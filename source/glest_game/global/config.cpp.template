@@ -1,0 +1,42 @@
+// ==============================================================
+//	This file is part of Glest (www.glest.org)
+//
+//	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2008 Daniel Santos <daniel.santos@pobox.com>
+//
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
+//	License, or (at your option) any later version
+// ==============================================================
+
+#include "pch.h"
+#include "config.h"
+#include "util.h"
+
+#include "leak_dumper.h"
+
+
+namespace Glest{ namespace Game{
+
+// =====================================================
+// 	class Config
+// =====================================================
+
+Config::Config(const char* fileName) :
+		Properties(),
+		fileName(fileName) {
+	load(fileName);
+
+CONFIG_INIT
+
+}
+
+void Config::save(const char *path) {
+
+CONFIG_SAVE
+
+	Properties::save(path);
+}
+
+}}// end namespace

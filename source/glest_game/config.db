@@ -1,0 +1,64 @@
+# Config Settings file.
+# This file is processed and used to generate config.cpp and confg.h using
+# config.cpp.template and config.h.template
+
+# variable					type	min		max
+aiLog						int
+aiRedir						bool
+cameraInvertXAxis			bool
+cameraInvertYAxis			bool
+cameraMaxDistance			float	20.f	1024.f
+cameraMaxYaw				float	0.f		360.f
+cameraMinDistance			float	0.f		20.f
+cameraMinYaw				float	0.f		360.f
+cameraFOV					float	0.f		360.f
+catchExceptions				bool
+checkGlCaps					bool
+colorBits					int
+consoleMaxLines				int
+consoleTimeout				int
+dayTime						float
+debugMode					bool
+depthBits					int
+enableCommandMinimap		bool
+factoryGraphics				string
+factorySound				string
+fastestSpeed				float	1.0f	10.0f
+filter						string
+filterMaxAnisotropy			int
+firstTime					bool
+focusArrows					bool
+fogOfWar					bool
+fogOfWarSmoothing			bool
+fogOfWarSmoothingFrameSkip	int
+fontConsole					string
+fontDisplay					string
+fontMenu					string
+lang						string
+maxFPS						int
+maxLights					int		0		8
+maxRenderDistance			float
+multiplayerPauseAllowed		bool
+networkConsistencyChecks	bool
+networkFPS					int
+photoMode					bool
+randStartLocs				bool
+refreshFrequency			int
+screenHeight				int
+screenWidth					int
+scrollSpeed					float
+serverIp					string
+shadowAlpha					float
+shadowFrameSkip				int
+shadowTextureSize			int
+shadows						string
+slowestSpeed				float	0.01f	1.0f
+soundStaticBuffers			int
+soundStreamingBuffers		int
+soundVolumeAmbient			int
+soundVolumeFx				int
+soundVolumeMusic			int
+stencilBits					int
+textures3D					bool
+windowed					bool
+worldUpdateFPS				int
