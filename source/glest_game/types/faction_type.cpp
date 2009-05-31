@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "faction_type.h"
 
 #include "logger.h"
@@ -17,7 +18,9 @@
 #include "tech_tree.h"
 #include "resource.h"
 #include "platform_util.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
@@ -38,7 +41,7 @@ FactionType::FactionType(){
 }
 
 //load a faction, given a directory
-void FactionType::load(const string &dir, const TechTree *techTree, Checksum* checksum){
+void FactionType::load(const string &dir, const TechTree *techTree, Checksum &checksum){
 
     Logger::getInstance().add("Faction type: "+ dir, true);
     name= lastDir(dir);
@@ -66,7 +69,7 @@ void FactionType::load(const string &dir, const TechTree *techTree, Checksum* ch
 	//open xml file
     string path= dir+"/"+name+".xml";
 
-	checksum->addFile(path);
+	checksum.addFile(path, true);
 
 	XmlTree xmlTree;
 	xmlTree.load(path);

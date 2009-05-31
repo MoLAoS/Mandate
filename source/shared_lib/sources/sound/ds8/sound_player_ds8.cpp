@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "sound_player_ds8.h"
 
 #include <cassert>
@@ -39,7 +40,7 @@ bool SoundBuffer::isFree(){
 
 	DWORD status;
 	dsBuffer->GetStatus(&status);
-    
+
     if(status & DSBSTATUS_BUFFERLOST){
         end();
         return true;
@@ -74,12 +75,12 @@ void SoundBuffer::createDsBuffer(IDirectSound8 *dsObject){
     format.cbSize= 0;
 
 	//buffer desc
-    DSBUFFERDESC dsBufferDesc; 
-    memset(&dsBufferDesc, 0, sizeof(DSBUFFERDESC)); 
-    dsBufferDesc.dwSize= sizeof(DSBUFFERDESC); 
+    DSBUFFERDESC dsBufferDesc;
+    memset(&dsBufferDesc, 0, sizeof(DSBUFFERDESC));
+    dsBufferDesc.dwSize= sizeof(DSBUFFERDESC);
     dsBufferDesc.dwFlags= DSBCAPS_CTRLVOLUME;
-    dsBufferDesc.dwBufferBytes= size; 
-    dsBufferDesc.lpwfxFormat= &format; 
+    dsBufferDesc.dwBufferBytes= size;
+    dsBufferDesc.lpwfxFormat= &format;
 
 	//create buffer
 	HRESULT hr= dsObject->CreateSoundBuffer(&dsBufferDesc, &buffer, NULL);
@@ -120,7 +121,7 @@ void StaticSoundBuffer::end(){
 
 void StaticSoundBuffer::play(){
 	dsBuffer->SetVolume(dsVolume(sound->getVolume()));
-	dsBuffer->Play(0, 0, 0); 
+	dsBuffer->Play(0, 0, 0);
 }
 
 // ===================== PRIVATE =======================
@@ -128,7 +129,7 @@ void StaticSoundBuffer::play(){
 void StaticSoundBuffer::fillDsBuffer(){
     void * writePointer;
     unsigned long size;
-	
+
 	//lock
 	HRESULT hr= dsBuffer->Lock(0, 0, &writePointer, &size, NULL, NULL, DSBLOCK_ENTIREBUFFER);
 	if (hr!=DS_OK){
@@ -193,11 +194,11 @@ void StrSoundBuffer::play(int64 fadeOn){
 		chrono.start();
 		dsBuffer->SetVolume(dsVolume(0.f));
 	}
-	dsBuffer->Play(0, 0, DSBPLAY_LOOPING); 
+	dsBuffer->Play(0, 0, DSBPLAY_LOOPING);
 }
 
 void StrSoundBuffer::update(){
-	
+
 	switch(state){
 	case sFadingOn:
 		if(chrono.getMillis()>fade){
@@ -311,7 +312,7 @@ void StrSoundBuffer::refreshDsBuffer(){
 		if (hr!=DS_OK){
 			throw runtime_error("Failed to Unlock direct sound buffer");
 		}
-	}		
+	}
 
 	lastPlayCursor= playCursor;
 }
@@ -338,7 +339,7 @@ SoundPlayerDs8::SoundPlayerDs8(){
 
 void SoundPlayerDs8::init(const SoundPlayerParams *params){
     HRESULT hr;
-    
+
 	this->params= *params;
 
 	//reserve memory for buffers
@@ -350,13 +351,13 @@ void SoundPlayerDs8::init(const SoundPlayerParams *params){
 	if (hr!=DS_OK){
         throw runtime_error("Can't create direct sound object");
 	}
-    
+
 	//Set cooperative level
-    hr= dsObject->SetCooperativeLevel(GetActiveWindow(), DSSCL_PRIORITY); 
+    hr= dsObject->SetCooperativeLevel(GetActiveWindow(), DSSCL_PRIORITY);
 	if (hr!=DS_OK){
         throw runtime_error("Can't set cooperative level of dsound");
 	}
-    
+
 }
 
 void SoundPlayerDs8::end(){
@@ -366,18 +367,18 @@ void SoundPlayerDs8::play(StaticSound *staticSound){
 	int bufferIndex= -1;
 
     assert(staticSound!=NULL);
-	
+
 	//if buffer found, play the sound
 	if (findStaticBuffer(staticSound, &bufferIndex)){
 		staticSoundBuffers[bufferIndex].init(dsObject, staticSound);
-		staticSoundBuffers[bufferIndex].play(); 
+		staticSoundBuffers[bufferIndex].play();
     }
 
 }
 
 void SoundPlayerDs8::play(StrSound *strSound, int64 fadeOn){
 	int bufferIndex= -1;
-	
+
 	//play sound if buffer found
 	if(findStrBuffer(strSound, &bufferIndex)){
 		strSoundBuffers[bufferIndex].init(dsObject, strSound, params.strBufferSize);
@@ -415,12 +416,12 @@ void SoundPlayerDs8::updateStreams(){
 }
 
 // ===================== PRIVATE =======================
-			
+
 bool SoundPlayerDs8::findStaticBuffer(Sound *sound, int *bufferIndex){
     bool bufferFound= false;
 
     assert(sound!=NULL);
-	
+
     //1st: we try fo find a stopped buffer with the same sound
 	for(int i=0; i<staticSoundBuffers.size(); ++i){
 		if(sound==staticSoundBuffers[i].getSound() && staticSoundBuffers[i].isReady()){

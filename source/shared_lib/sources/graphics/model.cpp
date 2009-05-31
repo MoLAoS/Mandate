@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "model.h"
 
 #include <cstdio>
@@ -18,7 +19,9 @@
 #include "interpolation.h"
 #include "conversion.h"
 #include "util.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Platform;
 
@@ -34,38 +37,38 @@ using namespace Util;
 
 // ==================== constructor & destructor ====================
 
-Mesh::Mesh(){
-	frameCount= 0;
-	vertexCount= 0;
-	indexCount= 0;
+Mesh::Mesh() {
+	frameCount = 0;
+	vertexCount = 0;
+	indexCount = 0;
 
-	vertices= NULL;
-	normals= NULL;
-	texCoords= NULL;
-	tangents= NULL;
-	indices= NULL;
-	interpolationData= NULL;
+	vertices = NULL;
+	normals = NULL;
+	texCoords = NULL;
+	tangents = NULL;
+	indices = NULL;
+	interpolationData = NULL;
 
-	for(int i=0; i<meshTextureCount; ++i){
-		textures[i]= NULL;
+	for (int i = 0; i < meshTextureCount; ++i) {
+		textures[i] = NULL;
 	}
 
-	twoSided= false;
-	customColor= false;
+	twoSided = false;
+	customColor = false;
 }
 
-Mesh::~Mesh(){
+Mesh::~Mesh() {
 	end();
 }
 
-void Mesh::init(){
-	vertices= new Vec3f[frameCount*vertexCount];
-	normals= new Vec3f[frameCount*vertexCount];
-	texCoords= new Vec2f[vertexCount];
-	indices= new uint32[indexCount];
+void Mesh::init() {
+	vertices = new Vec3f[frameCount * vertexCount];
+	normals = new Vec3f[frameCount * vertexCount];
+	texCoords = new Vec2f[vertexCount];
+	indices = new uint32[indexCount];
 }
 
-void Mesh::end(){
+void Mesh::end() {
 	delete [] vertices;
 	delete [] normals;
 	delete [] texCoords;
@@ -78,7 +81,7 @@ void Mesh::end(){
 // ========================== shadows & interpolation =========================
 
 void Mesh::buildInterpolationData(){
-	interpolationData= new InterpolationData(this);
+	interpolationData = new InterpolationData(this);
 }
 
 void Mesh::updateInterpolationData(float t, bool cycle) const{
@@ -129,12 +132,21 @@ void Mesh::loadV2(const string &dir, FILE *f, TextureManager *textureManager){
 	}
 
 	//read data
-	fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
-	fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	size_t vfCount = frameCount * vertexCount;
+	for(int i = 0; i < vfCount; ++i) {
+		fread(&vertices[i], 12, 1, f);
+	}
+	for(int i = 0; i < vfCount; ++i) {
+		fread(&normals[i], 12, 1, f);
+	}
+
 	if(textures[mtDiffuse]!=NULL){
 		fread(texCoords, sizeof(Vec2f)*vertexCount, 1, f);
 	}
-	fread(&diffuseColor, sizeof(Vec3f), 1, f);
+//	fread(&diffuseColor, sizeof(Vec3f), 1, f);
+	fread(&diffuseColor, 12, 1, f);
 	fread(&opacity, sizeof(float32), 1, f);
 	fseek(f, sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	fread(indices, sizeof(uint32)*indexCount, 1, f);
@@ -174,14 +186,23 @@ void Mesh::loadV3(const string &dir, FILE *f, TextureManager *textureManager){
 	}
 
 	//read data
-	fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
-	fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	size_t vfCount = frameCount * vertexCount;
+	for(int i = 0; i < vfCount; ++i) {
+		fread(&vertices[i], 12, 1, f);
+	}
+	for(int i = 0; i < vfCount; ++i) {
+		fread(&normals[i], 12, 1, f);
+	}
+
 	if(textures[mtDiffuse]!=NULL){
 		for(int i=0; i<meshHeader.texCoordFrameCount; ++i){
 			fread(texCoords, sizeof(Vec2f)*vertexCount, 1, f);
 		}
 	}
-	fread(&diffuseColor, sizeof(Vec3f), 1, f);
+	// fread(&diffuseColor, sizeof(Vec3f), 1, f);
+	fread(&diffuseColor, 12, 1, f);
 	fread(&opacity, sizeof(float32), 1, f);
 	fseek(f, sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	fread(indices, sizeof(uint32)*indexCount, 1, f);
@@ -232,8 +253,16 @@ void Mesh::load(const string &dir, FILE *f, TextureManager *textureManager){
 	}
 
 	//read data
-	fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
-	fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	size_t vfCount = frameCount * vertexCount;
+	for(int i = 0; i < vfCount; ++i) {
+		fread(&vertices[i], 12, 1, f);
+	}
+	for(int i = 0; i < vfCount; ++i) {
+		fread(&normals[i], 12, 1, f);
+	}
+
 	if(meshHeader.textures!=0){
 		fread(texCoords, sizeof(Vec2f)*vertexCount, 1, f);
 	}

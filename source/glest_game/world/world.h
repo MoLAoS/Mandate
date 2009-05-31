@@ -29,12 +29,14 @@
 #include "unit_updater.h"
 #include "random.h"
 #include "game_constants.h"
+#include "pos_iterator.h"
 
 namespace Glest{ namespace Game{
 
 using Shared::Graphics::Quad2i;
 using Shared::Graphics::Rect2i;
 using Shared::Util::Random;
+using Glest::Game::Util::PosCircularIteratorFactory;
 
 class Faction;
 class Unit;
@@ -63,11 +65,13 @@ private:
 	Tileset tileset;
 	TechTree techTree;
 	TimeFlow timeFlow;
+	Game &game;
+	const GameSettings &gs;
 
 	UnitUpdater unitUpdater;
     WaterEffects waterEffects;
 	Minimap minimap;
-    Stats stats;	//BattleEnd will delete this object
+    Stats stats;
 
 	Factions factions;
 
@@ -83,8 +87,15 @@ private:
 	int fogOfWarSmoothingFrameSkip;
 	bool fogOfWarSmoothing;
 
+	static World *singleton;
+	bool alive;
+	
+	Units newlydead;
+	PosCircularIteratorFactory posIteratorFactory;
+
 public:
-	World();
+	World(Game *game);
+	~World()										{singleton = NULL;}
 	void end(); //to die before selection does
 
 	//get
@@ -102,45 +113,67 @@ public:
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
 	const Minimap *getMinimap() const				{return &minimap;}
-	const Stats *getStats() const					{return &stats;};
-	Stats *getStats()								{return &stats;};
+//	const Stats &getStats() const					{return stats;}
+	Stats &getStats() 								{return stats;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}
 	int getNextUnitId()								{return nextUnitId++;}
 	int getFrameCount() const						{return frameCount;}
+	static World *getCurrWorld()					{return singleton;}
+	bool isAlive() const							{return alive;}
+	const PosCircularIteratorFactory &getPosIteratorFactory() {return posIteratorFactory;}
 
 	//init & load
-	void init(Game *game, const XmlNode *worldNode = NULL);
-	void loadTileset(const string &dir, Checksum* checksum);
-	void loadTech(const string &dir, Checksum* checksum);
-	void loadMap(const string &path, Checksum* checksum);
+	void init(const XmlNode *worldNode = NULL);
+	void loadTileset(Checksum &checksum);
+	void loadTech(Checksum &checksum);
+	void loadMap(Checksum &checksum);
 	void save(XmlNode *node) const;
 
 	//misc
 	void update();
+	void moveUnitCells(Unit *unit);
 	Unit* findUnitById(int id);
 	const UnitType* findUnitTypeById(const FactionType* factionType, int id);
 	bool placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated= false);
-	void moveUnitCells(Unit *unit);
-	bool toRenderUnit(const Unit *unit, const Quad2i &visibleQuad) const;
-	bool toRenderUnit(const Unit *unit) const;
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
 	void doKill(Unit *killer, Unit *killed);
+	void assertConsistiency();
+	void hackyCleanUp(Unit *unit);
+	//bool toRenderUnit(const Unit *unit, const Quad2i &visibleQuad) const;
+	//bool toRenderUnit(const Unit *unit) const;
+	bool toRenderUnit(const Unit *unit, const Quad2i &visibleQuad) const {
+		//a unit is rendered if it is in a visible cell or is attacking a unit in a visible cell
+		return visibleQuad.isInside(unit->getCenteredPos()) && toRenderUnit(unit);
+	}
+	
+	bool toRenderUnit(const Unit *unit) const {
+		return map.getSurfaceCell(Map::toSurfCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
+			|| (unit->getCurrSkill()->getClass() == scAttack
+			&& map.getSurfaceCell(Map::toSurfCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
+	}
 
 private:
-
 	void initCells();
 	void initSplattedTextures();
-	void initFactionTypes(GameSettings *gs);
+	void initFactionTypes();
 	void initMinimap();
 	void initUnits();
 	void initMap();
 	void initExplorationState();
+	void initNetworkServer();
 
 	//misc
+	void updateClient();
+	void updateEarthquakes(float seconds);
 	void tick();
 	void computeFow();
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
-	void loadSaved(GameSettings *gs, const XmlNode *worldNode);
+	void loadSaved(const XmlNode *worldNode);
+	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
+	void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
+	bool isNetworkServer() {return NetworkManager::getInstance().isNetworkServer();}
+	bool isNetworkClient() {return NetworkManager::getInstance().isNetworkClient();}
+	void doHackyCleanUp();
 };
 
 }}//end namespace

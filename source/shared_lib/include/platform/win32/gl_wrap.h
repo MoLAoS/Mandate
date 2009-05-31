@@ -24,41 +24,62 @@
 #include "types.h"
 
 
-#define GLEST_GLPROC(X, Y) inline X( static a= wglGetProcAddress(a); return a;) 
+#define GLEST_GLPROC(X, Y) inline X( static a = wglGetProcAddress(a); return a;)
 
 using std::string;
 
 using Shared::Graphics::FontMetrics;
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 // =====================================================
-//	class PlatformContextGl
+// class PlatformContextGl
 // =====================================================
 
-class PlatformContextGl{
+class PlatformContextGl {
 protected:
 	DeviceContextHandle dch;
 	GlContextHandle glch;
 
 public:
-	virtual void init(int colorBits, int depthBits, int stencilBits);
-	virtual void end();
+	void init(int colorBits, int depthBits, int stencilBits);
+	void end() {
+		int makeCurrentError = wglDeleteContext(glch);
+		assert(makeCurrentError);
+	}
 
-	virtual void makeCurrent();
-	virtual void swapBuffers();
-	
-	DeviceContextHandle getHandle() const	{return dch;}
+	void makeCurrent() {
+		int makeCurrentError = wglMakeCurrent(dch, glch);
+		assert(makeCurrentError);
+	}
+
+	void swapBuffers() {
+		int swapErr = SwapBuffers(dch);
+		assert(swapErr);
+	}
+
+	DeviceContextHandle getHandle() const {return dch;}
 };
 
+
 // =====================================================
-//	Global Fcs  
+// Global Fcs
 // =====================================================
 
 void createGlFontBitmaps(uint32 &base, const string &type, int size, int width, int charCount, FontMetrics &metrics);
 void createGlFontOutlines(uint32 &base, const string &type, int width, float depth, int charCount, FontMetrics &metrics);
-const char *getPlatformExtensions(const PlatformContextGl *pcgl);
-PROC getGlProcAddress(const char *procName);
+
+inline PROC getGlProcAddress(const char *procName) {
+	PROC proc = wglGetProcAddress(procName);
+	assert(proc != NULL);
+	return proc;
+}
+
+inline const char *getPlatformExtensions(const PlatformContextGl *pcgl) {
+	typedef const char*(WINAPI * PROCTYPE)(HDC hdc);
+	PROCTYPE proc = reinterpret_cast<PROCTYPE>(getGlProcAddress("wglGetExtensionsStringARB"));
+	return proc == NULL ? "" : proc(pcgl->getHandle());
+}
 
 }}//end namespace
 

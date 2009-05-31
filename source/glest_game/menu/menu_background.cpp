@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_background.h"
 
 #include <ctime>
@@ -19,7 +20,9 @@
 #include "xml_parser.h"
 #include "util.h"
 #include "game_constants.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
@@ -36,7 +39,7 @@ MenuBackground::MenuBackground(){
 	Renderer &renderer= Renderer::getInstance();
 
 	//load data
-	
+
 	XmlTree xmlTree;
 	xmlTree.load("data/core/menu/menu.xml");
 	const XmlNode *menuNode= xmlTree.getRootNode();
@@ -64,9 +67,9 @@ MenuBackground::MenuBackground(){
 	rain= menuNode->getChild("rain")->getAttribute("value")->getBoolValue();
 	if(rain){
 		RainParticleSystem *rps= new RainParticleSystem();
-		rps->setSpeed(12.f/GameConstants::updateFps);
+		rps->setSpeed(12.f/Config::getInstance().getGsWorldUpdateFps());
 		rps->setEmissionRate(25);
-		rps->setWind(-90.f, 4.f/GameConstants::updateFps);
+		rps->setWindSpeed2(-90.f, 4.f/Config::getInstance().getGsWorldUpdateFps());
 		rps->setPos(Vec3f(0.f, 25.f, 0.f));
 		rps->setColor(Vec4f(1.f, 1.f, 1.f, 0.2f));
 		rps->setRadius(30.f);
@@ -80,7 +83,7 @@ MenuBackground::MenuBackground(){
 
 	//camera
 	const XmlNode *cameraNode= menuNode->getChild("camera");
-	
+
 	//position
 	const XmlNode *positionNode= cameraNode->getChild("start-position");
 	Vec3f startPosition;
@@ -96,8 +99,8 @@ MenuBackground::MenuBackground(){
 	startRotation.y= rotationNode->getAttribute("y")->getFloatValue();
 	startRotation.z= rotationNode->getAttribute("z")->getFloatValue();
 	camera.setOrientation(Quaternion(EulerAngles(
-		degToRad(startRotation.x), 
-		degToRad(startRotation.y), 
+		degToRad(startRotation.x),
+		degToRad(startRotation.y),
 		degToRad(startRotation.z))));
 
 	//load main model
@@ -116,7 +119,7 @@ MenuBackground::MenuBackground(){
 	aboutPosition.y= positionNode->getAttribute("y")->getFloatValue();
 	aboutPosition.z= positionNode->getAttribute("z")->getFloatValue();
 	rotationNode= cameraNode->getChild("about-rotation");
-	
+
 	targetCamera= NULL;
 	t= 0.f;
 	fade= 0.f;
@@ -133,7 +136,7 @@ void MenuBackground::update(){
 
 	//rain drops
 	for(int i=0; i<raindropCount; ++i){
-		raindropStates[i]+= 1.f / GameConstants::updateFps;
+		raindropStates[i]+= 1.f / Config::getInstance().getGsWorldUpdateFps();
 		if(raindropStates[i]>=1.f){
 			raindropStates[i]= 0.f;
 			raindropPos[i]= computeRaindropPos();
@@ -141,7 +144,7 @@ void MenuBackground::update(){
 	}
 
 	if(targetCamera!=NULL){
-		t+= ((0.01f+(1.f-t)/10.f)/20.f)*(60.f/GameConstants::updateFps);
+		t+= ((0.01f+(1.f-t)/10.f)/20.f)*(60.f/Config::getInstance().getGsWorldUpdateFps());
 
 		//interpolate position
 		camera.setPosition(lastCamera.getPosition().lerp(t, targetCamera->getPosition()));
@@ -158,14 +161,14 @@ void MenuBackground::update(){
 
 	//fade
 	if(fade<=1.f){
-		fade+= 0.6f/GameConstants::updateFps;
+		fade+= 0.6f/Config::getInstance().getGsWorldUpdateFps();
 		if(fade>1.f){
 			fade= 1.f;
 		}
 	}
 
 	//animation
-	anim+=(0.6f/GameConstants::updateFps)/5+random.randRange(0.f, (0.6f/GameConstants::updateFps)/5.f);
+	anim+=(0.6f/Config::getInstance().getGsWorldUpdateFps())/5+random.randRange(0.f, (0.6f/Config::getInstance().getGsWorldUpdateFps())/5.f);
 	if(anim>1.f){
 		anim= 0.f;
 	}

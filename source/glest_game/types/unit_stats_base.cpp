@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include <algorithm>
 #include <cassert>
 
@@ -21,7 +22,9 @@
 #include "faction_type.h"
 #include "resource.h"
 #include "renderer.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
@@ -34,6 +37,8 @@ const char *UnitProperties::names[] = {"burnable", "rotated_climb", "wall"};
 // ===============================
 //  class UnitStatsBase
 // ===============================
+
+size_t UnitStatsBase::damageMultiplierCount = 0;
 
 // ==================== misc ====================
 
@@ -64,6 +69,10 @@ void UnitStatsBase::reset() {
 	prodSpeed = 0;
 	repairSpeed = 0;
 	harvestSpeed = 0;
+
+	for(int i = 0; i < damageMultiplierCount; ++i) {
+		damageMultipliers[i] = 0.f;
+	}
 }
 
 void UnitStatsBase::setValues(const UnitStatsBase &o) {
@@ -90,6 +99,11 @@ void UnitStatsBase::setValues(const UnitStatsBase &o) {
 	prodSpeed = o.prodSpeed;
 	repairSpeed = o.repairSpeed;
 	harvestSpeed = o.harvestSpeed;
+
+	for(int i = 0; i < damageMultiplierCount; ++i) {
+		damageMultipliers[i] = o.damageMultipliers[i];
+	}
+
 }
 
 void UnitStatsBase::addStatic(const EnhancementTypeBase &e, float strength) {
@@ -143,46 +157,47 @@ void UnitStatsBase::applyMultipliers(const EnhancementTypeBase &e) {
 // legacy load for Unit class
 void UnitStatsBase::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	//maxHp
-	maxHp = baseNode->getChild("max-hp")->getAttribute("value")->getIntValue();
+	maxHp = baseNode->getChildIntValue("max-hp");
 
 	//hpRegeneration
-	hpRegeneration = baseNode->getChild("max-hp")->getAttribute("regeneration")->getIntValue();
+	hpRegeneration = baseNode->getChild("max-hp")->getIntAttribute("regeneration");
 
 	//maxEp
-	maxEp = baseNode->getChild("max-ep")->getAttribute("value")->getIntValue();
+	maxEp = baseNode->getChildIntValue("max-ep");
 
 	//epRegeneration
-	if (maxEp == 0) {
+	if (maxEp) {
+		epRegeneration = baseNode->getChild("max-ep")->getIntAttribute("regeneration");
+	} else {
 		XmlAttribute *epRegenAttr = baseNode->getChild("max-ep")->getAttribute("regeneration", false);
 		epRegeneration = epRegenAttr ? epRegenAttr->getIntValue() : 0;
-	} else {
-		epRegeneration = baseNode->getChild("max-ep")->getAttribute("regeneration")->getIntValue();
 	}
 
 	//sight
-	sight = baseNode->getChild("sight")->getAttribute("value")->getIntValue();
+	sight = baseNode->getChildIntValue("sight");
 
 	//armor
-	armor = baseNode->getChild("armor")->getAttribute("value")->getIntValue();
+	armor = baseNode->getChildIntValue("armor");
 
 	//armor type string
-	string armorTypeName = baseNode->getChild("armor-type")->getAttribute("value")->getRestrictedValue();
+	string armorTypeName = baseNode->getChildRestrictedValue("armor-type");
 	armorType = techTree->getArmorType(armorTypeName);
 
 	//light & lightColor
 	const XmlNode *lightNode = baseNode->getChild("light");
 	light = lightNode->getAttribute("enabled")->getBoolValue();
 	if (light) {
+		lightColor = lightNode->getColor3Value();/*
 		lightColor.x = lightNode->getAttribute("red")->getFloatValue(0.f, 1.f);
 		lightColor.y = lightNode->getAttribute("green")->getFloatValue(0.f, 1.f);
-		lightColor.z = lightNode->getAttribute("blue")->getFloatValue(0.f, 1.f);
+		lightColor.z = lightNode->getAttribute("blue")->getFloatValue(0.f, 1.f);*/
 	}
 
 	//size
-	size = baseNode->getChild("size")->getAttribute("value")->getIntValue();
+	size = baseNode->getChildIntValue("size");
 
 	//height
-	height = baseNode->getChild("height")->getAttribute("value")->getIntValue();
+	height = baseNode->getChildIntValue("height");
 }
 
 void UnitStatsBase::save(XmlNode *node) {
@@ -206,7 +221,7 @@ void UnitStatsBase::save(XmlNode *node) {
 	node->addChild("move-speed", moveSpeed);
 	node->addChild("attack-speed", attackSpeed);
 	node->addChild("production-speed", prodSpeed);
-	node->addChild("repairSpeed", repairSpeed);
+	node->addChild("repair-speed", repairSpeed);
 	node->addChild("harvest-speed", harvestSpeed);
 }
 
@@ -254,7 +269,7 @@ void EnhancementTypeBase::save(XmlNode *node) const {
 	m->addChild("move-speed", moveSpeedMult);
 	m->addChild("attack-speed", attackSpeedMult);
 	m->addChild("production-speed", prodSpeedMult);
-	m->addChild("repairSpeed", repairSpeedMult);
+	m->addChild("repair-speed", repairSpeedMult);
 	m->addChild("harvest-speed", harvestSpeedMult);
 }
 
@@ -276,46 +291,48 @@ void EnhancementTypeBase::addMultipliers(const EnhancementTypeBase &e, float str
 	harvestSpeedMult += (e.getHarvestSpeedMult() - 1.0f) * strength;
 }
 
-inline void EnhancementTypeBase::formatModifier(string &str, const char* label, int value, float multiplier) {
+/*inline */void EnhancementTypeBase::formatModifier(string &str, const char *pre, const char* label,
+		int value, float multiplier) {
 	Lang &lang = Lang::getInstance();
 
-	if (value != 0) {
-		str += lang.get(label);
-		str += " ";
+	if (value) {
+		str += pre + lang.get(label) + ": ";
 		if (value > 0) {
 			str += "+";
 		}
 		str += intToStr(value);
-		str += "\n";
 	}
 
 	if (multiplier != 1.0f) {
-		str += (value != 0 ? "," : lang.get(label)) + " ";
+		if(value) {
+			str += ", ";
+		} else {
+			str += pre + lang.get(label) + ": ";
+		}
+
 		if (multiplier > 1.0f) {
 			str += "+";
 		}
-		str += floatToStr((multiplier - 1.0f) * 100.0f);
-		str += "%\n";
+		str += intToStr((int)((multiplier - 1.0f) * 100.0f)) + "%";
 	}
 }
 
-string &EnhancementTypeBase::getDesc(string &str) const {
-	formatModifier(str, "Hp", maxHp, maxHpMult);
-	formatModifier(str, "HpRegeneration", hpRegeneration, hpRegenerationMult);
-	formatModifier(str, "Sight", sight, sightMult);
-	formatModifier(str, "Ep", maxEp, maxEpMult);
-	formatModifier(str, "EpRegeneration", epRegeneration, epRegenerationMult);
-	formatModifier(str, "AttackStrength", attackStrength, attackStrengthMult);
-	formatModifier(str, "EffectStrength", effectStrength, effectStrengthMult);
-	formatModifier(str, "AttackPctStolen", (int)round(attackPctStolen * 100.0f), attackPctStolenMult);
-	formatModifier(str, "AttackSpeed", attackSpeed, attackSpeedMult);
-	formatModifier(str, "AttackDistance", attackRange, attackRangeMult);
-	formatModifier(str, "Armor", armor, armorMult);
-	formatModifier(str, "WalkSpeed", moveSpeed, moveSpeedMult);
-	formatModifier(str, "ProductionSpeed", prodSpeed, prodSpeedMult);
-	formatModifier(str, "RepairSpeed", repairSpeed, repairSpeedMult);
-	formatModifier(str, "HarvestSpeed", harvestSpeed, harvestSpeedMult);
-	return str;
+void EnhancementTypeBase::getDesc(string &str, const char *pre) const {
+	formatModifier(str, pre, "Hp", maxHp, maxHpMult);
+	formatModifier(str, pre, "HpRegeneration", hpRegeneration, hpRegenerationMult);
+	formatModifier(str, pre, "Sight", sight, sightMult);
+	formatModifier(str, pre, "Ep", maxEp, maxEpMult);
+	formatModifier(str, pre, "EpRegeneration", epRegeneration, epRegenerationMult);
+	formatModifier(str, pre, "AttackStrength", attackStrength, attackStrengthMult);
+	formatModifier(str, pre, "EffectStrength", (int)round(effectStrength * 100.0f), effectStrengthMult);
+	formatModifier(str, pre, "AttackPctStolen", (int)round(attackPctStolen * 100.0f), attackPctStolenMult);
+	formatModifier(str, pre, "AttackSpeed", attackSpeed, attackSpeedMult);
+	formatModifier(str, pre, "AttackDistance", attackRange, attackRangeMult);
+	formatModifier(str, pre, "Armor", armor, armorMult);
+	formatModifier(str, pre, "WalkSpeed", moveSpeed, moveSpeedMult);
+	formatModifier(str, pre, "ProductionSpeed", prodSpeed, prodSpeedMult);
+	formatModifier(str, pre, "RepairSpeed", repairSpeed, repairSpeedMult);
+	formatModifier(str, pre, "HarvestSpeed", harvestSpeed, harvestSpeedMult);
 }
 
 //Initialize value from <static-modifiers>
@@ -380,7 +397,7 @@ void EnhancementTypeBase::initMultiplier(const XmlNode *node, const string &dir)
 	} else if (name == "effect-strength") {
 		effectStrengthMult = value;
 	} else if (name == "attack-percent-stolen") {
-		attackPctStolenMult	 = value;
+		attackPctStolenMult = value;
 	} else if (name == "attack-range") {
 		attackRangeMult = value;
 	} else if (name == "move-speed") {

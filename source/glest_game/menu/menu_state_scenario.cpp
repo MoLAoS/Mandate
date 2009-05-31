@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_state_scenario.h"
 
 #include "renderer.h"
@@ -29,7 +30,7 @@ using namespace	Shared::Xml;
 // 	class MenuStateScenario
 // =====================================================
 
-MenuStateScenario::MenuStateScenario(Program *program, MainMenu *mainMenu):
+MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
     MenuState(program, mainMenu, "scenario")
 {
 	Lang &lang= Lang::getInstance();
@@ -76,12 +77,12 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton){
 	if(buttonReturn.mouseClick(x,y)){
 		soundRenderer.playFx(coreData.getClickSoundA());
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-    } 
+    }
 	else if(buttonPlayNow.mouseClick(x,y)){
 		soundRenderer.playFx(coreData.getClickSoundC());
 		GameSettings *gameSettings= new GameSettings();
         loadGameSettings(&scenarioInfo, gameSettings);
-		program->setState(new Game(program, gameSettings));
+		program.setState(new Game(program, *gameSettings));
 	}
     else if(listBoxScenario.mouseClick(x, y)){
         loadScenarioInfo( "scenarios/"+scenarioFiles[listBoxScenario.getSelectedItemIndex()]+".xml", &scenarioInfo );
@@ -89,8 +90,8 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton){
 	}
 }
 
-void MenuStateScenario::mouseMove(int x, int y, const MouseState *ms){
-	
+void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms){
+
 	listBoxScenario.mouseMove(x, y);
 
 	buttonReturn.mouseMove(x, y);
@@ -110,9 +111,9 @@ void MenuStateScenario::render(){
 }
 
 void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo){
-	
+
     Lang &lang= Lang::getInstance();
-    
+
     XmlTree xmlTree;
 	xmlTree.load(file);
 
@@ -159,7 +160,7 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 			break;
 		}
 	}
-	
+
 	//add misc info
 	string difficultyString = "Difficulty" + intToStr(scenarioInfo->difficulty);
 
@@ -178,7 +179,7 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	gameSettings->setMapPath("maps/" + scenarioInfo->mapName + ".gbm");
     gameSettings->setTilesetPath("tilesets/" + scenarioInfo->tilesetName);
     gameSettings->setTechPath("techs/" + scenarioInfo->techTreeName);
-   
+
     for(int i=0; i<GameConstants::maxPlayers; ++i){
         ControlType ct= static_cast<ControlType>(scenarioInfo->factionControls[i]);
 		if(ct!=ctClosed){
@@ -203,7 +204,7 @@ ControlType MenuStateScenario::strToControllerType(const string &str){
     else if(str=="cpu"){
 	    return ctCpu;
     }
-    else if(str=="cpu-ultra"){ 
+    else if(str=="cpu-ultra"){
         return ctCpuUltra;
     }
     else if(str=="human"){

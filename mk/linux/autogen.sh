@@ -25,18 +25,19 @@ echo 'JAMCONFIG_READ = yes ;' >> Jamconfig.in
 echo "autoconf"
 autoconf
 
-rm -rf autom4te.cache
+rm -rf autom4te.cache build
+
+mkdir -p /tmp/gae/0.2/build
+ln -s /tmp/gae/0.2/build .
 
 # create symlinks to the source dirs
 
 echo "Updating Source symlinks..."
 
 for f in data docs maps scenarios techs tilesets; do
-	rm -f $f
-	ln -s ../../data/glest_game/$f .;
+	ln -sf ../../data/glest_game/$f .;
 done
 
-rm -f shared_lib glest_game glest_map_editor
 ln -sf ../../source/shared_lib .
 ln -sf ../../source/glest_game .
 ln -sf ../../source/glest_map_editor .

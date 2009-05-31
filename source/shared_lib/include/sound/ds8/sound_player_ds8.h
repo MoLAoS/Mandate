@@ -13,6 +13,7 @@
 #define _SHARED_SOUND_SOUNDPLAYERDS8_H_
 
 #include "sound_player.h"
+#include "timer.h"
 #include "platform_util.h"
 
 #include <dsound.h>

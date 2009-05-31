@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -23,9 +23,9 @@ using Shared::Sound::StaticSound;
 
 
 // =====================================================
-// 	class TimeFlow  
+// 	class TimeFlow
 //
-/// Raises time related events (day/night cycle) 
+/// Raises time related events (day/night cycle)
 // =====================================================
 
 class TimeFlow{
@@ -49,6 +49,9 @@ public:
 	bool isTotalNight() const			{return time<dawn+1.f || time>dusk-1.f;}
 
 	void update();
+	void save(XmlNode *node) const;
+	void load(const XmlNode *node);
+
 private:
 	bool isAproxTime(float time);
 };

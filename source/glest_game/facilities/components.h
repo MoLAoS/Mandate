@@ -16,11 +16,13 @@
 #include <vector>
 
 #include "font.h"
+#include "input.h"
 
 using std::string;
 using std::vector;
 
 using Shared::Graphics::Font2D;
+using Shared::Platform::Key;
 
 namespace Glest{ namespace Game{
 
@@ -30,24 +32,25 @@ namespace Glest{ namespace Game{
 //	OpenGL renderer GUI components
 // ===========================================================
 
-class GraphicComponent{
+class GraphicComponent {
 public:
 	static const float animSpeed;
 	static const float fadeSpeed;
 
 protected:
-    int x, y, w, h;
-    string text;
+	int x, y, w, h;
+	string text;
 	const Font2D *font;
-
+	
 	static float anim;
 	static float fade;
 
 public:
+	GraphicComponent();
 	virtual ~GraphicComponent(){}
-
-    void init(int x, int y, int w, int h);
-
+	
+	void init(int x, int y, int w, int h);
+	
 	int getX() const					{return x;}
 	int getY() const					{return y;}
 	int getW() const					{return w;}
@@ -60,15 +63,15 @@ public:
 				&& y >= this->y
 				&& y < this->y + h;
 	}
-
+	
 	void setX(int x)					{this->x= x;}
 	void setY(int y)					{this->y= y;}
 	void setText(const string &text)	{this->text= text;}
 	void setFont(const Font2D *font)	{this->font= font;}
-
-    virtual bool mouseMove(int x, int y);
-    virtual bool mouseClick(int x, int y);
-
+	
+	virtual bool mouseMove(int x, int y);
+	virtual bool mouseClick(int x, int y);
+	
 	static void update();
 	static void resetFade();
 	static float getAnim()	{return anim;}
@@ -79,7 +82,7 @@ public:
 // 	class GraphicLabel
 // ===========================================================
 
-class GraphicLabel: public GraphicComponent{
+class GraphicLabel: public GraphicComponent {
 public:
 	static const int defH;
 	static const int defW;
@@ -88,6 +91,7 @@ private:
 	bool centered;
 
 public:
+	GraphicLabel() : GraphicComponent(), centered(false) {}
 	void init(int x, int y, int w=defW, int h=defH, bool centered= false);
 
 	bool getCentered() const	{return centered;}
@@ -108,6 +112,7 @@ private:
 	bool lighted;
 
 public:
+	GraphicButton() : GraphicComponent(), lighted(false) {}
 	void init(int x, int y, int w=defW, int h=defH);
 
 	bool getLighted() const			{return lighted;}
@@ -126,33 +131,34 @@ public:
 	static const int defW;
 
 private:
-    GraphicButton graphButton1, graphButton2;
-    vector<string> items;
-    int selectedItemIndex;
+	GraphicButton graphButton1, graphButton2;
+	vector<string> items;
+	int selectedItemIndex;
 
 public:
-    void init(int x, int y, int w=defW, int h=defH);
-
+	GraphicListBox();
+	void init(int x, int y, int w=defW, int h=defH);
+	
 	int getItemCount() const				{return items.size();}
 	int getSelectedItemIndex() const		{return selectedItemIndex;}
 	string getSelectedItem() const			{return items[selectedItemIndex];}
 	const GraphicButton *getButton1() const	{return &graphButton1;}
 	const GraphicButton *getButton2() const	{return &graphButton2;}
-
-    void pushBackItem(string item);
-    void setItems(const vector<string> &items);
+	
+	void pushBackItem(string item);
+	void setItems(const vector<string> &items);
 	void setSelectedItemIndex(int index);
-    void setSelectedItem(string item);
-
-    virtual bool mouseMove(int x, int y);
-    virtual bool mouseClick(int x, int y);
+	void setSelectedItem(string item);
+	
+	virtual bool mouseMove(int x, int y);
+	virtual bool mouseClick(int x, int y);
 };
 
 // ===========================================================
 // 	class GraphicMessageBox
 // ===========================================================
 
-class GraphicMessageBox: public GraphicComponent{
+class GraphicMessageBox: public GraphicComponent {
 public:
 	static const int defH;
 	static const int defW;
@@ -163,19 +169,26 @@ private:
 	int buttonCount;
 
 public:
-	void init(const string &button1Str, const string &button2Str);
-	void init(const string &button1Str);
-
+	GraphicMessageBox();
+	void init(const string &text, const string &button1Str, const string &button2Str);
+	void init(const string &text, const string &button1Str);
+	
 	int getButtonCount() const				{return buttonCount;}
 	const GraphicButton *getButton1() const	{return &button1;}
 	const GraphicButton *getButton2() const	{return &button2;}
-
-    virtual bool mouseMove(int x, int y);
-    virtual bool mouseClick(int x, int y);
-    bool mouseClick(int x, int y, int &clickedButton);
+	
+	virtual bool mouseMove(int x, int y);
+	virtual bool mouseClick(int x, int y);
+	bool mouseClick(int x, int y, int &clickedButton);
+	
+	void setText(const string &text) {
+		GraphicComponent::setText(text);
+		layout();
+	}
 
 private:
 	void init();
+	void layout();
 };
 
 // ===========================================================
@@ -183,20 +196,24 @@ private:
 // ===========================================================
 
 class GraphicTextEntry: public GraphicComponent {
-	private:
-		bool activated1, activated2;
+public:
+	static const int defH;
+	static const int defW;
 
-	public:
-		static const int defH;
-		static const int defW;
+private:
+	bool activated1, activated2;
 
-		void init(int x, int y, int w=defW, int h=defH);
+public:
+	GraphicTextEntry() : GraphicComponent(), activated1(false), activated2(false) {}
+	void init(int x, int y, int w=defW, int h=defH);
 
-		bool isActivated() const	{ return activated1 || activated2; }
+	bool isActivated() const	{ return activated1 || activated2; }
 
-		virtual bool mouseMove(int x, int y);
-		virtual bool mouseClick(int x, int y);
-		void keyDown(char key);
+	virtual bool mouseMove(int x, int y);
+	virtual bool mouseClick(int x, int y);
+	void keyPress(char c);
+	void keyDown(const Key &key);
+	void setFocus()				{activated1 = true;}
 };
 
 // ===========================================================
@@ -204,28 +221,32 @@ class GraphicTextEntry: public GraphicComponent {
 // ===========================================================
 
 class GraphicTextEntryBox: public GraphicComponent {
-	public:
-		static const int defH;
-		static const int defW;
+public:
+	static const int defH;
+	static const int defW;
 
-	private:
-		GraphicButton button1;
-		GraphicButton button2;
-		GraphicTextEntry entry;
-		GraphicLabel label;
+private:
+	GraphicButton button1;
+	GraphicButton button2;
+	GraphicTextEntry entry;
+	GraphicLabel label;
 
-	public:
-		void init(const string &button1Str, const string &button2Str, const string &title="", const string &text="", const string &entryText="");
+public:
+	GraphicTextEntryBox();
+	void init(const string &button1Str, const string &button2Str, const string &title="", const string &text="", const string &entryText="");
 
-		const GraphicButton *getButton1() const	{return &button1;}
-		const GraphicButton *getButton2() const	{return &button2;}
-		const GraphicTextEntry *getEntry() const	{return &entry;}
-		const GraphicLabel *getLabel() const	{return &label;}
+	const GraphicButton *getButton1() const	{return &button1;}
+	const GraphicButton *getButton2() const	{return &button2;}
+	const GraphicTextEntry *getEntry() const{return &entry;}
+	const GraphicLabel *getLabel() const	{return &label;}
 
-		virtual bool mouseMove(int x, int y);
-		virtual bool mouseClick(int x, int y);
-		bool mouseClick(int x, int y, int &clickedButton);
-		void keyDown(char key);
+	virtual bool mouseMove(int x, int y);
+	virtual bool mouseClick(int x, int y);
+	bool mouseClick(int x, int y, int &clickedButton);
+	void keyPress(char c)					{entry.keyPress(c);}
+	void keyDown(const Key &key);
+	void setFocus()							{entry.setFocus();}
+
 };
 
 }}//end namespace

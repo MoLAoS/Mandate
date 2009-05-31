@@ -8,9 +8,9 @@ using namespace Shared::Util;
 
 using namespace std;
 
-namespace Glest{ namespace MapEditor{
+namespace Glest { namespace MapEditor {
 
-const string MainWindow::versionString= "v1.3.0";
+const string MainWindow::versionString= "v1.5.0";
 const string MainWindow::winHeader= "Glest Map Editor " + versionString + " - Built: " + __DATE__;
 
 // ===============================================
@@ -268,10 +268,9 @@ void MainWindow::onMenuEditResetPlayers(wxCommandEvent &event){
 	simpleDialog.addValue("Players", intToStr(program->getMap()->getMaxPlayers()));
 	simpleDialog.show();
 
-	try{
+	try {
 		program->resetPlayers(strToInt(simpleDialog.getValue("Players")));
-	}
-	catch(const exception &e){
+	} catch(const exception &e) {
 		wxMessageDialog(NULL, ToUnicode(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 	}
 }

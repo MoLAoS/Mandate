@@ -57,6 +57,52 @@ rule CompileObjects
     return $(targets) ;
 }
 
+# This is hacky CRAP and needs fixing by somebody who understands this build system
+rule CompilePch
+{
+    local s ;
+    local sources = [ SearchSource $(<) ] ;
+    local targets ;
+
+    for s in $(sources)
+    {
+        # compile the sourcefile to targetfile
+        targets += [ CompilePchSingle $(s) : $(2) ] ;
+    }
+
+    return $(targets) ;
+}
+
+rule CompilePchSingle {
+    # handle #includes for source: Jam scans for headers with
+    # the regexp pattern $(HDRSCAN) and then invokes $(HDRRULE)
+    # with the scanned file as the target and the found headers
+    # as the sources.  HDRSEARCH is the value of SEARCH used for
+    # the found header files.
+
+    # $(SEARCH_SOURCE:E) is where cc first looks for #include
+    # "foo.h" files.  If the source file is in a distant directory,
+    # look there.  Else, look in "" (the current directory).
+    if $(HDRRULE_$(<:S))
+    {
+        HDRSEARCH on $(<) = $(SEARCH_SOURCE:E) $(HDRSEARCH) $(STDHDRSEARCH) ;
+        SEARCH_SOURCE on $(<) = $(SEARCH_SOURCE) ;
+        HDRRULE on $(<) = $(HDRRULE_$(<:S)) ;
+        HDRSCAN on $(<) = $(HDRPATTERN_$(<:S)) ;
+    }
+
+    local targets ;
+    # Invoke filetype specific rule
+    targets = [ C++Rule $(<) : pch ] ;
+
+    if $(targets) {
+        # construct clean target
+        Clean clean : $(targets) ;
+    }
+
+    return $(targets) ;
+}
+
 #----------------------------------------------------------------------------
 # private part
 
@@ -72,8 +118,8 @@ rule CompileObject
     # as the sources.  HDRSEARCH is the value of SEARCH used for
     # the found header files.
 
-    # $(SEARCH_SOURCE:E) is where cc first looks for #include 
-    # "foo.h" files.  If the source file is in a distant directory, 
+    # $(SEARCH_SOURCE:E) is where cc first looks for #include
+    # "foo.h" files.  If the source file is in a distant directory,
     # look there.  Else, look in "" (the current directory).
     if $(HDRRULE_$(<:S))
     {
@@ -108,7 +154,7 @@ rule HeaderRule
     # the fate of many targets has been determined, and must be
     # used with caution: don't add dependencies to unrelated
     # targets, and don't set variables on $(<).
-                                                                                
+
     # Tell Jam that anything depending on $(<) also depends on $(>),
     # set SEARCH so Jam can find the headers, but then say we don't
     # care if we can't actually find the headers (they may have been
@@ -158,7 +204,7 @@ RegisterHeaderRule HeaderRule : $(HDRPATTERN) : .h .hpp .inc ;
 rule SearchSource
 {
     local sources ;
-    
+
     for f in $(<) {
         if $(f:G) {
             sources += $(f) ;
@@ -183,7 +229,7 @@ rule LocateTarget
     } else {
         targetdir = $(LOCATE_TARGET) ;
     }
-    
+
     local targets = $(<:G=T!$(SOURCE_GRIST:E)!$(SUBVARIANT)) ;
     MakeLocate $(targets) : $(targetdir) ;
 

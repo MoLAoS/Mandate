@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "program.h"
 
 #include "sound.h"
@@ -27,51 +28,148 @@
 #include "network_manager.h"
 #include "menu_state_new_game.h"
 #include "menu_state_join_game.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 
+
+namespace Glest { namespace Game {
+
+// =====================================================
+// 	class Program::CrashProgramState
+// =====================================================
+
+Program::CrashProgramState::CrashProgramState(Program &program, const exception *e) :
+		ProgramState(program) {
+	msgBox.init("", "Exit");
+	if(e) {
+		fprintf(stderr, "%s\n", e->what());
+		msgBox.setText(string("Exception: ") + e->what());
+	} else {
+		msgBox.setText("Glest Advanced Engine has crashed.  Please help us improve GAE by emailing "
+				" the file gae-crash.txt to " + gaeMailString + ".");
+	}
+	mouse2dAnim = mouseY = mouseX = 0;
+	this->e = e;
+}
+
+void Program::CrashProgramState::render() {
+	Renderer &renderer= Renderer::getInstance();
+	renderer.clearBuffers();
+	renderer.reset2d();
+	renderer.renderMessageBox(&msgBox);
+	renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
+	renderer.swapBuffers();
+}
+
+void Program::CrashProgramState::mouseDownLeft(int x, int y) {
+	if(msgBox.mouseClick(x,y)) {
+		program.exit();
+	}
+}
+
+void Program::CrashProgramState::mouseMove(int x, int y, const MouseState &mouseState) {
+	mouseX = x;
+	mouseY = y;
+	msgBox.mouseMove(x, y);
+}
+
+void Program::CrashProgramState::update() {
+	mouse2dAnim = (mouse2dAnim +1) % Renderer::maxMouse2dAnim;
+}
+
 // =====================================================
 // 	class Program
 // =====================================================
 
-namespace Glest{ namespace Game{
-
-const int Program::maxTimes= 10;
+const int Program::maxTimes = 5;
+Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(){
-	programState= NULL;
+Program::Program(Config &config, int argc, char** argv) :
+		renderTimer(config.getRenderFpsMax(), 1),
+		tickTimer(1.f, maxTimes, -1),
+		updateTimer(config.getGsWorldUpdateFps(), maxTimes, 2),
+		updateCameraTimer(GameConstants::cameraFps, maxTimes, 10),
+		programState(NULL),
+		preCrashState(NULL),
+		keymap(getInput(), "keymap.ini") {
+
+    //set video mode
+	setDisplaySettings();
+
+	//window
+	setText("Glest Advanced Engine");
+	setStyle(config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
+	setPos(0, 0);
+	setSize(config.getDisplayWidth(), config.getDisplayHeight());
+	create();
+
+    //log start
+	Logger &logger= Logger::getInstance();
+	//logger.setFile("glest.log");
+	logger.clear();
+	Logger::getServerLog().clear();
+	Logger::getClientLog().clear();
+
+	//lang
+	Lang &lang= Lang::getInstance();
+	lang.load("data/lang/" + config.getUiLang());
+
+	//render
+	Renderer &renderer= Renderer::getInstance();
+
+	initGl(config.getRenderColorBits(), config.getRenderDepthBits(), config.getRenderStencilBits());
+	makeCurrentGl();
+
+	//coreData, needs renderer, but must load before renderer init
+	CoreData &coreData= CoreData::getInstance();
+    coreData.load();
+
+	//init renderer (load global textures)
+	renderer.init();
+
+	//sound
+	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+	soundRenderer.init(this);
+	
+	keymap.save("keymap.ini");
+
+	// startup and immediately host a game
+	if(argc == 2 && string(argv[1]) == "-server") {
+		MainMenu* mainMenu = new MainMenu(*this);
+		setState(mainMenu);
+		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
+
+	// startup and immediately connect to server
+	} else if(argc == 3 && string(argv[1]) == "-client") {
+		MainMenu* mainMenu = new MainMenu(*this);
+		setState(mainMenu);
+		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(argv[2])));
+
+	// normal startup
+	} else {
+		setState(new Intro(*this));
+	}
+
+	singleton = this;
 }
 
-void Program::initNormal(WindowGl *window){
-	init(window);
-	setState(new Intro(this));
-}
+Program::~Program() {
+	singleton = NULL;
 
-void Program::initServer(WindowGl *window){
-	MainMenu* mainMenu= NULL;
+	if(programState) {
+		delete programState;
+	}
 
-	init(window);
-	mainMenu= new MainMenu(this);
-	setState(mainMenu);
-	mainMenu->setState(new MenuStateNewGame(this, mainMenu, true));
-}
-
-void Program::initClient(WindowGl *window, const Ip &serverIp){
-	MainMenu* mainMenu= NULL;
-
-	init(window);
-	mainMenu= new MainMenu(this);
-	setState(mainMenu);
-	mainMenu->setState(new MenuStateJoinGame(this, mainMenu, true, serverIp));
-}
-
-Program::~Program(){
-	delete programState;
+	if(preCrashState) {
+		delete preCrashState;
+	}
 
 	Renderer::getInstance().end();
 
@@ -79,31 +177,44 @@ Program::~Program(){
 	restoreDisplaySettings();
 }
 
-void Program::loop(){
-
-	//render
-	programState->render();
-
-	//update camera
-	while(updateCameraTimer.isTime()){
-		programState->updateCamera();
-	}
-
-	//update world
-	while(updateTimer.isTime()){
-		GraphicComponent::update();
-		programState->update();
-		SoundRenderer::getInstance().update();
-		NetworkManager::getInstance().update();
-	}
-
-	//fps timer
-	while(fpsTimer.isTime()){
-		programState->tick();
+void Program::loop() {
+	while(handleEvent()) {
+		size_t sleepTime = renderTimer.timeToWait();
+	
+		sleepTime = sleepTime < updateCameraTimer.timeToWait() ? sleepTime : updateCameraTimer.timeToWait();
+		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
+		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
+	
+		if(sleepTime) {
+			Shared::Platform::sleep(sleepTime);
+		}
+	
+		//render
+		while(renderTimer.isTime()){
+			programState->render();
+		}
+	
+		//update camera
+		while(updateCameraTimer.isTime()){
+			programState->updateCamera();
+		}
+	
+		//update world
+		while(updateTimer.isTime()){
+			GraphicComponent::update();
+			programState->update();
+			SoundRenderer::getInstance().update();
+			NetworkManager::getInstance().update();
+		}
+	
+		//tick timer
+		while(tickTimer.isTime()){
+			programState->tick();
+		}
 	}
 }
 
-void Program::resize(SizeState sizeState){
+void Program::eventResize(SizeState sizeState) {
 
 	switch(sizeState){
 	case ssMinimized:
@@ -121,80 +232,44 @@ void Program::resize(SizeState sizeState){
 
 void Program::setState(ProgramState *programState){
 
-	delete this->programState;
+	if(programState) {
+		delete this->programState;
+	}
 
 	this->programState= programState;
 	programState->load();
 	programState->init();
 
+	renderTimer.reset();
 	updateTimer.reset();
 	updateCameraTimer.reset();
-	fpsTimer.reset();
+	tickTimer.reset();
 }
 
-void Program::exit(){
-	window->destroy();
+void Program::exit() {
+	destroy();
+}
+
+void Program::resetTimers() {
+	renderTimer.reset();
+	tickTimer.reset();
+	updateTimer.reset();
+	updateCameraTimer.reset();
 }
 
 // ==================== PRIVATE ====================
 
-void Program::init(WindowGl *window){
-
-	this->window= window;
-	Config &config= Config::getInstance();
-
-    //set video mode
-	setDisplaySettings();
-
-	//window
-	window->setText("Glest");
-	window->setStyle(config.getWindowed()? wsWindowedFixed: wsFullscreen);
-	window->setPos(0, 0);
-	window->setSize(config.getScreenWidth(), config.getScreenHeight());
-	window->create();
-
-	//timers
-	fpsTimer.init(1, maxTimes);
-	updateTimer.init(GameConstants::updateFps, maxTimes);
-	updateCameraTimer.init(GameConstants::cameraFps, maxTimes);
-
-    //log start
-	Logger &logger= Logger::getInstance();
-	logger.setFile("glest.log");
-	logger.clear();
-
-	//lang
-	Lang &lang= Lang::getInstance();
-	lang.load("data/lang/"+ config.getLang());
-
-	//render
-	Renderer &renderer= Renderer::getInstance();
-
-	window->initGl(config.getColorBits(), config.getDepthBits(), config.getStencilBits());
-	window->makeCurrentGl();
-
-	//coreData, needs renderer, but must load before renderer init
-	CoreData &coreData= CoreData::getInstance();
-    coreData.load();
-
-	//init renderer (load global textures)
-	renderer.init();
-
-	//sound
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-	soundRenderer.init(window);
-}
-
 void Program::setDisplaySettings(){
 
 	Config &config= Config::getInstance();
+	// bool multisamplingSupported = isGlExtensionSupported("WGL_ARB_multisample");
 
-	if(!config.getWindowed()){
+	if(!config.getDisplayWindowed()){
 
-		int freq= config.getRefreshFrequency();
-		int colorBits= config.getColorBits();
-		int screenWidth= config.getScreenWidth();
-		int screenHeight= config.getScreenHeight();
+		int freq= config.getDisplayRefreshFrequency();
+		int colorBits= config.getRenderColorBits();
+		int screenWidth= config.getDisplayWidth();
+		int screenHeight= config.getDisplayHeight();
 
 		if(!(changeVideoMode(screenWidth, screenHeight, colorBits, freq) ||
 			changeVideoMode(screenWidth, screenHeight, colorBits, 0)))
@@ -209,8 +284,22 @@ void Program::setDisplaySettings(){
 void Program::restoreDisplaySettings(){
 	Config &config= Config::getInstance();
 
-	if(!config.getWindowed()){
+	if(!config.getDisplayWindowed()){
 		restoreVideoMode();
+	}
+}
+
+void Program::crash(const exception *e) {
+	// if we've already crashed then we just try to exit
+	if(!preCrashState) {
+		preCrashState = programState;
+		programState = new CrashProgramState(*this, e);
+
+		while(Window::handleEvent()) {
+			loop();
+		}
+	} else {
+		exit();
 	}
 }
 

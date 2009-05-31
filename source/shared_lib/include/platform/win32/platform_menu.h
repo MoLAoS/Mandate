@@ -8,15 +8,15 @@
 using std::vector;
 using std::string;
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 class Menu;
 
 // =====================================================
-//	class MenuBase
+// class MenuBase
 // =====================================================
 
-class MenuBase{
+class MenuBase {
 private:
 	static int nextId;
 
@@ -26,11 +26,11 @@ protected:
 	HMENU handle;
 
 public:
-	void init(const string &text="");
-	virtual ~MenuBase(){};
+	void init(const string &text = "");
+	virtual ~MenuBase() {};
 
-	virtual void create(Menu *parent)= 0;
-	virtual void destroy(){};
+	virtual void create(Menu *parent) = 0;
+	virtual void destroy() {};
 
 	int getId() const				{return id;}
 	const string &getText() const	{return text;}
@@ -38,18 +38,18 @@ public:
 };
 
 // =====================================================
-//	class Menu
+// class Menu
 // =====================================================
 
-class Menu: public MenuBase{
+class Menu: public MenuBase {
 private:
-	typedef vector<MenuBase*> MenuChildren; 
+	typedef vector<MenuBase*> MenuChildren;
 
 private:
 	MenuChildren children;
 
 public:
-	virtual void create(Menu *parent= NULL);
+	virtual void create(Menu *parent = NULL);
 	virtual void destroy();
 
 	int getChildCount() const		{return children.size();}
@@ -59,10 +59,10 @@ public:
 };
 
 // =====================================================
-//	class MenuItem
+// class MenuItem
 // =====================================================
 
-class MenuItem: public MenuBase{
+class MenuItem: public MenuBase {
 private:
 	bool isChecked;
 	Menu *parent;
@@ -77,10 +77,10 @@ public:
 };
 
 // =====================================================
-//	class MenuSeparator
+// class MenuSeparator
 // =====================================================
 
-class MenuSeparator: public MenuBase{
+class MenuSeparator: public MenuBase {
 public:
 	virtual void create(Menu *parent);
 };

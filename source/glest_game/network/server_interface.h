@@ -13,6 +13,7 @@
 #define _GLEST_GAME_SERVERINTERFACE_H_
 
 #include <vector>
+#include <map>
 
 #include "game_constants.h"
 #include "network_interface.h"
@@ -20,6 +21,7 @@
 #include "socket.h"
 
 using std::vector;
+using std::map;
 using Shared::Platform::ServerSocket;
 
 namespace Glest{ namespace Game{
@@ -30,8 +32,18 @@ namespace Glest{ namespace Game{
 
 class ServerInterface: public GameNetworkInterface{
 private:
+	enum UnitUpdateType {
+		uutNew,
+		uutMorph,
+		uutFullUpdate,
+		uutPartialUpdate
+	};
+	typedef map<Unit *, UnitUpdateType> UnitUpdateMap;
+
 	ConnectionSlot* slots[GameConstants::maxPlayers];
 	ServerSocket serverSocket;
+	UnitUpdateMap updateMap;
+	bool updateFactionsFlag;
 
 public:
 	ServerInterface();
@@ -44,14 +56,14 @@ public:
 	virtual void update();
 	virtual void updateLobby(){};
 	virtual void updateKeyframe(int frameCount);
-	virtual void waitUntilReady(Checksum* checksum);
+	virtual void waitUntilReady(Checksum &checksum);
 
 	// message sending
 	virtual void sendTextMessage(const string &text, int teamIndex);
 	virtual void quitGame();
 
 	//misc
-	virtual string getNetworkStatus() const;
+	virtual string getStatus() const;
 
 	ServerSocket* getServerSocket()		{return &serverSocket;}
 	void addSlot(int playerIndex);
@@ -61,8 +73,20 @@ public:
 
 	void launchGame(const GameSettings* gameSettings, const string savedGameFile = "");
 	void sendFile(const string path, const string remoteName, bool compress);
+	void updateFactions()				{updateFactionsFlag = true;}
+	void newUnit(Unit *unit)			{addUnitUpdate(unit, uutNew);}
+	void unitMorph(Unit *unit)			{addUnitUpdate(unit, uutMorph);}
+	void unitUpdate(Unit *unit)			{addUnitUpdate(unit, uutFullUpdate);}
+	void minorUnitUpdate(Unit *unit)	{addUnitUpdate(unit, uutPartialUpdate);}
+	void sendUpdates();
+	void process(NetworkMessageText &msg, int requestor);
+	void process(NetworkMessageUpdateRequest &msg);
+
+protected:
+	virtual void ping() {};
 
 private:
+	void addUnitUpdate(Unit *unit, UnitUpdateType type);
 	void broadcastMessage(const NetworkMessage* networkMessage, int excludeSlot= -1);
 	void updateListen();
 };

@@ -9,15 +9,22 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "game_camera.h"
+
+#include <cstdlib>
 
 #include "config.h"
 #include "game_constants.h"
+#include "xml_parser.h"
+
 #include "leak_dumper.h"
 
-using namespace Shared::Graphics;
 
-namespace Glest{ namespace Game{
+using namespace Shared::Graphics;
+using Shared::Xml::XmlNode;
+
+namespace Glest { namespace Game {
 
 // =====================================================
 // 	class GameCamera
@@ -27,8 +34,6 @@ namespace Glest{ namespace Game{
 
 const float GameCamera::startingVAng= -60.f;
 const float GameCamera::startingHAng= 0.f;
-const float GameCamera::maxVAng= -20.f;
-const float GameCamera::minVAng= -77.5f;
 const float GameCamera::vTransitionMult= 0.125f;
 const float GameCamera::hTransitionMult= 0.125f;
 const float GameCamera::defaultHeight= 20.f;
@@ -38,11 +43,12 @@ const float GameCamera::centerOffsetZ= 8.0f;
 
 GameCamera::GameCamera() : pos(0.f, defaultHeight, 0.f),
 		destPos(0.f, defaultHeight, 0.f), destAng(startingVAng, startingHAng) {
+	Config &config = Config::getInstance();
     state= sGame;
 
 	//config
 	speed= 15.f / GameConstants::cameraFps;
-	clampBounds= !Config::getInstance().getPhotoMode();
+	clampBounds= !Config::getInstance().getUiPhotoMode();
 
 	vAng= startingVAng;
     hAng= startingHAng;
@@ -50,10 +56,15 @@ GameCamera::GameCamera() : pos(0.f, defaultHeight, 0.f),
     rotate=0;
 
 	move= Vec3f(0.f);
-	maxRenderDistance = Config::getInstance().getMaxRenderDistance();
-	maxHeight = Config::getInstance().getMaxCameraDistance();
-	minHeight = Config::getInstance().getMinCameraDistance();
-	fov = 45.f;
+
+	maxRenderDistance = config.getRenderDistanceMax();
+	maxHeight = config.getCameraMaxDistance();
+	minHeight = config.getCameraMinDistance();
+	maxCameraDist = config.getCameraMaxDistance();
+	minCameraDist = config.getCameraMinDistance();
+	minVAng = -config.getCameraMaxYaw();
+	maxVAng = -config.getCameraMinYaw();
+	fov = config.getCameraFov();
 }
 
 void GameCamera::init(int limitX, int limitY){
@@ -167,31 +178,31 @@ Quad2i GameCamera::computeVisibleQuad() const{
 	return Quad2i(pi4, pi3, pi2, pi1);
 	*/
 
-	float nearDist= 20.f;
-	float dist= pos.y > 20.f ? pos.y * 1.2f : 20.f;
-	float farDist= 90.f * (pos.y > 20.f ? pos.y / 15.f : 1.f);
-	float fov= 45.f;
-
-	Vec2f v(sin(degToRad(180-hAng)), cos(degToRad(180-hAng)));
-	Vec2f v1(sin(degToRad(180-hAng-fov)), cos(degToRad(180-hAng-fov)));
-	Vec2f v2(sin(degToRad(180-hAng+fov)), cos(degToRad(180-hAng+fov)));
+	float nearDist = 20.f;
+	float dist = pos.y > 20.f ? pos.y * 1.2f : 20.f;
+	float farDist = 90.f * (pos.y > 20.f ? pos.y / 15.f : 1.f);
+	float fov = Config::getInstance().getCameraFov();
+	
+	Vec2f v(sinf(degToRad(180 - hAng)), cosf(degToRad(180 - hAng)));
+	Vec2f v1(sinf(degToRad(180 - hAng - fov)), cosf(degToRad(180 - hAng - fov)));
+	Vec2f v2(sinf(degToRad(180 - hAng + fov)), cosf(degToRad(180 - hAng + fov)));
 	v.normalize();
 	v1.normalize();
 	v2.normalize();
-
-	Vec2f p= Vec2f(pos.x, pos.z)-v*dist;
-	Vec2i p1(static_cast<int>(p.x+v1.x*nearDist), static_cast<int>(p.y+v1.y*nearDist));
-	Vec2i p2(static_cast<int>(p.x+v1.x*farDist), static_cast<int>(p.y+v1.y*farDist));
-	Vec2i p3(static_cast<int>(p.x+v2.x*nearDist), static_cast<int>(p.y+v2.y*nearDist));
-	Vec2i p4(static_cast<int>(p.x+v2.x*farDist), static_cast<int>(p.y+v2.y*farDist));
-
-	if(hAng>=135 && hAng<=225){
+	
+	Vec2f p = Vec2f(pos.x, pos.z) - v * dist;
+	Vec2i p1(static_cast<int>(p.x + v1.x * nearDist), static_cast<int>(p.y + v1.y * nearDist));
+	Vec2i p2(static_cast<int>(p.x + v1.x * farDist), static_cast<int>(p.y + v1.y * farDist));
+	Vec2i p3(static_cast<int>(p.x + v2.x * nearDist), static_cast<int>(p.y + v2.y * nearDist));
+	Vec2i p4(static_cast<int>(p.x + v2.x * farDist), static_cast<int>(p.y + v2.y * farDist));
+	
+	if (hAng >= 135 && hAng <= 225) {
 		return Quad2i(p1, p2, p3, p4);
 	}
-	if(hAng>=45 && hAng<=135){
+	if (hAng >= 45 && hAng <= 135) {
 		return Quad2i(p3, p1, p4, p2);
 	}
-	if(hAng>=225 && hAng<=315) {
+	if (hAng >= 225 && hAng <= 315) {
 		return Quad2i(p2, p4, p1, p3);
 	}
 	return Quad2i(p4, p3, p2, p1);
@@ -229,8 +240,8 @@ void GameCamera::transitionVH(float v, float h) {
 }
 
 void GameCamera::zoom(float dist) {
-	float flatDist = dist * cos(degToRad(vAng));
-	Vec3f offset(flatDist * sin(degToRad(hAng)), dist * sin(degToRad(vAng)), flatDist  * -cos(degToRad(hAng)));
+	float flatDist = dist * cosf(degToRad(vAng));
+	Vec3f offset(flatDist * sinf(degToRad(hAng)), dist * sinf(degToRad(vAng)), flatDist  * -cosf(degToRad(hAng)));
 	float mult = 1.f;
 	if(destPos.y + offset.y < minHeight) {
 		mult = abs((destPos.y - minHeight) / offset.y);
@@ -238,6 +249,16 @@ void GameCamera::zoom(float dist) {
 		mult = abs((maxHeight - destPos.y) / offset.y);
 	}
 	destPos += offset * mult;
+}
+
+void GameCamera::load(const XmlNode *node) {
+	destPos = node->getChildVec3fValue("pos");
+	destAng = node->getChildVec2fValue("angle");
+}
+
+void GameCamera::save(XmlNode *node) const {
+	node->addChild("pos", pos);
+	node->addChild("angle", Vec2f(vAng, hAng));
 }
 
 // ==================== PRIVATE ====================
@@ -287,7 +308,7 @@ void GameCamera::clampAng() {
 
 //move camera forwad but never change heightFactor
 void GameCamera::moveForwardH(float d, float response) {
-	Vec3f offset(sin(degToRad(hAng)) * d, 0.f, -cos(degToRad(hAng)) * d);
+	Vec3f offset(sinf(degToRad(hAng)) * d, 0.f, -cosf(degToRad(hAng)) * d);
 	destPos += offset;
 	pos.x += offset.x * response;
 	pos.z += offset.z * response;
@@ -295,7 +316,7 @@ void GameCamera::moveForwardH(float d, float response) {
 
 //move camera to a side but never change heightFactor
 void GameCamera::moveSideH(float d, float response){
-	Vec3f offset(sin(degToRad(hAng+90)) * d, 0.f, -cos(degToRad(hAng+90)) * d);
+	Vec3f offset(sinf(degToRad(hAng+90)) * d, 0.f, -cosf(degToRad(hAng+90)) * d);
 	destPos += offset;
 	pos.x += (destPos.x - pos.x) * response;
 	pos.z += (destPos.z - pos.z) * response;

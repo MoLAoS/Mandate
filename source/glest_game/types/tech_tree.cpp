@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "tech_tree.h"
 
 #include <cassert>
@@ -19,7 +20,9 @@
 #include "logger.h"
 #include "xml_parser.h"
 #include "platform_util.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
@@ -30,7 +33,7 @@ namespace Glest{ namespace Game{
 // 	class TechTree
 // =====================================================
 
-void TechTree::load(const string &dir, Checksum* checksum){
+void TechTree::load(const string &dir, const vector<string> &factionNames, Checksum &checksum){
 
 	string str;
     vector<string> filenames;
@@ -38,27 +41,27 @@ void TechTree::load(const string &dir, Checksum* checksum){
 	Logger::getInstance().add("TechTree: "+ dir, true);
 
 	//load resources
-	str= dir+"/resources/*.";
+	str= dir + "/resources/*.";
 
-    try{
+    try {
         findAll(str, filenames);
 		resourceTypes.resize(filenames.size());
 
         for(int i=0; i<filenames.size(); ++i){
             str=dir+"/resources/"+filenames[i];
-            resourceTypes[i].load(str, checksum);
+            resourceTypes[i].load(str, i, checksum);
+			resourceTypeMap[filenames[i]] = &resourceTypes[i];
         }
-    }
-    catch(const exception &e){
+    } catch(const exception &e) {
 		throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
     }
 
 	//load tech tree xml info
-	try{
+	try {
 		XmlTree	xmlTree;
 		string path= dir+"/"+lastDir(dir)+".xml";
 
-		checksum->addFile(path);
+		checksum.addFile(path, true);
 
 		xmlTree.load(path);
 		const XmlNode *techTreeNode= xmlTree.getRootNode();
@@ -68,49 +71,70 @@ void TechTree::load(const string &dir, Checksum* checksum){
 		attackTypes.resize(attackTypesNode->getChildCount());
 		for(int i=0; i<attackTypes.size(); ++i){
 			const XmlNode *attackTypeNode= attackTypesNode->getChild("attack-type", i);
-			attackTypes[i].setName(attackTypeNode->getAttribute("name")->getRestrictedValue());
+			string name = attackTypeNode->getAttribute("name")->getRestrictedValue();
+			attackTypes[i].setName(name);
 			attackTypes[i].setId(i);
+			attackTypeMap[name] = &attackTypes[i];
 		}
 
 		//armor types
 		const XmlNode *armorTypesNode= techTreeNode->getChild("armor-types");
 		armorTypes.resize(armorTypesNode->getChildCount());
 		for(int i=0; i<armorTypes.size(); ++i){
-			const XmlNode *armorTypeNode= armorTypesNode->getChild("armor-type", i);
-			armorTypes[i].setName(armorTypeNode->getAttribute("name")->getRestrictedValue());
+			string name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name");
+			armorTypes[i].setName(name);
 			armorTypes[i].setId(i);
+			armorTypeMap[name] = &armorTypes[i];
 		}
 
 		//damage multipliers
 		damageMultiplierTable.init(attackTypes.size(), armorTypes.size());
 		const XmlNode *damageMultipliersNode= techTreeNode->getChild("damage-multipliers");
 		for(int i=0; i<damageMultipliersNode->getChildCount(); ++i){
-			const XmlNode *damageMultiplierNode= damageMultipliersNode->getChild("damage-multiplier", i);
-			const AttackType *attackType= getAttackType(damageMultiplierNode->getAttribute("attack")->getRestrictedValue());
-			const ArmorType *armorType= getArmorType(damageMultiplierNode->getAttribute("armor")->getRestrictedValue());
-			float multiplier= damageMultiplierNode->getAttribute("value")->getFloatValue();
+			const XmlNode *dmNode= damageMultipliersNode->getChild("damage-multiplier", i);
+			const AttackType *attackType= getAttackType(dmNode->getRestrictedAttribute("attack"));
+			const ArmorType *armorType= getArmorType(dmNode->getRestrictedAttribute("armor"));
+			float multiplier= dmNode->getFloatAttribute("value");
 			damageMultiplierTable.setDamageMultiplier(attackType, armorType, multiplier);
 		}
-    }
-    catch(const exception &e){
+    } catch(const exception &e) {
 		throw runtime_error("Error loading Tech Tree: "+ dir + "\n" + e.what());
     }
 
-	//load factions
-	str= dir+"/factions/*.";
-    try{
-        findAll(str, filenames);
-		factionTypes.resize(filenames.size());
+	// this must be set before any unit types are loaded
+	UnitStatsBase::setDamageMultiplierCount(getArmorTypeCount());
 
+	//load factions
+	/*filenames.clear();
+	for(int i = 0; i < factionCount; i++){
+		// only add faction once
+		// ie. only last of duplicate in list is added
+		if(std::find(factionNames.begin(), [i], factionNames, i+1, factionCount)){
+			continue;
+		}
+		filenames.push_back(factionNames[i]);
+	}*/
+    try {
+		factionTypes.resize(factionNames.size());
+/*
         for(int i=0; i<filenames.size(); ++i){
             str=dir+"/factions/"+filenames[i];
 			factionTypes[i].load(str, this, checksum);
-        }
-    }
-	catch(const exception &e){
+			factionTypeMap[filenames[i]] = &factionTypes[i];
+        }*/
+		int i = 0;
+		for(vector<string>::const_iterator fn = factionNames.begin();
+				fn != factionNames.end(); ++i, ++fn) {
+			factionTypes[i].load(dir + "/factions/" + *fn, this, checksum);
+			factionTypeMap[*fn] = &factionTypes[i];
+		}
+    } catch(const exception &e) {
 		throw runtime_error("Error loading Faction Types: "+ dir + "\n" + e.what());
     }
 
+	if(resourceTypes.size() > 256) {
+		throw runtime_error("Glest Advanced Engine currently only supports 256 resource types.");
+	}
 }
 
 TechTree::~TechTree(){
@@ -119,15 +143,6 @@ TechTree::~TechTree(){
 
 
 // ==================== get ====================
-
-const FactionType *TechTree::getType(const string &name) const{
-     for(int i=0; i<factionTypes.size(); ++i){
-          if(factionTypes[i].getName()==name){
-               return &factionTypes[i];
-          }
-     }
-	 throw runtime_error("Faction not found: "+name);
-}
 
 const ResourceType *TechTree::getTechResourceType(int i) const{
 
@@ -150,56 +165,19 @@ const ResourceType *TechTree::getFirstTechResourceType() const{
 	 throw runtime_error("This tech tree has not tech resources, one at least is required");
 }
 
-const ResourceType *TechTree::getResourceType(const string &name) const{
-
-	for(int i=0; i<resourceTypes.size(); ++i){
-		if(resourceTypes[i].getName()==name){
-			return &resourceTypes[i];
-		}
-	}
-
-	throw runtime_error("Resource Type not found: "+name);
-}
-
-const ArmorType *TechTree::getArmorType(const string &name) const{
-	for(int i=0; i<armorTypes.size(); ++i){
-		if(armorTypes[i].getName()==name){
-			return &armorTypes[i];
-		}
-	}
-
-	throw runtime_error("Armor Type not found: "+name);
-}
-
-const AttackType *TechTree::getAttackType(const string &name) const{
-	for(int i=0; i<attackTypes.size(); ++i){
-		if(attackTypes[i].getName()==name){
-			return &attackTypes[i];
-		}
-	}
-
-	throw runtime_error("Attack Type not found: "+name);
-}
-
-float TechTree::getDamageMultiplier(const AttackType *att, const ArmorType *art) const{
-	return damageMultiplierTable.getDamageMultiplier(att, art);
-}
-
-const EffectType *TechTree::getEffectType(const string &name) const {
-	EffectTypesMap::const_iterator i;
-	i = effectTypes.find(name);
-	return i == effectTypes.end() ? NULL : i->second;
-}
-
-void TechTree::addEffectType(const EffectType *et) {
-	EffectTypesMap::const_iterator i;
+int TechTree::addEffectType(EffectType *et) {
+	EffectTypeMap::const_iterator i;
 	const string &name = et->getName();
 
-	i = effectTypes.find(name);
-	if(i != effectTypes.end()) {
-		throw runtime_error("An effect named " + name + " has already been specified.  Each effect must have a unique name.");
+	i = effectTypeMap.find(name);
+	if(i != effectTypeMap.end()) {
+		throw runtime_error("An effect named " + name
+				+ " has already been specified.  Each effect must have a unique name.");
 	} else {
-		effectTypes[name] = et;
+		effectTypes.push_back(et);
+		effectTypeMap[name] = et;
+		// return the new id
+		return effectTypes.size() - 1;
 	}
 }
 

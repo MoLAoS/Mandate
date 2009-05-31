@@ -1,7 +1,8 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa,
+//				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -9,21 +10,27 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+//#include "pch.h"
 #include "xml_parser.h"
 
 #include <fstream>
 #include <stdexcept>
 
-#include "conversion.h"
-
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/framework/LocalFileFormatTarget.hpp>
+#include <xercesc/framework/MemBufInputSource.hpp>
+#include <xercesc/framework/Wrapper4InputSource.hpp>
+
+#include "conversion.h"
 
 #include "leak_dumper.h"
 
-
 XERCES_CPP_NAMESPACE_USE
+
+#if !defined(WIN32) || !defined(WIN64) // windows is a piece of shit
+#	define DOMDocument XERCES_CPP_NAMESPACE::DOMDocument
+#endif
 
 using namespace std;
 
@@ -84,50 +91,155 @@ XmlIo::~XmlIo(){
 }
 
 XmlNode *XmlIo::load(const string &path){
+	DOMBuilder *parser = NULL;
+	DOMDocument *document = NULL;
+	XmlNode *rootNode = NULL;
 
 	try{
 		ErrorHandler errorHandler;
-		DOMBuilder *parser= (static_cast<DOMImplementationLS*>(implementation))->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+		parser= (static_cast<DOMImplementationLS*>(implementation))->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 		parser->setErrorHandler(&errorHandler);
 		parser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
 		parser->setFeature(XMLUni::fgDOMValidation, true);
-		DOMDocument *document= parser->parseURI(path.c_str());
+		document= parser->parseURI(path.c_str());
 
-		if(document==NULL){
+		if(!document){
 			throw runtime_error("Can not parse URL: " + path);
 		}
 
-		XmlNode *rootNode= new XmlNode(document->getDocumentElement());
+		rootNode = new XmlNode(document->getDocumentElement());
 		parser->release();
 		return rootNode;
 	}
 	catch(const DOMException &e){
+		if(rootNode) {
+			delete rootNode;
+		}
+		if(parser) {
+			parser->release();
+		}
 		throw runtime_error("Exception while loading: " + path + ": " + XMLString::transcode(e.msg));
 	}
 }
 
+XmlNode *XmlIo::parseString(const char *doc, size_t size) {
+	DOMBuilder *parser = NULL;
+	DOMDocument *document = NULL;
+	XmlNode *rootNode = NULL;
+
+	if(size == (size_t)-1) {
+		size = strlen(doc);
+	}
+
+	try{
+		ErrorHandler errorHandler;
+		MemBufInputSource memInput((const XMLByte*)doc, size, (const XMLCh*)L"bite me");
+		Wrapper4InputSource wrapperSource(&memInput, false);
+
+		parser= (static_cast<DOMImplementationLS*>(implementation))->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+		parser->setErrorHandler(&errorHandler);
+		parser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
+		parser->setFeature(XMLUni::fgDOMValidation, true);
+
+		document = parser->parse(wrapperSource);
+
+		if(document == NULL){
+			throw runtime_error("Failed to parse in-memory document");
+		}
+
+		rootNode= new XmlNode(document->getDocumentElement());
+		parser->release();
+		return rootNode;
+	}
+	catch(const DOMException &e){
+		if(rootNode) {
+			delete rootNode;
+		}
+		if(parser) {
+			parser->release();
+		}
+		throw runtime_error(string("Exception while parsing in-memory document: ") + XMLString::transcode(e.msg));
+	}
+}
+
 void XmlIo::save(const string &path, const XmlNode *node){
+	DOMDocument *document = NULL;
+	DOMElement *documentElement = NULL;
+	DOMWriter* writer = NULL;
+
 	try{
 		XMLCh str[strSize];
 		XMLString::transcode(node->getName().c_str(), str, strSize-1);
 
-		DOMDocument *document= implementation->createDocument(0, str, 0);
-		DOMElement *documentElement= document->getDocumentElement();
-
-		for(int i=0; i<node->getChildCount(); ++i){
-			documentElement->appendChild(node->getChild(i)->buildElement(document));
-		}
+		document = implementation->createDocument(0, str, 0);
+		documentElement = document->getDocumentElement();
+		
+		node->populateElement(documentElement, document);
 
 		LocalFileFormatTarget file(path.c_str());
 		DOMWriter* writer = implementation->createDOMWriter();
 		writer->setFeature(XMLUni::fgDOMWRTFormatPrettyPrint, true);
 		writer->writeNode(&file, *document);
+		writer->release();
 		document->release();
 	}
 	catch(const DOMException &e){
+		if(writer) {
+			writer->release();
+		}
+		if(document) {
+			document->release();
+		}
 		throw runtime_error("Exception while saving: " + path + ": " + XMLString::transcode(e.msg));
 	}
 }
+
+/** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
+char *XmlIo::toString(const XmlNode *node, bool pretty) {
+	XMLCh str[strSize];
+	DOMDocument *document = NULL;
+	DOMElement *documentElement;
+	DOMWriter* writer = NULL;
+	XMLCh *xmlText = NULL;
+	char *ret = NULL;
+
+	try {
+		XMLString::transcode(node->getName().c_str(), str, strSize-1);
+
+		document = implementation->createDocument(0, str, 0);
+		documentElement = document->getDocumentElement();
+
+		node->populateElement(documentElement, document);
+
+		// retrieve as string
+		DOMWriter* writer = implementation->createDOMWriter();
+		writer->setFeature(XMLUni::fgDOMWRTFormatPrettyPrint, pretty);
+		writer->setEncoding((const XMLCh*)L"UTF-8");
+		xmlText = writer->writeToString(*document);
+		ret = XMLString::transcode(xmlText);
+		XMLString::release(&xmlText);
+		writer->release();
+		document->release();
+		return ret;
+	}
+	catch(const DOMException &e){
+		if(xmlText) {
+			XMLString::release(&xmlText);
+		}
+		if(writer) {
+			writer->release();
+		}
+		if(document) {
+			document->release();
+		}
+		throw runtime_error(string("Exception while converting to string: ") + XMLString::transcode(e.msg));
+	}
+}
+
+void XmlIo::releaseString(char **domAllocatedString) {
+	XMLString::release(domAllocatedString);
+}
+
 // =====================================================
 //	class XmlTree
 // =====================================================
@@ -190,22 +302,22 @@ XmlNode::XmlNode(DOMNode *node){
 	}
 }
 
-XmlNode::XmlNode(const string &name){
-	this->name= name;
+XmlNode::XmlNode(const string &name) {
+	this->name = name;
 }
 
 XmlNode::~XmlNode(){
-	for(int i=0; i<children.size(); ++i){
+	for (int i = 0; i < children.size(); ++i) {
 		delete children[i];
 	}
-	for(int i=0; i<attributes.size(); ++i){
+	for (int i = 0; i < attributes.size(); ++i) {
 		delete attributes[i];
 	}
 }
 
 XmlAttribute *XmlNode::getAttribute(int i) const{
-	if(i>=attributes.size()){
-		throw runtime_error(getName()+" node doesn't have "+intToStr(i)+" attributes");
+	if (i >= attributes.size()) {
+		throw runtime_error(getName() + " node doesn't have " + intToStr(i) + " attributes");
 	}
 	return attributes[i];
 }
@@ -257,48 +369,36 @@ XmlNode *XmlNode::addChild(const string &name){
 	return node;
 }
 
-XmlAttribute *XmlNode::addAttribute(const string &name, const string &value){
+XmlAttribute *XmlNode::addAttribute(const char *name, const char *value){
 	XmlAttribute *attr= new XmlAttribute(name, value);
 	attributes.push_back(attr);
 	return attr;
 }
 
-DOMElement *XmlNode::buildElement(DOMDocument *document) const{
+void XmlNode::populateElement(DOMElement *node, DOMDocument *document) const {
 	XMLCh str[strSize];
-	XMLString::transcode(name.c_str(), str, strSize-1);
+	for (int i = 0; i < attributes.size(); ++i) {
+		XMLString::transcode(attributes[i]->getName().c_str(), str, strSize - 1);
+		DOMAttr *attr = document->createAttribute(str);
 
-	DOMElement *node= document->createElement(str);
-
-	for(int i=0; i<attributes.size(); ++i){
-        XMLString::transcode(attributes[i]->getName().c_str(), str, strSize-1);
-		DOMAttr *attr= document->createAttribute(str);
-
-		XMLString::transcode(attributes[i]->getValue().c_str(), str, strSize-1);
+		XMLString::transcode(attributes[i]->getValue().c_str(), str, strSize - 1);
 		attr->setValue(str);
 
 		node->setAttributeNode(attr);
 	}
 
-	for(int i=0; i<children.size(); ++i){
+	for (int i = 0; i < children.size(); ++i) {
 		node->appendChild(children[i]->buildElement(document));
 	}
+}
 
+DOMElement *XmlNode::buildElement(DOMDocument *document) const {
+	XMLCh str[strSize];
+	XMLString::transcode(name.c_str(), str, strSize - 1);
+	DOMElement *node = document->createElement(str);
+
+	populateElement(node, document);
 	return node;
-}
-
-int XmlNode::getOptionalIntValue(const char* name, int defaultValue) const {
-	const XmlNode *node = getChild(name, 0, false);
-	return !node ? defaultValue : node->getAttribute("value")->getIntValue();
-}
-
-float XmlNode::getOptionalFloatValue(const char* name, float defaultValue) const {
-	const XmlNode *node = getChild(name, 0, false);
-	return !node ? defaultValue : node->getAttribute("value")->getFloatValue();
-}
-
-string XmlNode::getOptionalRestrictedValue(const char* name, const char* defaultValue) const {
-	const XmlNode *node = getChild(name, 0, false);
-	return !node ? string(defaultValue) : node->getAttribute("value")->getRestrictedValue();
 }
 
 string XmlNode::getTreeString() const{
@@ -332,26 +432,16 @@ XmlAttribute::XmlAttribute(DOMNode *attribute){
 	name= str;
 }
 
-XmlAttribute::XmlAttribute(const string &name, const string &value){
-	this->name= name;
-	this->value= value;
-}
-
-bool XmlAttribute::getBoolValue() const{
-	if(value=="true"){
+bool XmlAttribute::getBoolValue() const {
+	if(value == "true") {
 		return true;
-	}
-	else if(value=="false"){
+	} else if (value == "false") {
 		return false;
-	}
-	else{
-		throw runtime_error("Not a valid bool value (true or false): " +getName()+": "+ value);
+	} else {
+		throw runtime_error("Not a valid bool value (true or false): " + getName() + ": " + value);
 	}
 }
 
-int XmlAttribute::getIntValue() const{
-	return strToInt(value);
-}
 
 int XmlAttribute::getIntValue(int min, int max) const{
 	int i= strToInt(value);
@@ -359,10 +449,6 @@ int XmlAttribute::getIntValue(int min, int max) const{
 		throw runtime_error("Xml Attribute int out of range: " + getName() + ": " + value);
 	}
 	return i;
-}
-
-float XmlAttribute::getFloatValue() const{
-	return strToFloat(value);
 }
 
 float XmlAttribute::getFloatValue(float min, float max) const{

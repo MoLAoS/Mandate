@@ -3,13 +3,16 @@
 //
 //	Copyright (C) 2005 Matthias Braun <matze@braunis.de>
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "factory_repository.h"
+
+#include "leak_dumper.h"
 
 namespace Shared{ namespace Platform{
 

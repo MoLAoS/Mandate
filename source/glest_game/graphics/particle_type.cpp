@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "particle_type.h"
 
 #include "util.h"
@@ -19,6 +20,7 @@
 #include "game_constants.h"
 
 #include "leak_dumper.h"
+
 
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
@@ -32,93 +34,104 @@ namespace Glest{ namespace Game{
 ParticleSystemType::ParticleSystemType(){
 }
 
-void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &dir){
-	
-	Renderer &renderer= Renderer::getInstance();
+void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &dir) {
+
+	Renderer &renderer = Renderer::getInstance();
 
 	//texture
-	const XmlNode *textureNode= particleSystemNode->getChild("texture");
-	bool textureEnabled= textureNode->getAttribute("value")->getBoolValue();
-	if(textureEnabled){
-		texture= renderer.newTexture2D(rsGame);
-		if(textureNode->getAttribute("luminance")->getBoolValue()){
+	const XmlNode *textureNode = particleSystemNode->getChild("texture");
+	if (textureNode->getAttribute("value")->getBoolValue()) {
+		Texture2D *texture = renderer.newTexture2D(rsGame);
+		if (textureNode->getAttribute("luminance")->getBoolValue()) {
 			texture->setFormat(Texture::fAlpha);
 			texture->getPixmap()->init(1);
-		}
-		else{
+		} else {
 			texture->getPixmap()->init(4);
 		}
 		texture->load(dir + "/" + textureNode->getAttribute("path")->getRestrictedValue());
-	}
-	else{
-		texture= NULL;
-	}
-	
-	//model
-	const XmlNode *modelNode= particleSystemNode->getChild("model");
-	bool modelEnabled= modelNode->getAttribute("value")->getBoolValue();
-	if(modelEnabled){
-		string path= modelNode->getAttribute("path")->getRestrictedValue();
-		model= renderer.newModel(rsGame);
-		model->load(dir + "/" + path);
-	}
-	else{
-		model= NULL;
+		this->texture = texture;
+	} else {
+		texture = NULL;
 	}
 
-	//primitive
-	const XmlNode *primitiveNode= particleSystemNode->getChild("primitive");
-	primitive= primitiveNode->getAttribute("value")->getRestrictedValue();
+	//model
+	const XmlNode *modelNode = particleSystemNode->getChild("model");
+	if (modelNode->getAttribute("value")->getBoolValue()) {
+		string path = modelNode->getAttribute("path")->getRestrictedValue();
+		model = renderer.newModel(rsGame);
+		model->load(dir + "/" + path);
+	} else {
+		model = NULL;
+	}
+
+	//primitive type
+	string primativeTypeStr = particleSystemNode->getChildRestrictedValue("primitive");
+	if(primativeTypeStr == "quad") {
+		primitiveType = Particle::ptQuad;
+	} else 	if(primativeTypeStr == "line") {
+		primitiveType = Particle::ptLine;
+	} else {
+		throw runtime_error("Invalid primitive type: " + primativeTypeStr);
+	}
 
 	//offset
-	const XmlNode *offsetNode= particleSystemNode->getChild("offset");
-	offset.x= offsetNode->getAttribute("x")->getFloatValue();
-	offset.y= offsetNode->getAttribute("y")->getFloatValue();
-	offset.z= offsetNode->getAttribute("z")->getFloatValue();
+	offset = particleSystemNode->getChildVec3fValue("offset");
 
 	//color
-	const XmlNode *colorNode= particleSystemNode->getChild("color");
-	color.x= colorNode->getAttribute("red")->getFloatValue(0.f, 1.0f);
-	color.y= colorNode->getAttribute("green")->getFloatValue(0.f, 1.0f);
-	color.z= colorNode->getAttribute("blue")->getFloatValue(0.f, 1.0f);
-	color.w= colorNode->getAttribute("alpha")->getFloatValue(0.f, 1.0f);
+	color = particleSystemNode->getChildColor4Value("color");
 
-	//color
-	const XmlNode *colorNoEnergyNode= particleSystemNode->getChild("color-no-energy");
-	colorNoEnergy.x= colorNoEnergyNode->getAttribute("red")->getFloatValue(0.f, 1.0f);
-	colorNoEnergy.y= colorNoEnergyNode->getAttribute("green")->getFloatValue(0.f, 1.0f);
-	colorNoEnergy.z= colorNoEnergyNode->getAttribute("blue")->getFloatValue(0.f, 1.0f);
-	colorNoEnergy.w= colorNoEnergyNode->getAttribute("alpha")->getFloatValue(0.f, 1.0f);
+	//color2
+	const XmlNode *color2Node = particleSystemNode->getChild("color2", 0, false);
+	if(color2Node) {
+		color2 = color2Node->getColor4Value();
+	} else {
+		color2 = color;
+	}
+
+	//color no energy
+	colorNoEnergy = particleSystemNode->getChildColor4Value("color-no-energy");
+
+	//color2 no energy
+	const XmlNode *color2NoEnergyNode = particleSystemNode->getChild("color2-no-energy", 0, false);
+	if(color2NoEnergyNode) {
+		color2NoEnergy = color2NoEnergyNode->getColor4Value();
+	} else {
+		color2NoEnergy = colorNoEnergy;
+	}
 
 	//size
-	const XmlNode *sizeNode= particleSystemNode->getChild("size");
-	size= sizeNode->getAttribute("value")->getFloatValue();
+	size = particleSystemNode->getChildFloatValue("size");
 
 	//sizeNoEnergy
-	const XmlNode *sizeNoEnergyNode= particleSystemNode->getChild("size-no-energy");
-	sizeNoEnergy= sizeNoEnergyNode->getAttribute("value")->getFloatValue();
+	sizeNoEnergy = particleSystemNode->getChildFloatValue("size-no-energy");
 
 	//speed
-	const XmlNode *speedNode= particleSystemNode->getChild("speed");
-	speed= speedNode->getAttribute("value")->getFloatValue()/GameConstants::updateFps;
+	speed = particleSystemNode->getChildFloatValue("speed") / Config::getInstance().getGsWorldUpdateFps();
 
 	//gravity
-	const XmlNode *gravityNode= particleSystemNode->getChild("gravity");
-	gravity= gravityNode->getAttribute("value")->getFloatValue()/GameConstants::updateFps;
+	gravity= particleSystemNode->getChildFloatValue("gravity") / Config::getInstance().getGsWorldUpdateFps();
 
 	//emission rate
-	const XmlNode *emissionRateNode= particleSystemNode->getChild("emission-rate");
-	emissionRate= emissionRateNode->getAttribute("value")->getIntValue();
+	emissionRate = particleSystemNode->getChildIntValue("emission-rate");
 
-	//energy max
-	const XmlNode *energyMaxNode= particleSystemNode->getChild("energy-max");
-	energyMax= energyMaxNode->getAttribute("value")->getIntValue();
+	//energy
+	energy = particleSystemNode->getChildIntValue("energy-max");
+
+	//energy
+	energyVar = particleSystemNode->getChildIntValue("energy-var");
 
 	//speed
-	const XmlNode *energyVarNode= particleSystemNode->getChild("energy-var");
-	energyVar= energyVarNode->getAttribute("value")->getIntValue();
+	energyVar= particleSystemNode->getChildIntValue("energy-var");
+
+	//draw count
+	drawCount = particleSystemNode->getOptionalIntValue("draw-count", 1);
+
+	//inner size
+	//innerSize = particleSystemNode->getChildFloatValue("inner-size");
+
 }
 
+/*
 void ParticleSystemType::setValues(AttackParticleSystem *ats){
 	ats->setTexture(texture);
 	ats->setPrimitive(AttackParticleSystem::strToPrimitive(primitive));
@@ -133,7 +146,7 @@ void ParticleSystemType::setValues(AttackParticleSystem *ats){
 	ats->setMaxParticleEnergy(energyMax);
 	ats->setVarParticleEnergy(energyVar);
 	ats->setModel(model);
-}
+}*/
 
 // ===========================================================
 //	class ParticleSystemTypeProjectile
@@ -141,48 +154,60 @@ void ParticleSystemType::setValues(AttackParticleSystem *ats){
 
 void ParticleSystemTypeProjectile::load(const string &dir, const string &path){
 
-	try{
+	try {
 		XmlTree xmlTree;
 		xmlTree.load(path);
-		const XmlNode *particleSystemNode= xmlTree.getRootNode();
-		
+		const XmlNode *particleSystemNode = xmlTree.getRootNode();
+
 		ParticleSystemType::load(particleSystemNode, dir);
 
 		//trajectory values
-		const XmlNode *tajectoryNode= particleSystemNode->getChild("trajectory");
-		trajectory= tajectoryNode->getAttribute("type")->getRestrictedValue();
+		const XmlNode *tajectoryNode = particleSystemNode->getChild("trajectory");
+		trajectory = tajectoryNode->getAttribute("type")->getRestrictedValue();
 
 		//trajectory speed
-		const XmlNode *tajectorySpeedNode= tajectoryNode->getChild("speed");
-		trajectorySpeed= tajectorySpeedNode->getAttribute("value")->getFloatValue()/GameConstants::updateFps;
+		trajectorySpeed = tajectoryNode->getChildFloatValue("speed") / Config::getInstance().getGsWorldUpdateFps();
 
-		if(trajectory=="parabolic" || trajectory=="spiral"){
+		if(trajectory == "parabolic" || trajectory == "spiral" || trajectory == "random") {
 			//trajectory scale
-			const XmlNode *tajectoryScaleNode= tajectoryNode->getChild("scale");
-			trajectoryScale= tajectoryScaleNode->getAttribute("value")->getFloatValue();
-		}
-		else{
-			trajectoryScale= 1.0f;
+			trajectoryScale = tajectoryNode->getChildFloatValue("scale");
+		} else {
+			trajectoryScale = 1.0f;
 		}
 
-		if(trajectory=="spiral"){
+		if(trajectory == "spiral") {
 			//trajectory frequency
-			const XmlNode *tajectoryFrequencyNode= tajectoryNode->getChild("frequency");
-			trajectoryFrequency= tajectoryFrequencyNode->getAttribute("value")->getFloatValue();
+			trajectoryFrequency = tajectoryNode->getChildFloatValue("frequency");
+		} else {
+			trajectoryFrequency = 1.0f;
 		}
-		else{
-			trajectoryFrequency= 1.0f;
+
+		// projectile start
+		const XmlNode *startNode = tajectoryNode->getChild("start", 0, false);
+		if(startNode) {
+			string name = startNode->getStringAttribute("value");
+
+			if(name == "self") {
+				start = psSelf;
+			} else if(name == "target") {
+				start = psTarget;
+			} else if(name == "sky") {
+				start = psSky;
+			}
+		} else {
+			start = psSelf;
 		}
-	}
-	catch(const exception &e){
-		throw runtime_error("Error loading ParticleSystem: "+ path + "\n" +e.what());
+
+		const XmlNode *trackingNode = tajectoryNode->getChild("tracking", 0, false);
+		tracking = trackingNode && trackingNode->getBoolAttribute("value");
+
+	} catch(const exception &e) {
+		throw runtime_error("Error loading ParticleSystem: " + path + "\n" + e.what());
 	}
 }
 
-ProjectileParticleSystem *ParticleSystemTypeProjectile::create(){
-	ProjectileParticleSystem *ps=  new ProjectileParticleSystem();
-
-	ParticleSystemType::setValues(ps);
+ParticleSystem *ParticleSystemTypeProjectile::create() {
+	ProjectileParticleSystem *ps =  new ProjectileParticleSystem(*this);
 
 	ps->setTrajectory(ProjectileParticleSystem::strToTrajectory(trajectory));
 	ps->setTrajectorySpeed(trajectorySpeed);
@@ -202,13 +227,13 @@ void ParticleSystemTypeSplash::load(const string &dir, const string &path){
 		XmlTree xmlTree;
 		xmlTree.load(path);
 		const XmlNode *particleSystemNode= xmlTree.getRootNode();
-		
+
 		ParticleSystemType::load(particleSystemNode, dir);
 
 		//emission rate fade
 		const XmlNode *emissionRateFadeNode= particleSystemNode->getChild("emission-rate-fade");
 		emissionRateFade= emissionRateFadeNode->getAttribute("value")->getIntValue();
-		
+
 		//spread values
 		const XmlNode *verticalSpreadNode= particleSystemNode->getChild("vertical-spread");
 		verticalSpreadA= verticalSpreadNode->getAttribute("a")->getFloatValue(0.0f, 1.0f);
@@ -223,10 +248,8 @@ void ParticleSystemTypeSplash::load(const string &dir, const string &path){
 	}
 }
 
-SplashParticleSystem *ParticleSystemTypeSplash::create(){
-	SplashParticleSystem *ps=  new SplashParticleSystem();
-
-	ParticleSystemType::setValues(ps);
+ParticleSystem *ParticleSystemTypeSplash::create(){
+	SplashParticleSystem *ps =  new SplashParticleSystem(*this);
 
 	ps->setEmissionRateFade(emissionRateFade);
 	ps->setVerticalSpreadA(verticalSpreadA);

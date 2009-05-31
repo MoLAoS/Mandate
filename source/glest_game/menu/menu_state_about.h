@@ -34,10 +34,10 @@ private:
 	GraphicLabel labelTeammateRole[teammateCount];
 
 public:
-	MenuStateAbout(Program *program, MainMenu *mainMenu);
+	MenuStateAbout(Program &program, MainMenu *mainMenu);
 
 	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState *mouseState);
+	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
 };
 

@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -32,7 +32,7 @@ private:
 	int32	r;
     int32	c1;
     int32	c2;
-	
+
 public:
 	Checksum();
 
@@ -40,7 +40,7 @@ public:
 
 	void addByte(int8 value);
 	void addString(const string &value);
-	void addFile(const string &path);
+	void addFile(const string &path, bool text);
 };
 
 }}//end namespace

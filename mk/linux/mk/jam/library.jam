@@ -2,7 +2,7 @@
 # Rules for library creation
 #============================================================================
 
-##  Library libname : sources [ : options ]
+##  Library libname : sources [ : options [ : pch ] ]
 ##    Build a library out of sourcefiles. All sourcefiles will be passed
 ##    to the Objects rule which tries to compile them into object-files. You
 ##    can create rules for your own filetypes with the UserObject rule. Header
@@ -12,7 +12,7 @@
 ##    library.
 ##    Available options are 'shared' if you want to build a shared library on
 ##    platforms which support that. You can specify the 'noinstall' option if
-##    you don't want an install target is generated.
+##    you don't want an install target generated.
 ##    Don't specify any extensions for the library name, also leave out the
 ##    leading "lib".
 rule Library
@@ -22,9 +22,16 @@ rule Library
 
     local no_scan_archive = $(NOARSCAN) ;
     local target = [ ConstructLibraryTarget $(<) : $(3) ] ;
-    local sources = [ SearchSource $(>) ] ;
-    local objects = [ CompileObjects $(sources) : $(3) ] ;
+    local pch = $(4) ;
+    local sources = [ SearchSource $(pch) $(>) ] ;
+    local objects ;
     local install_targets ;
+
+	if $(pch) {
+        objects = [ CompilePch $(pch) ] ;
+	}
+
+    objects += [ CompileObjects $(sources) : $(3) ] ;
 
     $(<)_TYPE = library ;
     $(<)_OBJECTS = $(objects) ;
@@ -35,7 +42,7 @@ rule Library
     # create target clean rule
     Always $(<)clean ;
     NotFile $(<)clean ;
-    Clean $(<)clean : $(objects) ; # create target clean rule 
+    Clean $(<)clean : $(objects) ; # create target clean rule
 
     # so 'jam foo' works when it's really foo.exe (Windows) or foo.app (MacOS/X)
     if $(target) != $(<)
@@ -142,7 +149,7 @@ rule LibraryVersion
 rule SystemLinkLibrary
 {
     local target = $($(<)_TARGET) ;
-   
+
     if [ IsElem shared : $(3) ] {
         LINK on $(target) = "$(LIBTOOL) --mode=link $(LINK) -rpath $(libdir)" ;
         LinkLibrary $(target) : $(>) ;
@@ -150,7 +157,7 @@ rule SystemLinkLibrary
         Archive $(target) : $(>) ;
         if $(RANLIB) { Ranlib $(target) ; }
     }
-                                                                                
+
     Clean clean : $(target) ;
     Clean $(<)clean : $(target) ;
 }

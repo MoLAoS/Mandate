@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_state_about.h"
 
 #include "renderer.h"
@@ -19,21 +20,22 @@
 
 #include "leak_dumper.h"
 
+
 namespace Glest{ namespace Game{
 
 // =====================================================
 // 	class MenuStateAbout
 // =====================================================
 
-MenuStateAbout::MenuStateAbout(Program *program, MainMenu *mainMenu):
+MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu):
 	MenuState(program, mainMenu, "about")
 {
 	Lang &lang= Lang::getInstance();
-	
+
 	//init
 	buttonReturn.init(460, 100, 125);
 	buttonReturn.setText(lang.get("Return"));
-	
+
 	for(int i= 0; i<aboutStringCount1; ++i){
 		labelAbout1[i].init(100, 650-i*20);
 		labelAbout1[i].setText(getAboutString1(i));
@@ -43,7 +45,7 @@ MenuStateAbout::MenuStateAbout(Program *program, MainMenu *mainMenu):
 		labelAbout2[i].init(460, 650-i*20);
 		labelAbout2[i].setText(getAboutString2(i));
 	}
-	
+
 	for(int i= 0; i<teammateCount; ++i){
 		labelTeammateName[i].init(100+i*180, 500);
 		labelTeammateRole[i].init(100+i*180, 520);
@@ -65,11 +67,11 @@ void MenuStateAbout::mouseClick(int x, int y, MouseButton mouseButton){
 	if(buttonReturn.mouseClick(x, y)){
 		soundRenderer.playFx(coreData.getClickSoundA());
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-    }     
+    }
 
 }
 
-void MenuStateAbout::mouseMove(int x, int y, const MouseState *ms){
+void MenuStateAbout::mouseMove(int x, int y, const MouseState &ms){
 	buttonReturn.mouseMove(x, y);
 }
 

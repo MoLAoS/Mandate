@@ -22,34 +22,6 @@ using Shared::Platform::MouseState;
 
 namespace Glest{ namespace Game{
 
-// =====================================================
-// 	class MainWindow
-//
-///	Main program window
-// =====================================================
-
-class MainWindow: public WindowGl{
-private:
-    Program* program;
-
-public:
-	MainWindow(Program *program);
-	~MainWindow();
-
-	void setProgram(Program *program)	{this->program= program;}
-
-	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);
-	virtual void eventMouseUp(int x, int y, MouseButton mouseButton);
-	virtual void eventMouseDoubleClick(int x, int y, MouseButton mouseButton);
-	virtual void eventMouseMove(int x, int y, const MouseState *mouseState);
-	virtual void eventMouseWheel(int x, int y, int zDelta);
-	virtual void eventKeyDown(char key);
-	virtual void eventKeyUp(char key);
-	virtual void eventKeyPress(char c);
-	virtual void eventActivate(bool active);
-	virtual void eventResize(SizeState sizeState);
-	virtual void eventClose();
-};
 
 }}//end namespace
 

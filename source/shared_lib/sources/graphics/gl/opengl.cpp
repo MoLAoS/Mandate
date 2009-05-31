@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "opengl.h"
 
 #include <stdexcept>
@@ -16,9 +17,11 @@
 #include "graphics_interface.h"
 #include "context_gl.h"
 #include "gl_wrap.h"
+
 #include "leak_dumper.h"
 
-using namespace Shared::Platform; 
+
+using namespace Shared::Platform;
 using namespace std;
 
 namespace Shared{ namespace Graphics{ namespace Gl{
@@ -47,7 +50,7 @@ bool isGlExtensionSupported(const char *extensionName){
 }
 
 bool isGlVersionSupported(int major, int minor, int release){
-	
+
 	const char *strVersion= getGlVersion();
 
 	//major
@@ -103,7 +106,7 @@ const char *getGlVendor(){
 }
 
 const char *getGlExtensions(){
-	return reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));	
+	return reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
 }
 
 const char *getGlPlatformExtensions(){
@@ -120,13 +123,13 @@ int getGlMaxLights(){
 int getGlMaxTextureSize(){
 	int i;
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &i);
-	return i;	
+	return i;
 }
 
 int getGlMaxTextureUnits(){
 	int i;
 	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &i);
-	return i;	
+	return i;
 }
 
 int getGlModelviewMatrixStackDepth(){
@@ -138,7 +141,7 @@ int getGlModelviewMatrixStackDepth(){
 int getGlProjectionMatrixStackDepth(){
 	int i;
 	glGetIntegerv(GL_MAX_PROJECTION_STACK_DEPTH, &i);
-	return i;	
+	return i;
 }
 
 void checkGlExtension(const char *extensionName){

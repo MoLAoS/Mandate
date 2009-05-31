@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -92,7 +92,7 @@ public:
 };
 
 // =====================================================
-// 	class Tileset  
+// 	class Tileset
 //
 ///	Containt textures, models and parameters for a tileset
 // =====================================================
@@ -102,7 +102,7 @@ public:
 	static const int waterTexCount= 1;
 	static const int surfCount= 5;
 	static const int objCount= 10;
-	static const int transitionVars= 2; //number or different transition textures 
+	static const int transitionVars= 2; //number or different transition textures
 
 public:
 	typedef vector<float> SurfProbs;
@@ -111,7 +111,7 @@ public:
 private:
 	SurfaceAtlas surfaceAtlas;
     ObjectType objectTypes[objCount];
-    
+
 	SurfProbs surfProbs[surfCount];
 	SurfPixmaps surfPixmaps[surfCount];
 
@@ -123,14 +123,14 @@ private:
 	float fogDensity;
 	Vec3f fogColor;
 	Vec3f sunLightColor;
-	Vec3f moonLightColor;	
+	Vec3f moonLightColor;
 	Weather weather;
 
 	AmbientSounds ambientSounds;
 
 public:
     ~Tileset();
-	void load(const string &dir, Checksum *checksum);
+	void load(const string &dir, Checksum &checksum);
 
     //get
 	const SurfaceAtlas *getSurfaceAtlas() const		{return &surfaceAtlas;}
@@ -145,7 +145,7 @@ public:
 	const Vec3f &getSunLightColor() const			{return sunLightColor;}
 	const Vec3f &getMoonLightColor() const			{return moonLightColor;}
 	Weather getWeather() const						{return weather;}
-	
+
 	//surface textures
 	const Pixmap2D *getSurfPixmap(int type, int var) const;
 	void addSurfTex(int leftUp, int rightUp, int leftDown, int rightDown, Vec2f &coord, const Texture2D *&texture);

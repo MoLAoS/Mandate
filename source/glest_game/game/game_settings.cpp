@@ -9,8 +9,13 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
+#include <cstring>
+
 #include "game_settings.h"
 #include "random.h"
+
+#include "leak_dumper.h"
 
 using Shared::Util::Random;
 
@@ -30,12 +35,13 @@ GameSettings::GameSettings(const XmlNode *node){
 		XmlNode *factionNode = factionsNode->getChild("faction", i);
 
 		factionTypeNames[i] = factionNode->getChildStringValue("type");
+		playerNames[i] = factionNode->getChildStringValue("playerName");
 		factionControls[i] = (ControlType)factionNode->getChildIntValue("control");
 		teams[i] = factionNode->getChildIntValue("team");
 		startLocationIndex[i] = factionNode->getChildIntValue("startLocationIndex");
 	}
 }
-
+			
 void GameSettings::save(XmlNode *node) const {
 	node->addChild("description", description);
 	node->addChild("mapPath", mapPath);
@@ -48,6 +54,7 @@ void GameSettings::save(XmlNode *node) const {
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		XmlNode *factionNode = factionsNode->addChild("faction");
 		factionNode->addChild("type", factionTypeNames[i]);
+		factionNode->addChild("playerName", playerNames[i]);
 		factionNode->addChild("control", factionControls[i]);
 		factionNode->addChild("team", teams[i]);
 		factionNode->addChild("startLocationIndex", startLocationIndex[i]);

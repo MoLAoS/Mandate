@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "profiler.h"
 
 #ifdef SL_PROFILE
@@ -44,13 +45,13 @@ void Section::print(FILE *outStream, int tabLevel){
 
 	float percent= (parent==NULL || parent->milisElapsed==0)? 100.0f: 100.0f*milisElapsed/parent->milisElapsed;
 	string pname= parent==NULL? "": parent->getName();
-	
+
 	for(int i=0; i<tabLevel; ++i)
 		fprintf(outStream, "\t");
-	
-	fprintf(outStream, "%s: ", name.c_str()); 
-	fprintf(outStream, "%d ms, ", milisElapsed); 
-	fprintf(outStream, "%.1f%s\n", percent, "%"); 
+
+	fprintf(outStream, "%s: ", name.c_str());
+	fprintf(outStream, "%d ms, ", milisElapsed);
+	fprintf(outStream, "%.1f%s\n", percent, "%");
 
 	SectionContainer::iterator it;
 	for(it= children.begin(); it!=children.end(); ++it){

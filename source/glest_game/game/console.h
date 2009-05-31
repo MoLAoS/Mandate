@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -38,7 +38,7 @@ public:
 	typedef Lines::const_iterator LineIterator;
 
 private:
-	float timeElapsed; 
+	float timeElapsed;
 	Lines lines;
 
 	//this should be deleted from here someday
@@ -50,12 +50,13 @@ private:
 
 public:
 	Console();
-	
+
 	int getLineCount() const		{return lines.size();}
 	string getLine(int i) const		{return lines[i].first;}
 
 
 	void addStdMessage(const string &s);
+	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");
 	void addLine(string line);
 	void update();
 	bool isEmpty();

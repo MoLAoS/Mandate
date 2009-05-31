@@ -12,7 +12,7 @@
 #ifndef _GLEST_GAME_CLIENTINTERFACE_H_
 #define _GLEST_GAME_CLIENTINTERFACE_H_
 
-#include <vector>
+#include <deque>
 #include <zlib.h>
 
 #include "network_interface.h"
@@ -22,7 +22,7 @@
 
 using Shared::Platform::Ip;
 using Shared::Platform::ClientSocket;
-using std::vector;
+using std::deque;
 
 namespace Glest{ namespace Game{
 
@@ -32,6 +32,9 @@ namespace Glest{ namespace Game{
 
 class ClientInterface: public GameNetworkInterface{
 private:
+	typedef deque<NetworkMessageUpdate*> UpdateMessages;
+	typedef vector<UnitReference> UnitReferences;
+
 	class FileReceiver {
 		string name;
 		ofstream out;
@@ -55,12 +58,14 @@ private:
 
 	ClientSocket *clientSocket;
 	GameSettings gameSettings;
-	string serverName;
 	bool introDone;
 	bool launchGame;
 	int playerIndex;
 	FileReceiver *fileReceiver;
 	string savedGameFile;
+	UpdateMessages updates;
+	UnitReferences updateRequests;
+	UnitReferences fullUpdateRequests;
 
 public:
 	ClientInterface();
@@ -73,28 +78,42 @@ public:
 	virtual void update();
 	virtual void updateLobby();
 	virtual void updateKeyframe(int frameCount);
-	virtual void waitUntilReady(Checksum* checksum);
+	virtual void waitUntilReady(Checksum &checksum);
 
 	// message sending
 	virtual void sendTextMessage(const string &text, int teamIndex);
 	virtual void quitGame(){}
 
 	//misc
-	virtual string getNetworkStatus() const;
+	virtual string getStatus() const;
+	virtual void requestCommand(Command *command);
+
 
 	//accessors
-	string getServerName() const				{return serverName;}
 	bool getLaunchGame() const					{return launchGame;}
 	bool getIntroDone() const					{return introDone;}
 	int getPlayerIndex() const					{return playerIndex;}
 	const GameSettings *getGameSettings() const	{return &gameSettings;}
 	const string &getSavedGameFile() const		{return savedGameFile;}
+	NetworkMessageUpdate *getNextUpdate() {
+		NetworkMessageUpdate *ret = NULL;
+		if(updates.size()) {
+			ret = updates.front();
+			updates.pop_front();
+		}
+		return ret;
+	}
 
 	void connect(const Ip &ip, int port);
 	void reset();
+	void requestUpdate(Unit *unit)				{UnitReference ur(unit); requestUpdate(ur);}
+	void requestUpdate(UnitReference &ur)		{updateRequests.push_back(ur);}
+	void requestFullUpdate(Unit *unit)			{requestFullUpdate(UnitReference(unit));}
+	void requestFullUpdate(UnitReference &ur)	{fullUpdateRequests.push_back(ur);}
+	void sendUpdateRequests();
 
 private:
-	void waitForMessage();
+	NetworkMessage *waitForMessage();
 };
 
 }}//end namespace

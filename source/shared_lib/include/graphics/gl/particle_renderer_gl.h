@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -20,7 +20,7 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 //	class ParticleRendererGl
 // =====================================================
 
-class ParticleRendererGl: public ParticleRenderer{
+class ParticleRendererGl: public ParticleRenderer {
 public:
 	static const int bufferSize = 1024;
 
@@ -36,13 +36,12 @@ public:
 	virtual void renderManager(ParticleManager *pm, ModelRenderer *mr);
 	virtual void renderSystem(ParticleSystem *ps);
 	virtual void renderSystemLine(ParticleSystem *ps);
-	virtual void renderSystemLineAlpha(ParticleSystem *ps);
 	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr);
-	
+
 protected:
 	void renderBufferQuads(int quadCount);
 	void renderBufferLines(int lineCount);
-	void setBlendMode(ParticleSystem::BlendMode blendMode);
+	void setBlendMode(Particle::BlendMode blendMode);
 };
 
 }}}//end namespace

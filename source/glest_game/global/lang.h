@@ -14,29 +14,33 @@
 
 #include "properties.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 using Shared::Util::Properties;
 
 // =====================================================
-// 	class Lang
+//  class Lang
 //
-//	String table
+// String table
 // =====================================================
 
-class Lang{
+class Lang {
 private:
 	string name;
 	Properties langStrings;
 
 private:
-	Lang(){};
+	Lang() {}
 
 public:
-	static Lang &getInstance();    
-	void load(string file);
-	string get(const string &s);
-	string getName();
+	static Lang &getInstance() {
+		static Lang lang;
+		return lang;
+	}
+
+	void load(string file) {langStrings.load(file, true);}
+	string getName() const {return name;}
+	string get(const string &s) const;
 };
 
 }}//end namespace

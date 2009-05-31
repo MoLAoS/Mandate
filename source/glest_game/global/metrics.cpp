@@ -9,10 +9,13 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-#include "metrics.h"
+#include "pch.h"
 
+#include "metrics.h"
 #include "element_type.h"
+
 #include "leak_dumper.h"
+
 
 namespace Glest{ namespace Game{
 
@@ -27,8 +30,8 @@ Metrics::Metrics(){
 	virtualW= 1000;
 	virtualH= 750;
 
-	screenW= config.getScreenWidth();
-	screenH= config.getScreenHeight();
+	screenW= config.getDisplayWidth();
+	screenH= config.getDisplayHeight();
 
 	minimapX= 10;
 	minimapY= 600;
@@ -41,37 +44,5 @@ Metrics::Metrics(){
 	displayH= 480;
 }
 
-const Metrics &Metrics::getInstance(){
-	static const Metrics metrics;
-	return metrics;
-}
-
-float Metrics::getAspectRatio() const{
-	return static_cast<float>(screenW)/screenH;
-}
-
-int Metrics::toVirtualX(int w) const{
-	return w*virtualW/screenW;
-}
-
-int Metrics::toVirtualY(int h) const{
-	return h*virtualH/screenH;
-}
-
-bool Metrics::isInDisplay(int x, int y) const{
-	return
-        x > displayX &&
-        y > displayY &&
-        x < displayX+displayW &&
-        y < displayY+displayH;
-}
-
-bool Metrics::isInMinimap(int x, int y) const{
-	return
-        x > minimapX &&
-        y > minimapY &&
-        x < minimapX+minimapW &&
-        y < minimapY+minimapH;
-}
 
 }}// end namespace

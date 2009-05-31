@@ -15,10 +15,13 @@
 #include "effect_type.h"
 #include "vec.h"
 #include "unit_reference.h"
+#include "socket.h"
 
 namespace Glest{ namespace Game{
 
+class EffectState;
 class Unit;
+class UnitState;
 class UnitReference;
 
 // ===============================
@@ -29,9 +32,8 @@ class UnitReference;
  * An effect, usually temporary, that modifies the stats,
  * regeneration/degeneration or other attributes of a unit.
  * TODO: Implement lighting, particles & sound
- * TODO: Better implementation of effect strength
  */
-class Effect{
+class Effect {
 private:
 	/** Unit that caused this effect, or NULL if this is a recourse effect. */
 	UnitReference source;
@@ -62,7 +64,7 @@ private:
 public:
 	Effect(const EffectType* type, Unit *source, Effect *root, float strength,
 			const Unit *recipient, const TechTree *tt);
-	Effect(const XmlNode *node, World *world, const TechTree *tt);
+	Effect(const XmlNode *node);
 
 	virtual ~Effect();
 
@@ -88,6 +90,8 @@ public:
 	}
 
 	void save(XmlNode *node) const;
+//	void writeState(EffectState *es);
+//	void readState(EffectState *es);
 };
 
 // ===============================
@@ -120,7 +124,7 @@ private:
 
 public:
 	Effects();
-	Effects(const XmlNode *node, World *world, const TechTree *tt);
+	Effects(const XmlNode *node);
 
 	/**
 	 * Destructor. Clears all pointers to other objects (source and root
@@ -169,7 +173,7 @@ public:
 	 * Appends a string description/summary of all of the effects in this
 	 * collection and returns the supplied string object.
 	 */
-	string &getDescr(string &str) const;
+	void getDesc(string &str) const;
 	void save(XmlNode *node) const;
 };
 

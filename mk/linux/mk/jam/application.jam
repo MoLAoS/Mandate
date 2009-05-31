@@ -2,7 +2,7 @@
 # Rules for compiling applications
 #============================================================================
 
-##  Application appname : sources [ : options ]
+##  Application appname : sources [ : options [ : pch ] ]
 ##    Build an application out of sourcefiles. All sourcefiles will be passed
 ##    to the Objects rule which tries to compile them into object-files. You
 ##    can create rules for your own filetypes with the UserObject rule. Header
@@ -28,8 +28,16 @@ rule Application
     CheckOptions noinstall console independent : $(3) : $(<) ;
 
     local target = [ ConstructApplicationTarget $(<) : $(3) ] ;
-    local sources = [ SearchSource $(>) ] ;
-    local objects = [ CompileObjects $(sources) ] ;
+    local pch = $(4) ;
+    local sources = [ SearchSource $(pch) $(>) ] ;
+    local objects ;
+    local install_targets ;
+
+	if $(pch) {
+        objects = [ CompilePch $(pch) ] ;
+	}
+
+    objects += [ CompileObjects $(sources) : $(3) ] ;
 
     $(<)_TYPE = application ;
     $(<)_OBJECTS = $(objects) ;
@@ -41,7 +49,7 @@ rule Application
     # create target clean rule
     Always $(<)clean ;
     NotFile $(<)clean ;
-    Clean $(<)clean : $(objects) ; # create target clean rule 
+    Clean $(<)clean : $(objects) ; # create target clean rule
         Depends clean : $(<)clean ;
 
     # so 'jam foo' works when it's really foo.exe (Windows) or foo.app (MacOS/X)
@@ -60,7 +68,7 @@ rule Application
     # construct Install target
     if ! [ IsElem noinstall : $(3) ]
     {
-        $(<)_INSTALLTARGET = [ 
+        $(<)_INSTALLTARGET = [
             DoInstall $(target) : $(bindir) : $(INSTALL_PROGRAM) : nopackage
         ] ;
         Depends install_bin : $($(<)_INSTALLTARGET) ;

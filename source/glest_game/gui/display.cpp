@@ -3,17 +3,20 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "display.h"
 
 #include "metrics.h"
 #include "command_type.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Graphics;
 
@@ -30,7 +33,7 @@ Display::Display(){
 	colors[3]= Vec3f(0.7f, 0.7f, 0.7f);
 
 	currentColor= 0;
-	
+
 	clear();
 }
 
@@ -53,14 +56,9 @@ void Display::clear(){
 	progressBar= -1;
 }
 
-void Display::switchColor(){
-	currentColor= (currentColor+1) % colorCount;
-}
-
-
 int Display::computeDownIndex(int x, int y){
 	y= y-(downY-cellSideCount*imageSize);
-	
+
 	if(y>imageSize*cellSideCount){
 		return invalidPos;
 	}
@@ -76,20 +74,6 @@ int Display::computeDownIndex(int x, int y){
 	return index;
 }
 
-int Display::computeDownX(int index) const{
-	return (index % cellSideCount) * imageSize;
-}
 
-int Display::computeDownY(int index) const{
-	return Display::downY - (index/cellSideCount)*imageSize - imageSize;
-}
-
-int Display::computeUpX(int index) const{
-	return (index % cellSideCount) * imageSize;
-}
-
-int Display::computeUpY(int index) const{
-	return Metrics::getInstance().getDisplayH() - (index/cellSideCount)*imageSize - imageSize;
-}
 
 }}//end namespace

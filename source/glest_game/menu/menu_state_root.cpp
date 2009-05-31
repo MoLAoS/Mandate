@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_state_root.h"
 
 #include "renderer.h"
@@ -34,7 +35,7 @@ namespace Glest{ namespace Game{
 // 	class MenuStateRoot
 // =====================================================
 
-MenuStateRoot::MenuStateRoot(Program *program, MainMenu *mainMenu):
+MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu):
 	MenuState(program, mainMenu, "root")
 {
 	Lang &lang= Lang::getInstance();
@@ -92,11 +93,11 @@ void MenuStateRoot::mouseClick(int x, int y, MouseButton mouseButton){
     }
     else if(buttonExit.mouseClick(x, y)){
 		soundRenderer.playFx(coreData.getClickSoundA());
-		program->exit();
+		program.exit();
     }
 }
 
-void MenuStateRoot::mouseMove(int x, int y, const MouseState *ms){
+void MenuStateRoot::mouseMove(int x, int y, const MouseState &ms){
 	buttonNewGame.mouseMove(x, y);
     buttonJoinGame.mouseMove(x, y);
     buttonScenario.mouseMove(x, y);

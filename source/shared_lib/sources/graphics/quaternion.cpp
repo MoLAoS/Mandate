@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "quaternion.h"
 
 #include "leak_dumper.h"
@@ -83,7 +84,7 @@ void Quaternion::setEuler(const EulerAngles &eulerAngles){
 
 	qz.w= cosf(eulerAngles.z/2.0f);
 	qz.v= Vec3f(0.0f, 0.0f, sinf(eulerAngles.z/2.0f));
-	
+
 	qr= qx*qy*qz;
 
 	w= qr.w;
@@ -91,7 +92,7 @@ void Quaternion::setEuler(const EulerAngles &eulerAngles){
 }
 
 float Quaternion::length(){
-	return sqrt(w*w+v.x*v.x+v.y*v.y+v.z*v.z);
+	return sqrtf(static_cast<float>(w * w + v.x * v.x + v.y * v.y + v.z * v.z));
 }
 
 Quaternion Quaternion::conjugate(){
@@ -173,7 +174,7 @@ Matrix4f Quaternion::toMatrix4() const{
 	rm[14]= 0.0f;
 
 	//row4
-	rm[3]= 0.0f; 
+	rm[3]= 0.0f;
 	rm[7]= 0.0f;
 	rm[11]= 0.0f;
 	rm[15]= 1.0f;
@@ -187,21 +188,21 @@ AxisAngle Quaternion::toAxisAngle() const{
 }
 
 Vec3f Quaternion::getLocalXAxis() const{
-	return Vec3f(	
+	return Vec3f(
 		1.0f - 2*v.y*v.y - 2*v.z*v.z,
 		2*v.x*v.y + 2*w*v.z,
 		2*v.x*v.z - 2*w*v.y);
 }
 
 Vec3f Quaternion::getLocalYAxis() const{
-	return Vec3f(	
+	return Vec3f(
 		2*v.x*v.y - 2*w*v.z,
 		1.0f - 2*v.x*v.x - 2*v.z*v.z,
 		2*v.y*v.z + 2*w*v.x);
 }
 
 Vec3f Quaternion::getLocalZAxis() const{
-	return Vec3f(	
+	return Vec3f(
 		2*v.x*v.z + 2*w*v.y,
 		2*v.y*v.z - 2*w*v.x,
 		1.0f - 2*v.x*v.x - 2*v.y*v.y);

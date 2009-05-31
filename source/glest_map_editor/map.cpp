@@ -62,13 +62,13 @@ int Map::getStartLocationY(int index) const{
 
 static int get_dist(int delta_x, int delta_y)
 {
-	double dx = delta_x;
-	double dy = delta_y;
-	return static_cast<int> (sqrt(dx * dx + dy * dy));
+	float dx = delta_x;
+	float dy = delta_y;
+	return static_cast<int> (sqrtf(dx * dx + dy * dy));
 }
 
 void Map::changeHeight(int x, int y, int height, int radius){
-     
+
 	for (int i=x-radius+1; i<x+radius; i++){
 		for (int j=y-radius+1; j<y+radius; j++){
 			if (inside(i, j)){
@@ -102,10 +102,10 @@ void Map::setRefAlt(int x, int y){
 
 void Map::flipX(){
 	Cell **oldCells= cells;
-		
+
 	cells= new Cell*[w];
 	for (int i=0; i<w; i++){
-		cells[i]= new Cell[h];	
+		cells[i]= new Cell[h];
 		for (int j=0; j<h; j++){
 			cells[i][j].height= oldCells[w-i-1][j].height;
 			cells[i][j].object= oldCells[w-i-1][j].object;
@@ -119,17 +119,17 @@ void Map::flipX(){
 	}
 
 	for (int i=0; i<w; i++){
-		delete oldCells[i];	
+		delete oldCells[i];
 	}
 	delete oldCells;
 }
 
 void Map::flipY(){
 	Cell **oldCells= cells;
-		
+
 	cells= new Cell*[w];
 	for (int i=0; i<w; i++){
-		cells[i]= new Cell[h];	
+		cells[i]= new Cell[h];
 		for (int j=0; j<h; j++){
 			cells[i][j].height= oldCells[i][h-j-1].height;
 			cells[i][j].object= oldCells[i][h-j-1].object;
@@ -143,7 +143,7 @@ void Map::flipY(){
 	}
 
 	for (int i=0; i<w; i++){
-		delete oldCells[i];	
+		delete oldCells[i];
 	}
 	delete oldCells;
 }
@@ -158,7 +158,7 @@ void Map::changeSurface(int x, int y, int surface, int radius){
                     dist= get_dist(i-x, j-y);
                     if (radius>=dist){
                          cells[i][j].surface= surface;
-                    } 
+                    }
                }
           }
      }
@@ -175,7 +175,7 @@ void Map::changeObject(int x, int y, int object, int radius){
                     if (radius>=dist){
                          cells[i][j].object= object;
                          cells[i][j].resource= 0;
-                    } 
+                    }
                }
           }
      }
@@ -188,11 +188,11 @@ void Map::changeResource(int x, int y, int resource, int radius){
      for (i=x-radius+1; i<x+radius; i++){
           for (j=y-radius+1; j<y+radius; j++){
                if (inside(i, j)){
-                    dist= get_dist(i-x, j-y); 
+                    dist= get_dist(i-x, j-y);
                     if (radius>=dist){
                          cells[i][j].resource= resource;
                          cells[i][j].object= 0;
-                    } 
+                    }
                }
           }
      }
@@ -229,14 +229,14 @@ void Map::reset(int w, int h, float alt, int surf){
 		throw runtime_error("Surface must be in the range 1-5");
 		return;
 	}
-	
+
 	if (cells!=NULL){
 		for(int i=0; i<this->w; i++){
 			delete cells[i];
 		}
 		delete cells;
 	}
-     
+
 	this->w= w;
 	this->h= h;
 	this->maxPlayers= maxPlayers;
@@ -273,7 +273,7 @@ void Map::resize(int w, int h, float alt, int surf){
 		throw runtime_error("Surface must be in the range 1-5");
 		return;
 	}
-	
+
 	int oldW= this->w;
 	int oldH= this->h;
 	this->w= w;
@@ -313,7 +313,7 @@ void Map::resize(int w, int h, float alt, int surf){
 
 	//delete old cells
 	if (oldCells!=NULL){
-		for(int i=0; i<oldW; i++) 
+		for(int i=0; i<oldW; i++)
 			delete oldCells[i];
 		delete oldCells;
 	}
@@ -324,10 +324,10 @@ void Map::resetPlayers(int maxPlayers){
 		throw runtime_error("Max Players must be in the range 1-4");
 		return;
 	}
-	
-	if (startLocations!=NULL) 
+
+	if (startLocations!=NULL)
 		delete startLocations;
-          
+
 	this->maxPlayers= maxPlayers;
 
 	startLocations= new StartLocation[maxPlayers];
@@ -378,7 +378,7 @@ void Map::randomize(){
 	for(int i=0; i<maxPlayers; ++i){
 		StartLocation sl;
 		float slNoiseFactor= random.randRange(0.5f, 0.8f);
-		
+
 		sl.x= static_cast<int>(w*slNoiseFactor * ((i+slPlaceFactorX)%2) + w*(1.f-slNoiseFactor)/2.f);
 		sl.y= static_cast<int>(h*slNoiseFactor * (((i+slPlaceFactorY)/2) % 2)+ h*(1.f-slNoiseFactor)/2.f);
 		startLocations[i]= sl;
@@ -424,7 +424,7 @@ void Map::loadFromFile(const string &path){
 			fread(&startLocations[i].x, sizeof(int32), 1, f1);
 			fread(&startLocations[i].y, sizeof(int32), 1, f1);
 		}
-		
+
 		//read Heights
 		reset(header.width, header.height, 10, 1);
 		for(int j=0; j<h; ++j){
@@ -461,15 +461,15 @@ void Map::loadFromFile(const string &path){
 	}
 }
 
-          
+
 void Map::saveToFile(const string &path){
-     
+
 	FILE *f1= fopen(path.c_str(), "wb");
 	if(f1!=NULL){
 
 		//write header
 		MapFileHeader header;
-		
+
 		header.version= 1;
 		header.maxPlayers= maxPlayers;
 		header.width= w;
@@ -524,7 +524,7 @@ void Map::saveToFile(const string &path){
 	void randomHeight(int x, int y, int height);
 }
 
-// ==================== PRIVATE ==================== 
+// ==================== PRIVATE ====================
 
 void Map::resetHeights(int height){
 	for(int i=0; i<w; ++i){
@@ -549,8 +549,8 @@ void Map::sinRandomize(int strenght){
 			float normH= static_cast<float>(i)/w;
 			float normV= static_cast<float>(j)/h;
 
-			float sh= (sin(normH*sinH1) + sin(normH*sinH2))/2.f;
-			float sv= (sin(normV*sinV1) + sin(normV*sinV2))/2.f;
+			float sh= (sinf(normH*sinH1) + sin(normH*sinH2))/2.f;
+			float sv= (sinf(normV*sinV1) + sin(normV*sinV2))/2.f;
 
 			float newHeight= (ah+bh*sh+av+bv*sv)/2.f;
 			applyNewHeight(newHeight, i, j, strenght);
@@ -569,7 +569,7 @@ void Map::decalRandomize(int strenght){
 
 	//other rows
 	for(int j=1; j<h; ++j){
-		int height= static_cast<int>(cells[0][j-1].height+random.randRange(-1, 1)); 
+		int height= static_cast<int>(cells[0][j-1].height+random.randRange(-1, 1));
 		applyNewHeight(static_cast<float>(clamp(height, minHeight, maxHeight)), 0, j, strenght);
 		for(int i=1; i<w; ++i){
 			height= static_cast<int>((cells[i][j-1].height+cells[i-1][j].height)/2.f+random.randRange(-1, 1));

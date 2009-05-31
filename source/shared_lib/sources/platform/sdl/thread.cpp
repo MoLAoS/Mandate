@@ -1,11 +1,16 @@
-//This file is part of Glest Shared Library (www.glest.org)
-//Copyright (C) 2005 Matthias Braun <matze@braunis.de>
+// ==============================================================
+//	This file is part of Glest Shared Library (www.glest.org)
+//
+//	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2005 Matthias Braun <matze@braunis.de>
+//
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
+//	License, or (at your option) any later version
+// ==============================================================
 
-//You can redistribute this code and/or modify it under
-//the terms of the GNU General Public License as published by the Free Software
-//Foundation; either version 2 of the License, or (at your option) any later
-//version.
-
+#include "pch.h"
 #include "thread.h"
 
 #include <iostream>
@@ -14,7 +19,9 @@
 
 #include "noimpl.h"
 
-namespace Shared{ namespace Platform{
+#include "leak_dumper.h"
+
+namespace Shared { namespace Platform {
 
 // =====================================
 //          Threads
@@ -29,7 +36,7 @@ void Thread::setPriority(Thread::Priority threadPriority) {
 }
 
 int Thread::beginExecution(void* data) {
-	Thread* thread = static_cast<Thread*> (data);
+	Thread* thread = static_cast<Thread*>(data);
 	thread->execute();
 	return 0;
 }
@@ -42,8 +49,8 @@ void Thread::resume() {
 	NOIMPL;
 }
 
-bool Thread::join(int maxWaitMillis){
-	SDL_WaitThread(thread, NULL);
+bool Thread::join(int maxWaitMillis) {
+	SDL_WaitThread(thread, 0);
 	return true;
 }
 
@@ -53,7 +60,7 @@ bool Thread::join(int maxWaitMillis){
 
 Mutex::Mutex() {
 	mutex = SDL_CreateMutex();
-	if(mutex == 0)
+	if (mutex == 0)
 		throw std::runtime_error("Couldn't initialize mutex");
 }
 
@@ -69,4 +76,5 @@ void Mutex::v() {
 	SDL_mutexV(mutex);
 }
 
-}}//end namespace
+}
+}//end namespace

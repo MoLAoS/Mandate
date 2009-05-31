@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -32,7 +32,7 @@ using Util::MultiFactory;
 class SoundInfo;
 
 // =====================================================
-//	class SoundFileLoader  
+//	class SoundFileLoader
 //
 ///	Interface that all SoundFileLoaders will implement
 // =====================================================
@@ -48,7 +48,7 @@ public:
 };
 
 // =====================================================
-//	class WavSoundFileLoader  
+//	class WavSoundFileLoader
 //
 ///	Wave file loader
 // =====================================================
@@ -71,7 +71,7 @@ public:
 };
 
 // =====================================================
-//	class OggSoundFileLoader 
+//	class OggSoundFileLoader
 //
 ///	OGG sound file loader, uses ogg-vorbis library
 // =====================================================
@@ -82,6 +82,8 @@ private:
 	FILE *f;
 
 public:
+	OggSoundFileLoader() : vf(NULL), f(NULL) {}
+	virtual ~OggSoundFileLoader() {close();}
 	virtual void open(const string &path, SoundInfo *soundInfo);
 	virtual uint32 read(int8 *samples, uint32 size);
 	virtual void close();

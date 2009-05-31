@@ -9,13 +9,16 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "selection.h"
 
 #include <algorithm>
 
 #include "unit_type.h"
 #include "gui.h"
+
 #include "leak_dumper.h"
+
 
 using namespace std;
 
@@ -118,46 +121,7 @@ void Selection::clear(){
 	selectedUnits.clear();
 	update();
 }
-/*
-bool Selection::isUniform() const{
-	if(selectedUnits.empty()){
-		return true;
-	}
 
-	const UnitType *ut= selectedUnits.front()->getType();
-
-	for(int i=0; i<selectedUnits.size(); ++i){
-		if(selectedUnits[i]->getType()!=ut){
-            return false;
-		}
-    }
-    return true;
-}
-
-bool Selection::isEnemy() const{
-	return selectedUnits.size()==1 && selectedUnits.front()->getFactionIndex()!=factionIndex;
-}
-
-bool Selection::isComandable() const{
-	return
-		!isEmpty() &&
-		!isEnemy() &&
-		!(selectedUnits.size()==1 && !selectedUnits.front()->isOperative());
-}
-
-bool Selection::isCancelable() const{
-	return
-		selectedUnits.size()>1 ||
-		(selectedUnits.size()==1 && selectedUnits[0]->anyCommand());
-}
-
-bool Selection::isMeetable() const{
-	return
-		isUniform() &&
-		isComandable() &&
-		selectedUnits.front()->getType()->hasMeetingPoint();
-}
-*/
 Vec3f Selection::getRefPos() const{
 	return getFrontUnit()->getCurrVector();
 }
@@ -179,38 +143,42 @@ void Selection::recallGroup(int groupIndex){
 	}
 }
 
-void Selection::unitEvent(UnitObserver::Event event, const Unit *unit){
+void Selection::unitEvent(UnitObserver::Event event, const Unit *unit) {
 
-	if(event==UnitObserver::eKill){
+	if (event == UnitObserver::eKill) {
+		// prevent resetting Gui if a unit in a selection group dies
+		bool needUpdate = false;
 
 		//remove from selection
-		for(int i=0; i<selectedUnits.size(); ++i){
-			if(selectedUnits[i]==unit){
-				selectedUnits.erase(selectedUnits.begin()+i);
+		for (int i = 0; i < selectedUnits.size(); ++i) {
+			if (selectedUnits[i] == unit) {
+				selectedUnits.erase(selectedUnits.begin() + i);
+				needUpdate = true;
 				break;
 			}
 		}
 
 		//remove from groups
-		for(int i=0; i<maxGroups; ++i){
-			for(int j=0; j<groups[i].size(); ++j){
-				if(groups[i][j]==unit){
-					groups[i].erase(groups[i].begin()+j);
+		for (int i = 0; i < maxGroups; ++i) {
+			for (int j = 0; j < groups[i].size(); ++j) {
+				if (groups[i][j] == unit) {
+					groups[i].erase(groups[i].begin() + j);
 					break;
 				}
 			}
 		}
 
 		//notify gui & stuff
-		gui->onSelectionChanged();
+		if(needUpdate) {
+			gui->onSelectionChanged();
+		}
 	} else {
 		gui->onSelectionStateChanged();
 	}
-
 }
 
 void Selection::update() {
-	if(selectedUnits.empty()){
+	if(selectedUnits.empty()) {
 		empty = true;
 		enemy = false;
 		uniform = false;
@@ -252,11 +220,44 @@ void Selection::update() {
 			}
 
 			cancelable = cancelable || ((*i)->anyCommand()
-					&& (*i)->getCurrCommand()->getCommandType()->getClass() != ccStop);
+					&& (*i)->getCurrCommand()->getType()->getClass() != ccStop);
 			commandable = commandable || (*i)->isOperative();
 		}
 
 		meetable = uniform && commandable && frontUT->hasMeetingPoint();
+	}
+}
+
+void Selection::load(const XmlNode *node) {
+	for(int i = 0; i < node->getChildCount(); ++i) {
+		const XmlNode *groupNode = node->getChild("group", i);
+		int index = groupNode->getIntAttribute("index");
+
+		if(index < 0 || index > maxGroups) {
+			throw runtime_error("invalid group index");
+		}
+
+		groups[index].clear();
+		for(int j = 0; j < groupNode->getChildCount(); ++j) {
+			Unit *unit = UnitReference(groupNode->getChild("unit", j)).getUnit();
+			if(unit) {
+				groups[index].push_back(unit);
+			}
+		}
+	}
+}
+
+void Selection::save(XmlNode *node) const {
+	for(int i = 0; i < maxGroups; ++i) {
+		if(groups[i].empty()) {
+			continue;
+		}
+
+		XmlNode *groupNode = node->addChild("group");
+		groupNode->addAttribute("index", i);
+		for(UnitContainer::const_iterator j = groups[i].begin(); j != groups[i].end(); ++j) {
+			UnitReference(*j).save(groupNode->addChild("unit"));
+		}
 	}
 }
 

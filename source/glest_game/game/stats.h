@@ -17,65 +17,56 @@
 #include "game_constants.h"
 #include "faction.h"
 #include "xml_parser.h"
+#include "game_settings.h"
 
 using std::string;
 using Shared::Xml::XmlNode;
 
-namespace Glest{ namespace Game{
-
-struct PlayerStats{
-	PlayerStats();
-
-	ControlType control;
-	string factionTypeName;
-	int teamIndex;
-	bool victory;
-	int kills;
-	int deaths;
-	int unitsProduced;
-	int resourcesHarvested;
-};
+namespace Glest { namespace Game {
 
 // =====================================================
 // 	class Stats
-//
-///	Player statistics that are shown after the game ends
 // =====================================================
 
-class Stats{
+/** Player statistics that are shown after the game ends */
+class Stats {
+public:
+	struct PlayerStats {
+		PlayerStats();
+
+		bool victory;
+		int kills;
+		int deaths;
+		int unitsProduced;
+		int resourcesHarvested;
+	};
+
 private:
+	GameSettings gs;
 	PlayerStats playerStats[GameConstants::maxPlayers];
 
-	string description;
-	int factionCount;
-	int thisFactionIndex;
-
 public:
-	void init(int factionCount, int thisFactionIndex, const string &description);
+	Stats(const GameSettings &gs) : gs(gs), playerStats() {}
 	void load(const XmlNode *n);
 	void save(XmlNode *n) const;
 
-	string getDescription() const	{return description;}
-	int getThisFactionIndex() const	{return thisFactionIndex;}
-	int getFactionCount() const		{return factionCount;}
+	const GameSettings & getGameSettings() const	{return gs;}
+	bool getVictory(int i) const					{return playerStats[i].victory;}
+	int getKills(int i) const						{return playerStats[i].kills;}
+	int getDeaths(int i) const						{return playerStats[i].deaths;}
+	int getUnitsProduced(int i) const				{return playerStats[i].unitsProduced;}
+	int getResourcesHarvested(int i) const			{return playerStats[i].resourcesHarvested;}
 
-	const string &getFactionTypeName(int factionIndex) const	{return playerStats[factionIndex].factionTypeName;}
-	ControlType getControl(int factionIndex) const				{return playerStats[factionIndex].control;}
-	bool getVictory(int factionIndex) const						{return playerStats[factionIndex].victory;}
-	int getTeam(int factionIndex) const							{return playerStats[factionIndex].teamIndex;}
-	int getKills(int factionIndex) const						{return playerStats[factionIndex].kills;}
-	int getDeaths(int factionIndex) const						{return playerStats[factionIndex].deaths;}
-	int getUnitsProduced(int factionIndex) const				{return playerStats[factionIndex].unitsProduced;}
-	int getResourcesHarvested(int factionIndex) const			{return playerStats[factionIndex].resourcesHarvested;}
 
-	void setDescription(const string& description)							{this->description = description;}
-	void setFactionTypeName(int playerIndex, const string& factionTypeName)	{playerStats[playerIndex].factionTypeName= factionTypeName;}
-	void setControl(int playerIndex, ControlType control)					{playerStats[playerIndex].control= control;}
-	void setTeam(int playerIndex, int teamIndex)							{playerStats[playerIndex].teamIndex= teamIndex;}
-	void setVictorious(int playerIndex);
-	void kill(int killerFactionIndex, int killedFactionIndex);
-	void produce(int producerFactionIndex);
-	void harvest(int harvesterFactionIndex, int amount);
+	void setVictorious(int i)						{playerStats[i].victory = true;}
+	void produce(int i)								{playerStats[i].unitsProduced++;}
+	void harvest(int i, int amount)					{playerStats[i].resourcesHarvested += amount;}
+	void kill(int killerIndex, int killedIndex) {
+		if(killerIndex != killedIndex) {
+			playerStats[killerIndex].kills++;
+		}
+		playerStats[killedIndex].deaths++;
+	}
 };
 
 }}//end namespace

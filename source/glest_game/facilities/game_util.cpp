@@ -9,13 +9,16 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "game_util.h"
 
 #include "util.h"
 #include "lang.h"
 #include "game_constants.h"
 #include "config.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 
@@ -24,7 +27,7 @@ namespace Glest{ namespace Game{
 const string mailString= "contact_game@glest.org";
 const string gaeMailString= "daniel.santos@pobox.com";
 const string glestVersionString= "v3.1.2";
-const string gaeVersionString= "v0.1.8c";
+const string gaeVersionString= "v0.2.11";
 
 
 string getNetworkVersionString(){
@@ -78,24 +81,23 @@ string getTeammateRole(int i){
 	return "";
 }
 
-string formatString(const string &str){
+string formatString(const string &str) {
 	string outStr = str;
 
-	if(!outStr.empty()){
-		outStr[0]= toupper(outStr[0]);
+	if (!outStr.empty()) {
+		outStr[0] = toupper(outStr[0]);
 	}
 
-	bool afterSeparator= false;
-	for(int i= 0; i<str.size(); ++i){
-		if(outStr[i]=='_'){
-			outStr[i]= ' ';
+	bool afterSeparator = false;
+	for (int i = 0; i < str.size(); ++i) {
+		if (outStr[i] == '_') {
+			outStr[i] = ' ';
+		} else if (afterSeparator) {
+			outStr[i] = toupper(outStr[i]);
+			afterSeparator = false;
 		}
-		else if(afterSeparator){
-			outStr[i]= toupper(outStr[i]);
-			afterSeparator= false;
-		}
-		if(outStr[i]=='\n' || outStr[i]=='(' || outStr[i]==' '){
-			afterSeparator= true;
+		if (outStr[i] == '\n' || outStr[i] == '(' || outStr[i] == ' ') {
+			afterSeparator = true;
 		}
 	}
 	return outStr;

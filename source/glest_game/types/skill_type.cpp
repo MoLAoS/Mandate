@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "skill_type.h"
 
 #include <cassert>
@@ -20,7 +21,10 @@
 #include "particle_type.h"
 #include "tech_tree.h"
 #include "faction_type.h"
+#include "map.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Graphics;
@@ -31,34 +35,48 @@ namespace Glest{ namespace Game{
 // 	class SkillType
 // =====================================================
 
+SkillType::SkillType(SkillClass skillClass, const char* typeName) :
+		skillClass(skillClass),
+		effectTypes(),
+		name(),
+		epCost(0),
+		//speed(0.f),
+		//animSpeed(0.f),
+		animations(),
+		animationsStyle(asSingle),
+		sounds(),
+		soundStartTime(0.f),
+		typeName(typeName),
+		minRange(0),
+		maxRange(0),
+		effectsRemoved(0),
+		removeBenificialEffects(false),
+		removeDetrimentalEffects(false),
+		removeAllyEffects(false),
+		removeEnemyEffects(false) {
+}
+
 SkillType::~SkillType(){
 	deleteValues(sounds.getSounds().begin(), sounds.getSounds().end());
 }
 
 void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
-	//name
-	name= sn->getChild("name")->getAttribute("value")->getRestrictedValue();
 
-	//ep cost
-	epCost= sn->getChild("ep-cost")->getAttribute("value")->getIntValue();
-
-	//speed
-	speed= sn->getChild("speed")->getAttribute("value")->getIntValue();
-
-	minRange= sn->getOptionalIntValue("min-range", 1);
-	maxRange= sn->getOptionalIntValue("max-range", 1);
-
-	//anim speed
-	animSpeed= sn->getChild("anim-speed")->getAttribute("value")->getIntValue();
+	name = sn->getChildStringValue("name");
+	epCost = sn->getOptionalIntValue("ep-cost");
+	speed = sn->getChildIntValue("speed");
+	minRange = sn->getOptionalIntValue("min-range", 1);
+	maxRange = sn->getOptionalIntValue("max-range", 1);
+	animSpeed = sn->getChildIntValue("anim-speed");
 
 	//model
 	string path= sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
-	animation= Renderer::getInstance().newModel(rsGame);
-	animation->load(dir + "/" + path);
+	animations.push_back(Renderer::getInstance().newModel(rsGame));
+	animations.front()->load(dir + "/" + path);
 
 	//sound
-	const XmlNode *soundNode= sn->getChild("sound");
-	if(soundNode->getAttribute("enabled")->getBoolValue()){
+	const XmlNode *soundNode= sn->getChild("sound", 0, false);
+	if(soundNode && soundNode->getBoolAttribute("enabled")) {
 
 		soundStartTime= soundNode->getAttribute("start-time")->getFloatValue();
 
@@ -87,17 +105,65 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	//removing effects
 	const XmlNode *removeEffectsNode = sn->getChild("remove-effects", 0, false);
 	if(removeEffectsNode) {
-		effectsRemoved = removeEffectsNode->getAttribute("count")->getIntValue();
-		removeBenificialEffects = removeEffectsNode->getChild("benificial")->getAttribute("value")->getBoolValue();
-		removeDetrimentalEffects = removeEffectsNode->getChild("detrimental")->getAttribute("value")->getBoolValue();
-		removeAllyEffects = removeEffectsNode->getChild("allies")->getAttribute("value")->getBoolValue();
-		removeEnemyEffects = removeEffectsNode->getChild("foes")->getAttribute("value")->getBoolValue();
+		effectsRemoved = removeEffectsNode->getIntAttribute("count");
+		removeBenificialEffects = removeEffectsNode->getChildBoolValue("benificial");
+		removeDetrimentalEffects = removeEffectsNode->getChildBoolValue("detrimental");
+		removeAllyEffects = removeEffectsNode->getChildBoolValue("allies");
+		removeEnemyEffects = removeEffectsNode->getChildBoolValue("foes");
 	} else {
 		effectsRemoved = 0;
+	}
+
+	startTime= sn->getOptionalFloatValue("start-time");
+
+	//projectile
+	const XmlNode *projectileNode= sn->getChild("projectile", 0, false);
+	if(projectileNode && projectileNode->getAttribute("value")->getBoolValue()) {
+
+		//proj particle
+		const XmlNode *particleNode= projectileNode->getChild("particle", 0, false);
+		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
+			string path= particleNode->getAttribute("path")->getRestrictedValue();
+			projectileParticleSystemType= new ParticleSystemTypeProjectile();
+			projectileParticleSystemType->load(dir,  dir + "/" + path);
+		}
+
+		//proj sounds
+		const XmlNode *soundNode= projectileNode->getChild("sound", 0, false);
+		if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
+			projSounds.resize(soundNode->getChildCount());
+			for(int i=0; i<soundNode->getChildCount(); ++i){
+				const XmlNode *soundFileNode= soundNode->getChild("sound-file", i);
+				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound= new StaticSound();
+				sound->load(dir + "/" + path);
+				projSounds[i]= sound;
+			}
+		}
+	}
+
+	//splash damage and/or special effects
+	const XmlNode *splashNode = sn->getChild("splash", 0, false);
+	splash = splashNode && splashNode->getBoolValue();
+	if (splash) {
+		splashDamageAll = splashNode->getOptionalBoolValue("damage-all", true);
+		splashRadius= splashNode->getChild("radius")->getAttribute("value")->getIntValue();
+
+		//splash particle
+		const XmlNode *particleNode= splashNode->getChild("particle", 0, false);
+		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
+			string path= particleNode->getAttribute("path")->getRestrictedValue();
+			splashParticleSystemType= new ParticleSystemTypeSplash();
+			splashParticleSystemType->load(dir,  dir + "/" + path);
+		}
 	}
 }
 
 void SkillType::descEffects(string &str, const Unit *unit) const {
+	for(EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
+		str += "Effect: ";
+		(*i)->getDesc(str);
+	}
 }
 
 void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) const {
@@ -231,8 +297,6 @@ TargetBasedSkillType::~TargetBasedSkillType(){
 void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
 	SkillType::load(sn, dir, tt, ft);
 
-	startTime= sn->getOptionalFloatValue("start-time");
-
 	//fields
 	const XmlNode *attackFieldsNode = sn->getChild("attack-fields", 0, false);
 	const XmlNode *fieldsNode = sn->getChild("fields", 0, false);
@@ -243,49 +307,6 @@ void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 		throw runtime_error("Must specify either <attack-fields> or <fields>.");
 	}
 	fields.load(fieldsNode ? fieldsNode : attackFieldsNode, dir, tt, ft);
-
-	//projectile
-	const XmlNode *projectileNode= sn->getChild("projectile", 0, false);
-	if(projectileNode && projectileNode->getAttribute("value")->getBoolValue()) {
-
-		//proj particle
-		const XmlNode *particleNode= projectileNode->getChild("particle", 0, false);
-		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
-			string path= particleNode->getAttribute("path")->getRestrictedValue();
-			projectileParticleSystemType= new ParticleSystemTypeProjectile();
-			projectileParticleSystemType->load(dir,  dir + "/" + path);
-		}
-
-		//proj sounds
-		const XmlNode *soundNode= projectileNode->getChild("sound", 0, false);
-		if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
-			projSounds.resize(soundNode->getChildCount());
-			for(int i=0; i<soundNode->getChildCount(); ++i){
-				const XmlNode *soundFileNode= soundNode->getChild("sound-file", i);
-				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
-				StaticSound *sound= new StaticSound();
-				sound->load(dir + "/" + path);
-				projSounds[i]= sound;
-			}
-		}
-	}
-
-	//splash
-	const XmlNode *splashNode= sn->getChild("splash", 0, false);
-	if(splashNode && splashNode->getAttribute("value")->getBoolValue()) {
-		splash = true;
-		splashRadius= splashNode->getChild("radius")->getAttribute("value")->getIntValue();
-
-		//splash particle
-		const XmlNode *particleNode= splashNode->getChild("particle", 0, false);
-		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
-			string path= particleNode->getAttribute("path")->getRestrictedValue();
-			splashParticleSystemType= new ParticleSystemTypeSplash();
-			splashParticleSystemType->load(dir,  dir + "/" + path);
-		}
-	} else {
-		splash = false;
-	}
 }
 
 void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* rangeDesc) const {
@@ -334,13 +355,20 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 		attackPctStolen = 0.0f;
 		attackPctVar = 0.0f;
 	}
+
+	earthquakeType = NULL;
+	XmlNode *earthquakeNode = sn->getChild("earthquake", 0, false);
+	if(earthquakeNode) {
+		earthquakeType = new EarthquakeType(attackStrength, attackType);
+		earthquakeType->load(earthquakeNode, dir, tt, ft);
+	}
 }
 
 void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
 
 	//attack strength
-	str+= lang.get("AttackStrenght")+": ";
+	str+= lang.get("AttackStrength")+": ";
 	str+= intToStr(attackStrength - attackVar);
 	str+= "...";
 	str+= intToStr(attackStrength + attackVar);
@@ -448,14 +476,14 @@ void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 
 void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
-	descRange(str, unit, "MaxRange");
+//	descRange(str, unit, "MaxRange");
 
 	descSpeed(str, unit, "RepairSpeed");
 	if(amount) {
-		str+= lang.get("HpRestored")+": "+ intToStr(amount);
+		str+= "\n" + lang.get("HpRestored")+": "+ intToStr(amount);
 	}
 	if(maxRange > 1){
-		str+= lang.get("Range")+": "+ intToStr(maxRange);
+		str+= "\n" + lang.get("Range")+": "+ intToStr(maxRange);
 	}
 	str+= "\n";
 	descEpCost(str, unit);
@@ -480,6 +508,48 @@ void ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree
 	}
 }
 
+// ===============================
+// 	class FallDownSkillType
+// ===============================
+
+FallDownSkillType::FallDownSkillType(const SkillType *model) : SkillType(scFallDown, "Fall down") {
+    speed = model->getSpeed();
+    animSpeed = model->getAnimSpeed();
+    animations.push_back((Model *)model->getAnimation());
+	agility = 0.5f;
+}
+
+void FallDownSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+
+	agility = sn->getChildFloatValue("agility");
+}
+
+// ===============================
+// 	class GetUpSkillType
+// ===============================
+
+GetUpSkillType::GetUpSkillType(const SkillType *model) : SkillType(scGetUp, "Get up") {
+    speed = 50;//model->getSpeed();
+    animSpeed = model->getAnimSpeed();
+    animations.push_back((Model *)model->getAnimation());
+}
+
+void GetUpSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+}
+
+// =====================================================
+// 	class WaitForServerSkillType
+// =====================================================
+
+WaitForServerSkillType::WaitForServerSkillType(const SkillType *model) :
+		SkillType(scWaitForServer, "Waiting for server...") {
+    speed = model->getSpeed();
+    animSpeed = model->getAnimSpeed();
+    animations.push_back((Model *)model->getAnimation());
+}
+
 // =====================================================
 // 	class SkillTypeFactory
 // =====================================================
@@ -497,7 +567,8 @@ SkillTypeFactory::SkillTypeFactory(){
 	registerClass<MorphSkillType>("morph");
 	registerClass<DieSkillType>("die");
 	registerClass<CastSpellSkillType>("cast_spell");
-
+	registerClass<FallDownSkillType>("fall_down");
+	registerClass<GetUpSkillType>("get_up");
 }
 
 SkillTypeFactory &SkillTypeFactory::getInstance(){

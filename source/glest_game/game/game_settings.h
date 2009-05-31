@@ -19,19 +19,20 @@
 using std::string;
 using Shared::Xml::XmlNode;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 //	class GameSettings
 // =====================================================
 
-class GameSettings{
+class GameSettings {
 private:
 	string description;
 	string mapPath;
 	string tilesetPath;
 	string techPath;
 	string factionTypeNames[GameConstants::maxPlayers]; //faction names
+	string playerNames[GameConstants::maxPlayers];
 
 	ControlType factionControls[GameConstants::maxPlayers];
 
@@ -43,37 +44,37 @@ private:
 public:
 	GameSettings(){}
 	GameSettings(const XmlNode *node);
+	// use default copy ctor
+	//GameSettings(const GameSettings &gs);
+
 	//get
 	const string &getDescription() const						{return description;}
 	const string &getMapPath() const 							{return mapPath;}
 	const string &getTilesetPath() const						{return tilesetPath;}
 	const string &getTechPath() const							{return techPath;}
-	const string &getFactionTypeName(int factionIndex) const	{return factionTypeNames[factionIndex];}
-
-	ControlType getFactionControl(int factionIndex) const	{return factionControls[factionIndex];}
-
-	int getThisFactionIndex() const							{return thisFactionIndex;}
-	int getFactionCount() const								{return factionCount;}
-	int getTeam(int factionIndex) const						{return teams[factionIndex];}
-	int getStartLocationIndex(int factionIndex) const		{return startLocationIndex[factionIndex];}
+	const string &getFactionTypeName(int i) const				{return factionTypeNames[i];}
+	const string &getPlayerName(int i) const					{return playerNames[i];}
+	ControlType getFactionControl(int i) const					{return factionControls[i];}
+	int getThisFactionIndex() const								{return thisFactionIndex;}
+	int getFactionCount() const									{return factionCount;}
+	int getTeam(int i) const									{return teams[i];}
+	int getStartLocationIndex(int i) const						{return startLocationIndex[i];}
 
 	//set
-	void setDescription(const string& description)		{this->description= description;}
-	void setMapPath(const string& mapPath)				{this->mapPath= mapPath;}
-	void setTilesetPath(const string& tilesetPath)		{this->tilesetPath= tilesetPath;}
-	void setTechPath(const string& techPath)			{this->techPath= techPath;}
+	void setDescription(const string& description)				{this->description = description;}
+	void setMapPath(const string& mapPath)						{this->mapPath = mapPath;}
+	void setTilesetPath(const string& tilesetPath)				{this->tilesetPath = tilesetPath;}
+	void setTechPath(const string& techPath)					{this->techPath = techPath;}
+	void setFactionTypeName(int i, const string& name)			{this->factionTypeNames[i] = name;}
+	void setPlayerName(int i, const string &name)				{this->playerNames[i] = name;}
+	void setFactionControl(int i, ControlType controller)		{this->factionControls[i]= controller;}
+	void setThisFactionIndex(int thisFactionIndex) 				{this->thisFactionIndex = thisFactionIndex;}
+	void setFactionCount(int factionCount)						{this->factionCount = factionCount;}
+	void setTeam(int i, int team)								{this->teams[i] = team;}
+	void setStartLocationIndex(int i, int startLocationIndex)	{this->startLocationIndex[i] = startLocationIndex;}
 
-	void setFactionTypeName(int factionIndex, const string& factionTypeName)	{this->factionTypeNames[factionIndex]= factionTypeName;}
-
-	void setFactionControl(int factionIndex, ControlType controller)			{this->factionControls[factionIndex]= controller;}
-
-	void setThisFactionIndex(int thisFactionIndex) 							{this->thisFactionIndex= thisFactionIndex;}
-	void setFactionCount(int factionCount)									{this->factionCount= factionCount;}
-	void setTeam(int factionIndex, int team)								{this->teams[factionIndex]= team;}
-	void setStartLocationIndex(int factionIndex, int startLocationIndex)	{this->startLocationIndex[factionIndex]= startLocationIndex;}
-
+	//misc
 	void randomizeLocs();
-
 	void save(XmlNode *node) const;
 };
 

@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "pixmap.h"
 
 #include <stdexcept>
@@ -18,7 +19,9 @@
 #include "util.h"
 #include "math_util.h"
 #include "random.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace std;
@@ -33,27 +36,27 @@ using namespace Util;
 
 #pragma pack(push, 1)
 
-struct BitmapFileHeader{ 
-	uint8 type1; 
-	uint8 type2; 
-	uint32 size; 
-	uint16 reserved1; 
-	uint16 reserved2; 
-	uint32 offsetBits; 
-}; 
+struct BitmapFileHeader{
+	uint8 type1;
+	uint8 type2;
+	uint32 size;
+	uint16 reserved1;
+	uint16 reserved2;
+	uint32 offsetBits;
+};
 
 struct BitmapInfoHeader{
-	uint32 size; 
-	int32 width; 
-	int32 height; 
-	uint16 planes; 
-	uint16 bitCount; 
-	uint32 compression; 
-	uint32 sizeImage; 
-	int32 xPelsPerMeter; 
-	int32 yPelsPerMeter; 
-	uint32 clrUsed; 
-	uint32 clrImportant; 
+	uint32 size;
+	int32 width;
+	int32 height;
+	uint16 planes;
+	uint16 bitCount;
+	uint32 compression;
+	uint32 sizeImage;
+	int32 xPelsPerMeter;
+	int32 yPelsPerMeter;
+	uint32 clrUsed;
+	uint32 clrImportant;
 };
 
 struct TargaFileHeader{
@@ -91,22 +94,22 @@ PixmapIoTga::~PixmapIoTga(){
 }
 
 void PixmapIoTga::openRead(const string &path){
-	file= fopen(path.c_str(),"rb"); 
+	file= fopen(path.c_str(),"rb");
 	if (file==NULL){
 		throw runtime_error("Can't open TGA file: "+ path);
 	}
-	
+
 	//read header
 	TargaFileHeader fileHeader;
 	fread(&fileHeader, sizeof(TargaFileHeader), 1, file);
-    
+
 	//check that we can load this tga file
 	if(fileHeader.idLength!=0){
 		throw runtime_error(path + ": id field is not 0");
 	}
 
 	if(fileHeader.dataTypeCode!=tgaUncompressedRgb && fileHeader.dataTypeCode!=tgaUncompressedBw){
-		throw runtime_error(path + ": only uncompressed BW and RGB targa images are supported"); 
+		throw runtime_error(path + ": only uncompressed BW and RGB targa images are supported");
 	}
 
 	//check bits per pixel
@@ -171,7 +174,7 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 	this->h= h;
 	this->components= components;
 
-    file= fopen(path.c_str(),"wb"); 
+    file= fopen(path.c_str(),"wb");
 	if (file==NULL){
 		throw runtime_error("Can't open TGA file: "+ path);
 	}
@@ -189,7 +192,7 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 
 void PixmapIoTga::write(uint8 *pixels){
 	if(components==1){
-		fwrite(pixels, h*w, 1, file);	
+		fwrite(pixels, h*w, 1, file);
 	}
 	else{
 		for(int i=0; i<h*w*components; i+=components){
@@ -218,7 +221,7 @@ PixmapIoBmp::~PixmapIoBmp(){
 }
 
 void PixmapIoBmp::openRead(const string &path){
-    file= fopen(path.c_str(),"rb"); 
+    file= fopen(path.c_str(),"rb");
 	if (file==NULL){
 		throw runtime_error("Can't open BMP file: "+ path);
 	}
@@ -226,10 +229,10 @@ void PixmapIoBmp::openRead(const string &path){
 	//read file header
     BitmapFileHeader fileHeader;
     fread(&fileHeader, sizeof(BitmapFileHeader), 1, file);
-	if(fileHeader.type1!='B' || fileHeader.type2!='M'){ 
+	if(fileHeader.type1!='B' || fileHeader.type2!='M'){
 		throw runtime_error(path +" is not a bitmap");
 	}
-    
+
 	//read info header
 	BitmapInfoHeader infoHeader;
 	fread(&infoHeader, sizeof(BitmapInfoHeader), 1, file);
@@ -276,8 +279,8 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
     this->w= w;
 	this->h= h;
 	this->components= components;
-	
-	file= fopen(path.c_str(),"wb"); 
+
+	file= fopen(path.c_str(),"wb");
 	if (file==NULL){
 		throw runtime_error("Can't open BMP file for writting: "+ path);
 	}
@@ -289,7 +292,7 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	fileHeader.size=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader)+3*h*w;
 
     fwrite(&fileHeader, sizeof(BitmapFileHeader), 1, file);
-    
+
 	//info header
 	BitmapInfoHeader infoHeader;
 	infoHeader.bitCount=24;
@@ -322,7 +325,7 @@ void PixmapIoBmp::write(uint8 *pixels){
 
 // ===================== PUBLIC ========================
 
-Pixmap1D::Pixmap1D(){
+Pixmap1D::Pixmap1D() {
     w= -1;
 	components= -1;
     pixels= NULL;
@@ -349,7 +352,9 @@ void Pixmap1D::init(int w, int components){
 }
 
 Pixmap1D::~Pixmap1D(){
-	delete [] pixels;
+	if(pixels) {
+		delete [] pixels;
+	}
 }
 
 void Pixmap1D::load(const string &path){
@@ -366,7 +371,7 @@ void Pixmap1D::load(const string &path){
 }
 
 void Pixmap1D::loadBmp(const string &path){
-	
+
 	PixmapIoBmp plb;
 	plb.openRead(path);
 
@@ -385,7 +390,7 @@ void Pixmap1D::loadBmp(const string &path){
 		components= 3;
 	}
 	if(pixels==NULL){
-		pixels= new uint8[w*components]; 
+		pixels= new uint8[w*components];
 	}
 
 	//data
@@ -393,10 +398,10 @@ void Pixmap1D::loadBmp(const string &path){
 }
 
 void Pixmap1D::loadTga(const string &path){
-	
+
 	PixmapIoTga plt;
 	plt.openRead(path);
-	
+
 	//init
 	if(plt.getH()==1){
 		w= plt.getW();
@@ -414,7 +419,7 @@ void Pixmap1D::loadTga(const string &path){
 		components= fileComponents;
 	}
 	if(pixels==NULL){
-		pixels= new uint8[w*components]; 
+		pixels= new uint8[w*components];
 	}
 
 	//read data
@@ -457,7 +462,9 @@ void Pixmap2D::init(int w, int h, int components){
 }
 
 Pixmap2D::~Pixmap2D(){
-	delete [] pixels;
+	if(pixels) {
+		delete[] pixels;
+	}
 }
 
 void Pixmap2D::load(const string &path){
@@ -474,7 +481,7 @@ void Pixmap2D::load(const string &path){
 }
 
 void Pixmap2D::loadBmp(const string &path){
-	
+
 	PixmapIoBmp plb;
 	plb.openRead(path);
 
@@ -485,7 +492,7 @@ void Pixmap2D::loadBmp(const string &path){
 		components= 3;
 	}
 	if(pixels==NULL){
-		pixels= new uint8[w*h*components]; 
+		pixels= new uint8[w*h*components];
 	}
 
 	//data
@@ -493,7 +500,7 @@ void Pixmap2D::loadBmp(const string &path){
 }
 
 void Pixmap2D::loadTga(const string &path){
-	
+
 	PixmapIoTga plt;
 	plt.openRead(path);
 	w= plt.getW();
@@ -507,7 +514,7 @@ void Pixmap2D::loadTga(const string &path){
 		components= fileComponents;
 	}
 	if(pixels==NULL){
-		pixels= new uint8[w*h*components]; 
+		pixels= new uint8[w*h*components];
 	}
 
 	//read data
@@ -551,14 +558,6 @@ void Pixmap2D::getPixel(int x, int y, float32 *value) const{
 	}
 }
 
-void Pixmap2D::getComponent(int x, int y, int component, uint8 &value) const{
-	value= pixels[(w*y+x)*components+component];
-}
-
-void Pixmap2D::getComponent(int x, int y, int component, float32 &value) const{
-	value= pixels[(w*y+x)*components+component]/255.f;
-}
-
 //vector get
 Vec4f Pixmap2D::getPixel4f(int x, int y) const{
 	Vec4f v(0.f);
@@ -574,10 +573,6 @@ Vec3f Pixmap2D::getPixel3f(int x, int y) const{
 		v.ptr()[i]= pixels[(w*y+x)*components+i]/255.f;
 	}
 	return v;
-}
-
-float Pixmap2D::getPixelf(int x, int y) const{
-	return pixels[(w*y+x)*components]/255.f;
 }
 
 float Pixmap2D::getComponentf(int x, int y, int component) const{
@@ -598,14 +593,6 @@ void Pixmap2D::setPixel(int x, int y, const float32 *value){
 	}
 }
 
-void Pixmap2D::setComponent(int x, int y, int component, uint8 value){
-	pixels[(w*y+x)*components+component]= value;
-}
-
-void Pixmap2D::setComponent(int x, int y, int component, float32 value){
-	pixels[(w*y+x)*components+component]= static_cast<uint8>(value*255.f);
-}
-
 //vector set
 void Pixmap2D::setPixel(int x, int y, const Vec3f &p){
 	for(int i=0; i<components  && i<3; ++i){
@@ -619,9 +606,6 @@ void Pixmap2D::setPixel(int x, int y, const Vec4f &p){
 	}
 }
 
-void Pixmap2D::setPixel(int x, int y, float p){
-	pixels[(w*y+x)*components]= static_cast<uint8>(p*255.f);
-}
 
 void Pixmap2D::setPixels(const uint8 *value){
 	for(int i=0; i<w; ++i){
@@ -630,7 +614,7 @@ void Pixmap2D::setPixels(const uint8 *value){
 		}
 	}
 }
-	
+
 void Pixmap2D::setPixels(const float32 *value){
 	for(int i=0; i<w; ++i){
 		for(int j=0; j<h; ++j){
@@ -678,14 +662,14 @@ void Pixmap2D::splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixm
 
 	for(int i=0; i<w; ++i){
 		for(int j=0; j<h; ++j){
-			
+
 			float avg= (w+h)/2.f;
 
 			float distLu= splatDist(Vec2i(i, j), Vec2i(0, 0));
 			float distRu= splatDist(Vec2i(i, j), Vec2i(w, 0));
 			float distLd= splatDist(Vec2i(i, j), Vec2i(0, h));
 			float distRd= splatDist(Vec2i(i, j), Vec2i(w, h));
-			
+
 			const float powFactor= 2.0f;
 			distLu= pow(distLu, powFactor);
 			distRu= pow(distRu, powFactor);
@@ -697,7 +681,7 @@ void Pixmap2D::splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixm
 			float ru= distRu>avg? 0: ((avg-distRu))*random.randRange(0.5f, 1.0f);
 			float ld= distLd>avg? 0: ((avg-distLd))*random.randRange(0.5f, 1.0f);
 			float rd= distRd>avg? 0: ((avg-distRd))*random.randRange(0.5f, 1.0f);
-			
+
 			float total= lu+ru+ld+rd;
 
 			Vec4f pix= (leftUp->getPixel4f(i, j)*lu+
@@ -705,8 +689,8 @@ void Pixmap2D::splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixm
 				leftDown->getPixel4f(i, j)*ld+
 				rightDown->getPixel4f(i, j)*rd)*(1.0f/total);
 
-			setPixel(i, j, pix);				
-		}	
+			setPixel(i, j, pix);
+		}
 	}
 }
 
@@ -726,7 +710,7 @@ void Pixmap2D::lerp(float t, const Pixmap2D *pixmap1, const Pixmap2D *pixmap2){
 }
 
 void Pixmap2D::copy(const Pixmap2D *sourcePixmap){
-	
+
 	assert(components==sourcePixmap->getComponents());
 
 	if(w!=sourcePixmap->getW() || h!=sourcePixmap->getH()){
@@ -794,7 +778,9 @@ void Pixmap3D::init(int d, int components){
 }
 
 Pixmap3D::~Pixmap3D(){
-	delete [] pixels;
+	if(pixels) {
+		delete[] pixels;
+	}
 }
 
 void Pixmap3D::loadSlice(const string &path, int slice){
@@ -822,7 +808,7 @@ void Pixmap3D::loadSliceBmp(const string &path, int slice){
 		components= 3;
 	}
 	if(pixels==NULL){
-		pixels= new uint8[w*h*d*components]; 
+		pixels= new uint8[w*h*d*components];
 	}
 
 	//data
@@ -843,7 +829,7 @@ void Pixmap3D::loadSliceTga(const string &path, int slice){
 		components= fileComponents;
 	}
 	if(pixels==NULL){
-		pixels= new uint8[w*h*d*components]; 
+		pixels= new uint8[w*h*d*components];
 	}
 
 	//read data
@@ -859,7 +845,7 @@ void PixmapCube::init(int w, int h, int components){
 		faces[i].init(w, h, components);
 	}
 }
-	
+
 	//load & save
 void PixmapCube::loadFace(const string &path, int face){
 	faces[face].load(path);

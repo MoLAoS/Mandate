@@ -8,14 +8,18 @@
 //	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
-#include "ai_rule.h"
 
+#include "pch.h"
+
+#include <algorithm>
+
+#include "ai_rule.h"
 #include "ai.h"
 #include "ai_interface.h"
 #include "unit.h"
+
 #include "leak_dumper.h"
 
-#include <algorithm>
 
 using Shared::Graphics::Vec2i;
 
@@ -648,7 +652,7 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 
 			//if the unit is not going to build
 			const Unit *u= aiInterface->getMyUnit(i);
-			if(!u->anyCommand() || u->getCurrCommand()->getCommandType()->getClass()!=ccBuild){
+			if(!u->anyCommand() || u->getCurrCommand()->getType()->getClass()!=ccBuild){
 
 				//for each command
 				const UnitType *ut= aiInterface->getMyUnit(i)->getType();

@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -14,10 +14,12 @@
 
 #include <string>
 
+#include "vec.h"
+
 using std::string;
 
 namespace Shared{ namespace Graphics{
-	
+
 // =====================================================
 //	class FontMetrics
 // =====================================================
@@ -31,10 +33,10 @@ public:
 	FontMetrics();
 	~FontMetrics();
 
-	void setWidth(int i, float width)	{widths[i]= width;}
-	void setHeight(float height)		{this->height= height;}
+	void setWidth(int i, float width)	{widths[i] = width;}
+	void setHeight(float height)		{this->height = height;}
 
-	float getTextWidth(const string &str) const;
+	Vec2f getTextDiminsions(const string &str) const;
 	float getHeight() const;
 };
 
@@ -45,11 +47,11 @@ public:
 class Font{
 public:
 	static const int charCount;
-	
+
 public:
 	enum Width{
-		wNormal= 400,
-		wBold= 700
+		wNormal = 400,
+		wBold = 700
 	};
 
 protected:
@@ -57,16 +59,16 @@ protected:
 	int width;
 	bool inited;
 	FontMetrics metrics;
-	
+
 public:
 	//constructor & destructor
 	Font();
 	virtual ~Font(){};
-	virtual void init()=0;
-	virtual void end()=0;
-	
+	virtual void init() = 0;
+	virtual void end() = 0;
+
 	//get
-	string getType() const					{return type;}	
+	string getType() const					{return type;}
 	int getWidth() const					{return width;}
 	const FontMetrics *getMetrics() const	{return &metrics;}
 
@@ -85,7 +87,7 @@ protected:
 
 public:
 	Font2D();
-	
+
 	int getSize() const				{return size;}
 	void setSize(int size)			{this->size= size;}
 };
@@ -100,7 +102,7 @@ protected:
 
 public:
 	Font3D();
-	
+
 	float getDepth() const			{return depth;}
 	void setDepth(float depth)		{this->depth= depth;}
 };

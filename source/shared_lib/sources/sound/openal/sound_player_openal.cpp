@@ -1,10 +1,12 @@
 //This file is part of Glest Shared Library (www.glest.org)
 //Copyright (C) 2005 Matthias Braun <matze@braunis.de>
 
-//You can redistribute this code and/or modify it under 
-//the terms of the GNU General Public License as published by the Free Software 
-//Foundation; either version 2 of the License, or (at your option) any later 
+//You can redistribute this code and/or modify it under
+//the terms of the GNU General Public License as published by the Free Software
+//Foundation; either version 2 of the License, or (at your option) any later
 //version.
+
+#include "pch.h"
 #include "sound_player_openal.h"
 
 #include <cassert>
@@ -42,7 +44,7 @@ bool SoundSource::playing()
 void SoundSource::stop()
 {
 	alSourceStop(source);
-	alSourcei(source, AL_BUFFER, AL_NONE);	
+	alSourcei(source, AL_BUFFER, AL_NONE);
 	SoundPlayerOpenAL::checkAlError("Problem stopping audio source: ");
 }
 
@@ -63,7 +65,7 @@ ALenum SoundSource::getFormat(Sound* sound)
 		else
 			throw std::runtime_error("Sample format not supported");
 	}
-	
+
 	throw std::runtime_error("Sample format not supported");
 }
 
@@ -90,9 +92,9 @@ void StaticSoundSource::play(StaticSound* sound)
 
 	alGenBuffers(1, &buffer);
 	SoundPlayerOpenAL::checkAlError("Couldn't create audio buffer: ");
-	
+
 	bufferAllocated = true;
-	alBufferData(buffer, format, sound->getSamples(), 
+	alBufferData(buffer, format, sound->getSamples(),
 			static_cast<ALsizei> (sound->getInfo()->getSize()),
 			static_cast<ALsizei> (sound->getInfo()->getSamplesPerSecond()));
 	SoundPlayerOpenAL::checkAlError("Couldn't fill audio buffer: ");
@@ -173,14 +175,14 @@ void StreamSoundSource::update()
 		if(!fillBufferAndQueue(buffer))
 			break;
 	}
-        
+
  	// we might have to restart the source if we had a buffer underrun
 	if(!playing()) {
-		std::cerr 
+		std::cerr
 			<< "Restarting audio source because of buffer underrun.\n";
 		alSourcePlay(source);
 		SoundPlayerOpenAL::checkAlError("Couldn't restart audio source: ");
-  	}    
+  	}
 
 	// handle fading
 	switch(fadeState) {
@@ -223,7 +225,7 @@ bool StreamSoundSource::fillBufferAndQueue(ALuint buffer)
 			sound = next;
 		}
 	} while(bytesread < STREAMFRAGMENTSIZE);
-		
+
 	alBufferData(buffer, format, bufferdata, STREAMFRAGMENTSIZE,
 			sound->getInfo()->getSamplesPerSecond());
         delete[] bufferdata;
@@ -250,9 +252,9 @@ SoundPlayerOpenAL::~SoundPlayerOpenAL() {
 void SoundPlayerOpenAL::printOpenALInfo()
 {
 	std::cout << "OpenAL Vendor: " << alGetString(AL_VENDOR) << "\n"
-	          << "OpenAL Version: " << alGetString(AL_VERSION) << "\n"     	
+	          << "OpenAL Version: " << alGetString(AL_VERSION) << "\n"
 	          << "OpenAL Renderer: " << alGetString(AL_RENDERER) << "\n"
-	          << "OpenAl Extensions: " << alGetString(AL_RENDERER) << "\n";   	
+	          << "OpenAl Extensions: " << alGetString(AL_RENDERER) << "\n";
 }
 
 void SoundPlayerOpenAL::init(const SoundPlayerParams* params) {
@@ -269,7 +271,7 @@ void SoundPlayerOpenAL::init(const SoundPlayerParams* params) {
 		checkAlcError("Couldn't create audio context: ");
 		alcMakeContextCurrent(context);
 		checkAlcError("Couldn't select audio context: ");
-	
+
 		checkAlError("Audio error after init: ");
 	} catch(...) {
 		printOpenALInfo();

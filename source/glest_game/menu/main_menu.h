@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -14,7 +14,7 @@
 
 #include "lang.h"
 #include "console.h"
-#include "vec.h" 
+#include "vec.h"
 #include "world.h"
 #include "program.h"
 #include "components.h"
@@ -24,7 +24,7 @@
 namespace Glest{ namespace Game{
 
 //misc consts
-struct MapInfo{
+struct MapInfo {
 	Vec2i size;
 	int players;
 	string desc;
@@ -52,11 +52,8 @@ class MenuState;
 ///	Main menu ProgramState
 // =====================================================
 
-class MainMenu: public ProgramState{
+class MainMenu: public ProgramState {
 private:
-	//up
-	Program *program;
-	
 	//shared
 	GameSettings gameSettings;
 	MenuBackground menuBackground;
@@ -68,8 +65,12 @@ private:
     int mouse2dAnim;
 	int fps, lastFps;
 
+private:
+	MainMenu(const MainMenu &);
+	const MainMenu &operator =(const MainMenu &);
+
 public:
-	MainMenu(Program *program);
+	MainMenu(Program &program);
     ~MainMenu();
 
 	MenuBackground *getMenuBackground()	{return &menuBackground;}
@@ -78,36 +79,40 @@ public:
     virtual void update();
 	virtual void tick();
 	virtual void init();
-    virtual void mouseMove(int x, int y, const MouseState *mouseState);
+    virtual void mouseMove(int x, int y, const MouseState &mouseState);
     virtual void mouseDownLeft(int x, int y);
     virtual void mouseDownRight(int x, int y);
-	virtual void keyDown(char key);
-	virtual void keyPress(char key);
-    
+	virtual void keyDown(const Key &key);
+	virtual void keyPress(char c);
+
 	void setState(MenuState *state);
 };
 
 
 // ===============================
-// 	class MenuState  
+// 	class MenuState
 // ===============================
 
-class MenuState{
+class MenuState {
 protected:
-	Program *program;
+	Program &program;
 
 	MainMenu *mainMenu;
 	Camera camera;
 
+private:
+	MenuState(const MenuState &);
+	const MenuState &operator =(const MenuState &);
+
 public:
-	MenuState(Program *program, MainMenu *mainMenu, const string &stateName);
-	virtual ~MenuState(){};
-	virtual void mouseClick(int x, int y, MouseButton mouseButton)=0;
-	virtual void mouseMove(int x, int y, const MouseState *mouseState)=0;
-	virtual void render()=0;
-	virtual void update(){};
-	virtual void keyDown(char key){};
-	virtual void keyPress(char c){};
+	MenuState(Program &program, MainMenu *mainMenu, const string &stateName);
+	virtual ~MenuState(){}
+	virtual void mouseClick(int x, int y, MouseButton mouseButton) = 0;
+	virtual void mouseMove(int x, int y, const MouseState &mouseState) = 0;
+	virtual void render() = 0;
+	virtual void update(){}
+	virtual void keyDown(const Key &key){}
+	virtual void keyPress(char c){}
 
 	const Camera *getCamera() const			{return &camera;}
 };

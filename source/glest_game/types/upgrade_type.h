@@ -20,7 +20,8 @@
 using Shared::Util::Checksum;
 using namespace Shared::Xml;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
+
 class UnitType;
 class Unit;
 
@@ -38,26 +39,19 @@ private:
     vector<const UnitType*> effects;
 
 public:
-	void preLoad(const string &dir);
-	virtual void load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum* checksum);
+	void preLoad(const string &dir)			{name=lastDir(dir);}
+	virtual void load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
 
     //get all
 	int getEffectCount() const				{return effects.size();}
 	const UnitType * getEffect(int i) const	{return effects[i];}
-	bool isAffected(const UnitType *unitType) const;
+	bool isAffected(const UnitType *unitType) const {
+		return find(effects.begin(), effects.end(), unitType) != effects.end();
+	}
 
     //other methods
 	string getDesc() const;
 };
-
-
-/**
- * A specialization of EnhancementTypeBase which serves as a cache-like
- * mechanism, sums all upgrades (from UpgradeType and level increases) for
- * the given (owning) unit. In addition, TotalUpgrade manages a
- * baseEffectStrength variable that is used to modify the strength of
- * effects created/caused by this unit.
- */
 
 }}//end namespace
 

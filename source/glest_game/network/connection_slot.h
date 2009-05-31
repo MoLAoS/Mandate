@@ -30,12 +30,11 @@ class ServerInterface;
 //	class ConnectionSlot
 // =====================================================
 
-class ConnectionSlot: public NetworkInterface{
+class ConnectionSlot: public NetworkInterface {
 private:
 	ServerInterface* serverInterface;
 	Socket* socket;
 	int playerIndex;
-	string name;
 	bool ready;
 	bool resumeSaved;
 
@@ -45,8 +44,8 @@ public:
 
 	virtual void update();
 
-	void setReady()					{ready= true;}
-	const string &getName() const	{return name;}
+	void setReady()					{ready = true;}
+	int getPlayerIndex() const		{return playerIndex;}
 	bool isReady() const			{return ready;}
 
 protected:

@@ -96,11 +96,6 @@ public:
 	static const float selectionCircleRadius;
 	static const float magicCircleRadius;
 
-	//perspective values
-	static const float perspFov;
-	static const float perspNearPlane;
-	static const float perspFarPlane;
-
 	//default values
 	static const float ambFactor;
 	static const Vec4f defSpecularColor;
@@ -111,7 +106,7 @@ public:
 
 	//light
 	static const float maxLightDist;
-
+	
 public:
 	enum Shadows{
 		sDisabled,
@@ -164,6 +159,11 @@ private:
 
 	//water
 	float waterAnim;
+	
+	//perspective values
+	float perspFov;
+	float perspNearPlane;
+	float perspFarPlane;
 
 private:
 	Renderer();
@@ -218,8 +218,9 @@ public:
 	void renderChatManager(const ChatManager *chatManager);
 	void renderResourceStatus();
 	void renderSelectionQuad();
-	void renderText(const string &text, const Font2D *font, float alpha, int x, int y, bool centered);
-	void renderText(const string &text, const Font2D *font, const Vec3f &color, int x, int y, bool centered);
+	void renderText(const string &text, const Font2D *font, float alpha, int x, int y, bool centered= false);
+	void renderText(const string &text, const Font2D *font, const Vec3f &color, int x, int y, bool centered= false);
+	void renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered= false);	
 
     //components
 	void renderLabel(const GraphicLabel *label);
@@ -259,6 +260,7 @@ public:
 	//misc
 	void loadConfig();
 	void saveScreen(const string &path);
+	Quad2i getVisibleQuad() const		{return visibleQuad;}
 
 	//static
 	static Shadows strToShadows(const string &s);
@@ -276,7 +278,7 @@ private:
 
 	//selection render
 	void renderObjectsFast();
-	void renderUnitsFast();
+	void renderUnitsFast(bool renderingShadows = false);
 
 	//gl requirements
 	void checkGlCaps();

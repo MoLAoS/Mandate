@@ -9,60 +9,63 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "thread.h"
 
-namespace Shared{ namespace Platform{
+#include "leak_dumper.h"
+
+namespace Shared { namespace Platform {
 
 // =====================================================
-//	class Threads
+// class Thread
 // =====================================================
 
-ThreadId Thread::nextThreadId= threadIdBase;
+ThreadId nextThreadId = 1000;
 
-void Thread::start(){
-	threadHandle= CreateThread(NULL, 0, beginExecution, this, 0, &nextThreadId);
+void Thread::start() {
+	thread = CreateThread(NULL, 0, beginExecution, this, 0, &nextThreadId);
 	nextThreadId++;
 }
 
-void Thread::setPriority(Thread::Priority threadPriority){
-	SetThreadPriority(threadHandle, threadPriority);
+void Thread::setPriority(Thread::Priority threadPriority) {
+	SetThreadPriority(thread, threadPriority);
 }
 
-DWORD WINAPI Thread::beginExecution(void *param){
+DWORD WINAPI Thread::beginExecution(void *param) {
 	static_cast<Thread*>(param)->execute();
 	return 0;
 }
 
-void Thread::suspend(){
-	SuspendThread(threadHandle);
+void Thread::suspend() {
+	SuspendThread(thread);
 }
 
-void Thread::resume(){
-	ResumeThread(threadHandle);
+void Thread::resume() {
+	ResumeThread(thread);
 }
 
-bool Thread::join(int maxWaitMillis){
-	return WaitForSingleObject(threadHandle, maxWaitMillis) == WAIT_OBJECT_0;
+bool Thread::join(int maxWaitMillis) {
+	return WaitForSingleObject(thread, maxWaitMillis) == WAIT_OBJECT_0;
 }
 
 // =====================================================
-//	class Mutex
+// class Mutex
 // =====================================================
 
-Mutex::Mutex(){
-    InitializeCriticalSection(&mutex);
+Mutex::Mutex() {
+	InitializeCriticalSection(&mutex);
 }
 
-Mutex::~Mutex(){
-    DeleteCriticalSection(&mutex);
+Mutex::~Mutex() {
+	DeleteCriticalSection(&mutex);
 }
 
-void Mutex::p(){
-    EnterCriticalSection(&mutex);
+void Mutex::p() {
+	EnterCriticalSection(&mutex);
 }
 
-void Mutex::v(){
-    LeaveCriticalSection(&mutex);
+void Mutex::v() {
+	LeaveCriticalSection(&mutex);
 }
 
 }}//end namespace

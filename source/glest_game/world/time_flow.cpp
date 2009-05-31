@@ -9,11 +9,13 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "time_flow.h"
 
 #include "sound_renderer.h"
 #include "config.h"
 #include "game_constants.h"
+
 #include "leak_dumper.h"
 
 namespace Glest{ namespace Game{
@@ -31,7 +33,7 @@ void TimeFlow::init(Tileset *tileset){
 	time= dawn+1.5f;
 	lastTime= time;
 	Config &config= Config::getInstance();
-	timeInc= 24.f*(1.f/config.getDayTime())/GameConstants::updateFps;
+	timeInc= 24.f*(1.f/config.getGsDayTime())/Config::getInstance().getGsWorldUpdateFps();
 }
 
 void TimeFlow::update(){
@@ -83,6 +85,21 @@ void TimeFlow::update(){
 	}
 	lastTime= time;
 }
+
+void TimeFlow::save(XmlNode *node) const {
+	node->addChild("firstTime", firstTime);
+	node->addChild("time", time);
+	node->addChild("lastTime", lastTime);
+	node->addChild("timeInc", timeInc);
+}
+
+void TimeFlow::load(const XmlNode *node) {
+	firstTime = node->getChildBoolValue("firstTime");
+	time = node->getChildFloatValue("time");
+	lastTime = node->getChildFloatValue("lastTime");
+	timeInc = node->getChildFloatValue("timeInc");
+}
+
 
 bool TimeFlow::isAproxTime(float time){
 	return (this->time>=time) && (this->time<time+timeInc);

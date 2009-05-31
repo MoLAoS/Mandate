@@ -172,7 +172,7 @@ public:
 	float getSoundStartTime() const						{return soundStartTime;}
 	bool isLoopSound() const							{return loopSound;}
 	const EffectTypes &getRecourse() const				{return recourse;}
-	string &getDesc(string &str) const;
+	void getDesc(string &str) const;
 };
 
 class Emanation : public EffectType {

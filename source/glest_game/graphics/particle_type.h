@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -24,6 +24,7 @@ using std::string;
 
 namespace Glest{ namespace Game{
 
+using Shared::Graphics::ParticleSystemBase;
 using Shared::Graphics::ParticleSystem;
 using Shared::Graphics::AttackParticleSystem;
 using Shared::Graphics::ProjectileParticleSystem;
@@ -36,68 +37,73 @@ using Shared::Util::MultiFactory;
 using Shared::Xml::XmlNode;
 
 // ===========================================================
-//	class ParticleSystemType 
+//	class ParticleSystemType
 //
 ///	A type of particle system
 // ===========================================================
 
-class ParticleSystemType{
-protected:
-	string type;
-	Texture2D *texture;
-	Model *model;
-	string primitive;
-	Vec3f offset;
-	Vec4f color;
-	Vec4f colorNoEnergy;
-	float size;
-	float sizeNoEnergy;
-	float speed;
-	float gravity;
-	int emissionRate;
-	int energyMax;
-	int energyVar;
-
+class ParticleSystemType : public ParticleSystemBase {
 public:
 	ParticleSystemType();
 	void load(const XmlNode *particleSystemNode, const string &dir);
+	virtual ParticleSystem *create() = 0;
 
-protected:
-	void setValues(AttackParticleSystem *ats);
+//protected:
+//	void setValues(AttackParticleSystem *ats);
 };
 
 // ===========================================================
 //	class ParticleSystemTypeProjectile
 // ===========================================================
 
-class ParticleSystemTypeProjectile: public ParticleSystemType{
+class ParticleSystemTypeProjectile: public ParticleSystemType {
+public:
+	enum ProjectileStart {
+		psSelf,
+		psTarget,
+		psSky
+	};
+
 private:
 	string trajectory;
 	float trajectorySpeed;
 	float trajectoryScale;
 	float trajectoryFrequency;
+	ProjectileStart start;
+	bool tracking;
 
 public:
 	void load(const string &dir, const string &path);
-	ProjectileParticleSystem *create();
+	virtual ParticleSystem *create();
+	ProjectileParticleSystem *createProjectileParticleSystem() {return (ProjectileParticleSystem*)create();}
+
+	ProjectileStart getStart() const	{return start;}
+	bool isTracking() const				{return tracking;}
 };
 
 // ===========================================================
 //	class ParticleSystemTypeSplash
 // ===========================================================
 
-class ParticleSystemTypeSplash: public ParticleSystemType{
-public:
-	void load(const string &dir, const string &path);
-	SplashParticleSystem *create();
-
+class ParticleSystemTypeSplash: public ParticleSystemType {
 private:
 	int emissionRateFade;
 	float verticalSpreadA;
 	float verticalSpreadB;
 	float horizontalSpreadA;
 	float horizontalSpreadB;
+
+public:
+	void load(const string &dir, const string &path);
+	virtual ParticleSystem *create();
+	SplashParticleSystem *createSplashParticleSystem() {return (SplashParticleSystem*)create();}
 };
+
+class ParticleSystemTypeCompound: public ParticleSystemTypeSplash {
+public:
+	void load(const string &dir, const string &path);
+};
+
 
 }}//end namespace
 

@@ -47,20 +47,18 @@ class World;
 ///	Each of the game players
 // =====================================================
 
-class Faction{
+class Faction : public NameIdPair {
+public:
+	typedef vector<const ResourceType *> ResourceTypes;
+
 private:
     typedef vector<Resource> Resources;
     typedef vector<Resource> Store;
-//	typedef vector<Faction*> Allies;
-	typedef vector<Unit*> Units;
-	typedef map<int, Unit*> UnitMap;
 
-private:
 	UpgradeManager upgradeManager;
 
     Resources resources;
     Store store;
-//	Allies allies;
 	Units units;
 	UnitMap unitMap;
 
@@ -69,7 +67,6 @@ private:
 	Texture2D *texture;
 	const FactionType *factionType;
 
-	int index;
 	int teamIndex;
 	int startLocationIndex;
 
@@ -79,10 +76,11 @@ private:
 	time_t lastEnemyNotice;
 	Vec3f lastEventLoc;
 
+	static ResourceTypes neededResources;
+
 public:
-    void init(
-		const FactionType *factionType, ControlType control, TechTree *techTree,
-		int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction);
+    void init(const FactionType *factionType, ControlType control, TechTree *techTree,
+			int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction);
 	void end();
 
     //get
@@ -90,17 +88,20 @@ public:
 	const Resource *getResource(int i) const			{assert(i < resources.size()); return &resources[i];}
 	int getStoreAmount(const ResourceType *rt) const;
 	const FactionType *getType() const					{return factionType;}
-	int getIndex() const								{return index;}
+	int getIndex() const								{return id;}
 	int getTeam() const									{return teamIndex;}
-	bool getCpuControl() const;
-	bool getCpuUltraControl() const						{return control==ctCpuUltra;}
+	bool getCpuControl() const							{return control == ctCpuUltra || control == ctCpu;}
+	bool getCpuUltraControl() const						{return control == ctCpuUltra;}
 	Unit *getUnit(int i) const							{assert(units.size() == unitMap.size()); assert(i < units.size()); return units[i];}
 	int getUnitCount() const							{return units.size();}
+	const Units &getUnits() const						{return units;}
 	const UpgradeManager *getUpgradeManager() const		{return &upgradeManager;}
 	const Texture2D *getTexture() const					{return texture;}
 	int getStartLocationIndex() const					{return startLocationIndex;}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
+	static const ResourceTypes &getNeededResources() 	{return neededResources;}
+	bool isThisFaction() const							{return thisFaction;}
 
 	//upgrades
 	void startUpgrade(const UpgradeType *ut);
@@ -120,11 +121,11 @@ public:
 	//reqs
 	bool reqsOk(const RequirableType *rt) const;
 	bool reqsOk(const CommandType *ct) const;
-	bool isCommandAvailable(const CommandType *ct) const;
-	bool isCommandAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
+	bool isAvailable(const CommandType *ct) const;
+	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
 
 	//diplomacy
-	bool isAlly(const Faction *faction);
+	bool isAlly(const Faction *faction)					{return teamIndex == faction->getTeam();}
 
     //other
 	Unit *findUnit(int id) {
@@ -133,23 +134,14 @@ public:
 		return it == unitMap.end() ? NULL : it->second;
 	}
 
-	void addUnit(Unit *unit);
-	void removeUnit(Unit *unit);
+	void add(Unit *unit);
+	void remove(Unit *unit);
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
 	void attackNotice(const Unit *u);
 	void advanceSubfaction(int subfaction);
-
-	void checkAdvanceSubfaction(const ProducibleType *pt, bool finished) {
-		int advance = pt->getAdvancesToSubfaction();
-		if(advance && subfaction < advance) {
-			bool immediate = pt->isAdvanceImmediately();
-			if(immediate && !finished || !immediate && finished) {
-				advanceSubfaction(advance);
-			}
-		}
-	}
+	void checkAdvanceSubfaction(const ProducibleType *pt, bool finished);
 
 	//resources
 	void incResourceAmount(const ResourceType *rt, int amount);
@@ -158,6 +150,8 @@ public:
 	void load(const XmlNode *node, World *world, const FactionType *ft, ControlType control, TechTree *tt);
 //	void reinit(World *world);
 	void save(XmlNode *node) const;
+	void writeUpdate(XmlNode *node) const;
+	void update(const XmlNode *node);
 
 private:
 	void limitResourcesToStore();

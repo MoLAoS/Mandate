@@ -35,7 +35,7 @@ class GameConstants{
 public:
 	static const int maxPlayers= 4;
 	static const int serverPort= 61357;
-	static const int updateFps= 40;
+//	static const int updateFps= 40;
 	static const int cameraFps= 100;
 	static const int networkFramePeriod= 10;
 	static const int networkExtraLatency= 200;

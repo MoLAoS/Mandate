@@ -16,6 +16,7 @@
 #include "path_finder.h"
 #include "particle.h"
 #include "random.h"
+#include "network_manager.h"
 
 using Shared::Graphics::ParticleObserver;
 using Shared::Util::Random;
@@ -43,6 +44,13 @@ private:
 	static const int maxResSearchRadius= 10;
 	static const int harvestDistance= 5;
 	static const int ultraResourceFactor= 3;
+	/**
+	 * When a unit who can repair, but not attack is faced with a hostile, this is the percentage
+	 * of the radius that we search from the center of the intersection point for a friendly that
+	 * can attack.  This is used to decide if the repiarer stays put in to backup a friendly who
+	 * we presume will be fighting, of if the repairer flees.
+	 */
+	static const float repairerToFriendlySearchRadius;
 
 private:
 	const GameCamera *gameCamera;
@@ -54,7 +62,7 @@ private:
 	Random random;
 
 public:
-    void init(Game *game);
+    void init(Game &game);
 
 	//update skills
     void updateUnit(Unit *unit);
@@ -78,9 +86,9 @@ public:
 private:
     //attack
     void hit(Unit *attacker);
-	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField);
+	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked = NULL);
 	void damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, float distance);
-	void startAttackParticleSystem(Unit *unit);
+	void startAttackSystems(Unit *unit, const AttackSkillType* ast);
 
 	//effects
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, const Vec2i &targetPos, Field targetField, int splashRadius);
@@ -89,6 +97,9 @@ private:
 	void updateEmanations(Unit *unit);
 
 	//misc
+	Command *doAutoAttack(Unit *unit);
+	Command *doAutoRepair(Unit *unit);
+	Command *doAutoFlee(Unit *unit);
     bool searchForResource(Unit *unit, const HarvestCommandType *hct);
     bool attackerOnSight(const Unit *unit, Unit **enemyPtr);
     bool attackableOnSight(const Unit *unit, Unit **enemyPtr, const AttackSkillTypes *asts, const AttackSkillType **past);
@@ -124,10 +135,20 @@ private:
 
 	void enemiesAtDistance(const Unit *unit, const Unit *priorityUnit, int distance, vector<Unit*> &enemies);
 	bool updateAttackGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos);
-	Vec2i getNear(const Vec2i &orig, Vec2i dest, int minRange, int maxRange, int destSize = 1);
-	Vec2i getNear(const Vec2i &orig, const Unit *destUnit, int minRange, int maxRange) {
-		return getNear(orig, destUnit->getPos(), minRange, minRange, destUnit->getType()->getSize());
+/*
+	Vec2i getNear(const Vec2i &pos, Vec2i target, int minRange, int maxRange, int targetSize = 1) {
+		return map->getNearestPos(pos, target, targetSize, minRange, maxRange);
 	}
+
+	Vec2i getNear(const Vec2i &pos, const Unit *target, int minRange, int maxRange) {
+		return map->getNearestPos(pos, target, minRange, maxRange);
+	}*/
+
+	bool isLocal()							{return NetworkManager::getInstance().isLocal();}
+	bool isNetworkGame()					{return NetworkManager::getInstance().isNetworkGame();}
+	bool isNetworkServer() 					{return NetworkManager::getInstance().isNetworkServer();}
+	bool isNetworkClient() 					{return NetworkManager::getInstance().isNetworkClient();}
+	ServerInterface *getServerInterface()	{return NetworkManager::getInstance().getServerInterface();}
 };
 
 // =====================================================
@@ -142,9 +163,11 @@ public:
 	const GameCamera *gameCamera;
 	Vec2i targetPos;
 	Field targetField;
+	UnitReference targetRef;
+
 
 public:
-	ParticleDamager(Unit *attacker, UnitUpdater *unitUpdater, const GameCamera *gameCamera);
+	ParticleDamager(Unit *attacker, Unit *target, UnitUpdater *unitUpdater, const GameCamera *gameCamera);
 	virtual void update(ParticleSystem *particleSystem);
 };
 

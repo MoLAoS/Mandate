@@ -3,17 +3,20 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "text_renderer_gl.h"
 
 #include "opengl.h"
 #include "font_gl.h"
+
 #include "leak_dumper.h"
+
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
@@ -28,13 +31,13 @@ TextRenderer2DGl::TextRenderer2DGl(){
 void TextRenderer2DGl::begin(const Font2D *font){
 	assert(!rendering);
 	rendering= true;
-	
+
 	this->font= static_cast<const Font2DGl*>(font);
 }
 
 void TextRenderer2DGl::render(const string &text, int x, int y, bool centered){
 	assert(rendering);
-	
+
 	assertGl();
 
 	int line=0;
@@ -44,18 +47,19 @@ void TextRenderer2DGl::render(const string &text, int x, int y, bool centered){
 	Vec2f rasterPos;
 	const FontMetrics *metrics= font->getMetrics();
 	if(centered){
-		rasterPos.x= x-metrics->getTextWidth(text)/2.f;
-		rasterPos.y= y+metrics->getHeight()/2.f;
+		Vec2f textDiminsions = metrics->getTextDiminsions(text);
+		rasterPos.x = x - textDiminsions.x / 2.f;
+		rasterPos.y = y + textDiminsions.y / 2.f;
 	}
 	else{
 		rasterPos= Vec2f(static_cast<float>(x), static_cast<float>(y));
 	}
 	glRasterPos2f(rasterPos.x, rasterPos.y);
 
-	for (int i=0; utext[i]!='\0'; ++i) {
-		switch(utext[i]){
+	for (int i = 0; utext[i]; ++i) {
+		switch(utext[i]) {
 		case '\t':
-			rasterPos= Vec2f((rasterPos.x/size+3.f)*size, y-(size+1.f)*line);
+			rasterPos.x += size;
 			glRasterPos2f(rasterPos.x, rasterPos.y);
 			break;
 		case '\n':
@@ -64,7 +68,7 @@ void TextRenderer2DGl::render(const string &text, int x, int y, bool centered){
 			glRasterPos2f(rasterPos.x, rasterPos.y);
 			break;
 		default:
-			glCallList(font->getHandle()+utext[i]);
+			glCallList(font->getHandle() + utext[i]);
 		}
 	}
 
@@ -87,7 +91,7 @@ TextRenderer3DGl::TextRenderer3DGl(){
 void TextRenderer3DGl::begin(const Font3D *font){
 	assert(!rendering);
 	rendering= true;
-	
+
 	this->font= static_cast<const Font3DGl*>(font);
 
 	assertGl();
@@ -100,7 +104,7 @@ void TextRenderer3DGl::begin(const Font3D *font){
 
 void TextRenderer3DGl::render(const string &text, float  x, float y, float size, bool centered){
 	assert(rendering);
-	
+
 	assertGl();
 
 	const unsigned char *utext= reinterpret_cast<const unsigned char*>(text.c_str());
@@ -109,15 +113,15 @@ void TextRenderer3DGl::render(const string &text, float  x, float y, float size,
 	glPushMatrix();
 	glPushAttrib(GL_POLYGON_BIT);
 	float scale= size/10.f;
-	if(centered){
-		const FontMetrics *metrics= font->getMetrics();
-		glTranslatef(x-scale*metrics->getTextWidth(text)/2.f, y-scale*metrics->getHeight()/2.f, 0);
+	if(centered) {
+		Vec2f textDiminsions = font->getMetrics()->getTextDiminsions(text);
+		glTranslatef(x-scale * textDiminsions.x / 2.f, y - scale * textDiminsions.y / 2.f, 0);
 	}
 	else{
 		glTranslatef(x-scale, y-scale, 0);
 	}
 	glScalef(scale, scale, scale);
-                     
+
 	for (int i=0; utext[i]!='\0'; ++i) {
 		glCallList(font->getHandle()+utext[i]);
 	}

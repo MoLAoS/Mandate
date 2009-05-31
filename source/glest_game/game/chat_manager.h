@@ -14,38 +14,42 @@
 
 #include <string>
 
-using std::string;
+#include "keymap.h"
 
-namespace Glest{ namespace Game{
+using std::string;
+using Shared::Platform::Key;
+
+namespace Glest { namespace Game {
 
 class Console;
 
 // =====================================================
-//	class ChatManager
+// class ChatManager
 // =====================================================
 
-class ChatManager{
+class ChatManager {
 private:
 	static const int maxTextLenght;
 
 private:
+	const Keymap &keymap;
 	bool editEnabled;
 	bool teamMode;
 	Console* console;
-	string text;
 	int thisTeamIndex;
+	string text;
 
 public:
-	ChatManager();
+	ChatManager(const Keymap &keymap);
 	void init(Console* console, int thisTeamIndex);
 
-	void keyDown(char key);
+	bool keyDown(const Key &key);
 	void keyPress(char c);
 	void updateNetwork();
 
-	bool getEditEnabled() const	{return editEnabled;}
-	bool getTeamMode() const	{return teamMode;}
-	string getText() const		{return text;}
+	bool getEditEnabled() const {return editEnabled;}
+	bool getTeamMode() const {return teamMode;}
+	string getText() const  {return text;}
 };
 
 }}//end namespace

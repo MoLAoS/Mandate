@@ -9,11 +9,17 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
+#include <map>
+
 #include "effect.h"
 #include "unit.h"
-#include <map>
 #include "conversion.h"
 #include "tech_tree.h"
+#include "network_message.h"
+#include "world.h"
+
+#include "leak_dumper.h"
 
 namespace Glest { namespace Game {
 
@@ -36,15 +42,16 @@ Effect::Effect(const EffectType* type, Unit *source, Effect *root, float strengt
 	if(type->getHpRegeneration() < 0 && type->getDamageType()) {
 		float fregen = (float)type->getHpRegeneration() * tt->getDamageMultiplier(
 				type->getDamageType(), recipient->getType()->getArmorType()/*, recipient->getType()->getBodyType()*/);
-		this->actualHpRegen = (int)(fregen - 0.5f);
+		this->actualHpRegen = (int)roundf(fregen);
 	} else {
 		this->actualHpRegen = type->getHpRegeneration();
 	}
 }
 
-Effect::Effect(const XmlNode *node, World *world, const TechTree *tt) :
-		source(node, world) {
-	root = NULL;	//FIXME
+Effect::Effect(const XmlNode *node) :
+		source(node->getChild("source")) {
+	const TechTree *tt = World::getCurrWorld()->getTechTree();
+	root = NULL;	//FIXME: add effect reference class
 	type = tt->getEffectType(node->getChildStringValue("type"));
 	strength = node->getChildFloatValue("strength");
 	duration = node->getChildIntValue("duration");
@@ -67,6 +74,37 @@ void Effect::save(XmlNode *node) const {
 	node->addChild("recourse", recourse);
 	node->addChild("actualHpRegen", actualHpRegen);
 }
+/*
+class EffectReference : public NetworkWriteable {
+	UnitReference source;
+	int32 typeId;
+	float strength;
+	int32 duration;
+	int8 recourse;
+
+public:
+	EffectReference() : typeId(-1){}
+
+	size_t getNetSize() const				{return getMaxNetSize();}
+	size_t getMaxNetSize() const {
+		return
+			source.getNetSize()
+			+ sizeof(typeId)
+			+ sizeof(strength)
+			+ sizeof(duration)
+			+ sizeof(recourse);
+	}
+	void read(NetworkDataBuffer &buf, World *world);
+	void write(NetworkDataBuffer &buf) const;
+
+	friend Effect;
+};*/
+/*
+void Effect::writeState(EffectState &es) {
+}
+
+void Effect::readState(EffectState &es) {
+}*/
 
 // =====================================================
 //  class Effects
@@ -79,10 +117,10 @@ Effects::Effects() {
 	dirty = true;
 }
 
-Effects::Effects(const XmlNode *node, World *world, const TechTree *tt) {
+Effects::Effects(const XmlNode *node) {
 	clear();
 	for(int i = 0; i < node->getChildCount(); ++i) {
-		push_back(new Effect(node->getChild("effect", i), world, tt));
+		push_back(new Effect(node->getChild("effect", i)));
 	}
 	dirty = true;
 }
@@ -157,10 +195,10 @@ void Effects::clearRootRef(Effect *e) {
 }
 
 void Effects::tick() {
-	for (iterator i = begin(); i != end();) {
+	for(iterator i = begin(); i != end();) {
 		Effect *e = *i;
 
-		if (e->tick()) {
+		if(e->tick()) {
 			delete e;
 			i = erase(i);
 			dirty = true;
@@ -175,13 +213,13 @@ struct EffectSummary {
 	int count;
 };
 
-string &Effects::getDescr(string &str) const{
+void Effects::getDesc(string &str) const {
 	map<const EffectType*, EffectSummary> uniqueEffects;
 	map<const EffectType*, EffectSummary>::iterator uei;
 	bool printedFirst = false;
 	Lang &lang= Lang::getInstance();
 
-	for (const_iterator i = begin(); i != end(); i++) {
+	for(const_iterator i = begin(); i != end(); i++) {
 		const EffectType *type = (*i)->getType();
 		if(type->isDisplay()) {
 			uei = uniqueEffects.find(type);
@@ -197,11 +235,11 @@ string &Effects::getDescr(string &str) const{
 		}
 	}
 
-	for (uei = uniqueEffects.begin(); uei != uniqueEffects.end(); uei++) {
+	for(uei = uniqueEffects.begin(); uei != uniqueEffects.end(); uei++) {
 		if(printedFirst){
-			str+=", ";
+			str += "\n    ";
 		} else {
-			str+="\n" + lang.get("Effects") + ": ";
+			str += "\n" + lang.get("Effects") + ": ";
 		}
 		str += (*uei).first->getName() + " (" + intToStr((*uei).second.maxDuration) + ")";
 		if((*uei).second.count > 1) {
@@ -209,15 +247,13 @@ string &Effects::getDescr(string &str) const{
 		}
 		printedFirst = true;
 	}
-
-	return str;
 }
 
 
 // ====================================== get ======================================
 
 //who killed Kenny?
-Unit *Effects::getKiller() const{
+Unit *Effects::getKiller() const {
 	for (const_iterator i = begin(); i != end(); i++) {
 		Unit *source = (*i)->getSource();
 		//If more than two other units hit this unit with a DOT and it died,

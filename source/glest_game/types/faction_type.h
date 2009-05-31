@@ -65,7 +65,7 @@ private:
 public:
 	//init
 	FactionType();
-    void load(const string &dir, const TechTree *techTree, Checksum* checksum);
+    void load(const string &dir, const TechTree *techTree, Checksum &checksum);
 	~FactionType();
 
     //get

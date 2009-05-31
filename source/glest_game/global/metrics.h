@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -35,12 +35,15 @@ private:
 	int displayH;
 	int displayW;
 
-private:
 	Metrics();
 
 public:
-	static const Metrics &getInstance();
-	
+
+	static const Metrics &getInstance(){
+		static const Metrics singleton;
+		return singleton;
+	}
+
 	int getVirtualW() const	{return virtualW;}
 	int getVirtualH() const	{return virtualH;}
 	int getScreenW() const	{return screenW;}
@@ -53,13 +56,26 @@ public:
 	int getDisplayY() const	{return displayY;}
 	int getDisplayH() const	{return displayH;}
 	int getDisplayW() const	{return displayW;}
-	float getAspectRatio() const;
-	
-	int toVirtualX(int w) const;
-	int toVirtualY(int h) const;
 
-	bool isInDisplay(int x, int y) const;
-	bool isInMinimap(int x, int y) const;
+	float getAspectRatio() const	{return static_cast<float>(screenW) / screenH;}
+	int toVirtualX(int w) const		{return w * virtualW / screenW;}
+	int toVirtualY(int h) const		{return h * virtualH / screenH;}
+
+	bool isInDisplay(int x, int y) const{
+		return
+			x > displayX &&
+			y > displayY &&
+			x < displayX+displayW &&
+			y < displayY+displayH;
+	}
+
+	bool isInMinimap(int x, int y) const{
+		return
+			x > minimapX &&
+			y > minimapY &&
+			x < minimapX+minimapW &&
+			y < minimapY+minimapH;
+	}
 };
 
 }}//end namespace

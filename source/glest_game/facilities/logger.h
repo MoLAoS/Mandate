@@ -15,7 +15,8 @@
 #include <string>
 #include <deque>
 #include <time.h>
-//#include <sys/time.h>
+
+#include "timer.h"
 
 using std::string;
 using std::deque;
@@ -42,12 +43,25 @@ private:
 	Strings logLines;
 
 private:
-	Logger();
+	Logger(const char *fileName) : fileName(fileName) {}
 
 public:
-	static Logger & getInstance();
+	static Logger &getInstance(){
+		static Logger logger("glestadv.log");
+		return logger;
+	}
 
-	void setFile(const string &fileName)	{this->fileName= fileName;}
+	static Logger &getServerLog(){
+		static Logger logger("glestadv-server.log");
+		return logger;
+	}
+
+	static Logger &getClientLog(){
+		static Logger logger("glestadv-client.log");
+		return logger;
+	}
+
+	//void setFile(const string &fileName)	{this->fileName= fileName;}
 	void setState(const string &state);
 
 	void add(const string &str, bool renderScreen= false);
@@ -55,15 +69,31 @@ public:
 
 	void clear();
 };
-/*
+
+#if defined(WIN32) | defined(WIN64)
+
+class Timer {
+public:
+	Timer(int threshold, const char* msg) {}
+	~Timer() {}
+
+	void print(const char* msg) {}
+
+	struct timeval getDiff() {}
+};
+
+#else
+
 class Timer {
 	struct timeval start;
 	struct timezone tz;
 	unsigned int threshold;
 	const char* msg;
+	FILE *outfile;
 
 public:
-	Timer(int threshold, const char* msg) : threshold(threshold), msg(msg) {
+	Timer(int threshold, const char* msg, FILE *outfile = stderr) :
+			threshold(threshold), msg(msg), outfile(outfile) {
 		tz.tz_minuteswest = 0;
 		tz.tz_dsttime = 0;
 		gettimeofday(&start, &tz);
@@ -73,14 +103,14 @@ public:
 		struct timeval diff = getDiff();
 		unsigned int diffusec = diff.tv_sec * 1000000 + diff.tv_usec;
 		if(diffusec > threshold) {
-			fprintf(stderr, "%s: %d\n", msg, diffusec);
+			fprintf(outfile, "%s: %d\n", msg, diffusec);
 		}
 	}
 
 	void print(const char* msg) {
 		struct timeval diff = getDiff();
 		unsigned int diffusec = diff.tv_sec * 1000000 + diff.tv_usec;
-		fprintf(stderr, "%s -> %s: %d\n", this->msg, msg, diffusec);
+		fprintf(outfile, "%s -> %s: %d\n", this->msg, msg, diffusec);
 	}
 
 	struct timeval getDiff() {
@@ -91,7 +121,7 @@ public:
 		return diff;
 	}
 };
-*/
+#endif
 
 }}//end namespace
 

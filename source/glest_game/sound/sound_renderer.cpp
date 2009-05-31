@@ -9,13 +9,16 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "sound_renderer.h"
 
 #include "core_data.h"
 #include "config.h"
 #include "sound_interface.h"
 #include "factory_repository.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Graphics;
 using namespace Shared::Sound;
@@ -38,7 +41,7 @@ void SoundRenderer::init(Window *window){
 	FactoryRepository &fr= FactoryRepository::getInstance();
 	Config &config= Config::getInstance();
 
-	si.setFactory(fr.getSoundFactory(config.getFactorySound()));
+	si.setFactory(fr.getSoundFactory(config.getSoundFactory()));
 	soundPlayer= si.newSoundPlayer();
 
 	SoundPlayerParams soundPlayerParams;

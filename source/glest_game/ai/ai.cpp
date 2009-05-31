@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "ai.h"
 
 #include <ctime>
@@ -19,7 +20,9 @@
 #include "unit.h"
 #include "program.h"
 #include "config.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;
@@ -30,29 +33,29 @@ namespace Glest{ namespace Game{
 // 	class ProduceTask
 // =====================================================
 
-ProduceTask::ProduceTask(UnitClass unitClass){
-	taskClass= tcProduce;
-	this->unitClass= unitClass;
-	unitType= NULL;
-	resourceType= NULL;
+ProduceTask::ProduceTask(UnitClass unitClass) {
+	taskClass = tcProduce;
+	this->unitClass = unitClass;
+	unitType = NULL;
+	resourceType = NULL;
 }
 
-ProduceTask::ProduceTask(const UnitType *unitType){
-	taskClass= tcProduce;
-	this->unitType= unitType;
-	resourceType= NULL;
+ProduceTask::ProduceTask(const UnitType *unitType) {
+	taskClass = tcProduce;
+	this->unitType = unitType;
+	resourceType = NULL;
 }
 
-ProduceTask::ProduceTask(const ResourceType *resourceType){
-	taskClass= tcProduce;
-	unitType= NULL;
-	this->resourceType= resourceType;
+ProduceTask::ProduceTask(const ResourceType *resourceType) {
+	taskClass = tcProduce;
+	unitType = NULL;
+	this->resourceType = resourceType;
 }
 
-string ProduceTask::toString() const{
-	string str= "Produce ";
-	if(unitType!=NULL){
-		str+= unitType->getName();
+string ProduceTask::toString() const {
+	string str = "Produce ";
+	if (unitType != NULL) {
+		str += unitType->getName();
 	}
 	return str;
 }
@@ -61,32 +64,32 @@ string ProduceTask::toString() const{
 // 	class BuildTask
 // =====================================================
 
-BuildTask::BuildTask(const UnitType *unitType){
-	taskClass= tcBuild;
-	this->unitType= unitType;
-	resourceType= NULL;
-	forcePos= false;
+BuildTask::BuildTask(const UnitType *unitType) {
+	taskClass = tcBuild;
+	this->unitType = unitType;
+	resourceType = NULL;
+	forcePos = false;
 }
 
-BuildTask::BuildTask(const ResourceType *resourceType){
-	taskClass= tcBuild;
-	unitType= NULL;
-	this->resourceType= resourceType;
-	forcePos= false;
+BuildTask::BuildTask(const ResourceType *resourceType) {
+	taskClass = tcBuild;
+	unitType = NULL;
+	this->resourceType = resourceType;
+	forcePos = false;
 }
 
-BuildTask::BuildTask(const UnitType *unitType, const Vec2i &pos){
-	taskClass= tcBuild;
-	this->unitType= unitType;
-	resourceType= NULL;
-	forcePos= true;
-	this->pos= pos;
+BuildTask::BuildTask(const UnitType *unitType, const Vec2i &pos) {
+	taskClass = tcBuild;
+	this->unitType = unitType;
+	resourceType = NULL;
+	forcePos = true;
+	this->pos = pos;
 }
 
-string BuildTask::toString() const{
-	string str= "Build ";
-	if(unitType!=NULL){
-		str+= unitType->getName();
+string BuildTask::toString() const {
+	string str = "Build ";
+	if (unitType != NULL) {
+		str += unitType->getName();
 	}
 	return str;
 }
@@ -95,15 +98,15 @@ string BuildTask::toString() const{
 // 	class UpgradeTask
 // =====================================================
 
-UpgradeTask::UpgradeTask(const UpgradeType *upgradeType){
-	taskClass= tcUpgrade;
-	this->upgradeType= upgradeType;
+UpgradeTask::UpgradeTask(const UpgradeType *upgradeType) {
+	taskClass = tcUpgrade;
+	this->upgradeType = upgradeType;
 }
 
-string UpgradeTask::toString() const{
-	string str= "Build ";
-	if(upgradeType!=NULL){
-		str+= upgradeType->getName();
+string UpgradeTask::toString() const {
+	string str = "Build ";
+	if (upgradeType) {
+		str += upgradeType->getName();
 	}
 	return str;
 }
@@ -112,42 +115,44 @@ string UpgradeTask::toString() const{
 // 	class Ai
 // =====================================================
 
-void Ai::init(AiInterface *aiInterface){
-	this->aiInterface= aiInterface;
-	startLoc= random.randRange(0, aiInterface->getMapMaxPlayers()-1);
-    upgradeCount= 0;
-	minWarriors= minMinWarriors;
+void Ai::init(AiInterface *aiInterface) {
+	this->aiInterface = aiInterface;
+	startLoc = random.randRange(0, aiInterface->getMapMaxPlayers() - 1);
+	upgradeCount = 0;
+	minWarriors = minMinWarriors;
 	baseSeen = false;
 
 	//add ai rules
 	aiRules.resize(14);
-	aiRules[0]= new AiRuleWorkerHarvest(this);
-	aiRules[1]= new AiRuleRefreshHarvester(this);
-	aiRules[2]= new AiRuleScoutPatrol(this);
-	aiRules[3]= new AiRuleReturnBase(this);
-	aiRules[4]= new AiRuleMassiveAttack(this);
-	aiRules[5]= new AiRuleAddTasks(this);
-	aiRules[6]= new AiRuleProduceResourceProducer(this);
-	aiRules[7]= new AiRuleBuildOneFarm(this);
-	aiRules[8]= new AiRuleProduce(this);
-	aiRules[9]= new AiRuleBuild(this);
-	aiRules[10]= new AiRuleUpgrade(this);
-	aiRules[11]= new AiRuleExpand(this);
-	aiRules[12]= new AiRuleRepair(this);
-	aiRules[13]= new AiRuleRepair(this);
+	aiRules[0] = new AiRuleWorkerHarvest(this);
+	aiRules[1] = new AiRuleRefreshHarvester(this);
+	aiRules[2] = new AiRuleScoutPatrol(this);
+	aiRules[3] = new AiRuleReturnBase(this);
+	aiRules[4] = new AiRuleMassiveAttack(this);
+	aiRules[5] = new AiRuleAddTasks(this);
+	aiRules[6] = new AiRuleProduceResourceProducer(this);
+	aiRules[7] = new AiRuleBuildOneFarm(this);
+	aiRules[8] = new AiRuleProduce(this);
+	aiRules[9] = new AiRuleBuild(this);
+	aiRules[10] = new AiRuleUpgrade(this);
+	aiRules[11] = new AiRuleExpand(this);
+	aiRules[12] = new AiRuleRepair(this);
+	aiRules[13] = new AiRuleRepair(this);
 }
 
-Ai::~Ai(){
+Ai::~Ai() {
 	deleteValues(tasks.begin(), tasks.end());
 	deleteValues(aiRules.begin(), aiRules.end());
 }
 
-void Ai::update(){
+void Ai::update() {
 	//process ai rules
-	for(AiRules::iterator it= aiRules.begin(); it!=aiRules.end(); ++it){
-		if((aiInterface->getTimer() % ((*it)->getTestInterval()*GameConstants::updateFps/1000))==0){
-			if((*it)->test()){
-				aiInterface->printLog(3, intToStr(1000*aiInterface->getTimer()/GameConstants::updateFps) + ": Executing rule: " + (*it)->getName() + '\n');
+	for (AiRules::iterator it = aiRules.begin(); it != aiRules.end(); ++it) {
+		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * Config::getInstance().getGsWorldUpdateFps() / 1000)) == 0) {
+			if ((*it)->test()) {
+				aiInterface->printLog(3,
+						intToStr(1000 * aiInterface->getTimer() / Config::getInstance().getGsWorldUpdateFps())
+						+ ": Executing rule: " + (*it)->getName() + '\n');
 				(*it)->execute();
 			}
 		}
@@ -157,145 +162,138 @@ void Ai::update(){
 
 // ==================== state requests ====================
 
-int Ai::getCountOfType(const UnitType *ut){
-    int count= 0;
-	for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-		if(ut == aiInterface->getMyUnit(i)->getType()){
+int Ai::getCountOfType(const UnitType *ut) {
+	int count = 0;
+	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
+		if (ut == aiInterface->getMyUnit(i)->getType()) {
 			count++;
 		}
 	}
-    return count;
+	return count;
 }
 
-int Ai::getCountOfClass(UnitClass uc){
-    int count= 0;
-    for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-		if(aiInterface->getMyUnit(i)->getType()->isOfClass(uc)){
-            ++count;
+int Ai::getCountOfClass(UnitClass uc) {
+	int count = 0;
+	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
+		if (aiInterface->getMyUnit(i)->getType()->isOfClass(uc)) {
+			++count;
 		}
-    }
-    return count;
+	}
+	return count;
 }
 
-float Ai::getRatioOfClass(UnitClass uc){
-	if(aiInterface->getMyUnitCount()==0){
+float Ai::getRatioOfClass(UnitClass uc) {
+	if (aiInterface->getMyUnitCount() == 0) {
 		return 0;
-	}
-	else{
-		return static_cast<float>(getCountOfClass(uc))/aiInterface->getMyUnitCount();
+	} else {
+		return static_cast<float>(getCountOfClass(uc)) / aiInterface->getMyUnitCount();
 	}
 }
 
-const ResourceType *Ai::getNeededResource(){
+const ResourceType *Ai::getNeededResource() {
 
-    int amount= -1;
-	const ResourceType *neededResource= NULL;
-    const TechTree *tt= aiInterface->getTechTree();
+	int amount = -1;
+	const ResourceType *neededResource = NULL;
+	const TechTree *tt = aiInterface->getTechTree();
 
-    for(int i=0; i<tt->getResourceTypeCount(); ++i){
-        const ResourceType *rt= tt->getResourceType(i);
-        const Resource *r= aiInterface->getResource(rt);
-		if(rt->getClass()!=rcStatic && rt->getClass()!=rcConsumable && (r->getAmount()<amount || amount==-1)){
-            amount= r->getAmount();
-            neededResource= rt;
-        }
-    }
+	for (int i = 0; i < tt->getResourceTypeCount(); ++i) {
+		const ResourceType *rt = tt->getResourceType(i);
+		const Resource *r = aiInterface->getResource(rt);
+		if (rt->getClass() != rcStatic && rt->getClass() != rcConsumable && (r->getAmount() < amount || amount == -1)) {
+			amount = r->getAmount();
+			neededResource = rt;
+		}
+	}
 
-    return neededResource;
+	return neededResource;
 }
 
-bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius){
-    int count= aiInterface->onSightUnitCount();
-    const Unit *unit;
+bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
+	int count = aiInterface->onSightUnitCount();
+	const Unit *unit;
 
-    for(int i=0; i<count; ++i){
-        unit= aiInterface->getOnSightUnit(i);
-        if(!aiInterface->isAlly(unit) && unit->isAlive()){
-            pos= unit->getPos();
-			field= unit->getCurrField();
-            if(pos.dist(aiInterface->getHomeLocation())<radius){
+	for (int i = 0; i < count; ++i) {
+		unit = aiInterface->getOnSightUnit(i);
+		if (!aiInterface->isAlly(unit) && unit->isAlive()) {
+			pos = unit->getPos();
+			field = unit->getCurrField();
+			if (pos.dist(aiInterface->getHomeLocation()) < radius) {
 				baseSeen = true;
-                aiInterface->printLog(2, "Being attacked at pos "+intToStr(pos.x)+","+intToStr(pos.y)+"\n");
-                return true;
-            }
-        }
-    }
-    return false;
+				aiInterface->printLog(2, "Being attacked at pos " + intToStr(pos.x) + "," + intToStr(pos.y) + "\n");
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
-bool Ai::isStableBase(){
-
-    if(getCountOfClass(ucWarrior)>minWarriors){
-        aiInterface->printLog(4, "Base is stable\n");
-        return true;
-    }
-    else{
-        aiInterface->printLog(4, "Base is not stable\n");
-        return false;
-    }
+bool Ai::isStableBase() {
+	if (getCountOfClass(ucWarrior) > minWarriors) {
+		aiInterface->printLog(4, "Base is stable\n");
+		return true;
+	} else {
+		aiInterface->printLog(4, "Base is not stable\n");
+		return false;
+	}
 }
 
-bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly){
+bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly) {
 	vector<int> units;
 
-	*unitIndex= -1;
-	for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-		const Unit *unit= aiInterface->getMyUnit(i);
-		if(unit->getType()->hasCommandClass(ability)){
-			if(!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getCommandType()->getClass()==ccStop){
+	*unitIndex = -1;
+	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
+		const Unit *unit = aiInterface->getMyUnit(i);
+		if (unit->getType()->hasCommandClass(ability)) {
+			if ((!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() == ccStop) && !unit->isAPet()) {
 				units.push_back(i);
 			}
 		}
 	}
 
-	if(units.empty()){
+	if (units.empty()) {
 		return false;
-	}
-	else{
-		*unitIndex= units[random.randRange(0, units.size()-1)];
+	} else {
+		*unitIndex = units[random.randRange(0, units.size() - 1)];
 		return true;
 	}
 }
 
-bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, CommandClass currentCommand){
+bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, CommandClass currentCommand) {
 	vector<int> units;
 
-	*unitIndex= -1;
-	for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-		const Unit *unit= aiInterface->getMyUnit(i);
-		if(unit->getType()->hasCommandClass(ability)){
-			if(unit->anyCommand() && unit->getCurrCommand()->getCommandType()->getClass()==currentCommand){
+	*unitIndex = -1;
+	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
+		const Unit *unit = aiInterface->getMyUnit(i);
+		if (unit->getType()->hasCommandClass(ability)) {
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == currentCommand && !unit->isAPet()) {
 				units.push_back(i);
 			}
 		}
 	}
 
-	if(units.empty()){
+	if (units.empty()) {
 		return false;
-	}
-	else{
-		*unitIndex= units[random.randRange(0, units.size()-1)];
+	} else {
+		*unitIndex = units[random.randRange(0, units.size() - 1)];
 		return true;
 	}
 }
 
-bool Ai::findPosForBuilding(const UnitType* building, const Vec2i &searchPos, Vec2i &outPos){
+bool Ai::findPosForBuilding(const UnitType* building, const Vec2i &searchPos, Vec2i &outPos) {
+	const int spacing = 1;
 
-	const int spacing= 1;
+	for (int currRadius = 0; currRadius < maxBuildRadius; ++currRadius) {
+		for (int i = searchPos.x - currRadius; i < searchPos.x + currRadius; ++i) {
+			for (int j = searchPos.y - currRadius; j < searchPos.y + currRadius; ++j) {
+				outPos = Vec2i(i, j);
+				if (aiInterface->isFreeCells(outPos - Vec2i(spacing), building->getSize() + spacing*2, fLand)) {
+					return true;
+				}
+			}
+		}
+	}
 
-    for(int currRadius=0; currRadius<maxBuildRadius; ++currRadius){
-        for(int i=searchPos.x-currRadius; i<searchPos.x+currRadius; ++i){
-            for(int j=searchPos.y-currRadius; j<searchPos.y+currRadius; ++j){
-                outPos= Vec2i(i, j);
-                if(aiInterface->isFreeCells(outPos-Vec2i(spacing), building->getSize()+spacing*2, fLand)){
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-
+	return false;
 }
 
 /**

@@ -13,10 +13,12 @@
 #define _GLEST_GAME_NETWORKTYPES_H_
 
 #include <string>
+#include <limits.h>
 
 #include "types.h"
 #include "vec.h"
 #include "command.h"
+#include "socket.h"
 
 using std::string;
 using Shared::Platform::int8;
@@ -24,77 +26,67 @@ using Shared::Platform::int16;
 using Shared::Platform::int32;
 using Shared::Graphics::Vec2i;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
+class NetworkException : public runtime_error {
+public:
+	NetworkException(const string &msg) : runtime_error(msg) {}
+	NetworkException(const char *msg) : runtime_error(msg) {}
+};
+	
 // =====================================================
 //	class NetworkString
 // =====================================================
 
-template<int S>
-class NetworkString{
+template<int S> class NetworkString : public NetworkWriteable {
 private:
+	uint16 size;	//size excluding null terminator, max of S - 1
 	char buffer[S];
+	string s;
 
 public:
-	NetworkString()						{memset(buffer, 0, S);}
-	void operator=(const string& str)	{strncpy(buffer, str.c_str(), S-1);}
+	NetworkString() /*: s() */{
+		assert(S && S < USHRT_MAX);
+		size = 0;
+		*buffer = 0;
+	}
+	NetworkString(const string &str) {
+		assert(S && S < USHRT_MAX);
+		(*this) = str;
+	}
 	string getString() const			{return buffer;}
-};
-
-// =====================================================
-//	class NetworkCommand
-// =====================================================
-
-enum NetworkCommandType{
-	nctGiveCommand,
-	nctCancelCommand,
-	nctSetMeetingPoint,
-	nctSetAutoRepair
-};
-
-class NetworkCommand{
-private:
-	int16 networkCommandType;
-	int16 unitId;
-	int16 commandTypeId;
-	CommandFlags flags;
-	int16 positionX;
-	int16 positionY;
-	int16 unitTypeId;
-	int16 targetId;
-
-public:
-	NetworkCommand(){};
-	NetworkCommand(
-			int networkCommandType,
-   			int unitId,
-   			int commandTypeId= -1,
-			CommandFlags flags = CommandFlags(),
-   			const Vec2i &pos= Vec2i(0),
-   			int unitTypeId= -1,
-   			int targetId= -1) {
-		this->networkCommandType= networkCommandType;
-		this->unitId= unitId;
-		this->commandTypeId= commandTypeId;
-		this->flags = flags;
-		this->positionX= pos.x;
-		this->positionY= pos.y;
-		this->unitTypeId= unitTypeId;
-		this->targetId= targetId;
+	void operator=(const string &str) {
+		/*
+		s = str;
+		if(s.size() > S) {
+			s.resize(S);
+		}
+		*/
+		size = (uint16)(str.size() < S ? str.size() : S - 1);
+		strncpy(buffer, str.c_str(), size);
+		buffer[size] = 0;
 	}
 
-	NetworkCommandType getNetworkCommandType() const	{return static_cast<NetworkCommandType>(networkCommandType);}
-	int getUnitId() const								{return unitId;}
-	int getCommandTypeId() const						{return commandTypeId;}
-	CommandFlags getFlags() const						{return flags;}
-	bool isQueue() const								{return flags.get(cpQueue);}
-	bool isAuto() const									{return flags.get(cpAuto);}
-	Vec2i getPosition() const							{return Vec2i(positionX, positionY);}
-	int getUnitTypeId() const							{return unitTypeId;}
-	int getTargetId() const								{return targetId;}
+	size_t getNetSize() const {
+		//return s.size() + sizeof(uint16);
+		return sizeof(size) + size;
+	}
 
-	void setQueue(bool queue)							{flags.set(cpQueue, queue);}
-	void setAuto(bool _auto)							{flags.set(cpAuto, _auto);}
+	size_t getMaxNetSize() const {
+		return sizeof(size) + sizeof(buffer);
+	}
+
+	void write(NetworkDataBuffer &buf) const {
+		buf.write(size);
+		buf.write(buffer, size);
+	}
+
+	void read(NetworkDataBuffer &buf) {
+		buf.read(size);
+		assert(size < S);
+		buf.read(buffer, size);
+		buffer[size] = 0;
+	}
 };
 
 }}//end namespace

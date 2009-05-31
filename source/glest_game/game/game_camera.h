@@ -15,12 +15,16 @@
 #include "vec.h"
 #include "math_util.h"
 
+namespace Shared { namespace Xml {
+	class XmlNode;
+}}
+
 namespace Glest{ namespace Game{
 
 using Shared::Graphics::Quad2i;
 using Shared::Graphics::Vec3f;
-using Shared::Graphics::Vec3b;
 using Shared::Graphics::Vec2f;
+using Shared::Xml::XmlNode;
 
 class Config;
 
@@ -34,8 +38,6 @@ class GameCamera{
 public:
 	static const float startingVAng;
 	static const float startingHAng;
-	static const float minVAng;
-	static const float maxVAng;
 	static const float vTransitionMult;
 	static const float hTransitionMult;
 	static const float defaultHeight;
@@ -74,6 +76,8 @@ private:
 	float minHeight;
 	float maxCameraDist;
 	float minCameraDist;
+	float minVAng;
+	float maxVAng;
 	float fov;
 
 public:
@@ -113,6 +117,9 @@ public:
 	void zoom(float dist);
 	void moveForwardH(float dist, float response);	// response: 1.0 for immediate, 0 for full inertia
 	void moveSideH(float dist, float response);
+
+	void load(const XmlNode *node);
+	void save(XmlNode *node) const;
 
 private:
 	void clampPosXYZ(float x1, float x2, float y1, float y2, float z1, float z2);

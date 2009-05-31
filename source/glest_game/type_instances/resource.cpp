@@ -9,12 +9,14 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "resource.h"
 
 #include "conversion.h"
 #include "resource_type.h"
-#include "leak_dumper.h"
 #include "tech_tree.h"
+
+#include "leak_dumper.h"
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;

@@ -19,9 +19,13 @@
 #include "pixmap.h"
 #include "texture_manager.h"
 #include "random.h"
+#include "entity.h"
+#include "xml_parser.h"
+#include "math_util.h"
 
 using std::list;
 using Shared::Util::Random;
+using Shared::Xml::XmlNode;
 
 namespace Shared{ namespace Graphics{
 
@@ -36,10 +40,36 @@ class ModelRenderer;
 class Model;
 
 // =====================================================
+//	class WindSystem
+// =====================================================
+/*
+class WindSystem {
+public:
+	virtual Vec3f getWind() = 0;
+};*/
+
+// =====================================================
 //	class Particle
 // =====================================================
 
-class Particle{
+class Particle {
+public:
+	enum BlendMode {
+		bmOne,
+		bmOneMinusAlpha
+	};
+
+	enum PrimitiveType {
+		ptQuad,
+		ptLine
+	};
+
+	enum ProjectileStart {
+		psSelf,
+		psTarget,
+		psSky
+	};
+
 public:
 	//attributes
 	Vec3f pos;
@@ -47,16 +77,21 @@ public:
 	Vec3f speed;
 	Vec3f accel;
 	Vec4f color;
+	Vec4f color2;
 	float size;
 	int energy;
 
 public:
+	//void init(const ParticleSystem &ps, const Vec3f &pos, const Vec3f &speed, const Vec3f &accel);
+	//void init2(const ParticleSystem &ps, const Vec3f &pos, const Vec3f &speed, const Vec3f &accel);
+
 	//get
 	Vec3f getPos() const		{return pos;}
 	Vec3f getLastPos() const	{return lastPos;}
 	Vec3f getSpeed() const		{return speed;}
 	Vec3f getAccel() const		{return accel;}
 	Vec4f getColor() const		{return color;}
+	Vec4f getColor2() const		{return color2;}
 	float getSize() const		{return size;}
 	int getEnergy()	const		{return energy;}
 };
@@ -67,58 +102,131 @@ class ParticleSystem;
 //	class ParticleObserver
 // =====================================================
 
-class ParticleObserver{
+class ParticleObserver {
 public:
 	virtual ~ParticleObserver(){};
-	virtual void update(ParticleSystem *particleSystem)= 0;
+	virtual void update(ParticleSystem *particleSystem) = 0;
+};
+
+// =====================================================
+//	class ParticleSystemType
+// =====================================================
+
+/** Defines the parameters for a particle system. */
+class ParticleSystemBase {
+protected:
+	Random random;
+
+	Particle::BlendMode blendMode;
+	Particle::PrimitiveType primitiveType;
+	Texture *texture;
+	Model *model;
+	Vec3f offset;
+	Vec4f color;
+	Vec4f color2;
+	Vec4f colorNoEnergy;
+	Vec4f color2NoEnergy;
+	float size;
+	float sizeNoEnergy;
+	float speed;
+	float gravity;
+	float mass;
+	float density;
+	int emissionRate;
+	int energy;
+	int energyVar;
+	float radius;
+	int drawCount;
+
+//	static ParticleSystemType *fireParticleSystemType;
+//	static ParticleSystemType *rainParticleSystemType;
+//	static ParticleSystemType *snowParticleSystemType;
+
+public:
+	//constructor and destructor
+	ParticleSystemBase();
+	ParticleSystemBase(const ParticleSystemBase &model);
+	virtual ~ParticleSystemBase(){}
+
+	//get
+	Particle::BlendMode getBlendMode() const			{return blendMode;}
+	Particle::PrimitiveType getPrimitiveType() const	{return primitiveType;}
+	Texture *getTexture() const							{return texture;}
+	Model *getModel() const								{return model;}
+	const Vec3f &getOffset() const						{return offset;}
+	const Vec4f &getColor() const						{return color;}
+	const Vec4f &getColor2() const						{return color2;}
+	const Vec4f &getColorNoEnergy() const				{return colorNoEnergy;}
+	const Vec4f &getColor2NoEnergy() const				{return color2NoEnergy;}
+	float getSize() const 								{return size;}
+	float getSizeNoEnergy() const						{return sizeNoEnergy;}
+	float getSpeed() const								{return speed;}
+	float getGravity() const							{return gravity;}
+	float getMass() const								{return mass;}
+	float getDensity() const							{return density;}
+	int getEmissionRate() const							{return emissionRate;}
+	int getEnergy() const								{return energy;}
+	int getEnergyVar() const							{return energyVar;}
+	float getRadius() const								{return radius;}
+	int getDrawCount() const							{return drawCount;}
+
+	//set
+	void setBlendMode(Particle::BlendMode blendMode)			{this->blendMode = blendMode;}
+	void setPrimitiveType(Particle::PrimitiveType primitiveType){this->primitiveType = primitiveType;}
+	void setTexture(Texture *texture)							{this->texture = texture;}
+	void setModel(Model *model)									{this->model = model;}
+	void setOffset(const Vec3f &offset)							{this->offset = offset;}
+	void setColor(const Vec4f &color)							{this->color = color;}
+	void setColor2(const Vec4f &color2)							{this->color2 = color2;}
+	void setColorNoEnergy(const Vec4f &colorNoEnergy)			{this->colorNoEnergy = colorNoEnergy;}
+	void setColor2NoEnergy(const Vec4f &color2NoEnergy)			{this->color2NoEnergy = color2NoEnergy;}
+	void setSize(float size)									{this->size = size;}
+	void setSizeNoEnergy(float sizeNoEnergy)					{this->sizeNoEnergy = sizeNoEnergy;}
+	void setSpeed(float speed)									{this->speed = speed;}
+	void setGravity(float gravity)								{this->gravity = gravity;}
+	void setMass(float mass)									{this->mass = mass;}
+	void setEmissionRate(int emissionRate)						{this->emissionRate = emissionRate;}
+	void setEnergy(int energy)									{this->energy = energy;}
+	void setEnergyVar(int energyVar)							{this->energyVar = energyVar;}
+	void setRadius(float radius)								{this->radius = radius;}
+	void setDrawCount(int drawCount)							{this->drawCount = drawCount;}
+
+//	void load(const XmlNode *particleSystemNode, const string &dir);
+//	virtual ParticleSystem *create() = 0;
+	int getRandEnergy() 				{return energy + random.randRange(-energyVar, energyVar);}
+	void fudgeGravity()					{gravity = mass * density;}
+	void fudgeMassDensity()				{mass = 1.f; density = gravity;}
 };
 
 // =====================================================
 //	class ParticleSystem
 // =====================================================
 
-class ParticleSystem{
-public:
-	enum BlendMode{
-		bmOne,
-		bmOneMinusAlpha
-	};
-
+class ParticleSystem : public ParticleSystemBase {
 protected:
-	enum State{
-		sPause,	// No updates
+	enum State {
+		sPause,		// No updates
 		sPlay,
-		sFade	// No new particles
+		sPlayLast,	// new particles this update, then sFade
+		sFade		// No new particles
 	};
 
 protected:
-
+	int particleCount;
 	Particle *particles;
-	Random random;
-
-	BlendMode blendMode;
 	State state;
 	bool active;
 	bool visible;
 	int aliveParticleCount;
-	int particleCount;
-
-
-	Texture *texture;
 	Vec3f pos;
-	Vec4f color;
-	Vec4f colorNoEnergy;
-	int emissionRate;
-	int maxParticleEnergy;
-	int varParticleEnergy;
-	float particleSize;
-	float speed;
+	Vec3f windSpeed;
 
 	ParticleObserver *particleObserver;
 
 public:
 	//constructor and destructor
-	ParticleSystem(int particleCount);
+	ParticleSystem(int particleCount = 1000);
+	ParticleSystem(const ParticleSystemBase &type, int particleCount = 1000);
 	virtual ~ParticleSystem();
 
 	//public
@@ -127,104 +235,86 @@ public:
 
 	//get
 	State getState() const						{return state;}
-	BlendMode getBlendMode() const				{return blendMode;}
-	Texture *getTexture() const					{return texture;}
 	Vec3f getPos() const						{return pos;}
 	Particle *getParticle(int i)				{return &particles[i];}
 	const Particle *getParticle(int i) const	{return &particles[i];}
 	int getAliveParticleCount() const			{return aliveParticleCount;}
 	bool getActive() const						{return active;}
 	bool getVisible() const						{return visible;}
+	const Vec3f &getWindSpeed() const			{return windSpeed;}
 
 	//set
-	void setState(State state);
-	void setTexture(Texture *texture);
-	void setPos(Vec3f pos);
-	void setColor(Vec4f color);
-	void setColorNoEnergy(Vec4f color);
-	void setEmissionRate(int emissionRate);
-	void setMaxParticleEnergy(int maxParticleEnergy);
-	void setVarParticleEnergy(int varParticleEnergy);
-	void setParticleSize(float particleSize);
-	void setSpeed(float speed);
-	void setActive(bool active);
-	void setObserver(ParticleObserver *particleObserver);
-	void setVisible(bool visible);
+	void setState(State state)							{this->state = state;}
+	void setPos(Vec3f pos)								{this->pos = pos;}
+	void setActive(bool active)							{this->active = active;}
+	void setObserver(ParticleObserver *particleObserver){this->particleObserver = particleObserver;}
+	void setVisible(bool visible)						{this->visible = visible;}
+	void setWindSpeed(const Vec3f &windSpeed)			{this->windSpeed = windSpeed;}
+	void setWindSpeed2(float hAngle, float hSpeed, float vSpeed = 0.f) {
+		this->windSpeed.x = sinf(degToRad(hAngle)) * hSpeed;
+		this->windSpeed.y = vSpeed;
+		this->windSpeed.z = cosf(degToRad(hAngle)) * hSpeed;
+	}
 
 	//misc
 	void fade();
-	int isEmpty() const;
+	int isEmpty() const {
+		assert(aliveParticleCount >= 0);
+		return !aliveParticleCount && state != sPause;
+	}
 
 protected:
 	//protected
 	Particle *createParticle();
-	void killParticle(Particle *p);
+	void killParticle(Particle *p)				{aliveParticleCount--;}
 
 	//virtual protected
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual void updateParticle(Particle *p);
-	virtual bool deathTest(Particle *p);
+	virtual bool deathTest(Particle *p)			{return p->energy <= 0;}
 };
 
 // =====================================================
 //	class FireParticleSystem
 // =====================================================
 
-class FireParticleSystem: public ParticleSystem{
-private:
-	float radius;
-	Vec3f windSpeed;
-
+class FireParticleSystem: public ParticleSystem {
 public:
-	FireParticleSystem(int particleCount= 2000);
+	FireParticleSystem(int particleCount = 2000);
+	FireParticleSystem(const ParticleSystemBase &type, int particleCount = 2000);
 
 	//virtual
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual void updateParticle(Particle *p);
-
-	//set params
-	void setRadius(float radius);
-	void setWind(float windAngle, float windSpeed);
 };
 
 // =====================================================
 //	class RainParticleSystem
 // =====================================================
 
-class RainParticleSystem: public ParticleSystem{
-private:
-	Vec3f windSpeed;
-	float radius;
-
+class RainParticleSystem: public ParticleSystem {
 public:
-	RainParticleSystem(int particleCount= 4000);
+	RainParticleSystem(int particleCount = 4000);
+	RainParticleSystem(const ParticleSystemBase &model, int particleCount = 4000);
 
+	//virtual
 	virtual void render(ParticleRenderer *pr, ModelRenderer *mr);
-
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual bool deathTest(Particle *p);
-
-	void setRadius(float radius);
-	void setWind(float windAngle, float windSpeed);
 };
 
 // =====================================================
 //	class SnowParticleSystem
 // =====================================================
 
-class SnowParticleSystem: public ParticleSystem{
-private:
-	Vec3f windSpeed;
-	float radius;
-
+class SnowParticleSystem: public ParticleSystem {
 public:
-	SnowParticleSystem(int particleCount= 4000);
+	SnowParticleSystem(int particleCount = 4000);
+	SnowParticleSystem(const ParticleSystemBase &type, int particleCount = 4000);
 
+	//virtual
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual bool deathTest(Particle *p);
-
-	void setRadius(float radius);
-	void setWind(float windAngle, float windSpeed);
 };
 
 // ===========================================================================
@@ -233,52 +323,47 @@ public:
 /// Base class for Projectiles and Splashes
 // ===========================================================================
 
-class AttackParticleSystem: public ParticleSystem{
-public:
-	enum Primitive{
-		pQuad,
-		pLine,
-		pLineAlpha
-	};
-
+class AttackParticleSystem: public ParticleSystem {
 protected:
-	Model *model;
-	Primitive primitive;
-	Vec3f offset;
-	float sizeNoEnergy;
-	float gravity;
+//	Model *model;
+//	Primitive primitive;
+//	Vec3f offset;
+//	float sizeNoEnergy;
+//	float gravity;
 
 	Vec3f direction;
 
 public:
 	AttackParticleSystem(int particleCount);
+	AttackParticleSystem(const ParticleSystemBase &model, int particleCount);
 
 	virtual void render(ParticleRenderer *pr, ModelRenderer *mr);
 
-	Model *getModel() const			{return model;}
+//	Model *getModel() const			{return model;}
 	Vec3f getDirection() const		{return direction;}
 
-	void setModel(Model *model)					{this->model= model;}
-	void setOffset(Vec3f offset)				{this->offset= offset;}
-	void setSizeNoEnergy(float sizeNoEnergy)	{this->sizeNoEnergy= sizeNoEnergy;}
-	void setGravity(float gravity)				{this->gravity= gravity;}
-	void setPrimitive(Primitive primitive)		{this->primitive= primitive;}
+//	void setModel(Model *model)					{this->model= model;}
+//	void setOffset(Vec3f offset)				{this->offset= offset;}
+//	void setSizeNoEnergy(float sizeNoEnergy)	{this->sizeNoEnergy= sizeNoEnergy;}
+//	void setGravity(float gravity)				{this->gravity= gravity;}
+//	void setPrimitive(Primitive primitive)		{this->primitive= primitive;}
 
-	static Primitive strToPrimitive(const string &str);
+//	static Primitive strToPrimitive(const string &str);
 };
 
 // =====================================================
 //	class ProjectileParticleSystem
 // =====================================================
 
-class ProjectileParticleSystem: public AttackParticleSystem{
+class ProjectileParticleSystem: public AttackParticleSystem {
 public:
 	friend class SplashParticleSystem;
 
-	enum Trajectory{
+	enum Trajectory {
 		tLinear,
 		tParabolic,
-		tSpiral
+		tSpiral,
+		tRandom
 	};
 
 private:
@@ -288,6 +373,7 @@ private:
 	Vec3f startPos;
 	Vec3f endPos;
 	Vec3f flatPos;
+	const Entity *target;
 
 	Vec3f xVector;
 	Vec3f yVector;
@@ -300,8 +386,11 @@ private:
 	float trajectoryScale;
 	float trajectoryFrequency;
 
+	Random random;
+
 public:
 	ProjectileParticleSystem(int particleCount= 1000);
+	ProjectileParticleSystem(const ParticleSystemBase &model, int particleCount= 1000);
 	virtual ~ProjectileParticleSystem();
 
 	void link(SplashParticleSystem *particleSystem);
@@ -315,6 +404,7 @@ public:
 	void setTrajectoryScale(float trajectoryScale)			{this->trajectoryScale= trajectoryScale;}
 	void setTrajectoryFrequency(float trajectoryFrequency)	{this->trajectoryFrequency= trajectoryFrequency;}
 	void setPath(Vec3f startPos, Vec3f endPos);
+	void setTarget(const Entity *target)					{this->target = target;}
 
 	static Trajectory strToTrajectory(const string &str);
 };
@@ -323,7 +413,7 @@ public:
 //	class SplashParticleSystem
 // =====================================================
 
-class SplashParticleSystem: public AttackParticleSystem{
+class SplashParticleSystem: public AttackParticleSystem {
 public:
 	friend class ProjectileParticleSystem;
 
@@ -337,18 +427,19 @@ private:
 	float horizontalSpreadB;
 
 public:
-	SplashParticleSystem(int particleCount= 1000);
+	SplashParticleSystem(int particleCount = 1000);
+	SplashParticleSystem(const ParticleSystemBase &model, int particleCount = 1000);
 	virtual ~SplashParticleSystem();
 
 	virtual void update();
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual void updateParticle(Particle *p);
 
-	void setEmissionRateFade(int emissionRateFade)		{this->emissionRateFade= emissionRateFade;}
-	void setVerticalSpreadA(float verticalSpreadA)		{this->verticalSpreadA= verticalSpreadA;}
-	void setVerticalSpreadB(float verticalSpreadB)		{this->verticalSpreadB= verticalSpreadB;}
-	void setHorizontalSpreadA(float horizontalSpreadA)	{this->horizontalSpreadA= horizontalSpreadA;}
-	void setHorizontalSpreadB(float horizontalSpreadB)	{this->horizontalSpreadB= horizontalSpreadB;}
+	void setEmissionRateFade(int emissionRateFade)		{this->emissionRateFade = emissionRateFade;}
+	void setVerticalSpreadA(float verticalSpreadA)		{this->verticalSpreadA = verticalSpreadA;}
+	void setVerticalSpreadB(float verticalSpreadB)		{this->verticalSpreadB = verticalSpreadB;}
+	void setHorizontalSpreadA(float horizontalSpreadA)	{this->horizontalSpreadA = horizontalSpreadA;}
+	void setHorizontalSpreadB(float horizontalSpreadB)	{this->horizontalSpreadB = horizontalSpreadB;}
 
 };
 
@@ -356,7 +447,7 @@ public:
 //	class ParticleManager
 // =====================================================
 
-class ParticleManager{
+class ParticleManager {
 private:
 	list<ParticleSystem*> particleSystems;
 
@@ -365,7 +456,13 @@ public:
 	void update();
 	void render(ParticleRenderer *pr, ModelRenderer *mr) const;
 	void manage(ParticleSystem *ps);
-	void end();
+	void end() {
+		while(!particleSystems.empty()) {
+			delete particleSystems.front();
+			particleSystems.pop_front();
+		}
+	}
+
 };
 
 }}//end namespace

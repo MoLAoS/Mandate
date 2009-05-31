@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "ai_interface.h"
 
 #include "ai.h"
@@ -19,7 +20,9 @@
 #include "object.h"
 #include "game.h"
 #include "config.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Graphics;
@@ -43,8 +46,8 @@ AiInterface::AiInterface(Game &game, int factionIndex, int teamIndex){
 	ai.init(this);
 
 	//config
-	logLevel= Config::getInstance().getAiLog();
-	redir= Config::getInstance().getAiRedir();
+	logLevel= Config::getInstance().getMiscAiLog();
+	redir= Config::getInstance().getMiscAiRedir();
 
 	//clear log file
 	if(logLevel>0){

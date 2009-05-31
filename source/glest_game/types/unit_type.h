@@ -18,6 +18,7 @@
 #include "sound_container.h"
 #include "checksum.h"
 #include "unit_stats_base.h"
+#include "particle_type.h"
 
 namespace Glest{ namespace Game{
 
@@ -34,9 +35,8 @@ class FactionType;
 // 	class Level
 // ===============================
 
-class Level: public EnhancementTypeBase{
+class Level: public EnhancementTypeBase, public NameIdPair {
 private:
-	string name;
 	int kills;
 
 public:
@@ -49,7 +49,6 @@ public:
 	}
 
 	virtual void load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
-	const string &getName() const	{return name;}
 	int getKills() const			{return kills;}
 };
 
@@ -84,11 +83,11 @@ private:
     typedef vector<CommandType*> CommandTypes;
     typedef vector<Resource> StoredResources;
 	typedef vector<Level> Levels;
+	typedef vector<ParticleSystemType*> particleSystemTypes;
 //	typedef vector<PetRule*> PetRules;
 
 private:
 	//basic
-	int id;
 	bool multiBuild;
     bool multiSelect;
 
@@ -108,19 +107,21 @@ private:
 	bool meetingPoint;
 	Texture2D *meetingPointImage;
 
-    //OPTIMIZATION: store first command type and skill type of each class
+    //OPTIMIZATIONS:
+	//store first command type and skill type of each class
 	const CommandType *firstCommandTypeOfClass[ccCount];
     const SkillType *firstSkillTypeOfClass[scCount];
+	float halfSize;
+	float halfHeight;
 
 public:
 	//creation and loading
     UnitType();
     virtual ~UnitType();
 	void preLoad(const string &dir);
-    void load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum* checksum);
+    void load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
 
 	//get
-	int getId() const									{return id;}
 	bool getMultiSelect() const							{return multiSelect;}
 
 	const SkillType *getSkillType(int i) const			{return skillTypes[i];}
@@ -133,13 +134,15 @@ public:
 //	const PetRules &getPetRules() const					{return petRules;}
 	const Emanations &getEmanations() const				{return emanations;}
 	bool isMultiBuild() const							{return multiBuild;}
+	float getHalfSize() const							{return halfSize;}
+	float getHalfHeight() const							{return halfHeight;}
 
 	//cellmap
 	bool *cellMap;
 
 	int getStoredResourceCount() const					{return storedResources.size();}
 	const Resource *getStoredResource(int i) const		{return &storedResources[i];}
-	bool getCellMapCell(int x, int y) const				{return cellMap[size*y+x];}
+	bool getCellMapCell(int x, int y) const				{return cellMap[size * y + x];}
 	bool hasMeetingPoint() const						{return meetingPoint;}
 	Texture2D *getMeetingPointImage() const				{return meetingPointImage;}
 	StaticSound *getSelectionSound() const				{return selectionSounds.getRandSound();}
@@ -147,8 +150,9 @@ public:
 
 	int getStore(const ResourceType *rt) const;
 	const SkillType *getSkillType(const string &skillName, SkillClass skillClass = scCount) const;
-	const SkillType *getFirstStOfClass(SkillClass skillClass) const;
-    const CommandType *getFirstCtOfClass(CommandClass commandClass) const;
+
+	const CommandType *getFirstCtOfClass(CommandClass commandClass) const {return firstCommandTypeOfClass[commandClass];}
+	const SkillType *getFirstStOfClass(SkillClass skillClass) const {return firstSkillTypeOfClass[skillClass];}
     const HarvestCommandType *getFirstHarvestCommand(const ResourceType *resourceType) const;
 	const AttackCommandType *getFirstAttackCommand(Field field) const;
 	const RepairCommandType *getFirstRepairCommand(const UnitType *repaired) const;

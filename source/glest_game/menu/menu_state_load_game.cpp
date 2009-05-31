@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_state_load_game.h"
 
 #include "renderer.h"
@@ -20,6 +21,7 @@
 #include "xml_parser.h"
 
 #include "leak_dumper.h"
+
 
 namespace Glest{ namespace Game{
 
@@ -66,10 +68,10 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 // 	class MenuStateLoadGame
 // =====================================================
 
-MenuStateLoadGame::MenuStateLoadGame(Program *program, MainMenu *mainMenu):
-		MenuState(program, mainMenu, "loadgame"), loaderThread(*this) {
+MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu) :
+		MenuStateStartGameBase(program, mainMenu, "loadgame"), loaderThread(*this) {
 	confirmMessageBox = NULL;
-	msgBox = NULL;
+	//msgBox = NULL;
 	savedGame = NULL;
 	gs = NULL;
 
@@ -80,14 +82,13 @@ MenuStateLoadGame::MenuStateLoadGame(Program *program, MainMenu *mainMenu):
 	//create
 	buttonReturn.init(350, 200, 100);
 	buttonDelete.init(462, 200, 100);
-	buttonLoad.init(575, 200, 100);
+	buttonPlayNow.init(575, 200, 100);
 
 	//savegames listBoxGames
 	listBoxGames.init(400, 300, 225);
 	if(!loadGameList()) {
 		msgBox = new GraphicMessageBox();
-		msgBox->init(Lang::getInstance().get("Ok"));
-		msgBox->setText(Lang::getInstance().get("NoSavedGames"));
+		msgBox->init(Lang::getInstance().get("NoSavedGames"), Lang::getInstance().get("Ok"));
 		criticalError = true;
 		return;
 	}
@@ -95,7 +96,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program *program, MainMenu *mainMenu):
 	//texts
 	buttonReturn.setText(lang.get("Return"));
 	buttonDelete.setText(lang.get("Delete"));
-	buttonLoad.setText(lang.get("Load"));
+	buttonPlayNow.setText(lang.get("Load"));
 
 	//game info lables
 	labelInfoHeader.init(350, 500, 440, 225, false);
@@ -160,23 +161,25 @@ void MenuStateLoadGame::mouseClick(int x, int y, MouseButton mouseButton){
 		return;
 	}
 
-	if(msgBox && msgBox->mouseClick(x,y)) {
-		soundRenderer.playFx(coreData.getClickSoundC());
-		delete msgBox;
-		msgBox = NULL;
+	if(msgBox) {
+		if(msgBox->mouseClick(x,y)) {
+			soundRenderer.playFx(coreData.getClickSoundC());
+			delete msgBox;
+			msgBox = NULL;
+		}
 	}
 	else if(buttonDelete.mouseClick(x,y)){
 		soundRenderer.playFx(coreData.getClickSoundC());
 		confirmMessageBox = new GraphicMessageBox();
-		confirmMessageBox->init(lang.get("Yes"), lang.get("No"));
-		confirmMessageBox->setText(lang.get("Delete") + " " + listBoxGames.getSelectedItem() + "?");
+		confirmMessageBox->init(lang.get("Delete") + " " + listBoxGames.getSelectedItem() + "?",
+				lang.get("Yes"), lang.get("No"));
 	}
-	else if(buttonLoad.mouseClick(x,y) && gs){
+	else if(buttonPlayNow.mouseClick(x,y) && gs){
 		soundRenderer.playFx(coreData.getClickSoundC());
 		if(!loadGame()) {
+			buttonPlayNow.mouseMove(1, 1);
 			msgBox = new GraphicMessageBox();
-			msgBox->init(Lang::getInstance().get("Ok"));
-			msgBox->setText(Lang::getInstance().get("WaitingForConnections"));
+			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
 			criticalError = false;
 		}
 	}
@@ -185,7 +188,7 @@ void MenuStateLoadGame::mouseClick(int x, int y, MouseButton mouseButton){
 	}
 }
 
-void MenuStateLoadGame::mouseMove(int x, int y, const MouseState *ms){
+void MenuStateLoadGame::mouseMove(int x, int y, const MouseState &ms){
 
 	if (confirmMessageBox != NULL){
 		confirmMessageBox->mouseMove(x,y);
@@ -201,16 +204,14 @@ void MenuStateLoadGame::mouseMove(int x, int y, const MouseState *ms){
 
 	buttonReturn.mouseMove(x, y);
 	buttonDelete.mouseMove(x, y);
-	buttonLoad.mouseMove(x, y);
+	buttonPlayNow.mouseMove(x, y);
 }
 
 void MenuStateLoadGame::render(){
 	Renderer &renderer= Renderer::getInstance();
-	if (msgBox != NULL){
+	if(msgBox && criticalError) {
 		renderer.renderMessageBox(msgBox);
-		if(criticalError) {
-			return;
-		}
+		return;
 	}
 
 	if(savedGame) {
@@ -230,36 +231,38 @@ void MenuStateLoadGame::render(){
 	renderer.renderListBox(&listBoxGames);
 	renderer.renderButton(&buttonReturn);
 	renderer.renderButton(&buttonDelete);
-	renderer.renderButton(&buttonLoad);
+	renderer.renderButton(&buttonPlayNow);
 
-	if (confirmMessageBox != NULL){
+	if(confirmMessageBox) {
 		renderer.renderMessageBox(confirmMessageBox);
 	}
+
+	if(msgBox) {
+		renderer.renderMessageBox(msgBox);
+	}
+
 }
 
 void MenuStateLoadGame::update(){
-	if(!gs) {
+	if (!gs) {
 		return;
 	}
 
-	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
-	Lang& lang= Lang::getInstance();
+	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
+	Lang& lang = Lang::getInstance();
 
-	for(int i = 0; i < GameConstants::maxPlayers; ++i){
-		if(gs->getFactionControl(i) == ctNetwork){
-			ConnectionSlot* connectionSlot= serverInterface->getSlot(i);
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		if (gs->getFactionControl(i) == ctNetwork) {
+			ConnectionSlot* connectionSlot = serverInterface->getSlot(i);
 
-			assert(connectionSlot!=NULL);
+			assert(connectionSlot != NULL);
 
-			if(connectionSlot->isConnected()){
-				labelNetStatus[i].setText(connectionSlot->getName());
-			}
-			else
-			{
+			if (connectionSlot->isConnected()) {
+				labelNetStatus[i].setText(connectionSlot->getDescription());
+			} else {
 				labelNetStatus[i].setText(lang.get("NotConnected"));
 			}
-		}
-		else{
+		} else {
 			labelNetStatus[i].setText("");
 		}
 	}
@@ -340,7 +343,7 @@ bool MenuStateLoadGame::loadGame() {
 	if(serverInterface) {
 		serverInterface->launchGame(gs, getFileName());
 	}
-	program->setState(new Game(program, gs, root));
+	program.setState(new Game(program, *gs, root));
 	return true;
 }
 
@@ -352,7 +355,7 @@ void MenuStateLoadGame::selectionChanged() {
 	{
 		MutexLock lock(mutex);
 		fileName = getFileName();
-		labelInfoHeader.setText("");
+		labelInfoHeader.setText("Loading...");
 		for(int i=0; i<GameConstants::maxPlayers; ++i){
 			labelPlayers[i].setText("");
 			labelControls[i].setText("");
@@ -368,6 +371,7 @@ void MenuStateLoadGame::initGameInfo() {
 	try {
 		if(gs) {
 			delete gs;
+			gs = NULL;
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
 		string techTree = gs->getTechPath();
@@ -379,6 +383,7 @@ void MenuStateLoadGame::initGameInfo() {
 		elapsedSeconds = elapsedSeconds % 60;
 		elapsedMinutes = elapsedMinutes % 60;
 		char elapsedTime[0x100];
+		loadMapInfo(map, &mapInfo);
 
 		if(techTree.size() > strlen("techs/")) {
 			techTree.erase(0, strlen("techs/"));
@@ -397,10 +402,14 @@ void MenuStateLoadGame::initGameInfo() {
 		} else {
 			sprintf(elapsedTime, "%02d:%02d", elapsedMinutes, elapsedSeconds);
 		}
+
+		string mapDescr = " (Max Players: " + intToStr(mapInfo.players)
+				+ ", Size: " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
+
 		labelInfoHeader.setText(listBoxGames.getSelectedItem() + ": " + gs->getDescription()
 				+ "\nTech Tree: " + formatString(techTree)
 				+ "\nTileset: " + formatString(tileset)
-				+ "\nMap: " + formatString(map)
+				+ "\nMap: " + formatString(map) + mapDescr
 				+ "\nElapsed Time: " + elapsedTime);
 
 		if(gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {
@@ -431,6 +440,7 @@ void MenuStateLoadGame::initGameInfo() {
 				labelNetStatus[i].setText("");
 			}
 		}
+
 	} catch (exception &e) {
 		labelInfoHeader.setText(string("Bad game file.\n") + e.what());
 		for(int i = 0; i < GameConstants::maxPlayers; ++i){
@@ -440,8 +450,14 @@ void MenuStateLoadGame::initGameInfo() {
 			labelTeams[i].setText("");
 			labelNetStatus[i].setText("");
 		}
+		if(gs) {
+			delete gs;
+			gs = NULL;
+		}
 	}
-	updateNetworkSlots();
+	if(gs) {
+		updateNetworkSlots();
+	}
 
 	delete savedGame;
 	savedGame = NULL;

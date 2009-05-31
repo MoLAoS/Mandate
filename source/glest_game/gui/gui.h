@@ -20,8 +20,15 @@
 #include "selection.h"
 #include "random.h"
 #include "game_camera.h"
+#include "keymap.h"
 
 using Shared::Util::Random;
+
+namespace Shared { namespace Xml {
+	class XmlNode;
+}}
+
+using Shared::Xml::XmlNode;
 
 namespace Glest{ namespace Game{
 
@@ -30,7 +37,7 @@ class World;
 class CommandType;
 class Game;
 
-enum DisplayState{
+enum DisplayState {
 	dsEmpty,
 	dsUnitSkills,
 	dsUnitBuild,
@@ -41,7 +48,7 @@ enum DisplayState{
 //	class Mouse3d
 // =====================================================
 
-class Mouse3d{
+class Mouse3d {
 public:
 	static const float fadeSpeed;
 
@@ -49,16 +56,18 @@ private:
 	bool enabled;
 	int rot;
 	float fade;
+	Vec2i pos;
 
 public:
 	Mouse3d();
 
-	void enable();
+	void show(Vec2i pos);
 	void update();
 
 	bool isEnabled() const	{return enabled;}
 	float getFade() const	{return fade;}
 	int getRot() const		{return rot;}
+	Vec2i getPos() const	{return pos;}
 };
 
 // =====================================================
@@ -74,9 +83,9 @@ private:
 public:
 	SelectionQuad();
 
-	bool isEnabled() const		{return enabled;}
-	Vec2i getPosDown() const	{return posDown;}
-	Vec2i getPosUp() const		{return posUp;}
+	bool isEnabled() const			{return enabled;}
+	const Vec2i& getPosDown() const	{return posDown;}
+	const Vec2i& getPosUp() const	{return posUp;}
 
 	void setPosDown(const Vec2i &posDown);
 	void setPosUp(const Vec2i &posUp);
@@ -89,7 +98,7 @@ public:
 ///	In game GUI
 // =====================================================
 
-class Gui{
+class Gui {
 public:
 	static const int maxSelBuff= 128*5;
 	static const int upgradeDisplayIndex= 8;
@@ -104,12 +113,14 @@ public:
 
 private:
 	//External objects
-	Random random;
+	Game &game;
+	const Input &input;
 	const Commander *commander;
 	const World *world;
 	GameCamera *gameCamera;
 	Console *console;
-	Game *game;
+
+	Random random;
 
 	//Positions
 	Vec2i posObjWorld;		//world coords
@@ -126,6 +137,7 @@ private:
 	Vec2i dragStartPos;		//begining coord of multi-build command
 	BuildPositions buildPositions;
 	bool dragging;
+	bool draggingMinimap;	// the mouse went down on minimap
 
 	//composite
 	Display display;
@@ -137,12 +149,22 @@ private:
 	bool selectingBuilding;
 	bool selectingPos;
 	bool selectingMeetingPoint;
-	bool shiftDown;
-	bool controlDown;
+	bool needSelectionUpdate;
+	
+	static Gui* currentGui;
+
 
 public:
-	Gui();
-	void init(Game *game);
+	Gui(Game &game);
+	~Gui() {
+		currentGui = NULL;
+	}
+	
+	static Gui* getCurrentGui() {
+		return currentGui;
+	}
+	
+	void init();
 	void end();
 
 	//get
@@ -160,17 +182,16 @@ public:
 	bool isSelecting() const				{return selectionQuad.isEnabled();}
 	bool isSelectingPos() const				{return selectingPos;}
 	bool isSelectingBuilding() const		{return selectingBuilding;}
+	bool isSelected(const Unit *unit) const	{return selection.hasUnit(unit);}
 	bool isPlacingBuilding() const;
 	bool isVisible(const Vec2i &pos) const	{return gameCamera->computeVisibleQuad().isInside(pos);}
 	bool isDragging() const					{return dragging;}
-	bool isShiftDown() const				{return shiftDown;}
-	bool isControlDown() const				{return controlDown;}
+	bool isDraggingMinimap() const			{return draggingMinimap;}
+	bool isNeedSelectionUpdate() const		{return needSelectionUpdate;}
 
 	//set
 	void invalidatePosObjWorld()			{validPosObjWorld= false;}
 	void setComputeSelectionFlag()			{computeSelection= true;}
-	void setShiftDown(bool shiftDown)		{this->shiftDown = shiftDown;}
-	void setControlDown(bool controlDown)	{this->controlDown = controlDown;}
 
 	//events
 	void update(){
@@ -189,13 +210,13 @@ public:
 	void mouseDoubleClickLeft(int x, int y);
 
 	void mouseMoveDisplay(int x, int y);
-	void mouseDownLeftGraphics(int x, int y);
-	void mouseDownRightGraphics(int x, int y);
+//	void mouseDownLeftGraphics(int x, int y);
+//	void mouseDownRightGraphics(int x, int y);
 	void mouseUpLeftGraphics(int x, int y);
 	void mouseMoveGraphics(int x, int y);
 	void mouseDoubleClickLeftGraphics(int x, int y);
 	void groupKey(int groupIndex);
-	void hotKey(char key);
+	void hotKey(UserCommand cmd);
 	bool cancelPending();
 
 	bool mouseValid(int x, int y){
@@ -203,29 +224,41 @@ public:
 	}
 
 	//misc
-	void switchToNextDisplayColor(){
+	void switchToNextDisplayColor() {
 		display.switchColor();
 	}
 
-	void onSelectionChanged(){
+	void onSelectionChanged() {
 		selection.update();
 		resetState();
 		computeDisplay();
 	}
 
-	void onSelectionStateChanged(){
+	void onSelectionStateChanged() {
 		selection.update();
 		computeDisplay();
 	}
+	
+	/**
+	 * Hacky backstop function to make sure units are removed from all selection groups before they
+	 * are deleted.
+	 */
+	void makeSureImNotSelected(Unit *unit) {
+		selection.unitEvent(UnitObserver::eKill, unit);
+	}
+
 	bool getMinimapCell(int x, int y, Vec2i &cell);
+
+	void load(const XmlNode *node);
+	void save(XmlNode *node) const;
 
 private:
 	void mouseDownLeftDisplay(int posDisplay);
 
 	//orders
-	void giveDefaultOrders(const Vec2i &targetPos, const Unit *targetUnit);
+	void giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit);
 	void giveOneClickOrders();
-	void giveTwoClickOrders(const Vec2i &targetPos, const Unit *targetUnit);
+	void giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit);
 
 	//hotkeys
 	void centerCameraOnSelection();
@@ -242,8 +275,10 @@ private:
 	void computeInfoString(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
-	void computeSelected(bool doubleCkick);
-	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, const Unit *&targetUnit);
+public:
+	void updateSelection(bool doubleClick, Selection::UnitContainer &units);
+private:
+	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units);
 	void computeBuildPositions(const Vec2i &end);
 };
 

@@ -3,32 +3,33 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "leak_dumper.h"
 
 #ifdef SL_LEAK_DUMP
 
-AllocInfo::AllocInfo(){
-	ptr= NULL;
-	file= "";
-	line= -1;
-	bytes= -1;
-	array= false;
-	free= true;
+AllocInfo::AllocInfo() :
+		line(-1),
+		file(""),
+		bytes(-1),
+		ptr(NULL),
+		free(true),
+		array(false) {
 }
 
-AllocInfo::AllocInfo(void* ptr, const char* file, int line, size_t bytes, bool array){
-	this->ptr= ptr;
-	this->file= file;
-	this->line= line;
-	this->bytes= bytes;
-	this->array= array;
-	free= false;
+AllocInfo::AllocInfo(void* ptr, const char* file, int line, size_t bytes, bool array) :
+		line(line),
+		file(file),
+		bytes(bytes),
+		ptr(ptr),
+		free(false),
+		array(array) {
 }
 
 // =====================================================
@@ -37,7 +38,7 @@ AllocInfo::AllocInfo(void* ptr, const char* file, int line, size_t bytes, bool a
 
 // ===================== PRIVATE =======================
 
-AllocRegistry::AllocRegistry(){
+AllocRegistry::AllocRegistry() {
 	allocCount= 0;
 	allocBytes= 0;
 	nonMonitoredCount= 0;
@@ -58,15 +59,15 @@ AllocRegistry::~AllocRegistry(){
 void AllocRegistry::allocate(AllocInfo info){
 	++allocCount;
 	allocBytes+= info.bytes;
-	unsigned hashCode= reinterpret_cast<unsigned>(info.ptr) % maxAllocs;
-	
-	for(int i=hashCode; i<maxAllocs; ++i){
+	unsigned hashCode= static_cast<unsigned>(reinterpret_cast<intptr_t>(info.ptr) % maxAllocs);
+
+	for(unsigned i=hashCode; i<maxAllocs; ++i){
 		if(allocs[i].free){
 			allocs[i]= info;
 			return;
 		}
 	}
-	for(int i=0; i<hashCode; ++i){
+	for(unsigned i=0; i<hashCode; ++i){
 		if(allocs[i].free){
 			allocs[i]= info;
 			return;
@@ -75,10 +76,10 @@ void AllocRegistry::allocate(AllocInfo info){
 	++nonMonitoredCount;
 	nonMonitoredBytes+= info.bytes;
 }
-	
+
 void AllocRegistry::deallocate(void* ptr, bool array){
-	unsigned hashCode= reinterpret_cast<unsigned>(ptr) % maxAllocs;
-	
+	unsigned hashCode= static_cast<unsigned>(reinterpret_cast<intptr_t>(info.ptr) % maxAllocs);
+
 	for(int i=hashCode; i<maxAllocs; ++i){
 		if(!allocs[i].free && allocs[i].ptr==ptr && allocs[i].array==array){
 			allocs[i].free= true;
@@ -120,4 +121,4 @@ void AllocRegistry::dump(const char *path){
 	fclose(f);
 }
 
-#endif
+#endif // SL_LEAK_DUMP

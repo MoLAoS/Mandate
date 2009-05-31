@@ -15,7 +15,7 @@
 #include "program.h"
 #include "stats.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 // 	class BattleEnd  
@@ -23,16 +23,16 @@ namespace Glest{ namespace Game{
 ///	ProgramState representing the end of the game
 // =====================================================
 
-class BattleEnd: public ProgramState{
+class BattleEnd: public ProgramState {
 private:
 	Stats stats;
 
 public:
-	BattleEnd(Program *program, const Stats *stats);
+	BattleEnd(Program &program, const Stats &stats);
 	~BattleEnd();
-	virtual void update();
+	virtual void update() {}
 	virtual void render();
-	virtual void keyDown(char key);
+	virtual void keyDown(const Key &key);
 	virtual void mouseDownLeft(int x, int y);
 };
 

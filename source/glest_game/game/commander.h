@@ -21,13 +21,12 @@
 
 using std::vector;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 using Shared::Graphics::Vec2i;
 
 class World;
 class Unit;
-class NetworkCommand;
 
 // =====================================================
 // 	class Commander
@@ -35,32 +34,33 @@ class NetworkCommand;
 ///	Gives commands to the units
 // =====================================================
 
-class Commander{
+class Commander {
 private:
 	typedef vector<CommandResult> CommandResultContainer;
-
-private:
-    World *world;
+	typedef CommandResultContainer::const_iterator CRIterator;
+	World *world;
 
 public:
-    void init(World *world);
+    void init(World *world)		{this->world = world;}
 	void updateNetwork();
 
-	CommandResult tryGiveCommand(const Unit* unit, const CommandType *commandType, CommandFlags flags, const Vec2i &pos, const UnitType* unitType) const;
-	CommandResult tryGiveCommand(const Selection *selection, CommandClass commandClass, CommandFlags flags, const Vec2i &pos= Vec2i(0), const Unit *targetUnit= NULL) const;
-    CommandResult tryGiveCommand(const Selection *selection, const CommandType *commandType, CommandFlags flags, const Vec2i &pos= Vec2i(0), const Unit *targetUnit= NULL) const;
-    CommandResult tryGiveCommand(const Selection *selection, CommandFlags flags, const Vec2i &pos, const Unit *targetUnit= NULL) const;
+	CommandResult tryGiveCommand(
+		const Selection &selection,
+		CommandFlags flags,
+		const CommandType *commandType = NULL,
+		CommandClass commandClass = ccNull,
+		const Vec2i &pos = Command::invalidPos,
+		Unit *targetUnit = NULL,
+		const UnitType* unitType = NULL) const;
 	CommandResult tryCancelCommand(const Selection *selection) const;
-	void trySetMeetingPoint(const Unit* unit, CommandFlags flags, const Vec2i &pos) const;
-	void trySetAutoRepairEnabled(const Unit* unit, CommandFlags flags, bool enabled) const;
-	CommandResult pushNetworkCommand(const NetworkCommand* networkCommand) const;
+	void trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const;
 
 private:
-    Vec2i computeRefPos(const Selection *selection) const;
+	CommandResult pushCommand(Command *command) const;
+	void giveCommand(Command *command) const;
+    Vec2i computeRefPos(const Selection &selection) const;
     Vec2i computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, const Vec2i &commandPos) const;
     CommandResult computeResult(const CommandResultContainer &results) const;
-	void giveNetworkCommand(const NetworkCommand* networkCommand) const;
-	Command* buildCommand(const NetworkCommand* networkCommand) const;
 };
 
 }} //end namespace

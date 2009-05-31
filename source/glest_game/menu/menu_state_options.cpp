@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_state_options.h"
 
 #include "renderer.h"
@@ -29,7 +30,7 @@ namespace Glest{ namespace Game{
 // 	class MenuStateOptions
 // =====================================================
 
-MenuStateOptions::MenuStateOptions(Program *program, MainMenu *mainMenu):
+MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	MenuState(program, mainMenu, "config")
 {
 	Lang &lang= Lang::getInstance();
@@ -87,31 +88,31 @@ MenuStateOptions::MenuStateOptions(Program *program, MainMenu *mainMenu):
         throw runtime_error("There is no lang file");
 	}
     listBoxLang.setItems(langResults);
-	listBoxLang.setSelectedItem(config.getLang());
+	listBoxLang.setSelectedItem(config.getUiLang());
 
 	//shadows
 	for(int i= 0; i<Renderer::sCount; ++i){
 		listBoxShadows.pushBackItem(lang.get(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(i))));
 	}
 
-	string str= config.getShadows();
+	string str= config.getRenderShadows();
 	listBoxShadows.setSelectedItemIndex(clamp(Renderer::strToShadows(str), 0, Renderer::sCount-1));
 
 	//filter
 	listBoxFilter.pushBackItem("Bilinear");
 	listBoxFilter.pushBackItem("Trilinear");
-	listBoxFilter.setSelectedItem(config.getFilter());
+	listBoxFilter.setSelectedItem(config.getRenderFilter());
 
 	//textures 3d
 	listBoxTextures3D.pushBackItem(lang.get("No"));
 	listBoxTextures3D.pushBackItem(lang.get("Yes"));
-	listBoxTextures3D.setSelectedItemIndex(clamp(config.getTextures3D(), 0, 1));
+	listBoxTextures3D.setSelectedItemIndex(clamp(config.getRenderTextures3D(), 0, 1));
 
 	//lights
 	for(int i= 1; i<=8; ++i){
 		listBoxLights.pushBackItem(intToStr(i));
 	}
-	listBoxLights.setSelectedItemIndex(clamp(config.getMaxLights()-1, 0, 7));
+	listBoxLights.setSelectedItemIndex(clamp(config.getRenderLightsMax()-1, 0, 7));
 
 	//sound
 	for(int i=0; i<=100; i+=5){
@@ -146,27 +147,27 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
 	}
 	else if(listBoxLang.mouseClick(x, y)){
-		config.setLang(listBoxLang.getSelectedItem());
-		lang.load("data/lang/"+config.getLang());
+		config.setUiLang(listBoxLang.getSelectedItem());
+		lang.load("data/lang/"+config.getUiLang());
 		saveConfig();
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
 
 	}
 	else if(listBoxShadows.mouseClick(x, y)){
 		int index= listBoxShadows.getSelectedItemIndex();
-		config.setShadows(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(index)));
+		config.setRenderShadows(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(index)));
 		saveConfig();
 	}
 	else if(listBoxFilter.mouseClick(x, y)){
-		config.setFilter(listBoxFilter.getSelectedItem());
+		config.setRenderFilter(listBoxFilter.getSelectedItem());
 		saveConfig();
 	}
 	else if(listBoxTextures3D.mouseClick(x, y)){
-		config.setTextures3D(listBoxTextures3D.getSelectedItemIndex());
+		config.setRenderTextures3D(listBoxTextures3D.getSelectedItemIndex());
 		saveConfig();
 	}
 	else if(listBoxLights.mouseClick(x, y)){
-		config.setMaxLights(listBoxLights.getSelectedItemIndex()+1);
+		config.setRenderLightsMax(listBoxLights.getSelectedItemIndex()+1);
 		saveConfig();
 	}
 	else if(listBoxVolumeFx.mouseClick(x, y)){
@@ -186,7 +187,7 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 
 }
 
-void MenuStateOptions::mouseMove(int x, int y, const MouseState *ms){
+void MenuStateOptions::mouseMove(int x, int y, const MouseState &ms){
 	buttonReturn.mouseMove(x, y);
 	buttonAutoConfig.mouseMove(x, y);
 	buttonOpenglInfo.mouseMove(x, y);

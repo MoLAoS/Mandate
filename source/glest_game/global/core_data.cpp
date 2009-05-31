@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "core_data.h"
 
 #include "logger.h"
@@ -16,7 +17,9 @@
 #include "graphics_interface.h"
 #include "config.h"
 #include "util.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Sound;
 using namespace Shared::Graphics;
@@ -84,14 +87,14 @@ void CoreData::load(){
 
 	//display font
 	Config &config= Config::getInstance();
-	string displayFontName= config.getFontDisplay();
+	string displayFontName= config.getRenderFontDisplay();
 
 	displayFont= renderer.newFont(rsGlobal);
 	displayFont->setType(displayFontName);
 	displayFont->setSize(computeFontSize(15));
 
 	//menu fonts
-	string menuFontName= config.getFontMenu();
+	string menuFontName= config.getRenderFontMenu();
 
 	menuFontSmall= renderer.newFont(rsGlobal);
 	menuFontSmall->setType(menuFontName);
@@ -111,7 +114,7 @@ void CoreData::load(){
 	menuFontVeryBig->setSize(computeFontSize(25));
 
 	//console font
-	string consoleFontName= Config::getInstance().getFontConsole();
+	string consoleFontName= Config::getInstance().getRenderFontConsole();
 
 	consoleFont= renderer.newFont(rsGlobal);
 	consoleFont->setType(consoleFontName);
@@ -134,7 +137,7 @@ void CoreData::load(){
 }
 
 int CoreData::computeFontSize(int size){
-	int screenW= Config::getInstance().getScreenWidth();
+	int screenW= Config::getInstance().getDisplayWidth();
 	int rs= size*screenW/1000;
 	if(rs<12){
 		rs= 12;

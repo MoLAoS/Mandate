@@ -9,25 +9,11 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "network_types.h"
 
-namespace Glest{ namespace Game{
+#include "leak_dumper.h"
 
-// =====================================================
-//	class NetworkCommand
-// =====================================================
-/*
-NetworkCommand::NetworkCommand(int networkCommandType, int unitId, int commandTypeId, bool queue, bool _auto, const Vec2i &pos, int unitTypeId, int targetId){
-	this->networkCommandType= networkCommandType;
-	this->unitId= unitId;
-	this->commandTypeId= commandTypeId;
-	flags.set(cpQueue, queue);
-	flags.set(cpAuto, _auto);
-	this->positionX= pos.x;
-	this->positionY= pos.y;
-	this->unitTypeId= unitTypeId;
-	this->targetId= targetId;
-}
-*/
+namespace Glest { namespace Game {
 
 }}//end namespace

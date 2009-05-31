@@ -40,22 +40,26 @@ class FactionType;
 class TechTree;
 class EnhancementTypeBase;
 class Unit;
+class EarthquakeType;
 
 enum SkillClass{
-    scStop,
-    scMove,
-    scAttack,
-    scBuild,
-    scHarvest,
-    scRepair,
-    scBeBuilt,
-    scProduce,
-    scUpgrade,
+	scStop,
+	scMove,
+	scAttack,
+	scBuild,
+	scHarvest,
+	scRepair,
+	scBeBuilt,
+	scProduce,
+	scUpgrade,
 	scMorph,
 	scDie,
 	scCastSpell,
+	scFallDown,
+	scGetUp,
+	scWaitForServer,
 
-    scCount
+	scCount
 };
 
 // =====================================================
@@ -64,16 +68,26 @@ enum SkillClass{
 ///	A basic action that an unit can perform
 // =====================================================
 
-class SkillType{
+class SkillType {
+public:
+	typedef vector<Model *> Animations;
+	enum AnimationsStyle {
+		asSingle,
+		asSequential,
+		asRandom,
+		asDirectional
+	};
+
 protected:
-    SkillClass skillClass;
+	SkillClass skillClass;
 	EffectTypes effectTypes;
 	string name;
 	int epCost;
-    int speed;
-    int animSpeed;
-    Model *animation;
-    SoundContainer sounds;
+	int speed;
+	int animSpeed;
+	Animations animations;
+	AnimationsStyle animationsStyle;
+	SoundContainer sounds;
 	float soundStartTime;
 	const char* typeName;
 	int minRange;
@@ -85,14 +99,22 @@ protected:
 	bool removeAllyEffects;
 	bool removeEnemyEffects;
 
+	float startTime;
+
+	bool projectile;
+	ParticleSystemTypeProjectile* projectileParticleSystemType;
+	SoundContainer projSounds;
+
+	bool splash;
+	bool splashDamageAll;
+	int splashRadius;
+	ParticleSystemTypeSplash* splashParticleSystemType;
+
 public:
-    //varios
-	SkillType(SkillClass skillClass, const char* typeName) {
-		this->skillClass = skillClass;
-		this->typeName = typeName;
-	}
-    virtual ~SkillType();
-    virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	//varios
+	SkillType(SkillClass skillClass, const char* typeName);
+	virtual ~SkillType();
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	void descEffects(string &str, const Unit *unit) const;
 	void descEffectsRemoved(string &str, const Unit *unit) const;
@@ -105,7 +127,7 @@ public:
 		}
 	}
 
-    //get
+	//get
 	const string &getName() const		{return name;}
 	SkillClass getClass() const			{return skillClass;}
 	const EffectTypes &getEffectTypes() const	{return effectTypes;}
@@ -113,11 +135,14 @@ public:
 	int getEpCost() const				{return epCost;}
 	int getSpeed() const				{return speed;}
 	int getAnimSpeed() const			{return animSpeed;}
-	const Model *getAnimation() const	{return animation;}
+	const Model *getAnimation() const	{
+
+		return animations.front();}
 	StaticSound *getSound() const		{return sounds.getRandSound();}
 	float getSoundStartTime() const		{return soundStartTime;}
 	int getMaxRange() const				{return maxRange;}
 	int getMinRange() const				{return minRange;}
+	float getStartTime() const				{return startTime;}
 
 	//other
 	virtual string toString() const		{return Lang::getInstance().get(typeName);}
@@ -131,7 +156,16 @@ public:
 	bool isRemoveAllyEffects() const		{return removeAllyEffects;}
 	bool isRemoveEnemyEffects() const		{return removeEnemyEffects;}
 
-};
+	//get proj
+	bool getProjectile() const									{return projectile;}
+	ParticleSystemTypeProjectile * getProjParticleType() const	{return projectileParticleSystemType;}
+	StaticSound *getProjSound() const							{return projSounds.getRandSound();}
+
+	//get splash
+	bool getSplash() const										{return splash;}
+	bool getSplashDamageAll() const								{return splashDamageAll;}
+	int getSplashRadius() const									{return splashRadius;}
+	ParticleSystemTypeSplash * getSplashParticleType() const	{return splashParticleSystemType;}};
 
 // ===============================
 // 	class StopSkillType
@@ -139,7 +173,7 @@ public:
 
 class StopSkillType: public SkillType{
 public:
-    StopSkillType() : SkillType(scStop, "Stop"){}
+	StopSkillType() : SkillType(scStop, "Stop"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		Lang &lang= Lang::getInstance();
 		str+= lang.get("ReactionSpeed")+": "+ intToStr(speed)+"\n";
@@ -151,9 +185,13 @@ public:
 // 	class MoveSkillType
 // ===============================
 
-class MoveSkillType: public SkillType{
+class MoveSkillType: public SkillType {
+private:
+	float maxInclination;
+	float maxDeclination;
+
 public:
-    MoveSkillType() : SkillType(scMove, "Move"){}
+	MoveSkillType() : SkillType(scMove, "Move"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "WalkSpeed");
 		descEpCost(str, unit);
@@ -182,53 +220,34 @@ public:
 class TargetBasedSkillType: public SkillType {
 protected:
 	Fields fields;
-	float startTime;
-
-	bool projectile;
-	ParticleSystemTypeProjectile* projectileParticleSystemType;
-	SoundContainer projSounds;
-
-	bool splash;
-	int splashRadius;
-	ParticleSystemTypeSplash* splashParticleSystemType;
 
 public:
-    TargetBasedSkillType(SkillClass skillClass, const char* typeName);
-    virtual ~TargetBasedSkillType();
-    virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	TargetBasedSkillType(SkillClass skillClass, const char* typeName);
+	virtual ~TargetBasedSkillType();
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const	{getDesc(str, unit, "Range");}
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
 
 	Fields getFields() const				{return fields;}
 	bool getField(Field field) const		{return fields.get(field);}
-	float getStartTime() const				{return startTime;}
-
-	//get proj
-	bool getProjectile() const									{return projectile;}
-	ParticleSystemTypeProjectile * getProjParticleType() const	{return projectileParticleSystemType;}
-	StaticSound *getProjSound() const							{return projSounds.getRandSound();}
-
-	//get splash
-	bool getSplash() const										{return splash;}
-	int getSplashRadius() const									{return splashRadius;}
-	ParticleSystemTypeSplash * getSplashParticleType() const	{return splashParticleSystemType;}
 };
 
 // ===============================
 // 	class AttackSkillType
 // ===============================
 
-class AttackSkillType: public TargetBasedSkillType{
+class AttackSkillType: public TargetBasedSkillType {
 private:
-    int attackStrength;
-    int attackVar;
+	int attackStrength;
+	int attackVar;
 	float attackPctStolen;
-    float attackPctVar;
+	float attackPctVar;
 	const AttackType *attackType;
+	EarthquakeType *earthquakeType;
 
 public:
-    AttackSkillType() : TargetBasedSkillType(scAttack, "Attack"), attackType(NULL) {}
-    virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	AttackSkillType() : TargetBasedSkillType(scAttack, "Attack"), attackType(NULL) {}
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const;
 
 	//get
@@ -237,6 +256,7 @@ public:
 	float getAttackPctStolen() const			{return attackPctStolen;}
 	float getAttackPctVar() const				{return attackPctVar;}
 	const AttackType *getAttackType() const		{return attackType;}
+	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
 };
 
 // ===============================
@@ -245,7 +265,7 @@ public:
 
 class BuildSkillType: public SkillType{
 public:
-    BuildSkillType() : SkillType(scBuild, "Build") {}
+	BuildSkillType() : SkillType(scBuild, "Build") {}
 	void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "BuildSpeed");
 		descEpCost(str, unit);
@@ -258,7 +278,7 @@ public:
 
 class HarvestSkillType: public SkillType{
 public:
-    HarvestSkillType() : SkillType(scHarvest, "Harvest") {}
+	HarvestSkillType() : SkillType(scHarvest, "Harvest") {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 };
 
@@ -276,7 +296,7 @@ private:
 	ParticleSystemTypeSplash *splashParticleSystemType;
 
 public:
-    RepairSkillType();
+	RepairSkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const;
 
@@ -298,7 +318,7 @@ private:
 	int maxPets;
 
 public:
-    ProduceSkillType();
+	ProduceSkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "ProductionSpeed");
@@ -315,7 +335,7 @@ public:
 
 class UpgradeSkillType: public SkillType{
 public:
-    UpgradeSkillType() : SkillType(scUpgrade, "Upgrade"){}
+	UpgradeSkillType() : SkillType(scUpgrade, "Upgrade"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "UpgradeSpeed");
 		descEpCost(str, unit);
@@ -329,7 +349,7 @@ public:
 
 class BeBuiltSkillType: public SkillType{
 public:
-    BeBuiltSkillType() : SkillType(scBeBuilt, "Be built"){}
+	BeBuiltSkillType() : SkillType(scBeBuilt, "Be built"){}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 };
 
@@ -339,7 +359,7 @@ public:
 
 class MorphSkillType: public SkillType{
 public:
-    MorphSkillType() : SkillType(scMorph, "Morph"){}
+	MorphSkillType() : SkillType(scMorph, "Morph"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "MorphSpeed");
 		descEpCost(str, unit);
@@ -355,8 +375,8 @@ private:
 	bool fade;
 
 public:
-    DieSkillType() : SkillType(scDie, "Die"){}
-    bool getFade() const	{return fade;}
+	DieSkillType() : SkillType(scDie, "Die"){}
+	bool getFade() const	{return fade;}
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const {}
@@ -368,7 +388,52 @@ public:
 
 class CastSpellSkillType: public TargetBasedSkillType{
 public:
-    CastSpellSkillType() : TargetBasedSkillType(scCastSpell, "Cast spell"){}
+	CastSpellSkillType() : TargetBasedSkillType(scCastSpell, "Cast spell"){}
+	virtual void getDesc(string &str, const Unit *unit) const {}
+};
+
+// ===============================
+// 	class FallDownSkillType
+// ===============================
+
+class FallDownSkillType: public SkillType {
+private:
+	float agility;
+
+public:
+	FallDownSkillType() : SkillType(scFallDown, "Fall down") {}
+	FallDownSkillType(const SkillType *model);
+
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void getDesc(string &str, const Unit *unit) const {}
+
+	float getAgility() const {return agility;}
+};
+
+// ===============================
+// 	class GetUpSkillType
+// ===============================
+
+class GetUpSkillType: public SkillType {
+public:
+	GetUpSkillType() : SkillType(scGetUp, "Get up") {}
+	GetUpSkillType(const SkillType *model);
+
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void getDesc(string &str, const Unit *unit) const {}
+};
+
+// ===============================
+// 	class WaitForServerSkillType
+//
+/// A dummy skill type used to make a unit wait for a server update when there's
+/// no other way to assure syncrhonization.
+// ===============================
+
+class WaitForServerSkillType: public SkillType {
+public:
+	WaitForServerSkillType(const SkillType *model);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 };
 

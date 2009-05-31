@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -22,7 +22,7 @@ using Shared::Graphics::Model;
 using Shared::Util::Checksum;
 
 enum ResourceClass{
-	rcTech,		
+	rcTech,
 	rcTileset,
 	rcStatic,
 	rcConsumable
@@ -34,7 +34,7 @@ enum ResourceClass{
 ///	A type of resource that can be harvested or not
 // =====================================================
 
-class ResourceType: public DisplayableType{
+class ResourceType: public DisplayableType {
 private:
     ResourceClass resourceClass;
     int tilesetObject;	//used only if class==rcTileset
@@ -42,9 +42,13 @@ private:
     int interval;		//used only if class==rcConsumable
 	int defResPerPatch;	//used only if class==rcTileset || class==rcTech
     Model *model;
+	/**
+	 * Rather or not to display this resource at the top of the screen (defaults to true).
+	 */
+	bool display;
 
 public:
-    void load(const string &dir, Checksum* checksum);
+    void load(const string &dir, int id, Checksum &checksum);
 
     //get
 	int getClass() const			{return resourceClass;}
@@ -53,6 +57,7 @@ public:
 	int getInterval() const			{return interval;}
 	int getDefResPerPatch() const	{return defResPerPatch;}
 	const Model *getModel() const	{return model;}
+	bool isDisplay() const			{return display;}
 
 	static ResourceClass strToRc(const string &s);
 };

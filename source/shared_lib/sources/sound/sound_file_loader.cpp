@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "sound_file_loader.h"
 
 #include <vorbis/codec.h>
@@ -29,9 +30,9 @@ namespace Shared{ namespace Sound{
 void WavSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
     char chunkId[]={'-', '-', '-', '-', '\0'};
     uint32 size32= 0;
-    uint16 size16= 0; 
+    uint16 size16= 0;
     int count;
-	
+
 	f.open(path.c_str(), ios_base::in | ios_base::binary);
 
 	if(!f.is_open()){
@@ -45,12 +46,12 @@ void WavSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
 		throw runtime_error("Not a valid wav file (first four bytes are not RIFF):" + path);
 	}
 
-    //RIFF chunk - Size 
+    //RIFF chunk - Size
     f.read((char*) &size32, 4);
 
     //RIFF chunk - Data (WAVE string)
     f.read(chunkId, 4);
-    
+
 	if(strcmp(chunkId, "WAVE")!=0){
 		throw runtime_error("Not a valid wav file (wave data don't start by WAVE): " + path);
 	}
@@ -59,12 +60,12 @@ void WavSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
 
     //first sub-chunk (header) - Id
     f.read(chunkId, 4);
-    
+
 	if(strcmp(chunkId, "fmt ")!=0){
 		throw runtime_error("Not a valid wav file (first sub-chunk Id is not fmt): "+ path);
 	}
 
-    //first sub-chunk (header) - Size 
+    //first sub-chunk (header) - Size
     f.read((char*) &size32, 4);
 
     //first sub-chunk (header) - Data (encoding type) - Ignore
@@ -129,7 +130,7 @@ void WavSoundFileLoader::close(){
 }
 
 void WavSoundFileLoader::restart(){
-	f.seekg(dataOffset, ios_base::beg);	
+	f.seekg(dataOffset, ios_base::beg);
 }
 
 // =======================================
@@ -137,13 +138,18 @@ void WavSoundFileLoader::restart(){
 // =======================================
 
 void OggSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
-	f= fopen(path.c_str(), "rb");
-	if(f==NULL){
+	if(!(f = fopen(path.c_str(), "rb"))){
 		throw runtime_error("Can't open ogg file: "+path);
 	}
 
-	vf= new OggVorbis_File();
-	ov_open(f, vf, NULL, 0);
+	vf = new OggVorbis_File();
+	if(ov_open(f, vf, NULL, 0)) {
+		fclose(f);
+		f = NULL;
+		throw runtime_error("ov_open failed on ogg file: " + path);
+	}
+	// ogg assumes the file pointer.
+	f = NULL;
 
 	vorbis_info *vi= ov_info(vf, -1);
 
@@ -165,16 +171,16 @@ uint32 OggSoundFileLoader::read(int8 *samples, uint32 size){
 		}
 		size-= bytesRead;
 		samples+= bytesRead;
-		totalBytesRead+= bytesRead; 
+		totalBytesRead+= bytesRead;
 	}
 	return totalBytesRead;
 }
 
 void OggSoundFileLoader::close(){
-	if(vf!=NULL){
+	if(vf){
 		ov_clear(vf);
 		delete vf;
-		vf= 0;
+		vf = NULL;
 	}
 }
 

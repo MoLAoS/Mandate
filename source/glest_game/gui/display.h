@@ -18,6 +18,8 @@
 #include "util.h"
 #include "command_type.h"
 #include "game_util.h"
+#include "network_status.h"
+#include "metrics.h"
 
 using std::string;
 
@@ -33,16 +35,16 @@ namespace Glest{ namespace Game{
 ///	Display for unit commands, and unit selection
 // =====================================================
 
-class Display{
+class Display {
 public:
-	static const int cellSideCount= 4;
-	static const int upCellCount= cellSideCount*cellSideCount;
-	static const int downCellCount= cellSideCount*cellSideCount;
-	static const int colorCount= 4;
-	static const int imageSize= 32;
-	static const int invalidPos= -1;
-	static const int downY = imageSize*9;
-	static const int infoStringY= imageSize*4;
+    static const int cellSideCount = 4;
+    static const int upCellCount = cellSideCount * cellSideCount;
+    static const int downCellCount = cellSideCount * cellSideCount;
+    static const int colorCount = 4;
+    static const int imageSize = 32;
+    static const int invalidPos = -1;
+    static const int downY = imageSize * 9;
+    static const int infoStringY = imageSize * 4;
 
 private:
 	string title;
@@ -91,12 +93,26 @@ public:
 
 	//misc
 	void clear();
-	void switchColor();
 	int computeDownIndex(int x, int y);
-	int computeDownX(int index) const;
-	int computeDownY(int index) const;
-	int computeUpX(int index) const;
-	int computeUpY(int index) const;
+	void switchColor() {
+		currentColor = (currentColor + 1) % colorCount;
+	}
+
+	int computeDownX(int index) const {
+		return (index % cellSideCount) * imageSize;
+	}
+	
+	int computeDownY(int index) const {
+		return Display::downY - (index / cellSideCount)*imageSize - imageSize;
+	}
+	
+	int computeUpX(int index) const {
+		return (index % cellSideCount) * imageSize;
+	}
+	
+	int computeUpY(int index) const {
+		return Metrics::getInstance().getDisplayH() - (index / cellSideCount) * imageSize - imageSize;
+	}
 };
 
 }}//end namespace

@@ -4,7 +4,7 @@
 #----------------------------------------------------------------------------
 AC_PREREQ([2.54])
 
-AC_INIT([gae], [0.2.0-wip], [daniel.santos@pobox.com])
+AC_INIT([gae], [0.2.11], [http://bugs.codemonger.org])
 AC_CONFIG_SRCDIR([mk/jam/build.jam])
 AC_CONFIG_AUX_DIR([mk/autoconf])
 
@@ -72,7 +72,7 @@ esac
 #----------------------------------------------------------------------------
 # find libraries
 #----------------------------------------------------------------------------
-AC_CHECK_HEADERS([glob.h sys/ioctl.h sys/filio.h])
+AC_CHECK_HEADERS([glob.h sys/ioctl.h sys/filio.h sys/time.h byteswap.h])
 
 AX_TYPE_SOCKLEN_T
 
@@ -98,7 +98,7 @@ AC_LANG_POP([C++])
 NP_FINDLIB([OPENAL], [OpenAL], [OpenAL],
 		NP_LANG_PROGRAM([#include <AL/al.h>],
 			[alcOpenDevice(0);]),
-		[], [-lopenal],
+		[], [-lopenal -ldl -lpthread -lm],
 		[],
 		[AC_MSG_ERROR([Please intall OpenAL])],
 		[], [])
@@ -117,6 +117,8 @@ XIPH_PATH_OGG(, [AC_MSG_ERROR([Please install ogg/vorbis])])
 
 CHECK_ZLIB
 AM_CONDITIONAL([ZLIB], [test "x$have_zlib" = "xyes"])
+
+#CHECK_LUA()
 
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG([2.6.0], [WX_AVAILABLE="yes"], [WX_AVAILABLE="no"], [std,gl], [--unicode=yes])

@@ -3,17 +3,19 @@
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "shader_gl.h"
 
 #include <fstream>
 
 #include "opengl.h"
+
 #include "leak_dumper.h"
 
 using namespace std;
@@ -95,7 +97,7 @@ bool ShaderProgramGl::link(string &messages){
 	//status
 	GLint status= false;
 	glGetObjectParameterivARB(handle, GL_OBJECT_LINK_STATUS_ARB, &status);
-	
+
 	assertGl();
 
 	return status!=0;
@@ -174,7 +176,7 @@ void ShaderGl::load(const string &path){
 }
 
 bool ShaderGl::compile(string &messages){
-	
+
 	assertGl();
 
 	messages= "Compiling shader: " + source.getPathInfo() + "\n";
@@ -186,7 +188,7 @@ bool ShaderGl::compile(string &messages){
 
 	//compile
 	glCompileShaderARB(handle);
-	
+
 	//log
 	GLint logLength= 0;
 	glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &logLength);

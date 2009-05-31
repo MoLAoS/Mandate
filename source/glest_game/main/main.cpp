@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "main.h"
 
 #include <string>
@@ -22,7 +23,6 @@
 #include "game_util.h"
 #include "platform_util.h"
 #include "platform_main.h"
-#include "leak_dumper.h"
 
 using namespace std;
 using namespace Shared::Platform;
@@ -34,149 +34,85 @@ namespace Glest{ namespace Game{
 // 	class ExceptionHandler
 // =====================================================
 
-class ExceptionHandler: public PlatformExceptionHandler{
+class ExceptionHandler: public PlatformExceptionHandler {
 public:
-	virtual void handle(string description, void *address){
-		FILE *f= fopen("crash.txt", "at");
-		if(f!=NULL){
-			time_t t= time(NULL);
-			char *timeString= asctime(localtime(&t));
+	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) {
+		bool closeme = true;
+		FILE *f = fopen("gae-crash.txt", "at");
+		if(!f) {
+			f = stderr;
+			closeme = false;
+		}
+		time_t t= time(NULL);
+		char *timeString = asctime(localtime(&t));
 
-			fprintf(f, "Crash\n");
-			fprintf(f, "Version: Advanced Engine %s\n", gaeVersionString.c_str());
-			fprintf(f, "Time: %s", timeString);
-			fprintf(f, "Description: %s\n", description.c_str());
-			fprintf(f, "Address: %p\n\n", address);
+		fprintf(f, "Crash\n");
+		fprintf(f, "Version: Advanced Engine %s\n", gaeVersionString.c_str());
+		fprintf(f, "Time: %s", timeString);
+		if(description) {
+			fprintf(f, "Description: %s\n", description);
+		}
+		if(e) {
+			fprintf(f, "Exception: %s\n", e->what());
+		}
+		fprintf(f, "Address: %p\n", address);
+		if(backtrace) {
+			fprintf(f, "Backtrace:\n");
+			for(size_t i = 0 ; i < count; ++i) {
+				fprintf(f, "%s\n", backtrace[i]);
+			}
+		}
+		fprintf(f, "\n=======================\n");
+
+		if(closeme) {
 			fclose(f);
 		}
+	}
 
-		message("An error ocurred and Glest will close.\nCrash info has been saved in the crash.txt file\nPlease report this bug to " + gaeMailString);
+	virtual void notifyUser(bool pretty) {
+		if(pretty) {
+			Program *program = Program::getInstance();
+			if(program) {
+				program->crash(NULL);
+				return;
+			}
+		}
+
+		Shared::Platform::message(
+				"An error ocurred and Glest will close.\n"
+				"Crash info has been saved in the crash.txt file\n"
+				"Please report this bug to " + gaeMailString);
 	}
 };
-
-// =====================================================
-// 	class MainWindow
-// =====================================================
-
-MainWindow::MainWindow(Program *program){
-	this->program= program;
-}
-
-MainWindow::~MainWindow(){
-	delete program;
-}
-
-void MainWindow::eventMouseDown(int x, int y, MouseButton mouseButton){
-	switch(mouseButton){
-	case mbLeft:
-		program->mouseDownLeft(x, getH() - y);
-		break;
-	case mbRight:
-		program->mouseDownRight(x, getH() - y);
-		break;
-	case mbCenter:
-		program->mouseDownCenter(x, getH() - y);
-		break;
-	default:
-		break;
-	}
-}
-
-void MainWindow::eventMouseUp(int x, int y, MouseButton mouseButton){
-	switch(mouseButton){
-	case mbLeft:
-		program->mouseUpLeft(x, getH() - y);
-		break;
-	case mbCenter:
-		program->mouseUpCenter(x, getH() - y);
-		break;
-	default:
-		break;
-	}
-}
-
-void MainWindow::eventMouseDoubleClick(int x, int y, MouseButton mouseButton){
-	if(mouseButton == mbLeft){
-		program->mouseDoubleClickLeft(x,  getH() - y);
-	}
-}
-
-void MainWindow::eventMouseWheel(int x, int y, int zDelta){
-	program->eventMouseWheel(x,  getH() - y, zDelta);
-}
-
-void MainWindow::eventMouseMove(int x, int y, const MouseState *ms){
-	program->mouseMove(x, getH() - y, ms);
-}
-
-void MainWindow::eventKeyDown(char key){
-	program->keyDown(key);
-}
-
-void MainWindow::eventKeyUp(char key){
-	program->keyUp(key);
-}
-
-void MainWindow::eventKeyPress(char c){
-	program->keyPress(c);
-}
-
-void MainWindow::eventActivate(bool active){
-	if(!active){
-		//minimize();
-	}
-}
-
-void MainWindow::eventResize(SizeState sizeState){
-	program->resize(sizeState);
-}
-
-void MainWindow::eventClose(){
-	delete program;
-	program= NULL;
-}
 
 // =====================================================
 // Main
 // =====================================================
 
-int glestMain(int argc, char** argv){
-
-	MainWindow *mainWindow= NULL;
-	Program *program= NULL;
+int glestMain(int argc, char** argv) {
 	ExceptionHandler exceptionHandler;
-	exceptionHandler.install();
 
-	try{
+	try {
 		Config &config = Config::getInstance();
-
-		showCursor(config.getWindowed());
-
-		program= new Program();
-		mainWindow= new MainWindow(program);
-
-		//parse command line
-		if(argc==2 && string(argv[1])=="-server"){
-			program->initServer(mainWindow);
+		if(config.getMiscCatchExceptions()) {
+			exceptionHandler.install();
 		}
-		else if(argc==3 && string(argv[1])=="-client"){
-			program->initClient(mainWindow, Ip(argv[2]));
-		}
-		else{
-			program->initNormal(mainWindow);
-		}
+		Program program(config, argc, argv);
 
-		//main loop
-		while(Window::handleEvent()){
-			program->loop();
+		showCursor(config.getDisplayWindowed());
+
+		try {
+			//main loop
+			program.loop();
+		} catch(const exception &e) {
+			// friendlier error handling
+			program.crash(&e);
+			restoreVideoMode();
 		}
-	}
-	catch(const exception &e){
+	} catch(const exception &e) {
 		restoreVideoMode();
 		exceptionMessage(e);
 	}
-
-	delete mainWindow;
 
 	return 0;
 }

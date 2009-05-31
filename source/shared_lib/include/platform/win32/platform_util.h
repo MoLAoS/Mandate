@@ -12,64 +12,23 @@
 #ifndef _SHARED_PLATFORM_PLATFORMUTIL_H_
 #define _SHARED_PLATFORM_PLATFORMUTIL_H_
 
-#include <windows.h>
-
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <cassert>
+#include <io.h>
+#include <errno.h>
 
 #include "types.h"
 
 using std::string;
 using std::vector;
 using std::exception;
+using std::runtime_error;
 
 using Shared::Platform::int64;
 
-namespace Shared{ namespace Platform{
-
-// =====================================================
-//	class PerformanceTimer
-// =====================================================
-
-class PerformanceTimer{
-private:
-	int64 thisTicks;
-	int64 lastTicks;
-	int64 updateTicks;
-
-	int times;			// number of consecutive times
-	int maxTimes;		// maximum number consecutive times
-
-public:
-	void init(int fps, int maxTimes= -1);
-
-	bool isTime();
-	void reset();
-};
-
-// =====================================================
-//	class Chrono
-// =====================================================
-
-class Chrono{
-private:
-	int64 startCount;
-	int64 accumCount;
-	int64 freq;
-	bool stopped;
-
-public:
-	Chrono();
-	void start();
-	void stop();
-	int64 getMicros() const;
-	int64 getMillis() const;
-	int64 getSeconds() const;
-
-private:
-	int64 queryCounter(int multiplier) const;
-};
+namespace Shared { namespace Platform {
 
 // =====================================================
 //	class PlatformExceptionHandler
@@ -77,16 +36,17 @@ private:
 
 LONG WINAPI UnhandledExceptionFilter2(struct _EXCEPTION_POINTERS *ExceptionInfo);
 
-class PlatformExceptionHandler{
+class PlatformExceptionHandler {
 private:
-	static PlatformExceptionHandler *thisPointer;
-
-private:
+	static PlatformExceptionHandler *singleton;
 	static LONG WINAPI handler(LPEXCEPTION_POINTERS pointers);
 
 public:
+	PlatformExceptionHandler()			{assert(!singleton); singleton = this;}
+	virtual ~PlatformExceptionHandler()	{assert(singleton == this); singleton = NULL;}
 	void install();
-	virtual void handle(string description, void *address)=0;
+	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) = 0;
+	virtual void notifyUser(bool pretty) = 0;
 	static string codeToStr(DWORD code);
 };
 
@@ -94,7 +54,32 @@ public:
 //	Misc
 // =====================================================
 
-void findAll(const string &path, vector<string> &results, bool cutExtension=false);
+typedef struct _DirIterator {
+	struct __finddata64_t fi;
+	intptr_t handle;
+} DirIterator;
+
+
+inline char *initDirIterator(const string &path, DirIterator &di) {
+	if((di.handle = _findfirst64(path.c_str(), &di.fi)) == -1) {
+		if(errno == ENOENT) {
+			return NULL;
+		}
+		throw runtime_error("Error searching for files '" + path + "': " + strerror(errno));
+	}
+	return di.fi.name;
+}
+
+inline char *getNextFile(DirIterator &di) {
+	assert(di.handle != -1);
+	return !_findnext64(di.handle, &di.fi) ? di.fi.name : NULL;
+}
+
+inline void freeDirIterator(DirIterator &di) {
+	assert(di.handle != -1);
+	_findclose(di.handle);
+}
+
 void mkdir(const string &path, bool ignoreDirExists = false);
 size_t getFileSize(const string &path);
 
@@ -105,13 +90,11 @@ void message(string message);
 bool ask(string message);
 void exceptionMessage(const exception &excp);
 
-int getScreenW();
-int getScreenH();
+inline int getScreenW()			{return GetSystemMetrics(SM_CXSCREEN);}
+inline int getScreenH()			{return GetSystemMetrics(SM_CYSCREEN);}
+inline void sleep(int millis)	{Sleep(millis);}
+inline void showCursor(bool b)	{ShowCursor(b);}
 
-void sleep(int millis);
-
-void showCursor(bool b);
-bool isKeyDown(int virtualKey);
 string getCommandLine();
 
 }}//end namespace

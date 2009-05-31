@@ -3,31 +3,33 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "gl_wrap.h"
 
 #include <cassert>
-
 #include <windows.h>
 
 #include "opengl.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Graphics::Gl;
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 // =====================================================
 //	class PlatformContextGl
 // =====================================================
 
 void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
-	
+
 	int iFormat;
 	PIXELFORMATDESCRIPTOR pfd;
 	BOOL err;
@@ -44,13 +46,13 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
 	pfd.cColorBits= colorBits;
 	pfd.cDepthBits= depthBits;
 	pfd.iLayerType= PFD_MAIN_PLANE;
-	pfd.cStencilBits= stencilBits; 
+	pfd.cStencilBits= stencilBits;
 
 	iFormat= ChoosePixelFormat(dch, &pfd);
 	assert(iFormat!=0);
 
 	err= SetPixelFormat(dch, iFormat, &pfd);
-	assert(err);    
+	assert(err);
 
 	glch= wglCreateContext(dch);
 	if(glch==NULL){
@@ -60,29 +62,14 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
 	makeCurrent();
 }
 
-void PlatformContextGl::end(){
-	int makeCurrentError= wglDeleteContext(glch);
-	assert(makeCurrentError);
-}
-
-void PlatformContextGl::makeCurrent(){
-	int makeCurrentError= wglMakeCurrent(dch, glch);
-	assert(makeCurrentError);
-}
-
-void PlatformContextGl::swapBuffers(){
-	int swapErr= SwapBuffers(dch);
-	assert(swapErr);
-}
-
 // ======================================
-//	Global Fcs  
+//	Global Fcs
 // ======================================
 
 void createGlFontBitmaps(uint32 &base, const string &type, int size, int width, int charCount, FontMetrics &metrics){
 	HFONT font= CreateFont(
 		size, 0, 0, 0, width, 0, FALSE, FALSE, ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY, 
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
 		DEFAULT_PITCH, type.c_str());
 
 	assert(font!=NULL);
@@ -90,7 +77,7 @@ void createGlFontBitmaps(uint32 &base, const string &type, int size, int width, 
 	HDC dc= wglGetCurrentDC();
 	SelectObject(dc, font);
 	BOOL err= wglUseFontBitmaps(dc, 0, charCount, base);
-		
+
 	FIXED one;
 	one.value= 1;
 	one.fract= 0;
@@ -126,7 +113,7 @@ void createGlFontBitmaps(uint32 &base, const string &type, int size, int width, 
 void createGlFontOutlines(uint32 &base, const string &type, int width, float depth, int charCount, FontMetrics &metrics){
 	HFONT font= CreateFont(
 		10, 0, 0, 0, width, 0, FALSE, FALSE, ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY, 
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
 		DEFAULT_PITCH, type.c_str());
 
 	assert(font!=NULL);
@@ -136,7 +123,7 @@ void createGlFontOutlines(uint32 &base, const string &type, int width, float dep
 	HDC dc= wglGetCurrentDC();
 	SelectObject(dc, font);
 	BOOL err= wglUseFontOutlines(dc, 0, charCount, base, 1000, depth, WGL_FONT_POLYGONS, glyphMetrics);
-		
+
 	//load metrics
 	metrics.setHeight(glyphMetrics['a'].gmfBlackBoxY);
 	for(int i=0; i<charCount; ++i){
@@ -149,16 +136,5 @@ void createGlFontOutlines(uint32 &base, const string &type, int width, float dep
 	assert(err);
 }
 
-const char *getPlatformExtensions(const PlatformContextGl *pcgl){
-	typedef const char* (WINAPI * PROCTYPE) (HDC hdc);
-	PROCTYPE proc= reinterpret_cast<PROCTYPE>(getGlProcAddress("wglGetExtensionsStringARB"));
-	return proc==NULL? "": proc(pcgl->getHandle());
-}
 
-PROC getGlProcAddress(const char *procName){
-	PROC proc= wglGetProcAddress(procName);
-	assert(proc!=NULL);
-	return proc;
-}
-
-}}//end namespace 
+}}//end namespace

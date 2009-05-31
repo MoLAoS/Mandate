@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "upgrade_type.h"
 
 #include <algorithm>
@@ -23,7 +24,9 @@
 #include "faction_type.h"
 #include "resource.h"
 #include "renderer.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
@@ -34,27 +37,17 @@ namespace Glest{ namespace Game{
 // 	class UpgradeType
 // =====================================================
 
-// ==================== get ====================
-
-bool UpgradeType::isAffected(const UnitType *unitType) const{
-	return find(effects.begin(), effects.end(), unitType)!=effects.end();
-}
-
 // ==================== misc ====================
 
-void UpgradeType::preLoad(const string &dir){
-	name=lastDir(dir);
-}
-
-void UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum* checksum){
+void UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum) {
 	string path;
 
 	Logger::getInstance().add("Upgrade type: "+ dir, true);
 
-	path=dir+"/"+name+".xml";
+	path = dir + "/" + name + ".xml";
 
-	try{
-		checksum->addFile(path);
+	try {
+		checksum.addFile(path, true);
 
 		XmlTree xmlTree;
 		xmlTree.load(path);
@@ -71,8 +64,7 @@ void UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
 
 		//upgrade time
-		const XmlNode *upgradeTimeNode= upgradeNode->getChild("time");
-		productionTime= upgradeTimeNode->getAttribute("value")->getIntValue();
+		productionTime= upgradeNode->getChildIntValue("time");
 
 		//ProducibleType parameters
 		ProducibleType::load(upgradeNode, dir, techTree, factionType);
@@ -103,33 +95,25 @@ void UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 				 || upgradeNode->getChild("multipliers", 0, false)){
 			EnhancementTypeBase::load(upgradeNode, dir, techTree, factionType);
 		}
-	}
-	catch (const exception &e) {
+	} catch (const exception &e) {
 		throw runtime_error("Error loading UpgradeType: " + dir + "\n" + e.what());
 	}
 }
 
-string UpgradeType::getDesc() const{
+string UpgradeType::getDesc() const {
+	Lang &lang = Lang::getInstance();
+	string str = getReqDesc();
 
-    string str;
-    int i;
-	Lang &lang= Lang::getInstance();
+	if(getEffectCount() > 0) {
+		str += "\n" + lang.get("Upgrades") + ":";
 
-    str= getReqDesc();
-	if(getEffectCount()>0){
-		str+= "\n"+ lang.get("Upgrades")+":\n";
-		for(i=0; i<getEffectCount(); ++i){
-			str+= getEffect(i)->getName()+"\n";
+		for(int i = 0; i < getEffectCount(); ++i) {
+			str += "\n" + getEffect(i)->getName();
 		}
 	}
 
-    return EnhancementTypeBase::getDesc(str);
+	EnhancementTypeBase::getDesc(str, "\n");
+	return str;
 }
-
-// ===============================
-// 	class TotalUpgrade
-// ===============================
-
-
 
 }}//end namespace

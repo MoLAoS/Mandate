@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "menu_state_new_game.h"
 
 #include "renderer.h"
@@ -35,9 +36,9 @@ using namespace Shared::Util;
 // 	class MenuStateNewGame
 // =====================================================
 
-MenuStateNewGame::MenuStateNewGame(Program *program, MainMenu *mainMenu, bool openNetworkSlots):
-	MenuState(program, mainMenu, "new-game")
-{
+MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots) :
+		MenuStateStartGameBase(program, mainMenu, "new-game") {
+
 	Lang &lang= Lang::getInstance();
 	NetworkManager &networkManager= NetworkManager::getInstance();
 
@@ -165,7 +166,9 @@ MenuStateNewGame::MenuStateNewGame(Program *program, MainMenu *mainMenu, bool op
 	listBoxRandomize.init(332, 500 - GameConstants::maxPlayers * 30, 75);
 	listBoxRandomize.pushBackItem(lang.get("No"));
 	listBoxRandomize.pushBackItem(lang.get("Yes"));
-	listBoxRandomize.setSelectedItemIndex(Config::getInstance().getRandStartLocs() ? 1 : 0);
+	listBoxRandomize.setSelectedItemIndex(Config::getInstance().getGsRandStartLocs() ? 1 : 0);
+
+	//msgBox = NULL;
 }
 
 
@@ -175,19 +178,31 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton){
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
 
-	if(buttonReturn.mouseClick(x,y)){
+	if(msgBox) {
+		if(msgBox->mouseClick(x,y)) {
+			soundRenderer.playFx(coreData.getClickSoundC());
+			delete msgBox;
+			msgBox = NULL;
+		}
+	}
+	else if(buttonReturn.mouseClick(x,y)){
 		soundRenderer.playFx(coreData.getClickSoundA());
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
     }
 	else if(buttonPlayNow.mouseClick(x,y)){
-		GameSettings gameSettings;
+		if(isUnconnectedSlots()) {
+			buttonPlayNow.mouseMove(1, 1);
+			msgBox = new GraphicMessageBox();
+			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
+		} else {
+			GameSettings gameSettings;
 
-		Config::getInstance().save();
-		closeUnusedSlots();
-		soundRenderer.playFx(coreData.getClickSoundC());
-		loadGameSettings(&gameSettings);
-		serverInterface->launchGame(&gameSettings);
-		program->setState(new Game(program, &gameSettings));
+			Config::getInstance().save();
+			soundRenderer.playFx(coreData.getClickSoundC());
+			loadGameSettings(&gameSettings);
+			serverInterface->launchGame(&gameSettings);
+			program.setState(new Game(program, gameSettings));
+		}
 	}
 	else if(listBoxMap.mouseClick(x, y)){
 		loadMapInfo("maps/"+mapFiles[listBoxMap.getSelectedItemIndex()]+".gbm", &mapInfo);
@@ -200,7 +215,7 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton){
 		reloadFactions();
 	}
 	else if(listBoxRandomize.mouseClick(x, y)){
-		Config::getInstance().setRandStartLocs(listBoxRandomize.getSelectedItemIndex());
+		Config::getInstance().setGsRandStartLocs(listBoxRandomize.getSelectedItemIndex());
 	}
 	else{
 		for(int i=0; i<mapInfo.players; ++i){
@@ -241,7 +256,12 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton){
 	}
 }
 
-void MenuStateNewGame::mouseMove(int x, int y, const MouseState *ms){
+void MenuStateNewGame::mouseMove(int x, int y, const MouseState &ms){
+
+	if (msgBox != NULL){
+		msgBox->mouseMove(x,y);
+		return;
+	}
 
 	buttonReturn.mouseMove(x, y);
 	buttonPlayNow.mouseMove(x, y);
@@ -289,27 +309,28 @@ void MenuStateNewGame::render(){
 	renderer.renderListBox(&listBoxTileset);
 	renderer.renderListBox(&listBoxTechTree);
 	renderer.renderListBox(&listBoxRandomize);
+
+	if(msgBox != NULL){
+		renderer.renderMessageBox(msgBox);
+	}
 }
 
-void MenuStateNewGame::update(){
-	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
-	Lang& lang= Lang::getInstance();
+void MenuStateNewGame::update() {
+	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
+	Lang& lang = Lang::getInstance();
 
-	for(int i= 0; i<mapInfo.players; ++i){
-		if(listBoxControls[i].getSelectedItemIndex()==ctNetwork){
-			ConnectionSlot* connectionSlot= serverInterface->getSlot(i);
+	for (int i = 0; i < mapInfo.players; ++i) {
+		if (listBoxControls[i].getSelectedItemIndex() == ctNetwork) {
+			ConnectionSlot* connectionSlot = serverInterface->getSlot(i);
 
-			assert(connectionSlot!=NULL);
+			assert(connectionSlot != NULL);
 
-			if(connectionSlot->isConnected()){
-				labelNetStatus[i].setText(connectionSlot->getName());
-			}
-			else
-			{
+			if (connectionSlot->isConnected()) {
+				labelNetStatus[i].setText(connectionSlot->getDescription());
+			} else {
 				labelNetStatus[i].setText(lang.get("NotConnected"));
 			}
-		}
-		else{
+		} else {
 			labelNetStatus[i].setText("");
 		}
 	}
@@ -352,42 +373,6 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 
 // ============ PRIVATE ===========================
 
-void MenuStateNewGame::loadMapInfo(string file, MapInfo *mapInfo){
-
-	struct MapFileHeader{
-		int32 version;
-		int32 maxPlayers;
-		int32 width;
-		int32 height;
-		int32 altFactor;
-		int32 waterLevel;
-		int8 title[128];
-	};
-
-	Lang &lang= Lang::getInstance();
-
-	try{
-		FILE *f= fopen(file.c_str(), "rb");
-		if(f==NULL)
-			throw runtime_error("Can't open file");
-
-		MapFileHeader header;
-		fread(&header, sizeof(MapFileHeader), 1, f);
-
-		mapInfo->size.x= header.width;
-		mapInfo->size.y= header.height;
-		mapInfo->players= header.maxPlayers;
-
-		mapInfo->desc= lang.get("MaxPlayers")+": "+intToStr(mapInfo->players)+"\n";
-		mapInfo->desc+=lang.get("Size")+": "+intToStr(mapInfo->size.x) + " x " + intToStr(mapInfo->size.y);
-
-		fclose(f);
-	}
-	catch(exception e){
-		throw runtime_error("Error loading map file: "+file+'\n'+e.what());
-	}
-
-}
 
 void MenuStateNewGame::reloadFactions(){
 
@@ -428,20 +413,21 @@ void MenuStateNewGame::updateControlers(){
 	}
 }
 
-void MenuStateNewGame::closeUnusedSlots(){
+bool MenuStateNewGame::isUnconnectedSlots(){
 	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
 	for(int i= 0; i<mapInfo.players; ++i){
 		if(listBoxControls[i].getSelectedItemIndex()==ctNetwork){
 			if(!serverInterface->getSlot(i)->isConnected()){
-				listBoxControls[i].setSelectedItemIndex(ctClosed);
+				return true;
 			}
 		}
 	}
-	updateNetworkSlots();
+	return false;
 }
 
 void MenuStateNewGame::updateNetworkSlots(){
 	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
+
 
 	for(int i= 0; i<GameConstants::maxPlayers; ++i){
 		if(serverInterface->getSlot(i)==NULL && listBoxControls[i].getSelectedItemIndex()==ctNetwork){

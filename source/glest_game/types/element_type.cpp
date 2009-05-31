@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "element_type.h"
 
 #include <cassert>
@@ -21,18 +22,22 @@
 #include "logger.h"
 #include "lang.h"
 #include "renderer.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Util;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 // 	class DisplayableType
 // =====================================================
 
-DisplayableType::DisplayableType(){
-	image= NULL;
+void DisplayableType::load(const XmlNode *baseNode, const string &dir) {
+	const XmlNode *imageNode = baseNode->getChild("image");
+	image = Renderer::getInstance().newTexture2D(rsGame);
+	image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
 }
 
 // =====================================================
@@ -40,61 +45,60 @@ DisplayableType::DisplayableType(){
 // =====================================================
 
 string RequirableType::getReqDesc() const{
-	bool anyReqs= false;
-
+	bool anyReqs = false;
 	string reqString;
-	for(int i=0; i<getUnitReqCount(); ++i){
-        reqString+= getUnitReq(i)->getName();
-        reqString+= "\n";
-		anyReqs= true;
-    }
 
-    for(int i=0; i<getUpgradeReqCount(); ++i){
-        reqString+= getUpgradeReq(i)->getName();
-        reqString+= "\n";
-		anyReqs= true;
-    }
-
-	string str= getName();
-	if(anyReqs){
-		return str + " " + Lang::getInstance().get("Reqs") + ":\n" + reqString;
+	for(int i = 0; i < getUnitReqCount(); ++i) {
+		reqString += getUnitReq(i)->getName();
+		reqString += "\n";
+		anyReqs = true;
 	}
-	else{
+
+	for(int i = 0; i < getUpgradeReqCount(); ++i) {
+		reqString += getUpgradeReq(i)->getName();
+		reqString += "\n";
+		anyReqs = true;
+	}
+
+	string str = getName();
+
+	if(anyReqs) {
+		return str + " " + Lang::getInstance().get("Reqs") + ":\n" + reqString;
+	} else {
 		return str;
 	}
 }
 
 void RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	//unit requirements
-	const XmlNode *unitRequirementsNode= baseNode->getChild("unit-requirements", 0, false);
+	const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
 	if(unitRequirementsNode) {
-		for(int i=0; i<unitRequirementsNode->getChildCount(); ++i){
-			const XmlNode *unitNode= 	unitRequirementsNode->getChild("unit", i);
-			string name= unitNode->getAttribute("name")->getRestrictedValue();
+		for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
+			const XmlNode *unitNode = unitRequirementsNode->getChild("unit", i);
+			string name = unitNode->getRestrictedAttribute("name");
 			unitReqs.push_back(ft->getUnitType(name));
 		}
 	}
 
 	//upgrade requirements
-	const XmlNode *upgradeRequirementsNode= baseNode->getChild("upgrade-requirements", 0, false);
+	const XmlNode *upgradeRequirementsNode = baseNode->getChild("upgrade-requirements", 0, false);
 	if(upgradeRequirementsNode) {
-		for(int i=0; i<upgradeRequirementsNode->getChildCount(); ++i){
-			const XmlNode *upgradeReqNode= upgradeRequirementsNode->getChild("upgrade", i);
-			string name= upgradeReqNode->getAttribute("name")->getRestrictedValue();
+		for(int i = 0; i < upgradeRequirementsNode->getChildCount(); ++i) {
+			const XmlNode *upgradeReqNode = upgradeRequirementsNode->getChild("upgrade", i);
+			string name = upgradeReqNode->getRestrictedAttribute("name");
 			upgradeReqs.push_back(ft->getUpgradeType(name));
 		}
 	}
 
 	//subfactions required
-	const XmlNode *subfactionsNode= baseNode->getChild("subfaction-restrictions", 0, false);
+	const XmlNode *subfactionsNode = baseNode->getChild("subfaction-restrictions", 0, false);
 	if(subfactionsNode) {
-		subfactionsReqs = 0;
-		for(int i=0; i<subfactionsNode->getChildCount(); ++i){
-			string name= subfactionsNode->getChild("subfaction", i)->getAttribute("name")->getRestrictedValue();
+		for(int i = 0; i < subfactionsNode->getChildCount(); ++i) {
+			string name = subfactionsNode->getChild("subfaction", i)->getRestrictedAttribute("name");
 			subfactionsReqs |= 1 << ft->getSubfactionIndex(name);
 		}
 	} else {
-		subfactionsReqs	= -1;	//all subfactions
+		subfactionsReqs = -1; //all subfactions
 	}
 }
 
@@ -102,49 +106,53 @@ void RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 // 	class ProducibleType
 // =====================================================
 
-ProducibleType::ProducibleType(){
-	cancelImage= NULL;
-	advancesToSubfaction= 0;
-	advancementIsImmediate= false;
+ProducibleType::ProducibleType() :
+		RequirableType(),
+		costs(),
+		cancelImage(NULL),
+		productionTime(0),
+		advancesToSubfaction(0),
+		advancementIsImmediate(false) {
 }
 
-ProducibleType::~ProducibleType(){
+ProducibleType::~ProducibleType() {
 }
 
-string ProducibleType::getReqDesc() const{
-    string str= getName()+" "+Lang::getInstance().get("Reqs")+":\n";
-    for(int i=0; i<getCostCount(); ++i){
-        if(getCost(i)->getAmount()!=0){
-            str+= getCost(i)->getType()->getName();
-            str+= ": "+ intToStr(getCost(i)->getAmount());
-            str+= "\n";
-        }
-    }
+string ProducibleType::getReqDesc() const {
+	string str = getName() + " " + Lang::getInstance().get("Reqs") + ":\n";
 
-    for(int i=0; i<getUnitReqCount(); ++i){
-        str+= getUnitReq(i)->getName();
-        str+= "\n";
-    }
+	for(int i = 0; i < getCostCount(); ++i) {
+		if(getCost(i)->getAmount() != 0) {
+			str += getCost(i)->getType()->getName();
+			str += ": " + intToStr(getCost(i)->getAmount());
+			str += "\n";
+		}
+	}
 
-    for(int i=0; i<getUpgradeReqCount(); ++i){
-        str+= getUpgradeReq(i)->getName();
-        str+= "\n";
-    }
+	for(int i = 0; i < getUnitReqCount(); ++i) {
+		str += getUnitReq(i)->getName();
+		str += "\n";
+	}
 
-    return str;
+	for(int i = 0; i < getUpgradeReqCount(); ++i) {
+		str += getUpgradeReq(i)->getName();
+		str += "\n";
+	}
+
+	return str;
 }
 
 void ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	RequirableType::load(baseNode, dir, techTree, factionType);
 
 	//resource requirements
-	const XmlNode *resourceRequirementsNode= baseNode->getChild("resource-requirements", 0, false);
+	const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);
 	if(resourceRequirementsNode) {
 		costs.resize(resourceRequirementsNode->getChildCount());
-		for(int i=0; i<costs.size(); ++i){
-			const XmlNode *resourceNode= resourceRequirementsNode->getChild("resource", i);
-			string name= resourceNode->getAttribute("name")->getRestrictedValue();
-			int amount= resourceNode->getAttribute("amount")->getIntValue();
+		for(int i = 0; i < costs.size(); ++i) {
+			const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
+			string name = resourceNode->getAttribute("name")->getRestrictedValue();
+			int amount = resourceNode->getAttribute("amount")->getIntValue();
 			costs[i].init(techTree->getResourceType(name), amount);
 		}
 	}
@@ -152,8 +160,8 @@ void ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 	//subfaction advancement
 	const XmlNode *advancementNode = baseNode->getChild("advances-to-subfaction", 0, false);
 	if(advancementNode) {
-		advancesToSubfaction = factionType->getSubfactionIndex(advancementNode->
-				getAttribute("name")->getRestrictedValue());
+		advancesToSubfaction = factionType->getSubfactionIndex(
+				advancementNode->getAttribute("name")->getRestrictedValue());
 		advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
 	}
 }

@@ -16,6 +16,7 @@
 //SL_PROFILE controls if profile is enabled or not
 
 #include "platform_util.h"
+#include "timer.h"
 #include <list>
 #include <string>
 

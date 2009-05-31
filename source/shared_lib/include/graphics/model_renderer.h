@@ -35,7 +35,7 @@ public:
 //	class ModelRenderer
 // =====================================================
 
-class ModelRenderer{
+class ModelRenderer {
 protected:
 	bool renderNormals;
 	bool renderTextures;
@@ -43,7 +43,7 @@ protected:
 	MeshCallback *meshCallback;
 
 public:
-	ModelRenderer()	{meshCallback= NULL;}
+	ModelRenderer() : meshCallback(NULL) {}
 
 	virtual ~ModelRenderer(){};
 

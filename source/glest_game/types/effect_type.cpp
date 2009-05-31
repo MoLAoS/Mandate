@@ -9,9 +9,12 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "effect_type.h"
 #include "renderer.h"
 #include "tech_tree.h"
+
+#include "leak_dumper.h"
 
 namespace Glest{ namespace Game{
 
@@ -49,10 +52,6 @@ const char *EffectTypeFlags::names[etfCount] = {
 // =====================================================
 
 EffectType::EffectType() : lightColor(0.0f) {
-	//DisplayableType members
-	name = "";
-	image = NULL;
-
 	bias = ebNeutral;
 	stacking = esStack;
 
@@ -72,52 +71,53 @@ void EffectType::load(const XmlNode *effectNode, const string &dir, const TechTr
 	const XmlNode *node;
 
 	//name
-	name= effectNode->getAttribute("name")->getRestrictedValue();
+	name = effectNode->getAttribute("name")->getRestrictedValue();
 
 	//bigtime hack
-	((TechTree*)tt)->addEffectType(this);
+	id = ((TechTree*)tt)->addEffectType(this);
 
 	//bias
-	tmp= effectNode->getAttribute("bias")->getRestrictedValue();
-	if(tmp=="detrimental"){
-		bias= ebDetrimental;
-	}else if(tmp=="neutral"){
-		bias= ebNeutral;
-	}else if(tmp=="benificial"){
-		bias= ebBenificial;
-	}else{
+	tmp = effectNode->getAttribute("bias")->getRestrictedValue();
+	if (tmp == "detrimental") {
+		bias = ebDetrimental;
+	} else if (tmp == "neutral") {
+		bias = ebNeutral;
+	} else if (tmp == "benificial") {
+		bias = ebBenificial;
+	} else {
 		throw runtime_error("Not a valid value for bias: " + tmp + ": " + dir);
 	}
 
 	//stacking
-	tmp= effectNode->getAttribute("stacking")->getRestrictedValue();
-	if(tmp=="stack"){
-		stacking= esStack;
-	}else if(tmp=="extend"){
-		stacking= esExtend;
-	}else if(tmp=="overwrite"){
-		stacking= esOverwrite;
-	}else if(tmp=="reject"){
-		stacking= esReject;
-	}else{
+	tmp = effectNode->getAttribute("stacking")->getRestrictedValue();
+	if(tmp == "stack") {
+		stacking = esStack;
+	} else if(tmp == "extend") {
+		stacking = esExtend;
+	} else if(tmp == "overwrite") {
+		stacking = esOverwrite;
+	} else if(tmp == "reject") {
+		stacking = esReject;
+	} else {
 		throw runtime_error("Not a valid value for stacking: " + tmp + ": " + dir);
 	}
 
 	//target (default all)
 	attr = effectNode->getAttribute("target", false);
 	if(attr) {
-		tmp= attr->getRestrictedValue();
-		if(tmp=="ally"){
+		tmp = attr->getRestrictedValue();
+
+		if(tmp == "ally") {
 			flags.set(etfAlly, true);
-		}else if(tmp=="foe"){
+		} else if(tmp == "foe") {
 			flags.set(etfFoe, true);
-		}else if(tmp=="pet"){
+		} else if(tmp == "pet") {
 			flags.set(etfAlly, true);
 			flags.set(eftPetsOnly, true);
-		}else if(tmp=="all"){
+		} else if(tmp == "all") {
 			flags.set(etfAlly, true);
 			flags.set(etfFoe, true);
-		}else{
+		} else {
 			throw runtime_error("Not a valid value for units-effected: " + tmp + ": " + dir);
 		}
 	} else {
@@ -135,20 +135,20 @@ void EffectType::load(const XmlNode *effectNode, const string &dir, const TechTr
 	}
 
 	//duration
-	duration= effectNode->getAttribute("duration")->getIntValue();
+	duration = effectNode->getAttribute("duration")->getIntValue();
 
 	//damageType (default NULL)
 	attr = effectNode->getAttribute("damage-type", false);
 	if(attr) {
-		damageType= tt->getAttackType(attr->getRestrictedValue());
+		damageType = tt->getAttackType(attr->getRestrictedValue());
 	}
 
 	//display (default true)
 	attr = effectNode->getAttribute("display", false);
 	if(attr) {
-		display= attr->getBoolValue();
+		display = attr->getBoolValue();
 	} else {
-		display= true;
+		display = true;
 	}
 
 	//image (default NULL)
@@ -167,45 +167,46 @@ void EffectType::load(const XmlNode *effectNode, const string &dir, const TechTr
 	EnhancementTypeBase::load(effectNode, dir, tt, ft);
 
 	//light & lightColor
-	const XmlNode *lightNode= effectNode->getChild("light", 0, false);
+	const XmlNode *lightNode = effectNode->getChild("light", 0, false);
 	if(lightNode) {
-		light= lightNode->getAttribute("enabled")->getBoolValue();
-		if(light){
-			lightColor.x= lightNode->getAttribute("red")->getFloatValue(0.f, 1.f);
-			lightColor.y= lightNode->getAttribute("green")->getFloatValue(0.f, 1.f);
-			lightColor.z= lightNode->getAttribute("blue")->getFloatValue(0.f, 1.f);
+		light = lightNode->getAttribute("enabled")->getBoolValue();
+
+		if(light) {
+			lightColor.x = lightNode->getAttribute("red")->getFloatValue(0.f, 1.f);
+			lightColor.y = lightNode->getAttribute("green")->getFloatValue(0.f, 1.f);
+			lightColor.z = lightNode->getAttribute("blue")->getFloatValue(0.f, 1.f);
 		}
 	} else {
 		light = false;
 	}
 
 	//particle
-	const XmlNode *particleNode= effectNode->getChild("particle", 0, false);
+	const XmlNode *particleNode = effectNode->getChild("particle", 0, false);
 	if(particleNode && particleNode->getAttribute("value")->getBoolValue()) {
-		string path= particleNode->getAttribute("path")->getRestrictedValue();
-		particleSystemType= new ParticleSystemType();
-		particleSystemType->load(effectNode,  dir + "/" + path);
+		string path = particleNode->getAttribute("path")->getRestrictedValue();
+//		particleSystemType = new ParticleSystemType();
+//		particleSystemType->load(effectNode,  dir + "/" + path);
 	}
 
 	//sound
-	const XmlNode *soundNode= effectNode->getChild("sound", 0, false);
+	const XmlNode *soundNode = effectNode->getChild("sound", 0, false);
 	if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
-		soundStartTime= soundNode->getAttribute("start-time")->getFloatValue();
-		loopSound= soundNode->getAttribute("loop")->getBoolValue();
-		string path= soundNode->getAttribute("path")->getRestrictedValue();
-		sound= new StaticSound();
+		soundStartTime = soundNode->getAttribute("start-time")->getFloatValue();
+		loopSound = soundNode->getAttribute("loop")->getBoolValue();
+		string path = soundNode->getAttribute("path")->getRestrictedValue();
+		sound = new StaticSound();
 		sound->load(dir + "/" + path);
 	}
 
 	//recourse
-	const XmlNode *recourseEffectsNode= effectNode->getChild("recourse-effects", 0, false);
+	const XmlNode *recourseEffectsNode = effectNode->getChild("recourse-effects", 0, false);
 	if(recourseEffectsNode) {
 		recourse.resize(recourseEffectsNode->getChildCount());
-		for(int i=0; i<recourseEffectsNode->getChildCount(); ++i){
-			const XmlNode *recourseEffectNode= recourseEffectsNode->getChild("effect", i);
+		for(int i = 0; i < recourseEffectsNode->getChildCount(); ++i) {
+			const XmlNode *recourseEffectNode = recourseEffectsNode->getChild("effect", i);
 			EffectType *effectType = new EffectType();
 			effectType->load(recourseEffectNode, dir, tt, ft);
-			recourse[i]= effectType;
+			recourse[i] = effectType;
 		}
 	}
 
@@ -214,13 +215,48 @@ void EffectType::load(const XmlNode *effectNode, const string &dir, const TechTr
 	}
 }
 
-string &EffectType::getDesc(string &str) const {
-	return str;
+void EffectType::getDesc(string &str) const {
+	if(!display) {
+		return;
+	}
+
+	str += getName();
+
+	// effected units
+	if(isEffectsPetsOnly() || !isEffectsFoe() || !isEffectsAlly()) {
+		str += "\n\tEffects: ";
+		if(isEffectsPetsOnly()) {
+			str += "pets only";
+		} else if(isEffectsAlly()) {
+			str += "ally only";
+		} else {
+			assert(isEffectsFoe());
+			str += "foe only";
+		}
+	}
+
+	if(chance != 100.0f) {
+		str += "\n\tChance: " + intToStr((int)chance) + "%\n\t";
+	}
+
+	str += "\n\tDuration: ";
+	if(isPermanent()) {
+		str += "permenant";
+	} else {
+		str += intToStr(duration);
+	}
+
+	if(damageType) {
+		str += "\n\tDamage Type: " + damageType->getName();
+	}
+
+	EnhancementTypeBase::getDesc(str, "\n\t");
+	str += "\n";
 }
 
 
 // =====================================================
-// 	class Emanation
+//  class Emanation
 // =====================================================
 
 void Emanation::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {

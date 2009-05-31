@@ -124,7 +124,14 @@ protected:
 	int repairSpeed;
 	int harvestSpeed;
 
+	/**
+	 * Resistance / Damage Multipliers
+	 */
+	static size_t damageMultiplierCount;
+	vector<float> damageMultipliers;
+
 public:
+	UnitStatsBase() {damageMultipliers.resize(damageMultiplierCount);}
 
 	// ==================== get ====================
 
@@ -153,6 +160,14 @@ public:
 	bool getField(Field field) const		{return fields.get(field);}
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}
+
+	static size_t getDamageMultiplierCount()	{return damageMultiplierCount;}
+	float getDamageMultiplier(size_t i) const	{assert(i < damageMultiplierCount); return damageMultipliers[i];}
+
+	// ==================== set ====================
+
+	// this is called from TechTree::load()
+	static void setDamageMultiplierCount(size_t count)	{damageMultiplierCount = count;}
 
 	// ==================== misc ====================
 
@@ -189,6 +204,8 @@ public:
 	 * are specified in the object e.
 	 */
 	void addStatic(const EnhancementTypeBase &e, float strength = 1.0f);
+
+
 };
 
 // ===============================
@@ -271,7 +288,7 @@ public:
 	 * Returns a string description of this object, only supplying information
 	 * on fields which cause a modification.
 	 */
-	virtual string &getDesc(string &str) const;
+	virtual void getDesc(string &str, const char *prefix) const;
 
 	/**
 	 * Initializes this object from the specified XmlNode object.
@@ -308,7 +325,8 @@ private:
 
 	/** Initialize value from <multipliers> node */
 	void initMultiplier(const XmlNode *node, const string &dir);
-	static void formatModifier(string &str, const char* label, int value, float multiplier);
+
+	static void formatModifier(string &str, const char *pre, const char* label, int value, float multiplier);
 };
 
 }}//end namespace

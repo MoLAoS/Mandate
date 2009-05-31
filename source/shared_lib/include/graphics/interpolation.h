@@ -21,7 +21,7 @@ namespace Shared{ namespace Graphics{
 //	class InterpolationData
 // =====================================================
 
-class InterpolationData{
+class InterpolationData {
 private:
 	const Mesh *mesh;
 

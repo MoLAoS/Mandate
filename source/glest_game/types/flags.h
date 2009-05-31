@@ -57,6 +57,13 @@ public:
 		set(flag1, val1);
 	}
 
+	Flags(E flag1, bool val1, E flag2, bool val2) {
+		assert(max <= sizeof(flags) * 8);
+		flags = 0;
+		set(flag1, val1);
+		set(flag2, val2);
+	}
+
 	Flags(E flag1, E flag2) {
 		assert(max <= sizeof(flags) * 8);
 		flags = 0;
@@ -124,6 +131,7 @@ public:
  */
 template<class E, size_t max, class T = unsigned int> class XmlBasedFlags : public Flags<E, max, T> {
 public:
+	virtual ~XmlBasedFlags(){}
 	/**
 	 * Called to initialize the Flags object from an xml node.  The derived
 	 * class should in turn call the protected load method passing the

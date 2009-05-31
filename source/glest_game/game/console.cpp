@@ -9,13 +9,19 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "console.h"
 
 #include "lang.h"
 #include "config.h"
 #include "program.h"
 #include "game_constants.h"
+
 #include "leak_dumper.h"
+
+#if defined(WIN32) || defined(WIN64)
+	#define snprintf _snprintf
+#endif
 
 namespace Glest{ namespace Game{
 
@@ -25,14 +31,23 @@ namespace Glest{ namespace Game{
 
 Console::Console(){
 	//config
-	maxLines= Config::getInstance().getConsoleMaxLines();
-	timeout= (float)Config::getInstance().getConsoleTimeout();
+	maxLines= Config::getInstance().getUiConsoleMaxLines();
+	timeout= (float)Config::getInstance().getUiConsoleTimeout();
 
 	timeElapsed= 0.0f;
 }
 
 void Console::addStdMessage(const string &s){
 	addLine(Lang::getInstance().get(s));
+}
+
+void Console::addStdMessage(const string &s, const string &param1, const string &param2, const string &param3) {
+	string msg = Lang::getInstance().get(s);
+	size_t bufsize = msg.size() + param1.size()  + param2.size()  + param3.size() + 32;
+	char *buf = new char[bufsize];
+	snprintf(buf, bufsize - 1, msg.c_str(), param1.c_str(), param2.c_str(), param3.c_str());
+	addLine(buf);
+	delete[] buf;
 }
 
 void Console::addLine(string line){
@@ -43,7 +58,7 @@ void Console::addLine(string line){
 }
 
 void Console::update(){
-	timeElapsed+= 1.f/GameConstants::updateFps;
+	timeElapsed+= 1.f / Config::getInstance().getGsWorldUpdateFps();
 
 	if(!lines.empty()){
 		if(lines.back().second<timeElapsed-timeout){

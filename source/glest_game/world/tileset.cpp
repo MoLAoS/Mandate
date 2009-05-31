@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "tileset.h"
 
 #include <cassert>
@@ -17,6 +18,7 @@
 #include "logger.h"
 #include "util.h"
 #include "renderer.h"
+
 #include "leak_dumper.h"
 
 using namespace Shared::Util;
@@ -73,7 +75,7 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 		path= dayStartNode->getAttribute("path")->getRestrictedValue();
 		dayStart.load(dir + "/" + path);
 	}
-	
+
 	//nightStart
 	const XmlNode *nightStartNode= xmlNode->getChild("night-start-sound");
 	enabledNightStart= nightStartNode->getAttribute("enabled")->getBoolValue();
@@ -88,13 +90,13 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 // 	class Tileset
 // =====================================================
 
-void Tileset::load(const string &dir, Checksum *checksum){
-	
+void Tileset::load(const string &dir, Checksum &checksum){
+
 	random.init(time(NULL));
 
 	string path= dir+"/"+lastDir(dir)+".xml";
 
-	checksum->addFile(path);
+	checksum.addFile(path, true);
 
 	try{
 		Logger::getInstance().add("Tileset: "+dir, true);
@@ -109,7 +111,7 @@ void Tileset::load(const string &dir, Checksum *checksum){
 		const XmlNode *surfacesNode= tilesetNode->getChild("surfaces");
 		for(int i=0; i<surfCount; ++i){
 			const XmlNode *surfaceNode= surfacesNode->getChild("surface", i);
-			
+
 			int childCount= surfaceNode->getChildCount();
 			surfPixmaps[i].resize(childCount);
 			surfProbs[i].resize(childCount);
@@ -146,7 +148,7 @@ void Tileset::load(const string &dir, Checksum *checksum){
 		waterTex->setMipmap(false);
 		waterTex->setWrapMode(Texture::wmRepeat);
 		waterEffects= waterNode->getAttribute("effects")->getBoolValue();
-		
+
 		int waterFrameCount= waterNode->getChildCount();
 		waterTex->getPixmap()->init(waterFrameCount, 4);
 		for(int i=0; i<waterFrameCount; ++i){
@@ -210,10 +212,10 @@ const Pixmap2D *Tileset::getSurfPixmap(int type, int var) const{
 }
 
 void Tileset::addSurfTex(int leftUp, int rightUp, int leftDown, int rightDown, Vec2f &coord, const Texture2D *&texture){
-	
+
 	//center textures
 	if(leftUp==rightUp && leftUp==leftDown && leftUp==rightDown){
-		
+
 		//texture variation according to probability
 		float r= random.randRange(0.f, 1.f);
 		int var= 0;
@@ -236,9 +238,9 @@ void Tileset::addSurfTex(int leftUp, int rightUp, int leftDown, int rightDown, V
 		int var= random.randRange(0, transitionVars);
 
 		SurfaceInfo si(
-			getSurfPixmap(leftUp, var), 
-			getSurfPixmap(rightUp, var), 
-			getSurfPixmap(leftDown, var), 
+			getSurfPixmap(leftUp, var),
+			getSurfPixmap(rightUp, var),
+			getSurfPixmap(leftDown, var),
 			getSurfPixmap(rightDown, var));
 		surfaceAtlas.addSurface(&si);
 		coord= si.getCoord();

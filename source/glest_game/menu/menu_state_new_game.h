@@ -12,7 +12,7 @@
 #ifndef _GLEST_GAME_MENUSTATENEWGAME_H_
 #define _GLEST_GAME_MENUSTATENEWGAME_H_
 
-#include "main_menu.h"
+#include "menu_state_start_game_base.h"
 
 namespace Glest{ namespace Game{
 
@@ -20,10 +20,10 @@ namespace Glest{ namespace Game{
 // 	class MenuStateNewGame
 // ===============================
 
-class MenuStateNewGame: public MenuState{
+class MenuStateNewGame: public MenuStateStartGameBase {
 private:
-	GraphicButton buttonReturn;
-	GraphicButton buttonPlayNow;
+	//GraphicButton buttonReturn;
+	//GraphicButton buttonPlayNow;
 	GraphicLabel labelNetwork;
 	GraphicLabel labelControl;
 	GraphicLabel labelFaction;
@@ -39,30 +39,31 @@ private:
 	vector<string> techTreeFiles;
 	vector<string> tilesetFiles;
 	vector<string> factionFiles;
-	GraphicLabel labelPlayers[GameConstants::maxPlayers];
+	//GraphicLabel labelPlayers[GameConstants::maxPlayers];
 	GraphicListBox listBoxControls[GameConstants::maxPlayers];
 	GraphicListBox listBoxFactions[GameConstants::maxPlayers];
 	GraphicListBox listBoxTeams[GameConstants::maxPlayers];
-	GraphicLabel labelNetStatus[GameConstants::maxPlayers];
-	MapInfo mapInfo;
+	//GraphicLabel labelNetStatus[GameConstants::maxPlayers];
+	//MapInfo mapInfo;
 	GraphicLabel labelRandomize;
 	GraphicListBox listBoxRandomize;
+	//GraphicMessageBox *msgBox;
 
 
 public:
-	MenuStateNewGame(Program *program, MainMenu *mainMenu, bool openNetworkSlots= false);
+	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
 
 	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState *mouseState);
+	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
 	void update();
 
 private:
     void loadGameSettings(GameSettings *gameSettings);
-	void loadMapInfo(string file, MapInfo *mapInfo);
+	//void loadMapInfo(string file, MapInfo *mapInfo);
 	void reloadFactions();
 	void updateControlers();
-	void closeUnusedSlots();
+	bool isUnconnectedSlots();
 	void updateNetworkSlots();
 };
 

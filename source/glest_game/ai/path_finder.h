@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -15,8 +15,10 @@
 #include "vec.h"
 
 #include <vector>
+#include <list>
 
 using std::vector;
+using std::list;
 using Shared::Graphics::Vec2i;
 
 namespace Glest{ namespace Game{
@@ -46,6 +48,28 @@ public:
 	};
 	typedef vector<Node*> Nodes;
 
+	/*
+	class Nodes : public list<Node*> {
+		float minDist
+		public:
+		Nodes();
+		//returns an iterator to the lowest heuristic node
+		PathFinder::Nodes::iterator PathFinder::minHeuristic(){
+		//Timer t(1000, "PathFinder::minHeuristic");
+			Nodes::iterator minNodeIt=  openNodes.begin();
+
+			assert(!openNodes.empty());
+
+			for(Nodes::iterator it= openNodes.begin(); it!=openNodes.end(); ++it){
+				if((*it)->heuristic < (*minNodeIt)->heuristic){
+					minNodeIt= it;
+				}
+			}
+
+			return minNodeIt;
+		}
+	};*/
+
 public:
 	static const int maxFreeSearchRadius;
 	static const int pathFindNodesMax;
@@ -69,7 +93,7 @@ private:
 	TravelState aStar(Unit *unit, const Vec2i &finalPos);
 	Node *newNode();
 	Vec2i computeNearestFreePos(const Unit *unit, const Vec2i &targetPos);
-	float heuristic(const Vec2i &pos, const Vec2i &finalPos);
+	float heuristic(const Vec2i &pos, const Vec2i &finalPos) {return pos.dist(finalPos);}
 	Nodes::iterator minHeuristic();
 	bool openPos(const Vec2i &sucPos);
 };

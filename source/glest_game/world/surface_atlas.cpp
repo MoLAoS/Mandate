@@ -3,12 +3,13 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "surface_atlas.h"
 
 #include <stdexcept>
@@ -17,6 +18,7 @@
 #include "renderer.h"
 #include "util.h"
 #include "math_util.h"
+
 #include "leak_dumper.h"
 
 using namespace std;
@@ -46,7 +48,7 @@ SurfaceInfo::SurfaceInfo(const Pixmap2D *center){
 }
 
 bool SurfaceInfo::operator==(const SurfaceInfo &si) const{
-	return 
+	return
 		this->center == si.getCenter() &&
 		this->leftDown == si.getLeftDown() &&
 		this->leftUp == si.getLeftUp() &&
@@ -63,7 +65,7 @@ SurfaceAtlas::SurfaceAtlas(){
 }
 
 void SurfaceAtlas::addSurface(SurfaceInfo *si){
-	
+
 	//check dimensions
 	if(si->getCenter()!=NULL){
 		checkDimensions(si->getCenter());
@@ -82,11 +84,11 @@ void SurfaceAtlas::addSurface(SurfaceInfo *si){
 		Texture2D *t= Renderer::getInstance().newTexture2D(rsGame);
 		t->setWrapMode(Texture::wmClampToEdge);
 		t->getPixmap()->init(surfaceSize, surfaceSize, 3);
-		
+
 		si->setCoord(Vec2f(0.f, 0.f));
 		si->setTexture(t);
 		surfaceInfos.push_back(*si);
-		
+
 		//copy texture to pixmap
 		if(si->getCenter()!=NULL){
 			t->getPixmap()->copy(si->getCenter());

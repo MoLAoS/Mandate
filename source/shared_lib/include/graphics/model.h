@@ -25,7 +25,7 @@ using std::string;
 using std::map;
 using std::pair;
 
-namespace Shared{ namespace Graphics{
+namespace Shared { namespace Graphics {
 
 class Model;
 class Mesh;
@@ -34,12 +34,12 @@ class InterpolationData;
 class TextureManager;
 
 // =====================================================
-//	class Mesh
+// class Mesh
 //
-//	Part of a 3D model
+// Part of a 3D model
 // =====================================================
 
-class Mesh{
+class Mesh {
 private:
 	//mesh data
 	Texture2D *textures[meshTextureCount];
@@ -86,11 +86,11 @@ public:
 	uint32 getTriangleCount() const;
 
 	//data
-	const Vec3f *getVertices() const 	{return vertices;}
-	const Vec3f *getNormals() const 	{return normals;}
-	const Vec2f *getTexCoords() const	{return texCoords;}
-	const Vec3f *getTangents() const	{return tangents;}
-	const uint32 *getIndices() const 	{return indices;}
+	const Vec3f *getVertices() const 		{return vertices;}
+	const Vec3f *getNormals() const 		{return normals;}
+	const Vec2f *getTexCoords() const		{return texCoords;}
+	const Vec3f *getTangents() const		{return tangents;}
+	const uint32 *getIndices() const 		{return indices;}
 
 	//material
 	const Vec3f &getDiffuseColor() const	{return diffuseColor;}
@@ -99,11 +99,11 @@ public:
 	float getOpacity() const				{return opacity;}
 
 	//properties
-	bool getTwoSided() const		{return twoSided;}
-	bool getCustomTexture() const	{return customColor;}
+	bool getTwoSided() const				{return twoSided;}
+	bool getCustomTexture() const			{return customColor;}
 
 	//external data
-	const InterpolationData *getInterpolationData() const	{return interpolationData;}
+	const InterpolationData *getInterpolationData() const {return interpolationData;}
 
 	//interpolation
 	void buildInterpolationData();
@@ -121,12 +121,12 @@ private:
 };
 
 // =====================================================
-//	class Model
+// class Model
 //
-//	3D Model, than can be loaded from a g3d file
+// 3D Model, than can be loaded from a g3d file
 // =====================================================
 
-class Model{
+class Model {
 private:
 	TextureManager *textureManager;
 
@@ -139,28 +139,28 @@ public:
 	//constructor & destructor
 	Model();
 	virtual ~Model();
-	virtual void init()= 0;
-	virtual void end()= 0;
+	virtual void init() = 0;
+	virtual void end() = 0;
 
 	//data
 	void buildShadowVolumeData() const;
 	void updateInterpolationData(float t, bool cycle) const {
-		for(int i=0; i<meshCount; ++i){
+		for (int i = 0; i < meshCount; ++i) {
 			meshes[i].updateInterpolationData(t, cycle);
 		}
 	}
 
-	void updateInterpolationVertices(float t, bool cycle) const{
-		for(int i=0; i<meshCount; ++i){
+	void updateInterpolationVertices(float t, bool cycle) const {
+		for (int i = 0; i < meshCount; ++i) {
 			meshes[i].updateInterpolationVertices(t, cycle);
 		}
 	}
 
 
 	//get
-	uint8 getFileVersion() const		{return fileVersion;}
-	uint32 getMeshCount() const			{return meshCount;}
-	const Mesh *getMesh(int i) const	{return &meshes[i];}
+	uint8 getFileVersion() const  {return fileVersion;}
+	uint32 getMeshCount() const   {return meshCount;}
+	const Mesh *getMesh(int i) const {return &meshes[i];}
 
 	uint32 getTriangleCount() const;
 	uint32 getVertexCount() const;
@@ -171,11 +171,11 @@ public:
 	void loadG3d(const string &path);
 	void saveS3d(const string &path);
 
-	void setTextureManager(TextureManager *textureManager)	{this->textureManager= textureManager;}
+	void setTextureManager(TextureManager *textureManager) {this->textureManager = textureManager;}
 
 private:
-	void buildInterpolationData() const{
-		for(int i=0; i<meshCount; ++i){
+	void buildInterpolationData() const {
+		for (int i = 0; i < meshCount; ++i) {
 			meshes[i].buildInterpolationData();
 		}
 	}

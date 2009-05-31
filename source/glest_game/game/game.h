@@ -23,10 +23,14 @@
 #include "chat_manager.h"
 #include "game_settings.h"
 #include "config.h"
+#include "keymap.h"
+
+// weather system not yet ready
+//#include "../physics/weather.h"
 
 using std::vector;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 class GraphicMessageBox;
 class GraphicTextEntryBox;
@@ -37,9 +41,9 @@ class GraphicTextEntryBox;
 //	Main game class
 // =====================================================
 
-class Game: public ProgramState{
+class Game: public ProgramState {
 public:
-	enum Speed{
+	enum Speed {
 		sSlowest,
 		sVerySlow,
 		sSlow,
@@ -58,7 +62,14 @@ private:
 	typedef vector<AiInterface*> AiInterfaces;
 
 private:
+	static Game *singleton;
+
 	//main data
+	GameSettings gameSettings;
+	XmlNode *savedGame;
+	Keymap &keymap;
+	const Input &input;
+	const Config &config;
 	World world;
     AiInterfaces aiInterfaces;
     Gui gui;
@@ -87,35 +98,16 @@ private:
 
 	//misc ptr
 	ParticleSystem *weatherParticleSystem;
-	GameSettings gameSettings;
-	XmlNode *savedGame;
-
+	
 public:
-	/** Constructor to start a new game or join a new network game */
-	Game(Program *program, const GameSettings *gs) :
-			ProgramState(program),
-			world(),
-			gameSettings(*gs) {
-		_init();
-		this->savedGame = NULL;
-	}
-
-	/**
-	 * Constructor to load a saved game or join a network game that is resumed
-	 * resumes from a previous session
-	 */
-	Game(Program *program, const GameSettings *gs, XmlNode *savedGame) :
-			ProgramState(program),
-			world(),
-			gameSettings(*gs) {
-		_init();
-		this->savedGame = savedGame;
-	}
-
+	Game(Program &program, const GameSettings &gs, XmlNode *savedGame = NULL);
     ~Game();
+	static Game *getInstance()				{return singleton;}
 
     //get
-	GameSettings *getGameSettings()			{return &gameSettings;}
+	GameSettings &getGameSettings()			{return gameSettings;}
+	const Keymap &getKeymap() const			{return keymap;}
+	const Input &getInput() const			{return input;}
 
 	const GameCamera *getGameCamera() const	{return &gameCamera;}
 	GameCamera *getGameCamera()				{return &gameCamera;}
@@ -136,8 +128,8 @@ public:
 	virtual void tick();
 
     //Event managing
-    virtual void keyDown(char key);
-    virtual void keyUp(char key);
+    virtual void keyDown(const Key &key);
+    virtual void keyUp(const Key &key);
     virtual void keyPress(char c);
     virtual void mouseDownLeft(int x, int y);
     virtual void mouseDownRight(int x, int y);
@@ -147,7 +139,7 @@ public:
 	virtual void mouseUpCenter(int x, int y);
     virtual void mouseDoubleClickLeft(int x, int y);
 	virtual void eventMouseWheel(int x, int y, int zDelta);
-    virtual void mouseMove(int x, int y, const MouseState *mouseState);
+    virtual void mouseMove(int x, int y, const MouseState &mouseState);
 
 	void setCameraCell(int x, int y)	{
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
@@ -164,6 +156,7 @@ private:
 	bool hasBuilding(const Faction *faction);
 	void incSpeed();
 	void decSpeed();
+	void resetSpeed();
 	void updateSpeed();
 	int getUpdateLoops();
 	void showExitMessageBox(const string &text, bool toggle);
@@ -171,6 +164,7 @@ private:
 	Unit *findUnit(int id);
 	char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
+	void displayError(SocketException &e);
 };
 
 }}//end namespace

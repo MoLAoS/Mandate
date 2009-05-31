@@ -3,18 +3,20 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "texture_gl.h"
 
-#include "opengl.h"
-#include "leak_dumper.h"
-
 #include <stdexcept>
+
+#include "opengl.h"
+
+#include "leak_dumper.h"
 
 using namespace std;
 
@@ -63,7 +65,7 @@ GLint toFormatGl(Texture::Format format, int components){
 		assert(false);
 		return GL_RGB;
 	}
-} 
+}
 
 GLint toInternalFormatGl(Texture::Format format, int components){
 	switch(format){
@@ -92,7 +94,7 @@ GLint toInternalFormatGl(Texture::Format format, int components){
 		assert(false);
 		return GL_RGB8;
 	}
-} 
+}
 
 // =====================================================
 //	class Texture1DGl
@@ -133,7 +135,7 @@ void Texture1DGl::init(Filter filter, int maxAnisotropy){
 			int error= gluBuild1DMipmaps(
 				GL_TEXTURE_1D, glInternalFormat, pixmap.getW(),
 				glFormat, GL_UNSIGNED_BYTE, pixels);
-		
+
 			if(error!=0){
 				throw runtime_error("Error building texture 1D mipmaps");
 			}
@@ -144,7 +146,7 @@ void Texture1DGl::init(Filter filter, int maxAnisotropy){
 			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			glTexImage1D(
-				GL_TEXTURE_1D, 0, glInternalFormat, pixmap.getW(), 
+				GL_TEXTURE_1D, 0, glInternalFormat, pixmap.getW(),
 				0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
 			GLint error= glGetError();
@@ -204,10 +206,10 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			int error= gluBuild2DMipmaps(
-				GL_TEXTURE_2D, glInternalFormat, 
-				pixmap.getW(), pixmap.getH(), 
+				GL_TEXTURE_2D, glInternalFormat,
+				pixmap.getW(), pixmap.getH(),
 				glFormat, GL_UNSIGNED_BYTE, pixels);
-		
+
 			if(error!=0){
 				throw runtime_error("Error building texture 2D mipmaps");
 			}
@@ -254,7 +256,7 @@ void Texture3DGl::init(Filter filter, int maxAnisotropy){
 		GLint wrap= toWrapModeGl(wrapMode);
 		GLint glFormat= toFormatGl(format, pixmap.getComponents());
 		GLint glInternalFormat= toInternalFormatGl(format, pixmap.getComponents());
-		
+
 		//pixel init var
 		const uint8* pixels= pixmapInit? pixmap.getPixels(): NULL;
 
@@ -302,11 +304,11 @@ void TextureCubeGl::init(Filter filter, int maxAnisotropy){
 	assertGl();
 
 	if(!inited){
-		
+
 		//gen texture
 		glGenTextures(1, &handle);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
-			
+
 		//wrap
 		GLint wrap= toWrapModeGl(wrapMode);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap);
@@ -336,10 +338,10 @@ void TextureCubeGl::init(Filter filter, int maxAnisotropy){
 
 			if(mipmap){
 				int error= gluBuild2DMipmaps(
-					target, glInternalFormat, 
-					currentPixmap->getW(), currentPixmap->getH(), 
+					target, glInternalFormat,
+					currentPixmap->getW(), currentPixmap->getH(),
 					glFormat, GL_UNSIGNED_BYTE, pixels);
-				
+
 				if(error!=0){
 					throw runtime_error("Error building texture cube mipmaps");
 				}

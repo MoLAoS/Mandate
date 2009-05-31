@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -84,7 +84,7 @@ private:
 public:
 	PixmapIoBmp();
 	virtual ~PixmapIoBmp();
-	
+
 	virtual void openRead(const string &path);
 	virtual void read(uint8 *pixels);
 	virtual void read(uint8 *pixels, int components);
@@ -111,13 +111,13 @@ public:
 	void init(int components);
 	void init(int w, int components);
 	~Pixmap1D();
-	
+
 	//load & save
 	void load(const string &path);
 	void loadTga(const string &path);
 	void loadBmp(const string &path);
 
-	//get 
+	//get
 	int getW() const			{return w;}
 	int getComponents() const	{return components;}
 	uint8 *getPixels() const	{return pixels;}
@@ -142,7 +142,7 @@ public:
 	void init(int components);
 	void init(int w, int h, int components);
 	~Pixmap2D();
-	
+
 	//load & save
 	void load(const string &path);
 	void loadTga(const string &path);
@@ -151,35 +151,35 @@ public:
 	void saveBmp(const string &path);
 	void saveTga(const string &path);
 
-	//get 
+	//get
 	int getW() const			{return w;}
 	int getH() const			{return h;}
 	int getComponents() const	{return components;}
 	uint8 *getPixels() const	{return pixels;}
-		
+
 	//get data
 	void getPixel(int x, int y, uint8 *value) const;
 	void getPixel(int x, int y, float32 *value) const;
-	void getComponent(int x, int y, int component, uint8 &value) const;
-	void getComponent(int x, int y, int component, float32 &value) const;
+	void getComponent(int x, int y, int component, uint8 &value) const	{value= pixels[(w*y+x)*components+component];}
+	void getComponent(int x, int y, int component, float32 &value) const{value= pixels[(w*y+x)*components+component]/255.f;}
 
 	//vector get
 	Vec4f getPixel4f(int x, int y) const;
 	Vec3f getPixel3f(int x, int y) const;
-	float getPixelf(int x, int y) const;
+	float getPixelf(int x, int y) const								{return pixels[(w*y+x)*components]/255.f;}
 	float getComponentf(int x, int y, int component) const;
 
 	//set data
 	void setPixel(int x, int y, const uint8 *value);
 	void setPixel(int x, int y, const float32 *value);
-	void setComponent(int x, int y, int component, uint8 value);
-	void setComponent(int x, int y, int component, float32 value);
+	void setComponent(int x, int y, int component, uint8 value)		{pixels[(w*y+x)*components+component]= value;}
+	void setComponent(int x, int y, int component, float32 value)	{pixels[(w*y+x)*components+component]= static_cast<uint8>(value*255.f);}
 
 	//vector set
 	void setPixel(int x, int y, const Vec3f &p);
 	void setPixel(int x, int y, const Vec4f &p);
-	void setPixel(int x, int y, float p);
-	
+	void setPixel(int x, int y, float p)		{pixels[(w*y+x)*components]= static_cast<uint8>(p*255.f);}
+
 	//mass set
 	void setPixels(const uint8 *value);
 	void setPixels(const float32 *value);
@@ -187,7 +187,7 @@ public:
 	void setComponents(int component, float32 value);
 
 	//operations
-	void splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixmap2D *leftDown, const Pixmap2D *rightDown); 
+	void splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixmap2D *leftDown, const Pixmap2D *rightDown);
 	void lerp(float t, const Pixmap2D *pixmap1, const Pixmap2D *pixmap2);
 	void copy(const Pixmap2D *sourcePixmap);
 	void subCopy(int x, int y, const Pixmap2D *sourcePixmap);
@@ -216,13 +216,13 @@ public:
 	void init(int w, int h, int d, int components);
 	void init(int d, int components);
 	~Pixmap3D();
-	
+
 	//load & save
 	void loadSlice(const string &path, int slice);
 	void loadSliceBmp(const string &path, int slice);
 	void loadSliceTga(const string &path, int slice);
-	
-	//get 
+
+	//get
 	int getW() const			{return w;}
 	int getH() const			{return h;}
 	int getD() const			{return d;}
@@ -256,8 +256,8 @@ public:
 	void loadFace(const string &path, int face);
 	void loadFaceBmp(const string &path, int face);
 	void loadFaceTga(const string &path, int face);
-	
-	//get 
+
+	//get
 	Pixmap2D *getFace(int face)				{return &faces[face];}
 	const Pixmap2D *getFace(int face) const	{return &faces[face];}
 };

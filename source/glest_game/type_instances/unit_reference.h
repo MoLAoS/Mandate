@@ -13,10 +13,14 @@
 #define _GLEST_GAME_UNIT_REFERENCE_H_
 
 #include "xml_parser.h"
+#include "socket.h"
 
 namespace Glest{ namespace Game{
 
 using Shared::Xml::XmlNode;
+using Shared::Platform::NetworkDataBuffer;
+using Shared::Platform::int32;
+using Shared::Platform::int8;
 
 class Faction;
 class World;
@@ -32,14 +36,21 @@ private:
 	Faction *faction;
 
 public:
-	UnitReference();
-	UnitReference(const XmlNode *node, World *world);
+	UnitReference(): id(-1), faction(NULL) {}
+	UnitReference(const XmlNode *node);
 	UnitReference(const Unit* unit)			{*this = unit;}
+//	UnitReference(int id, Faction *faction): id(id), faction(faction) {}
 
 	void operator=(const Unit *unit);
 	operator Unit *() const					{return getUnit();}
+	int getUnitId() const					{return id;}
+	Faction *getFaction() const				{return faction;}
 	Unit *getUnit() const;
 	void save(XmlNode *node) const;
+
+	size_t getNetSize() const				{return sizeof(int32) + sizeof(int8);}
+	void read(NetworkDataBuffer &buf, World *world);
+	void write(NetworkDataBuffer &buf) const;
 };
 
 

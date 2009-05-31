@@ -26,7 +26,7 @@ class TextureManager;
 //	class ModelManager
 // =====================================================
 
-class ModelManager{
+class ModelManager {
 protected:
 	typedef vector<Model*> ModelContainer;
 

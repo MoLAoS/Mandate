@@ -3,17 +3,20 @@
 //
 //	Copyright (C) 2001-2007 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "socket.h"
 
 #include <stdexcept>
 
 #include "conversion.h"
+
+#include "leak_dumper.h"
 
 using namespace std;
 using namespace Shared::Util;
@@ -40,7 +43,7 @@ Ip::Ip(unsigned char byte0, unsigned char byte1, unsigned char byte2, unsigned c
 
 
 Ip::Ip(const string& ipString){
-	int offset= 0; 
+	int offset= 0;
 	int byteIndex= 0;
 
 	for(byteIndex= 0; byteIndex<4; ++byteIndex){
@@ -59,16 +62,16 @@ string Ip::getString() const{
 //	class Socket
 // =====================================================
 
-Socket::SocketManager Socket::socketManager;
+Socket::LibraryManager Socket::libraryManager;
 
-Socket::SocketManager::SocketManager(){
-	WSADATA wsaData; 
+Socket::LibraryManager::LibraryManager(){
+	WSADATA wsaData;
 	WORD wVersionRequested = MAKEWORD(2, 0);
 	WSAStartup(wVersionRequested, &wsaData);
 	//dont throw exceptions here, this is a static initializacion
 }
 
-Socket::SocketManager::~SocketManager(){
+Socket::LibraryManager::~LibraryManager(){
 	WSACleanup();
 }
 
@@ -81,6 +84,14 @@ Socket::Socket(){
 	if(sock==INVALID_SOCKET){
 		throwException("Error creating socket");
 	}
+	assert(sizeof(int8) == 1);
+	assert(sizeof(uint8) == 1);
+	assert(sizeof(int16) == 2);
+	assert(sizeof(uint16) == 2);
+	assert(sizeof(int32) == 4);
+	assert(sizeof(uint32) == 4);
+	assert(sizeof(int64) == 8);
+	assert(sizeof(uint64) == 8);
 }
 
 Socket::~Socket(){
@@ -92,7 +103,7 @@ Socket::~Socket(){
 
 int Socket::getDataToRead(){
 	u_long size;
-	
+
 	int err= ioctlsocket(sock, FIONREAD, &size);
 
 	if(err==SOCKET_ERROR){
@@ -218,15 +229,17 @@ string Socket::getIp() const{
 		throwException("Error getting host ip");
 	}
 
-	return 
-		intToStr(address[0]) + "." + 
-		intToStr(address[1]) + "." + 
+	return
+		intToStr(address[0]) + "." +
+		intToStr(address[1]) + "." +
 		intToStr(address[2]) + "." +
 		intToStr(address[3]);
 }
 
-void Socket::throwException(const string &str){
-	throw runtime_error("Network error: " + str+" (Code: " + intToStr(WSAGetLastError())+")");
+void Socket::throwException(const char *msg){
+	stringstream str;
+	str << "Network error: " << msg << " (Code: " << WSAGetLastError() << ")";
+	throw runtime_error(str.str());
 }
 
 // =====================================================
@@ -260,7 +273,7 @@ void ServerSocket::bind(int port){
 	addr.sin_family= AF_INET;
 	addr.sin_addr.s_addr= INADDR_ANY;
 	addr.sin_port= htons(port);
-	
+
 	int err= ::bind(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 	if(err==SOCKET_ERROR){
 		throwException("Error binding socket");

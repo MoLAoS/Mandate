@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
 #include "unit_type.h"
 
 #include <cassert>
@@ -22,7 +23,9 @@
 #include "tech_tree.h"
 #include "resource.h"
 #include "renderer.h"
+
 #include "leak_dumper.h"
+
 
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
@@ -37,6 +40,16 @@ namespace Glest{ namespace Game{
 void Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	name = levelNode->getAttribute("name")->getRestrictedValue();
 	kills = levelNode->getAttribute("kills")->getIntValue();
+
+	const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
+	if(defaultsAtt && !defaultsAtt->getBoolValue()) {
+		maxHpMult = 1.f;
+		maxEpMult = 1.f;
+		sightMult = 1.f;
+		armorMult = 1.f;
+		effectStrength = 0.0f;
+	}
+
 	EnhancementTypeBase::load(levelNode, dir, tt, ft);
 }
 
@@ -78,7 +91,7 @@ void UnitType::preLoad(const string &dir){
 	name= lastDir(dir);
 }
 
-void UnitType::load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum* checksum){
+void UnitType::load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum){
 	this->id = id;
 	string path;
 
@@ -88,7 +101,7 @@ void UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		//file load
 		path= dir+"/"+name+".xml";
 
-		checksum->addFile(path);
+		checksum.addFile(path, true);
 
 		XmlTree xmlTree;
 		xmlTree.load(path);
@@ -97,16 +110,18 @@ void UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		const XmlNode *parametersNode= unitNode->getChild("parameters");
 
 		UnitStatsBase::load(parametersNode, dir, techTree, factionType);
+		
+		halfSize = size / 2.f;
+		halfHeight = height / 2.f;
 
 		//prod time
-		productionTime= parametersNode->getChild("time")->getAttribute("value")->getIntValue();
+		productionTime= parametersNode->getChildIntValue("time");
 
 		//multi-build
-		const XmlNode *multiBuildNode= parametersNode->getChild("multi-build", 0, false);
-		multiBuild = multiBuildNode && multiBuildNode->getAttribute("value")->getBoolValue();
+		multiBuild = parametersNode->getOptionalBoolValue("multi-build");
 
 		//multi selection
-		multiSelect= parametersNode->getChild("multi-selection")->getAttribute("value")->getBoolValue();
+		multiSelect= parametersNode->getChildBoolValue("multi-selection");
 
 		//cellmap
 		const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
@@ -156,9 +171,7 @@ void UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		}
 
 		//image
-		const XmlNode *imageNode= parametersNode->getChild("image");
-		image= Renderer::getInstance().newTexture2D(rsGame);
-		image->load(dir+"/"+imageNode->getAttribute("path")->getRestrictedValue());
+		DisplayableType::load(parametersNode, dir);
 
 		//image cancel
 		const XmlNode *imageCancelNode= parametersNode->getChild("image-cancel");
@@ -212,26 +225,45 @@ void UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		}
 
 		//commands
-		const XmlNode *commandsNode= unitNode->getChild("commands");
+		const XmlNode *commandsNode = unitNode->getChild("commands");
 		commandTypes.resize(commandsNode->getChildCount());
-		for(int i=0; i<commandTypes.size(); ++i){
-			const XmlNode *commandNode= commandsNode->getChild("command", i);
-			const XmlNode *typeNode= commandNode->getChild("type");
-			string classId= typeNode->getAttribute("value")->getRestrictedValue();
-			CommandType *commandType= CommandTypeFactory::getInstance().newInstance(classId);
-			commandType->load(i, commandNode, dir, techTree, factionType, *this);
-			commandTypes[i]= commandType;
+		for (int i = 0; i < commandTypes.size(); ++i) {
+			const XmlNode *commandNode = commandsNode->getChild("command", i);
+			string classId = commandNode->getChildRestrictedValue("type");
+			CommandType *commandType = CommandTypeFactory::getInstance().newInstance(classId);
+			commandType->setUnitTypeAndIndex(this, i);
+			commandType->load(commandNode, dir, techTree, factionType);
+			commandTypes[i] = commandType;
+		}
+
+		// if type has a meeting point, add a SetMeetingPoint command
+		if(meetingPoint) {
+			commandTypes.push_back(new SetMeetingPointCommandType());
+			commandTypes.back()->setUnitTypeAndIndex(this, commandTypes.size() - 1);
 		}
 
 		computeFirstStOfClass();
 		computeFirstCtOfClass();
 
-		if(getFirstStOfClass(scStop)==NULL){
+		if(!getFirstStOfClass(scStop)) {
 			throw runtime_error("Every unit must have at least one stop skill: "+ path);
 		}
-		if(getFirstStOfClass(scDie)==NULL){
+		if(!getFirstStOfClass(scDie)) {
 			throw runtime_error("Every unit must have at least one die skill: "+ path);
 		}
+
+		// if it's mobile and doesn't have a fall down skill, give it one
+		if(!firstSkillTypeOfClass[scFallDown] && firstSkillTypeOfClass[scMove]) {
+			skillTypes.push_back(new FallDownSkillType(firstSkillTypeOfClass[scDie]));
+		}
+
+		if(!firstSkillTypeOfClass[scGetUp] && firstSkillTypeOfClass[scMove]) {
+			skillTypes.push_back(new GetUpSkillType(firstSkillTypeOfClass[scMove]));
+		}
+
+		//push dummy wait for server skill type and recalculate first of skill cache
+		skillTypes.push_back(new WaitForServerSkillType(getFirstStOfClass(scStop)));
+		computeFirstStOfClass();
 
 		/*
 		//petRules
@@ -269,13 +301,7 @@ void UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 
 // ==================== get ====================
 
-const CommandType *UnitType::getFirstCtOfClass(CommandClass commandClass) const{
-    return firstCommandTypeOfClass[commandClass];
-}
 
-const SkillType *UnitType::getFirstStOfClass(SkillClass skillClass) const{
-    return firstSkillTypeOfClass[skillClass];
-}
 
 const CommandType *UnitType::getCommandType(const string &name) const {
 	for(CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {

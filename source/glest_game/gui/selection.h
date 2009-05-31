@@ -12,12 +12,13 @@
 #ifndef _GLEST_GAME_SELECTION_
 #define _GLEST_GAME_SELECTION_
 
-#include "unit.h"
 #include <vector>
+
+#include "unit.h"
 
 using std::vector;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 class Gui;
 
@@ -33,14 +34,14 @@ enum AutoRepairState {
 ///	List of selected units and groups
 // =====================================================
 
-class Selection: public UnitObserver{
+class Selection: public UnitObserver {
 public:
 	typedef vector<Unit*> UnitContainer;
 	typedef UnitContainer::const_iterator UnitIterator;
 
 public:
-	static const int maxGroups= 10;
-	static const int maxUnits= 16;
+	static const int maxGroups = 10;
+	static const int maxUnits = 16;
 
 private:
 	bool empty;
@@ -64,7 +65,7 @@ public:
 	void select(Unit *unit);
 	void select(const UnitContainer &units) {
 		//add units to gui
-		for(UnitIterator it= units.begin(); it!=units.end(); ++it){
+		for(UnitIterator it= units.begin(); it!=units.end(); ++it) {
 			select(*it);
 		}
 	}
@@ -78,10 +79,19 @@ public:
 	bool isCancelable() const			{return cancelable;}
 	bool isMeetable() const				{return meetable;}
 	bool isCanRepair() const			{return canRepair;}
+	bool hasUnit(const Unit *unit) const {
+		for(UnitIterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
+			if(*i == unit) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-	int getCount() const				{return selectedUnits.size();}
-	const Unit *getUnit(int i) const	{return selectedUnits[i];}
-	const Unit *getFrontUnit() const	{return selectedUnits.front();}
+	int getCount() const					{return selectedUnits.size();}
+	const Unit *getUnit(int i) const		{return selectedUnits[i];}
+	const Unit *getFrontUnit() const		{return selectedUnits.front();}
+	const UnitContainer &getUnits() const	{return selectedUnits;}
 	Vec3f getRefPos() const;
 	AutoRepairState getAutoRepairState() const	{return autoRepairState;}
 
@@ -90,6 +100,9 @@ public:
 
 	virtual void unitEvent(UnitObserver::Event event, const Unit *unit);
 	void update();
+
+	void load(const XmlNode *node);
+	void save(XmlNode *node) const;
 
 protected:
 	void unSelect(int unitIndex);

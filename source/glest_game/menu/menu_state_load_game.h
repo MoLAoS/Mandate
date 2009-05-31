@@ -1,7 +1,8 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>
+//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>,
+//				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -12,7 +13,7 @@
 #ifndef _GLEST_GAME_MENUSTATELOADGAME_H_
 #define _GLEST_GAME_MENUSTATELOADGAME_H_
 
-#include "main_menu.h"
+#include "menu_state_start_game_base.h"
 #include "thread.h"
 
 namespace Glest{ namespace Game{
@@ -59,12 +60,12 @@ private:
 // 	class MenuStateLoadGame
 // ===============================
 
-class MenuStateLoadGame: public MenuState{
+class MenuStateLoadGame: public MenuStateStartGameBase {
 private:
 	SavedGamePreviewLoader loaderThread;
-	GraphicButton buttonReturn;
+	//GraphicButton buttonReturn;
 	GraphicButton buttonDelete;
-	GraphicButton buttonLoad;
+	//GraphicButton buttonPlayNow;
 
 	// only modify with mutex locked ==>
 	GraphicLabel labelInfoHeader;
@@ -72,7 +73,7 @@ private:
 	GraphicLabel labelControls[GameConstants::maxPlayers];
 	GraphicLabel labelFactions[GameConstants::maxPlayers];
 	GraphicLabel labelTeams[GameConstants::maxPlayers];
-	GraphicLabel labelNetStatus[GameConstants::maxPlayers];
+	//GraphicLabel labelNetStatus[GameConstants::maxPlayers];
 	ControlType controlTypes[GameConstants::maxPlayers];
 	string fileName;
 	const XmlNode *savedGame;
@@ -83,18 +84,22 @@ private:
 	GraphicLabel labelNetwork;
 
 	GraphicMessageBox *confirmMessageBox;
-	GraphicMessageBox *msgBox;
+	//GraphicMessageBox *msgBox;
 	bool criticalError;
 	Mutex mutex;
 	vector<string> fileNames;
 	vector<string> prettyNames;
 
+private:
+	MenuStateLoadGame(const MenuStateLoadGame &);
+	const MenuStateLoadGame &operator =(const MenuStateLoadGame &);
+
 public:
-	MenuStateLoadGame(Program *program, MainMenu *mainMenu);
+	MenuStateLoadGame(Program &program, MainMenu *mainMenu);
 	~MenuStateLoadGame();
 
 	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState *mouseState);
+	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
 	void update();
 
