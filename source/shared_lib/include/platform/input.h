@@ -519,7 +519,7 @@ public:
 	bool isShiftDown() const	{return GetAsyncKeyState(VK_SHIFT);}
 	bool isCtrlDown() const		{return GetAsyncKeyState(VK_CONTROL);}
 	bool isAltDown() const		{return GetAsyncKeyState(VK_MENU);}
-	bool isMetaDown() const		{return GetAsyncKeyState(VK_LWIN) || GetKeyState(VK_RWIN);}
+	bool isMetaDown() const		{return GetAsyncKeyState(VK_LWIN) || GetAsyncKeyState(VK_RWIN);}
 	bool isNumOn() const		{return GetAsyncKeyState(VK_NUMLOCK);}
 	bool isCapsOn() const		{return GetAsyncKeyState(VK_CAPITAL);}
 //	bool isModeOn() const		{return GetKeyState(0);}
