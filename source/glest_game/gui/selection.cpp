@@ -226,6 +226,8 @@ void Selection::update() {
 
 		meetable = uniform && commandable && frontUT->hasMeetingPoint();
 	}
+
+	gui->onSelectionUpdated();
 }
 
 void Selection::load(const XmlNode *node) {

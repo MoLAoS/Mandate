@@ -112,6 +112,7 @@ Gui::Gui(Game &game) : game(game), input(game.getInput()) {
 	draggingMinimap = false;
 	needSelectionUpdate = false;
 	currentGui = this;
+	currentGroup= invalidGroupIndex;
 }
 
 void Gui::init(){
@@ -415,7 +416,13 @@ void Gui::groupKey(int groupIndex){
 	if (input.isCtrlDown()) {
 		selection.assignGroup(groupIndex);
 	} else {
+		if(currentGroup == groupIndex){
+			centerCameraOnSelection();
+		}
+
 		selection.recallGroup(groupIndex);
+
+		currentGroup= groupIndex;
 	}
 }
 

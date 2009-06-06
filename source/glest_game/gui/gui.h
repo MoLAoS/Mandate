@@ -108,6 +108,7 @@ public:
 	static const int imageCount= 16;
 	static const int invalidPos= -1;
 	static const int doubleClickSelectionRadius= 20;
+	static const int invalidGroupIndex= -1;
 
 	typedef vector<Vec2i> BuildPositions;
 
@@ -150,6 +151,7 @@ private:
 	bool selectingPos;
 	bool selectingMeetingPoint;
 	bool needSelectionUpdate;
+	int currentGroup;
 	
 	static Gui* currentGui;
 
@@ -201,6 +203,10 @@ public:
 
 	void tick(){
 		computeDisplay();
+	}
+
+	void onSelectionUpdated(){
+		currentGroup= invalidGroupIndex;
 	}
 
 	void mouseDownLeft(int x, int y);
