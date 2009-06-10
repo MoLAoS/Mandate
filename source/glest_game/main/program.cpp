@@ -97,7 +97,7 @@ Program::Program(Config &config, int argc, char** argv) :
 		updateTimer(config.getGsWorldUpdateFps(), maxTimes, 2),
 		updateCameraTimer(GameConstants::cameraFps, maxTimes, 10),
 		programState(NULL),
-		preCrashState(NULL),
+		crashed(false),
 		keymap(getInput(), "keymap.ini") {
 
     //set video mode
@@ -165,10 +165,6 @@ Program::~Program() {
 
 	if(programState) {
 		delete programState;
-	}
-
-	if(preCrashState) {
-		delete preCrashState;
 	}
 
 	Renderer::getInstance().end();
@@ -291,13 +287,15 @@ void Program::restoreDisplaySettings(){
 
 void Program::crash(const exception *e) {
 	// if we've already crashed then we just try to exit
-	if(!preCrashState) {
-		preCrashState = programState;
-		programState = new CrashProgramState(*this, e);
+	if(!crashed) {
+		crashed = true;
 
-		while(Window::handleEvent()) {
-			loop();
+		if(programState) {
+			delete programState;
 		}
+
+		programState = new CrashProgramState(*this, e);
+		loop();
 	} else {
 		exit();
 	}
