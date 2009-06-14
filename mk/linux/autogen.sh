@@ -42,3 +42,5 @@ ln -sf ../../source/shared_lib .
 ln -sf ../../source/glest_game .
 ln -sf ../../source/glest_map_editor .
 
+
+

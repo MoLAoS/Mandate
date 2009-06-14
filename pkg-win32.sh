@@ -21,3 +21,5 @@ rar a -m5 -mdG -mt2 ${archive} README.txt glestadv-sse2.exe glestadv-i686.exe gl
 scp ${archive} glest@beaker.javamonger.org:www/files/ &&
 mv  ${archive} ../old
 
+
+
