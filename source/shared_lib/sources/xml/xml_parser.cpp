@@ -91,16 +91,28 @@ XmlIo::~XmlIo(){
 }
 
 XmlNode *XmlIo::load(const string &path){
+
+#if XERCES_VERSION_MAJOR < 3
 	DOMBuilder *parser = NULL;
+#else
+	DOMLSParser *parser = NULL;
+#endif
 	DOMDocument *document = NULL;
 	XmlNode *rootNode = NULL;
 
 	try{
 		ErrorHandler errorHandler;
+#if XERCES_VERSION_MAJOR < 3
 		parser= (static_cast<DOMImplementationLS*>(implementation))->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 		parser->setErrorHandler(&errorHandler);
 		parser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
 		parser->setFeature(XMLUni::fgDOMValidation, true);
+#else
+		parser = (static_cast<DOMImplementationLS*>(implementation))->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+    		DOMConfiguration  *config = parser->getDomConfig();
+		config->setParameter(XMLUni::fgXercesSchemaFullChecking, true);
+		config->setParameter(XMLUni::fgDOMValidate, true);
+#endif
 		document= parser->parseURI(path.c_str());
 
 		if(!document){
@@ -123,7 +135,12 @@ XmlNode *XmlIo::load(const string &path){
 }
 
 XmlNode *XmlIo::parseString(const char *doc, size_t size) {
+#if XERCES_VERSION_MAJOR < 3
 	DOMBuilder *parser = NULL;
+#else
+	DOMLSParser *parser = NULL;
+	DOMConfiguration  *config = NULL;
+#endif
 	DOMDocument *document = NULL;
 	XmlNode *rootNode = NULL;
 
@@ -135,12 +152,17 @@ XmlNode *XmlIo::parseString(const char *doc, size_t size) {
 		ErrorHandler errorHandler;
 		MemBufInputSource memInput((const XMLByte*)doc, size, (const XMLCh*)L"bite me");
 		Wrapper4InputSource wrapperSource(&memInput, false);
-
+#if XERCES_VERSION_MAJOR < 3
 		parser= (static_cast<DOMImplementationLS*>(implementation))->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 		parser->setErrorHandler(&errorHandler);
 		parser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
 		parser->setFeature(XMLUni::fgDOMValidation, true);
-
+#else
+		parser = (static_cast<DOMImplementationLS*>(implementation))->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+		config = parser->getDomConfig();
+		config->setParameter(XMLUni::fgXercesSchemaFullChecking, true);
+		config->setParameter(XMLUni::fgDOMValidate, true);
+#endif
 		document = parser->parse(wrapperSource);
 
 		if(document == NULL){
@@ -163,9 +185,16 @@ XmlNode *XmlIo::parseString(const char *doc, size_t size) {
 }
 
 void XmlIo::save(const string &path, const XmlNode *node){
+#if XERCES_VERSION_MAJOR < 3		
+	DOMWriter* writer = NULL;
+#else
+	DOMLSSerializer *serializer = NULL;
+	DOMLSOutput* output = NULL;
+	DOMConfiguration* config = NULL;
+#endif
 	DOMDocument *document = NULL;
 	DOMElement *documentElement = NULL;
-	DOMWriter* writer = NULL;
+	
 
 	try{
 		XMLCh str[strSize];
@@ -177,16 +206,37 @@ void XmlIo::save(const string &path, const XmlNode *node){
 		node->populateElement(documentElement, document);
 
 		LocalFileFormatTarget file(path.c_str());
+#if XERCES_VERSION_MAJOR < 3		
 		DOMWriter* writer = implementation->createDOMWriter();
 		writer->setFeature(XMLUni::fgDOMWRTFormatPrettyPrint, true);
 		writer->writeNode(&file, *document);
-		writer->release();
+#else	
+		serializer = implementation->createLSSerializer();
+		output=implementation->createLSOutput();
+		config=serializer->getDomConfig();
+		config->setParameter(XMLUni::fgDOMWRTFormatPrettyPrint,true);
+		output->setByteStream(&file);
+		serializer->write(document,output);
+		output->release();
+		serializer->release();
+#endif
+		
 		document->release();
 	}
 	catch(const DOMException &e){
+#if XERCES_VERSION_MAJOR < 3
 		if(writer) {
 			writer->release();
 		}
+#else
+		if(serializer) {
+			serializer->release();
+		}
+		if(output) {
+			output->release();
+		}
+#endif
+		
 		if(document) {
 			document->release();
 		}
@@ -196,10 +246,16 @@ void XmlIo::save(const string &path, const XmlNode *node){
 
 /** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
 char *XmlIo::toString(const XmlNode *node, bool pretty) {
+#if XERCES_VERSION_MAJOR < 3		
+	DOMWriter* writer = NULL;
+#else
+	DOMLSSerializer *serializer = NULL;
+	DOMLSOutput* output = NULL;
+	DOMConfiguration* config = NULL;
+#endif
 	XMLCh str[strSize];
 	DOMDocument *document = NULL;
 	DOMElement *documentElement;
-	DOMWriter* writer = NULL;
 	XMLCh *xmlText = NULL;
 	char *ret = NULL;
 
@@ -212,6 +268,7 @@ char *XmlIo::toString(const XmlNode *node, bool pretty) {
 		node->populateElement(documentElement, document);
 
 		// retrieve as string
+#if XERCES_VERSION_MAJOR < 3
 		DOMWriter* writer = implementation->createDOMWriter();
 		writer->setFeature(XMLUni::fgDOMWRTFormatPrettyPrint, pretty);
 		writer->setEncoding((const XMLCh*)L"UTF-8");
@@ -219,15 +276,37 @@ char *XmlIo::toString(const XmlNode *node, bool pretty) {
 		ret = XMLString::transcode(xmlText);
 		XMLString::release(&xmlText);
 		writer->release();
+#else
+		serializer = implementation->createLSSerializer();
+		output=implementation->createLSOutput();
+		config=serializer->getDomConfig();
+		config->setParameter(XMLUni::fgDOMWRTFormatPrettyPrint,true);
+		//output->setByteStream(&file);
+		xmlText = serializer->writeToString(document);
+		ret = XMLString::transcode(xmlText);
+		XMLString::release(&xmlText);
+		output->release();
+		serializer->release();
+#endif
+		
 		document->release();
 		return ret;
 	}
 	catch(const DOMException &e){
-		if(xmlText) {
-			XMLString::release(&xmlText);
-		}
+#if XERCES_VERSION_MAJOR < 3
 		if(writer) {
 			writer->release();
+		}
+#else
+		if(serializer) {
+			serializer->release();
+		}
+		if(output) {
+			output->release();
+		}
+#endif
+		if(xmlText) {
+			XMLString::release(&xmlText);
 		}
 		if(document) {
 			document->release();
