@@ -1240,6 +1240,11 @@ void Renderer::renderObjects(){
 
 				const Model *objModel= sc->getObject()->getModel();
 				Vec3f v= o->getPos();
+            
+            // QUICK-FIX: Objects/Resources drawn out of place...
+            // Why do we need this ??? are the tileset objects / techtree resources defined out of position ??
+            v.x += Map::mapScale / 2; // == 1
+            v.z += Map::mapScale / 2;
 
 				//ambient and diffuse color is taken from cell color
 				float fowFactor= fowTex->getPixmap()->getPixelf(pos.x/Map::cellScale, pos.y/Map::cellScale);
