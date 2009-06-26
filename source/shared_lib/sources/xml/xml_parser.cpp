@@ -379,6 +379,13 @@ XmlNode::XmlNode(DOMNode *node){
 			}
 		}
 	}
+
+	//get value
+	if(node->getNodeType()==DOMNode::ELEMENT_NODE && children.size()==0){
+		char *textStr= XMLString::transcode(node->getTextContent());
+		text= textStr;
+		XMLString::release(&textStr);
+	}
 }
 
 XmlNode::XmlNode(const string &name) {

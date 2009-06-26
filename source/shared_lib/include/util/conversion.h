@@ -109,6 +109,12 @@ inline string floatToStr(float f) {
 	return str;
 }
 
+inline string doubleToStr(double d){
+	char str[maxStrSize];
+	sprintf(str, "%.2f", d);
+	return str; 
+}
+
 /*
 bool strToBool(const string &s);
 int strToInt(const string &s);

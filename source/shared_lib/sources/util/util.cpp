@@ -17,6 +17,8 @@
 #include <cassert>
 #include <list>
 #include <stdexcept>
+#include <cstring>
+#include <cstdio>
 
 #include "leak_dumper.h"
 #include "platform_util.h"
@@ -418,5 +420,15 @@ string replaceBy(const string &s, char c1, char c2){
 	return rs;
 }
 
+// ==================== misc ====================
+
+bool fileExists(const string &path){
+	FILE* file= fopen(path.c_str(), "rb");
+	if(file!=NULL){
+		fclose(file);
+		return true;
+	}
+	return false;
+}
 
 }}//end namespace

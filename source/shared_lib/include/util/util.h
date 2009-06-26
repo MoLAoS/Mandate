@@ -44,7 +44,7 @@ namespace Shared { namespace Xml {
 
 namespace Shared { namespace Util {
 
-const string sharedLibVersionString= "v0.2.7";
+const string sharedLibVersionString= "v0.4.1";
 
 void findAll(const string &path, vector<string> &results, bool cutExtension = false);
 
@@ -118,6 +118,8 @@ inline int round(float f){
 }
 
 //misc
+bool fileExists(const string &path);
+
 template<typename T>
 void deleteValues(T beginIt, T endIt){
 	for(T it= beginIt; it!=endIt; ++it){
