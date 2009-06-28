@@ -38,9 +38,11 @@ private:
 
 private:
 	string fileName;
-	string sectionName;
+	//string sectionName;
 	string state;
-	Strings logLines;
+	//Strings logLines;
+   string subtitle;
+   string current;
 
 private:
 	Logger(const char *fileName) : fileName(fileName) {}
@@ -63,6 +65,7 @@ public:
 
 	//void setFile(const string &fileName)	{this->fileName= fileName;}
 	void setState(const string &state);
+   void setSubtitle(const string &subtitle)	{this->subtitle= subtitle;}
 
 	void add(const string &str, bool renderScreen= false);
 	void renderLoadingScreen();

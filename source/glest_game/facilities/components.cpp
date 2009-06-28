@@ -40,7 +40,10 @@ float GraphicComponent::fade = 0.f;
 const float GraphicComponent::animSpeed = 0.02f;
 const float GraphicComponent::fadeSpeed = 0.01f;
 
-GraphicComponent::GraphicComponent() : x(0), y(0), w(0), h(0), text(), font(NULL) {}
+GraphicComponent::GraphicComponent() : x(0), y(0), w(0), h(0), text(), font(NULL) 
+{ 
+   enabled = true;
+}
 
 void GraphicComponent::init(int x, int y, int w, int h) {
 	this->x = x;
@@ -48,6 +51,7 @@ void GraphicComponent::init(int x, int y, int w, int h) {
 	this->w = w;
 	this->h = h;
 	font = CoreData::getInstance().getMenuFontNormal();
+   enabled = true;
 }
 
 bool GraphicComponent::mouseMove(int x, int y) {
@@ -186,10 +190,11 @@ bool GraphicListBox::mouseClick(int x, int y) {
 // class GraphicMessageBox
 // =====================================================
 
-GraphicMessageBox::GraphicMessageBox() : GraphicComponent(), button1(), button2(), buttonCount(0) {}
+GraphicMessageBox::GraphicMessageBox() 
+: GraphicComponent(), button1(), button2(), buttonCount(0) {}
 
-const int GraphicMessageBox::defH = 150;
-const int GraphicMessageBox::defW = 300;
+const int GraphicMessageBox::defH = 240;
+const int GraphicMessageBox::defW = 350;
 // bunch of sloppy crap...
 void GraphicMessageBox::init(const string &text, const string &button1Str) {
 	init();
@@ -200,9 +205,11 @@ void GraphicMessageBox::init(const string &text, const string &button1Str) {
 	button1.init(x + (w - GraphicButton::defW) / 2, y + 25);
 	button1.setText(button1Str);
 }
-
 void GraphicMessageBox::init(const string &text, const string &button1Str, const string &button2Str) {
-	init();
+//MERGE ADD START
+   // This codes has been modified in gae, changes in 3.2.2 were not merged
+//MERGE ADD END
+   init();
 	GraphicComponent::setText(text);
 	layout();
 	buttonCount = 2;

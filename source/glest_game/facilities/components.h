@@ -41,7 +41,8 @@ protected:
 	int x, y, w, h;
 	string text;
 	const Font2D *font;
-	
+	bool enabled;
+
 	static float anim;
 	static float fade;
 
@@ -55,6 +56,8 @@ public:
 	int getY() const					{return y;}
 	int getW() const					{return w;}
 	int getH() const					{return h;}
+   bool getEnabled () const { return enabled; }
+   void setEnabled ( bool enable ) { enabled = enable; }
 	const string &getText() const		{return text;}
 	const Font2D *getFont() const		{return font;}
 	bool isInBounds(int x, int y) const {
@@ -167,6 +170,7 @@ private:
 	GraphicButton button1;
 	GraphicButton button2;
 	int buttonCount;
+   string header;
 
 public:
 	GraphicMessageBox();
@@ -176,6 +180,8 @@ public:
 	int getButtonCount() const				{return buttonCount;}
 	const GraphicButton *getButton1() const	{return &button1;}
 	const GraphicButton *getButton2() const	{return &button2;}
+   string getHeader () const { return header; }
+   void setHeader ( string text ) { header = text; }
 	
 	virtual bool mouseMove(int x, int y);
 	virtual bool mouseClick(int x, int y);
