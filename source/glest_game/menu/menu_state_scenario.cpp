@@ -176,9 +176,9 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	int factionCount= 0;
 
 	gameSettings->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
-	gameSettings->setMapPath("maps/" + scenarioInfo->mapName + ".gbm");
-    gameSettings->setTilesetPath("tilesets/" + scenarioInfo->tilesetName);
-    gameSettings->setTechPath("techs/" + scenarioInfo->techTreeName);
+	gameSettings->setMap ( scenarioInfo->mapName );
+    gameSettings->setTileset ( scenarioInfo->tilesetName );
+    gameSettings->setTech ( scenarioInfo->techTreeName );
 
     for(int i=0; i<GameConstants::maxPlayers; ++i){
         ControlType ct= static_cast<ControlType>(scenarioInfo->factionControls[i]);

@@ -57,7 +57,7 @@ public:
 
 	void addStdMessage(const string &s);
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");
-	void addLine(string line);
+	void addLine(string line, bool playSound=false );
 	void update();
 	bool isEmpty();
 };

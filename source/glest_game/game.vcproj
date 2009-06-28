@@ -536,6 +536,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\menu\menu_state_custom_game.h"
+				>
+			</File>
+			<File
 				RelativePath=".\menu\menu_state_graphic_info.h"
 				>
 			</File>
@@ -633,6 +637,14 @@
 			</File>
 			<File
 				RelativePath=".\types\resource_type.h"
+				>
+			</File>
+			<File
+				RelativePath=".\world\scenario.h"
+				>
+			</File>
+			<File
+				RelativePath=".\game\script_manager.h"
 				>
 			</File>
 			<File
@@ -868,6 +880,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\menu\menu_state_custom_game.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\menu\menu_state_graphic_info.cpp"
 				>
 			</File>
@@ -1075,6 +1091,14 @@
 			</File>
 			<File
 				RelativePath=".\types\resource_type.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\world\scenario.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\game\script_manager.cpp"
 				>
 			</File>
 			<File
