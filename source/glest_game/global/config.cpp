@@ -28,7 +28,7 @@ namespace Glest { namespace Game {
 
 Config::Config(const char* fileName) : fileName(fileName) {
 	Properties *p = new Properties();
-	p->load(fileName, true);	
+	p->load(fileName);	
 
 	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);

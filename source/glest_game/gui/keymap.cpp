@@ -222,7 +222,7 @@ void Keymap::reinit() {
 
 void Keymap::load(const char *path) {
 	Properties p;
-	p.load(path, true);
+	p.load(path);
  	const Properties::PropertyMap &pm = p.getPropertyMap();
 	Properties::PropertyMap::const_iterator it;
 	for(int i = ucNone; i != ucCount; ++i) {

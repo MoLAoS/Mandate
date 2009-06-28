@@ -230,9 +230,9 @@ public:
 	}
 
 	//misc
-	void switchToNextDisplayColor() {
-		display.switchColor();
-	}
+   
+   //MERGE DELETE
+   //void switchToNextDisplayColor() {display.switchColor();}
 
 	void onSelectionChanged() {
 		selection.update();

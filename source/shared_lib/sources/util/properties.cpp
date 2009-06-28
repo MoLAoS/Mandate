@@ -32,7 +32,7 @@ namespace Shared { namespace Util {
 	
 Properties::Properties() {}
 
-void Properties::load(const string &path, bool trim) {
+void Properties::load(const string &path) {
 	ifstream fileStream;
 	char lineBuffer[maxLine];
 	string line, key, value;
@@ -71,20 +71,14 @@ void Properties::load(const string &path, bool trim) {
 
 		key = line.substr(0, pos);
 		value = line.substr(pos + 1);
-		if(trim) {
-			while(!key.empty() && isspace(key[0])) {
-				key.erase(0, 1);
-			}
-			while(!key.empty() && isspace(key[key.size() - 1])) {
-				key.erase(key.size() - 1);
-			}
-			while(!value.empty() && isspace(value[0])) {
-				value.erase(0, 1);
-			}
-			while(!value.empty() && isspace(value[value.size() - 1])) {
-				value.erase(value.size() - 1);
-			}
-		}
+		while(!key.empty() && isspace(key[0]))
+			key.erase(0, 1);
+		while(!key.empty() && isspace(key[key.size() - 1]))
+			key.erase(key.size() - 1);
+		while(!value.empty() && isspace(value[0]))
+			value.erase(0, 1);
+		while(!value.empty() && isspace(value[value.size() - 1]))
+			value.erase(value.size() - 1);
 		propertyMap.insert(PropertyPair(key, value));
 		propertyVector.push_back(PropertyPair(key, value));
 	}

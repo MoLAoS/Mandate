@@ -45,7 +45,7 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 	Config &config = Config::getInstance();
 	NetworkManager &networkManager = NetworkManager::getInstance();
 
-	servers.load(serverFileName, true);
+	servers.load(serverFileName);
 
 	//buttons
 	buttonReturn.init(325, 300, 125);

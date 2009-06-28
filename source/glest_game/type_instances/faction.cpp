@@ -37,7 +37,10 @@ namespace Glest { namespace Game {
 Faction::ResourceTypes Faction::neededResources;
 
 void Faction::init(const FactionType *factionType, ControlType control, TechTree *techTree,
-		int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction) {
+      //MERGE DELETE
+		//int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction) {
+      //MERGE ADD
+      int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources ) {
 	this->control = control;
 	this->factionType = factionType;
 	this->startLocationIndex = startLocationIndex;
@@ -53,8 +56,13 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 	store.resize(techTree->getResourceTypeCount());
 	for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 		const ResourceType *rt = techTree->getResourceType(i);
-		resources[i].init(rt, factionType->getStartingResourceAmount(rt));
-		store[i].init(rt, 0);
+		//MERGE DELETE
+      //resources[i].init(rt, factionType->getStartingResourceAmount(rt));
+      //MERGE ADD START
+      int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
+      resources[i].init(rt, resourceAmount);
+      //MERGE ADD END
+      store[i].init(rt, 0);
 	}
 
 	texture = Renderer::getInstance().newTexture2D(rsGame);
@@ -392,6 +400,21 @@ void Faction::deApplyStaticCosts(const ProducibleType *p) {
 			incResourceAmount(rt, cost);
 		}
 	}
+}
+
+//deapply static costs, but not negative costs, for when building gets killed
+void Faction::deApplyStaticConsumption(const ProducibleType *p){
+   
+    //decrease resources
+	for(int i=0; i<p->getCostCount(); ++i){
+		const ResourceType *rt= p->getCost(i)->getType();
+		if(rt->getClass()==rcStatic){
+            int cost= p->getCost(i)->getAmount();
+			if(cost>0){
+				incResourceAmount(rt, cost);
+			}
+        }    
+    }
 }
 
 //apply resource on interval (cosumable resouces)

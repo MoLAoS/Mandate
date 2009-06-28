@@ -80,7 +80,10 @@ private:
 
 public:
     void init(const FactionType *factionType, ControlType control, TechTree *techTree,
-			int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction);
+       //MERGE DELETE
+			//int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction);
+       // MERGE ADD
+         int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources);
 	void end();
 
     //get
@@ -115,6 +118,7 @@ public:
 	void applyStaticProduction(const ProducibleType *p);
 	void deApplyCosts(const ProducibleType *p);
 	void deApplyStaticCosts(const ProducibleType *p);
+   void deApplyStaticConsumption(const ProducibleType *p);
 	void applyCostsOnInterval();
 	bool checkCosts(const ProducibleType *pt);
 

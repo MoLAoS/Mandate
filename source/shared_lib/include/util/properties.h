@@ -147,7 +147,7 @@ private:
 public:
 	Properties();
 	void clear();
-	void load(const string &path, bool trim);
+	void load(const string &path);
 	void save(const string &path);
 
 	const PropertyMap &getPropertyMap() const								{return propertyMap;}
