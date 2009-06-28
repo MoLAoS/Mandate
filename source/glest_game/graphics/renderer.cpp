@@ -966,11 +966,11 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
       //MERGE DELETE
 		//glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
       //MERGE ADD
+      glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
+		glVertex2i(messageBox->getX(), messageBox->getY());
       //MERGE DELETE
       //glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
       //MERGE ADD
-      glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
-		glVertex2i(messageBox->getX(), messageBox->getY());
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + 9*messageBox->getH()/10);
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY());
 	glEnd();

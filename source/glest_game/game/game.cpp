@@ -919,7 +919,7 @@ void Game::render2d(){
 
 		renderer.renderText(
 			str.str(), coreData.getMenuFontNormal(),
-			gui.getDisplay()->getColor(), 10, 500, false);
+			Vec3f(1.0f), 10, 500, false);
 	}
 
 	//network status
@@ -927,7 +927,7 @@ void Game::render2d(){
 		renderer.renderText(
 			networkManager.getGameNetworkInterface()->getStatus(),
 			coreData.getMenuFontNormal(),
-			gui.getDisplay()->getColor(), 750, 75, false);
+			Vec3f(1.0f), 750, 75, false);
 	}
 
     //resource info
@@ -1056,7 +1056,7 @@ void Game::resetSpeed() {
 }
 
 int Game::getUpdateLoops() {
-	if(paused || (!NetworkManager::getInstance().isNetworkGame() && (saveBox || exitMessageBox))){
+   if(paused || (!NetworkManager::getInstance().isNetworkGame() && (saveBox || mainMessageBox.getEnabled ()))){
 		return 0;
 	} else {
 		int updateLoops = (int)(fUpdateLoops + lastUpdateLoopsFraction);

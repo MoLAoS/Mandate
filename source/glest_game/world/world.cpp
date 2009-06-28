@@ -177,18 +177,18 @@ void World::loadTech(Checksum &checksum) {
 		}
 	}
 
-	techTree.load(gs.getTechPath(), names, checksum);
+	techTree.load(gs.getTech(), names, checksum);
 }
 
 //load map
 void World::loadMap(Checksum &checksum) {
-	const string &path = gs.getMapPath();
-	checksum.addFile(path, false);
-	map.load(path, &techTree, &tileset);
+	const string &name = gs.getMap();
+	checksum.addFile(name, false);
+	map.load(name, &techTree, &tileset);
 }
 
 void World::loadScenario(const string &path, Checksum *checksum){
-	checksum->addFile(path);
+	checksum->addFile(path, true);
 	scenario.load(path);
 }
 
@@ -995,9 +995,8 @@ void World::initFactionTypes() {
 	factions.resize(gs.getFactionCount());
 	for(int i=0; i<factions.size(); ++i){
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
-		factions[i].init(
-			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
-			gs.getStartLocationIndex(i), i==thisFactionIndex);
+		factions[i].init( ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
+         gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ());
 
 //		stats.setTeam(i, gs.getTeam(i));
 //		stats.setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));

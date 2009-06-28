@@ -9,9 +9,9 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-#include "scenario.h"
+#include "pch.h"
 
-#include <stdexcept>
+#include "scenario.h"
 
 #include "logger.h"
 #include "xml_parser.h"

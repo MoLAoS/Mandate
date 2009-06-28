@@ -536,10 +536,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\menu\menu_state_custom_game.h"
-				>
-			</File>
-			<File
 				RelativePath=".\menu\menu_state_graphic_info.h"
 				>
 			</File>
@@ -877,10 +873,6 @@
 			</File>
 			<File
 				RelativePath=".\menu\menu_state_about.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\menu\menu_state_custom_game.cpp"
 				>
 			</File>
 			<File

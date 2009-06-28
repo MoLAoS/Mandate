@@ -9,6 +9,8 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
+
 #include "script_manager.h"
 
 #include "world.h"
@@ -81,7 +83,7 @@ void ScriptManager::init(World* world, GameCamera *gameCamera){
 	}
 	
 	//setup message box
-	messageBox.init( Lang::getInstance().get("Ok") );
+	messageBox.init( "", Lang::getInstance().get("Ok") );
 	messageBox.setEnabled(false);
 
 	//last created unit

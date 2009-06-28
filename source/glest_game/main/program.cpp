@@ -119,7 +119,7 @@ Program::Program(Config &config, int argc, char** argv) :
 
 	//lang
 	Lang &lang= Lang::getInstance();
-	lang.load("data/lang/" + config.getUiLang());
+	lang.loadStrings(config.getUiLang());
 
 	//render
 	Renderer &renderer= Renderer::getInstance();
