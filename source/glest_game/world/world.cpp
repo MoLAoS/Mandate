@@ -158,7 +158,7 @@ void World::initNetworkServer() {
 
 //load tileset
 void World::loadTileset(Checksum &checksum) {
-	tileset.load(game.getGameSettings().getTileset(), checksum);
+	tileset.load( "tilsets/" + game.getGameSettings().getTileset(), checksum);
 	timeFlow.init(&tileset);
 }
 
@@ -814,7 +814,7 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 			throw runtime_error("Invalid position commmand: " + commandName);
 		}
 		
-		unit->giveCommand(new Command( unit->getType()->getFirstCtOfClass(cc), pos ));
+		unit->giveCommand(new Command( unit->getType()->getFirstCtOfClass(cc), CommandFlags(), pos ));
 	}
 }
 
@@ -829,7 +829,7 @@ void World::giveProductionCommand(int unitId, const string &producedName){
 			if(ct->getClass()==ccProduce){
 				const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
 				if(pct->getProducedUnit()->getName()==producedName){
-					unit->giveCommand(new Command(pct));
+					unit->giveCommand(new Command(pct, CommandFlags()));
 					break;
 				}
 			}
@@ -848,7 +848,7 @@ void World::giveUpgradeCommand(int unitId, const string &upgradeName){
 			if(ct->getClass()==ccUpgrade){
 				const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
 				if(uct->getProducedUpgrade()->getName()==upgradeName){
-					unit->giveCommand(new Command(uct));
+					unit->giveCommand(new Command(uct, CommandFlags()));
 					break;
 				}
 			}

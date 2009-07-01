@@ -114,18 +114,21 @@ Program::Program(Config &config, int argc, char** argv) :
 	Logger &logger= Logger::getInstance();
 	//logger.setFile("glest.log");
 	logger.clear();
+   logger.add ( "Program ctor, logger up..." );
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
 
 	//lang
 	Lang &lang= Lang::getInstance();
 	lang.loadStrings(config.getUiLang());
+   logger.add ( "Program ctor, lang loaded..." );
 
 	//render
 	Renderer &renderer= Renderer::getInstance();
 
 	initGl(config.getRenderColorBits(), config.getRenderDepthBits(), config.getRenderStencilBits());
 	makeCurrentGl();
+   logger.add ( "Program ctor, opengl init ok..." );
 
 	//coreData, needs renderer, but must load before renderer init
 	CoreData &coreData= CoreData::getInstance();
@@ -133,10 +136,12 @@ Program::Program(Config &config, int argc, char** argv) :
 
 	//init renderer (load global textures)
 	renderer.init();
+   logger.add ( "Program ctor, coredata loaded & opengl init ok..." );
 
 	//sound
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 	soundRenderer.init(this);
+   logger.add ( "Program ctor, sound init ok..." );
 	
 	keymap.save("keymap.ini");
 

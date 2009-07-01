@@ -94,6 +94,8 @@ void Tileset::load(const string &dir, Checksum &checksum){
 
 	random.init(time(NULL));
 
+   //MERGE should be string path= dir+"/"+name+".xml";
+   // we don't have a name member...
 	string path= dir+"/"+lastDir(dir)+".xml";
 
 	checksum.addFile(path, true);

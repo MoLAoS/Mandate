@@ -30,7 +30,8 @@ namespace Glest { namespace Game {
 void Lang::loadStrings(const string &language){
 	this->language= language;
 	strings.clear();
-	strings.load("data/lang/"+language+".lng");
+   string path = "data/lang/" + language;// + ".lng";
+	strings.load ( path );
 }
  
 void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenarioName){
@@ -63,5 +64,13 @@ string Lang::get(const string &s) const {
 	}
 }
 
+string Lang::getScenarioString(const string &s){
+	try{
+		return scenarioStrings.getString(s);
+	}
+	catch(exception &){
+		return "???" + s + "???";
+	}
+}
 
 }}//end namespace
