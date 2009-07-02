@@ -40,7 +40,7 @@ struct ScenarioInfo
     string mapName;
     string tilesetName;
     string techTreeName;
-
+    string scenarioName;
     string desc;
 };
 

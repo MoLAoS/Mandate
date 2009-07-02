@@ -52,7 +52,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
     labelScenario.setText(lang.get("Scenario"));
 
     //tileset listBox
-    findAll("scenarios/*.xml", results, true);
+    findAll("scenarios/*", results, true);
     scenarioFiles= results;
 	if(results.size()==0){
         throw runtime_error("There is no scenarios");
@@ -62,7 +62,8 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 	}
     listBoxScenario.setItems(results);
 
-    loadScenarioInfo( "scenarios/"+scenarioFiles[listBoxScenario.getSelectedItemIndex()]+".xml", &scenarioInfo );
+    string name = scenarioFiles[listBoxScenario.getSelectedItemIndex()];
+    loadScenarioInfo( "scenarios/"+name+"/"+name+".xml", &scenarioInfo );
     labelInfo.setText(scenarioInfo.desc);
 
 	networkManager.init(nrServer);
@@ -85,7 +86,8 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton){
 		program.setState(new Game(program, *gameSettings));
 	}
     else if(listBoxScenario.mouseClick(x, y)){
-        loadScenarioInfo( "scenarios/"+scenarioFiles[listBoxScenario.getSelectedItemIndex()]+".xml", &scenarioInfo );
+       string name = scenarioFiles[listBoxScenario.getSelectedItemIndex()];
+       loadScenarioInfo( "scenarios/"+name+"/"+name+".xml", &scenarioInfo );
         labelInfo.setText(scenarioInfo.desc);
 	}
 }
@@ -116,6 +118,8 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 
     XmlTree xmlTree;
 	xmlTree.load(file);
+
+   scenarioInfo->scenarioName = cutLastExt ( lastDir ( file ) );
 
     const XmlNode *scenarioNode= xmlTree.getRootNode();
 	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
@@ -179,6 +183,8 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	gameSettings->setMap ( scenarioInfo->mapName );
     gameSettings->setTileset ( scenarioInfo->tilesetName );
     gameSettings->setTech ( scenarioInfo->techTreeName );
+    gameSettings->setScenario ( scenarioInfo->scenarioName );
+    gameSettings->setScenarioDir ( "scenarios/" + scenarioInfo->scenarioName );
 
     for(int i=0; i<GameConstants::maxPlayers; ++i){
         ControlType ct= static_cast<ControlType>(scenarioInfo->factionControls[i]);
