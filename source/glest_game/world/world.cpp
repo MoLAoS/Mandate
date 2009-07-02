@@ -158,7 +158,7 @@ void World::initNetworkServer() {
 
 //load tileset
 void World::loadTileset(Checksum &checksum) {
-	tileset.load( "tilsets/" + game.getGameSettings().getTileset(), checksum);
+	tileset.load(game.getGameSettings().getTileset(), checksum);
 	timeFlow.init(&tileset);
 }
 

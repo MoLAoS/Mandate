@@ -343,9 +343,9 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 	int factionCount= 0;
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
-	gameSettings->setMap (mapFiles[listBoxMap.getSelectedItemIndex()]);
-    gameSettings->setTileset (tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-    gameSettings->setTech (techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setMap ("maps/" + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm");
+    gameSettings->setTileset ("tilesets/" + tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
+    gameSettings->setTech ("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
 
     for(int i=0; i<mapInfo.players; ++i){
 		ControlType ct= static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
