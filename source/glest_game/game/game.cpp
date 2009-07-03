@@ -401,8 +401,10 @@ void Game::mouseDownLeft(int x, int y){
 	if(!mainMessageBox.getEnabled() && scriptManager.getMessageBox()->getEnabled()){
 		int button= 1;
 		if(scriptManager.getMessageBox()->mouseClick(x, y, button)){
-   		scriptManager.onMessageBoxOk();
+   			scriptManager.onMessageBoxOk();
 			messageBoxClick= true;
+			//MERGE : only a quick fix to not being able to rectangle select, need to look at GraphicMessageBox
+			scriptManager.getMessageBox()->setEnabled(false);
 		}
 	}
    //MERGE ADD END
