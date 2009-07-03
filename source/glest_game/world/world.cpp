@@ -158,7 +158,7 @@ void World::initNetworkServer() {
 
 //load tileset
 void World::loadTileset(Checksum &checksum) {
-	tileset.load( "tilesets/" + game.getGameSettings().getTileset(), checksum);
+	tileset.load(game.getGameSettings().getTilesetPath(), checksum);
 	timeFlow.init(&tileset);
 }
 
@@ -177,12 +177,12 @@ void World::loadTech(Checksum &checksum) {
 		}
 	}
 
-	techTree.load( "techs/" + gs.getTech(), names, checksum);
+	techTree.load(gs.getTechPath(), names, checksum);
 }
 
 //load map
 void World::loadMap(Checksum &checksum) {
-	const string &path = "maps/" + gs.getMap() + ".gbm";
+	const string &path = gs.getMapPath();
 	checksum.addFile(path, false);
 	map.load( path, &techTree, &tileset);
 }

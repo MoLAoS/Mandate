@@ -48,6 +48,13 @@ public:
     void mouseClick(int x, int y, MouseButton mouseButton);
 	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
+	//MERGE ADD START
+	//void update();
+
+	void launchGame();
+	//void setScenario(int i);
+	int getScenarioCount() const	{ return listBoxScenario.getItemCount(); }
+	//MERGE ADD END
 
 private:
     void loadScenarioInfo(string file, ScenarioInfo *scenarioInfo);

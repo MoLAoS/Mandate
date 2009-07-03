@@ -31,6 +31,9 @@ private:
 	string map;
 	string tileset;
 	string tech;
+	string mapPath;
+	string tilesetPath;
+	string techPath;
 	string factionTypeNames[GameConstants::maxPlayers]; //faction names
 	string playerNames[GameConstants::maxPlayers];
 	string scenario;
@@ -55,11 +58,14 @@ public:
 
 	//get
 	const string &getDescription() const						{return description;}
-	const string &getMap() const 							{return map;}
-	const string &getTileset() const						{return tileset;}
-	const string &getTech() const							{return tech;}
-   const string &getScenario() const							{return scenario;}
-   const string &getScenarioDir() const						{return scenarioDir;}
+	const string &getMap() const 								{return map;}
+	const string &getTileset() const							{return tileset;}
+	const string &getTech() const								{return tech;}
+	const string &getMapPath() const 							{return mapPath;}
+	const string &getTilesetPath() const						{return tilesetPath;}
+	const string &getTechPath() const							{return techPath;}
+	const string &getScenario() const							{return scenario;}
+	const string &getScenarioDir() const						{return scenarioDir;}
    
 	const string &getFactionTypeName(int i) const				{return factionTypeNames[i];}
 	const string &getPlayerName(int i) const					{return playerNames[i];}
@@ -75,9 +81,9 @@ public:
 
 	//set
 	void setDescription(const string& description)				{this->description = description;}
-	void setMap(const string& map)						{this->map = map;}
-	void setTileset(const string& tileset)				{this->tileset = tileset;}
-	void setTech(const string& tech)					{this->tech = tech;}
+	void setMap(const string& map)						{this->map = map; this->mapPath = "maps/" + map + ".gbm";}
+	void setTileset(const string& tileset)				{this->tileset = tileset; this->tilesetPath = "tilesets/" + tileset;}
+	void setTech(const string& tech)					{this->tech = tech; this->techPath = "techs/" + tech;}
 	void setScenario(const string& scenario)							{this->scenario= scenario;}
 	void setScenarioDir(const string& scenarioDir)						{this->scenarioDir= scenarioDir;}
 	void setFactionTypeName(int i, const string& name)			{this->factionTypeNames[i] = name;}
