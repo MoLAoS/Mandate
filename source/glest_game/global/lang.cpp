@@ -35,7 +35,7 @@ void Lang::loadStrings(const string &language){
 }
  
 void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenarioName){
-	string path= scenarioDir + "/" + scenarioName + "/" + scenarioName + "_" + language + ".lng";
+	string path= scenarioDir + "/" + scenarioName + "_" + language;// + ".lng";
 	
 	scenarioStrings.clear();
 	
