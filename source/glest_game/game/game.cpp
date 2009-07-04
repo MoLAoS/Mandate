@@ -181,7 +181,7 @@ void Game::init() {
 	// init world, and place camera
 	commander.init(&world);
 
-   //MERGE ADD
+   //MERGE ADD : not needed
    //world.init ( this, gameSettings.getFefaultUnits () );
 	//MERGE DELETE
    world.init(savedGame ? savedGame->getChild("world") : NULL);
@@ -295,7 +295,8 @@ void Game::update() {
 
 		//AiInterface
 		for (int i = 0; i < world.getFactionCount(); ++i){
-			if (world.getFaction(i)->getCpuControl()) {
+            //MERGE ADD
+			if (world.getFaction(i)->getCpuControl() && scriptManager.getPlayerModifiers(i)->getAiEnabled()) {
 				aiInterfaces[i]->update();
 			}
 		}
@@ -403,8 +404,6 @@ void Game::mouseDownLeft(int x, int y){
 		if(scriptManager.getMessageBox()->mouseClick(x, y, button)){
    			scriptManager.onMessageBoxOk();
 			messageBoxClick= true;
-			//MERGE : only a quick fix to not being able to rectangle select, need to look at GraphicMessageBox
-			scriptManager.getMessageBox()->setEnabled(false);
 		}
 	}
    //MERGE ADD END
@@ -598,8 +597,11 @@ void Game::keyDown(const Key &key) {
 	} else if (cmd == ucSaveScreenshot) {
 		Shared::Platform::mkdir("screens", true);
 		int i;
-
-		for (i = 0; i < 100; ++i) {
+        const int MAX_SCREENSHOTS = 100;
+        
+        // Find a filename from 'screen(0 to MAX_SCREENHOTS).tga' and save the screenshot in one that doesn't
+        //  already exist.
+		for (i = 0; i < MAX_SCREENSHOTS; ++i) {
 			string path = "screens/screen" + intToStr(i) + ".tga";
 
 			FILE *f = fopen(path.c_str(), "rb");
@@ -611,7 +613,7 @@ void Game::keyDown(const Key &key) {
 			}
 		}
 
-		if (i == 101) {
+		if (i > MAX_SCREENSHOTS) {
 			console.addLine(lang.get("ScreenshotDirectoryFull"));
 		}
 

@@ -108,6 +108,11 @@ void ScriptManager::onMessageBoxOk(){
 			messageBox.setHeader(lang.getScenarioString(messageQueue.front().getHeader()));
 		}
 	}
+
+	//MERGE : better quick fix, still no idea why this isn't needed in 3.2.2, maybe use a helper method to make this simpler
+	if (messageQueue.empty()){
+		messageBox.setEnabled(false);
+	}
 }
 
 void ScriptManager::onResourceHarvested(){
