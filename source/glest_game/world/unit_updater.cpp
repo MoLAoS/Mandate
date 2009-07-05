@@ -528,6 +528,8 @@ void UnitUpdater::updateBuild(Unit *unit){
 		}
 
 		//if arrived destination
+		//MERGE ADD
+        assert(command->getUnitType()!=NULL);
 		if(map->isFreeCells(command->getPos(), buildingSize, fLand)) {
 			if(!verifySubfaction(unit, builtUnitType)) {
 				return;

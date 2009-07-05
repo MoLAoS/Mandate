@@ -212,11 +212,11 @@ void Game::init() {
 
 	//wheather particle systems
 	if(world.getTileset()->getWeather() == wRainy){
-		/*logger.add("Creating rain particle system", true);
+		logger.add("Creating rain particle system", true);
 		weatherParticleSystem= new RainParticleSystem();
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
-		renderer.manageParticleSystem(weatherParticleSystem, rsGame);*/
+		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
 	}
 	else if(world.getTileset()->getWeather() == wSnowy){
 		logger.add("Creating snow particle system", true);
@@ -238,10 +238,10 @@ void Game::init() {
 	AmbientSounds *ambientSounds= tileset->getAmbientSounds();
 
 	//rain
-	/*if(tileset->getWeather()==wRainy && ambientSounds->isEnabledRain()){
+	if(tileset->getWeather()==wRainy && ambientSounds->isEnabledRain()){
 		logger.add("Starting ambient stream", true);
 		soundRenderer.playAmbient(ambientSounds->getRain());
-	}*/
+	}
 
 	//snow
 	if(tileset->getWeather()==wSnowy && ambientSounds->isEnabledSnow()){

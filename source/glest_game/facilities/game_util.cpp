@@ -26,7 +26,7 @@ namespace Glest{ namespace Game{
 
 const string mailString= "contact_game@glest.org";
 const string gaeMailString= "daniel.santos@pobox.com";
-const string glestVersionString= "v3.1.2";
+const string glestVersionString= "v3.2.2";
 const string gaeVersionString= "v0.2.11";
 
 string getCrashDumpFileName(){
@@ -50,7 +50,7 @@ string getAboutString1(int i){
 string getAboutString2(int i){
 	switch(i){
 	case 0: return "Web: http://glest.codemonger.org, http://glest.org";
-	case 1: return "Mail: daniel.santos@pobox.com, " + mailString;
+	case 1: return "Mail: " + gaeMailString + ", " + mailString;
 	case 2: return "Irc: irc://irc.freenode.net/glest";
 	}
 	return "";
