@@ -864,6 +864,7 @@ void UnitUpdater::updateRepair(Unit *unit) {
 	if(repaired && !repaired->isDamaged()) {
 		unit->setCurrSkill(scStop);
 		unit->finishCommand();
+      //MERGE ????
       scriptManager->onUnitCreated(repaired);
 	}
 
@@ -960,6 +961,8 @@ void UnitUpdater::updateProduce(Unit *unit) {
 			} else {
 				produced->create();
 				produced->born();
+            //MERGE ADD
+            scriptManager->onUnitCreated ( produced );
 				world->getStats().produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 

@@ -103,11 +103,10 @@ void World::init(const XmlNode *worldNode) {
 	//minimap must be init after sum computation
 	initMinimap();
 
-	if(worldNode) {
+	if(worldNode)
 		loadSaved(worldNode);
-	} else {
-		initUnits();
-	}
+   else if ( game.getGameSettings ().getDefaultUnits () )
+      initUnits();
 
 	initExplorationState();
 
@@ -933,7 +932,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName){
 		throw runtime_error("Invalid faction index in getUnitCountOfType: " + intToStr(factionIndex));
 	}
 }
-//MERGA ADD END
+//MERGE ADD END
 
 // ==================== PRIVATE ====================
 
