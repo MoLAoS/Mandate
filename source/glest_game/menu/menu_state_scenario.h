@@ -37,7 +37,13 @@ private:
 	GraphicLabel labelInfo;
 	GraphicLabel labelScenario;
 	GraphicListBox listBoxScenario;
-    
+
+	//MERGE NEW START
+	GraphicLabel labelCategory;
+	GraphicListBox listBoxCategory;
+    vector<string> categories;
+	//MERGE NEW END
+
 	vector<string> scenarioFiles;
 
     ScenarioInfo scenarioInfo;
@@ -57,6 +63,8 @@ public:
 	//MERGE ADD END
 
 private:
+	//MERGE NEW ADD
+	void updateScenarioList(const string category);
     void loadScenarioInfo(string file, ScenarioInfo *scenarioInfo);
     void loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gameSettings);
 	Difficulty computeDifficulty(const ScenarioInfo *scenarioInfo);

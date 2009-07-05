@@ -45,33 +45,28 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
     buttonReturn.init(350, 200, 125);
 	buttonPlayNow.init(525, 200, 125);
 
+	listBoxCategory.init(350, 500, 190);
+	labelCategory.init(350, 530);
+
     listBoxScenario.init(350, 400, 190);
 	labelScenario.init(350, 430);
 
 	buttonReturn.setText(lang.get("Return"));
 	buttonPlayNow.setText(lang.get("PlayNow"));
 
+	labelCategory.setText(lang.get("Category"));
     labelScenario.setText(lang.get("Scenario"));
 
-    //scenario listBox
-    //MERGE ADD : dir is either scenarios or tutorials from 3.2.2
-    //findAll(dir+"/*.", results);
+    //categories listBox
 	findAll("scenarios/*.", results);
-    //MERGE DELETE : the xml extension might be good since there are the lng files
-    //findAll("scenarios/*.xml", results, true);
-    scenarioFiles= results;
+	categories= results;
+	
 	if(results.size()==0){
-        throw runtime_error("There is no scenarios");
+        throw runtime_error("There are no categories");
 	}
-	for(int i= 0; i<results.size(); ++i){
-		results[i]= formatString(results[i]);
-	}
-    listBoxScenario.setItems(results);
-    //MERGE ADD
-    //loadScenarioInfo(Scenario::getScenarioPath(dir, scenarioFiles[listBoxScenario.getSelectedItemIndex()]), &scenarioInfo );
-    //MERGE DELETE
-    loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
-    labelInfo.setText(scenarioInfo.desc);
+
+	listBoxCategory.setItems(results);
+	updateScenarioList( categories[listBoxCategory.getSelectedItemIndex()] );
 
 	networkManager.init(nrServer);
 }
@@ -102,11 +97,15 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton){
         loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
         labelInfo.setText(scenarioInfo.desc);
 	}
+	else if(listBoxCategory.mouseClick(x, y)){
+        updateScenarioList( categories[listBoxCategory.getSelectedItemIndex()] );
+	}
 }
 
 void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms){
 
 	listBoxScenario.mouseMove(x, y);
+	listBoxCategory.mouseMove(x, y);
 
 	buttonReturn.mouseMove(x, y);
 	buttonPlayNow.mouseMove(x, y);
@@ -117,6 +116,10 @@ void MenuStateScenario::render(){
 	Renderer &renderer= Renderer::getInstance();
 
 	renderer.renderLabel(&labelInfo);
+
+	renderer.renderLabel(&labelCategory);
+	renderer.renderListBox(&listBoxCategory);
+
 	renderer.renderLabel(&labelScenario);
 	renderer.renderListBox(&listBoxScenario);
 
@@ -145,13 +148,34 @@ void MenuStateScenario::setScenario(int i){
 }
 */
 //MERGE ADD END
+
+void MenuStateScenario::updateScenarioList(const string category){
+	vector<string> results;
+
+	findAll("scenarios/" + category + "/*.", results);
+
+	//update scenarioFiles
+	scenarioFiles= results;
+	if(results.size()==0){
+        throw runtime_error("There are no scenarios for category, " + category + ".");
+	}
+	for(int i= 0; i<results.size(); ++i){
+		results[i]= formatString(results[i]);
+	}
+    listBoxScenario.setItems(results);
+
+	//update scenario info
+	loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
+    labelInfo.setText(scenarioInfo.desc);
+}
+
 void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo){
 
     Lang &lang= Lang::getInstance();
 
     XmlTree xmlTree;
 	//MERGE it was being duplicated in the two cases
-	xmlTree.load("scenarios/"+file+"/"+file+".xml");
+	xmlTree.load("scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
 
     const XmlNode *scenarioNode= xmlTree.getRootNode();
 	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
@@ -220,7 +244,7 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
     gameSettings->setTech( scenarioInfo->techTreeName );
 	//MERGE ADD START
 	gameSettings->setScenario(scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
-	gameSettings->setScenarioDir(/*dir*/"scenarios/" + gameSettings->getScenario());
+	gameSettings->setScenarioDir("scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] + "/" + gameSettings->getScenario());
 	gameSettings->setDefaultUnits(scenarioInfo->defaultUnits);
 	gameSettings->setDefaultResources(scenarioInfo->defaultResources);
 	gameSettings->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
