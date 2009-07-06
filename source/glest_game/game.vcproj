@@ -396,6 +396,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\facilities\auto_test.h"
+				>
+			</File>
+			<File
 				RelativePath=".\main\battle_end.h"
 				>
 			</File>
@@ -741,6 +745,10 @@
 			</File>
 			<File
 				RelativePath=".\ai\ai_rule.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\facilities\auto_test.cpp"
 				>
 			</File>
 			<File

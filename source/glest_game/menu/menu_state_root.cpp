@@ -128,4 +128,12 @@ void MenuStateRoot::render(){
 	renderer.renderLabel(&labelVersion);
 }
 
+//MERGE ADD START
+void MenuStateRoot::update(){
+	/*if(Config::getInstance().getBool("AutoTest")){
+		AutoTest::getInstance().updateRoot(program, mainMenu);
+	}*/
+}
+//MERGE ADD END
+
 }}//end namespace

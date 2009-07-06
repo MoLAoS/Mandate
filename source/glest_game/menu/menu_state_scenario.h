@@ -55,10 +55,10 @@ public:
 	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
 	//MERGE ADD START
-	//void update();
+	void update();
 
 	void launchGame();
-	//void setScenario(int i);
+	void setScenario(int i);
 	int getScenarioCount() const	{ return listBoxScenario.getItemCount(); }
 	//MERGE ADD END
 

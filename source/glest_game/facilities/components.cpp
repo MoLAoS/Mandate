@@ -195,34 +195,20 @@ GraphicMessageBox::GraphicMessageBox()
 
 const int GraphicMessageBox::defH = 240;
 const int GraphicMessageBox::defW = 350;
-// bunch of sloppy crap...
-void GraphicMessageBox::init(const string &text, const string &button1Str) {
-	init();
-	GraphicComponent::setText(text);
-	layout();
-	buttonCount = 1;
 
-	button1.init(x + (w - GraphicButton::defW) / 2, y + 25);
-	button1.setText(button1Str);
-}
 void GraphicMessageBox::init(const string &text, const string &button1Str, const string &button2Str) {
-//MERGE ADD START
-   // This codes has been modified in gae, changes in 3.2.2 were not merged
-//MERGE ADD END
-   init();
+	font = CoreData::getInstance().getMenuFontNormal();
 	GraphicComponent::setText(text);
+	
+	//init and position the button(s)
+	buttonCount = (button2Str == "") ? 1 : 2;
 	layout();
-	buttonCount = 2;
 
-	button1.init(x + (w - GraphicButton::defW) / 4, y + 25);
 	button1.setText(button1Str);
 
-	button2.init(x + 3 * (w - GraphicButton::defW) / 4, y + 25);
-	button2.setText(button2Str);
-}
-
-void GraphicMessageBox::init() {
-	font = CoreData::getInstance().getMenuFontNormal();
+	if (buttonCount == 2) {
+		button2.setText(button2Str);
+	}
 }
 
 void GraphicMessageBox::layout() {

@@ -174,8 +174,8 @@ private:
 
 public:
 	GraphicMessageBox();
-	void init(const string &text, const string &button1Str, const string &button2Str);
-	void init(const string &text, const string &button1Str);
+	void init(const string &text, const string &button1Str, const string &button2Str = "");
+	//void init(const string &text, const string &button1Str); //redundant
 	
 	int getButtonCount() const				{return buttonCount;}
 	const GraphicButton *getButton1() const	{return &button1;}
@@ -193,7 +193,7 @@ public:
 	}
 
 private:
-	void init();
+	//void init(); //redundant
 	void layout();
 };
 

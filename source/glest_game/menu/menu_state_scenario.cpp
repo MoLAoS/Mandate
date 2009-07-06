@@ -128,25 +128,24 @@ void MenuStateScenario::render(){
 }
 
 //MERGE ADD START
-/*
 void MenuStateScenario::update(){
+	/*
 	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateScenario(this);
 	}
+	*/
 }
-*/
 
 void MenuStateScenario::launchGame(){
 	GameSettings gameSettings;
     loadGameSettings(&scenarioInfo, &gameSettings);
 	program.setState(new Game(program, gameSettings));
 }
-/*
+
 void MenuStateScenario::setScenario(int i){
 	listBoxScenario.setSelectedItemIndex(i);
-	loadScenarioInfo(Scenario::getScenarioPath(dir, scenarioFiles[listBoxScenario.getSelectedItemIndex()]), &scenarioInfo);
+	loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
 }
-*/
 //MERGE ADD END
 
 void MenuStateScenario::updateScenarioList(const string category){

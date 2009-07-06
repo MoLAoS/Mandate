@@ -165,7 +165,7 @@ void Game::init() {
 	logger.setState(lang.get("Initializing"));
 
 	//mesage box
-	mainMessageBox.init(lang.get("Yes"), lang.get("No"));
+	mainMessageBox.init("", lang.get("Yes"), lang.get("No"));
 	mainMessageBox.setEnabled(false);
 
 #ifndef DEBUG
@@ -337,6 +337,15 @@ void Game::update() {
       //MERGE DELETE
       //program.setState(new BattleEnd(program, world.getStats()));
 	}
+
+	//MERGE ADD START
+	//update auto test
+	/*
+	if(Config::getInstance().getBool("AutoTest")){
+		AutoTest::getInstance().updateGame(this);
+	}
+	*/
+	//MERGE ADD END
 }
 
 void Game::displayError(SocketException &e) {
