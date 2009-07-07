@@ -116,6 +116,7 @@ Game::~Game() {
 	gui.end();		//selection must be cleared before deleting units
 	world.end();	//must die before selection because of referencers
 	singleton = NULL;
+   logger.setLoading ( true );
 }
 
 
@@ -181,9 +182,6 @@ void Game::init() {
 	// init world, and place camera
 	commander.init(&world);
 
-   //MERGE ADD : not needed
-   //world.init ( this, gameSettings.getFefaultUnits () );
-	//MERGE DELETE
    world.init(savedGame ? savedGame->getChild("world") : NULL);
 	gui.init();
 	chatManager.init(&console, world.getThisTeamIndex());
@@ -269,6 +267,7 @@ void Game::init() {
 		delete savedGame;
 		savedGame = NULL;
 	}
+   logger.setLoading ( false );
 }
 
 
@@ -294,12 +293,10 @@ void Game::update() {
 		Renderer &renderer = Renderer::getInstance();
 
 		//AiInterface
-		for (int i = 0; i < world.getFactionCount(); ++i){
-            //MERGE ADD
-			if (world.getFaction(i)->getCpuControl() && scriptManager.getPlayerModifiers(i)->getAiEnabled()) {
-				aiInterfaces[i]->update();
-			}
-		}
+      for (int i = 0; i < world.getFactionCount(); ++i)
+         if ( world.getFaction(i)->getCpuControl() 
+         &&   scriptManager.getPlayerModifiers(i)->getAiEnabled() )
+            aiInterfaces[i]->update();
 
 		//World
 		world.update();
@@ -332,10 +329,7 @@ void Game::update() {
 
 	//check for quiting status
 	if(NetworkManager::getInstance().getGameNetworkInterface()->getQuit()) {
-		//MERGE ADD
       quitGame();
-      //MERGE DELETE
-      //program.setState(new BattleEnd(program, world.getStats()));
 	}
 
 	//MERGE ADD START
@@ -359,15 +353,8 @@ void Game::displayError(SocketException &e) {
 	snprintf(buf, sizeof(buf) - 1, lang.get("YourGameWasSaved").c_str(), saveName);
 	errmsg << e.what() << endl << buf;
 
-   //MERGE, replace with mainMessageBox
-   /*
-	if(exitMessageBox) {
-		delete exitMessageBox;
-	}
-
-	exitMessageBox = new GraphicMessageBox();
-	exitMessageBox->init(errmsg.str(), lang.get("Ok"));
-   */
+   mainMessageBox.init ( errmsg.str(), lang.get("Ok") );
+   mainMessageBox.setEnabled ( true );
 }
 
 void Game::updateCamera(){
