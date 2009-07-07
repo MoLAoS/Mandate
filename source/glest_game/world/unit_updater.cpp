@@ -866,8 +866,6 @@ void UnitUpdater::updateRepair(Unit *unit) {
 	if(repaired && !repaired->isDamaged()) {
 		unit->setCurrSkill(scStop);
 		unit->finishCommand();
-      //MERGE ????
-      scriptManager->onUnitCreated(repaired);
 	}
 
 	if(repairThisFrame && unit->getCurrSkill()->getClass() == scRepair) {
@@ -898,6 +896,10 @@ void UnitUpdater::updateRepair(Unit *unit) {
 				unit->setCurrSkill(scStop);
 				if(!wasBuilt) {
 					//building finished
+               //MERGE ADD START
+			      repaired->born();
+			      scriptManager->onUnitCreated(repaired);
+               //MERGE ADD END
 					if(unit->getFactionIndex() == world->getThisFactionIndex()) {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(ccBuild);
