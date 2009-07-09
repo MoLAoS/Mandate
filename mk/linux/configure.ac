@@ -103,6 +103,8 @@ NP_FINDLIB([OPENAL], [OpenAL], [OpenAL],
 		[AC_MSG_ERROR([Please intall OpenAL])],
 		[], [])
 
+CHECK_LUA([], [AC_MSG_ERROR([Please install lua 5.1])])
+
 AX_CHECK_GL
 if test "$no_gl" = "yes"; then
     AC_MSG_ERROR([You need to have OpenGL headers and libraries installed])
@@ -117,8 +119,6 @@ XIPH_PATH_OGG(, [AC_MSG_ERROR([Please install ogg/vorbis])])
 
 CHECK_ZLIB
 AM_CONDITIONAL([ZLIB], [test "x$have_zlib" = "xyes"])
-
-#CHECK_LUA()
 
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG([2.6.0], [WX_AVAILABLE="yes"], [WX_AVAILABLE="no"], [std,gl], [--unicode=yes])
