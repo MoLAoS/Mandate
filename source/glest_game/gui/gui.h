@@ -230,9 +230,8 @@ public:
 	}
 
 	//misc
-	void switchToNextDisplayColor() {
-		display.switchColor();
-	}
+
+	void switchToNextDisplayColor() {display.switchColor();}
 
 	void onSelectionChanged() {
 		selection.update();

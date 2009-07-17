@@ -20,7 +20,6 @@
 
 #include "leak_dumper.h"
 
-
 using namespace std;
 using namespace Shared::Graphics;
 
@@ -41,32 +40,30 @@ void Logger::setState(const string &state){
 
 void Logger::add(const string &str,  bool renderScreen){
 	FILE *f=fopen(fileName.c_str(), "at+");
-	if(f==NULL){
-		throw runtime_error("Error opening log file"+ fileName);
+	if ( f )
+	{
+		fprintf(f, "%d: %s\n", (int)(clock() / 1000), str.c_str());
+		fclose(f);
 	}
-	fprintf(f, "%d: %s\n", (int)(clock() / 1000), str.c_str());
-    fclose(f);
+	if ( loadingGame )
+	{
+		if(f==NULL){
+			throw runtime_error("Error opening log file"+ fileName);
+		}
 
-	logLines.push_back(str);
-	if(logLines.size() > logLineCount){
-		logLines.pop_front();
+		logLines.push_back(str);
+		if(logLines.size() > logLineCount){
+			logLines.pop_front();
+		}
+	}
+	else
+	{
+		current = str;
 	}
 	if(renderScreen){
 		renderLoadingScreen();
 	}
 }
-
-/*void Logger::addLoad(const string &text, bool renderScreen){
-	appendText(text, "Loading", renderScreen);
-}
-
-void Logger::addInit(const string &text, bool renderScreen){
-	appendText(text, "Initializing", renderScreen);
-}
-
-void Logger::addDelete(const string &text, bool renderScreen){
-	appendText(text, "Deleting", renderScreen);
-}*/
 
 void Logger::clear() {
     string s="Log file\n";
@@ -97,20 +94,28 @@ void Logger::renderLoadingScreen(){
 
 	renderer.renderText(
 		state, coreData.getMenuFontBig(), Vec3f(1.f),
-		metrics.getVirtualW()/4, 70*metrics.getVirtualH()/100, false);
-
-	int offset= 0;
-	Font2D *font= coreData.getMenuFontNormal();
-	for(Strings::reverse_iterator it= logLines.rbegin(); it!=logLines.rend(); ++it){
-		float alpha= offset==0? 1.0f: 0.8f-0.8f*static_cast<float>(offset)/logLines.size();
-		renderer.renderText(
-			*it, font, alpha ,
-			metrics.getVirtualW()/4,
-			65*metrics.getVirtualH()/100 - offset*(font->getSize()+4),
-			false);
-		++offset;
+		metrics.getVirtualW()/4, 75*metrics.getVirtualH()/100, false);
+	if ( loadingGame )
+	{
+		int offset= 0;
+		Font2D *font= coreData.getMenuFontNormal();
+		for(Strings::reverse_iterator it= logLines.rbegin(); it!=logLines.rend(); ++it){
+			float alpha= offset==0? 1.0f: 0.8f-0.8f*static_cast<float>(offset)/logLines.size();
+			renderer.renderText(
+				*it, font, alpha ,
+				metrics.getVirtualW()/4,
+				70*metrics.getVirtualH()/100 - offset*(font->getSize()+4),
+				false);
+			++offset;
+		}
 	}
-
+	else
+	{
+		renderer.renderText(
+			current, coreData.getMenuFontNormal(), 1.0f, 
+			metrics.getVirtualW()/4, 
+			62*metrics.getVirtualH()/100, false);
+	}
 	renderer.swapBuffers();
 }
 

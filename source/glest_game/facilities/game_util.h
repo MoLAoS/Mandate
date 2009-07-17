@@ -33,7 +33,7 @@ string getAboutString1(int i);
 string getAboutString2(int i);
 string getTeammateName(int i);
 string getTeammateRole(int i);
-
+string getCrashDumpFileName();
 string formatString(const string &str);
 
 }}//end namespace

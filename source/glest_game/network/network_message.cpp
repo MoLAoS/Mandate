@@ -226,9 +226,9 @@ void NetworkMessageReady::write(NetworkDataBuffer &buf) const {
 NetworkMessageLaunch::NetworkMessageLaunch(const GameSettings *gameSettings) : NetworkMessage(nmtLaunch) {
 
 	description= gameSettings->getDescription();
-	mapPath= gameSettings->getMapPath();
-	tilesetPath= gameSettings->getTilesetPath();
-	techPath= gameSettings->getTechPath();
+	mapPath= gameSettings->getMap();
+	tilesetPath= gameSettings->getTileset();
+	techPath= gameSettings->getTech();
 	factionCount= gameSettings->getFactionCount();
 	thisFactionIndex= gameSettings->getThisFactionIndex();
 
@@ -242,9 +242,9 @@ NetworkMessageLaunch::NetworkMessageLaunch(const GameSettings *gameSettings) : N
 
 void NetworkMessageLaunch::buildGameSettings(GameSettings *gameSettings) const{
 	gameSettings->setDescription(description.getString());
-	gameSettings->setMapPath(mapPath.getString());
-	gameSettings->setTilesetPath(tilesetPath.getString());
-	gameSettings->setTechPath(techPath.getString());
+	gameSettings->setMap(mapPath.getString());
+	gameSettings->setTileset(tilesetPath.getString());
+	gameSettings->setTech(techPath.getString());
 	gameSettings->setFactionCount(factionCount);
 	gameSettings->setThisFactionIndex(thisFactionIndex);
 

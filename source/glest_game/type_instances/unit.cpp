@@ -844,7 +844,8 @@ void Unit::born(){
 void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 	assert(hp <= 0);
 	hp = 0;
-	World::getCurrWorld()->hackyCleanUp(this);
+
+   World::getCurrWorld()->hackyCleanUp(this);
 
 	if(fire != NULL) {
 		fire->fade();
@@ -861,15 +862,16 @@ void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 	}
 	setCurrSkill(scDie);
 
+	//no longer needs static resources
+	if(isBeingBuilt())
+		faction->deApplyStaticConsumption(type);
+	else
+		faction->deApplyStaticCosts(type);
+
 	notifyObservers(UnitObserver::eKill);
 
 	//clear commands
 	clearCommands();
-
-	//no longer needs static resources
-	if(!isBeingBuilt()) {
-		faction->deApplyStaticCosts(type);
-	}
 
 	//kill or free pets
 	killPets();

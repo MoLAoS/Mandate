@@ -118,7 +118,7 @@ void ChatManager::updateNetwork() {
 		int teamIndex = gameNetworkInterface->getChatTeamIndex();
 
 		if (teamIndex == -1 || teamIndex == thisTeamIndex) {
-			console->addLine(gameNetworkInterface->getChatSender() + ": " + gameNetworkInterface->getChatText());
+			console->addLine(gameNetworkInterface->getChatSender() + ": " + gameNetworkInterface->getChatText(), true);
 		}
 	}
 }

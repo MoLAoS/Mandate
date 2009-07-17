@@ -374,9 +374,9 @@ void MenuStateLoadGame::initGameInfo() {
 			gs = NULL;
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
-		string techTree = gs->getTechPath();
-		string tileset = gs->getTilesetPath();
-		string map = gs->getMapPath();
+		string techTree = gs->getTech();
+		string tileset = gs->getTileset();
+		string map = gs->getMap();
 		int elapsedSeconds = savedGame->getChild("world")->getChildIntValue("frameCount") / 60;
 		int elapsedMinutes = elapsedSeconds / 60;
 		int elapsedHours = elapsedMinutes / 60;

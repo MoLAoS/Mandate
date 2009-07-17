@@ -40,6 +40,7 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 
 	//texture
 	const XmlNode *textureNode = particleSystemNode->getChild("texture");
+    //texture enabled
 	if (textureNode->getAttribute("value")->getBoolValue()) {
 		Texture2D *texture = renderer.newTexture2D(rsGame);
 		if (textureNode->getAttribute("luminance")->getBoolValue()) {
@@ -56,6 +57,7 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 
 	//model
 	const XmlNode *modelNode = particleSystemNode->getChild("model");
+    //model enabled
 	if (modelNode->getAttribute("value")->getBoolValue()) {
 		string path = modelNode->getAttribute("path")->getRestrictedValue();
 		model = renderer.newModel(rsGame);

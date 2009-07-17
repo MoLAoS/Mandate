@@ -40,6 +40,11 @@ struct ScenarioInfo
     string mapName;
     string tilesetName;
     string techTreeName;
+    string scenarioName;
+
+	bool defaultUnits;
+	bool defaultResources;
+	bool defaultVictoryConditions;
 
     string desc;
 };

@@ -34,7 +34,7 @@ Metrics::Metrics(){
 	screenH= config.getDisplayHeight();
 
 	minimapX= 10;
-	minimapY= 600;
+	minimapY= 750-128-30+16;
 	minimapW= 128;
 	minimapH= 128;
 

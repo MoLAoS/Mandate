@@ -41,6 +41,7 @@ public:
 	void mouseClick(int x, int y, MouseButton mouseButton);
 	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
+	void update();
 };
 
 

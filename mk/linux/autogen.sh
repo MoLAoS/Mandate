@@ -38,9 +38,14 @@ for f in data docs maps scenarios techs tilesets; do
 	ln -sf ../../data/glest_game/$f .;
 done
 
-ln -sf ../../source/shared_lib .
-ln -sf ../../source/glest_game .
-ln -sf ../../source/glest_map_editor .
-
+if [ ! -d shared_lib ]; then
+  ln -sf ../../source/shared_lib .
+fi
+if [ ! -d glest_game ]; then
+  ln -sf ../../source/glest_game .
+fi
+if [ ! -d glest_map_editor ]; then
+  ln -sf ../../source/glest_map_editor .
+fi
 
 

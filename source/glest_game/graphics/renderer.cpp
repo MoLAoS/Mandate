@@ -660,7 +660,6 @@ void Renderer::renderConsole(const Console *console){
 			CoreData::getInstance().getConsoleFont(),
 			20, i*20+20);
 	}
-
 	glPopAttrib();
 }
 
@@ -688,7 +687,6 @@ void Renderer::renderChatManager(const ChatManager *chatManager){
 void Renderer::renderResourceStatus(){
 
 	const Metrics &metrics= Metrics::getInstance();
-	const Gui *gui= game->getGui();
 	const World *world= game->getWorld();
 	const Faction *thisFaction= world->getFaction(world->getThisFactionIndex());
 	int subfaction = thisFaction->getSubfaction();
@@ -957,13 +955,42 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
 	//background
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glEnable(GL_BLEND);
-	glColor4f(0.5f, 0.5f, 0.5f, 0.2f) ;
+	glColor4f( 0.f, 0.f, 0.f, 0.5f );
 
 	glBegin(GL_TRIANGLE_STRIP);
-		glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
+		glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
 		glVertex2i(messageBox->getX(), messageBox->getY());
-		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + messageBox->getH());
+		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + 9*messageBox->getH()/10);
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY());
+	glEnd();
+	glColor4f(0.0f, 0.0f, 0.0f, 0.8f) ;   
+	glBegin(GL_TRIANGLE_STRIP);
+		glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
+		glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
+		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + messageBox->getH());
+		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY()+9*messageBox->getH()/10);
+	glEnd();
+ 
+	glBegin(GL_LINE_LOOP);
+		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
+		glVertex2i(messageBox->getX(), messageBox->getY());
+		
+		glColor4f(0.0f, 0.0f, 0.0f, 0.25f) ;   
+		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY());
+		
+		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
+		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY() + messageBox->getH());
+		
+		glColor4f(0.25f, 0.25f, 0.25f, 0.25f) ;   
+		glVertex2i(messageBox->getX(), messageBox->getY() + messageBox->getH());
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.25f) ;   
+		glVertex2i(messageBox->getX(), messageBox->getY() + 90*messageBox->getH()/100);
+		
+		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
+		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY() + 90*messageBox->getH()/100);
 	glEnd();
 
 	glPopAttrib();
@@ -975,11 +1002,16 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
 	}
 
 	//text
-	GraphicLabel label;
-	label.init(messageBox->getX(), messageBox->getY()+messageBox->getH()/2, messageBox->getW(), messageBox->getH()/2, true);
-	label.setText(messageBox->getText());
-	label.setFont(messageBox->getFont());
-	renderLabel(&label);
+	renderText(
+		messageBox->getText(), messageBox->getFont(), Vec3f(1.0f, 1.0f, 1.0f), 
+		messageBox->getX()+15, messageBox->getY()+7*messageBox->getH()/10, 
+		false );
+
+	renderText(
+		messageBox->getHeader(), messageBox->getFont(),Vec3f(1.0f, 1.0f, 1.0f), 
+		messageBox->getX()+15, messageBox->getY()+93*messageBox->getH()/100, 
+		false );
+
 }
 
 void Renderer::renderTextEntry(const GraphicTextEntry *textEntry) {

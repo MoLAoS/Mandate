@@ -38,12 +38,15 @@ private:
 
 private:
 	string fileName;
-	string sectionName;
+	//string sectionName;
 	string state;
 	Strings logLines;
+   string subtitle;
+   string current;
+   bool loadingGame;
 
 private:
-	Logger(const char *fileName) : fileName(fileName) {}
+	Logger(const char *fileName) : fileName(fileName) { loadingGame = true; }
 
 public:
 	static Logger &getInstance(){
@@ -63,9 +66,11 @@ public:
 
 	//void setFile(const string &fileName)	{this->fileName= fileName;}
 	void setState(const string &state);
+   void setSubtitle(const string &subtitle)	{this->subtitle= subtitle;}
 
 	void add(const string &str, bool renderScreen= false);
 	void renderLoadingScreen();
+   void setLoading ( bool loading ) { loadingGame = loading; }
 
 	void clear();
 };

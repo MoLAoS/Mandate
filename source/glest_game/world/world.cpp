@@ -50,6 +50,7 @@ World::World(Game *game) : game(*game), gs(game->getGameSettings()), stats(game-
 
 	frameCount= 0;
 	nextUnitId= 0;
+   scriptManager = NULL;
 	assert(!singleton);
 	singleton = this;
 	alive = false;
@@ -89,7 +90,7 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-
+	scriptManager = game.getScriptManager();
 	unitUpdater.init(game);
 
 	initFactionTypes();
@@ -100,11 +101,10 @@ void World::init(const XmlNode *worldNode) {
 	//minimap must be init after sum computation
 	initMinimap();
 
-	if(worldNode) {
+	if(worldNode)
 		loadSaved(worldNode);
-	} else {
-		initUnits();
-	}
+   else if ( game.getGameSettings ().getDefaultUnits () )
+      initUnits();
 
 	initExplorationState();
 
@@ -181,7 +181,12 @@ void World::loadTech(Checksum &checksum) {
 void World::loadMap(Checksum &checksum) {
 	const string &path = gs.getMapPath();
 	checksum.addFile(path, false);
-	map.load(path, &techTree, &tileset);
+	map.load( path, &techTree, &tileset);
+}
+
+void World::loadScenario(const string &path, Checksum *checksum){
+	checksum->addFile(path, true);
+	scenario.load(path);
 }
 
 //load saved game
@@ -756,6 +761,174 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
     return currUnit;
 }
 
+void World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		const FactionType* ft= faction->getType();
+		const UnitType* ut= ft->getUnitType(unitName);
+
+		Unit* unit= new Unit(getNextUnitId(), pos, ut, faction, &map);
+		if(placeUnit(pos, generationArea, unit, true)){
+			unit->create(true);
+			unit->born();
+			scriptManager->onUnitCreated(unit);
+		}
+		else{
+			throw runtime_error("Unit cant be placed");    
+		}
+	}
+	else
+	{
+		throw runtime_error("Invalid faction index in createUnitAtPosition: " + intToStr(factionIndex));
+	}
+}
+
+void World::giveResource(const string &resourceName, int factionIndex, int amount){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		const ResourceType* rt= techTree.getResourceType(resourceName);
+		faction->incResourceAmount(rt, amount);
+	}
+	else
+	{
+		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
+	}
+}
+
+void World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos){
+	Unit* unit= findUnitById(unitId);
+	if(unit!=NULL){
+		CommandClass cc;
+
+		if(commandName=="move"){
+			cc= ccMove; 
+		}
+		else if(commandName=="attack"){
+			cc= ccAttack;
+		}
+		else{
+			throw runtime_error("Invalid position commmand: " + commandName);
+		}
+		
+		unit->giveCommand(new Command( unit->getType()->getFirstCtOfClass(cc), CommandFlags(), pos ));
+	}
+}
+
+void World::giveProductionCommand(int unitId, const string &producedName){
+	Unit *unit= findUnitById(unitId);
+	if(unit!=NULL){
+		const UnitType *ut= unit->getType();
+		
+		//Search for a command that can produce the unit
+		for(int i= 0; i<ut->getCommandTypeCount(); ++i){
+			const CommandType* ct= ut->getCommandType(i);
+			if(ct->getClass()==ccProduce){
+				const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
+				if(pct->getProducedUnit()->getName()==producedName){
+					unit->giveCommand(new Command(pct, CommandFlags()));
+					break;
+				}
+			}
+		}
+	}
+}
+
+void World::giveUpgradeCommand(int unitId, const string &upgradeName){
+	Unit *unit= findUnitById(unitId);
+	if(unit!=NULL){
+		const UnitType *ut= unit->getType();
+		
+		//Search for a command that can produce the unit
+		for(int i= 0; i<ut->getCommandTypeCount(); ++i){
+			const CommandType* ct= ut->getCommandType(i);
+			if(ct->getClass()==ccUpgrade){
+				const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
+				if(uct->getProducedUpgrade()->getName()==upgradeName){
+					unit->giveCommand(new Command(uct, CommandFlags()));
+					break;
+				}
+			}
+		}
+	}
+}
+
+
+int World::getResourceAmount(const string &resourceName, int factionIndex){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		const ResourceType* rt= techTree.getResourceType(resourceName);
+		return faction->getResource(rt)->getAmount();
+	}
+	else
+	{
+		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
+	}
+}
+
+Vec2i World::getStartLocation(int factionIndex){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		return map.getStartLocation(faction->getStartLocationIndex());
+	}
+	else
+	{
+		throw runtime_error("Invalid faction index in getStartLocation: " + intToStr(factionIndex));
+	}
+}
+
+Vec2i World::getUnitPosition(int unitId){
+	Unit* unit= findUnitById(unitId);
+	if(unit==NULL){
+		throw runtime_error("Can not find unit to get position");
+	}
+	return unit->getPos();
+}
+
+int World::getUnitFactionIndex(int unitId){
+	Unit* unit= findUnitById(unitId);
+	if(unit==NULL){
+		throw runtime_error("Can not find unit to get position");
+	}
+	return unit->getFactionIndex();
+}
+
+int World::getUnitCount(int factionIndex){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		int count= 0;
+		
+		for(int i= 0; i<faction->getUnitCount(); ++i){
+			const Unit* unit= faction->getUnit(i);
+			if(unit->isAlive()){
+				++count;
+			}
+		}
+		return count;
+	}
+	else
+	{
+		throw runtime_error("Invalid faction index in getUnitCount: " + intToStr(factionIndex));
+	}
+}
+
+int World::getUnitCountOfType(int factionIndex, const string &typeName){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		int count= 0;
+		
+		for(int i= 0; i< faction->getUnitCount(); ++i){
+			const Unit* unit= faction->getUnit(i);
+			if(unit->isAlive() && unit->getType()->getName()==typeName){
+				++count;
+			}
+		}
+		return count;
+	}
+	else
+	{
+		throw runtime_error("Invalid faction index in getUnitCountOfType: " + intToStr(factionIndex));
+	}
+}
 
 // ==================== PRIVATE ====================
 
@@ -817,9 +990,8 @@ void World::initFactionTypes() {
 	factions.resize(gs.getFactionCount());
 	for(int i=0; i<factions.size(); ++i){
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
-		factions[i].init(
-			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
-			gs.getStartLocationIndex(i), i==thisFactionIndex);
+		factions[i].init( ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
+         gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ());
 
 //		stats.setTeam(i, gs.getTeam(i));
 //		stats.setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));

@@ -28,11 +28,16 @@ namespace Glest { namespace Game {
 class GameSettings {
 private:
 	string description;
+	string map;
+	string tileset;
+	string tech;
 	string mapPath;
 	string tilesetPath;
 	string techPath;
 	string factionTypeNames[GameConstants::maxPlayers]; //faction names
 	string playerNames[GameConstants::maxPlayers];
+	string scenario;
+	string scenarioDir;
 
 	ControlType factionControls[GameConstants::maxPlayers];
 
@@ -40,6 +45,10 @@ private:
 	int factionCount;
 	int teams[GameConstants::maxPlayers];
 	int startLocationIndex[GameConstants::maxPlayers];
+
+   bool defaultUnits;
+   bool defaultResources;
+   bool defaultVictoryConditions;
 
 public:
 	GameSettings(){}
@@ -49,9 +58,15 @@ public:
 
 	//get
 	const string &getDescription() const						{return description;}
+	const string &getMap() const 								{return map;}
+	const string &getTileset() const							{return tileset;}
+	const string &getTech() const								{return tech;}
 	const string &getMapPath() const 							{return mapPath;}
 	const string &getTilesetPath() const						{return tilesetPath;}
 	const string &getTechPath() const							{return techPath;}
+	const string &getScenario() const							{return scenario;}
+	const string &getScenarioDir() const						{return scenarioDir;}
+   
 	const string &getFactionTypeName(int i) const				{return factionTypeNames[i];}
 	const string &getPlayerName(int i) const					{return playerNames[i];}
 	ControlType getFactionControl(int i) const					{return factionControls[i];}
@@ -60,11 +75,17 @@ public:
 	int getTeam(int i) const									{return teams[i];}
 	int getStartLocationIndex(int i) const						{return startLocationIndex[i];}
 
+   bool getDefaultUnits() const				{return defaultUnits;}
+   bool getDefaultResources() const			{return defaultResources;}
+   bool getDefaultVictoryConditions() const	{return defaultVictoryConditions;}
+
 	//set
 	void setDescription(const string& description)				{this->description = description;}
-	void setMapPath(const string& mapPath)						{this->mapPath = mapPath;}
-	void setTilesetPath(const string& tilesetPath)				{this->tilesetPath = tilesetPath;}
-	void setTechPath(const string& techPath)					{this->techPath = techPath;}
+	void setMap(const string& map)						{this->map = map; this->mapPath = "maps/" + map + ".gbm";}
+	void setTileset(const string& tileset)				{this->tileset = tileset; this->tilesetPath = "tilesets/" + tileset;}
+	void setTech(const string& tech)					{this->tech = tech; this->techPath = "techs/" + tech;}
+	void setScenario(const string& scenario)							{this->scenario= scenario;}
+	void setScenarioDir(const string& scenarioDir)						{this->scenarioDir= scenarioDir;}
 	void setFactionTypeName(int i, const string& name)			{this->factionTypeNames[i] = name;}
 	void setPlayerName(int i, const string &name)				{this->playerNames[i] = name;}
 	void setFactionControl(int i, ControlType controller)		{this->factionControls[i]= controller;}
@@ -72,6 +93,10 @@ public:
 	void setFactionCount(int factionCount)						{this->factionCount = factionCount;}
 	void setTeam(int i, int team)								{this->teams[i] = team;}
 	void setStartLocationIndex(int i, int startLocationIndex)	{this->startLocationIndex[i] = startLocationIndex;}
+
+	void setDefaultUnits(bool defaultUnits) 						{this->defaultUnits= defaultUnits;}
+	void setDefaultResources(bool defaultResources) 				{this->defaultResources= defaultResources;}
+	void setDefaultVictoryConditions(bool defaultVictoryConditions) {this->defaultVictoryConditions= defaultVictoryConditions;}
 
 	//misc
 	void randomizeLocs();

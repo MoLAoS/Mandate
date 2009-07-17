@@ -94,9 +94,7 @@ public:
 	//misc
 	void clear();
 	int computeDownIndex(int x, int y);
-	void switchColor() {
-		currentColor = (currentColor + 1) % colorCount;
-	}
+	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 
 	int computeDownX(int index) const {
 		return (index % cellSideCount) * imageSize;

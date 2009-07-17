@@ -32,19 +32,28 @@ start compiling it. Here's a list of them:
   http://www.x.org (or the older http://www.xfree86.org)
 
 * SDL 1.2.5 or later
+  License: GNU LGPL version 2
   http://www.libsdl.org
 
 * Xerces-C
+  License: Apache Software License, Version 2.0.
   http://xml.apache.org/xerces-c/index.html
 
 * OpenAL
+  License: LGPL
   http://www.openal.org
 
 * Ogg
+  License: BSD-like
   http://www.xiph.org/ogg/vorbis  
 
 * Vorbis
+  License: BSD-like
   http://www.vorbis.com
+  
+* Lua 5.1
+  License: MIT
+  http://www.lua.org/
 
 If the configure script can't find some of the libraries, make sure that you
 also have the -dev packages installed that some distributions provide.

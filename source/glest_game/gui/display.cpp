@@ -33,7 +33,6 @@ Display::Display(){
 	colors[3]= Vec3f(0.7f, 0.7f, 0.7f);
 
 	currentColor= 0;
-
 	clear();
 }
 

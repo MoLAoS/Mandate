@@ -316,6 +316,12 @@ void MenuStateNewGame::render(){
 }
 
 void MenuStateNewGame::update() {
+	//TOOD: add AutoTest to config
+	/*
+	if(Config::getInstance().getBool("AutoTest")){
+		AutoTest::getInstance().updateNewGame(program, mainMenu);
+	}
+	*/
 	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
 	Lang& lang = Lang::getInstance();
 
@@ -343,9 +349,9 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 	int factionCount= 0;
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
-	gameSettings->setMapPath("maps/" + mapFiles[listBoxMap.getSelectedItemIndex()]+".gbm");
-    gameSettings->setTilesetPath("tilesets/" + tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-    gameSettings->setTechPath("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setMap(mapFiles[listBoxMap.getSelectedItemIndex()]);
+    gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
+    gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
 
     for(int i=0; i<mapInfo.players; ++i){
 		ControlType ct= static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());

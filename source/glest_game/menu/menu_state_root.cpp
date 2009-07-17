@@ -128,4 +128,11 @@ void MenuStateRoot::render(){
 	renderer.renderLabel(&labelVersion);
 }
 
+void MenuStateRoot::update(){
+	//TOOD: add AutoTest to config
+	/*if(Config::getInstance().getBool("AutoTest")){
+		AutoTest::getInstance().updateRoot(program, mainMenu);
+	}*/
+}
+
 }}//end namespace

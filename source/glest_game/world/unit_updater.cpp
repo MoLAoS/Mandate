@@ -63,6 +63,7 @@ void UnitUpdater::init(Game &game) {
 	this->world = game.getWorld();
 	this->map = world->getMap();
 	this->console = game.getConsole();
+   this->scriptManager = game.getScriptManager ();
 	pathFinder.init(map);
 }
 
@@ -527,6 +528,7 @@ void UnitUpdater::updateBuild(Unit *unit){
 		}
 
 		//if arrived destination
+        assert(command->getUnitType()!=NULL);
 		if(map->isFreeCells(command->getPos(), buildingSize, fLand)) {
 			if(!verifySubfaction(unit, builtUnitType)) {
 				return;
@@ -634,6 +636,8 @@ void UnitUpdater::updateBuild(Unit *unit){
 			unit->finishCommand();
 			unit->setCurrSkill(scStop);
 			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
+			builtUnit->born();
+			scriptManager->onUnitCreated(builtUnit);
 			if(unit->getFactionIndex()==world->getThisFactionIndex()) {
 				SoundRenderer::getInstance().playFx(
 					bct->getBuiltSound(),
@@ -713,6 +717,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
 					world->getStats().harvest(unit->getFactionIndex(), resourceAmount);
+               scriptManager->onResourceHarvested ();
 
 					//if next to a store unload resources
 					unit->getPath()->clear();
@@ -888,6 +893,8 @@ void UnitUpdater::updateRepair(Unit *unit) {
 				unit->setCurrSkill(scStop);
 				if(!wasBuilt) {
 					//building finished
+					repaired->born();
+					scriptManager->onUnitCreated(repaired);
 					if(unit->getFactionIndex() == world->getThisFactionIndex()) {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(ccBuild);
@@ -953,6 +960,7 @@ void UnitUpdater::updateProduce(Unit *unit) {
 			} else {
 				produced->create();
 				produced->born();
+				scriptManager->onUnitCreated( produced );
 				world->getStats().produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 
@@ -1053,6 +1061,7 @@ void UnitUpdater::updateMorph(Unit *unit){
 				if(gui->isSelected(unit)) {
 					gui->onSelectionChanged();
 				}
+            scriptManager->onUnitCreated ( unit );
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
 				if(isNetworkServer()) {
 					getServerInterface()->unitMorph(unit);
@@ -1236,6 +1245,7 @@ void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attac
 	if (attacked->decHp(static_cast<int>(damage))) {
 		world->doKill(attacker, attacked);
 		actualDamage = startingHealth;
+      scriptManager->onUnitDied ( attacked );
 	} else {
 		actualDamage = (int)roundf(damage);
 	}

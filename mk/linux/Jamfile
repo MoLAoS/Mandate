@@ -17,6 +17,7 @@ LIB_DIRS =
 	sound
 	sound/openal
 	xml
+	lua
 ;
 
 for i in $(LIB_DIRS) {
@@ -31,7 +32,7 @@ if $(USE_PCH) = "yes" {
 }
 
 Library glestlib : $(LIB_SOURCES) : : $(LIB_PCH) ;
-ExternalLibs glestlib : SDL GL GLU XERCES VORBIS VORBISFILE OGG OPENAL Z ;
+ExternalLibs glestlib : SDL GL GLU XERCES VORBIS VORBISFILE OGG OPENAL LUA Z ;
 IncludeDir glestlib : $(LIB_INCLUDE_DIRS) ;
 
 #### Game ####
@@ -65,7 +66,7 @@ if $(USE_PCH) = "yes" {
 
 Application glestadv : $(GLEST_SOURCES) : : $(GLEST_PCH) ;
 LinkWith glestadv : glestlib ;
-ExternalLibs glestadv : SDL GL GLU XERCES VORBIS VORBISFILE OGG OPENAL Z ;
+ExternalLibs glestadv : SDL GL GLU XERCES VORBIS VORBISFILE OGG OPENAL LUA Z ;
 IncludeDir glestadv : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_DIRS) ;
 
 #### Editor ####

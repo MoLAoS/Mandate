@@ -49,9 +49,10 @@ typedef map<int, Faction*> FactionMap;
 
 // =====================================================
 // 	class NameIdPair
+//
+/// Base class for anything that has both a name and id 
 // =====================================================
 
-/** Base class for anything that has both a name and id */
 class NameIdPair {
 protected:
 	int id;				//id
@@ -71,9 +72,10 @@ public:
 
 // =====================================================
 // 	class DisplayableType
+//
+/// Base class for anything that has a name, id and a portrait.
 // =====================================================
 
-/** Base class for anything that has a name, id and a portrait. */
 class DisplayableType : public NameIdPair {
 protected:
 	Texture2D *image;	//portrait
