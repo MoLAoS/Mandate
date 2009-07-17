@@ -692,10 +692,10 @@ bool World::placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spacia
                 Vec2i pos= Vec2i(i,j)+startLoc;
 				if(spaciated){
                     const int spacing= 2;
-					freeSpace= map.isFreeCells(pos-Vec2i(spacing), size+spacing*2, currField);
+					freeSpace= map.areFreeCells(pos-Vec2i(spacing), size+spacing*2, currField);
 				}
 				else{
-                    freeSpace= map.isFreeCells(pos, size, currField);
+                    freeSpace= map.areFreeCells(pos, size, currField);
 				}
 
                 if(freeSpace){
@@ -735,8 +735,9 @@ void World::moveUnitCells(Unit *unit) {
 	map.putUnitCells(unit, newPos);
 
 	//water splash
-	if(tileset.getWaterEffects() && unit->getCurrField()==fLand){
-		if(map.getSubmerged(map.getCell(unit->getLastPos()))){
+	if(tileset.getWaterEffects() && unit->getCurrField()==FieldWalkable){
+      if ( map.getCell(unit->getLastPos())->isSubmerged () )
+      {
 			for(int i=0; i<3; ++i){
 				waterEffects.addWaterSplash(
 					Vec2f(unit->getLastPos().x+random.randRange(-0.4f, 0.4f), unit->getLastPos().y+random.randRange(-0.4f, 0.4f)));
@@ -938,14 +939,14 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName){
 void World::initCells() {
 
 	Logger::getInstance().add("State cells", true);
-    for(int i=0; i<map.getSurfaceW(); ++i){
-        for(int j=0; j<map.getSurfaceH(); ++j){
+    for(int i=0; i<map.getTileW(); ++i){
+        for(int j=0; j<map.getTileH(); ++j){
 
-			SurfaceCell *sc= map.getSurfaceCell(i, j);
+			Tile *sc= map.getTile(i, j);
 
 			sc->setFowTexCoord(Vec2f(
-				i/(next2Power(map.getSurfaceW())-1.f),
-				j/(next2Power(map.getSurfaceH())-1.f)));
+				i/(next2Power(map.getTileW())-1.f),
+				j/(next2Power(map.getTileH())-1.f)));
 
 			for(int k=0; k<GameConstants::maxPlayers; k++){
 				sc->setExplored(k, false);
@@ -957,22 +958,22 @@ void World::initCells() {
 
 //init surface textures
 void World::initSplattedTextures(){
-	for(int i=0; i<map.getSurfaceW()-1; ++i){
-        for(int j=0; j<map.getSurfaceH()-1; ++j){
+	for(int i=0; i<map.getTileW()-1; ++i){
+        for(int j=0; j<map.getTileH()-1; ++j){
 			Vec2f coord;
 			const Texture2D *texture;
-			SurfaceCell *sc00= map.getSurfaceCell(i, j);
-			SurfaceCell *sc10= map.getSurfaceCell(i+1, j);
-			SurfaceCell *sc01= map.getSurfaceCell(i, j+1);
-			SurfaceCell *sc11= map.getSurfaceCell(i+1, j+1);
+			Tile *sc00= map.getTile(i, j);
+			Tile *sc10= map.getTile(i+1, j);
+			Tile *sc01= map.getTile(i, j+1);
+			Tile *sc11= map.getTile(i+1, j+1);
 			tileset.addSurfTex(
-				sc00->getSurfaceType(),
-				sc10->getSurfaceType(),
-				sc01->getSurfaceType(),
-				sc11->getSurfaceType(),
+				sc00->getTileType(),
+				sc10->getTileType(),
+				sc01->getTileType(),
+				sc11->getTileType(),
 				coord, texture);
-			sc00->setSurfTexCoord(coord);
-			sc00->setSurfaceTexture(texture);
+			sc00->setTileTexCoord(coord);
+			sc00->setTileTexture(texture);
 		}
 	}
 }
@@ -1046,10 +1047,10 @@ void World::initMap(){
 
 void World::initExplorationState(){
 	if(!fogOfWar){
-		for(int i=0; i<map.getSurfaceW(); ++i){
-			for(int j=0; j<map.getSurfaceH(); ++j){
-				map.getSurfaceCell(i, j)->setVisible(thisTeamIndex, true);
-				map.getSurfaceCell(i, j)->setExplored(thisTeamIndex, true);
+		for(int i=0; i<map.getTileW(); ++i){
+			for(int j=0; j<map.getTileH(); ++j){
+				map.getTile(i, j)->setVisible(thisTeamIndex, true);
+				map.getTile(i, j)->setExplored(thisTeamIndex, true);
 			}
 		}
 	}
@@ -1060,7 +1061,7 @@ void World::initExplorationState(){
 
 void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
-	Vec2i newSurfPos = Map::toSurfCoords(newPos);
+	Vec2i newSurfPos = Map::toTileCoords(newPos);
 	int surfSightRange = sightRange / Map::cellScale + 1;
 	int sweepRange = surfSightRange + indirectSightRange + 1;
 
@@ -1070,9 +1071,9 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 			Vec2i currRelPos(x, y);
 			Vec2i currPos = newSurfPos + currRelPos;
 
-			if (map.isInsideSurface(currPos)) {
+			if (map.isInsideTile(currPos)) {
 				float dist = currRelPos.length();
-				SurfaceCell *sc = map.getSurfaceCell(currPos);
+				Tile *sc = map.getTile(currPos);
 
 				//explore
 				if (dist < sweepRange) {
@@ -1097,9 +1098,9 @@ void World::computeFow() {
 	//reset visibility in cells
 	for(int k = 0; k < GameConstants::maxPlayers; ++k){
 		if(fogOfWar || k != thisTeamIndex) {
-			for(int i = 0; i < map.getSurfaceW(); ++i) {
-				for(int j = 0; j < map.getSurfaceH(); ++j) {
-					map.getSurfaceCell(i, j)->setVisible(k, false);
+			for(int i = 0; i < map.getTileW(); ++i) {
+				for(int j = 0; j < map.getTileH(); ++j) {
+					map.getTile(i, j)->setVisible(k, false);
 				}
 			}
 		}
@@ -1125,7 +1126,7 @@ void World::computeFow() {
 			//fire
 			ParticleSystem *fire = unit->getFire();
 			if (fire) {
-				fire->setActive(map.getSurfaceCell(Map::toSurfCoords(unit->getPos()))->isVisible(thisTeamIndex));
+				fire->setActive(map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(thisTeamIndex));
 			}
 		}
 	}
@@ -1146,13 +1147,13 @@ void World::computeFow() {
 				//iterate through all cells
 				PosCircularIteratorSimple pci(map, unit->getPos(), sightRange + indirectSightRange);
 				while (pci.getNext(pos, distance)) {
-					Vec2i surfPos = Map::toSurfCoords(pos);
+					Vec2i surfPos = Map::toTileCoords(pos);
 
 					//compute max alpha
 					float maxAlpha;
-					if (surfPos.x > 1 && surfPos.y > 1 && surfPos.x < map.getSurfaceW() - 2 && surfPos.y < map.getSurfaceH() - 2) {
+					if (surfPos.x > 1 && surfPos.y > 1 && surfPos.x < map.getTileW() - 2 && surfPos.y < map.getTileH() - 2) {
 						maxAlpha = 1.f;
-					} else if (surfPos.x > 0 && surfPos.y > 0 && surfPos.x < map.getSurfaceW() - 1 && surfPos.y < map.getSurfaceH() - 1) {
+					} else if (surfPos.x > 0 && surfPos.y > 0 && surfPos.x < map.getTileW() - 1 && surfPos.y < map.getTileH() - 1) {
 						maxAlpha = 0.3f;
 					} else {
 						maxAlpha = 0.0f;

@@ -48,7 +48,7 @@ enum Weather{
 };
 
 class Renderer;
-class SurfaceCell;
+class Tile;
 
 // =====================================================
 //	class AmbientSounds

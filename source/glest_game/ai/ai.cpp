@@ -286,7 +286,7 @@ bool Ai::findPosForBuilding(const UnitType* building, const Vec2i &searchPos, Ve
 		for (int i = searchPos.x - currRadius; i < searchPos.x + currRadius; ++i) {
 			for (int j = searchPos.y - currRadius; j < searchPos.y + currRadius; ++j) {
 				outPos = Vec2i(i, j);
-				if (aiInterface->isFreeCells(outPos - Vec2i(spacing), building->getSize() + spacing*2, fLand)) {
+				if (aiInterface->areFreeCells(outPos - Vec2i(spacing), building->getSize() + spacing*2, FieldWalkable)) {
 					return true;
 				}
 			}
@@ -485,7 +485,7 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 
     for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
         const Unit *unit= aiInterface->getMyUnit(i);
-		const AttackCommandType *act= unit->getType()->getFirstAttackCommand(field);
+		const AttackCommandType *act= unit->getType()->getFirstAttackCommand(field==FieldAir?ZoneAir:ZoneSurface);
 		bool isWarrior= !unit->getType()->hasCommandClass(ccHarvest) && !unit->getType()->hasCommandClass(ccProduce);
 		bool alreadyAttacking= unit->getCurrSkill()->getClass()==scAttack;
 		if(!alreadyAttacking && act!=NULL && (ultraAttack || isWarrior)){

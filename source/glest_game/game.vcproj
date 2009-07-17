@@ -225,7 +225,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world"
+				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -253,7 +253,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib xerces-depdom_static_2.lib xerces-c_static_2.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib libcmt.lib"
+				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib xerces-depdom_static_2.lib xerces-c_static_2.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zdll.lib libcmt.lib lua5.1.lib"
 				Version="3.1.0-beta-something"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
@@ -396,11 +396,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\path_finder\annotated_map.h"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\astar_nodepool.h"
+				>
+			</File>
+			<File
 				RelativePath=".\facilities\auto_test.h"
 				>
 			</File>
 			<File
 				RelativePath=".\main\battle_end.h"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\bestfirst_node_pool.h"
 				>
 			</File>
 			<File
@@ -497,6 +509,10 @@
 			</File>
 			<File
 				RelativePath=".\facilities\game_util.h"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\graph_search.h"
 				>
 			</File>
 			<File
@@ -613,6 +629,10 @@
 			</File>
 			<File
 				RelativePath=".\ai\path_finder.h"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\path_finder.h"
 				>
 			</File>
 			<File
@@ -748,11 +768,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\path_finder\annotated_map.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\astar_nodepool.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\facilities\auto_test.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\main\battle_end.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\bestfirst_node_pool.cpp"
 				>
 			</File>
 			<File
@@ -841,6 +873,10 @@
 			</File>
 			<File
 				RelativePath=".\facilities\game_util.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\path_finder\graph_search.cpp"
 				>
 			</File>
 			<File
@@ -971,56 +1007,8 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\ai\path_finder.cpp"
+				RelativePath=".\path_finder\path_finder.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						InlineFunctionExpansion="2"
-						FavorSizeOrSpeed="1"
-						BasicRuntimeChecks="0"
-						SmallerTypeCheck="false"
-						EnableEnhancedInstructionSet="2"
-						UsePrecompiledHeader="0"
-						BrowseInformation="1"
-						DebugInformationFormat="3"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release+SSE2|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug+opt|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						InlineFunctionExpansion="2"
-						FavorSizeOrSpeed="1"
-						BasicRuntimeChecks="0"
-						SmallerTypeCheck="false"
-						EnableEnhancedInstructionSet="2"
-						UsePrecompiledHeader="0"
-						BrowseInformation="1"
-						DebugInformationFormat="3"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\pch.cpp"

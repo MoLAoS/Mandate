@@ -155,9 +155,9 @@ public:
 	}
 	
 	bool toRenderUnit(const Unit *unit) const {
-		return map.getSurfaceCell(Map::toSurfCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
+		return map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
 			|| (unit->getCurrSkill()->getClass() == scAttack
-			&& map.getSurfaceCell(Map::toSurfCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
+			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
 	}
 
    //scripting interface

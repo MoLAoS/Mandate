@@ -226,12 +226,13 @@ string SkillType::skillClassToStr(SkillClass skillClass){
 	};
 }
 
-string SkillType::fieldToStr(Field field){
-	switch(field){
-	case fLand: return "Land";
-	case fAir: return "Air";
-//	case fWater: return "Water";
-//	case fSubterranean: return "Subterranean";
+string SkillType::fieldToStr(Zone field){
+	switch(field)
+   {
+   case ZoneSurfaceProp: return "SurfaceProp";
+	case ZoneSurface: return "Surface";
+	case ZoneAir: return "Air";
+//	case fSubsurface: return "Subsurface";
 
 		default:
 		assert(false);
@@ -306,7 +307,7 @@ void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 	if(!attackFieldsNode && !fieldsNode) {
 		throw runtime_error("Must specify either <attack-fields> or <fields>.");
 	}
-	fields.load(fieldsNode ? fieldsNode : attackFieldsNode, dir, tt, ft);
+	zones.load(fieldsNode ? fieldsNode : attackFieldsNode, dir, tt, ft);
 }
 
 void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* rangeDesc) const {
@@ -322,11 +323,11 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 	descRange(str, unit, rangeDesc);
 
 	//fields
-	str+= lang.get("Fields") + ": ";
-	for(int i= 0; i < fCount; i++){
-		Field field = static_cast<Field>(i);
-		if(fields.get(field)){
-			str+= fieldToStr(field) + " ";
+	str+= lang.get("Zones") + ": ";
+	for(int i= 0; i < ZoneCount; i++){
+		Zone zone = static_cast<Zone>(i);
+		if(zones.get(zone)){
+			str+= fieldToStr(zone) + " ";
 		}
 	}
 	str+="\n";

@@ -31,7 +31,8 @@ using namespace Shared::Xml;
 
 namespace Glest { namespace Game {
 
-const char *Fields::names[] = {"land", "air"/*, "water", "subterranean"*/};
+const char *Zones::names[] = {"prop", "land"/*<- == "surface"*/, "air", /*, "subsurface"*/};
+const char *Fields::names[] = {"land"/*<- == "walkable"*/, "air", "any_water", "deep_water", "amphibious" };
 const char *UnitProperties::names[] = {"burnable", "rotated_climb", "wall"};
 
 // ===============================

@@ -26,6 +26,8 @@ namespace Glest{ namespace Game{
 class Unit;
 class Map;
 class ScriptManager;
+class ParticleDamager;
+namespace Search { class PathFinder; }
 
 // =====================================================
 //	class UnitUpdater
@@ -34,8 +36,6 @@ class ScriptManager;
 ///	controlled units, performs basic actions only
 ///	such as responding to an attack
 // =====================================================
-
-class ParticleDamager;
 
 class UnitUpdater{
 private:
@@ -60,7 +60,7 @@ private:
 	World *world;
 	Console *console;
    ScriptManager *scriptManager;
-	PathFinder pathFinder;
+   Search::PathFinder *pathFinder;
 	Random random;
 
 public:

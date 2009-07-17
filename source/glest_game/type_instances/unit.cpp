@@ -130,11 +130,11 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	progress2 = 0;
 	kills = 0;
 
-	if(type->getField(fAir)) currField = fAir;
+	if(type->getField(FieldAir)) currField = FieldAir;
 //	if(getType()->getField(fWater)) currField = fWater;
 //	if(getType()->getField(fSubterranean)) currField = fSubterranean;
-	if(type->getField(fLand)) currField = fLand;
-	targetField = fLand;		// init just to keep it pretty in memory
+	if(type->getField(FieldWalkable)) currField = FieldWalkable;
+	targetField = FieldWalkable;		// init just to keep it pretty in memory
 	level= NULL;
 
 	float rot = 0.f;
@@ -894,12 +894,12 @@ void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 
 const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *targetUnit) const{
 	const CommandType *commandType = NULL;
-	SurfaceCell *sc = map->getSurfaceCell(Map::toSurfCoords(pos));
+	Tile *sc = map->getTile(Map::toTileCoords(pos));
 
 	if (targetUnit) {
 		//attack enemies
 		if (!isAlly(targetUnit)) {
-			commandType = type->getFirstAttackCommand(targetUnit->getCurrField());
+			commandType = type->getFirstAttackCommand(targetUnit->getCurrZone());
 
 		//repair allies
 		} else {
@@ -1316,7 +1316,7 @@ void Unit::incKills() {
 bool Unit::morph(const MorphCommandType *mct) {
 	const UnitType *morphUnitType = mct->getMorphUnit();
 
-	if (map->isFreeCellsOrHasUnit(pos, morphUnitType->getSize(), currField, this)) {
+	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), currField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = morphUnitType;
@@ -1418,7 +1418,7 @@ void Unit::effectExpired(Effect *e){
 inline float Unit::computeHeight(const Vec2i &pos) const {
 	float height = map->getCell(pos)->getHeight();
 
-	if (currField == fAir) {
+	if (currField == FieldAir) {
 		height += World::airHeight;
 	}
 

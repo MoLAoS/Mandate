@@ -324,11 +324,11 @@ const HarvestCommandType *UnitType::getFirstHarvestCommand(const ResourceType *r
 	return NULL;
 }
 
-const AttackCommandType *UnitType::getFirstAttackCommand(Field field) const{
+const AttackCommandType *UnitType::getFirstAttackCommand(Zone zone) const{
 	for(int i=0; i<commandTypes.size(); ++i){
 		if(commandTypes[i]->getClass()== ccAttack){
 			const AttackCommandType *act= static_cast<const AttackCommandType*>(commandTypes[i]);
-			if(act->getAttackSkillTypes()->getField(field)){
+			if(act->getAttackSkillTypes()->getZone(zone)){
 				return act;
 			}
 		}

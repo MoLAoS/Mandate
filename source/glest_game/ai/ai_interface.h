@@ -81,7 +81,7 @@ public:
 	bool reqsOk(const RequirableType *rt);
 	bool reqsOk(const CommandType *ct);
     bool checkCosts(const ProducibleType *pt);
-	bool isFreeCells(const Vec2i &pos, int size, Field field);
+	bool areFreeCells(const Vec2i &pos, int size, Field field);
 	bool isUltra() const {return world->getFaction(factionIndex)->getCpuUltraControl();}
 
 private:

@@ -136,7 +136,11 @@ public:
 	bool isMultiBuild() const							{return multiBuild;}
 	float getHalfSize() const							{return halfSize;}
 	float getHalfHeight() const							{return halfHeight;}
-
+   bool isMobile () const
+   {
+      const SkillType *st = getFirstStOfClass(scMove);
+      return st && st->getSpeed() > 0 ? true: false;
+   }
 	//cellmap
 	bool *cellMap;
 
@@ -154,7 +158,7 @@ public:
 	const CommandType *getFirstCtOfClass(CommandClass commandClass) const {return firstCommandTypeOfClass[commandClass];}
 	const SkillType *getFirstStOfClass(SkillClass skillClass) const {return firstSkillTypeOfClass[skillClass];}
     const HarvestCommandType *getFirstHarvestCommand(const ResourceType *resourceType) const;
-	const AttackCommandType *getFirstAttackCommand(Field field) const;
+	const AttackCommandType *getFirstAttackCommand(Zone zone) const;
 	const RepairCommandType *getFirstRepairCommand(const UnitType *repaired) const;
 
 	//has

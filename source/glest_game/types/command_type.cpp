@@ -54,7 +54,7 @@ void AttackSkillTypes::init() {
 		if(types[i]->getMaxRange() > maxRange) {
 			maxRange = types[i]->getMaxRange();
 		}
-		fields.flags |= types[i]->getFields().flags;
+		zones.flags |= types[i]->getZones().flags;
 		allPrefs.flags |= associatedPrefs[i].flags;
 	}
 }
@@ -97,7 +97,7 @@ const AttackSkillType *AttackSkillTypes::getPreferredAttack(const Unit *unit,
 	if(hasPreference(aspWheneverPossible)) {
 		ast = getSkillForPref(aspWheneverPossible, 0);
 		assert(ast);
-		if(ast->getField(target->getCurrField())) {
+		if(ast->getZone(target->getCurrZone())) {
 			return unit->getMaxRange(ast) >= rangeToTarget ? ast : NULL;
 		}
 		ast = NULL;
@@ -114,7 +114,7 @@ const AttackSkillType *AttackSkillTypes::getPreferredAttack(const Unit *unit,
 	//still haven't found an attack skill then use the 1st that's in range
 	if(!ast) {
 		for(int i = 0; i < types.size(); ++i) {
-			if(unit->getMaxRange(types[i]) >= rangeToTarget && types[i]->getField(target->getCurrField())) {
+			if(unit->getMaxRange(types[i]) >= rangeToTarget && types[i]->getZone(target->getCurrZone())) {
 				ast = types[i];
 				break;
 			}

@@ -285,13 +285,13 @@ void Minimap::write(NetworkDataBuffer &buf) const {
  * Alpha states from the cell being visible will be calculated later, so visilbity is ignored here.
  */
 void Minimap::synthesize(const Map *map, int team) {
-	int h = map->getSurfaceH();
-	int w = map->getSurfaceW();
+	int h = map->getTileH();
+	int w = map->getTileW();
 
 	// smooth edges of fow alpha
 	for(int x = 0; x < w; ++x) {
 		for(int y = 0; y < h; ++y) {
-			if(!map->getSurfaceCell(x, y)->isExplored(team)) {
+			if(!map->getTile(x, y)->isExplored(team)) {
 				continue;
 			}
 			int exploredNeighbors = 0;
@@ -300,7 +300,7 @@ void Minimap::synthesize(const Map *map, int team) {
 					Vec2i pos(x + xoff, y + yoff);
 
 					// we'll count out of bounds as explored so edges aren't messed up
-					if(!map->isInsideSurface(pos) || (map->getSurfaceCell(pos)->isExplored(team)
+					if(!map->isInsideTile(pos) || (map->getTile(pos)->isExplored(team)
 							&& (xoff || yoff))) {
 						++exploredNeighbors;
 					}
@@ -328,10 +328,10 @@ void Minimap::computeTexture(const World *world){
 
 	for(int j=0; j<tex->getPixmap()->getH(); ++j){
 		for(int i=0; i<tex->getPixmap()->getW(); ++i){
-			SurfaceCell *sc= map->getSurfaceCell(i, j);
+			Tile *sc= map->getTile(i, j);
 
 			if(sc->getObject()==NULL || sc->getObject()->getType()==NULL){
-				const Pixmap2D *p= world->getTileset()->getSurfPixmap(sc->getSurfaceType(), 0);
+				const Pixmap2D *p= world->getTileset()->getSurfPixmap(sc->getTileType(), 0);
 				color= p->getPixel3f(p->getW()/2, p->getH()/2);
 				color= color * static_cast<float>(sc->getVertex().y/6.f);
 

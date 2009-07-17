@@ -558,7 +558,7 @@ void Renderer::renderMouse3d(){
 				glTranslatef(pos3f.x+offset, pos3f.y, pos3f.z+offset);
 
 				//choose color
-				if(map->isFreeCellsOrHasUnit(*i, building->getSize(), fLand, units)) {
+				if(map->areFreeCellsOrHaveUnits(*i, building->getSize(), FieldWalkable, units)) {
 					color= Vec4f(1.f, 1.f, 1.f, 0.5f);
 				} else {
 					color= Vec4f(1.f, 0.f, 0.f, 0.5f);
@@ -1134,7 +1134,7 @@ void Renderer::renderSurface(){
 	int currTex;
 	const World *world= game->getWorld();
 	const Map *map= world->getMap();
-	const Rect2i mapBounds(0, 0, map->getSurfaceW()-1, map->getSurfaceH()-1);
+	const Rect2i mapBounds(0, 0, map->getTileW()-1, map->getTileH()-1);
 	float coordStep= world->getTileset()->getSurfaceAtlas()->getCoordStep();
 
 	assertGl();
@@ -1178,16 +1178,16 @@ void Renderer::renderSurface(){
 
 		if(mapBounds.isInside(pos)){
 
-			SurfaceCell *tc00= map->getSurfaceCell(pos.x, pos.y);
-			SurfaceCell *tc10= map->getSurfaceCell(pos.x+1, pos.y);
-			SurfaceCell *tc01= map->getSurfaceCell(pos.x, pos.y+1);
-			SurfaceCell *tc11= map->getSurfaceCell(pos.x+1, pos.y+1);
+			Tile *tc00= map->getTile(pos.x, pos.y);
+			Tile *tc10= map->getTile(pos.x+1, pos.y);
+			Tile *tc01= map->getTile(pos.x, pos.y+1);
+			Tile *tc11= map->getTile(pos.x+1, pos.y+1);
 
 			triangleCount+= 2;
 			pointCount+= 4;
 
 			//set texture
-			currTex= static_cast<const Texture2DGl*>(tc00->getSurfaceTexture())->getHandle();
+			currTex= static_cast<const Texture2DGl*>(tc00->getTileTexture())->getHandle();
 			if(currTex!=lastTex){
 				lastTex=currTex;
 				glBindTexture(GL_TEXTURE_2D, lastTex);
@@ -1266,7 +1266,7 @@ void Renderer::renderObjects(){
 
 		if(map->isInside(pos)){
 
-			SurfaceCell *sc= map->getSurfaceCell(Map::toSurfCoords(pos));
+			Tile *sc= map->getTile(Map::toTileCoords(pos));
 			Object *o= sc->getObject();
 			if(o && sc->isExplored(thisTeamIndex)){
 
@@ -1354,7 +1354,7 @@ void Renderer::renderWater(){
 
 	Rect2i boundingRect= visibleQuad.computeBoundingRect();
 	Rect2i scaledRect= boundingRect/Map::cellScale;
-	scaledRect.clamp(0, 0, map->getSurfaceW()-1, map->getSurfaceH()-1);
+	scaledRect.clamp(0, 0, map->getTileW()-1, map->getTileH()-1);
 
 	float waterLevel= world->getMap()->getWaterLevel();
     for(int j=scaledRect.p[0].y; j<scaledRect.p[1].y; ++j){
@@ -1362,8 +1362,8 @@ void Renderer::renderWater(){
 
 		for(int i=scaledRect.p[0].x; i<=scaledRect.p[1].x; ++i){
 
-			SurfaceCell *tc0= map->getSurfaceCell(i, j);
-            SurfaceCell *tc1= map->getSurfaceCell(i, j+1);
+			Tile *tc0= map->getTile(i, j);
+            Tile *tc1= map->getTile(i, j+1);
 
 			int thisTeamIndex= world->getThisTeamIndex();
 			if(tc0->getNearSubmerged() && (tc0->isExplored(thisTeamIndex) || tc1->isExplored(thisTeamIndex))){
@@ -1736,7 +1736,7 @@ void Renderer::renderWaterEffects(){
 
 			//render only if visible
 			Vec2i intPos= Vec2i(static_cast<int>(ws->getPos().x), static_cast<int>(ws->getPos().y));
-			if(map->getSurfaceCell(Map::toSurfCoords(intPos))->isVisible(world->getThisTeamIndex())){
+			if(map->getTile(Map::toTileCoords(intPos))->isVisible(world->getThisTeamIndex())){
 
 				float scale= ws->getAnim();
 
@@ -2641,7 +2641,7 @@ void Renderer::renderObjectsFast(){
 
 		if(map->isInside(pos)){
 
-			SurfaceCell *sc= map->getSurfaceCell(Map::toSurfCoords(pos));
+			Tile *sc= map->getTile(Map::toTileCoords(pos));
 			Object *o= sc->getObject();
 			if(sc->isExplored(thisTeamIndex) && o!=NULL){
 
