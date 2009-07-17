@@ -40,8 +40,7 @@ public:
     static const int cellSideCount = 4;
     static const int upCellCount = cellSideCount * cellSideCount;
     static const int downCellCount = cellSideCount * cellSideCount;
-    //MERGE DELETE
-    //static const int colorCount = 4;
+    static const int colorCount = 4;
     static const int imageSize = 32;
     static const int invalidPos = -1;
     static const int downY = imageSize * 9;
@@ -57,11 +56,9 @@ private:
 	int index[downCellCount];
 	const CommandType *commandTypes[downCellCount];
 	CommandClass commandClasses[downCellCount];
-   //MERGE DELETE
-	//Vec3f colors[colorCount];
+	Vec3f colors[colorCount];
 	int progressBar;
-   //MERGE DELETE
-	//int currentColor;
+	int currentColor;
 	int downSelectedPos;
 
 public:
@@ -77,8 +74,7 @@ public:
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
 	CommandClass getCommandClass(int i)				{return commandClasses[i];}
-	//MERGE DELETE
-   //Vec3f getColor() const							{return colors[currentColor];}
+	Vec3f getColor() const							{return colors[currentColor];}
 	int getProgressBar() const						{return progressBar;}
 	int getDownSelectedPos() const					{return downSelectedPos;}
 
@@ -98,8 +94,7 @@ public:
 	//misc
 	void clear();
 	int computeDownIndex(int x, int y);
-	//MERGE DELETE
-   //void switchColor() {currentColor = (currentColor + 1) % colorCount;}
+	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 
 	int computeDownX(int index) const {
 		return (index % cellSideCount) * imageSize;

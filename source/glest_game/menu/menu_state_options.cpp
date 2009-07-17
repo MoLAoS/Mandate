@@ -148,10 +148,7 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 	}
 	else if(listBoxLang.mouseClick(x, y)){
 		config.setUiLang(listBoxLang.getSelectedItem());
-      //MERGE DELETE
-		//lang.load("data/lang/"+config.getUiLang());
-      //MERGE ADD
-      lang.loadStrings(config.getUiLang());
+		lang.loadStrings(config.getUiLang());
 		saveConfig();
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
 

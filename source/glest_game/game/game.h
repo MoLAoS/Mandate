@@ -78,7 +78,7 @@ private:
     Commander commander;
     Console console;
 	ChatManager chatManager;
-   ScriptManager scriptManager;
+	ScriptManager scriptManager;
 
 	//misc
 	Checksum checksum;
@@ -94,10 +94,7 @@ private:
 	Speed speed;
 	float fUpdateLoops;
 	float lastUpdateLoopsFraction;
-	//MERGE DELETE
-   //GraphicMessageBox *exitMessageBox;
-   //MERGE ADD
-   GraphicMessageBox mainMessageBox;
+	GraphicMessageBox mainMessageBox;
 
 	GraphicTextEntryBox *saveBox;
 	Vec2i lastMousePos;
@@ -122,7 +119,7 @@ public:
 	const Gui *getGui() const				{return &gui;}
 	Commander *getCommander()				{return &commander;}
 	Console *getConsole()					{return &console;}
-   ScriptManager *getScriptManager()		{return &scriptManager;}
+	ScriptManager *getScriptManager()		{return &scriptManager;}
 	World *getWorld()						{return &world;}
 	const World *getWorld() const			{return &world;}
 
@@ -148,10 +145,10 @@ public:
 	virtual void eventMouseWheel(int x, int y, int zDelta);
     virtual void mouseMove(int x, int y, const MouseState &mouseState);
 
-	void setCameraCell(int x, int y)	{
+	void setCameraCell(int x, int y) {
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
-   void quitGame ();
+	void quitGame ();
 
 private:
 	//render
@@ -161,8 +158,8 @@ private:
 	//misc
 	void _init();
 	void checkWinner();
-   void checkWinnerStandard();
-   void checkWinnerScripted();
+	void checkWinnerStandard();
+	void checkWinnerScripted();
 	bool hasBuilding(const Faction *faction);
 	void incSpeed();
 	void decSpeed();
@@ -170,9 +167,9 @@ private:
 	void updateSpeed();
 	int getUpdateLoops();
 
-   void showLoseMessageBox();
-   void showWinMessageBox();
-   void showMessageBox(const string &text, const string &header, bool toggle);
+	void showLoseMessageBox();
+	void showWinMessageBox();
+	void showMessageBox(const string &text, const string &header, bool toggle);
 
 	void showExitMessageBox(const string &text, bool toggle);
 	string controllerTypeToStr(ControlType ct);

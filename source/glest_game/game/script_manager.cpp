@@ -109,7 +109,7 @@ void ScriptManager::onMessageBoxOk(){
 		}
 	}
 
-	//MERGE : better quick fix, still no idea why this isn't needed in 3.2.2, maybe use a helper method to make this simpler
+	//close the messageBox now all messages have been shown
 	if (messageQueue.empty()){
 		messageBox.setEnabled(false);
 	}

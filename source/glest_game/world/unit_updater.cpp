@@ -528,7 +528,6 @@ void UnitUpdater::updateBuild(Unit *unit){
 		}
 
 		//if arrived destination
-		//MERGE ADD
         assert(command->getUnitType()!=NULL);
 		if(map->isFreeCells(command->getPos(), buildingSize, fLand)) {
 			if(!verifySubfaction(unit, builtUnitType)) {
@@ -637,10 +636,8 @@ void UnitUpdater::updateBuild(Unit *unit){
 			unit->finishCommand();
 			unit->setCurrSkill(scStop);
 			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
-         // MERGE ADD START
-         builtUnit->born ();
-         scriptManager->onUnitCreated ( builtUnit );
-         //MERGE ADD END
+			builtUnit->born();
+			scriptManager->onUnitCreated(builtUnit);
 			if(unit->getFactionIndex()==world->getThisFactionIndex()) {
 				SoundRenderer::getInstance().playFx(
 					bct->getBuiltSound(),
@@ -896,10 +893,8 @@ void UnitUpdater::updateRepair(Unit *unit) {
 				unit->setCurrSkill(scStop);
 				if(!wasBuilt) {
 					//building finished
-               //MERGE ADD START
-			      repaired->born();
-			      scriptManager->onUnitCreated(repaired);
-               //MERGE ADD END
+					repaired->born();
+					scriptManager->onUnitCreated(repaired);
 					if(unit->getFactionIndex() == world->getThisFactionIndex()) {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(ccBuild);
@@ -965,8 +960,7 @@ void UnitUpdater::updateProduce(Unit *unit) {
 			} else {
 				produced->create();
 				produced->born();
-            //MERGE ADD
-            scriptManager->onUnitCreated ( produced );
+				scriptManager->onUnitCreated( produced );
 				world->getStats().produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 

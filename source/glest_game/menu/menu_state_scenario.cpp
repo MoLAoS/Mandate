@@ -37,8 +37,6 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 	NetworkManager &networkManager= NetworkManager::getInstance();
     vector<string> results;
 
-    //MERGE ADD : related to the parameter
-    //this->dir = dir;
     labelInfo.init(350, 350);
 	labelInfo.setFont(CoreData::getInstance().getMenuFontNormal());
 
@@ -83,14 +81,6 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton){
     }
 	else if(buttonPlayNow.mouseClick(x,y)){
 		soundRenderer.playFx(coreData.getClickSoundC());
-		//MERGE DELETE START
-		/*
-		GameSettings *gameSettings= new GameSettings();
-        loadGameSettings(&scenarioInfo, gameSettings);
-		program.setState(new Game(program, *gameSettings));
-		*/
-		//MERGE DELETE END
-        //MERGE ADD
         launchGame();
 	}
     else if(listBoxScenario.mouseClick(x, y)){
@@ -127,8 +117,8 @@ void MenuStateScenario::render(){
 	renderer.renderButton(&buttonPlayNow);
 }
 
-//MERGE ADD START
 void MenuStateScenario::update(){
+	//TOOD: add AutoTest to config
 	/*
 	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateScenario(this);
@@ -146,7 +136,6 @@ void MenuStateScenario::setScenario(int i){
 	listBoxScenario.setSelectedItemIndex(i);
 	loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
 }
-//MERGE ADD END
 
 void MenuStateScenario::updateScenarioList(const string category){
 	vector<string> results;
@@ -173,7 +162,7 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
     Lang &lang= Lang::getInstance();
 
     XmlTree xmlTree;
-	//MERGE it was being duplicated in the two cases
+	//gae_scenarios/[category]/[scenario]/[scenario].xml
 	xmlTree.load("gae_scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
 
     const XmlNode *scenarioNode= xmlTree.getRootNode();
@@ -207,11 +196,9 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
         scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
         scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
         scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
-        //MERGE ADD START
         scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
         scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
         scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
-        //MERGE ADD END
     }
 
 	//add player info
@@ -241,13 +228,11 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	gameSettings->setMap( scenarioInfo->mapName );
     gameSettings->setTileset( scenarioInfo->tilesetName );
     gameSettings->setTech( scenarioInfo->techTreeName );
-	//MERGE ADD START
 	gameSettings->setScenario(scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
 	gameSettings->setScenarioDir("gae_scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] + "/" + gameSettings->getScenario());
 	gameSettings->setDefaultUnits(scenarioInfo->defaultUnits);
 	gameSettings->setDefaultResources(scenarioInfo->defaultResources);
 	gameSettings->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
-	//MERGE ADD END
 
 	int factionCount= 0;
     for(int i=0; i<GameConstants::maxPlayers; ++i){

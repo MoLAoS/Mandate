@@ -37,9 +37,6 @@ namespace Glest { namespace Game {
 Faction::ResourceTypes Faction::neededResources;
 
 void Faction::init(const FactionType *factionType, ControlType control, TechTree *techTree,
-      //MERGE DELETE
-		//int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction) {
-      //MERGE ADD
       int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources ) {
 	this->control = control;
 	this->factionType = factionType;
@@ -56,13 +53,9 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 	store.resize(techTree->getResourceTypeCount());
 	for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 		const ResourceType *rt = techTree->getResourceType(i);
-		//MERGE DELETE
-      //resources[i].init(rt, factionType->getStartingResourceAmount(rt));
-      //MERGE ADD START
-      int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
-      resources[i].init(rt, resourceAmount);
-      //MERGE ADD END
-      store[i].init(rt, 0);
+		int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
+		resources[i].init(rt, resourceAmount);
+		store[i].init(rt, 0);
 	}
 
 	texture = Renderer::getInstance().newTexture2D(rsGame);

@@ -26,10 +26,6 @@ using Shared::Util::Properties;
 
 class Lang {
 private:
-	//MERGE DELETE START
-   //string name;
-	//Properties langStrings;
-   //MERGE DELETE END
    string language;
    Properties strings;
    Properties scenarioStrings;
@@ -42,16 +38,9 @@ public:
 		static Lang lang;
 		return lang;
 	}
-   //MERGE DELETE
-	//void load(string file) {langStrings.load(file, true);}
-   //MERGE ADD
-   void loadStrings ( const string &language );
-   //MERGE ADD
-   void loadScenarioStrings ( const string &scenarioDir, const string &scenarioName );
-   //MERGE DELETE
-	//string getName() const {return name;}
-   //MERGE ADD
-   string getScenarioString ( const string &s );
+	void loadStrings( const string &language );
+	void loadScenarioStrings ( const string &scenarioDir, const string &scenarioName );
+	string getScenarioString ( const string &s );
 	string get(const string &s) const;
 };
 

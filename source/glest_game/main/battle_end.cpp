@@ -42,14 +42,13 @@ BattleEnd::~BattleEnd() {
 	SoundRenderer::getInstance().playMusic(CoreData::getInstance().getMenuMusic());
 }
 
-//MERGE ADD START
 void BattleEnd::update(){
+	//TOOD: add AutoTest to config
 	/*
 	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateBattleEnd(program);
 	}*/
 }
-//MERGE ADD END
 
 void BattleEnd::render() {
 	Renderer &renderer = Renderer::getInstance();

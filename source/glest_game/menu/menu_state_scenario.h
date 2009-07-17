@@ -38,11 +38,9 @@ private:
 	GraphicLabel labelScenario;
 	GraphicListBox listBoxScenario;
 
-	//MERGE NEW START
 	GraphicLabel labelCategory;
 	GraphicListBox listBoxCategory;
     vector<string> categories;
-	//MERGE NEW END
 
 	vector<string> scenarioFiles;
 
@@ -54,16 +52,13 @@ public:
     void mouseClick(int x, int y, MouseButton mouseButton);
 	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
-	//MERGE ADD START
 	void update();
 
 	void launchGame();
 	void setScenario(int i);
 	int getScenarioCount() const	{ return listBoxScenario.getItemCount(); }
-	//MERGE ADD END
 
 private:
-	//MERGE NEW ADD
 	void updateScenarioList(const string category);
     void loadScenarioInfo(string file, ScenarioInfo *scenarioInfo);
     void loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gameSettings);

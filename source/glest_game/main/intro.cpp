@@ -78,13 +78,12 @@ void Intro::update(){
 		program.setState(new MainMenu(program));
 	}
 
-	//MERGE ADD START
+	//TOOD: add AutoTest to config
 	/*
 	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateIntro(program);
 	}
 	*/
-	//MERGE ADD END
 }
 
 void Intro::render(){

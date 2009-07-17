@@ -112,7 +112,7 @@ public:
 	const Map *getMap() const 						{return &map;}
 	const Tileset *getTileset() const 				{return &tileset;}
 	const TechTree *getTechTree() const 			{return &techTree;}
-   const Scenario* getScenario () const {return &scenario;}
+	const Scenario* getScenario () const			{return &scenario;}
 	const TimeFlow *getTimeFlow() const				{return &timeFlow;}
 	Tileset *getTileset() 							{return &tileset;}
 	Map *getMap() 									{return &map;}
@@ -129,14 +129,11 @@ public:
 	const PosCircularIteratorFactory &getPosIteratorFactory() {return posIteratorFactory;}
 
 	//init & load
-   //MERGE DELETE ... this has changed...
 	void init(const XmlNode *worldNode = NULL);
-   //MARGE ADD
-   //void init ( Game *game, bool createUnits );
 	void loadTileset(Checksum &checksum);
 	void loadTech(Checksum &checksum);
 	void loadMap(Checksum &checksum);
-   void loadScenario ( const string &path, Checksum *checksum );
+	void loadScenario(const string &path, Checksum *checksum);
 
 	void save(XmlNode *node) const;
 

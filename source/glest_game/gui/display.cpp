@@ -27,16 +27,12 @@ namespace Glest{ namespace Game{
 // =====================================================
 
 Display::Display(){
-   //MERGE DELETE START
-   /*
 	colors[0]= Vec3f(1.f, 1.f, 1.f);
 	colors[1]= Vec3f(1.f, 0.5f, 0.5f);
 	colors[2]= Vec3f(0.f, 1.f, 0.f);
 	colors[3]= Vec3f(0.7f, 0.7f, 0.7f);
 
 	currentColor= 0;
-   */
-   //MERGE DELETE END
 	clear();
 }
 

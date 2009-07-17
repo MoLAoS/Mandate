@@ -90,9 +90,7 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-
-   //MERGE ADD
-   scriptManager = game.getScriptManager ();
+	scriptManager = game.getScriptManager();
 	unitUpdater.init(game);
 
 	initFactionTypes();
@@ -763,7 +761,6 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
     return currUnit;
 }
 
-//MERGE ADD START
 void World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos){
 	if(factionIndex<factions.size()){
 		Faction* faction= &factions[factionIndex];
@@ -932,7 +929,6 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName){
 		throw runtime_error("Invalid faction index in getUnitCountOfType: " + intToStr(factionIndex));
 	}
 }
-//MERGE ADD END
 
 // ==================== PRIVATE ====================
 

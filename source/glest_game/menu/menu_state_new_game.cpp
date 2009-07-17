@@ -316,13 +316,12 @@ void MenuStateNewGame::render(){
 }
 
 void MenuStateNewGame::update() {
-	//MERGE ADD START
+	//TOOD: add AutoTest to config
 	/*
 	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateNewGame(program, mainMenu);
 	}
 	*/
-	//MERGE ADD END
 	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
 	Lang& lang = Lang::getInstance();
 

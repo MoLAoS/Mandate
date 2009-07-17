@@ -332,14 +332,13 @@ void Game::update() {
       quitGame();
 	}
 
-	//MERGE ADD START
+	//TODO: add AutoTest to config
 	//update auto test
 	/*
 	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateGame(this);
 	}
 	*/
-	//MERGE ADD END
 }
 
 void Game::displayError(SocketException &e) {
@@ -390,11 +389,10 @@ void Game::mouseDownLeft(int x, int y){
 	NetworkManager &networkManager= NetworkManager::getInstance();
 	Vec2i mmCell;
 
-   //MERGE ADD START
-   const Metrics &metrics= Metrics::getInstance();
+	const Metrics &metrics= Metrics::getInstance();
 	bool messageBoxClick= false;
- 
-	//scrip message box, only if the exit box is not enabled
+
+	//script message box, only if the exit box is not enabled
 	if(!mainMessageBox.getEnabled() && scriptManager.getMessageBox()->getEnabled()){
 		int button= 1;
 		if(scriptManager.getMessageBox()->mouseClick(x, y, button)){
@@ -402,11 +400,6 @@ void Game::mouseDownLeft(int x, int y){
 			messageBoxClick= true;
 		}
 	}
-   //MERGE ADD END
-
-   //
-   //MERGE MAJOR CHANGES TO BOTH CODEBASES... PROBABLE PROBLEM POINT
-   //
 
 	//exit message box, has to be the last thing to do in this function
 	if(mainMessageBox.getEnabled()){
@@ -421,7 +414,7 @@ void Game::mouseDownLeft(int x, int y){
 				mainMessageBox.setEnabled(false);
 			}
 		}
-   //save box
+	//save box
 	} else if(saveBox) {
 		int button;
 		if (saveBox->mouseClick(x, y, button)) {
@@ -629,12 +622,9 @@ void Game::keyDown(const Key &key) {
 	} else if (cmd == ucCameraPosDown) {
 		gameCamera.setMoveZ(-scrollSpeed);
 
-   //MERGE DELETE START
 	//switch display color
-	//} 
-   //else if (cmd == ucCycleDisplayColor) {
-	//	gui.switchToNextDisplayColor();
-   //MERGE DELETE END
+	} else if (cmd == ucCycleDisplayColor) {
+		gui.switchToNextDisplayColor();
 
 	//change camera mode
 	} else if (cmd == ucCameraCycleMode) {
@@ -872,7 +862,7 @@ void Game::render2d(){
 	if(!scriptManager.getDisplayText().empty() && !scriptManager.getMessageBoxEnabled()){
 		renderer.renderText(
 			scriptManager.getDisplayText(), coreData.getMenuFontNormal(),
-			Vec3f(1.0f), 200, 680, false);
+			gui.getDisplay()->getColor(), 200, 680, false);
 	}
 
 	//save box
@@ -919,7 +909,7 @@ void Game::render2d(){
 
 		renderer.renderText(
 			str.str(), coreData.getMenuFontNormal(),
-			Vec3f(1.0f), 10, 500, false);
+			gui.getDisplay()->getColor(), 10, 500, false);
 	}
 
 	//network status
@@ -927,7 +917,7 @@ void Game::render2d(){
 		renderer.renderText(
 			networkManager.getGameNetworkInterface()->getStatus(),
 			coreData.getMenuFontNormal(),
-			Vec3f(1.0f), 750, 75, false);
+			gui.getDisplay()->getColor(), 750, 75, false);
 	}
 
     //resource info

@@ -687,8 +687,6 @@ void Renderer::renderChatManager(const ChatManager *chatManager){
 void Renderer::renderResourceStatus(){
 
 	const Metrics &metrics= Metrics::getInstance();
-	//MERGE DELETE
-   //const Gui *gui= game->getGui();
 	const World *world= game->getWorld();
 	const Faction *thisFaction= world->getFaction(world->getThisFactionIndex());
 	int subfaction = thisFaction->getSubfaction();
@@ -957,24 +955,14 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
 	//background
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glEnable(GL_BLEND);
-	//MERGE DELETE
-   //glColor4f(0.5f, 0.5f, 0.5f, 0.2f) ;
-   //MERGE ADD
-   glColor4f ( 0.f, 0.f, 0.f, 0.5f );
+	glColor4f( 0.f, 0.f, 0.f, 0.5f );
 
 	glBegin(GL_TRIANGLE_STRIP);
-      //MERGE DELETE
-		//glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
-      //MERGE ADD
-      glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
+		glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
 		glVertex2i(messageBox->getX(), messageBox->getY());
-      //MERGE DELETE
-      //glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
-      //MERGE ADD
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + 9*messageBox->getH()/10);
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY());
 	glEnd();
-   //MERGE ADD START	
 	glColor4f(0.0f, 0.0f, 0.0f, 0.8f) ;   
 	glBegin(GL_TRIANGLE_STRIP);
 		glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
@@ -1004,7 +992,6 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
 		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
 		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY() + 90*messageBox->getH()/100);
 	glEnd();
-   //MERGE ADD END
 
 	glPopAttrib();
 
@@ -1015,15 +1002,6 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
 	}
 
 	//text
-   //MERGE DELETE START
-   /*
-	GraphicLabel label;
-	label.init(messageBox->getX(), messageBox->getY()+messageBox->getH()/2, messageBox->getW(), messageBox->getH()/2, true);
-	label.setText(messageBox->getText());
-	label.setFont(messageBox->getFont());
-	renderLabel(&label);
-   */
-   //MERGE DELETE END
 	renderText(
 		messageBox->getText(), messageBox->getFont(), Vec3f(1.0f, 1.0f, 1.0f), 
 		messageBox->getX()+15, messageBox->getY()+7*messageBox->getH()/10, 

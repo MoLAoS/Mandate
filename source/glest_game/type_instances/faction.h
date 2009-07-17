@@ -80,9 +80,6 @@ private:
 
 public:
     void init(const FactionType *factionType, ControlType control, TechTree *techTree,
-       //MERGE DELETE
-			//int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction);
-       // MERGE ADD
          int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources);
 	void end();
 
