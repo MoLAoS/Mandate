@@ -44,6 +44,46 @@ namespace Glest{ namespace Game{ namespace Search {
 
 // ===================== PUBLIC ========================
 
+//FIXME I was duplicated from GraphSearch because the search functions
+// absolutely _need_ this inlined, and then it can't be used here without 
+// having been defined... find a better solution :-)
+void PathFinder::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 )
+{
+   assert ( s.x != d.x && s.y != d.y );
+   if ( size == 1 )
+   {
+      d1.x = s.x; d1.y = d.y;
+      d2.x = d.x; d2.y = s.y;
+      return;
+   }
+   if ( d.x > s.x )
+   {  // travelling east
+      if ( d.y > s.y )
+      {  // se
+         d1.x = d.x + size - 1; d1.y = s.y;
+         d2.x = s.x; d2.y = d.y + size - 1;
+      }
+      else
+      {  // ne
+         d1.x = s.x; d1.y = d.y;
+         d2.x = d.x + size - 1; d2.y = s.y - size + 1;
+      }
+   }
+   else
+   {  // travelling west
+      if ( d.y > s.y )
+      {  // sw
+         d1.x = d.x; d1.y = s.y;
+         d2.x = s.x + size - 1; d2.y = d.y + size - 1;
+      }
+      else
+      {  // nw
+         d1.x = d.x; d1.y = s.y - size + 1;
+         d2.x = s.x + size - 1; d2.y = d.y;
+      }
+   }
+}
+
 PathFinder* PathFinder::singleton = NULL;
 
 PathFinder* PathFinder::getInstance ()
@@ -89,7 +129,7 @@ bool PathFinder::isLegalMove ( Unit *unit, const Vec2i &pos2 ) const
    if ( pos1.x != pos2.x && pos1.y != pos2.y )
    {  // Proposed move is diagonal, check if cells either 'side' are free.
       Vec2i diag1, diag2;
-      search->getDiags ( pos1, pos2, size, diag1, diag2 );
+      getDiags ( pos1, pos2, size, diag1, diag2 );
       if ( ! annotatedMap->canOccupy (diag1, 1, field) 
       ||   ! annotatedMap->canOccupy (diag2, 1, field) ) 
 		   return false; // obstruction, can not move to pos2

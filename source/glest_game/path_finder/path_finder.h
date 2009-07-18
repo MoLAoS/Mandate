@@ -140,6 +140,7 @@ private:
 	Vec2i computeNearestFreePos (const Unit *unit, const Vec2i &targetPos);
 	void copyToPath ( const list<Vec2i> pathList, UnitPath *path );
    Map *map;
+   static inline void getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 );
 
 public: // should be private ... debugging...
    AnnotatedMap *annotatedMap;
