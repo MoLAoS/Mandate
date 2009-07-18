@@ -1244,6 +1244,16 @@ void Map::computeNearSubmerged(){
 	for(int x = 0; x < tileW; ++x){
 		for(int y = 0; y < tileH; ++y) {
 
+         //FIXME
+         // if the cells have been init already, we could use the new 
+         // SurfaceType enum, it'll be a bit clunky (the code anyway), 
+         // but it will reduce redundant calculation...
+
+         //FIXME
+         // Also, I meant to move getSubmerged(Tile*) into Tile ages ago
+         // That's the logical place for it, getSubmerged(Cell*) now lives
+         // in Cell ( as Cell::isSubmerged() )... 
+
 			// Daniel's optimized version: +speed, +code size
 			/*
 			bool anySubmerged = getSubmerged(getTile(x, y))
