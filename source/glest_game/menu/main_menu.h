@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -106,7 +106,7 @@ protected:
 	Camera camera;
 
 private:
-	MenuState(const MenuState &);
+	//MenuState(const MenuState &);
 	const MenuState &operator =(const MenuState &);
 
 public:

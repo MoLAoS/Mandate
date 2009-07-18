@@ -1,8 +1,8 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Jaagup Repän <jrepan@gmail.com>,
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa,
+//				  2008 Jaagup Repï¿½n <jrepan@gmail.com>,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //            2009 James McCulloch <silnarm@gmail.com>
 //
@@ -607,7 +607,7 @@ bool Map::isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const
 		if (sc->isVisible(teamIndex))
 			return sc->isFree() && isFreeCell(pos, field);
 		else if (sc->isExplored(teamIndex))
-         return field == ZoneSurface ? sc->isFree() && !getCell(pos)->isDeepSubmerged() : true;
+			return field == FieldWalkable ? sc->isFree() && !getCell(pos)->isDeepSubmerged() : true;
 		else
 			return true;
 	}
@@ -1267,7 +1267,7 @@ void Map::computeNearSubmerged(){
 					|| (x - 1 >= 0		 && y - 1 >= 0		 && getSubmerged(getTile(x - 1, y - 1)));
 			*/
 
-			// Martiño's version: slower, but more compact (altered from original)
+			// Martiï¿½o's version: slower, but more compact (altered from original)
 			bool anySubmerged = false;
 			for(int xoff = -1; xoff <= 2 && !anySubmerged; ++xoff) {
 				for(int yoff = -1; yoff <= 2 && !anySubmerged; ++yoff) {
@@ -1354,7 +1354,7 @@ PosQuadIterator::PosQuadIterator(const Quad2i &quad, int step) :
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>,
+//	Copyright (C) 2008 Jaagup Repï¿½n <jrepan@gmail.com>,
 //				     2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under

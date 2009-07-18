@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under 
 //	the terms of the GNU General Public License as published 
@@ -35,7 +35,7 @@ using namespace Shared::Util;
 // =====================================================
 
 MenuStateCustomGame::MenuStateCustomGame(Program *program, MainMenu *mainMenu, bool openNetworkSlots): 
-	MenuState(program, mainMenu, "new-game")
+	MenuState(*program, mainMenu, "new-game")
 {
 	Lang &lang= Lang::getInstance();
 	NetworkManager &networkManager= NetworkManager::getInstance();
@@ -173,7 +173,7 @@ void MenuStateCustomGame::mouseClick(int x, int y, MouseButton mouseButton){
 		soundRenderer.playFx(coreData.getClickSoundC());
 		loadGameSettings(&gameSettings);
 		serverInterface->launchGame(&gameSettings);
-		program->setState(new Game(program, &gameSettings));
+		Program::getInstance()->setState(new Game(program, gameSettings));
 	}
 	else if(listBoxMap.mouseClick(x, y)){
 		loadMapInfo(Map::getMapPath(mapFiles[listBoxMap.getSelectedItemIndex()]), &mapInfo);

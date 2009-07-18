@@ -49,6 +49,7 @@ GLEST_DIRS =
 	main
 	menu
 	network
+	path_finder
 	sound
 	type_instances
 	types

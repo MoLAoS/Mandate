@@ -75,6 +75,14 @@ public:
 
 };
 */
+//TODO: figue out why gcc can't see min()
+#if ! ( defined WIN32 || defined WIN64 )
+inline int min ( int a, int b )
+{
+   return a < b ? a : b;
+}
+#endif
+
 __inline float heuristic ( const Vec2i &p1, const Vec2i &p2 )
 {
    int diagonal = min ( abs (p1.x-p2.x), abs (p1.y-p2.y) );
@@ -114,7 +122,7 @@ public:
    // The Classic A* [Hart, Nilsson, & Raphael, 1968]
    bool AStarSearch ( SearchParams &params, list<Vec2i> &path );
 
-   // Fringe Search ? (a bit of A* with a dash of IDA*) [Björnsson, et al, 2005]
+   // Fringe Search ? (a bit of A* with a dash of IDA*) [Bjï¿½rnsson, et al, 2005]
    //bool FringeSearch ( SearchParams params, list<Vec2i> &path );
 
    // true if any path to at least radius cells away can be found
