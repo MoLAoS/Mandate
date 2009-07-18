@@ -89,7 +89,7 @@ bool PathFinder::isLegalMove ( Unit *unit, const Vec2i &pos2 ) const
    if ( pos1.x != pos2.x && pos1.y != pos2.y )
    {  // Proposed move is diagonal, check if cells either 'side' are free.
       Vec2i diag1, diag2;
-      getDiags ( pos1, pos2, size, diag1, diag2 );
+      search->getDiags ( pos1, pos2, size, diag1, diag2 );
       if ( ! annotatedMap->canOccupy (diag1, 1, field) 
       ||   ! annotatedMap->canOccupy (diag2, 1, field) ) 
 		   return false; // obstruction, can not move to pos2

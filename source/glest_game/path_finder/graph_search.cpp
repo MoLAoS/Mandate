@@ -347,14 +347,7 @@ bool GraphSearch::canPathOut ( const Vec2i &pos, const int radius, Field field  
    return pathFound;
 }
 
-void GraphSearch::copyToPath ( const list<Vec2i> &pathList, list<Vec2i> &path )
-{
-   for ( VLConIt it = pathList.begin (); it != pathList.end(); ++it )
-      path.push_back ( *it );
-}
-
-
-void getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 )
+void GraphSearch::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 )
 {
    assert ( s.x != d.x && s.y != d.y );
    if ( size == 1 )
@@ -389,6 +382,12 @@ void getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i
          d2.x = s.x + size - 1; d2.y = d.y;
       }
    }
+}
+
+void GraphSearch::copyToPath ( const list<Vec2i> &pathList, list<Vec2i> &path )
+{
+   for ( VLConIt it = pathList.begin (); it != pathList.end(); ++it )
+      path.push_back ( *it );
 }
 
 void GraphSearch::getCrossOverPoints ( const list<Vec2i> &forward, const list<Vec2i> &backward, list<Vec2i> &result )

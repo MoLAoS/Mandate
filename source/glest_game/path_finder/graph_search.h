@@ -90,14 +90,6 @@ __inline float heuristic ( const Vec2i &p1, const Vec2i &p2 )
    return 1.4 * diagonal + 1.0 * straight;
 }
 
-// fills d1 and d2 with the diagonal cells(coords) that need checking for a 
-// unit of size to move from s to d, for diagonal moves.
-// WARNING: ASSUMES ( s.x != d.x && s.y != d.y ) ie. the move IS diagonal
-// if this condition is not true, results are undefined
-__inline 
-void getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 );
-
-
 // class GraphSearch
 //
 // Encapsulates the search algorithms
@@ -121,6 +113,12 @@ public:
 
    // The Classic A* [Hart, Nilsson, & Raphael, 1968]
    bool AStarSearch ( SearchParams &params, list<Vec2i> &path );
+
+   // fills d1 and d2 with the diagonal cells(coords) that need checking for a 
+   // unit of size to move from s to d, for diagonal moves.
+   // WARNING: ASSUMES ( s.x != d.x && s.y != d.y ) ie. the move IS diagonal
+   // if this condition is not true, results are undefined
+   static inline void getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 );
 
    // Fringe Search ? (a bit of A* with a dash of IDA*) [Bj�rnsson, et al, 2005]
    //bool FringeSearch ( SearchParams params, list<Vec2i> &path );
