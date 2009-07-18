@@ -352,6 +352,7 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 	gameSettings->setMap(mapFiles[listBoxMap.getSelectedItemIndex()]);
     gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
     gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setDefaultVictoryConditions(true);
 
     for(int i=0; i<mapInfo.players; ++i){
 		ControlType ct= static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
