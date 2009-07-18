@@ -732,7 +732,7 @@ void World::moveUnitCells(Unit *unit) {
 	*/
 	//}
 
-	assert(map.canMove(unit, unit->getPos(), newPos));
+   assert ( unitUpdater.pathFinder->isLegalMove ( unit, newPos ) );
 	map.clearUnitCells(unit, unit->getPos());
 	map.putUnitCells(unit, newPos);
 
