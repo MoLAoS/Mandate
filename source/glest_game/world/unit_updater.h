@@ -40,6 +40,7 @@ namespace Search { class PathFinder; }
 class UnitUpdater{
 private:
 	friend class ParticleDamager;
+   friend class World;
 
 private:
 	static const int maxResSearchRadius= 10;

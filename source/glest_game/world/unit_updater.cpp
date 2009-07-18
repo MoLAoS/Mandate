@@ -573,6 +573,8 @@ void UnitUpdater::updateBuild(Unit *unit){
 					getServerInterface()->updateFactions();
 				}
 			}
+         if ( !builtUnit->isMobile() )
+            pathFinder->updateMapMetrics ( builtUnit->getPos(), builtUnit->getSize(), true, FieldWalkable );
 
 			//play start sound
 			if(unit->getFactionIndex()==world->getThisFactionIndex()){
@@ -747,10 +749,12 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 
 				//if resource exausted, then delete it and stop
 				if (r->decAmount(1)) {
+               // let the pathfinder know
+               pathFinder->updateMapMetrics ( r->getPos(), 2, false, FieldWalkable );
 					sc->deleteResource();
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
-
+              
 				if (unit->getLoadCount() == hct->getMaxLoad()) {
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 					unit->getPath()->clear();
@@ -1056,6 +1060,8 @@ void UnitUpdater::updateMorph(Unit *unit){
 		unit->update2();
 		if(unit->getProgress2()>mct->getProduced()->getProductionTime()) {
 
+         bool mapUpdate = unit->isMobile () != mct->getMorphUnit()->isMobile ();
+
 			//finish the command
 			if(unit->morph(mct)){
 				unit->finishCommand();
@@ -1064,6 +1070,12 @@ void UnitUpdater::updateMorph(Unit *unit){
 				}
             scriptManager->onUnitCreated ( unit );
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
+            if ( mapUpdate )
+            {
+               bool adding = !mct->getMorphUnit()->isMobile ();
+               pathFinder->updateMapMetrics ( unit->getPos (), unit->getSize (), adding, FieldWalkable );
+            }
+
 				if(isNetworkServer()) {
 					getServerInterface()->unitMorph(unit);
 					getServerInterface()->updateFactions();

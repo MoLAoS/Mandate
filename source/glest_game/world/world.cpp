@@ -603,6 +603,8 @@ void World::doKill(Unit *killer, Unit *killed) {
 	if(killed->getCurrSkill()->getClass() != scDie) {
 	   killed->kill();
 	}
+   if ( !killed->isMobile() )
+      unitUpdater.pathFinder->updateMapMetrics ( killed->getPos (), killed->getSize (), false, FieldWalkable );
 }
 
 void World::tick() {
@@ -1026,15 +1028,23 @@ void World::initUnits() {
 				if(placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
 					unit->create(true);
 					unit->born();
+
 				} else {
 					throw runtime_error("Unit cant be placed, this error is caused because there "
 							"is no enough place to put the units near its start location, make a "
 							"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
 				}
-				if(unit->getType()->hasSkillClass(scBeBuilt)){
-                    map.flatternTerrain(unit);
+            //if ( !unit->isMobile() )
+            //   unitUpdater.pathFinder->updateMapMetrics ( unit->getPos(),
+            //                unit->getSize(), true, unit->getCurrField () );
+				if(unit->getType()->hasSkillClass(scBeBuilt))
+            {
+               map.flatternTerrain(unit);
+               assert ( !unit->isMobile () );
+               unitUpdater.pathFinder->updateMapMetrics ( unit->getPos(),
+                            unit->getSize(), true, unit->getCurrField () );
 				}
-            }
+         }
 		}
 	}
 	map.computeNormals();
