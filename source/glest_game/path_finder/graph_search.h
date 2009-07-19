@@ -48,39 +48,8 @@ struct SearchParams
    SearchParams ( Unit *u );
 };
 
-/*
-struct EuclideanHeuristic
-{
-public:
-   float operator () ( const Vec2i &p1, const Vec2i &p2 )
-      { return p1.dist (p2); }
-};
-
-struct ManhattenHeuristic
-{
-public:
-   float operator () ( const Vec2i &p1, const Vec2i &p2 )
-      { return abs (p1.x-p2.x) + abs (p1.y-p2.y); }
-};
-
-struct DiaganolHeuristic
-{
-public:
-   float operator () ( const Vec2i &p1, const Vec2i &p2 )
-   {
-      int diagonal = min ( abs (p1.x-p2.x), abs (p1.y-p2.y) );
-      int straight = abs (p1.x-p2.x) + abs (p1.y-p2.y) - 2 * diagonal;
-      return 1.4 * diagonal + 1.0 * straight;
-   }
-
-};
-*/
-//TODO: figue out why gcc can't see min()
 #if ! ( defined WIN32 || defined WIN64 )
-inline int min ( int a, int b )
-{
-   return a < b ? a : b;
-}
+inline int min ( int a, int b ) { return a < b ? a : b; }
 #endif
 
 __inline float heuristic ( const Vec2i &p1, const Vec2i &p2 )
@@ -139,11 +108,6 @@ private:
    Map *cMap; // the cell map // REMOVE ME, replace with function pointer to a hasUnit() type function
    BFSNodePool *bNodePool;
    AStarNodePool *aNodePool;
-
-#ifdef PATHFINDER_DEBUG_TEXTURES
-public:
-   enum { PathOnly, OpenClosedSets, LocalAnnotations } debug_texture_action;
-#endif
 
 #ifdef PATHFINDER_TIMING
 public:

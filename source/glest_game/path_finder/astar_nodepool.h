@@ -165,11 +165,6 @@ public:
    void updateClosedNode ( const Vec2i &pos, AStarNode *neighbour, float cost );
 #endif
 
-#ifdef PATHFINDER_DEBUG_TEXTURES
-   virtual list<Vec2i>* getOpenNodes ();
-   virtual list<Vec2i>* getClosedNodes ();
-   list<Vec2i> listedNodes;
-#endif
 #ifdef PATHFINDER_TIMING
    int64 startTime;
    void startTimer () { startTime = Chrono::getCurMicros (); }

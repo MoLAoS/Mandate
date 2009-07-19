@@ -19,9 +19,6 @@
 #include "path_finder.h"
 #include "map.h"
 #include "vec.h"
-#ifdef PATHFINDER_DEBUG_TEXTURES
-#  include "config.h"
-#endif
 
 namespace Glest { namespace Game { namespace Search {
 
@@ -62,15 +59,6 @@ void GraphSearch::init ( Map *cell_map, AnnotatedMap *annt_map )
    aMap = annt_map;
    bNodePool->init ( cell_map );
    aNodePool->init ( cell_map );
-#  ifdef PATHFINDER_DEBUG_TEXTURES
-      switch ( Config::getInstance().getDebugTextureMode() )
-      {
-      case 1: debug_texture_action = PathOnly; break;
-      case 2: debug_texture_action = OpenClosedSets; break;
-      case 3: debug_texture_action = LocalAnnotations; break;
-      default: throw new runtime_error ("Illegal value for DebugTextureMode");
-      }
-#  endif
 }
 
 bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
@@ -152,40 +140,6 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
       path.push_back ( currNode->pos );
       currNode = currNode->next;
    }
-#ifdef PATHFINDER_DEBUG_TEXTURES
-   if ( Config::getInstance().getDebugTextures () )
-   {
-      cMap->PathStart = path.front ();
-      cMap->PathDest = path.back ();
-
-      if ( debug_texture_action == OpenClosedSets )
-      {
-         cMap->clearNodes ();
-         list<Vec2i> *alist = bNodePool->getOpenNodes ();
-         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
-            cMap->setOpenNode ( *it );
-         delete alist;
-         alist = bNodePool->getClosedNodes ();
-         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
-            cMap->setClosedNode ( *it );
-         delete alist;
-      }
-      if ( debug_texture_action == OpenClosedSets 
-      ||   debug_texture_action == PathOnly )
-      {
-         for ( VLIt it = path.begin(); it != path.end(); ++it )
-            cMap->setPathNode ( *it );
-      }
-      if ( debug_texture_action == LocalAnnotations )
-      {
-         cMap->clearLocal0 ();
-         list<pair<Vec2i,uint32>> *annt = aMap->getLocalAnnotations ();
-         for ( list<pair<Vec2i,uint32>>::iterator it = annt->begin(); it != annt->end(); ++it )
-            cMap->setLocal0 ( it->first, it->second );
-         delete annt;
-      }
-   }
-#endif   
    return true;
 }
 
@@ -270,34 +224,6 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
       path.clear ();
       return false;
    }
-#  ifdef PATHFINDER_DEBUG_TEXTURES
-      cMap->clearNodes ();
-      cMap->PathStart = path.front ();
-      cMap->PathDest = path.back ();
-      if ( debug_texture_action == OpenClosedSets )
-      {
-         list<Vec2i> *alist = aNodePool->getOpenNodes ();
-         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
-            cMap->setOpenNode ( *it );
-         delete alist;
-         alist = aNodePool->getClosedNodes ();
-         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
-            cMap->setClosedNode ( *it );
-         delete alist;
-      }
-      if ( debug_texture_action == OpenClosedSets 
-      ||   debug_texture_action == PathOnly )
-         for ( VLIt it = path.begin(); it != path.end(); ++it )
-            cMap->setPathNode ( *it );
-      if ( debug_texture_action == LocalAnnotations )
-      {
-         cMap->clearLocal0 ();
-         list<pair<Vec2i,uint32>> *annt = aMap->getLocalAnnotations ();
-         for ( list<pair<Vec2i,uint32>>::iterator it = annt->begin(); it != annt->end(); ++it )
-            cMap->setLocal0 ( it->first, it->second );
-         delete annt;
-      }
-#  endif
    //Logger::getInstance ().add ( "AStarSearch() ... Returning..." );
    //assertValidPath ( path );
    return true;

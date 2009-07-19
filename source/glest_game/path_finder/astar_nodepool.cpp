@@ -64,10 +64,6 @@ void AStarNodePool::reset ()
    leastH = NULL;
    markerArray.newSearch ();
    openHeap.clear ();
-
-#ifdef PATHFINDER_DEBUG_TEXTURES
-   listedNodes.clear ();
-#endif
 }
 
 void AStarNodePool::setMaxNodes ( const int max )
@@ -102,9 +98,6 @@ bool AStarNodePool::addToOpen ( AStarNode* prev, const Vec2i &pos, float h, floa
 
 void AStarNodePool::addOpenNode ( AStarNode *node )
 {
-#ifdef PATHFINDER_DEBUG_TEXTURES
-   listedNodes.push_back ( node->pos );
-#endif
    markerArray.setOpen ( node->pos );
    pointerArray.set ( node->pos, node );
    openHeap.push_back ( node );
@@ -151,28 +144,6 @@ AStarNode* AStarNodePool::getBestCandidate ()
    markerArray.setClosed ( ret->pos );
    return ret;
 }
-
-#ifdef PATHFINDER_DEBUG_TEXTURES
-
-list<Vec2i>* AStarNodePool::getOpenNodes ()
-{
-   list<Vec2i> *ret = new list<Vec2i> ();
-   list<Vec2i>::iterator it = listedNodes.begin();
-   for ( ; it != listedNodes.end (); ++it )
-      if ( isOpen ( *it ) ) ret->push_back ( *it );
-   return ret;
-}
-
-list<Vec2i>* AStarNodePool::getClosedNodes ()
-{
-   list<Vec2i> *ret = new list<Vec2i> ();
-   list<Vec2i>::iterator it = listedNodes.begin();
-   for ( ; it != listedNodes.end (); ++it )
-      if ( isClosed ( *it ) ) ret->push_back ( *it );
-   return ret;
-}
-
-#endif // defined ( PATHFINDER_DEBUG_TEXTURES )
 
 #ifdef PATHFINDER_TIMING
 

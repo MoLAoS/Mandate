@@ -105,11 +105,6 @@ public:
    // moves 'best' node from open to closed, and returns it, or NULL if open is empty
    BFSNode* getBestCandidate ();
 
-#ifdef PATHFINDER_DEBUG_TEXTURES
-   list<Vec2i>* getOpenNodes ();
-   list<Vec2i>* getClosedNodes ();
-#endif
-
 }; // class BFSNodePool
 
 }}}; // namespace Glest::Game::LowLevelSearch

@@ -632,10 +632,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ai\path_finder.h"
-				>
-			</File>
-			<File
 				RelativePath=".\pch.h"
 				>
 			</File>
