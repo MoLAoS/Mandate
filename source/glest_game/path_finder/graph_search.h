@@ -68,7 +68,7 @@ public:
    GraphSearch ();
    virtual ~GraphSearch ();
 
-   void init ( Map *cm, AnnotatedMap *am );
+   void init ( Map *cm, AnnotatedMap *am, bool astar=true );
    //
    // Search Functions
    //
@@ -97,6 +97,7 @@ public:
    // for zero minus the distance to here, the algorithm thus tries to 'escape'
    // (ie, get as far from start as quickly as possible).
    bool canPathOut ( const Vec2i &pos, const int radius, Field field );
+   bool canPathOut_Greedy ( const Vec2i &pos, const int radius, Field field );
 
 private:
    void init (); 
@@ -105,7 +106,13 @@ private:
    void copyToPath ( const list<Vec2i> &pathList, list<Vec2i> &path );
 
    AnnotatedMap *aMap; // the annotated map to search on
-   Map *cMap; // the cell map // REMOVE ME, replace with function pointer to a hasUnit() type function
+   
+   // REMOVE ME, replace with function pointer to a hasUnit() type function.
+   // 'local annotations' takes care of this now, but we still need the explored
+   // state from the map, we should keep a compact representation with the annotated
+   // map for better cache performance in the search
+   Map *cMap; // the cell map 
+   
    BFSNodePool *bNodePool;
    AStarNodePool *aNodePool;
 
@@ -115,6 +122,7 @@ public:
    static PathFinderStats *statsGreedy;
    static void resetCounters ();
 #endif
+   bool assertValidPath ( list<Vec2i> &path );
 };
 
 }}}

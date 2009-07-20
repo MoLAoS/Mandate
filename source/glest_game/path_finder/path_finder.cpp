@@ -111,7 +111,16 @@ void PathFinder::init ( Map *map )
 	this->map= map;
    delete annotatedMap;
    annotatedMap = new AnnotatedMap ( map );
-   search->init ( map, annotatedMap );
+   search->init ( map, annotatedMap, Config::getInstance().getPathFinderUseAStar() );
+#ifdef _GAE_DEBUG_EDITION_
+   if ( Config::getInstance ().getMiscDebugTextures() )
+   {
+      int foo = Config::getInstance ().getMiscDebugTextureMode ();
+      debug_texture_action = foo == 0 ? PathFinder::ShowPathOnly
+                           : foo == 1 ? PathFinder::ShowOpenClosedSets
+                                      : PathFinder::ShowLocalAnnotations;
+   }
+#endif
 }
 
 bool PathFinder::isLegalMove ( Unit *unit, const Vec2i &pos2 ) const
@@ -155,7 +164,6 @@ TravelState PathFinder::findPath(Unit *unit, const Vec2i &finalPos)
 	if( finalPos == unit->getPos () )
    {	//if arrived (where we wanted to go)
 		unit->setCurrSkill ( scStop );
-      //Logger::getInstance ().add ( "findPath() ... Returning, Arrived ..." );
 		return tsArrived;
 	}
    else if( ! path.isEmpty () )
@@ -164,13 +172,11 @@ TravelState PathFinder::findPath(Unit *unit, const Vec2i &finalPos)
       if ( isLegalMove ( unit, pos ) )
       {
 			unit->setNextPos ( pos );
-         //Logger::getInstance ().add ( "findPath() ... Returning, On the way ..." );
 			return tsOnTheWay;
 		}
 	}
    //route cache miss
 	const Vec2i targetPos = computeNearestFreePos ( unit, finalPos );
-   //Logger::getInstance ().add ( "findPath() ... route cache miss ..." );
 
    //if arrived (as close as we can get to it)
 	if ( targetPos == unit->getPos () )
@@ -178,6 +184,8 @@ TravelState PathFinder::findPath(Unit *unit, const Vec2i &finalPos)
       unit->setCurrSkill(scStop);
 		return tsArrived;
    }
+
+   bool useAStar = Config::getInstance().getPathFinderUseAStar ();
    // some tricks to determine if we are probably blocked on a short path, without
    // an exhuastive and expensive search through pathFindNodesMax nodes
    float dist = unit->getPos().dist ( targetPos );
@@ -189,31 +197,34 @@ TravelState PathFinder::findPath(Unit *unit, const Vec2i &finalPos)
       else if ( dist < 10 ) radius = 3;
       else if ( dist < 15 ) radius = 4;
       else radius = 5;
-      if ( ! search->canPathOut ( targetPos, radius, FieldWalkable ) ) 
+      if( ( useAStar  && !search->canPathOut ( targetPos, radius, FieldWalkable ) )
+      ||  ( !useAStar && !search->canPathOut_Greedy ( targetPos, radius, FieldWalkable ) ) )
       {
          unit->getPath()->incBlockCount ();
          unit->setCurrSkill(scStop);
-         //Logger::getInstance ().add ( "findPath() ... Returning, target blocked ..." );
          return tsBlocked;
       }
    }
    SearchParams params (unit);
    params.dest = targetPos;
    list<Vec2i> pathList;
+
+   bool result;
    annotatedMap->annotateLocal ( unit->getPos (), unit->getSize (), unit->getCurrField () );
-   bool result = search->AStarSearch ( params, pathList );
+      if ( useAStar )
+         result = search->AStarSearch ( params, pathList );
+      else
+         result = search->GreedySearch ( params, pathList );
    annotatedMap->clearLocalAnnotations ( unit->getCurrField () );
-   //Logger::getInstance ().add ( "findPath()... clearing local annotations ..." );
    if ( ! result )
    {
       unit->getPath()->incBlockCount ();
       unit->setCurrSkill(scStop);
-      //Logger::getInstance ().add ( "findPath() ... Returning, Search Failed ..." );
       return tsBlocked;
    }
    else
       copyToPath ( pathList, unit->getPath () );
-	Vec2i pos = path.pop(); //crash point
+	Vec2i pos = path.pop();
    if ( ! isLegalMove ( unit, pos ) )
    {
 		unit->setCurrSkill(scStop);

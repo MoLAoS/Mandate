@@ -57,7 +57,13 @@ private:
 	bool miscCatchExceptions;
 	bool miscDebugKeys;
 	bool miscDebugMode;
-	bool miscFirstTime;
+
+   int miscDebugTextureMode;
+	bool miscDebugTextures;
+   int pathFinderMaxNodes;
+   bool pathFinderUseAStar;
+
+   bool miscFirstTime;
 	bool miscLowMemory;
 	bool netChangeSpeedAllowed;
 	bool netConsistencyChecks;
@@ -199,6 +205,11 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
+   int getMiscDebugTextureMode () const { return miscDebugTextureMode; }
+   bool getMiscDebugTextures () const { return miscDebugTextures; }
+   int getPathFinderMaxNodes () const { return pathFinderMaxNodes; }
+   bool getPathFinderUseAStar () const { return pathFinderUseAStar; }
+
 	void setCameraFov(float val)				{cameraFov = val;}
 	void setCameraInvertXAxis(bool val)			{cameraInvertXAxis = val;}
 	void setCameraInvertYAxis(bool val)			{cameraInvertYAxis = val;}
@@ -268,6 +279,12 @@ public:
 	void setUiLang(string val)					{uiLang = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
+
+   void setMiscDebugTextureMode ( int val ) { miscDebugTextureMode = val; }
+   void setMiscDebugTextures ( bool val ) { miscDebugTextures = val; }
+   void setPathFinderMaxNodes ( int val ) { pathFinderMaxNodes = val; }
+   void setPathFinderUseAStar ( bool val ) { pathFinderUseAStar = val; }
+
 };
 
 }}//end namespace

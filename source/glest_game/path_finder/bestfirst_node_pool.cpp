@@ -101,4 +101,29 @@ BFSNode* BFSNodePool::getBestCandidate ()
    return lists[numClosed-1];
 }
 
+#ifdef _GAE_DEBUG_EDITION_
+
+list<Vec2i>* BFSNodePool::getOpenNodes ()
+{
+   list<Vec2i> *ret = new list<Vec2i> ();
+   const int openStart = tmpMaxNodes - numOpen - 1;
+   for ( int i = openStart; i < tmpMaxNodes; ++i )
+   {
+      ret->push_back ( lists[i]->pos );
+   }
+   return ret;
+}
+
+list<Vec2i>* BFSNodePool::getClosedNodes ()
+{
+   list<Vec2i> *ret = new list<Vec2i> ();
+   for ( int i = 0; i < numClosed; ++i )
+   {
+      ret->push_back ( lists[i]->pos );
+   }
+   return ret;
+}
+
+#endif
+
 }}}

@@ -16,8 +16,12 @@
 #include "annotated_map.h"
 #include "graph_search.h"
 
+#include <set>
+#include <map>
+
 using std::vector;
 using std::list;
+
 using Shared::Graphics::Vec2i;
 using Shared::Platform::uint32;
 using Shared::Platform::int64;
@@ -33,7 +37,7 @@ namespace Search {
 // Some 'globals' (oh no!!! run for cover...)
 
 const int maxFreeSearchRadius = 10;
-const int pathFindRefresh = 10; // now unused
+//const int pathFindRefresh = 10; // now unused
 const int pathFindNodesMax = 2048;// = Config::getInstance ().getPathFinderMaxNodes ();
 
 const int numOffsetsSize1Dist1 = 8;
@@ -145,6 +149,13 @@ private:
 public: // should be private ... debugging...
    AnnotatedMap *annotatedMap;
    GraphSearch *search;
+
+#ifdef _GAE_DEBUG_EDITION_
+   Vec2i PathStart, PathDest;
+   std::set<Vec2i> OpenSet, ClosedSet, PathSet;
+   std::map<Vec2i,uint32> LocalAnnotations;
+   enum { ShowPathOnly, ShowOpenClosedSets, ShowLocalAnnotations } debug_texture_action;
+#endif
 
 }; // class PathFinder
 

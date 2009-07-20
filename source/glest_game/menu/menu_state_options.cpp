@@ -53,6 +53,12 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	labelTextures3D.init(200, 280);
 	labelLights.init(200, 250);
 
+   labelMaxPathNodes.init ( 500, 560 );
+   labelPFAlgorithm.init ( 500, 530 );
+#  ifdef _GAE_DEBUG_EDITION_
+      labelPFTexturesOn.init ( 500, 500 );
+      labelPFTextureMode.init ( 500, 470 );
+#  endif
 	//list boxes
 	listBoxVolumeFx.init(350, 530, 80);
 	listBoxVolumeAmbient.init(350, 500, 80);
@@ -65,6 +71,13 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	listBoxShadows.init(350, 310, 170);
 	listBoxTextures3D.init(350, 280, 80);
 	listBoxLights.init(350, 250, 80);
+
+   listBoxMaxPathNodes.init ( 650, 560, 80 );
+   listBoxPFAlgorithm.init ( 650, 530, 180 );
+#  ifdef _GAE_DEBUG_EDITION_
+      listBoxPFTexturesOn.init ( 650, 500, 180 );
+      listBoxPFTextureMode.init ( 650, 470, 180 );
+#  endif
 
 	//set text
 	buttonReturn.setText(lang.get("Return"));
@@ -79,6 +92,12 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	labelVolumeAmbient.setText(lang.get("AmbientVolume"));
 	labelVolumeMusic.setText(lang.get("MusicVolume"));
 
+   labelMaxPathNodes.setText ( lang.get("MaxPathNodes") );
+   labelPFAlgorithm.setText ( "SearchAlgorithm" );
+#  ifdef _GAE_DEBUG_EDITION_
+      labelPFTexturesOn.setText ( "DebugTextures" );
+      labelPFTextureMode.setText ( "TextureMode" );
+#  endif
 	//sound
 
 	//lang
@@ -123,6 +142,29 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	listBoxVolumeFx.setSelectedItem(intToStr(config.getSoundVolumeFx()/5*5));
 	listBoxVolumeAmbient.setSelectedItem(intToStr(config.getSoundVolumeAmbient()/5*5));
 	listBoxVolumeMusic.setSelectedItem(intToStr(config.getSoundVolumeMusic()/5*5));
+
+   // path finder node limit
+   listBoxMaxPathNodes.pushBackItem ( intToStr ( 512 ) );
+   listBoxMaxPathNodes.pushBackItem ( intToStr ( 1024 ) );
+   listBoxMaxPathNodes.pushBackItem ( intToStr ( 2048 ) );
+   listBoxMaxPathNodes.pushBackItem ( intToStr ( 4096 ) );
+   listBoxMaxPathNodes.setSelectedItem ( intToStr ( config.getPathFinderMaxNodes() ) );
+
+   listBoxPFAlgorithm.pushBackItem ( "Admissable A*" );
+   //listBoxPFAlgorithm.pushBackItem ( "Greedy 'PingPong'" );
+   listBoxPFAlgorithm.pushBackItem ( "Greedy Best First" );
+   listBoxPFAlgorithm.setSelectedItemIndex ( config.getPathFinderUseAStar() ? 0 : 1 );
+
+#  ifdef _GAE_DEBUG_EDITION_
+      listBoxPFTexturesOn.pushBackItem ( "On" );
+      listBoxPFTexturesOn.pushBackItem ( "Off" );
+      listBoxPFTexturesOn.setSelectedItemIndex ( config.getMiscDebugTextures() ? 0 : 1 );
+      listBoxPFTextureMode.pushBackItem ( "Path Only" );
+      listBoxPFTextureMode.pushBackItem ( "Open/Closed Sets" );
+      listBoxPFTextureMode.pushBackItem ( "Local Annotations" );
+      listBoxPFTextureMode.setSelectedItemIndex ( config.getMiscDebugTextureMode () );
+#  endif
+
 }
 
 void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
@@ -183,8 +225,28 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		config.setSoundVolumeMusic(atoi(listBoxVolumeMusic.getSelectedItem().c_str()));
 		saveConfig();
 	}
-
-
+   else if ( listBoxMaxPathNodes.mouseClick ( x,y ) )
+   {
+      config.setPathFinderMaxNodes ( strToInt ( this->listBoxMaxPathNodes.getSelectedItem () ) );
+      saveConfig ();
+   }
+   else if ( listBoxPFAlgorithm.mouseClick ( x,y ) )
+   {
+      config.setPathFinderUseAStar( listBoxPFAlgorithm.getSelectedItemIndex () ? false : true );
+      saveConfig ();
+   }
+#  ifdef _GAE_DEBUG_EDITION_
+   else if ( listBoxPFTexturesOn.mouseClick ( x,y ) )
+   {
+      config.setMiscDebugTextures ( listBoxPFTexturesOn.getSelectedItemIndex () == 0 ? true : false );
+      saveConfig ();
+   }
+   else if ( listBoxPFTextureMode.mouseClick ( x,y ) )
+   {
+      config.setMiscDebugTextureMode( listBoxPFTextureMode.getSelectedItemIndex () );
+      saveConfig ();
+   }
+#  endif
 }
 
 void MenuStateOptions::mouseMove(int x, int y, const MouseState &ms){
@@ -200,6 +262,12 @@ void MenuStateOptions::mouseMove(int x, int y, const MouseState &ms){
 	listBoxShadows.mouseMove(x, y);
 	listBoxTextures3D.mouseMove(x, y);
 	listBoxLights.mouseMove(x, y);
+   listBoxMaxPathNodes.mouseMove (x, y);
+   listBoxPFAlgorithm.mouseMove (x, y);
+#  ifdef _GAE_DEBUG_EDITION_      
+      listBoxPFTexturesOn.mouseMove (x, y);
+      listBoxPFTextureMode.mouseMove (x, y);
+#  endif
 }
 
 void MenuStateOptions::render(){
@@ -216,7 +284,13 @@ void MenuStateOptions::render(){
 	renderer.renderListBox(&listBoxVolumeFx);
 	renderer.renderListBox(&listBoxVolumeAmbient);
 	renderer.renderListBox(&listBoxVolumeMusic);
-	renderer.renderLabel(&labelLang);
+   renderer.renderListBox ( &listBoxMaxPathNodes );
+   renderer.renderListBox ( &listBoxPFAlgorithm );
+#  ifdef _GAE_DEBUG_EDITION_
+      renderer.renderListBox ( &listBoxPFTexturesOn );
+      renderer.renderListBox ( &listBoxPFTextureMode );
+#  endif
+   renderer.renderLabel(&labelLang);
 	renderer.renderLabel(&labelShadows);
 	renderer.renderLabel(&labelTextures3D);
 	renderer.renderLabel(&labelLights);
@@ -224,6 +298,12 @@ void MenuStateOptions::render(){
 	renderer.renderLabel(&labelVolumeFx);
 	renderer.renderLabel(&labelVolumeAmbient);
 	renderer.renderLabel(&labelVolumeMusic);
+   renderer.renderLabel( & labelMaxPathNodes );
+   renderer.renderLabel( & labelPFAlgorithm );
+#  ifdef _GAE_DEBUG_EDITION_
+      renderer.renderLabel( & labelPFTexturesOn );
+      renderer.renderLabel( & labelPFTextureMode );
+#  endif
 }
 
 void MenuStateOptions::saveConfig(){

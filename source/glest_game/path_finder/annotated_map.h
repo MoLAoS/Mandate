@@ -124,6 +124,10 @@ public:
    // Clear temporary annotations
    void clearLocalAnnotations ( Field field );
 
+#  ifdef _GAE_DEBUG_EDITION_
+      list<std::pair<Vec2i,uint32>>* getLocalAnnotations ();
+#  endif
+
 private:
    // for initMetrics () and updateMapMetrics ()
    CellMetrics computeClearances ( const Vec2i & );
@@ -137,6 +141,9 @@ private:
    int metricHeight;
    std::map<Vec2i,uint32> localAnnt;
    Map *cMap;
+#ifdef _GAE_DEBUG_EDITION_
+public:
+#endif
    MetricMap metrics;
 };
 

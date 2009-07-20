@@ -173,6 +173,12 @@ public:
 	int getUnitCount(int factionIndex);
 	int getUnitCountOfType(int factionIndex, const string &typeName);
 
+#ifdef _GAE_DEBUG_EDITION_
+   void loadPFDebugTextures ();
+   Texture2D *PFDebugTextures[18];
+   //int getNumPathPos () { return map.PathPositions.size (); }
+#endif
+
 private:
 	void initCells();
 	void initSplattedTextures();

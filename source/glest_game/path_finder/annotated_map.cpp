@@ -299,8 +299,6 @@ uint32 AnnotatedMap::computeClearance ( const Vec2i &pos, Field field )
          while ( canClear ( pos, clearance + 1, FieldDeepWater ) )
             clearance++;
       return clearance;
-   case FieldAmphibious:
-      return maxClearanceValue;
    default:
       throw new runtime_error ( "Illegal Field passed to PathFinder::computeClearance()" );
       return 0;
@@ -432,5 +430,17 @@ void AnnotatedMap::clearLocalAnnotations ( Field field )
    }
    localAnnt.clear ();
 }
+
+#ifdef _GAE_DEBUG_EDITION_
+
+list<pair<Vec2i,uint32>>* AnnotatedMap::getLocalAnnotations ()
+{
+   list<pair<Vec2i,uint32>> *ret = new list<pair<Vec2i,uint32>> ();
+   for ( map<Vec2i,uint32>::iterator it = localAnnt.begin (); it != localAnnt.end (); ++ it )
+      ret->push_back ( pair<Vec2i,uint32> (it->first,metrics[it->first].get(FieldWalkable)) );
+   return ret;
+}
+
+#endif
 
 }}}

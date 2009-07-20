@@ -431,6 +431,7 @@ void Map::setCellTypes ()
             cell->setType ( SurfaceTypeFordable );
       }
 }
+/*
 void Map::setCellType ( Vec2i pos )
 {
    Cell *cell = getCell ( pos );
@@ -441,7 +442,7 @@ void Map::setCellType ( Vec2i pos )
    else
       cell->setType ( SurfaceTypeLand );
 }
-
+*/
 void Map::read(NetworkDataBuffer &buf) {
 
 	for(int y = 0; y < tileH; ++y) {

@@ -19,6 +19,7 @@
 #include "path_finder.h"
 #include "map.h"
 #include "vec.h"
+#include "config.h"
 
 namespace Glest { namespace Game { namespace Search {
 
@@ -34,9 +35,8 @@ GraphSearch::GraphSearch ()
 {
    aMap = NULL;
    cMap = NULL;
-
-   bNodePool = new BFSNodePool ();
-   aNodePool = new AStarNodePool ();
+   bNodePool = NULL;
+   aNodePool = NULL;
 
 #  ifdef PATHFINDER_TIMING
       statsAStar = new PathFinderStats ( "A-Star Search : " );
@@ -53,12 +53,16 @@ GraphSearch::~GraphSearch ()
 #  endif
 }
 
-void GraphSearch::init ( Map *cell_map, AnnotatedMap *annt_map )
+void GraphSearch::init ( Map *cell_map, AnnotatedMap *annt_map, bool astar )
 {
    cMap = cell_map;
    aMap = annt_map;
-   bNodePool->init ( cell_map );
-   aNodePool->init ( cell_map );
+   bNodePool = new BFSNodePool ();
+   aNodePool = new AStarNodePool ();
+   if ( astar )
+      aNodePool->init ( cell_map );
+   else
+      bNodePool->init ( cell_map );
 }
 
 bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
@@ -140,6 +144,39 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
       path.push_back ( currNode->pos );
       currNode = currNode->next;
    }
+#  ifdef _GAE_DEBUG_EDITION_
+   if ( Config::getInstance().getMiscDebugTextures() )
+   {
+      PathFinder *pf = PathFinder::getInstance();
+      pf->PathStart = path.front();
+      pf->PathDest = path.back();
+      pf->OpenSet.clear(); pf->ClosedSet.clear();
+      pf->PathSet.clear(); pf->LocalAnnotations.clear ();
+      if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets )
+      {
+         list<Vec2i> *alist = bNodePool->getOpenNodes ();
+         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
+            pf->OpenSet.insert ( *it );
+         delete alist;
+         alist = bNodePool->getClosedNodes ();
+         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
+            pf->ClosedSet.insert ( *it );
+         delete alist;
+      }
+      if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets 
+      ||   pf->debug_texture_action == PathFinder::ShowPathOnly )
+         for ( VLIt it = path.begin(); it != path.end(); ++it )
+            pf->PathSet.insert ( *it );
+      if ( pf->debug_texture_action == PathFinder::ShowLocalAnnotations )
+      {
+         pf->LocalAnnotations.clear();
+         list<pair<Vec2i,uint32>> *annt = aMap->getLocalAnnotations ();
+         for ( list<pair<Vec2i,uint32>>::iterator it = annt->begin(); it != annt->end(); ++it )
+            pf->LocalAnnotations[it->first] = it->second;
+         delete annt;
+      }
+   }
+#  endif
    return true;
 }
 
@@ -174,15 +211,10 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
             if ( !aMap->canOccupy ( diag1, 1, params.field ) || !aMap->canOccupy ( diag2, 1, params.field ) )
                continue; // not allowed
          }
+         // Assumes heuristic is admissable, or that you don't care if it isn't
          if ( aNodePool->isOpen ( sucPos ) )
             aNodePool->updateOpenNode ( sucPos, minNode, diag ? 1.4 : 1.0 );
-#        ifndef LOW_LEVEL_SEARCH_ADMISSABLE_HEURISTIC
-            else if ( aNodePool->isClosed ( sucPos ) )
-               aNodePool->updateClosedNode ( sucPos, minNode, diag ? 1.4 : 1.0 );
-            else
-#        else
-            else if ( ! aNodePool->isClosed ( sucPos ) )
-#        endif
+         else if ( ! aNodePool->isClosed ( sucPos ) )
          {
             bool exp = cMap->getTile (Map::toTileCoords (sucPos))->isExplored (params.team);
             if ( ! aNodePool->addToOpen ( minNode, sucPos, heuristic ( sucPos, params.dest ), minNode->distToHere + (diag?1.4:1.0), exp ) )
@@ -224,12 +256,60 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
       path.clear ();
       return false;
    }
-   //Logger::getInstance ().add ( "AStarSearch() ... Returning..." );
-   //assertValidPath ( path );
+
+#  ifdef _GAE_DEBUG_EDITION_
+   if ( Config::getInstance().getMiscDebugTextures() )
+   {
+      PathFinder *pf = PathFinder::getInstance();
+      pf->PathStart = path.front();
+      pf->PathDest = path.back();
+      pf->OpenSet.clear(); pf->ClosedSet.clear();
+      pf->PathSet.clear(); pf->LocalAnnotations.clear ();
+      if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets )
+      {
+         list<Vec2i> *alist = aNodePool->getOpenNodes ();
+         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
+            pf->OpenSet.insert ( *it );
+         delete alist;
+         alist = aNodePool->getClosedNodes ();
+         for ( VLIt it = alist->begin(); it != alist->end(); ++it )
+            pf->ClosedSet.insert ( *it );
+         delete alist;
+      }
+      if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets 
+      ||   pf->debug_texture_action == PathFinder::ShowPathOnly )
+         for ( VLIt it = path.begin(); it != path.end(); ++it )
+            pf->PathSet.insert ( *it );
+      if ( pf->debug_texture_action == PathFinder::ShowLocalAnnotations )
+      {
+         pf->LocalAnnotations.clear();
+         list<pair<Vec2i,uint32>> *annt = aMap->getLocalAnnotations ();
+         for ( list<pair<Vec2i,uint32>>::iterator it = annt->begin(); it != annt->end(); ++it )
+            pf->LocalAnnotations[it->first] = it->second;
+         delete annt;
+      }
+   }
+#  endif
+   //assert ( assertValidPath ( path ) );
    return true;
 }
 
-bool GraphSearch::canPathOut ( const Vec2i &pos, const int radius, Field field  )
+bool GraphSearch::assertValidPath ( list<Vec2i> &path )
+{
+   if ( path.size () < 2 ) return true;
+   VLIt it = path.begin();
+   Vec2i prevPos = *it;
+   for ( ++it; it != path.end(); ++it )
+   {
+      if ( prevPos.dist(*it) < 0.99 || prevPos.dist(*it) > 1.42 )
+         return false;
+      prevPos = *it;
+   }
+   return true;
+}
+
+//KILLME Remove when Greedy search is removed...
+bool GraphSearch::canPathOut_Greedy ( const Vec2i &pos, const int radius, Field field  )
 {
    assert ( radius > 0 && radius <= 5 );
    bNodePool->reset ();
@@ -267,6 +347,54 @@ bool GraphSearch::canPathOut ( const Vec2i &pos, const int radius, Field field  
                pathFound = true;
             else
                bNodePool->addToOpen ( maxNode, sucPos, maxNode->heuristic - 1.f );
+			} // end if
+		} // end for
+	} // end while
+   return pathFound;
+}
+
+// true if any path to at least radius cells away can be found
+// Performs a modified A* Search where the f-value is substituted
+// for zero minus the g-value, the algorithm thus tries to 'escape'
+// (ie, get as far from start as quickly as possible).
+bool GraphSearch::canPathOut ( const Vec2i &pos, const int radius, Field field  )
+{
+   assert ( radius > 0 && radius <= 5 );
+   aNodePool->reset ();
+   aNodePool->addToOpen ( NULL, pos, 0, 0 );
+	bool pathFound= false;
+   AStarNode *maxNode = NULL;
+   const Vec2i *Directions = OffsetsSize1Dist1;
+
+   while( ! pathFound ) 
+   {
+      maxNode = aNodePool->getBestCandidate ();
+      if ( ! maxNode ) break; // failure
+      for ( int i = 0; i < 8 && ! pathFound; ++ i )
+      {
+         Vec2i sucPos = maxNode->pos + Directions[i];
+         if ( ! cMap->isInside ( sucPos ) 
+         ||   ! cMap->getCell( sucPos )->isFree( field == FieldAir ? ZoneAir: ZoneSurface ) )
+            continue;
+         //CanOccupy() will be cheapest, do it first...
+         if ( aMap->canOccupy (sucPos, 1, field) && ! aNodePool->isListed (sucPos) )
+         {
+            if ( maxNode->pos.x != sucPos.x && maxNode->pos.y != sucPos.y ) // if diagonal move
+            {
+               Vec2i diag1 ( maxNode->pos.x, sucPos.y );
+               Vec2i diag2 ( sucPos.x, maxNode->pos.y );
+               // and either diag cell is not free...
+               if ( ! aMap->canOccupy ( diag1, 1, field ) 
+               ||   ! aMap->canOccupy ( diag2, 1, field )
+               ||   ! cMap->getCell( diag1 )->isFree( field == FieldAir ? ZoneAir: ZoneSurface ) 
+               ||   ! cMap->getCell( diag2 )->isFree( field == FieldAir ? ZoneAir: ZoneSurface ) )
+                  continue; // not allowed
+            }
+            // Move is legal.
+            if ( -(maxNode->distToHere) + 1 >= radius ) 
+               pathFound = true;
+            else
+               aNodePool->addToOpen ( maxNode, sucPos, 0, maxNode->distToHere - 1.f );
 			} // end if
 		} // end for
 	} // end while

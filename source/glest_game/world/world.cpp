@@ -24,6 +24,9 @@
 #include "game_settings.h"
 #include "network_message.h"
 
+//DEBUG remove me some time...
+#include "renderer.h"
+
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -90,15 +93,19 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-	scriptManager = game.getScriptManager();
-	unitUpdater.init(game);
 
+#  ifdef _GAE_DEBUG_EDITION_
+      loadPFDebugTextures ();
+#  endif
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
 	initSplattedTextures();
 
-	//minimap must be init after sum computation
+	scriptManager = game.getScriptManager();
+	unitUpdater.init(game); // must be done after initMap()
+
+   //minimap must be init after sum computation
 	initMinimap();
 
 	if(worldNode)
@@ -1194,6 +1201,41 @@ void World::hackyCleanUp(Unit *unit) {
 }
 
 
+#ifdef _GAE_DEBUG_EDITION_
+#define _load_tex(i,f) \
+   PFDebugTextures[i]=Renderer::getInstance().newTexture2D(rsGame);\
+   PFDebugTextures[i]->setMipmap(false);\
+   PFDebugTextures[i]->getPixmap()->load(f);
+
+void World::loadPFDebugTextures()
+{
+   char buff[128];
+   for ( int i=0; i < 4; ++i )
+   {
+      sprintf ( buff, "data/core/misc_textures/g%02d.bmp", i );
+      _load_tex ( i, buff );
+   }
+   for ( int i=13; i < 13+4; ++i )
+   {
+      sprintf ( buff, "data/core/misc_textures/l%02d.bmp", i-13 );
+      _load_tex ( i, buff );
+   }
+
+   //_load_tex ( 4, "data/core/misc_textures/local0.bmp" );
+
+   _load_tex ( 5, "data/core/misc_textures/path_start.bmp" );
+   _load_tex ( 6, "data/core/misc_textures/path_dest.bmp" );
+   _load_tex ( 7, "data/core/misc_textures/path_both.bmp" );
+   _load_tex ( 8, "data/core/misc_textures/path_return.bmp" );
+   _load_tex ( 9, "data/core/misc_textures/path.bmp" );
+
+   _load_tex ( 10, "data/core/misc_textures/path_node.bmp" );
+   _load_tex ( 11, "data/core/misc_textures/open_node.bmp" );
+   _load_tex ( 12, "data/core/misc_textures/closed_node.bmp" );
+}
+
+#undef _load_tex
+#endif
 
 
 }}//end namespace

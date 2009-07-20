@@ -331,7 +331,7 @@ private:
 	void computeNearSubmerged();
 	void computeCellColors();
    void setCellTypes ();
-   void setCellType ( Vec2i pos );
+   //void setCellType ( Vec2i pos );
 
 	static void findNearest(Vec2i &result, const Vec2i &start, const Vec2i &candidate, float &minDistance);
 	void findNearestFree(Vec2i &result, const Vec2i &start, int size, Field field, const Vec2i &candidate, float &minDistance) const;

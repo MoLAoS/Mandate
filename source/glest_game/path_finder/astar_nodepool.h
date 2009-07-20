@@ -160,15 +160,21 @@ public:
    // test if a position is closed
    bool isClosed ( const Vec2i &pos ) { return markerArray.isClosed ( pos ); } 
 
+   // needed for canPathOut()
+   bool isListed ( const Vec2i &pos ) { return markerArray.isListed ( pos ); }
 #ifndef LOW_LEVEL_SEARCH_ADMISSABLE_HEURISTIC
    // conditionally update a node (known to be closed) and re-open if updated
    void updateClosedNode ( const Vec2i &pos, AStarNode *neighbour, float cost );
 #endif
-
 #ifdef PATHFINDER_TIMING
    int64 startTime;
    void startTimer () { startTime = Chrono::getCurMicros (); }
    int64 stopTimer () { return Chrono::getCurMicros () - startTime; }
+#endif
+#ifdef _GAE_DEBUG_EDITION_
+   virtual list<Vec2i>* getOpenNodes ();
+   virtual list<Vec2i>* getClosedNodes ();
+   list<Vec2i> listedNodes;
 #endif
 
 private:

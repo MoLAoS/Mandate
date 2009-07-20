@@ -1129,6 +1129,13 @@ void Renderer::renderTextEntryBox(const GraphicTextEntryBox *textEntryBox){
 // ==================== complex rendering ====================
 
 void Renderer::renderSurface(){
+#  if defined _GAE_DEBUG_EDITION_
+   if ( Config::getInstance().getMiscDebugTextures() )
+   {
+      renderSurfacePFDebug ();
+      return;
+   }
+#  endif
 
 	int lastTex=-1;
 	int currTex;
@@ -1231,6 +1238,176 @@ void Renderer::renderSurface(){
 	glGetError();	//remove when first mtex problem solved
 	assertGl();
 }
+
+
+#ifdef _GAE_DEBUG_EDITION_
+void Renderer::renderSurfacePFDebug ()
+{
+	int lastTex=-1;
+	int currTex;
+	const World *world= game->getWorld();
+	const Map *map= world->getMap();
+   const Search::PathFinder *pf = Search::PathFinder::getInstance ();
+	const Rect2i mapBounds(0, 0, map->getTileW()-1, map->getTileH()-1);
+	float coordStep= world->getTileset()->getSurfaceAtlas()->getCoordStep();
+
+	assertGl();
+
+	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
+
+	glEnable(GL_BLEND);
+	glEnable(GL_COLOR_MATERIAL); 
+	glDisable(GL_ALPHA_TEST);
+	glActiveTexture(baseTexUnit);
+
+	Quad2i scaledQuad= visibleQuad/Map::cellScale;
+
+	PosQuadIterator pqi(scaledQuad);
+	while(pqi.next()){
+
+      const Vec2i &pos= pqi.getPos();
+      int cx, cy;
+      cx = pos.x * 2;
+      cy = pos.y * 2;
+      if(mapBounds.isInside(pos)){
+
+			Tile *tc00= map->getTile(pos.x, pos.y);
+			Tile *tc10= map->getTile(pos.x+1, pos.y);
+			Tile *tc01= map->getTile(pos.x, pos.y+1);
+			Tile *tc11= map->getTile(pos.x+1, pos.y+1);
+
+         Vec3f tl = tc00->getVertex ();
+         Vec3f tr = tc10->getVertex ();
+         Vec3f bl = tc01->getVertex ();
+         Vec3f br = tc11->getVertex ();
+
+         Vec3f tc = tl + (tr - tl) / 2;
+         Vec3f ml = tl + (bl - tl) / 2;
+         Vec3f mr = tr + (br - tr) / 2;
+         Vec3f mc = ml + (mr - ml) / 2;
+         Vec3f bc = bl + (br - bl) / 2;
+
+         // cx,cy
+         uint32 tex = 0;
+         uint32 met;
+
+         Vec2i cPos ( cx, cy );
+         if ( pf->PathStart == cPos ) met = 5;
+         else if ( pf->PathDest == cPos ) met = 6;
+         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
+         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
+         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
+         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
+            met = 13 + pf->LocalAnnotations.find(cPos)->second;
+         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
+         glBindTexture(GL_TEXTURE_2D, tex);
+         glBegin ( GL_TRIANGLE_FAN );
+            glTexCoord2f ( 0.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(tl.ptr());
+            glTexCoord2f ( 1.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(tc.ptr());
+            glTexCoord2f ( 1.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(mc.ptr());
+            glTexCoord2f ( 0.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(ml.ptr());                        
+         glEnd ();
+
+         cPos = Vec2i( cx+1, cy );
+         if ( pf->PathStart == cPos ) met = 5;
+         else if ( pf->PathDest == cPos ) met = 6;
+         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
+         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
+         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
+         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
+            met = 13 + pf->LocalAnnotations.find(cPos)->second;
+         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
+         glBindTexture(GL_TEXTURE_2D, tex);
+         glBegin ( GL_TRIANGLE_FAN );
+            glTexCoord2f ( 0.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(tc.ptr());
+            glTexCoord2f ( 1.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(tr.ptr());
+            glTexCoord2f ( 1.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(mr.ptr());
+            glTexCoord2f ( 0.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(mc.ptr());                        
+         glEnd ();
+
+         cPos = Vec2i( cx, cy + 1 );
+         if ( pf->PathStart == cPos ) met = 5;
+         else if ( pf->PathDest == cPos ) met = 6;
+         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
+         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
+         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
+         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
+            met = 13 + pf->LocalAnnotations.find(cPos)->second;
+         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
+         glBindTexture(GL_TEXTURE_2D, tex);
+         glBegin ( GL_TRIANGLE_FAN );
+            glTexCoord2f ( 0.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(ml.ptr());
+            glTexCoord2f ( 1.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(mc.ptr());
+            glTexCoord2f ( 1.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(bc.ptr());
+            glTexCoord2f ( 0.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(bl.ptr());                        
+         glEnd ();
+
+         cPos = Vec2i( cx + 1, cy + 1 );
+         if ( pf->PathStart == cPos ) met = 5;
+         else if ( pf->PathDest == cPos ) met = 6;
+         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
+         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
+         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
+         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
+            met = 13 + pf->LocalAnnotations.find(cPos)->second;
+         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
+         glBindTexture(GL_TEXTURE_2D, tex);
+         glBegin ( GL_TRIANGLE_FAN );
+            glTexCoord2f ( 0.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(mc.ptr());
+            glTexCoord2f ( 1.f, 1.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(mr.ptr());
+            glTexCoord2f ( 1.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(br.ptr());
+            glTexCoord2f ( 0.f, 0.f );
+            glNormal3fv(tc00->getNormal().ptr());
+            glVertex3fv(bc.ptr());                        
+         glEnd ();
+		}
+	}
+	glEnd();
+
+	//Restore
+	static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(false);
+	glPopAttrib();
+
+	//assert
+	glGetError();	//remove when first mtex problem solved
+	assertGl();
+}
+#endif
+
 
 void Renderer::renderObjects(){
 	const World *world= game->getWorld();

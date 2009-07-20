@@ -64,6 +64,9 @@ void AStarNodePool::reset ()
    leastH = NULL;
    markerArray.newSearch ();
    openHeap.clear ();
+#  ifdef _GAE_DEBUG_EDITION_
+      listedNodes.clear ();
+#  endif
 }
 
 void AStarNodePool::setMaxNodes ( const int max )
@@ -77,6 +80,9 @@ bool AStarNodePool::addToOpen ( AStarNode* prev, const Vec2i &pos, float h, floa
 {
    if ( numNodes == tmpMaxNodes ) 
       return false;
+#  ifdef _GAE_DEBUG_EDITION_
+      listedNodes.push_back ( pos );
+#  endif
    stock[numNodes].next = NULL;
    stock[numNodes].prev = prev;
    stock[numNodes].pos = pos;
@@ -144,6 +150,28 @@ AStarNode* AStarNodePool::getBestCandidate ()
    markerArray.setClosed ( ret->pos );
    return ret;
 }
+
+#ifdef _GAE_DEBUG_EDITION_
+
+list<Vec2i>* AStarNodePool::getOpenNodes ()
+{
+   list<Vec2i> *ret = new list<Vec2i> ();
+   list<Vec2i>::iterator it = listedNodes.begin();
+   for ( ; it != listedNodes.end (); ++it )
+      if ( isOpen ( *it ) ) ret->push_back ( *it );
+   return ret;
+}
+
+list<Vec2i>* AStarNodePool::getClosedNodes ()
+{
+   list<Vec2i> *ret = new list<Vec2i> ();
+   list<Vec2i>::iterator it = listedNodes.begin();
+   for ( ; it != listedNodes.end (); ++it )
+      if ( isClosed ( *it ) ) ret->push_back ( *it );
+   return ret;
+}
+
+#endif // defined ( _GAE_DEBUG_EDITION_ )
 
 #ifdef PATHFINDER_TIMING
 
