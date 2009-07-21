@@ -639,7 +639,6 @@ void UnitUpdater::updateBuild(Unit *unit){
 			unit->finishCommand();
 			unit->setCurrSkill(scStop);
 			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
-			builtUnit->born();
 			scriptManager->onUnitCreated(builtUnit);
 			if(unit->getFactionIndex()==world->getThisFactionIndex()) {
 				SoundRenderer::getInstance().playFx(
@@ -898,7 +897,6 @@ void UnitUpdater::updateRepair(Unit *unit) {
 				unit->setCurrSkill(scStop);
 				if(!wasBuilt) {
 					//building finished
-					repaired->born();
 					scriptManager->onUnitCreated(repaired);
 					if(unit->getFactionIndex() == world->getThisFactionIndex()) {
 						// try to find finish build sound

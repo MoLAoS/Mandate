@@ -1047,7 +1047,6 @@ void World::initUnits() {
 				if(unit->getType()->hasSkillClass(scBeBuilt))
             {
                map.flatternTerrain(unit);
-               assert ( !unit->isMobile () );
                unitUpdater.pathFinder->updateMapMetrics ( unit->getPos(),
                             unit->getSize(), true, unit->getCurrField () );
 				}
