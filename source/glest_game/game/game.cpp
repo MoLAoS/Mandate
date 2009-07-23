@@ -139,11 +139,11 @@ void Game::load(){
 
 	//tileset
    if ( ! world.loadTileset(checksum) )
-      throw new runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
+      throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
 
    //tech, load before map because of resources
    if ( ! world.loadTech(checksum) )
-      throw new runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
+      throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
 
    //map
    world.loadMap(checksum);

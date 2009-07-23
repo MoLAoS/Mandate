@@ -101,8 +101,8 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
    miscDebugTextureMode = p->getInt ("MiscDebugTextureMode", 0 );
    miscDebugTextures = p->getBool ( "MiscDebugTextures", false );
-   pathFinderMaxNodes = p->getInt ( "PathFinderMaxNodes", 2048 );
-   pathFinderUseAStar = p->getBool ( "PathFinderUseAStar", true );
+   pathFinderMaxNodes = p->getInt ( "PathFinderMaxNodes", 1024 );
+   pathFinderUseAStar = p->getBool ( "PathFinderUseAStar", false );
 
 	delete p;
 }
