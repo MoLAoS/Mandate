@@ -154,8 +154,8 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
    factionTypes.resize(factionNames.size());
    int i = 0;
    set<string>::const_iterator fn;
-   for(fn = factionNames.begin(); fn != factionNames.end(); ++fn) {
-      if ( ! factionTypes[i++].load(dir + "/factions/" + *fn, this, checksum) )
+   for(fn = factionNames.begin(); fn != factionNames.end(); ++fn, ++i) {
+      if ( ! factionTypes[i].load(dir + "/factions/" + *fn, this, checksum) )
          loadOk = false;
       else
          factionTypeMap[*fn] = &factionTypes[i];
@@ -164,6 +164,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
    if(resourceTypes.size() > 256) {
       throw runtime_error("Glest Advanced Engine currently only supports 256 resource types.");
    }
+   return loadOk;
 }
 
 TechTree::~TechTree(){
