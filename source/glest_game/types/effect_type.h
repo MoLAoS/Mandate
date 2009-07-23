@@ -141,7 +141,7 @@ private:
 public:
 	EffectType();
 	virtual ~EffectType() {}
-	virtual void load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 
 	EffectBias getBias() const				{return bias;}
 	EffectStacking getStacking() const		{return stacking;}
@@ -181,7 +181,7 @@ private:
 
 public:
 	virtual ~Emanation() {}
-	virtual void load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	int getRadius() const	{return radius;}
 };
 

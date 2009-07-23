@@ -34,10 +34,17 @@ namespace Glest { namespace Game {
 // 	class DisplayableType
 // =====================================================
 
-void DisplayableType::load(const XmlNode *baseNode, const string &dir) {
-	const XmlNode *imageNode = baseNode->getChild("image");
-	image = Renderer::getInstance().newTexture2D(rsGame);
-	image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
+bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
+   try {
+      const XmlNode *imageNode = baseNode->getChild("image");
+	   image = Renderer::getInstance().newTexture2D(rsGame);
+	   image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
+   }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().addXmlError ( dir, e.what() );
+      return false;
+   }
+   return true;
 }
 
 // =====================================================
@@ -69,37 +76,57 @@ string RequirableType::getReqDesc() const{
 	}
 }
 
-void RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
-	//unit requirements
-	const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
-	if(unitRequirementsNode) {
-		for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
-			const XmlNode *unitNode = unitRequirementsNode->getChild("unit", i);
-			string name = unitNode->getRestrictedAttribute("name");
-			unitReqs.push_back(ft->getUnitType(name));
-		}
-	}
+bool RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool loadOk = true;
+   //unit requirements
+   try {
+	   const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
+	   if(unitRequirementsNode) {
+		   for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
+			   const XmlNode *unitNode = unitRequirementsNode->getChild("unit", i);
+			   string name = unitNode->getRestrictedAttribute("name");
+			   unitReqs.push_back(ft->getUnitType(name));
+		   }
+	   }
+   }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().addXmlError ( dir, e.what () );
+      loadOk = false;
+   }
 
 	//upgrade requirements
-	const XmlNode *upgradeRequirementsNode = baseNode->getChild("upgrade-requirements", 0, false);
-	if(upgradeRequirementsNode) {
-		for(int i = 0; i < upgradeRequirementsNode->getChildCount(); ++i) {
-			const XmlNode *upgradeReqNode = upgradeRequirementsNode->getChild("upgrade", i);
-			string name = upgradeReqNode->getRestrictedAttribute("name");
-			upgradeReqs.push_back(ft->getUpgradeType(name));
-		}
-	}
+   try {
+	   const XmlNode *upgradeRequirementsNode = baseNode->getChild("upgrade-requirements", 0, false);
+	   if(upgradeRequirementsNode) {
+		   for(int i = 0; i < upgradeRequirementsNode->getChildCount(); ++i) {
+			   const XmlNode *upgradeReqNode = upgradeRequirementsNode->getChild("upgrade", i);
+			   string name = upgradeReqNode->getRestrictedAttribute("name");
+			   upgradeReqs.push_back(ft->getUpgradeType(name));
+		   }
+	   }
+   }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().addXmlError ( dir, e.what () );
+      loadOk = false;
+   }
 
 	//subfactions required
-	const XmlNode *subfactionsNode = baseNode->getChild("subfaction-restrictions", 0, false);
-	if(subfactionsNode) {
-		for(int i = 0; i < subfactionsNode->getChildCount(); ++i) {
-			string name = subfactionsNode->getChild("subfaction", i)->getRestrictedAttribute("name");
-			subfactionsReqs |= 1 << ft->getSubfactionIndex(name);
-		}
-	} else {
-		subfactionsReqs = -1; //all subfactions
-	}
+   try { 
+      const XmlNode *subfactionsNode = baseNode->getChild("subfaction-restrictions", 0, false);
+	   if(subfactionsNode) {
+		   for(int i = 0; i < subfactionsNode->getChildCount(); ++i) {
+			   string name = subfactionsNode->getChild("subfaction", i)->getRestrictedAttribute("name");
+			   subfactionsReqs |= 1 << ft->getSubfactionIndex(name);
+		   }
+      }
+	   else
+		   subfactionsReqs = -1; //all subfactions
+   }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().addXmlError ( dir, e.what () );
+      loadOk = false;
+   }
+   return loadOk;
 }
 
 // =====================================================
@@ -142,28 +169,49 @@ string ProducibleType::getReqDesc() const {
 	return str;
 }
 
-void ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
-	RequirableType::load(baseNode, dir, techTree, factionType);
+bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
+	bool loadOk = true;
+   if ( ! RequirableType::load(baseNode, dir, techTree, factionType) )
+      loadOk = false;
 
 	//resource requirements
-	const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);
-	if(resourceRequirementsNode) {
-		costs.resize(resourceRequirementsNode->getChildCount());
-		for(int i = 0; i < costs.size(); ++i) {
-			const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
-			string name = resourceNode->getAttribute("name")->getRestrictedValue();
-			int amount = resourceNode->getAttribute("amount")->getIntValue();
-			costs[i].init(techTree->getResourceType(name), amount);
-		}
-	}
+   try {
+	   const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);
+	   if(resourceRequirementsNode) {
+		   costs.resize(resourceRequirementsNode->getChildCount());
+		   for(int i = 0; i < costs.size(); ++i) {
+            try {
+               const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
+			      string name = resourceNode->getAttribute("name")->getRestrictedValue();
+			      int amount = resourceNode->getAttribute("amount")->getIntValue();
+			      costs[i].init(techTree->getResourceType(name), amount);
+            }
+            catch ( runtime_error e ) {
+               Logger::getErrorLog().addXmlError ( dir, e.what() );
+               loadOk = false;
+            }
+		   }
+	   }
+   }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().addXmlError ( dir, e.what() );
+      loadOk = false;
+   }
 
 	//subfaction advancement
-	const XmlNode *advancementNode = baseNode->getChild("advances-to-subfaction", 0, false);
-	if(advancementNode) {
-		advancesToSubfaction = factionType->getSubfactionIndex(
-				advancementNode->getAttribute("name")->getRestrictedValue());
-		advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
-	}
+   try {
+      const XmlNode *advancementNode = baseNode->getChild("advances-to-subfaction", 0, false);
+	   if(advancementNode) {
+		   advancesToSubfaction = factionType->getSubfactionIndex(
+				   advancementNode->getAttribute("name")->getRestrictedValue());
+		   advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
+	   }
+   }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().addXmlError ( dir, e.what() );
+      loadOk = false;
+   }
+   return loadOk;
 }
 
 }}//end namespace

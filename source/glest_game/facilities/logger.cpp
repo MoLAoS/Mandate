@@ -66,18 +66,26 @@ void Logger::add(const string &str,  bool renderScreen){
 }
 
 void Logger::clear() {
-    string s="Log file\n";
+   string s="Log file\n";
 
-	FILE *f= fopen(fileName.c_str(), "wt+");
-	if(!f){
-		throw runtime_error("Error opening log file" + fileName);
-	}
+   FILE *f= fopen(fileName.c_str(), "wt+");
+   if(!f){
+      throw runtime_error("Error opening log file" + fileName);
+   }
 
-    fprintf(f, "%s", s.c_str());
-	fprintf(f, "\n");
+   fprintf(f, "%s", s.c_str());
+   fprintf(f, "\n");
 
-    fclose(f);
+   fclose(f);
 }
+
+void Logger::addXmlError ( const string &path, const char *error )
+{
+   static char buffer[2048];
+   sprintf ( buffer, "XML Error in %s:\n %s", path.c_str(), error );
+   add ( buffer );
+}
+
 
 // ==================== PRIVATE ====================
 

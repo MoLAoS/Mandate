@@ -73,7 +73,7 @@ void LuaScript::registerFunction(LuaFunction luaFunction, const string &function
 
 string LuaScript::errorToString(int errorCode){
 
-	string error;
+   string error = "LUA:: ";
 		
 	switch(errorCode){
 		case LUA_ERRSYNTAX: 
@@ -91,9 +91,8 @@ string LuaScript::errorToString(int errorCode){
 		default:
 			error+= "Unknown error";
 	}
-
 	error += string(": ")+luaL_checkstring(luaState, -1);
-
+   fprintf ( stderr, error.c_str() );
 	return error;
 }
 

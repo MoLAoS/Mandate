@@ -40,7 +40,7 @@ private:
 
 public:
 	void preLoad(const string &dir)			{name=lastDir(dir);}
-	virtual void load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
+	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
 
     //get all
 	int getEffectCount() const				{return effects.size();}

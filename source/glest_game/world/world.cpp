@@ -161,39 +161,33 @@ void World::initNetworkServer() {
 }
 
 //load tileset
-void World::loadTileset(Checksum &checksum) {
+bool World::loadTileset(Checksum &checksum) {
 	tileset.load(game.getGameSettings().getTilesetPath(), checksum);
 	timeFlow.init(&tileset);
+   return true;
 }
 
 //load tech
-void World::loadTech(Checksum &checksum) {
-	vector<string> names;
-
-	for (int i = 0; i < gs.getFactionCount(); ++i) {
-		if(gs.getFactionTypeName(i).size()) {
-			vector<string>::const_iterator j;
-			for(j = names.begin(); j != names.end() && *j != gs.getFactionTypeName(i); ++j) ;
-
-			if(j == names.end()) {
-				names.push_back(gs.getFactionTypeName(i));
-			}
-		}
-	}
-
-	techTree.load(gs.getTechPath(), names, checksum);
+bool World::loadTech(Checksum &checksum) {
+	set<string> names;
+	for (int i = 0; i < gs.getFactionCount(); ++i)
+		if(gs.getFactionTypeName(i).size())
+         names.insert ( gs.getFactionTypeName(i) );
+	return techTree.load(gs.getTechPath(), names, checksum);
 }
 
 //load map
-void World::loadMap(Checksum &checksum) {
+bool World::loadMap(Checksum &checksum) {
 	const string &path = gs.getMapPath();
 	checksum.addFile(path, false);
 	map.load( path, &techTree, &tileset);
+   return true;
 }
 
-void World::loadScenario(const string &path, Checksum *checksum){
+bool World::loadScenario(const string &path, Checksum *checksum){
 	checksum->addFile(path, true);
 	scenario.load(path);
+   return true;
 }
 
 //load saved game

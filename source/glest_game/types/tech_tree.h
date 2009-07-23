@@ -13,6 +13,7 @@
 #define _GLEST_GAME_TECHTREE_H_
 
 #include <map>
+#include <set>
 #include "util.h"
 #include "resource_type.h"
 #include "faction_type.h"
@@ -58,7 +59,7 @@ private:
 	DamageMultiplierTable damageMultiplierTable;
 
 public:
-    void load(const string &dir, const vector<string> &factionNames, Checksum &checksum);
+    bool load(const string &dir, const set<string> &factionNames, Checksum &checksum);
     ~TechTree();
 
     // get count

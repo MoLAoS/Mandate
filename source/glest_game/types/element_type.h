@@ -86,7 +86,7 @@ public:
 			NameIdPair(id, name), image(image) {}
 	virtual ~DisplayableType() {};
 
-	virtual void load(const XmlNode *baseNode, const string &dir);
+	virtual bool load(const XmlNode *baseNode, const string &dir);
 
 	//get
 	const Texture2D *getImage() const	{return image;}
@@ -123,7 +123,7 @@ public:
 
     //other
     virtual string getReqDesc() const;
-	virtual void load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 };
 
 // =====================================================
@@ -165,7 +165,7 @@ public:
 
     //varios
     void checkCostStrings(TechTree *techTree);
-	virtual void load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
 	virtual string getReqDesc() const;
 };

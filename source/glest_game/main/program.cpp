@@ -116,6 +116,7 @@ Program::Program(Config &config, int argc, char** argv) :
 	logger.clear();
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
+   Logger::getErrorLog().clear();
 
 	//lang
 	Lang &lang= Lang::getInstance();

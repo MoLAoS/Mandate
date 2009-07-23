@@ -217,7 +217,7 @@ public:
 	 * is exactly what XmlNode object the UnitType load() method supplies to
 	 * this method.
 	 */
-	void load(const XmlNode *parametersNode, const string &dir, const TechTree *tt, const FactionType *ft);
+	bool load(const XmlNode *parametersNode, const string &dir, const TechTree *tt, const FactionType *ft);
 
 	virtual void save(XmlNode *node);
 
@@ -329,7 +329,7 @@ public:
 	 * Initializes this object from the specified XmlNode object.
 	 * TODO: explain better.
 	 */
-	virtual void load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 
 	virtual void save(XmlNode *node) const;
 

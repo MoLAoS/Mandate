@@ -41,42 +41,60 @@ FactionType::FactionType(){
 }
 
 //load a faction, given a directory
-void FactionType::load(const string &dir, const TechTree *techTree, Checksum &checksum){
+bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &checksum){
 
-    Logger::getInstance().add("Faction type: "+ dir, true);
-    name= lastDir(dir);
+   Logger::getInstance().add("Faction type: "+ dir, true);
+   name= lastDir(dir);
 
-	// a1) preload units
-	string unitsPath= dir + "/units/*.";
-	vector<string> unitFilenames;
-    findAll(unitsPath, unitFilenames);
-	unitTypes.resize(unitFilenames.size());
-    for(int i=0; i<unitTypes.size(); ++i){
-		string str= dir + "/units/" + unitFilenames[i];
-		unitTypes[i].preLoad(str);
-    }
+   // a1) preload units
+   string unitsPath= dir + "/units/*.";
+   vector<string> unitFilenames;
+   bool loadOk = true;
+   try { findAll(unitsPath, unitFilenames); }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().add( e.what() );
+      loadOk = false;
+   }
+   unitTypes.resize(unitFilenames.size());
+   for(int i=0; i<unitTypes.size(); ++i){
+      string str= dir + "/units/" + unitFilenames[i];
+      unitTypes[i].preLoad(str);
+   }
 
-	// a2) preload upgrades
-	string upgradesPath= dir + "/upgrades/*.";
-	vector<string> upgradeFilenames;
-    findAll(upgradesPath, upgradeFilenames);
-	upgradeTypes.resize(upgradeFilenames.size());
-    for(int i=0; i<upgradeTypes.size(); ++i){
-		string str= dir + "/upgrades/" + upgradeFilenames[i];
-		upgradeTypes[i].preLoad(str);
-    }
+   // a2) preload upgrades
+   string upgradesPath= dir + "/upgrades/*.";
+   vector<string> upgradeFilenames;
+   try { findAll(upgradesPath, upgradeFilenames); }
+   catch ( runtime_error e ) {
+      Logger::getErrorLog().add( e.what() );
+      loadOk = false;
+   }
+   upgradeTypes.resize(upgradeFilenames.size());
+   for(int i=0; i<upgradeTypes.size(); ++i){
+      string str= dir + "/upgrades/" + upgradeFilenames[i];
+      upgradeTypes[i].preLoad(str);
+   }
 
-	//open xml file
-    string path= dir+"/"+name+".xml";
+   //open xml file
+   string path= dir+"/"+name+".xml";
 
-	checksum.addFile(path, true);
+   checksum.addFile(path, true);
 
 	XmlTree xmlTree;
-	xmlTree.load(path);
-	const XmlNode *factionNode= xmlTree.getRootNode();
-
+   try { xmlTree.load(path); }
+   catch ( runtime_error e ) { 
+      Logger::getErrorLog().addXmlError ( path, "File missing or wrongly named." );
+      return false; // bail
+   }
+	const XmlNode *factionNode;
+   try { factionNode= xmlTree.getRootNode(); }
+   catch ( runtime_error e ) { 
+      Logger::getErrorLog().addXmlError ( path, "File appears to lack contents." );
+      return false; // bail
+   }
 	//read subfaction list
-	const XmlNode *subfactionsNode= factionNode->getChild("subfactions", 0, false);
+	const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
+
 	if(subfactionsNode) {
 		for(int i=0; i<subfactionsNode->getChildCount(); ++i){
 			// can't have more subfactions than an int has bits
@@ -87,56 +105,78 @@ void FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
 		}
 	}
 
-	// b1) load units
-	try{
-		for(int i=0; i<unitTypes.size(); ++i){
-            string str= dir + "/units/" + unitTypes[i].getName();
-            unitTypes[i].load(i, str, techTree, this, checksum);
-        }
-    }
-	catch(const exception &e){
-		throw runtime_error("Error loading units: "+ dir + "\n" + e.what());
-	}
+   // b1) load units
+   for(int i=0; i<unitTypes.size(); ++i){
+      string str= dir + "/units/" + unitTypes[i].getName();
+      if ( ! unitTypes[i].load(i, str, techTree, this, checksum) )
+         loadOk = false;
+   }
 
-	// b2) load upgrades
-	try{
-		for(int i=0; i<upgradeTypes.size(); ++i){
-            string str= dir + "/upgrades/" + upgradeTypes[i].getName();
-            upgradeTypes[i].load(str, techTree, this, checksum);
-        }
-    }
-	catch(const exception &e){
-		throw runtime_error("Error loading upgrades: "+ dir + "\n" + e.what());
-	}
+   // b2) load upgrades
+   for(int i=0; i<upgradeTypes.size(); ++i){
+      string str= dir + "/upgrades/" + upgradeTypes[i].getName();
+      if ( ! upgradeTypes[i].load(str, techTree, this, checksum) )
+         loadOk = false;
+   }
 
 	//read starting resources
-	const XmlNode *startingResourcesNode= factionNode->getChild("starting-resources");
-
-	startingResources.resize(startingResourcesNode->getChildCount());
-	for(int i=0; i<startingResources.size(); ++i){
-		const XmlNode *resourceNode= startingResourcesNode->getChild("resource", i);
-		string name= resourceNode->getAttribute("name")->getRestrictedValue();
-		int amount= resourceNode->getAttribute("amount")->getIntValue();
-		startingResources[i].init(techTree->getResourceType(name), amount);
-	}
+   try { 
+      const XmlNode *startingResourcesNode= factionNode->getChild("starting-resources"); 
+	   startingResources.resize(startingResourcesNode->getChildCount());
+	   for(int i=0; i<startingResources.size(); ++i){
+		   try { 
+            const XmlNode *resourceNode = startingResourcesNode->getChild("resource", i);
+		      string name= resourceNode->getAttribute("name")->getRestrictedValue();
+		      int amount= resourceNode->getAttribute("amount")->getIntValue();
+		      startingResources[i].init(techTree->getResourceType(name), amount);
+         }
+         catch ( runtime_error e ) {
+            Logger::getErrorLog().addXmlError ( path, e.what() );
+            loadOk = false;
+         }
+	   }
+   }
+   catch ( runtime_error e ) { 
+      Logger::getErrorLog().addXmlError ( path, e.what() );
+      loadOk = false;
+   }
 
 	//read starting units
-	const XmlNode *startingUnitsNode= factionNode->getChild("starting-units");
-	for(int i=0; i<startingUnitsNode->getChildCount(); ++i){
-		const XmlNode *unitNode= startingUnitsNode->getChild("unit", i);
-		string name= unitNode->getAttribute("name")->getRestrictedValue();
-		int amount= unitNode->getAttribute("amount")->getIntValue();
-		startingUnits.push_back(PairPUnitTypeInt(getUnitType(name), amount));
-	}
-
+   try { 
+      const XmlNode *startingUnitsNode = factionNode->getChild("starting-units");
+	   for(int i=0; i<startingUnitsNode->getChildCount(); ++i){
+         try {
+		      const XmlNode *unitNode= startingUnitsNode->getChild("unit", i);
+		      string name= unitNode->getAttribute("name")->getRestrictedValue();
+		      int amount= unitNode->getAttribute("amount")->getIntValue();
+		      startingUnits.push_back(PairPUnitTypeInt(getUnitType(name), amount));
+         }
+         catch ( runtime_error e ) { 
+            Logger::getErrorLog().addXmlError ( path, e.what() );
+            loadOk = false;
+         }
+      }
+   }
+   catch ( runtime_error e ) { 
+      Logger::getErrorLog().addXmlError ( path, e.what() );
+      loadOk = false;
+   }
+      
 	//read music
-	const XmlNode *musicNode= factionNode->getChild("music");
-	bool value= musicNode->getAttribute("value")->getBoolValue();
-	if(value){
-		music= new StrSound();
-		music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());
-	}
+   try {
+      const XmlNode *musicNode= factionNode->getChild("music");
+	   bool value= musicNode->getAttribute("value")->getBoolValue();
+	   if(value){
+		   music= new StrSound();
+		   music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());
+	   }
+   }
+   catch ( runtime_error e ) { 
+      Logger::getErrorLog().addXmlError ( path, e.what() );
+      loadOk = false;
+   }
 
+   //TODO try {} catch {} ... try {} catch {} ... try {} catch {} ... 
 	//notification of being attacked off screen
 	const XmlNode *attackNoticeNode= factionNode->getChild("attack-notice", 0, false);
 	if(attackNoticeNode && attackNoticeNode->getAttribute("enabled")->getRestrictedValue() == "true") {
@@ -170,6 +210,7 @@ void FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
 			throw runtime_error("An enabled enemy-notice must contain at least one sound-file: "+ dir);
 		}
 	}
+   return loadOk;
 }
 
 FactionType::~FactionType(){

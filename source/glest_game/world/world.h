@@ -130,10 +130,10 @@ public:
 
 	//init & load
 	void init(const XmlNode *worldNode = NULL);
-	void loadTileset(Checksum &checksum);
-	void loadTech(Checksum &checksum);
-	void loadMap(Checksum &checksum);
-	void loadScenario(const string &path, Checksum *checksum);
+	bool loadTileset(Checksum &checksum);
+	bool loadTech(Checksum &checksum);
+	bool loadMap(Checksum &checksum);
+	bool loadScenario(const string &path, Checksum *checksum);
 
 	void save(XmlNode *node) const;
 

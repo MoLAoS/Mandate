@@ -30,79 +30,114 @@ namespace Glest { namespace Game {
 //  class ResourceType
 // =====================================================
 
-void ResourceType::load(const string &dir, int id, Checksum &checksum) {
+bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
 
 	string path, str;
 	Renderer &renderer = Renderer::getInstance();
-
 	this->id = id;
 
-	try {
-		Logger::getInstance().add("Resource type: " + dir, true);
-		name = lastDir(dir);
-		path = dir + "/" + name + ".xml";
-
-		checksum.addFile(path, true);
-
-		//tree
-		XmlTree xmlTree;
-		xmlTree.load(path);
-		const XmlNode *resourceNode = xmlTree.getRootNode();
-
-		//image
-		const XmlNode *imageNode = resourceNode->getChild("image");
-		image = renderer.newTexture2D(rsGame);
-		image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
-
-		//type
-		const XmlNode *typeNode = resourceNode->getChild("type");
+   bool loadOk = true;
+   Logger::getInstance().add("Resource type: " + dir, true);
+	name = lastDir(dir);
+	path = dir + "/" + name + ".xml";
+	checksum.addFile(path, true);
+	
+	XmlTree xmlTree;
+   const XmlNode *resourceNode;
+   try { // tree
+      xmlTree.load(path); 
+	   resourceNode = xmlTree.getRootNode();
+      if ( ! resourceNode ) {
+         Logger::getErrorLog().addXmlError ( path, "XML file appears to lack contents." );
+         return false; // bail
+      }
+   }
+   catch ( runtime_error &e ) {
+      Logger::getErrorLog().addXmlError ( path, "Missing or wrong name of XML file." );
+      return false; // bail
+   }
+   try { // image
+      const XmlNode *imageNode;
+      imageNode = resourceNode->getChild("image");
+	   image = renderer.newTexture2D(rsGame);
+	   image->load( dir + "/" + imageNode->getAttribute("path")->getRestrictedValue() );
+   }
+   catch ( runtime_error &e ) {
+      Logger::getErrorLog().addXmlError ( path, e.what() );
+      loadOk = false; // can continue, to catch other errors
+   }   
+   const XmlNode *typeNode;
+   try { // type
+		typeNode = resourceNode->getChild("type");
 		resourceClass = strToRc(typeNode->getAttribute("value")->getRestrictedValue());
+   }
+   catch ( runtime_error &e ) {
+      Logger::getErrorLog().addXmlError ( path, e.what() );
+      return false; // bail, can't continue without type
+   }
 
-		switch (resourceClass) {
-		case rcTech: {
-				//model
-				const XmlNode *modelNode = typeNode->getChild("model");
-				string path = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
-	
-				model = renderer.newModel(rsGame);
-				model->load(path);
-	
-				//default resources
-				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
-				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
-	
-				//resource number
-				const XmlNode *resourceNumberNode = typeNode->getChild("resource-number");
-				resourceNumber = resourceNumberNode->getAttribute("value")->getIntValue();
-				break;
-			}
-
-		case rcTileset: {
-				//resource number
-				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
-				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
-	
-				//resource number
-				const XmlNode *tilesetObjectNode = typeNode->getChild("tileset-object");
-				tilesetObject = tilesetObjectNode->getAttribute("value")->getIntValue();
-				break;
-			}
-
-		case rcConsumable: {
-				//interval
-				const XmlNode *intervalNode = typeNode->getChild("interval");
-				interval = intervalNode->getAttribute("value")->getIntValue();
-				break;
-			}
-
-		default:
-			break;
-		}
-
-		display = resourceNode->getOptionalBoolValue("display", true);
-	} catch (const exception &e) {
-		throw runtime_error("Error loading resource type: " + path + "\n" + e.what());
-	}
+   switch (resourceClass) {
+   case rcTech: 
+      try { // model
+         const XmlNode *modelNode = typeNode->getChild("model");
+         string mPath = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
+         model = renderer.newModel(rsGame);
+         model->load(mPath);
+      }
+      catch ( runtime_error e ) {
+         Logger::getErrorLog().addXmlError ( path, e.what() );
+         loadOk = false; // can continue, to catch other errors
+      }
+      try { // default resources
+         const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
+         defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
+      }
+      catch ( runtime_error e ) {
+         Logger::getErrorLog().addXmlError ( path, e.what() );
+         loadOk = false; // can continue, to catch other errors
+      }
+      try { // resource number
+         const XmlNode *resourceNumberNode = typeNode->getChild("resource-number");
+         resourceNumber = resourceNumberNode->getAttribute("value")->getIntValue();
+      }
+      catch ( runtime_error e ) {
+         Logger::getErrorLog().addXmlError ( path, e.what() );
+         loadOk = false;
+      }
+      break;
+   case rcTileset: 
+      try { // default resources
+         const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
+         defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
+      }
+      catch ( runtime_error e ) {
+         Logger::getErrorLog().addXmlError ( path, e.what() );
+         loadOk = false; // can continue, to catch other errors
+      }
+      try { // object number
+         const XmlNode *tilesetObjectNode = typeNode->getChild("tileset-object");
+         tilesetObject = tilesetObjectNode->getAttribute("value")->getIntValue();
+      }
+      catch ( runtime_error e ) {
+         Logger::getErrorLog().addXmlError ( path, e.what() );
+         loadOk = false;
+      }
+      break;
+   case rcConsumable: 
+      try { // interval
+         const XmlNode *intervalNode = typeNode->getChild("interval");
+         interval = intervalNode->getAttribute("value")->getIntValue();
+      }
+      catch ( runtime_error e ) {
+         Logger::getErrorLog().addXmlError ( path, e.what() );
+         loadOk = false;
+      }
+      break;
+   default:
+      break;
+   }
+	display = resourceNode->getOptionalBoolValue("display", true);
+   return loadOk;
 }
 
 

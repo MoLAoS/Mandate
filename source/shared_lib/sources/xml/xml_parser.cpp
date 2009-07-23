@@ -417,12 +417,12 @@ XmlAttribute *XmlNode::getAttribute(const string &name, bool required) const{
 	if (!required) {
 		return NULL;
 	}
-	throw runtime_error("\"" + getName() + "\" node doesn't have a attribute named \"" + name + "\"");
+	throw runtime_error("'" + getName() + "' node doesn't have an attribute named '" + name + "'");
 }
 
 XmlNode *XmlNode::getChild(int i) const {
 	if (i >= children.size()) {
-		throw runtime_error("\"" + getName() + "\" node doesn't have "
+		throw runtime_error("'" + getName() + "' node doesn't have "
 				+ intToStr(i + 1) + " children");
 	}
 	return children[i];
@@ -444,9 +444,12 @@ XmlNode *XmlNode::getChild(const string &childName, int i, bool required) const{
 	if (!required) {
 		return NULL;
 	}
-	throw runtime_error("Node \"" + getName() + "\" doesn't have "
-			+ intToStr(i + 1) + " children named  \"" + childName
-			+ "\"\n\nTree: " + getTreeString());
+   if ( i == 0 )
+      throw runtime_error("Node '" + getName() + "' doesn't have a"
+			+ " child named  '" + childName + "'");
+   else
+	   throw runtime_error("Node '" + getName() + "' doesn't have "
+		   + intToStr(i + 1) + " children named  '" + childName + "'");
 }
 
 XmlNode *XmlNode::addChild(const string &name){

@@ -44,6 +44,7 @@ private:
    string subtitle;
    string current;
    bool loadingGame;
+   static char errorBuf[];
 
 private:
 	Logger(const char *fileName) : fileName(fileName) { loadingGame = true; }
@@ -63,6 +64,13 @@ public:
 		static Logger logger("glestadv-client.log");
 		return logger;
 	}
+
+   static Logger &getErrorLog(){
+		static Logger logger("glestadv-error.log");
+		return logger;
+	}
+
+   void addXmlError ( const string &path, const char *error );
 
 	//void setFile(const string &fileName)	{this->fileName= fileName;}
 	void setState(const string &state);

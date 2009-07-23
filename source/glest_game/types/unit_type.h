@@ -48,7 +48,7 @@ public:
 		effectStrength = 0.1f;
 	}
 
-	virtual void load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
 	int getKills() const			{return kills;}
 };
 
@@ -119,7 +119,7 @@ public:
     UnitType();
     virtual ~UnitType();
 	void preLoad(const string &dir);
-    void load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
+    bool load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
 
 	//get
 	bool getMultiSelect() const							{return multiSelect;}
