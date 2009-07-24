@@ -680,7 +680,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					unit->setLoadType(map->getTile(Map::toTileCoords(targetPos))->getResource()->getType());
 				} else {
 					//if not continue walking
-					switch (pathFinder->findPath(unit, command->getPos())) {
+               switch (pathFinder->findPathToResource(unit, command->getPos(), r->getType())) {
 					case Search::tsOnTheWay:
 						unit->setCurrSkill(hct->getMoveSkillType());
 						unit->face(unit->getNextPos());
@@ -694,6 +694,8 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 				unit->setCurrSkill(scStop);
 				if (!searchForResource(unit, hct)) {
 					unit->finishCommand();
+               //FIXME don't just stand around at the store!!
+               //insert move command here.
 				}
 			}
 		} else {
@@ -749,8 +751,9 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 				//if resource exausted, then delete it and stop
 				if (r->decAmount(1)) {
                // let the pathfinder know
+               Vec2i rPos = r->getPos ();
+               sc->deleteResource();
                pathFinder->updateMapMetrics ( r->getPos(), 2, false, FieldWalkable );
-					sc->deleteResource();
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               

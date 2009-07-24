@@ -84,6 +84,7 @@ class BFSNodePool
    int maxNodes, tmpMaxNodes;
 
    PosMarkerArray markerArray;
+   BFSNode *leastH;
 
 public:
    BFSNodePool ();
@@ -104,6 +105,9 @@ public:
 
    // moves 'best' node from open to closed, and returns it, or NULL if open is empty
    BFSNode* getBestCandidate ();
+
+   // returns the lowest h-node of this search
+   BFSNode* getLowestH () { return leastH; }
 
 #ifdef _GAE_DEBUG_EDITION_
    list<Vec2i>* getOpenNodes ();

@@ -597,7 +597,7 @@ bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const Selection::
 }
 
 // if the Cell is visible, true if free, false if occupied
-// if the Cell is explored, true if _SurfaceCell_ is free (no object), false otherwise
+// if the Cell is explored, true if Tile is free (no object), false otherwise
 // if the Cell is unexplored, true
 bool Map::isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const 
 {

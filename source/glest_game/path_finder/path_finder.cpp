@@ -25,6 +25,7 @@
 
 #include "config.h"
 #include "map.h"
+#include "game.h"
 #include "unit.h"
 #include "unit_type.h"
 #include "world.h"
@@ -47,37 +48,29 @@ namespace Glest{ namespace Game{ namespace Search {
 //FIXME I was duplicated from GraphSearch because the search functions
 // absolutely _need_ this inlined, and then it can't be used here without 
 // having been defined... find a better solution :-)
-void PathFinder::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 )
-{
+void PathFinder::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 ) {
    assert ( s.x != d.x && s.y != d.y );
-   if ( size == 1 )
-   {
+   if ( size == 1 ) {
       d1.x = s.x; d1.y = d.y;
       d2.x = d.x; d2.y = s.y;
       return;
    }
-   if ( d.x > s.x )
-   {  // travelling east
-      if ( d.y > s.y )
-      {  // se
+   if ( d.x > s.x ) {  // travelling east
+      if ( d.y > s.y ) {  // se
          d1.x = d.x + size - 1; d1.y = s.y;
          d2.x = s.x; d2.y = d.y + size - 1;
       }
-      else
-      {  // ne
+      else {  // ne
          d1.x = s.x; d1.y = d.y;
          d2.x = d.x + size - 1; d2.y = s.y - size + 1;
       }
    }
-   else
-   {  // travelling west
-      if ( d.y > s.y )
-      {  // sw
+   else {  // travelling west
+      if ( d.y > s.y ) {  // sw
          d1.x = d.x; d1.y = s.y;
          d2.x = s.x + size - 1; d2.y = d.y + size - 1;
       }
-      else
-      {  // nw
+      else {  // nw
          d1.x = d.x; d1.y = s.y - size + 1;
          d2.x = s.x + size - 1; d2.y = d.y;
       }
@@ -155,7 +148,20 @@ bool PathFinder::isLegalMove ( Unit *unit, const Vec2i &pos2 ) const
 	return true;
 }
 
-TravelState PathFinder::findPath(Unit *unit, const Vec2i &finalPos)
+const ResourceType* PathFinder::resourceGoal = NULL;
+
+bool PathFinder::resourceGoalFunc ( Vec2i &pos )
+{
+   //FIXME need to take unit size into account...
+   Vec2i tmp;
+   Map *map = Game::getInstance()->getWorld()->getMap();
+   if ( map->isResourceNear ( pos, resourceGoal, tmp ) )
+      return true;
+   else 
+      return false;
+}
+
+TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (*func)(Vec2i&))
 {
    //Logger::getInstance ().add ( "findPath() Called..." );
    static int flipper = 0;
@@ -206,15 +212,16 @@ TravelState PathFinder::findPath(Unit *unit, const Vec2i &finalPos)
       }
    }
    SearchParams params (unit);
+   if ( func ) params.goalFunc = func;
    params.dest = targetPos;
    list<Vec2i> pathList;
 
    bool result;
    annotatedMap->annotateLocal ( unit->getPos (), unit->getSize (), unit->getCurrField () );
-      if ( useAStar )
-         result = search->AStarSearch ( params, pathList );
-      else
-         result = search->GreedySearch ( params, pathList );
+   if ( useAStar )
+      result = search->AStarSearch ( params, pathList );
+   else
+      result = search->GreedySearch ( params, pathList );
    annotatedMap->clearLocalAnnotations ( unit->getCurrField () );
    if ( ! result )
    {
@@ -401,15 +408,10 @@ void World::assertConsistiency() {}
 #endif
 
 void World::doHackyCleanUp() {
-	int h = map.getH();
-	int w = map.getW();
-
-	for(Units::const_iterator u = newlydead.begin(); u != newlydead.end(); ++u) 
-   {
+	for(Units::const_iterator u = newlydead.begin(); u != newlydead.end(); ++u) {
       Unit &unit = **u;
       for ( int i=0; i < unit.getSize(); ++i )
-         for ( int j=0; j < unit.getSize(); ++j )
-         {
+         for ( int j=0; j < unit.getSize(); ++j ) {
             Cell *cell = map.getCell ( unit.getPos() + Vec2i(i,j) );
             if(cell->getUnit(unit.getCurrZone()) == &unit)
 				   cell->setUnit(unit.getCurrZone(), NULL);

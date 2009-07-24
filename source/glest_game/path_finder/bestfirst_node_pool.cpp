@@ -42,6 +42,7 @@ void BFSNodePool::reset ()
    numOpen = numClosed = numTotal = numPos = 0;
    tmpMaxNodes = maxNodes;
    markerArray.newSearch ();
+   leastH = NULL;
 }
 
 void BFSNodePool::setMaxNodes ( const int max )
@@ -61,9 +62,14 @@ bool BFSNodePool::addToOpen ( BFSNode* prev, const Vec2i &pos, float h, bool exp
    stock[numTotal].heuristic = h;
    stock[numTotal].exploredCell = exp;
    const int top = tmpMaxNodes - 1;
-   if ( !numOpen ) lists[top] = &stock[numTotal];
-   else
-   {  // find insert index
+   if ( !numOpen ) {
+      lists[top] = &stock[numTotal];
+      leastH = &stock[numTotal];
+   }
+   else {  
+      if ( leastH->heuristic > stock[numTotal].heuristic )
+         leastH = &stock[numTotal];
+      // find insert index
       // due to the nature of the greedy algorithm, new nodes are likely to have lower 
       // heuristics than the majority already in open, so we start checking from the low end.
       const int openStart = tmpMaxNodes - numOpen - 1;

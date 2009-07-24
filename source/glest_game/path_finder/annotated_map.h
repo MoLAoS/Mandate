@@ -68,6 +68,9 @@ struct CellMetrics
    inline uint32 get ( const Field );
    inline void   set ( const Field, uint32 val );
 
+   bool isNearResource ( const Vec2i &pos );
+   bool isNearStore ( const Vec2i &pos );
+
 private:
    uint32 field0 : 2; // In Use: FieldWalkable = land + shallow water 
    uint32 field1 : 2; // In Use: FieldAir = air
@@ -81,10 +84,14 @@ private:
    uint32 field9 : 2; // Unused: ?
    uint32 fielda : 2; // Unused: ?
    uint32 fieldb : 2; // Unused: ?
-   uint32 fieldc : 2; // Unused: ?
-   uint32 fieldd : 2; // Unused: ?
-   uint32 fielde : 2; // Unused: ?
-   uint32 fieldf : 2; // Unused: ?
+   uint32 visTeam0 : 1; // map visibility... not used yet.
+   uint32 visTeam1 : 1; //  will be used to remove calls to Tile::isExplored()
+   uint32 visTeam2 : 1; //  from search algorithms, for better cache performance.
+   uint32 visTeam3 : 1; // 
+   uint32 adjResrc1 : 1; // to be used for semi co-operative resource gathering
+   uint32 adjResrc2 : 1; // to be used for semi co-operative resource gathering
+   uint32 adjStore1 : 1; // to be used for semi co-operative resource gathering
+   uint32 adjStore2 : 1; // to be used for semi co-operative resource gathering
 };
 
 class MetricMap
@@ -97,8 +104,10 @@ public:
    MetricMap () { stride = 0; metrics = NULL; }
    virtual ~MetricMap () { delete [] metrics; }
 
-   void init ( int w, int h ) { assert (w>0&&h>0); stride = w; metrics = new CellMetrics[w*h]; }
-   CellMetrics& operator [] ( const Vec2i &pos ) const { return metrics[pos.y*stride+pos.x]; }
+   void init ( int w, int h ) 
+      { assert (w>0&&h>0); stride = w; metrics = new CellMetrics[w*h]; }
+   CellMetrics& operator [] ( const Vec2i &pos ) const 
+      { return metrics[pos.y*stride+pos.x]; }
 };
 
 class AnnotatedMap

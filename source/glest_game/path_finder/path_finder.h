@@ -15,6 +15,7 @@
 
 #include "annotated_map.h"
 #include "graph_search.h"
+#include "config.h"
 
 #include <set>
 #include <map>
@@ -38,7 +39,7 @@ namespace Search {
 
 const int maxFreeSearchRadius = 10;
 //const int pathFindRefresh = 10; // now unused
-const int pathFindNodesMax = 2048;// = Config::getInstance ().getPathFinderMaxNodes ();
+const int pathFindNodesMax = Config::getInstance ().getPathFinderMaxNodes ();
 
 const int numOffsetsSize1Dist1 = 8;
 const Vec2i OffsetsSize1Dist1 [numOffsetsSize1Dist1] = 
@@ -128,7 +129,20 @@ public:
    static PathFinder* getInstance ();
 	~PathFinder();
 	void init(Map *map);
-	TravelState findPath(Unit *unit, const Vec2i &finalPos);
+
+   static void setResourceGoal ( const ResourceType *resType ) {resourceGoal = resType;}
+   static bool resourceGoalFunc ( Vec2i &pos );
+
+   TravelState findPathToGoal ( Unit *unit, const Vec2i &targetPos, bool (*func)(Vec2i&)=NULL );
+
+   TravelState findPathToResource ( Unit *unit, const Vec2i &targetPos, const ResourceType *resType ) { 
+      setResourceGoal ( resType ); 
+      return findPathToGoal ( unit, targetPos, &resourceGoalFunc ); 
+   }
+
+   TravelState findPath(Unit *unit, const Vec2i &finalPos) { 
+      return findPathToGoal ( unit, finalPos ); 
+   }
 
    // legal move ?
    bool isLegalMove ( Unit *unit, const Vec2i &pos ) const;
@@ -138,6 +152,7 @@ public:
    { annotatedMap->updateMapMetrics ( pos, size, adding, field ); }
 
 private:
+   static const ResourceType *resourceGoal;
    static PathFinder *singleton;
 	PathFinder();
 

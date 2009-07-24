@@ -29,6 +29,7 @@ SearchParams::SearchParams ( Unit *u )
    field = u->getCurrField ();
    size = u->getSize (); 
    team = u->getTeam ();
+   goalFunc = NULL;
 }
 
 GraphSearch::GraphSearch ()
@@ -86,8 +87,10 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
          pathFound = false;
          break; // failure
       }
-      if ( minNode->pos == params.dest || ! minNode->exploredCell ) 
+      if ( minNode->pos == params.dest || ! minNode->exploredCell 
+      ||  ( params.goalFunc && params.goalFunc (minNode->pos) ) ) { 
          break; // success
+      }
 
       for ( int i = 0; i < 8 && ! nodeLimitReached; ++ i )
       {  // for each neighbour of minNode
@@ -121,10 +124,10 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
       return false;
    }
 	BFSNode *lastNode= minNode;
-   // if ( nodeLimtReached ) iterate over closed list, testing for a lower h node ...
+   if ( nodeLimitReached )
+      lastNode = bNodePool->getLowestH ();
 
-   //if ( nodeLimitReached ) Logger::getInstance ().add ( "Node Limit Exceeded." );
-	// on the way
+   // on the way
    // fill in next pointers
 	BFSNode *currNode = lastNode;
    int steps = 0;
@@ -180,7 +183,6 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path)
    return true;
 }
 
-
 bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
 {
 #  ifdef PATHFINDER_TIMING
@@ -195,8 +197,12 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
    {
       minNode = aNodePool->getBestCandidate ();
       if ( ! minNode ) break; // done, failed
-      if ( minNode->pos == params.dest || ! minNode->exploredCell ) 
-         { pathFound = true; break; }// done, success
+      if ( minNode->pos == params.dest || ! minNode->exploredCell 
+      ||  ( params.goalFunc && params.goalFunc (minNode->pos ) ) ) { 
+         // done, success
+         pathFound = true; 
+         break; 
+      }
       for ( int i = 0; i < 8 && ! nodeLimitReached; ++i )
       {  // for each neighbour
          Vec2i sucPos = minNode->pos + Directions[i];
@@ -227,13 +233,11 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
 #  endif
    if ( ! pathFound && ! nodeLimitReached ) 
          return false;
-   if ( nodeLimitReached )
-   {
+   if ( nodeLimitReached ) {
       // get node closest to goal
       minNode = aNodePool->getBestHNode ();
       path.clear ();
-      while ( minNode )
-      {
+      while ( minNode ) {
          path.push_front ( minNode->pos );
 		   minNode = minNode->prev;
 	   }
@@ -242,17 +246,14 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
       for ( int i=0; i < backoff ; ++i )
          path.pop_back ();
    }
-   else
-   {  // fill in path
+   else {  // fill in path
       path.clear ();
-      while ( minNode )
-      {
+      while ( minNode ) {
          path.push_front ( minNode->pos );
 		   minNode = minNode->prev;
 	   }
    }
-   if ( path.size () < 2 )
-   {
+   if ( path.size () < 2 ) {
       path.clear ();
       return false;
    }

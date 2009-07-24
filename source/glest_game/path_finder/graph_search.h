@@ -45,6 +45,7 @@ struct SearchParams
    Vec2i start, dest;
    Field field;
    int size, team;
+   bool (*goalFunc)(Vec2i&);
    SearchParams ( Unit *u );
 };
 

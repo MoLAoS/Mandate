@@ -231,6 +231,7 @@ void AnnotatedMap::updateMapMetrics ( const Vec2i &pos, const int size, bool add
    }// end while
 }
 
+//TODO
 // this could be made much faster pretty easily... 
 // make it so...
 // if cell is an obstacle in field, clearance = 0. done.
@@ -269,7 +270,7 @@ CellMetrics AnnotatedMap::computeClearances ( const Vec2i &pos )
    
    // Amphibious
    int clearSurf = clearances.get ( FieldWalkable );
-   if ( clearances.get ( FieldAnyWater ) > clearSurf ) 
+   if ( clearances.get ( FieldAnyWater ) > clearSurf ) //FIXME this is wrong
       clearSurf = clearances.get ( FieldAnyWater );
    clearances.set ( FieldAmphibious, clearSurf );
 
