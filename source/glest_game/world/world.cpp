@@ -593,6 +593,7 @@ assertConsistiency();
 }
 
 void World::doKill(Unit *killer, Unit *killed) {
+   scriptManager->onUnitDied ( killed );
 	int kills = 1 + killed->getPets().size();
 	for (int i = 0; i < kills; i++) {
 		stats.kill(killer->getFactionIndex(), killed->getFactionIndex());

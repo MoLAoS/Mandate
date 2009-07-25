@@ -476,7 +476,6 @@ bool GraphSearch::mergePath ( const list<Vec2i> &fwd, const list<Vec2i> &bwd, li
    assert ( co.back() == fwd.back() && co.back() == bwd.front() );
    if ( ! ( *coIt == *fIt && *coIt == *bIt ) )
    {
-      //throw new runtime_error ( "LowLevelSearch::MergePath() was passed dodgey data..." );
       Logger::getInstance().add ( "LowLevelSearch::MergePath() was passed dodgey data..." );
       copyToPath ( fwd, path );
       return false;
@@ -497,7 +496,6 @@ bool GraphSearch::mergePath ( const list<Vec2i> &fwd, const list<Vec2i> &bwd, li
          path.push_back ( *coIt );
          if ( *fIt != *bIt )
          {
-            //throw new runtime_error ( "LowLevelSearch::MergePath() was passed a dodgey crossover list..." );
             Logger::getInstance().add ( "LowLevelSearch::MergePath() was passed a dodgey crossover list..." );
             if ( !path.empty () ) path.clear ();
             copyToPath ( fwd, path );

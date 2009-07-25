@@ -1259,10 +1259,9 @@ void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attac
 	if (attacked->decHp(static_cast<int>(damage))) {
 		world->doKill(attacker, attacked);
 		actualDamage = startingHealth;
-      scriptManager->onUnitDied ( attacked );
-	} else {
+	} 
+   else
 		actualDamage = (int)roundf(damage);
-	}
 
 	//add stolen health to attacker
 	if(attacker->getAttackPctStolen(ast) || ast->getAttackPctVar()) {

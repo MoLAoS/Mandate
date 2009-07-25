@@ -31,7 +31,7 @@ inline uint32 CellMetrics::get ( const Field field )
    case FieldAnyWater: return field2;
    case FieldDeepWater: return field3;
    case FieldAmphibious: return field4;
-   default: throw new runtime_error ( "Unknown Field passed to CellMetrics::get()" );
+   default: throw runtime_error ( "Unknown Field passed to CellMetrics::get()" );
    }
    return 0;
 }
@@ -46,7 +46,7 @@ inline void CellMetrics::set ( const Field field, uint32 val )
    case FieldAnyWater: field2 = val; return;
    case FieldDeepWater: field3 = val; return;
    case FieldAmphibious: field4 = val; return;
-   default: throw new runtime_error ( "Unknown Field passed to CellMetrics::set()" );
+   default: throw runtime_error ( "Unknown Field passed to CellMetrics::set()" );
    }
 
 }
@@ -301,7 +301,7 @@ uint32 AnnotatedMap::computeClearance ( const Vec2i &pos, Field field )
             clearance++;
       return clearance;
    default:
-      throw new runtime_error ( "Illegal Field passed to PathFinder::computeClearance()" );
+      throw runtime_error ( "Illegal Field passed to PathFinder::computeClearance()" );
       return 0;
    }
 }

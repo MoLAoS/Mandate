@@ -283,14 +283,12 @@ Cell *Map::getCell(const Vec2i &pos) const
 }
 Tile *Map::getTile(int sx, int sy) const	
 {  
-   if ( ! isInsideTile(sx, sy) )
-      throw new runtime_error ("");
+   assert ( isInsideTile(sx, sy) );
    return &tiles[sy*tileW+sx];
 }
 Tile *Map::getTile(const Vec2i &sPos) const
 {  
-   if ( ! isInsideTile(sPos) )
-      throw new runtime_error ("");
+   assert ( isInsideTile(sPos) );
    return getTile(sPos.x, sPos.y);
 }
 void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
@@ -640,7 +638,7 @@ bool Map::areFreeCells( const Vec2i &pos, int size, char *fieldMap ) const
          case 'a': field = FieldAmphibious; break;
          case 'w': field = FieldDeepWater; break;
          case 'r': field = FieldWalkable; break;
-         default: throw new runtime_error ( "Bad value in fieldMap" );
+         default: throw runtime_error ( "Bad value in fieldMap" );
          }
 			if ( ! isFreeCell (Vec2i(pos.x+i, pos.y+j), field) )
                 return false;
@@ -715,7 +713,7 @@ bool Map::isFieldMapCompatible ( const Vec2i &pos, const UnitType *building ) co
          case 'l': field = FieldWalkable; break;
          case 'a': field = FieldAmphibious; break;
          case 'w': field = FieldDeepWater; break;
-         default: throw new runtime_error ( "Illegal value in FieldMap." );
+         default: throw runtime_error ( "Illegal value in FieldMap." );
          }
          if ( !fieldsCompatible ( getCell ( pos ), field ) )
             return false;
@@ -1006,7 +1004,7 @@ void Map::putUnitCells(Unit *unit, const Vec2i &pos){
 			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
 				if (getCell(currPos)->getUnit(field) != NULL)
             {
-               throw new runtime_error ( "Ooops..." );
+               throw runtime_error ( "Ooops..." );
             }
             assert(getCell(currPos)->getUnit(field) == NULL);
 				getCell(currPos)->setUnit(field, unit);

@@ -1019,12 +1019,11 @@ bool Unit::doRegen(int hpRegeneration, int epRegeneration) {
 	}
 
 	//hp regen/degen
-	if(hpRegeneration > 0) {
+	if(hpRegeneration > 0)
 		repair(hpRegeneration);
-	} else if(hpRegeneration < 0) {
-		if(decHp(-hpRegeneration)) {
+	else if(hpRegeneration < 0) {
+		if(decHp(-hpRegeneration))
 			return true;
-		}
 	}
 
 	//ep regen/degen
