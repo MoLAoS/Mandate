@@ -23,6 +23,7 @@
 #include "sound_renderer.h"
 #include "game_settings.h"
 #include "network_message.h"
+#include "path_finder.h"
 
 //DEBUG remove me some time...
 #include "renderer.h"
@@ -776,6 +777,10 @@ void World::createUnit(const string &unitName, int factionIndex, const Vec2i &po
 		if(placeUnit(pos, generationArea, unit, true)){
 			unit->create(true);
 			unit->born();
+			if ( !unit->isMobile() ) {
+				Search::PathFinder *pf = Search::PathFinder::getInstance();
+				pf->updateMapMetrics ( unit->getPos(), unit->getSize(), true, FieldWalkable );
+			}
 			scriptManager->onUnitCreated(unit);
 		}
 		else{
