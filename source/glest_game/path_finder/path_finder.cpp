@@ -197,6 +197,8 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
    bool useAStar = Config::getInstance().getPathFinderUseAStar ();
    // some tricks to determine if we are probably blocked on a short path, without
    // an exhuastive and expensive search through pathFindNodesMax nodes
+   /* goal based pathing removes the need for this..
+    * Should probably adapt this to check the entire resource 'patch'
    float dist = unit->getPos().dist ( targetPos );
    if ( unit->getCurrField () == FieldWalkable 
    &&   map->getTile (Map::toTileCoords ( targetPos ))->isVisible (unit->getTeam ()) )
@@ -214,7 +216,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
 		 //Logger::getInstance ().add ( "findPathToGoal() returning..." );
          return tsBlocked;
       }
-   }
+   }*/
    SearchParams params (unit);
    if ( func ) params.goalFunc = func;
    params.dest = targetPos;
@@ -222,6 +224,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
 
    bool result;
    annotatedMap->annotateLocal ( unit->getPos (), unit->getSize (), unit->getCurrField () );
+   //TODO annotate target if visible ??
    if ( useAStar )
       result = search->AStarSearch ( params, pathList );
    else
