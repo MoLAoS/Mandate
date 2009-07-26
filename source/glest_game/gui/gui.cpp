@@ -427,6 +427,7 @@ void Gui::groupKey(int groupIndex){
 }
 
 void Gui::hotKey(UserCommand cmd) {
+	int f = 0;
 	switch(cmd) {
  	// goto selection
 	case ucCameraGotoSelection:
@@ -521,7 +522,13 @@ void Gui::hotKey(UserCommand cmd) {
 	case ucPatrol:
 		//clickCommonCommand(ccPatrol);
 		break;
-
+#ifdef _GAE_DEBUG_EDITION_
+	case ucSwitchDebugField:
+		f = (int)Renderer::getInstance().getDebugField ();
+		f ++; f %= FieldCount;
+		Renderer::getInstance().setDebugField ( (Field)f );
+		break;
+#endif
 	default:
 		break;
 	}

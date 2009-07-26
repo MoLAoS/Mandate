@@ -241,6 +241,9 @@ public:
     void renderDisplay();
 	void renderMenuBackground(const MenuBackground *menuBackground);
 #ifdef _GAE_DEBUG_EDITION_
+	Field debugField;
+	void setDebugField ( Field f ) { debugField = f; }
+	Field getDebugField () { return debugField; }
     void renderSurfacePFDebug ();
 #endif
 	//computing

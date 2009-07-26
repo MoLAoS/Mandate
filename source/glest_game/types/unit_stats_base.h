@@ -77,6 +77,7 @@ public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
 		XmlBasedFlags<Field, FieldCount>::load(node, dir, tt, ft, "field", names);
 	}
+	static const char* getName ( Field f ) { return names[f]; }
 };
 
 /** Zones of attack (air, surface, etc.) */

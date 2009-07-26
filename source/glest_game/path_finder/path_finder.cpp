@@ -185,11 +185,10 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
 	const Vec2i targetPos = computeNearestFreePos ( unit, finalPos );
 
    //if arrived (as close as we can get to it)
-	if ( targetPos == unit->getPos () )
-   {
-      unit->setCurrSkill(scStop);
+	if ( targetPos == unit->getPos () ) {
+		unit->setCurrSkill(scStop);
 		return tsArrived;
-   }
+	}
 
    bool useAStar = Config::getInstance().getPathFinderUseAStar ();
    // some tricks to determine if we are probably blocked on a short path, without

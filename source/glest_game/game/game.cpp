@@ -906,7 +906,9 @@ void Game::render2d(){
             }
             str << endl;
         }
-
+#ifdef _GAE_DEBUG_EDITION_
+	   str << "Debug Field : " << Fields::getName ( renderer.getDebugField() ) << endl;
+#endif
 		renderer.renderText(
 			str.str(), coreData.getMenuFontNormal(),
 			gui.getDisplay()->getColor(), 10, 500, false);

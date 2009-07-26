@@ -167,6 +167,9 @@ Renderer::Renderer(){
 	perspFov = config.getRenderFov();
 	perspNearPlane = config.getRenderDistanceMin();
 	perspFarPlane = config.getRenderDistanceMax();
+#ifdef _GAE_DEBUG_EDITION_
+	debugField = FieldWalkable;
+#endif
 }
 
 Renderer::~Renderer(){
@@ -1239,7 +1242,6 @@ void Renderer::renderSurface(){
 	assertGl();
 }
 
-
 #ifdef _GAE_DEBUG_EDITION_
 void Renderer::renderSurfacePFDebug ()
 {
@@ -1247,7 +1249,7 @@ void Renderer::renderSurfacePFDebug ()
 	int currTex;
 	const World *world= game->getWorld();
 	const Map *map= world->getMap();
-   const Search::PathFinder *pf = Search::PathFinder::getInstance ();
+	const Search::PathFinder *pf = Search::PathFinder::getInstance ();
 	const Rect2i mapBounds(0, 0, map->getTileW()-1, map->getTileH()-1);
 	float coordStep= world->getTileset()->getSurfaceAtlas()->getCoordStep();
 
@@ -1264,28 +1266,27 @@ void Renderer::renderSurfacePFDebug ()
 
 	PosQuadIterator pqi(scaledQuad);
 	while(pqi.next()){
-
-      const Vec2i &pos= pqi.getPos();
-      int cx, cy;
-      cx = pos.x * 2;
-      cy = pos.y * 2;
-      if(mapBounds.isInside(pos)){
+		const Vec2i &pos= pqi.getPos();
+		int cx, cy;
+		cx = pos.x * 2;
+		cy = pos.y * 2;
+		if(mapBounds.isInside(pos)){
 
 			Tile *tc00= map->getTile(pos.x, pos.y);
 			Tile *tc10= map->getTile(pos.x+1, pos.y);
 			Tile *tc01= map->getTile(pos.x, pos.y+1);
 			Tile *tc11= map->getTile(pos.x+1, pos.y+1);
 
-         Vec3f tl = tc00->getVertex ();
-         Vec3f tr = tc10->getVertex ();
-         Vec3f bl = tc01->getVertex ();
-         Vec3f br = tc11->getVertex ();
+			Vec3f tl = tc00->getVertex ();
+			Vec3f tr = tc10->getVertex ();
+			Vec3f bl = tc01->getVertex ();
+			Vec3f br = tc11->getVertex ();
 
-         Vec3f tc = tl + (tr - tl) / 2;
-         Vec3f ml = tl + (bl - tl) / 2;
-         Vec3f mr = tr + (br - tr) / 2;
-         Vec3f mc = ml + (mr - ml) / 2;
-         Vec3f bc = bl + (br - bl) / 2;
+			Vec3f tc = tl + (tr - tl) / 2;
+			Vec3f ml = tl + (bl - tl) / 2;
+			Vec3f mr = tr + (br - tr) / 2;
+			Vec3f mc = ml + (mr - ml) / 2;
+			Vec3f bc = bl + (br - bl) / 2;
 
          // cx,cy
          uint32 tex = 0;
@@ -1299,7 +1300,7 @@ void Renderer::renderSurfacePFDebug ()
          else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
          else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
             met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
          tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
          glBindTexture(GL_TEXTURE_2D, tex);
          glBegin ( GL_TRIANGLE_FAN );
@@ -1325,7 +1326,7 @@ void Renderer::renderSurfacePFDebug ()
          else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
          else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
             met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
          tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
          glBindTexture(GL_TEXTURE_2D, tex);
          glBegin ( GL_TRIANGLE_FAN );
@@ -1351,7 +1352,7 @@ void Renderer::renderSurfacePFDebug ()
          else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
          else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
             met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
          tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
          glBindTexture(GL_TEXTURE_2D, tex);
          glBegin ( GL_TRIANGLE_FAN );
@@ -1377,7 +1378,7 @@ void Renderer::renderSurfacePFDebug ()
          else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
          else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
             met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( FieldWalkable );
+         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
          tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
          glBindTexture(GL_TEXTURE_2D, tex);
          glBegin ( GL_TRIANGLE_FAN );

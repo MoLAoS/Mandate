@@ -22,10 +22,8 @@
 
 namespace Glest { namespace Game { namespace Search {
 
-inline uint32 CellMetrics::get ( const Field field )
-{
-   switch ( field )
-   {
+inline uint32 CellMetrics::get ( const Field field ) {
+   switch ( field ) {
    case FieldWalkable: return field0;
    case FieldAir: return field1;
    case FieldAnyWater: return field2;
@@ -36,11 +34,9 @@ inline uint32 CellMetrics::get ( const Field field )
    return 0;
 }
 
-inline void CellMetrics::set ( const Field field, uint32 val )
-{
+inline void CellMetrics::set ( const Field field, uint32 val ) {
    assert ( val <= AnnotatedMap::maxClearanceValue );
-   switch ( field )
-   {
+   switch ( field ) {
    case FieldWalkable: field0 = val; return;
    case FieldAir: field1 = val; return;
    case FieldAnyWater: field2 = val; return;
