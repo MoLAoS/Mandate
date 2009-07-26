@@ -255,7 +255,7 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path )
    }
    if ( path.size () < 2 ) {
       path.clear ();
-      return false;
+      return true; //tsArrived
    }
 
 #  ifdef _GAE_DEBUG_EDITION_

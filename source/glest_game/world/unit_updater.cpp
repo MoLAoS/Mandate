@@ -685,6 +685,16 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 						unit->setCurrSkill(hct->getMoveSkillType());
 						unit->face(unit->getNextPos());
 						break;
+					case Search::tsArrived:
+						for ( int i=0; i < 8; ++i ) { // reset target
+							Vec2i cPos = unit->getPos() + Search::OffsetsSize1Dist1[i];
+							Resource *res = map->getTile (Map::toTileCoords(cPos))->getResource();
+							if ( res && hct->canHarvest (res->getType()) ) {
+								command->setPos ( cPos );
+								break;
+							}
+						}
+						//command->setPos ( 
 					default:
 						break;
 					}
@@ -753,7 +763,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
                // let the pathfinder know
                Vec2i rPos = r->getPos ();
                sc->deleteResource();
-               pathFinder->updateMapMetrics ( r->getPos(), 2, false, FieldWalkable );
+               pathFinder->updateMapMetrics ( rPos, 2, false, FieldWalkable );
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               

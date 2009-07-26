@@ -77,6 +77,10 @@ void AnnotatedMap::initMapMetrics ( Map *map )
 // adding: true if the object has been added, false if it has been removed.
 void AnnotatedMap::updateMapMetrics ( const Vec2i &pos, const int size, bool adding, Field field )
 {
+   assert ( cMap->isInside ( pos ) );
+   assert ( cMap->isInside ( pos.x + size - 1, pos.y + size - 1 ) );
+
+	//Logger::getInstance ().add ( "updateMapMetrics() called..." );
    // first, re-evaluate the cells occupied (or formerly occupied)
    for ( int i=0; i < size; ++i )
       for ( int j=0; j < size; ++j )
@@ -225,6 +229,7 @@ void AnnotatedMap::updateMapMetrics ( const Vec2i &pos, const int size, bool add
       AboveList = newAboveList;
       shell++;
    }// end while
+	//Logger::getInstance ().add ( "updateMapMetrics() returning." );
 }
 
 //TODO
@@ -239,8 +244,9 @@ void AnnotatedMap::updateMapMetrics ( const Vec2i &pos, const int size, bool add
 CellMetrics AnnotatedMap::computeClearances ( const Vec2i &pos )
 {
    assert ( sizeof ( CellMetrics ) == 4 );
-
+   assert ( cMap->isInside ( pos ) );
    CellMetrics clearances;
+
    Tile *container = cMap->getTile ( cMap->toTileCoords ( pos ) );
  
    if ( container->isFree () ) // Tile is walkable?
@@ -254,6 +260,9 @@ CellMetrics AnnotatedMap::computeClearances ( const Vec2i &pos )
       // Deep Water
       while ( canClear ( pos, clearances.get ( FieldDeepWater ) + 1, FieldDeepWater ) )
          clearances.set ( FieldDeepWater, clearances.get ( FieldDeepWater ) + 1 );
+	  // Amphibious
+	  while ( canClear ( pos, clearances.get ( FieldAmphibious ) + 1, FieldAmphibious ) )
+		  clearances.set ( FieldAmphibious, clearances.get ( FieldAmphibious ) + 1 );
    }
    
    // Air
@@ -263,18 +272,13 @@ CellMetrics AnnotatedMap::computeClearances ( const Vec2i &pos )
    if ( pos.y == cMap->getH() - 3 ) clearAir = 1;
    else if ( pos.y == cMap->getH() - 4 && clearAir > 2 ) clearAir = 2;
    clearances.set ( FieldAir, clearAir );
-   
-   // Amphibious
-   int clearSurf = clearances.get ( FieldWalkable );
-   if ( clearances.get ( FieldAnyWater ) > clearSurf ) //FIXME this is wrong
-      clearSurf = clearances.get ( FieldAnyWater );
-   clearances.set ( FieldAmphibious, clearSurf );
 
    return clearances;
 }
 // as above, make faster...
 uint32 AnnotatedMap::computeClearance ( const Vec2i &pos, Field field )
 {
+   assert ( cMap->isInside ( pos ) );
    uint32 clearance = 0;
    Tile *container = cMap->getTile ( cMap->toTileCoords ( pos ) );
    switch ( field )
@@ -296,14 +300,20 @@ uint32 AnnotatedMap::computeClearance ( const Vec2i &pos, Field field )
          while ( canClear ( pos, clearance + 1, FieldDeepWater ) )
             clearance++;
       return clearance;
+   case FieldAmphibious:
+      if ( container->isFree () )
+         while ( canClear ( pos, clearance + 1, FieldAmphibious ) )
+            clearance++;
+      return clearance;
    default:
-      throw runtime_error ( "Illegal Field passed to PathFinder::computeClearance()" );
+      throw runtime_error ( "Illegal Field passed to AnnotatedMap::computeClearance()" );
       return 0;
    }
 }
 
 bool AnnotatedMap::canClear ( const Vec2i &pos, int clear, Field field )
 {
+   assert ( cMap->isInside ( pos ) );
    if ( clear > maxClearanceValue ) return false;
 
    // on map ?
@@ -334,6 +344,13 @@ bool AnnotatedMap::canClear ( const Vec2i &pos, int clear, Field field )
             ||   !sc->isFree () || !cell->isDeepSubmerged () ) 
                return false;
             break;
+		 case FieldAmphibious:
+			if ( ( cell->getUnit(ZoneSurface) && !cell->getUnit(ZoneSurface)->isMobile() )
+			||   !sc->isFree () )
+				return false;
+			break;
+	   default:
+		  throw runtime_error ( "Illegal Field passed to AnnotatedMap::canClear()" );
          }
       }// end for
    }// end for
@@ -349,6 +366,8 @@ bool AnnotatedMap::canOccupy ( const Vec2i &pos, int size, Field field ) const
 
 void AnnotatedMap::annotateLocal ( const Vec2i &pos, const int size, const Field field )
 {
+   assert ( cMap->isInside ( pos ) );
+   assert ( cMap->isInside ( pos.x + size - 1, pos.y + size - 1 ) );
    const Vec2i *offsets1 = NULL, *offsets2 = NULL;
    int numOffsets1, numOffsets2;
    if ( size == 1 ) 

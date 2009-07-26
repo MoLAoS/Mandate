@@ -118,6 +118,7 @@ void PathFinder::init ( Map *map )
 
 bool PathFinder::isLegalMove ( Unit *unit, const Vec2i &pos2 ) const
 {
+   assert ( map->isInside ( pos2 ) );
    if ( unit->getPos().dist ( pos2 ) > 1.5 ) return false; // shouldn't really need this....
 
    const Vec2i &pos1 = unit->getPos ();
@@ -163,13 +164,14 @@ bool PathFinder::resourceGoalFunc ( Vec2i &pos )
 
 TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (*func)(Vec2i&))
 {
-   //Logger::getInstance ().add ( "findPath() Called..." );
+   //Logger::getInstance ().add ( "findPathToGoal() Called..." );
    static int flipper = 0;
    //route cache
 	UnitPath &path = *unit->getPath ();
 	if( finalPos == unit->getPos () )
    {	//if arrived (where we wanted to go)
 		unit->setCurrSkill ( scStop );
+		//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 		return tsArrived;
 	}
    else if( ! path.isEmpty () )
@@ -178,6 +180,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
       if ( isLegalMove ( unit, pos ) )
       {
 			unit->setNextPos ( pos );
+			//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 			return tsOnTheWay;
 		}
 	}
@@ -187,6 +190,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
    //if arrived (as close as we can get to it)
 	if ( targetPos == unit->getPos () ) {
 		unit->setCurrSkill(scStop);
+		//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 		return tsArrived;
 	}
 
@@ -207,6 +211,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
       {
          unit->getPath()->incBlockCount ();
          unit->setCurrSkill(scStop);
+		 //Logger::getInstance ().add ( "findPathToGoal() returning..." );
          return tsBlocked;
       }
    }
@@ -226,18 +231,29 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
    {
       unit->getPath()->incBlockCount ();
       unit->setCurrSkill(scStop);
+	  //Logger::getInstance ().add ( "findPathToGoal() returning..." );
       return tsBlocked;
+   }
+   else if ( pathList.empty() ) { // goal might be closer than targetPos.
+      unit->setCurrSkill(scStop);
+	  //Logger::getInstance ().add ( "findPathToGoal() returning..." );
+      return tsArrived;
    }
    else
       copyToPath ( pathList, unit->getPath () );
+
+	//ASSERT VALID PATH ( step size 1 || 1.42, all positions on map )
+
 	Vec2i pos = path.pop();
-   if ( ! isLegalMove ( unit, pos ) )
-   {
+	if ( ! isLegalMove ( unit, pos ) )
+	{
 		unit->setCurrSkill(scStop);
-      unit->getPath()->incBlockCount ();
+		unit->getPath()->incBlockCount ();
+		//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 		return tsBlocked;
 	}
-   unit->setNextPos(pos);
+	unit->setNextPos(pos);
+	//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 	return tsOnTheWay;
 }
 

@@ -273,22 +273,18 @@ Map::~Map() {
 	if (surfaceHeights)	{delete[] surfaceHeights;}
 }
 //get
-Cell *Map::getCell(int x, int y) const					
-{  assert(isInside(x, y)); 
+Cell *Map::getCell(int x, int y) const {
+	assert ( this->isInside ( x,y ) );
    return &cells[y * w + x];
 }
-Cell *Map::getCell(const Vec2i &pos) const				
-{  assert(isInside(pos.x, pos.y)); 
+Cell *Map::getCell(const Vec2i &pos) const {
    return getCell(pos.x, pos.y);
 }
-Tile *Map::getTile(int sx, int sy) const	
-{  
-   assert ( isInsideTile(sx, sy) );
-   return &tiles[sy*tileW+sx];
+Tile *Map::getTile(int sx, int sy) const { 
+	assert ( this->isInsideTile ( sx,sy ) );
+	return &tiles[sy*tileW+sx];
 }
-Tile *Map::getTile(const Vec2i &sPos) const
-{  
-   assert ( isInsideTile(sPos) );
+Tile *Map::getTile(const Vec2i &sPos) const {  
    return getTile(sPos.x, sPos.y);
 }
 void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
