@@ -1691,6 +1691,11 @@ void Renderer::renderUnits(){
 
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();
+			
+			//TODO: floating units should maintain their 'y' coord properly...
+			// Quick fix: float boats
+			if ( unit->getCurrField () == FieldDeepWater )
+				currVec.y = game->getWorld()->getMap()->getWaterLevel ();
 
 			// let dead units start sinking before they go away
 			if(framesUntilDead <= 200 && !ut->isOfClass(ucBuilding)) {

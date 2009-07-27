@@ -63,8 +63,8 @@ void UnitUpdater::init(Game &game) {
 	this->world = game.getWorld();
 	this->map = world->getMap();
 	this->console = game.getConsole();
-   this->scriptManager = game.getScriptManager ();
-   pathFinder = Search::PathFinder::getInstance();
+	this->scriptManager = game.getScriptManager ();
+	pathFinder = Search::PathFinder::getInstance();
 	pathFinder->init(map);
 }
 
@@ -670,17 +670,17 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 			Resource *r = map->getTile(Map::toTileCoords(command->getPos()))->getResource();
 			if (r && hct->canHarvest(r->getType())) {
 				//if can harvest dest. pos
-				if (unit->getPos().dist(command->getPos()) < harvestDistance &&
-						map->isResourceNear(unit->getPos(), r->getType(), targetPos)) {
+				if (unit->getPos().dist(command->getPos()) < harvestDistance 
+				&&  map->isResourceNear(unit->getPos(), r->getType(), targetPos)) {
 					//if it finds resources it starts harvesting
 					unit->setCurrSkill(hct->getHarvestSkillType());
 					unit->setTargetPos(targetPos);
 					unit->face(targetPos);
 					unit->setLoadCount(0);
 					unit->setLoadType(map->getTile(Map::toTileCoords(targetPos))->getResource()->getType());
-				} else {
-					//if not continue walking
-               switch (pathFinder->findPathToResource(unit, command->getPos(), r->getType())) {
+				} 
+				else { //if not continue walking
+					switch (pathFinder->findPathToResource(unit, command->getPos(), r->getType())) {
 					case Search::tsOnTheWay:
 						unit->setCurrSkill(hct->getMoveSkillType());
 						unit->face(unit->getNextPos());
@@ -699,7 +699,8 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 						break;
 					}
 				}
-			} else {
+			} 
+			else {
 				//if can't harvest, search for another resource
 				unit->setCurrSkill(scStop);
 				if (!searchForResource(unit, hct)) {
@@ -712,7 +713,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 			//if loaded, return to store
 			Unit *store = world->nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
 			if (store) {
-				switch (pathFinder->findPath(unit, store->getNearestOccupiedCell(unit->getPos()))) {
+				switch (pathFinder->findPathToStore(unit, store->getNearestOccupiedCell(unit->getPos()), store)) {
 				case Search::tsOnTheWay:
 					unit->setCurrSkill(hct->getMoveLoadedSkillType());
 					unit->face(unit->getNextPos());
@@ -731,7 +732,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
 					world->getStats().harvest(unit->getFactionIndex(), resourceAmount);
-               scriptManager->onResourceHarvested ();
+					scriptManager->onResourceHarvested ();
 
 					//if next to a store unload resources
 					unit->getPath()->clear();
@@ -760,10 +761,10 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 
 				//if resource exausted, then delete it and stop
 				if (r->decAmount(1)) {
-               // let the pathfinder know
-               Vec2i rPos = r->getPos ();
-               sc->deleteResource();
-               pathFinder->updateMapMetrics ( rPos, 2, false, FieldWalkable );
+					// let the pathfinder know
+					Vec2i rPos = r->getPos ();
+					sc->deleteResource();
+					pathFinder->updateMapMetrics ( rPos, 2, false, FieldWalkable );
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               
@@ -1058,13 +1059,26 @@ void UnitUpdater::updateMorph(Unit *unit){
 
 	if(unit->getCurrSkill()->getClass() != scMorph){
 		//if not morphing, check space
-		if(map->areFreeCellsOrHasUnit(unit->getPos(), mct->getMorphUnit()->getSize(), unit->getCurrField(), unit)){
+		bool gotSpace = false;
+		Fields mfs = mct->getMorphUnit()->getFields ();
+		Field mf = (Field)0;
+		while ( mf != FieldCount ) {
+			if ( mfs.get ( mf )
+			&&   map->areFreeCellsOrHasUnit ( unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit) ) {
+				gotSpace = true;
+				break;
+			}
+			mf = (Field)(mf + 1);
+		}
+
+		if ( gotSpace ) {
 			unit->setCurrSkill(mct->getMorphSkillType());
 			unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), false);
-		} else {
-			if(unit->getFactionIndex() == world->getThisFactionIndex()){
-				console->addStdMessage("InvalidPosition");
-			}
+			unit->setCurrField ( mf );
+		} 
+		else {
+			if(unit->getFactionIndex() == world->getThisFactionIndex())
+				Game::getInstance()->getConsole()->addStdMessage("InvalidPosition");
 			unit->cancelCurrCommand();
 		}
 	} else {
