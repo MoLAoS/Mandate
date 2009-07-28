@@ -224,7 +224,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
 		//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 		return tsBlocked;
 	}
-	else if ( pathList.empty() ) { // goal might be closer than targetPos.
+	else if ( pathList.size() < 2 ) { // goal might be closer than targetPos.
 		unit->setCurrSkill(scStop);
 		//Logger::getInstance ().add ( "findPathToGoal() returning..." );
 		return tsArrived;
