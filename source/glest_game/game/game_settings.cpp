@@ -14,10 +14,11 @@
 
 #include "game_settings.h"
 #include "random.h"
-
+#include "timer.h"
 #include "leak_dumper.h"
 
 using Shared::Util::Random;
+using Shared::Platform::Chrono;
 
 namespace Glest { namespace Game {
 
@@ -61,24 +62,25 @@ void GameSettings::save(XmlNode *node) const {
 	}
 }
 
-void GameSettings::randomizeLocs() {
-	bool slotUsed[GameConstants::maxPlayers];
+void GameSettings::randomizeLocs(int maxPlayers) {
+	bool *slotUsed = new bool[maxPlayers];
 	Random rand;
 
-	memset(slotUsed, 0, sizeof(slotUsed));
-	rand.init(1234);
+	memset(slotUsed, 0, sizeof(bool)*maxPlayers);
+	rand.init(Shared::Platform::Chrono::getCurMillis ());
 
-	for(int i = 0; i < GameConstants::maxPlayers; i++) {
+	for(int i = 0; i < maxPlayers; i++) {
 		int slot = rand.randRange(0, 3 - i);
-		for(int j = slot; j < slot + GameConstants::maxPlayers; j++) {
-			int k = j % GameConstants::maxPlayers;
-			if(!slotUsed[j % GameConstants::maxPlayers]) {
-				slotUsed[j % GameConstants::maxPlayers] = true;
+		for(int j = slot; j < slot + maxPlayers; j++) {
+			int k = j % maxPlayers;
+			if(!slotUsed[j % maxPlayers]) {
+				slotUsed[j % maxPlayers] = true;
 				startLocationIndex[k] = i;
 				break;
 			}
 		}
 	}
+	delete [] slotUsed;
 }
 
 }}//end namespace

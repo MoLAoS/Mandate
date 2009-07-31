@@ -99,7 +99,7 @@ public:
 	void setDefaultVictoryConditions(bool defaultVictoryConditions) {this->defaultVictoryConditions= defaultVictoryConditions;}
 
 	//misc
-	void randomizeLocs();
+	void randomizeLocs(int maxPlayers);
 	void save(XmlNode *node) const;
 };
 

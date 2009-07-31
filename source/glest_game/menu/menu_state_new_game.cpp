@@ -344,7 +344,7 @@ void MenuStateNewGame::update() {
 
 void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 	Random rand;
-	rand.init(654321);
+	rand.init(Shared::Platform::Chrono::getCurMillis());
 
 	int factionCount= 0;
 
@@ -377,7 +377,7 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 	gameSettings->setFactionCount(factionCount);
 
 	if(listBoxRandomize.getSelectedItemIndex()) {
-		gameSettings->randomizeLocs();
+		gameSettings->randomizeLocs(mapInfo.players);
 	}
 }
 
