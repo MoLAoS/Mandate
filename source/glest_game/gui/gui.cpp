@@ -900,11 +900,15 @@ void Gui::computeDisplay() {
 
 	// ================ PART 1 ================
 
+	int thisTeam = Game::getInstance()->getWorld()->getThisTeamIndex();
 	//title, text and progress bar
 	if (selection.getCount() == 1) {
 		display.setTitle(selection.getFrontUnit()->getFullName());
-		display.setText(selection.getFrontUnit()->getDesc());
-		display.setProgressBar(selection.getFrontUnit()->getProductionPercent());
+		//FIXME maybe do a 'partial' getDesc() showing HP of enemy unit
+		if ( selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
+			display.setText(selection.getFrontUnit()->getDesc());
+			display.setProgressBar(selection.getFrontUnit()->getProductionPercent());
+		}
 	}
 
 	//portraits
@@ -918,7 +922,8 @@ void Gui::computeDisplay() {
 		display.setDownSelectedPos(activePos);
 	}
 
-	if (selection.isComandable()) {
+	if (selection.isComandable() 
+	&& selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
 		if (!selectingBuilding) {
 
 			//cancel button
