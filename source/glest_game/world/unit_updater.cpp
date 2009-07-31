@@ -258,7 +258,7 @@ Command *UnitUpdater::doAutoRepair(Unit *unit) {
 }
 
 Command *UnitUpdater::doAutoFlee(Unit *unit) {
-	
+
 	Unit *sighted = NULL;
 	if(unit->getType()->hasCommandClass(ccMove) && attackerOnSight(unit, &sighted)) {
 		//if there is a friendly military unit that we can heal/repair and is
@@ -392,6 +392,10 @@ void UnitUpdater::updateMove(Unit *unit) {
 /** Returns true when completed */
 bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) {
 	const AttackSkillType *ast = NULL;
+	const AttackSkillTypes *asts = act->getAttackSkillTypes();
+
+	if ( target && !asts->getZone (target->getCurrZone()) )
+		unit->finishCommand();
 
 	//if found
 	if(attackableOnRange(unit, &target, act->getAttackSkillTypes(), &ast)) {
@@ -402,16 +406,18 @@ bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const Attack
 		} else {
 			unit->setCurrSkill(scStop);
 		}
-	} else {
+	} 
+	else {
 		//compute target pos
 		Vec2i pos;
-		if(attackableOnSight(unit, &target, act->getAttackSkillTypes(), NULL)) {
+		if ( attackableOnSight(unit, &target, asts, NULL) ) {
 			pos = target->getNearestOccupiedCell(unit->getPos());
 			if (pos != unit->getTargetPos()) {
 				unit->setTargetPos(pos);
 				unit->getPath()->clear();
 			}
-		} else {
+		} 
+		else {
 			// if no more targets and on auto command, then turn around
 			if(command->isAuto() && command->hasPos2()) {
 				if(Config::getInstance().getGsAutoReturnEnabled()) {
@@ -1535,12 +1541,14 @@ inline bool UnitUpdater::attackerOnSight(const Unit *unit, Unit **rangedPtr) {
 	return unitOnRange(unit, range, rangedPtr, NULL, NULL);
 }
 
-inline bool UnitUpdater::attackableOnSight(const Unit *unit, Unit **rangedPtr, const AttackSkillTypes *asts, const AttackSkillType **past) {
+inline bool UnitUpdater::attackableOnSight(const Unit *unit, Unit **rangedPtr, 
+					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	int range = unit->getSight();
 	return unitOnRange(unit, range, rangedPtr, asts, past);
 }
 
-inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr, const AttackSkillTypes *asts, const AttackSkillType **past) {
+inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr, 
+					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	// can't attack beyond range of vision
 	int range = min(unit->getMaxRange(asts), unit->getSight());
 	return unitOnRange(unit, range, rangedPtr, asts, past);
@@ -1548,15 +1556,16 @@ inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr, c
 
 //if the unit has any enemy on range
 /** rangedPtr should point to a pointer that is either NULL or a valid Unit */
-bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr, const AttackSkillTypes *asts, const AttackSkillType **past) {
+bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr, 
+					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	Vec2f floatCenter = unit->getFloatCenteredPos();
 	float halfSize = (float)unit->getType()->getSize() / 2.f;
 	float distance;
 	bool needDistance = false;
 
-	if(*rangedPtr && (*rangedPtr)->isDead()) {
+	if ( *rangedPtr && ( (*rangedPtr)->isDead() 
+	||	 !asts->getZone((*rangedPtr)->getCurrZone()) ) )
 		*rangedPtr = NULL;
-	}
 
 	if(*rangedPtr) {
 		needDistance = true;

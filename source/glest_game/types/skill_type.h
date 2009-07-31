@@ -229,7 +229,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
 
 	Zones getZones () const				{return zones;}
-	bool getZone ( Zone zone ) const		{return zones.get(zone);}
+	bool getZone ( const Zone zone ) const		{return zones.get(zone);}
 };
 
 // ===============================
