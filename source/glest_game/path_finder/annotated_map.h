@@ -62,7 +62,7 @@ const Vec2i AboveLeftDist2[5] =
 // Will Glest even do size > 2 moveable units without serious movement related issues ???
 struct CellMetrics
 {
-   CellMetrics () { memset ( this, 0, sizeof(this) ); }
+   CellMetrics () { memset ( this, 0, sizeof(*this) ); }
    // can't get a reference to a bit field, so we can't overload 
    // the [] operator, and we have to get by with these...
    inline uint32 get ( const Field );
