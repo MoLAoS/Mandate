@@ -101,12 +101,17 @@ void World::init(const XmlNode *worldNode) {
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
+
+	Logger::getInstance ().add ("Calling World::initSplattedTextures()");
 	initSplattedTextures();
 
+	Logger::getInstance ().add ("Creating ScriptManager");
 	scriptManager = game.getScriptManager();
+	Logger::getInstance ().add ("Calling UnitUpdater::init()");
 	unitUpdater.init(game); // must be done after initMap()
 
    //minimap must be init after sum computation
+	Logger::getInstance ().add ("Calling Map::initMinimap()");
 	initMinimap();
 
 	if(worldNode)

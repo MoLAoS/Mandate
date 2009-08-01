@@ -406,12 +406,19 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 
 void Map::init() {
 	Logger::getInstance().add("Heightmap computations", true);
+	Logger::getInstance().add("Calling Map::smoothSurface()");
 	smoothSurface();
+	Logger::getInstance().add("Calling Map::computeNormals()");
 	computeNormals();
+	Logger::getInstance().add("Calling Map::computeInterpolatedHeights()");
 	computeInterpolatedHeights();
+	Logger::getInstance().add("Calling Map::computeNearSubmerged()");
 	computeNearSubmerged();
+	Logger::getInstance().add("Calling Map::computeCellColors()");
 	computeCellColors();
-   setCellTypes ();
+	Logger::getInstance().add("Calling Map::setCellTypes()");
+	setCellTypes ();
+	Logger::getInstance().add("Map::init() returning...");
 }
 void Map::setCellTypes ()
 {
