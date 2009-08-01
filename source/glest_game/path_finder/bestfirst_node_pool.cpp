@@ -31,10 +31,10 @@ BFSNodePool::~BFSNodePool ()
    delete [] stock;
    delete [] lists;
 }
-void BFSNodePool::init ( Map *map )
-{
-   markerArray.init ( map->getW(), map->getH() );
-   reset ();
+void BFSNodePool::init ( Map *map ) {
+	Logger::getInstance ().add ( "BFSNodePool::init()" );
+	markerArray.init ( map->getW(), map->getH() );
+	reset ();
 }
 // reset the node pool
 void BFSNodePool::reset ()

@@ -49,27 +49,24 @@ inline void CellMetrics::set ( const Field field, uint32 val ) {
 
 const int AnnotatedMap::maxClearanceValue = 3;
 
-AnnotatedMap::AnnotatedMap ( Map *m )
-{
-   cMap = m;
-   metrics.init ( m->getW(), m->getH() );
-   initMapMetrics ( cMap );
+AnnotatedMap::AnnotatedMap ( Map *m ) {
+	Logger::getInstance ().add ( "AnnotatedMap::AnnotatedMap()" );
+	cMap = m;
+	metrics.init ( m->getW(), m->getH() );
+	initMapMetrics ( cMap );
 }
 
-AnnotatedMap::~AnnotatedMap ()
-{
+AnnotatedMap::~AnnotatedMap () {
 }
 
-void AnnotatedMap::initMapMetrics ( Map *map )
-{
-   for ( int i=0; i < map->getH(); ++i )
-   {
-      for ( int j=0; j < map->getW(); ++j )
-      {
-         Vec2i pos( j, i );
-         metrics[pos] = computeClearances ( pos );
-      }
-   }
+void AnnotatedMap::initMapMetrics ( Map *map ) {
+	Logger::getInstance ().add ( "AnnotatedMap::initMapMetrics()" );
+	for ( int i=0; i < map->getH(); ++i ) {
+		for ( int j=0; j < map->getW(); ++j ) {
+			Vec2i pos( j, i );
+			metrics[pos] = computeClearances ( pos );
+		}
+	}
 }
 
 // pos: location of object added/removed

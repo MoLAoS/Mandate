@@ -52,10 +52,12 @@ GraphSearch::~GraphSearch () {
 }
 
 void GraphSearch::init ( Map *cell_map, AnnotatedMap *annt_map, bool astar ) {
+	Logger::getInstance ().add ( "GraphSearch::init()" );
 	cMap = cell_map;
 	aMap = annt_map;
 	bNodePool = new BFSNodePool ();
 	aNodePool = new AStarNodePool ();
+
 	if ( astar )
 		aNodePool->init ( cell_map );
 	else

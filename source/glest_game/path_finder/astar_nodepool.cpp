@@ -53,6 +53,7 @@ AStarNodePool::~AStarNodePool ()
 
 void AStarNodePool::init ( Map *map )
 {
+	Logger::getInstance ().add ( "AStarNodePool::init()" );
    markerArray.init ( map->getW(), map->getH() );
    pointerArray.init ( map->getW(), map->getH() );
 }
