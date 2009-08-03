@@ -157,13 +157,15 @@ XmlNode *XmlIo::parseString(const char *doc, size_t size) {
 		parser->setErrorHandler(&errorHandler);
 		parser->setFeature(XMLUni::fgXercesSchemaFullChecking, true);
 		parser->setFeature(XMLUni::fgDOMValidation, true);
+		document = parser->parse(wrapperSource);
 #else
 		parser = (static_cast<DOMImplementationLS*>(implementation))->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 		config = parser->getDomConfig();
 		config->setParameter(XMLUni::fgXercesSchemaFullChecking, true);
 		config->setParameter(XMLUni::fgDOMValidate, true);
+		document = parser->parse(static_cast<DOMLSInput*>(&wrapperSource));
 #endif
-		document = parser->parse(wrapperSource);
+		
 
 		if(document == NULL){
 			throw runtime_error("Failed to parse in-memory document");

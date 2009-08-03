@@ -25,15 +25,15 @@ COMPILER_MORE_WARNING_FLAGS = -Winit-self -Wmissing-include-dirs -Wwrite-strings
 COMPILER_INLINE_WARNING_FLAGS = -Winline ;
 COMPILER_CFLAGS            += $(COMPILER_WARNING_FLAGS) -Werror-implicit-function-declaration ;
 COMPILER_CXXFLAGS          += $(COMPILER_WARNING_FLAGS) ;
-COMPILER_CFLAGS_optimize   += -O3 -g3 -DNDEBUG -ffast-math -ftree-vectorize $(COMPILER_MORE_WARNING_FLAGS) ;
-COMPILER_CXXFLAGS_optimize += -O3 -g3 -DNDEBUG -ffast-math -ftree-vectorize $(COMPILER_MORE_WARNING_FLAGS) ;
+COMPILER_CFLAGS_optimize   += -O3 -DNDEBUG -ffast-math -ftree-vectorize $(COMPILER_MORE_WARNING_FLAGS) ;
+COMPILER_CXXFLAGS_optimize += -O3 -DNDEBUG -ffast-math -ftree-vectorize $(COMPILER_MORE_WARNING_FLAGS) ;
 COMPILER_LIBS_optimize     += ;
 COMPILER_CFLAGS_debug      += -DDEBUG -g3 $(COMPILER_MORE_WARNING_FLAGS) ;
 COMPILER_CXXFLAGS_debug    += -DDEBUG -g3 $(COMPILER_MORE_WARNING_FLAGS) ;
 COMPILER_LIBS_debug        += -g3 ;
-COMPILER_CFLAGS_profile    += -O3 -g3 -pg -ffast-math -ftree-vectorize ;
-COMPILER_CXXFLAGS_profile  += -O3 -g3 -pg -ffast-math -ftree-vectorize ;
-COMPILER_LIBS_profile      += -g3 -pg ;
+COMPILER_CFLAGS_profile    += -O3 -pg -ffast-math -ftree-vectorize ;
+COMPILER_CXXFLAGS_profile  += -O3 -pg -ffast-math -ftree-vectorize ;
+COMPILER_LIBS_profile      += -pg ;
 
 LINK = $(CXX) ;
 

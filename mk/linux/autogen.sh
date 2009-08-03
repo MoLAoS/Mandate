@@ -35,7 +35,7 @@ ln -s /tmp/gae/0.2/build .
 echo "Updating Source symlinks..."
 
 for f in data docs maps scenarios techs tilesets; do
-	ln -sf ../../data/glest_game/$f .;
+	ln -sf ../../../data/glest_game/$f .;
 done
 
 if [ ! -d shared_lib ]; then
