@@ -23,19 +23,19 @@
 
 namespace Glest { namespace Game { namespace Search {
 
-	SearchParams::SearchParams ( Unit *u ) {
-		start = u->getPos(); 
-		field = u->getCurrField ();
-		size = u->getSize (); 
-		team = u->getTeam ();
-		goalFunc = NULL;
-	}
+SearchParams::SearchParams ( Unit *u ) {
+	start = u->getPos(); 
+	field = u->getCurrField ();
+	size = u->getSize (); 
+	team = u->getTeam ();
+	goalFunc = NULL;
+}
 
-	GraphSearch::GraphSearch () {
-		aMap = NULL;
-		cMap = NULL;
-		bNodePool = NULL;
-		aNodePool = NULL;
+GraphSearch::GraphSearch () {
+	aMap = NULL;
+	cMap = NULL;
+	bNodePool = NULL;
+	aNodePool = NULL;
 
 #	ifdef PATHFINDER_TIMING
 		statsAStar = new PathFinderStats ( "A-Star Search : " );
@@ -52,16 +52,17 @@ GraphSearch::~GraphSearch () {
 }
 
 void GraphSearch::init ( Map *cell_map, AnnotatedMap *annt_map, bool astar ) {
-	Logger::getInstance ().add ( "GraphSearch::init()" );
 	cMap = cell_map;
-	aMap = annt_map;
-	bNodePool = new BFSNodePool ();
-	aNodePool = new AStarNodePool ();
+	aMap = annt_map;	
 
-	if ( astar )
+	if ( astar ) {
+		aNodePool = new AStarNodePool ();
 		aNodePool->init ( cell_map );
-	else
+	}
+	else {
+		bNodePool = new BFSNodePool ();
 		bNodePool->init ( cell_map );
+	}
 }
 
 bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path) {
@@ -86,22 +87,20 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path) {
 		||  ( params.goalFunc && params.goalFunc (minNode->pos) ) ) { 
 			break; // success
 		}
-
 		for ( int i = 0; i < 8 && ! nodeLimitReached; ++ i )
-		{  // for each neighbour of minNode
+		{	// for each neighbour of minNode
 			Vec2i sucPos = minNode->pos + Directions[i];
-			if ( ! cMap->isInside ( sucPos ) ) 
+			if ( !cMap->isInside ( sucPos ) 
+			||	 !aMap->canOccupy ( sucPos, params.size, params.field )
+			||	 bNodePool->isListed ( sucPos ) ) {
 				continue; 
-			if ( ! aMap->canOccupy (sucPos, params.size, params.field ) )
-				continue;
-			if ( bNodePool->isListed ( sucPos ) )
-				continue;
+			}
 			if ( minNode->pos.x != sucPos.x && minNode->pos.y != sucPos.y ) {
-			   // if diagonal move and either diag cell is not free...
+				// if diagonal move and either diag cell is not free...
 				Vec2i diag1, diag2;
 				getDiags ( minNode->pos, sucPos, params.size, diag1, diag2 );
-				if ( !aMap->canOccupy ( diag1, 1, params.field ) 
-				||   !aMap->canOccupy ( diag2, 1, params.field ) )
+				if ( !aMap->canOccupy (diag1, 1, params.field) 
+				||   !aMap->canOccupy (diag2, 1, params.field) )
 					continue; // not allowed
 			}
 			// else move is legal.
@@ -118,8 +117,9 @@ bool GraphSearch::GreedySearch ( SearchParams &params, list<Vec2i> &path) {
 		return false;
 	}
 	BFSNode *lastNode= minNode;
-	if ( nodeLimitReached )
+	if ( nodeLimitReached ) {
 		lastNode = bNodePool->getLowestH ();
+	}
 
 	// on the way
 	// fill in next pointers
@@ -191,32 +191,41 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path ) {
 		}
 		for ( int i = 0; i < 8 && ! nodeLimitReached; ++i ) {  // for each neighbour
 			Vec2i sucPos = minNode->pos + Directions[i];
-			if ( ! cMap->isInside ( sucPos ) || ! aMap->canOccupy (sucPos, params.size, params.field )) 
+			if ( ! cMap->isInside ( sucPos ) 
+			||	 ! aMap->canOccupy (sucPos, params.size, params.field )) {
 				continue;
+			}
 			bool diag = false;
 			if ( minNode->pos.x != sucPos.x && minNode->pos.y != sucPos.y ) {
 				// if diagonal move and either diag cell is not free...
 				diag = true;
 				Vec2i diag1, diag2;
 				getDiags ( minNode->pos, sucPos, params.size, diag1, diag2 );
-				if ( !aMap->canOccupy ( diag1, 1, params.field ) || !aMap->canOccupy ( diag2, 1, params.field ) )
+				if ( !aMap->canOccupy ( diag1, 1, params.field ) 
+				||	 !aMap->canOccupy ( diag2, 1, params.field ) ) {
 					continue; // not allowed
+				}
 			}
 			// Assumes heuristic is admissable, or that you don't care if it isn't
-			if ( aNodePool->isOpen ( sucPos ) )
+			if ( aNodePool->isOpen ( sucPos ) ) {
 				aNodePool->updateOpenNode ( sucPos, minNode, diag ? 1.4 : 1.0 );
+			}
 			else if ( ! aNodePool->isClosed ( sucPos ) ) {
 				bool exp = cMap->getTile (Map::toTileCoords (sucPos))->isExplored (params.team);
-				if ( ! aNodePool->addToOpen ( minNode, sucPos, heuristic ( sucPos, params.dest ), minNode->distToHere + (diag?1.4:1.0), exp ) )
+				float h = heuristic ( sucPos, params.dest );
+				float d = minNode->distToHere + (diag?1.4:1.0);
+				if ( ! aNodePool->addToOpen ( minNode, sucPos, h, d, exp ) ) {
 					nodeLimitReached = true;
+				}
 			}
 		} // end for each neighbour of minNode
 	} // end while ( ! nodeLimitReached )
-#  ifdef PATHFINDER_TIMING
+#	ifdef PATHFINDER_TIMING
 		statsAStar->AddEntry ( aNodePool->stopTimer () );
-#  endif
-	if ( ! pathFound && ! nodeLimitReached ) 
+#	endif
+	if ( ! pathFound && ! nodeLimitReached ) {
 		return false;
+	}
 	if ( nodeLimitReached ) {
 		// get node closest to goal
 		minNode = aNodePool->getBestHNode ();
@@ -227,8 +236,9 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path ) {
 		}
 		int backoff = path.size () / 10;
 		// back up a bit, to avoid a possible cul-de-sac
-		for ( int i=0; i < backoff ; ++i )
-		path.pop_back ();
+		for ( int i=0; i < backoff ; ++i ) {
+			path.pop_back ();
+		}
 	}
 	else {  // fill in path
 		path.clear ();
@@ -242,38 +252,38 @@ bool GraphSearch::AStarSearch ( SearchParams &params, list<Vec2i> &path ) {
 		return true; //tsArrived
 	}
 
-#  ifdef _GAE_DEBUG_EDITION_
-	if ( Config::getInstance().getMiscDebugTextures() ) {
-		PathFinder *pf = PathFinder::getInstance();
-		pf->PathStart = path.front();
-		pf->PathDest = path.back();
-		pf->OpenSet.clear(); pf->ClosedSet.clear();
-		pf->PathSet.clear(); pf->LocalAnnotations.clear ();
-		if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets ) {
-			list<Vec2i> *alist = aNodePool->getOpenNodes ();
-			for ( VLIt it = alist->begin(); it != alist->end(); ++it )
-			pf->OpenSet.insert ( *it );
-			delete alist;
-			alist = aNodePool->getClosedNodes ();
-			for ( VLIt it = alist->begin(); it != alist->end(); ++it )
-			pf->ClosedSet.insert ( *it );
-			delete alist;
+#	ifdef _GAE_DEBUG_EDITION_
+		if ( Config::getInstance().getMiscDebugTextures() ) {
+			PathFinder *pf = PathFinder::getInstance();
+			pf->PathStart = path.front();
+			pf->PathDest = path.back();
+			pf->OpenSet.clear(); pf->ClosedSet.clear();
+			pf->PathSet.clear(); pf->LocalAnnotations.clear ();
+			if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets ) {
+				list<Vec2i> *alist = aNodePool->getOpenNodes ();
+				for ( VLIt it = alist->begin(); it != alist->end(); ++it )
+				pf->OpenSet.insert ( *it );
+				delete alist;
+				alist = aNodePool->getClosedNodes ();
+				for ( VLIt it = alist->begin(); it != alist->end(); ++it )
+				pf->ClosedSet.insert ( *it );
+				delete alist;
+			}
+			if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets 
+			||   pf->debug_texture_action == PathFinder::ShowPathOnly )
+				for ( VLIt it = path.begin(); it != path.end(); ++it )
+					pf->PathSet.insert ( *it );
+			if ( pf->debug_texture_action == PathFinder::ShowLocalAnnotations ) {
+				pf->LocalAnnotations.clear();
+				list<pair<Vec2i,uint32>> *annt = aMap->getLocalAnnotations ();
+				for ( list<pair<Vec2i,uint32>>::iterator it = annt->begin(); it != annt->end(); ++it )
+				pf->LocalAnnotations[it->first] = it->second;
+				delete annt;
+			}
 		}
-		if ( pf->debug_texture_action == PathFinder::ShowOpenClosedSets 
-		||   pf->debug_texture_action == PathFinder::ShowPathOnly )
-			for ( VLIt it = path.begin(); it != path.end(); ++it )
-				pf->PathSet.insert ( *it );
-		if ( pf->debug_texture_action == PathFinder::ShowLocalAnnotations ) {
-			pf->LocalAnnotations.clear();
-			list<pair<Vec2i,uint32>> *annt = aMap->getLocalAnnotations ();
-			for ( list<pair<Vec2i,uint32>>::iterator it = annt->begin(); it != annt->end(); ++it )
-			pf->LocalAnnotations[it->first] = it->second;
-			delete annt;
-		}
-	}
-#  endif
-   //assert ( assertValidPath ( path ) );
-   return true;
+#	endif
+	//assert ( assertValidPath ( path ) );
+	return true;
 }
 
 bool GraphSearch::assertValidPath ( list<Vec2i> &path ) {

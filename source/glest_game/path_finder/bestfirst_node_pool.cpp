@@ -32,7 +32,6 @@ BFSNodePool::~BFSNodePool ()
    delete [] lists;
 }
 void BFSNodePool::init ( Map *map ) {
-	Logger::getInstance ().add ( "BFSNodePool::init()" );
 	markerArray.init ( map->getW(), map->getH() );
 	reset ();
 }

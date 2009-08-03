@@ -96,28 +96,24 @@ void World::save(XmlNode *node) const {
 void World::init(const XmlNode *worldNode) {
 
 #  ifdef _GAE_DEBUG_EDITION_
-      loadPFDebugTextures ();
+	loadPFDebugTextures ();
 #  endif
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
 
-	Logger::getInstance ().add ("Calling World::initSplattedTextures()");
 	initSplattedTextures();
 
-	Logger::getInstance ().add ("Creating ScriptManager");
 	scriptManager = game.getScriptManager();
-	Logger::getInstance ().add ("Calling UnitUpdater::init()");
 	unitUpdater.init(game); // must be done after initMap()
 
-   //minimap must be init after sum computation
-	Logger::getInstance ().add ("Calling Map::initMinimap()");
+	//minimap must be init after sum computation
 	initMinimap();
 
 	if(worldNode)
 		loadSaved(worldNode);
-   else if ( game.getGameSettings ().getDefaultUnits () )
-      initUnits();
+	else if ( game.getGameSettings ().getDefaultUnits () )
+		initUnits();
 
 	initExplorationState();
 
@@ -1017,8 +1013,8 @@ void World::initFactionTypes() {
 }
 
 void World::initMinimap() {
-    minimap.init(map.getW(), map.getH(), this);
 	Logger::getInstance().add("Compute minimap surface", true);
+    minimap.init(map.getW(), map.getH(), this);
 }
 
 //place units randomly aroud start location

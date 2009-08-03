@@ -97,7 +97,7 @@ PathFinder::~PathFinder () {
 }
 
 void PathFinder::init ( Map *map ) {
-	Logger::getInstance ().add ( "PathFinder::init()" );
+	Logger::getInstance().add("Initialising PathFinder", true);
 	this->map= map;
 	delete annotatedMap;
 	annotatedMap = new AnnotatedMap ( map );
