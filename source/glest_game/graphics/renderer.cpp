@@ -1694,8 +1694,17 @@ void Renderer::renderUnits(){
 			
 			//TODO: floating units should maintain their 'y' coord properly...
 			// Quick fix: float boats
-			if ( unit->getCurrField () == FieldDeepWater )
-				currVec.y = game->getWorld()->getMap()->getWaterLevel ();
+			const Field f = unit->getCurrField ();
+			const Map *map = world->getMap ();
+			if ( f == FieldAmphibious ) {
+				SurfaceType st = map->getCell(unit->getPos())->getType();
+				if ( st == SurfaceTypeDeepWater || st == SurfaceTypeFordable ) {
+					currVec.y = map->getWaterLevel ();
+				}
+			}
+			if ( f == FieldDeepWater || f == FieldAnyWater ) {
+				currVec.y = map->getWaterLevel ();
+			}
 
 			// let dead units start sinking before they go away
 			if(framesUntilDead <= 200 && !ut->isOfClass(ucBuilding)) {
