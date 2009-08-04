@@ -130,10 +130,14 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	progress2 = 0;
 	kills = 0;
 
-	if(type->getField(FieldAir)) currField = FieldAir;
-//	if(getType()->getField(fWater)) currField = fWater;
-//	if(getType()->getField(fSubterranean)) currField = fSubterranean;
 	if(type->getField(FieldWalkable)) currField = FieldWalkable;
+
+	if(type->getField(FieldAir)) currField = FieldAir;
+
+	if ( type->getField (FieldAmphibious) ) currField = FieldAmphibious;
+	else if ( type->getField (FieldAnyWater) ) currField = FieldAnyWater;
+	else if ( type->getField (FieldDeepWater) ) currField = FieldDeepWater;
+
 	targetField = FieldWalkable;		// init just to keep it pretty in memory
 	level= NULL;
 
