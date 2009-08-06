@@ -31,20 +31,18 @@ class Map;
 
 namespace Search {
 
-const Vec2i AboveLeftDist1[3] = 
-{
-   Vec2i ( -1,  0 ),
-   Vec2i ( -1, -1 ),
-   Vec2i (  0, -1 )
+const Vec2i AboveLeftDist1[3] =  {
+	Vec2i ( -1,  0 ),
+	Vec2i ( -1, -1 ),
+	Vec2i (  0, -1 )
 };
 
-const Vec2i AboveLeftDist2[5] =
-{
-   Vec2i ( -2,  0 ),
-   Vec2i ( -2, -1 ),
-   Vec2i ( -2, -2 ),
-   Vec2i ( -1, -2 ),
-   Vec2i (  0, -2 )
+const Vec2i AboveLeftDist2[5] = {
+	Vec2i ( -2,  0 ),
+	Vec2i ( -2, -1 ),
+	Vec2i ( -2, -2 ),
+	Vec2i ( -1, -2 ),
+	Vec2i (  0, -2 )
 };
 
 // Adding a new field?
@@ -60,100 +58,99 @@ const Vec2i AboveLeftDist2[5] =
 // (with modifications) path groups in formation using this, 
 // maybe this is not enough.. perhaps give some fields more resolution? 
 // Will Glest even do size > 2 moveable units without serious movement related issues ???
-struct CellMetrics
-{
-   CellMetrics () { memset ( this, 0, sizeof(*this) ); }
-   // can't get a reference to a bit field, so we can't overload 
-   // the [] operator, and we have to get by with these...
-   inline uint32 get ( const Field );
-   inline void   set ( const Field, uint32 val );
+struct CellMetrics {
+	CellMetrics () { memset ( this, 0, sizeof(*this) ); }
+	// can't get a reference to a bit field, so we can't overload 
+	// the [] operator, and we have to get by with these...
+	inline uint32 get ( const Field );
+	inline void   set ( const Field, uint32 val );
 
-   bool isNearResource ( const Vec2i &pos );
-   bool isNearStore ( const Vec2i &pos );
+	bool isNearResource ( const Vec2i &pos );
+	bool isNearStore ( const Vec2i &pos );
 
 private:
-   uint32 field0 : 2; // In Use: FieldWalkable = land + shallow water 
-   uint32 field1 : 2; // In Use: FieldAir = air
-   uint32 field2 : 2; // In Use: FieldAnyWater = shallow + deep water
-   uint32 field3 : 2; // In Use: FieldDeepWater = deep water
-   uint32 field4 : 2; // In Use: FieldAmphibious = land + shallow + deep water 
-   uint32 field5 : 2; // Unused: ?
-   uint32 field6 : 2; // Unused: ?
-   uint32 field7 : 2; // Unused: ?
-   uint32 field8 : 2; // Unused: ?
-   uint32 field9 : 2; // Unused: ?
-   uint32 fielda : 2; // Unused: ?
-   uint32 fieldb : 2; // Unused: ?
-   uint32 visTeam0 : 1; // map visibility... not used yet.
-   uint32 visTeam1 : 1; //  will be used to remove calls to Tile::isExplored()
-   uint32 visTeam2 : 1; //  from search algorithms, for better cache performance.
-   uint32 visTeam3 : 1; // 
-   uint32 adjResrc1 : 1; // to be used for semi co-operative resource gathering
-   uint32 adjResrc2 : 1; // to be used for semi co-operative resource gathering
-   uint32 adjStore1 : 1; // to be used for semi co-operative resource gathering
-   uint32 adjStore2 : 1; // to be used for semi co-operative resource gathering
+	uint32 field0 : 2; // In Use: FieldWalkable = land + shallow water 
+	uint32 field1 : 2; // In Use: FieldAir = air
+	uint32 field2 : 2; // In Use: FieldAnyWater = shallow + deep water
+	uint32 field3 : 2; // In Use: FieldDeepWater = deep water
+	uint32 field4 : 2; // In Use: FieldAmphibious = land + shallow + deep water 
+	uint32 field5 : 2; // Unused: ?
+	uint32 field6 : 2; // Unused: ?
+	uint32 field7 : 2; // Unused: ?
+	uint32 field8 : 2; // Unused: ?
+	uint32 field9 : 2; // Unused: ?
+	uint32 fielda : 2; // Unused: ?
+	uint32 fieldb : 2; // Unused: ?
+	uint32 visTeam0 : 1; // map visibility... not used yet.
+	uint32 visTeam1 : 1; //  will be used to remove calls to Tile::isExplored()
+	uint32 visTeam2 : 1; //  from search algorithms, for better cache performance.
+	uint32 visTeam3 : 1; // 
+	uint32 adjResrc1 : 1; // to be used for semi co-operative resource gathering
+	uint32 adjResrc2 : 1; // to be used for semi co-operative resource gathering
+	uint32 adjStore1 : 1; // to be used for semi co-operative resource gathering
+	uint32 adjStore2 : 1; // to be used for semi co-operative resource gathering
 };
 
-class MetricMap
-{
+class MetricMap {
 private:
-   CellMetrics *metrics;
-   int stride;
+	CellMetrics *metrics;
+	int stride;
 
 public:
-   MetricMap () { stride = 0; metrics = NULL; }
-   virtual ~MetricMap () { delete [] metrics; }
+	MetricMap () { stride = 0; metrics = NULL; }
+	virtual ~MetricMap () { delete [] metrics; }
 
-   void init ( int w, int h ) 
-      { assert (w>0&&h>0); stride = w; metrics = new CellMetrics[w*h]; }
-   CellMetrics& operator [] ( const Vec2i &pos ) const 
-      { return metrics[pos.y*stride+pos.x]; }
+	void init ( int w, int h ) { 
+		assert (w>0&&h>0); stride = w; metrics = new CellMetrics[w*h]; 
+	}
+	CellMetrics& operator [] ( const Vec2i &pos ) const { 
+		return metrics[pos.y*stride+pos.x]; 
+	}
 };
 
-class AnnotatedMap
-{
+class AnnotatedMap {
 public:
-   AnnotatedMap ( Map *map );
-   virtual ~AnnotatedMap ();
+	AnnotatedMap ( Map *map );
+	virtual ~AnnotatedMap ();
 
-   // Initialise the Map Metrics
-   void initMapMetrics ( Map *map );
+	// Initialise the Map Metrics
+	void initMapMetrics ( Map *map );
 
-   // Start a 'cascading update' of the Map Metrics from a position and size
-   void updateMapMetrics ( const Vec2i &pos, const int size, bool adding, Field field ); 
+	// Start a 'cascading update' of the Map Metrics from a position and size
+	void updateMapMetrics ( const Vec2i &pos, const int size, bool adding, Field field ); 
 
-   // Interface to the clearance metrics, can a unit of size occupy a cell(s) ?
-   bool canOccupy ( const Vec2i &pos, int size, Field field ) const;
+	// Interface to the clearance metrics, can a unit of size occupy a cell(s) ?
+	bool canOccupy ( const Vec2i &pos, int size, Field field ) const;
 
-   static const int maxClearanceValue;
+	static const int maxClearanceValue;
 
-   // Temporarily annotate the map for nearby units
-   void annotateLocal ( const Vec2i &pos, const int size, const Field field );
+	// Temporarily annotate the map for nearby units
+	void annotateLocal ( const Vec2i &pos, const int size, const Field field );
 
-   // Clear temporary annotations
-   void clearLocalAnnotations ( Field field );
+	// Clear temporary annotations
+	void clearLocalAnnotations ( Field field );
 
 #  ifdef _GAE_DEBUG_EDITION_
-      list<std::pair<Vec2i,uint32>>* getLocalAnnotations ();
+	list<std::pair<Vec2i,uint32>>* getLocalAnnotations ();
 #  endif
 
 private:
-   // for initMetrics () and updateMapMetrics ()
-   CellMetrics computeClearances ( const Vec2i & );
-   uint32 computeClearance ( const Vec2i &, Field );
-   bool canClear ( const Vec2i &pos, int clear, Field field );
+	// for initMetrics () and updateMapMetrics ()
+	CellMetrics computeClearances ( const Vec2i & );
+	uint32 computeClearance ( const Vec2i &, Field );
+	bool canClear ( const Vec2i &pos, int clear, Field field );
 
-   // for annotateLocal ()
-   void localAnnotateCells ( const Vec2i &pos, const int size, const Field field, 
-                        const Vec2i *offsets, const int numOffsets );
+	// for annotateLocal ()
+	void localAnnotateCells ( const Vec2i &pos, const int size, const Field field, 
+		const Vec2i *offsets, const int numOffsets );
 
-   int metricHeight;
-   std::map<Vec2i,uint32> localAnnt;
-   Map *cMap;
+	int metricHeight;
+	std::map<Vec2i,uint32> localAnnt;
+	Map *cMap;
 #ifdef _GAE_DEBUG_EDITION_
 public:
 #endif
-   MetricMap metrics;
+	MetricMap metrics;
 };
 
 }}}

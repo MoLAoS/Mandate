@@ -131,8 +131,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	kills = 0;
 
 	if(type->getField(FieldWalkable)) currField = FieldWalkable;
-
-	if(type->getField(FieldAir)) currField = FieldAir;
+	else if(type->getField(FieldAir)) currField = FieldAir;
 
 	if ( type->getField (FieldAmphibious) ) currField = FieldAmphibious;
 	else if ( type->getField (FieldAnyWater) ) currField = FieldAnyWater;

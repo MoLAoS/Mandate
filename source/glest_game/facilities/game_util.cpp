@@ -27,7 +27,7 @@ namespace Glest{ namespace Game{
 const string mailString= "contact_game@glest.org";
 const string gaeMailString= "daniel.santos@pobox.com";
 const string glestVersionString= "v3.2.2";
-const string gaeVersionString= "v0.2.11";
+const string gaeVersionString= "v0.2.12";
 
 string getCrashDumpFileName(){
 	return "gae" + gaeVersionString + ".dmp";

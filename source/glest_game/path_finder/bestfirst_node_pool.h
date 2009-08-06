@@ -24,7 +24,7 @@ using Shared::Graphics::Vec2i;
 using std::list;
 
 namespace Glest { namespace Game { 
-   
+
 class Map;
 
 namespace Search {
@@ -34,13 +34,12 @@ namespace Search {
 //
 // A Greedy 'Best First' Search Node
 // =====================================================
-struct BFSNode
-{
-   Vec2i pos;
-   BFSNode *next;
-   BFSNode *prev;
-   float heuristic;
-   bool exploredCell;
+struct BFSNode {
+	Vec2i pos;
+	BFSNode *next;
+	BFSNode *prev;
+	float heuristic;
+	bool exploredCell;
 };
 
 // ========================================================
@@ -54,64 +53,62 @@ struct BFSNode
 // mechanism to test whether a listed position is open or 
 // closed.
 // ========================================================
-class BFSNodePool
-{
-   // =====================================================
-   // struct PosMarkerArray
-   //
-   // A Marker Array, using sizeof(unsigned int) bytes per 
-   // cell, and a lazy clearing scheme.
-   // =====================================================
-   struct PosMarkerArray
-   {
-      int stride;
-      unsigned int counter;
-      unsigned int *marker;
-      
-      PosMarkerArray () {counter=0;marker=NULL;};
-      ~PosMarkerArray () {if (marker) delete marker; }
+class BFSNodePool {
+	// =====================================================
+	// struct PosMarkerArray
+	//
+	// A Marker Array, using sizeof(unsigned int) bytes per 
+	// cell, and a lazy clearing scheme.
+	// =====================================================
+	struct PosMarkerArray {
+		int stride;
+		unsigned int counter;
+		unsigned int *marker;
 
-      void init ( int w, int h ) { stride = w; marker = new unsigned int[w*h]; 
-               memset ( marker, 0, w * h * sizeof(unsigned int) ); }
-      inline void newSearch () { ++counter; }
-      inline void setMark ( const Vec2i &pos ) { marker[pos.y * stride + pos.x] = counter; }
-      inline bool isMarked ( const Vec2i &pos ) { return marker[pos.y * stride + pos.x] == counter; }
-   };
+		PosMarkerArray () {counter=0;marker=NULL;};
+		~PosMarkerArray () {if (marker) delete marker; }
 
-   BFSNode *stock;
-   BFSNode **lists;
-   int numOpen, numClosed, numTotal, numPos;
-   int maxNodes, tmpMaxNodes;
+		void init ( int w, int h ) { stride = w; marker = new unsigned int[w*h]; 
+		memset ( marker, 0, w * h * sizeof(unsigned int) ); }
+		inline void newSearch () { ++counter; }
+		inline void setMark ( const Vec2i &pos ) { marker[pos.y * stride + pos.x] = counter; }
+		inline bool isMarked ( const Vec2i &pos ) { return marker[pos.y * stride + pos.x] == counter; }
+	};
 
-   PosMarkerArray markerArray;
-   BFSNode *leastH;
+	BFSNode *stock;
+	BFSNode **lists;
+	int numOpen, numClosed, numTotal, numPos;
+	int maxNodes, tmpMaxNodes;
+
+	PosMarkerArray markerArray;
+	BFSNode *leastH;
 
 public:
-   BFSNodePool ();
-   ~BFSNodePool ();
-   void init ( Map *map );
+	BFSNodePool ();
+	~BFSNodePool ();
+	void init ( Map *map );
 
-   // reset everything, include maxNodes...
-   void reset ();
-   // will be == PathFinder::pathFindMaxNodes (returns 'normal' max, not temp)
-   int getMaxNodes () const { return maxNodes; }
-   // sets a temporary maximum number of nodes to use (50 <= max <= pathFindMaxNodes)
-   void setMaxNodes ( const int max );
-   // Is this pos already listed?
-   bool isListed ( const Vec2i &pos ) { return markerArray.isMarked ( pos ); }
+	// reset everything, include maxNodes...
+	void reset ();
+	// will be == PathFinder::pathFindMaxNodes (returns 'normal' max, not temp)
+	int getMaxNodes () const { return maxNodes; }
+	// sets a temporary maximum number of nodes to use (50 <= max <= pathFindMaxNodes)
+	void setMaxNodes ( const int max );
+	// Is this pos already listed?
+	bool isListed ( const Vec2i &pos ) { return markerArray.isMarked ( pos ); }
 
-   void listPos ( const Vec2i &pos ) { markerArray.setMark ( pos ); }
-   bool addToOpen ( BFSNode* prev, const Vec2i &pos, float h, bool exp = true );
+	void listPos ( const Vec2i &pos ) { markerArray.setMark ( pos ); }
+	bool addToOpen ( BFSNode* prev, const Vec2i &pos, float h, bool exp = true );
 
-   // moves 'best' node from open to closed, and returns it, or NULL if open is empty
-   BFSNode* getBestCandidate ();
+	// moves 'best' node from open to closed, and returns it, or NULL if open is empty
+	BFSNode* getBestCandidate ();
 
-   // returns the lowest h-node of this search
-   BFSNode* getLowestH () { return leastH; }
+	// returns the lowest h-node of this search
+	BFSNode* getLowestH () { return leastH; }
 
 #ifdef _GAE_DEBUG_EDITION_
-   list<Vec2i>* getOpenNodes ();
-   list<Vec2i>* getClosedNodes ();
+	list<Vec2i>* getOpenNodes ();
+	list<Vec2i>* getClosedNodes ();
 #endif
 
 }; // class BFSNodePool
