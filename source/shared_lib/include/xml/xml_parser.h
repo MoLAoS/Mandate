@@ -16,7 +16,8 @@
 #include <string>
 #include <vector>
 
-#include <xercesc/util/XercesDefs.hpp>
+#include "tinyxml.h"
+//#include <xercesc/util/XercesDefs.hpp>
 #include "vec.h"
 #include "conversion.h"
 
@@ -25,7 +26,7 @@ using std::vector;
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
-namespace XERCES_CPP_NAMESPACE {
+/*namespace XERCES_CPP_NAMESPACE {
 	class DOMImplementation;
 	class DOMDocument;
 	class DOMNode;
@@ -36,6 +37,7 @@ using XERCES_CPP_NAMESPACE::DOMImplementation;
 //using XERCES_CPP_NAMESPACE::DOMDocument;
 using XERCES_CPP_NAMESPACE::DOMNode;
 using XERCES_CPP_NAMESPACE::DOMElement;
+*/
 
 namespace Shared { namespace Xml {
 
@@ -55,7 +57,7 @@ class XmlAttribute;
 class XmlIo {
 private:
 	static bool initialized;
-	DOMImplementation *implementation;
+	//DOMImplementation *implementation;
 
 private:
 	XmlIo();
@@ -67,7 +69,7 @@ public:
 	void save(const string &path, const XmlNode *node);
 	XmlNode *parseString(const char *doc, size_t size = (size_t)-1);
 	/** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
-	char *toString(const XmlNode *node, bool pretty);
+	//char *toString(const XmlNode *node, bool pretty);
 	void releaseString(char **domAllocatedString);
 };
 
@@ -90,7 +92,9 @@ public:
 	void init(const string &name);
 	void load(const string &path);
 	void save(const string &path);
-
+	void parse(const string &xml);
+	
+	char *toString() const;
 	XmlNode *getRootNode() const	{return rootNode;}
 };
 
@@ -109,13 +113,14 @@ private:
 	void operator =(XmlAttribute&);
 
 public:
-	XmlAttribute(DOMNode *attribute);
+	XmlAttribute(TiXmlAttribute *attribute);
 	XmlAttribute(const char *name, const char *value) : name(name), value(value){}
 	XmlAttribute(const string &name, const string &value) : name(name), value(value){}
 
 public:
 	const string &getName() const						{return name;}
 	const string &getValue() const						{return value;}
+	string toString() const								{return name + "=\"" + value + "\""; }
 
 	bool getBoolValue() const;
 	int getIntValue() const								{return strToInt(value);}
@@ -132,16 +137,16 @@ public:
 class XmlNode{
 private:
 	string name;
-	string text;
 	vector<XmlNode*> children;
 	vector<XmlAttribute*> attributes;
+	string text;
 
 private:
 	XmlNode(XmlNode&);
 	void operator =(XmlNode&);
 
 public:
-	XmlNode(DOMNode *node);
+	XmlNode(TiXmlNode *node);
 	XmlNode(const string &name);
 	~XmlNode();
 
@@ -149,13 +154,13 @@ public:
 	const string &getName() const	{return name;}
 	int getChildCount() const		{return children.size();}
 	int getAttributeCount() const	{return attributes.size();}
-	const string &getText() const	{return text;}
 
 	XmlAttribute *getAttribute(int i) const;
 	XmlAttribute *getAttribute(const string &name, bool required = true) const;
 	XmlNode *getChild(int i) const;
 	XmlNode *getChild(const string &childName, int childIndex = 0, bool required = true) const;
 	XmlNode *getParent() const;
+	const string &getText() const	{return text;}
 
 	// get methods that return a specific type using the "value" attribute or appropriate attributes
 	// for vector types
@@ -336,8 +341,8 @@ public:
 		return child;
 	}
 
-	void populateElement(DOMElement *node, XERCES_CPP_NAMESPACE::DOMDocument *document) const;
-	DOMElement *buildElement(XERCES_CPP_NAMESPACE::DOMDocument *document) const;
+	void populateElement(TiXmlElement *node) const;
+	//DOMElement *buildElement(XERCES_CPP_NAMESPACE::DOMDocument *document) const;
 
 	int getOptionalIntValue(const char* name, int defaultValue = 0) const {
 		const XmlNode *node = getChild(name, 0, false);
@@ -360,9 +365,9 @@ public:
 	}
 
 	/** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
-	char *toString(bool pretty) const {
+	char *toString() const;/*bool pretty) const {
 		return XmlIo::getInstance().toString(this, pretty);
-	}
+	}*/
 
 private:
 	string getTreeString() const;

@@ -541,7 +541,7 @@ void NetworkMessageXmlDoc::parse() {
 void NetworkMessageXmlDoc::writeXml() {
 	assert(!data);
 	assert(rootNode);
-	data = rootNode->toString(Config::getInstance().getMiscDebugMode());
+	data = rootNode->toString(/*Config::getInstance().getMiscDebugMode()*/);
 	size = strlen(data) + 1;
 	domAllocated = true;
 }

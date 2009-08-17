@@ -79,7 +79,7 @@ void ScriptManager::init(World* world, GameCamera *gameCamera){
 	//load code
 	for(int i= 0; i<scenario->getScriptCount(); ++i){
 		const Script* script= scenario->getScript(i);
-		luaScript.loadCode("function " + script->getName() + "()" + script->getCode() + "end\n", script->getName());
+		luaScript.loadCode("function " + script->getName() + "()" + script->getCode() + " end\n", script->getName());
 	}
 	
 	//setup message box

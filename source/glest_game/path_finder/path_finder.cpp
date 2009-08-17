@@ -315,16 +315,16 @@ public:
 		memset(cells, 0, h * w * ZoneCount);
 	}
 
-	void validate(int x, int y, Field field) {
-		assert(!getCell(x, y, field));
-		getCell(x, y, field) = 1;
+	void validate(int x, int y, Zone zone) {
+		assert(!getCell(x, y, zone));
+		getCell(x, y, zone) = 1;
 	}
 
-	char &getCell(int x, int y, Field field) {
+	char &getCell(int x, int y, Zone zone) {
 		assert(x >= 0 && x < w);
 		assert(y >= 0 && y < h);
-		assert(field >= 0 && field < ZoneCount);
-		return cells[field * h * w + x * w + y];
+		assert(zone >= 0 && zone < ZoneCount);
+		return cells[zone * h * w + x * w + y];
 	}
 };
 
@@ -359,7 +359,7 @@ void World::assertConsistiency() {
 
 			const UnitType *ut = unit->getType();
 			int size = ut->getSize();
-			Field field = unit->getCurrField();
+			Zone zone = unit->getCurrZone ();
 			const Vec2i &pos = unit->getPos();
 
 			for(int x = 0; x < size; ++x) {
@@ -368,12 +368,12 @@ void World::assertConsistiency() {
 					assert(map.isInside(currPos));
 
 					if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
-						Unit *unitInCell = map.getCell(currPos)->getUnit(field);
+						Unit *unitInCell = map.getCell(currPos)->getUnit(zone);
 						if(unitInCell != unit) {
 							cerr << "Unit id " << unit->getId()
 									<< " from faction " << fi->getIndex()
 									<< "(type = " << unit->getType()->getName() << ")"
-									<< " not in cells (" << currPos.x << ", " << currPos.y << ", " << field << ")";
+									<< " not in cells (" << currPos.x << ", " << currPos.y << ", " << zone << ")";
 							if(unitInCell == NULL && !unit->getHp()) {
 								cerr << " but has zero HP and is not executing scDie." << endl;
 							} else {
@@ -381,7 +381,7 @@ void World::assertConsistiency() {
 								assert(false);
 							}
 						}
-						validationMap.validate(currPos.x, currPos.y, field);
+						validationMap.validate(currPos.x, currPos.y, zone);
 					}
 				}
 			}
@@ -391,12 +391,12 @@ void World::assertConsistiency() {
 	// make sure that every cell that was not validated is empty
 	for(int x = 0; x < map.getW(); ++x) {
 		for(int y = 0; y < map.getH(); ++y ) {
-			for(int field = 0; field < ZoneCount; ++field) {
-				if(!validationMap.getCell(x, y, (Field)field)) {
+			for(int zone = 0; zone < ZoneCount; ++zone) {
+				if(!validationMap.getCell(x, y, (Zone)zone)) {
 					Cell *cell = map.getCell(x, y);
-					if(cell->getUnit(field)) {
-						cerr << "Cell not empty at " << x << ", " << y << ", " << field << endl;
-						cerr << "Cell has pointer to unit object at " << cell->getUnit(field) << endl;
+					if(cell->getUnit((Zone)zone)) {
+						cerr << "Cell not empty at " << x << ", " << y << ", " << zone << endl;
+						cerr << "Cell has pointer to unit object at " << cell->getUnit((Zone)zone) << endl;
 
 						assert(false);
 					}

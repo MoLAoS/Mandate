@@ -47,6 +47,11 @@ LuaScript::~LuaScript(){
 void LuaScript::loadCode(const string &code, const string &name){
 	int errorCode= luaL_loadbuffer(luaState, code.c_str(), code.size(), name.c_str());
 	if(errorCode!=0){
+		FILE *fp = fopen ( "bad.lua", "w" );
+		if ( fp ) {
+			fprintf ( fp, "%s", code.c_str() );
+			fclose ( fp );
+		}
 		throw runtime_error("Error loading lua code: " + errorToString(errorCode));
 	}
 
