@@ -189,7 +189,7 @@ void Game::init() {
 	gameCamera.init(map->getW(), map->getH());
 	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
 
-   scriptManager.init(&world, &gameCamera);
+   scriptManager.init(&world, &gameCamera, &gameSettings);
 	
    if(savedGame && (!networkManager.isNetworkGame() || networkManager.isServer())) {
 		gui.load(savedGame->getChild("gui"));

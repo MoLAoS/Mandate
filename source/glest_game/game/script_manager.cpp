@@ -41,11 +41,12 @@ ScriptManager* ScriptManager::thisScriptManager= NULL;
 const int ScriptManager::messageWrapCount= 30;
 const int ScriptManager::displayTextWrapCount= 64;
 
-void ScriptManager::init(World* world, GameCamera *gameCamera){
+void ScriptManager::init(World* world, GameCamera *gameCamera, GameSettings *gameSettings){
 	const Scenario*	scenario= world->getScenario();
 	
 	this->world= world;
 	this->gameCamera= gameCamera;
+	this->gameSettings = gameSettings;
 
 	//set static instance
 	thisScriptManager= this;
@@ -64,6 +65,9 @@ void ScriptManager::init(World* world, GameCamera *gameCamera){
 	luaScript.registerFunction(setPlayerAsWinner, "setPlayerAsWinner");
 	luaScript.registerFunction(endGame, "endGame");
 
+	luaScript.registerFunction(getPlayerName, "playerName");
+	luaScript.registerFunction(getFactionTypeName, "factionTypeName");
+	luaScript.registerFunction(getScenarioDir, "scenarioDir");
 	luaScript.registerFunction(getStartLocation, "startLocation");
 	luaScript.registerFunction(getUnitPosition, "unitPosition");
 	luaScript.registerFunction(getUnitFaction, "unitFaction");
@@ -135,6 +139,71 @@ void ScriptManager::onUnitDied(const Unit* unit){
 	luaScript.beginCall("unitDied");
 	luaScript.endCall();
 }
+
+//=================== experimental timer
+
+/*class ScriptTimer {
+public:
+	ScriptTimer(int timeInMiliseconds, const string &name, bool repeat = false) 
+			: name(name)
+			, _repeat(repeat)
+			, targetTime(0)
+			, duration(timeInMiliseconds) {
+		reset();
+	}
+
+	bool ready() {
+		if (getCurrentTime() >= targetTime) {
+			return true;
+		}
+		return false;
+	}
+
+	void reset() {
+		targetTime = getCurrentTime() + duration;
+	}
+
+	string getName() { return name; }
+	bool repeat() { return _repeat; }
+
+private:
+	string name;
+	bool _repeat;
+	int targetTime, duration;
+};
+
+vector<ScriptTimer> timers;
+
+void ScriptManager::setTimer(int timeInMiliseconds, const string &name) {
+	timers.push_back(ScriptTimer(timeInMiliseconds, name));
+}
+
+void ScriptManager::setInterval(int timeInMiliseconds, const string &name) {
+	timers.push_back(ScriptTimer(timeInMiliseconds, name, true));
+}
+
+void ScriptManager::stopTimer(const string &name) {
+	timers.remove(*name or something*);
+}
+
+void ScriptManager::onTimer() {
+	// when a timer is ready, call the corresponding xml block of lua code 
+	// and remove the timer or reset to repeat.
+	for (*loop through timers*) {
+		timer = timers[i];
+		if ( timer.ready() ) {
+			luaScript.beginCall("timer_"+timer.getName());
+			luaScript.endCall();
+			if ( timer.repeat() ) {
+				timer.reset();
+			} else {
+				timers.remove( timer );
+			}
+		}
+	}
+}*/
+
+//=================== experimental timer end
 
 // ========================== lua wrappers ===============================================
 
@@ -213,6 +282,19 @@ void ScriptManager::setPlayerAsWinner(int factionIndex){
 
 void ScriptManager::endGame(){
 	gameOver= true;
+}
+
+// Queries
+const string &ScriptManager::getPlayerName(int factionIndex){
+	return gameSettings->getPlayerName(factionIndex);
+}
+
+const string &ScriptManager::getFactionTypeName(int factionIndex){
+	return gameSettings->getFactionTypeName(factionIndex);
+}
+
+const string &ScriptManager::getScenarioDir(){
+	return gameSettings->getScenarioDir();
 }
 
 Vec2i ScriptManager::getStartLocation(int factionIndex){
@@ -338,6 +420,27 @@ int ScriptManager::setPlayerAsWinner(LuaHandle* luaHandle){
 int ScriptManager::endGame(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
 	thisScriptManager->endGame();
+	return luaArguments.getReturnCount();
+}
+
+// Queries
+int ScriptManager::getPlayerName(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	string playerName= thisScriptManager->getPlayerName(luaArguments.getInt(-1));
+	luaArguments.returnString(playerName);
+	return luaArguments.getReturnCount();
+}
+
+int ScriptManager::getFactionTypeName(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	string factionTypeName= thisScriptManager->getFactionTypeName(luaArguments.getInt(-1));
+	luaArguments.returnString(factionTypeName);
+	return luaArguments.getReturnCount();
+}
+
+int ScriptManager::getScenarioDir(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	luaArguments.returnString(thisScriptManager->getScenarioDir());
 	return luaArguments.getReturnCount();
 }
 

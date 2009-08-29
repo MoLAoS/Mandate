@@ -32,6 +32,7 @@ namespace Glest{ namespace Game{
 class World;
 class Unit;
 class GameCamera;
+class GameSettings;
 
 // =====================================================
 //	class ScriptManagerMessage
@@ -80,6 +81,7 @@ private:
 	//world
 	World *world;
 	GameCamera *gameCamera;
+	GameSettings *gameSettings;
 
 	//misc
 	MessageQueue messageQueue;
@@ -106,7 +108,7 @@ private:
 	static const int displayTextWrapCount;
 
 public:
-	void init(World* world, GameCamera *gameCamera);
+	void init(World* world, GameCamera *gameCamera, GameSettings *gameSettings);
 
 	//message box functions
 	bool getMessageBoxEnabled() const									{return !messageQueue.empty();}
@@ -140,6 +142,9 @@ private:
 	void endGame();
 
 	//wrappers, queries
+	const string &getPlayerName(int factionIndex);
+	const string &getFactionTypeName(int factionIndex);
+	const string &getScenarioDir();
 	Vec2i getStartLocation(int factionIndex);
 	Vec2i getUnitPosition(int unitId);
 	int getUnitFaction(int unitId);
@@ -166,6 +171,9 @@ private:
 	static int endGame(LuaHandle* luaHandle);
 
 	//callbacks, queries
+	static int getPlayerName(LuaHandle* luaHandle);
+	static int getFactionTypeName(LuaHandle* luaHandle);
+	static int getScenarioDir(LuaHandle* luaHandle);
 	static int getStartLocation(LuaHandle* luaHandle);
 	static int getUnitPosition(LuaHandle* luaHandle);
 	static int getUnitFaction(LuaHandle* luaHandle);
