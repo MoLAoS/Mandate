@@ -52,6 +52,11 @@ void ScriptManager::init(World* world, GameCamera *gameCamera, GameSettings *gam
 	thisScriptManager= this;
 
 	//register functions
+	//NEW
+	luaScript.registerFunction(setTimer, "setTimer");
+	luaScript.registerFunction(setInterval, "setInterval");
+	luaScript.registerFunction(stopTimer, "stopTimer");
+	//NEW END
 	luaScript.registerFunction(showMessage, "showMessage");
 	luaScript.registerFunction(setDisplayText, "setDisplayText");
 	luaScript.registerFunction(clearDisplayText, "clearDisplayText");
@@ -65,9 +70,11 @@ void ScriptManager::init(World* world, GameCamera *gameCamera, GameSettings *gam
 	luaScript.registerFunction(setPlayerAsWinner, "setPlayerAsWinner");
 	luaScript.registerFunction(endGame, "endGame");
 
+	//NEW
 	luaScript.registerFunction(getPlayerName, "playerName");
 	luaScript.registerFunction(getFactionTypeName, "factionTypeName");
 	luaScript.registerFunction(getScenarioDir, "scenarioDir");
+	//NEW END
 	luaScript.registerFunction(getStartLocation, "startLocation");
 	luaScript.registerFunction(getUnitPosition, "unitPosition");
 	luaScript.registerFunction(getUnitFaction, "unitFaction");
@@ -142,66 +149,83 @@ void ScriptManager::onUnitDied(const Unit* unit){
 
 //=================== experimental timer
 
-/*class ScriptTimer {
-public:
-	ScriptTimer(int timeInMiliseconds, const string &name, bool repeat = false) 
-			: name(name)
-			, _repeat(repeat)
-			, targetTime(0)
-			, duration(timeInMiliseconds) {
-		reset();
+bool ScriptTimer::ready() {
+	if (chrono.getCurSeconds() >= targetTime) {
+		return true;
 	}
-
-	bool ready() {
-		if (getCurrentTime() >= targetTime) {
-			return true;
-		}
-		return false;
-	}
-
-	void reset() {
-		targetTime = getCurrentTime() + duration;
-	}
-
-	string getName() { return name; }
-	bool repeat() { return _repeat; }
-
-private:
-	string name;
-	bool _repeat;
-	int targetTime, duration;
-};
-
-vector<ScriptTimer> timers;
-
-void ScriptManager::setTimer(int timeInMiliseconds, const string &name) {
-	timers.push_back(ScriptTimer(timeInMiliseconds, name));
+	return false;
 }
 
-void ScriptManager::setInterval(int timeInMiliseconds, const string &name) {
-	timers.push_back(ScriptTimer(timeInMiliseconds, name, true));
+void ScriptTimer::reset() {
+	targetTime = chrono.getCurSeconds() + duration;
+}
+
+void ScriptManager::setTimer(int seconds, const string &name) {
+	timers.push_back(ScriptTimer(seconds, name, false));
+}
+
+void ScriptManager::setInterval(int seconds, const string &name) {
+	timers.push_back(ScriptTimer(seconds, name, true));
 }
 
 void ScriptManager::stopTimer(const string &name) {
-	timers.remove(*name or something*);
+	// find timer with the name and remove it
+	vector<ScriptTimer>::iterator i;
+	for (i = timers.begin(); i != timers.end(); ++i) {
+		if (i->getName() == name) {
+			timers.erase( i );
+			timerStopped = true; // see ScriptManager::onTimer()
+			break;
+		}
+	}
 }
 
 void ScriptManager::onTimer() {
 	// when a timer is ready, call the corresponding xml block of lua code 
-	// and remove the timer or reset to repeat.
-	for (*loop through timers*) {
-		timer = timers[i];
-		if ( timer.ready() ) {
-			luaScript.beginCall("timer_"+timer.getName());
+	// and remove the timer, or reset to repeat.
+    timerStopped = false;
+	vector<ScriptTimer>::iterator timer;
+	for (timer = timers.begin(); timer != timers.end();) {
+		if ( timer->ready() ) {
+			
+			luaScript.beginCall("timer_" + timer->getName());
 			luaScript.endCall();
-			if ( timer.repeat() ) {
-				timer.reset();
+
+			// protection from calling stopTimer in a timer
+			// - remaining timers will need to wait until next World::update()
+			if ( timerStopped ) {
+				// exit loop since iterator no longer valid
+				break;
+			}
+
+			if ( timer->repeat() ) {
+				timer->reset();
 			} else {
-				timers.remove( timer );
+				timer = timers.erase( timer ); //returns next element
+				continue;
 			}
 		}
+		++timer;
 	}
-}*/
+}
+
+int ScriptManager::setTimer(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	thisScriptManager->setTimer(luaArguments.getInt(-2), luaArguments.getString(-1));
+	return luaArguments.getReturnCount();
+}
+
+int ScriptManager::setInterval(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	thisScriptManager->setInterval(luaArguments.getInt(-2), luaArguments.getString(-1));
+	return luaArguments.getReturnCount();
+}
+
+int ScriptManager::stopTimer(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	thisScriptManager->stopTimer(luaArguments.getString(-1));
+	return luaArguments.getReturnCount();
+}
 
 //=================== experimental timer end
 

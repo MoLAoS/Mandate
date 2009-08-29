@@ -17,6 +17,7 @@
 
 #include "lua_script.h"
 #include "vec.h"
+#include "timer.h"
 
 #include "components.h"
 #include "game_constants.h"
@@ -26,6 +27,7 @@ using std::queue;
 using Shared::Graphics::Vec2i;
 using Shared::Lua::LuaScript;
 using Shared::Lua::LuaHandle;
+using Shared::Platform::Chrono;
 
 namespace Glest{ namespace Game{
 
@@ -33,6 +35,35 @@ class World;
 class Unit;
 class GameCamera;
 class GameSettings;
+
+
+// =====================================================
+//	class ScriptManagerMessage
+// =====================================================
+
+class ScriptTimer {
+public:
+	ScriptTimer(int seconds, const string &name, bool repeat) 
+			: name(name)
+			, _repeat(repeat)
+			, targetTime(0)
+			, duration(seconds) {
+		chrono.start();
+		reset();
+	}
+
+	bool ready();
+	void reset();
+
+	string getName() { return name; }
+	bool repeat() { return _repeat; }
+
+private:
+	string name;
+	bool _repeat;
+	int64 targetTime, duration;
+	Chrono chrono;
+};
 
 // =====================================================
 //	class ScriptManagerMessage
@@ -100,6 +131,9 @@ private:
 	bool gameOver;
 	PlayerModifiers playerModifiers[GameConstants::maxPlayers];
 
+	vector<ScriptTimer> timers;
+	bool timerStopped;
+
 private:
 	static ScriptManager* thisScriptManager;
 
@@ -122,12 +156,18 @@ public:
 	void onResourceHarvested();
 	void onUnitCreated(const Unit* unit);
 	void onUnitDied(const Unit* unit);
+	void onTimer();
 
 private:
 
 	string wrapString(const string &str, int wrapCount);
 
 	//wrappers, commands
+	//NEW
+	void setTimer(int seconds, const string &name);
+	void setInterval(int seconds, const string &name);
+	void stopTimer(const string &name);
+	//NEW END
 	void showMessage(const string &text, const string &header);
 	void clearDisplayText();
 	void setDisplayText(const string &text);
@@ -142,9 +182,11 @@ private:
 	void endGame();
 
 	//wrappers, queries
+	//NEW
 	const string &getPlayerName(int factionIndex);
 	const string &getFactionTypeName(int factionIndex);
 	const string &getScenarioDir();
+	//NEW END
 	Vec2i getStartLocation(int factionIndex);
 	Vec2i getUnitPosition(int unitId);
 	int getUnitFaction(int unitId);
@@ -157,6 +199,9 @@ private:
 	int getUnitCountOfType(int factionIndex, const string &typeName);
 
 	//callbacks, commands
+	static int setTimer(LuaHandle* luaHandle);
+	static int setInterval(LuaHandle* luaHandle);
+	static int stopTimer(LuaHandle* luaHandle);
 	static int showMessage(LuaHandle* luaHandle);
 	static int setDisplayText(LuaHandle* luaHandle);
 	static int clearDisplayText(LuaHandle* luaHandle);

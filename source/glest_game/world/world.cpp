@@ -520,6 +520,9 @@ void World::update() {
 
 	++frameCount;
 
+	// check ScriptTimers
+	scriptManager->onTimer();
+
 	//time
 	timeFlow.update();
 
