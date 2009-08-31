@@ -35,6 +35,7 @@ class World;
 class Unit;
 class GameCamera;
 class GameSettings;
+class Game;
 
 
 // =====================================================
@@ -117,6 +118,7 @@ private:
 	World *world;
 	GameCamera *gameCamera;
 	GameSettings *gameSettings;
+	Game *game;
 
 	//misc
 	MessageQueue messageQueue;
@@ -145,7 +147,7 @@ private:
 	static const int displayTextWrapCount;
 
 public:
-	void init(World* world, GameCamera *gameCamera, GameSettings *gameSettings);
+	void init(Game *game, World* world, GameCamera *gameCamera, GameSettings *gameSettings);
 
 	//message box functions
 	bool getMessageBoxEnabled() const									{return !messageQueue.empty();}

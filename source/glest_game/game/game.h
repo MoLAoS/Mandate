@@ -149,6 +149,8 @@ public:
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
 	void quitGame ();
+	void pause() { paused = true; }
+	void resume() { paused = false; }
 
 private:
 	//render

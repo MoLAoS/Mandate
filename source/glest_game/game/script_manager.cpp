@@ -16,6 +16,7 @@
 #include "world.h"
 #include "lang.h"
 #include "game_camera.h"
+#include "game.h"
 
 #include "leak_dumper.h"
 
@@ -41,12 +42,13 @@ ScriptManager* ScriptManager::thisScriptManager= NULL;
 const int ScriptManager::messageWrapCount= 30;
 const int ScriptManager::displayTextWrapCount= 64;
 
-void ScriptManager::init(World* world, GameCamera *gameCamera, GameSettings *gameSettings){
+void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameSettings *gameSettings){
 	const Scenario*	scenario= world->getScenario();
 	
+	this->game= game;
 	this->world= world;
 	this->gameCamera= gameCamera;
-	this->gameSettings = gameSettings;
+	this->gameSettings= gameSettings;
 
 	//set static instance
 	thisScriptManager= this;
@@ -123,6 +125,7 @@ void ScriptManager::onMessageBoxOk(){
 	//close the messageBox now all messages have been shown
 	if (messageQueue.empty()){
 		messageBox.setEnabled(false);
+		game->resume();
 	}
 }
 
@@ -246,6 +249,8 @@ string ScriptManager::wrapString(const string &str, int wrapCount){
 void ScriptManager::showMessage(const string &text, const string &header){
 	Lang &lang= Lang::getInstance();
 	
+	game->pause();
+
 	messageQueue.push(ScriptManagerMessage(text, header));
 	messageBox.setEnabled(true);
 	messageBox.setText(wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount));
