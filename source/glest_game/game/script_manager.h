@@ -50,6 +50,7 @@ public:
 			, duration(seconds) {
 		chrono.start();
 		reset();
+		active = true;
 	}
 
 	bool ready();
@@ -57,10 +58,13 @@ public:
 
 	string getName() { return name; }
 	bool repeat() { return _repeat; }
+	bool alive () { return active; }
+	void kill () { active = false; }
 
 private:
 	string name;
 	bool _repeat;
+	bool active;
 	int64 targetTime, duration;
 	Chrono chrono;
 };
@@ -132,7 +136,6 @@ private:
 	PlayerModifiers playerModifiers[GameConstants::maxPlayers];
 
 	vector<ScriptTimer> timers;
-	bool timerStopped;
 
 private:
 	static ScriptManager* thisScriptManager;

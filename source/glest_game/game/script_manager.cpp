@@ -173,8 +173,7 @@ void ScriptManager::stopTimer(const string &name) {
 	vector<ScriptTimer>::iterator i;
 	for (i = timers.begin(); i != timers.end(); ++i) {
 		if (i->getName() == name) {
-			timers.erase( i );
-			timerStopped = true; // see ScriptManager::onTimer()
+			i->kill ();
 			break;
 		}
 	}
@@ -183,24 +182,17 @@ void ScriptManager::stopTimer(const string &name) {
 void ScriptManager::onTimer() {
 	// when a timer is ready, call the corresponding xml block of lua code 
 	// and remove the timer, or reset to repeat.
-    timerStopped = false;
 	vector<ScriptTimer>::iterator timer;
 	for (timer = timers.begin(); timer != timers.end();) {
 		if ( timer->ready() ) {
-			
-			luaScript.beginCall("timer_" + timer->getName());
-			luaScript.endCall();
-
-			// protection from calling stopTimer in a timer
-			// - remaining timers will need to wait until next World::update()
-			if ( timerStopped ) {
-				// exit loop since iterator no longer valid
-				break;
+			if ( timer->alive() ) {
+				luaScript.beginCall("timer_" + timer->getName());
+				luaScript.endCall();
 			}
-
-			if ( timer->repeat() ) {
+			if ( timer->repeat() && timer->alive() ) {
 				timer->reset();
-			} else {
+			} 
+			else {
 				timer = timers.erase( timer ); //returns next element
 				continue;
 			}

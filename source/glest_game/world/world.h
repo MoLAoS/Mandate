@@ -67,20 +67,20 @@ private:
 	Tileset tileset;
 	TechTree techTree;
 	TimeFlow timeFlow;
-   Scenario scenario;
+	Scenario scenario;
 	Game &game;
 	const GameSettings &gs;
 
 	UnitUpdater unitUpdater;
-    WaterEffects waterEffects;
+	WaterEffects waterEffects;
 	Minimap minimap;
-    Stats stats;
+	Stats stats;
 
 	Factions factions;
 
 	Random random;
 
-   ScriptManager *scriptManager;
+	ScriptManager *scriptManager;
 
 	int thisFactionIndex;
 	int thisTeamIndex;
@@ -160,7 +160,7 @@ public:
 			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
 	}
 
-   //scripting interface
+	//scripting interface
 	void createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
 	void givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
 	void giveProductionCommand(int unitId, const string &producedName);
@@ -174,9 +174,9 @@ public:
 	int getUnitCountOfType(int factionIndex, const string &typeName);
 
 #ifdef _GAE_DEBUG_EDITION_
-   void loadPFDebugTextures ();
-   Texture2D *PFDebugTextures[18];
-   //int getNumPathPos () { return map.PathPositions.size (); }
+	void loadPFDebugTextures ();
+	Texture2D *PFDebugTextures[18];
+	//int getNumPathPos () { return map.PathPositions.size (); }
 #endif
 
 private:
