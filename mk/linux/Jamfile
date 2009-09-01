@@ -17,6 +17,7 @@ LIB_DIRS =
 	sound
 	sound/openal
 	xml
+	tinyxml
 	lua
 ;
 
