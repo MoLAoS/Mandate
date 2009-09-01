@@ -168,8 +168,7 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
     const XmlNode *scenarioNode= xmlTree.getRootNode();
 	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
 	scenarioInfo->difficulty = difficultyNode->getAttribute("value")->getIntValue();
-	if( scenarioInfo->difficulty < dVeryEasy || scenarioInfo->difficulty > dInsane )
-	{
+	if( scenarioInfo->difficulty < dVeryEasy || scenarioInfo->difficulty > dInsane ) {
 		throw std::runtime_error("Invalid difficulty");
 	}
 
@@ -184,8 +183,7 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
         if(factionControl != ctClosed){
             int teamIndex = playerNode->getAttribute("team")->getIntValue();
 
-            if( teamIndex < 1 || teamIndex > GameConstants::maxPlayers )
-            {
+            if( teamIndex < 1 || teamIndex > GameConstants::maxPlayers ) {
                 throw runtime_error("Team out of range: " + intToStr(teamIndex) );
             }
 

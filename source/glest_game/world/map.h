@@ -305,8 +305,12 @@ public:
 	void flatternTerrain(const Unit *unit);
 
 	//void flattenTerrain(const Unit *unit);
-	void computeNormals(Rect2i range = Rect2i(0, 0, 0, 0));
-	void computeInterpolatedHeights(Rect2i range = Rect2i(0, 0, 0, 0));
+	void computeNormals();
+	void computeInterpolatedHeights();
+
+	void computeNormals(Rect2i range);
+	void computeInterpolatedHeights(Rect2i range);
+
 	void read(NetworkDataBuffer &buf);
 	void write(NetworkDataBuffer &buf) const;
 

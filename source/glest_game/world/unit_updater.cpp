@@ -1090,22 +1090,19 @@ void UnitUpdater::updateMorph(Unit *unit){
 	} else {
 		unit->update2();
 		if(unit->getProgress2()>mct->getProduced()->getProductionTime()) {
-
-         bool mapUpdate = unit->isMobile () != mct->getMorphUnit()->isMobile ();
-
+			bool mapUpdate = unit->isMobile () != mct->getMorphUnit()->isMobile ();
 			//finish the command
 			if(unit->morph(mct)){
 				unit->finishCommand();
 				if(gui->isSelected(unit)) {
 					gui->onSelectionChanged();
 				}
-            scriptManager->onUnitCreated ( unit );
+				scriptManager->onUnitCreated ( unit );
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
-            if ( mapUpdate )
-            {
-               bool adding = !mct->getMorphUnit()->isMobile ();
-               pathFinder->updateMapMetrics ( unit->getPos (), unit->getSize (), adding, FieldWalkable );
-            }
+				if ( mapUpdate ) {
+					bool adding = !mct->getMorphUnit()->isMobile ();
+					pathFinder->updateMapMetrics ( unit->getPos (), unit->getSize (), adding, FieldWalkable );
+				}
 
 				if(isNetworkServer()) {
 					getServerInterface()->unitMorph(unit);

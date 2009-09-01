@@ -297,7 +297,7 @@ Vec2i PathFinder::computeNearestFreePos (const Unit *unit, const Vec2i &finalPos
 
 } // end namespace Glest::Game::PathFinder
 
-#ifdef DEBUG
+#if defined DEBUG && defined VALIDATE_WORLD
 // Why is this here?  Doesn't it belong in world.cpp?  It's here because we compile path_finder.cpp
 // optimized in debug since it's the only possible way you can really debug and this is a dog slow
 // function.

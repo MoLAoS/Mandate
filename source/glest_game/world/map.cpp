@@ -1016,7 +1016,7 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 	assert(unit);
 	const UnitType *ut = unit->getType();
 	int size = ut->getSize();
-	Zone field = unit->getCurrField()==FieldAir?ZoneAir:ZoneSurface;
+	Zone zone = unit->getCurrZone ();
 
 	for(int x = 0; x < size; ++x) {
 		for(int y = 0; y < size; ++y) {
@@ -1024,8 +1024,8 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 			assert(isInside(currPos));
 
 			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
-				assert(getCell(currPos)->getUnit(field) == unit);
-				getCell(currPos)->setUnit(field, NULL);
+				assert(getCell(currPos)->getUnit(zone) == unit);
+				getCell(currPos)->setUnit(zone, NULL);
 			}
 		}
 	}
@@ -1149,6 +1149,62 @@ void Map::flattenTerrain ( const Unit *unit )
 }*/
 
 //compute normals
+void Map::computeNormals(){  
+    //compute center normals
+    for(int i=1; i<tileW-1; ++i){
+        for(int j=1; j<tileH-1; ++j){
+            getTile(i, j)->setNormal(
+				getTile(i, j)->getVertex().normal(getTile(i, j-1)->getVertex(), 
+					getTile(i+1, j)->getVertex(), 
+					getTile(i, j+1)->getVertex(), 
+					getTile(i-1, j)->getVertex()));
+        }
+    }
+}
+
+void Map::computeInterpolatedHeights(){
+
+	for(int i=0; i<w; ++i){
+		for(int j=0; j<h; ++j){
+			getCell(i, j)->setHeight(getTile(toTileCoords(Vec2i(i, j)))->getHeight());
+		}
+	}
+
+	for(int i=1; i<tileW-1; ++i){
+		for(int j=1; j<tileH-1; ++j){
+			for(int k=0; k<cellScale; ++k){
+				for(int l=0; l<cellScale; ++l){
+					if(k==0 && l==0){
+						getCell(i*cellScale, j*cellScale)->setHeight(getTile(i, j)->getHeight());
+					}
+					else if(k!=0 && l==0){
+						getCell(i*cellScale+k, j*cellScale)->setHeight((
+							getTile(i, j)->getHeight()+
+							getTile(i+1, j)->getHeight())/2.f);
+					}
+					else if(l!=0 && k==0){
+						getCell(i*cellScale, j*cellScale+l)->setHeight((
+							getTile(i, j)->getHeight()+
+							getTile(i, j+1)->getHeight())/2.f);
+					}
+					else{
+						getCell(i*cellScale+k, j*cellScale+l)->setHeight((
+							getTile(i, j)->getHeight()+
+							getTile(i, j+1)->getHeight()+
+							getTile(i+1, j)->getHeight()+
+							getTile(i+1, j+1)->getHeight())/4.f);
+					}
+				}
+			}
+		}
+	}
+}
+
+
+//================================================================================================
+// Earthquake friendly versions, these are broken for maps with either dimension <= 32
+//================================================================================================
+//compute normals
 void Map::computeNormals(Rect2i range) {
 	if (range == Rect2i(0, 0, 0, 0)) {
 		range = Rect2i(0, 0, h, w);
@@ -1206,6 +1262,7 @@ void Map::computeInterpolatedHeights(Rect2i range){
 		}
 	}
 }
+//================================================================================================
 
 void Map::smoothSurface() {
 	float *oldHeights = new float[tileW * tileH];
