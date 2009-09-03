@@ -42,15 +42,11 @@ class Game;
 //	class ScriptManagerMessage
 // =====================================================
 
-namespace TimeType {
-	enum Enum { Real, Game } ;
-}
-
 class ScriptTimer {
 public:
-	ScriptTimer ( const string &name, TimeType::Enum type, int interval, bool periodic) 
+	ScriptTimer ( const string &name, bool real, int interval, bool periodic) 
 			: name (name)
-			, type (type)
+			, real (real)
 			, periodic  (periodic)
 			, interval (interval)
 			, active (true) {
@@ -67,7 +63,7 @@ public:
 
 private:
 	string name;
-	TimeType::Enum type;
+	bool real;
 	bool periodic;
 	bool active;
 	int64 targetTime, interval;
@@ -170,11 +166,11 @@ private:
 
 	string wrapString(const string &str, int wrapCount);
 
+	vector<ScriptTimer> newTimerQueue;
+
 	//wrappers, commands
 	//NEW
 	void setTimer ( const string &name, const string &type, int interval, bool periodic );
-	//void setTimer(int seconds, const string &name);
-	//void setInterval(int seconds, const string &name);
 	void stopTimer(const string &name);
 	//NEW END
 	void showMessage(const string &text, const string &header);

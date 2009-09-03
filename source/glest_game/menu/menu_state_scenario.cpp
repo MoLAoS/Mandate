@@ -183,8 +183,17 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 
         if(factionControl != ctClosed){
             int teamIndex = playerNode->getAttribute("team")->getIntValue();
-
-            if( teamIndex < 1 || teamIndex > GameConstants::maxPlayers )
+			XmlAttribute *nameAttrib = playerNode->getAttribute("name", false );
+			if ( nameAttrib ) {
+				scenarioInfo->playerNames[i] = nameAttrib->getValue ();
+			}
+			else if ( factionControl == ctHuman ) {
+				scenarioInfo->playerNames[i] = Config::getInstance().getNetPlayerName();
+			}
+			else {
+				scenarioInfo->playerNames[i] = "CPU Player";
+			}
+		    if( teamIndex < 1 || teamIndex > GameConstants::maxPlayers )
             {
                 throw runtime_error("Team out of range: " + intToStr(teamIndex) );
             }
@@ -241,10 +250,12 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 			if(ct==ctHuman){
 				gameSettings->setThisFactionIndex(factionCount);
 			}
+			gameSettings->setPlayerName ( i, scenarioInfo->playerNames[i] );
 			gameSettings->setFactionControl(factionCount, ct);
             gameSettings->setTeam(factionCount, scenarioInfo->teams[i]-1);
 			gameSettings->setStartLocationIndex(factionCount, i);
             gameSettings->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
+			
 			factionCount++;
 		}
     }

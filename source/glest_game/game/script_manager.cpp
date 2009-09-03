@@ -153,21 +153,14 @@ void ScriptManager::onUnitDied(const Unit* unit){
 //=================== experimental timer
 
 bool ScriptTimer::ready() {
-	if ( type == TimeType::Real ) {
-		if ( Chrono::getCurMillis () >= targetTime ) {
-			return true;
-		}
+	if ( real ) {
+		return Chrono::getCurMillis () >= targetTime;
 	}
-	else {
-		if ( Game::getInstance()->getWorld()->getFrameCount() >= targetTime ) {
-			return true;
-		}
-	}
-	return false;
+	return Game::getInstance()->getWorld()->getFrameCount() >= targetTime;
 }
 
 void ScriptTimer::reset() {
-	if ( type == TimeType::Real ) {
+	if ( real ) {
 		targetTime = Chrono::getCurMillis () + interval * 1000;
 	}
 	else {
@@ -175,22 +168,13 @@ void ScriptTimer::reset() {
 	}
 }
 
-/*
-void ScriptManager::setTimer(int seconds, const string &name) {
-	timers.push_back(ScriptTimer(seconds, name, false));
-}
-
-void ScriptManager::setInterval(int seconds, const string &name) {
-	timers.push_back(ScriptTimer(seconds, name, true));
-}
-*/
 
 void ScriptManager::setTimer( const string &name, const string &type, int interval, bool periodic ) {
 	if ( type == "real" ) {
-		timers.push_back (ScriptTimer ( name, TimeType::Real, interval, periodic ));
+		newTimerQueue.push_back (ScriptTimer ( name, true, interval, periodic ));
 	}
 	else if ( type == "game" ) {
-		timers.push_back (ScriptTimer ( name, TimeType::Game, interval, periodic ));
+		newTimerQueue.push_back (ScriptTimer ( name, false, interval, periodic ));
 	}
 }
 
@@ -208,6 +192,7 @@ void ScriptManager::stopTimer(const string &name) {
 void ScriptManager::onTimer() {
 	// when a timer is ready, call the corresponding xml block of lua code 
 	// and remove the timer, or reset to repeat.
+
 	vector<ScriptTimer>::iterator timer;
 
 	for (timer = timers.begin(); timer != timers.end();) {
@@ -226,6 +211,10 @@ void ScriptManager::onTimer() {
 		}
 		++timer;
 	}
+	for ( vector<ScriptTimer>::iterator it = newTimerQueue.begin(); it != newTimerQueue.end(); ++it ) {
+		timers.push_back ( *it );
+	}
+	newTimerQueue.clear();
 }
 
 int ScriptManager::setTimer(LuaHandle* luaHandle){
