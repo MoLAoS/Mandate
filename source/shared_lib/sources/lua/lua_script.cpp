@@ -110,6 +110,13 @@ LuaArguments::LuaArguments(lua_State *luaState){
 	returnCount= 0;
 }
 
+bool LuaArguments::getBoolean ( int ndx ) const {
+	if ( !lua_isboolean ( luaState, ndx ) ) {
+		throwLuaError("Can not get boolean from Lua state");
+	}
+	return lua_toboolean ( luaState, ndx );
+}
+
 int LuaArguments::getInt(int argumentIndex) const{
 	if(!lua_isnumber(luaState, argumentIndex)){
 		throwLuaError("Can not get int from Lua state");

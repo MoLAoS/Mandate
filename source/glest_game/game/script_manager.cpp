@@ -56,7 +56,7 @@ void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameS
 	//register functions
 	//NEW
 	luaScript.registerFunction(setTimer, "setTimer");
-	luaScript.registerFunction(setInterval, "setInterval");
+	//luaScript.registerFunction(setInterval, "setInterval");
 	luaScript.registerFunction(stopTimer, "stopTimer");
 	//NEW END
 	luaScript.registerFunction(showMessage, "showMessage");
@@ -153,22 +153,45 @@ void ScriptManager::onUnitDied(const Unit* unit){
 //=================== experimental timer
 
 bool ScriptTimer::ready() {
-	if (chrono.getCurSeconds() >= targetTime) {
-		return true;
+	if ( type == TimeType::Real ) {
+		if ( Chrono::getCurMillis () >= targetTime ) {
+			return true;
+		}
+	}
+	else {
+		if ( Game::getInstance()->getWorld()->getFrameCount() >= targetTime ) {
+			return true;
+		}
 	}
 	return false;
 }
 
 void ScriptTimer::reset() {
-	targetTime = chrono.getCurSeconds() + duration;
+	if ( type == TimeType::Real ) {
+		targetTime = Chrono::getCurMillis () + interval * 1000;
+	}
+	else {
+		targetTime = Game::getInstance()->getWorld()->getFrameCount() + interval;
+	}
 }
 
+/*
 void ScriptManager::setTimer(int seconds, const string &name) {
 	timers.push_back(ScriptTimer(seconds, name, false));
 }
 
 void ScriptManager::setInterval(int seconds, const string &name) {
 	timers.push_back(ScriptTimer(seconds, name, true));
+}
+*/
+
+void ScriptManager::setTimer( const string &name, const string &type, int interval, bool periodic ) {
+	if ( type == "real" ) {
+		timers.push_back (ScriptTimer ( name, TimeType::Real, interval, periodic ));
+	}
+	else if ( type == "game" ) {
+		timers.push_back (ScriptTimer ( name, TimeType::Game, interval, periodic ));
+	}
 }
 
 void ScriptManager::stopTimer(const string &name) {
@@ -186,13 +209,14 @@ void ScriptManager::onTimer() {
 	// when a timer is ready, call the corresponding xml block of lua code 
 	// and remove the timer, or reset to repeat.
 	vector<ScriptTimer>::iterator timer;
+
 	for (timer = timers.begin(); timer != timers.end();) {
 		if ( timer->ready() ) {
-			if ( timer->alive() ) {
+			if ( timer->isAlive() ) {
 				luaScript.beginCall("timer_" + timer->getName());
 				luaScript.endCall();
 			}
-			if ( timer->repeat() && timer->alive() ) {
+			if ( timer->isPeriodic() && timer->isAlive() ) {
 				timer->reset();
 			} 
 			else {
@@ -206,16 +230,20 @@ void ScriptManager::onTimer() {
 
 int ScriptManager::setTimer(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
-	thisScriptManager->setTimer(luaArguments.getInt(-2), luaArguments.getString(-1));
+	thisScriptManager->setTimer(
+		luaArguments.getString(-4),
+		luaArguments.getString(-3),
+		luaArguments.getInt(-2), 
+		luaArguments.getBoolean(-1));
 	return luaArguments.getReturnCount();
 }
-
+/*
 int ScriptManager::setInterval(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
 	thisScriptManager->setInterval(luaArguments.getInt(-2), luaArguments.getString(-1));
 	return luaArguments.getReturnCount();
 }
-
+*/
 int ScriptManager::stopTimer(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
 	thisScriptManager->stopTimer(luaArguments.getString(-1));

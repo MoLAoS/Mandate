@@ -63,6 +63,7 @@ private:
 public:
 	LuaArguments(lua_State *luaState);
 
+	bool getBoolean ( int ndx ) const;
 	int getInt(int argumentIndex) const;
 	string getString(int argumentIndex) const;
 	Vec2i getVec2i(int argumentIndex) const;

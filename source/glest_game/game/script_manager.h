@@ -42,32 +42,35 @@ class Game;
 //	class ScriptManagerMessage
 // =====================================================
 
+namespace TimeType {
+	enum Enum { Real, Game } ;
+}
+
 class ScriptTimer {
 public:
-	ScriptTimer(int seconds, const string &name, bool repeat) 
-			: name(name)
-			, _repeat(repeat)
-			, targetTime(0)
-			, duration(seconds) {
-		chrono.start();
+	ScriptTimer ( const string &name, TimeType::Enum type, int interval, bool periodic) 
+			: name (name)
+			, type (type)
+			, periodic  (periodic)
+			, interval (interval)
+			, active (true) {
 		reset();
-		active = true;
 	}
 
 	bool ready();
 	void reset();
 
 	string getName() { return name; }
-	bool repeat() { return _repeat; }
-	bool alive () { return active; }
+	bool isPeriodic() { return periodic; }
+	bool isAlive () { return active; }
 	void kill () { active = false; }
 
 private:
 	string name;
-	bool _repeat;
+	TimeType::Enum type;
+	bool periodic;
 	bool active;
-	int64 targetTime, duration;
-	Chrono chrono;
+	int64 targetTime, interval;
 };
 
 // =====================================================
@@ -169,8 +172,9 @@ private:
 
 	//wrappers, commands
 	//NEW
-	void setTimer(int seconds, const string &name);
-	void setInterval(int seconds, const string &name);
+	void setTimer ( const string &name, const string &type, int interval, bool periodic );
+	//void setTimer(int seconds, const string &name);
+	//void setInterval(int seconds, const string &name);
 	void stopTimer(const string &name);
 	//NEW END
 	void showMessage(const string &text, const string &header);
@@ -205,7 +209,7 @@ private:
 
 	//callbacks, commands
 	static int setTimer(LuaHandle* luaHandle);
-	static int setInterval(LuaHandle* luaHandle);
+	//static int setInterval(LuaHandle* luaHandle);
 	static int stopTimer(LuaHandle* luaHandle);
 	static int showMessage(LuaHandle* luaHandle);
 	static int setDisplayText(LuaHandle* luaHandle);
