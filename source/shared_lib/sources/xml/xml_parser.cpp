@@ -173,10 +173,14 @@ XmlNode::XmlNode(TiXmlNode *node) : text() {
 		attribute = attribute->Next();
 	}
 
+
 	// text
-	const char * txt = element->GetText ();
-	if ( txt ) {
-		text = txt;
+	if ( element->FirstChild() ) {
+		TiXmlText *script = element->FirstChild()->ToText ();
+		if ( script ) {
+			script->SetCondenseWhiteSpace ( false );
+			text = script->Value();
+		}
 	}
 }
 

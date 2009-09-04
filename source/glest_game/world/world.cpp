@@ -802,6 +802,10 @@ void World::giveResource(const string &resourceName, int factionIndex, int amoun
 		Faction* faction= &factions[factionIndex];
 		const ResourceType* rt= techTree.getResourceType(resourceName);
 		faction->incResourceAmount(rt, amount);
+		//DEBUG
+		static char buf[256];
+		sprintf ( buf, "Faction %d given %d %s", factionIndex, amount, resourceName.c_str() );
+		scriptManager->setDisplayText ( buf );
 	}
 	else
 	{
@@ -812,19 +816,56 @@ void World::giveResource(const string &resourceName, int factionIndex, int amoun
 void World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos){
 	Unit* unit= findUnitById(unitId);
 	if(unit!=NULL){
-		CommandClass cc;
+		const CommandType *cmdType = NULL;
 
 		if(commandName=="move"){
-			cc= ccMove; 
+			cmdType = unit->getType()->getFirstCtOfClass ( ccMove );
+
 		}
 		else if(commandName=="attack"){
-			cc= ccAttack;
+			cmdType = unit->getType()->getFirstCtOfClass ( ccAttack );
+		}
+		else if ( commandName=="harvest" ) {
+			Resource *r = map.getTile ( Map::toTileCoords(pos) )->getResource();
+			bool found = false;
+			if ( ! unit->getType()->getFirstCtOfClass(ccHarvest) ) {
+				scriptManager->setDisplayText ( "Error: Invalid command, unit has no harvest command" );
+				return;
+			}
+			if ( !r ) {
+				scriptManager->setDisplayText ( "Warning: No resources found at target pos of harvest cmd" );
+				cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
+			}
+			else {
+				for ( int i=0; i < unit->getType()->getCommandTypeCount (); ++i ) {
+					cmdType = unit->getType()->getCommandType ( i );
+					if ( cmdType->getClass() == ccHarvest ) {
+						HarvestCommandType *hct = (HarvestCommandType*)cmdType;
+						if ( hct->canHarvest (r->getType()) ) {
+							found = true;
+							break;
+						}
+					}
+				}
+				if ( !found ) {
+					scriptManager->setDisplayText ( "Warning: Resource at target pos can not be harvested by this unit" );
+					cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
+				}
+			}
 		}
 		else{
 			throw runtime_error("Invalid position commmand: " + commandName);
 		}
 		
-		unit->giveCommand(new Command( unit->getType()->getFirstCtOfClass(cc), CommandFlags(), pos ));
+		CommandResult res = unit->giveCommand(new Command( cmdType, CommandFlags(), pos ));
+
+		if ( res != crSuccess ) {
+			scriptManager->setDisplayText ( "command failed" );
+		}
+		else {
+			scriptManager->setDisplayText ( "command succees" );
+		}
+
 	}
 }
 
@@ -832,17 +873,37 @@ void World::giveProductionCommand(int unitId, const string &producedName){
 	Unit *unit= findUnitById(unitId);
 	if(unit!=NULL){
 		const UnitType *ut= unit->getType();
-		
+		const MorphCommandType *mct = NULL;
 		//Search for a command that can produce the unit
 		for(int i= 0; i<ut->getCommandTypeCount(); ++i){
 			const CommandType* ct= ut->getCommandType(i);
 			if(ct->getClass()==ccProduce){
 				const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
 				if(pct->getProducedUnit()->getName()==producedName){
-					unit->giveCommand(new Command(pct, CommandFlags()));
-					break;
+					if ( unit->giveCommand(new Command(pct, CommandFlags())) == crSuccess ) {
+						scriptManager->setDisplayText ( "produce command success" );
+					}
+					else {
+						scriptManager->setDisplayText ( "produce command failed" );
+					}
+					return;
 				}
 			}
+			else if ( ct->getClass() == ccMorph ) {
+				mct = (MorphCommandType*)ct; // just record it for now...
+			}
+		}
+		// didn't find a produce command, was there are morph command?
+		if ( mct ) {
+			if ( unit->giveCommand ( new Command (mct, CommandFlags()) ) == crSuccess ) {
+				scriptManager->setDisplayText ( "morph command success" );
+			}
+			else {
+				scriptManager->setDisplayText ( "morph command failed" );
+			}
+		}
+		else {
+			scriptManager->setDisplayText ( "Error: invalid production command" );
 		}
 	}
 }

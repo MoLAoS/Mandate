@@ -104,6 +104,9 @@ private:
 // =====================================================
 
 class ScriptManager{
+
+	friend class World; // Lua Debugging, using setDisplayTest()
+
 private:
 	typedef queue<ScriptManagerMessage> MessageQueue;
 
