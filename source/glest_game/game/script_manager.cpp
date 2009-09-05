@@ -108,8 +108,7 @@ void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameS
 	gameOver= false;
 
 	//call startup function
-	luaScript.beginCall("startup");
-	luaScript.endCall();
+	luaScript.luaCall("startup");
 }
 
 // ========================== events ===============================================
@@ -133,27 +132,22 @@ void ScriptManager::onMessageBoxOk(){
 }
 
 void ScriptManager::onResourceHarvested(){
-	luaScript.beginCall("resourceHarvested");
-	luaScript.endCall();
+	luaScript.luaCall("resourceHarvested");
 }
 
 void ScriptManager::onUnitCreated(const Unit* unit){
 	lastCreatedUnitName= unit->getType()->getName();
 	lastCreatedUnitId= unit->getId();
-	luaScript.beginCall("unitCreated");
-	luaScript.endCall();
-	luaScript.beginCall("unitCreatedOfType_"+unit->getType()->getName());
-	luaScript.endCall();
+	luaScript.luaCall("unitCreated");
+	luaScript.luaCall("unitCreatedOfType_"+unit->getType()->getName());
 }
 
 void ScriptManager::onUnitDied(const Unit* unit){
 	lastDeadUnitName= unit->getType()->getName();
 	lastDeadUnitId= unit->getId();
-	luaScript.beginCall("unitDied");
-	luaScript.endCall();
+	luaScript.luaCall("unitDied");
 }
 
-//=================== experimental timer
 
 bool ScriptTimer::ready() {
 	if ( real ) {
@@ -193,7 +187,7 @@ void ScriptManager::stopTimer(const string &name) {
 }
 
 void ScriptManager::onTimer() {
-	// when a timer is ready, call the corresponding xml block of lua code 
+	// when a timer is ready, call the corresponding lua function
 	// and remove the timer, or reset to repeat.
 
 	vector<ScriptTimer>::iterator timer;
@@ -201,8 +195,9 @@ void ScriptManager::onTimer() {
 	for (timer = timers.begin(); timer != timers.end();) {
 		if ( timer->ready() ) {
 			if ( timer->isAlive() ) {
-				luaScript.beginCall("timer_" + timer->getName());
-				luaScript.endCall();
+				if ( ! luaScript.luaCall("timer_" + timer->getName()) ) {
+					Logger::getErrorLog ().add ( "Error: function timer_" + timer->getName() + " not defined." );
+				}
 			}
 			if ( timer->isPeriodic() && timer->isAlive() ) {
 				timer->reset();
@@ -220,31 +215,9 @@ void ScriptManager::onTimer() {
 	newTimerQueue.clear();
 }
 
-int ScriptManager::setTimer(LuaHandle* luaHandle){
-	LuaArguments luaArguments(luaHandle);
-	thisScriptManager->setTimer(
-		luaArguments.getString(-4),
-		luaArguments.getString(-3),
-		luaArguments.getInt(-2), 
-		luaArguments.getBoolean(-1));
-	return luaArguments.getReturnCount();
-}
-/*
-int ScriptManager::setInterval(LuaHandle* luaHandle){
-	LuaArguments luaArguments(luaHandle);
-	thisScriptManager->setInterval(luaArguments.getInt(-2), luaArguments.getString(-1));
-	return luaArguments.getReturnCount();
-}
-*/
-int ScriptManager::stopTimer(LuaHandle* luaHandle){
-	LuaArguments luaArguments(luaHandle);
-	thisScriptManager->stopTimer(luaArguments.getString(-1));
-	return luaArguments.getReturnCount();
-}
-
-//=================== experimental timer end
 
 // ========================== lua wrappers ===============================================
+
 
 string ScriptManager::wrapString(const string &str, int wrapCount){
 
@@ -256,8 +229,7 @@ string ScriptManager::wrapString(const string &str, int wrapCount){
 			returnString+= '\n';
 			letterCount= 0;
 		}
-		else
-		{
+		else {
 			returnString+= str[i];
 		}
 		++letterCount;
@@ -388,6 +360,60 @@ int ScriptManager::getUnitCountOfType(int factionIndex, const string &typeName){
 }
 
 // ========================== lua callbacks ===============================================
+
+string ScriptManager::describeLuaStack ( LuaArguments &args ) {
+	if ( args.getArgumentCount () == 0 ) {
+		return "";
+	}
+	string desc = args.getType ( 1 );
+	for ( int i=2; i <= args.getArgumentCount(); ++i ) {
+		desc += ", "; 
+		desc += args.getType ( i );
+	}
+}
+
+// Generalise...
+// luaCppCallError ( string &func, string &expected, string &received );
+//
+
+int ScriptManager::setTimer(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	if ( luaArguments.getArgumentCount () != 4 ) {
+		// luaCppCallError ( "setTimer", "String, String, Number, Boolean", describeLuaStack ( luaArguments ) );
+		string msg = "setTimer() called with incorrect number of arguments\nExpected ( String, String, Number, Boolean )\n";
+		msg += "Got ( " + describeLuaStack ( luaArguments ) + " ).\n";
+		Logger::getErrorLog().add ( msg );
+		return 0;
+	}
+	try {
+		thisScriptManager->setTimer( luaArguments.getString(-4), luaArguments.getString(-3),
+			luaArguments.getInt(-2), luaArguments.getBoolean(-1));
+	}
+	catch ( LuaError e ) {
+		// luaCppCallError ( "setTimer", "String, String, Number, Boolean", describeLuaStack ( luaArguments ) );
+		string msg = "Error: setTimer() " + e.desc();
+		Logger::getErrorLog().add ( msg );
+	}
+	return luaArguments.getReturnCount(); // == 0
+}
+
+int ScriptManager::stopTimer(LuaHandle* luaHandle){
+	LuaArguments luaArguments(luaHandle);
+	if ( luaArguments.getArgumentCount() != 1 ) {
+		// luaCppCallError ( "stopTimer", "String", describeLuaStack ( luaArguments ) );
+	}
+	try { 
+		thisScriptManager->stopTimer(luaArguments.getString(-1));
+	}
+	catch ( LuaError e ) {
+		// luaCppCallError ( "stopTimer", "String", describeLuaStack ( luaArguments ) );
+	}
+	return luaArguments.getReturnCount();
+}
+
+// hmmm... no.
+// pre-check args, then pull them off without error checking
+//
 
 int ScriptManager::showMessage(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);

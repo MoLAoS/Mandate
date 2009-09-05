@@ -45,8 +45,9 @@ LuaScript::~LuaScript(){
 }
 
 void LuaScript::loadCode(const string &code, const string &name){
-	int errorCode= luaL_loadbuffer(luaState, code.c_str(), code.size(), name.c_str());
+	int errorCode= luaL_loadbuffer(luaState, code.c_str(), code.size(), name.c_str());	
 	if(errorCode!=0){
+		//DEBUG
 		FILE *fp = fopen ( "bad.lua", "w" );
 		if ( fp ) {
 			fprintf ( fp, "%s", code.c_str() );
@@ -62,13 +63,18 @@ void LuaScript::loadCode(const string &code, const string &name){
 	}
 }
 
-void LuaScript::beginCall(const string& functionName){
+bool LuaScript::luaCall(const string& functionName) {
 	lua_getglobal(luaState, functionName.c_str());
 	argumentCount= 0;
-}
-
-void LuaScript::endCall(){
-	lua_pcall(luaState, argumentCount, 0, 0);
+	if ( lua_pcall(luaState, argumentCount, 0, 0) ) {
+		// call failed, top of stack should have an error message on it...
+		//if ( lua_isstring ( luaState, -1 ) ) {
+			//const char *err = lua_tostring ( luaState, -1 );
+			//string emsg = "Error: function " + functionName + " not defined.\n" + err;
+		//}
+		return false;
+	}
+	return true;
 }
 
 void LuaScript::registerFunction(LuaFunction luaFunction, const string &functionName){
@@ -97,7 +103,7 @@ string LuaScript::errorToString(int errorCode){
 			error+= "Unknown error";
 	}
 	error += string(": ")+luaL_checkstring(luaState, -1);
-   fprintf ( stderr, error.c_str() );
+	fprintf ( stderr, error.c_str() );
 	return error;
 }
 
@@ -107,26 +113,34 @@ string LuaScript::errorToString(int errorCode){
 
 LuaArguments::LuaArguments(lua_State *luaState){
 	this->luaState= luaState;
+	args = lua_gettop(luaState);
 	returnCount= 0;
 }
 
+/* Better LUA error handling, if one of these fail then an attempt to call a C++ function
+ * has been made with invalid arguments, throw a LuaError with a description of the problem,
+ * the 'callback' that called this will construct a nice error message.
+ */
 bool LuaArguments::getBoolean ( int ndx ) const {
 	if ( !lua_isboolean ( luaState, ndx ) ) {
-		throwLuaError("Can not get boolean from Lua state");
+		string emsg = "Argument " + intToStr(-ndx) + " expected Boolean, got " + getType(ndx) + ".\n";
+		throw LuaError ( emsg );
 	}
 	return lua_toboolean ( luaState, ndx );
 }
 
 int LuaArguments::getInt(int argumentIndex) const{
 	if(!lua_isnumber(luaState, argumentIndex)){
-		throwLuaError("Can not get int from Lua state");
+		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Number, got " + getType(argumentIndex) + ".\n";
+		throw LuaError ( emsg );
 	}
 	return luaL_checkint(luaState, argumentIndex);
 }
 
 string LuaArguments::getString(int argumentIndex) const{
 	if(!lua_isstring(luaState, argumentIndex)){
-		throwLuaError("Can not get string from Lua state");
+		string emsg = "Argument " + intToStr(-argumentIndex) + " expected String, got " + getType(argumentIndex) + ".\n";
+		throw LuaError ( emsg );
 	}
 	return luaL_checkstring(luaState, argumentIndex);
 }
@@ -134,14 +148,18 @@ string LuaArguments::getString(int argumentIndex) const{
 Vec2i LuaArguments::getVec2i(int argumentIndex) const{
 	Vec2i v;
 	
-	if(!lua_istable(luaState, argumentIndex)){
-		throwLuaError("Can not get vec2i from Lua state, value on the stack is not a table");
+	if ( ! lua_istable(luaState, argumentIndex ) ) {
+		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table, got " + getType(argumentIndex) + ".\n";
+		throw LuaError ( emsg );
 	}
-
-	if(luaL_getn(luaState, argumentIndex)!=2){
-		throwLuaError("Can not get vec2i from Lua state, array size not 2");
+	if ( luaL_getn(luaState, argumentIndex) != 2 ) {
+		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table with two elements, got Table with " 
+			+ intToStr ( luaL_getn(luaState, argumentIndex) ) + " elements.\n";
+		throw LuaError ( emsg );
 	}
-
+	//
+	// TODO: Don't just rawget, check if they are actually numbers first...
+	//
 	lua_rawgeti(luaState, argumentIndex, 1);
 	v.x= luaL_checkint(luaState, argumentIndex);
 	lua_pop(luaState, 1);
@@ -175,30 +193,20 @@ void LuaArguments::returnVec2i(const Vec2i &value){
 	lua_rawseti(luaState, -2, 2);
 }
 
-void LuaArguments::throwLuaError(const string &message) const{
-	string stackString;
-	int stackSize = lua_gettop(luaState);
+char* LuaArguments::getType ( int ndx ) const {
 
-	//build stack string
-	for(int i= 1; i<=stackSize; ++i){
-		stackString+= "-" + intToStr(i) + ": ";
-		if(lua_isnumber(luaState, -i)){
-			stackString+= "Number: " + doubleToStr(luaL_checknumber(luaState, -i ));
-		}
-		else if(lua_isstring(luaState, -i)){
-			stackString+= "String: " + string(luaL_checkstring(luaState, -i));
-		}
-		else if(lua_istable(luaState, -i)){
-			stackString+= "Table (" + intToStr(luaL_getn(luaState, -i)) + ")";
-		}
-		else
-		{
-			stackString+= "Unknown";
-		}
-		stackString+= "\n";
+	if(lua_isnumber(luaState, ndx)){
+		return "Number";
 	}
-	
-	throw runtime_error("Lua error: " + message + "\n\nLua Stack:\n" + stackString);
+	else if(lua_isstring(luaState, ndx)){
+		return "String";
+	}
+	else if(lua_istable(luaState, ndx)){
+		return "Table";
+	}
+	else {
+		return "Unknown";
+	}
 }
 
 }}//end namespace

@@ -25,9 +25,8 @@
 using std::string;
 using std::queue;
 using Shared::Graphics::Vec2i;
-using Shared::Lua::LuaScript;
-using Shared::Lua::LuaHandle;
 using Shared::Platform::Chrono;
+using namespace Shared::Lua;
 
 namespace Glest{ namespace Game{
 
@@ -170,6 +169,8 @@ private:
 	string wrapString(const string &str, int wrapCount);
 
 	vector<ScriptTimer> newTimerQueue;
+
+	static string describeLuaStack ( LuaArguments &args );
 
 	//wrappers, commands
 	//NEW
