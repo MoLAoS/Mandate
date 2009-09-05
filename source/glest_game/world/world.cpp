@@ -853,6 +853,8 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 				}
 			}
 		}
+		else if ( commandName == "patrol" ) {
+		}
 		else{
 			throw runtime_error("Invalid position commmand: " + commandName);
 		}
@@ -868,6 +870,74 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 
 	}
 }
+void World::giveTargetCommand ( int unitId, const string & cmdName, int targetId ) {
+	Unit *unit = findUnitById ( unitId );
+	Unit *target = findUnitById ( targetId );
+	if ( !target ) {
+		scriptManager->setDisplayText ( "Error: Target command has invalid target ID." );
+		return;
+	}
+	if ( cmdName == "attack" ) {
+		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
+			if ( unit->getType()->getCommandType ( i )->getClass () == ccAttack ) {
+				const AttackCommandType *act = (AttackCommandType *)unit->getType()->getCommandType ( i );
+				const AttackSkillTypes *asts = act->getAttackSkillTypes ();
+				if ( asts->getZone ( target->getCurrZone () ) ) {
+					unit->giveCommand ( new Command ( act, CommandFlags(), target ) );
+					return;
+				}
+			}
+		}
+		scriptManager->setDisplayText ( "Warning: Could not attack target, no appropriate attack command found." );
+	}
+	else if ( cmdName == "repair" ) {
+		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
+			if ( unit->getType()->getCommandType( i )->getClass () == ccRepair ) {
+				RepairCommandType *rct = (RepairCommandType*)unit->getType()->getCommandType ( i );
+				if ( rct->isRepairableUnitType ( target->getType() ) ) {
+					unit->giveCommand ( new Command ( rct, CommandFlags(), target ) );
+					return;
+				}
+			}
+		}
+		scriptManager->setDisplayText ( "Error: Unit " + unit->getType()->getName() + " can not repair "
+			+ target->getType()->getName () );
+
+	}
+	else if ( cmdName == "guard" ) {
+	}
+	else {
+		throw runtime_error ( "Illegal Target Command : " + cmdName );
+	}
+
+}
+
+void World::giveStopCommand ( int unitId, const string &cmdName ) {
+	Unit *unit = findUnitById ( unitId );
+	if ( cmdName == "stop" ) {
+		const StopCommandType *sct = (StopCommandType *)unit->getType()->getFirstCtOfClass ( ccStop );
+		if ( sct ) {
+			unit->giveCommand ( new Command ( sct, CommandFlags() ) );
+		}
+		else {
+			throw runtime_error ( "Error: Unit " + unit->getType()->getName() + "has no Stop Command" );
+		}
+	}
+	else if ( cmdName == "attack-stopped" ) {
+		const AttackStoppedCommandType *asct = 
+			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass ( ccAttackStopped );
+		if ( asct ) {
+			unit->giveCommand ( new Command ( asct, CommandFlags() ) );
+		}
+		else {
+			scriptManager->setDisplayText ( "Error: Unit Type " + unit->getType()->getName() + 
+				" has no Attack Stopped Command." );
+		}
+	}
+	else {
+		throw runtime_error ( "Illegal Stop Command : " + cmdName );
+	}
+}
 
 void World::giveProductionCommand(int unitId, const string &producedName){
 	Unit *unit= findUnitById(unitId);
@@ -877,6 +947,7 @@ void World::giveProductionCommand(int unitId, const string &producedName){
 		//Search for a command that can produce the unit
 		for(int i= 0; i<ut->getCommandTypeCount(); ++i){
 			const CommandType* ct= ut->getCommandType(i);
+			// if we find a suitable Produce Command, execute and return
 			if(ct->getClass()==ccProduce){
 				const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
 				if(pct->getProducedUnit()->getName()==producedName){
@@ -888,12 +959,16 @@ void World::giveProductionCommand(int unitId, const string &producedName){
 					}
 					return;
 				}
-			}
+			} // Morph Command ?
 			else if ( ct->getClass() == ccMorph ) {
-				mct = (MorphCommandType*)ct; // just record it for now...
+				if ( ((MorphCommandType*)ct)->getMorphUnit()->getName() == producedName ) {
+					// just record it for now, and keep looking for a Produce Command
+					mct = (MorphCommandType*)ct; 
+				}
+				
 			}
 		}
-		// didn't find a produce command, was there are morph command?
+		// didn't find a Produce Command, was there are Morph Command?
 		if ( mct ) {
 			if ( unit->giveCommand ( new Command (mct, CommandFlags()) ) == crSuccess ) {
 				scriptManager->setDisplayText ( "morph command success" );
@@ -934,8 +1009,7 @@ int World::getResourceAmount(const string &resourceName, int factionIndex){
 		const ResourceType* rt= techTree.getResourceType(resourceName);
 		return faction->getResource(rt)->getAmount();
 	}
-	else
-	{
+	else {
 		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
 	}
 }

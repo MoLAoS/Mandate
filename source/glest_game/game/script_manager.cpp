@@ -67,6 +67,9 @@ void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameS
 	luaScript.registerFunction(giveResource, "giveResource");
 	luaScript.registerFunction(givePositionCommand, "givePositionCommand");
 	luaScript.registerFunction(giveProductionCommand, "giveProductionCommand");
+	luaScript.registerFunction(giveStopCommand, "giveStopCommand");
+	luaScript.registerFunction(giveTargetCommand, "giveTargetCommand");
+
 	luaScript.registerFunction(giveUpgradeCommand, "giveUpgradeCommand");
 	luaScript.registerFunction(disableAi, "disableAi");
 	luaScript.registerFunction(setPlayerAsWinner, "setPlayerAsWinner");
@@ -306,6 +309,14 @@ void ScriptManager::giveUpgradeCommand(int unitId, const string &producedName){
 	world->giveUpgradeCommand(unitId, producedName);
 }
 
+void ScriptManager::giveTargetCommand ( int unitId, const string &cmdName, int targetId ) {
+	world->giveTargetCommand ( unitId, cmdName, targetId );
+}
+
+void ScriptManager::giveStopCommand ( int unitId, const string &cmdName ) {
+	world->giveStopCommand ( unitId, cmdName );
+}
+
 void ScriptManager::disableAi(int factionIndex){
 	if(factionIndex<GameConstants::maxPlayers){
 		playerModifiers[factionIndex].disableAi();
@@ -426,6 +437,22 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
+int ScriptManager::giveTargetCommand ( LuaHandle * luaHandle ) {
+	LuaArguments luaArguments(luaHandle);
+	thisScriptManager->giveTargetCommand(
+		luaArguments.getInt(-3), 
+		luaArguments.getString(-2),
+		luaArguments.getInt(-1));
+	return luaArguments.getReturnCount();	
+}
+
+int ScriptManager::giveStopCommand ( LuaHandle * luaHandle ) {
+	LuaArguments luaArguments(luaHandle);
+	thisScriptManager->giveStopCommand(
+		luaArguments.getInt(-2), 
+		luaArguments.getString(-1) );
+	return luaArguments.getReturnCount();	
+}
 
 int ScriptManager::giveProductionCommand(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);

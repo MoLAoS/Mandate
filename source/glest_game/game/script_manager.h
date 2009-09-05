@@ -185,6 +185,8 @@ private:
 	void givePositionCommand(int unitId, const string &producedName, const Vec2i &pos);
 	void giveProductionCommand(int unitId, const string &producedName);
 	void giveUpgradeCommand(int unitId, const string &upgradeName);
+	void giveTargetCommand ( int unitId, const string &cmdName, int targetId );
+	void giveStopCommand ( int unitId, const string &cmdName );
 	void disableAi(int factionIndex);
 	void setPlayerAsWinner(int factionIndex);
 	void endGame();
@@ -217,6 +219,8 @@ private:
 	static int createUnit(LuaHandle* luaHandle);
 	static int giveResource(LuaHandle* luaHandle);
 	static int givePositionCommand(LuaHandle* luaHandle);
+	static int giveTargetCommand ( LuaHandle * luaHandle );
+	static int giveStopCommand ( LuaHandle * luaHandle );
 	static int giveProductionCommand(LuaHandle* luaHandle);
 	static int giveUpgradeCommand(LuaHandle* luaHandle);
 	static int disableAi(LuaHandle* luaHandle);
