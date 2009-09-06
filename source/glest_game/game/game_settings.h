@@ -40,6 +40,7 @@ private:
 	string scenarioDir;
 
 	ControlType factionControls[GameConstants::maxPlayers];
+	float resourceMultipliers [GameConstants::maxPlayers];
 
 	int thisFactionIndex;
 	int factionCount;
@@ -51,7 +52,7 @@ private:
 	bool defaultVictoryConditions;
 
 public:
-	GameSettings(){}
+	GameSettings();
 	GameSettings(const XmlNode *node);
 	// use default copy ctor
 	//GameSettings(const GameSettings &gs);
@@ -70,6 +71,7 @@ public:
 	const string &getFactionTypeName(int i) const				{return factionTypeNames[i];}
 	const string &getPlayerName(int i) const					{return playerNames[i];}
 	ControlType getFactionControl(int i) const					{return factionControls[i];}
+	float getResourceMultilpier ( int i ) const					{ return resourceMultipliers[i]; }
 	int getThisFactionIndex() const								{return thisFactionIndex;}
 	int getFactionCount() const									{return factionCount;}
 	int getTeam(int i) const									{return teams[i];}
@@ -89,6 +91,7 @@ public:
 	void setFactionTypeName(int i, const string& name)			{this->factionTypeNames[i] = name;}
 	void setPlayerName(int i, const string &name)				{this->playerNames[i] = name;}
 	void setFactionControl(int i, ControlType controller)		{this->factionControls[i]= controller;}
+	void setResourceMultiplier ( int i, float mult ) { resourceMultipliers[i] = mult; }
 	void setThisFactionIndex(int thisFactionIndex) 				{this->thisFactionIndex = thisFactionIndex;}
 	void setFactionCount(int factionCount)						{this->factionCount = factionCount;}
 	void setTeam(int i, int team)								{this->teams[i] = team;}

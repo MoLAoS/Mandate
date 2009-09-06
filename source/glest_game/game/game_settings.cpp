@@ -22,6 +22,10 @@ using Shared::Platform::Chrono;
 
 namespace Glest { namespace Game {
 
+GameSettings::GameSettings () {
+
+}
+
 GameSettings::GameSettings(const XmlNode *node){
 	description = node->getChildStringValue("description");
 	map = node->getChildStringValue("mapPath");
@@ -42,7 +46,7 @@ GameSettings::GameSettings(const XmlNode *node){
 		startLocationIndex[i] = factionNode->getChildIntValue("startLocationIndex");
 	}
 }
-			
+
 void GameSettings::save(XmlNode *node) const {
 	node->addChild("description", description);
 	node->addChild("mapPath", map);

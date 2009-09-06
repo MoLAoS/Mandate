@@ -40,12 +40,12 @@ namespace Search { class PathFinder; }
 class UnitUpdater{
 private:
 	friend class ParticleDamager;
-   friend class World;
+	friend class World;
 
 private:
 	static const int maxResSearchRadius= 10;
 	static const int harvestDistance= 5;
-	static const int ultraResourceFactor= 3;
+//	static const int ultraResourceFactor= 3;
 	/**
 	 * When a unit who can repair, but not attack is faced with a hostile, this is the percentage
 	 * of the radius that we search from the center of the intersection point for a friendly that
@@ -60,9 +60,10 @@ private:
 	Map *map;
 	World *world;
 	Console *console;
-   ScriptManager *scriptManager;
-   Search::PathFinder *pathFinder;
+	ScriptManager *scriptManager;
+	Search::PathFinder *pathFinder;
 	Random random;
+	GameSettings gameSettings;
 
 public:
     void init(Game &game);

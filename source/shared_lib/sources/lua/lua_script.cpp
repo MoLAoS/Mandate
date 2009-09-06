@@ -204,6 +204,9 @@ char* LuaArguments::getType ( int ndx ) const {
 	else if(lua_istable(luaState, ndx)){
 		return "Table";
 	}
+	else if (lua_isboolean ( luaState, ndx ) ) {
+		return "Boolean";
+	}
 	else {
 		return "Unknown";
 	}

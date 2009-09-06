@@ -66,6 +66,7 @@ void UnitUpdater::init(Game &game) {
 	this->scriptManager = game.getScriptManager ();
 	pathFinder = Search::PathFinder::getInstance();
 	pathFinder->init(map);
+	gameSettings = game.getGameSettings ();
 }
 
 // ==================== progress skills ====================
@@ -733,8 +734,11 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 
 					//update resources
 					int resourceAmount = unit->getLoadCount();
+					//
+					// Just do this all players ???
 					if (unit->getFaction()->getCpuUltraControl()) {
-						resourceAmount *= ultraResourceFactor;
+						resourceAmount = (int)(resourceAmount * gameSettings.getResourceMultilpier ( unit->getFactionIndex () ));
+						//resourceAmount *= ultraResourceFactor; // Pull from GameSettings
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
 					world->getStats().harvest(unit->getFactionIndex(), resourceAmount);

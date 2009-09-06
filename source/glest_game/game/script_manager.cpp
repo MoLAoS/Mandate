@@ -370,6 +370,7 @@ string ScriptManager::describeLuaStack ( LuaArguments &args ) {
 		desc += ", "; 
 		desc += args.getType ( i );
 	}
+	return desc;
 }
 
 // Generalise...
@@ -380,8 +381,8 @@ int ScriptManager::setTimer(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount () != 4 ) {
 		// luaCppCallError ( "setTimer", "String, String, Number, Boolean", describeLuaStack ( luaArguments ) );
-		string msg = "setTimer() called with incorrect number of arguments\nExpected ( String, String, Number, Boolean )\n";
-		msg += "Got ( " + describeLuaStack ( luaArguments ) + " ).\n";
+		string msg = "setTimer() called with incorrect number of arguments\nExpected ( String, String, Number, Boolean )";
+		msg += "\nGot ( " + describeLuaStack ( luaArguments ) + " ).";
 		Logger::getErrorLog().add ( msg );
 		return 0;
 	}
@@ -392,6 +393,8 @@ int ScriptManager::setTimer(LuaHandle* luaHandle){
 	catch ( LuaError e ) {
 		// luaCppCallError ( "setTimer", "String, String, Number, Boolean", describeLuaStack ( luaArguments ) );
 		string msg = "Error: setTimer() " + e.desc();
+		msg += "Expected ( String, String, Number, Boolean )";
+		msg += "\nGot ( " + describeLuaStack ( luaArguments ) + " ).";
 		Logger::getErrorLog().add ( msg );
 	}
 	return luaArguments.getReturnCount(); // == 0
