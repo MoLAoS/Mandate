@@ -165,13 +165,13 @@ public:
 	void onTimer();
 
 private:
-
 	string wrapString(const string &str, int wrapCount);
 
 	vector<ScriptTimer> newTimerQueue;
-
+	static void luaCppCallError ( const string &func, const string &expected, const string &received, 
+											const string extra = "Wrong number of parameters." ) ;
 	static string describeLuaStack ( LuaArguments &args );
-
+	
 	//wrappers, commands
 	//NEW
 	void setTimer ( const string &name, const string &type, int interval, bool periodic );
@@ -227,6 +227,8 @@ private:
 	static int disableAi(LuaHandle* luaHandle);
 	static int setPlayerAsWinner(LuaHandle* luaHandle);
 	static int endGame(LuaHandle* luaHandle);
+
+	static int debugLog ( LuaHandle* luaHandle );
 
 	//callbacks, queries
 	static int getPlayerName(LuaHandle* luaHandle);

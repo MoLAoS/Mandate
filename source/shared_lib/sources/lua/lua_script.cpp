@@ -207,6 +207,9 @@ char* LuaArguments::getType ( int ndx ) const {
 	else if (lua_isboolean ( luaState, ndx ) ) {
 		return "Boolean";
 	}
+	else if ( lua_isnil ( luaState, ndx ) ) {
+		return "Nil";
+	}
 	else {
 		return "Unknown";
 	}

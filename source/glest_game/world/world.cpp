@@ -791,8 +791,7 @@ void World::createUnit(const string &unitName, int factionIndex, const Vec2i &po
 			throw runtime_error("Unit cant be placed");    
 		}
 	}
-	else
-	{
+	else {
 		throw runtime_error("Invalid faction index in createUnitAtPosition: " + intToStr(factionIndex));
 	}
 }
@@ -807,8 +806,7 @@ void World::giveResource(const string &resourceName, int factionIndex, int amoun
 		sprintf ( buf, "Faction %d given %d %s", factionIndex, amount, resourceName.c_str() );
 		scriptManager->setDisplayText ( buf );
 	}
-	else
-	{
+	else {
 		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
 	}
 }
