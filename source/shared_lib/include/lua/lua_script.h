@@ -50,14 +50,18 @@ public:
 	LuaScript();
 	~LuaScript();
 
+	void startUp();
+
 	void loadCode(const string &code, const string &name);
 
+	bool isDefined( const string &functionName );
 	bool luaCall(const string& functionName);
 
 	void registerFunction(LuaFunction luaFunction, const string &functionName);
 
 private:
 	string errorToString(int errorCode);
+	void close();
 };
 
 // =====================================================

@@ -12,6 +12,16 @@
 #ifndef _GLEST_GAME_GAMECONSTANTS_H_
 #define _GLEST_GAME_GAMECONSTANTS_H_
 
+//TODO
+// Rationialise singletons, make return all references if plausible,
+// if not, make them ALL return pointers
+//
+#define theWorld		(World::getInstance())
+#define theGame			(*Game::getInstance())
+#define theCamera		(*Game::getInstance()->getGameCamera())
+#define theGameSettings (Game::getInstance()->getGameSettings())
+#define theConsole		(*Game::getInstance()->getConsole())
+
 namespace Glest{ namespace Game{
 
 // =====================================================

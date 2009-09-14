@@ -26,6 +26,26 @@ using namespace Shared::Lua;
 namespace Glest{ namespace Game{
 
 // =====================================================
+//	class ScriptTimer
+// =====================================================
+
+bool ScriptTimer::ready() {
+	if ( real ) {
+		return Chrono::getCurMillis () >= targetTime;
+	}
+	return theWorld.getFrameCount() >= targetTime;
+}
+
+void ScriptTimer::reset() {
+	if ( real ) {
+		targetTime = Chrono::getCurMillis () + interval * 1000;
+	}
+	else {
+		targetTime = theWorld.getFrameCount() + interval;
+	}
+}
+
+// =====================================================
 //	class PlayerModifiers
 // =====================================================
 
@@ -38,27 +58,37 @@ PlayerModifiers::PlayerModifiers(){
 //	class ScriptManager
 // =====================================================
 
-ScriptManager* ScriptManager::thisScriptManager= NULL;
+// ========== statics ==========
+
+//ScriptManager* ScriptManager::thisScriptManager= NULL;
 const int ScriptManager::messageWrapCount= 30;
 const int ScriptManager::displayTextWrapCount= 64;
 
-void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameSettings *gameSettings){
-	const Scenario*	scenario= world->getScenario();
-	
-	this->game= game;
-	this->world= world;
-	this->gameCamera= gameCamera;
-	this->gameSettings= gameSettings;
+string				ScriptManager::code;
+LuaScript			ScriptManager::luaScript;
+GraphicMessageBox	ScriptManager::messageBox;
+string				ScriptManager::displayText;
+string				ScriptManager::lastCreatedUnitName;
+int					ScriptManager::lastCreatedUnitId;
+string				ScriptManager::lastDeadUnitName;
+int					ScriptManager::lastDeadUnitId;
+bool				ScriptManager::gameOver;
+PlayerModifiers		ScriptManager::playerModifiers[GameConstants::maxPlayers];
+vector<ScriptTimer> ScriptManager::timers;
+vector<ScriptTimer> ScriptManager::newTimerQueue;
+set<string>			ScriptManager::definedEvents;
+ScriptManager::MessageQueue ScriptManager::messageQueue;
 
-	//set static instance
-	thisScriptManager= this;
+
+void ScriptManager::init () {
+	const Scenario*	scenario = theWorld.getScenario();
+
+	luaScript.startUp();
+	assert ( ! luaScript.isDefined ( "startup" ) );
 
 	//register functions
-	//NEW
 	luaScript.registerFunction(setTimer, "setTimer");
-	//luaScript.registerFunction(setInterval, "setInterval");
 	luaScript.registerFunction(stopTimer, "stopTimer");
-	//NEW END
 	luaScript.registerFunction(showMessage, "showMessage");
 	luaScript.registerFunction(setDisplayText, "setDisplayText");
 	luaScript.registerFunction(clearDisplayText, "clearDisplayText");
@@ -69,19 +99,16 @@ void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameS
 	luaScript.registerFunction(giveProductionCommand, "giveProductionCommand");
 	luaScript.registerFunction(giveStopCommand, "giveStopCommand");
 	luaScript.registerFunction(giveTargetCommand, "giveTargetCommand");
-
 	luaScript.registerFunction(giveUpgradeCommand, "giveUpgradeCommand");
 	luaScript.registerFunction(disableAi, "disableAi");
 	luaScript.registerFunction(setPlayerAsWinner, "setPlayerAsWinner");
 	luaScript.registerFunction(endGame, "endGame");
+	luaScript.registerFunction(debugLog, "debugLog");
+	luaScript.registerFunction(consoleMsg, "consoleMsg");
 
-	//NEW
 	luaScript.registerFunction(getPlayerName, "playerName");
 	luaScript.registerFunction(getFactionTypeName, "factionTypeName");
 	luaScript.registerFunction(getScenarioDir, "scenarioDir");
-
-	luaScript.registerFunction(debugLog, "debugLog");
-	//NEW END
 	luaScript.registerFunction(getStartLocation, "startLocation");
 	luaScript.registerFunction(getUnitPosition, "unitPosition");
 	luaScript.registerFunction(getUnitFaction, "unitFaction");
@@ -100,6 +127,27 @@ void ScriptManager::init(Game *game, World* world, GameCamera *gameCamera, GameS
 		luaScript.loadCode("function " + script->getName() + "()" + script->getCode() + " end\n", script->getName());
 	}
 	
+	// get globs, startup, unitDied, unitDiedOfType_xxxx (archer, worker, etc...) etc. 
+	//  need unit names of all loaded factions
+	// put defined function names in definedEvents, check membership before doing luaCall()
+	set<string> funcNames;
+	funcNames.insert ( "startup" );
+	funcNames.insert ( "unitDied" );
+	funcNames.insert ( "unitCreated" );
+	funcNames.insert ( "resourceHarvested" );
+	for ( int i=0; i < theWorld.getFactionCount(); ++i ) {
+		const FactionType *f = theWorld.getFaction( i )->getType();
+		for ( int j=0; j < f->getUnitTypeCount(); ++j ) {
+			const UnitType *ut = f->getUnitType( j );
+			funcNames.insert( "unitCreatedOfType_" + ut->getName() );
+		}
+	}
+	for ( set<string>::iterator it = funcNames.begin(); it != funcNames.end(); ++it ) {
+		if ( luaScript.isDefined( *it ) ) {
+			definedEvents.insert( *it );
+		}
+	}
+
 	//setup message box
 	messageBox.init( "", Lang::getInstance().get("Ok") );
 	messageBox.setEnabled(false);
@@ -129,62 +177,32 @@ void ScriptManager::onMessageBoxOk(){
 	//close the messageBox now all messages have been shown
 	if (messageQueue.empty()){
 		messageBox.setEnabled(false);
-		game->resume();
+		theGame.resume ();
 	}
 }
 
 void ScriptManager::onResourceHarvested(){
-	luaScript.luaCall("resourceHarvested");
+	if ( definedEvents.find( "resourceHarvested" ) != definedEvents.end() ) {
+		luaScript.luaCall("resourceHarvested");
+	}
 }
 
 void ScriptManager::onUnitCreated(const Unit* unit){
 	lastCreatedUnitName= unit->getType()->getName();
 	lastCreatedUnitId= unit->getId();
-	luaScript.luaCall("unitCreated");
-	luaScript.luaCall("unitCreatedOfType_"+unit->getType()->getName());
+	if ( definedEvents.find( "unitCreated" ) != definedEvents.end() ) {
+		luaScript.luaCall("unitCreated");
+	}
+	if ( definedEvents.find( "unitCreatedOfType_"+unit->getType()->getName() ) != definedEvents.end() ) {
+		luaScript.luaCall("unitCreatedOfType_"+unit->getType()->getName());
+	}
 }
 
 void ScriptManager::onUnitDied(const Unit* unit){
 	lastDeadUnitName= unit->getType()->getName();
 	lastDeadUnitId= unit->getId();
-	luaScript.luaCall("unitDied");
-}
-
-
-bool ScriptTimer::ready() {
-	if ( real ) {
-		return Chrono::getCurMillis () >= targetTime;
-	}
-	return Game::getInstance()->getWorld()->getFrameCount() >= targetTime;
-}
-
-void ScriptTimer::reset() {
-	if ( real ) {
-		targetTime = Chrono::getCurMillis () + interval * 1000;
-	}
-	else {
-		targetTime = Game::getInstance()->getWorld()->getFrameCount() + interval;
-	}
-}
-
-
-void ScriptManager::setTimer( const string &name, const string &type, int interval, bool periodic ) {
-	if ( type == "real" ) {
-		newTimerQueue.push_back (ScriptTimer ( name, true, interval, periodic ));
-	}
-	else if ( type == "game" ) {
-		newTimerQueue.push_back (ScriptTimer ( name, false, interval, periodic ));
-	}
-}
-
-void ScriptManager::stopTimer(const string &name) {
-	// find timer with the name and remove it
-	vector<ScriptTimer>::iterator i;
-	for (i = timers.begin(); i != timers.end(); ++i) {
-		if (i->getName() == name) {
-			i->kill ();
-			break;
-		}
+	if ( definedEvents.find( "unitDied" ) != definedEvents.end() ) {
+		luaScript.luaCall("unitDied");
 	}
 }
 
@@ -198,7 +216,8 @@ void ScriptManager::onTimer() {
 		if ( timer->ready() ) {
 			if ( timer->isAlive() ) {
 				if ( ! luaScript.luaCall("timer_" + timer->getName()) ) {
-					Logger::getErrorLog ().add ( "Error: function timer_" + timer->getName() + " not defined." );
+					timer->kill();
+					theConsole.addLine( "Error: timer_" + timer->getName() + " is not defined." );
 				}
 			}
 			if ( timer->isPeriodic() && timer->isAlive() ) {
@@ -217,9 +236,7 @@ void ScriptManager::onTimer() {
 	newTimerQueue.clear();
 }
 
-
-// ========================== lua wrappers ===============================================
-
+// =============== util ===============
 
 string ScriptManager::wrapString(const string &str, int wrapCount){
 
@@ -240,128 +257,7 @@ string ScriptManager::wrapString(const string &str, int wrapCount){
 	return returnString;
 }
 
-void ScriptManager::showMessage(const string &text, const string &header){
-	Lang &lang= Lang::getInstance();
-	
-	game->pause();
-
-	messageQueue.push(ScriptManagerMessage(text, header));
-	messageBox.setEnabled(true);
-	messageBox.setText(wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount));
-	messageBox.setHeader(lang.getScenarioString(messageQueue.front().getHeader()));
-}
-
-void ScriptManager::clearDisplayText(){
-	displayText= "";
-}
-
-void ScriptManager::setDisplayText(const string &text){
-	displayText= wrapString(Lang::getInstance().getScenarioString(text), displayTextWrapCount);
-}
-
-void ScriptManager::setCameraPosition(const Vec2i &pos){
-	gameCamera->centerXZ((float)pos.x, (float)pos.y);
-}
-
-void ScriptManager::createUnit(const string &unitName, int factionIndex, Vec2i pos){
-	world->createUnit(unitName, factionIndex, pos);
-}
-
-void ScriptManager::giveResource(const string &resourceName, int factionIndex, int amount){
-	world->giveResource(resourceName, factionIndex, amount);
-}
-
-void ScriptManager::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos){
-	world->givePositionCommand(unitId, commandName, pos);
-}
-
-void ScriptManager::giveProductionCommand(int unitId, const string &producedName){
-	world->giveProductionCommand(unitId, producedName);
-}
-
-void ScriptManager::giveUpgradeCommand(int unitId, const string &producedName){
-	world->giveUpgradeCommand(unitId, producedName);
-}
-
-void ScriptManager::giveTargetCommand ( int unitId, const string &cmdName, int targetId ) {
-	world->giveTargetCommand ( unitId, cmdName, targetId );
-}
-
-void ScriptManager::giveStopCommand ( int unitId, const string &cmdName ) {
-	world->giveStopCommand ( unitId, cmdName );
-}
-
-void ScriptManager::disableAi(int factionIndex){
-	if(factionIndex<GameConstants::maxPlayers){
-		playerModifiers[factionIndex].disableAi();
-	}
-}
-
-void ScriptManager::setPlayerAsWinner(int factionIndex){
-	if(factionIndex<GameConstants::maxPlayers){
-		playerModifiers[factionIndex].setAsWinner();
-	}
-}
-
-void ScriptManager::endGame(){
-	gameOver= true;
-}
-
-// Queries
-const string &ScriptManager::getPlayerName(int factionIndex){
-	return gameSettings->getPlayerName(factionIndex);
-}
-
-const string &ScriptManager::getFactionTypeName(int factionIndex){
-	return gameSettings->getFactionTypeName(factionIndex);
-}
-
-const string &ScriptManager::getScenarioDir(){
-	return gameSettings->getScenarioDir();
-}
-
-Vec2i ScriptManager::getStartLocation(int factionIndex){
-	return world->getStartLocation(factionIndex);
-}
-
-
-Vec2i ScriptManager::getUnitPosition(int unitId){
-	return world->getUnitPosition(unitId);
-}
-
-int ScriptManager::getUnitFaction(int unitId){
-	return world->getUnitFactionIndex(unitId);
-}
-
-int ScriptManager::getResourceAmount(const string &resourceName, int factionIndex){
-	return world->getResourceAmount(resourceName, factionIndex);
-}
-
-const string &ScriptManager::getLastCreatedUnitName(){
-	return lastCreatedUnitName;
-}
-
-int ScriptManager::getLastCreatedUnitId(){
-	return lastCreatedUnitId;
-}
-
-const string &ScriptManager::getLastDeadUnitName(){
-	return lastDeadUnitName;
-}
-
-int ScriptManager::getLastDeadUnitId(){
-	return lastDeadUnitId;
-}
-
-int ScriptManager::getUnitCount(int factionIndex){
-	return world->getUnitCount(factionIndex);
-}
-
-int ScriptManager::getUnitCountOfType(int factionIndex, const string &typeName){
-	return world->getUnitCountOfType(factionIndex, typeName);
-}
-
-// ========================== lua callbacks ===============================================
+// =============== Error handling bits ===============
 
 void ScriptManager::luaCppCallError ( const string &func, const string &expected, const string &received, const string extra ) {
 	string msg = func + " called with wrong paramaters, Expected: ("+ expected + ")\n\tGot (" + received + ")";
@@ -383,6 +279,9 @@ string ScriptManager::describeLuaStack ( LuaArguments &args ) {
 	return desc;
 }
 
+
+// ========================== lua callbacks ===============================================
+
 int ScriptManager::debugLog(Shared::Lua::LuaHandle *luaHandle)  {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 1 ) {
@@ -400,6 +299,23 @@ int ScriptManager::debugLog(Shared::Lua::LuaHandle *luaHandle)  {
 
 }
 
+int ScriptManager::consoleMsg (Shared::Lua::LuaHandle *luaHandle)  {
+	LuaArguments luaArguments(luaHandle);
+	if ( luaArguments.getArgumentCount() != 1 ) {
+		luaCppCallError ( "consoleMsg", "String", describeLuaStack ( luaArguments ) );
+		return luaArguments.getReturnCount();
+	}
+	try { 
+		string &msg = luaArguments.getString(-1);
+		theConsole.addLine ( msg );
+	}
+	catch ( LuaError e ) {
+		luaCppCallError ( "consoleMsg", "String", describeLuaStack ( luaArguments ), e.desc() );
+	}
+	return luaArguments.getReturnCount();
+
+}
+
 int ScriptManager::setTimer(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount () != 4 ) {
@@ -407,8 +323,15 @@ int ScriptManager::setTimer(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->setTimer( luaArguments.getString(-4), luaArguments.getString(-3),
-			luaArguments.getInt(-2), luaArguments.getBoolean(-1));
+		const string &name = luaArguments.getString(-4), &type = luaArguments.getString(-3);
+		int interval = luaArguments.getInt(-2);
+		bool periodic = luaArguments.getBoolean(-1);
+		if ( type == "real" ) {
+			newTimerQueue.push_back (ScriptTimer ( name, true, interval, periodic ));
+		}
+		else if ( type == "game" ) {
+			newTimerQueue.push_back (ScriptTimer ( name, false, interval, periodic ));
+		}
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "setTimer", "String, String, Number, Boolean", describeLuaStack ( luaArguments ), e.desc() );
@@ -423,7 +346,15 @@ int ScriptManager::stopTimer(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		thisScriptManager->stopTimer(luaArguments.getString(-1));
+		// find timer with the name and remove it
+		const string &name =  luaArguments.getString(-1);
+		vector<ScriptTimer>::iterator i;
+		for (i = timers.begin(); i != timers.end(); ++i) {
+			if (i->getName() == name) {
+				i->kill ();
+				break;
+			}
+		}
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "stopTimer", "String", describeLuaStack ( luaArguments ), e.desc() );
@@ -433,12 +364,19 @@ int ScriptManager::stopTimer(LuaHandle* luaHandle){
 
 int ScriptManager::showMessage(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
+	Lang &lang= Lang::getInstance();
 	if ( luaArguments.getArgumentCount() != 2 ) {
 		luaCppCallError ( "showMessage", "String, String", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->showMessage(luaArguments.getString(-2), luaArguments.getString(-1));
+		theGame.pause ();
+		ScriptManagerMessage msg ( luaArguments.getString(-2), luaArguments.getString(-1) );
+		messageQueue.push ( msg );
+		messageBox.setEnabled ( true );
+		messageBox.setText ( wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount) );
+		messageBox.setHeader(lang.getScenarioString(messageQueue.front().getHeader()));
+		//thisScriptManager->showMessage();
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "showMessage", "String, String", describeLuaStack ( luaArguments ), e.desc() );
@@ -453,7 +391,7 @@ int ScriptManager::setDisplayText(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->setDisplayText(luaArguments.getString(-1));
+		displayText= wrapString(Lang::getInstance().getScenarioString(luaArguments.getString(-1)), displayTextWrapCount);
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "setDisplayText", "String", describeLuaStack ( luaArguments ), e.desc() );
@@ -467,7 +405,7 @@ int ScriptManager::clearDisplayText(LuaHandle* luaHandle){
 		luaCppCallError ( "clearDisplayText", "", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
-	thisScriptManager->clearDisplayText();
+	displayText= "";
 	return luaArguments.getReturnCount();
 }
 
@@ -478,7 +416,8 @@ int ScriptManager::setCameraPosition(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->setCameraPosition(Vec2i(luaArguments.getVec2i(-1)));
+		Vec2i pos ( luaArguments.getVec2i(-1) );
+		theCamera.centerXZ((float)pos.x, (float)pos.y);
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "setCameraPosition", "Table", describeLuaStack ( luaArguments ), e.desc() );
@@ -492,8 +431,8 @@ int ScriptManager::createUnit(LuaHandle* luaHandle){
 		luaCppCallError ( "createUnit", "String, Number, Table", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
-	try { 
-		thisScriptManager->createUnit(luaArguments.getString(-3),luaArguments.getInt(-2),luaArguments.getVec2i(-1));
+	try {
+		theWorld.createUnit ( luaArguments.getString(-3),luaArguments.getInt(-2),luaArguments.getVec2i(-1) );
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "createUnit", "String, Number, Table", describeLuaStack ( luaArguments ), e.desc() );
@@ -508,7 +447,7 @@ int ScriptManager::giveResource(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->giveResource(luaArguments.getString(-3), luaArguments.getInt(-2), luaArguments.getInt(-1));
+		theWorld.giveResource(luaArguments.getString(-3), luaArguments.getInt(-2), luaArguments.getInt(-1));
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "giveResource", "String, Number, Number", describeLuaStack ( luaArguments ), e.desc() );
@@ -523,7 +462,7 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->givePositionCommand(luaArguments.getInt(-3),luaArguments.getString(-2),luaArguments.getVec2i(-1));
+		theWorld.givePositionCommand(luaArguments.getInt(-3),luaArguments.getString(-2),luaArguments.getVec2i(-1));
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "givePositionCommand", "Number, String, Table", describeLuaStack ( luaArguments ), e.desc() );
@@ -538,7 +477,7 @@ int ScriptManager::giveTargetCommand ( LuaHandle * luaHandle ) {
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->giveTargetCommand(luaArguments.getInt(-3),luaArguments.getString(-2),luaArguments.getInt(-1));
+		theWorld.giveTargetCommand(luaArguments.getInt(-3),luaArguments.getString(-2),luaArguments.getInt(-1));
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "giveTargetCommand", "Number, String, Number", describeLuaStack ( luaArguments ), e.desc() );
@@ -553,7 +492,7 @@ int ScriptManager::giveStopCommand ( LuaHandle * luaHandle ) {
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->giveStopCommand( luaArguments.getInt(-2),luaArguments.getString(-1) );
+		theWorld.giveStopCommand( luaArguments.getInt(-2),luaArguments.getString(-1) );
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "giveStopCommand", "Number, String", describeLuaStack ( luaArguments ), e.desc() );
@@ -561,14 +500,14 @@ int ScriptManager::giveStopCommand ( LuaHandle * luaHandle ) {
 	return luaArguments.getReturnCount();	
 }
 
-int ScriptManager::giveProductionCommand(LuaHandle* luaHandle){
+int ScriptManager::giveProductionCommand(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount () != 2 ) {
 		luaCppCallError ( "giveProductionCommand", "Number, String", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->giveProductionCommand(luaArguments.getInt(-2),luaArguments.getString(-1));
+		theWorld.giveProductionCommand(luaArguments.getInt(-2),luaArguments.getString(-1));
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "giveProductionCommand", "Number, String", describeLuaStack ( luaArguments ), e.desc() );
@@ -576,14 +515,14 @@ int ScriptManager::giveProductionCommand(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::giveUpgradeCommand(LuaHandle* luaHandle){
+int ScriptManager::giveUpgradeCommand(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount () != 2 ) {
 		luaCppCallError ( "giveUpgradeCommand", "Number, String", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
 	try {
-		thisScriptManager->giveUpgradeCommand(luaArguments.getInt(-2), luaArguments.getString(-1));
+		theWorld.giveUpgradeCommand(luaArguments.getInt(-2), luaArguments.getString(-1));
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "giveUpgradeCommand", "Number, String", describeLuaStack ( luaArguments ), e.desc() );
@@ -591,14 +530,17 @@ int ScriptManager::giveUpgradeCommand(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::disableAi(LuaHandle* luaHandle){
+int ScriptManager::disableAi(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 1 ) {
 		luaCppCallError ( "disableAi", "Number", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		thisScriptManager->disableAi(luaArguments.getInt(-1));
+		int factionIndex = luaArguments.getInt(-1);
+		if(factionIndex<GameConstants::maxPlayers){
+			playerModifiers[factionIndex].disableAi();
+		}
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "disableAi", "Number", describeLuaStack ( luaArguments ), e.desc() );
@@ -606,14 +548,17 @@ int ScriptManager::disableAi(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::setPlayerAsWinner(LuaHandle* luaHandle){
+int ScriptManager::setPlayerAsWinner(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 1 ) {
 		luaCppCallError ( "setPlayerAsWinner", "Number", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		thisScriptManager->setPlayerAsWinner(luaArguments.getInt(-1));
+		int factionIndex = luaArguments.getInt(-1);
+		if(factionIndex<GameConstants::maxPlayers){
+			playerModifiers[factionIndex].setAsWinner();
+		}
 	}
 	catch ( LuaError e ) {
 		luaCppCallError ( "setPlayerAsWinner", "Number", describeLuaStack ( luaArguments ), e.desc() );
@@ -621,18 +566,18 @@ int ScriptManager::setPlayerAsWinner(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::endGame(LuaHandle* luaHandle){
+int ScriptManager::endGame(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 0 ) {
 		luaCppCallError ( "endGame", "", describeLuaStack ( luaArguments ) );
 		return luaArguments.getReturnCount();
 	}
-	thisScriptManager->endGame();
+	gameOver = true;
 	return luaArguments.getReturnCount();
 }
 
 // Queries
-int ScriptManager::getPlayerName(LuaHandle* luaHandle){
+int ScriptManager::getPlayerName(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 1 ) {
 		luaCppCallError ( "getPlayerName", "Number", describeLuaStack ( luaArguments ) );
@@ -640,7 +585,7 @@ int ScriptManager::getPlayerName(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		string playerName= thisScriptManager->getPlayerName(luaArguments.getInt(-1));
+		string playerName= theGameSettings.getPlayerName(luaArguments.getInt(-1));
 		luaArguments.returnString(playerName);
 	}
 	catch ( LuaError e ) {
@@ -650,7 +595,7 @@ int ScriptManager::getPlayerName(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::getFactionTypeName(LuaHandle* luaHandle){
+int ScriptManager::getFactionTypeName(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 1 ) {
 		luaCppCallError ( "getFactionTypeName", "Number", describeLuaStack ( luaArguments ) );
@@ -658,7 +603,7 @@ int ScriptManager::getFactionTypeName(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		string factionTypeName= thisScriptManager->getFactionTypeName(luaArguments.getInt(-1));
+		string factionTypeName= theGameSettings.getFactionTypeName(luaArguments.getInt(-1));
 		luaArguments.returnString(factionTypeName);
 	}
 	catch ( LuaError e ) {
@@ -668,13 +613,13 @@ int ScriptManager::getFactionTypeName(LuaHandle* luaHandle){
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::getScenarioDir(LuaHandle* luaHandle){
+int ScriptManager::getScenarioDir(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
-	luaArguments.returnString(thisScriptManager->getScenarioDir());
+	luaArguments.returnString(theGameSettings.getScenarioDir());
 	return luaArguments.getReturnCount();
 }
 
-int ScriptManager::getStartLocation(LuaHandle* luaHandle){
+int ScriptManager::getStartLocation(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
 	if ( luaArguments.getArgumentCount() != 1 ) {
 		luaCppCallError ( "getStartLocation", "Number", describeLuaStack ( luaArguments ) );
@@ -682,7 +627,7 @@ int ScriptManager::getStartLocation(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		Vec2i pos= thisScriptManager->getStartLocation(luaArguments.getInt(-1));
+		Vec2i pos= theWorld.getStartLocation(luaArguments.getInt(-1));
 		luaArguments.returnVec2i(pos);
 	}
 	catch ( LuaError e ) {
@@ -700,7 +645,7 @@ int ScriptManager::getUnitPosition(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		Vec2i pos= thisScriptManager->getUnitPosition(luaArguments.getInt(-1));
+		Vec2i pos= theWorld.getUnitPosition(luaArguments.getInt(-1));
 		luaArguments.returnVec2i(pos);
 	}
 	catch ( LuaError e ) {
@@ -718,7 +663,7 @@ int ScriptManager::getUnitFaction(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		int factionIndex= thisScriptManager->getUnitFaction(luaArguments.getInt(-1));
+		int factionIndex= theWorld.getUnitFactionIndex(luaArguments.getInt(-1));
 		luaArguments.returnInt(factionIndex);
 	}
 	catch ( LuaError e ) {
@@ -736,7 +681,7 @@ int ScriptManager::getResourceAmount(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		int amount = thisScriptManager->getResourceAmount(luaArguments.getString(-2), luaArguments.getInt(-1));
+		int amount = theWorld.getResourceAmount(luaArguments.getString(-2), luaArguments.getInt(-1));
 		luaArguments.returnInt(amount);
 	}
 	catch ( LuaError e ) {
@@ -748,25 +693,25 @@ int ScriptManager::getResourceAmount(LuaHandle* luaHandle){
 
 int ScriptManager::getLastCreatedUnitName(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
-	luaArguments.returnString(thisScriptManager->getLastCreatedUnitName());
+	luaArguments.returnString( lastCreatedUnitName );
 	return luaArguments.getReturnCount();
 }
 
 int ScriptManager::getLastCreatedUnitId(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
-	luaArguments.returnInt(thisScriptManager->getLastCreatedUnitId());
+	luaArguments.returnInt(lastCreatedUnitId);
 	return luaArguments.getReturnCount();
 }
 
 int ScriptManager::getLastDeadUnitName(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
-	luaArguments.returnString(thisScriptManager->getLastDeadUnitName());
+	luaArguments.returnString(lastDeadUnitName);
 	return luaArguments.getReturnCount();
 }
 
 int ScriptManager::getLastDeadUnitId(LuaHandle* luaHandle){
 	LuaArguments luaArguments(luaHandle);
-	luaArguments.returnInt(thisScriptManager->getLastDeadUnitId());
+	luaArguments.returnInt(lastDeadUnitId);
 	return luaArguments.getReturnCount();
 }
 
@@ -778,7 +723,7 @@ int ScriptManager::getUnitCount(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		int amount = thisScriptManager->getUnitCount(luaArguments.getInt(-1));
+		int amount = theWorld.getUnitCount(luaArguments.getInt(-1));
 		luaArguments.returnInt(amount);
 	}
 	catch ( LuaError e ) {
@@ -796,7 +741,7 @@ int ScriptManager::getUnitCountOfType(LuaHandle* luaHandle){
 		return luaArguments.getReturnCount();
 	}
 	try {
-		int amount = thisScriptManager->getUnitCountOfType(luaArguments.getInt(-2), luaArguments.getString(-1));
+		int amount = theWorld.getUnitCountOfType(luaArguments.getInt(-2), luaArguments.getString(-1));
 		luaArguments.returnInt(amount);
 	}
 	catch ( LuaError e ) {

@@ -54,7 +54,7 @@ World::World(Game *game) : game(*game), gs(game->getGameSettings()), stats(game-
 
 	frameCount= 0;
 	nextUnitId= 0;
-   scriptManager = NULL;
+	scriptManager = NULL;
 	assert(!singleton);
 	singleton = this;
 	alive = false;
@@ -104,7 +104,6 @@ void World::init(const XmlNode *worldNode) {
 
 	initSplattedTextures();
 
-	scriptManager = game.getScriptManager();
 	unitUpdater.init(game); // must be done after initMap()
 
 	//minimap must be init after sum computation
@@ -771,6 +770,10 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
     return currUnit;
 }
 
+//
+// TODO: More logging of lua problems to console... and wrap them all up in conditions [ if ( luaLog ) ]
+//
+
 void World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos){
 	if(factionIndex<factions.size()){
 		Faction* faction= &factions[factionIndex];
@@ -801,10 +804,6 @@ void World::giveResource(const string &resourceName, int factionIndex, int amoun
 		Faction* faction= &factions[factionIndex];
 		const ResourceType* rt= techTree.getResourceType(resourceName);
 		faction->incResourceAmount(rt, amount);
-		//DEBUG
-		static char buf[256];
-		sprintf ( buf, "Faction %d given %d %s", factionIndex, amount, resourceName.c_str() );
-		scriptManager->setDisplayText ( buf );
 	}
 	else {
 		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
@@ -827,11 +826,11 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 			Resource *r = map.getTile ( Map::toTileCoords(pos) )->getResource();
 			bool found = false;
 			if ( ! unit->getType()->getFirstCtOfClass(ccHarvest) ) {
-				scriptManager->setDisplayText ( "Error: Invalid command, unit has no harvest command" );
+				theConsole.addLine ( "Error: Invalid command, unit has no harvest command" );
 				return;
 			}
 			if ( !r ) {
-				scriptManager->setDisplayText ( "Warning: No resources found at target pos of harvest cmd" );
+				theConsole.addLine ( "Warning: No resources found at target pos of harvest cmd" );
 				cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
 			}
 			else {
@@ -846,7 +845,7 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 					}
 				}
 				if ( !found ) {
-					scriptManager->setDisplayText ( "Warning: Resource at target pos can not be harvested by this unit" );
+					theConsole.addLine ( "Warning: Resource at target pos can not be harvested by this unit" );
 					cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
 				}
 			}
@@ -858,12 +857,12 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 		}
 		
 		CommandResult res = unit->giveCommand(new Command( cmdType, CommandFlags(), pos ));
-
+		
 		if ( res != crSuccess ) {
-			scriptManager->setDisplayText ( "command failed" );
+			theConsole.addLine ( "command failed" );
 		}
 		else {
-			scriptManager->setDisplayText ( "command succees" );
+			theConsole.addLine ( "command succees" );
 		}
 
 	}
@@ -872,7 +871,7 @@ void World::giveTargetCommand ( int unitId, const string & cmdName, int targetId
 	Unit *unit = findUnitById ( unitId );
 	Unit *target = findUnitById ( targetId );
 	if ( !target ) {
-		scriptManager->setDisplayText ( "Error: Target command has invalid target ID." );
+		theConsole.addLine ( "Error: Target command has invalid target ID." );
 		return;
 	}
 	if ( cmdName == "attack" ) {
@@ -886,7 +885,7 @@ void World::giveTargetCommand ( int unitId, const string & cmdName, int targetId
 				}
 			}
 		}
-		scriptManager->setDisplayText ( "Warning: Could not attack target, no appropriate attack command found." );
+		theConsole.addLine ( "Warning: Could not attack target, no appropriate attack command found." );
 	}
 	else if ( cmdName == "repair" ) {
 		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
@@ -898,8 +897,7 @@ void World::giveTargetCommand ( int unitId, const string & cmdName, int targetId
 				}
 			}
 		}
-		scriptManager->setDisplayText ( "Error: Unit " + unit->getType()->getName() + " can not repair "
-			+ target->getType()->getName () );
+		theConsole.addLine ( "Error: Unit " + unit->getType()->getName() + " can not repair " + target->getType()->getName () );
 
 	}
 	else if ( cmdName == "guard" ) {
@@ -928,8 +926,7 @@ void World::giveStopCommand ( int unitId, const string &cmdName ) {
 			unit->giveCommand ( new Command ( asct, CommandFlags() ) );
 		}
 		else {
-			scriptManager->setDisplayText ( "Error: Unit Type " + unit->getType()->getName() + 
-				" has no Attack Stopped Command." );
+			theConsole.addLine ( "Error: Unit Type " + unit->getType()->getName() + " has no Attack Stopped Command." );
 		}
 	}
 	else {
@@ -950,10 +947,10 @@ void World::giveProductionCommand(int unitId, const string &producedName){
 				const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
 				if(pct->getProducedUnit()->getName()==producedName){
 					if ( unit->giveCommand(new Command(pct, CommandFlags())) == crSuccess ) {
-						scriptManager->setDisplayText ( "produce command success" );
+						theConsole.addLine ( "produce command success" );
 					}
 					else {
-						scriptManager->setDisplayText ( "produce command failed" );
+						theConsole.addLine ( "produce command failed" );
 					}
 					return;
 				}
@@ -969,14 +966,14 @@ void World::giveProductionCommand(int unitId, const string &producedName){
 		// didn't find a Produce Command, was there are Morph Command?
 		if ( mct ) {
 			if ( unit->giveCommand ( new Command (mct, CommandFlags()) ) == crSuccess ) {
-				scriptManager->setDisplayText ( "morph command success" );
+				theConsole.addLine ( "morph command success" );
 			}
 			else {
-				scriptManager->setDisplayText ( "morph command failed" );
+				theConsole.addLine ( "morph command failed" );
 			}
 		}
 		else {
-			scriptManager->setDisplayText ( "Error: invalid production command" );
+			theConsole.addLine ( "Error: invalid production command" );
 		}
 	}
 }
@@ -1052,8 +1049,7 @@ int World::getUnitCount(int factionIndex){
 		}
 		return count;
 	}
-	else
-	{
+	else {
 		throw runtime_error("Invalid faction index in getUnitCount: " + intToStr(factionIndex));
 	}
 }

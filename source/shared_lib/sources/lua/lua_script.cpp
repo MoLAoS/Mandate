@@ -14,9 +14,7 @@
 #include "lua_script.h"
 
 //#include <stdexcept>
-
 #include "conversion.h"
-
 #include "leak_dumper.h"
 
 using namespace std;
@@ -28,20 +26,29 @@ namespace Shared{ namespace Lua{
 //	class LuaScript
 // =====================================================
 
-LuaScript::LuaScript(){
+LuaScript::LuaScript() {
+	luaState = NULL;
+}
+
+LuaScript::~LuaScript() {
+	close();
+}
+
+void LuaScript::close () {
+	if ( luaState ) {
+		lua_close(luaState);
+		luaState = NULL;
+	}
+}
+
+void LuaScript::startUp () {
+	close();
 	luaState= luaL_newstate();
-
 	luaL_openlibs(luaState);
-
 	if(luaState==NULL){
 		throw runtime_error("Can not allocate lua state");
 	}
-
 	argumentCount= -1;
-}
-
-LuaScript::~LuaScript(){
-	lua_close(luaState);
 }
 
 void LuaScript::loadCode(const string &code, const string &name){
@@ -62,16 +69,21 @@ void LuaScript::loadCode(const string &code, const string &name){
 		throw runtime_error("Error initializing lua: " + errorToString(errorCode));
 	}
 }
+bool LuaScript::isDefined ( const string &name ) {
+	bool defined = false;
+	lua_getglobal( luaState, name.c_str() );
+	if ( lua_isfunction ( luaState, -1 ) ) {
+		defined = true;
+	}
+	lua_pop( luaState, 1 );
+	
+	return defined;
+}
 
 bool LuaScript::luaCall(const string& functionName) {
 	lua_getglobal(luaState, functionName.c_str());
 	argumentCount= 0;
 	if ( lua_pcall(luaState, argumentCount, 0, 0) ) {
-		// call failed, top of stack should have an error message on it...
-		//if ( lua_isstring ( luaState, -1 ) ) {
-			//const char *err = lua_tostring ( luaState, -1 );
-			//string emsg = "Error: function " + functionName + " not defined.\n" + err;
-		//}
 		return false;
 	}
 	return true;

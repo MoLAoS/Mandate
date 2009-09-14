@@ -103,6 +103,8 @@ public:
 	~World()										{singleton = NULL;}
 	void end(); //to die before selection does
 
+	static World& getInstance () { return *singleton; }
+
 	//get
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
