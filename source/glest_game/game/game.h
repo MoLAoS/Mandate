@@ -78,7 +78,6 @@ private:
     Commander commander;
     Console console;
 	ChatManager chatManager;
-	ScriptManager scriptManager;
 
 	//misc
 	Checksum checksum;
@@ -119,7 +118,6 @@ public:
 	const Gui *getGui() const				{return &gui;}
 	Commander *getCommander()				{return &commander;}
 	Console *getConsole()					{return &console;}
-	ScriptManager *getScriptManager()		{return &scriptManager;}
 	World *getWorld()						{return &world;}
 	const World *getWorld() const			{return &world;}
 
@@ -149,6 +147,8 @@ public:
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
 	void quitGame ();
+	void pause() { paused = true; }
+	void resume() { paused = false; }
 
 private:
 	//render

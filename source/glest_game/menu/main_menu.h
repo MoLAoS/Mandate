@@ -30,12 +30,13 @@ struct MapInfo {
 	string desc;
 };
 
-struct ScenarioInfo
-{
+struct ScenarioInfo {
 	int difficulty;
     ControlType factionControls[GameConstants::maxPlayers];
     int teams[GameConstants::maxPlayers];
     string factionTypeNames[GameConstants::maxPlayers];
+	string playerNames[GameConstants::maxPlayers];
+	float resourceMultipliers[GameConstants::maxPlayers];
 
     string mapName;
     string tilesetName;

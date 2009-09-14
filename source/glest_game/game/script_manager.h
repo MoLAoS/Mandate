@@ -14,24 +14,61 @@
 
 #include <string>
 #include <queue>
+#include <set>
 
 #include "lua_script.h"
 #include "vec.h"
+#include "timer.h"
 
 #include "components.h"
 #include "game_constants.h"
 
 using std::string;
 using std::queue;
+using std::set;
 using Shared::Graphics::Vec2i;
-using Shared::Lua::LuaScript;
-using Shared::Lua::LuaHandle;
+using Shared::Platform::Chrono;
+using namespace Shared::Lua;
 
 namespace Glest{ namespace Game{
 
 class World;
 class Unit;
 class GameCamera;
+class GameSettings;
+class Game;
+
+
+// =====================================================
+//	class ScriptTimer
+// =====================================================
+
+class ScriptTimer {
+public:
+	ScriptTimer ( const string &name, bool real, int interval, bool periodic) 
+			: name (name)
+			, real (real)
+			, periodic  (periodic)
+			, interval (interval)
+			, active (true) {
+		reset();
+	}
+
+	bool ready();
+	void reset();
+
+	string getName() { return name; }
+	bool isPeriodic() { return periodic; }
+	bool isAlive () { return active; }
+	void kill () { active = false; }
+
+private:
+	string name;
+	bool real;
+	bool periodic;
+	bool active;
+	int64 targetTime, interval;
+};
 
 // =====================================================
 //	class ScriptManagerMessage
@@ -68,90 +105,73 @@ private:
 // =====================================================
 
 class ScriptManager{
+
+	//friend class World; // Lua Debugging, using setDisplayTest()
+
 private:
 	typedef queue<ScriptManagerMessage> MessageQueue;
 
-private:
-
 	//lua
-	string code;
-	LuaScript luaScript;
-
-	//world
-	World *world;
-	GameCamera *gameCamera;
+	static string code;
+	static LuaScript luaScript;
 
 	//misc
-	MessageQueue messageQueue;
-	GraphicMessageBox messageBox;
-	string displayText;
+	static MessageQueue messageQueue;
+	static GraphicMessageBox messageBox;
+	static string displayText;
 	
 	//last created unit
-	string lastCreatedUnitName;
-	int lastCreatedUnitId;
+	static string lastCreatedUnitName;
+	static int lastCreatedUnitId;
 
 	//last dead unit
-	string lastDeadUnitName;
-	int lastDeadUnitId;
+	static string lastDeadUnitName;
+	static int lastDeadUnitId;
 
 	// end game state
-	bool gameOver;
-	PlayerModifiers playerModifiers[GameConstants::maxPlayers];
+	static bool gameOver;
+	static PlayerModifiers playerModifiers[GameConstants::maxPlayers];
 
-private:
-	static ScriptManager* thisScriptManager;
+	static vector<ScriptTimer> timers;
+	static vector<ScriptTimer> newTimerQueue;
 
-private:
+	static set<string> definedEvents;
+
+	//static ScriptManager* thisScriptManager;
+
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
 
 public:
-	void init(World* world, GameCamera *gameCamera);
+	static void init ();
 
 	//message box functions
-	bool getMessageBoxEnabled() const									{return !messageQueue.empty();}
-	GraphicMessageBox* getMessageBox()									{return &messageBox;}
-	string getDisplayText() const										{return displayText;}
-	bool getGameOver() const											{return gameOver;}
-	const PlayerModifiers *getPlayerModifiers(int factionIndex) const	{return &playerModifiers[factionIndex];}	
+	static bool getMessageBoxEnabled() 									{return !messageQueue.empty();}
+	static GraphicMessageBox* getMessageBox()							{return &messageBox;}
+	static string getDisplayText() 										{return displayText;}
+	static bool getGameOver() 											{return gameOver;}
+	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}	
 
 	//events
-	void onMessageBoxOk();
-	void onResourceHarvested();
-	void onUnitCreated(const Unit* unit);
-	void onUnitDied(const Unit* unit);
+	static void onMessageBoxOk();
+	static void onResourceHarvested();
+	static void onUnitCreated(const Unit* unit);
+	static void onUnitDied(const Unit* unit);
+	static void onTimer();
 
 private:
+	static string wrapString(const string &str, int wrapCount);
+	static string describeLuaStack ( LuaArguments &args );
+	static void luaCppCallError ( const string &func, const string &expected, const string &received, 
+											const string extra = "Wrong number of parameters." ) ;
 
-	string wrapString(const string &str, int wrapCount);
-
-	//wrappers, commands
-	void showMessage(const string &text, const string &header);
-	void clearDisplayText();
-	void setDisplayText(const string &text);
-	void setCameraPosition(const Vec2i &pos);
-	void createUnit(const string &unitName, int factionIndex, Vec2i pos);
-	void giveResource(const string &resourceName, int factionIndex, int amount);
-	void givePositionCommand(int unitId, const string &producedName, const Vec2i &pos);
-	void giveProductionCommand(int unitId, const string &producedName);
-	void giveUpgradeCommand(int unitId, const string &upgradeName);
-	void disableAi(int factionIndex);
-	void setPlayerAsWinner(int factionIndex);
-	void endGame();
-
-	//wrappers, queries
-	Vec2i getStartLocation(int factionIndex);
-	Vec2i getUnitPosition(int unitId);
-	int getUnitFaction(int unitId);
-	int getResourceAmount(const string &resourceName, int factionIndex);
-	const string &getLastCreatedUnitName();
-	int getLastCreatedUnitId();
-	const string &getLastDeadUnitName();
-	int getLastDeadUnitId();
-	int getUnitCount(int factionIndex);
-	int getUnitCountOfType(int factionIndex, const string &typeName);
-
-	//callbacks, commands
+	//
+	// LUA callbacks
+	//
+	
+	// commands
+	static int setTimer(LuaHandle* luaHandle);
+	static int stopTimer(LuaHandle* luaHandle);
 	static int showMessage(LuaHandle* luaHandle);
 	static int setDisplayText(LuaHandle* luaHandle);
 	static int clearDisplayText(LuaHandle* luaHandle);
@@ -159,13 +179,20 @@ private:
 	static int createUnit(LuaHandle* luaHandle);
 	static int giveResource(LuaHandle* luaHandle);
 	static int givePositionCommand(LuaHandle* luaHandle);
+	static int giveTargetCommand ( LuaHandle * luaHandle );
+	static int giveStopCommand ( LuaHandle * luaHandle );
 	static int giveProductionCommand(LuaHandle* luaHandle);
 	static int giveUpgradeCommand(LuaHandle* luaHandle);
 	static int disableAi(LuaHandle* luaHandle);
 	static int setPlayerAsWinner(LuaHandle* luaHandle);
 	static int endGame(LuaHandle* luaHandle);
+	static int debugLog ( LuaHandle* luaHandle );
+	static int consoleMsg ( LuaHandle* luaHandle );
 
-	//callbacks, queries
+	// queries
+	static int getPlayerName(LuaHandle* luaHandle);
+	static int getFactionTypeName(LuaHandle* luaHandle);
+	static int getScenarioDir(LuaHandle* luaHandle);
 	static int getStartLocation(LuaHandle* luaHandle);
 	static int getUnitPosition(LuaHandle* luaHandle);
 	static int getUnitFaction(LuaHandle* luaHandle);

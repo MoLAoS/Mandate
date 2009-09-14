@@ -350,25 +350,31 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
 	gameSettings->setMap(mapFiles[listBoxMap.getSelectedItemIndex()]);
-    gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-    gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
+	gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
 	gameSettings->setDefaultVictoryConditions(true);
 	gameSettings->setDefaultResources (true);
 	gameSettings->setDefaultUnits (true);
-  
 
-    for(int i=0; i<mapInfo.players; ++i){
+	for(int i=0; i<mapInfo.players; ++i){
 		ControlType ct= static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
 		if(ct!=ctClosed){
 			if(ct==ctHuman){
 				gameSettings->setThisFactionIndex(factionCount);
+			}
+			if ( ct == ctCpuUltra ) {
+				gameSettings->setResourceMultiplier ( factionCount, 3.f );
+			}
+			else {
+				gameSettings->setResourceMultiplier ( factionCount, 1.f );
 			}
 			gameSettings->setFactionControl(factionCount, ct);
 			gameSettings->setTeam(factionCount, listBoxTeams[i].getSelectedItemIndex());
 			gameSettings->setStartLocationIndex(factionCount, i);
 			if(listBoxFactions[i].getSelectedItemIndex() >= factionFiles.size()) {
 				gameSettings->setFactionTypeName(factionCount, factionFiles[rand.randRange(0, factionFiles.size() - 1)]);
-			} else {
+			} 
+			else {
 				gameSettings->setFactionTypeName(factionCount, factionFiles[listBoxFactions[i].getSelectedItemIndex()]);
 			}
 			factionCount++;

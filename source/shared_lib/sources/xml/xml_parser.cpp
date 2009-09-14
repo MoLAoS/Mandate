@@ -173,6 +173,7 @@ XmlNode::XmlNode(TiXmlNode *node) : text() {
 		attribute = attribute->Next();
 	}
 
+
 	// text
 	if ( element->FirstChild() ) {
 		TiXmlText *script = element->FirstChild()->ToText ();

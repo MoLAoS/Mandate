@@ -71,7 +71,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zdll.lib lua5.1.lib"
+				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zdll.lib lua5.1_d.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				IgnoreAllDefaultLibraries="false"
@@ -131,7 +131,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
+				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -226,7 +226,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;../shared_lib/include/tinyxml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;TIXML_USE_STL;USE_PCH=1"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				BufferSecurityCheck="true"
@@ -626,6 +626,10 @@
 			</File>
 			<File
 				RelativePath=".\graphics\particle_type.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ai\path_finder.h"
 				>
 			</File>
 			<File
