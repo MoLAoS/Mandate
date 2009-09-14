@@ -1322,7 +1322,6 @@ bool Unit::morph(const MorphCommandType *mct) {
 	Field newField;
 	if(morphUnitType->getField(FieldWalkable)) newField = FieldWalkable;
 	else if(morphUnitType->getField(FieldAir)) newField = FieldAir;
-
 	if ( morphUnitType->getField (FieldAmphibious) ) newField = FieldAmphibious;
 	else if ( morphUnitType->getField (FieldAnyWater) ) newField = FieldAnyWater;
 	else if ( morphUnitType->getField (FieldDeepWater) ) newField = FieldDeepWater;

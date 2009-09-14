@@ -353,8 +353,8 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
     gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
     gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
 	gameSettings->setDefaultVictoryConditions(true);
-   gameSettings->setDefaultResources (true);
-   gameSettings->setDefaultUnits (true);
+	gameSettings->setDefaultResources (true);
+	gameSettings->setDefaultUnits (true);
   
 
     for(int i=0; i<mapInfo.players; ++i){

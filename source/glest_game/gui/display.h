@@ -18,7 +18,6 @@
 #include "util.h"
 #include "command_type.h"
 #include "game_util.h"
-#include "network_status.h"
 #include "metrics.h"
 
 using std::string;

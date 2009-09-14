@@ -1066,21 +1066,19 @@ void UnitUpdater::updateMorph(Unit *unit){
 	if(unit->getCurrSkill()->getClass() != scMorph){
 		//if not morphing, check space
 		bool gotSpace = false;
+		// redo field
 		Fields mfs = mct->getMorphUnit()->getFields ();
-		Field mf = (Field)0;
-		while ( mf != FieldCount ) {
-			if ( mfs.get ( mf )
-			&&   map->areFreeCellsOrHasUnit ( unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit) ) {
-				gotSpace = true;
-				break;
-			}
-			mf = (Field)(mf + 1);
-		}
+		
+		Field mf;
+		if ( mfs.get ( FieldWalkable ) ) mf = FieldWalkable;
+		else if ( mfs.get ( FieldAir ) ) mf = FieldAir;
+		if ( mfs.get (FieldAmphibious) ) mf = FieldAmphibious;
+		else if ( mfs.get (FieldAnyWater) ) mf = FieldAnyWater;
+		else if ( mfs.get (FieldDeepWater) ) mf = FieldDeepWater;
 
-		if ( gotSpace ) {
+		if ( map->areFreeCellsOrHasUnit (unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit) ) {
 			unit->setCurrSkill(mct->getMorphSkillType());
 			unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), false);
-			unit->setCurrField ( mf );
 		} 
 		else {
 			if(unit->getFactionIndex() == world->getThisFactionIndex())

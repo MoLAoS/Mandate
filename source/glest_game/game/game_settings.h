@@ -46,9 +46,9 @@ private:
 	int teams[GameConstants::maxPlayers];
 	int startLocationIndex[GameConstants::maxPlayers];
 
-   bool defaultUnits;
-   bool defaultResources;
-   bool defaultVictoryConditions;
+	bool defaultUnits;
+	bool defaultResources;
+	bool defaultVictoryConditions;
 
 public:
 	GameSettings(){}
@@ -75,9 +75,9 @@ public:
 	int getTeam(int i) const									{return teams[i];}
 	int getStartLocationIndex(int i) const						{return startLocationIndex[i];}
 
-   bool getDefaultUnits() const				{return defaultUnits;}
-   bool getDefaultResources() const			{return defaultResources;}
-   bool getDefaultVictoryConditions() const	{return defaultVictoryConditions;}
+	bool getDefaultUnits() const				{return defaultUnits;}
+	bool getDefaultResources() const			{return defaultResources;}
+	bool getDefaultVictoryConditions() const	{return defaultVictoryConditions;}
 
 	//set
 	void setDescription(const string& description)				{this->description = description;}

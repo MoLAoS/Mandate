@@ -101,7 +101,7 @@ const char *Game::SpeedDesc[sCount] = {
 };
 
 Game::~Game() {
-    Logger &logger= Logger::getInstance();
+	Logger &logger= Logger::getInstance();
 	Renderer &renderer= Renderer::getInstance();
 
 	logger.setState(Lang::getInstance().get("Deleting"));
@@ -116,7 +116,7 @@ Game::~Game() {
 	gui.end();		//selection must be cleared before deleting units
 	world.end();	//must die before selection because of referencers
 	singleton = NULL;
-   logger.setLoading ( true );
+	logger.setLoading ( true );
 }
 
 
@@ -134,21 +134,21 @@ void Game::load(){
 
 	if(scenarioName.empty())
 		logger.setSubtitle(formatString(mapName)+" - "+formatString(tilesetName)+" - "+formatString(techName));
-   else
+	else
 		logger.setSubtitle(formatString(scenarioName));
 
 	//tileset
-   if ( ! world.loadTileset(checksum) )
-      throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
+	if ( ! world.loadTileset(checksum) )
+		throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
 
-   //tech, load before map because of resources
-   if ( ! world.loadTech(checksum) )
-      throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
+	//tech, load before map because of resources
+	if ( ! world.loadTech(checksum) )
+		throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
 
-   //map
-   world.loadMap(checksum);
+	//map
+	world.loadMap(checksum);
 
-   //scenario
+	//scenario
 	if(!scenarioName.empty()){
 		Lang::getInstance().loadScenarioStrings(gameSettings.getScenarioDir(), scenarioName);
 		world.loadScenario(Scenario::getScenarioPath(gameSettings.getScenarioDir(), scenarioName), &checksum);
