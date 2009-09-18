@@ -71,13 +71,13 @@ public:
    Cell() {
 		memset(units, 0, sizeof(units));
 		height= 0;
-      surfaceType = SurfaceTypeLand;
-	}
+		surfaceType = SurfaceTypeLand;
+   }
 
-	// get
-	Unit *getUnit (Zone zone) const		{return units[zone];}
+   // get
+   Unit *getUnit (Zone zone) const		{return units[zone];}
    Unit *getUnit ( Field field ) {return getUnit(field==FieldAir?ZoneAir:ZoneSurface);}
-	float getHeight () const				{return height;}
+   float getHeight () const				{return height;}
    SurfaceType getType () const { return surfaceType; }
 
    bool isSubmerged () const { return surfaceType != SurfaceTypeLand; }
@@ -85,11 +85,11 @@ public:
 
    // set
    void setUnit ( Zone field, Unit *unit) {units[field]= unit;}
-	void setHeight (float h) { height= h; }
+   void setHeight (float h) { height= h; }
    void setType ( SurfaceType type ) { surfaceType = type; }
 
    //misc
-	bool isFree(Zone field) const;
+   bool isFree(Zone field) const;
 };
 
 // =====================================================
@@ -231,15 +231,15 @@ public:
 	float getHeightFactor() const						{return heightFactor;}
 	float getWaterLevel() const							{return waterLevel;}
 	Vec2i getStartLocation(int loactionIndex) const		{return startLocations[loactionIndex];}
-	
-   // these should be in their respective cell classes...
-   bool getSubmerged(const Tile *sc) const		{return sc->getHeight()<waterLevel;}
+
+	// these should be in their respective cell classes...
+	bool getSubmerged(const Tile *sc) const		{return sc->getHeight()<waterLevel;}
 	//bool getSubmerged(const Cell *c) const				{return c->getHeight()<waterLevel;}
 	bool getDeepSubmerged(const Tile *sc) const	{return sc->getHeight()<waterLevel-(1.5f/heightFactor);}
 	//bool getDeepSubmerged(const Cell *c) const			{return c->getHeight()<waterLevel-(1.5f/heightFactor);}
 	//float getSurfaceHeight(const Vec2i &pos) const;
-	
-   const Earthquakes &getEarthquakes() const			{return earthquakes;}
+
+	const Earthquakes &getEarthquakes() const			{return earthquakes;}
 
 	//is
 	bool isInside(int x, int y) const					{return x >= 0 && y >= 0 && x < w && y < h;}
@@ -249,29 +249,29 @@ public:
 	bool isResourceNear(const Vec2i &pos, const ResourceType *rt, Vec2i &resourcePos) const;
 
 	//free cells
-   // This should just do a look up in the map metrics (currently maintained by the PathFinder object)
-   // Is a cell of a given field 'free' to be occupied
-   //bool isFreeCell(const Vec2i &pos, Zone field) const;
-   bool isFreeCell(const Vec2i &pos, Field field) const;
+	// This should just do a look up in the map metrics (currently maintained by the PathFinder object)
+	// Is a cell of a given field 'free' to be occupied
+	//bool isFreeCell(const Vec2i &pos, Zone field) const;
+	bool isFreeCell(const Vec2i &pos, Field field) const;
 
 	//bool areFreeCells(const Vec2i &pos, int size, Zone field) const;
-   bool areFreeCells(const Vec2i &pos, int size, Field field) const;
-   bool areFreeCells ( const Vec2i &pos, int size, char *fieldMap ) const;
+	bool areFreeCells(const Vec2i &pos, int size, Field field) const;
+	bool areFreeCells ( const Vec2i &pos, int size, char *fieldMap ) const;
 
-   bool isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const;
+	bool isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const;
 	bool areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const Unit *unit) const;
 
-   bool isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const Selection::UnitContainer &units) const;
+	bool isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const Selection::UnitContainer &units) const;
 	bool areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const Selection::UnitContainer &units) const;
 
-   bool isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const;
+	bool isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const;
 	bool areAproxFreeCells(const Vec2i &pos, int size, Field field, int teamIndex) const;
 
-   void getOccupants(vector<Unit *> &results, const Vec2i &pos, int size, Zone field) const;
+	void getOccupants(vector<Unit *> &results, const Vec2i &pos, int size, Zone field) const;
 	//bool isFreeCell(const Vec2i &pos, Field field) const;
 
-   bool fieldsCompatible ( Cell *cell, Field mf ) const;
-   bool isFieldMapCompatible ( const Vec2i &pos, const UnitType *unitType ) const;
+	bool fieldsCompatible ( Cell *cell, Field mf ) const;
+	bool isFieldMapCompatible ( const Vec2i &pos, const UnitType *unitType ) const;
 
 	// location calculations
 	static Vec2i getNearestAdjacentPos(const Vec2i &start, int size, const Vec2i &target, Field field, int targetSize = 1);
@@ -305,8 +305,12 @@ public:
 	void flatternTerrain(const Unit *unit);
 
 	//void flattenTerrain(const Unit *unit);
-	void computeNormals(Rect2i range = Rect2i(0, 0, 0, 0));
-	void computeInterpolatedHeights(Rect2i range = Rect2i(0, 0, 0, 0));
+	void computeNormals();
+	void computeInterpolatedHeights();
+
+	void computeNormals(Rect2i range);
+	void computeInterpolatedHeights(Rect2i range);
+
 	void read(NetworkDataBuffer &buf);
 	void write(NetworkDataBuffer &buf) const;
 
@@ -323,15 +327,15 @@ public:
 	//static
 	static Vec2i toTileCoords(Vec2i unitPos)	{return unitPos/cellScale;}
 	static Vec2i toUnitCoords(Vec2i surfPos)	{return surfPos*cellScale;}
-   static string getMapPath(const string &mapName)	{return "maps/"+mapName+".gbm";}
+	static string getMapPath(const string &mapName)	{return "maps/"+mapName+".gbm";}
 
 private:
 	//compute
 	void smoothSurface();
 	void computeNearSubmerged();
 	void computeCellColors();
-   void setCellTypes ();
-   //void setCellType ( Vec2i pos );
+	void setCellTypes ();
+	//void setCellType ( Vec2i pos );
 
 	static void findNearest(Vec2i &result, const Vec2i &start, const Vec2i &candidate, float &minDistance);
 	void findNearestFree(Vec2i &result, const Vec2i &start, int size, Field field, const Vec2i &candidate, float &minDistance) const;

@@ -1318,10 +1318,19 @@ void Unit::incKills() {
 bool Unit::morph(const MorphCommandType *mct) {
 	const UnitType *morphUnitType = mct->getMorphUnit();
 
-	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), currField, this)) {
+	// redo field
+	Field newField;
+	if(morphUnitType->getField(FieldWalkable)) newField = FieldWalkable;
+	else if(morphUnitType->getField(FieldAir)) newField = FieldAir;
+	if ( morphUnitType->getField (FieldAmphibious) ) newField = FieldAmphibious;
+	else if ( morphUnitType->getField (FieldAnyWater) ) newField = FieldAnyWater;
+	else if ( morphUnitType->getField (FieldDeepWater) ) newField = FieldDeepWater;
+
+	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = morphUnitType;
+		currField = newField;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->applyDiscount(morphUnitType, mct->getDiscount());

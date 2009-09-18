@@ -579,15 +579,12 @@ void UnitUpdater::updateBuild(Unit *unit){
 					getServerInterface()->updateFactions();
 				}
 			}
-         if ( !builtUnit->isMobile() )
-            pathFinder->updateMapMetrics ( builtUnit->getPos(), builtUnit->getSize(), true, FieldWalkable );
-
+			if ( !builtUnit->isMobile() ) {
+				pathFinder->updateMapMetrics ( builtUnit->getPos(), builtUnit->getSize() );
+			}
 			//play start sound
 			if(unit->getFactionIndex()==world->getThisFactionIndex()){
-				SoundRenderer::getInstance().playFx(
-					bct->getStartSound(),
-					unit->getCurrVector(),
-					gameCamera->getPos());
+				SoundRenderer::getInstance().playFx( bct->getStartSound(), unit->getCurrVector(), gameCamera->getPos() );
 			}
 		} else {
 			// there are no free cells
@@ -770,7 +767,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					// let the pathfinder know
 					Vec2i rPos = r->getPos ();
 					sc->deleteResource();
-					pathFinder->updateMapMetrics ( rPos, 2, false, FieldWalkable );
+					pathFinder->updateMapMetrics ( rPos, 2 );
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               
@@ -1070,9 +1067,9 @@ void UnitUpdater::updateMorph(Unit *unit){
 		Field mf = (Field)0;
 		while ( mf != FieldCount ) {
 			if ( mfs.get ( mf )
-			&&   map->areFreeCellsOrHasUnit ( unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit) ) {
-				gotSpace = true;
-				break;
+				&&   map->areFreeCellsOrHasUnit ( unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit) ) {
+					gotSpace = true;
+					break;
 			}
 			mf = (Field)(mf + 1);
 		}
@@ -1091,7 +1088,7 @@ void UnitUpdater::updateMorph(Unit *unit){
 		unit->update2();
 		if(unit->getProgress2()>mct->getProduced()->getProductionTime()) {
 
-         bool mapUpdate = unit->isMobile () != mct->getMorphUnit()->isMobile ();
+			bool mapUpdate = unit->isMobile () != mct->getMorphUnit()->isMobile ();
 
 			//finish the command
 			if(unit->morph(mct)){
@@ -1099,19 +1096,19 @@ void UnitUpdater::updateMorph(Unit *unit){
 				if(gui->isSelected(unit)) {
 					gui->onSelectionChanged();
 				}
-            scriptManager->onUnitCreated ( unit );
+				scriptManager->onUnitCreated ( unit );
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
-            if ( mapUpdate )
-            {
-               bool adding = !mct->getMorphUnit()->isMobile ();
-               pathFinder->updateMapMetrics ( unit->getPos (), unit->getSize (), adding, FieldWalkable );
-            }
+				if ( mapUpdate ) {
+					bool adding = !mct->getMorphUnit()->isMobile ();
+					pathFinder->updateMapMetrics ( unit->getPos (), unit->getSize () );
+				}
 
 				if(isNetworkServer()) {
 					getServerInterface()->unitMorph(unit);
 					getServerInterface()->updateFactions();
 				}
-			} else {
+			}
+			else {
 				unit->cancelCurrCommand();
 				if(unit->getFactionIndex() == world->getThisFactionIndex()){
 					console->addStdMessage("InvalidPosition");

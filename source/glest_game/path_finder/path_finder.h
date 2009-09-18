@@ -156,8 +156,8 @@ public:
 	bool isLegalMove ( Unit *unit, const Vec2i &pos ) const;
 
 	// update the annotated map at pos 
-	void updateMapMetrics ( const Vec2i &pos, const int size, bool adding, Field field )
-	{ annotatedMap->updateMapMetrics ( pos, size, adding, field ); }
+	void updateMapMetrics ( const Vec2i &pos, const int size )
+	{ annotatedMap->updateMapMetrics ( pos, size ); }
 
 private:
 	static const ResourceType *resourceGoal;
