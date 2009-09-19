@@ -27,6 +27,12 @@ using std::stringstream;
 using Shared::Platform::int64;
 using Shared::Platform::uint64;
 
+#if defined(WIN32) || defined(WIN64)
+#	define strtoull(np,ep,b) _strtoui64(np,ep,b)
+#	define strtof(np,ep) ((float)strtod(np,ep))
+#	define strtold(np,ep) ((long double)strtod(np,ep))
+#endif
+
 namespace Shared { namespace Util {
 
 const int maxStrSize = 256;

@@ -25,9 +25,13 @@
 #include "xml_parser.h"
 #include "zlib.h"
 
+// Big time HACK! Windoze doesn't have strtok_r(), 
+// I belive from your use of the 'buffer' parameter that this is 'safe'
+// but if you actually need the re-entrant version, this will need revisiting :)
 #if defined(WIN32) || defined(WIN64)
+#	define strtok_r(a,b,c) strtok(a,b)
 #else
-	#include <glob.h>
+#	include <glob.h>
 #endif
 
 #include "leak_dumper.h"
