@@ -61,35 +61,35 @@ class Earthquake;
 
 class Cell{
 private:
-   Unit *units[ZoneCount];	//units on this cell
-   float height;
-   SurfaceType surfaceType;
-   Cell(Cell&);
-   void operator=(Cell&);
+	Unit *units[ZoneCount];	//units on this cell
+	float height;
+	SurfaceType surfaceType;
+	Cell(Cell&);
+	void operator=(Cell&);
 
 public:
-   Cell() {
+	Cell() {
 		memset(units, 0, sizeof(units));
-		height= 0;
+		height = 0;
 		surfaceType = SurfaceTypeLand;
-   }
+	}
 
-   // get
-   Unit *getUnit (Zone zone) const		{return units[zone];}
-   Unit *getUnit ( Field field ) {return getUnit(field==FieldAir?ZoneAir:ZoneSurface);}
-   float getHeight () const				{return height;}
-   SurfaceType getType () const { return surfaceType; }
+	// get
+	Unit *getUnit(Zone zone) const	{return units[zone];}
+	Unit *getUnit(Field field)		{return getUnit(field == FieldAir ? ZoneAir : ZoneSurface);}
+	float getHeight() const			{return height;}
+	SurfaceType getType() const		{return surfaceType;}
 
-   bool isSubmerged () const { return surfaceType != SurfaceTypeLand; }
-   bool isDeepSubmerged () const { return surfaceType == SurfaceTypeDeepWater; }
+	bool isSubmerged() const		{return surfaceType != SurfaceTypeLand;}
+	bool isDeepSubmerged() const	{return surfaceType == SurfaceTypeDeepWater;}
 
-   // set
-   void setUnit ( Zone field, Unit *unit) {units[field]= unit;}
-   void setHeight (float h) { height= h; }
-   void setType ( SurfaceType type ) { surfaceType = type; }
+	// set
+	void setUnit(Zone field, Unit *unit)	{units[field] = unit;}
+	void setHeight(float h)					{height = h;}
+	void setType(SurfaceType type)			{surfaceType = type;}
 
-   //misc
-   bool isFree(Zone field) const;
+	//misc
+	bool isFree(Zone field) const;
 };
 
 // =====================================================

@@ -225,11 +225,10 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gameSettings){
 
 	gameSettings->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
-	gameSettings->setMap( scenarioInfo->mapName );
-    gameSettings->setTileset( scenarioInfo->tilesetName );
-    gameSettings->setTech( scenarioInfo->techTreeName );
-	gameSettings->setScenario(scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
-	gameSettings->setScenarioDir("gae_scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] + "/" + gameSettings->getScenario());
+	gameSettings->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
+    gameSettings->setTilesetPath(string("tilesets/") +scenarioInfo->tilesetName);
+    gameSettings->setTechPath(string("techs/") + scenarioInfo->techTreeName);
+	gameSettings->setScenarioPath("gae_scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] + "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
 	gameSettings->setDefaultUnits(scenarioInfo->defaultUnits);
 	gameSettings->setDefaultResources(scenarioInfo->defaultResources);
 	gameSettings->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);

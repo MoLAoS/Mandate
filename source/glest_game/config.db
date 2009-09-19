@@ -14,21 +14,23 @@ displayHeight				int		768
 displayRefreshFrequency		int		75
 displayWidth				int		1024
 displayWindowed				bool	true
-gsDayTime					float	1000.f
 gsAutoRepairEnabled			bool	true
 gsAutoReturnEnabled			bool	false
+gsDayTime					float	1000.f
 gsFogOfWarEnabled			bool	true
 gsRandStartLocs				bool	false
-gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsSpeedFastest				float	2.f				1.0f	10.0f
+gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsWorldUpdateFps			int		40
 miscAiLog					int		0
 miscAiRedir					bool	false
 miscCatchExceptions			bool	true
 miscDebugKeys				bool	false
 miscDebugMode				bool	false
-miscLowMemory				bool	false
+miscDebugTextureMode		int		0
+miscDebugTextures			bool	false
 miscFirstTime				bool	true
+#miscLowMemory				bool	false
 netChangeSpeedAllowed		bool	false
 netConsistencyChecks		bool	false
 netFps						int		4
@@ -37,6 +39,8 @@ netPauseAllowed				bool	false
 netPlayerName				string	"Player"
 netServerIp					string	"192.168.1.1"
 netServerPort				int		12345			0		65535
+pathFinderMaxNodes			int		1024
+pathFinderUseAStar			bool	false
 renderCheckGlCaps			bool	true
 renderColorBits				int		32
 renderDepthBits				int		isWindows()?32:16
@@ -49,9 +53,6 @@ renderFogOfWarSmoothingFrameSkip int 3
 renderFontConsole			string	getDefaultFontStr()
 renderFontDisplay			string	getDefaultFontStr()
 renderFontMenu				string	getDefaultFontStr()
-#renderFontConsole			string	-
-#renderFontDisplay			string	-
-#renderFontMenu				string	-
 renderFov					float	60.f			0.01f	360.f
 renderFpsMax				int		60				0		1000000
 renderGraphicsFactory		string	"OpenGL"

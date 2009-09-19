@@ -49,13 +49,9 @@ const string sharedLibVersionString= "v0.4.1";
 void findAll(const string &path, vector<string> &results, bool cutExtension = false);
 
 //string fcs
-string lastDir(const string &s);
-
-inline string lastFile(const string &s){
-	return lastDir(s);
-}
-
-string cutLastFile(const string &s);
+string cleanPath(const string &s);
+string dirname(const string &s);
+string basename(const string &s);
 string cutLastExt(const string &s);
 string ext(const string &s);
 string replaceBy(const string &s, char c1, char c2);

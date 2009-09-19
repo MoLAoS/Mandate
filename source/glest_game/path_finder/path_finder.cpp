@@ -359,7 +359,7 @@ void World::assertConsistiency() {
 
 			const UnitType *ut = unit->getType();
 			int size = ut->getSize();
-			Zone zone = unit->getCurrZone ();
+			Zone zone = unit->getCurrZone();
 			const Vec2i &pos = unit->getPos();
 
 			for(int x = 0; x < size; ++x) {

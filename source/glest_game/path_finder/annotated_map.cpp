@@ -22,35 +22,6 @@
 
 namespace Glest { namespace Game { namespace Search {
 
-inline uint32 CellMetrics::get ( const Field field ) {
-	switch ( field ) {
-		case FieldWalkable: return field0;
-		case FieldAir: return field1;
-		case FieldAnyWater: return field2;
-		case FieldDeepWater: return field3;
-		case FieldAmphibious: return field4;
-		default: throw runtime_error ( "Unknown Field passed to CellMetrics::get()" );
-	}
-	return 0;
-}
-
-inline void CellMetrics::set ( const Field field, uint32 val ) {
-	assert ( val <= AnnotatedMap::maxClearanceValue );
-	switch ( field ) {
-		case FieldWalkable: field0 = val; return;
-		case FieldAir: field1 = val; return;
-		case FieldAnyWater: field2 = val; return;
-		case FieldDeepWater: field3 = val; return;
-		case FieldAmphibious: field4 = val; return;
-		default: throw runtime_error ( "Unknown Field passed to CellMetrics::set()" );
-	}
-
-}
-inline void CellMetrics::setAll ( uint32 val ) {
-	assert ( val <= AnnotatedMap::maxClearanceValue );
-	field0 = field1 = field2 = field3 = field4 = val;
-}
-
 const int AnnotatedMap::maxClearanceValue = 5;
 
 AnnotatedMap::AnnotatedMap ( Map *m ) {

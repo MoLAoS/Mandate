@@ -59,7 +59,7 @@ public:
 	int getScriptCount() const				{return scripts.size();}
 	const Script* getScript(int i) const	{return &scripts[i];}
 
-	static string getScenarioPath(const string &dir, const string &scenarioName);
+//	static string getScenarioPath(const string &dir, const string &scenarioName);
 
 private:
 	string getFunctionName(const XmlNode *scriptNode);

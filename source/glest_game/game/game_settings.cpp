@@ -24,9 +24,10 @@ namespace Glest { namespace Game {
 
 GameSettings::GameSettings(const XmlNode *node){
 	description = node->getChildStringValue("description");
-	map = node->getChildStringValue("mapPath");
-	tileset = node->getChildStringValue("tilesetPath");
-	tech = node->getChildStringValue("techPath");
+	mapPath = node->getChildStringValue("mapPath");
+	tilesetPath = node->getChildStringValue("tilesetPath");
+	techPath = node->getChildStringValue("techPath");
+	scenarioPath = node->getChildStringValue("scenarioPath");
 	thisFactionIndex = node->getChildIntValue("thisFactionIndex");
 	factionCount = node->getChildIntValue("factionCount");
 
@@ -45,9 +46,10 @@ GameSettings::GameSettings(const XmlNode *node){
 			
 void GameSettings::save(XmlNode *node) const {
 	node->addChild("description", description);
-	node->addChild("mapPath", map);
-	node->addChild("tilesetPath", tileset);
-	node->addChild("techPath", tech);
+	node->addChild("mapPath", mapPath);
+	node->addChild("tilesetPath", tilesetPath);
+	node->addChild("techPath", techPath);
+	node->addChild("scenarioPath", scenarioPath);
 	node->addChild("thisFactionIndex", thisFactionIndex);
 	node->addChild("factionCount", factionCount);
 

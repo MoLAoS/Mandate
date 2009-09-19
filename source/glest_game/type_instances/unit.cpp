@@ -1320,11 +1320,18 @@ bool Unit::morph(const MorphCommandType *mct) {
 
 	// redo field
 	Field newField;
-	if(morphUnitType->getField(FieldWalkable)) newField = FieldWalkable;
-	else if(morphUnitType->getField(FieldAir)) newField = FieldAir;
-	if ( morphUnitType->getField (FieldAmphibious) ) newField = FieldAmphibious;
-	else if ( morphUnitType->getField (FieldAnyWater) ) newField = FieldAnyWater;
-	else if ( morphUnitType->getField (FieldDeepWater) ) newField = FieldDeepWater;
+	if ( morphUnitType->getField( FieldWalkable ) ) {
+		newField = FieldWalkable;
+	} else if ( morphUnitType->getField( FieldAir ) ) {
+		newField = FieldAir;
+	}
+	if ( morphUnitType->getField( FieldAmphibious ) ) {
+		newField = FieldAmphibious;
+	} else if ( morphUnitType->getField( FieldAnyWater ) ) {
+		newField = FieldAnyWater;
+	} else if ( morphUnitType->getField( FieldDeepWater ) ) {
+		newField = FieldDeepWater;
+	}
 
 	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);

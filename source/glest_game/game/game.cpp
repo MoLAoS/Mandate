@@ -125,10 +125,10 @@ Game::~Game() {
 void Game::load(){
 	Logger::getInstance().setState(Lang::getInstance().get("Loading"));
 	Logger &logger= Logger::getInstance();
-	string mapName= gameSettings.getMap();
-	string tilesetName= gameSettings.getTileset();
-	string techName= gameSettings.getTech();
-	string scenarioName= gameSettings.getScenario();
+	string mapName= gameSettings.getMapPath();
+	string tilesetName= gameSettings.getTilesetPath();
+	string techName= gameSettings.getTechPath();
+	string scenarioName= gameSettings.getScenarioPath();
  	
 	logger.setState(Lang::getInstance().get("Loading"));
 
@@ -150,8 +150,8 @@ void Game::load(){
 
    //scenario
 	if(!scenarioName.empty()){
-		Lang::getInstance().loadScenarioStrings(gameSettings.getScenarioDir(), scenarioName);
-		world.loadScenario(Scenario::getScenarioPath(gameSettings.getScenarioDir(), scenarioName), &checksum);
+		Lang::getInstance().loadScenarioStrings(dirname(gameSettings.getScenarioPath()), scenarioName);
+		world.loadScenario(scenarioName/*Scenario::getScenarioPath(gameSettings.getScenarioDir(), scenarioName)*/, &checksum);
 	}
 }
 

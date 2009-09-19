@@ -36,9 +36,9 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
 	Renderer &renderer = Renderer::getInstance();
 	this->id = id;
 
-   bool loadOk = true;
-   Logger::getInstance().add("Resource type: " + dir, true);
-	name = lastDir(dir);
+	bool loadOk = true;
+	Logger::getInstance().add("Resource type: " + dir, true);
+	name = basename(dir);
 	path = dir + "/" + name + ".xml";
 	checksum.addFile(path, true);
 	

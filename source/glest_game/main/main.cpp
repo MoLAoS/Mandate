@@ -90,28 +90,32 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
-	ExceptionHandler exceptionHandler;
+	Config &config = Config::getInstance();
 
-	try {
-		Config &config = Config::getInstance();
-		if(config.getMiscCatchExceptions()) {
-			exceptionHandler.install();
-		}
-		Program program(config, argc, argv);
-
-		showCursor(config.getDisplayWindowed());
+	if(config.getMiscCatchExceptions()) {
+		ExceptionHandler exceptionHandler;
 
 		try {
-			//main loop
-			program.loop();
+			exceptionHandler.install();
+			Program program(config, argc, argv);
+			showCursor(config.getDisplayWindowed());
+
+			try {
+				//main loop
+				program.loop();
+			} catch(const exception &e) {
+				// friendlier error handling
+				program.crash(&e);
+				restoreVideoMode();
+			}
 		} catch(const exception &e) {
-			// friendlier error handling
-			program.crash(&e);
 			restoreVideoMode();
+			exceptionMessage(e);
 		}
-	} catch(const exception &e) {
-		restoreVideoMode();
-		exceptionMessage(e);
+	} else {
+		Program program(config, argc, argv);
+		showCursor(config.getDisplayWindowed());
+		program.loop();
 	}
 
 	return 0;

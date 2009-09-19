@@ -92,7 +92,7 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 
 void Tileset::load(const string &dir, Checksum &checksum){
 	random.init(time(NULL));
-	string path= dir+"/"+lastDir(dir)+".xml";
+	string path= dir+"/"+basename(dir)+".xml";
 
 	checksum.addFile(path, true);
 

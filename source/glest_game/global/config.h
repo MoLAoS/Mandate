@@ -57,14 +57,9 @@ private:
 	bool miscCatchExceptions;
 	bool miscDebugKeys;
 	bool miscDebugMode;
-
-   int miscDebugTextureMode;
+	int miscDebugTextureMode;
 	bool miscDebugTextures;
-   int pathFinderMaxNodes;
-   bool pathFinderUseAStar;
-
-   bool miscFirstTime;
-	bool miscLowMemory;
+	bool miscFirstTime;
 	bool netChangeSpeedAllowed;
 	bool netConsistencyChecks;
 	int netFps;
@@ -73,6 +68,8 @@ private:
 	string netPlayerName;
 	string netServerIp;
 	int netServerPort;
+	int pathFinderMaxNodes;
+	bool pathFinderUseAStar;
 	bool renderCheckGlCaps;
 	int renderColorBits;
 	int renderDepthBits;
@@ -159,8 +156,9 @@ public:
 	bool getMiscCatchExceptions() const			{return miscCatchExceptions;}
 	bool getMiscDebugKeys() const				{return miscDebugKeys;}
 	bool getMiscDebugMode() const				{return miscDebugMode;}
+	int getMiscDebugTextureMode() const			{return miscDebugTextureMode;}
+	bool getMiscDebugTextures() const			{return miscDebugTextures;}
 	bool getMiscFirstTime() const				{return miscFirstTime;}
-	bool getMiscLowMemory() const				{return miscLowMemory;}
 	bool getNetChangeSpeedAllowed() const		{return netChangeSpeedAllowed;}
 	bool getNetConsistencyChecks() const		{return netConsistencyChecks;}
 	int getNetFps() const						{return netFps;}
@@ -169,6 +167,8 @@ public:
 	string getNetPlayerName() const				{return netPlayerName;}
 	string getNetServerIp() const				{return netServerIp;}
 	int getNetServerPort() const				{return netServerPort;}
+	int getPathFinderMaxNodes() const			{return pathFinderMaxNodes;}
+	bool getPathFinderUseAStar() const			{return pathFinderUseAStar;}
 	bool getRenderCheckGlCaps() const			{return renderCheckGlCaps;}
 	int getRenderColorBits() const				{return renderColorBits;}
 	int getRenderDepthBits() const				{return renderDepthBits;}
@@ -205,11 +205,6 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
-   int getMiscDebugTextureMode () const { return miscDebugTextureMode; }
-   bool getMiscDebugTextures () const { return miscDebugTextures; }
-   int getPathFinderMaxNodes () const { return pathFinderMaxNodes; }
-   bool getPathFinderUseAStar () const { return pathFinderUseAStar; }
-
 	void setCameraFov(float val)				{cameraFov = val;}
 	void setCameraInvertXAxis(bool val)			{cameraInvertXAxis = val;}
 	void setCameraInvertYAxis(bool val)			{cameraInvertYAxis = val;}
@@ -234,8 +229,9 @@ public:
 	void setMiscCatchExceptions(bool val)		{miscCatchExceptions = val;}
 	void setMiscDebugKeys(bool val)				{miscDebugKeys = val;}
 	void setMiscDebugMode(bool val)				{miscDebugMode = val;}
+	void setMiscDebugTextureMode(int val)		{miscDebugTextureMode = val;}
+	void setMiscDebugTextures(bool val)			{miscDebugTextures = val;}
 	void setMiscFirstTime(bool val)				{miscFirstTime = val;}
-	void setMiscLowMemory(bool val)				{miscLowMemory = val;}
 	void setNetChangeSpeedAllowed(bool val)		{netChangeSpeedAllowed = val;}
 	void setNetConsistencyChecks(bool val)		{netConsistencyChecks = val;}
 	void setNetFps(int val)						{netFps = val;}
@@ -244,6 +240,8 @@ public:
 	void setNetPlayerName(string val)			{netPlayerName = val;}
 	void setNetServerIp(string val)				{netServerIp = val;}
 	void setNetServerPort(int val)				{netServerPort = val;}
+	void setPathFinderMaxNodes(int val)			{pathFinderMaxNodes = val;}
+	void setPathFinderUseAStar(bool val)		{pathFinderUseAStar = val;}
 	void setRenderCheckGlCaps(bool val)			{renderCheckGlCaps = val;}
 	void setRenderColorBits(int val)			{renderColorBits = val;}
 	void setRenderDepthBits(int val)			{renderDepthBits = val;}
@@ -279,12 +277,6 @@ public:
 	void setUiLang(string val)					{uiLang = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
-
-   void setMiscDebugTextureMode ( int val ) { miscDebugTextureMode = val; }
-   void setMiscDebugTextures ( bool val ) { miscDebugTextures = val; }
-   void setPathFinderMaxNodes ( int val ) { pathFinderMaxNodes = val; }
-   void setPathFinderUseAStar ( bool val ) { pathFinderUseAStar = val; }
-
 };
 
 }}//end namespace

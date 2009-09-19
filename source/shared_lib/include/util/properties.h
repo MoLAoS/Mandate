@@ -147,8 +147,12 @@ private:
 public:
 	Properties();
 	void clear();
-	void load(const string &path);
+	void load(const string &path, bool trim = true);
 	void save(const string &path);
+
+	int getPropertyCount()	{return propertyVector.size();}
+	string getKey(int i)	{return propertyVector[i].first;}
+	string getString(int i)	{return propertyVector[i].second;}
 
 	const PropertyMap &getPropertyMap() const								{return propertyMap;}
 	bool getBool(const string &key) const									{return _getBool(key);}
@@ -163,11 +167,10 @@ public:
 	float getFloat(const string &key, float def, float min, float max) const{return _getFloat(key, &def, &min, &max);}
 	const string &getString(const string &key) const						{return _getString(key);}
 	const string &getString(const string &key, const string &def) const		{return _getString(key, &def);}
-	int getPropertyCount()	{return propertyVector.size();}
 
-	void setInt(const string &key, int value)		{setString(key, intToStr(value));}
-	void setBool(const string &key, bool value)		{setString(key, boolToStr(value));}
-	void setFloat(const string &key, float value)	{setString(key, floatToStr(value));}
+	void setInt(const string &key, int value)		{setString(key, Conversion::toStr(value));}
+	void setBool(const string &key, bool value)		{setString(key, Conversion::toStr(value));}
+	void setFloat(const string &key, float value)	{setString(key, Conversion::toStr(value));}
 	void setString(const string &key, const string &value) {
 		propertyMap.erase(key);
 		propertyMap.insert(PropertyPair(key, value));

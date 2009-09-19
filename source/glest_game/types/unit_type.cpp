@@ -101,7 +101,7 @@ namespace Glest{ namespace Game{
 	}
 
 	void UnitType::preLoad(const string &dir){
-		name= lastDir(dir);
+		name= basename(dir);
 	}
 
 	bool UnitType::load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum){

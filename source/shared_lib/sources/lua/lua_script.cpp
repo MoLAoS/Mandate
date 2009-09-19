@@ -11,10 +11,10 @@
 
 #include "pch.h"
 
-#include "lua_script.h"
-
 //#include <stdexcept>
+#include <iostream>
 
+#include "lua_script.h"
 #include "conversion.h"
 
 #include "leak_dumper.h"
@@ -92,7 +92,7 @@ string LuaScript::errorToString(int errorCode){
 			error+= "Unknown error";
 	}
 	error += string(": ")+luaL_checkstring(luaState, -1);
-   fprintf ( stderr, error.c_str() );
+	cerr << error << endl;
 	return error;
 }
 
@@ -171,17 +171,17 @@ void LuaArguments::throwLuaError(const string &message) const{
 	for(int i= 1; i<=stackSize; ++i){
 		stackString+= "-" + intToStr(i) + ": ";
 		if(lua_isnumber(luaState, -i)){
-			stackString+= "Number: " + doubleToStr(luaL_checknumber(luaState, -i ));
+			stackString += "Number: " + Conversion::toStr(luaL_checknumber(luaState, -i ));
 		}
 		else if(lua_isstring(luaState, -i)){
-			stackString+= "String: " + string(luaL_checkstring(luaState, -i));
+			stackString += "String: " + string(luaL_checkstring(luaState, -i));
 		}
 		else if(lua_istable(luaState, -i)){
-			stackString+= "Table (" + intToStr(luaL_getn(luaState, -i)) + ")";
+			stackString += "Table (" + intToStr(luaL_getn(luaState, -i)) + ")";
 		}
 		else
 		{
-			stackString+= "Unknown";
+			stackString += "Unknown";
 		}
 		stackString+= "\n";
 	}

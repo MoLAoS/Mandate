@@ -408,7 +408,7 @@ void Model::save(const string &path){
 			throw runtime_error("Error opening 3d model file");
 		}
 
-		string dir= cutLastFile(path);
+		string dir= dirname(path);
 
 		//read header
 		ModelHeaderOld modelHeader;
@@ -448,7 +448,7 @@ void Model::loadG3d(const string &path){
 			throw runtime_error("Error opening 3d model file");
 		}
 
-		string dir= cutLastFile(path);
+		string dir= dirname(path);
 
 		//file header
 		FileHeader fileHeader;
@@ -522,7 +522,7 @@ void Model::saveS3d(const string &path){
 	modelHeader.version= 3;
 	modelHeader.meshCount= meshCount;
 
-	string dir= cutLastFile(path);
+	string dir= dirname(path);
 
 	fwrite(&modelHeader, sizeof(ModelHeader), 1, f);
 	for(int i=0; i<meshCount; ++i){

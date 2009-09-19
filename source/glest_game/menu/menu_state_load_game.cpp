@@ -368,23 +368,24 @@ void MenuStateLoadGame::selectionChanged() {
 }
 
 void MenuStateLoadGame::initGameInfo() {
-	try {
+	//try {
 		if(gs) {
 			delete gs;
 			gs = NULL;
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
-		string techTree = gs->getTech();
-		string tileset = gs->getTileset();
-		string map = gs->getMap();
+		string techPath = gs->getTechPath();
+		string tilesetPath = gs->getTilesetPath();
+		string mapPath = gs->getMapPath();
+		string scenarioPath = gs->getScenarioPath();
 		int elapsedSeconds = savedGame->getChild("world")->getChildIntValue("frameCount") / 60;
 		int elapsedMinutes = elapsedSeconds / 60;
 		int elapsedHours = elapsedMinutes / 60;
 		elapsedSeconds = elapsedSeconds % 60;
 		elapsedMinutes = elapsedMinutes % 60;
 		char elapsedTime[0x100];
-		loadMapInfo(map, &mapInfo);
-
+		loadMapInfo(mapPath, &mapInfo);
+/*
 		if(techTree.size() > strlen("techs/")) {
 			techTree.erase(0, strlen("techs/"));
 		}
@@ -396,7 +397,7 @@ void MenuStateLoadGame::initGameInfo() {
 		}
 		if(map.size() > strlen(".gbm")) {
 			map.resize(map.size() - strlen(".gbm"));
-		}
+		}*/
 		if(elapsedHours) {
 			sprintf(elapsedTime, "%d:%02d:%02d", elapsedHours, elapsedMinutes, elapsedSeconds);
 		} else {
@@ -407,9 +408,9 @@ void MenuStateLoadGame::initGameInfo() {
 				+ ", Size: " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
 
 		labelInfoHeader.setText(listBoxGames.getSelectedItem() + ": " + gs->getDescription()
-				+ "\nTech Tree: " + formatString(techTree)
-				+ "\nTileset: " + formatString(tileset)
-				+ "\nMap: " + formatString(map) + mapDescr
+				+ "\nTech Tree: " + formatString(basename(techPath))
+				+ "\nTileset: " + formatString(basename(tilesetPath))
+				+ "\nMap: " + basename(cutLastExt(mapPath)) + mapDescr
 				+ "\nElapsed Time: " + elapsedTime);
 
 		if(gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {
@@ -440,7 +441,7 @@ void MenuStateLoadGame::initGameInfo() {
 				labelNetStatus[i].setText("");
 			}
 		}
-
+/*
 	} catch (exception &e) {
 		labelInfoHeader.setText(string("Bad game file.\n") + e.what());
 		for(int i = 0; i < GameConstants::maxPlayers; ++i){
@@ -454,7 +455,7 @@ void MenuStateLoadGame::initGameInfo() {
 			delete gs;
 			gs = NULL;
 		}
-	}
+	}*/
 	if(gs) {
 		updateNetworkSlots();
 	}

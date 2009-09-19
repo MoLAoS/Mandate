@@ -28,7 +28,7 @@ namespace Glest { namespace Game {
 
 Config::Config(const char* fileName) : fileName(fileName) {
 	Properties *p = new Properties();
-	p->load(fileName);	
+	p->load(fileName, true);	
 
 	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);
@@ -54,8 +54,9 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	miscCatchExceptions = p->getBool("MiscCatchExceptions", true);
 	miscDebugKeys = p->getBool("MiscDebugKeys", false);
 	miscDebugMode = p->getBool("MiscDebugMode", false);
+	miscDebugTextureMode = p->getInt("MiscDebugTextureMode", 0);
+	miscDebugTextures = p->getBool("MiscDebugTextures", false);
 	miscFirstTime = p->getBool("MiscFirstTime", true);
-	miscLowMemory = p->getBool("MiscLowMemory", false);
 	netChangeSpeedAllowed = p->getBool("NetChangeSpeedAllowed", false);
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
 	netFps = p->getInt("NetFps", 4);
@@ -64,6 +65,8 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	netPlayerName = p->getString("NetPlayerName", "Player");
 	netServerIp = p->getString("NetServerIp", "192.168.1.1");
 	netServerPort = p->getInt("NetServerPort", 12345, 0, 65535);
+	pathFinderMaxNodes = p->getInt("PathFinderMaxNodes", 1024);
+	pathFinderUseAStar = p->getBool("PathFinderUseAStar", false);
 	renderCheckGlCaps = p->getBool("RenderCheckGlCaps", true);
 	renderColorBits = p->getInt("RenderColorBits", 32);
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
@@ -99,10 +102,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	uiLang = p->getString("UiLang", "english.lng");
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
-   miscDebugTextureMode = p->getInt ("MiscDebugTextureMode", 0 );
-   miscDebugTextures = p->getBool ( "MiscDebugTextures", false );
-   pathFinderMaxNodes = p->getInt ( "PathFinderMaxNodes", 1024 );
-   pathFinderUseAStar = p->getBool ( "PathFinderUseAStar", false );
 
 	delete p;
 }
@@ -134,8 +133,9 @@ void Config::save(const char *path) {
 	p->setBool("MiscCatchExceptions", miscCatchExceptions);
 	p->setBool("MiscDebugKeys", miscDebugKeys);
 	p->setBool("MiscDebugMode", miscDebugMode);
+	p->setInt("MiscDebugTextureMode", miscDebugTextureMode);
+	p->setBool("MiscDebugTextures", miscDebugTextures);
 	p->setBool("MiscFirstTime", miscFirstTime);
-	p->setBool("MiscLowMemory", miscLowMemory);
 	p->setBool("NetChangeSpeedAllowed", netChangeSpeedAllowed);
 	p->setBool("NetConsistencyChecks", netConsistencyChecks);
 	p->setInt("NetFps", netFps);
@@ -144,6 +144,8 @@ void Config::save(const char *path) {
 	p->setString("NetPlayerName", netPlayerName);
 	p->setString("NetServerIp", netServerIp);
 	p->setInt("NetServerPort", netServerPort);
+	p->setInt("PathFinderMaxNodes", pathFinderMaxNodes);
+	p->setBool("PathFinderUseAStar", pathFinderUseAStar);
 	p->setBool("RenderCheckGlCaps", renderCheckGlCaps);
 	p->setInt("RenderColorBits", renderColorBits);
 	p->setInt("RenderDepthBits", renderDepthBits);
@@ -179,12 +181,6 @@ void Config::save(const char *path) {
 	p->setString("UiLang", uiLang);
 	p->setBool("UiPhotoMode", uiPhotoMode);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
-
-   p->setInt("MiscDebugTextureMode", miscDebugTextureMode );
-   p->setBool ( "MiscDebugTextures", miscDebugTextures );
-   p->setInt ( "PathFinderMaxNodes", pathFinderMaxNodes );
-   p->setBool ( "PathFinderUseAStar", pathFinderUseAStar );
-
 
 	p->save(path);
 	delete p;
