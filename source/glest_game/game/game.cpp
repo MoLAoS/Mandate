@@ -128,7 +128,9 @@ void Game::load(){
 	string mapName= gameSettings.getMapPath();
 	string tilesetName= gameSettings.getTilesetPath();
 	string techName= gameSettings.getTechPath();
-	string scenarioName= gameSettings.getScenarioPath();
+	string scenarioPath= gameSettings.getScenarioPath();
+	string scenarioName= basename(scenarioPath);
+			
  	
 	logger.setState(Lang::getInstance().get("Loading"));
 
@@ -150,8 +152,8 @@ void Game::load(){
 
    //scenario
 	if(!scenarioName.empty()){
-		Lang::getInstance().loadScenarioStrings(dirname(gameSettings.getScenarioPath()), scenarioName);
-		world.loadScenario(scenarioName/*Scenario::getScenarioPath(gameSettings.getScenarioDir(), scenarioName)*/, &checksum);
+		Lang::getInstance().loadScenarioStrings(scenarioPath, scenarioName);
+		world.loadScenario(scenarioPath + "/" + scenarioName + ".xml", &checksum);
 	}
 }
 

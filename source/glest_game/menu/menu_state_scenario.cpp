@@ -163,7 +163,7 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 
     XmlTree xmlTree;
 	//gae_scenarios/[category]/[scenario]/[scenario].xml
-	xmlTree.load("gae_scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
+	xmlTree.load("gae_scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file);
 
     const XmlNode *scenarioNode= xmlTree.getRootNode();
 	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
@@ -228,7 +228,7 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	gameSettings->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
     gameSettings->setTilesetPath(string("tilesets/") +scenarioInfo->tilesetName);
     gameSettings->setTechPath(string("techs/") + scenarioInfo->techTreeName);
-	gameSettings->setScenarioPath("gae_scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] + "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
+	gameSettings->setScenarioPath("gae_scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] /*+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]*/);
 	gameSettings->setDefaultUnits(scenarioInfo->defaultUnits);
 	gameSettings->setDefaultResources(scenarioInfo->defaultResources);
 	gameSettings->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);

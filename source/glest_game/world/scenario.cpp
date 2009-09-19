@@ -56,8 +56,8 @@ void Scenario::load(const string &path){
 	}
 }
 
-/*string Scenario::getScenarioPath(const string &dir, const string &scenarioName){
-	return dir + "/" + scenarioName + ".xml";
+/*string Scenario::getScenarioPath(const string &scenarioPath) {
+	return scenarioPath + "/" + basename(scenarioPath) + ".xml";
 }*/
 
 string Scenario::getFunctionName(const XmlNode *scriptNode){

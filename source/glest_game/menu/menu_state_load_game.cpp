@@ -410,7 +410,8 @@ void MenuStateLoadGame::initGameInfo() {
 		labelInfoHeader.setText(listBoxGames.getSelectedItem() + ": " + gs->getDescription()
 				+ "\nTech Tree: " + formatString(basename(techPath))
 				+ "\nTileset: " + formatString(basename(tilesetPath))
-				+ "\nMap: " + basename(cutLastExt(mapPath)) + mapDescr
+				+ "\nMap: " + formatString(basename(cutLastExt(mapPath))) + mapDescr
+				+ "\nScenario: " + formatString(basename(scenarioPath))
 				+ "\nElapsed Time: " + elapsedTime);
 
 		if(gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {
