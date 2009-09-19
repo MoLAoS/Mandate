@@ -15,7 +15,8 @@ rule UseAutoconf
 
 	Clean very-clean : data docs maps scenarios techs tilesets shared_lib
                        glest_game glest_map_editor glestadv.log
-                       glestadv-server.log glestadv-client.log ;
+                       glestadv-server.log glestadv-client.log
+                       glestadv-error.log ;
     CleanDir very-clean : savegames screens incoming build ;
     Depends very-clean : maintainer-clean ;
                                                                                 

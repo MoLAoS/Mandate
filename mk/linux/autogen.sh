@@ -1,6 +1,10 @@
 #!/bin/sh
 
-rm -f configure Jamconfig.in
+rm -f configure Jamconfig.in build shared_lib glest_game glest_map_editor test data docs maps scenarios techs tilesets
+
+if [ "$1" = "clean" ]; then
+	exit
+fi
 
 # Correct working directory?
 if test ! -f configure.ac ; then
@@ -27,25 +31,18 @@ autoconf
 
 rm -rf autom4te.cache build
 
-mkdir -p /tmp/gae/0.2/build
-ln -s /tmp/gae/0.2/build .
+mkdir -p /tmp/$(whoami)/gae/0.2.12
+ln -s /tmp/$(whoami)/gae/0.2.12 build
 
 # create symlinks to the source dirs
 
 echo "Updating Source symlinks..."
 
 for f in data docs maps scenarios techs tilesets; do
-	ln -sf ../../../data/glest_game/$f .;
+	ln -sf ../../data/game/$f .;
 done
 
-if [ ! -d shared_lib ]; then
-  ln -sf ../../source/shared_lib .
-fi
-if [ ! -d glest_game ]; then
-  ln -sf ../../source/glest_game .
-fi
-if [ ! -d glest_map_editor ]; then
-  ln -sf ../../source/glest_map_editor .
-fi
-
+ln -sf ../../source/shared_lib .
+ln -sf ../../source/glest_game .
+ln -sf ../../source/glest_map_editor .
 
