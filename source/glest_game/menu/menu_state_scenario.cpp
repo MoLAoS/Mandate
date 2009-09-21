@@ -56,7 +56,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
     labelScenario.setText(lang.get("Scenario"));
 
     //categories listBox
-	findAll("gae_scenarios/*.", results);
+	findAll("scenarios/*.", results);
 	categories= results;
 	
 	if(results.size()==0){
@@ -140,7 +140,7 @@ void MenuStateScenario::setScenario(int i){
 void MenuStateScenario::updateScenarioList(const string category){
 	vector<string> results;
 
-	findAll("gae_scenarios/" + category + "/*.", results);
+	findAll("scenarios/" + category + "/*.", results);
 
 	//update scenarioFiles
 	scenarioFiles= results;
@@ -162,8 +162,8 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
     Lang &lang= Lang::getInstance();
 
     XmlTree xmlTree;
-	//gae_scenarios/[category]/[scenario]/[scenario].xml
-	xmlTree.load("gae_scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
+	//scenarios/[category]/[scenario]/[scenario].xml
+	xmlTree.load("scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
 
     const XmlNode *scenarioNode= xmlTree.getRootNode();
 	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
@@ -228,7 +228,7 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	gameSettings->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
     gameSettings->setTilesetPath(string("tilesets/") +scenarioInfo->tilesetName);
     gameSettings->setTechPath(string("techs/") + scenarioInfo->techTreeName);
-	gameSettings->setScenarioPath("gae_scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] /*+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]*/);
+	gameSettings->setScenarioPath("scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] /*+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]*/);
 	gameSettings->setDefaultUnits(scenarioInfo->defaultUnits);
 	gameSettings->setDefaultResources(scenarioInfo->defaultResources);
 	gameSettings->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
