@@ -102,12 +102,12 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 
 	//lang
 	vector<string> langResults;
-	findAll("data/lang/*.lng", langResults);
+	findAll("data/lang/*.lng", langResults, true);
 	if(langResults.empty()){
         throw runtime_error("There is no lang file");
 	}
     listBoxLang.setItems(langResults);
-	listBoxLang.setSelectedItem(config.getUiLang());
+	listBoxLang.setSelectedItem(config.getUiLocale());
 
 	//shadows
 	for(int i= 0; i<Renderer::sCount; ++i){
@@ -189,8 +189,8 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
 	}
 	else if(listBoxLang.mouseClick(x, y)){
-		config.setUiLang(listBoxLang.getSelectedItem());
-		lang.loadStrings(config.getUiLang());
+		config.setUiLocale(listBoxLang.getSelectedItem());
+		lang.setLocale(config.getUiLocale());
 		saveConfig();
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
 

@@ -73,6 +73,6 @@ uiConsoleMaxLines			int		10
 uiConsoleTimeout			int		20
 uiEnableCommandMinimap		bool	true
 uiFocusArrows				bool	true
-uiLang						string	"en.lng"
+uiLocale					string	"en"
 uiPhotoMode					bool	false
 uiScrollSpeed				float	1.5f

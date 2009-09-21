@@ -99,7 +99,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	uiConsoleTimeout = p->getInt("UiConsoleTimeout", 20);
 	uiEnableCommandMinimap = p->getBool("UiEnableCommandMinimap", true);
 	uiFocusArrows = p->getBool("UiFocusArrows", true);
-	uiLang = p->getString("UiLang", "en.lng");
+	uiLocale = p->getString("UiLocale", "en");
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
 
@@ -178,7 +178,7 @@ void Config::save(const char *path) {
 	p->setInt("UiConsoleTimeout", uiConsoleTimeout);
 	p->setBool("UiEnableCommandMinimap", uiEnableCommandMinimap);
 	p->setBool("UiFocusArrows", uiFocusArrows);
-	p->setString("UiLang", uiLang);
+	p->setString("UiLocale", uiLocale);
 	p->setBool("UiPhotoMode", uiPhotoMode);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
 

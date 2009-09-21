@@ -102,7 +102,7 @@ private:
 	int uiConsoleTimeout;
 	bool uiEnableCommandMinimap;
 	bool uiFocusArrows;
-	string uiLang;
+	string uiLocale;
 	bool uiPhotoMode;
 	float uiScrollSpeed;
 
@@ -201,7 +201,7 @@ public:
 	int getUiConsoleTimeout() const				{return uiConsoleTimeout;}
 	bool getUiEnableCommandMinimap() const		{return uiEnableCommandMinimap;}
 	bool getUiFocusArrows() const				{return uiFocusArrows;}
-	string getUiLang() const					{return uiLang;}
+	string getUiLocale() const					{return uiLocale;}
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
@@ -274,7 +274,7 @@ public:
 	void setUiConsoleTimeout(int val)			{uiConsoleTimeout = val;}
 	void setUiEnableCommandMinimap(bool val)	{uiEnableCommandMinimap = val;}
 	void setUiFocusArrows(bool val)				{uiFocusArrows = val;}
-	void setUiLang(string val)					{uiLang = val;}
+	void setUiLocale(string val)				{uiLocale = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
 };
