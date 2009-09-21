@@ -1,5 +1,5 @@
 =============================
-Glest Game 3.1.2 Readme
+Glest Game 3.2.2 Readme
 =============================
 
 =================
@@ -52,7 +52,6 @@ r => select next producer unit
 
 e) Other Keys
 
-c => switch display color
 - + => adjust game speed  (disabled in multiplayer)
 p => pause game (disabled in multiplayer)
 e => save screen to TGA file
@@ -78,9 +77,11 @@ To connect to a server you need the server's IP, the IP is shown in the lower le
 
 Glest uses TCP port 61357, if you are behind a router you will have to forward this port to your computer if you want to host games.
 
-All players have to be using the same version of the game and have exactly the same map, tileset and tech tree. This means that if you have mods installed in the tech tree that is being used for the game, every player has to have the same mods. An option if you want to install mods over the magitech tech tree and be able to play people that don't have them, is to copy it and install the mods over the copy.
+All players have to be using the same binaries of the game and have exactly the same map, tileset and tech tree. This means that if you have mods installed in the tech tree that is being used for the game, every player has to have the same mods. An option if you want to install mods over the magitech tech tree and be able to play people that don't have them, is to copy it and install the mods over the copy.
 
-It is highly recommended that the same binaries are used for all players. On Windows this is not usually an issue, since people use the installer. On platforms where the exe is compiled from the source (like Linux), if it is generated with different compilers, or using different architectures, the game might get out of sync and crash.
+This means that you can not play windows vs. linux games (even using wine), and that 32 bit vs. 64 bit games are only possible if the player with the 64 bit machine is using 32 bit binaries too.
+
+You can disable binary and checksum checks in glest.ini, by setting NetworkConsistencyChecks to 0, but the game might get out of sync and crash.
 
 =================
 COMMAND LINE
@@ -106,7 +107,9 @@ The game requires either OpenGL 1.4 or OpenGL 1.3 plus the GL_ARB_env_crossbar e
 
 ATI card problems.
 
-It seems to be a bug in some ATI OpenGL drivers that makes the game crash with certain card/driver configurations when using more than 1 light. Auto config  will detect this issue and turn off all secondary lights when it detects an ATI card. If you still want to try running the game using more than 1 light you can change this setting in the in-game options menu.
+In some versions of the Catalyst drivers, OpenGL selection mode is implemented by software, making it incredibly slow. Glest uses selection mode to select units using the mouse (and in versions prior to 3.1.2 to place buildings too), so selecting units makes the frame rate drop quite a lot, not to the point of making the game unlayable if you have a fast computer, but it is a very noticeable glitch. To fix this you can revert the video card drivers to Catalyst 7.9 or earlier. There are some more tricky things you can to if you want to keep your current driver version, please see our boards for more information.
+
+Also, there seems to be a bug in some ATI OpenGL drivers that makes the game crash with certain card/driver configurations when using more than 1 light. Auto config  will detect this issue and turn off all secondary lights when it detects an ATI card. If you still want to try running the game using more than 1 light you can change this setting in the in-game options menu.
 
 
 Shadows.
@@ -123,14 +126,32 @@ The game uses 3D textures for some effects like animated water. Some old video c
 HISTORY
 =================
 
+3.2.1
+- Auto tester
+- Fixes in River Crossing map
+- Resource bug fixes
+- Fixed compile errors on GCC 4
+
+3.2.0
+- LUA scriting
+- New tileset: Dark Forest
+- Tutorials
+- Improved text rendering
+- Added sound effect for chat messages
+- Changed loading screen
+- Removed IP from new game screen
+- Removed Api Info screen
+
 3.1.2
 - Fixed slow building placement in ATI cards with catalyst 7.10 or newer
+- Fixed fog of war smoothing
 - Improved position picking when giving orders
 - Fixed some glitches in shadows
 - Added red colored building cursor when trying to build in an invalid location
 - Fix for empty chat messages
-- Reduced Drake Rider morphing time from 120 to 80
+- Reduced Drake Rider morphing time from 120 to 80 and reduced splash radius attack of a few units
 - Improved battlemachine death animation
+- The game now checks that all players are using the same binaries
 
 3.1.1
 - Improved shadows
@@ -467,30 +488,38 @@ ABOUT
 
 Glest Copyright (C) 2001-2008 The Glest Team. All rights reserved.
 mail: contact_game@glest.org
-web: http://www.glest.org/
+web: http://glest.org/
 irc: irc://irc.freenode.net/glest
 
 The Glest Team:
 
-MARTIÑO FIGUEROA. Programmer.
+MARTIï¿½O FIGUEROA. Programmer.
 Glest game, engine and tools coder. 
-MS in Computer Science by the University of Coruña (Spain).
+MS in Computer Science by the University of Coruï¿½a (Spain).
  
-JOSÉ GONZÁLEZ. Sound.
+JOSï¿½ GONZï¿½LEZ. Sound.
 Glest music composer and sound designer. Pianist. 
 Currently studies Composition at the Vigo Conservatoire in Spain, in addition to Electroacoustic Music at the CCMIX in Paris.
 
-TUCHO FERNÁNDEZ. 2D and 3D Artist.
+TUCHO FERNï¿½NDEZ. 2D and 3D Artist.
 Design, modeling, texturing, and animation of the 3D models of units, buildings and more.
 
-JOSÉ ZANNI. 2D Artist and Web design.
+JOSï¿½ ZANNI. 2D Artist and Web design.
 Design of the logo, buttons, icons and other 2D stuff for the game. Design and implementation of the website.
 
 MATZE BRAUN. Linux port. 
 Ported Glest to SDL and OpenAL which enabled it to work under Linux and other operative systems.
 
-FÉLIX MENéNDEZ. Artist and 3D Animator.
+Fï¿½LIX MENï¿½NDEZ. Artist and 3D Animator.
 New animations in v2.0.
 
 MARCOS CARUNCHO. 3D Artist.
 Creator of the 3D models for buildings in versions prior to 0.7, his work helped in export plugin testing among other things.
+
+=================
+SPECIAL THANKS TO
+=================
+
+Mark Vejvoda - Helped fixing networking issues on Linux
+Titust Scharntke - Created the Mod megapack and helped with the Linux builds - see titusgames.de
+Yggdrasil - Provided patch for building with LUA in Linux

@@ -112,7 +112,7 @@
 			<name value="die_skill"/>		
 			<ep-cost value="0"/>
 			<speed value="120"/>
-			<anim-speed value="120"/>
+			<anim-speed value="60"/>
 			<animation path="models/dragon_dying.g3d"/>
 			<sound enabled="true" start-time="0">
 				<sound-file path="sounds/dragon_die1.wav"/>
