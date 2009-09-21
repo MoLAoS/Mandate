@@ -39,7 +39,7 @@ namespace Search {
 
 const int maxFreeSearchRadius = 10;
 //const int pathFindRefresh = 10; // now unused
-const int pathFindNodesMax = Config::getInstance ().getPathFinderMaxNodes ();
+extern int pathFindNodesMax;
 
 const int numOffsetsSize1Dist1 = 8;
 const Vec2i OffsetsSize1Dist1 [numOffsetsSize1Dist1] = 

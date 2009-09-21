@@ -18,20 +18,18 @@ using namespace std;
 
 namespace Shared { namespace Util {
 
-#if !( defined WIN32 || defined WIN64 )
-	const string Conversion::str_zero		= "0";
-	const string Conversion::str_false		= "false";
-	const string Conversion::str_one		= "1";
-	const string Conversion::str_true		= "true";
-	const string Conversion::str_bool		= "bool";
-	const string Conversion::str_int		= "int";
-	const string Conversion::str_uint		= "unsigned int";
-	const string Conversion::str_int64		= "int64";
-	const string Conversion::str_uint64		= "uint64";
-	const string Conversion::str_double		= "double";
-	const string Conversion::str_float		= "float";
-	const string Conversion::str_longdouble	= "long double";
-#endif
+const string Conversion::str_zero		= "0";
+const string Conversion::str_false		= "false";
+const string Conversion::str_one		= "1";
+const string Conversion::str_true		= "true";
+const string Conversion::str_bool		= "bool";
+const string Conversion::str_int		= "int";
+const string Conversion::str_uint		= "unsigned int";
+const string Conversion::str_int64		= "int64";
+const string Conversion::str_uint64		= "uint64";
+const string Conversion::str_double		= "double";
+const string Conversion::str_float		= "float";
+const string Conversion::str_longdouble	= "long double";
 
 // this function is outlined because we don't need this extra code inlined everywhere
 void Conversion::throwException(const string &typeName, const string &s, int base) {

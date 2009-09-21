@@ -37,26 +37,6 @@ namespace Shared { namespace Util {
 
 const int maxStrSize = 256;
 
-// Yuck!
-// 'string pooling' project options should take care of this anyway,
-// but the static const data members are preferable... working in 
-// the network branch, but not getting initialised here... 
-
-// begin terrible hack
-#if ( defined WIN32 || defined WIN64 )
-#	define str_zero			"0"
-#	define str_false		"false"
-#	define str_one			"1"
-#	define str_true			"true"
-#	define str_bool			"bool"
-#	define str_int			"int"
-#	define str_uint			"unsigned int"
-#	define str_int64		"int64"
-#	define str_uint64		"uint64"
-#	define str_double		"double"
-#	define str_float		"float"
-#	define str_longdouble	"long double"
-#endif
 /**
  * Contains static functions to primatives to and from string representation.  Ideally, this class
  * would not be needed if we were using iostreams instead of appending string objects, but it's
@@ -64,7 +44,6 @@ const int maxStrSize = 256;
  */
 class Conversion {
 private:
-#if !( defined WIN32 || defined WIN64 )
 	// Note: static const data members used to prevent replication of strings accross object files
 	// caused by inline functions using them.
 	static const string str_zero;
@@ -80,7 +59,7 @@ private:
 	static const string str_double;
 	static const string str_float;
 	static const string str_longdouble;
-#endif
+
 private:
 	Conversion();
 
@@ -90,7 +69,6 @@ public:
 		if (s == str_zero || s == str_false) {
 			return false;
 		}
-
 		if (s == str_one || s == str_true) {
 			return true;
 		}

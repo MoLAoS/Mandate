@@ -78,6 +78,7 @@ void PathFinder::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2
 }
 
 PathFinder* PathFinder::singleton = NULL;
+int pathFindNodesMax;
 
 PathFinder* PathFinder::getInstance () {
 	if ( ! singleton )
@@ -89,6 +90,7 @@ PathFinder::PathFinder() {
 	search = new GraphSearch ();
 	annotatedMap = NULL;
 	singleton = this;
+	pathFindNodesMax = Config::getInstance ().getPathFinderMaxNodes ();
 }
 
 PathFinder::~PathFinder () {

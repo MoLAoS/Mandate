@@ -30,7 +30,7 @@ namespace Glest { namespace Game {
 void Lang::loadStrings(const string &language){
 	this->language= language;
 	strings.clear();
-	string path = "data/lang/" + language;// + ".lng";
+	string path = "data/lang/" + language + ".lng";
 	strings.load( path );
 }
  
