@@ -1,8 +1,8 @@
 ; Euskarazko hizkuntza fitxategia ( 3ARRANO / http://www.3arrano.com / 3arrano@3arrano.com )
 
-3dArt=3D Irudiak
-3dAnd2dArt=3D / 2D Irudiak
 2dArtAndWeb=2D Irudiak / Weba
+3dAnd2dArt=3D / 2D Irudiak
+3dArt=3D Irudiak
 About=Egileak
 AlreadyUpgraded=Jadanik ikertuta dago
 AmbientVolume=Girotze soinuak
@@ -48,8 +48,8 @@ Filter=Iragazkia
 FreeCamera=Kamera askea
 FxVolume=Efektuen ozent.
 GameCamera=Jokuko kamera
-GameMusic=Musika
 GameLoaded=Jokaldia eskuratu da
+GameMusic=Musika
 GamePaused=Jokua gelditu da
 GameResumed=Jokuari berriz ekin zaio
 GameSaved=Jokaldia gorde da
@@ -66,9 +66,9 @@ Kills=Hildakoak
 Languaje=Hizkuntza
 LinuxPort=Linuxeratzea
 Load=Zama
+LoadGame?=Jokaldia eskuratu?
 LoadedSpeed=Zamatze abiad.
 Loading=Eskuratzen
-LoadGame?=Jokaldia eskuratu?
 Map=Lurra
 MaxFilterAnisotropy=Iragazkiaren Gehienezko Anisotropia
 MaxLights=Argiak
@@ -118,8 +118,8 @@ Shadows=Itzalak
 Sight=Ikusmena
 Size=Neurria
 Slow=Motela
-SoundAndMusic=Soinua eta musika
 SomeOrdersFailed=Agindu batzuk ezin izan dira eman
+SoundAndMusic=Soinua eta musika
 SplashRadius=Uhinen erradioa
 StartingToUpgrade=Ikertzen hasten
 Stop=Gelditu
@@ -145,4 +145,3 @@ WalkSpeed=Abiadura
 Yes=Bai
 YouLose=Galdu egin duzu
 YouWin=Irabazi egin duzu
-

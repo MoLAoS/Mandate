@@ -1,8 +1,8 @@
 ; Hebrew lang file
 
-3dArt=אומנות תלת מימדית
-3dAnd2dArt=אומנות תלת ודו-מימדית
 2dArtAndWeb=אומנות דו-מימדית ורשת
+3dAnd2dArt=אומנות תלת ודו-מימדית
+3dArt=אומנות תלת מימדית
 About=אודות
 AlreadyUpgraded=כבר עודכן
 AmbientVolume=עוצמת קול סביבה

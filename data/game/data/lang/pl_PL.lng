@@ -1,8 +1,8 @@
 ; Polish lang file (Polski plik jezykowy, bez znakow diakrytycznych)
 
-3dArt=Grafika 3D
-3dAnd2dArt=Grafika 3D i 2D
 2dArtAndWeb=Grafika i Web 2D
+3dAnd2dArt=Grafika 3D i 2D
+3dArt=Grafika 3D
 About=Info
 AlreadyUpgraded=Juz ulepszone
 AmbientVolume=Glosnosc ogolna

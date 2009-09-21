@@ -2,9 +2,9 @@
 ; by G. F.
 ; Updated to v 3.0.0 by Panagiotis www.linuxer.gr
 
-3dArt=3D τέχνη
-3dAnd2dArt=3D και 2D τέχνη
 2dArtAndWeb=2D τέχνη και διαδίκτυο
+3dAnd2dArt=3D και 2D τέχνη
+3dArt=3D τέχνη
 About=Σχετικά
 Address=Διέυθηνση
 AlreadyUpgraded=Έχει ήδη αναβαθμιστεί
@@ -73,8 +73,8 @@ Human=’νθρωπος
 Initializing=Εκκίνηση
 InvalidOrder=’κυρη εντολή
 InvalidPosition=’κυρη θέση
-Kills=Σκότωσες
 JoinGame=Σύνδεση
+Kills=Σκότωσες
 Language=Γλώσσα
 LinuxPort=Έκδοση Linux
 Load=Φόρτωση
@@ -93,9 +93,9 @@ MusicVolume=Ένταση μουσικής
 Network=Δύκτιο
 NewGame=Νέο παιχνίδι
 No=Όχι
-NotConnected=Not connected
 None=Κανένα
 Normal=Κανονικό
+NotConnected=Not connected
 Ok=Εντάξει
 OpenGlExtensions=Επεκτάσεις
 OpenGlInfo=Πληροφορίες OpenGL
@@ -159,8 +159,8 @@ UpgradeSpeed=Ρυθμός αναβάθμισης
 Upgrades=Αναβαθμίσεις
 Upgrading=Αναβάθμιση
 Victory=Νίκη
-WalkSpeed=Ταχύτητα βαδύσματος
 WaitingHost=Περίμενε τον σέρβερ για την έναρξη
+WalkSpeed=Ταχύτητα βαδύσματος
 Yes=Ναί
 YouLose=Έχασες!
 YouWin=Κέρδισες!

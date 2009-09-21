@@ -1,7 +1,6 @@
 ; Czech lang file
-
-; for Glest v3.1.2
 ; by Triple T (triple.t@seznam.cz) and RedDy
+; for Glest v3.1.2
 
 2dArtAndWeb=2D grafika a web
 3dAnd2dArt=3D a 2D grafika
@@ -20,15 +19,16 @@ AttackStopped=Utok zastaven
 AttackStrenght=Sila utoku
 AutoConfig=Auto konf.
 Build=Staveni
+BuildSpeed=Rychlost staveni
 BuildingNoPlace=Budovu nelze postavit na tomto miste
 BuildingNoReqs=Budova nesplnuje pozadavky
 BuildingNoRes=Nedostatek surovin pro stavbu budovy
-BuildSpeed=Rychlost staveni
 Built=Postaveno
 CameraModeSet=Mod kamery nastaven na
+CanRepair=Muze opravovat
 Cancel=Storno
 Canceled=Stornovano
-CanRepair=Muze opravovat
+ChatMode=Pokec
 Closed=Nikdo
 Command=Prikaz
 CommonCommand=Obvykly prikaz
@@ -74,7 +74,6 @@ Harvest=Tezba
 HarvestSpeed=Rychlost tezby
 Hp=HP
 Human=Clovek
-ChatMode=Pokec
 Initializing=Inicializuji
 InvalidOrder=Neplatny prikaz
 InvalidPosition=Neplatna pozice
@@ -116,8 +115,8 @@ OpenGlVersion=Verze
 Options=Nastaveni
 OrdersOnQueue=Prikazu ve fronte
 Play=Hrat
-Player=Hrac 
 PlayNow=Hrat!
+Player=Hrac 
 Port=Port
 Produce=Vyroba
 Producing=Vyrabim
@@ -163,8 +162,8 @@ UnitsProduced=Vyrobenych jednotek
 Upgrade=Vylepseni
 UpgradeNoReqs=Vylepseni nesplnuje pozadavky
 UpgradeNoRes=Nedostatek surovin pro vylepseni
-Upgrades=Vylepseni
 UpgradeSpeed=Rychlost vylepsovani
+Upgrades=Vylepseni
 Upgrading=Vylepsuji
 Victory=Vyhral
 WaitingHost=Cekam na server az spusti hru
