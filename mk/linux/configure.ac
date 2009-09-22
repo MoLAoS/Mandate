@@ -85,16 +85,6 @@ else
 fi
 ])
 
-AC_LANG_PUSH([C++])
-NP_FINDLIB([XERCES], [xerces], [xerces],
-		NP_LANG_PROGRAM([#include <xercesc/util/PlatformUtils.hpp>
-XERCES_CPP_NAMESPACE_USE;], [XMLPlatformUtils::Initialize();]),
-		[], [-lxerces-c -lpthread],
-		[],
-		[AC_MSG_ERROR([Please install xerces-c])],
-		[], [])
-AC_LANG_POP([C++])
-
 NP_FINDLIB([OPENAL], [OpenAL], [OpenAL],
 		NP_LANG_PROGRAM([#include <AL/al.h>],
 			[alcOpenDevice(0);]),
