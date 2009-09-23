@@ -2,7 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
+//				  2008-2009 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -28,7 +28,9 @@ namespace Glest { namespace Game {
 
 Config::Config(const char* fileName) : fileName(fileName) {
 	Properties *p = new Properties();
-	p->load(fileName, true);	
+	if(Shared::Util::fileExists(fileName)) {
+		p->load(fileName, true);
+	}
 
 	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);

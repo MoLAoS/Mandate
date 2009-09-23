@@ -56,7 +56,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
     labelScenario.setText(lang.get("Scenario"));
 
     //categories listBox
-	findAll("scenarios/*.", results);
+	findAll("gae/scenarios/*.", results);
 	categories= results;
 	
 	if(results.size()==0){
@@ -140,7 +140,7 @@ void MenuStateScenario::setScenario(int i){
 void MenuStateScenario::updateScenarioList(const string category){
 	vector<string> results;
 
-	findAll("scenarios/" + category + "/*.", results);
+	findAll("gae/scenarios/" + category + "/*.", results);
 
 	//update scenarioFiles
 	scenarioFiles= results;
@@ -162,8 +162,8 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
     Lang &lang= Lang::getInstance();
 
     XmlTree xmlTree;
-	//scenarios/[category]/[scenario]/[scenario].xml
-	xmlTree.load("scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
+	//gae/scenarios/[category]/[scenario]/[scenario].xml
+	xmlTree.load("gae/scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
 
     const XmlNode *scenarioNode= xmlTree.getRootNode();
 	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
@@ -222,34 +222,34 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 	scenarioInfo->desc+= lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
 }
 
-void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gameSettings){
+void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gs){
 
-	gameSettings->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
-	gameSettings->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
-    gameSettings->setTilesetPath(string("tilesets/") +scenarioInfo->tilesetName);
-    gameSettings->setTechPath(string("techs/") + scenarioInfo->techTreeName);
-	gameSettings->setScenarioPath("scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
+	gs->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
+	gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
+    gs->setTilesetPath(string("tilesets/") +scenarioInfo->tilesetName);
+    gs->setTechPath(string("techs/") + scenarioInfo->techTreeName);
+	gs->setScenarioPath("gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
 		+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
-	gameSettings->setDefaultUnits(scenarioInfo->defaultUnits);
-	gameSettings->setDefaultResources(scenarioInfo->defaultResources);
-	gameSettings->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
+	gs->setDefaultUnits(scenarioInfo->defaultUnits);
+	gs->setDefaultResources(scenarioInfo->defaultResources);
+	gs->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
 
 	int factionCount= 0;
     for(int i=0; i<GameConstants::maxPlayers; ++i){
         ControlType ct= static_cast<ControlType>(scenarioInfo->factionControls[i]);
 		if(ct!=ctClosed){
 			if(ct==ctHuman){
-				gameSettings->setThisFactionIndex(factionCount);
+				gs->setThisFactionIndex(factionCount);
 			}
-			gameSettings->setFactionControl(factionCount, ct);
-            gameSettings->setTeam(factionCount, scenarioInfo->teams[i]-1);
-			gameSettings->setStartLocationIndex(factionCount, i);
-            gameSettings->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
+			gs->setFactionControl(factionCount, ct);
+            gs->setTeam(factionCount, scenarioInfo->teams[i]-1);
+			gs->setStartLocationIndex(factionCount, i);
+            gs->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
 			factionCount++;
 		}
     }
 
-	gameSettings->setFactionCount(factionCount);
+	gs->setFactionCount(factionCount);
 }
 
 ControlType MenuStateScenario::strToControllerType(const string &str){

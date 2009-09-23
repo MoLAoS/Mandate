@@ -26,7 +26,13 @@ using Shared::Util::Properties;
 
 class Lang {
 private:
-	string locale;
+	string locale;		/**< Should have this format: language[_territory][.encoding][@script] */
+#if 0
+	string language;
+	string territory;
+	string encoding;
+	script script;
+#endif
 	Properties strings;
 	Properties scenarioStrings;
 
@@ -38,6 +44,14 @@ public:
 		static Lang lang;
 		return lang;
 	}
+	const string &getLocale() const			{return locale;}
+#if 0
+	const string &getLanguage() const		{return language;}
+	const string &getTerritory() const		{return territory;}
+	const string &getEncoding() const		{return encoding;}
+	const string &getScript() const			{return script;}
+#endif
+
 	void setLocale(const string &locale);
 	void loadScenarioStrings(const string &scenarioDir, const string &scenarioName);
 	string getScenarioString(const string &s);

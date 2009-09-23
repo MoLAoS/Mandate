@@ -32,7 +32,7 @@ void Lang::setLocale(const string &locale) {
 	this->locale = locale;
 	strings.clear();
 	setlocale(LC_CTYPE, locale.c_str());
-	string path = "data/lang/" + locale + ".lng";
+	string path = "gae/data/lang/" + locale + ".lng";
 	strings.load(path);
 }
 
