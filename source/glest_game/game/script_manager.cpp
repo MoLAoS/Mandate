@@ -289,7 +289,7 @@ int ScriptManager::debugLog(Shared::Lua::LuaHandle *luaHandle)  {
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		string &msg = luaArguments.getString(-1);
+		const string &msg = luaArguments.getString(-1);
 		Logger::getErrorLog().add ( msg );
 	}
 	catch ( LuaError e ) {
@@ -306,7 +306,7 @@ int ScriptManager::consoleMsg (Shared::Lua::LuaHandle *luaHandle)  {
 		return luaArguments.getReturnCount();
 	}
 	try { 
-		string &msg = luaArguments.getString(-1);
+		const string &msg = luaArguments.getString(-1);
 		theConsole.addLine ( msg );
 	}
 	catch ( LuaError e ) {
