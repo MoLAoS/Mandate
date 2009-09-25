@@ -1,7 +1,10 @@
 #!/bin/sh
 
-rm -f configure Jamconfig.in build shared_lib glest_game glest_map_editor test data docs maps gae/scenarios techs tilesets gae/data/lang
-rmdir -p gae/data > /dev/null 2>&1
+branchSubDir=0.2
+
+rm -f configure Jamconfig.in build \
+	  data docs gae maps techs tilesets \
+	  configurator g3d_viewer game map_editor shared_lib test
 
 if [ "$1" = "clean" ]; then
 	exit
@@ -32,22 +35,17 @@ autoconf
 
 rm -rf autom4te.cache build
 
-mkdir -p gae/data
-mkdir -p /tmp/$(whoami)/gae/0.2.12
-ln -s /tmp/$(whoami)/gae/0.2.12 build
+mkdir -p /tmp/$(whoami)/gae/${branchSubDir}
+ln -s /tmp/$(whoami)/gae/${branchSubDir} build
 
 # create symlinks to the source dirs
 
 echo "Updating Source symlinks..."
 
-for f in data docs maps techs tilesets; do
+for f in data docs gae maps techs tilesets; do
 	ln -sf ../../data/game/$f .;
 done
 
-ln -sf ../../../data/game/scenarios gae;
-ln -sf ../../../../data/game/data/lang gae/data;
-
-ln -sf ../../source/shared_lib .
-ln -sf ../../source/glest_game .
-ln -sf ../../source/glest_map_editor .
-
+for f in configurator g3d_viewer game map_editor shared_lib test; do
+	ln -sf ../../source/$f .;
+done
