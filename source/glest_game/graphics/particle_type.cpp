@@ -38,6 +38,12 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 
 	Renderer &renderer = Renderer::getInstance();
 
+	const XmlNode *blendModeNode = particleSystemNode->getChild("blend-mode", 0, false);
+	if(blendModeNode) {
+		srcBlendMode = Particle::stringToBlendMode(blendModeNode->getRestrictedAttribute("src"));
+		destBlendMode = Particle::stringToBlendMode(blendModeNode->getRestrictedAttribute("dest"));
+	}
+
 	//texture
 	const XmlNode *textureNode = particleSystemNode->getChild("texture");
     //texture enabled
