@@ -14,7 +14,9 @@
 #define _SHARED_UTIL_RANDOM_H_
 
 #include <cassert>
+#include "vec.h"
 
+using namespace Shared::Graphics;
 namespace Shared { namespace Util {
 
 // =====================================================
@@ -60,6 +62,27 @@ public:
 		float res = min + (max - min) * rand01;
 		assert(res >= min && res <= max);
 		return res;
+	}
+	
+	template<typename T> Vec2<T> randRange(const Vec2<T> &min, const Vec2<T> &max) {
+		return Vec2<T>(
+				randRange(min.x, max.x),
+				randRange(min.y, max.y));
+	}
+	
+	template<typename T> Vec3<T> randRange(const Vec3<T> &min, const Vec3<T> &max) {
+		return Vec3<T>(
+				randRange(min.x, max.x),
+				randRange(min.y, max.y),
+				randRange(min.z, max.z));
+	}
+	
+	template<typename T> Vec4<T> randRange(const Vec4<T> &min, const Vec4<T> &max) {
+		return Vec4<T>(
+				randRange(min.x, max.x),
+				randRange(min.y, max.y),
+				randRange(min.z, max.z),
+				randRange(min.w, max.w));
 	}
 };
 

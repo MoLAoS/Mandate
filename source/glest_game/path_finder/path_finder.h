@@ -39,7 +39,7 @@ namespace Search {
 
 const int maxFreeSearchRadius = 10;
 //const int pathFindRefresh = 10; // now unused
-const int pathFindNodesMax = Config::getInstance ().getPathFinderMaxNodes ();
+extern int pathFindNodesMax;
 
 const int numOffsetsSize1Dist1 = 8;
 const Vec2i OffsetsSize1Dist1 [numOffsetsSize1Dist1] = 
@@ -156,8 +156,8 @@ public:
 	bool isLegalMove ( Unit *unit, const Vec2i &pos ) const;
 
 	// update the annotated map at pos 
-	void updateMapMetrics ( const Vec2i &pos, const int size, bool adding, Field field )
-	{ annotatedMap->updateMapMetrics ( pos, size, adding, field ); }
+	void updateMapMetrics ( const Vec2i &pos, const int size )
+	{ annotatedMap->updateMapMetrics ( pos, size ); }
 
 private:
 	static const ResourceType *resourceGoal;

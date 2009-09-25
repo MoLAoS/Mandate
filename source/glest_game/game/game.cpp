@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -85,7 +85,7 @@ Game::Game(Program &program, const GameSettings &gs, XmlNode *savedGame) :
 		lastUpdateLoopsFraction(0.f),
 		saveBox(NULL),
 		lastMousePos(0),
-	weatherParticleSystem(NULL) {
+		weatherParticleSystem(NULL) {
 	assert(!singleton);
 	singleton = this;
 }
@@ -125,10 +125,12 @@ Game::~Game() {
 void Game::load(){
 	Logger::getInstance().setState(Lang::getInstance().get("Loading"));
 	Logger &logger= Logger::getInstance();
-	string mapName= gameSettings.getMap();
-	string tilesetName= gameSettings.getTileset();
-	string techName= gameSettings.getTech();
-	string scenarioName= gameSettings.getScenario();
+	string mapName= gameSettings.getMapPath();
+	string tilesetName= gameSettings.getTilesetPath();
+	string techName= gameSettings.getTechPath();
+	string scenarioPath= gameSettings.getScenarioPath();
+	string scenarioName= basename(scenarioPath);
+			
 
 	logger.setState(Lang::getInstance().get("Loading"));
 
@@ -150,8 +152,8 @@ void Game::load(){
 
 	//scenario
 	if(!scenarioName.empty()){
-		Lang::getInstance().loadScenarioStrings(gameSettings.getScenarioDir(), scenarioName);
-		world.loadScenario(Scenario::getScenarioPath(gameSettings.getScenarioDir(), scenarioName), &checksum);
+		Lang::getInstance().loadScenarioStrings(scenarioPath, scenarioName);
+		world.loadScenario(scenarioPath + "/" + scenarioName + ".xml", &checksum);
 	}
 }
 

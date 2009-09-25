@@ -1,5 +1,16 @@
-#ifndef _GLEST_MAPEDITOR_MAIN_H_
-#define _GLEST_MAPEDITOR_MAIN_H_
+// ==============================================================
+//	This file is part of Glest (www.glest.org)
+//
+//	Copyright (C) 2001-2008 Martiño Figueroa
+//
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
+//	License, or (at your option) any later version
+// ==============================================================
+
+#ifndef _MAPEDITOR_MAIN_H_
+#define _MAPEDITOR_MAIN_H_
 
 #include <string>
 #include <vector>
@@ -7,13 +18,13 @@
 #include <wx/wx.h>
 #include <wx/glcanvas.h>
 
-#include "program.h" 
+#include "program.h"
 
 using std::string;
 using std::vector;
 using std::pair;
 
-namespace Glest{ namespace MapEditor{
+namespace MapEditor {
 
 class GlCanvas;
 
@@ -21,22 +32,22 @@ class GlCanvas;
 //	class MainWindow
 // =====================================================
 
-class MainWindow: public wxFrame{
+class MainWindow: public wxFrame {
 private:
 	DECLARE_EVENT_TABLE()
 
 private:
 	static const string versionString;
 	static const string winHeader;
-	static const int heightCount= 11;
-	static const int surfaceCount= 5;
-	static const int objectCount= 11;
-	static const int resourceCount= 6;
-	static const int startLocationCount= 4;
-	static const int radiusCount= 9;
+	static const int heightCount = 11;
+	static const int surfaceCount = 5;
+	static const int objectCount = 11;
+	static const int resourceCount = 6;
+	static const int startLocationCount = 4;
+	static const int radiusCount = 9;
 
 private:
-	enum MenuId{
+	enum MenuId {
 		miFileLoad,
 		miFileSave,
 		miFileSaveAs,
@@ -58,12 +69,12 @@ private:
 		miMiscHelp,
 
 		miBrushHeight,
-		miBrushSurface= miBrushHeight + heightCount + 1,
-		miBrushObject= miBrushSurface + surfaceCount + 1,
-		miBrushResource= miBrushObject + objectCount + 1,
-		miBrushStartLocation= miBrushResource + resourceCount + 1,
+		miBrushSurface = miBrushHeight + heightCount + 1,
+		miBrushObject = miBrushSurface + surfaceCount + 1,
+		miBrushResource = miBrushObject + objectCount + 1,
+		miBrushStartLocation = miBrushResource + resourceCount + 1,
 
-		miRadius= miBrushStartLocation + startLocationCount + 1
+		miRadius = miBrushStartLocation + startLocationCount + 1
 	};
 
 private:
@@ -83,7 +94,7 @@ private:
 	wxMenu *menuBrushStartLocation;
 	wxMenu *menuRadius;
 
-	string currentFile; 
+	string currentFile;
 
 	int height;
 	int surface;
@@ -92,18 +103,18 @@ private:
 	int resource;
 	int startLocation;
 	int enabledGroup;
-	
+
 public:
 	MainWindow();
 	~MainWindow();
-	
+
 	void init();
 
 	void onClose(wxCloseEvent &event);
 	void onMouseDown(wxMouseEvent &event);
 	void onMouseMove(wxMouseEvent &event);
 	void onPaint(wxPaintEvent &event);
-	
+
 	void onMenuFileLoad(wxCommandEvent &event);
 	void onMenuFileSave(wxCommandEvent &event);
 	void onMenuFileSaveAs(wxCommandEvent &event);
@@ -141,7 +152,7 @@ public:
 //	class GlCanvas
 // =====================================================
 
-class GlCanvas: public wxGLCanvas{
+class GlCanvas: public wxGLCanvas {
 private:
 	DECLARE_EVENT_TABLE()
 
@@ -159,7 +170,7 @@ private:
 //	class SimpleDialog
 // =====================================================
 
-class SimpleDialog: public wxDialog{
+class SimpleDialog: public wxDialog {
 private:
 	typedef vector<pair<string, string> > Values;
 
@@ -181,7 +192,7 @@ public:
 //	class App
 // =====================================================
 
-class App: public wxApp{
+class App: public wxApp {
 private:
 	MainWindow *mainWindow;
 
@@ -191,8 +202,8 @@ public:
 	virtual int OnExit();
 };
 
-}}// end namespace
+}// end namespace
 
-DECLARE_APP(Glest::MapEditor::App)
+DECLARE_APP(MapEditor::App)
 
 #endif

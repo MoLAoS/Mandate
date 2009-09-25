@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -349,9 +349,10 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 	int factionCount= 0;
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
-	gameSettings->setMap(mapFiles[listBoxMap.getSelectedItemIndex()]);
-	gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-	gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setMapPath(string("maps/") + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm");
+    gameSettings->setTilesetPath(string("tilesets/") + tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
+    gameSettings->setTechPath(string("techs/") + techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+    gameSettings->setScenarioPath("");
 	gameSettings->setDefaultVictoryConditions(true);
 	gameSettings->setDefaultResources (true);
 	gameSettings->setDefaultUnits (true);
@@ -373,8 +374,7 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 			gameSettings->setStartLocationIndex(factionCount, i);
 			if(listBoxFactions[i].getSelectedItemIndex() >= factionFiles.size()) {
 				gameSettings->setFactionTypeName(factionCount, factionFiles[rand.randRange(0, factionFiles.size() - 1)]);
-			} 
-			else {
+			} else {
 				gameSettings->setFactionTypeName(factionCount, factionFiles[listBoxFactions[i].getSelectedItemIndex()]);
 			}
 			factionCount++;

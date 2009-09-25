@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under 
 //	the terms of the GNU General Public License as published 
@@ -11,9 +11,9 @@
 
 #include "pch.h"
 
-#include "lua_script.h"
-
 //#include <stdexcept>
+#include <iostream>
+#include "lua_script.h"
 #include "conversion.h"
 #include "leak_dumper.h"
 
@@ -115,7 +115,7 @@ string LuaScript::errorToString(int errorCode){
 			error+= "Unknown error";
 	}
 	error += string(": ")+luaL_checkstring(luaState, -1);
-	fprintf ( stderr, error.c_str() );
+	cerr << error << endl;
 	return error;
 }
 

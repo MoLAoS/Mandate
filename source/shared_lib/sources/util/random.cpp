@@ -30,6 +30,7 @@ const int Random::a= 1366;
 const int Random::b= 150889;
 
 void Random::init(int seed) {
+	seed = abs(seed);
 #ifdef SEED_RANDOM_WITH_CLOCK
 	assert(sizeof(time_t) == 32);
 	time_t curSeconds = 0;

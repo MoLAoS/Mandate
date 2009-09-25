@@ -25,9 +25,13 @@
 #include "xml_parser.h"
 #include "zlib.h"
 
+// Big time HACK! Windoze doesn't have strtok_r(), 
+// I belive from your use of the 'buffer' parameter that this is 'safe'
+// but if you actually need the re-entrant version, this will need revisiting :)
 #if defined(WIN32) || defined(WIN64)
+#	define strtok_r(a,b,c) strtok(a,b)
 #else
-	#include <glob.h>
+#	include <glob.h>
 #endif
 
 #include "leak_dumper.h"
@@ -342,51 +346,84 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 	}
 }
 
-string lastDir(const string &s){
-	size_t i= s.find_last_of('/');
-	size_t j= s.find_last_of('\\');
-	size_t pos;
+/**
+ * Cleans up a path.
+ * - converting any backslashes to slashes
+ * - removes duplicate path delimiters
+ * - eliminates all entries that specify the current directory
+ * - if a "paraent directory" entry is found (two dots) and a path element exists before it, then
+ *   both are removed (i.e., factored out)
+ * - If the resulting path is the current directory, then an empty string is returned.
+ */
+string cleanPath(const string &s) {
+	string result;
+	vector<const char *> elements;
+	char *buf = strcpy(new char[s.length() + 1], s.c_str());
+	char *data;
+	bool isAbsolute;
 
-	if(i==string::npos){
-		pos= j;
-	}
-	else if(j==string::npos){
-		pos= i;
-	}
-	else{
-		pos= i<j? j: i;
+	// empty input gets empty output
+	if(!s.length()) {
+		return s;
 	}
 
-	if (pos==string::npos){
-		throw runtime_error(string(__FILE__)+" lastDir - i==string::npos");
+	isAbsolute = (s.at(0) == '/' || s.at(0) == '\\');
+	
+	for(char *p =  strtok_r(buf, "\\/", &data); p; p = strtok_r(NULL, "\\/", &data)) {
+		// skip duplicate path delimiters
+		if(strlen(p) == 0) {
+			continue;
+
+		// skip entries that just say "the current directory"
+		} else if(!strcmp(p, ".")) {
+			continue;
+
+		// If an entry referrs to the parent directory and we have that, then we just drop the
+		// parent and shorten the whole path
+		} else if(!strcmp(p, "..") && elements.size()) {
+			elements.pop_back();
+		} else {
+			elements.push_back(p);
+		}
 	}
 
-	return (s.substr(pos+1, s.length()));
+	for(vector<const char *>::const_iterator i = elements.begin(); i != elements.end(); ++i) {
+		if(result.length() || isAbsolute) {
+			result.push_back('/');
+		}
+		result.append(*i);
+	}
+
+	delete[] buf;
+	return result;
 }
 
-string cutLastFile(const string &s){
-	size_t i= s.find_last_of('/');
-	size_t j= s.find_last_of('\\');
-	size_t pos;
+string dirname(const string &s) {
+	string clean = cleanPath(s);
+	int pos = clean.find_last_of('/');
 
-	if(i==string::npos){
-		pos= j;
-	}
-	else if(j==string::npos){
-		pos= i;
-	}
-	else{
-		pos= i<j? j: i;
-	}
+	/* This does the same thing, which one is more readable?
+	return pos == string::npos ? string(".") : (pos ? clean.substr(0, pos) : string("/"));
+	*/
 
-	if (pos==string::npos){
-		throw runtime_error(string(__FILE__)+"cutLastFile - i==string::npos");
+	if(pos == string::npos) {
+		return string(".");
+	} else if(pos == 0) {
+		return string("/");
+	} else {
+		return clean.substr(0, pos);
 	}
-
-	return (s.substr(0, pos));
 }
 
-string cutLastExt(const string &s){
+string basename(const string &s) {
+	string cleaned = cleanPath(s);
+	int pos = cleaned.find_last_of('/');
+
+	// cleanPath() promises that the last character wont be the slash, so "pos + 1" should be safe.
+	return pos == string::npos ? cleaned : cleaned.substr(pos + 1);
+}
+
+string cutLastExt(const string &s) {
      size_t i= s.find_last_of('.');
 
 	 if (i==string::npos){

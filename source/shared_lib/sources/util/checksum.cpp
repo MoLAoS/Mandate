@@ -56,7 +56,7 @@ void Checksum::addFile(const string &path, bool text){
 		throw runtime_error("Can not open file: " + path);
 	}
 
-	addString(lastFile(path));
+	addString(basename(path));
 
 	while(!feof(file)) {
 		int8 byte= 0;

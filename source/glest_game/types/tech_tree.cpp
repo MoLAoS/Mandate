@@ -61,7 +61,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
    XmlTree	xmlTree;
    string path;
 	try {
-		path= dir+"/"+lastDir(dir)+".xml";
+		path= dir+"/"+basename(dir)+".xml";
 		checksum.addFile(path, true);
 		xmlTree.load(path);
    }

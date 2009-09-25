@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -579,15 +579,12 @@ void UnitUpdater::updateBuild(Unit *unit){
 					getServerInterface()->updateFactions();
 				}
 			}
-         if ( !builtUnit->isMobile() )
-            pathFinder->updateMapMetrics ( builtUnit->getPos(), builtUnit->getSize(), true, FieldWalkable );
-
+			if ( !builtUnit->isMobile() ) {
+				pathFinder->updateMapMetrics ( builtUnit->getPos(), builtUnit->getSize() );
+			}
 			//play start sound
 			if(unit->getFactionIndex()==world->getThisFactionIndex()){
-				SoundRenderer::getInstance().playFx(
-					bct->getStartSound(),
-					unit->getCurrVector(),
-					gameCamera->getPos());
+				SoundRenderer::getInstance().playFx( bct->getStartSound(), unit->getCurrVector(), gameCamera->getPos() );
 			}
 		} else {
 			// there are no free cells
@@ -773,7 +770,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					// let the pathfinder know
 					Vec2i rPos = r->getPos ();
 					sc->deleteResource();
-					pathFinder->updateMapMetrics ( rPos, 2, false, FieldWalkable );
+					pathFinder->updateMapMetrics ( rPos, 2 );
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               
