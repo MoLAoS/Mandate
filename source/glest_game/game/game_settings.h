@@ -63,7 +63,7 @@ public:
 	const string &getFactionTypeName(int i) const	{return factionTypeNames[i];}
 	const string &getPlayerName(int i) const		{return playerNames[i];}
 	ControlType getFactionControl(int i) const		{return factionControls[i];}
-	float getResourceMultilpier ( int i ) const					{ return resourceMultipliers[i]; }
+	float getResourceMultilpier(int i) const		{return resourceMultipliers[i];}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getFactionCount() const						{return factionCount;}
 	int getTeam(int i) const						{return teams[i];}
@@ -83,7 +83,7 @@ public:
 	void setFactionControl(int i, ControlType v)	{factionControls[i]= v;}
 	void setThisFactionIndex(int v) 				{thisFactionIndex = v;}
 	void setFactionCount(int v)						{factionCount = v;}
-	void setResourceMultiplier(int i, float v){resourceMultipliers[i] = v;}
+	void setResourceMultiplier(int i, float v)		{resourceMultipliers[i] = v;}
 	void setTeam(int i, int v)						{teams[i] = v;}
 	void setStartLocationIndex(int i, int v)		{startLocationIndex[i] = v;}
 	void setDefaultUnits(bool v) 					{defaultUnits = v;}

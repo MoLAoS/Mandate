@@ -365,8 +365,7 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 			}
 			if ( ct == ctCpuUltra ) {
 				gameSettings->setResourceMultiplier ( factionCount, 3.f );
-			}
-			else {
+			} else {
 				gameSettings->setResourceMultiplier ( factionCount, 1.f );
 			}
 			gameSettings->setFactionControl(factionCount, ct);

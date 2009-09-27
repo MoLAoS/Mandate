@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2007 Martiño Figueroa
+//	Copyright (C) 2001-2007 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -74,16 +74,16 @@ void Properties::load(const string &path, bool trim) {
 		key = line.substr(0, pos);
 		value = line.substr(pos + 1);
 		if(trim) {
-			while (!key.empty() && isspace( key[0], loc )) {
+			while (!key.empty() && isspace(key[0], loc)) {
 				key.erase(0, 1);
 			}
-			while (!key.empty() && isspace( key[key.size() - 1], loc )) {
+			while (!key.empty() && isspace(key[key.size() - 1], loc)) {
 				key.erase(key.size() - 1);
 			}
-			while (!value.empty() && isspace( value[0], loc )) {
+			while (!value.empty() && isspace(value[0], loc)) {
 				value.erase(0, 1);
 			}
-			while (!value.empty() && isspace( value[value.size() - 1], loc )) {
+			while (!value.empty() && isspace(value[value.size() - 1], loc)) {
 				value.erase(value.size() - 1);
 			}
 		}

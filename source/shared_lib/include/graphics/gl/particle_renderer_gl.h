@@ -13,6 +13,7 @@
 #define _SHARED_GRAPHICS_GL_PARTICLERENDERERGL_H_
 
 #include "particle_renderer.h"
+#include "opengl.h"
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
@@ -23,6 +24,7 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 class ParticleRendererGl: public ParticleRenderer {
 public:
 	static const int bufferSize = 1024;
+	static const GLenum glBlendModes[Particle::BLEND_MODE_COUNT];
 
 private:
 	bool rendering;
@@ -38,10 +40,19 @@ public:
 	virtual void renderSystemLine(ParticleSystem *ps);
 	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr);
 
+	/** Translate a Particle::BlendMode into an OpenGL value for glBlendFunc() */
+	static GLenum glBlendMode(Particle::BlendMode blendMode) {
+		assert(blendMode >= 0 && blendMode < Particle::BLEND_MODE_COUNT);
+		return glBlendModes[blendMode];
+	}
+
 protected:
 	void renderBufferQuads(int quadCount);
 	void renderBufferLines(int lineCount);
-	void setBlendMode(Particle::BlendMode blendMode);
+
+	static void setBlendMode(Particle::BlendMode srcBlendMode, Particle::BlendMode destBlendMode) {
+		glBlendFunc(glBlendMode(srcBlendMode), glBlendMode(destBlendMode));
+	}
 };
 
 }}}//end namespace

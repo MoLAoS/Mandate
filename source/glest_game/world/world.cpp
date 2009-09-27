@@ -44,8 +44,11 @@ World *World::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-World::World(Game *game) : game(*game), gs(game->getGameSettings()), stats(game->getGameSettings()),
-		posIteratorFactory(65) {
+World::World(Game *game) 
+		: game(*game)
+		, gs(game->getGameSettings())
+		, stats(game->getGameSettings())
+		, posIteratorFactory(65) {
 	Config &config = Config::getInstance();
 
 	fogOfWar = config.getGsFogOfWarEnabled();
@@ -173,8 +176,9 @@ bool World::loadTileset(Checksum &checksum) {
 bool World::loadTech(Checksum &checksum) {
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i)
-		if (gs.getFactionTypeName(i).size())
+		if (gs.getFactionTypeName(i).size()) {
 			names.insert(gs.getFactionTypeName(i));
+		}
 	return techTree.load(gs.getTechPath(), names, checksum);
 }
 
@@ -264,7 +268,7 @@ void World::doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, f
 	UnitReference unitRef(n);
 	Unit *unit = unitRef.getUnit();
 
-	if (!unit) {
+	if (unlikely(!unit)) {
 		//who the fuck is that?
 		if (minor) {
 			NetworkManager::getInstance().getClientInterface()->requestFullUpdate(unitRef);
@@ -505,8 +509,8 @@ void World::updateEarthquakes(float seconds) {
 					continue;
 				}
 
-				const FallDownSkillType *fdst = (const FallDownSkillType *)
-												dri->first->getType()->getFirstStOfClass(scFallDown);
+				const FallDownSkillType *fdst = static_cast<const FallDownSkillType*>(
+						dri->first->getType()->getFirstStOfClass(scFallDown));
 
 				if (fdst && dri->first->getCurrSkill() != fdst
 						&& random.randRange(0.f, 1.f) + fdst->getAgility() < intensity / count / 0.25f) {
@@ -747,8 +751,9 @@ void World::moveUnitCells(Unit *unit) {
 	if (tileset.getWaterEffects() && unit->getCurrField() == FieldWalkable) {
 		if (map.getCell(unit->getLastPos())->isSubmerged()) {
 			for (int i = 0; i < 3; ++i) {
-				waterEffects.addWaterSplash(
-					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f), unit->getLastPos().y + random.randRange(-0.4f, 0.4f)));
+				waterEffects.addWaterSplash(Vec2f(
+						unit->getLastPos().x + random.randRange(-0.4f, 0.4f),
+						unit->getLastPos().y + random.randRange(-0.4f, 0.4f)));
 			}
 		}
 	}
@@ -813,11 +818,10 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 		const CommandType *cmdType = NULL;
 
 		if (commandName == "move") {
-			cmdType = unit->getType()->getFirstCtOfClass ( ccMove );
+			cmdType = unit->getType()->getFirstCtOfClass(ccMove);
 		} else if (commandName == "attack") {
 			cmdType = unit->getType()->getFirstCtOfClass ( ccAttack );
-		}
-		else if ( commandName=="harvest" ) {
+		} else if ( commandName=="harvest" ) {
 			Resource *r = map.getTile ( Map::toTileCoords(pos) )->getResource();
 			bool found = false;
 			if ( ! unit->getType()->getFirstCtOfClass(ccHarvest) ) {
@@ -827,8 +831,7 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 			if ( !r ) {
 				theConsole.addLine ( "Warning: No resources found at target pos of harvest cmd" );
 				cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
-			}
-			else {
+			} else {
 				for ( int i=0; i < unit->getType()->getCommandTypeCount (); ++i ) {
 					cmdType = unit->getType()->getCommandType ( i );
 					if ( cmdType->getClass() == ccHarvest ) {
@@ -844,8 +847,7 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 					cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
 				}
 			}
-		}
-		else if ( commandName == "patrol" ) {
+		} else if ( commandName == "patrol" ) {
 		} else {
 			throw runtime_error("Invalid position commmand: " + commandName);
 		}
@@ -854,8 +856,7 @@ void World::givePositionCommand(int unitId, const string &commandName, const Vec
 		
 		if ( res != crSuccess ) {
 			theConsole.addLine ( "command failed" );
-		}
-		else {
+		} else {
 			theConsole.addLine ( "command succees" );
 		}
 
@@ -942,8 +943,7 @@ void World::giveProductionCommand(int unitId, const string &producedName) {
 				if (pct->getProducedUnit()->getName() == producedName) {
 					if ( unit->giveCommand(new Command(pct, CommandFlags())) == crSuccess ) {
 						theConsole.addLine ( "produce command success" );
-					}
-					else {
+					} else {
 						theConsole.addLine ( "produce command failed" );
 					}
 					return;
@@ -954,19 +954,16 @@ void World::giveProductionCommand(int unitId, const string &producedName) {
 					// just record it for now, and keep looking for a Produce Command
 					mct = (MorphCommandType*)ct; 
 				}
-				
 			}
 		}
 		// didn't find a Produce Command, was there are Morph Command?
 		if ( mct ) {
 			if ( unit->giveCommand ( new Command (mct, CommandFlags()) ) == crSuccess ) {
 				theConsole.addLine ( "morph command success" );
-			}
-			else {
+			} else {
 				theConsole.addLine ( "morph command failed" );
 			}
-		}
-		else {
+		} else {
 			theConsole.addLine ( "Error: invalid production command" );
 		}
 	}

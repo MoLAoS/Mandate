@@ -13,6 +13,7 @@
 
 //#include <stdexcept>
 #include <iostream>
+
 #include "lua_script.h"
 #include "conversion.h"
 #include "leak_dumper.h"
@@ -205,24 +206,19 @@ void LuaArguments::returnVec2i(const Vec2i &value){
 	lua_rawseti(luaState, -2, 2);
 }
 
-char* LuaArguments::getType ( int ndx ) const {
+char* LuaArguments::getType(int ndx) const {
 
-	if(lua_isnumber(luaState, ndx)){
+	if (lua_isnumber(luaState, ndx)) {
 		return "Number";
-	}
-	else if(lua_isstring(luaState, ndx)){
+	} else if (lua_isstring(luaState, ndx)) {
 		return "String";
-	}
-	else if(lua_istable(luaState, ndx)){
+	} else if (lua_istable(luaState, ndx)) {
 		return "Table";
-	}
-	else if (lua_isboolean ( luaState, ndx ) ) {
+	} else if (lua_isboolean(luaState, ndx)) {
 		return "Boolean";
-	}
-	else if ( lua_isnil ( luaState, ndx ) ) {
+	} else if (lua_isnil(luaState, ndx)) {
 		return "Nil";
-	}
-	else {
+	} else {
 		return "Unknown";
 	}
 }
