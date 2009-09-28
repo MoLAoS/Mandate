@@ -26,7 +26,7 @@ namespace Shared { namespace Graphics { namespace Gl {
 // class ParticleRendererGl
 // =====================================================
 
-const GLenum ParticleRendererGl::glBlendModes[Particle::BLEND_MODE_COUNT] = {
+const GLenum ParticleRendererGl::glBlendFactors[Particle::BLEND_FUNC_COUNT] = {
 	GL_ZERO,
 	GL_ONE,
 	GL_SRC_COLOR,
@@ -42,6 +42,14 @@ const GLenum ParticleRendererGl::glBlendModes[Particle::BLEND_MODE_COUNT] = {
 	GL_CONSTANT_ALPHA,
 	GL_ONE_MINUS_CONSTANT_ALPHA,
 	GL_SRC_ALPHA_SATURATE
+};
+
+const GLenum ParticleRendererGl::glBlendEquations[Particle::BLEND_EQUATION_COUNT] = {
+	GL_FUNC_ADD,
+	GL_FUNC_SUBTRACT,
+	GL_FUNC_REVERSE_SUBTRACT,
+	GL_MIN,
+	GL_MAX
 };
 
 // ===================== PUBLIC ========================
@@ -102,7 +110,8 @@ void ParticleRendererGl::renderSystem(ParticleSystem *ps) {
 	float modelview[16];
 
 	//render particles
-	setBlendMode(ps->getSrcBlendMode(), ps->getDestBlendMode());
+	setBlendFunc(ps->getSrcBlendFactor(), ps->getDestBlendFactor());
+	setBlendEquation(ps->getBlendEquationMode());
 	glEnable(GL_BLEND);
 
 	// get the current modelview state
@@ -162,7 +171,8 @@ void ParticleRendererGl::renderSystemLine(ParticleSystem *ps) {
 	if (!ps->isEmpty()) {
 		const Particle *particle = ps->getParticle(0);
 
-		setBlendMode(ps->getSrcBlendMode(), ps->getDestBlendMode());
+		setBlendFunc(ps->getSrcBlendFactor(), ps->getDestBlendFactor());
+		setBlendEquation(ps->getBlendEquationMode());
 		glEnable(GL_BLEND);
 
 		glDisable(GL_TEXTURE_2D);

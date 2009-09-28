@@ -24,7 +24,8 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 class ParticleRendererGl: public ParticleRenderer {
 public:
 	static const int bufferSize = 1024;
-	static const GLenum glBlendModes[Particle::BLEND_MODE_COUNT];
+	static const GLenum glBlendFactors[Particle::BLEND_FUNC_COUNT];
+	static const GLenum glBlendEquations[Particle::BLEND_EQUATION_COUNT];
 
 private:
 	bool rendering;
@@ -40,18 +41,28 @@ public:
 	virtual void renderSystemLine(ParticleSystem *ps);
 	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr);
 
-	/** Translate a Particle::BlendMode into an OpenGL value for glBlendFunc() */
-	static GLenum glBlendMode(Particle::BlendMode blendMode) {
-		assert(blendMode >= 0 && blendMode < Particle::BLEND_MODE_COUNT);
-		return glBlendModes[blendMode];
+	/** Translate a Particle::BlendFactor into an OpenGL GLenum value for glBlendFunc() */
+	static GLenum translate(Particle::BlendFactor v) {
+		assert(v >= 0 && v < Particle::BLEND_FUNC_COUNT);
+		return glBlendFactors[v];
+	}
+
+	/** Translate a Particle::BlendEquation into an OpenGL GLenum value for glBlendEquation() */
+	static GLenum translate(Particle::BlendEquation v) {
+		assert(v >= 0 && v < Particle::BLEND_EQUATION_COUNT);
+		return glBlendEquations[v];
 	}
 
 protected:
 	void renderBufferQuads(int quadCount);
 	void renderBufferLines(int lineCount);
 
-	static void setBlendMode(Particle::BlendMode srcBlendMode, Particle::BlendMode destBlendMode) {
-		glBlendFunc(glBlendMode(srcBlendMode), glBlendMode(destBlendMode));
+	static void setBlendFunc(Particle::BlendFactor sfactor, Particle::BlendFactor dfactor) {
+		::glBlendFunc(translate(sfactor), translate(dfactor));
+	}
+
+	static void setBlendEquation(Particle::BlendEquation equation) {
+		::glBlendEquation(translate(equation));
 	}
 };
 

@@ -55,27 +55,39 @@ public:
 
 class Particle {
 public:
-	enum BlendMode {
-		BLEND_MODE_ZERO,
-		BLEND_MODE_ONE,
-		BLEND_MODE_SRC_COLOR,
-		BLEND_MODE_ONE_MINUS_SRC_COLOR,
-		BLEND_MODE_DST_COLOR,
-		BLEND_MODE_ONE_MINUS_DST_COLOR,
-		BLEND_MODE_SRC_ALPHA,
-		BLEND_MODE_ONE_MINUS_SRC_ALPHA,
-		BLEND_MODE_DST_ALPHA,
-		BLEND_MODE_ONE_MINUS_DST_ALPHA,
-		BLEND_MODE_CONSTANT_COLOR,
-		BLEND_MODE_ONE_MINUS_CONSTANT_COLOR,
-		BLEND_MODE_CONSTANT_ALPHA,
-		BLEND_MODE_ONE_MINUS_CONSTANT_ALPHA,
-		BLEND_MODE_SRC_ALPHA_SATURATE,
+	enum BlendFactor {
+		BLEND_FUNC_ZERO,
+		BLEND_FUNC_ONE,
+		BLEND_FUNC_SRC_COLOR,
+		BLEND_FUNC_ONE_MINUS_SRC_COLOR,
+		BLEND_FUNC_DST_COLOR,
+		BLEND_FUNC_ONE_MINUS_DST_COLOR,
+		BLEND_FUNC_SRC_ALPHA,
+		BLEND_FUNC_ONE_MINUS_SRC_ALPHA,
+		BLEND_FUNC_DST_ALPHA,
+		BLEND_FUNC_ONE_MINUS_DST_ALPHA,
+		BLEND_FUNC_CONSTANT_COLOR,
+		BLEND_FUNC_ONE_MINUS_CONSTANT_COLOR,
+		BLEND_FUNC_CONSTANT_ALPHA,
+		BLEND_FUNC_ONE_MINUS_CONSTANT_ALPHA,
+		BLEND_FUNC_SRC_ALPHA_SATURATE,
 
-		BLEND_MODE_COUNT
+		BLEND_FUNC_COUNT
 	};
 
-	static const char* blendModeNames[BLEND_MODE_COUNT];
+	static const char* blendFactorNames[BLEND_FUNC_COUNT];
+
+	enum BlendEquation {
+		BLEND_EQUATION_FUNC_ADD,
+		BLEND_EQUATION_FUNC_SUBTRACT,
+		BLEND_EQUATION_FUNC_REVERSE_SUBTRACT,
+		BLEND_EQUATION_MIN,
+		BLEND_EQUATION_MAX,
+
+		BLEND_EQUATION_COUNT
+	};
+
+	static const char* blendEquationNames[BLEND_EQUATION_COUNT];
 
 	enum PrimitiveType {
 		ptQuad,
@@ -103,6 +115,9 @@ public:
 	//void init(const ParticleSystem &ps, const Vec3f &pos, const Vec3f &speed, const Vec3f &accel);
 	//void init2(const ParticleSystem &ps, const Vec3f &pos, const Vec3f &speed, const Vec3f &accel);
 
+	static BlendFactor getBlendFactor(const string &);
+	static BlendEquation getBlendEquation(const string &);
+
 	//get
 	Vec3f getPos() const		{return pos;}
 	Vec3f getLastPos() const	{return lastPos;}
@@ -113,7 +128,6 @@ public:
 	float getSize() const		{return size;}
 	int getEnergy()	const		{return energy;}
 
-	static BlendMode stringToBlendMode(const string &);
 };
 
 class ParticleSystem;
@@ -137,8 +151,9 @@ class ParticleSystemBase {
 protected:
 	Random random;
 
-	Particle::BlendMode srcBlendMode;
-	Particle::BlendMode destBlendMode;
+	Particle::BlendFactor srcBlendFactor;
+	Particle::BlendFactor destBlendFactor;
+	Particle::BlendEquation blendEquationMode;
 	Particle::PrimitiveType primitiveType;
 	Texture *texture;
 	Model *model;
@@ -170,8 +185,9 @@ public:
 	virtual ~ParticleSystemBase(){}
 
 	//get
-	Particle::BlendMode getSrcBlendMode() const			{return srcBlendMode;}
-	Particle::BlendMode getDestBlendMode() const		{return destBlendMode;}
+	Particle::BlendFactor getSrcBlendFactor() const		{return srcBlendFactor;}
+	Particle::BlendFactor getDestBlendFactor() const	{return destBlendFactor;}
+	Particle::BlendEquation getBlendEquationMode() const{return blendEquationMode;}
 	Particle::PrimitiveType getPrimitiveType() const	{return primitiveType;}
 	Texture *getTexture() const							{return texture;}
 	Model *getModel() const								{return model;}
@@ -193,8 +209,9 @@ public:
 	int getDrawCount() const							{return drawCount;}
 
 	//set
-	void setSrcBlendMode(Particle::BlendMode v)			{srcBlendMode = v;}
-	void setDestBlendMode(Particle::BlendMode v)		{destBlendMode = v;}
+	void setSrcBlendFactor(Particle::BlendFactor v)		{srcBlendFactor = v;}
+	void setDestBlendFactor(Particle::BlendFactor v)	{destBlendFactor = v;}
+	void setBlendEquationMode(Particle::BlendEquation v){blendEquationMode = v;}
 	void setPrimitiveType(Particle::PrimitiveType v)	{primitiveType = v;}
 	void setTexture(Texture *v)							{texture = v;}
 	void setModel(Model *v)								{model = v;}

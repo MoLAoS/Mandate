@@ -20,6 +20,7 @@
 #include "util.h"
 #include "particle_renderer.h"
 #include "math_util.h"
+#include "lang_features.h"
 
 #include "leak_dumper.h"
 
@@ -29,7 +30,7 @@ using namespace std;
 
 namespace Shared{ namespace Graphics{
 
-const char* Particle::blendModeNames[BLEND_MODE_COUNT] = {
+const char* Particle::blendFactorNames[BLEND_FUNC_COUNT] = {
 	"zero",
 	"one",
 	"src_color",
@@ -47,26 +48,41 @@ const char* Particle::blendModeNames[BLEND_MODE_COUNT] = {
 	"src_alpha_saturate"
 };
 
-Particle::BlendMode Particle::stringToBlendMode(const string &s) {
-	for(size_t i = 0; i < BLEND_MODE_COUNT; ++i) {
-		if(s == blendModeNames[i]) {
-			return static_cast<Particle::BlendMode>(i);
+const char* Particle::blendEquationNames[BLEND_EQUATION_COUNT] = {
+	"func_add",
+	"func_subtract",
+	"func_reverse_subtract",
+	"min",
+	"max"
+};
+
+static __cold __noreturn void puke(const char*options[], size_t optionCount,
+		const string &badValue, const string &typeDesc) {
+	stringstream str;
+	str << "\"" << badValue << "\" is not a valid " << typeDesc << ".  Valid values are: ";
+	for(size_t i = 0; i < optionCount; ++i) {
+		str << (i ? ", " : "") << options[i];
+	}
+	str << ".";
+	throw range_error(str.str());
+}
+
+Particle::BlendFactor Particle::getBlendFactor(const string &s) {
+	for(size_t i = 0; i < BLEND_FUNC_COUNT; ++i) {
+		if(s == blendFactorNames[i]) {
+			return static_cast<Particle::BlendFactor>(i);
 		}
 	}
-	{
-		stringstream str;
-		str << "\"" << s << "\" is not a valid blend mode.  Valid values are: ";
-		for(size_t i = 0; i < BLEND_MODE_COUNT; ++i) {
-			if(i) {
-				str << ", ";
-			}
-			str << blendModeNames[i];
+	puke(blendFactorNames, BLEND_FUNC_COUNT, s, "blend function factor");
+}
+
+Particle::BlendEquation Particle::getBlendEquation(const string &s) {
+	for(size_t i = 0; i < BLEND_EQUATION_COUNT; ++i) {
+		if(s == blendEquationNames[i]) {
+			return static_cast<Particle::BlendEquation>(i);
 		}
-		str << ".";
-		throw range_error(str.str());
 	}
-	// shut compiler up
-	return BLEND_MODE_ZERO;
+	puke(blendEquationNames, BLEND_EQUATION_COUNT, s, "blend equation mode");
 }
 
 // =====================================================
@@ -79,8 +95,9 @@ Particle::BlendMode Particle::stringToBlendMode(const string &s) {
 
 ParticleSystemBase::ParticleSystemBase() :
 		random((intptr_t)this & 0xffffffff),
-		srcBlendMode(Particle::BLEND_MODE_SRC_ALPHA),
-		destBlendMode(Particle::BLEND_MODE_ONE),
+		srcBlendFactor(Particle::BLEND_FUNC_SRC_ALPHA),
+		destBlendFactor(Particle::BLEND_FUNC_ONE),
+		blendEquationMode(Particle::BLEND_EQUATION_FUNC_ADD),
 		primitiveType(Particle::ptQuad),
 		texture(NULL),
 		model(NULL),
@@ -104,8 +121,9 @@ ParticleSystemBase::ParticleSystemBase() :
 
 ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &model) :
 		random((intptr_t)this & 0xffffffff),
-		srcBlendMode(model.srcBlendMode),
-		destBlendMode(model.destBlendMode),
+		srcBlendFactor(model.srcBlendFactor),
+		destBlendFactor(model.destBlendFactor),
+		blendEquationMode(model.blendEquationMode),
 		primitiveType(model.primitiveType),
 		texture(model.texture),
 		model(model.model),

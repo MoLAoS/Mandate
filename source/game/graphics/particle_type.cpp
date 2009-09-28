@@ -38,10 +38,15 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 
 	Renderer &renderer = Renderer::getInstance();
 
-	const XmlNode *blendModeNode = particleSystemNode->getChild("blend-mode", 0, false);
-	if(blendModeNode) {
-		srcBlendMode = Particle::stringToBlendMode(blendModeNode->getRestrictedAttribute("src"));
-		destBlendMode = Particle::stringToBlendMode(blendModeNode->getRestrictedAttribute("dest"));
+	const XmlNode *blendFuncNode = particleSystemNode->getChild("blend-func", 0, false);
+	if(blendFuncNode) {
+		srcBlendFactor = Particle::getBlendFactor(blendFuncNode->getRestrictedAttribute("src"));
+		destBlendFactor = Particle::getBlendFactor(blendFuncNode->getRestrictedAttribute("dest"));
+	}
+
+	const XmlNode *blendEquationNode = particleSystemNode->getChild("blend-equation", 0, false);
+	if(blendEquationNode) {
+		blendEquationMode = Particle::getBlendEquation(blendEquationNode->getRestrictedAttribute("mode"));
 	}
 
 	//texture

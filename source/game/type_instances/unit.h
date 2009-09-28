@@ -415,7 +415,7 @@ public:
 	//other
 	void resetHighlight()								{highlight= 1.f;}
 	const CommandType *computeCommandType(const Vec2i &pos, const Unit *targetUnit= NULL) const;
-	string getDesc() const;
+	string getDesc(bool full) const;
 	bool computeEp();
 	bool repair(int amount = 0, float multiplier = 1.0f);
 	bool decHp(int i);
