@@ -399,7 +399,6 @@ protected:
 	char *data;
 	XmlNode *rootNode;
 	bool cleanupNode;
-	bool domAllocated;
 	bool compressed;
 
 public:
@@ -410,7 +409,6 @@ public:
 			data(NULL),
 			rootNode(NULL),
 			cleanupNode(false),
-			domAllocated(false),
 			compressed(false) {
 		read(buf);
 	}
@@ -422,7 +420,6 @@ public:
 			data(NULL),
 			rootNode(rootNode),
 			cleanupNode(adoptNode),
-			domAllocated(false),
 			compressed(false) {
 	}
 

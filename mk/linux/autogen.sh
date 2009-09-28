@@ -13,9 +13,12 @@ branchSubDir="$(
 	sed "s|^URL: ${svnRoot}||g; s|branch/||g; s|tags/|tag_|g"
 )"
 
+rm -f data/lang/english.lng
+rmdir data/lang > /dev/null 2>&1
 rm -f configure Jamconfig.in build \
 	  data docs gae maps techs tilesets \
 	  configurator g3d_viewer game map_editor shared_lib test
+
 
 if [ "$1" = "clean" ]; then
 	exit
@@ -54,3 +57,6 @@ done
 for f in configurator g3d_viewer game map_editor shared_lib test; do
 	ln -sf ../../source/$f .;
 done
+
+mkdir data/lang
+ln -s ../../gae/data/lang/en.lng data/lang/english.lng

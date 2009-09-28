@@ -22,10 +22,11 @@
 #include "leak_dumper.h"
 
 using namespace std;
+using namespace Shared::Util;
 
-namespace Shared{ namespace Xml{
+namespace Shared { namespace Xml {
 
-using namespace Util;
+const string defaultIndent = string("  ");
 
 // =====================================================
 //	class XmlIo
@@ -33,15 +34,9 @@ using namespace Util;
 
 bool XmlIo::initialized= false;
 
-XmlIo::XmlIo(){
-}
-
 XmlIo &XmlIo::getInstance(){
 	static XmlIo XmlIo;
 	return XmlIo;
-}
-
-XmlIo::~XmlIo(){
 }
 
 XmlNode *XmlIo::load(const string &path){
@@ -97,46 +92,10 @@ void XmlIo::save(const string &path, const XmlNode *node){
 	}
 }
 
-void XmlIo::releaseString(char **domAllocatedString) {
-	delete domAllocatedString;
-}
-
-// =====================================================
-//	class XmlTree
-// =====================================================
-
-XmlTree::XmlTree(){
-	rootNode= NULL;
-}
-
-void XmlTree::init(const string &name){
-	this->rootNode= new XmlNode(name);
-}
-
-void XmlTree::load(const string &path){
-	this->rootNode= XmlIo::getInstance().load(path);
-}
-
-void XmlTree::save(const string &path){
-	XmlIo::getInstance().save(path, rootNode);
-}
-
-void XmlTree::parse(const string &xml){
-	this->rootNode= XmlIo::getInstance().parseString(xml.c_str());
-}
-
-char *XmlTree::toString() const {
-	return rootNode->toString();
-}
-
-XmlTree::~XmlTree(){
-	delete rootNode;
-}
-
 // =====================================================
 //	class XmlNode
 // =====================================================
-
+		
 XmlNode::XmlNode(TiXmlNode *node) : text() {
 	//no node
 	if ( !node ) {
@@ -257,6 +216,75 @@ XmlAttribute *XmlNode::addAttribute(const char *name, const char *value){
 	return attr;
 }
 
+auto_ptr<string> XmlNode::toString(bool pretty, const string &indentSingle) const {
+	stringstream str;
+
+	if (pretty) {
+		string indent;
+		toStringPretty(str, indent, indentSingle);
+	} else {
+		toStringSimple(str);
+	}
+	return auto_ptr<string>(new string(str.str()));
+}
+
+void XmlNode::toStringSimple(stringstream &str) const {
+	bool needsClosingTag = children.size() || text.size();
+
+	str << "<" << name;
+
+	for (Attributes::const_iterator a = attributes.begin(); a != attributes.end(); ++a) {
+		str << " ";
+		(*a)->toString(str);
+	}
+
+	if (needsClosingTag) {
+		str << "/>";
+	} else {
+		str << ">";
+		if (text.size()) {
+			str << text;
+		}
+
+		for (Nodes::const_iterator n = children.begin(); n != children.end(); ++n) {
+			(*n)->toStringSimple(str);
+		}
+
+		// closing tag
+		str << "</" << name << ">";
+	}
+}
+
+void XmlNode::toStringPretty(stringstream &str, string &indent, const string &indentSingle) const {
+	str << indent << "<" << name;
+
+	for (Attributes::const_iterator a = attributes.begin(); a != attributes.end(); ++a) {
+		str << " ";
+		(*a)->toString(str);
+	}
+
+	if (children.size() || text.size()) {
+		str << "/>" << endl;
+	} else {
+		str << ">" << endl;
+		indent.append(indentSingle);
+
+		// FIXME: All CR or CR/LF should have indentation appended to them
+		if (text.size()) {
+			str << text << endl;
+		}
+
+		for (Nodes::const_iterator n = children.begin(); n != children.end(); ++n) {
+			(*n)->toStringPretty(str, indent, indentSingle);
+		}
+
+		// closing tag
+		indent.erase(indent.length() - indentSingle.length());
+		str << indent << "</" << name << ">" << endl;
+	}
+}
+
+/*
 char *XmlNode::toString() const {
 	string xmlString = "<" + name;
 	
@@ -284,7 +312,7 @@ char *XmlNode::toString() const {
 
 	return cstr;
 }
-
+*/
 void XmlNode::populateElement(TiXmlElement *node) const {
 	//add all the attributes to the element node
 	for (int i = 0; i < attributes.size(); ++i) {
@@ -304,20 +332,19 @@ void XmlNode::populateElement(TiXmlElement *node) const {
 }
 
 string XmlNode::getTreeString() const{
-	string str;
+	stringstream str;
 
-	str+= getName();
+	str << getName();
 
-	if(!children.empty()){
-		str+= " (";
-		for(int i=0; i<children.size(); ++i){
-			str+= children[i]->getTreeString();
-			str+= " ";
+	if (!children.empty()) {
+		str << " (";
+		for (int i = 0; i < children.size(); ++i) {
+			str << children[i]->getTreeString() << " ";
 		}
-		str+=") ";
+		str << ") ";
 	}
 
-	return str;
+	return str.str();
 }
 
 // =====================================================

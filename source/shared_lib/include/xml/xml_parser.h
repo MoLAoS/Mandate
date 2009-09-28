@@ -15,6 +15,8 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include <sstream>
 
 #define TIXML_USE_STL
 #include "tinyxml.h"
@@ -24,25 +26,16 @@
 
 using std::string;
 using std::vector;
+using std::stringstream;
+using std::auto_ptr;	// This isn't as good as shared_ptr from tr1 or boost, but it's better
+						// than what we've been doing with toString()
 using namespace Shared::Graphics;
 using namespace Shared::Util;
-
-/*namespace XERCES_CPP_NAMESPACE {
-	class DOMImplementation;
-	class DOMDocument;
-	class DOMNode;
-	class DOMElement;
-}
-
-using XERCES_CPP_NAMESPACE::DOMImplementation;
-//using XERCES_CPP_NAMESPACE::DOMDocument;
-using XERCES_CPP_NAMESPACE::DOMNode;
-using XERCES_CPP_NAMESPACE::DOMElement;
-*/
 
 namespace Shared { namespace Xml {
 
 const int strSize = 256;
+extern const string defaultIndent;
 
 class XmlIo;
 class XmlTree;
@@ -52,53 +45,23 @@ class XmlAttribute;
 // =====================================================
 // 	class XmlIo
 //
-///	Wrapper for Xerces C++
+///	Wrapper for TinyXML
 // =====================================================
 
 class XmlIo {
 private:
 	static bool initialized;
-	//DOMImplementation *implementation;
 
 private:
-	XmlIo();
+	XmlIo() {}
+	~XmlIo() {}
 
 public:
 	static XmlIo &getInstance();
-	~XmlIo();
 	XmlNode *load(const string &path);
 	void save(const string &path, const XmlNode *node);
 	XmlNode *parseString(const char *doc, size_t size = (size_t)-1);
-	/** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
-	//char *toString(const XmlNode *node, bool pretty);
-	void releaseString(char **domAllocatedString);
 };
-
-// =====================================================
-//	class XmlTree
-// =====================================================
-
-class XmlTree{
-private:
-	XmlNode *rootNode;
-
-private:
-	XmlTree(XmlTree&);
-	void operator =(XmlTree&);
-
-public:
-	XmlTree();
-	~XmlTree();
-
-	void init(const string &name);
-	void load(const string &path);
-	void save(const string &path);
-	void parse(const string &xml);
-	
-	char *toString() const;
-	XmlNode *getRootNode() const	{return rootNode;}
-};
-
 
 // =====================================================
 //	class XmlAttribute
@@ -115,13 +78,14 @@ private:
 
 public:
 	XmlAttribute(TiXmlAttribute *attribute);
-	XmlAttribute(const char *name, const char *value) : name(name), value(value){}
-	XmlAttribute(const string &name, const string &value) : name(name), value(value){}
+	XmlAttribute(const char *name, const char *value) : name(name), value(value) {}
+	XmlAttribute(const string &name, const string &value) : name(name), value(value) {}
 
 public:
 	const string &getName() const						{return name;}
 	const string &getValue() const						{return value;}
 	string toString() const								{return name + "=\"" + value + "\""; }
+	void toString(stringstream &str) const				{str << name << "=\"" << value << "\"";}
 
 	bool getBoolValue() const;
 	int getIntValue() const								{return strToInt(value);}
@@ -135,11 +99,15 @@ public:
 //	class XmlNode
 // =====================================================
 
-class XmlNode{
+class XmlNode {
+public:
+	typedef vector<XmlNode*> Nodes;
+	typedef vector<XmlAttribute*> Attributes;
+
 private:
 	string name;
-	vector<XmlNode*> children;
-	vector<XmlAttribute*> attributes;
+	Nodes children;
+	Attributes attributes;
 	string text;
 
 private:
@@ -365,15 +333,43 @@ public:
 		return !node ? string(defaultValue) : node->getAttribute("value")->getRestrictedValue();
 	}
 
-	/** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
-	char *toString() const;/*bool pretty) const {
-		return XmlIo::getInstance().toString(this, pretty);
-	}*/
+	auto_ptr<string> toString(bool pretty = false, const string &indentSingle = defaultIndent) const;
+
+	void toStringSimple(stringstream &str) const;
+	void toStringPretty(stringstream &str, string &indent, const string &indentSingle) const;
 
 private:
 	string getTreeString() const;
 };
 
+
+// =====================================================
+//	class XmlTree
+// =====================================================
+
+class XmlTree {
+private:
+	XmlNode *rootNode;
+
+private:
+	XmlTree(const XmlTree &);
+	void operator =(const XmlTree &);
+
+public:
+	XmlTree() : rootNode(NULL)		{}
+	XmlTree(const string &name) : rootNode(new XmlNode(name)) {}
+	~XmlTree()						{delete rootNode;}
+
+	void init(const string &name)	{rootNode = new XmlNode(name);}
+	void load(const string &path)	{rootNode = XmlIo::getInstance().load(path);}
+	void save(const string &path)	{XmlIo::getInstance().save(path, rootNode);}
+	void parse(const string &xml)	{rootNode = XmlIo::getInstance().parseString(xml.c_str());}
+	
+	auto_ptr<string> toString(bool pretty = false, const string &indentSingle = defaultIndent) const {
+		return rootNode->toString(pretty, indentSingle);
+	}
+	XmlNode *getRootNode() const	{return rootNode;}
+};
 
 }}//end namespace
 
