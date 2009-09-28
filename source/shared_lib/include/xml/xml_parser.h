@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa,
+//	Copyright (C) 2001-2008 Martiño Figueroa,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -47,9 +47,6 @@ class XmlIo;
 class XmlTree;
 class XmlNode;
 class XmlAttribute;
-
-typedef vector<const XmlNode*> XmlNodes;
-typedef vector<const XmlAttribute*> XmlAttributes;
 
 // =====================================================
 // 	class XmlIo
@@ -126,12 +123,9 @@ public:
 	string toString() const								{return name + "=\"" + value + "\""; }
 
 	bool getBoolValue() const;
-	int getIntValue() const								{return Conversion::strToInt(value);}
-	unsigned int getUIntValue() const					{return Conversion::strToUInt(value);}
-	int64 getInt64Value() const							{return Conversion::strToInt64(value);}
-	uint64 getUInt64Value() const						{return Conversion::strToUInt64(value);}
+	int getIntValue() const								{return strToInt(value);}
 	int getIntValue(int min, int max) const;
-	float getFloatValue() const							{return Conversion::strToFloat(value);}
+	float getFloatValue() const							{return strToFloat(value);}
 	float getFloatValue(float min, float max) const;
 	const string &getRestrictedValue() const;
 };
@@ -140,12 +134,12 @@ public:
 //	class XmlNode
 // =====================================================
 
-class XmlNode {
+class XmlNode{
 private:
 	string name;
-	string text;
 	vector<XmlNode*> children;
 	vector<XmlAttribute*> attributes;
+	string text;
 
 private:
 	XmlNode(XmlNode&);
@@ -156,17 +150,10 @@ public:
 	XmlNode(const string &name);
 	~XmlNode();
 
-	// accessors
-	const string &getName() const					{return name;}
-
-	// Implementation Note: The following reinterpret_cast<> cannot be 100% gaurenteed to be safe
-	// with all compilers, although all it's doing is adding const-ness to the values managed by the
-	// vector.
-	const XmlNodes &getChildren() const				{return reinterpret_cast<const vector<const XmlNode*> &>(children);}
-	const XmlAttributes &getXmlAttributes() const	{return reinterpret_cast<const vector<const XmlAttribute*> &>(attributes);}
-
-	int getChildCount() const						{return children.size();}
-	int getAttributeCount() const					{return attributes.size();}
+	// get
+	const string &getName() const	{return name;}
+	int getChildCount() const		{return children.size();}
+	int getAttributeCount() const	{return attributes.size();}
 
 	XmlAttribute *getAttribute(int i) const;
 	XmlAttribute *getAttribute(const string &name, bool required = true) const;
@@ -182,9 +169,6 @@ public:
 	const string &getRestrictedValue() const	{return getValue()->getRestrictedValue();}
 	bool getBoolValue() const					{return getValue()->getBoolValue();}
 	int getIntValue() const						{return getValue()->getIntValue();}
-	unsigned int getUIntValue() const			{return getValue()->getUIntValue();}
-	int64 getInt64Value() const					{return getValue()->getInt64Value();}
-	uint64 getUInt64Value() const				{return getValue()->getUInt64Value();}
 	float getFloatValue() const					{return getValue()->getFloatValue();}
 
 	Vec2i getVec2iValue() const {
@@ -223,8 +207,19 @@ public:
 				getFloatAttribute("w"));
 	}
 
-	Vec3f getColor3Value() const;
-	Vec4f getColor4Value() const;
+	Vec3f getColor3Value() const {
+		return Vec3f(getFloatAttribute("red", 0.f, 1.0f),
+				getFloatAttribute("green", 0.f, 1.0f),
+				getFloatAttribute("blue", 0.f, 1.0f));
+	}
+
+	Vec4f getColor4Value() const {
+		return Vec4f(getFloatAttribute("red", 0.f, 1.0f),
+				getFloatAttribute("green", 0.f, 1.0f),
+				getFloatAttribute("blue", 0.f, 1.0f),
+				getFloatAttribute("alpha", 0.f, 1.0f));
+	}
+
 
 	// get methods that return a specific type using the "value" attribute or appropriate attributes
 	// of the specified child node
@@ -246,18 +241,6 @@ public:
 
 	int getChildIntValue(const string &childName, int childIndex = 0) const {
 		return getChildValue(childName, childIndex)->getIntValue();
-	}
-
-	unsigned int getChildUIntValue(const string &childName, int childIndex = 0) const {
-		return getChildValue(childName, childIndex)->getUIntValue();
-	}
-
-	int64 getChildInt64Value(const string &childName, int childIndex = 0) const {
-		return getChildValue(childName, childIndex)->getInt64Value();
-	}
-
-	uint64 getChildUInt64Value(const string &childName, int childIndex = 0) const {
-		return getChildValue(childName, childIndex)->getUInt64Value();
 	}
 
 	float getChildFloatValue(const string &childName, int childIndex = 0) const {
@@ -298,12 +281,14 @@ public:
 
 	// add
 	XmlNode *addChild(const string &name);
-	template<typename T>
-	XmlAttribute *addAttribute(const string &name, T value)				{return addAttribute(name.c_str(), Conversion::toStr(value).c_str());}
+	XmlAttribute *addAttribute(const string &name, int value)			{return addAttribute(name.c_str(), intToStr(value).c_str());}
+	XmlAttribute *addAttribute(const string &name, float value)			{return addAttribute(name.c_str(), floatToStr(value).c_str());}
+	XmlAttribute *addAttribute(const string &name, bool value)			{return addAttribute(name.c_str(), string(value ? "true" : "false").c_str());}
 	XmlAttribute *addAttribute(const string &name, const char *value)	{return addAttribute(name.c_str(), value);}
 	XmlAttribute *addAttribute(const string &name, const string &value)	{return addAttribute(name.c_str(), value.c_str());}
-	template<typename T>
-	XmlAttribute *addAttribute(const char *name, T value)				{return addAttribute(name, Conversion::toStr(value).c_str());}
+	XmlAttribute *addAttribute(const char *name, int value)				{return addAttribute(name, intToStr(value).c_str());}
+	XmlAttribute *addAttribute(const char *name, float value)			{return addAttribute(name, floatToStr(value).c_str());}
+	XmlAttribute *addAttribute(const char *name, bool value)			{return addAttribute(name, string(value ? "true" : "false").c_str());}
 	XmlAttribute *addAttribute(const char *name, const char *value);
 	XmlAttribute *addAttribute(const char *name, const string &value)	{return addAttribute(name, value.c_str());}
 
@@ -316,15 +301,16 @@ public:
 	const string &getStringAttribute(const string &childName) const				{return getAttribute(childName)->getValue();}
 	const string &getRestrictedAttribute(const string &childName) const			{return getAttribute(childName)->getRestrictedValue();}
 
-	template<typename T>
-	XmlNode *addChild(const string &name, T value)				{return addChild(name, Conversion::toStr(value));}
+	XmlNode *addChild(const string &name, int value)			{return addChild(name, intToStr(value));}
+	XmlNode *addChild(const string &name, float value)			{return addChild(name, floatToStr(value));}
+	XmlNode *addChild(const string &name, bool value)			{return addChild(name, string(value ? "true" : "false"));}
 	XmlNode *addChild(const string &name, const char *value)	{return addChild(name, string(value));}
-	template<typename T>
-	XmlNode *addChild(const string &name, const Vec2<T> &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y));}
-	template<typename T>
-	XmlNode *addChild(const string &name, const Vec3<T> &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y), Conversion::toStr(value.z));}
-	template<typename T>
-	XmlNode *addChild(const string &name, const Vec4<T> &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y), Conversion::toStr(value.z), Conversion::toStr(value.w));}
+	XmlNode *addChild(const string &name, const Vec2i &value)	{return addChild(name, intToStr(value.x), intToStr(value.y));}
+	XmlNode *addChild(const string &name, const Vec3i &value)	{return addChild(name, intToStr(value.x), intToStr(value.y), intToStr(value.z));}
+	XmlNode *addChild(const string &name, const Vec4i &value)	{return addChild(name, intToStr(value.x), intToStr(value.y), intToStr(value.z), intToStr(value.w));}
+	XmlNode *addChild(const string &name, const Vec2f &value)	{return addChild(name, floatToStr(value.x), floatToStr(value.y));}
+	XmlNode *addChild(const string &name, const Vec3f &value)	{return addChild(name, floatToStr(value.x), floatToStr(value.y), floatToStr(value.z));}
+	XmlNode *addChild(const string &name, const Vec4f &value)	{return addChild(name, floatToStr(value.x), floatToStr(value.y), floatToStr(value.z), floatToStr(value.w));}
 	XmlNode *addChild(const string &name, const string &value)	{
 		XmlNode *child = addChild(name);
 		child->addAttribute("value", value);
@@ -378,7 +364,6 @@ public:
 		return !node ? string(defaultValue) : node->getAttribute("value")->getRestrictedValue();
 	}
 
-	// FIXME: This should be managed by some type of smart pointer.
 	/** WARNING: return value must be freed by calling XmlIo::getInstance().releaseString(). */
 	char *toString() const;/*bool pretty) const {
 		return XmlIo::getInstance().toString(this, pretty);
@@ -388,11 +373,6 @@ private:
 	string getTreeString() const;
 };
 
-class XmlWritable {
-public:
-	virtual ~XmlWritable() {}
-	virtual void write(XmlNode &node) const = 0;
-};
 
 }}//end namespace
 

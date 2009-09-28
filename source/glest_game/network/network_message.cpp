@@ -226,10 +226,9 @@ void NetworkMessageReady::write(NetworkDataBuffer &buf) const {
 NetworkMessageLaunch::NetworkMessageLaunch(const GameSettings *gameSettings) : NetworkMessage(nmtLaunch) {
 
 	description= gameSettings->getDescription();
-	mapPath= gameSettings->getMapPath();
-	tilesetPath= gameSettings->getTilesetPath();
-	techPath= gameSettings->getTechPath();
-	scenarioPath= gameSettings->getScenarioPath();
+	mapPath= gameSettings->getMap();
+	tilesetPath= gameSettings->getTileset();
+	techPath= gameSettings->getTech();
 	factionCount= gameSettings->getFactionCount();
 	thisFactionIndex= gameSettings->getThisFactionIndex();
 
@@ -243,10 +242,9 @@ NetworkMessageLaunch::NetworkMessageLaunch(const GameSettings *gameSettings) : N
 
 void NetworkMessageLaunch::buildGameSettings(GameSettings *gameSettings) const{
 	gameSettings->setDescription(description.getString());
-	gameSettings->setMapPath(mapPath.getString());
-	gameSettings->setTilesetPath(tilesetPath.getString());
-	gameSettings->setTechPath(techPath.getString());
-	gameSettings->setScenarioPath(scenarioPath.getString());
+	gameSettings->setMap(mapPath.getString());
+	gameSettings->setTileset(tilesetPath.getString());
+	gameSettings->setTech(techPath.getString());
 	gameSettings->setFactionCount(factionCount);
 	gameSettings->setThisFactionIndex(thisFactionIndex);
 
@@ -264,7 +262,6 @@ size_t NetworkMessageLaunch::getNetSize() const {
 	size += mapPath.getNetSize();
 	size += tilesetPath.getNetSize();
 	size += techPath.getNetSize();
-	size += scenarioPath.getNetSize();
 	size += sizeof(thisFactionIndex);
 	size += sizeof(factionCount);
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -282,7 +279,6 @@ size_t NetworkMessageLaunch::getMaxNetSize() const {
 	size += mapPath.getMaxNetSize();
 	size += tilesetPath.getMaxNetSize();
 	size += techPath.getMaxNetSize();
-	size += scenarioPath.getMaxNetSize();
 	size += sizeof(thisFactionIndex);
 	size += sizeof(factionCount);
 	size += factionTypeNames[0].getMaxNetSize() * GameConstants::maxPlayers;
@@ -297,7 +293,6 @@ void NetworkMessageLaunch::read(NetworkDataBuffer &buf) {
 	mapPath.read(buf);
 	tilesetPath.read(buf);
 	techPath.read(buf);
-	scenarioPath.read(buf);
 	buf.read(thisFactionIndex);
 	buf.read(factionCount);
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -313,7 +308,6 @@ void NetworkMessageLaunch::write(NetworkDataBuffer &buf) const {
 	mapPath.write(buf);
 	tilesetPath.write(buf);
 	techPath.write(buf);
-	scenarioPath.write(buf);
 	buf.write(thisFactionIndex);
 	buf.write(factionCount);
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {

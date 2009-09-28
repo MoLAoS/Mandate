@@ -49,20 +49,16 @@ const string sharedLibVersionString= "v0.4.1";
 void findAll(const string &path, vector<string> &results, bool cutExtension = false);
 
 //string fcs
-string cleanPath(const string &s);
-string dirname(const string &s);
-string basename(const string &s);
+string lastDir(const string &s);
+
+inline string lastFile(const string &s){
+	return lastDir(s);
+}
+
+string cutLastFile(const string &s);
 string cutLastExt(const string &s);
 string ext(const string &s);
 string replaceBy(const string &s, char c1, char c2);
-
-#if defined(WIN32) || defined(WIN64)
-inline string intToHex ( int addr ) {
-	static char hexBuffer[32];
-	sprintf ( hexBuffer, "%.8X", addr );
-	return string( hexBuffer );
-}
-#endif
 
 inline string toLower(const string &s){
 	size_t size = s.size();

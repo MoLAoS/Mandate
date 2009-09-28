@@ -14,8 +14,6 @@
 
 #include <cassert>
 #include <algorithm>
-#include <sstream>
-#include <exception>
 
 #include "util.h"
 #include "particle_renderer.h"
@@ -25,49 +23,9 @@
 
 
 using namespace Shared::Util;
-using namespace std;
 
 namespace Shared{ namespace Graphics{
 
-const char* Particle::blendModeNames[BLEND_MODE_COUNT] = {
-	"zero",
-	"one",
-	"src_color",
-	"one_minus_src_color",
-	"dst_color",
-	"one_minus_dst_color",
-	"src_alpha",
-	"one_minus_src_alpha",
-	"dst_alpha",
-	"one_minus_dst_alpha",
-	"constant_color",
-	"one_minus_constant_color",
-	"constant_alpha",
-	"one_minus_constant_alpha",
-	"src_alpha_saturate"
-};
-
-Particle::BlendMode Particle::stringToBlendMode(const string &s) {
-	for(size_t i = 0; i < BLEND_MODE_COUNT; ++i) {
-		if(s == blendModeNames[i]) {
-			return static_cast<Particle::BlendMode>(i);
-		}
-	}
-	{
-		stringstream str;
-		str << "\"" << s << "\" is not a valid blend mode.  Valid values are: ";
-		for(size_t i = 0; i < BLEND_MODE_COUNT; ++i) {
-			if(i) {
-				str << ", ";
-			}
-			str << blendModeNames[i];
-		}
-		str << ".";
-		throw range_error(str.str());
-	}
-	// shut compiler up
-	return BLEND_MODE_ZERO;
-}
 
 // =====================================================
 //	class ParticleSystemBase
@@ -79,8 +37,7 @@ Particle::BlendMode Particle::stringToBlendMode(const string &s) {
 
 ParticleSystemBase::ParticleSystemBase() :
 		random((intptr_t)this & 0xffffffff),
-		srcBlendMode(Particle::BLEND_MODE_SRC_ALPHA),
-		destBlendMode(Particle::BLEND_MODE_ONE),
+		blendMode(Particle::bmOne),
 		primitiveType(Particle::ptQuad),
 		texture(NULL),
 		model(NULL),
@@ -104,8 +61,7 @@ ParticleSystemBase::ParticleSystemBase() :
 
 ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &model) :
 		random((intptr_t)this & 0xffffffff),
-		srcBlendMode(model.srcBlendMode),
-		destBlendMode(model.destBlendMode),
+		blendMode(model.blendMode),
 		primitiveType(model.primitiveType),
 		texture(model.texture),
 		model(model.model),

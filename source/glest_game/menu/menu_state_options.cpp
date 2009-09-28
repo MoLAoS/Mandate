@@ -102,12 +102,12 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 
 	//lang
 	vector<string> langResults;
-	findAll("data/lang/*.lng", langResults, true);
+	findAll("data/lang/*.lng", langResults);
 	if(langResults.empty()){
         throw runtime_error("There is no lang file");
 	}
     listBoxLang.setItems(langResults);
-	listBoxLang.setSelectedItem(config.getUiLocale());
+	listBoxLang.setSelectedItem(config.getUiLang());
 
 	//shadows
 	for(int i= 0; i<Renderer::sCount; ++i){
@@ -189,8 +189,8 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
 	}
 	else if(listBoxLang.mouseClick(x, y)){
-		config.setUiLocale(listBoxLang.getSelectedItem());
-		lang.setLocale(config.getUiLocale());
+		config.setUiLang(listBoxLang.getSelectedItem());
+		lang.loadStrings(config.getUiLang());
 		saveConfig();
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
 
@@ -221,13 +221,13 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		saveConfig();
 	}
 	else if(listBoxVolumeMusic.mouseClick(x, y)){
-		CoreData::getInstance().getMenuMusic()->setVolume(Conversion::strToInt(listBoxVolumeMusic.getSelectedItem())/100.f);
+		CoreData::getInstance().getMenuMusic()->setVolume(strToInt(listBoxVolumeMusic.getSelectedItem())/100.f);
 		config.setSoundVolumeMusic(atoi(listBoxVolumeMusic.getSelectedItem().c_str()));
 		saveConfig();
 	}
    else if ( listBoxMaxPathNodes.mouseClick ( x,y ) )
    {
-      config.setPathFinderMaxNodes ( Conversion::strToInt ( this->listBoxMaxPathNodes.getSelectedItem () ) );
+      config.setPathFinderMaxNodes ( strToInt ( this->listBoxMaxPathNodes.getSelectedItem () ) );
       saveConfig ();
    }
    else if ( listBoxPFAlgorithm.mouseClick ( x,y ) )

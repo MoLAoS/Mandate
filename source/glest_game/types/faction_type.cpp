@@ -44,7 +44,7 @@ FactionType::FactionType(){
 bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &checksum){
 
    Logger::getInstance().add("Faction type: "+ dir, true);
-   name= basename(dir);
+   name= lastDir(dir);
 
    // a1) preload units
    string unitsPath= dir + "/units/*.";

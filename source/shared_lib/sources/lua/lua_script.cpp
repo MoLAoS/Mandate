@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under 
 //	the terms of the GNU General Public License as published 
@@ -11,10 +11,9 @@
 
 #include "pch.h"
 
-//#include <stdexcept>
-#include <iostream>
-
 #include "lua_script.h"
+
+//#include <stdexcept>
 #include "conversion.h"
 #include "leak_dumper.h"
 
@@ -116,7 +115,7 @@ string LuaScript::errorToString(int errorCode){
 			error+= "Unknown error";
 	}
 	error += string(": ")+luaL_checkstring(luaState, -1);
-	cerr << error << endl;
+	fprintf ( stderr, error.c_str() );
 	return error;
 }
 
@@ -206,19 +205,24 @@ void LuaArguments::returnVec2i(const Vec2i &value){
 	lua_rawseti(luaState, -2, 2);
 }
 
-char* LuaArguments::getType(int ndx) const {
+char* LuaArguments::getType ( int ndx ) const {
 
-	if (lua_isnumber(luaState, ndx)) {
+	if(lua_isnumber(luaState, ndx)){
 		return "Number";
-	} else if (lua_isstring(luaState, ndx)) {
+	}
+	else if(lua_isstring(luaState, ndx)){
 		return "String";
-	} else if (lua_istable(luaState, ndx)) {
+	}
+	else if(lua_istable(luaState, ndx)){
 		return "Table";
-	} else if (lua_isboolean(luaState, ndx)) {
+	}
+	else if (lua_isboolean ( luaState, ndx ) ) {
 		return "Boolean";
-	} else if (lua_isnil(luaState, ndx)) {
+	}
+	else if ( lua_isnil ( luaState, ndx ) ) {
 		return "Nil";
-	} else {
+	}
+	else {
 		return "Unknown";
 	}
 }

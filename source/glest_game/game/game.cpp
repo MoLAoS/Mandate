@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -85,7 +85,7 @@ Game::Game(Program &program, const GameSettings &gs, XmlNode *savedGame) :
 		lastUpdateLoopsFraction(0.f),
 		saveBox(NULL),
 		lastMousePos(0),
-		weatherParticleSystem(NULL) {
+	weatherParticleSystem(NULL) {
 	assert(!singleton);
 	singleton = this;
 }
@@ -125,38 +125,33 @@ Game::~Game() {
 void Game::load(){
 	Logger::getInstance().setState(Lang::getInstance().get("Loading"));
 	Logger &logger= Logger::getInstance();
-	string mapName = gameSettings.getMapPath();
-	string tilesetName = gameSettings.getTilesetPath();
-	string techName = gameSettings.getTechPath();
-	string scenarioPath = gameSettings.getScenarioPath();
-	string scenarioName = basename(scenarioPath);
-			
+	string mapName= gameSettings.getMap();
+	string tilesetName= gameSettings.getTileset();
+	string techName= gameSettings.getTech();
+	string scenarioName= gameSettings.getScenario();
 
 	logger.setState(Lang::getInstance().get("Loading"));
 
-	if(scenarioName.empty()) {
-		logger.setSubtitle(formatString(mapName) + " - " + formatString(tilesetName) + " - " + formatString(techName));
-	} else {
+	if(scenarioName.empty())
+		logger.setSubtitle(formatString(mapName)+" - "+formatString(tilesetName)+" - "+formatString(techName));
+	else
 		logger.setSubtitle(formatString(scenarioName));
-	}
 
 	//tileset
-	if ( ! world.loadTileset(checksum) ) {
+	if ( ! world.loadTileset(checksum) )
 		throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
-	}
 
 	//tech, load before map because of resources
-	if ( ! world.loadTech(checksum) ) {
+	if ( ! world.loadTech(checksum) )
 		throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
-	}
 
 	//map
 	world.loadMap(checksum);
 
 	//scenario
-	if(!scenarioName.empty()) {
-		Lang::getInstance().loadScenarioStrings(scenarioPath, scenarioName);
-		world.loadScenario(scenarioPath + "/" + scenarioName + ".xml", &checksum);
+	if(!scenarioName.empty()){
+		Lang::getInstance().loadScenarioStrings(gameSettings.getScenarioDir(), scenarioName);
+		world.loadScenario(Scenario::getScenarioPath(gameSettings.getScenarioDir(), scenarioName), &checksum);
 	}
 }
 
@@ -204,11 +199,12 @@ void Game::init() {
 	aiInterfaces.resize(world.getFactionCount());
 	for(int i=0; i<world.getFactionCount(); ++i){
 		Faction *faction= world.getFaction(i);
-		if(faction->getCpuControl()&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
-			aiInterfaces[i] = new AiInterface(*this, i, faction->getTeam());
+		if(faction->getCpuControl()&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()){
+			aiInterfaces[i]= new AiInterface(*this, i, faction->getTeam());
 			logger.add("Creating AI for faction " + intToStr(i), true);
-		} else {
-			aiInterfaces[i] = NULL;
+		}
+		else{
+			aiInterfaces[i]= NULL;
 		}
 	}
 
@@ -253,11 +249,11 @@ void Game::init() {
 
 	logger.add("Waiting for network", true);
 	networkManager.getGameNetworkInterface()->waitUntilReady(checksum);
-/*
+	/*
 	if(networkManager.isNetworkClient()) {
-		program.setMaxUpdateBacklog(-1);
+	program.setMaxUpdateBacklog(-1);
 	} else {
-		program.setMaxUpdateBacklog(2);
+	program.setMaxUpdateBacklog(2);
 	}*/
 
 	logger.add("Starting music stream", true);
@@ -271,7 +267,7 @@ void Game::init() {
 		delete savedGame;
 		savedGame = NULL;
 	}
-	logger.setLoading(false);
+	logger.setLoading ( false );
 }
 
 

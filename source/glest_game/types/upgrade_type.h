@@ -39,7 +39,7 @@ private:
     vector<const UnitType*> effects;
 
 public:
-	void preLoad(const string &dir)			{name=basename(dir);}
+	void preLoad(const string &dir)			{name=lastDir(dir);}
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
 
     //get all

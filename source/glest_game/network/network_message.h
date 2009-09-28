@@ -206,7 +206,6 @@ private:
 	NetworkString<maxStringSize> mapPath;
 	NetworkString<maxStringSize> tilesetPath;
 	NetworkString<maxStringSize> techPath;
-	NetworkString<maxStringSize> scenarioPath;
 	int8 thisFactionIndex;
 	int8 factionCount;
 

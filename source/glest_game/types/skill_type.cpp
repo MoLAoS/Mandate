@@ -382,10 +382,10 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 		float fhigh = unit->getAttackPctStolen(this) + attackPctVar;
 		float flow = unit->getAttackPctStolen(this) - attackPctVar;
 
-		str += Conversion::toStr(flow * 100.0f);
+		str += floatToStr(flow * 100.0f);
 		if(fhigh != flow) {
 			str += "% ... ";
-			str += Conversion::toStr(fhigh * 100.0f);
+			str += floatToStr(fhigh * 100.0f);
 		}
 		str += "%\n";
 	}

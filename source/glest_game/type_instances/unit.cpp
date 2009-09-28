@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -1320,18 +1320,11 @@ bool Unit::morph(const MorphCommandType *mct) {
 
 	// redo field
 	Field newField;
-	if ( morphUnitType->getField( FieldWalkable ) ) {
-		newField = FieldWalkable;
-	} else if ( morphUnitType->getField( FieldAir ) ) {
-		newField = FieldAir;
-	}
-	if ( morphUnitType->getField( FieldAmphibious ) ) {
-		newField = FieldAmphibious;
-	} else if ( morphUnitType->getField( FieldAnyWater ) ) {
-		newField = FieldAnyWater;
-	} else if ( morphUnitType->getField( FieldDeepWater ) ) {
-		newField = FieldDeepWater;
-	}
+	if(morphUnitType->getField(FieldWalkable)) newField = FieldWalkable;
+	else if(morphUnitType->getField(FieldAir)) newField = FieldAir;
+	if ( morphUnitType->getField (FieldAmphibious) ) newField = FieldAmphibious;
+	else if ( morphUnitType->getField (FieldAnyWater) ) newField = FieldAnyWater;
+	else if ( morphUnitType->getField (FieldDeepWater) ) newField = FieldDeepWater;
 
 	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -65,7 +65,7 @@ void UnitUpdater::init(Game &game) {
 	this->console = game.getConsole();
 	pathFinder = Search::PathFinder::getInstance();
 	pathFinder->init(map);
-	gameSettings = game.getGameSettings();
+	gameSettings = game.getGameSettings ();
 }
 
 // ==================== progress skills ====================
@@ -579,12 +579,15 @@ void UnitUpdater::updateBuild(Unit *unit){
 					getServerInterface()->updateFactions();
 				}
 			}
-			if ( !builtUnit->isMobile() ) {
-				pathFinder->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
-			}
+         if ( !builtUnit->isMobile() )
+            pathFinder->updateMapMetrics ( builtUnit->getPos(), builtUnit->getSize(), true, FieldWalkable );
+
 			//play start sound
-			if(unit->getFactionIndex()==world->getThisFactionIndex()) {
-				SoundRenderer::getInstance().playFx(bct->getStartSound(), unit->getCurrVector(), gameCamera->getPos());
+			if(unit->getFactionIndex()==world->getThisFactionIndex()){
+				SoundRenderer::getInstance().playFx(
+					bct->getStartSound(),
+					unit->getCurrVector(),
+					gameCamera->getPos());
 			}
 		} else {
 			// there are no free cells
@@ -733,7 +736,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					//
 					// Just do this all players ???
 					if (unit->getFaction()->getCpuUltraControl()) {
-						resourceAmount = static_cast<int>(resourceAmount * gameSettings.getResourceMultilpier(unit->getFactionIndex()));
+						resourceAmount = (int)(resourceAmount * gameSettings.getResourceMultilpier ( unit->getFactionIndex () ));
 						//resourceAmount *= ultraResourceFactor; // Pull from GameSettings
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
@@ -770,7 +773,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					// let the pathfinder know
 					Vec2i rPos = r->getPos ();
 					sc->deleteResource();
-					pathFinder->updateMapMetrics(rPos, 2);
+					pathFinder->updateMapMetrics ( rPos, 2, false, FieldWalkable );
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               
@@ -1099,7 +1102,7 @@ void UnitUpdater::updateMorph(Unit *unit){
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
 				if ( mapUpdate ) {
 					bool adding = !mct->getMorphUnit()->isMobile ();
-					pathFinder->updateMapMetrics(unit->getPos(), unit->getSize(), adding, FieldWalkable);
+					pathFinder->updateMapMetrics ( unit->getPos (), unit->getSize (), adding, FieldWalkable );
 				}
 
 				if(isNetworkServer()) {

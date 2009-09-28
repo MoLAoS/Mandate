@@ -140,14 +140,14 @@ void Tile::read(NetworkDataBuffer &buf) {
 		if((a & 0x60) == 0x60) {
 			// sanity check, let's have a real exception rather than crash if these don't match.
 			if(!object) {
-				throw runtime_error("Expected Tile at " + Conversion::toStr(vertex.x) + ", "
-						+ Conversion::toStr(vertex.z) + " to have an object, but it did not.  This "
+				throw runtime_error("Expected Tile at " + floatToStr(vertex.x) + ", "
+						+ floatToStr(vertex.z) + " to have an object, but it did not.  This "
 						"probably means that you modified the map since this game was saved or if "
 						"this is a network game, that you have a different map than the server.");
 			}
 			if(!object->getResource()) {
-				throw runtime_error("Expected Tile at " + Conversion::toStr(vertex.x) + ", "
-						+ Conversion::toStr(vertex.z) + " to have a resource, but it did not.  This "
+				throw runtime_error("Expected Tile at " + floatToStr(vertex.x) + ", "
+						+ floatToStr(vertex.z) + " to have a resource, but it did not.  This "
 						"probably means that you modified the map since this game was saved or if "
 						"this is a network game, that you have a different map than the server.");
 			}
@@ -1148,7 +1148,6 @@ void Map::flattenTerrain ( const Unit *unit )
     }
 }*/
 
-
 //compute normals
 void Map::computeNormals(){  
     //compute center normals
@@ -1264,7 +1263,6 @@ void Map::computeInterpolatedHeights(Rect2i range){
 	}
 }
 //================================================================================================
-
 
 void Map::smoothSurface() {
 	float *oldHeights = new float[tileW * tileH];

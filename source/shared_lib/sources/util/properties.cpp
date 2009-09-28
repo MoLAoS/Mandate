@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2007 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2007 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -16,7 +16,6 @@
 #include <stdexcept>
 #include <cstring>
 #include <sstream>
-#include <locale>
 
 #include "conversion.h"
 
@@ -33,8 +32,7 @@ namespace Shared { namespace Util {
 	
 Properties::Properties() {}
 
-void Properties::load(const string &path, bool trim) {
-	locale loc;
+void Properties::load(const string &path) {
 	ifstream fileStream;
 	char lineBuffer[maxLine];
 	string line, key, value;
@@ -73,20 +71,14 @@ void Properties::load(const string &path, bool trim) {
 
 		key = line.substr(0, pos);
 		value = line.substr(pos + 1);
-		if(trim) {
-			while (!key.empty() && isspace(key[0], loc)) {
-				key.erase(0, 1);
-			}
-			while (!key.empty() && isspace(key[key.size() - 1], loc)) {
-				key.erase(key.size() - 1);
-			}
-			while (!value.empty() && isspace(value[0], loc)) {
-				value.erase(0, 1);
-			}
-			while (!value.empty() && isspace(value[value.size() - 1], loc)) {
-				value.erase(value.size() - 1);
-			}
-		}
+		while(!key.empty() && isspace(key[0]))
+			key.erase(0, 1);
+		while(!key.empty() && isspace(key[key.size() - 1]))
+			key.erase(key.size() - 1);
+		while(!value.empty() && isspace(value[0]))
+			value.erase(0, 1);
+		while(!value.empty() && isspace(value[value.size() - 1]))
+			value.erase(value.size() - 1);
 		propertyMap.insert(PropertyPair(key, value));
 		propertyVector.push_back(PropertyPair(key, value));
 	}
@@ -154,7 +146,7 @@ bool Properties::_getBool(const string &key, const bool *pDef) const {
 			assert(pDef);
 			return *pDef;
 		}
-		return Conversion::strToBool(*pstrVal);
+		return strToBool(*pstrVal);
 	} catch (exception &e) {
 		throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
 	}
@@ -167,7 +159,7 @@ int Properties::_getInt(const string &key, const int *pDef, const int *pMin, con
 			assert(pDef);
 			return *pDef;
 		}
-		int val =  Conversion::strToInt(*pstrVal);
+		int val =  strToInt(*pstrVal);
 		checkRange<int>(val, pMin, pMax);
 		return val;
 	} catch (exception &e) {
@@ -182,7 +174,7 @@ float Properties::_getFloat(const string &key, const float *pDef, const float *p
 			assert(pDef);
 			return *pDef;
 		}
-		float val =  Conversion::strToFloat(*pstrVal);
+		float val =  strToFloat(*pstrVal);
 		checkRange<float>(val, pMin, pMax);
 		return val;
 	} catch (exception &e) {
