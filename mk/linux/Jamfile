@@ -16,6 +16,7 @@ LIB_DIRS =
 	graphics/gl
 	sound
 	sound/openal
+	tinyxml
 	xml
 	lua
 ;
