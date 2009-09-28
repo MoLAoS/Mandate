@@ -1,11 +1,24 @@
 #!/bin/sh
 
-rm -f configure Jamconfig.in
-
 # Correct working directory?
 if test ! -f configure.ac ; then
   echo "*** Please invoke this script from directory containing configure.ac."
   exit 1
+fi
+
+svnRoot="https://glestae.svn.sourceforge.net/svnroot/glestae/"
+branchSubDir="$(
+	svn info |
+	grep '^URL: ' |
+	sed "s|^URL: ${svnRoot}||g; s|branch/||g; s|tags/|tag_|g"
+)"
+
+rm -f configure Jamconfig.in build \
+	  data docs gae maps techs tilesets \
+	  configurator g3d_viewer game map_editor shared_lib test
+
+if [ "$1" = "clean" ]; then
+	exit
 fi
 
 echo "aclocal..."
@@ -27,25 +40,17 @@ autoconf
 
 rm -rf autom4te.cache build
 
-mkdir -p /tmp/gae/0.2/build
-ln -s /tmp/gae/0.2/build .
+mkdir -p /tmp/$(whoami)/gae/${branchSubDir}
+ln -s /tmp/$(whoami)/gae/${branchSubDir} build
 
 # create symlinks to the source dirs
 
 echo "Updating Source symlinks..."
 
-for f in data docs maps scenarios techs tilesets; do
-	ln -sf ../../../data/glest_game/$f .;
+for f in data docs gae maps techs tilesets; do
+	ln -sf ../../data/game/$f .;
 done
 
-if [ ! -d shared_lib ]; then
-  ln -sf ../../source/shared_lib .
-fi
-if [ ! -d glest_game ]; then
-  ln -sf ../../source/glest_game .
-fi
-if [ ! -d glest_map_editor ]; then
-  ln -sf ../../source/glest_map_editor .
-fi
-
-
+for f in configurator g3d_viewer game map_editor shared_lib test; do
+	ln -sf ../../source/$f .;
+done

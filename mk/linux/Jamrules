@@ -18,6 +18,7 @@ if $(USE_STLPORT_DEBUG)
   CPPFLAGS += -D_STLP_SHRED_BYTE=0xA3 ;
   LIBS += -lstlport_gcc_debug ;
 }
+LIBS += -ltinyxml ;
 
 COMPILER_WARNING_FLAGS     += -Wall -W -Wno-unused -Wno-sign-compare
                               -fno-strict-aliasing ;

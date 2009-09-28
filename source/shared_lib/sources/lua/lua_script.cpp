@@ -20,102 +20,103 @@
 using namespace std;
 using namespace Shared::Util;
 
-namespace Shared{ namespace Lua{
+namespace Shared { namespace Lua {
 
 // =====================================================
 //	class LuaScript
 // =====================================================
 
-LuaScript::LuaScript() {
-	luaState = NULL;
+LuaScript::LuaScript()
+		: luaState(NULL)
+		, argumentCount(0) {
 }
 
 LuaScript::~LuaScript() {
 	close();
 }
 
-void LuaScript::close () {
-	if ( luaState ) {
+void LuaScript::close() {
+	if (luaState) {
 		lua_close(luaState);
 		luaState = NULL;
 	}
 }
 
-void LuaScript::startUp () {
+void LuaScript::startUp() {
 	close();
-	luaState= luaL_newstate();
+	luaState = luaL_newstate();
 	luaL_openlibs(luaState);
-	if(luaState==NULL){
+	if (luaState == NULL) {
 		throw runtime_error("Can not allocate lua state");
 	}
-	argumentCount= -1;
+	argumentCount = -1;
 }
 
-void LuaScript::loadCode(const string &code, const string &name){
-	int errorCode= luaL_loadbuffer(luaState, code.c_str(), code.size(), name.c_str());	
-	if(errorCode!=0){
+void LuaScript::loadCode(const string &code, const string &name) {
+	int errorCode = luaL_loadbuffer(luaState, code.c_str(), code.size(), name.c_str());
+	if (errorCode != 0) {
 		//DEBUG
-		FILE *fp = fopen ( "bad.lua", "w" );
-		if ( fp ) {
-			fprintf ( fp, "%s", code.c_str() );
-			fclose ( fp );
+		FILE *fp = fopen("bad.lua", "w");
+		if (fp) {
+			fprintf(fp, "%s", code.c_str());
+			fclose(fp);
 		}
 		throw runtime_error("Error loading lua code: " + errorToString(errorCode));
 	}
 
 	//run code
-	errorCode= lua_pcall(luaState, 0, 0, 0)!=0;
-	if(errorCode!=0){
+	errorCode = lua_pcall(luaState, 0, 0, 0) != 0;
+	if (errorCode != 0) {
 		throw runtime_error("Error initializing lua: " + errorToString(errorCode));
 	}
 }
-bool LuaScript::isDefined ( const string &name ) {
+bool LuaScript::isDefined(const string &name) {
 	bool defined = false;
-	lua_getglobal( luaState, name.c_str() );
-	if ( lua_isfunction ( luaState, -1 ) ) {
+	lua_getglobal(luaState, name.c_str());
+	if (lua_isfunction(luaState, -1)) {
 		defined = true;
 	}
-	lua_pop( luaState, 1 );
-	
+	lua_pop(luaState, 1);
+
 	return defined;
 }
 
 bool LuaScript::luaCall(const string& functionName) {
 	lua_getglobal(luaState, functionName.c_str());
-	argumentCount= 0;
-	if ( lua_pcall(luaState, argumentCount, 0, 0) ) {
+	argumentCount = 0;
+	if (lua_pcall(luaState, argumentCount, 0, 0)) {
 		return false;
 	}
 	return true;
 }
 
-void LuaScript::registerFunction(LuaFunction luaFunction, const string &functionName){
-    lua_pushcfunction(luaState, luaFunction);
+void LuaScript::registerFunction(LuaFunction luaFunction, const string &functionName) {
+	lua_pushcfunction(luaState, luaFunction);
 	lua_setglobal(luaState, functionName.c_str());
 }
 
-string LuaScript::errorToString(int errorCode){
+string LuaScript::errorToString(int errorCode) {
 
-   string error = "LUA:: ";
-		
-	switch(errorCode){
-		case LUA_ERRSYNTAX: 
-			error+= "Syntax error"; 
+	string error = "LUA:: ";
+
+	switch (errorCode) {
+		case LUA_ERRSYNTAX:
+			error += "Syntax error";
 			break;
-		case LUA_ERRRUN: 
-			error+= "Runtime error"; 
+		case LUA_ERRRUN:
+			error += "Runtime error";
 			break;
-		case LUA_ERRMEM: 
-			error+= "Memory allocation error"; 
+		case LUA_ERRMEM:
+			error += "Memory allocation error";
 			break;
-		case LUA_ERRERR: 
-			error+= "Error while running the error handler"; 
+		case LUA_ERRERR:
+			error += "Error while running the error handler";
 			break;
 		default:
-			error+= "Unknown error";
+			error += "Unknown error";
 	}
-	error += string(": ")+luaL_checkstring(luaState, -1);
-	fprintf ( stderr, error.c_str() );
+	error += string(": ") + luaL_checkstring(luaState, -1);
+	fprintf(stderr, "%s", error.c_str());
 	return error;
 }
 
@@ -205,24 +206,19 @@ void LuaArguments::returnVec2i(const Vec2i &value){
 	lua_rawseti(luaState, -2, 2);
 }
 
-char* LuaArguments::getType ( int ndx ) const {
+const char* LuaArguments::getType(int ndx) const {
 
-	if(lua_isnumber(luaState, ndx)){
+	if (lua_isnumber(luaState, ndx)) {
 		return "Number";
-	}
-	else if(lua_isstring(luaState, ndx)){
+	} else if (lua_isstring(luaState, ndx)) {
 		return "String";
-	}
-	else if(lua_istable(luaState, ndx)){
+	} else if (lua_istable(luaState, ndx)) {
 		return "Table";
-	}
-	else if (lua_isboolean ( luaState, ndx ) ) {
+	} else if (lua_isboolean(luaState, ndx)) {
 		return "Boolean";
-	}
-	else if ( lua_isnil ( luaState, ndx ) ) {
+	} else if (lua_isnil(luaState, ndx)) {
 		return "Nil";
-	}
-	else {
+	} else {
 		return "Unknown";
 	}
 }

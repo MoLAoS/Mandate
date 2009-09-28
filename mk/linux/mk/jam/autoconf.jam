@@ -13,9 +13,11 @@ rule UseAutoconf
     Clean maintainer-clean : configure aclocal.m4 config.h.in Jamconfig.in ;
     Depends maintainer-clean : distclean ;
 
-	Clean very-clean : data docs maps scenarios techs tilesets shared_lib
-                       glest_game glest_map_editor glestadv.log
-                       glestadv-server.log glestadv-client.log ;
+	Clean very-clean : build configurator data docs g3d_viewer gae game
+                       glestadv-client.log glestadv-error.log
+                       glestadv-server.log glestadv.log map_editor maps 
+                       shared_lib techs test tilesets ;
+
     CleanDir very-clean : savegames screens incoming build ;
     Depends very-clean : maintainer-clean ;
                                                                                 

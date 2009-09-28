@@ -18,7 +18,7 @@
 
 using Shared::Util::Random;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 class Program;
 class MainMenu;
@@ -31,7 +31,7 @@ class Game;
 /// Interface to write log files
 // =====================================================
 
-class AutoTest{
+class AutoTest {
 private:
 	int gameStartTime;
 	Random random;

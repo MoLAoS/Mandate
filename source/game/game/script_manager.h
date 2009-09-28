@@ -44,67 +44,61 @@ class Game;
 // =====================================================
 
 class ScriptTimer {
-public:
-	ScriptTimer ( const string &name, bool real, int interval, bool periodic) 
-			: name (name)
-			, real (real)
-			, periodic  (periodic)
-			, interval (interval)
-			, active (true) {
-		reset();
-	}
-
-	bool ready();
-	void reset();
-
-	string getName() { return name; }
-	bool isPeriodic() { return periodic; }
-	bool isAlive () { return active; }
-	void kill () { active = false; }
-
 private:
 	string name;
 	bool real;
 	bool periodic;
 	bool active;
-	int64 targetTime, interval;
+	int64 targetTime;
+	int64 interval;
+
+public:
+	ScriptTimer(const string &name, bool real, int interval, bool periodic);
+
+	const string &getName()	const	{return name;}
+	bool isPeriodic() const			{return periodic;}
+	bool isAlive() const			{return active;}
+	bool isReady() const;
+
+	void kill()						{active = false;}
+	void reset();
 };
 
 // =====================================================
 //	class ScriptManagerMessage
 // =====================================================
 
-class ScriptManagerMessage{
+class ScriptManagerMessage {
 private:
 	string text;
 	string header;
 
 public:
-	ScriptManagerMessage(string text, string header)	{this->text= text, this->header= header;}
+	ScriptManagerMessage(string text, string header) : text(text), header(header) {}
 	const string &getText() const	{return text;}
 	const string &getHeader() const	{return header;}
 };
 
-class PlayerModifiers{
+class PlayerModifiers {
+private:
+	bool winner;
+	bool aiEnabled;
+
 public:
 	PlayerModifiers();
-
-	void disableAi()			{aiEnabled= false;}
-	void setAsWinner()			{winner= true;}
 
 	bool getWinner() const		{return winner;}
 	bool getAiEnabled() const	{return aiEnabled;}
 
-private:
-	bool winner;
-	bool aiEnabled;
+	void disableAi()			{aiEnabled = false;}
+	void setAsWinner()			{winner = true;}
 };
 
 // =====================================================
 //	class ScriptManager
 // =====================================================
 
-class ScriptManager{
+class ScriptManager {
 
 	//friend class World; // Lua Debugging, using setDisplayTest()
 

@@ -15,8 +15,8 @@
 
 #include <string>
 #include <vector>
-
-#include "tinyxml.h"
+#define TIXML_USE_STL
+#include <tinyxml.h>
 //#include <xercesc/util/XercesDefs.hpp>
 #include "vec.h"
 #include "conversion.h"

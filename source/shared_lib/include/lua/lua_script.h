@@ -12,36 +12,33 @@
 #ifndef _SHARED_LUA_LUASCRIPT_H_
 #define _SHARED_LUA_LUASCRIPT_H_
 
+#include <stdexcept>
 #include <string>
 #include <lua.hpp>
-#include <vec.h>
-#include <conversion.h>
+
+#include "vec.h"
+#include "conversion.h"
 
 using std::string;
-
 using Shared::Graphics::Vec2i;
 using namespace Shared::Util;
 
-namespace Shared{ namespace Lua{
+namespace Shared { namespace Lua {
 
 typedef lua_State LuaHandle;
 typedef int(*LuaFunction)(LuaHandle*);
 
-class LuaError
-{
+class LuaError : public runtime_error {
 public:
-	LuaError ( string msg = "Lua Error" ) : msg(msg) {}
-	string desc () const {return msg;}
-
-private:
-	string msg;
+	LuaError(const string &msg = string("Lua Error")) : runtime_error(msg) {}
+	string desc() const {return what();}
 };
 
 // =====================================================
 //	class LuaScript
 // =====================================================
 
-class LuaScript{
+class LuaScript {
 private:
 	LuaHandle *luaState;
 	int argumentCount;
@@ -70,7 +67,7 @@ private:
 
 // class LuaStack
 
-class LuaArguments{
+class LuaArguments {
 private:
 	lua_State *luaState;
 	int returnCount;
@@ -79,18 +76,18 @@ private:
 public:
 	LuaArguments(lua_State *luaState);
 
-	bool getBoolean ( int ndx ) const;
+	bool getBoolean(int ndx) const;
 	int getInt(int argumentIndex) const;
 	string getString(int argumentIndex) const;
 	Vec2i getVec2i(int argumentIndex) const;
 	int getReturnCount() const					{return returnCount;}
-	int getArgumentCount () const { return args; }
+	int getArgumentCount() const				{return args;}
 
 	void returnInt(int value);
 	void returnString(const string &value);
 	void returnVec2i(const Vec2i &value);
 
-	char* getType ( int ndx ) const;
+	const char* getType(int ndx) const;
 };
 
 }}//end namespace
