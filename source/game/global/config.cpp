@@ -47,7 +47,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
 	gsDayTime = p->getFloat("GsDayTime", 1000.f);
 	gsFogOfWarEnabled = p->getBool("GsFogOfWarEnabled", true);
-	gsRandStartLocs = p->getBool("GsRandStartLocs", false);
 	gsSpeedFastest = p->getFloat("GsSpeedFastest", 2.f, 1.0f, 10.0f);
 	gsSpeedSlowest = p->getFloat("GsSpeedSlowest", 0.5f, 0.01f, 1.0f);
 	gsWorldUpdateFps = p->getInt("GsWorldUpdateFps", 40);
@@ -102,6 +101,9 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	uiEnableCommandMinimap = p->getBool("UiEnableCommandMinimap", true);
 	uiFocusArrows = p->getBool("UiFocusArrows", true);
 	uiLastMap = p->getString("UiLastMap", "four_rivers");
+	uiLastRandStartLocs = p->getBool("UiLastRandStartLocs", false);
+	uiLastScenario = p->getString("UiLastScenario", "glest_classic/anarchy");
+	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLastTechTree = p->getString("UiLastTechTree", "magitech");
 	uiLastTileset = p->getString("UiLastTileset", "forest");
 	uiLocale = p->getString("UiLocale", "en");
@@ -130,7 +132,6 @@ void Config::save(const char *path) {
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
 	p->setFloat("GsDayTime", gsDayTime);
 	p->setBool("GsFogOfWarEnabled", gsFogOfWarEnabled);
-	p->setBool("GsRandStartLocs", gsRandStartLocs);
 	p->setFloat("GsSpeedFastest", gsSpeedFastest);
 	p->setFloat("GsSpeedSlowest", gsSpeedSlowest);
 	p->setInt("GsWorldUpdateFps", gsWorldUpdateFps);
@@ -185,6 +186,9 @@ void Config::save(const char *path) {
 	p->setBool("UiEnableCommandMinimap", uiEnableCommandMinimap);
 	p->setBool("UiFocusArrows", uiFocusArrows);
 	p->setString("UiLastMap", uiLastMap);
+	p->setBool("UiLastRandStartLocs", uiLastRandStartLocs);
+	p->setString("UiLastScenario", uiLastScenario);
+	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLastTechTree", uiLastTechTree);
 	p->setString("UiLastTileset", uiLastTileset);
 	p->setString("UiLocale", uiLocale);

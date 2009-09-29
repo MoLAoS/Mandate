@@ -30,7 +30,7 @@ namespace Shared { namespace Util {
 // =====================================================
 // class Properties
 // =====================================================
-	
+
 Properties::Properties() {}
 
 void Properties::load(const string &path, bool trim) {
@@ -58,6 +58,8 @@ void Properties::load(const string &path, bool trim) {
 			continue;
 		}
 
+		// FIXME: Is this neccisary? I thought ifstream was supposed to do this for us unless you
+		// pass ios_base::binary when opening the file (i.e., the default file mode is "text").
 		// gracefully handle win32 \r\n line endings
 		size_t len = strlen(lineBuffer);
 		if (len > 0 && lineBuffer[len - 1] == '\r') {

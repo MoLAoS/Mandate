@@ -32,9 +32,11 @@ using namespace Shared::Xml;
 
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 		MenuState(program, mainMenu, "scenario") {
+	Config &config = Config::getInstance();
 	Lang &lang = Lang::getInstance();
 	NetworkManager &networkManager = NetworkManager::getInstance();
 	vector<string> results;
+	int match = 0;
 
 	labelInfo.init(350, 350);
 	labelInfo.setFont(CoreData::getInstance().getMenuFontNormal());
@@ -61,30 +63,45 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 	if (results.size() == 0) {
 		throw runtime_error("There are no categories");
 	}
+	for(int i = 0; i < results.size(); ++i) {
+		if (results[i] == config.getUiLastScenarioCatagory()) {
+			match = i;
+		}
+	}
 
 	listBoxCategory.setItems(results);
-	updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()]);
+	listBoxCategory.setSelectedItemIndex(match);
+	updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()], true);
 
 	networkManager.init(nrServer);
 }
 
 
 void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton) {
-
+	Config &config = Config::getInstance();
 	CoreData &coreData = CoreData::getInstance();
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
 
 	if (buttonReturn.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundA());
+		config.save();
 		mainMenu->setState(new MenuStateRoot(program, mainMenu)); //TO CHANGE
 	} else if (buttonPlayNow.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundC());
+		config.save();
 		launchGame();
 	} else if (listBoxScenario.mouseClick(x, y)) {
-		loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo);
+		const string &catagory = categories[listBoxCategory.getSelectedItemIndex()];
+		const string &scenario = scenarioFiles[listBoxScenario.getSelectedItemIndex()];
+
+		loadScenarioInfo(scenario, &scenarioInfo);
 		labelInfo.setText(scenarioInfo.desc);
+		config.setUiLastScenario(catagory + "/" + scenario);
 	} else if (listBoxCategory.mouseClick(x, y)) {
-		updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()]);
+		const string &catagory = categories[listBoxCategory.getSelectedItemIndex()];
+
+		updateScenarioList(catagory);
+		config.setUiLastScenarioCatagory(catagory);
 	}
 }
 
@@ -133,8 +150,10 @@ void MenuStateScenario::setScenario(int i) {
 	loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo);
 }
 
-void MenuStateScenario::updateScenarioList(const string category) {
+void MenuStateScenario::updateScenarioList(const string &category, bool selectDefault) {
+	const Config &config = Config::getInstance();
 	vector<string> results;
+	int match = 0;
 
 	findAll("gae/scenarios/" + category + "/*.", results);
 
@@ -144,9 +163,17 @@ void MenuStateScenario::updateScenarioList(const string category) {
 		throw runtime_error("There are no scenarios for category, " + category + ".");
 	}
 	for (int i = 0; i < results.size(); ++i) {
+		string path = category + "/" + results[i];
+		cout << path << " / " << config.getUiLastScenario() << endl;
+		if (path == config.getUiLastScenario()) {
+			match = i;
+		}
 		results[i] = formatString(results[i]);
 	}
 	listBoxScenario.setItems(results);
+	if(selectDefault) {
+		listBoxScenario.setSelectedItemIndex(match);
+	}
 
 	//update scenario info
 	loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo);

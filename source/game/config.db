@@ -1,6 +1,7 @@
 # Config Settings file.
 # This file is processed and used to generate config.cpp and confg.h using
-# config.cpp.template and config.h.template
+# config.cpp.template and config.h.template.  NOTE: You may not use the pipe
+# character in this file unless you want to modify the script.
 #
 # variable					type	default			min		max
 cameraFov					float	45.f			0.f		360.f
@@ -18,7 +19,6 @@ gsAutoRepairEnabled			bool	true
 gsAutoReturnEnabled			bool	false
 gsDayTime					float	1000.f
 gsFogOfWarEnabled			bool	true
-gsRandStartLocs				bool	false
 gsSpeedFastest				float	2.f				1.0f	10.0f
 gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsWorldUpdateFps			int		40
@@ -74,6 +74,9 @@ uiConsoleTimeout			int		20
 uiEnableCommandMinimap		bool	true
 uiFocusArrows				bool	true
 uiLastMap					string	"four_rivers"
+uiLastRandStartLocs			bool	false
+uiLastScenario				string	"glest_classic/anarchy"
+uiLastScenarioCatagory		string	"glest_classic"
 uiLastTileset				string	"forest"
 uiLastTechTree				string	"magitech"
 uiLocale					string	"en"
