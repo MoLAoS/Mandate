@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -61,7 +61,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
    XmlTree	xmlTree;
    string path;
 	try {
-		path= dir+"/"+lastDir(dir)+".xml";
+		path= dir+"/"+basename(dir)+".xml";
 		checksum.addFile(path, true);
 		xmlTree.load(path);
    }

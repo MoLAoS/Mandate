@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -903,10 +903,12 @@ void Gui::computeDisplay() {
 	int thisTeam = Game::getInstance()->getWorld()->getThisTeamIndex();
 	//title, text and progress bar
 	if (selection.getCount() == 1) {
-		display.setTitle(selection.getFrontUnit()->getFullName());
-		//FIXME maybe do a 'partial' getDesc() showing HP of enemy unit
-		if ( selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
-			display.setText(selection.getFrontUnit()->getDesc());
+		const Unit *unit = selection.getFrontUnit();
+		bool friendly = unit->getFaction()->getTeam() == thisTeam;
+
+		display.setTitle(unit->getFullName());
+		display.setText(unit->getDesc(friendly));
+		if (friendly) {
 			display.setProgressBar(selection.getFrontUnit()->getProductionPercent());
 		}
 	}

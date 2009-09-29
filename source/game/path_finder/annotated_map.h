@@ -62,33 +62,25 @@ struct CellMetrics {
 	CellMetrics () { memset ( this, 0, sizeof(*this) ); }
 	// can't get a reference to a bit field, so we can't overload 
 	// the [] operator, and we have to get by with these...
-	inline uint32 get ( const Field );
-	inline void   set ( const Field, uint32 val );
 
-	bool isNearResource ( const Vec2i &pos );
-	bool isNearStore ( const Vec2i &pos );
+	__inline uint32 get ( const Field );
+	__inline void   set ( const Field, uint32 val );
+	__inline void   setAll ( uint32 val );
+
+	bool operator != ( CellMetrics &that ) {
+		return memcmp ( this, &that, sizeof(*this) );
+	}
+
+	//bool isNearResource ( const Vec2i &pos );
+	//bool isNearStore ( const Vec2i &pos );
 
 private:
-	uint32 field0 : 2; // In Use: FieldWalkable = land + shallow water 
-	uint32 field1 : 2; // In Use: FieldAir = air
-	uint32 field2 : 2; // In Use: FieldAnyWater = shallow + deep water
-	uint32 field3 : 2; // In Use: FieldDeepWater = deep water
-	uint32 field4 : 2; // In Use: FieldAmphibious = land + shallow + deep water 
-	uint32 field5 : 2; // Unused: ?
-	uint32 field6 : 2; // Unused: ?
-	uint32 field7 : 2; // Unused: ?
-	uint32 field8 : 2; // Unused: ?
-	uint32 field9 : 2; // Unused: ?
-	uint32 fielda : 2; // Unused: ?
-	uint32 fieldb : 2; // Unused: ?
-	uint32 visTeam0 : 1; // map visibility... not used yet.
-	uint32 visTeam1 : 1; //  will be used to remove calls to Tile::isExplored()
-	uint32 visTeam2 : 1; //  from search algorithms, for better cache performance.
-	uint32 visTeam3 : 1; // 
-	uint32 adjResrc1 : 1; // to be used for semi co-operative resource gathering
-	uint32 adjResrc2 : 1; // to be used for semi co-operative resource gathering
-	uint32 adjStore1 : 1; // to be used for semi co-operative resource gathering
-	uint32 adjStore2 : 1; // to be used for semi co-operative resource gathering
+	uint32 field0 : 3; // In Use: FieldWalkable = land + shallow water 
+	uint32 field1 : 3; // In Use: FieldAir = air
+	uint32 field2 : 3; // In Use: FieldAnyWater = shallow + deep water
+	uint32 field3 : 3; // In Use: FieldDeepWater = deep water
+	uint32 field4 : 3; // In Use: FieldAmphibious = land + shallow + deep water 
+	uint32 pad    : 1;
 };
 
 class MetricMap {
@@ -117,15 +109,17 @@ public:
 	void initMapMetrics ( Map *map );
 
 	// Start a 'cascading update' of the Map Metrics from a position and size
-	void updateMapMetrics ( const Vec2i &pos, const int size, bool adding, Field field ); 
+	void updateMapMetrics ( const Vec2i &pos, const int size ); 
 
 	// Interface to the clearance metrics, can a unit of size occupy a cell(s) ?
-	bool canOccupy ( const Vec2i &pos, int size, Field field ) const;
+	__inline bool canOccupy ( const Vec2i &pos, int size, Field field ) const {
+		return metrics[pos].get ( field ) >= size ? true : false;
+	}
 
 	static const int maxClearanceValue;
 
 	// Temporarily annotate the map for nearby units
-	void annotateLocal ( const Vec2i &pos, const int size, const Field field );
+	void annotateLocal ( const Unit *unit, const Field field );
 
 	// Clear temporary annotations
 	void clearLocalAnnotations ( Field field );
@@ -136,13 +130,18 @@ public:
 
 private:
 	// for initMetrics () and updateMapMetrics ()
-	CellMetrics computeClearances ( const Vec2i & );
-	uint32 computeClearance ( const Vec2i &, Field );
+	void computeClearances ( const Vec2i & );
+	void computeClearance ( const Vec2i &, Field );
 	bool canClear ( const Vec2i &pos, int clear, Field field );
 
-	// for annotateLocal ()
-	void localAnnotateCells ( const Vec2i &pos, const int size, const Field field, 
-		const Vec2i *offsets, const int numOffsets );
+	// perform local annotations, mkae unit obstactle in field
+	void annotateUnit ( const Unit *unit, const Field field );
+
+	// update to the left and above a area that may have changed metrics
+	// pos: top-left of area changed
+	// size: size of area changed
+	// field: field to update for a local annotation, or FieldCount to update all fields
+	void cascadingUpdate ( const Vec2i &pos, const int size, const Field field = FieldCount );
 
 	int metricHeight;
 	std::map<Vec2i,uint32> localAnnt;
@@ -152,6 +151,36 @@ public:
 #endif
 	MetricMap metrics;
 };
+
+inline uint32 CellMetrics::get ( const Field field ) {
+	switch ( field ) {
+		case FieldWalkable: return field0;
+		case FieldAir: return field1;
+		case FieldAnyWater: return field2;
+		case FieldDeepWater: return field3;
+		case FieldAmphibious: return field4;
+		default: throw runtime_error ( "Unknown Field passed to CellMetrics::get()" );
+	}
+	return 0;
+}
+
+inline void CellMetrics::set ( const Field field, uint32 val ) {
+	assert ( val <= AnnotatedMap::maxClearanceValue );
+	switch ( field ) {
+		case FieldWalkable: field0 = val; return;
+		case FieldAir: field1 = val; return;
+		case FieldAnyWater: field2 = val; return;
+		case FieldDeepWater: field3 = val; return;
+		case FieldAmphibious: field4 = val; return;
+		default: throw runtime_error ( "Unknown Field passed to CellMetrics::set()" );
+	}
+
+}
+
+inline void CellMetrics::setAll ( uint32 val ) {
+	assert ( val <= AnnotatedMap::maxClearanceValue );
+	field0 = field1 = field2 = field3 = field4 = val;
+}
 
 }}}
 

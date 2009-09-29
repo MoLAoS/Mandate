@@ -299,9 +299,10 @@ void MenuStateCustomGame::loadGameSettings(GameSettings *gameSettings){
 	int factionCount= 0;
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
-	gameSettings->setMap(mapFiles[listBoxMap.getSelectedItemIndex()]);
-    gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-    gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setMapPath(string("maps/") + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm");
+    gameSettings->setTilesetPath(string("tilesets/") + tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
+    gameSettings->setTechPath(string("techs/") + techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+    gameSettings->setScenarioPath("");
 	gameSettings->setDefaultUnits(true);
 	gameSettings->setDefaultResources(true);
 	gameSettings->setDefaultVictoryConditions(true);

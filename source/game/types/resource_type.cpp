@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -36,9 +36,9 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
 	Renderer &renderer = Renderer::getInstance();
 	this->id = id;
 
-   bool loadOk = true;
-   Logger::getInstance().add("Resource type: " + dir, true);
-	name = lastDir(dir);
+	bool loadOk = true;
+	Logger::getInstance().add("Resource type: " + dir, true);
+	name = basename(dir);
 	path = dir + "/" + name + ".xml";
 	checksum.addFile(path, true);
 	

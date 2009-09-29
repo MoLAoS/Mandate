@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -382,10 +382,10 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 		float fhigh = unit->getAttackPctStolen(this) + attackPctVar;
 		float flow = unit->getAttackPctStolen(this) - attackPctVar;
 
-		str += floatToStr(flow * 100.0f);
+		str += Conversion::toStr(flow * 100.0f);
 		if(fhigh != flow) {
 			str += "% ... ";
-			str += floatToStr(fhigh * 100.0f);
+			str += Conversion::toStr(fhigh * 100.0f);
 		}
 		str += "%\n";
 	}

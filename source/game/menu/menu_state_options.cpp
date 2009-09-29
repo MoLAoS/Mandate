@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -102,12 +102,12 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 
 	//lang
 	vector<string> langResults;
-	findAll("data/lang/*.lng", langResults);
+	findAll("data/lang/*.lng", langResults, true);
 	if(langResults.empty()){
         throw runtime_error("There is no lang file");
 	}
     listBoxLang.setItems(langResults);
-	listBoxLang.setSelectedItem(config.getUiLang());
+	listBoxLang.setSelectedItem(config.getUiLocale());
 
 	//shadows
 	for(int i= 0; i<Renderer::sCount; ++i){
@@ -189,8 +189,8 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
 	}
 	else if(listBoxLang.mouseClick(x, y)){
-		config.setUiLang(listBoxLang.getSelectedItem());
-		lang.loadStrings(config.getUiLang());
+		config.setUiLocale(listBoxLang.getSelectedItem());
+		lang.setLocale(config.getUiLocale());
 		saveConfig();
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
 
@@ -221,13 +221,13 @@ void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
 		saveConfig();
 	}
 	else if(listBoxVolumeMusic.mouseClick(x, y)){
-		CoreData::getInstance().getMenuMusic()->setVolume(strToInt(listBoxVolumeMusic.getSelectedItem())/100.f);
+		CoreData::getInstance().getMenuMusic()->setVolume(Conversion::strToInt(listBoxVolumeMusic.getSelectedItem())/100.f);
 		config.setSoundVolumeMusic(atoi(listBoxVolumeMusic.getSelectedItem().c_str()));
 		saveConfig();
 	}
    else if ( listBoxMaxPathNodes.mouseClick ( x,y ) )
    {
-      config.setPathFinderMaxNodes ( strToInt ( this->listBoxMaxPathNodes.getSelectedItem () ) );
+      config.setPathFinderMaxNodes ( Conversion::strToInt ( this->listBoxMaxPathNodes.getSelectedItem () ) );
       saveConfig ();
    }
    else if ( listBoxPFAlgorithm.mouseClick ( x,y ) )

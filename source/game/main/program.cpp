@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -100,7 +100,7 @@ Program::Program(Config &config, int argc, char** argv) :
 		crashed(false),
 		keymap(getInput(), "keymap.ini") {
 
-    //set video mode
+	//set video mode
 	setDisplaySettings();
 
 	//window
@@ -110,17 +110,17 @@ Program::Program(Config &config, int argc, char** argv) :
 	setSize(config.getDisplayWidth(), config.getDisplayHeight());
 	create();
 
-    //log start
+	//log start
 	Logger &logger= Logger::getInstance();
 	//logger.setFile("glest.log");
 	logger.clear();
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
-   Logger::getErrorLog().clear();
+	Logger::getErrorLog().clear();
 
 	//lang
 	Lang &lang= Lang::getInstance();
-	lang.loadStrings(config.getUiLang());
+	lang.setLocale(config.getUiLocale());
 
 	//render
 	Renderer &renderer= Renderer::getInstance();
@@ -130,7 +130,7 @@ Program::Program(Config &config, int argc, char** argv) :
 
 	//coreData, needs renderer, but must load before renderer init
 	CoreData &coreData= CoreData::getInstance();
-    coreData.load();
+	coreData.load();
 
 	//init renderer (load global textures)
 	renderer.init();
@@ -138,7 +138,7 @@ Program::Program(Config &config, int argc, char** argv) :
 	//sound
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 	soundRenderer.init(this);
-	
+
 	keymap.save("keymap.ini");
 
 	// startup and immediately host a game

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -1190,9 +1190,9 @@ int Unit::killPets() {
 }
 
 
-string Unit::getDesc() const {
+string Unit::getDesc(bool full) const {
 
-	Lang &lang= Lang::getInstance();
+	Lang &lang = Lang::getInstance();
 	int armorBonus = getArmor() - type->getArmor();
 	int sightBonus = getSight() - type->getSight();
 
@@ -1200,78 +1200,86 @@ string Unit::getDesc() const {
 	//str+="Pos: "+v2iToStr(pos)+"\n";
 
 	//hp
-	string str= "\n" + lang.get("Hp")+ ": " + intToStr(hp) + "/" + intToStr(getMaxHp());
-	if(getHpRegeneration()!=0){
-		str+= " (" + lang.get("Regeneration") + ": " + intToStr(getHpRegeneration()) + ")";
+	string str = "\n" + lang.get("Hp") + ": " + intToStr(hp) + "/" + intToStr(getMaxHp());
+	if (getHpRegeneration() != 0) {
+		str += " (" + lang.get("Regeneration") + ": " + intToStr(getHpRegeneration()) + ")";
 	}
 
 	//ep
-	if(getMaxEp()!=0){
-		str+= "\n" + lang.get("Ep")+ ": " + intToStr(ep) + "/" + intToStr(getMaxEp());
-		if(getEpRegeneration()!=0){
-			str+= " (" + lang.get("Regeneration") + ": " + intToStr(getEpRegeneration()) + ")";
+	if (getMaxEp() != 0) {
+		str += "\n" + lang.get("Ep") + ": " + intToStr(ep) + "/" + intToStr(getMaxEp());
+		if (getEpRegeneration() != 0) {
+			str += " (" + lang.get("Regeneration") + ": " + intToStr(getEpRegeneration()) + ")";
 		}
+	}
+
+	if (!full) {
+		// Show only current command being executed and effects
+		if (!commands.empty()) {
+			str += "\n" + commands.front()->getType()->getName();
+		}
+		effects.getDesc(str);
+		return str;
 	}
 
 	//armor
-	str+= "\n" + lang.get("Armor")+ ": " + intToStr(type->getArmor());
-	if(armorBonus) {
-		if(armorBonus > 0) {
-			str+="+";
+	str += "\n" + lang.get("Armor") + ": " + intToStr(type->getArmor());
+	if (armorBonus) {
+		if (armorBonus > 0) {
+			str += "+";
 		}
-		str+=intToStr(armorBonus);
+		str += intToStr(armorBonus);
 	}
-	str+= " ("+type->getArmorType()->getName()+")";
+	str += " (" + type->getArmorType()->getName() + ")";
 
 	//sight
-	str+="\n"+ lang.get("Sight")+ ": " + intToStr(type->getSight());
-	if(sightBonus){
-		if(sightBonus > 0) {
-			str+="+";
+	str += "\n" + lang.get("Sight") + ": " + intToStr(type->getSight());
+	if (sightBonus) {
+		if (sightBonus > 0) {
+			str += "+";
 		}
-		str+=intToStr(sightBonus);
+		str += intToStr(sightBonus);
 	}
 
 	//kills
-	const Level *nextLevel= getNextLevel();
-	if(kills>0 || nextLevel!=NULL){
-		str+= "\n" + lang.get("Kills") +": " + intToStr(kills);
-		if(nextLevel!=NULL){
-			str+= " (" + nextLevel->getName() + ": " + intToStr(nextLevel->getKills()) + ")";
+	const Level *nextLevel = getNextLevel();
+	if (kills > 0 || nextLevel != NULL) {
+		str += "\n" + lang.get("Kills") + ": " + intToStr(kills);
+		if (nextLevel != NULL) {
+			str += " (" + nextLevel->getName() + ": " + intToStr(nextLevel->getKills()) + ")";
 		}
 	}
 
 	//str+= "\nskl: "+scToStr(currSkill->getClass());
 
 	//load
-	if(loadCount){
-		str+= "\n" + lang.get("Load")+ ": " + intToStr(loadCount) +"  " + loadType->getName();
+	if (loadCount) {
+		str += "\n" + lang.get("Load") + ": " + intToStr(loadCount) + "  " + loadType->getName();
 	}
 
 	//consumable production
-	for(int i=0; i<type->getCostCount(); ++i){
-		const Resource *r= getType()->getCost(i);
-		if(r->getType()->getClass()==rcConsumable){
-			str+= "\n";
-			str+= r->getAmount()<0? lang.get("Produce")+": ": lang.get("Consume")+": ";
-			str+= intToStr(abs(r->getAmount())) + " " + r->getType()->getName();
+	for (int i = 0; i < type->getCostCount(); ++i) {
+		const Resource *r = getType()->getCost(i);
+		if (r->getType()->getClass() == rcConsumable) {
+			str += "\n";
+			str += r->getAmount() < 0 ? lang.get("Produce") + ": " : lang.get("Consume") + ": ";
+			str += intToStr(abs(r->getAmount())) + " " + r->getType()->getName();
 		}
 	}
 
 	//command info
-	if(!commands.empty()) {
-		str+= "\n" + commands.front()->getType()->getName();
-		if(commands.size() > 1) {
+	if (!commands.empty()) {
+		str += "\n" + commands.front()->getType()->getName();
+		if (commands.size() > 1) {
 			str += "\n" + lang.get("OrdersOnQueue") + ": " + intToStr(commands.size());
 		}
-	}
-	else{
+	} else {
 		//can store
-		if(type->getStoredResourceCount()>0){
-			for(int i=0; i<type->getStoredResourceCount(); ++i){
-				const Resource *r= type->getStoredResource(i);
-				str+= "\n"+lang.get("Store")+": ";
-				str+= intToStr(r->getAmount()) + " " + r->getType()->getName();
+		if (type->getStoredResourceCount() > 0) {
+			for (int i = 0; i < type->getStoredResourceCount(); ++i) {
+				const Resource *r = type->getStoredResource(i);
+				str += "\n" + lang.get("Store") + ": ";
+				str += intToStr(r->getAmount()) + " " + r->getType()->getName();
 			}
 		}
 	}
@@ -1320,11 +1328,18 @@ bool Unit::morph(const MorphCommandType *mct) {
 
 	// redo field
 	Field newField;
-	if(morphUnitType->getField(FieldWalkable)) newField = FieldWalkable;
-	else if(morphUnitType->getField(FieldAir)) newField = FieldAir;
-	if ( morphUnitType->getField (FieldAmphibious) ) newField = FieldAmphibious;
-	else if ( morphUnitType->getField (FieldAnyWater) ) newField = FieldAnyWater;
-	else if ( morphUnitType->getField (FieldDeepWater) ) newField = FieldDeepWater;
+	if ( morphUnitType->getField( FieldWalkable ) ) {
+		newField = FieldWalkable;
+	} else if ( morphUnitType->getField( FieldAir ) ) {
+		newField = FieldAir;
+	}
+	if ( morphUnitType->getField( FieldAmphibious ) ) {
+		newField = FieldAmphibious;
+	} else if ( morphUnitType->getField( FieldAnyWater ) ) {
+		newField = FieldAnyWater;
+	} else if ( morphUnitType->getField( FieldDeepWater ) ) {
+		newField = FieldDeepWater;
+	}
 
 	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -13,6 +13,7 @@
 #define _SHARED_GRAPHICS_GL_PARTICLERENDERERGL_H_
 
 #include "particle_renderer.h"
+#include "opengl.h"
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
@@ -23,6 +24,8 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 class ParticleRendererGl: public ParticleRenderer {
 public:
 	static const int bufferSize = 1024;
+	static const GLenum glBlendFactors[Particle::BLEND_FUNC_COUNT];
+	static const GLenum glBlendEquations[Particle::BLEND_EQUATION_COUNT];
 
 private:
 	bool rendering;
@@ -38,10 +41,29 @@ public:
 	virtual void renderSystemLine(ParticleSystem *ps);
 	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr);
 
+	/** Translate a Particle::BlendFactor into an OpenGL GLenum value for glBlendFunc() */
+	static GLenum translate(Particle::BlendFactor v) {
+		assert(v >= 0 && v < Particle::BLEND_FUNC_COUNT);
+		return glBlendFactors[v];
+	}
+
+	/** Translate a Particle::BlendEquation into an OpenGL GLenum value for glBlendEquation() */
+	static GLenum translate(Particle::BlendEquation v) {
+		assert(v >= 0 && v < Particle::BLEND_EQUATION_COUNT);
+		return glBlendEquations[v];
+	}
+
 protected:
 	void renderBufferQuads(int quadCount);
 	void renderBufferLines(int lineCount);
-	void setBlendMode(Particle::BlendMode blendMode);
+
+	static void setBlendFunc(Particle::BlendFactor sfactor, Particle::BlendFactor dfactor) {
+		::glBlendFunc(translate(sfactor), translate(dfactor));
+	}
+
+	static void setBlendEquation(Particle::BlendEquation equation) {
+		::glBlendEquation(translate(equation));
+	}
 };
 
 }}}//end namespace

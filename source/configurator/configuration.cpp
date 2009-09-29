@@ -11,80 +11,80 @@ using namespace std;
 using namespace Shared::Xml;
 using namespace Shared::Util;
 
-namespace Configurator{
+namespace Configurator {
 
 // ===============================================
-// 	class Configuration
+//  class Configuration
 // ===============================================
 
-Configuration::~Configuration(){
-	for(int i= 0; i<fieldGroups.size(); ++i){
+Configuration::~Configuration() {
+	for (int i = 0; i < fieldGroups.size(); ++i) {
 		delete fieldGroups[i];
 	}
 }
 
-void Configuration::load(const string &path){
+void Configuration::load(const string &path) {
 	loadStructure(path);
 	loadValues(fileName);
 }
 
-void Configuration::loadStructure(const string &path){
-	
+void Configuration::loadStructure(const string &path) {
+
 	XmlTree xmlTree;
 	xmlTree.load(path);
 
-	const XmlNode *configurationNode= xmlTree.getRootNode();
+	const XmlNode *configurationNode = xmlTree.getRootNode();
 
 	//title
-	title= configurationNode->getChild("title")->getAttribute("value")->getValue();
-	
+	title = configurationNode->getChild("title")->getAttribute("value")->getValue();
+
 	//fileName
-	fileName= configurationNode->getChild("file-name")->getAttribute("value")->getValue();
-	
+	fileName = configurationNode->getChild("file-name")->getAttribute("value")->getValue();
+
 	//icon
-	XmlNode *iconNode= configurationNode->getChild("icon");
-	icon= iconNode->getAttribute("value")->getBoolValue();
-	if(icon){
-		iconPath= iconNode->getAttribute("path")->getValue();
+	XmlNode *iconNode = configurationNode->getChild("icon");
+	icon = iconNode->getAttribute("value")->getBoolValue();
+	if (icon) {
+		iconPath = iconNode->getAttribute("path")->getValue();
 	}
 
-	const XmlNode *fieldGroupsNode= configurationNode->getChild("field-groups");
+	const XmlNode *fieldGroupsNode = configurationNode->getChild("field-groups");
 
 	fieldGroups.resize(fieldGroupsNode->getChildCount());
 
-	for(int i=0; i<fieldGroups.size(); ++i){
-		const XmlNode *fieldGroupNode= fieldGroupsNode->getChild("field-group", i);
-		FieldGroup *fieldGroup= new FieldGroup();
+	for (int i = 0; i < fieldGroups.size(); ++i) {
+		const XmlNode *fieldGroupNode = fieldGroupsNode->getChild("field-group", i);
+		FieldGroup *fieldGroup = new FieldGroup();
 		fieldGroup->load(fieldGroupNode);
-		fieldGroups[i]= fieldGroup;
+		fieldGroups[i] = fieldGroup;
 	}
 }
 
-void Configuration::loadValues(const string &path){
+void Configuration::loadValues(const string &path) {
 	Properties properties;
 
 	properties.load(path);
 
-	for(int i=0; i<fieldGroups.size(); ++i){
-		FieldGroup *fg= fieldGroups[i];
-		for(int j=0; j<fg->getFieldCount(); ++j){
-			Field *f= fg->getField(j);
+	for (int i = 0; i < fieldGroups.size(); ++i) {
+		FieldGroup *fg = fieldGroups[i];
+		for (int j = 0; j < fg->getFieldCount(); ++j) {
+			Field *f = fg->getField(j);
 			f->setValue(properties.getString(f->getVariableName()));
 		}
 	}
 }
 
-void Configuration::save(){
+void Configuration::save() {
 	Properties properties;
 
 	properties.load(fileName);
 
-	for(int i=0; i<fieldGroups.size(); ++i){
-		FieldGroup *fg= fieldGroups[i];
-		for(int j=0; j<fg->getFieldCount(); ++j){
-			Field *f= fg->getField(j);
+	for (int i = 0; i < fieldGroups.size(); ++i) {
+		FieldGroup *fg = fieldGroups[i];
+		for (int j = 0; j < fg->getFieldCount(); ++j) {
+			Field *f = fg->getField(j);
 			f->updateValue();
-			if(!f->isValueValid(f->getValue())){
+			if (!f->isValueValid(f->getValue())) {
 				f->setValue(f->getDefaultValue());
 				f->updateControl();
 			}
@@ -95,297 +95,286 @@ void Configuration::save(){
 	properties.save(fileName);
 }
 
-string Field::getInfo() const{
-	return name+" (default: " + defaultValue + ")";
+string Field::getInfo() const {
+	return name + " (default: " + defaultValue + ")";
 }
 
 // ===============================================
-// 	class FieldGroup
+//  class FieldGroup
 // ===============================================
 
-FieldGroup::~FieldGroup(){
-	for(int i= 0; i<fields.size(); ++i){
+FieldGroup::~FieldGroup() {
+	for (int i = 0; i < fields.size(); ++i) {
 		delete fields[i];
 	}
 }
 
-void FieldGroup::load(const XmlNode *groupNode){
+void FieldGroup::load(const XmlNode *groupNode) {
 
-	name= groupNode->getAttribute("name")->getValue();
+	name = groupNode->getAttribute("name")->getValue();
 
 	fields.resize(groupNode->getChildCount());
-	for(int i=0; i<fields.size(); ++i){
-		const XmlNode *fieldNode= groupNode->getChild("field", i); 
+	for (int i = 0; i < fields.size(); ++i) {
+		const XmlNode *fieldNode = groupNode->getChild("field", i);
 
-		Field *f= newField(fieldNode->getAttribute("type")->getValue());
-			
+		Field *f = newField(fieldNode->getAttribute("type")->getValue());
+
 		//name
-		const XmlNode *nameNode= fieldNode->getChild("name");
+		const XmlNode *nameNode = fieldNode->getChild("name");
 		f->setName(nameNode->getAttribute("value")->getValue());
 
 		//variableName
-		const XmlNode *variableNameNode= fieldNode->getChild("variable-name");
+		const XmlNode *variableNameNode = fieldNode->getChild("variable-name");
 		f->setVariableName(variableNameNode->getAttribute("value")->getValue());
 
 		//description
-		const XmlNode *descriptionNode= fieldNode->getChild("description");
+		const XmlNode *descriptionNode = fieldNode->getChild("description");
 		f->setDescription(descriptionNode->getAttribute("value")->getValue());
 
 		//default
-		const XmlNode *defaultNode= fieldNode->getChild("default");
+		const XmlNode *defaultNode = fieldNode->getChild("default");
 		f->setDefaultValue(defaultNode->getAttribute("value")->getValue());
 
 		f->loadSpecific(fieldNode);
 
-		if(!f->isValueValid(f->getDefaultValue())){
+		if (!f->isValueValid(f->getDefaultValue())) {
 			throw runtime_error("Default value not valid in field: " + f->getName());
 		}
 
-		fields[i]= f;
+		fields[i] = f;
 	}
 }
 
-Field *FieldGroup::newField(const string &type){
-	if(type=="Bool"){
+Field *FieldGroup::newField(const string &type) {
+	if (type == "Bool") {
 		return new BoolField();
-	}
-	else if(type=="Int"){
+	} else if (type == "Int") {
 		return new IntField();
-	}
-	else if(type=="Float"){
+	} else if (type == "Float") {
 		return new FloatField();
-	}
-	else if(type=="String"){
+	} else if (type == "String") {
 		return new StringField();
-	}
-	else if(type=="Enum"){
+	} else if (type == "Enum") {
 		return new EnumField();
-	}
-	else if(type=="IntRange"){
+	} else if (type == "IntRange") {
 		return new IntRangeField();
-	}
-	else if(type=="FloatRange"){
+	} else if (type == "FloatRange") {
 		return new FloatRangeField();
-	}
-	else{
+	} else {
 		throw runtime_error("Unknown field type: " + type);
 	}
 }
 
 // ===============================================
-// 	class BoolField
+//  class BoolField
 // ===============================================
 
-void BoolField::createControl(wxWindow *parent, wxSizer *sizer){
-	checkBox= new wxCheckBox(parent, -1, "");
+void BoolField::createControl(wxWindow *parent, wxSizer *sizer) {
+	checkBox = new wxCheckBox(parent, -1, "");
 	checkBox->SetValue(strToBool(value));
 	sizer->Add(checkBox);
 }
 
-void BoolField::updateValue(){
-	value= boolToStr(checkBox->GetValue());
+void BoolField::updateValue() {
+	value = boolToStr(checkBox->GetValue());
 }
 
-void BoolField::updateControl(){
+void BoolField::updateControl() {
 	checkBox->SetValue(strToBool(value));
 }
 
-bool BoolField::isValueValid(const string &value){
-	try{
+bool BoolField::isValueValid(const string &value) {
+	try {
 		strToBool(value);
-	}
-	catch(const exception &){
+	} catch (const exception &) {
 		return false;
 	}
 	return true;
 }
 
 // ===============================================
-// 	class IntField
+//  class IntField
 // ===============================================
 
-void IntField::createControl(wxWindow *parent, wxSizer *sizer){
-	textCtrl= new wxTextCtrl(parent, -1, value.c_str());
+void IntField::createControl(wxWindow *parent, wxSizer *sizer) {
+	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
 	sizer->Add(textCtrl);
 }
 
-void IntField::updateValue(){
-	value= textCtrl->GetValue();
+void IntField::updateValue() {
+	value = textCtrl->GetValue();
 }
 
-void IntField::updateControl(){
+void IntField::updateControl() {
 	textCtrl->SetValue(value.c_str());
 }
 
-bool IntField::isValueValid(const string &value){
-	try{
+bool IntField::isValueValid(const string &value) {
+	try {
 		strToInt(value);
-	}
-	catch(const exception &){
+	} catch (const exception &) {
 		return false;
 	}
 	return true;
 }
 
 // ===============================================
-// 	class FloatField
+//  class FloatField
 // ===============================================
 
-void FloatField::createControl(wxWindow *parent, wxSizer *sizer){
-	textCtrl= new wxTextCtrl(parent, -1, value.c_str());
+void FloatField::createControl(wxWindow *parent, wxSizer *sizer) {
+	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
 	sizer->Add(textCtrl);
 }
 
-void FloatField::updateValue(){
-	value= textCtrl->GetValue();
+void FloatField::updateValue() {
+	value = textCtrl->GetValue();
 }
 
-void FloatField::updateControl(){
+void FloatField::updateControl() {
 	textCtrl->SetValue(value.c_str());
 }
 
-bool FloatField::isValueValid(const string &value){
-	try{
+bool FloatField::isValueValid(const string &value) {
+	try {
 		strToFloat(value);
-	}
-	catch(const exception &){
+	} catch (const exception &) {
 		return false;
 	}
 	return true;
 }
 
 // ===============================================
-// 	class StringField
+//  class StringField
 // ===============================================
 
-void StringField::createControl(wxWindow *parent, wxSizer *sizer){
-	textCtrl= new wxTextCtrl(parent, -1, value.c_str());
-	textCtrl->SetSize(wxSize(3*textCtrl->GetSize().x/2, textCtrl->GetSize().y));
+void StringField::createControl(wxWindow *parent, wxSizer *sizer) {
+	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
+	textCtrl->SetSize(wxSize(3*textCtrl->GetSize().x / 2, textCtrl->GetSize().y));
 	sizer->Add(textCtrl);
 }
 
-void StringField::updateValue(){
-	value= textCtrl->GetValue();
+void StringField::updateValue() {
+	value = textCtrl->GetValue();
 }
 
-void StringField::updateControl(){
+void StringField::updateControl() {
 	textCtrl->SetValue(value.c_str());
 }
 
-bool StringField::isValueValid(const string &value){
+bool StringField::isValueValid(const string &value) {
 	return true;
 }
 
 // ===============================================
-// 	class EnumField
+//  class EnumField
 // ===============================================
 
-void EnumField::createControl(wxWindow *parent, wxSizer *sizer){
-	comboBox= new wxComboBox(parent, -1, "", wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
-	for(int i=0; i<enumerants.size(); ++i){
+void EnumField::createControl(wxWindow *parent, wxSizer *sizer) {
+	comboBox = new wxComboBox(parent, -1, "", wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
+	for (int i = 0; i < enumerants.size(); ++i) {
 		comboBox->Append(enumerants[i].c_str());
 	}
 	comboBox->SetValue(value.c_str());
 	sizer->Add(comboBox);
 }
 
-void EnumField::updateValue(){
-	value= comboBox->GetValue();
+void EnumField::updateValue() {
+	value = comboBox->GetValue();
 }
 
-void EnumField::updateControl(){
+void EnumField::updateControl() {
 	comboBox->SetValue(value.c_str());
 }
 
-bool EnumField::isValueValid(const string &value){
+bool EnumField::isValueValid(const string &value) {
 	return true;
 }
 
-void EnumField::loadSpecific(const XmlNode *fieldNode){
-	const XmlNode *enumsNode= fieldNode->getChild("enums");
-	for(int i=0; i<enumsNode->getChildCount(); ++i){
-		const XmlNode *enumNode= enumsNode->getChild("enum", i);
+void EnumField::loadSpecific(const XmlNode *fieldNode) {
+	const XmlNode *enumsNode = fieldNode->getChild("enums");
+	for (int i = 0; i < enumsNode->getChildCount(); ++i) {
+		const XmlNode *enumNode = enumsNode->getChild("enum", i);
 		enumerants.push_back(enumNode->getAttribute("value")->getValue());
 	}
 };
 
 // ===============================================
-// 	class IntRange
+//  class IntRange
 // ===============================================
 
-void IntRangeField::createControl(wxWindow *parent, wxSizer *sizer){
-	slider= new wxSlider(parent, -1, strToInt(value), min, max, wxDefaultPosition, wxDefaultSize, wxSL_LABELS);
+void IntRangeField::createControl(wxWindow *parent, wxSizer *sizer) {
+	slider = new wxSlider(parent, -1, strToInt(value), min, max, wxDefaultPosition, wxDefaultSize, wxSL_LABELS);
 	sizer->Add(slider);
 }
 
-void IntRangeField::updateValue(){
-	value= intToStr(slider->GetValue());
+void IntRangeField::updateValue() {
+	value = intToStr(slider->GetValue());
 }
 
-void IntRangeField::updateControl(){
+void IntRangeField::updateControl() {
 	slider->SetValue(strToInt(value));
 }
 
-bool IntRangeField::isValueValid(const string &value){
-	try{
+bool IntRangeField::isValueValid(const string &value) {
+	try {
 		strToInt(value);
-	}
-	catch(const exception &){
+	} catch (const exception &) {
 		return false;
 	}
 	return true;
 }
 
-void IntRangeField::loadSpecific(const XmlNode *fieldNode){
-	const XmlNode *minNode= fieldNode->getChild("min");
-	min= strToInt(minNode->getAttribute("value")->getValue());
+void IntRangeField::loadSpecific(const XmlNode *fieldNode) {
+	const XmlNode *minNode = fieldNode->getChild("min");
+	min = strToInt(minNode->getAttribute("value")->getValue());
 
-	const XmlNode *maxNode= fieldNode->getChild("max");
-	max= strToInt(maxNode->getAttribute("value")->getValue());
+	const XmlNode *maxNode = fieldNode->getChild("max");
+	max = strToInt(maxNode->getAttribute("value")->getValue());
 }
 
-string IntRangeField::getInfo() const{
-	return name + " (min: " + intToStr(min)+ ", max: " + intToStr(max) + ", default: " + defaultValue + ")";
+string IntRangeField::getInfo() const {
+	return name + " (min: " + intToStr(min) + ", max: " + intToStr(max) + ", default: " + defaultValue + ")";
 }
 
 // ===============================================
-// 	class FloatRangeField
+//  class FloatRangeField
 // ===============================================
 
-void FloatRangeField::createControl(wxWindow *parent, wxSizer *sizer){
-	textCtrl= new wxTextCtrl(parent, -1, value.c_str());
+void FloatRangeField::createControl(wxWindow *parent, wxSizer *sizer) {
+	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
 	sizer->Add(textCtrl);
 }
 
-void FloatRangeField::updateValue(){
-	value= textCtrl->GetValue();
+void FloatRangeField::updateValue() {
+	value = textCtrl->GetValue();
 }
 
-void FloatRangeField::updateControl(){
+void FloatRangeField::updateControl() {
 	textCtrl->SetValue(value.c_str());
 }
 
-bool FloatRangeField::isValueValid(const string &value){
-	try{
-		float f= strToFloat(value);
-		return f>=min && f<=max;
-	}
-	catch(const exception &){
+bool FloatRangeField::isValueValid(const string &value) {
+	try {
+		float f = strToFloat(value);
+		return f >= min && f <= max;
+	} catch (const exception &) {
 		return false;
 	}
 	return true;
 }
 
-void FloatRangeField::loadSpecific(const XmlNode *fieldNode){
-	const XmlNode *minNode= fieldNode->getChild("min");
-	min= strToFloat(minNode->getAttribute("value")->getValue());
+void FloatRangeField::loadSpecific(const XmlNode *fieldNode) {
+	const XmlNode *minNode = fieldNode->getChild("min");
+	min = strToFloat(minNode->getAttribute("value")->getValue());
 
-	const XmlNode *maxNode= fieldNode->getChild("max");
-	max= strToFloat(maxNode->getAttribute("value")->getValue());
+	const XmlNode *maxNode = fieldNode->getChild("max");
+	max = strToFloat(maxNode->getAttribute("value")->getValue());
 };
 
-string FloatRangeField::getInfo() const{
-	return name + " (min: " + floatToStr(min)+ ", max: " + floatToStr(max) + ", default: " + defaultValue + ")";
+string FloatRangeField::getInfo() const {
+	return name + " (min: " + Conversion::toStr(min) + ", max: " + Conversion::toStr(max)
+		   + ", default: " + defaultValue + ")";
 }
 
 }//end namespace

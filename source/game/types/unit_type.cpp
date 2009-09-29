@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -45,8 +45,8 @@ namespace Glest{ namespace Game{
 			loadOk = false;
 		}
 
-		try { 
-			kills = levelNode->getAttribute("kills")->getIntValue(); 
+		try {
+			kills = levelNode->getAttribute("kills")->getIntValue();
 			const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
 			if(defaultsAtt && !defaultsAtt->getBoolValue()) {
 				maxHpMult = 1.f;
@@ -101,7 +101,7 @@ namespace Glest{ namespace Game{
 	}
 
 	void UnitType::preLoad(const string &dir){
-		name= lastDir(dir);
+		name= basename(dir);
 	}
 
 	bool UnitType::load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum){
@@ -121,6 +121,7 @@ namespace Glest{ namespace Game{
 			Logger::getErrorLog().addXmlError ( path, e.what() );
 			return false; // bail
 		}
+
 		const XmlNode *unitNode;
 		try { unitNode = xmlTree.getRootNode(); }
 		catch ( runtime_error e ) {
@@ -407,7 +408,7 @@ namespace Glest{ namespace Game{
 			Logger::getErrorLog().addXmlError ( path, e.what() );
 			loadOk = false;
 		}
-		return loadOk;   
+		return loadOk;
 	}
 
 	// ==================== get ====================

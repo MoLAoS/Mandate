@@ -140,14 +140,14 @@ void Tile::read(NetworkDataBuffer &buf) {
 		if((a & 0x60) == 0x60) {
 			// sanity check, let's have a real exception rather than crash if these don't match.
 			if(!object) {
-				throw runtime_error("Expected Tile at " + floatToStr(vertex.x) + ", "
-						+ floatToStr(vertex.z) + " to have an object, but it did not.  This "
+				throw runtime_error("Expected Tile at " + Conversion::toStr(vertex.x) + ", "
+						+ Conversion::toStr(vertex.z) + " to have an object, but it did not.  This "
 						"probably means that you modified the map since this game was saved or if "
 						"this is a network game, that you have a different map than the server.");
 			}
 			if(!object->getResource()) {
-				throw runtime_error("Expected Tile at " + floatToStr(vertex.x) + ", "
-						+ floatToStr(vertex.z) + " to have a resource, but it did not.  This "
+				throw runtime_error("Expected Tile at " + Conversion::toStr(vertex.x) + ", "
+						+ Conversion::toStr(vertex.z) + " to have a resource, but it did not.  This "
 						"probably means that you modified the map since this game was saved or if "
 						"this is a network game, that you have a different map than the server.");
 			}
@@ -454,24 +454,24 @@ void Map::read(NetworkDataBuffer &buf) {
 			if(!getTile(x, y)->isExplored(thisTeam)) {
 				continue;
 			}
-			// count the number of adjacent cells that are explored, allocating .5 for diagonal
-			// matches with a total max of 6.0
+			// count the adjacent area of surrounding tiles that are explored, for a total of 100%
 			float adjacent =
-					  (x + 1 < tileW	&& getTile(x + 1, y)->isExplored(thisTeam) ? 1.f : 0.0f)
-					+ (x - 1 >= 0		&& getTile(x - 1, y)->isExplored(thisTeam) ? 1.f : 0.0f)
-					+ (y + 1 < tileH	&& getTile(x, y + 1)->isExplored(thisTeam) ? 1.f : 0.0f)
-					+ (y - 1 >= 0		&& getTile(x, y - 1)->isExplored(thisTeam) ? 1.f : 0.0f)
-					+ (x + 1 < tileW	&& y + 1 < tileH	&& getTile(x + 1, y + 1)->isExplored(thisTeam) ? 0.5f : 0.0f)
-					+ (x + 1 < tileW	&& y - 1 >= 0		&& getTile(x + 1, y - 1)->isExplored(thisTeam) ? 0.5f : 0.0f)
-					+ (x - 1 >= 0		&& y + 1 < tileH	&& getTile(x - 1, y + 1)->isExplored(thisTeam) ? 0.5f : 0.0f)
-					+ (x - 1 >= 0		&& y - 1 >= 0		&& getTile(x - 1, y - 1)->isExplored(thisTeam) ? 0.5f : 0.0f);
-			// if less than 5, it remains
-			if(adjacent >= 5.f) {
-				// alpha between 0.25 and 0.5 depending upon how many surrounding are explored
-				minimap->incFowTextureAlphaSurface(Vec2i(x, y), 0.25 + (adjacent - 5.f) / 4.f);
+					  (x + 1 < tileW	&& getTile(x + 1, y)->isExplored(thisTeam) ? 0.1029f : 0.0f)
+					+ (x - 1 >= 0		&& getTile(x - 1, y)->isExplored(thisTeam) ? 0.1029f : 0.0f)
+					+ (y + 1 < tileH	&& getTile(x, y + 1)->isExplored(thisTeam) ? 0.1029f : 0.0f)
+					+ (y - 1 >= 0		&& getTile(x, y - 1)->isExplored(thisTeam) ? 0.1029f : 0.0f)
+					+ (x + 1 < tileW	&& y + 1 < tileH	&& getTile(x + 1, y + 1)->isExplored(thisTeam) ? 0.1471f : 0.0f)
+					+ (x + 1 < tileW	&& y - 1 >= 0		&& getTile(x + 1, y - 1)->isExplored(thisTeam) ? 0.1471f : 0.0f)
+					+ (x - 1 >= 0		&& y + 1 < tileH	&& getTile(x - 1, y + 1)->isExplored(thisTeam) ? 0.1471f : 0.0f)
+					+ (x - 1 >= 0		&& y - 1 >= 0		&& getTile(x - 1, y - 1)->isExplored(thisTeam) ? 0.1471f : 0.0f);
+			// if less than 80%, it remains the same, otherwise, we raise the alpha
+			if(adjacent >= 0.80f) {
+				// alpha between 0.25 and 0.5 depending upon how many surrounding tiles are explored
+				minimap->incFowTextureAlphaSurface(Vec2i(x, y), 0.25f + (adjacent - 0.8f) * 1.25f);
 			}
 		}
 	}
+
 
 	minimap->updateFowTex(1.f);
 */
@@ -1310,13 +1310,13 @@ void Map::computeNearSubmerged(){
 			/*
 			bool anySubmerged = getSubmerged(getTile(x, y))
 					|| (x + 1 < tileW && getSubmerged(getTile(x + 1, y)))
-					|| (x - 1 >= 0		 && getSubmerged(getTile(x - 1, y)))
+					|| (x - 1 >= 0	  && getSubmerged(getTile(x - 1, y)))
 					|| (y + 1 < tileH && getSubmerged(getTile(x, y + 1)))
-					|| (y - 1 >= 0		 && getSubmerged(getTile(x, y - 1)))
+					|| (y - 1 >= 0	  && getSubmerged(getTile(x, y - 1)))
 					|| (x + 1 < tileW && y + 1 < tileH && getSubmerged(getTile(x + 1, y + 1)))
-					|| (x + 1 < tileW && y - 1 >= 0		 && getSubmerged(getTile(x + 1, y - 1)))
-					|| (x - 1 >= 0		 && y + 1 < tileH && getSubmerged(getTile(x - 1, y + 1)))
-					|| (x - 1 >= 0		 && y - 1 >= 0		 && getSubmerged(getTile(x - 1, y - 1)));
+					|| (x + 1 < tileW && y - 1 >= 0	   && getSubmerged(getTile(x + 1, y - 1)))
+					|| (x - 1 >= 0	  && y + 1 < tileH && getSubmerged(getTile(x - 1, y + 1)))
+					|| (x - 1 >= 0	  && y - 1 >= 0	   && getSubmerged(getTile(x - 1, y - 1)));
 			*/
 
 			// Marti�o's version: slower, but more compact (altered from original)

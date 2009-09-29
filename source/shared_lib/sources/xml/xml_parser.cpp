@@ -1,8 +1,8 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>,
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa,
+//				  2008-2009 Daniel Santos <daniel.santos@pobox.com>,
 //				  2009 Nathan Turner <hailstone3>
 //
 //	You can redistribute this code and/or modify it under
@@ -15,6 +15,7 @@
 #include "xml_parser.h"
 
 #include <fstream>
+#include <sstream>
 #include <stdexcept>
 
 #include "conversion.h"
@@ -158,7 +159,9 @@ XmlNode::~XmlNode(){
 
 XmlAttribute *XmlNode::getAttribute(int i) const{
 	if (i >= attributes.size()) {
-		throw runtime_error(getName() + " node doesn't have " + intToStr(i) + " attributes");
+		std::stringstream str;
+		str << getName() << " node doesn't have " << i << " attributes";
+		throw runtime_error(str.str());
 	}
 	return attributes[i];
 }
@@ -172,13 +175,14 @@ XmlAttribute *XmlNode::getAttribute(const string &name, bool required) const{
 	if (!required) {
 		return NULL;
 	}
-	throw runtime_error("\"" + getName() + "\" node doesn't have a attribute named \"" + name + "\"");
+	throw runtime_error("'" + getName() + "' node doesn't have an attribute named '" + name + "'");
 }
 
 XmlNode *XmlNode::getChild(int i) const {
 	if (i >= children.size()) {
-		throw runtime_error("\"" + getName() + "\" node doesn't have "
-				+ intToStr(i + 1) + " children");
+		std::stringstream str;
+		str << "\"" << getName() << "\" node doesn't have " << (i + 1) << " child(ren)";
+		throw runtime_error(str.str());
 	}
 	return children[i];
 }
@@ -329,7 +333,7 @@ void XmlNode::populateElement(TiXmlElement *node) const {
 	}
 }
 
-string XmlNode::getTreeString() const{
+string XmlNode::getTreeString() const {
 	stringstream str;
 
 	str << getName();
@@ -343,6 +347,52 @@ string XmlNode::getTreeString() const{
 	}
 
 	return str.str();
+}
+
+Vec3f XmlNode::getColor3Value() const {
+	try {
+		XmlAttribute *rgbAttr = getAttribute("rgb", false);
+		if (rgbAttr) {
+			const string &str = rgbAttr->getValue();
+			if (str.size() != 6) {
+				throw runtime_error("rgb attribute does not contain 6 digits");
+			}
+			return Vec3f(
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str())) / 255.f,
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str() + 2)) / 255.f,
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str() + 4)) / 255.f);
+		} else {
+			return Vec3f(getFloatAttribute("red", 0.f, 1.0f),
+						 getFloatAttribute("green", 0.f, 1.0f),
+						 getFloatAttribute("blue", 0.f, 1.0f));
+		}
+	} catch (exception &e) {
+		throw runtime_error("While processing node \"" + getName() + "\"\n" + e.what());
+	}
+}
+
+Vec4f XmlNode::getColor4Value() const {
+	try {
+		XmlAttribute *rgbaAttr = getAttribute("rgba", false);
+		if (rgbaAttr) {
+			const string &str = rgbaAttr->getValue();
+			if (str.size() != 8) {
+				throw runtime_error("rgba attribute does not contain 8 digits");
+			}
+			return Vec4f(
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str())) / 255.f,
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str() + 2)) / 255.f,
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str() + 4)) / 255.f,
+					   static_cast<float>(Conversion::hexPair2Int(str.c_str() + 6)) / 255.f);
+		} else {
+			return Vec4f(getFloatAttribute("red", 0.f, 1.0f),
+						 getFloatAttribute("green", 0.f, 1.0f),
+						 getFloatAttribute("blue", 0.f, 1.0f),
+						 getFloatAttribute("alpha", 0.f, 1.0f));
+		}
+	} catch (exception &e) {
+		throw runtime_error("While processing node \"" + getName() + "\"\n" + e.what());
+	}
 }
 
 // =====================================================
@@ -360,23 +410,23 @@ bool XmlAttribute::getBoolValue() const {
 	} else if (value == "false") {
 		return false;
 	} else {
-		throw runtime_error("Not a valid bool value (true or false): " + getName() + ": " + value);
+		throw range_error("Not a valid bool value (true or false): " + getName() + ": " + value);
 	}
 }
 
 
-int XmlAttribute::getIntValue(int min, int max) const{
-	int i= strToInt(value);
-	if(i<min || i>max){
-		throw runtime_error("Xml Attribute int out of range: " + getName() + ": " + value);
+int XmlAttribute::getIntValue(int min, int max) const {
+	int i = Conversion::strToInt(value);
+	if (i < min || i > max) {
+		throw range_error("Xml Attribute int out of range: " + getName() + ": " + value);
 	}
 	return i;
 }
 
 float XmlAttribute::getFloatValue(float min, float max) const{
-	float f= strToFloat(value);
-	if(f<min || f>max){
-		throw runtime_error("Xml attribute float out of range: " + getName() + ": " + value);
+	float f = Conversion::strToFloat(value);
+	if (f < min || f > max) {
+		throw range_error("Xml attribute float out of range: " + getName() + ": " + value);
 	}
 	return f;
 }
@@ -387,7 +437,7 @@ const string &XmlAttribute::getRestrictedValue() const
 
 	for(int i= 0; i<value.size(); ++i){
 		if(allowedCharacters.find(value[i])==string::npos){
-			throw runtime_error(
+			throw range_error(
 				string("The string \"" + value + "\" contains a character that is not allowed: \"") + value[i] +
 				"\"\nFor portability reasons the only allowed characters in this field are: " + allowedCharacters);
 		}

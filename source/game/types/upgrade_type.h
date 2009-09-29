@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -39,7 +39,7 @@ private:
     vector<const UnitType*> effects;
 
 public:
-	void preLoad(const string &dir)			{name=lastDir(dir);}
+	void preLoad(const string &dir)			{name=basename(dir);}
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
 
     //get all

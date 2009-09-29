@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -37,6 +37,17 @@ ParticleSystemType::ParticleSystemType(){
 void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &dir) {
 
 	Renderer &renderer = Renderer::getInstance();
+
+	const XmlNode *blendFuncNode = particleSystemNode->getChild("blend-func", 0, false);
+	if(blendFuncNode) {
+		srcBlendFactor = Particle::getBlendFactor(blendFuncNode->getRestrictedAttribute("src"));
+		destBlendFactor = Particle::getBlendFactor(blendFuncNode->getRestrictedAttribute("dest"));
+	}
+
+	const XmlNode *blendEquationNode = particleSystemNode->getChild("blend-equation", 0, false);
+	if(blendEquationNode) {
+		blendEquationMode = Particle::getBlendEquation(blendEquationNode->getRestrictedAttribute("mode"));
+	}
 
 	//texture
 	const XmlNode *textureNode = particleSystemNode->getChild("texture");

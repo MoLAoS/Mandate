@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa,
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -30,6 +30,7 @@ const int Random::a= 1366;
 const int Random::b= 150889;
 
 void Random::init(int seed) {
+	seed = abs(seed);
 #ifdef SEED_RANDOM_WITH_CLOCK
 	assert(sizeof(time_t) == 32);
 	time_t curSeconds = 0;

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under 
 //	the terms of the GNU General Public License as published 
@@ -59,7 +59,7 @@ public:
 	int getScriptCount() const				{return scripts.size();}
 	const Script* getScript(int i) const	{return &scripts[i];}
 
-	static string getScenarioPath(const string &dir, const string &scenarioName);
+//	static string getScenarioPath(const string &scenarioPath);
 
 private:
 	string getFunctionName(const XmlNode *scriptNode);

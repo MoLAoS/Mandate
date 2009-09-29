@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>
+//	Copyright (C) 2008 Jaagup Repï¿½n <jrepan@gmail.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -374,17 +374,18 @@ void MenuStateLoadGame::initGameInfo() {
 			gs = NULL;
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
-		string techTree = gs->getTech();
-		string tileset = gs->getTileset();
-		string map = gs->getMap();
+		string techPath = gs->getTechPath();
+		string tilesetPath = gs->getTilesetPath();
+		string mapPath = gs->getMapPath();
+		string scenarioPath = gs->getScenarioPath();
 		int elapsedSeconds = savedGame->getChild("world")->getChildIntValue("frameCount") / 60;
 		int elapsedMinutes = elapsedSeconds / 60;
 		int elapsedHours = elapsedMinutes / 60;
 		elapsedSeconds = elapsedSeconds % 60;
 		elapsedMinutes = elapsedMinutes % 60;
 		char elapsedTime[0x100];
-		loadMapInfo(map, &mapInfo);
-
+		loadMapInfo(mapPath, &mapInfo);
+/*
 		if(techTree.size() > strlen("techs/")) {
 			techTree.erase(0, strlen("techs/"));
 		}
@@ -396,7 +397,7 @@ void MenuStateLoadGame::initGameInfo() {
 		}
 		if(map.size() > strlen(".gbm")) {
 			map.resize(map.size() - strlen(".gbm"));
-		}
+		}*/
 		if(elapsedHours) {
 			sprintf(elapsedTime, "%d:%02d:%02d", elapsedHours, elapsedMinutes, elapsedSeconds);
 		} else {
@@ -407,9 +408,10 @@ void MenuStateLoadGame::initGameInfo() {
 				+ ", Size: " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
 
 		labelInfoHeader.setText(listBoxGames.getSelectedItem() + ": " + gs->getDescription()
-				+ "\nTech Tree: " + formatString(techTree)
-				+ "\nTileset: " + formatString(tileset)
-				+ "\nMap: " + formatString(map) + mapDescr
+				+ "\nTech Tree: " + formatString(basename(techPath))
+				+ "\nTileset: " + formatString(basename(tilesetPath))
+				+ "\nMap: " + formatString(basename(cutLastExt(mapPath))) + mapDescr
+				+ "\nScenario: " + formatString(basename(scenarioPath))
 				+ "\nElapsed Time: " + elapsedTime);
 
 		if(gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {

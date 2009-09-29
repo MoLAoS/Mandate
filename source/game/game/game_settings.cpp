@@ -22,21 +22,20 @@ using Shared::Platform::Chrono;
 
 namespace Glest { namespace Game {
 
-GameSettings::GameSettings () {
+GameSettings::GameSettings() {}
 
-}
-
-GameSettings::GameSettings(const XmlNode *node){
+GameSettings::GameSettings(const XmlNode *node) {
 	description = node->getChildStringValue("description");
-	map = node->getChildStringValue("mapPath");
-	tileset = node->getChildStringValue("tilesetPath");
-	tech = node->getChildStringValue("techPath");
+	mapPath = node->getChildStringValue("mapPath");
+	tilesetPath = node->getChildStringValue("tilesetPath");
+	techPath = node->getChildStringValue("techPath");
+	scenarioPath = node->getChildStringValue("scenarioPath");
 	thisFactionIndex = node->getChildIntValue("thisFactionIndex");
 	factionCount = node->getChildIntValue("factionCount");
 
 	XmlNode *factionsNode = node->getChild("factions");
 	assert(GameConstants::maxPlayers == factionsNode->getChildCount());
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		XmlNode *factionNode = factionsNode->getChild("faction", i);
 
 		factionTypeNames[i] = factionNode->getChildStringValue("type");
@@ -49,14 +48,15 @@ GameSettings::GameSettings(const XmlNode *node){
 
 void GameSettings::save(XmlNode *node) const {
 	node->addChild("description", description);
-	node->addChild("mapPath", map);
-	node->addChild("tilesetPath", tileset);
-	node->addChild("techPath", tech);
+	node->addChild("mapPath", mapPath);
+	node->addChild("tilesetPath", tilesetPath);
+	node->addChild("techPath", techPath);
+	node->addChild("scenarioPath", scenarioPath);
 	node->addChild("thisFactionIndex", thisFactionIndex);
 	node->addChild("factionCount", factionCount);
 
 	XmlNode *factionsNode = node->addChild("factions");
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		XmlNode *factionNode = factionsNode->addChild("faction");
 		factionNode->addChild("type", factionTypeNames[i]);
 		factionNode->addChild("playerName", playerNames[i]);

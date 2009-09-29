@@ -1,7 +1,8 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//				  2008-2009 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -11,110 +12,42 @@
 
 #include "pch.h"
 #include "conversion.h"
-
-#include <stdexcept>
-#include <cstdio>
-#include <cstdlib>
-
 #include "leak_dumper.h"
 
 using namespace std;
 
-namespace Shared{ namespace Util{
-/*
-const int strSize = 256;
+namespace Shared { namespace Util {
 
-bool strToBool(const string &s){
-	if (s=="0" || s=="false"){
-		return false;
-	}
-	if (s=="1" || s=="true"){
-		return true;
-	}
-	throw runtime_error("Error converting string to bool, expected 0 or 1, found: " + s);
+const string Conversion::str_zero		= "0";
+const string Conversion::str_false		= "false";
+const string Conversion::str_one		= "1";
+const string Conversion::str_true		= "true";
+const string Conversion::str_bool		= "bool";
+const string Conversion::str_int		= "int";
+const string Conversion::str_uint		= "unsigned int";
+const string Conversion::str_int64		= "int64";
+const string Conversion::str_uint64		= "uint64";
+const string Conversion::str_double		= "double";
+const string Conversion::str_float		= "float";
+const string Conversion::str_longdouble	= "long double";
+
+// this function is outlined because we don't need this extra code inlined everywhere
+__cold __noreturn void Conversion::throwException(const string &typeName, const string &s, int base) {
+	std::stringstream str;
+	str << "Error converting from string to " << typeName << " (base = " << base << "), found: " << s;
+	throw runtime_error(str.str());
 }
 
-int strToInt(const string &s){
-	char *endChar;
-	int intValue= strtol(s.c_str(), &endChar, 10);
-
-	if(*endChar!='\0'){
-		throw runtime_error("Error converting from string to int, found: "+s);
-	}
-
-	return intValue;
-}
-
-
-float strToFloat(const string &s){
-	char *endChar;
-	float floatValue= static_cast<float>(strtod(s.c_str(), &endChar));
-
-	if(*endChar!='\0'){
-		throw runtime_error("Error converting from string to float, found: "+s);
-	}
-
-	return floatValue;
-}
-
-bool strToBool(const string &s, bool *b){
-	if (s=="0" || s=="false"){
-		*b= false;
-		return true;
-	}
-	if (s=="1" || s=="true"){
-		*b= true;
-		return true;
-	}
-
-	return false;
-}
-
-bool strToInt(const string &s, int *i){
-	char *endChar;
-	*i= strtol(s.c_str(), &endChar, 10);
-
-	if(*endChar!='\0'){
-		return false;
-	}
-	return true;
-}
-
-bool strToFloat(const string &s, float *f){
-	char *endChar;
-	*f= static_cast<float>(strtod(s.c_str(), &endChar));
-
-	if(*endChar!='\0'){
-		return false;
-	}
-	return true;
-}
-
-string boolToStr(bool b){
-	if(b){
-		return "1";
-	}
-	else{
-		return "0";
+int Conversion::hexChar2Int(char c) {
+	if (c >= '0' && c <= '9') {
+		return c - '0';
+	} else if (c >= 'a' && c <= 'f') {
+		return c - 'a' + 10;
+	} else if (c >= 'A' && c <= 'F') {
+		return c - 'A' + 10;
+	} else {
+		throw runtime_error("bad hex value");
 	}
 }
 
-string intToStr(int i){
-	char str[strSize];
-	sprintf(str, "%d", i);
-	return str;
-}
-
-string intToHex(int i){
-	char str[strSize];
-	sprintf(str, "%x", i);
-	return str;
-}
-
-string floatToStr(float f){
-	char str[strSize];
-	sprintf(str, "%.2f", f);
-	return str;
-}
-*/
 }}//end namespace

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -28,19 +28,19 @@
 
 #include "leak_dumper.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 using namespace Shared::Util;
 
 // =====================================================
-// 	class MenuStateNewGame
+//  class MenuStateNewGame
 // =====================================================
 
 MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots) :
 		MenuStateStartGameBase(program, mainMenu, "new-game") {
 
-	Lang &lang= Lang::getInstance();
-	NetworkManager &networkManager= NetworkManager::getInstance();
+	Lang &lang = Lang::getInstance();
+	NetworkManager &networkManager = NetworkManager::getInstance();
 
 	vector<string> results, teamItems, controlItems;
 
@@ -48,65 +48,65 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	buttonReturn.init(350, 200, 125);
 	buttonPlayNow.init(525, 200, 125);
 
-    //map listBox
-    findAll("maps/*.gbm", results, true);
-	if(results.size()==0){
-        throw runtime_error("There are no maps");
+	//map listBox
+	findAll("maps/*.gbm", results, true);
+	if (results.size() == 0) {
+		throw runtime_error("There are no maps");
 	}
-	mapFiles= results;
-	for(int i= 0; i<results.size(); ++i){
-		results[i]= formatString(results[i]);
+	mapFiles = results;
+	for (int i = 0; i < results.size(); ++i) {
+		results[i] = formatString(results[i]);
 	}
-    listBoxMap.init(200, 320, 150);
-    listBoxMap.setItems(results);
+	listBoxMap.init(200, 320, 150);
+	listBoxMap.setItems(results);
 	labelMap.init(200, 350);
 	labelMapInfo.init(200, 290, 200, 40);
 
-    //tileset listBox
-    findAll("tilesets/*.", results);
-	if(results.size()==0){
-        throw runtime_error("There are no tile sets");
+	//tileset listBox
+	findAll("tilesets/*.", results);
+	if (results.size() == 0) {
+		throw runtime_error("There are no tile sets");
 	}
-    tilesetFiles= results;
-	for(int i= 0; i<results.size(); ++i){
-		results[i]= formatString(results[i]);
+	tilesetFiles = results;
+	for (int i = 0; i < results.size(); ++i) {
+		results[i] = formatString(results[i]);
 	}
 	listBoxTileset.init(400, 320, 150);
-    listBoxTileset.setItems(results);
+	listBoxTileset.setItems(results);
 	labelTileset.init(400, 350);
 
-    //tech Tree listBox
-    findAll("techs/*.", results);
-	if(results.size()==0){
-        throw runtime_error("There are no tech trees");
+	//tech Tree listBox
+	findAll("techs/*.", results);
+	if (results.size() == 0) {
+		throw runtime_error("There are no tech trees");
 	}
-    techTreeFiles= results;
-	for(int i= 0; i<results.size(); ++i){
-		results[i]= formatString(results[i]);
+	techTreeFiles = results;
+	for (int i = 0; i < results.size(); ++i) {
+		results[i] = formatString(results[i]);
 	}
 	listBoxTechTree.init(600, 320, 150);
-    listBoxTechTree.setItems(results);
+	listBoxTechTree.setItems(results);
 	labelTechTree.init(600, 350);
 
 	//list boxes
-    for(int i=0; i<GameConstants::maxPlayers; ++i){
-		labelPlayers[i].init(200, 500-i*30);
-        listBoxControls[i].init(300, 500-i*30);
-        listBoxFactions[i].init(500, 500-i*30);
-		listBoxTeams[i].init(700, 500-i*30, 60);
-		labelNetStatus[i].init(800, 500-i*30, 60);
-    }
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		labelPlayers[i].init(200, 500 - i*30);
+		listBoxControls[i].init(300, 500 - i*30);
+		listBoxFactions[i].init(500, 500 - i*30);
+		listBoxTeams[i].init(700, 500 - i*30, 60);
+		labelNetStatus[i].init(800, 500 - i*30, 60);
+	}
 
 	labelControl.init(300, 550, GraphicListBox::defW, GraphicListBox::defH, true);
-    labelFaction.init(500, 550, GraphicListBox::defW, GraphicListBox::defH, true);
-    labelTeam.init(700, 550, 60, GraphicListBox::defH, true);
+	labelFaction.init(500, 550, GraphicListBox::defW, GraphicListBox::defH, true);
+	labelTeam.init(700, 550, 60, GraphicListBox::defH, true);
 
 	//texts
 	buttonReturn.setText(lang.get("Return"));
 	buttonPlayNow.setText(lang.get("PlayNow"));
 
-	for(int i = 0; i < ctCount; ++i) {
-	    controlItems.push_back(lang.get(controlTypeNames[i]));
+	for (int i = 0; i < ctCount; ++i) {
+		controlItems.push_back(lang.get(controlTypeNames[i]));
 	}
 	teamItems.push_back("1");
 	teamItems.push_back("2");
@@ -115,27 +115,27 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	reloadFactions();
 
-	findAll("techs/"+techTreeFiles[listBoxTechTree.getSelectedItemIndex()]+"/factions/*.", results);
-	if(results.size()==0){
-        throw runtime_error("There are no factions for this tech tree");
+	findAll("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()] + "/factions/*.", results);
+	if (results.size() == 0) {
+		throw runtime_error("There are no factions for this tech tree");
 	}
 
-	for(int i=0; i<GameConstants::maxPlayers; ++i){
-		labelPlayers[i].setText(lang.get("Player")+" "+intToStr(i));
-        listBoxTeams[i].setItems(teamItems);
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		labelPlayers[i].setText(lang.get("Player") + " " + intToStr(i));
+		listBoxTeams[i].setItems(teamItems);
 		listBoxTeams[i].setSelectedItemIndex(i);
 		listBoxControls[i].setItems(controlItems);
 		labelNetStatus[i].setText("");
-    }
+	}
 
 	labelMap.setText(lang.get("Map"));
 	labelTileset.setText(lang.get("Tileset"));
 	labelTechTree.setText(lang.get("TechTree"));
 	labelControl.setText(lang.get("Control"));
-    labelFaction.setText(lang.get("Faction"));
-    labelTeam.setText(lang.get("Team"));
+	labelFaction.setText(lang.get("Faction"));
+	labelTeam.setText(lang.get("Team"));
 
-	loadMapInfo("maps/"+mapFiles[listBoxMap.getSelectedItemIndex()]+".gbm", &mapInfo);
+	loadMapInfo("maps/" + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm", &mapInfo);
 
 	labelMapInfo.setText(mapInfo.desc);
 
@@ -144,18 +144,17 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	labelNetwork.init(50, 50);
 	try {
 		labelNetwork.setText(lang.get("Address") + ": " + networkManager.getServerInterface()->getIp() + ":" + intToStr(GameConstants::serverPort));
-	} catch(const exception &e) {
+	} catch (const exception &e) {
 		labelNetwork.setText(lang.get("Address") + ": ? " + e.what());
 	}
 
 	//init controllers
 	listBoxControls[0].setSelectedItemIndex(ctHuman);
-	if(openNetworkSlots){
-		for(int i= 1; i<mapInfo.players; ++i){
+	if (openNetworkSlots) {
+		for (int i = 1; i < mapInfo.players; ++i) {
 			listBoxControls[i].setSelectedItemIndex(ctNetwork);
 		}
-	}
-	else{
+	} else {
 		listBoxControls[1].setSelectedItemIndex(ctCpu);
 	}
 	updateControlers();
@@ -172,25 +171,23 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 }
 
 
-void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton){
+void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
 
-	CoreData &coreData= CoreData::getInstance();
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
+	CoreData &coreData = CoreData::getInstance();
+	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
+	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
 
-	if(msgBox) {
-		if(msgBox->mouseClick(x,y)) {
+	if (msgBox) {
+		if (msgBox->mouseClick(x, y)) {
 			soundRenderer.playFx(coreData.getClickSoundC());
 			delete msgBox;
 			msgBox = NULL;
 		}
-	}
-	else if(buttonReturn.mouseClick(x,y)){
+	} else if (buttonReturn.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundA());
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-    }
-	else if(buttonPlayNow.mouseClick(x,y)){
-		if(isUnconnectedSlots()) {
+	} else if (buttonPlayNow.mouseClick(x, y)) {
+		if (isUnconnectedSlots()) {
 			buttonPlayNow.mouseMove(1, 1);
 			msgBox = new GraphicMessageBox();
 			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
@@ -203,98 +200,90 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton){
 			serverInterface->launchGame(&gameSettings);
 			program.setState(new Game(program, gameSettings));
 		}
-	}
-	else if(listBoxMap.mouseClick(x, y)){
-		loadMapInfo("maps/"+mapFiles[listBoxMap.getSelectedItemIndex()]+".gbm", &mapInfo);
+	} else if (listBoxMap.mouseClick(x, y)) {
+		loadMapInfo("maps/" + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm", &mapInfo);
 		labelMapInfo.setText(mapInfo.desc);
 		updateControlers();
-	}
-	else if(listBoxTileset.mouseClick(x, y)){
-	}
-	else if(listBoxTechTree.mouseClick(x, y)){
+	} else if (listBoxTileset.mouseClick(x, y)) {
+	} else if (listBoxTechTree.mouseClick(x, y)) {
 		reloadFactions();
-	}
-	else if(listBoxRandomize.mouseClick(x, y)){
+	} else if (listBoxRandomize.mouseClick(x, y)) {
 		Config::getInstance().setGsRandStartLocs(listBoxRandomize.getSelectedItemIndex());
-	}
-	else{
-		for(int i=0; i<mapInfo.players; ++i){
+	} else {
+		for (int i = 0; i < mapInfo.players; ++i) {
 			//ensure thet only 1 human player is present
-			if(listBoxControls[i].mouseClick(x, y)){
+			if (listBoxControls[i].mouseClick(x, y)) {
 
 				//look for human players
-				int humanIndex1= -1;
-				int humanIndex2= -1;
-				for(int j=0; j<GameConstants::maxPlayers; ++j){
-					ControlType ct= static_cast<ControlType>(listBoxControls[j].getSelectedItemIndex());
-					if(ct==ctHuman){
-						if(humanIndex1==-1){
-							humanIndex1= j;
-						}
-						else{
-							humanIndex2= j;
+				int humanIndex1 = -1;
+				int humanIndex2 = -1;
+				for (int j = 0; j < GameConstants::maxPlayers; ++j) {
+					ControlType ct = static_cast<ControlType>(listBoxControls[j].getSelectedItemIndex());
+					if (ct == ctHuman) {
+						if (humanIndex1 == -1) {
+							humanIndex1 = j;
+						} else {
+							humanIndex2 = j;
 						}
 					}
 				}
 
 				//no human
-				if(humanIndex1==-1 && humanIndex2==-1){
+				if (humanIndex1 == -1 && humanIndex2 == -1) {
 					listBoxControls[i].setSelectedItemIndex(ctHuman);
 				}
 
 				//2 humans
-				if(humanIndex1!=-1 && humanIndex2!=-1){
+				if (humanIndex1 != -1 && humanIndex2 != -1) {
 					listBoxControls[humanIndex1==i? humanIndex2: humanIndex1].setSelectedItemIndex(ctClosed);
 				}
 				updateNetworkSlots();
-			}
-			else if(listBoxFactions[i].mouseClick(x, y)){
-			}
-			else if(listBoxTeams[i].mouseClick(x, y)){
+			} else if (listBoxFactions[i].mouseClick(x, y)) {
+			} else if (listBoxTeams[i].mouseClick(x, y)) {
 			}
 		}
 	}
 }
 
-void MenuStateNewGame::mouseMove(int x, int y, const MouseState &ms){
+void MenuStateNewGame::mouseMove(int x, int y, const MouseState &ms) {
 
-	if (msgBox != NULL){
-		msgBox->mouseMove(x,y);
+	if (msgBox != NULL) {
+		msgBox->mouseMove(x, y);
 		return;
 	}
 
 	buttonReturn.mouseMove(x, y);
 	buttonPlayNow.mouseMove(x, y);
 
-	for(int i=0; i<GameConstants::maxPlayers; ++i){
-        listBoxControls[i].mouseMove(x, y);
-        listBoxFactions[i].mouseMove(x, y);
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		listBoxControls[i].mouseMove(x, y);
+		listBoxFactions[i].mouseMove(x, y);
 		listBoxTeams[i].mouseMove(x, y);
-    }
+	}
 	listBoxMap.mouseMove(x, y);
 	listBoxTileset.mouseMove(x, y);
 	listBoxTechTree.mouseMove(x, y);
 	listBoxRandomize.mouseMove(x, y);
 }
 
-void MenuStateNewGame::render(){
+void MenuStateNewGame::render() {
 
-	Renderer &renderer= Renderer::getInstance();
+	Renderer &renderer = Renderer::getInstance();
 
 	int i;
 
 	renderer.renderButton(&buttonReturn);
 	renderer.renderButton(&buttonPlayNow);
 
-	for(i=0; i<GameConstants::maxPlayers; ++i){
+	for (i = 0; i < GameConstants::maxPlayers; ++i) {
 		renderer.renderLabel(&labelPlayers[i]);
-        renderer.renderListBox(&listBoxControls[i]);
-		if(listBoxControls[i].getSelectedItemIndex()!=ctClosed){
+		renderer.renderListBox(&listBoxControls[i]);
+		if (listBoxControls[i].getSelectedItemIndex() != ctClosed) {
 			renderer.renderListBox(&listBoxFactions[i]);
 			renderer.renderListBox(&listBoxTeams[i]);
 			renderer.renderLabel(&labelNetStatus[i]);
 		}
-    }
+	}
 	renderer.renderLabel(&labelNetwork);
 	renderer.renderLabel(&labelMap);
 	renderer.renderLabel(&labelTileset);
@@ -310,7 +299,7 @@ void MenuStateNewGame::render(){
 	renderer.renderListBox(&listBoxTechTree);
 	renderer.renderListBox(&listBoxRandomize);
 
-	if(msgBox != NULL){
+	if (msgBox != NULL) {
 		renderer.renderMessageBox(msgBox);
 	}
 }
@@ -342,47 +331,46 @@ void MenuStateNewGame::update() {
 	}
 }
 
-void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
+void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings) {
 	Random rand;
 	rand.init(Shared::Platform::Chrono::getCurMillis());
 
-	int factionCount= 0;
+	int factionCount = 0;
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
-	gameSettings->setMap(mapFiles[listBoxMap.getSelectedItemIndex()]);
-	gameSettings->setTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-	gameSettings->setTech(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setMapPath(string("maps/") + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm");
+	gameSettings->setTilesetPath(string("tilesets/") + tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
+	gameSettings->setTechPath(string("techs/") + techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
+	gameSettings->setScenarioPath("");
 	gameSettings->setDefaultVictoryConditions(true);
-	gameSettings->setDefaultResources (true);
-	gameSettings->setDefaultUnits (true);
+	gameSettings->setDefaultResources(true);
+	gameSettings->setDefaultUnits(true);
 
-	for(int i=0; i<mapInfo.players; ++i){
-		ControlType ct= static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
-		if(ct!=ctClosed){
-			if(ct==ctHuman){
+	for (int i = 0; i < mapInfo.players; ++i) {
+		ControlType ct = static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
+		if (ct != ctClosed) {
+			if (ct == ctHuman) {
 				gameSettings->setThisFactionIndex(factionCount);
 			}
-			if ( ct == ctCpuUltra ) {
-				gameSettings->setResourceMultiplier ( factionCount, 3.f );
-			}
-			else {
-				gameSettings->setResourceMultiplier ( factionCount, 1.f );
+			if (ct == ctCpuUltra) {
+				gameSettings->setResourceMultiplier(factionCount, 3.f);
+			} else {
+				gameSettings->setResourceMultiplier(factionCount, 1.f);
 			}
 			gameSettings->setFactionControl(factionCount, ct);
 			gameSettings->setTeam(factionCount, listBoxTeams[i].getSelectedItemIndex());
 			gameSettings->setStartLocationIndex(factionCount, i);
-			if(listBoxFactions[i].getSelectedItemIndex() >= factionFiles.size()) {
+			if (listBoxFactions[i].getSelectedItemIndex() >= factionFiles.size()) {
 				gameSettings->setFactionTypeName(factionCount, factionFiles[rand.randRange(0, factionFiles.size() - 1)]);
-			} 
-			else {
+			} else {
 				gameSettings->setFactionTypeName(factionCount, factionFiles[listBoxFactions[i].getSelectedItemIndex()]);
 			}
 			factionCount++;
 		}
-    }
+	}
 	gameSettings->setFactionCount(factionCount);
 
-	if(listBoxRandomize.getSelectedItemIndex()) {
+	if (listBoxRandomize.getSelectedItemIndex()) {
 		gameSettings->randomizeLocs(mapInfo.players);
 	}
 }
@@ -390,50 +378,50 @@ void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings){
 // ============ PRIVATE ===========================
 
 
-void MenuStateNewGame::reloadFactions(){
+void MenuStateNewGame::reloadFactions() {
 
 	vector<string> results;
 
-	findAll("techs/"+techTreeFiles[listBoxTechTree.getSelectedItemIndex()]+"/factions/*.", results);
+	findAll("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()] + "/factions/*.", results);
 
-	if(results.size()==0){
-        throw runtime_error("There is no factions for this tech tree");
+	if (results.size() == 0) {
+		throw runtime_error("There is no factions for this tech tree");
 	}
 	factionFiles.clear();
-	factionFiles= results;
-   	for(int i= 0; i<results.size(); ++i){
-		results[i]= formatString(results[i]);
+	factionFiles = results;
+	for (int i = 0; i < results.size(); ++i) {
+		results[i] = formatString(results[i]);
 	}
-	for(int i=0; i<GameConstants::maxPlayers; ++i){
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		listBoxFactions[i].setItems(results);
 		listBoxFactions[i].pushBackItem(Lang::getInstance().get("Random"));
 		listBoxFactions[i].setSelectedItemIndex(i % results.size());
-    }
+	}
 }
 
-void MenuStateNewGame::updateControlers(){
-	bool humanPlayer= false;
+void MenuStateNewGame::updateControlers() {
+	bool humanPlayer = false;
 
-	for(int i= 0; i<mapInfo.players; ++i){
-		if(listBoxControls[i].getSelectedItemIndex() == ctHuman){
-			humanPlayer= true;
+	for (int i = 0; i < mapInfo.players; ++i) {
+		if (listBoxControls[i].getSelectedItemIndex() == ctHuman) {
+			humanPlayer = true;
 		}
 	}
 
-	if(!humanPlayer){
+	if (!humanPlayer) {
 		listBoxControls[0].setSelectedItemIndex(ctHuman);
 	}
 
-	for(int i= mapInfo.players; i<GameConstants::maxPlayers; ++i){
+	for (int i = mapInfo.players; i < GameConstants::maxPlayers; ++i) {
 		listBoxControls[i].setSelectedItemIndex(ctClosed);
 	}
 }
 
-bool MenuStateNewGame::isUnconnectedSlots(){
-	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
-	for(int i= 0; i<mapInfo.players; ++i){
-		if(listBoxControls[i].getSelectedItemIndex()==ctNetwork){
-			if(!serverInterface->getSlot(i)->isConnected()){
+bool MenuStateNewGame::isUnconnectedSlots() {
+	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
+	for (int i = 0; i < mapInfo.players; ++i) {
+		if (listBoxControls[i].getSelectedItemIndex() == ctNetwork) {
+			if (!serverInterface->getSlot(i)->isConnected()) {
 				return true;
 			}
 		}
@@ -441,15 +429,15 @@ bool MenuStateNewGame::isUnconnectedSlots(){
 	return false;
 }
 
-void MenuStateNewGame::updateNetworkSlots(){
-	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
+void MenuStateNewGame::updateNetworkSlots() {
+	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
 
 
-	for(int i= 0; i<GameConstants::maxPlayers; ++i){
-		if(serverInterface->getSlot(i)==NULL && listBoxControls[i].getSelectedItemIndex()==ctNetwork){
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		if (serverInterface->getSlot(i) == NULL && listBoxControls[i].getSelectedItemIndex() == ctNetwork) {
 			serverInterface->addSlot(i);
 		}
-		if(serverInterface->getSlot(i) != NULL && listBoxControls[i].getSelectedItemIndex()!=ctNetwork){
+		if (serverInterface->getSlot(i) != NULL && listBoxControls[i].getSelectedItemIndex() != ctNetwork) {
 			serverInterface->removeSlot(i);
 		}
 	}

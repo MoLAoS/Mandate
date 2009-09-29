@@ -1,11 +1,11 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -604,7 +604,7 @@ int ScriptManager::getFactionTypeName(LuaHandle* luaHandle) {
 
 int ScriptManager::getScenarioDir(LuaHandle* luaHandle) {
 	LuaArguments luaArguments(luaHandle);
-	luaArguments.returnString(theGameSettings.getScenarioDir());
+	luaArguments.returnString(dirname(theGameSettings.getScenarioPath()));
 	return luaArguments.getReturnCount();
 }
 

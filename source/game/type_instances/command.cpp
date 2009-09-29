@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -113,7 +113,7 @@ Command::Command(NetworkDataBuffer &buf) :
 void Command::save(XmlNode *node) const {
 	node->addChild("archetype", archetype);
 	node->addChild("type", type->getName());
-	node->addChild("flags", flags.flags);
+	node->addChild("flags", (int)flags.flags);
 	node->addChild("pos", pos);
 	node->addChild("pos2", pos2);
 	unitRef.save(node->addChild("unitRef"));

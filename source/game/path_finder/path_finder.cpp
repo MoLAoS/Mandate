@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //				  2009 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -78,6 +78,7 @@ void PathFinder::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2
 }
 
 PathFinder* PathFinder::singleton = NULL;
+int pathFindNodesMax;
 
 PathFinder* PathFinder::getInstance () {
 	if ( ! singleton )
@@ -89,6 +90,7 @@ PathFinder::PathFinder() {
 	search = new GraphSearch ();
 	annotatedMap = NULL;
 	singleton = this;
+	pathFindNodesMax = Config::getInstance ().getPathFinderMaxNodes ();
 }
 
 PathFinder::~PathFinder () {
@@ -212,7 +214,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
 	list<Vec2i> pathList;
 
 	bool result;
-	annotatedMap->annotateLocal ( unit->getPos (), unit->getSize (), unit->getCurrField () );
+	annotatedMap->annotateLocal ( unit, unit->getCurrField () );
 	//TODO annotate target if visible ??
 	if ( useAStar )
 		result = search->AStarSearch ( params, pathList );
@@ -297,7 +299,7 @@ Vec2i PathFinder::computeNearestFreePos (const Unit *unit, const Vec2i &finalPos
 
 } // end namespace Glest::Game::PathFinder
 
-#if defined DEBUG && defined VALIDATE_MAP
+#if defined DEBUG && defined VALIDATE_WORLD
 // Why is this here?  Doesn't it belong in world.cpp?  It's here because we compile path_finder.cpp
 // optimized in debug since it's the only possible way you can really debug and this is a dog slow
 // function.
@@ -359,7 +361,7 @@ void World::assertConsistiency() {
 
 			const UnitType *ut = unit->getType();
 			int size = ut->getSize();
-			Zone zone = unit->getCurrZone ();
+			Zone zone = unit->getCurrZone();
 			const Vec2i &pos = unit->getPos();
 
 			for(int x = 0; x < size; ++x) {

@@ -88,9 +88,9 @@ public:
 	void toString(stringstream &str) const				{str << name << "=\"" << value << "\"";}
 
 	bool getBoolValue() const;
-	int getIntValue() const								{return strToInt(value);}
+	int getIntValue() const								{return Conversion::strToInt(value);}
 	int getIntValue(int min, int max) const;
-	float getFloatValue() const							{return strToFloat(value);}
+	float getFloatValue() const							{return Conversion::strToFloat(value);}
 	float getFloatValue(float min, float max) const;
 	const string &getRestrictedValue() const;
 };
@@ -176,19 +176,8 @@ public:
 				getFloatAttribute("w"));
 	}
 
-	Vec3f getColor3Value() const {
-		return Vec3f(getFloatAttribute("red", 0.f, 1.0f),
-				getFloatAttribute("green", 0.f, 1.0f),
-				getFloatAttribute("blue", 0.f, 1.0f));
-	}
-
-	Vec4f getColor4Value() const {
-		return Vec4f(getFloatAttribute("red", 0.f, 1.0f),
-				getFloatAttribute("green", 0.f, 1.0f),
-				getFloatAttribute("blue", 0.f, 1.0f),
-				getFloatAttribute("alpha", 0.f, 1.0f));
-	}
-
+	Vec3f getColor3Value() const;
+	Vec4f getColor4Value() const;
 
 	// get methods that return a specific type using the "value" attribute or appropriate attributes
 	// of the specified child node
@@ -250,13 +239,13 @@ public:
 
 	// add
 	XmlNode *addChild(const string &name);
-	XmlAttribute *addAttribute(const string &name, int value)			{return addAttribute(name.c_str(), intToStr(value).c_str());}
-	XmlAttribute *addAttribute(const string &name, float value)			{return addAttribute(name.c_str(), floatToStr(value).c_str());}
+	XmlAttribute *addAttribute(const string &name, int value)			{return addAttribute(name.c_str(), Conversion::toStr(value).c_str());}
+	XmlAttribute *addAttribute(const string &name, float value)			{return addAttribute(name.c_str(), Conversion::toStr(value).c_str());}
 	XmlAttribute *addAttribute(const string &name, bool value)			{return addAttribute(name.c_str(), string(value ? "true" : "false").c_str());}
 	XmlAttribute *addAttribute(const string &name, const char *value)	{return addAttribute(name.c_str(), value);}
 	XmlAttribute *addAttribute(const string &name, const string &value)	{return addAttribute(name.c_str(), value.c_str());}
-	XmlAttribute *addAttribute(const char *name, int value)				{return addAttribute(name, intToStr(value).c_str());}
-	XmlAttribute *addAttribute(const char *name, float value)			{return addAttribute(name, floatToStr(value).c_str());}
+	XmlAttribute *addAttribute(const char *name, int value)				{return addAttribute(name, Conversion::toStr(value).c_str());}
+	XmlAttribute *addAttribute(const char *name, float value)			{return addAttribute(name, Conversion::toStr(value).c_str());}
 	XmlAttribute *addAttribute(const char *name, bool value)			{return addAttribute(name, string(value ? "true" : "false").c_str());}
 	XmlAttribute *addAttribute(const char *name, const char *value);
 	XmlAttribute *addAttribute(const char *name, const string &value)	{return addAttribute(name, value.c_str());}
@@ -270,16 +259,16 @@ public:
 	const string &getStringAttribute(const string &childName) const				{return getAttribute(childName)->getValue();}
 	const string &getRestrictedAttribute(const string &childName) const			{return getAttribute(childName)->getRestrictedValue();}
 
-	XmlNode *addChild(const string &name, int value)			{return addChild(name, intToStr(value));}
-	XmlNode *addChild(const string &name, float value)			{return addChild(name, floatToStr(value));}
+	XmlNode *addChild(const string &name, int value)			{return addChild(name, Conversion::toStr(value));}
+	XmlNode *addChild(const string &name, float value)			{return addChild(name, Conversion::toStr(value));}
 	XmlNode *addChild(const string &name, bool value)			{return addChild(name, string(value ? "true" : "false"));}
 	XmlNode *addChild(const string &name, const char *value)	{return addChild(name, string(value));}
-	XmlNode *addChild(const string &name, const Vec2i &value)	{return addChild(name, intToStr(value.x), intToStr(value.y));}
-	XmlNode *addChild(const string &name, const Vec3i &value)	{return addChild(name, intToStr(value.x), intToStr(value.y), intToStr(value.z));}
-	XmlNode *addChild(const string &name, const Vec4i &value)	{return addChild(name, intToStr(value.x), intToStr(value.y), intToStr(value.z), intToStr(value.w));}
-	XmlNode *addChild(const string &name, const Vec2f &value)	{return addChild(name, floatToStr(value.x), floatToStr(value.y));}
-	XmlNode *addChild(const string &name, const Vec3f &value)	{return addChild(name, floatToStr(value.x), floatToStr(value.y), floatToStr(value.z));}
-	XmlNode *addChild(const string &name, const Vec4f &value)	{return addChild(name, floatToStr(value.x), floatToStr(value.y), floatToStr(value.z), floatToStr(value.w));}
+	XmlNode *addChild(const string &name, const Vec2i &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y));}
+	XmlNode *addChild(const string &name, const Vec3i &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y), Conversion::toStr(value.z));}
+	XmlNode *addChild(const string &name, const Vec4i &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y), Conversion::toStr(value.z), Conversion::toStr(value.w));}
+	XmlNode *addChild(const string &name, const Vec2f &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y));}
+	XmlNode *addChild(const string &name, const Vec3f &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y), Conversion::toStr(value.z));}
+	XmlNode *addChild(const string &name, const Vec4f &value)	{return addChild(name, Conversion::toStr(value.x), Conversion::toStr(value.y), Conversion::toStr(value.z), Conversion::toStr(value.w));}
 	XmlNode *addChild(const string &name, const string &value)	{
 		XmlNode *child = addChild(name);
 		child->addAttribute("value", value);
@@ -364,7 +353,7 @@ public:
 	void load(const string &path)	{rootNode = XmlIo::getInstance().load(path);}
 	void save(const string &path)	{XmlIo::getInstance().save(path, rootNode);}
 	void parse(const string &xml)	{rootNode = XmlIo::getInstance().parseString(xml.c_str());}
-	
+
 	auto_ptr<string> toString(bool pretty = false, const string &indentSingle = defaultIndent) const {
 		return rootNode->toString(pretty, indentSingle);
 	}

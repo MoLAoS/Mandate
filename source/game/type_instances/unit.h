@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -224,7 +224,7 @@ public:
 	//queries
 	int getId() const							{return id;}
 	Field getCurrField() const					{return currField;}
-   Zone getCurrZone () const  { return currField == FieldAir ? ZoneAir : ZoneSurface; }
+	Zone getCurrZone() const					{return currField == FieldAir ? ZoneAir : ZoneSurface;}
 	int getLoadCount() const					{return loadCount;}
 	float getLastAnimProgress() const			{return lastAnimProgress;}
 	float getProgress() const					{return progress;}
@@ -415,7 +415,7 @@ public:
 	//other
 	void resetHighlight()								{highlight= 1.f;}
 	const CommandType *computeCommandType(const Vec2i &pos, const Unit *targetUnit= NULL) const;
-	string getDesc() const;
+	string getDesc(bool full) const;
 	bool computeEp();
 	bool repair(int amount = 0, float multiplier = 1.0f);
 	bool decHp(int i);
