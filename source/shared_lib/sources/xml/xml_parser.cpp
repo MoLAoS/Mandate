@@ -229,8 +229,6 @@ auto_ptr<string> XmlNode::toString(bool pretty, const string &indentSingle) cons
 }
 
 void XmlNode::toStringSimple(stringstream &str) const {
-	bool needsClosingTag = children.size() || text.size();
-
 	str << "<" << name;
 
 	for (Attributes::const_iterator a = attributes.begin(); a != attributes.end(); ++a) {
@@ -238,11 +236,11 @@ void XmlNode::toStringSimple(stringstream &str) const {
 		(*a)->toString(str);
 	}
 
-	if (needsClosingTag) {
+	if (children.empty() && text.empty()) {
 		str << "/>";
 	} else {
 		str << ">";
-		if (text.size()) {
+		if (!text.empty()) {
 			str << text;
 		}
 
@@ -263,14 +261,14 @@ void XmlNode::toStringPretty(stringstream &str, string &indent, const string &in
 		(*a)->toString(str);
 	}
 
-	if (children.size() || text.size()) {
+	if (children.empty() && text.empty()) {
 		str << "/>" << endl;
 	} else {
 		str << ">" << endl;
 		indent.append(indentSingle);
 
 		// FIXME: All CR or CR/LF should have indentation appended to them
-		if (text.size()) {
+		if (!text.empty()) {
 			str << text << endl;
 		}
 
