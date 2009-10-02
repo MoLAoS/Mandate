@@ -1108,11 +1108,8 @@ void UnitUpdater::updateMorph(Unit *unit) {
 				scriptManager->onUnitCreated(unit);
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
 				if (mapUpdate) {
-					bool adding = !mct->getMorphUnit()->isMobile();
-#warning I changed this code and I'm not sure it's correct :)
-					pathFinder->updateMapMetrics(unit->getPos(), unit->getSize()/*, adding, FieldWalkable*/);
+					pathFinder->updateMapMetrics(unit->getPos(), unit->getSize());
 				}
-
 				if (isNetworkServer()) {
 					getServerInterface()->unitMorph(unit);
 					getServerInterface()->updateFactions();
