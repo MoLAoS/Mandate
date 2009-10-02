@@ -131,7 +131,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;../shared_lib/include/tinyxml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
+				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -450,11 +450,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\path_finder\path_finder.h"
+				RelativePath=".\ai\path_finder.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ai\path_finder.h"
+				RelativePath=".\path_finder\path_finder.h"
 				>
 			</File>
 			<File
