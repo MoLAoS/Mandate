@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -38,7 +38,7 @@ namespace Glest{ namespace Game{
 // =====================================================
 
 const int UnitPath::maxBlockCount= 10;
-	
+
 void UnitPath::read(const XmlNode *node) {
 	clear();
 	string str = node->getStringValue();
@@ -58,10 +58,10 @@ void UnitPath::read(const XmlNode *node) {
 		p = z + 1;
 		pathQueue.push_back(Vec2i(x, y));
 	} while(true);
-	
+
 	blockCount = node->getIntAttribute("blockCount");
-  
-	
+
+
 	/*
  	char *x, *y, *saveptr;
 	char *buf = strcpy(new char [str.size() + 1], str.c_str());
@@ -206,7 +206,7 @@ void Unit::save(XmlNode *node, bool morphed) const {
 	node->addChild("targetVec", targetVec);
 	node->addChild("meetingPos", meetingPos);
 	node->addChild("faceTarget", faceTarget);
-	node->addChild("useNearestOccupiedCell", useNearestOccupiedCell);	
+	node->addChild("useNearestOccupiedCell", useNearestOccupiedCell);
 	node->addChild("lastRotation", lastRotation);
 	node->addChild("targetRotation", targetRotation);
 	node->addChild("rotation", rotation);
@@ -253,7 +253,7 @@ void Unit::writeMinorUpdate(XmlNode *node) const {
 	node->addChild("targetPos", targetPos);
 	node->addChild("targetVec", targetVec);
 	node->addChild("faceTarget", faceTarget);
-	node->addChild("useNearestOccupiedCell", useNearestOccupiedCell);	
+	node->addChild("useNearestOccupiedCell", useNearestOccupiedCell);
 	node->addChild("loadType", loadType ? loadType->getName() : "null_value");
 	node->addChild("currSkill", currSkill ? currSkill->getName() : "null_value");
 //	node->addChild("alive", alive);
@@ -283,7 +283,7 @@ void Unit::updateMinor(const XmlNode *node) {
 
 		s = node->getChildStringValue("currSkill");
 		currSkill = s == "null_value" ? NULL : type->getSkillType(s);
-	
+
 		unitPath.read(node->getChild("unitPath"));
 	}
 
@@ -297,7 +297,7 @@ void Unit::updateMinor(const XmlNode *node) {
 		// FIXME: Is this the best way to do this?
 		decHp(0);
 	}
-	
+
 }
 
 Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) :
@@ -343,7 +343,7 @@ void Unit::update(const XmlNode *node, const TechTree *tt, bool creation, bool p
 	loadCount = node->getChildIntValue("loadCount");
 	deadCount = node->getChildIntValue("deadCount");
 	// these fields updated later
-	//progress 
+	//progress
 	//lastAnimProgress
 	//animProgress
 	//highlight
@@ -375,7 +375,7 @@ void Unit::update(const XmlNode *node, const TechTree *tt, bool creation, bool p
 		useNearestOccupiedCell = node->getChildBoolValue("useNearestOccupiedCell");
 		s = node->getChildStringValue("currSkill");
 		currSkill = s == "null_value" ? NULL : type->getSkillType(s);
-	
+
 		progress = node->getChildFloatValue("progress");
 	}
 
@@ -397,7 +397,7 @@ void Unit::update(const XmlNode *node, const TechTree *tt, bool creation, bool p
 		for(int i = 0; i < n->getChildCount(); ++i) {
 			commands.push_back(new Command(n->getChild("command", i), type, faction->getType()));
 		}
-	
+
 		unitPath.read(node->getChild("unitPath"));
 		setNextUpdateFrames(nextAdvanceFrames);
 	}
@@ -634,7 +634,7 @@ void Unit::setPos(const Vec2i &pos){
 	this->lastPos = this->pos;
 	this->pos = pos;
 	this->meetingPos = pos - Vec2i(1);
-	
+
 	// make sure it's not invalid if they build at 0,0
 	if(pos.x == 0 && pos.y == 0) {
 		this->meetingPos = pos + Vec2i(size);
@@ -1349,7 +1349,7 @@ bool Unit::morph(const MorphCommandType *mct) {
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->applyDiscount(morphUnitType, mct->getDiscount());
-		
+
 		// reprocess commands
 		Commands newCommands;
 		Commands::const_iterator i;
@@ -1458,14 +1458,14 @@ void Unit::updateTarget(const Unit *target) {
 
 	//find a free pos in cellmap
 //	setTargetPos(unit->getCellPos());
-	
+
 	if(target) {
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)
 				: targetPos = target->getCenteredPos();
 		targetField = target->getCurrField();
 		targetVec = target->getCurrVector();
-		
+
 		if(faceTarget) {
 			face(target->getCenteredPos());
 		}
@@ -1486,7 +1486,7 @@ CommandResult Unit::checkCommand(const Command &command) const {
 	if (command.getArchetype() != catGiveCommand) {
 		return crSuccess;
 	}
-	
+
 	if(ct->getClass() == ccSetMeetingPoint) {
 		return type->hasMeetingPoint() ? crSuccess : crFailUndefined;
 	}

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //				  2009 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -15,7 +15,7 @@
 // Currently DOES use precompiled header, because it's no longer optimized in debug
 // because debugging optimized code is not much fun :-)
 
-// Actually, no need for this one to be optimized anymore, when path finding is stable again, 
+// Actually, no need for this one to be optimized anymore, when path finding is stable again,
 // graph_search.cpp should get this treatment, that's where the 'hard work' is done now.
 
 #include "pch.h"
@@ -46,7 +46,7 @@ namespace Glest{ namespace Game{ namespace Search {
 // ===================== PUBLIC ========================
 
 //FIXME I was duplicated from GraphSearch because the search functions
-// absolutely _need_ this inlined, and then it can't be used here without 
+// absolutely _need_ this inlined, and then it can't be used here without
 // having been defined... find a better solution :-)
 void PathFinder::getDiags ( const Vec2i &s, const Vec2i &d, const int size, Vec2i &d1, Vec2i &d2 ) {
 	assert ( s.x != d.x && s.y != d.y );
@@ -131,8 +131,8 @@ bool PathFinder::isLegalMove ( Unit *unit, const Vec2i &pos2 ) const {
 		// Proposed move is diagonal, check if cells either 'side' are free.
 		Vec2i diag1, diag2;
 		getDiags ( pos1, pos2, size, diag1, diag2 );
-		if ( ! annotatedMap->canOccupy (diag1, 1, field) 
-		||   ! annotatedMap->canOccupy (diag2, 1, field) ) 
+		if ( ! annotatedMap->canOccupy (diag1, 1, field)
+		||   ! annotatedMap->canOccupy (diag2, 1, field) )
 			return false; // obstruction, can not move to pos2
 		if ( ! map->getCell (diag1)->isFree (zone)
 		||   ! map->getCell (diag2)->isFree (zone) )
@@ -193,7 +193,7 @@ TravelState PathFinder::findPathToGoal(Unit *unit, const Vec2i &finalPos, bool (
 	/* goal based pathing removes the need for this..
 	* Should probably adapt this to check the entire resource 'patch'
 	float dist = unit->getPos().dist ( targetPos );
-	if ( unit->getCurrField () == FieldWalkable 
+	if ( unit->getCurrField () == FieldWalkable
 	&&   map->getTile (Map::toTileCoords ( targetPos ))->isVisible (unit->getTeam ()) ) {
 		int radius;
 		if ( dist < 5 ) radius = 2;
@@ -267,7 +267,7 @@ Vec2i PathFinder::computeNearestFreePos (const Unit *unit, const Vec2i &finalPos
 	int teamIndex= unit->getTeam();
 
 	//if finalPos is free return it
-	
+
 	if(map->areAproxFreeCells(finalPos, size, field, teamIndex)){
 		return finalPos;
 	}

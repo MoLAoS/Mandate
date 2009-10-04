@@ -1,11 +1,11 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2009 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2009 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -29,7 +29,7 @@ namespace Glest { namespace Game {
 const time_t AutoTest::invalidTime = -1;
 const time_t AutoTest::gameTime = 60*20;
 
-// ===================== PUBLIC ======================== 
+// ===================== PUBLIC ========================
 
 AutoTest::AutoTest(){
 	gameStartTime = invalidTime;
@@ -63,7 +63,7 @@ void AutoTest::updateScenario(MenuStateScenario *menuStateScenario){
 }
 
 void AutoTest::updateGame(Game *game){
-	
+
 	// record start time
 	if(gameStartTime==invalidTime)
 	{

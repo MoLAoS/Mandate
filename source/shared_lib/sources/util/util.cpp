@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa,
+//	Copyright (C) 2001-2008 Martiño Figueroa,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -365,7 +365,7 @@ string cleanPath(const string &s) {
 	}
 
 	isAbsolute = (s.at(0) == '/' || s.at(0) == '\\');
-	
+
 	for(char *p =  strtok_r(buf, "\\/", &data); p; p = strtok_r(NULL, "\\/", &data)) {
 		// skip duplicate path delimiters
 		if(strlen(p) == 0) {

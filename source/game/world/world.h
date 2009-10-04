@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -94,7 +94,7 @@ private:
 
 	static World *singleton;
 	bool alive;
-	
+
 	Units newlydead;
 	PosCircularIteratorFactory posIteratorFactory;
 
@@ -155,7 +155,7 @@ public:
 		//a unit is rendered if it is in a visible cell or is attacking a unit in a visible cell
 		return visibleQuad.isInside(unit->getCenteredPos()) && toRenderUnit(unit);
 	}
-	
+
 	bool toRenderUnit(const Unit *unit) const {
 		return map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
 			|| (unit->getCurrSkill()->getClass() == scAttack

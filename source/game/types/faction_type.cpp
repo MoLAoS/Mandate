@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -82,13 +82,13 @@ bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
 
 	XmlTree xmlTree;
    try { xmlTree.load(path); }
-   catch ( runtime_error e ) { 
+   catch ( runtime_error e ) {
       Logger::getErrorLog().addXmlError ( path, "File missing or wrongly named." );
       return false; // bail
    }
 	const XmlNode *factionNode;
    try { factionNode= xmlTree.getRootNode(); }
-   catch ( runtime_error e ) { 
+   catch ( runtime_error e ) {
       Logger::getErrorLog().addXmlError ( path, "File appears to lack contents." );
       return false; // bail
    }
@@ -120,11 +120,11 @@ bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
    }
 
 	//read starting resources
-   try { 
-      const XmlNode *startingResourcesNode= factionNode->getChild("starting-resources"); 
+   try {
+      const XmlNode *startingResourcesNode= factionNode->getChild("starting-resources");
 	   startingResources.resize(startingResourcesNode->getChildCount());
 	   for(int i=0; i<startingResources.size(); ++i){
-		   try { 
+		   try {
             const XmlNode *resourceNode = startingResourcesNode->getChild("resource", i);
 		      string name= resourceNode->getAttribute("name")->getRestrictedValue();
 		      int amount= resourceNode->getAttribute("amount")->getIntValue();
@@ -136,13 +136,13 @@ bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
          }
 	   }
    }
-   catch ( runtime_error e ) { 
+   catch ( runtime_error e ) {
       Logger::getErrorLog().addXmlError ( path, e.what() );
       loadOk = false;
    }
 
 	//read starting units
-   try { 
+   try {
       const XmlNode *startingUnitsNode = factionNode->getChild("starting-units");
 	   for(int i=0; i<startingUnitsNode->getChildCount(); ++i){
          try {
@@ -151,17 +151,17 @@ bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
 		      int amount= unitNode->getAttribute("amount")->getIntValue();
 		      startingUnits.push_back(PairPUnitTypeInt(getUnitType(name), amount));
          }
-         catch ( runtime_error e ) { 
+         catch ( runtime_error e ) {
             Logger::getErrorLog().addXmlError ( path, e.what() );
             loadOk = false;
          }
       }
    }
-   catch ( runtime_error e ) { 
+   catch ( runtime_error e ) {
       Logger::getErrorLog().addXmlError ( path, e.what() );
       loadOk = false;
    }
-      
+
 	//read music
    try {
       const XmlNode *musicNode= factionNode->getChild("music");
@@ -171,12 +171,12 @@ bool FactionType::load(const string &dir, const TechTree *techTree, Checksum &ch
 		   music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());
 	   }
    }
-   catch ( runtime_error e ) { 
+   catch ( runtime_error e ) {
       Logger::getErrorLog().addXmlError ( path, e.what() );
       loadOk = false;
    }
 
-   //TODO try {} catch {} ... try {} catch {} ... try {} catch {} ... 
+   //TODO try {} catch {} ... try {} catch {} ... try {} catch {} ...
 	//notification of being attacked off screen
 	const XmlNode *attackNoticeNode= factionNode->getChild("attack-notice", 0, false);
 	if(attackNoticeNode && attackNoticeNode->getAttribute("enabled")->getRestrictedValue() == "true") {

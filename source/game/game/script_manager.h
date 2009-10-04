@@ -1,11 +1,11 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -113,7 +113,7 @@ private:
 	static MessageQueue messageQueue;
 	static GraphicMessageBox messageBox;
 	static string displayText;
-	
+
 	//last created unit
 	static string lastCreatedUnitName;
 	static int lastCreatedUnitId;
@@ -144,7 +144,7 @@ public:
 	static GraphicMessageBox* getMessageBox()							{return &messageBox;}
 	static string getDisplayText() 										{return displayText;}
 	static bool getGameOver() 											{return gameOver;}
-	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}	
+	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}
 
 	//events
 	static void onMessageBoxOk();
@@ -156,13 +156,13 @@ public:
 private:
 	static string wrapString(const string &str, int wrapCount);
 	static string describeLuaStack ( LuaArguments &args );
-	static void luaCppCallError ( const string &func, const string &expected, const string &received, 
+	static void luaCppCallError ( const string &func, const string &expected, const string &received,
 											const string extra = "Wrong number of parameters." ) ;
 
 	//
 	// LUA callbacks
 	//
-	
+
 	// commands
 	static int setTimer(LuaHandle* luaHandle);
 	static int stopTimer(LuaHandle* luaHandle);

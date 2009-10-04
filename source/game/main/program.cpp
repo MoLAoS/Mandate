@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -177,25 +177,25 @@ Program::~Program() {
 void Program::loop() {
 	while(handleEvent()) {
 		size_t sleepTime = renderTimer.timeToWait();
-	
+
 		sleepTime = sleepTime < updateCameraTimer.timeToWait() ? sleepTime : updateCameraTimer.timeToWait();
 		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
-	
+
 		if(sleepTime) {
 			Shared::Platform::sleep(sleepTime);
 		}
-	
+
 		//render
 		while(renderTimer.isTime()){
 			programState->render();
 		}
-	
+
 		//update camera
 		while(updateCameraTimer.isTime()){
 			programState->updateCamera();
 		}
-	
+
 		//update world
 		while(updateTimer.isTime()){
 			GraphicComponent::update();
@@ -203,7 +203,7 @@ void Program::loop() {
 			SoundRenderer::getInstance().update();
 			NetworkManager::getInstance().update();
 		}
-	
+
 		//tick timer
 		while(tickTimer.isTime()){
 			programState->tick();

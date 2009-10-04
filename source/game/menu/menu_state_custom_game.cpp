@@ -1,11 +1,11 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -34,7 +34,7 @@ using namespace Shared::Util;
 // 	class MenuStateCustomGame
 // =====================================================
 
-MenuStateCustomGame::MenuStateCustomGame(Program *program, MainMenu *mainMenu, bool openNetworkSlots): 
+MenuStateCustomGame::MenuStateCustomGame(Program *program, MainMenu *mainMenu, bool openNetworkSlots):
 	MenuState(*program, mainMenu, "new-game")
 {
 	Lang &lang= Lang::getInstance();
@@ -119,12 +119,12 @@ MenuStateCustomGame::MenuStateCustomGame(Program *program, MainMenu *mainMenu, b
 	if(results.size()==0){
         throw runtime_error("There is no factions for this tech tree");
 	}
-   
+
 	for(int i=0; i<GameConstants::maxPlayers; ++i){
 		labelPlayers[i].setText(lang.get("Player")+" "+intToStr(i));
         listBoxTeams[i].setItems(teamItems);
 		listBoxTeams[i].setSelectedItemIndex(i);
-		listBoxControls[i].setItems(controlItems); 
+		listBoxControls[i].setItems(controlItems);
 		labelNetStatus[i].setText("");
     }
 
@@ -136,7 +136,7 @@ MenuStateCustomGame::MenuStateCustomGame(Program *program, MainMenu *mainMenu, b
     labelTeam.setText(lang.get("Team"));
 
 	loadMapInfo(Map::getMapPath(mapFiles[listBoxMap.getSelectedItemIndex()]), &mapInfo);
-	
+
 	labelMapInfo.setText(mapInfo.desc);
 
 	//initialize network interface
@@ -165,10 +165,10 @@ void MenuStateCustomGame::mouseClick(int x, int y, MouseButton mouseButton){
 	if(buttonReturn.mouseClick(x,y)){
 		soundRenderer.playFx(coreData.getClickSoundA());
 		mainMenu->setState(new MenuStateNewGame(program, mainMenu));
-    }  
+    }
 	else if(buttonPlayNow.mouseClick(x,y)){
 		GameSettings gameSettings;
-		
+
 		closeUnusedSlots();
 		soundRenderer.playFx(coreData.getClickSoundC());
 		loadGameSettings(&gameSettings);
@@ -225,7 +225,7 @@ void MenuStateCustomGame::mouseClick(int x, int y, MouseButton mouseButton){
 }
 
 void MenuStateCustomGame::mouseMove(int x, int y, const MouseState *ms){
-	
+
 	buttonReturn.mouseMove(x, y);
 	buttonPlayNow.mouseMove(x, y);
 
@@ -279,7 +279,7 @@ void MenuStateCustomGame::update(){
 			ConnectionSlot* connectionSlot= serverInterface->getSlot(i);
 
 			assert(connectionSlot!=NULL);
-			
+
 			if(connectionSlot->isConnected()){
 				labelNetStatus[i].setText(connectionSlot->getName());
 			}
@@ -306,7 +306,7 @@ void MenuStateCustomGame::loadGameSettings(GameSettings *gameSettings){
 	gameSettings->setDefaultUnits(true);
 	gameSettings->setDefaultResources(true);
 	gameSettings->setDefaultVictoryConditions(true);
-   
+
     for(int i=0; i<mapInfo.players; ++i){
 		ControlType ct= static_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
 		if(ct!=ctClosed){
@@ -363,7 +363,7 @@ void MenuStateCustomGame::loadMapInfo(string file, MapInfo *mapInfo){
 }
 
 void MenuStateCustomGame::reloadFactions(){
-	
+
 	vector<string> results;
 
 	findAll("techs/"+techTreeFiles[listBoxTechTree.getSelectedItemIndex()]+"/factions/*.", results);
@@ -382,7 +382,7 @@ void MenuStateCustomGame::reloadFactions(){
 
 void MenuStateCustomGame::updateControlers(){
 	bool humanPlayer= false;
-	
+
 	for(int i= 0; i<mapInfo.players; ++i){
 		if(listBoxControls[i].getSelectedItemIndex() == ctHuman){
 			humanPlayer= true;
@@ -412,7 +412,7 @@ void MenuStateCustomGame::closeUnusedSlots(){
 
 void MenuStateCustomGame::updateNetworkSlots(){
 	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
-	
+
 	for(int i= 0; i<GameConstants::maxPlayers; ++i){
 		if(serverInterface->getSlot(i)==NULL && listBoxControls[i].getSelectedItemIndex()==ctNetwork){
 			serverInterface->addSlot(i);

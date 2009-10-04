@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -506,7 +506,7 @@ void Gui::hotKey(UserCommand cmd) {
  	// Repair / Heal / Replenish
 	case ucReplenish:
 		clickCommonCommand(ccRepair);
-		break;	
+		break;
 
  	// Guard
 	case ucGuard:
@@ -924,7 +924,7 @@ void Gui::computeDisplay() {
 		display.setDownSelectedPos(activePos);
 	}
 
-	if (selection.isComandable() 
+	if (selection.isComandable()
 	&& selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
 		if (!selectingBuilding) {
 

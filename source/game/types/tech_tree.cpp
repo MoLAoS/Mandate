@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -47,7 +47,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
    try {
       findAll(str, filenames);
       resourceTypes.resize(filenames.size());
-   } 
+   }
    catch(const exception &e) {
       throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
    }
@@ -78,21 +78,21 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
 
    //attack types
    const XmlNode *attackTypesNode;
-   try { 
+   try {
       attackTypesNode= techTreeNode->getChild("attack-types");
       attackTypes.resize(attackTypesNode->getChildCount());
       for(int i=0; i<attackTypes.size(); ++i){
 	      const XmlNode *attackTypeNode= attackTypesNode->getChild("attack-type", i);
 	      string name;
-         try { 
-            name = attackTypeNode->getAttribute("name")->getRestrictedValue(); 
+         try {
+            name = attackTypeNode->getAttribute("name")->getRestrictedValue();
 	         attackTypes[i].setName(name);
 	         attackTypes[i].setId(i);
 	         attackTypeMap[name] = &attackTypes[i];
          }
-         catch ( runtime_error &e ) { 
+         catch ( runtime_error &e ) {
             Logger::getErrorLog().addXmlError ( path, e.what() );
-            loadOk = false; 
+            loadOk = false;
          }
       }
    }
@@ -103,28 +103,28 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
 
    //armor types
    const XmlNode *armorTypesNode;
-   try { 
-      armorTypesNode= techTreeNode->getChild("armor-types"); 
+   try {
+      armorTypesNode= techTreeNode->getChild("armor-types");
       armorTypes.resize(armorTypesNode->getChildCount());
       for(int i=0; i<armorTypes.size(); ++i){
          string name ;
-         try { 
-            name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name"); 
+         try {
+            name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name");
 	         armorTypes[i].setName(name);
 	         armorTypes[i].setId(i);
 	         armorTypeMap[name] = &armorTypes[i];
          }
-         catch ( runtime_error &e ) { 
+         catch ( runtime_error &e ) {
             Logger::getErrorLog().addXmlError ( path, e.what() );
-            loadOk = false; 
+            loadOk = false;
          }
-      }  
+      }
    }
    catch ( runtime_error &e ) {
       Logger::getErrorLog().addXmlError ( path, e.what() );
       loadOk = false;
    }
- 
+
    try { //damage multipliers
 	   damageMultiplierTable.init(attackTypes.size(), armorTypes.size());
 	   const XmlNode *damageMultipliersNode= techTreeNode->getChild("damage-multipliers");

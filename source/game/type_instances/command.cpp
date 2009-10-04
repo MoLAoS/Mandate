@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -153,7 +153,7 @@ void Command::write(NetworkDataBuffer &buf) const {
 
 	buf.write(static_cast<uint16>(commandedUnit->getId()));
 	buf.write(static_cast<uint8>((archetype & 0x0f) | ((flags.flags & 0x0f) << 4)));
-	fieldsPresent = 
+	fieldsPresent =
 			  (type					? 0x01 : 0)
 			| (pos != invalidPos 	? 0x02 : 0)
 			| (pos2 != invalidPos	? 0x04 : 0)

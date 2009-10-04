@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest Shared Library (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa,
+//	Copyright (C) 2001-2008 Martiño Figueroa,
 //				  2008-2009 Daniel Santos <daniel.santos@pobox.com>,
 //				  2009 Nathan Turner <hailstone3>
 //
@@ -74,14 +74,14 @@ XmlNode *XmlIo::parseString(const char *doc, size_t size) {
 	return rootNode;
 }
 
-void XmlIo::save(const string &path, const XmlNode *node){		
-	// doesn't keep: space chars, doc type declaration (although a generic one 
+void XmlIo::save(const string &path, const XmlNode *node){
+	// doesn't keep: space chars, doc type declaration (although a generic one
 	//	can be added), any other text like comments
 
 	TiXmlDocument document;
 
 	TiXmlElement *rootElement = new TiXmlElement(node->getName().c_str());
-	
+
 	if ( !document.LinkEndChild(rootElement) ) { // TinyXML owns pointer
 		throw runtime_error("Problem adding xml child element to: document");
 	}
@@ -96,7 +96,7 @@ void XmlIo::save(const string &path, const XmlNode *node){
 // =====================================================
 //	class XmlNode
 // =====================================================
-		
+
 XmlNode::XmlNode(TiXmlNode *node) : text() {
 	//no node
 	if ( !node ) {
@@ -117,7 +117,7 @@ XmlNode::XmlNode(TiXmlNode *node) : text() {
 
 	while ( childElement ) {
 		XmlNode *xmlNode = new XmlNode(childElement); // recursive, null childElement as base
-		
+
 		children.push_back(xmlNode);
 		childElement = childElement->NextSiblingElement();
 	}
@@ -289,12 +289,12 @@ void XmlNode::toStringPretty(stringstream &str, string &indent, const string &in
 /*
 char *XmlNode::toString() const {
 	string xmlString = "<" + name;
-	
+
 	//add attributes to string
 	for (int i = 0; i < attributes.size(); ++i) {
 		xmlString += " " + attributes[i]->toString();
 	}
-	
+
 	if (children.size() <= 0) {
 		xmlString += "/>";
 	} else {
@@ -324,7 +324,7 @@ void XmlNode::populateElement(TiXmlElement *node) const {
 	//add all the children to the element node
 	for (int i = 0; i < children.size(); ++i) {
 		TiXmlElement *childElement = new TiXmlElement(children[i]->getName().c_str());
-		
+
 		if ( !(node->LinkEndChild(childElement)) ) { // TinyXML owns pointer
 			throw runtime_error("Problem adding xml child element to: " + name);
 		}

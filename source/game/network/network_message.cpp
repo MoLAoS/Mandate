@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -140,7 +140,7 @@ NetworkMessage *NetworkMessage::readMsg(NetworkDataBuffer &buf) {
 
 	assert(buf.size() == bytesReady - msgSize);
 	assert(msg->getNetSize() + sizeof(msgSize) + sizeof(type) == msgSize);
-	
+
 	if(Config::getInstance().getMiscDebugMode()) {
 		NetworkManager &netmgr = NetworkManager::getInstance();
 		Logger &log = (netmgr.isServer() ? Logger::getServerLog() : Logger::getClientLog());
@@ -339,7 +339,7 @@ size_t NetworkMessageCommandList::getNetSize() const {
 	for(vector<Command*>::const_iterator i = commands.begin(); i != commands.end(); ++i) {
 		size += (*i)->getNetSize();
 	}
-	return size;			
+	return size;
 }
 
 
@@ -349,7 +349,7 @@ void NetworkMessageCommandList::read(NetworkDataBuffer &buf) {
 	buf.read(commandCount);
 	buf.read(frameCount);
 	assert(commandCount <= maxCommandCount);
-	for(int i = 0; i < commandCount; ++i) {		
+	for(int i = 0; i < commandCount; ++i) {
 		commands.push_back(new Command(buf));
 	}
 }
@@ -361,7 +361,7 @@ void NetworkMessageCommandList::write(NetworkDataBuffer &buf) const {
 	buf.write(frameCount);
 
 	for(Commands::const_iterator i = commands.begin(); i != commands.end(); ++i) {
-		(*i)->write(buf);	
+		(*i)->write(buf);
 	}
 }
 

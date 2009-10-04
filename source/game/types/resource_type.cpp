@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -41,11 +41,11 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
 	name = basename(dir);
 	path = dir + "/" + name + ".xml";
 	checksum.addFile(path, true);
-	
+
 	XmlTree xmlTree;
    const XmlNode *resourceNode;
    try { // tree
-      xmlTree.load(path); 
+      xmlTree.load(path);
 	   resourceNode = xmlTree.getRootNode();
       if ( ! resourceNode ) {
          Logger::getErrorLog().addXmlError ( path, "XML file appears to lack contents." );
@@ -65,7 +65,7 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
    catch ( runtime_error &e ) {
       Logger::getErrorLog().addXmlError ( path, e.what() );
       loadOk = false; // can continue, to catch other errors
-   }   
+   }
    const XmlNode *typeNode;
    try { // type
 		typeNode = resourceNode->getChild("type");
@@ -77,7 +77,7 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
    }
 
    switch (resourceClass) {
-   case rcTech: 
+   case rcTech:
       try { // model
          const XmlNode *modelNode = typeNode->getChild("model");
          string mPath = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
@@ -105,7 +105,7 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
          loadOk = false;
       }
       break;
-   case rcTileset: 
+   case rcTileset:
       try { // default resources
          const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
          defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
@@ -123,7 +123,7 @@ bool ResourceType::load(const string &dir, int id, Checksum &checksum) {
          loadOk = false;
       }
       break;
-   case rcConsumable: 
+   case rcConsumable:
       try { // interval
          const XmlNode *intervalNode = typeNode->getChild("interval");
          interval = intervalNode->getAttribute("value")->getIntValue();

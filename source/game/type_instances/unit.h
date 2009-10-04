@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -118,7 +118,7 @@ public:
 		pathQueue.erase(pathQueue.begin());
 		return p;
 	}
-	
+
 	void read(const XmlNode *node);
 	void write(XmlNode *node) const;
 };
@@ -169,14 +169,14 @@ private:
 	Field targetField;
 	const Level *level;
 
-	Vec2i pos;				/** Current position */
-	Vec2i lastPos;			/** The last position before current */
-	Vec2i nextPos;			/** Position unit is moving into next. */
-	Vec2i targetPos;		/** Position of the target, or the cell of the target we care about. */
+	Vec2i pos;				/**< Current position */
+	Vec2i lastPos;			/**< The last position before current */
+	Vec2i nextPos;			/**< Position unit is moving into next. */
+	Vec2i targetPos;		/**< Position of the target, or the cell of the target we care about. */
 	Vec3f targetVec;
 	Vec2i meetingPos;
-	bool faceTarget;		/** If true and target is set, we continue to face target. */
-	bool useNearestOccupiedCell;	/** If true, targetPos is set to target->getNearestOccupiedCell() */
+	bool faceTarget;		/**< If true and target is set, we continue to face target. */
+	bool useNearestOccupiedCell;	/**< If true, targetPos is set to target->getNearestOccupiedCell() */
 
 	float lastRotation;		//in degrees
 	float targetRotation;
@@ -209,8 +209,8 @@ private:
 	Observers observers;
 	Pets pets;
 	UnitReference master;
-	
-	
+
+
 	int64 lastCommandUpdate;	// microseconds
 	int64 lastUpdated;			// microseconds
 	int64 lastCommanded;		// milliseconds
@@ -369,7 +369,7 @@ public:
 	// this is a heavy use function so it's inlined even though it isn't exactly small
 	Vec3f getCurrVectorFlat() const {
 		Vec3f v(static_cast<float>(pos.x),  computeHeight(pos), static_cast<float>(pos.y));
-	
+
 		if (currSkill->getClass() == scMove) {
 			v = Vec3f(static_cast<float>(lastPos.x), computeHeight(lastPos),
 					  static_cast<float>(lastPos.y)).lerp(progress, v);
@@ -377,7 +377,7 @@ public:
 
 		v.x += type->getHalfSize();
 		v.z += type->getHalfSize();
-	
+
 		return v;
 	}
 
