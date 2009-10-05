@@ -2,7 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Jaagup Repï¿½n <jrepan@gmail.com>,
+//				  2008 Jaagup Repän <jrepan@gmail.com>,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //				  2009 James McCulloch <silnarm@gmail.com>
 //
@@ -43,13 +43,6 @@ namespace Glest{ namespace Game{
 // 	class Cell
 // =====================================================
 
-
-// ==================== misc ====================
-
-//returns if the cell is free
-bool Cell::isFree(Zone field) const {
-	return getUnit(field)==NULL || getUnit(field)->isPutrefacting();
-}
 
 // =====================================================
 // 	class Tile
@@ -1406,7 +1399,7 @@ PosQuadIterator::PosQuadIterator(const Quad2i &quad, int step) :
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repï¿½n <jrepan@gmail.com>,
+//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>,
 //				     2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under

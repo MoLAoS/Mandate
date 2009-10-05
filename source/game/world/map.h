@@ -2,7 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008 Jaagup Repï¿½n <jrepan@gmail.com>,
+//				  2008 Jaagup Repän <jrepan@gmail.com>,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //				  2009 James McCulloch <silnarm@gmail.com>
 //
@@ -59,19 +59,23 @@ class Earthquake;
 ///	A map cell that holds info about units present on it
 // =====================================================
 
-class Cell{
+class Cell {
 private:
 	Unit *units[ZoneCount];	//units on this cell
 	float height;
 	SurfaceType surfaceType;
-	Cell(Cell&);
-	void operator=(Cell&);
+
+private:
+	Cell(const Cell&);
+	void operator=(const Cell&) const;
 
 public:
-	Cell() {
+	/**
+	 * Default ctor.  It's usually better to outline stuff like this, but when these are created,
+	 * they are created in large quantities, so it's probably much better to have this ctor inlined.
+	 */
+	Cell() : height(0), surfaceType(SurfaceTypeLand) {
 		memset(units, 0, sizeof(units));
-		height = 0;
-		surfaceType = SurfaceTypeLand;
 	}
 
 	// get
@@ -89,7 +93,11 @@ public:
 	void setType(SurfaceType type)			{surfaceType = type;}
 
 	//misc
-	bool isFree(Zone field) const;
+	/** @returns true if the zone in the cell is not occupied. */
+	bool isFree(Zone zone) const {
+		const Unit *resident = getUnit(zone);
+		return !resident || resident->isPutrefacting();
+	}
 };
 
 // =====================================================
@@ -634,7 +642,7 @@ public:
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repï¿½n <jrepan@gmail.com>,
+//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>,
 //				     2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under

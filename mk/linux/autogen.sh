@@ -11,7 +11,7 @@ if [ -d build ]; then
 	rm -rf build
 fi
 
-rm -f configure Jamconfig.in build \
+rm -f configure Jamconfig.in build aclocal.m4 \
 	  data docs gae maps techs tilesets \
 	  configurator g3d_viewer game map_editor shared_lib test
 
@@ -52,7 +52,7 @@ echo 'JAMCONFIG_READ = yes ;' >> Jamconfig.in
 echo "autoconf"
 autoconf
 
-rm -rf autom4te.cache aclocal.m4
+rm -rf autom4te.cache
 
 # Attempt to create build directory under /tmp file system (which should be
 # tempfs on any modern *nix system) and if that fails, just create a

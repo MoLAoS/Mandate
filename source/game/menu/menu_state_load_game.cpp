@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repï¿½n <jrepan@gmail.com>
+//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
