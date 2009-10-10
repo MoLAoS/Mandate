@@ -3,9 +3,9 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-DOXYFILE_ENCODING      = "iso 8859-1"
+DOXYFILE_ENCODING      = iso8859-1
 PROJECT_NAME           = "Glest Advanced Engine"
-PROJECT_NUMBER         = 0.2.11
+PROJECT_NUMBER         = 20091010-trunk-wip
 OUTPUT_DIRECTORY       = ../mk/linux/build
 CREATE_SUBDIRS         = YES
 OUTPUT_LANGUAGE        = English
@@ -22,10 +22,10 @@ ABBREVIATE_BRIEF       = "The $name class" \
                          a \
                          an \
                          the
-ALWAYS_DETAILED_SEC    = YES
+ALWAYS_DETAILED_SEC    = NO
 INLINE_INHERITED_MEMB  = NO
 FULL_PATH_NAMES        = NO
-STRIP_FROM_PATH        = /home/daniel/proj/gae
+STRIP_FROM_PATH        = /home/daniel/proj/gae/network
 STRIP_FROM_INC_PATH    = 
 SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = YES
@@ -43,7 +43,7 @@ OPTIMIZE_OUTPUT_VHDL   = NO
 BUILTIN_STL_SUPPORT    = YES
 CPP_CLI_SUPPORT        = NO
 SIP_SUPPORT            = NO
-IDL_PROPERTY_SUPPORT   = YES
+IDL_PROPERTY_SUPPORT   = NO
 DISTRIBUTE_GROUP_DOC   = YES
 SUBGROUPING            = YES
 TYPEDEF_HIDES_STRUCT   = NO
@@ -69,7 +69,7 @@ INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = YES
 SORT_BRIEF_DOCS        = YES
 SORT_GROUP_NAMES       = NO
-SORT_BY_SCOPE_NAME     = YES
+SORT_BY_SCOPE_NAME     = NO
 GENERATE_TODOLIST      = YES
 GENERATE_TESTLIST      = YES
 GENERATE_BUGLIST       = YES
@@ -77,7 +77,7 @@ GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       = 
 MAX_INITIALIZER_LINES  = 30
 SHOW_USED_FILES        = YES
-SHOW_DIRECTORIES       = NO
+SHOW_DIRECTORIES       = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = YES
 FILE_VERSION_FILTER    = 
@@ -94,11 +94,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ./g3d_viewer \
-                         ./glest_game \
-                         ./shared_lib \
-                         ./glest_map_editor
-INPUT_ENCODING         = UTF-8
+INPUT                  = .
+INPUT_ENCODING         = iso8859-1
 FILE_PATTERNS          = *.c \
                          *.cc \
                          *.cxx \
@@ -126,6 +123,10 @@ FILE_PATTERNS          = *.c \
                          *.mm \
                          *.dox \
                          *.py \
+                         *.f90 \
+                         *.f \
+                         *.vhd \
+                         *.vhdl \
                          *.C \
                          *.CC \
                          *.C++ \
@@ -140,6 +141,10 @@ FILE_PATTERNS          = *.c \
                          *.M \
                          *.MM \
                          *.PY \
+                         *.F90 \
+                         *.F \
+                         *.VHD \
+                         *.VHDL \
                          *.C \
                          *.H \
                          *.tlh \
@@ -151,7 +156,7 @@ FILE_PATTERNS          = *.c \
 RECURSIVE              = YES
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       = 
+EXCLUDE_PATTERNS       = */.svn/*
 EXCLUDE_SYMBOLS        = 
 EXAMPLE_PATH           = 
 EXAMPLE_PATTERNS       = *
@@ -272,7 +277,7 @@ SKIP_FUNCTION_MACROS   = YES
 # Configuration::additions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES               = 
-GENERATE_TAGFILE       = glest_game.tag
+GENERATE_TAGFILE       = gae.tag
 ALLEXTERNALS           = NO
 EXTERNAL_GROUPS        = YES
 PERL_PATH              = /usr/bin/perl
@@ -282,13 +287,13 @@ PERL_PATH              = /usr/bin/perl
 CLASS_DIAGRAMS         = YES
 MSCGEN_PATH            = 
 HIDE_UNDOC_RELATIONS   = YES
-HAVE_DOT               = YES
+HAVE_DOT               = NO
 DOT_FONTNAME           = FreeSans
 DOT_FONTPATH           = 
 CLASS_GRAPH            = YES
 COLLABORATION_GRAPH    = NO
-GROUP_GRAPHS           = YES
-UML_LOOK               = NO
+GROUP_GRAPHS           = NO
+UML_LOOK               = YES
 TEMPLATE_RELATIONS     = YES
 INCLUDE_GRAPH          = NO
 INCLUDED_BY_GRAPH      = NO

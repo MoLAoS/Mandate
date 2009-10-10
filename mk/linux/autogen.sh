@@ -28,7 +28,7 @@ svnRoot="https://glestae.svn.sourceforge.net/svnroot/glestae/"
 branchSubDir="$(
 	svn info |
 	grep '^URL: ' |
-	sed "s|^URL: ${svnRoot}||g; s|branch/||g; s|tags/|tag_|g" |
+	sed "s|^URL: ${svnRoot}||g; s|branches/||g; s|tags/|tag_|g" |
 	awk -F/ '{print $1}' || echo "build"
 )"
 buildDir="/tmp/$(whoami || echo "build")/gae/${branchSubDir}"

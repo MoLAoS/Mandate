@@ -172,7 +172,7 @@ private:
 	void showWinMessageBox();
 	void showMessageBox(const string &text, const string &header, bool toggle);
 
-	void showExitMessageBox(const string &text, bool toggle);
+//	void showExitMessageBox(const string &text, bool toggle);
 	string controllerTypeToStr(ControlType ct);
 	Unit *findUnit(int id);
 	char getStringFromFile(ifstream *fileStream, string *str);

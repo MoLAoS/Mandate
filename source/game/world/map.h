@@ -141,8 +141,8 @@ public:
 	float getHeight() const						{return vertex.y;}
 	const Vec3f &getColor() const				{return color;}
 	const Vec3f &getNormal() const				{return normal;}
-	int getTileType() const					{return tileType;}
-	const Texture2D *getTileTexture() const	{return tileTexture;}
+	int getTileType() const						{return tileType;}
+	const Texture2D *getTileTexture() const		{return tileTexture;}
 	Object *getObject() const					{return object;}
 	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
 	const Vec2f &getFowTexCoord() const			{return fowTexCoord;}
@@ -764,7 +764,7 @@ public:
 	const Vec2i getEpicenter() const		{return epicenter;}
 	void update(float slice);
 	void getDamageReport(DamageReport &results, float slice);
-   bool isDone() { return progress >= 1.f + radius / speed / duration; };
+	bool isDone()							{return progress >= 1.f + radius / speed / duration;}
 	void resetSurface();
 
 private:
