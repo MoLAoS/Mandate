@@ -156,7 +156,7 @@ ResourceClass ResourceType::strToRc(const string &s) {
 	if (s == "consumable") {
 		return rcConsumable;
 	}
-	throw runtime_error("Error converting from string ro resourceClass, found: " + s);
+	throw runtime_error("Error converting from string to resourceClass, found: " + s);
 }
 
 }}//end namespace
