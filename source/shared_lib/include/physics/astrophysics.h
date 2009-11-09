@@ -127,8 +127,8 @@ public:
  * Describes one side of an orbital relationship.
  */
 class Orbit {
-	double meanVelocity;	/**< The mean velocity of the primary object in relationship to the secondary object. */
-	double tilt;			/**< The angle of axial tilt of the celestial body in radians.  (Earth =~0.409092628 (23.439281 degrees)). */
+	double meanVelocity;	/**< The mean velocity of the primary object in relationship to the secondary object in meters per second (m/s). (Earth to Sun = 29783)*/
+	double tilt;			/**< The angle of axial tilt of the celestial body in radians.  (Earth to Sun = ~0.409092628 (23.439281 degrees)). */
 	float eccentricity;		/**< The eccentricity of the orbit. A perfect circle is zero, eliptical is > 0 and < 1. */
 	double meanDistance;	/**< The mean orbital distance in meters (m) */
 	double relationalTilt;	/**< Tilt of the secondary object in relationship to the orbit in radians. */
@@ -170,7 +170,7 @@ public:
  * Eventually, this will be used to feed the base values for physics and weather calculations.  For
  * now, it's just shiny ideas. :)
  */
-class NonStellarBody {
+class NonStellarBody : public CelestialBody {
 	/**
 	 * Distance of the average sea-level from the core of the celesital body in kilometers.  If the
 	 * celestial body has no "sea level" to reference, use the lowest point on the surface.
