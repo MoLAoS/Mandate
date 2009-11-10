@@ -24,6 +24,7 @@ gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsWorldUpdateFps			int		40
 miscAiLog					int		0
 miscAiRedir					bool	false
+miscAutoTest				bool	false
 miscCatchExceptions			bool	true
 miscDebugKeys				bool	false
 miscDebugMode				bool	false

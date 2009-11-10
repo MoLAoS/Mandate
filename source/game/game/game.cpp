@@ -24,6 +24,7 @@
 #include "faction.h"
 #include "network_manager.h"
 #include "checksum.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 #ifdef _MSC_VER
@@ -335,13 +336,10 @@ void Game::update() {
 		quitGame();
 	}
 
-	//TODO: add AutoTest to config
 	//update auto test
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
+	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateGame(this);
 	}
-	*/
 }
 
 void Game::displayError(SocketException &e) {

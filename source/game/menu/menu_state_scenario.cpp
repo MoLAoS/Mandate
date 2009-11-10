@@ -19,6 +19,7 @@
 #include "menu_state_options.h"
 #include "network_manager.h"
 #include "game.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 
@@ -131,12 +132,9 @@ void MenuStateScenario::render() {
 }
 
 void MenuStateScenario::update() {
-	//TOOD: add AutoTest to config
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
-	 AutoTest::getInstance().updateScenario(this);
+	if (Config::getInstance().getMiscAutoTest()) {
+		AutoTest::getInstance().updateScenario(this);
 	}
-	*/
 }
 
 void MenuStateScenario::launchGame() {

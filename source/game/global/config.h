@@ -53,6 +53,7 @@ private:
 	int gsWorldUpdateFps;
 	int miscAiLog;
 	bool miscAiRedir;
+	bool miscAutoTest;
 	bool miscCatchExceptions;
 	bool miscDebugKeys;
 	bool miscDebugMode;
@@ -74,8 +75,8 @@ private:
 	int renderDepthBits;
 	float renderDistanceMax;
 	float renderDistanceMin;
-	string renderFilter;
 	int renderFilterMaxAnisotropy;
+	string renderFilter;
 	bool renderFogOfWarSmoothing;
 	int renderFogOfWarSmoothingFrameSkip;
 	string renderFontConsole;
@@ -87,8 +88,8 @@ private:
 	int renderLightsMax;
 	float renderShadowAlpha;
 	int renderShadowFrameSkip;
-	int renderShadowTextureSize;
 	string renderShadows;
+	int renderShadowTextureSize;
 	int renderStencilBits;
 	bool renderTextures3D;
 	string soundFactory;
@@ -103,8 +104,8 @@ private:
 	bool uiFocusArrows;
 	string uiLastMap;
 	bool uiLastRandStartLocs;
-	string uiLastScenario;
 	string uiLastScenarioCatagory;
+	string uiLastScenario;
 	string uiLastTechTree;
 	string uiLastTileset;
 	string uiLocale;
@@ -158,6 +159,7 @@ public:
 	int getGsWorldUpdateFps() const					{return gsWorldUpdateFps;}
 	int getMiscAiLog() const						{return miscAiLog;}
 	bool getMiscAiRedir() const						{return miscAiRedir;}
+	bool getMiscAutoTest() const					{return miscAutoTest;}
 	bool getMiscCatchExceptions() const				{return miscCatchExceptions;}
 	bool getMiscDebugKeys() const					{return miscDebugKeys;}
 	bool getMiscDebugMode() const					{return miscDebugMode;}
@@ -179,8 +181,8 @@ public:
 	int getRenderDepthBits() const					{return renderDepthBits;}
 	float getRenderDistanceMax() const				{return renderDistanceMax;}
 	float getRenderDistanceMin() const				{return renderDistanceMin;}
-	const string &getRenderFilter() const			{return renderFilter;}
 	int getRenderFilterMaxAnisotropy() const		{return renderFilterMaxAnisotropy;}
+	const string &getRenderFilter() const			{return renderFilter;}
 	bool getRenderFogOfWarSmoothing() const			{return renderFogOfWarSmoothing;}
 	int getRenderFogOfWarSmoothingFrameSkip() const	{return renderFogOfWarSmoothingFrameSkip;}
 	const string &getRenderFontConsole() const		{return renderFontConsole;}
@@ -192,8 +194,8 @@ public:
 	int getRenderLightsMax() const					{return renderLightsMax;}
 	float getRenderShadowAlpha() const				{return renderShadowAlpha;}
 	int getRenderShadowFrameSkip() const			{return renderShadowFrameSkip;}
-	int getRenderShadowTextureSize() const			{return renderShadowTextureSize;}
 	const string &getRenderShadows() const			{return renderShadows;}
+	int getRenderShadowTextureSize() const			{return renderShadowTextureSize;}
 	int getRenderStencilBits() const				{return renderStencilBits;}
 	bool getRenderTextures3D() const				{return renderTextures3D;}
 	const string &getSoundFactory() const			{return soundFactory;}
@@ -208,8 +210,8 @@ public:
 	bool getUiFocusArrows() const					{return uiFocusArrows;}
 	const string &getUiLastMap() const				{return uiLastMap;}
 	bool getUiLastRandStartLocs() const				{return uiLastRandStartLocs;}
-	const string &getUiLastScenario() const			{return uiLastScenario;}
 	const string &getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
+	const string &getUiLastScenario() const			{return uiLastScenario;}
 	const string &getUiLastTechTree() const			{return uiLastTechTree;}
 	const string &getUiLastTileset() const			{return uiLastTileset;}
 	const string &getUiLocale() const				{return uiLocale;}
@@ -237,6 +239,7 @@ public:
 	void setGsWorldUpdateFps(int v)					{gsWorldUpdateFps = v;}
 	void setMiscAiLog(int v)						{miscAiLog = v;}
 	void setMiscAiRedir(bool v)						{miscAiRedir = v;}
+	void setMiscAutoTest(bool v)					{miscAutoTest = v;}
 	void setMiscCatchExceptions(bool v)				{miscCatchExceptions = v;}
 	void setMiscDebugKeys(bool v)					{miscDebugKeys = v;}
 	void setMiscDebugMode(bool v)					{miscDebugMode = v;}
@@ -258,8 +261,8 @@ public:
 	void setRenderDepthBits(int v)					{renderDepthBits = v;}
 	void setRenderDistanceMax(float v)				{renderDistanceMax = v;}
 	void setRenderDistanceMin(float v)				{renderDistanceMin = v;}
-	void setRenderFilter(const string &v)			{renderFilter = v;}
 	void setRenderFilterMaxAnisotropy(int v)		{renderFilterMaxAnisotropy = v;}
+	void setRenderFilter(const string &v)			{renderFilter = v;}
 	void setRenderFogOfWarSmoothing(bool v)			{renderFogOfWarSmoothing = v;}
 	void setRenderFogOfWarSmoothingFrameSkip(int v)	{renderFogOfWarSmoothingFrameSkip = v;}
 	void setRenderFontConsole(const string &v)		{renderFontConsole = v;}
@@ -271,8 +274,8 @@ public:
 	void setRenderLightsMax(int v)					{renderLightsMax = v;}
 	void setRenderShadowAlpha(float v)				{renderShadowAlpha = v;}
 	void setRenderShadowFrameSkip(int v)			{renderShadowFrameSkip = v;}
-	void setRenderShadowTextureSize(int v)			{renderShadowTextureSize = v;}
 	void setRenderShadows(const string &v)			{renderShadows = v;}
+	void setRenderShadowTextureSize(int v)			{renderShadowTextureSize = v;}
 	void setRenderStencilBits(int v)				{renderStencilBits = v;}
 	void setRenderTextures3D(bool v)				{renderTextures3D = v;}
 	void setSoundFactory(const string &v)			{soundFactory = v;}
@@ -287,8 +290,8 @@ public:
 	void setUiFocusArrows(bool v)					{uiFocusArrows = v;}
 	void setUiLastMap(const string &v)				{uiLastMap = v;}
 	void setUiLastRandStartLocs(bool v)				{uiLastRandStartLocs = v;}
-	void setUiLastScenario(const string &v)			{uiLastScenario = v;}
 	void setUiLastScenarioCatagory(const string &v)	{uiLastScenarioCatagory = v;}
+	void setUiLastScenario(const string &v)			{uiLastScenario = v;}
 	void setUiLastTechTree(const string &v)			{uiLastTechTree = v;}
 	void setUiLastTileset(const string &v)			{uiLastTileset = v;}
 	void setUiLocale(const string &v)				{uiLocale = v;}

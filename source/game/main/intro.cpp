@@ -21,6 +21,7 @@
 #include "sound_renderer.h"
 #include "core_data.h"
 #include "metrics.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 
@@ -78,12 +79,9 @@ void Intro::update(){
 		program.setState(new MainMenu(program));
 	}
 
-	//TOOD: add AutoTest to config
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
+	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateIntro(program);
 	}
-	*/
 }
 
 void Intro::render(){

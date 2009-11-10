@@ -23,6 +23,7 @@
 #include "components.h"
 #include "metrics.h"
 #include "stats.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 
@@ -43,11 +44,9 @@ BattleEnd::~BattleEnd() {
 }
 
 void BattleEnd::update(){
-	//TOOD: add AutoTest to config
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
+	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateBattleEnd(program);
-	}*/
+	}
 }
 
 void BattleEnd::render() {

@@ -25,6 +25,7 @@
 #include "socket.h"
 #include "game.h"
 #include "random.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 
@@ -329,12 +330,10 @@ void MenuStateNewGame::render() {
 }
 
 void MenuStateNewGame::update() {
-	//TOOD: add AutoTest to config
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
+	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateNewGame(program, mainMenu);
 	}
-	*/
+
 	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
 	Lang& lang = Lang::getInstance();
 
