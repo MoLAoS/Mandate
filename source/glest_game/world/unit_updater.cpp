@@ -1077,7 +1077,6 @@ void UnitUpdater::updateMorph(Unit *unit){
 		if ( gotSpace ) {
 			unit->setCurrSkill(mct->getMorphSkillType());
 			unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), false);
-			unit->setCurrField ( mf );
 		} 
 		else {
 			if(unit->getFactionIndex() == world->getThisFactionIndex())

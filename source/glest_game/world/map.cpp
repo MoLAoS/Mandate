@@ -1018,6 +1018,33 @@ void Map::putUnitCells(Unit *unit, const Vec2i &pos){
 	unit->setPos(pos);
 }
 
+/*
+ostream& operator<<(ostream &lhs, Vec2i &rhs) {
+	return lhs << "(" << rhs.x << ", " << rhs.y << ")";
+}
+
+void locateUnit(Map *map, Unit *unit) {
+	stringstream ss;
+	bool located = false;
+	ss	<< "Searching for Unit " << unit->getType()->getName() << ":" << unit->getId();
+	for ( int y = 0; y < map->getH(); ++y ) {
+		for ( int x = 0; x < map->getW(); ++ x ) {
+			const Cell *cell = map->getCell(x,y);
+			for ( Zone z = ZoneSurfaceProp; z < ZoneCount; z = (Zone)(z + 1) ) {
+				if ( cell->getUnit(z) == unit ) {
+					ss << endl << " located @ " << Vec2i(x,y) << " in zone " << z;
+					located = true;
+				}
+			}
+		}
+	}
+	if ( !located ) {
+		ss << endl << "Not Found! Unit is not located in the cell map" << endl;
+	}
+	Logger::getErrorLog().add(ss.str());
+}
+*/
+
 //removes a unit from cells
 void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 
@@ -1032,6 +1059,18 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 			assert(isInside(currPos));
 
 			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
+				/*
+				if ( getCell(currPos)->getUnit(field) != unit ) {
+					stringstream ss;
+					ss	<< "Error: Unit '" << ut->getName() << "[id:" << unit->getId() << "]" << endl 
+						<< "Is at " << unit->getPos() << " in zone " << unit->getCurrZone() 
+						<< ", attempting to clear cell " << currPos << " in zone " << field
+						<< ", unit " << unit->getId() << " is not in this cell!" << endl;
+					Logger::getErrorLog().add(ss.str());
+
+					locateUnit(this, unit);
+				}
+				*/
 				assert(getCell(currPos)->getUnit(field) == unit);
 				getCell(currPos)->setUnit(field, NULL);
 			}
