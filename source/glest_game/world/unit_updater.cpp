@@ -937,6 +937,35 @@ void UnitUpdater::updateRepair(Unit *unit) {
 }
 
 
+// hacked up version of World::placeUnit()
+bool findPlaceForUnit(Map *map, const Vec2i &startLoc, int radius, const UnitType *ut) {
+	// determine field
+	Field newField;
+	if ( ut->getField( FieldWalkable ) ) {
+		newField = FieldWalkable;
+	} else if ( ut->getField( FieldAir ) ) {
+		newField = FieldAir;
+	}
+	if ( ut->getField( FieldAmphibious ) ) {
+		newField = FieldAmphibious;
+	} else if ( ut->getField( FieldAnyWater ) ) {
+		newField = FieldAnyWater;
+	} else if ( ut->getField( FieldDeepWater ) ) {
+		newField = FieldDeepWater;
+	}
+
+	for (int r = 1; r < radius; r++) {
+		for (int i = -r; i < r; ++i) {
+			for (int j = -r; j < r; ++j) {
+				Vec2i pos = Vec2i(i, j) + startLoc;
+				if ( map->areFreeCells(pos, ut->getSize(), newField) ) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
 // ==================== updateProduce ====================
 
 void UnitUpdater::updateProduce(Unit *unit) {
@@ -950,9 +979,17 @@ void UnitUpdater::updateProduce(Unit *unit) {
 		if(!verifySubfaction(unit, pct->getProducedUnit())) {
 			return;
 		}
+		const UnitType *produced = pct->getProducedUnit();
+		if ( findPlaceForUnit(map, unit->getCenteredPos(), 10, produced) ) {
+			unit->setCurrSkill(pct->getProduceSkillType());
+			unit->getFaction()->checkAdvanceSubfaction(produced, false);
+		} 
+		else {
+			if(unit->getFactionIndex() == world->getThisFactionIndex())
+				Game::getInstance()->getConsole()->addStdMessage("InvalidPosition");
+			unit->cancelCurrCommand();
+		}
 
-		unit->setCurrSkill(pct->getProduceSkillType());
-		unit->getFaction()->checkAdvanceSubfaction(pct->getProducedUnit(), false);
 	} else {
 		unit->update2();
 
