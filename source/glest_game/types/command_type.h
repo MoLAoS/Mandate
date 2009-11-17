@@ -22,6 +22,7 @@
 #include "sound_container.h"
 #include "skill_type.h"
 #include "upgrade_type.h"
+#include "game_constants.h"
 
 namespace Glest { namespace Game {
 
@@ -136,7 +137,7 @@ public:
 	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void setUnitTypeAndIndex(const UnitType *unitType, int unitTypeIndex);
-	virtual void getDesc(string &str, const Unit *unit) const = 0;
+	virtual void getDesc(string &str, const Unit *unit) const PURE_VIRTUAL;
 	virtual string toString() const						{return Lang::getInstance().get(name);}
 	virtual const ProducibleType *getProduced() const	{return NULL;}
 	bool isQueuable() const								{return queuable;}

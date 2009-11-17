@@ -22,6 +22,12 @@
 
 #include "math_util.h"
 
+#if 1
+#	define PURE_VIRTUAL {throw runtime_error("Pure virtual called.");}
+#else
+#	define PURE_VIRTUAL =0
+#endif
+
 #if defined(WIN32) || defined(WIN64)
 	#include <list>
 	#define slist list

@@ -16,6 +16,7 @@
 
 #include "vec.h"
 #include "types.h"
+#include "util.h"
 
 using std::string;
 using Shared::Platform::int8;
@@ -45,12 +46,12 @@ public:
 	int getH() const			{return h;}
 	int getComponents() const	{return components;}
 
-	virtual void openRead(const string &path)= 0;
-	virtual void read(uint8 *pixels)= 0;
-	virtual void read(uint8 *pixels, int components)= 0;
+	virtual void openRead(const string &path) PURE_VIRTUAL;
+	virtual void read(uint8 *pixels) PURE_VIRTUAL;
+	virtual void read(uint8 *pixels, int components) PURE_VIRTUAL;
 
-	virtual void openWrite(const string &path, int w, int h, int components)= 0;
-	virtual void write(uint8 *pixels)= 0;
+	virtual void openWrite(const string &path, int w, int h, int components) PURE_VIRTUAL;
+	virtual void write(uint8 *pixels) PURE_VIRTUAL;
 };
 
 // =====================================================

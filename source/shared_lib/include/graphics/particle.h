@@ -105,7 +105,7 @@ class ParticleSystem;
 class ParticleObserver {
 public:
 	virtual ~ParticleObserver(){};
-	virtual void update(ParticleSystem *particleSystem) = 0;
+	virtual void update(ParticleSystem *particleSystem) PURE_VIRTUAL;
 };
 
 // =====================================================

@@ -14,6 +14,7 @@
 
 #include "sound.h"
 #include "types.h"
+#include "util.h"
 
 using Shared::Platform::uint32;
 
@@ -41,13 +42,13 @@ public:
 class SoundPlayer{
 public:
 	virtual ~SoundPlayer(){};
-	virtual void init(const SoundPlayerParams *params)= 0;
-	virtual void end()= 0;
-	virtual void play(StaticSound *staticSound)= 0;
-	virtual	void play(StrSound *strSound, int64 fadeOn=0)= 0;	//delay and fade in miliseconds
-	virtual void stop(StrSound *strSound, int64 fadeOff=0)= 0;
-	virtual void stopAllSounds()= 0;
-	virtual void updateStreams()= 0;
+	virtual void init(const SoundPlayerParams *params) PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
+	virtual void play(StaticSound *staticSound) PURE_VIRTUAL;
+	virtual	void play(StrSound *strSound, int64 fadeOn=0) PURE_VIRTUAL;	//delay and fade in miliseconds
+	virtual void stop(StrSound *strSound, int64 fadeOff=0) PURE_VIRTUAL;
+	virtual void stopAllSounds() PURE_VIRTUAL;
+	virtual void updateStreams() PURE_VIRTUAL;
 };
 
 }}//end namespace

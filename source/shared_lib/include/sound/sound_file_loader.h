@@ -17,6 +17,7 @@
 
 #include "types.h"
 #include "factory.h"
+#include "util.h"
 
 struct OggVorbis_File;
 
@@ -41,10 +42,10 @@ class SoundFileLoader{
 public:
 	virtual ~SoundFileLoader(){}
 
-	virtual void open(const string &path, SoundInfo *soundInfo)= 0;
-	virtual uint32 read(int8 *samples, uint32 size)= 0;
-	virtual void close()= 0;
-	virtual void restart()= 0;
+	virtual void open(const string &path, SoundInfo *soundInfo) PURE_VIRTUAL;
+	virtual uint32 read(int8 *samples, uint32 size) PURE_VIRTUAL;
+	virtual void close() PURE_VIRTUAL;
+	virtual void restart() PURE_VIRTUAL;
 };
 
 // =====================================================

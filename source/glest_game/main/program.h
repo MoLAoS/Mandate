@@ -51,7 +51,7 @@ public:
 	ProgramState(Program &program) : program(program) {}
 	virtual ~ProgramState(){}
 
-	virtual void render() = 0;
+	virtual void render() PURE_VIRTUAL;
 	virtual void update(){}
 	virtual void updateCamera(){}
 	virtual void tick(){}

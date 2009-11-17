@@ -21,9 +21,9 @@ class Entity {
 public:
 	virtual ~Entity(){}
 //	virtual int getSize() const = 0;
-	virtual Vec2i getPos() const = 0;
-	virtual Vec3f getCurrVector() const = 0;
-	virtual Vec3f getCurrVectorFlat() const = 0;
+	virtual Vec2i getPos() const PURE_VIRTUAL;
+	virtual Vec3f getCurrVector() const PURE_VIRTUAL;
+	virtual Vec3f getCurrVectorFlat() const PURE_VIRTUAL;
 };
 
 }}//end namespace

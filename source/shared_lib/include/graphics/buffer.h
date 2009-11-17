@@ -13,7 +13,7 @@
 #define _SHARED_GRAPHICS_BUFFER_H_
 
 #include <string>
-
+#include "util.h"
 using std::string;
 
 namespace Shared{ namespace Graphics{
@@ -42,7 +42,7 @@ public:
 	VertexBuffer();
 	virtual ~VertexBuffer(){};
 
-	virtual void init(int size)= 0;
+	virtual void init(int size) PURE_VIRTUAL;
 
 	void setPositionPointer(void *pointer);
 	void setNormalPointer(void *pointer);
@@ -62,7 +62,7 @@ public:
 	IndexBuffer();
 	virtual ~IndexBuffer(){}
 
-	virtual void init(int size)= 0;
+	virtual void init(int size) PURE_VIRTUAL;
 
 	void setIndexPointer(void *pointer);
 };

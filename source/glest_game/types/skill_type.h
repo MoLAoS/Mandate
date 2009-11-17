@@ -115,7 +115,7 @@ public:
 	SkillType(SkillClass skillClass, const char* typeName);
 	virtual ~SkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const = 0;
+	virtual void getDesc(string &str, const Unit *unit) const PURE_VIRTUAL;
 	void descEffects(string &str, const Unit *unit) const;
 	void descEffectsRemoved(string &str, const Unit *unit) const;
 	void descSpeed(string &str, const Unit *unit, const char* speedType) const;

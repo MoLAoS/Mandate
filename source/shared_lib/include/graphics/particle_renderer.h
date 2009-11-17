@@ -26,10 +26,10 @@ class ParticleRenderer{
 public:
 	//particles
 	virtual ~ParticleRenderer(){};
-	virtual void renderManager(ParticleManager *pm, ModelRenderer *mr)=0;
-	virtual void renderSystem(ParticleSystem *ps)=0;
-	virtual void renderSystemLine(ParticleSystem *ps)=0;
-	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr)=0;
+	virtual void renderManager(ParticleManager *pm, ModelRenderer *mr) PURE_VIRTUAL;
+	virtual void renderSystem(ParticleSystem *ps) PURE_VIRTUAL;
+	virtual void renderSystemLine(ParticleSystem *ps) PURE_VIRTUAL;
+	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr) PURE_VIRTUAL;
 };
 
 }}//end namespace

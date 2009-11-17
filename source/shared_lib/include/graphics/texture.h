@@ -14,7 +14,7 @@
 
 #include "types.h"
 #include "pixmap.h"
-
+#include "util.h"
 #include <string>
 
 using std::string;
@@ -75,8 +75,8 @@ public:
 	void setPixmapInit(bool pixmapInit)	{this->pixmapInit= pixmapInit;}
 	void setFormat(Format format)		{this->format= format;}
 
-	virtual void init(Filter filter= fBilinear, int maxAnisotropy= 1)=0;
-	virtual void end()=0;
+	virtual void init(Filter filter= fBilinear, int maxAnisotropy= 1) PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
 };
 
 // =====================================================

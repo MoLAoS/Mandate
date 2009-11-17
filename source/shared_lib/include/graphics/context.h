@@ -13,6 +13,7 @@
 #define _SHARED_GRAPHICS_CONTEXT_H_ 
 
 #include "types.h"
+#include "util.h"
 
 namespace Shared{ namespace Graphics{
 
@@ -40,12 +41,12 @@ public:
 	void setDepthBits(uint32 depthBits)		{this->depthBits= depthBits;}
 	void setStencilBits(uint32 stencilBits)	{this->stencilBits= stencilBits;}
 
-	virtual void init()= 0;
-	virtual void end()= 0;
-	virtual void reset()= 0;
+	virtual void init() PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
+	virtual void reset() PURE_VIRTUAL;
 
-	virtual void makeCurrent()= 0;
-	virtual void swapBuffers()= 0;
+	virtual void makeCurrent() PURE_VIRTUAL;
+	virtual void swapBuffers() PURE_VIRTUAL;
 };
 
 }}//end namespace

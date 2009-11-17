@@ -131,16 +131,15 @@ public:
 	int getSkillTypeCount() const						{return skillTypes.size();}
 	int getCommandTypeCount() const						{return commandTypes.size();}
 	int getLevelCount() const							{return levels.size();}
-//	const PetRules &getPetRules() const					{return petRules;}
+	//	const PetRules &getPetRules() const					{return petRules;}
 	const Emanations &getEmanations() const				{return emanations;}
 	bool isMultiBuild() const							{return multiBuild;}
 	float getHalfSize() const							{return halfSize;}
 	float getHalfHeight() const							{return halfHeight;}
-   bool isMobile () const
-   {
-      const SkillType *st = getFirstStOfClass(scMove);
-      return st && st->getSpeed() > 0 ? true: false;
-   }
+	bool isMobile () const {
+		const SkillType *st = getFirstStOfClass(scMove);
+		return st && st->getSpeed() > 0 ? true: false;
+	}
 	//cellmap
 	bool *cellMap;
 

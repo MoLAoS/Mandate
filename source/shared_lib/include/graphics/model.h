@@ -139,8 +139,8 @@ public:
 	//constructor & destructor
 	Model();
 	virtual ~Model();
-	virtual void init() = 0;
-	virtual void end() = 0;
+	virtual void init() PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
 
 	//data
 	void buildShadowVolumeData() const;

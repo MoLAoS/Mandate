@@ -46,12 +46,12 @@ public:
 	AiRule(Ai *ai);
 	virtual ~AiRule() {}
 
-	virtual int getTestInterval() const= 0;	//in milliseconds
-	virtual string getName() const= 0;
+	virtual int getTestInterval() const PURE_VIRTUAL;	//in milliseconds
+	virtual string getName() const PURE_VIRTUAL;
 
 	/** Returns true if the rule should be executed. */
-	virtual bool test()= 0;
-	virtual void execute()= 0;
+	virtual bool test() PURE_VIRTUAL;
+	virtual void execute() PURE_VIRTUAL;
 };
 
 // =====================================================

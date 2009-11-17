@@ -14,6 +14,8 @@
 
 #include <cassert>
 #include <stdexcept>
+
+#include "game_constants.h"
 #include "xml_parser.h"
 
 using std::runtime_error;
@@ -138,7 +140,7 @@ public:
 	 * appropriate values for childNodeName and flagNames.
 	 */
 	virtual void load(const XmlNode *node, const string &dir,
-			const TechTree *tt, const FactionType *ft) = 0;
+			const TechTree *tt, const FactionType *ft) PURE_VIRTUAL;
 
 protected:
 	/**

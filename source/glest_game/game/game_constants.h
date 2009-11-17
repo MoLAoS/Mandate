@@ -11,6 +11,7 @@
 
 #ifndef _GLEST_GAME_GAMECONSTANTS_H_
 #define _GLEST_GAME_GAMECONSTANTS_H_
+#include "util.h"
 
 namespace Glest{ namespace Game{
 

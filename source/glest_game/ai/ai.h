@@ -49,7 +49,7 @@ protected:
 public:
 	virtual ~Task(){}
 	TaskClass getClass() const	{return taskClass;}
-	virtual string toString() const= 0;
+	virtual string toString() const PURE_VIRTUAL;
 };
 
 // ==================== ProduceTask ====================

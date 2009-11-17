@@ -28,21 +28,21 @@ class FragmentShader;
 class ShaderProgram{
 public:
 	virtual ~ShaderProgram(){}
-	virtual void init()= 0;
-	virtual void end()= 0;
+	virtual void init() PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
 
-	virtual void attach(VertexShader *vs, FragmentShader *fs)= 0;
-	virtual bool link(string &messages)= 0;
-	virtual void activate()= 0;
-	virtual void deactivate()= 0;
+	virtual void attach(VertexShader *vs, FragmentShader *fs) PURE_VIRTUAL;
+	virtual bool link(string &messages) PURE_VIRTUAL;
+	virtual void activate() PURE_VIRTUAL;
+	virtual void deactivate() PURE_VIRTUAL;
 
-	virtual void setUniform(const string &name, int value)= 0;
-	virtual void setUniform(const string &name, float value)= 0;
-	virtual void setUniform(const string &name, const Vec2f &value)= 0;
-	virtual void setUniform(const string &name, const Vec3f &value)= 0;
-	virtual void setUniform(const string &name, const Vec4f &value)= 0;
-	virtual void setUniform(const string &name, const Matrix3f &value)= 0;
-	virtual void setUniform(const string &name, const Matrix4f &value)= 0;
+	virtual void setUniform(const string &name, int value) PURE_VIRTUAL;
+	virtual void setUniform(const string &name, float value) PURE_VIRTUAL;
+	virtual void setUniform(const string &name, const Vec2f &value) PURE_VIRTUAL;
+	virtual void setUniform(const string &name, const Vec3f &value) PURE_VIRTUAL;
+	virtual void setUniform(const string &name, const Vec4f &value) PURE_VIRTUAL;
+	virtual void setUniform(const string &name, const Matrix3f &value) PURE_VIRTUAL;
+	virtual void setUniform(const string &name, const Matrix4f &value) PURE_VIRTUAL;
 };
 
 // =====================================================
@@ -52,11 +52,11 @@ public:
 class Shader{
 public:
 	virtual ~Shader(){}
-	virtual void init()= 0;
-	virtual void end()= 0;
+	virtual void init() PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
 
-	virtual void load(const string &path)= 0;
-	virtual bool compile(string &messages)= 0;
+	virtual void load(const string &path) PURE_VIRTUAL;
+	virtual bool compile(string &messages) PURE_VIRTUAL;
 };
 
 class VertexShader: virtual public Shader{

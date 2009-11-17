@@ -15,6 +15,7 @@
 #include <string>
 
 #include "vec.h"
+#include "util.h"
 
 using std::string;
 
@@ -64,8 +65,8 @@ public:
 	//constructor & destructor
 	Font();
 	virtual ~Font(){};
-	virtual void init() = 0;
-	virtual void end() = 0;
+	virtual void init() PURE_VIRTUAL;
+	virtual void end() PURE_VIRTUAL;
 
 	//get
 	string getType() const					{return type;}

@@ -56,17 +56,15 @@ public:
 	int getY() const					{return y;}
 	int getW() const					{return w;}
 	int getH() const					{return h;}
-   bool getEnabled () const { return enabled; }
-   void setEnabled ( bool enable ) { enabled = enable; }
+	bool getEnabled () const { return enabled; }
+	void setEnabled ( bool enable ) { enabled = enable; }
 	const string &getText() const		{return text;}
 	const Font2D *getFont() const		{return font;}
 	bool isInBounds(int x, int y) const {
-		return	   x >= this->x
-				&& x < this->x + w
-				&& y >= this->y
-				&& y < this->y + h;
+		return	   x >= this->x && x < this->x + w
+				&& y >= this->y && y < this->y + h;
 	}
-	
+
 	void setX(int x)					{this->x= x;}
 	void setY(int y)					{this->y= y;}
 	void setText(const string &text)	{this->text= text;}
