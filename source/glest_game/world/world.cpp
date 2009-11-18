@@ -1171,12 +1171,9 @@ void World::computeFow() {
 
 
 void World::hackyCleanUp(Unit *unit) {
-	for (Units::const_iterator i = newlydead.begin(); i != newlydead.end(); ++i) {
-		if (unit == *i) {
-			return;
-		}
+	if ( find(newlydead.begin(), newlydead.end(), unit) == newlydead.end() ) {
+		newlydead.push_back(unit);
 	}
-	newlydead.push_back(unit);
 }
 
 

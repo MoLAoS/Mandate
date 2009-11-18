@@ -848,7 +848,7 @@ void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 	assert(hp <= 0);
 	hp = 0;
 
-   World::getCurrWorld()->hackyCleanUp(this);
+	World::getCurrWorld()->hackyCleanUp(this);
 
 	if(fire != NULL) {
 		fire->fade();
@@ -873,6 +873,7 @@ void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 
 	notifyObservers(UnitObserver::eKill);
 
+
 	//clear commands
 	clearCommands();
 
@@ -883,6 +884,9 @@ void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 	if(master.getUnit()) {
 		master.getUnit()->petDied(this);
 	}
+
+	// hack... 
+	Renderer::getInstance().getParticleManager()->checkTargets(this);
 
 	// random decay time
 	//deadCount = Random(id).randRange(-256, 256);

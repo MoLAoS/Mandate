@@ -196,6 +196,8 @@ public:
 	int getRandEnergy() 				{return energy + random.randRange(-energyVar, energyVar);}
 	void fudgeGravity()					{gravity = mass * density;}
 	void fudgeMassDensity()				{mass = 1.f; density = gravity;}
+
+	virtual bool isProjectile() const	{ return false; }
 };
 
 // =====================================================
@@ -406,7 +408,11 @@ public:
 	void setPath(Vec3f startPos, Vec3f endPos);
 	void setTarget(const Entity *target)					{this->target = target;}
 
+	const Entity* getTarget() const							{return this->target; }
+
 	static Trajectory strToTrajectory(const string &str);
+
+	virtual bool isProjectile() const	{ return true; }
 };
 
 // =====================================================
@@ -462,7 +468,18 @@ public:
 			particleSystems.pop_front();
 		}
 	}
-
+	
+	void checkTargets(const Entity *dead) {
+		list<ParticleSystem*>::iterator it = particleSystems.begin();
+		for ( ; it != particleSystems.end(); ++it ) {
+			if ( *it && (*it)->isProjectile() ) {
+				ProjectileParticleSystem* pps = static_cast<ProjectileParticleSystem*>(*it);
+				if ( pps->getTarget() == dead ) {
+					pps->setTarget(NULL);
+				}
+			}
+		}
+	}
 };
 
 }}//end namespace
