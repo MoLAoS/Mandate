@@ -698,7 +698,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 							}
 						}
 						//command->setPos ( 
-					default:
+					case Search::tsBlocked:
 						break;
 					}
 				}
@@ -721,11 +721,13 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					unit->setCurrSkill(hct->getMoveLoadedSkillType());
 					unit->face(unit->getNextPos());
 					break;
+				case Search::tsBlocked:
+					unit->setCurrSkill(hct->getStopLoadedSkillType());
+					break;
 				default:
 					break;
 				}
 
-				//world->changePosCells(unit,unit->getPos()+unit->getDest());
 				if (map->isNextTo(unit->getPos(), store)) {
 
 					//update resources
@@ -765,9 +767,9 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 				//if resource exausted, then delete it and stop
 				if (r->decAmount(1)) {
 					// let the pathfinder know
-					Vec2i rPos = r->getPos ();
+					Vec2i rPos = r->getPos();
 					sc->deleteResource();
-					pathFinder->updateMapMetrics ( rPos, 2 );
+					pathFinder->updateMapMetrics(rPos, 2);
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               

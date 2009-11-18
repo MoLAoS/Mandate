@@ -184,14 +184,14 @@ void Game::init() {
 	// init world, and place camera
 	commander.init(&world);
 
-   world.init(savedGame ? savedGame->getChild("world") : NULL);
+	world.init(savedGame ? savedGame->getChild("world") : NULL);
 	gui.init();
 	chatManager.init(&console, world.getThisTeamIndex());
 	const Vec2i &v= map->getStartLocation(world.getThisFaction()->getStartLocationIndex());
 	gameCamera.init(map->getW(), map->getH());
 	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
 
-   scriptManager.init(&world, &gameCamera);
+	scriptManager.init(&world, &gameCamera);
 	
    if(savedGame && (!networkManager.isNetworkGame() || networkManager.isServer())) {
 		gui.load(savedGame->getChild("gui"));
@@ -204,8 +204,7 @@ void Game::init() {
 		if(faction->getCpuControl()&& scriptManager.getPlayerModifiers(i)->getAiEnabled()){
 			aiInterfaces[i]= new AiInterface(*this, i, faction->getTeam());
 			logger.add("Creating AI for faction " + intToStr(i), true);
-		}
-		else{
+		} else{
 			aiInterfaces[i]= NULL;
 		}
 	}
@@ -217,8 +216,7 @@ void Game::init() {
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
-	}
-	else if(world.getTileset()->getWeather() == wSnowy){
+	} else if(world.getTileset()->getWeather() == wSnowy){
 		logger.add("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());

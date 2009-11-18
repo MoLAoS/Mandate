@@ -2021,7 +2021,7 @@ void Renderer::renderMinimap(){
 	for(int i=0; i<world->getFactionCount(); ++i){
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			Unit *unit= world->getFaction(i)->getUnit(j);
-			if(world->toRenderUnit(unit)){
+			if(world->toRenderUnit(unit) && unit->isAlive()){
 				Vec2i pos= unit->getPos()/Map::cellScale;
 				int size= unit->getType()->getSize();
 				Vec3f color=  world->getFaction(i)->getTexture()->getPixmap()->getPixel3f(0, 0);
