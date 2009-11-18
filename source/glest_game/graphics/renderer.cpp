@@ -546,7 +546,7 @@ void Renderer::renderMouse3d(){
 			//selection building emplacement
 			float offset= building->getSize()/2.f-0.5f;
 
-			for(Gui::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); i++) {
+			for(Gui::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); ++i) {
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
 				glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);

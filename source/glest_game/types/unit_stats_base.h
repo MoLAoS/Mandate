@@ -168,6 +168,7 @@ protected:
 
 public:
 	UnitStatsBase() {damageMultipliers.resize(damageMultiplierCount);}
+    virtual ~UnitStatsBase() {}
 
 	// ==================== get ====================
 

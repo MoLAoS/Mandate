@@ -206,7 +206,7 @@ const string &Properties::_getString(const string &key, const string *pDef) cons
 string Properties::toString() const {
 	stringstream str;
 
-	for (PropertyMap::const_iterator pi = propertyMap.begin(); pi != propertyMap.end(); pi++)
+	for (PropertyMap::const_iterator pi = propertyMap.begin(); pi != propertyMap.end(); ++pi)
 		str << pi->first << "=" << pi->second << endl;
 
 	return str.str();

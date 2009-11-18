@@ -116,7 +116,7 @@ void AiRuleRepair::execute(){
 
 	//try all of our repairable units in case one type of repairer is busy, but
 	//others aren't.
-	for(Units::iterator ui = repairable.begin(); ui != repairable.end(); ui++) {
+	for(Units::iterator ui = repairable.begin(); ui != repairable.end(); ++ui) {
 		const Unit *damagedUnit= *ui;
 		Vec2f fpos = damagedUnit->getFloatCenteredPos();
 		int size = damagedUnit->getType()->getSize();
