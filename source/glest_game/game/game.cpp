@@ -940,9 +940,7 @@ void Game::checkWinner(){
 	if(!gameOver){
 		if(gameSettings.getDefaultVictoryConditions()){
 			checkWinnerStandard();
-		}
-		else
-		{
+		} else {
 			checkWinnerScripted();
 		}
 	}
@@ -955,7 +953,9 @@ void Game::checkWinnerStandard(){
 		lose= true;
 		for(int i=0; i<world.getFactionCount(); ++i){
 			if(!world.getFaction(i)->isAlly(world.getThisFaction())){
-				world.getStats().setVictorious(i);	
+				if ( hasBuilding(world.getFaction(i)) ) {
+					world.getStats().setVictorious(i);	
+				}
 			}
 		}
 		gameOver= true;
@@ -977,7 +977,9 @@ void Game::checkWinnerStandard(){
 		if(win){
 			for(int i=0; i< world.getFactionCount(); ++i){
 				if(world.getFaction(i)->isAlly(world.getThisFaction())){
-					world.getStats().setVictorious(i);	
+					if ( hasBuilding(world.getFaction(i)) ) {
+						world.getStats().setVictorious(i);	
+					}
 				}
 			}
 			gameOver= true;
@@ -996,8 +998,7 @@ void Game::checkWinnerScripted(){
 		}
 		if(scriptManager.getPlayerModifiers(world.getThisFactionIndex())->getWinner()){
 			showWinMessageBox();
-		}
-		else{
+		} else {
 			showLoseMessageBox();
 		}
 	}
