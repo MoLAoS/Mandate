@@ -140,6 +140,7 @@ Program::Program(Config &config, int argc, char** argv) :
 	soundRenderer.init(this);
 
 	keymap.save("keymap.ini");
+	keymap.load("keymap.ini");
 
 	// startup and immediately host a game
 	if(argc == 2 && string(argv[1]) == "-server") {
