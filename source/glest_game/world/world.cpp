@@ -61,7 +61,7 @@ World::World(Game *game) : game(*game), gs(game->getGameSettings()), stats(game-
 }
 
 void World::end() {
-	Logger::getInstance().add("World", true);
+	Logger::getInstance().add("World", !Program::getInstance()->isTerminating());
 	alive = false;
 
 	for (int i = 0; i < factions.size(); ++i) {

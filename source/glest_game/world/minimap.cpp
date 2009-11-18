@@ -22,6 +22,7 @@
 #include "types.h"
 #include "socket.h"
 #include "map.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -73,7 +74,7 @@ void Minimap::init(int w, int h, const World *world){
 }
 
 Minimap::~Minimap(){
-	Logger::getInstance().add("Minimap", true);
+	Logger::getInstance().add("Minimap", !Program::getInstance()->isTerminating());
 	delete fowPixmap0;
 	delete fowPixmap1;
 }

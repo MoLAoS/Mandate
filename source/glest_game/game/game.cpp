@@ -104,8 +104,9 @@ Game::~Game() {
     Logger &logger= Logger::getInstance();
 	Renderer &renderer= Renderer::getInstance();
 
+	logger.setLoading ( true );
 	logger.setState(Lang::getInstance().get("Deleting"));
-	logger.add("Game", true);
+	logger.add("Game", !Program::getInstance()->isTerminating());
 
 	renderer.endGame();
 	SoundRenderer::getInstance().stopAllSounds();
@@ -116,7 +117,6 @@ Game::~Game() {
 	gui.end();		//selection must be cleared before deleting units
 	world.end();	//must die before selection because of referencers
 	singleton = NULL;
-   logger.setLoading ( true );
 }
 
 

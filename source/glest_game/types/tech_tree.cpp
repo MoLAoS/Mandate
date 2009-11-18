@@ -20,6 +20,7 @@
 #include "logger.h"
 #include "xml_parser.h"
 #include "platform_util.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -168,7 +169,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum
 }
 
 TechTree::~TechTree(){
-	Logger::getInstance().add("Tech tree", true);
+	Logger::getInstance().add("Tech tree", !Program::getInstance()->isTerminating());
 }
 
 

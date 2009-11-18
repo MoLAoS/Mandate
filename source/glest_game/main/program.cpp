@@ -98,6 +98,7 @@ Program::Program(Config &config, int argc, char** argv) :
 		updateCameraTimer(GameConstants::cameraFps, maxTimes, 10),
 		programState(NULL),
 		crashed(false),
+		terminate(false),
 		keymap(getInput(), "keymap.ini") {
 
 	//set video mode
@@ -163,8 +164,6 @@ Program::Program(Config &config, int argc, char** argv) :
 }
 
 Program::~Program() {
-	singleton = NULL;
-
 	if(programState) {
 		delete programState;
 	}
@@ -173,6 +172,7 @@ Program::~Program() {
 
 	//restore video mode
 	restoreDisplaySettings();
+	singleton = NULL;
 }
 
 void Program::loop() {
@@ -210,6 +210,7 @@ void Program::loop() {
 			programState->tick();
 		}
 	}
+	terminate = true;
 }
 
 void Program::eventResize(SizeState sizeState) {

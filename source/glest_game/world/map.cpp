@@ -27,6 +27,7 @@
 #include "config.h"
 #include "socket.h"
 #include "selection.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -265,7 +266,7 @@ Map::Map() :
 }
 
 Map::~Map() {
-	Logger::getInstance().add("Cells", true);
+	Logger::getInstance().add("Cells", !Program::getInstance()->isTerminating());
 
 	if(cells)			{delete[] cells;}
 	if(tiles)	{delete[] tiles;}

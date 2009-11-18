@@ -102,7 +102,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 
 	//lang
 	vector<string> langResults;
-	findAll("data/lang/*.lng", langResults, true);
+	findAll("gae/data/lang/*.lng", langResults, true);
 	if(langResults.empty()){
         throw runtime_error("There is no lang file");
 	}

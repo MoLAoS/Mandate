@@ -108,6 +108,9 @@ private:
 	bool crashed;
 	Keymap keymap;
 
+	bool terminate;
+
+
 private:
 	Program(const Program &);
 	const Program &operator =(const Program &);
@@ -117,6 +120,7 @@ public:
     ~Program();
 	static Program *getInstance()	{return singleton;}
 
+	bool isTerminating() const	{ return terminate; }
 	Keymap &getKeymap() 			{return keymap;}
 
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) {

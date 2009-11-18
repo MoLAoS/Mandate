@@ -18,6 +18,7 @@
 #include "logger.h"
 #include "util.h"
 #include "renderer.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -201,7 +202,7 @@ void Tileset::load(const string &dir, Checksum &checksum){
 }
 
 Tileset::~Tileset(){
-	Logger::getInstance().add("Tileset", true);
+	Logger::getInstance().add("Tileset", !Program::getInstance()->isTerminating());
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type, int var) const{
