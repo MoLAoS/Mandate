@@ -337,6 +337,10 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 // 	class AttackSkillType
 // =====================================================
 
+AttackSkillType::~AttackSkillType() { 
+	delete earthquakeType; 
+}
+
 void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
 	TargetBasedSkillType::load(sn, dir, tt, ft);
 
