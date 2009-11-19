@@ -71,7 +71,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib xerces-depdom_static_2.lib xerces-c_static_2.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib lua5.1.lib"
+				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib lua5.1.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				IgnoreAllDefaultLibraries="false"
@@ -253,7 +253,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib xerces-depdom_static_2.lib xerces-c_static_2.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib libcmt.lib lua5.1.lib"
+				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib libcmt.lib lua5.1.lib"
 				Version="3.1.0-beta-something"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"

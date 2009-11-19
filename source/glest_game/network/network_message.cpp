@@ -140,7 +140,7 @@ NetworkMessage *NetworkMessage::readMsg(NetworkDataBuffer &buf) {
 
 	assert(buf.size() == bytesReady - msgSize);
 	assert(msg->getNetSize() + sizeof(msgSize) + sizeof(type) == msgSize);
-	
+
 	if(Config::getInstance().getMiscDebugMode()) {
 		NetworkManager &netmgr = NetworkManager::getInstance();
 		Logger &log = (netmgr.isServer() ? Logger::getServerLog() : Logger::getClientLog());
@@ -339,7 +339,7 @@ size_t NetworkMessageCommandList::getNetSize() const {
 	for(vector<Command*>::const_iterator i = commands.begin(); i != commands.end(); ++i) {
 		size += (*i)->getNetSize();
 	}
-	return size;			
+	return size;
 }
 
 
@@ -349,7 +349,7 @@ void NetworkMessageCommandList::read(NetworkDataBuffer &buf) {
 	buf.read(commandCount);
 	buf.read(frameCount);
 	assert(commandCount <= maxCommandCount);
-	for(int i = 0; i < commandCount; ++i) {		
+	for(int i = 0; i < commandCount; ++i) {
 		commands.push_back(new Command(buf));
 	}
 }
@@ -361,7 +361,7 @@ void NetworkMessageCommandList::write(NetworkDataBuffer &buf) const {
 	buf.write(frameCount);
 
 	for(Commands::const_iterator i = commands.begin(); i != commands.end(); ++i) {
-		(*i)->write(buf);	
+		(*i)->write(buf);
 	}
 }
 
@@ -479,11 +479,7 @@ void NetworkMessageFileFragment::write(NetworkDataBuffer &buf) const {
 
 void NetworkMessageXmlDoc::freeData() {
 	if(data) {
-		if(domAllocated) {
-			XmlIo::getInstance().releaseString(&data);
-		} else {
-			free(data);
-		}
+		free(data);
 	}
 }
 
@@ -510,8 +506,7 @@ void NetworkMessageXmlDoc::read(NetworkDataBuffer &buf) {
 		throw runtime_error("Buffer does not contain the specified number of bytes for compressed XML document.");
 	}
 
-	data = (char *)malloc(size);
-	domAllocated = false;
+	data = static_cast<char *>(malloc(size));
 
 	if(!data) {
 		throw runtime_error(string("Failed to allocate ") + intToStr(size) + " bytes of data");
@@ -547,14 +542,15 @@ void NetworkMessageXmlDoc::parse() {
 void NetworkMessageXmlDoc::writeXml() {
 	assert(!data);
 	assert(rootNode);
-	data = rootNode->toString(Config::getInstance().getMiscDebugMode());
-	size = strlen(data) + 1;
-	domAllocated = true;
+	auto_ptr<string> strData = rootNode->toString(Config::getInstance().getMiscDebugMode());
+	size = strData->length() + 1;
+	data = strncpy(static_cast<char *>(malloc(size)), strData->c_str(), size);
+	data[size - 1] = 0;	// just in case
 }
 
 void NetworkMessageXmlDoc::compress() {
 	uLongf destLen = (uLongf)(size * 1.001f + 12);
-	char *compressedData = (char *)malloc(destLen);
+	char *compressedData = static_cast<char *>(malloc(destLen));
 
 	int zstatus = ::compress2((Bytef *)compressedData, &destLen, (const Bytef *)data, size, Z_BEST_COMPRESSION);
 
@@ -565,7 +561,7 @@ void NetworkMessageXmlDoc::compress() {
 
 	// free old data buffer and shrink the new one
 	freeData();
-	data = (char *)realloc(compressedData, compressedSize = destLen);
+	data = static_cast<char *>(realloc(compressedData, compressedSize = destLen));
 	compressed = true;
 }
 
