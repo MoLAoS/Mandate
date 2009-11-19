@@ -140,7 +140,7 @@ private:
 
 public:
 	EffectType();
-	virtual ~EffectType() {}
+	virtual ~EffectType() { delete sound; }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 
 	EffectBias getBias() const				{return bias;}

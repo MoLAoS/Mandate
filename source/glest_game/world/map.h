@@ -698,6 +698,7 @@ private:
 
 public:
 	EarthquakeType(float maxDps, const AttackType *attackType);
+	~EarthquakeType() { delete sound; }
 	void load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	void spawn(Map &map, Unit *cause, const Vec2i &epicenter, float strength) const;
 

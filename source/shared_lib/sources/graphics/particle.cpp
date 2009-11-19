@@ -661,7 +661,7 @@ ParticleManager::~ParticleManager(){
 void ParticleManager::render(ParticleRenderer *pr, ModelRenderer *mr) const{
 	list<ParticleSystem*>::const_iterator it;
 
-	for (it=particleSystems.begin(); it!=particleSystems.end(); it++){
+	for (it=particleSystems.begin(); it!=particleSystems.end(); ++it){
 		if((*it)->getVisible()){
 			(*it)->render(pr, mr);
 		}
@@ -671,7 +671,7 @@ void ParticleManager::render(ParticleRenderer *pr, ModelRenderer *mr) const{
 void ParticleManager::update(){
 	list<ParticleSystem*>::iterator it;
 
-	for (it = particleSystems.begin(); it != particleSystems.end(); it++) {
+	for (it = particleSystems.begin(); it != particleSystems.end(); ++it) {
 		(*it)->update();
 		if ((*it)->isEmpty()) {
 			delete *it;

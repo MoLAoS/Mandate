@@ -1496,8 +1496,11 @@ namespace Glest{ namespace Game{
 // 	class EarthquakeType
 // =====================================================
 
-EarthquakeType::EarthquakeType(float maxDps, const AttackType *attackType) :
-		maxDps(maxDps), attackType(attackType), affectsAllies(true) {
+EarthquakeType::EarthquakeType(float maxDps, const AttackType *attackType) 
+		: maxDps(maxDps)
+		, attackType(attackType)
+		, affectsAllies(true)
+		, sound(NULL) {
 }
 
 /** Load the EarthquakeType from xml */

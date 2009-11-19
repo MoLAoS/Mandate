@@ -559,14 +559,11 @@ void UnitUpdater::updateBuild(Unit *unit){
 					}
 					unit->getFaction()->applyCosts(command->getUnitType());
 				}
-
-				builtUnit = new Unit(world->getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), world->getMap());
-				builtUnit->create();
-
 				if(!builtUnitType->hasSkillClass(scBeBuilt)){
 					throw runtime_error("Unit " + builtUnitType->getName() + " has no be_built skill");
 				}
-
+				builtUnit = new Unit(world->getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), world->getMap());
+				builtUnit->create();
 				builtUnit->setCurrSkill(scBeBuilt);
 				unit->setCurrSkill(bct->getBuildSkillType());
 				unit->setTarget(builtUnit, true, true);

@@ -421,13 +421,12 @@ void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt
 // 	class RepairSkillType
 // ===============================
 
-RepairSkillType::RepairSkillType() : SkillType(scRepair, "Repair") {
+RepairSkillType::RepairSkillType() : SkillType(scRepair, "Repair"), splashParticleSystemType(NULL) {
 	amount = 0;
 	multiplier = 1.0f;
 	petOnly = false;
 	selfAllowed = true;
 	selfOnly = false;
-	splashParticleSystemType = NULL;
 }
 
 void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
