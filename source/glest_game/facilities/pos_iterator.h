@@ -53,7 +53,9 @@ public:
 			case 5: return Vec2i( step, -off);
 			case 6: return Vec2i(-off,  -step);
 			case 7: return Vec2i(-step, -off);
-			default: assert(false);
+			default: 
+				assert(false); 
+				return Vec2i(0);
 		}
 	}
 /*
