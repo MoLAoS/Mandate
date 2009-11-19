@@ -126,7 +126,7 @@ public:
 	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
 
 	//diplomacy
-	bool isAlly(const Faction *faction)					{return teamIndex == faction->getTeam();}
+	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
 
     //other
 	Unit *findUnit(int id) {

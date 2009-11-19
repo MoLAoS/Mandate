@@ -946,46 +946,36 @@ void Game::checkWinner(){
 	}
 }
 
-void Game::checkWinnerStandard(){
-	//lose
-	bool lose= false;
-	if(!hasBuilding(world.getThisFaction())){
-		lose= true;
-		for(int i=0; i<world.getFactionCount(); ++i){
-			if(!world.getFaction(i)->isAlly(world.getThisFaction())){
-				if ( hasBuilding(world.getFaction(i)) ) {
-					world.getStats().setVictorious(i);	
-				}
+void Game::checkWinnerStandard() {
+	const Faction *lf = world.getThisFaction();
+	// check loss
+	if ( !hasBuilding(lf) ) { // we have a loser...
+		for ( int i = 0; i < world.getFactionCount(); ++i ) {
+			const Faction *f = world.getFaction(i);
+			if ( !f->isAlly(lf) && hasBuilding(f) ) {
+				world.getStats().setVictorious(i);
 			}
 		}
 		gameOver= true;
 		showLoseMessageBox();
+		return;
 	}
-
-	//win
-	if(!lose){
-		bool win= true;
-		for(int i=0; i<world.getFactionCount(); ++i){
-			if(i!=world.getThisFactionIndex()){
-				if(hasBuilding(world.getFaction(i)) && !world.getFaction(i)->isAlly(world.getThisFaction())){
-					win= false;
-				}
-			}
-		}
-
-		//if win
-		if(win){
-			for(int i=0; i< world.getFactionCount(); ++i){
-				if(world.getFaction(i)->isAlly(world.getThisFaction())){
-					if ( hasBuilding(world.getFaction(i)) ) {
-						world.getStats().setVictorious(i);	
-					}
-				}
-			}
-			gameOver= true;
-			showWinMessageBox();
+	// check win
+	for ( int i = 0; i < world.getFactionCount(); ++i ) {
+		const Faction *f = world.getFaction(i);
+		if ( f != lf && hasBuilding(f) && !f->isAlly(lf) ) {
+			return; // no winner.
 		}
 	}
+	// we have a winner!
+	for(int i = 0; i < world.getFactionCount(); ++i ) {
+		const Faction *f = world.getFaction(i);
+		if ( f->isAlly(lf) && hasBuilding(f) ) {
+			world.getStats().setVictorious(i);	
+		}
+	}
+	gameOver = true;
+	showWinMessageBox();
 }
 
 void Game::checkWinnerScripted(){
