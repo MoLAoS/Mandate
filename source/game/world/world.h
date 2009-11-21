@@ -55,6 +55,7 @@ class ScriptManager;
 class World{
 private:
 	typedef vector<Faction> Factions;
+	typedef std::map<string,set<string>> UnitTypes;
 
 public:
 	static const int generationArea= 100;
@@ -94,6 +95,8 @@ private:
 
 	static World *singleton;
 	bool alive;
+
+	UnitTypes unitTypes;
 
 	Units newlydead;
 	PosCircularIteratorFactory posIteratorFactory;
@@ -163,13 +166,13 @@ public:
 	}
 
 	//scripting interface
-	void createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
-	void givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
-	void giveTargetCommand ( int unitId, const string &commandName, int targetId );
-	void giveStopCommand ( int unitId, const string &commandName );
-	void giveProductionCommand(int unitId, const string &producedName);
-	void giveUpgradeCommand(int unitId, const string &upgradeName);
-	void giveResource(const string &resourceName, int factionIndex, int amount);
+	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
+	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
+	int giveTargetCommand ( int unitId, const string &commandName, int targetId );
+	int giveStopCommand ( int unitId, const string &commandName );
+	int giveProductionCommand(int unitId, const string &producedName);
+	int giveUpgradeCommand(int unitId, const string &upgradeName);
+	int giveResource(const string &resourceName, int factionIndex, int amount);
 	int getResourceAmount(const string &resourceName, int factionIndex);
 	Vec2i getStartLocation(int factionIndex);
 	Vec2i getUnitPosition(int unitId);

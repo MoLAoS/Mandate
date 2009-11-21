@@ -21,6 +21,7 @@
 
 using std::string;
 using Shared::Graphics::Vec2i;
+using Shared::Graphics::Vec4i;
 using namespace Shared::Util;
 
 namespace Shared { namespace Lua {
@@ -42,6 +43,7 @@ class LuaScript {
 private:
 	LuaHandle *luaState;
 	int argumentCount;
+	string lastError;
 
 public:
 	LuaScript();
@@ -49,10 +51,13 @@ public:
 
 	void startUp();
 
-	void loadCode(const string &code, const string &name);
+	bool loadCode(const string &code, const string &name);
 
 	bool isDefined( const string &functionName );
+	bool luaCallback(const string& functionName, int id);
 	bool luaCall(const string& functionName);
+
+	string& getLastError() { return lastError; }
 
 	void registerFunction(LuaFunction luaFunction, const string &functionName);
 
@@ -80,6 +85,7 @@ public:
 	int getInt(int argumentIndex) const;
 	string getString(int argumentIndex) const;
 	Vec2i getVec2i(int argumentIndex) const;
+	Vec4i getVec4i(int argumentIndex) const;
 	int getReturnCount() const					{return returnCount;}
 	int getArgumentCount() const				{return args;}
 
@@ -87,7 +93,7 @@ public:
 	void returnString(const string &value);
 	void returnVec2i(const Vec2i &value);
 
-	const char* getType(int ndx) const;
+	char* getType ( int ndx ) const;
 };
 
 }}//end namespace

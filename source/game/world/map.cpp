@@ -27,6 +27,7 @@
 #include "config.h"
 #include "socket.h"
 #include "selection.h"
+#include "script_manager.h"
 
 #include "leak_dumper.h"
 
@@ -1001,6 +1002,7 @@ void Map::putUnitCells(Unit *unit, const Vec2i &pos){
 		}
 	}
 	unit->setPos(pos);
+	ScriptManager::unitMoved(unit);
 }
 
 //removes a unit from cells

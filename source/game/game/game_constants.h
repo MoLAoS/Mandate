@@ -21,6 +21,7 @@
 #define theCamera		(*Game::getInstance()->getGameCamera())
 #define theGameSettings (Game::getInstance()->getGameSettings())
 #define theConsole		(*Game::getInstance()->getConsole())
+#define theLogger		(Logger::getInstance())
 
 namespace Glest{ namespace Game{
 
