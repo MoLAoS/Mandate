@@ -125,21 +125,18 @@ struct CompoundRegion : public Region {
 // =====================================================
 
 class LocationEventManager {
-	typedef map<string,Region*> Regions;
-	typedef map<string,string> Events;
-	typedef multimap<int, string> Triggers;
+	//TODO: make ugly... use integer ids only in C++, strings from Lua looked-up in a map<string,int>
+	typedef map<string,Region*>	Regions; 
+	typedef map<string,string>	Events;
+	typedef vector<string>		Triggers;
+	typedef map<int,Triggers>	TriggersMap;
 
-	// named regions
 	Regions regions;
-	
-	// named events, maps to region
 	Events  events;
 
-	// maps to event name
-	Triggers unitIdTriggers;
-	Triggers factionIndexTriggers;
-	Triggers teamIndexTriggers;
-	//map<int, multimap<const UnitType*, string>> factionUnitTypeTriggers;
+	TriggersMap unitIdTriggers;
+	TriggersMap factionTriggers;
+	TriggersMap teamTriggers;
 
 public:
 	LocationEventManager() { reset(); }
@@ -192,9 +189,6 @@ public:
 // =====================================================
 
 class ScriptManager {
-
-	//friend class World; // Lua Debugging, using setDisplayTest()
-
 private:
 	typedef queue<ScriptManagerMessage> MessageQueue;
 

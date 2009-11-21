@@ -63,118 +63,76 @@ void LocationEventManager::reset() {
 	regions.clear();
 	events.clear();
 	unitIdTriggers.clear();
-	factionIndexTriggers.clear();
-	teamIndexTriggers.clear();
-	//factionUnitTypeTriggers.clear();
 }
 
 bool LocationEventManager::registerRegion(const string &name, const Rect &rect) {
-	/*
 	if ( regions.find(name) != regions.end() ) {
 		return false;
 	}
 	Region *region = new Rect(rect);
-	regions[name] = region;*/
+	regions[name] = region;
 	return true;
 }
 
 int LocationEventManager::registerEvent(const string &name, const string &region) {
-	/*
 	if ( events.find(name) != events.end() ) {
 		return -1;
 	}
 	if ( regions.find(region) == regions.end() ) {
 		return -2;
 	}
-	events[name] = region;*/
+	events[name] = region;
 	return 0;
 }
 
-
-
 void LocationEventManager::unitMoved(const Unit *unit) {
-	/*Triggers::iterator it;
 	// check id
-	it = unitIdTriggers.lower_bound(unit->getId());
-	while ( it != unitIdTriggers.upper_bound(unit->getId()) ) {
-		if ( regions[events[it->second]]->isInside(unit->getPos()) ) {
-			ScriptManager::onTrigger(it->second, unit->getId());
-			it = unitIdTriggers.erase(it);
+	int id = unit->getId();
+	TriggersMap::iterator tmit = unitIdTriggers.find(id);
+	if ( tmit == unitIdTriggers.end() ) return;
+	Triggers &triggers = tmit->second;
+	Triggers::iterator it = triggers.begin();
+	while ( it != triggers.end() ) {
+		Region *region = regions[events[*it]];
+		if ( region->isInside(unit->getPos()) ) {
+			ScriptManager::onTrigger(*it, id);
+			it = triggers.erase(it);
 		} else {
 			++it;
 		}
 	}
-	// check faction index
-	it = factionIndexTriggers.lower_bound(unit->getFactionIndex());
-	while ( it != factionIndexTriggers.upper_bound(unit->getFactionIndex()) ) {
-		if ( regions[events[it->second]]->isInside(unit->getPos()) ) {
-			ScriptManager::onTrigger(it->second, unit->getId());
-			it = factionIndexTriggers.erase(it);
-		} else {
-			++it;
-		}
-	}
-	// check team index
-	it = teamIndexTriggers.lower_bound(unit->getTeam());
-	while ( it != teamIndexTriggers.upper_bound(unit->getTeam()) ) {
-		if ( regions[events[it->second]]->isInside(unit->getPos()) ) {
-			ScriptManager::onTrigger(it->second, unit->getId());
-			it = teamIndexTriggers.erase(it);
-		} else {
-			++it;
-		}
-	}*/
-	// check unit type for faction index
 }
 
 void LocationEventManager::unitDied(const Unit *unit) {
-	/*int id = unit->getId();
-	Triggers::iterator it = unitIdTriggers.begin();
-	while ( it != unitIdTriggers.end() ) {
-		if ( id == it->first ) {
-			it = unitIdTriggers.erase(it);
-		} else {
-			++it;
-		}
-	}*/
+	int id = unit->getId();
+	TriggersMap::iterator it = unitIdTriggers.find(id);
+	if ( it != unitIdTriggers.end() ) {
+		unitIdTriggers.erase(it);
+	}
 }
 
-/** @return 0 if ok, -1 if bad unit id, -2 if event not found  */
+/** @return 0 if ok, -1 if bad unit id, -2 if event not found, -3 event already registered for this unit */
 int LocationEventManager::addUnitIdTrigger(int unitId, const string &eventName) {
 	//theLogger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
-	/*Unit *unit = theWorld.findUnitById(unitId);
-	if ( !unit ) {
-		return -1;
+	Unit *unit = theWorld.findUnitById(unitId);
+	if ( !unit ) return -1;
+	if ( events.find(eventName) == events.end() ) return -2;
+	if ( unitIdTriggers.find(unitId) == unitIdTriggers.end() ) {
+		unitIdTriggers.insert(pair<int,Triggers>(unitId,Triggers()));
 	}
-	if ( events.find(eventName) == events.end() ) {
-		return -2;
+	if ( find(unitIdTriggers[unitId].begin(), unitIdTriggers[unitId].end(), eventName) 
+	!= unitIdTriggers[unitId].end() ) {
+		return -3;
 	}
-	unitIdTriggers.insert(pair<int,string>(unitId,eventName));*/
+	unitIdTriggers[unitId].push_back(eventName);
 	return 0;
 }
-
-/** @return 0 if ok, -1 if bad index, -2 if event not found  */
-int LocationEventManager::addFactionTrigger(int ndx, const string &eventName ) {
-	/*if ( ndx < 0 || ndx >= theWorld.getFactionCount() ) {
-		return -1;
-	}
-	if ( events.find(eventName) == events.end() ) {
-		return -2;
-	}
-	factionIndexTriggers.insert(pair<int,string>(ndx, eventName));*/
-	return 0;
+int LocationEventManager::addFactionTrigger(int ndx, const string &eventName) {
+	return -9;
 }
 
-/** @return 0 if ok, -1 if bad index, -2 if event not found  */
-int LocationEventManager::addTeamTrigger(int ndx, const string &eventName ) {
-	/*if ( ndx < 0 || ndx >= GameConstants::maxPlayers ) {
-		return -1;
-	}
-	if ( events.find(eventName) == events.end() ) {
-		return -2;
-	}
-	teamIndexTriggers.insert(pair<int,string>(ndx,eventName));*/
-	return 0;
+int LocationEventManager::addTeamTrigger(int ndx, const string &eventName) {
+	return -9;
 }
 
 LocationEventManager ScriptManager::locationEventManager;
@@ -369,6 +327,7 @@ void ScriptManager::onUnitDied(const Unit* unit){
 
 void ScriptManager::onTrigger(const string &name, int unitId) {
 	if ( !luaScript.luaCallback("unitEvent_" + name, unitId) ) {
+		addErrorMessage("unitEvent_" + name + "(" + intToStr(unitId) + "): call failed.");
 		addErrorMessage();
 	}
 }
