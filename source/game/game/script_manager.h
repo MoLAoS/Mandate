@@ -107,7 +107,7 @@ struct CompoundRegion : public Region {
 
 	template<typename InIter>
 	void addRegions(InIter start, InIter end) {
-		copy(start,end,regions.end())
+		copy(start,end,regions.end());
 	}
 
 	virtual bool isInside(const Vec2i &pos) const {

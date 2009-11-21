@@ -55,7 +55,7 @@ class ScriptManager;
 class World{
 private:
 	typedef vector<Faction> Factions;
-	typedef std::map<string,set<string>> UnitTypes;
+	typedef std::map< string,set<string> > UnitTypes;
 
 public:
 	static const int generationArea= 100;

@@ -1081,7 +1081,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName){
 	if(factionIndex<factions.size()){
 		Faction* faction= &factions[factionIndex];
 		int count= 0;
-		string &ftName = faction->getType()->getName();
+		const string &ftName = faction->getType()->getName();
 		if ( unitTypes[ftName].find(typeName) == unitTypes[ftName].end() ) {
 			return -2;
 		}
@@ -1162,7 +1162,7 @@ void World::initFactionTypes() {
 		factions[i].init( ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
 				gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ());
 		if ( unitTypes.find(ft->getName()) == unitTypes.end() ) {
-			unitTypes.insert(pair<string,set<string>>(ft->getName(),set<string>()));
+			unitTypes.insert(pair< string,set<string> >(ft->getName(),set<string>()));
 			for ( int j = 0; j < ft->getUnitTypeCount(); ++j ) {
 				unitTypes[ft->getName()].insert(ft->getUnitType(j)->getName());
 			}

@@ -69,29 +69,31 @@ void LocationEventManager::reset() {
 }
 
 bool LocationEventManager::registerRegion(const string &name, const Rect &rect) {
+	/*
 	if ( regions.find(name) != regions.end() ) {
 		return false;
 	}
 	Region *region = new Rect(rect);
-	regions[name] = region;
+	regions[name] = region;*/
 	return true;
 }
 
 int LocationEventManager::registerEvent(const string &name, const string &region) {
+	/*
 	if ( events.find(name) != events.end() ) {
 		return -1;
 	}
 	if ( regions.find(region) == regions.end() ) {
 		return -2;
 	}
-	events[name] = region;
+	events[name] = region;*/
 	return 0;
 }
 
 
 
 void LocationEventManager::unitMoved(const Unit *unit) {
-	Triggers::iterator it;
+	/*Triggers::iterator it;
 	// check id
 	it = unitIdTriggers.lower_bound(unit->getId());
 	while ( it != unitIdTriggers.upper_bound(unit->getId()) ) {
@@ -121,12 +123,12 @@ void LocationEventManager::unitMoved(const Unit *unit) {
 		} else {
 			++it;
 		}
-	}
+	}*/
 	// check unit type for faction index
 }
 
 void LocationEventManager::unitDied(const Unit *unit) {
-	int id = unit->getId();
+	/*int id = unit->getId();
 	Triggers::iterator it = unitIdTriggers.begin();
 	while ( it != unitIdTriggers.end() ) {
 		if ( id == it->first ) {
@@ -134,44 +136,44 @@ void LocationEventManager::unitDied(const Unit *unit) {
 		} else {
 			++it;
 		}
-	}
+	}*/
 }
 
 /** @return 0 if ok, -1 if bad unit id, -2 if event not found  */
 int LocationEventManager::addUnitIdTrigger(int unitId, const string &eventName) {
 	//theLogger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
-	Unit *unit = theWorld.findUnitById(unitId);
+	/*Unit *unit = theWorld.findUnitById(unitId);
 	if ( !unit ) {
 		return -1;
 	}
 	if ( events.find(eventName) == events.end() ) {
 		return -2;
 	}
-	unitIdTriggers.insert(pair<int,string>(unitId,eventName));
+	unitIdTriggers.insert(pair<int,string>(unitId,eventName));*/
 	return 0;
 }
 
 /** @return 0 if ok, -1 if bad index, -2 if event not found  */
 int LocationEventManager::addFactionTrigger(int ndx, const string &eventName ) {
-	if ( ndx < 0 || ndx >= theWorld.getFactionCount() ) {
+	/*if ( ndx < 0 || ndx >= theWorld.getFactionCount() ) {
 		return -1;
 	}
 	if ( events.find(eventName) == events.end() ) {
 		return -2;
 	}
-	factionIndexTriggers.insert(pair<int,string>(ndx, eventName));
+	factionIndexTriggers.insert(pair<int,string>(ndx, eventName));*/
 	return 0;
 }
 
 /** @return 0 if ok, -1 if bad index, -2 if event not found  */
 int LocationEventManager::addTeamTrigger(int ndx, const string &eventName ) {
-	if ( ndx < 0 || ndx >= GameConstants::maxPlayers ) {
+	/*if ( ndx < 0 || ndx >= GameConstants::maxPlayers ) {
 		return -1;
 	}
 	if ( events.find(eventName) == events.end() ) {
 		return -2;
 	}
-	teamIndexTriggers.insert(pair<int,string>(ndx,eventName));
+	teamIndexTriggers.insert(pair<int,string>(ndx,eventName));*/
 	return 0;
 }
 
