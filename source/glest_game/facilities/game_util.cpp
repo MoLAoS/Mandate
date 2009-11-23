@@ -27,7 +27,7 @@ namespace Glest{ namespace Game{
 const string mailString= "contact_game@glest.org";
 const string gaeMailString= "daniel.santos@pobox.com";
 const string glestVersionString= "v3.2.2";
-const string gaeVersionString= "v0.2.12";
+const string gaeVersionString= "v0.2.12b";
 
 string getCrashDumpFileName(){
 	return "gae" + gaeVersionString + ".dmp";
@@ -42,7 +42,7 @@ string getAboutString1(int i){
 	case 0: return "Glest Advanced Engine " + gaeVersionString + " based on Glest "
 			+ glestVersionString + " (" + "Shared Library " + sharedLibVersionString + ")";
 	case 1: return "Built: " + string(__DATE__);
-	case 2: return "Copyright 2001-2008 The Glest Team, 2008 Daniel Santos";
+	case 2: return "Copyright 2001-2008 The Glest Team, 2008-2009 The GAE Team";
 	}
 	return "";
 }
