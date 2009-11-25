@@ -58,11 +58,11 @@ protected:
 	void renderBufferLines(int lineCount);
 
 	static void setBlendFunc(Particle::BlendFactor sfactor, Particle::BlendFactor dfactor) {
-		::glBlendFunc(translate(sfactor), translate(dfactor));
+		glBlendFunc(translate(sfactor), translate(dfactor));
 	}
 
 	static void setBlendEquation(Particle::BlendEquation equation) {
-		::glBlendEquation(translate(equation));
+		glBlendEquation(translate(equation));
 	}
 };
 
