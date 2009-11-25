@@ -73,6 +73,7 @@ public:
 			return true;
 		}
 		throwException(str_bool, s, 1);
+		return false;
 	}
 
 	static int strToInt(const string &s, int base = 10) {

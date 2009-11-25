@@ -303,10 +303,12 @@ void AnnotatedMap::annotateLocal ( const Unit *unit, const Field field ) {
 
 	for ( int y = pos.y - dist; y < pos.y + size + dist; ++y ) {
 		for ( int x = pos.x - dist; x < pos.x + size + dist; ++x ) {
-			if ( metrics[Vec2i(x,y)].get(field) ) {
-				Unit *u = cMap->getCell(x,y)->getUnit ( field );
+			Vec2i cPos(x,y);
+			if ( !cMap->isInside(cPos) ) continue;
+			if ( metrics[cPos].get(field) ) {
+				Unit *u = cMap->getCell(cPos)->getUnit(field);
 				if ( u && u != unit ) {
-					annotate.insert ( u );
+					annotate.insert(u);
 				}
 			}
 		}

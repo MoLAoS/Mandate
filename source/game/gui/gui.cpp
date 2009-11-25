@@ -629,7 +629,7 @@ void Gui::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit) {
 		bool firstBuildPosition = true;
 
 		BuildPositions::const_iterator i;
-		for(i = buildPositions.begin(); i != buildPositions.end(); i++) {
+		for(i = buildPositions.begin(); i != buildPositions.end(); ++i) {
 			flags.set(cpQueue, input.isShiftDown() || !firstBuildPosition);
 			flags.set(cpDontReserveResources, selection.getCount() > 1 || !firstBuildPosition);
 			result = commander->tryGiveCommand(selection, flags, activeCommandType, ccNull, *i, NULL, choosenBuildingType);

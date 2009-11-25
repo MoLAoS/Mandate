@@ -18,6 +18,7 @@ LIB_DIRS =
 	sound/openal
 	xml
 	lua
+	tinyxml
 ;
 
 for i in $(LIB_DIRS) {

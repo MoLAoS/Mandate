@@ -20,6 +20,7 @@
 #include "logger.h"
 #include "xml_parser.h"
 #include "platform_util.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -34,141 +35,138 @@ namespace Glest{ namespace Game{
 // =====================================================
 
 bool TechTree::load(const string &dir, const set<string> &factionNames, Checksum &checksum){
+	string str;
+	vector<string> filenames;
+	Logger::getInstance().add("TechTree: "+ dir, true);
+	bool loadOk = true;
+	//load resources
+	str= dir + "/resources/*.";
 
-   string str;
-   vector<string> filenames;
-
-   Logger::getInstance().add("TechTree: "+ dir, true);
-
-   bool loadOk = true;
-   //load resources
-   str= dir + "/resources/*.";
-
-   try {
-      findAll(str, filenames);
-      resourceTypes.resize(filenames.size());
-   } 
-   catch(const exception &e) {
-      throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
-   }
-   for(int i=0; i<filenames.size(); ++i){
-      str=dir+"/resources/"+filenames[i];
-      if ( ! resourceTypes[i].load(str, i, checksum) ) loadOk = false;
-      resourceTypeMap[filenames[i]] = &resourceTypes[i];
-   }
+	try {
+		findAll(str, filenames);
+		resourceTypes.resize(filenames.size());
+	} 
+	catch(const exception &e) {
+		throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
+	}
+	for(int i=0; i<filenames.size(); ++i){
+		str=dir+"/resources/"+filenames[i];
+		if ( ! resourceTypes[i].load(str, i, checksum) ) loadOk = false;
+		resourceTypeMap[filenames[i]] = &resourceTypes[i];
+	}
 
 	//load tech tree xml info
-   XmlTree	xmlTree;
-   string path;
+	XmlTree	xmlTree;
+	string path;
 	try {
 		path= dir+"/"+basename(dir)+".xml";
 		checksum.addFile(path, true);
 		xmlTree.load(path);
-   }
-   catch ( runtime_error &e ) {
-      Logger::getErrorLog().addXmlError ( path, "File missing or wrongly named." );
-      return false;
-   }
+	}
+	catch ( runtime_error &e ) {
+		Logger::getErrorLog().addXmlError ( path, "File missing or wrongly named." );
+		return false;
+	}
 	const XmlNode *techTreeNode;
-   try { techTreeNode= xmlTree.getRootNode(); }
-   catch ( runtime_error &e ) {
-      Logger::getErrorLog().addXmlError ( path, "File appears to lack contents." );
-      return false;
-   }
+	try { techTreeNode= xmlTree.getRootNode(); }
+	catch ( runtime_error &e ) {
+		Logger::getErrorLog().addXmlError ( path, "File appears to lack contents." );
+		return false;
+	}
 
-   //attack types
-   const XmlNode *attackTypesNode;
-   try { 
-      attackTypesNode= techTreeNode->getChild("attack-types");
-      attackTypes.resize(attackTypesNode->getChildCount());
-      for(int i=0; i<attackTypes.size(); ++i){
-	      const XmlNode *attackTypeNode= attackTypesNode->getChild("attack-type", i);
-	      string name;
-         try { 
-            name = attackTypeNode->getAttribute("name")->getRestrictedValue(); 
-	         attackTypes[i].setName(name);
-	         attackTypes[i].setId(i);
-	         attackTypeMap[name] = &attackTypes[i];
-         }
-         catch ( runtime_error &e ) { 
-            Logger::getErrorLog().addXmlError ( path, e.what() );
-            loadOk = false; 
-         }
-      }
-   }
-   catch ( runtime_error &e ) {
-      Logger::getErrorLog().addXmlError ( path, e.what() );
-      loadOk = false;
-   }
+	//attack types
+	const XmlNode *attackTypesNode;
+	try { 
+		attackTypesNode= techTreeNode->getChild("attack-types");
+		attackTypes.resize(attackTypesNode->getChildCount());
+		for(int i=0; i<attackTypes.size(); ++i){
+			const XmlNode *attackTypeNode= attackTypesNode->getChild("attack-type", i);
+			string name;
+			try { 
+				name = attackTypeNode->getAttribute("name")->getRestrictedValue(); 
+				attackTypes[i].setName(name);
+				attackTypes[i].setId(i);
+				attackTypeMap[name] = &attackTypes[i];
+			}
+			catch ( runtime_error &e ) { 
+				Logger::getErrorLog().addXmlError ( path, e.what() );
+				loadOk = false; 
+			}
+		}
+	}
+	catch ( runtime_error &e ) {
+		Logger::getErrorLog().addXmlError ( path, e.what() );
+		loadOk = false;
+	}
 
-   //armor types
-   const XmlNode *armorTypesNode;
-   try { 
-      armorTypesNode= techTreeNode->getChild("armor-types"); 
-      armorTypes.resize(armorTypesNode->getChildCount());
-      for(int i=0; i<armorTypes.size(); ++i){
-         string name ;
-         try { 
-            name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name"); 
-	         armorTypes[i].setName(name);
-	         armorTypes[i].setId(i);
-	         armorTypeMap[name] = &armorTypes[i];
-         }
-         catch ( runtime_error &e ) { 
-            Logger::getErrorLog().addXmlError ( path, e.what() );
-            loadOk = false; 
-         }
-      }  
-   }
-   catch ( runtime_error &e ) {
-      Logger::getErrorLog().addXmlError ( path, e.what() );
-      loadOk = false;
-   }
- 
-   try { //damage multipliers
-	   damageMultiplierTable.init(attackTypes.size(), armorTypes.size());
-	   const XmlNode *damageMultipliersNode= techTreeNode->getChild("damage-multipliers");
-	   for(int i=0; i<damageMultipliersNode->getChildCount(); ++i){
-         try {
-            const XmlNode *dmNode= damageMultipliersNode->getChild("damage-multiplier", i);
-		      const AttackType *attackType= getAttackType(dmNode->getRestrictedAttribute("attack"));
-		      const ArmorType *armorType= getArmorType(dmNode->getRestrictedAttribute("armor"));
-		      float multiplier= dmNode->getFloatAttribute("value");
-		      damageMultiplierTable.setDamageMultiplier(attackType, armorType, multiplier);
-         }
-         catch ( runtime_error e ) {
-            Logger::getErrorLog().addXmlError ( path, e.what() );
-            loadOk = false;
-         }
-	   }
-   }
-   catch ( runtime_error &e ) {
-      Logger::getErrorLog().addXmlError ( path, e.what() );
-      loadOk = false;
-   }
+	//armor types
+	const XmlNode *armorTypesNode;
+	try { 
+		armorTypesNode= techTreeNode->getChild("armor-types"); 
+		armorTypes.resize(armorTypesNode->getChildCount());
+		for(int i=0; i<armorTypes.size(); ++i){
+			string name ;
+			try { 
+				name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name"); 
+				armorTypes[i].setName(name);
+				armorTypes[i].setId(i);
+				armorTypeMap[name] = &armorTypes[i];
+			}
+			catch ( runtime_error &e ) { 
+				Logger::getErrorLog().addXmlError ( path, e.what() );
+				loadOk = false; 
+			}
+		}  
+	}
+	catch ( runtime_error &e ) {
+		Logger::getErrorLog().addXmlError ( path, e.what() );
+		loadOk = false;
+	}
+
+	try { //damage multipliers
+		damageMultiplierTable.init(attackTypes.size(), armorTypes.size());
+		const XmlNode *damageMultipliersNode= techTreeNode->getChild("damage-multipliers");
+		for(int i=0; i<damageMultipliersNode->getChildCount(); ++i){
+			try {
+				const XmlNode *dmNode= damageMultipliersNode->getChild("damage-multiplier", i);
+				const AttackType *attackType= getAttackType(dmNode->getRestrictedAttribute("attack"));
+				const ArmorType *armorType= getArmorType(dmNode->getRestrictedAttribute("armor"));
+				float multiplier= dmNode->getFloatAttribute("value");
+				damageMultiplierTable.setDamageMultiplier(attackType, armorType, multiplier);
+			}
+			catch ( runtime_error e ) {
+				Logger::getErrorLog().addXmlError ( path, e.what() );
+				loadOk = false;
+			}
+		}
+	}
+	catch ( runtime_error &e ) {
+		Logger::getErrorLog().addXmlError ( path, e.what() );
+		loadOk = false;
+	}
 
 	// this must be set before any unit types are loaded
 	UnitStatsBase::setDamageMultiplierCount(getArmorTypeCount());
 
-   //load factions
-   factionTypes.resize(factionNames.size());
-   int i = 0;
-   set<string>::const_iterator fn;
-   for(fn = factionNames.begin(); fn != factionNames.end(); ++fn, ++i) {
-      if ( ! factionTypes[i].load(dir + "/factions/" + *fn, this, checksum) )
-         loadOk = false;
-      else
-         factionTypeMap[*fn] = &factionTypes[i];
-   }
+	//load factions
+	factionTypes.resize(factionNames.size());
+	int i = 0;
+	set<string>::const_iterator fn;
+	for(fn = factionNames.begin(); fn != factionNames.end(); ++fn, ++i) {
+		if ( ! factionTypes[i].load(dir + "/factions/" + *fn, this, checksum) )
+			loadOk = false;
+		else
+			factionTypeMap[*fn] = &factionTypes[i];
+	}
 
-   if(resourceTypes.size() > 256) {
-      throw runtime_error("Glest Advanced Engine currently only supports 256 resource types.");
-   }
-   return loadOk;
+	if(resourceTypes.size() > 256) {
+		throw runtime_error("Glest Advanced Engine currently only supports 256 resource types.");
+	}
+	return loadOk;
 }
 
 TechTree::~TechTree(){
-	Logger::getInstance().add("Tech tree", true);
+	Logger::getInstance().add("Tech tree", !Program::getInstance()->isTerminating());
 }
 
 

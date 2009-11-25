@@ -546,7 +546,7 @@ void Renderer::renderMouse3d(){
 			//selection building emplacement
 			float offset= building->getSize()/2.f-0.5f;
 
-			for(Gui::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); i++) {
+			for(Gui::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); ++i) {
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
 				glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
@@ -2021,7 +2021,7 @@ void Renderer::renderMinimap(){
 	for(int i=0; i<world->getFactionCount(); ++i){
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			Unit *unit= world->getFaction(i)->getUnit(j);
-			if(world->toRenderUnit(unit)){
+			if ( world->toRenderUnit(unit) && unit->isAlive() ) {
 				Vec2i pos= unit->getPos()/Map::cellScale;
 				int size= unit->getType()->getSize();
 				Vec3f color=  world->getFaction(i)->getTexture()->getPixmap()->getPixel3f(0, 0);

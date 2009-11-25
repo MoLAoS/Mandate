@@ -203,7 +203,9 @@ public:
 	void renderParticleManager(ResourceScope rs);
 	void swapBuffers();
 
-    //lights and camera
+	ParticleManager* getParticleManager() { return particleManager[rsGame]; }
+
+	//lights and camera
 	void setupLighting();
 	void loadGameCameraMatrix();
 	void loadCameraMatrix(const Camera *camera);

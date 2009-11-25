@@ -14,6 +14,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include "game_constants.h"
 #include "xml_parser.h"
 
 using std::runtime_error;

@@ -104,8 +104,9 @@ Game::~Game() {
     Logger &logger= Logger::getInstance();
 	Renderer &renderer= Renderer::getInstance();
 
+	logger.setLoading(true);
 	logger.setState(Lang::getInstance().get("Deleting"));
-	logger.add("Game", true);
+	logger.add("Game", !Program::getInstance()->isTerminating());
 
 	renderer.endGame();
 	SoundRenderer::getInstance().stopAllSounds();
@@ -116,7 +117,6 @@ Game::~Game() {
 	gui.end();		//selection must be cleared before deleting units
 	world.end();	//must die before selection because of referencers
 	singleton = NULL;
-   logger.setLoading ( true );
 }
 
 
@@ -131,26 +131,26 @@ void Game::load(){
 	string scenarioPath= gameSettings.getScenarioPath();
 	string scenarioName= basename(scenarioPath);
 			
- 	
+
 	logger.setState(Lang::getInstance().get("Loading"));
 
 	if(scenarioName.empty())
 		logger.setSubtitle(formatString(mapName)+" - "+formatString(tilesetName)+" - "+formatString(techName));
-   else
+	else
 		logger.setSubtitle(formatString(scenarioName));
 
 	//tileset
-   if ( ! world.loadTileset(checksum) )
-      throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
+	if ( ! world.loadTileset(checksum) )
+		throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
 
-   //tech, load before map because of resources
-   if ( ! world.loadTech(checksum) )
-      throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
+	//tech, load before map because of resources
+	if ( ! world.loadTech(checksum) )
+		throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
 
-   //map
-   world.loadMap(checksum);
+	//map
+	world.loadMap(checksum);
 
-   //scenario
+	//scenario
 	if(!scenarioName.empty()){
 		Lang::getInstance().loadScenarioStrings(scenarioPath, scenarioName);
 		world.loadScenario(scenarioPath + "/" + scenarioName + ".xml", &checksum);
@@ -158,7 +158,7 @@ void Game::load(){
 }
 
 void Game::init() {
-   Lang &lang= Lang::getInstance();
+	Lang &lang= Lang::getInstance();
 	Logger &logger= Logger::getInstance();
 	CoreData &coreData= CoreData::getInstance();
 	Renderer &renderer= Renderer::getInstance();
@@ -184,16 +184,16 @@ void Game::init() {
 	// init world, and place camera
 	commander.init(&world);
 
-   world.init(savedGame ? savedGame->getChild("world") : NULL);
+	world.init(savedGame ? savedGame->getChild("world") : NULL);
 	gui.init();
 	chatManager.init(&console, world.getThisTeamIndex());
 	const Vec2i &v= map->getStartLocation(world.getThisFaction()->getStartLocationIndex());
 	gameCamera.init(map->getW(), map->getH());
 	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
 
-   scriptManager.init(&world, &gameCamera);
-	
-   if(savedGame && (!networkManager.isNetworkGame() || networkManager.isServer())) {
+	scriptManager.init(&world, &gameCamera);
+
+	if(savedGame && (!networkManager.isNetworkGame() || networkManager.isServer())) {
 		gui.load(savedGame->getChild("gui"));
 	}
 
@@ -204,8 +204,7 @@ void Game::init() {
 		if(faction->getCpuControl()&& scriptManager.getPlayerModifiers(i)->getAiEnabled()){
 			aiInterfaces[i]= new AiInterface(*this, i, faction->getTeam());
 			logger.add("Creating AI for faction " + intToStr(i), true);
-		}
-		else{
+		} else{
 			aiInterfaces[i]= NULL;
 		}
 	}
@@ -217,8 +216,7 @@ void Game::init() {
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
-	}
-	else if(world.getTileset()->getWeather() == wSnowy){
+	} else if(world.getTileset()->getWeather() == wSnowy){
 		logger.add("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());
@@ -269,7 +267,7 @@ void Game::init() {
 		delete savedGame;
 		savedGame = NULL;
 	}
-   logger.setLoading ( false );
+   logger.setLoading(false);
 }
 
 
@@ -784,10 +782,32 @@ void Game::keyPress(char c) {
 }
 
 void Game::quitGame(){
+	setWinnerFlags();
 	program.setState(new BattleEnd(program, world.getStats()));
 }
 
 // ==================== PRIVATE ====================
+
+void Game::setWinnerFlags() {
+	if(gameSettings.getDefaultVictoryConditions()) {
+		if ( gameOver ) {
+			int winningTeam = -1;
+			for ( int i=0; i < world.getFactionCount(); ++i ) {
+				if ( hasBuilding(world.getFaction(i)) ) {
+					if ( winningTeam != -1 ) {
+						assert(world.getFaction(i)->getTeam() == winningTeam);
+					}
+					winningTeam = world.getFaction(i)->getTeam();
+				} 
+			}
+			for ( int i=0; i < world.getFactionCount(); ++i ) {
+				if ( world.getFaction(i)->getTeam() == winningTeam ) {
+					world.getStats().setVictorious(i);
+				}
+			}
+		}
+	}
+}
 
 // ==================== render ====================
 
@@ -938,54 +958,34 @@ void Game::render2d(){
 // ==================== misc ====================
 
 
-void Game::checkWinner(){	
-	if(!gameOver){
-		if(gameSettings.getDefaultVictoryConditions()){
+void Game::checkWinner() {	
+	if ( !gameOver ) {
+		if ( gameSettings.getDefaultVictoryConditions() ) {
 			checkWinnerStandard();
-		}
-		else
-		{
+		} else {
 			checkWinnerScripted();
 		}
 	}
 }
 
-void Game::checkWinnerStandard(){
-	//lose
-	bool lose= false;
-	if(!hasBuilding(world.getThisFaction())){
-		lose= true;
-		for(int i=0; i<world.getFactionCount(); ++i){
-			if(!world.getFaction(i)->isAlly(world.getThisFaction())){
-				world.getStats().setVictorious(i);	
-			}
-		}
-		gameOver= true;
-		showLoseMessageBox();
+void Game::checkWinnerStandard() {
+	const Faction *lf = world.getThisFaction();
+	// check loss
+	if ( !hasBuilding(lf) ) { // we have a loser...
+ 		gameOver= true;
+ 		showLoseMessageBox();
+		return;
 	}
-
-	//win
-	if(!lose){
-		bool win= true;
-		for(int i=0; i<world.getFactionCount(); ++i){
-			if(i!=world.getThisFactionIndex()){
-				if(hasBuilding(world.getFaction(i)) && !world.getFaction(i)->isAlly(world.getThisFaction())){
-					win= false;
-				}
-			}
-		}
-
-		//if win
-		if(win){
-			for(int i=0; i< world.getFactionCount(); ++i){
-				if(world.getFaction(i)->isAlly(world.getThisFaction())){
-					world.getStats().setVictorious(i);	
-				}
-			}
-			gameOver= true;
-			showWinMessageBox();
+	// check win
+	for ( int i = 0; i < world.getFactionCount(); ++i ) {
+		const Faction *f = world.getFaction(i);
+		if ( f != lf && hasBuilding(f) && !f->isAlly(lf) ) {
+			return; // no winner.
 		}
 	}
+	// we have a winner!
+	gameOver = true;
+	showWinMessageBox();
 }
 
 void Game::checkWinnerScripted(){
@@ -998,8 +998,7 @@ void Game::checkWinnerScripted(){
 		}
 		if(scriptManager.getPlayerModifiers(world.getThisFactionIndex())->getWinner()){
 			showWinMessageBox();
-		}
-		else{
+		} else{
 			showLoseMessageBox();
 		}
 	}

@@ -71,16 +71,12 @@ Profiler::Profiler(){
 
 Profiler::~Profiler(){
 	rootSection->stop();
-
 	FILE *f= fopen("profiler.log", "w");
-	if(f==NULL)
-		throw runtime_error("Can not open file: profiler.log");
-
-	fprintf(f, "Profiler Results\n\n");
-
-	rootSection->print(f);
-
-	fclose(f);
+	if ( f ) {
+		fprintf(f, "Profiler Results\n\n");
+		rootSection->print(f);
+		fclose(f);
+	}
 }
 
 Profiler &Profiler::getInstance(){

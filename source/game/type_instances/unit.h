@@ -474,7 +474,7 @@ public:
 	Unit *getNearest(SkillClass skillClass = scCount, float pctHealth = 0.0f) {
 		Unit *nearest = NULL;
 		int dist = 0x10000;
-		for(iterator i = begin(); i != end(); i++) {
+		for(iterator i = begin(); i != end(); ++i) {
 			Unit * u = i->first;
 			if(i->second < dist
 					&& (skillClass == scCount || u->getType()->hasSkillClass(skillClass))

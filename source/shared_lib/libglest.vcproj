@@ -507,11 +507,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\win32\socket.h"
+				RelativePath=".\include\platform\socket.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\socket.h"
+				RelativePath=".\include\platform\win32\socket.h"
 				>
 			</File>
 			<File
@@ -563,15 +563,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\thread.h"
-				>
-			</File>
-			<File
 				RelativePath=".\include\platform\win32\thread.h"
 				>
 			</File>
 			<File
+				RelativePath=".\include\platform\thread.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\platform\timer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\tinyxml\tinyxml.h"
 				>
 			</File>
 			<File
@@ -595,11 +599,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\win32\window_gl.h"
+				RelativePath=".\include\platform\window_gl.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\window_gl.h"
+				RelativePath=".\include\platform\win32\window_gl.h"
 				>
 			</File>
 			<File
@@ -1248,6 +1252,18 @@
 			</File>
 			<File
 				RelativePath=".\sources\platform\timer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\tinyxml\tinyxml.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\tinyxml\tinyxmlerror.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\tinyxml\tinyxmlparser.cpp"
 				>
 			</File>
 			<File

@@ -560,12 +560,12 @@ void UnitUpdater::updateBuild(Unit *unit){
 					unit->getFaction()->applyCosts(command->getUnitType());
 				}
 
-				builtUnit = new Unit(world->getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), world->getMap());
-				builtUnit->create();
-
 				if(!builtUnitType->hasSkillClass(scBeBuilt)){
 					throw runtime_error("Unit " + builtUnitType->getName() + " has no be_built skill");
 				}
+
+				builtUnit = new Unit(world->getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), world->getMap());
+				builtUnit->create();
 
 				builtUnit->setCurrSkill(scBeBuilt);
 				unit->setCurrSkill(bct->getBuildSkillType());
@@ -697,7 +697,6 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 								break;
 							}
 						}
-						//command->setPos ( 
 					default:
 						break;
 					}
@@ -724,10 +723,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 				default:
 					break;
 				}
-
-				//world->changePosCells(unit,unit->getPos()+unit->getDest());
 				if (map->isNextTo(unit->getPos(), store)) {
-
 					//update resources
 					int resourceAmount = unit->getLoadCount();
 					if (unit->getFaction()->getCpuUltraControl()) {
@@ -765,9 +761,9 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 				//if resource exausted, then delete it and stop
 				if (r->decAmount(1)) {
 					// let the pathfinder know
-					Vec2i rPos = r->getPos ();
+					Vec2i rPos = r->getPos();
 					sc->deleteResource();
-					pathFinder->updateMapMetrics ( rPos, 2 );
+					pathFinder->updateMapMetrics(rPos, 2);
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
               
@@ -936,6 +932,35 @@ void UnitUpdater::updateRepair(Unit *unit) {
 	}
 }
 
+// hacked up version of World::placeUnit()
+bool findPlaceForUnit(Map *map, const Vec2i &startLoc, int radius, const UnitType *ut) {
+	// determine field
+	Field newField;
+	if ( ut->getField( FieldWalkable ) ) {
+		newField = FieldWalkable;
+	} else if ( ut->getField( FieldAir ) ) {
+		newField = FieldAir;
+	}
+	if ( ut->getField( FieldAmphibious ) ) {
+		newField = FieldAmphibious;
+	} else if ( ut->getField( FieldAnyWater ) ) {
+		newField = FieldAnyWater;
+	} else if ( ut->getField( FieldDeepWater ) ) {
+		newField = FieldDeepWater;
+	}
+
+	for (int r = 1; r < radius; r++) {
+		for (int i = -r; i < r; ++i) {
+			for (int j = -r; j < r; ++j) {
+				Vec2i pos = Vec2i(i, j) + startLoc;
+				if ( map->areFreeCells(pos, ut->getSize(), newField) ) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
 
 // ==================== updateProduce ====================
 
@@ -950,9 +975,16 @@ void UnitUpdater::updateProduce(Unit *unit) {
 		if(!verifySubfaction(unit, pct->getProducedUnit())) {
 			return;
 		}
-
-		unit->setCurrSkill(pct->getProduceSkillType());
-		unit->getFaction()->checkAdvanceSubfaction(pct->getProducedUnit(), false);
+		const UnitType *produced = pct->getProducedUnit();
+		if ( findPlaceForUnit(map, unit->getCenteredPos(), 10, produced) ) {
+			unit->setCurrSkill(pct->getProduceSkillType());
+			unit->getFaction()->checkAdvanceSubfaction(produced, false);
+		} 
+		else {
+			if(unit->getFactionIndex() == world->getThisFactionIndex())
+				Game::getInstance()->getConsole()->addStdMessage("InvalidPosition");
+			unit->cancelCurrCommand();
+		}
 	} else {
 		unit->update2();
 

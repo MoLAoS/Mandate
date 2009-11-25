@@ -98,6 +98,7 @@ Program::Program(Config &config, int argc, char** argv) :
 		updateCameraTimer(GameConstants::cameraFps, maxTimes, 10),
 		programState(NULL),
 		crashed(false),
+		terminating(false),
 		keymap(getInput(), "keymap.ini") {
 
 	//set video mode
@@ -140,6 +141,7 @@ Program::Program(Config &config, int argc, char** argv) :
 	soundRenderer.init(this);
 
 	keymap.save("keymap.ini");
+	keymap.load("keymap.ini");
 
 	// startup and immediately host a game
 	if(argc == 2 && string(argv[1]) == "-server") {
@@ -162,16 +164,13 @@ Program::Program(Config &config, int argc, char** argv) :
 }
 
 Program::~Program() {
-	singleton = NULL;
-
 	if(programState) {
 		delete programState;
 	}
-
 	Renderer::getInstance().end();
-
 	//restore video mode
 	restoreDisplaySettings();
+	singleton = NULL;
 }
 
 void Program::loop() {
@@ -209,6 +208,7 @@ void Program::loop() {
 			programState->tick();
 		}
 	}
+	terminating = true;
 }
 
 void Program::eventResize(SizeState sizeState) {

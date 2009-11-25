@@ -160,6 +160,7 @@ private:
 	void checkWinner();
 	void checkWinnerStandard();
 	void checkWinnerScripted();
+	void setWinnerFlags();
 	bool hasBuilding(const Faction *faction);
 	void incSpeed();
 	void decSpeed();

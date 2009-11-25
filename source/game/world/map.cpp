@@ -27,7 +27,7 @@
 #include "config.h"
 #include "socket.h"
 #include "selection.h"
-
+#include "program.h"
 #include "leak_dumper.h"
 
 //#ifndef M_PI
@@ -265,7 +265,7 @@ Map::Map() :
 }
 
 Map::~Map() {
-	Logger::getInstance().add("Cells", true);
+	Logger::getInstance().add("Cells", !Program::getInstance()->isTerminating());
 
 	if(cells)			{delete[] cells;}
 	if(tiles)	{delete[] tiles;}
@@ -990,20 +990,27 @@ void Map::putUnitCells(Unit *unit, const Vec2i &pos){
 	assert(unit);
 	const UnitType *ut = unit->getType();
 	int size = ut->getSize();
-	Zone field = unit->getCurrField()==FieldAir?ZoneAir:ZoneSurface;
+	Zone zone = unit->getCurrZone();
 
-	for(int x = 0; x < size; ++x) {
-		for(int y = 0; y < size; ++y) {
+	for ( int x = 0; x < size; ++x ) {
+		for ( int y = 0; y < size; ++y ) {
 			Vec2i currPos = pos + Vec2i(x, y);
 			assert(isInside(currPos));
-
-			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
-				if (getCell(currPos)->getUnit(field) != NULL)
-            {
-               throw runtime_error ( "Ooops..." );
-            }
-            assert(getCell(currPos)->getUnit(field) == NULL);
-				getCell(currPos)->setUnit(field, unit);
+			if ( !ut->hasCellMap() || ut->getCellMapCell(x, y) ) {
+				if ( getCell(currPos)->getUnit(zone) != NULL ) {
+					Unit *other = getCell(currPos)->getUnit(zone);
+					Field o_zone = other->getCurrField();
+					string str = string() + "Error: " + ut->getName() + "[id:" + intToStr(unit->getId())
+						+ "] putting in cell ("  + intToStr(currPos.x) + ", " + intToStr(currPos.y) + ")"
+						+ (zone == ZoneSurface ? "{LAND} " : zone == ZoneAir ? "{AIR} " : "{OTHER} ")
+						+ " cell is already occupied by a " + other->getType()->getName() + "[id:"
+						+ intToStr(other->getId()) + "]"
+						+ (o_zone == ZoneSurface ? "{LAND} " : o_zone == ZoneAir ? "{AIR} " : "{OTHER} ");
+					Logger::getErrorLog().add(str);
+					throw runtime_error ( "Ooops... see glestadv-error.log" );
+				}
+				assert(getCell(currPos)->getUnit(zone) == NULL);
+				getCell(currPos)->setUnit(zone, unit);
 			}
 		}
 	}
@@ -1448,8 +1455,11 @@ namespace Glest{ namespace Game{
 // 	class EarthquakeType
 // =====================================================
 
-EarthquakeType::EarthquakeType(float maxDps, const AttackType *attackType) :
-		maxDps(maxDps), attackType(attackType), affectsAllies(true) {
+EarthquakeType::EarthquakeType(float maxDps, const AttackType *attackType) 
+		: maxDps(maxDps)
+		, attackType(attackType)
+		, sound(NULL)
+		, affectsAllies(true) {
 }
 
 /** Load the EarthquakeType from xml */

@@ -246,7 +246,9 @@ private:
 	EarthquakeType *earthquakeType;
 
 public:
-	AttackSkillType() : TargetBasedSkillType(scAttack, "Attack"), attackType(NULL) {}
+	AttackSkillType() : TargetBasedSkillType(scAttack, "Attack"), attackType(NULL), earthquakeType(NULL) {}
+	virtual ~AttackSkillType();
+
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const;
 
@@ -297,6 +299,8 @@ private:
 
 public:
 	RepairSkillType();
+	virtual ~RepairSkillType() { delete splashParticleSystemType; }
+
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const;
 

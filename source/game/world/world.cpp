@@ -61,7 +61,7 @@ World::World(Game *game) : game(*game), gs(game->getGameSettings()), stats(game-
 }
 
 void World::end() {
-	Logger::getInstance().add("World", true);
+	Logger::getInstance().add("World", !Program::getInstance()->isTerminating());
 	alive = false;
 
 	for (int i = 0; i < factions.size(); ++i) {
@@ -1171,12 +1171,9 @@ void World::computeFow() {
 
 
 void World::hackyCleanUp(Unit *unit) {
-	for (Units::const_iterator i = newlydead.begin(); i != newlydead.end(); ++i) {
-		if (unit == *i) {
-			return;
-		}
+	if ( find(newlydead.begin(), newlydead.end(), unit) == newlydead.end() ) {
+		newlydead.push_back(unit);
 	}
-	newlydead.push_back(unit);
 }
 
 
