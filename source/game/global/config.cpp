@@ -47,6 +47,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
 	gsDayTime = p->getFloat("GsDayTime", 1000.f);
 	gsFogOfWarEnabled = p->getBool("GsFogOfWarEnabled", true);
+	gsShroudOfDarknessEnabled = p->getBool("GsShroudOfDarkness", true);
 	gsSpeedFastest = p->getFloat("GsSpeedFastest", 2.f, 1.0f, 10.0f);
 	gsSpeedSlowest = p->getFloat("GsSpeedSlowest", 0.5f, 0.01f, 1.0f);
 	gsWorldUpdateFps = p->getInt("GsWorldUpdateFps", 40);
@@ -133,6 +134,7 @@ void Config::save(const char *path) {
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
 	p->setFloat("GsDayTime", gsDayTime);
 	p->setBool("GsFogOfWarEnabled", gsFogOfWarEnabled);
+	p->setBool("GsShroudOfDarknessEnabled", gsShroudOfDarknessEnabled);
 	p->setFloat("GsSpeedFastest", gsSpeedFastest);
 	p->setFloat("GsSpeedSlowest", gsSpeedSlowest);
 	p->setInt("GsWorldUpdateFps", gsWorldUpdateFps);

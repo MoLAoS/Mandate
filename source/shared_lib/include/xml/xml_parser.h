@@ -126,8 +126,8 @@ public:
 	XmlAttribute *getAttribute(int i) const;
 	XmlAttribute *getAttribute(const string &name, bool required = true) const;
 	XmlNode *getChild(int i) const;
-	XmlNode *getChild(const string &childName, int childIndex = 0, bool required = true) const;
 	XmlNode *getOptionalChild(const string &childName) const;
+	XmlNode *getChild(const string &childName, int childIndex = 0, bool required = true) const;
 
 	XmlNode *getParent() const;
 	const string &getText() const	{return text;}

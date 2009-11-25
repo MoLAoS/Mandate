@@ -172,7 +172,11 @@ void UnitUpdater::updateUnitCommand(Unit *unit) {
 		default:
 			break;
 	}
-
+	// check if a command being 'watched' has finished
+	if ( unit->getCommandCallback() && unit->getCommandCallback() != unit->getCurrCommand() ) {
+		// Trigger Time...
+		ScriptManager::commandCallback(unit);
+	}
 	//if unit has command process it
 	if (unit->anyCommand()) {
 		unit->getCurrCommand()->getType()->update(this, unit);

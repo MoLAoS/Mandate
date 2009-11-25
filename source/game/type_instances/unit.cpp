@@ -24,6 +24,7 @@
 #include "skill_type.h"
 #include "core_data.h"
 #include "renderer.h"
+#include "script_manager.h"
 
 #include "leak_dumper.h"
 
@@ -108,6 +109,9 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		lastPos(pos),
 		nextPos(pos),
 		targetPos(0),
+		commandCallback(NULL),
+		hp_below_trigger(0),
+		hp_above_trigger(0),
 		targetVec(0.0f),
 		meetingPos(pos),
 		lastCommandUpdate(0),
@@ -1121,6 +1125,10 @@ bool Unit::repair(int amount, float multiplier) {
 
 	//increase hp
 	hp += amount;
+	if ( hp_above_trigger && hp > hp_above_trigger ) {
+		hp_above_trigger = 0;
+		ScriptManager::onHPAboveTrigger(this);
+	}
 	if (hp > getMaxHp()) {
 		hp = getMaxHp();
 		if (!isBuilt()) {
@@ -1150,6 +1158,10 @@ bool Unit::decHp(int i) {
 	// we shouldn't ever go negative
 	assert(hp > 0);
 	hp -= i;
+	if ( hp_below_trigger && hp < hp_below_trigger ) {
+		hp_below_trigger = 0;
+		ScriptManager::onHPBelowTrigger(this);
+	}
 
 	//fire
 	if (type->getProperty(pBurnable) && hp < type->getMaxHp() / 2 && fire == NULL) {

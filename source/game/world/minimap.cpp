@@ -42,6 +42,7 @@ Minimap::Minimap(){
 	fowPixmap0= NULL;
 	fowPixmap1= NULL;
 	fogOfWar= Config::getInstance().getGsFogOfWarEnabled();
+	shroudOfDarkness = Config::getInstance().getGsShroudOfDarknessEnabled();
 }
 
 void Minimap::init(int w, int h, const World *world){

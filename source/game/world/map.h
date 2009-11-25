@@ -4,7 +4,7 @@
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //				  2008 Jaagup Repän <jrepan@gmail.com>,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
-//            2009 James McCulloch <silnarm@gmail.com>
+//				  2009 James McCulloch <silnarm@gmail.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -59,19 +59,23 @@ class Earthquake;
 ///	A map cell that holds info about units present on it
 // =====================================================
 
-class Cell{
+class Cell {
 private:
 	Unit *units[ZoneCount];	//units on this cell
 	float height;
 	SurfaceType surfaceType;
-	Cell(Cell&);
-	void operator=(Cell&);
+
+private:
+	Cell(const Cell&);
+	void operator=(const Cell&) const;
 
 public:
-	Cell() {
+	/**
+	 * Default ctor.  It's usually better to outline stuff like this, but when these are created,
+	 * they are created in large quantities, so it's probably much better to have this ctor inlined.
+	 */
+	Cell() : height(0), surfaceType(SurfaceTypeLand) {
 		memset(units, 0, sizeof(units));
-		height = 0;
-		surfaceType = SurfaceTypeLand;
 	}
 
 	// get
@@ -89,7 +93,11 @@ public:
 	void setType(SurfaceType type)			{surfaceType = type;}
 
 	//misc
-	bool isFree(Zone field) const;
+	/** @returns true if the zone in the cell is not occupied. */
+	bool isFree(Zone zone) const {
+		const Unit *resident = getUnit(zone);
+		return !resident || resident->isPutrefacting();
+	}
 };
 
 // =====================================================
@@ -133,8 +141,8 @@ public:
 	float getHeight() const						{return vertex.y;}
 	const Vec3f &getColor() const				{return color;}
 	const Vec3f &getNormal() const				{return normal;}
-	int getTileType() const					{return tileType;}
-	const Texture2D *getTileTexture() const	{return tileTexture;}
+	int getTileType() const						{return tileType;}
+	const Texture2D *getTileTexture() const		{return tileTexture;}
 	Object *getObject() const					{return object;}
 	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
 	const Vec2f &getFowTexCoord() const			{return fowTexCoord;}
@@ -361,7 +369,7 @@ private:
 
 public:
 	PosCircularIteratorOrdered(const Map &map, const Vec2i &center,
-			Glest::Game::Util::PosCircularIterator *i) : map(map), center(center), i(i) {} 
+			Glest::Game::Util::PosCircularIterator *i) : map(map), center(center), i(i) {}
 	~PosCircularIteratorOrdered() {
 		delete i;
 	}
@@ -431,7 +439,7 @@ private:
 
 public:
 	PosCircularIteratorSimple(const Map &map, const Vec2i &center, int radius);
-	bool getNext(Vec2i &result, float &dist) {	
+	bool getNext(Vec2i &result, float &dist) {
 		//iterate while dont find a cell that is inside the world
 		//and at less or equal distance that the radius
 		do {
@@ -447,7 +455,7 @@ public:
 			dist = pos.dist(center);
 		} while (floor(dist) >= (radius + 1) || !map.isInside(pos));
 		//while(!(pos.dist(center) <= radius && map.isInside(pos)));
-	
+
 		return true;
 	}
 
@@ -516,7 +524,7 @@ private:
 
 public:
 	PosCircularInsideOutIterator(const Map *map, const Vec2i &center, int radius);
-	
+
 	bool isOutOfRange(const Vec2i &p) {
 		return p.length() > radius;
 	}
@@ -629,7 +637,7 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////
-// Cut Here 
+// Cut Here
 //////////////////////////////////////////////////////////////////
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
@@ -681,18 +689,18 @@ class UnitContainer;
 */
 class EarthquakeType {
 private:
-	float magnitude;			/** max variance in height */
-	float frequency;			/** oscilations per second */
-	float speed;				/** speed siesmic waves travel per second (in surface cells) */
-	float duration;				/** duration in seconds */
-	float radius;				/** radius in surface cells */
-	float initialRadius;		/** radius of area of initial activity (in surface cells) */
-	float shiftsPerSecond;		/** number of sudden shifts per second */
-	float shiftsPerSecondVar;	/** variance of shiftsPerSecond (+-) */
-	Vec3f shiftLengthMult;		/** multiplier of magnitude to determine max length of each shift */
-	float maxDps;				/** maxiumum damage per second caused */
-	const AttackType *attackType;/** the damage type to use for damage reports */
-	bool affectsAllies;			/** rather or not this earthquake affects allies */
+	float magnitude;			/**< max variance in height */
+	float frequency;			/**< oscilations per second */
+	float speed;				/**< speed siesmic waves travel per second (in surface cells) */
+	float duration;				/**< duration in seconds */
+	float radius;				/**< radius in surface cells */
+	float initialRadius;		/**< radius of area of initial activity (in surface cells) */
+	float shiftsPerSecond;		/**< number of sudden shifts per second */
+	float shiftsPerSecondVar;	/**< variance of shiftsPerSecond (+-) */
+	Vec3f shiftLengthMult;		/**< multiplier of magnitude to determine max length of each shift */
+	float maxDps;				/**< maxiumum damage per second caused */
+	const AttackType *attackType;/**< the damage type to use for damage reports */
+	bool affectsAllies;			/**< rather or not this earthquake affects allies */
 	StaticSound *sound;
 
 
@@ -721,8 +729,8 @@ class Earthquake {
 public:
 	class UnitImpact {
 	public:
-		int count;		/** total number of cells unit occupies that are affected */
-		float intensity;/** total intensity (average = intensity / count) */
+		int count;		/**< total number of cells unit occupies that are affected */
+		float intensity;/**< total intensity (average = intensity / count) */
 
 		UnitImpact() : count(0), intensity(0.f) {}
 		void impact(float intensity)			{++count; this->intensity += intensity;}
@@ -731,20 +739,20 @@ public:
 
 private:
 	Map &map;
-	UnitReference cause;	/** unit that caused this earthquake */
-	const EarthquakeType *type; /** the type */
-	Vec2i epicenter;		/** epicenter in surface coordinates */
-	float magnitude;		/** max variance in height */
-	float frequency;		/** oscilations per second */
-	float speed;			/** unit cells traveled per second */
-	float duration;			/** duration in seconds */
-	float radius;			/** radius in surface cells */
-	float initialRadius;	/** radius of area of initial activity (in surface cells) */
-	float progress;			/** 0 when started, 1 when complete at epicenter (continues longer for waves to even out) */
-	Rect2i bounds;			/** surface cell area effected */
-	Rect2i uBounds;			/** unit cell area effected */
-	float nextShiftTime;	/** when the shift should occurred */
-	Vec3f currentShift;		/** the current xyz offset caused by seismic shift (before magnitude multiplier) */
+	UnitReference cause;	/**< unit that caused this earthquake */
+	const EarthquakeType *type; /**< the type */
+	Vec2i epicenter;		/**< epicenter in surface coordinates */
+	float magnitude;		/**< max variance in height */
+	float frequency;		/**< oscilations per second */
+	float speed;			/**< unit cells traveled per second */
+	float duration;			/**< duration in seconds */
+	float radius;			/**< radius in surface cells */
+	float initialRadius;	/**< radius of area of initial activity (in surface cells) */
+	float progress;			/**< 0 when started, 1 when complete at epicenter (continues longer for waves to even out) */
+	Rect2i bounds;			/**< surface cell area effected */
+	Rect2i uBounds;			/**< unit cell area effected */
+	float nextShiftTime;	/**< when the shift should occurred */
+	Vec3f currentShift;		/**< the current xyz offset caused by seismic shift (before magnitude multiplier) */
 	Vec2i size;
 	size_t cellCount;
 	Random random;
@@ -757,7 +765,7 @@ public:
 	const Vec2i getEpicenter() const		{return epicenter;}
 	void update(float slice);
 	void getDamageReport(DamageReport &results, float slice);
-   bool isDone() { return progress >= 1.f + radius / speed / duration; };
+	bool isDone()							{return progress >= 1.f + radius / speed / duration;}
 	void resetSurface();
 
 private:
@@ -772,7 +780,7 @@ private:
 //#endif
 
 //////////////////////////////////////////////////////////////////
-// Cut Here 
+// Cut Here
 //////////////////////////////////////////////////////////////////
 
 

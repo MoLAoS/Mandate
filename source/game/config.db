@@ -19,6 +19,7 @@ gsAutoRepairEnabled			bool	true
 gsAutoReturnEnabled			bool	false
 gsDayTime					float	1000.f
 gsFogOfWarEnabled			bool	true
+gsShroudOfDarknessEnabled	bool	true
 gsSpeedFastest				float	2.f				1.0f	10.0f
 gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsWorldUpdateFps			int		40

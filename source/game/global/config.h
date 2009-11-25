@@ -48,6 +48,7 @@ private:
 	bool gsAutoReturnEnabled;
 	float gsDayTime;
 	bool gsFogOfWarEnabled;
+	bool gsShroudOfDarknessEnabled;
 	float gsSpeedFastest;
 	float gsSpeedSlowest;
 	int gsWorldUpdateFps;
@@ -154,6 +155,7 @@ public:
 	bool getGsAutoReturnEnabled() const				{return gsAutoReturnEnabled;}
 	float getGsDayTime() const						{return gsDayTime;}
 	bool getGsFogOfWarEnabled() const				{return gsFogOfWarEnabled;}
+	bool getGsShroudOfDarknessEnabled() const		{return gsShroudOfDarknessEnabled;}
 	float getGsSpeedFastest() const					{return gsSpeedFastest;}
 	float getGsSpeedSlowest() const					{return gsSpeedSlowest;}
 	int getGsWorldUpdateFps() const					{return gsWorldUpdateFps;}
@@ -234,6 +236,7 @@ public:
 	void setGsAutoReturnEnabled(bool v)				{gsAutoReturnEnabled = v;}
 	void setGsDayTime(float v)						{gsDayTime = v;}
 	void setGsFogOfWarEnabled(bool v)				{gsFogOfWarEnabled = v;}
+	void setGsShroudOfDarknessEnabled(bool v)		{gsShroudOfDarknessEnabled = v;}
 	void setGsSpeedFastest(float v)					{gsSpeedFastest = v;}
 	void setGsSpeedSlowest(float v)					{gsSpeedSlowest = v;}
 	void setGsWorldUpdateFps(int v)					{gsWorldUpdateFps = v;}

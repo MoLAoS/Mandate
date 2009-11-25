@@ -304,8 +304,7 @@ void AnnotatedMap::annotateLocal ( const Unit *unit, const Field field ) {
 	for ( int y = pos.y - dist; y < pos.y + size + dist; ++y ) {
 		for ( int x = pos.x - dist; x < pos.x + size + dist; ++x ) {
 			Vec2i cPos(x,y);
-			if ( !cMap->isInside(cPos) ) continue;
-			if ( metrics[cPos].get(field) ) {
+			if ( cMap->isInside(cPos) && metrics[cPos].get(field) ) {
 				Unit *u = cMap->getCell(cPos)->getUnit(field);
 				if ( u && u != unit ) {
 					annotate.insert(u);
@@ -314,17 +313,17 @@ void AnnotatedMap::annotateLocal ( const Unit *unit, const Field field ) {
 		}
 	}
 	for ( set<Unit*>::iterator it = annotate.begin(); it != annotate.end(); ++it ) {
-		annotateUnit ( *it, field );
+		annotateUnit(*it, field);
 	}
 }
 
-void AnnotatedMap::clearLocalAnnotations ( Field field ) {
-	for ( map<Vec2i,uint32>::iterator it = localAnnt.begin (); it != localAnnt.end (); ++ it ) {
-		assert ( it->second <= maxClearanceValue );
-		assert ( cMap->isInside ( it->first ) );
-		metrics[it->first].set ( field, it->second );
+void AnnotatedMap::clearLocalAnnotations(Field field) {
+	for ( map<Vec2i,uint32>::iterator it = localAnnt.begin(); it != localAnnt.end(); ++ it ) {
+		assert(it->second <= maxClearanceValue);
+		assert(cMap->isInside(it->first));
+		metrics[it->first].set(field, it->second);
 	}
-	localAnnt.clear ();
+	localAnnt.clear();
 }
 
 #ifdef _GAE_DEBUG_EDITION_

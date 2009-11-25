@@ -51,7 +51,7 @@ private:
 	Pixmap2D *fowPixmap1;
 	Texture2D *tex;
 	Texture2D *fowTex;    //Fog Of War Texture2D
-	bool fogOfWar;
+	bool fogOfWar, shroudOfDarkness;
 
 private:
 	static const float exploredAlpha;

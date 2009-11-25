@@ -87,6 +87,7 @@ private:
 	int updateFps, lastUpdateFps;
 	int renderFps, lastRenderFps;
 	bool paused;
+	bool noInput;
 	bool gameOver;
 	bool renderNetworkStatus;
 	float scrollSpeed;
@@ -128,6 +129,9 @@ public:
 	virtual void updateCamera();
 	virtual void render();
 	virtual void tick();
+
+	void lockInput()	{ noInput = true;	}
+	void unlockInput()	{ noInput = false;	}
 
 
     //Event managing

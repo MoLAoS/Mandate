@@ -210,7 +210,10 @@ private:
 	Pets pets;
 	UnitReference master;
 	
-	
+	const Command *commandCallback; // for script 'command callbacks'
+	int hp_below_trigger;		// if non-zero, call the Trigger manager when HP falls below this
+	int hp_above_trigger;		// if non-zero, call the Trigger manager when HP rises above this
+ 	
 	int64 lastCommandUpdate;	// microseconds
 	int64 lastUpdated;			// microseconds
 	int64 lastCommanded;		// milliseconds
@@ -272,13 +275,17 @@ public:
 	const int64 &getLastUpdated() const			{return lastUpdated;}
 	int64 getLastCommanded() const				{return Chrono::getCurMillis() - lastCommanded;}
 	int64 getLastCommandUpdate() const			{return Chrono::getCurMicros() - lastCommandUpdate;}
-   bool isMobile () { return type->isMobile(); }
-
+	bool isMobile ()							{ return type->isMobile(); }
 
 	void addPet(Unit *u)						{pets.push_back(u);}
 	void petDied(Unit *u)						{pets.remove(u);}
 	int killPets();
 
+	void setCommandCallback()					{ commandCallback = commands.front(); }
+	void clearCommandCallback()					{ commandCallback = NULL; }
+	const Command* getCommandCallback() const	{ return commandCallback; }
+	void setHPBelowTrigger(int i)				{ hp_below_trigger = i; }
+	void setHPAboveTrigger(int i)				{ hp_above_trigger = i; }
 
 	/**
 	 * Returns the total attack strength (base damage) for this unit using the

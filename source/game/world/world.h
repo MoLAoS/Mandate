@@ -89,9 +89,13 @@ private:
 	int nextUnitId;
 
 	//config
-	bool fogOfWar;
+	bool fogOfWar, shroudOfDarkness;
 	int fogOfWarSmoothingFrameSkip;
 	bool fogOfWarSmoothing;
+
+	bool unfogActive;
+	int unfogTTL;
+	Vec4i unfogArea;
 
 	static World *singleton;
 	bool alive;
@@ -180,6 +184,8 @@ public:
 	int getUnitCount(int factionIndex);
 	int getUnitCountOfType(int factionIndex, const string &typeName);
 
+	void unfogMap(const Vec4i &rect, int time);
+
 #ifdef _GAE_DEBUG_EDITION_
 	void loadPFDebugTextures ();
 	Texture2D *PFDebugTextures[18];
@@ -201,6 +207,7 @@ private:
 	void updateEarthquakes(float seconds);
 	void tick();
 	void computeFow();
+	void doUnfog();
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);

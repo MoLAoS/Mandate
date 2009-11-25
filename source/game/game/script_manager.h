@@ -56,7 +56,7 @@ private:
 
 public:
 	ScriptTimer(const string &name, bool real, int interval, bool periodic)
-		: name (name), real (real), periodic  (periodic), interval (interval), active (true) {
+		: name(name), real(real), periodic(periodic), interval(interval), active(true) {
 			reset();
 	}
 
@@ -68,6 +68,10 @@ public:
 	void kill()						{active = false;}
 	void reset();
 };
+
+// =====================================================
+//	class Region, and Derivitives
+// =====================================================
 
 struct Region {
 	virtual bool isInside(const Vec2i &pos) const = 0;
@@ -120,38 +124,49 @@ struct CompoundRegion : public Region {
 	}
 };
 
+struct PosTrigger {
+	Region *region;
+	string event;
+};
+
+
 // =====================================================
-//	class LocationEventManager
+//	class TriggerManager
 // =====================================================
 
-class LocationEventManager {
-	//TODO: make ugly... use integer ids only in C++, strings from Lua looked-up in a map<string,int>
-	typedef map<string,Region*>	Regions; 
-	typedef map<string,string>	Events;
-	typedef vector<string>		Triggers;
-	typedef map<int,Triggers>	TriggersMap;
+class TriggerManager {
+	typedef map<string,Region*>			Regions; 
+	typedef set<string>					Events;
+	typedef vector<PosTrigger>			PosTriggers;
+	typedef map<int,PosTriggers>		PosTriggerMap;
+	typedef map<int,string>				TriggerMap;
 
-	Regions regions;
 	Events  events;
+	Regions regions;
 
-	TriggersMap unitIdTriggers;
-	TriggersMap factionTriggers;
-	TriggersMap teamTriggers;
+	PosTriggerMap	posTriggers;
+	TriggerMap		attackedTriggers;
+	TriggerMap		hpBelowTriggers;
+	TriggerMap		hpAboveTriggers;
+	TriggerMap		commandCallbacks;
 
 public:
-	LocationEventManager() { reset(); }
+	TriggerManager() { reset(); }
 
 	void reset();
 	bool registerRegion(const string &name, const Rect &rect);
-	int registerEvent(const string &name, const string &region);
-
+	int registerEvent(const string &name);
+	int  addRegionTrigger(int unitId, const string &region, const string &eventName);
+	int  addCommandCallback(int unitId, const string &eventName);
+	int  addHPBelowTrigger(int unitId, int threshold, const string &eventName);
+	int  addHPAboveTrigger(int unitId, int threshold, const string &eventName);
+ 
 	// must be called any time a unit is 'put' in cells (created, moved, 
 	void unitMoved(const Unit *unit);
 	void unitDied(const Unit *unit);
-	
-	int addUnitIdTrigger(int unitId, const string &eventName);
-	int addFactionTrigger(int ndx, const string &eventName);
-	int addTeamTrigger(int ndx, const string &eventName);
+	void commandCallback(const Unit *unit);
+	void onHPBelow(const Unit *unit);
+	void onHPAbove(const Unit *unit);
 };
 
 // =====================================================
@@ -218,8 +233,7 @@ private:
 
 	static set<string> definedEvents;
 
-	static LocationEventManager locationEventManager;
-	//static ScriptManager* thisScriptManager;
+	static TriggerManager triggerManager;
 
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
@@ -239,9 +253,13 @@ public:
 	static void onResourceHarvested();
 	static void onUnitCreated(const Unit* unit);
 	static void onUnitDied(const Unit* unit);
+
 	static void onTimer();
 	static void onTrigger(const string &name, int unitId);
-	static void unitMoved(Unit *unit) { locationEventManager.unitMoved(unit); }
+	static void unitMoved(Unit *unit) { triggerManager.unitMoved(unit); }
+	static void commandCallback(const Unit *unit) { triggerManager.commandCallback(unit); }
+	static void onHPBelowTrigger(const Unit *unit) { triggerManager.onHPBelow(unit); }
+	static void onHPAboveTrigger(const Unit *unit) { triggerManager.onHPAbove(unit); }
 
 	static void addErrorMessage(const char *txt=NULL);
 	static void addErrorMessage(const string &txt) {
@@ -256,7 +274,7 @@ private:
 	// LUA callbacks
 	//
 
-	// commands
+	// Timers, Triggers, Events...
 	static int setTimer(LuaHandle* luaHandle);
 	static int stopTimer(LuaHandle* luaHandle);
 	static int registerRegion(LuaHandle* luaHandle);
@@ -264,22 +282,36 @@ private:
 	static int setUnitTrigger(LuaHandle* luaHandle);
 	static int setFactionTrigger(LuaHandle* luaHandle);
 	static int setTeamTrigger(LuaHandle* luaHandle);
+
+	// messages
 	static int showMessage(LuaHandle* luaHandle);
 	static int setDisplayText(LuaHandle* luaHandle);
 	static int clearDisplayText(LuaHandle* luaHandle);
+	static int consoleMsg(LuaHandle* luaHandle);
+
+	// gui
+	static int lockInput(LuaHandle* luaHandle);
+	static int unlockInput(LuaHandle* luaHandle);	
 	static int setCameraPosition(LuaHandle* luaHandle);
+	static int unfogMap(LuaHandle *luaHandle);
+
+	// create units / hand-out resources
 	static int createUnit(LuaHandle* luaHandle);
 	static int giveResource(LuaHandle* luaHandle);
+
+	// commands
 	static int givePositionCommand(LuaHandle* luaHandle);
-	static int giveTargetCommand ( LuaHandle * luaHandle );
-	static int giveStopCommand ( LuaHandle * luaHandle );
+	static int giveTargetCommand(LuaHandle * luaHandle);
+	static int giveStopCommand(LuaHandle * luaHandle);
 	static int giveProductionCommand(LuaHandle* luaHandle);
 	static int giveUpgradeCommand(LuaHandle* luaHandle);
+
+	// game flow
 	static int disableAi(LuaHandle* luaHandle);
 	static int setPlayerAsWinner(LuaHandle* luaHandle);
 	static int endGame(LuaHandle* luaHandle);
-	static int debugLog ( LuaHandle* luaHandle );
-	static int consoleMsg ( LuaHandle* luaHandle );
+
+	static int debugLog(LuaHandle* luaHandle);
 
 	// queries
 	static int getPlayerName(LuaHandle* luaHandle);

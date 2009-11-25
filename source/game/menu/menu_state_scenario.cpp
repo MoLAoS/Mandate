@@ -193,6 +193,19 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 		throw std::runtime_error("Invalid difficulty");
 	}
 
+	const XmlNode *tmp = scenarioNode->getOptionalChild("fog-of-war");
+	if ( tmp ) {
+		scenarioInfo->fogOfWar = tmp->getAttribute("value")->getBoolValue();
+	} else {
+		scenarioInfo->fogOfWar = Config::getInstance().getGsFogOfWarEnabled();
+	}
+	tmp = scenarioNode->getOptionalChild("shroud-of-darkness");
+	if ( tmp ) {
+		scenarioInfo->shroudOfDarkness = tmp->getAttribute("value")->getBoolValue();
+	} else {
+		scenarioInfo->shroudOfDarkness = Config::getInstance().getGsFogOfWarEnabled();
+	}
+
 	const XmlNode *playersNode = scenarioNode->getChild("players");
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		const XmlNode* playerNode = playersNode->getChild("player", i);
@@ -257,13 +270,19 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 }
 
 void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gs) {
-
+	string scenarioPath = "gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
+							+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()];
+	// map in scenario dir ?
+	string test = scenarioPath + "/" + scenarioInfo->mapName + ".gbm";
+	if ( fileExists(test) ) {
+		gs->setMapPath(test);
+	} else {
+		gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
+	}
 	gs->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
-	gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
 	gs->setTilesetPath(string("tilesets/") + scenarioInfo->tilesetName);
 	gs->setTechPath(string("techs/") + scenarioInfo->techTreeName);
-	gs->setScenarioPath("gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
-						+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
+	gs->setScenarioPath(scenarioPath);
 	gs->setDefaultUnits(scenarioInfo->defaultUnits);
 	gs->setDefaultResources(scenarioInfo->defaultResources);
 	gs->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
@@ -284,7 +303,8 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 			factionCount++;
 		}
 	}
-
+	Config::getInstance().setGsFogOfWarEnabled(scenarioInfo->fogOfWar);
+	Config::getInstance().setGsShroudOfDarknessEnabled(scenarioInfo->shroudOfDarkness);
 	gs->setFactionCount(factionCount);
 }
 

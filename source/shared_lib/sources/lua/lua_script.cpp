@@ -246,6 +246,11 @@ void LuaArguments::returnVec2i(const Vec2i &value){
 	lua_rawseti(luaState, -2, 2);
 }
 
+void LuaArguments::returnBool(bool value){
+	++returnCount;
+	lua_pushboolean(luaState, value);
+}
+
 char* LuaArguments::getType(int ndx) const {
 	if ( lua_isnumber(luaState, ndx) ) {
 		return "Number";

@@ -49,93 +49,148 @@ bool ScriptTimer::isReady() const {
 
 void ScriptTimer::reset() {
 	if (real) {
-		targetTime = Chrono::getCurMillis() + interval * 1000;
+		targetTime = Chrono::getCurMillis() + interval;
 	} else {
 		targetTime = theWorld.getFrameCount() + interval;
 	}
 }
 
 // =====================================================
-//	class LocationEventManager
+//	class TriggerManager
 // =====================================================
 
-void LocationEventManager::reset() {
+void TriggerManager::reset() {
 	regions.clear();
 	events.clear();
-	unitIdTriggers.clear();
+	posTriggers.clear();
+	attackedTriggers.clear();
+	hpBelowTriggers.clear();
+	hpAboveTriggers.clear();
+	commandCallbacks.clear();
 }
 
-bool LocationEventManager::registerRegion(const string &name, const Rect &rect) {
-	if ( regions.find(name) != regions.end() ) {
-		return false;
-	}
-	Region *region = new Rect(rect);
-	regions[name] = region;
-	return true;
-}
+bool TriggerManager::registerRegion(const string &name, const Rect &rect) {
+	if ( regions.find(name) != regions.end() ) return false;
+ 	Region *region = new Rect(rect);
+ 	regions[name] = region;
+ 	return true;
+ }
 
-int LocationEventManager::registerEvent(const string &name, const string &region) {
-	if ( events.find(name) != events.end() ) {
-		return -1;
-	}
-	if ( regions.find(region) == regions.end() ) {
-		return -2;
-	}
-	events[name] = region;
+int TriggerManager::registerEvent(const string &name) {
+	if ( events.find(name) != events.end() ) return -1;
+	events.insert(name);
 	return 0;
 }
 
-void LocationEventManager::unitMoved(const Unit *unit) {
+int TriggerManager::addCommandCallback(int unitId, const string &eventName) {
+	Unit *unit = theWorld.findUnitById(unitId);
+	if ( !unit ) return -1;
+	commandCallbacks[unitId] = eventName;
+	unit->setCommandCallback();
+	return 0;
+}
+
+int TriggerManager::addHPBelowTrigger(int unitId, int threshold, const string &eventName) {
+	Unit *unit = theWorld.findUnitById(unitId);
+	if ( !unit ) return -1;
+	if ( unit->getHp() < threshold ) return -2;
+	unit->setHPBelowTrigger(threshold);
+	hpBelowTriggers[unit->getId()] = eventName;
+	return 0;
+}
+
+int TriggerManager::addHPAboveTrigger(int unitId, int threshold, const string &eventName) {
+	Unit *unit = theWorld.findUnitById(unitId);
+	if ( !unit ) return -1;
+	if ( unit->getHp() > threshold ) return -2;
+	unit->setHPAboveTrigger(threshold);
+	hpAboveTriggers[unit->getId()] = eventName;
+	return 0;
+}
+
+void TriggerManager::unitMoved(const Unit *unit) {
 	// check id
 	int id = unit->getId();
-	TriggersMap::iterator tmit = unitIdTriggers.find(id);
-	if ( tmit == unitIdTriggers.end() ) return;
-	Triggers &triggers = tmit->second;
-	Triggers::iterator it = triggers.begin();
-	while ( it != triggers.end() ) {
-		Region *region = regions[events[*it]];
-		if ( region->isInside(unit->getPos()) ) {
-			ScriptManager::onTrigger(*it, id);
+	PosTriggerMap::iterator tmit = posTriggers.find(id);
+	if ( tmit == posTriggers.end() ) return;
+	PosTriggers &triggers = tmit->second;
+start:
+	PosTriggers::iterator it = triggers.begin();
+ 	while ( it != triggers.end() ) {
+		if ( it->region->isInside(unit->getPos()) ) {
+			// setting another trigger on this unit in response to this trigger will cause our 
+			// iterators here to go bad... :(
+			string evnt = it->event;
 			it = triggers.erase(it);
-		} else {
-			++it;
-		}
+			ScriptManager::onTrigger(evnt, id);
+			goto start;
+ 		} else {
+ 			++it;
+ 		}
 	}
 }
 
-void LocationEventManager::unitDied(const Unit *unit) {
-	int id = unit->getId();
-	TriggersMap::iterator it = unitIdTriggers.find(id);
-	if ( it != unitIdTriggers.end() ) {
-		unitIdTriggers.erase(it);
-	}
+void TriggerManager::unitDied(const Unit *unit) {
+	posTriggers.erase(unit->getId());
+	commandCallbacks.erase(unit->getId());
+	attackedTriggers.erase(unit->getId());
+	hpBelowTriggers.erase(unit->getId());
+	hpAboveTriggers.erase(unit->getId());
 }
 
-/** @return 0 if ok, -1 if bad unit id, -2 if event not found, -3 event already registered for this unit */
-int LocationEventManager::addUnitIdTrigger(int unitId, const string &eventName) {
+void TriggerManager::commandCallback(const Unit *unit) {
+	TriggerMap::iterator it = commandCallbacks.find(unit->getId());
+	if ( it == commandCallbacks.end() ) return;
+	string evnt = it->second;
+	commandCallbacks.erase(it);
+	ScriptManager::onTrigger(evnt, unit->getId());
+}
+
+void TriggerManager::onHPBelow(const Unit *unit) {
+	TriggerMap::iterator it = hpBelowTriggers.find(unit->getId());
+	if ( it == hpBelowTriggers.end() ) return;
+	string evnt = it->second;
+	hpBelowTriggers.erase(it);
+	ScriptManager::onTrigger(evnt, unit->getId());
+}
+
+void TriggerManager::onHPAbove(const Unit *unit) {
+	TriggerMap::iterator it = hpAboveTriggers.find(unit->getId());
+	if ( it == hpAboveTriggers.end() ) {
+		return;
+	}
+	string evnt = it->second;
+	hpAboveTriggers.erase(it);
+	ScriptManager::onTrigger(evnt, unit->getId());
+}
+
+/** @return 0 if ok, -1 if bad unit id, -2 if event not found, -3 region not found,
+  * -4 unit already has a trigger for this region,event pair */
+int TriggerManager::addRegionTrigger	(int unitId, const string &region, const string &eventName) {
 	//theLogger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
 	Unit *unit = theWorld.findUnitById(unitId);
 	if ( !unit ) return -1;
 	if ( events.find(eventName) == events.end() ) return -2;
-	if ( unitIdTriggers.find(unitId) == unitIdTriggers.end() ) {
-		unitIdTriggers.insert(pair<int,Triggers>(unitId,Triggers()));
-	}
-	if ( find(unitIdTriggers[unitId].begin(), unitIdTriggers[unitId].end(), eventName) 
-	!= unitIdTriggers[unitId].end() ) {
-		return -3;
-	}
-	unitIdTriggers[unitId].push_back(eventName);
+	Region *rgn = NULL;
+	if ( regions.find(region) != regions.end() ) rgn = regions[region];
+	if ( !rgn ) return -3;
+	if ( posTriggers.find(unitId) == posTriggers.end() ) {
+		posTriggers.insert(pair<int,PosTriggers>(unitId,PosTriggers()));
+ 	}
+	PosTriggers &triggers = posTriggers.find(unitId)->second;
+	PosTriggers::iterator it = triggers.begin();
+	for ( ; it != triggers.end(); ++it ) {
+		if ( it->region == rgn && it->event == eventName ) {
+			return -4;
+		}
+ 	}
+	triggers.push_back(PosTrigger());
+	triggers.back().region = rgn;
+	triggers.back().event = eventName;
 	return 0;
 }
-int LocationEventManager::addFactionTrigger(int ndx, const string &eventName) {
-	return -9;
-}
 
-int LocationEventManager::addTeamTrigger(int ndx, const string &eventName) {
-	return -9;
-}
-
-LocationEventManager ScriptManager::locationEventManager;
+TriggerManager ScriptManager::triggerManager;
 
 // =====================================================
 //	class ScriptManager
@@ -175,12 +230,15 @@ void ScriptManager::init() {
 	luaScript.registerFunction(registerRegion, "registerRegion");
 	luaScript.registerFunction(registerEvent, "registerEvent");
 	luaScript.registerFunction(setUnitTrigger, "setUnitTrigger");
-	luaScript.registerFunction(setFactionTrigger, "setFactionTrigger");
-	luaScript.registerFunction(setTeamTrigger, "setTeamTrigger");
 	luaScript.registerFunction(showMessage, "showMessage");
 	luaScript.registerFunction(setDisplayText, "setDisplayText");
 	luaScript.registerFunction(clearDisplayText, "clearDisplayText");
-	luaScript.registerFunction(setCameraPosition, "setCameraPosition");
+
+	luaScript.registerFunction(lockInput, "lockInput");
+	luaScript.registerFunction(unlockInput, "unlockInput");
+ 	luaScript.registerFunction(setCameraPosition, "setCameraPosition");
+	luaScript.registerFunction(unfogMap, "unfogMap");
+
 	luaScript.registerFunction(createUnit, "createUnit");
 	luaScript.registerFunction(giveResource, "giveResource");
 	luaScript.registerFunction(givePositionCommand, "givePositionCommand");
@@ -209,7 +267,7 @@ void ScriptManager::init() {
 	luaScript.registerFunction(getUnitCountOfType, "unitCountOfType");
 	
 	//setup message box
-	messageBox.init( "", Lang::getInstance().get("Ok") );
+	messageBox.init("", Lang::getInstance().get("Ok"));
 	messageBox.setEnabled(false);
 
 	//last created unit
@@ -253,7 +311,7 @@ void ScriptManager::init() {
 		}
 	}
 
-	locationEventManager.reset();
+	triggerManager.reset();
 
 	//call startup function
 	luaScript.luaCall("startup");
@@ -322,7 +380,7 @@ void ScriptManager::onUnitDied(const Unit* unit){
 			addErrorMessage();
 		}
 	}
-	locationEventManager.unitDied(unit);
+	triggerManager.unitDied(unit);
 }
 
 void ScriptManager::onTrigger(const string &name, int unitId) {
@@ -438,7 +496,7 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 			} else {
 				throw runtime_error("ScriptManager::extractArgs() passed bad arg_desc string");
 			}
-			expected--;
+			--expected;
 			tok = strtok(NULL, ",");
 		}
 	} catch ( LuaError e ) {
@@ -511,7 +569,7 @@ int ScriptManager::registerRegion(LuaHandle* luaHandle) {
 	string name;
 	Vec4i rect;
 	if ( extractArgs(args, "registerRegion", "str,v4i", &name, &rect) ) {
-		if ( !locationEventManager.registerRegion(name, rect) ) {
+		if ( !triggerManager.registerRegion(name, rect) ) {
 			stringstream ss;
 			ss << "registerRegion(): with name='" << name << "' at " << rect
 				<< "failed, a region with that name is already registered.";
@@ -524,75 +582,80 @@ int ScriptManager::registerRegion(LuaHandle* luaHandle) {
 int ScriptManager::registerEvent(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	string name, condition;
-	if ( extractArgs(args, "registerEvent", "str,str", &name, &condition) ) {
-		bool did_something = false;
-		if ( condition == "attacked" ) { // nop
-		} else if ( condition == "enemy_sighted" ) { // nop
+	if ( extractArgs(args, "registerEvent", "str", &name) ) {
+		if ( triggerManager.registerEvent(name) == -1 ) {
+			addErrorMessage("registerEvent(): event '" + name + "' is already registered");
+		}
+	}
+	return args.getReturnCount();
+}
+
+/** @return 0 if ok, -1 if bad unit id, -2 if event not found  */
+
+int ScriptManager::setUnitTrigger(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int id;
+	string cond, evnt;
+	if ( extractArgs(args, "setUnitTrigger", "int,str,str", &id, &cond, &evnt) ) {
+	bool did_something = false;
+		if ( cond == "attacked" ) { // nop
+		} else if ( cond == "enemy_sighted" ) { // nop
+		} else if ( cond == "command_callback") {
+			if ( triggerManager.addCommandCallback(id,evnt) == -1 ) {
+				addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
+			}
+			did_something = true;
 		} else { // 'complex' conditions
-			size_t ePos = condition.find('=');
-			if ( ePos != string::npos ) {
-				string key = condition.substr(0, ePos);
-				string val = condition.substr(ePos+1);
-				if ( key == "hp_below" ) { // nop
-				} else if ( key == "region" ) { // look, this one does something!
-					int res = locationEventManager.registerEvent(name,val);
-					if ( res == -1 ) {
-						addErrorMessage("registerEvent(): event '" + name + "' already exists");
-					} else if ( res == -2 ) {
-						addErrorMessage("registerEvent(): unkown region  '" + val + "'");
+			size_t ePos = cond.find('=');
+ 			if ( ePos != string::npos ) {
+				string key = cond.substr(0, ePos);
+				string val = cond.substr(ePos+1);
+ 				if ( key == "hp_below" ) { // nop
+					int threshold = atoi(val.c_str());
+					if ( threshold < 1 ) {
+						addErrorMessage("setUnitTrigger(): invalid hp_below condition = '" + val + "'");
+					} else {
+						int res = triggerManager.addHPBelowTrigger(id, threshold, evnt);
+						if ( res == -1 ) {
+							addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
+						} else if ( res == -2 ) {
+							addErrorMessage("setUnitTrigger(): hp_below=" + intToStr(threshold) + ", unit doesn't have that many hp");
+						}
+					}
+					did_something = true;
+				} else if ( key == "hp_above" ) { // nop
+					int threshold = atoi(val.c_str());
+					if ( threshold < 1 ) {
+						addErrorMessage("setUnitTrigger(): invalid hp_above condition = '" + val + "'");
+					} else {
+						int res = triggerManager.addHPAboveTrigger(id, threshold, evnt);
+						if ( res == -1 ) {
+							addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
+						} else if ( res == -2 ) {
+							addErrorMessage("setUnitTrigger(): hp_above=" + intToStr(threshold) + ", unit already has that many hp");
+						}
+					}
+					did_something = true;
+ 				} else if ( key == "region" ) { // look, this one does something!
+					int res = triggerManager.addRegionTrigger(id,val,evnt);
+ 					if ( res == -1 ) {
+						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
+ 					} else if ( res == -2 ) {
+						addErrorMessage("setUnitTrigger(): unkown event  '" + evnt + "'");
+					} else if ( res == -3 ) {
+						addErrorMessage("setUnitTrigger(): unkown region  '" + val + "'");
+					} else if ( res == -4 ) {
+						addErrorMessage("setUnitTrigger(): unit " + intToStr(id) 
+							+ " already has a trigger for this region,event pair "
+							+ "'" + val + ", " + evnt + "'");
+
 					}
 					did_something = true;
 				}
 			}
 		}
 		if ( !did_something ) {
-			addErrorMessage("registerEvent(): invalid condition = '" + condition + "'");
-		}
-	}
-	return args.getReturnCount();
-}
-/** @return 0 if ok, -1 if bad unit id, -2 if event not found  */
-
-int ScriptManager::setUnitTrigger(LuaHandle* luaHandle) {
-	LuaArguments args(luaHandle);
-	int id;
-	string name;
-	if ( extractArgs(args, "setUnitTrigger", "int,str", &id, &name) ) {
-		int res = locationEventManager.addUnitIdTrigger(id, name);
-		if ( res == -1 ) {
-			addErrorMessage("setUnitTrigger(): invalid unitId " + id);
-		} else if ( res == -2 ) {
-			addErrorMessage("setUnitTrigger(): event '" + name + "' not found");
-		}
-	}
-	return args.getReturnCount();
-}
-
-int ScriptManager::setFactionTrigger(LuaHandle* luaHandle) {
-	LuaArguments args(luaHandle);
-	int fNdx;
-	string name;
-	if ( extractArgs(args, "setFactionTrigger", "int,str", &fNdx, &name) ) {
-		int res = locationEventManager.addFactionTrigger(fNdx, name);
-		if ( res == -1 ) {
-			addErrorMessage("setFactionTrigger(): invalid faction index " + fNdx);
-		} else if ( res == -2 ) {
-			addErrorMessage("setFactionTrigger(): event '" + name + "' not found");
-		}
-	}
-	return args.getReturnCount();
-}
-
-int ScriptManager::setTeamTrigger(LuaHandle* luaHandle) {
-	LuaArguments args(luaHandle);
-	int tNdx;
-	string name;
-	if ( extractArgs(args, "setTeamTrigger", "int,str", &tNdx, &name) ) {
-		int res = locationEventManager.addTeamTrigger(tNdx, name);
-		if ( res == -1 ) {
-			addErrorMessage("setTeamTrigger(): invalid team index " + tNdx);
-		} else if ( res == -2 ) {
-			addErrorMessage("setTeamTrigger(): event '" + name + "' not found");
+			addErrorMessage("setUnitTrigger(): invalid condition = '" + cond + "'");
 		}
 	}
 	return args.getReturnCount();
@@ -627,6 +690,28 @@ int ScriptManager::setDisplayText(LuaHandle* luaHandle){
 int ScriptManager::clearDisplayText(LuaHandle* luaHandle){
 	LuaArguments args(luaHandle);
 	displayText= "";
+	return args.getReturnCount();
+}
+
+int ScriptManager::lockInput(LuaHandle* luaHandle){
+	LuaArguments args(luaHandle);
+	theGame.lockInput();
+	return args.getReturnCount();
+}
+
+int ScriptManager::unlockInput(LuaHandle* luaHandle){
+	LuaArguments args(luaHandle);
+	theGame.unlockInput();
+	return args.getReturnCount();
+}
+
+int ScriptManager::unfogMap(LuaHandle* luaHandle){
+	LuaArguments args(luaHandle);
+	Vec4i area;
+	int time;
+	if ( extractArgs(args, "unfogMap", "int,v4i", &time, &area) ) {
+		theWorld.unfogMap(area,time);
+	}
 	return args.getReturnCount();
 }
 
@@ -683,6 +768,7 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle){
 	Vec2i pos;
 	if ( extractArgs(args, "givePositionCommand", "int,str,v2i", &id, &cmd, &pos) ) {
 		int res = theWorld.givePositionCommand(id, cmd, pos);
+		args.returnBool( (res == 0 ? true : false) );
 		if ( res < 0 ) {
 			stringstream ss;
 			switch ( res ) {
@@ -692,7 +778,8 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle){
 				default: throw runtime_error("In ScriptManager::givePositionCommand, World::givePositionCommand() returned unknown error code.");
 			}
 			addErrorMessage(ss.str());
-		}	}
+		}	
+	}
 	return args.getReturnCount();
 }
 
@@ -702,6 +789,7 @@ int ScriptManager::giveTargetCommand ( LuaHandle * luaHandle ) {
 	string cmd;
 	if ( extractArgs(args, "giveTargetCommand", "int,str,int", &id, &cmd, &id2) ) {
 		int res = theWorld.giveTargetCommand(id, cmd, id2);
+		args.returnBool( (res == 0 ? true : false) );
 		if ( res < 0 ) {
 			stringstream ss;
 			switch ( res ) {
@@ -722,6 +810,7 @@ int ScriptManager::giveStopCommand ( LuaHandle * luaHandle ) {
 	string cmd;
 	if ( extractArgs(args, "giveStopCommand", "int,str", &id, &cmd) ) {
 		int res = theWorld.giveStopCommand(id, cmd);
+		args.returnBool( (res == 0 ? true : false) );
 		if ( res < 0 ) {
 			stringstream ss;
 			switch ( res ) {
@@ -742,6 +831,7 @@ int ScriptManager::giveProductionCommand(LuaHandle* luaHandle) {
 	string prod;
 	if ( extractArgs(args, "giveProductionCommand", "int,str", &id, &prod) ) {
 		int res = theWorld.giveProductionCommand(id, prod);
+		args.returnBool( (res == 0 ? true : false) );
 		if ( res < 0 ) {
 			stringstream ss;
 			switch ( res ) {
@@ -762,6 +852,7 @@ int ScriptManager::giveUpgradeCommand(LuaHandle* luaHandle) {
 	string prod;
 	if ( extractArgs(args, "giveUpgradeCommand", "int,str", &id, &prod) ) {
 		int res = theWorld.giveUpgradeCommand(id, prod);
+		args.returnBool( (res == 0 ? true : false) );
 		if ( res < 0 ) {
 			stringstream ss;
 			switch ( res ) {
