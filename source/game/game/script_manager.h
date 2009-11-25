@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -14,144 +14,256 @@
 
 #include <string>
 #include <queue>
+#include <set>
+#include <map>
+#include <limits>
 
 #include "lua_script.h"
 #include "vec.h"
+#include "timer.h"
 
 #include "components.h"
 #include "game_constants.h"
+#include "logger.h"
 
-using std::string;
-using std::queue;
+using namespace std;
 using Shared::Graphics::Vec2i;
-using Shared::Lua::LuaScript;
-using Shared::Lua::LuaHandle;
+using Shared::Graphics::Vec4i;
+using Shared::Platform::Chrono;
+using namespace Shared::Lua;
 
-namespace Glest{ namespace Game{
+namespace Glest{ namespace Game {
 
 class World;
 class Unit;
 class GameCamera;
+class GameSettings;
+class Game;
+class UnitType;
+
+// =====================================================
+//	class ScriptTimer
+// =====================================================
+
+class ScriptTimer {
+private:
+	string name;
+	bool real;
+	bool periodic;
+	bool active;
+	int64 targetTime;
+	int64 interval;
+
+public:
+	ScriptTimer(const string &name, bool real, int interval, bool periodic)
+		: name (name), real (real), periodic  (periodic), interval (interval), active (true) {
+			reset();
+	}
+
+	const string &getName()	const	{return name;}
+	bool isPeriodic() const			{return periodic;}
+	bool isAlive() const			{return active;}
+	bool isReady() const;
+
+	void kill()						{active = false;}
+	void reset();
+};
+
+struct Region {
+	virtual bool isInside(const Vec2i &pos) const = 0;
+};
+
+struct Rect : public Region {
+	int x, y, w, h; // top-left coords + width and height
+
+	Rect() : x(0), y(0), w(0), h(0) { }
+	Rect(const int v) : x(v), y(v), w(v), h(v) { }
+	Rect(const Vec4i &v) : x(v.x), y(v.y), w(v.z), h(v.w) { }
+	Rect(const int x, const int y, const int w, const int h) : x(x), y(y), w(w), h(h) { }
+
+	virtual bool isInside(const Vec2i &pos) const {
+		return pos.x >= x && pos.y >= y && pos.x < x + w && pos.y < y + h;
+	}
+};
+
+struct Circle : public Region {
+	int x, y; // centre
+	float radius;
+
+	Circle() : x(-1), y(-1), radius(numeric_limits<float>::quiet_NaN()) { }
+	Circle(const Vec2i &pos, const float radius) : x(pos.x), y(pos.y), radius(radius) { }
+	Circle(const int x, const int y, const float r) : x(x), y(y), radius(r) { }
+
+	virtual bool isInside(const Vec2i &pos) const {
+		return pos.dist(Vec2i(x,y)) <= radius;
+	}
+};
+
+struct CompoundRegion : public Region {
+	vector<Region*> regions;
+
+	CompoundRegion() { }
+	CompoundRegion(Region *ptr) { regions.push_back(ptr); }
+
+	template<typename InIter>
+	void addRegions(InIter start, InIter end) {
+		copy(start,end,regions.end());
+	}
+
+	virtual bool isInside(const Vec2i &pos) const {
+		for ( vector<Region*>::const_iterator it = regions.begin(); it != regions.end(); ++it ) {
+			if ( (*it)->isInside(pos) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+// =====================================================
+//	class LocationEventManager
+// =====================================================
+
+class LocationEventManager {
+	//TODO: make ugly... use integer ids only in C++, strings from Lua looked-up in a map<string,int>
+	typedef map<string,Region*>	Regions; 
+	typedef map<string,string>	Events;
+	typedef vector<string>		Triggers;
+	typedef map<int,Triggers>	TriggersMap;
+
+	Regions regions;
+	Events  events;
+
+	TriggersMap unitIdTriggers;
+	TriggersMap factionTriggers;
+	TriggersMap teamTriggers;
+
+public:
+	LocationEventManager() { reset(); }
+
+	void reset();
+	bool registerRegion(const string &name, const Rect &rect);
+	int registerEvent(const string &name, const string &region);
+
+	// must be called any time a unit is 'put' in cells (created, moved, 
+	void unitMoved(const Unit *unit);
+	void unitDied(const Unit *unit);
+	
+	int addUnitIdTrigger(int unitId, const string &eventName);
+	int addFactionTrigger(int ndx, const string &eventName);
+	int addTeamTrigger(int ndx, const string &eventName);
+};
 
 // =====================================================
 //	class ScriptManagerMessage
 // =====================================================
 
-class ScriptManagerMessage{
+class ScriptManagerMessage {
 private:
 	string text;
 	string header;
 
 public:
-	ScriptManagerMessage(string text, string header)	{this->text= text, this->header= header;}
+	ScriptManagerMessage(string text, string header) : text(text), header(header) {}
 	const string &getText() const	{return text;}
 	const string &getHeader() const	{return header;}
 };
 
-class PlayerModifiers{
-public:
-	PlayerModifiers();
+class PlayerModifiers {
+private:
+	bool winner;
+	bool aiEnabled;
 
-	void disableAi()			{aiEnabled= false;}
-	void setAsWinner()			{winner= true;}
+public:
+	PlayerModifiers() : winner(false), aiEnabled(true) { }
 
 	bool getWinner() const		{return winner;}
 	bool getAiEnabled() const	{return aiEnabled;}
 
-private:
-	bool winner;
-	bool aiEnabled;
+	void disableAi()			{aiEnabled = false;}
+	void setAsWinner()			{winner = true;}
 };
 
 // =====================================================
 //	class ScriptManager
 // =====================================================
 
-class ScriptManager{
+class ScriptManager {
 private:
 	typedef queue<ScriptManagerMessage> MessageQueue;
 
-private:
-
 	//lua
-	string code;
-	LuaScript luaScript;
-
-	//world
-	World *world;
-	GameCamera *gameCamera;
+	static string code;
+	static LuaScript luaScript;
 
 	//misc
-	MessageQueue messageQueue;
-	GraphicMessageBox messageBox;
-	string displayText;
-	
+	static MessageQueue messageQueue;
+	static GraphicMessageBox messageBox;
+	static string displayText;
+
 	//last created unit
-	string lastCreatedUnitName;
-	int lastCreatedUnitId;
+	static string lastCreatedUnitName;
+	static int lastCreatedUnitId;
 
 	//last dead unit
-	string lastDeadUnitName;
-	int lastDeadUnitId;
+	static string lastDeadUnitName;
+	static int lastDeadUnitId;
 
 	// end game state
-	bool gameOver;
-	PlayerModifiers playerModifiers[GameConstants::maxPlayers];
+	static bool gameOver;
+	static PlayerModifiers playerModifiers[GameConstants::maxPlayers];
 
-private:
-	static ScriptManager* thisScriptManager;
+	static vector<ScriptTimer> timers;
+	static vector<ScriptTimer> newTimerQueue;
 
-private:
+	static set<string> definedEvents;
+
+	static LocationEventManager locationEventManager;
+	//static ScriptManager* thisScriptManager;
+
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
 
 public:
-	void init(World* world, GameCamera *gameCamera);
+	static void init ();
 
 	//message box functions
-	bool getMessageBoxEnabled() const									{return !messageQueue.empty();}
-	GraphicMessageBox* getMessageBox()									{return &messageBox;}
-	string getDisplayText() const										{return displayText;}
-	bool getGameOver() const											{return gameOver;}
-	const PlayerModifiers *getPlayerModifiers(int factionIndex) const	{return &playerModifiers[factionIndex];}	
+	static bool getMessageBoxEnabled() 									{return !messageQueue.empty();}
+	static GraphicMessageBox* getMessageBox()							{return &messageBox;}
+	static string getDisplayText() 										{return displayText;}
+	static bool getGameOver() 											{return gameOver;}
+	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}
 
 	//events
-	void onMessageBoxOk();
-	void onResourceHarvested();
-	void onUnitCreated(const Unit* unit);
-	void onUnitDied(const Unit* unit);
+	static void onMessageBoxOk();
+	static void onResourceHarvested();
+	static void onUnitCreated(const Unit* unit);
+	static void onUnitDied(const Unit* unit);
+	static void onTimer();
+	static void onTrigger(const string &name, int unitId);
+	static void unitMoved(Unit *unit) { locationEventManager.unitMoved(unit); }
+
+	static void addErrorMessage(const char *txt=NULL);
+	static void addErrorMessage(const string &txt) {
+		addErrorMessage(txt.c_str());
+	}
 
 private:
+	static string wrapString(const string &str, int wrapCount);
+	static bool extractArgs(LuaArguments &args, const char *caller, const char *format, ...);
 
-	string wrapString(const string &str, int wrapCount);
+	//
+	// LUA callbacks
+	//
 
-	//wrappers, commands
-	void showMessage(const string &text, const string &header);
-	void clearDisplayText();
-	void setDisplayText(const string &text);
-	void setCameraPosition(const Vec2i &pos);
-	void createUnit(const string &unitName, int factionIndex, Vec2i pos);
-	void giveResource(const string &resourceName, int factionIndex, int amount);
-	void givePositionCommand(int unitId, const string &producedName, const Vec2i &pos);
-	void giveProductionCommand(int unitId, const string &producedName);
-	void giveUpgradeCommand(int unitId, const string &upgradeName);
-	void disableAi(int factionIndex);
-	void setPlayerAsWinner(int factionIndex);
-	void endGame();
-
-	//wrappers, queries
-	Vec2i getStartLocation(int factionIndex);
-	Vec2i getUnitPosition(int unitId);
-	int getUnitFaction(int unitId);
-	int getResourceAmount(const string &resourceName, int factionIndex);
-	const string &getLastCreatedUnitName();
-	int getLastCreatedUnitId();
-	const string &getLastDeadUnitName();
-	int getLastDeadUnitId();
-	int getUnitCount(int factionIndex);
-	int getUnitCountOfType(int factionIndex, const string &typeName);
-
-	//callbacks, commands
+	// commands
+	static int setTimer(LuaHandle* luaHandle);
+	static int stopTimer(LuaHandle* luaHandle);
+	static int registerRegion(LuaHandle* luaHandle);
+	static int registerEvent(LuaHandle* luaHandle);
+	static int setUnitTrigger(LuaHandle* luaHandle);
+	static int setFactionTrigger(LuaHandle* luaHandle);
+	static int setTeamTrigger(LuaHandle* luaHandle);
 	static int showMessage(LuaHandle* luaHandle);
 	static int setDisplayText(LuaHandle* luaHandle);
 	static int clearDisplayText(LuaHandle* luaHandle);
@@ -159,13 +271,20 @@ private:
 	static int createUnit(LuaHandle* luaHandle);
 	static int giveResource(LuaHandle* luaHandle);
 	static int givePositionCommand(LuaHandle* luaHandle);
+	static int giveTargetCommand ( LuaHandle * luaHandle );
+	static int giveStopCommand ( LuaHandle * luaHandle );
 	static int giveProductionCommand(LuaHandle* luaHandle);
 	static int giveUpgradeCommand(LuaHandle* luaHandle);
 	static int disableAi(LuaHandle* luaHandle);
 	static int setPlayerAsWinner(LuaHandle* luaHandle);
 	static int endGame(LuaHandle* luaHandle);
+	static int debugLog ( LuaHandle* luaHandle );
+	static int consoleMsg ( LuaHandle* luaHandle );
 
-	//callbacks, queries
+	// queries
+	static int getPlayerName(LuaHandle* luaHandle);
+	static int getFactionTypeName(LuaHandle* luaHandle);
+	static int getScenarioDir(LuaHandle* luaHandle);
 	static int getStartLocation(LuaHandle* luaHandle);
 	static int getUnitPosition(LuaHandle* luaHandle);
 	static int getUnitFaction(LuaHandle* luaHandle);

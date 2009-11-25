@@ -22,7 +22,9 @@ using Shared::Platform::Chrono;
 
 namespace Glest { namespace Game {
 
-GameSettings::GameSettings(const XmlNode *node){
+GameSettings::GameSettings() {}
+
+GameSettings::GameSettings(const XmlNode *node) {
 	description = node->getChildStringValue("description");
 	mapPath = node->getChildStringValue("mapPath");
 	tilesetPath = node->getChildStringValue("tilesetPath");
@@ -33,7 +35,7 @@ GameSettings::GameSettings(const XmlNode *node){
 
 	XmlNode *factionsNode = node->getChild("factions");
 	assert(GameConstants::maxPlayers == factionsNode->getChildCount());
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		XmlNode *factionNode = factionsNode->getChild("faction", i);
 
 		factionTypeNames[i] = factionNode->getChildStringValue("type");
@@ -43,7 +45,7 @@ GameSettings::GameSettings(const XmlNode *node){
 		startLocationIndex[i] = factionNode->getChildIntValue("startLocationIndex");
 	}
 }
-			
+
 void GameSettings::save(XmlNode *node) const {
 	node->addChild("description", description);
 	node->addChild("mapPath", mapPath);
@@ -54,7 +56,7 @@ void GameSettings::save(XmlNode *node) const {
 	node->addChild("factionCount", factionCount);
 
 	XmlNode *factionsNode = node->addChild("factions");
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		XmlNode *factionNode = factionsNode->addChild("faction");
 		factionNode->addChild("type", factionTypeNames[i]);
 		factionNode->addChild("playerName", playerNames[i]);

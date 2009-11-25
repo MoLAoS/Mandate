@@ -36,18 +36,19 @@ private:
 	string scenarioPath;
 
 	ControlType factionControls[GameConstants::maxPlayers];
+	float resourceMultipliers [GameConstants::maxPlayers];
 
 	int thisFactionIndex;
 	int factionCount;
 	int teams[GameConstants::maxPlayers];
 	int startLocationIndex[GameConstants::maxPlayers];
 
-   bool defaultUnits;
-   bool defaultResources;
-   bool defaultVictoryConditions;
+	bool defaultUnits;
+	bool defaultResources;
+	bool defaultVictoryConditions;
 
 public:
-	GameSettings(){}
+	GameSettings();
 	GameSettings(const XmlNode *node);
 	// use default copy ctor
 	//GameSettings(const GameSettings &gs);
@@ -62,6 +63,7 @@ public:
 	const string &getFactionTypeName(int i) const	{return factionTypeNames[i];}
 	const string &getPlayerName(int i) const		{return playerNames[i];}
 	ControlType getFactionControl(int i) const		{return factionControls[i];}
+	float getResourceMultilpier(int i) const		{return resourceMultipliers[i];}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getFactionCount() const						{return factionCount;}
 	int getTeam(int i) const						{return teams[i];}
@@ -76,9 +78,11 @@ public:
 	void setTilesetPath(const string& v)			{tilesetPath = v;}
 	void setTechPath(const string& v)				{techPath = v;}
 	void setScenarioPath(const string& v)			{scenarioPath = v;}
+
 	void setFactionTypeName(int i, const string& v)	{factionTypeNames[i] = v;}
 	void setPlayerName(int i, const string &v)		{playerNames[i] = v;}
 	void setFactionControl(int i, ControlType v)	{factionControls[i]= v;}
+	void setResourceMultiplier(int i, float v)		{resourceMultipliers[i] = v;}
 	void setThisFactionIndex(int v) 				{thisFactionIndex = v;}
 	void setFactionCount(int v)						{factionCount = v;}
 	void setTeam(int i, int v)						{teams[i] = v;}

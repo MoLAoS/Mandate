@@ -55,6 +55,7 @@ class ScriptManager;
 class World{
 private:
 	typedef vector<Faction> Factions;
+	typedef std::map< string,set<string> > UnitTypes;
 
 public:
 	static const int generationArea= 100;
@@ -67,20 +68,20 @@ private:
 	Tileset tileset;
 	TechTree techTree;
 	TimeFlow timeFlow;
-   Scenario scenario;
+	Scenario scenario;
 	Game &game;
 	const GameSettings &gs;
 
 	UnitUpdater unitUpdater;
-    WaterEffects waterEffects;
+	WaterEffects waterEffects;
 	Minimap minimap;
-    Stats stats;
+	Stats stats;
 
 	Factions factions;
 
 	Random random;
 
-   ScriptManager *scriptManager;
+	ScriptManager *scriptManager;
 
 	int thisFactionIndex;
 	int thisTeamIndex;
@@ -94,7 +95,9 @@ private:
 
 	static World *singleton;
 	bool alive;
-	
+
+	UnitTypes unitTypes;
+
 	Units newlydead;
 	PosCircularIteratorFactory posIteratorFactory;
 
@@ -102,6 +105,8 @@ public:
 	World(Game *game);
 	~World()										{singleton = NULL;}
 	void end(); //to die before selection does
+
+	static World& getInstance () { return *singleton; }
 
 	//get
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
@@ -153,19 +158,21 @@ public:
 		//a unit is rendered if it is in a visible cell or is attacking a unit in a visible cell
 		return visibleQuad.isInside(unit->getCenteredPos()) && toRenderUnit(unit);
 	}
-	
+
 	bool toRenderUnit(const Unit *unit) const {
 		return map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
 			|| (unit->getCurrSkill()->getClass() == scAttack
 			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
 	}
 
-   //scripting interface
-	void createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
-	void givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
-	void giveProductionCommand(int unitId, const string &producedName);
-	void giveUpgradeCommand(int unitId, const string &upgradeName);
-	void giveResource(const string &resourceName, int factionIndex, int amount);
+	//scripting interface
+	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
+	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
+	int giveTargetCommand ( int unitId, const string &commandName, int targetId );
+	int giveStopCommand ( int unitId, const string &commandName );
+	int giveProductionCommand(int unitId, const string &producedName);
+	int giveUpgradeCommand(int unitId, const string &upgradeName);
+	int giveResource(const string &resourceName, int factionIndex, int amount);
 	int getResourceAmount(const string &resourceName, int factionIndex);
 	Vec2i getStartLocation(int factionIndex);
 	Vec2i getUnitPosition(int unitId);
@@ -174,9 +181,9 @@ public:
 	int getUnitCountOfType(int factionIndex, const string &typeName);
 
 #ifdef _GAE_DEBUG_EDITION_
-   void loadPFDebugTextures ();
-   Texture2D *PFDebugTextures[18];
-   //int getNumPathPos () { return map.PathPositions.size (); }
+	void loadPFDebugTextures ();
+	Texture2D *PFDebugTextures[18];
+	//int getNumPathPos () { return map.PathPositions.size (); }
 #endif
 
 private:

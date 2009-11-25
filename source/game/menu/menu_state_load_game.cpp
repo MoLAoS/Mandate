@@ -368,7 +368,7 @@ void MenuStateLoadGame::selectionChanged() {
 }
 
 void MenuStateLoadGame::initGameInfo() {
-	//try {
+	try {
 		if(gs) {
 			delete gs;
 			gs = NULL;
@@ -442,7 +442,7 @@ void MenuStateLoadGame::initGameInfo() {
 				labelNetStatus[i].setText("");
 			}
 		}
-/*
+
 	} catch (exception &e) {
 		labelInfoHeader.setText(string("Bad game file.\n") + e.what());
 		for(int i = 0; i < GameConstants::maxPlayers; ++i){
@@ -456,7 +456,7 @@ void MenuStateLoadGame::initGameInfo() {
 			delete gs;
 			gs = NULL;
 		}
-	}*/
+	}
 	if(gs) {
 		updateNetworkSlots();
 	}

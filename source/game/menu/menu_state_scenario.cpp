@@ -19,80 +19,94 @@
 #include "menu_state_options.h"
 #include "network_manager.h"
 #include "game.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
-using namespace	Shared::Xml;
+using namespace Shared::Xml;
 
 // =====================================================
-// 	class MenuStateScenario
+//  class MenuStateScenario
 // =====================================================
 
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
-    MenuState(program, mainMenu, "scenario")
-{
-	Lang &lang= Lang::getInstance();
-	NetworkManager &networkManager= NetworkManager::getInstance();
-    vector<string> results;
+		MenuState(program, mainMenu, "scenario") {
+	Config &config = Config::getInstance();
+	Lang &lang = Lang::getInstance();
+	NetworkManager &networkManager = NetworkManager::getInstance();
+	vector<string> results;
+	int match = 0;
 
-    labelInfo.init(350, 350);
+	labelInfo.init(350, 350);
 	labelInfo.setFont(CoreData::getInstance().getMenuFontNormal());
 
-    buttonReturn.init(350, 200, 125);
+	buttonReturn.init(350, 200, 125);
 	buttonPlayNow.init(525, 200, 125);
 
 	listBoxCategory.init(350, 500, 190);
 	labelCategory.init(350, 530);
 
-    listBoxScenario.init(350, 400, 190);
+	listBoxScenario.init(350, 400, 190);
 	labelScenario.init(350, 430);
 
 	buttonReturn.setText(lang.get("Return"));
 	buttonPlayNow.setText(lang.get("PlayNow"));
 
 	labelCategory.setText(lang.get("Category"));
-    labelScenario.setText(lang.get("Scenario"));
+	labelScenario.setText(lang.get("Scenario"));
 
-    //categories listBox
+	//categories listBox
 	findAll("gae/scenarios/*.", results);
-	categories= results;
-	
-	if(results.size()==0){
-        throw runtime_error("There are no categories");
+	categories = results;
+
+	if (results.size() == 0) {
+		throw runtime_error("There are no categories");
+	}
+	for(int i = 0; i < results.size(); ++i) {
+		if (results[i] == config.getUiLastScenarioCatagory()) {
+			match = i;
+		}
 	}
 
 	listBoxCategory.setItems(results);
-	updateScenarioList( categories[listBoxCategory.getSelectedItemIndex()] );
+	listBoxCategory.setSelectedItemIndex(match);
+	updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()], true);
 
 	networkManager.init(nrServer);
 }
 
 
-void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton){
+void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton) {
+	Config &config = Config::getInstance();
+	CoreData &coreData = CoreData::getInstance();
+	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
 
-	CoreData &coreData= CoreData::getInstance();
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-
-	if(buttonReturn.mouseClick(x,y)){
+	if (buttonReturn.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundA());
+		config.save();
 		mainMenu->setState(new MenuStateRoot(program, mainMenu)); //TO CHANGE
-    }
-	else if(buttonPlayNow.mouseClick(x,y)){
+	} else if (buttonPlayNow.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundC());
-        launchGame();
-	}
-    else if(listBoxScenario.mouseClick(x, y)){
-        loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
-        labelInfo.setText(scenarioInfo.desc);
-	}
-	else if(listBoxCategory.mouseClick(x, y)){
-        updateScenarioList( categories[listBoxCategory.getSelectedItemIndex()] );
+		config.save();
+		launchGame();
+	} else if (listBoxScenario.mouseClick(x, y)) {
+		const string &catagory = categories[listBoxCategory.getSelectedItemIndex()];
+		const string &scenario = scenarioFiles[listBoxScenario.getSelectedItemIndex()];
+
+		loadScenarioInfo(scenario, &scenarioInfo);
+		labelInfo.setText(scenarioInfo.desc);
+		config.setUiLastScenario(catagory + "/" + scenario);
+	} else if (listBoxCategory.mouseClick(x, y)) {
+		const string &catagory = categories[listBoxCategory.getSelectedItemIndex()];
+
+		updateScenarioList(catagory);
+		config.setUiLastScenarioCatagory(catagory);
 	}
 }
 
-void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms){
+void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms) {
 
 	listBoxScenario.mouseMove(x, y);
 	listBoxCategory.mouseMove(x, y);
@@ -101,9 +115,9 @@ void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms){
 	buttonPlayNow.mouseMove(x, y);
 }
 
-void MenuStateScenario::render(){
+void MenuStateScenario::render() {
 
-	Renderer &renderer= Renderer::getInstance();
+	Renderer &renderer = Renderer::getInstance();
 
 	renderer.renderLabel(&labelInfo);
 
@@ -117,97 +131,117 @@ void MenuStateScenario::render(){
 	renderer.renderButton(&buttonPlayNow);
 }
 
-void MenuStateScenario::update(){
-	//TOOD: add AutoTest to config
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
+void MenuStateScenario::update() {
+	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateScenario(this);
 	}
-	*/
 }
 
-void MenuStateScenario::launchGame(){
+void MenuStateScenario::launchGame() {
 	GameSettings gameSettings;
-    loadGameSettings(&scenarioInfo, &gameSettings);
+	loadGameSettings(&scenarioInfo, &gameSettings);
 	program.setState(new Game(program, gameSettings));
 }
 
-void MenuStateScenario::setScenario(int i){
+void MenuStateScenario::setScenario(int i) {
 	listBoxScenario.setSelectedItemIndex(i);
-	loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
+	loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo);
 }
 
-void MenuStateScenario::updateScenarioList(const string category){
+void MenuStateScenario::updateScenarioList(const string &category, bool selectDefault) {
+	const Config &config = Config::getInstance();
 	vector<string> results;
+	int match = 0;
 
 	findAll("gae/scenarios/" + category + "/*.", results);
 
 	//update scenarioFiles
-	scenarioFiles= results;
-	if(results.size()==0){
-        throw runtime_error("There are no scenarios for category, " + category + ".");
+	scenarioFiles = results;
+	if (results.size() == 0) {
+		throw runtime_error("There are no scenarios for category, " + category + ".");
 	}
-	for(int i= 0; i<results.size(); ++i){
-		results[i]= formatString(results[i]);
+	for (int i = 0; i < results.size(); ++i) {
+		string path = category + "/" + results[i];
+		cout << path << " / " << config.getUiLastScenario() << endl;
+		if (path == config.getUiLastScenario()) {
+			match = i;
+		}
+		results[i] = formatString(results[i]);
 	}
-    listBoxScenario.setItems(results);
+	listBoxScenario.setItems(results);
+	if(selectDefault) {
+		listBoxScenario.setSelectedItemIndex(match);
+	}
 
 	//update scenario info
-	loadScenarioInfo( scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo );
-    labelInfo.setText(scenarioInfo.desc);
+	loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()], &scenarioInfo);
+	labelInfo.setText(scenarioInfo.desc);
 }
 
-void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo){
+void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo) {
 
-    Lang &lang= Lang::getInstance();
+	Lang &lang = Lang::getInstance();
 
-    XmlTree xmlTree;
+	XmlTree xmlTree;
 	//gae/scenarios/[category]/[scenario]/[scenario].xml
-	xmlTree.load("gae/scenarios/"+categories[listBoxCategory.getSelectedItemIndex()]+"/"+file+"/"+file+".xml");
+	xmlTree.load("gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()] + "/" + file + "/" + file + ".xml");
 
-    const XmlNode *scenarioNode= xmlTree.getRootNode();
-	const XmlNode *difficultyNode= scenarioNode->getChild("difficulty");
+	const XmlNode *scenarioNode = xmlTree.getRootNode();
+	const XmlNode *difficultyNode = scenarioNode->getChild("difficulty");
 	scenarioInfo->difficulty = difficultyNode->getAttribute("value")->getIntValue();
-	if( scenarioInfo->difficulty < dVeryEasy || scenarioInfo->difficulty > dInsane )
-	{
+	if (scenarioInfo->difficulty < dVeryEasy || scenarioInfo->difficulty > dInsane) {
 		throw std::runtime_error("Invalid difficulty");
 	}
 
-	const XmlNode *playersNode= scenarioNode->getChild("players");
-    for(int i= 0; i<GameConstants::maxPlayers; ++i){
-        const XmlNode* playerNode = playersNode->getChild("player", i);
-        ControlType factionControl = strToControllerType( playerNode->getAttribute("control")->getValue() );
-        string factionTypeName;
+	const XmlNode *playersNode = scenarioNode->getChild("players");
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		const XmlNode* playerNode = playersNode->getChild("player", i);
+		ControlType factionControl = strToControllerType(playerNode->getAttribute("control")->getValue());
+		string factionTypeName;
 
-        scenarioInfo->factionControls[i] = factionControl;
+		scenarioInfo->factionControls[i] = factionControl;
 
-        if(factionControl != ctClosed){
-            int teamIndex = playerNode->getAttribute("team")->getIntValue();
+		if (factionControl != ctClosed) {
+			int teamIndex = playerNode->getAttribute("team")->getIntValue();
+			XmlAttribute *nameAttrib = playerNode->getAttribute("name", false);
+			XmlAttribute *resMultAttrib = playerNode->getAttribute("resource-multiplier", false);
+			if (nameAttrib) {
+				scenarioInfo->playerNames[i] = nameAttrib->getValue();
+			} else if (factionControl == ctHuman) {
+				scenarioInfo->playerNames[i] = Config::getInstance().getNetPlayerName();
+			} else {
+				scenarioInfo->playerNames[i] = "CPU Player";
+			}
+			if (resMultAttrib) {
+				scenarioInfo->resourceMultipliers[i] = resMultAttrib->getFloatValue();
+			} else {
+				if (factionControl == ctCpuUltra) {
+					scenarioInfo->resourceMultipliers[i] = 3.f;
+				} else {
+					scenarioInfo->resourceMultipliers[i] = 1.f;
+				}
+			}
+			if (teamIndex < 1 || teamIndex > GameConstants::maxPlayers) {
+				throw runtime_error("Team out of range: " + intToStr(teamIndex));
+			}
 
-            if( teamIndex < 1 || teamIndex > GameConstants::maxPlayers )
-            {
-                throw runtime_error("Team out of range: " + intToStr(teamIndex) );
-            }
+			scenarioInfo->teams[i] = playerNode->getAttribute("team")->getIntValue();
+			scenarioInfo->factionTypeNames[i] = playerNode->getAttribute("faction")->getValue();
+		}
 
-            scenarioInfo->teams[i]= playerNode->getAttribute("team")->getIntValue();
-            scenarioInfo->factionTypeNames[i]= playerNode->getAttribute("faction")->getValue();
-        }
-
-        scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
-        scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
-        scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
-        scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
-        scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
-        scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
-    }
+		scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
+		scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
+		scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
+		scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
+		scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
+		scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
+	}
 
 	//add player info
-    scenarioInfo->desc= lang.get("Player") + ": ";
-	for(int i=0; i<GameConstants::maxPlayers; ++i )
-	{
-		if(scenarioInfo->factionControls[i] == ctHuman )
-		{
-			scenarioInfo->desc+= formatString(scenarioInfo->factionTypeNames[i]);
+	scenarioInfo->desc = lang.get("Player") + ": ";
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		if (scenarioInfo->factionControls[i] == ctHuman) {
+			scenarioInfo->desc += formatString(scenarioInfo->factionTypeNames[i]);
 			break;
 		}
 	}
@@ -215,58 +249,57 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 	//add misc info
 	string difficultyString = "Difficulty" + intToStr(scenarioInfo->difficulty);
 
-	scenarioInfo->desc+= "\n";
-    scenarioInfo->desc+= lang.get("Difficulty") + ": " + lang.get(difficultyString) +"\n";
-    scenarioInfo->desc+= lang.get("Map") + ": " + formatString(scenarioInfo->mapName) + "\n";
-    scenarioInfo->desc+= lang.get("Tileset") + ": " + formatString(scenarioInfo->tilesetName) + "\n";
-	scenarioInfo->desc+= lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
+	scenarioInfo->desc += "\n";
+	scenarioInfo->desc += lang.get("Difficulty") + ": " + lang.get(difficultyString) + "\n";
+	scenarioInfo->desc += lang.get("Map") + ": " + formatString(scenarioInfo->mapName) + "\n";
+	scenarioInfo->desc += lang.get("Tileset") + ": " + formatString(scenarioInfo->tilesetName) + "\n";
+	scenarioInfo->desc += lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
 }
 
-void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gs){
+void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gs) {
 
 	gs->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
 	gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
-    gs->setTilesetPath(string("tilesets/") +scenarioInfo->tilesetName);
-    gs->setTechPath(string("techs/") + scenarioInfo->techTreeName);
+	gs->setTilesetPath(string("tilesets/") + scenarioInfo->tilesetName);
+	gs->setTechPath(string("techs/") + scenarioInfo->techTreeName);
 	gs->setScenarioPath("gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
-		+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
+						+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
 	gs->setDefaultUnits(scenarioInfo->defaultUnits);
 	gs->setDefaultResources(scenarioInfo->defaultResources);
 	gs->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
 
-	int factionCount= 0;
-    for(int i=0; i<GameConstants::maxPlayers; ++i){
-        ControlType ct= static_cast<ControlType>(scenarioInfo->factionControls[i]);
-		if(ct!=ctClosed){
-			if(ct==ctHuman){
+	int factionCount = 0;
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		ControlType ct = static_cast<ControlType>(scenarioInfo->factionControls[i]);
+		if (ct != ctClosed) {
+			if (ct == ctHuman) {
 				gs->setThisFactionIndex(factionCount);
 			}
 			gs->setFactionControl(factionCount, ct);
-            gs->setTeam(factionCount, scenarioInfo->teams[i]-1);
+			gs->setPlayerName(factionCount, scenarioInfo->playerNames[i]);
+			gs->setTeam(factionCount, scenarioInfo->teams[i] - 1);
 			gs->setStartLocationIndex(factionCount, i);
-            gs->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
+			gs->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
+			gs->setResourceMultiplier(factionCount, scenarioInfo->resourceMultipliers[i]);
 			factionCount++;
 		}
-    }
+	}
 
 	gs->setFactionCount(factionCount);
 }
 
-ControlType MenuStateScenario::strToControllerType(const string &str){
-    if(str=="closed"){
-        return ctClosed;
-    }
-    else if(str=="cpu"){
-	    return ctCpu;
-    }
-    else if(str=="cpu-ultra"){
-        return ctCpuUltra;
-    }
-    else if(str=="human"){
-	    return ctHuman;
-    }
+ControlType MenuStateScenario::strToControllerType(const string &str) {
+	if (str == "closed") {
+		return ctClosed;
+	} else if (str == "cpu") {
+		return ctCpu;
+	} else if (str == "cpu-ultra") {
+		return ctCpuUltra;
+	} else if (str == "human") {
+		return ctHuman;
+	}
 
-    throw std::runtime_error("Unknown controller type: " + str);
+	throw std::runtime_error("Unknown controller type: " + str);
 }
 
 }}//end namespace

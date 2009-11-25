@@ -26,6 +26,7 @@
 #include "network_manager.h"
 #include "network_message.h"
 #include "socket.h"
+#include "auto_test.h"
 
 #include "leak_dumper.h"
 
@@ -129,10 +130,9 @@ void MenuStateRoot::render(){
 }
 
 void MenuStateRoot::update(){
-	//TOOD: add AutoTest to config
-	/*if(Config::getInstance().getBool("AutoTest")){
+	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateRoot(program, mainMenu);
-	}*/
+	}
 }
 
 }}//end namespace

@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -59,7 +59,7 @@ public:
 	int getScenarioCount() const	{ return listBoxScenario.getItemCount(); }
 
 private:
-	void updateScenarioList(const string category);
+	void updateScenarioList(const string &category, bool selectDefault = false);
     void loadScenarioInfo(string file, ScenarioInfo *scenarioInfo);
     void loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gameSettings);
 	Difficulty computeDifficulty(const ScenarioInfo *scenarioInfo);

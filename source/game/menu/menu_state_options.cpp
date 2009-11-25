@@ -264,7 +264,7 @@ void MenuStateOptions::mouseMove(int x, int y, const MouseState &ms){
 	listBoxLights.mouseMove(x, y);
    listBoxMaxPathNodes.mouseMove (x, y);
    listBoxPFAlgorithm.mouseMove (x, y);
-#  ifdef _GAE_DEBUG_EDITION_      
+#  ifdef _GAE_DEBUG_EDITION_
       listBoxPFTexturesOn.mouseMove (x, y);
       listBoxPFTextureMode.mouseMove (x, y);
 #  endif

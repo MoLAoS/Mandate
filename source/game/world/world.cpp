@@ -1,4 +1,4 @@
-//	==============================================================
+// ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
@@ -7,7 +7,7 @@
 //	the terms of the GNU General Public License as published
 //	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
-//	==============================================================
+// ==============================================================
 
 #include "pch.h"
 #include "world.h"
@@ -24,6 +24,7 @@
 #include "game_settings.h"
 #include "network_message.h"
 #include "path_finder.h"
+#include "lang_features.h"
 
 //DEBUG remove me some time...
 #include "renderer.h"
@@ -44,8 +45,12 @@ World *World::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-World::World(Game *game) : game(*game), gs(game->getGameSettings()), stats(game->getGameSettings()),
-		posIteratorFactory(65) {
+World::World(Game *game)
+		: game(*game)
+		, gs(game->getGameSettings())
+		, unitUpdater(*game)
+		, stats(game->getGameSettings())
+		, posIteratorFactory(65) {
 	Config &config = Config::getInstance();
 
 	fogOfWar = config.getGsFogOfWarEnabled();
@@ -104,7 +109,6 @@ void World::init(const XmlNode *worldNode) {
 
 	initSplattedTextures();
 
-	scriptManager = game.getScriptManager();
 	unitUpdater.init(game); // must be done after initMap()
 
 	//minimap must be init after sum computation
@@ -173,8 +177,9 @@ bool World::loadTileset(Checksum &checksum) {
 bool World::loadTech(Checksum &checksum) {
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i)
-		if (gs.getFactionTypeName(i).size())
+		if (gs.getFactionTypeName(i).size()) {
 			names.insert(gs.getFactionTypeName(i));
+		}
 	return techTree.load(gs.getTechPath(), names, checksum);
 }
 
@@ -264,7 +269,7 @@ void World::doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, f
 	UnitReference unitRef(n);
 	Unit *unit = unitRef.getUnit();
 
-	if (!unit) {
+	if (unlikely(!unit)) {
 		//who the fuck is that?
 		if (minor) {
 			NetworkManager::getInstance().getClientInterface()->requestFullUpdate(unitRef);
@@ -521,6 +526,9 @@ void World::update() {
 
 	++frameCount;
 
+	// check ScriptTimers
+	scriptManager->onTimer();
+
 	//time
 	timeFlow.update();
 
@@ -727,7 +735,7 @@ void World::moveUnitCells(Unit *unit) {
 	/*
 	if (isNetworkClient()) {
 		// make sure route is still clear
-	
+
 		if (!map.canMove(unit, unit->getPos(), newPos)) {
 			fprintf(stderr, "Unit %d needs a new path and I'm stopping.\n", unit->getId());
 			unit->getPath()->clear();
@@ -766,164 +774,329 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	}
 	return currUnit;
 }
+/** @return unit id, or -1 if factionindex invalid, or -2 if unitName invalid, or -3 if 
+  * a position could not be found for the new unit, -4 if pos invalid */
+int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos){
+	if ( factionIndex  < 0 && factionIndex >= factions.size() ) {
+		return -1;
+	}
+	Faction* faction= &factions[factionIndex];
+	const FactionType* ft= faction->getType();
+	const UnitType* ut;
+	try{
+		ut = ft->getUnitType(unitName);
+	} catch (runtime_error e) {
+		return -2;
+	}
+	if ( !map.isInside(pos) ) {
+		return -4;
+	}
+	Unit* unit= new Unit(getNextUnitId(), pos, ut, faction, &map);
+	if(placeUnit(pos, generationArea, unit, true)){
+		unit->create(true);
+		unit->born();
+		if ( !unit->isMobile() ) {
+			Search::PathFinder *pf = Search::PathFinder::getInstance();
+			pf->updateMapMetrics(unit->getPos(), unit->getSize());
+		}
+		scriptManager->onUnitCreated(unit);
+		return unit->getId();
+	} else{
+		delete unit;
+		return -3;
+	}
+}
 
-void World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos) {
-	if (factionIndex < factions.size()) {
-		Faction* faction = &factions[factionIndex];
-		const FactionType* ft = faction->getType();
-		const UnitType* ut = ft->getUnitType(unitName);
+int World::giveResource(const string &resourceName, int factionIndex, int amount){
+	if ( factionIndex < 0 && factionIndex >= factions.size() ) {
+		return -1;
+	}
+	Faction* faction= &factions[factionIndex];
+	const ResourceType* rt;
+	try {
+		rt = techTree.getResourceType(resourceName);
+	} catch (runtime_error e) {
+		return -2;
+	}
+	faction->incResourceAmount(rt, amount);
+	return 0;
+}
 
-		Unit* unit = new Unit(getNextUnitId(), pos, ut, faction, &map);
-		if (placeUnit(pos, generationArea, unit, true)) {
-			unit->create(true);
-			unit->born();
-			if (!unit->isMobile()) {
-				Search::PathFinder *pf = Search::PathFinder::getInstance();
-				pf->updateMapMetrics ( unit->getPos(), unit->getSize() );
+int World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos){
+	Unit* unit= findUnitById(unitId);
+	if ( unit == NULL ) {
+		return -1;
+	}
+	const CommandType *cmdType = NULL;
+
+	if ( commandName == "move" ) {
+		cmdType = unit->getType()->getFirstCtOfClass(ccMove);
+	} else if ( commandName == "attack" ) {
+		cmdType = unit->getType()->getFirstCtOfClass(ccAttack);
+	} else if ( commandName == "harvest" ) {
+		Resource *r = map.getTile(Map::toTileCoords(pos))->getResource();
+		bool found = false;
+		if ( ! unit->getType()->getFirstCtOfClass(ccHarvest) ) {
+			return -2;
+		}
+		if ( !r ) {
+			cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
+		} else {
+			for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
+				cmdType = unit->getType()->getCommandType(i);
+				if ( cmdType->getClass() == ccHarvest ) {
+					HarvestCommandType *hct = (HarvestCommandType*)cmdType;
+					if ( hct->canHarvest(r->getType()) ) {
+						found = true;
+						break;
+					}
+				}
 			}
-			scriptManager->onUnitCreated(unit);
-		} else {
-			throw runtime_error("Unit cant be placed");
+			if ( !found ) {
+				cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
+			}
 		}
+	} else if ( commandName == "patrol" ) {
+		//TODO insert code
+		return 0;
 	} else {
-		throw runtime_error("Invalid faction index in createUnitAtPosition: " + intToStr(factionIndex));
+		return -3;
 	}
+	if ( !cmdType ) {
+		return -2;
+	}
+	unit->giveCommand(new Command(cmdType, CommandFlags(), pos));
+	return 0;
 }
 
-void World::giveResource(const string &resourceName, int factionIndex, int amount) {
-	if (factionIndex < factions.size()) {
-		Faction* faction = &factions[factionIndex];
-		const ResourceType* rt = techTree.getResourceType(resourceName);
-		faction->incResourceAmount(rt, amount);
-	} else {
-		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
+/** @return 0 if ok, -1 if unitId or targetId invalid, -2 unit could attack target, -3 illegal cmd name */
+int World::giveTargetCommand ( int unitId, const string & cmdName, int targetId ) {
+	Unit *unit = findUnitById( unitId );
+	Unit *target = findUnitById( targetId );
+	if ( !unit || !target ) {
+		return -1;
 	}
-}
-
-void World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos) {
-	Unit* unit = findUnitById(unitId);
-	if (unit != NULL) {
-		CommandClass cc;
-
-		if (commandName == "move") {
-			cc = ccMove;
-		} else if (commandName == "attack") {
-			cc = ccAttack;
-		} else {
-			throw runtime_error("Invalid position commmand: " + commandName);
-		}
-
-		unit->giveCommand(new Command(unit->getType()->getFirstCtOfClass(cc), CommandFlags(), pos));
-	}
-}
-
-void World::giveProductionCommand(int unitId, const string &producedName) {
-	Unit *unit = findUnitById(unitId);
-	if (unit != NULL) {
-		const UnitType *ut = unit->getType();
-
-		//Search for a command that can produce the unit
-		for (int i = 0; i < ut->getCommandTypeCount(); ++i) {
-			const CommandType* ct = ut->getCommandType(i);
-			if (ct->getClass() == ccProduce) {
-				const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(ct);
-				if (pct->getProducedUnit()->getName() == producedName) {
-					unit->giveCommand(new Command(pct, CommandFlags()));
-					break;
+	if ( cmdName == "attack" ) {
+		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
+			if ( unit->getType()->getCommandType ( i )->getClass () == ccAttack ) {
+				const AttackCommandType *act = (AttackCommandType *)unit->getType()->getCommandType ( i );
+				const AttackSkillTypes *asts = act->getAttackSkillTypes ();
+				if ( asts->getZone ( target->getCurrZone () ) ) {
+					unit->giveCommand ( new Command ( act, CommandFlags(), target ) );
+					return 0;
 				}
 			}
 		}
-	}
-}
-
-void World::giveUpgradeCommand(int unitId, const string &upgradeName) {
-	Unit *unit = findUnitById(unitId);
-	if (unit != NULL) {
-		const UnitType *ut = unit->getType();
-
-		//Search for a command that can produce the unit
-		for (int i = 0; i < ut->getCommandTypeCount(); ++i) {
-			const CommandType* ct = ut->getCommandType(i);
-			if (ct->getClass() == ccUpgrade) {
-				const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-				if (uct->getProducedUpgrade()->getName() == upgradeName) {
-					unit->giveCommand(new Command(uct, CommandFlags()));
-					break;
+		return -2;
+	} else if ( cmdName == "repair" ) {
+		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
+			if ( unit->getType()->getCommandType( i )->getClass () == ccRepair ) {
+				RepairCommandType *rct = (RepairCommandType*)unit->getType()->getCommandType ( i );
+				if ( rct->isRepairableUnitType ( target->getType() ) ) {
+					unit->giveCommand ( new Command ( rct, CommandFlags(), target ) );
+					return 0;
 				}
 			}
 		}
+		return -2;
+	} else if ( cmdName == "guard" ) {
+		//TODO add code
+		return 0;
+	} else {
+		return -3;
+	}
+
+}
+/** return 0 if ok, -1 if bad unit id, -2 if unit has no stop command, -3 illegal cmd name */
+int World::giveStopCommand(int unitId, const string &cmdName) {
+	Unit *unit = findUnitById(unitId);
+	if ( unit == NULL ) {
+		return -1;
+	}
+	if ( cmdName == "stop" ) {
+		const StopCommandType *sct = (StopCommandType *)unit->getType()->getFirstCtOfClass(ccStop);
+		if ( sct ) {
+			unit->giveCommand(new Command(sct, CommandFlags()));
+		} else {
+			return -2;
+		}
+	} else if ( cmdName == "attack-stopped" ) {
+		const AttackStoppedCommandType *asct = 
+			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(ccAttackStopped);
+		if ( asct ) {
+			unit->giveCommand(new Command(asct, CommandFlags()));
+		} else {
+			return -2;
+		}
+	} else {
+		return -3;
+	}
+	return 0;
+}
+
+/** #return 0 if ok, -1 if unitId invalid, -2 if unit cannot produce other unit,
+  * -3 if unit's faction has no such unit producedName */
+int World::giveProductionCommand(int unitId, const string &producedName){
+	Unit *unit= findUnitById(unitId);
+	if ( unit == NULL) {
+		return -1;
+	}
+	const UnitType *ut = unit->getType();
+	const UnitType *put = NULL;
+	try {
+		put = unit->getFaction()->getType()->getUnitType(producedName);
+	} catch (runtime_error e) {
+		return -3;
+	}
+	const MorphCommandType *mct = NULL;
+	//Search for a command that can produce the unit
+	for(int i= 0; i<ut->getCommandTypeCount(); ++i){
+		const CommandType* ct= ut->getCommandType(i);
+		// if we find a suitable Produce Command, execute and return
+		if(ct->getClass()==ccProduce){
+			const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
+			if ( pct->getProducedUnit() == put ) {
+				CommandResult res = unit->giveCommand(new Command(pct, CommandFlags()));
+				/*if ( Config::getInstance().getLuaCommandLog() ) {
+					if ( res == crSuccess ) {
+						theConsole.addLine("produce command success");
+					} else {
+						theConsole.addLine("produce command failed");
+					}
+				}*/
+				return 0;
+			}
+		} else if ( ct->getClass() == ccMorph ) { // Morph Command ?
+			if ( ((MorphCommandType*)ct)->getMorphUnit()->getName() == producedName ) {
+				// just record it for now, and keep looking for a Produce Command
+				mct = (MorphCommandType*)ct; 
+			}
+			
+		}
+	}
+	// didn't find a Produce Command, was there are Morph Command?
+	if ( mct ) {
+		CommandResult res = unit->giveCommand(new Command (mct, CommandFlags()));
+		/*if ( Config::getInstance().getLuaCommandLog() ) {
+			if ( res == == crSuccess ) {
+				theConsole.addLine("morph command success");
+			} else {
+				theConsole.addLine("morph command failed");
+			}
+		}*/
+		return 0;
+	} else {
+		return -2;
 	}
 }
 
+/** #return 0 if ok, -1 if unitId invalid, -2 if unit cannot produce upgrade,
+  * -3 if unit's faction has no such upgrade */
+int World::giveUpgradeCommand(int unitId, const string &upgradeName){
+	Unit *unit= findUnitById(unitId);
+	if ( unit==NULL ) {
+		return -1;
+	}
+	const UpgradeType *upgrd = NULL;
+	try {
+		upgrd = unit->getFaction()->getType()->getUpgradeType(upgradeName);
+	} catch (runtime_error e) {
+		return -3;
+	}
+	const UnitType *ut= unit->getType();
+	//Search for a command that can produce the upgrade
+	for(int i= 0; i<ut->getCommandTypeCount(); ++i){
+		const CommandType* ct= ut->getCommandType(i);
+		if(ct->getClass()==ccUpgrade){
+			const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
+			if ( uct->getProducedUpgrade() == upgrd ) {
+				unit->giveCommand(new Command(uct, CommandFlags()));
+				return 0;
+			}
+		}
+	}
+	return -2;
+}
 
-int World::getResourceAmount(const string &resourceName, int factionIndex) {
-	if (factionIndex < factions.size()) {
-		Faction* faction = &factions[factionIndex];
-		const ResourceType* rt = techTree.getResourceType(resourceName);
+
+int World::getResourceAmount(const string &resourceName, int factionIndex){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		const ResourceType* rt;
+		try {
+			rt = techTree.getResourceType(resourceName);
+		} catch (runtime_error e) {
+			return -2;
+		}
 		return faction->getResource(rt)->getAmount();
 	} else {
-		throw runtime_error("Invalid faction index in giveResource: " + intToStr(factionIndex));
+		return -1;
 	}
 }
 
-Vec2i World::getStartLocation(int factionIndex) {
-	if (factionIndex < factions.size()) {
-		Faction* faction = &factions[factionIndex];
+Vec2i World::getStartLocation(int factionIndex){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
 		return map.getStartLocation(faction->getStartLocationIndex());
 	} else {
-		throw runtime_error("Invalid faction index in getStartLocation: " + intToStr(factionIndex));
+		return Vec2i(-1);
 	}
 }
 
-Vec2i World::getUnitPosition(int unitId) {
-	Unit* unit = findUnitById(unitId);
-	if (unit == NULL) {
-		throw runtime_error("Can not find unit to get position");
+Vec2i World::getUnitPosition(int unitId){
+	Unit* unit= findUnitById(unitId);
+	if(unit==NULL){
+		return Vec2i(-1);
 	}
 	return unit->getPos();
 }
 
-int World::getUnitFactionIndex(int unitId) {
-	Unit* unit = findUnitById(unitId);
-	if (unit == NULL) {
-		throw runtime_error("Can not find unit to get position");
+int World::getUnitFactionIndex(int unitId){
+	Unit* unit= findUnitById(unitId);
+	if(unit==NULL){
+		return -1;
 	}
 	return unit->getFactionIndex();
 }
 
-int World::getUnitCount(int factionIndex) {
-	if (factionIndex < factions.size()) {
-		Faction* faction = &factions[factionIndex];
-		int count = 0;
-
-		for (int i = 0; i < faction->getUnitCount(); ++i) {
-			const Unit* unit = faction->getUnit(i);
-			if (unit->isAlive()) {
+int World::getUnitCount(int factionIndex){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		int count= 0;
+		for(int i= 0; i<faction->getUnitCount(); ++i){
+			const Unit* unit= faction->getUnit(i);
+			if(unit->isAlive()){
 				++count;
 			}
 		}
 		return count;
 	} else {
-		throw runtime_error("Invalid faction index in getUnitCount: " + intToStr(factionIndex));
+		return -1;
 	}
 }
 
-int World::getUnitCountOfType(int factionIndex, const string &typeName) {
-	if (factionIndex < factions.size()) {
-		Faction* faction = &factions[factionIndex];
-		int count = 0;
-
-		for (int i = 0; i < faction->getUnitCount(); ++i) {
-			const Unit* unit = faction->getUnit(i);
-			if (unit->isAlive() && unit->getType()->getName() == typeName) {
+/** @return number of units of type a faction has, -1 if faction index invalid, 
+  * -2 if unitType not found */
+int World::getUnitCountOfType(int factionIndex, const string &typeName){
+	if(factionIndex<factions.size()){
+		Faction* faction= &factions[factionIndex];
+		int count= 0;
+		const string &ftName = faction->getType()->getName();
+		if ( unitTypes[ftName].find(typeName) == unitTypes[ftName].end() ) {
+			return -2;
+		}
+		for(int i= 0; i< faction->getUnitCount(); ++i){
+			const Unit* unit= faction->getUnit(i);
+			if(unit->isAlive() && unit->getType()->getName()==typeName){
 				++count;
 			}
 		}
 		return count;
 	} else {
-		throw runtime_error("Invalid faction index in getUnitCountOfType: " + intToStr(factionIndex));
+		return -1;
 	}
 }
+
 
 // ==================== PRIVATE ====================
 
@@ -939,8 +1112,8 @@ void World::initCells() {
 			Tile *sc = map.getTile(i, j);
 
 			sc->setFowTexCoord(Vec2f(
-					i / (next2Power(map.getTileW()) - 1.f),
-					j / (next2Power(map.getTileH()) - 1.f)));
+								   i / (next2Power(map.getTileW()) - 1.f),
+								   j / (next2Power(map.getTileH()) - 1.f)));
 
 			for (int k = 0; k < GameConstants::maxPlayers; k++) {
 				sc->setExplored(k, false);
@@ -965,7 +1138,8 @@ void World::initSplattedTextures() {
 					sc10->getTileType(),
 					sc01->getTileType(),
 					sc11->getTileType(),
-					coord, texture);
+					coord,
+					texture);
 			sc00->setTileTexCoord(coord);
 			sc00->setTileTexture(texture);
 		}
@@ -984,13 +1158,18 @@ void World::initFactionTypes() {
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	factions.resize(gs.getFactionCount());
 	for (int i = 0; i < factions.size(); ++i) {
-		const FactionType *ft = techTree.getFactionType(gs.getFactionTypeName(i));
-		factions[i].init(ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
-				gs.getStartLocationIndex(i), i == thisFactionIndex, gs.getDefaultResources());
-
-//		stats.setTeam(i, gs.getTeam(i));
-//		stats.setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
-//		stats.setControl(i, gs.getFactionControl(i));
+		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
+		factions[i].init( ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
+				gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ());
+		if ( unitTypes.find(ft->getName()) == unitTypes.end() ) {
+			unitTypes.insert(pair< string,set<string> >(ft->getName(),set<string>()));
+			for ( int j = 0; j < ft->getUnitTypeCount(); ++j ) {
+				unitTypes[ft->getName()].insert(ft->getUnitType(j)->getName());
+			}
+		}
+		//  stats.setTeam(i, gs.getTeam(i));
+		//  stats.setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
+		//  stats.setControl(i, gs.getFactionControl(i));
 	}
 
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
@@ -1023,12 +1202,12 @@ void World::initUnits() {
 
 				} else {
 					throw runtime_error("Unit cant be placed, this error is caused because there "
-						"is no enough place to put the units near its start location, make a "
-						"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
+										"is no enough place to put the units near its start location, make a "
+										"better map: " + unit->getType()->getName() + " Faction: " + intToStr(i));
 				}
-				if(unit->getType()->hasSkillClass(scBeBuilt)) {
-					map.flatternTerrain( unit );
-					unitUpdater.pathFinder->updateMapMetrics( unit->getPos(),unit->getSize() );
+				if (unit->getType()->hasSkillClass(scBeBuilt)) {
+					map.flatternTerrain(unit);
+					unitUpdater.pathFinder->updateMapMetrics(unit->getPos(), unit->getSize());
 				}
 			}
 		}
@@ -1171,17 +1350,20 @@ void World::computeFow() {
 
 
 void World::hackyCleanUp(Unit *unit) {
-	if ( find(newlydead.begin(), newlydead.end(), unit) == newlydead.end() ) {
-		newlydead.push_back(unit);
+	for (Units::const_iterator i = newlydead.begin(); i != newlydead.end(); ++i) {
+		if (unit == *i) {
+			return;
+		}
 	}
+	newlydead.push_back(unit);
 }
 
 
 #ifdef _GAE_DEBUG_EDITION_
 #define _load_tex(i,f) \
-   PFDebugTextures[i]=Renderer::getInstance().newTexture2D(rsGame);\
-   PFDebugTextures[i]->setMipmap(false);\
-   PFDebugTextures[i]->getPixmap()->load(f);
+	PFDebugTextures[i]=Renderer::getInstance().newTexture2D(rsGame);\
+	PFDebugTextures[i]->setMipmap(false);\
+	PFDebugTextures[i]->getPixmap()->load(f);
 
 void World::loadPFDebugTextures() {
 	char buff[128];
