@@ -27,26 +27,15 @@
 #include "font_manager.h"
 #include "camera.h"
 
+#if DEBUG_RENDERING_ENABLED
+#	include "debug_renderer.h"
+#endif
+
+#include "profiler.h"
+
 namespace Glest{ namespace Game{
 
-using Shared::Graphics::Texture2D;
-using Shared::Graphics::Texture3D;
-using Shared::Graphics::ModelRenderer;
-using Shared::Graphics::TextRenderer2D;
-using Shared::Graphics::ParticleRenderer;
-using Shared::Graphics::ParticleManager;
-using Shared::Graphics::ModelManager;
-using Shared::Graphics::TextureManager;
-using Shared::Graphics::FontManager;
-using Shared::Graphics::Font2D;
-using Shared::Graphics::Matrix4f;
-using Shared::Graphics::Vec2i;
-using Shared::Graphics::Quad2i;
-using Shared::Graphics::Vec3f;
-using Shared::Graphics::Model;
-using Shared::Graphics::ParticleSystem;
-using Shared::Graphics::Pixmap2D;
-using Shared::Graphics::Camera;
+using namespace Shared::Graphics;
 
 //non shared classes
 class Config;
@@ -242,11 +231,8 @@ public:
 	void renderMinimap();
     void renderDisplay();
 	void renderMenuBackground(const MenuBackground *menuBackground);
-#ifdef _GAE_DEBUG_EDITION_
-	Field debugField;
-	void setDebugField ( Field f ) { debugField = f; }
-	Field getDebugField () { return debugField; }
-    void renderSurfacePFDebug ();
+#if DEBUG_RENDERING_ENABLED
+	DebugRenderer debugRenderer;
 #endif
 	//computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);

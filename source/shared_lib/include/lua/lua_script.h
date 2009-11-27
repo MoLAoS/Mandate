@@ -60,6 +60,8 @@ public:
 	bool luaCallback(const string& functionName, int id, int userData);
 	bool luaCall(const string& functionName);
 
+	bool luaDoLine(const string &str);
+
 	string& getLastError() { return lastError; }
 
 	void registerFunction(LuaFunction luaFunction, const string &functionName);

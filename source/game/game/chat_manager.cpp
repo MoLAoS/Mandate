@@ -17,6 +17,7 @@
 #include "network_manager.h"
 #include "lang.h"
 #include "keymap.h"
+#include "script_manager.h"
 
 #include "leak_dumper.h"
 
@@ -84,9 +85,15 @@ bool ChatManager::keyDown(const Key &key) {
 	if (key == keyReturn && editEnabled) {
 		editEnabled = false;
 		if (!text.empty()) {
-			GameNetworkInterface *gameNetworkInterface = NetworkManager::getInstance().getGameNetworkInterface();
-			console->addLine(gameNetworkInterface->getHostName() + ": " + text);
-			gameNetworkInterface->sendTextMessage(text, teamMode ? thisTeamIndex : -1);
+			if ( text[0] == '~' ) {
+				string codeline = text.substr(1);
+				console->addLine("Lua > " + codeline);
+				ScriptManager::doSomeLua(codeline);
+			} else {
+				GameNetworkInterface *gameNetworkInterface = NetworkManager::getInstance().getGameNetworkInterface();
+				console->addLine(gameNetworkInterface->getHostName() + ": " + text);
+				gameNetworkInterface->sendTextMessage(text, teamMode ? thisTeamIndex : -1);
+			}
 		}
 	} else if (key == keyBackspace) {
 		if (!text.empty()) {

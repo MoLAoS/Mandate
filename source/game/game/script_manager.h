@@ -168,6 +168,12 @@ public:
 	bool registerRegion(const string &name, const Rect &rect);
 	int  registerEvent(const string &name);
 
+	const Region* getRegion(string &name) { 
+		Regions::iterator it = regions.find(name);
+		if ( it == regions.end() ) return NULL;
+		else return it->second;
+	}
+
 	int  addUnitPosTrigger(int unitId, const string &region, const string &eventName, int userData=0);
 	int  addFactionPosTrigger(int ndx, const string &region, const string &eventName, int userData);
 
@@ -254,6 +260,8 @@ private:
 
 public:
 	static void init(Game *game);
+
+	static void doSomeLua(string &code);
 
 	//message box functions
 	static bool getMessageBoxEnabled() 									{return !messageQueue.empty();}
@@ -354,6 +362,15 @@ private:
 
 	static int lastDeadUnitName(LuaHandle* luaHandle);		// deprecate, use unitEvent
 	static int lastDeadUnit(LuaHandle* luaHandle);		// deprecate, use unitEvent
+
+#	if DEBUG_RENDERING_ENABLED
+
+	static int hilightRegion(LuaHandle *luaHandle);
+	static int hilightCell(LuaHandle *luaHandle);
+	static int clearHilights(LuaHandle *luaHandle);
+
+#	endif
+
 };
 
 }}//end namespace

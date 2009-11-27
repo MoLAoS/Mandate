@@ -105,6 +105,14 @@ bool LuaScript::luaCall(const string& functionName) {
 	return true;
 }
 
+bool LuaScript::luaDoLine(const string &str) {
+	if ( luaL_dostring(luaState, str.c_str()) ) {
+		lastError = luaL_checkstring(luaState, 1);
+		return false;
+	}
+	return true;
+}
+
 void LuaScript::registerFunction(LuaFunction luaFunction, const string &functionName) {
 	lua_pushcfunction(luaState, luaFunction);
 	lua_setglobal(luaState, functionName.c_str());

@@ -22,6 +22,10 @@
 
 #include "leak_dumper.h"
 
+#if DEBUG_RENDERING_ENABLED
+#	include "debug_renderer.h"
+#endif
+
 using namespace Shared::Platform;
 using namespace Shared::Lua;
 
@@ -353,6 +357,14 @@ void ScriptManager::init(Game *g) {
 	LUA_FUNC(unitCount);
 	LUA_FUNC(unitCountOfType);
 	
+#	if DEBUG_RENDERING_ENABLED
+
+	LUA_FUNC(hilightRegion);
+	LUA_FUNC(hilightCell);
+	LUA_FUNC(clearHilights);
+
+#	endif
+
 	//setup message box
 	messageBox.init("", Lang::getInstance().get("Ok"));
 	messageBox.setEnabled(false);
@@ -520,6 +532,13 @@ string ScriptManager::wrapString(const string &str, int wrapCount){
 
 	return returnString;
 }
+
+void ScriptManager::doSomeLua(string &code) {
+	if ( !luaScript.luaDoLine(code) ) {
+		addErrorMessage();
+	}
+}
+
 
 // =============== Error handling bits ===============
 
@@ -1204,5 +1223,44 @@ int ScriptManager::unitCountOfType(LuaHandle* luaHandle){
 	}
 	return args.getReturnCount();
 }
+
+#if DEBUG_RENDERING_ENABLED
+
+int ScriptManager::hilightRegion(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	string region;
+	if ( extractArgs(args, "hilightRegion", "str", &region) ) {
+		const Region *r = triggerManager.getRegion(region);
+		if ( r ) {
+			const Rect *rect = static_cast<const Rect*>(r);
+			for ( int y = rect->y; y < rect->y + rect->h; ++y ) {
+				for ( int x = rect->x; x < rect->x + rect->w; ++x ) {
+					RegionHilightCallback::cells.insert(Vec2i(x,y));
+				}
+			}
+		} else {
+			addErrorMessage("hilightRegion(): region '" + region + "' not found");
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::hilightCell(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	Vec2i cell;
+	if ( extractArgs(args, "hilightCell", "v2i", &cell) ) {
+		RegionHilightCallback::cells.insert(cell);
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::clearHilights(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	RegionHilightCallback::cells.clear();
+	return args.getReturnCount();
+}
+
+
+#endif
 
 }}//end namespace
