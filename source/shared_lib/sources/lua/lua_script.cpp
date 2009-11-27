@@ -84,10 +84,11 @@ bool LuaScript::isDefined(const string &name) {
 	return defined;
 }
 
-bool LuaScript::luaCallback(const string& functionName, int id) {
+bool LuaScript::luaCallback(const string& functionName, int id, int userData) {
 	lua_getglobal(luaState, functionName.c_str());
 	lua_pushnumber(luaState, id);
-	if ( lua_pcall(luaState, 1, 0, 0) ) {
+	lua_pushnumber(luaState, userData);
+	if ( lua_pcall(luaState, 2, 0, 0) ) {
 		lastError = luaL_checkstring(luaState, 1);
 		return false; // error
 	}

@@ -126,9 +126,16 @@ struct CompoundRegion : public Region {
 
 struct PosTrigger {
 	Region *region;
-	string event;
+	string evnt;
+	int user_dat;
+	PosTrigger() : region(NULL), evnt(""), user_dat(0) {}
 };
 
+struct Trigger {
+	string evnt;
+	int user_dat;
+	Trigger() : evnt(""), user_dat(0) {}
+};
 
 // =====================================================
 //	class TriggerManager
@@ -139,28 +146,36 @@ class TriggerManager {
 	typedef set<string>					Events;
 	typedef vector<PosTrigger>			PosTriggers;
 	typedef map<int,PosTriggers>		PosTriggerMap;
-	typedef map<int,string>				TriggerMap;
+	typedef map<int,Trigger>			TriggerMap;
 
 	Events  events;
 	Regions regions;
 
-	PosTriggerMap	posTriggers;
+	PosTriggerMap	unitPosTriggers;
+	PosTriggerMap	factionPosTriggers;
 	TriggerMap		attackedTriggers;
 	TriggerMap		hpBelowTriggers;
 	TriggerMap		hpAboveTriggers;
 	TriggerMap		commandCallbacks;
+	TriggerMap		deathTriggers;
 
+	World *world;
 public:
-	TriggerManager() { reset(); }
+	TriggerManager() : world(NULL) {}
+	~TriggerManager();
 
-	void reset();
+	void reset(World *world);
 	bool registerRegion(const string &name, const Rect &rect);
-	int registerEvent(const string &name);
-	int  addRegionTrigger(int unitId, const string &region, const string &eventName);
-	int  addCommandCallback(int unitId, const string &eventName);
-	int  addHPBelowTrigger(int unitId, int threshold, const string &eventName);
-	int  addHPAboveTrigger(int unitId, int threshold, const string &eventName);
- 
+	int  registerEvent(const string &name);
+
+	int  addUnitPosTrigger(int unitId, const string &region, const string &eventName, int userData=0);
+	int  addFactionPosTrigger(int ndx, const string &region, const string &eventName, int userData);
+
+	int  addCommandCallback(int unitId, const string &eventName, int userData=0);
+	int  addHPBelowTrigger(int unitId, int threshold, const string &eventName, int userData=0);
+	int  addHPAboveTrigger(int unitId, int threshold, const string &eventName, int userData=0);
+	int  addDeathTrigger(int unitId, const string &eventName, int userData=0);
+
 	// must be called any time a unit is 'put' in cells (created, moved, 
 	void unitMoved(const Unit *unit);
 	void unitDied(const Unit *unit);
@@ -216,13 +231,11 @@ private:
 	static GraphicMessageBox messageBox;
 	static string displayText;
 
-	//last created unit
-	static string lastCreatedUnitName;
-	static int lastCreatedUnitId;
-
-	//last dead unit
-	static string lastDeadUnitName;
-	static int lastDeadUnitId;
+	//last created unit & last dead unit
+	static struct UnitInfo {
+		string name;
+		int id;
+	} latestCreated, latestCasualty;
 
 	// end game state
 	static bool gameOver;
@@ -230,16 +243,17 @@ private:
 
 	static vector<ScriptTimer> timers;
 	static vector<ScriptTimer> newTimerQueue;
-
 	static set<string> definedEvents;
-
 	static TriggerManager triggerManager;
 
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
 
+	static Game *game;
+	static World *world;
+
 public:
-	static void init ();
+	static void init(Game *game);
 
 	//message box functions
 	static bool getMessageBoxEnabled() 									{return !messageQueue.empty();}
@@ -255,16 +269,18 @@ public:
 	static void onUnitDied(const Unit* unit);
 
 	static void onTimer();
-	static void onTrigger(const string &name, int unitId);
+	static void onTrigger(const string &name, int unitId, int userData=0);
 	static void unitMoved(Unit *unit) { triggerManager.unitMoved(unit); }
 	static void commandCallback(const Unit *unit) { triggerManager.commandCallback(unit); }
 	static void onHPBelowTrigger(const Unit *unit) { triggerManager.onHPBelow(unit); }
 	static void onHPAboveTrigger(const Unit *unit) { triggerManager.onHPAbove(unit); }
 
-	static void addErrorMessage(const char *txt=NULL);
+	static void addErrorMessage(const char *txt=NULL, bool quietly = false);
 	static void addErrorMessage(const string &txt) {
 		addErrorMessage(txt.c_str());
 	}
+
+	static int panicFunc(LuaHandle* luaHandle);
 
 private:
 	static string wrapString(const string &str, int wrapCount);
@@ -274,59 +290,70 @@ private:
 	// LUA callbacks
 	//
 
+	// unit trigger helper...
+	static void doUnitTrigger(int id, string &cond, string &evnt, int ud);
+
 	// Timers, Triggers, Events...
-	static int setTimer(LuaHandle* luaHandle);
-	static int stopTimer(LuaHandle* luaHandle);
-	static int registerRegion(LuaHandle* luaHandle);
-	static int registerEvent(LuaHandle* luaHandle);
-	static int setUnitTrigger(LuaHandle* luaHandle);
-	static int setFactionTrigger(LuaHandle* luaHandle);
-	static int setTeamTrigger(LuaHandle* luaHandle);
+	static int setTimer(LuaHandle* luaHandle);			// Game.setTimer()
+	static int stopTimer(LuaHandle* luaHandle);			// Game.stopTimer()
+	static int registerRegion(LuaHandle* luaHandle);	// Game.resgisterRegion()
+	static int registerEvent(LuaHandle* luaHandle);		// Game.resgisterEvent()
+	static int setUnitTrigger(LuaHandle* luaHandle);	// Unit:setTrigger()
+	static int setUnitTriggerX(LuaHandle* luaHandle);	// Unit:setTrigger()
+	static int setFactionTrigger(LuaHandle* luaHandle);	// Faction:setTrigger()
+	//static int setTeamTrigger(LuaHandle* luaHandle);	// 
 
 	// messages
-	static int showMessage(LuaHandle* luaHandle);
-	static int setDisplayText(LuaHandle* luaHandle);
-	static int clearDisplayText(LuaHandle* luaHandle);
-	static int consoleMsg(LuaHandle* luaHandle);
+	static int showMessage(LuaHandle* luaHandle);		// Gui.showMessage()
+	static int setDisplayText(LuaHandle* luaHandle);	// Gui.setDisplayText()
+	static int clearDisplayText(LuaHandle* luaHandle);	// Gui.clearDisplayText()
+	static int consoleMsg(LuaHandle* luaHandle);		// Gui.consoleMsg()
 
 	// gui
-	static int lockInput(LuaHandle* luaHandle);
-	static int unlockInput(LuaHandle* luaHandle);	
-	static int setCameraPosition(LuaHandle* luaHandle);
-	static int unfogMap(LuaHandle *luaHandle);
+	static int lockInput(LuaHandle* luaHandle);			// Gui.lockInput()
+	static int unlockInput(LuaHandle* luaHandle);		// Gui.unlockInput()
+	static int setCameraPosition(LuaHandle* luaHandle);	// Gui.setCameraPosition()
+	static int unfogMap(LuaHandle *luaHandle);			// Gui.unfogMap()
 
 	// create units / hand-out resources
-	static int createUnit(LuaHandle* luaHandle);
-	static int giveResource(LuaHandle* luaHandle);
+	static int createUnit(LuaHandle* luaHandle);		// Faction:createUnit()
+	static int giveResource(LuaHandle* luaHandle);		// Faction:giveResource()
 
 	// commands
-	static int givePositionCommand(LuaHandle* luaHandle);
-	static int giveTargetCommand(LuaHandle * luaHandle);
-	static int giveStopCommand(LuaHandle * luaHandle);
-	static int giveProductionCommand(LuaHandle* luaHandle);
-	static int giveUpgradeCommand(LuaHandle* luaHandle);
+	static int givePositionCommand(LuaHandle* luaHandle);	// Unit:givePosCommand()
+	static int giveTargetCommand(LuaHandle * luaHandle);	// Unit:giveTargetCommand()
+	static int giveStopCommand(LuaHandle * luaHandle);		// Unit:giveStopCommand()
+	static int giveProductionCommand(LuaHandle* luaHandle);	// Unit:givePorduceCommand()
+	static int giveUpgradeCommand(LuaHandle* luaHandle);	// Unit:giveUpgradeCommand()
+	//static int giveBuildCommand(LuaHanfle* luaHandle);	// Unit:giveBuildCommand()
 
 	// game flow
-	static int disableAi(LuaHandle* luaHandle);
-	static int setPlayerAsWinner(LuaHandle* luaHandle);
-	static int endGame(LuaHandle* luaHandle);
+	static int disableAi(LuaHandle* luaHandle);				// Faction:disableAi()
+	static int setPlayerAsWinner(LuaHandle* luaHandle);		// Faction:setWinnerFlag()
+	static int endGame(LuaHandle* luaHandle);				// Game.end()
 
-	static int debugLog(LuaHandle* luaHandle);
+	static int debugLog(LuaHandle* luaHandle);				// Game.debugLog()
 
 	// queries
-	static int getPlayerName(LuaHandle* luaHandle);
-	static int getFactionTypeName(LuaHandle* luaHandle);
-	static int getScenarioDir(LuaHandle* luaHandle);
-	static int getStartLocation(LuaHandle* luaHandle);
-	static int getUnitPosition(LuaHandle* luaHandle);
-	static int getUnitFaction(LuaHandle* luaHandle);
-	static int getResourceAmount(LuaHandle* luaHandle);
-	static int getLastCreatedUnitName(LuaHandle* luaHandle);
-	static int getLastCreatedUnitId(LuaHandle* luaHandle);
-	static int getLastDeadUnitName(LuaHandle* luaHandle);
-	static int getLastDeadUnitId(LuaHandle* luaHandle);
-	static int getUnitCount(LuaHandle* luaHandle);
-	static int getUnitCountOfType(LuaHandle* luaHandle);
+	static int playerName(LuaHandle* luaHandle);			// Faction:getPlayerName()
+	static int factionTypeName(LuaHandle* luaHandle);		// Faction:getName()
+	static int startLocation(LuaHandle* luaHandle);			// Faction:getStartLocation()
+	static int resourceAmount(LuaHandle* luaHandle);		// Faction:getResourceAmount()
+
+	static int scenarioDir(LuaHandle* luaHandle);			// Scenario.getPath()
+	//static int campaignDir(LuaHandle* luaHandle);			// Scenario.getCampaignPath()
+
+	static int unitPosition(LuaHandle* luaHandle);			// Unit:getPosition()
+	static int unitFaction(LuaHandle* luaHandle);			// Unit:getFaction()
+
+	static int unitCount(LuaHandle* luaHandle);				// Faction:getUnitCount()
+	static int unitCountOfType(LuaHandle* luaHandle);		// Faction:getUnitTypeCount()
+
+	static int lastCreatedUnitName(LuaHandle* luaHandle);	// ?? deprecate, use 'created' unitEvent ??
+	static int lastCreatedUnit(LuaHandle* luaHandle);		// ?? deprecate, use 'created' unitEvent ??
+
+	static int lastDeadUnitName(LuaHandle* luaHandle);		// deprecate, use unitEvent
+	static int lastDeadUnit(LuaHandle* luaHandle);		// deprecate, use unitEvent
 };
 
 }}//end namespace

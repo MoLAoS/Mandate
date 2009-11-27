@@ -50,11 +50,14 @@ public:
 	~LuaScript();
 
 	void startUp();
+	void atPanic(lua_CFunction func) {
+		lua_atpanic(luaState, func);
+	}
 
 	bool loadCode(const string &code, const string &name);
 
 	bool isDefined( const string &functionName );
-	bool luaCallback(const string& functionName, int id);
+	bool luaCallback(const string& functionName, int id, int userData);
 	bool luaCall(const string& functionName);
 
 	string& getLastError() { return lastError; }
