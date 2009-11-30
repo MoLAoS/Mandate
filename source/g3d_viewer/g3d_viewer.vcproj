@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="map_editor"
-	ProjectGUID="{0E1DBB5D-37A3-484E-8510-F25B71222411}"
-	RootNamespace="map_editor"
+	Name="g3d_viewer"
+	ProjectGUID="{1ACEE8EA-A0FB-4759-B647-5A881FFDA499}"
+	RootNamespace="g3d_viewer"
 	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
@@ -40,11 +40,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder"
-				PreprocessorDefinitions="WIN32"
+				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -59,10 +58,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libcmtd.lib opengl32.lib glu32.lib libglest.lib wxmsw28_gl.lib wxmsw28_richtext.lib wxmsw28_aui.lib wxbase28_xml.lib wxmsw28_qa.lib wxmsw28_xrc.lib wxmsw28_dbgrid.lib wxbase28_odbc.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_adv.lib wxbase28_net.lib wxbase28.lib wxexpat.lib wxmsw28_core.lib wxtiff.lib wxjpeg.lib wxpng.lib wxregex.lib wxzlib.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib libglest.lib comctl32.lib wxbase28.lib wxbase28_net.lib wxbase28_odbc.lib wxbase28_xml.lib wxexpat.lib wxjpeg.lib wxmsw28_adv.lib wxmsw28_aui.lib wxmsw28_core.lib wxmsw28_dbgrid.lib wxmsw28_gl.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_qa.lib wxmsw28_richtext.lib wxmsw28_xrc.lib wxpng.lib wxregex.lib wxtiff.lib wxzlib.lib"
 				AdditionalLibraryDirectories="../../../deps/lib;../../../deps/lib/wx;&quot;../../build/$(ConfigurationName)/libglest&quot;"
-				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -115,7 +112,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
+				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -177,22 +174,6 @@
 			</File>
 			<File
 				RelativePath=".\main.h"
-				>
-			</File>
-			<File
-				RelativePath=".\map.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\map.h"
-				>
-			</File>
-			<File
-				RelativePath=".\program.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\program.h"
 				>
 			</File>
 			<File
