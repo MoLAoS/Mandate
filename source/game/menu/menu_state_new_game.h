@@ -47,6 +47,8 @@ private:
 	//MapInfo mapInfo;
 	GraphicLabel labelRandomize;
 	GraphicListBox listBoxRandomize;
+	GraphicLabel labelFogOfWar;
+	GraphicListBox listBoxFogOfWar;
 	//GraphicMessageBox *msgBox;
 
 

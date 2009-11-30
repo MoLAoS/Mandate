@@ -49,8 +49,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	int match = 0;
 
 	//create
-	buttonReturn.init(350, 200, 125);
-	buttonPlayNow.init(525, 200, 125);
+	buttonReturn.init(350, 170, 125);
+	buttonPlayNow.init(525, 170, 125);
 
 	//map listBox
 	findAll("maps/*.gbm", results, true);
@@ -64,11 +64,11 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxMap.init(200, 320, 150);
+	listBoxMap.init(200, 290, 150);
 	listBoxMap.setItems(results);
 	listBoxMap.setSelectedItemIndex(match);
-	labelMap.init(200, 350);
-	labelMapInfo.init(200, 290, 200, 40);
+	labelMap.init(200, 320);
+	labelMapInfo.init(200, 260, 200, 40);
 
 	//tileset listBox
 	match = 0;
@@ -83,10 +83,10 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxTileset.init(400, 320, 150);
+	listBoxTileset.init(400, 290, 150);
 	listBoxTileset.setItems(results);
 	listBoxTileset.setSelectedItemIndex(match);
-	labelTileset.init(400, 350);
+	labelTileset.init(400, 320);
 
 	//tech Tree listBox
 	match = 0;
@@ -101,10 +101,10 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxTechTree.init(600, 320, 150);
+	listBoxTechTree.init(600, 290, 150);
 	listBoxTechTree.setItems(results);
 	listBoxTechTree.setSelectedItemIndex(match);
-	labelTechTree.init(600, 350);
+	labelTechTree.init(600, 320);
 
 	//list boxes
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -180,10 +180,17 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	labelRandomize.init(200, 500 - GameConstants::maxPlayers * 30);
 	labelRandomize.setText(lang.get("RandomizeLocations"));
-	listBoxRandomize.init(332, 500 - GameConstants::maxPlayers * 30, 75);
+	listBoxRandomize.init(237, 470 - GameConstants::maxPlayers * 30, 75);
 	listBoxRandomize.pushBackItem(lang.get("No"));
 	listBoxRandomize.pushBackItem(lang.get("Yes"));
 	listBoxRandomize.setSelectedItemIndex(config.getUiLastRandStartLocs() ? 1 : 0);
+
+	labelFogOfWar.init(400, 500 - GameConstants::maxPlayers * 30);
+	labelFogOfWar.setText(lang.get("FogOfWar"));
+	listBoxFogOfWar.init(437, 470 - GameConstants::maxPlayers * 30, 75);
+	listBoxFogOfWar.pushBackItem(lang.get("No"));
+	listBoxFogOfWar.pushBackItem(lang.get("Yes"));
+	listBoxFogOfWar.setSelectedItemIndex(config.getGsFogOfWarEnabled() ? 1 : 0);
 
 	//msgBox = NULL;
 }
@@ -234,6 +241,8 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
 		config.setUiLastTechTree(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
 	} else if (listBoxRandomize.mouseClick(x, y)) {
 		config.setUiLastRandStartLocs(listBoxRandomize.getSelectedItemIndex());
+	} else if (listBoxFogOfWar.mouseClick(x, y)) {
+        config.setGsFogOfWarEnabled(listBoxFogOfWar.getSelectedItemIndex());
 	} else {
 		for (int i = 0; i < mapInfo.players; ++i) {
 			//ensure thet only 1 human player is present
@@ -289,6 +298,7 @@ void MenuStateNewGame::mouseMove(int x, int y, const MouseState &ms) {
 	listBoxTileset.mouseMove(x, y);
 	listBoxTechTree.mouseMove(x, y);
 	listBoxRandomize.mouseMove(x, y);
+	listBoxFogOfWar.mouseMove(x, y);
 }
 
 void MenuStateNewGame::render() {
@@ -318,11 +328,13 @@ void MenuStateNewGame::render() {
 	renderer.renderLabel(&labelTeam);
 	renderer.renderLabel(&labelMapInfo);
 	renderer.renderLabel(&labelRandomize);
+	renderer.renderLabel(&labelFogOfWar);
 
 	renderer.renderListBox(&listBoxMap);
 	renderer.renderListBox(&listBoxTileset);
 	renderer.renderListBox(&listBoxTechTree);
 	renderer.renderListBox(&listBoxRandomize);
+	renderer.renderListBox(&listBoxFogOfWar);
 
 	if (msgBox != NULL) {
 		renderer.renderMessageBox(msgBox);
