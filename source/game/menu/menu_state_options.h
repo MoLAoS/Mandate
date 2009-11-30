@@ -44,16 +44,19 @@ private:
 	GraphicListBox listBoxVolumeMusic;
 	GraphicListBox listBoxMusicSelect;
 
-   GraphicLabel labelMaxPathNodes;
-   GraphicListBox listBoxMaxPathNodes;
-   GraphicLabel labelPFAlgorithm;
-   GraphicListBox listBoxPFAlgorithm;
-#  ifdef _GAE_DEBUG_EDITION_
-      GraphicLabel labelPFTexturesOn;
-      GraphicLabel labelPFTextureMode;
-      GraphicListBox listBoxPFTexturesOn;
-      GraphicListBox listBoxPFTextureMode;
-#  endif
+	GraphicLabel labelMaxPathNodes;
+	GraphicListBox listBoxMaxPathNodes;
+	GraphicLabel labelPFAlgorithm;
+	GraphicListBox listBoxPFAlgorithm;
+#	ifdef _GAE_DEBUG_EDITION_
+		GraphicLabel labelPFTexturesOn;
+		GraphicLabel labelPFTextureMode;
+		GraphicListBox listBoxPFTexturesOn;
+		GraphicListBox listBoxPFTextureMode;
+#	endif
+
+	map<string,string> langMap;
+
 private:
 	MenuStateOptions(const MenuStateOptions &);
 	const MenuStateOptions &operator =(const MenuStateOptions &);
