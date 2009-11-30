@@ -46,7 +46,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="0"
 				FloatingPointModel="2"
@@ -450,11 +450,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ai\path_finder.h"
+				RelativePath=".\path_finder\path_finder.h"
 				>
 			</File>
 			<File
-				RelativePath=".\path_finder\path_finder.h"
+				RelativePath=".\ai\path_finder.h"
 				>
 			</File>
 			<File
