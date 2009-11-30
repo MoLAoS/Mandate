@@ -7,12 +7,13 @@
 #include <wx/timer.h>
 #include <wx/glcanvas.h>
 
+#include "graphics_factory_basic_gl.h"
 #include "renderer.h"
 #include "util.h"
 #include "window.h"
 
-using Shared::Platform::Window;
-using Shared::Platform::MouseState;
+//using Shared::Platform::Window;
+//using Shared::Platform::MouseState;
 
 using std::string;
 
@@ -69,6 +70,8 @@ private:
 public:
 	MainWindow(const string &modelPath);
 	~MainWindow();
+
+	void init();
 
 	void Notify();
 

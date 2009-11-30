@@ -158,9 +158,15 @@ MainWindow::MainWindow():
 	SetMenuBar(menuBar);
 }
 
-void MainWindow::init() {
+void MainWindow::init(string fname) {
 	glCanvas->SetCurrent();
 	program = new Program(GetClientSize().x, GetClientSize().y);
+
+	if(!fname.empty()){
+		program->loadMap(fname);
+		currentFile = fname;
+		SetTitle(ToUnicode(winHeader + "; " + currentFile));
+	}
 }
 
 void MainWindow::onClose(wxCloseEvent &event) {
@@ -561,9 +567,14 @@ void SimpleDialog::show() {
 // ===============================================
 
 bool App::OnInit() {
+	string fileparam;
+	if(argc==2){
+		fileparam = wxFNCONV(argv[1]);
+	}
+
 	mainWindow = new MainWindow();
 	mainWindow->Show();
-	mainWindow->init();
+	mainWindow->init(fileparam);
 	return true;
 }
 

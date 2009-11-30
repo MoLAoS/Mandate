@@ -108,7 +108,7 @@ public:
 	MainWindow();
 	~MainWindow();
 
-	void init();
+	void init(string fname);
 
 	void onClose(wxCloseEvent &event);
 	void onMouseDown(wxMouseEvent &event);
