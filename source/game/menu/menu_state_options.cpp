@@ -290,6 +290,7 @@ void MenuStateOptions::setupListBoxLang() {
 			langTable[string(code)] = string(lang);
 		}
 	}
+	fclose(fp);
 
 	// insert the values for langNames
 	vector<string> langNames;
