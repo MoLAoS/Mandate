@@ -70,6 +70,10 @@ public:
 
 private:
 	void saveConfig();
+	void setupListBoxLang();
+	void initLabels();
+	void initListBoxes();
+	void setTexts();
 };
 
 }}//end namespace
