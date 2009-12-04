@@ -98,7 +98,7 @@ int glestMain(int argc, char** argv) {
 		try {
 			exceptionHandler.install();
 			Program program(config, argc, argv);
-			showCursor(config.getDisplayWindowed());
+			showCursor(false/*config.getDisplayWindowed()*/);
 
 			try {
 				//main loop
@@ -114,7 +114,7 @@ int glestMain(int argc, char** argv) {
 		}
 	} else {
 		Program program(config, argc, argv);
-		showCursor(config.getDisplayWindowed());
+		showCursor(false/*config.getDisplayWindowed()*/);
 		program.loop();
 	}
 

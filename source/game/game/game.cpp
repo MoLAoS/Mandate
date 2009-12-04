@@ -532,14 +532,15 @@ void Game::keyDown(const Key &key) {
 			default:
 				saveBox->keyDown(key);
 		};
-
 		return;
-
+	
+	}
+	if (chatManager.keyDown(key)) {
+		return; // key consumed, we're done here
+	}
 	// if ChatManger does not use this key, we keep processing
-	} else if (chatManager.keyDown(key)) {
-
 	// network status
-	} else if (isNetworkGame) {
+	if (isNetworkGame) {
 		switch (cmd) {
 			// on
 			case ucNetworkStatusOn:

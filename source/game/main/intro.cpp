@@ -75,7 +75,7 @@ Intro::Intro(Program &program) : ProgramState(program) {
 
 void Intro::update(){
 	timer++;
-	if(timer>introTime * Config::getInstance().getGsWorldUpdateFps() / 1000){
+	if (timer > introTime * Config::getInstance().getGsWorldUpdateFps() / 1000) {
 		program.setState(new MainMenu(program));
 	}
 

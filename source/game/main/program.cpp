@@ -146,13 +146,11 @@ Program::Program(Config &config, int argc, char** argv) :
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
-
 	// startup and immediately connect to server
 	} else if(argc == 3 && string(argv[1]) == "-client") {
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(argv[2])));
-
 	// normal startup
 	} else {
 		setState(new Intro(*this));
