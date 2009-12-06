@@ -27,6 +27,8 @@ for i in $(LIB_DIRS) {
 
 LIB_INCLUDE_DIRS = include include/$(LIB_DIRS) ;
 
+CPPFLAGS += -DDEBUG_RENDERING_ENABLED ;
+
 if $(USE_PCH) = "yes" {
 	LIB_PCH = include/pch.h ;
 	CPPFLAGS += -DUSE_PCH=1 [ CreateIncludeFlags $(LOCATE_TARGET)/include ] ;
@@ -71,8 +73,8 @@ LinkWith glestadv : glestlib ;
 ExternalLibs glestadv : SDL GL GLU VORBISFILE OPENAL LUA Z ;
 IncludeDir glestadv : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_DIRS) ;
 
-#### Editor ####
 if $(WX_AVAILABLE) = "yes" {
+#### Editor ####
   SubDir TOP map_editor ;
 
   GLEST_MAP_DIRS = . ;
@@ -84,5 +86,18 @@ if $(WX_AVAILABLE) = "yes" {
   LinkWith editor : glestlib ;
   ExternalLibs editor : SDL GL GLU WX ;
   IncludeDir editor : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_MAP_DIRS) ;
+
+### Viewer ###
+  SubDir TOP g3d_viewer ;
+
+  GLEST_VIEWER_DIRS = . ;
+  for i in $(GLEST_DIRS) {
+    GLEST_VIEWER_SOURCES += [ Wildcard $(i) : *.cpp *.h ] ;
+  }
+
+  Application glest_g3dviewer : $(GLEST_VIEWER_SOURCES) ;
+  LinkWith glest_g3dviewer : glestlib ;
+  ExternalLibs glest_g3dviewer : SDL GL GLU WX ;
+  IncludeDir glest_g3dviewer : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_VIEWER_DIRS) ;
 }
 
