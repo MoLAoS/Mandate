@@ -50,9 +50,9 @@ private:
 	string name;
 	bool real;
 	bool periodic;
-	bool active;
 	int64 targetTime;
 	int64 interval;
+	bool active;
 
 public:
 	ScriptTimer(const string &name, bool real, int interval, bool periodic)
