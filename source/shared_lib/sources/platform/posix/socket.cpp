@@ -10,6 +10,12 @@
 // ==============================================================
 
 #include "pch.h"
+
+#include "socket.h"
+#include "conversion.h"
+
+#include "leak_dumper.h"
+
 #include <stdexcept>
 #include <sstream>
 #if defined(HAVE_SYS_IOCTL_H)
@@ -20,10 +26,6 @@
 #include <sys/filio.h>
 #endif
 
-#include "socket.h"
-#include "conversion.h"
-
-#include "leak_dumper.h"
 
 using namespace std;
 using namespace Shared::Util;

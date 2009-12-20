@@ -14,6 +14,9 @@
 
 #include <string>
 #include <cstdlib>
+#ifdef WIN32
+#	include <dir.h>  // for mkdir, chdir
+#endif
 
 #include "game.h"
 #include "main_menu.h"
@@ -27,6 +30,11 @@
 using namespace std;
 using namespace Shared::Platform;
 using namespace Shared::Util;
+
+
+string configDir = DEFAULT_CONFIG_DIR;
+const string dataDir = DEFAULT_DATA_DIR;
+
 
 namespace Glest{ namespace Game{
 
@@ -90,6 +98,18 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
+	if(configDir.empty()){
+#ifdef WIN32
+		configDir = getenv("UserProfile");
+#else
+		configDir = getenv("HOME");
+#endif
+		configDir += "/.glestae/";
+	}
+	mkdir(configDir.c_str(), 0750);
+	chdir(dataDir.c_str());
+	cout << "configDir:" << configDir << endl;
+	
 	Config &config = Config::getInstance();
 
 	if(config.getMiscCatchExceptions()) {

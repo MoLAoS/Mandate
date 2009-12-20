@@ -14,6 +14,8 @@
 #ifndef _SHARED_PLATFORM_TIMER_H_
 #define _SHARED_PLATFORM_TIMER_H_
 
+#include "projectConfig.h"
+
 // Prefer posix, then SDL then native windows call
 #ifdef HAVE_SYS_TIME_H
 	// use gettimeofday with microsecond precision, although the actual resolution may be anywhere

@@ -1,0 +1,25 @@
+#ifndef _PROJECTCONFIG_H_
+#define _PROJECTCONFIG_H_
+
+#include <string>
+
+
+#undef USE_SDL
+#undef USE_POSIX_SOCKETS
+#undef X11_AVAILABLE
+
+#undef HAVE_GLOB_H
+#undef HAVE_SYS_IOCTL_H
+#undef HAVE_SYS_FILIO_H
+#undef HAVE_SYS_TIME_H
+#undef HAVE_BYTESWAP_H
+
+//FIXME: trailed slash is needed
+#define DEFAULT_CONFIG_DIR "./"
+#define DEFAULT_DATA_DIR   "./"
+
+// defined in main/main.h; FIXME: there's probably a better way
+extern std::string configDir;
+extern const std::string dataDir;
+
+#endif

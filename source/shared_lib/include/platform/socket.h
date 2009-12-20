@@ -17,6 +17,8 @@
 #include <string>
 #include <cassert>
 
+#include "projectConfig.h"
+
 #ifdef HAVE_BYTESWAP_H
 #	include <byteswap.h>
 #endif

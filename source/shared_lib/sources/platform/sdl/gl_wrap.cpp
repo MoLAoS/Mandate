@@ -14,6 +14,8 @@
 #include <stdexcept>
 #include <cassert>
 
+#include "projectConfig.h"
+
 #include <SDL.h>
 #ifdef X11_AVAILABLE
 #include <GL/glx.h>

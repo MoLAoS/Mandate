@@ -16,6 +16,8 @@
 #include <string>
 #include <cassert>
 
+#include "projectConfig.h"
+
 #ifdef USE_SDL
 #	include <SDL.h>
 #ifndef SDL_BUTTON_WHEELUP

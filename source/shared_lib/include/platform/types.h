@@ -13,6 +13,8 @@
 #ifndef _SHARED_PLATFORM_TYPES_H_
 #define _SHARED_PLATFORM_TYPES_H_
 
+#include "projectConfig.h"
+
 #ifdef USE_SDL
 	#include <SDL.h>
 	#include <SDL_thread.h>

@@ -202,10 +202,10 @@ Keymap::Keymap(const Input &input, const char* fileName) :
 	}
 	
 	if(fileName) {
-		std::ifstream in(fileName, ios_base::in);
+		std::ifstream in((configDir + fileName).c_str(), ios_base::in);
 		if(!in.fail()) {
 			in.close();
-			load(fileName);
+			load((configDir + fileName).c_str());
 		}
 	}
 }
@@ -253,7 +253,7 @@ void Keymap::load(const char *path) {
 
 void Keymap::save(const char *path) {
 	try {
-		ofstream out(path, ios_base::out | ios_base::trunc);
+		ofstream out((configDir + path).c_str(), ios_base::out | ios_base::trunc);
 		size_t maxSize = 0;
 		for(int i = ucNone + 1; i != ucCount; ++i) {
 			size_t size = strlen(getCommandName((UserCommand)i));
@@ -272,7 +272,7 @@ void Keymap::save(const char *path) {
 		}
 	} catch (runtime_error &e) {
 		stringstream str;
-		str << "Failed to save key map file: " << path << endl << e.what();
+		str << "Failed to save key map file: " << (configDir + path).c_str() << endl << e.what();
 		throw runtime_error(str.str());
 	}
 }

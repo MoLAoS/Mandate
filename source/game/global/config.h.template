@@ -55,11 +55,11 @@ CONFIG_VARIABLES
 
 public:
 	static Config &getInstance() {
-		static Config singleton("glestadv.ini");
+		static Config singleton((configDir + "glestadv.ini").c_str());
 		return singleton;
 	}
 
-	void save(const char *path = "glestadv.ini");
+	void save(const char *path = (configDir + "glestadv.ini").c_str());
 
 CONFIG_GETTERS
 

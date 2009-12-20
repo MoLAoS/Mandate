@@ -20,16 +20,10 @@ CHECK_INCLUDE_FILE(byteswap.h HAVE_BYTESWAP_H)
 
 # set paths for config and data
 if(NOT DEFINED CONFIG_DIR)
-	set(CONFIG_DIR "")
-#   not known at build time
-# 	if(WIN32)
-# 		set(CONFIG_DIR "$ENV{UserProfile}/.glestae/")
-# 	else(WIN32)
-# 		set(CONFIG_DIR "$ENV{HOME}/.glestae/")
-# 	endif(WIN32)
+	set(CONFIG_DIR "" CACHE FILEPATH "user specific directory for configs and logs")
 endif(NOT DEFINED CONFIG_DIR)
 if(NOT DEFINED DATA_DIR)
-	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/")
+	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE FILEPATH "root directory of data")
 endif(NOT DEFINED DATA_DIR)
 #message(STATUS "c:${CONFIG_DIR};;d:${DATA_DIR};")
 
@@ -62,8 +56,7 @@ else(WIN32)
 	find_package(OpenAL REQUIRED)
 	include_directories(${SDL_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR})
 	# FIXME: better included from projectConfig.h, needs changes in sources
-	add_definitions(-DUSE_SDL -DUSE_POSIX_SOCKETS -DHAVE_SYS_IOCTL_H -DHAVE_SYS_TIME_H -DX11_AVAILABLE)
-	add_definitions()
+	#add_definitions(-DUSE_SDL -DUSE_POSIX_SOCKETS -DHAVE_SYS_IOCTL_H -DHAVE_SYS_TIME_H -DX11_AVAILABLE)
 	# FIXME: a bit ugly
 	set(USE_SDL "ON")
 	set(USE_POSIX_SOCKETS "ON")

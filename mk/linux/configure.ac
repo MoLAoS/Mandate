@@ -114,6 +114,8 @@ AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG([2.6.0], [WX_AVAILABLE="yes"], [WX_AVAILABLE="no"], [std,gl], [--unicode=yes])
 AC_SUBST([WX_AVAILABLE])
 
+AC_CONFIG_HEADER([projectConfig.h])
+
 AC_INIT_JAM
 AC_CONFIG_FILES([Jamconfig])
 AC_OUTPUT
