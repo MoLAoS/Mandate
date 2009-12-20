@@ -7,6 +7,5 @@ if(wxWidgets_FOUND)
 
 	add_subdirectory(map_editor)
 	add_subdirectory(g3d_viewer)
-	# FIXME: needs patch for configurator (wxString stuff)
-	#add_subdirectory(configurator)
+	add_subdirectory(configurator)
 endif(wxWidgets_FOUND)

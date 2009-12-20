@@ -82,10 +82,10 @@ if $(WX_AVAILABLE) = "yes" {
     GLEST_MAP_SOURCES += [ Wildcard $(i) : *.cpp *.h ] ;
   }
 
-  Application editor : $(GLEST_MAP_SOURCES) ;
-  LinkWith editor : glestlib ;
-  ExternalLibs editor : SDL GL GLU WX ;
-  IncludeDir editor : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_MAP_DIRS) ;
+  Application glest_editor : $(GLEST_MAP_SOURCES) ;
+  LinkWith glest_editor : glestlib ;
+  ExternalLibs glest_editor : SDL GL GLU WX ;
+  IncludeDir glest_editor : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_MAP_DIRS) ;
 
 ### Viewer ###
   SubDir TOP g3d_viewer ;
@@ -99,5 +99,17 @@ if $(WX_AVAILABLE) = "yes" {
   LinkWith glest_g3dviewer : glestlib ;
   ExternalLibs glest_g3dviewer : SDL GL GLU WX ;
   IncludeDir glest_g3dviewer : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_VIEWER_DIRS) ;
-}
 
+### Configurator ###
+  SubDir TOP configurator ;
+
+  GLEST_CONFIG_DIRS = . ;
+  for i in $(GLEST_DIRS) {
+    GLEST_CONFIG_SOURCES += [ Wildcard $(i) : *.cpp *.h ] ;
+  }
+
+  Application glest_configurator : $(GLEST_CONFIG_SOURCES) ;
+  LinkWith glest_configurator : glestlib ;
+  ExternalLibs glest_configurator : SDL GL GLU WX ;
+  IncludeDir glest_configurator : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_CONFIG_DIRS) ;
+}

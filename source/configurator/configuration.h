@@ -8,6 +8,14 @@
 
 #include "xml/xml_parser.h"
 
+
+#if (wxUSE_UNICODE == 1)
+#define STRCONV(x) wxConvUTF8.cMB2WC(x)
+#else
+#define STRCONV(x) x
+#endif
+
+
 using std::string;
 using std::vector;
 
@@ -90,7 +98,7 @@ protected:
 	string defaultValue;
 
 public:
-	virtual ~Field()= 0{}
+	virtual ~Field()/*= 0*/{}
 
 	const string &getName() const			{return name;}
 	const string &getVariableName() const	{return variableName;}

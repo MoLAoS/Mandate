@@ -8,6 +8,7 @@
 #include <wx/bitmap.h>
 #include <wx/icon.h>
 
+
 using namespace std;
 
 namespace Configurator{
@@ -27,13 +28,13 @@ MainWindow::MainWindow(){
 	
 	configuration.load("configuration.xml");
 
-	Create(NULL, -1, "", wxDefaultPosition,  wxDefaultSize, wxCAPTION | wxSYSTEM_MENU);
+	Create(NULL, -1, wxT(""), wxDefaultPosition,  wxDefaultSize, wxCAPTION | wxSYSTEM_MENU);
 
-	SetTitle(("Configurator - " + configuration.getTitle() + " - Editing " + configuration.getFileName()).c_str());
+	SetTitle(STRCONV(("Configurator - " + configuration.getTitle() + " - Editing " + configuration.getFileName()).c_str()));
 
 	if(configuration.getIcon()){
 		wxIcon icon;
-		icon.LoadFile(configuration.getIconPath().c_str(), wxBITMAP_TYPE_ICO);
+		icon.LoadFile(STRCONV(configuration.getIconPath().c_str()), wxBITMAP_TYPE_ICO);
 		SetIcon(icon);
 	}
 
@@ -49,7 +50,7 @@ MainWindow::MainWindow(){
 		//create page
 		FieldGroup *fg= configuration.getFieldGroup(i);
 		wxPanel *panel= new wxPanel(notebook, -1);
-		notebook->AddPage(panel, fg->getName().c_str());
+		notebook->AddPage(panel, STRCONV(fg->getName().c_str()));
 
 		//sizers
 		wxSizer *gridSizer= new wxFlexGridSizer(2, margin, gridMarginHorizontal);
@@ -70,16 +71,17 @@ MainWindow::MainWindow(){
 	//buttons
 	wxSizer *bottomSizer= new wxBoxSizer(wxHORIZONTAL);
 	
-	buttonOk= new wxButton(this, biOk, "OK");
-	buttonApply= new wxButton(this, biApply, "Apply");
-	buttonCancel= new wxButton(this, biCancel, "Cancel");
-	buttonDefault= new wxButton(this, biDefault, "Default");
+	buttonOk= new wxButton(this, biOk, wxT("OK"));
+	buttonApply= new wxButton(this, biApply, wxT("Apply"));
+	buttonCancel= new wxButton(this, biCancel, wxT("Cancel"));
+	buttonDefault= new wxButton(this, biDefault, wxT("Default"));
 	bottomSizer->Add(buttonOk, 0, wxALL, margin);
 	bottomSizer->Add(buttonApply, 0, wxRIGHT | wxDOWN | wxUP, margin);
 	bottomSizer->Add(buttonCancel, 0, wxRIGHT | wxDOWN | wxUP, margin);
 	bottomSizer->Add(buttonDefault, 0, wxRIGHT | wxDOWN | wxUP, margin);
 
-	infoText= new wxTextCtrl(this, -1, "Info text.", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+	infoText= new wxTextCtrl(this, -1, wxT("Info text."), wxDefaultPosition,
+							wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
 	infoText->SetSize(infoText->GetSize().x, 2*infoText->GetSize().y/3);
 	infoText->SetBackgroundColour(buttonOk->GetBackgroundColour());
 	
@@ -126,7 +128,7 @@ void MainWindow::onMouseDown(wxMouseEvent &event){
 }
 
 void MainWindow::setInfoText(const string &str){
-	infoText->SetValue(str.c_str());
+	infoText->SetValue(STRCONV(str.c_str()));
 }
 
 BEGIN_EVENT_TABLE(MainWindow, wxFrame)
@@ -143,7 +145,7 @@ END_EVENT_TABLE()
 // ===============================================
 
 FieldText::FieldText(wxWindow *parent, MainWindow *mainWindow, const Field *field):
-	wxStaticText(parent, -1, field->getName().c_str())
+	wxStaticText(parent, -1, STRCONV(field->getName().c_str()))
 {
 	this->mainWindow= mainWindow;
 	this->field= field;
@@ -172,7 +174,7 @@ bool App::OnInit(){
 		mainWindow->Show();
 	}
 	catch(const exception &e){
-		wxMessageDialog(NULL, e.what(), "Exception", wxOK | wxICON_ERROR).ShowModal();
+		wxMessageDialog(NULL, STRCONV(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 		return 0;
 	}
 	return true;
@@ -183,7 +185,7 @@ int App::MainLoop(){
 		return wxApp::MainLoop();
 	}
 	catch(const exception &e){
-		wxMessageDialog(NULL, e.what(), "Exception", wxOK | wxICON_ERROR).ShowModal();
+		wxMessageDialog(NULL, STRCONV(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 		return 0;
 	}
 }

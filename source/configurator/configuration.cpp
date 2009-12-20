@@ -170,22 +170,22 @@ Field *FieldGroup::newField(const string &type) {
 // ===============================================
 
 void BoolField::createControl(wxWindow *parent, wxSizer *sizer) {
-	checkBox = new wxCheckBox(parent, -1, "");
-	checkBox->SetValue(strToBool(value));
+	checkBox = new wxCheckBox(parent, -1, wxT(""));
+	checkBox->SetValue(Conversion::strToBool(value));
 	sizer->Add(checkBox);
 }
 
 void BoolField::updateValue() {
-	value = boolToStr(checkBox->GetValue());
+	value = Conversion::toStr(checkBox->GetValue());
 }
 
 void BoolField::updateControl() {
-	checkBox->SetValue(strToBool(value));
+	checkBox->SetValue(Conversion::strToBool(value));
 }
 
 bool BoolField::isValueValid(const string &value) {
 	try {
-		strToBool(value);
+		Conversion::strToBool(value);
 	} catch (const exception &) {
 		return false;
 	}
@@ -197,21 +197,21 @@ bool BoolField::isValueValid(const string &value) {
 // ===============================================
 
 void IntField::createControl(wxWindow *parent, wxSizer *sizer) {
-	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
+	textCtrl = new wxTextCtrl(parent, -1, STRCONV(value.c_str()));
 	sizer->Add(textCtrl);
 }
 
 void IntField::updateValue() {
-	value = textCtrl->GetValue();
+	value = textCtrl->GetValue().mb_str(wxConvUTF8);
 }
 
 void IntField::updateControl() {
-	textCtrl->SetValue(value.c_str());
+	textCtrl->SetValue(STRCONV(value.c_str()));
 }
 
 bool IntField::isValueValid(const string &value) {
 	try {
-		strToInt(value);
+		Conversion::strToInt(value);
 	} catch (const exception &) {
 		return false;
 	}
@@ -223,21 +223,21 @@ bool IntField::isValueValid(const string &value) {
 // ===============================================
 
 void FloatField::createControl(wxWindow *parent, wxSizer *sizer) {
-	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
+	textCtrl = new wxTextCtrl(parent, -1, STRCONV(value.c_str()));
 	sizer->Add(textCtrl);
 }
 
 void FloatField::updateValue() {
-	value = textCtrl->GetValue();
+	value = textCtrl->GetValue().mb_str(wxConvUTF8);
 }
 
 void FloatField::updateControl() {
-	textCtrl->SetValue(value.c_str());
+	textCtrl->SetValue(STRCONV(value.c_str()));
 }
 
 bool FloatField::isValueValid(const string &value) {
 	try {
-		strToFloat(value);
+		Conversion::strToFloat(value);
 	} catch (const exception &) {
 		return false;
 	}
@@ -249,17 +249,17 @@ bool FloatField::isValueValid(const string &value) {
 // ===============================================
 
 void StringField::createControl(wxWindow *parent, wxSizer *sizer) {
-	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
+	textCtrl = new wxTextCtrl(parent, -1, STRCONV(value.c_str()));
 	textCtrl->SetSize(wxSize(3*textCtrl->GetSize().x / 2, textCtrl->GetSize().y));
 	sizer->Add(textCtrl);
 }
 
 void StringField::updateValue() {
-	value = textCtrl->GetValue();
+	value = textCtrl->GetValue().mb_str(wxConvUTF8);
 }
 
 void StringField::updateControl() {
-	textCtrl->SetValue(value.c_str());
+	textCtrl->SetValue(STRCONV(value.c_str()));
 }
 
 bool StringField::isValueValid(const string &value) {
@@ -271,20 +271,20 @@ bool StringField::isValueValid(const string &value) {
 // ===============================================
 
 void EnumField::createControl(wxWindow *parent, wxSizer *sizer) {
-	comboBox = new wxComboBox(parent, -1, "", wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
+	comboBox = new wxComboBox(parent, -1, wxT(""), wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_READONLY);
 	for (int i = 0; i < enumerants.size(); ++i) {
-		comboBox->Append(enumerants[i].c_str());
+		comboBox->Append(STRCONV(enumerants[i].c_str()));
 	}
-	comboBox->SetValue(value.c_str());
+	comboBox->SetValue(STRCONV(value.c_str()));
 	sizer->Add(comboBox);
 }
 
 void EnumField::updateValue() {
-	value = comboBox->GetValue();
+	value = comboBox->GetValue().mb_str(wxConvUTF8);
 }
 
 void EnumField::updateControl() {
-	comboBox->SetValue(value.c_str());
+	comboBox->SetValue(STRCONV(value.c_str()));
 }
 
 bool EnumField::isValueValid(const string &value) {
@@ -304,21 +304,21 @@ void EnumField::loadSpecific(const XmlNode *fieldNode) {
 // ===============================================
 
 void IntRangeField::createControl(wxWindow *parent, wxSizer *sizer) {
-	slider = new wxSlider(parent, -1, strToInt(value), min, max, wxDefaultPosition, wxDefaultSize, wxSL_LABELS);
+	slider = new wxSlider(parent, -1, Conversion::strToInt(value), min, max, wxDefaultPosition, wxDefaultSize, wxSL_LABELS);
 	sizer->Add(slider);
 }
 
 void IntRangeField::updateValue() {
-	value = intToStr(slider->GetValue());
+	value = Conversion::toStr(slider->GetValue());
 }
 
 void IntRangeField::updateControl() {
-	slider->SetValue(strToInt(value));
+	slider->SetValue(Conversion::strToInt(value));
 }
 
 bool IntRangeField::isValueValid(const string &value) {
 	try {
-		strToInt(value);
+		Conversion::strToInt(value);
 	} catch (const exception &) {
 		return false;
 	}
@@ -327,10 +327,10 @@ bool IntRangeField::isValueValid(const string &value) {
 
 void IntRangeField::loadSpecific(const XmlNode *fieldNode) {
 	const XmlNode *minNode = fieldNode->getChild("min");
-	min = strToInt(minNode->getAttribute("value")->getValue());
+	min = Conversion::strToInt(minNode->getAttribute("value")->getValue());
 
 	const XmlNode *maxNode = fieldNode->getChild("max");
-	max = strToInt(maxNode->getAttribute("value")->getValue());
+	max = Conversion::strToInt(maxNode->getAttribute("value")->getValue());
 }
 
 string IntRangeField::getInfo() const {
@@ -342,21 +342,21 @@ string IntRangeField::getInfo() const {
 // ===============================================
 
 void FloatRangeField::createControl(wxWindow *parent, wxSizer *sizer) {
-	textCtrl = new wxTextCtrl(parent, -1, value.c_str());
+	textCtrl = new wxTextCtrl(parent, -1, STRCONV(value.c_str()));
 	sizer->Add(textCtrl);
 }
 
 void FloatRangeField::updateValue() {
-	value = textCtrl->GetValue();
+	value = textCtrl->GetValue().mb_str(wxConvUTF8);
 }
 
 void FloatRangeField::updateControl() {
-	textCtrl->SetValue(value.c_str());
+	textCtrl->SetValue(STRCONV(value.c_str()));
 }
 
 bool FloatRangeField::isValueValid(const string &value) {
 	try {
-		float f = strToFloat(value);
+		float f = Conversion::strToFloat(value);
 		return f >= min && f <= max;
 	} catch (const exception &) {
 		return false;
@@ -366,10 +366,11 @@ bool FloatRangeField::isValueValid(const string &value) {
 
 void FloatRangeField::loadSpecific(const XmlNode *fieldNode) {
 	const XmlNode *minNode = fieldNode->getChild("min");
-	min = strToFloat(minNode->getAttribute("value")->getValue());
+	string str = minNode->getAttribute("value")->getValue();
+	min = Conversion::strToFloat(str);
 
 	const XmlNode *maxNode = fieldNode->getChild("max");
-	max = strToFloat(maxNode->getAttribute("value")->getValue());
+	max = Conversion::strToFloat(maxNode->getAttribute("value")->getValue());
 };
 
 string FloatRangeField::getInfo() const {
