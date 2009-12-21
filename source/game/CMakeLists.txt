@@ -25,12 +25,12 @@ foreach(folder ${folders})
 endforeach(folder)
 
 include_directories(${shared_lib_incs})
-add_executable(glestae ${game_srcs})
+add_executable(glestadv ${game_srcs})
 if(WIN32)
-	target_link_libraries(glestae shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
+	target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
 else(WIN32)
-	target_link_libraries(glestae shared_lib ${SDL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
+	target_link_libraries(glestadv shared_lib ${SDL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
 							${OPENAL_LIBRARY} ${LUA_LIBRARIES} ${VORBISFILE_LIBRARY} ${ZLIB_LIBRARIES})
 endif(WIN32)
 
-install(TARGETS glestae DESTINATION bin)
+install(TARGETS glestadv DESTINATION bin)

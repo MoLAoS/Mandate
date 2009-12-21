@@ -23,7 +23,7 @@ if(NOT DEFINED CONFIG_DIR)
 	set(CONFIG_DIR "" CACHE FILEPATH "user specific directory for configs and logs")
 endif(NOT DEFINED CONFIG_DIR)
 if(NOT DEFINED DATA_DIR)
-	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE FILEPATH "root directory of data")
+	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestadv/" CACHE FILEPATH "root directory of data")
 endif(NOT DEFINED DATA_DIR)
 #message(STATUS "c:${CONFIG_DIR};;d:${DATA_DIR};")
 

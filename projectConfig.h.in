@@ -15,9 +15,10 @@
 #cmakedefine HAVE_BYTESWAP_H
 
 
-//FIXME: trailed slash is needed
-#define DEFAULT_CONFIG_DIR "${CONFIG_DIR}"
-#define DEFAULT_DATA_DIR   "${DATA_DIR}"
+// trailed slash is needed
+// relative path for config_dir is relative to data_dir, ./ stores in data_dir
+#define DEFAULT_CONFIG_DIR "@CONFIG_DIR@"
+#define DEFAULT_DATA_DIR   "@DATA_DIR@"
 
 // defined in main/main.h; FIXME: there's probably a better way
 extern std::string configDir;

@@ -104,7 +104,7 @@ int glestMain(int argc, char** argv) {
 #else
 		configDir = getenv("HOME");
 #endif
-		configDir += "/.glestae/";
+		configDir += "/.glestadv/";
 	}
 	mkdir(configDir.c_str(), 0750);
 	chdir(dataDir.c_str());
