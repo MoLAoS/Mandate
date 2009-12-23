@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "game", "game\game.vcproj", "{6C6978EF-B3B5-4827-B543-BFECD0A6BCCF}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A29E0F89-0584-4E22-A163-7A676E17E9E1} = {A29E0F89-0584-4E22-A163-7A676E17E9E1}

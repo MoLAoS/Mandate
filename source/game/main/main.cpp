@@ -15,7 +15,7 @@
 #include <string>
 #include <cstdlib>
 #ifdef WIN32
-#	include <dir.h>  // for mkdir, chdir
+#	include <direct.h>  // for mkdir, chdir
 #endif
 
 #include "game.h"
