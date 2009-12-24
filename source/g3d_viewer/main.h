@@ -40,10 +40,12 @@ public:
 		miModeGrid,
 		miSpeedSlower,
 		miSpeedFaster,
-		miColorRed,
-		miColorBlue,
-		miColorYellow,
-		miColorGreen
+		miColorOne,
+		miColorTwo,
+		miColorThree,
+		miColorFour,
+		miColourAll,
+		miColourEdit
 	};
 
 private:
@@ -65,7 +67,7 @@ private:
 	float anim;
 	float rotX, rotY, zoom;
 	int lastX, lastY;
-	Renderer::PlayerColor playerColor;
+	int playerColor;
 
 public:
 	MainWindow(const string &modelPath);
@@ -83,10 +85,12 @@ public:
 	void onMenuModeGrid(wxCommandEvent &event);
 	void onMenuSpeedSlower(wxCommandEvent &event);
 	void onMenuSpeedFaster(wxCommandEvent &event);
-	void onMenuColorRed(wxCommandEvent &event);
-	void onMenuColorBlue(wxCommandEvent &event);
-	void onMenuColorYellow(wxCommandEvent &event);
-	void onMenuColorGreen(wxCommandEvent &event);
+	void onMenuColorOne(wxCommandEvent &event);
+	void onMenuColorTwo(wxCommandEvent &event);
+	void onMenuColorThree(wxCommandEvent &event);
+	void onMenuColorFour(wxCommandEvent &event);
+	void onMenuColorAll(wxCommandEvent &event);
+	void onMenuColorEdit(wxCommandEvent &event);
 	void onMouseMove(wxMouseEvent &event);
 	void onTimer(wxTimerEvent &event);
 

@@ -116,8 +116,9 @@
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
-				WarningLevel="3"
+				WarningLevel="2"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4996;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

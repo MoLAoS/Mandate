@@ -73,10 +73,29 @@ void MeshCallbackTeamColor::execute(const Mesh *mesh){
 // 	class Renderer
 // ===============================================
 
-Renderer::Renderer(){
+Renderer::Renderer() {
 	normals= false;
 	wireframe= false;
 	grid= true;
+
+	memset(colours, 0, 4 * 3);
+	memset(customTextures, 0, 4 * sizeof(Texture2D*));
+
+	// default colours...
+
+	// player 1 : red
+	colours[3*0 + 0] = 0xFF;
+	
+	// player 2 : blue
+	colours[3*1 + 2] = 0xFF;
+
+	// player 3 : green
+	colours[3*2 + 1] = 0x5E;
+	colours[3*2 + 2] = 0x20;
+
+	// player 4 : yellow
+	colours[3*3 + 0] = 0xFF;
+	colours[3*3 + 1] = 0xFF;
 }
 
 Renderer::~Renderer(){
@@ -102,6 +121,15 @@ void Renderer::transform(float rotX, float rotY, float zoom){
 	assertGl();
 }
 
+void Renderer::resetTeamTextures() {
+	for (int i=0; i < 4; ++i) {
+		delete customTextures[i];
+		customTextures[i] = textureManager->newTexture2D();
+		customTextures[i]->getPixmap()->init(1, 1, 3);
+		customTextures[i]->getPixmap()->setPixel(0, 0, &colours[3*i]);
+	}
+}
+
 void Renderer::init(){
 	assertGl();
 
@@ -112,26 +140,8 @@ void Renderer::init(){
 	modelRenderer= gf->newModelRenderer();
 	textureManager= gf->newTextureManager();
 	
-	//red tex
-	customTextureRed= textureManager->newTexture2D();
-	customTextureRed->getPixmap()->init(1, 1, 3);
-	customTextureRed->getPixmap()->setPixel(0, 0, Vec3f(1.f, 0.f, 0.f));
+	resetTeamTextures();
 
-	//blue tex
-	customTextureBlue= textureManager->newTexture2D();
-	customTextureBlue->getPixmap()->init(1, 1, 3);
-	customTextureBlue->getPixmap()->setPixel(0, 0, Vec3f(0.f, 0.f, 1.f));
-
-	//yellow tex
-	customTextureYellow= textureManager->newTexture2D();
-	customTextureYellow->getPixmap()->init(1, 1, 3);
-	customTextureYellow->getPixmap()->setPixel(0, 0, Vec3f(1.f, 1.f, 0.f));
-
-	//green
-	customTextureGreen= textureManager->newTexture2D();
-	customTextureGreen->getPixmap()->init(1, 1, 3);
-	customTextureGreen->getPixmap()->setPixel(0, 0, Vec3f(0.f, 0.5f, 0.f));
-	
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
 	glFrontFace(GL_CW);
@@ -156,11 +166,10 @@ void Renderer::init(){
 	assertGl();
 }
 
-void Renderer::reset(int w, int h, PlayerColor playerColor){
+void Renderer::reset(int x, int y, int w, int h, int playerColor){
 	assertGl();
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, w, h);
+	glViewport(x, y, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(60.0f, static_cast<float>(w)/h, 1.0f, 200.0f);
@@ -168,24 +177,7 @@ void Renderer::reset(int w, int h, PlayerColor playerColor){
 	glLoadIdentity();
 	glTranslatef(0, -1.5, -5);
 
-	Texture2D *customTexture;
-	switch(playerColor){
-	case pcRed:
-		customTexture= customTextureRed;
-		break;
-	case pcBlue:
-		customTexture= customTextureBlue;
-		break;
-	case pcYellow:
-		customTexture= customTextureYellow;
-		break;
-	case pcGreen:
-		customTexture= customTextureGreen;
-		break;
-	default:
-		assert(false);
-	}
-	meshCallbackTeamColor.setTeamTexture(customTexture);
+	meshCallbackTeamColor.setTeamTexture(customTextures[playerColor]);
 
 	if(wireframe){
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
