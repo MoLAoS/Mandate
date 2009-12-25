@@ -6,26 +6,46 @@
 #include <wx/wx.h>
 #include <wx/timer.h>
 #include <wx/glcanvas.h>
+#include <wx/colordlg.h>
 
 #include "graphics_factory_basic_gl.h"
 #include "renderer.h"
 #include "util.h"
 #include "window.h"
 
-//using Shared::Platform::Window;
-//using Shared::Platform::MouseState;
-
 using std::string;
 
-namespace Shared{ namespace G3dViewer{
+namespace Shared { namespace G3dViewer {
 
 class GlCanvas;
+
+class TeamColourDialog : public wxDialog {
+	DECLARE_EVENT_TABLE()
+
+	int editIndex;
+	Renderer *renderer;
+
+	wxButton *btnColour[4];
+	wxColourDialog *colourDialog;
+
+	wxStaticBitmap *bitmaps[4];
+
+	void CreateChildren();
+
+public:
+	TeamColourDialog(Renderer *renderer);
+	~TeamColourDialog();
+
+	void onColourBtn(wxCommandEvent& event);
+
+	wxColour colours[4];
+};
 
 // ===============================
 // 	class MainWindow  
 // ===============================
 
-class MainWindow: public wxFrame{
+class MainWindow: public wxFrame {
 private:
 	DECLARE_EVENT_TABLE()
 
@@ -45,7 +65,9 @@ public:
 		miColorThree,
 		miColorFour,
 		miColourAll,
-		miColourEdit
+		miColourEdit,
+
+		miCount
 	};
 
 private:
@@ -59,6 +81,8 @@ private:
 	wxMenu *menuMode;
 	wxMenu *menuSpeed;
 	wxMenu *menuCustomColor;
+
+	TeamColourDialog *colourDialog;
 
 	Model *model;
 	string modelPath;

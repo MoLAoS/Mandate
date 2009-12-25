@@ -40,12 +40,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder"
+				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder"
 				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				WarningLevel="3"
+				WarningLevel="2"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -59,7 +59,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libcmtd.lib opengl32.lib glu32.lib libglest.lib wxmsw28_gl.lib wxmsw28_richtext.lib wxmsw28_aui.lib wxbase28_xml.lib wxmsw28_qa.lib wxmsw28_xrc.lib wxmsw28_dbgrid.lib wxbase28_odbc.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_adv.lib wxbase28_net.lib wxbase28.lib wxexpat.lib wxmsw28_core.lib wxtiff.lib wxjpeg.lib wxpng.lib wxregex.lib wxzlib.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib libglest.lib wxmsw28_gl.lib wxmsw28_richtext.lib wxmsw28_aui.lib wxbase28_xml.lib wxmsw28_qa.lib wxmsw28_xrc.lib wxmsw28_dbgrid.lib wxbase28_odbc.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_adv.lib wxbase28_net.lib wxbase28.lib wxexpat.lib wxmsw28_core.lib wxtiff.lib wxjpeg.lib wxpng.lib wxregex.lib wxzlib.lib"
 				AdditionalLibraryDirectories="../../../deps/lib;../../../deps/lib/wx;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""

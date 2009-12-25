@@ -48,8 +48,6 @@ private:
 	bool normals;
 	bool grid;
 
-	uint8 colours[4*3];
-
 	ModelRenderer *modelRenderer;
 	TextureManager *textureManager;
 	Texture2D *customTextures[4];
@@ -57,7 +55,6 @@ private:
 
 	Renderer();
 
-	void resetTeamTextures();
 
 public:
 	~Renderer();
@@ -67,6 +64,7 @@ public:
 	void reset(int x, int y, int w, int h, int playerColor);
 	void transform(float rotX, float rotY, float zoom);
 	void renderGrid();
+	void resetTeamTexture(int i, uint8 r, uint8 g, uint8 b);
 
 	bool getNormals() const		{return normals;}
 	bool getWireframe() const	{return wireframe;}
@@ -78,6 +76,8 @@ public:
 
 	void loadTheModel(Model *model, string file);
 	void renderTheModel(Model *model, float f);
+
+	uint8 colours[4*3];
 };
 
 }}//end namespace

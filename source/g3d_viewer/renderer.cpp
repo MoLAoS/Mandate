@@ -121,13 +121,16 @@ void Renderer::transform(float rotX, float rotY, float zoom){
 	assertGl();
 }
 
-void Renderer::resetTeamTextures() {
-	for (int i=0; i < 4; ++i) {
-		delete customTextures[i];
-		customTextures[i] = textureManager->newTexture2D();
-		customTextures[i]->getPixmap()->init(1, 1, 3);
-		customTextures[i]->getPixmap()->setPixel(0, 0, &colours[3*i]);
-	}
+void Renderer::resetTeamTexture(int i, uint8 red, uint8 green, uint8 blue) {
+	assert(i >= 0 && i < 4);
+	colours[3*i+0] = red;
+	colours[3*i+1] = green;
+	colours[3*i+2] = blue;
+	
+	customTextures[i] = textureManager->newTexture2D();
+	customTextures[i]->getPixmap()->init(1, 1, 3);
+	customTextures[i]->getPixmap()->setPixel(0, 0, &colours[3*i]);
+	textureManager->init();
 }
 
 void Renderer::init(){
@@ -139,8 +142,12 @@ void Renderer::init(){
 
 	modelRenderer= gf->newModelRenderer();
 	textureManager= gf->newTextureManager();
-	
-	resetTeamTextures();
+
+	for (int i=0; i < 4; ++i) {
+		customTextures[i] = textureManager->newTexture2D();
+		customTextures[i]->getPixmap()->init(1, 1, 3);
+		customTextures[i]->getPixmap()->setPixel(0, 0, &colours[3*i]);
+	}
 
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_TEXTURE_2D);

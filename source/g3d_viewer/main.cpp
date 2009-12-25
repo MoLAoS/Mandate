@@ -18,13 +18,72 @@ using namespace std;
 #	define STRCONV(x) x
 #endif
 
-namespace Shared{ namespace G3dViewer{
+namespace Shared { namespace G3dViewer {
+
+TeamColourDialog::TeamColourDialog(Renderer *renderer) 
+		: renderer(renderer)
+		, colourDialog(0), editIndex(0) {
+	memset(btnColour, 0, sizeof(void*) * 4);
+	memset(bitmaps, 0, sizeof(void*) * 4);
+
+	for (int i=0; i < 4; ++i) {
+		colours[i] = wxColour();
+	}
+	colours[0].Set(renderer->colours[3*0+0], renderer->colours[3*0+1], renderer->colours[3*0+2], 0xFF);
+	colours[1].Set(renderer->colours[3*1+0], renderer->colours[3*1+1], renderer->colours[3*1+2], 0xFF);
+	colours[2].Set(renderer->colours[3*2+0], renderer->colours[3*2+1], renderer->colours[3*2+2], 0xFF);
+	colours[3].Set(renderer->colours[3*3+0], renderer->colours[3*3+1], renderer->colours[3*3+2], 0xFF);
+
+	Create(0, 0, "Customise Team Colours");
+	CreateChildren();
+}
+
+TeamColourDialog::~TeamColourDialog() {
+	delete colourDialog;
+}
+
+void TeamColourDialog::CreateChildren() {
+	SetSize(150, 150, 230, 340);
+
+	for (int i=0; i < 4; ++i) {
+		char buf[32];
+		sprintf(buf, "Player %d Colour", (i+1));
+		wxPoint pos(10, 80 * i + 10);
+		wxSize size(160, 40);
+		btnColour[i] = new wxButton(this, MainWindow::miCount + i, wxT(buf), pos, size);
+		
+		pos.x += 165;
+		size.x = 40;
+		size.y = 40;
+		bitmaps[i] = new wxStaticBitmap(this, -1, wxNullBitmap, pos, size);
+		bitmaps[i]->SetBackgroundColour(colours[i]);
+	}
+	colourDialog = new wxColourDialog();
+}
+
+void TeamColourDialog::onColourBtn(wxCommandEvent &event) {
+	editIndex = event.GetId() - MainWindow::miCount;
+	if (colourDialog->ShowModal() == wxID_OK) {
+		wxColour colour = colourDialog->GetColourData().GetColour();
+		colours[editIndex] = colour;
+		bitmaps[editIndex]->SetBackgroundColour(colours[editIndex]);
+		bitmaps[editIndex]->Refresh();
+		renderer->resetTeamTexture(editIndex, colour.Red(), colour.Green(), colour.Blue());
+	}
+}
+
+BEGIN_EVENT_TABLE(TeamColourDialog, wxDialog)
+	EVT_BUTTON(MainWindow::miCount + 0, TeamColourDialog::onColourBtn)
+	EVT_BUTTON(MainWindow::miCount + 1, TeamColourDialog::onColourBtn)
+	EVT_BUTTON(MainWindow::miCount + 2, TeamColourDialog::onColourBtn)
+	EVT_BUTTON(MainWindow::miCount + 3, TeamColourDialog::onColourBtn)
+END_EVENT_TABLE()
 
 // ===============================================
 // 	class MainWindow
 // ===============================================
 
-const string MainWindow::versionString= "v1.3.4";
+const string MainWindow::versionString= "v1.3.4+";
 const string MainWindow::winHeader= "G3D viewer " + versionString + " - Built: " + __DATE__;
 
 MainWindow::MainWindow(const string &modelPath)
@@ -86,6 +145,8 @@ MainWindow::MainWindow(const string &modelPath)
 
 	CreateStatusBar();
 
+	colourDialog = new TeamColourDialog(renderer);
+
 	timer = new wxTimer(this);
 	timer->Start(40);
 }
@@ -95,6 +156,7 @@ MainWindow::~MainWindow(){
 	delete model;
 	delete timer;
 	delete glCanvas;
+	delete colourDialog;
 }
 
 void MainWindow::init(){
@@ -245,15 +307,15 @@ void MainWindow::onMenuColorAll(wxCommandEvent &event){
 	menuCustomColor->Check(miColourAll, true);
 }
 
-void MainWindow::onMenuColorEdit(wxCommandEvent &event){
+void MainWindow::onMenuColorEdit(wxCommandEvent &event){	
+	colourDialog->Show();
 }
 
 void MainWindow::onTimer(wxTimerEvent &event){
-	wxPaintEvent paintEvent;
-	
-	anim= anim+speed;
-	if(anim>1.0f){
-		anim-= 1.f;
+	wxPaintEvent paintEvent;	
+	anim = anim + speed;
+	if (anim > 1.0f) {
+		anim -= 1.f;
 	}
 	onPaint(paintEvent);
 }	
