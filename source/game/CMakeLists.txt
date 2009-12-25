@@ -26,11 +26,14 @@ endforeach(folder)
 
 include_directories(${shared_lib_incs})
 add_executable(glestadv ${game_srcs})
+target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
+					${LUA_LIBRARIES} ${ZLIB_LIBRARIES})
 if(WIN32)
-	target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
+	# FIXME: VC project needs static vorbis/ogg libs
+	target_link_libraries(glestadv ${DXGUID_LIBRARY}
+					${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
 else(WIN32)
-	target_link_libraries(glestadv shared_lib ${SDL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
-							${OPENAL_LIBRARY} ${LUA_LIBRARIES} ${VORBISFILE_LIBRARY} ${ZLIB_LIBRARIES})
+	target_link_libraries(glestadv ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
 endif(WIN32)
 
 install(TARGETS glestadv DESTINATION bin)

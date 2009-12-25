@@ -19,6 +19,7 @@
 #include <glprocs.h>
 
 #include <string>
+#include <cassert>
 
 #include "font.h"
 #include "types.h"

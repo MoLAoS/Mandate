@@ -12,6 +12,8 @@
 #ifndef _GLEST_GAME_UPGRADETYPE_H_
 #define _GLEST_GAME_UPGRADETYPE_H_
 
+#include <algorithm>
+
 #include "element_type.h"
 #include "checksum.h"
 #include "xml_parser.h"

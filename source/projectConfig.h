@@ -1,18 +1,8 @@
-// for VC project
+// dummy for VC project
 #ifndef _PROJECTCONFIG_H_
 #define _PROJECTCONFIG_H_
 
 #include <string>
-
-//#cmakedefine USE_SDL
-//#cmakedefine USE_POSIX_SOCKETS
-//#cmakedefine X11_AVAILABLE
-//
-//#cmakedefine HAVE_GLOB_H
-//#cmakedefine HAVE_SYS_IOCTL_H
-//#cmakedefine HAVE_SYS_FILIO_H
-//#cmakedefine HAVE_SYS_TIME_H
-//#cmakedefine HAVE_BYTESWAP_H
 
 
 // trailed slash is needed

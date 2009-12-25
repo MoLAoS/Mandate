@@ -108,8 +108,17 @@ int glestMain(int argc, char** argv) {
 	}
 	mkdir(configDir.c_str(), 0750);
 	chdir(dataDir.c_str());
-	cout << "configDir:" << configDir << endl;
-	
+	//cout << "configDir:" << configDir << endl;
+
+	//char* buffer;
+	//// Get the current working directory: 
+	//if( (buffer = _getcwd( NULL, 0 )) == NULL ){  // getcwd is POSIX, deprecated in VC, use _getcwd
+	//	perror( "_getcwd error" );
+	//}else{
+	//	printf( "cwd:%s \n", buffer );
+	//	free(buffer);
+	//}
+
 	Config &config = Config::getInstance();
 
 	if(config.getMiscCatchExceptions()) {

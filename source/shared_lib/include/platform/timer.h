@@ -31,7 +31,8 @@
 #if defined(WIN32) || defined(WIN64)
 	// use QueryPerformanceCounter with variable precision
 #	define	_CHRONO_USE_WIN
-#	include <winbase.h>
+//#	include <winbase.h>
+#	include <windows.h>
 #else
 #	error No usable timer
 #endif

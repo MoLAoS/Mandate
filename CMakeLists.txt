@@ -5,7 +5,7 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 endif(NOT DEFINED CMAKE_BUILD_TYPE)
 
-project(glestae)
+project(glestae CXX C)
 
 # add additional CMake modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
@@ -46,24 +46,27 @@ find_package(wxWidgets COMPONENTS base core gl)
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR})
 
 if(WIN32)
-	# TODO: look for dsound8 and winapi stuff
 	# dsound8 library
 	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${WINDEPS} PATH_SUFFIXES include)
 	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${WINDEPS}/src)
 	include_directories(${DSOUND_INCLUDE_DIR})
+	# FIXME: VC project needs to be build with static vorbis/ogg libs
+	find_library(VORBISFILE_STATIC_LIBRARY NAMES vorbisfile_static HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	find_library(VORBIS_STATIC_LIBRARY NAMES vorbis_static HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	find_library(OGG_STATIC_LIBRARY NAMES ogg_static HINTS ${WINDEPS} PATH_SUFFIXES lib)
 else(WIN32)
 	find_package(SDL 1.2 REQUIRED)
 	find_package(OpenAL REQUIRED)
 	include_directories(${SDL_INCLUDE_DIR} ${OPENAL_INCLUDE_DIR})
-	# FIXME: better included from projectConfig.h, needs changes in sources
-	#add_definitions(-DUSE_SDL -DUSE_POSIX_SOCKETS -DHAVE_SYS_IOCTL_H -DHAVE_SYS_TIME_H -DX11_AVAILABLE)
-	# FIXME: a bit ugly
+	# a bit ugly
 	set(USE_SDL "ON")
 	set(USE_POSIX_SOCKETS "ON")
 	set(X11_AVAILABLE "ON")
 endif(WIN32)
 
-# create projectConfig.h, TODO: use it in source files
+# create projectConfig.h, used in source files
 configure_file(${PROJECT_SOURCE_DIR}/projectConfig.h.in ${PROJECT_BINARY_DIR}/projectConfig.h)
 include_directories(${PROJECT_BINARY_DIR})
 
@@ -93,10 +96,12 @@ include(CPack)
 install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilesets data/game/gae
  		DESTINATION share/glestae REGEX "/.svn" EXCLUDE)
 
-# add uninstall target; FIXME: seems not working?
-configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-	"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-	IMMEDIATE @ONLY)
-add_custom_target(uninstall
-	"${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+if(NOT WIN32)
+	# add uninstall target; FIXME: does not delete created folders
+	configure_file(
+		"${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+		"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+		IMMEDIATE @ONLY)
+	add_custom_target(uninstall
+		"${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+endif(NOT WIN32)
