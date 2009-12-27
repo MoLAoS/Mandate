@@ -35,6 +35,7 @@ if(DEFINED WINDEPS)
 	set(ENV{VORBISDIR} ${WINDEPS})
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
+	#set(ENV{WXWIN} ${WINDEPS}/mingw/wxMSW-2.8.10)
 endif(DEFINED WINDEPS)
 
 find_package(Lua51 5.1 REQUIRED)
@@ -74,7 +75,6 @@ add_subdirectory(source)
 
 
 # cpack stuff
-set(CPACK_GENERATOR "TBZ2")
 set(CPACK_PACKAGE_NAME "glestae")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "glest advanced engine")
 set(CPACK_PACKAGE_VENDOR "gae developers")
@@ -82,13 +82,40 @@ set(CPACK_PACKAGE_VERSION_MAJOR "1")
 set(CPACK_PACKAGE_VERSION_MINOR "2")
 set(CPACK_PACKAGE_VERSION_PATCH "3")
 set(CPACK_PACKAGE_CONTACT "blubbmonster@mail.domain")
-set(CPACK_STRIP_FILES "TRUE")
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/docs/license.txt)
+set(CPACK_PACKAGE_EXECUTABLES "glestadv" "Glest Advanced Engine")
+
+if(WIN32)
+	# install runtime libs from vc
+	include(InstallRequiredSystemLibraries)
+
+	set(CPACK_GENERATOR "NSIS")
+	set(CPACK_NSIS_DISPLAY_NAME "glest advanced engine")
+	set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.glest.org")
+	set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.glest.org")
+	set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
+	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
+	set(CPACK_NSIS_MODIFY_PATH ON)
+	set(CPACK_NSIS_MENU_LINKS
+		"share/glestae" "data folder"
+	)
+	set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/data/game\\\\glest.ico")
+	
+	if(DEFINED WINDEPS)
+		# only lua is linked dynamic, install it next to the binary
+		install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
+	endif(DEFINED WINDEPS)
+else(WIN32)
+	set(CPACK_GENERATOR "TBZ2")
+	set(CPACK_STRIP_FILES "TRUE")
+endif(WIN32)
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;/data/;/build/;.*~;/docs/html/;/mk/")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src")
 # get it written to CPackConfig.cmake
 include(CPack)
+
 
 # data directory
 #install(FILES data/glest.xpm DESTINATION share/pixmaps)
