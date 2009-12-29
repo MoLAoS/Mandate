@@ -23,10 +23,16 @@ foreach(folder ${folders})
 	file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "sources/${folder}/*.cpp" "include/${folder}/*.h")
 	list(APPEND shared_lib_incs "${CMAKE_CURRENT_SOURCE_DIR}/include/${folder}")
 	list(APPEND shared_lib_srcs ${srcs})
+	# to get subfolders in VC project
+	if(WIN32)
+		string(REPLACE "/" "\\" folder ${folder})
+	endif(WIN32)
+	source_group("${folder}" FILES ${srcs})
 endforeach(folder)
 
 if(WIN32)
 	list(APPEND shared_lib_srcs ${GLPROCS_FILE})
+	source_group("" FILES ${GLPROCS_FILE})
 endif(WIN32)
 
 # ugly, but otherwise not in cache

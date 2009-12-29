@@ -4,6 +4,14 @@ cmake_minimum_required (VERSION 2.6)
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 endif(NOT DEFINED CMAKE_BUILD_TYPE)
+if(WIN32)
+	if(NOT DEFINED CMAKE_CXX_FLAGS)
+		set(CMAKE_CXX_FLAGS "/DWIN32 /D_WINDOWS /W2 /Zm1000 /EHsc /GR- /Ob2 /arch:SSE2 /fp:fast /Zc:forScope-" CACHE STRING "Flags used by the compiler during all build types.")
+	endif()
+	if(NOT DEFINED CMAKE_CXX_FLAGS_RELEASE)
+		set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2 /DNDEBUG /Oi /Ot" CACHE STRING "Flags used by the compiler during release builds (/MD /Ob1 /Oi /Ot /Oy /Gs will produce slightly less optimized but smaller files).")
+	endif()
+endif(WIN32)
 
 project(glestae CXX C)
 
@@ -20,10 +28,10 @@ CHECK_INCLUDE_FILE(byteswap.h HAVE_BYTESWAP_H)
 
 # set paths for config and data
 if(NOT DEFINED CONFIG_DIR)
-	set(CONFIG_DIR "" CACHE FILEPATH "user specific directory for configs and logs")
+	set(CONFIG_DIR "" CACHE PATH "user specific directory for configs and logs")
 endif(NOT DEFINED CONFIG_DIR)
 if(NOT DEFINED DATA_DIR)
-	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestadv/" CACHE FILEPATH "root directory of data")
+	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE PATH "root directory of data")
 endif(NOT DEFINED DATA_DIR)
 #message(STATUS "c:${CONFIG_DIR};;d:${DATA_DIR};")
 

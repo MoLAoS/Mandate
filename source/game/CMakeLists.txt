@@ -1,7 +1,6 @@
 # glest game
 
 set(folders
-	.
 	ai
 	facilities
 	game
@@ -17,11 +16,14 @@ set(folders
 	types
 	world
 )
-set(game_srcs "")
+file(GLOB game_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
+source_group("" FILES ${game_srcs})
 foreach(folder ${folders})
 	file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h")
 	include_directories(${folder})
 	list(APPEND game_srcs ${srcs})
+	# to get subfolders in VC project
+	source_group(${folder} FILES ${srcs})
 endforeach(folder)
 
 include_directories(${shared_lib_incs})
