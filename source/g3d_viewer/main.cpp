@@ -21,8 +21,7 @@ using namespace std;
 namespace Shared { namespace G3dViewer {
 
 TeamColourDialog::TeamColourDialog(Renderer *renderer) 
-		: renderer(renderer)
-		, colourDialog(0), editIndex(0) {
+		: editIndex(0), renderer(renderer), colourDialog(0) {
 	memset(btnColour, 0, sizeof(void*) * 4);
 	memset(bitmaps, 0, sizeof(void*) * 4);
 
@@ -34,7 +33,7 @@ TeamColourDialog::TeamColourDialog(Renderer *renderer)
 	colours[2].Set(renderer->colours[3*2+0], renderer->colours[3*2+1], renderer->colours[3*2+2], 0xFF);
 	colours[3].Set(renderer->colours[3*3+0], renderer->colours[3*3+1], renderer->colours[3*3+2], 0xFF);
 
-	Create(0, 0, "Customise Team Colours");
+	Create(0, 0, wxT("Customise Team Colours"));
 	CreateChildren();
 }
 
@@ -50,7 +49,7 @@ void TeamColourDialog::CreateChildren() {
 		sprintf(buf, "Player %d Colour", (i+1));
 		wxPoint pos(10, 80 * i + 10);
 		wxSize size(160, 40);
-		btnColour[i] = new wxButton(this, MainWindow::miCount + i, wxT(buf), pos, size);
+		btnColour[i] = new wxButton(this, MainWindow::miCount + i, STRCONV(buf), pos, size);
 		
 		pos.x += 165;
 		size.x = 40;

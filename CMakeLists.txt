@@ -5,6 +5,7 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 endif(NOT DEFINED CMAKE_BUILD_TYPE)
 if(WIN32)
+	# change default compile flags for VC on windows
 	if(NOT DEFINED CMAKE_CXX_FLAGS)
 		set(CMAKE_CXX_FLAGS "/DWIN32 /D_WINDOWS /W2 /Zm1000 /EHsc /GR- /Ob2 /arch:SSE2 /fp:fast /Zc:forScope-" CACHE STRING "Flags used by the compiler during all build types.")
 	endif()
@@ -33,7 +34,6 @@ endif(NOT DEFINED CONFIG_DIR)
 if(NOT DEFINED DATA_DIR)
 	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE PATH "root directory of data")
 endif(NOT DEFINED DATA_DIR)
-#message(STATUS "c:${CONFIG_DIR};;d:${DATA_DIR};")
 
 # help the windows people with their deps folder
 if(DEFINED WINDEPS)
@@ -41,9 +41,11 @@ if(DEFINED WINDEPS)
 	#set(ENV{SDLDIR} ${WINDEPS})
 	set(ENV{LUA_DIR} ${WINDEPS})
 	set(ENV{VORBISDIR} ${WINDEPS})
+	# sadly FindZLIB does not support HINTS, set it directly
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
-	#set(ENV{WXWIN} ${WINDEPS}/mingw/wxMSW-2.8.10)
+	# TODO: get wxWidgets stuff compiling on win
+	set(ENV{WXWIN} ${WINDEPS}/mingw/wxMSW-2.8.10)
 endif(DEFINED WINDEPS)
 
 find_package(Lua51 5.1 REQUIRED)
@@ -59,6 +61,7 @@ if(WIN32)
 	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${WINDEPS} PATH_SUFFIXES include)
 	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${WINDEPS} PATH_SUFFIXES lib)
 	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	# needs to be compiled as C, extra file for shared_lib
 	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${WINDEPS}/src)
 	include_directories(${DSOUND_INCLUDE_DIR})
 	# FIXME: VC project needs to be build with static vorbis/ogg libs
@@ -75,26 +78,22 @@ else(WIN32)
 	set(X11_AVAILABLE "ON")
 endif(WIN32)
 
-# create projectConfig.h, used in source files
-configure_file(${PROJECT_SOURCE_DIR}/projectConfig.h.in ${PROJECT_BINARY_DIR}/projectConfig.h)
-include_directories(${PROJECT_BINARY_DIR})
-
-add_subdirectory(source)
-
 
 # cpack stuff
+# FIXME: setting version from outside does not work fully
 set(CPACK_PACKAGE_NAME "glestae")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "glest advanced engine")
 set(CPACK_PACKAGE_VENDOR "gae developers")
-set(CPACK_PACKAGE_VERSION_MAJOR "1")
-set(CPACK_PACKAGE_VERSION_MINOR "2")
-set(CPACK_PACKAGE_VERSION_PATCH "3")
-set(CPACK_PACKAGE_CONTACT "blubbmonster@mail.domain")
+set(CPACK_PACKAGE_VERSION "svn")
+# set(CPACK_PACKAGE_VERSION_MAJOR "1")
+# set(CPACK_PACKAGE_VERSION_MINOR "2")
+# set(CPACK_PACKAGE_VERSION_PATCH "3")
+set(CPACK_PACKAGE_CONTACT "glestae-devel@lists.sourceforge.net")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/docs/license.txt)
 set(CPACK_PACKAGE_EXECUTABLES "glestadv" "Glest Advanced Engine")
 
 if(WIN32)
-	# install runtime libs from vc
+	# install runtime libs from VC
 	include(InstallRequiredSystemLibraries)
 
 	set(CPACK_GENERATOR "NSIS")
@@ -103,10 +102,11 @@ if(WIN32)
 	set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.glest.org")
 	set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
 	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
-	set(CPACK_NSIS_MODIFY_PATH ON)
+	set(CPACK_NSIS_MODIFY_PATH "ON")
 	set(CPACK_NSIS_MENU_LINKS
 		"share/glestae" "data folder"
 	)
+	# a bug in NSIS, last one needs to be \ and 2 times escaped to get there
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/data/game\\\\glest.ico")
 	
 	if(DEFINED WINDEPS)
@@ -114,6 +114,8 @@ if(WIN32)
 		install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
 	endif(DEFINED WINDEPS)
 else(WIN32)
+	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
+	# TODO: try to add some general dependencies for deb and rpm
 	set(CPACK_GENERATOR "TBZ2")
 	set(CPACK_STRIP_FILES "TRUE")
 endif(WIN32)
@@ -125,9 +127,18 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src")
 include(CPack)
 
 
+# create projectConfig.h, used in source files
+configure_file(${PROJECT_SOURCE_DIR}/projectConfig.h.in ${PROJECT_BINARY_DIR}/projectConfig.h)
+include_directories(${PROJECT_BINARY_DIR})
+
+add_subdirectory(source)
+
+
 # data directory
-#install(FILES data/glest.xpm DESTINATION share/pixmaps)
-#install(FILES data/glest.desktop DESTINATION share/applications)
+# if(NOT WIN32)
+# 	install(FILES data/glest.xpm DESTINATION share/pixmaps)
+# 	install(FILES data/glest.desktop DESTINATION share/applications)
+# endif(NOT WIN32)
 install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilesets data/game/gae
  		DESTINATION share/glestae REGEX "/.svn" EXCLUDE)
 

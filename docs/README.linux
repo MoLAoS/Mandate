@@ -35,10 +35,6 @@ start compiling it. Here's a list of them:
   License: GNU LGPL version 2
   http://www.libsdl.org
 
-* Xerces-C
-  License: Apache Software License, Version 2.0.
-  http://xml.apache.org/xerces-c/index.html
-
 * OpenAL
   License: LGPL
   http://www.openal.org
@@ -55,12 +51,14 @@ start compiling it. Here's a list of them:
   License: MIT
   http://www.lua.org/
 
-If the configure script can't find some of the libraries, make sure that you
-also have the -dev packages installed that some distributions provide.
+If the configure script or cmake can't find some of the libraries, make sure
+that you also have the -dev packages installed that some distributions provide.
 At this point I'd like to thank all the authors of these helpful libraries
 that made our development easy and straightforward.
 
 2.2 Building
+
+2.2.1 Building with Jam
 
 To build and install the game use the following commands
 
@@ -72,12 +70,19 @@ change to the mk/linux directory first and create a configure script:
 	cd mk/linux
 	./autogen.sh
 
+2.2.2 Building with CMake
+
+mkdir build && cd build
+cmake ..
+make
+
 2.3 Installation
 
-Unfortunately there is no real installation mechanism present yet (jam install
-does NOT work correctly). Please copy the executable file named "glest" and the
-example linux config "glest.ini" into the directory where you extracted the
-datafiles and start the game there.
+Unfortunately there is no real installation mechanism present yet in jam
+(jam install does NOT work correctly). Please copy the executable file named
+"glest" and the example linux config "glest.ini" into the directory where you
+extracted the datafiles and start the game there.
+Or use cmake and run 'make install'.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -110,8 +115,8 @@ Sound/Audio errors when starting
 The game complains about opengl1.3 not available, is missing opengl extensions
 or works very slowly
 * Make sure you fullfill the system requirements
-* look at glxinfo and make sure the system is using ATI or NVIDIA driver and NOT the
-  mesa drivers ("glxinfo | grep -i mesa" should return nothing)
+* look at glxinfo and make sure the system is using ATI or NVIDIA driver and NOT
+  the mesa drivers ("glxinfo | grep -i mesa" should return nothing)
 
 The game crashs
 * Fedora3 seems to have problems with the precompiled glest binaries -> compile
