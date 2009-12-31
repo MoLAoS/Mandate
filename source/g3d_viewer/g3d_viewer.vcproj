@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="g3d_viewer"
 	ProjectGUID="{1ACEE8EA-A0FB-4759-B647-5A881FFDA499}"
 	RootNamespace="g3d_viewer"
@@ -133,7 +133,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib glu32.lib libglest.lib comctl32.lib wxbase28.lib wxbase28_net.lib wxbase28_odbc.lib wxbase28_xml.lib wxexpat.lib wxjpeg.lib wxmsw28_adv.lib wxmsw28_aui.lib wxmsw28_core.lib wxmsw28_dbgrid.lib wxmsw28_gl.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_qa.lib wxmsw28_richtext.lib wxmsw28d_xrc.lib wxpng.lib wxregex.lib wxtiff.lib wxzlib.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib libglest.lib comctl32.lib wxbase28.lib wxbase28_net.lib wxbase28_odbc.lib wxbase28_xml.lib wxexpat.lib wxjpeg.lib wxmsw28_adv.lib wxmsw28_aui.lib wxmsw28_core.lib wxmsw28_dbgrid.lib wxmsw28_gl.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_qa.lib wxmsw28_richtext.lib wxmsw28_xrc.lib wxpng.lib wxregex.lib wxtiff.lib wxzlib.lib"
 				AdditionalLibraryDirectories="../../../deps/lib;../../../deps/lib/wx;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"

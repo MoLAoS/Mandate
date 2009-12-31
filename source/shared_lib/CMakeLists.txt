@@ -41,7 +41,7 @@ set(shared_lib_incs ${shared_lib_incs} CACHE INTERNAL "include directories for s
 include_directories(${shared_lib_incs})
 add_library(shared_lib STATIC ${shared_lib_srcs})
 if(WIN32)
-	target_link_libraries(shared_lib ${DSOUND_LIBRARY} wsock32)
+	#target_link_libraries(shared_lib ${DSOUND_LIBRARY} wsock32)
 else(WIN32)
 	target_link_libraries(shared_lib ${SDL_LIBRARY} ${OPENAL_LIBRARY})
 endif(WIN32)

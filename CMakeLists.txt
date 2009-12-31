@@ -44,8 +44,8 @@ if(DEFINED WINDEPS)
 	# sadly FindZLIB does not support HINTS, set it directly
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
-	# TODO: get wxWidgets stuff compiling on win
-	set(ENV{WXWIN} ${WINDEPS}/mingw/wxMSW-2.8.10)
+	# root folder of wxWidgets
+	set(ENV{WXWIN} ${WINDEPS}/wxMSW)
 endif(DEFINED WINDEPS)
 
 find_package(Lua51 5.1 REQUIRED)
@@ -90,7 +90,16 @@ set(CPACK_PACKAGE_VERSION "svn")
 # set(CPACK_PACKAGE_VERSION_PATCH "3")
 set(CPACK_PACKAGE_CONTACT "glestae-devel@lists.sourceforge.net")
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/docs/license.txt)
-set(CPACK_PACKAGE_EXECUTABLES "glestadv" "Glest Advanced Engine")
+if(wxWidgets_FOUND)
+	set(CPACK_PACKAGE_EXECUTABLES
+			"glestadv" "Glest Advanced Engine"
+			"glest_editor" "Map Editor"
+			"glest_configurator" "Configurator"
+			"glest_g3dviewer" "G3D Viewer"
+	)
+else(wxWidgets_FOUND)
+	set(CPACK_PACKAGE_EXECUTABLES "glestadv" "Glest Advanced Engine")
+endif(wxWidgets_FOUND)
 
 if(WIN32)
 	# install runtime libs from VC

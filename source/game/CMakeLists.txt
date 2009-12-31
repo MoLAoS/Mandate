@@ -32,7 +32,7 @@ target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBR
 					${LUA_LIBRARIES} ${ZLIB_LIBRARIES})
 if(WIN32)
 	# FIXME: VC project needs static vorbis/ogg libs
-	target_link_libraries(glestadv ${DXGUID_LIBRARY}
+	target_link_libraries(glestadv ${DXGUID_LIBRARY} ${DSOUND_LIBRARY} wsock32
 					${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
 else(WIN32)
 	target_link_libraries(glestadv ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
