@@ -45,7 +45,9 @@ if(DEFINED WINDEPS)
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
 	# root folder of wxWidgets
-	set(ENV{WXWIN} ${WINDEPS}/wxMSW)
+	if(DEFINED WXWIN)
+		set(ENV{WXWIN} ${WXWIN})
+	endif(DEFINED WXWIN)
 endif(DEFINED WINDEPS)
 
 find_package(Lua51 5.1 REQUIRED)
@@ -61,7 +63,7 @@ if(WIN32)
 	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${WINDEPS} PATH_SUFFIXES include)
 	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${WINDEPS} PATH_SUFFIXES lib)
 	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${WINDEPS} PATH_SUFFIXES lib)
-	# needs to be compiled as C, extra file for shared_lib
+	# needs to be compiled as C (done automatically because *.c and project() has C), extra file for shared_lib
 	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${WINDEPS}/src)
 	include_directories(${DSOUND_INCLUDE_DIR})
 	# FIXME: VC project needs to be build with static vorbis/ogg libs
@@ -78,17 +80,23 @@ else(WIN32)
 	set(X11_AVAILABLE "ON")
 endif(WIN32)
 
+if(NOT DEFINED GLEST_VERSION)
+	set(GLEST_VERSION "svn" CACHE STRING "Version of glest advanced engine")
+endif()
+if(NOT DEFINED CONTACT)
+	set(CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")
+endif()
 
 # cpack stuff
 # FIXME: setting version from outside does not work fully
 set(CPACK_PACKAGE_NAME "glestae")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "glest advanced engine")
 set(CPACK_PACKAGE_VENDOR "gae developers")
-set(CPACK_PACKAGE_VERSION "svn")
+set(CPACK_PACKAGE_VERSION ${GLEST_VERSION})
 # set(CPACK_PACKAGE_VERSION_MAJOR "1")
 # set(CPACK_PACKAGE_VERSION_MINOR "2")
 # set(CPACK_PACKAGE_VERSION_PATCH "3")
-set(CPACK_PACKAGE_CONTACT "glestae-devel@lists.sourceforge.net")
+set(CPACK_PACKAGE_CONTACT ${CONTACT})
 set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/docs/license.txt)
 if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES

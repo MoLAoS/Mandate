@@ -16,8 +16,8 @@
 #cmakedefine HAVE_BYTESWAP_H
 
 
-#define VERSION_STRING "@CPACK_PACKAGE_VERSION@"
-#define CONTACT_STRING "@CPACK_PACKAGE_CONTACT@"
+#define VERSION_STRING "@GLEST_VERSION@"
+#define CONTACT_STRING "@CONTACT@"
 
 // trailed slash is needed
 // relative path for config_dir is relative to data_dir, ./ stores in data_dir
