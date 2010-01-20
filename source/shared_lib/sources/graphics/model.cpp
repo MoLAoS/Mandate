@@ -22,6 +22,7 @@
 
 #include "leak_dumper.h"
 
+#include "FSFactory.hpp"
 
 using namespace Shared::Platform;
 
@@ -94,10 +95,10 @@ void Mesh::updateInterpolationVertices(float t, bool cycle) const{
 
 // ==================== load ====================
 
-void Mesh::loadV2(const string &dir, FILE *f, TextureManager *textureManager){
+void Mesh::loadV2(const string &dir, FileOps *f, TextureManager *textureManager){
 	//read header
 	MeshHeaderV2 meshHeader;
-	fread(&meshHeader, sizeof(MeshHeaderV2), 1, f);
+	f->read(&meshHeader, sizeof(MeshHeaderV2), 1);
 
 
 	if(meshHeader.normalFrameCount!=meshHeader.vertexFrameCount){
@@ -136,26 +137,26 @@ void Mesh::loadV2(const string &dir, FILE *f, TextureManager *textureManager){
 	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
 	size_t vfCount = frameCount * vertexCount;
 	for(int i = 0; i < vfCount; ++i) {
-		fread(&vertices[i], 12, 1, f);
+		f->read(&vertices[i], 12, 1);
 	}
 	for(int i = 0; i < vfCount; ++i) {
-		fread(&normals[i], 12, 1, f);
+		f->read(&normals[i], 12, 1);
 	}
 
 	if(textures[mtDiffuse]!=NULL){
-		fread(texCoords, sizeof(Vec2f)*vertexCount, 1, f);
+		f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
 	}
-//	fread(&diffuseColor, sizeof(Vec3f), 1, f);
-	fread(&diffuseColor, 12, 1, f);
-	fread(&opacity, sizeof(float32), 1, f);
-	fseek(f, sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
-	fread(indices, sizeof(uint32)*indexCount, 1, f);
+//	f->read(&diffuseColor, sizeof(Vec3f), 1, f);
+	f->read(&diffuseColor, 12, 1);
+	f->read(&opacity, sizeof(float32), 1);
+	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR/*seekpos::current*/);
+	f->read(indices, sizeof(uint32)*indexCount, 1);
 }
 
-void Mesh::loadV3(const string &dir, FILE *f, TextureManager *textureManager){
+void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager){
 	//read header
 	MeshHeaderV3 meshHeader;
-	fread(&meshHeader, sizeof(MeshHeaderV3), 1, f);
+	f->read(&meshHeader, sizeof(MeshHeaderV3), 1);
 
 
 	if(meshHeader.normalFrameCount!=meshHeader.vertexFrameCount){
@@ -190,28 +191,28 @@ void Mesh::loadV3(const string &dir, FILE *f, TextureManager *textureManager){
 	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
 	size_t vfCount = frameCount * vertexCount;
 	for(int i = 0; i < vfCount; ++i) {
-		fread(&vertices[i], 12, 1, f);
+		f->read(&vertices[i], 12, 1);
 	}
 	for(int i = 0; i < vfCount; ++i) {
-		fread(&normals[i], 12, 1, f);
+		f->read(&normals[i], 12, 1);
 	}
 
 	if(textures[mtDiffuse]!=NULL){
 		for(int i=0; i<meshHeader.texCoordFrameCount; ++i){
-			fread(texCoords, sizeof(Vec2f)*vertexCount, 1, f);
+			f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
 		}
 	}
 	// fread(&diffuseColor, sizeof(Vec3f), 1, f);
-	fread(&diffuseColor, 12, 1, f);
-	fread(&opacity, sizeof(float32), 1, f);
-	fseek(f, sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
-	fread(indices, sizeof(uint32)*indexCount, 1, f);
+	f->read(&diffuseColor, 12, 1);
+	f->read(&opacity, sizeof(float32), 1);
+	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR/*seekpos::current*/);
+	f->read(indices, sizeof(uint32)*indexCount, 1);
 }
 
-void Mesh::load(const string &dir, FILE *f, TextureManager *textureManager){
+void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	//read header
 	MeshHeader meshHeader;
-	fread(&meshHeader, sizeof(MeshHeader), 1, f);
+	f->read(&meshHeader, sizeof(MeshHeader), 1);
 
 	//init
 	frameCount= meshHeader.frameCount;
@@ -235,7 +236,7 @@ void Mesh::load(const string &dir, FILE *f, TextureManager *textureManager){
 	for(int i=0; i<meshTextureCount; ++i){
 		if((meshHeader.textures & flag) && textureManager!=NULL){
 			uint8 cMapPath[mapPathSize];
-			fread(cMapPath, mapPathSize, 1, f);
+			f->read(cMapPath, mapPathSize, 1);
 			string mapPath= toLower(reinterpret_cast<char*>(cMapPath));
 
 			string mapFullPath= dir + "/" + mapPath;
@@ -257,16 +258,16 @@ void Mesh::load(const string &dir, FILE *f, TextureManager *textureManager){
 	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
 	size_t vfCount = frameCount * vertexCount;
 	for(int i = 0; i < vfCount; ++i) {
-		fread(&vertices[i], 12, 1, f);
+		f->read(&vertices[i], 12, 1);
 	}
 	for(int i = 0; i < vfCount; ++i) {
-		fread(&normals[i], 12, 1, f);
+		f->read(&normals[i], 12, 1);
 	}
 
 	if(meshHeader.textures!=0){
-		fread(texCoords, sizeof(Vec2f)*vertexCount, 1, f);
+		f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
 	}
-	fread(indices, sizeof(uint32)*indexCount, 1, f);
+	f->read(indices, sizeof(uint32)*indexCount, 1);
 
 	//tangents
 	if(textures[mtNormal]!=NULL){
@@ -274,7 +275,7 @@ void Mesh::load(const string &dir, FILE *f, TextureManager *textureManager){
 	}
 }
 
-void Mesh::save(const string &dir, FILE *f){
+void Mesh::save(const string &dir, FileOps *f){
 	/*MeshHeader meshHeader;
 	meshHeader.vertexFrameCount= vertexFrameCount;
 	meshHeader.normalFrameCount= normalFrameCount;
@@ -443,16 +444,14 @@ void Model::save(const string &path){
 void Model::loadG3d(const string &path){
 
     try{
-		FILE *f=fopen(path.c_str(),"rb");
-		if (f==NULL){
-			throw runtime_error("Error opening 3d model file");
-		}
+		FileOps *f = FSFactory::getInstance()->getFileOps();
+		f->openRead(path.c_str());
 
 		string dir= dirname(path);
 
 		//file header
 		FileHeader fileHeader;
-		fread(&fileHeader, sizeof(FileHeader), 1, f);
+		f->read(&fileHeader, sizeof(FileHeader), 1);
 		if(strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3)!=0){
 			throw runtime_error("Not a valid S3D model");
 		}
@@ -463,7 +462,7 @@ void Model::loadG3d(const string &path){
 
 			//model header
 			ModelHeader modelHeader;
-			fread(&modelHeader, sizeof(ModelHeader), 1, f);
+			f->read(&modelHeader, sizeof(ModelHeader), 1);
 			meshCount= modelHeader.meshCount;
 			if(modelHeader.type!=mtMorphMesh){
 				throw runtime_error("Invalid model type");
@@ -479,7 +478,7 @@ void Model::loadG3d(const string &path){
 		//version 3
 		else if(fileHeader.version==3){
 
-			fread(&meshCount, sizeof(meshCount), 1, f);
+			f->read(&meshCount, sizeof(meshCount), 1);
 			meshes= new Mesh[meshCount];
 			for(uint32 i=0; i<meshCount; ++i){
 				meshes[i].loadV3(dir, f, textureManager);
@@ -489,7 +488,7 @@ void Model::loadG3d(const string &path){
 		//version 2
 		else if(fileHeader.version==2){
 
-			fread(&meshCount, sizeof(meshCount), 1, f);
+			f->read(&meshCount, sizeof(meshCount), 1);
 			meshes= new Mesh[meshCount];
 			for(uint32 i=0; i<meshCount; ++i){
 				meshes[i].loadV2(dir, f, textureManager);
@@ -500,7 +499,7 @@ void Model::loadG3d(const string &path){
 			throw runtime_error("Invalid model version: "+ intToStr(fileHeader.version));
 		}
 
-		fclose(f);
+		delete f;
     }
 	catch(exception &e){
 		throw runtime_error("Exception caught loading 3d file: " + path +"\n"+ e.what());

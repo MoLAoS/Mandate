@@ -28,6 +28,7 @@
 #include "socket.h"
 #include "selection.h"
 #include "script_manager.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
@@ -282,7 +283,7 @@ Tile *Map::getTile(const Vec2i &sPos) const {
    return getTile(sPos.x, sPos.y);
 }
 void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
-	FILE *f = NULL;
+	FileOps *f = FSFactory::getInstance()->getFileOps();
 
 	struct MapFileHeader {
 		int32 version;
@@ -297,16 +298,14 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 	};
 
 	try {
-		if (!(f = fopen(path.c_str(), "rb"))) {
-			throw runtime_error("Can't open file");
-		}
+		f->openRead(path.c_str());
 
 		//read header
 		MapFileHeader header;
 
 		// FIXME: Better error handling starting here: report bad map instead of partially loading,
 		// etc.
-		fread(&header, sizeof(MapFileHeader), 1, f);
+		f->read(&header, sizeof(MapFileHeader), 1);
 
 		if (next2Power(header.width) != header.width) {
 			throw runtime_error("Map width is not a power of 2");
@@ -330,8 +329,8 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 		startLocations = new Vec2i[maxPlayers];
 		for (int i = 0; i < maxPlayers; ++i) {
 			int x, y;
-			fread(&x, sizeof(int32), 1, f);
-			fread(&y, sizeof(int32), 1, f);
+			f->read(&x, sizeof(int32), 1);
+			f->read(&y, sizeof(int32), 1);
 			startLocations[i] = Vec2i(x, y) * cellScale;
 		}
 
@@ -347,7 +346,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 		for (int y = 0; y < tileH; ++y) {
 			for (int x = 0; x < tileW; ++x) {
 				float32 alt;
-				fread(&alt, sizeof(float32), 1, f);
+				f->read(&alt, sizeof(float32), 1);
 				Tile *sc = getTile(x, y);
 				sc->setVertex(Vec3f((float)(x * mapScale), alt / heightFactor, (float)(y * mapScale)));
 			}
@@ -357,7 +356,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 		for (int y = 0; y < tileH; ++y) {
 			for (int x = 0; x < tileW; ++x) {
 				int8 surf;
-				fread(&surf, sizeof(int8), 1, f);
+				f->read(&surf, sizeof(int8), 1);
 				getTile(x, y)->setTileType(surf - 1);
 			}
 		}
@@ -367,7 +366,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 			for (int x = 0; x < w; x += cellScale) {
 
 				int8 objNumber;
-				fread(&objNumber, sizeof(int8), 1, f);
+				f->read(&objNumber, sizeof(int8), 1);
 				Tile *sc = getTile(toTileCoords(Vec2i(x, y)));
 				if (objNumber == 0) {
 					sc->setObject(NULL);
@@ -389,11 +388,9 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 			}
 		}
 
-		fclose(f);
+		delete f;
 	} catch (const exception &e) {
-		if (f) {
-			fclose(f);
-		}
+		delete f;
 		throw MapException(path, "Error loading map: " + path + "\n" + e.what());
 	}
 }

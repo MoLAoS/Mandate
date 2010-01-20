@@ -78,6 +78,9 @@ else(WIN32)
 	set(USE_SDL "ON")
 	set(USE_POSIX_SOCKETS "ON")
 	set(X11_AVAILABLE "ON")
+
+	find_package(PhysFS REQUIRED)
+	include_directories(${PHYSFS_INCLUDE_DIR})
 endif(WIN32)
 
 if(NOT DEFINED GLEST_VERSION)
@@ -162,9 +165,9 @@ install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilese
 if(NOT WIN32)
 	# add uninstall target; FIXME: does not delete created folders
 	configure_file(
-		"${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
-		"${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+		"${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+		"${CMAKE_BINARY_DIR}/cmake_uninstall.cmake"
 		IMMEDIATE @ONLY)
 	add_custom_target(uninstall
-		"${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+		"${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
 endif(NOT WIN32)

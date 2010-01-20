@@ -17,6 +17,8 @@
 #include "vec.h"
 #include "types.h"
 
+#include "FileOps.hpp"
+
 using std::string;
 using Shared::Platform::int8;
 using Shared::Platform::uint8;
@@ -59,7 +61,7 @@ public:
 
 class PixmapIoTga: public PixmapIo{
 private:
-	FILE *file;
+	FileOps *file;
 
 public:
 	PixmapIoTga();
@@ -79,7 +81,7 @@ public:
 
 class PixmapIoBmp: public PixmapIo{
 private:
-	FILE *file;
+	FileOps *file;
 
 public:
 	PixmapIoBmp();

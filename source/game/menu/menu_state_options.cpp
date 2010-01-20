@@ -19,6 +19,7 @@
 #include "menu_state_root.h"
 #include "menu_state_graphic_info.h"
 #include "util.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
@@ -275,22 +276,20 @@ void MenuStateOptions::setupListBoxLang() {
 	}
 
 	const string langListPath = langDir + "langlist.txt";
-	FILE *fp = fopen(langListPath.c_str(), "r");
-	if ( !fp ) {
-		throw runtime_error("Failed to open " + langListPath);
-	}
+	istream *fp = FSFactory::getInstance()->getIStream(langListPath.c_str());
 	
 	// insert values into table from file
 	map<string,string> langTable;
 	char buf[128];
-	while ( fgets(buf, 128, fp) ) {
+	//while ( fgets(buf, 128, fp) ) {
+	while(fp->getline(buf, 128)){
 		char *code = strtok(buf, "=");
 		char *lang = strtok(NULL, "=");
 		if ( code && lang ) {
 			langTable[string(code)] = string(lang);
 		}
 	}
-	fclose(fp);
+	delete fp;
 
 	// insert the values for langNames
 	vector<string> langNames;

@@ -5,6 +5,9 @@
 #include "graphics_interface.h"
 #include "util.h"
 
+#include <physfs.h>
+#include "FSFactory.hpp"
+
 using namespace Shared::Platform; 
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
@@ -375,9 +378,29 @@ END_EVENT_TABLE()
 // ===============================================
 
 bool App::OnInit(){
+	FSFactory::getInstance()->usePhysFS(true);
+	PHYSFS_init(wxFNCONV(argv[0]));
+	cout << "argv[0]: " << wxFNCONV(argv[0]) << endl;
+	const char *mountpoint = "/home/franky/programming/modding/glestae_svn/data/game/techs/magitech/factions/magic/units";
+	//const char *mountpoint = "../battlemage.zip";
+	//const char *mountpoint = "../battlemage.7z";
+	if(!PHYSFS_mount(mountpoint, NULL, 1)){
+		cout << "battlemage:" << PHYSFS_getLastError() << endl;
+	}
+	PHYSFS_mount("/", NULL, 1);
+
+	
 	string modelPath;
 	if(argc==2){
 		modelPath= wxFNCONV(argv[1]);
+	}
+	modelPath = "battlemage/models/battlemage_standing.g3d";
+	//modelPath = "/home/franky/programming/modding/glestae_svn/data/game/techs/magitech/factions/magic/units/battlemage/models/battlemage_standing.g3d";
+	if(PHYSFS_exists(modelPath.c_str())){
+		cout << "found: " << modelPath << endl;
+	}else{
+		cout << "not found: " << modelPath << endl;
+		return false;
 	}
 	
 	mainWindow= new MainWindow(modelPath);
@@ -397,6 +420,7 @@ int App::MainLoop(){
 }
 
 int App::OnExit(){
+	PHYSFS_deinit();
 	return 0;
 }
 

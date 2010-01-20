@@ -16,6 +16,7 @@
 #include <stdexcept>
 
 #include "util.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
@@ -50,25 +51,22 @@ void Checksum::addString(const string &value){
 
 void Checksum::addFile(const string &path, bool text){
 
-	FILE* file = fopen(path.c_str(), "rb");
-
-	if(!file) {
-		throw runtime_error("Can not open file: " + path);
-	}
+	FileOps *file = FSFactory::getInstance()->getFileOps();
+	file->openRead(path.c_str());
 
 	addString(basename(path));
 
-	while(!feof(file)) {
+	while(!file->eof()) {
 		int8 byte= 0;
 
-		fread(&byte, 1, 1, file);
+		file->read(&byte, 1, 1);
 		if(text && !isprint(byte)) {
 			continue;
 		}
 		addByte(byte);
 	}
 
-	fclose(file);
+	delete file;
 }
 
 }}//end namespace

@@ -21,6 +21,7 @@
 #include "conversion.h"
 
 #include "leak_dumper.h"
+#include "FSFactory.hpp"
 
 
 using namespace std;
@@ -35,22 +36,23 @@ Properties::Properties() {}
 
 void Properties::load(const string &path, bool trim) {
 	locale loc;
-	ifstream fileStream;
+	//ifstream fileStream;
 	char lineBuffer[maxLine];
 	string line, key, value;
 	int pos;
 
 	this->path = path;
 
+	istream *fileStream = FSFactory::getInstance()->getIStream(path.c_str());
 //	fileStream.exceptions(ios::failbit | ios::badbit);
-	fileStream.open(path.c_str(), ios_base::in);
-	if (fileStream.fail()) {
+	//fileStream.open(path.c_str(), ios_base::in);
+	if (fileStream->fail()) {
 		throw runtime_error("Can't open propertyMap file: " + path);
 	}
 
 	propertyMap.clear();
-	while (!fileStream.eof()) {
-		fileStream.getline(lineBuffer, maxLine);
+	while (!fileStream->eof()) {
+		fileStream->getline(lineBuffer, maxLine);
 
 		lineBuffer[maxLine-1] = '\0';
 
@@ -93,7 +95,8 @@ void Properties::load(const string &path, bool trim) {
 		propertyVector.push_back(PropertyPair(key, value));
 	}
 
-	fileStream.close();
+	//fileStream.close();
+	delete fileStream;
 }
 
 void Properties::save(const string &path) {

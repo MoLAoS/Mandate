@@ -93,7 +93,7 @@ public:
 	void returnString(const string &value);
 	void returnVec2i(const Vec2i &value);
 
-	char* getType ( int ndx ) const;
+	const char *getType ( int ndx ) const;
 };
 
 }}//end namespace

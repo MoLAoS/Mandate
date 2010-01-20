@@ -21,6 +21,7 @@
 #include "random.h"
 
 #include "leak_dumper.h"
+#include "FSFactory.hpp"
 
 
 using namespace Shared::Util;
@@ -89,19 +90,17 @@ PixmapIoTga::PixmapIoTga(){
 
 PixmapIoTga::~PixmapIoTga(){
 	if(file!=NULL){
-		fclose(file);
+		delete file;
 	}
 }
 
 void PixmapIoTga::openRead(const string &path){
-	file= fopen(path.c_str(),"rb");
-	if (file==NULL){
-		throw runtime_error("Can't open TGA file: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openRead(path.c_str());
 
 	//read header
 	TargaFileHeader fileHeader;
-	fread(&fileHeader, sizeof(TargaFileHeader), 1, file);
+	file->read(&fileHeader, sizeof(TargaFileHeader), 1);
 
 	//check that we can load this tga file
 	if(fileHeader.idLength!=0){
@@ -131,18 +130,18 @@ void PixmapIoTga::read(uint8 *pixels, int components){
 		uint8 r, g, b, a, l;
 
 		if(this->components==1){
-			fread(&l, 1, 1, file);
+			file->read(&l, 1, 1);
 			r= l;
 			g= l;
 			b= l;
 			a= 255;
 		}
 		else{
-			fread(&b, 1, 1, file);
-			fread(&g, 1, 1, file);
-			fread(&r, 1, 1, file);
+			file->read(&b, 1, 1);
+			file->read(&g, 1, 1);
+			file->read(&r, 1, 1);
 			if(this->components==4){
-				fread(&a, 1, 1, file);
+				file->read(&a, 1, 1);
 			}
 			else{
 				a= 255;
@@ -174,10 +173,8 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 	this->h= h;
 	this->components= components;
 
-    file= fopen(path.c_str(),"wb");
-	if (file==NULL){
-		throw runtime_error("Can't open TGA file: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openWrite(path.c_str());
 
 	TargaFileHeader fileHeader;
 	memset(&fileHeader, 0, sizeof(TargaFileHeader));
@@ -187,20 +184,20 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 	fileHeader.height= h;
 	fileHeader.imageDescriptor= components==4? 8: 0;
 
-	fwrite(&fileHeader, sizeof(TargaFileHeader), 1, file);
+	file->write(&fileHeader, sizeof(TargaFileHeader), 1);
 }
 
 void PixmapIoTga::write(uint8 *pixels){
 	if(components==1){
-		fwrite(pixels, h*w, 1, file);
+		file->write(pixels, h*w, 1);
 	}
 	else{
 		for(int i=0; i<h*w*components; i+=components){
-			fwrite(&pixels[i+2], 1, 1, file);
-			fwrite(&pixels[i+1], 1, 1, file);
-			fwrite(&pixels[i], 1, 1, file);
+			file->write(&pixels[i+2], 1, 1);
+			file->write(&pixels[i+1], 1, 1);
+			file->write(&pixels[i], 1, 1);
 			if(components==4){
-				fwrite(&pixels[i+3], 1, 1, file);
+				file->write(&pixels[i+3], 1, 1);
 			}
 		}
 	}
@@ -216,26 +213,24 @@ PixmapIoBmp::PixmapIoBmp(){
 
 PixmapIoBmp::~PixmapIoBmp(){
 	if(file!=NULL){
-		fclose(file);
+		delete file;
 	}
 }
 
 void PixmapIoBmp::openRead(const string &path){
-    file= fopen(path.c_str(),"rb");
-	if (file==NULL){
-		throw runtime_error("Can't open BMP file: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openRead(path.c_str());
 
 	//read file header
     BitmapFileHeader fileHeader;
-    fread(&fileHeader, sizeof(BitmapFileHeader), 1, file);
+    file->read(&fileHeader, sizeof(BitmapFileHeader), 1);
 	if(fileHeader.type1!='B' || fileHeader.type2!='M'){
 		throw runtime_error(path +" is not a bitmap");
 	}
 
 	//read info header
 	BitmapInfoHeader infoHeader;
-	fread(&infoHeader, sizeof(BitmapInfoHeader), 1, file);
+	file->read(&infoHeader, sizeof(BitmapInfoHeader), 1);
 	if(infoHeader.bitCount!=24){
         throw runtime_error(path+" is not a 24 bit bitmap");
 	}
@@ -252,9 +247,9 @@ void PixmapIoBmp::read(uint8 *pixels){
 void PixmapIoBmp::read(uint8 *pixels, int components){
     for(int i=0; i<h*w*components; i+=components){
 		uint8 r, g, b;
-		fread(&b, 1, 1, file);
-		fread(&g, 1, 1, file);
-		fread(&r, 1, 1, file);
+		file->read(&b, 1, 1);
+		file->read(&g, 1, 1);
+		file->read(&r, 1, 1);
 
 		switch(components){
 		case 1:
@@ -280,10 +275,8 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	this->h= h;
 	this->components= components;
 
-	file= fopen(path.c_str(),"wb");
-	if (file==NULL){
-		throw runtime_error("Can't open BMP file for writting: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openWrite(path.c_str());
 
 	BitmapFileHeader fileHeader;
     fileHeader.type1='B';
@@ -291,7 +284,7 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	fileHeader.offsetBits=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader);
 	fileHeader.size=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader)+3*h*w;
 
-    fwrite(&fileHeader, sizeof(BitmapFileHeader), 1, file);
+    file->write(&fileHeader, sizeof(BitmapFileHeader), 1);
 
 	//info header
 	BitmapInfoHeader infoHeader;
@@ -307,14 +300,14 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	infoHeader.xPelsPerMeter= 0;
 	infoHeader.yPelsPerMeter= 0;
 
-	fwrite(&infoHeader, sizeof(BitmapInfoHeader), 1, file);
+	file->write(&infoHeader, sizeof(BitmapInfoHeader), 1);
 }
 
 void PixmapIoBmp::write(uint8 *pixels){
     for (int i=0; i<h*w*components; i+=components){
-        fwrite(&pixels[i+2], 1, 1, file);
-		fwrite(&pixels[i+1], 1, 1, file);
-		fwrite(&pixels[i], 1, 1, file);
+        file->write(&pixels[i+2], 1, 1);
+		file->write(&pixels[i+1], 1, 1);
+		file->write(&pixels[i], 1, 1);
     }
 }
 
