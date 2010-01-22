@@ -36,6 +36,9 @@ FSFactory::FSFactory(){
 }
 
 FSFactory::~FSFactory(){
+	if(PHYSFS_isInit()){
+		PHYSFS_deinit();
+	}
 }
 
 FSFactory *FSFactory::getInstance(){
@@ -48,18 +51,18 @@ FSFactory *FSFactory::getInstance(){
 void FSFactory::initPhysFS(const char *argv0, const char *configDir){
 	PHYSFS_init(argv0);
 	if(!PHYSFS_mount(DEFAULT_DATA_DIR, NULL, 1)){
-		throw runtime_error("Couldn't mount dataDir");
+		throw runtime_error(string("Couldn't mount dataDir: ") + DEFAULT_DATA_DIR);
 	}
 	PHYSFS_setWriteDir(configDir);
 	if(!PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 1)){
-		throw runtime_error("Couldn't mount configDir");
+		throw runtime_error(string("Couldn't mount configDir: ") + configDir);
 	}
 	char **list = PHYSFS_enumerateFiles("addons");
 	for(char **i=list; *i; i++){
 		// because we use physfs functions, we need path in physfs
 		string str("addons/");
 		str += *i;
-		// check if mountable
+		// check if useful
 		if(PHYSFS_isDirectory(str.c_str()) || ext(str)=="zip"){// || ext(str)=="7z"){
 			// get full real name
 			str = PHYSFS_getRealDir(str.c_str()) + str;
@@ -71,7 +74,7 @@ void FSFactory::initPhysFS(const char *argv0, const char *configDir){
 	PHYSFS_freeList(list);
 
 	//FIXME: debug
-	for (char **i = PHYSFS_getSearchPath(); *i; i++){
+	for(char **i=PHYSFS_getSearchPath(); *i; i++){
 		cout << "[" << *i << "] is in the search path.\n";
 	}
 }

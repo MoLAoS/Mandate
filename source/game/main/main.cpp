@@ -136,7 +136,8 @@ int glestMain(int argc, char** argv) {
 		program.loop();
 	}
 
-	fsfac->deinitPhysFS();
+	//fsfac->deinitPhysFS();  //FIXME: audio thread is still running and so also the ogg file open
+	//delete fsfac;           //       the deletion is then invoked over CoreData
 	return 0;
 }
 

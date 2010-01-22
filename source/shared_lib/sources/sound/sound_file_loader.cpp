@@ -143,12 +143,14 @@ void WavSoundFileLoader::restart(){
 // =======================================
 
 void OggSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
-	FSFactory *fsfac = FSFactory::getInstance();
-	FileOps *fops = fsfac->getFileOps();
+	FileOps *fops = FSFactory::getInstance()->getFileOps();
 	fops->openRead(path.c_str());
 	ov_callbacks callbacks = {FSFactory::cb_read, FSFactory::cb_seek, FSFactory::cb_close, FSFactory::cb_tell};
 	vf = new OggVorbis_File();
-	ov_open_callbacks(fops, vf, 0, 0, callbacks);
+	if(ov_open_callbacks(fops, vf, NULL, 0, callbacks)){  // fops is deleted by cb_close
+		delete fops;
+		throw runtime_error("ov_open_callback failed on ogg file: " + path);
+	}
 
 // 	if(!(f = fopen(path.c_str(), "rb"))){
 // 		throw runtime_error("Can't open ogg file: "+path);

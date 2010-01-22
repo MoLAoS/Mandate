@@ -64,19 +64,26 @@ int PhysFileOps::write(void *buf, int size, int num){
 int PhysFileOps::seek(long offset, int w){
 	switch(w){
 		case SEEK_SET:
-			return PHYSFS_seek(this->f, offset);
+			if(!PHYSFS_seek(this->f, offset)){
+				return -1;
+			}
 		break;
 		case SEEK_CUR:
 			offset += PHYSFS_tell(this->f);
-			return PHYSFS_seek(this->f, offset);
+			if(!PHYSFS_seek(this->f, offset)){
+				return -1;
+			}
 		break;
 		case SEEK_END:
 			offset += PHYSFS_fileLength(this->f);
-			return PHYSFS_seek(this->f, offset);
+			if(!PHYSFS_seek(this->f, offset)){
+				return -1;
+			}
 		break;
 		default:
 			throw runtime_error("unknown seek_whence" + w);
 	}
+	return 0;
 }
 
 
