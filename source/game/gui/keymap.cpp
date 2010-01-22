@@ -202,15 +202,8 @@ Keymap::Keymap(const Input &input, const char* fileName) :
 		//entries[i] = EntryPair(commandInfo[i]);
 	}
 	
-	if(fileName) {
-		//std::ifstream in((configDir + fileName).c_str(), ios_base::in);
-		istream *in = FSFactory::getInstance()->getIStream(fileName);
-		if(!in->fail()) {
-			//in.close();
-			delete in;  //FIXME: why open it and then just close it? probably looking if exists
-			//load((configDir + fileName).c_str());
-			load(fileName);
-		}
+	if(fileName && Shared::Util::fileExists(fileName)) {
+		load(fileName);
 	}
 }
 
@@ -278,7 +271,7 @@ void Keymap::save(const char *path) {
 		delete out;
 	} catch (runtime_error &e) {
 		stringstream str;
-		str << "Failed to save key map file: " << (configDir + path).c_str() << endl << e.what();
+		str << "Failed to save key map file: " << path << endl << e.what();
 		throw runtime_error(str.str());
 	}
 }

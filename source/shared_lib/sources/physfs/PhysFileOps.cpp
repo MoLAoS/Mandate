@@ -45,6 +45,14 @@ void PhysFileOps::openWrite(const char *fname){
 	}
 }
 
+void PhysFileOps::openAppend(const char *fname){
+	string str(fname);
+	str = cleanPath(str);
+	if(!(this->f = PHYSFS_openAppend(str.c_str()))){
+		throw runtime_error("PHYSFS_openAppend failed: " + str);
+	}
+}
+
 int PhysFileOps::read(void *buf, int size, int num){
 	return PHYSFS_read(this->f, buf, size, num);
 }

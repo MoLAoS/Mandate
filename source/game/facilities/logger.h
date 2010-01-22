@@ -18,8 +18,6 @@
 
 #include "timer.h"
 
-#include "projectConfig.h"
-
 using std::string;
 using std::deque;
 
@@ -51,7 +49,7 @@ private:
 private:
 	Logger(const char *fileName)
 			:  loadingGame(true) {
-		this->fileName = configDir + fileName;
+		this->fileName = fileName;
 	}
 
 public:

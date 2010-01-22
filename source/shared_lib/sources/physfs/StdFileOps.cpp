@@ -32,6 +32,10 @@ void StdFileOps::openWrite(const char *fname){
 	this->f = fopen(fname, "w");
 }
 
+void StdFileOps::openAppend(const char *fname){
+	this->f = fopen(fname, "a");
+}
+
 int StdFileOps::read(void *buf, int size, int num){
 	return fread(buf, size, num, this->f);
 }

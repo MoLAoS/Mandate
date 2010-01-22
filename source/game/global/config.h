@@ -133,7 +133,7 @@ private:
 
 public:
 	static Config &getInstance() {
-		static Config singleton((configDir + "glestadv.ini").c_str());
+		static Config singleton("glestadv.ini");
 		return singleton;
 	}
 
