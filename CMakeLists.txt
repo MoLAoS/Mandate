@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 2.6)
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 endif(NOT DEFINED CMAKE_BUILD_TYPE)
-if(WIN32)
+if(WIN32 AND MSVC)
 	# change default compile flags for VC on windows
 	if(NOT DEFINED CMAKE_CXX_FLAGS)
 		set(CMAKE_CXX_FLAGS "/DWIN32 /D_WINDOWS /W2 /Zm1000 /EHsc /GR- /Ob2 /arch:SSE2 /fp:fast /Zc:forScope-" CACHE STRING "Flags used by the compiler during all build types.")
@@ -12,7 +12,7 @@ if(WIN32)
 	if(NOT DEFINED CMAKE_CXX_FLAGS_RELEASE)
 		set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2 /DNDEBUG /Oi /Ot" CACHE STRING "Flags used by the compiler during release builds (/MD /Ob1 /Oi /Ot /Oy /Gs will produce slightly less optimized but smaller files).")
 	endif()
-endif(WIN32)
+endif(WIN32 AND MSVC)
 
 project(glestae CXX C)
 
@@ -41,6 +41,7 @@ if(DEFINED WINDEPS)
 	#set(ENV{SDLDIR} ${WINDEPS})
 	set(ENV{LUA_DIR} ${WINDEPS})
 	set(ENV{VORBISDIR} ${WINDEPS})
+	set(ENV{PHYSFSDIR} ${WINDEPS})
 	# sadly FindZLIB does not support HINTS, set it directly
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
@@ -54,9 +55,10 @@ find_package(Lua51 5.1 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Vorbis REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(PhysFS REQUIRED)
 find_package(wxWidgets COMPONENTS base core gl)
 
-include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR})
+include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library
@@ -78,9 +80,6 @@ else(WIN32)
 	set(USE_SDL "ON")
 	set(USE_POSIX_SOCKETS "ON")
 	set(X11_AVAILABLE "ON")
-
-	find_package(PhysFS REQUIRED)
-	include_directories(${PHYSFS_INCLUDE_DIR})
 endif(WIN32)
 
 if(NOT DEFINED GLEST_VERSION)
@@ -132,6 +131,7 @@ if(WIN32)
 	if(DEFINED WINDEPS)
 		# only lua is linked dynamic, install it next to the binary
 		install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
+		install(FILES ${WINDEPS}/bin/physfs.dll DESTINATION bin)
 	endif(DEFINED WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'

@@ -118,7 +118,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/xml;include/lua;include/tinyxml;.."
+				AdditionalIncludeDirectories="../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/xml;include/lua;include/physfs;include/tinyxml;.."
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;USE_PCH=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -209,6 +209,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\physfs\FileOps.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\include\graphics\font.h"
 				>
 			</File>
@@ -218,6 +222,10 @@
 			</File>
 			<File
 				RelativePath=".\include\graphics\font_manager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\physfs\FSFactory.hpp"
 				>
 			</File>
 			<File
@@ -242,6 +250,14 @@
 			</File>
 			<File
 				RelativePath=".\include\graphics\graphics_interface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\physfs\ifile_stream.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\include\physfs\ifile_streambuf.hpp"
 				>
 			</File>
 			<File
@@ -293,6 +309,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\physfs\ofile_stream.hpp"
+				>
+			</File>
+			<File
+				RelativePath=".\include\physfs\ofile_streambuf.hpp"
+				>
+			</File>
+			<File
 				RelativePath=".\include\graphics\gl\opengl.h"
 				>
 			</File>
@@ -310,6 +334,10 @@
 			</File>
 			<File
 				RelativePath=".\include\pch.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\physfs\PhysFileOps.hpp"
 				>
 			</File>
 			<File
@@ -365,11 +393,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\socket.h"
+				RelativePath=".\include\platform\win32\socket.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\win32\socket.h"
+				RelativePath=".\include\platform\socket.h"
 				>
 			</File>
 			<File
@@ -398,6 +426,10 @@
 			</File>
 			<File
 				RelativePath=".\include\sound\ds8\sound_player_ds8.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\physfs\StdFileOps.hpp"
 				>
 			</File>
 			<File
@@ -437,11 +469,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\types.h"
+				RelativePath=".\include\platform\win32\types.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\win32\types.h"
+				RelativePath=".\include\platform\types.h"
 				>
 			</File>
 			<File
@@ -509,6 +541,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sources\physfs\FileOps.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\sources\graphics\font.cpp"
 				>
 			</File>
@@ -518,6 +554,10 @@
 			</File>
 			<File
 				RelativePath=".\sources\graphics\font_manager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\physfs\FSFactory.cpp"
 				>
 			</File>
 			<File
@@ -549,6 +589,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sources\physfs\ifile_stream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\physfs\ifile_streambuf.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\sources\platform\input.cpp"
 				>
 			</File>
@@ -574,6 +622,14 @@
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\model_renderer_gl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\physfs\ofile_stream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\physfs\ofile_streambuf.cpp"
 				>
 			</File>
 			<File
@@ -607,6 +663,10 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\sources\physfs\PhysFileOps.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\pixmap.cpp"
@@ -670,6 +730,10 @@
 			</File>
 			<File
 				RelativePath=".\sources\sound\ds8\sound_player_ds8.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\physfs\StdFileOps.cpp"
 				>
 			</File>
 			<File

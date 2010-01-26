@@ -18,7 +18,7 @@ else(WIN32)
 	list(APPEND folders platform/posix platform/sdl sound/openal)
 endif(WIN32)
 
-set(glestshared_incs "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
+set(glestshared_incs "${CMAKE_CURRENT_SOURCE_DIR}/include")
 foreach(folder ${folders})
 	file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 		"sources/${folder}/*.cpp" "include/${folder}/*.h" "include/${folder}/*.hpp")
@@ -42,11 +42,10 @@ set(glestshared_incs ${glestshared_incs} PARENT_SCOPE)
 
 include_directories(${glestshared_incs})
 add_library(glestshared STATIC ${glestshared_srcs})
-target_link_libraries(glestshared ${LUA_LIBRARIES})
+target_link_libraries(glestshared ${LUA_LIBRARIES} ${PHYSFS_LIBRARY})
 if(WIN32)
 	# FIXME: VC project needs static vorbis/ogg libs
 	target_link_libraries(glestshared ${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
 else(WIN32)
-	# FIXME: physfs also for windows
-	target_link_libraries(glestshared ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY} ${PHYSFS_LIBRARY})
+	target_link_libraries(glestshared ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
 endif(WIN32)

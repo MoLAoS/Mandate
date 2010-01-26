@@ -9,6 +9,8 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "pch.h"
+
 #include "PhysFileOps.hpp"
 
 #include <stdexcept>

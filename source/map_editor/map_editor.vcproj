@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="map_editor"
 	ProjectGUID="{0E1DBB5D-37A3-484E-8510-F25B71222411}"
 	RootNamespace="map_editor"
@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
+				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/physfs;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -133,7 +133,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib glu32.lib libglest.lib comctl32.lib wxbase28.lib wxbase28_net.lib wxbase28_odbc.lib wxbase28_xml.lib wxexpat.lib wxjpeg.lib wxmsw28_adv.lib wxmsw28_aui.lib wxmsw28_core.lib wxmsw28_dbgrid.lib wxmsw28_gl.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_qa.lib wxmsw28_richtext.lib wxmsw28_xrc.lib wxpng.lib wxregex.lib wxtiff.lib wxzlib.lib"
+				AdditionalDependencies="opengl32.lib glu32.lib libglest.lib comctl32.lib wxbase28.lib wxbase28_net.lib wxbase28_odbc.lib wxbase28_xml.lib wxexpat.lib wxjpeg.lib wxmsw28_adv.lib wxmsw28_aui.lib wxmsw28_core.lib wxmsw28_dbgrid.lib wxmsw28_gl.lib wxmsw28_html.lib wxmsw28_media.lib wxmsw28_qa.lib wxmsw28_richtext.lib wxmsw28_xrc.lib wxpng.lib wxregex.lib wxtiff.lib wxzlib.lib physfs.lib"
 				AdditionalLibraryDirectories="../../../deps/lib;../../../deps/lib/wx;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
