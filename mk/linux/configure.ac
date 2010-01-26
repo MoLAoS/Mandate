@@ -95,6 +95,15 @@ NP_FINDLIB([OPENAL], [OpenAL], [OpenAL],
 
 CHECK_LUA([], [AC_MSG_ERROR([Please install lua 5.1])])
 
+# Look for PhysicsFS 
+AC_CHECK_HEADER(physfs.h, , AC_MSG_ERROR([PhysicsFS header not found.]))
+AC_CHECK_LIB(physfs,
+		PHYSFS_init,
+		AC_SUBST([PHYSFS_LIBS],
+		[-lphysfs]),
+		AC_MSG_ERROR([PhysicsFS not found.]),
+		[-pthread])
+
 AX_CHECK_GL
 if test "$no_gl" = "yes"; then
     AC_MSG_ERROR([You need to have OpenGL headers and libraries installed])

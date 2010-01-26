@@ -52,6 +52,8 @@ FSFactory *FSFactory::getInstance(){
 
 void FSFactory::initPhysFS(const char *argv0, const char *configDir){
 	PHYSFS_init(argv0);
+	PHYSFS_permitSymbolicLinks(1);
+	
 	if(!PHYSFS_mount(DEFAULT_DATA_DIR, NULL, 1)){
 		throw runtime_error(string("Couldn't mount dataDir: ") + DEFAULT_DATA_DIR);
 	}
