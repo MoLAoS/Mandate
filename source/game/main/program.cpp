@@ -91,7 +91,7 @@ Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(Config &config, int argc, char** argv) :
+Program::Program(Config &config, CmdArgs &args) :
 		renderTimer(config.getRenderFpsMax(), 1),
 		tickTimer(1.f, maxTimes, -1),
 		updateTimer(config.getGsWorldUpdateFps(), maxTimes, 2),
@@ -142,15 +142,15 @@ Program::Program(Config &config, int argc, char** argv) :
 	keymap.save("keymap.ini");
 
 	// startup and immediately host a game
-	if(argc == 2 && string(argv[1]) == "-server") {
+	if(args.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
 	// startup and immediately connect to server
-	} else if(argc == 3 && string(argv[1]) == "-client") {
+	} else if(!args.getClientIP().empty()) {
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
-		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(argv[2])));
+		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
 	// normal startup
 	} else {
 		setState(new Intro(*this));

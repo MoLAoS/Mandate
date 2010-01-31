@@ -13,10 +13,6 @@
 #include "main.h"
 
 #include <string>
-#include <cstdlib>
-#ifdef WIN32
-#	include <direct.h>  // for mkdir, chdir
-#endif
 
 #include "game.h"
 #include "main_menu.h"
@@ -27,6 +23,7 @@
 #include "platform_util.h"
 #include "platform_main.h"
 #include "FSFactory.hpp"
+#include "CmdArgs.h"
 
 using namespace std;
 using namespace Shared::Platform;
@@ -34,7 +31,7 @@ using namespace Shared::Util;
 
 
 string configDir = DEFAULT_CONFIG_DIR;
-const string dataDir = DEFAULT_DATA_DIR;
+string dataDir = DEFAULT_DATA_DIR;
 
 
 namespace Glest{ namespace Game{
@@ -93,6 +90,18 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
+	CmdArgs args;
+	if(args.parse(argc, argv)){
+		// quick exit
+		return 0;
+	}
+	if(!args.getConfigDir().empty()){
+		configDir = args.getConfigDir();
+	}
+	if(!args.getDataDir().empty()){
+		dataDir = args.getDataDir();
+	}
+	
 	if(configDir.empty()){
 #ifdef WIN32
 		configDir = getenv("UserProfile");
@@ -101,8 +110,9 @@ int glestMain(int argc, char** argv) {
 #endif
 		configDir += "/.glestadv/";
 	}
+	cout << "config: " << configDir << "\ndata: " << dataDir << endl;
 	mkdir(configDir, true);
-	mkdir(configDir+"addons/", true);
+	mkdir(configDir+"/addons/", true);
 	
 	FSFactory *fsfac = FSFactory::getInstance();
 	fsfac->initPhysFS(argv[0], configDir.c_str());
@@ -115,7 +125,7 @@ int glestMain(int argc, char** argv) {
 
 		try {
 			exceptionHandler.install();
-			Program program(config, argc, argv);
+			Program program(config, args);
 			showCursor(false/*config.getDisplayWindowed()*/);
 
 			try {
@@ -131,7 +141,7 @@ int glestMain(int argc, char** argv) {
 			exceptionMessage(e);
 		}
 	} else {
-		Program program(config, argc, argv);
+		Program program(config, args);
 		showCursor(false/*config.getDisplayWindowed()*/);
 		program.loop();
 	}

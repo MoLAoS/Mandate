@@ -198,7 +198,7 @@ void Config::save(const char *path) {
 	p->setBool("UiRandomStartLocations", uiRandomStartLocations);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
 
-	p->save(configDir + path);
+	p->save(path);
 	delete p;
 }
 
