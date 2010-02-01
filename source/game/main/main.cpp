@@ -111,7 +111,9 @@ int glestMain(int argc, char** argv) {
 #endif
 		configDir += "/.glestadv/";
 	}
+	//FIXME: debug
 	cout << "config: " << configDir << "\ndata: " << dataDir << endl;
+
 	mkdir(configDir, true);
 	mkdir(configDir+"/addons/", true);
 	
@@ -147,7 +149,7 @@ int glestMain(int argc, char** argv) {
 		program.loop();
 	}
 
-	delete CoreData::getPointer();  // close audio stuff with ogg files
+	CoreData::getInstance().closeSounds(); // close audio stuff with ogg files
 	fsfac->deinitPhysFS();
 	delete fsfac;
 	return 0;

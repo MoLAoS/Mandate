@@ -41,6 +41,7 @@ FSFactory::~FSFactory(){
 	if(PHYSFS_isInit()){
 		PHYSFS_deinit();
 	}
+	instance = NULL;
 }
 
 FSFactory *FSFactory::getInstance(){
@@ -61,6 +62,7 @@ void FSFactory::initPhysFS(const char *argv0, const char *configDir){
 	if(!PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 1)){
 		throw runtime_error(string("Couldn't mount configDir: ") + configDir);
 	}
+	// check for addons
 	char **list = PHYSFS_enumerateFiles("addons");
 	for(char **i=list; *i; i++){
 		// because we use physfs functions, we need path in physfs

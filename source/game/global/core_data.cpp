@@ -34,22 +34,9 @@ namespace Glest{ namespace Game{
 
 // ===================== PUBLIC ========================
 
-CoreData *CoreData::instance = NULL;
-
-CoreData *CoreData::getPointer(){
-	if(!instance){
-		instance = new CoreData();
-	}
-	return instance;
-}
-
 CoreData &CoreData::getInstance(){
-	if(!instance){
-		instance = new CoreData();
-	}
-	return *instance;
-	//static CoreData coreData;
-	//return coreData;
+	static CoreData coreData;
+	return coreData;
 }
 
 CoreData::~CoreData(){
@@ -148,6 +135,11 @@ void CoreData::load(){
 		waterSounds[i]->load(dir+"/water_sounds/water"+intToStr(i)+".wav");
 	}
 
+}
+
+void CoreData::closeSounds(){
+	introMusic.close();
+    menuMusic.close();
 }
 
 int CoreData::computeFontSize(int size){
