@@ -24,6 +24,7 @@
 #include "platform_main.h"
 #include "FSFactory.hpp"
 #include "CmdArgs.h"
+#include "core_data.h"
 
 using namespace std;
 using namespace Shared::Platform;
@@ -146,8 +147,9 @@ int glestMain(int argc, char** argv) {
 		program.loop();
 	}
 
-	//fsfac->deinitPhysFS();  //FIXME: audio thread is still running and so also the ogg file open
-	//delete fsfac;           //       the deletion is then invoked over CoreData
+	delete CoreData::getPointer();  // close audio stuff with ogg files
+	fsfac->deinitPhysFS();
+	delete fsfac;
 	return 0;
 }
 

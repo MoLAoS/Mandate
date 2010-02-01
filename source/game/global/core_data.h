@@ -59,7 +59,10 @@ private:
 	Font2D *menuFontVeryBig;
 	Font2D *consoleFont;
 
+	static CoreData *instance;
+	
 public:
+	static CoreData *getPointer();
 	static CoreData &getInstance();
 	~CoreData();
 

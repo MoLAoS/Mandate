@@ -34,9 +34,22 @@ namespace Glest{ namespace Game{
 
 // ===================== PUBLIC ========================
 
+CoreData *CoreData::instance = NULL;
+
+CoreData *CoreData::getPointer(){
+	if(!instance){
+		instance = new CoreData();
+	}
+	return instance;
+}
+
 CoreData &CoreData::getInstance(){
-	static CoreData coreData;
-	return coreData;
+	if(!instance){
+		instance = new CoreData();
+	}
+	return *instance;
+	//static CoreData coreData;
+	//return coreData;
 }
 
 CoreData::~CoreData(){
