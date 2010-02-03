@@ -4,6 +4,7 @@
 
 #include "graphics_interface.h"
 #include "util.h"
+#include "FSFactory.hpp"
 
 using namespace Shared::Platform; 
 using namespace Shared::Graphics;
@@ -375,6 +376,8 @@ END_EVENT_TABLE()
 // ===============================================
 
 bool App::OnInit(){
+	FSFactory::getInstance()->usePhysFS(false);
+	
 	string modelPath;
 	if(argc==2){
 		modelPath= wxFNCONV(argv[1]);

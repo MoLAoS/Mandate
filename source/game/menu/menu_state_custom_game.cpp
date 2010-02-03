@@ -23,6 +23,7 @@
 #include "conversion.h"
 #include "socket.h"
 #include "game.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
@@ -340,12 +341,11 @@ void MenuStateCustomGame::loadMapInfo(string file, MapInfo *mapInfo){
 	Lang &lang= Lang::getInstance();
 
 	try{
-		FILE *f= fopen(file.c_str(), "rb");
-		if(f==NULL)
-			throw runtime_error("Can't open file");
+		FileOps *f = FSFactory::getInstance()->getFileOps();
+		f->openRead(file.c_str());
 
 		MapFileHeader header;
-		fread(&header, sizeof(MapFileHeader), 1, f);
+		f->read(&header, sizeof(MapFileHeader), 1);
 
 		mapInfo->size.x= header.width;
 		mapInfo->size.y= header.height;
@@ -354,7 +354,7 @@ void MenuStateCustomGame::loadMapInfo(string file, MapInfo *mapInfo){
 		mapInfo->desc= lang.get("MaxPlayers")+": "+intToStr(mapInfo->players)+"\n";
 		mapInfo->desc+=lang.get("Size")+": "+intToStr(mapInfo->size.x) + " x " + intToStr(mapInfo->size.y);
 
-		fclose(f);
+		delete f;
 	}
 	catch(exception e){
 		throw runtime_error("Error loading map file: "+file+'\n'+e.what());

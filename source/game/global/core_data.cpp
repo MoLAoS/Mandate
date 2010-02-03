@@ -137,6 +137,11 @@ void CoreData::load(){
 
 }
 
+void CoreData::closeSounds(){
+	introMusic.close();
+    menuMusic.close();
+}
+
 int CoreData::computeFontSize(int size){
 	int screenH= Config::getInstance().getDisplayHeight();
 	int rs= size*screenH/1000;

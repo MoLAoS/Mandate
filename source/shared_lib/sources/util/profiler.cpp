@@ -14,6 +14,8 @@
 
 #ifdef SL_PROFILE
 
+#include "FSFactory.hpp"
+
 #include <stdexcept>
 
 using namespace std;
@@ -72,15 +74,17 @@ Profiler::Profiler(){
 Profiler::~Profiler(){
 	rootSection->stop();
 
-	FILE *f= fopen("profiler.log", "w");
-	if(f==NULL)
-		throw runtime_error("Can not open file: profiler.log");
+// 	FILE *f= fopen("profiler.log", "w");
+// 	if(f==NULL)
+// 		throw runtime_error("Can not open file: profiler.log");
+// 
+// 	fprintf(f, "Profiler Results\n\n");
+	//ostream *of = FSFactory::getInstance()->getOStream("profiler.log");
+	//*of << "Profiler Results\n\n";
 
-	fprintf(f, "Profiler Results\n\n");
+	//rootSection->print(f); //FIXME
 
-	rootSection->print(f);
-
-	fclose(f);
+	//fclose(f);
 }
 
 Profiler &Profiler::getInstance(){

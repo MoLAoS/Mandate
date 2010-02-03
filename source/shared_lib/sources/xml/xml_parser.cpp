@@ -21,6 +21,7 @@
 #include "conversion.h"
 
 #include "leak_dumper.h"
+#include <FSFactory.hpp>
 
 using namespace std;
 using namespace Shared::Util;
@@ -43,15 +44,20 @@ XmlIo &XmlIo::getInstance(){
 XmlNode *XmlIo::load(const string &path){
 	// creates a document from file
 
-	TiXmlDocument document( path.c_str() );
+	//TiXmlDocument document( path.c_str() );
+	TiXmlDocument *document = new TiXmlDocument();
+	istream *ifs = FSFactory::getInstance()->getIStream(path.c_str());
 
-	if ( !document.LoadFile() )	{
-		char message[strSize];
-		sprintf(message, "Error parsing XML, file: %s, line %i, %s", path.c_str(), document.ErrorRow(), document.ErrorDesc());
-		throw runtime_error(message);
-	}
+// 	if ( !document.LoadFile() )	{
+// 		char message[strSize];
+// 		sprintf(message, "Error parsing XML, file: %s, line %i, %s", path.c_str(), document.ErrorRow(), document.ErrorDesc());
+// 		throw runtime_error(message);
+// 	}
+	//FIXME: no error checking
+	*ifs >> *document;
+	delete ifs;
 
-	XmlNode *rootNode = new XmlNode(document.RootElement());
+	XmlNode *rootNode = new XmlNode(document->RootElement());
 
 	return rootNode;
 }

@@ -13,10 +13,6 @@
 #include "main.h"
 
 #include <string>
-#include <cstdlib>
-#ifdef WIN32
-#	include <direct.h>  // for mkdir, chdir
-#endif
 
 #include "game.h"
 #include "main_menu.h"
@@ -26,6 +22,9 @@
 #include "game_util.h"
 #include "platform_util.h"
 #include "platform_main.h"
+#include "FSFactory.hpp"
+#include "CmdArgs.h"
+#include "core_data.h"
 
 using namespace std;
 using namespace Shared::Platform;
@@ -33,7 +32,7 @@ using namespace Shared::Util;
 
 
 string configDir = DEFAULT_CONFIG_DIR;
-const string dataDir = DEFAULT_DATA_DIR;
+string dataDir = DEFAULT_DATA_DIR;
 
 
 namespace Glest{ namespace Game{
@@ -45,36 +44,30 @@ namespace Glest{ namespace Game{
 class ExceptionHandler: public PlatformExceptionHandler {
 public:
 	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) {
-		bool closeme = true;
-		FILE *f = fopen("gae-crash.txt", "at");
-		if(!f) {
-			f = stderr;
-			closeme = false;
-		}
+		ostream *ofs = FSFactory::getInstance()->getOStream("gae-crash.txt");
+
 		time_t t= time(NULL);
 		char *timeString = asctime(localtime(&t));
 
-		fprintf(f, "Crash\n");
-		fprintf(f, "Version: Advanced Engine %s\n", gaeVersionString.c_str());
-		fprintf(f, "Time: %s", timeString);
+		*ofs << "Crash\n"
+			<< "Version: Advanced Engine " << gaeVersionString << endl
+			<< "Time: " << timeString;
 		if(description) {
-			fprintf(f, "Description: %s\n", description);
+			*ofs << "Description: " << description << endl;
 		}
 		if(e) {
-			fprintf(f, "Exception: %s\n", e->what());
+			*ofs << "Exception: " << e->what() << endl;
 		}
-		fprintf(f, "Address: %p\n", address);
+		*ofs << "Address: " << address << endl;
 		if(backtrace) {
-			fprintf(f, "Backtrace:\n");
+			*ofs << "Backtrace:\n";
 			for(size_t i = 0 ; i < count; ++i) {
-				fprintf(f, "%s\n", backtrace[i]);
+				*ofs << backtrace[i] << endl;
 			}
 		}
-		fprintf(f, "\n=======================\n");
+		*ofs << "\n=======================\n";
 
-		if(closeme) {
-			fclose(f);
-		}
+		delete ofs;
 	}
 
 	virtual void notifyUser(bool pretty) {
@@ -98,6 +91,18 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
+	CmdArgs args;
+	if(args.parse(argc, argv)){
+		// quick exit
+		return 0;
+	}
+	if(!args.getConfigDir().empty()){
+		configDir = args.getConfigDir();
+	}
+	if(!args.getDataDir().empty()){
+		dataDir = args.getDataDir();
+	}
+	
 	if(configDir.empty()){
 #ifdef WIN32
 		configDir = getenv("UserProfile");
@@ -106,18 +111,15 @@ int glestMain(int argc, char** argv) {
 #endif
 		configDir += "/.glestadv/";
 	}
-	mkdir(configDir.c_str(), 0750);
-	chdir(dataDir.c_str());
-	//cout << "configDir:" << configDir << endl;
+	//FIXME: debug
+	cout << "config: " << configDir << "\ndata: " << dataDir << endl;
 
-	//char* buffer;
-	//// Get the current working directory: 
-	//if( (buffer = _getcwd( NULL, 0 )) == NULL ){  // getcwd is POSIX, deprecated in VC, use _getcwd
-	//	perror( "_getcwd error" );
-	//}else{
-	//	printf( "cwd:%s \n", buffer );
-	//	free(buffer);
-	//}
+	mkdir(configDir, true);
+	mkdir(configDir+"/addons/", true);
+	
+	FSFactory *fsfac = FSFactory::getInstance();
+	fsfac->initPhysFS(argv[0], configDir.c_str());
+	fsfac->usePhysFS(true);
 
 	Config &config = Config::getInstance();
 
@@ -126,7 +128,7 @@ int glestMain(int argc, char** argv) {
 
 		try {
 			exceptionHandler.install();
-			Program program(config, argc, argv);
+			Program program(config, args);
 			showCursor(false/*config.getDisplayWindowed()*/);
 
 			try {
@@ -142,11 +144,14 @@ int glestMain(int argc, char** argv) {
 			exceptionMessage(e);
 		}
 	} else {
-		Program program(config, argc, argv);
+		Program program(config, args);
 		showCursor(false/*config.getDisplayWindowed()*/);
 		program.loop();
 	}
 
+	CoreData::getInstance().closeSounds(); // close audio stuff with ogg files
+	fsfac->deinitPhysFS();
+	delete fsfac;
 	return 0;
 }
 

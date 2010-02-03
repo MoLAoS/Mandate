@@ -108,6 +108,9 @@
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
+//physfs
+#include <physfs.h>
+
 // xerces-c
 /*
 #include <xercesc/dom/DOM.hpp>

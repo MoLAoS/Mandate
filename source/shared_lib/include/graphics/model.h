@@ -21,6 +21,8 @@
 #include "texture.h"
 #include "model_header.h"
 
+#include "FileOps.hpp"
+
 using std::string;
 using std::map;
 using std::pair;
@@ -111,10 +113,10 @@ public:
 	void updateInterpolationVertices(float t, bool cycle) const;
 
 	//load
-	void loadV2(const string &dir, FILE *f, TextureManager *textureManager);
-	void loadV3(const string &dir, FILE *f, TextureManager *textureManager);
-	void load(const string &dir, FILE *f, TextureManager *textureManager);
-	void save(const string &dir, FILE *f);
+	void loadV2(const string &dir, FileOps *f, TextureManager *textureManager);
+	void loadV3(const string &dir, FileOps *f, TextureManager *textureManager);
+	void load(const string &dir, FileOps *f, TextureManager *textureManager);
+	void save(const string &dir, FileOps *f);
 
 private:
 	void computeTangents();

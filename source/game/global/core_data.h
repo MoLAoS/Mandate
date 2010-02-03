@@ -58,12 +58,13 @@ private:
 	Font2D *menuFontBig;
 	Font2D *menuFontVeryBig;
 	Font2D *consoleFont;
-
+	
 public:
 	static CoreData &getInstance();
 	~CoreData();
 
     void load();
+	void closeSounds();
 
 	Texture2D *getBackgroundTexture() const		{return backgroundTexture;}
 	Texture2D *getFireTexture() const			{return fireTexture;}

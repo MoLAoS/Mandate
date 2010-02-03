@@ -571,12 +571,9 @@ void Game::keyDown(const Key &key) {
 		for (i = 0; i < MAX_SCREENSHOTS; ++i) {
 			string path = "screens/screen" + intToStr(i) + ".tga";
 
-			FILE *f = fopen(path.c_str(), "rb");
-			if (!f) {
+			if(fileExists(path)){
 				Renderer::getInstance().saveScreen(path);
 				break;
-			} else {
-				fclose(f);
 			}
 		}
 

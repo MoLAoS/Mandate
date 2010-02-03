@@ -26,16 +26,13 @@ foreach(folder ${folders})
 	source_group(${folder} FILES ${srcs})
 endforeach(folder)
 
-include_directories(${shared_lib_incs})
+include_directories(${glestshared_incs})
 add_executable(glestadv ${game_srcs})
-target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
-					${LUA_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(glestadv glestshared ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${ZLIB_LIBRARIES})
 if(WIN32)
-	# FIXME: VC project needs static vorbis/ogg libs
-	target_link_libraries(glestadv ${DXGUID_LIBRARY} ${DSOUND_LIBRARY} wsock32
-					${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
+	target_link_libraries(glestadv ${DXGUID_LIBRARY} ${DSOUND_LIBRARY} wsock32)
 else(WIN32)
-	target_link_libraries(glestadv ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
+	target_link_libraries(glestadv ${SDL_LIBRARY} ${OPENAL_LIBRARY})
 endif(WIN32)
 
 install(TARGETS glestadv DESTINATION bin)

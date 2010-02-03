@@ -14,6 +14,7 @@
 
 #include <deque>
 #include <zlib.h>
+#include <fstream>
 
 #include "network_interface.h"
 #include "game_settings.h"

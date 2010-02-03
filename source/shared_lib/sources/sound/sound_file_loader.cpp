@@ -18,6 +18,8 @@
 #include "sound.h"
 #include "leak_dumper.h"
 
+#include "FSFactory.hpp"
+
 using namespace Shared::Platform;
 using namespace std;
 
@@ -33,24 +35,26 @@ void WavSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
     uint16 size16= 0;
     int count;
 
-	f.open(path.c_str(), ios_base::in | ios_base::binary);
+	//f.open(path.c_str(), ios_base::in | ios_base::binary);
+	f = FSFactory::getInstance()->getIStream(path.c_str());
 
-	if(!f.is_open()){
+	//if(!f->is_open()){
+	if(f->fail()){
 		throw runtime_error("Error opening wav file: "+ string(path));
 	}
 
     //RIFF chunk - Id
-    f.read(chunkId, 4);
+    f->read(chunkId, 4);
 
 	if(strcmp(chunkId, "RIFF")!=0){
 		throw runtime_error("Not a valid wav file (first four bytes are not RIFF):" + path);
 	}
 
     //RIFF chunk - Size
-    f.read((char*) &size32, 4);
+    f->read((char*) &size32, 4);
 
     //RIFF chunk - Data (WAVE string)
-    f.read(chunkId, 4);
+    f->read(chunkId, 4);
 
 	if(strcmp(chunkId, "WAVE")!=0){
 		throw runtime_error("Not a valid wav file (wave data don't start by WAVE): " + path);
@@ -59,34 +63,34 @@ void WavSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
     // === HEADER ===
 
     //first sub-chunk (header) - Id
-    f.read(chunkId, 4);
+    f->read(chunkId, 4);
 
 	if(strcmp(chunkId, "fmt ")!=0){
 		throw runtime_error("Not a valid wav file (first sub-chunk Id is not fmt): "+ path);
 	}
 
     //first sub-chunk (header) - Size
-    f.read((char*) &size32, 4);
+    f->read((char*) &size32, 4);
 
     //first sub-chunk (header) - Data (encoding type) - Ignore
-    f.read((char*) &size16, 2);
+    f->read((char*) &size16, 2);
 
     //first sub-chunk (header) - Data (nChannels)
-    f.read((char*) &size16, 2);
+    f->read((char*) &size16, 2);
 	soundInfo->setChannels(size16);
 
     //first sub-chunk (header) - Data (nsamplesPerSecond)
-    f.read((char*) &size32, 4);
+    f->read((char*) &size32, 4);
 	soundInfo->setsamplesPerSecond(size32);
 
     //first sub-chunk (header) - Data (nAvgBytesPerSec)  - Ignore
-    f.read((char*) &size32, 4);
+    f->read((char*) &size32, 4);
 
     //first sub-chunk (header) - Data (blockAlign) - Ignore
-    f.read((char*) &size16, 2);
+    f->read((char*) &size16, 2);
 
     //first sub-chunk (header) - Data (nsamplesPerSecond)
-    f.read((char*) &size16, 2);
+    f->read((char*) &size16, 2);
 	soundInfo->setBitsPerSample(size16);
 
 	if (soundInfo->getBitsPerSample() != 8 && soundInfo->getBitsPerSample()!=16){
@@ -100,37 +104,38 @@ void WavSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
 
         // === DATA ===
         //second sub-chunk (samples) - Id
-        f.read(chunkId, 4);
+        f->read(chunkId, 4);
 		if(strncmp(chunkId, "data", 4)!=0){
 			continue;
 		}
 
         //second sub-chunk (samples) - Size
-        f.read((char*) &size32, 4);
+        f->read((char*) &size32, 4);
 		dataSize= size32;
 		soundInfo->setSize(dataSize);
     }
     while(strncmp(chunkId, "data", 4)!=0 && count<maxDataRetryCount);
 
-	if(f.bad() || count==maxDataRetryCount){
+	if(f->bad() || count==maxDataRetryCount){
 		throw runtime_error("Error reading samples: "+ path);
 	}
 
-	dataOffset= f.tellg();
+	dataOffset= f->tellg();
 
 }
 
 uint32 WavSoundFileLoader::read(int8 *samples, uint32 size){
-	f.read(reinterpret_cast<char*> (samples), size);
-	return f.gcount();
+	f->read(reinterpret_cast<char*> (samples), size);
+	return f->gcount();
 }
 
 void WavSoundFileLoader::close(){
-    f.close();
+    //f->close();
+	delete f;
 }
 
 void WavSoundFileLoader::restart(){
-	f.seekg(dataOffset, ios_base::beg);
+	f->seekg(dataOffset, ios_base::beg);
 }
 
 // =======================================
@@ -138,18 +143,27 @@ void WavSoundFileLoader::restart(){
 // =======================================
 
 void OggSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
-	if(!(f = fopen(path.c_str(), "rb"))){
-		throw runtime_error("Can't open ogg file: "+path);
+	FileOps *fops = FSFactory::getInstance()->getFileOps();
+	fops->openRead(path.c_str());
+	ov_callbacks callbacks = {FSFactory::cb_read, FSFactory::cb_seek, FSFactory::cb_close, FSFactory::cb_tell};
+	vf = new OggVorbis_File();
+	if(ov_open_callbacks(fops, vf, NULL, 0, callbacks)){  // fops is deleted by cb_close
+		delete fops;
+		throw runtime_error("ov_open_callback failed on ogg file: " + path);
 	}
 
-	vf = new OggVorbis_File();
-	if(ov_open(f, vf, NULL, 0)) {
-		fclose(f);
-		f = NULL;
-		throw runtime_error("ov_open failed on ogg file: " + path);
-	}
-	// ogg assumes the file pointer.
-	f = NULL;
+// 	if(!(f = fopen(path.c_str(), "rb"))){
+// 		throw runtime_error("Can't open ogg file: "+path);
+// 	}
+// 
+// 	vf = new OggVorbis_File();
+// 	if(ov_open(f, vf, NULL, 0)) {
+// 		fclose(f);
+// 		f = NULL;
+// 		throw runtime_error("ov_open failed on ogg file: " + path);
+// 	}
+// 	// ogg assumes the file pointer.
+// 	f = NULL;
 
 	vorbis_info *vi= ov_info(vf, -1);
 
