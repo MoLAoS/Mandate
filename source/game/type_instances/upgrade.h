@@ -14,6 +14,7 @@
 
 #include <vector>
 #include "xml_parser.h"
+#include "game_constants.h"
 
 using std::vector;
 using Shared::Xml::XmlNode;
@@ -23,13 +24,6 @@ namespace Glest{ namespace Game{
 class Unit;
 class UpgradeType;
 class Game;
-
-enum UpgradeState{
-	usUpgrading,
-	usUpgraded,
-
-	upgradeStateCount
-};
 
 class UpgradeManager;
 class EnhancementTypeBase;

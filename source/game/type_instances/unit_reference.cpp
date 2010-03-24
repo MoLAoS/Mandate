@@ -51,26 +51,4 @@ void UnitReference::save(XmlNode *node) const {
 	node->addAttribute("faction", faction ? faction->getIndex() : -1);
 }
 
-void UnitReference::read(NetworkDataBuffer &buf, World *world) {
-	int32 id;
-	int8 factionIndex;
-	buf.read(id);
-	buf.read(factionIndex);
-
-	if(factionIndex < -1 || factionIndex >= world->getFactionCount()) {
-		throw runtime_error("Faction Index " + intToStr(factionIndex) + " is invalid.");
-	}
-
-	this->id = id;
-	this->faction = factionIndex == -1 ? NULL : world->getFaction(factionIndex);
-}
-
-void UnitReference::write(NetworkDataBuffer &buf) const {
-	int32 id = this->id;
-	int8 factionIndex = (int8)(faction ? faction->getIndex() : -1);
-	assert(!faction || faction->getIndex() <= SCHAR_MAX);
-	buf.write(id);
-	buf.write(factionIndex);
-}
-
 }}//end namespace

@@ -20,12 +20,10 @@
 #include "texture_manager.h"
 #include "texture.h"
 #include "model_header.h"
-
 #include "FileOps.hpp"
 
-using std::string;
-using std::map;
-using std::pair;
+using namespace std;
+using namespace Shared::Math;
 
 namespace Shared { namespace Graphics {
 

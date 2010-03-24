@@ -19,7 +19,7 @@
 
 using std::string;
 
-using Shared::Graphics::Vec2i;
+using Shared::Math::Vec2i;
 
 namespace Glest{ namespace Game{
 
@@ -43,7 +43,7 @@ protected:
 	Ai *ai;
 
 public:
-	AiRule(Ai *ai);
+	AiRule(Ai *ai) : ai(ai) {}
 	virtual ~AiRule() {}
 
 	virtual int getTestInterval() const= 0;	//in milliseconds

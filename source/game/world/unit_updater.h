@@ -13,7 +13,6 @@
 #define _GLEST_GAME_UNITUPDATER_H_
 
 #include "gui.h"
-#include "path_finder.h"
 #include "particle.h"
 #include "random.h"
 #include "network_manager.h"
@@ -21,32 +20,34 @@
 using Shared::Graphics::ParticleObserver;
 using Shared::Util::Random;
 
-namespace Glest { namespace Game {
+namespace Glest{ namespace Game{
 
 class Unit;
 class Map;
 class ScriptManager;
 class ParticleDamager;
-namespace Search { class PathFinder; }
+
+namespace Search { 
+	class RoutePlanner; 
+}
 
 // =====================================================
-// class UnitUpdater
+//	class UnitUpdater
 //
-/// Updates all units in the game, even the player
-/// controlled units, performs basic actions only
-/// such as responding to an attack
+///	Updates all units in the game, even the player
+///	controlled units, performs basic actions only
+///	such as responding to an attack
 // =====================================================
 
-class UnitUpdater {
+class UnitUpdater{
 private:
 	friend class ParticleDamager;
 	friend class World;
 
 private:
-	static const int maxResSearchRadius = 10;
-	static const int harvestDistance = 5;
+	static const int maxResSearchRadius= 10;
+	static const int harvestDistance= 5;
 //	static const int ultraResourceFactor= 3;
-
 	/**
 	 * When a unit who can repair, but not attack is faced with a hostile, this is the percentage
 	 * of the radius that we search from the center of the intersection point for a friendly that
@@ -57,17 +58,16 @@ private:
 
 private:
 	const GameCamera *gameCamera;
-	Gui &gui;
-	World &world;
+	Gui *gui;
 	Map *map;
-	Console &console;
+	World *world;
+	Console *console;
 	ScriptManager *scriptManager;
-	Search::PathFinder *pathFinder;
+	Search::RoutePlanner *routePlanner;
 	Random random;
-	GameSettings &gameSettings;
+	GameSettings gameSettings;
 
 public:
-	UnitUpdater(Game &game);
 	void init(Game &game);
 
 	//update skills
@@ -132,7 +132,7 @@ private:
 			bool militaryOnly = false,
 			bool damagedOnly = true) {
 		return repairableOnRange(unit, unit->getPos(), unit->getType()->getSize(),
-								 rangedPtr, rct, rct->getRepairSkillType(), range, allowSelf, militaryOnly, damagedOnly);
+				rangedPtr, rct, rct->getRepairSkillType(), range, allowSelf, militaryOnly, damagedOnly);
 	}
 
 	bool repairableOnSight(const Unit *unit, Unit **rangedPtr, const RepairCommandType *rct, bool allowSelf) {
@@ -141,24 +141,24 @@ private:
 
 	void enemiesAtDistance(const Unit *unit, const Unit *priorityUnit, int distance, vector<Unit*> &enemies);
 	bool updateAttackGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos);
-	/*
+/*
 	 Vec2i getNear(const Vec2i &pos, Vec2i target, int minRange, int maxRange, int targetSize = 1) {
 	  return map->getNearestPos(pos, target, targetSize, minRange, maxRange);
 	 }
 
-	 Vec2i getNear(const Vec2i &pos, const Unit *target, int minRange, int maxRange) {
-	  return map->getNearestPos(pos, target, minRange, maxRange);
-	 }*/
+	Vec2i getNear(const Vec2i &pos, const Unit *target, int minRange, int maxRange) {
+		return map->getNearestPos(pos, target, minRange, maxRange);
+	}*/
 
 	bool isLocal()							{return NetworkManager::getInstance().isLocal();}
 	bool isNetworkGame()					{return NetworkManager::getInstance().isNetworkGame();}
-	bool isNetworkServer()					{return NetworkManager::getInstance().isNetworkServer();}
-	bool isNetworkClient()					{return NetworkManager::getInstance().isNetworkClient();}
+	bool isNetworkServer() 					{return NetworkManager::getInstance().isNetworkServer();}
+	bool isNetworkClient() 					{return NetworkManager::getInstance().isNetworkClient();}
 	ServerInterface *getServerInterface()	{return NetworkManager::getInstance().getServerInterface();}
 };
 
 // =====================================================
-// class ParticleDamager
+//	class ParticleDamager
 // =====================================================
 
 class ParticleDamager: public ParticleObserver {

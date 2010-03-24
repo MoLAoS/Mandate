@@ -21,7 +21,7 @@ using std::vector;
 namespace Glest{ namespace Game{
 
 using Shared::Graphics::Model;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec3f;
 
 // =====================================================
 // 	class ObjectType  

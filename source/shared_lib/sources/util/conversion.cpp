@@ -32,7 +32,7 @@ const string Conversion::str_float		= "float";
 const string Conversion::str_longdouble	= "long double";
 
 // this function is outlined because we don't need this extra code inlined everywhere
-__cold __noreturn void Conversion::throwException(const string &typeName, const string &s, int base) {
+void Conversion::throwException(const string &typeName, const string &s, int base) {
 	std::stringstream str;
 	str << "Error converting from string to " << typeName << " (base = " << base << "), found: " << s;
 	throw runtime_error(str.str());

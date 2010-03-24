@@ -31,6 +31,8 @@ private:
 	GraphicButton buttonExit;
 	GraphicLabel labelVersion;
 
+	GraphicMessageBox *msgBox;
+
 private:
 	MenuStateRoot(const MenuStateRoot &);
 	const MenuStateRoot &operator =(const MenuStateRoot &);

@@ -136,8 +136,8 @@ Effects::~Effects() {
 // ============================ misc =============================
 
 void Effects::add(Effect *e){
-	EffectType::EffectStacking es = e->getType()->getStacking();
-	if(es == EffectType::esStack) {
+	EffectStacking es = e->getType()->getStacking();
+	if (es == EffectStacking::STACK) {
 		push_back(e);
 		dirty = true;
 		return;
@@ -146,7 +146,7 @@ void Effects::add(Effect *e){
 	for (iterator i = begin(); i != end(); i++) {
 		if((*i)->getType() == e->getType() && (*i)->getSource() == e->getSource() && (*i)->getRoot() == e->getRoot() ){
 			switch (es) {
-				case EffectType::esExtend:
+				case EffectStacking::EXTEND:
 					(*i)->setDuration((*i)->getDuration() + e->getDuration());
 					if((*i)->getStrength() < e->getStrength()) {
 						(*i)->setStrength(e->getStrength());
@@ -155,19 +155,19 @@ void Effects::add(Effect *e){
 					dirty = true;
 					return;
 
-				case EffectType::esOverwrite:
+				case EffectStacking::OVERWRITE:
 					delete *i;
 					erase(i);
 					push_back(e);
 					dirty = true;
 					return;
 
-				case EffectType::esReject:
+				case EffectStacking::REJECT:
 					delete e;
 					return;
 
-				case EffectType::esStack:; // tell compiler to shut up
-				case EffectType::esCount:;
+				case EffectStacking::STACK:; // tell compiler to shut up
+				case EffectStacking::COUNT:;
 			}
 		}
 	}

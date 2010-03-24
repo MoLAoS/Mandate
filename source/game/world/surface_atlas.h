@@ -22,8 +22,8 @@ using std::vector;
 using std::set;
 using Shared::Graphics::Pixmap2D;
 using Shared::Graphics::Texture2D;
-using Shared::Graphics::Vec2i;
-using Shared::Graphics::Vec2f;
+using Shared::Math::Vec2i;
+using Shared::Math::Vec2f;
 
 namespace Glest{ namespace Game{
 

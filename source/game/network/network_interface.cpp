@@ -18,14 +18,17 @@
 #include "types.h"
 #include "conversion.h"
 #include "platform_util.h"
+#include "world.h"
 
 #include "leak_dumper.h"
+#include "logger.h"
+#include "network_util.h"
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
 using namespace std;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 //	class NetworkInterface
@@ -33,49 +36,35 @@ namespace Glest{ namespace Game{
 
 const int NetworkInterface::readyWaitTimeout= 60000;	//1 minute
 
-
-void NetworkInterface::send(const NetworkMessage* msg, bool flush) {
-	size_t startBufSize = txbuf.size();
-	msg->writeMsg(txbuf);
-	addDataSent(txbuf.size() - startBufSize);
-	if(flush) {
-		NetworkInterface::flush();
-	}
-}
-
-/** returns false if there is still data to be written */
-bool NetworkInterface::flush() {
-	if(txbuf.size()) {
-		txbuf.pop(getSocket()->send(txbuf.data(), txbuf.size()));
-		return !txbuf.size();
-	}
-	return true;
-}
-
-void NetworkInterface::receive() {
-	int bytesReceived;
-	NetworkMessage *m;
+void NetworkInterface::send(const NetworkMessage* networkMessage) {
 	Socket* socket= getSocket();
-	
-	rxbuf.ensureRoom(32768);
-	while((bytesReceived = socket->receive(rxbuf.data(), rxbuf.room())) > 0) {
-		addDataRecieved(bytesReceived);
-		rxbuf.resize(rxbuf.size() + bytesReceived);
-		while((m = NetworkMessage::readMsg(rxbuf))) {
+	networkMessage->send(socket);
+}
 
-			// respond immediately to pings
-			if(m->getType() == nmtPing) {
-#ifdef DEBUG_NETWORK
-				pingQ.push_back((NetworkMessagePing*)m);
-#else
-				processPing((NetworkMessagePing*)m);
-#endif
-			} else {
-				q.push_back(m);
-			}
-		}
-		rxbuf.ensureRoom(32768);
+//NETWORK: this is (re)moved
+NetworkMessageType NetworkInterface::getNextMessageType(){
+	Socket* socket = getSocket();
+	int8 messageType = NetworkMessageType::NO_MSG;
+
+	//peek message type
+	if (socket->getDataToRead() >= sizeof(messageType)) {
+		socket->peek(&messageType, sizeof(messageType));
 	}
+
+	//sanity check new message type
+	if (messageType < 0 || messageType >= NetworkMessageType::COUNT){
+		throw runtime_error("Invalid message type: " + intToStr(messageType));
+	}
+	return NetworkMessageType(messageType);
+}
+
+int NetworkInterface::dataAvailable() {
+	return getSocket()->getDataToRead();
+}
+
+bool NetworkInterface::receiveMessage(NetworkMessage* networkMessage){
+	Socket* socket= getSocket();
+	return networkMessage->receive(socket);
 }
 
 void NetworkInterface::setRemoteNames(const string &hostName, const string &playerName) {
@@ -89,6 +78,7 @@ void NetworkInterface::setRemoteNames(const string &hostName, const string &play
 	}
 	description = str.str();
 }
+
 // =====================================================
 //	class GameNetworkInterface
 // =====================================================
@@ -97,5 +87,25 @@ GameNetworkInterface::GameNetworkInterface() {
 	quit = false;
 }
 
+void GameNetworkInterface::requestCommand(Command *command) {
+	Unit *unit = command->getCommandedUnit();
+	
+	if (command->isAuto()) {
+		pendingCommands.push_back(command);
+	}
+
+	if (command->getArchetype() == CommandArchetype::GIVE_COMMAND) {
+		requestedCommands.push_back(NetworkCommand(command));
+	} else if (command->getArchetype() == CommandArchetype::CANCEL_COMMAND) {
+		requestedCommands.push_back(NetworkCommand(nctCancelCommand, unit, Vec2i(-1)));
+	}
+}
+
+void GameNetworkInterface::processTextMessage(NetworkMessageText &msg) {
+	if (msg.getTeamIndex() == -1 
+	|| msg.getTeamIndex() == theWorld.getThisFaction()->getTeam()) {
+		chatMessages.push_back(ChatMsg(msg.getText(), msg.getSender()));
+	}
+}
 
 }}//end namespace

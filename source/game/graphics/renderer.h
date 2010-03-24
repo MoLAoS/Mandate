@@ -12,6 +12,7 @@
 #ifndef _GLEST_GAME_RENDERER_H_
 #define _GLEST_GAME_RENDERER_H_
 
+// shared_lib
 #include "vec.h"
 #include "math_util.h"
 #include "model.h"
@@ -19,34 +20,26 @@
 #include "pixmap.h"
 #include "font.h"
 #include "matrix.h"
-#include "selection.h"
-#include "components.h"
 #include "texture.h"
 #include "model_manager.h"
 #include "graphics_factory_gl.h"
 #include "font_manager.h"
 #include "camera.h"
+#include "profiler.h"
 
-namespace Glest{ namespace Game{
+// game
+#include "selection.h"
+#include "components.h"
+#include "scene_culler.h"
 
-using Shared::Graphics::Texture2D;
-using Shared::Graphics::Texture3D;
-using Shared::Graphics::ModelRenderer;
-using Shared::Graphics::TextRenderer2D;
-using Shared::Graphics::ParticleRenderer;
-using Shared::Graphics::ParticleManager;
-using Shared::Graphics::ModelManager;
-using Shared::Graphics::TextureManager;
-using Shared::Graphics::FontManager;
-using Shared::Graphics::Font2D;
-using Shared::Graphics::Matrix4f;
-using Shared::Graphics::Vec2i;
-using Shared::Graphics::Quad2i;
-using Shared::Graphics::Vec3f;
-using Shared::Graphics::Model;
-using Shared::Graphics::ParticleSystem;
-using Shared::Graphics::Pixmap2D;
-using Shared::Graphics::Camera;
+#if _GAE_DEBUG_EDITION_
+#	include "debug_renderer.h"
+#endif
+
+namespace Glest { namespace Game {
+
+using namespace Shared::Math;
+using namespace Shared::Graphics;
 
 //non shared classes
 class Config;
@@ -71,6 +64,7 @@ enum ResourceScope{
 // ===========================================================
 
 class Renderer{
+	IF_DEBUG_EDITION( friend class ScriptManager; )
 public:
 	//progress bar
 	static const int maxProgressBar;
@@ -108,6 +102,7 @@ public:
 	static const float maxLightDist;
 	
 public:
+	//WRAPPED_ENUM(Shadows, Disabled, Projected, Mapped);
 	enum Shadows{
 		sDisabled,
 		sProjected,
@@ -133,7 +128,6 @@ private:
 	//misc
 	int triangleCount;
 	int pointCount;
-	Quad2i visibleQuad;
 	Vec4f nearestLightPos;
 
 	//renderers
@@ -165,6 +159,8 @@ private:
 	float perspNearPlane;
 	float perspFarPlane;
 
+	SceneCuller culler;
+
 private:
 	Renderer();
 	~Renderer();
@@ -189,6 +185,8 @@ public:
 	int getTriangleCount() const	{return triangleCount;}
 	int getPointCount() const		{return pointCount;}
 
+	void setFarClip(float clip) { perspFarPlane = clip; }
+
 	//misc
 	void reloadResources();
 
@@ -203,11 +201,14 @@ public:
 	void renderParticleManager(ResourceScope rs);
 	void swapBuffers();
 
-    //lights and camera
+	ParticleManager* getParticleManager() { return particleManager[rsGame]; }
+
+	//lights and camera
 	void setupLighting();
 	void loadGameCameraMatrix();
 	void loadCameraMatrix(const Camera *camera);
-	void computeVisibleQuad();
+	
+	void computeVisibleArea();
 
     //basic rendering
 	void renderMouse2d(int mouseX, int mouseY, int anim, float fade= 0.f);
@@ -229,6 +230,7 @@ public:
 	void renderMessageBox(const GraphicMessageBox *listBox);
 	void renderTextEntry(const GraphicTextEntry *textEntry);
 	void renderTextEntryBox(const GraphicTextEntryBox *textEntryBox);
+	void renderProgressBar(int size, int x, int y, int w, int h, const Font2D *font);
 
     //complex rendering
     void renderSurface();
@@ -240,12 +242,9 @@ public:
 	void renderMinimap();
     void renderDisplay();
 	void renderMenuBackground(const MenuBackground *menuBackground);
-#ifdef _GAE_DEBUG_EDITION_
-	Field debugField;
-	void setDebugField ( Field f ) { debugField = f; }
-	Field getDebugField () { return debugField; }
-    void renderSurfacePFDebug ();
-#endif
+
+	IF_DEBUG_EDITION( DebugRenderer debugRenderer; )
+
 	//computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);
 	void computeSelected(Selection::UnitContainer &units, const Vec2i &posDown, const Vec2i &posUp);
@@ -265,7 +264,7 @@ public:
 	//misc
 	void loadConfig();
 	void saveScreen(const string &path);
-	Quad2i getVisibleQuad() const		{return visibleQuad;}
+//	Quad2i getVisibleQuad() const		{return visibleQuad;}
 
 	//static
 	static Shadows strToShadows(const string &s);
@@ -301,7 +300,6 @@ private:
 	//private aux drawing
 	void renderSelectionCircle(Vec3f v, int size, float radius);
 	void renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &color, float width);
-	void renderProgressBar(int size, int x, int y, Font2D *font);
 	void renderTile(const Vec2i &pos);
 	void renderQuad(int x, int y, int w, int h, const Texture2D *texture);
 

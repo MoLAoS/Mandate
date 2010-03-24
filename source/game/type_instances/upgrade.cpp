@@ -32,16 +32,15 @@ namespace Glest{ namespace Game{
 
 Upgrade::Upgrade(const XmlNode *node, const FactionType *ft) {
 	type = ft->getUpgradeType(node->getChildStringValue("type"));
-	state = (UpgradeState)node->getChildIntValue("state");
+	state = enum_cast<UpgradeState>(node->getChildIntValue("state"));
 	factionIndex = node->getChildIntValue("factionIndex");
 }
 
 Upgrade::Upgrade(const UpgradeType *type, int factionIndex){
-	state= usUpgrading;
-	this->factionIndex= factionIndex;
-	this->type= type;
+	state = UpgradeState::UPGRADING;
+	this->factionIndex = factionIndex;
+	this->type = type;
 }
-
 
 void Upgrade::save(XmlNode *node) const {
 	node->addChild("type", type->getName());
@@ -109,7 +108,7 @@ void UpgradeManager::finishUpgrade(const UpgradeType *upgradeType){
 	}
 
 	if(it!=upgrades.end()){
-		(*it)->setState(usUpgraded);
+		(*it)->setState(UpgradeState::UPGRADED);
 	}
 	else{
 		throw runtime_error("Error finishing upgrade, upgrade not found in upgrade manager");
@@ -130,7 +129,7 @@ bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType) const
 
 bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const{
 	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
-		if((*it)->getType()==upgradeType && (*it)->getState()==usUpgraded){
+		if((*it)->getType()==upgradeType && (*it)->getState()==UpgradeState::UPGRADED){
 			return true;
 		}
 	}
@@ -139,7 +138,7 @@ bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const{
 
 bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const{
 	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
-		if((*it)->getType()==upgradeType && (*it)->getState()==usUpgrading){
+		if((*it)->getType()==upgradeType && (*it)->getState()==UpgradeState::UPGRADING){
 			return true;
 		}
 	}
@@ -151,7 +150,7 @@ void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementTypeBase *
 	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
 		if((*it)->getFactionIndex()==unit->getFactionIndex()
 			&& (*it)->getType()->isAffected(unit->getType())
-			&& (*it)->getState()==usUpgraded)
+			&& (*it)->getState()==UpgradeState::UPGRADED)
 			totalUpgrade->sum((*it)->getType());
 	}
 }

@@ -21,6 +21,7 @@
 #include "random.h"
 #include "surface_atlas.h"
 #include "checksum.h"
+#include "game_constants.h"
 
 namespace Glest{ namespace Game{
 
@@ -28,7 +29,7 @@ using Shared::Xml::XmlNode;
 using Shared::Sound::StaticSound;
 using Shared::Sound::StrSound;
 using Shared::Graphics::Model;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec3f;
 using Shared::Graphics::Texture2D;
 using Shared::Graphics::Texture3D;
 using Shared::Util::Random;
@@ -39,12 +40,6 @@ using std::map;
 enum FogMode{
 	fmExp,
 	fmExp2
-};
-
-enum Weather{
-	wSunny,
-	wRainy,
-	wSnowy
 };
 
 class Renderer;
@@ -129,10 +124,13 @@ private:
 	AmbientSounds ambientSounds;
 
 public:
-    ~Tileset();
-	void load(const string &dir, Checksum &checksum);
+	~Tileset();
 
-    //get
+	void count(const string &dir);
+	void load(const string &dir);
+	void doChecksum(Checksum &checksum) const;
+
+	//get
 	const SurfaceAtlas *getSurfaceAtlas() const		{return &surfaceAtlas;}
 	ObjectType *getObjectType(int i)				{return &objectTypes[i];}
 	float getSurfProb(int surf, int var) const		{return surfProbs[surf][var];}

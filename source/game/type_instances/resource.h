@@ -15,13 +15,14 @@
 
 #include "vec.h"
 #include "xml_parser.h"
+#include "sigslot.h"
 
 using std::string;
 using Shared::Xml::XmlNode;
 
 namespace Glest{ namespace Game{
 
-using Shared::Graphics::Vec2i;
+using Shared::Math::Vec2i;
 
 class ResourceType;
 class TechTree;
@@ -32,7 +33,7 @@ class TechTree;
 /// Amount of a given ResourceType
 // =====================================================
 
-class Resource{
+class Resource {
 private:
     int amount;
     const ResourceType *type;
@@ -50,11 +51,24 @@ public:
 	int getBalance() const					{return balance;}
 	string getDescription() const;
 
-	void setAmount(int amount)				{this->amount= amount;}
-	void setBalance(int balance)			{this->balance= balance;}
+	void setAmount(int amount)				{
+		if (this->amount == amount) return;
+		this->amount = amount;
+		AmountChanged(amount);
+	}
+	void setBalance(int balance)			{
+		if (this->balance == balance) return;
+		this->balance = balance;
+		BalanceChanged(balance);
+	}
 
     bool decAmount(int i);
 	void save(XmlNode *node) const;
+
+	sigslot::signal1<Vec2i>		Depleted;
+	sigslot::signal1<int>		AmountChanged;
+	sigslot::signal1<int>		BalanceChanged;
+
 };
 
 }}// end namespace

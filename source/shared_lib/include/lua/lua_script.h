@@ -20,8 +20,8 @@
 #include "conversion.h"
 
 using std::string;
-using Shared::Graphics::Vec2i;
-using Shared::Graphics::Vec4i;
+using Shared::Math::Vec2i;
+using Shared::Math::Vec4i;
 using namespace Shared::Util;
 
 namespace Shared { namespace Lua {
@@ -50,12 +50,17 @@ public:
 	~LuaScript();
 
 	void startUp();
+	void atPanic(lua_CFunction func) {
+		lua_atpanic(luaState, func);
+	}
 
 	bool loadCode(const string &code, const string &name);
 
 	bool isDefined( const string &functionName );
-	bool luaCallback(const string& functionName, int id);
+	bool luaCallback(const string& functionName, int id, int userData);
 	bool luaCall(const string& functionName);
+
+	bool luaDoLine(const string &str);
 
 	string& getLastError() { return lastError; }
 
@@ -92,8 +97,9 @@ public:
 	void returnInt(int value);
 	void returnString(const string &value);
 	void returnVec2i(const Vec2i &value);
+	void returnBool(bool val);
 
-	const char *getType ( int ndx ) const;
+	const char* getType ( int ndx ) const;
 };
 
 }}//end namespace

@@ -23,7 +23,7 @@ using std::vector;
 
 namespace Glest { namespace Game {
 
-using Shared::Graphics::Vec2i;
+using Shared::Math::Vec2i;
 
 class World;
 class Unit;
@@ -48,11 +48,12 @@ public:
 		const Selection &selection,
 		CommandFlags flags,
 		const CommandType *commandType = NULL,
-		CommandClass commandClass = ccNull,
+		CommandClass commandClass = CommandClass::NULL_COMMAND,
 		const Vec2i &pos = Command::invalidPos,
 		Unit *targetUnit = NULL,
 		const UnitType* unitType = NULL) const;
 	CommandResult tryCancelCommand(const Selection *selection) const;
+	
 	void trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const;
 
 private:

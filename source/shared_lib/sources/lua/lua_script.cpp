@@ -84,10 +84,11 @@ bool LuaScript::isDefined(const string &name) {
 	return defined;
 }
 
-bool LuaScript::luaCallback(const string& functionName, int id) {
+bool LuaScript::luaCallback(const string& functionName, int id, int userData) {
 	lua_getglobal(luaState, functionName.c_str());
 	lua_pushnumber(luaState, id);
-	if ( lua_pcall(luaState, 1, 0, 0) ) {
+	lua_pushnumber(luaState, userData);
+	if ( lua_pcall(luaState, 2, 0, 0) ) {
 		lastError = luaL_checkstring(luaState, 1);
 		return false; // error
 	}
@@ -100,6 +101,14 @@ bool LuaScript::luaCall(const string& functionName) {
 	if ( lua_pcall(luaState, argumentCount, 0, 0) ) {
 		lastError = luaL_checkstring(luaState, 1);
 		return false; // error
+	}
+	return true;
+}
+
+bool LuaScript::luaDoLine(const string &str) {
+	if ( luaL_dostring(luaState, str.c_str()) ) {
+		lastError = luaL_checkstring(luaState, 1);
+		return false;
 	}
 	return true;
 }
@@ -246,7 +255,12 @@ void LuaArguments::returnVec2i(const Vec2i &value){
 	lua_rawseti(luaState, -2, 2);
 }
 
-const char *LuaArguments::getType(int ndx) const {
+void LuaArguments::returnBool(bool value){
+	++returnCount;
+	lua_pushboolean(luaState, value);
+}
+
+const char* LuaArguments::getType(int ndx) const {
 	if ( lua_isnumber(luaState, ndx) ) {
 		return "Number";
 	}

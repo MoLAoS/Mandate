@@ -19,11 +19,12 @@
 #include "particle_type.h"
 #include "upgrade_type.h"
 #include "flags.h"
+#include "game_constants.h"
 
 
 using Shared::Sound::StaticSound;
 using Shared::Xml::XmlNode;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec3f;
 
 namespace Glest { namespace Game {
 
@@ -34,47 +35,15 @@ class TechTree;
 // 	enum EffectTypeFlag & class EffectTypeFlags
 // ==============================================================
 
-enum EffectTypeFlag {
-	etfAlly,					// effects allies
-	etfFoe,						// effects foes
-	etfNoNormalUnits,			// doesn't effects normal units
-	etfBuildings,				// effects buildings
-	eftPetsOnly,				// only effects pets of the originator
-	etfNonLiving,				//
-	etfScaleSplashStrength,		// decrease strength when applied from splash
-	etfEndsWhenSourceDies,		// ends when the unit causing the effect dies
-	etfRecourseEndsWithRoot,	// ends when root effect ends (recourse effects only)
-	etfPermanent,				// the effect has an infinite duration
-	etfAllowNegativeSpeed,		//
-	etfTickImmediately,			//
-
-	//ai hints
-	etfAIDamaged,				// use on damaged units (benificials only)
-	etfAIRanged,				// use on ranged attack units
-	etfAIMelee,					// use on melee units
-	etfAIWorker,				// use on worker units
-	etfAIBuilding,				// use on buildings
-	etfAIHeavy,					// perfer to use on heavy units
-	etfAIScout,					// useful for scouting units
-	etfAICombat,				// don't use outside of combat (benificials only)
-	etfAISparingly,				// use sparingly
-	etfAILiberally,				// use liberally
-
-	etfCount
-};
-
 /**
  * Flags for an EffectType object.
  *
  * @see EffectTypeFlag
  */
-class EffectTypeFlags : public XmlBasedFlags<EffectTypeFlag, etfCount>{
-private:
-	static const char *names[etfCount];
-
+class EffectTypeFlags : public XmlBasedFlags<EffectTypeFlag, EffectTypeFlag::COUNT>{
 public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<EffectTypeFlag, etfCount>::load(node, dir, tt, ft, "flag", names);
+		XmlBasedFlags<EffectTypeFlag, EffectTypeFlag::COUNT>::load(node, dir, tt, ft, "flag", EffectTypeFlagNames);
 	}
 };
 
@@ -87,39 +56,6 @@ typedef vector<EffectType*> EffectTypes;
  * attributes of a Unit.
  */
 class EffectType: public EnhancementTypeBase, public DisplayableType {
-private:
-
-
-public:
-	/** Rather the effect is detrimental, neutral or benificial */
-	enum EffectBias {
-		ebDetrimental,
-		ebNeutral,
-		ebBenificial,
-
-		ebCount
-	};
-
-	/**
-	 * How the attempt to apply multiple instances of this effect should be
-	 * handled
-	 */
-	enum EffectStacking {
-		esStack,
-		esExtend,
-		esOverwrite,
-		esReject,
-
-  		esCount
-	};
-
-	/** Valid flag names/descriptions for values in EffectBias enum. */
-	static const char *effectBiasNames[ebCount];
-
-	/** Valid flag names/descriptions for values in EffectStacking enum. */
-	static const char *effectStackingNames[esCount];
-
-
 private:
 	EffectBias bias;
 	EffectStacking stacking;
@@ -140,8 +76,9 @@ private:
 
 public:
 	EffectType();
-	virtual ~EffectType() {}
+	virtual ~EffectType() { delete sound; }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
 
 	EffectBias getBias() const				{return bias;}
 	EffectStacking getStacking() const		{return stacking;}
@@ -149,18 +86,18 @@ public:
 	bool getFlag(EffectTypeFlag flag) const	{return flags.get(flag);}
 	const AttackType *getDamageType() const	{return damageType;}
 
-	bool isEffectsAlly() const				{return getFlag(etfAlly);}
-	bool isEffectsFoe() const				{return getFlag(etfFoe);}
-	bool isEffectsNormalUnits() const		{return !getFlag(etfNoNormalUnits);}
-	bool isEffectsBuildings() const			{return getFlag(etfBuildings);}
-	bool isEffectsPetsOnly() const			{return getFlag(eftPetsOnly);}
-	bool isEffectsNonLiving() const			{return getFlag(etfNonLiving);}
-	bool isScaleSplashStrength() const		{return getFlag(etfScaleSplashStrength);}
-	bool isEndsWhenSourceDies() const		{return getFlag(etfEndsWhenSourceDies);}
-	bool idRecourseEndsWithRoot() const		{return getFlag(etfRecourseEndsWithRoot);}
-	bool isPermanent() const				{return getFlag(etfPermanent);}
-	bool isAllowNegativeSpeed() const		{return getFlag(etfAllowNegativeSpeed);}
-	bool isTickImmediately() const			{return getFlag(etfTickImmediately);}
+	bool isEffectsAlly() const				{return getFlag(EffectTypeFlag::ALLY);}
+	bool isEffectsFoe() const				{return getFlag(EffectTypeFlag::FOE);}
+	bool isEffectsNormalUnits() const		{return !getFlag(EffectTypeFlag::NO_NORMAL_UNITS);}
+	bool isEffectsBuildings() const			{return getFlag(EffectTypeFlag::BUILDINGS);}
+	bool isEffectsPetsOnly() const			{return getFlag(EffectTypeFlag::PETS_ONLY);}
+	bool isEffectsNonLiving() const			{return getFlag(EffectTypeFlag::NON_LIVING);}
+	bool isScaleSplashStrength() const		{return getFlag(EffectTypeFlag::SCALE_SPLASH_STRENGTH);}
+	bool isEndsWhenSourceDies() const		{return getFlag(EffectTypeFlag::ENDS_WITH_SOURCE);}
+	bool idRecourseEndsWithRoot() const		{return getFlag(EffectTypeFlag::RECOURSE_ENDS_WITH_ROOT);}
+	bool isPermanent() const				{return getFlag(EffectTypeFlag::PERMANENT);}
+	bool isAllowNegativeSpeed() const		{return getFlag(EffectTypeFlag::ALLOW_NEGATIVE_SPEED);}
+	bool isTickImmediately() const			{return getFlag(EffectTypeFlag::TICK_IMMEDIATELY);}
 
 	int getDuration() const								{return duration;}
 	float getChance() const								{return chance;}
@@ -182,6 +119,7 @@ private:
 public:
 	virtual ~Emanation() {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
 	int getRadius() const	{return radius;}
 };
 

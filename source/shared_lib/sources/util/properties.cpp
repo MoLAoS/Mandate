@@ -31,7 +31,7 @@ namespace Shared { namespace Util {
 // =====================================================
 // class Properties
 // =====================================================
-
+	
 Properties::Properties() {}
 
 void Properties::load(const string &path, bool trim) {
@@ -60,8 +60,6 @@ void Properties::load(const string &path, bool trim) {
 			continue;
 		}
 
-		// FIXME: Is this neccisary? I thought ifstream was supposed to do this for us unless you
-		// pass ios_base::binary when opening the file (i.e., the default file mode is "text").
 		// gracefully handle win32 \r\n line endings
 		size_t len = strlen(lineBuffer);
 		if (len > 0 && lineBuffer[len - 1] == '\r') {
@@ -90,6 +88,9 @@ void Properties::load(const string &path, bool trim) {
 			while (!value.empty() && isspace( value[value.size() - 1], loc )) {
 				value.erase(value.size() - 1);
 			}
+		}
+		for (int i=0; i < key.size(); ++i) {
+			key[i] = tolower(key[i]);
 		}
 		propertyMap.insert(PropertyPair(key, value));
 		propertyVector.push_back(PropertyPair(key, value));
@@ -121,7 +122,11 @@ void Properties::clear(){
 
 const string *Properties::_getString(const string &key, bool required) const {
 	PropertyMap::const_iterator it;
-	it = propertyMap.find(key);
+	string lkey = key;
+	for (int i=0; i < lkey.size(); ++i) {
+		lkey[i] = tolower(lkey[i]);
+	}
+	it = propertyMap.find(lkey);
 	if(it == propertyMap.end()) {
 		if(required) {
 			throw runtime_error("Value not found in propertyMap: " + key + ", loaded from: " + path);
@@ -211,7 +216,7 @@ const string &Properties::_getString(const string &key, const string *pDef) cons
 string Properties::toString() const {
 	stringstream str;
 
-	for (PropertyMap::const_iterator pi = propertyMap.begin(); pi != propertyMap.end(); pi++)
+	for (PropertyMap::const_iterator pi = propertyMap.begin(); pi != propertyMap.end(); ++pi)
 		str << pi->first << "=" << pi->second << endl;
 
 	return str.str();

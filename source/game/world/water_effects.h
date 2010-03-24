@@ -18,7 +18,7 @@
 
 using std::vector;
 
-using Shared::Graphics::Vec2f;
+using Shared::Math::Vec2f;
 
 namespace Glest{ namespace Game{
 

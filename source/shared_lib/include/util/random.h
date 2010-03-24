@@ -16,7 +16,8 @@
 #include <cassert>
 #include "vec.h"
 
-using namespace Shared::Graphics;
+using namespace Shared::Math;
+
 namespace Shared { namespace Util {
 
 // =====================================================
@@ -25,9 +26,9 @@ namespace Shared { namespace Util {
 
 class Random {
 private:
-	static const int m;
-	static const int a;
-	static const int b;
+	static const int m = 714025;
+	static const int a = 1366;
+	static const int b = 150889;
 
 	int lastNumber;
 
@@ -37,11 +38,12 @@ public:
 	}
 
 	Random(int seed) {
-		lastNumber = 0;
 		init(seed);
 	}
 
-	void init(int seed);
+	void init(int seed) {
+		lastNumber = abs(seed) % m;
+	}
 
 	int rand() {
 		lastNumber = (a * lastNumber + b) % m;
@@ -51,32 +53,32 @@ public:
 	int randRange(int min, int max) {
 		assert(min <= max);
 		int diff = max - min;
-		int res = min + static_cast<int>(static_cast<float>(diff + 1) * Random::rand() / m);
+		int res = min + int(float(diff + 1) * Random::rand() / m);
 		assert(res >= min && res <= max);
 		return res;
 	}
 
 	float randRange(float min, float max) {
 		assert(min <= max);
-		float rand01 = static_cast<float>(Random::rand()) / (m - 1);
+		float rand01 = float(Random::rand()) / (m - 1);
 		float res = min + (max - min) * rand01;
 		assert(res >= min && res <= max);
 		return res;
 	}
-
+	
 	template<typename T> Vec2<T> randRange(const Vec2<T> &min, const Vec2<T> &max) {
 		return Vec2<T>(
 				randRange(min.x, max.x),
 				randRange(min.y, max.y));
 	}
-
+	
 	template<typename T> Vec3<T> randRange(const Vec3<T> &min, const Vec3<T> &max) {
 		return Vec3<T>(
 				randRange(min.x, max.x),
 				randRange(min.y, max.y),
 				randRange(min.z, max.z));
 	}
-
+	
 	template<typename T> Vec4<T> randRange(const Vec4<T> &min, const Vec4<T> &max) {
 		return Vec4<T>(
 				randRange(min.x, max.x),

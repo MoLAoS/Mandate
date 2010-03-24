@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 MartiÃ±o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -22,28 +22,12 @@
 
 namespace Glest{ namespace Game{
 
-using Shared::Graphics::Vec2i;
+using Shared::Math::Vec2i;
 using Shared::Platform::int16;
 
 class CommandType;
 
-enum CommandProperties {
-	cpQueue,
-	cpAuto,
-	cpDontReserveResources,
-	cpAutoRepairEnabled,
-
-	cpCount
-};
-
-typedef Flags<CommandProperties, cpCount, uint8> CommandFlags;
-
-enum CommandArchetype {
-	catGiveCommand,
-	catCancelCommand,
-//	catSetMeetingPoint,
-	catSetAutoRepair
-};
+typedef Flags<CommandProperties, CommandProperties::COUNT, uint8> CommandFlags;
 
 // =====================================================
 // 	class Command
@@ -51,41 +35,40 @@ enum CommandArchetype {
 ///	A unit command
 // =====================================================
 
-class Command : public NetworkWriteable {
+class Command {
 public:
 
 	static const Vec2i invalidPos;
 
 private:
 	CommandArchetype archetype;
-    const CommandType *type;
+	const CommandType *type;
 	CommandFlags flags;
-    Vec2i pos;
-    Vec2i pos2;					//for patrol command, the position traveling away from.
+	Vec2i pos;
+	Vec2i pos2;					//for patrol command, the position traveling away from.
 	UnitReference unitRef;		//target unit, used to move and attack optinally
 	UnitReference unitRef2;		//for patrol command, the unit traveling away from.
 	const UnitType *unitType;	//used for build
 	Unit *commandedUnit;
 
 public:
-    //constructor
-    Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
-    Command(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
-    Command(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL);
-    Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, Unit *commandedUnit = NULL);
+	//constructor
+	Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
+	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
+	Command(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL);
+	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, Unit *commandedUnit = NULL);
 	Command(const XmlNode *node, const UnitType *ut, const FactionType *ft);
-	Command(NetworkDataBuffer &buf);
-//	Command(const Command &);
+
 	// allow default ctor
 
-    //get
+	//get
 	CommandArchetype getArchetype() const		{return archetype;}
 	const CommandType *getType() const			{return type;}
 	CommandFlags getFlags() const				{return flags;}
-	bool isQueue() const						{return flags.get(cpQueue);}
-	bool isAuto() const							{return flags.get(cpAuto);}
-	bool isReserveResources() const				{return !flags.get(cpDontReserveResources);}
-	bool isAutoRepairEnabled() const			{return flags.get(cpAutoRepairEnabled);}
+	bool isQueue() const						{return flags.get(CommandProperties::QUEUE);}
+	bool isAuto() const							{return flags.get(CommandProperties::AUTO);}
+	bool isReserveResources() const				{return !flags.get(CommandProperties::DONT_RESERVE_RESOURCES);}
+	bool isAutoRepairEnabled() const			{return flags.get(CommandProperties::AUTO_REPAIR_ENABLED);}
 	Vec2i getPos() const						{return pos;}
 	Vec2i getPos2() const						{return pos2;}
 	Unit* getUnit() const						{return unitRef.getUnit();}
@@ -96,13 +79,13 @@ public:
 	bool hasPos() const							{return pos.x != -1;}
 	bool hasPos2() const						{return pos2.x != -1;}
 
-    //set
+	//set
 	void setType(const CommandType *type)				{this->type= type;}
 	void setFlags(CommandFlags flags)					{this->flags = flags;}
-	void setQueue(bool queue)							{flags.set(cpQueue, queue);}
-	void setAuto(bool _auto)							{flags.set(cpAuto, _auto);}
-	void setReserveResources(bool reserveResources)		{flags.set(cpDontReserveResources, !reserveResources);}
-	void setAutoRepairEnabled(bool enabled)				{flags.set(cpAutoRepairEnabled, enabled);}
+	void setQueue(bool queue)							{flags.set(CommandProperties::QUEUE, queue);}
+	void setAuto(bool _auto)							{flags.set(CommandProperties::AUTO, _auto);}
+	void setReserveResources(bool reserveResources)		{flags.set(CommandProperties::DONT_RESERVE_RESOURCES, !reserveResources);}
+	void setAutoRepairEnabled(bool enabled)				{flags.set(CommandProperties::AUTO_REPAIR_ENABLED, enabled);}
 	void setPos(const Vec2i &pos)						{this->pos = pos;}
 	void setPos2(const Vec2i &pos2)						{this->pos2 = pos2;}
 
@@ -115,23 +98,6 @@ public:
 	void swap();
 	void popPos()										{pos = pos2; pos2 = invalidPos;}
 	void save(XmlNode *node) const;
-
-	// NetworkWriteable methods
-	void write(NetworkDataBuffer &buf) const;
-	void read(NetworkDataBuffer &buf);
-	size_t getNetSize() const;
-	size_t getMaxNetSize() const						{return Command::getStaticMaxNetSize();}
-	static size_t getStaticMaxNetSize() {
-		return	  sizeof(uint16)		// id of unit command is being issued to
-				+ sizeof(uint8)			// archtype + flags
-				+ sizeof(uint8)			// fields present
-				+ sizeof(uint8)			// command id (unit type-specific)
-				+ sizeof(uint16) * 2	// pos
-				+ sizeof(uint16) * 2	// pos2
-				+ sizeof(uint16)		// target (unit id)
-				+ sizeof(uint16)		// target2 (unit id)
-				+ sizeof(uint8);		// unitTypeId
-	}
 };
 
 }}//end namespace

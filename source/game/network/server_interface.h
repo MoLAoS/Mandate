@@ -13,7 +13,6 @@
 #define _GLEST_GAME_SERVERINTERFACE_H_
 
 #include <vector>
-#include <map>
 
 #include "game_constants.h"
 #include "network_interface.h"
@@ -21,10 +20,9 @@
 #include "socket.h"
 
 using std::vector;
-using std::map;
 using Shared::Platform::ServerSocket;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 //	class ServerInterface
@@ -32,18 +30,8 @@ namespace Glest{ namespace Game{
 
 class ServerInterface: public GameNetworkInterface{
 private:
-	enum UnitUpdateType {
-		uutNew,
-		uutMorph,
-		uutFullUpdate,
-		uutPartialUpdate
-	};
-	typedef map<Unit *, UnitUpdateType> UnitUpdateMap;
-
 	ConnectionSlot* slots[GameConstants::maxPlayers];
 	ServerSocket serverSocket;
-	UnitUpdateMap updateMap;
-	bool updateFactionsFlag;
 
 public:
 	ServerInterface();
@@ -52,11 +40,14 @@ public:
 	virtual Socket* getSocket()				{return &serverSocket;}
 	virtual const Socket* getSocket() const	{return &serverSocket;}
 
+protected:
 	//message processing
 	virtual void update();
 	virtual void updateLobby(){};
 	virtual void updateKeyframe(int frameCount);
 	virtual void waitUntilReady(Checksum &checksum);
+	virtual void syncAiSeeds(int aiCount, int *seeds);
+	//virtual void logUnit(int id);
 
 	// message sending
 	virtual void sendTextMessage(const string &text, int teamIndex);
@@ -65,28 +56,18 @@ public:
 	//misc
 	virtual string getStatus() const;
 
+public:
 	ServerSocket* getServerSocket()		{return &serverSocket;}
 	void addSlot(int playerIndex);
 	void removeSlot(int playerIndex);
 	ConnectionSlot* getSlot(int playerIndex);
 	int getConnectedSlotCount();
 
-	void launchGame(const GameSettings* gameSettings, const string savedGameFile = "");
-	void sendFile(const string path, const string remoteName, bool compress);
-	void updateFactions()				{updateFactionsFlag = true;}
-	void newUnit(Unit *unit)			{addUnitUpdate(unit, uutNew);}
-	void unitMorph(Unit *unit)			{addUnitUpdate(unit, uutMorph);}
-	void unitUpdate(Unit *unit)			{addUnitUpdate(unit, uutFullUpdate);}
-	void minorUnitUpdate(Unit *unit)	{addUnitUpdate(unit, uutPartialUpdate);}
-	void sendUpdates();
-	void process(NetworkMessageText &msg, int requestor);
-	void process(NetworkMessageUpdateRequest &msg);
+	void launchGame(const GameSettings* gameSettings);
 
-protected:
-	virtual void ping() {};
+	void process(NetworkMessageText &msg, int requestor);
 
 private:
-	void addUnitUpdate(Unit *unit, UnitUpdateType type);
 	void broadcastMessage(const NetworkMessage* networkMessage, int excludeSlot= -1);
 	void updateListen();
 };

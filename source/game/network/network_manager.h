@@ -21,7 +21,7 @@
 
 using Shared::Util::Checksum;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 //	class NetworkManager
@@ -48,7 +48,7 @@ public:
 
 	void update() {
 		if(gameNetworkInterface) {
-			gameNetworkInterface->update();
+			gameNetworkInterface->doUpdate();
 		}
 	}
 

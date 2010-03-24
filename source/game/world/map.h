@@ -4,7 +4,7 @@
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //				  2008 Jaagup Repän <jrepan@gmail.com>,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
-//				  2009 James McCulloch <silnarm@gmail.com>
+//				  2009 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -29,20 +29,10 @@
 #include "exceptions.h"
 #include "pos_iterator.h"
 
-namespace Shared{ namespace Platform{
-	class NetworkDataBuffer;
-}}
-
 namespace Glest{ namespace Game{
 
-using Shared::Graphics::Vec4f;
-using Shared::Graphics::Quad2i;
-using Shared::Graphics::Rect2i;
-using Shared::Graphics::Vec4f;
-using Shared::Graphics::Vec2f;
-using Shared::Graphics::Vec2i;
+using namespace Shared::Math;
 using Shared::Graphics::Texture2D;
-using Shared::Platform::NetworkDataBuffer;
 using Glest::Game::Util::PosCircularIteratorFactory;
 
 class Tileset;
@@ -59,45 +49,38 @@ class Earthquake;
 ///	A map cell that holds info about units present on it
 // =====================================================
 
-class Cell {
+class Cell{
 private:
-	Unit *units[ZoneCount];	//units on this cell
+	Unit *units[Zone::COUNT];	//units on this cell
 	float height;
 	SurfaceType surfaceType;
-
-private:
-	Cell(const Cell&);
-	void operator=(const Cell&) const;
+	
+	Cell(Cell&);
+	void operator=(Cell&);
 
 public:
-	/**
-	 * Default ctor.  It's usually better to outline stuff like this, but when these are created,
-	 * they are created in large quantities, so it's probably much better to have this ctor inlined.
-	 */
-	Cell() : height(0), surfaceType(SurfaceTypeLand) {
+	Cell() {
 		memset(units, 0, sizeof(units));
+		height= 0;
+		surfaceType = SurfaceType::LAND;
 	}
 
 	// get
-	Unit *getUnit(Zone zone) const	{return units[zone];}
-	Unit *getUnit(Field field)		{return getUnit(field == FieldAir ? ZoneAir : ZoneSurface);}
-	float getHeight() const			{return height;}
-	SurfaceType getType() const		{return surfaceType;}
+	Unit *getUnit( Zone zone ) const	{return units[zone];}
+	Unit *getUnit( Field field )		{return getUnit( field==Field::AIR?Zone::AIR:Zone::LAND );}
+	float getHeight() const				{return height;}
+	SurfaceType getType() const 		{ return surfaceType; }
 
-	bool isSubmerged() const		{return surfaceType != SurfaceTypeLand;}
-	bool isDeepSubmerged() const	{return surfaceType == SurfaceTypeDeepWater;}
+	bool isSubmerged () const { return surfaceType != SurfaceType::LAND; }
+	bool isDeepSubmerged () const { return surfaceType == SurfaceType::DEEP_WATER; }
 
 	// set
-	void setUnit(Zone field, Unit *unit)	{units[field] = unit;}
-	void setHeight(float h)					{height = h;}
-	void setType(SurfaceType type)			{surfaceType = type;}
+	void setUnit ( Zone field, Unit *unit) {units[field]= unit;}
+	void setHeight (float h) { height= h; }
+	void setType ( SurfaceType type ) { surfaceType = type; }
 
 	//misc
-	/** @returns true if the zone in the cell is not occupied. */
-	bool isFree(Zone zone) const {
-		const Unit *resident = getUnit(zone);
-		return !resident || resident->isPutrefacting();
-	}
+	bool isFree(Zone field) const;
 };
 
 // =====================================================
@@ -157,7 +140,7 @@ public:
 	void setHeight(float height)					{originalVertex.y = vertex.y = height;}
 	void setNormal(const Vec3f &normal)				{this->normal= normal;}
 	void setColor(const Vec3f &color)				{this->color= color;}
-	void setTileType(int tileType)			{this->tileType= tileType;}
+	void setTileType(int tileType)					{this->tileType= tileType;}
 	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;}
 	void setObject(Object *object)					{this->object= object;}
 	void setFowTexCoord(const Vec2f &ftc)			{this->fowTexCoord= ftc;}
@@ -173,18 +156,10 @@ public:
 	void alterVertex(const Vec3f &offset)			{vertex += offset;}
 	void updateObjectVertex() {
 		if(object) {
-			object->setPos(vertex); // should be centered ???
+			object->setPos(vertex); // should be centered ??? YES!!! It should, do so here, remove hack from Renderer
 		}
 	}
-
-	// I know it looks stupid using NetworkDataBuffer to save these, but then I
-	// get my multi-byte values in platform portable format, so that saved game
-	// files will work across platforms (especially when resuming an interrupted
-	// network game).
-	void read(NetworkDataBuffer &buf);
-	void write(NetworkDataBuffer &buf) const;
 };
-
 
 // =====================================================
 // 	class Map
@@ -202,6 +177,7 @@ private:
 	string title;
 	float waterLevel;
 	float heightFactor;
+	float avgHeight;
 	int w;
 	int h;
 	int tileW;
@@ -210,7 +186,7 @@ private:
 	Cell *cells;
 	Tile *tiles;
 	Vec2i *startLocations;
-	float *surfaceHeights;
+	//float *surfaceHeights;
 
 	Earthquakes earthquakes;
 
@@ -224,6 +200,7 @@ public:
 
 	void init();
 	void load(const string &path, TechTree *techTree, Tileset *tileset);
+	void doChecksum(Checksum &checksum);
 
 	//get
 	Cell *getCell(int x, int y) const;
@@ -237,6 +214,7 @@ public:
 	int getTileH() const								{return tileH;}
 	int getMaxPlayers() const							{return maxPlayers;}
 	float getHeightFactor() const						{return heightFactor;}
+	float getAvgHeight() const							{return avgHeight;}
 	float getWaterLevel() const							{return waterLevel;}
 	Vec2i getStartLocation(int loactionIndex) const		{return startLocations[loactionIndex];}
 
@@ -319,9 +297,6 @@ public:
 	void computeNormals(Rect2i range);
 	void computeInterpolatedHeights(Rect2i range);
 
-	void read(NetworkDataBuffer &buf);
-	void write(NetworkDataBuffer &buf) const;
-
 	void add(Earthquake *earthquake) 			{earthquakes.push_back(earthquake);}
 	void update(float slice);
 
@@ -342,7 +317,9 @@ private:
 	void smoothSurface();
 	void computeNearSubmerged();
 	void computeCellColors();
-	void setCellTypes ();
+	void setCellTypes();
+	void calcAvgAltitude();
+
 	//void setCellType ( Vec2i pos );
 
 	static void findNearest(Vec2i &result, const Vec2i &start, const Vec2i &candidate, float &minDistance);
@@ -369,7 +346,7 @@ private:
 
 public:
 	PosCircularIteratorOrdered(const Map &map, const Vec2i &center,
-			Glest::Game::Util::PosCircularIterator *i) : map(map), center(center), i(i) {}
+			Glest::Game::Util::PosCircularIterator *i) : map(map), center(center), i(i) {} 
 	~PosCircularIteratorOrdered() {
 		delete i;
 	}
@@ -439,7 +416,7 @@ private:
 
 public:
 	PosCircularIteratorSimple(const Map &map, const Vec2i &center, int radius);
-	bool getNext(Vec2i &result, float &dist) {
+	bool getNext(Vec2i &result, float &dist) {	
 		//iterate while dont find a cell that is inside the world
 		//and at less or equal distance that the radius
 		do {
@@ -455,7 +432,7 @@ public:
 			dist = pos.dist(center);
 		} while (floor(dist) >= (radius + 1) || !map.isInside(pos));
 		//while(!(pos.dist(center) <= radius && map.isInside(pos)));
-
+	
 		return true;
 	}
 
@@ -524,7 +501,7 @@ private:
 
 public:
 	PosCircularInsideOutIterator(const Map *map, const Vec2i &center, int radius);
-
+	
 	bool isOutOfRange(const Vec2i &p) {
 		return p.length() > radius;
 	}
@@ -599,45 +576,8 @@ public:
 };
 */
 
-// ===============================
-// 	class PosQuadIterator
-// ===============================
-
-class PosQuadIterator {
-private:
-	Quad2i quad;
-	int step;
-	Rect2i boundingRect;
-	Vec2i pos;
-
-public:
-	PosQuadIterator(const Quad2i &quad, int step = 1);
-
-	bool next() {
-		do {
-			pos.x += step;
-			if (pos.x > boundingRect.p[1].x) {
-				pos.x = (boundingRect.p[0].x / step) * step;
-				pos.y += step;
-			}
-			if (pos.y > boundingRect.p[1].y)
-				return false;
-		} while (!quad.isInside(pos));
-
-		return true;
-	}
-
-	void skipX() {
-		pos.x += step;
-	}
-
-	const Vec2i &getPos() {
-		return pos;
-	}
-};
-
 //////////////////////////////////////////////////////////////////
-// Cut Here
+// Cut Here 
 //////////////////////////////////////////////////////////////////
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
@@ -670,12 +610,12 @@ public:
 
 namespace Glest{ namespace Game{
 
-using Shared::Graphics::Vec4f;
-using Shared::Graphics::Quad2i;
-using Shared::Graphics::Rect2i;
-using Shared::Graphics::Vec4f;
-using Shared::Graphics::Vec2f;
-using Shared::Graphics::Vec2i;
+using Shared::Math::Vec4f;
+using Shared::Math::Quad2i;
+using Shared::Math::Rect2i;
+using Shared::Math::Vec4f;
+using Shared::Math::Vec2f;
+using Shared::Math::Vec2i;
 using Shared::Graphics::Texture2D;
 using Shared::Platform::NetworkDataBuffer;
 using Glest::Game::Util::PosCircularIteratorFactory;
@@ -706,6 +646,7 @@ private:
 
 public:
 	EarthquakeType(float maxDps, const AttackType *attackType);
+	~EarthquakeType() { delete sound; }
 	void load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	void spawn(Map &map, Unit *cause, const Vec2i &epicenter, float strength) const;
 
@@ -779,7 +720,7 @@ private:
 //#endif
 
 //////////////////////////////////////////////////////////////////
-// Cut Here
+// Cut Here 
 //////////////////////////////////////////////////////////////////
 
 

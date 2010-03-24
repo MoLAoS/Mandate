@@ -41,7 +41,7 @@
 
 using std::map;
 using std::string;
-using Shared::Graphics::Vec2i;
+using Shared::Math::Vec2i;
 
 namespace Shared { namespace Platform {
 

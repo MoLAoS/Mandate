@@ -18,6 +18,7 @@
 #include "logger.h"
 #include "util.h"
 #include "renderer.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -90,11 +91,14 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 // 	class Tileset
 // =====================================================
 
-void Tileset::load(const string &dir, Checksum &checksum){
+void Tileset::count(const string &dir){
+	Logger &logger = Logger::getInstance();
+	logger.setUnitCount(objCount);
+}
+
+void Tileset::load(const string &dir){
 	random.init(time(NULL));
 	string path= dir+"/"+basename(dir)+".xml";
-
-	checksum.addFile(path, true);
 
 	try{
 		Logger::getInstance().add("Tileset: "+dir, true);
@@ -121,6 +125,7 @@ void Tileset::load(const string &dir, Checksum &checksum){
 			}
 		}
 
+		Logger &logger = Logger::getInstance();
 		//object models
 		const XmlNode *objectsNode= tilesetNode->getChild("objects");
 		for(int i=0; i<objCount; ++i){
@@ -132,6 +137,8 @@ void Tileset::load(const string &dir, Checksum &checksum){
 				const XmlAttribute *pathAttribute= modelNode->getAttribute("path");
 				objectTypes[i].loadModel(dir +"/"+ pathAttribute->getRestrictedValue());
 			}
+			logger.unitLoaded();
+			logger.renderLoadingScreen();
 		}
 
 		//ambient sounds
@@ -184,13 +191,13 @@ void Tileset::load(const string &dir, Checksum &checksum){
 		float rnd= fabs(random.randRange(-1.f, 1.f));
 
 		if(rnd<sunnyProb){
-			weather= wSunny;
+			weather= Weather::SUNNY;
 		}
 		else if(rnd<rainyProb){
-			weather= wRainy;
+			weather= Weather::RAINY;
 		}
 		else{
-			weather= wSnowy;
+			weather= Weather::SNOWY;
 		}
 
 	}
@@ -200,8 +207,27 @@ void Tileset::load(const string &dir, Checksum &checksum){
 	}
 }
 
+void Tileset::doChecksum(Checksum &checksum) const {
+	for (int i=0; i < objCount; ++i) {
+		checksum.add<bool>(objectTypes[i].getWalkable());
+		checksum.add<bool>(objectTypes[i].isATree());
+	}
+	for (int i=0; i < surfCount; ++i) {
+		foreach_const (SurfProbs, it, surfProbs[i]) {
+			checksum.add<float>(*it);
+		}
+	}
+	checksum.add<bool>(fog);
+	checksum.add<int>(fogMode);
+	checksum.add<float>(fogDensity);
+	checksum.add<Vec3f>(fogColor);
+	checksum.add<Vec3f>(sunLightColor);
+	checksum.add<Vec3f>(moonLightColor);
+	checksum.add<Weather>(weather);
+}
+
 Tileset::~Tileset(){
-	Logger::getInstance().add("Tileset", true);
+	Logger::getInstance().add("Tileset", !Program::getInstance()->isTerminating());
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type, int var) const{

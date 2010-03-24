@@ -12,10 +12,6 @@
 #include "pch.h"
 #include "unit_updater.h"
 
-#include <algorithm>
-#include <cassert>
-#include <map>
-
 #include "sound.h"
 #include "upgrade.h"
 #include "unit.h"
@@ -25,11 +21,12 @@
 #include "renderer.h"
 #include "sound_renderer.h"
 #include "game.h"
-#include "path_finder.h"
+#include "route_planner.h"
 #include "object.h"
 #include "faction.h"
 #include "network_manager.h"
-
+#include "cartographer.h"
+#include "network_util.h"
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -45,35 +42,27 @@ static bool verifySubfaction(Unit *unit, const ProducibleType *pt) {
 		return true;
 	} else {
 		unit->finishCommand();
-		unit->setCurrSkill(scStop);
+		unit->setCurrSkill(SkillClass::STOP);
 		unit->getFaction()->deApplyCosts(pt);
 		return false;
 	}
 }
 
 // =====================================================
-//  class UnitUpdater
+// 	class UnitUpdater
 // =====================================================
 
 // ===================== PUBLIC ========================
 const float UnitUpdater::repairerToFriendlySearchRadius = 1.25f;
 
-UnitUpdater::UnitUpdater(Game &game)
-		: gameCamera(game.getGameCamera())
-		, gui(*(game.getGui()))
-		, world(*(game.getWorld()))
-		, map(NULL)
-		, console(*(game.getConsole()))
-		, scriptManager(NULL)
-		, pathFinder(NULL)
-		, random() // note, should be initialized identically on all nodes of a network game!
-		, gameSettings(game.getGameSettings()) {
-}
-
 void UnitUpdater::init(Game &game) {
-	map = world.getMap();
-	pathFinder = Search::PathFinder::getInstance();
-	pathFinder->init(map);
+	this->gui = game.getGui();
+	this->gameCamera = game.getGameCamera();
+	this->world = game.getWorld();
+	this->map = world->getMap();
+	this->console = game.getConsole();
+	routePlanner = world->getRoutePlanner();
+	gameSettings = game.getGameSettings();
 }
 
 // ==================== progress skills ====================
@@ -87,14 +76,14 @@ void UnitUpdater::updateUnit(Unit *unit) {
 	if (currSkill->getSound() != NULL) {
 		float soundStartTime = currSkill->getSoundStartTime();
 		if (soundStartTime >= unit->getLastAnimProgress() && soundStartTime < unit->getAnimProgress()) {
-			if (map->getTile(Map::toTileCoords(unit->getPos()))->isVisible(world.getThisTeamIndex())) {
+			if (map->getTile(Map::toTileCoords(unit->getPos()))->isVisible(world->getThisTeamIndex())) {
 				soundRenderer.playFx(currSkill->getSound(), unit->getCurrVector(), gameCamera->getPos());
 			}
 		}
 	}
 
 	//start attack particle system
-	if (unit->getCurrSkill()->getClass() == scAttack) {
+	if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK) {
 		const AttackSkillType *ast = static_cast<const AttackSkillType*>(unit->getCurrSkill());
 		float attackStartTime = ast->getStartTime();
 		if (attackStartTime >= unit->getLastAnimProgress() && attackStartTime < unit->getAnimProgress()) {
@@ -103,29 +92,21 @@ void UnitUpdater::updateUnit(Unit *unit) {
 	}
 
 	//update emanations every 8 frames
-	if (unit->getGetEmanations().size() && !((world.getFrameCount() + unit->getId()) % 8)
+	if (unit->getGetEmanations().size() && !((world->getFrameCount() + unit->getId()) % 8)
 			&& unit->isOperative()) {
 		updateEmanations(unit);
 	}
 
 	//update unit
 	if (unit->update()) {
-		// make sure attack systems are started even on laggy computers
-		/* this is causing double attacks for some reason
-		if (unit->getCurrSkill()->getClass() == scAttack) {
-			const AttackSkillType *ast = static_cast<const AttackSkillType*>(unit->getCurrSkill());
-			if (ast->getStartTime() < unit->getLastAnimProgress()) {
-				startAttackSystems(unit, ast);
-			}
-		}*/
 
 		const UnitType *ut = unit->getType();
 
-		if (unit->getCurrSkill()->getClass() == scFallDown) {
-			assert(ut->getFirstStOfClass(scGetUp));
-			unit->setCurrSkill(scGetUp);
-		} else if (unit->getCurrSkill()->getClass() == scGetUp) {
-			unit->setCurrSkill(scStop);
+		if (unit->getCurrSkill()->getClass() == SkillClass::FALL_DOWN) {
+			assert(ut->getFirstStOfClass(SkillClass::GET_UP));
+			unit->setCurrSkill(SkillClass::GET_UP);
+		} else if (unit->getCurrSkill()->getClass() == SkillClass::GET_UP) {
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 
 		updateUnitCommand(unit);
@@ -135,22 +116,23 @@ void UnitUpdater::updateUnit(Unit *unit) {
 			if (unit->getCurrCommand()) {
 				unit->cancelCurrCommand();
 			}
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 
 		//move unit in cells
-		if (unit->getCurrSkill()->getClass() == scMove) {
-			world.moveUnitCells(unit);
+		if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+			world->moveUnitCells(unit);
 
 			//play water sound
-			if (map->getCell(unit->getPos())->getHeight() < map->getWaterLevel() && unit->getCurrField() == FieldWalkable) {
+			if (map->getCell(unit->getPos())->getHeight() < map->getWaterLevel() 
+			&& unit->getCurrField() == Field::LAND) {
 				soundRenderer.playFx(CoreData::getInstance().getWaterSound());
 			}
 		}
 	}
 
 	//unit death
-	if (unit->isDead() && unit->getCurrSkill()->getClass() != scDie) {
+	if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
 		unit->kill();
 	}
 	map->assertUnitCells(unit);
@@ -164,15 +146,19 @@ void UnitUpdater::updateUnitCommand(Unit *unit) {
 
 	//commands aren't updated for these skills
 	switch (st->getClass()) {
-		case scWaitForServer:
-		case scFallDown:
-		case scGetUp:
+		case SkillClass::WAIT_FOR_SERVER:
+		case SkillClass::FALL_DOWN:
+		case SkillClass::GET_UP:
 			return;
 
 		default:
 			break;
 	}
-
+	// check if a command being 'watched' has finished
+	if ( unit->getCommandCallback() && unit->getCommandCallback() != unit->getCurrCommand() ) {
+		// Trigger Time...
+		ScriptManager::commandCallback(unit);
+	}
 	//if unit has command process it
 	if (unit->anyCommand()) {
 		unit->getCurrCommand()->getType()->update(this, unit);
@@ -181,22 +167,23 @@ void UnitUpdater::updateUnitCommand(Unit *unit) {
 	//if no commands stop and add stop command or guard command for pets
 	if (!unit->anyCommand() && unit->isOperative()) {
 		const UnitType *ut = unit->getType();
-		unit->setCurrSkill(scStop);
-		if (unit->getMaster() && ut->hasCommandClass(ccGuard)) {
-			unit->giveCommand(new Command(ut->getFirstCtOfClass(ccGuard), CommandFlags(cpAuto), unit->getMaster()));
+		unit->setCurrSkill(SkillClass::STOP);
+		if (unit->getMaster() && ut->hasCommandClass(CommandClass::GUARD)) {
+			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::GUARD), 
+							CommandFlags(CommandProperties::AUTO), unit->getMaster()));
 		} else {
-			if (ut->hasCommandClass(ccStop)) {
-				unit->giveCommand(new Command(ut->getFirstCtOfClass(ccStop), CommandFlags()));
+			if (ut->hasCommandClass(CommandClass::STOP)) {
+				unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
 			}
 		}
 	}
+	// calculate and cache skill progress here.	
+	unit->preProcessSkill();
 }
 
-// ==================== updateStop ====================
-
-
 Command *UnitUpdater::doAutoAttack(Unit *unit) {
-	if (unit->getType()->hasCommandClass(ccAttack) || unit->getType()->hasCommandClass(ccAttackStopped)) {
+	if (unit->getType()->hasCommandClass(CommandClass::ATTACK) 
+	|| unit->getType()->hasCommandClass(CommandClass::ATTACK_STOPPED)) {
 
 		for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
 			const CommandType *ct = unit->getType()->getCommandType(i);
@@ -211,11 +198,11 @@ Command *UnitUpdater::doAutoAttack(Unit *unit) {
 			Unit *sighted = NULL;
 
 			switch (ct->getClass()) {
-				case ccAttack:
+				case CommandClass::ATTACK:
 					asts = ((const AttackCommandType*)ct)->getAttackSkillTypes();
 					break;
 
-				case ccAttackStopped:
+				case CommandClass::ATTACK_STOPPED:
 					asts = ((const AttackStoppedCommandType*)ct)->getAttackSkillTypes();
 					break;
 
@@ -226,7 +213,7 @@ Command *UnitUpdater::doAutoAttack(Unit *unit) {
 			//use it to attack
 			if (asts) {
 				if (attackableOnSight(unit, &sighted, asts, NULL)) {
-					Command *newCommand = new Command(ct, CommandFlags(cpAuto), sighted->getPos());
+					Command *newCommand = new Command(ct, CommandFlags(CommandProperties::AUTO), sighted->getPos());
 					newCommand->setPos2(unit->getPos());
 					return newCommand;
 				}
@@ -239,12 +226,13 @@ Command *UnitUpdater::doAutoAttack(Unit *unit) {
 
 
 Command *UnitUpdater::doAutoRepair(Unit *unit) {
-	if (unit->getType()->hasCommandClass(ccRepair) && unit->isAutoRepairEnabled()) {
+	/*
+	if (unit->getType()->hasCommandClass(CommandClass::REPAIR) && unit->isAutoRepairEnabled()) {
 
 		for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
 			const CommandType *ct = unit->getType()->getCommandType(i);
 
-			if (!unit->getFaction()->isAvailable(ct) || ct->getClass() != ccRepair) {
+			if (!unit->getFaction()->isAvailable(ct) || ct->getClass() != CommandClass::REPAIR) {
 				continue;
 			}
 
@@ -255,23 +243,24 @@ Command *UnitUpdater::doAutoRepair(Unit *unit) {
 
 			if (unit->getEp() >= rst->getEpCost() && repairableOnSight(unit, &sighted, rct, rst->isSelfAllowed())) {
 				Command *newCommand;
-				newCommand = new Command(rct, CommandFlags(cpQueue, cpAuto),
-										 Map::getNearestPos(unit->getPos(), sighted, rst->getMinRange(), rst->getMaxRange()));
+				newCommand = new Command(rct, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO),
+							Map::getNearestPos(unit->getPos(), sighted, rst->getMinRange(), rst->getMaxRange()));
 				newCommand->setPos2(unit->getPos());
 				return newCommand;
 			}
 		}
 	}
+	*/
 	return NULL;
 }
 
 Command *UnitUpdater::doAutoFlee(Unit *unit) {
 
 	Unit *sighted = NULL;
-	if (unit->getType()->hasCommandClass(ccMove) && attackerOnSight(unit, &sighted)) {
+	if (unit->getType()->hasCommandClass(CommandClass::MOVE) && attackerOnSight(unit, &sighted)) {
 		//if there is a friendly military unit that we can heal/repair and is
 		//rougly between us, then be brave
-		if (unit->getType()->hasCommandClass(ccRepair)) {
+		if (unit->getType()->hasCommandClass(CommandClass::REPAIR)) {
 			Vec2f myCenter = unit->getFloatCenteredPos();
 			Vec2f signtedCenter = sighted->getFloatCenteredPos();
 			Vec2f fcenter = (myCenter + signtedCenter) / 2.f;
@@ -289,7 +278,7 @@ Command *UnitUpdater::doAutoFlee(Unit *unit) {
 			//try all of our repair commands
 			for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
 				const CommandType *ct = unit->getType()->getCommandType(i);
-				if (ct->getClass() != ccRepair) {
+				if (ct->getClass() != CommandClass::REPAIR) {
 					continue;
 				}
 				const RepairCommandType *rct = (const RepairCommandType*)ct;
@@ -301,10 +290,13 @@ Command *UnitUpdater::doAutoFlee(Unit *unit) {
 			}
 		}
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();
-		return new Command(unit->getType()->getFirstCtOfClass(ccMove), CommandFlags(cpAuto), escapePos);
+		return new Command(unit->getType()->getFirstCtOfClass(CommandClass::MOVE),
+									CommandFlags(CommandProperties::AUTO), escapePos);
 	}
 	return NULL;
 }
+
+// ==================== updateStop ====================
 
 void UnitUpdater::updateStop(Unit *unit) {
 	Command *command = unit->getCurrCommand();
@@ -313,8 +305,9 @@ void UnitUpdater::updateStop(Unit *unit) {
 	Command *autoCmd;
 
 	// if we have another command then stop sitting on your ass
-	if (unit->getCommands().size() > 1 && unit->getCommands().front()->getType()->getClass() == ccStop) {
+	if (unit->getCommands().size() > 1 && unit->getCommands().front()->getType()->getClass() == CommandClass::STOP) {
 		unit->finishCommand();
+		UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(unit->getId()) + " cancelling stop" );
 		return;
 	}
 
@@ -356,20 +349,22 @@ void UnitUpdater::updateMove(Unit *unit) {
 		pos = command->getPos();
 	}
 
-	switch (pathFinder->findPath(unit, pos)) {
-		case Search::tsOnTheWay:
+	switch (routePlanner->findPath(unit, pos)) {
+		case TravelState::MOVING:
 			unit->setCurrSkill(mct->getMoveSkillType());
 			unit->face(unit->getNextPos());
+			//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(unit->getId()) 
+			//	+ " updating move "  + "Unit is at " + Vec2iToStr(unit->getPos()) 
+			//	+ " now moving into " + Vec2iToStr(unit->getNextPos()) );
 			break;
-
-		case Search::tsBlocked:
-			if (unit->getPath()->isBlocked() && !command->getUnit()) {
+		case TravelState::BLOCKED:
+			unit->setCurrSkill(SkillClass::STOP);
+			if(unit->getPath()->isBlocked() && !command->getUnit()){
 				unit->finishCommand();
 			}
-			break;
-
-		default:
-			unit->finishCommand();
+			break;	
+		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
+			unit->finishCommand();	
 	}
 
 	// if we're doing an auto command, let's make sure we still want to do it
@@ -405,19 +400,20 @@ bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const Attack
 	if (target && !asts->getZone(target->getCurrZone()))
 		unit->finishCommand();
 
-	//if found
-	if (attackableOnRange(unit, &target, act->getAttackSkillTypes(), &ast)) {
+	if(attackableOnRange(unit, &target, act->getAttackSkillTypes(), &ast)) {
+		// found a target in range
 		assert(ast);
 		if (unit->getEp() >= ast->getEpCost()) {
 			unit->setCurrSkill(ast);
 			unit->setTarget(target, true, true);
 		} else {
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 	} else {
 		//compute target pos
 		Vec2i pos;
-		if (attackableOnSight(unit, &target, asts, NULL)) {
+		if ( attackableOnSight(unit, &target, asts, NULL) ) {
+			// found a target, but not in range
 			pos = target->getNearestOccupiedCell(unit->getPos());
 			if (pos != unit->getTargetPos()) {
 				unit->setTargetPos(pos);
@@ -439,18 +435,19 @@ bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const Attack
 		}
 
 		//if unit arrives destPos order has ended
-		switch (pathFinder->findPath(unit, pos)) {
-			case Search::tsOnTheWay:
-				unit->setCurrSkill(act->getMoveSkillType());
-				unit->face(unit->getNextPos());
-				break;
-			case Search::tsBlocked:
-				if (unit->getPath()->isBlocked()) {
-					return true;
-				}
-				break;
-			default:
+		switch(routePlanner->findPath(unit, pos)) {
+		case TravelState::MOVING:
+			unit->setCurrSkill(act->getMoveSkillType());
+			unit->face(unit->getNextPos());
+			break;
+		case TravelState::BLOCKED:
+			unit->setCurrSkill(SkillClass::STOP);
+			if (unit->getPath()->isBlocked()) {
 				return true;
+			}
+			break;
+		default:
+			return true;
 		}
 	}
 
@@ -500,102 +497,94 @@ void UnitUpdater::updateBuild(Unit *unit) {
 
 	assert(command->getUnitType());
 
-	if (unit->getCurrSkill()->getClass() != scBuild) {
+	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
 		//if not building
 
 		int buildingSize = builtUnitType->getSize();
 		Vec2i waypoint;
 
 		// find the nearest place for the builder
-		if (map->getNearestAdjacentFreePos(waypoint, unit, command->getPos(), FieldWalkable, buildingSize)) {
+		if (map->getNearestAdjacentFreePos(waypoint, unit, command->getPos(), Field::LAND, buildingSize)) {
 			if (waypoint != unit->getTargetPos()) {
 				unit->setTargetPos(waypoint);
 				unit->getPath()->clear();
 			}
 		} else {
-			console.addStdMessage("Blocked");
+			console->addStdMessage("Blocked");
 			unit->cancelCurrCommand();
 			return;
 		}
 
-		switch (pathFinder->findPath(unit, waypoint)) {
-			case Search::tsOnTheWay:
+		switch (routePlanner->findPath(unit, waypoint)) {
+			case TravelState::MOVING:
 				unit->setCurrSkill(bct->getMoveSkillType());
 				unit->face(unit->getNextPos());
 				return;
 
-			case Search::tsBlocked:
-				if (unit->getPath()->isBlocked()) {
-					console.addStdMessage("Blocked");
+			case TravelState::BLOCKED:
+				unit->setCurrSkill(SkillClass::STOP);
+				if(unit->getPath()->isBlocked()) {
+					console->addStdMessage("Blocked");
 					unit->cancelCurrCommand();
 				}
 				return;
 
-			case Search::tsArrived:
-				if (unit->getPos() != waypoint) {
-					console.addStdMessage("Blocked");
+			case TravelState::ARRIVED:
+				if(unit->getPos() != waypoint) {
+					console->addStdMessage("Blocked");
 					unit->cancelCurrCommand();
 					return;
 				}
-				// otherwise, we fall through
+			default:
+				; // otherwise, we fall through
 		}
 
 		//if arrived destination
 		assert(command->getUnitType() != NULL);
-		if (map->areFreeCells(command->getPos(), buildingSize, FieldWalkable)) {
+		if (map->areFreeCells(command->getPos(), buildingSize, Field::LAND)) {
 			if (!verifySubfaction(unit, builtUnitType)) {
 				return;
 			}
 
-			// network client has to wait for the server to tell them to begin building.  If the
-			// creates the building, we can have an id mismatch.
-			if (isNetworkClient()) {
-				unit->setCurrSkill(scWaitForServer);
-				// FIXME: Might play start sound multiple times or never at all
-			} else {
-				// late resource allocation
-				if (!command->isReserveResources()) {
-					command->setReserveResources(true);
-					if (unit->checkCommand(*command) != crSuccess) {
-						if (unit->getFactionIndex() == world.getThisFactionIndex()) {
-							console.addStdMessage("BuildingNoRes");
-						}
-						unit->finishCommand();
-						return;
+			// late resource allocation
+			if (!command->isReserveResources()) {
+				command->setReserveResources(true);
+				if (unit->checkCommand(*command) != CommandResult::SUCCESS) {
+					if (unit->getFactionIndex() == world->getThisFactionIndex()) {
+						console->addStdMessage("BuildingNoRes");
 					}
-					unit->getFaction()->applyCosts(command->getUnitType());
+					unit->finishCommand();
+					return;
 				}
-
-				builtUnit = new Unit(world.getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), world.getMap());
-				builtUnit->create();
-
-				if (!builtUnitType->hasSkillClass(scBeBuilt)) {
-					throw runtime_error("Unit " + builtUnitType->getName() + " has no be_built skill");
-				}
-
-				builtUnit->setCurrSkill(scBeBuilt);
-				unit->setCurrSkill(bct->getBuildSkillType());
-				unit->setTarget(builtUnit, true, true);
-				map->prepareTerrain(builtUnit);
-				command->setUnit(builtUnit);
-				unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
-				if (isNetworkGame()) {
-					getServerInterface()->newUnit(builtUnit);
-					getServerInterface()->unitUpdate(unit);
-					getServerInterface()->updateFactions();
-				}
+				unit->getFaction()->applyCosts(command->getUnitType());
 			}
+
+			builtUnit = new Unit(world->getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), world->getMap());
+			builtUnit->create();
+
+			if (!builtUnitType->hasSkillClass(SkillClass::BE_BUILT)) {
+				throw runtime_error("Unit " + builtUnitType->getName() + " has no be_built skill");
+			}
+
+			builtUnit->setCurrSkill(SkillClass::BE_BUILT);
+			unit->setCurrSkill(bct->getBuildSkillType());
+			unit->setTarget(builtUnit, true, true);
+			map->prepareTerrain(builtUnit);
+			command->setUnit(builtUnit);
+			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
+
 			if (!builtUnit->isMobile()) {
-				pathFinder->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
+				world->getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
 			}
+			
 			//play start sound
-			if (unit->getFactionIndex() == world.getThisFactionIndex()) {
+			if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 				SoundRenderer::getInstance().playFx(bct->getStartSound(), unit->getCurrVector(), gameCamera->getPos());
 			}
 		} else {
 			// there are no free cells
 			vector<Unit *>occupants;
-			map->getOccupants(occupants, command->getPos(), buildingSize, ZoneSurface);
+			map->getOccupants(occupants, command->getPos(), buildingSize, Zone::LAND);
 
 			// is construction already under way?
 			Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
@@ -616,7 +605,7 @@ void UnitUpdater::updateBuild(Unit *unit) {
 					// Can they get the fuck out of the way?
 					vector<Unit *>::const_iterator i;
 					for (i = occupants.begin();
-							i != occupants.end() && (*i)->getType()->hasSkillClass(scMove); ++i) ;
+							i != occupants.end() && (*i)->getType()->hasSkillClass(SkillClass::MOVE); ++i) ;
 					if (i == occupants.end()) {
 						// they all have a move command, so we'll wait
 						return;
@@ -628,9 +617,9 @@ void UnitUpdater::updateBuild(Unit *unit) {
 				// blocked by non-moving units, surface objects (trees, rocks, etc.) or build area
 				// contains deeply submerged terain
 				unit->cancelCurrCommand();
-				unit->setCurrSkill(scStop);
-				if (unit->getFactionIndex() == world.getThisFactionIndex()) {
-					console.addStdMessage("BuildingNoPlace");
+				unit->setCurrSkill(SkillClass::STOP);
+				if (unit->getFactionIndex() == world->getThisFactionIndex()) {
+					console->addStdMessage("BuildingNoPlace");
 				}
 			}
 		}
@@ -639,26 +628,21 @@ void UnitUpdater::updateBuild(Unit *unit) {
 		Unit *builtUnit = command->getUnit();
 
 		if (builtUnit && builtUnit->getType() != builtUnitType) {
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		} else if (!builtUnit || builtUnit->isBuilt()) {
 			unit->finishCommand();
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		} else if (builtUnit->repair()) {
 			//building finished
 			unit->finishCommand();
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
 			scriptManager->onUnitCreated(builtUnit);
-			if (unit->getFactionIndex() == world.getThisFactionIndex()) {
+			if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 				SoundRenderer::getInstance().playFx(
 					bct->getBuiltSound(),
 					unit->getCurrVector(),
 					gameCamera->getPos());
-			}
-			if (isNetworkServer()) {
-				getServerInterface()->unitUpdate(unit);
-				getServerInterface()->unitUpdate(builtUnit);
-				getServerInterface()->updateFactions();
 			}
 		}
 	}
@@ -672,44 +656,35 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 	const HarvestCommandType *hct = static_cast<const HarvestCommandType*>(command->getType());
 	Vec2i targetPos;
 
-	if (unit->getCurrSkill()->getClass() != scHarvest) {
+	if (unit->getCurrSkill()->getClass() != SkillClass::HARVEST) {
 		//if not working
 		if (!unit->getLoadCount()) {
 			//if not loaded go for resources
 			Resource *r = map->getTile(Map::toTileCoords(command->getPos()))->getResource();
 			if (r && hct->canHarvest(r->getType())) {
-				//if can harvest dest. pos
-				if (unit->getPos().dist(command->getPos()) < harvestDistance
-						&&  map->isResourceNear(unit->getPos(), r->getType(), targetPos)) {
-					//if it finds resources it starts harvesting
-					unit->setCurrSkill(hct->getHarvestSkillType());
-					unit->setTargetPos(targetPos);
-					unit->face(targetPos);
-					unit->setLoadCount(0);
-					unit->setLoadType(map->getTile(Map::toTileCoords(targetPos))->getResource()->getType());
-				} else { //if not continue walking
-					switch (pathFinder->findPathToResource(unit, command->getPos(), r->getType())) {
-						case Search::tsOnTheWay:
-							unit->setCurrSkill(hct->getMoveSkillType());
-							unit->face(unit->getNextPos());
-							break;
-						case Search::tsArrived:
-							for (int i = 0; i < 8; ++i) { // reset target
-								Vec2i cPos = unit->getPos() + Search::OffsetsSize1Dist1[i];
-								Resource *res = map->getTile(Map::toTileCoords(cPos))->getResource();
-								if (res && hct->canHarvest(res->getType())) {
-									command->setPos(cPos);
-									break;
-								}
-							}
-							//command->setPos (
-						default:
-							break;
-					}
+				switch (routePlanner->findPathToResource(unit, command->getPos(), r->getType())) {
+					case TravelState::ARRIVED:
+						if (map->isResourceNear(unit->getPos(), r->getType(), targetPos)) {
+							//if it finds resources it starts harvesting
+							unit->setCurrSkill(hct->getHarvestSkillType());
+							unit->setTargetPos(targetPos);
+							command->setPos(targetPos);
+							unit->face(targetPos);
+							unit->setLoadCount(0);
+							unit->setLoadType(map->getTile(Map::toTileCoords(targetPos))->getResource()->getType());
+						}
+						break;
+					case TravelState::MOVING:
+						unit->setCurrSkill(hct->getMoveSkillType());
+						unit->face(unit->getNextPos());
+						break;
+					default:
+						unit->setCurrSkill(SkillClass::STOP);
+						break;
 				}
 			} else {
 				//if can't harvest, search for another resource
-				unit->setCurrSkill(scStop);
+				unit->setCurrSkill(SkillClass::STOP);
 				if (!searchForResource(unit, hct)) {
 					unit->finishCommand();
 					//FIXME don't just stand around at the store!!
@@ -718,43 +693,37 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 			}
 		} else {
 			//if loaded, return to store
-			Unit *store = world.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
+			Unit *store = world->nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
 			if (store) {
-				switch (pathFinder->findPathToStore(unit, store->getNearestOccupiedCell(unit->getPos()), store)) {
-					case Search::tsOnTheWay:
+				switch (routePlanner->findPathToStore(unit, store)) {
+					case TravelState::MOVING:
 						unit->setCurrSkill(hct->getMoveLoadedSkillType());
 						unit->face(unit->getNextPos());
 						break;
-					default:
+					case TravelState::BLOCKED:
+						unit->setCurrSkill(hct->getStopLoadedSkillType());
 						break;
+					default:
+						; // otherwise, we fall through
 				}
-
-				//world.changePosCells(unit,unit->getPos()+unit->getDest());
 				if (map->isNextTo(unit->getPos(), store)) {
-
 					//update resources
 					int resourceAmount = unit->getLoadCount();
-					//
-					// Just do this all players ???
+					// Just do this for all players ???
 					if (unit->getFaction()->getCpuUltraControl()) {
 						resourceAmount = (int)(resourceAmount * gameSettings.getResourceMultilpier(unit->getFactionIndex()));
 						//resourceAmount *= ultraResourceFactor; // Pull from GameSettings
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
-					world.getStats().harvest(unit->getFactionIndex(), resourceAmount);
+					world->getStats().harvest(unit->getFactionIndex(), resourceAmount);
 					scriptManager->onResourceHarvested();
 
 					//if next to a store unload resources
 					unit->getPath()->clear();
-					unit->setCurrSkill(scStop);
+					unit->setCurrSkill(SkillClass::STOP);
 					unit->setLoadCount(0);
-					if (isNetworkServer()) {
-						// FIXME: wasteful full update here
-						getServerInterface()->unitUpdate(unit);
-						getServerInterface()->updateFactions();
-					}
 				}
-			} else {
+			} else { // no store found, give up
 				unit->finishCommand();
 			}
 		}
@@ -771,13 +740,12 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 
 				//if resource exausted, then delete it and stop
 				if (r->decAmount(1)) {
-					// let the pathfinder know
+					// let the cartographer know
 					Vec2i rPos = r->getPos();
 					sc->deleteResource();
-					pathFinder->updateMapMetrics(rPos, 2);
+					world->getCartographer()->updateMapMetrics(rPos, 2);
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 				}
-
 				if (unit->getLoadCount() == hct->getMaxLoad()) {
 					unit->setCurrSkill(hct->getStopLoadedSkillType());
 					unit->getPath()->clear();
@@ -789,7 +757,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 				unit->setCurrSkill(hct->getStopLoadedSkillType());
 			} else {
 				unit->finishCommand();
-				unit->setCurrSkill(scStop);
+				unit->setCurrSkill(SkillClass::STOP);
 			}
 		}
 	}
@@ -800,21 +768,21 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 void UnitUpdater::updateRepair(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const CommandType *ct = command->getType();
-	assert(ct->getClass() == ccRepair);
+	assert(ct->getClass() == CommandClass::REPAIR);
 
 	const RepairCommandType *rct = static_cast<const RepairCommandType*>(ct);
 	const RepairSkillType *rst = rct->getRepairSkillType();
-	bool repairThisFrame = unit->getCurrSkill()->getClass() == scRepair;
+	bool repairThisFrame = unit->getCurrSkill()->getClass() == SkillClass::REPAIR;
 	Unit *repaired = command->getUnit();
 
 	// If the unit I was supposed to repair died or is already fixed then finish
 	if (repaired && (repaired->isDead() || !repaired->isDamaged())) {
-		unit->setCurrSkill(scStop);
+		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
 		return;
 	}
 
-	if (command->isAuto() && unit->getType()->hasCommandClass(ccAttack)) {
+	if (command->isAuto() && unit->getType()->hasCommandClass(CommandClass::ATTACK)) {
 		Command *autoAttackCmd;
 		// attacking is 1st priority
 
@@ -834,7 +802,7 @@ void UnitUpdater::updateRepair(Unit *unit) {
 		Vec2i targetPos;
 		if (repairableOnSight(unit, &repaired, rct, rst->isSelfAllowed())) {
 			if (!map->getNearestFreePos(targetPos, unit, repaired, 1, rst->getMaxRange())) {
-				unit->setCurrSkill(scStop);
+				unit->setCurrSkill(SkillClass::STOP);
 				unit->finishCommand();
 				return;
 			}
@@ -858,54 +826,56 @@ void UnitUpdater::updateRepair(Unit *unit) {
 			targetPos = command->getPos();
 		}
 
-		switch (pathFinder->findPath(unit, targetPos)) {
-			case Search::tsArrived:
+		switch (routePlanner->findPath(unit, targetPos)) {
+			case TravelState::ARRIVED:
 				if (repaired && unit->getPos() != targetPos) {
 					// presume blocked
-					unit->setCurrSkill(scStop);
+					unit->setCurrSkill(SkillClass::STOP);
 					unit->finishCommand();
 					break;
 				}
 				if (repaired) {
 					unit->setCurrSkill(rst);
 				} else {
-					unit->setCurrSkill(scStop);
+					unit->setCurrSkill(SkillClass::STOP);
 					unit->finishCommand();
 				}
 				break;
-
-			case Search::tsOnTheWay:
+			case TravelState::MOVING:
 				unit->setCurrSkill(rct->getMoveSkillType());
 				unit->face(unit->getNextPos());
 				break;
 
-			case Search::tsBlocked:
-				if (unit->getPath()->isBlocked()) {
-					unit->setCurrSkill(scStop);
+			case TravelState::BLOCKED:
+				unit->setCurrSkill(SkillClass::STOP);
+				if(unit->getPath()->isBlocked()){
+					unit->setCurrSkill(SkillClass::STOP);
 					unit->finishCommand();
 				}
 				break;
+			default:
+				; // otherwise, we fall through
 		}
 	}
 
 	if (repaired && !repaired->isDamaged()) {
-		unit->setCurrSkill(scStop);
+		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
 	}
 
-	if (repairThisFrame && unit->getCurrSkill()->getClass() == scRepair) {
+	if (repairThisFrame && unit->getCurrSkill()->getClass() == SkillClass::REPAIR) {
 		//if repairing
 		if (repaired) {
 			unit->setTarget(repaired, true, true);
 		}
 
 		if (!repaired) {
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		} else {
 			//shiney
 			if (rst->getSplashParticleSystemType()) {
 				const Tile *sc = map->getTile(Map::toTileCoords(repaired->getCenteredPos()));
-				bool visible = sc->isVisible(world.getThisTeamIndex());
+				bool visible = sc->isVisible(world->getThisTeamIndex());
 
 				SplashParticleSystem *psSplash = rst->getSplashParticleSystemType()->createSplashParticleSystem();
 				psSplash->setPos(repaired->getCurrVector());
@@ -918,24 +888,19 @@ void UnitUpdater::updateRepair(Unit *unit) {
 			assert(repaired->isAlive() && repaired->getHp() > 0);
 
 			if (repaired->repair(rst->getAmount(), rst->getMultiplier())) {
-				unit->setCurrSkill(scStop);
+				unit->setCurrSkill(SkillClass::STOP);
 				if (!wasBuilt) {
 					//building finished
 					scriptManager->onUnitCreated(repaired);
-					if (unit->getFactionIndex() == world.getThisFactionIndex()) {
+					if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 						// try to find finish build sound
-						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(ccBuild);
+						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::BUILD);
 						if (bct) {
 							SoundRenderer::getInstance().playFx(
 								bct->getBuiltSound(),
 								unit->getCurrVector(),
 								gameCamera->getPos());
 						}
-					}
-					if (isNetworkServer()) {
-						getServerInterface()->unitUpdate(unit);
-						getServerInterface()->unitUpdate(repaired);
-						getServerInterface()->updateFactions();
 					}
 				}
 			}
@@ -952,7 +917,7 @@ void UnitUpdater::updateProduce(Unit *unit) {
 	const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(command->getType());
 	Unit *produced;
 
-	if (unit->getCurrSkill()->getClass() != scProduce) {
+	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		//if not producing
 		if (!verifySubfaction(unit, pct->getProducedUnit())) {
 			return;
@@ -964,14 +929,7 @@ void UnitUpdater::updateProduce(Unit *unit) {
 		unit->update2();
 
 		if (unit->getProgress2() > pct->getProduced()->getProductionTime()) {
-			if (isNetworkClient()) {
-				// client predict, presume the server will send us the unit soon.
-				unit->finishCommand();
-				unit->setCurrSkill(scStop);
-				return;
-			}
-
-			produced = new Unit(world.getNextUnitId(), Vec2i(0), pct->getProducedUnit(), unit->getFaction(), world.getMap());
+			produced = new Unit(world->getNextUnitId(), Vec2i(0), pct->getProducedUnit(), unit->getFaction(), world->getMap());
 
 			//if no longer a valid subfaction, let them have the unit, but make
 			//sure it doesn't advance the subfaction
@@ -980,15 +938,14 @@ void UnitUpdater::updateProduce(Unit *unit) {
 				unit->getFaction()->checkAdvanceSubfaction(pct->getProducedUnit(), true);
 			}
 
-			//place unit creates the unit
-			if (!world.placeUnit(unit->getCenteredPos(), 10, produced)) {
+			if (!world->placeUnit(unit->getCenteredPos(), 10, produced)) {
 				unit->cancelCurrCommand();
 				delete produced;
 			} else {
 				produced->create();
 				produced->born();
-				scriptManager->onUnitCreated(produced);
-				world.getStats().produce(unit->getFactionIndex());
+				scriptManager->onUnitCreated( produced );
+				world->getStats().produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 
 				if (ct) {
@@ -1001,13 +958,9 @@ void UnitUpdater::updateProduce(Unit *unit) {
 				}
 
 				unit->finishCommand();
-
-				if (isNetworkServer()) {
-					getServerInterface()->newUnit(produced);
-				}
 			}
 
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
 }
@@ -1023,11 +976,11 @@ void UnitUpdater::updateUpgrade(Unit *unit) {
 
 	if (!verifySubfaction(unit, uct->getProduced())) {
 		unit->cancelCommand();
-		unit->setCurrSkill(scStop);
+		unit->setCurrSkill(SkillClass::STOP);
 		return;
 	}
 
-	if (unit->getCurrSkill()->getClass() != scUpgrade) {
+	if (unit->getCurrSkill()->getClass() != SkillClass::UPGRADE) {
 		//if not producing
 		unit->setCurrSkill(uct->getUpgradeSkillType());
 		unit->getFaction()->checkAdvanceSubfaction(uct->getProducedUpgrade(), false);
@@ -1038,18 +991,10 @@ void UnitUpdater::updateUpgrade(Unit *unit) {
 		}
 
 		if (unit->getProgress2() >= uct->getProduced()->getProductionTime()) {
-			if (isNetworkClient()) {
-				// clients will wait for the server to tell them that the upgrade is finished
-				return;
-			}
 			unit->finishCommand();
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 			unit->getFaction()->finishUpgrade(uct->getProducedUpgrade());
 			unit->getFaction()->checkAdvanceSubfaction(uct->getProducedUpgrade(), true);
-			if (isNetworkServer()) {
-				getServerInterface()->unitUpdate(unit);
-				getServerInterface()->updateFactions();
-			}
 		}
 	}
 }
@@ -1067,33 +1012,24 @@ void UnitUpdater::updateMorph(Unit *unit) {
 		return;
 	}
 
-	if (unit->getCurrSkill()->getClass() != scMorph) {
+	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
 		//if not morphing, check space
-		bool gotSpace = false;
-		// redo field
-		Fields mfs = mct->getMorphUnit()->getFields();
-
+		// determine morph unit field
+		Fields mfs = mct->getMorphUnit()->getFields ();
 		Field mf;
-		if (mfs.get(FieldWalkable)){
-			mf = FieldWalkable;
-		} else if (mfs.get(FieldAir)) {
-			mf = FieldAir;
-		}
-		if (mfs.get(FieldAmphibious)) {
-			mf = FieldAmphibious;
-		} else if (mfs.get(FieldAnyWater)) {
-			mf = FieldAnyWater;
-		} else if (mfs.get(FieldDeepWater)) {
-			mf = FieldDeepWater;
-		}
+		if ( mfs.get ( Field::LAND ) ) mf = Field::LAND;
+		else if ( mfs.get ( Field::AIR ) ) mf = Field::AIR;
+		if ( mfs.get (Field::AMPHIBIOUS) ) mf = Field::AMPHIBIOUS;
+		else if ( mfs.get (Field::ANY_WATER) ) mf = Field::ANY_WATER;
+		else if ( mfs.get (Field::DEEP_WATER) ) mf = Field::DEEP_WATER;
 
-		if (map->areFreeCellsOrHasUnit(unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit)) {
+		if (map->areFreeCellsOrHasUnit (unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit)) {
 			unit->setCurrSkill(mct->getMorphSkillType());
 			unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), false);
 		} else {
-			if (unit->getFactionIndex() == world.getThisFactionIndex())
+			if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 				Game::getInstance()->getConsole()->addStdMessage("InvalidPosition");
-			unit->cancelCurrCommand();
+			}			unit->cancelCurrCommand();
 		}
 	} else {
 		unit->update2();
@@ -1102,25 +1038,23 @@ void UnitUpdater::updateMorph(Unit *unit) {
 			//finish the command
 			if (unit->morph(mct)) {
 				unit->finishCommand();
-				if (gui.isSelected(unit)) {
-					gui.onSelectionChanged();
+				if (gui->isSelected(unit)) {
+					gui->onSelectionChanged();
 				}
 				scriptManager->onUnitCreated(unit);
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
 				if (mapUpdate) {
-					pathFinder->updateMapMetrics(unit->getPos(), unit->getSize());
-				}
-				if (isNetworkServer()) {
-					getServerInterface()->unitMorph(unit);
-					getServerInterface()->updateFactions();
+					// obstacle added or removed, update annotated maps
+					bool adding = !mct->getMorphUnit()->isMobile();
+					world->getCartographer()->updateMapMetrics(unit->getPos(), unit->getSize());
 				}
 			} else {
 				unit->cancelCurrCommand();
-				if (unit->getFactionIndex() == world.getThisFactionIndex()) {
-					console.addStdMessage("InvalidPosition");
+				if (unit->getFactionIndex() == world->getThisFactionIndex()) {
+					console->addStdMessage("InvalidPosition");
 				}
 			}
-			unit->setCurrSkill(scStop);
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
 }
@@ -1153,7 +1087,7 @@ void UnitUpdater::updateGuard(Unit *unit) {
 	}
 
 	if (updateAttackGeneric(unit, command, gct, NULL, pos)) {
-		unit->setCurrSkill(scStop);
+		unit->setCurrSkill(SkillClass::STOP);
 	}
 }
 
@@ -1205,8 +1139,8 @@ void UnitUpdater::updateEmanations(Unit *unit) {
 			i != unit->getGetEmanations().end(); i++) {
 		singleEmanation.resize(1);
 		singleEmanation[0] = *i;
-		applyEffects(unit, singleEmanation, unit->getPos(), FieldWalkable, (*i)->getRadius());
-		applyEffects(unit, singleEmanation, unit->getPos(), FieldAir, (*i)->getRadius());
+		applyEffects(unit, singleEmanation, unit->getPos(), Field::LAND, (*i)->getRadius());
+		applyEffects(unit, singleEmanation, unit->getPos(), Field::AIR, (*i)->getRadius());
 	}
 }
 
@@ -1264,17 +1198,12 @@ void UnitUpdater::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &t
 	}
 }
 
-void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, float distance) {
-
-	if (isNetworkClient()) {
-		return;
-	}
-
+void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, float distance){
 	//get vars
 	float damage = (float)attacker->getAttackStrength(ast);
 	int var = ast->getAttackVar();
 	int armor = attacked->getArmor();
-	float damageMultiplier = world.getTechTree()->getDamageMultiplier(ast->getAttackType(),
+	float damageMultiplier = world->getTechTree()->getDamageMultiplier(ast->getAttackType(),
 							 attacked->getType()->getArmorType());
 	int startingHealth = attacked->getHp();
 	int actualDamage;
@@ -1290,31 +1219,29 @@ void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attac
 
 	//damage the unit
 	if (attacked->decHp(static_cast<int>(damage))) {
-		world.doKill(attacker, attacked);
+		world->doKill(attacker, attacked);
 		actualDamage = startingHealth;
-	} else
+	} 
+	else {
 		actualDamage = (int)roundf(damage);
+	}
 
 	//add stolen health to attacker
 	if (attacker->getAttackPctStolen(ast) || ast->getAttackPctVar()) {
 		float pct = attacker->getAttackPctStolen(ast)
-					+ random.randRange(-ast->getAttackPctVar(), ast->getAttackPctVar());
+				+ random.randRange(-ast->getAttackPctVar(), ast->getAttackPctVar());
 		int stolen = (int)roundf((float)actualDamage * pct);
 		if (stolen && attacker->doRegen(stolen, 0)) {
 			// stealing a negative percentage and dying?
-			world.doKill(attacker, attacker);
+			world->doKill(attacker, attacker);
 		}
 	}
-	if (isNetworkServer()) {
-		getServerInterface()->minorUnitUpdate(attacker);
-		getServerInterface()->minorUnitUpdate(attacked);
-	}
-
 	//complain
+	/*
 	const Vec3f &attackerVec = attacked->getCurrVector();
-	if (!gui.isVisible(Vec2i((int)roundf(attackerVec.x), (int)roundf(attackerVec.y)))) {
+	if (!gui->isVisible(Vec2i((int)roundf(attackerVec.x), (int)roundf(attackerVec.y)))) {
 		attacked->getFaction()->attackNotice(attacked);
-	}
+	}*/
 }
 
 void UnitUpdater::startAttackSystems(Unit *unit, const AttackSkillType *ast) {
@@ -1332,7 +1259,7 @@ void UnitUpdater::startAttackSystems(Unit *unit, const AttackSkillType *ast) {
 	//make particle system
 	const Tile *sc = map->getTile(Map::toTileCoords(unit->getPos()));
 	const Tile *tsc = map->getTile(Map::toTileCoords(unit->getTargetPos()));
-	bool visible = sc->isVisible(world.getThisTeamIndex()) || tsc->isVisible(world.getThisTeamIndex());
+	bool visible = sc->isVisible(world->getThisTeamIndex()) || tsc->isVisible(world->getThisTeamIndex());
 
 	//projectile
 	if (pstProj != NULL) {
@@ -1356,7 +1283,7 @@ void UnitUpdater::startAttackSystems(Unit *unit, const AttackSkillType *ast) {
 		}
 
 		psProj->setPath(startPos, endPos);
-		if (pstProj->isTracking() && unit->getTarget()) {
+		if(pstProj->isTracking() && unit->getTarget()) {
 			psProj->setTarget(unit->getTarget());
 			psProj->setObserver(new ParticleDamager(unit, unit->getTarget(), this, gameCamera));
 		} else {
@@ -1396,7 +1323,7 @@ void UnitUpdater::startAttackSystems(Unit *unit, const AttackSkillType *ast) {
 
 // Apply effects to a specific location, with or without splash
 void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes,
-							   const Vec2i &targetPos, Field targetField, int splashRadius) {
+				const Vec2i &targetPos, Field targetField, int splashRadius) {
 
 	Unit *target;
 
@@ -1444,7 +1371,7 @@ void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes, Uni
 						: (*i)->isEffectsFoe()) &&
 
 				// building/normal unit test
-				(target->getType()->isOfClass(ucBuilding)
+				(target->getType()->isOfClass(UnitClass::BUILDING)
 						? (*i)->isEffectsBuildings()
 						: (*i)->isEffectsNormalUnits()) &&
 
@@ -1459,13 +1386,13 @@ void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes, Uni
 						: true)) {
 
 			float strength = (*i)->isScaleSplashStrength() ? 1.0f / (float)(distance + 1) : 1.0f;
-			Effect *primaryEffect = new Effect((*i), source, NULL, strength, target, world.getTechTree());
+			Effect *primaryEffect = new Effect((*i), source, NULL, strength, target, world->getTechTree());
 
 			target->add(primaryEffect);
 
 			for (EffectTypes::const_iterator j = (*i)->getRecourse().begin();
 					j != (*i)->getRecourse().end(); j++) {
-				source->add(new Effect((*j), NULL, primaryEffect, strength, source, world.getTechTree()));
+				source->add(new Effect((*j), NULL, primaryEffect, strength, source, world->getTechTree()));
 			}
 		}
 	}
@@ -1475,11 +1402,11 @@ void UnitUpdater::appyEffect(Unit *u, Effect *e) {
 	if (u->add(e)) {
 		Unit *attacker = e->getSource();
 		if (attacker) {
-			world.getStats().kill(attacker->getFactionIndex(), u->getFactionIndex());
+			world->getStats().kill(attacker->getFactionIndex(), u->getFactionIndex());
 			attacker->incKills();
 		} else if (e->getRoot()) {
 			// if killed by a recourse effect, this was suicide
-			world.getStats().kill(u->getFactionIndex(), u->getFactionIndex());
+			world->getStats().kill(u->getFactionIndex(), u->getFactionIndex());
 		}
 	}
 }
@@ -1525,7 +1452,7 @@ bool UnitUpdater::searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
 
 	PosCircularIteratorOrdered pci(*map, unit->getCurrCommand()->getPos(),
-								   world.getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
+			world->getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
 
 	while (pci.getNext(pos)) {
 		Resource *r = map->getTile(Map::toTileCoords(pos))->getResource();
@@ -1542,14 +1469,14 @@ inline bool UnitUpdater::attackerOnSight(const Unit *unit, Unit **rangedPtr) {
 	return unitOnRange(unit, range, rangedPtr, NULL, NULL);
 }
 
-inline bool UnitUpdater::attackableOnSight(const Unit *unit, Unit **rangedPtr,
-		const AttackSkillTypes *asts, const AttackSkillType **past) {
+inline bool UnitUpdater::attackableOnSight(const Unit *unit, Unit **rangedPtr, 
+					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	int range = unit->getSight();
 	return unitOnRange(unit, range, rangedPtr, asts, past);
 }
 
-inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr,
-		const AttackSkillTypes *asts, const AttackSkillType **past) {
+inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr, 
+					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	// can't attack beyond range of vision
 	int range = min(unit->getMaxRange(asts), unit->getSight());
 	return unitOnRange(unit, range, rangedPtr, asts, past);
@@ -1557,15 +1484,15 @@ inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr,
 
 //if the unit has any enemy on range
 /** rangedPtr should point to a pointer that is either NULL or a valid Unit */
-bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr,
-							  const AttackSkillTypes *asts, const AttackSkillType **past) {
+bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr, 
+					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	Vec2f floatCenter = unit->getFloatCenteredPos();
 	float halfSize = (float)unit->getType()->getSize() / 2.f;
 	float distance;
 	bool needDistance = false;
 
-	if (*rangedPtr && ((*rangedPtr)->isDead()
-					   ||  !asts->getZone((*rangedPtr)->getCurrZone())))
+	if ( *rangedPtr && ( (*rangedPtr)->isDead() 
+	||	 !asts->getZone((*rangedPtr)->getCurrZone()) ) )
 		*rangedPtr = NULL;
 
 	if (*rangedPtr) {
@@ -1573,51 +1500,51 @@ bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr,
 	} else {
 		Targets enemies;
 		Vec2i pos;
-		PosCircularIteratorOrdered pci(*map, unit->getPos(), world.getPosIteratorFactory()
+		PosCircularIteratorOrdered pci(*map, unit->getPos(), world->getPosIteratorFactory()
 									   .getInsideOutIterator(1, (int)roundf(range + halfSize)));
 
 		while (pci.getNext(pos, distance)) {
 
-			//all fields
-			for (int k = 0; k < ZoneCount; k++) {
-				Zone f = static_cast<Zone>(k);
+			//all zones
+			for (int k = 0; k < Zone::COUNT; k++) {
+				Zone z = enum_cast<Zone>(k);
 
-				//check field
-				if (!asts || asts->getZone(f)) {
-					Unit *possibleEnemy = map->getCell(pos)->getUnit(f);
+				//check zone
+				if (!asts || asts->getZone(z)) {
+					Unit *possibleEnemy= map->getCell(pos)->getUnit(z);
 
 					//check enemy
 					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)) {
 						// If enemy and has an attack command we can short circut this loop now
-						if (possibleEnemy->getType()->hasCommandClass(ccAttack)) {
+						if (possibleEnemy->getType()->hasCommandClass(CommandClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;
 							goto unitOnRange_exitLoop;
 						}
 						// otherwise, we'll record it and figure out who to slap later.
-						enemies.record(possibleEnemy, distance);
+						enemies.record(possibleEnemy, (int)distance);
 					}
 				}
 			}
 		}
-
+	
 		if (!enemies.size()) {
 			return false;
 		}
-
+	
 		*rangedPtr = enemies.getNearest();
 		needDistance = true;
 	}
 unitOnRange_exitLoop:
 	assert(*rangedPtr);
-
-	if (needDistance) {
+	
+	if(needDistance) {
 		float targetHalfSize = (float)(*rangedPtr)->getType()->getSize() / 2.f;
 		distance = floatCenter.dist((*rangedPtr)->getFloatCenteredPos()) - targetHalfSize;
 	}
 
 	// check to see if we like this target.
-	if (asts && past) {
-		return (bool)(*past = asts->getPreferredAttack(unit, *rangedPtr, distance - halfSize));
+	if(asts && past) {
+		return (bool)(*past = asts->getPreferredAttack(unit, *rangedPtr, (int)(distance - halfSize)));
 	}
 	return true;
 }
@@ -1659,10 +1586,10 @@ bool UnitUpdater::repairableOnRange(
 	float distance;
 	PosCircularIteratorSimple pci(*map, center, range);
 	while (pci.getNext(pos, distance)) {
-		//all fields
-		for (int f = 0; f < FieldCount; f++) {
-			Unit *candidate = map->getCell(pos)->getUnit((Field)f);
-
+		//all zones
+		for (int z = 0; z < Zone::COUNT; z++) {
+			Unit *candidate = map->getCell(pos)->getUnit(enum_cast<Field>(z));
+	
 			//is it a repairable?
 			if (candidate
 					&& (allowSelf || candidate != unit)
@@ -1671,11 +1598,11 @@ bool UnitUpdater::repairableOnRange(
 					&& unit->isAlly(candidate)
 					&& (!rst->isPetOnly() || unit->isPet(candidate))
 					&& (!damagedOnly || candidate->isDamaged())
-					&& (!militaryOnly || candidate->getType()->hasCommandClass(ccAttack))
+					&& (!militaryOnly || candidate->getType()->hasCommandClass(CommandClass::ATTACK))
 					&& rct->isRepairableUnitType(candidate->getType())) {
-
+	
 				//record the nearest distance to target (target may be on multiple cells)
-				repairables.record(candidate, distance);
+				repairables.record(candidate, (int)distance);
 			}
 		}
 	}
@@ -1691,8 +1618,8 @@ bool UnitUpdater::repairableOnRange(
 	//heal cloesest ally that can attack (and are probably fighting) first.
 	//if none, go for units that are less than 20%
 	//otherwise, take the nearest repairable unit
-	if (!(*rangedPtr = repairables.getNearest(scAttack))
-			&& !(*rangedPtr = repairables.getNearest(scCount, 0.2f))
+	if(!(*rangedPtr = repairables.getNearest(SkillClass::ATTACK))
+			&& !(*rangedPtr = repairables.getNearest(SkillClass::COUNT, 0.2f))
 			&& !(*rangedPtr = repairables.getNearest())) {
 		return false;
 	}
@@ -1700,7 +1627,7 @@ bool UnitUpdater::repairableOnRange(
 }
 
 // =====================================================
-// class ParticleDamager
+//	class ParticleDamager
 // =====================================================
 
 ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, UnitUpdater *unitUpdater, const GameCamera *gameCamera) {
@@ -1736,5 +1663,4 @@ void ParticleDamager::update(ParticleSystem *particleSystem) {
 	delete this;
 }
 
-}
-}//end namespace
+}}//end namespace

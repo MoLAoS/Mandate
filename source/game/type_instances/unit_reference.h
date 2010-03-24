@@ -18,7 +18,6 @@
 namespace Glest{ namespace Game{
 
 using Shared::Xml::XmlNode;
-using Shared::Platform::NetworkDataBuffer;
 using Shared::Platform::int32;
 using Shared::Platform::int8;
 
@@ -49,8 +48,6 @@ public:
 	void save(XmlNode *node) const;
 
 	size_t getNetSize() const				{return sizeof(int32) + sizeof(int8);}
-	void read(NetworkDataBuffer &buf, World *world);
-	void write(NetworkDataBuffer &buf) const;
 };
 
 

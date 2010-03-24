@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 MartiÃ±o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -193,6 +193,19 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 		throw std::runtime_error("Invalid difficulty");
 	}
 
+	const XmlNode *tmp = scenarioNode->getOptionalChild("fog-of-war");
+	if ( tmp ) {
+		scenarioInfo->fogOfWar = tmp->getAttribute("value")->getBoolValue();
+	} else {
+		scenarioInfo->fogOfWar = true;
+	}
+	tmp = scenarioNode->getOptionalChild("shroud-of-darkness");
+	if ( tmp ) {
+		scenarioInfo->shroudOfDarkness = tmp->getAttribute("value")->getBoolValue();
+	} else {
+		scenarioInfo->shroudOfDarkness = true;
+	}
+
 	const XmlNode *playersNode = scenarioNode->getChild("players");
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		const XmlNode* playerNode = playersNode->getChild("player", i);
@@ -201,13 +214,13 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 
 		scenarioInfo->factionControls[i] = factionControl;
 
-		if (factionControl != ctClosed) {
+		if (factionControl != ControlType::CLOSED) {
 			int teamIndex = playerNode->getAttribute("team")->getIntValue();
 			XmlAttribute *nameAttrib = playerNode->getAttribute("name", false);
 			XmlAttribute *resMultAttrib = playerNode->getAttribute("resource-multiplier", false);
 			if (nameAttrib) {
 				scenarioInfo->playerNames[i] = nameAttrib->getValue();
-			} else if (factionControl == ctHuman) {
+			} else if (factionControl == ControlType::HUMAN) {
 				scenarioInfo->playerNames[i] = Config::getInstance().getNetPlayerName();
 			} else {
 				scenarioInfo->playerNames[i] = "CPU Player";
@@ -215,9 +228,13 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 			if (resMultAttrib) {
 				scenarioInfo->resourceMultipliers[i] = resMultAttrib->getFloatValue();
 			} else {
-				if (factionControl == ctCpuUltra) {
+				if (factionControl == ControlType::CPU_MEGA) {
+					scenarioInfo->resourceMultipliers[i] = 4.f;
+				}
+				else if (factionControl == ControlType::CPU_ULTRA) {
 					scenarioInfo->resourceMultipliers[i] = 3.f;
-				} else {
+				} 
+				else {
 					scenarioInfo->resourceMultipliers[i] = 1.f;
 				}
 			}
@@ -240,7 +257,7 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 	//add player info
 	scenarioInfo->desc = lang.get("Player") + ": ";
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		if (scenarioInfo->factionControls[i] == ctHuman) {
+		if (scenarioInfo->factionControls[i] == ControlType::HUMAN) {
 			scenarioInfo->desc += formatString(scenarioInfo->factionTypeNames[i]);
 			break;
 		}
@@ -257,13 +274,19 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 }
 
 void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gs) {
-
+	string scenarioPath = "gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
+							+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()];
+	// map in scenario dir ?
+	string test = scenarioPath + "/" + scenarioInfo->mapName + ".gbm";
+	if ( fileExists(test) ) {
+		gs->setMapPath(test);
+	} else {
+		gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
+	}
 	gs->setDescription(formatString(scenarioFiles[listBoxScenario.getSelectedItemIndex()]));
-	gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
 	gs->setTilesetPath(string("tilesets/") + scenarioInfo->tilesetName);
 	gs->setTechPath(string("techs/") + scenarioInfo->techTreeName);
-	gs->setScenarioPath("gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
-						+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()]);
+	gs->setScenarioPath(scenarioPath);
 	gs->setDefaultUnits(scenarioInfo->defaultUnits);
 	gs->setDefaultResources(scenarioInfo->defaultResources);
 	gs->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
@@ -271,8 +294,8 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	int factionCount = 0;
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		ControlType ct = static_cast<ControlType>(scenarioInfo->factionControls[i]);
-		if (ct != ctClosed) {
-			if (ct == ctHuman) {
+		if (ct != ControlType::CLOSED) {
+			if (ct == ControlType::HUMAN) {
 				gs->setThisFactionIndex(factionCount);
 			}
 			gs->setFactionControl(factionCount, ct);
@@ -284,19 +307,20 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 			factionCount++;
 		}
 	}
-
+	gs->setFogOfWar(scenarioInfo->fogOfWar);
+	//Config::getInstance().setGsShroudOfDarknessEnabled(scenarioInfo->shroudOfDarkness);
 	gs->setFactionCount(factionCount);
 }
 
 ControlType MenuStateScenario::strToControllerType(const string &str) {
 	if (str == "closed") {
-		return ctClosed;
+		return ControlType::CLOSED;
 	} else if (str == "cpu") {
-		return ctCpu;
+		return ControlType::CPU;
 	} else if (str == "cpu-ultra") {
-		return ctCpuUltra;
+		return ControlType::CPU_ULTRA;
 	} else if (str == "human") {
-		return ctHuman;
+		return ControlType::HUMAN;
 	}
 
 	throw std::runtime_error("Unknown controller type: " + str);

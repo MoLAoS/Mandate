@@ -1,8 +1,0 @@
-Windows:
-Install Glest 3.1.2
-Extract windows install file into Glest 3.1.2 directory (it will overwrite one file, menu.xml)
-
-Linux:
-Install Glest 3.1.2
-Compile or download executable and copy into Glest 3.1.2 directory as "glestadv"
-Extract dependency files into Glest 3.1.2 directory

@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/physfs;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
+				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/physfs;../shared_lib/include/platform;../shared_lib/include/physfs;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
 				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -114,7 +114,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/physfs;../shared_lib/include/tinyxml;../shared_lib/include"
+				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/physfs;../shared_lib/include/tinyxml;../shared_lib/include"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"

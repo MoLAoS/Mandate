@@ -46,7 +46,7 @@ void Display::clear(){
 		downImages[i]= NULL;
 		downLighted[i]= true;
 		commandTypes[i]= NULL;
-		commandClasses[i]= ccNull;
+		commandClasses[i]= CommandClass::NULL_COMMAND;
 	}
 
 	downSelectedPos= invalidPos;

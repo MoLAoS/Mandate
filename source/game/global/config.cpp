@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Marti�o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //				  2008-2009 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -46,7 +46,8 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	gsAutoRepairEnabled = p->getBool("GsAutoRepairEnabled", true);
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
 	gsDayTime = p->getFloat("GsDayTime", 1000.f);
-	gsFogOfWarEnabled = p->getBool("GsFogOfWarEnabled", true);
+	//gsFogOfWarEnabled = p->getBool("GsFogOfWarEnabled", true);
+	//gsShroudOfDarknessEnabled = p->getBool("GsShroudOfDarkness", true);
 	gsSpeedFastest = p->getFloat("GsSpeedFastest", 2.f, 1.0f, 10.0f);
 	gsSpeedSlowest = p->getFloat("GsSpeedSlowest", 0.5f, 0.01f, 1.0f);
 	gsWorldUpdateFps = p->getInt("GsWorldUpdateFps", 40);
@@ -56,8 +57,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	miscCatchExceptions = p->getBool("MiscCatchExceptions", true);
 	miscDebugKeys = p->getBool("MiscDebugKeys", false);
 	miscDebugMode = p->getBool("MiscDebugMode", false);
-	miscDebugTextureMode = p->getInt("MiscDebugTextureMode", 0);
-	miscDebugTextures = p->getBool("MiscDebugTextures", false);
 	miscFirstTime = p->getBool("MiscFirstTime", true);
 	netChangeSpeedAllowed = p->getBool("NetChangeSpeedAllowed", false);
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
@@ -67,8 +66,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	netPlayerName = p->getString("NetPlayerName", "Player");
 	netServerIp = p->getString("NetServerIp", "192.168.1.1");
 	netServerPort = p->getInt("NetServerPort", 12345, 0, 65535);
-	pathFinderMaxNodes = p->getInt("PathFinderMaxNodes", 1024);
-	pathFinderUseAStar = p->getBool("PathFinderUseAStar", false);
 	renderCheckGlCaps = p->getBool("RenderCheckGlCaps", true);
 	renderColorBits = p->getInt("RenderColorBits", 32);
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
@@ -132,7 +129,8 @@ void Config::save(const char *path) {
 	p->setBool("GsAutoRepairEnabled", gsAutoRepairEnabled);
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
 	p->setFloat("GsDayTime", gsDayTime);
-	p->setBool("GsFogOfWarEnabled", gsFogOfWarEnabled);
+	//p->setBool("GsFogOfWarEnabled", gsFogOfWarEnabled);
+	//p->setBool("GsShroudOfDarknessEnabled", gsShroudOfDarknessEnabled);
 	p->setFloat("GsSpeedFastest", gsSpeedFastest);
 	p->setFloat("GsSpeedSlowest", gsSpeedSlowest);
 	p->setInt("GsWorldUpdateFps", gsWorldUpdateFps);
@@ -142,8 +140,6 @@ void Config::save(const char *path) {
 	p->setBool("MiscCatchExceptions", miscCatchExceptions);
 	p->setBool("MiscDebugKeys", miscDebugKeys);
 	p->setBool("MiscDebugMode", miscDebugMode);
-	p->setInt("MiscDebugTextureMode", miscDebugTextureMode);
-	p->setBool("MiscDebugTextures", miscDebugTextures);
 	p->setBool("MiscFirstTime", miscFirstTime);
 	p->setBool("NetChangeSpeedAllowed", netChangeSpeedAllowed);
 	p->setBool("NetConsistencyChecks", netConsistencyChecks);
@@ -153,8 +149,6 @@ void Config::save(const char *path) {
 	p->setString("NetPlayerName", netPlayerName);
 	p->setString("NetServerIp", netServerIp);
 	p->setInt("NetServerPort", netServerPort);
-	p->setInt("PathFinderMaxNodes", pathFinderMaxNodes);
-	p->setBool("PathFinderUseAStar", pathFinderUseAStar);
 	p->setBool("RenderCheckGlCaps", renderCheckGlCaps);
 	p->setInt("RenderColorBits", renderColorBits);
 	p->setInt("RenderDepthBits", renderDepthBits);

@@ -159,6 +159,30 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	}
 }
 
+void SkillType::doChecksum(Checksum &checksum) const {
+	checksum.add<SkillClass>(skillClass);
+	foreach_const (EffectTypes, it, effectTypes) {
+		(*it)->doChecksum(checksum);
+	}
+	checksum.addString(name);
+	checksum.add<int>(epCost);
+	checksum.add<int>(speed);
+	checksum.add<int>(animSpeed);
+	checksum.add<int>(minRange);
+	checksum.add<int>(maxRange);
+	checksum.add<int>(effectsRemoved);
+	checksum.add<bool>(removeBenificialEffects);
+	checksum.add<bool>(removeDetrimentalEffects);
+	checksum.add<bool>(removeAllyEffects);
+	checksum.add<bool>(removeEnemyEffects);
+	checksum.add<float>(startTime);
+	checksum.add<bool>(projectile);
+	checksum.add<bool>(splash);
+	checksum.add<bool>(splashDamageAll);
+	checksum.add<int>(splashRadius);
+
+}
+
 void SkillType::descEffects(string &str, const Unit *unit) const {
 	for(EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
 		str += "Effect: ";
@@ -207,36 +231,37 @@ void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) 
 	str+="\n";
 }
 
+/** obsolete??? use SkillClassNames[sc] ?? */
 string SkillType::skillClassToStr(SkillClass skillClass){
 	switch(skillClass){
-	case scStop: return "Stop";
-	case scMove: return "Move";
-	case scAttack: return "Attack";
-	case scHarvest: return "Harvest";
-	case scRepair: return "Repair";
-	case scBuild: return "Build";
-	case scDie: return "Die";
-	case scBeBuilt: return "Be Built";
-	case scProduce: return "Produce";
-	case scUpgrade: return "Upgrade";
-	case scCastSpell: return "Cast Spell";
-	default:
-		assert(false);
-		return "";
+		case SkillClass::STOP: return "Stop";
+		case SkillClass::MOVE: return "Move";
+		case SkillClass::ATTACK: return "Attack";
+		case SkillClass::HARVEST: return "Harvest";
+		case SkillClass::REPAIR: return "Repair";
+		case SkillClass::BUILD: return "Build";
+		case SkillClass::DIE: return "Die";
+		case SkillClass::BE_BUILT: return "Be Built";
+		case SkillClass::PRODUCE: return "Produce";
+		case SkillClass::UPGRADE: return "Upgrade";
+		case SkillClass::CAST_SPELL: return "Cast Spell";
+		default:
+			assert(false);
+			return "";
 	};
 }
 
+/** obsolete??? use FieldNames[f] ?? */
 string SkillType::fieldToStr(Zone field){
-	switch(field)
-   {
-   case ZoneSurfaceProp: return "SurfaceProp";
-	case ZoneSurface: return "Surface";
-	case ZoneAir: return "Air";
-//	case fSubsurface: return "Subsurface";
+	switch (field) {
+		case Zone::SURFACE_PROP: return "SurfaceProp";
+		case Zone::LAND: return "Surface";
+		case Zone::AIR: return "Air";
+			//	case fSubsurface: return "Subsurface";
 
 		default:
-		assert(false);
-		return "";
+			assert(false);
+			return "";
 	};
 }
 // ===============================
@@ -310,6 +335,13 @@ void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 	zones.load(fieldsNode ? fieldsNode : attackFieldsNode, dir, tt, ft);
 }
 
+void TargetBasedSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	foreach_enum (Zone, z) {
+		checksum.add<bool>(zones.get(z));
+	}
+}
+
 void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* rangeDesc) const {
 	Lang &lang= Lang::getInstance();
 
@@ -324,8 +356,8 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 
 	//fields
 	str+= lang.get("Zones") + ": ";
-	for(int i= 0; i < ZoneCount; i++){
-		Zone zone = static_cast<Zone>(i);
+	for(int i= 0; i < Zone::COUNT; i++){
+		Zone zone = enum_cast<Zone>(i);
 		if(zones.get(zone)){
 			str+= fieldToStr(zone) + " ";
 		}
@@ -337,11 +369,19 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 // 	class AttackSkillType
 // =====================================================
 
+AttackSkillType::~AttackSkillType() { 
+	delete earthquakeType; 
+}
+
 void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
 	TargetBasedSkillType::load(sn, dir, tt, ft);
 
 	//misc
-	attackStrength= sn->getChild("attack-strenght")->getAttribute("value")->getIntValue();
+	if (sn->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
+		attackStrength = sn->getChild("attack-strenght")->getAttribute("value")->getIntValue();
+	} else {
+		attackStrength = sn->getChild("attack-strength")->getAttribute("value")->getIntValue();
+	}
 	attackVar= sn->getChild("attack-var")->getAttribute("value")->getIntValue();
 	maxRange= sn->getOptionalIntValue("attack-range");
 	string attackTypeName= sn->getChild("attack-type")->getAttribute("value")->getRestrictedValue();
@@ -363,6 +403,18 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 		earthquakeType = new EarthquakeType(attackStrength, attackType);
 		earthquakeType->load(earthquakeNode, dir, tt, ft);
 	}
+}
+
+void AttackSkillType::doChecksum(Checksum &checksum) const {
+	TargetBasedSkillType::doChecksum(checksum);
+
+	checksum.add<int>(attackStrength);
+	checksum.add<int>(attackVar);
+	checksum.add<float>(attackPctStolen);
+	checksum.add<float>(attackPctVar);
+	attackType->doChecksum(checksum);
+	
+	// earthquakeType ??
 }
 
 void AttackSkillType::getDesc(string &str, const Unit *unit) const {
@@ -421,13 +473,12 @@ void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt
 // 	class RepairSkillType
 // ===============================
 
-RepairSkillType::RepairSkillType() : SkillType(scRepair, "Repair") {
+RepairSkillType::RepairSkillType() : SkillType(SkillClass::REPAIR, "Repair"), splashParticleSystemType(NULL) {
 	amount = 0;
 	multiplier = 1.0f;
 	petOnly = false;
 	selfAllowed = true;
 	selfOnly = false;
-	splashParticleSystemType = NULL;
 }
 
 void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
@@ -475,6 +526,15 @@ void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	}
 }
 
+void RepairSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add<int>(amount);
+	checksum.add<float>(multiplier);
+	checksum.add<bool>(petOnly);
+	checksum.add<bool>(selfOnly);
+	checksum.add<bool>(selfAllowed);
+}
+
 void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
 //	descRange(str, unit, "MaxRange");
@@ -494,7 +554,7 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 // 	class ProduceSkillType
 // =====================================================
 
-ProduceSkillType::ProduceSkillType() : SkillType(scProduce, "Produce") {
+ProduceSkillType::ProduceSkillType() : SkillType(SkillClass::PRODUCE, "Produce") {
 	pet = false;
 	maxPets = 0;
 }
@@ -509,11 +569,27 @@ void ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree
 	}
 }
 
+void ProduceSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add<bool>(pet);
+	checksum.add<int>(maxPets);
+}
+
+// ===============================
+// 	class DieSkillType
+// ===============================
+
+void DieSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add<bool>(fade);
+}
+
+
 // ===============================
 // 	class FallDownSkillType
 // ===============================
 
-FallDownSkillType::FallDownSkillType(const SkillType *model) : SkillType(scFallDown, "Fall down") {
+FallDownSkillType::FallDownSkillType(const SkillType *model) : SkillType(SkillClass::FALL_DOWN, "Fall down") {
     speed = model->getSpeed();
     animSpeed = model->getAnimSpeed();
     animations.push_back((Model *)model->getAnimation());
@@ -526,11 +602,15 @@ void FallDownSkillType::load(const XmlNode *sn, const string &dir, const TechTre
 	agility = sn->getChildFloatValue("agility");
 }
 
+void FallDownSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add<float>(agility);
+}
 // ===============================
 // 	class GetUpSkillType
 // ===============================
 
-GetUpSkillType::GetUpSkillType(const SkillType *model) : SkillType(scGetUp, "Get up") {
+GetUpSkillType::GetUpSkillType(const SkillType *model) : SkillType(SkillClass::GET_UP, "Get up") {
     speed = 50;//model->getSpeed();
     animSpeed = model->getAnimSpeed();
     animations.push_back((Model *)model->getAnimation());
@@ -545,7 +625,7 @@ void GetUpSkillType::load(const XmlNode *sn, const string &dir, const TechTree *
 // =====================================================
 
 WaitForServerSkillType::WaitForServerSkillType(const SkillType *model) :
-		SkillType(scWaitForServer, "Waiting for server...") {
+		SkillType(SkillClass::WAIT_FOR_SERVER, "Waiting for server...") {
     speed = model->getSpeed();
     animSpeed = model->getAnimSpeed();
     animations.push_back((Model *)model->getAnimation());

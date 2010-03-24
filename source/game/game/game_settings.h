@@ -47,6 +47,8 @@ private:
 	bool defaultResources;
 	bool defaultVictoryConditions;
 
+	bool fogOfWar;
+
 public:
 	GameSettings();
 	GameSettings(const XmlNode *node);
@@ -71,6 +73,7 @@ public:
 	bool getDefaultUnits() const					{return defaultUnits;}
 	bool getDefaultResources() const				{return defaultResources;}
 	bool getDefaultVictoryConditions() const		{return defaultVictoryConditions;}
+	bool getFogOfWar() const						{ return fogOfWar; }
 
 	//set
 	void setDescription(const string& v)			{description = v;}
@@ -90,6 +93,7 @@ public:
 	void setDefaultUnits(bool v) 					{defaultUnits = v;}
 	void setDefaultResources(bool v) 				{defaultResources = v;}
 	void setDefaultVictoryConditions(bool v) 		{defaultVictoryConditions = v;}
+	void setFogOfWar(bool v)						{ fogOfWar = v; }
 
 	//misc
 	void randomizeLocs(int maxPlayers);

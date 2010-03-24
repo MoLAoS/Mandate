@@ -34,9 +34,13 @@ namespace Glest{ namespace Game{
 
 Console::Console(){
 	//config
-	maxLines= Config::getInstance().getUiConsoleMaxLines();
-	timeout= (float)Config::getInstance().getUiConsoleTimeout();
-
+#	if _GAE_DEBUG_EDITION_
+		maxLines = 20;
+		timeout = numeric_limits<float>::infinity();
+#	else
+		maxLines= Config::getInstance().getUiConsoleMaxLines();
+		timeout= (float)Config::getInstance().getUiConsoleTimeout();
+#	endif
 	timeElapsed= 0.0f;
 }
 

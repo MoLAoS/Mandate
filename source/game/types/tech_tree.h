@@ -59,10 +59,12 @@ private:
 	DamageMultiplierTable damageMultiplierTable;
 
 public:
-    bool load(const string &dir, const set<string> &factionNames, Checksum &checksum);
-    ~TechTree();
+	bool preload(const string &dir, const set<string> &factionNames);
+	bool load(const string &dir, const set<string> &factionNames);
+	void doChecksum(Checksum &checksum) const;
+	~TechTree();
 
-    // get count
+	// get count
 	int getResourceTypeCount() const							{return resourceTypes.size();}
 	int getFactionTypeCount() const								{return factionTypes.size();}
 	int getArmorTypeCount() const								{return armorTypes.size();}

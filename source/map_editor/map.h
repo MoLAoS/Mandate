@@ -98,11 +98,17 @@ public:
 	string getDesc() const		{return desc;}
 	string getAuthor() const	{return author;}
 
-	void changeHeight(int x, int y, int height, int radius);
+	void glestChangeHeight(int x, int y, int height, int radius);
+	void pirateChangeHeight(int x, int y, int height, int radius);
 	void changeSurface(int x, int y, int surface, int radius);
 	void changeObject(int x, int y, int object, int radius);
 	void changeResource(int x, int y, int resource, int radius);
 	void changeStartLocation(int x, int y, int player);
+
+	void setHeight(int x, int y, float height);
+	void setSurface(int x, int y, int surface);
+	void setObject(int x, int y, int object);
+	void setResource(int x, int y, int resource);
 
 	void flipX();
 	void flipY();

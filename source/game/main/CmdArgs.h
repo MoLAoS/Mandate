@@ -22,6 +22,9 @@ private:
 	string configDir;
 	/// not empty if -datadir, contains following argument as path
 	string dataDir;
+	///
+	string map;
+	string tileset;
 
 public:
 	CmdArgs();
@@ -33,10 +36,12 @@ public:
 	bool parse(int argc, char **argv);
 	
 	// getters
-	bool isServer()       { return server; }
-	string getClientIP()  { return clientIP; }
-	string getConfigDir() { return configDir; }
-	string getDataDir()   { return dataDir; }
+	bool isServer()         { return server; }
+	string getClientIP()    { return clientIP; }
+	string getConfigDir()   { return configDir; }
+	string getDataDir()     { return dataDir; }
+	string getLoadmap()     { return map; }
+	string getLoadTileset() { return tileset; }
 
 };
 

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -15,31 +15,102 @@
 #include "map.h"
 #include "renderer.h"
 
+#include <stack>
+
+using std::stack;
+
 namespace MapEditor {
 
 class MainWindow;
+
+enum ChangeType {
+	ctNone = -1,
+	ctHeight,
+	ctSurface,
+	ctObject,
+	ctResource,
+	ctLocation,
+	ctGradient,
+	ctAll
+};
+
+// =============================================
+// class Undo Point
+// A linked list class that is more of an extension / modification on
+// the already existing Cell struct in map.h
+// Provides the ability to only specify a certain property of the map to change
+// =============================================
+class UndoPoint {
+	private:
+		// Only keep a certain number of undo points in memory otherwise
+		// Big projects could hog a lot of memory
+		const static int MAX_UNDO_LIST_SIZE = 100; // TODO get feedback on this value
+		static int undoCount;
+
+		ChangeType change;
+
+		// Pointers to arrays of each property
+		int *surface;
+		int *object;
+		int *resource;
+		float *height;
+
+		// Map width and height
+		static int w;
+		static int h;
+
+	public:
+		UndoPoint();
+		~UndoPoint();
+		void init(ChangeType change);
+		void revert();
+
+		inline ChangeType getChange() const 	{ return change; }
+};
+
+class ChangeStack : public std::stack<UndoPoint> {
+public:
+	static const int maxSize = 100;
+
+	void clear() { c.clear(); }
+
+	void push(UndoPoint p) {
+		if (c.size() >= maxSize) {
+			c.pop_front();
+		}
+		stack<UndoPoint>::push(p);
+	}
+};
 
 // ===============================================
 // class Program
 // ===============================================
 
 class Program {
+	friend class UndoPoint;
 private:
 	Renderer renderer;
 	int ofsetX, ofsetY;
 	int cellSize;
-	Map *map;
+	static Map *map;
+
+	ChangeStack undoStack, redoStack;
 
 public:
 	Program(int w, int h);
 	~Program();
 
 	//map cell change
-	void changeMapHeight(int x, int y, int Height, int radius);
+	void glestChangeMapHeight(int x, int y, int Height, int radius);
+	void pirateChangeMapHeight(int x, int y, int Height, int radius);
 	void changeMapSurface(int x, int y, int surface, int radius);
 	void changeMapObject(int x, int y, int object, int radius);
 	void changeMapResource(int x, int y, int resource, int radius);
 	void changeStartLocation(int x, int y, int player);
+
+	void setUndoPoint(ChangeType change);
+	bool undo();
+	bool redo();
 
 	//map ops
 	void reset(int w, int h, int alt, int surf);
@@ -55,9 +126,9 @@ public:
 	void saveMap(const string &path);
 
 	//map misc
-	void setMapTitle(const string &title);
-	void setMapDesc(const string &desc);
-	void setMapAuthor(const string &author);
+	bool setMapTitle(const string &title);
+	bool setMapDesc(const string &desc);
+	bool setMapAuthor(const string &author);
 	void setMapAdvanced(int altFactor, int waterLevel);
 
 	//misc
@@ -66,7 +137,9 @@ public:
 	void incCellSize(int i);
 	void resetOfset();
 
-	const Map *getMap() {return map;}
+	int getObject(int x, int y);
+	int getResource(int x, int y);
+	static const Map *getMap() {return map;}
 };
 
 }// end namespace

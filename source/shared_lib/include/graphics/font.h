@@ -17,8 +17,9 @@
 #include "vec.h"
 
 using std::string;
+using namespace Shared::Math;
 
-namespace Shared{ namespace Graphics{
+namespace Shared { namespace Graphics {
 
 // =====================================================
 //	class FontMetrics

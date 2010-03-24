@@ -10,15 +10,15 @@ SubDir TOP shared_lib ;
 LIB_DIRS =
 	platform
 	platform/sdl
-	platform/posix
 	util
+	math
 	graphics
 	graphics/gl
 	sound
 	sound/openal
-	tinyxml
 	xml
 	lua
+	tinyxml
 	physfs
 ;
 
@@ -27,8 +27,6 @@ for i in $(LIB_DIRS) {
 }
 
 LIB_INCLUDE_DIRS = include include/$(LIB_DIRS) ;
-
-CPPFLAGS += -DDEBUG_RENDERING_ENABLED ;
 
 if $(USE_PCH) = "yes" {
 	LIB_PCH = include/pch.h ;
@@ -113,4 +111,40 @@ if $(WX_AVAILABLE) = "yes" {
   LinkWith glest_configurator : glestlib ;
   ExternalLibs glest_configurator : SDL GL GLU WX PHYSFS ;
   IncludeDir glest_configurator : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_CONFIG_DIRS) ;
+}
+
+### testsuite ###
+if $(CPPUNIT) = "yes" {
+  SubDir TOP test ;
+  GLEST_TEST_DIRS = . search datastructs facilities ;
+#   for i in $(GLEST_TEST_DIRS) {
+#     GLEST_TEST_SOURCES += [ Wildcard $(i) : *.cpp *.h ] ;
+#   }
+  GLEST_TEST_SOURCES =
+	search/influence_map_test.cpp
+	search/annotated_map_test.cpp
+	main.cpp
+	datastructs/circular_buffer_test.cpp
+	facilities/reverse_rect_iter_test.cpp
+	pch.cpp
+	pch.h
+	search/influence_map_test.h
+	search/annotated_map_test.h
+	datastructs/circular_buffer_test.h
+	facilities/reverse_rect_iter_test.h
+  ;
+  Application testsuite : $(GLEST_TEST_SOURCES) ;
+  LinkWith testsuite : glestlib ;
+  ExternalLibs testsuite : SDL CPPUNIT ;
+  IncludeDir testsuite : ../shared_lib/$(LIB_INCLUDE_DIRS) $(GLEST_TEST_DIRS) ../game/$(GLEST_DIRS) ;
+}
+
+### glexemel ###
+if $(XML) = "yes" {
+  SubDir TOP glexemel ;
+
+  Application g2xml : g2xml.c g3dv4.h ;
+
+  Application xml2g : xml2g.c g3dv4.h ;
+  ExternalLibs xml2g : XML ;
 }

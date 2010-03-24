@@ -14,7 +14,7 @@
 
 #include "leak_dumper.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
 //	class NetworkManager
@@ -43,9 +43,7 @@ void NetworkManager::init(NetworkRole networkRole) {
 }
 
 NetworkManager::~NetworkManager() {
-	if(gameNetworkInterface) {
-		delete gameNetworkInterface;
-	}
+	delete gameNetworkInterface;
 }
 
 void NetworkManager::end() {

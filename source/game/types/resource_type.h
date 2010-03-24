@@ -15,18 +15,12 @@
 #include "element_type.h"
 #include "model.h"
 #include "checksum.h"
+#include "game_constants.h"
 
 namespace Glest{ namespace Game{
 
 using Shared::Graphics::Model;
 using Shared::Util::Checksum;
-
-enum ResourceClass{
-	rcTech,
-	rcTileset,
-	rcStatic,
-	rcConsumable
-};
 
 // =====================================================
 // 	class ResourceType
@@ -36,26 +30,30 @@ enum ResourceClass{
 
 class ResourceType: public DisplayableType {
 private:
-    ResourceClass resourceClass;
-    int tilesetObject;	//used only if class==rcTileset
-    int resourceNumber;	//used only if class==rcTech, resource number in the map
-    int interval;		//used only if class==rcConsumable
-	int defResPerPatch;	//used only if class==rcTileset || class==rcTech
-    Model *model;
+	ResourceClass resourceClass;
+	int tilesetObject;	// used only if class == ResourceClass::TILESET
+	int resourceNumber;	// used only if class == ResourceClass::TECHTREE, resource number in the map
+	int interval;		// used only if class == ResourceClass::CONSUMABLE
+	int defResPerPatch;	// used only if class == ResourceClass::TILESET || class == ResourceClass::TECHTREE
+	bool recoupCost;	// used only if class == ResourceClass::STATIC
+
+	Model *model;
 	/**
 	 * Rather or not to display this resource at the top of the screen (defaults to true).
 	 */
 	bool display;
 
 public:
-    bool load(const string &dir, int id, Checksum &checksum);
+	bool load(const string &dir, int id);
+	virtual void doChecksum(Checksum &checksum) const;
 
-    //get
-	int getClass() const			{return resourceClass;}
+	//get
+	ResourceClass getClass() const	{return resourceClass;}
 	int getTilesetObject() const	{return tilesetObject;}
 	int getResourceNumber() const	{return resourceNumber;}
 	int getInterval() const			{return interval;}
 	int getDefResPerPatch() const	{return defResPerPatch;}
+	bool getRecoupCost() const		{ return recoupCost; }
 	const Model *getModel() const	{return model;}
 	bool isDisplay() const			{return display;}
 

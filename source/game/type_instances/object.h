@@ -21,8 +21,8 @@ class ResourceType;
 class Resource;
 
 using Shared::Graphics::Model;
-using Shared::Graphics::Vec2i;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec2i;
+using Shared::Math::Vec3f;
 
 // =====================================================
 // 	class Object

@@ -345,9 +345,7 @@ void Pixmap1D::init(int w, int components){
 }
 
 Pixmap1D::~Pixmap1D(){
-	if(pixels) {
-		delete [] pixels;
-	}
+	delete [] pixels;
 }
 
 void Pixmap1D::load(const string &path){
@@ -364,7 +362,6 @@ void Pixmap1D::load(const string &path){
 }
 
 void Pixmap1D::loadBmp(const string &path){
-
 	PixmapIoBmp plb;
 	plb.openRead(path);
 
@@ -455,9 +452,7 @@ void Pixmap2D::init(int w, int h, int components){
 }
 
 Pixmap2D::~Pixmap2D(){
-	if(pixels) {
-		delete[] pixels;
-	}
+	delete[] pixels;
 }
 
 void Pixmap2D::load(const string &path){
@@ -771,9 +766,7 @@ void Pixmap3D::init(int d, int components){
 }
 
 Pixmap3D::~Pixmap3D(){
-	if(pixels) {
-		delete[] pixels;
-	}
+	delete[] pixels;
 }
 
 void Pixmap3D::loadSlice(const string &path, int slice){

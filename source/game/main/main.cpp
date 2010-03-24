@@ -22,6 +22,7 @@
 #include "game_util.h"
 #include "platform_util.h"
 #include "platform_main.h"
+#include "renderer.h"
 #include "FSFactory.hpp"
 #include "CmdArgs.h"
 #include "core_data.h"
@@ -29,10 +30,6 @@
 using namespace std;
 using namespace Shared::Platform;
 using namespace Shared::Util;
-
-
-string configDir = DEFAULT_CONFIG_DIR;
-string dataDir = DEFAULT_DATA_DIR;
 
 
 namespace Glest{ namespace Game{
@@ -44,6 +41,12 @@ namespace Glest{ namespace Game{
 class ExceptionHandler: public PlatformExceptionHandler {
 public:
 	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) {
+		try { 
+			Renderer::getInstance().saveScreen("glestadv-crash.tga");
+		} catch(runtime_error &e) {
+			printf("%s", e.what());
+		}
+
 		ostream *ofs = FSFactory::getInstance()->getOStream("gae-crash.txt");
 
 		time_t t= time(NULL);
@@ -91,6 +94,8 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
+	string configDir = DEFAULT_CONFIG_DIR;
+	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;
 	if(args.parse(argc, argv)){
 		// quick exit
@@ -118,7 +123,7 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir+"/addons/", true);
 	
 	FSFactory *fsfac = FSFactory::getInstance();
-	fsfac->initPhysFS(argv[0], configDir.c_str());
+	fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
 	fsfac->usePhysFS(true);
 
 	Config &config = Config::getInstance();

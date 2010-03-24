@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 MartiÃ±o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -49,6 +49,10 @@ public:
 	}
 
 	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const {
+		NameIdPair::doChecksum(checksum);
+		EnhancementTypeBase::doChecksum(checksum);
+	}
 	int getKills() const			{return kills;}
 };
 
@@ -64,12 +68,6 @@ public:
 };
 */
 
-enum UnitClass{
-	ucWarrior,
-	ucWorker,
-	ucBuilding
-};
-
 // ===============================
 // 	class UnitType
 //
@@ -79,9 +77,9 @@ enum UnitClass{
 
 class UnitType: public ProducibleType, public UnitStatsBase {
 private:
-    typedef vector<SkillType*> SkillTypes;
-    typedef vector<CommandType*> CommandTypes;
-    typedef vector<Resource> StoredResources;
+	typedef vector<SkillType*> SkillTypes;
+	typedef vector<CommandType*> CommandTypes;
+	typedef vector<Resource> StoredResources;
 	typedef vector<Level> Levels;
 	typedef vector<ParticleSystemType*> particleSystemTypes;
 //	typedef vector<PetRule*> PetRules;
@@ -89,16 +87,16 @@ private:
 private:
 	//basic
 	bool multiBuild;
-    bool multiSelect;
+	bool multiSelect;
 
 	//sounds
-    SoundContainer selectionSounds;
-    SoundContainer commandSounds;
+	SoundContainer selectionSounds;
+	SoundContainer commandSounds;
 
 	//info
-    SkillTypes skillTypes;
-    CommandTypes commandTypes;
-    StoredResources storedResources;
+	SkillTypes skillTypes;
+	CommandTypes commandTypes;
+	StoredResources storedResources;
 	Levels levels;
 //	PetRules petRules;
 	Emanations emanations;
@@ -107,19 +105,20 @@ private:
 	bool meetingPoint;
 	Texture2D *meetingPointImage;
 
-    //OPTIMIZATIONS:
+	//OPTIMIZATIONS:
 	//store first command type and skill type of each class
-	const CommandType *firstCommandTypeOfClass[ccCount];
-    const SkillType *firstSkillTypeOfClass[scCount];
+	const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
+	const SkillType *firstSkillTypeOfClass[SkillClass::COUNT];
 	float halfSize;
 	float halfHeight;
 
 public:
 	//creation and loading
-    UnitType();
-    virtual ~UnitType();
+	UnitType();
+	virtual ~UnitType();
 	void preLoad(const string &dir);
-    bool load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
+	bool load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	virtual void doChecksum(Checksum &checksum) const;
 
 	//get
 	bool getMultiSelect() const							{return multiSelect;}
@@ -136,11 +135,10 @@ public:
 	bool isMultiBuild() const							{return multiBuild;}
 	float getHalfSize() const							{return halfSize;}
 	float getHalfHeight() const							{return halfHeight;}
-   bool isMobile () const
-   {
-      const SkillType *st = getFirstStOfClass(scMove);
-      return st && st->getSpeed() > 0 ? true: false;
-   }
+	bool isMobile () const {
+		const SkillType *st = getFirstStOfClass(SkillClass::MOVE);
+		return st && st->getSpeed() > 0 ? true: false;
+	}
 	//cellmap
 	bool *cellMap;
 
@@ -153,7 +151,7 @@ public:
 	StaticSound *getCommandSound() const				{return commandSounds.getRandSound();}
 
 	int getStore(const ResourceType *rt) const;
-	const SkillType *getSkillType(const string &skillName, SkillClass skillClass = scCount) const;
+	const SkillType *getSkillType(const string &skillName, SkillClass skillClass = SkillClass::COUNT) const;
 
 	const CommandType *getFirstCtOfClass(CommandClass commandClass) const {return firstCommandTypeOfClass[commandClass];}
 	const SkillType *getFirstStOfClass(SkillClass skillClass) const {return firstSkillTypeOfClass[skillClass];}

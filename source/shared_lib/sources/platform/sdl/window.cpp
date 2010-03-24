@@ -91,6 +91,19 @@ bool Window::handleEvent() {
 			case SDL_KEYUP:
 				eventKeyUp(Key(event.key.keysym));
 				break;
+
+			case SDL_ACTIVEEVENT:
+				
+				if(event.active.state & SDL_APPACTIVE){
+					if(event.active.gain){
+						// got focus
+						eventResize(ssRestored);
+					}else{
+						// lost focus (minimized)
+						eventResize(ssMinimized);
+					}
+				}
+				break;
 		}
 	}
 

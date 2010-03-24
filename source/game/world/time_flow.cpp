@@ -60,7 +60,7 @@ void TimeFlow::update(){
 			soundRenderer.playFx(ambientSounds->getDayStart());
 		}
 		if(ambientSounds->isEnabledDay()){
-			if(ambientSounds->getAlwaysPlayDay() || tileset->getWeather()==wSunny){
+			if(ambientSounds->getAlwaysPlayDay() || tileset->getWeather()==Weather::SUNNY){
 				soundRenderer.playAmbient(ambientSounds->getDay());
 			}
 		}
@@ -78,7 +78,7 @@ void TimeFlow::update(){
 			soundRenderer.playFx(ambientSounds->getNightStart());
 		}
 		if(ambientSounds->isEnabledNight()){
-			if(ambientSounds->getAlwaysPlayNight() || tileset->getWeather()==wSunny){
+			if(ambientSounds->getAlwaysPlayNight() || tileset->getWeather()==Weather::SUNNY){
 				soundRenderer.playAmbient(ambientSounds->getNight());
 			}
 		}

@@ -45,13 +45,20 @@ namespace Glest { namespace Game {
 
 Program::CrashProgramState::CrashProgramState(Program &program, const exception *e) :
 		ProgramState(program) {
+	try { 
+		Renderer::getInstance().saveScreen("glestadv-crash.tga");
+	} catch(runtime_error &e) {
+		printf("%s", e.what());
+	}
+
 	msgBox.init("", "Exit");
 	if(e) {
 		fprintf(stderr, "%s\n", e->what());
 		msgBox.setText(string("Exception: ") + e->what());
 	} else {
-		msgBox.setText("Glest Advanced Engine has crashed.  Please help us improve GAE by emailing "
-				" the file gae-crash.txt to " + gaeMailString + ".");
+		msgBox.setText("Glest Advanced Engine has crashed."
+					   "\nPlease help us improve GAE by emailing the file"
+					   "\ngae-crash.txt to " + gaeMailString + ".");
 	}
 	mouse2dAnim = mouseY = mouseX = 0;
 	this->e = e;
@@ -92,12 +99,14 @@ Program *Program::singleton = NULL;
 // ===================== PUBLIC ========================
 
 Program::Program(Config &config, CmdArgs &args) :
-		renderTimer(config.getRenderFpsMax(), 1),
+		renderTimer(config.getRenderFpsMax(), 1, 0),
 		tickTimer(1.f, maxTimes, -1),
-		updateTimer(config.getGsWorldUpdateFps(), maxTimes, 2),
+		updateTimer(config.getGsWorldUpdateFps(), maxTimes, 1),
 		updateCameraTimer(GameConstants::cameraFps, maxTimes, 10),
 		programState(NULL),
 		crashed(false),
+		terminating(false),
+		visible(true),
 		keymap(getInput(), "keymap.ini") {
 
 	//set video mode
@@ -140,6 +149,7 @@ Program::Program(Config &config, CmdArgs &args) :
 	soundRenderer.init(this);
 
 	keymap.save("keymap.ini");
+	keymap.load("keymap.ini");
 
 	// startup and immediately host a game
 	if(args.isServer()) {
@@ -151,6 +161,23 @@ Program::Program(Config &config, CmdArgs &args) :
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
+	} else if(!args.getLoadmap().empty()) {
+		GameSettings gs;
+		gs.setDefaultResources(false);
+		gs.setDefaultUnits(false);
+		gs.setDefaultVictoryConditions(false);
+		gs.setMapPath(string("maps/") + args.getLoadmap() + ".gbm");
+		gs.setTilesetPath(string("tilesets/") + args.getLoadTileset());
+		gs.setTechPath(string("techs/magitech"));
+		gs.setFogOfWar(false);
+		gs.setFactionCount(0);
+
+		//needed because Game::update -> updateLoops -> isNetworkGame
+		NetworkManager &networkManager= NetworkManager::getInstance();
+		networkManager.init(nrServer);
+		
+		ShowMap *game = new ShowMap(*this, gs);
+		setState(game);
 	// normal startup
 	} else {
 		setState(new Intro(*this));
@@ -160,40 +187,37 @@ Program::Program(Config &config, CmdArgs &args) :
 }
 
 Program::~Program() {
-	singleton = NULL;
-
 	if(programState) {
 		delete programState;
 	}
-
 	Renderer::getInstance().end();
-
 	//restore video mode
 	restoreDisplaySettings();
+	singleton = NULL;
 }
 
 void Program::loop() {
 	while(handleEvent()) {
 		size_t sleepTime = renderTimer.timeToWait();
-
+	
 		sleepTime = sleepTime < updateCameraTimer.timeToWait() ? sleepTime : updateCameraTimer.timeToWait();
 		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
-
+	
 		if(sleepTime) {
 			Shared::Platform::sleep(sleepTime);
 		}
-
+	
 		//render
-		while(renderTimer.isTime()){
+		while(renderTimer.isTime() && visible){
 			programState->render();
 		}
-
+	
 		//update camera
 		while(updateCameraTimer.isTime()){
 			programState->updateCamera();
 		}
-
+	
 		//update world
 		while(updateTimer.isTime()){
 			GraphicComponent::update();
@@ -201,22 +225,25 @@ void Program::loop() {
 			SoundRenderer::getInstance().update();
 			NetworkManager::getInstance().update();
 		}
-
+	
 		//tick timer
 		while(tickTimer.isTime()){
 			programState->tick();
 		}
 	}
+	terminating = true;
 }
 
 void Program::eventResize(SizeState sizeState) {
 
 	switch(sizeState){
 	case ssMinimized:
+		visible = false;
 		//restoreVideoMode();
 		break;
 	case ssMaximized:
 	case ssRestored:
+		visible = true;
 		//setDisplaySettings();
 		//renderer.reloadResources();
 		break;

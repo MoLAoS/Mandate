@@ -18,12 +18,13 @@
 #include "util.h"
 #include "command_type.h"
 #include "game_util.h"
+//#include "network_status.h"
 #include "metrics.h"
 
 using std::string;
 
 using Shared::Graphics::Texture2D;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec3f;
 using Shared::Util::replaceBy;
 
 namespace Glest{ namespace Game{
@@ -98,15 +99,15 @@ public:
 	int computeDownX(int index) const {
 		return (index % cellSideCount) * imageSize;
 	}
-
+	
 	int computeDownY(int index) const {
 		return Display::downY - (index / cellSideCount)*imageSize - imageSize;
 	}
-
+	
 	int computeUpX(int index) const {
 		return (index % cellSideCount) * imageSize;
 	}
-
+	
 	int computeUpY(int index) const {
 		return Metrics::getInstance().getDisplayH() - (index / cellSideCount) * imageSize - imageSize;
 	}

@@ -2,6 +2,7 @@
 
 set(folders
 	util
+	math
 	graphics
 	graphics/gl
 	platform
@@ -15,7 +16,7 @@ set(folders
 if(WIN32)
 	list(APPEND folders platform/win32 sound/ds8)
 else(WIN32)
-	list(APPEND folders platform/posix platform/sdl sound/openal)
+	list(APPEND folders platform/sdl sound/openal)
 endif(WIN32)
 
 set(glestshared_incs "${CMAKE_CURRENT_SOURCE_DIR}/include")

@@ -214,6 +214,15 @@ XmlNode *XmlNode::getChild(const string &childName, int i, bool required) const{
 			+ "\"\n\nTree: " + getTreeString());
 }
 
+XmlNode *XmlNode::getOptionalChild(const string &childName) const {
+	for (int j = 0; j < children.size(); ++j) {
+		if (children[j]->getName() == childName) {
+			return children[j];
+		}
+	}
+	return NULL;
+}
+
 XmlNode *XmlNode::addChild(const string &name){
 	XmlNode *node= new XmlNode(name);
 	children.push_back(node);

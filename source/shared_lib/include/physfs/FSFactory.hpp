@@ -39,7 +39,7 @@ class FSFactory{
 
 		bool physFS;
 		
-		void initPhysFS(const char *argv0, const char *configDir);
+		void initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
 		void deinitPhysFS();
 		void usePhysFS(bool enable);
 		istream *getIStream(const char *fname);

@@ -26,7 +26,7 @@ extern const string mailString;
 extern const string gaeMailString;
 extern const string glestVersionString;
 extern const string gaeVersionString;
-extern const string networkVersionString;
+//extern const string networkVersionString;
 
 string getNetworkVersionString();
 string getAboutString1(int i);

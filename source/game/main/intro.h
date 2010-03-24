@@ -21,9 +21,9 @@
 
 using std::vector;
 
-using Shared::Graphics::Vec2i;
-using Shared::Graphics::Vec2f;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec2i;
+using Shared::Math::Vec2f;
+using Shared::Math::Vec3f;
 using Shared::Graphics::Font2D;
 using Shared::Graphics::Texture2D;
 

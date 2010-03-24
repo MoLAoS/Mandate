@@ -156,7 +156,7 @@ const Keymap::UserCommandInfo Keymap::commandInfo[ucCount] = {
 	{"NetworkStatusToggle",		keyN,		0,			0,			0},
 	{"SaveScreenshot",			keyE,		0,			0,			0},
 	{"CycleDisplayColor",		keyC,		0,			0,			0},
-	{"CameraCycleMode",			keyF,		0,			0,			0},
+	{"CameraCycleMode",			0,			0,			0,			0},
 	{"CameraZoomIn",			keyPageUp,	0,			0,			0},
 	{"CameraZoomOut",			keyPageDown,0,			0,			0},
 	{"CameraZoomReset",			0,			0,			0,			0},
@@ -189,9 +189,6 @@ const Keymap::UserCommandInfo Keymap::commandInfo[ucCount] = {
 	{"Guard",					keyG,		0,			0,			0},
 	{"Follow",					0,			0,			0,			0},
 	{"Patrol",					0,			0,			0,			0}
-#ifdef _GAE_DEBUG_EDITION_
-	,{"SwitchDebugField",		keyKPMinus,	0,			0,			0}
-#endif
 };
 #pragma pack(pop)
 
@@ -250,7 +247,6 @@ void Keymap::load(const char *path) {
 
 void Keymap::save(const char *path) {
 	try {
-		//ofstream out((configDir + path).c_str(), ios_base::out | ios_base::trunc);
 		ostream *out = FSFactory::getInstance()->getOStream(path);
 		size_t maxSize = 0;
 		for(int i = ucNone + 1; i != ucCount; ++i) {

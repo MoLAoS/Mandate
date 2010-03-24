@@ -97,7 +97,9 @@ MainWindow::MainWindow(const string &modelPath)
 
 	speed= 0.025f;
 	
-	glCanvas = new GlCanvas(this);
+	//gl canvas
+	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
+	glCanvas = new GlCanvas(this, args);
 	
 	menu= new wxMenuBar();
 
@@ -357,9 +359,8 @@ END_EVENT_TABLE()
 //	class GlCanvas
 // =====================================================
 
-GlCanvas::GlCanvas(MainWindow *	mainWindow):
-	wxGLCanvas(mainWindow, -1, wxDefaultPosition)
-{
+GlCanvas::GlCanvas(MainWindow *	mainWindow, int *args)
+		: wxGLCanvas(mainWindow, -1, wxDefaultPosition, wxDefaultSize, 0, wxT("GLCanvas"), args) {
 	this->mainWindow = mainWindow;
 }
 

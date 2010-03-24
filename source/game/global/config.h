@@ -47,7 +47,8 @@ private:
 	bool gsAutoRepairEnabled;
 	bool gsAutoReturnEnabled;
 	float gsDayTime;
-	bool gsFogOfWarEnabled;
+	//bool gsFogOfWarEnabled;
+	//bool gsShroudOfDarknessEnabled;
 	float gsSpeedFastest;
 	float gsSpeedSlowest;
 	int gsWorldUpdateFps;
@@ -57,8 +58,6 @@ private:
 	bool miscCatchExceptions;
 	bool miscDebugKeys;
 	bool miscDebugMode;
-	int miscDebugTextureMode;
-	bool miscDebugTextures;
 	bool miscFirstTime;
 	bool netChangeSpeedAllowed;
 	bool netConsistencyChecks;
@@ -68,8 +67,6 @@ private:
 	string netPlayerName;
 	string netServerIp;
 	int netServerPort;
-	int pathFinderMaxNodes;
-	bool pathFinderUseAStar;
 	bool renderCheckGlCaps;
 	int renderColorBits;
 	int renderDepthBits;
@@ -153,7 +150,8 @@ public:
 	bool getGsAutoRepairEnabled() const				{return gsAutoRepairEnabled;}
 	bool getGsAutoReturnEnabled() const				{return gsAutoReturnEnabled;}
 	float getGsDayTime() const						{return gsDayTime;}
-	bool getGsFogOfWarEnabled() const				{return gsFogOfWarEnabled;}
+	//bool getGsFogOfWarEnabled() const				{return gsFogOfWarEnabled;}
+	//bool getGsShroudOfDarknessEnabled() const		{return gsShroudOfDarknessEnabled;}
 	float getGsSpeedFastest() const					{return gsSpeedFastest;}
 	float getGsSpeedSlowest() const					{return gsSpeedSlowest;}
 	int getGsWorldUpdateFps() const					{return gsWorldUpdateFps;}
@@ -163,8 +161,6 @@ public:
 	bool getMiscCatchExceptions() const				{return miscCatchExceptions;}
 	bool getMiscDebugKeys() const					{return miscDebugKeys;}
 	bool getMiscDebugMode() const					{return miscDebugMode;}
-	int getMiscDebugTextureMode() const				{return miscDebugTextureMode;}
-	bool getMiscDebugTextures() const				{return miscDebugTextures;}
 	bool getMiscFirstTime() const					{return miscFirstTime;}
 	bool getNetChangeSpeedAllowed() const			{return netChangeSpeedAllowed;}
 	bool getNetConsistencyChecks() const			{return netConsistencyChecks;}
@@ -174,8 +170,6 @@ public:
 	const string &getNetPlayerName() const			{return netPlayerName;}
 	const string &getNetServerIp() const			{return netServerIp;}
 	int getNetServerPort() const					{return netServerPort;}
-	int getPathFinderMaxNodes() const				{return pathFinderMaxNodes;}
-	bool getPathFinderUseAStar() const				{return pathFinderUseAStar;}
 	bool getRenderCheckGlCaps() const				{return renderCheckGlCaps;}
 	int getRenderColorBits() const					{return renderColorBits;}
 	int getRenderDepthBits() const					{return renderDepthBits;}
@@ -233,7 +227,8 @@ public:
 	void setGsAutoRepairEnabled(bool v)				{gsAutoRepairEnabled = v;}
 	void setGsAutoReturnEnabled(bool v)				{gsAutoReturnEnabled = v;}
 	void setGsDayTime(float v)						{gsDayTime = v;}
-	void setGsFogOfWarEnabled(bool v)				{gsFogOfWarEnabled = v;}
+	//void setGsFogOfWarEnabled(bool v)				{gsFogOfWarEnabled = v;}
+	//void setGsShroudOfDarknessEnabled(bool v)		{gsShroudOfDarknessEnabled = v;}
 	void setGsSpeedFastest(float v)					{gsSpeedFastest = v;}
 	void setGsSpeedSlowest(float v)					{gsSpeedSlowest = v;}
 	void setGsWorldUpdateFps(int v)					{gsWorldUpdateFps = v;}
@@ -243,8 +238,6 @@ public:
 	void setMiscCatchExceptions(bool v)				{miscCatchExceptions = v;}
 	void setMiscDebugKeys(bool v)					{miscDebugKeys = v;}
 	void setMiscDebugMode(bool v)					{miscDebugMode = v;}
-	void setMiscDebugTextureMode(int v)				{miscDebugTextureMode = v;}
-	void setMiscDebugTextures(bool v)				{miscDebugTextures = v;}
 	void setMiscFirstTime(bool v)					{miscFirstTime = v;}
 	void setNetChangeSpeedAllowed(bool v)			{netChangeSpeedAllowed = v;}
 	void setNetConsistencyChecks(bool v)			{netConsistencyChecks = v;}
@@ -254,8 +247,6 @@ public:
 	void setNetPlayerName(const string &v)			{netPlayerName = v;}
 	void setNetServerIp(const string &v)			{netServerIp = v;}
 	void setNetServerPort(int v)					{netServerPort = v;}
-	void setPathFinderMaxNodes(int v)				{pathFinderMaxNodes = v;}
-	void setPathFinderUseAStar(bool v)				{pathFinderUseAStar = v;}
 	void setRenderCheckGlCaps(bool v)				{renderCheckGlCaps = v;}
 	void setRenderColorBits(int v)					{renderColorBits = v;}
 	void setRenderDepthBits(int v)					{renderDepthBits = v;}

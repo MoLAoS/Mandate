@@ -17,11 +17,12 @@
 #include "config.h"
 #include "game_constants.h"
 #include "xml_parser.h"
+#include "metrics.h"
 
 #include "leak_dumper.h"
 
 
-using namespace Shared::Graphics;
+using namespace Shared::Math;
 using Shared::Xml::XmlNode;
 
 namespace Glest { namespace Game {
@@ -55,16 +56,23 @@ GameCamera::GameCamera() : pos(0.f, defaultHeight, 0.f),
 
     rotate=0;
 
-	move= Vec3f(0.f);
+	moveMouse= Vec3f(0.f);
+	moveKey= Vec3f(0.f);
 
 	maxRenderDistance = config.getRenderDistanceMax();
 	maxHeight = config.getCameraMaxDistance();
 	minHeight = config.getCameraMinDistance();
 	maxCameraDist = config.getCameraMaxDistance();
 	minCameraDist = config.getCameraMinDistance();
+	
 	minVAng = -config.getCameraMaxYaw();
-	maxVAng = -config.getCameraMinYaw();
-	fov = config.getCameraFov();
+	//maxVAng = -config.getCameraMinYaw();
+
+	fov = config.getRenderFov();
+
+	float vFov = fov / Metrics::getInstance().getAspectRatio();
+	
+	maxVAng = -(vFov / 2);
 }
 
 void GameCamera::init(int limitX, int limitY){
@@ -82,6 +90,7 @@ void GameCamera::setPos(Vec2f pos){
 }
 
 void GameCamera::update(){
+	Vec3f move = moveMouse+moveKey;
 
 	//move XZ
 	if(move.z){
@@ -140,72 +149,6 @@ void GameCamera::update(){
 	if(clampBounds){
 		clampPosXYZ(0.0f, (float)limitX, minHeight, maxHeight, 0.0f, (float)limitY);
 	}
-}
-
-Quad2i GameCamera::computeVisibleQuad() const{
-	/*
-	//maxRenderDistance
-	float flatDist = maxRenderDistance * -cos(degToRad(vAng + fov / 2.f));
-	Vec3f p1(flatDist * sin(degToRad(hAng + fov / 2.f)), maxRenderDistance * sin(degToRad(vAng + fov / 2.f)), flatDist  * -cos(degToRad(hAng + fov / 2.f)));
-	Vec3f p2(flatDist * sin(degToRad(hAng - fov / 2.f)), maxRenderDistance * sin(degToRad(vAng + fov / 2.f)), flatDist  * -cos(degToRad(hAng - fov / 2.f)));
-	flatDist = maxRenderDistance * -cos(degToRad(vAng - fov / 2.f));
-	Vec3f p3(flatDist * sin(degToRad(hAng + fov / 2.f)), maxRenderDistance * sin(degToRad(vAng - fov / 2.f)), flatDist  * -cos(degToRad(hAng + fov / 2.f)));
-	Vec3f p4(flatDist * sin(degToRad(hAng - fov / 2.f)), maxRenderDistance * sin(degToRad(vAng - fov / 2.f)), flatDist  * -cos(degToRad(hAng - fov / 2.f)));
-	// find the floor
-	if(-p1.y > pos.y) {
-		p1 = p1 * pos.y / abs(p1.y);
-	}
-	if(-p2.y > pos.y) {
-		p2 = p2 * pos.y / abs(p2.y);
-	}
-	if(-p3.y > pos.y) {
-		p3 = p3 * pos.y / abs(p3.y);
-	}
-	if(-p4.y > pos.y) {
-		p4 = p4 * pos.y / abs(p4.y);
-	}
-	Vec2i pi1(p1.x, p1.z), pi2(p2.x, p2.z), pi3(p3.x, p3.z), pi4(p4.x, p4.z);
-
-	if(hAng>=135 && hAng<=225){
-		return Quad2i(pi1, pi2, pi3, pi4);
-	}
-	if(hAng>=45 && hAng<=135){
-		return Quad2i(pi3, pi1, pi4, pi2);
-	}
-	if(hAng>=225 && hAng<=315) {
-		return Quad2i(pi2, pi4, pi1, pi3);
-	}
-	return Quad2i(pi4, pi3, pi2, pi1);
-	*/
-
-	float nearDist = 20.f;
-	float dist = pos.y > 20.f ? pos.y * 1.2f : 20.f;
-	float farDist = 90.f * (pos.y > 20.f ? pos.y / 15.f : 1.f);
-	float fov = Config::getInstance().getCameraFov();
-	
-	Vec2f v(sinf(degToRad(180 - hAng)), cosf(degToRad(180 - hAng)));
-	Vec2f v1(sinf(degToRad(180 - hAng - fov)), cosf(degToRad(180 - hAng - fov)));
-	Vec2f v2(sinf(degToRad(180 - hAng + fov)), cosf(degToRad(180 - hAng + fov)));
-	v.normalize();
-	v1.normalize();
-	v2.normalize();
-	
-	Vec2f p = Vec2f(pos.x, pos.z) - v * dist;
-	Vec2i p1(static_cast<int>(p.x + v1.x * nearDist), static_cast<int>(p.y + v1.y * nearDist));
-	Vec2i p2(static_cast<int>(p.x + v1.x * farDist), static_cast<int>(p.y + v1.y * farDist));
-	Vec2i p3(static_cast<int>(p.x + v2.x * nearDist), static_cast<int>(p.y + v2.y * nearDist));
-	Vec2i p4(static_cast<int>(p.x + v2.x * farDist), static_cast<int>(p.y + v2.y * farDist));
-	
-	if (hAng >= 135 && hAng <= 225) {
-		return Quad2i(p1, p2, p3, p4);
-	}
-	if (hAng >= 45 && hAng <= 135) {
-		return Quad2i(p3, p1, p4, p2);
-	}
-	if (hAng >= 225 && hAng <= 315) {
-		return Quad2i(p2, p4, p1, p3);
-	}
-	return Quad2i(p4, p3, p2, p1);
 }
 
 void GameCamera::switchState(){

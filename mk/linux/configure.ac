@@ -4,7 +4,7 @@
 #----------------------------------------------------------------------------
 AC_PREREQ([2.54])
 
-AC_INIT([gae], [0.2.11], [http://bugs.codemonger.org])
+AC_INIT([gae], [0.2.13_beta1], [http://sf.net/apps/trac/glestae])
 AC_CONFIG_SRCDIR([mk/jam/build.jam])
 AC_CONFIG_AUX_DIR([mk/autoconf])
 
@@ -94,6 +94,14 @@ NP_FINDLIB([OPENAL], [OpenAL], [OpenAL],
 		[], [])
 
 CHECK_LUA([], [AC_MSG_ERROR([Please install lua 5.1])])
+
+AM_PATH_CPPUNIT([1.10.2], CPPUNIT="yes")
+AC_SUBST(CPPUNIT)
+
+AM_PATH_XML2([2.0.0], XML="yes")
+AC_SUBST(XML)
+XML_CFLAGS="$XML_CPPFLAGS"
+AC_SUBST(XML_CFLAGS)
 
 # Look for PhysicsFS 
 AC_CHECK_HEADER(physfs.h, , AC_MSG_ERROR([PhysicsFS header not found.]))

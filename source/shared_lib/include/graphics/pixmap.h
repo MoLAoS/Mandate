@@ -20,15 +20,10 @@
 #include "FileOps.hpp"
 
 using std::string;
-using Shared::Platform::int8;
-using Shared::Platform::uint8;
-using Shared::Platform::int16;
-using Shared::Platform::uint16;
-using Shared::Platform::int32;
-using Shared::Platform::uint32;
-using Shared::Platform::float32;
+using namespace Shared::Platform;
+using namespace Shared::Math;
 
-namespace Shared{ namespace Graphics{
+namespace Shared { namespace Graphics {
 
 // =====================================================
 //	class PixmapIo

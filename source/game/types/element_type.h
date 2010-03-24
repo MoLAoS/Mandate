@@ -21,6 +21,8 @@
 #include "resource.h"
 #include "xml_parser.h"
 
+#include "checksum.h"
+
 using std::vector;
 using std::map;
 using std::string;
@@ -68,6 +70,8 @@ public:
 
 	int getId() const					{return id;}
 	string getName() const				{return name;}
+
+	virtual void doChecksum(Checksum &checksum) const;
 };
 
 // =====================================================
@@ -113,6 +117,9 @@ public:
 	RequirableType() : DisplayableType(), subfactionsReqs(0) {}
 	RequirableType(int id, const char *name, Texture2D *image) :
 			DisplayableType(id, name, image), subfactionsReqs(0) {}
+
+	virtual void doChecksum(Checksum &checksum) const;
+
 	//get
 	int getUpgradeReqCount() const						{return upgradeReqs.size();}
 	int getUnitReqCount() const							{return unitReqs.size();}
@@ -167,6 +174,7 @@ public:
     void checkCostStrings(TechTree *techTree);
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
+	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc() const;
 };
 

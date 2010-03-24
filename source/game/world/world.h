@@ -34,8 +34,8 @@
 
 namespace Glest{ namespace Game{
 
-using Shared::Graphics::Quad2i;
-using Shared::Graphics::Rect2i;
+using Shared::Math::Quad2i;
+using Shared::Math::Rect2i;
 using Shared::Util::Random;
 using Glest::Game::Util::PosCircularIteratorFactory;
 
@@ -45,6 +45,8 @@ class Config;
 class Game;
 class GameSettings;
 class ScriptManager;
+namespace Search { class Cartographer; class RoutePlanner; }
+using namespace Search;
 
 // =====================================================
 // 	class World
@@ -58,17 +60,19 @@ private:
 	typedef std::map< string,set<string> > UnitTypes;
 
 public:
+	/** max radius to look when placing units */
 	static const int generationArea= 100;
+	/** height air units are drawn at. @todo this is not game data, probably belongs somewhere else */
 	static const float airHeight;
+	/** ??? anyone ? */
 	static const int indirectSightRange= 5;
 
 private:
-
 	Map map;
 	Tileset tileset;
 	TechTree techTree;
 	TimeFlow timeFlow;
-	Scenario scenario;
+	Scenario *scenario;
 	Game &game;
 	const GameSettings &gs;
 
@@ -82,6 +86,8 @@ private:
 	Random random;
 
 	ScriptManager *scriptManager;
+	Cartographer *cartographer;
+	RoutePlanner *routePlanner;
 
 	int thisFactionIndex;
 	int thisTeamIndex;
@@ -89,9 +95,13 @@ private:
 	int nextUnitId;
 
 	//config
-	bool fogOfWar;
+	bool fogOfWar, shroudOfDarkness;
 	int fogOfWarSmoothingFrameSkip;
 	bool fogOfWarSmoothing;
+
+	bool unfogActive;
+	int unfogTTL;
+	Vec4i unfogArea;
 
 	static World *singleton;
 	bool alive;
@@ -103,10 +113,11 @@ private:
 
 public:
 	World(Game *game);
-	~World()										{singleton = NULL;}
+	~World();
 	void end(); //to die before selection does
 
-	static World& getInstance () { return *singleton; }
+	static World& getInstance() { return *singleton; }
+	static bool isConstructed() { return singleton != 0; }
 
 	//get
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
@@ -117,14 +128,15 @@ public:
 	const Map *getMap() const 						{return &map;}
 	const Tileset *getTileset() const 				{return &tileset;}
 	const TechTree *getTechTree() const 			{return &techTree;}
-	const Scenario* getScenario () const			{return &scenario;}
+	const Scenario* getScenario () const			{return scenario;}
 	const TimeFlow *getTimeFlow() const				{return &timeFlow;}
 	Tileset *getTileset() 							{return &tileset;}
 	Map *getMap() 									{return &map;}
+	Cartographer* getCartographer()					{return cartographer;}
+	RoutePlanner* getRoutePlanner()					{return routePlanner;}
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
 	const Minimap *getMinimap() const				{return &minimap;}
-//	const Stats &getStats() const					{return stats;}
 	Stats &getStats() 								{return stats;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}
 	int getNextUnitId()								{return nextUnitId++;}
@@ -134,42 +146,35 @@ public:
 	const PosCircularIteratorFactory &getPosIteratorFactory() {return posIteratorFactory;}
 
 	//init & load
-	void init(const XmlNode *worldNode = NULL);
-	bool loadTileset(Checksum &checksum);
-	bool loadTech(Checksum &checksum);
-	bool loadMap(Checksum &checksum);
-	bool loadScenario(const string &path, Checksum *checksum);
-
-	void save(XmlNode *node) const;
+	void init();
+	void preload();
+	bool loadTileset();
+	bool loadTech();
+	bool loadMap();
+	bool loadScenario(const string &path);
 
 	//misc
 	void update();
 	void moveUnitCells(Unit *unit);
-	Unit* findUnitById(int id);
+	Unit* findUnitById(int id) const;
 	const UnitType* findUnitTypeById(const FactionType* factionType, int id);
 	bool placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated= false);
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
 	void doKill(Unit *killer, Unit *killed);
 	void assertConsistiency();
 	void hackyCleanUp(Unit *unit);
-	//bool toRenderUnit(const Unit *unit, const Quad2i &visibleQuad) const;
-	//bool toRenderUnit(const Unit *unit) const;
-	bool toRenderUnit(const Unit *unit, const Quad2i &visibleQuad) const {
-		//a unit is rendered if it is in a visible cell or is attacking a unit in a visible cell
-		return visibleQuad.isInside(unit->getCenteredPos()) && toRenderUnit(unit);
-	}
-
+	
 	bool toRenderUnit(const Unit *unit) const {
 		return map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
-			|| (unit->getCurrSkill()->getClass() == scAttack
+			|| (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
 			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
 	}
 
 	//scripting interface
 	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
 	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
-	int giveTargetCommand ( int unitId, const string &commandName, int targetId );
-	int giveStopCommand ( int unitId, const string &commandName );
+	int giveTargetCommand( int unitId, const string &commandName, int targetId);
+	int giveStopCommand( int unitId, const string &commandName);
 	int giveProductionCommand(int unitId, const string &producedName);
 	int giveUpgradeCommand(int unitId, const string &upgradeName);
 	int giveResource(const string &resourceName, int factionIndex, int amount);
@@ -180,10 +185,12 @@ public:
 	int getUnitCount(int factionIndex);
 	int getUnitCountOfType(int factionIndex, const string &typeName);
 
+	void unfogMap(const Vec4i &rect, int time);
+
 #ifdef _GAE_DEBUG_EDITION_
-	void loadPFDebugTextures ();
+	// these should be in DebugRenderer
+	void loadPFDebugTextures();
 	Texture2D *PFDebugTextures[18];
-	//int getNumPathPos () { return map.PathPositions.size (); }
 #endif
 
 private:
@@ -201,12 +208,13 @@ private:
 	void updateEarthquakes(float seconds);
 	void tick();
 	void computeFow();
+	void doUnfog();
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
 	void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
-	bool isNetworkServer() {return NetworkManager::getInstance().isNetworkServer();}
-	bool isNetworkClient() {return NetworkManager::getInstance().isNetworkClient();}
+	//NETWORK:bool isNetworkServer() {return NetworkManager::getInstance().isNetworkServer();}
+	//NETWORK:bool isNetworkClient() {return NetworkManager::getInstance().isNetworkClient();}
 	void doHackyCleanUp();
 };
 

@@ -39,74 +39,73 @@ namespace Glest{ namespace Game{
 
 // ==================== misc ====================
 
-bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum) {
+bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	string path;
 
 	Logger::getInstance().add("Upgrade type: "+ dir, true);
 	path = dir + "/" + name + ".xml";
-   bool loadOk = true;
-	checksum.addFile(path, true);
+	bool loadOk = true;
 
 	XmlTree xmlTree;
-   const XmlNode *upgradeNode;
-   try { 
-      xmlTree.load(path);
-	   upgradeNode= xmlTree.getRootNode();
-   }
-   catch ( runtime_error e ) { 
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      return false;
-   }
+	const XmlNode *upgradeNode;
+	try { 
+		xmlTree.load(path);
+		upgradeNode= xmlTree.getRootNode();
+	}
+	catch (runtime_error e) { 
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		return false;
+	}
 	//image
-   try {
-	   const XmlNode *imageNode= upgradeNode->getChild("image");
-	   image= Renderer::getInstance().newTexture2D(rsGame);
-	   image->load(dir+"/"+imageNode->getAttribute("path")->getRestrictedValue());
-   }
-   catch ( runtime_error e ) { 
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      return false;
-   }
+	try {
+		const XmlNode *imageNode= upgradeNode->getChild("image");
+		image= Renderer::getInstance().newTexture2D(rsGame);
+		image->load(dir+"/"+imageNode->getAttribute("path")->getRestrictedValue());
+	}
+	catch (runtime_error e) { 
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		return false;
+	}
 	//image cancel
-   try {
-      const XmlNode *imageCancelNode= upgradeNode->getChild("image-cancel");
-	   cancelImage= Renderer::getInstance().newTexture2D(rsGame);
-	   cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
-   }
-   catch ( runtime_error e ) { 
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      return false;
-   }
+	try {
+		const XmlNode *imageCancelNode= upgradeNode->getChild("image-cancel");
+		cancelImage= Renderer::getInstance().newTexture2D(rsGame);
+		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
+	}
+	catch (runtime_error e) { 
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		return false;
+	}
 
 	//upgrade time
-   try { productionTime= upgradeNode->getChildIntValue("time"); }
-   catch ( runtime_error e ) { 
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      return false;
-   }
+	try { productionTime= upgradeNode->getChildIntValue("time"); }
+	catch (runtime_error e) { 
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		return false;
+	}
 
 	//ProducibleType parameters
-   try { ProducibleType::load(upgradeNode, dir, techTree, factionType); }
-   catch ( runtime_error e ) { 
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      return false;
-   }
+	try { ProducibleType::load(upgradeNode, dir, techTree, factionType); }
+	catch (runtime_error e) { 
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		return false;
+	}
 
 	//effects
-   try {
-	   const XmlNode *effectsNode= upgradeNode->getChild("effects", 0, false);
-	   if(effectsNode) {
-		   for(int i=0; i<effectsNode->getChildCount(); ++i){
-			   const XmlNode *unitNode= effectsNode->getChild("unit", i);
-			   string name= unitNode->getAttribute("name")->getRestrictedValue();
-			   effects.push_back(factionType->getUnitType(name));
-		   }
-	   }
-   }
-   catch ( runtime_error e ) { 
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      return false;
-   }
+	try {
+		const XmlNode *effectsNode= upgradeNode->getChild("effects", 0, false);
+		if(effectsNode) {
+			for(int i=0; i<effectsNode->getChildCount(); ++i){
+				const XmlNode *unitNode= effectsNode->getChild("unit", i);
+				string name= unitNode->getAttribute("name")->getRestrictedValue();
+				effects.push_back(factionType->getUnitType(name));
+			}
+		}
+	}
+	catch (runtime_error e) { 
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		return false;
+	}
 
 	//values
 	//maintain backward compatibility using legacy format
@@ -121,11 +120,20 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 
 	//initialize values using new format if nodes are present
 	if(upgradeNode->getChild("static-modifiers", 0, false)
-			 || upgradeNode->getChild("multipliers", 0, false)){
-		if ( ! EnhancementTypeBase::load(upgradeNode, dir, techTree, factionType) )
-         loadOk = false;
+	|| upgradeNode->getChild("multipliers", 0, false)) {
+		if (! EnhancementTypeBase::load(upgradeNode, dir, techTree, factionType)) {
+			loadOk = false;
+		}
 	}
-   return loadOk;
+	return loadOk;
+}
+
+void UpgradeType::doChecksum(Checksum &checksum) const {
+	ProducibleType::doChecksum(checksum);
+	EnhancementTypeBase::doChecksum(checksum);
+	foreach_const (vector<const UnitType*>, it, effects) {
+		checksum.addString((*it)->getName());
+	}
 }
 
 string UpgradeType::getDesc() const {

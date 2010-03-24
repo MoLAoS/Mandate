@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 MartiÃ±o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -23,7 +23,6 @@
 #include "components.h"
 #include "metrics.h"
 #include "stats.h"
-#include "auto_test.h"
 
 #include "leak_dumper.h"
 
@@ -44,9 +43,11 @@ BattleEnd::~BattleEnd() {
 }
 
 void BattleEnd::update(){
-	if (Config::getInstance().getMiscAutoTest()) {
+	//TOOD: add AutoTest to config
+	/*
+	if(Config::getInstance().getBool("AutoTest")){
 		AutoTest::getInstance().updateBattleEnd(program);
-	}
+	}*/
 }
 
 void BattleEnd::render() {
@@ -78,16 +79,22 @@ void BattleEnd::render() {
 		string controlString;
 
 		switch (gs.getFactionControl(i)) {
-		case ctCpu:
+		case ControlType::CPU_EASY:
+			controlString = lang.get("CpuEasy");
+			break;
+		case ControlType::CPU:
 			controlString = lang.get("Cpu");
 			break;
-		case ctCpuUltra:
+		case ControlType::CPU_ULTRA:
 			controlString = lang.get("CpuUltra");
 			break;
-		case ctNetwork:
+		case ControlType::CPU_MEGA:
+			controlString = lang.get("CpuMega");
+			break;
+		case ControlType::NETWORK:
 			controlString = lang.get("Network");
 			break;
-		case ctHuman:
+		case ControlType::HUMAN:
 			controlString = lang.get("Human");
 			break;
 		default:

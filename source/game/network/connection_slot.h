@@ -22,7 +22,7 @@ using Shared::Platform::ServerSocket;
 using Shared::Platform::Socket;
 using std::vector;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 class ServerInterface;
 
@@ -47,7 +47,7 @@ public:
 	void setReady()					{ready = true;}
 	int getPlayerIndex() const		{return playerIndex;}
 	bool isReady() const			{return ready;}
-	string getName () {return "";}
+	string getName() const			{return getRemotePlayerName();}
 
 protected:
 	virtual Socket* getSocket()				{return socket;}

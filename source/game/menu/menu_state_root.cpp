@@ -61,12 +61,15 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu):
 
 	// end network interface
 	NetworkManager::getInstance().end();
+
+	msgBox = NULL;
 }
 
 void MenuStateRoot::mouseClick(int x, int y, MouseButton mouseButton){
 
 	CoreData &coreData=  CoreData::getInstance();
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+	Lang &lang= Lang::getInstance();
 
 	if(buttonNewGame.mouseClick(x, y)){
 		soundRenderer.playFx(coreData.getClickSoundB());
@@ -85,8 +88,10 @@ void MenuStateRoot::mouseClick(int x, int y, MouseButton mouseButton){
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
     }
 	else if(buttonLoadGame.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateLoadGame(program, mainMenu));
+		/*soundRenderer.playFx(coreData.getClickSoundB());
+		mainMenu->setState(new MenuStateLoadGame(program, mainMenu));*/
+		msgBox = new GraphicMessageBox();
+		msgBox->init("Feature Disabled: to be enabled in 0.3", lang.get("Ok"));
 	}
     else if(buttonAbout.mouseClick(x, y)){
 		soundRenderer.playFx(coreData.getClickSoundB());
@@ -95,7 +100,12 @@ void MenuStateRoot::mouseClick(int x, int y, MouseButton mouseButton){
     else if(buttonExit.mouseClick(x, y)){
 		soundRenderer.playFx(coreData.getClickSoundA());
 		program.exit();
-    }
+	} 
+	else if(msgBox && msgBox->mouseClick(x, y)){
+		soundRenderer.playFx(coreData.getClickSoundC());
+		delete msgBox;
+		msgBox = NULL;
+	}
 }
 
 void MenuStateRoot::mouseMove(int x, int y, const MouseState &ms){
@@ -106,6 +116,11 @@ void MenuStateRoot::mouseMove(int x, int y, const MouseState &ms){
     buttonOptions.mouseMove(x, y);
     buttonAbout.mouseMove(x, y);
     buttonExit.mouseMove(x,y);
+
+	if(msgBox) {
+		msgBox->mouseMove(x, y);
+		return;
+	}
 }
 
 void MenuStateRoot::render(){
@@ -127,6 +142,10 @@ void MenuStateRoot::render(){
 	renderer.renderButton(&buttonAbout);
 	renderer.renderButton(&buttonExit);
 	renderer.renderLabel(&labelVersion);
+
+	if(msgBox) {
+		renderer.renderMessageBox(msgBox);
+	}
 }
 
 void MenuStateRoot::update(){

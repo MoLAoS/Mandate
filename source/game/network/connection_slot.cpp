@@ -21,6 +21,8 @@
 #include "network_message.h"
 
 #include "leak_dumper.h"
+#include "logger.h"
+#include "world.h"
 
 using namespace std;
 using namespace Shared::Util;
@@ -44,79 +46,96 @@ ConnectionSlot::~ConnectionSlot() {
 }
 
 void ConnectionSlot::update() {
-	if(!socket) {
+	if (!socket) {
 		socket = serverInterface->getServerSocket()->accept();
 
 		//send intro message when connected
-		if(socket) {
-			NetworkMessageIntro networkMessageIntro(getNetworkVersionString(), socket->getHostName(),
-					Config::getInstance().getNetPlayerName(), playerIndex, resumeSaved);
-			send(&networkMessageIntro, true);
+		if (socket) {
+			socket->setBlock(false);
+			NetworkMessageIntro networkMessageIntro(
+				getNetworkVersionString(), theConfig.getNetPlayerName(), socket->getHostName(), playerIndex);
+			send(&networkMessageIntro);
+			LOG_NETWORK( "Connection established, slot " + intToStr(playerIndex) +  " sending intro message." );
 		}
-	} else {
-		NetworkMessage *genericMsg = NULL;
-		if(!socket->isConnected()) {
+		return;
+	}
+	if (!socket->isConnected()) {
+		LOG_NETWORK("Slot " + intToStr(playerIndex) + " disconnected, [" + getRemotePlayerName() + "]");
+		close();
+		return;
+	}
+	NetworkMessageType networkMessageType = getNextMessageType();
+	//process incoming commands
+	switch (networkMessageType) {
+		case NetworkMessageType::NO_MSG:
+			break;
+		case NetworkMessageType::TEXT: {
+				NetworkMessageText textMsg;
+				if (receiveMessage(&textMsg)) {
+					serverInterface->process(textMsg, playerIndex);
+					LOG_NETWORK( "Received text message on slot " + intToStr(playerIndex) + " : " + textMsg.getText() );
+				}
+			}
+			break;
+		case NetworkMessageType::COMMAND_LIST: {
+				NetworkMessageCommandList cmdList;
+				if(receiveMessage(&cmdList)){
+					/*LOG_NETWORK(
+						"Receivied " + intToStr(cmdList.getCommandCount()) + " commands on slot "
+						+ intToStr(playerIndex) + " frame: " + intToStr(theWorld.getFrameCount())
+					);*/
+					for (int i=0; i < cmdList.getCommandCount(); ++i) {
+						serverInterface->requestCommand(cmdList.getCommand(i));
+
+						/*const NetworkCommand * const &cmd = cmdList.getCommand(i);
+						const Unit * const &unit = theWorld.findUnitById(cmd->getUnitId());
+						const UnitType * const &unitType = unit->getType();
+						const CommandType * const &cmdType = unitType->findCommandTypeById(cmd->getCommandTypeId());
+						LOG_NETWORK(
+							"\tUnit: " + intToStr(unit->getId()) + " [" + unitType->getName() + "] "
+							+ cmdType->getName() + "."
+						);*/
+					}
+				}
+			}
+			break;
+		case NetworkMessageType::INTRO: {
+				NetworkMessageIntro msg;
+				if (receiveMessage(&msg)) {
+					LOG_NETWORK (
+						"Received intro message on slot " + intToStr(playerIndex) + ", host name = "
+						+ msg.getHostName() + ", player name = " + msg.getPlayerName()
+					);
+					setRemoteNames(msg.getHostName(), msg.getPlayerName());
+				}
+			}
+			break;
+
+		case NetworkMessageType::QUIT: {
+				LOG_NETWORK( "Received quit message in slot " + intToStr(playerIndex) );
+				string msg = getRemotePlayerName() + " [" + getRemoteHostName() + "] has quit the game!";
+				close();
+				serverInterface->doSendTextMessage(msg, -1);
+			}
+			break;
+
+		default:
+			stringstream ss;
+			ss << "Unexpected message type: " << networkMessageType << " on slot: " << playerIndex;
+			LOG_NETWORK( ss.str() );
+			ss.clear();
+			ss << "Player " << playerIndex << " [" << getName()
+				<< "] was disconnected because they sent the server bad data.";
+			serverInterface->doSendTextMessage(ss.str(), -1);
 			close();
 			return;
-		}
-				
-		while ((genericMsg = nextMsg())) {
-			try {
-				//process incoming commands
-				switch(genericMsg->getType()) {
-
-					//process intro messages
-					case nmtIntro: {
-						NetworkMessageIntro *msg = (NetworkMessageIntro*)genericMsg;
-						setRemoteNames(msg->getHostName(), msg->getPlayerName());
-					}
-					break;
-
-					//command list
-					case nmtCommandList: {
-						NetworkMessageCommandList *msg = (NetworkMessageCommandList*)genericMsg;
-						for (int i = 0; i < msg->getCommandCount(); ++i){
-							serverInterface->requestCommand(msg->getCommand(i));
-						}
-						msg->clear();
-					}
-					break;
-
-					case nmtText:
-						serverInterface->process(*reinterpret_cast<NetworkMessageText*>(genericMsg), playerIndex);
-						break;
-					
-					case nmtQuit:			// I pwned joo wus!
-						break;
-
-					case nmtUpdateRequest:
-						serverInterface->process(*reinterpret_cast<NetworkMessageUpdateRequest*>(genericMsg));
-						break;
-
-					case nmtReady:			// cute, but I don't care
-					case nmtLaunch: 		// launch your heart out
-						break;
-					
-					case nmtFileHeader:		// I don't want your files
-					case nmtFileFragment:
-					case nmtInvalid:		// invalid, duh!
-					case nmtUpdate:			// no thanks, you're not the server
-					case nmtPing:			// ping should be intercepted in NetworkInterface::receive()
-					case nmtCount:
-						throw runtime_error("Unexpected message in connection slot: " + intToStr(genericMsg->getType()));
-				}
-				flush();
-			} catch (runtime_error &e) {
-				delete genericMsg;
-				throw e;
-			}
-			delete genericMsg;
-		}
-		NetworkStatus::update();
 	}
 }
 
 void ConnectionSlot::close() {
+	if (socket) {
+		socket->close();
+	}
 	delete socket;
 	socket = NULL;
 }

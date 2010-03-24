@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 MartiÃ±o Figueroa
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
@@ -30,7 +30,7 @@ using std::vector;
 namespace Glest{ namespace Game{
 
 using Shared::Graphics::Texture2D;
-using Shared::Graphics::Vec3f;
+using Shared::Math::Vec3f;
 
 class Unit;
 class TechTree;
@@ -79,19 +79,22 @@ private:
 	static ResourceTypes neededResources;
 
 public:
-    void init(const FactionType *factionType, ControlType control, TechTree *techTree,
-         int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources);
+	void init(const FactionType *factionType, ControlType control, TechTree *techTree,
+		int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources);
 	void end();
 
-    //get
+	//get
 	const Resource *getResource(const ResourceType *rt) const;
 	const Resource *getResource(int i) const			{assert(i < resources.size()); return &resources[i];}
 	int getStoreAmount(const ResourceType *rt) const;
 	const FactionType *getType() const					{return factionType;}
 	int getIndex() const								{return id;}
 	int getTeam() const									{return teamIndex;}
-	bool getCpuControl() const							{return control == ctCpuUltra || control == ctCpu;}
-	bool getCpuUltraControl() const						{return control == ctCpuUltra;}
+	bool getCpuControl() const							{return control == ControlType::CPU_EASY || control == ControlType::CPU_MEGA || control == ControlType::CPU_ULTRA || control == ControlType::CPU;}
+	bool getCpuUltraControl() const						{return control == ControlType::CPU_ULTRA;}
+	bool getCpuEasyControl() const						{return control == ControlType::CPU_EASY;}
+	bool getCpuMegaControl() const						{return control == ControlType::CPU_MEGA;}
+	ControlType getControlType() const					{return control;}
 	Unit *getUnit(int i) const							{assert(units.size() == unitMap.size()); assert(i < units.size()); return units[i];}
 	int getUnitCount() const							{return units.size();}
 	const Units &getUnits() const						{return units;}
@@ -115,7 +118,7 @@ public:
 	void applyStaticProduction(const ProducibleType *p);
 	void deApplyCosts(const ProducibleType *p);
 	void deApplyStaticCosts(const ProducibleType *p);
-   void deApplyStaticConsumption(const ProducibleType *p);
+	void deApplyStaticConsumption(const ProducibleType *p);
 	void applyCostsOnInterval();
 	bool checkCosts(const ProducibleType *pt);
 
@@ -126,9 +129,9 @@ public:
 	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
 
 	//diplomacy
-	bool isAlly(const Faction *faction)					{return teamIndex == faction->getTeam();}
+	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
 
-    //other
+	//other
 	Unit *findUnit(int id) {
 		assert(units.size() == unitMap.size());
 		UnitMap::iterator it = unitMap.find(id);
@@ -147,12 +150,6 @@ public:
 	//resources
 	void incResourceAmount(const ResourceType *rt, int amount);
 	void setResourceBalance(const ResourceType *rt, int balance);
-
-	void load(const XmlNode *node, World *world, const FactionType *ft, ControlType control, TechTree *tt);
-//	void reinit(World *world);
-	void save(XmlNode *node) const;
-	void writeUpdate(XmlNode *node) const;
-	void update(const XmlNode *node);
 
 private:
 	void limitResourcesToStore();

@@ -39,8 +39,15 @@ public:
 	int32 getSum() const	{return sum;}
 
 	void addByte(int8 value);
+
+	template <typename T>
+	void add(T val) {
+		for (unsigned i=0; i < sizeof(T); ++i) {
+			int8 *byte = (int8*)&val + i;
+			addByte(*byte);
+		}
+	}
 	void addString(const string &value);
-	void addFile(const string &path, bool text);
 };
 
 }}//end namespace

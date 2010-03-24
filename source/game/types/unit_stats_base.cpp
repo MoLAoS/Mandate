@@ -31,10 +31,6 @@ using namespace Shared::Xml;
 
 namespace Glest { namespace Game {
 
-const char *Zones::names[] = {"prop", "land"/*<- == "surface"*/, "air", /*, "subsurface"*/};
-const char *Fields::names[] = {"land"/*<- == "walkable"*/, "air", "any_water", "deep_water", "amphibious" };
-const char *UnitProperties::names[] = {"burnable", "rotated_climb", "wall"};
-
 // ===============================
 //  class UnitStatsBase
 // ===============================
@@ -158,83 +154,112 @@ void UnitStatsBase::applyMultipliers(const EnhancementTypeBase &e) {
 // legacy load for Unit class
 bool UnitStatsBase::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	bool loadOk = true;
-   //maxHp
-   try { maxHp = baseNode->getChildIntValue("max-hp"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	//maxHp
+	try { maxHp = baseNode->getChildIntValue("max-hp"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//hpRegeneration
-   try { hpRegeneration = baseNode->getChild("max-hp")->getIntAttribute("regeneration"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try { hpRegeneration = baseNode->getChild("max-hp")->getIntAttribute("regeneration"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//maxEp
-   try { maxEp = baseNode->getChildIntValue("max-ep"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
-   try {
-	   //epRegeneration
-	   if (maxEp) {
-		   epRegeneration = baseNode->getChild("max-ep")->getIntAttribute("regeneration");
-	   } 
-      else {
-		   XmlAttribute *epRegenAttr = baseNode->getChild("max-ep")->getAttribute("regeneration", false);
-		   epRegeneration = epRegenAttr ? epRegenAttr->getIntValue() : 0;
-	   }
-   }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try { maxEp = baseNode->getChildIntValue("max-ep"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
+	try {
+		//epRegeneration
+		if (maxEp) {
+			epRegeneration = baseNode->getChild("max-ep")->getIntAttribute("regeneration");
+		} 
+		else {
+			XmlAttribute *epRegenAttr = baseNode->getChild("max-ep")->getAttribute("regeneration", false);
+			epRegeneration = epRegenAttr ? epRegenAttr->getIntValue() : 0;
+		}
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//sight
-   try { sight = baseNode->getChildIntValue("sight"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try { sight = baseNode->getChildIntValue("sight"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//armor
-   try { armor = baseNode->getChildIntValue("armor"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try { armor = baseNode->getChildIntValue("armor"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//armor type string
-   try {
-      string armorTypeName = baseNode->getChildRestrictedValue("armor-type");
-      armorType = techTree->getArmorType(armorTypeName);
-   }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try {
+		string armorTypeName = baseNode->getChildRestrictedValue("armor-type");
+		armorType = techTree->getArmorType(armorTypeName);
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//light & lightColor
-   try {
-	   const XmlNode *lightNode = baseNode->getChild("light");
-	   light = lightNode->getAttribute("enabled")->getBoolValue();
-	   if (light)
-		   lightColor = lightNode->getColor3Value();
-   }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try {
+		const XmlNode *lightNode = baseNode->getChild("light");
+		light = lightNode->getAttribute("enabled")->getBoolValue();
+		if (light)
+			lightColor = lightNode->getColor3Value();
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//size
-   try { size = baseNode->getChildIntValue("size"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try { size = baseNode->getChildIntValue("size"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//height
-   try { height = baseNode->getChildIntValue("height"); }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
-   return loadOk;
+	try { height = baseNode->getChildIntValue("height"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void UnitStatsBase::doChecksum(Checksum &checksum) const {
+	checksum.add<int>(maxHp);
+	checksum.add<int>(hpRegeneration);
+	checksum.add<int>(maxEp);
+	checksum.add<int>(epRegeneration);
+	foreach_enum (Field, f) {
+		checksum.add<bool>(fields.get(f));
+	}
+	foreach_enum (Property, p) {
+		checksum.add<bool>(properties.get(p));
+	}
+	checksum.add<int>(sight);
+	checksum.add<int>(armor);
+	if (armorType) checksum.addString(armorType->getName());
+	checksum.add<bool>(light);
+	checksum.add<Vec3f>(lightColor);
+	checksum.add<int>(size);
+	checksum.add<int>(height);
+	checksum.add<int>(attackStrength);
+	checksum.add<float>(effectStrength);
+	checksum.add<float>(attackPctStolen);
+	checksum.add<int>(attackRange);
+	checksum.add<int>(moveSpeed);
+	checksum.add<int>(attackSpeed);
+	checksum.add<int>(prodSpeed);
+	checksum.add<int>(repairSpeed);
+	checksum.add<int>(harvestSpeed);
 }
 
 void UnitStatsBase::save(XmlNode *node) {
@@ -454,33 +479,57 @@ void EnhancementTypeBase::initMultiplier(const XmlNode *node, const string &dir)
 
 bool EnhancementTypeBase::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	const XmlNode *node;
-   bool loadOk = true;
+	bool loadOk = true;
 	//static modifiers
-   try {
-      node = baseNode->getChild("static-modifiers", 0, false);
-	   if(node) {
-		   for (int i = 0; i < node->getChildCount(); ++i) {
-			   initStaticModifier(node->getChild(i), dir);
-		   }
-	   }
-   }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
+	try {
+		node = baseNode->getChild("static-modifiers", 0, false);
+		if(node) {
+			for (int i = 0; i < node->getChildCount(); ++i) {
+				initStaticModifier(node->getChild(i), dir);
+			}
+		}
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
 	//multipliers
-   try {
-	   node = baseNode->getChild("multipliers", 0, false);
-	   if(node)
-		   for (int i = 0; i < node->getChildCount(); ++i)
-			   initMultiplier(node->getChild(i), dir);
-   }
-   catch ( runtime_error e ) {
-      Logger::getErrorLog().addXmlError ( dir, e.what() );
-      loadOk = false;
-   }
-   return loadOk;
+	try {
+		node = baseNode->getChild("multipliers", 0, false);
+		if(node)
+			for (int i = 0; i < node->getChildCount(); ++i)
+				initMultiplier(node->getChild(i), dir);
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		loadOk = false;
+	}
+	return loadOk;
 }
 
+void EnhancementTypeBase::doChecksum(Checksum &checksum) const {
+	UnitStatsBase::doChecksum(checksum);
+	checksum.add<float>(maxHpMult);
+	checksum.add<float>(hpRegenerationMult);
+	checksum.add<float>(maxEpMult);
+	checksum.add<float>(epRegenerationMult);
+	checksum.add<float>(sightMult);
+	checksum.add<float>(armorMult);
+	checksum.add<float>(attackStrengthMult);
+	checksum.add<float>(effectStrengthMult);
+	checksum.add<float>(attackPctStolenMult);
+	checksum.add<float>(attackRangeMult);
+	checksum.add<float>(moveSpeedMult);
+	checksum.add<float>(attackSpeedMult);
+	checksum.add<float>(prodSpeedMult);
+	checksum.add<float>(repairSpeedMult);
+	checksum.add<float>(harvestSpeedMult);
+	foreach_enum (Field, f) {
+		checksum.add<bool>(antiFields.get(f));
+	}
+	foreach_enum (Property, p) {
+		checksum.add<bool>(antiProperties.get(p));
+	}
+}
 
 }}//end namespace

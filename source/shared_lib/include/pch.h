@@ -111,16 +111,6 @@
 //physfs
 #include <physfs.h>
 
-// xerces-c
-/*
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
-#include <xercesc/framework/MemBufInputSource.hpp>
-#include <xercesc/framework/Wrapper4InputSource.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/util/XercesDefs.hpp>
-*/
-
 #if defined(WIN32) || defined(WIN64)
 	#include <glprocs.h>
 	#include <winsock.h>

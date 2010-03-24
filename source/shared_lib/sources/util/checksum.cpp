@@ -49,24 +49,4 @@ void Checksum::addString(const string &value){
 	}
 }
 
-void Checksum::addFile(const string &path, bool text){
-
-	FileOps *file = FSFactory::getInstance()->getFileOps();
-	file->openRead(path.c_str());
-
-	addString(basename(path));
-
-	while(!file->eof()) {
-		int8 byte= 0;
-
-		file->read(&byte, 1, 1);
-		if(text && !isprint(byte)) {
-			continue;
-		}
-		addByte(byte);
-	}
-
-	delete file;
-}
-
 }}//end namespace

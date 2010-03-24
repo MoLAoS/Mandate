@@ -50,9 +50,9 @@ private:
 	typedef vector<string> Subfactions;
 
 private:
-    string name;
-    UnitTypes unitTypes;
-    UpgradeTypes upgradeTypes;
+	string name;
+	UnitTypes unitTypes;
+	UpgradeTypes upgradeTypes;
 	StartingUnits startingUnits;
 	Resources startingResources;
 	Subfactions subfactions;
@@ -65,10 +65,12 @@ private:
 public:
 	//init
 	FactionType();
-    bool load(const string &dir, const TechTree *techTree, Checksum &checksum);
+	bool preLoad(const string &dir, const TechTree *techTree);
+	bool load(const string &dir, const TechTree *techTree);
+	void doChecksum(Checksum &checksum) const;
 	~FactionType();
 
-    //get
+	//get
 	string getName() const								{return name;}
 	int getUnitTypeCount() const						{return unitTypes.size();}
 	int getUpgradeTypeCount() const						{return upgradeTypes.size();}

@@ -47,6 +47,9 @@ struct ScenarioInfo {
 	bool defaultResources;
 	bool defaultVictoryConditions;
 
+	bool fogOfWar;
+	bool shroudOfDarkness;
+
     string desc;
 };
 

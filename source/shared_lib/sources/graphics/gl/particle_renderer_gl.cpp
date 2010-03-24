@@ -83,10 +83,10 @@ void ParticleRendererGl::renderManager(ParticleManager *pm, ModelRenderer *mr) {
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_STENCIL_TEST);
-	//glEnable(GL_BLEND); // redundant
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // redundant
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask(GL_FALSE);
-	//glEnable(GL_BLEND); // redundant
+	//glEnable(GL_BLEND);
 
 	//render
 	rendering = true;

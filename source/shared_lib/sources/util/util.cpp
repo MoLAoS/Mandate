@@ -24,10 +24,11 @@
 #include "platform_util.h"
 #include "xml_parser.h"
 #include "zlib.h"
-#include "lang_features.h"
 #include "FSFactory.hpp"
 
+// Hack
 #if defined(WIN32) || defined(WIN64)
+#	define strtok_r(a,b,c) strtok(a,b)
 #else
 #	include <glob.h>
 #endif
@@ -39,6 +40,109 @@ using namespace Shared::Platform;
 using Shared::Xml::XmlNode;
 
 namespace Shared{ namespace Util{
+
+EnumNamesBase::EnumNamesBase(const char *valueList, size_t count, bool lazy, const char *enumName) 
+		: valueList(valueList)
+		, names(NULL)
+		, qualifiedList(NULL)
+		, qualifiedNames(NULL)
+		, count(count) {
+	if(!lazy) {
+		init();
+	}
+	if (enumName) {
+		if (lazy) {
+			throw runtime_error("Qualified names and Lazy loading not simultaneously supported.");
+		}
+		qualifiedList = const_cast<const char*>(new char[(strlen(enumName) + 2) * count + strlen(valueList) + 1]);
+		qualifiedNames = const_cast<const char**>(new char*[count]);
+		char *tmp = strcpy(new char[strlen(valueList) + 1], valueList);
+		char *tok = strtok(tmp,", ");
+		char *ptr = const_cast<char*>(qualifiedList);
+		int tokens = 0;
+		while (tok) {
+			qualifiedNames[tokens] = ptr;
+			tokens++;
+			while (isspace(*tok)) tok++;
+			ptr += sprintf(ptr, "%s::%s", enumName, tok);
+			*ptr++ = 0;
+			tok = strtok(NULL, ", ");
+		}
+		delete [] tmp;
+	}
+}
+
+EnumNamesBase::~EnumNamesBase() {
+	if (names) {
+		delete [] names;
+		delete [] valueList;
+	}
+	if (qualifiedNames) {
+		delete [] qualifiedNames;
+		delete [] qualifiedList;
+	}
+}
+
+
+int EnumNamesBase::_match(const char *value) const {
+	if (!names) {
+		const_cast<EnumNamesBase*>(this)->init();
+	}
+	for (int i=0; i < count; ++i) {
+		const char *ptr1 = names[i];
+		const char *ptr2 = value;
+		bool same = true;
+		if (!*ptr1 || !*ptr2) {
+			continue;
+		}
+		while (*ptr1 && *ptr2) {
+			if (isalpha(*ptr1) && isalpha(*ptr2)) {
+				if (tolower(*ptr1) != tolower(*ptr2)) {
+					same = false;
+					break;
+				}
+			} else if (!(*ptr1 == '_' && (*ptr2 == ' ' || *ptr2 == '_'))) {
+				same = false;
+				break;
+			}
+			++ptr1;
+			++ptr2;
+			if ((!*ptr1 && *ptr2 && !isspace(*ptr2)) || (*ptr1 && !*ptr2)) {
+				same = false;
+			}
+		}
+		if (same) {
+			return i;
+		}
+	}
+	return -1;	
+}
+
+void EnumNamesBase::init() {
+	size_t curName = 0;
+	bool needStart = true;
+
+	assert(!names);
+	names = new const char *[count];
+	valueList = strcpy(new char[strlen(valueList) + 1], valueList);
+
+	for (char *p = const_cast<char*>(valueList); *p; ++p) {
+		if (isspace(*p)) { // I don't want to have any leading or trailing whitespace
+			*p = 0;
+		} else if (needStart) {
+			// do some basic sanity checking, even though the compiler should catch any such errors
+			assert(isalpha(*p) || *p == '_');
+			assert(curName < count);
+			names[curName++] = p;
+			needStart = false;
+		} else if (*p == ',') {
+			assert(!needStart);
+			needStart = true;
+			*p = 0;
+		}
+	}
+	assert(curName == count);
+}
 
 // =====================================================
 //	class SimpleDataBuffer
@@ -375,7 +479,7 @@ string cleanPath(const string &s) {
 	}
 
 	isAbsolute = (s.at(0) == '/' || s.at(0) == '\\');
-
+	
 	for(char *p =  strtok_r(buf, "\\/", &data); p; p = strtok_r(NULL, "\\/", &data)) {
 		// skip duplicate path delimiters
 		if(strlen(p) == 0) {
@@ -430,7 +534,52 @@ string basename(const string &s) {
 	return pos == string::npos ? cleaned : cleaned.substr(pos + 1);
 }
 
-string cutLastExt(const string &s) {
+
+string lastDir(const string &s){
+	size_t i= s.find_last_of('/');
+	size_t j= s.find_last_of('\\');
+	size_t pos;
+
+	if(i==string::npos){
+		pos= j;
+	}
+	else if(j==string::npos){
+		pos= i;
+	}
+	else{
+		pos= i<j? j: i;
+	}
+
+	if (pos==string::npos){
+		throw runtime_error(string(__FILE__)+" lastDir - i==string::npos");
+	}
+
+	return (s.substr(pos+1, s.length()));
+}
+
+string cutLastFile(const string &s){
+	size_t i= s.find_last_of('/');
+	size_t j= s.find_last_of('\\');
+	size_t pos;
+
+	if(i==string::npos){
+		pos= j;
+	}
+	else if(j==string::npos){
+		pos= i;
+	}
+	else{
+		pos= i<j? j: i;
+	}
+
+	if (pos==string::npos){
+		throw runtime_error(string(__FILE__)+"cutLastFile - i==string::npos");
+	}
+
+	return (s.substr(0, pos));
+}
+
+string cutLastExt(const string &s){
      size_t i= s.find_last_of('.');
 
 	 if (i==string::npos){

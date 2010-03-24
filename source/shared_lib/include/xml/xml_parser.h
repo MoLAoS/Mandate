@@ -20,7 +20,6 @@
 
 #define TIXML_USE_STL
 #include "tinyxml.h"
-//#include <xercesc/util/XercesDefs.hpp>
 #include "vec.h"
 #include "conversion.h"
 
@@ -29,7 +28,7 @@ using std::vector;
 using std::stringstream;
 using std::auto_ptr;	// This isn't as good as shared_ptr from tr1 or boost, but it's better
 						// than what we've been doing with toString()
-using namespace Shared::Graphics;
+using namespace Shared::Math;
 using namespace Shared::Util;
 
 namespace Shared { namespace Xml {
@@ -127,7 +126,9 @@ public:
 	XmlAttribute *getAttribute(int i) const;
 	XmlAttribute *getAttribute(const string &name, bool required = true) const;
 	XmlNode *getChild(int i) const;
+	XmlNode *getOptionalChild(const string &childName) const;
 	XmlNode *getChild(const string &childName, int childIndex = 0, bool required = true) const;
+
 	XmlNode *getParent() const;
 	const string &getText() const	{return text;}
 

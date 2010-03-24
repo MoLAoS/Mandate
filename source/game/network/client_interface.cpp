@@ -20,419 +20,293 @@
 #include "conversion.h"
 #include "config.h"
 #include "lang.h"
-
 #include "leak_dumper.h"
+#include "logger.h"
+#include "timer.h"
 
+#include "game.h"
+#include "world.h"
 
 using namespace std;
 using namespace Shared::Platform;
 using namespace Shared::Util;
+using Shared::Platform::Chrono;
 
-namespace Glest{ namespace Game{
-
-
-ClientInterface::FileReceiver::FileReceiver(const NetworkMessageFileHeader &msg, const string &outdir) :
-		name(outdir + "/" + msg.getName()),
-		out(name.c_str(), ios::binary | ios::out | ios::trunc) {
-	if(out.bad()) {
-		throw runtime_error("Failed to open new file for output: " + msg.getName());
-	}
-	compressed = msg.isCompressed();
-	finished = false;
-	nextseq = 0;
-}
-
-ClientInterface::FileReceiver::~FileReceiver() {
-}
-
-bool ClientInterface::FileReceiver::processFragment(const NetworkMessageFileFragment &msg) {
-    int zstatus;
-
-	assert(!finished);
-	if(finished) {
-		throw runtime_error(string("Received file fragment after download of file ")
-				+ name + " was already completed.");
-	}
-
-	if(!compressed) {
-		out.write(msg.getData(), msg.getDataSize());
-		if(out.bad()) {
-			throw runtime_error("Error while writing file " + name);
-		}
-	}
-
-	if(nextseq == 0){
-		z.zalloc = Z_NULL;
-		z.zfree = Z_NULL;
-		z.opaque = Z_NULL;
-		z.avail_in = 0;
-		z.next_in = Z_NULL;
-
-		if(inflateInit(&z) != Z_OK) {
-			throw runtime_error(string("Failed to initialize zstream: ") + z.msg);
-		}
-	}
-
-	if(nextseq++ != msg.getSeq()) {
-		throw runtime_error("File fragments arrived out of sequence, which isn't "
-				"supposed to happen with stream sockets.  Did somebody change "
-				"the socket implementation to datagrams?");
-	}
-
-	z.avail_in = msg.getDataSize();
-	z.next_in = (Bytef*)msg.getData();
-	do {
-		z.avail_out = sizeof(buf);
-		z.next_out = (Bytef*)buf;
-		zstatus = inflate(&z, Z_NO_FLUSH);
-		assert(zstatus != Z_STREAM_ERROR);	// state not clobbered
-		switch (zstatus) {
-		case Z_NEED_DICT:
-			zstatus = Z_DATA_ERROR;
-			// intentional fall-through
-		case Z_DATA_ERROR:
-		case Z_MEM_ERROR:
-			throw runtime_error(string("error in zstream: ") + z.msg);
-		}
-		out.write(buf, sizeof(buf) - z.avail_out);
-		if(out.bad()) {
-			throw runtime_error("Error while writing file " + name);
-		}
-	} while (z.avail_out == 0);
-
-	if(msg.isLast() && zstatus != Z_STREAM_END) {
-		throw runtime_error("Unexpected end of zstream data.");
-	}
-
-	if(msg.isLast() || zstatus == Z_STREAM_END) {
-		finished = true;
-		inflateEnd(&z);
-	}
-
-	return msg.isLast();
-}
-
+namespace Glest { namespace Game {
 
 // =====================================================
 //	class ClientInterface
 // =====================================================
 
-const int ClientInterface::messageWaitTimeout= 10000;	//10 seconds
-const int ClientInterface::waitSleepTime= 5;
+const int ClientInterface::messageWaitTimeout = 10000;	//10 seconds
+const int ClientInterface::waitSleepTime = 5; // changed from 50, no obvious effect
 
 ClientInterface::ClientInterface(){
 	clientSocket = NULL;
 	launchGame = false;
 	introDone = false;
 	playerIndex = -1;
-	fileReceiver = NULL;
-	savedGameFile = "";
 }
 
-ClientInterface::~ClientInterface(){
+ClientInterface::~ClientInterface() {
+	quitGame();
 	delete clientSocket;
-	if(fileReceiver) {
-		delete fileReceiver;
-	}
+	clientSocket = NULL;
 }
 
-void ClientInterface::connect(const Ip &ip, int port){
+void ClientInterface::connect(const Ip &ip, int port) {
 	delete clientSocket;
 	clientSocket = new ClientSocket();
 	clientSocket->connect(ip, port);
 	clientSocket->setBlock(false);
+	LOG_NETWORK( "connecting to " + ip.getString() + ":" + intToStr(port) );
 }
 
-void ClientInterface::reset(){
+void ClientInterface::reset() {
+	quitGame();
 	delete clientSocket;
 	clientSocket = NULL;
 }
 
 void ClientInterface::update() {
-	NetworkMessageCommandList networkMessageCommandList(-1);
+	NetworkMessageCommandList cmdList;
 
 	//send as many commands as we can
-	while(!requestedCommands.empty()
-			&& networkMessageCommandList.addCommand(requestedCommands.front())) {
-		requestedCommands.erase(requestedCommands.begin());
+	while (!requestedCommands.empty() && cmdList.addCommand(&requestedCommands.back())) {
+		requestedCommands.pop_back();
 	}
-
-	if(networkMessageCommandList.getCommandCount() > 0) {
-		send(&networkMessageCommandList);
-		flush();
-	}
-
-	//clear chat variables
-	chatText.clear();
-	chatSender.clear();
-	chatTeamIndex = -1;
-
-	if(isConnected()) {
-		receive();
-		MsgQueue newQ;
-
-		// pull out updates for immediate processing
-		for(MsgQueue::iterator i = q.begin(); i != q.end(); ++i) {
-			if((*i)->getType() == nmtUpdate) {
-				updates.push_back((NetworkMessageUpdate*)*i);
-			} else {
-				newQ.push_back(*i);
-			}
-		}
-		q.swap(newQ);
-		NetworkStatus::update();
-	}
-	flush();
-}
-
-void ClientInterface::sendUpdateRequests() {
-	if(isConnected() && updateRequests.size()) {
-		NetworkMessageUpdateRequest msg;
-		UnitReferences::iterator i;
-		for(i = updateRequests.begin(); i != updateRequests.end(); ++i) {
-			msg.addUnit(*i, false);
-		}
-		for(i = fullUpdateRequests.begin(); i != fullUpdateRequests.end(); ++i) {
-			msg.addUnit(*i, true);
-		}
-		msg.writeXml();
-		msg.compress();
-		send(&msg, true);
-		updateRequests.clear();
+	if (cmdList.getCommandCount() > 0) {
+		send(&cmdList);
 	}
 }
 
-
-void ClientInterface::updateLobby(){
-	NetworkMessage *genericMsg= nextMsg();
-	if(!genericMsg) {
-		return;
-	}
-
-	try {
-		switch(genericMsg->getType()){
-			case nmtIntro: {
-				NetworkMessageIntro *msg = (NetworkMessageIntro *)genericMsg;
-
-				//check consistency
-				if(Config::getInstance().getNetConsistencyChecks() && msg->getVersionString() != getNetworkVersionString()) {
-					throw SocketException("Server and client versions do not match (" + msg->getVersionString() + ").");
-				}
-
-				//send intro message
-				NetworkMessageIntro sendNetworkMessageIntro(getNetworkVersionString(),
-						getHostName(), Config::getInstance().getNetPlayerName(), -1, false);
-
-				playerIndex = msg->getPlayerIndex();
-				setRemoteNames(msg->getHostName(), msg->getPlayerName());
-				send(&sendNetworkMessageIntro);
-
-				assert(playerIndex >= 0 && playerIndex < GameConstants::maxPlayers);
-				introDone = true;
+void ClientInterface::updateLobby() {
+	// NETWORK: this method is very different
+	NetworkMessageType msgType = getNextMessageType();
+	
+	if (msgType == NetworkMessageType::INTRO) {
+		NetworkMessageIntro introMsg;
+		if (receiveMessage(&introMsg)) {
+			//check consistency
+			if(theConfig.getNetConsistencyChecks() && introMsg.getVersionString() != getNetworkVersionString()) {
+				throw runtime_error("Server and client versions do not match (" 
+							+ introMsg.getVersionString() + "). You have to use the same binaries.");
 			}
-			break;
+			LOG_NETWORK( "Received intro message, sending intro message reply." );
+			playerIndex = introMsg.getPlayerIndex();
+			serverName = introMsg.getHostName();
+			
+			setRemoteNames(introMsg.getHostName(), introMsg.getPlayerName());
 
-			case nmtFileHeader: {
-				NetworkMessageFileHeader *msg = (NetworkMessageFileHeader *)genericMsg;
-
-				if(fileReceiver) {
-					throw runtime_error("Can't receive file from server because I'm already receiving one.");
-				}
-
-				if(savedGameFile != "") {
-					throw runtime_error("Saved game file already downloaded and server tried to send me another.");
-				}
-
-				if(strchr(msg->getName().c_str(), '/') || strchr(msg->getName().c_str(), '\\')) {
-					throw SocketException("Server tried to send a file name with a path component, which is not allowed.");
-				}
-
-				Shared::Platform::mkdir("incoming", true);
-				fileReceiver = new FileReceiver(*msg, "incoming");
+			if (playerIndex < 0 || playerIndex >= GameConstants::maxPlayers) {
+				throw runtime_error("Intro message from server contains bad data, are you using the same version?");
 			}
-			break;
-
-			case nmtFileFragment: {
-				NetworkMessageFileFragment *msg = (NetworkMessageFileFragment*)genericMsg;
-
-				if(!fileReceiver) {
-					throw runtime_error("Recieved file fragment, but did not get header.");
-				}
-				if(fileReceiver->processFragment(*msg)) {
-					savedGameFile = fileReceiver->getName();
-					delete fileReceiver;
-					fileReceiver = NULL;
-				}
-			}
-			break;
-
-			case nmtLaunch: {
-				NetworkMessageLaunch *msg = (NetworkMessageLaunch*)genericMsg;
-
-				msg->buildGameSettings(&gameSettings);
-
-				//replace server player by network
-				for(int i = 0; i < gameSettings.getFactionCount(); ++i){
-
-					//replace by network
-					if(gameSettings.getFactionControl(i) == ctHuman){
-						gameSettings.setFactionControl(i, ctNetwork);
-					}
-				}
-				gameSettings.setFactionControl(playerIndex, ctHuman);
-				gameSettings.setThisFactionIndex(playerIndex);
-				launchGame= true;
-			}
-			break;
-
-			default:
-				throw SocketException("Unexpected network message: " + intToStr(genericMsg->getType()));
+			
+			//send reply
+			NetworkMessageIntro replyMsg(
+				getNetworkVersionString(), theConfig.getNetPlayerName(), getHostName(), -1);
+			
+			send(&replyMsg);
+			introDone= true;
 		}
-		flush();
-	} catch (runtime_error &e) {
-		delete genericMsg;
-		throw e;
+	} else if (msgType == NetworkMessageType::LAUNCH) {
+		NetworkMessageLaunch launchMsg;
+		if (receiveMessage(&launchMsg)) {
+			launchMsg.buildGameSettings(&gameSettings);
+			//replace server player by network
+			for (int i= 0; i < gameSettings.getFactionCount(); ++i) {
+				//replace by network
+				if (gameSettings.getFactionControl(i) == ControlType::HUMAN) {
+					gameSettings.setFactionControl(i, ControlType::NETWORK);
+				}
+				//set the faction index
+				if (gameSettings.getStartLocationIndex(i)==playerIndex) {
+					gameSettings.setThisFactionIndex(i);
+					gameSettings.setFactionControl(i, ControlType::HUMAN);
+				}
+			}
+			launchGame= true;
+			LOG_NETWORK( "Received launch message." );
+		}
+	} else if (msgType != NetworkMessageType::NO_MSG) {
+		LOG_NETWORK( "Received bad message type : " + intToStr(msgType) );
+		reset();
+		//throw runtime_error("Unexpected network message: " + intToStr(msgType));
 	}
-	delete genericMsg;
 }
 
-void ClientInterface::updateKeyframe(int frameCount){
-	bool done = false;
+void ClientInterface::updateKeyframe(int frameCount) {
+	//DEBUG
+	static int commandsReceived = 0;
 
-	while(!done) {
+	// NETWORK: this method is very different
+	while (true) {
 		//wait for the next message
-		NetworkMessage *genericMsg = waitForMessage();
+		waitForMessage();
 
-		try {
-			switch(genericMsg->getType()) {
-				case nmtCommandList: {
-					//make sure we read the message
-					NetworkMessageCommandList *msg = (NetworkMessageCommandList*)genericMsg;
+		//check we have an expected message
+		NetworkMessageType msgType = getNextMessageType();
 
-					//check that we are in the right frame
-					if(msg->getFrameCount() != frameCount){
-						throw SocketException("Network synchronization error, frame counts do not match");
-					}
-
-					// give all commands
-					for(int i= 0; i < msg->getCommandCount(); ++i){
-						pendingCommands.push_back(msg->getCommand(i));
-					}
-
-					done = true;
-					delete msg;
-				}
-				break;
-
-				case nmtQuit: {
-					quit = true;
-					done=  true;
-					delete genericMsg;
-				}
-				break;
-
-				case nmtText:{
-					NetworkMessageText *msg = (NetworkMessageText*)genericMsg;
-					chatText = msg->getText();
-					chatSender = msg->getSender();
-					chatTeamIndex = msg->getTeamIndex();
-					delete msg;
-				}
-				break;
-
-				case nmtUpdate: {
-					updates.push_back((NetworkMessageUpdate*)genericMsg);
-				}
-				break;
-
-				default:
-					throw SocketException("Unexpected message in client interface: " + intToStr(genericMsg->getType()));
+		if (msgType == NetworkMessageType::COMMAND_LIST) {
+			NetworkMessageCommandList cmdList;
+			//make sure we read the message
+			while (!receiveMessage(&cmdList)) {
+				sleep(waitSleepTime);
 			}
-			flush();
-		} catch(runtime_error &e) {
-			delete genericMsg;
-			throw e;
+			
+			if (cmdList.getTotalB4This() != commandsReceived) {
+				stringstream ss;
+				ss << "ERROR: Server claims to have sent " << cmdList.getTotalB4This() << " commands in total, "
+					<< "but I have received " << commandsReceived;
+				LOG_NETWORK( ss.str() );
+			}
+
+			//check that we are in the right frame
+			if (cmdList.getFrameCount() != frameCount) {
+				stringstream ss;
+				ss << "Network synchronization error, my frame count == " << frameCount
+					<< ", server frame count == " << cmdList.getFrameCount();
+				LOG_NETWORK( ss.str() );
+				throw runtime_error(ss.str());
+			}
+
+			// give all commands
+			if (cmdList.getCommandCount()) {
+				/*LOG_NETWORK( 
+					"Keyframe update: " + intToStr(frameCount) + " received "
+					+ intToStr(cmdList.getCommandCount()) + " commands. " 
+					+ intToStr(dataAvailable()) + " bytes waiting to be read."
+				);*/
+				for (int i= 0; i < cmdList.getCommandCount(); ++i) {
+					pendingCommands.push_back(*cmdList.getCommand(i));
+					++commandsReceived;
+					/*const NetworkCommand * const &cmd = cmdList.getCommand(i);
+					const Unit * const &unit = theWorld.findUnitById(cmd->getUnitId());
+					LOG_NETWORK( 
+						"\tUnit: " + intToStr(unit->getId()) + " [" + unit->getType()->getName() + "] " 
+						+ unit->getType()->findCommandTypeById(cmd->getCommandTypeId())->getName() + "."
+					);*/
+				}
+			}
+			return;
+		} else if (msgType == NetworkMessageType::QUIT) {
+			NetworkMessageQuit quitMsg;
+			if (receiveMessage(&quitMsg)) {
+				quit = true;
+				quitGame();
+			}
+			return;
+		} else if (msgType == NetworkMessageType::TEXT) {
+			NetworkMessageText textMsg;
+			if (receiveMessage(&textMsg)) {
+				GameNetworkInterface::processTextMessage(textMsg);
+			}
+		} else {
+			throw runtime_error("Unexpected message in client interface: " + intToStr(msgType));
 		}
 	}
 }
 
-void ClientInterface::waitUntilReady(Checksum &checksum){
-	NetworkMessage *msg = NULL;
-	NetworkMessageReady networkMessageReady(checksum.getSum());
+void ClientInterface::syncAiSeeds(int aiCount, int *seeds) {
+	NetworkMessageAiSeedSync seedSyncMsg;
 	Chrono chrono;
+	chrono.start();
+	LOG_NETWORK( "Ready, waiting for server to send Ai random number seeds." );
+	//wait until we get an ai seed sync message from the server
+	while (true) {
+		NetworkMessageType msgType = getNextMessageType();
+		if (msgType == NetworkMessageType::AI_SYNC) {
+			if (receiveMessage(&seedSyncMsg)) {
+				LOG_NETWORK( "Received AI random number seed message." );
+				assert(seedSyncMsg.getSeedCount());
+				for (int i=0; i < seedSyncMsg.getSeedCount(); ++i) {
+					seeds[i] = seedSyncMsg.getSeed(i);
+				}
+				break;
+			}
+		} else if (msgType == NetworkMessageType::NO_MSG) {
+			if (chrono.getMillis() > readyWaitTimeout) {
+				throw runtime_error("Timeout waiting for server");
+			}
+		} else {
+			throw runtime_error("Unexpected network message: " + intToStr(msgType) );
+		}
+		sleep(2);
+	}
+}
 
+void ClientInterface::waitUntilReady(Checksum &checksum) {
+	// NETWORK: this method is very different
+	NetworkMessageReady readyMsg;
+	Chrono chrono;
 	chrono.start();
 
 	//send ready message
-	send(&networkMessageReady);
+	send(&readyMsg);
+	LOG_NETWORK( "Ready, waiting for server ready message." );
 
-	try {
-		//wait until we get a ready message from the server
-		while(!(msg = nextMsg())) {
-			if(chrono.getMillis() > readyWaitTimeout){
-				throw SocketException("Timeout waiting for server");
+	//wait until we get a ready message from the server
+	while (true) {
+		NetworkMessageType msgType = getNextMessageType();
+		if (msgType == NetworkMessageType::READY) {
+			if (receiveMessage(&readyMsg)) {
+				LOG_NETWORK( "Received ready message." );
+				break;
 			}
-
-			// sleep a bit
-			sleep(waitSleepTime);
+		} else if (msgType == NetworkMessageType::NO_MSG) {
+			if (chrono.getMillis() > readyWaitTimeout) {
+				throw runtime_error("Timeout waiting for server");
+			}
+		} else {
+			throw runtime_error("Unexpected network message: " + intToStr(msgType) );
 		}
-
-		if(msg->getType() != nmtReady) {
-			SocketException("Unexpected network message: " + intToStr(msg->getType()));
-		}
-
-		//check checksum
-		if(Config::getInstance().getNetConsistencyChecks()
-				&& ((NetworkMessageReady*)msg)->getChecksum() != checksum.getSum()) {
-			throw SocketException("Checksum error, you don't have the same data as the server");
-		}
-		flush();
-	} catch (runtime_error &e) {
-		if(msg) {
-			delete msg;
-		}
-		throw e;
-	}
-
-	//delay the start a bit, so clients have nore room to get messages
-	sleep(GameConstants::networkExtraLatency);
-	delete msg;
-}
-
-void ClientInterface::sendTextMessage(const string &text, int teamIndex) {
-	NetworkMessageText networkMessageText(text, Config::getInstance().getNetPlayerName(), teamIndex);
-	send(&networkMessageText);
-}
-
-string ClientInterface::getStatus() const {
-	return getRemotePlayerName() + ": " + NetworkStatus::getStatus();
-}
-
-NetworkMessage *ClientInterface::waitForMessage() {
-	NetworkMessage *msg = NULL;
-	Chrono chrono;
-
-	chrono.start();
-
-	while(!(msg = nextMsg())) {
-		if(!isConnected()){
-			throw SocketException("Disconnected");
-		}
-
-		if(chrono.getMillis()>messageWaitTimeout){
-			throw SocketException("Timeout waiting for message");
-		}
-
+		// sleep a bit
 		sleep(waitSleepTime);
 	}
-	return msg;
+	//check checksum
+	if (theConfig.getNetConsistencyChecks() && readyMsg.getChecksum() != checksum.getSum()) {
+		throw runtime_error("Checksum error, you don't have the same data as the server");
+	}
+	//delay the start a bit, so clients have nore room to get messages
+	sleep(GameConstants::networkExtraLatency);
 }
 
-void ClientInterface::requestCommand(Command *command) {
-	if(!command->isAuto()) {
-		requestedCommands.push_back(new Command(*command));
+void ClientInterface::sendTextMessage(const string &text, int teamIndex){
+	NetworkMessageText textMsg(text, theConfig.getNetPlayerName(), teamIndex);
+	send(&textMsg);
+}
+
+string ClientInterface::getStatus() const{
+	return theLang.get("Server") + ": " + serverName;
+	//	return getRemotePlayerName() + ": " + NetworkStatus::getStatus();
+}
+
+void ClientInterface::waitForMessage() {
+	Chrono chrono;
+	chrono.start();
+	while (getNextMessageType() == NetworkMessageType::NO_MSG) {
+		if (!isConnected()) {
+			throw runtime_error("Disconnected");
+		}
+		if (chrono.getMillis() > messageWaitTimeout) {
+			throw runtime_error("Timeout waiting for message");
+		}
+		sleep(waitSleepTime);
 	}
-	pendingCommands.push_back(command);
+}
+
+void ClientInterface::quitGame() {
+	LOG_NETWORK( "Quitting" );
+	if(!quit && clientSocket && clientSocket->isConnected()) {
+		//string text = getHostName() + " has left the game!";
+		//sendTextMessage(text, -1);
+		//LOG_NETWORK( "Sent goodbye text messsage." );
+		NetworkMessageQuit networkMessageQuit;
+		send(&networkMessageQuit);
+		LOG_NETWORK( "Sent quit message." );
+	}
+	delete clientSocket;
+	clientSocket = NULL;
 }
 
 }}//end namespace

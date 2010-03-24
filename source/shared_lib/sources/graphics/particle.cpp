@@ -2,7 +2,6 @@
 //	This file is part of Glest Shared Library (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008-2009 Daniel Santos <daniel.santos@pobox.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -95,7 +94,7 @@ Particle::BlendEquation Particle::getBlendEquation(const string &s) {
 // =====================================================
 
 ParticleSystemBase::ParticleSystemBase() :
-		random((intptr_t)this & 0xffffffff),
+		random(0),
 		srcBlendFactor(Particle::BLEND_FUNC_SRC_ALPHA),
 		destBlendFactor(Particle::BLEND_FUNC_ONE),
 		blendEquationMode(Particle::BLEND_EQUATION_FUNC_ADD),
@@ -121,7 +120,7 @@ ParticleSystemBase::ParticleSystemBase() :
 }
 
 ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &model) :
-		random((intptr_t)this & 0xffffffff),
+		random(0),
 		srcBlendFactor(model.srcBlendFactor),
 		destBlendFactor(model.destBlendFactor),
 		blendEquationMode(model.blendEquationMode),
@@ -204,10 +203,6 @@ void ParticleSystem::update() {
 				Particle *p = createParticle();
 				initParticle(p, i);
 			}
-		}
-
-		if (state == sPlayLast) {
-			state = sFade;
 		}
 	}
 }
@@ -475,15 +470,12 @@ void ProjectileParticleSystem::link(SplashParticleSystem *particleSystem) {
 }
 
 void ProjectileParticleSystem::update() {
-
 	if (state == sPlay) {
 		if (target) {
 			endPos = target->getCurrVector();
 		}
 		lastPos = pos;
 
-		Vec3f targetVector = endPos - startPos;
-		Vec3f currentVector = flatPos - startPos;
 		Vec3f flatVector;
 
 		if (trajectory == tRandom) {
@@ -510,29 +502,26 @@ void ProjectileParticleSystem::update() {
 		}
 
 		flatPos += flatVector;
-		if (endPos.dist(flatPos) <= flatVector.length() || endPos.dist(pos) > endPos.dist(lastPos)) {
-			pos = endPos;
-			state = sPlayLast;
-			model = NULL;
-		} else {
+		Vec3f targetVector = endPos - startPos;
+		Vec3f currentVector = flatPos - startPos;
 
-			// ratio
-			float t = clamp(currentVector.length() / targetVector.length(), 0.0f, 1.0f);
+		// ratio
+		float t = clamp(currentVector.length() / targetVector.length(), 0.0f, 1.0f);
 
-			// trajectory
-			switch (trajectory) {
+		// trajectory
+		switch (trajectory) {
 			case tLinear:
 				pos = flatPos;
 				break;
 
 			case tParabolic: {
-				float scaledT = 2.0f * (t - 0.5f);
-				float paraboleY = (1.0f - scaledT * scaledT) * trajectoryScale;
+					float scaledT = 2.0f * (t - 0.5f);
+					float paraboleY = (1.0f - scaledT * scaledT) * trajectoryScale;
 
-				pos = flatPos;
-				pos.y += paraboleY;
-			}
-			break;
+					pos = flatPos;
+					pos.y += paraboleY;
+				}
+				break;
 
 			case tSpiral:
 				pos = flatPos;
@@ -552,25 +541,26 @@ void ProjectileParticleSystem::update() {
 
 			default:
 				assert(false);
-			}
-		}
-
-		direction = pos - lastPos;
-		direction.normalize();
-
-		//arrive destination
-		if (state == sPlayLast) {
-			if (particleObserver) {
-				particleObserver->update(this);
-			}
-
-			if (nextParticleSystem) {
-				nextParticleSystem->setState(sPlay);
-				nextParticleSystem->setPos(endPos);
-			}
 		}
 	}
 
+	direction = pos - lastPos;
+	direction.normalize();
+
+	//arrive destination
+	if (flatPos.dist(endPos) < 0.5f) {
+		state = sFade;
+		model = NULL;
+
+		if (particleObserver) {
+			particleObserver->update(this);
+		}
+
+		if (nextParticleSystem) {
+			nextParticleSystem->setState(sPlay);
+			nextParticleSystem->setPos(endPos);
+		}
+	}
 	ParticleSystem::update();
 }
 
@@ -724,7 +714,7 @@ ParticleManager::~ParticleManager(){
 void ParticleManager::render(ParticleRenderer *pr, ModelRenderer *mr) const{
 	list<ParticleSystem*>::const_iterator it;
 
-	for (it=particleSystems.begin(); it!=particleSystems.end(); it++){
+	for (it=particleSystems.begin(); it!=particleSystems.end(); ++it){
 		if((*it)->getVisible()){
 			(*it)->render(pr, mr);
 		}
@@ -734,7 +724,7 @@ void ParticleManager::render(ParticleRenderer *pr, ModelRenderer *mr) const{
 void ParticleManager::update(){
 	list<ParticleSystem*>::iterator it;
 
-	for (it = particleSystems.begin(); it != particleSystems.end(); it++) {
+	for (it = particleSystems.begin(); it != particleSystems.end(); ++it) {
 		(*it)->update();
 		if ((*it)->isEmpty()) {
 			delete *it;

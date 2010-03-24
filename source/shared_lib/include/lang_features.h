@@ -9,6 +9,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+
 /**
  * @file
  * Contains macros and other language-feature specific declarations, includes, etc.  The purpose
@@ -22,13 +23,11 @@
 #ifndef _SHARED_LANGFEATURES_H_
 #define _SHARED_LANGFEATURES_H_
 
-#if defined(__GNUC__)
-#	define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#endif
-
 /* Catch bad/old compilers */
+#if 0 // oops, this is screwd up :(
 #if defined(__GNUC__) && GCC_VERSION < 30000
 #	error Sorry, you're compiler is too old and we don't want to support it.
+#endif
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1300 /* MSVC 2003 */
@@ -119,7 +118,7 @@
 
 /* MS Visual Studio 2003 or higher compiler */
 #ifdef _MSC_VER
-#	define __always_inline			inline						/* none for MSVS */
+#	define __always_inline			__forceinline
 #	define __noinline				__declspec(noinline)
 #	define __aligned_pre(x)			__declspec(align(x))		/* put *before* declaration */
 #	define __novtable				__declspec(novtable)
@@ -157,10 +156,5 @@
 #	define strtold(np,ep)			((long double)strtod(np,ep))
 #endif
 
-/* strtok in msvcrt uses TLS for thread safety and can therefore be aliased to strtok omitting the
- * POSIX-defined saveptr parameter of strtok_r.  The same is true for HP-UX's libc.*/
-#if defined(_MSC_VER) || defined(_HPUX)
-#	define strtok_r(a,b,c) strtok(a,b)
-#endif
 
 #endif // _SHARED_LANGFEATURES_H_

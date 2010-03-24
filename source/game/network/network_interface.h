@@ -14,33 +14,32 @@
 
 #include <string>
 #include <vector>
-#include <deque>
+//#include <deque>
 
 #include "checksum.h"
 #include "network_message.h"
 #include "network_types.h"
-#include "network_status.h"
+//#include "network_status.h"
+
+#include "logger.h"
 
 using std::string;
 using std::vector;
-using std::deque;
+//using std::deque;
 using Shared::Util::Checksum;
-using Shared::Platform::int64;
+//using Shared::Platform::int64;
+
+class Command;
 
 namespace Glest { namespace Game {
 
 // =====================================================
 //	class NetworkInterface
 // =====================================================
-
-class NetworkInterface : public NetworkStatus {
+//NETWORK: a lot different with this class
+class NetworkInterface {
 protected:
-	typedef deque<NetworkMessage*> MsgQueue;
-
 	static const int readyWaitTimeout;
-	NetworkDataBuffer txbuf;
-	NetworkDataBuffer rxbuf;
-	MsgQueue q;
 
 private:
 	string remoteHostName;
@@ -48,8 +47,8 @@ private:
 	string description;
 
 public:
-	NetworkInterface() : NetworkStatus(), txbuf(16384), rxbuf(16384) {}
 	virtual ~NetworkInterface() {}
+
 	virtual Socket* getSocket() = 0;
 	virtual const Socket* getSocket() const = 0;
 
@@ -58,83 +57,17 @@ public:
 	string getRemoteHostName() const	{return remoteHostName;}
 	string getRemotePlayerName() const	{return remotePlayerName;}
 	string getDescription() const		{return description;}
-	
+
 	void setRemoteNames(const string &hostName, const string &playerName);
-	void pop()							{if(q.empty()) throw runtime_error("queue empty"); q.pop_front();}
 
-	void send(const NetworkMessage* msg, bool flush = true);
-	bool flush();
-	void receive();
+	int dataAvailable();
 
-#ifdef DEBUG_NETWORK
-	std::deque<NetworkMessagePing*> pingQ;
-	
-	NetworkMessage *peek() {
-		receive();
-		
-		int now = Chrono::getCurMillis();
+	void send(const NetworkMessage* networkMessage);
+	NetworkMessageType getNextMessageType();
+	bool receiveMessage(NetworkMessage* networkMessage);
 
-		while(!pingQ.empty()) {
-			NetworkMessagePing *ping = pingQ.front();
-			if(ping->getSimRxTime() < now) {
-				processPing(ping);
-				pingQ.pop_front();
-			} else {
-				break;
-			} 
-		}
-
-		if(!q.empty()) {
-			NetworkMessage *msg = q.front();
-			return msg->getSimRxTime() < now ? msg : NULL;
-		} else {
-			return NULL;
-		}
-	}
-#else
-	NetworkMessage *peek() {
-		// more processor, more accurate ping times
-		receive();
-		return q.empty() ? NULL : q.front();
-		
-		// less processor, less accurate ping times
-		/*
-		if(!q.empty()) {
-			return q.front();
-		} else {
-			receive();
-			return q.empty() ? NULL : q.front();
-		}*/
-	}
-#endif
-
-	NetworkMessage *nextMsg() {
-		NetworkMessage *m = peek();
-		if(m) {
-			q.pop_front();
-		}
-		return m;
-	}
-
-	virtual bool isConnected() {
+	bool isConnected() {
 		return getSocket() && getSocket()->isConnected();
-	}
-
-protected:
-	virtual void ping() {
-		NetworkMessagePing msg;
-		send(&msg);
-	}
-	
-	void processPing(NetworkMessagePing *ping) {
-		if(ping->isPong()) {
-			pong(ping->getTime(), ping->getTimeRcvd());
-		} else {
-			ping->setPong();
-			send(ping);
-			flush();
-		}
-		delete ping;
 	}
 };
 
@@ -147,37 +80,138 @@ protected:
 
 class GameNetworkInterface: public NetworkInterface {
 private:
-	typedef vector<Command *> Commands;
+	typedef vector<NetworkCommand> Commands; //NETWORK: uses command instead
 
 protected:
 	Commands requestedCommands;	//commands requested by the user
 	Commands pendingCommands;	//commands ready to be given
 	bool quit;
-	string chatText;
-	string chatSender;
-	int chatTeamIndex;
 
-public:
-	GameNetworkInterface();
+	struct ChatMsg {
+		string text;
+		string sender;
+
+		ChatMsg(const string &txt, const string &sndr)
+				: text(txt), sender(sndr) {}
+	};
+	std::vector<ChatMsg> chatMessages;
+
+	// All network accessing virtuals were made protected so the exception handling
+	// can be done in the same place for clients and servers.
+	//
+	// For users of GameNetworkInterface, non virtual wrappers are used, see below.
+
 	//message processimg
-//	virtual void update()= 0;
+	virtual void update() = 0;
 	virtual void updateLobby() = 0;
 	virtual void updateKeyframe(int frameCount) = 0;
 	virtual void waitUntilReady(Checksum &checksum) = 0;
+	virtual void syncAiSeeds(int aiCount, int *seeds) = 0;
+	//virtual void logUnit(int id) = 0;
 
 	//message sending
 	virtual void sendTextMessage(const string &text, int teamIndex) = 0;
 	virtual void quitGame() = 0;
+	
+	//misc
+	virtual string getStatus() const = 0;
+
+public:
+	GameNetworkInterface();
+
+	void doUpdate() {
+		try {
+			update();
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	void doUpdateLobby() {
+		try {
+			updateLobby();
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	void doUpdateKeyframe(int frameCount) {
+		try {
+			updateKeyframe(frameCount);
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	void doWaitUntilReady(Checksum &checksum) {
+		try {
+			waitUntilReady(checksum);
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	void doSyncAiSeeds(int aiCount, int *seeds) {
+		try {
+			syncAiSeeds(aiCount, seeds);
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	void doSendTextMessage(const string &text, int teamIndex) {
+		try {
+			sendTextMessage(text, teamIndex);
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	void doQuitGame() {
+		try {
+			quitGame();
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
+
+	string doGetStatus() const {
+		string res;
+		try {
+			res = getStatus();
+		} catch (runtime_error e) {
+			LOG_NETWORK(e.what());
+			throw e;
+		}
+	}
 
 	//access functions
-	virtual void requestCommand(Command *command)	{requestedCommands.push_back(command);}
+
+	virtual void requestCommand(const NetworkCommand *networkCommand) {
+		requestedCommands.push_back(*networkCommand);
+	} 
+	
+	virtual void requestCommand(Command *command);
+	
 	int getPendingCommandCount() const				{return pendingCommands.size();}
-	Command *getPendingCommand(int i) const			{return pendingCommands[i];}
+	Command *getPendingCommand(int i)				{return pendingCommands[i].toCommand();}
+	const NetworkCommand *getPendingNetworkCommand(int i) const			{return &pendingCommands[i];}
 	void clearPendingCommands()						{pendingCommands.clear();}
 	bool getQuit() const							{return quit;}
-	const string getChatText() const				{return chatText;}
-	const string getChatSender() const				{return chatSender;}
-	int getChatTeamIndex() const					{return chatTeamIndex;}
+	
+	bool hasChatMsg() const				{ return !chatMessages.empty(); }
+	void popChatMsg() { chatMessages.pop_back();}
+	void processTextMessage(NetworkMessageText &msg);
+
+	const string getChatText() const				{return chatMessages.back().text;}
+	const string getChatSender() const				{return chatMessages.back().sender;}
 };
 
 }}//end namespace

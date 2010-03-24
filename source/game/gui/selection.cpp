@@ -211,7 +211,7 @@ void Selection::update() {
 				uniform = false;
 			}
 
-			if(ut->hasCommandClass(ccRepair)) {
+			if(ut->hasCommandClass(CommandClass::REPAIR)) {
 				if(((*i)->isAutoRepairEnabled() ? arsOn : arsOff) != autoRepairState) {
 					autoRepairState = arsMixed;
 				}
@@ -220,7 +220,7 @@ void Selection::update() {
 			}
 
 			cancelable = cancelable || ((*i)->anyCommand()
-					&& (*i)->getCurrCommand()->getType()->getClass() != ccStop);
+					&& (*i)->getCurrCommand()->getType()->getClass() != CommandClass::STOP);
 			commandable = commandable || (*i)->isOperative();
 		}
 

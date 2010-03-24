@@ -1,7 +1,7 @@
 #!/bin/bash
 
 VERSION=`autoconf -t AC_INIT | sed -e 's/[^:]*:[^:]*:[^:]*:[^:]*:\([^:]*\):.*/\1/g'`
-RELEASENAME=glest-source
+RELEASENAME=glestae-source
 RELEASEDIR="`pwd`/release/$RELEASENAME-$VERSION"
 
 echo "Creating source package in $RELEASEDIR"
@@ -10,18 +10,20 @@ rm -rf $RELEASEDIR
 mkdir -p $RELEASEDIR
 # copy sources
 pushd "`pwd`/../../source"
-find glest_game/ \( -name "*.cpp" -o -name "*.h" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
+find game/ \( -name "*.cpp" -o -name "*.h" -o -name "*.inl" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
 find shared_lib/ \( -name "*.cpp" -o -name "*.h" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
-find glest_map_editor/ \( -name "*.cpp" -o -name "*.h" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
+find map_editor/ \( -name "*.cpp" -o -name "*.h" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
+find g3d_viewer/ \( -name "*.cpp" -o -name "*.h" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
+find test/ \( -name "*.cpp" -o -name "*.h" \) -exec cp -p --parents "{}" $RELEASEDIR ';'
 popd
-AUTOCONFSTUFF="configure.ac autogen.sh Jamrules Jamfile `find mk/jam -name "*.jam"` `find mk/autoconf -name "*.m4" -o -name "config.*" -o -name "*sh"`"
+AUTOCONFSTUFF="configure.ac autogen_pkg.sh Jamrules Jamfile `find mk/jam -name "*.jam"` `find mk/autoconf -name "*.m4" -o -name "config.*" -o -name "*sh"`"
 
 cp -p --parents $AUTOCONFSTUFF $RELEASEDIR
 cp -p ../../docs/README* ../../docs/license.txt $RELEASEDIR
 cp -p glest.ini $RELEASEDIR
 
 pushd $RELEASEDIR
-./autogen.sh
+./autogen_pkg.sh
 popd
 
 pushd release

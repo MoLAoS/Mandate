@@ -20,6 +20,7 @@
 #include "conversion.h"
 #include "util.h"
 #include "flags.h"
+#include "game_constants.h"
 
 using std::runtime_error;
 
@@ -32,62 +33,26 @@ class TechTree;
 class FactionType;
 class EnhancementTypeBase;
 
-// ===============================
-// 	enum Field & Zone, and SurfaceType
-// ===============================
-
-// Adding a new field ???
-// see instructions at the top of annotated_map.h
-
-enum Zone // Zone of unit _occupance_
-{  // used for attack fields, actual occupance is indirectly 
-   // specified by the unit's current Field
-   ZoneSurfaceProp,
-   ZoneSurface,
-   ZoneAir,
-   //ZoneSubSurface,
-   ZoneCount
-};
-
-enum SurfaceType // for each cell's surface zone,
-{  // is computed in Map::setCellTypes ()
-   // FIXME: may change... need hook in Map::prepareTerrain()
-   SurfaceTypeLand, 
-   SurfaceTypeFordable, 
-   SurfaceTypeDeepWater, 
-   SurfaceTypeCount
-};
-
-enum Field // Zones of Movement
-{
-   FieldWalkable, // ZoneSurface + ( SurfaceTypeLand || SurfaceTypeFordable )
-   FieldAir,      // ZoneAir
-   FieldAnyWater, // ZoneSurface + ( SurfaceTypeFordable || SurfaceTypeDeepWater )
-   FieldDeepWater, // ZoneSurface + SurfaceTypeDeepWater
-   FieldAmphibious, // ZoneSurface + SuraceType*
-   FieldCount
-};
-
 /** Fields of travel, and indirectly zone of occupance */
-class Fields : public XmlBasedFlags<Field, FieldCount> {
+class Fields : public XmlBasedFlags<Field, Field::COUNT> {
 private:
-	static const char *names[FieldCount];
+	//static const char *names[Field::COUNT];
 
 public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<Field, FieldCount>::load(node, dir, tt, ft, "field", names);
+		XmlBasedFlags<Field, Field::COUNT>::load(node, dir, tt, ft, "field", FieldNames);
 	}
-	static const char* getName ( Field f ) { return names[f]; }
+	//static const char* getName ( Field f ) { return names[f]; }
 };
 
 /** Zones of attack (air, surface, etc.) */
-class Zones : public XmlBasedFlags<Zone, ZoneCount> {
+class Zones : public XmlBasedFlags<Zone, Zone::COUNT> {
 private:
-	static const char *names[ZoneCount];
+	//static const char *names[Zone::COUNT];
 
 public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<Zone, ZoneCount>::load(node, dir, tt, ft, "field", names);
+		XmlBasedFlags<Zone, Zone::COUNT>::load(node, dir, tt, ft, "field", ZoneNames);
 	}
 };
 
@@ -96,22 +61,16 @@ public:
 // 	enum Property & class UnitProperties
 // ==============================================================
 
-enum Property{
-	pBurnable,
-	pRotatedClimb,
-	pWall,
 
-	pCount
-};
 
 /** Properties that can be applied to a unit. */
-class UnitProperties : public XmlBasedFlags<Property, pCount>{
+class UnitProperties : public XmlBasedFlags<Property, Property::COUNT>{
 private:
-	static const char *names[pCount];
+	//static const char *names[pCount];
 
 public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<Property, pCount>::load(node, dir, tt, ft, "property", names);
+		XmlBasedFlags<Property, Property::COUNT>::load(node, dir, tt, ft, "property", PropertyNames);
 	}
 };
 
@@ -168,6 +127,9 @@ protected:
 
 public:
 	UnitStatsBase() {damageMultipliers.resize(damageMultiplierCount);}
+	virtual ~UnitStatsBase() {}
+
+	virtual void doChecksum(Checksum &checksum) const;
 
 	// ==================== get ====================
 
@@ -331,6 +293,8 @@ public:
 	 * TODO: explain better.
 	 */
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
+
+	virtual void doChecksum(Checksum &checksum) const;
 
 	virtual void save(XmlNode *node) const;
 

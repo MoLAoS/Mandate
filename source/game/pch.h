@@ -33,6 +33,8 @@
 
 // some local headers of importance
 #include "types.h"
+#include "game_constants.h"
+#include "sigslot.h"
 
 // POSIX base
 #include <stdlib.h>
@@ -43,7 +45,7 @@
 #include <time.h>
 
 
-// lib c++ & stl
+// lib c
 #include <cstdlib>
 #include <cassert>
 #include <cctype>
@@ -51,19 +53,25 @@
 #include <cstring>
 #include <cstddef>
 #include <cstdio>
-#include <deque>
+#include <ctime>
+#include <cassert>
+
+// lib c++
 #include <fstream>
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <limits>
+
+// stl
 #include <algorithm>
+#include <deque>
 #include <vector>
 #include <list>
 #include <map>
 #include <deque>
-#include <string>
-#include <cassert>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <ctime>
+
 
 #include <sys/types.h>
 
@@ -106,14 +114,6 @@
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
-// xerces-c
-/*#include <xercesc/dom/DOM.hpp>
-#include <xercesc/framework/LocalFileFormatTarget.hpp>
-#include <xercesc/framework/MemBufInputSource.hpp>
-#include <xercesc/framework/Wrapper4InputSource.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/util/XercesDefs.hpp>
-*/
 #if defined(WIN32) || defined(WIN64)
 	#include <glprocs.h>
 	#include <winsock.h>

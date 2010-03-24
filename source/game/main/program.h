@@ -22,14 +22,6 @@
 #include "keymap.h"
 #include "CmdArgs.h"
 
-/*
-using Shared::Graphics::Context;
-using Shared::Platform::WindowGl;
-using Shared::Platform::SizeState;
-using Shared::Platform::MouseState;
-using Shared::Platform::PerformanceTimer;
-using Shared::Platform::Ip;
-*/
 using namespace Shared::Platform;
 
 namespace Glest { namespace Game {
@@ -105,8 +97,10 @@ private:
 	PerformanceTimer updateTimer;
 	PerformanceTimer updateCameraTimer;
 
-    ProgramState *programState;
+	ProgramState *programState;
 	bool crashed;
+	bool terminating;
+	bool visible;
 	Keymap keymap;
 
 private:
@@ -115,10 +109,12 @@ private:
 	
 public:
 	Program(Config &config, CmdArgs &args);
-    ~Program();
+	~Program();
 	static Program *getInstance()	{return singleton;}
 
-	Keymap &getKeymap() 			{return keymap;}
+	bool isTerminating() const		{ return terminating;	}
+	bool isVisible() const			{ return visible;		}
+	Keymap &getKeymap() 			{ return keymap;		}
 
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) {
 		const Metrics &metrics = Metrics::getInstance();

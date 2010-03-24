@@ -58,7 +58,7 @@ public:
 		float f;
 		double d;
 	} value;
-
+	
 public:
 //	template < T> Variant(T value) : {setValue(value);}
 	virtual ~Variant();
@@ -112,7 +112,7 @@ public:
 	unsigned int getUintValue(const Key &key) const		{return getValue(key).getUintValue();}
 	float getFloatValue(const Key &key) const			{return getValue(key).getFloatValue();}
 	double getDoubleValue(const Key &key) const			{return getValue(key).getDoubleValue();}
-
+	
 private:
 	const Variant &getValue(const Key &key) const {
 		Map it = _map.find(key);
@@ -175,7 +175,7 @@ public:
 		propertyMap.erase(key);
 		propertyMap.insert(PropertyPair(key, value));
 	}
-
+	
 	string toString() const;
 
 private:

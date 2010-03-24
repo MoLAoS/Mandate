@@ -23,11 +23,13 @@
 #include "sound_renderer.h"
 #include "game_settings.h"
 #include "network_message.h"
-#include "path_finder.h"
+#include "route_planner.h"
+#include "cartographer.h"
 #include "lang_features.h"
 
-//DEBUG remove me some time...
-#include "renderer.h"
+#if _GAE_DEBUG_EDITION_
+#	include "debug_renderer.h"
+#endif
 
 #include "leak_dumper.h"
 
@@ -37,25 +39,31 @@ using namespace Shared::Util;
 namespace Glest { namespace Game {
 
 // =====================================================
-//  class World
+// 	class World
 // =====================================================
 
 const float World::airHeight = 5.f;
-World *World::singleton = NULL;
+World *World::singleton = 0;
 
 // ===================== PUBLIC ========================
 
-World::World(Game *game)
-		: game(*game)
+World::World(Game *game) 
+		: scenario(NULL)
+		, game(*game)
 		, gs(game->getGameSettings())
-		, unitUpdater(*game)
 		, stats(game->getGameSettings())
-		, posIteratorFactory(65) {
+		, cartographer(NULL)
+		, routePlanner(NULL)
+		, posIteratorFactory(65)
+		, minimap(gs.getFogOfWar()) {
 	Config &config = Config::getInstance();
 
-	fogOfWar = config.getGsFogOfWarEnabled();
+	fogOfWar = gs.getFogOfWar();
 	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
 	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
+	shroudOfDarkness = gs.getFogOfWar();
+
+	unfogActive = false;
 
 	frameCount = 0;
 	nextUnitId = 0;
@@ -65,414 +73,90 @@ World::World(Game *game)
 	alive = false;
 }
 
-void World::end() {
-	Logger::getInstance().add("World", true);
+World::~World() {
+	singleton = NULL;
+}
+
+void World::end(){
+	Logger::getInstance().add("World", !Program::getInstance()->isTerminating());
 	alive = false;
 
 	for (int i = 0; i < factions.size(); ++i) {
 		factions[i].end();
 	}
+	delete scenario;
+	delete cartographer;
+	delete routePlanner;
 	//stats will be deleted by BattleEnd
-}
-
-void World::save(XmlNode *node) const {
-	node->addChild("frameCount", frameCount);
-	node->addChild("nextUnitId", nextUnitId);
-
-	stats.save(node->addChild("stats"));
-	timeFlow.save(node->addChild("timeFlow"));
-	XmlNode *factionsNode = node->addChild("factions");
-	for (Factions::const_iterator i = factions.begin(); i != factions.end(); ++i) {
-		i->save(factionsNode->addChild("faction"));
-	}
-
-	NetworkDataBuffer mmbuf(0x1000); // 4kb
-	NetworkDataBuffer buf(0x10000); // 64kb
-	minimap.write(mmbuf);
-	uint32 mmDataSize = mmbuf.size();
-	buf.write(mmDataSize);
-	buf.write(mmbuf.data(), mmDataSize);
-	map.write(buf);
-	buf.compressUuencodIntoXml(node->addChild("map"), 80);
 }
 
 // ========================== init ===============================================
 
-void World::init(const XmlNode *worldNode) {
-
-#  ifdef _GAE_DEBUG_EDITION_
-	loadPFDebugTextures();
-#  endif
+void World::init() {
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
 
 	initSplattedTextures();
 
-	unitUpdater.init(game); // must be done after initMap()
-
+	// must be done after initMap()
+	routePlanner = new RoutePlanner(this);
+	cartographer = new Cartographer(this);
+	unitUpdater.init(game);
+	
 	//minimap must be init after sum computation
 	initMinimap();
 
-	if (worldNode) {
-		loadSaved(worldNode);
-	} else if (game.getGameSettings().getDefaultUnits()) {
+	if (game.getGameSettings().getDefaultUnits()) {
 		initUnits();
 	}
-
-	initExplorationState();
-
-	if (worldNode) {
-		NetworkDataBuffer buf;
-		NetworkManager &networkManager = NetworkManager::getInstance();
-		uint32 mmDataSize;
-
-		buf.uudecodeUncompressFromXml(worldNode->getChild("map"));
-		buf.read(mmDataSize);
-
-		// if client resuming saved game we omit minimap alpha data and sythesize it instead.
-		if (isNetworkClient()) {
-			buf.pop(mmDataSize);
-			map.read(buf);
-			minimap.synthesize(&map, thisTeamIndex);
-		} else {
-			minimap.read(buf);
-			map.read(buf);
-		}
-
-		// make sure I read every last byte
-		assert(!buf.size());
-	}
+	initExplorationState();	
 	computeFow();
-
-	if (isNetworkServer()) {
-		initNetworkServer();
-	}
-
 	alive = true;
 }
 
-void World::initNetworkServer() {
-	// For network games, we want to randomize this so we don't send all updates at
-	// once.
-	int64 now = Chrono::getCurMicros();
-	int64 interval = Config::getInstance().getNetMinFullUpdateInterval() * 1000LL;
-
-	for (Factions::iterator f = factions.begin(); f != factions.end(); ++f) {
-		const Units &units = f->getUnits();
-		for (Units::const_iterator u = units.begin(); u != units.end(); ++u) {
-			(*u)->setLastUpdated(now + random.randRange(0, interval));
+// preload tileset and techtree for progressbar
+void World::preload() {
+	tileset.count(gs.getTilesetPath());
+	set<string> names;
+	for (int i = 0; i < gs.getFactionCount(); ++i) {
+		if (gs.getFactionTypeName(i).size()) {
+			names.insert(gs.getFactionTypeName(i));
 		}
 	}
+	techTree.preload(gs.getTechPath(), names);
 }
 
 //load tileset
-bool World::loadTileset(Checksum &checksum) {
-	tileset.load(game.getGameSettings().getTilesetPath(), checksum);
+bool World::loadTileset() {
+	tileset.load(game.getGameSettings().getTilesetPath());
 	timeFlow.init(&tileset);
 	return true;
 }
 
 //load tech
-bool World::loadTech(Checksum &checksum) {
+bool World::loadTech() {
 	set<string> names;
-	for (int i = 0; i < gs.getFactionCount(); ++i)
+	for (int i = 0; i < gs.getFactionCount(); ++i) {
 		if (gs.getFactionTypeName(i).size()) {
 			names.insert(gs.getFactionTypeName(i));
 		}
-	return techTree.load(gs.getTechPath(), names, checksum);
+	}
+	return techTree.load(gs.getTechPath(), names);
 }
 
 //load map
-bool World::loadMap(Checksum &checksum) {
+bool World::loadMap() {
 	const string &path = gs.getMapPath();
-	checksum.addFile(path, false);
 	map.load(path, &techTree, &tileset);
 	return true;
 }
 
-bool World::loadScenario(const string &path, Checksum *checksum) {
-	checksum->addFile(path, true);
-	scenario.load(path);
+bool World::loadScenario(const string &path) {
+	assert(!scenario);
+	scenario = new Scenario();
+	scenario->load(path);
 	return true;
-}
-
-//load saved game
-void World::loadSaved(const XmlNode *worldNode) {
-	Logger::getInstance().add("Loading saved game", true);
-	this->thisFactionIndex = gs.getThisFactionIndex();
-	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
-
-	frameCount = worldNode->getChildIntValue("frameCount");
-	nextUnitId = worldNode->getChildIntValue("nextUnitId");
-
-	stats.load(worldNode->getChild("stats"));
-	timeFlow.load(worldNode->getChild("timeFlow"));
-
-	const XmlNode *factionsNode = worldNode->getChild("factions");
-	factions.resize(factionsNode->getChildCount());
-	for (int i = 0; i < factionsNode->getChildCount(); ++i) {
-		const XmlNode *n = factionsNode->getChild("faction", i);
-		const FactionType *ft = techTree.getFactionType(gs.getFactionTypeName(i));
-		factions[i].load(n, this, ft, gs.getFactionControl(i), &techTree);
-	}
-
-	map.computeNormals();
-	map.computeInterpolatedHeights();
-
-	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
-}
-
-/**
- * Moves the unit to the specified location, evicting any current inhabitants and adding them to the
- * evicted list.  If oldPos is specified, the unit is first removed from those cells.  For new
- * units, units who have been previously evicted or otherwise do not reside in the map, oldPos
- * should be NULL.
- */
-inline void World::moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos) {
-	Vec2i pos = unit->getPos();
-
-	// if they haven't moved, we don't bother
-	if (!oldPos || *oldPos != pos) {
-		bool isEvicted = false;
-		for (vector<Unit*>::iterator i = evicted.begin(); i != evicted.end(); ++i) {
-			if (*i == unit) {
-				isEvicted = true;
-				evicted.erase(i);
-				break;
-			}
-		}
-		if (oldPos && !isEvicted) {
-			map.clearUnitCells(unit, *oldPos);
-		}
-		map.evict(unit, pos, evicted);
-		map.putUnitCells(unit, pos);
-	}
-}
-
-inline static string pos2str(Vec2i pos) {
-	return intToStr(pos.x) + ", " + intToStr(pos.y);
-}
-
-static void logUnit(Unit *unit, string action, Vec2i *oldPos, int *oldHp) {
-	Logger::getClientLog().add(action + " " + unit->getType()->getName()
-			+ " (" + intToStr(unit->getId()) + ")\tpos "
-			+ (oldPos ? pos2str(*oldPos) : string("none"))
-			+ " => " + pos2str(unit->getPos())
-			+ "\thp " + (oldHp ? intToStr(*oldHp) : string("none"))
-			+ " => " + intToStr(unit->getHp())
-			, false);
-}
-
-
-void World::doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames) {
-	UnitReference unitRef(n);
-	Unit *unit = unitRef.getUnit();
-
-	if (unlikely(!unit)) {
-		//who the fuck is that?
-		if (minor) {
-			NetworkManager::getInstance().getClientInterface()->requestFullUpdate(unitRef);
-			if (Config::getInstance().getMiscDebugMode()) {
-				Logger::getClientLog().add("Received minor update for unknown unit, sending full "
-						"update request to server. id = " + intToStr(unitRef.getUnitId())
-						+ ", faction = " + intToStr(unitRef.getFaction()->getId()));
-			}
-			return;
-		}
-		Faction *faction = getFaction(n->getAttribute("faction")->getIntValue());
-		unit = new Unit(n, faction, &map, &techTree, false);
-		if (nextUnitId <= unit->getId()) {
-			nextUnitId = unit->getId() + 1;
-		}
-
-		if (Config::getInstance().getMiscDebugMode()) {
-			logUnit(unit, "received full update for unknown unit, so created a new one", NULL, NULL);
-		}
-		return;
-	}
-	Vec2i lastPos = unit->getPos();
-	int lastHp = unit->getHp();
-	Field lastField = unit->getCurrField();
-	const SkillType *lastSkill = unit->getCurrSkill();
-	bool wasEvicted = false;
-	bool morphed = false;
-
-	// if they were previously evicted, remove them from the eviction list because they will get
-	// replaced here.
-	for (vector<Unit*>::iterator i = evicted.begin(); i != evicted.end(); ++i) {
-		if (*i == unit) {
-			wasEvicted = true;
-			evicted.erase(i);
-			break;
-		}
-	}
-
-	if (!wasEvicted) {
-		map.assertUnitCells(unit);
-	}
-
-#if defined(DEBUG_NETWORK_LEVEL) && DEBUG_NETWORK_LEVEL > 0
-	XmlNode pre("unit");
-	unit->save(&pre);
-#endif
-	if (minor) {
-		unit->updateMinor(n);
-	} else {
-		XmlAttribute *morphAtt = n->getAttribute("morphed", false);
-		morphed = morphAtt && morphAtt->getBoolValue();
-		unit->update(n, &techTree, false, false, true, nextAdvanceFrames);
-		// possibly update selection
-		unit->notifyObservers(UnitObserver::eStateChange);
-	}
-
-#if defined(DEBUG_NETWORK_LEVEL) && DEBUG_NETWORK_LEVEL > 0
-	{
-		XmlNode post("unit");
-		bool diffFound = false;
-		unit->save(&post);
-		assert(pre.getChildCount() == post.getChildCount());
-		for (int i = 0; i < post.getChildCount(); ++i) {
-			char *a = pre.getChild(i)->toString(true);
-			char *b = post.getChild(i)->toString(true);
-			if (strcmp(a, b)) {
-				if (!diffFound) {
-					diffFound = true;
-					cerr << unit->getType()->getName() << " id " << unit->getId() << endl;
-				}
-				cerr << "----" << endl << a << endl << "++++" << endl << b << endl;
-			}
-			delete [] a;
-			delete [] b;
-		}
-		if (diffFound) {
-			cerr << "========================" << endl;
-		}
-	}
-#endif
-
-
-	if (Config::getInstance().getMiscDebugMode()) {
-		logUnit(unit, morphed ? "morphed" : "update", &lastPos, &lastHp);
-	}
-
-	// were they alive or not killed before?
-	if (lastHp || lastSkill->getClass() != scDie) {
-		// are they alive now?
-		if (unit->getHp()) {
-			moveAndEvict(unit, evicted, (wasEvicted || morphed) ? NULL : &lastPos);
-		} else {
-			if (!unit->getHp()) {
-				assert(lastSkill->getClass() != scDie);
-				// we kill them here so their cells are freed and we don't have to relocate them if
-				// there's another unit (in this update) where they used to be.
-				unit->kill(lastPos, !(wasEvicted || morphed));
-			}
-		}
-	} else {
-		// make sure they are still dead
-		if (unit->getHp()) {
-			// doh! we gotta bring em back
-			moveAndEvict(unit, evicted, NULL);
-
-			// remove them from hacky cleanup list
-			for (Units::iterator i = newlydead.begin(); i != newlydead.end(); ++i) {
-				if (*i == unit) {
-					newlydead.erase(i);
-					break;
-				}
-			}
-		}
-	}
-	map.assertUnitCells(unit);
-}
-
-//placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated)
-void World::updateClient() {
-	// world enters an inconsistent state while executing this function, but should be consistent
-	// when it exits.
-
-	ClientInterface *clientInterface = NetworkManager::getInstance().getClientInterface();
-	// here we try to make up for the lag time between when the server sent this data and what the
-	// state on the server probably is now.
-	float nextAdvanceFrames = 1.f + clientInterface->getAvgLatency() / 2000000.f * Config::getInstance().getGsWorldUpdateFps();
-	NetworkMessageUpdate *msg;
-	vector<Unit*> evicted;
-
-	while ((msg = clientInterface->getNextUpdate())) {
-		/*
-		if(Config::getInstance().getDebugMode()) {
-		 Logger::getInstance().add(string("\n======================\n")
-		   + msg->getData() + "\n======================\n");
-		}*/
-
-		msg->parse();
-		XmlNode *root = msg->getRootNode();
-		XmlNode *n = NULL;
-		XmlNode *unitNode = NULL;
-
-		if ((n = root->getChild("new-units", 0, false))) {
-			for (int i = 0; i < n->getChildCount(); ++i) {
-				unitNode = n->getChild("unit", i);
-				Faction *faction = getFaction(unitNode->getAttribute("faction")->getIntValue());
-				Unit *unit = new Unit(unitNode, faction, &map, &techTree, false);
-				if (nextUnitId <= unit->getId()) {
-					nextUnitId = unit->getId() + 1;
-				}
-				unit->setNextUpdateFrames(nextAdvanceFrames);
-
-				moveAndEvict(unit, evicted, NULL);
-				if (Config::getInstance().getMiscDebugMode()) {
-					logUnit(unit, "new unit", NULL, NULL);
-				}
-				if (unit->getType()->hasSkillClass(scBeBuilt)) {
-					map.prepareTerrain(unit);
-				}
-				map.assertUnitCells(unit);
-			}
-		}
-
-		if ((n = root->getChild("unit-updates", 0, false))) {
-			for (int i = 0; i < n->getChildCount(); ++i) {
-				doClientUnitUpdate(n->getChild("unit", i), false, evicted, nextAdvanceFrames);
-			}
-		}
-
-		if ((n = root->getChild("minor-unit-updates", 0, false))) {
-			for (int i = 0; i < n->getChildCount(); ++i) {
-				doClientUnitUpdate(n->getChild("unit", i), true, evicted, nextAdvanceFrames);
-			}
-		}
-
-		if ((n = root->getChild("factions", 0, false))) {
-			for (int i = 0; i < n->getChildCount(); ++i) {
-				if (i > factions.size()) {
-					throw runtime_error("too many factions in client update");
-				}
-				factions[i].update(n->getChild("faction", i));
-			}
-		}
-
-		delete msg;
-	}
-
-	//relocated the evicted
-	for (vector<Unit *>::iterator i = evicted.begin(); i != evicted.end(); ++i) {
-		Unit *unit = *i;
-		Vec2i oldPos = unit->getPos();
-		if (!placeUnit(unit->getPos(), 32, unit, false)) {
-			// if unable, let the server update him and tell us where he's
-			// supposed to be
-			unit->kill(oldPos, false);
-			logUnit(unit, "couldn't replace unit", &oldPos, NULL);
-		} else {
-			map.putUnitCells(unit, unit->getPos());
-			logUnit(unit, "relocated unit", &oldPos, NULL);
-		}
-		clientInterface->requestUpdate(unit);
-		map.assertUnitCells(unit);
-	}
-	clientInterface->sendUpdateRequests();
 }
 
 // ==================== misc ====================
@@ -496,9 +180,9 @@ void World::updateEarthquakes(float seconds) {
 
 			for (dri = damageReport.begin(); dri != damageReport.end(); ++dri) {
 				float multiplier = techTree.getDamageMultiplier(
-									   at, dri->first->getType()->getArmorType());
+						at, dri->first->getType()->getArmorType());
 				float intensity = dri->second.intensity;
-				float count = dri->second.count;
+				float count = (float)dri->second.count;
 				float damage = intensity * maxDps * multiplier;
 
 				if (!(*ei)->getType()->isAffectsAllies() && attacker->isAlly(dri->first)) {
@@ -511,8 +195,7 @@ void World::updateEarthquakes(float seconds) {
 				}
 
 				const FallDownSkillType *fdst = (const FallDownSkillType *)
-												dri->first->getType()->getFirstStOfClass(scFallDown);
-
+						dri->first->getType()->getFirstStOfClass(SkillClass::FALL_DOWN);
 				if (fdst && dri->first->getCurrSkill() != fdst
 						&& random.randRange(0.f, 1.f) + fdst->getAgility() < intensity / count / 0.25f) {
 					dri->first->setCurrSkill(fdst);
@@ -523,7 +206,7 @@ void World::updateEarthquakes(float seconds) {
 }
 
 void World::update() {
-
+	PROFILE_START( "World Update" );
 	++frameCount;
 
 	// check ScriptTimers
@@ -535,10 +218,12 @@ void World::update() {
 	//water effects
 	waterEffects.update();
 
+	/* NETWORK:
 	//update network clients
 	if (isNetworkClient()) {
 		updateClient();
 	}
+	*/
 
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
@@ -565,7 +250,8 @@ void World::update() {
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
 		const ResourceType *rt = techTree.getResourceType(i);
-		if (rt->getClass() == rcConsumable && frameCount % (rt->getInterval()*Config::getInstance().getGsWorldUpdateFps()) == 0) {
+		if (rt->getClass() == ResourceClass::CONSUMABLE 
+		&& frameCount % (rt->getInterval()*Config::getInstance().getGsWorldUpdateFps()) == 0) {
 			for (int i = 0; i < getFactionCount(); ++i) {
 				getFaction(i)->applyCostsOnInterval();
 			}
@@ -574,7 +260,8 @@ void World::update() {
 
 	//fow smoothing
 	if (fogOfWarSmoothing && ((frameCount + 1) % (fogOfWarSmoothingFrameSkip + 1)) == 0) {
-		float fogFactor = static_cast<float>(frameCount % Config::getInstance().getGsWorldUpdateFps()) / Config::getInstance().getGsWorldUpdateFps();
+		float fogFactor = float(frameCount % Config::getInstance().getGsWorldUpdateFps()) 
+									/ Config::getInstance().getGsWorldUpdateFps();
 		minimap.updateFowTex(clamp(fogFactor, 0.f, 1.f));
 	}
 
@@ -584,23 +271,7 @@ void World::update() {
 		tick();
 	}
 	assertConsistiency();
-	//if we're the server, send any updates needed to the client
-	if (isNetworkServer()) {
-		ServerInterface &si = *(NetworkManager::getInstance().getServerInterface());
-		int64 oldest = Chrono::getCurMicros() - Config::getInstance().getNetMinFullUpdateInterval() * 1000;
-
-		for (Factions::iterator f = factions.begin(); f != factions.end(); ++f) {
-			const Units &units = f->getUnits();
-			for (Units::const_iterator u = units.begin(); u != units.end(); ++u) {
-				if ((*u)->getLastUpdated() < oldest) {
-					si.unitUpdate(*u);
-				}
-			}
-		}
-
-		si.sendUpdates();
-	}
-}
+	PROFILE_STOP( "World Update" );}
 
 void World::doKill(Unit *killer, Unit *killed) {
 	scriptManager->onUnitDied(killed);
@@ -612,11 +283,12 @@ void World::doKill(Unit *killer, Unit *killed) {
 		}
 	}
 
-	if (killed->getCurrSkill()->getClass() != scDie) {
+	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
 		killed->kill();
 	}
 	if ( !killed->isMobile() ) {
-		unitUpdater.pathFinder->updateMapMetrics ( killed->getPos (), killed->getSize () );
+		// obstacle removed
+		cartographer->updateMapMetrics(killed->getPos(), killed->getSize());
 	}
 }
 
@@ -624,9 +296,10 @@ void World::tick() {
 	if (!fogOfWarSmoothing) {
 		minimap.updateFowTex(1.f);
 	}
-
 	//apply hack cleanup
 	doHackyCleanUp();
+
+	cartographer->tick();
 
 	//apply regen/degen
 	for (int i = 0; i < getFactionCount(); ++i) {
@@ -650,7 +323,7 @@ void World::tick() {
 			const ResourceType *rt = techTree.getResourceType(i);
 
 			//if consumable
-			if (rt->getClass() == rcConsumable) {
+			if (rt->getClass() == ResourceClass::CONSUMABLE) {
 				int balance = 0;
 				for (int j = 0; j < faction->getUnitCount(); ++j) {
 
@@ -669,9 +342,9 @@ void World::tick() {
 	}
 }
 
-Unit* World::findUnitById(int id) {
+Unit* World::findUnitById(int id) const {
 	for (int i = 0; i < getFactionCount(); ++i) {
-		Faction* faction = getFaction(i);
+		const Faction* faction = getFaction(i);
 
 		for (int j = 0; j < faction->getUnitCount(); ++j) {
 			Unit* unit = faction->getUnit(j);
@@ -726,34 +399,28 @@ bool World::placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spacia
 //clears a unit old position from map and places new position
 void World::moveUnitCells(Unit *unit) {
 	Vec2i newPos = unit->getNextPos();
-
-	/*if (newPos == unit->getPos()) {
-		return;
-	}*/
-
-	// FIXME: workaround for client problems trying to move units into occupied cells
-	/*
-	if (isNetworkClient()) {
-		// make sure route is still clear
-
-		if (!map.canMove(unit, unit->getPos(), newPos)) {
-			fprintf(stderr, "Unit %d needs a new path and I'm stopping.\n", unit->getId());
-			unit->getPath()->clear();
-			unit->setCurrSkill(scStop);
-			return;
-		}
-	}*/
-
-	assert(unitUpdater.pathFinder->isLegalMove(unit, newPos));
+	bool changingTiles = false;
+	if (Map::toTileCoords(newPos) != Map::toTileCoords(unit->getPos())) {
+		changingTiles = true;
+		// remove unit's visibility
+		cartographer->removeUnitVisibility(unit);
+	}
+	assert(routePlanner->isLegalMove(unit, newPos));
 	map.clearUnitCells(unit, unit->getPos());
 	map.putUnitCells(unit, newPos);
+	if (changingTiles) {
+		// re-apply unit's visibility
+		cartographer->applyUnitVisibility(unit);
+	}
 
 	//water splash
-	if (tileset.getWaterEffects() && unit->getCurrField() == FieldWalkable) {
+	if (tileset.getWaterEffects() && unit->getCurrField() == Field::LAND) {
 		if (map.getCell(unit->getLastPos())->isSubmerged()) {
 			for (int i = 0; i < 3; ++i) {
 				waterEffects.addWaterSplash(
-					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f), unit->getLastPos().y + random.randRange(-0.4f, 0.4f)));
+					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f), 
+						  unit->getLastPos().y + random.randRange(-0.4f, 0.4f))
+				);
 			}
 		}
 	}
@@ -761,7 +428,7 @@ void World::moveUnitCells(Unit *unit) {
 
 //returns the nearest unit that can store a type of resource given a position and a faction
 Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt) {
-	float currDist = infinity;
+	float currDist = numeric_limits<float>::infinity();
 	Unit *currUnit = NULL;
 
 	for (int i = 0; i < getFaction(factionIndex)->getUnitCount(); ++i) {
@@ -778,7 +445,7 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
   * a position could not be found for the new unit, -4 if pos invalid */
 int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos){
 	if ( factionIndex  < 0 && factionIndex >= factions.size() ) {
-		return -1;
+		return -1; // bad faction index
 	}
 	Faction* faction= &factions[factionIndex];
 	const FactionType* ft= faction->getType();
@@ -796,12 +463,11 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		unit->create(true);
 		unit->born();
 		if ( !unit->isMobile() ) {
-			Search::PathFinder *pf = Search::PathFinder::getInstance();
-			pf->updateMapMetrics(unit->getPos(), unit->getSize());
+			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
 		}
 		scriptManager->onUnitCreated(unit);
 		return unit->getId();
-	} else{
+	} else {
 		delete unit;
 		return -3;
 	}
@@ -811,8 +477,8 @@ int World::giveResource(const string &resourceName, int factionIndex, int amount
 	if ( factionIndex < 0 && factionIndex >= factions.size() ) {
 		return -1;
 	}
+	const ResourceType* rt= techTree.getResourceType(resourceName);
 	Faction* faction= &factions[factionIndex];
-	const ResourceType* rt;
 	try {
 		rt = techTree.getResourceType(resourceName);
 	} catch (runtime_error e) {
@@ -820,6 +486,13 @@ int World::giveResource(const string &resourceName, int factionIndex, int amount
 	}
 	faction->incResourceAmount(rt, amount);
 	return 0;
+}
+
+void World::unfogMap(const Vec4i &rect, int time) {
+	if ( time < 1 ) return;
+	unfogActive = true;
+	unfogTTL = time;
+	unfogArea = rect;
 }
 
 int World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos){
@@ -830,21 +503,21 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	const CommandType *cmdType = NULL;
 
 	if ( commandName == "move" ) {
-		cmdType = unit->getType()->getFirstCtOfClass(ccMove);
+		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::MOVE);
 	} else if ( commandName == "attack" ) {
-		cmdType = unit->getType()->getFirstCtOfClass(ccAttack);
+		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::ATTACK);
 	} else if ( commandName == "harvest" ) {
 		Resource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
-		if ( ! unit->getType()->getFirstCtOfClass(ccHarvest) ) {
-			return -2;
+		if ( ! unit->getType()->getFirstCtOfClass(CommandClass::HARVEST) ) {
+			return -2; // unit has no appropriate command
 		}
 		if ( !r ) {
-			cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
+			cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
 		} else {
 			for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
 				cmdType = unit->getType()->getCommandType(i);
-				if ( cmdType->getClass() == ccHarvest ) {
+				if ( cmdType->getClass() == CommandClass::HARVEST ) {
 					HarvestCommandType *hct = (HarvestCommandType*)cmdType;
 					if ( hct->canHarvest(r->getType()) ) {
 						found = true;
@@ -853,20 +526,24 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 				}
 			}
 			if ( !found ) {
-				cmdType = unit->getType()->getFirstCtOfClass(ccHarvest);
+				cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
 			}
 		}
 	} else if ( commandName == "patrol" ) {
-		//TODO insert code
-		return 0;
+		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::PATROL);
+	} else if (commandName == "guard") {
+		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
 	} else {
-		return -3;
+		return -3; // unknown position command
+
 	}
 	if ( !cmdType ) {
-		return -2;
+		return -2; // unit has no appropriate command
 	}
-	unit->giveCommand(new Command(cmdType, CommandFlags(), pos));
-	return 0;
+	if ( unit->giveCommand(new Command(cmdType, CommandFlags(), pos)) == CommandResult::SUCCESS ) {
+		return 0; // Ok
+	}
+	return 1; // command fail
 }
 
 /** @return 0 if ok, -1 if unitId or targetId invalid, -2 unit could attack target, -3 illegal cmd name */
@@ -876,55 +553,71 @@ int World::giveTargetCommand ( int unitId, const string & cmdName, int targetId 
 	if ( !unit || !target ) {
 		return -1;
 	}
+	const CommandType *cmdType = NULL;
 	if ( cmdName == "attack" ) {
 		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
-			if ( unit->getType()->getCommandType ( i )->getClass () == ccAttack ) {
+			if ( unit->getType()->getCommandType ( i )->getClass () == CommandClass::ATTACK ) {
 				const AttackCommandType *act = (AttackCommandType *)unit->getType()->getCommandType ( i );
 				const AttackSkillTypes *asts = act->getAttackSkillTypes ();
-				if ( asts->getZone ( target->getCurrZone () ) ) {
-					unit->giveCommand ( new Command ( act, CommandFlags(), target ) );
-					return 0;
+				if ( asts->getZone(target->getCurrZone()) ) {
+					if ( unit->giveCommand(new Command(act, CommandFlags(), target)) ) {
+						return 0; // ok
+					}
+					return 1; // command fail			
 				}
 			}
 		}
 		return -2;
 	} else if ( cmdName == "repair" ) {
 		for ( int i=0; i < unit->getType()->getCommandTypeCount(); ++i ) {
-			if ( unit->getType()->getCommandType( i )->getClass () == ccRepair ) {
+			if ( unit->getType()->getCommandType( i )->getClass () == CommandClass::REPAIR ) {
 				RepairCommandType *rct = (RepairCommandType*)unit->getType()->getCommandType ( i );
 				if ( rct->isRepairableUnitType ( target->getType() ) ) {
-					unit->giveCommand ( new Command ( rct, CommandFlags(), target ) );
-					return 0;
+					if ( unit->giveCommand(new Command(rct, CommandFlags(), target)) ) {
+						return 0; // ok
+					}
+					return 1; // command fail
 				}
 			}
 		}
 		return -2;
+
 	} else if ( cmdName == "guard" ) {
-		//TODO add code
-		return 0;
+		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
+	} else if ( cmdName == "patrol" ) {
+		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::PATROL);
 	} else {
 		return -3;
 	}
-
+	if ( unit->giveCommand(new Command(cmdType, CommandFlags(), target)) ) {
+		return 0; // ok
+	}
+	return 1; // command fail
 }
 /** return 0 if ok, -1 if bad unit id, -2 if unit has no stop command, -3 illegal cmd name */
 int World::giveStopCommand(int unitId, const string &cmdName) {
 	Unit *unit = findUnitById(unitId);
-	if ( unit == NULL ) {
+	if (unit == NULL) {
 		return -1;
 	}
-	if ( cmdName == "stop" ) {
-		const StopCommandType *sct = (StopCommandType *)unit->getType()->getFirstCtOfClass(ccStop);
-		if ( sct ) {
-			unit->giveCommand(new Command(sct, CommandFlags()));
+	if (cmdName == "stop") {
+		const StopCommandType *sct = (StopCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::STOP);
+		if (sct) {
+			if (unit->giveCommand(new Command(sct, CommandFlags())) == CommandResult::SUCCESS) {
+				return 0; // ok
+			}
+			return 1; // command fail
 		} else {
 			return -2;
 		}
 	} else if ( cmdName == "attack-stopped" ) {
 		const AttackStoppedCommandType *asct = 
-			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(ccAttackStopped);
-		if ( asct ) {
-			unit->giveCommand(new Command(asct, CommandFlags()));
+			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::ATTACK_STOPPED);
+		if (asct) {
+			if (unit->giveCommand(new Command(asct, CommandFlags())) == CommandResult::SUCCESS) {
+				return 0;
+			}
+			return 1;
 		} else {
 			return -2;
 		}
@@ -934,7 +627,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 	return 0;
 }
 
-/** #return 0 if ok, -1 if unitId invalid, -2 if unit cannot produce other unit,
+/** #return 0 if ok, 1 on command failure, -1 if unitId invalid, -2 if unit cannot produce other unit,
   * -3 if unit's faction has no such unit producedName */
 int World::giveProductionCommand(int unitId, const string &producedName){
 	Unit *unit= findUnitById(unitId);
@@ -953,20 +646,24 @@ int World::giveProductionCommand(int unitId, const string &producedName){
 	for(int i= 0; i<ut->getCommandTypeCount(); ++i){
 		const CommandType* ct= ut->getCommandType(i);
 		// if we find a suitable Produce Command, execute and return
-		if(ct->getClass()==ccProduce){
+		if(ct->getClass()==CommandClass::PRODUCE){
 			const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
 			if ( pct->getProducedUnit() == put ) {
 				CommandResult res = unit->giveCommand(new Command(pct, CommandFlags()));
-				/*if ( Config::getInstance().getLuaCommandLog() ) {
-					if ( res == crSuccess ) {
-						theConsole.addLine("produce command success");
-					} else {
-						theConsole.addLine("produce command failed");
-					}
-				}*/
-				return 0;
+				if ( res == CommandResult::SUCCESS ) {
+					//theConsole.addLine("produce command success");
+					return 0; //Ok
+				//} else if ( res == CommandResult::FAIL_RESOURCES ) {
+				//	theConsole.addLine("produce command failed, resources");
+				//} else if ( res == CommandResult::FAIL_REQUIREMENTS ) {
+				//	theConsole.addLine("produce command failed, requirements");
+				//} else {
+				//	theConsole.addLine("produce command failed");
+				}
+				return 1; // command fail	
+
 			}
-		} else if ( ct->getClass() == ccMorph ) { // Morph Command ?
+		} else if ( ct->getClass() == CommandClass::MORPH ) { // Morph Command ?
 			if ( ((MorphCommandType*)ct)->getMorphUnit()->getName() == producedName ) {
 				// just record it for now, and keep looking for a Produce Command
 				mct = (MorphCommandType*)ct; 
@@ -977,14 +674,13 @@ int World::giveProductionCommand(int unitId, const string &producedName){
 	// didn't find a Produce Command, was there are Morph Command?
 	if ( mct ) {
 		CommandResult res = unit->giveCommand(new Command (mct, CommandFlags()));
-		/*if ( Config::getInstance().getLuaCommandLog() ) {
-			if ( res == == crSuccess ) {
-				theConsole.addLine("morph command success");
-			} else {
-				theConsole.addLine("morph command failed");
-			}
-		}*/
-		return 0;
+		if ( res == CommandResult::SUCCESS ) {
+			theConsole.addLine("morph command success");
+			return 0; // ok
+		} else {
+			theConsole.addLine("morph command failed");
+			return 1; // fail
+		}
 	} else {
 		return -2;
 	}
@@ -1007,17 +703,18 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName){
 	//Search for a command that can produce the upgrade
 	for(int i= 0; i<ut->getCommandTypeCount(); ++i){
 		const CommandType* ct= ut->getCommandType(i);
-		if(ct->getClass()==ccUpgrade){
+		if(ct->getClass()==CommandClass::UPGRADE){
 			const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
 			if ( uct->getProducedUpgrade() == upgrd ) {
-				unit->giveCommand(new Command(uct, CommandFlags()));
-				return 0;
+				if ( unit->giveCommand(new Command(uct, CommandFlags())) == CommandResult::SUCCESS ) {
+					return 0;
+				}
+				return 1;
 			}
 		}
 	}
 	return -2;
 }
-
 
 int World::getResourceAmount(const string &resourceName, int factionIndex){
 	if(factionIndex<factions.size()){
@@ -1062,8 +759,9 @@ int World::getUnitFactionIndex(int unitId){
 int World::getUnitCount(int factionIndex){
 	if(factionIndex<factions.size()){
 		Faction* faction= &factions[factionIndex];
-		int count= 0;
-		for(int i= 0; i<faction->getUnitCount(); ++i){
+		int count = 0;
+		
+		for (int i= 0; i<faction->getUnitCount(); ++i) {
 			const Unit* unit= faction->getUnit(i);
 			if(unit->isAlive()){
 				++count;
@@ -1097,7 +795,6 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName){
 	}
 }
 
-
 // ==================== PRIVATE ====================
 
 // ==================== private init ====================
@@ -1109,15 +806,14 @@ void World::initCells() {
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
 
-			Tile *sc = map.getTile(i, j);
+			Tile *sc= map.getTile(i, j);
 
-			sc->setFowTexCoord(Vec2f(
-								   i / (next2Power(map.getTileW()) - 1.f),
-								   j / (next2Power(map.getTileH()) - 1.f)));
+			sc->setFowTexCoord(
+				Vec2f(i / (next2Power(map.getTileW()) - 1.f),j / (next2Power(map.getTileH()) - 1.f)));
 
 			for (int k = 0; k < GameConstants::maxPlayers; k++) {
-				sc->setExplored(k, false);
-				sc->setVisible(k, 0);
+				sc->setExplored(k, !gs.getFogOfWar());
+				sc->setVisible(k, !gs.getFogOfWar());
 			}
 		}
 	}
@@ -1134,12 +830,11 @@ void World::initSplattedTextures() {
 			Tile *sc01 = map.getTile(i, j + 1);
 			Tile *sc11 = map.getTile(i + 1, j + 1);
 			tileset.addSurfTex(
-					sc00->getTileType(),
-					sc10->getTileType(),
-					sc01->getTileType(),
-					sc11->getTileType(),
-					coord,
-					texture);
+				sc00->getTileType(),
+				sc10->getTileType(),
+				sc01->getTileType(),
+				sc11->getTileType(),
+				coord, texture);
 			sc00->setTileTexCoord(coord);
 			sc00->setTileTexture(texture);
 		}
@@ -1149,6 +844,8 @@ void World::initSplattedTextures() {
 //creates each faction looking at each faction name contained in GameSettings
 void World::initFactionTypes() {
 	Logger::getInstance().add("Faction types", true);
+	
+	if(!gs.getFactionCount()) return;
 
 	if (gs.getFactionCount() > map.getMaxPlayers()) {
 		throw runtime_error("This map only supports " + intToStr(map.getMaxPlayers()) + " players");
@@ -1159,8 +856,10 @@ void World::initFactionTypes() {
 	factions.resize(gs.getFactionCount());
 	for (int i = 0; i < factions.size(); ++i) {
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
-		factions[i].init( ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
-				gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ());
+		factions[i].init( 
+			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
+			gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ()
+		);
 		if ( unitTypes.find(ft->getName()) == unitTypes.end() ) {
 			unitTypes.insert(pair< string,set<string> >(ft->getName(),set<string>()));
 			for ( int j = 0; j < ft->getUnitTypeCount(); ++j ) {
@@ -1202,12 +901,15 @@ void World::initUnits() {
 
 				} else {
 					throw runtime_error("Unit cant be placed, this error is caused because there "
-										"is no enough place to put the units near its start location, make a "
-										"better map: " + unit->getType()->getName() + " Faction: " + intToStr(i));
+						"is no enough place to put the units near its start location, make a "
+						"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
 				}
-				if (unit->getType()->hasSkillClass(scBeBuilt)) {
+				//if ( !unit->isMobile() )
+				//   unitUpdater.routePlanner->updateMapMetrics ( unit->getPos(),
+				//                unit->getSize(), true, unit->getCurrField () );
+				if(unit->getType()->hasSkillClass(SkillClass::BE_BUILT)) {
 					map.flatternTerrain(unit);
-					unitUpdater.pathFinder->updateMapMetrics(unit->getPos(), unit->getSize());
+					cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
 				}
 			}
 		}
@@ -1228,11 +930,38 @@ void World::initExplorationState() {
 				map.getTile(i, j)->setExplored(thisTeamIndex, true);
 			}
 		}
+	} else if ( !shroudOfDarkness ) {
+		for (int i = 0; i < map.getTileW(); ++i) {
+			for (int j = 0; j < map.getTileH(); ++j) {
+				map.getTile(i, j)->setExplored(thisTeamIndex, true);
+			}
+		}
 	}
 }
 
 
 // ==================== exploration ====================
+
+void World::doUnfog() {
+	const Vec2i start = Map::toTileCoords(Vec2i(unfogArea.x, unfogArea.y));
+	const Vec2i end = Map::toTileCoords(Vec2i(unfogArea.x + unfogArea.z, unfogArea.y + unfogArea.w));
+	for ( int x = start.x; x < end.x; ++x ) {
+		for ( int y = start.y; y < end.y; ++y ) {
+			if ( map.isInsideTile(x,y) ) {
+				map.getTile(x,y)->setVisible(thisTeamIndex, true);
+			}
+		}
+	}
+	for ( int x = start.x; x < end.x; ++x ) {
+		for ( int y = start.y; y < end.y; ++y ) {
+			if ( map.isInsideTile(x,y) ) {
+				minimap.incFowTextureAlphaSurface(Vec2i(x,y), 1.f);
+			}
+		}
+	}
+	--unfogTTL;
+	if ( !unfogTTL ) unfogActive = false;
+}
 
 void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
@@ -1275,7 +1004,7 @@ void World::computeFow() {
 		if (fogOfWar || k != thisTeamIndex) {
 			for (int i = 0; i < map.getTileW(); ++i) {
 				for (int j = 0; j < map.getTileH(); ++j) {
-					map.getTile(i, j)->setVisible(k, false);
+					map.getTile(i, j)->setVisible(k, !gs.getFogOfWar());
 				}
 			}
 		}
@@ -1285,7 +1014,7 @@ void World::computeFow() {
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
-
+	
 			//exploration
 			if (unit->isOperative()) {
 				exploreCells(unit->getCenteredPos(), unit->getSight(), unit->getTeam());
@@ -1297,7 +1026,7 @@ void World::computeFow() {
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
-
+	
 			//fire
 			ParticleSystem *fire = unit->getFire();
 			if (fire) {
@@ -1305,8 +1034,11 @@ void World::computeFow() {
 			}
 		}
 	}
-
+	
 	//compute texture
+	if ( unfogActive ) { // scripted map reveal
+		doUnfog();
+	}	
 	for (int i = 0; i < getFactionCount(); ++i) {
 		Faction *faction = getFaction(i);
 		if (faction->getTeam() != thisTeamIndex) {
@@ -1357,40 +1089,5 @@ void World::hackyCleanUp(Unit *unit) {
 	}
 	newlydead.push_back(unit);
 }
-
-
-#ifdef _GAE_DEBUG_EDITION_
-#define _load_tex(i,f) \
-	PFDebugTextures[i]=Renderer::getInstance().newTexture2D(rsGame);\
-	PFDebugTextures[i]->setMipmap(false);\
-	PFDebugTextures[i]->getPixmap()->load(f);
-
-void World::loadPFDebugTextures() {
-	char buff[128];
-	for (int i = 0; i < 4; ++i) {
-		sprintf(buff, "data/core/misc_textures/g%02d.bmp", i);
-		_load_tex(i, buff);
-	}
-	for (int i = 13; i < 13 + 4; ++i) {
-		sprintf(buff, "data/core/misc_textures/l%02d.bmp", i - 13);
-		_load_tex(i, buff);
-	}
-
-	//_load_tex ( 4, "data/core/misc_textures/local0.bmp" );
-
-	_load_tex(5, "data/core/misc_textures/path_start.bmp");
-	_load_tex(6, "data/core/misc_textures/path_dest.bmp");
-	_load_tex(7, "data/core/misc_textures/path_both.bmp");
-	_load_tex(8, "data/core/misc_textures/path_return.bmp");
-	_load_tex(9, "data/core/misc_textures/path.bmp");
-
-	_load_tex(10, "data/core/misc_textures/path_node.bmp");
-	_load_tex(11, "data/core/misc_textures/open_node.bmp");
-	_load_tex(12, "data/core/misc_textures/closed_node.bmp");
-}
-
-#undef _load_tex
-#endif
-
 
 }}//end namespace

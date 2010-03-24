@@ -24,8 +24,6 @@
 #include "PhysFileOps.hpp"
 #include "StdFileOps.hpp"
 
-#include "projectConfig.h"
-
 #include "util.h"
 
 using namespace Shared::Util;
@@ -51,12 +49,12 @@ FSFactory *FSFactory::getInstance(){
 	return instance;
 }
 
-void FSFactory::initPhysFS(const char *argv0, const char *configDir){
+void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
 	PHYSFS_init(argv0);
 	PHYSFS_permitSymbolicLinks(1);
 	
-	if(!PHYSFS_mount(DEFAULT_DATA_DIR, NULL, 1)){
-		throw runtime_error(string("Couldn't mount dataDir: ") + DEFAULT_DATA_DIR);
+	if(!PHYSFS_mount(dataDir, NULL, 1)){
+		throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
 	}
 	PHYSFS_setWriteDir(configDir);
 	if(!PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 1)){

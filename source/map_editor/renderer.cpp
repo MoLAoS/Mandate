@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -39,6 +39,7 @@ void Renderer::init(int clientW, int clientH) {
 
 void Renderer::renderMap(Map *map, int x, int y, int clientW, int clientH, int cellSize) {
 	float alt;
+	float showWater;
 
 	assertGl();
 
@@ -64,13 +65,15 @@ void Renderer::renderMap(Map *map, int x, int y, int clientW, int clientH, int c
 
 				//surface
 				alt = map->getHeight(i, j) / 20.f;
+				showWater = map->getWaterLevel()/ 20.f - alt;
+				showWater = (showWater > 0)? showWater:0;
 				Vec3f surfColor;
 				switch (map->getSurface(i, j)) {
-				case 1: surfColor = Vec3f(0.0, 0.8f * alt, 0.f); break;
-				case 2: surfColor = Vec3f(0.4f * alt, 0.6f * alt, 0.f); break;
-				case 3: surfColor = Vec3f(0.6f * alt, 0.3f * alt, 0.f); break;
-				case 4: surfColor = Vec3f(0.7f * alt, 0.7f * alt, 0.7f * alt); break;
-				case 5: surfColor = Vec3f(1.0f * alt, 0.f, 0.f); break;
+					case 1: surfColor = Vec3f(0.0, 0.8f * alt, 0.f + showWater); break;
+					case 2: surfColor = Vec3f(0.4f * alt, 0.6f * alt, 0.f + showWater); break;
+					case 3: surfColor = Vec3f(0.6f * alt, 0.3f * alt, 0.f + showWater); break;
+					case 4: surfColor = Vec3f(0.7f * alt, 0.7f * alt, 0.7f * alt + showWater); break;
+					case 5: surfColor = Vec3f(0.7f * alt, 0.5f * alt, 0.3f * alt + showWater); break;
 				}
 
 				glColor3fv(surfColor.ptr());
@@ -84,17 +87,17 @@ void Renderer::renderMap(Map *map, int x, int y, int clientW, int clientH, int c
 
 				//objects
 				switch (map->getObject(i, j)) {
-				case 0: glColor3f(0.f, 0.f, 0.f); break;
-				case 1: glColor3f(1.f, 0.f, 0.f); break;
-				case 2: glColor3f(1.f, 1.f, 1.f); break;
-				case 3: glColor3f(0.5f, 0.5f, 1.f); break;
-				case 4: glColor3f(0.f, 0.f, 1.f); break;
-				case 5: glColor3f(0.5f, 0.5f, 0.5f); break;
-				case 6: glColor3f(1.f, 0.8f, 0.5f); break;
-				case 7: glColor3f(0.f, 1.f, 1.f); break;
-				case 8: glColor3f(0.7f, 0.1f, 0.3f); break;
-				case 9: glColor3f(0.5f, 1.f, 0.1f); break;
-				case 10: glColor3f(1.f, 0.2f, 0.8f); break;
+					case 0: glColor3f(0.f, 0.f, 0.f); break;
+					case 1: glColor3f(1.f, 0.f, 0.f); break;
+					case 2: glColor3f(1.f, 1.f, 1.f); break;
+					case 3: glColor3f(0.5f, 0.5f, 1.f); break;
+					case 4: glColor3f(0.f, 0.f, 1.f); break;
+					case 5: glColor3f(0.5f, 0.5f, 0.5f); break;
+					case 6: glColor3f(1.f, 0.8f, 0.5f); break;
+					case 7: glColor3f(0.f, 1.f, 1.f); break;
+					case 8: glColor3f(0.7f, 0.1f, 0.3f); break;
+					case 9: glColor3f(0.5f, 1.f, 0.1f); break;
+					case 10: glColor3f(1.f, 0.2f, 0.8f); break;
 				}
 
 				if (map->getObject(i, j) != 0) {
@@ -104,10 +107,10 @@ void Renderer::renderMap(Map *map, int x, int y, int clientW, int clientH, int c
 					glEnd();
 				}
 
-				bool found = false;
+//				bool found = false;
 
 				//height lines
-				if (!found) {
+//				if (!found) {
 					glColor3fv((surfColor*0.5f).ptr());
 					//left
 					if (i > 0 && map->getHeight(i - 1, j) > map->getHeight(i, j)) {
@@ -138,15 +141,15 @@ void Renderer::renderMap(Map *map, int x, int y, int clientW, int clientH, int c
 						glVertex2i((i + 1) * cellSize, clientH - j * cellSize);
 						glEnd();
 					}
-				}
+//				}
 
 				//resources
 				switch (map->getResource(i, j)) {
-				case 1: glColor3f(1.f, 1.f, 0.f); break;
-				case 2: glColor3f(0.5f, 0.5f, 0.5f); break;
-				case 3: glColor3f(1.f, 0.f, 0.f); break;
-				case 4: glColor3f(0.f, 0.f, 1.f); break;
-				case 5: glColor3f(0.5f, 0.5f, 1.f); break;
+					case 1: glColor3f(1.f, 1.f, 0.f); break;
+					case 2: glColor3f(0.5f, 0.5f, 0.5f); break;
+					case 3: glColor3f(1.f, 0.f, 0.f); break;
+					case 4: glColor3f(0.f, 0.f, 1.f); break;
+					case 5: glColor3f(0.5f, 0.5f, 1.f); break;
 				}
 
 				if (map->getResource(i, j) != 0) {
@@ -165,10 +168,14 @@ void Renderer::renderMap(Map *map, int x, int y, int clientW, int clientH, int c
 	glLineWidth(3);
 	for (int i = 0; i < map->getMaxFactions(); i++) {
 		switch (i) {
-		case 0: glColor3f(1.f, 1.f, 0.f); break;
-		case 1: glColor3f(0.5f, 0.5f, 0.5f); break;
-		case 2: glColor3f(1.f, 0.f, 0.f); break;
-		case 3: glColor3f(0.f, 0.f, 1.f); break;
+			case 0: glColor3f(1.f, 0.f, 0.f); break;
+			case 1: glColor3f(0.f, 0.f, 1.f); break;
+			case 2: glColor3f(0.f, 1.f, 0.f); break;
+			case 3: glColor3f(1.f, 1.f, 0.f); break;
+			case 4: glColor3f(1.f, 1.f, 1.f); break;
+			case 5: glColor3f(0.f, 1.f, 0.8f); break;
+			case 6: glColor3f(1.f, 0.8f, 0.f); break;
+			case 7: glColor3f(1.f, 0.8f, 1.f); break;
 		}
 		glBegin(GL_LINES);
 		glVertex2i((map->getStartLocationX(i) - 1) * cellSize, clientH - (map->getStartLocationY(i) - 1) * cellSize);

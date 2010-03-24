@@ -28,7 +28,6 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
@@ -144,7 +143,7 @@ const float Renderer::maxLightDist= 50.f;
 
 // ==================== constructor and destructor ====================
 
-Renderer::Renderer(){
+Renderer::Renderer() {
 	GraphicsInterface &gi= GraphicsInterface::getInstance();
 	FactoryRepository &fr= FactoryRepository::getInstance();
 	Config &config= Config::getInstance();
@@ -167,9 +166,6 @@ Renderer::Renderer(){
 	perspFov = config.getRenderFov();
 	perspNearPlane = config.getRenderDistanceMin();
 	perspFarPlane = config.getRenderDistanceMax();
-#ifdef _GAE_DEBUG_EDITION_
-	debugField = FieldWalkable;
-#endif
 }
 
 Renderer::~Renderer(){
@@ -262,6 +258,8 @@ void Renderer::initGame(Game *game){
 		shadowMapFrame= -1;
 	}
 
+	IF_DEBUG_EDITION( debugRenderer.init(); )
+
 	//texture init
 	modelManager[rsGame]->init();
 	textureManager[rsGame]->init();
@@ -282,6 +280,7 @@ void Renderer::initMenu(MainMenu *mm){
 void Renderer::reset3d(){
 	assertGl();
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+	loadProjectionMatrix();
 	glCallList(list3d);
 	pointCount= 0;
 	triangleCount= 0;
@@ -399,7 +398,7 @@ void Renderer::swapBuffers(){
 //places all the opengl lights
 void Renderer::setupLighting(){
 
-    int lightCount= 0;
+	int lightCount= 0;
 	const World *world= game->getWorld();
 	const GameCamera *gameCamera= game->getGameCamera();
 	const TimeFlow *timeFlow= world->getTimeFlow();
@@ -407,7 +406,7 @@ void Renderer::setupLighting(){
 
 	assertGl();
 
-    //sun/moon light
+	//sun/moon light
 	Vec3f lightColor= computeLightColor(time);
 	Vec3f fogColor= world->getTileset()->getFogColor();
 	Vec4f lightPos= timeFlow->isDay()? computeSunPos(time): computeMoonPos(time);
@@ -420,24 +419,24 @@ void Renderer::setupLighting(){
 
 	glFogfv(GL_FOG_COLOR, Vec4f(fogColor*lightColor, 1.f).ptr());
 
-    lightCount++;
+	lightCount++;
 
 	//disable all secondary lights
 	for(int i= 1; i<maxLights; ++i){
 		glDisable(GL_LIGHT0 + i);
 	}
 
-    //unit lights (not projectiles)
+	//unit lights (not projectiles)
 	if(timeFlow->isTotalNight()){
-        for(int i=0; i<world->getFactionCount() && lightCount<maxLights; ++i){
-            for(int j=0; j<world->getFaction(i)->getUnitCount() && lightCount<maxLights; ++j){
-                Unit *unit= world->getFaction(i)->getUnit(j);
+		for(int i=0; i<world->getFactionCount() && lightCount<maxLights; ++i){
+			for(int j=0; j<world->getFaction(i)->getUnitCount() && lightCount<maxLights; ++j){
+				Unit *unit= world->getFaction(i)->getUnit(j);
 				if(world->toRenderUnit(unit) &&
 					unit->getCurrVector().dist(gameCamera->getPos())<maxLightDist &&
-                    unit->getType()->getLight() && unit->isOperative()){
+					unit->getType()->getLight() && unit->isOperative()){
 
 					Vec4f pos= Vec4f(unit->getCurrVector());
-                    pos.y+=4.f;
+					pos.y+=4.f;
 
 					GLenum lightEnum= GL_LIGHT0 + lightCount;
 
@@ -448,17 +447,17 @@ void Renderer::setupLighting(){
 					glLightfv(lightEnum, GL_SPECULAR, Vec4f(unit->getType()->getLightColor()*0.3f).ptr());
 					glLightf(lightEnum, GL_QUADRATIC_ATTENUATION, 0.05f);
 
-                    ++lightCount;
+					++lightCount;
 
 					const GameCamera *gameCamera= game->getGameCamera();
 
 					if(Vec3f(pos).dist(gameCamera->getPos())<Vec3f(nearestLightPos).dist(gameCamera->getPos())){
 						nearestLightPos= pos;
 					}
-                }
-            }
-        }
-    }
+				}
+			}
+		}
+	}
 
 	assertGl();
 }
@@ -483,8 +482,9 @@ void Renderer::loadCameraMatrix(const Camera *camera){
 	glTranslatef(-position.x, -position.y, -position.z);
 }
 
-void Renderer::computeVisibleQuad(){
-	visibleQuad= game->getGameCamera()->computeVisibleQuad();
+void Renderer::computeVisibleArea() {
+	culler.establishScene();
+	IF_DEBUG_EDITION( debugRenderer.sceneEstablished(culler); )
 }
 
 // =======================================
@@ -492,37 +492,37 @@ void Renderer::computeVisibleQuad(){
 // =======================================
 
 void Renderer::renderMouse2d(int x, int y, int anim, float fade){
-    float color1, color2;
+	float color1, color2;
 
 	float fadeFactor= fade+1.f;
 
 	anim= anim*2-maxMouse2dAnim;
 
-    color2= (abs(anim*fadeFactor)/static_cast<float>(maxMouse2dAnim))/2.f+0.4f;
-    color1= (abs(anim*fadeFactor)/static_cast<float>(maxMouse2dAnim))/2.f+0.8f;
+	color2= (abs(anim*fadeFactor)/static_cast<float>(maxMouse2dAnim))/2.f+0.4f;
+	color1= (abs(anim*fadeFactor)/static_cast<float>(maxMouse2dAnim))/2.f+0.8f;
 
-    glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
-        glEnable(GL_BLEND);
+	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
+		glEnable(GL_BLEND);
 
 		//inside
 		glColor4f(0.4f*fadeFactor, 0.2f*fadeFactor, 0.2f*fadeFactor, 0.5f*fadeFactor);
-        glBegin(GL_TRIANGLES);
-            glVertex2i(x, y);
-            glVertex2i(x+20, y-10);
-            glVertex2i(x+10, y-20);
-        glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex2i(x, y);
+			glVertex2i(x+20, y-10);
+			glVertex2i(x+10, y-20);
+		glEnd();
 
-		//biorder
-        glLineWidth(2);
-        glBegin(GL_LINE_LOOP);
-            glColor4f(1.f, 0.2f, 0, color1);
-            glVertex2i(x, y);
-            glColor4f(1.f, 0.4f, 0, color2);
-            glVertex2i(x+20, y-10);
-            glColor4f(1.f, 0.4f, 0, color2);
-            glVertex2i(x+10, y-20);
-        glEnd();
-    glPopAttrib();
+		//border
+		glLineWidth(2);
+		glBegin(GL_LINE_LOOP);
+			glColor4f(1.f, 0.2f, 0, color1);
+			glVertex2i(x, y);
+			glColor4f(1.f, 0.4f, 0, color2);
+			glVertex2i(x+20, y-10);
+			glColor4f(1.f, 0.4f, 0, color2);
+			glVertex2i(x+10, y-20);
+		glEnd();
+	glPopAttrib();
 }
 
 void Renderer::renderMouse3d(){
@@ -556,12 +556,12 @@ void Renderer::renderMouse3d(){
 				glEnable(GL_COLOR_MATERIAL);
 				glDepthMask(GL_FALSE);
 
-				Vec3f pos3f= Vec3f((*i).x, map->getCell(*i)->getHeight(), (*i).y);
+				Vec3f pos3f= Vec3f( (float)(*i).x, map->getCell(*i)->getHeight(), (float)(*i).y );
 
 				glTranslatef(pos3f.x+offset, pos3f.y, pos3f.z+offset);
 
 				//choose color
-				if(map->areFreeCellsOrHaveUnits(*i, building->getSize(), FieldWalkable, units)) {
+				if(map->areFreeCellsOrHaveUnits(*i, building->getSize(), Field::LAND, units)) {
 					color= Vec4f(1.f, 1.f, 1.f, 0.5f);
 				} else {
 					color= Vec4f(1.f, 0.f, 0.f, 0.5f);
@@ -570,7 +570,7 @@ void Renderer::renderMouse3d(){
 				modelRenderer->begin(true, true, false);
 				glColor4fv(color.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color.ptr());
-				const Model *buildingModel= building->getFirstStOfClass(scStop)->getAnimation();
+				const Model *buildingModel= building->getFirstStOfClass(SkillClass::STOP)->getAnimation();
 				buildingModel->updateInterpolationData(0.f, false);
 				modelRenderer->render(buildingModel);
 				glDisable(GL_COLOR_MATERIAL);
@@ -590,7 +590,7 @@ void Renderer::renderMouse3d(){
 			glDepthMask(GL_FALSE);
 
 			Vec2i pos= mouse3d->getPos();
-			Vec3f pos3f= Vec3f(pos.x, map->getCell(pos)->getHeight(), pos.y);
+			Vec3f pos3f= Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
 
 			//standard mouse
 			glDisable(GL_TEXTURE_2D);
@@ -624,7 +624,7 @@ void Renderer::renderBackground(const Texture2D *texture){
 
 	assertGl();
 
-    glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT);
 
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
@@ -637,7 +637,7 @@ void Renderer::renderBackground(const Texture2D *texture){
 }
 
 void Renderer::renderTextureQuad(int x, int y, int w, int h, const Texture2D *texture, float alpha){
-    assertGl();
+	assertGl();
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -726,10 +726,10 @@ void Renderer::renderResourceStatus(){
 			glEnable(GL_TEXTURE_2D);
 			renderQuad(j*100+200, metrics.getVirtualH()-30, 16, 16, rt->getImage());
 
-			if(rt->getClass()!=rcStatic){
+			if(rt->getClass()!=ResourceClass::STATIC){
 				str+= "/" + intToStr(thisFaction->getStoreAmount(rt));
 			}
-			if(rt->getClass()==rcConsumable){
+			if(rt->getClass()==ResourceClass::CONSUMABLE){
 				str+= "(";
 				if(r->getBalance()>0){
 					str+= "+";
@@ -757,20 +757,20 @@ void Renderer::renderSelectionQuad(){
 	const Gui *gui= game->getGui();
 	const SelectionQuad *sq= gui->getSelectionQuad();
 
-    Vec2i down= sq->getPosDown();
-    Vec2i up= sq->getPosUp();
+	Vec2i down= sq->getPosDown();
+	Vec2i up= sq->getPosUp();
 
-    if(gui->isSelecting()){
-        glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
-            glColor3f(0,1,0);
-            glBegin(GL_LINE_LOOP);
-                glVertex2i(down.x, down.y);
-                glVertex2i(up.x, down.y);
-                glVertex2i(up.x, up.y);
-                glVertex2i(down.x, up.y);
-            glEnd();
-        glPopAttrib();
-    }
+	if(gui->isSelecting()){
+		glPushAttrib(GL_CURRENT_BIT | GL_LINE_BIT);
+			glColor3f(0,1,0);
+			glBegin(GL_LINE_LOOP);
+				glVertex2i(down.x, down.y);
+				glVertex2i(up.x, down.y);
+				glVertex2i(up.x, up.y);
+				glVertex2i(down.x, up.y);
+			glEnd();
+		glPopAttrib();
+	}
 }
 
 Vec2i computeCenteredPos(const string &text, const Font2D *font, int x, int y){
@@ -815,10 +815,7 @@ void Renderer::renderText(const string &text, const Font2D *font, const Vec3f &c
 
 void Renderer::renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered){
 	glPushAttrib(GL_CURRENT_BIT);
-	
-	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
-
-	textRenderer->begin(font);
+	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);	textRenderer->begin(font);
 	glColor3f(0.0f, 0.0f, 0.0f);
 	textRenderer->render(text, pos.x-1.0f, pos.y-1.0f);
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -831,7 +828,6 @@ void Renderer::renderTextShadow(const string &text, const Font2D *font, int x, i
 // ============= COMPONENTS =============================
 
 void Renderer::renderLabel(const GraphicLabel *label){
-
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
 
@@ -854,12 +850,7 @@ void Renderer::renderLabel(const GraphicLabel *label){
 }
 
 void Renderer::renderButton(const GraphicButton *button){
-
-    int x= button->getX();
-    int y= button->getY();
-    int h= button->getH();
-    int w= button->getW();
-
+	int x = button->getX(),	 y = button->getY(), h= button->getH(), w= button->getW();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 
 	//background
@@ -877,16 +868,16 @@ void Renderer::renderButton(const GraphicButton *button){
 
 	glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2f(0.f, 0.f);
-		glVertex2f(x, y);
+		glVertex2f( (float)x, (float)y );
 
 		glTexCoord2f(0.f, 1.f);
-		glVertex2f(x, y+h);
+		glVertex2f( (float)x, (float)(y+h) );
 
 		glTexCoord2f(1.f, 0.f);
-		glVertex2f(x+w, y);
+		glVertex2f( (float)(x+w), (float)y );
 
 		glTexCoord2f(1.f, 1.f);
-		glVertex2f(x+w, y+h);
+		glVertex2f( (float)(x+w), (float)(y+h) );
 
 	glEnd();
 
@@ -904,36 +895,33 @@ void Renderer::renderButton(const GraphicButton *button){
 		glBegin(GL_TRIANGLE_FAN);
 
 		glColor4fv(color2.ptr());
-		glVertex2f(x+w/2, y+h/2);
+		glVertex2f( (float)(x+w/2), (float)(y+h/2) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x-lightSize, y-lightSize);
+		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x+w+lightSize, y-lightSize);
+		glVertex2f( (float)(x+w+lightSize), (float)(y-lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x+w+lightSize, y+h+lightSize);
+		glVertex2f( (float)(x+w+lightSize), (float)(y+h+lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x+w+lightSize, y+h+lightSize);
+		glVertex2f( (float)(x+w+lightSize), (float)(y+h+lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x-lightSize, y+h+lightSize);
+		glVertex2f( (float)(x-lightSize), (float)(y+h+lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x-lightSize, y-lightSize);
+		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
 
 		glEnd();
 	}
 
 	Vec2i textPos= Vec2i(x+w/2, y+h/2);
 
-	renderText(
-		button->getText(), button->getFont(), GraphicButton::getFade(),
-		x+w/2, y+h/2, true);
-
-    glPopAttrib();
+	renderText( button->getText(), button->getFont(), GraphicButton::getFade(), x+w/2, y+h/2, true);
+	glPopAttrib();
 }
 
 void Renderer::renderListBox(const GraphicListBox *listBox){
@@ -973,7 +961,7 @@ void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + messageBox->getH());
 		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY()+9*messageBox->getH()/10);
 	glEnd();
- 
+
 	glBegin(GL_LINE_LOOP);
 		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
 		glVertex2i(messageBox->getX(), messageBox->getY());
@@ -1040,16 +1028,16 @@ void Renderer::renderTextEntry(const GraphicTextEntry *textEntry) {
 
 	glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2f(0.f, 0.f);
-		glVertex2f(x, y);
+		glVertex2f( (float)x, (float)y );
 
 		glTexCoord2f(0.f, 1.f);
-		glVertex2f(x, y+h);
+		glVertex2f( (float)x, (float)(y+h) );
 
 		glTexCoord2f(1.f, 0.f);
-		glVertex2f(x+w, y);
+		glVertex2f( (float)(x+w), (float)y);
 
 		glTexCoord2f(1.f, 1.f);
-		glVertex2f(x+w, y+h);
+		glVertex2f( (float)(x+w), (float)(y+h) );
 	glEnd();
 
 	glDisable(GL_TEXTURE_2D);
@@ -1066,25 +1054,25 @@ void Renderer::renderTextEntry(const GraphicTextEntry *textEntry) {
 		glBegin(GL_TRIANGLE_FAN);
 
 		glColor4fv(color2.ptr());
-		glVertex2f(x+w/2, y+h/2);
+		glVertex2f( (float)(x+w/2), (float)(y+h/2) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x-lightSize, y-lightSize);
+		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x+w+lightSize, y-lightSize);
+		glVertex2f( (float)(x+w+lightSize), (float)(y-lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x+w+lightSize, y+h+lightSize);
+		glVertex2f( (float)(x+w+lightSize), (float)(y+h+lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x+w+lightSize, y+h+lightSize);
+		glVertex2f( (float)( x+w+lightSize ), (float)(y+h+lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x-lightSize, y+h+lightSize);
+		glVertex2f( (float)(x-lightSize), (float)(y+h+lightSize) );
 
 		glColor4fv(color1.ptr());
-		glVertex2f(x-lightSize, y-lightSize);
+		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
 
 		glEnd();
 	}
@@ -1131,16 +1119,15 @@ void Renderer::renderTextEntryBox(const GraphicTextEntryBox *textEntryBox){
 
 // ==================== complex rendering ====================
 
-void Renderer::renderSurface(){
-#  if defined _GAE_DEBUG_EDITION_
-   if ( Config::getInstance().getMiscDebugTextures() )
-   {
-      renderSurfacePFDebug ();
-      return;
-   }
-#  endif
+void Renderer::renderSurface() {
+	IF_DEBUG_EDITION(
+		if (debugRenderer.willRenderSurface()) {
+			debugRenderer.renderSurface(culler);
+		} else {
+	)
 
 	int lastTex=-1;
+
 	int currTex;
 	const World *world= game->getWorld();
 	const Map *map= world->getMap();
@@ -1161,8 +1148,7 @@ void Renderer::renderSurface(){
 	glActiveTexture(fowTexUnit);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
-	glTexSubImage2D(
-		GL_TEXTURE_2D, 0, 0, 0,
+	glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0,
 		fowTex->getPixmap()->getW(), fowTex->getPixmap()->getH(),
 		GL_ALPHA, GL_UNSIGNED_BYTE, fowTex->getPixmap()->getPixels());
 
@@ -1179,13 +1165,9 @@ void Renderer::renderSurface(){
 
 	glActiveTexture(baseTexUnit);
 
-	Quad2i scaledQuad= visibleQuad/Map::cellScale;
-
-	PosQuadIterator pqi(scaledQuad);
-	while(pqi.next()){
-
-		const Vec2i &pos= pqi.getPos();
-
+	SceneCuller::iterator it = culler.tile_begin();
+	for ( ; it != culler.tile_end(); ++it) {
+		const Vec2i pos = *it;
 		if(mapBounds.isInside(pos)){
 
 			Tile *tc00= map->getTile(pos.x, pos.y);
@@ -1231,7 +1213,6 @@ void Renderer::renderSurface(){
 			glEnd();
 		}
 	}
-	glEnd();
 
 	//Restore
 	static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(false);
@@ -1240,183 +1221,20 @@ void Renderer::renderSurface(){
 	//assert
 	glGetError();	//remove when first mtex problem solved
 	assertGl();
+
+	IF_DEBUG_EDITION(
+		} // end else, if not renderering textures instead of terrain
+		debugRenderer.renderEffects(culler);
+	)
 }
-
-#ifdef _GAE_DEBUG_EDITION_
-void Renderer::renderSurfacePFDebug ()
-{
-	int lastTex=-1;
-	int currTex;
-	const World *world= game->getWorld();
-	const Map *map= world->getMap();
-	const Search::PathFinder *pf = Search::PathFinder::getInstance ();
-	const Rect2i mapBounds(0, 0, map->getTileW()-1, map->getTileH()-1);
-	float coordStep= world->getTileset()->getSurfaceAtlas()->getCoordStep();
-
-	assertGl();
-
-	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
-
-	glEnable(GL_BLEND);
-	glEnable(GL_COLOR_MATERIAL); 
-	glDisable(GL_ALPHA_TEST);
-	glActiveTexture(baseTexUnit);
-
-	Quad2i scaledQuad= visibleQuad/Map::cellScale;
-
-	PosQuadIterator pqi(scaledQuad);
-	while(pqi.next()){
-		const Vec2i &pos= pqi.getPos();
-		int cx, cy;
-		cx = pos.x * 2;
-		cy = pos.y * 2;
-		if(mapBounds.isInside(pos)){
-
-			Tile *tc00= map->getTile(pos.x, pos.y);
-			Tile *tc10= map->getTile(pos.x+1, pos.y);
-			Tile *tc01= map->getTile(pos.x, pos.y+1);
-			Tile *tc11= map->getTile(pos.x+1, pos.y+1);
-
-			Vec3f tl = tc00->getVertex ();
-			Vec3f tr = tc10->getVertex ();
-			Vec3f bl = tc01->getVertex ();
-			Vec3f br = tc11->getVertex ();
-
-			Vec3f tc = tl + (tr - tl) / 2;
-			Vec3f ml = tl + (bl - tl) / 2;
-			Vec3f mr = tr + (br - tr) / 2;
-			Vec3f mc = ml + (mr - ml) / 2;
-			Vec3f bc = bl + (br - bl) / 2;
-
-         // cx,cy
-         uint32 tex = 0;
-         uint32 met;
-
-         Vec2i cPos ( cx, cy );
-         if ( pf->PathStart == cPos ) met = 5;
-         else if ( pf->PathDest == cPos ) met = 6;
-         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
-         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
-         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
-         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
-            met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
-         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
-         glBindTexture(GL_TEXTURE_2D, tex);
-         glBegin ( GL_TRIANGLE_FAN );
-            glTexCoord2f ( 0.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(tl.ptr());
-            glTexCoord2f ( 1.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(tc.ptr());
-            glTexCoord2f ( 1.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(mc.ptr());
-            glTexCoord2f ( 0.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(ml.ptr());                        
-         glEnd ();
-
-         cPos = Vec2i( cx+1, cy );
-         if ( pf->PathStart == cPos ) met = 5;
-         else if ( pf->PathDest == cPos ) met = 6;
-         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
-         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
-         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
-         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
-            met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
-         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
-         glBindTexture(GL_TEXTURE_2D, tex);
-         glBegin ( GL_TRIANGLE_FAN );
-            glTexCoord2f ( 0.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(tc.ptr());
-            glTexCoord2f ( 1.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(tr.ptr());
-            glTexCoord2f ( 1.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(mr.ptr());
-            glTexCoord2f ( 0.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(mc.ptr());                        
-         glEnd ();
-
-         cPos = Vec2i( cx, cy + 1 );
-         if ( pf->PathStart == cPos ) met = 5;
-         else if ( pf->PathDest == cPos ) met = 6;
-         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
-         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
-         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
-         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
-            met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
-         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
-         glBindTexture(GL_TEXTURE_2D, tex);
-         glBegin ( GL_TRIANGLE_FAN );
-            glTexCoord2f ( 0.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(ml.ptr());
-            glTexCoord2f ( 1.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(mc.ptr());
-            glTexCoord2f ( 1.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(bc.ptr());
-            glTexCoord2f ( 0.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(bl.ptr());                        
-         glEnd ();
-
-         cPos = Vec2i( cx + 1, cy + 1 );
-         if ( pf->PathStart == cPos ) met = 5;
-         else if ( pf->PathDest == cPos ) met = 6;
-         else if ( pf->PathSet.find ( cPos ) != pf->PathSet.end() ) met = 10; // on path
-         else if ( pf->OpenSet.find ( cPos ) != pf->OpenSet.end() ) met = 11; // open nodes
-         else if ( pf->ClosedSet.find ( cPos ) != pf->ClosedSet.end() ) met = 12; // closed nodes
-         else if ( pf->LocalAnnotations.find ( cPos ) != pf->LocalAnnotations.end() ) // local annotation
-            met = 13 + pf->LocalAnnotations.find(cPos)->second;
-         else met = pf->annotatedMap->metrics[cPos].get ( debugField );
-         tex = static_cast<const Texture2DGl*>(world->PFDebugTextures[met])->getHandle ();
-         glBindTexture(GL_TEXTURE_2D, tex);
-         glBegin ( GL_TRIANGLE_FAN );
-            glTexCoord2f ( 0.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(mc.ptr());
-            glTexCoord2f ( 1.f, 1.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(mr.ptr());
-            glTexCoord2f ( 1.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(br.ptr());
-            glTexCoord2f ( 0.f, 0.f );
-            glNormal3fv(tc00->getNormal().ptr());
-            glVertex3fv(bc.ptr());                        
-         glEnd ();
-		}
-	}
-	glEnd();
-
-	//Restore
-	static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(false);
-	glPopAttrib();
-
-	//assert
-	glGetError();	//remove when first mtex problem solved
-	assertGl();
-}
-#endif
-
 
 void Renderer::renderObjects(){
 	const World *world= game->getWorld();
 	const Map *map= world->getMap();
 
-    assertGl();
+	assertGl();
 	const Texture2D *fowTex= world->getMinimap()->getFowTexture();
-	Vec3f baseFogColor= world->getTileset()->getFogColor()*computeLightColor(world->getTimeFlow()->getTime());
+	Vec3f baseFogColor= world->getTileset()->getFogColor() * computeLightColor( world->getTimeFlow()->getTime() );
 
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 
@@ -1433,42 +1251,40 @@ void Renderer::renderObjects(){
 	glActiveTexture(baseTexUnit);
 
 	glEnable(GL_COLOR_MATERIAL);
-    glAlphaFunc(GL_GREATER, 0.5f);
+	glAlphaFunc(GL_GREATER, 0.5f);
 
 	modelRenderer->begin(true, true, false);
 	int thisTeamIndex= world->getThisTeamIndex();
 
-	PosQuadIterator pqi(visibleQuad, Map::cellScale);
-	while(pqi.next()){
-		const Vec2i &pos= pqi.getPos();
+	SceneCuller::iterator it = culler.tile_begin();
+	for ( ; it != culler.tile_end(); ++it ) {
+		const Vec2i &pos = *it;
+		if (!map->isInsideTile(pos)) continue;
+		Tile *sc= map->getTile(pos);
+		Object *o= sc->getObject();
+		if(o && sc->isExplored(thisTeamIndex)) {
 
-		if(map->isInside(pos)){
+			const Model *objModel= sc->getObject()->getModel();
+			Vec3f v= o->getPos();
 
-			Tile *sc= map->getTile(Map::toTileCoords(pos));
-			Object *o= sc->getObject();
-			if(o && sc->isExplored(thisTeamIndex)){
+			// QUICK-FIX: Objects/Resources drawn out of place...				
+			// Why do we need this ??? are the tileset objects / techtree resources defined out of position ??
+			v.x += Map::mapScale / 2; // == 1
+			v.z += Map::mapScale / 2;
+			
+			//ambient and diffuse color is taken from cell color
+			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
+			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
+			glColor4fv(color.ptr());
+			// FIXME: I was tired when I edited this code and it could be as broken as our
+			// economy.
+			Vec4f color2 = color * ambFactor;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color2.ptr());
+			color2 = Vec4f(baseFogColor) * fowFactor;
+			glFogfv(GL_FOG_COLOR, color2.ptr());
 
-				const Model *objModel= sc->getObject()->getModel();
-				Vec3f v= o->getPos();
-            
-            // QUICK-FIX: Objects/Resources drawn out of place...
-            // Why do we need this ??? are the tileset objects / techtree resources defined out of position ??
-            v.x += Map::mapScale / 2; // == 1
-            v.z += Map::mapScale / 2;
-
-				//ambient and diffuse color is taken from cell color
-				float fowFactor= fowTex->getPixmap()->getPixelf(pos.x/Map::cellScale, pos.y/Map::cellScale);
-				Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
-				glColor4fv(color.ptr());
-				// FIXME: I was tired when I edited this code and it could be as broken as our
-				// economy.
-				Vec4f color2 = color * ambFactor;
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color2.ptr());
-				color2 = Vec4f(baseFogColor) * fowFactor;
-				glFogfv(GL_FOG_COLOR, color2.ptr());
-
-				glMatrixMode(GL_MODELVIEW);
-				glPushMatrix();
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);
 				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
 
@@ -1477,13 +1293,10 @@ void Renderer::renderObjects(){
 
 				triangleCount+= objModel->getTriangleCount();
 				pointCount+= objModel->getVertexCount();
+			glPopMatrix();
 
-				glPopMatrix();
-
-			}
 		}
 	}
-
 	modelRenderer->end();
 
 	//restore
@@ -1500,12 +1313,12 @@ void Renderer::renderWater(){
 	float waterAnim= world->getWaterEffects()->getAmin();
 
 	//assert
-    assertGl();
+	assertGl();
 
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_CURRENT_BIT);
 
 	//water texture nit
-    glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
 
 	glEnable(GL_BLEND);
 	if(textures3D){
@@ -1525,66 +1338,64 @@ void Renderer::renderWater(){
 	const Texture2D *fowTex= world->getMinimap()->getFowTexture();
 	glActiveTexture(fowTexUnit);
 	glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
-    glActiveTexture(baseTexUnit);
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
+	glActiveTexture(baseTexUnit);
 
 	assertGl();
 
-	Rect2i boundingRect= visibleQuad.computeBoundingRect();
-	Rect2i scaledRect= boundingRect/Map::cellScale;
+	//Rect2i boundingRect= visibleQuad.computeBoundingRect();
+	//Rect2i scaledRect= boundingRect/Map::cellScale;
+	Rect2i scaledRect = culler.getBoundingRectTile();
 	scaledRect.clamp(0, 0, map->getTileW()-1, map->getTileH()-1);
 
 	float waterLevel= world->getMap()->getWaterLevel();
-    for(int j=scaledRect.p[0].y; j<scaledRect.p[1].y; ++j){
-        glBegin(GL_TRIANGLE_STRIP);
+	for(int j=scaledRect.p[0].y; j<scaledRect.p[1].y; ++j) {
+		glBegin(GL_TRIANGLE_STRIP);
 
 		for(int i=scaledRect.p[0].x; i<=scaledRect.p[1].x; ++i){
 
 			Tile *tc0= map->getTile(i, j);
-            Tile *tc1= map->getTile(i, j+1);
+			Tile *tc1= map->getTile(i, j+1);
 
 			int thisTeamIndex= world->getThisTeamIndex();
 			if(tc0->getNearSubmerged() && (tc0->isExplored(thisTeamIndex) || tc1->isExplored(thisTeamIndex))){
 				glNormal3f(0.f, 1.f, 0.f);
-                closed= false;
+				closed= false;
 
-                triangleCount+= 2;
+				triangleCount+= 2;
 				pointCount+= 2;
 
-                //vertex 1
+				//vertex 1
 				glMaterialfv(
 					GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 					computeWaterColor(waterLevel, tc1->getHeight()).ptr());
 				glMultiTexCoord2fv(GL_TEXTURE1, tc1->getFowTexCoord().ptr());
-                glTexCoord3f(i, 1.f, waterAnim);
+				glTexCoord3f( (float)i, 1.f, waterAnim );
 				glVertex3f(
 					static_cast<float>(i)*Map::mapScale,
 					waterLevel,
 					static_cast<float>(j+1)*Map::mapScale);
 
-                //vertex 2
+				//vertex 2
 				glMaterialfv(
 					GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 					computeWaterColor(waterLevel, tc0->getHeight()).ptr());
 				glMultiTexCoord2fv(GL_TEXTURE1, tc0->getFowTexCoord().ptr());
-                glTexCoord3f(i, 0.f, waterAnim);
-                glVertex3f(
+				glTexCoord3f( (float)i, 0.f, waterAnim );
+				glVertex3f(
 					static_cast<float>(i)*Map::mapScale,
 					waterLevel,
 					static_cast<float>(j)*Map::mapScale);
 
-            }
-            else{
-				if(!closed){
-
+			} else {
+				if ( !closed ) {
 					pointCount+= 2;
-
 					//vertex 1
 					glMaterialfv(
 						GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 						computeWaterColor(waterLevel, tc1->getHeight()).ptr());
 					glMultiTexCoord2fv(GL_TEXTURE1, tc1->getFowTexCoord().ptr());
-					glTexCoord3f(i, 1.f, waterAnim);
+					glTexCoord3f( (float)i, 1.f, waterAnim );
 					glVertex3f(
 						static_cast<float>(i)*Map::mapScale,
 						waterLevel,
@@ -1595,7 +1406,7 @@ void Renderer::renderWater(){
 						GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 						computeWaterColor(waterLevel, tc0->getHeight()).ptr());
 					glMultiTexCoord2fv(GL_TEXTURE1, tc0->getFowTexCoord().ptr());
-					glTexCoord3f(i, 0.f, waterAnim);
+					glTexCoord3f( (float)i, 0.f, waterAnim );
 					glVertex3f(
 						static_cast<float>(i)*Map::mapScale,
 						waterLevel,
@@ -1605,10 +1416,10 @@ void Renderer::renderWater(){
 					glBegin(GL_TRIANGLE_STRIP);
 					closed= true;
 				}
-           	}
-        }
-        glEnd();
-    }
+			}
+		}
+		glEnd();
+	}
 
 	//restore
 	glPopAttrib();
@@ -1617,47 +1428,13 @@ void Renderer::renderWater(){
 }
 
 void Renderer::renderUnits(){
-	Unit *unit;
+	const Unit *unit;
 	const UnitType *ut;
 	int framesUntilDead;
 	const World *world= game->getWorld();
+	const Map *map = world->getMap();
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
-/*	// commented out because "calculate selected units on render" functionality isn't working
-	
-	// compute selection variables
-	GLuint selectBuffer[Gui::maxSelBuff];
-	Selection::UnitContainer units;
-	const Metrics &metrics= Metrics::getInstance();
-	Gui* gui = Gui::getCurrentGui();
-
-	// compute selected during render
-	if (gui && gui->isNeedSelectionUpdate()) {
-		//compute center and dimensions of selection rectangle
-		const SelectionQuad &selectionQuad = *(gui->getSelectionQuad());
-		const Vec2i &posDown = selectionQuad.getPosDown();
-		const Vec2i &posUp = selectionQuad.getPosUp();
-		int x = (posDown.x + posUp.x) / 2;
-		int y = (posDown.y + posUp.y) / 2;
-		int w = abs(posDown.x - posUp.x);
-		int h = abs(posDown.y - posUp.y);
-		if (w < 1) w = 1;
-		if (h < 1) h = 1;
-	
-		//setup matrices
-		glSelectBuffer(Gui::maxSelBuff, selectBuffer);
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		GLint view[] = {0, 0, metrics.getVirtualW(), metrics.getVirtualH()};
-		glRenderMode(GL_SELECT);
-		glLoadIdentity();
-		gluPickMatrix(x, y, w, h, view);
-		gluPerspective(perspFov, metrics.getAspectRatio(), perspNearPlane, perspFarPlane);
-		loadGameCameraMatrix();
-	}*/
-
-	
-	
 	assertGl();
 
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
@@ -1676,13 +1453,39 @@ void Renderer::renderUnits(){
 
 	modelRenderer->begin(true, true, true, &meshCallbackTeamColor);
 
-	for(int i=0; i<world->getFactionCount(); ++i){
-		meshCallbackTeamColor.setTeamTexture(world->getFaction(i)->getTexture());
-		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
+	vector<const Unit*> toRender[GameConstants::maxPlayers];
+
+	for (int i=0; i < world->getFactionCount(); ++i) { 
+		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
-			if(!world->toRenderUnit(unit, visibleQuad)) {
-				continue;
+			//@todo take unit size into account
+			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
+				toRender[i].push_back(unit);
 			}
+		}
+	}
+	/*
+	vector<const Unit*> toRender[GameConstants::maxPlayers];
+	set<const Unit*> unitsSeen;
+	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
+		const Vec2i &pos = *it;
+		if (!map->isInside(pos)) continue;
+		for (Zone z(0); z < Zone::COUNT; ++z) {
+			const Unit *unit = map->getCell(pos)->getUnit(z);
+			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
+				unitsSeen.insert(unit);
+				toRender[unit->getFactionIndex()].push_back(unit);
+			}
+		}
+	}
+	*/
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (toRender[i].empty()) continue;
+
+		meshCallbackTeamColor.setTeamTexture(world->getFaction(i)->getTexture());
+		vector<const Unit *>::iterator it = toRender[i].begin();
+		for ( ; it != toRender[i].end(); ++it) {
+			unit = *it;
 			ut = unit->getType();
 			int framesUntilDead = Unit::maxDeadCount - unit->getDeadCount();
 
@@ -1696,18 +1499,18 @@ void Renderer::renderUnits(){
 			// Quick fix: float boats
 			const Field f = unit->getCurrField ();
 			const Map *map = world->getMap ();
-			if ( f == FieldAmphibious ) {
+			if ( f == Field::AMPHIBIOUS ) {
 				SurfaceType st = map->getCell(unit->getPos())->getType();
-				if ( st == SurfaceTypeDeepWater || st == SurfaceTypeFordable ) {
+				if ( st == SurfaceType::DEEP_WATER || st == SurfaceType::FORDABLE ) {
 					currVec.y = map->getWaterLevel ();
 				}
 			}
-			if ( f == FieldDeepWater || f == FieldAnyWater ) {
+			if ( f == Field::DEEP_WATER || f == Field::ANY_WATER ) {
 				currVec.y = map->getWaterLevel ();
 			}
 
 			// let dead units start sinking before they go away
-			if(framesUntilDead <= 200 && !ut->isOfClass(ucBuilding)) {
+			if(framesUntilDead <= 200 && !ut->isOfClass(UnitClass::BUILDING)) {
 				float baseline = logf(20.125f) / 5.f;
 				float adjust = logf((float)framesUntilDead / 10.f + 0.125f) / 5.f;
 				currVec.y += adjust - baseline;
@@ -1722,7 +1525,7 @@ void Renderer::renderUnits(){
 			float alpha= 1.0f;
 			const SkillType *st= unit->getCurrSkill();
 			bool fade = false;
-			if(st->getClass() == scDie) {
+			if(st->getClass() == SkillClass::DIE) {
 				const DieSkillType *dst = (const DieSkillType*)st;
 				if(dst->getFade()) {
 					alpha= 1.0f - unit->getAnimProgress();
@@ -1749,7 +1552,6 @@ void Renderer::renderUnits(){
 			const Model *model= unit->getCurrentModel();
 			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
 			modelRenderer->render(model);
-
 			triangleCount+= model->getTriangleCount();
 			pointCount+= model->getVertexCount();
 
@@ -1762,29 +1564,6 @@ void Renderer::renderUnits(){
 	static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(true);
 	glPopAttrib();
 
-/*
-	// compute selected during render
-	if(gui && gui->isNeedSelectionUpdate()) {
-		//pop matrices
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-	
-		//select units
-		int selCount= glRenderMode(GL_RENDER);
-		for(int i=1; i<=selCount; ++i){
-			int factionIndex= selectBuffer[i*5-2];
-			int unitIndex= selectBuffer[i*5-1];
-			const World *world= game->getWorld();
-			if(factionIndex<world->getFactionCount() && unitIndex<world->getFaction(factionIndex)->getUnitCount()){
-				Unit *unit= world->getFaction(factionIndex)->getUnit(unitIndex);
-				if(unit->isAlive()){
-					units.push_back(unit);
-				}
-			}
-		}
-		gui->updateSelection(false, units);
-	}*/
-	
 	//assert
 	assertGl();
 }
@@ -1836,16 +1615,16 @@ void Renderer::renderSelectionEffects(){
 		//comand arrow
 		if(focusArrows && unit->anyCommand()){
 			const CommandType *ct= unit->getCurrCommand()->getType();
-			if(ct->getClicks()!=cOne){
+			if(ct->getClicks()!=Clicks::ONE){
 
 				//arrow color
 				Vec3f arrowColor;
 				switch(ct->getClass()){
-				case ccMove:
+				case CommandClass::MOVE:
 					arrowColor= Vec3f(0.f, 1.f, 0.f);
 					break;
-				case ccAttack:
-				case ccAttackStopped:
+				case CommandClass::ATTACK:
+				case CommandClass::ATTACK_STOPPED:
 					arrowColor= Vec3f(1.f, 0.f, 0.f);
 					break;
 				default:
@@ -1860,7 +1639,7 @@ void Renderer::renderSelectionEffects(){
 				}
 				else{
 					Vec2i pos= c->getPos();
-					arrowTarget= Vec3f(pos.x, map->getCell(pos)->getHeight(), pos.y);
+					arrowTarget= Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
 				}
 
 				renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
@@ -1870,7 +1649,7 @@ void Renderer::renderSelectionEffects(){
 		//meeting point arrow
 		if(unit->getType()->hasMeetingPoint()){
 			Vec2i pos= unit->getMeetingPos();
-			Vec3f arrowTarget= Vec3f(pos.x, map->getCell(pos)->getHeight(), pos.y);
+			Vec3f arrowTarget= Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
 			renderArrow(unit->getCurrVectorFlat(), arrowTarget, Vec3f(0.f, 0.f, 1.f), 0.3f);
 		}
 
@@ -1953,7 +1732,7 @@ void Renderer::renderWaterEffects(){
 }
 
 void Renderer::renderMinimap(){
-    const World *world= game->getWorld();
+	const World *world= game->getWorld();
 	const Minimap *minimap= world->getMinimap();
 	const GameCamera *gameCamera= game->getGameCamera();
 	const Pixmap2D *pixmap= minimap->getTexture()->getPixmap();
@@ -1970,9 +1749,9 @@ void Renderer::renderMinimap(){
 
 	assertGl();
 
-    glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TEXTURE_BIT);
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TEXTURE_BIT);
 
-    //draw map
+	//draw map
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
@@ -2009,7 +1788,7 @@ void Renderer::renderMinimap(){
 		glVertex2i(mx+mw, my+mh);
 	glEnd();
 
-    glDisable(GL_BLEND);
+	glDisable(GL_BLEND);
 
 	glActiveTexture(fowTexUnit);
 	glDisable(GL_TEXTURE_2D);
@@ -2021,7 +1800,7 @@ void Renderer::renderMinimap(){
 	for(int i=0; i<world->getFactionCount(); ++i){
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			Unit *unit= world->getFaction(i)->getUnit(j);
-			if(world->toRenderUnit(unit)){
+			if (world->toRenderUnit(unit) && unit->isAlive()) {
 				Vec2i pos= unit->getPos()/Map::cellScale;
 				int size= unit->getType()->getSize();
 				Vec3f color=  world->getFaction(i)->getTexture()->getPixmap()->getPixel3f(0, 0);
@@ -2035,19 +1814,19 @@ void Renderer::renderMinimap(){
 	}
 	glEnd();
 
-    //draw camera
+	//draw camera
 	float wRatio= static_cast<float>(metrics.getMinimapW()) / world->getMap()->getW();
 	float hRatio= static_cast<float>(metrics.getMinimapH()) / world->getMap()->getH();
 
-    int x= static_cast<int>(gameCamera->getPos().x * wRatio);
-    int y= static_cast<int>(gameCamera->getPos().z * hRatio);
+	int x= static_cast<int>(gameCamera->getPos().x * wRatio);
+	int y= static_cast<int>(gameCamera->getPos().z * hRatio);
 
-    float ang= degToRad(gameCamera->getHAng());
+	float ang= degToRad(gameCamera->getHAng());
 
-    glEnable(GL_BLEND);
+	glEnable(GL_BLEND);
 
 	glBegin(GL_TRIANGLES);
-    glColor4f(1.f, 1.f, 1.f, 1.f);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex2i(mx+x, my+mh-y);
 
 	glColor4f(1.f, 1.f, 1.f, 0.0f);
@@ -2056,59 +1835,51 @@ void Renderer::renderMinimap(){
 		my + mh - (y-static_cast<int>(20*cosf(ang-pi/5))));
 
 	glColor4f(1.f, 1.f, 1.f, 0.0f);
-    glVertex2i(
+	glVertex2i(
 		mx + x + static_cast<int>(20*sinf(ang+pi/5)),
 		my + mh - (y-static_cast<int>(20*cosf(ang+pi/5))));
 
-    glEnd();
-    glPopAttrib();
+	glEnd();
+	glPopAttrib();
 
 	assertGl();
 }
 
 void Renderer::renderDisplay(){
-
 	CoreData &coreData= CoreData::getInstance();
 	const Metrics &metrics= Metrics::getInstance();
 	const Display *display= game->getGui()->getDisplay();
-
 	glPushAttrib(GL_ENABLE_BIT);
-
 	//infoString
 	renderTextShadow(
 		display->getInfoText().c_str(),
 		coreData.getDisplayFont(),
 		metrics.getDisplayX(),
 		metrics.getDisplayY()+Display::infoStringY);
-
 	//title
 	renderTextShadow(
 		display->getTitle().c_str(),
 		coreData.getDisplayFont(),
 		metrics.getDisplayX()+40,
 		metrics.getDisplayY() + metrics.getDisplayH() - 20);
-
-    glColor3f(0.0f, 0.0f, 0.0f);
-
-    //text
+	glColor3f(0.0f, 0.0f, 0.0f);
+	//text
 	renderTextShadow(
 		display->getText().c_str(),
 		coreData.getDisplayFont(),
 		metrics.getDisplayX() -1, 
 		metrics.getDisplayY() + metrics.getDisplayH() - 56);
-
 	//progress Bar
 	if(display->getProgressBar()!=-1){
 		renderProgressBar(
 			display->getProgressBar(),
 			metrics.getDisplayX(),
 			metrics.getDisplayY() + metrics.getDisplayH()-50,
+			100, 10,
 			coreData.getMenuFontSmall());
 	}
-
 	//up images
 	glEnable(GL_TEXTURE_2D);
-
 	glColor3f(1.f, 1.f, 1.f);
 	for(int i=0; i<Display::upCellCount; ++i){
 		if(display->getUpImage(i)!=NULL){
@@ -2118,31 +1889,23 @@ void Renderer::renderDisplay(){
 				Display::imageSize, Display::imageSize, display->getUpImage(i));
 		}
 	}
-
  	//down images
 	for(int i=0; i<Display::downCellCount; ++i){
 		if(display->getDownImage(i)!=NULL){
-			if(display->getDownLighted(i)){
-                glColor3f(1.f, 1.f, 1.f);
-			}
-			else{
-                glColor3f(0.3f, 0.3f, 0.3f);
-			}
-
+			if ( display->getDownLighted(i) ) {
+				glColor3f(1.f, 1.f, 1.f);
+			} else {				glColor3f(0.3f, 0.3f, 0.3f);			}
 			int x= metrics.getDisplayX()+display->computeDownX(i);
 			int y= metrics.getDisplayY()+display->computeDownY(i);
 			int size= Display::imageSize;
-
 			if(display->getDownSelectedPos()==i){
 				x-= 3;
 				y-= 3;
 				size+= 6;
 			}
-
 			renderQuad(x, y, size, size, display->getDownImage(i));
 		}
 	}
-
 	//selection
 	int downPos= display->getDownSelectedPos();
 	if(downPos!=Display::invalidPos){
@@ -2153,37 +1916,29 @@ void Renderer::renderDisplay(){
 			int size= Display::imageSize+6;
 			renderQuad(x, y, size, size, display->getDownImage(downPos));
 		}
-    }
-
+	}
 	glPopAttrib();
 }
 
 void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
-
 	assertGl();
-
 	Vec3f cameraPosition= menuBackground->getCamera()->getPosition();
-
 	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
-
 	//clear
 	Vec4f fogColor= Vec4f(0.4f, 0.4f, 0.4f, 1.f) * menuBackground->getFade();
 	glClearColor(fogColor.x, fogColor.y, fogColor.z, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glFogfv(GL_FOG_COLOR, fogColor.ptr());
-
 	//light
 	Vec4f lightPos= Vec4f(10.f, 10.f, 10.f, 1.f)* menuBackground->getFade();
 	Vec4f diffLight= Vec4f(0.9f, 0.9f, 0.9f, 1.f)* menuBackground->getFade();
 	Vec4f ambLight= Vec4f(0.3f, 0.3f, 0.3f, 1.f)* menuBackground->getFade();
 	Vec4f specLight= Vec4f(0.1f, 0.1f, 0.1f, 1.f)* menuBackground->getFade();
-
 	glEnable(GL_LIGHT0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos.ptr());
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffLight.ptr());
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambLight.ptr());
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specLight.ptr());
-
 	//main model
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
@@ -2191,17 +1946,14 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	modelRenderer->render(menuBackground->getMainModel());
 	modelRenderer->end();
 	glDisable(GL_ALPHA_TEST);
-
 	//characters
 	float dist= menuBackground->getAboutPosition().dist(cameraPosition);
 	float minDist= 3.f;
 	if(dist<minDist){
-
 		glAlphaFunc(GL_GREATER, 0.0f);
 		float alpha= clamp((minDist-dist)/minDist, 0.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.0f, 1.0f, 1.0f, alpha).ptr());
 		modelRenderer->begin(true, true, false);
-
 		for(int i=0; i<MenuBackground::characterCount; ++i){
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
@@ -2213,18 +1965,14 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 		}
 		modelRenderer->end();
 	}
-
 	//water
 	if(menuBackground->getWater()){
-
 		//water surface
 		const int waterTesselation= 10;
 		const int waterSize= 250;
 		const int waterQuadSize= 2*waterSize/waterTesselation;
 		const float waterHeight= menuBackground->getWaterHeight();
-
 		glEnable(GL_BLEND);
-
 		glNormal3f(0.f, 1.f, 0.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.f, 1.f, 1.f, 1.f).ptr());
 		GLuint waterHandle= static_cast<Texture2DGl*>(menuBackground->getWaterTexture())->getHandle();
@@ -2233,38 +1981,31 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 			glBegin(GL_TRIANGLE_STRIP);
 			for(int j=1; j<waterTesselation; ++j){
 				glTexCoord2i(1, 2 % j);
-				glVertex3f(-waterSize+i*waterQuadSize, waterHeight, -waterSize+j*waterQuadSize);
+				glVertex3f( (float)(-waterSize+i*waterQuadSize), waterHeight, (float)(-waterSize+j*waterQuadSize) );
 				glTexCoord2i(0, 2 % j);
-				glVertex3f(-waterSize+(i+1)*waterQuadSize, waterHeight, -waterSize+j*waterQuadSize);
+				glVertex3f( (float)(-waterSize+(i+1)*waterQuadSize), waterHeight, (float)(-waterSize+j*waterQuadSize) );
 			}
 			glEnd();
 		}
 		glDisable(GL_BLEND);
-
 		//raindrops
 		if(menuBackground->getRain()){
 			const float maxRaindropAlpha= 0.5f;
-
 			glEnable(GL_BLEND);
 			glDisable(GL_LIGHTING);
 			glDisable(GL_ALPHA_TEST);
 			glDepthMask(GL_FALSE);
-
 			//splashes
 			CoreData &coreData= CoreData::getInstance();
 			glBindTexture(GL_TEXTURE_2D, static_cast<Texture2DGl*>(coreData.getWaterSplashTexture())->getHandle());
 			for(int i=0; i<MenuBackground::raindropCount; ++i){
-
 				Vec2f pos= menuBackground->getRaindropPos(i);
 				float scale= menuBackground->getRaindropState(i);
 				float alpha= maxRaindropAlpha-scale*maxRaindropAlpha;
-
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
-
 				glColor4f(1.f, 1.f, 1.f, alpha);
 				glTranslatef(pos.x, waterHeight+0.01f, pos.y);
-
 				glBegin(GL_TRIANGLE_STRIP);
 					glTexCoord2f(0.f, 1.f);
 					glVertex3f(-scale, 0, scale);
@@ -2275,21 +2016,17 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 					glTexCoord2f(1.f, 0.f);
 					glVertex3f(scale, 0, -scale);
 				glEnd();
-
 				glPopMatrix();
 			}
 		}
 	}
-
 	glPopAttrib();
-
 	assertGl();
 }
 
 // ==================== computing ====================
 
 bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
-
 	assertGl();
 	const Map* map= game->getWorld()->getMap();
 	const Metrics &metrics= Metrics::getInstance();
@@ -2308,7 +2045,7 @@ bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
 
 	//load matrices
 	loadProjectionMatrix();
-    loadGameCameraMatrix();
+	loadGameCameraMatrix();
 
 	//get matrices
 	glGetDoublev(GL_MODELVIEW_MATRIX, modelviewMatrix);
@@ -2362,14 +2099,16 @@ void Renderer::computeSelected(Selection::UnitContainer &units, const Vec2i &pos
 	int selCount= glRenderMode(GL_RENDER);
 	for(int i=1; i<=selCount; ++i){
 		int factionIndex= selectBuffer[i*5-2];
-		int unitIndex= selectBuffer[i*5-1];
+		//int unitIndex= selectBuffer[i*5-1];
+		int uid = selectBuffer[i*5-1];
 		const World *world= game->getWorld();
-		if(factionIndex<world->getFactionCount() && unitIndex<world->getFaction(factionIndex)->getUnitCount()){
-			Unit *unit= world->getFaction(factionIndex)->getUnit(unitIndex);
-			if(unit->isAlive()){
+		//if (factionIndex < world->getFactionCount() && unitIndex < world->getFaction(factionIndex)->getUnitCount()) {
+			Unit *unit = world->findUnitById(uid);
+			//Unit *unit= world->getFaction(factionIndex)->getUnit(unitIndex);
+			if (unit && unit->isAlive()) {
 				units.push_back(unit);
 			}
-		}
+		//}
 	}
 }
 
@@ -2377,17 +2116,11 @@ void Renderer::computeSelected(Selection::UnitContainer &units, const Vec2i &pos
 // ==================== shadows ====================
 
 void Renderer::renderShadowsToTexture() {
-
 	if (shadows == sProjected || shadows == sShadowMapping) {
-
 		shadowMapFrame = (shadowMapFrame + 1) % (shadowFrameSkip + 1);
-
 		if (shadowMapFrame == 0) {
-
 			assertGl();
-
 			glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT | GL_POLYGON_BIT);
-
 			if (shadows == sShadowMapping) {
 				glClear(GL_DEPTH_BUFFER_BIT);
 			} else {
@@ -2397,53 +2130,41 @@ void Renderer::renderShadowsToTexture() {
 				glDisable(GL_DEPTH_TEST);
 				glClear(GL_COLOR_BUFFER_BIT);
 			}
-
 			//clear color buffer
 			//
 			//set viewport, we leave one texel always in white to avoid problems
 			glViewport(1, 1, shadowTextureSize - 2, shadowTextureSize - 2);
-
 			if (nearestLightPos.w == 0.f) {
 				//directional light
-
 				//light pos
 				const TimeFlow *tf = game->getWorld()->getTimeFlow();
 				float ang = tf->isDay() ? computeSunAngle(tf->getTime()) : computeMoonAngle(tf->getTime());
 				ang = radToDeg(ang);
-
 				//push and set projection
 				glMatrixMode(GL_PROJECTION);
 				glPushMatrix();
 				glLoadIdentity();
 				if (game->getGameCamera()->getState() == GameCamera::sGame) {
 					glOrtho(-35, 5, -15, 15, -1000, 1000);
-				}
-				else{
+				} else {
 					glOrtho(-30, 30, -20, 20, -1000, 1000);
 				}
-
 				//push and set modelview
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
 				glLoadIdentity();
-
 				glRotatef(15, 0, 1, 0);
-
 				glRotatef(ang, 1, 0, 0);
 				glRotatef(90, 0, 1, 0);
 				Vec3f pos = game->getGameCamera()->getPos();
-
 				glTranslatef(static_cast<int>(-pos.x), 0, static_cast<int>(-pos.z));
-
 			} else {
 				//non directional light
-
 				//push projection
 				glMatrixMode(GL_PROJECTION);
 				glPushMatrix();
 				glLoadIdentity();
 				gluPerspective(150, 1.f, perspNearPlane, perspFarPlane);
-
 				//push modelview
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
@@ -2451,52 +2172,40 @@ void Renderer::renderShadowsToTexture() {
 				glRotatef(-90, -1, 0, 0);
 				glTranslatef(-nearestLightPos.x, -nearestLightPos.y - 2, -nearestLightPos.z);
 			}
-
 			if (shadows == sShadowMapping) {
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset(1.0f, 0.001f);
 			}
-
 			//render 3d
 			renderUnitsFast(true);
 			renderObjectsFast();
-
 			//read color buffer
 			glBindTexture(GL_TEXTURE_2D, shadowMapHandle);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, shadowTextureSize, shadowTextureSize);
-
 			//get elemental matrices
 			Matrix4f matrix1;
 			matrix1[0] = 0.5f;	matrix1[4] = 0.f;	matrix1[8] = 0.f;	matrix1[12] = 0.5f;
 			matrix1[1] = 0.f;	matrix1[5] = 0.5f;	matrix1[9] = 0.f;	matrix1[13] = 0.5f;
 			matrix1[2] = 0.f;	matrix1[6] = 0.f;	matrix1[10] = 0.5f;	matrix1[14] = 0.5f;
 			matrix1[3] = 0.f;	matrix1[7] = 0.f;	matrix1[11] = 0.f;	matrix1[15] = 1.f;
-
 			Matrix4f matrix2;
 			glGetFloatv(GL_PROJECTION_MATRIX, matrix2.ptr());
-
 			Matrix4f matrix3;
 			glGetFloatv(GL_MODELVIEW_MATRIX, matrix3.ptr());
-
 			//pop both matrices
 			glPopMatrix();
 			glMatrixMode(GL_PROJECTION);
 			glPopMatrix();
-
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
-
 			//compute texture matrix
 			glLoadMatrixf(matrix1.ptr());
 			glMultMatrixf(matrix2.ptr());
 			glMultMatrixf(matrix3.ptr());
 			glGetFloatv(GL_TRANSPOSE_PROJECTION_MATRIX_ARB, shadowMapMatrix.ptr());
-
 			//pop
 			glPopMatrix();
-
 			glPopAttrib();
-
 			assertGl();
 		}
 	}
@@ -2508,35 +2217,31 @@ void Renderer::renderShadowsToTexture() {
 string Renderer::getGlInfo(){
 	string infoStr;
 	Lang &lang= Lang::getInstance();
-
 	infoStr+= lang.get("OpenGlInfo")+":\n";
 	infoStr+= "   "+lang.get("OpenGlVersion")+": ";
-    infoStr+= string(getGlVersion())+"\n";
-    infoStr+= "   "+lang.get("OpenGlRenderer")+": ";
-    infoStr+= string(getGlRenderer())+"\n";
-    infoStr+= "   "+lang.get("OpenGlVendor")+": ";
-    infoStr+= string(getGlVendor())+"\n";
+	infoStr+= string(getGlVersion())+"\n";
+	infoStr+= "   "+lang.get("OpenGlRenderer")+": ";
+	infoStr+= string(getGlRenderer())+"\n";
+	infoStr+= "   "+lang.get("OpenGlVendor")+": ";
+	infoStr+= string(getGlVendor())+"\n";
 	infoStr+= "   "+lang.get("OpenGlMaxLights")+": ";
-    infoStr+= intToStr(getGlMaxLights())+"\n";
+	infoStr+= intToStr(getGlMaxLights())+"\n";
 	infoStr+= "   "+lang.get("OpenGlMaxTextureSize")+": ";
-    infoStr+= intToStr(getGlMaxTextureSize())+"\n";
+	infoStr+= intToStr(getGlMaxTextureSize())+"\n";
 	infoStr+= "   "+lang.get("OpenGlMaxTextureUnits")+": ";
-    infoStr+= intToStr(getGlMaxTextureUnits())+"\n";
+	infoStr+= intToStr(getGlMaxTextureUnits())+"\n";
 	infoStr+= "   "+lang.get("OpenGlModelviewStack")+": ";
-    infoStr+= intToStr(getGlModelviewMatrixStackDepth())+"\n";
+	infoStr+= intToStr(getGlModelviewMatrixStackDepth())+"\n";
 	infoStr+= "   "+lang.get("OpenGlProjectionStack")+": ";
-    infoStr+= intToStr(getGlProjectionMatrixStackDepth())+"\n";
-
+	infoStr+= intToStr(getGlProjectionMatrixStackDepth())+"\n";
 	return infoStr;
 }
 
 string Renderer::getGlMoreInfo(){
 	string infoStr;
 	Lang &lang= Lang::getInstance();
-
 	//gl extensions
 	infoStr+= lang.get("OpenGlExtensions")+":\n   ";
-
 	string extensions= getGlExtensions();
 	int charCount= 0;
 	for(int i=0; i<extensions.size(); ++i){
@@ -2547,11 +2252,9 @@ string Renderer::getGlMoreInfo(){
 		}
 		++charCount;
 	}
-
 	//platform extensions
 	infoStr+= "\n\n";
 	infoStr+= lang.get("OpenGlPlatformExtensions")+":\n   ";
-
 	charCount= 0;
 	string platformExtensions= getGlPlatformExtensions();
 	for(int i=0; i<platformExtensions.size(); ++i){
@@ -2562,38 +2265,30 @@ string Renderer::getGlMoreInfo(){
 		}
 		++charCount;
 	}
-
 	return infoStr;
 }
 
 void Renderer::autoConfig(){
-
 	Config &config= Config::getInstance();
 	bool nvidiaCard= toLower(getGlVendor()).find("nvidia")!=string::npos;
 	bool atiCard= toLower(getGlVendor()).find("ati")!=string::npos;
 	bool shadowExtensions = isGlExtensionSupported("GL_ARB_shadow") && isGlExtensionSupported("GL_ARB_shadow_ambient");
-
 	//3D textures
 	config.setRenderTextures3D(isGlExtensionSupported("GL_EXT_texture3D"));
-
 	//shadows
 	string shadows;
-	if(getGlMaxTextureUnits()>=3){
+	if ( getGlMaxTextureUnits() >= 3 ) {
 		if(nvidiaCard && shadowExtensions){
 			shadows= shadowsToStr(sShadowMapping);
-		}
-		else{
+		} else {
 			shadows= shadowsToStr(sProjected);
 		}
-	}
-	else{
+	} else {
 		shadows=shadowsToStr(sDisabled);
 	}
 	config.setRenderShadows(shadows);
-
 	//lights
 	config.setRenderLightsMax(atiCard? 1: 4);
-
 	//filter
 	config.setRenderFilter("Bilinear");
 }
@@ -2682,19 +2377,15 @@ Vec3f Renderer::computeLightColor(float time){
 	const float nightStart= TimeFlow::dusk;
 	const float nightEnd= TimeFlow::dawn-transition;
 
-	if(time>dayStart && time<dayEnd){
+	if ( time > dayStart && time < dayEnd ) {
 		color= tileset->getSunLightColor();
-	}
-	else if(time>nightStart || time<nightEnd){
+	} else if( time>nightStart || time<nightEnd ) {
 		color= tileset->getMoonLightColor();
-	}
-	else if(time>=dayEnd && time<=nightStart){
+	} else if( time>=dayEnd && time<=nightStart ) {
 		color= tileset->getSunLightColor().lerp((time-dayEnd)/transition, tileset->getMoonLightColor());
-	}
-	else if(time>=nightEnd && time<=dayStart){
+	} else if( time>=nightEnd && time<=dayStart ) {
 		color= tileset->getMoonLightColor().lerp((time-nightEnd)/transition, tileset->getSunLightColor());
-	}
-	else{
+	} else {
 		assert(false);
 		color= tileset->getSunLightColor();
 	}
@@ -2708,13 +2399,14 @@ Vec4f Renderer::computeWaterColor(float waterLevel, float cellHeight){
 
 // ==================== fast render ====================
 
-//render units for selection purposes
+//render units for shadows or selection purposes
 void Renderer::renderUnitsFast(bool renderingShadows) {
-	Unit *unit;
+	const Unit *unit;
 	const UnitType *ut;
 	int framesUntilDead;
 	bool changeColor = false;
 	const World *world= game->getWorld();
+	const Map *map = world->getMap();
 
 	assertGl();
 
@@ -2724,93 +2416,106 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 	modelRenderer->begin(false, false, false);
 	glInitNames();
-	for(int i=0; i<world->getFactionCount(); ++i){
+
+	vector<const Unit*> toRender[GameConstants::maxPlayers];
+	set<const Unit*> unitsSeen;
+	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
+		const Vec2i &pos = *it;
+		if (!map->isInside(pos)) continue;
+		for (Zone z(0); z < Zone::COUNT; ++z) {
+			const Unit *unit = map->getCell(pos)->getUnit(z);
+			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
+				unitsSeen.insert(unit);
+				toRender[unit->getFactionIndex()].push_back(unit);
+			}
+		}
+	}
+
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (toRender[i].empty()) continue;
+
 		glPushName(i);
-		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
-			glPushName(j);
-			Unit *unit= world->getFaction(i)->getUnit(j);
-			if(world->toRenderUnit(unit, visibleQuad)) {
+		vector<const Unit *>::iterator it = toRender[i].begin();
+		for ( ; it != toRender[i].end(); ++it) {
+			unit = *it;
+			glPushName(unit->getId());
+			glMatrixMode(GL_MODELVIEW);
 
-				glMatrixMode(GL_MODELVIEW);
+			//debuxar modelo
+			glPushMatrix();
 
-				//debuxar modelo
-				glPushMatrix();
+			//translate
+			Vec3f currVec= unit->getCurrVectorFlat();
 
-				//translate
-				Vec3f currVec= unit->getCurrVectorFlat();
+			glTranslatef(currVec.x, currVec.y, currVec.z);
 
-				glTranslatef(currVec.x, currVec.y, currVec.z);
+			//rotate
+			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
 
-				//rotate
-				glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
+			// faded shadows
+			if(renderingShadows) {
+				ut = unit->getType();
+				int framesUntilDead = Unit::maxDeadCount - unit->getDeadCount();
+				float color = 1.0f - shadowAlpha;
+				float fade = false;
 
-				// faded shadows
-				if(renderingShadows) {
-					ut = unit->getType();
-					int framesUntilDead = Unit::maxDeadCount - unit->getDeadCount();
-					float color = 1.0f - shadowAlpha;
-					float fade = false;
-
-					//dead alpha
-					const SkillType *st = unit->getCurrSkill();
-					if(st->getClass() == scDie) {
-						const DieSkillType *dst = (const DieSkillType*)st;
-						if(dst->getFade()) {
-							color *= 1.0f - unit->getAnimProgress();
-							fade = true;
-						} else if (framesUntilDead <= 300) {
-							color *= (float)framesUntilDead / 300.f;
-							fade = true;
-						}
-						changeColor = changeColor || fade;
+				//dead alpha
+				const SkillType *st = unit->getCurrSkill();
+				if(st->getClass() == SkillClass::DIE) {
+					const DieSkillType *dst = (const DieSkillType*)st;
+					if(dst->getFade()) {
+						color *= 1.0f - unit->getAnimProgress();
+						fade = true;
+					} else if (framesUntilDead <= 300) {
+						color *= (float)framesUntilDead / 300.f;
+						fade = true;
 					}
-
-					if(shadows == sShadowMapping) {
-						if(changeColor) {
-							//fprintf(stderr, "color = %f\n", color);
-							glColor3f(color, color, color);
-							glClearColor(1.f, 1.f, 1.f, 1.f);
-							glDisable(GL_DEPTH_TEST);
-							glClear(GL_COLOR_BUFFER_BIT);
-							if(!fade) {
-								changeColor = false;
-							}
-						}
-					} else if(fade) {
-						// skip this unit's shadow in projected shadows
-						glPopMatrix();
-						continue;
-					}
+					changeColor = changeColor || fade;
 				}
 
-				//render
-				const Model *model= unit->getCurrentModel();
-				model->updateInterpolationVertices(unit->getAnimProgress(), unit->isAlive());
-				modelRenderer->render(model);
-
-				glPopMatrix();
-
+				if(shadows == sShadowMapping) {
+					if(changeColor) {
+						//fprintf(stderr, "color = %f\n", color);
+						glColor3f(color, color, color);
+						glClearColor(1.f, 1.f, 1.f, 1.f);
+						glDisable(GL_DEPTH_TEST);
+						glClear(GL_COLOR_BUFFER_BIT);
+						if(!fade) {
+							changeColor = false;
+						}
+					}
+				} else if(fade) {
+					// skip this unit's shadow in projected shadows
+					glPopMatrix();
+					continue;
+				}
 			}
+
+			//render
+			const Model *model= unit->getCurrentModel();
+			model->updateInterpolationVertices(unit->getAnimProgress(), unit->isAlive());
+			modelRenderer->render(model);
+
+			glPopMatrix();
 			glPopName();
 		}
 		glPopName();
 	}
 	modelRenderer->end();
-
 	glPopAttrib();
 }
 
-//render objects for selection purposes
+//render objects for shadows
 void Renderer::renderObjectsFast(){
 	const World *world= game->getWorld();
 	const Map *map= world->getMap();
 
-    assertGl();
+	assertGl();
 
 	glPushAttrib(GL_ENABLE_BIT| GL_TEXTURE_BIT);
 	glDisable(GL_LIGHTING);
 
-    glAlphaFunc(GL_GREATER, 0.5f);
+	glAlphaFunc(GL_GREATER, 0.5f);
 
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
@@ -2827,36 +2532,26 @@ void Renderer::renderObjectsFast(){
 	modelRenderer->begin(false, true, false);
 	int thisTeamIndex= world->getThisTeamIndex();
 
-	PosQuadIterator pqi(visibleQuad, Map::cellScale);
-	while(pqi.next()){
-		const Vec2i pos= pqi.getPos();
+	SceneCuller::iterator it = culler.tile_begin();
+	for ( ; it != culler.tile_end(); ++it) {
+		const Vec2i &pos = *it;
+		if (!map->isInside(pos)) continue;
+		Tile *sc= map->getTile(pos);
+		Object *o= sc->getObject();
+		if(o && sc->isExplored(thisTeamIndex)) {
+			const Model *objModel= sc->getObject()->getModel();
+			Vec3f v= o->getPos();
 
-		if(map->isInside(pos)){
-
-			Tile *sc= map->getTile(Map::toTileCoords(pos));
-			Object *o= sc->getObject();
-			if(sc->isExplored(thisTeamIndex) && o!=NULL){
-
-				const Model *objModel= sc->getObject()->getModel();
-				Vec3f v= o->getPos();
-
-				glMatrixMode(GL_MODELVIEW);
-				glPushMatrix();
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);
 				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
-
 				modelRenderer->render(objModel);
-
-				glPopMatrix();
-
-			}
+			glPopMatrix();
 		}
 	}
-
 	modelRenderer->end();
-
 	glPopAttrib();
-
 	assertGl();
 }
 
@@ -2911,7 +2606,7 @@ void Renderer::init3dList(){
 
 	const Metrics &metrics= Metrics::getInstance();
 
-    assertGl();
+	assertGl();
 
 	list3d= glGenLists(1);
 	glNewList(list3d, GL_COMPILE_AND_EXECUTE);
@@ -2922,7 +2617,6 @@ void Renderer::init3dList(){
 		glClearColor(fowColor.x, fowColor.y, fowColor.z, fowColor.w);
 		glFrontFace(GL_CW);
 		glEnable(GL_CULL_FACE);
-		loadProjectionMatrix();
 
 		//texture state
 		glActiveTexture(shadowTexUnit);
@@ -3032,7 +2726,7 @@ void Renderer::init2dList(){
 }
 
 void Renderer::init3dListMenu(MainMenu *mm){
-    assertGl();
+	assertGl();
 
 	const Metrics &metrics= Metrics::getInstance();
 	const MenuBackground *mb= mm->getMenuBackground();
@@ -3102,7 +2796,7 @@ void Renderer::loadProjectionMatrix(){
 	GLdouble clipping;
 	const Metrics &metrics= Metrics::getInstance();
 
-    assertGl();
+	assertGl();
 
 	clipping= photoMode ? perspFarPlane*100 : perspFarPlane;
 
@@ -3110,7 +2804,7 @@ void Renderer::loadProjectionMatrix(){
 	glLoadIdentity();
 	gluPerspective(perspFov, metrics.getAspectRatio(), perspNearPlane, clipping);
 
-    assertGl();
+	assertGl();
 }
 
 void Renderer::enableProjectiveTexturing(){
@@ -3130,7 +2824,7 @@ void Renderer::renderSelectionCircle(Vec3f v, int size, float radius){
 	GLUquadricObj *disc;
 
 	glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+	glPushMatrix();
 
 	glTranslatef(v.x, v.y, v.z);
 	glRotatef(90.f, 1.f, 0.f, 0.f);
@@ -3139,7 +2833,7 @@ void Renderer::renderSelectionCircle(Vec3f v, int size, float radius){
 	gluCylinder(disc, radius*(size-0.2f), radius*size, 0.2f, 30, 1);
 	gluDeleteQuadric(disc);
 
-    glPopMatrix();
+	glPopMatrix();
 }
 
 void Renderer::renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &color, float width){
@@ -3186,34 +2880,39 @@ void Renderer::renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &co
 	glEnd();
 }
 
-void Renderer::renderProgressBar(int size, int x, int y, Font2D *font){
+void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const Font2D *font){
+	assert(progress <= maxProgressBar);
+	assert(x >= maxProgressBar);
+
+	int widthFactor = static_cast<int>(w / maxProgressBar);
+	int width = progress * widthFactor;
 
 	//bar
 	glBegin(GL_QUADS);
 		glColor4fv(progressBarFront2.ptr());
-		glVertex2i(x, y);
-		glVertex2i(x, y+10);
+		glVertex2i(x, y); // bottom left
+		glVertex2i(x, y + h); // top left
 		glColor4fv(progressBarFront1.ptr());
-		glVertex2i(x+size, y+10);
-		glVertex2i(x+size, y);
+		glVertex2i(x+width, y + h); // top right
+		glVertex2i(x+width, y); // bottom right
 	glEnd();
 
 	//transp bar
 	glEnable(GL_BLEND);
 	glBegin(GL_QUADS);
 		glColor4fv(progressBarBack2.ptr());
-		glVertex2i(x+size, y);
-		glVertex2i(x+size, y+10);
+		glVertex2i(x+width, y); // bottom left
+		glVertex2i(x+width, y + h); // top left
 		glColor4fv(progressBarBack1.ptr());
-		glVertex2i(x+maxProgressBar, y+10);
-		glVertex2i(x+maxProgressBar, y);
+		glVertex2i(x+maxProgressBar*widthFactor, y + h); // top right
+		glVertex2i(x+maxProgressBar*widthFactor, y); // bottom right
 	glEnd();
 	glDisable(GL_BLEND);
 
 	//text
 	glColor3fv(defColor.ptr());
 	textRenderer->begin(font);
-	textRenderer->render(intToStr(static_cast<int>(size))+"%", x+maxProgressBar/2, y, true);
+	textRenderer->render(intToStr(progress)+"%", x+maxProgressBar*widthFactor/2, y, true);
 	textRenderer->end();
 }
 
@@ -3280,37 +2979,34 @@ void Renderer::renderQuad(int x, int y, int w, int h, const Texture2D *texture){
 }
 
 Renderer::Shadows Renderer::strToShadows(const string &s){
-	if(s=="Projected"){
+	if ( s == "Projected" ) {
 		return sProjected;
-	}
-	else if(s=="ShadowMapping"){
+	} else if ( s == "ShadowMapping" ) {
 		return sShadowMapping;
 	}
 	return sDisabled;
 }
 
 string Renderer::shadowsToStr(Shadows shadows){
-	switch(shadows){
-	case sDisabled:
-		return "Disabled";
-	case sProjected:
-		return "Projected";
-	case sShadowMapping:
-		return "ShadowMapping";
-	default:
-		assert(false);
-		return "";
+	switch ( shadows ) {
+		case sDisabled:
+			return "Disabled";
+		case sProjected:
+			return "Projected";
+		case sShadowMapping:
+			return "ShadowMapping";
+		default:
+			assert(false);
+			return "";
 	}
 }
 
 Texture2D::Filter Renderer::strToTextureFilter(const string &s){
-	if(s=="Bilinear"){
+	if ( s == "Bilinear" ) {
 		return Texture2D::fBilinear;
-	}
-	else if(s=="Trilinear"){
+	} else if ( s == "Trilinear" ) {
 		return Texture2D::fTrilinear;
 	}
-
 	throw runtime_error("Error converting from string to FilterType, found: "+s);
 }
 

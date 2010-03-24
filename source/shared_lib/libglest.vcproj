@@ -40,8 +40,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/lua;include/xml;include/tinyxml;include/physfs;.."
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;NO_GL_ASSERTIONS;USE_PCH=1"
+				AdditionalIncludeDirectories="include/math;../../../deps/include/lua;../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/lua;include/xml;include/physfs"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -70,7 +70,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="false"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -118,8 +117,8 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/xml;include/lua;include/physfs;include/tinyxml;.."
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;USE_PCH=1"
+				AdditionalIncludeDirectories="../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/xml;include/lua;include/math;include/tinyxml"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;XML_LIBRARY;USE_PCH=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="true"
@@ -145,7 +144,6 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -155,6 +153,151 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Speedy Debug|Win32"
+			OutputDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
+			IntermediateDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
+			ConfigurationType="4"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				InlineFunctionExpansion="2"
+				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/lua;include/xml"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1"
+				StringPooling="true"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="2"
+				SmallerTypeCheck="true"
+				RuntimeLibrary="1"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
+				FloatingPointModel="2"
+				RuntimeTypeInfo="false"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="pch.h"
+				BrowseInformation="1"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4250; 4355"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+				SuppressStartupBanner="true"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Ultra Debug|Win32"
+			OutputDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
+			IntermediateDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
+			ConfigurationType="4"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;include;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/lua;include/xml"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1"
+				StringPooling="true"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				SmallerTypeCheck="true"
+				RuntimeLibrary="1"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="0"
+				FloatingPointModel="2"
+				RuntimeTypeInfo="false"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="pch.h"
+				BrowseInformation="1"
+				WarningLevel="2"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="4"
+				DisableSpecificWarnings="4250; 4355"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+				SuppressStartupBanner="true"
 			/>
 			<Tool
 				Name="VCFxCopTool"
@@ -277,11 +420,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\graphics\math_util.h"
+				RelativePath=".\include\math\math_util.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\graphics\matrix.h"
+				RelativePath=".\include\math\matrix.h"
 				>
 			</File>
 			<File
@@ -369,6 +512,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\math\quaternion.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\graphics\quaternion.h"
 				>
 			</File>
@@ -386,6 +533,14 @@
 			</File>
 			<File
 				RelativePath=".\include\graphics\shader_manager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\util\sigslot.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\platform\simd.h"
 				>
 			</File>
 			<File
@@ -481,6 +636,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\math\vec.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\graphics\vec.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\graphics\vec.h"
 				>
 			</File>
@@ -515,10 +678,42 @@
 			<File
 				RelativePath=".\sources\graphics\buffer.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\camera.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\util\checksum.cpp"
@@ -527,10 +722,42 @@
 			<File
 				RelativePath=".\sources\graphics\context.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\context_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\util\conversion.cpp"
@@ -547,14 +774,62 @@
 			<File
 				RelativePath=".\sources\graphics\font.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\font_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\font_manager.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\physfs\FSFactory.cpp"
@@ -583,10 +858,42 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Ultra Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\graphics_interface.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\physfs\ifile_stream.cpp"
@@ -603,6 +910,22 @@
 			<File
 				RelativePath=".\sources\graphics\interpolation.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\util\leak_dumper.cpp"
@@ -615,14 +938,62 @@
 			<File
 				RelativePath=".\sources\graphics\model.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\model_manager.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\model_renderer_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\physfs\ofile_stream.cpp"
@@ -635,14 +1006,62 @@
 			<File
 				RelativePath=".\sources\graphics\gl\opengl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\particle.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\particle_renderer_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\pch.cpp"
@@ -663,6 +1082,22 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Ultra Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\physfs\PhysFileOps.cpp"
@@ -671,6 +1106,22 @@
 			<File
 				RelativePath=".\sources\graphics\pixmap.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\platform\win32\platform_menu.cpp"
@@ -689,27 +1140,87 @@
 				>
 			</File>
 			<File
-				RelativePath=".\sources\graphics\quaternion.cpp"
+				RelativePath=".\sources\math\quaternion.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\sources\util\random.cpp"
-				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\shader.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\shader_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\shader_manager.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\sources\platform\win32\socket.cpp"
+				RelativePath=".\sources\platform\socket.cpp"
 				>
 			</File>
 			<File
@@ -739,18 +1250,82 @@
 			<File
 				RelativePath=".\sources\graphics\gl\text_renderer_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\texture.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\gl\texture_gl.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\graphics\texture_manager.cpp"
 				>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						InlineFunctionExpansion="2"
+						EnableIntrinsicFunctions="true"
+						FavorSizeOrSpeed="1"
+						BasicRuntimeChecks="0"
+						SmallerTypeCheck="false"
+						EnableEnhancedInstructionSet="2"
+						UsePrecompiledHeader="0"
+						DebugInformationFormat="3"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\sources\platform\win32\thread.cpp"
@@ -797,6 +1372,22 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release+SSE2|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Speedy Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Ultra Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

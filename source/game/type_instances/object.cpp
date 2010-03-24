@@ -33,17 +33,14 @@ namespace Glest{ namespace Game{
 // 	class Object
 // =====================================================
 
-Object::Object(ObjectType *objectType, const Vec3f &pos){
-	Random random;
-
-	random.init(static_cast<int>(pos.x*pos.z));
-
-	this->objectType= objectType;
-	resource= NULL;
-	this->pos= pos + Vec3f(random.randRange(-0.6f, 0.6f), 0.0f, random.randRange(-0.6f, 0.6f));
-	rotation= random.randRange(0.f, 360.f);
-	if(objectType!=NULL){
-		variation = random.randRange(0, objectType->getModelCount()-1);
+Object::Object(ObjectType *objType, const Vec3f &p){
+	objectType = objType;
+	resource = NULL;
+	Random random(int(p.x * p.z));
+	pos = p + Vec3f(random.randRange(-0.6f, 0.6f), 0.0f, random.randRange(-0.6f, 0.6f));
+	rotation = random.randRange(0.f, 360.f);
+	if (objectType != NULL) {
+		variation = random.randRange(0, objectType->getModelCount() - 1);
 	}
 }
 

@@ -186,7 +186,7 @@ public:
 	bool isSelectingBuilding() const		{return selectingBuilding;}
 	bool isSelected(const Unit *unit) const	{return selection.hasUnit(unit);}
 	bool isPlacingBuilding() const;
-	bool isVisible(const Vec2i &pos) const	{return gameCamera->computeVisibleQuad().isInside(pos);}
+	//bool isVisible(const Vec2i &pos) const	{return gameCamera->computeVisibleQuad().isInside(pos);}
 	bool isDragging() const					{return dragging;}
 	bool isDraggingMinimap() const			{return draggingMinimap;}
 	bool isNeedSelectionUpdate() const		{return needSelectionUpdate;}

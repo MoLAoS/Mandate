@@ -45,6 +45,9 @@ if(DEFINED WINDEPS)
 	# sadly FindZLIB does not support HINTS, set it directly
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
+	# FindLibXml2 uses PkgConfig as HINTS on non win, set them directly
+	set(PC_LIBXML_INCLUDEDIR ${WINDEPS}/include)
+	set(PC_LIBXML_LIBDIR ${WINDEPS}/lib)
 	# root folder of wxWidgets
 	if(DEFINED WXWIN)
 		set(ENV{WXWIN} ${WXWIN})
@@ -56,6 +59,8 @@ find_package(OpenGL REQUIRED)
 find_package(Vorbis REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(PhysFS REQUIRED)
+find_package(CppUnit)
+find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
@@ -129,13 +134,15 @@ if(WIN32)
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/data/game\\\\glest.ico")
 	
 	if(DEFINED WINDEPS)
-		# only lua is linked dynamic, install it next to the binary
+		# only lua and physfs are linked dynamic, install it next to the binary
 		install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
 		install(FILES ${WINDEPS}/bin/physfs.dll DESTINATION bin)
 	endif(DEFINED WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm
+	set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, physfs >= 2.0, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
+
 	set(CPACK_GENERATOR "TBZ2")
 	set(CPACK_STRIP_FILES "TRUE")
 endif(WIN32)

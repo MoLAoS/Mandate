@@ -40,6 +40,7 @@ private:
 	GraphicLabel labelInfo;
 	GraphicListBox listBoxServerType;
 	GraphicListBox listBoxServers;
+	GraphicMessageBox *msgBox;
 
 	bool connected;
 	int playerIndex;

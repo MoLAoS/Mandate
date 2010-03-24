@@ -22,8 +22,8 @@
 using Shared::Graphics::RainParticleSystem;
 using Shared::Graphics::FireParticleSystem;
 using Shared::Graphics::Camera;
-using Shared::Graphics::Vec3f;
-using Shared::Graphics::Vec2f;
+using Shared::Math::Vec3f;
+using Shared::Math::Vec2f;
 using Shared::Graphics::Texture2D;
 using Shared::Graphics::Model;
 using Shared::Util::Random;

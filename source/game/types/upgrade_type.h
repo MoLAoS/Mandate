@@ -38,20 +38,22 @@ class Unit;
  */
 class UpgradeType: public EnhancementTypeBase, public ProducibleType {
 private:
-    vector<const UnitType*> effects;
+	vector<const UnitType*> effects;
 
 public:
 	void preLoad(const string &dir)			{name=basename(dir);}
-	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, Checksum &checksum);
+	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-    //get all
+	//get all
 	int getEffectCount() const				{return effects.size();}
 	const UnitType * getEffect(int i) const	{return effects[i];}
 	bool isAffected(const UnitType *unitType) const {
 		return find(effects.begin(), effects.end(), unitType) != effects.end();
 	}
 
-    //other methods
+	virtual void doChecksum(Checksum &checksum) const;
+
+	//other methods
 	string getDesc() const;
 };
 

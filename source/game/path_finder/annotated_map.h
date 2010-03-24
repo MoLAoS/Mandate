@@ -19,168 +19,186 @@
 
 #include "vec.h"
 #include "unit_stats_base.h"
-/*
-#include <vector>
-#include <list>
-#include <set>
-*/
+#include "node_pool.h"
+#include "map.h"
+#include "world.h"
+
+typedef list<Vec2i>::iterator VLIt;
+typedef list<Vec2i>::const_iterator VLConIt;
+typedef list<Vec2i>::reverse_iterator VLRevIt;
+typedef list<Vec2i>::const_reverse_iterator VLConRevIt;
+
+using Shared::Platform::int64;
 
 namespace Glest { namespace Game {
 
 class Map;
+class PathFinderTextureCallBack;
 
 namespace Search {
 
-const Vec2i AboveLeftDist1[3] =  {
-	Vec2i ( -1,  0 ),
-	Vec2i ( -1, -1 ),
-	Vec2i (  0, -1 )
-};
+class ExplorationMap;
 
-const Vec2i AboveLeftDist2[5] = {
-	Vec2i ( -2,  0 ),
-	Vec2i ( -2, -1 ),
-	Vec2i ( -2, -2 ),
-	Vec2i ( -1, -2 ),
-	Vec2i (  0, -2 )
-};
-
-// Adding a new field?
-// add the new Field (enum defined in units_stats_base.h)
-// add the 'xml' name to the Fields::names array (in units_stats_base.cpp)
-// add a comment below, claiming the first unused metric field.
-// add a case to the switches in CellMetrics::get() & CellMetrics::set()
-// add code to PathFinder::computeClearance(), PathFinder::computeClearances() 
-// and PathFinder::canClear() (if not handled fully in computeClearance[s]).
-// finaly, add a little bit of code to Map::fieldsCompatable().
-
-// Allows for a maximum moveable unit size of 3. we can 
-// (with modifications) path groups in formation using this, 
-// maybe this is not enough.. perhaps give some fields more resolution? 
-// Will Glest even do size > 2 moveable units without serious movement related issues ???
+// =====================================================
+// struct CellMetrics
+// =====================================================
+/** Stores clearance metrics for a cell.
+  * 3 bits are used per field, allowing for a maximum moveable unit size of 7.
+  * The left over bit is used for per team 'foggy' maps, the dirty bit is set when
+  * an obstacle has been placed or removed in an area the team cannot currently see.
+  * The team's annotated map is thus not updated until that cell becomes visible again.
+  */
 struct CellMetrics {
-	CellMetrics () { memset ( this, 0, sizeof(*this) ); }
-	// can't get a reference to a bit field, so we can't overload 
-	// the [] operator, and we have to get by with these...
-
-	__inline uint32 get ( const Field );
-	__inline void   set ( const Field, uint32 val );
-	__inline void   setAll ( uint32 val );
-
-	bool operator != ( CellMetrics &that ) {
-		return memcmp ( this, &that, sizeof(*this) );
+	CellMetrics() { memset(this, 0, sizeof(*this)); }
+	
+	uint16 get(const Field field) const { /**< get metrics for field */
+		switch (field) {
+			case Field::LAND:		return field0;
+			case Field::AIR:		return field1;
+			case Field::ANY_WATER:	return field2;
+			case Field::DEEP_WATER:	return field3;
+			case Field::AMPHIBIOUS:	return field4;
+			default: throw runtime_error("Unknown Field passed to CellMetrics::get()");
+		}
+	}
+	
+	void set(const Field field, uint16 val) { /**< set metrics for field */
+		switch (field) {
+			case Field::LAND:		field0 = val; return;
+			case Field::AIR:		field1 = val; return;
+			case Field::ANY_WATER:	field2 = val; return;
+			case Field::DEEP_WATER:	field3 = val; return;
+			case Field::AMPHIBIOUS:	field4 = val; return;
+			default: throw runtime_error("Unknown Field passed to CellMetrics::set()");
+		}
+	}
+	
+	void setAll(uint16 val)	{ /**< set clearance of all fields to val */
+		field0 = field1 = field2 = field3 = field4 = val; 
 	}
 
-	//bool isNearResource ( const Vec2i &pos );
-	//bool isNearStore ( const Vec2i &pos );
+	bool operator!=(CellMetrics &that)	const { /**< comparison, ignoring dirty bit */
+		if (field0 == that.field0 && field1 == that.field1 
+		&& field2 == that.field2 && field3 == that.field3 && field4 == that.field4) {
+			return false;
+		}
+		return true;
+	}
+	
+	bool isDirty() const				{ return dirty; } /**< is this cell dirty */
+	void setDirty(const bool val)		{ dirty = val;	} /**< set dirty flag */	
 
 private:
-	uint32 field0 : 3; // In Use: FieldWalkable = land + shallow water 
-	uint32 field1 : 3; // In Use: FieldAir = air
-	uint32 field2 : 3; // In Use: FieldAnyWater = shallow + deep water
-	uint32 field3 : 3; // In Use: FieldDeepWater = deep water
-	uint32 field4 : 3; // In Use: FieldAmphibious = land + shallow + deep water 
-	uint32 pad    : 1;
+	uint16 field0 : 3; /**< Field::LAND = land + shallow water */
+	uint16 field1 : 3; /**< Field::AIR = air */
+	uint16 field2 : 3; /**< Field::ANY_WATER = shallow + deep water */
+	uint16 field3 : 3; /**< Field::DEEP_WATER = deep water */
+	uint16 field4 : 3; /**< Field::AMPHIBIOUS = land + shallow + deep water */
+
+	uint16  dirty : 1; /**< used in 'team' maps as a 'dirty bit' (clearances have changed
+					     * but team hasn't seen that change yet). */
 };
 
+// =====================================================
+// class MetricMap
+// =====================================================
+/** A wrapper class for the array of CellMetrics
+  */
 class MetricMap {
 private:
 	CellMetrics *metrics;
-	int stride;
+	int width,height;
 
 public:
-	MetricMap () { stride = 0; metrics = NULL; }
-	virtual ~MetricMap () { delete [] metrics; }
+	MetricMap() : metrics(NULL), width(0), height(0) { }
+	~MetricMap()			{ delete [] metrics; }
 
-	void init ( int w, int h ) { 
-		assert (w>0&&h>0); stride = w; metrics = new CellMetrics[w*h]; 
+	void init(int w, int h) { 
+		assert ( w > 0 && h > 0); 
+		width = w; 
+		height = h; 
+		metrics = new CellMetrics[w * h];
 	}
-	CellMetrics& operator [] ( const Vec2i &pos ) const { 
-		return metrics[pos.y*stride+pos.x]; 
-	}
+
+	void zero()				{ memset(metrics, 0, sizeof(CellMetrics) * width * height); }
+	
+	CellMetrics& operator[](const Vec2i &pos) const { return metrics[pos.y * width + pos.x]; }
 };
 
+// =====================================================
+// class AnnotatedMap
+// =====================================================
+/** A 'search' map, annotated with clearance data and explored status
+  * <p>A compact representation of the map with clearance information for each cell.
+  * The clearance values are stored for each cell & field, and represent the 
+  * clearance to the south and east of the cell. That is, the maximum size unit 
+  * that can be 'positioned' in this cell (with units in Glest always using the 
+  * north-west most cell they occupy as their 'position').</p>
+  */
+//TODO: pretty pictures for the doco...
 class AnnotatedMap {
+	friend class AbstractMap;
+	friend class ClusterMap;
+#	if _GAE_DEBUG_EDITION_
+		list<std::pair<Vec2i,uint32> >* getLocalAnnotations();
+		friend class Glest::Game::PathFinderTextureCallBack;
+#	endif
+	int width, height;
+
+	Map *cellMap;
+	
 public:
-	AnnotatedMap ( Map *map );
-	virtual ~AnnotatedMap ();
+	AnnotatedMap(World *world, ExplorationMap *eMap=NULL);
+	~AnnotatedMap();
 
-	// Initialise the Map Metrics
-	void initMapMetrics ( Map *map );
+	int getWidth()	{ return width;		}
+	int getHeight()	{ return height;	}
 
-	// Start a 'cascading update' of the Map Metrics from a position and size
-	void updateMapMetrics ( const Vec2i &pos, const int size ); 
+	/** Maximum clearance allowed by the game. Hence, also maximum moveable unit size supported. */
+	static const int maxClearanceValue = 7; // don't change me without also changing CellMetrics
 
-	// Interface to the clearance metrics, can a unit of size occupy a cell(s) ?
-	__inline bool canOccupy ( const Vec2i &pos, int size, Field field ) const {
-		return metrics[pos].get ( field ) >= size ? true : false;
+	int maxClearance[Field::COUNT]; // maximum clearances needed for this world
+
+	void initMapMetrics();
+
+	void revealTile(const Vec2i &pos);
+
+	void updateMapMetrics(const Vec2i &pos, const int size);
+
+	/** Interface to the clearance metrics, can a unit of size occupy a cell(s) 
+	  * @param pos position agent wishes to occupy
+	  * @param size size of agent
+	  * @param field field agent moves in
+	  * @return true if position can be occupied, else false
+	  */
+	bool canOccupy(const Vec2i &pos, int size, Field field) const {
+		assert(cellMap->isInside(pos));
+		return metrics[pos].get(field) >= size ? true : false;
 	}
 
-	static const int maxClearanceValue;
+	bool isDirty(const Vec2i &pos) const			{ return metrics[pos].isDirty(); }
+	void setDirty(const Vec2i &pos, const bool val)	{ metrics[pos].setDirty(val);	}
 
-	// Temporarily annotate the map for nearby units
-	void annotateLocal ( const Unit *unit, const Field field );
-
-	// Clear temporary annotations
-	void clearLocalAnnotations ( Field field );
-
-#  ifdef _GAE_DEBUG_EDITION_
-	list<std::pair<Vec2i,uint32>>* getLocalAnnotations ();
-#  endif
+	void annotateLocal(const Unit *unit);
+	void clearLocalAnnotations(const Unit *unit);
 
 private:
-	// for initMetrics () and updateMapMetrics ()
-	void computeClearances ( const Vec2i & );
-	void computeClearance ( const Vec2i &, Field );
-	bool canClear ( const Vec2i &pos, int clear, Field field );
+	// for initMetrics() and updateMapMetrics ()
+	void computeClearances(const Vec2i &);
+	uint32 computeClearance(const Vec2i &, Field);
 
-	// perform local annotations, mkae unit obstactle in field
-	void annotateUnit ( const Unit *unit, const Field field );
+	void cascadingUpdate(const Vec2i &pos, const int size, const Field field = Field::COUNT);
+	void annotateUnit(const Unit *unit, const Field field);
 
-	// update to the left and above a area that may have changed metrics
-	// pos: top-left of area changed
-	// size: size of area changed
-	// field: field to update for a local annotation, or FieldCount to update all fields
-	void cascadingUpdate ( const Vec2i &pos, const int size, const Field field = FieldCount );
+	bool updateCell(const Vec2i &pos, const Field field);
+	
 
-	int metricHeight;
+	/** the original values of locations that have had local annotations applied */
 	std::map<Vec2i,uint32> localAnnt;
-	Map *cMap;
-#ifdef _GAE_DEBUG_EDITION_
-public:
-#endif
+	/** The metrics */
 	MetricMap metrics;
+	ExplorationMap *eMap;
 };
-
-inline uint32 CellMetrics::get ( const Field field ) {
-	switch ( field ) {
-		case FieldWalkable: return field0;
-		case FieldAir: return field1;
-		case FieldAnyWater: return field2;
-		case FieldDeepWater: return field3;
-		case FieldAmphibious: return field4;
-		default: throw runtime_error ( "Unknown Field passed to CellMetrics::get()" );
-	}
-	return 0;
-}
-
-inline void CellMetrics::set ( const Field field, uint32 val ) {
-	assert ( val <= AnnotatedMap::maxClearanceValue );
-	switch ( field ) {
-		case FieldWalkable: field0 = val; return;
-		case FieldAir: field1 = val; return;
-		case FieldAnyWater: field2 = val; return;
-		case FieldDeepWater: field3 = val; return;
-		case FieldAmphibious: field4 = val; return;
-		default: throw runtime_error ( "Unknown Field passed to CellMetrics::set()" );
-	}
-
-}
-
-inline void CellMetrics::setAll ( uint32 val ) {
-	assert ( val <= AnnotatedMap::maxClearanceValue );
-	field0 = field1 = field2 = field3 = field4 = val;
-}
 
 }}}
 
