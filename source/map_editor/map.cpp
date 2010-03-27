@@ -546,20 +546,175 @@ void Map::randomizeHeights() {
 	sinRandomize(1);
 }
 
+/// MAP RANDOMIZATION
+/// randomization is based of of having seed positions and growing a mass
+/// of a given object or resource to a set population (TODO randomize population size?).
+/// A start point is randomly decided or it is based of off player start location
+/// and if the cell is clear a single point is added.
+/// The next point to be added in the group is randomly picked from the eight adjacent
+/// squares. This continues until the mass has been grown to the desired size.
 void Map::randomize() {
-	randomizeHeights();
+	maxFactions = 4;
 
-	int slPlaceFactorX = random.randRange(0, 1);
-	int slPlaceFactorY = random.randRange(0, 1) * 2;
+	resetFactions(maxFactions);
+
+	// Set height to a base level
+	// randomizeHeights() was taken out because there is already a button
+	// for it and much more realistic terrain should be randomized
+	int baseHeight = random.randRange(5, 9);
+	reset(64, 64, baseHeight, 1);
+
+
+///////////////////// Randomize start locations /////////////////////////////
+const int MIN_DISTANCE = 20; // minimum distance between players
 
 	for (int i = 0; i < maxFactions; ++i) {
-		StartLocation sl;
-		float slNoiseFactor = random.randRange(0.5f, 0.8f);
+		int randX = random.randRange(1, 5);
+		int randY = random.randRange(1, 5);
+		int randXmod = random.randRange((w / 15), (2 * w / 15));
+		int randYmod = random.randRange((h / 15), (2 * h / 15));
 
-		sl.x = static_cast<int>(w * slNoiseFactor * ((i + slPlaceFactorX) % 2) + w * (1.f - slNoiseFactor) / 2.f);
-		sl.y = static_cast<int>(h * slNoiseFactor * (((i + slPlaceFactorY) / 2) % 2) + h * (1.f - slNoiseFactor) / 2.f);
-		startLocations[i] = sl;
+		startLocations[i].x = (w / 5)*randX - randXmod;
+		startLocations[i].y = (h / 5)*randY - randYmod;
+		for (int j = 0; j < maxFactions; j++) {
+			if (i == j) continue;
+			if (get_dist(startLocations[i].x - startLocations[j].x, startLocations[i].y - startLocations[j].y) < MIN_DISTANCE) {
+				i--;
+				break;
+			}
+		}
 	}
+
+/////////////////////Randomize the Resources/////////////////////////////
+// TODO add randMod?
+// TOOD extra seeds aren't randomized yet
+const int GOLD_PILE = 5; // size of each resource pile
+const int STONE_PILE = 3;
+
+const int RESOURCE_SEEDS = 1; // extra seeds for resource deposits
+
+const int RESOURCE_RADIUS = 5; // distance from the start location to place resource seeds
+
+	for (int i = 0; i < maxFactions + RESOURCE_SEEDS; i++) {
+		StartLocation goldSeed;
+		int goldRand;
+
+		do {
+			goldRand = random.randRange(0, 7);
+			if (goldRand > 3) goldRand++;
+
+			goldSeed.x = ((i < maxFactions)? startLocations[i].x:30) + (((goldRand % 3) - 1) * RESOURCE_RADIUS);
+			goldSeed.y = ((i < maxFactions)? startLocations[i].y:30) + (((goldRand / 3) - 1) * RESOURCE_RADIUS);
+		} while (!inside (goldSeed.x, goldSeed.y));
+
+		for (int j = 0; j < GOLD_PILE; j++) {
+			cells[goldSeed.x][goldSeed.y].resource = 1;
+			while (cells[goldSeed.x][goldSeed.y].resource == 1) {
+				int next = random.randRange(0,8);
+				if (inside( goldSeed.x + ((next % 3) - 1), goldSeed.y + ((next / 3) - 1) )) {
+					goldSeed.x += ((next % 3) - 1);
+					goldSeed.y += ((next / 3) - 1);
+				}
+			}
+		}
+
+		StartLocation stoneSeed;
+		int stoneRand;
+		do {
+		stoneRand = random.randRange(0, 7);
+		if (stoneRand > 3) stoneRand++;
+		if (stoneRand == goldRand) {
+			stoneRand += 5 + goldRand;
+			while (stoneRand > 8) {
+				stoneRand -= 8;
+			}
+		}
+
+		stoneSeed.x = ((i < maxFactions)? startLocations[i].x:30) + (((stoneRand % 3) - 1) * RESOURCE_RADIUS);
+		stoneSeed.y = ((i < maxFactions)? startLocations[i].y:30) + (((stoneRand / 3) - 1) * RESOURCE_RADIUS);
+		} while (!inside (stoneSeed.x, stoneSeed.y));
+
+		for (int j = 0; j < STONE_PILE; j++) {
+			cells[stoneSeed.x][stoneSeed.y].resource = 2;
+			while (cells[stoneSeed.x][stoneSeed.y].resource == 2) {
+				int next = random.randRange(0,8);
+				if (inside( stoneSeed.x + ((next % 3) - 1), stoneSeed.y + ((next / 3) - 1) )) {
+					if (cells[stoneSeed.x + ((next % 3) - 1)][stoneSeed.y + ((next / 3) - 1)].resource == 0) {
+						stoneSeed.x += ((next % 3) - 1);
+						stoneSeed.y += ((next / 3) - 1);
+					}
+				}
+			}
+		} // End stone populaton
+	} // End for: resource populaton
+
+///////////////////////////Randomize the Forests///////////////////
+// TODO forests seeded diagnoly from the start location are very far away from
+// the actual start location... fix maybe?
+
+// TODO forests can populate around resources
+// to the point where they become inaccessable
+
+// TODO extra seeds aren't randomized yet
+
+const int FOREST_SEEDS = 3; // number of extra seed points to use apart from forests near start locations
+const int FOREST_GROWTH = 50; // size of each forest
+const int FOREST_RADIUS = 8; // Should be about RESOURCE_RADIUS + 3
+
+
+	for (int i = 0; i < FOREST_SEEDS + maxFactions; i++) {
+	StartLocation forestSeed;
+		// Make sure we aren't seeding outside the map or on top of anything
+		// and set a seed point
+		do {
+		int forestRand = random.randRange(0,7);
+		if (forestRand > 3) forestRand++;
+
+		forestSeed.x = ((i < maxFactions)? startLocations[i].x:30) + (((forestRand % 3) - 1) * FOREST_RADIUS);
+		forestSeed.y = ((i < maxFactions)? startLocations[i].y:30) + (((forestRand / 3) - 1) * FOREST_RADIUS);
+		} while (!inside (forestSeed.x, forestSeed.y) || (cells[forestSeed.x][forestSeed.y].resource != 0) );
+
+	// grow the forests
+		cells[forestSeed.x][forestSeed.y].object = 1;
+
+		bool doNext = false;
+
+		for (int j = 0; j < FOREST_GROWTH; j++) {
+			// Loop until there is a spot that forest can be planted
+			while (cells[forestSeed.x][forestSeed.y].object == 1 || !doNext) {
+				int next = random.randRange(0,8);
+				if (inside( forestSeed.x + ((next % 3) - 1), forestSeed.y + ((next / 3) - 1) )) {
+					if ( cells[forestSeed.x + ((next % 3) - 1)][forestSeed.y + ((next / 3) - 1)].resource == 0 ) {
+					// Check to make sure the forest isn't growing into a player's territory
+					doNext = true;
+					for (int k = 0; k < maxFactions; k++) {
+						if (get_dist(forestSeed.x - startLocations[k].x, forestSeed.y - startLocations[k].y) < FOREST_RADIUS) {
+							doNext = false;
+							break;
+						}
+					}
+					forestSeed.x += ((next % 3) - 1);
+					forestSeed.y += ((next / 3) - 1);
+					}
+				}
+			}
+
+			cells[forestSeed.x][forestSeed.y].object = 1;
+			doNext = false;
+		} // End Single Forest Growth
+	} // End Forest Seeding
+
+
+
+///////////////////////////Randomize the Terrain////////////////
+/*	* I had a bunch of code here but I realized it has no potential at all.
+	* My intention now, as far as terrain randomization goes, is to use the
+	* "Diamond-Square" fractal generating algorithm with randomization and
+	* possibly seed values. Terrain would be generated before generating forests,
+	* resource deposits, and player locations. Then using some user defined
+	* rules forests and resource deposits would be seeded based on the terrain.
+*/
+//////////////////////ADD AESTHETICS///////////////////////////
 }
 
 void Map::switchSurfaces(int surf1, int surf2) {
