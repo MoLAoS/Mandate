@@ -547,7 +547,12 @@ void Map::randomizeHeights() {
 }
 
 /// MAP RANDOMIZATION
-/// randomization is based of of having seed positions and growing a mass
+/// Terrain randomization is based on the "Diamond-Square" algorithm.
+/// Diamond-Square terrain generation works by taking the average of the heights
+/// from four cells in a square or diamond pattern and adding a randomization value.
+/// Every iteration includes one square stage and one diamond stage. After each iteration
+/// there will be 2^n number of cells
+/// Object/Resource Randomization is based of of having seed positions and growing a mass
 /// of a given object or resource to a set population (TODO randomize population size?).
 /// A start point is randomly decided or it is based of off player start location
 /// and if the cell is clear a single point is added.
@@ -558,11 +563,124 @@ void Map::randomize() {
 
 	resetFactions(maxFactions);
 
+	const int MAP_WIDTH = 64;
+
 	// Set height to a base level
 	// randomizeHeights() was taken out because there is already a button
 	// for it and much more realistic terrain should be randomized
 	int baseHeight = random.randRange(5, 9);
-	reset(64, 64, baseHeight, 1);
+	reset(MAP_WIDTH, MAP_WIDTH, baseHeight, 1);
+
+
+///////////////// Begin Heightmap Randomization
+
+// Defines what level of the algorithm we are at right now
+// This will be a control variable in the for loops
+// Square stage will loop through 0 to map_width
+// while diamond stages will use -stepping to (map_width - stepping)
+// after each stage stepping will be cut in half for the next stage
+int stepping = MAP_WIDTH;
+float heightRand = 7;
+
+// the roughness constant should be bellow zero if the randomization is decreasing
+// with each itteration the more negative it is the less randomness there will be.
+const float ROUGHNESS_CONSTANT = -0.2;
+
+// Square stage
+// loop through the map taking the four corners of each square
+// average them and add a random value
+// AD		o		CE
+//
+//
+// o		BE		o
+//
+//
+// AF		o		CF
+
+// Diamond stage
+// loop through the map taking the four corner values of each diamond
+// average them and add a random value
+// o		BD		o
+//
+//
+// AE		BE		CE
+//
+//
+// o		BF		o
+
+// For simplicity's sake we will assume that the map is a square grid of size (2^n) + 1
+// If we try to index a cell outside this range we will assume the map wraps
+// Or maybe I'll think of something better...
+
+for (int t = 0; t < log2(MAP_WIDTH); t++) {
+
+	for (int i = 0; i < MAP_WIDTH; i+=stepping) {
+		for (int j = 0; j < MAP_WIDTH; j+=stepping) {
+			int A = i;
+			int B = i + stepping/2;
+			int C = i + stepping;
+
+			int D = j;
+			int E = j + stepping/2;
+			int F = j + stepping;
+
+			//if (A < 0) A += MAP_WIDTH;
+			if (C > MAP_WIDTH - 1) C -= MAP_WIDTH;
+
+			//if (D < 0) D += MAP_WIDTH;
+			if (F > MAP_WIDTH - 1) F -= MAP_WIDTH;
+
+			cells[B][E].height =
+			((cells[A][D].height +
+			cells[C][E].height +
+			cells[A][F].height +
+			cells[C][F].height) * 0.25f) +
+			random.randRange(-heightRand, heightRand);
+		}
+	}
+
+	stepping /= 2;
+	// Stepping was divided by 2 here so for the diamond stage
+	// We need to skip every other diamond
+	bool skip = true;
+
+	for (int i = -stepping; i <= MAP_WIDTH-stepping; i+=stepping) {
+		for (int j = -stepping; j <= MAP_WIDTH-stepping; j +=stepping) {
+			if (skip) {
+				skip = !skip;
+				continue;
+			}
+			int A = i;
+			int B = i + stepping;
+			int C = i + stepping*2;
+
+			int D = j;
+			int E = j + stepping;
+			int F = j + stepping*2;
+
+			if (A < 0) A += MAP_WIDTH;
+			if (C > MAP_WIDTH - 1) C -= MAP_WIDTH;
+
+			if (D < 0) D += MAP_WIDTH;
+			if (F > MAP_WIDTH - 1) F -= MAP_WIDTH;
+
+			if (inside(B, E)) {
+				cells[B][E].height =
+				((cells[B][D].height +
+				cells[A][E].height +
+				cells[C][E].height +
+				cells[B][F].height) * 0.25f) +
+				random.randRange(-heightRand, heightRand);
+			}
+			skip = !skip;
+		}
+	}
+	heightRand *= pow(2, ROUGHNESS_CONSTANT);
+}
+///////////////// End Heightmap Randomization
+
+
+	//return; // Lets not randomize crap until we get the heightmap right
 
 
 ///////////////////// Randomize start locations /////////////////////////////
@@ -704,16 +822,6 @@ const int FOREST_RADIUS = 8; // Should be about RESOURCE_RADIUS + 3
 		} // End Single Forest Growth
 	} // End Forest Seeding
 
-
-
-///////////////////////////Randomize the Terrain////////////////
-/*	* I had a bunch of code here but I realized it has no potential at all.
-	* My intention now, as far as terrain randomization goes, is to use the
-	* "Diamond-Square" fractal generating algorithm with randomization and
-	* possibly seed values. Terrain would be generated before generating forests,
-	* resource deposits, and player locations. Then using some user defined
-	* rules forests and resource deposits would be seeded based on the terrain.
-*/
 //////////////////////ADD AESTHETICS///////////////////////////
 }
 
