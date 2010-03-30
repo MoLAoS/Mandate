@@ -948,7 +948,7 @@ void SimpleDialog::addValue(const string &key, const string &value) {
 }
 
 string SimpleDialog::getValue(const string &key) {
-	for (int i = 0; i < values.size(); ++i) {
+	for (size_t i = 0; i < values.size(); ++i) {
 		if (values[i].first == key) {
 			return values[i].second;
 		}
@@ -974,7 +974,7 @@ void SimpleDialog::show() {
 
 	ShowModal();
 
-	for (int i = 0; i < texts.size(); ++i) {
+	for (size_t i = 0; i < texts.size(); ++i) {
 		values[i].second = texts[i]->GetValue().ToAscii();
 	}
 }

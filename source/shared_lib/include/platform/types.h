@@ -46,6 +46,8 @@ namespace Shared { namespace Platform {
 	typedef unsigned long long uint64;
 
 #	define strcasecmp stricmp
+#	define strtok_r(a,b,c) strtok(a,b)
+#	define log2(x) (log(float(x))/log(2.f))
 #endif
 
 #ifdef USE_SDL

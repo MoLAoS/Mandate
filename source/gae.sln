@@ -14,8 +14,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcproj", 
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "map_editor", "map_editor\map_editor.vcproj", "{0E1DBB5D-37A3-484E-8510-F25B71222411}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A29E0F89-0584-4E22-A163-7A676E17E9E1} = {A29E0F89-0584-4E22-A163-7A676E17E9E1}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g3d_viewer", "g3d_viewer\g3d_viewer.vcproj", "{1ACEE8EA-A0FB-4759-B647-5A881FFDA499}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A29E0F89-0584-4E22-A163-7A676E17E9E1} = {A29E0F89-0584-4E22-A163-7A676E17E9E1}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

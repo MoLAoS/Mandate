@@ -111,10 +111,11 @@ int glestMain(int argc, char** argv) {
 	if(configDir.empty()){
 #ifdef WIN32
 		configDir = getenv("UserProfile");
+		configDir += "/glestadv/";
 #else
 		configDir = getenv("HOME");
-#endif
 		configDir += "/.glestadv/";
+#endif
 	}
 	//FIXME: debug
 	cout << "config: " << configDir << "\ndata: " << dataDir << endl;
@@ -124,7 +125,7 @@ int glestMain(int argc, char** argv) {
 	
 	FSFactory *fsfac = FSFactory::getInstance();
 	fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-	fsfac->usePhysFS(true);
+	fsfac->usePhysFS(false);
 
 	Config &config = Config::getInstance();
 

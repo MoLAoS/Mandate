@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
+				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
 				PreprocessorDefinitions="USE_PCH=1;WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -51,6 +51,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="2"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4996; 4244"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -118,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../../../deps/include;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
+				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
 				PreprocessorDefinitions="USE_PCH=1;WIN32"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -126,6 +127,7 @@
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4996; 4244"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

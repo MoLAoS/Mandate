@@ -212,7 +212,9 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	//read header
 	MeshHeader meshHeader;
-	f->read(&meshHeader, sizeof(MeshHeader), 1);
+	if (f->read(&meshHeader, sizeof(MeshHeader), 1) != 1) {
+		throw runtime_error("Could not read mesh header");
+	}
 
 	//init
 	frameCount= meshHeader.frameCount;
@@ -253,24 +255,25 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		flag*= 2;
 	}
 
-	//read data
-	// fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
-	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
+	// read data
 	size_t vfCount = frameCount * vertexCount;
-	for(int i = 0; i < vfCount; ++i) {
-		f->read(&vertices[i], 12, 1);
-	}
-	for(int i = 0; i < vfCount; ++i) {
-		f->read(&normals[i], 12, 1);
-	}
 
-	if(meshHeader.textures!=0){
-		f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
+	// Assume packed vectors.
+	if (f->read(vertices, 12 * vfCount, 1) != 1) {
+		throw runtime_error("error reading mesh, insufficient vertex data.");
 	}
-	f->read(indices, sizeof(uint32)*indexCount, 1);
+	if (f->read(normals, 12 * vfCount, 1) != 1) {
+		throw runtime_error("error reading mesh, insufficient normal vector data.");
+	}
+	if (meshHeader.textures && f->read(texCoords, sizeof(Vec2f)*vertexCount, 1) != 1) {
+		throw runtime_error("error reading mesh, insufficient texture co-ordinate data.");
+	}
+	if (f->read(indices, sizeof(uint32)*indexCount, 1) != 1) {
+		throw runtime_error("error reading mesh, insufficient vertex index data.");
+	}
 
 	//tangents
-	if(textures[mtNormal]!=NULL){
+	if (textures[mtNormal]) {
 		computeTangents();
 	}
 }
@@ -442,7 +445,6 @@ void Model::save(const string &path){
 
 //load a model from a g3d file
 void Model::loadG3d(const string &path){
-
     try{
 		FileOps *f = FSFactory::getInstance()->getFileOps();
 		f->openRead(path.c_str());
@@ -458,39 +460,39 @@ void Model::loadG3d(const string &path){
 		fileVersion= fileHeader.version;
 
 		//version 4
-		if(fileHeader.version==4){
+		if (fileHeader.version == 4) {
 
 			//model header
 			ModelHeader modelHeader;
 			f->read(&modelHeader, sizeof(ModelHeader), 1);
-			meshCount= modelHeader.meshCount;
-			if(modelHeader.type!=mtMorphMesh){
+			meshCount = modelHeader.meshCount;
+			if (modelHeader.type != mtMorphMesh) {
 				throw runtime_error("Invalid model type");
 			}
 
 			//load meshes
-			meshes= new Mesh[meshCount];
-			for(uint32 i=0; i<meshCount; ++i){
+			meshes = new Mesh[meshCount];
+			for(uint32 i=0; i < meshCount; ++i){
 				meshes[i].load(dir, f, textureManager);
 				meshes[i].buildInterpolationData();
 			}
 		}
 		//version 3
-		else if(fileHeader.version==3){
+		else if (fileHeader.version == 3) {
 
 			f->read(&meshCount, sizeof(meshCount), 1);
 			meshes= new Mesh[meshCount];
-			for(uint32 i=0; i<meshCount; ++i){
+			for(uint32 i=0; i < meshCount; ++i){
 				meshes[i].loadV3(dir, f, textureManager);
 				meshes[i].buildInterpolationData();
 			}
 		}
 		//version 2
-		else if(fileHeader.version==2){
+		else if (fileHeader.version == 2) {
 
 			f->read(&meshCount, sizeof(meshCount), 1);
 			meshes= new Mesh[meshCount];
-			for(uint32 i=0; i<meshCount; ++i){
+			for(uint32 i=0; i < meshCount; ++i){
 				meshes[i].loadV2(dir, f, textureManager);
 				meshes[i].buildInterpolationData();
 			}

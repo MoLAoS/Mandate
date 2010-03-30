@@ -151,20 +151,6 @@ void OggSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
 		delete fops;
 		throw runtime_error("ov_open_callback failed on ogg file: " + path);
 	}
-
-// 	if(!(f = fopen(path.c_str(), "rb"))){
-// 		throw runtime_error("Can't open ogg file: "+path);
-// 	}
-// 
-// 	vf = new OggVorbis_File();
-// 	if(ov_open(f, vf, NULL, 0)) {
-// 		fclose(f);
-// 		f = NULL;
-// 		throw runtime_error("ov_open failed on ogg file: " + path);
-// 	}
-// 	// ogg assumes the file pointer.
-// 	f = NULL;
-
 	vorbis_info *vi= ov_info(vf, -1);
 
 	soundInfo->setChannels(vi->channels);

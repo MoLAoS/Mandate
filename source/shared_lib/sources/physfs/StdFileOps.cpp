@@ -27,15 +27,15 @@ StdFileOps::~StdFileOps(){
 }
 
 void StdFileOps::openRead(const char *fname){
-	this->f = fopen(fname, "r");
+	this->f = fopen(fname, "rb");
 }
 
 void StdFileOps::openWrite(const char *fname){
-	this->f = fopen(fname, "w");
+	this->f = fopen(fname, "wb");
 }
 
 void StdFileOps::openAppend(const char *fname){
-	this->f = fopen(fname, "a");
+	this->f = fopen(fname, "ab");
 }
 
 int StdFileOps::read(void *buf, int size, int num){

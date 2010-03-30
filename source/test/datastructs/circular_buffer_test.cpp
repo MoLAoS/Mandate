@@ -149,13 +149,13 @@ void CircularBufferTest::testRollOver() {
 
 	int ndx = 0;
 	for (int i=0; i < times - 1; ++i) {
-		for (int j=0; j < hex_size; ++j) {
+		for (size_t j=0; j < hex_size; ++j) {
 			CPPUNIT_ASSERT(my_buffer[ndx] == hex_data[ndx % hex_size]);
 			++ndx;
 		}
 	}
 	int offset = ndx;
-	for (int i=0; i < alpha_size; ++i) {
+	for (size_t i=0; i < alpha_size; ++i) {
 		CPPUNIT_ASSERT(my_buffer[ndx] == alpha_data[ndx - offset]);
 		++ndx;
 	}
@@ -195,7 +195,7 @@ void CircularBufferTest::testPerfectFill() {
 
 	int ndx = 0;
 	for (int i=0; i < times; ++i) {
-		for (int j=0; j < hex_size; ++j) {
+		for (size_t j=0; j < hex_size; ++j) {
 			CPPUNIT_ASSERT(my_buffer[ndx] == hex_data[ndx % hex_size]);
 			++ndx;
 		}
@@ -232,7 +232,7 @@ void CircularBufferTest::testPeek() {
 
 	int ndx = 0;
 	for (int i=0; i < times; ++i) {
-		for (int j=0; j < num_size; ++j) {
+		for (size_t j=0; j < num_size; ++j) {
 			CPPUNIT_ASSERT(my_buffer[ndx] == num_data[ndx % num_size]);
 			++ndx;
 		}

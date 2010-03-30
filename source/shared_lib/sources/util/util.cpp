@@ -26,10 +26,7 @@
 #include "zlib.h"
 #include "FSFactory.hpp"
 
-// Hack
-#if defined(WIN32) || defined(WIN64)
-#	define strtok_r(a,b,c) strtok(a,b)
-#else
+#if !defined(WIN32) && !defined(WIN64)
 #	include <glob.h>
 #endif
 
@@ -615,18 +612,16 @@ string replaceBy(const string &s, char c1, char c2){
 
 // ==================== misc ====================
 
-bool fileExists(const string &path){
-	if(FSFactory::getInstance()->physFS){
-		FSFactory::fileExists(path);
-	}else{
-		
-	FILE* file= fopen(path.c_str(), "rb");
-	if(file!=NULL){
-		fclose(file);
-		return true;
-	}
-	return false;
-	
+bool fileExists(const string &path) {
+	if (FSFactory::getInstance()->physFS) {
+		return FSFactory::fileExists(path);
+	} else {
+		FILE* file= fopen(path.c_str(), "rb");
+		if (file!=NULL) {
+			fclose(file);
+			return true;
+		}
+		return false;
 	}
 }
 
