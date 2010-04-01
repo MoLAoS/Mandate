@@ -23,9 +23,7 @@
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
 
-
 using namespace Shared::Util;
-using namespace std;
 
 namespace Shared{ namespace Graphics{
 

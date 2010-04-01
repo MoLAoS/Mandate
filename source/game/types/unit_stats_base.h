@@ -31,7 +31,7 @@ using namespace Shared::Util;
 
 class TechTree;
 class FactionType;
-class EnhancementTypeBase;
+class EnhancementType;
 
 /** Fields of travel, and indirectly zone of occupance */
 class Fields : public XmlBasedFlags<Field, Field::COUNT> {
@@ -73,61 +73,53 @@ public:
 		XmlBasedFlags<Property, Property::COUNT>::load(node, dir, tt, ft, "property", PropertyNames);
 	}
 };
-
 // ===============================
-// 	class UnitStatsBase
+// 	class UnitStats
 // ===============================
 
 /**
  * Base stats for a unit type, upgrade, effect or other enhancement.
  */
-class UnitStatsBase {
+class UnitStats {
 protected:
 	int maxHp;
 	int hpRegeneration;
     int maxEp;
 	int epRegeneration;
 
-	/**
-	 * Fields of travel. For enhancment-type objects, there are fields that are
-	 * added.
-	 */
-	Fields fields;
-
-	/**
-	 * Properties (burnable, etc.). For enhancment-type objects, there are
-	 * properties that are added.
-	 */
-	UnitProperties properties;
     int sight;
 	int armor;
-	const ArmorType *armorType;
-	bool light;
-    Vec3f lightColor;
+	const ArmorType *armorType; // ??? UnitStats?
 
-    /** size in cells squared (i.e., size x size) */
+    /** size in cells square (i.e., size x size) */
     int size;
     int height;
 
-	int attackStrength;
-	float effectStrength;
-	float attackPctStolen;
-	int attackRange;
-	int moveSpeed;
-	int attackSpeed;
-	int prodSpeed;
-	int repairSpeed;
-	int harvestSpeed;
+	bool light;			// ??? UnitStats?
+    Vec3f lightColor;	// ??? UnitStats?
 
-	/**
-	 * Resistance / Damage Multipliers
-	 */
+	// these are skill stats
+	int attackStrength;		// ??? UnitStats?
+	fixed effectStrength;	// ??? UnitStats?
+	fixed attackPctStolen;	// ??? UnitStats?
+	int attackRange;		// ??? UnitStats?
+	int moveSpeed;			// ??? UnitStats?
+	int attackSpeed;		// ??? UnitStats?
+	int prodSpeed;			// ??? UnitStats?
+	int repairSpeed;		// ??? UnitStats?
+	int harvestSpeed;		// ??? UnitStats?
+
+
+	// move these 'down' (to UnitType)
+	UnitProperties properties;
+	Fields fields;
+	/** Resistance / Damage Multipliers */
 	static size_t damageMultiplierCount;
 	vector<float> damageMultipliers;
 
 public:
-	UnitStatsBase() {damageMultipliers.resize(damageMultiplierCount);}
-	virtual ~UnitStatsBase() {}
+	UnitStats() {damageMultipliers.resize(damageMultiplierCount);}
+	virtual ~UnitStats() {}
 
 	virtual void doChecksum(Checksum &checksum) const;
 
@@ -146,8 +138,8 @@ public:
 	int getHeight() const					{return height;}
 
 	int getAttackStrength() const			{return attackStrength;}
-	float getEffectStrength() const			{return effectStrength;}
-	float getAttackPctStolen() const		{return attackPctStolen;}
+	fixed getEffectStrength() const			{return effectStrength;}
+	fixed getAttackPctStolen() const		{return attackPctStolen;}
 	int getAttackRange() const				{return attackRange;}
 	int getMoveSpeed() const				{return moveSpeed;}
 	int getAttackSpeed() const				{return attackSpeed;}
@@ -185,14 +177,14 @@ public:
 	virtual void save(XmlNode *node);
 
 	/** Equivilant to an assignment operator; initializes values based on supplied object. */
-	void setValues(const UnitStatsBase &us);
+	void setValues(const UnitStats &us);
 
 	/**
-	 * Apply all the multipliers to in the supplied EnhancementTypeBase to the
+	 * Apply all the multipliers to in the supplied EnhancementType to the
 	 * applicable static value (i.e., addition/subtraction values) in this
 	 * object.
 	 */
-	void applyMultipliers(const EnhancementTypeBase &e);
+	void applyMultipliers(const EnhancementType &e);
 
 	/**
 	 * Add all static values (i.e., addition/subtraction values) in to this
@@ -201,66 +193,67 @@ public:
 	 * properties as well as overwriting light and/or armor if either of those
 	 * are specified in the object e.
 	 */
-	void addStatic(const EnhancementTypeBase &e, float strength = 1.0f);
+	void addStatic(const EnhancementType &e, fixed strength = 1);
 
 
 };
 
 // ===============================
-// 	class EnhancementTypeBase
+// 	class EnhancementType
 // ===============================
 
-/** An extension of UnitStatsBase, which contains values suitable for an
+/** An extension of UnitStats, which contains values suitable for an
  * addition/subtraction alteration to a Unit's stats, that also has a multiplier
  * for each of those stats.  This is the base class for both UpgradeType and
  * EffectType.
  */
-class EnhancementTypeBase : public UnitStatsBase{
+class EnhancementType : public UnitStats {
 protected:
-	float maxHpMult;
-	float hpRegenerationMult;
-	float maxEpMult;
-	float epRegenerationMult;
-	float sightMult;
-	float armorMult;
-	float attackStrengthMult;
-	float effectStrengthMult;
-	float attackPctStolenMult;
-	float attackRangeMult;
-	float moveSpeedMult;
-	float attackSpeedMult;
-	float prodSpeedMult;
-	float repairSpeedMult;
-	float harvestSpeedMult;
+	fixed maxHpMult;
+	fixed hpRegenerationMult;
+	fixed maxEpMult;
+	fixed epRegenerationMult;
+	fixed sightMult;
+	fixed armorMult;
+	fixed attackStrengthMult;
+	fixed effectStrengthMult;
+	fixed attackPctStolenMult;
+	fixed attackRangeMult;
+	fixed moveSpeedMult;
+	fixed attackSpeedMult;
+	fixed prodSpeedMult;
+	fixed repairSpeedMult;
+	fixed harvestSpeedMult;
 	//Note: the member variables fields, properties, armorType, bodyType, light,
 	//lightColor, size and height don't get multipliers.
 
 	/** Fields which are removed by this enhancement/degridation object. */
+	// replace with generic immobilize ?
 	Fields antiFields;
 
 	/** Properties which are removed by this enhancement/degridation object. */
 	UnitProperties antiProperties;
 
 public:
-	EnhancementTypeBase() {
+	EnhancementType() {
 		reset();
 	}
 
-	float getMaxHpMult() const			{return maxHpMult;}
-	float getHpRegenerationMult() const	{return hpRegenerationMult;}
-	float getMaxEpMult() const			{return maxEpMult;}
-	float getEpRegenerationMult() const	{return epRegenerationMult;}
-	float getSightMult() const			{return sightMult;}
-	float getArmorMult() const			{return armorMult;}
-	float getAttackStrengthMult() const	{return attackStrengthMult;}
-	float getEffectStrengthMult() const	{return effectStrengthMult;}
-	float getAttackPctStolenMult() const{return attackPctStolenMult;}
-	float getAttackRangeMult() const	{return attackRangeMult;}
-	float getMoveSpeedMult() const		{return moveSpeedMult;}
-	float getAttackSpeedMult() const	{return attackSpeedMult;}
-	float getProdSpeedMult() const		{return prodSpeedMult;}
-	float getRepairSpeedMult() const	{return repairSpeedMult;}
-	float getHarvestSpeedMult() const	{return harvestSpeedMult;}
+	fixed getMaxHpMult() const			{return maxHpMult;}
+	fixed getHpRegenerationMult() const	{return hpRegenerationMult;}
+	fixed getMaxEpMult() const			{return maxEpMult;}
+	fixed getEpRegenerationMult() const	{return epRegenerationMult;}
+	fixed getSightMult() const			{return sightMult;}
+	fixed getArmorMult() const			{return armorMult;}
+	fixed getAttackStrengthMult() const	{return attackStrengthMult;}
+	fixed getEffectStrengthMult() const	{return effectStrengthMult;}
+	fixed getAttackPctStolenMult() const{return attackPctStolenMult;}
+	fixed getAttackRangeMult() const	{return attackRangeMult;}
+	fixed getMoveSpeedMult() const		{return moveSpeedMult;}
+	fixed getAttackSpeedMult() const	{return attackSpeedMult;}
+	fixed getProdSpeedMult() const		{return prodSpeedMult;}
+	fixed getRepairSpeedMult() const	{return repairSpeedMult;}
+	fixed getHarvestSpeedMult() const	{return harvestSpeedMult;}
 
 	const Fields &getRemovedFields() const				{return antiFields;}
 	bool getRemovedField(Field field) const				{return antiFields.get(field);}
@@ -274,7 +267,7 @@ public:
 	 * multiplier for each field to be adjusted by the deviation from the value
 	 * 1.0f of each multiplier in the supplied object e.
 	 */
-	void addMultipliers(const EnhancementTypeBase &e, float strength = 1.0f);
+	void addMultipliers(const EnhancementType &e, fixed strength = 1);
 
 	/**
 	 * Resets all multipliers to 1.0f and all base class members to their
@@ -314,7 +307,7 @@ public:
 		}
 	}
 
-	void sum(const EnhancementTypeBase *enh) {
+	void sum(const EnhancementType *enh) {
 		addStatic(*enh);
 		addMultipliers(*enh);
 	}
@@ -326,7 +319,7 @@ private:
 	/** Initialize value from <multipliers> node */
 	void initMultiplier(const XmlNode *node, const string &dir);
 
-	static void formatModifier(string &str, const char *pre, const char* label, int value, float multiplier);
+	static void formatModifier(string &str, const char *pre, const char* label, int value, fixed multiplier);
 };
 
 }}//end namespace

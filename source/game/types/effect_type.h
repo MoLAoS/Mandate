@@ -55,7 +55,7 @@ typedef vector<EffectType*> EffectTypes;
  * stats, regeneration/degeneration and possibly other behaviors &
  * attributes of a Unit.
  */
-class EffectType: public EnhancementTypeBase, public DisplayableType {
+class EffectType: public EnhancementType, public DisplayableType {
 private:
 	EffectBias bias;
 	EffectStacking stacking;

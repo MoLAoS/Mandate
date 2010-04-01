@@ -18,8 +18,6 @@
 
 #include "leak_dumper.h"
 
-
-using namespace std;
 using namespace Shared::Util;
 
 namespace Glest { namespace Game {

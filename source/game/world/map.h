@@ -28,12 +28,13 @@
 #include "selection.h"
 #include "exceptions.h"
 #include "pos_iterator.h"
+#include "fixed.h"
 
 namespace Glest{ namespace Game{
 
 using namespace Shared::Math;
 using Shared::Graphics::Texture2D;
-using Glest::Game::Util::PosCircularIteratorFactory;
+using namespace Glest::Game::Util;
 
 class Tileset;
 class Unit;
@@ -43,13 +44,17 @@ class World;
 class UnitContainer;
 class Earthquake;
 
+inline Zone fieldZone(Field f) {
+	return f == Field::AIR ? Zone::AIR : Zone::LAND;
+}
+
 // =====================================================
 // 	class Cell
 //
 ///	A map cell that holds info about units present on it
 // =====================================================
 
-class Cell{
+class Cell {
 private:
 	Unit *units[Zone::COUNT];	//units on this cell
 	float height;
@@ -66,21 +71,20 @@ public:
 	}
 
 	// get
-	Unit *getUnit( Zone zone ) const	{return units[zone];}
-	Unit *getUnit( Field field )		{return getUnit( field==Field::AIR?Zone::AIR:Zone::LAND );}
-	float getHeight() const				{return height;}
-	SurfaceType getType() const 		{ return surfaceType; }
+	Unit *getUnit(Zone zone) const	{ return units[zone];			}
+	Unit *getUnit(Field f) const	{ return getUnit(fieldZone(f));	}
+	float getHeight() const			{ return height;				}
+	SurfaceType getType() const 	{ return surfaceType;			}
 
-	bool isSubmerged () const { return surfaceType != SurfaceType::LAND; }
-	bool isDeepSubmerged () const { return surfaceType == SurfaceType::DEEP_WATER; }
+	// is
+	bool isSubmerged () const		{ return surfaceType != SurfaceType::LAND;			}
+	bool isDeepSubmerged () const	{ return surfaceType == SurfaceType::DEEP_WATER;	}
+	bool isFree(Zone field) const	{ return !getUnit(field) || getUnit(field)->isPutrefacting(); }
 
 	// set
-	void setUnit ( Zone field, Unit *unit) {units[field]= unit;}
-	void setHeight (float h) { height= h; }
-	void setType ( SurfaceType type ) { surfaceType = type; }
-
-	//misc
-	bool isFree(Zone field) const;
+	void setUnit(Zone field, Unit *unit)	{ units[field]= unit;	}
+	void setHeight(float h)					{ height= h;			}
+	void setType(SurfaceType type)			{ surfaceType = type;	}
 };
 
 // =====================================================
@@ -116,49 +120,46 @@ private:
 	bool nearSubmerged;
 
 public:
-	Tile();
-	~Tile();
+	Tile() : vertex(0.f), normal(0.f, 1.f, 0.f), originalVertex(0.f), 
+			tileType(-1), tileTexture(NULL), object(NULL) {}
+	~Tile() { if(object) delete object;}
 
 	//get
-	const Vec3f &getVertex() const				{return vertex;}
-	float getHeight() const						{return vertex.y;}
-	const Vec3f &getColor() const				{return color;}
-	const Vec3f &getNormal() const				{return normal;}
-	int getTileType() const						{return tileType;}
+	const Vec3f &getVertex() const				{return vertex;		}
+	float getHeight() const						{return vertex.y;	}
+	const Vec3f &getColor() const				{return color;		}
+	const Vec3f &getNormal() const				{return normal;		}
+	int getTileType() const						{return tileType;	}
 	const Texture2D *getTileTexture() const		{return tileTexture;}
-	Object *getObject() const					{return object;}
+	Object *getObject() const					{return object;		}
 	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
-	const Vec2f &getFowTexCoord() const			{return fowTexCoord;}
-	const Vec2f &getSurfTexCoord() const		{return surfTexCoord;}
-	bool getNearSubmerged() const				{return nearSubmerged;}
+	const Vec2f &getFowTexCoord() const			{return fowTexCoord;	}
+	const Vec2f &getSurfTexCoord() const		{return surfTexCoord;	}
+	bool getNearSubmerged() const				{return nearSubmerged;	}
 
 	bool isVisible(int teamIndex) const			{return visible[teamIndex];}
 	bool isExplored(int teamIndex) const		{return explored[teamIndex];}
 
 	//set
 	void setVertex(const Vec3f &vertex)				{originalVertex = this->vertex = vertex;}
-	void setHeight(float height)					{originalVertex.y = vertex.y = height;}
-	void setNormal(const Vec3f &normal)				{this->normal= normal;}
-	void setColor(const Vec3f &color)				{this->color= color;}
-	void setTileType(int tileType)					{this->tileType= tileType;}
-	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;}
-	void setObject(Object *object)					{this->object= object;}
-	void setFowTexCoord(const Vec2f &ftc)			{this->fowTexCoord= ftc;}
-	void setTileTexCoord(const Vec2f &stc)			{this->surfTexCoord= stc;}
-	void setExplored(int teamIndex, bool explored)	{this->explored[teamIndex]= explored;}
-	void setVisible(int teamIndex, bool visible)	{this->visible[teamIndex]= visible;}
-	void setNearSubmerged(bool nearSubmerged)		{this->nearSubmerged= nearSubmerged;}
+	void setHeight(float height)					{originalVertex.y = vertex.y = height; }
+	void setNormal(const Vec3f &normal)				{this->normal= normal;				  }
+	void setColor(const Vec3f &color)				{this->color= color;				 }
+	void setTileType(int tileType)					{this->tileType= tileType;			}
+	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;			   }
+	void setObject(Object *object)					{this->object= object;			   }
+	void setFowTexCoord(const Vec2f &ftc)			{this->fowTexCoord= ftc;			}
+	void setTileTexCoord(const Vec2f &stc)			{this->surfTexCoord= stc;			 }
+	void setExplored(int teamIndex, bool explored)	{this->explored[teamIndex]= explored; }
+	void setVisible(int teamIndex, bool visible)	{this->visible[teamIndex]= visible;	   }
+	void setNearSubmerged(bool nearSubmerged)		{this->nearSubmerged= nearSubmerged;	}
 
 	//misc
-	void deleteResource();
-	bool isFree() const								{return object==NULL || object->getWalkable();}
-	void resetVertex()								{vertex = originalVertex;}
-	void alterVertex(const Vec3f &offset)			{vertex += offset;}
-	void updateObjectVertex() {
-		if(object) {
-			object->setPos(vertex); // should be centered ??? YES!!! It should, do so here, remove hack from Renderer
-		}
-	}
+	bool isFree() const						{ return !object || object->getWalkable();	}
+	void deleteResource()					{ delete object; object= NULL;				}
+	void resetVertex()						{ vertex = originalVertex;					}
+	void alterVertex(const Vec3f &offset)	{ vertex += offset;							}
+	void updateObjectVertex()				{ if (object) object->setPos(vertex);		}
 };
 
 // =====================================================
@@ -169,8 +170,6 @@ public:
 
 class Map {
 public:
-	static const int cellScale;	//number of cells per tile
-	static const int mapScale;	//horizontal scale of surface
 	typedef vector<Earthquake*> Earthquakes;
 
 private:
@@ -202,21 +201,31 @@ public:
 	void load(const string &path, TechTree *techTree, Tileset *tileset);
 	void doChecksum(Checksum &checksum);
 
-	//get
-	Cell *getCell(int x, int y) const;
-	Cell *getCell(const Vec2i &pos) const;
-	Tile *getTile(int sx, int sy) const;
-	Tile *getTile(const Vec2i &sPos) const;
+	void saveExplorationState(XmlNode *node) const;
+	void loadExplorationState(XmlNode *node);
 
-	int getW() const									{return w;}
-	int getH() const									{return h;}
-	int getTileW() const								{return tileW;}
-	int getTileH() const								{return tileH;}
-	int getMaxPlayers() const							{return maxPlayers;}
-	float getHeightFactor() const						{return heightFactor;}
-	float getAvgHeight() const							{return avgHeight;}
-	float getWaterLevel() const							{return waterLevel;}
-	Vec2i getStartLocation(int loactionIndex) const		{return startLocations[loactionIndex];}
+	//get
+	Cell *getCell(int x, int y) const {
+		assert ( this->isInside ( x,y ) );
+		return &cells[y * w + x];
+	}
+	Cell *getCell(const Vec2i &pos) const { return getCell(pos.x, pos.y); }
+	Tile *getTile(int sx, int sy) const {
+		assert(this->isInsideTile(sx, sy));
+		return &tiles[sy*tileW+sx];
+	}
+	Tile *getTile(const Vec2i &sPos) const { return getTile(sPos.x, sPos.y); }
+
+	int getW() const							{ return w;				}
+	int getH() const							{ return h;				 }
+	int getTileW() const						{ return tileW;			  }
+	int getTileH() const						{ return tileH;			   }
+	int getMaxPlayers() const					{ return maxPlayers;		}
+	float getHeightFactor() const				{ return heightFactor;		 }
+	float getAvgHeight() const					{ return avgHeight;			  }
+	float getWaterLevel() const					{ return waterLevel;		   }
+	Rect2i getBounds() const					{ return Rect2i(0,0, w,h);	    }
+	Vec2i getStartLocation(int locNdx) const	{ return startLocations[locNdx]; }
 
 	// these should be in their respective cell classes...
 	bool getSubmerged(const Tile *sc) const		{return sc->getHeight()<waterLevel;}
@@ -235,12 +244,10 @@ public:
 	bool isResourceNear(const Vec2i &pos, const ResourceType *rt, Vec2i &resourcePos) const;
 
 	//free cells
-	// This should just do a look up in the map metrics (currently maintained by the PathFinder object)
+	// This should just do a look up in the map metrics (currently maintained by the Cartographer object)
 	// Is a cell of a given field 'free' to be occupied
-	//bool isFreeCell(const Vec2i &pos, Zone field) const;
 	bool isFreeCell(const Vec2i &pos, Field field) const;
 
-	//bool areFreeCells(const Vec2i &pos, int size, Zone field) const;
 	bool areFreeCells(const Vec2i &pos, int size, Field field) const;
 	bool areFreeCells ( const Vec2i &pos, int size, char *fieldMap ) const;
 
@@ -254,7 +261,6 @@ public:
 	bool areAproxFreeCells(const Vec2i &pos, int size, Field field, int teamIndex) const;
 
 	void getOccupants(vector<Unit *> &results, const Vec2i &pos, int size, Zone field) const;
-	//bool isFreeCell(const Vec2i &pos, Field field) const;
 
 	bool fieldsCompatible ( Cell *cell, Field mf ) const;
 	bool isFieldMapCompatible ( const Vec2i &pos, const UnitType *unitType ) const;
@@ -277,8 +283,6 @@ public:
 	}
 
 	//unit placement
-//	bool aproxCanMove(const Unit *unit, const Vec2i &pos1, const Vec2i &pos2) const;
-	//bool canMove(const Unit *unit, const Vec2i &pos1, const Vec2i &pos2) const;
     void putUnitCells(Unit *unit, const Vec2i &pos);
 	void clearUnitCells(Unit *unit, const Vec2i &pos);
 	void evict(Unit *unit, const Vec2i &pos, vector<Unit*> &evicted);
@@ -290,7 +294,6 @@ public:
 	void prepareTerrain(const Unit *unit);
 	void flatternTerrain(const Unit *unit);
 
-	//void flattenTerrain(const Unit *unit);
 	void computeNormals();
 	void computeInterpolatedHeights();
 
@@ -308,8 +311,8 @@ public:
 	#endif
 
 	//static
-	static Vec2i toTileCoords(Vec2i unitPos)	{return unitPos/cellScale;}
-	static Vec2i toUnitCoords(Vec2i surfPos)	{return surfPos*cellScale;}
+	static Vec2i toTileCoords(Vec2i cellPos)	{return cellPos / GameConstants::cellScale;}
+	static Vec2i toUnitCoords(Vec2i tilePos)	{return tilePos * GameConstants::cellScale;}
 	static string getMapPath(const string &mapName)	{return "maps/"+mapName+".gbm";}
 
 private:
@@ -320,409 +323,10 @@ private:
 	void setCellTypes();
 	void calcAvgAltitude();
 
-	//void setCellType ( Vec2i pos );
-
-	static void findNearest(Vec2i &result, const Vec2i &start, const Vec2i &candidate, float &minDistance);
-	void findNearestFree(Vec2i &result, const Vec2i &start, int size, Field field, const Vec2i &candidate, float &minDistance) const;
-	void findNearestFree(Vec2i &result, const Vec2i &start, int size, Field field, const Vec2i &candidate, float &minDistance, const Unit *unit) const;
+	static void findNearest(Vec2i &result, const Vec2i &start, const Vec2i &candidate, fixed &minDistance);
+	void findNearestFree(Vec2i &result, const Vec2i &start, int size, Field field, const Vec2i &candidate, fixed &minDistance) const;
+	void findNearestFree(Vec2i &result, const Vec2i &start, int size, Field field, const Vec2i &candidate, fixed &minDistance, const Unit *unit) const;
 };
-
-
-// ===============================
-// 	class PosCircularIteratorOrdered
-// ===============================
-/**
- * A position circular iterator who's results are garaunteed to be ordered by distance from the
- * center.  This iterator is slightly slower than PosCircularIteratorSimple, but can produce faster
- * calculations when either the nearest or furthest of a certain object is desired and the loop
- * can termainte as soon as a match is found, rather than iterating through all possibilities and
- * then calculating the nearest or furthest later.
- */
-class PosCircularIteratorOrdered {
-private:
-	const Map &map;
-	Vec2i center;
-	Glest::Game::Util::PosCircularIterator *i;
-
-public:
-	PosCircularIteratorOrdered(const Map &map, const Vec2i &center,
-			Glest::Game::Util::PosCircularIterator *i) : map(map), center(center), i(i) {} 
-	~PosCircularIteratorOrdered() {
-		delete i;
-	}
-
-	bool getNext(Vec2i &result) {
-		Vec2i offset;
-		do {
-			if(!i->getNext(offset)) {
-				return false;
-			}
-			result = center + offset;
-		} while(!map.isInside(result));
-
-		return true;
-	}
-
-	bool getPrev(Vec2i &result) {
-		Vec2i offset;
-		do {
-			if(!i->getPrev(offset)) {
-				return false;
-			}
-			result = center + offset;
-		} while(!map.isInside(result));
-
-		return true;
-	}
-
-	bool getNext(Vec2i &result, float &dist) {
-		Vec2i offset;
-		do {
-			if(!i->getNext(offset, dist)) {
-				return false;
-			}
-			result = center + offset;
-		} while(!map.isInside(result));
-
-		return true;
-	}
-
-	bool getPrev(Vec2i &result, float &dist) {
-		Vec2i offset;
-		do {
-			if(!i->getPrev(offset, dist)) {
-				return false;
-			}
-			result = center + offset;
-		} while(!map.isInside(result));
-
-		return true;
-	}
-};
-// ===============================
-// 	class PosCircularIteratorSimple
-// ===============================
-/**
- * A position circular iterator that is more primitive and light weight than the
- * PosCircularIteratorOrdered class.  It's best used when order is not important as it uses less CPU
- * cycles for a full iteration than PosCircularIteratorOrdered (and makes code smaller).
- */
-class PosCircularIteratorSimple {
-private:
-	const Map &map;
-	Vec2i center;
-	int radius;
-	Vec2i pos;
-
-public:
-	PosCircularIteratorSimple(const Map &map, const Vec2i &center, int radius);
-	bool getNext(Vec2i &result, float &dist) {	
-		//iterate while dont find a cell that is inside the world
-		//and at less or equal distance that the radius
-		do {
-			pos.x++;
-			if (pos.x > center.x + radius) {
-				pos.x = center.x - radius;
-				pos.y++;
-			}
-			if (pos.y > center.y + radius) {
-				return false;
-			}
-			result = pos;
-			dist = pos.dist(center);
-		} while (floor(dist) >= (radius + 1) || !map.isInside(pos));
-		//while(!(pos.dist(center) <= radius && map.isInside(pos)));
-	
-		return true;
-	}
-
-	const Vec2i &getPos() {
-		return pos;
-	}
-};
-
-/*
-class PosCircularIterator{
-private:
-	Vec2i center;
-	int radius;
-	const Map *map;
-	Vec2i pos;
-
-public:
-	PosCircularIterator(const Map *map, const Vec2i &center, int radius);
-	bool next(){
-
-		//iterate while dont find a cell that is inside the world
-		//and at less or equal distance that the radius
-		do{
-			pos.x++;
-			if(pos.x > center.x+radius){
-				pos.x= center.x-radius;
-				pos.y++;
-			}
-			if(pos.y>center.y+radius)
-				return false;
-		}
-		while(floor(pos.dist(center)) >= (radius+1) || !map->isInside(pos));
-		//while(!(pos.dist(center) <= radius && map->isInside(pos)));
-
-		return true;
-	}
-
-	const Vec2i &getPos(){
-		return pos;
-	}
-};
-*/
-// ==================================
-// 	class PosCircularInsideOutIterator
-// ==================================
-
-/* *
- * A position iterator which traverses (mostly) from the nearest points to the center to the
- * furthest.  The "mostly" is because it may return a position that is more diagonal before
- * returning a position that is less diagonal, but one step further out on either the x or y
- * axis.  None the less, the behavior of this iterator should be sufficient for targeting
- * purposes where small differences in distance will not have a negative effect and are acceptable
- * to reduce CPU cycles.
- */
- /*
-class PosCircularInsideOutIterator {
-private:
-	Vec2i center;
-	int radius;
-	const Map *map;
-	Vec2i pos;
-	int step;
-	int off;
-	int cycle;
-	bool cornerOutOfRange;
-
-public:
-	PosCircularInsideOutIterator(const Map *map, const Vec2i &center, int radius);
-	
-	bool isOutOfRange(const Vec2i &p) {
-		return p.length() > radius;
-	}
-
-	bool next() {
-		do {
-			if(off ? cycle == 7 : cycle == 3) {
-				cycle = 0;
-				if(off && (off == step || (cornerOutOfRange && isOutOfRange(Vec2i(step, off))))) {
-					if(step > radius) {
-						return false;
-					} else {
-						++step;
-						off = 0;
-						cornerOutOfRange = isOutOfRange(Vec2i(step));
-					}
-				}
-			} else {
-				++cycle;
-			}
-			pos = center;
-			switch(cycle) {
-				case 0: pos += Vec2i( off,  -step);	break;
-				case 1: pos += Vec2i( step,  off);	break;
-				case 2: pos += Vec2i( off,   step);	break;
-				case 3: pos += Vec2i(-step,  off);	break;
-				case 4: pos += Vec2i(-off,  -step);	break;
-				case 5: pos += Vec2i( step, -off);	break;
-				case 7: pos += Vec2i(-off,   step);	break;
-				case 8: pos += Vec2i(-step, -off);	break;
-			}
-		} while(!map->isInside(pos));
-
-		return true;
-	}
-
-	bool next(float &dist) {
-		do {
-			if(off ? cycle == 7 : cycle == 3) {
-				cycle = 0;
-				dist = Vec2i(step, off).length();
-				if(off == step || dist > radius) {
-					if(step > radius) {
-						return false;
-					} else {
-						++step;
-						off = 0;
-					}
-				}
-			} else {
-				++cycle;
-			}
-			pos = center;
-			switch(cycle) {
-				case 0: pos += Vec2i( off,  -step);	break;
-				case 1: pos += Vec2i( step,  off);	break;
-				case 2: pos += Vec2i( off,   step);	break;
-				case 3: pos += Vec2i(-step,  off);	break;
-				case 4: pos += Vec2i(-off,  -step);	break;
-				case 5: pos += Vec2i( step, -off);	break;
-				case 7: pos += Vec2i(-off,   step);	break;
-				case 8: pos += Vec2i(-step, -off);	break;
-			}
-		} while(!map->isInside(pos));
-
-		return true;
-	}
-
-	const Vec2i &getPos() {
-		return pos;
-	}
-};
-*/
-
-//////////////////////////////////////////////////////////////////
-// Cut Here 
-//////////////////////////////////////////////////////////////////
-// ==============================================================
-//	This file is part of Glest (www.glest.org)
-//
-//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>,
-//				     2008 Daniel Santos <daniel.santos@pobox.com>
-//
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
-// ==============================================================
-
-/*
-#ifndef _GLEST_GAME_EARTHQUAKE_H_
-#define _GLEST_GAME_EARTHQUAKE_H_
-
-#include <cassert>
-#include <map>
-
-#include "vec.h"
-#include "math_util.h"
-#include "command_type.h"
-#include "logger.h"
-#include "object.h"
-#include "game_constants.h"
-#include "selection.h"
-#include "exceptions.h"
-#include "pos_iterator.h"
-
-namespace Glest{ namespace Game{
-
-using Shared::Math::Vec4f;
-using Shared::Math::Quad2i;
-using Shared::Math::Rect2i;
-using Shared::Math::Vec4f;
-using Shared::Math::Vec2f;
-using Shared::Math::Vec2i;
-using Shared::Graphics::Texture2D;
-using Shared::Platform::NetworkDataBuffer;
-using Glest::Game::Util::PosCircularIteratorFactory;
-
-class Tileset;
-class Unit;
-class Resource;
-class TechTree;
-class World;
-class UnitContainer;
-*/
-class EarthquakeType {
-private:
-	float magnitude;			/**< max variance in height */
-	float frequency;			/**< oscilations per second */
-	float speed;				/**< speed siesmic waves travel per second (in surface cells) */
-	float duration;				/**< duration in seconds */
-	float radius;				/**< radius in surface cells */
-	float initialRadius;		/**< radius of area of initial activity (in surface cells) */
-	float shiftsPerSecond;		/**< number of sudden shifts per second */
-	float shiftsPerSecondVar;	/**< variance of shiftsPerSecond (+-) */
-	Vec3f shiftLengthMult;		/**< multiplier of magnitude to determine max length of each shift */
-	float maxDps;				/**< maxiumum damage per second caused */
-	const AttackType *attackType;/**< the damage type to use for damage reports */
-	bool affectsAllies;			/**< rather or not this earthquake affects allies */
-	StaticSound *sound;
-
-
-public:
-	EarthquakeType(float maxDps, const AttackType *attackType);
-	~EarthquakeType() { delete sound; }
-	void load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
-	void spawn(Map &map, Unit *cause, const Vec2i &epicenter, float strength) const;
-
-	float getMagnitude() const				{return magnitude;}
-	float getFrequency() const				{return frequency;}
-	float getSpeed() const					{return speed;}
-	float getDuration() const				{return duration;}
-	float getRadius() const					{return radius;}
-	float getInitialRadius() const			{return initialRadius;}
-	float getshiftsPerSecond() const		{return shiftsPerSecond;}
-	float getshiftsPerSecondVar() const		{return shiftsPerSecondVar;}
-	const Vec3f &getshiftLengthMult() const	{return shiftLengthMult;}
-	float getMaxDps() const					{return maxDps;}
-	const AttackType *getAttackType() const	{return attackType;}
-	bool isAffectsAllies() const			{return affectsAllies;}
-	StaticSound *getSound() const			{return sound;}
-};
-
-class Earthquake {
-public:
-	class UnitImpact {
-	public:
-		int count;		/**< total number of cells unit occupies that are affected */
-		float intensity;/**< total intensity (average = intensity / count) */
-
-		UnitImpact() : count(0), intensity(0.f) {}
-		void impact(float intensity)			{++count; this->intensity += intensity;}
-	};
-	typedef std::map<Unit *, UnitImpact> DamageReport;
-
-private:
-	Map &map;
-	UnitReference cause;	/**< unit that caused this earthquake */
-	const EarthquakeType *type; /**< the type */
-	Vec2i epicenter;		/**< epicenter in surface coordinates */
-	float magnitude;		/**< max variance in height */
-	float frequency;		/**< oscilations per second */
-	float speed;			/**< unit cells traveled per second */
-	float duration;			/**< duration in seconds */
-	float radius;			/**< radius in surface cells */
-	float initialRadius;	/**< radius of area of initial activity (in surface cells) */
-	float progress;			/**< 0 when started, 1 when complete at epicenter (continues longer for waves to even out) */
-	Rect2i bounds;			/**< surface cell area effected */
-	Rect2i uBounds;			/**< unit cell area effected */
-	float nextShiftTime;	/**< when the shift should occurred */
-	Vec3f currentShift;		/**< the current xyz offset caused by seismic shift (before magnitude multiplier) */
-	Vec2i size;
-	size_t cellCount;
-	Random random;
-
-public:
-	Earthquake(Map &map, Unit *cause, const Vec2i &epicenter, const EarthquakeType* type, float strength);
-
-	Unit *getCause() const					{return cause;}
-	const EarthquakeType *getType() const	{return type;};
-	const Vec2i getEpicenter() const		{return epicenter;}
-	void update(float slice);
-	void getDamageReport(DamageReport &results, float slice);
-	bool isDone()							{return progress >= 1.f + radius / speed / duration;}
-	void resetSurface();
-
-private:
-	float temporalMagnitude(float temporalProgress);
-	float temporalPressure(float time, float &tm);
-	void calculateEffectiveValues(float &effectiveTime, float &effectiveMagnitude, const Vec2i &surfacePos, float time);
-};
-
-
-//}} //end namespace
-
-//#endif
-
-//////////////////////////////////////////////////////////////////
-// Cut Here 
-//////////////////////////////////////////////////////////////////
-
 
 }} //end namespace
 

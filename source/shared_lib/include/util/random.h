@@ -15,6 +15,7 @@
 
 #include <cassert>
 #include "vec.h"
+#include "fixed.h"
 
 using namespace Shared::Math;
 
@@ -45,27 +46,12 @@ public:
 		lastNumber = abs(seed) % m;
 	}
 
-	int rand() {
-		lastNumber = (a * lastNumber + b) % m;
-		return lastNumber;
-	}
+	// defined in util.cpp
+	int rand();
+	int randRange(int min, int max);
+	float randRange(float min, float max);
+	//fixed randRange(fixed min, fixed max);
 
-	int randRange(int min, int max) {
-		assert(min <= max);
-		int diff = max - min;
-		int res = min + int(float(diff + 1) * Random::rand() / m);
-		assert(res >= min && res <= max);
-		return res;
-	}
-
-	float randRange(float min, float max) {
-		assert(min <= max);
-		float rand01 = float(Random::rand()) / (m - 1);
-		float res = min + (max - min) * rand01;
-		assert(res >= min && res <= max);
-		return res;
-	}
-	
 	template<typename T> Vec2<T> randRange(const Vec2<T> &min, const Vec2<T> &max) {
 		return Vec2<T>(
 				randRange(min.x, max.x),

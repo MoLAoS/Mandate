@@ -207,7 +207,7 @@ void ParticleRendererGl::renderSystemLine(ParticleSystem *ps) {
 	assertGl();
 }
 
-void ParticleRendererGl::renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr) {
+void ParticleRendererGl::renderSingleModel(ParticleSystem *ps, ModelRenderer *mr) {
 	//render model
 	if (ps->getModel() != NULL) {
 

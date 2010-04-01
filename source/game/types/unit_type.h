@@ -35,23 +35,24 @@ class FactionType;
 // 	class Level
 // ===============================
 
-class Level: public EnhancementTypeBase, public NameIdPair {
+class Level: public EnhancementType, public NameIdPair {
 private:
 	int kills;
 
 public:
-	Level() : EnhancementTypeBase() {
-		maxHpMult = 1.5f;
-		maxEpMult = 1.5f;
-		sightMult = 1.2f;
-		armorMult = 1.5f;
-		effectStrength = 0.1f;
+	Level() : EnhancementType() {
+		const fixed onePointFive = fixed(3) / 2;
+		maxHpMult = onePointFive;
+		maxEpMult = onePointFive;
+		sightMult = fixed(6) / 5;
+		armorMult = onePointFive;
+		effectStrength = fixed(1) / 10;
 	}
 
 	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const {
 		NameIdPair::doChecksum(checksum);
-		EnhancementTypeBase::doChecksum(checksum);
+		EnhancementType::doChecksum(checksum);
 	}
 	int getKills() const			{return kills;}
 };
@@ -75,7 +76,7 @@ public:
 // ===============================
 
 
-class UnitType: public ProducibleType, public UnitStatsBase {
+class UnitType: public ProducibleType, public UnitStats {
 private:
 	typedef vector<SkillType*> SkillTypes;
 	typedef vector<CommandType*> CommandTypes;
@@ -109,8 +110,8 @@ private:
 	//store first command type and skill type of each class
 	const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
 	const SkillType *firstSkillTypeOfClass[SkillClass::COUNT];
-	float halfSize;
-	float halfHeight;
+	fixed halfSize;
+	fixed halfHeight;
 
 public:
 	//creation and loading
@@ -133,8 +134,8 @@ public:
 //	const PetRules &getPetRules() const					{return petRules;}
 	const Emanations &getEmanations() const				{return emanations;}
 	bool isMultiBuild() const							{return multiBuild;}
-	float getHalfSize() const							{return halfSize;}
-	float getHalfHeight() const							{return halfHeight;}
+	fixed getHalfSize() const							{return halfSize;}
+	fixed getHalfHeight() const							{return halfHeight;}
 	bool isMobile () const {
 		const SkillType *st = getFirstStOfClass(SkillClass::MOVE);
 		return st && st->getSpeed() > 0 ? true: false;

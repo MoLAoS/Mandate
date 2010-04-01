@@ -21,7 +21,6 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
 
@@ -31,7 +30,7 @@ namespace Glest{ namespace Game{
 // 	class ParticleSystemType
 // =====================================================
 
-ParticleSystemType::ParticleSystemType(){
+ParticleSystemType::ParticleSystemType() {
 }
 
 void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &dir) {
@@ -220,13 +219,13 @@ void ParticleSystemTypeProjectile::load(const string &dir, const string &path){
 }
 
 ParticleSystem *ParticleSystemTypeProjectile::create() {
-	ProjectileParticleSystem *ps =  new ProjectileParticleSystem(*this);
+	ProjectileParticleSystem *ps = new ProjectileParticleSystem(*this);
 
 	ps->setTrajectory(ProjectileParticleSystem::strToTrajectory(trajectory));
 	ps->setTrajectorySpeed(trajectorySpeed);
 	ps->setTrajectoryScale(trajectoryScale);
 	ps->setTrajectoryFrequency(trajectoryFrequency);
-
+	
 	return ps;
 }
 

@@ -22,9 +22,10 @@
 #include "tech_tree.h"
 #include "faction_type.h"
 #include "map.h"
+#include "earthquake_type.h"
+#include "network_message.h"
 
 #include "leak_dumper.h"
-
 
 using namespace Shared::Util;
 using namespace Shared::Graphics;
@@ -35,25 +36,25 @@ namespace Glest{ namespace Game{
 // 	class SkillType
 // =====================================================
 
-SkillType::SkillType(SkillClass skillClass, const char* typeName) :
-		skillClass(skillClass),
-		effectTypes(),
-		name(),
-		epCost(0),
-		//speed(0.f),
-		//animSpeed(0.f),
-		animations(),
-		animationsStyle(asSingle),
-		sounds(),
-		soundStartTime(0.f),
-		typeName(typeName),
-		minRange(0),
-		maxRange(0),
-		effectsRemoved(0),
-		removeBenificialEffects(false),
-		removeDetrimentalEffects(false),
-		removeAllyEffects(false),
-		removeEnemyEffects(false) {
+SkillType::SkillType(SkillClass skillClass, const char* typeName) 
+		: NameIdPair()
+		, skillClass(skillClass)
+		, effectTypes()
+		, epCost(0)
+		//, speed(0.f)
+		//, animSpeed(0.f)
+		, animations()
+		, animationsStyle(AnimationsStyle::SINGLE)
+		, sounds()
+		, soundStartTime(0.f)
+		, typeName(typeName)
+		, minRange(0)
+		, maxRange(0)
+		, effectsRemoved(0)
+		, removeBenificialEffects(false)
+		, removeDetrimentalEffects(false)
+		, removeAllyEffects(false)
+		, removeEnemyEffects(false) {
 }
 
 SkillType::~SkillType(){
@@ -70,23 +71,31 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	animSpeed = sn->getChildIntValue("anim-speed");
 
 	//model
-	string path= sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
-	animations.push_back(Renderer::getInstance().newModel(rsGame));
-	animations.front()->load(dir + "/" + path);
+	const XmlNode *animNode = sn->getChild("animation");
+	if (animNode->getAttribute("path")) { // single animation, lagacy style
+		string path= sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
+		animations.push_back(Renderer::getInstance().newModel(rsGame));
+		animations.back()->load(dir + "/" + path);
+		animationsStyle = AnimationsStyle::SINGLE;
+	} else { // multi-anim, new style
+		for (int i=0; i < animNode->getChildCount(); ++i) {
+			string path = animNode->getChild("anim-file", i)->getAttribute("path")->getRestrictedValue();
+			animations.push_back(Renderer::getInstance().newModel(rsGame));
+			animations.back()->load(dir + "/" + path);
+		}
+		animationsStyle = AnimationsStyle::RANDOM;
+	}
 
 	//sound
 	const XmlNode *soundNode= sn->getChild("sound", 0, false);
 	if(soundNode && soundNode->getBoolAttribute("enabled")) {
-
 		soundStartTime= soundNode->getAttribute("start-time")->getFloatValue();
-
-		sounds.resize(soundNode->getChildCount());
 		for(int i=0; i<soundNode->getChildCount(); ++i){
 			const XmlNode *soundFileNode= soundNode->getChild("sound-file", i);
 			string path= soundFileNode->getAttribute("path")->getRestrictedValue();
 			StaticSound *sound= new StaticSound();
 			sound->load(dir + "/" + path);
-			sounds[i]= sound;
+			sounds.add(sound);
 		}
 	}
 
@@ -131,13 +140,12 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 		//proj sounds
 		const XmlNode *soundNode= projectileNode->getChild("sound", 0, false);
 		if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
-			projSounds.resize(soundNode->getChildCount());
 			for(int i=0; i<soundNode->getChildCount(); ++i){
 				const XmlNode *soundFileNode= soundNode->getChild("sound-file", i);
 				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
 				StaticSound *sound= new StaticSound();
 				sound->load(dir + "/" + path);
-				projSounds[i]= sound;
+				projSounds.add(sound);
 			}
 		}
 	}
@@ -164,7 +172,7 @@ void SkillType::doChecksum(Checksum &checksum) const {
 	foreach_const (EffectTypes, it, effectTypes) {
 		(*it)->doChecksum(checksum);
 	}
-	checksum.addString(name);
+	checksum.add(name);
 	checksum.add<int>(epCost);
 	checksum.add<int>(speed);
 	checksum.add<int>(animSpeed);
@@ -196,7 +204,7 @@ void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) 
 		str += 	intToStr(minRange) + "...";
 	}
 	str += intToStr(maxRange);
-	EnhancementTypeBase::describeModifier(str, unit->getMaxRange(this) - maxRange);
+	EnhancementType::describeModifier(str, unit->getMaxRange(this) - maxRange);
 	str+="\n";
 }
 
@@ -227,9 +235,35 @@ void SkillType::descEffectsRemoved(string &str, const Unit *unit) const {
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
 	str+= Lang::getInstance().get(speedType) + ": " + intToStr(speed);
-	EnhancementTypeBase::describeModifier(str, unit->getSpeed(this) - speed);
+	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
 	str+="\n";
 }
+
+CycleInfo SkillType::calculateCycleTime() const {
+	static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
+	if (skillClass == SkillClass::MOVE) {
+		return CycleInfo(-1, -1);
+	}
+	float progressSpeed = getSpeed() * speedModifier;
+	float animProgressSpeed = getAnimSpeed() * speedModifier;
+	int skillFrames = int(1.0000001f / progressSpeed);
+	int animFrames = int(1.0000001f / animProgressSpeed);
+	int attackOffset = -1;
+	if (skillClass == SkillClass::ATTACK) {
+		attackOffset = int(startTime / animProgressSpeed);
+		if (!attackOffset) attackOffset = 1;
+		assert(attackOffset > 0 && attackOffset < 256);
+	}
+	int soundOffset = -1;
+	if (!sounds.getSounds().empty()) {
+		soundOffset = int(soundStartTime / animProgressSpeed);
+		if (soundOffset < 1) ++soundOffset;
+		assert(soundOffset > 0);
+	}
+	assert(skillFrames > 0 && animFrames > 0);
+	return CycleInfo(skillFrames, animFrames, soundOffset, attackOffset);
+}
+
 
 /** obsolete??? use SkillClassNames[sc] ?? */
 string SkillType::skillClassToStr(SkillClass skillClass){
@@ -289,7 +323,7 @@ void RangedType::getDesc(string &str, const Unit *unit, const char* rangeDesc) c
 		str += 	intToStr(minRange) + "...";
 	}
 	str += intToStr(maxRange);
-	EnhancementTypeBase::describeModifier(str, unit->getMaxRange(this) - maxRange);
+	EnhancementType::describeModifier(str, unit->getMaxRange(this) - maxRange);
 	str+="\n";
 }
 */
@@ -390,17 +424,17 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 
 	const XmlNode *attackPctStolenNode= sn->getChild("attack-percent-stolen", 0, false);
 	if(attackPctStolenNode) {
-		attackPctStolen = attackPctStolenNode->getAttribute("value")->getFloatValue() / 100.0f;
-		attackPctVar = attackPctStolenNode->getAttribute("var")->getFloatValue() / 100.0f;
+		attackPctStolen = attackPctStolenNode->getAttribute("value")->getFixedValue() / 100;
+		attackPctVar = attackPctStolenNode->getAttribute("var")->getFixedValue() / 100;
 	} else {
-		attackPctStolen = 0.0f;
-		attackPctVar = 0.0f;
+		attackPctStolen = 0;
+		attackPctVar = 0;
 	}
 
 	earthquakeType = NULL;
 	XmlNode *earthquakeNode = sn->getChild("earthquake", 0, false);
 	if(earthquakeNode) {
-		earthquakeType = new EarthquakeType(attackStrength, attackType);
+		earthquakeType = new EarthquakeType(float(attackStrength), attackType);
 		earthquakeType->load(earthquakeNode, dir, tt, ft);
 	}
 }
@@ -408,10 +442,10 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 void AttackSkillType::doChecksum(Checksum &checksum) const {
 	TargetBasedSkillType::doChecksum(checksum);
 
-	checksum.add<int>(attackStrength);
-	checksum.add<int>(attackVar);
-	checksum.add<float>(attackPctStolen);
-	checksum.add<float>(attackPctVar);
+	checksum.add(attackStrength);
+	checksum.add(attackVar);
+	checksum.add(attackPctStolen);
+	checksum.add(attackPctVar);
 	attackType->doChecksum(checksum);
 	
 	// earthquakeType ??
@@ -425,23 +459,23 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	str+= intToStr(attackStrength - attackVar);
 	str+= "...";
 	str+= intToStr(attackStrength + attackVar);
-	EnhancementTypeBase::describeModifier(str, unit->getAttackStrength(this) - attackStrength);
+	EnhancementType::describeModifier(str, unit->getAttackStrength(this) - attackStrength);
 	str+= " ("+ attackType->getName() +")";
 	str+= "\n";
-
-	if(unit->getAttackPctStolen(this) || attackPctVar) {
+/*
+	if(unit->getAttackPctStolen(this) != 0 || attackPctVar != 0) {
 		str+= lang.get("HealthStolen") + ": ";
-		float fhigh = unit->getAttackPctStolen(this) + attackPctVar;
-		float flow = unit->getAttackPctStolen(this) - attackPctVar;
+		fixed fhigh = unit->getAttackPctStolen(this) + attackPctVar;
+		fixed flow = unit->getAttackPctStolen(this) - attackPctVar;
 
-		str += Conversion::toStr(flow * 100.0f);
+		str += Conversion::toStr(flow * 100);
 		if(fhigh != flow) {
 			str += "% ... ";
-			str += Conversion::toStr(fhigh * 100.0f);
+			str += Conversion::toStr(fhigh * 100);
 		}
 		str += "%\n";
 	}
-
+*/
 	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
 
 	descSpeed(str, unit, "AttackSpeed");
@@ -458,10 +492,14 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 // 	class HarvestSkillType
 // ===============================
 
-
-// =====================================================
+// ===============================
 // 	class DieSkillType
-// =====================================================
+// ===============================
+
+void DieSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add<bool>(fade);
+}
 
 void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
 	SkillType::load(sn, dir, tt, ft);
@@ -475,7 +513,7 @@ void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt
 
 RepairSkillType::RepairSkillType() : SkillType(SkillClass::REPAIR, "Repair"), splashParticleSystemType(NULL) {
 	amount = 0;
-	multiplier = 1.0f;
+	multiplier = 1;
 	petOnly = false;
 	selfAllowed = true;
 	selfOnly = false;
@@ -493,7 +531,7 @@ void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	}
 
 	if((n = sn->getChild("multiplier", 0, false))) {
-		multiplier = n->getAttribute("value")->getFloatValue();
+		multiplier = n->getAttribute("value")->getFixedValue();
 	}
 
 	if((n = sn->getChild("pet-only", 0, false))) {
@@ -528,11 +566,11 @@ void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 
 void RepairSkillType::doChecksum(Checksum &checksum) const {
 	SkillType::doChecksum(checksum);
-	checksum.add<int>(amount);
-	checksum.add<float>(multiplier);
-	checksum.add<bool>(petOnly);
-	checksum.add<bool>(selfOnly);
-	checksum.add<bool>(selfAllowed);
+	checksum.add(amount);
+	checksum.add(multiplier);
+	checksum.add(petOnly);
+	checksum.add(selfOnly);
+	checksum.add(selfAllowed);
 }
 
 void RepairSkillType::getDesc(string &str, const Unit *unit) const {
@@ -576,16 +614,6 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 }
 
 // ===============================
-// 	class DieSkillType
-// ===============================
-
-void DieSkillType::doChecksum(Checksum &checksum) const {
-	SkillType::doChecksum(checksum);
-	checksum.add<bool>(fade);
-}
-
-
-// ===============================
 // 	class FallDownSkillType
 // ===============================
 
@@ -618,17 +646,6 @@ GetUpSkillType::GetUpSkillType(const SkillType *model) : SkillType(SkillClass::G
 
 void GetUpSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
 	SkillType::load(sn, dir, tt, ft);
-}
-
-// =====================================================
-// 	class WaitForServerSkillType
-// =====================================================
-
-WaitForServerSkillType::WaitForServerSkillType(const SkillType *model) :
-		SkillType(SkillClass::WAIT_FOR_SERVER, "Waiting for server...") {
-    speed = model->getSpeed();
-    animSpeed = model->getAnimSpeed();
-    animations.push_back((Model *)model->getAnimation());
 }
 
 // =====================================================

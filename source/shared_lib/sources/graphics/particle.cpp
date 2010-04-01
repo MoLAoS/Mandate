@@ -24,9 +24,7 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Util;
-using namespace std;
 
 namespace Shared{ namespace Graphics{
 
@@ -158,8 +156,7 @@ ParticleSystem::ParticleSystem(int particleCount) :
 		visible(true),
 		aliveParticleCount(0),
 		pos(0.f),
-		windSpeed(0.f),
-		particleObserver(NULL) {
+		windSpeed(0.f) {
 }
 
 ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCount) :
@@ -171,8 +168,7 @@ ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCoun
 		visible(true),
 		aliveParticleCount(0),
 		pos(0.f),
-		windSpeed(0.f),
-		particleObserver(NULL) {
+		windSpeed(0.f) {
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -219,10 +215,6 @@ inline void ParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 void ParticleSystem::fade() {
 	assert(state == sPlay);
 	state = sFade;
-
-	if (particleObserver) {
-		particleObserver->update(this);
-	}
 }
 
 // =============== PROTECTED =========================
@@ -387,320 +379,6 @@ void SnowParticleSystem::initParticle(Particle *p, int particleIndex) {
 
 inline bool SnowParticleSystem::deathTest(Particle *p) {
 	return p->pos.y < 0;
-}
-
-// ===========================================================================
-//  AttackParticleSystem
-// ===========================================================================
-
-AttackParticleSystem::AttackParticleSystem(int particleCount): ParticleSystem(particleCount) {
-	primitiveType = Particle::ptQuad;
-	offset = Vec3f(0.0f);
-	gravity = 0.0f;
-	direction = Vec3f(1.0f, 0.0f, 0.0f);
-}
-
-AttackParticleSystem::AttackParticleSystem(const ParticleSystemBase &type, int particleCount) :
-		ParticleSystem(type, particleCount) {
-	direction = Vec3f(1.0f, 0.0f, 0.0f);
-}
-
-void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
-	if (active) {
-		if (model) {
-			pr->renderSingleModel(this, mr);
-		}
-		switch (primitiveType) {
-		case Particle::ptQuad:
-			pr->renderSystem(this);
-			break;
-		case Particle::ptLine:
-			pr->renderSystemLine(this);
-			break;
-		default:
-			assert(false);
-		}
-	}
-}
-
-// ===========================================================================
-//  ProjectileParticleSystem
-// ===========================================================================
-
-ProjectileParticleSystem::ProjectileParticleSystem(int particleCount) :
-		AttackParticleSystem(particleCount) {
-	setEmissionRate(20);
-	setColor(Vec4f(1.0f, 0.3f, 0.0f, 0.5f));
-	setEnergy(100);
-	setEnergyVar(50);
-	setSize(0.4f);
-	setSpeed(0.14f);
-
-	trajectory = tLinear;
-	trajectorySpeed = 1.0f;
-	trajectoryScale = 1.0f;
-	trajectoryFrequency = 1.0f;
-
-	nextParticleSystem = NULL;
-	target = NULL;
-}
-
-
-ProjectileParticleSystem::ProjectileParticleSystem(const ParticleSystemBase &model, int particleCount) :
-		AttackParticleSystem(model, particleCount) {
-	trajectory = tLinear;
-	trajectorySpeed = 1.0f;
-	trajectoryScale = 1.0f;
-	trajectoryFrequency = 1.0f;
-
-	nextParticleSystem = NULL;
-	target = NULL;
-}
-
-ProjectileParticleSystem::~ProjectileParticleSystem() {
-	if (nextParticleSystem != NULL) {
-		nextParticleSystem->prevParticleSystem = NULL;
-	}
-}
-
-void ProjectileParticleSystem::link(SplashParticleSystem *particleSystem) {
-	nextParticleSystem = particleSystem;
-	nextParticleSystem->setState(sPause);
-	nextParticleSystem->prevParticleSystem = this;
-}
-
-void ProjectileParticleSystem::update() {
-	if (state == sPlay) {
-		if (target) {
-			endPos = target->getCurrVector();
-		}
-		lastPos = pos;
-
-		Vec3f flatVector;
-
-		if (trajectory == tRandom) {
-			Vec3f currentTargetVector = endPos - pos;
-			currentTargetVector.normalize();
-
-			float varRotation = random.randRange(0.f, twopi);
-			float varAngle = random.randRange(-pi, pi) * trajectoryScale;
-			float varPitch = cosf(varRotation) * varAngle;
-			float varYaw = sinf(varRotation) * varAngle;
-
-			float d = Vec2f(currentTargetVector.z, currentTargetVector.x).length();
-			float yaw = atan2f(currentTargetVector.x, currentTargetVector.z) + varYaw;
-			float pitch = asinf(currentTargetVector.y) + varPitch;
-			float pc = cosf(pitch);
-
-			Vec3f newVector(pc * sinf(yaw), sinf(pitch), pc * cosf(yaw));
-
-			float lengthVariance = 1.f;//random.randRange(0.125f, 1.f);
-			//currentEmissionRate = (int)roundf(emissionRate * lengthVariance);
-			flatVector = newVector * (trajectorySpeed * lengthVariance);
-		} else {
-			flatVector = zVector * trajectorySpeed;
-		}
-
-		flatPos += flatVector;
-		Vec3f targetVector = endPos - startPos;
-		Vec3f currentVector = flatPos - startPos;
-
-		// ratio
-		float t = clamp(currentVector.length() / targetVector.length(), 0.0f, 1.0f);
-
-		// trajectory
-		switch (trajectory) {
-			case tLinear:
-				pos = flatPos;
-				break;
-
-			case tParabolic: {
-					float scaledT = 2.0f * (t - 0.5f);
-					float paraboleY = (1.0f - scaledT * scaledT) * trajectoryScale;
-
-					pos = flatPos;
-					pos.y += paraboleY;
-				}
-				break;
-
-			case tSpiral:
-				pos = flatPos;
-				pos += xVector * cosf(t * trajectoryFrequency * targetVector.length()) * trajectoryScale;
-				pos += yVector * sinf(t * trajectoryFrequency * targetVector.length()) * trajectoryScale;
-				break;
-
-			case tRandom:
-				if (flatPos.dist(endPos) < 0.5f) {
-					pos = flatPos;
-				} else {
-					pos = flatPos;
-					//pos += xVector * cos(t*trajectoryFrequency*targetVector.length())*trajectoryScale;
-					//pos += yVector * sin(t*trajectoryFrequency*targetVector.length())*trajectoryScale;
-				}
-				break;
-
-			default:
-				assert(false);
-		}
-	}
-
-	direction = pos - lastPos;
-	direction.normalize();
-
-	//arrive destination
-	if (flatPos.dist(endPos) < 0.5f) {
-		state = sFade;
-		model = NULL;
-
-		if (particleObserver) {
-			particleObserver->update(this);
-		}
-
-		if (nextParticleSystem) {
-			nextParticleSystem->setState(sPlay);
-			nextParticleSystem->setPos(endPos);
-		}
-	}
-	ParticleSystem::update();
-}
-
-void ProjectileParticleSystem::initParticle(Particle *p, int particleIndex) {
-	ParticleSystem::initParticle(p, particleIndex);
-
-	float t = static_cast<float>(particleIndex) / emissionRate;
-
-	p->pos = pos + (lastPos - pos) * t;
-	p->lastPos = lastPos;
-	p->speed = Vec3f(random.randRange(-0.1f, 0.1f), random.randRange(-0.1f, 0.1f), random.randRange(-0.1f, 0.1f)) * speed;
-	p->accel = Vec3f(0.0f, -gravity, 0.0f);
-
-	updateParticle(p);
-}
-
-inline void ProjectileParticleSystem::updateParticle(Particle *p) {
-	float energyRatio = clamp(static_cast<float>(p->energy) / energy, 0.f, 1.f);
-
-	p->lastPos += p->speed;
-	p->pos += p->speed;
-	p->speed += p->accel;
-	p->color = color * energyRatio + colorNoEnergy * (1.0f - energyRatio);
-	p->color2 = color2 * energyRatio + color2NoEnergy * (1.0f - energyRatio);
-	p->size = size * energyRatio + sizeNoEnergy * (1.0f - energyRatio);
-	p->energy--;
-}
-
-void ProjectileParticleSystem::setPath(Vec3f startPos, Vec3f endPos) {
-
-	//compute axis
-	zVector = endPos - startPos;
-	zVector.normalize();
-	yVector = Vec3f(0.0f, 1.0f, 0.0f);
-	xVector = zVector.cross(yVector);
-
-	//apply offset
-	startPos += xVector * offset.x;
-	startPos += yVector * offset.y;
-	startPos += zVector * offset.z;
-
-	pos = startPos;
-	lastPos = startPos;
-	flatPos = startPos;
-
-	//recompute axis
-	zVector = endPos - startPos;
-	zVector.normalize();
-	yVector = Vec3f(0.0f, 1.0f, 0.0f);
-	xVector = zVector.cross(yVector);
-
-	// set members
-	this->startPos = startPos;
-	this->endPos = endPos;
-}
-
-ProjectileParticleSystem::Trajectory ProjectileParticleSystem::strToTrajectory(const string &str) {
-	if(str == "linear") {
-		return tLinear;
-	} else if(str == "parabolic") {
-		return tParabolic;
-	} else if(str == "spiral") {
-		return tSpiral;
-	} else if(str == "random") {
-		return tRandom;
-	} else {
-		throw runtime_error("Unknown particle system trajectory: " + str);
-	}
-}
-
-// ===========================================================================
-//  SplashParticleSystem
-// ===========================================================================
-
-SplashParticleSystem::SplashParticleSystem(const ParticleSystemBase &model,  int particleCount)
-		: AttackParticleSystem(model, particleCount) {
-
-	prevParticleSystem = NULL;
-
-	emissionRateFade = 1;
-	verticalSpreadA = 1.0f;
-	verticalSpreadB = 0.0f;
-	horizontalSpreadA = 1.0f;
-	horizontalSpreadB = 0.0f;
-}
-
-SplashParticleSystem::SplashParticleSystem(int particleCount)
-		: AttackParticleSystem(particleCount) {
-	setColor(Vec4f(1.0f, 0.3f, 0.0f, 0.8f));
-	setEnergy(100);
-	setEnergyVar(50);
-	setSize(1.0f);
-	setSpeed(0.003f);
-
-	prevParticleSystem = NULL;
-
-	emissionRateFade = 1;
-	verticalSpreadA = 1.0f;
-	verticalSpreadB = 0.0f;
-	horizontalSpreadA = 1.0f;
-	horizontalSpreadB = 0.0f;
-}
-
-SplashParticleSystem::~SplashParticleSystem() {
-	if (prevParticleSystem != NULL) {
-		prevParticleSystem->nextParticleSystem = NULL;
-	}
-}
-
-inline void SplashParticleSystem::update() {
-	ParticleSystem::update();
-	if (state != sPause) {
-		emissionRate -= emissionRateFade;
-	}
-}
-
-void SplashParticleSystem::initParticle(Particle *p, int particleIndex){
-	p->pos = pos;
-	p->lastPos = p->pos;
-	p->energy = energy;
-	p->size = size;
-	p->color = color;
-	p->speed = Vec3f(
-			horizontalSpreadA * random.randRange(-1.0f, 1.0f) + horizontalSpreadB,
-			verticalSpreadA * random.randRange(-1.0f, 1.0f) + verticalSpreadB,
-			horizontalSpreadA * random.randRange(-1.0f, 1.0f) + horizontalSpreadB);
-	p->speed.normalize();
-	p->speed = p->speed * speed;
-	p->accel = Vec3f(0.0f, -gravity, 0.0f);
-}
-
-inline void SplashParticleSystem::updateParticle(Particle *p) {
-	float energyRatio = clamp(static_cast<float>(p->energy) / energy, 0.f, 1.f);
-
-	p->lastPos = p->pos;
-	p->pos = p->pos + p->speed;
-	p->speed = p->speed + p->accel;
-	p->energy--;
-	p->color = color * energyRatio + colorNoEnergy * (1.0f - energyRatio);
-	p->size = size * energyRatio + sizeNoEnergy * (1.0f - energyRatio);
 }
 
 // ===========================================================================

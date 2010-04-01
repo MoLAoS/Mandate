@@ -18,15 +18,19 @@
 #include "vec.h"
 #include "game_constants.h"
 
+#include "heap.h"
+
 #include <algorithm>
 #include <set>
 #include <list>
 #include <limits>
 
+#define _USE_STL_HEAP_ 0
+
 using Shared::Math::Vec2i;
 
-using namespace std;
 using namespace Shared::Platform;
+using Shared::Util::MinHeap;
 
 namespace Glest { namespace Game { namespace Search {
 
@@ -54,41 +58,75 @@ struct PosOff {				/**< A bit packed position (Vec2i) and offset (direction) pai
 };
 #pragma pack(pop)
 
-// =====================================================
-// struct AStarNode
-// =====================================================
-struct AStarNode {					/**< A node structure for A* with NodeStore							*/
-	PosOff posOff;				   /**< position of this node, and direction of best path to it		   */
-	float heuristic;			  /**< estimate of distance to goal									  */
-	float distToHere;			 /**< cost from origin to this node									 */
-	float est()	const { return distToHere + heuristic;}	   /**< estimate, costToHere + heuristic   */
-	Vec2i pos()		  { return posOff.getPos();		  }	  /**< position of this node			  */
-	Vec2i prev()	  { return posOff.getPrev();	  }  /**< best path to this node is from	 */
-	bool hasPrev()	  { return posOff.hasOffset();	  } /**< has valid previous 'pointer'		*/
-}; // == 96 bits (12 bytes)
+#if _USE_STL_HEAP_
+	// =====================================================
+	// struct AStarNode
+	// =====================================================
+	struct AStarNode {					/**< A node structure for A* with NodeStore							*/
+		PosOff posOff;				   /**< position of this node, and direction of best path to it		   */
+		float heuristic;			  /**< estimate of distance to goal									  */
+		float distToHere;			 /**< cost from origin to this node									 */
+		float est()	const { return distToHere + heuristic;}	   /**< estimate, costToHere + heuristic   */
+		Vec2i pos()		  { return posOff.getPos();		  }	  /**< position of this node			  */
+		Vec2i prev()	  { return posOff.getPrev();	  }  /**< best path to this node is from	 */
+		bool hasPrev()	  { return posOff.hasOffset();	  } /**< has valid previous 'pointer'		*/
+	}; // == 96 bits (12 bytes)
 
-// =====================================================
-// class AStarComp
-// =====================================================
-class AStarComp { /**< Comparison function for the open heap @todo deprecate, replace heap */
-public:
-	/** Comparison function
-	  * @param one AStarNode for comparison
-	  * @param two AStarNode for comparison
-	  * @return  true if two is 'better' than one
-	  */
-	bool operator()( const AStarNode * const one, const AStarNode * const two ) const {
-		const float diff = ( one->distToHere + one->heuristic ) - ( two->distToHere + two->heuristic );
-		if ( diff < 0 ) return false;
-		else if ( diff > 0 ) return true;
-		// tie, prefer closer to goal...
-		if ( one->heuristic < two->heuristic ) return false;
-		if ( one->heuristic > two->heuristic ) return true;
-		// still tied... prefer nodes 'in line' with goal ???
-		// just distinguish them somehow...
-		return one < two;
-	}
-};
+	// =====================================================
+	// class AStarComp
+	// =====================================================
+	class AStarComp { /**< Comparison function for the open heap @todo deprecate, replace heap */
+	public:
+		/** Comparison function
+		  * @param one AStarNode for comparison
+		  * @param two AStarNode for comparison
+		  * @return  true if two is 'better' than one
+		  */
+		bool operator()( const AStarNode * const one, const AStarNode * const two ) const {
+			const float diff = ( one->distToHere + one->heuristic ) - ( two->distToHere + two->heuristic );
+			if ( diff < 0 ) return false;
+			else if ( diff > 0 ) return true;
+			// tie, prefer closer to goal...
+			if ( one->heuristic < two->heuristic ) return false;
+			if ( one->heuristic > two->heuristic ) return true;
+			// still tied... prefer nodes 'in line' with goal ???
+			// just distinguish them somehow...
+			return one < two;
+		}
+	};
+#else
+	// =====================================================
+	// struct AStarNode
+	// =====================================================
+	#pragma pack(push, 2)
+	struct AStarNode {					/**< A node structure for A* with NodeStore							*/
+		PosOff posOff;				   /**< position of this node, and direction of best path to it		   */
+		float heuristic;			  /**< estimate of distance to goal									  */
+		float distToHere;			 /**< cost from origin to this node									 */
+
+		float est()	const { return distToHere + heuristic;}	   /**< estimate, costToHere + heuristic   */
+		Vec2i pos()		  { return posOff.getPos();		  }	  /**< position of this node			  */
+		Vec2i prev()	  { return posOff.getPrev();	  }  /**< best path to this node is from	 */
+		bool hasPrev()	  { return posOff.hasOffset();	  } /**< has valid previous 'pointer'		*/
+
+		int16 heap_ndx;
+		void setHeapIndex(int ndx) { heap_ndx = ndx;  }
+		int  getHeapIndex() const  { return heap_ndx; }
+
+		bool operator<(const AStarNode &that) const {
+			const float diff = (distToHere + heuristic) - (that.distToHere + that.heuristic);
+			if (diff < 0) return true;
+			else if (diff > 0) return false;
+			// tie, prefer closer to goal...
+			if (heuristic < that.heuristic) return true;
+			if (heuristic > that.heuristic) return false;
+			// still tied... prefer nodes 'in line' with goal ???
+			// just distinguish them somehow...
+			return this < &that;
+		}
+	}; // == 112 bits (14 bytes)
+	#pragma pack(pop)
+#endif
 
 // ========================================================
 // class NodeStore
@@ -134,8 +172,13 @@ private:
 	int numNodes;	  /**< number of nodes used so far this search	  */
 	int tmpMaxNodes; /**< a temporary maximum number of nodes to use */
 	
-	MarkerArray markerArray;	/**< An array the size of the map, indicating node status (unvisited, open, closed)		  */
-	vector<AStarNode*> openHeap;  /**< the open list, binary heap, maintained with std algorithms							*/
+	MarkerArray markerArray;	/**< An array the size of the map, indicating node status (unvisited, open, closed) */
+
+#	if _USE_STL_HEAP_
+		vector<AStarNode*> openHeap;  /**< the open list, binary heap, maintained with std algorithms */
+#	else
+		MinHeap<AStarNode> openHeap;  /**< the open list, binary heap with index aware nodes */
+#	endif
 
 public:
 	NodeStore(int w, int h);
@@ -156,12 +199,16 @@ public:
 	/** get the best candidate from the open list, and close it.
 	  * @return the lowest estimate node from the open list, or -1,-1 if open list empty */
 	Vec2i getBestCandidate() {
-		if ( openHeap.empty() ) {
+		if (!openHeap.size()) {
 			return Vec2i(-1);
 		}
-		pop_heap(openHeap.begin(), openHeap.end(), AStarComp());
-		AStarNode *ptr = openHeap.back();
-		openHeap.pop_back();
+#		if _USE_STL_HEAP_
+			pop_heap(openHeap.begin(), openHeap.end(), AStarComp());
+			AStarNode *ptr = openHeap.back();
+			openHeap.pop_back();
+#		else
+			AStarNode *ptr = openHeap.extract();
+#		endif
 		markerArray.setClosed(ptr->pos());
 		return ptr->pos();
 	}

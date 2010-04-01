@@ -21,7 +21,6 @@
 
 using namespace Shared::Xml;
 using namespace Shared::Util;
-using namespace std;
 
 namespace Glest{ namespace Game{
 

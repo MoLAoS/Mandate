@@ -34,7 +34,9 @@ NodeStore::NodeStore(int w, int h)
 		, numNodes(0)
 		, tmpMaxNodes(size)
 		, markerArray(w, h) {
-	openHeap.reserve(size / 2);
+#	if _USE_STL_HEAP_
+		openHeap.reserve(size / 2);
+#	endif
 	stock = new AStarNode[size];
 }
 
@@ -67,7 +69,6 @@ void NodeStore::setMaxNodes(const int max) {
   * @return true if added, false if node limit reached		*/
 bool NodeStore::setOpen(const Vec2i &pos, const Vec2i &prev, float h, float d) {
 	assert(!isOpen(pos));
-//	assert(prev.x < 0 || isClosed(prev));
 	AStarNode *node = newNode();
 	if (!node) { // NodePool exhausted
 		return false;
@@ -96,8 +97,12 @@ void NodeStore::addOpenNode(AStarNode *node) {
 	assert(!isOpen(node->pos()));
 	markerArray.setOpen(node->pos());
 	markerArray.set(node->pos(), node);
-	openHeap.push_back(node);
-	push_heap(openHeap.begin(), openHeap.end(), AStarComp());
+#	if _USE_STL_HEAP_
+		openHeap.push_back(node);
+		push_heap(openHeap.begin(), openHeap.end(), AStarComp());
+#	else
+		openHeap.insert(node);
+#	endif
 }
 
 /** conditionally update a node on the open list. Tests if a path through a new nieghbour
@@ -110,16 +115,20 @@ void NodeStore::updateOpen(const Vec2i &pos, const Vec2i &prev, const float cost
 	AStarNode *posNode, *prevNode;
 	posNode = markerArray.get(pos);
 	prevNode = markerArray.get(prev);
-	if ( prevNode->distToHere + cost < posNode->distToHere ) {
+	if (prevNode->distToHere + cost < posNode->distToHere) {
 		posNode->posOff.ox = prev.x - pos.x;
 		posNode->posOff.oy = prev.y - pos.y;
 		posNode->distToHere = prevNode->distToHere + cost;
-#if 1	// find and push heap
-		vector<AStarNode*>::iterator it = find(openHeap.begin(), openHeap.end(), posNode);
-		push_heap(openHeap.begin(), it + 1, AStarComp());
-#else	// just remake entire heap
-		make_heap(openHeap.begin(), openHeap.end(), AStarComp());
-#endif
+#		if _USE_STL_HEAP_
+#			if 1	// find and push heap
+				vector<AStarNode*>::iterator it = find(openHeap.begin(), openHeap.end(), posNode);
+				push_heap(openHeap.begin(), it + 1, AStarComp());
+#			else	// just remake entire heap
+				make_heap(openHeap.begin(), openHeap.end(), AStarComp());
+#			endif
+#		else
+			openHeap.promote(posNode);
+#		endif
 	}
 }
 

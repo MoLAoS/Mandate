@@ -15,15 +15,19 @@
 #include <cassert>
 
 #include "vec.h"
+#include "fixed.h"
+#include "math_util.h"
 
 namespace Glest { namespace Game { namespace Util {
 
 using Shared::Math::Vec2i;
+using Shared::Math::Rect2i;
+using Shared::Math::fixed;
 
 struct PosData {
 	int step;
 	int off;
-	float dist;
+	fixed dist;
 };
 
 class PosCircularIterator {
@@ -34,16 +38,13 @@ protected:
 	int cycle;
 
 public:
-	PosCircularIterator(const PosData *next, const PosData *first, const PosData *last, int cycle) :
-			next(next),
-			first(first),
-			last(last),
-			cycle(cycle) {
+	PosCircularIterator(const PosData *next, const PosData *first, const PosData *last, int cycle)
+			: next(next), first(first), last(last), cycle(cycle) {
 	}
 
 	Vec2i getPosForCycle() { 
-		int step = next->step;
-		int off = next->off;
+		const int &step = next->step;
+		const int &off = next->off;
 		switch(cycle) {
 			case 0: return Vec2i( off,   step);
 			case 1: return Vec2i( step,  off);
@@ -54,17 +55,10 @@ public:
 			case 6: return Vec2i(-off,  -step);
 			case 7: return Vec2i(-step, -off);
 			default: 
-				assert(false); 
-				return Vec2i(0);		
+				throw runtime_error("PosCircularIterator::getPosForCycle() has bad cycle.");
 		}
 	}
-/*
-	Vec2i getPosForCycle() { 
-		int step = cycle & 2 ? -next->step : next->step;
-		int off = cycle & 4 ? -next->off : next->off;
-		return cycle & 1 ? Vec2i(step, off) :  Vec2i(off, step);
-	}
-*/
+
 	bool getNext(Vec2i &result) {
 		assert(next <= last);
 		if(next < first || cycle == (next->off ? 7 : 3)) {
@@ -93,7 +87,7 @@ public:
 		return true;
 	}
 
-	bool getNext(Vec2i &result, float &dist) {
+	bool getNext(Vec2i &result, fixed &dist) {
 		assert(next <= last);
 		if(next < first || cycle == (next->off ? 7 : 3)) {
 			if(next++ == last) {
@@ -108,7 +102,7 @@ public:
 		return true;
 	}
 
-	bool getPrev(Vec2i &result, float &dist) {
+	bool getPrev(Vec2i &result, fixed &dist) {
 		assert(next >= first);
 		if(!cycle) {
 			if(next-- == first) {
@@ -170,10 +164,10 @@ private:
 		return p - 1;
 	}
 
-	const PosData *getLessThanDistance(float distance) const {
+	const PosData *getLessThanDistance(fixed distance) const {
 		assert(distance <= maxRadius);
 		const PosData *p;
-		for(p = radiusIndex[static_cast<int>(distance)]; p != dataEnd; ++p) {
+		for(p = radiusIndex[distance.intp()]; p != dataEnd; ++p) {
 			if(p->dist >= distance) {
 				break;
 			}
@@ -181,15 +175,148 @@ private:
 		return p - 1;
 	}
 
-	const PosData *getGreaterThanDistance(float distance) const {
+	const PosData *getGreaterThanDistance(fixed distance) const {
 		assert(distance <= maxRadius);
 		const PosData *p;
-		for(p = radiusIndex[static_cast<int>(distance)]; p != dataEnd; ++p) {
+		for(p = radiusIndex[distance.intp()]; p != dataEnd; ++p) {
 			if(p->dist > distance) {
 				break;
 			}
 		}
 		return p;
+	}
+};
+
+// ===============================
+// 	class PosCircularIteratorOrdered
+// ===============================
+/**
+ * A position circular iterator who's results are garaunteed to be ordered by distance from the
+ * center.  This iterator is slightly slower than PosCircularIteratorSimple, but can produce faster
+ * calculations when either the nearest or furthest of a certain object is desired and the loop
+ * can termainte as soon as a match is found, rather than iterating through all possibilities and
+ * then calculating the nearest or furthest later.
+ */
+class PosCircularIteratorOrdered {
+private:
+	Rect2i bounds;
+	Vec2i center;
+	PosCircularIterator *i;
+
+public:
+	PosCircularIteratorOrdered(const Rect2i &bounds, const Vec2i &center, PosCircularIterator *i)
+			: bounds(bounds), center(center), i(i)	{} 
+	~PosCircularIteratorOrdered()				{ delete i; }
+
+	bool getNext(Vec2i &result) {
+		Vec2i offset;
+		do {
+			if(!i->getNext(offset)) {
+				return false;
+			}
+			result = center + offset;
+		} while(!bounds.isInside(result));
+
+		return true;
+	}
+
+	bool getPrev(Vec2i &result) {
+		Vec2i offset;
+		do {
+			if(!i->getPrev(offset)) {
+				return false;
+			}
+			result = center + offset;
+		} while(!bounds.isInside(result));
+
+		return true;
+	}
+
+	bool getNext(Vec2i &result, fixed &dist) {
+		Vec2i offset;
+		do {
+			if(!i->getNext(offset, dist)) {
+				return false;
+			}
+			result = center + offset;
+		} while(!bounds.isInside(result));
+
+		return true;
+	}
+
+	bool getPrev(Vec2i &result, fixed &dist) {
+		Vec2i offset;
+		do {
+			if(!i->getPrev(offset, dist)) {
+				return false;
+			}
+			result = center + offset;
+		} while(!bounds.isInside(result));
+
+		return true;
+	}
+};
+// ===============================
+// 	class PosCircularIteratorSimple
+// ===============================
+/**
+ * A position circular iterator that is more primitive and light weight than the
+ * PosCircularIteratorOrdered class.  It's best used when order is not important as it uses less CPU
+ * cycles for a full iteration than PosCircularIteratorOrdered (and makes code smaller).
+ */
+class PosCircularIteratorSimple {
+private:
+	Rect2i bounds;
+	Vec2i center;
+	int radius;
+	Vec2i pos;
+
+public:
+	PosCircularIteratorSimple(const Rect2i &bounds, const Vec2i &center, int radius)
+			: bounds(bounds), center(center), radius(radius), pos(center - Vec2i(radius + 1, radius)) {
+	}
+
+
+	bool getNext(Vec2i &result, fixed &dist) {	
+		//iterate while dont find a cell that is inside the world
+		//and at less or equal distance that the radius
+		do {
+			++pos.x;
+			if (pos.x > center.x + radius) {
+				pos.x = center.x - radius;
+				++pos.y;
+			}
+			if (pos.y > center.y + radius) {
+				return false;
+			}
+			result = pos;
+			dist = fixedDist(pos, center);
+		} while (dist.intp() >= (radius + 1) || !bounds.isInside(pos));
+	
+		return true;
+	}
+
+	bool getNext(Vec2i &result, float &dist) {	
+		//iterate while dont find a cell that is inside the world
+		//and at less or equal distance that the radius
+		do {
+			++pos.x;
+			if (pos.x > center.x + radius) {
+				pos.x = center.x - radius;
+				++pos.y;
+			}
+			if (pos.y > center.y + radius) {
+				return false;
+			}
+			result = pos;
+			dist = pos.dist(center);
+		} while (dist >= (radius + 1.f) || !bounds.isInside(pos));
+	
+		return true;
+	}
+
+	const Vec2i &getPos() {
+		return pos;
 	}
 };
 

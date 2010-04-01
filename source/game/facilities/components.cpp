@@ -26,8 +26,6 @@
 
 #include "leak_dumper.h"
 
-
-using namespace std;
 using namespace Shared::Graphics;
 
 namespace Glest { namespace Game {
@@ -41,8 +39,7 @@ float GraphicComponent::fade = 0.f;
 const float GraphicComponent::animSpeed = 0.02f;
 const float GraphicComponent::fadeSpeed = 0.01f;
 
-GraphicComponent::GraphicComponent() : x(0), y(0), w(0), h(0), text(), font(NULL) 
-{ 
+GraphicComponent::GraphicComponent() : x(0), y(0), w(0), h(0), text(), font(NULL) {
    enabled = true;
 }
 
@@ -191,7 +188,7 @@ bool GraphicListBox::mouseClick(int x, int y) {
 // class GraphicMessageBox
 // =====================================================
 
-GraphicMessageBox::GraphicMessageBox() 
+GraphicMessageBox::GraphicMessageBox()
 : GraphicComponent(), button1(), button2(), buttonCount(0) {}
 
 const int GraphicMessageBox::defH = 240;
@@ -200,7 +197,7 @@ const int GraphicMessageBox::defW = 350;
 void GraphicMessageBox::init(const string &text, const string &button1Str, const string &button2Str) {
 	font = CoreData::getInstance().getMenuFontNormal();
 	GraphicComponent::setText(text);
-	
+
 	//init and position the button(s)
 	buttonCount = (button2Str == "") ? 1 : 2;
 	layout();
@@ -294,15 +291,15 @@ void GraphicTextEntry::keyDown(const Key &key) {
 		// character
 		if ((key >= 'A' && key <= 'Z') || (key >= 'a' && key <= 'z')) {
 			text += key - 'A' + 'a';
-		
+
 		// other symbol
 		} else if ((key >= 32) && (key <= 126)) {
 			text += key;
-		
+
 		// delete
 		} else*/ if (key == keyDelete) {
 			text = "";
-		
+
 		// backspace
 		} else if (key == keyBackspace && text.size()) {
 			text.erase(text.end() - 1);

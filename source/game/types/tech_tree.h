@@ -19,6 +19,9 @@
 #include "faction_type.h"
 #include "damage_multiplier.h"
 
+using std::set;
+using std::string;
+
 namespace Glest{ namespace Game{
 
 class EffectType;
@@ -127,7 +130,7 @@ public:
     const ResourceType *getTechResourceType(int i) const;
     const ResourceType *getFirstTechResourceType() const;
     const string &getDesc() const								{return desc;}
-	float getDamageMultiplier(const AttackType *att, const ArmorType *art) const {
+	fixed getDamageMultiplier(const AttackType *att, const ArmorType *art) const {
 		return damageMultiplierTable.getDamageMultiplier(att, art);
 	}
 

@@ -57,7 +57,7 @@
 				WarningLevel="2"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4250; 4355"
+				DisableSpecificWarnings="4250;4355;4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -131,7 +131,7 @@
 				WarningLevel="1"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4250; 4355"
+				DisableSpecificWarnings="4250;4355;4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -203,7 +203,7 @@
 				WarningLevel="2"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4250; 4355"
+				DisableSpecificWarnings="4250;4355;4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -275,7 +275,7 @@
 				WarningLevel="2"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4250; 4355"
+				DisableSpecificWarnings="4250;4355;4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -356,6 +356,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\math\fixed.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\graphics\font.h"
 				>
 			</File>
@@ -388,11 +392,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\graphics\gl\graphics_factory_gl2.h"
+				RelativePath=".\include\graphics\graphics_interface.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\graphics\graphics_interface.h"
+				RelativePath=".\include\util\heap.h"
 				>
 			</File>
 			<File
@@ -412,7 +416,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\include\lang_features.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\util\leak_dumper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\util\line.h"
 				>
 			</File>
 			<File
@@ -512,27 +524,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\math\quaternion.h"
-				>
-			</File>
-			<File
 				RelativePath=".\include\graphics\quaternion.h"
 				>
 			</File>
 			<File
+				RelativePath=".\include\math\quaternion.h"
+				>
+			</File>
+			<File
 				RelativePath=".\include\util\random.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\graphics\shader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\graphics\gl\shader_gl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\include\graphics\shader_manager.h"
 				>
 			</File>
 			<File
@@ -608,11 +608,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\win32\thread.h"
+				RelativePath=".\include\platform\thread.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\thread.h"
+				RelativePath=".\include\platform\win32\thread.h"
 				>
 			</File>
 			<File
@@ -652,11 +652,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\window_gl.h"
+				RelativePath=".\include\platform\win32\window_gl.h"
 				>
 			</File>
 			<File
-				RelativePath=".\include\platform\win32\window_gl.h"
+				RelativePath=".\include\platform\window_gl.h"
 				>
 			</File>
 			<File
@@ -936,6 +936,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sources\math\math_util.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\sources\graphics\model.cpp"
 				>
 				<FileConfiguration
@@ -1160,66 +1164,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\sources\graphics\shader.cpp"
-				>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						InlineFunctionExpansion="2"
-						EnableIntrinsicFunctions="true"
-						FavorSizeOrSpeed="1"
-						BasicRuntimeChecks="0"
-						SmallerTypeCheck="false"
-						EnableEnhancedInstructionSet="2"
-						UsePrecompiledHeader="0"
-						DebugInformationFormat="3"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\sources\graphics\gl\shader_gl.cpp"
-				>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						InlineFunctionExpansion="2"
-						EnableIntrinsicFunctions="true"
-						FavorSizeOrSpeed="1"
-						BasicRuntimeChecks="0"
-						SmallerTypeCheck="false"
-						EnableEnhancedInstructionSet="2"
-						UsePrecompiledHeader="0"
-						DebugInformationFormat="3"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\sources\graphics\shader_manager.cpp"
-				>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						InlineFunctionExpansion="2"
-						EnableIntrinsicFunctions="true"
-						FavorSizeOrSpeed="1"
-						BasicRuntimeChecks="0"
-						SmallerTypeCheck="false"
-						EnableEnhancedInstructionSet="2"
-						UsePrecompiledHeader="0"
-						DebugInformationFormat="3"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\sources\platform\socket.cpp"
 				>
 			</File>
@@ -1367,7 +1311,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
+						UsePrecompiledHeader="2"
 					/>
 				</FileConfiguration>
 				<FileConfiguration

@@ -27,13 +27,12 @@ class MenuStateLoadGame;
 class SavedGamePreviewLoader : public Thread {
 	MenuStateLoadGame &menu;
 	string *fileName;		//only modify with mutex locked
-	bool seeJaneRun;
+	bool running;
 	Mutex mutex;
 
 public:
-	SavedGamePreviewLoader(MenuStateLoadGame &menu) : menu(menu) {
-		fileName = NULL;
-		seeJaneRun = true;
+	SavedGamePreviewLoader(MenuStateLoadGame &menu)
+			: menu(menu), fileName(0), running(true) {
 		start();
 	}
 
@@ -41,7 +40,7 @@ public:
 
 	void goAway() {
 		MutexLock lock(mutex);
-		seeJaneRun = false;
+		running = false;
 	}
 
 	void setFileName(const string &fileName) {

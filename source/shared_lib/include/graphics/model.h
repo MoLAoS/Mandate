@@ -22,7 +22,6 @@
 #include "model_header.h"
 #include "FileOps.hpp"
 
-using namespace std;
 using namespace Shared::Math;
 
 namespace Shared { namespace Graphics {

@@ -19,6 +19,12 @@
 #include "search_engine.h"
 #include "route_planner.h"
 
+#include "line.h"
+
+using Shared::Util::line;
+
+#define _USE_LINE_PATH_ 1
+
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
 #endif
@@ -27,13 +33,6 @@ namespace Glest { namespace Game { namespace Search {
 
 int Edge::numEdges[Field::COUNT];
 int Transition::numTransitions[Field::COUNT];
-
-
-#if SILNARM_HAS_DEFINED_SOME_CRAZY_PREPROCESSOR_SYMBOL
-#	define WRITE_AND_FLUSH(x) { cout << x, cout.flush(); }
-#else
-#	define WRITE_AND_FLUSH(x) {}
-#endif
 
 void Edge::zeroCounters() {
 	for (Field f(0); f < Field::COUNT; ++f) {
@@ -49,39 +48,26 @@ void Transition::zeroCounters() {
 
 ClusterMap::ClusterMap(AnnotatedMap *aMap, Cartographer *carto) 
 		: carto(carto), aMap(aMap), dirty(false) {
+	_PROFILE_FUNCTION
 	w = aMap->getWidth() / clusterSize;
 	h = aMap->getHeight() / clusterSize;
 	vertBorders = new ClusterBorder[(w-1)*h];
 	horizBorders = new ClusterBorder[w*(h-1)];
-	// init Borders (and hence inter-cluster edges) & evaluate clusters (intra-cluster edges)
 
 	Edge::zeroCounters();
 	Transition::zeroCounters();
 
-	theLogger.setClusterCount(w * h);
-/*
-	static char buf[512];
-	char *ptr = buf;
-	ptr += sprintf(ptr, "Initialising cluster map.\n");
-	int64 time_millis = Chrono::getCurMillis();
-*/
+	//theLogger.setClusterCount(w * h);
+
+	// init Borders (and hence inter-cluster edges) & evaluate clusters (intra-cluster edges)
 	for (int i = h - 1; i >= 0; --i) {
 		for (int j = w - 1; j >= 0; --j) {
 			Vec2i cluster(j, i);
-			WRITE_AND_FLUSH( "Cluster " << cluster << endl )
 			initCluster(cluster);
-			WRITE_AND_FLUSH( "Cluster " << cluster << "initialised.\n" )
 			evalCluster(cluster);
-			WRITE_AND_FLUSH( "Cluster " << cluster << "evaluated.\n" )
-			theLogger.clusterInit();
+			//theLogger.clusterInit();
 		}
 	}
-
-	/*
-	time_millis = Chrono::getCurMillis() - time_millis;
-	ptr += sprintf(ptr, "\ttook %dms\n", (int)time_millis);
-	theLogger.add(buf);
-	*/
 }
 
 ClusterMap::~ClusterMap() {
@@ -122,7 +108,7 @@ void ClusterMap::assertValid() {
 
 		// collect all transitions, checking for membership in tSet and tkMap (indicating an error)
 		// and filling tSet and tkMap
-		for (int i=0; i < (w - 1) * h; ++i) {
+		for (int i=0; i < (w - 1) * h; ++i) {	// vertical borders
 			ClusterBorder *b = &vertBorders[i];
 			for (int j=0; j < b->transitions[f].n; ++j) {
 				const Transition *t = b->transitions[f].transitions[j]; 
@@ -141,9 +127,8 @@ void ClusterMap::assertValid() {
 				}
 				++numNodes[f];
 			}
-			
 		}
-		for (int i=0; i < w * (h - 1); ++i) {
+		for (int i=0; i < w * (h - 1); ++i) {	// horizontal borders
 			ClusterBorder *b = &horizBorders[i];
 			for (int j=0; j < b->transitions[f].n; ++j) {
 				const Transition *t = b->transitions[f].transitions[j]; 
@@ -225,10 +210,6 @@ public:
 
 void ClusterMap::addBorderTransition(EntranceInfo &info) {
 	assert(info.max_clear > 0 && info.startPos != -1 && info.endPos != -1);	
-	WRITE_AND_FLUSH( 
-		"\t\tEntrance from (" << info.endPos << ", " << info.pos << ") to (" 
-		<< info.startPos << ", " << info.pos << ")" << endl 
-	)
 	if (info.run < 12) {
 		// find central most pos with max clearance
 		InsideOutIterator it(info.endPos, info.startPos);
@@ -240,13 +221,11 @@ void ClusterMap::addBorderTransition(EntranceInfo &info) {
 				} else {
 					t = new Transition(Vec2i(*it, info.pos), info.max_clear, false, info.f);
 				}
-				WRITE_AND_FLUSH( "\t\t\tadding Entrance at " << t->nwPos << "\n" )
 				info.cb->transitions[info.f].add(t);
 				return;
 			}
 			++it;
 		}
-		WRITE_AND_FLUSH( "\t\t\tno pos with clearance == max_clear found!!!! WTF!!!" )
 		assert(false);
 	} else {
 		// look for two, as close as possible to 1/4 and 3/4 accross
@@ -282,8 +261,6 @@ void ClusterMap::addBorderTransition(EntranceInfo &info) {
 					t1 = new Transition(Vec2i(first_at, info.pos), info.max_clear, false, info.f);
 					t2 = new Transition(Vec2i(next_at, info.pos), info.max_clear, false, info.f);
 				}
-				WRITE_AND_FLUSH( "\t\t\tadding Entrance at " << t1->nwPos << "\n" )
-				WRITE_AND_FLUSH( "\t\t\tadding Entrance at " << t2->nwPos << "\n" )
 				info.cb->transitions[info.f].add(t1);
 				info.cb->transitions[info.f].add(t2);
 				return;
@@ -299,19 +276,17 @@ void ClusterMap::addBorderTransition(EntranceInfo &info) {
 				} else {
 					t = new Transition(Vec2i(*it, info.pos), info.max_clear, false, info.f);
 				}
-				WRITE_AND_FLUSH( "\t\t\tadding Entrance at " << t->nwPos << "\n" )
 				info.cb->transitions[info.f].add(t);
 				return;
 			}
 			++it;
 		}
-		WRITE_AND_FLUSH( "\t\t\tno pos with clearance == max_clear found!!!! WTF!!!" )
 		assert(false);
 	}
 }
 
 void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
-	WRITE_AND_FLUSH( "\tInit " << (north ? "north" : "west") << " border [cluster=" << cluster << "]\n" )
+	_PROFILE_FUNCTION
 	ClusterBorder *cb = north ? getNorthBorder(cluster) : getWestBorder(cluster);
 	EntranceInfo inf;
 	inf.cb = cb;
@@ -320,8 +295,8 @@ void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
 		int pos = north ? cluster.y * clusterSize - 1 : cluster.x * clusterSize - 1;
 		inf.pos = pos;
 		int pos2 = pos + 1;
-		bool clear = false;   // true while evaluating a Transition, false when obstacle hit
-		inf.max_clear = -1;  // max clearance seen for current Transition
+		bool clear = false;  // true while evaluating a Transition, false when obstacle hit
+		inf.max_clear = -1; // max clearance seen for current Transition
 		inf.startPos = -1; // start position of entrance
 		inf.endPos = -1;  // end position of entrance
 		inf.run = 0;	 // to count entrance 'width'
@@ -384,10 +359,41 @@ void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
 			}
 #		endif
 	} // if not sentinel
-	WRITE_AND_FLUSH( "\tDone Init " << (north ? "north" : "west") << " border [cluster=" << cluster << "]\n" )
 }
 
+/** function object for line alg. 'visit' */
+struct Visitor {
+	vector<Vec2i> &results;
+	Visitor(vector<Vec2i> &res) : results(res) {}
+
+	void operator()(int x, int y) {
+		results.push_back(Vec2i(x, y));
+	}
+};
+
+/** compute path length using midpoint line algorithm, @return infinite if path not possible, else cost */
+float ClusterMap::linePathLength(Field f, int size, const Vec2i &start, const Vec2i &dest) {
+	_PROFILE_FUNCTION
+	if (start == dest) {
+		return 0.f;
+	}
+	vector<Vec2i> linePath;
+	Visitor visitor(linePath);
+	line(start.x, start.y, dest.x, dest.y, visitor);
+	assert(linePath.size() >= 2);
+	MoveCost costFunc(f, size, aMap);
+	vector<Vec2i>::iterator it = linePath.begin();
+	vector<Vec2i>::iterator nIt = it + 1;
+	float cost = 0.f;
+	while (nIt != linePath.end() && cost != numeric_limits<float>::infinity()) {
+		cost += costFunc(*it++, *nIt++);
+	}
+	return cost;
+}
+
+/** compute path length using A* (with node limit), @return infinite if path not possible, else cost */
 float ClusterMap::aStarPathLength(Field f, int size, const Vec2i &start, const Vec2i &dest) {
+	_PROFILE_FUNCTION
 	if (start == dest) {
 		return 0.f;
 	}
@@ -453,6 +459,7 @@ void ClusterMap::disconnectCluster(const Vec2i &cluster) {
 }
 
 void ClusterMap::update() {
+	_PROFILE_FUNCTION
 	//cout << "ClusterMap::update()" << endl;
 	for (set<Vec2i>::iterator it = dirtyNorthBorders.begin(); it != dirtyNorthBorders.end(); ++it) {
 		if (it->y > 0 && it->y < h) {
@@ -483,13 +490,16 @@ void ClusterMap::update() {
 	}
 	
 	dirtyClusters.clear();
-	dirtyClusters.clear();
+	dirtyNorthBorders.clear();
 	dirtyWestBorders.clear();
 	dirty = false;
 }
 
+
 /** compute intra-cluster path lengths */
 void ClusterMap::evalCluster(const Vec2i &cluster) {
+	_PROFILE_FUNCTION
+	int linePathSuccess = 0, linePathFail = 0;
 	GridNeighbours::setSearchCluster(cluster);
 	Transitions transitions;
 	for (Field f(0); f < Field::COUNT; ++f) {
@@ -497,15 +507,22 @@ void ClusterMap::evalCluster(const Vec2i &cluster) {
 		transitions.clear();
 		getTransitions(cluster, f, transitions);
 		Transitions::iterator it = transitions.begin();
-		for ( ; it != transitions.end(); ++it) {
+		for ( ; it != transitions.end(); ++it) { // foreach transition
 			Transition *t = const_cast<Transition*>(*it);
 			Vec2i start = t->nwPos;
 			Transitions::iterator it2 = transitions.begin();
-			for ( ; it2 != transitions.end(); ++it2) {
+			for ( ; it2 != transitions.end(); ++it2) { // foreach other transition
 				const Transition* &t2 = *it2;
 				if (t == t2) continue;
 				Vec2i dest = t2->nwPos;
-				float cost  = aStarPathLength(f, 1, start, dest);
+#				if _USE_LINE_PATH_
+					float cost = linePathLength(f, 1, start, dest);
+					if (cost == numeric_limits<float>::infinity()) {
+						cost  = aStarPathLength(f, 1, start, dest);
+					}
+#				else
+					float cost  = aStarPathLength(f, 1, start, dest);
+#				endif
 				if (cost == numeric_limits<float>::infinity()) continue;
 				Edge *e = new Edge(t2, f);
 				t->edges.push_back(e);
@@ -513,7 +530,14 @@ void ClusterMap::evalCluster(const Vec2i &cluster) {
 				int size = 2;
 				int maxClear = t->clearance > t2->clearance ? t2->clearance : t->clearance;
 				while (size <= maxClear) {
-					cost = aStarPathLength(f, size, start, dest);
+#					if _USE_LINE_PATH_
+						cost = linePathLength(f, 1, start, dest);
+						if (cost == numeric_limits<float>::infinity()) {
+							cost  = aStarPathLength(f, size, start, dest);
+						}
+#					else
+						float cost  = aStarPathLength(f, size, start, dest);
+#					endif
 					if (cost == numeric_limits<float>::infinity()) {
 						break;
 					}
@@ -521,8 +545,8 @@ void ClusterMap::evalCluster(const Vec2i &cluster) {
 					assert(size == e->maxClear());
 					++size;
 				}
-			}
-		}
+			} // for each other transition
+		} // for each transitions
 	} // for each Field
 	GridNeighbours::setSearchSpace(SearchSpace::CELLMAP);
 }

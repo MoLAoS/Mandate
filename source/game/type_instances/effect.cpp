@@ -31,7 +31,7 @@ using namespace Shared::Util;
 
 // ============================ Constructor & destructor =============================
 
-Effect::Effect(const EffectType* type, Unit *source, Effect *root, float strength,
+Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strength,
 		const Unit *recipient, const TechTree *tt) {
 	this->type = type;
 	this->source = source;
@@ -40,9 +40,9 @@ Effect::Effect(const EffectType* type, Unit *source, Effect *root, float strengt
 	this->duration = type->getDuration();
 	this->recourse = root != NULL;
 	if(type->getHpRegeneration() < 0 && type->getDamageType()) {
-		float fregen = (float)type->getHpRegeneration() * tt->getDamageMultiplier(
+		fixed fregen = type->getHpRegeneration() * tt->getDamageMultiplier(
 				type->getDamageType(), recipient->getType()->getArmorType()/*, recipient->getType()->getBodyType()*/);
-		this->actualHpRegen = (int)roundf(fregen);
+		this->actualHpRegen = fregen.intp();
 	} else {
 		this->actualHpRegen = type->getHpRegeneration();
 	}
@@ -53,7 +53,7 @@ Effect::Effect(const XmlNode *node) :
 	const TechTree *tt = World::getCurrWorld()->getTechTree();
 	root = NULL;	//FIXME: add effect reference class
 	type = tt->getEffectType(node->getChildStringValue("type"));
-	strength = node->getChildFloatValue("strength");
+	strength = node->getChildFixedValue("strength");
 	duration = node->getChildIntValue("duration");
 	recourse = node->getChildBoolValue("recourse");
 	actualHpRegen = node->getChildIntValue("actualHpRegen");

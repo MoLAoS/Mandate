@@ -114,22 +114,25 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 				const XmlNode *dmNode= damageMultipliersNode->getChild("damage-multiplier", i);
 				const AttackType *attackType= getAttackType(dmNode->getRestrictedAttribute("attack"));
 				const ArmorType *armorType= getArmorType(dmNode->getRestrictedAttribute("armor"));
-				float multiplier= dmNode->getFloatAttribute("value");
-				damageMultiplierTable.setDamageMultiplier(attackType, armorType, multiplier);
-			}
-			catch (runtime_error e) {
+
+				fixed fixedMult = dmNode->getFixedAttribute("value");
+				//float multiplier= dmNode->getFloatAttribute("value");
+				
+				//cout << "Damage Multiplier as float: " << multiplier << ", as fixed " << fixedMult << endl;
+								
+				damageMultiplierTable.setDamageMultiplier(attackType, armorType, fixedMult);
+			} catch (runtime_error e) {
 				Logger::getErrorLog().addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
-	}
-	catch (runtime_error &e) {
+	} catch (runtime_error &e) {
 		Logger::getErrorLog().addXmlError(path, e.what());
 		loadOk = false;
 	}
 
 	// this must be set before any unit types are loaded
-	UnitStatsBase::setDamageMultiplierCount(getArmorTypeCount());
+	UnitStats::setDamageMultiplierCount(getArmorTypeCount());
 
 	//load factions
 	factionTypes.resize(factionNames.size());
@@ -185,7 +188,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	}
 
 	for (i = 0, fn = factionNames.begin(); fn != factionNames.end(); ++fn, ++i) {
-		if (!factionTypes[i].load(dir + "/factions/" + *fn, this)) {
+		if (!factionTypes[i].load(i, dir + "/factions/" + *fn, this)) {
 			loadOk = false;
 		} else {
 			factionTypeMap[*fn] = &factionTypes[i];
@@ -199,7 +202,7 @@ TechTree::~TechTree(){
 }
 
 void TechTree::doChecksum(Checksum &checksum) const {
-	checksum.addString(desc);
+	checksum.add(desc);
 
 	foreach_const (ResourceTypes, it, resourceTypes) {
 		it->doChecksum(checksum);
@@ -217,7 +220,7 @@ void TechTree::doChecksum(Checksum &checksum) const {
 		foreach_const (AttackTypes, attackIt, attackTypes) {
 			const AttackType *attackType 
 				= (*const_cast<AttackTypeMap*>(&attackTypeMap))[attackIt->getName()];
-			checksum.add<float>(damageMultiplierTable.getDamageMultiplier(attackType, armourType));
+			checksum.add(damageMultiplierTable.getDamageMultiplier(attackType, armourType));
 		}
 	}
 	// Effects... ?

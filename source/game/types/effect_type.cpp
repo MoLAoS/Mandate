@@ -178,7 +178,7 @@ bool EffectType::load(const XmlNode *effectNode, const string &dir, const TechTr
 		flags.load(flagsNode, dir, tt, ft);
 	}
 
-	EnhancementTypeBase::load(effectNode, dir, tt, ft);
+	EnhancementType::load(effectNode, dir, tt, ft);
 
 	//light & lightColor
 	try {
@@ -251,7 +251,7 @@ bool EffectType::load(const XmlNode *effectNode, const string &dir, const TechTr
 
 void EffectType::doChecksum(Checksum &checksum) const {
 	NameIdPair::doChecksum(checksum);
-	EnhancementTypeBase::doChecksum(checksum);
+	EnhancementType::doChecksum(checksum);
 
 	checksum.add<EffectBias>(bias);
 	checksum.add<EffectStacking>(stacking);
@@ -271,7 +271,7 @@ void EffectType::doChecksum(Checksum &checksum) const {
 	foreach_enum (EffectTypeFlag, f) {
 		checksum.add<bool>(flags.get(f));
 	}
-	checksum.addString(damageType->getName());
+	checksum.add(damageType->getName());
 	checksum.add<bool>(display);
 }
 
@@ -310,7 +310,7 @@ void EffectType::getDesc(string &str) const {
 		str += "\n\tDamage Type: " + damageType->getName();
 	}
 
-	EnhancementTypeBase::getDesc(str, "\n\t");
+	EnhancementType::getDesc(str, "\n\t");
 	str += "\n";
 }
 

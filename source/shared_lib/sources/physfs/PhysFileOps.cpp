@@ -17,9 +17,7 @@
 
 #include "util.h"
 
-using namespace std;
 using Shared::Util::cleanPath;
-
 
 PhysFileOps::PhysFileOps(){
 	this->f = NULL;

@@ -130,18 +130,6 @@ public:
 
 };
 
-class ParticleSystem;
-
-// =====================================================
-//	class ParticleObserver
-// =====================================================
-
-class ParticleObserver {
-public:
-	virtual ~ParticleObserver(){};
-	virtual void update(ParticleSystem *particleSystem) = 0;
-};
-
 // =====================================================
 //	class ParticleSystemType
 // =====================================================
@@ -262,8 +250,6 @@ protected:
 	Vec3f pos;
 	Vec3f windSpeed;
 
-	ParticleObserver *particleObserver;
-
 public:
 	//constructor and destructor
 	ParticleSystem(int particleCount = 1000);
@@ -284,11 +270,12 @@ public:
 	bool getVisible() const						{return visible;}
 	const Vec3f &getWindSpeed() const			{return windSpeed;}
 
+	virtual Vec3f getDirection() const { return Vec3f(0.f); }
+
 	//set
 	void setState(State state)							{this->state = state;}
 	void setPos(Vec3f pos)								{this->pos = pos;}
 	void setActive(bool active)							{this->active = active;}
-	void setObserver(ParticleObserver *particleObserver){this->particleObserver = particleObserver;}
 	void setVisible(bool visible)						{this->visible = visible;}
 	void setWindSpeed(const Vec3f &windSpeed)			{this->windSpeed = windSpeed;}
 	void setWindSpeed2(float hAngle, float hSpeed, float vSpeed = 0.f) {
@@ -358,146 +345,17 @@ public:
 	virtual bool deathTest(Particle *p);
 };
 
-// ===========================================================================
-//  AttackParticleSystem
-//
-/// Base class for Projectiles and Splashes
-// ===========================================================================
-
-class AttackParticleSystem: public ParticleSystem {
-protected:
-//	Model *model;
-//	Primitive primitive;
-//	Vec3f offset;
-//	float sizeNoEnergy;
-//	float gravity;
-
-	Vec3f direction;
-
-public:
-	AttackParticleSystem(int particleCount);
-	AttackParticleSystem(const ParticleSystemBase &model, int particleCount);
-
-	virtual void render(ParticleRenderer *pr, ModelRenderer *mr);
-
-//	Model *getModel() const			{return model;}
-	Vec3f getDirection() const		{return direction;}
-
-//	void setModel(Model *model)					{this->model= model;}
-//	void setOffset(Vec3f offset)				{this->offset= offset;}
-//	void setSizeNoEnergy(float sizeNoEnergy)	{this->sizeNoEnergy= sizeNoEnergy;}
-//	void setGravity(float gravity)				{this->gravity= gravity;}
-//	void setPrimitive(Primitive primitive)		{this->primitive= primitive;}
-
-//	static Primitive strToPrimitive(const string &str);
-};
-
-// =====================================================
-//	class ProjectileParticleSystem
-// =====================================================
-
-class ProjectileParticleSystem: public AttackParticleSystem {
-public:
-	friend class SplashParticleSystem;
-
-	enum Trajectory {
-		tLinear,
-		tParabolic,
-		tSpiral,
-		tRandom
-	};
-
-private:
-	SplashParticleSystem *nextParticleSystem;
-
-	Vec3f lastPos;
-	Vec3f startPos;
-	Vec3f endPos;
-	Vec3f flatPos;
-	const Entity *target;
-
-	Vec3f xVector;
-	Vec3f yVector;
-	Vec3f zVector;
-
-	Trajectory trajectory;
-	float trajectorySpeed;
-
-	//parabolic
-	float trajectoryScale;
-	float trajectoryFrequency;
-
-	Random random;
-
-public:
-	ProjectileParticleSystem(int particleCount= 1000);
-	ProjectileParticleSystem(const ParticleSystemBase &model, int particleCount= 1000);
-	virtual ~ProjectileParticleSystem();
-
-	void link(SplashParticleSystem *particleSystem);
-
-	virtual void update();
-	virtual void initParticle(Particle *p, int particleIndex);
-	virtual void updateParticle(Particle *p);
-
-	void setTrajectory(Trajectory trajectory)				{this->trajectory= trajectory;}
-	void setTrajectorySpeed(float trajectorySpeed)			{this->trajectorySpeed= trajectorySpeed;}
-	void setTrajectoryScale(float trajectoryScale)			{this->trajectoryScale= trajectoryScale;}
-	void setTrajectoryFrequency(float trajectoryFrequency)	{this->trajectoryFrequency= trajectoryFrequency;}
-	void setPath(Vec3f startPos, Vec3f endPos);
-
-	void setTarget(const Entity *target)					{this->target = target;}
-	const Entity* getTarget() const							{return this->target; }
-	virtual bool isProjectile() const						{ return true; }
-
-	static Trajectory strToTrajectory(const string &str);
-};
-
-// =====================================================
-//	class SplashParticleSystem
-// =====================================================
-
-class SplashParticleSystem: public AttackParticleSystem {
-public:
-	friend class ProjectileParticleSystem;
-
-private:
-	ProjectileParticleSystem *prevParticleSystem;
-
-	int emissionRateFade;
-	float verticalSpreadA;
-	float verticalSpreadB;
-	float horizontalSpreadA;
-	float horizontalSpreadB;
-
-public:
-	SplashParticleSystem(int particleCount = 1000);
-	SplashParticleSystem(const ParticleSystemBase &model, int particleCount = 1000);
-	virtual ~SplashParticleSystem();
-
-	virtual void update();
-	virtual void initParticle(Particle *p, int particleIndex);
-	virtual void updateParticle(Particle *p);
-
-	void setEmissionRateFade(int emissionRateFade)		{this->emissionRateFade = emissionRateFade;}
-	void setVerticalSpreadA(float verticalSpreadA)		{this->verticalSpreadA = verticalSpreadA;}
-	void setVerticalSpreadB(float verticalSpreadB)		{this->verticalSpreadB = verticalSpreadB;}
-	void setHorizontalSpreadA(float horizontalSpreadA)	{this->horizontalSpreadA = horizontalSpreadA;}
-	void setHorizontalSpreadB(float horizontalSpreadB)	{this->horizontalSpreadB = horizontalSpreadB;}
-
-};
-
 // =====================================================
 //	class ParticleManager
 // =====================================================
 
 class ParticleManager {
-private:
+protected:
 	list<ParticleSystem*> particleSystems;
 
 public:
-	~ParticleManager();
-	void update();
+	virtual ~ParticleManager();
+	virtual void update();
 	void render(ParticleRenderer *pr, ModelRenderer *mr) const;
 	void manage(ParticleSystem *ps);
 	void end() {
@@ -506,19 +364,7 @@ public:
 			particleSystems.pop_front();
 		}
 	}
-	
-	void checkTargets(const Entity *dead) {
-		list<ParticleSystem*>::iterator it = particleSystems.begin();
-		for ( ; it != particleSystems.end(); ++it ) {
-			if ( *it && (*it)->isProjectile() ) {
-				ProjectileParticleSystem* pps = static_cast<ProjectileParticleSystem*>(*it);
-				if ( pps->getTarget() == dead ) {
-					pps->setTarget(NULL);
-				}
-			}
-		}
-	}
-
+	const list<ParticleSystem*>& getList() const { return particleSystems; }
 };
 
 }}//end namespace

@@ -28,7 +28,7 @@ namespace Glest { namespace Game {
 //	class ServerInterface
 // =====================================================
 
-class ServerInterface: public GameNetworkInterface{
+class ServerInterface: public GameInterface{
 private:
 	ConnectionSlot* slots[GameConstants::maxPlayers];
 	ServerSocket serverSocket;
@@ -40,6 +40,10 @@ public:
 	virtual Socket* getSocket()				{return &serverSocket;}
 	virtual const Socket* getSocket() const	{return &serverSocket;}
 
+#	if _RECORD_GAME_STATE_
+		void dumpFrame(int frame);
+#	endif
+
 protected:
 	//message processing
 	virtual void update();
@@ -47,26 +51,36 @@ protected:
 	virtual void updateKeyframe(int frameCount);
 	virtual void waitUntilReady(Checksum &checksum);
 	virtual void syncAiSeeds(int aiCount, int *seeds);
-	//virtual void logUnit(int id);
+	virtual void createSkillCycleTable(const TechTree *techTree);
 
 	// message sending
 	virtual void sendTextMessage(const string &text, int teamIndex);
 	virtual void quitGame();
+
+	// unit/projectile updates
+	virtual void updateUnitCommand(Unit *unit, int32);
+	virtual void unitBorn(Unit *unit, int32);
+	virtual void updateProjectile(Unit *unit, int, int32);
+	virtual void updateAnim(Unit *unit, int32);
+
+	virtual void updateMove(Unit *unit);
+	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
 
 	//misc
 	virtual string getStatus() const;
 
 public:
 	ServerSocket* getServerSocket()		{return &serverSocket;}
+
+	// ConnectionSlot management
 	void addSlot(int playerIndex);
 	void removeSlot(int playerIndex);
 	ConnectionSlot* getSlot(int playerIndex);
 	int getConnectedSlotCount();
-
+	
 	void launchGame(const GameSettings* gameSettings);
-
 	void process(NetworkMessageText &msg, int requestor);
-
+	
 private:
 	void broadcastMessage(const NetworkMessage* networkMessage, int excludeSlot= -1);
 	void updateListen();

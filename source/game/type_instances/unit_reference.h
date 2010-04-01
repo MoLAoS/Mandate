@@ -29,6 +29,7 @@ class Unit;
 // 	class UnitReference
 // =====================================================
 
+//REFACTOR redunant info, id alone is sufficient, look up in one map
 class UnitReference {
 private:
 	int id;

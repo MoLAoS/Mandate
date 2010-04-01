@@ -24,7 +24,6 @@
 #include "world.h"
 #include "network_util.h"
 
-using namespace std;
 using namespace Shared::Graphics;
 
 namespace Glest{ namespace Game{
@@ -47,14 +46,15 @@ void Logger::unitLoaded() {
 	float pcnt = ((float)unitsLoaded) / ((float)totalUnits) * 100.f;
 	progressBar->setProgress(int(pcnt));
 }
-
+/*
 void Logger::clusterInit() {
+	_PROFILE_FUNCTION
 	++clustersInit;
 	float pcnt = ((float)clustersInit) / ((float)totalClusters) * 100.f;
 	progressBar->setProgress(int(pcnt));
 	renderLoadingScreen();
 }
-
+*/
 void Logger::add(const string &str,  bool renderScreen){
 /*	FILE *f=fopen(fileName.c_str(), "at+");
 	if (f) {

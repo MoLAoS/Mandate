@@ -28,6 +28,11 @@
 #include "cartographer.h"
 #include "network_util.h"
 #include "leak_dumper.h"
+#include "renderer.h"
+#include "earthquake_type.h"
+
+#define UNIT_LOG(x) {}
+//#define UNIT_LOG(x) { theLogger.add(x); }
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;
@@ -53,7 +58,7 @@ static bool verifySubfaction(Unit *unit, const ProducibleType *pt) {
 // =====================================================
 
 // ===================== PUBLIC ========================
-const float UnitUpdater::repairerToFriendlySearchRadius = 1.25f;
+const fixed UnitUpdater::repairerToFriendlySearchRadius = fixed(5) / 4;
 
 void UnitUpdater::init(Game &game) {
 	this->gui = game.getGui();
@@ -70,12 +75,12 @@ void UnitUpdater::init(Game &game) {
 //skill dependent actions
 void UnitUpdater::updateUnit(Unit *unit) {
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
+	GameInterface *gni = theNetworkManager.getGameInterface();
+	const SkillType * const currSkill = unit->getCurrSkill();
 
 	//play skill sound
-	const SkillType *currSkill = unit->getCurrSkill();
-	if (currSkill->getSound() != NULL) {
-		float soundStartTime = currSkill->getSoundStartTime();
-		if (soundStartTime >= unit->getLastAnimProgress() && soundStartTime < unit->getAnimProgress()) {
+	if (currSkill->getSound()) {
+		if (theWorld.getFrameCount() == unit->getSoundStartFrame()) {
 			if (map->getTile(Map::toTileCoords(unit->getPos()))->isVisible(world->getThisTeamIndex())) {
 				soundRenderer.playFx(currSkill->getSound(), unit->getCurrVector(), gameCamera->getPos());
 			}
@@ -83,23 +88,25 @@ void UnitUpdater::updateUnit(Unit *unit) {
 	}
 
 	//start attack particle system
-	if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK) {
-		const AttackSkillType *ast = static_cast<const AttackSkillType*>(unit->getCurrSkill());
-		float attackStartTime = ast->getStartTime();
-		if (attackStartTime >= unit->getLastAnimProgress() && attackStartTime < unit->getAnimProgress()) {
-			startAttackSystems(unit, ast);
-		}
+	if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
+	&& unit->getNextAttackFrame() == world->getFrameCount()) {
+		startAttackSystems(unit, static_cast<const AttackSkillType*>(unit->getCurrSkill()));
+	}
+
+	// update anim cycle
+	if (theWorld.getFrameCount() >= unit->getNextAnimReset()) {
+		// new anim cycle (or reset)
+		gni->doUpdateAnim(unit);
 	}
 
 	//update emanations every 8 frames
-	if (unit->getGetEmanations().size() && !((world->getFrameCount() + unit->getId()) % 8)
-			&& unit->isOperative()) {
+	if (unit->getEmanations().size() && !((world->getFrameCount() + unit->getId()) % 8)
+	&& unit->isOperative()) {
 		updateEmanations(unit);
 	}
 
 	//update unit
 	if (unit->update()) {
-
 		const UnitType *ut = unit->getType();
 
 		if (unit->getCurrSkill()->getClass() == SkillClass::FALL_DOWN) {
@@ -108,16 +115,7 @@ void UnitUpdater::updateUnit(Unit *unit) {
 		} else if (unit->getCurrSkill()->getClass() == SkillClass::GET_UP) {
 			unit->setCurrSkill(SkillClass::STOP);
 		}
-
-		updateUnitCommand(unit);
-
-		//if unit is out of EP, it stops
-		if (unit->computeEp()) {
-			if (unit->getCurrCommand()) {
-				unit->cancelCurrCommand();
-			}
-			unit->setCurrSkill(SkillClass::STOP);
-		}
+		gni->doUpdateUnitCommand(this, unit);
 
 		//move unit in cells
 		if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
@@ -125,7 +123,9 @@ void UnitUpdater::updateUnit(Unit *unit) {
 
 			//play water sound
 			if (map->getCell(unit->getPos())->getHeight() < map->getWaterLevel() 
-			&& unit->getCurrField() == Field::LAND) {
+			&& unit->getCurrField() == Field::LAND
+			&& map->getTile(Map::toTileCoords(unit->getPos()))->isVisible(world->getThisTeamIndex())
+			&& theRenderer.getCuller().isInside(unit->getPos())) {
 				soundRenderer.playFx(CoreData::getInstance().getWaterSound());
 			}
 		}
@@ -139,47 +139,9 @@ void UnitUpdater::updateUnit(Unit *unit) {
 }
 
 // ==================== progress commands ====================
+// gone to Client/Server-Interface
 
-//VERY IMPORTANT: compute next state depending on the first order of the list
-void UnitUpdater::updateUnitCommand(Unit *unit) {
-	const SkillType *st = unit->getCurrSkill();
-
-	//commands aren't updated for these skills
-	switch (st->getClass()) {
-		case SkillClass::WAIT_FOR_SERVER:
-		case SkillClass::FALL_DOWN:
-		case SkillClass::GET_UP:
-			return;
-
-		default:
-			break;
-	}
-	// check if a command being 'watched' has finished
-	if ( unit->getCommandCallback() && unit->getCommandCallback() != unit->getCurrCommand() ) {
-		// Trigger Time...
-		ScriptManager::commandCallback(unit);
-	}
-	//if unit has command process it
-	if (unit->anyCommand()) {
-		unit->getCurrCommand()->getType()->update(this, unit);
-	}
-
-	//if no commands stop and add stop command or guard command for pets
-	if (!unit->anyCommand() && unit->isOperative()) {
-		const UnitType *ut = unit->getType();
-		unit->setCurrSkill(SkillClass::STOP);
-		if (unit->getMaster() && ut->hasCommandClass(CommandClass::GUARD)) {
-			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::GUARD), 
-							CommandFlags(CommandProperties::AUTO), unit->getMaster()));
-		} else {
-			if (ut->hasCommandClass(CommandClass::STOP)) {
-				unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
-			}
-		}
-	}
-	// calculate and cache skill progress here.	
-	unit->preProcessSkill();
-}
+// ==================== auto commands ====================
 
 Command *UnitUpdater::doAutoAttack(Unit *unit) {
 	if (unit->getType()->hasCommandClass(CommandClass::ATTACK) 
@@ -191,7 +153,6 @@ Command *UnitUpdater::doAutoAttack(Unit *unit) {
 			if (!unit->getFaction()->isAvailable(ct)) {
 				continue;
 			}
-
 			//look for an attack skill
 			const AttackSkillType *ast = NULL;
 			const AttackSkillTypes *asts = NULL;
@@ -209,7 +170,6 @@ Command *UnitUpdater::doAutoAttack(Unit *unit) {
 				default:
 					break;
 			}
-
 			//use it to attack
 			if (asts) {
 				if (attackableOnSight(unit, &sighted, asts, NULL)) {
@@ -226,17 +186,14 @@ Command *UnitUpdater::doAutoAttack(Unit *unit) {
 
 
 Command *UnitUpdater::doAutoRepair(Unit *unit) {
-	/*
 	if (unit->getType()->hasCommandClass(CommandClass::REPAIR) && unit->isAutoRepairEnabled()) {
-
 		for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
 			const CommandType *ct = unit->getType()->getCommandType(i);
 
 			if (!unit->getFaction()->isAvailable(ct) || ct->getClass() != CommandClass::REPAIR) {
 				continue;
 			}
-
-			//look a repair skill
+			// look for a repair skill
 			const RepairCommandType *rct = (const RepairCommandType*)ct;
 			const RepairSkillType *rst = rct->getRepairSkillType();
 			Unit *sighted = NULL;
@@ -250,32 +207,31 @@ Command *UnitUpdater::doAutoRepair(Unit *unit) {
 			}
 		}
 	}
-	*/
 	return NULL;
 }
 
 Command *UnitUpdater::doAutoFlee(Unit *unit) {
-
 	Unit *sighted = NULL;
 	if (unit->getType()->hasCommandClass(CommandClass::MOVE) && attackerOnSight(unit, &sighted)) {
 		//if there is a friendly military unit that we can heal/repair and is
 		//rougly between us, then be brave
 		if (unit->getType()->hasCommandClass(CommandClass::REPAIR)) {
-			Vec2f myCenter = unit->getFloatCenteredPos();
-			Vec2f signtedCenter = sighted->getFloatCenteredPos();
-			Vec2f fcenter = (myCenter + signtedCenter) / 2.f;
+			fixedVec2 myCenter = unit->getFixedCenteredPos();
+			fixedVec2 signtedCenter = sighted->getFixedCenteredPos();
+			fixedVec2 fcenter =  (myCenter + signtedCenter) / 2;
 			Unit *myHero = NULL;
 
 			// calculate the real distance to hostile by subtracting half of the size of each.
-			float actualDistance = myCenter.dist(signtedCenter)
-					- (unit->getType()->getSize() + sighted->getType()->getSize()) / 2.f;
+			fixed actualDistance = myCenter.dist(signtedCenter)
+					- (unit->getType()->getHalfSize() + sighted->getType()->getHalfSize());
 
 			// allow friendly combat unit to be within a radius of 65% of the actual distance to
 			// hostile, starting from the half way intersection of the repairer and hostile.
-			int searchRadius = (int)roundf(actualDistance * repairerToFriendlySearchRadius / 2.f);
-			Vec2i center((int)roundf(fcenter.x), (int)roundf(fcenter.y));
+			int searchRadius = (actualDistance * repairerToFriendlySearchRadius / 2).round();
+			Vec2i center(fcenter.x.round(), fcenter.y.round());
 
 			//try all of our repair commands
+			/*
 			for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
 				const CommandType *ct = unit->getType()->getCommandType(i);
 				if (ct->getClass() != CommandClass::REPAIR) {
@@ -288,6 +244,7 @@ Command *UnitUpdater::doAutoFlee(Unit *unit) {
 					return NULL;
 				}
 			}
+			*/
 		}
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();
 		return new Command(unit->getType()->getFirstCtOfClass(CommandClass::MOVE),
@@ -297,7 +254,7 @@ Command *UnitUpdater::doAutoFlee(Unit *unit) {
 }
 
 // ==================== updateStop ====================
-
+/// 0: start, 1: continue doing nothing, 2: cancel (another command is pending)
 void UnitUpdater::updateStop(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const StopCommandType *sct = static_cast<const StopCommandType*>(command->getType());
@@ -332,7 +289,7 @@ void UnitUpdater::updateStop(Unit *unit) {
 }
 
 // ==================== updateMove ====================
-
+/// 0: start, 1: do nothing (blocked), 2: move
 void UnitUpdater::updateMove(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const MoveCommandType *mct = static_cast<const MoveCommandType*>(command->getType());
@@ -405,7 +362,7 @@ bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const Attack
 		assert(ast);
 		if (unit->getEp() >= ast->getEpCost()) {
 			unit->setCurrSkill(ast);
-			unit->setTarget(target, true, true);
+			unit->setTarget(target);
 		} else {
 			unit->setCurrSkill(SkillClass::STOP);
 		}
@@ -455,7 +412,7 @@ bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const Attack
 }
 
 // ==================== updateAttack ====================
-
+/// 0: start, 1: do nothing (blocked), 2: move to target unit, 3: move to target pos, 4: finsih
 void UnitUpdater::updateAttack(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const AttackCommandType *act = static_cast<const AttackCommandType*>(command->getType());
@@ -468,7 +425,7 @@ void UnitUpdater::updateAttack(Unit *unit) {
 
 
 // ==================== updateAttackStopped ====================
-
+/// 0: start, 1: do nothing, 2 attack
 void UnitUpdater::updateAttackStopped(Unit *unit) {
 
 	Command *command = unit->getCurrCommand();
@@ -487,7 +444,7 @@ void UnitUpdater::updateAttackStopped(Unit *unit) {
 
 
 // ==================== updateBuild ====================
-
+/// 0: start, 1: do nothing (blocked move or waiting for site to clear) 2: build, 3: move to site
 void UnitUpdater::updateBuild(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const BuildCommandType *bct = static_cast<const BuildCommandType*>(command->getType());
@@ -637,7 +594,7 @@ void UnitUpdater::updateBuild(Unit *unit) {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
-			scriptManager->onUnitCreated(builtUnit);
+			ScriptManager::onUnitCreated(builtUnit);
 			if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 				SoundRenderer::getInstance().playFx(
 					bct->getBuiltSound(),
@@ -648,9 +605,8 @@ void UnitUpdater::updateBuild(Unit *unit) {
 	}
 }
 
-
 // ==================== updateHarvest ====================
-
+/// 0: start, 1: do nothing (blocked), 2: harvest, 3: move to resource, 4: move to store, 5: finish (no more goods)
 void UnitUpdater::updateHarvest(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const HarvestCommandType *hct = static_cast<const HarvestCommandType*>(command->getType());
@@ -716,7 +672,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
 					world->getStats().harvest(unit->getFactionIndex(), resourceAmount);
-					scriptManager->onResourceHarvested();
+					ScriptManager::onResourceHarvested();
 
 					//if next to a store unload resources
 					unit->getPath()->clear();
@@ -764,7 +720,7 @@ void UnitUpdater::updateHarvest(Unit *unit) {
 }
 
 // ==================== updateRepair ====================
-
+/// 0: start, 1: do nothing (blocked), 2: repair, 3: move to target, 4: move back (auto-return), 5: finish
 void UnitUpdater::updateRepair(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const CommandType *ct = command->getType();
@@ -891,7 +847,7 @@ void UnitUpdater::updateRepair(Unit *unit) {
 				unit->setCurrSkill(SkillClass::STOP);
 				if (!wasBuilt) {
 					//building finished
-					scriptManager->onUnitCreated(repaired);
+					ScriptManager::onUnitCreated(repaired);
 					if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::BUILD);
@@ -910,7 +866,7 @@ void UnitUpdater::updateRepair(Unit *unit) {
 
 
 // ==================== updateProduce ====================
-
+/// 0: start, 1: produce, 2: finsh (ok), 3: cancel (could not place new unit)
 void UnitUpdater::updateProduce(Unit *unit) {
 
 	Command *command = unit->getCurrCommand();
@@ -944,7 +900,7 @@ void UnitUpdater::updateProduce(Unit *unit) {
 			} else {
 				produced->create();
 				produced->born();
-				scriptManager->onUnitCreated( produced );
+				ScriptManager::onUnitCreated(produced);
 				world->getStats().produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 
@@ -966,7 +922,7 @@ void UnitUpdater::updateProduce(Unit *unit) {
 }
 
 // ==================== updateUpgrade ====================
-
+/// 0: start, 1: upgrade, 2: finish (ok)
 void UnitUpdater::updateUpgrade(Unit *unit) {
 
 	Command *command = unit->getCurrCommand();
@@ -1001,7 +957,8 @@ void UnitUpdater::updateUpgrade(Unit *unit) {
 
 
 // ==================== updateMorph ====================
-
+/// 0: start, 1: morph, 2: finsh (ok), 3: cancel (could not start because there is not enough space),
+/// 4: cancel (could not finish morph because space became blocked)
 void UnitUpdater::updateMorph(Unit *unit) {
 
 	Command *command = unit->getCurrCommand();
@@ -1015,13 +972,13 @@ void UnitUpdater::updateMorph(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
 		//if not morphing, check space
 		// determine morph unit field
-		Fields mfs = mct->getMorphUnit()->getFields ();
+		Fields mfs = mct->getMorphUnit()->getFields();
 		Field mf;
-		if ( mfs.get ( Field::LAND ) ) mf = Field::LAND;
-		else if ( mfs.get ( Field::AIR ) ) mf = Field::AIR;
-		if ( mfs.get (Field::AMPHIBIOUS) ) mf = Field::AMPHIBIOUS;
-		else if ( mfs.get (Field::ANY_WATER) ) mf = Field::ANY_WATER;
-		else if ( mfs.get (Field::DEEP_WATER) ) mf = Field::DEEP_WATER;
+		if (mfs.get(Field::LAND)) mf = Field::LAND;
+		else if (mfs.get(Field::AIR)) mf = Field::AIR;
+		if (mfs.get(Field::AMPHIBIOUS)) mf = Field::AMPHIBIOUS;
+		else if (mfs.get(Field::ANY_WATER)) mf = Field::ANY_WATER;
+		else if (mfs.get(Field::DEEP_WATER)) mf = Field::DEEP_WATER;
 
 		if (map->areFreeCellsOrHasUnit (unit->getPos(), mct->getMorphUnit()->getSize(), mf, unit)) {
 			unit->setCurrSkill(mct->getMorphSkillType());
@@ -1029,7 +986,8 @@ void UnitUpdater::updateMorph(Unit *unit) {
 		} else {
 			if (unit->getFactionIndex() == world->getThisFactionIndex()) {
 				Game::getInstance()->getConsole()->addStdMessage("InvalidPosition");
-			}			unit->cancelCurrCommand();
+			}
+			unit->cancelCurrCommand();
 		}
 	} else {
 		unit->update2();
@@ -1041,7 +999,7 @@ void UnitUpdater::updateMorph(Unit *unit) {
 				if (gui->isSelected(unit)) {
 					gui->onSelectionChanged();
 				}
-				scriptManager->onUnitCreated(unit);
+				ScriptManager::onUnitCreated(unit);
 				unit->getFaction()->checkAdvanceSubfaction(mct->getMorphUnit(), true);
 				if (mapUpdate) {
 					// obstacle added or removed, update annotated maps
@@ -1066,7 +1024,8 @@ void UnitUpdater::updateCastSpell(Unit *unit) {
 }
 
 // ==================== updateGuard ====================
-
+/// 0: start, 1: do nothing, 2: attack 3: move to attack, 4: move to target (unit or pos)
+/// no exit state, will gaurd a target if set, if target dies, will gaurd the position the target died at
 void UnitUpdater::updateGuard(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const GuardCommandType *gct = static_cast<const GuardCommandType*>(command->getType());
@@ -1092,7 +1051,7 @@ void UnitUpdater::updateGuard(Unit *unit) {
 }
 
 // ==================== updatePatrol ====================
-
+/// 0: start, 1: do nothing (blocked), 2: move to waypoint, 3: move to attack, 4: attack
 void UnitUpdater::updatePatrol(Unit *unit) {
 	Command *command = unit->getCurrCommand();
 	const PatrolCommandType *pct = static_cast<const PatrolCommandType*>(command->getType());
@@ -1109,25 +1068,16 @@ void UnitUpdater::updatePatrol(Unit *unit) {
 	} else {
 		pos = command->getPos();
 	}
-
 	if (target) {
 		pos = Map::getNearestPos(unit->getPos(), pos, 1, pct->getMaxDistance());
 	}
-
 	if (target2 && target2->isDead()) {
 		command->setUnit2(NULL);
 		command->setPos2(target2->getCenteredPos());
 	}
-
 	// If destination reached or blocked, turn around on next frame.
 	if (updateAttackGeneric(unit, command, pct, NULL, pos)) {
 		command->swap();
-		/*
-		// can't use minor update here because the command has changed and that wont give the new
-		// command
-		if (isNetworkGame() && isServer()) {
-			getServerInterface()->minorUnitUpdate(unit);
-		}*/
 	}
 }
 
@@ -1135,8 +1085,8 @@ void UnitUpdater::updatePatrol(Unit *unit) {
 void UnitUpdater::updateEmanations(Unit *unit) {
 	// This is a little hokey, but probably the best way to reduce redundant code
 	static EffectTypes singleEmanation;
-	for (Emanations::const_iterator i = unit->getGetEmanations().begin();
-			i != unit->getGetEmanations().end(); i++) {
+	for (Emanations::const_iterator i = unit->getEmanations().begin();
+			i != unit->getEmanations().end(); i++) {
 		singleEmanation.resize(1);
 		singleEmanation[0] = *i;
 		applyEffects(unit, singleEmanation, unit->getPos(), Field::LAND, (*i)->getRadius());
@@ -1153,89 +1103,83 @@ void UnitUpdater::hit(Unit *attacker) {
 }
 
 void UnitUpdater::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked) {
-
+	typedef std::map<Unit*, fixed> DistMap;
 	//hit attack positions
 	if (ast->getSplash() && ast->getSplashRadius()) {
-		std::map<Unit*, float> hitList;
-		std::map<Unit*, float>::iterator i;
 		Vec2i pos;
-		float distance;
-
-		PosCircularIteratorSimple pci(*map, targetPos, ast->getSplashRadius());
+		fixed distance;
+		DistMap hitSet;
+		PosCircularIteratorSimple pci(map->getBounds(), targetPos, ast->getSplashRadius());
 		while (pci.getNext(pos, distance)) {
-			attacked = map->getCell(pos)->getUnit(targetField);
-			if (attacked && (distance == 0  || ast->getSplashDamageAll() || !attacker->isAlly(attacked))) {
-				//float distance = pci.getPos().dist(attacker->getTargetPos());
-				damage(attacker, ast, attacked, distance);
-
-				// Remember all units we hit with the closest distance. We only
-				// want to hit them with effects once.
-				if (ast->isHasEffects()) {
-					i = hitList.find(attacked);
-					if (i == hitList.end() || i->second > distance) {
-						hitList[attacked] = distance;
-					}
-				}
+			if ((attacked = map->getCell(pos)->getUnit(targetField))
+			&& (hitSet.find(attacked) == hitSet.end() || hitSet[attacked] > distance)) {
+				hitSet[attacked] = distance;
 			}
 		}
-
-		if (ast->isHasEffects()) {
-			for (i = hitList.begin(); i != hitList.end(); i++) {
-				applyEffects(attacker, ast->getEffectTypes(), i->first, i->second);
+		foreach (DistMap, it, hitSet) {
+			damage(attacker, ast, it->first, it->second);
+			if (ast->isHasEffects()) {
+				applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
 			}
 		}
 	} else {
 		if (!attacked) {
 			attacked = map->getCell(targetPos)->getUnit(targetField);
 		}
-
 		if (attacked) {
-			damage(attacker, ast, attacked, 0.f);
+			damage(attacker, ast, attacked, 0);
 			if (ast->isHasEffects()) {
-				applyEffects(attacker, ast->getEffectTypes(), attacked, 0.f);
+				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
 			}
 		}
 	}
 }
 
-void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, float distance){
+void UnitUpdater::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance){
 	//get vars
-	float damage = (float)attacker->getAttackStrength(ast);
+	fixed fDamage = attacker->getAttackStrength(ast);
+	//int damage = attacker->getAttackStrength(ast);
 	int var = ast->getAttackVar();
 	int armor = attacked->getArmor();
-	float damageMultiplier = world->getTechTree()->getDamageMultiplier(ast->getAttackType(),
+
+	fixed damageMultiplier = world->getTechTree()->getDamageMultiplier(ast->getAttackType(),
 							 attacked->getType()->getArmorType());
+	
+	//compute damage
+	fDamage += random.randRange(-var, var);
+	fDamage /= (distance + 1);
+	fDamage -= armor;
+	fDamage *= damageMultiplier;
+	if (fDamage < 1) {
+		fDamage = 1;
+	}
+	int damage = fDamage.intp();
 	int startingHealth = attacked->getHp();
 	int actualDamage;
-
-	//compute damage
-	damage += random.randRange(-var, var);
-	damage /= distance + 1.0f;
-	damage -= armor;
-	damage *= damageMultiplier;
-	if (damage < 1) {
-		damage = 1;
-	}
-
 	//damage the unit
-	if (attacked->decHp(static_cast<int>(damage))) {
+	if (attacked->decHp(damage)) {
 		world->doKill(attacker, attacked);
 		actualDamage = startingHealth;
 	} 
 	else {
-		actualDamage = (int)roundf(damage);
+		actualDamage = damage;
 	}
 
+	///@todo make effects stuff fixed point
+
 	//add stolen health to attacker
-	if (attacker->getAttackPctStolen(ast) || ast->getAttackPctVar()) {
-		float pct = attacker->getAttackPctStolen(ast)
+	/*
+	if (attacker->getAttackPctStolen(ast) != 0 || ast->getAttackPctVar() != 0) {
+		
+		fixed pct = attacker->getAttackPctStolen(ast)
 				+ random.randRange(-ast->getAttackPctVar(), ast->getAttackPctVar());
-		int stolen = (int)roundf((float)actualDamage * pct);
+		int stolen = (fixed(actualDamage) * pct).intp();
 		if (stolen && attacker->doRegen(stolen, 0)) {
 			// stealing a negative percentage and dying?
 			world->doKill(attacker, attacker);
 		}
 	}
+	*/
 	//complain
 	/*
 	const Vec3f &attackerVec = attacked->getCurrVector();
@@ -1282,14 +1226,15 @@ void UnitUpdater::startAttackSystems(Unit *unit, const AttackSkillType *ast) {
 				break;
 		}
 
-		psProj->setPath(startPos, endPos);
+		// game network interface calls setPath() on psProj, differently for clients/servers
+		theNetworkManager.getGameInterface()->doUpdateProjectile(unit, psProj, startPos, endPos);
+		
 		if(pstProj->isTracking() && unit->getTarget()) {
 			psProj->setTarget(unit->getTarget());
-			psProj->setObserver(new ParticleDamager(unit, unit->getTarget(), this, gameCamera));
+			psProj->setDamager(new ParticleDamager(unit, unit->getTarget(), this, gameCamera));
 		} else {
-			psProj->setObserver(new ParticleDamager(unit, NULL, this, gameCamera));
+			psProj->setDamager(new ParticleDamager(unit, NULL, this, gameCamera));
 		}
-
 		psProj->setVisible(visible);
 		renderer.manageParticleSystem(psProj, rsGame);
 	} else {
@@ -1324,43 +1269,38 @@ void UnitUpdater::startAttackSystems(Unit *unit, const AttackSkillType *ast) {
 // Apply effects to a specific location, with or without splash
 void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes,
 				const Vec2i &targetPos, Field targetField, int splashRadius) {
-
+	typedef std::map<Unit*, fixed> DistMap;
 	Unit *target;
 
 	if (splashRadius != 0) {
-		std::map<Unit*, float> hitList;
-		std::map<Unit*, float>::iterator i;
+		DistMap hitList;
+		DistMap::iterator i;
 		Vec2i pos;
-		float distance;
+		fixed distance;
 
-		PosCircularIteratorSimple pci(*map, targetPos, splashRadius);
+		PosCircularIteratorSimple pci(map->getBounds(), targetPos, splashRadius);
 		while (pci.getNext(pos, distance)) {
 			target = map->getCell(pos)->getUnit(targetField);
 			if (target) {
-				//float distance = pci.getPos().dist(targetPos);
-
-				// Remember all units we hit with the closest distance. We only
-				// want to hit them once.
 				i = hitList.find(target);
-				if (i == hitList.end() || (*i).second > distance) {
+				if (i == hitList.end() || i->second > distance) {
 					hitList[target] = distance;
 				}
 			}
 		}
-
-		for (i = hitList.begin(); i != hitList.end(); i++) {
-			applyEffects(source, effectTypes, (*i).first, (*i).second);
+		foreach (DistMap, it, hitList) {
+			applyEffects(source, effectTypes, it->first, it->second);
 		}
 	} else {
 		target = map->getCell(targetPos)->getUnit(targetField);
 		if (target) {
-			applyEffects(source, effectTypes, target, 0.f);
+			applyEffects(source, effectTypes, target, 0);
 		}
 	}
 }
 
 //apply effects to a specific target
-void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *target, float distance) {
+void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *target, fixed distance) {
 	//apply effects
 	for (EffectTypes::const_iterator i = effectTypes.begin();
 			i != effectTypes.end(); i++) {
@@ -1385,7 +1325,8 @@ void UnitUpdater::applyEffects(Unit *source, const EffectTypes &effectTypes, Uni
 						? random.randRange(0.0f, 100.0f) < (*i)->getChance()
 						: true)) {
 
-			float strength = (*i)->isScaleSplashStrength() ? 1.0f / (float)(distance + 1) : 1.0f;
+			
+			fixed strength = (*i)->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
 			Effect *primaryEffect = new Effect((*i), source, NULL, strength, target, world->getTechTree());
 
 			target->add(primaryEffect);
@@ -1415,7 +1356,7 @@ void UnitUpdater::appyEffect(Unit *u, Effect *e) {
 
 /**
  * Finds the nearest position to dest, presuming that dest is the NW corner of
- * a quare destSize cells, that is at least minRange from the target, but no
+ * a square destSize cells, that is at least minRange from the target, but no
  * greater than maxRange.
  */
 /*
@@ -1451,7 +1392,7 @@ Vec2i UnitUpdater::getNear(const Vec2i &orig, const Vec2i destNW, int destSize, 
 bool UnitUpdater::searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
 
-	PosCircularIteratorOrdered pci(*map, unit->getCurrCommand()->getPos(),
+	PosCircularIteratorOrdered pci(map->getBounds(), unit->getCurrCommand()->getPos(),
 			world->getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
 
 	while (pci.getNext(pos)) {
@@ -1482,33 +1423,78 @@ inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr,
 	return unitOnRange(unit, range, rangedPtr, asts, past);
 }
 
+// =====================================================
+// 	class Targets
+// =====================================================
+
+/** Utility class for managing multiple targets by distance. */
+class Targets : public std::map<Unit*, fixed> {
+private:
+	Unit *nearest;
+	fixed distance;
+
+public:
+	Targets() : nearest(0), distance(fixed::max_int()) {}
+
+	void record(Unit *target, fixed dist) {
+		if (find(target) == end()) {
+			insert(std::make_pair(target, dist));
+		}
+		if (dist < distance) {
+			nearest = target;
+			distance = dist;
+		}
+	}
+
+	Unit* getNearest() {
+		return nearest;
+	}
+
+	Unit* getNearestSkillClass(SkillClass sc) {
+		foreach(Targets, it, *this) {
+			if (it->first->getType()->hasSkillClass(sc)) {
+				return it->first;
+			}
+		}
+		return false;
+	}
+
+	Unit* getNearestHpRatio(fixed hpRatio) {
+		foreach(Targets, it, *this) {
+			if (it->first->getHpRatioFixed() < hpRatio) {
+				return it->first;
+			}
+		}
+		return false;
+	}
+};
+
 //if the unit has any enemy on range
 /** rangedPtr should point to a pointer that is either NULL or a valid Unit */
 bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr, 
 					const AttackSkillTypes *asts, const AttackSkillType **past) {
-	Vec2f floatCenter = unit->getFloatCenteredPos();
-	float halfSize = (float)unit->getType()->getSize() / 2.f;
-	float distance;
+	///@todo convert to fixed point
+	//Vec2f floatCenter = unit->getFloatCenteredPos();
+	fixedVec2 fixedCentre = unit->getFixedCenteredPos();
+	fixed halfSize = unit->getType()->getHalfSize();
+	fixed distance;
 	bool needDistance = false;
 
-	if ( *rangedPtr && ( (*rangedPtr)->isDead() 
-	||	 !asts->getZone((*rangedPtr)->getCurrZone()) ) )
+	if (*rangedPtr && ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone()))) {
 		*rangedPtr = NULL;
-
+	}
 	if (*rangedPtr) {
 		needDistance = true;
 	} else {
 		Targets enemies;
 		Vec2i pos;
-		PosCircularIteratorOrdered pci(*map, unit->getPos(), world->getPosIteratorFactory()
-									   .getInsideOutIterator(1, (int)roundf(range + halfSize)));
+		PosCircularIteratorOrdered pci(map->getBounds(), unit->getPos(), 
+			world->getPosIteratorFactory().getInsideOutIterator(1, range + halfSize.intp()));
 
 		while (pci.getNext(pos, distance)) {
 
 			//all zones
-			for (int k = 0; k < Zone::COUNT; k++) {
-				Zone z = enum_cast<Zone>(k);
-
+			foreach_enum (Zone, z) {
 				//check zone
 				if (!asts || asts->getZone(z)) {
 					Unit *possibleEnemy= map->getCell(pos)->getUnit(z);
@@ -1521,7 +1507,7 @@ bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr,
 							goto unitOnRange_exitLoop;
 						}
 						// otherwise, we'll record it and figure out who to slap later.
-						enemies.record(possibleEnemy, (int)distance);
+						enemies.record(possibleEnemy, distance);
 					}
 				}
 			}
@@ -1538,13 +1524,13 @@ unitOnRange_exitLoop:
 	assert(*rangedPtr);
 	
 	if(needDistance) {
-		float targetHalfSize = (float)(*rangedPtr)->getType()->getSize() / 2.f;
-		distance = floatCenter.dist((*rangedPtr)->getFloatCenteredPos()) - targetHalfSize;
+		const fixed &targetHalfSize = (*rangedPtr)->getType()->getHalfSize();
+		distance = fixedCentre.dist((*rangedPtr)->getFixedCenteredPos()) - targetHalfSize;
 	}
 
 	// check to see if we like this target.
 	if(asts && past) {
-		return (bool)(*past = asts->getPreferredAttack(unit, *rangedPtr, (int)(distance - halfSize)));
+		return (bool)(*past = asts->getPreferredAttack(unit, *rangedPtr, (distance - halfSize).intp()));
 	}
 	return true;
 }
@@ -1552,26 +1538,25 @@ unitOnRange_exitLoop:
 //find a unit we can repair
 /** rangedPtr should point to a pointer that is either NULL or a valid Unit */
 bool UnitUpdater::repairableOnRange(
-	const Unit *unit,
-	Vec2i center,
-	int centerSize,
-	Unit **rangedPtr,
-	const RepairCommandType *rct,
-	const RepairSkillType *rst,
-	int range,
-	bool allowSelf,
-	bool militaryOnly,
-	bool damagedOnly) {
-
+		const Unit *unit,
+		Vec2i centre,
+		int centreSize,
+		Unit **rangedPtr,
+		const RepairCommandType *rct,
+		const RepairSkillType *rst,
+		int range,
+		bool allowSelf,
+		bool militaryOnly,
+		bool damagedOnly) {
 	Targets repairables;
 
-	Vec2f floatCenter(center.x + centerSize / 2.f, center.y + centerSize / 2.f);
-	int targetRange = 0x10000;
+	fixedVec2 fixedCentre(centre.x + centreSize / fixed(2), centre.y + centreSize / fixed(2));
+	fixed targetRange = fixed::max_int();
 	Unit *target = *rangedPtr;
-	range += centerSize / 2;
+	range += centreSize / 2;
 
 	if (target && target->isAlive() && target->isDamaged() && rct->isRepairableUnitType(target->getType())) {
-		float rangeToTarget = floatCenter.dist(target->getFloatCenteredPos()) - (float)(centerSize + target->getSize()) / 2.0f;
+		fixed rangeToTarget = fixedCentre.dist(target->getFixedCenteredPos()) - (centreSize + target->getSize()) / fixed(2);
 		if (rangeToTarget <= range) {
 			// current target is good
 			return true;
@@ -1583,30 +1568,26 @@ bool UnitUpdater::repairableOnRange(
 
 	//nearby cells
 	Vec2i pos;
-	float distance;
-	PosCircularIteratorSimple pci(*map, center, range);
+	fixed distance;
+	PosCircularIteratorSimple pci(map->getBounds(), centre, range);
 	while (pci.getNext(pos, distance)) {
 		//all zones
 		for (int z = 0; z < Zone::COUNT; z++) {
 			Unit *candidate = map->getCell(pos)->getUnit(enum_cast<Field>(z));
 	
 			//is it a repairable?
-			if (candidate
-					&& (allowSelf || candidate != unit)
-					&& (!rst->isSelfOnly() || candidate == unit)
-					&& candidate->isAlive()
-					&& unit->isAlly(candidate)
-					&& (!rst->isPetOnly() || unit->isPet(candidate))
-					&& (!damagedOnly || candidate->isDamaged())
-					&& (!militaryOnly || candidate->getType()->hasCommandClass(CommandClass::ATTACK))
-					&& rct->isRepairableUnitType(candidate->getType())) {
-	
+			if (candidate && (allowSelf || candidate != unit)
+			&& (!rst->isSelfOnly() || candidate == unit)
+			&& candidate->isAlive() && unit->isAlly(candidate)
+			&& (!rst->isPetOnly() || unit->isPet(candidate))
+			&& (!damagedOnly || candidate->isDamaged())
+			&& (!militaryOnly || candidate->getType()->hasCommandClass(CommandClass::ATTACK))
+			&& rct->isRepairableUnitType(candidate->getType())) {
 				//record the nearest distance to target (target may be on multiple cells)
-				repairables.record(candidate, (int)distance);
+				repairables.record(candidate, distance.intp());
 			}
 		}
 	}
-
 	// if no repairables or just one then it's a simple choice.
 	if (repairables.empty()) {
 		return false;
@@ -1614,13 +1595,12 @@ bool UnitUpdater::repairableOnRange(
 		*rangedPtr = repairables.begin()->first;
 		return true;
 	}
-
 	//heal cloesest ally that can attack (and are probably fighting) first.
 	//if none, go for units that are less than 20%
 	//otherwise, take the nearest repairable unit
-	if(!(*rangedPtr = repairables.getNearest(SkillClass::ATTACK))
-			&& !(*rangedPtr = repairables.getNearest(SkillClass::COUNT, 0.2f))
-			&& !(*rangedPtr = repairables.getNearest())) {
+	if(!(*rangedPtr = repairables.getNearestSkillClass(SkillClass::ATTACK))
+	&& !(*rangedPtr = repairables.getNearestHpRatio(fixed(2) / 10))
+	&& !(*rangedPtr = repairables.getNearest())) {
 		return false;
 	}
 	return true;
@@ -1640,7 +1620,7 @@ ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, UnitUpdater *unit
 	this->unitUpdater = unitUpdater;
 }
 
-void ParticleDamager::update(ParticleSystem *particleSystem) {
+void ParticleDamager::execute(ParticleSystem *particleSystem) {
 	Unit *attacker = attackerRef.getUnit();
 
 	if (attacker) {
@@ -1656,11 +1636,10 @@ void ParticleDamager::update(ParticleSystem *particleSystem) {
 		//play sound
 		StaticSound *projSound = ast->getProjSound();
 		if (particleSystem->getVisible() && projSound) {
-			SoundRenderer::getInstance().playFx(projSound, Vec3f(targetPos.x, 0.f, targetPos.y), gameCamera->getPos());
+			SoundRenderer::getInstance().playFx(
+				projSound, Vec3f(float(targetPos.x), 0.f, float(targetPos.y)), gameCamera->getPos());
 		}
 	}
-	particleSystem->setObserver(NULL);
-	delete this;
 }
 
 }}//end namespace

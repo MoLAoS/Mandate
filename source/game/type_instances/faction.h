@@ -82,6 +82,8 @@ public:
 	void init(const FactionType *factionType, ControlType control, TechTree *techTree,
 		int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources);
 	void end();
+	void save(XmlNode *node) const;
+	void load(const XmlNode *node, World *world, const FactionType *ft, ControlType control, TechTree *tt);
 
 	//get
 	const Resource *getResource(const ResourceType *rt) const;

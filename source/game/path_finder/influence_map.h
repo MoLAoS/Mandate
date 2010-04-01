@@ -23,15 +23,10 @@ using Shared::Platform::uint32;
 typedef Shared::Math::Vec2i Point;
 
 struct Rectangle {
-	Rectangle () : x(0), y(0), w(0), h(0) {}
-	Rectangle (int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
+	Rectangle() : x(0), y(0), w(0), h(0) {}
+	Rectangle(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
 	int x, y, w, h;
 };
-/*
-ostream& operator<<(ostream &lhs, Point &rhs) {
-	lhs << "(" << rhs.x << "," << rhs.y << ")";
-	return lhs;
-}*/
 
 const Point invalidPos(-1,-1);
 
@@ -51,8 +46,8 @@ public:
 	}
 	bool setInfluence(Point pos, iType val) {
 		pos = translate(pos);
-		if ( pos != invalidPos ) {
-			static_cast<MapType*>(this)->set(pos,val);
+		if (pos != invalidPos) {
+			static_cast<MapType*>(this)->set(pos, val);
 			return true;
 		}
 		return false;
@@ -60,8 +55,8 @@ public:
 	Point translate(Point p) {
 		const int nx = p.x - x;
 		const int ny = p.y - y;
-		if ( nx >= 0 && ny >=0 && nx < w && ny < h ) {
-			return Point(nx,ny);
+		if (nx >= 0 && ny >=0 && nx < w && ny < h) {
+			return Point(nx, ny);
 		}
 		return invalidPos;
 	}
@@ -79,6 +74,7 @@ public:
 	TypeMap(Rectangle b, type def) : InfluenceMap<type, TypeMap<type> >(b,def) {
 		data = new type[b.w*b.h];
 	}
+	~TypeMap() { delete [] data; }
 	void zeroMap() { memset(data, 0, sizeof(type) * this->w * this->h); }
 	void clearMap(type val) { fill_n(data, this->w * this->h, val); }
 
@@ -106,6 +102,7 @@ public:
 		//cout << "section size = " << sectionSize << ", sections per row = " << sectionsPerRow << endl;
 		data = new uint32[b.h * sectionsPerRow];
 	}
+	~PatchMap() { delete [] data; }
 	void zeroMap() { memset(data, 0, sizeof(uint32) * sectionsPerRow * this->h); }
 	void clearMap(uint32 val) { 
 //		assert(val < max_value);
@@ -186,6 +183,7 @@ public:
 		blocksPerRow = b.w / 8 + 1;
 		data = new uint32[b.h * blocksPerRow];
 	}
+	~FlowMap() { delete [] data; }
 	void zeroMap() { memset(data, 0, sizeof(uint32) * blocksPerRow * h); }
 	void clearMap(Point val) {
 		uint32 v = pack(val);

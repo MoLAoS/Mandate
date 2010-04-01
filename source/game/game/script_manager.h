@@ -26,11 +26,12 @@
 #include "game_constants.h"
 #include "logger.h"
 
-using namespace std;
 using Shared::Math::Vec2i;
 using Shared::Math::Vec4i;
 using Shared::Platform::Chrono;
 using namespace Shared::Lua;
+using std::queue;
+using std::set;
 
 namespace Glest{ namespace Game {
 
@@ -168,7 +169,7 @@ public:
 	bool registerRegion(const string &name, const Rect &rect);
 	int  registerEvent(const string &name);
 
-	const Region* getRegion(string &name) { 
+	const Region* getRegion(string &name) {
 		Regions::iterator it = regions.find(name);
 		if ( it == regions.end() ) return NULL;
 		else return it->second;
@@ -183,7 +184,7 @@ public:
 	int  addAttackedTrigger(int unitId, const string &eventName, int userData=0);
 	int  addDeathTrigger(int unitId, const string &eventName, int userData=0);
 
-	// must be called any time a unit is 'put' in cells (created, moved, 
+	// must be called any time a unit is 'put' in cells (created, moved,
 	void unitMoved(const Unit *unit);
 	void unitDied(const Unit *unit);
 	void commandCallback(const Unit *unit);
@@ -313,7 +314,7 @@ private:
 	static int setUnitTrigger(LuaHandle* luaHandle);	// Unit:setTrigger()
 	static int setUnitTriggerX(LuaHandle* luaHandle);	// Unit:setTrigger()
 	static int setFactionTrigger(LuaHandle* luaHandle);	// Faction:setTrigger()
-	//static int setTeamTrigger(LuaHandle* luaHandle);	// 
+	//static int setTeamTrigger(LuaHandle* luaHandle);	//
 
 	// messages
 	static int showMessage(LuaHandle* luaHandle);		// Gui.showMessage()

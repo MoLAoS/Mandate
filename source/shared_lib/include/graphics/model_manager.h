@@ -16,8 +16,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace Shared{ namespace Graphics{
 
 class TextureManager;

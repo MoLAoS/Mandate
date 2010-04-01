@@ -15,6 +15,7 @@
 #define GAME_CONSTANTS_DEF
 #include "game_constants.h"
 
-namespace Game {
+namespace Glest { namespace Game {
 
-} // end namespace Game
+
+}} // end namespace Game

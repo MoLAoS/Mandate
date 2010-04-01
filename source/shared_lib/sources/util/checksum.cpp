@@ -20,9 +20,6 @@
 
 #include "leak_dumper.h"
 
-
-using namespace std;
-
 namespace Shared{ namespace Util{
 
 // =====================================================
@@ -41,12 +38,6 @@ void Checksum::addByte(int8 value){
 
 	r= (cipher + r) * c1 + c2;
 	sum+= cipher;
-}
-
-void Checksum::addString(const string &value){
-	for(int i= 0; i<value.size(); ++i){
-		addByte(value[i]);
-	}
 }
 
 }}//end namespace

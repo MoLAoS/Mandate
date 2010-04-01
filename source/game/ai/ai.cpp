@@ -195,7 +195,6 @@ float Ai::getRatioOfClass(UnitClass uc) {
 }
 
 const ResourceType *Ai::getNeededResource() {
-
 	int amount = -1;
 	const ResourceType *neededResource = NULL;
 	const TechTree *tt = aiInterface->getTechTree();
@@ -203,12 +202,12 @@ const ResourceType *Ai::getNeededResource() {
 	for (int i = 0; i < tt->getResourceTypeCount(); ++i) {
 		const ResourceType *rt = tt->getResourceType(i);
 		const Resource *r = aiInterface->getResource(rt);
-		if (rt->getClass() != ResourceClass::STATIC && rt->getClass() != ResourceClass::CONSUMABLE && (r->getAmount() < amount || amount == -1)) {
+		if (rt->getClass() != ResourceClass::STATIC && rt->getClass() != ResourceClass::CONSUMABLE
+		&& (r->getAmount() < amount || amount == -1)) {
 			amount = r->getAmount();
 			neededResource = rt;
 		}
 	}
-
 	return neededResource;
 }
 

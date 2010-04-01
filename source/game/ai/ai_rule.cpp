@@ -101,13 +101,14 @@ void AiRuleRepair::execute() {
 	AiInterface *aiInterface = ai->getAiInterface();
 	const RepairCommandType *nearestRct = NULL;
 	int nearest = -1;
-	int minDist = 0x10000;
+	fixed minDist = fixed::max_int();
 
 	//try all of our repairable units in case one type of repairer is busy, but
 	//others aren't.
 	for (Units::iterator ui = repairable.begin(); ui != repairable.end(); ++ui) {
 		const Unit *damagedUnit = *ui;
-		Vec2f fpos = damagedUnit->getFloatCenteredPos();
+
+		fixedVec2 fpos = damagedUnit->getFixedCenteredPos();
 		int size = damagedUnit->getType()->getSize();
 
 		//find the nearest available repairer and issue command
@@ -117,8 +118,8 @@ void AiRuleRepair::execute() {
 			if ((u->getCurrSkill()->getClass() == SkillClass::STOP 
 			||   u->getCurrSkill()->getClass() == SkillClass::MOVE)
 			&& (rct = u->getRepairCommandType(damagedUnit))) {
-				int dist = (int)round(fpos.dist(u->getFloatCenteredPos())
-						 + (float)(size + u->getType()->getSize()) / 2.0f);
+				fixed dist = fpos.dist(u->getFixedCenteredPos())
+							+ size + u->getType()->getHalfSize();
 				if (minDist > dist) {
 					nearestRct = rct;
 					nearest = i;

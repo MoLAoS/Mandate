@@ -88,10 +88,8 @@ void MenuStateRoot::mouseClick(int x, int y, MouseButton mouseButton){
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
     }
 	else if(buttonLoadGame.mouseClick(x, y)){
-		/*soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateLoadGame(program, mainMenu));*/
-		msgBox = new GraphicMessageBox();
-		msgBox->init("Feature Disabled: to be enabled in 0.3", lang.get("Ok"));
+		soundRenderer.playFx(coreData.getClickSoundB());
+		mainMenu->setState(new MenuStateLoadGame(program, mainMenu));
 	}
     else if(buttonAbout.mouseClick(x, y)){
 		soundRenderer.playFx(coreData.getClickSoundB());

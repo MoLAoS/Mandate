@@ -89,6 +89,8 @@ public:
 	bool getBoolValue() const;
 	int getIntValue() const								{return Conversion::strToInt(value);}
 	int getIntValue(int min, int max) const;
+	fixed getFixedValue() const							{return Conversion::strToFixed(value);}
+	fixed getFixedValue(fixed min, fixed max) const;
 	float getFloatValue() const							{return Conversion::strToFloat(value);}
 	float getFloatValue(float min, float max) const;
 	const string &getRestrictedValue() const;
@@ -139,6 +141,7 @@ public:
 	const string &getRestrictedValue() const	{return getValue()->getRestrictedValue();}
 	bool getBoolValue() const					{return getValue()->getBoolValue();}
 	int getIntValue() const						{return getValue()->getIntValue();}
+	fixed getFixedValue() const					{return getValue()->getFixedValue();}
 	float getFloatValue() const					{return getValue()->getFloatValue();}
 
 	Vec2i getVec2iValue() const {
@@ -202,6 +205,10 @@ public:
 		return getChildValue(childName, childIndex)->getIntValue();
 	}
 
+	fixed getChildFixedValue(const string &childName, int childIndex = 0) const {
+		return getChildValue(childName, childIndex)->getFixedValue();
+	}
+
 	float getChildFloatValue(const string &childName, int childIndex = 0) const {
 		return getChildValue(childName, childIndex)->getFloatValue();
 	}
@@ -254,6 +261,8 @@ public:
 	// get
 	int getIntAttribute(const string &childName) const							{return getAttribute(childName)->getIntValue();}
 	int getIntAttribute(const string &childName, int min, int max) const		{return getAttribute(childName)->getIntValue(min, max);}
+	fixed getFixedAttribute(const string &childName) const						{return getAttribute(childName)->getFixedValue();}
+	fixed getFixedAttribute(const string &childName, fixed min, fixed max) const{return getAttribute(childName)->getFixedValue(min, max);}
 	float getFloatAttribute(const string &childName) const						{return getAttribute(childName)->getFloatValue();}
 	float getFloatAttribute(const string &childName, float min, float max) const{return getAttribute(childName)->getFloatValue(min, max);}
 	bool getBoolAttribute(const string &childName) const						{return getAttribute(childName)->getBoolValue();}
@@ -261,6 +270,7 @@ public:
 	const string &getRestrictedAttribute(const string &childName) const			{return getAttribute(childName)->getRestrictedValue();}
 
 	XmlNode *addChild(const string &name, int value)			{return addChild(name, Conversion::toStr(value));}
+	XmlNode *addChild(const string &name, fixed value)			{return addChild(name, Conversion::toStr(value));}
 	XmlNode *addChild(const string &name, float value)			{return addChild(name, Conversion::toStr(value));}
 	XmlNode *addChild(const string &name, bool value)			{return addChild(name, string(value ? "true" : "false"));}
 	XmlNode *addChild(const string &name, const char *value)	{return addChild(name, string(value));}

@@ -23,7 +23,6 @@
 #include <cassert>
 
 using namespace Shared::Math;
-using namespace std;
 
 namespace Glest { namespace Game {
 
@@ -181,10 +180,11 @@ private:
 		return (e0.first.y < e1.first.y);
 	}
 
+	typedef pair<int,int> RowExtrema;
 	struct Extrema {
 		int min_y, max_y;
 		int min_x, max_x;
-		vector< pair<int,int> > spans;
+		vector<RowExtrema> spans;
 
 		Rect2i getBounds() const { return Rect2i(min_x - 1, min_y - 1, max_x + 1, max_y + 1); }
 		void reset(int minY, int maxY);
@@ -204,7 +204,9 @@ private:
 	template < typename EdgeIt >
 	void setVisibleExtrema(const EdgeIt &start, const EdgeIt &end);
 
+	///@todo remove, use Shared::Util::line()
 	void scanLine(int x0, int y0, int x1, int y1);
+	///@todo plug into line(), no need for inlining, just use adapter from functional.
 	void cellVisit(int x, int y);
 	
 	int activeEdge;
@@ -219,7 +221,7 @@ public:
 		visiblePoly.reserve(10);
 	}
 	void establishScene();
-	bool isInside(Vec2i pos);
+	bool isInside(Vec2i pos) const;
 
 	class iterator {
 		friend class SceneCuller;

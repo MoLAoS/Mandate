@@ -23,7 +23,7 @@ using Shared::Platform::Socket;
 namespace Test {
 
 // =====================================================
-//	class AnnotatedMapTest
+//	class CircularBufferTest
 // =====================================================
 
 class CircularBufferTest : public CppUnit::TestFixture {

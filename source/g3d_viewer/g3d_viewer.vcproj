@@ -41,10 +41,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/physfs;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder"
-				PreprocessorDefinitions="WIN32"
+				PreprocessorDefinitions="WIN32;USE_PCH=1"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="2"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4996; 4244"
@@ -116,9 +118,11 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="..;../../../deps/include/lua;../../../deps/include;../shared_lib/include/math;../shared_lib/include/physfs;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../shared_lib/include;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32"
+				PreprocessorDefinitions="WIN32;USE_PCH=1"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="2"
 				DebugInformationFormat="3"
 				DisableSpecificWarnings="4996; 4244"
@@ -176,14 +180,53 @@
 			<File
 				RelativePath=".\main.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\main.h"
 				>
 			</File>
 			<File
+				RelativePath="..\shared_lib\sources\pch.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release+SSE2|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\renderer.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="pch.h"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\renderer.h"

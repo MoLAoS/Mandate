@@ -17,15 +17,15 @@
 
 /** Goal function for 'normal' search */
 class PosGoal {
+private:
+	Vec2i target; /**< search target */
+
 public:
 	PosGoal(const Vec2i &target) : target(target) {}
-	/** search target */
-	Vec2i target; 
-	/** The goal function 
-	  * @param pos position to test
+	
+	/** The goal function  @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
-	  * @return true if pos is target, else false
-	  */
+	  * @return true if pos is target, else false	*/
 	bool operator()(const Vec2i &pos, const float costSoFar) const { 
 		return pos == target; 
 	}
@@ -33,75 +33,67 @@ public:
 
 /** Goal function for 'get within x of' searches */
 class RangeGoal {
-	//
-	// accurate version, a cheaper one could just use the range param
-	// that gives the 'diaganol distance'
-	//
+private:
+	Vec2i target; /**< search target	   */
+	float range; /**< range to get within */
+
 public:
 	RangeGoal(const Vec2i &target, float range) : target(target), range(range) {}
-	/** search target */
-	Vec2i target;
-	/** range to get within */
-	float range;
-	/** The goal function 
-	  * @param pos position to test
+	
+	/** The goal function @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
-	  * @return true if pos is within range of target, else false
-	  */
+	  * @return true if pos is within range of target, else false	*/
 	bool operator()(const Vec2i &pos, const float costSoFar) const { 
 		return pos.dist(target) <= range; 
 	}
 };
 
 /** Goal function using influence map */
-template<typename type>class InfluenceGoal {
+template<typename type> class InfluenceGoal {
+private:
+	const TypeMap<type> *iMap; /**< InfluenceMap to use */	
+	type threshold; /**< influence 'threshold' of goal */
+
 public:
 	InfluenceGoal(const TypeMap<type> *iMap, type threshold) : iMap(iMap), threshold(threshold) {}
-	/** InfluenceMap to use */
-	const TypeMap<type> *iMap;
-	/** influence 'threshold' of goal */
-	type threshold;
-	/** The goal function 
-	  * @param pos position to test
+	
+	/** The goal function  @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
-	  * @return true if influence at pos on iMap is greater than threashold, else false
-	  */
+	  * @return true if influence at pos on iMap is greater than threashold, else false */
 	bool operator()( const Vec2i &pos, const float costSoFar) const { 
-		return iMap->getInfluence( pos ) > threshold; 
+		return iMap->getInfluence(pos) > threshold; 
 	}
 };
 
 /** Goal function for free cell search */
 class FreeCellGoal {
+private:
+	Field field; /**< field to find a free cell in */
+
 public:
 	FreeCellGoal(Field field) : field(field) {}
-	/** field to find a free cell in */
-	Field field;
-	/** The goal function 
-	  * @param pos position to test
+	
+	/** The goal function @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
-	  * @return true if pos is free, else false
-	  */
+	  * @return true if pos is free, else false */
 	bool operator()(const Vec2i &pos, const float costSoFar) const { 
-		return theMap.isFreeCell( pos, field ); 
+		return theMap.isFreeCell(pos, field); 
 	}
 };
 
 /** Goal function to find a free position that a unit of 'size' can occupy. */
 class FreePosGoal {
+private:
+	AnnotatedMap *aMap;	 /**< Annotated Map to use		*/
+	Field field;	/**< field to find position in	   */
+	int size;  /**< size of unit to find position for */
+
 public:
 	FreePosGoal(AnnotatedMap *aMap, Field field, int size) : aMap(aMap), field(field), size(size) {}
-	/** Annotated Map to use */
-	AnnotatedMap *aMap;
-	/** field to find position in */
-	Field field;
-	/** size of unit to find position for */
-	int size;
-	/** The goal function 
-	  * @param pos position to test
+
+	/** The goal function  @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
-	  * @return true if a unit of size can occupy pos in field (according to aMap), else false
-	  */
+	  * @return true if a unit of size can occupy pos in field (according to aMap), else false */
 	bool operator()(const Vec2i &pos, const float costSoFar) const {
 		return aMap->canOccupy(pos, size, field);
 	}
@@ -112,11 +104,9 @@ public:
 class NoGoal {
 public:
 	NoGoal(){}
-	/** The goal function 
-	  * @param pos the position to ignore
+	/** The goal function  @param pos the position to ignore
 	  * @param costSoFar the cost of the shortest path to pos
-	  * @return false
-	  */
+	  * @return false */
 	bool operator()(const Vec2i &pos, const float costSoFar) const { 
 		return false; 
 	}
@@ -124,22 +114,21 @@ public:
 
 /** Helper goal, used to build distance maps. */
 class DistanceBuilderGoal {
+private:
+	float cutOff; /**< a 'cutoff' distance, search ends after this is reached. */
+	TypeMap<float> *iMap; /**< inluence map to write distance data into.	  */
+
 public:
 	DistanceBuilderGoal(float cutOff, TypeMap<float> *iMap) : cutOff(cutOff), iMap(iMap) {}
-	/** a 'cutoff' distance, search ends after this is reached. */
-	float cutOff;
-	/** inluence map to write distance data into. */
-	TypeMap<float> *iMap;
+	
 	/** The goal function, writes ( cutOff - costSoFar ) into the influence map.
-	  * @param pos position to test
-	  * @param costSoFar the cost of the shortest path to pos
-	  * @return true if costSoFar exceeeds cutOff, else false.
-	  */
+	  * @param pos position to test @param costSoFar the cost of the shortest path to pos
+	  * @return true if costSoFar exceeeds cutOff, else false. */
 	bool operator()(const Vec2i &pos, const float costSoFar) const {
-		if ( costSoFar > cutOff ) {
+		if (costSoFar > cutOff) {
 			return true;
 		}
-		if ( costSoFar < iMap->getInfluence(pos) ) {
+		if (costSoFar < iMap->getInfluence(pos)) {
 			iMap->setInfluence(pos, cutOff - costSoFar);
 		}
 		return false;
@@ -148,22 +137,19 @@ public:
 
 /** Helper goal, used to build influence maps. */
 class InfluenceBuilderGoal {
+private:
+	float cutOff;
+	TypeMap<float> *iMap;
+
 public:
 	InfluenceBuilderGoal(float cutOff, TypeMap<float> *iMap) : cutOff(cutOff), iMap(iMap) {}
-	/** WIP */
-	float cutOff;
-	/** WIP */
-	TypeMap<float> *iMap;
-	/** The goal function, WIP
-	  * @param pos position to test
-	  * @param costSoFar the cost of the shortest path to pos
-	  * @return 
-	  */
+	/** The goal function, WIP @param pos position to test
+	  * @param costSoFar the cost of the shortest path to pos */
 	bool operator()(const Vec2i &pos, const float costSoFar) const {
-		if ( costSoFar > cutOff ) {
+		if (costSoFar > cutOff) {
 			return true;
 		}
-		if ( cutOff - costSoFar > iMap->getInfluence(pos) ) {
+		if (cutOff - costSoFar > iMap->getInfluence(pos)) {
 			iMap->setInfluence(pos, cutOff - costSoFar);
 		}
 		return false;
@@ -172,15 +158,14 @@ public:
 
 /** A uniform cost function */
 class UniformCost {
+private:
+	float cost;		/**< The uniform cost to return */
+
 public:
 	UniformCost(float cost) : cost(cost) {}
-	/** The uniform cost to return */
-	float cost;
-	/** The cost function
-	  * @param p1 position 1
-	  * @param p2 position 2 ('adjacent' p1)
-	  * @return cost
-	  */
+
+	/** The cost function @param p1 position 1 @param p2 position 2 ('adjacent' p1)
+	  * @return cost */
 	float operator()(const Vec2i &p1, const Vec2i &p2) const { return cost; }
 };
 
@@ -188,11 +173,8 @@ public:
 class DistanceCost {
 public:
 	DistanceCost(){}
-	/** The cost function
-	  * @param p1 position 1
-	  * @param p2 position 2 ('adjacent' p1)
-	  * @return 1.0 if p1 and p2 are 'in line', else SQRT2
-	  */
+	/** The cost function @param p1 position 1 @param p2 position 2 ('adjacent' p1)
+	  * @return 1.0 if p1 and p2 are 'in line', else SQRT2 */
 	float operator()(const Vec2i &p1, const Vec2i &p2) const {
 		assert ( p1.dist(p2) < 1.5 );
 		if ( p1.x != p2.x && p1.y != p2.y ) {
@@ -204,25 +186,19 @@ public:
 
 /** The movement cost function */
 class MoveCost {
+private:
+	const int size;				  /**< size of agent	  */
+	const Field field;			 /**< field to search in */
+	const AnnotatedMap *aMap;	/**< map to search on   */
+
 public:
-	/*/* unit wanting to move */
-	//const Unit *unit;
-	const int size;
-	const Field field;
-
-	/** map to search on */
-	const AnnotatedMap *aMap;
-
 	MoveCost(const Unit *unit, const AnnotatedMap *aMap) 
 			: size(unit->getSize()), field(unit->getCurrField()), aMap(aMap) {}
 	MoveCost(const Field field, const int size, const AnnotatedMap *aMap )
 			: size(size), field(field), aMap(aMap) {}
 
-	/** The cost function
-	  * @param p1 position 1
-	  * @param p2 position 2 ('adjacent' p1)
-	  * @return cost of move, possibly infinite
-	  */
+	/** The cost function @param p1 position 1 @param p2 position 2 ('adjacent' p1)
+	  * @return cost of move, possibly infinite */
 	float operator()(const Vec2i &p1, const Vec2i &p2) const {
 		assert(p1.dist(p2) < 1.5 && p1 != p2);
 		assert(theMap.isInside(p2));
@@ -249,10 +225,8 @@ public:
 	DiagonalDistance(const Vec2i &target) : target(target) {}
 	/** search target */
 	Vec2i target;	
-	/** The heuristic function.
-	  * @param pos the position to calculate the heuristic for
-	  * @return an estimate of the cost to target
-	  */
+	/** The heuristic function. @param pos the position to calculate the heuristic for
+	  * @return an estimate of the cost to target */
 	float operator()(const Vec2i &pos) const {
 		float dx = (float)abs(pos.x - target.x), 
 			  dy = (float)abs(pos.y - target.y);
@@ -264,14 +238,14 @@ public:
 
 /** Diagonal Distance Overestimating Heuristic */
 class OverEstimate {
+private:
+	Vec2i target; /**< search target */
+
 public:
 	OverEstimate(const Vec2i &target) : target(target) {}
-	/** search target */
-	Vec2i target;
-	/** The heuristic function.
-	  * @param pos the position to calculate the heuristic for
-	  * @return an (over) estimate of the cost to target
-	  */
+	
+	/** The heuristic function. @param pos the position to calculate the heuristic for
+	  * @return an (over) estimate of the cost to target */
 	float operator()(const Vec2i &pos) const {
 		float dx = (float)abs(pos.x - target.x), 
 			  dy = (float)abs(pos.y - target.y);
@@ -284,14 +258,14 @@ public:
 
 /** Diagonal Distance underestimating Heuristic */
 class UnderEstimate {
+private:
+	Vec2i target; /**< search target */
+
 public:
 	UnderEstimate(const Vec2i &target) : target(target) {}
-	/** search target */
-	Vec2i target;
-	/** The heuristic function.
-	  * @param pos the position to calculate the heuristic for
-	  * @return an (over) estimate of the cost to target
-	  */
+	
+	/** The heuristic function. @param pos the position to calculate the heuristic for
+	  * @return an (over) estimate of the cost to target */
 	float operator()(const Vec2i &pos) const {
 		float dx = (float)abs(pos.x - target.x), 
 			  dy = (float)abs(pos.y - target.y);
@@ -306,9 +280,6 @@ public:
 class ZeroHeuristic {
 public:
 	ZeroHeuristic(){}
-	/** The 'no heuristic' function.
-	  * @param pos the position to ignore
-	  * @return 0.f
-	  */
+	/** The 'no heuristic' function. @param pos the position to ignore @return 0.f */
 	float operator()(const Vec2i &pos) const { return 0.0f; }
 };

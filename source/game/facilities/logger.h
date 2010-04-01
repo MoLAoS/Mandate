@@ -19,7 +19,8 @@
 
 #include "timer.h"
 
-using namespace std;
+using std::deque;
+using std::string;
 
 namespace Glest { namespace Game {
 
@@ -48,7 +49,7 @@ private:
 	bool loadingGame;
 	static char errorBuf[];
 	int totalUnits, unitsLoaded;
-	int totalClusters, clustersInit;
+	//int totalClusters, clustersInit;
 
 	GraphicProgressBar *progressBar;
 
@@ -98,8 +99,8 @@ public:
 	void addUnitCount(int val) { totalUnits += val; }
 	void unitLoaded();
 
-	void setClusterCount(int count) { totalClusters = count; clustersInit = 0; }
-	void clusterInit();
+	//void setClusterCount(int count) { totalClusters = count; clustersInit = 0; }
+	//void clusterInit();
 };
 
 void logNetwork(const string &msg);

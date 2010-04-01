@@ -30,6 +30,7 @@
 //#include "../physics/weather.h"
 
 using std::vector;
+using std::ifstream;
 
 namespace Glest { namespace Game {
 
@@ -44,7 +45,6 @@ class GraphicTextEntryBox;
 
 class Game: public ProgramState {
 public:
-
 	WRAPPED_ENUM( GameSpeed,
 		SLOWEST,
 		VERY_SLOW,
@@ -54,7 +54,6 @@ public:
 		VERY_FAST,
 		FASTEST
 	)
-
 	static const char*SpeedDesc[GameSpeed::COUNT];
 
 private:
@@ -121,7 +120,9 @@ public:
 	World *getWorld()						{return &world;}
 	const World *getWorld() const			{return &world;}
 
-	//init
+	// ProgramState implementation
+
+	// init
 	virtual void load();
 	virtual void init();
 	virtual void update();
@@ -129,11 +130,7 @@ public:
 	virtual void render();
 	virtual void tick();
 
-	void lockInput()	{ noInput = true;	}
-	void unlockInput()	{ noInput = false;	}
-
-
-	//Event managing
+	// event handlers
 	virtual void keyDown(const Key &key);
 	virtual void keyUp(const Key &key);
 	virtual void keyPress(char c);
@@ -147,6 +144,10 @@ public:
 	virtual void eventMouseWheel(int x, int y, int zDelta);
 	virtual void mouseMove(int x, int y, const MouseState &mouseState);
 
+
+	// game/camera control (used by ScriptManager)
+	void lockInput()	{ noInput = true;	}
+	void unlockInput()	{ noInput = false;	}
 	void setCameraCell(int x, int y) {
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
@@ -155,22 +156,24 @@ public:
 	void resume()							{paused = false;}
 
 protected:
-	//render
+	// render
 	void render3d();
 	virtual void render2d();
-
-	//misc
-	void _init();
+	
+	// game over checks
 	void checkWinner();
 	void checkWinnerStandard();
 	void checkWinnerScripted();
 	bool hasBuilding(const Faction *faction);
+
+	// game speed control
 	void incSpeed();
 	void decSpeed();
 	void resetSpeed();
 	void updateSpeed();
 	int getUpdateLoops();
 
+	// show messages
 	void showLoseMessageBox();
 	void showWinMessageBox();
 	void showMessageBox(const string &text, const string &header, bool toggle);

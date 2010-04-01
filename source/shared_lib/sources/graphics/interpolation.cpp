@@ -19,8 +19,7 @@
 
 #include "leak_dumper.h"
 
-
-using namespace std;
+using std::min;
 
 namespace Shared { namespace Graphics {
 

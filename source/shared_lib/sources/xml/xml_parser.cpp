@@ -11,7 +11,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-//#include "pch.h"
+#include "pch.h"
 #include "xml_parser.h"
 
 #include <fstream>
@@ -23,7 +23,6 @@
 #include "leak_dumper.h"
 #include <FSFactory.hpp>
 
-using namespace std;
 using namespace Shared::Util;
 
 namespace Shared { namespace Xml {

@@ -27,7 +27,7 @@
 #include "util.h"
 
 using namespace Shared::Util;
-
+using std::ios;
 
 FSFactory *FSFactory::instance = NULL;
 

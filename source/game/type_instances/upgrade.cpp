@@ -21,7 +21,6 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
 using namespace Shared::Util;
 
 namespace Glest{ namespace Game{
@@ -145,7 +144,7 @@ bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const{
 	return false;
 }
 
-void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementTypeBase *totalUpgrade) const{
+void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const{
 	totalUpgrade->reset();
 	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
 		if((*it)->getFactionIndex()==unit->getFactionIndex()

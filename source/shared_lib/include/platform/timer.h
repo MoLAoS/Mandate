@@ -64,10 +64,6 @@ private:
 
 public:
 	Chrono() : startTime(0), stopTime(0), accumTime(0) {
-		assert(initialized);/*
-		if(!initialized) {
-			initialized = init();
-		}*/
 	}
 
 	void start() {

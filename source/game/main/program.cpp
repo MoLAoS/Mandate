@@ -98,17 +98,20 @@ Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(Config &config, CmdArgs &args) :
-		renderTimer(config.getRenderFpsMax(), 1, 0),
-		tickTimer(1.f, maxTimes, -1),
-		updateTimer(config.getGsWorldUpdateFps(), maxTimes, 1),
-		updateCameraTimer(GameConstants::cameraFps, maxTimes, 10),
-		programState(NULL),
-		crashed(false),
-		terminating(false),
-		visible(true),
-		keymap(getInput(), "keymap.ini") {
-
+Program::Program(Config &config, CmdArgs &args)
+		: renderTimer(float(config.getRenderFpsMax()), 1, 0)
+		, tickTimer(1.f, maxTimes, -1)
+#		if _GAE_DEBUG_EDITION_
+		, updateTimer(float(config.getGsWorldUpdateFps()), maxTimes, 1)
+#		else
+		, updateTimer(float(GameConstants::updateFps), maxTimes, 1) 
+#		endif
+		, updateCameraTimer(float(GameConstants::cameraFps), maxTimes, 10)
+		, programState(NULL)
+		, crashed(false)
+		, terminating(false)
+		, visible(true)
+		, keymap(getInput(), "keymap.ini") {
 	//set video mode
 	setDisplaySettings();
 

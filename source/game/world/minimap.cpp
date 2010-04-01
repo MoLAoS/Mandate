@@ -44,9 +44,9 @@ Minimap::Minimap(bool FoW){
 	shroudOfDarkness = FoW;
 }
 
-void Minimap::init(int w, int h, const World *world){
-	int scaledW= w/Map::cellScale;
-	int scaledH= h/Map::cellScale;
+void Minimap::init(int w, int h, const World *world, bool resumingGame){
+	int scaledW = w / GameConstants::cellScale;
+	int scaledH = h / GameConstants::cellScale;
 
 	Renderer &renderer= Renderer::getInstance();
 
@@ -56,6 +56,10 @@ void Minimap::init(int w, int h, const World *world){
 	fowPixmap1= new Pixmap2D(next2Power(scaledW), next2Power(scaledH), 1);
 	fowPixmap0->setPixels(&f);
 	fowPixmap1->setPixels(&f);
+
+	if (resumingGame) {
+		setExploredState(world);
+	}
 
 	//fow tex
 	fowTex= renderer.newTexture2D(rsGame);
@@ -148,6 +152,18 @@ void Minimap::computeTexture(const World *world){
 				color= sc->getObject()->getType()->getColor();
 			}
 			tex->getPixmap()->setPixel(i, j, color);
+		}
+	}
+}
+
+void Minimap::setExploredState(const World *world) {
+	const Map &map = *world->getMap();
+	for (int y=0; y < map.getTileH(); ++y) {
+		for (int x=0; x < map.getTileW(); ++x) {
+			if (map.getTile(x,y)->isExplored(world->getThisFactionIndex())) {
+				fowPixmap0->setPixel(x, y, exploredAlpha);
+				fowPixmap1->setPixel(x, y, exploredAlpha);
+			}
 		}
 	}
 }

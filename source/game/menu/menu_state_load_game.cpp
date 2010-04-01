@@ -31,7 +31,7 @@ using namespace Shared::Util;
 // =====================================================
 
 void SavedGamePreviewLoader::execute() {
-	while(seeJaneRun) {
+	while(running) {
 		string *fileName;
 		{
 			MutexLock lock(mutex);
@@ -270,8 +270,7 @@ void MenuStateLoadGame::update(){
 
 // ============ misc ===========================
 
-string *MenuStateLoadGame::setGameInfo(const string &fileName, const XmlNode *root,
-		const string &err) {
+string *MenuStateLoadGame::setGameInfo(const string &fileName, const XmlNode *root, const string &err) {
 	MutexLock lock(mutex);
 	if(this->fileName != fileName) {
 		return new string(this->fileName);

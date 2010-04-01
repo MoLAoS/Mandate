@@ -137,6 +137,7 @@ public:
 	int receive(void *data, int dataSize);
 	int peek(void *data, int dataSize);
 
+	void setNoDelay();
 	void setBlock(bool block);
 	bool isReadable();
 	bool isWritable();

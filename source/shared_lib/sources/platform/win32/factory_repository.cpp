@@ -29,9 +29,6 @@ GraphicsFactory *FactoryRepository::getGraphicsFactory(const string &name){
 	if(name == "OpenGL"){
 		return &graphicsFactoryGl;
 	}
-	else if(name == "OpenGL2"){
-		return &graphicsFactoryGl2;
-	}
 
 	throw runtime_error("Unknown graphics factory: " + name);
 }

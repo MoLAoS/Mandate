@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include "types.h"
+#include "fixed.h"
 #include "vec.h"
 
 using std::string;
@@ -28,6 +29,8 @@ using std::stringstream;
 using Shared::Platform::int64;
 using Shared::Platform::uint64;
 using Shared::Math::Vec2i;
+using Shared::Math::Vec3f;
+using Shared::Math::fixed;
 
 #if defined(WIN32) || defined(WIN64)
 #	define strtoull(np,ep,b) _strtoui64(np,ep,b)
@@ -44,215 +47,44 @@ const int maxStrSize = 256;
  * would not be needed if we were using iostreams instead of appending string objects, but it's
  * better than having a multitude of global functions.
  */
-class Conversion {
-private:
-	// Note: static const data members used to prevent replication of strings accross object files
-	// caused by inline functions using them.
-	static const string str_zero;
-	static const string str_false;
-	static const string str_one;
-	static const string str_true;
+namespace Conversion {
 
-	static const string str_bool;
-	static const string str_int;
-	static const string str_uint;
-	static const string str_int64;
-	static const string str_uint64;
-	static const string str_double;
-	static const string str_float;
-	static const string str_longdouble;
+	bool			strToBool(const string &s);
+	int				strToInt(const string &s, int base = 10);
+	unsigned int	strToUInt(const string &s, unsigned int base = 10);
+	int64			strToInt64(const string &s, int base = 10);
+	uint64			strToUInt64(const string &s, int base = 10);
+	double			strToDouble(const string &s);
+	float			strToFloat(const string &s);
+	fixed			strToFixed(const string &s);
+	long double		strToLongDouble(const string &s);
 
-private:
-	Conversion();
+	const string &toStr(bool b);
 
-public:
-
-	static bool strToBool(const string &s) {
-		if (s == str_zero || s == str_false) {
-			return false;
-		}
-		if (s == str_one || s == str_true) {
-			return true;
-		}
-		throwException(str_bool, s, 1);
-		return false;
-	}
-
-	static int strToInt(const string &s, int base = 10) {
-		return strToX<long int>(s, base, str_int);
-	}
-
-	static unsigned int strToUInt(const string &s, unsigned int base = 10) {
-		return strToX<unsigned long int>(s, base, str_uint);
-	}
-
-	static int64 strToInt64(const string &s, int base = 10) {
-		return strToX<int64>(s, base, str_int64);
-	}
-
-	static uint64 strToUInt64(const string &s, int base = 10) {
-		return strToX<uint64>(s, base, str_uint64);
-	}
-
-	static double strToDouble(const string &s) {
-		return strToX<double>(s, 10, str_double);
-	}
-
-	static float strToFloat(const string &s) {
-		return strToX<float>(s, 10, str_float);
-	}
-
-	static long double strToLongDouble(const string &s) {
-		return strToX<long double>(s, 10, str_longdouble);
-	}
-
-	/*
-	inline bool strToBool(const string &s, bool *b) {
-		if (s == "0" || s == "false") {
-			*b = false;
-			return true;
-		}
-
-		if (s == "1" || s == "true") {
-			*b = true;
-			return true;
-		}
-
-		return false;
-	}
-
-	inline bool strToInt(const string &s, int *i) {
-		char *endChar;
-		*i = strtol(s.c_str(), &endChar, 10);
-
-		return !*endChar;
-	}
-
-	inline bool strToFloat(const string &s, float *f) {
-		char *endChar;
-		*f = static_cast<float>(strtod(s.c_str(), &endChar));
-
-		return !*endChar;
-	}
-	*/
-	static const string &toStr(bool b) {
-		return b ? str_true : str_false;
-	}
-
-	static string toStr(int i) {
-		char str[13];
-		sprintf(str, "%d", i);
-		return str;
-	}
-
-	static string toStr(unsigned int i) {
-		char str[13];
-		sprintf(str, "%u", i);
-		return str;
-	}
-
-	static string toStr(int64 i) {
-		char str[32];
-		sprintf(str, "%lld", static_cast<long long int>(i));
-		return str;
-	}
-
-	static string toStr(uint64 i) {
-		char str[32];
-		sprintf(str, "%llu", static_cast<unsigned long long int>(i));
-		return str;
-	}
-
-	static string toHex(int i) {
-		char str[10];
-		sprintf(str, "%x", static_cast<unsigned int>(i));
-		return str;
-	}
-
-	static string toHex(unsigned int i) {
-		char str[10];
-		sprintf(str, "%x", i);
-		return str;
-	}
-
-	static string toHex(int64 i) {
-		char str[18];
-		sprintf(str, "%llx", static_cast<long long unsigned int>(i));
-		return str;
-	}
-
-	static string toHex(uint64 i) {
-		char str[18];
-		sprintf(str, "%llx", static_cast<long long unsigned int>(i));
-		return str;
-	}
-
-	static string toStr(float f) {
-		char str[24];
-		sprintf(str, "%.2f", f);
-		return str;
-	}
+	string toStr(int i);
+	string toStr(unsigned int i);
+	string toStr(int64 i);
+	string toStr(uint64 i);
+	string toHex(int i);
+	string toHex(unsigned int i);
+	string toHex(int64 i);
+	string toHex(uint64 i);
+	string toStr(fixed f);
+	string toStr(float f);
 
 	// ugly (i.e., fat) catch-all
-	template<typename T>
-	static string toStr(T v) {
+	template<typename T> string toStr(T v) {
 		stringstream str;
 		str << v;
 		return str.str();
 	}
 
-	static int hexChar2Int(char c);
+	int hexChar2Int(char c);
 
-	static int hexPair2Int(const char *hex) {
+	inline int hexPair2Int(const char *hex) {
 		return (hexChar2Int(hex[0]) << 4) + hexChar2Int(hex[1]);
 	}
 
-private:
-	// overloaded functions to fill in strToX()'s call to strto_
-	static void strto_(const char *nptr, char **endptr, int base, long int &dest) {
-		dest = strtoul(nptr, endptr, base);
-	}
-
-	static void strto_(const char *nptr, char **endptr, int base, long long int &dest) {
-		dest = strtoull(nptr, endptr, base);
-	}
-
-	static void strto_(const char *nptr, char **endptr, int base, unsigned long int &dest) {
-		dest = strtoul(nptr, endptr, base);
-	}
-
-	static void strto_(const char *nptr, char **endptr, int base, unsigned long long int &dest) {
-		dest = strtoull(nptr, endptr, base);
-	}
-
-	static void strto_(const char *nptr, char **endptr, int base, double &dest) {
-		dest = strtod(nptr, endptr);
-	}
-
-	static void strto_(const char *nptr, char **endptr, int base, float &dest) {
-		dest = strtof(nptr, endptr);
-	}
-
-	static void strto_(const char *nptr, char **endptr, int base, long double &dest) {
-		dest = strtold(nptr, endptr);
-	}
-
-	template<typename T>
-	static T strToX(const string &s, int base, const string &typeName) {
-		char *endChar;
-		T ret;
-		strto_(s.c_str(), &endChar, base, ret);
-
-		if (*endChar) {
-			// make an actual function call to throw exception so we can keep the size of this
-			// inline smaller
-			throwException(typeName, s, base);
-		}
-
-		return ret;
-	}
-
-	static void throwException(const string &typeName, const string &s, int base);
 };
 
 inline string intToStr(int i) {return Conversion::toStr(i);}
@@ -260,6 +92,12 @@ inline string intToStr(int i) {return Conversion::toStr(i);}
 inline string Vec2iToStr(Vec2i v) {
 	char str[maxStrSize];
 	sprintf(str, "(%d,%d)", v.x, v.y);
+	return str; 
+}
+
+inline string Vec3fToStr(Vec3f v) {
+	char str[maxStrSize];
+	sprintf(str, "(%g,%g,%g)", v.x, v.y, v.z);
 	return str; 
 }
 

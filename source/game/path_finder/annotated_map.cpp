@@ -29,6 +29,7 @@ namespace Glest { namespace Game { namespace Search {
 AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap) 
 		: cellMap(NULL)
 		, eMap(eMap) {
+	_PROFILE_FUNCTION
 	assert(world && world->getMap());
 	cellMap = world->getMap();
 	width = cellMap->getW();
@@ -71,6 +72,7 @@ AnnotatedMap::~AnnotatedMap() {
 
 /** Initialise clearance data for a master map. */
 void AnnotatedMap::initMapMetrics() {
+	_PROFILE_FUNCTION
 	const int east = cellMap->getW() - 1;
 	int x = east;
 	int y = cellMap->getH() - 1;
@@ -151,7 +153,7 @@ struct MudFlinger {
 void AnnotatedMap::updateMapMetrics(const Vec2i &pos, const int size) {
 	assert(cellMap->isInside(pos));
 	assert(cellMap->isInside(pos.x + size - 1, pos.y + size - 1));
-	PROFILE_LVL2_START("Updating Map Metrics");
+	_PROFILE_FUNCTION
 
 	// need to throw mud on the ClusterMap
 	mudFlinger.cm = World::getInstance().getCartographer()->getClusterMap();	
@@ -173,7 +175,6 @@ void AnnotatedMap::updateMapMetrics(const Vec2i &pos, const int size) {
 	}
 	// 2. propegate changes...
 	cascadingUpdate(pos, size);
-	PROFILE_LVL2_STOP("Updating Map Metrics");
 }
 
 /** Perform a 'cascading update' of clearance metrics having just changed clearances				*
@@ -341,7 +342,7 @@ uint32 AnnotatedMap::computeClearance( const Vec2i &pos, Field f ) {
   * @param field the field that the unit is about to search in
   */
 void AnnotatedMap::annotateLocal(const Unit *unit) {
-	PROFILE_LVL2_START("Local Annotations");
+	_PROFILE_FUNCTION
 	const Field &field = unit->getCurrField();
 	const Vec2i &pos = unit->getPos();
 	const int &size = unit->getSize();
@@ -365,7 +366,6 @@ void AnnotatedMap::annotateLocal(const Unit *unit) {
 	for ( set<Unit*>::iterator it = annotate.begin(); it != annotate.end(); ++it ) {
 		annotateUnit(*it, field);
 	}
-	PROFILE_LVL2_STOP("Local Annotations");
 }
 
 /** Temporarily annotate the map, to treat unit as an obstacle
@@ -403,7 +403,7 @@ void AnnotatedMap::annotateUnit(const Unit *unit, const Field field) {
 /** Clear all local annotations								*
   * @param field the field annotations were applied to		*/
 void AnnotatedMap::clearLocalAnnotations(const Unit *unit) {
-	PROFILE_LVL2_START("Local Annotations");
+	_PROFILE_FUNCTION
 	const Field &field = unit->getCurrField();
 	for ( map<Vec2i,uint32>::iterator it = localAnnt.begin(); it != localAnnt.end(); ++ it ) {
 		assert(it->second <= maxClearance[field]);
@@ -411,7 +411,6 @@ void AnnotatedMap::clearLocalAnnotations(const Unit *unit) {
 		metrics[it->first].set(field, it->second);
 	}
 	localAnnt.clear();
-	PROFILE_LVL2_STOP("Local Annotations");
 }
 
 #if _GAE_DEBUG_EDITION_

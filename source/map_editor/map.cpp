@@ -16,7 +16,6 @@
 #include <stdexcept>
 
 using namespace Shared::Util;
-using namespace std;
 
 namespace MapEditor {
 

@@ -39,7 +39,7 @@ public:
 	virtual void renderManager(ParticleManager *pm, ModelRenderer *mr);
 	virtual void renderSystem(ParticleSystem *ps);
 	virtual void renderSystemLine(ParticleSystem *ps);
-	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr);
+	virtual void renderSingleModel(ParticleSystem *ps, ModelRenderer *mr);
 
 	/** Translate a Particle::BlendFactor into an OpenGL GLenum value for glBlendFunc() */
 	static GLenum translate(Particle::BlendFactor v) {

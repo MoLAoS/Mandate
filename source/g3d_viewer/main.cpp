@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include "main.h"
 
 #include <stdexcept>
@@ -10,8 +12,6 @@ using namespace Shared::Platform;
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
-
-using namespace std;
 
 #if (wxUSE_UNICODE == 1)
 #	define STRCONV(x) wxConvUTF8.cMB2WC(x)

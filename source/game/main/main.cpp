@@ -27,7 +27,6 @@
 #include "CmdArgs.h"
 #include "core_data.h"
 
-using namespace std;
 using namespace Shared::Platform;
 using namespace Shared::Util;
 

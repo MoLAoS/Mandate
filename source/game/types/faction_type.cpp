@@ -77,9 +77,10 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 }
 
 //load a faction, given a directory
-bool FactionType::load(const string &dir, const TechTree *techTree) {
+bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
 	logger.add("Faction type: "+ dir, true);
+	id = ndx;
 	name = basename(dir);
 
 	bool loadOk = true;
@@ -223,7 +224,7 @@ bool FactionType::load(const string &dir, const TechTree *techTree) {
 }
 
 void FactionType::doChecksum(Checksum &checksum) const {
-	checksum.addString(name);
+	checksum.add(name);
 	foreach_const (UnitTypes, it, unitTypes) {
 		it->doChecksum(checksum);
 	}
@@ -231,15 +232,15 @@ void FactionType::doChecksum(Checksum &checksum) const {
 		it->doChecksum(checksum);
 	}
 	foreach_const (StartingUnits, it, startingUnits) {
-		checksum.addString(it->first->getName());
+		checksum.add(it->first->getName());
 		checksum.add<int>(it->second);
 	}
 	foreach_const (Resources, it, startingResources) {
-		checksum.addString(it->getType()->getName());
+		checksum.add(it->getType()->getName());
 		checksum.add<int>(it->getAmount());
 	}
 	foreach_const (Subfactions, it, subfactions) {
-		checksum.addString(*it);
+		checksum.add(*it);
 	}
 }
 

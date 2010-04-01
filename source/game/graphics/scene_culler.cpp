@@ -58,7 +58,7 @@ void SceneCuller::RayInfo::castRay() {
 	}
 }
 
-bool SceneCuller::isInside(Vec2i pos) {
+bool SceneCuller::isInside(Vec2i pos) const {
 	if (pos.y >= cellExtrema.min_y && pos.y <= cellExtrema.max_y) {
 		pair<int, int> row = cellExtrema.spans[pos.y - cellExtrema.min_y];
 		if (pos.x >= row.first && pos.x <= row.second) {
@@ -243,56 +243,47 @@ void SceneCuller::cellVisit(int x, int y) {
 }
 
 /** MidPoint line algorithm */
+///@todo replace with Shared::Util::line<>()
 void SceneCuller::scanLine(int x0, int y0, int x1, int y1) {
+	assert(y0 <= y1 && x0 <= x1);
 	int dx = x1 - x0,
 		dy = y1 - y0;
 	int x = x0,
 		y = y0;
 
-	if ( dx == 0 ) {
+	if (dx == 0) {
 		while (y <= y1) {
-			cellVisit(x,y);
-			++y;
+			cellVisit(x,y);		++y;
 		}
 	} else if (dy > dx) {
 		int d = 2 * dx - dy;
 		int incrS = 2 * dx;
 		int incrSE = 2 * (dx - dy);
-		
-		cellVisit(x,y);
-		while (y < y1) {
-			if (d <= 0) {
-				d = d + incrS;
-				y = y + 1;
-			} else {
-				d = d + incrSE;
-				x = x + 1;
-				y = y + 1;
-			}
+		do {
 			cellVisit(x,y);
-		}
+			if (d <= 0) {
+				d += incrS;		++y;
+			} else {
+				d += incrSE;	++x;	++y;
+			}
+		} while (y <= y1);
 	} else {
 		int d = 2 * dy - dx;
 		int incrE = 2 * dy;
 		int incrSE = 2 * (dy - dx);
-		
-		cellVisit(x,y);
-		while (x < x1) {
-			if (d <= 0) {
-				d = d + incrE;
-				x = x + 1;
-			} else {
-				d = d + incrSE;
-				x = x + 1;
-				y = y + 1;
-			}
+		do {
 			cellVisit(x,y);
-		}
+			if (d <= 0) {
+				d += incrE;		++x;
+			} else {
+				d += incrSE;	++x;	++y;
+			}
+		} while (x <= x1);
 	}
 }
 
 /** evaluate a set of edges (the left or right side), calls scanLine() for each edge */
-template < typename EdgeIt >
+template<typename EdgeIt>
 void SceneCuller::setVisibleExtrema(const EdgeIt &start, const EdgeIt &end) {
 	for (EdgeIt it = start; it != end; ++it) {
 		assert(it->first.y < it->second.y);

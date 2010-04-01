@@ -12,15 +12,11 @@
 #ifndef _GLEST_GAME_CONNECTIONSLOT_H_
 #define _GLEST_GAME_CONNECTIONSLOT_H_
 
-#include <vector>
-
 #include "socket.h"
-
 #include "network_interface.h"
 
 using Shared::Platform::ServerSocket;
 using Shared::Platform::Socket;
-using std::vector;
 
 namespace Glest { namespace Game {
 

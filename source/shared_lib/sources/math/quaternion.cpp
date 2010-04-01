@@ -17,22 +17,6 @@
 
 namespace Shared { namespace Math {
 
-ostream& operator<<(ostream &lhs, Vec3f &pt) {
-	return lhs << "(" << pt.x << ", " << pt.y << ", " << pt.z << ")";
-}
-
-ostream& operator<<(ostream &lhs, Vec2i &pt) {
-	return lhs << "(" << pt.x << ", " << pt.y << ")";
-}
-
-ostream& operator<<(ostream &lhs, Vec4i &rhs) {
-	return lhs << "(" << rhs.x << ", " << rhs.y << ", " << rhs.z << ", " << rhs.w << ")";
-}
-
-ostream& operator<<(ostream &lhs, Vec2f &rhs) {
-	return lhs << "(" << rhs.x << ", " << rhs.y << ")";
-}
-
 // =====================================================
 //	class AxisAngle
 // =====================================================

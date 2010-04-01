@@ -34,7 +34,7 @@ PosCircularIteratorFactory::PosCircularIteratorFactory(int maxRadius) :
 		for(int off = 0; off <= step; ++off) {
 			p->step = step;
 			p->off = off;
-			p->dist = sqrtf(static_cast<float>(step * step + off * off));
+			p->dist = int(sqrtf(float(step * step + off * off)));
 			++p;
 		}
 	}

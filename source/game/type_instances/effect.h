@@ -21,7 +21,6 @@ namespace Glest{ namespace Game{
 
 class EffectState;
 class Unit;
-class UnitState;
 class UnitReference;
 
 // ===============================
@@ -52,7 +51,7 @@ private:
 	 * should be. Each values of this effect will be multiplied by strength
 	 * before being applied to the Unit or any other modifiers.
 	 */
-	float strength;
+	fixed strength;
 
 	/** The effect's duration in game ticks */
 	int duration;
@@ -62,7 +61,7 @@ private:
 	int actualHpRegen;
 
 public:
-	Effect(const EffectType* type, Unit *source, Effect *root, float strength,
+	Effect(const EffectType* type, Unit *source, Effect *root, fixed strength,
 			const Unit *recipient, const TechTree *tt);
 	Effect(const XmlNode *node);
 
@@ -71,7 +70,7 @@ public:
 	Unit *getSource()				{return source.getUnit();}
 	Effect *getRoot()				{return root;}
 	const EffectType *getType()		{return type;}
-	float getStrength() const		{return strength;}
+	fixed getStrength() const		{return strength;}
 	int getDuration() const			{return duration;}
 	bool isRecourse() const			{return recourse;}
 	int getActualHpRegen() const	{return actualHpRegen;}
@@ -79,12 +78,14 @@ public:
 	void clearSource()				{source = NULL;}
 	void clearRoot()				{root = NULL;}
 	void setDuration(int duration)	{this->duration = duration;}
-	void setStrength(float strength){this->strength = strength;}
+	void setStrength(fixed strength){this->strength = strength;}
 
 	/**
 	 * Causes the effect to age one tick and returns true when the effect has
 	 * expired (and should be removed from the Unit).
 	 */
+	//REFACTOR : Effect is-a GameEntity, this should be update(), and called 
+	// once per world frame (if it's not already)
 	bool tick() {
 		return type->isPermanent() ? false : --duration <= 0;
 	}
@@ -161,6 +162,7 @@ public:
 	 * unit that caused the effect so that they can have any related recourse
 	 * effects expire (if appropriate).
 	 */
+	//REFACTOR is-a GameEntityCollection, tick() should be update()
 	void tick();
 
 	/**

@@ -15,19 +15,19 @@
 #include <string>
 #include <stdexcept>
 
+#include "game_constants.h"
 #include "types.h"
 #include "vec.h"
-#include "unit.h"
 
 using std::string;
-using Shared::Platform::int8;
-using Shared::Platform::int16;
-using Shared::Platform::int32;
 using Shared::Math::Vec2i;
+using namespace Shared::Platform;
 
 namespace Glest { namespace Game {
 
+class Unit;
 class Command;
+class ProjectileParticleSystem;
 
 // =====================================================
 //	class NetworkException
@@ -104,40 +104,113 @@ public:
 //	class NetworkCommand
 // =====================================================
 
-enum NetworkCommandType{
-	nctGiveCommand,
-	nctCancelCommand,
-	nctSetMeetingPoint
+WRAPPED_ENUM( NetworkCommandType,
+	GIVE_COMMAND,
+	CANCEL_COMMAND,
+	SET_MEETING_POINT
+);
+
+#pragma pack(push, 1)
+
+	class NetworkCommand{
+	private:
+		uint32 networkCommandType	:  8;
+		int32 unitId				: 24; // 32
+		int32 commandTypeId			:  8;
+		int32 targetId				: 24; // 32
+		int32 positionX				: 16; 
+		int32 positionY				: 16; // 32
+		int32 unitTypeId			: 15;
+		uint32 queue				:  1; // 16
+	public:
+		NetworkCommand(){};
+		NetworkCommand(Command *command);
+		NetworkCommand(NetworkCommandType type, const Unit *unit, const Vec2i &pos);
+		NetworkCommand(int networkCommandType, int unitId, int commandTypeId= -1, const Vec2i &pos= Vec2i(0), int unitTypeId= -1, int targetId= -1);
+
+		Command *toCommand() const;
+		NetworkCommandType getNetworkCommandType() const	{return static_cast<NetworkCommandType>(networkCommandType);}
+		int getUnitId() const								{return unitId;}
+		int getCommandTypeId() const						{return commandTypeId;}
+		Vec2i getPosition() const							{return Vec2i(positionX, positionY);}
+		int getUnitTypeId() const							{return unitTypeId;}
+		int getTargetId() const								{return targetId;}
+	};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+	struct MoveSkillUpdate {
+		int8	offsetX		:  2;
+		int8	offsetY		:  2;
+		int16	end_offset	: 12;
+
+		MoveSkillUpdate(const Unit *unit);
+		MoveSkillUpdate(const char *ptr) { *this = *((MoveSkillUpdate*)ptr); }
+		Vec2i posOffset() const { return Vec2i(offsetX, offsetY); }
+	};
+
+	struct ProjectileUpdate {
+		uint8 end_offset	:  8;
+		ProjectileUpdate(const Unit *unit, ProjectileParticleSystem *pps);
+		ProjectileUpdate(const char *ptr) { *this = *((ProjectileUpdate*)ptr); }
+	}; // 2 bytes
+#pragma pack(pop)
+
+
+#define _RECORD_GAME_STATE_ 1
+
+#if _RECORD_GAME_STATE_
+struct UnitStateRecord {
+	uint32	unit_id		: 24;
+	int32	cmd_class	:  8;
+	uint32	skill_cl	:  8;
+	int32	curr_pos_x	: 12;
+	int32	curr_pos_y	: 12;
+	int32	next_pos_x	: 12;
+	int32	next_pos_y	: 12;
+	int32	targ_pos_x	: 12;
+	int32	targ_pos_y	: 12;
+	int32	target_id	: 24;
+
+	UnitStateRecord(Unit *unit);
+	UnitStateRecord() {}
+};					//	: 20 bytes
+
+ostream& operator<<(ostream &lhs, const UnitStateRecord&);
+
+struct FrameRecord : public vector<UnitStateRecord> {
+	int32	frame;
 };
 
-#pragma pack(push, 2)
+ostream& operator<<(ostream &lhs, const FrameRecord&);
 
-class NetworkCommand{
-private:
-	int16 networkCommandType;
-	int16 unitId;
-	int16 commandTypeId;
-	int16 positionX;
-	int16 positionY;
-	int16 unitTypeId;
-	int16 targetId;
+class GameStateLog {
+	FrameRecord currFrame;
+
+	void writeFrame();
 
 public:
-	NetworkCommand(){};
-	NetworkCommand(Command *command);
-	NetworkCommand(NetworkCommandType type, const Unit *unit, const Vec2i &pos);
-	NetworkCommand(int networkCommandType, int unitId, int commandTypeId= -1, const Vec2i &pos= Vec2i(0), int unitTypeId= -1, int targetId= -1);
+	GameStateLog();
 
-	Command *toCommand() const;
-	NetworkCommandType getNetworkCommandType() const	{return static_cast<NetworkCommandType>(networkCommandType);}
-	int getUnitId() const								{return unitId;}
-	int getCommandTypeId() const						{return commandTypeId;}
-	Vec2i getPosition() const							{return Vec2i(positionX, positionY);}
-	int getUnitTypeId() const							{return unitTypeId;}
-	int getTargetId() const								{return targetId;}
+	int getCurrFrame() const { return currFrame.frame; }
+
+	void addUnitRecord(UnitStateRecord &usr) {
+		currFrame.push_back(usr);
+	}
+
+	void newFrame(int frame) {
+		if (currFrame.frame) {
+			writeFrame();
+		}
+		currFrame.clear();
+		assert(frame == currFrame.frame + 1);
+		currFrame.frame = frame;
+	}
+
+	void logFrame(int frame = -1);
 };
 
-#pragma pack(pop)
+#endif
 
 }}//end namespace
 

@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
+				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
 				PreprocessorDefinitions="USE_PCH=1;WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunitd.lib libglest.lib wsock32.lib"
+				AdditionalDependencies="cppunitd.lib libglest.lib wsock32.lib zlib.lib physfs.lib"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -119,7 +119,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
+				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;../shared_lib/include/tinyxml;../game/ai;../game/facilities;../game/game;../game/global;../game/graphics;../game/gui;../game/main;../game/menu;../game/network;../game/sound;../game/type_instances;../game/types;../game/world;../game/path_finder;facilities;search;datastructs"
 				PreprocessorDefinitions="USE_PCH=1;WIN32"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -140,7 +140,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="cppunit.lib libglest.lib wsock32.lib"
+				AdditionalDependencies="cppunit.lib libglest.lib wsock32.lib zlib.lib physfs.lib"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
@@ -194,6 +194,14 @@
 				RelativePath=".\search\influence_map_test.h"
 				>
 			</File>
+			<File
+				RelativePath=".\search\line_test.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\search\line_test.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="facilities"
@@ -218,6 +226,26 @@
 				RelativePath=".\datastructs\circular_buffer_test.h"
 				>
 			</File>
+			<File
+				RelativePath=".\datastructs\fixed_point_test.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\datastructs\fixed_point_test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\datastructs\heap_test.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\datastructs\heap_test.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="shared"
+			>
 		</Filter>
 		<File
 			RelativePath=".\main.cpp"
@@ -242,10 +270,6 @@
 					UsePrecompiledHeader="1"
 				/>
 			</FileConfiguration>
-		</File>
-		<File
-			RelativePath=".\pch.h"
-			>
 		</File>
 	</Files>
 	<Globals>

@@ -17,7 +17,6 @@
 #include "conversion.h"
 #include "leak_dumper.h"
 
-using namespace std;
 using namespace Shared::Util;
 
 namespace Shared { namespace Lua {
@@ -137,7 +136,7 @@ string LuaScript::errorToString(int errorCode) {
 			error += "Unknown error";
 	}
 	error += string(": ") + luaL_checkstring(luaState, -1);
-	cerr << error << endl;
+	fprintf(stderr, "%s\n", error.c_str());
 	return error;
 }
 

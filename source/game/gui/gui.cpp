@@ -922,18 +922,14 @@ void Gui::computeDisplay() {
 
 	if (selection.isComandable()
 	&& selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
-		if (!selectingBuilding) {
-
-			//cancel button
+		if (!selectingBuilding) { 
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
-			if (selection.isCancelable()) {
+			if (selection.isCancelable()) { //cancel button
 				display.setDownImage(cancelPos, ut->getCancelImage());
 				display.setDownLighted(cancelPos, true);
 			}
-
-			//meeting point
-			if (selection.isMeetable()) {
+			if (selection.isMeetable()) { //meeting point
 				display.setDownImage(meetingPointPos, ut->getMeetingPointImage());
 				display.setDownLighted(meetingPointPos, true);
 			}
@@ -949,8 +945,7 @@ void Gui::computeDisplay() {
 				display.setDownLighted(autoRepairPos, true);
 			}
 
-			if (selection.isUniform()) {
-				//uniform selection
+			if (selection.isUniform()) { //uniform selection
 				if (u->isBuilt()) {
 					int morphPos = 8;
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
@@ -964,12 +959,9 @@ void Gui::computeDisplay() {
 						}
 					}
 				}
-			} else {
-
-				//non uniform selection
+			} else { //non uniform selection
 				int lastCommand = 0;
-				for (int i = 0; i < CommandClass::COUNT; ++i) {
-					CommandClass cc = enum_cast<CommandClass>(i);
+				foreach_enum (CommandClass, cc) {
 					if (isSharedCommandClass(cc) && cc != CommandClass::BUILD) {
 						display.setDownLighted(lastCommand, true);
 						display.setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
@@ -978,9 +970,7 @@ void Gui::computeDisplay() {
 					}
 				}
 			}
-		} else {
-
-			//selecting building
+		} else { //selecting building
 			const Unit *unit = selection.getFrontUnit();
 			if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
 				const BuildCommandType* bct = static_cast<const BuildCommandType*>(activeCommandType);
@@ -1213,13 +1203,13 @@ void Gui::computeBuildPositions(const Vec2i &end) {
 	if(abs(offset.x) > abs(offset.y)) {
 		count = abs(offset.x / size) + 1;
 		offsetAdjusted.x = (offset.x / size) * size;
-		float mulit = (float)offset.x / (float)offsetAdjusted.x;
-		offsetAdjusted.y = (float)offset.y * mulit;
+		float mulit = float(offset.x) / float(offsetAdjusted.x);
+		offsetAdjusted.y = int(float(offset.y) * mulit);
 	} else {
 		count = abs(offset.y / size) + 1;
 		offsetAdjusted.y = (offset.y / size) * size;
-		float mulit = (float)offset.y / (float)offsetAdjusted.y;
-		offsetAdjusted.x = (float)offset.x * mulit;
+		float mulit = float(offset.y) / float(offsetAdjusted.y);
+		offsetAdjusted.x = int(float(offset.x * mulit));
 	}
 
 	buildPositions.resize(count);

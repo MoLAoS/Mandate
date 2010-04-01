@@ -93,9 +93,9 @@ bool ChatManager::keyDown(const Key &key) {
 					ScriptManager::doSomeLua(codeline);
 				} else {
 			)
-					GameNetworkInterface *gameNetworkInterface = NetworkManager::getInstance().getGameNetworkInterface();
+					GameInterface *gameInterface = NetworkManager::getInstance().getGameInterface();
 					console->addLine(theConfig.getNetPlayerName() + ": " + text);
-					gameNetworkInterface->doSendTextMessage(text, teamMode ? thisTeamIndex : -1);
+					gameInterface->doSendTextMessage(text, teamMode ? thisTeamIndex : -1);
 			IF_DEBUG_EDITION(
 				}
 			)
@@ -122,7 +122,7 @@ void ChatManager::keyPress(char c) {
 }
 
 void ChatManager::updateNetwork() {
-	GameNetworkInterface *gni = NetworkManager::getInstance().getGameNetworkInterface();
+	GameInterface *gni = NetworkManager::getInstance().getGameInterface();
 	while (gni->hasChatMsg()) {
 		console->addLine(gni->getChatSender() + ": " + gni->getChatText(), true);
 		gni->popChatMsg();

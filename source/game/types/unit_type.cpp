@@ -49,11 +49,11 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 		kills = levelNode->getAttribute("kills")->getIntValue(); 
 		const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
 		if(defaultsAtt && !defaultsAtt->getBoolValue()) {
-			maxHpMult = 1.f;
-			maxEpMult = 1.f;
-			sightMult = 1.f;
-			armorMult = 1.f;
-			effectStrength = 0.0f;
+			maxHpMult = 1;
+			maxEpMult = 1;
+			sightMult = 1;
+			armorMult = 1;
+			effectStrength = 0;
 		}
 	}
 	catch (runtime_error e) {
@@ -61,7 +61,7 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 		loadOk = false;
 	}
 
-	if ( ! EnhancementTypeBase::load(levelNode, dir, tt, ft) )
+	if ( ! EnhancementType::load(levelNode, dir, tt, ft) )
 		loadOk = false;
 	return loadOk;
 }
@@ -133,10 +133,10 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		Logger::getErrorLog().addXmlError(path, e.what());
 		return false; // bail out
 	}
-	if ( ! UnitStatsBase::load(parametersNode, dir, techTree, factionType) )
+	if ( ! UnitStats::load(parametersNode, dir, techTree, factionType) )
 		loadOk = false;
-	halfSize = size / 2.f;
-	halfHeight = height / 2.f;
+	halfSize = size / fixed(2);
+	halfHeight = height / fixed(2);
 	//prod time
 	try { productionTime= parametersNode->getChildIntValue("time"); }
 	catch (runtime_error e) {
@@ -303,12 +303,13 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 	{
 		const XmlNode *skillsNode= unitNode->getChild("skills");
 		skillTypes.resize(skillsNode->getChildCount());
-		for(int i=0; i<skillTypes.size(); ++i){
+		for(int i=0, sc=0; i<skillTypes.size(); ++i){
 			const XmlNode *sn= skillsNode->getChild("skill", i);
 			const XmlNode *typeNode= sn->getChild("type");
 			string classId= typeNode->getAttribute("value")->getRestrictedValue();
 			SkillType *skillType= SkillTypeFactory::getInstance().newInstance(classId);
 			skillType->load(sn, dir, techTree, factionType);
+			skillType->setId(sc++);
 			skillTypes[i]= skillType;
 		}
 	}
@@ -366,8 +367,7 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		skillTypes.push_back(new GetUpSkillType(firstSkillTypeOfClass[SkillClass::MOVE]));
 	}
 
-	//push dummy wait for server skill type and recalculate first of skill cache
-	skillTypes.push_back(new WaitForServerSkillType(getFirstStOfClass(SkillClass::STOP)));
+	// recalculate first of skill cache
 	computeFirstStOfClass();
 
 	/*
@@ -412,10 +412,10 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 
 void UnitType::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
-	UnitStatsBase::doChecksum(checksum);
+	UnitStats::doChecksum(checksum);
 
-	checksum.add<bool>(multiBuild);
-	checksum.add<bool>(multiSelect);
+	checksum.add(multiBuild);
+	checksum.add(multiSelect);
 	foreach_const (SkillTypes, it, skillTypes) {
 		(*it)->doChecksum(checksum);
 	}
@@ -423,8 +423,8 @@ void UnitType::doChecksum(Checksum &checksum) const {
 		(*it)->doChecksum(checksum);
 	}
 	foreach_const (StoredResources, it, storedResources) {
-		checksum.addString(it->getType()->getName());
-		checksum.add<int>(it->getAmount());
+		checksum.add(it->getType()->getName());
+		checksum.add(it->getAmount());
 	}
 	foreach_const (Levels, it, levels) {
 		it->doChecksum(checksum);
@@ -434,9 +434,9 @@ void UnitType::doChecksum(Checksum &checksum) const {
 	}
 
 	//meeting point
-	checksum.add<bool>(meetingPoint);
-	checksum.add<float>(halfSize);
-	checksum.add<float>(halfHeight);
+	checksum.add(meetingPoint);
+	checksum.add(halfSize);
+	checksum.add(halfHeight);
 
 }
 

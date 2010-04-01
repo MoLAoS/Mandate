@@ -149,13 +149,13 @@ void CircularBufferTest::testRollOver() {
 
 	int ndx = 0;
 	for (int i=0; i < times - 1; ++i) {
-		for (size_t j=0; j < hex_size; ++j) {
+		for (unsigned j=0; j < hex_size; ++j) {
 			CPPUNIT_ASSERT(my_buffer[ndx] == hex_data[ndx % hex_size]);
 			++ndx;
 		}
 	}
 	int offset = ndx;
-	for (size_t i=0; i < alpha_size; ++i) {
+	for (unsigned i=0; i < alpha_size; ++i) {
 		CPPUNIT_ASSERT(my_buffer[ndx] == alpha_data[ndx - offset]);
 		++ndx;
 	}
@@ -174,8 +174,8 @@ void CircularBufferTest::testPerfectFill() {
 
 	// write hex_data (buf_size / hex_size) times 
 	// completely filling the buffer
-	int times = buf_size / hex_size;
-	for (int i=0; i < times; ++i) {
+	unsigned int times = buf_size / hex_size;
+	for (unsigned i=0; i < times; ++i) {
 		max = buffer.getMaxWrite(limit);
 		CPPUNIT_ASSERT(max == buf_size - i * hex_size);
 		memcpy(buffer.getWritePos(), hex_data, hex_size);
@@ -194,8 +194,8 @@ void CircularBufferTest::testPerfectFill() {
 	CPPUNIT_ASSERT(buffer.getFreeBytes() == buf_size);	// and we should have buf_size free space
 
 	int ndx = 0;
-	for (int i=0; i < times; ++i) {
-		for (size_t j=0; j < hex_size; ++j) {
+	for (unsigned i=0; i < times; ++i) {
+		for (unsigned j=0; j < hex_size; ++j) {
 			CPPUNIT_ASSERT(my_buffer[ndx] == hex_data[ndx % hex_size]);
 			++ndx;
 		}
@@ -232,7 +232,7 @@ void CircularBufferTest::testPeek() {
 
 	int ndx = 0;
 	for (int i=0; i < times; ++i) {
-		for (size_t j=0; j < num_size; ++j) {
+		for (unsigned j=0; j < num_size; ++j) {
 			CPPUNIT_ASSERT(my_buffer[ndx] == num_data[ndx % num_size]);
 			++ndx;
 		}

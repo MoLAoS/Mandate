@@ -22,13 +22,14 @@
 #include "leak_dumper.h"
 #include "logger.h"
 
+#include "tech_tree.h"
+#include "unit.h"
+#include "world.h"
+
 using namespace Shared::Platform;
 using namespace Shared::Util;
-using namespace std;
 
 namespace Glest { namespace Game {
-
-	// NETWORK: nearly whole file is different
 
 // =====================================================
 //	class NetworkMessage
@@ -278,8 +279,272 @@ bool NetworkMessageQuit::receive(Socket* socket){
 }
 
 void NetworkMessageQuit::send(Socket* socket) const{
-	assert(data.messageType==NetworkMessageType::QUIT);
+	assert(data.messageType == NetworkMessageType::QUIT);
 	NetworkMessage::send(socket, &data, sizeof(data));
 }
+
+// =====================================================
+//	class SkillCycleTable
+// =====================================================
+
+void SkillCycleTable::create(const TechTree *techTree) {
+	const FactionType *ft;
+	const UnitType *ut;
+	const SkillType *st;
+	for (int i=0; i < techTree->getFactionTypeCount(); ++i) {
+		ft = techTree->getFactionType(i);
+		for (int j=0; j < ft->getUnitTypeCount(); ++j) {
+			ut = ft->getUnitType(j);
+			for (int k=0; k < ut->getSkillTypeCount(); ++k) {
+				st = ut->getSkillType(k);
+				SkillIdTriple id(ft->getId(), ut->getId(), st->getId());
+				cycleTable[id] = st->calculateCycleTime();
+			}
+		}
+	}
+}
+
+struct SkillCycleTableMsgHeader {
+	int32  type		:  8;
+	uint32 dataSize : 24;
+};
+
+void SkillCycleTable::send(Socket *socket) const {
+	size_t numEntries = cycleTable.size();
+	size_t dataSize = numEntries * (sizeof(SkillIdTriple) + sizeof(CycleInfo));
+	size_t totalSize = sizeof(SkillCycleTableMsgHeader) + dataSize;
+	char* buffer = new char[totalSize];
+	char *ptr = buffer;
+
+	assert(dataSize < 16777216);
+	assert( (1<<24) == 16777216);
+	SkillCycleTableMsgHeader* hdr = (SkillCycleTableMsgHeader*)buffer;
+	hdr->type = NetworkMessageType::SKILL_CYCLE_TABLE;
+	hdr->dataSize = dataSize;
+	ptr += sizeof(SkillCycleTableMsgHeader);
+
+	foreach_const (CycleMap, it, cycleTable) {
+		memcpy(ptr, &it->first, sizeof(SkillIdTriple));
+		ptr += sizeof(SkillIdTriple);
+		memcpy(ptr, &it->second, sizeof(CycleInfo));
+		ptr += sizeof(CycleInfo);
+	}
+	assert(ptr == buffer + totalSize);
+	try {
+		cout << "sending SkillCycleTable " << totalSize << " bytes.\n";
+		NetworkMessage::send(socket, buffer, totalSize);
+	} catch (...) {
+		delete [] buffer;
+		throw;
+	}
+	delete [] buffer;
+}
+
+struct SkillIdCycleInfoPair {
+	SkillIdTriple id;
+	CycleInfo info;
+};
+
+bool SkillCycleTable::receive(Socket *socket) {
+	SkillCycleTableMsgHeader hdr;
+	const size_t &hdrSize = sizeof(SkillCycleTableMsgHeader);
+	if (!socket->peek(&hdr, hdrSize)) {
+		return false;
+	}
+	size_t totalSize = hdrSize + hdr.dataSize;
+	char *buffer = new char[totalSize];
+	try {
+		if (socket->receive(buffer, totalSize) == totalSize) {
+			cout << "received SkillCycleTable " << totalSize << " bytes.\n";
+			SkillIdCycleInfoPair *data = (SkillIdCycleInfoPair*)(buffer + hdrSize);
+			const size_t items = hdr.dataSize / sizeof(SkillIdCycleInfoPair);
+			assert(hdr.dataSize % sizeof(SkillIdCycleInfoPair) == 0);
+			for (size_t i=0; i < items; ++i) {
+				cycleTable.insert(std::make_pair(data[i].id, data[i].info));
+			}
+			delete [] buffer;
+			return true;
+		} else {
+			delete [] buffer;
+			return false;
+		}
+	} catch(...) {
+		delete [] buffer;
+		throw;
+	}
+}
+
+const CycleInfo& SkillCycleTable::lookUp(const Unit *unit) {
+	SkillIdTriple id(
+		unit->getFaction()->getType()->getId(),
+		unit->getType()->getId(),
+		unit->getCurrSkill()->getId()
+	);
+	return cycleTable[id];
+}
+
+// =====================================================
+//	class KeyFrame
+// =====================================================
+
+struct KeyFrameMsgHeader {
+	int8	type;
+	uint8	cmdCount;
+	uint16	checksumCount;
+	uint16 moveUpdateCount;
+	uint16 projUpdateCount;
+	uint16 updateSize;
+	int32 frame;
+
+};
+
+bool KeyFrame::receive(Socket* socket) {
+	KeyFrameMsgHeader  header;
+	if (socket->peek(&header, sizeof(KeyFrameMsgHeader ))) {
+		assert(header.type == NetworkMessageType::KEY_FRAME);
+		this->frame = header.frame;
+		this->checksumCount = header.checksumCount;
+		
+		this->moveUpdateCount = header.moveUpdateCount;
+		this->projUpdateCount = header.projUpdateCount;
+		this->updateSize = header.updateSize;
+		
+		this->cmdCount = header.cmdCount;
+		size_t headerSize = sizeof(KeyFrameMsgHeader );
+		size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
+		size_t totalSize = headerSize + checksumCount * sizeof(int32) + commandsSize + updateSize;
+
+		if (socket->getDataToRead() >= totalSize) {
+			socket->receive(&header, headerSize);
+			if (checksumCount) {
+				socket->receive(checksums, checksumCount * sizeof(int32));
+			}
+			if (updateSize) {
+				socket->receive(updateBuffer, updateSize);
+			}
+			if (commandsSize) {
+				socket->receive(commands, commandsSize);
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	return false;
+}
+
+void KeyFrame::send(Socket* socket) const {
+	KeyFrameMsgHeader header;
+	header.type = NetworkMessageType::KEY_FRAME;
+	header.frame = this->frame;
+	header.cmdCount = this->cmdCount;
+	header.checksumCount = this->checksumCount;
+
+	header.moveUpdateCount = this->moveUpdateCount;
+	header.projUpdateCount = this->projUpdateCount;
+	header.updateSize = this->updateSize;
+
+	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
+	size_t headerSize = sizeof(KeyFrameMsgHeader);
+
+	size_t totalSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32) + updateSize + commandsSize;
+	char *buf = new char[totalSize];
+	char *ptr = buf;
+	memcpy(ptr, &header, sizeof(KeyFrameMsgHeader));
+	ptr += sizeof(KeyFrameMsgHeader);
+	if (checksumCount) {
+		memcpy(ptr, checksums, checksumCount * sizeof(int32));
+		ptr += checksumCount * sizeof(int32);
+	}
+	if (updateSize) {
+		memcpy(ptr, updateBuffer, updateSize);
+		ptr += updateSize;
+	}
+	if (commandsSize) {
+		memcpy(ptr, commands, commandsSize);
+	}
+	NetworkMessage::send(socket, buf, totalSize);
+	delete [] buf;
+}
+
+int32 KeyFrame::getNextChecksum() { 
+	assert(checksumCounter < checksumCount);
+	if (checksumCounter >= checksumCount) {
+		throw runtime_error("sync error: insufficient checksums in keyframe.");
+	}
+	return checksums[checksumCounter++];
+}
+
+void KeyFrame::addChecksum(int32 cs) {
+	assert(checksumCount < max_checksums);
+	if (checksumCount >= max_checksums) {
+		throw runtime_error("Error: insufficient room for checksums in keyframe, increase KeyFrame::max_checksums.");
+	}
+	checksums[checksumCount++] = cs;
+}
+
+void KeyFrame::add(NetworkCommand &nc) {
+	assert(cmdCount < max_cmds);
+	memcpy(&commands[cmdCount++], &nc, sizeof(NetworkCommand));		
+}
+
+void KeyFrame::reset() {
+	checksumCounter = checksumCount = 0;
+	projUpdateCount = moveUpdateCount = cmdCount = 0;
+	updateSize = 0;
+	writePtr = updateBuffer;
+	readPtr = updateBuffer;
+}
+
+void KeyFrame::addUpdate(MoveSkillUpdate updt) {
+	assert(writePtr < &updateBuffer[buffer_size - 2]);
+	memcpy(writePtr, &updt, sizeof(MoveSkillUpdate));
+	writePtr += sizeof(MoveSkillUpdate);
+	updateSize += sizeof(MoveSkillUpdate);
+	++moveUpdateCount;
+}
+
+void KeyFrame::addUpdate(ProjectileUpdate updt) {
+	assert(writePtr < &updateBuffer[buffer_size - 1]);
+	memcpy(writePtr, &updt, sizeof(ProjectileUpdate));
+	writePtr += sizeof(ProjectileUpdate);
+	updateSize += sizeof(ProjectileUpdate);
+	++projUpdateCount;
+}
+
+MoveSkillUpdate KeyFrame::getMoveUpdate() {
+	assert(readPtr < updateBuffer + updateSize - 1);
+	if (!moveUpdateCount) {
+		throw runtime_error("Sync error: Insufficient move skill updates in keyframe");
+	}
+	MoveSkillUpdate res = *((MoveSkillUpdate*)readPtr);
+	readPtr += sizeof(MoveSkillUpdate);
+	--moveUpdateCount;
+	return res;
+}
+
+ProjectileUpdate KeyFrame::getProjUpdate() {
+	assert(readPtr < updateBuffer + updateSize);
+	if (!projUpdateCount) {
+		throw runtime_error("Sync error: Insufficient projectile updates in keyframe");
+	}
+	ProjectileUpdate res = *((ProjectileUpdate*)readPtr);
+	readPtr += sizeof(ProjectileUpdate);
+	--projUpdateCount;
+	return res;
+}
+
+#if _RECORD_GAME_STATE_
+
+bool SyncError::receive(Socket* socket){
+	return NetworkMessage::receive(socket, &data, sizeof(data));
+}
+
+void SyncError::send(Socket* socket) const{
+	assert(data.messageType == NetworkMessageType::SYNC_ERROR);
+	NetworkMessage::send(socket, &data, sizeof(data));
+}
+
+#endif
 
 }}//end namespace

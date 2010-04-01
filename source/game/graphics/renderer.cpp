@@ -498,8 +498,8 @@ void Renderer::renderMouse2d(int x, int y, int anim, float fade){
 
 	anim= anim*2-maxMouse2dAnim;
 
-	color2= (abs(anim*fadeFactor)/static_cast<float>(maxMouse2dAnim))/2.f+0.4f;
-	color1= (abs(anim*fadeFactor)/static_cast<float>(maxMouse2dAnim))/2.f+0.8f;
+	color2= (abs(anim*fadeFactor)/float(maxMouse2dAnim))/2.f+0.4f;
+	color1= (abs(anim*fadeFactor)/float(maxMouse2dAnim))/2.f+0.8f;
 
 	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
 		glEnable(GL_BLEND);
@@ -601,7 +601,7 @@ void Renderer::renderMouse3d(){
 
 			glTranslatef(pos3f.x, pos3f.y+2.f, pos3f.z);
 			glRotatef(90.f, 1.f, 0.f, 0.f);
-			glRotatef(static_cast<float>(mouse3d->getRot()), 0.f, 0.f, 1.f);
+			glRotatef(float(mouse3d->getRot()), 0.f, 0.f, 1.f);
 
 			cilQuadric= gluNewQuadric();
 			gluQuadricDrawStyle(cilQuadric, GLU_FILL);
@@ -724,6 +724,7 @@ void Renderer::renderResourceStatus(){
 			string str= intToStr(r->getAmount());
 
 			glEnable(GL_TEXTURE_2D);
+			glColor3f(1.f, 1.f, 1.f);
 			renderQuad(j*100+200, metrics.getVirtualH()-30, 16, 16, rt->getImage());
 
 			if(rt->getClass()!=ResourceClass::STATIC){
@@ -817,7 +818,7 @@ void Renderer::renderTextShadow(const string &text, const Font2D *font, int x, i
 	glPushAttrib(GL_CURRENT_BIT);
 	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);	textRenderer->begin(font);
 	glColor3f(0.0f, 0.0f, 0.0f);
-	textRenderer->render(text, pos.x-1.0f, pos.y-1.0f);
+	textRenderer->render(text, pos.x - 1, pos.y - 1);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	textRenderer->render(text, pos.x, pos.y);
 	textRenderer->end();
@@ -1269,9 +1270,9 @@ void Renderer::renderObjects(){
 
 			// QUICK-FIX: Objects/Resources drawn out of place...				
 			// Why do we need this ??? are the tileset objects / techtree resources defined out of position ??
-			v.x += Map::mapScale / 2; // == 1
-			v.z += Map::mapScale / 2;
-			
+			v.x += GameConstants::cellScale / 2; // == 1
+			v.z += GameConstants::cellScale / 2;
+
 			//ambient and diffuse color is taken from cell color
 			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
 			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
@@ -1372,9 +1373,9 @@ void Renderer::renderWater(){
 				glMultiTexCoord2fv(GL_TEXTURE1, tc1->getFowTexCoord().ptr());
 				glTexCoord3f( (float)i, 1.f, waterAnim );
 				glVertex3f(
-					static_cast<float>(i)*Map::mapScale,
+					float(i) * GameConstants::mapScale,
 					waterLevel,
-					static_cast<float>(j+1)*Map::mapScale);
+					float(j + 1) * GameConstants::mapScale);
 
 				//vertex 2
 				glMaterialfv(
@@ -1383,9 +1384,9 @@ void Renderer::renderWater(){
 				glMultiTexCoord2fv(GL_TEXTURE1, tc0->getFowTexCoord().ptr());
 				glTexCoord3f( (float)i, 0.f, waterAnim );
 				glVertex3f(
-					static_cast<float>(i)*Map::mapScale,
+					float(i) * GameConstants::mapScale,
 					waterLevel,
-					static_cast<float>(j)*Map::mapScale);
+					float(j) * GameConstants::mapScale);
 
 			} else {
 				if ( !closed ) {
@@ -1397,9 +1398,9 @@ void Renderer::renderWater(){
 					glMultiTexCoord2fv(GL_TEXTURE1, tc1->getFowTexCoord().ptr());
 					glTexCoord3f( (float)i, 1.f, waterAnim );
 					glVertex3f(
-						static_cast<float>(i)*Map::mapScale,
+						float(i) * GameConstants::mapScale,
 						waterLevel,
-						static_cast<float>(j+1)*Map::mapScale);
+						float(j + 1) * GameConstants::mapScale);
 
 					//vertex 2
 					glMaterialfv(
@@ -1408,9 +1409,9 @@ void Renderer::renderWater(){
 					glMultiTexCoord2fv(GL_TEXTURE1, tc0->getFowTexCoord().ptr());
 					glTexCoord3f( (float)i, 0.f, waterAnim );
 					glVertex3f(
-						static_cast<float>(i)*Map::mapScale,
+						float(i) * GameConstants::mapScale,
 						waterLevel,
-						static_cast<float>(j)*Map::mapScale);
+						float(j) * GameConstants::mapScale);
 
 					glEnd();
 					glBegin(GL_TRIANGLE_STRIP);
@@ -1487,7 +1488,7 @@ void Renderer::renderUnits(){
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
 			ut = unit->getType();
-			int framesUntilDead = Unit::maxDeadCount - unit->getDeadCount();
+			int framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
 
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
@@ -1744,8 +1745,8 @@ void Renderer::renderMinimap(){
 	int mh= metrics.getMinimapH();
 
 	Vec2f zoom= Vec2f(
-		static_cast<float>(mw)/ pixmap->getW(),
-		static_cast<float>(mh)/ pixmap->getH());
+		float(mw)/ pixmap->getW(),
+		float(mh)/ pixmap->getH());
 
 	assertGl();
 
@@ -1801,7 +1802,7 @@ void Renderer::renderMinimap(){
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			Unit *unit= world->getFaction(i)->getUnit(j);
 			if (world->toRenderUnit(unit) && unit->isAlive()) {
-				Vec2i pos= unit->getPos()/Map::cellScale;
+				Vec2i pos= unit->getPos() / GameConstants::cellScale;
 				int size= unit->getType()->getSize();
 				Vec3f color=  world->getFaction(i)->getTexture()->getPixmap()->getPixel3f(0, 0);
 				glColor3fv(color.ptr());
@@ -1815,8 +1816,8 @@ void Renderer::renderMinimap(){
 	glEnd();
 
 	//draw camera
-	float wRatio= static_cast<float>(metrics.getMinimapW()) / world->getMap()->getW();
-	float hRatio= static_cast<float>(metrics.getMinimapH()) / world->getMap()->getH();
+	float wRatio= float(metrics.getMinimapW()) / world->getMap()->getW();
+	float hRatio= float(metrics.getMinimapH()) / world->getMap()->getH();
 
 	int x= static_cast<int>(gameCamera->getPos().x * wRatio);
 	int y= static_cast<int>(gameCamera->getPos().z * hRatio);
@@ -1881,8 +1882,8 @@ void Renderer::renderDisplay(){
 	//up images
 	glEnable(GL_TEXTURE_2D);
 	glColor3f(1.f, 1.f, 1.f);
-	for(int i=0; i<Display::upCellCount; ++i){
-		if(display->getUpImage(i)!=NULL){
+	for (int i=0; i < Display::upCellCount; ++i) {
+		if (display->getUpImage(i) != NULL) {
 			renderQuad(
 				metrics.getDisplayX()+display->computeUpX(i),
 				metrics.getDisplayY()+display->computeUpY(i),
@@ -1890,15 +1891,17 @@ void Renderer::renderDisplay(){
 		}
 	}
  	//down images
-	for(int i=0; i<Display::downCellCount; ++i){
-		if(display->getDownImage(i)!=NULL){
-			if ( display->getDownLighted(i) ) {
+	for (int i=0; i < Display::downCellCount; ++i) {
+		if(display->getDownImage(i) != NULL){
+			if (display->getDownLighted(i)) {
 				glColor3f(1.f, 1.f, 1.f);
-			} else {				glColor3f(0.3f, 0.3f, 0.3f);			}
+			} else {
+				glColor3f(0.3f, 0.3f, 0.3f);
+			}
 			int x= metrics.getDisplayX()+display->computeDownX(i);
 			int y= metrics.getDisplayY()+display->computeDownY(i);
 			int size= Display::imageSize;
-			if(display->getDownSelectedPos()==i){
+			if (display->getDownSelectedPos() == i) {
 				x-= 3;
 				y-= 3;
 				size+= 6;
@@ -2157,7 +2160,7 @@ void Renderer::renderShadowsToTexture() {
 				glRotatef(ang, 1, 0, 0);
 				glRotatef(90, 0, 1, 0);
 				Vec3f pos = game->getGameCamera()->getPos();
-				glTranslatef(static_cast<int>(-pos.x), 0, static_cast<int>(-pos.z));
+				glTranslatef(-pos.x, 0, -pos.z);
 			} else {
 				//non directional light
 				//push projection
@@ -2455,7 +2458,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			// faded shadows
 			if(renderingShadows) {
 				ut = unit->getType();
-				int framesUntilDead = Unit::maxDeadCount - unit->getDeadCount();
+				int framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
 				float color = 1.0f - shadowAlpha;
 				float fade = false;
 
@@ -2861,7 +2864,7 @@ void Renderer::renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &co
 	//arrow body
 	glBegin(GL_TRIANGLE_STRIP);
 	for(int i=0; i<=tesselation; ++i){
-		float t= static_cast<float>(i)/tesselation;
+		float t= float(i)/tesselation;
 		Vec3f a= pos1Left.lerp(t, pos2Left);
 		Vec3f b= pos1Right.lerp(t, pos2Right);
 		Vec4f c= Vec4f(color, t*0.25f*alphaFactor);
@@ -2920,17 +2923,17 @@ void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const
 void Renderer::renderTile(const Vec2i &pos){
 
 	const Map *map= game->getWorld()->getMap();
-	Vec2i scaledPos= pos * Map::cellScale;
+	Vec2i scaledPos= pos * GameConstants::cellScale;
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glTranslatef(-0.5f, 0.f, -0.5f);
 
 	glInitNames();
-	for(int i=0; i<Map::cellScale; ++i){
-		for(int j=0; j<Map::cellScale; ++j){
+	for (int i=0; i < GameConstants::cellScale; ++i) {
+		for (int j=0; j < GameConstants::cellScale; ++j) {
 
-			Vec2i renderPos= scaledPos + Vec2i(i, j);
+			Vec2i renderPos = scaledPos + Vec2i(i, j);
 
 			glPushName(renderPos.y);
 			glPushName(renderPos.x);
@@ -2939,21 +2942,21 @@ void Renderer::renderTile(const Vec2i &pos){
 
 			glBegin(GL_TRIANGLE_STRIP);
 			glVertex3f(
-				static_cast<float>(renderPos.x),
+				float(renderPos.x),
 				map->getCell(renderPos.x, renderPos.y)->getHeight(),
-				static_cast<float>(renderPos.y));
+				float(renderPos.y));
 			glVertex3f(
-				static_cast<float>(renderPos.x),
+				float(renderPos.x),
 				map->getCell(renderPos.x, renderPos.y+1)->getHeight(),
-				static_cast<float>(renderPos.y+1));
+				float(renderPos.y+1));
 			glVertex3f(
-				static_cast<float>(renderPos.x+1),
+				float(renderPos.x+1),
 				map->getCell(renderPos.x+1, renderPos.y)->getHeight(),
-				static_cast<float>(renderPos.y));
+				float(renderPos.y));
 			glVertex3f(
-				static_cast<float>(renderPos.x+1),
+				float(renderPos.x+1),
 				map->getCell(renderPos.x+1, renderPos.y+1)->getHeight(),
-				static_cast<float>(renderPos.y+1));
+				float(renderPos.y+1));
 			glEnd();
 
 			glPopName();

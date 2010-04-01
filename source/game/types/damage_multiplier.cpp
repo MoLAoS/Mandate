@@ -20,11 +20,11 @@ namespace Glest{ namespace Game{
 // 	class DamageMultiplierTable
 // =====================================================
 
-DamageMultiplierTable::DamageMultiplierTable(){
-	values= NULL;
+DamageMultiplierTable::DamageMultiplierTable() 
+		: values(0) {
 }
 
-DamageMultiplierTable::~DamageMultiplierTable(){
+DamageMultiplierTable::~DamageMultiplierTable() {
 	delete [] values;
 }
 
@@ -33,17 +33,17 @@ void DamageMultiplierTable::init(int attackTypeCount, int armorTypeCount){
 	this->armorTypeCount= armorTypeCount;
 
 	int valueCount= attackTypeCount*armorTypeCount;
-	values= new float[valueCount];
+	values= new fixed[valueCount];
 	for(int i=0; i<valueCount; ++i){
-		values[i]= 1.f;
+		values[i] = 1;
 	}
 }
 
-float DamageMultiplierTable::getDamageMultiplier(const AttackType *att, const ArmorType *art) const{
+fixed DamageMultiplierTable::getDamageMultiplier(const AttackType *att, const ArmorType *art) const {
 	return values[attackTypeCount*art->getId()+att->getId()];
 }
 
-void DamageMultiplierTable::setDamageMultiplier(const AttackType *att, const ArmorType *art, float value){
+void DamageMultiplierTable::setDamageMultiplier(const AttackType *att, const ArmorType *art, fixed value) {
 	values[attackTypeCount*art->getId()+att->getId()]= value;
 }
 

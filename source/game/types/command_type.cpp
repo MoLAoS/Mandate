@@ -185,11 +185,10 @@ void CommandType::update(UnitUpdater *unitUpdater, Unit *unit) const{
 			unitUpdater->updatePatrol(unit);
 			break;
 
+		case CommandClass::INVALID:
 		case CommandClass::SET_MEETING_POINT:
 		case CommandClass::COUNT:
 		case CommandClass::NULL_COMMAND:
-			assert(0);  //FIXME: really assertion fail here? which can be disabled by setting NDEBUG
-			break;
 		default:
 			throw runtime_error("unhandled CommandClass");
 	}
@@ -421,9 +420,9 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 void BuildCommandType::doChecksum(Checksum &checksum) const {
 	MoveBaseCommandType::doChecksum(checksum);
-	checksum.addString(buildSkillType->getName());
+	checksum.add(buildSkillType->getName());
 	for (int i=0; i < buildings.size(); ++i) {
-		checksum.addString(buildings[i]->getName());
+		checksum.add(buildings[i]->getName());
 	}
 }
 
@@ -486,11 +485,11 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 void HarvestCommandType::doChecksum(Checksum &checksum) const {
 	MoveBaseCommandType::doChecksum(checksum);
-	checksum.addString(moveLoadedSkillType->getName());
-	checksum.addString(harvestSkillType->getName());
-	checksum.addString(stopLoadedSkillType->getName());
+	checksum.add(moveLoadedSkillType->getName());
+	checksum.add(harvestSkillType->getName());
+	checksum.add(stopLoadedSkillType->getName());
 	for (int i=0; i < harvestedResources.size(); ++i) {
-		checksum.addString(harvestedResources[i]->getName());
+		checksum.add(harvestedResources[i]->getName());
 	}
 	checksum.add<int>(maxLoad);
 	checksum.add<int>(hitsPerUnit);
@@ -500,7 +499,7 @@ void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
 
 	str+= lang.get("HarvestSpeed")+": "+ intToStr(harvestSkillType->getSpeed()/hitsPerUnit);
-	EnhancementTypeBase::describeModifier(str, (unit->getSpeed(harvestSkillType) - harvestSkillType->getSpeed())/hitsPerUnit);
+	EnhancementType::describeModifier(str, (unit->getSpeed(harvestSkillType) - harvestSkillType->getSpeed())/hitsPerUnit);
 	str+= "\n";
 	str+= lang.get("MaxLoad")+": "+ intToStr(maxLoad)+"\n";
 	str+= lang.get("LoadedSpeed")+": "+ intToStr(moveLoadedSkillType->getSpeed())+"\n";
@@ -551,9 +550,9 @@ bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree
 
 void RepairCommandType::doChecksum(Checksum &checksum) const {
 	MoveBaseCommandType::doChecksum(checksum);
-	checksum.addString(repairSkillType->getName());
+	checksum.add(repairSkillType->getName());
 	for (int i=0; i < repairableUnits.size(); ++i) {
-		checksum.addString(repairableUnits[i]->getName());
+		checksum.add(repairableUnits[i]->getName());
 	}
 }
 
@@ -616,8 +615,8 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 void ProduceCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	checksum.addString(produceSkillType->getName());
-	checksum.addString(producedUnit->getName());
+	checksum.add(produceSkillType->getName());
+	checksum.add(producedUnit->getName());
 }
 
 void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
@@ -661,8 +660,8 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	checksum.addString(upgradeSkillType->getName());
-	checksum.addString(producedUpgrade->getName());
+	checksum.add(upgradeSkillType->getName());
+	checksum.add(producedUpgrade->getName());
 }
 
 string UpgradeCommandType::getReqDesc() const{
@@ -706,8 +705,8 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 void MorphCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	checksum.addString(morphSkillType->getName());
-	checksum.addString(morphUnit->getName());
+	checksum.add(morphSkillType->getName());
+	checksum.add(morphUnit->getName());
 	checksum.add<int>(discount);
 }
 

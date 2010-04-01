@@ -62,7 +62,8 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	}
 
 	string str= config.getRenderShadows();
-	listBoxShadows.setSelectedItemIndex(clamp(Renderer::strToShadows(str), 0, Renderer::sCount-1));
+	listBoxShadows.setSelectedItemIndex(
+		clamp(int(Renderer::strToShadows(str)), 0, Renderer::sCount - 1));
 
 	//filter
 	listBoxFilter.pushBackItem("Bilinear");
@@ -72,7 +73,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	//textures 3d
 	listBoxTextures3D.pushBackItem(lang.get("No"));
 	listBoxTextures3D.pushBackItem(lang.get("Yes"));
-	listBoxTextures3D.setSelectedItemIndex(clamp(config.getRenderTextures3D(), 0, 1));
+	listBoxTextures3D.setSelectedItemIndex(config.getRenderTextures3D() ? 1 : 0);
 
 	//lights
 	for(int i= 1; i<=8; ++i){

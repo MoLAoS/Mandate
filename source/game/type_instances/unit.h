@@ -27,8 +27,6 @@
 #include "timer.h"
 #include "logger.h"
 
-#define UNIT_LOG(x) {}
-
 namespace Glest { namespace Game {
 
 using Shared::Graphics::ParticleSystem;
@@ -54,10 +52,6 @@ class MorphCommandType;
 class RepairCommandType;
 class Game;
 class World;
-class UnitState;
-
-//#define UNIT_LOG(x) theLogger.add(x)
-#define UNIT_LOG(x) {}
 
 // =====================================================
 // 	class UnitObserver
@@ -75,13 +69,19 @@ public:
 	virtual void unitEvent(Event event, const Unit *unit)=0;
 };
 
+class Vec2iList : public list<Vec2i> {
+public:
+	void read(const XmlNode *node);
+	void write(XmlNode *node) const;
+};
+
 // =====================================================
 // 	class UnitPath
 // =====================================================
 /** Holds the next cells of a Unit movement 
   * @extends std::list<Shared::Math::Vec2i>
   */
-class UnitPath : public list<Vec2i> {
+class UnitPath : public Vec2iList {
 private:
 	static const int maxBlockCount = 10; /**< number of frames to wait on a blocked path */
 
@@ -99,9 +99,13 @@ public:
 	Vec2i peek()		{return front();}	 /**< peek at the next position			 */	
 	void pop()			{erase(begin());}	/**< pop the next position off the path */
 
-	int getBlockCount() const { return blockCount; }};
+	int getBlockCount() const { return blockCount; }
 
-class WaypointPath : public list<Vec2i> {
+	void read(const XmlNode *node);
+	void write(XmlNode *node) const;
+};
+
+class WaypointPath : public Vec2iList {
 public:
 	WaypointPath() {}
 	void push(const Vec2i &pos/*, float dist*/)	{ push_front(pos); }
@@ -118,22 +122,18 @@ public:
 
 /**
  * Represents a single game unit or building. The Unit class inherits from
- * EnhancementTypeBase as a mechanism to maintain a cache of it's current
+ * EnhancementType as a mechanism to maintain a cache of it's current
  * stat values. These values are only recalculated when an effect is added
  * or removed, an upgrade is applied or the unit levels up. This way, all
  * requests from other parts of the code for the value of a stat can be
  * procured without having to perform lengthy computations. Previously, the
  * TotalUpgrade class provided this functionality.
  */
-class Unit : public EnhancementTypeBase, public Entity {
+class Unit : public EnhancementType {
 public:
 	typedef list<Command*> Commands;
 	typedef list<UnitObserver*> Observers;
 	typedef list<UnitReference> Pets;
-	static const float speedDivider;
-	static const int maxDeadCount;
-	static const float highlightTime;
-	static const int invalidId;
 
 private:
 	int id;					/**< unique identifier  */
@@ -141,12 +141,27 @@ private:
 	int ep;					/**< current energy points */
 	int loadCount;			/**< current 'load' (resources carried) */
 	int deadCount;			/**< how many frames this unit has been dead */
-	float progress;			/**< skill progress, between 0 and 1 */
-	float progressSpeed;	/**< cached progress */
-	float animProgressSpeed;/**< cached animation progress */
+	
+	//todo: deprecate, interpolate using lastCommandUpdate -> nextCommandUpdate
+	//float progress;			/**< skill progress, between 0 and 1 */
+
+	//todo: wont need these anymore
+	//float progressSpeed;	/**< cached progress */
+	//float animProgressSpeed;/**< cached animation progress */
+
+	int lastAnimReset;		/**< the frame the current animation cycle was last reset to 0 */
+	int nextAnimReset;		/**< the frame the current animation cycle will nect be reset to 0 */
+
+	int lastCommandUpdate;	//**< the frame this unit last updated its command */
 	int nextCommandUpdate;	/**< frame next command update will occur */
-	float lastAnimProgress;	/**< animation progress last frame, between 0 and 1 */
-	float animProgress;		/**< animation progress, between 0 and 1 */
+
+	int attackStartFrame;	/**< the frame the unit will start an attack system */
+	int soundStartFrame;	/**< the frame the sound for the current skill should be started */
+
+	//todo: deprecate, interpolate from current frame using lastAnimReset (0.f) to nextAnimReset - 1 (1.f)
+	//float lastAnimProgress;	/**< animation progress last frame, between 0 and 1 */
+	//float animProgress;		/**< animation progress, between 0 and 1 */
+
 	float highlight;		/**< alpha for selection circle effects */
 	int progress2;			/**< 'secondary' skill progress counter */
 	int kills;				/**< number of kills */
@@ -186,7 +201,7 @@ private:
 	Effects effectsCreated;
 
 	/** All stat changes from upgrades and level ups */
-	EnhancementTypeBase totalUpgrade;
+	EnhancementType totalUpgrade;
 	Faction *faction;
 	ParticleSystem *fire;
 	Map *map;
@@ -204,31 +219,59 @@ private:
 	int hp_above_trigger;		// if non-zero, call the Trigger manager when HP rises above this
 	bool attacked_trigger;
  	
-	float nextUpdateFrames;
+public:
+	// signals, should prob replace the UnitObserver stuff
+	//
+	//@todo sigslot is slow. remove the signal to Cartographer, replace
+	// direct function call.
+	//
+	typedef Unit* u_ptr;
+	typedef const UnitType* ut_ptr;
+	typedef sigslot::signal1<u_ptr>			UnitSignal;
+	typedef sigslot::signal2<u_ptr, Vec2i>	UnitPosSignal;
+	typedef sigslot::signal2<u_ptr, ut_ptr> MorphSignal;
+
+	//UnitSignal		Created;	 /**< fires when a unit is created		   */
+	//UnitSignal		Born;		/**< fires when a unit is 'born'		  */
+	//UnitPosSignal	Moving;	   /**< fires just before a unit is moved	 */
+	//UnitPosSignal	Moved;	  /**< fires after a unit has moved			*/
+	//MorphSignal		Morphed; /**<  */
+	UnitSignal		Died;	/**<  */
 
 public:
 	Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master = NULL);
+	Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
 	~Unit();
+
+	void save(XmlNode *node) const;
 
 	//queries
 	int getId() const							{return id;}
 	Field getCurrField() const					{return currField;}
 	Zone getCurrZone() const					{return currField == Field::AIR ? Zone::AIR : Zone::LAND;}
 	int getLoadCount() const					{return loadCount;}
-	float getLastAnimProgress() const			{return lastAnimProgress;}
-	float getProgress() const					{return progress;}
-	float getAnimProgress() const				{return animProgress;}
+	//float getLastAnimProgress() const			{return lastAnimProgress;}
+	float getProgress() const;
+	float getAnimProgress() const;
 	float getHightlight() const					{return highlight;}
 	int getProgress2() const					{return progress2;}
+
+	int getNextCommandUpdate() const			{ return nextCommandUpdate; }
+	int getLastCommandUpdate() const			{ return lastCommandUpdate; }
+	int getNextAnimReset() const				{ return nextAnimReset; }
+	int getNextAttackFrame() const				{ return attackStartFrame; }
+	int getSoundStartFrame() const				{ return soundStartFrame; }
+
 	int getFactionIndex() const					{return faction->getIndex();}
 	int getTeam() const							{return faction->getTeam();}
 	int getHp() const							{return hp;}
 	int getEp() const							{return ep;}
 	int getProductionPercent() const;
 	float getHpRatio() const					{return clamp(static_cast<float>(hp) / getMaxHp(), 0.f, 1.f);}
+	fixed getHpRatioFixed() const				{ return fixed(hp) / getMaxHp(); }
 	float getEpRatio() const					{return !type->getMaxEp() ? 0.0f : clamp(static_cast<float>(ep)/getMaxEp(), 0.f, 1.f);}
 	bool getToBeUndertaken() const				{return toBeUndertaken;}
-	Unit *getTarget()							{return targetRef.getUnit();}
+	Unit *getTarget() const						{return targetRef.getUnit();}
 	Vec2i getNextPos() const					{return nextPos;}
 	Vec2i getTargetPos() const					{return targetPos;}
 	Vec3f getTargetVec() const					{return targetVec;}
@@ -238,7 +281,7 @@ public:
 	const ResourceType *getLoadType() const		{return loadType;}
 	const UnitType *getType() const				{return type;}
 	const SkillType *getCurrSkill() const		{return currSkill;}
-	const EnhancementTypeBase *getTotalUpgrade() const	{return &totalUpgrade;}
+	const EnhancementType *getTotalUpgrade() const	{return &totalUpgrade;}
 	float getRotation() const					{return rotation;}
 	float getVerticalRotation() const			{return 0.0f;}
 	ParticleSystem *getFire() const				{return fire;}
@@ -255,7 +298,7 @@ public:
 	Unit *getMaster() const						{return master;}
 	void setMaster(Unit *master)				{this->master = master;}
 	const Pets &getPets() const					{return pets;}
-	const Emanations &getGetEmanations() const	{return type->getEmanations();}
+	const Emanations &getEmanations() const		{return type->getEmanations();}
 	int getPetCount(const UnitType *unitType) const;
 	const Commands &getCommands() const			{return commands;}
 	const RepairCommandType *getRepairCommandType(const Unit *u) const;
@@ -266,6 +309,8 @@ public:
 	void petDied(Unit *u)						{pets.remove(u);}
 	int killPets();
 
+	//void clearAttackStartFrame()				{ attackStartFrame = -1; }
+
 	void setCommandCallback()					{ commandCallback = commands.front(); }
 	void clearCommandCallback()					{ commandCallback = NULL; }
 	const Command* getCommandCallback() const	{ return commandCallback; }
@@ -274,21 +319,24 @@ public:
 	void setAttackedTrigger(bool val)			{ attacked_trigger = val; }
 	bool getAttackedTrigger() const				{ return attacked_trigger; }
 
+	void resetAnim(int frame) { nextAnimReset = frame; }
+
 	/**
 	 * Returns the total attack strength (base damage) for this unit using the
 	 * supplied skill, taking into account all upgrades & effects.
 	 */
 	int getAttackStrength(const AttackSkillType *ast) const	{
-		return (int)roundf(ast->getAttackStrength() * attackStrengthMult + attackStrength);
+		return (ast->getAttackStrength() * attackStrengthMult + attackStrength).intp();
 	}
 
 	/**
 	 * Returns the total attack percentage stolen for this unit using the
 	 * supplied skill, taking into account all upgrades & effects.
+	 * @todo fix for fixed ;)
 	 */
-	float getAttackPctStolen(const AttackSkillType *ast) const	{
-		return ast->getAttackPctStolen() * attackPctStolenMult + attackPctStolen;
-	}
+	//fixed getAttackPctStolen(const AttackSkillType *ast) const	{
+	//	return (ast->getAttackPctStolen() * attackPctStolenMult + attackPctStolen);
+	//}
 
 	/**
 	 * Returns the maximum range (attack range, spell range, etc.) for this unit
@@ -298,23 +346,23 @@ public:
 	int getMaxRange(const SkillType *st) const {
 		switch(st->getClass()) {
 			case SkillClass::ATTACK:
-				return (int)roundf(st->getMaxRange() * attackRangeMult + attackRange);
+				return (st->getMaxRange() * attackRangeMult + attackRange).intp();
 			default:
 				return st->getMaxRange();
 		}
 	}
 
 	int getMaxRange(const AttackSkillTypes *asts) const {
-		return (int)roundf(asts->getMaxRange() * attackRangeMult + attackRange);
+		return (asts->getMaxRange() * attackRangeMult + attackRange).intp();
 	}
 
 	//pos
 	Vec2i getPos() const				{return pos;}
 	Vec2i getLastPos() const			{return lastPos;}
-	Vec2i getCenteredPos() const		{return Vec2i((int)type->getHalfSize()) + pos;}
-	Vec2f getFloatCenteredPos() const	{return Vec2f(type->getHalfSize()) + Vec2f((float)pos.x, (float)pos.y);}
+	Vec2i getCenteredPos() const		{return Vec2i(type->getHalfSize().intp()) + pos;}
+	//Vec2f getFloatCenteredPos() const	{return Vec2f(type->getHalfSize()) + Vec2f((float)pos.x, (float)pos.y);}
+	fixedVec2 getFixedCenteredPos() const	{ return fixedVec2(pos.x + type->getHalfSize(), pos.y + type->getHalfSize()); }
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
-//	Vec2i getCellPos() const;
 
 	//is
 	bool isHighlighted() const			{return highlight > 0.f;}
@@ -350,24 +398,25 @@ public:
 		notifyObservers(UnitObserver::eStateChange);
 	}
 	void setDirty(bool dirty)							{this->dirty = dirty;}
-	void setNextUpdateFrames(float nextUpdateFrames)	{this->nextUpdateFrames = nextUpdateFrames;}
-	
+
+	//void setNextCommandUpdate(int frame)			{ nextCommandUpdate = frame; }
+	//void setAttackStartFrame(int frame)				{ attackStartFrame = frame; }
+
 	//render related
 	const Model *getCurrentModel() const				{return currSkill->getAnimation();}
-	Vec3f getCurrVector() const							{return getCurrVectorFlat() + Vec3f(0.f, type->getHalfHeight(), 0.f);}
+	Vec3f getCurrVector() const							{
+		return getCurrVectorFlat() + Vec3f(0.f, type->getHalfHeight().toFloat(), 0.f);
+	}
 	//Vec3f getCurrVectorFlat() const;
 	// this is a heavy use function so it's inlined even though it isn't exactly small
 	Vec3f getCurrVectorFlat() const {
-		Vec3f v(static_cast<float>(pos.x),  computeHeight(pos), static_cast<float>(pos.y));
-	
-		if (currSkill->getClass() == SkillClass::MOVE) {
-			v = Vec3f(static_cast<float>(lastPos.x), computeHeight(lastPos),
-					  static_cast<float>(lastPos.y)).lerp(progress, v);
+		Vec3f v(float(pos.x),  computeHeight(pos), float(pos.y));
+			if (currSkill->getClass() == SkillClass::MOVE) {
+			v = Vec3f(float(lastPos.x), computeHeight(lastPos), float(lastPos.y)).lerp(getProgress(), v);
 		}
-
-		v.x += type->getHalfSize();
-		v.z += type->getHalfSize();
-	
+		const float &halfSize = type->getHalfSize().toFloat();
+		v.x += halfSize;
+		v.z += halfSize;
 		return v;
 	}
 
@@ -402,29 +451,21 @@ public:
 		}
 	}
 
-	// signals, should prob replace that observer stuff above
-	typedef Unit* u_ptr;
-	typedef const UnitType* ut_ptr;
-	typedef sigslot::signal1<u_ptr>			UnitSignal;
-	typedef sigslot::signal2<u_ptr, Vec2i>	UnitPosSignal;
-	typedef sigslot::signal2<u_ptr, ut_ptr> MorphSignal;
-
-	//UnitSignal		Created;	 /**< fires when a unit is created		   */
-	//UnitSignal		Born;		/**< fires when a unit is 'born'		  */
-	//UnitPosSignal	Moving;	   /**< fires just before a unit is moved	 */
-	//UnitPosSignal	Moved;	  /**< fires after a unit has moved			*/
-	//MorphSignal		Morphed; /**<  */
-	UnitSignal		Died;	/**<  */
-
 	//other
 	void resetHighlight()								{highlight= 1.f;}
 	const CommandType *computeCommandType(const Vec2i &pos, const Unit *targetUnit= NULL) const;
 	string getDesc(bool friendly) const;
 	bool computeEp();
-	bool repair(int amount = 0, float multiplier = 1.0f);
+	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
 	int update2()										{return ++progress2;}
-	void preProcessSkill();
+
+	void updateSkillCycle(int offset);
+	void updateMoveSkillCycle();
+	//void updateAnimationCycle();
+	void updateAnimDead();
+	void updateAnimCycle(int animOffset, int soundOffset = -1, int attackOffset = -1);
+
 	bool update();
 	void face(const Vec2i &nextPos);
 
@@ -449,42 +490,6 @@ private:
 	void recalculateStats();
 	Command *popCommand();
 };
-
-// =====================================================
-// 	class Targets
-// =====================================================
-
-/** Utility class for managing multiple targets by distance. */
-class Targets : public std::map<Unit *, int> {
-public:
-	void record(Unit *target, int dist) {
-		iterator i = find(target);
-		if (i == end() || dist < i->second) {
-			(*this)[target] = dist;
-		}
-	}
-
-	/**
-	 * Cheesy input, specify SkillClass::COUNT to tell it not to care about command class.
-	 * Specify 0.f for pctHealth and health level wont matter. These should get
-	 * optimized out when inlining.
-	 */
-	Unit *getNearest(SkillClass skillClass = SkillClass::COUNT, float pctHealth = 0.0f) {
-		Unit *nearest = NULL;
-		int dist = 0x10000;
-		for(iterator i = begin(); i != end(); ++i) {
-			Unit * u = i->first;
-			if(i->second < dist
-					&& (skillClass == SkillClass::COUNT || u->getType()->hasSkillClass(skillClass))
-					&& (!pctHealth || (float)u->getHp() / (float)u->getMaxHp() < pctHealth)) {
-				nearest = i->first;
-				dist = i->second;
-			}
-		}
-		return nearest;
-	}
-};
-
 
 }}// end namespace
 

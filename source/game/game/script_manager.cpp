@@ -1322,7 +1322,7 @@ int ScriptManager::setFarClip(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	int clip;
 	if (extractArgs(args, "setFarClip", "int", &clip)) {
-		Renderer::getInstance().setFarClip(clip);
+		Renderer::getInstance().setFarClip(float(clip));
 	}
 	return args.getReturnCount();
 }

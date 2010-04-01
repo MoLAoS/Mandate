@@ -17,8 +17,6 @@
 #include "vec.h"
 #include "matrix.h"
 
-using namespace std;
-
 namespace Shared { namespace Math {
 
 // =====================================================

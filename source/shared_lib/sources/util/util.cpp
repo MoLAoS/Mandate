@@ -22,6 +22,7 @@
 
 #include "leak_dumper.h"
 #include "platform_util.h"
+#include "random.h"
 #include "xml_parser.h"
 #include "zlib.h"
 #include "FSFactory.hpp"
@@ -32,13 +33,12 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
 using namespace Shared::Platform;
 using Shared::Xml::XmlNode;
 
 namespace Shared{ namespace Util{
 
-EnumNamesBase::EnumNamesBase(const char *valueList, size_t count, bool lazy, const char *enumName) 
+EnumNamesBase::EnumNamesBase(const char *valueList, size_t count, bool lazy, const char *enumName)
 		: valueList(valueList)
 		, names(NULL)
 		, qualifiedList(NULL)
@@ -112,7 +112,7 @@ int EnumNamesBase::_match(const char *value) const {
 			return i;
 		}
 	}
-	return -1;	
+	return -1;
 }
 
 void EnumNamesBase::init() {
@@ -141,6 +141,35 @@ void EnumNamesBase::init() {
 	assert(curName == count);
 }
 
+int Random::rand() {
+	lastNumber = (a * lastNumber + b) % m;
+	return lastNumber;
+}
+
+int Random::randRange(int min, int max) {
+	assert(min <= max);
+	int diff = max - min;
+	assert(diff < m);
+	if (!diff) return min;
+	int res = min + (rand() % diff);
+	assert(res >= min && res <= max);
+	return res;
+}
+
+float Random::randRange(float min, float max) {
+	assert(min <= max);
+	float rand01 = float(Random::rand()) / (m - 1);
+	float res = min + (max - min) * rand01;
+	assert(res >= min && res <= max);
+	return res;
+}
+/*
+fixed Random::randRange(fixed min, fixed max) {
+	fixed res;
+	res.raw() = randRange(min.raw(), max.raw());
+	return res;
+}
+*/
 // =====================================================
 //	class SimpleDataBuffer
 // =====================================================
@@ -476,7 +505,7 @@ string cleanPath(const string &s) {
 	}
 
 	isAbsolute = (s.at(0) == '/' || s.at(0) == '\\');
-	
+
 	for(char *p =  strtok_r(buf, "\\/", &data); p; p = strtok_r(NULL, "\\/", &data)) {
 		// skip duplicate path delimiters
 		if(strlen(p) == 0) {

@@ -19,9 +19,6 @@
 
 #include "leak_dumper.h"
 
-
-using namespace std;
-
 namespace Glest{ namespace Game{
 
 // =====================================================

@@ -38,9 +38,11 @@ class ParticleSystemTypeProjectile;
 class ParticleSystemTypeSplash;
 class FactionType;
 class TechTree;
-class EnhancementTypeBase;
+class EnhancementType;
 class Unit;
 class EarthquakeType;
+
+class CycleInfo;
 
 // =====================================================
 // 	class SkillType
@@ -48,20 +50,19 @@ class EarthquakeType;
 ///	A basic action that an unit can perform
 // =====================================================
 
-class SkillType {
+class SkillType : public NameIdPair{
 public:
 	typedef vector<Model *> Animations;
-	enum AnimationsStyle {
-		asSingle,
-		asSequential,
-		asRandom,
-		asDirectional
-	};
+
+	WRAPPED_ENUM( AnimationsStyle,
+		SINGLE,
+		SEQUENTIAL,
+		RANDOM
+	)
 
 protected:
 	SkillClass skillClass;
 	EffectTypes effectTypes;
-	string name;
 	int epCost;
 	int speed;
 	int animSpeed;
@@ -95,6 +96,7 @@ public:
 	SkillType(SkillClass skillClass, const char* typeName);
 	virtual ~SkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	void setId(int val) { id = val; }
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	void descEffects(string &str, const Unit *unit) const;
@@ -107,6 +109,8 @@ public:
 			str+= Lang::getInstance().get("EpCost") + ": " + intToStr(epCost) + "\n";
 		}
 	}
+
+	CycleInfo calculateCycleTime() const;
 
 	//get
 	const string &getName() const		{return name;}
@@ -221,8 +225,8 @@ class AttackSkillType: public TargetBasedSkillType {
 private:
 	int attackStrength;
 	int attackVar;
-	float attackPctStolen;
-	float attackPctVar;
+	fixed attackPctStolen;
+	fixed attackPctVar;
 	const AttackType *attackType;
 	EarthquakeType *earthquakeType;
 
@@ -237,8 +241,8 @@ public:
 	//get
 	int getAttackStrength() const				{return attackStrength;}
 	int getAttackVar() const					{return attackVar;}
-	float getAttackPctStolen() const			{return attackPctStolen;}
-	float getAttackPctVar() const				{return attackPctVar;}
+	//fixed getAttackPctStolen() const			{return attackPctStolen;}
+	//fixed getAttackPctVar() const				{return attackPctVar;}
 	const AttackType *getAttackType() const		{return attackType;}
 	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
 };
@@ -273,7 +277,7 @@ public:
 class RepairSkillType: public SkillType {
 private:
 	int amount;
-	float multiplier;
+	fixed multiplier;
 	bool petOnly;
 	bool selfOnly;
 	bool selfAllowed;
@@ -288,7 +292,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 
 	int getAmount() const		{return amount;}
-	float getMultiplier() const	{return multiplier;}
+	fixed getMultiplier() const	{return multiplier;}
 	ParticleSystemTypeSplash *getSplashParticleSystemType() const	{return splashParticleSystemType;}
 	bool isPetOnly() const		{return petOnly;}
 	bool isSelfOnly() const		{return selfOnly;}
@@ -410,20 +414,6 @@ public:
 	GetUpSkillType(const SkillType *model);
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const {}
-};
-
-// ===============================
-// 	class WaitForServerSkillType
-//
-/// A dummy skill type used to make a unit wait for a server update when there's
-/// no other way to assure syncrhonization.
-// ===============================
-
-class WaitForServerSkillType: public SkillType {
-public:
-	WaitForServerSkillType(const SkillType *model);
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 };
 

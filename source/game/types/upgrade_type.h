@@ -32,11 +32,11 @@ class Unit;
 // ===============================
 
 /**
- * A specialization of EnhancementTypeBase that represents a permanent,
+ * A specialization of EnhancementType that represents a permanent,
  * producable (i.e., researchable) upgrade to all of one or more unit
  * classes.
  */
-class UpgradeType: public EnhancementTypeBase, public ProducibleType {
+class UpgradeType: public EnhancementType, public ProducibleType {
 private:
 	vector<const UnitType*> effects;
 

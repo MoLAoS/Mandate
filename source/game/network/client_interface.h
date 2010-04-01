@@ -29,7 +29,7 @@ namespace Glest{ namespace Game{
 // =====================================================
 //	class ClientInterface
 // =====================================================
-class ClientInterface: public GameNetworkInterface{
+class ClientInterface: public GameInterface{
 private:
 	static const int messageWaitTimeout;
 	static const int waitSleepTime;
@@ -55,11 +55,20 @@ protected:
 	virtual void updateKeyframe(int frameCount);
 	virtual void waitUntilReady(Checksum &checksum);
 	virtual void syncAiSeeds(int aiCount, int *seeds);
-	//virtual void logUnit(int id);
+	virtual void createSkillCycleTable(const TechTree *);
 
 	// message sending
 	virtual void sendTextMessage(const string &text, int teamIndex);
 	virtual void quitGame();
+
+	// unit/projectile updates
+	virtual void updateUnitCommand(Unit *unit, int32);
+	virtual void unitBorn(Unit *unit, int32);
+	virtual void updateProjectile(Unit *unit, int endFrame, int32);
+	virtual void updateAnim(Unit *unit, int32);
+
+	virtual void updateMove(Unit *unit);
+	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
 
 	//misc
 	virtual string getStatus() const;

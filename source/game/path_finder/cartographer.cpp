@@ -25,9 +25,9 @@
 #include "unit_type.h"
 #include "world.h"
 
+#include "profiler.h"
 #include "leak_dumper.h"
 
-using namespace std;
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
@@ -38,6 +38,7 @@ namespace Glest { namespace Game { namespace Search {
 Cartographer::Cartographer(World *world)
 		: world(world), cellMap(0), routePlanner(0) {
 	theLogger.add("Cartographer", true);
+	_PROFILE_FUNCTION
 
 	cellMap = world->getMap();
 	int w = cellMap->getW(), h = cellMap->getH();
@@ -123,7 +124,6 @@ Cartographer::~Cartographer() {
 		delete smIt->second;
 	}
 	storeMaps.clear();
-	
 }
 
 void Cartographer::initResourceMap(const ResourceType *rt, PatchMap<1> *pMap) {
@@ -142,7 +142,7 @@ void Cartographer::initResourceMap(const ResourceType *rt, PatchMap<1> *pMap) {
 
 		r->Depleted.connect(this, &Cartographer::onResourceDepleted);
 
-		Vec2i pos = *it * Map::cellScale;
+		Vec2i pos = *it * GameConstants::cellScale;
 		Vec2i tl = pos + OrdinalOffsets[OrdinalDir::NORTH_WEST];
 		Vec2i tr = pos + OrdinalOffsets[OrdinalDir::EAST] + OrdinalOffsets[OrdinalDir::NORTH_EAST];
 		Vec2i bl = pos + OrdinalOffsets[OrdinalDir::SOUTH] + OrdinalOffsets[OrdinalDir::SOUTH_WEST];
@@ -183,7 +183,7 @@ void Cartographer::initResourceMap(const ResourceType *rt, PatchMap<1> *pMap) {
 }
 
 void Cartographer::onResourceDepleted(Vec2i pos) {
-	const ResourceType *rt = cellMap->getTile(pos/Map::cellScale)->getResource()->getType();
+	const ResourceType *rt = cellMap->getTile(pos / GameConstants::cellScale)->getResource()->getType();
 	Vec2i tl = pos + OrdinalOffsets[OrdinalDir::NORTH_WEST];
 	Vec2i br = pos + OrdinalOffsets[OrdinalDir::SOUTH_EAST] * 2;
 	resDirtyAreas[rt].push_back(pair<Vec2i,Vec2i>(tl,br));

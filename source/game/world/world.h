@@ -116,6 +116,9 @@ public:
 	~World();
 	void end(); //to die before selection does
 
+	void save(XmlNode *node) const;
+	
+
 	static World& getInstance() { return *singleton; }
 	static bool isConstructed() { return singleton != 0; }
 
@@ -146,12 +149,13 @@ public:
 	const PosCircularIteratorFactory &getPosIteratorFactory() {return posIteratorFactory;}
 
 	//init & load
-	void init();
+	void init(const XmlNode *worldNode = NULL);
 	void preload();
 	bool loadTileset();
 	bool loadTech();
 	bool loadMap();
 	bool loadScenario(const string &path);
+	void activateUnits();
 
 	//misc
 	void update();
@@ -197,7 +201,7 @@ private:
 	void initCells();
 	void initSplattedTextures();
 	void initFactionTypes();
-	void initMinimap();
+	void initMinimap(bool resuming = false);
 	void initUnits();
 	void initMap();
 	void initExplorationState();
@@ -213,8 +217,6 @@ private:
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
 	void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
-	//NETWORK:bool isNetworkServer() {return NetworkManager::getInstance().isNetworkServer();}
-	//NETWORK:bool isNetworkClient() {return NetworkManager::getInstance().isNetworkClient();}
 	void doHackyCleanUp();
 };
 

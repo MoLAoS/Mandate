@@ -16,9 +16,6 @@
 
 #include <cstdio>
 
-using namespace std;
-
-
 class StdFileOps : public FileOps{
 private:
 	FILE *f;

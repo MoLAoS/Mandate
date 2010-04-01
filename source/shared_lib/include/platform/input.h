@@ -20,15 +20,14 @@
 
 #ifdef USE_SDL
 #	include <SDL.h>
-#ifndef SDL_BUTTON_WHEELUP
-#	define SDL_BUTTON_WHEELUP	4
-#	define SDL_BUTTON_WHEELDOWN	5
-#endif
-#ifndef SDL_BUTTON_X1
-#	define SDL_BUTTON_X1		6
-#	define SDL_BUTTON_X2		7
-#endif
-
+#	ifndef SDL_BUTTON_WHEELUP
+#		define SDL_BUTTON_WHEELUP	4
+#		define SDL_BUTTON_WHEELDOWN	5
+#	endif
+#	ifndef SDL_BUTTON_X1
+#		define SDL_BUTTON_X1		6
+#		define SDL_BUTTON_X2		7
+#	endif
 #elif defined(WIN32)  || defined(WIN64)
 #	include <windows.h>
 #	ifndef VK_OEM_102
@@ -400,7 +399,7 @@ enum KeyModifier {
 /*
 class MouseEvent {
 public:
-	enum EventType 
+	enum EventType
 	Vec2i pos;
 	MouseButton button;
 
@@ -541,7 +540,7 @@ class Key {
 private:
 	KeyCode key;
 	char ascii;
-	
+
 	static const char*names[keyCount];
 
 public:
@@ -553,13 +552,13 @@ public:
 #elif defined(WIN32)  || defined(WIN64)
 	Key(KeyCode key, char ascii) : key(key), ascii(ascii) {}
 #endif
-	
+
 	operator KeyCode() const	{return key;}
 
 	KeyCode getCode() const		{return key;}
 	char getAscii() const		{return ascii;}
 	bool isModifier() const		{return key >= keyNumLock && key <= keyMode;}
-	
+
 	static KeyCode findByName(const char *name);
 	static const char* getName(KeyCode key) {
 		assert(key >= 0 && key < keyCount);

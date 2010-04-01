@@ -40,7 +40,7 @@ private:
 ///	Each of the possible factions the user can select
 // =====================================================
 
-class FactionType{
+class FactionType : public NameIdPair {
 private:
 	typedef pair<const UnitType*, int> PairPUnitTypeInt;
 	typedef vector<UnitType> UnitTypes;
@@ -50,7 +50,6 @@ private:
 	typedef vector<string> Subfactions;
 
 private:
-	string name;
 	UnitTypes unitTypes;
 	UpgradeTypes upgradeTypes;
 	StartingUnits startingUnits;
@@ -66,7 +65,7 @@ public:
 	//init
 	FactionType();
 	bool preLoad(const string &dir, const TechTree *techTree);
-	bool load(const string &dir, const TechTree *techTree);
+	bool load(int ndx, const string &dir, const TechTree *techTree);
 	void doChecksum(Checksum &checksum) const;
 	~FactionType();
 

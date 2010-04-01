@@ -11,30 +11,37 @@
 
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
-#ifdef USE_PCH
+//#ifdef USE_PCH
+
 
 #if defined(WIN32) || defined(WIN64)
-
-	// sanity checks
-	#if defined (USE_POSIX_SOCKETS)
-		#error USE_POSIX_SOCKETS is not compatible with WIN32 or WIN64
-	#endif
-
-	#if defined (USE_SDL)
-		#error USE_SDL is not compatible with WIN32 or WIN64
-	#endif
-
-	#include <windows.h>
-	#include <io.h>
-
+#	if defined (USE_POSIX_SOCKETS)
+#		error USE_POSIX_SOCKETS is not compatible with WIN32 or WIN64
+#	endif
+#	if defined (USE_SDL)
+#		error USE_SDL is not compatible with WIN32 or WIN64
+#	endif
+#	include <windows.h>
 #else
-	#include <unistd.h>
+#	include <unistd.h>
+#	include <signal.h>
+#	if !defined(USE_SDL)
+#		error not WIN32 || WIN64 and USE_SDL not defined
+#	endif
+#	if !defined(USE_POSIX_SOCKETS)
+#		error not WIN32 || WIN64 and USE_POSIX_SOCKETS not defined
+#	endif
 #endif
 
 // some local headers of importance
 #include "types.h"
 #include "game_constants.h"
 #include "sigslot.h"
+#include "util.h"
+
+#define FIXED_THROW_ON_OVERFLOW 1
+#define FIXED_THROW_ON_DIVIDE_BY_ZERO 1
+#include "fixed.h"
 
 // POSIX base
 #include <stdlib.h>
@@ -43,7 +50,6 @@
 #include <errno.h>
 #include <math.h>
 #include <time.h>
-
 
 // lib c
 #include <cstdlib>
@@ -66,11 +72,14 @@
 
 // stl
 #include <algorithm>
+#include <functional>
 #include <deque>
 #include <vector>
 #include <list>
 #include <map>
+#include <queue>
 #include <deque>
+#include <set>
 
 
 #include <sys/types.h>
@@ -120,6 +129,34 @@
 	#include <dsound.h>
 #endif
 
-#endif // USE_PCH
+using std::string;
+using std::stringstream;
+
+using std::exception;
+using std::runtime_error;
+using std::range_error;
+
+using std::fstream;
+using std::ifstream;
+using std::ofstream;
+
+using std::istream;
+using std::ostream;
+using std::ios_base;
+
+using std::cout;
+using std::endl;
+
+using std::vector;
+using std::list;
+using std::deque;
+using std::queue;
+using std::set;
+using std::map;
+using std::pair;
+
+using std::numeric_limits;
+
+//#endif // USE_PCH
 #endif // _SHARED_PCH_H_
 

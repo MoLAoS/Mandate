@@ -26,7 +26,7 @@ class UpgradeType;
 class Game;
 
 class UpgradeManager;
-class EnhancementTypeBase;
+class EnhancementType;
 class FactionType;
 
 // =====================================================
@@ -84,7 +84,7 @@ public:
 	bool isUpgraded(const UpgradeType *upgradeType) const;
 	bool isUpgrading(const UpgradeType *upgradeType) const;
 	bool isUpgradingOrUpgraded(const UpgradeType *upgradeType) const;
-	void computeTotalUpgrade(const Unit *unit, EnhancementTypeBase *totalUpgrade) const;
+	void computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const;
 
 	void load(const XmlNode *node, const FactionType *ft);
 	void save(XmlNode *node) const;

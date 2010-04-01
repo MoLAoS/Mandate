@@ -12,24 +12,17 @@
 #include "pch.h"
 #include "server_interface.h"
 
-#include <cassert>
-#include <stdexcept>
-//#include <fstream>
-//#include <zlib.h>
-
 #include "platform_util.h"
 #include "conversion.h"
 #include "config.h"
 #include "lang.h"
 #include "world.h"
 #include "game.h"
-
 #include "network_types.h"
 
 #include "leak_dumper.h"
 #include "logger.h"
 
-using namespace std;
 using namespace Shared::Platform;
 using namespace Shared::Util;
 
@@ -50,7 +43,6 @@ ServerInterface::ServerInterface() {
 		LOG_NETWORK(e.what());
 		throw e;
 	}
-	//updateFactionsFlag = false;
 }
 
 ServerInterface::~ServerInterface(){
@@ -105,55 +97,63 @@ void ServerInterface::update() {
 	}
 }
 
+void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
+	skillCycleTable.create(techTree);
+	this->broadcastMessage(&skillCycleTable);
+}
+
+void ServerInterface::unitBorn(Unit *unit, int32 cs) {
+	//LOG_NETWORK( "Unit born, adding checksum " + intToHex(cs) );
+	keyFrame.addChecksum(cs);
+}
+
+void ServerInterface::updateUnitCommand(Unit*, int32 cs) {
+	keyFrame.addChecksum(cs);
+}
+
+void ServerInterface::updateProjectile(Unit*, int, int32 cs) {
+	keyFrame.addChecksum(cs);	
+}
+
+void ServerInterface::updateAnim(Unit*, int32 cs) {
+	keyFrame.addChecksum(cs);
+}
+
+void ServerInterface::updateMove(Unit *unit) {
+	unit->updateMoveSkillCycle();
+	MoveSkillUpdate updt(unit);
+	keyFrame.addUpdate(updt);
+}
+
+void ServerInterface::updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
+	pps->setPath(start, end);
+	ProjectileUpdate updt(u, pps);
+	keyFrame.addUpdate(updt);
+}
+
 void ServerInterface::process(NetworkMessageText &msg, int requestor) {
 	broadcastMessage(&msg, requestor);
-	GameNetworkInterface::processTextMessage(msg);
+	GameInterface::processTextMessage(msg);
 }
 
 void ServerInterface::updateKeyframe(int frameCount){
-	//DEBUG
-	static int totalCommandsSent = 0;
-	NetworkMessageCommandList cmdList(frameCount);
-	cmdList.setTotalB4This(totalCommandsSent);
-	
 	//build command list, remove commands from requested and add to pending
 	while(!requestedCommands.empty()){
-		if(cmdList.addCommand(&requestedCommands.back())){
-			pendingCommands.push_back(requestedCommands.back());
-			requestedCommands.pop_back();
-			++totalCommandsSent;
-		}
-		else{
-			break;
-		}
+		keyFrame.add(requestedCommands.back());
+		pendingCommands.push_back(requestedCommands.back());
+		requestedCommands.pop_back();
 	}
-
-	// log it ?
-	/*if (cmdList.getCommandCount()) {
-		LOG_NETWORK( 
-			"KeyFrame update, sending " + intToStr(cmdList.getCommandCount()) + " commands" +
-			(requestedCommands.size() ? intToStr(requestedCommands.size()) + " still pending." : "." )
-		);
-		for (int i=0; i < cmdList.getCommandCount(); ++i) {
-			const NetworkCommand * const &cmd = cmdList.getCommand(i);
-			const Unit * const &unit = theWorld.findUnitById(cmd->getUnitId());
-			LOG_NETWORK( 
-				"\tUnit: " + intToStr(unit->getId()) + " [" + unit->getType()->getName() + "] " 
-				+ unit->getType()->findCommandTypeById(cmd->getCommandTypeId())->getName() + "."
-			);
-		}
-	}*/
-
-	//broadcast commands
-	broadcastMessage(&cmdList);
+	keyFrame.setFrameCount(frameCount);
+	//cout << "sending keyframe, frameCount == " << keyFrame.getFrameCount() << endl;
+	broadcastMessage(&keyFrame);
+	//cout << "keyframe sent." << endl;
+	keyFrame.reset();
 }
 
 void ServerInterface::waitUntilReady(Checksum &checksum) {
 	Chrono chrono;
-	bool allReady = false;
-
 	chrono.start();
-
+	bool allReady = false;
 	LOG_NETWORK( "Waiting for ready messages from all clients" );
 	//wait until we get a ready message from all clients
 	while(!allReady) {
@@ -223,6 +223,11 @@ string ServerInterface::getStatus() const{
 
 void ServerInterface::syncAiSeeds(int aiCount, int *seeds) {
 	assert(aiCount && seeds);
+	Random r;
+	r.init(Chrono::getCurMillis());
+	for (int i=0; i < aiCount; ++i) {
+		seeds[i] = r.rand();
+	}
 	LOG_NETWORK("sending " + intToStr(aiCount) + " Ai random number seeds...");
 	NetworkMessageAiSeedSync seedSyncMsg(aiCount, seeds);
 	broadcastMessage(&seedSyncMsg);
@@ -234,10 +239,8 @@ void ServerInterface::launchGame(const GameSettings* gameSettings){
 	broadcastMessage(&networkMessageLaunch);	
 }
 
-
 // NETWORK: I'm thinking the file stuff should go somewhere else.
 // I agree, /dev/null will do for now ;-) We can resuurect it later.
-
 
 void ServerInterface::broadcastMessage(const NetworkMessage* networkMessage, int excludeSlot) {
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -266,5 +269,11 @@ void ServerInterface::updateListen() {
 	}
 	serverSocket.listen(openSlotCount);
 }
+
+#if _RECORD_GAME_STATE_
+	void ServerInterface::dumpFrame(int frame) {
+		stateLog.logFrame(frame);
+	}
+#endif
 
 }}//end namespace

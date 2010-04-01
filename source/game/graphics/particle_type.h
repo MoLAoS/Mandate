@@ -20,15 +20,17 @@
 #include "vec.h"
 #include "xml_parser.h"
 
+#include "game_particle.h"
+
 using std::string;
 
 namespace Glest{ namespace Game{
 
 using Shared::Graphics::ParticleSystemBase;
 using Shared::Graphics::ParticleSystem;
-using Shared::Graphics::AttackParticleSystem;
-using Shared::Graphics::ProjectileParticleSystem;
-using Shared::Graphics::SplashParticleSystem;
+//using Shared::Graphics::AttackParticleSystem;
+//using Shared::Graphics::ProjectileParticleSystem;
+//using Shared::Graphics::SplashParticleSystem;
 using Shared::Graphics::Texture2D;
 using Shared::Math::Vec3f;
 using Shared::Math::Vec4f;

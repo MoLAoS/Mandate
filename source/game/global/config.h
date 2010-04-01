@@ -59,11 +59,11 @@ private:
 	bool miscDebugKeys;
 	bool miscDebugMode;
 	bool miscFirstTime;
-	bool netChangeSpeedAllowed;
+	//bool netChangeSpeedAllowed;
 	bool netConsistencyChecks;
-	int netFps;
-	int netMinFullUpdateInterval;
-	bool netPauseAllowed;
+	//int netFps;
+	//int netMinFullUpdateInterval;
+	//bool netPauseAllowed;
 	string netPlayerName;
 	string netServerIp;
 	int netServerPort;
@@ -162,11 +162,11 @@ public:
 	bool getMiscDebugKeys() const					{return miscDebugKeys;}
 	bool getMiscDebugMode() const					{return miscDebugMode;}
 	bool getMiscFirstTime() const					{return miscFirstTime;}
-	bool getNetChangeSpeedAllowed() const			{return netChangeSpeedAllowed;}
+//	bool getNetChangeSpeedAllowed() const			{return netChangeSpeedAllowed;}
 	bool getNetConsistencyChecks() const			{return netConsistencyChecks;}
-	int getNetFps() const							{return netFps;}
-	int getNetMinFullUpdateInterval() const			{return netMinFullUpdateInterval;}
-	bool getNetPauseAllowed() const					{return netPauseAllowed;}
+//	int getNetFps() const							{return netFps;}
+//	int getNetMinFullUpdateInterval() const			{return netMinFullUpdateInterval;}
+//	bool getNetPauseAllowed() const					{return netPauseAllowed;}
 	const string &getNetPlayerName() const			{return netPlayerName;}
 	const string &getNetServerIp() const			{return netServerIp;}
 	int getNetServerPort() const					{return netServerPort;}
@@ -239,11 +239,11 @@ public:
 	void setMiscDebugKeys(bool v)					{miscDebugKeys = v;}
 	void setMiscDebugMode(bool v)					{miscDebugMode = v;}
 	void setMiscFirstTime(bool v)					{miscFirstTime = v;}
-	void setNetChangeSpeedAllowed(bool v)			{netChangeSpeedAllowed = v;}
+//	void setNetChangeSpeedAllowed(bool v)			{netChangeSpeedAllowed = v;}
 	void setNetConsistencyChecks(bool v)			{netConsistencyChecks = v;}
-	void setNetFps(int v)							{netFps = v;}
-	void setNetMinFullUpdateInterval(int v)			{netMinFullUpdateInterval = v;}
-	void setNetPauseAllowed(bool v)					{netPauseAllowed = v;}
+//	void setNetFps(int v)							{netFps = v;}
+//	void setNetMinFullUpdateInterval(int v)			{netMinFullUpdateInterval = v;}
+//	void setNetPauseAllowed(bool v)					{netPauseAllowed = v;}
 	void setNetPlayerName(const string &v)			{netPlayerName = v;}
 	void setNetServerIp(const string &v)			{netServerIp = v;}
 	void setNetServerPort(int v)					{netServerPort = v;}

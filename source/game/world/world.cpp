@@ -26,6 +26,7 @@
 #include "route_planner.h"
 #include "cartographer.h"
 #include "lang_features.h"
+#include "earthquake_type.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -90,9 +91,22 @@ void World::end(){
 	//stats will be deleted by BattleEnd
 }
 
+void World::save(XmlNode *node) const {
+	node->addChild("frameCount", frameCount);
+	node->addChild("nextUnitId", nextUnitId);
+	stats.save(node->addChild("stats"));
+	timeFlow.save(node->addChild("timeFlow"));
+	XmlNode *factionsNode = node->addChild("factions");
+	foreach_const (Factions, i, factions) {
+		i->save(factionsNode->addChild("faction"));
+	}
+	map.saveExplorationState(node->addChild("explorationState"));
+}
+
 // ========================== init ===============================================
 
-void World::init() {
+void World::init(const XmlNode *worldNode) {
+	_PROFILE_FUNCTION
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
@@ -104,15 +118,47 @@ void World::init() {
 	cartographer = new Cartographer(this);
 	unitUpdater.init(game);
 	
-	//minimap must be init after sum computation
-	initMinimap();
-
-	if (game.getGameSettings().getDefaultUnits()) {
+	if (worldNode) {
+		initExplorationState();
+		loadSaved(worldNode);
+		initMinimap(true);
+	} else if (game.getGameSettings().getDefaultUnits()) {
+		initMinimap();
 		initUnits();
+		initExplorationState();
+	} else {
+		initMinimap();
 	}
-	initExplorationState();	
 	computeFow();
+
 	alive = true;
+}
+
+
+//load saved game
+void World::loadSaved(const XmlNode *worldNode) {
+	Logger::getInstance().add("Loading saved game", true);
+	this->thisFactionIndex = gs.getThisFactionIndex();
+	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
+
+	frameCount = worldNode->getChildIntValue("frameCount");
+	nextUnitId = worldNode->getChildIntValue("nextUnitId");
+
+	stats.load(worldNode->getChild("stats"));
+	timeFlow.load(worldNode->getChild("timeFlow"));
+
+	const XmlNode *factionsNode = worldNode->getChild("factions");
+	factions.resize(factionsNode->getChildCount());
+	for (int i = 0; i < factionsNode->getChildCount(); ++i) {
+		const XmlNode *n = factionsNode->getChild("faction", i);
+		const FactionType *ft = techTree.getFactionType(gs.getFactionTypeName(i));
+		factions[i].load(n, this, ft, gs.getFactionControl(i), &techTree);
+	}
+
+	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
+	map.computeNormals();
+	map.computeInterpolatedHeights();
+	map.loadExplorationState(worldNode->getChild("explorationState"));
 }
 
 // preload tileset and techtree for progressbar
@@ -179,11 +225,14 @@ void World::updateEarthquakes(float seconds) {
 			Unit *attacker = (*ei)->getCause();
 
 			for (dri = damageReport.begin(); dri != damageReport.end(); ++dri) {
-				float multiplier = techTree.getDamageMultiplier(
+				fixed multiplier = techTree.getDamageMultiplier(
 						at, dri->first->getType()->getArmorType());
+
+				///@todo make fixed point ... use multiplier
+
 				float intensity = dri->second.intensity;
 				float count = (float)dri->second.count;
-				float damage = intensity * maxDps * multiplier;
+				float damage = intensity * maxDps;// * multiplier;
 
 				if (!(*ei)->getType()->isAffectsAllies() && attacker->isAlly(dri->first)) {
 					continue;
@@ -206,8 +255,10 @@ void World::updateEarthquakes(float seconds) {
 }
 
 void World::update() {
-	PROFILE_START( "World Update" );
+	_PROFILE_FUNCTION
 	++frameCount;
+
+	theNetworkManager.getGameInterface()->frameStart(frameCount);
 
 	// check ScriptTimers
 	scriptManager->onTimer();
@@ -217,13 +268,6 @@ void World::update() {
 
 	//water effects
 	waterEffects.update();
-
-	/* NETWORK:
-	//update network clients
-	if (isNetworkClient()) {
-		updateClient();
-	}
-	*/
 
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
@@ -271,7 +315,9 @@ void World::update() {
 		tick();
 	}
 	assertConsistiency();
-	PROFILE_STOP( "World Update" );}
+
+	theNetworkManager.getGameInterface()->frameEnd(frameCount);
+}
 
 void World::doKill(Unit *killer, Unit *killed) {
 	scriptManager->onUnitDied(killed);
@@ -441,6 +487,10 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	}
 	return currUnit;
 }
+
+///@todo collect all distinct error conditions from the scripting interface, put them in an
+/// and enum with a table of string messages... then make error handling in ScriptManager less shit
+
 /** @return unit id, or -1 if factionindex invalid, or -2 if unitName invalid, or -3 if 
   * a position could not be found for the new unit, -4 if pos invalid */
 int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos){
@@ -874,9 +924,9 @@ void World::initFactionTypes() {
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
 }
 
-void World::initMinimap() {
+void World::initMinimap(bool resuming) {
 	Logger::getInstance().add("Compute minimap surface", true);
-	minimap.init(map.getW(), map.getH(), this);
+	minimap.init(map.getW(), map.getH(), this, resuming);
 }
 
 //place units randomly aroud start location
@@ -897,7 +947,8 @@ void World::initUnits() {
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
 					unit->create(true);
-					unit->born();
+					// sends updates, must be done after all other init
+					//unit->born();
 
 				} else {
 					throw runtime_error("Unit cant be placed, this error is caused because there "
@@ -918,6 +969,14 @@ void World::initUnits() {
 	map.computeInterpolatedHeights();
 }
 
+void World::activateUnits() {
+	foreach (Factions, fIt, factions) {
+		foreach_const (Units, uIt, fIt->getUnits()) {
+			(*uIt)->born();
+		}
+	}
+}
+
 void World::initMap() {
 	map.init();
 }
@@ -930,7 +989,7 @@ void World::initExplorationState() {
 				map.getTile(i, j)->setExplored(thisTeamIndex, true);
 			}
 		}
-	} else if ( !shroudOfDarkness ) {
+	} else /*if (!shroudOfDarkness)*/ {
 		for (int i = 0; i < map.getTileW(); ++i) {
 			for (int j = 0; j < map.getTileH(); ++j) {
 				map.getTile(i, j)->setExplored(thisTeamIndex, true);
@@ -966,7 +1025,7 @@ void World::doUnfog() {
 void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
 	Vec2i newSurfPos = Map::toTileCoords(newPos);
-	int surfSightRange = sightRange / Map::cellScale + 1;
+	int surfSightRange = sightRange / GameConstants::cellScale + 1;
 	int sweepRange = surfSightRange + indirectSightRange + 1;
 
 	//explore
@@ -1036,7 +1095,7 @@ void World::computeFow() {
 	}
 	
 	//compute texture
-	if ( unfogActive ) { // scripted map reveal
+	if (unfogActive) { // scripted map reveal
 		doUnfog();
 	}	
 	for (int i = 0; i < getFactionCount(); ++i) {
@@ -1052,7 +1111,7 @@ void World::computeFow() {
 				float distance;
 
 				//iterate through all cells
-				PosCircularIteratorSimple pci(map, unit->getPos(), sightRange + indirectSightRange);
+				PosCircularIteratorSimple pci(map.getBounds(), unit->getPos(), sightRange + indirectSightRange);
 				while (pci.getNext(pos, distance)) {
 					Vec2i surfPos = Map::toTileCoords(pos);
 
@@ -1082,12 +1141,9 @@ void World::computeFow() {
 
 
 void World::hackyCleanUp(Unit *unit) {
-	for (Units::const_iterator i = newlydead.begin(); i != newlydead.end(); ++i) {
-		if (unit == *i) {
-			return;
-		}
+	if (std::find(newlydead.begin(), newlydead.end(), unit) == newlydead.end()) {
+		newlydead.push_back(unit);
 	}
-	newlydead.push_back(unit);
 }
 
 }}//end namespace

@@ -29,7 +29,7 @@ public:
 	virtual void renderManager(ParticleManager *pm, ModelRenderer *mr)=0;
 	virtual void renderSystem(ParticleSystem *ps)=0;
 	virtual void renderSystemLine(ParticleSystem *ps)=0;
-	virtual void renderSingleModel(AttackParticleSystem *ps, ModelRenderer *mr)=0;
+	virtual void renderSingleModel(ParticleSystem *ps, ModelRenderer *mr)=0;
 };
 
 }}//end namespace

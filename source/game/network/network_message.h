@@ -25,11 +25,12 @@ namespace Glest { namespace Game {
 class GameSettings;
 class Command;
 
-// NETWORK: nearly whole file changed
-// - need more description about what role a NetworkMessage plays.
-// - Should NetworkMessageXmlDoc really be a NetworkMessage or is it a network type?
-// - Perhaps NetworkMessage and NetworkMessageXmlDoc should go into network_types and this renamed to 
-// network_messages?
+class TechTree;
+class FactionType;
+class UnitType;
+class SkillType;
+class Unit;
+class NetworkInterface;
 
 // ==============================================================
 //	class NetworkMessage
@@ -66,10 +67,7 @@ private:
 		NetworkString<maxNameSize> playerName;
 		NetworkString<maxNameSize> hostName;
 		int16 playerIndex;
-	};
-
-private:
-	Data data;
+	} data;
 
 public:
 	NetworkMessageIntro();
@@ -82,6 +80,7 @@ public:
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
+	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -93,7 +92,7 @@ private:
 	static const int maxAiSeeds = 2;
 
 private:
-	struct {
+	struct Data {
 		int8 msgType;
 		int8 seedCount;
 		int32 seeds[maxAiSeeds];
@@ -108,6 +107,7 @@ public:
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
+	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -119,10 +119,7 @@ private:
 	struct Data{
 		int8 messageType;
 		int32 checksum;
-	};
-
-private:
-	Data data;
+	} data;
 
 public:
 	NetworkMessageReady();
@@ -132,6 +129,7 @@ public:
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
+	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -162,10 +160,7 @@ private:
 		int8 defaultUnits;
 		int8 defaultVictoryConditions;
 		int8 fogOfWar;
-	};
-
-private:
-	Data data;
+	} data;
 
 public:
 	NetworkMessageLaunch();
@@ -175,6 +170,7 @@ public:
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
+	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -183,33 +179,23 @@ public:
 /**	Message to issue commands to several units */
 #pragma pack(push, 2)
 class NetworkMessageCommandList : public NetworkMessage {
+	friend class NetworkInterface;
 private:
 	static const int maxCommandCount= 16*4;
 	
 private:
-	static const int dataHeaderSize = 10;
+	static const int dataHeaderSize = 6;
 	struct Data{
 		int8 messageType;
 		int8 commandCount;
 		int32 frameCount;
-		int32 totalB4this; //DEBUG
 		NetworkCommand commands[maxCommandCount];
-	};
-
-private:
-	Data data;
+	} data;
 
 public:
 	NetworkMessageCommandList(int32 frameCount= -1);
 
 	bool addCommand(const NetworkCommand* networkCommand);
-	//DEBUG
-	void setTotalB4This(int32 total) { 
-		assert(total >= 0);
-		data.totalB4this = total; 
-	}
-	int32 getTotalB4This() const { return data.totalB4this; }
-	
 	void clear()									{data.commandCount= 0;}
 	int getCommandCount() const						{return data.commandCount;}
 	int getFrameCount() const						{return data.frameCount;}
@@ -234,10 +220,7 @@ private:
 		NetworkString<maxStringSize> text;
 		NetworkString<maxStringSize> sender;
 		int8 teamIndex;
-	};
-
-private:
-	Data data;
+	} data;
 
 public:
 	NetworkMessageText(){}
@@ -249,27 +232,177 @@ public:
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
+	static size_t getSize() { return sizeof(Data); }
 };
 
 // =====================================================
 //	class NetworkMessageQuit
 // =====================================================
-/** Message sent at the beggining of the game */
+/** Message sent by clients to quit nicely, or by the server to terminate the game */
 class NetworkMessageQuit: public NetworkMessage {
 private:
 	struct Data{
 		int8 messageType;
-	};
-
-private:
-	Data data;
+	} data;
 
 public:
 	NetworkMessageQuit();
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
+	static size_t getSize() { return sizeof(Data); }
 };
+
+class SkillIdTriple {
+	int factionTypeId;
+	int unitTypeId;
+	int skillTypeId;
+
+public:
+	SkillIdTriple(int ftId, int utId, int stId) 
+			: factionTypeId(ftId)
+			, unitTypeId(utId)
+			, skillTypeId(stId) {
+	}
+
+	int getFactionTypeId() const { return factionTypeId; }
+	int getUnitTypeId() const { return unitTypeId; }
+	int getSkillTypeId() const { return skillTypeId; }
+
+	bool operator==(const SkillIdTriple &other) const {
+		return memcmp(this, &other, sizeof(SkillIdTriple));
+	}
+
+	bool operator<(const SkillIdTriple &other) const {
+		if (factionTypeId < other.getFactionTypeId()) return true;
+		if (factionTypeId > other.getFactionTypeId()) return false;
+
+		if (unitTypeId < other.getUnitTypeId()) return true;
+		if (unitTypeId > other.getUnitTypeId()) return false;
+
+		if (skillTypeId < other.getSkillTypeId()) return true;
+		// (skillTypeId >= other.getSkillTypeId())
+		return false;
+	}
+};
+
+class CycleInfo {
+	int skillFrames, animFrames;
+	int soundOffset, attackOffset;
+
+public:
+	CycleInfo()
+			: skillFrames(-1)
+			, animFrames(-1)
+			, soundOffset(-1)
+			, attackOffset(-1) {
+	}
+
+	CycleInfo(int sFrames, int aFrames, int sOffset = -1, int aOffset = -1) 
+			: skillFrames(sFrames)
+			, animFrames(aFrames)
+			, soundOffset(sOffset)
+			, attackOffset(aOffset) {
+	}
+
+	int getSkillFrames() const	{ return skillFrames;	}
+	int getAnimFrames() const	{ return animFrames;	}
+	int getSoundOffset() const	{ return soundOffset;	}
+	int getAttackOffset() const { return attackOffset;	}
+
+};
+
+class SkillCycleTable : public NetworkMessage {
+private:
+	typedef std::map<SkillIdTriple, CycleInfo> CycleMap;
+	CycleMap cycleTable;
+
+public:
+	SkillCycleTable() {}
+
+	void create(const TechTree *techTree);
+
+	const CycleInfo& lookUp(SkillIdTriple id) {
+		return cycleTable[id];
+	}
+	const CycleInfo& lookUp(int ftId, int utId, int stId) {
+		return cycleTable[SkillIdTriple(ftId, utId, stId)];
+	}
+	const CycleInfo& lookUp(const Unit *unit);
+
+	virtual bool receive(Socket* socket);
+	virtual void send(Socket* socket) const;
+};
+
+class KeyFrame : public NetworkMessage {
+private:
+	static const int buffer_size = 1024 * 4;
+	static const int max_cmds = 512;
+	static const int max_checksums = 2048;
+	typedef char* byte_ptr;
+
+	int32	frame;
+
+	int32	checksums[max_checksums];
+	int32	checksumCount;
+	uint32	checksumCounter;
+	
+	char	 updateBuffer[buffer_size];
+	size_t	 updateSize;
+	uint32	 projUpdateCount;
+	uint32	 moveUpdateCount;
+	byte_ptr writePtr;
+	byte_ptr readPtr;
+
+	NetworkCommand commands[max_cmds];
+	size_t cmdCount;
+
+
+public:
+	KeyFrame()		{ reset(); }
+
+	virtual bool receive(Socket* socket);
+	virtual void send(Socket* socket) const;
+
+	void setFrameCount(int fc) { frame = fc; }
+	int getFrameCount() const { return frame; }
+
+	const size_t& getCmdCount() const	{ return cmdCount; }
+	const NetworkCommand* getCmd(size_t ndx) const { return &commands[ndx]; }
+
+	int32 getNextChecksum();
+	void addChecksum(int32 cs);
+	void add(NetworkCommand &nc);
+	void reset();
+	void addUpdate(MoveSkillUpdate updt);
+	void addUpdate(ProjectileUpdate updt);
+	MoveSkillUpdate getMoveUpdate();
+	ProjectileUpdate getProjUpdate();
+};
+
+#if _RECORD_GAME_STATE_
+
+class SyncError : public NetworkMessage {
+	struct Data{
+		int32	messageType	:  8;
+		uint32	frameCount	: 24;
+	} data;
+
+public:
+	SyncError(int frame) {
+		data.messageType = NetworkMessageType::SYNC_ERROR;
+		data.frameCount = frame;
+	}
+	SyncError() {}
+
+	int getFrame() const { return data.frameCount; }
+
+	virtual bool receive(Socket* socket);
+	virtual void send(Socket* socket) const;
+};
+
+#endif
+
 
 }}//end namespace
 

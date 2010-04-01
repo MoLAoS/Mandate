@@ -201,6 +201,8 @@ public:
 	void renderParticleManager(ResourceScope rs);
 	void swapBuffers();
 
+	const SceneCuller& getCuller() const { return culler; }
+
 	ParticleManager* getParticleManager() { return particleManager[rsGame]; }
 
 	//lights and camera

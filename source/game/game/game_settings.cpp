@@ -32,6 +32,7 @@ GameSettings::GameSettings(const XmlNode *node) {
 	scenarioPath = node->getChildStringValue("scenarioPath");
 	thisFactionIndex = node->getChildIntValue("thisFactionIndex");
 	factionCount = node->getChildIntValue("factionCount");
+	fogOfWar = node->getChildBoolValue("fogOfWar");
 
 	XmlNode *factionsNode = node->getChild("factions");
 	assert(GameConstants::maxPlayers == factionsNode->getChildCount());
@@ -54,6 +55,7 @@ void GameSettings::save(XmlNode *node) const {
 	node->addChild("scenarioPath", scenarioPath);
 	node->addChild("thisFactionIndex", thisFactionIndex);
 	node->addChild("factionCount", factionCount);
+	node->addChild("fogOfWar", fogOfWar);
 
 	XmlNode *factionsNode = node->addChild("factions");
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {

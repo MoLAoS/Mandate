@@ -22,9 +22,6 @@
 
 #include "FileOps.hpp"
 
-using namespace std;
-
-
 class FSFactory{
 	private:
 		static FSFactory *instance;

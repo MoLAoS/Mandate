@@ -21,7 +21,6 @@
 #include "FSFactory.hpp"
 
 using namespace Shared::Platform;
-using namespace std;
 
 namespace Shared{ namespace Sound{
 

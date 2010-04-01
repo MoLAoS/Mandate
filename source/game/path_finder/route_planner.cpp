@@ -41,9 +41,11 @@
 #	define CONSOLE_LOG(x) {}
 #endif
 
-using namespace std;
 using namespace Shared::Graphics;
 using namespace Shared::Util;
+
+using std::cout;
+using std::endl;
 
 namespace Glest { namespace Game { namespace Search {
 
@@ -73,8 +75,8 @@ namespace Glest { namespace Game { namespace Search {
 		WaypointPath::const_iterator it = path.begin();
 		for ( ; it != path.end(); ++it) {
 			Vec3f vert = theWorld.getMap()->getTile(Map::toTileCoords(*it))->getVertex();
-			vert.x += it->x % Map::cellScale + 0.5f;
-			vert.z += it->y % Map::cellScale + 0.5f;
+			vert.x += it->x % GameConstants::cellScale + 0.5f;
+			vert.z += it->y % GameConstants::cellScale + 0.5f;
 			vert.y += 0.15f;
 			DebugRenderer::addWaypoint(vert);
 		}
@@ -145,9 +147,11 @@ bool RoutePlanner::isLegalMove(Unit *unit, const Vec2i &pos2) const {
 	//assert(unit->getPos().dist(pos2) < 1.5);
 	if (unit->getPos().dist(pos2) > 1.5) {
 		//TODO: figure out why we need this!  because blocked paths are popping...
+
 		cout << "Unit is at " << unit->getPos() << " next step is " << pos2  
 			 << " dist is " << unit->getPos().dist(pos2) << endl;
 		cout.flush();
+
 		return false;
 	}
 	const Vec2i &pos1 = unit->getPos();

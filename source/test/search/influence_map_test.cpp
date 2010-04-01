@@ -16,8 +16,6 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
-
 namespace Test {
 
 InfluenceMapTest::InfluenceMapTest() {

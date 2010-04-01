@@ -15,6 +15,7 @@
 #include "game_constants.h"
 
 using std::set;
+using std::numeric_limits;
 
 namespace Glest { namespace Game { 
 
@@ -218,8 +219,8 @@ public:
 				return getWestBorder(cluster);
 			default:
 				throw runtime_error("ClusterMap::getBorder() passed dodgey direction");
-				return 0; // keep compiler quiet
 		}
+		return 0; // keep compiler quiet
 	}
 	void getTransitions(const Vec2i &cluster, Field f, Transitions &t);
 
@@ -250,6 +251,7 @@ private:
 
 	void evalCluster(const Vec2i &cluster);
 
+	float linePathLength(Field f, int size, const Vec2i &start, const Vec2i &dest);
 	float aStarPathLength(Field f, int size, const Vec2i &start, const Vec2i &dest);
 
 	void disconnectCluster(const Vec2i &cluster);

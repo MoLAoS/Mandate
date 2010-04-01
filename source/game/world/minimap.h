@@ -52,8 +52,8 @@ private:
 	static const float exploredAlpha;
 
 public:
-	void init(int x, int y, const World *world);
-	Minimap( bool FoW);
+	void init(int x, int y, const World *world, bool resuming);
+	Minimap(bool FoW);
 	~Minimap();
 
 	const Texture2D *getFowTexture() const	{return fowTex;}
@@ -72,6 +72,7 @@ public:
 
 private:
 	void computeTexture(const World *world);
+	void setExploredState(const World *world);
 };
 
 }}//end namespace

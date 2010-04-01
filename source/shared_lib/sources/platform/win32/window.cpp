@@ -23,7 +23,6 @@
 
 
 using namespace Shared::Util;
-using namespace std;
 
 namespace Shared {
 namespace Platform {

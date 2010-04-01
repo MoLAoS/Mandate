@@ -35,7 +35,7 @@ enum NetworkRole{
 
 class NetworkManager{
 private:
-	GameNetworkInterface* gameNetworkInterface;
+	GameInterface* gameInterface;
 	NetworkRole networkRole;
 
 public:
@@ -47,8 +47,8 @@ public:
 	void end();
 
 	void update() {
-		if(gameNetworkInterface) {
-			gameNetworkInterface->doUpdate();
+		if(gameInterface) {
+			gameInterface->doUpdate();
 		}
 	}
 
@@ -72,21 +72,21 @@ public:
 		return networkRole == nrClient || getServerInterface()->getConnectedSlotCount() > 0;
 	}
 
-	GameNetworkInterface* getGameNetworkInterface() {
-		assert(gameNetworkInterface != NULL);
-		return gameNetworkInterface;
+	GameInterface* getGameInterface() {
+		assert(gameInterface != NULL);
+		return gameInterface;
 	}
 
 	ServerInterface* getServerInterface() {
-		assert(gameNetworkInterface != NULL);
+		assert(gameInterface != NULL);
 		assert(networkRole == nrServer);
-		return static_cast<ServerInterface*>(gameNetworkInterface);
+		return static_cast<ServerInterface*>(gameInterface);
 	}
 
 	ClientInterface* getClientInterface() {
-		assert(gameNetworkInterface != NULL);
+		assert(gameInterface != NULL);
 		assert(networkRole == nrClient);
-		return static_cast<ClientInterface*>(gameNetworkInterface);
+		return static_cast<ClientInterface*>(gameInterface);
 	}
 };
 

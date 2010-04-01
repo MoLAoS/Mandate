@@ -42,6 +42,7 @@ public:
 	SoundContainer();
 
 	void resize(int size)			{sounds.resize(size);}
+	void add(StaticSound *sound)		{ sounds.push_back(sound); }
 	StaticSound *&operator[](int i)	{return sounds[i];}
 
 	const Sounds &getSounds() const	{return sounds;}

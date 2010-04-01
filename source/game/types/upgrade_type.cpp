@@ -121,7 +121,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 	//initialize values using new format if nodes are present
 	if(upgradeNode->getChild("static-modifiers", 0, false)
 	|| upgradeNode->getChild("multipliers", 0, false)) {
-		if (! EnhancementTypeBase::load(upgradeNode, dir, techTree, factionType)) {
+		if (! EnhancementType::load(upgradeNode, dir, techTree, factionType)) {
 			loadOk = false;
 		}
 	}
@@ -130,9 +130,9 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 
 void UpgradeType::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
-	EnhancementTypeBase::doChecksum(checksum);
+	EnhancementType::doChecksum(checksum);
 	foreach_const (vector<const UnitType*>, it, effects) {
-		checksum.addString((*it)->getName());
+		checksum.add((*it)->getName());
 	}
 }
 
@@ -148,7 +148,7 @@ string UpgradeType::getDesc() const {
 		}
 	}
 
-	EnhancementTypeBase::getDesc(str, "\n");
+	EnhancementType::getDesc(str, "\n");
 	return str;
 }
 

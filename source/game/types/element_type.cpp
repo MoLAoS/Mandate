@@ -32,7 +32,7 @@ namespace Glest { namespace Game {
 
 void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
 	checksum.add<int>(id);
-	checksum.addString(name);
+	checksum.add(name);
 }
 
 // =====================================================
@@ -133,11 +133,11 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 void RequirableType::doChecksum(Checksum &checksum) const {
 	NameIdPair::doChecksum(checksum);
 	foreach_const (UnitReqs, it, unitReqs) {
-		checksum.addString((*it)->getName());
+		checksum.add((*it)->getName());
 		checksum.add<int>((*it)->getId());
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		checksum.addString((*it)->getName());
+		checksum.add((*it)->getName());
 		checksum.add<int>((*it)->getId());
 	}
 	checksum.add<int>(subfactionsReqs);
@@ -229,7 +229,7 @@ void ProducibleType::doChecksum(Checksum &checksum) const {
 	RequirableType::doChecksum(checksum);
 	foreach_const (Costs, it, costs) {
 		checksum.add<int>(it->getType()->getId());
-		checksum.addString(it->getType()->getName());
+		checksum.add(it->getType()->getName());
 		checksum.add<int>(it->getAmount());
 	}
 	checksum.add<int>(productionTime);
