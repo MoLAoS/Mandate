@@ -45,6 +45,7 @@ bool CmdArgs::parse(int argc, char **argv){
 			return true;
 		}else{
 			cout << "unknown argument: " << argv[i] << endl;
+			return true;
 		}
 	}
 	return false;

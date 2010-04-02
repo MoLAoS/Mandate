@@ -11,6 +11,7 @@
 
 #ifndef _SHARED_PCH_H_
 #	define _SHARED_PCH_H_
+#include "projectConfig.h"
 //#ifdef USE_PCH // this will cause failed compilation if not defined, even if not using pre-compiled hdrs
 
 #if defined(WIN32) || defined(WIN64)

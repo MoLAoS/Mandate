@@ -11,6 +11,7 @@
 
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
+#include "projectConfig.h"
 //#ifdef USE_PCH
 
 
@@ -159,4 +160,3 @@ using std::numeric_limits;
 
 //#endif // USE_PCH
 #endif // _SHARED_PCH_H_
-
