@@ -557,21 +557,101 @@ void Map::randomizeHeights() {
 /// and if the cell is clear a single point is added.
 /// The next point to be added in the group is randomly picked from the eight adjacent
 /// squares. This continues until the mass has been grown to the desired size.
+
+/* Main TODO list
+	* Optimize seeding for terrain
+	* Seed some lakes or rivers (on user input?)
+	* Properly calculate and properly randomize resource and object placement
+		* What is done now I have found is OK for a quick random map game but
+		  for anyone who wants the map to look good OK is nowhere near enough.
+	* Add realistic weathering to terrain?
+		* Rivers/Canyons throught mountains?
+		* Earthquakes/Fault lines?
+	* Create a dialog for user input on what are now const int values
+	* Add some aesthetics
+		* Hanged/Impaled
+		* Statues
+		* Mountains
+		* Recalculate some terrain here to make it look better? (see realistic weathering)
+*/
 void Map::randomize() {
+	random.init(time(NULL));
 	maxFactions = 4;
 
-	resetFactions(maxFactions);
-
 	const int MAP_WIDTH = 64;
+
+	// the roughness constant should be bellow zero if the randomization is decreasing
+	// with each itteration the more negative it is the less randomness there will be.
+	const float ROUGHNESS_CONSTANT = -0.2;
+	const float DELTA_HEIGHT = 8.0;
+
+	const int MIN_DISTANCE = 20; // minimum distance between players
+
+	const int GOLD_PILE = 5; // size of each resource pile
+	const int STONE_PILE = 3;
+
+	const int RESOURCE_SEEDS = 1; // extra seeds for resource deposits
+
+	const int RESOURCE_RADIUS = 5; // distance from the start location to place resource seeds
+
+	const int FOREST_SEEDS = 3; // number of extra seed points to use apart from forests near start locations
+	const int FOREST_GROWTH = 50; // size of each forest
+	const int FOREST_RADIUS = 8; // distance of forest from player start location Should be about RESOURCE_RADIUS + 3
 
 	// Set height to a base level
 	// randomizeHeights() was taken out because there is already a button
 	// for it and much more realistic terrain should be randomized
-	int baseHeight = random.randRange(5, 9);
+	int baseHeight = random.randRange(8, 12);
+
+	resetFactions(maxFactions);
 	reset(MAP_WIDTH, MAP_WIDTH, baseHeight, 1);
 
 
-///////////////// Begin Heightmap Randomization
+///////////////////// Randomize start locations /////////////////////////////
+
+// Randomizes player start locations and makes sure to seed the corresponding terrain values
+// TODO I havn't figured out any optimal seeding yet so the actual method of seeding
+// still needs to be finallized
+	for (int i = 0; i < maxFactions; ++i) {
+		int randX = random.randRange(1, 5);
+		int randY = random.randRange(1, 5);
+		int randXmod = random.randRange((w / 15), (2 * w / 15));
+		int randYmod = random.randRange((h / 15), (2 * h / 15));
+
+		startLocations[i].x = (w / 5)*randX - randXmod;
+		startLocations[i].y = (h / 5)*randY - randYmod;
+		// check to make sure we arn't too close to other players
+		for (int j = 0; j < maxFactions; j++) {
+			if (i == j) continue;
+			if (get_dist(startLocations[i].x - startLocations[j].x, startLocations[i].y - startLocations[j].y) < MIN_DISTANCE) {
+				i--;
+				break;
+			}
+		}
+		// Seed the height of the player location up
+		for (int x = -1; x < 2; x++) {
+			for (int y = -1; y < 2; y++) {
+				// This formula is a little bit brutal to read:
+				// Basically it takes the start locations and divides them by one eighth the map width
+				// Rounds the eighth map width numbers and multiplies them by one eighth the mpa width
+				// This has the effect of finding the closest point that is a one eighth cell
+				// finding the one eighth (or 1/16) cells is important because it ensures the points are calculated
+				// on an early iteration of the diamond-square algorithm and are thus good seed points
+				int X1 = ((int)(((startLocations[i].x + x*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5)) * (MAP_WIDTH / 8.f);
+				int Y1 = ((int)(((startLocations[i].y + y*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5)) * (MAP_WIDTH / 8.f);
+				int X2 = ((int)(((startLocations[i].x + x*(MAP_WIDTH / 16.f)) / (MAP_WIDTH / 16.f)) + 0.5)) * (MAP_WIDTH / 16.f);
+				int Y2 = ((int)(((startLocations[i].y + y*(MAP_WIDTH / 16.f)) / (MAP_WIDTH / 16.f)) + 0.5)) * (MAP_WIDTH / 16.f);
+				if (inside (X1, Y1)) {
+					cells[X1][Y1].height = baseHeight + 3;
+				}
+				if (inside (X2, Y2)) {
+					cells[X2][Y2].height = baseHeight + 3;
+				}
+			}
+		}
+	}
+
+///////////////// Begin Heightmap Randomization ////////////////////
 
 // Defines what level of the algorithm we are at right now
 // This will be a control variable in the for loops
@@ -579,11 +659,7 @@ void Map::randomize() {
 // while diamond stages will use -stepping to (map_width - stepping)
 // after each stage stepping will be cut in half for the next stage
 int stepping = MAP_WIDTH;
-float heightRand = 7;
-
-// the roughness constant should be bellow zero if the randomization is decreasing
-// with each itteration the more negative it is the less randomness there will be.
-const float ROUGHNESS_CONSTANT = -0.2;
+float heightRand = DELTA_HEIGHT;
 
 // Square stage
 // loop through the map taking the four corners of each square
@@ -629,12 +705,14 @@ for (int t = 0; t < log2(MAP_WIDTH); t++) {
 			//if (D < 0) D += MAP_WIDTH;
 			if (F > MAP_WIDTH - 1) F -= MAP_WIDTH;
 
-			cells[B][E].height =
-			((cells[A][D].height +
-			cells[C][E].height +
-			cells[A][F].height +
-			cells[C][F].height) * 0.25f) +
-			random.randRange(-heightRand, heightRand);
+			if (cells[B][E].height == baseHeight) {
+				cells[B][E].height =
+				((cells[A][D].height +
+				cells[C][E].height +
+				cells[A][F].height +
+				cells[C][F].height) * 0.25f) +
+				random.randRange(-heightRand, heightRand);
+			}
 		}
 	}
 
@@ -663,7 +741,7 @@ for (int t = 0; t < log2(MAP_WIDTH); t++) {
 			if (D < 0) D += MAP_WIDTH;
 			if (F > MAP_WIDTH - 1) F -= MAP_WIDTH;
 
-			if (inside(B, E)) {
+			if (inside(B, E) && cells[B][E].height == baseHeight) {
 				cells[B][E].height =
 				((cells[B][D].height +
 				cells[A][E].height +
@@ -676,41 +754,9 @@ for (int t = 0; t < log2(MAP_WIDTH); t++) {
 	}
 	heightRand *= pow(2, ROUGHNESS_CONSTANT);
 }
-///////////////// End Heightmap Randomization
-
-
-	//return; // Lets not randomize crap until we get the heightmap right
-
-
-///////////////////// Randomize start locations /////////////////////////////
-const int MIN_DISTANCE = 20; // minimum distance between players
-
-	for (int i = 0; i < maxFactions; ++i) {
-		int randX = random.randRange(1, 5);
-		int randY = random.randRange(1, 5);
-		int randXmod = random.randRange((w / 15), (2 * w / 15));
-		int randYmod = random.randRange((h / 15), (2 * h / 15));
-
-		startLocations[i].x = (w / 5)*randX - randXmod;
-		startLocations[i].y = (h / 5)*randY - randYmod;
-		for (int j = 0; j < maxFactions; j++) {
-			if (i == j) continue;
-			if (get_dist(startLocations[i].x - startLocations[j].x, startLocations[i].y - startLocations[j].y) < MIN_DISTANCE) {
-				i--;
-				break;
-			}
-		}
-	}
+///////////////// End Heightmap Randomization ///////////////////
 
 /////////////////////Randomize the Resources/////////////////////////////
-// TODO add randMod?
-// TOOD extra seeds aren't randomized yet
-const int GOLD_PILE = 5; // size of each resource pile
-const int STONE_PILE = 3;
-
-const int RESOURCE_SEEDS = 1; // extra seeds for resource deposits
-
-const int RESOURCE_RADIUS = 5; // distance from the start location to place resource seeds
 
 	for (int i = 0; i < maxFactions + RESOURCE_SEEDS; i++) {
 		StartLocation goldSeed;
@@ -766,18 +812,6 @@ const int RESOURCE_RADIUS = 5; // distance from the start location to place reso
 	} // End for: resource populaton
 
 ///////////////////////////Randomize the Forests///////////////////
-// TODO forests seeded diagnoly from the start location are very far away from
-// the actual start location... fix maybe?
-
-// TODO forests can populate around resources
-// to the point where they become inaccessable
-
-// TODO extra seeds aren't randomized yet
-
-const int FOREST_SEEDS = 3; // number of extra seed points to use apart from forests near start locations
-const int FOREST_GROWTH = 50; // size of each forest
-const int FOREST_RADIUS = 8; // Should be about RESOURCE_RADIUS + 3
-
 
 	for (int i = 0; i < FOREST_SEEDS + maxFactions; i++) {
 	StartLocation forestSeed;
