@@ -42,6 +42,7 @@ protected:
 	string text;
 	const Font2D *font;
 	bool enabled;
+	bool visible;
 
 	static float anim;
 	static float fade;
@@ -56,8 +57,11 @@ public:
 	int getY() const					{return y;}
 	int getW() const					{return w;}
 	int getH() const					{return h;}
-   bool getEnabled () const { return enabled; }
-   void setEnabled ( bool enable ) { enabled = enable; }
+	bool getEnabled () const { return enabled; }
+	void setEnabled ( bool enable ) { enabled = enable; }
+	void show() { visible = true; }
+	void hide() { visible = false; }
+	bool isVisible() { return visible; }
 	const string &getText() const		{return text;}
 	const Font2D *getFont() const		{return font;}
 	bool isInBounds(int x, int y) const {
@@ -74,11 +78,40 @@ public:
 	
 	virtual bool mouseMove(int x, int y);
 	virtual bool mouseClick(int x, int y);
+	virtual void render() {} // TODO: should this have a no implementation warning?
 	
 	static void update();
 	static void resetFade();
 	static float getAnim()	{return anim;}
 	static float getFade()	{return fade;}
+};
+
+// ===========================================================
+// 	class GraphicPanel
+
+/// GraphicPanel is a container for other GraphicComponents. 
+/// Common actions are performed on the contained components 
+/// with a single call to the related panel methods.
+// ===========================================================
+
+class GraphicPanel : public GraphicComponent {
+public:
+	
+private:
+	vector<GraphicComponent*> components;
+
+public:
+	GraphicPanel() : GraphicComponent() {}
+
+	void init(int x, int y, int w, int h);
+	/** Add a GraphicComponent to the panel. Pointer should be managed by caller. */
+	void addComponent(GraphicComponent *gc);
+	
+	// common actions
+	/** Only movement within the panel area is passed to contained components. */
+	virtual bool mouseMove(int x, int y);
+	void update();
+	virtual void render();
 };
 
 // ===========================================================
@@ -100,6 +133,7 @@ public:
 	bool getCentered() const	{return centered;}
 
 	void setCentered(bool centered)	{this->centered= centered;}
+	virtual void render();
 };
 
 // ===========================================================
@@ -122,6 +156,7 @@ public:
 
 	void setLighted(bool lighted)	{this->lighted= lighted;}
 	virtual bool mouseMove(int x, int y);
+	virtual void render();
 };
 
 // ===========================================================
@@ -155,6 +190,7 @@ public:
 	
 	virtual bool mouseMove(int x, int y);
 	virtual bool mouseClick(int x, int y);
+	virtual void render();
 };
 
 // ===========================================================
@@ -186,6 +222,7 @@ public:
 	virtual bool mouseMove(int x, int y);
 	virtual bool mouseClick(int x, int y);
 	bool mouseClick(int x, int y, int &clickedButton);
+	virtual void render();
 	
 	void setText(const string &text) {
 		GraphicComponent::setText(text);
@@ -220,6 +257,7 @@ public:
 	void keyPress(char c);
 	void keyDown(const Key &key);
 	void setFocus()				{activated1 = true;}
+	virtual void render();
 };
 
 // ===========================================================
@@ -252,6 +290,7 @@ public:
 	void keyPress(char c)					{entry.keyPress(c);}
 	void keyDown(const Key &key);
 	void setFocus()							{entry.setFocus();}
+	virtual void render();
 
 };
 
@@ -272,8 +311,7 @@ public:
 
 	void setProgress(int v) { progress = v; }
 	int getProgress() { return progress; }
-	void render();
-
+	virtual void render();
 };
 
 }}//end namespace

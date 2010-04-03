@@ -16,6 +16,7 @@
 #include <cassert>
 #include <algorithm>
 
+#include "renderer.h"
 #include "metrics.h"
 #include "core_data.h"
 #include "platform_util.h"
@@ -26,6 +27,7 @@
 
 #include "leak_dumper.h"
 
+using namespace std;
 using namespace Shared::Graphics;
 
 namespace Glest { namespace Game {
@@ -41,6 +43,7 @@ const float GraphicComponent::fadeSpeed = 0.01f;
 
 GraphicComponent::GraphicComponent() : x(0), y(0), w(0), h(0), text(), font(NULL) {
    enabled = true;
+   visible = true;
 }
 
 void GraphicComponent::init(int x, int y, int w, int h) {
@@ -49,7 +52,8 @@ void GraphicComponent::init(int x, int y, int w, int h) {
 	this->w = w;
 	this->h = h;
 	font = CoreData::getInstance().getMenuFontNormal();
-   enabled = true;
+	enabled = true;
+	visible = true;
 }
 
 bool GraphicComponent::mouseMove(int x, int y) {
@@ -76,6 +80,49 @@ void GraphicComponent::resetFade() {
 }
 
 // =====================================================
+// class GraphicPanel
+// =====================================================
+
+void GraphicPanel::init(int x, int y, int w, int h) {
+	GraphicComponent::init(x, y, w, h);
+}
+
+void GraphicPanel::addComponent(GraphicComponent *gc) {
+	components.push_back(gc);
+}
+	
+// common actions
+bool GraphicPanel::mouseMove(int x, int y) {
+	// mouseMove is only relevant to components if they are 
+	// within the panel.
+	bool b = GraphicComponent::mouseMove(x, y);
+	if (b) {
+		vector<GraphicComponent*>::iterator iter;
+		for (iter = components.begin(); iter != components.end(); ++iter) {
+			(*iter)->mouseMove(x,y);
+		}
+	}
+	return b;
+}
+
+void GraphicPanel::update() {
+	vector<GraphicComponent*>::iterator iter;
+	for (iter = components.begin(); iter != components.end(); ++iter) {
+		(*iter)->update();
+	}
+}
+
+void GraphicPanel::render() {
+	vector<GraphicComponent*>::iterator iter;
+	for (iter = components.begin(); iter != components.end(); ++iter) {
+		GraphicComponent *gc = (*iter);
+		if (gc->isVisible()) {
+			gc->render();
+		}
+	}
+}
+
+// =====================================================
 // class GraphicLabel
 // =====================================================
 
@@ -85,6 +132,10 @@ const int GraphicLabel::defW = 70;
 void GraphicLabel::init(int x, int y, int w, int h, bool centered) {
 	GraphicComponent::init(x, y, w, h);
 	this->centered = centered;
+}
+
+void GraphicLabel::render() {
+	Renderer::getInstance().renderLabel(this);
 }
 
 // =====================================================
@@ -103,6 +154,10 @@ bool GraphicButton::mouseMove(int x, int y) {
 	bool b = GraphicComponent::mouseMove(x, y);
 	lighted = b;
 	return b;
+}
+
+void GraphicButton::render() {
+	Renderer::getInstance().renderButton(this);
 }
 
 // =====================================================
@@ -125,7 +180,7 @@ void GraphicListBox::init(int x, int y, int w, int h) {
 	selectedItemIndex = -1;
 }
 
-//queryes
+//queries
 void GraphicListBox::pushBackItem(string item) {
 	items.push_back(item);
 	setSelectedItemIndex(0);
@@ -182,6 +237,10 @@ bool GraphicListBox::mouseClick(int x, int y) {
 		return b1 || b2;
 	}
 	return false;
+}
+
+void GraphicListBox::render() {
+	Renderer::getInstance().renderListBox(this);
 }
 
 // =====================================================
@@ -250,6 +309,10 @@ bool GraphicMessageBox::mouseClick(int x, int y, int &clickedButton) {
 	return false;
 }
 
+void GraphicMessageBox::render() {
+	Renderer::getInstance().renderMessageBox(this);
+}
+
 // ===========================================================
 //  class GraphicTextEntry
 // ===========================================================
@@ -305,6 +368,10 @@ void GraphicTextEntry::keyDown(const Key &key) {
 			text.erase(text.end() - 1);
 		}
 	}
+}
+
+void GraphicTextEntry::render() {
+	Renderer::getInstance().renderTextEntry(this);
 }
 
 // =====================================================
@@ -373,6 +440,10 @@ bool GraphicTextEntryBox::mouseClick(int x, int y, int &clickedButton) {
 
 void GraphicTextEntryBox::keyDown(const Key &key) {
 	entry.keyDown(key);
+}
+
+void GraphicTextEntryBox::render() {
+	Renderer::getInstance().renderTextEntryBox(this);
 }
 
 // ===========================================================
