@@ -21,6 +21,7 @@
 
 #include "leak_dumper.h"
 
+using namespace std;
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
 

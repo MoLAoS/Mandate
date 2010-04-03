@@ -23,6 +23,8 @@
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
 
+using namespace std;
+
 namespace Shared { namespace Util {
 
 // =====================================================
@@ -32,7 +34,7 @@ namespace Shared { namespace Util {
 Properties::Properties() {}
 
 void Properties::load(const string &path, bool trim) {
-	std::locale loc;
+	locale loc;
 	//ifstream fileStream;
 	char lineBuffer[maxLine];
 	string line, key, value;

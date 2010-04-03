@@ -8,6 +8,7 @@
 #include "util.h"
 #include "FSFactory.hpp"
 
+using std::exception;
 using namespace Shared::Platform; 
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;

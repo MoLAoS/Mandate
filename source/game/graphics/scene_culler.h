@@ -22,6 +22,9 @@
 #include <limits>
 #include <cassert>
 
+using std::list;
+using std::vector;
+using std::pair;
 using namespace Shared::Math;
 
 namespace Glest { namespace Game {

@@ -52,11 +52,11 @@ World::World(Game *game)
 		: scenario(NULL)
 		, game(*game)
 		, gs(game->getGameSettings())
+		, minimap(gs.getFogOfWar())
 		, stats(game->getGameSettings())
 		, cartographer(NULL)
 		, routePlanner(NULL)
-		, posIteratorFactory(65)
-		, minimap(gs.getFogOfWar()) {
+		, posIteratorFactory(65) {
 	Config &config = Config::getInstance();
 
 	fogOfWar = gs.getFogOfWar();

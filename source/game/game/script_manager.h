@@ -32,6 +32,7 @@ using Shared::Platform::Chrono;
 using namespace Shared::Lua;
 using std::queue;
 using std::set;
+using std::numeric_limits;
 
 namespace Glest{ namespace Game {
 

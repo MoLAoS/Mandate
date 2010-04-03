@@ -18,7 +18,10 @@
 #include "fixed.h"
 #include "math_util.h"
 
+
 namespace Glest { namespace Game { namespace Util {
+
+using namespace std;
 
 using Shared::Math::Vec2i;
 using Shared::Math::Rect2i;

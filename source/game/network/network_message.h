@@ -16,6 +16,9 @@
 #include "game_constants.h"
 #include "network_types.h"
 
+#include <map>
+
+using std::map;
 using Shared::Platform::Socket;
 using Shared::Platform::int8;
 using Shared::Platform::int16;

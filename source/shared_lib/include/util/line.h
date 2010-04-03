@@ -11,6 +11,8 @@
 #ifndef _LINE_ALGORITHM_INCLUDED_
 #define _LINE_ALGORITHM_INCLUDED_
 
+#include <cassert>
+
 namespace Shared { namespace Util {
 
 /** midpoint line algorithm, 'Visit' specifies the 'pixel visit' function,	*

@@ -11,6 +11,7 @@
 
 #include "pch.h"
 #include <cppunit/extensions/HelperMacros.h>
+#include <algorithm>
 
 #include "line_test.h"
 

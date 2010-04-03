@@ -15,6 +15,7 @@
 #include "font.h"
 
 #include <vector>
+using std::vector;
 
 namespace Shared{ namespace Graphics{
 

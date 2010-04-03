@@ -21,6 +21,7 @@
 #include "icons.h"
 
 
+using std::exception;
 using namespace Shared::Util;
 
 namespace MapEditor {

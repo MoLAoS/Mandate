@@ -11,8 +11,8 @@
 
 #ifndef _SHARED_PCH_H_
 #	define _SHARED_PCH_H_
-#include "projectConfig.h"
-//#ifdef USE_PCH // this will cause failed compilation if not defined, even if not using pre-compiled hdrs
+//#include "projectConfig.h"
+#ifdef USE_PCH // this will cause failed compilation if not defined, even if not using pre-compiled hdrs
 
 #if defined(WIN32) || defined(WIN64)
 #	if defined (USE_POSIX_SOCKETS)
@@ -152,5 +152,5 @@ using std::max;
 
 using std::numeric_limits;
 
-//#endif // USE_PCH
+#endif // USE_PCH
 #endif // _SHARED_PCH_H_

@@ -169,7 +169,7 @@ inline string intToHex(int addr) {
 
 inline string toLower(const string &str){
 	string s = str;
-	std::transform(s.begin(), s.end(), s.begin(), tolower);
+	std::transform(s.begin(), s.end(), s.begin(), (int(*)(int))std::tolower);
 	return s;
 }
 

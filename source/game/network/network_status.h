@@ -23,9 +23,10 @@
 
 using Shared::Platform::Chrono;
 using Shared::Platform::int64;
-using namespace std;
 
 namespace Glest { namespace Game {
+
+using namespace std;
 
 class NetworkStatus {
 public:

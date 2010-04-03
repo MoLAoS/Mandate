@@ -33,6 +33,7 @@
 
 #include "leak_dumper.h"
 
+using namespace std;
 using namespace Shared::Platform;
 using Shared::Xml::XmlNode;
 

@@ -37,6 +37,8 @@ using namespace Shared::Util;
 #endif
 
 #ifdef USE_POSIX_SOCKETS
+#	include <netinet/tcp.h>
+
 #	define socket_close ::close
 #	define get_error() errno
 #	define NO_DATA_AVAILABLE EAGAIN

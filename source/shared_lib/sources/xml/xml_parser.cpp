@@ -21,8 +21,9 @@
 #include "conversion.h"
 
 #include "leak_dumper.h"
-#include <FSFactory.hpp>
+#include "FSFactory.hpp"
 
+using namespace std;
 using namespace Shared::Util;
 
 namespace Shared { namespace Xml {

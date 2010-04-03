@@ -19,6 +19,9 @@
 #include "game_util.h"
 #include "leak_dumper.h"
 
+
+
+using std::exception;
 using namespace Shared::Xml;
 using namespace Shared::Util;
 

@@ -24,6 +24,8 @@ using namespace Shared::Platform;
 
 namespace Shared{ namespace Sound{
 
+using namespace std;
+
 // =====================================================
 //	class WavSoundFileLoader
 // =====================================================

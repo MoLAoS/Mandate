@@ -59,12 +59,12 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 
 ProjectileParticleSystem::ProjectileParticleSystem(int particleCount)
 		: AttackParticleSystem(particleCount)
+		, nextParticleSystem(0)
+		, target(0)
 		, trajectory(tLinear)
 		, trajectorySpeed(1.f)
 		, trajectoryScale(1.f)
 		, trajectoryFrequency(1.f)
-		, nextParticleSystem(0)
-		, target(0)
 		, damager(0) {
 	setEmissionRate(20);
 	setColor(Vec4f(1.0f, 0.3f, 0.0f, 0.5f));
@@ -77,12 +77,12 @@ ProjectileParticleSystem::ProjectileParticleSystem(int particleCount)
 
 ProjectileParticleSystem::ProjectileParticleSystem(const ParticleSystemBase &model, int particleCount)
 		: AttackParticleSystem(model, particleCount)
+		, nextParticleSystem(0)
+		, target(0)
 		, trajectory(tLinear)
 		, trajectorySpeed(1.f)
 		, trajectoryScale(1.f)
 		, trajectoryFrequency(1.f)
-		, nextParticleSystem(0)
-		, target(0)
 		, damager(0) {
 }
 

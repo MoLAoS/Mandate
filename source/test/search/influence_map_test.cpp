@@ -16,6 +16,10 @@
 
 #include "leak_dumper.h"
 
+
+using std::pair;
+using std::max;
+
 namespace Test {
 
 InfluenceMapTest::InfluenceMapTest() {

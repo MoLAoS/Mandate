@@ -27,7 +27,7 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
+using std::max;
 using namespace Shared::Graphics;
 
 namespace Glest { namespace Game {

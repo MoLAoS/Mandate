@@ -22,6 +22,12 @@
 
 #include "FileOps.hpp"
 
+//using namespace std;
+using std::vector;
+using std::ostream;
+using std::istream;
+using std::string;
+
 class FSFactory{
 	private:
 		static FSFactory *instance;

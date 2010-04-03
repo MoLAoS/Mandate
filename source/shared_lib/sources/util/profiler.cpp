@@ -18,6 +18,9 @@
 #include "platform_util.h"
 #include "timer.h"
 
+#include <map>
+
+using namespace std;
 using Shared::Platform::Chrono;
 
 namespace Shared { namespace Util { namespace Profile {

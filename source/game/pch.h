@@ -11,8 +11,8 @@
 
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
-#include "projectConfig.h"
-//#ifdef USE_PCH
+//#include "projectConfig.h"
+#ifdef USE_PCH
 
 
 #if defined(WIN32) || defined(WIN64)
@@ -158,5 +158,5 @@ using std::pair;
 
 using std::numeric_limits;
 
-//#endif // USE_PCH
+#endif // USE_PCH
 #endif // _SHARED_PCH_H_
