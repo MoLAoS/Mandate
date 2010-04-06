@@ -261,7 +261,7 @@ void World::update() {
 	theNetworkManager.getGameInterface()->frameStart(frameCount);
 
 	// check ScriptTimers
-	scriptManager->onTimer();
+	ScriptManager::update();
 
 	//time
 	timeFlow.update();

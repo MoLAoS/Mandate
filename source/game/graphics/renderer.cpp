@@ -657,12 +657,21 @@ void Renderer::renderConsole(const Console *console){
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
 
-	for(int i=0; i<console->getLineCount(); ++i){
-		renderTextShadow( 
-			console->getLine(i), 
-			CoreData::getInstance().getConsoleFont(),
-			20, i*20+20);
-	}
+	Font2D *font = CoreData::getInstance().getConsoleFont();
+	const FontMetrics *fm = font->getMetrics();
+
+	int yPos = console->getYPos();
+	bool fromTop = console->isFromTop();
+
+	for (int i=0; i < console->getLineCount(); ++i) {
+		int x = 20;
+		int y = yPos + (fromTop ? -(console->getLineCount() - i - 1) : i) * 20;
+		Console::Message msg = console->getLine(i);
+		foreach (Console::Message, snippet, msg) {
+			renderTextShadow(snippet->text, font, x, y, false, snippet->colour);
+			x += int(fm->getTextDiminsions(snippet->text).x + 1.f);
+		}
+ 	}
 	glPopAttrib();
 }
 
@@ -814,12 +823,12 @@ void Renderer::renderText(const string &text, const Font2D *font, const Vec3f &c
 	glPopAttrib();
 }
 
-void Renderer::renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered){
+void Renderer::renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered, Vec3f colour) {
 	glPushAttrib(GL_CURRENT_BIT);
 	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);	textRenderer->begin(font);
 	glColor3f(0.0f, 0.0f, 0.0f);
 	textRenderer->render(text, pos.x - 1, pos.y - 1);
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glColor3fv(colour.ptr());
 	textRenderer->render(text, pos.x, pos.y);
 	textRenderer->end();
 	

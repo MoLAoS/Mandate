@@ -23,20 +23,19 @@
 #	define	_CHRONO_USE_POSIX
 #	include <sys/time.h>
 #else
-#ifdef USE_SDL
-	// use SDL_GetTicks() with millisecond precision.
-#	define	_CHRONO_USE_SDL
-#	include <SDL.h>
-#else
-#if defined(WIN32) || defined(WIN64)
-	// use QueryPerformanceCounter with variable precision
-#	define	_CHRONO_USE_WIN
-//#	include <winbase.h>
-#	include <windows.h>
-#else
-#	error No usable timer
-#endif
-#endif
+#	ifdef USE_SDL
+		// use SDL_GetTicks() with millisecond precision.
+#		define	_CHRONO_USE_SDL
+#		include <SDL.h>
+#	else
+#		if defined(WIN32) || defined(WIN64)
+			// use QueryPerformanceCounter with variable precision
+#			define	_CHRONO_USE_WIN
+#			include <windows.h>
+#		else
+#			error No usable timer
+#		endif
+#	endif
 #endif
 
 #include <cassert>

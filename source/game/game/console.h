@@ -14,11 +14,15 @@
 
 #include <utility>
 #include <string>
-#include <vector>
+#include <deque>
 
 using std::string;
-using std::vector;
+using std::deque;
 using std::pair;
+
+#include "vec.h"
+
+using Shared::Math::Vec3f;
 
 namespace Glest{ namespace Game{
 
@@ -28,13 +32,20 @@ namespace Glest{ namespace Game{
 //	In-game console that shows various types of messages
 // =====================================================
 
-class Console{
-private:
-	static const int consoleLines= 5;
-
+class Console {
 public:
-	typedef pair<string, float> StringTimePair;
-	typedef vector<StringTimePair> Lines;
+	struct TextInfo {
+		string text;
+		Vec3f colour;
+		TextInfo(const string &text) : text(text), colour(1.f) {}
+		TextInfo(const string &text, Vec3f colour) : text(text), colour(colour) {}
+	};
+	struct Message : public vector<TextInfo> {
+		Message(const string &txt, Vec3f col) { push_back(TextInfo(txt, col)); }
+		Message(const string &txt) { push_back(TextInfo(txt)); }
+	};
+	typedef pair<Message, float> MessageTimePair;
+	typedef deque<MessageTimePair> Lines;
 	typedef Lines::const_iterator LineIterator;
 
 private:
@@ -48,16 +59,22 @@ private:
 	int maxLines;
 	float timeout;
 
+	int yPos;
+	bool fromTop;
+
 public:
-	Console();
+	Console(int maxLines = 5, int yPos = 20, bool fromTop = false);
 
 	int getLineCount() const		{return lines.size();}
-	string getLine(int i) const		{return lines[i].first;}
+	Message getLine(int i) const	{return lines[i].first;}
+	int getYPos() const				{ return yPos; }
+	bool isFromTop() const			{ return fromTop; }
 
 
 	void addStdMessage(const string &s);
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");
-	void addLine(string line, bool playSound=false );
+	void addLine(string line, bool playSound=false);
+	void addDialog(string speaker, Vec3f colour, string text);
 	void update();
 	bool isEmpty();
 };

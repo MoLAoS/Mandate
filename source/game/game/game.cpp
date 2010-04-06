@@ -891,6 +891,7 @@ void Game::render2d(){
 	if(!config.getUiPhotoMode()){
 		renderer.renderResourceStatus();
 		renderer.renderConsole(&console);
+		renderer.renderConsole(ScriptManager::getDialogConsole());
 	}
 
 	//2d mouse

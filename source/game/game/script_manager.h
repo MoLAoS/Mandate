@@ -42,6 +42,7 @@ class GameCamera;
 class GameSettings;
 class Game;
 class UnitType;
+class Console;
 
 // =====================================================
 //	class ScriptTimer
@@ -228,6 +229,7 @@ public:
 //	class ScriptManager
 // =====================================================
 
+//REFACTOR: namespace ScriptManager [hide all the private stuff in the cpp]
 class ScriptManager {
 private:
 	typedef queue<ScriptManagerMessage> MessageQueue;
@@ -262,11 +264,16 @@ private:
 	static Game *game;
 	static World *world;
 
+	static Console *dialogConsole;
+	static map<string, Vec3f> actorColours;
+
 public:
 	static void cleanUp();
 	static void init(Game *game);
 
 	static void doSomeLua(string &code);
+
+	static Console* getDialogConsole()	{ return dialogConsole; }
 
 	//message box functions
 	static bool getMessageBoxEnabled() 									{return !messageQueue.empty();}
@@ -281,7 +288,8 @@ public:
 	static void onUnitCreated(const Unit* unit);
 	static void onUnitDied(const Unit* unit);
 
-	static void onTimer();
+	static void update();
+
 	static void onTrigger(const string &name, int unitId, int userData=0);
 	static void unitMoved(Unit *unit) { triggerManager.unitMoved(unit); }
 	static void commandCallback(const Unit *unit) { triggerManager.commandCallback(unit); }
@@ -297,8 +305,10 @@ public:
 	static int panicFunc(LuaHandle* luaHandle);
 
 private:
+	typedef const char* c_str;
+
 	static string wrapString(const string &str, int wrapCount);
-	static bool extractArgs(LuaArguments &args, const char *caller, const char *format, ...);
+	static bool extractArgs(LuaArguments &args, c_str caller, c_str format, ...);
 
 	//
 	// LUA callbacks
@@ -322,11 +332,15 @@ private:
 	static int setDisplayText(LuaHandle* luaHandle);	// Gui.setDisplayText()
 	static int clearDisplayText(LuaHandle* luaHandle);	// Gui.clearDisplayText()
 	static int consoleMsg(LuaHandle* luaHandle);		// Gui.consoleMsg()
+	static int addActor(LuaHandle* luaHandle);
+	static int addDialog(LuaHandle* luaHandle);
 
 	// gui
 	static int lockInput(LuaHandle* luaHandle);			// Gui.lockInput()
 	static int unlockInput(LuaHandle* luaHandle);		// Gui.unlockInput()
 	static int setCameraPosition(LuaHandle* luaHandle);	// Gui.setCameraPosition()
+	static int setCameraAngles(LuaHandle* luaHandle);
+	static int setCameraDestination(LuaHandle* luaHandle);
 	static int unfogMap(LuaHandle *luaHandle);			// Gui.unfogMap()
 
 	// create units / hand-out resources

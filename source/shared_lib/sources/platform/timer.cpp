@@ -67,12 +67,10 @@ bool Chrono::init() {
 //	class PerformanceTimer
 // =====================================================
 
-PerformanceTimer::PerformanceTimer(float fps, int maxTimes, int maxBacklog) :
-//		lastTicks(Chrono::getCurTicks()),
-//		updateTicks((int64)((float)Chrono::getResolution() / fps)),
-		times(0),
-		maxTimes(maxTimes),
-		maxBacklog(maxBacklog) {
+PerformanceTimer::PerformanceTimer(float fps, int maxTimes, int maxBacklog)
+		: times(0)
+		, maxTimes(maxTimes)
+		, maxBacklog(maxBacklog) {
 	assert(maxTimes == -1 || maxTimes > 0);
 	assert(maxBacklog >= -1);
 	reset();

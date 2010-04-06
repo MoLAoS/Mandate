@@ -51,12 +51,12 @@ public:
 	int getBalance() const					{return balance;}
 	string getDescription() const;
 
-	void setAmount(int amount)				{
+	void setAmount(int amount) {
 		if (this->amount == amount) return;
 		this->amount = amount;
 		AmountChanged(amount);
 	}
-	void setBalance(int balance)			{
+	void setBalance(int balance) {
 		if (this->balance == balance) return;
 		this->balance = balance;
 		BalanceChanged(balance);

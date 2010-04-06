@@ -312,6 +312,9 @@ set<string>			ScriptManager::definedEvents;
 Game  *ScriptManager::game  = NULL;
 World *ScriptManager::world = NULL;
 
+Console *ScriptManager::dialogConsole = NULL;
+map<string, Vec3f> ScriptManager::actorColours;
+
 ScriptManager::MessageQueue ScriptManager::messageQueue;
 ScriptManager::UnitInfo		ScriptManager::latestCreated,
 							ScriptManager::latestCasualty;
@@ -329,6 +332,8 @@ void ScriptManager::cleanUp() {
 	latestCasualty.id = -1;
 	gameOver= false;
 	triggerManager.reset(world);
+	delete dialogConsole;
+	dialogConsole = 0;
 }
 
 void ScriptManager::init(Game *g) {
@@ -341,6 +346,9 @@ void ScriptManager::init(Game *g) {
 	messageBox.setEnabled(false);
 
 	cleanUp();
+
+	//TODO: calculate y co-ordinate
+	dialogConsole = new Console(10, 170, true);
 
 	luaScript.startUp();
 	luaScript.atPanic(panicFunc);
@@ -357,12 +365,16 @@ void ScriptManager::init(Game *g) {
 	LUA_FUNC(lockInput);
 	LUA_FUNC(unlockInput);
 	LUA_FUNC(setCameraPosition);
+	LUA_FUNC(setCameraDestination);
+	LUA_FUNC(setCameraAngles);
 	LUA_FUNC(unfogMap);
 
 	// messaging
 	LUA_FUNC(showMessage);
 	LUA_FUNC(setDisplayText);
 	LUA_FUNC(clearDisplayText);
+	LUA_FUNC(addActor);
+	LUA_FUNC(addDialog);
 
 	// create and give ...
 	LUA_FUNC(createUnit);
@@ -528,7 +540,9 @@ void ScriptManager::onTrigger(const string &name, int unitId, int userData) {
 	}
 }
 
-void ScriptManager::onTimer() {
+void ScriptManager::update() {
+	dialogConsole->update();
+
 	// when a timer is ready, call the corresponding lua function
 	// and remove the timer, or reset to repeat.
 
@@ -606,10 +620,12 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 }
 
 /** Extracts arguments for Lua callbacks.
-  * <p>uses a string description of the expected arguments in arg_desc, then pointers the 
-  * corresponding variables to populate the results.</p>
-  * @param luaArgs the LuaArguments object
-  * @param caller name of the lua callback, in case of errors
+  * <p>uses a string description of the expected arguments in arg_desc, then takes pointers the 
+  * variables of the corresponding types to populate with the results 
+  * using va_args obviously, so there is no type checking, be careful.</p>
+  * @param luaArgs the LuaArguments object to extract arguments from
+  * @param caller if NULL, errors will not be reported, otherwise this is name of the lua callback
+  *  that called this function, used for error reporting.
   * @param arg_desc argument descriptor, a string of the form "[xxx[,xxx[,etc]]]" where xxx can be any of
   * <ul><li>'int' for an integer</li>
   *		<li>'str' for a string</li>
@@ -622,8 +638,10 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const char *arg_desc, ...) {
 	if (!*arg_desc) {
 		if (luaArgs.getArgumentCount()) {
-			addErrorMessage(string(caller) + "(): expected 0 arguments, got " 
-					+ intToStr(luaArgs.getArgumentCount()));
+			if (caller) {
+				addErrorMessage(string(caller) + "(): expected 0 arguments, got " 
+						+ intToStr(luaArgs.getArgumentCount()));
+			}
 			return false;
 		} else {
 			return true;
@@ -635,8 +653,10 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 		if (*ptr++ == ',') expected++;
 	}
 	if (expected != luaArgs.getArgumentCount()) {
-		addErrorMessage(string(caller) + "(): expected " + intToStr(expected) 
-			+ " arguments, got " + intToStr(luaArgs.getArgumentCount()));
+		if (caller) {
+			addErrorMessage(string(caller) + "(): expected " + intToStr(expected) 
+				+ " arguments, got " + intToStr(luaArgs.getArgumentCount()));
+		}
 		return false;
 	}
 	va_list vArgs;
@@ -662,7 +682,9 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 			tok = strtok(NULL, ",");
 		}
 	} catch (LuaError e) {
-		addErrorMessage("Error: " + string(caller) + "() " + e.desc());
+		if (caller) {
+			addErrorMessage("Error: " + string(caller) + "() " + e.desc());
+		}
 		va_end(vArgs);
 		return false;
 	}
@@ -685,7 +707,7 @@ int ScriptManager::debugLog(LuaHandle *luaHandle) {
 	return args.getReturnCount();
 }
 
-int ScriptManager::consoleMsg (LuaHandle *luaHandle) {
+int ScriptManager::consoleMsg(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string msg;
 	if (extractArgs(args, "consoleMsg", "str", &msg)) {
@@ -783,55 +805,55 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 	if (cond == "attacked") { 
 		triggerManager.addAttackedTrigger(id, evnt, ud);
 		did_something = true;
-	} else if (cond == "death") { // nop
+	} else if (cond == "death") {
 		triggerManager.addDeathTrigger(id, evnt, ud);
 		did_something = true;
 	} else if (cond == "enemy_sighted") { // nop
 	} else if (cond == "command_callback") {
-		if ( triggerManager.addCommandCallback(id,evnt) == -1 ) {
+		if (triggerManager.addCommandCallback(id,evnt) == -1) {
 			addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
 		}
 		did_something = true;
 	} else { // 'complex' conditions
 		size_t ePos = cond.find('=');
-		if ( ePos != string::npos ) {
+		if (ePos != string::npos) {
 			string key = cond.substr(0, ePos);
 			string val = cond.substr(ePos+1);
-			if ( key == "hp_below" ) {
+			if (key == "hp_below") {
 				int threshold = atoi(val.c_str());
-				if ( threshold < 1 ) {
+				if (threshold < 1) {
 					addErrorMessage("setUnitTrigger(): invalid hp_below condition = '" + val + "'");
 				} else {
 					int res = triggerManager.addHPBelowTrigger(id, threshold, evnt);
-					if ( res == -1 ) {
+					if (res == -1) {
 						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-					} else if ( res == -2 ) {
+					} else if (res == -2) {
 						addErrorMessage("setUnitTrigger(): hp_below=" + intToStr(threshold) + ", unit doesn't have that many hp");
 					}
 				}
 				did_something = true;
-			} else if ( key == "hp_above" ) {
+			} else if (key == "hp_above") {
 				int threshold = atoi(val.c_str());
-				if ( threshold < 1 ) {
+				if (threshold < 1) {
 					addErrorMessage("setUnitTrigger(): invalid hp_above condition = '" + val + "'");
 				} else {
 					int res = triggerManager.addHPAboveTrigger(id, threshold, evnt);
-					if ( res == -1 ) {
+					if (res == -1) {
 						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-					} else if ( res == -2 ) {
+					} else if (res == -2) {
 						addErrorMessage("setUnitTrigger(): hp_above=" + intToStr(threshold) + ", unit already has that many hp");
 					}
 				}
 				did_something = true;
-			} else if ( key == "region" ) {
+			} else if (key == "region") {
 				int res = triggerManager.addUnitPosTrigger(id,val,evnt,ud);
-				if ( res == -1 ) {
+				if (res == -1) {
 					addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-				} else if ( res == -2 ) {
+				} else if (res == -2) {
 					addErrorMessage("setUnitTrigger(): unkown event  '" + evnt + "'");
-				} else if ( res == -3 ) {
+				} else if (res == -3) {
 					addErrorMessage("setUnitTrigger(): unkown region  '" + val + "'");
-				} else if ( res == -4 ) {
+				} else if (res == -4) {
 					addErrorMessage("setUnitTrigger(): unit " + intToStr(id) 
 						+ " already has a trigger for this region,event pair "
 						+ "'" + val + ", " + evnt + "'");
@@ -840,7 +862,7 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 			}
 		}
 	}
-	if ( !did_something ) {
+	if (!did_something) {
 		addErrorMessage("setUnitTrigger(): invalid condition = '" + cond + "'");
 	}
 }
@@ -849,21 +871,21 @@ int ScriptManager::setFactionTrigger(LuaHandle* luaHandle){
 	LuaArguments args(luaHandle);
 	int ndx, ud;
 	string cond, evnt;
-	if ( extractArgs(args, "setFactionTrigger", "int,str,str,int", &ndx, &cond, &evnt, &ud) ) {
+	if (extractArgs(args, "setFactionTrigger", "int,str,str,int", &ndx, &cond, &evnt, &ud)) {
 		size_t ePos = cond.find('=');
 		bool did_something = false;
-		if ( ePos != string::npos ) {
+		if (ePos != string::npos) {
 			string key = cond.substr(0, ePos);
 			string val = cond.substr(ePos+1);
-			if ( key == "region" ) {
+			if (key == "region") {
 				int res = triggerManager.addFactionPosTrigger(ndx,val,evnt, ud);
-				if ( res == -1 ) {
+				if (res == -1) {
 					addErrorMessage("setFactionTrigger(): invalid factio index" + intToStr(ndx));
-				} else if ( res == -2 ) {
+				} else if (res == -2) {
 					addErrorMessage("setFactionTrigger(): unkown event  '" + evnt + "'");
-				} else if ( res == -3 ) {
+				} else if (res == -3) {
 					addErrorMessage("setFactionTrigger(): unkown region  '" + val + "'");
-				} else if ( res == -4 ) {
+				} else if (res == -4) {
 					addErrorMessage("setFactionTrigger(): faction " + intToStr(ndx) 
 						+ " already has a trigger for this region,event pair "
 						+ "'" + val + ", " + evnt + "'");
@@ -871,7 +893,7 @@ int ScriptManager::setFactionTrigger(LuaHandle* luaHandle){
 				did_something = true;
 			}
 		}
-		if ( !did_something ) {
+		if (!did_something) {
 			addErrorMessage("setFactionTrigger(): invalid condition = '" + cond + "'");
 		}
 	}
@@ -880,15 +902,15 @@ int ScriptManager::setFactionTrigger(LuaHandle* luaHandle){
 
 int ScriptManager::showMessage(LuaHandle* luaHandle){
 	LuaArguments args(luaHandle);
-	Lang &lang= Lang::getInstance();
+	Lang &lang = Lang::getInstance();
 	string txt, hdr;
-	if ( extractArgs(args, "showMessage", "str,str", &txt, &hdr) ) {
-		theGame.pause ();
+	if (extractArgs(args, "showMessage", "str,str", &txt, &hdr)) {
+		theGame.pause();
 		ScriptManagerMessage msg(txt, hdr);
-		messageQueue.push ( msg );
-		if ( !messageBox.getEnabled() ) {
-			messageBox.setEnabled ( true );
-			messageBox.setText ( wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount) );
+		messageQueue.push(msg);
+		if (!messageBox.getEnabled()) {
+			messageBox.setEnabled(true);
+			messageBox.setText(wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount));
 			messageBox.setHeader(lang.getScenarioString(messageQueue.front().getHeader()));
 		}
 	}
@@ -898,25 +920,83 @@ int ScriptManager::showMessage(LuaHandle* luaHandle){
 int ScriptManager::setDisplayText(LuaHandle* luaHandle){
 	LuaArguments args(luaHandle);
 	string txt;
-	if ( extractArgs(args,"setDisplayText", "str", &txt) ) {
+	if (extractArgs(args,"setDisplayText", "str", &txt)) {
 		displayText= wrapString(Lang::getInstance().getScenarioString(txt), displayTextWrapCount);
 	}
 	return args.getReturnCount();
 }
 
-int ScriptManager::clearDisplayText(LuaHandle* luaHandle){
+int ScriptManager::clearDisplayText(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	displayText= "";
 	return args.getReturnCount();
 }
 
-int ScriptManager::lockInput(LuaHandle* luaHandle){
+///@todo move to somewhere sensible
+bool isHex(string s) {
+	foreach (string, c, s) {
+		if (!(isdigit(*c) || ((*c >= 'a' && *c <= 'f') || (*c >= 'A' && *c <= 'F')) )) {
+			return false;
+		}
+	}
+	return true;
+}
+
+int ScriptManager::addActor(LuaHandle* luaHandle){
+	LuaArguments args(luaHandle);
+	string name, colour;
+	int r,g,b;
+	Vec3f gl_colour;
+	if (extractArgs(args, 0, "str,str", &name, &colour)) {
+		///@todo this may be useful elsewhere, refactor this out into Vec3f extractColour(string s)
+		if (colour.size() > 6) { // trim pre/post-fixes
+			if (colour[0] == '0' && (colour[1] == 'x' || colour[1] == 'X')) {
+				colour = colour.substr(2);
+			} else if (colour[0] == '#') {
+				colour = colour.substr(1);
+			} else if (colour[colour.size()-1] == 'h' || colour[colour.size()-1] == 'H') {
+				colour = colour.substr(0, colour.size() - 1);
+			}
+		}
+		if (colour.size() == 6 && isHex(colour)) {
+			string tmp = colour.substr(0, 2);
+			gl_colour.r = Conversion::strToInt(tmp, 16);
+			tmp = colour.substr(2, 2);
+			gl_colour.g = Conversion::strToInt(tmp, 16);
+			tmp = colour.substr(4, 2);
+			gl_colour.b = Conversion::strToInt(tmp, 16);
+		} else {
+			throw runtime_error("bad colour string " + colour);
+		}
+	} else if (extractArgs(args,"addActor", "str,int,int,int", &name, &r, &g, &b)) {
+		gl_colour.r = float(r);
+		gl_colour.g = float(g);
+		gl_colour.b = float(b);
+	}
+	gl_colour /= 255.f;
+	actorColours[name] = gl_colour;
+	return args.getReturnCount();
+}
+
+int ScriptManager::addDialog(LuaHandle* luaHandle){
+	LuaArguments args(luaHandle);
+	string actor, msg;
+	if (extractArgs(args, "addDialog", "str,str", &actor, &msg)) {
+		if (actorColours.find(actor) == actorColours.end()) {
+			actorColours[actor] = Vec3f(1.f);
+		}
+		dialogConsole->addDialog(actor + " : ", actorColours[actor], theLang.getScenarioString(msg));
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::lockInput(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	theGame.lockInput();
 	return args.getReturnCount();
 }
 
-int ScriptManager::unlockInput(LuaHandle* luaHandle){
+int ScriptManager::unlockInput(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	theGame.unlockInput();
 	return args.getReturnCount();
@@ -926,7 +1006,7 @@ int ScriptManager::unfogMap(LuaHandle* luaHandle){
 	LuaArguments args(luaHandle);
 	Vec4i area;
 	int time;
-	if ( extractArgs(args, "unfogMap", "int,v4i", &time, &area) ) {
+	if (extractArgs(args, "unfogMap", "int,v4i", &time, &area)) {
 		theWorld.unfogMap(area,time);
 	}
 	return args.getReturnCount();
@@ -935,8 +1015,35 @@ int ScriptManager::unfogMap(LuaHandle* luaHandle){
 int ScriptManager::setCameraPosition(LuaHandle* luaHandle){
 	LuaArguments args(luaHandle);
 	Vec2i pos;
-	if ( extractArgs(args, "setCameraPosition", "v2i", &pos) ) {
+	if (extractArgs(args, "setCameraPosition", "v2i", &pos)) {
 		theCamera.centerXZ((float)pos.x, (float)pos.y);
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::setCameraAngles(LuaHandle* luaHandle){
+	LuaArguments args(luaHandle);
+	int hAngle, vAngle;
+	if (extractArgs(args, 0, "int,int", &hAngle, &vAngle)) {
+		theCamera.setAngles(hAngle, vAngle);
+	} else if (extractArgs(args, "setCameraPosition", "int", &hAngle)) {
+		theCamera.setAngles(hAngle, INFINITY);	
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::setCameraDestination(LuaHandle* luaHandle){	
+	LuaArguments args(luaHandle);	
+	Vec2i pos;
+	int height, hAngle, vAngle;
+	if (extractArgs(args, 0, "int,int,int,int,int", &pos.x, &pos.y, &height, &hAngle, &vAngle)) {
+		theCamera.setDest(pos, height, hAngle, vAngle);	
+	} else if (extractArgs(args, 0, "int,int,int,int", &pos.x, &pos.y, &height, &hAngle)) {
+		theCamera.setDest(pos, height, hAngle);
+	} else if (extractArgs(args, 0, "int,int,int", &pos.x, &pos.y, &height)) {
+		theCamera.setDest(pos, height);
+	} else if (extractArgs(args, "setCameraPosition", "v2i", &pos)) {
+		theCamera.setDest(pos);
 	}
 	return args.getReturnCount();
 }

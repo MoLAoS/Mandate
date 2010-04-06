@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
+#include <cctype>
 #include <vector>
 #include <algorithm>
 

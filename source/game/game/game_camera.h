@@ -14,17 +14,20 @@
 
 #include "vec.h"
 #include "math_util.h"
+#include <limits>
 
 namespace Shared { namespace Xml {
 	class XmlNode;
 }}
 
-namespace Glest{ namespace Game{
+using namespace Shared::Math;
 
-using Shared::Math::Quad2i;
-using Shared::Math::Vec3f;
-using Shared::Math::Vec2f;
 using Shared::Xml::XmlNode;
+using std::numeric_limits;
+
+#define INFINITY numeric_limits<float>::infinity()
+
+namespace Glest{ namespace Game{
 
 class Config;
 
@@ -95,6 +98,8 @@ public:
     //set
 	void setRotate(float rotate){this->rotate= rotate;}
 	void setPos(Vec2f pos);
+	void setAngles(float hAng, float vAng);
+	void setDest(const Vec2i &pos, int height = -1, float hAngle = INFINITY, float vAngle = INFINITY);
 
 	void setMoveX(float f, bool mouse){
 		if(mouse){

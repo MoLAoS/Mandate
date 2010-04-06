@@ -457,6 +457,7 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 	assert(false);
 }
 
+
 void Faction::setResourceBalance(const ResourceType *rt, int balance) {
 	for (int i = 0; i < resources.size(); ++i) {
 		Resource *r = &resources[i];

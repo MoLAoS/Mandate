@@ -32,16 +32,21 @@ namespace Glest{ namespace Game{
 // 	class Console
 // =====================================================
 
-Console::Console(){
+Console::Console(int maxLines, int y_pos, bool fromTop)
+		: maxLines(maxLines)
+		, yPos(y_pos)
+		, fromTop(fromTop) {
 	//config
 #	if _GAE_DEBUG_EDITION_
 		maxLines = 20;
 		timeout = numeric_limits<float>::infinity();
 #	else
-		maxLines= Config::getInstance().getUiConsoleMaxLines();
-		timeout= (float)Config::getInstance().getUiConsoleTimeout();
+		timeout= float(Config::getInstance().getUiConsoleTimeout());
 #	endif
-	timeElapsed= 0.0f;
+	timeElapsed = 0.0f;
+	if (fromTop) {
+		yPos = Metrics::getInstance().getScreenH() - y_pos;
+	}
 }
 
 void Console::addStdMessage(const string &s){
@@ -58,19 +63,29 @@ void Console::addStdMessage(const string &s, const string &param1, const string 
 }
 
 void Console::addLine(string line, bool playSound){
-   if ( playSound )
-      SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
-	lines.insert(lines.begin(), StringTimePair(line, timeElapsed));
-	if(lines.size()>maxLines){
+	if (playSound) {
+		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
+	}
+	lines.push_front(MessageTimePair(Message(line), timeElapsed));
+	if (lines.size() > maxLines) {
+		lines.pop_back();
+	}
+}
+
+void Console::addDialog(string speaker, Vec3f colour, string text) {
+	Message msg(speaker, colour);
+	msg.push_back(TextInfo(text));
+	lines.push_front(MessageTimePair(msg, timeElapsed));
+	if (lines.size() > maxLines) {
 		lines.pop_back();
 	}
 }
 
 void Console::update(){
-	timeElapsed+= 1.f / Config::getInstance().getGsWorldUpdateFps();
+	timeElapsed += 1.f / Config::getInstance().getGsWorldUpdateFps();
 
-	if(!lines.empty()){
-		if(lines.back().second<timeElapsed-timeout){
+	if (!lines.empty()) {
+		if(lines.back().second < timeElapsed - timeout){
 			lines.pop_back();
 		}
     }

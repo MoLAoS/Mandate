@@ -21,7 +21,7 @@
 
 #include "leak_dumper.h"
 
-
+using std::numeric_limits;
 using namespace Shared::Math;
 using Shared::Xml::XmlNode;
 
@@ -89,8 +89,29 @@ void GameCamera::setPos(Vec2f pos){
 	destPos.z = pos.y;
 }
 
-void GameCamera::update(){
-	Vec3f move = moveMouse+moveKey;
+void GameCamera::setAngles(float h, float v) {
+	destAng.x = vAng = v;
+	destAng.y = hAng = h;
+	clampAng();
+}
+
+void GameCamera::setDest(const Vec2i &pos, int height, float hAngle, float vAngle) {
+	destPos.x = float(pos.x);
+	destPos.z = float(pos.y);
+	if (height != -1) {
+		destPos.y = clamp(float(height), minHeight, maxHeight);
+	}
+	if (vAngle != INFINITY) {
+		destAng.x = vAngle;
+	}
+	if (hAngle != INFINITY) {
+		destAng.y = hAngle;
+	}
+	clampAng();
+}
+
+void GameCamera::update() {
+	Vec3f move = moveMouse + moveKey;
 
 	//move XZ
 	if(move.z){
@@ -102,18 +123,18 @@ void GameCamera::update(){
 
 	//free state
 	if(state==sFree){
-		if(fabs(rotate) == 1){
+		if(fabs(rotate) == 1.f){
 			rotateHV(speed*5*rotate, 0);
 		}
-		if(move.y>0){
+		if (move.y > 0.f) {
 			moveUp(speed * move.y);
-			if(clampBounds && pos.y<maxHeight){
+			if (clampBounds && pos.y < maxHeight) {
 				rotateHV(0.f, -speed * 1.7f * move.y);
 			}
 		}
-		if(move.y<0){
+		if (move.y < 0.f) {
 			moveUp(speed * move.y);
-			if(clampBounds && pos.y>minHeight){
+			if (clampBounds && pos.y > minHeight) {
 				rotateHV(0.f, -speed * 1.7f * move.y);
 			}
 		}
@@ -134,14 +155,15 @@ void GameCamera::update(){
 			hAng+= (destAng.y - hAng) * vTransitionMult;
 		}
 	}
+	const float move_scale = 32.f;
 	if(abs(destPos.x - pos.x) > 0.01f) {
-		pos.x += (destPos.x - pos.x) / 32.0f;
+		pos.x += (destPos.x - pos.x) / move_scale;
 	}
 	if(abs(destPos.y - pos.y) > 0.01f) {
-		pos.y += (destPos.y - pos.y) / 32.0f;
+		pos.y += (destPos.y - pos.y) / move_scale;
 	}
 	if(abs(destPos.z - pos.z) > 0.01f) {
-		pos.z += (destPos.z - pos.z) / 32.0f;
+		pos.z += (destPos.z - pos.z) / move_scale;
 	}
 
 	clampAng();
@@ -184,11 +206,11 @@ void GameCamera::transitionVH(float v, float h) {
 
 void GameCamera::zoom(float dist) {
 	float flatDist = dist * cosf(degToRad(vAng));
-	Vec3f offset(flatDist * sinf(degToRad(hAng)), dist * sinf(degToRad(vAng)), flatDist  * -cosf(degToRad(hAng)));
+	Vec3f offset(flatDist * sinf(degToRad(hAng)), dist * sinf(degToRad(vAng)), flatDist * -cosf(degToRad(hAng)));
 	float mult = 1.f;
-	if(destPos.y + offset.y < minHeight) {
+	if (destPos.y + offset.y < minHeight) {
 		mult = abs((destPos.y - minHeight) / offset.y);
-	} else if(destPos.y + offset.y > maxHeight) {
+	} else if (destPos.y + offset.y > maxHeight) {
 		mult = abs((maxHeight - destPos.y) / offset.y);
 	}
 	destPos += offset * mult;

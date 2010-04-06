@@ -223,7 +223,7 @@ public:
 	void renderSelectionQuad();
 	void renderText(const string &text, const Font2D *font, float alpha, int x, int y, bool centered= false);
 	void renderText(const string &text, const Font2D *font, const Vec3f &color, int x, int y, bool centered= false);
-	void renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered= false);	
+	void renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(0.f));
 
     //components
 	void renderLabel(const GraphicLabel *label);

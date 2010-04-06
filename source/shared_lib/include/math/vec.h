@@ -273,6 +273,20 @@ public:
 		return *this;
 	}
 
+	Vec3<T> operator *=(const T &v) {
+		x *= v;
+		y *= v;
+		z *= v;
+		return *this;
+	}
+
+	Vec3<T> operator /=(const T &v) {
+		x /= v;
+		y /= v;
+		z /= v;
+		return *this;
+	}
+
 	Vec3<T> lerp(T t, const Vec3<T> &v) const {
 		return *this + (v - *this) * t;
 	}

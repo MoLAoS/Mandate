@@ -31,7 +31,7 @@ using Shared::Util::Checksum;
 class ResourceType: public DisplayableType {
 private:
 	ResourceClass resourceClass;
-	int tilesetObject;	// used only if class == ResourceClass::TILESET
+	int tilesetObject;	// used only if class == ResourceClass::TILESET, object number in the map
 	int resourceNumber;	// used only if class == ResourceClass::TECHTREE, resource number in the map
 	int interval;		// used only if class == ResourceClass::CONSUMABLE
 	int defResPerPatch;	// used only if class == ResourceClass::TILESET || class == ResourceClass::TECHTREE

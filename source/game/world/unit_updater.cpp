@@ -349,66 +349,72 @@ void UnitUpdater::updateMove(Unit *unit) {
 
 // ==================== updateGenericAttack ====================
 
-/** @returns true when completed */
+/** Update helper for attack based commands that included a move skill (sub classes of AttackCommandType).
+  * @returns true when completed */
 bool UnitUpdater::updateAttackGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) {
 	const AttackSkillType *ast = NULL;
 	const AttackSkillTypes *asts = act->getAttackSkillTypes();
 
-	if (target && !asts->getZone(target->getCurrZone()))
+	if (target && !asts->getZone(target->getCurrZone())) { // if have target but can't attack it
 		unit->finishCommand();
-
-	if(attackableOnRange(unit, &target, act->getAttackSkillTypes(), &ast)) {
-		// found a target in range
+	}
+	if(attackableOnRange(unit, &target, act->getAttackSkillTypes(), &ast)) { // found a target in range
 		assert(ast);
-		if (unit->getEp() >= ast->getEpCost()) {
+		if (unit->getEp() >= ast->getEpCost()) { // enough ep for skill?
 			unit->setCurrSkill(ast);
 			unit->setTarget(target);
 		} else {
-			unit->setCurrSkill(SkillClass::STOP);
+			unit->setCurrSkill(SkillClass::STOP); ///@todo check other attack skills for a cheaper one??
 		}
-	} else {
-		//compute target pos
-		Vec2i pos;
-		if ( attackableOnSight(unit, &target, asts, NULL) ) {
-			// found a target, but not in range
-			pos = target->getNearestOccupiedCell(unit->getPos());
-			if (pos != unit->getTargetPos()) {
-				unit->setTargetPos(pos);
+		return false;
+	}
+	
+	// couldn't attack anyone, look for someone to smite nearby, compute target pos
+	Vec2i pos;
+	if (attackableOnSight(unit, &target, asts, NULL)) { // got a target
+		pos = target->getNearestOccupiedCell(unit->getPos());
+		if (pos != unit->getTargetPos()) {
+			unit->setTargetPos(pos);
+			unit->getPath()->clear();
+		}
+	} else { // if no more targets and on auto command, then turn around
+		if (command->isAuto() && command->hasPos2()) {
+			if (Config::getInstance().getGsAutoReturnEnabled()) {
+				command->popPos();
+				pos = command->getPos();
 				unit->getPath()->clear();
-			}
-		} else {
-			// if no more targets and on auto command, then turn around
-			if (command->isAuto() && command->hasPos2()) {
-				if (Config::getInstance().getGsAutoReturnEnabled()) {
-					command->popPos();
-					pos = command->getPos();
-					unit->getPath()->clear();
-				} else {
-					unit->finishCommand();
-				}
 			} else {
-				pos = targetPos;
+				unit->finishCommand();
 			}
+		} else { // no targets & not auto-command, use command target pos
+			pos = targetPos;
 		}
-
-		//if unit arrives destPos order has ended
-		switch(routePlanner->findPath(unit, pos)) {
+	}
+	switch (routePlanner->findPath(unit, pos)) { // head to target pos
+		
 		case TravelState::MOVING:
 			unit->setCurrSkill(act->getMoveSkillType());
 			unit->face(unit->getNextPos());
-			break;
+			return false;
+
 		case TravelState::BLOCKED:
 			unit->setCurrSkill(SkillClass::STOP);
 			if (unit->getPath()->isBlocked()) {
 				return true;
 			}
-			break;
-		default:
-			return true;
-		}
-	}
+			return false;
 
-	return false;
+		case TravelState::IMPOSSIBLE:
+			unit->setCurrSkill(SkillClass::STOP);
+			unit->cancelCurrCommand();
+ 			return true;
+
+		case TravelState::ARRIVED:
+			return true;
+
+		default:
+			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
+	}
 }
 
 // ==================== updateAttack ====================
@@ -1038,15 +1044,15 @@ void UnitUpdater::updateGuard(Unit *unit) {
 		command->setPos(target->getPos());
 		target = NULL;
 	}
-
+	// calculate target pos
 	if (target) {
 		pos = Map::getNearestPos(unit->getPos(), target, 1, gct->getMaxDistance());
 	} else {
 		pos = Map::getNearestPos(unit->getPos(), command->getPos(), 1, gct->getMaxDistance());
 	}
-
-	if (updateAttackGeneric(unit, command, gct, NULL, pos)) {
-		unit->setCurrSkill(SkillClass::STOP);
+	// if within 'guard range' and no bad guys to attack
+	if (updateAttackGeneric(unit, command, gct, NULL, pos)) { 
+		unit->setCurrSkill(SkillClass::STOP);  // just hang-ten
 	}
 }
 
@@ -1059,19 +1065,18 @@ void UnitUpdater::updatePatrol(Unit *unit) {
 	Unit *target2 = command->getUnit2();
 	Vec2i pos;
 
-	if (target) {
-		pos = target->getCenteredPos();
-		if (target->isDead()) {
+	if (target) {	// patrolling toward a target unit
+ 		if (target->isDead()) { // check target
+			pos = target->getCenteredPos();
 			command->setUnit(NULL);
 			command->setPos(pos);
+		} else { // if target not dead calc nearest pos with patrol range 
+			pos = Map::getNearestPos(unit->getPos(), pos, 1, pct->getMaxDistance());
 		}
-	} else {
+	} else { // no target unit, use command pos
 		pos = command->getPos();
 	}
-	if (target) {
-		pos = Map::getNearestPos(unit->getPos(), pos, 1, pct->getMaxDistance());
-	}
-	if (target2 && target2->isDead()) {
+	if (target2 && target2->isDead()) { // patrolling away from a unit, check target
 		command->setUnit2(NULL);
 		command->setPos2(target2->getCenteredPos());
 	}
@@ -1387,8 +1392,8 @@ Vec2i UnitUpdater::getNear(const Vec2i &orig, const Vec2i destNW, int destSize, 
 }
 */
 
-//looks for a resource of type rt, if rt==NULL looks for any
-//resource the unit can harvest
+// looks for a resource of type rt, if rt==NULL looks for any
+// resource the unit can harvest
 bool UnitUpdater::searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
 
@@ -1419,6 +1424,7 @@ inline bool UnitUpdater::attackableOnSight(const Unit *unit, Unit **rangedPtr,
 inline bool UnitUpdater::attackableOnRange(const Unit *unit, Unit **rangedPtr, 
 					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	// can't attack beyond range of vision
+	///@todo #undef min\n#undef max in pch, or #define NOMINMAX before #include <windows.h>
 	int range = min(unit->getMaxRange(asts), unit->getSight());
 	return unitOnRange(unit, range, rangedPtr, asts, past);
 }
@@ -1469,8 +1475,13 @@ public:
 	}
 };
 
-//if the unit has any enemy on range
-/** rangedPtr should point to a pointer that is either NULL or a valid Unit */
+/** Check for enemies unit can smite.
+  * @param rangedPtr [in/out] should point to a pointer that is either NULL or a valid Unit (a target unit)
+  * @param asts [in] The attack skill types available to unit
+  * @param past [out] Preferred attack skill
+  * @return true if the unit has any enemy in range, with results written to rangedPtr and past.
+  *  false if no enemies in range, rangedPtr & past will be unchanged.
+  */
 bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr, 
 					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	///@todo convert to fixed point
@@ -1492,16 +1503,12 @@ bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr,
 			world->getPosIteratorFactory().getInsideOutIterator(1, range + halfSize.intp()));
 
 		while (pci.getNext(pos, distance)) {
-
-			//all zones
-			foreach_enum (Zone, z) {
-				//check zone
-				if (!asts || asts->getZone(z)) {
+			foreach_enum (Zone, z) { // all zones
+				if (!asts || asts->getZone(z)) { // have attack skill that can attack in z?
+					// does cell contain a bad guy?
 					Unit *possibleEnemy= map->getCell(pos)->getUnit(z);
-
-					//check enemy
 					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)) {
-						// If enemy and has an attack command we can short circut this loop now
+						// If bad guy has an attack command we can short circut this loop now
 						if (possibleEnemy->getType()->hasCommandClass(CommandClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;
 							goto unitOnRange_exitLoop;
@@ -1523,31 +1530,23 @@ bool UnitUpdater::unitOnRange(const Unit *unit, int range, Unit **rangedPtr,
 unitOnRange_exitLoop:
 	assert(*rangedPtr);
 	
-	if(needDistance) {
+	if (needDistance) {
 		const fixed &targetHalfSize = (*rangedPtr)->getType()->getHalfSize();
 		distance = fixedCentre.dist((*rangedPtr)->getFixedCenteredPos()) - targetHalfSize;
 	}
 
 	// check to see if we like this target.
-	if(asts && past) {
-		return (bool)(*past = asts->getPreferredAttack(unit, *rangedPtr, (distance - halfSize).intp()));
+	if (asts && past) {
+		return bool(*past = asts->getPreferredAttack(unit, *rangedPtr, (distance - halfSize).intp()));
 	}
 	return true;
 }
 
 //find a unit we can repair
 /** rangedPtr should point to a pointer that is either NULL or a valid Unit */
-bool UnitUpdater::repairableOnRange(
-		const Unit *unit,
-		Vec2i centre,
-		int centreSize,
-		Unit **rangedPtr,
-		const RepairCommandType *rct,
-		const RepairSkillType *rst,
-		int range,
-		bool allowSelf,
-		bool militaryOnly,
-		bool damagedOnly) {
+bool UnitUpdater::repairableOnRange(const Unit *unit, Vec2i centre, int centreSize,
+		Unit **rangedPtr, const RepairCommandType *rct, const RepairSkillType *rst,
+		int range, bool allowSelf, bool militaryOnly, bool damagedOnly) {
 	Targets repairables;
 
 	fixedVec2 fixedCentre(centre.x + centreSize / fixed(2), centre.y + centreSize / fixed(2));
