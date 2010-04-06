@@ -9,10 +9,14 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#ifndef USE_PCH
+#	define USE_PCH 0
+#endif
+
 #ifndef _SHARED_PCH_H_
 #	define _SHARED_PCH_H_
 //#include "projectConfig.h"
-#ifdef USE_PCH // this will cause failed compilation if not defined, even if not using pre-compiled hdrs
+#if USE_PCH
 
 #if defined(WIN32) || defined(WIN64)
 #	if defined (USE_POSIX_SOCKETS)

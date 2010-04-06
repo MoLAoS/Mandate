@@ -481,7 +481,7 @@ void Window::createWindow(LPVOID creationData) {
 				 x, y, w, h,
 				 NULL, NULL, GetModuleHandle(NULL), creationData);
 
-	createdWindows.insert(pair<WindowHandle, Window*>(handle, this));
+	createdWindows.insert(std::pair<WindowHandle, Window*>(handle, this));
 	eventRouter(handle, WM_CREATE, 0, 0);
 
 	assert(handle != NULL);

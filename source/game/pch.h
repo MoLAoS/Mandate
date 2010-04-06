@@ -1,5 +1,5 @@
 // ==============================================================
-//	This file is part of Glest Shared Library (www.glest.org)
+//	This file is part of Glest Advanced Engine (www.glest.org)
 //
 //	Copyright (C) 2008 Daniel Santos <daniel.santos@pobox.com>
 //
@@ -9,10 +9,14 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#ifndef USE_PCH
+#	define USE_PCH 0
+#endif
+
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
 //#include "projectConfig.h"
-#ifdef USE_PCH
+#if USE_PCH
 
 
 #if defined(WIN32) || defined(WIN64)

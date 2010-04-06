@@ -15,10 +15,12 @@
 #include <utility>
 #include <string>
 #include <deque>
+#include <vector>
 
 using std::string;
 using std::deque;
 using std::pair;
+using std::vector;
 
 #include "vec.h"
 

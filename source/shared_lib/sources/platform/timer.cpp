@@ -55,7 +55,7 @@ bool Chrono::init() {
 
 bool Chrono::init() {
 	if(!QueryPerformanceFrequency((LARGE_INTEGER*) &freq)) {
-		throw runtime_error("Performance counters not supported");
+		throw std::runtime_error("Performance counters not supported");
 	}
 	return true;
 }
