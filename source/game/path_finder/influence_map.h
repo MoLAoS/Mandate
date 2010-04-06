@@ -61,7 +61,7 @@ public:
 		}
 		return invalidPos;
 	}
-	Point getPos() const { return Vec2i(x, y); }
+	Point getPos() const { return Point(x, y); }
 	Rectangle getBounds() const { return Rectangle(x, y, w, h); }
 
 protected:
