@@ -9,6 +9,9 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "projectConfig.h"
+#ifdef USE_PHYSFS
+
 #include "pch.h"
 
 #include "PhysFileOps.hpp"
@@ -100,3 +103,5 @@ int PhysFileOps::close(){
 int PhysFileOps::eof(){
 	return PHYSFS_eof(this->f);
 }
+
+#endif

@@ -6,6 +6,7 @@
 #cmakedefine USE_SDL
 #cmakedefine USE_POSIX_SOCKETS
 #cmakedefine X11_AVAILABLE
+#cmakedefine USE_PHYSFS
 
 #cmakedefine HAVE_GLOB_H
 #cmakedefine HAVE_SYS_IOCTL_H

@@ -6,6 +6,7 @@
 #undef USE_SDL
 #undef USE_POSIX_SOCKETS
 #undef X11_AVAILABLE
+#undef USE_PHYSFS
 
 #undef HAVE_GLOB_H
 #undef HAVE_SYS_IOCTL_H

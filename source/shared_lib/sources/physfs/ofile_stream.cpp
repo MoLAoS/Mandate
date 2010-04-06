@@ -17,6 +17,9 @@
 //#ifndef HEADER_SUPERTUX_PHYSFS_OFILE_STREAM_CPP
 //#define HEADER_SUPERTUX_PHYSFS_OFILE_STREAM_CPP
 
+#include "projectConfig.h"
+#ifdef USE_PHYSFS
+
 #include "pch.h"
 
 #include "ofile_stream.hpp"
@@ -33,6 +36,7 @@ OFileStream::~OFileStream()
   delete rdbuf();
 }
 
-//#endif
+#endif
 
+//#endif
 /* EOF */

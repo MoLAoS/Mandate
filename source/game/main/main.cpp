@@ -123,8 +123,10 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir+"/addons/", true);
 	
 	FSFactory *fsfac = FSFactory::getInstance();
-	//fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-	fsfac->usePhysFS(false);
+#ifdef USE_PHYSFS
+	fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+	fsfac->usePhysFS(true);
+#endif
 
 	Config &config = Config::getInstance();
 
@@ -155,7 +157,9 @@ int glestMain(int argc, char** argv) {
 	}
 
 	CoreData::getInstance().closeSounds(); // close audio stuff with ogg files
-	//fsfac->deinitPhysFS();
+#ifdef USE_PHYSFS
+	fsfac->deinitPhysFS();
+#endif
 	delete fsfac;
 	return 0;
 }

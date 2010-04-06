@@ -103,14 +103,18 @@ AC_SUBST(XML)
 XML_CFLAGS="$XML_CPPFLAGS"
 AC_SUBST(XML_CFLAGS)
 
-# Look for PhysicsFS 
-AC_CHECK_HEADER(physfs.h, , AC_MSG_ERROR([PhysicsFS header not found.]))
-AC_CHECK_LIB(physfs,
-		PHYSFS_init,
-		AC_SUBST([PHYSFS_LIBS],
-		[-lphysfs]),
-		AC_MSG_ERROR([PhysicsFS not found.]),
-		[-pthread])
+# Look for PhysicsFS
+AC_ARG_ENABLE(physfs, [AC_HELP_STRING([--enable-physfs],[enable PhysicsFS support])], USE_PHYSFS="yes",)
+if test "$USE_PHYSFS" = "yes"; then
+	AC_CHECK_HEADER(physfs.h, , AC_MSG_ERROR([PhysicsFS header not found.]))
+	AC_CHECK_LIB(physfs,
+			PHYSFS_init,
+			AC_SUBST([PHYSFS_LIBS],
+			[-lphysfs]),
+			AC_MSG_ERROR([PhysicsFS not found.]),
+			[-pthread])
+	AC_DEFINE([USE_PHYSFS], [], [Define if physfs should be used])
+fi
 
 AX_CHECK_GL
 if test "$no_gl" = "yes"; then

@@ -43,7 +43,7 @@ set(glestshared_incs ${glestshared_incs} PARENT_SCOPE)
 
 include_directories(${glestshared_incs})
 add_library(glestshared STATIC ${glestshared_srcs})
-target_link_libraries(glestshared ${LUA_LIBRARIES} ${PHYSFS_LIBRARY})
+target_link_libraries(glestshared ${LUA_LIBRARIES} ${PHYSFS_LIBRARY} ${ZLIB_LIBRARIES})
 if(WIN32)
 	# FIXME: VC project needs static vorbis/ogg libs
 	target_link_libraries(glestshared ${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})

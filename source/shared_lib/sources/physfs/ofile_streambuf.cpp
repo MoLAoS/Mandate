@@ -14,6 +14,9 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "projectConfig.h"
+#ifdef USE_PHYSFS
+
 #include "pch.h"
 
 #include "ofile_streambuf.hpp"
@@ -70,4 +73,6 @@ OFileStreambuf::sync()
   return overflow(traits_type::eof());
 }
 
+
+#endif
 /* EOF */

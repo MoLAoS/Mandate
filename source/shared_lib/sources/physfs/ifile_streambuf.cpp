@@ -14,6 +14,9 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "projectConfig.h"
+#ifdef USE_PHYSFS
+
 #include "pch.h"
 
 #include "ifile_streambuf.hpp"
@@ -99,4 +102,6 @@ IFileStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
   return seekpos(static_cast<pos_type> (pos), mode);
 }
 
+
+#endif
 /* EOF */

@@ -18,10 +18,13 @@
 #include <iostream>
 //#include <physfs.h> //already in PhysFileOps.hpp
 
-#include "ifile_stream.hpp"
-#include "ofile_stream.hpp"
+#include "projectConfig.h"
+#ifdef USE_PHYSFS
+#	include "ifile_stream.hpp"
+#	include "ofile_stream.hpp"
 
-#include "PhysFileOps.hpp"
+#	include "PhysFileOps.hpp"
+#endif
 #include "StdFileOps.hpp"
 
 #include "util.h"
@@ -36,9 +39,11 @@ FSFactory::FSFactory(){
 }
 
 FSFactory::~FSFactory(){
+#ifdef USE_PHYSFS
 	if(PHYSFS_isInit()){
 		PHYSFS_deinit();
 	}
+#endif
 	instance = NULL;
 }
 
@@ -50,6 +55,7 @@ FSFactory *FSFactory::getInstance(){
 }
 
 void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
+#ifdef USE_PHYSFS
 	PHYSFS_init(argv0);
 	PHYSFS_permitSymbolicLinks(1);
 	
@@ -81,10 +87,13 @@ void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	for(char **i=PHYSFS_getSearchPath(); *i; i++){
 		cout << "[" << *i << "] is in the search path.\n";
 	}
+#endif
 }
 
 void FSFactory::deinitPhysFS(){
+#ifdef USE_PHYSFS
 	PHYSFS_deinit();
+#endif
 }
 
 void FSFactory::usePhysFS(bool enable){
@@ -92,37 +101,41 @@ void FSFactory::usePhysFS(bool enable){
 }
 
 istream *FSFactory::getIStream(const char *fname){
+#ifdef USE_PHYSFS
 	if(this->physFS){
 		string str(fname);
 		str = cleanPath(str);  // get rid of .. and .
 		return new IFileStream(str);
-	}else{
+	}else
+#endif
 		return new ifstream(fname, ios::in | ios::binary);
-	}
 }
 
 ostream *FSFactory::getOStream(const char *fname){
+#ifdef USE_PHYSFS
 	if(this->physFS){
 		string str(fname);
 		str = cleanPath(str);  // get rid of ../ and ./
 		return new OFileStream(str);
-	}else{
+	}else
+#endif
 		return new ofstream(fname, ios::out | ios::binary);
-	}
 }
 
 FileOps *FSFactory::getFileOps(){
+#ifdef USE_PHYSFS
 	if(this->physFS){
 		return new PhysFileOps();
-	}else{
+	}else
+#endif
 		return new StdFileOps();
-	}
 }
 
 // FIXME: quick & dirty
 vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 	vector<string> res;
 	
+#ifdef USE_PHYSFS
 	// FIXME: currently assumes there's always a dir before wildcard
 	//int pos = path.find_last_of('/');
 	//const string dir = path.substr(0, pos);
@@ -153,11 +166,16 @@ vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 		}
 	}
 	PHYSFS_freeList(list);
+#endif
 	return res;
 }
 
 bool FSFactory::fileExists(const string &path){
+#ifdef USE_PHYSFS
 	return PHYSFS_exists(path.c_str());
+#else
+	return false;
+#endif
 }
 
 

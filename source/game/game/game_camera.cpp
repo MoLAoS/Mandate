@@ -101,10 +101,10 @@ void GameCamera::setDest(const Vec2i &pos, int height, float hAngle, float vAngl
 	if (height != -1) {
 		destPos.y = clamp(float(height), minHeight, maxHeight);
 	}
-	if (vAngle != INFINITY) {
+	if (vAngle != FLOATINFINITY) {
 		destAng.x = vAngle;
 	}
-	if (hAngle != INFINITY) {
+	if (hAngle != FLOATINFINITY) {
 		destAng.y = hAngle;
 	}
 	clampAng();

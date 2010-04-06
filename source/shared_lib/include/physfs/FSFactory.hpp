@@ -12,7 +12,6 @@
 #ifndef _FSFACTORY_HPP_
 #define _FSFACTORY_HPP_
 
-//#include <istream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -32,7 +31,6 @@ class FSFactory{
 	private:
 		static FSFactory *instance;
 		
-		
 		FSFactory();
 
 	public:
@@ -41,7 +39,7 @@ class FSFactory{
 		~FSFactory();
 
 		bool physFS;
-		
+
 		void initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
 		void deinitPhysFS();
 		void usePhysFS(bool enable);

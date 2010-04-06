@@ -58,10 +58,16 @@ find_package(Lua51 5.1 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Vorbis REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(PhysFS REQUIRED)
 find_package(CppUnit)
 find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
+
+if(NOT DEFINED USE_PHYSFS)
+	set(USE_PHYSFS "OFF" CACHE BOOL "enable PhysicsFS support")
+endif()
+if(USE_PHYSFS)
+	find_package(PhysFS REQUIRED)
+endif()
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
 

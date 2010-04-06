@@ -1026,7 +1026,7 @@ int ScriptManager::setCameraAngles(LuaHandle* luaHandle){
 	if (extractArgs(args, 0, "int,int", &hAngle, &vAngle)) {
 		theCamera.setAngles(hAngle, vAngle);
 	} else if (extractArgs(args, "setCameraPosition", "int", &hAngle)) {
-		theCamera.setAngles(hAngle, INFINITY);	
+		theCamera.setAngles(hAngle, FLOATINFINITY);
 	}
 	return args.getReturnCount();
 }
