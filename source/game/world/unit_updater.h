@@ -19,6 +19,16 @@
 
 using Shared::Util::Random;
 
+#ifndef LOG_COMMAND_UPDATE
+#	define LOG_COMMAND_UPDATE 0
+#endif
+
+#if LOG_COMMAND_UPDATE
+#	define COMMAND_UPDATE_LOG(x) STREAM_LOG(x)
+#else
+#	define COMMAND_UPDATE_LOG(x)
+#endif
+
 namespace Glest{ namespace Game{
 
 class Unit;
@@ -105,7 +115,9 @@ private:
 	Command *doAutoAttack(Unit *unit);
 	Command *doAutoRepair(Unit *unit);
 	Command *doAutoFlee(Unit *unit);
-	bool searchForResource(Unit *unit, const HarvestCommandType *hct);
+	
+	Resource* searchForResource(Unit *unit, const HarvestCommandType *hct);
+
 	bool attackerOnSight(const Unit *unit, Unit **enemyPtr);
 	bool attackableOnSight(const Unit *unit, Unit **enemyPtr, const AttackSkillTypes *asts, const AttackSkillType **past);
 	bool attackableOnRange(const Unit *unit, Unit **enemyPtr, const AttackSkillTypes *asts, const AttackSkillType **past);

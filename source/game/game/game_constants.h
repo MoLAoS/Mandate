@@ -30,6 +30,7 @@
 #define theLang				(Lang::getInstance())
 
 #if _GAE_DEBUG_EDITION_
+#	define theDebugRenderer	(Renderer::getInstance().debugRenderer)
 #	define IF_DEBUG_EDITION(x) x
 #	define IF_NOT_DEBUG_EDITION(x)
 #	define WORLD_FPS (theConfig.getGsWorldUpdateFps())
@@ -39,14 +40,21 @@
 #	define WORLD_FPS (GameConstants::updateFps)
 #endif
 
-#ifndef NDEBUG
-#	define LOG(x) Logger::getInstance().add(x)
-#else
-#	define LOG(x) {}
-#endif
-
 #include "util.h"
 using Shared::Util::EnumNames;
+
+namespace Glest { namespace Game {
+
+#if !defined(NDEBUG) || (defined(LOG_STUFF) && LOG_STUFF)
+#	define LOG(x) theLogger.add(x)
+#	define STREAM_LOG(x) {stringstream ss; ss << x; theLogger.add(ss.str()); }
+	void no_op();
+#	define DEBUG_HOOK() no_op()
+#else
+#	define LOG(x)
+#	define STREAM_LOG(x)
+#	define DEBUG_HOOK()
+#endif
 
 // =====================================================
 //	Enumerations
@@ -56,9 +64,6 @@ using Shared::Util::EnumNames;
 	  *		<li><b>VALUE</b> description</li>
 	  *		<li><b>VALUE</b> description</li></ul>
 	  */
-
-namespace Glest { namespace Game {
-
 // =====================================================
 //	namespace GameConstants
 // =====================================================
@@ -96,8 +101,8 @@ namespace Search {
 						ARRIVED, MOVING, BLOCKED, IMPOSSIBLE
 				);
 
-	/** result set for aStar() 
-	  * <ul><li><b>FAILED</b> No path exists
+	/** result set for A*
+	  * <ul><li><b>FAILURE</b> No path exists</li>
 	  *		<li><b>COMPLETE</b> complete path found</li>
 	  *		<li><b>NODE_LIMIT</b> node limit reached, partial path available</li>
 	  *		<li><b>TIME_LIMIT</b> search ongoing (time limit reached)</li></ul>
@@ -106,6 +111,12 @@ namespace Search {
 					FAILURE, COMPLETE, NODE_LIMIT, TIME_LIMIT
 				);
 
+	/** result set for HAA*
+	  * <ul><li><b>FAILURE</b> No path exists</li>
+	  *		<li><b>COMPLETE</b> path found</li>
+	  *		<li><b>START_TRAP</b> path found, but transitions in start cluster are blocked</li>
+	  *		<li><b>GOAL_TRAP</b> path found, but transitions in destination cluster are blocked</li></ul>
+	  */
 	REGULAR_ENUM( HAAStarResult,
 					FAILURE, COMPLETE, START_TRAP, GOAL_TRAP
 				);
@@ -115,7 +126,7 @@ namespace Search {
 	  *		<li><b>TILEMAP</b> search on tile map</li></ul>
 	  */
 	REGULAR_ENUM( SearchSpace,
-						CELLMAP, TILEMAP, CLUSTERMAP
+						CELLMAP, TILEMAP
 				);
 
 	/** The cardinal and ordinal directions enumerated for convenience */
@@ -301,7 +312,7 @@ REGULAR_ENUM( UnitClass,
   *		<li><b>FAIL_UNDEFINED</b> failed.</li>
   *		<li><b>SOME_FAILED</b> partially failed.</li></ul>
   */
-REGULAR_ENUM( CommandResult,
+STRINGY_ENUM( CommandResult,
 					SUCCESS,
 					FAIL_RESOURCES,
 					FAIL_REQUIREMENTS,

@@ -26,6 +26,7 @@
 #include "faction_type.h"
 #include "unit_updater.h"
 #include "renderer.h"
+#include "world.h"
 
 #include "leak_dumper.h"
 #include "logger.h"
@@ -132,6 +133,9 @@ CommandType::CommandType(const char* name, CommandClass cc, Clicks clicks, bool 
 }
 
 void CommandType::update(UnitUpdater *unitUpdater, Unit *unit) const{
+	COMMAND_UPDATE_LOG( theWorld.getFrameCount() << "::Unit:" << unit->getId() <<
+		" updating " << CommandClassNames[cc] << " command."
+	);
 	switch(cc) {
 		case CommandClass::STOP:
 			unitUpdater->updateStop(unit);

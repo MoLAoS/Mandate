@@ -30,13 +30,14 @@
 #include "leak_dumper.h"
 #include "network_util.h"
 
-#define UNIT_LOG(x) {}
-//#define UNIT_LOG(x) { theLogger.add(x); }
-
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
 namespace Glest{ namespace Game{
+
+// =====================================================
+//  class Vec2iList, UnitPath & WaypointPath
+// =====================================================
 
 void Vec2iList::read(const XmlNode *node) {
 	clear();
@@ -68,6 +69,20 @@ void UnitPath::write(XmlNode *node) const {
 	node->addAttribute("blockCount", blockCount);
 }
 
+void WaypointPath::condense() {
+	if (size() < 2) {
+		return;
+	}
+	iterator prev, curr;
+	prev = curr = begin();
+	while (++curr != end()) {
+		if (prev->dist(*curr) < 3.f) {
+			prev = erase(prev);
+		} else {
+			++prev;
+		}
+	}
+}
 
 // =====================================================
 // 	class Unit
@@ -133,7 +148,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	loadType = NULL;
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
 //	lastSkill = currSkill;
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " constructed at pos(" + intToStr(pos.x) + "," + intToStr(pos.y) + ")" );
+	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
 
 	toBeUndertaken = false;
 //	alive= true;
@@ -248,8 +263,8 @@ Unit::~Unit() {
 	// remain in a selection group.
 	Gui::getCurrentGui()->makeSureImNotSelected(this);
 //	World::getCurrWorld()->getMap()->makeSureImRemoved(this);
+	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id << " deleted." );
 }
-
 
 void Unit::save(XmlNode *node) const {
 	XmlNode *n;
@@ -497,7 +512,7 @@ float Unit::getAnimProgress() const {
 /** sets the current skill */
 void Unit::setCurrSkill(const SkillType *newSkill) {
 	assert(newSkill);
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " skill set => " + SkillClassNames[currSkill->getClass()] );
+	//COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << id << " skill set => " << SkillClassNames[currSkill->getClass()] );
 	if (newSkill->getClass() == SkillClass::STOP && currSkill->getClass() == SkillClass::STOP) {
 		return;
 	}
@@ -585,7 +600,10 @@ unsigned int Unit::getCommandSize() const{
   */
 CommandResult Unit::giveCommand(Command *command) {
 	const CommandType *ct = command->getType();
-	UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " command given: " + CommandClassNames[command->getType()->getClass()] );
+	COMMAND_LOG(
+		theWorld.getFrameCount() << "::Unit:" << id << " command given: " 
+		<< CommandClassNames[command->getType()->getClass()]
+	);
 	if(ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		if(command->isQueue() && !commands.empty()) {
 			commands.push_back(command);
@@ -631,6 +649,8 @@ CommandResult Unit::giveCommand(Command *command) {
 
 	//check command
 	CommandResult result = checkCommand(*command);
+	//COMMAND_LOG( "NO_RESERVE_RESOURCES flag is " << (command->isReserveResources() ? "not " : "" ) << "set,"
+	//	<< " command result = " << CommandResultNames[result] );
 	if(result == CommandResult::SUCCESS){
 		applyCommand(*command);
 		commands.push_back(command);
@@ -651,8 +671,8 @@ CommandResult Unit::giveCommand(Command *command) {
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
 	//pop front
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " " 
-	//	+ CommandClassNames[commands.front()->getType()->getClass()] + " command popped." );
+	//COMMAND_LOG( theWorld.getFrameCount() << "::Unit:" << id << " " 
+	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command popped." );
 	delete commands.front();
 	commands.erase(commands.begin());
 	unitPath.clear();
@@ -667,8 +687,8 @@ Command *Unit::popCommand() {
 		command = commands.empty() ? NULL : commands.front();
 	}
 	//if ( command ) {
-	//	UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " " 
-	//		+ CommandClassNames[commands.front()->getType()->getClass()] + " command now front of queue." );
+	//	COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << id << " " 
+	//		<< CommandClassNames[commands.front()->getType()->getClass()] << " command now front of queue." );
 	//}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		notifyObservers(UnitObserver::eStateChange);
@@ -683,8 +703,8 @@ CommandResult Unit::finishCommand() {
 	if(commands.empty()) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " " 
-	//	+ CommandClassNames[commands.front()->getType()->getClass()] + " command finished." );
+	//COMMAND_LOG( theWorld.getFrameCount() << "::Unit:" << intToStr(id) << " " 
+	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command finished." );
 
 	Command *command = popCommand();
 
@@ -705,8 +725,8 @@ CommandResult Unit::cancelCommand() {
 	if(commands.empty()){
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " queued " 
-	//	+ CommandClassNames[commands.front()->getType()->getClass()] + " command cancelled." );
+	//COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << id << " queued " 
+	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command cancelled." );
 
 	//undo command
 	undoCommand(*commands.back());
@@ -729,8 +749,8 @@ CommandResult Unit::cancelCurrCommand() {
 	if(commands.empty()) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " current " 
-	//	+ CommandClassNames[commands.front()->getType()->getClass()] + " command cancelled." );
+	//COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << intToStr(id) << " current " 
+	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command cancelled." );
 
 	//undo command
 	undoCommand(*commands.front());
@@ -748,7 +768,7 @@ CommandResult Unit::cancelCurrCommand() {
   * @param startingUnit true if this is a starting unit.
   */
 void Unit::create(bool startingUnit) {
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " created." );
+	UNIT_LOG( theWorld.getFrameCount() << "::Unit:" << id << " created." );
 	faction->add(this);
 	lastPos.x = lastPos.y = -1;
 	map->putUnitCells(this, pos);
@@ -761,7 +781,7 @@ void Unit::create(bool startingUnit) {
 /** Give a unit life. Called when a unit becomes 'operative'
   */
 void Unit::born(){
-	//UNIT_LOG( intToStr(theWorld.getFrameCount()) + "::Unit:" + intToStr(id) + " born." );
+	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id + " born." );
 	faction->addStore(type);
 	faction->applyStaticProduction(type);
 	setCurrSkill(SkillClass::STOP);
@@ -795,6 +815,7 @@ void checkTargets(const Unit *dead) {
  */
 void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 	assert(hp <= 0);
+	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id + " killed." );
 	hp = 0;
 
 	World::getCurrWorld()->hackyCleanUp(this);

@@ -27,67 +27,66 @@ namespace Glest{ namespace Game{
 
 const Vec2i Command::invalidPos = Vec2i(-1);
 
-Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit) :
-		archetype(archetype),
-		type(NULL),
-		flags(flags),
-		pos(pos),
-		pos2(-1),
-		unitRef(),
-		unitRef2(),
-		unitType(NULL),
-		commandedUnit(commandedUnit) {
+Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
+		: archetype(archetype)
+		, type(NULL)
+		, flags(flags)
+		, pos(pos)
+		, pos2(-1)
+		, unitRef()
+		, unitRef2()
+		, unitType(NULL)
+		, commandedUnit(commandedUnit) {
 }
 
-Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit) :
-		archetype(CommandArchetype::GIVE_COMMAND),
-		type(type),
-		flags(flags),
-		pos(pos),
-		pos2(-1),
-		unitRef(),
-		unitRef2(),
-		unitType(NULL),
-		commandedUnit(commandedUnit) {
+Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
+		: archetype(CommandArchetype::GIVE_COMMAND)
+		, type(type)
+		, flags(flags)
+		, pos(pos)
+		, pos2(-1)
+		, unitRef()
+		, unitRef2()
+		, unitType(NULL)
+		, commandedUnit(commandedUnit) {
 }
 
-Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit) :
-		archetype(CommandArchetype::GIVE_COMMAND),
-		type(type),
-		flags(flags),
-		pos(-1),
-		pos2(-1),
-		unitRef(unit),
-		unitRef2(),
-		unitType(NULL),
-		commandedUnit(commandedUnit) {
-	if(unit) {
+Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit)
+		: archetype(CommandArchetype::GIVE_COMMAND)
+		, type(type)
+		, flags(flags)
+		, pos(-1)
+		, pos2(-1)
+		, unitRef(unit)
+		, unitRef2()
+		, unitType(NULL)
+		, commandedUnit(commandedUnit) {
+	if (unit) {
 		pos = unit->getCenteredPos();
 	}
-
-	if(unit && !isAuto() && unit->getFaction()->isThisFaction()) {
+	if (unit && !isAuto() && unit->getFaction()->isThisFaction()) {
 		unit->resetHighlight();
 		//pos = unit->getCellPos();
 	}
 }
 
 
-Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, Unit *commandedUnit) :
-		archetype(CommandArchetype::GIVE_COMMAND),
-		type(type),
-		flags(flags),
-		pos(pos),
-		pos2(-1),
-		unitRef(),
-		unitRef2(),
-		unitType(unitType),
-		commandedUnit(commandedUnit) {
+Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, Unit *commandedUnit)
+		: archetype(CommandArchetype::GIVE_COMMAND)
+		, type(type)
+		, flags(flags)
+		, pos(pos)
+		, pos2(-1)
+		, unitRef()
+		, unitRef2()
+		, unitType(unitType)
+		, commandedUnit(commandedUnit) {
 }
 
-Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft) :
-		unitRef(node->getChild("unitRef")),
-		unitRef2(node->getChild("unitRef2")) {
-	archetype = enum_cast<CommandArchetype>(node->getChildIntValue("archetype"));
+Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
+		: unitRef(node->getChild("unitRef"))
+		, unitRef2(node->getChild("unitRef2")) {
+	archetype = CommandArchetype(node->getChildIntValue("archetype"));
 	type = ut->getCommandType(node->getChildStringValue("type"));
 	flags.flags = node->getChildIntValue("flags");
 	pos = node->getChildVec2iValue("pos");

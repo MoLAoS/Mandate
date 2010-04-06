@@ -10,12 +10,13 @@
 // ==============================================================
 
 #include "pch.h"
+
+#if _GAE_DEBUG_EDITION_
+
 #include "renderer.h"
 #include "route_planner.h"   
 #include "influence_map.h"
 #include "cartographer.h"
-
-#if _GAE_DEBUG_EDITION_
 
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
@@ -24,82 +25,38 @@ using Glest::Game::Search::InfluenceMap;
 using Glest::Game::Search::Cartographer;
 
 namespace Glest { namespace Game {
+//namespace Game { namespace Debug {
 
-
-// =====================================================
-//  class RegionHilightCallback
-// =====================================================
-set<Vec2i>	RegionHilightCallback::blueCells,
-			RegionHilightCallback::greenCells; 
-
-// =====================================================
-//  class ResourceMapOverlay
-// =====================================================
-const ResourceType *ResourceMapOverlay::rt;
-
-vector<const Unit*> StoreMapOverlay::stores;
-
+// texture loading helper
+void _load_debug_tex(Texture2D* &texPtr, const char *fileName) {
+	texPtr = theRenderer.newTexture2D(rsGame);
+	texPtr->setMipmap(false);
+	texPtr->getPixmap()->load(fileName);
+}
 
 // =====================================================
 //  class PathFinderTextureCallback
 // =====================================================
-Field		PathFinderTextureCallBack::debugField;
-Texture2D*	PathFinderTextureCallBack::PFDebugTextures[26];
-set<Vec2i>	PathFinderTextureCallBack::pathSet, 
-			PathFinderTextureCallBack::openSet, 
-			PathFinderTextureCallBack::closedSet;
-Vec2i		PathFinderTextureCallBack::pathStart, 
-			PathFinderTextureCallBack::pathDest;
-map<Vec2i,uint32> 
-			PathFinderTextureCallBack::localAnnotations;
 
-Texture2D*	GridTextureCallback::tex;
+void PathFinderTextureCallback::reset() {
+	pathSet.clear();
+	openSet.clear();
+	closedSet.clear();
+	pathStart = Vec2i(-1);
+	pathDest = Vec2i(-1);
+	localAnnotations.clear();
+	debugField = Field::LAND;
 
-// =====================================================
-//  class VisibleQuadColourCallback
-// =====================================================
-Vec4f VisibleQuadColourCallback::colour( 0.f, 1.f, 0.f, 0.5f );
-set<Vec2i> VisibleQuadColourCallback::quadSet;
-
-// =====================================================
-//  class PathfinderClusterOverlay
-// =====================================================
-set<Vec2i> PathfinderClusterOverlay::entranceCells;
-set<Vec2i> PathfinderClusterOverlay::pathCells;
-
-// =====================================================
-// 	class DebugRender
-// =====================================================
-list<Vec3f> DebugRenderer::waypoints;
-
-DebugRenderer::DebugRenderer() {
-	gridTextures = AAStarTextures = HAAStarOverlay = showVisibleQuad = 
-		captureVisibleQuad = regionHilights = 
-		teamSight = resourceMapOverlay = storeMapOverlay =
-		showFrustum = captureFrustum = false;
-}
-
-bool findResourceMapRes(const string &res) {
-	ResourceMapOverlay::rt = NULL;
-	const int &n = theWorld.getTechTree()->getResourceTypeCount();
-	for (int i=0; i < n; ++i) {
-		const ResourceType *rt = theWorld.getTechTree()->getResourceType(i);
-		if (rt->getName() == res) {
-			ResourceMapOverlay::rt = rt;
-			return true;
+	for (size_t i=0; i < 26; ++i) {
+		if (PFDebugTextures[i]) {
+			PFDebugTextures[i]->end();
 		}
 	}
-	return false;
+	memset(PFDebugTextures, 0, sizeof(PFDebugTextures));
 }
 
-void _load_debug_tex(Texture2D* &t, const char *f) {
-	t = Renderer::getInstance().newTexture2D(rsGame);
-	t->setMipmap(false);
-	t->getPixmap()->load(f);
-}
-
-void DebugRenderer::init() {
-#	define _load_tex(i,f) _load_debug_tex(PathFinderTextureCallBack::PFDebugTextures[i],f)
+void PathFinderTextureCallback::loadTextures() {
+#	define _load_tex(i,f) _load_debug_tex(PFDebugTextures[i],f)
 	char buff[128];
 	for (int i=0; i < 8; ++i) {
 		sprintf(buff, "data/core/misc_textures/g%02d.bmp", i);
@@ -120,15 +77,70 @@ void DebugRenderer::init() {
 		_load_tex(i, buff);
 	}
 #	undef _load_tex
+}
 
-	_load_debug_tex(GridTextureCallback::tex, "data/core/misc_textures/grid.bmp");
+// =====================================================
+//  class GridTextureCallback
+// =====================================================
 
-	resourceMapOverlay = storeMapOverlay = gridTextures = true;
-	PathFinderTextureCallBack::debugField = Field::LAND;
+void GridTextureCallback::loadTextures() {
+	_load_debug_tex(tex, "data/core/misc_textures/grid.bmp");
+}
 
-	ResourceMapOverlay::rt = NULL;
-	findResourceMapRes(string("gold"));
+// =====================================================
+// 	class DebugRender
+// =====================================================
 
+DebugRenderer::DebugRenderer() {
+	// defaults, listed for ease of maintenance. [Note: these can be set from Lua now, use debugSet()]
+	AAStarTextures = 
+	HAAStarOverlay = 
+	showVisibleQuad = 
+	captureVisibleQuad = 
+	regionHilights = 
+	teamSight = 
+	resourceMapOverlay = 
+	storeMapOverlay =
+	showFrustum = 
+	captureFrustum = 
+					false;
+
+	gridTextures = 
+	buildSiteMaps =
+					true;
+}
+
+const ResourceType* findResourceMapRes(const string &res) {
+	const int &n = theWorld.getTechTree()->getResourceTypeCount();
+	for (int i=0; i < n; ++i) {
+		const ResourceType *rt = theWorld.getTechTree()->getResourceType(i);
+		if (rt->getName() == res) {
+			return rt;
+		}
+	}
+	return 0;
+}
+
+void DebugRenderer::init() {
+	
+	pfCallback.reset();
+	pfCallback.loadTextures();
+
+	gtCallback.reset();
+	gtCallback.loadTextures();
+
+	rhCallback.reset();
+	vqCallback.reset();
+	cmOverlay.reset();
+	rmOverlay.reset();
+	smOverlay.reset();
+	bsOverlay.reset();
+
+	if (resourceMapOverlay) {
+		rmOverlay.rt = findResourceMapRes(string("gold"));
+	} else {
+		rmOverlay.reset();
+	}
 }
 
 void DebugRenderer::sceneEstablished(SceneCuller &culler) {
@@ -140,20 +152,20 @@ void DebugRenderer::sceneEstablished(SceneCuller &culler) {
 
 		for (int i=0; i < culler.boundingPoints.size(); ++i) {
 			Vec2i pos(int(culler.boundingPoints[i].x), int(culler.boundingPoints[i].y));
-			RegionHilightCallback::blueCells.insert(pos);
+			addCellHighlight(pos, HighlightColour::BLUE);
 		}
 
 		vector<Vec2f>::iterator it = culler.visiblePoly.begin();
 		for ( ; it != culler.visiblePoly.end(); ++it) {
 			Vec2i pos(int(it->x), int(it->y));
-			RegionHilightCallback::greenCells.insert(pos);
+			addCellHighlight(pos, HighlightColour::GREEN);
 		}
 		for ( int i=0; i < culler.cellExtrema.spans.size(); ++i) {
 			int y = culler.cellExtrema.min_y + i;
 			int x1 = culler.cellExtrema.spans[i].first;
 			int x2 = culler.cellExtrema.spans[i].second;
-			RegionHilightCallback::greenCells.insert(Vec2i(x1,y));
-			RegionHilightCallback::greenCells.insert(Vec2i(x2,y));
+			addCellHighlight(Vec2i(x1,y), HighlightColour::GREEN);
+			addCellHighlight(Vec2i(x2,y), HighlightColour::GREEN);
 		}
 		showFrustum = true;
 	}
@@ -213,7 +225,7 @@ void DebugRenderer::commandLine(string &line) {
 	} else if ( key == "DebugField" ) {
 		Field f = FieldNames.match(val.c_str());
 		if ( f != Field::INVALID ) {
-			PathFinderTextureCallBack::debugField = f;
+			pfCallback.debugField = f;
 		} else {
 			theConsole.addLine("Bad field: " + val);
 		}
@@ -227,6 +239,7 @@ void DebugRenderer::commandLine(string &line) {
 		if ( val == "" ) { // no val supplied, toggle
 			resourceMapOverlay = !resourceMapOverlay;
 		} else {
+			const ResourceType *rt = 0;
 			if ( val == "on" || val == "On" ) {
 				resourceMapOverlay = true;
 				storeMapOverlay = true;
@@ -235,7 +248,7 @@ void DebugRenderer::commandLine(string &line) {
 				storeMapOverlay = false;
 			} else {
 				// else find resource
-				if (!findResourceMapRes(val)) {
+				if (!( rt = findResourceMapRes(val))) {
 					theConsole.addLine("Error: value=" + val + " not valid.");
 					resourceMapOverlay = false;
 					storeMapOverlay = false;
@@ -243,13 +256,15 @@ void DebugRenderer::commandLine(string &line) {
 				resourceMapOverlay = true;
 				storeMapOverlay = true;
 			}
-			if (storeMapOverlay) {
+			if (storeMapOverlay && rt) {
 				const Faction *f = theWorld.getThisFaction();
-				StoreMapOverlay::stores.clear();
+				smOverlay.stores.clear();
 				for (int i=0; i < f->getUnitCount(); ++i) {
 					const Unit *u = f->getUnit(i);
-					if (u->getType()->getName() == "mage_tower") {
-						StoreMapOverlay::stores.push_back(u);
+					for (int i=0; i < u->getType()->getStoredResourceCount(); ++i) {
+						if (u->getType()->getStoredResource(i)->getType() == rt) {
+							smOverlay.stores.push_back(u);
+						}
 					}
 				}
 			}
@@ -409,8 +424,8 @@ void DebugRenderer::renderPathOverlay() {
 }
 
 void DebugRenderer::renderIntraClusterEdges(const Vec2i &cluster, CardinalDir dir) {
-	ClusterMap *cm = World::getInstance().getCartographer()->getClusterMap();
-	const Map *map = World::getInstance().getMap();
+	ClusterMap *cm = theWorld.getCartographer()->getClusterMap();
+	const Map *map = theWorld.getMap();
 	
 	if (cluster.x < 0 || cluster.x >= cm->getWidth()
 	|| cluster.y < 0 || cluster.y >= cm->getHeight()) {
@@ -492,17 +507,17 @@ void DebugRenderer::renderFrustum() const {
 }
 
 void DebugRenderer::renderEffects(SceneCuller &culler) {
-	if (regionHilights) {
-		renderRegionHilight(culler);
+	if (regionHilights && !rhCallback.empty()) {
+		renderCellOverlay(culler, rhCallback);
 	}
 	if (showVisibleQuad) {
-		renderCapturedQuad(culler);
+		renderCellOverlay(culler, vqCallback);
 	}
 	if (teamSight) {
-		renderTeamSightOverlay(culler);
+		renderCellOverlay(culler, tsCallback);
 	}
 	if (HAAStarOverlay) {
-		renderClusterOverlay(culler);
+		renderCellOverlay(culler, cmOverlay);
 		renderPathOverlay();
 		set<Vec2i>::iterator it;
 		for (it = clusterEdgesWest.begin(); it != clusterEdgesWest.end(); ++it) {
@@ -512,11 +527,14 @@ void DebugRenderer::renderEffects(SceneCuller &culler) {
 			renderIntraClusterEdges(*it, CardinalDir::NORTH);
 		}
 	}
-	if (resourceMapOverlay) {
-		renderResourceMapOverlay(culler);
+	if (resourceMapOverlay && rmOverlay.rt) {
+		renderCellOverlay(culler, rmOverlay);
 	}
-	if (storeMapOverlay) {
-		renderStoreMapOverlay(culler);
+	if (storeMapOverlay && !smOverlay.stores.empty()) {
+		renderCellOverlay(culler, smOverlay);
+	}
+	if (buildSiteMaps && !bsOverlay.cells.empty()) {
+		renderCellOverlay(culler, bsOverlay);
 	}
 	if (showFrustum) {
 		renderFrustum();

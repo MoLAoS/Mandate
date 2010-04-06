@@ -42,7 +42,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="2"
 				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;..;../shared_lib/include;../shared_lib/include/physfs;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1;_GAE_DEBUG_EDITION_=0"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1;_GAE_DEBUG_EDITION_=0;LOG_STUFF=0;LOG_BUILD_COMMAND=1;LOG_REPAIR_COMMAND=0;LOG_COMMAND_ISSUE=0;LOG_COMMAND_UPDATE=1;LOG_UNIT_LIFECYCLE=1;PATHFINDER_DEBUG_MESSAGES=0"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -133,7 +133,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include;../shared_lib/include/physfs;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1;_GAE_DEBUG_EDITION_=0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1;_GAE_DEBUG_EDITION_=0;LOG_STUFF=0;LOG_BUILD_COMMAND=1;LOG_REPAIR_COMMAND=0;LOG_COMMAND_ISSUE=0;LOG_COMMAND_UPDATE=1;LOG_UNIT_LIFECYCLE=1;PATHFINDER_DEBUG_MESSAGES=0"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="true"
@@ -1342,10 +1342,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\facilities\logger.cpp"
-			>
-		</File>
-		<File
 			RelativePath=".\types\earthquake_type.cpp"
 			>
 		</File>
@@ -1359,6 +1355,10 @@
 		</File>
 		<File
 			RelativePath=".\graphics\game_particle.h"
+			>
+		</File>
+		<File
+			RelativePath=".\facilities\logger.cpp"
 			>
 		</File>
 		<File

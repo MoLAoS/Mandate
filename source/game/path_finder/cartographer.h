@@ -22,11 +22,13 @@
 #include "sigslot.h"
 
 namespace Glest { namespace Game { namespace Search {
+//namespace Game { namespace Search {
 
 class ClusterMap;
 class RoutePlanner;
 
-/** A map containing a visility counter and explored flag for every map tile. */
+/** A map containing a visility counter and explored flag for every map tile. 
+  * WIP, not in use, exploration state is currently maintained in the tile map */
 class ExplorationMap {
 #	pragma pack(push, 2)
 		struct ExplorationState {	/**< The exploration state of one tile for one team */			
@@ -71,8 +73,11 @@ class Cartographer : public sigslot::has_slots<> {
 	typedef pair<Vec2i, Vec2i> PosPair;
 	typedef vector<PosPair> AreaList;
 
-	typedef map<rt_ptr, PatchMap<1>*> ResourceMaps;
-	typedef map<const Unit*, PatchMap<1>*> StoreMaps;
+	typedef map<rt_ptr, PatchMap<1>*> ResourceMaps;		// goal maps for harvester path searches to resourecs
+	typedef map<const Unit*, PatchMap<1>*> StoreMaps;	// goal maps for harvester path searches to store
+
+	typedef pair<const UnitType*, Vec2i> SiteDesc;	// describes a building site.
+	typedef map<SiteDesc, PatchMap<1>*> SiteMaps;	// goal maps for building sites.
 
 	// Resources
 	/** The locations of each and every resource on the map */
@@ -85,6 +90,7 @@ class Cartographer : public sigslot::has_slots<> {
 	ResourceMaps resourceMaps;
 
 	StoreMaps storeMaps;
+	SiteMaps siteMaps;
 
 	// Exploration
 	/** Exploration maps for each team */
@@ -101,7 +107,20 @@ class Cartographer : public sigslot::has_slots<> {
 	void initResourceMap(const ResourceType *rt, PatchMap<1> *pMap);
 	void fixupResourceMap(const ResourceType *rt, const Vec2i &tl, const Vec2i &br);
 
-	PatchMap<1>* buildStoreMap(Unit *unit);
+	PatchMap<1>* buildAdjacencyMap(const UnitType *uType, const Vec2i &pos);
+
+	PatchMap<1>* buildStoreMap(Unit *unit) {
+		unit->Died.connect(this, &Cartographer::onStoreDestroyed);
+		return (storeMaps[unit] = buildAdjacencyMap(unit->getType(), unit->getPos()));
+	}
+
+	IF_DEBUG_EDITION( void debugAddBuildSiteMap(PatchMap<1>*); )
+
+	PatchMap<1>* buildSiteMap(const UnitType *uType, const Vec2i &pos) {
+		PatchMap<1> *smap = siteMaps[make_pair(uType, pos)] = buildAdjacencyMap(uType, pos);
+		IF_DEBUG_EDITION( debugAddBuildSiteMap(smap); )
+		return smap;
+	}
 
 	// slots
 	void onResourceDepleted(Vec2i pos);
@@ -154,7 +173,15 @@ public:
 		if (it != storeMaps.end()) {
 			return it->second;
 		}
-		return buildStoreMap(const_cast<Unit*>(unit));
+		return buildStoreMap(const_cast<Unit*>(unit)); // connects signal, needs non-const...
+	}
+
+	PatchMap<1>* getSiteMap(const UnitType *ut, const Vec2i &pos) {
+		SiteMaps::iterator it = siteMaps.find(make_pair(ut, pos));
+		if (it != siteMaps.end()) {
+			return it->second;
+		}
+		return buildSiteMap(ut, pos);
 	}
 
 	ClusterMap* getClusterMap() const { return clusterMap; }

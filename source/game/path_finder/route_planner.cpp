@@ -2,7 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2009 James McCulloch
+//				  2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -30,12 +30,14 @@
 #include "leak_dumper.h"
 
 #if _GAE_DEBUG_EDITION_
-#	include "debug_renderer.h"
+#	include "renderer.h"
 #endif
 
-//#define PATHFINDER_DEBUG_MESSAGES
+#ifndef PATHFINDER_DEBUG_MESSAGES
+#	define PATHFINDER_DEBUG_MESSAGES 0 
+#endif
 
-#ifdef PATHFINDER_DEBUG_MESSAGES
+#if PATHFINDER_DEBUG_MESSAGES
 #	define CONSOLE_LOG(x) {theConsole.addLine(x); theLogger.add(x);}
 #else
 #	define CONSOLE_LOG(x) {}
@@ -55,44 +57,40 @@ namespace Glest { namespace Game { namespace Search {
 		list<Vec2i> *nodes = ns->getOpenNodes();
 		list<Vec2i>::iterator nit = nodes->begin();
 		for ( ; nit != nodes->end(); ++nit ) 
-			PathFinderTextureCallBack::openSet.insert(*nit);
+			theDebugRenderer.getPFCallback().openSet.insert(*nit);
 		delete nodes;
 		nodes = ns->getClosedNodes();
 		for ( nit = nodes->begin(); nit != nodes->end(); ++nit )
-			PathFinderTextureCallBack::closedSet.insert(*nit);
+			theDebugRenderer.getPFCallback().closedSet.insert(*nit);
 		delete nodes;					
 	}
 
 	void collectPath(const Unit *unit) {
 		const UnitPath &path = *unit->getPath();
 		for (UnitPath::const_iterator pit = path.begin(); pit != path.end(); ++pit) 
-			PathFinderTextureCallBack::pathSet.insert(*pit);
+			theDebugRenderer.getPFCallback().pathSet.insert(*pit);
 	}
 
 	void collectWaypointPath(const Unit *unit) {
 		const WaypointPath &path = *unit->getWaypointPath();
-		DebugRenderer::clearWaypoints();
+		theDebugRenderer.clearWaypoints();
 		WaypointPath::const_iterator it = path.begin();
 		for ( ; it != path.end(); ++it) {
 			Vec3f vert = theWorld.getMap()->getTile(Map::toTileCoords(*it))->getVertex();
 			vert.x += it->x % GameConstants::cellScale + 0.5f;
 			vert.z += it->y % GameConstants::cellScale + 0.5f;
 			vert.y += 0.15f;
-			DebugRenderer::addWaypoint(vert);
+			theDebugRenderer.addWaypoint(vert);
 		}
 	}
 
 	void clearOpenClosed(const Vec2i &start, const Vec2i &target) {
-		PathFinderTextureCallBack::pathStart = start;
-		PathFinderTextureCallBack::pathDest = target;
-		PathFinderTextureCallBack::pathSet.clear();
-		PathFinderTextureCallBack::openSet.clear();
-		PathFinderTextureCallBack::closedSet.clear();
+		theDebugRenderer.getPFCallback().pathStart = start;
+		theDebugRenderer.getPFCallback().pathDest = target;
+		theDebugRenderer.getPFCallback().pathSet.clear();
+		theDebugRenderer.getPFCallback().openSet.clear();
+		theDebugRenderer.getPFCallback().closedSet.clear();
 	}
-
-#	define IF_DEBUG_TEXTURES(x) { x }
-#else
-#	define IF_DEBUG_TEXTURES(x) {}
 #endif  // _GAE_DEBUG_EDITION_
 
 int GridNeighbours::x = 0;
@@ -117,6 +115,7 @@ RoutePlanner::RoutePlanner(World *world)
 
 	const int &w = world->getMap()->getW();
 	const int &h = world->getMap()->getH();
+
 	//cout << "NodeStore SearchEngine\n";
 	nodeStore = new NodeStore(w, h);
 	nsgSearchEngine = new SearchEngine<NodeStore>(nodeStore, true);
@@ -310,6 +309,9 @@ HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, Wayp
 	return HAAStarResult::FAILURE;
 }
 
+/** refine waypoint path, extend low level path to next waypoint.
+  * @return true if successful, in which case waypoint will have been popped.
+  * false on failure, in which case waypoint will not be popped. */
 bool RoutePlanner::refinePath(Unit *unit) {
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	UnitPath &path = *unit->getPath();
@@ -328,7 +330,7 @@ bool RoutePlanner::refinePath(Unit *unit) {
 	if (res != AStarResult::COMPLETE) {
 		return false;
 	}
-	IF_DEBUG_TEXTURES( collectOpenClosed<NodeStore>(nsgSearchEngine->getStorage()); )
+	IF_DEBUG_EDITION( collectOpenClosed<NodeStore>(nsgSearchEngine->getStorage()); )
 	// extract path
 	Vec2i pos = nsgSearchEngine->getGoalPos();
 	assert(pos == destPos);
@@ -347,6 +349,9 @@ bool RoutePlanner::refinePath(Unit *unit) {
 #undef max
 
 void RoutePlanner::smoothPath(Unit *unit) {
+	if (unit->getPath()->size() < 3) {
+		return;
+	}
 	AnnotatedMap* const &aMap = world->getCartographer()->getMasterMap();
 	int min_x = numeric_limits<int>::max(), 
 		max_x = -1, 
@@ -361,7 +366,6 @@ void RoutePlanner::smoothPath(Unit *unit) {
 		if (it->y > max_y) max_y = it->y;
 		onPath.insert(*it);
 	}
-	assert(unit->getPath()->size() > 1);
 	Rect2i bounds(min_x, min_y, max_x + 1, max_y + 1);
 
 	it = unit->getPath()->begin();
@@ -420,7 +424,7 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 	if (attemptMove(unit)) {
 		if (!wpPath.empty() && path.size() < 12) {
 			// if there are less than 12 steps left on this path, and there are more waypoints
-			IF_DEBUG_TEXTURES( clearOpenClosed(unit->getPos(), wpPath.back()); )
+			IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), wpPath.back()); )
 			while (!wpPath.empty() && path.size() < 24) {
 				// refine path to at least 24 steps (or end of path)
 				if (!refinePath(unit)) {
@@ -430,14 +434,14 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 				}
 			}
 			smoothPath(unit);
-			IF_DEBUG_TEXTURES( collectPath(unit); )
+			IF_DEBUG_EDITION( collectPath(unit); )
 		}
 		return TravelState::MOVING;
 	}
 	// path blocked, quickSearch to next waypoint...
-	IF_DEBUG_TEXTURES( clearOpenClosed(unit->getPos(), wpPath.empty() ? path.back() : wpPath.front()); )
+	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), wpPath.empty() ? path.back() : wpPath.front()); )
 	if (repairPath(unit) && attemptMove(unit)) {
-		IF_DEBUG_TEXTURES( collectPath(unit); )
+		IF_DEBUG_EDITION( collectPath(unit); )
 		return TravelState::MOVING;
 	}
 	return TravelState::BLOCKED;
@@ -446,21 +450,23 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
 	UnitPath &path = *unit->getPath();
-	IF_DEBUG_TEXTURES( clearOpenClosed(unit->getPos(), target); )
+	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	aMap->annotateLocal(unit);
 	float cost = quickSearch(unit->getCurrField(), unit->getSize(), unit->getPos(), target);
 	aMap->clearLocalAnnotations(unit);
-	IF_DEBUG_TEXTURES( collectOpenClosed<NodeStore>(nodeStore); )
+	IF_DEBUG_EDITION( collectOpenClosed<NodeStore>(nodeStore); )
 	if (cost != numeric_limits<float>::infinity()) {
 		Vec2i pos = nsgSearchEngine->getGoalPos();
 		while (pos.x != -1) {
 			path.push_front(pos);
 			pos = nsgSearchEngine->getPreviousPos(pos);
 		}
-		if (!path.empty()) path.pop();
-		if (attemptMove(unit)) {
-			IF_DEBUG_TEXTURES( collectPath(unit); )
-			return TravelState::MOVING;
+		if (path.size() > 1) {
+			path.pop();
+			if (attemptMove(unit)) {
+				IF_DEBUG_EDITION( collectPath(unit); )
+				return TravelState::MOVING;
+			}
 		}
 		path.clear();
 	}
@@ -486,9 +492,13 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
 			path.push_front(pos);
 			pos = nsgSearchEngine->getPreviousPos(pos);
 		}
-		if (!path.empty()) path.pop();
-		if (attemptMove(unit)) {
-			return TravelState::MOVING;
+		if (path.size() > 1) {
+			path.pop();
+			if (attemptMove(unit)) {
+				return TravelState::MOVING;
+			}
+		} else {
+			path.clear();
 		}
 	}
 	path.incBlockCount();
@@ -547,37 +557,49 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 		}
 		return TravelState::IMPOSSIBLE;
 	} else if (res == HAAStarResult::START_TRAP) {
-		return TravelState::BLOCKED;
+		if (wpPath.size() < 2) {
+			CONSOLE_LOG( "START_TRAP" );
+			return TravelState::BLOCKED;
+		}
 	}
 
-	IF_DEBUG_TEXTURES( collectWaypointPath(unit); )
+	IF_DEBUG_EDITION( collectWaypointPath(unit); )
 	//CONSOLE_LOG( "WaypointPath size : " + intToStr(wpPath.size()) )
 	//TODO post process, scan wpPath, if prev.dist(pos) < 4 cull prev
 	assert(wpPath.size() > 1);
 	wpPath.pop();
-	IF_DEBUG_TEXTURES( clearOpenClosed(unit->getPos(), target); )
+	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	// refine path, to at least 20 steps (or end of path)
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	aMap->annotateLocal(unit);
+	wpPath.condense();
 	while (!wpPath.empty() && path.size() < 20) {
 		if (!refinePath(unit)) {
-			CONSOLE_LOG( "refinePath failed. [fresh path]" )
+			if (res == HAAStarResult::START_TRAP) {
+				CONSOLE_LOG( "refinePath failed. [START_TRAP]" )
+			} else {
+				CONSOLE_LOG( "refinePath failed. [fresh path]" )
+			}
 			aMap->clearLocalAnnotations(unit);
 			path.incBlockCount();
-			CONSOLE_LOG( "   blockCount = " + intToStr(path.getBlockCount()) )
+			//CONSOLE_LOG( "   blockCount = " + intToStr(path.getBlockCount()) )
 			return TravelState::BLOCKED;
 		}
 	}
 	smoothPath(unit);
 	aMap->clearLocalAnnotations(unit);
-	IF_DEBUG_TEXTURES( collectPath(unit); )
+	IF_DEBUG_EDITION( collectPath(unit); )
+	if (path.empty()) {
+		CONSOLE_LOG( "post hierarchical search failure, path empty." );
+		return TravelState::BLOCKED;
+	}
 	if (attemptMove(unit)) {
 		return TravelState::MOVING;
 	}
 	CONSOLE_LOG( "Hierarchical refined path blocked ? valid ?!?" )
 	unit->setCurrSkill(SkillClass::STOP);
 	path.incBlockCount();
-	return TravelState::INVALID;
+	return TravelState::BLOCKED;
 }
 
 TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Vec2i &target) {
@@ -597,14 +619,14 @@ TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Ve
 	aMap->clearLocalAnnotations(unit);
 	if (r == AStarResult::COMPLETE) {
 		Vec2i pos = nsgSearchEngine->getGoalPos();
-		IF_DEBUG_TEXTURES( clearOpenClosed(unit->getPos(), pos); )
-		IF_DEBUG_TEXTURES( collectOpenClosed<NodeStore>(nsgSearchEngine->getStorage()); )
+		IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), pos); )
+		IF_DEBUG_EDITION( collectOpenClosed<NodeStore>(nsgSearchEngine->getStorage()); )
 		while (pos.x != -1) {
 			path.push_front(pos);
 			pos = nsgSearchEngine->getPreviousPos(pos);
 		}
 		if (!path.empty()) path.pop();
-		IF_DEBUG_TEXTURES( collectPath(unit); )
+		IF_DEBUG_EDITION( collectPath(unit); )
 		if (attemptMove(unit)) {
 			return TravelState::MOVING;
 		}
@@ -646,10 +668,10 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 		}
 		return TravelState::IMPOSSIBLE;
 	}
-	IF_DEBUG_TEXTURES( collectWaypointPath(unit); )
+	IF_DEBUG_EDITION( collectWaypointPath(unit); )
 	assert(wpPath.size() > 1);
 	wpPath.pop();
-	IF_DEBUG_TEXTURES( clearOpenClosed(unit->getPos(), target); )
+	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	// cull destination and waypoints close to it, when we get to the last remaining 
 	// waypoint we'll do a 'customGoalSearch' to the target
 	while (wpPath.size() > 1 && wpPath.back().dist(target) < 32.f) {
@@ -667,13 +689,13 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 	}
 	smoothPath(unit);
 	aMap->clearLocalAnnotations(unit);
-	IF_DEBUG_TEXTURES( collectPath(unit); )
+	IF_DEBUG_EDITION( collectPath(unit); )
 	if (attemptMove(unit)) {
 		return TravelState::MOVING;
 	}
 	CONSOLE_LOG( "Hierarchical refined path blocked ? valid ?!? [Custom Goal Search]" )
 	unit->setCurrSkill(SkillClass::STOP);
-	return TravelState::INVALID;
+	return TravelState::BLOCKED;
 }
 
 /** repair a blocked path
@@ -711,7 +733,7 @@ bool RoutePlanner::repairPath(Unit *unit) {
 	}
 	aMap->clearLocalAnnotations(unit);
 	if (!path.empty()) {
-		IF_DEBUG_TEXTURES ( 
+		IF_DEBUG_EDITION ( 
 			collectOpenClosed<NodeStore>(nsgSearchEngine->getStorage()); 
 			collectPath(unit);
 		)
@@ -746,7 +768,7 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 	se->setStart(unit->getPos(), dd(unit->getPos()));
 	AStarResult res = se->aStar(goal,cost,dd);
 	list<Vec2i>::iterator it;
-	IF_DEBUG_TEXTURES ( 
+	IF_DEBUG_EDITION ( 
 		list<Vec2i> *nodes = NULL;
 		NodeMap* nm = se->getStorage();
 	)
@@ -760,22 +782,23 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 				pos = se->getPreviousPos(pos);
 			}
 			if (!path.empty()) path.pop();
-			IF_DEBUG_TEXTURES ( 
+			IF_DEBUG_EDITION ( 
 				collectOpenClosed<NodeMap>(se->getStorage());
 				collectPath(unit);
 			)
 			break; // case AStarResult::COMPLETE
+
 		case AStarResult::FAILURE:
 			return TravelState::IMPOSSIBLE;
+
 		default:
 			throw runtime_error("Something that shouldn't have happened, did happen :(");
-			break;
 	}
 	if (path.empty()) {
 		unit->setCurrSkill(SkillClass::STOP);
 		return TravelState::ARRIVED;
 	}
-	if (attemptMove(unit)) return TravelState::MOVING; // should always succeed
+	if (attemptMove(unit)) return TravelState::MOVING; // should always succeed (if local annotations were applied)
 	unit->setCurrSkill(SkillClass::STOP);
 	path.incBlockCount();
 	return TravelState::BLOCKED;

@@ -15,9 +15,10 @@
 
 #include "game_constants.h"
 #include "cartographer.h"
-
 #include "search_engine.h"
 #include "cluster_map.h"
+
+#include "pos_iterator.h"
 
 #include "map.h"
 #include "game.h"
@@ -28,10 +29,16 @@
 #include "profiler.h"
 #include "leak_dumper.h"
 
+#if _GAE_DEBUG_EDITION_
+#	include "renderer.h"
+#endif
+
+using namespace std;
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
 namespace Glest { namespace Game { namespace Search {
+//namespace Game { namespace Search {
 
 /** Construct Cartographer object. Requires game settings, factions & cell map to have been loaded.
   */
@@ -100,30 +107,20 @@ Cartographer::~Cartographer() {
 	delete nmSearchEngine;
 
 	// Team Annotated Maps
-	/*map<int,AnnotatedMap*>::iterator aMapIt = teamMaps.begin();
-	for ( ; aMapIt != teamMaps.end(); ++aMapIt ) {
-		delete aMapIt->second;
-	}
-	teamMaps.clear();*/
+	//deleteMapValues(teamMaps.begin(), teamMaps.end());
+	//teamMaps.clear();
 
 	// Exploration Maps
-	map<int,ExplorationMap*>::iterator eMapIt = explorationMaps.begin();
-	for ( ; eMapIt != explorationMaps.end(); ++eMapIt ) {
-		delete eMapIt->second;
-	}
+	deleteMapValues(explorationMaps.begin(), explorationMaps.end());
 	explorationMaps.clear();
 	
-	// Resource Maps
-	for (ResourceMaps::iterator rmIt = resourceMaps.begin(); rmIt != resourceMaps.end(); ++rmIt) {
-		delete rmIt->second;
-	}
+	// Goal Maps
+	deleteMapValues(resourceMaps.begin(), resourceMaps.end());
 	resourceMaps.clear();
-
-	// Store Maps
-	for (StoreMaps::iterator smIt = storeMaps.begin(); smIt != storeMaps.end(); ++smIt) {
-		delete smIt->second;
-	}
+	deleteMapValues(storeMaps.begin(), storeMaps.end());
 	storeMaps.clear();
+	deleteMapValues(siteMaps.begin(), siteMaps.end());
+	siteMaps.clear();
 }
 
 void Cartographer::initResourceMap(const ResourceType *rt, PatchMap<1> *pMap) {
@@ -212,35 +209,59 @@ void Cartographer::onStoreDestroyed(Unit *unit) {
 	storeMaps.erase(unit);
 }
 
-PatchMap<1>* Cartographer::buildStoreMap(Unit *unit) {
-	const UnitType* const &ut = unit->getType();
-
-	unit->Died.connect(this, &Cartographer::onStoreDestroyed);
-	Vec2i pos = unit->getPos();
+PatchMap<1>* Cartographer::buildAdjacencyMap(const UnitType *uType, const Vec2i &pos) {
+	const Vec2i mapPos = pos + OrdinalOffsets[OrdinalDir::NORTH_WEST];
 	const int sx = pos.x;
 	const int sy = pos.y;
-	pos += OrdinalOffsets[OrdinalDir::NORTH_WEST];
-	Rectangle rect(pos.x, pos.y, unit->getSize() + 2, unit->getSize() + 2);
+
+	Rectangle rect(mapPos.x, mapPos.y, uType->getSize() + 3, uType->getSize() + 3);
 	PatchMap<1> *pMap = new PatchMap<1>(rect, 0);
 	pMap->zeroMap();
-	
-	for (int y = sy; y < sy + unit->getSize(); ++y) {
-		for (int x = sx; x < sx + unit->getSize(); ++x) {
-			if (!ut->hasCellMap() || ut->getCellMapCell(x-sx, y-sy)) {
-				for (OrdinalDir d(0); d < OrdinalDir::COUNT; ++d) {
-					Vec2i goalPos = Vec2i(x,y) + OrdinalOffsets[d];
-					if (masterMap->canOccupy(goalPos, 1, Field::LAND) 
-					&& !pMap->getInfluence(goalPos)) {
-						pMap->setInfluence(goalPos, 1);
-						assert(pMap->getInfluence(goalPos));
-					}
+
+	PatchMap<1> tmpMap(rect, 0);
+	tmpMap.zeroMap();
+
+	// mark cells occupied by unitType at pos (on tmpMap)
+	Util::RectIterator iter(pos, pos + Vec2i(uType->getSize() - 1));
+	while (iter.more()) {
+		Vec2i gpos = iter.next();
+		if (!uType->hasCellMap() || uType->getCellMapCell(gpos.x - sx, gpos.y - sy)) {
+			tmpMap.setInfluence(gpos, 1);
+		}
+	}
+
+	// mark goal cells on result map
+	iter = Util::RectIterator(mapPos, mapPos + Vec2i(uType->getSize() + 1));
+	while (iter.more()) {
+		Vec2i gpos = iter.next();
+		if (tmpMap.getInfluence(gpos) || !masterMap->canOccupy(gpos, 1, Field::LAND)) {
+			continue; // building occupied cell or obstacle
+		}
+		foreach_enum (OrdinalDir, d) {
+			if (tmpMap.getInfluence(gpos + OrdinalOffsets[d])) {
+				// if next to a cell marked from first sweep, then this is a valid goal pos
+				pMap->setInfluence(gpos, 1);
+				break;
+			}
+		}
+	}
+	return pMap;
+}
+
+IF_DEBUG_EDITION(
+	void Cartographer::debugAddBuildSiteMap(PatchMap<1> *siteMap) {
+		Rectangle mapBounds = siteMap->getBounds();
+		for (int ly = 0; ly < mapBounds.h; ++ly) {
+			int y = mapBounds.y + ly;
+			for (int lx = 0; lx < mapBounds.w; ++lx) {
+				Vec2i pos(mapBounds.x + lx, y);
+				if (siteMap->getInfluence(pos)) {
+					theDebugRenderer.addBuildSiteCell(pos);
 				}
 			}
 		}
 	}
-	storeMaps[unit] = pMap;
-	return pMap;
-}
+)
 
 void Cartographer::tick() {
 	if (clusterMap->isDirty()) {

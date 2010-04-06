@@ -106,6 +106,17 @@ private:
 	bool meetingPoint;
 	Texture2D *meetingPointImage;
 
+	//REFACTOR: types are limited in the number, and more than just the first command/Skill-TypeOfClass() 
+	// is often of interest, let's have vectors per Command/Skill-class for all Command/Skill-Types
+
+	// then, instead of iterating over a vector of all command types and checking their class,
+	// we can just get _all_ command types of a class
+
+	//REFACTOR: in trunk, uncomment these.
+	//CommandTypes commandTypesByClass[CommandClass::COUNT];
+	//SkillTypes skillTypesByClass[SkillClass::COUNT];
+
+	//REFACTOR: use above, remove these
 	//OPTIMIZATIONS:
 	//store first command type and skill type of each class
 	const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
@@ -145,7 +156,10 @@ public:
 
 	int getStoredResourceCount() const					{return storedResources.size();}
 	const Resource *getStoredResource(int i) const		{return &storedResources[i];}
-	bool getCellMapCell(int x, int y) const				{return cellMap[size * y + x];}
+	bool getCellMapCell(int x, int y) const				{
+		assert(size * y + x >= 0 && size * y + x < size * size);
+		return cellMap[size * y + x];
+	}
 	bool hasMeetingPoint() const						{return meetingPoint;}
 	Texture2D *getMeetingPointImage() const				{return meetingPointImage;}
 	StaticSound *getSelectionSound() const				{return selectionSounds.getRandSound();}

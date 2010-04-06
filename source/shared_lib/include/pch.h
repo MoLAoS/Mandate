@@ -25,6 +25,7 @@
 #	if defined (USE_SDL)
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
+#	define NOMINMAX
 #	include <windows.h>
 #else
 #	include <unistd.h>
@@ -39,6 +40,7 @@
 
 // some local headers of importance
 #include "types.h"
+#include "lang_features.h"
 
 // POSIX base
 #include <stdlib.h>
@@ -69,6 +71,7 @@
 
 // stl
 #include <algorithm>
+#include <functional>
 #include <deque>
 #include <vector>
 #include <list>
@@ -76,6 +79,7 @@
 #include <map>
 #include <queue>
 #include <deque>
+#include <set>
 
 // will this fly on windoze?
 #include <sys/types.h>

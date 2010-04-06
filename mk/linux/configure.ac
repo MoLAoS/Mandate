@@ -4,7 +4,7 @@
 #----------------------------------------------------------------------------
 AC_PREREQ([2.54])
 
-AC_INIT([gae], [0.2.13_beta1], [http://sf.net/apps/trac/glestae])
+AC_INIT([gae], [0.2.13_rc1], [http://sf.net/apps/trac/glestae])
 AC_CONFIG_SRCDIR([mk/jam/build.jam])
 AC_CONFIG_AUX_DIR([mk/autoconf])
 

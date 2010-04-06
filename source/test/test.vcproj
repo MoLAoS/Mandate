@@ -207,6 +207,14 @@
 			Name="facilities"
 			>
 			<File
+				RelativePath=".\facilities\rect_iter_test.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\facilities\rect_iter_test.h"
+				>
+			</File>
+			<File
 				RelativePath=".\facilities\reverse_rect_iter_test.cpp"
 				>
 			</File>

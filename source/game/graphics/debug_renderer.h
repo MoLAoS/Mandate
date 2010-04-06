@@ -37,16 +37,20 @@ using Glest::Game::Search::ClusterMap;
 using Glest::Game::Search::Cartographer;
 
 namespace Glest { namespace Game {
+//namespace Game { namespace Debug {
 
-class PathFinderTextureCallBack {
+class PathFinderTextureCallback {
 public:
-	static set<Vec2i> pathSet, openSet, closedSet;
-	static Vec2i pathStart, pathDest;
-	static map<Vec2i,uint32> localAnnotations;
-	
-	static Field debugField;
-	//static void loadPFDebugTextures ();
-	static Texture2D *PFDebugTextures[26];
+	set<Vec2i> pathSet, openSet, closedSet;
+	Vec2i pathStart, pathDest;
+	map<Vec2i,uint32> localAnnotations;
+	Field debugField;
+	Texture2D *PFDebugTextures[26];
+
+	PathFinderTextureCallback() { reset(); }
+
+	void reset();
+	void loadTextures();
 
 	Texture2DGl* operator()(const Vec2i &cell) {
 		int ndx = -1;
@@ -64,32 +68,60 @@ public:
 
 class GridTextureCallback {
 public:
-	static Texture2D *tex;
+	Texture2D *tex;
+
+	void reset() { if (tex) tex->end(); tex = 0; }
+	void loadTextures();
+
+	GridTextureCallback() : tex(0) {}
+
 	Texture2DGl* operator()(const Vec2i &cell) {
 		return (Texture2DGl*)tex;
    }
 };
 
-class RegionHilightCallback {
+WRAPPED_ENUM( HighlightColour,
+	BLUE,
+	GREEN
+);
+
+class CellHighlightOverlay {
 public:
-	static set<Vec2i> blueCells, greenCells;
+	typedef map<Vec2i, HighlightColour> CellColours;
+	CellColours cells;
+
+	Vec4f highlightColours[HighlightColour::COUNT];
+
+	CellHighlightOverlay() {
+		highlightColours[HighlightColour::BLUE] = Vec4f(0.f, 0.f, 1.f, 0.6f);
+		highlightColours[HighlightColour::GREEN] = Vec4f(0.f, 1.f, 0.f, 0.6f);
+	}
+
+	void reset() {
+		cells.clear();
+	}
+
+	bool empty() const { return cells.empty(); }
 
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
-		if (blueCells.find(cell) != blueCells.end()) {
-			colour = Vec4f(0.f, 0.f, 1.f, 0.6f);
-		} else if (greenCells.find(cell) != greenCells.end()) {
-			colour = Vec4f(0.f, 1.f, 0.f, 0.6f);
-		} else {
-			return false;
+		CellColours::iterator it = cells.find(cell);
+		if (it != cells.end()) {
+			colour = highlightColours[it->second];
+			return true;
 		}
-		return true;
+		return false;
 	}
 };
 
-class VisibleQuadColourCallback {
+class VisibleAreaOverlay {
 public:
-	static set<Vec2i> quadSet;
-	static Vec4f colour;
+	set<Vec2i> quadSet;
+	Vec4f colour;
+
+	void reset() {
+		colour = Vec4f(0.f, 1.f, 0.f, 0.5f);
+		quadSet.clear();
+	}
 
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
 		if (quadSet.find(cell) == quadSet.end()) {
@@ -100,7 +132,7 @@ public:
 	}
 };
 
-class TeamSightColourCallback {
+class TeamSightOverlay {
 public:
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
 		const Vec2i &tile = Map::toTileCoords(cell);
@@ -120,10 +152,15 @@ public:
 	}
 };
 
-class PathfinderClusterOverlay {
+class ClusterMapOverlay {
 public:
-	static set<Vec2i> entranceCells;
-	static set<Vec2i> pathCells;
+	set<Vec2i> entranceCells;
+	set<Vec2i> pathCells;
+
+	void reset() {
+		entranceCells.clear();
+		pathCells.clear();
+	}
 
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
 		const int &clusterSize = Search::clusterSize;
@@ -145,7 +182,10 @@ public:
 
 class ResourceMapOverlay {
 public:
-	static const ResourceType *rt;
+	const ResourceType *rt;
+
+	ResourceMapOverlay() : rt(0) {}
+	void reset() { rt = 0; }
 
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
 		PatchMap<1> *pMap = theWorld.getCartographer()->getResourceMap(rt);
@@ -160,7 +200,9 @@ public:
 class StoreMapOverlay {
 public:
 	typedef vector<const Unit *> UnitList;
-	static UnitList stores;
+	UnitList stores;
+
+	void reset() { stores.clear(); }
 
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
 		for (UnitList::iterator it = stores.begin(); it != stores.end(); ++it) {
@@ -169,6 +211,21 @@ public:
 				colour = Vec4f(0.f, 1.f, 0.3f, 0.7f);
 				return true;
 			}
+		}
+		return false;
+	}
+};
+
+class BuildSiteMapOverlay {
+public:
+	set<Vec2i> cells;
+
+	void reset() { cells.clear(); }
+
+	bool operator()(const Vec2i &cell, Vec4f &colour) {
+		if (cells.find(cell) != cells.end()) {
+			colour = Vec4f(0.f, 1.f, 0.3f, 0.7f);
+			return true;
 		}
 		return false;
 	}
@@ -185,19 +242,53 @@ private:
 	set<Vec2i> clusterEdgesNorth;
 	Vec3f frstmPoints[8];
 
+	PathFinderTextureCallback	pfCallback;
+	GridTextureCallback			gtCallback;
+	CellHighlightOverlay		rhCallback;
+	VisibleAreaOverlay			vqCallback;
+	TeamSightOverlay			tsCallback;
+	ClusterMapOverlay			cmOverlay;
+	ResourceMapOverlay			rmOverlay;
+	StoreMapOverlay				smOverlay;
+	BuildSiteMapOverlay			bsOverlay;
+
 public:
 	DebugRenderer();
 	void init();
 	void commandLine(string &line);
 
-	bool gridTextures, AAStarTextures, HAAStarOverlay, showVisibleQuad, captureVisibleQuad,
-		regionHilights, teamSight, resourceMapOverlay, storeMapOverlay;
-	bool captureFrustum;
-	bool showFrustum;
+	bool	gridTextures,		// show cell grid
+			AAStarTextures,		// AA* search space and results of last low-level search visualisation
+			HAAStarOverlay,		// HAA* search space and results of last hierarchical search visualisation
+			showVisibleQuad,	// set to show visualisation of last captured scene cull
+			captureVisibleQuad, // set to trigger a capture of the next scene cull
+			captureFrustum,		// set to trigger a capture of the view frustum
+			showFrustum,		// set to show visualisation of captured view frustum
+			regionHilights,		// show hilighted cells, are, and can further be, used for various things
+			teamSight,			// currently useless ;)
+			resourceMapOverlay,	// show resource goal map overlay
+			storeMapOverlay,	// show store goal map overlay
+			buildSiteMaps;		// show building site goal maps
+
+	void addCellHighlight(const Vec2i &pos, HighlightColour c = HighlightColour::BLUE) {
+		rhCallback.cells[pos] = c;
+	}
+
+	void clearCellHilights() {
+		rhCallback.cells.clear();
+	}
+
+	void addBuildSiteCell(const Vec2i &pos) {
+		bsOverlay.cells.insert(pos);
+	}
+
+	PathFinderTextureCallback& getPFCallback() { return pfCallback; }
+	ClusterMapOverlay&	getCMOverlay() { return cmOverlay; }
 
 private:
-	template<typename CellTextureCallback>
-	void renderCellTextures(SceneCuller &culler) {
+	/***/
+	template<typename TextureCallback>
+	void renderCellTextures(SceneCuller &culler, TextureCallback callback) {
 		const Rect2i mapBounds(0, 0, theMap.getTileW()-1, theMap.getTileH()-1);
 		float coordStep= theWorld.getTileset()->getSurfaceAtlas()->getCoordStep();
 		assertGl();
@@ -207,8 +298,6 @@ private:
 		glEnable(GL_COLOR_MATERIAL); 
 		glDisable(GL_ALPHA_TEST);
 		glActiveTexture( GL_TEXTURE0 );
-
-		CellTextureCallback callback;
 
 		SceneCuller::iterator it = culler.tile_begin();
 		for ( ; it != culler.tile_end(); ++it ) {
@@ -245,8 +334,10 @@ private:
 
 	} // renderCellTextures ()
 
-	template< typename CellOverlayColourCallback >
-	void renderCellOverlay(SceneCuller &culler) {
+	
+	/***/
+	template< typename ColourCallback >
+	void renderCellOverlay(SceneCuller &culler, ColourCallback callback) {
 		const Rect2i mapBounds( 0, 0, theMap.getTileW() - 1, theMap.getTileH() - 1 );
 		float coordStep = theWorld.getTileset()->getSurfaceAtlas()->getCoordStep();
 		Vec4f colour;
@@ -257,8 +348,6 @@ private:
 		glDisable( GL_ALPHA_TEST );
 		glActiveTexture( GL_TEXTURE0 );
 		glDisable( GL_TEXTURE_2D );
-
-		CellOverlayColourCallback callback;
 
 		SceneCuller::iterator it = culler.tile_begin();
 		for ( ; it != culler.tile_end(); ++it ) {
@@ -294,54 +383,40 @@ private:
 		assertGl();
 	}
 
-	void renderClusterOverlay(SceneCuller &culler) {
-		renderCellOverlay<PathfinderClusterOverlay>(culler);
-	}
-	void renderRegionHilight(SceneCuller &culler) {
-		renderCellOverlay<RegionHilightCallback>(culler);
-	}
-	void renderCapturedQuad(SceneCuller &culler) {
-		renderCellOverlay<VisibleQuadColourCallback>(culler);
-	}
-	void renderTeamSightOverlay(SceneCuller &culler) {
-		renderCellOverlay<TeamSightColourCallback>(culler);
-	}
-	void renderResourceMapOverlay(SceneCuller &culler) {
-		renderCellOverlay<ResourceMapOverlay>(culler);
-	}
-	void renderStoreMapOverlay(SceneCuller &culler) {
-		if (!StoreMapOverlay::stores.empty()) {
-			renderCellOverlay<StoreMapOverlay>(culler);
-		}
-	}
+	/***/
 	void renderCellTextured(const Texture2DGl *tex, const Vec3f &norm, const Vec3f &v0, 
 				const Vec3f &v1, const Vec3f &v2, const Vec3f &v3);
+
+	/***/
 	void renderCellOverlay(const Vec4f colour,  const Vec3f &norm, const Vec3f &v0, 
 				const Vec3f &v1, const Vec3f &v2, const Vec3f &v3);
+	
+	/***/
 	void renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &color, float width);
 
-	static list<Vec3f> waypoints;
-	void renderGrid(SceneCuller &culler) {
-		renderCellTextures<GridTextureCallback>(culler);
-	}
-
+	/***/
 	void renderPathOverlay();
+
+	/***/
 	void renderIntraClusterEdges(const Vec2i &cluster, CardinalDir dir = CardinalDir::COUNT);
 
+	/***/
 	void renderFrustum() const;
 
+	list<Vec3f> waypoints;
+
 public:
-	static void clearWaypoints()		{ waypoints.clear();		}
-	static void addWaypoint(Vec3f v)	{ waypoints.push_back(v);	}
+	void clearWaypoints()		{ waypoints.clear();		}
+	void addWaypoint(Vec3f v)	{ waypoints.push_back(v);	}
 
 	void sceneEstablished(SceneCuller &culler);
 	bool willRenderSurface() const { return AAStarTextures || gridTextures; }
 	void renderSurface(SceneCuller &culler) {
 		if (AAStarTextures) {
 			if (gridTextures) gridTextures = false;
-			renderCellTextures<PathFinderTextureCallBack>(culler);
+			renderCellTextures(culler, pfCallback);
 		} else if (gridTextures) {
-			renderCellTextures<GridTextureCallback>(culler);
+			renderCellTextures(culler, gtCallback);
 		}
 	}
 	void renderEffects(SceneCuller &culler);

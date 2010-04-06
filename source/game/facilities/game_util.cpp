@@ -31,11 +31,10 @@ const string gaeMailString= CONTACT_STRING;
 const string glestVersionString= "v3.2.2";
 
 #if _GAE_DEBUG_EDITION_
-	//const string gaeVersionString= "v0.2.13_DE-beta1";
+	//const string gaeVersionString= "v0.3.0-alpha_DE-beta1";
 	const string gaeVersionString= VERSION_STRING;
 #else
-	//const string gaeVersionString= "v0.2.13-beta1";
-	const string gaeVersionString= VERSION_STRING;
+	const string gaeVersionString= "v0.3.0-alpha";
 #endif
 
 string getCrashDumpFileName(){
@@ -51,7 +50,7 @@ string getAboutString1(int i){
 	case 0: return "Glest Advanced Engine " + gaeVersionString + " based on Glest "
 			+ glestVersionString + " (" + "Shared Library " + sharedLibVersionString + ")";
 	case 1: return "Built: " + string(__DATE__);
-	case 2: return "Copyright 2001-2008 The Glest Team, 2008-2009 The GAE Team";
+	case 2: return "Copyright 2001-2008 The Glest Team, 2008-2010 The GAE Team";
 	}
 	return "";
 }

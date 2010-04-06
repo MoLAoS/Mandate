@@ -26,7 +26,9 @@
 #	if defined (USE_SDL)
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
+#	define NOMINMAX
 #	include <windows.h>
+#	include <io.h>
 #else
 #	include <unistd.h>
 #	include <signal.h>

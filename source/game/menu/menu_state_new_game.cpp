@@ -53,8 +53,20 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	buttonPlayNow.init(525, 170, 125);
 
 	//map listBox
-	findAll("maps/*.gbm", results, true);
-	if (results.size() == 0) {
+	findAll("maps/*.gbm", results, false);
+
+	// hack... _only_ match '.gbm' (and not .gbm8 or anything else like that).
+	foreach (vector<string>, it, results) {
+		string::size_type dotPos = it->find_last_of('.');
+		assert(dotPos != string::npos);
+		if (it->substr(dotPos + 1).size() != 3U) {
+			it = results.erase(it) - 1;
+		} else {
+			*it = cutLastExt(*it);
+		}
+	}
+
+	if (results.empty()) {
 		throw runtime_error("There are no maps");
 	}
 	mapFiles = results;

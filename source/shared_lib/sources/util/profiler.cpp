@@ -20,6 +20,8 @@
 
 #include <map>
 
+using Shared::Platform::Chrono;
+
 using namespace std;
 using Shared::Platform::Chrono;
 

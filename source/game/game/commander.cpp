@@ -61,6 +61,10 @@ CommandResult Commander::tryGiveCommand(
 	//give orders to all selected units
 	const Selection::UnitContainer &units = selection.getUnits();
 
+	if (units.size() > 2) {
+		DEBUG_HOOK();
+	}
+
 	foreach_const (Selection::UnitContainer, i, units) {
 		const CommandType *effectiveCt;
 		if(ct) {
@@ -73,6 +77,7 @@ CommandResult Commander::tryGiveCommand(
 		if(effectiveCt) {
 			CommandResult result;
 			if(unitType) { // build command
+				flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if(targetUnit) { // 'target' based command
 				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
@@ -172,6 +177,12 @@ CommandResult Commander::pushCommand(Command *command) const {
 	assert(command->getCommandedUnit());
 	GameInterface *gameInterface = NetworkManager::getInstance().getGameInterface();
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
+	if (command->getArchetype() != CommandArchetype::CANCEL_COMMAND) {
+		COMMAND_LOG(
+			__FUNCTION__ << " Unit id: " << command->getCommandedUnit()->getId() << ", command = "
+			<< command->getType()->getName() << " result = " << CommandResultNames[result];
+		);
+	}
 	gameInterface->requestCommand(command);
 	return result;
 }

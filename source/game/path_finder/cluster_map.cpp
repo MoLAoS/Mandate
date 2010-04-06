@@ -26,7 +26,7 @@ using Shared::Util::line;
 #define _USE_LINE_PATH_ 1
 
 #if _GAE_DEBUG_EDITION_
-#	include "debug_renderer.h"
+#	include "renderer.h"
 #endif
 
 namespace Glest { namespace Game { namespace Search {
@@ -302,15 +302,17 @@ void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
 		inf.run = 0;	 // to count entrance 'width'
 		for (Field f(0); f < Field::COUNT; ++f) {
 			if (!aMap->maxClearance[f] || f == Field::AIR) continue;
-#			if _GAE_DEBUG_EDITION_
+
+			IF_DEBUG_EDITION(
 				if (f == Field::LAND) {	
 					for (int i=0; i < cb->transitions[f].n; ++i) {
-						PathfinderClusterOverlay::entranceCells.erase(
+						theDebugRenderer.getCMOverlay().entranceCells.erase(
 							cb->transitions[f].transitions[i]->nwPos
 						);
 					}
 				}
-#			endif
+			) // DEBUG_EDITION
+
 			cb->transitions[f].clear();
 			clear = false;
 			inf.f = f;
@@ -351,13 +353,14 @@ void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
 				clear = false;
 			}
 		}// for each Field
-#		if _GAE_DEBUG_EDITION_
+
+		IF_DEBUG_EDITION(
 			for (int i=0; i < cb->transitions[Field::LAND].n; ++i) {
-				PathfinderClusterOverlay::entranceCells.insert(
+				theDebugRenderer.getCMOverlay().entranceCells.insert(
 					cb->transitions[Field::LAND].transitions[i]->nwPos
 				);
 			}
-#		endif
+		) // DEBUG_EDITION
 	} // if not sentinel
 }
 

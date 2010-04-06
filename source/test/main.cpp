@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "reverse_rect_iter_test.h"
+#include "rect_iter_test.h"
 //#include "node_pool_test.h"
 #include "influence_map_test.h"
 #include "circular_buffer_test.h"

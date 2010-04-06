@@ -318,6 +318,8 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		return false; // if skills are screwy, stop
 	}
 
+	//REFACTOR: sort all skill types into skillTypesByClass
+
 	//commands
 	try {
 		const XmlNode *commandsNode = unitNode->getChild("commands");
@@ -337,6 +339,8 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 	}
 
 	if ( !loadOk ) return false; // unsafe to keep going...
+
+	//REFACTOR: sort all CommandTypes by class, into commandTypesByClass
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if(meetingPoint) {
@@ -442,8 +446,6 @@ void UnitType::doChecksum(Checksum &checksum) const {
 
 // ==================== get ====================
 
-
-
 const CommandType *UnitType::getCommandType(const string &name) const {
 	for(CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {
 		if((*i)->getName() == name) {
@@ -453,6 +455,7 @@ const CommandType *UnitType::getCommandType(const string &name) const {
 	return NULL;
 }
 
+//REIMPLEMENT with commandTypesByClass
 const HarvestCommandType *UnitType::getFirstHarvestCommand(const ResourceType *resourceType) const{
 	for(int i=0; i<commandTypes.size(); ++i){
 		if(commandTypes[i]->getClass()== CommandClass::HARVEST){
@@ -465,6 +468,7 @@ const HarvestCommandType *UnitType::getFirstHarvestCommand(const ResourceType *r
 	return NULL;
 }
 
+//REIMPLEMENT with commandTypesByClass
 const AttackCommandType *UnitType::getFirstAttackCommand(Zone zone) const{
 	for(int i=0; i<commandTypes.size(); ++i){
 		if(commandTypes[i]->getClass()== CommandClass::ATTACK){
@@ -477,7 +481,7 @@ const AttackCommandType *UnitType::getFirstAttackCommand(Zone zone) const{
 	return NULL;
 }
 
-
+//REIMPLEMENT with commandTypesByClass
 const RepairCommandType *UnitType::getFirstRepairCommand(const UnitType *repaired) const{
 	for(int i=0; i<commandTypes.size(); ++i){
 		if(commandTypes[i]->getClass()== CommandClass::REPAIR){
@@ -499,6 +503,7 @@ int UnitType::getStore(const ResourceType *rt) const{
 	return 0;
 }
 
+//REIMPLEMENT with skillTypesByClass
 const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skillClass) const{
 	for(int i=0; i<skillTypes.size(); ++i){
 		if(skillTypes[i]->getName()==skillName){
@@ -516,10 +521,12 @@ const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skil
 
 // ==================== has ====================
 
+//REIMPLEMENT with skillTypesByClass
 bool UnitType::hasSkillClass(SkillClass skillClass) const {
 	return firstSkillTypeOfClass[skillClass] != NULL;
 }
 
+//REIMPLEMENT with commandTypesByClass ?
 bool UnitType::hasCommandType(const CommandType *commandType) const {
 	assert(commandType != NULL);
 	for (int i = 0; i < commandTypes.size(); ++i) {
@@ -530,10 +537,12 @@ bool UnitType::hasCommandType(const CommandType *commandType) const {
 	return false;
 }
 
+//REIMPLEMENT with commandTypesByClass
 bool UnitType::hasCommandClass(CommandClass commandClass) const{
 	return firstCommandTypeOfClass[commandClass] != NULL;
 }
 
+//REIMPLEMENT with skillTypesByClass
 bool UnitType::hasSkillType(const SkillType *skillType) const{
 	assert(skillType != NULL);
 	for (int i = 0; i < skillTypes.size(); ++i) {
@@ -560,6 +569,7 @@ bool UnitType::isOfClass(UnitClass uc) const{
 
 // ==================== PRIVATE ====================
 
+//REFACTOR: sortSkillTypes() : sort skillTypes into skillTypesByClass
 void UnitType::computeFirstStOfClass(){
 	for (int j = 0; j < SkillClass::COUNT; ++j) {
 		firstSkillTypeOfClass[j] = NULL;
@@ -572,6 +582,7 @@ void UnitType::computeFirstStOfClass(){
 	}
 }
 
+//REFACTOR: sortCommandTypes() : sort commandTypes into commandTypesByClass
 void UnitType::computeFirstCtOfClass() {
 	for (int j = 0; j < CommandClass::COUNT; ++j) {
 		firstCommandTypeOfClass[j]= NULL;

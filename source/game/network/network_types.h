@@ -111,7 +111,6 @@ WRAPPED_ENUM( NetworkCommandType,
 );
 
 #pragma pack(push, 1)
-
 	class NetworkCommand{
 	private:
 		uint32 networkCommandType	:  8;
@@ -120,13 +119,16 @@ WRAPPED_ENUM( NetworkCommandType,
 		int32 targetId				: 24; // 32
 		int32 positionX				: 16; 
 		int32 positionY				: 16; // 32
-		int32 unitTypeId			: 15;
-		uint32 queue				:  1; // 16
+		int32 unitTypeId			: 12;
+		uint32 flags_padding		:  2; // 16
+		uint32 no_reserve_res		:  1;
+		uint32 queue				:  1;
+
 	public:
 		NetworkCommand(){};
 		NetworkCommand(Command *command);
 		NetworkCommand(NetworkCommandType type, const Unit *unit, const Vec2i &pos);
-		NetworkCommand(int networkCommandType, int unitId, int commandTypeId= -1, const Vec2i &pos= Vec2i(0), int unitTypeId= -1, int targetId= -1);
+		//NetworkCommand(int networkCommandType, int unitId, int commandTypeId= -1, const Vec2i &pos= Vec2i(0), int unitTypeId= -1, int targetId= -1);
 
 		Command *toCommand() const;
 		NetworkCommandType getNetworkCommandType() const	{return static_cast<NetworkCommandType>(networkCommandType);}
@@ -136,9 +138,7 @@ WRAPPED_ENUM( NetworkCommandType,
 		int getUnitTypeId() const							{return unitTypeId;}
 		int getTargetId() const								{return targetId;}
 	};
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 	struct MoveSkillUpdate {
 		int8	offsetX		:  2;
 		int8	offsetY		:  2;

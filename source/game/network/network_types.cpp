@@ -34,6 +34,7 @@ NetworkCommand::NetworkCommand(Command *command) {
 							? command->getUnitType()->getId()
 							: command->getCommandedUnit()->getType()->getId();
 	this->targetId = command->getUnit() ? command->getUnit()->getId() : -1;
+	this->no_reserve_res = command->isReserveResources() ? 0 : 1;
 	this->queue = command->isQueue() ? 1 : 0;
 }
 
@@ -46,6 +47,7 @@ NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, const 
 	this->positionY= pos.y;
 	this->unitTypeId = -1;
 	this->targetId = -1;
+	this->no_reserve_res = 0;
 	this->queue = 0;
 }
 /*
@@ -87,11 +89,11 @@ Command *NetworkCommand::toCommand() const {
 
 	//create command
 	Command *command= NULL;
+	CommandFlags flags(CommandProperties::QUEUE, queue, CommandProperties::DONT_RESERVE_RESOURCES, no_reserve_res);
 	if (target) {
-		command= new Command(ct, CommandFlags(CommandProperties::QUEUE, queue), target, unit);
+		command= new Command(ct, flags, target, unit);
 	} else if(unitType){
-		command= new Command(ct, CommandFlags(CommandProperties::QUEUE, queue), 
-								Vec2i(positionX, positionY), unitType, unit);
+		command= new Command(ct, flags, Vec2i(positionX, positionY), unitType, unit);
 	} /*else if(!target){
 		command= new Command(ct, CommandFlags(), Vec2i(positionX, positionY));
 	} else{

@@ -19,11 +19,6 @@
 
 namespace Glest { namespace Game { namespace Search {
 
-#if _GAE_DEBUG_EDITION_
-#	define IF_DEBUG_TEXTURES(x) { x }
-#else
-#	define IF_DEBUG_TEXTURES(x) {}
-#endif  // _GAE_DEBUG_EDITION_
 // =====================================================
 // 	class NodeStore
 // =====================================================
@@ -52,7 +47,7 @@ void NodeStore::reset() {
 	leastH = NULL;
 	markerArray.newSearch();
 	openHeap.clear();
-	IF_DEBUG_TEXTURES( listedNodes.clear(); )
+	IF_DEBUG_EDITION( listedNodes.clear(); )
 }
 /** set a maximum number of nodes to expand */
 void NodeStore::setMaxNodes(const int max) {
@@ -73,7 +68,7 @@ bool NodeStore::setOpen(const Vec2i &pos, const Vec2i &prev, float h, float d) {
 	if (!node) { // NodePool exhausted
 		return false;
 	}
-	IF_DEBUG_TEXTURES( listedNodes.push_back(pos); )
+	IF_DEBUG_EDITION( listedNodes.push_back(pos); )
 	node->posOff = pos;
 	if (prev.x >= 0) {
 		node->posOff.ox = prev.x - pos.x;

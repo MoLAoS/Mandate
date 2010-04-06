@@ -33,7 +33,7 @@ using Shared::Platform::int64;
 namespace Glest { namespace Game {
 
 class Map;
-class PathFinderTextureCallBack;
+class PathFinderTextureCallback;
 
 namespace Search {
 
@@ -141,7 +141,7 @@ class AnnotatedMap {
 	friend class ClusterMap;
 #	if _GAE_DEBUG_EDITION_
 		list<std::pair<Vec2i,uint32> >* getLocalAnnotations();
-		friend class Glest::Game::PathFinderTextureCallBack;
+		friend class Glest::Game::PathFinderTextureCallback;
 #	endif
 	int width, height;
 

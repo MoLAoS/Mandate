@@ -85,7 +85,6 @@ private:
 
 	Random random;
 
-	ScriptManager *scriptManager;
 	Cartographer *cartographer;
 	RoutePlanner *routePlanner;
 

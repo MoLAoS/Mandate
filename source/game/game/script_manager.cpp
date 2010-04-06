@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
+//				  2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -64,9 +65,7 @@ TriggerManager::~TriggerManager() {
 }
 	
 void TriggerManager::reset(World *world) {
-	for ( Regions::iterator it = regions.begin(); it != regions.end(); ++it ) {
-		delete it->second;
-	}
+	deleteMapValues(regions.begin(), regions.end());
 	regions.clear();
 	events.clear();
 	unitPosTriggers.clear();
@@ -499,8 +498,8 @@ void ScriptManager::onMessageBoxOk() {
 }
 
 void ScriptManager::onResourceHarvested(){
-	if ( definedEvents.find( "resourceHarvested" ) != definedEvents.end() ) {
-		if ( !luaScript.luaCall("resourceHarvested") ) {
+	if (definedEvents.find( "resourceHarvested" ) != definedEvents.end()) {
+		if (!luaScript.luaCall("resourceHarvested")) {
 			addErrorMessage();
 		}
 	}
@@ -509,13 +508,13 @@ void ScriptManager::onResourceHarvested(){
 void ScriptManager::onUnitCreated(const Unit* unit){
 	latestCreated.name = unit->getType()->getName();
 	latestCreated.id = unit->getId();
-	if ( definedEvents.find( "unitCreated" ) != definedEvents.end() ) {
-		if ( !luaScript.luaCall("unitCreated") ) {
+	if (definedEvents.find( "unitCreated" ) != definedEvents.end()) {
+		if (!luaScript.luaCall("unitCreated")) {
 			addErrorMessage();
 		}
 	}
-	if ( definedEvents.find( "unitCreatedOfType_"+latestCreated.name ) != definedEvents.end() ) {
-		if ( !luaScript.luaCall("unitCreatedOfType_"+latestCreated.name) ) {
+	if (definedEvents.find( "unitCreatedOfType_"+latestCreated.name) != definedEvents.end()) {
+		if (!luaScript.luaCall("unitCreatedOfType_"+latestCreated.name)) {
 			addErrorMessage();
 		}
 	}
@@ -1384,13 +1383,13 @@ int ScriptManager::unitCountOfType(LuaHandle* luaHandle){
 int ScriptManager::hilightRegion(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string region;
-	if ( extractArgs(args, "hilightRegion", "str", &region) ) {
+	if (extractArgs(args, "hilightRegion", "str", &region)) {
 		const Region *r = triggerManager.getRegion(region);
-		if ( r ) {
+		if (r) {
 			const Rect *rect = static_cast<const Rect*>(r);
-			for ( int y = rect->y; y < rect->y + rect->h; ++y ) {
-				for ( int x = rect->x; x < rect->x + rect->w; ++x ) {
-					RegionHilightCallback::blueCells.insert(Vec2i(x,y));
+			for (int y = rect->y; y < rect->y + rect->h; ++y) {
+				for (int x = rect->x; x < rect->x + rect->w; ++x) {
+					theDebugRenderer.addCellHighlight(Vec2i(x,y));
 				}
 			}
 		} else {
@@ -1404,15 +1403,14 @@ int ScriptManager::hilightCell(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	Vec2i cell;
 	if ( extractArgs(args, "hilightCell", "v2i", &cell) ) {
-		RegionHilightCallback::blueCells.insert(cell);
+		theDebugRenderer.addCellHighlight(cell);
 	}
 	return args.getReturnCount();
 }
 
 int ScriptManager::clearHilights(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
-	RegionHilightCallback::blueCells.clear();
-	RegionHilightCallback::greenCells.clear();
+	theDebugRenderer.clearCellHilights();
 	return args.getReturnCount();
 }
 
@@ -1420,7 +1418,7 @@ int ScriptManager::debugSet(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string line;
 	if ( extractArgs(args, "debugSet", "str", &line) ) {
-		Renderer::getInstance().debugRenderer.commandLine(line);
+		theDebugRenderer.commandLine(line);
 	}
 	return args.getReturnCount();
 }

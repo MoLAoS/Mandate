@@ -85,6 +85,11 @@ public:
 		return findPathToGoal(unit, goal, target);
 	}
 
+	TravelState findPathToBuildSite(Unit *unit, const UnitType *buildingType, const Vec2i &buildingPos) {
+		PMap1Goal goal(world->getCartographer()->getSiteMap(buildingType, buildingPos));
+		return findPathToGoal(unit, goal, unit->getTargetPos());
+	}
+
 	bool isLegalMove(Unit *unit, const Vec2i &pos) const;
 
 	SearchEngine<NodeStore>* getSearchEngine() { return nsgSearchEngine; }
@@ -116,6 +121,7 @@ private:
 	Vec2i computeNearestFreePos(const Unit *unit, const Vec2i &targetPos);
 
 	bool attemptMove(Unit *unit) const {
+		assert(!unit->getPath()->empty());
 		Vec2i pos = unit->getPath()->peek(); 
 		if (isLegalMove(unit, pos)) {
 			unit->setNextPos(pos);

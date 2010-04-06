@@ -17,6 +17,7 @@
 #include <algorithm>
 
 namespace Glest { namespace Game { namespace Search {
+//namespace Game { namespace Search {
 
 using Shared::Platform::uint32;
 
@@ -39,7 +40,7 @@ public:
 	
 	iType getInfluence(Point pos) {
 		pos = translate(pos);
-		if ( pos != invalidPos ) {
+		if (pos != invalidPos) {
 			return static_cast<MapType*>(this)->get(pos);
 		}
 		return def;
@@ -60,9 +61,12 @@ public:
 		}
 		return invalidPos;
 	}
+	Point getPos() const { return Vec2i(x, y); }
+	Rectangle getBounds() const { return Rectangle(x, y, w, h); }
+
 protected:
-	iType def;
-	int x,y,w,h;
+	iType def;			// defualt value for positions not within (this) maps dimensions 
+	int x , y, w, h;	// Dimensions of this map.
 };
 
 // =====================================================

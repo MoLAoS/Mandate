@@ -706,6 +706,7 @@ void Renderer::renderResourceStatus(){
 	assertGl();
 
 	glPushAttrib(GL_ENABLE_BIT);
+	glColor3f(1.f, 1.f, 1.f);
 
 	int j= 0;
 	for(int i= 0; i<world->getTechTree()->getResourceTypeCount(); ++i){
@@ -2553,7 +2554,8 @@ void Renderer::renderObjectsFast(){
 		if(o && sc->isExplored(thisTeamIndex)) {
 			const Model *objModel= sc->getObject()->getModel();
 			Vec3f v= o->getPos();
-
+			v.x += GameConstants::cellScale / 2;
+			v.z += GameConstants::cellScale / 2;
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);
