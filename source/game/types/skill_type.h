@@ -24,6 +24,7 @@
 #include "factory.h"
 #include "sound_container.h"
 #include "lang.h"
+#include "flags.h"
 
 using Shared::Sound::StaticSound;
 using Shared::Xml::XmlNode;
@@ -427,6 +428,53 @@ private:
 public:
 	static SkillTypeFactory &getInstance();
 };
+
+
+class AttackSkillPreferences : public XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT> {
+public:
+	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
+		XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT>::load(node, dir, tt, ft, "flag", AttackSkillPreferenceNames);
+	}
+};
+
+class AttackSkillTypes {
+private:
+	vector<const AttackSkillType*> types;
+	vector<AttackSkillPreferences> associatedPrefs;
+	int maxRange;
+	Zones zones;
+	AttackSkillPreferences allPrefs;
+
+public:
+	void init();
+	int getMaxRange() const									{return maxRange;}
+// const vector<const AttackSkillType*> &getTypes() const	{return types;}
+	void getDesc(string &str, const Unit *unit) const;
+	bool getZone(Zone zone) const						{return zones.get(zone);}
+	bool hasPreference(AttackSkillPreference pref) const	{return allPrefs.get(pref);}
+	const AttackSkillType *getPreferredAttack(const Unit *unit, const Unit *target, int rangeToTarget) const;
+	const AttackSkillType *getSkillForPref(AttackSkillPreference pref, int rangeToTarget) const {
+		assert(types.size() == associatedPrefs.size());
+		for (int i = 0; i < types.size(); ++i) {
+			if (associatedPrefs[i].get(pref) && types[i]->getMaxRange() >= rangeToTarget) {
+				return types[i];
+			}
+		}
+		return NULL;
+	}
+
+	void push_back(const AttackSkillType* ast, AttackSkillPreferences pref) {
+		types.push_back(ast);
+		associatedPrefs.push_back(pref);
+	}
+
+	void doChecksum(Checksum &checksum) const {
+		for (int i=0; i < types.size(); ++i) {
+			checksum.add(types[i]->getName());
+		}
+	}
+};
+
 
 }}//end namespace
 

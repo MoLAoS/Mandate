@@ -20,25 +20,30 @@ using std::string;
 using Shared::Platform::int32;
 using Shared::Platform::int8;
 
-namespace Shared{ namespace Util{
+namespace Shared { namespace Util {
 
 // =====================================================
 //	class Checksum
 // =====================================================
 
-class Checksum{
+class Checksum {
 private:
 	int32	sum;
 	int32	r;
     int32	c1;
     int32	c2;
 
+private:
+	void addByte(int8 value) {
+		int32 cipher = (value ^ (r >> 8));
+		r = (cipher + r) * c1 + c2;
+		sum += cipher;
+	}
+
 public:
-	Checksum();
+	Checksum() : sum(0), r(55665), c1(52845), c2(22719) {}
 
 	int32 getSum() const	{return sum;}
-
-	void addByte(int8 value);
 
 	template <typename T> void add(T val) {
 		for (unsigned i=0; i < sizeof(T); ++i) {

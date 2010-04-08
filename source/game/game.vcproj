@@ -1169,10 +1169,6 @@
 			Name="types"
 			>
 			<File
-				RelativePath=".\types\command_type.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\types\command_type.h"
 				>
 			</File>
@@ -1337,6 +1333,18 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\types\cmd_types_attack.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\types\cmd_types_general.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\types\cmd_types_worker.cpp"
+			>
+		</File>
 		<File
 			RelativePath=".\config.db"
 			>

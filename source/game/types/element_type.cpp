@@ -56,28 +56,19 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 // =====================================================
 
 string RequirableType::getReqDesc() const{
-	bool anyReqs = false;
-	string reqString;
-
-	for(int i = 0; i < getUnitReqCount(); ++i) {
-		reqString += getUnitReq(i)->getName();
-		reqString += "\n";
-		anyReqs = true;
+	stringstream ss;
+	ss << name;
+	if (unitReqs.empty() && upgradeReqs.empty()) {
+		return ss.str();
 	}
-
-	for(int i = 0; i < getUpgradeReqCount(); ++i) {
-		reqString += getUpgradeReq(i)->getName();
-		reqString += "\n";
-		anyReqs = true;
+	ss << " " << Lang::getInstance().get("Reqs") << ":\n";
+	foreach_const (UnitReqs, it, unitReqs) {
+		ss << (*it)->getName() << endl;
 	}
-
-	string str = getName();
-
-	if(anyReqs) {
-		return str + " " + Lang::getInstance().get("Reqs") + ":\n" + reqString;
-	} else {
-		return str;
+	foreach_const (UpgradeReqs, it, upgradeReqs) {
+		ss << (*it)->getName() << endl;
 	}
+	return ss.str();
 }
 
 bool RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
@@ -160,27 +151,22 @@ ProducibleType::~ProducibleType() {
 }
 
 string ProducibleType::getReqDesc() const {
-	string str = getName() + " " + Lang::getInstance().get("Reqs") + ":\n";
-
-	for(int i = 0; i < getCostCount(); ++i) {
-		if(getCost(i)->getAmount() != 0) {
-			str += getCost(i)->getType()->getName();
-			str += ": " + intToStr(getCost(i)->getAmount());
-			str += "\n";
-		}
+	stringstream ss;
+	ss << name;
+	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
+		return ss.str();
 	}
-
-	for(int i = 0; i < getUnitReqCount(); ++i) {
-		str += getUnitReq(i)->getName();
-		str += "\n";
+	ss << " " << Lang::getInstance().get("Reqs") << ":\n";
+	foreach_const (Costs, it, costs) {
+		ss << it->getType()->getName() << ": " << it->getAmount() << endl;
 	}
-
-	for(int i = 0; i < getUpgradeReqCount(); ++i) {
-		str += getUpgradeReq(i)->getName();
-		str += "\n";
+	foreach_const (UnitReqs, it, unitReqs) {
+		ss << (*it)->getName() << endl;
 	}
-
-	return str;
+	foreach_const (UpgradeReqs, it, upgradeReqs) {
+		ss << (*it)->getName() << endl;
+	}
+	return ss.str();
 }
 
 bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {

@@ -34,51 +34,7 @@ class UnitType;
 class TechTree;
 class FactionType;
 
-
-class AttackSkillPreferences : public XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT> {
-public:
-	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT>::load(node, dir, tt, ft, "flag", AttackSkillPreferenceNames);
-	}
-};
-
-class AttackSkillTypes {
-private:
-	vector<const AttackSkillType*> types;
-	vector<AttackSkillPreferences> associatedPrefs;
-	int maxRange;
-	Zones zones;
-	AttackSkillPreferences allPrefs;
-
-public:
-	void init();
-	int getMaxRange() const									{return maxRange;}
-// const vector<const AttackSkillType*> &getTypes() const	{return types;}
-	void getDesc(string &str, const Unit *unit) const;
-	bool getZone(Zone zone) const						{return zones.get(zone);}
-	bool hasPreference(AttackSkillPreference pref) const	{return allPrefs.get(pref);}
-	const AttackSkillType *getPreferredAttack(const Unit *unit, const Unit *target, int rangeToTarget) const;
-	const AttackSkillType *getSkillForPref(AttackSkillPreference pref, int rangeToTarget) const {
-		assert(types.size() == associatedPrefs.size());
-		for (int i = 0; i < types.size(); ++i) {
-			if (associatedPrefs[i].get(pref) && types[i]->getMaxRange() >= rangeToTarget) {
-				return types[i];
-			}
-		}
-		return NULL;
-	}
-
-	void push_back(const AttackSkillType* ast, AttackSkillPreferences pref) {
-		types.push_back(ast);
-		associatedPrefs.push_back(pref);
-	}
-
-	void doChecksum(Checksum &checksum) const {
-		for (int i=0; i < types.size(); ++i) {
-			checksum.add(types[i]->getName());
-		}
-	}
-};
+class Command;
 
 // =====================================================
 //  class CommandType
@@ -86,7 +42,7 @@ public:
 /// A complex action performed by a unit, composed by skills
 // =====================================================
 
-class CommandType: public RequirableType {
+class CommandType : public RequirableType {
 protected:
 	CommandClass cc;
 	Clicks clicks;
@@ -103,17 +59,21 @@ private:
 public:
 	CommandType(const char* name, CommandClass cc, Clicks clicks, bool queuable = false);
 
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const = 0;
+	virtual void getDesc(string &str, const Unit *unit) const = 0;
+
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
+
 	virtual void setUnitTypeAndIndex(const UnitType *unitType, int unitTypeIndex);
-	virtual void getDesc(string &str, const Unit *unit) const = 0;
+
 	virtual string toString() const						{return Lang::getInstance().get(name);}
+
 	virtual const ProducibleType *getProduced() const	{return NULL;}
+
 	bool isQueuable() const								{return queuable;}
 	const UnitType *getUnitType() const					{return unitType;}
 	int getUnitTypeIndex() const						{return unitTypeIndex;}
-	
 
 	//get
 	CommandClass getClass() const						{assert(this); return cc;}
@@ -125,9 +85,27 @@ public:
 		return str;
 	}
 
+protected:
+	// static command update helpers... don't really belong here, but it's convenient for now
+	///@todo move range checking update helpers to Cartographer (?)
+	/// See also: RepairCommandType::repairableInRange()
+	static bool unitInRange(const Unit *unit, int range, Unit **rangedPtr,
+			const AttackSkillTypes *asts, const AttackSkillType **past);
+	static bool attackerInSight(const Unit *unit, Unit **rangedPtr);
+	static bool attackableInRange(const Unit *unit, Unit **rangedPtr, 
+				const AttackSkillTypes *asts, const AttackSkillType **past);
+
+	static bool attackableInSight(const Unit *unit, Unit **rangedPtr, 
+				const AttackSkillTypes *asts, const AttackSkillType **past);
+
+public:
 	// must be called before a new game loads anything, savegames need command types to get 
 	// the same id everytime a game is started, not just the first game in one 'program session'
+	///@todo maybe CommandTypeFactory could be made non-singleton, owned by the World (or Game)
+	// and take control of type ids, thus neatly removing the need for this kludge
 	static void resetIdCounter() { nextId = 0; }
+
+	Command* doAutoCommand(Unit *unit) const;
 };
 
 // ===============================
@@ -148,6 +126,9 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const	{moveSkillType->getDesc(str, unit);}
 	const MoveSkillType *getMoveSkillType() const				{return moveSkillType;}
+
+public:
+	Command* doAutoFlee(Unit *unit) const;
 };
 
 // ===============================
@@ -177,6 +158,7 @@ public:
 class StopCommandType: public StopBaseCommandType {
 public:
 	StopCommandType() : StopBaseCommandType("Stop", CommandClass::STOP, Clicks::ONE) {}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 };
 
 // ===============================
@@ -186,6 +168,7 @@ public:
 class MoveCommandType: public MoveBaseCommandType {
 public:
 	MoveCommandType() : MoveBaseCommandType("Move", CommandClass::MOVE, Clicks::TWO) {}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 };
 
 // ===============================
@@ -225,6 +208,13 @@ public:
 		AttackCommandTypeBase::getDesc(str, unit);
 		MoveBaseCommandType::getDesc(str, unit);
 	}
+
+	bool updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) const;
+
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+
+public:
+	Command* doAutoAttack(Unit *unit) const;
 };
 
 // =======================================
@@ -242,6 +232,10 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		AttackCommandTypeBase::getDesc(str, unit);
 	}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+
+public:
+	Command* doAutoAttack(Unit *unit) const;
 };
 
 
@@ -264,6 +258,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		buildSkillType->getDesc(str, unit);
 	}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 
 	//get
 	const BuildSkillType *getBuildSkillType() const	{return buildSkillType;}
@@ -292,6 +287,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 
 	//get
 	const MoveSkillType *getMoveLoadedSkillType() const		{return moveLoadedSkillType;}
@@ -316,14 +312,30 @@ private:
 
 public:
 	RepairCommandType() : MoveBaseCommandType("Repair", CommandClass::REPAIR, Clicks::TWO) {}
-	~RepairCommandType();
+	~RepairCommandType() {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 
 	//get
 	const RepairSkillType *getRepairSkillType() const	{return repairSkillType;}
 	bool isRepairableUnitType(const UnitType *unitType) const;
+
+protected:
+	///@todo move to Cartographer, generalise so that the same code can be used for searching 
+	// for bad guys to kill/run-from and looking for friendlies to repair.
+	static bool repairableInRange(const Unit *unit, Vec2i centre, int centreSize, Unit **rangedPtr, 
+			const RepairCommandType *rct, const RepairSkillType *rst, int range, 
+			bool allowSelf, bool militaryOnly, bool damagedOnly);
+
+	static bool repairableInRange(const Unit *unit, Unit **rangedPtr, const RepairCommandType *rct,
+			int range, bool allowSelf = false, bool militaryOnly = false, bool damagedOnly = true);
+
+	static bool repairableInSight(const Unit *unit, Unit **rangedPtr, const RepairCommandType *rct, bool allowSelf);
+
+public:
+	Command* doAutoRepair(Unit *unit) const;
 };
 
 
@@ -341,7 +353,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
 
@@ -370,6 +382,7 @@ public:
 		upgradeSkillType->getDesc(str, unit);
 		str += "\n" + getProducedUpgrade()->getDesc();
 	}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 
 	//get
 	const UpgradeSkillType *getUpgradeSkillType() const	{return upgradeSkillType;}
@@ -391,6 +404,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
 
@@ -414,6 +428,8 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const;
 	const CastSpellSkillType * getCastSpellSkillType() const	{return castSpellSkillType;}
+
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 };
 
 // ===============================
@@ -429,6 +445,7 @@ public:
 			AttackCommandType(name, commandTypeClass, clicks) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 	int getMaxDistance() const {return maxDistance;}
 };
 
@@ -439,6 +456,7 @@ public:
 class PatrolCommandType: public GuardCommandType {
 public:
 	PatrolCommandType() : GuardCommandType("Patrol", CommandClass::PATROL, Clicks::TWO) {}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
 };
 
 
@@ -452,6 +470,9 @@ public:
 			CommandType("SetMeetingPoint", CommandClass::SET_MEETING_POINT, Clicks::TWO) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {return true;}
 	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const {
+		throw std::runtime_error("Set meeting point command in queue. Thats wrong.");
+	}
 };
 
 // ===============================
@@ -464,6 +485,25 @@ private:
 
 public:
 	static CommandTypeFactory &getInstance();
+};
+
+// update helper, move somewhere sensible
+// =====================================================
+// 	class Targets
+// =====================================================
+
+/** Utility class for managing multiple targets by distance. */
+class Targets : public std::map<Unit*, fixed> {
+private:
+	Unit *nearest;
+	fixed distance;
+
+public:
+	Targets() : nearest(0), distance(fixed::max_int()) {}
+	void record(Unit *target, fixed dist);
+	Unit* getNearest() { return nearest; }
+	Unit* getNearestSkillClass(SkillClass sc);
+	Unit* getNearestHpRatio(fixed hpRatio);
 };
 
 }}//end namespace

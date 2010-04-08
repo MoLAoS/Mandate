@@ -674,4 +674,88 @@ SkillTypeFactory &SkillTypeFactory::getInstance(){
 	return ctf;
 }
 
+
+// =====================================================
+// 	class AttackSkillTypes & enum AttackSkillPreferenceFlags
+// =====================================================
+
+void AttackSkillTypes::init() {
+	maxRange = 0;
+
+	assert(types.size() == associatedPrefs.size());
+	for(int i = 0; i < types.size(); ++i) {
+		if(types[i]->getMaxRange() > maxRange) {
+			maxRange = types[i]->getMaxRange();
+		}
+		zones.flags |= types[i]->getZones().flags;
+		allPrefs.flags |= associatedPrefs[i].flags;
+	}
+}
+
+void AttackSkillTypes::getDesc(string &str, const Unit *unit) const {
+	if(types.size() == 1) {
+		types[0]->getDesc(str, unit);
+	} else {
+		str += Lang::getInstance().get("Attacks") + ": ";
+		bool printedFirst = false;
+
+		for(int i = 0; i < types.size(); ++i) {
+			if(printedFirst) {
+				str += ", ";
+			}
+			str += types[i]->getName();
+			printedFirst = true;
+		}
+		str += "\n";
+	}
+}
+
+const AttackSkillType *AttackSkillTypes::getPreferredAttack(
+		const Unit *unit, const Unit *target, int rangeToTarget) const {
+	const AttackSkillType *ast = NULL;
+
+	if(types.size() == 1) {
+		ast = types[0];
+		return unit->getMaxRange(ast) >= rangeToTarget ? ast : NULL;
+	}
+
+	//a skill for use when damaged gets 1st priority.
+	if(hasPreference(AttackSkillPreference::WHEN_DAMAGED) && unit->isDamaged()) {
+		return getSkillForPref(AttackSkillPreference::WHEN_DAMAGED, rangeToTarget);
+	}
+
+	//If a skill in this collection is specified as use whenever possible and
+	//the target resides in a field that skill can attack, we will only use that
+	//skill if in range and return NULL otherwise.
+	if(hasPreference(AttackSkillPreference::WHENEVER_POSSIBLE)) {
+		ast = getSkillForPref(AttackSkillPreference::WHENEVER_POSSIBLE, 0);
+		assert(ast);
+		if(ast->getZone(target->getCurrZone())) {
+			return unit->getMaxRange(ast) >= rangeToTarget ? ast : NULL;
+		}
+		ast = NULL;
+	}
+
+	if(hasPreference(AttackSkillPreference::ON_BUILDING) && unit->getType()->isOfClass(UnitClass::BUILDING)) {
+		ast = getSkillForPref(AttackSkillPreference::ON_BUILDING, rangeToTarget);
+	}
+
+	if(!ast && hasPreference(AttackSkillPreference::ON_LARGE) && unit->getType()->getSize() > 1) {
+		ast = getSkillForPref(AttackSkillPreference::ON_LARGE, rangeToTarget);
+	}
+
+	//still haven't found an attack skill then use the 1st that's in range
+	if(!ast) {
+		for(int i = 0; i < types.size(); ++i) {
+			if(unit->getMaxRange(types[i]) >= rangeToTarget && types[i]->getZone(target->getCurrZone())) {
+				ast = types[i];
+				break;
+			}
+		}
+	}
+
+	return ast;
+}
+
+
 }} //end namespace

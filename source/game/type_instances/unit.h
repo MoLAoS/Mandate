@@ -287,9 +287,9 @@ public:
 	int getHp() const							{return hp;}
 	int getEp() const							{return ep;}
 	int getProductionPercent() const;
-	float getHpRatio() const					{return clamp(static_cast<float>(hp) / getMaxHp(), 0.f, 1.f);}
+	float getHpRatio() const					{return clamp(float(hp) / getMaxHp(), 0.f, 1.f);}
 	fixed getHpRatioFixed() const				{ return fixed(hp) / getMaxHp(); }
-	float getEpRatio() const					{return !type->getMaxEp() ? 0.0f : clamp(static_cast<float>(ep)/getMaxEp(), 0.f, 1.f);}
+	float getEpRatio() const					{return !type->getMaxEp() ? 0.0f : clamp(float(ep)/getMaxEp(), 0.f, 1.f);}
 	bool getToBeUndertaken() const				{return toBeUndertaken;}
 	Unit *getTarget() const						{return targetRef.getUnit();}
 	Vec2i getNextPos() const					{return nextPos;}

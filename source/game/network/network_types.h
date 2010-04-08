@@ -110,20 +110,26 @@ WRAPPED_ENUM( NetworkCommandType,
 	SET_MEETING_POINT
 );
 
+//OSX: use bigger structure to avoid values accross byte boundaries 
 #pragma pack(push, 1)
 	class NetworkCommand{
 	private:
-		uint32 networkCommandType	:  8;
-		int32 unitId				: 24; // 32
-		int32 commandTypeId			:  8;
-		int32 targetId				: 24; // 32
-		int32 positionX				: 16; 
-		int32 positionY				: 16; // 32
-		int32 unitTypeId			: 12;
-		uint32 flags_padding		:  2; // 16
-		uint32 no_reserve_res		:  1;
-		uint32 queue				:  1;
-
+		uint32 networkCommandType	:  8; //  8 
+		int32 unitId				: 20; // 24 
+											//OSX: first word == netCmdType & unitId
+		int32 commandTypeId			: 16; // 16 
+											//OSX: second word == commandTypeId & unitTypeId
+		int32 targetId				: 20; // 24
+											//OSX: third word == targetId & commandFlags
+		int32 positionX				: 16; // 16 
+		int32 positionY				: 16; // 16 
+											//OSX: fourth word == posX & posY
+		int32 unitTypeId			: 12; // 16 
+		uint32 flags_padding		:  2; // flags :  8 
+		uint32 no_reserve_res		:  1;  
+		uint32 queue				:  1;  
+									// 112 bits (14 bytes) 
+									//OSX 128 bits (16 bytes)
 	public:
 		NetworkCommand(){};
 		NetworkCommand(Command *command);

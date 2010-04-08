@@ -26,18 +26,4 @@ namespace Shared{ namespace Util{
 //	class Checksum
 // =====================================================
 
-Checksum::Checksum(){
-	sum= 0;
-	r= 55665;
-	c1= 52845;
-	c2= 22719;
-}
-
-void Checksum::addByte(int8 value){
-	int32 cipher= (value ^ (r >> 8));
-
-	r= (cipher + r) * c1 + c2;
-	sum+= cipher;
-}
-
 }}//end namespace
