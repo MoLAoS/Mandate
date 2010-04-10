@@ -14,6 +14,13 @@
 
 #include <windows.h>
 
-#define MAIN_FUNCTION(X) int main(int argc, char *argv[]){return X(argc, argv);}
+#define MAIN_FUNCTION(X)					\
+	int main(int argc, char *argv[]) {		\
+		HWND hWnd = GetConsoleWindow();		\
+		ShowWindow(hWnd, SW_HIDE);			\
+		freopen("stdout.txt", "w", stdout);	\
+		freopen("stderr.txt", "w", stderr);	\
+		return X(argc, argv);				\
+	}
 
 #endif

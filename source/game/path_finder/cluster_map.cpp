@@ -48,7 +48,7 @@ void Transition::zeroCounters() {
 
 ClusterMap::ClusterMap(AnnotatedMap *aMap, Cartographer *carto) 
 		: carto(carto), aMap(aMap), dirty(false) {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	w = aMap->getWidth() / clusterSize;
 	h = aMap->getHeight() / clusterSize;
 	vertBorders = new ClusterBorder[(w-1)*h];
@@ -286,7 +286,7 @@ void ClusterMap::addBorderTransition(EntranceInfo &info) {
 }
 
 void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	ClusterBorder *cb = north ? getNorthBorder(cluster) : getWestBorder(cluster);
 	EntranceInfo inf;
 	inf.cb = cb;
@@ -376,7 +376,7 @@ struct Visitor {
 
 /** compute path length using midpoint line algorithm, @return infinite if path not possible, else cost */
 float ClusterMap::linePathLength(Field f, int size, const Vec2i &start, const Vec2i &dest) {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	if (start == dest) {
 		return 0.f;
 	}
@@ -396,7 +396,7 @@ float ClusterMap::linePathLength(Field f, int size, const Vec2i &start, const Ve
 
 /** compute path length using A* (with node limit), @return infinite if path not possible, else cost */
 float ClusterMap::aStarPathLength(Field f, int size, const Vec2i &start, const Vec2i &dest) {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	if (start == dest) {
 		return 0.f;
 	}
@@ -462,7 +462,7 @@ void ClusterMap::disconnectCluster(const Vec2i &cluster) {
 }
 
 void ClusterMap::update() {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	//cout << "ClusterMap::update()" << endl;
 	for (set<Vec2i>::iterator it = dirtyNorthBorders.begin(); it != dirtyNorthBorders.end(); ++it) {
 		if (it->y > 0 && it->y < h) {
@@ -501,7 +501,7 @@ void ClusterMap::update() {
 
 /** compute intra-cluster path lengths */
 void ClusterMap::evalCluster(const Vec2i &cluster) {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	int linePathSuccess = 0, linePathFail = 0;
 	GridNeighbours::setSearchCluster(cluster);
 	Transitions transitions;

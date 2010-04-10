@@ -20,7 +20,7 @@
 #include "util.h"
 
 #include "leak_dumper.h"
-
+#include "profiler.h"
 
 using namespace Shared::Sound;
 using namespace Shared::Graphics;
@@ -43,7 +43,7 @@ CoreData::~CoreData(){
 	deleteValues(waterSounds.getSounds().begin(), waterSounds.getSounds().end());
 }
 
-void CoreData::load(){
+void CoreData::load() {
 	const string dir="data/core";
 	Logger::getInstance().add("Core data");
 

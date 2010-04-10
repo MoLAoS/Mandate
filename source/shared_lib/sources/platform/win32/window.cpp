@@ -459,7 +459,7 @@ void Window::registerWindow(WNDPROC wndProc) {
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
 	wc.hInstance     = GetModuleHandle(NULL);
-	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIcon         = LoadIcon(wc.hInstance, "GlestAdvIcon");
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 	wc.lpszMenuName  = NULL;

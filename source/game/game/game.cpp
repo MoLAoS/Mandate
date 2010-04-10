@@ -756,7 +756,7 @@ void Game::quitGame(){
 // ==================== render ====================
 
 void Game::render3d(){
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	Renderer &renderer= Renderer::getInstance();
 
 	//init
@@ -796,7 +796,7 @@ void Game::render3d(){
 }
 
 void Game::render2d(){
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	Renderer &renderer= Renderer::getInstance();
 	Config &config= Config::getInstance();
 	CoreData &coreData= CoreData::getInstance();

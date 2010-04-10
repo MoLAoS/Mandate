@@ -981,7 +981,7 @@ void Unit::updateMoveSkillCycle() {
 
 /** @return true when the current skill has completed a cycle */
 bool Unit::update() {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	//highlight
 	if(highlight > 0.f) {
 		highlight -= 1.f / (GameConstants::highlightTime * WORLD_FPS);

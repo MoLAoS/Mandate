@@ -72,7 +72,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib lua5.1.lib physfs.lib"
+				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib lua5.1.lib physfs.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
 				IgnoreAllDefaultLibraries="false"
@@ -139,6 +139,7 @@
 				BufferSecurityCheck="true"
 				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
+				ForceConformanceInForLoopScope="false"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="pch.h"
@@ -164,6 +165,7 @@
 				Version="3.1.0-beta-something"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
+				GenerateManifest="false"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="../../build/$(ConfigurationName)/$(ProjectName)/$(TargetName).pdb"
@@ -179,6 +181,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -1399,6 +1402,10 @@
 		</File>
 		<File
 			RelativePath=".\pch.h"
+			>
+		</File>
+		<File
+			RelativePath="..\resources.rc"
 			>
 		</File>
 		<File

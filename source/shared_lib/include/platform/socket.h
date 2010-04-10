@@ -48,7 +48,6 @@
 #endif
 
 using std::string;
-using Shared::Util::SimpleDataBuffer;
 
 namespace Test {
 	class CircularBufferTest;

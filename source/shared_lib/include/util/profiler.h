@@ -16,7 +16,7 @@
 #define SL_PROFILE
 // SL_PROFILE controls if profile is enabled or not
 
-// The Profiler and Section classes have been 'hidden away', just put _PROFILE_FUNCTION at the 
+// The Profiler and Section classes have been 'hidden away', just put _PROFILE_FUNCTION(); at the 
 // beginning of any function you want timed.
 
 #include <string>
@@ -25,7 +25,8 @@ using std::string;
 namespace Shared { namespace Util {
 
 #ifndef SL_PROFILE
-#	define _PROFILE_FUNCTION {}
+#	define _PROFILE_FUNCTION() {}
+#	define _PROFILE_SCOPE(name) {}
 #else // SL_PROFILE
 
 namespace Profile {
@@ -47,7 +48,8 @@ public:
 	}
 };
 
-#define _PROFILE_FUNCTION ProfileSection _func_profile(__FUNCTION__);
+#define _PROFILE_FUNCTION() Shared::Util::ProfileSection _func_profile(__FUNCTION__)
+#define _PROFILE_SCOPE(name) Shared::Util::ProfileSection _func_profile(name)
 
 #endif //SL_PROFILE
 

@@ -171,6 +171,8 @@ fixed Random::randRange(fixed min, fixed max) {
 	return res;
 }
 */
+
+#if 0
 // =====================================================
 //	class SimpleDataBuffer
 // =====================================================
@@ -426,7 +428,7 @@ void uudecode(void *dest, size_t *destSize, const char *src) {
 	*destSize = ++p - (unsigned char *)dest;
 	assert(*destSize == expectedSize);
 }
-
+#endif
 
 //finds all filenames like path and stores them in results
 void findAll(const string &path, vector<string> &results, bool cutExtension){

@@ -216,6 +216,7 @@ void deleteMapValues(T beginIt, T endIt){
 	}
 }
 
+#if 0
 class SimpleDataBuffer {
 	char *buf;
 	size_t bufsize;
@@ -285,6 +286,7 @@ public:
 protected:
 	void compact();
 };
+#endif
 
 }}//end namespace
 

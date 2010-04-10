@@ -23,6 +23,8 @@
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
 
+#include "profiler.h"
+
 using std::max;
 using namespace Shared::Util;
 
@@ -125,27 +127,37 @@ void PixmapIoTga::read(uint8 *pixels){
 }
 
 void PixmapIoTga::read(uint8 *pixels, int components){
-	for(int i=0; i<h*w*components; i+=components){
+	_PROFILE_FUNCTION();
+	size_t dataSize = h * w * components;
+	uint8 *buf = new uint8[dataSize];
+	file->read(buf, dataSize, 1);
+
+	for (int i=0; i < dataSize; i+=components) {
 		uint8 r, g, b, a, l;
 
-		if(this->components==1){
-			file->read(&l, 1, 1);
+		if (this->components==1) {
+			//file->read(&l, 1, 1);
+			l = *(buf + i);
 			r= l;
 			g= l;
 			b= l;
 			a= 255;
 		}
 		else{
-			file->read(&b, 1, 1);
-			file->read(&g, 1, 1);
-			file->read(&r, 1, 1);
-			if(this->components==4){
-				file->read(&a, 1, 1);
+			b = *(buf + i);
+			g = *(buf + i + 1);
+			r = *(buf + i + 2);
+			//file->read(&b, 1, 1);
+			//file->read(&g, 1, 1);
+			//file->read(&r, 1, 1);
+			if (this->components == 4) {
+				a  = *(buf + i + 3);
+				//file->read(&a, 1, 1);
 			}
 			else{
-				a= 255;
+				a = 255;
 			}
-			l= (r+g+b)/3;
+			l = (r + g + b) / 3;
 		}
 
 		switch(components){
@@ -165,6 +177,7 @@ void PixmapIoTga::read(uint8 *pixels, int components){
 			break;
 		}
 	}
+	delete [] buf;
 }
 
 void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
@@ -244,11 +257,19 @@ void PixmapIoBmp::read(uint8 *pixels){
 }
 
 void PixmapIoBmp::read(uint8 *pixels, int components){
-    for(int i=0; i<h*w*components; i+=components){
-		uint8 r, g, b;
-		file->read(&b, 1, 1);
-		file->read(&g, 1, 1);
-		file->read(&r, 1, 1);
+	_PROFILE_FUNCTION();
+
+	size_t dataSize = h * w * components;
+	uint8 *buf = new uint8[dataSize];
+	file->read(buf, dataSize, 1);
+
+    for(int i=0; i < dataSize; i += components) {
+		uint8	&r = *(buf + i),
+				&g = *(buf + i + 1),
+				&b = *(buf + i + 2);
+		//file->read(&b, 1, 1);
+		//file->read(&g, 1, 1);
+		//file->read(&r, 1, 1);
 
 		switch(components){
 		case 1:
@@ -267,6 +288,7 @@ void PixmapIoBmp::read(uint8 *pixels, int components){
 			break;
 		}
     }
+	delete [] buf;
 }
 
 void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){

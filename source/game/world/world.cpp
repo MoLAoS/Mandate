@@ -105,7 +105,7 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
@@ -254,7 +254,7 @@ void World::updateEarthquakes(float seconds) {
 }
 
 void World::update() {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	++frameCount;
 
 	theNetworkManager.getGameInterface()->frameStart(frameCount);

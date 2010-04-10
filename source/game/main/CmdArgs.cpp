@@ -21,6 +21,7 @@ CmdArgs::~CmdArgs(){
 	
 }
 
+/** parse command line arguments @return true if program should not proceed. */
 bool CmdArgs::parse(int argc, char **argv){
 	for(int i=1; i<argc; ++i){
 		string arg(argv[i]);

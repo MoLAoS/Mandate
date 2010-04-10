@@ -48,7 +48,7 @@ void Logger::unitLoaded() {
 }
 /*
 void Logger::clusterInit() {
-	_PROFILE_FUNCTION
+	_PROFILE_FUNCTION();
 	++clustersInit;
 	float pcnt = ((float)clustersInit) / ((float)totalClusters) * 100.f;
 	progressBar->setProgress(int(pcnt));

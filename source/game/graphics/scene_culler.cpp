@@ -306,7 +306,8 @@ void SceneCuller::setVisibleExtrema() {
 	const size_t &n = visiblePoly.size();
 	int ndx_min_y = -1, min_y = numeric_limits<int>::max(),
 		ndx_max_y = -1, max_y = -1;
-	for (int i=0; i < n; ++i) {
+	int i;
+	for (i=0; i < n; ++i) {
 		Vec2i pt((int)visiblePoly[i].x, (int)visiblePoly[i].y);
 		if (pt.y < min_y) {
 			min_y = pt.y;
@@ -318,7 +319,6 @@ void SceneCuller::setVisibleExtrema() {
 		}
 	}
 	// build left and right edge lists
-	int i;
 	vector<Edge> leftEdges, rightEdges;
 	for (i = ndx_min_y; i != ndx_max_y; ++i, i %= n) {
 		Vec2i pt0((int)visiblePoly[i % n].x, (int)visiblePoly[i % n].y);
