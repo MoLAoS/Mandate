@@ -19,6 +19,19 @@ using namespace Shared::Util;
 
 namespace MapEditor {
 
+// There's better in the Shared lib already ;)
+// I typedef'd Vec2i as StartLocation, so StartLocation now has a full compliment
+// of operators and functions, including Vec2i::dist(Vec2i), see changes in MapMaker.
+// Try not to use this function in new code (where possible), use the vector classes 
+// from Shared::Math rather than using 'loose' pairs of coordinates.
+// ie, use Vec2i pos; rather than, int posX, posY;
+// if you absolutely can't live without it, just declare it in map.h, leave the definition here.
+int get_dist(int delta_x, int delta_y) {
+	float dx = delta_x;
+	float dy = delta_y;
+	return static_cast<int>(sqrtf(dx * dx + dy * dy));
+}
+
 // ===============================================
 //	class Map
 // ===============================================

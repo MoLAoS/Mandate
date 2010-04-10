@@ -350,7 +350,7 @@ void MapMaker::growForestsMountaintop(float forestMinHeight, float forestMaxHeig
 				numTrees++;
 				// Make sure not to grow forests too close to players
 				for (int k = 0; k < map->getMaxFactions(); k++) {
-					if (get_dist(i - map->startLocations[k].x, j - map->startLocations[k].y) < playerRadius) {
+					if (Vec2i(i, j).dist(map->startLocations[k]) < playerRadius) {
 						numTrees--;
 						break;
 					}
@@ -366,7 +366,7 @@ void MapMaker::growForestsMountaintop(float forestMinHeight, float forestMaxHeig
 			}
 			map->cells[i][j].object = 1;
 			for (int k = 0; k < map->getMaxFactions(); k++) {
-				if (get_dist(i - map->startLocations[k].x, j - map->startLocations[k].y) < playerRadius) {
+				if (Vec2i(i, j).dist(map->startLocations[k]) < playerRadius) {
 					map->cells[i][j].object = 0;
 					break;
 				}

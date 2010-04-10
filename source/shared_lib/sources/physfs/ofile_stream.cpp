@@ -17,10 +17,9 @@
 //#ifndef HEADER_SUPERTUX_PHYSFS_OFILE_STREAM_CPP
 //#define HEADER_SUPERTUX_PHYSFS_OFILE_STREAM_CPP
 
+#include "pch.h"
 #include "projectConfig.h"
 #ifdef USE_PHYSFS
-
-#include "pch.h"
 
 #include "ofile_stream.hpp"
 #include "ofile_streambuf.hpp"
