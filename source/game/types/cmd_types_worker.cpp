@@ -22,7 +22,6 @@
 #include "graphics_interface.h"
 #include "tech_tree.h"
 #include "faction_type.h"
-#include "unit_updater.h"
 #include "renderer.h"
 #include "world.h"
 #include "unit.h"
@@ -188,7 +187,7 @@ bool RepairCommandType::isRepairableUnitType(const UnitType *unitType) const{
 #	define REPAIR_LOG(x)
 #endif
 
-void RepairCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void RepairCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const RepairSkillType * const &rst = repairSkillType;
@@ -424,6 +423,174 @@ void BuildCommandType::doChecksum(Checksum &checksum) const {
 	}
 }
 
+const string cmdCancelMsg = " Command cancelled.";
+
+#if LOG_BUILD_COMMAND
+#	define BUILD_LOG(x) STREAM_LOG(x)
+#else
+#	define BUILD_LOG(x)
+#endif
+
+void BuildCommandType::update(Unit *unit) const {
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	const UnitType *builtUnitType = command->getUnitType();
+	Unit *builtUnit = NULL;
+	Unit *target = unit->getTarget();
+
+	Map *map = theWorld.getMap();
+
+	BUILD_LOG( 
+		__FUNCTION__ << " : Updating unit " << unit->getId() << ", building type = " << builtUnitType->getName()
+		<< ", command target = " << command->getPos();
+	);
+
+	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
+		// if not building
+		// this is just a 'search target', the SiteMap will tell the search when/where it has found a goal cell
+		Vec2i targetPos = command->getPos() + Vec2i(builtUnitType->getSize() / 2);
+		unit->setTargetPos(targetPos);
+		switch (theRoutePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos())) {
+			case TravelState::MOVING:
+				unit->setCurrSkill(this->getMoveSkillType());
+				unit->face(unit->getNextPos());
+				BUILD_LOG( "Moving." );
+				return;
+
+			case TravelState::BLOCKED:
+				unit->setCurrSkill(SkillClass::STOP);
+				if(unit->getPath()->isBlocked()) {
+					theConsole.addStdMessage("Blocked");
+					unit->cancelCurrCommand();
+					BUILD_LOG( "Blocked." << cmdCancelMsg );
+				}
+				return;
+
+			case TravelState::ARRIVED:
+				break;
+
+			case TravelState::IMPOSSIBLE:
+				theConsole.addStdMessage("Unreachable");
+				unit->cancelCurrCommand();
+				BUILD_LOG( "Route impossible," << cmdCancelMsg );
+				return;
+
+			default: throw runtime_error("Error: RoutePlanner::findPath() returned invalid result.");
+		}
+
+		// if arrived destination
+		assert(command->getUnitType() != NULL);
+		const int &buildingSize = builtUnitType->getSize();
+
+		if (map->canOccupy(command->getPos(), Field::LAND, builtUnitType)) {
+			// late resource allocation
+			if (!command->isReserveResources()) {
+				command->setReserveResources(true);
+				if (unit->checkCommand(*command) != CommandResult::SUCCESS) {
+					if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+						theConsole.addStdMessage("BuildingNoRes");
+					}
+					BUILD_LOG( "in positioin, late resource allocation failed." << cmdCancelMsg );
+					unit->finishCommand();
+					return;
+				}
+				unit->getFaction()->applyCosts(command->getUnitType());
+			}
+
+			BUILD_LOG( "in position, starting construction." );
+			builtUnit = new Unit(theWorld.getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), theWorld.getMap());
+			builtUnit->create();
+
+			if (!builtUnitType->hasSkillClass(SkillClass::BE_BUILT)) {
+				throw runtime_error("Unit " + builtUnitType->getName() + " has no be_built skill");
+			}
+
+			builtUnit->setCurrSkill(SkillClass::BE_BUILT);
+			unit->setCurrSkill(this->getBuildSkillType());
+			unit->setTarget(builtUnit, true, true);
+			map->prepareTerrain(builtUnit);
+			command->setUnit(builtUnit);
+			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
+
+			if (!builtUnit->isMobile()) {
+				theWorld.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
+			}
+			
+			//play start sound
+			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+				SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), theGame.getGameCamera()->getPos());
+			}
+		} else {
+			// there are no free cells
+			vector<Unit *>occupants;
+			map->getOccupants(occupants, command->getPos(), buildingSize, Zone::LAND);
+
+			// is construction already under way?
+			Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
+			if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
+				// if we pre-reserved the resources, we have to deallocate them now
+				if (command->isReserveResources()) {
+					unit->getFaction()->deApplyCosts(command->getUnitType());
+					command->setReserveResources(false);
+				}
+				unit->setTarget(builtUnit, true, true);
+				unit->setCurrSkill(this->getBuildSkillType());
+				command->setUnit(builtUnit);
+				BUILD_LOG( "in position, building already under construction." );
+
+			} else {
+				// is it not free because there are units in the way?
+				if (occupants.size()) {
+					// Can they get the fuck out of the way?
+					vector<Unit *>::const_iterator i;
+					for (i = occupants.begin();
+							i != occupants.end() && (*i)->getType()->hasSkillClass(SkillClass::MOVE); ++i) ;
+					if (i == occupants.end()) {
+						BUILD_LOG( "in position, site blocked, waiting for people to get out of the way." );
+						// they all have a move command, so we'll wait
+						return;
+					}
+					//TODO: Check for idle units and tell them to get the fuck out of the way.
+					//TODO: Possibly add a unit notification to let player know builder is waiting
+				}
+
+				// blocked by non-moving units, surface objects (trees, rocks, etc.) or build area
+				// contains deeply submerged terain
+				unit->cancelCurrCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+				if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+					theConsole.addStdMessage("BuildingNoPlace");
+				}
+				BUILD_LOG( "in position, site blocked." << cmdCancelMsg );
+			}
+		}
+	} else {
+		//if building
+		BUILD_LOG( "building." );
+		Unit *builtUnit = command->getUnit();
+
+		if (builtUnit && builtUnit->getType() != builtUnitType) {
+			unit->setCurrSkill(SkillClass::STOP);
+		} else if (!builtUnit || builtUnit->isBuilt()) {
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+		} else if (builtUnit->repair()) {
+			//building finished
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
+			ScriptManager::onUnitCreated(builtUnit);
+			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+				SoundRenderer::getInstance().playFx(
+					this->getBuiltSound(),
+					unit->getCurrVector(),
+					theGame.getGameCamera()->getPos());
+			}
+		}
+	}
+}
+
+
 // =====================================================
 // 	class HarvestCommandType
 // =====================================================
@@ -514,5 +681,185 @@ bool HarvestCommandType::canHarvest(const ResourceType *resourceType) const{
 	return find(harvestedResources.begin(), harvestedResources.end(), resourceType) != harvestedResources.end();
 }
 
+
+// hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
+const MoveSkillType* getMoveLoadedSkill(Unit *u) {
+	const MoveSkillType *mst = 0;
+
+	//REFACTOR: this, and _lots_of_existing_similar_code_ is to be replaced
+	// once UnitType::commandTypesByclass is implemented, to look and be less shit.
+	for (int i=0; i < u->getType()->getCommandTypeCount(); ++i) {
+		if (u->getType()->getCommandType(i)->getClass() == CommandClass::HARVEST) {
+			const HarvestCommandType *t = 
+				static_cast<const HarvestCommandType*>(u->getType()->getCommandType(i));
+			if (t->canHarvest(u->getLoadType())) {
+				mst = t->getMoveLoadedSkillType();
+				break;
+			}
+		}
+	}
+	return mst;
+}
+
+// hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
+const StopSkillType* getStopLoadedSkill(Unit *u) {
+	const StopSkillType *sst = 0;
+
+	//REFACTOR: this, and lots of existing similar code is to be replaced
+	// once UnitType::commandTypesByclass is implemented, to look and be less shit.
+	for (int i=0; i < u->getType()->getCommandTypeCount(); ++i) {
+		if (u->getType()->getCommandType(i)->getClass() == CommandClass::HARVEST) {
+			const HarvestCommandType *t = 
+				static_cast<const HarvestCommandType*>(u->getType()->getCommandType(i));
+			if (t->canHarvest(u->getLoadType())) {
+				sst = t->getStopLoadedSkillType();
+				break;
+			}
+		}
+	}
+	return sst;
+}
+
+const int maxResSearchRadius= 10;
+
+/// looks for a resource of a type that hct can harvest, searching from command target pos
+/// @return pointer to Resource if found (unit's command pos will have been re-set).
+/// NULL if no resource was found within UnitUpdater::maxResSearchRadius.
+Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
+	Vec2i pos;
+	Map *map = theWorld.getMap();
+
+	PosCircularIteratorOrdered pci(map->getBounds(), unit->getCurrCommand()->getPos(),
+			theWorld.getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
+
+	while (pci.getNext(pos)) {
+		Resource *r = map->getTile(Map::toTileCoords(pos))->getResource();
+		if (r && hct->canHarvest(r->getType())) {
+			unit->getCurrCommand()->setPos(pos);
+			return r;
+		}
+	}
+	return 0;
+}
+
+void HarvestCommandType::update(Unit *unit) const {
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Vec2i targetPos;
+	Map *map = theWorld.getMap();
+
+	Tile *tile = map->getTile(Map::toTileCoords(unit->getCurrCommand()->getPos()));
+	Resource *res = tile->getResource();
+	if (!res) { // reset command pos, but not Unit::targetPos
+		if (!(res = searchForResource(unit, this))) {
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+			return;
+		}
+	}
+
+	if (unit->getCurrSkill()->getClass() != SkillClass::HARVEST) { // if not working
+		if  (!unit->getLoadCount() || (unit->getLoadType() == res->getType()
+		&& unit->getLoadCount() < this->getMaxLoad() / 2)) {
+			// if current load is correct resource type and not more than half loaded, go for resources
+			if (res && this->canHarvest(res->getType())) {
+				switch (theRoutePlanner.findPathToResource(unit, command->getPos(), res->getType())) {
+					case TravelState::ARRIVED:
+						if (map->isResourceNear(unit->getPos(), res->getType(), targetPos)) {
+							// if it finds resources it starts harvesting
+							unit->setCurrSkill(this->getHarvestSkillType());
+							unit->setTargetPos(targetPos);
+							command->setPos(targetPos);
+							unit->face(targetPos);
+							unit->setLoadType(map->getTile(Map::toTileCoords(targetPos))->getResource()->getType());
+						}
+						break;
+					case TravelState::MOVING:
+						unit->setCurrSkill(this->getMoveSkillType());
+						unit->face(unit->getNextPos());
+						break;
+					default:
+						unit->setCurrSkill(SkillClass::STOP);
+						break;
+				}
+			} else { // if can't harvest, search for another resource
+				unit->setCurrSkill(SkillClass::STOP);
+				if (!searchForResource(unit, this)) {
+					unit->finishCommand();
+					//FIXME don't just stand around at the store!!
+					//insert move command here.
+				}
+			}
+		} else { // if load is wrong type, or more than half loaded, return to store
+			Unit *store = theWorld.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
+			if (store) {
+				switch (theRoutePlanner.findPathToStore(unit, store)) {
+					case TravelState::MOVING:
+						unit->setCurrSkill(getMoveLoadedSkill(unit));
+						unit->face(unit->getNextPos());
+						break;
+					case TravelState::BLOCKED:
+						unit->setCurrSkill(getStopLoadedSkill(unit));
+						break;
+					default:
+						; // otherwise, we fall through
+				}
+				if (map->isNextTo(unit->getPos(), store)) {
+					// update resources
+					int resourceAmount = unit->getLoadCount();
+					// Just do this for all players ???
+					if (unit->getFaction()->getCpuUltraControl()) {
+						resourceAmount = (int)(resourceAmount * theGame.getGameSettings().getResourceMultilpier(unit->getFactionIndex()));
+						//resourceAmount *= ultraRes/*/*/*/*/ourceFactor; // Pull from GameSettings
+					}
+					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
+					theWorld.getStats().harvest(unit->getFactionIndex(), resourceAmount);
+					ScriptManager::onResourceHarvested();
+
+					// if next to a store unload resources
+					unit->getPath()->clear();
+					unit->setCurrSkill(SkillClass::STOP);
+					unit->setLoadCount(0);
+				}
+			} else { // no store found, give up
+				unit->finishCommand();
+			}
+		}
+	} else { // if working
+		res = map->getTile(Map::toTileCoords(unit->getTargetPos()))->getResource();
+		if (res) { // if there is a resource, continue working, until loaded
+			if (!this->canHarvest(res->getType())) { // wrong resource type, command changed
+				unit->setCurrSkill(getStopLoadedSkill(unit));
+				unit->getPath()->clear();
+				return;
+			}
+			unit->update2();
+			if (unit->getProgress2() >= this->getHitsPerUnit()) {
+				unit->setProgress2(0);
+				if (unit->getLoadCount() < this->getMaxLoad()) {
+					unit->setLoadCount(unit->getLoadCount() + 1);
+				}
+				// if resource exausted, then delete it and stop (and let the cartographer know)
+				if (res->decAmount(1)) {
+					Vec2i rPos = res->getPos();
+					tile->deleteResource();
+					theWorld.getCartographer()->updateMapMetrics(rPos, GameConstants::cellScale);
+					unit->setCurrSkill(getStopLoadedSkill(unit));
+				}
+				if (unit->getLoadCount() == this->getMaxLoad()) {
+					unit->setCurrSkill(getStopLoadedSkill(unit));
+					unit->getPath()->clear();
+				}
+			}
+		} else { // if there is no resource
+			if (unit->getLoadCount()) {
+				unit->setCurrSkill(getStopLoadedSkill(unit));
+			} else {
+				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+			}
+		}
+	}
+}
 
 }}

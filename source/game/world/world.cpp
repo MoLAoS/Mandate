@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "core_data.h"
 #include "config.h"
 #include "faction.h"
 #include "unit.h"
@@ -27,6 +28,8 @@
 #include "cartographer.h"
 #include "lang_features.h"
 #include "earthquake_type.h"
+#include "renderer.h"
+#include "network_manager.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -115,7 +118,6 @@ void World::init(const XmlNode *worldNode) {
 	// must be done after initMap()
 	routePlanner = new RoutePlanner(this);
 	cartographer = new Cartographer(this);
-	unitUpdater.init(game);
 	
 	if (worldNode) {
 		initExplorationState();
@@ -268,11 +270,44 @@ void World::update() {
 	//water effects
 	waterEffects.update();
 
+	GameInterface *gni = theNetworkManager.getGameInterface();
+
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
 		const Units &units = f->getUnits();
 		for (int i = 0;  i < f->getUnitCount(); ++i) {
-			unitUpdater.updateUnit(f->getUnit(i));
+			//unitUpdater.updateUnit(f->getUnit(i));
+			Unit *unit = f->getUnit(i);
+			if (unit->update()) {
+				const UnitType *ut = unit->getType();
+
+				if (unit->getCurrSkill()->getClass() == SkillClass::FALL_DOWN) {
+					assert(ut->getFirstStOfClass(SkillClass::GET_UP));
+					unit->setCurrSkill(SkillClass::GET_UP);
+				} else if (unit->getCurrSkill()->getClass() == SkillClass::GET_UP) {
+					unit->setCurrSkill(SkillClass::STOP);
+				}
+				gni->doUpdateUnitCommand(unit);
+
+				//move unit in cells
+				if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+					moveUnitCells(unit);
+
+					//play water sound
+					if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
+					&& unit->getCurrField() == Field::LAND
+					&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
+					&& theRenderer.getCuller().isInside(unit->getPos())) {
+						theSoundRenderer.playFx(CoreData::getInstance().getWaterSound());
+					}
+				}
+			}
+
+			//unit death
+			if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
+				unit->kill();
+			}
+			map.assertUnitCells(unit);
 		}
 	}
 
@@ -318,6 +353,99 @@ void World::update() {
 	theNetworkManager.getGameInterface()->frameEnd(frameCount);
 }
 
+
+// to World
+void World::hit(Unit *attacker) {
+	hit(attacker, static_cast<const AttackSkillType*>(attacker->getCurrSkill()), attacker->getTargetPos(), attacker->getTargetField());
+}
+
+void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked) {
+	typedef std::map<Unit*, fixed> DistMap;
+	//hit attack positions
+	if (ast->getSplash() && ast->getSplashRadius()) {
+		Vec2i pos;
+		fixed distance;
+		DistMap hitSet;
+		PosCircularIteratorSimple pci(map.getBounds(), targetPos, ast->getSplashRadius());
+		while (pci.getNext(pos, distance)) {
+			if ((attacked = map.getCell(pos)->getUnit(targetField))
+			&& (hitSet.find(attacked) == hitSet.end() || hitSet[attacked] > distance)) {
+				hitSet[attacked] = distance;
+			}
+		}
+		foreach (DistMap, it, hitSet) {
+			damage(attacker, ast, it->first, it->second);
+			if (ast->isHasEffects()) {
+				applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
+			}
+		}
+	} else {
+		if (!attacked) {
+			attacked = map.getCell(targetPos)->getUnit(targetField);
+		}
+		if (attacked) {
+			damage(attacker, ast, attacked, 0);
+			if (ast->isHasEffects()) {
+				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
+			}
+		}
+	}
+}
+
+// to world
+void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance){
+	//get vars
+	fixed fDamage = attacker->getAttackStrength(ast);
+	//int damage = attacker->getAttackStrength(ast);
+	int var = ast->getAttackVar();
+	int armor = attacked->getArmor();
+
+	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
+							 attacked->getType()->getArmorType());
+	
+	//compute damage
+	fDamage += random.randRange(-var, var);
+	fDamage /= (distance + 1);
+	fDamage -= armor;
+	fDamage *= damageMultiplier;
+	if (fDamage < 1) {
+		fDamage = 1;
+	}
+	int damage = fDamage.intp();
+	int startingHealth = attacked->getHp();
+	int actualDamage;
+	//damage the unit
+	if (attacked->decHp(damage)) {
+		doKill(attacker, attacked);
+		actualDamage = startingHealth;
+	} 
+	else {
+		actualDamage = damage;
+	}
+
+	///@todo make effects stuff fixed point
+
+	//add stolen health to attacker
+	/*
+	if (attacker->getAttackPctStolen(ast) != 0 || ast->getAttackPctVar() != 0) {
+		
+		fixed pct = attacker->getAttackPctStolen(ast)
+				+ random.randRange(-ast->getAttackPctVar(), ast->getAttackPctVar());
+		int stolen = (fixed(actualDamage) * pct).intp();
+		if (stolen && attacker->doRegen(stolen, 0)) {
+			// stealing a negative percentage and dying?
+			world->doKill(attacker, attacker);
+		}
+	}
+	*/
+	//complain
+	/*
+	const Vec3f &attackerVec = attacked->getCurrVector();
+	if (!gui->isVisible(Vec2i((int)roundf(attackerVec.x), (int)roundf(attackerVec.y)))) {
+		attacked->getFaction()->attackNotice(attacked);
+	}*/
+}
+
 void World::doKill(Unit *killer, Unit *killed) {
 	ScriptManager::onUnitDied(killed);
 	int kills = 1 + killed->getPets().size();
@@ -334,6 +462,93 @@ void World::doKill(Unit *killer, Unit *killed) {
 	if ( !killed->isMobile() ) {
 		// obstacle removed
 		cartographer->updateMapMetrics(killed->getPos(), killed->getSize());
+	}
+}
+
+
+// Apply effects to a specific location, with or without splash
+void World::applyEffects(Unit *source, const EffectTypes &effectTypes,
+				const Vec2i &targetPos, Field targetField, int splashRadius) {
+	typedef std::map<Unit*, fixed> DistMap;
+	Unit *target;
+
+	if (splashRadius != 0) {
+		DistMap hitList;
+		DistMap::iterator i;
+		Vec2i pos;
+		fixed distance;
+
+		PosCircularIteratorSimple pci(map.getBounds(), targetPos, splashRadius);
+		while (pci.getNext(pos, distance)) {
+			target = map.getCell(pos)->getUnit(targetField);
+			if (target) {
+				i = hitList.find(target);
+				if (i == hitList.end() || i->second > distance) {
+					hitList[target] = distance;
+				}
+			}
+		}
+		foreach (DistMap, it, hitList) {
+			applyEffects(source, effectTypes, it->first, it->second);
+		}
+	} else {
+		target = map.getCell(targetPos)->getUnit(targetField);
+		if (target) {
+			applyEffects(source, effectTypes, target, 0);
+		}
+	}
+}
+
+//apply effects to a specific target
+void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *target, fixed distance) {
+	//apply effects
+	for (EffectTypes::const_iterator i = effectTypes.begin();
+			i != effectTypes.end(); i++) {
+		// lots of tests, roughly in order of speed of evaluation.
+		if(		// ally/foe test
+				(source->isAlly(target)
+						? (*i)->isEffectsAlly()
+						: (*i)->isEffectsFoe()) &&
+
+				// building/normal unit test
+				(target->getType()->isOfClass(UnitClass::BUILDING)
+						? (*i)->isEffectsBuildings()
+						: (*i)->isEffectsNormalUnits()) &&
+
+				// pet test
+				((*i)->isEffectsPetsOnly()
+						? source->isPet(target)
+						: true) &&
+
+				// random chance test
+				((*i)->getChance() != 100.0f
+						? random.randRange(0.0f, 100.0f) < (*i)->getChance()
+						: true)) {
+
+			
+			fixed strength = (*i)->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
+			Effect *primaryEffect = new Effect((*i), source, NULL, strength, target, &techTree);
+
+			target->add(primaryEffect);
+
+			for (EffectTypes::const_iterator j = (*i)->getRecourse().begin();
+					j != (*i)->getRecourse().end(); j++) {
+				source->add(new Effect((*j), NULL, primaryEffect, strength, source, &techTree));
+			}
+		}
+	}
+}
+
+void World::appyEffect(Unit *u, Effect *e) {
+	if (u->add(e)) {
+		Unit *attacker = e->getSource();
+		if (attacker) {
+			stats.kill(attacker->getFactionIndex(), u->getFactionIndex());
+			attacker->incKills();
+		} else if (e->getRoot()) {
+			// if killed by a recourse effect, this was suicide
+			stats.kill(u->getFactionIndex(), u->getFactionIndex());
+		}
 	}
 }
 
@@ -1142,6 +1357,42 @@ void World::computeFow() {
 void World::hackyCleanUp(Unit *unit) {
 	if (std::find(newlydead.begin(), newlydead.end(), unit) == newlydead.end()) {
 		newlydead.push_back(unit);
+	}
+}
+
+// =====================================================
+//	class ParticleDamager
+// =====================================================
+
+ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera) {
+	this->gameCamera = gameCamera;
+	this->attackerRef = attacker;
+	this->targetRef = target;
+	this->ast = static_cast<const AttackSkillType*>(attacker->getCurrSkill());
+	this->targetPos = attacker->getTargetPos();
+	this->targetField = attacker->getTargetField();
+	this->world = world;
+}
+
+void ParticleDamager::execute(ParticleSystem *particleSystem) {
+	Unit *attacker = attackerRef.getUnit();
+
+	if (attacker) {
+		Unit *target = targetRef.getUnit();
+		if (target) {
+			targetPos = target->getCenteredPos();
+			// manually feed the attacked unit here to avoid problems with cell maps and such
+			world->hit(attacker, ast, targetPos, targetField, target);
+		} else {
+			world->hit(attacker, ast, targetPos, targetField, NULL);
+		}
+
+		//play sound
+		StaticSound *projSound = ast->getProjSound();
+		if (particleSystem->getVisible() && projSound) {
+			SoundRenderer::getInstance().playFx(
+				projSound, Vec3f(float(targetPos.x), 0.f, float(targetPos.y)), gameCamera->getPos());
+		}
 	}
 }
 

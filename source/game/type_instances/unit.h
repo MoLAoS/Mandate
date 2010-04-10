@@ -487,6 +487,7 @@ public:
 	void updateAnimCycle(int animOffset, int soundOffset = -1, int attackOffset = -1);
 
 	bool update();
+	void updateEmanations();
 	void face(const Vec2i &nextPos);
 
 	Unit *tick();
@@ -496,6 +497,7 @@ public:
 	bool morph(const MorphCommandType *mct);
 	CommandResult checkCommand(const Command &command) const;
 	void applyCommand(const Command &command);
+	void startAttackSystems(const AttackSkillType *ast);
 
 	bool add(Effect *e);
 	void remove(Effect *e);

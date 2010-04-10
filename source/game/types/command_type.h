@@ -59,7 +59,7 @@ private:
 public:
 	CommandType(const char* name, CommandClass cc, Clicks clicks, bool queuable = false);
 
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const = 0;
+	virtual void update(Unit *unit) const = 0;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -158,7 +158,7 @@ public:
 class StopCommandType: public StopBaseCommandType {
 public:
 	StopCommandType() : StopBaseCommandType("Stop", CommandClass::STOP, Clicks::ONE) {}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 };
 
 // ===============================
@@ -168,7 +168,7 @@ public:
 class MoveCommandType: public MoveBaseCommandType {
 public:
 	MoveCommandType() : MoveBaseCommandType("Move", CommandClass::MOVE, Clicks::TWO) {}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 };
 
 // ===============================
@@ -211,7 +211,7 @@ public:
 
 	bool updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) const;
 
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 
 public:
 	Command* doAutoAttack(Unit *unit) const;
@@ -232,7 +232,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		AttackCommandTypeBase::getDesc(str, unit);
 	}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 
 public:
 	Command* doAutoAttack(Unit *unit) const;
@@ -258,7 +258,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		buildSkillType->getDesc(str, unit);
 	}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 
 	//get
 	const BuildSkillType *getBuildSkillType() const	{return buildSkillType;}
@@ -287,7 +287,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 
 	//get
 	const MoveSkillType *getMoveLoadedSkillType() const		{return moveLoadedSkillType;}
@@ -316,7 +316,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 
 	//get
 	const RepairSkillType *getRepairSkillType() const	{return repairSkillType;}
@@ -353,7 +353,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
 
@@ -382,7 +382,7 @@ public:
 		upgradeSkillType->getDesc(str, unit);
 		str += "\n" + getProducedUpgrade()->getDesc();
 	}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 
 	//get
 	const UpgradeSkillType *getUpgradeSkillType() const	{return upgradeSkillType;}
@@ -404,7 +404,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
 
@@ -429,7 +429,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	const CastSpellSkillType * getCastSpellSkillType() const	{return castSpellSkillType;}
 
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 };
 
 // ===============================
@@ -445,7 +445,7 @@ public:
 			AttackCommandType(name, commandTypeClass, clicks) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 	int getMaxDistance() const {return maxDistance;}
 };
 
@@ -456,7 +456,7 @@ public:
 class PatrolCommandType: public GuardCommandType {
 public:
 	PatrolCommandType() : GuardCommandType("Patrol", CommandClass::PATROL, Clicks::TWO) {}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const;
+	virtual void update(Unit *unit) const;
 };
 
 
@@ -470,7 +470,7 @@ public:
 			CommandType("SetMeetingPoint", CommandClass::SET_MEETING_POINT, Clicks::TWO) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {return true;}
 	virtual void getDesc(string &str, const Unit *unit) const {}
-	virtual void update(UnitUpdater *unitUpdater, Unit *unit) const {
+	virtual void update(Unit *unit) const {
 		throw std::runtime_error("Set meeting point command in queue. Thats wrong.");
 	}
 };

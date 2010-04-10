@@ -24,10 +24,11 @@
 #include "graphics_interface.h"
 #include "tech_tree.h"
 #include "faction_type.h"
-#include "unit_updater.h"
 #include "renderer.h"
 #include "world.h"
+#include "game.h"
 #include "route_planner.h"
+#include "script_manager.h"
 
 #include "leak_dumper.h"
 #include "logger.h"
@@ -150,7 +151,7 @@ Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
 // 	class MoveCommandType
 // =====================================================
 
-void MoveCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void MoveCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
@@ -214,7 +215,7 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 // 	class StopCommandType
 // =====================================================
 
-void StopCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void StopCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
@@ -282,12 +283,51 @@ const ProducibleType *ProduceCommandType::getProduced() const{
 	return producedUnit;
 }
 
+/// 0: start, 1: produce, 2: finsh (ok), 3: cancel (could not place new unit)
+void ProduceCommandType::update(Unit *unit) const {
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	
+	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
+		//if not producing
+		unit->setCurrSkill(produceSkillType);
+	} else {
+		unit->update2();
+
+		if (unit->getProgress2() > producedUnit->getProductionTime()) {
+			Unit *produced = new Unit(theWorld.getNextUnitId(), Vec2i(0), producedUnit, unit->getFaction(), theWorld.getMap());
+			if (!theWorld.placeUnit(unit->getCenteredPos(), 10, produced)) {
+				unit->cancelCurrCommand();
+				delete produced;
+			} else {
+				produced->create();
+				produced->born();
+				ScriptManager::onUnitCreated(produced);
+				theWorld.getStats().produce(unit->getFactionIndex());
+				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
+
+				if (ct) {
+					produced->giveCommand(new Command(ct, CommandFlags(), unit->getMeetingPos()));
+				}
+
+				if (getProduceSkillType()->isPet()) {
+					unit->addPet(produced);
+					produced->setMaster(unit);
+				}
+
+				unit->finishCommand();
+			}
+
+			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
+}
+
 // =====================================================
 // 	class UpgradeCommandType
 // =====================================================
 
-bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-
+bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
 	//upgrade
@@ -314,12 +354,30 @@ void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 	checksum.add(producedUpgrade->getName());
 }
 
-string UpgradeCommandType::getReqDesc() const{
+string UpgradeCommandType::getReqDesc() const {
 	return RequirableType::getReqDesc()+"\n"+getProducedUpgrade()->getReqDesc();
 }
 
-const ProducibleType *UpgradeCommandType::getProduced() const{
+const ProducibleType *UpgradeCommandType::getProduced() const {
 	return producedUpgrade;
+}
+
+void UpgradeCommandType::update(Unit *unit) const {
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+
+	if (unit->getCurrSkill()->getClass() != SkillClass::UPGRADE) {
+		//if not producing
+		unit->setCurrSkill(upgradeSkillType);
+	} else {
+		//if producing
+		unit->update2();
+		if (unit->getProgress2() >= producedUpgrade->getProductionTime()) {
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+			unit->getFaction()->finishUpgrade(producedUpgrade);
+		}
+	}
 }
 
 // =====================================================
@@ -379,6 +437,58 @@ string MorphCommandType::getReqDesc() const{
 
 const ProducibleType *MorphCommandType::getProduced() const{
 	return morphUnit;
+}
+
+void MorphCommandType::update(Unit *unit) const {
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	const Map *map = theWorld.getMap();
+
+	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
+		//if not morphing, check space
+		// determine morph unit field
+		Fields mfs = morphUnit->getFields();
+		Field mf;
+		if (mfs.get(Field::LAND)) mf = Field::LAND;
+		else if (mfs.get(Field::AIR)) mf = Field::AIR;
+		if (mfs.get(Field::AMPHIBIOUS)) mf = Field::AMPHIBIOUS;
+		else if (mfs.get(Field::ANY_WATER)) mf = Field::ANY_WATER;
+		else if (mfs.get(Field::DEEP_WATER)) mf = Field::DEEP_WATER;
+
+		if (map->areFreeCellsOrHasUnit (unit->getPos(), morphUnit->getSize(), mf, unit)) {
+			unit->setCurrSkill(morphSkillType);
+			unit->getFaction()->checkAdvanceSubfaction(morphUnit, false);
+		} else {
+			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+				theConsole.addStdMessage("InvalidPosition");
+			}
+			unit->cancelCurrCommand();
+		}
+	} else {
+		unit->update2();
+		if (unit->getProgress2() > morphUnit->getProductionTime()) {
+			bool mapUpdate = unit->isMobile() != morphUnit->isMobile();
+			int biggerSize = std::max(unit->getSize(), morphUnit->getSize());
+			//finish the command
+			if (unit->morph(this)) {
+				unit->finishCommand();
+				if (theGui.isSelected(unit)) {
+					theGui.onSelectionChanged();
+				}
+				ScriptManager::onUnitCreated(unit);
+				if (mapUpdate) {
+					// obstacle added or removed, update annotated maps
+					theWorld.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
+				}
+			} else {
+				unit->cancelCurrCommand();
+				if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+					theConsole.addStdMessage("InvalidPosition");
+				}
+			}
+			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
 }
 
 // =====================================================
@@ -517,18 +627,8 @@ CommandTypeFactory &CommandTypeFactory::getInstance(){
 	return ctf;
 }
 
-//
-//REFACTOR: Command updates that haven't been moved yet
-//
-#define STILL_IN_UNIT_UPDATER(X) \
-	void X##CommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {	\
-		unitUpdater->update##X(unit);											\
-	}
-STILL_IN_UNIT_UPDATER( Build )
-STILL_IN_UNIT_UPDATER( Harvest )
-STILL_IN_UNIT_UPDATER( Produce )
-STILL_IN_UNIT_UPDATER( Upgrade )
-STILL_IN_UNIT_UPDATER( Morph )
-STILL_IN_UNIT_UPDATER( CastSpell )
+void CastSpellCommandType::update(Unit *unit) const {
+	//surprise! it never got implemented
+}
 
 }}//end namespace

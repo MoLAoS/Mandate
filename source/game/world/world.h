@@ -27,7 +27,6 @@
 #include "upgrade.h"
 #include "water_effects.h"
 #include "faction.h"
-#include "unit_updater.h"
 #include "random.h"
 #include "game_constants.h"
 #include "pos_iterator.h"
@@ -76,7 +75,6 @@ private:
 	Game &game;
 	const GameSettings &gs;
 
-	UnitUpdater unitUpdater;
 	WaterEffects waterEffects;
 	Minimap minimap;
 	Stats stats;
@@ -173,6 +171,16 @@ public:
 			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
 	}
 
+	// attack
+	void hit(Unit *attacker);
+	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked = NULL);
+	void damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance);
+
+	// effects
+	void applyEffects(Unit *source, const EffectTypes &effectTypes, const Vec2i &targetPos, Field targetField, int splashRadius);
+	void applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *dest, fixed distance);
+	void appyEffect(Unit *unit, Effect *effect);
+
 	//scripting interface
 	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
 	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
@@ -218,6 +226,28 @@ private:
 	void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
 	void doHackyCleanUp();
 };
+
+class GameCamera;
+
+// =====================================================
+//	class ParticleDamager
+// =====================================================
+
+class ParticleDamager {
+public:
+	UnitReference attackerRef;
+	const AttackSkillType* ast;
+	World *world;
+	const GameCamera *gameCamera;
+	Vec2i targetPos;
+	Field targetField;
+	UnitReference targetRef;
+
+public:
+	ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera);
+	void execute(ParticleSystem *particleSystem);
+};
+
 
 }}//end namespace
 

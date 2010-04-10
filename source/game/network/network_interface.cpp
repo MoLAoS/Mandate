@@ -25,6 +25,7 @@
 #include "network_util.h"
 #include "network_message.h"
 #include "script_manager.h"
+#include "command.h"
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
@@ -108,7 +109,7 @@ void GameInterface::processTextMessage(NetworkMessageText &msg) {
 	}
 }
 
-void GameInterface::doUpdateUnitCommand(UnitUpdater *uu, Unit *unit) {
+void GameInterface::doUpdateUnitCommand(Unit *unit) {
 	const SkillType *old_st = unit->getCurrSkill();
 
 	//commands aren't updated for these skills
@@ -127,7 +128,7 @@ void GameInterface::doUpdateUnitCommand(UnitUpdater *uu, Unit *unit) {
 			// Trigger Time...
 			ScriptManager::commandCallback(unit);
 		}
-		unit->getCurrCommand()->getType()->update(uu, unit);
+		unit->getCurrCommand()->getType()->update(unit);
 	}
 
 	//if no commands stop and add stop command or guard command for pets

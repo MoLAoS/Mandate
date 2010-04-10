@@ -16,11 +16,12 @@
 #include "projectConfig.h"
 
 #ifdef USE_SDL
-	#include <SDL.h>
-	#include <SDL_thread.h>
+#	include <SDL.h>
+#	include <SDL_thread.h>
 #endif
 #if defined(WIN32)  || defined(WIN64)
-	#include <windows.h>
+#	define NOMINMAX
+#	include <windows.h>
 #endif
 
 namespace Shared { namespace Platform {

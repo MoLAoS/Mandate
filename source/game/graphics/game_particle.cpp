@@ -15,7 +15,6 @@
 #include "particle_renderer.h"
 #include "logger.h"
 #include "world.h"
-#include "unit_updater.h"
 
 #define PARTICLE_LOG(x) {}//{ theLogger.add(intToStr(theWorld.getFrameCount()) + " :: " + x); }
 

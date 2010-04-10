@@ -16,6 +16,7 @@
 #include <cassert>
 #include <climits>
 
+#include "command.h"
 #include "upgrade_type.h"
 #include "unit_type.h"
 #include "sound.h"
@@ -24,7 +25,6 @@
 #include "graphics_interface.h"
 #include "tech_tree.h"
 #include "faction_type.h"
-#include "unit_updater.h"
 #include "renderer.h"
 #include "world.h"
 #include "route_planner.h"
@@ -104,7 +104,7 @@ const AttackSkillType * AttackCommandTypeBase::getAttackSkillType(Field field) c
 // 	class AttackCommandType
 // =====================================================
 
-/** Update helper for attack based commands that included a move skill (sub classes of AttackCommandType).
+/** Update helper for attack based commands that includes a move skill (sub classes of AttackCommandType).
   * @returns true when completed */
 bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, 
 									  Unit* target, const Vec2i &targetPos) const {
@@ -175,7 +175,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 	}
 }
 
-void AttackCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void AttackCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *target = command->getUnit();
@@ -205,7 +205,7 @@ Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 // 	class AttackStoppedCommandType
 // =====================================================
 
-void AttackStoppedCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void AttackStoppedCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *enemy = NULL;
@@ -238,7 +238,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 // 	class PatrolCommandType
 // =====================================================
 
-void PatrolCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void PatrolCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *target = command->getUnit();
@@ -270,7 +270,7 @@ void PatrolCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
 // 	class GuardCommandType
 // =====================================================
 
-void GuardCommandType::update(UnitUpdater *unitUpdater, Unit *unit) const {
+void GuardCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *target = command->getUnit();

@@ -264,9 +264,9 @@ void PixmapIoBmp::read(uint8 *pixels, int components){
 	file->read(buf, dataSize, 1);
 
     for(int i=0; i < dataSize; i += components) {
-		uint8	&r = *(buf + i),
+		uint8	&b = *(buf + i),
 				&g = *(buf + i + 1),
-				&b = *(buf + i + 2);
+				&r = *(buf + i + 2);
 		//file->read(&b, 1, 1);
 		//file->read(&g, 1, 1);
 		//file->read(&r, 1, 1);

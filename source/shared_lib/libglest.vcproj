@@ -118,7 +118,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="../../../deps/include;..;include;include/physfs;include/graphics;include/graphics/gl;include/platform;include/platform/win32;include/sound;include/sound/ds8;include/util;include/xml;include/lua;include/math;include/tinyxml"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;XML_LIBRARY;USE_PCH=1"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;XML_LIBRARY;USE_PCH=0;USE_PHYSFS=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="true"

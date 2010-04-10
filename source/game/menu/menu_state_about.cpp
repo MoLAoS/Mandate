@@ -17,6 +17,7 @@
 #include "sound_renderer.h"
 #include "core_data.h"
 #include "menu_state_options.h"
+#include "game_util.h"
 
 #include "leak_dumper.h"
 

@@ -15,6 +15,7 @@
 #include "renderer.h"
 #include "sound_renderer.h"
 #include "core_data.h"
+#include "game_util.h"
 #include "config.h"
 #include "menu_state_new_game.h"
 #include "menu_state_join_game.h"

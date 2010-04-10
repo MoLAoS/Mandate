@@ -26,6 +26,9 @@
 #include "renderer.h"
 #include "script_manager.h"
 #include "cartographer.h"
+#include "game.h"
+#include "earthquake_type.h"
+#include "sound_renderer.h"
 
 #include "leak_dumper.h"
 #include "network_util.h"
@@ -552,6 +555,84 @@ void Unit::face(const Vec2i &nextPos) {
 	targetRotation = radToDeg(atan2f(relPosf.x, relPosf.y));
 }
 
+void Unit::startAttackSystems(const AttackSkillType *ast) {
+	Renderer &renderer = Renderer::getInstance();
+
+	ProjectileParticleSystem *psProj = 0;
+	SplashParticleSystem *psSplash;
+
+	ParticleSystemTypeProjectile *pstProj = ast->getProjParticleType();
+	ParticleSystemTypeSplash *pstSplash = ast->getSplashParticleType();
+
+	Vec3f startPos = this->getCurrVector();
+	Vec3f endPos = this->getTargetVec();
+
+	//make particle system
+	const Tile *sc = map->getTile(Map::toTileCoords(this->getPos()));
+	const Tile *tsc = map->getTile(Map::toTileCoords(this->getTargetPos()));
+	bool visible = sc->isVisible(theWorld.getThisTeamIndex()) || tsc->isVisible(theWorld.getThisTeamIndex());
+
+	//projectile
+	if (pstProj != NULL) {
+		psProj = pstProj->createProjectileParticleSystem();
+
+		switch (pstProj->getStart()) {
+			case ParticleSystemTypeProjectile::psSelf:
+				break;
+
+			case ParticleSystemTypeProjectile::psTarget:
+				startPos = this->getTargetVec();
+				break;
+
+			case ParticleSystemTypeProjectile::psSky: {
+					Random random(id);
+					float skyAltitude = 30.f;
+					startPos = endPos;
+					startPos.x += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
+					startPos.y += skyAltitude;
+					startPos.z += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
+				}
+				break;
+		}
+
+		// game network interface calls setPath() on psProj, differently for clients/servers
+		theNetworkManager.getGameInterface()->doUpdateProjectile(this, psProj, startPos, endPos);
+		
+		if(pstProj->isTracking() && this->getTarget()) {
+			psProj->setTarget(this->getTarget());
+			psProj->setDamager(new ParticleDamager(this, this->getTarget(), &theWorld, theGame.getGameCamera()));
+		} else {
+			psProj->setDamager(new ParticleDamager(this, NULL, &theWorld, theGame.getGameCamera()));
+		}
+		psProj->setVisible(visible);
+		renderer.manageParticleSystem(psProj, rsGame);
+	} else {
+		theWorld.hit(this);
+	}
+
+	//splash
+	if (pstSplash != NULL) {
+		psSplash = pstSplash->createSplashParticleSystem();
+		psSplash->setPos(endPos);
+		psSplash->setVisible(visible);
+		renderer.manageParticleSystem(psSplash, rsGame);
+		if (pstProj != NULL) {
+			psProj->link(psSplash);
+		}
+	}
+
+	const EarthquakeType *et = ast->getEarthquakeType();
+	if (et) {
+		et->spawn(*map, this, this->getTargetPos(), 1.f);
+		if (et->getSound()) {
+			// play rather visible or not
+			theSoundRenderer.playFx(et->getSound(), getTargetVec(), theGame.getGameCamera()->getPos());
+		}
+		// FIXME: hacky mechanism of keeping attackers from walking into their own earthquake :(
+		this->finishCommand();
+	}
+}
+
 // =============================== Render related ==================================
 /*
 Vec3f Unit::getCurrVectorFlat() const {
@@ -982,6 +1063,35 @@ void Unit::updateMoveSkillCycle() {
 /** @return true when the current skill has completed a cycle */
 bool Unit::update() {
 	_PROFILE_FUNCTION();
+	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
+	GameInterface *gni = theNetworkManager.getGameInterface();
+
+	// start skill sound ?
+	if (currSkill->getSound()) {
+		if (theWorld.getFrameCount() == getSoundStartFrame()) {
+			if (map->getTile(Map::toTileCoords(getPos()))->isVisible(theWorld.getThisTeamIndex())) {
+				soundRenderer.playFx(currSkill->getSound(), getCurrVector(), theGame.getGameCamera()->getPos());
+			}
+		}
+	}
+
+	// start attack systems ?
+	if (currSkill->getClass() == SkillClass::ATTACK
+	&& getNextAttackFrame() == theWorld.getFrameCount()) {
+		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
+	}
+
+	// update anim cycle ?
+	if (theWorld.getFrameCount() >= getNextAnimReset()) {
+		// new anim cycle (or reset)
+		gni->doUpdateAnim(this);
+	}
+
+	// update emanations every 8 frames
+	if (this->getEmanations().size() && !((theWorld.getFrameCount() + id) % 8) && isOperative()) {
+		updateEmanations();
+	}
+
 	//highlight
 	if(highlight > 0.f) {
 		highlight -= 1.f / (GameConstants::highlightTime * WORLD_FPS);
@@ -1003,12 +1113,11 @@ bool Unit::update() {
 			}
 		}
 	}
-	// check for cycle completion
-	
+	// check for cycle completion	
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead
-	if (theWorld.getFrameCount() >= this->getNextCommandUpdate()) {
+	if (theWorld.getFrameCount() >= getNextCommandUpdate()) {
 		lastRotation = targetRotation;
-		if(currSkill->getClass() != SkillClass::DIE) {
+		if (currSkill->getClass() != SkillClass::DIE) {
 			return true;
 		} else {
 			deadCount++;
@@ -1018,6 +1127,17 @@ bool Unit::update() {
 		}
 	}
 	return false;
+}
+
+//REFACOR: to Emanation::update() called from Unit::update()
+void Unit::updateEmanations() {
+	// This is a little hokey, but probably the best way to reduce redundant code
+	static EffectTypes singleEmanation(1);
+	foreach_const (Emanations, i, getEmanations()) {
+		singleEmanation[0] = *i;
+		theWorld.applyEffects(this, singleEmanation, pos, Field::LAND, (*i)->getRadius());
+		theWorld.applyEffects(this, singleEmanation, pos, Field::AIR, (*i)->getRadius());
+	}
 }
 
 /**
