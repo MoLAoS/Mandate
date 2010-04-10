@@ -11,7 +11,7 @@
 
 #include "pch.h"
 #include "program.h"
-
+#include "map_maker.h"
 #include "util.h"
 
 using namespace Shared::Util;
@@ -145,8 +145,8 @@ Map *Program::map = NULL;
 
 Program::Program(int w, int h) {
 	cellSize = 6;
-	ofsetX = 0;
-	ofsetY = 0;
+	offsetX = 0;
+	offsetY = 0;
 	map = new Map();
 	renderer.init(w, h);
 }
@@ -156,8 +156,8 @@ Program::~Program() {
 }
 
 int Program::getObject(int x, int y) {
-	int i = (x - ofsetX) / cellSize;
-	int j = (y + ofsetY) / cellSize;
+	int i = (x - offsetX) / cellSize;
+	int j = (y + offsetY) / cellSize;
 	if (map->inside(i, j)) {
 		return map->getObject(i,j);
 	}else{
@@ -166,8 +166,8 @@ int Program::getObject(int x, int y) {
 }
 
 int Program::getResource(int x, int y) {
-	int i = (x - ofsetX) / cellSize;
-	int j = (y + ofsetY) / cellSize;
+	int i = (x - offsetX) / cellSize;
+	int j = (y + offsetY) / cellSize;
 	if (map->inside(i, j)) {
 		return map->getResource(i,j);
 	} else {
@@ -176,27 +176,27 @@ int Program::getResource(int x, int y) {
 }
 
 void Program::glestChangeMapHeight(int x, int y, int Height, int radius) {
-	map->glestChangeHeight((x - ofsetX) / cellSize, (y + ofsetY) / cellSize, Height, radius);
+	map->glestChangeHeight((x - offsetX) / cellSize, (y + offsetY) / cellSize, Height, radius);
 }
 
 void Program::pirateChangeMapHeight(int x, int y, int Height, int radius) {
-	map->pirateChangeHeight((x - ofsetX) / cellSize, (y + ofsetY) / cellSize, Height, radius);
+	map->pirateChangeHeight((x - offsetX) / cellSize, (y + offsetY) / cellSize, Height, radius);
 }
 
 void Program::changeMapSurface(int x, int y, int surface, int radius) {
-	map->changeSurface((x - ofsetX) / cellSize, (y + ofsetY) / cellSize, surface, radius);
+	map->changeSurface((x - offsetX) / cellSize, (y + offsetY) / cellSize, surface, radius);
 }
 
 void Program::changeMapObject(int x, int y, int object, int radius) {
-	map->changeObject((x - ofsetX) / cellSize, (y + ofsetY) / cellSize, object, radius);
+	map->changeObject((x - offsetX) / cellSize, (y + offsetY) / cellSize, object, radius);
 }
 
 void Program::changeMapResource(int x, int y, int resource, int radius) {
-	map->changeResource((x - ofsetX) / cellSize, (y + ofsetY) / cellSize, resource, radius);
+	map->changeResource((x - offsetX) / cellSize, (y + offsetY) / cellSize, resource, radius);
 }
 
 void Program::changeStartLocation(int x, int y, int player) {
-	map->changeStartLocation((x - ofsetX) / cellSize, (y + ofsetY) / cellSize, player);
+	map->changeStartLocation((x - offsetX) / cellSize, (y + offsetY) / cellSize, player);
 }
 
 void Program::setUndoPoint(ChangeType change) {
@@ -235,11 +235,11 @@ bool Program::redo() {
 }
 
 void Program::renderMap(int w, int h) {
-	renderer.renderMap(map, ofsetX, ofsetY, w, h, cellSize);
+	renderer.renderMap(map, offsetX, offsetY, w, h, cellSize);
 }
 
 void Program::setRefAlt(int x, int y) {
-	map->setRefAlt((x - ofsetX) / cellSize, (y + ofsetY) / cellSize);
+	map->setRefAlt((x - offsetX) / cellSize, (y + offsetY) / cellSize);
 }
 
 void Program::flipX() {
@@ -255,7 +255,10 @@ void Program::randomizeMapHeights() {
 }
 
 void Program::randomizeMap() {
-	map->randomize();
+	///@todo show dialog with parameters
+	MapMaker mm(map);
+	///@todo pass parameters
+	mm.randomize();
 }
 
 void Program::switchMapSurfaces(int surf1, int surf2) {
@@ -300,9 +303,9 @@ bool Program::setMapAuthor(const string &author) {
 	return false;
 }
 
-void Program::setOfset(int x, int y) {
-	ofsetX += x;
-	ofsetY -= y;
+void Program::setOffset(int x, int y) {
+	offsetX += x;
+	offsetY -= y;
 }
 
 void Program::incCellSize(int i) {
@@ -313,13 +316,13 @@ void Program::incCellSize(int i) {
 		i = minInc;
 	}
 	cellSize += i;
-	ofsetX -= (map->getW() * i) / 2;
-	ofsetY += (map->getH() * i) / 2;
+	offsetX -= (map->getW() * i) / 2;
+	offsetY += (map->getH() * i) / 2;
 }
 
-void Program::resetOfset() {
-	ofsetX = 0;
-	ofsetY = 0;
+void Program::resetOffset() {
+	offsetX = 0;
+	offsetY = 0;
 	cellSize = 6;
 }
 

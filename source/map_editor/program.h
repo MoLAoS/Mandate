@@ -90,7 +90,7 @@ class Program {
 	friend class UndoPoint;
 private:
 	Renderer renderer;
-	int ofsetX, ofsetY;
+	int offsetX, offsetY;
 	int cellSize;
 	static Map *map;
 
@@ -133,9 +133,11 @@ public:
 
 	//misc
 	void renderMap(int w, int h);
-	void setOfset(int x, int y);
+	void setOffset(int x, int y);
 	void incCellSize(int i);
-	void resetOfset();
+	int getCellSize() const { return cellSize;	}
+	void setCellSize(int s) { cellSize = s;		}
+	void resetOffset();
 
 	int getObject(int x, int y);
 	int getResource(int x, int y);

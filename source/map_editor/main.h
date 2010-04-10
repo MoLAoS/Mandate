@@ -135,6 +135,7 @@ private:
 	wxPanel *panel;
 	
 	wxTimer *timer;
+	wxToolBar *toolbar, *toolbar2;
 
 	wxMenuBar *menuBar;
 	wxMenu *menuFile;
@@ -148,6 +149,8 @@ private:
 	wxMenu *menuBrushObject;
 	wxMenu *menuBrushResource;
 	wxMenu *menuBrushStartLocation;
+	wxMenuItem *miStartPos[startLocationCount];
+	wxBitmap *bmStartPos[startLocationCount];
 	wxMenu *menuRadius;
 
 	string currentFile;
@@ -225,6 +228,15 @@ private:
 	bool isDirty() const	{ return fileModified; }
 	void setDirty(bool val=true);
 	void setExtension();
+
+	void buildStartPosMenu(size_t n);
+	void buildMenuBar();
+	void buildToolBars();
+	void buildStatusBar();
+
+	void setFactionCount();
+
+	void centreMap();
 };
 
 // =====================================================

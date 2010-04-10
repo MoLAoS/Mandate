@@ -26,7 +26,7 @@ using namespace Shared::Util;
 
 namespace MapEditor {
 
-const string MainWindow::versionString = "v1.5.0-beta3";
+const string MainWindow::versionString = "v1.5.0";
 const string MainWindow::winHeader = "Glest Map Editor " + versionString + " - Built: " + __DATE__;
 
 // ===============================================
@@ -57,6 +57,7 @@ MainWindow::MainWindow()
 		, startLocation(1)
 		, enabledGroup(ctHeight)
 		, fileModified(false) {
+	fileName = "New (unsaved) map";
 
 	this->panel = new wxPanel(this, wxID_ANY);
 
@@ -64,6 +65,27 @@ MainWindow::MainWindow()
 	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
 	glCanvas = new GlCanvas(this, this->panel, args);
 
+	buildMenuBar();
+	buildToolBars();
+	buildStatusBar();
+
+	wxBoxSizer *boxsizer = new wxBoxSizer(wxVERTICAL);
+	boxsizer->Add(toolbar, 0, wxEXPAND);
+	boxsizer->Add(toolbar2, 0, wxEXPAND);
+	boxsizer->Add(glCanvas, 1, wxEXPAND);
+
+	panel->SetSizer(boxsizer);
+	panel->Layout();
+
+#ifndef WIN32
+	timer = new wxTimer(this);
+	timer->Start(100);
+#endif
+
+	glCanvas->SetFocus();
+}
+
+void MainWindow::buildMenuBar() {
 	//menus
 	menuBar = new wxMenuBar();
 
@@ -155,32 +177,41 @@ MainWindow::MainWindow()
 	menuBrushResource->AppendCheckItem(miBrushResource+6, wxT("&5 - custom"));
 	menuBrush->Append(miBrushResource, wxT("&Resource"), menuBrushResource);
 
+	bmStartPos[0] = new wxBitmap(brush_players_red);
+	bmStartPos[1] = new wxBitmap(brush_players_blue);
+	bmStartPos[2] = new wxBitmap(brush_players_green);
+	bmStartPos[3] = new wxBitmap(brush_players_yellow);
+	bmStartPos[4] = new wxBitmap(brush_players_white);
+	bmStartPos[5] = new wxBitmap(brush_players_cyan);
+	bmStartPos[6] = new wxBitmap(brush_players_orange);
+	bmStartPos[7] = new wxBitmap(brush_players_pink);
+
 	//players
 	menuBrushStartLocation = new wxMenu();
-	wxMenuItem *pmi1 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 1, wxT("&1 - Player 1"));
-	pmi1->SetBitmap(wxBitmap(brush_players_red));
-	menuBrushStartLocation->Append(pmi1);
-	wxMenuItem *pmi2 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 2, wxT("&2 - Player 2"));
-	pmi2->SetBitmap(wxBitmap(brush_players_blue));
-	menuBrushStartLocation->Append(pmi2);
-	wxMenuItem *pmi3 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 3, wxT("&3 - Player 3"));
-	pmi3->SetBitmap(wxBitmap(brush_players_green));
-	menuBrushStartLocation->Append(pmi3);
-	wxMenuItem *pmi4 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 4, wxT("&4 - Player 4"));
-	pmi4->SetBitmap(wxBitmap(brush_players_yellow));
-	menuBrushStartLocation->Append(pmi4);
-	wxMenuItem *pmi5 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 5, wxT("&5 - Player 5"));
-	pmi5->SetBitmap(wxBitmap(brush_players_white));
-	menuBrushStartLocation->Append(pmi5);
-	wxMenuItem *pmi6 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 6, wxT("&6 - Player 6"));
-	pmi6->SetBitmap(wxBitmap(brush_players_cyan));
-	menuBrushStartLocation->Append(pmi6);
-	wxMenuItem *pmi7 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 7, wxT("&7 - Player 7"));
-	pmi7->SetBitmap(wxBitmap(brush_players_orange));
-	menuBrushStartLocation->Append(pmi7);
-	wxMenuItem *pmi8 = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 8, wxT("&8 - Player 8"));
-	pmi8->SetBitmap(wxBitmap(brush_players_pink));
-	menuBrushStartLocation->Append(pmi8);
+	miStartPos[0] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 1, wxT("&1 - Player 1"));
+	miStartPos[0]->SetBitmap(*bmStartPos[0]);
+	menuBrushStartLocation->Append(miStartPos[0]);
+	miStartPos[1] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 2, wxT("&2 - Player 2"));
+	miStartPos[1]->SetBitmap(*bmStartPos[1]);
+	menuBrushStartLocation->Append(miStartPos[1]);
+	miStartPos[2] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 3, wxT("&3 - Player 3"));
+	miStartPos[2]->SetBitmap(*bmStartPos[2]);
+	menuBrushStartLocation->Append(miStartPos[2]);
+	miStartPos[3] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 4, wxT("&4 - Player 4"));
+	miStartPos[3]->SetBitmap(*bmStartPos[3]);
+	menuBrushStartLocation->Append(miStartPos[3]);
+	miStartPos[4] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 5, wxT("&5 - Player 5"));
+	miStartPos[4]->SetBitmap(*bmStartPos[4]);
+	menuBrushStartLocation->Append(miStartPos[4]);
+	miStartPos[5] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 6, wxT("&6 - Player 6"));
+	miStartPos[5]->SetBitmap(*bmStartPos[5]);
+	menuBrushStartLocation->Append(miStartPos[5]);
+	miStartPos[6] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 7, wxT("&7 - Player 7"));
+	miStartPos[6]->SetBitmap(*bmStartPos[6]);
+	menuBrushStartLocation->Append(miStartPos[6]);
+	miStartPos[7] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 8, wxT("&8 - Player 8"));
+	miStartPos[7]->SetBitmap(*bmStartPos[7]);
+	menuBrushStartLocation->Append(miStartPos[7]);
 	menuBrush->Append(miBrushStartLocation, wxT("&Player"), menuBrushStartLocation);
 	menuBar->Append(menuBrush, wxT("&Brush"));
 
@@ -191,30 +222,11 @@ MainWindow::MainWindow()
 	}
 	menuRadius->Check(miRadius + 1, true);
 	menuBar->Append(menuRadius, wxT("&Radius"));
-
 	SetMenuBar(menuBar);
+}
 
-	fileName = "New (unsaved) map";
-	int status_widths[StatusItems::COUNT] = {
-		10, // empty
-		-2, // File name
-		-1, // File type
-		-2, // Current Object
-		-2, // Brush Type
-		-2, // Brush 'Value'
-		-1, // Brush Radius
-	};
-	CreateStatusBar(StatusItems::COUNT);
-	GetStatusBar()->SetStatusWidths(StatusItems::COUNT, status_widths);
-
-	SetStatusText(wxT("File: ") + ToUnicode(fileName), StatusItems::FILE_NAME);
-	SetStatusText(wxT(".gbm"), StatusItems::FILE_TYPE);
-	SetStatusText(wxT("Object: None (Erase)"), StatusItems::CURR_OBJECT);
-	SetStatusText(wxT("Brush: Height"), StatusItems::BRUSH_TYPE);
-	SetStatusText(wxT("Value: 0"), StatusItems::BRUSH_VALUE);
-	SetStatusText(wxT("Radius: 1"), StatusItems::BRUSH_RADIUS);
-
-	wxToolBar *toolbar = new wxToolBar(this->panel, wxID_ANY);
+void MainWindow::buildToolBars() {
+	toolbar = new wxToolBar(this->panel, wxID_ANY);
 	toolbar->AddTool(miEditUndo, _("undo"), wxBitmap(edit_undo), _("Undo"));
 	toolbar->AddTool(miEditRedo, _("redo"), wxBitmap(edit_redo), _("Redo"));
 	toolbar->AddTool(miEditRandomizeHeights, _("randomizeHeights"), wxBitmap(edit_randomize_heights), _("Randomize Heights"));
@@ -248,7 +260,7 @@ MainWindow::MainWindow()
 	toolbar->AddTool(toolPlayer, _("brush_player"), wxBitmap(brush_players_player));
 	toolbar->Realize();
 
-	wxToolBar *toolbar2 = new wxToolBar(this->panel, wxID_ANY);
+	toolbar2 = new wxToolBar(this->panel, wxID_ANY);
 	toolbar2->AddTool(miBrushGradient + 1, _("brush_gradient_n5"), wxBitmap(brush_gradient_n5));
 	toolbar2->AddTool(miBrushGradient + 2, _("brush_gradient_n4"), wxBitmap(brush_gradient_n4));
 	toolbar2->AddTool(miBrushGradient + 3, _("brush_gradient_n3"), wxBitmap(brush_gradient_n3));
@@ -283,20 +295,28 @@ MainWindow::MainWindow()
 	toolbar2->AddTool(miRadius + 8, _("radius8"), wxBitmap(radius_8));
 	toolbar2->AddTool(miRadius + 9, _("radius9"), wxBitmap(radius_9));
 	toolbar2->Realize();
-	
-	wxBoxSizer *boxsizer = new wxBoxSizer(wxVERTICAL);
-	boxsizer->Add(toolbar, 0, wxEXPAND);
-	boxsizer->Add(toolbar2, 0, wxEXPAND);
-	boxsizer->Add(glCanvas, 1, wxEXPAND);
-	
-	this->panel->SetSizer(boxsizer);
-	this->Layout();
+}
 
-#ifndef WIN32
-	timer = new wxTimer(this);
-	timer->Start(100);
-#endif
-	glCanvas->SetFocus();
+
+void MainWindow::buildStatusBar() {
+	int status_widths[StatusItems::COUNT] = {
+		10, // empty
+		-2, // File name
+		-1, // File type
+		-2, // Current Object
+		-2, // Brush Type
+		-2, // Brush 'Value'
+		-1, // Brush Radius
+	};
+	CreateStatusBar(StatusItems::COUNT);
+	GetStatusBar()->SetStatusWidths(StatusItems::COUNT, status_widths);
+
+	SetStatusText(wxT("File: ") + ToUnicode(fileName), StatusItems::FILE_NAME);
+	SetStatusText(wxT(".gbm"), StatusItems::FILE_TYPE);
+	SetStatusText(wxT("Object: None (Erase)"), StatusItems::CURR_OBJECT);
+	SetStatusText(wxT("Brush: Height"), StatusItems::BRUSH_TYPE);
+	SetStatusText(wxT("Value: 0"), StatusItems::BRUSH_VALUE);
+	SetStatusText(wxT("Radius: 1"), StatusItems::BRUSH_RADIUS);
 }
 
 void MainWindow::onToolPlayer(wxCommandEvent& event){
@@ -316,6 +336,49 @@ void MainWindow::init(string fname) {
 	SetTitle(ToUnicode(winHeader + "; " + currentFile));
 	setDirty(false);
 	setExtension();
+	centreMap();
+	setFactionCount();
+}
+
+void MainWindow::centreMap() {
+	const wxSize canvasSize = glCanvas->GetClientSize();
+	const int	mw = program->getMap()->getW(),
+				mh = program->getMap()->getH();
+
+	int cellSize = std::min(canvasSize.x / mw, canvasSize.y / mh);
+
+	int pxWidth = cellSize * mw;
+	int pxHeight = cellSize * mh;
+	
+	int offsetX, offsetY;
+	if (pxWidth < canvasSize.x) {
+		offsetX = (canvasSize.x - pxWidth) / 2;
+	} else {
+		offsetX = 0;
+	}
+	if (pxHeight < canvasSize.y) {
+		offsetY = (canvasSize.y - pxHeight) / 2;
+	} else {
+		offsetY = 0;
+	}
+	program->resetOffset();
+	program->setOffset(offsetX, offsetY);
+	program->setCellSize(cellSize);
+}
+
+void MainWindow::setFactionCount() {
+	size_t curr_n = menuBrushStartLocation->GetMenuItemCount();
+	size_t map_n = program->getMap()->getMaxFactions();
+	if (curr_n > map_n) {
+		for (size_t i = map_n; i < curr_n; ++i) {
+			menuBrushStartLocation->Remove(miStartPos[i]);
+		}
+	} else if (curr_n < map_n) {
+		for (size_t i = curr_n; i < map_n; ++i) {
+			miStartPos[i]->SetBitmap(*bmStartPos[i]); // hack for apparent wx bug @todo investigate
+			menuBrushStartLocation->Append(miStartPos[i]);
+		}
+	}
 }
 
 void MainWindow::onClose(wxCloseEvent &event) {
@@ -328,6 +391,8 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::setDirty(bool val) {
+	wxPaintEvent ev;
+	onPaint(ev);
 	if (fileModified && val) {
 		return;
 	}
@@ -376,16 +441,20 @@ void MainWindow::onMouseDown(wxMouseEvent &event, int x, int y) {
 }
 
 void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
+	bool repaint = false;
 	int dif;
 	if (event.LeftIsDown()) {
 		change(x, y);
+		repaint = true;
 	} else if (event.MiddleIsDown()) {
 		dif = (y - lastY);
 		if (dif != 0) {
 			program->incCellSize(dif / abs(dif));
+			repaint = true;
 		}
 	} else if (event.RightIsDown()) {
-		program->setOfset(x - lastX, y - lastY);
+		program->setOffset(x - lastX, y - lastY);
+		repaint = true;
 	} else {
 		int currResource = program->getResource(x, y);
 		if (currResource > 0) {
@@ -402,14 +471,17 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 	lastX = x;
 	lastY = y;
 
-	wxPaintEvent ev;
-	onPaint(ev);
+	if (repaint) {
+		wxPaintEvent ev;
+		onPaint(ev);
+	}
 	event.Skip();
 }
 
 void MainWindow::onPaint(wxPaintEvent &event) {
 	program->renderMap(glCanvas->GetClientSize().x, glCanvas->GetClientSize().y);
 	glCanvas->SwapBuffers();
+	event.Skip();
 }
 
 void MainWindow::onMenuFileLoad(wxCommandEvent &event) {
@@ -419,9 +491,11 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event) {
 		currentFile = fileDialog.GetPath().ToAscii();
 		program->loadMap(currentFile);
 		fileName = cutLastExt(basename(currentFile));
-		setDirty(false);
 		setExtension();
 		SetTitle(ToUnicode(winHeader + "; " + currentFile));
+		centreMap();
+		setDirty(false);
+		setFactionCount();
 	}
 }
 
@@ -456,8 +530,6 @@ void MainWindow::onMenuFileExit(wxCommandEvent &event) {
 void MainWindow::onMenuEditUndo(wxCommandEvent &event) {
 	std::cout << "Undo Pressed" << std::endl;
 	if (program->undo()) {
-		wxPaintEvent e;
-		onPaint(e);
 		setDirty();
 	}
 }
@@ -465,8 +537,6 @@ void MainWindow::onMenuEditUndo(wxCommandEvent &event) {
 void MainWindow::onMenuEditRedo(wxCommandEvent &event) {
 	std::cout << "Redo Pressed" << std::endl;
 	if (program->redo()) {
-		wxPaintEvent e;
-		onPaint(e);
 		setDirty();
 	}
 }
@@ -491,6 +561,9 @@ void MainWindow::onMenuEditReset(wxCommandEvent &event) {
 	}
 	currentFile = "";
 	fileName = "New (unsaved) map";
+
+	centreMap();
+	setDirty(false);
 }
 
 void MainWindow::onMenuEditResetPlayers(wxCommandEvent &event) {
@@ -505,6 +578,7 @@ void MainWindow::onMenuEditResetPlayers(wxCommandEvent &event) {
 	}
 	setDirty();
 	setExtension();
+	setFactionCount();
 }
 
 void MainWindow::onMenuEditResize(wxCommandEvent &event) {
@@ -524,6 +598,7 @@ void MainWindow::onMenuEditResize(wxCommandEvent &event) {
 	} catch (const exception &e) {
 		wxMessageDialog(NULL, ToUnicode(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 	}
+	centreMap();
 	setDirty();
 }
 
@@ -539,12 +614,15 @@ void MainWindow::onMenuEditFlipY(wxCommandEvent &event) {
 
 void MainWindow::onMenuEditRandomizeHeights(wxCommandEvent &event) {
 	program->randomizeMapHeights();
+	centreMap();
 	setDirty();
 }
 
 void MainWindow::onMenuEditRandomize(wxCommandEvent &event) {
 	program->randomizeMap();
+	centreMap();
 	setDirty();
+	setFactionCount();
 }
 
 void MainWindow::onMenuEditSwitchSurfaces(wxCommandEvent &event) {
@@ -598,7 +676,7 @@ void MainWindow::onMenuEditAdvanced(wxCommandEvent &event) {
 }
 
 void MainWindow::onMenuMiscResetZoomAndPos(wxCommandEvent &event) {
-	program->resetOfset();
+	program->resetOffset();
 }
 
 void MainWindow::onMenuMiscAbout(wxCommandEvent &event) {
@@ -756,93 +834,95 @@ void MainWindow::uncheckRadius() {
 	}
 }
 
- void MainWindow::onKeyDown(wxKeyEvent &e) {
- 	if (currentBrush == btHeight || currentBrush == btGradient) { // 'height' brush
- 		if (e.GetKeyCode() >= '0' && e.GetKeyCode() <= '5') {
- 			height = e.GetKeyCode() - 48; // '0'-'5' == 0-5
- 			if (e.GetModifiers() == wxMOD_CONTROL) { // Ctrl means negative
- 				height  = -height ;
- 			}
- 			int id_offset = heightCount / 2 + height + 1;
- 			if (currentBrush == btHeight) {
- 				wxCommandEvent evt(wxEVT_NULL, miBrushHeight + id_offset);
- 				onMenuBrushHeight(evt);
- 			} else {
- 				wxCommandEvent evt(wxEVT_NULL, miBrushGradient + id_offset);
- 				onMenuBrushGradient(evt);
- 			}
- 			return;
- 		}
- 	}
- 	if (currentBrush == btSurface) { // surface texture
- 		if (e.GetKeyCode() >= '1' && e.GetKeyCode() <= '5') {
- 			surface = e.GetKeyCode() - 48; // '1'-'5' == 1-5
- 			wxCommandEvent evt(wxEVT_NULL, miBrushSurface + surface);
- 			onMenuBrushSurface(evt);
- 			return;
- 		}
- 	}
- 	if (currentBrush == btObject) {
- 		bool valid = true;
- 		if (e.GetKeyCode() >= '1' && e.GetKeyCode() <= '9') {
- 			object = e.GetKeyCode() - 48; // '1'-'9' == 1-9
- 		} else if (e.GetKeyCode() == '0') { // '0' == 10
- 			object = 10;
- 		} else if (e.GetKeyCode() == '-') {	// '-' == 0
- 			object = 0;
- 		} else {
- 			valid = false;
- 		}
- 		if (valid) {
- 			wxCommandEvent evt(wxEVT_NULL, miBrushObject + object + 1);
- 			onMenuBrushObject(evt);
- 			return;
- 		}
- 	}
- 	if (currentBrush == btResource) {
- 		if (e.GetKeyCode() >= '0' && e.GetKeyCode() <= '5') {
- 			resource = e.GetKeyCode() - 48;	// '0'-'5' == 0-5
- 			wxCommandEvent evt(wxEVT_NULL, miBrushResource + resource + 1);
- 			onMenuBrushResource(evt);
- 			return;
- 		}
- 	}
- 	if (currentBrush == btStartLocation) {
- 		if (e.GetKeyCode() >= '1' && e.GetKeyCode() <= '8') {
- 			startLocation = e.GetKeyCode() - 48; // '1'-'8' == 0-7
- 			wxCommandEvent evt(wxEVT_NULL, miBrushStartLocation + startLocation);
- 			onMenuBrushStartLocation(evt);
- 			return;
- 		}
- 	}
- 	if (e.GetKeyCode() == 'H') {
- 		wxCommandEvent evt(wxEVT_NULL, miBrushHeight + height + heightCount / 2 + 1);
- 		onMenuBrushHeight(evt);
- 	} else if (e.GetKeyCode() == ' ') {	
+void MainWindow::onKeyDown(wxKeyEvent &e) {
+	if (currentBrush == btHeight || currentBrush == btGradient) { // 'height' brush
+		if (e.GetKeyCode() >= '0' && e.GetKeyCode() <= '5') {
+			height = e.GetKeyCode() - 48; // '0'-'5' == 0-5
+			if (e.GetModifiers() == wxMOD_CONTROL) { // Ctrl means negative
+				height  = -height ;
+			}
+			int id_offset = heightCount / 2 + height + 1;
+			if (currentBrush == btHeight) {
+				wxCommandEvent evt(wxEVT_NULL, miBrushHeight + id_offset);
+				onMenuBrushHeight(evt);
+			} else {
+				wxCommandEvent evt(wxEVT_NULL, miBrushGradient + id_offset);
+				onMenuBrushGradient(evt);
+			}
+			return;
+		}
+	}
+	if (currentBrush == btSurface) { // surface texture
+		if (e.GetKeyCode() >= '1' && e.GetKeyCode() <= '5') {
+			surface = e.GetKeyCode() - 48; // '1'-'5' == 1-5
+			wxCommandEvent evt(wxEVT_NULL, miBrushSurface + surface);
+			onMenuBrushSurface(evt);
+			return;
+		}
+	}
+	if (currentBrush == btObject) {
+		bool valid = true;
+		if (e.GetKeyCode() >= '1' && e.GetKeyCode() <= '9') {
+			object = e.GetKeyCode() - 48; // '1'-'9' == 1-9
+		} else if (e.GetKeyCode() == '0') { // '0' == 10
+			object = 10;
+		} else if (e.GetKeyCode() == '-') {	// '-' == 0
+			object = 0;
+		} else {
+			valid = false;
+		}
+		if (valid) {
+			wxCommandEvent evt(wxEVT_NULL, miBrushObject + object + 1);
+			onMenuBrushObject(evt);
+			return;
+		}
+	}
+	if (currentBrush == btResource) {
+		if (e.GetKeyCode() >= '0' && e.GetKeyCode() <= '5') {
+			resource = e.GetKeyCode() - 48;	// '0'-'5' == 0-5
+			wxCommandEvent evt(wxEVT_NULL, miBrushResource + resource + 1);
+			onMenuBrushResource(evt);
+			return;
+		}
+	}
+	if (currentBrush == btStartLocation) {
+		if (e.GetKeyCode() >= '1' && e.GetKeyCode() <= '8') {
+			startLocation = e.GetKeyCode() - 48; // '1'-'8' == 0-7
+			if (startLocation <= program->getMap()->getMaxFactions()) {
+				wxCommandEvent evt(wxEVT_NULL, miBrushStartLocation + startLocation);
+				onMenuBrushStartLocation(evt);
+				return;
+			}
+		}
+	}
+	if (e.GetKeyCode() == 'H') {
+		wxCommandEvent evt(wxEVT_NULL, miBrushHeight + height + heightCount / 2 + 1);
+		onMenuBrushHeight(evt);
+	} else if (e.GetKeyCode() == ' ') {	
 		if (resourceUnderMouse != 0) {
 			wxCommandEvent evt(wxEVT_NULL, miBrushResource + resourceUnderMouse + 1);
- 			onMenuBrushResource(evt);
+			onMenuBrushResource(evt);
 		} else {
 			wxCommandEvent evt(wxEVT_NULL, miBrushObject + objectUnderMouse + 1);
- 			onMenuBrushObject(evt);
+			onMenuBrushObject(evt);
 		}
- 	} else if (e.GetKeyCode() == 'G') {
- 		wxCommandEvent evt(wxEVT_NULL, miBrushGradient + height + heightCount / 2 + 1);
- 		onMenuBrushGradient(evt);
- 	} else if (e.GetKeyCode() == 'S') {
+	} else if (e.GetKeyCode() == 'G') {
+		wxCommandEvent evt(wxEVT_NULL, miBrushGradient + height + heightCount / 2 + 1);
+		onMenuBrushGradient(evt);
+	} else if (e.GetKeyCode() == 'S') {
 		wxCommandEvent evt(wxEVT_NULL, miBrushSurface + surface);
 		onMenuBrushSurface(evt);
- 	} else if (e.GetKeyCode() == 'O') {
- 		wxCommandEvent evt(wxEVT_NULL, miBrushObject + object + 1);
- 		onMenuBrushObject(evt);
- 	} else if (e.GetKeyCode() == 'R') {
- 		wxCommandEvent evt(wxEVT_NULL, miBrushResource + resource + 1);
- 		onMenuBrushResource(evt);
- 	} else if (e.GetKeyCode() == 'L') {
- 		wxCommandEvent evt(wxEVT_NULL, miBrushStartLocation + startLocation + 1);
- 		onMenuBrushStartLocation(evt);
- 	} else {
- 		e.Skip();
+	} else if (e.GetKeyCode() == 'O') {
+		wxCommandEvent evt(wxEVT_NULL, miBrushObject + object + 1);
+		onMenuBrushObject(evt);
+	} else if (e.GetKeyCode() == 'R') {
+		wxCommandEvent evt(wxEVT_NULL, miBrushResource + resource + 1);
+		onMenuBrushResource(evt);
+	} else if (e.GetKeyCode() == 'L') {
+		wxCommandEvent evt(wxEVT_NULL, miBrushStartLocation + startLocation + 1);
+		onMenuBrushStartLocation(evt);
+	} else {
+		e.Skip();
 	}
 }
 
@@ -898,37 +978,25 @@ END_EVENT_TABLE()
 // =====================================================
 
 GlCanvas::GlCanvas(MainWindow *mainWindow, wxWindow *parent, int *args)
-		: wxGLCanvas(parent, -1, wxDefaultPosition, wxDefaultSize, 0, wxT("GLCanvas"), args) {
-	this->mainWindow = mainWindow;
-}
-
-void translateCoords(wxWindow *wnd, int &x, int &y) {
-#ifdef WIN32
-	int cx, cy;
-	wnd->GetPosition(&cx, &cy);
-	x += cx;
-	y += cy;
-#endif
+		: wxGLCanvas(parent, -1, wxDefaultPosition, wxDefaultSize, 0, wxT("GLCanvas"), args)
+		, mainWindow(mainWindow) {
 }
 
 void GlCanvas::onMouseDown(wxMouseEvent &event) {
 	int x, y;
 	event.GetPosition(&x, &y);
-	translateCoords(this, x, y);
 	mainWindow->onMouseDown(event, x, y);
 }
 
 void GlCanvas::onMouseMove(wxMouseEvent &event) {
 	int x, y;
 	event.GetPosition(&x, &y);
-	translateCoords(this, x, y);
 	mainWindow->onMouseMove(event, x, y);
 }
 
 void GlCanvas::onKeyDown(wxKeyEvent &event) {
 	int x, y;
 	event.GetPosition(&x, &y);
-	translateCoords(this, x, y);
 	mainWindow->onKeyDown(event);
 }
 

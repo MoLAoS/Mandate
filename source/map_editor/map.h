@@ -12,6 +12,7 @@
 #ifndef _MAPEDITOR_MAP_H_
 #define _MAPEDITOR_MAP_H_
 
+#include "vec.h"
 #include "util.h"
 #include "types.h"
 #include "random.h"
@@ -19,6 +20,7 @@
 using Shared::Platform::int8;
 using Shared::Platform::int32;
 using Shared::Platform::float32;
+using Shared::Math::Vec2i;
 using Shared::Util::Random;
 
 namespace MapEditor {
@@ -35,11 +37,14 @@ struct MapFileHeader {
 	int8 description[256];
 };
 
+class MapMaker;
+
 // ===============================================
 //	class Map
 // ===============================================
 
 class Map {
+	friend class MapMaker;
 public:
 	static const int maxHeight = 20;
 	static const int minHeight = 0;
@@ -52,10 +57,11 @@ private:
 		float height;
 	};
 
-	struct StartLocation {
-		int x;
-		int y;
-	};
+	typedef Vec2i StartLocation;
+//	struct StartLocation {
+//		int x;
+//		int y;
+//	};
 
 	Random random;
 	string title;
@@ -116,7 +122,6 @@ public:
 	void resize(int w, int h, float alt, int surf);
 	void resetFactions(int maxFactions);
 	void randomizeHeights();
-	void randomize();
 	void switchSurfaces(int surf1, int surf2);
 
 	void loadFromFile(const string &path);
