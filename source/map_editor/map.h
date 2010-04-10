@@ -134,6 +134,14 @@ public:
 	void applyNewHeight(float newHeight, int x, int y, int strenght);
 };
 
+// get dist moved to here so map_maker could use it.
+// can this be moved to the shared_lib??
+static int get_dist(int delta_x, int delta_y) {
+	float dx = delta_x;
+	float dy = delta_y;
+	return static_cast<int>(sqrtf(dx * dx + dy * dy));
+}
+
 }// end namespace
 
 #endif

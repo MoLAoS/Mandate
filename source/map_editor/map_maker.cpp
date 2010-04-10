@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of the Glest Advanced Engine
 //
-//	Copyright (C) 2010 - 
+//	Copyright (C) 2010 -
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -58,10 +58,13 @@ void MapMaker::randomize() {
 	///@todo pass more parameters to these functions
 	setStartLocations(baseHeight);
 	diamondSquare(baseHeight);
-	
+
+
+	growForestsMountaintop(5, 19, 800, 8);
+
 	//generateResoures();
 
-	// forest growth is sometimes getting stuck in an infinite loop 
+	// forest growth is sometimes getting stuck in an infinite loop
 	//growForests();
 
 	//addEyeCandy();
@@ -98,13 +101,13 @@ void MapMaker::setStartLocations(float baseHeight, int numFactions, float minDis
 				// This has the effect of finding the closest point that is a one eighth cell
 				// finding the one eighth (or 1/16) cells is important because it ensures the points are calculated
 				// on an early iteration of the diamond-square algorithm and are thus good seed points
-				int X1 = ((int)(((map->startLocations[i].x + x*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5f)) * (MAP_WIDTH / 8.f);
-				int Y1 = ((int)(((map->startLocations[i].y + y*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5f)) * (MAP_WIDTH / 8.f);
+				//int X1 = ((int)(((map->startLocations[i].x + x*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5f)) * (MAP_WIDTH / 8.f);
+				//int Y1 = ((int)(((map->startLocations[i].y + y*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5f)) * (MAP_WIDTH / 8.f);
 				int X2 = ((int)(((map->startLocations[i].x + x*(MAP_WIDTH / 16.f)) / (MAP_WIDTH / 16.f)) + 0.5f)) * (MAP_WIDTH / 16.f);
 				int Y2 = ((int)(((map->startLocations[i].y + y*(MAP_WIDTH / 16.f)) / (MAP_WIDTH / 16.f)) + 0.5f)) * (MAP_WIDTH / 16.f);
-				if (map->inside (X1, Y1)) {
-					map->cells[X1][Y1].height = baseHeight + 3;
-				}
+				//if (map->inside (X1, Y1)) {
+				//	map->cells[X1][Y1].height = baseHeight + 3;
+				//}
 				if (map->inside (X2, Y2)) {
 					map->cells[X2][Y2].height = baseHeight + 3;
 				}
@@ -114,7 +117,7 @@ void MapMaker::setStartLocations(float baseHeight, int numFactions, float minDis
 }
 
 void MapMaker::diamondSquare(float baseHeight, float delta, float roughness) {
-	// Defines what level of the algorithm we are at right now
+	// Stepping defines what level of the algorithm we are at right now
 	// This will be a control variable in the for loops
 	// Square stage will loop through 0 to map_width
 	// while diamond stages will use -stepping to (map_width - stepping)
@@ -330,6 +333,46 @@ void MapMaker::growForests(/* control variables ?? */) {
 			doNext = false;
 		} // End Single Forest Growth
 	} // End Forest Seeding
+}
+
+void MapMaker::growForestsMountaintop(float forestMinHeight, float forestMaxHeight, int maxTrees, float playerRadius) {
+	int numTrees = 0;
+	// Grow trees on mountain tops, valleys or in between
+	do {
+		numTrees = 0;
+		forestMinHeight += 0.5;
+		forestMaxHeight -= 0.5;
+		for (int i = 0; i < map->getW(); i++) {
+			for (int j = 0; j < map->getH(); j++) {
+				if (map->cells[i][j].height < forestMinHeight || map->cells[i][j].height > forestMaxHeight) {
+					continue;
+				}
+				numTrees++;
+				// Make sure not to grow forests too close to players
+				for (int k = 0; k < map->getMaxFactions(); k++) {
+					if (get_dist(i - map->startLocations[k].x, j - map->startLocations[k].y) < playerRadius) {
+						numTrees--;
+						break;
+					}
+				}
+			}
+		}
+	} while (numTrees > maxTrees);
+
+	for (int i = 0; i < map->getW(); i++) {
+		for (int j = 0; j < map->getH(); j++) {
+			if (map->cells[i][j].height < forestMinHeight || map->cells[i][j].height > forestMaxHeight) {
+				continue;
+			}
+			map->cells[i][j].object = 1;
+			for (int k = 0; k < map->getMaxFactions(); k++) {
+				if (get_dist(i - map->startLocations[k].x, j - map->startLocations[k].y) < playerRadius) {
+					map->cells[i][j].object = 0;
+					break;
+				}
+			}
+		}
+	}
 }
 
 

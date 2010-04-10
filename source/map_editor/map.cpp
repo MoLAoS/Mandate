@@ -71,11 +71,7 @@ int Map::getStartLocationY(int index) const {
 	return startLocations[index].y;
 }
 
-static int get_dist(int delta_x, int delta_y) {
-	float dx = delta_x;
-	float dy = delta_y;
-	return static_cast<int>(sqrtf(dx * dx + dy * dy));
-}
+
 
 void Map::glestChangeHeight(int x, int y, int height, int radius) {
 
