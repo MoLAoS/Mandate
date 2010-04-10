@@ -173,10 +173,10 @@ public:
 	  * @param own wether the SearchEngine should own the storage
 	  */
 	SearchEngine(NodeStorage *store = 0, bool own=false) 
-			: expandLimit(-1)
+			: nodeStorage(store)
+			, expandLimit(-1)
 			, nodeLimit(-1)
 			, expanded(0)
-			, nodeStorage(store)
 			, ownStore(own) {
 	}
 

@@ -132,23 +132,16 @@ void Mesh::loadV2(const string &dir, FileOps *f, TextureManager *textureManager)
 	}
 
 	//read data
-	// fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
-	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
 	size_t vfCount = frameCount * vertexCount;
-	for(int i = 0; i < vfCount; ++i) {
-		f->read(&vertices[i], 12, 1);
-	}
-	for(int i = 0; i < vfCount; ++i) {
-		f->read(&normals[i], 12, 1);
-	}
+	f->read(vertices, sizeof(Vec3f)*vfCount, 1);
+	f->read(normals, sizeof(Vec3f)*vfCount, 1);
 
 	if(textures[mtDiffuse]!=NULL){
 		f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
 	}
-//	f->read(&diffuseColor, sizeof(Vec3f), 1, f);
-	f->read(&diffuseColor, 12, 1);
+	f->read(&diffuseColor, sizeof(Vec3f), 1);
 	f->read(&opacity, sizeof(float32), 1);
-	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR/*seekpos::current*/);
+	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
 }
 
@@ -186,25 +179,18 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	}
 
 	//read data
-	// fread(vertices, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
-	// fread(normals, sizeof(Vec3f)*frameCount*vertexCount, 1, f);
 	size_t vfCount = frameCount * vertexCount;
-	for(int i = 0; i < vfCount; ++i) {
-		f->read(&vertices[i], 12, 1);
-	}
-	for(int i = 0; i < vfCount; ++i) {
-		f->read(&normals[i], 12, 1);
-	}
+	f->read(vertices, sizeof(Vec3f)*vfCount, 1);
+	f->read(normals, sizeof(Vec3f)*vfCount, 1);
 
 	if(textures[mtDiffuse]!=NULL){
 		for(int i=0; i<meshHeader.texCoordFrameCount; ++i){
 			f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
 		}
 	}
-	// fread(&diffuseColor, sizeof(Vec3f), 1, f);
-	f->read(&diffuseColor, 12, 1);
+	f->read(&diffuseColor, sizeof(Vec3f), 1);
 	f->read(&opacity, sizeof(float32), 1);
-	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR/*seekpos::current*/);
+	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
 }
 

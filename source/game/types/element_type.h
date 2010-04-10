@@ -104,11 +104,10 @@ public:
 // =====================================================
 
 class RequirableType: public DisplayableType {
-private:
+protected:
 	typedef vector<const UnitType*> UnitReqs;
 	typedef vector<const UpgradeType*> UpgradeReqs;
 
-protected:
 	UnitReqs unitReqs;			//needed units
 	UpgradeReqs upgradeReqs;	//needed upgrades
 	int subfactionsReqs;		//bitmask of subfactions producable is restricted to
