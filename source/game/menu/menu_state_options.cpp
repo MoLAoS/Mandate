@@ -73,7 +73,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
 	//textures 3d
 	listBoxTextures3D.pushBackItem(lang.get("No"));
 	listBoxTextures3D.pushBackItem(lang.get("Yes"));
-	listBoxTextures3D.setSelectedItemIndex(config.getRenderTextures3D() ? 1 : 0);
+	listBoxTextures3D.setSelectedItemIndex(clamp(int(config.getRenderTextures3D()), 0, 1));
 
 	//lights
 	for(int i= 1; i<=8; ++i){

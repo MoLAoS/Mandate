@@ -79,6 +79,9 @@ private:
 	Minimap minimap;
 	Stats stats;
 
+	//REFACTOR: add this...
+	//UnitMap units;
+
 	Factions factions;
 
 	Random random;

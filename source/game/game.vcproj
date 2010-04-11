@@ -42,7 +42,7 @@
 				Optimization="0"
 				InlineFunctionExpansion="2"
 				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;..;../shared_lib/include;../shared_lib/include/physfs;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1;_GAE_DEBUG_EDITION_=0;LOG_STUFF=0;LOG_BUILD_COMMAND=1;LOG_REPAIR_COMMAND=0;LOG_COMMAND_ISSUE=0;LOG_COMMAND_UPDATE=1;LOG_UNIT_LIFECYCLE=1;PATHFINDER_DEBUG_MESSAGES=0"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1;USE_PHYSFS=1;_GAE_DEBUG_EDITION_=0;LOG_STUFF=0;LOG_BUILD_COMMAND=1;LOG_REPAIR_COMMAND=0;LOG_COMMAND_ISSUE=0;LOG_COMMAND_UPDATE=1;LOG_UNIT_LIFECYCLE=1;PATHFINDER_DEBUG_MESSAGES=0"
 				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -133,7 +133,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="../../../deps/include;..;../shared_lib/include;../shared_lib/include/physfs;../shared_lib/include/math;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/xml;../shared_lib/include/lua;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=0;USE_PHYSFS=1;_GAE_DEBUG_EDITION_=0;LOG_STUFF=0;LOG_BUILD_COMMAND=1;LOG_REPAIR_COMMAND=0;LOG_COMMAND_ISSUE=0;LOG_COMMAND_UPDATE=1;LOG_UNIT_LIFECYCLE=1;PATHFINDER_DEBUG_MESSAGES=0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;XML_LIBRARY;USE_PCH=1;USE_PHYSFS=1;_GAE_DEBUG_EDITION_=0;LOG_STUFF=0;LOG_BUILD_COMMAND=1;LOG_REPAIR_COMMAND=0;LOG_COMMAND_ISSUE=0;LOG_COMMAND_UPDATE=1;LOG_UNIT_LIFECYCLE=1;PATHFINDER_DEBUG_MESSAGES=0"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="true"
@@ -198,178 +198,6 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="Speedy Debug|Win32"
-			OutputDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
-			IntermediateDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
-			ConfigurationType="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="2"
-				InlineFunctionExpansion="2"
-				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1"
-				StringPooling="true"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="0"
-				SmallerTypeCheck="false"
-				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="2"
-				FloatingPointModel="2"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderThrough=""
-				BrowseInformation="1"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4250; 4355; 4996"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib xerces-depdom_static_2.lib xerces-c_static_2.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib lua5.1.lib"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
-				IgnoreAllDefaultLibraries="false"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Ultra Debug|Win32"
-			OutputDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
-			IntermediateDirectory="../../build/$(ConfigurationName)/$(ProjectName)"
-			ConfigurationType="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				InlineFunctionExpansion="0"
-				AdditionalIncludeDirectories="../../../deps/include/lua;../../../deps/include;../shared_lib/include;../shared_lib/include/graphics;../shared_lib/include/graphics/gl;../shared_lib/include/platform;../shared_lib/include/platform/win32;../shared_lib/include/sound;../shared_lib/include/sound/ds8;../shared_lib/include/util;../shared_lib/include/lua;../shared_lib/include/xml;ai;facilities;game;global;graphics;gui;main;menu;network;sound;type_instances;types;world;path_finder"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;XML_LIBRARY;NO_GL_ASSERTIONS;USE_PCH=1;_GAE_DEBUG_EDITION_=1"
-				StringPooling="true"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				SmallerTypeCheck="true"
-				RuntimeLibrary="1"
-				EnableFunctionLevelLinking="true"
-				EnableEnhancedInstructionSet="0"
-				FloatingPointModel="2"
-				RuntimeTypeInfo="false"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="pch.h"
-				BrowseInformation="1"
-				WarningLevel="2"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4250; 4355; 4996"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="dsound.lib dxguid.lib ogg_static.lib vorbis_static.lib vorbisfile_static.lib xerces-depdom_static_2.lib xerces-c_static_2.lib opengl32.lib glu32.lib wsock32.lib libglest.lib mmc.lib zlib.lib lua5.1.lib"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../../deps/lib;&quot;../../build/$(ConfigurationName)/libglest&quot;"
-				IgnoreAllDefaultLibraries="false"
-				GenerateDebugInformation="true"
-				SubSystem="1"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 	</Configurations>
@@ -508,22 +336,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release+SSE2|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Ultra Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -928,28 +740,6 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Ultra Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						InlineFunctionExpansion="2"
-						EnableIntrinsicFunctions="true"
-						FavorSizeOrSpeed="1"
-						OmitFramePointers="true"
-						BasicRuntimeChecks="3"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\path_finder\cartographer.h"
@@ -996,28 +786,6 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Ultra Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						InlineFunctionExpansion="2"
-						EnableIntrinsicFunctions="true"
-						FavorSizeOrSpeed="1"
-						OmitFramePointers="true"
-						BasicRuntimeChecks="3"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\path_finder\node_map.h"
@@ -1053,28 +821,6 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Speedy Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Ultra Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						InlineFunctionExpansion="2"
-						EnableIntrinsicFunctions="true"
-						FavorSizeOrSpeed="1"
-						OmitFramePointers="true"
-						BasicRuntimeChecks="3"
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
@@ -1377,14 +1123,6 @@
 			</FileConfiguration>
 			<FileConfiguration
 				Name="Release+SSE2|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Ultra Debug|Win32"
 				>
 				<Tool
 					Name="VCCLCompilerTool"

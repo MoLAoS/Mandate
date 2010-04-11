@@ -47,7 +47,7 @@ public:
 	Field debugField;
 	Texture2D *PFDebugTextures[26];
 
-	PathFinderTextureCallback() { reset(); }
+	PathFinderTextureCallback();
 
 	void reset();
 	void loadTextures();

@@ -38,6 +38,11 @@ void _load_debug_tex(Texture2D* &texPtr, const char *fileName) {
 //  class PathFinderTextureCallback
 // =====================================================
 
+PathFinderTextureCallback::PathFinderTextureCallback() 
+		: debugField(Field::LAND) {
+	reset(); 
+}
+
 void PathFinderTextureCallback::reset() {
 	pathSet.clear();
 	openSet.clear();
@@ -46,12 +51,6 @@ void PathFinderTextureCallback::reset() {
 	pathDest = Vec2i(-1);
 	localAnnotations.clear();
 	debugField = Field::LAND;
-
-	for (size_t i=0; i < 26; ++i) {
-		if (PFDebugTextures[i]) {
-			PFDebugTextures[i]->end();
-		}
-	}
 	memset(PFDebugTextures, 0, sizeof(PFDebugTextures));
 }
 

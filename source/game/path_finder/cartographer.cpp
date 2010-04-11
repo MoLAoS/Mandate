@@ -179,6 +179,56 @@ void Cartographer::initResourceMap(const ResourceType *rt, PatchMap<1> *pMap) {
 */
 }
 
+void Cartographer::saveResourceState(XmlNode *mapNode) {
+	XmlNode *resourcesNode = mapNode->addChild("resources");
+	foreach_const (ResourcePosMap, typeLocations, resourceLocations) {
+		XmlNode *rNode = resourcesNode->addChild(typeLocations->first->getName());
+		stringstream ss;
+		foreach_const (vector<Vec2i>, it, typeLocations->second) {
+			ss << *it << ":";
+			Resource *r = cellMap->getTile(*it)->getResource();
+			if (r) {
+				ss << r->getAmount();
+			} else {
+				ss << 0;
+			}
+		}
+		ss << "(-1,-1):-1";
+		rNode->addAttribute("values", ss.str());
+	}
+}
+
+void Cartographer::loadResourceState(XmlNode *node) {
+	const TechTree *tt = world->getTechTree();
+	XmlNode *resourcesNode = node->getChild("resources");
+	Vec2i pos;
+	char sep;
+	int amount;
+
+	for (int i=0; i < tt->getResourceTypeCount(); ++i) {
+		rt_ptr rt = tt->getResourceType(i);
+		if (rt->getClass() <= ResourceClass::TILESET) { // tech or tileset
+			XmlNode *rNode = resourcesNode->getChild(rt->getName());
+			stringstream ss(rNode->getAttribute("values")->getValue());
+			ss >> pos >> sep >> amount;
+			while (amount != -1) {
+				Tile *tile = cellMap->getTile(pos);
+				if (!tile->getResource()) {
+					throw runtime_error("Error loading savegame, resource location data does not match map.");
+				}
+				if (amount) {
+					tile->getResource()->setAmount(amount);
+				} else {
+					onResourceDepleted(Map::toUnitCoords(pos));
+					tile->deleteResource();
+					masterMap->updateMapMetrics(Map::toUnitCoords(pos), GameConstants::cellScale);
+				}
+				ss >> pos >> sep >> amount;
+			}
+		}
+	}
+}
+
 void Cartographer::onResourceDepleted(Vec2i pos) {
 	const ResourceType *rt = cellMap->getTile(pos / GameConstants::cellScale)->getResource()->getType();
 	Vec2i tl = pos + OrdinalOffsets[OrdinalDir::NORTH_WEST];

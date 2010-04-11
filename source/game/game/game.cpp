@@ -1050,7 +1050,7 @@ void Game::showMessageBox(const string &text, const string &header, bool toggle)
 
 void Game::saveGame(string name) const {
 	XmlNode root("saved-game");
-	root.addAttribute("version", "0.2.13");
+	root.addAttribute("version", "3");
 	gui.save(root.addChild("gui"));
 	gameSettings.save(root.addChild("settings"));
 	world.save(root.addChild("world"));

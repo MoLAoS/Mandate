@@ -37,7 +37,6 @@
 	using __gnu_cxx::slist;
 #endif
 
-
 using std::string;
 using std::vector;
 using std::runtime_error;
@@ -56,7 +55,7 @@ const string sharedLibVersionString= "v0.5";
 		Name() : value(INVALID) {}						\
 		Name(Enum val) : value(val) {}					\
 		explicit Name(int i) {							\
-			if (i >= 0 && i < COUNT) value = (Enum)i;	\
+			if (i >= 0 && i < COUNT) value = Enum(i);	\
 			else value = INVALID;						\
 		}												\
 		operator Enum() const { return value; }			\
@@ -185,10 +184,10 @@ void uudecode(void *dest, size_t *destSize, const char *src);
 
 // ==================== numeric fcs ====================
 
-template<typename T> inline T clamp(T val, T min, T max) {
-	if (val < min) return min;
-	if (val > max) return max;
-	return val;
+template <typename T> inline T clamp(const T &val, const T &min, const T &max) {
+	return	val < min	? min
+		 :	val > max	? max
+						: val;
 }
 
 inline float saturate(float value) {

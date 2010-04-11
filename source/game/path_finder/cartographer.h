@@ -79,10 +79,12 @@ class Cartographer : public sigslot::has_slots<> {
 	typedef pair<const UnitType*, Vec2i> SiteDesc;	// describes a building site.
 	typedef map<SiteDesc, PatchMap<1>*> SiteMaps;	// goal maps for building sites.
 
+	typedef map<rt_ptr, vector<Vec2i> > ResourcePosMap;
+
 	// Resources
 	/** The locations of each and every resource on the map */
-	map<rt_ptr, vector<Vec2i> > resourceLocations;
-
+	ResourcePosMap resourceLocations;
+	
 	/** areas where resources have been depleted and updates are required */
 	map<rt_ptr, AreaList> resDirtyAreas;
 
@@ -133,6 +135,9 @@ class Cartographer : public sigslot::has_slots<> {
 
 	void maintainUnitVisibility(Unit *unit, bool add);
 
+	void saveResourceState(XmlNode *node);
+	void loadResourceState(XmlNode *node);
+
 public:
 	Cartographer(World *world);
 	virtual ~Cartographer();
@@ -163,6 +168,16 @@ public:
 	}
 
 	void tick();
+
+	void loadMapState(const XmlNode *node) {
+		cellMap->loadExplorationState(node->getChild("explorationState"));
+		loadResourceState(node->getChild("resourceState"));
+	}
+
+	void saveMapState(XmlNode *node) {
+		cellMap->saveExplorationState(node->addChild("explorationState"));
+		saveResourceState(node->addChild("resourceState"));
+	}
 
 	PatchMap<1>* getResourceMap(const ResourceType* rt) {
 		return resourceMaps[rt];

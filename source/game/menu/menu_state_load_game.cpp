@@ -366,11 +366,23 @@ void MenuStateLoadGame::selectionChanged() {
 	loaderThread.setFileName(fileName);
 }
 
+const string oldSaveMsg = "Old savegame format, no longer supported, sorry.";
+const string unknownSaveMsg = "Unknown savegame version. Possibly saved with a newer GAE than this.";
+
 void MenuStateLoadGame::initGameInfo() {
 	try {
 		if(gs) {
 			delete gs;
 			gs = NULL;
+		}
+		int version;
+		try {
+			version = savedGame->getAttribute("version")->getIntValue();
+		} catch (...) {
+			version = 0;
+		}
+		if (version != 3) {
+			throw runtime_error(version < 3 ? oldSaveMsg : unknownSaveMsg);
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
 		string techPath = gs->getTechPath();

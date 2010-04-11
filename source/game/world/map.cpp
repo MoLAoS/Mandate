@@ -87,12 +87,20 @@ char encodeExplorationState(Tile *tile) {
 			result |= (1 << i);
 		}
 	}
-	result += 48;
+	if (result < 10) {
+		result += 48; // 0-9
+	} else {
+		result += 55; // A-F
+	}
 	return result;
 }
 
 void decodeExplorationState(Tile *tile, char state) {
-	state -= 48;
+	if (state < 58) {
+		state -= 48;
+	} else {
+		state -= 55;
+	}
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		tile->setExplored(i, state & (1 << i));
 	}
