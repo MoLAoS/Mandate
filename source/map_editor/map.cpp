@@ -723,20 +723,23 @@ void Map::sinRandomize(int strenght) {
 
 void Map::decalRandomize(int strenght) {
 	//first row
+	int max=maxHeight, min=minHeight;  //FIXME: wtf? otherwise linker problem,
+							//cause http://sourceforge.net/apps/trac/glestae/changeset/581#file20
+							//now references
 	int lastHeight = 10;
 	for (int i = 0; i < w; ++i) {
 		lastHeight += random.randRange(-1, 1);
-		lastHeight = clamp(lastHeight, minHeight, maxHeight);
+		lastHeight = clamp(lastHeight, min/*Height*/, max/*Height*/);
 		applyNewHeight(static_cast<float>(lastHeight), i, 0, strenght);
 	}
 
 	//other rows
 	for (int j = 1; j < h; ++j) {
 		int height = static_cast<int>(cells[0][j-1].height + random.randRange(-1, 1));
-		applyNewHeight(static_cast<float>(clamp(height, minHeight, maxHeight)), 0, j, strenght);
+		applyNewHeight(static_cast<float>(clamp(height, min/*Height*/, max/*Height*/)), 0, j, strenght);
 		for (int i = 1; i < w; ++i) {
 			height = static_cast<int>((cells[i][j-1].height + cells[i-1][j].height) / 2.f + random.randRange(-1, 1));
-			float newHeight = static_cast<float>(clamp(height, minHeight, maxHeight));
+			float newHeight = static_cast<float>(clamp(height, min/*Height*/, max/*Height*/));
 			applyNewHeight(newHeight, i, j, strenght);
 		}
 	}

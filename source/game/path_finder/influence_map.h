@@ -106,6 +106,19 @@ public:
 		//cout << "section size = " << sectionSize << ", sections per row = " << sectionsPerRow << endl;
 		data = new uint32[b.h * sectionsPerRow];
 	}
+	//only for infuence_map_test.cpp:249
+	PatchMap<bits> &operator=(const PatchMap<bits> &op){
+		//FIXME: better when moved to InfluenceMap::operator=...
+		this->def = op.def;
+		this->x = op.x; this->y = op.y; this->w = op.w; this->h = op.h;
+		//
+
+		sectionsPerRow = op.sectionsPerRow;
+		delete[] data;
+		data = new uint32[op.h * sectionsPerRow];
+		memcpy(data, op.data, op.h * sectionsPerRow);
+		return *this;
+	}
 	~PatchMap() { delete [] data; }
 	void zeroMap() { memset(data, 0, sizeof(uint32) * sectionsPerRow * this->h); }
 	void clearMap(uint32 val) { 

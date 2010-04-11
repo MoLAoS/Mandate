@@ -104,6 +104,7 @@ public:
 	void onPaint(wxPaintEvent &event);
 	void onClose(wxCloseEvent &event);
 	void onMenuFileLoad(wxCommandEvent &event);
+	void onMenuExit(wxCommandEvent &event);
 	void onMenuModeNormals(wxCommandEvent &event);
 	void onMenuModeWireframe(wxCommandEvent &event);
 	void onMenuModeGrid(wxCommandEvent &event);

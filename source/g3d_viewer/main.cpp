@@ -106,21 +106,22 @@ MainWindow::MainWindow(const string &modelPath)
 
 	//menu
 	menuFile= new wxMenu();
-	menuFile->Append(miFileLoad, wxT("Load"));
-	menu->Append(menuFile, wxT("File"));
+	menuFile->Append(miFileLoad, wxT("Load\tCTRL+O"));
+	menuFile->Append(wxID_EXIT);
+	menu->Append(menuFile, wxT("&File"));
 
 	//mode
 	menuMode= new wxMenu();
 	menuMode->AppendCheckItem(miModeNormals, wxT("Normals"));
 	menuMode->AppendCheckItem(miModeWireframe, wxT("Wireframe"));
 	menuMode->AppendCheckItem(miModeGrid, wxT("Grid"));
-	menu->Append(menuMode, wxT("Mode"));
+	menu->Append(menuMode, wxT("&Mode"));
 
 	//mode
 	menuSpeed= new wxMenu();
 	menuSpeed->Append(miSpeedSlower, wxT("Slower"));
 	menuSpeed->Append(miSpeedFaster, wxT("Faster"));
-	menu->Append(menuSpeed, wxT("Speed"));
+	menu->Append(menuSpeed, wxT("&Speed"));
 
 	//custom color
 	menuCustomColor= new wxMenu();
@@ -130,7 +131,7 @@ MainWindow::MainWindow(const string &modelPath)
 	menuCustomColor->AppendCheckItem(miColorFour, wxT("Faction 4"));
 	menuCustomColor->AppendCheckItem(miColourAll, wxT("Show All"));
 	menuCustomColor->Append(miColourEdit, wxT("Edit Colours"));
-	menu->Append(menuCustomColor, wxT("Custom Color"));
+	menu->Append(menuCustomColor, wxT("&Custom Color"));
 
 	menuMode->Check(miModeGrid, true);
 	menuCustomColor->Check(miColorOne, true);
@@ -204,7 +205,8 @@ void MainWindow::onPaint(wxPaintEvent &event) {
 }
 
 void MainWindow::onClose(wxCloseEvent &event){
-	delete this;
+	//delete this;
+	Destroy();
 }
 
 void MainWindow::onMouseMove(wxMouseEvent &event){
@@ -240,6 +242,10 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event){
 		model= tmpModel;
 		GetStatusBar()->SetStatusText(wxString(getModelInfo().c_str(), wxConvUTF8));
 	}
+}
+
+void MainWindow::onMenuExit(wxCommandEvent& event){
+	Close();
 }
 
 void MainWindow::onMenuModeNormals(wxCommandEvent &event){
@@ -340,6 +346,7 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_TIMER(-1, MainWindow::onTimer)
 	EVT_CLOSE(MainWindow::onClose)
 	EVT_MENU(miFileLoad, MainWindow::onMenuFileLoad)
+	EVT_MENU(wxID_EXIT, MainWindow::onMenuExit)
 
 	EVT_MENU(miModeWireframe, MainWindow::onMenuModeWireframe)
 	EVT_MENU(miModeNormals, MainWindow::onMenuModeNormals)

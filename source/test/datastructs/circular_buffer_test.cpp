@@ -159,7 +159,7 @@ void CircularBufferTest::testRollOver() {
 		CPPUNIT_ASSERT(my_buffer[ndx] == alpha_data[ndx - offset]);
 		++ndx;
 	}
-	delete my_buffer;
+	delete[] my_buffer;
 }
 
 void CircularBufferTest::testPerfectFill() {
@@ -200,7 +200,7 @@ void CircularBufferTest::testPerfectFill() {
 			++ndx;
 		}
 	}
-	delete my_buffer;
+	delete[] my_buffer;
 }
 
 void CircularBufferTest::testPeek() {
@@ -237,7 +237,7 @@ void CircularBufferTest::testPeek() {
 			++ndx;
 		}
 	}
-	delete my_buffer;
+	delete[] my_buffer;
 }
 
 
