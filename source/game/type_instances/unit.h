@@ -400,6 +400,8 @@ public:
 	bool isAutoRepairEnabled() const	{return autoRepairEnabled;}
 	bool isDirty()						{return dirty;}
 
+	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
+
 	//set
 	void setCurrField(Field currField)					{this->currField = currField;}
 	void setCurrSkill(const SkillType *currSkill);

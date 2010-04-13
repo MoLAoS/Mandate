@@ -29,7 +29,7 @@ namespace Glest { namespace Game { namespace Search {
 AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap) 
 		: cellMap(NULL)
 		, eMap(eMap) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	assert(world && world->getMap());
 	cellMap = world->getMap();
 	width = cellMap->getW();
@@ -72,7 +72,7 @@ AnnotatedMap::~AnnotatedMap() {
 
 /** Initialise clearance data for a master map. */
 void AnnotatedMap::initMapMetrics() {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	const int east = cellMap->getW() - 1;
 	int x = east;
 	int y = cellMap->getH() - 1;
@@ -153,7 +153,7 @@ struct MudFlinger {
 void AnnotatedMap::updateMapMetrics(const Vec2i &pos, const int size) {
 	assert(cellMap->isInside(pos));
 	assert(cellMap->isInside(pos.x + size - 1, pos.y + size - 1));
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 
 	// need to throw mud on the ClusterMap
 	mudFlinger.cm = World::getInstance().getCartographer()->getClusterMap();	
@@ -342,7 +342,7 @@ uint32 AnnotatedMap::computeClearance( const Vec2i &pos, Field f ) {
   * @param field the field that the unit is about to search in
   */
 void AnnotatedMap::annotateLocal(const Unit *unit) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	const Field &field = unit->getCurrField();
 	const Vec2i &pos = unit->getPos();
 	const int &size = unit->getSize();
@@ -403,7 +403,7 @@ void AnnotatedMap::annotateUnit(const Unit *unit, const Field field) {
 /** Clear all local annotations								*
   * @param field the field annotations were applied to		*/
 void AnnotatedMap::clearLocalAnnotations(const Unit *unit) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	const Field &field = unit->getCurrField();
 	for ( map<Vec2i,uint32>::iterator it = localAnnt.begin(); it != localAnnt.end(); ++ it ) {
 		assert(it->second <= maxClearance[field]);

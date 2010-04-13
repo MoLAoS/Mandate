@@ -117,7 +117,6 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	return 0;
 }
 
-
 // =====================================================
 // 	class MoveBaseCommandType
 // =====================================================
@@ -152,6 +151,7 @@ Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
 // =====================================================
 
 void MoveCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
@@ -216,6 +216,7 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 // =====================================================
 
 void StopCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
@@ -285,6 +286,7 @@ const ProducibleType *ProduceCommandType::getProduced() const{
 
 /// 0: start, 1: produce, 2: finsh (ok), 3: cancel (could not place new unit)
 void ProduceCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	
@@ -363,6 +365,7 @@ const ProducibleType *UpgradeCommandType::getProduced() const {
 }
 
 void UpgradeCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
@@ -440,6 +443,7 @@ const ProducibleType *MorphCommandType::getProduced() const{
 }
 
 void MorphCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const Map *map = theWorld.getMap();
@@ -528,6 +532,7 @@ void CastSpellCommandType::getDesc(string &str, const Unit *unit) const{
   */
 bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr, 
 					const AttackSkillTypes *asts, const AttackSkillType **past) {
+	_PROFILE_COMMAND_UPDATE();
 	fixedVec2 fixedCentre = unit->getFixedCenteredPos();
 	fixed halfSize = unit->getType()->getHalfSize();
 	fixed distance;

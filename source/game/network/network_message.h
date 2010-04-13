@@ -92,7 +92,7 @@ public:
 /** Message sent if there are AI players, to seed their Random objects */
 class NetworkMessageAiSeedSync : public NetworkMessage {
 private:
-	static const int maxAiSeeds = 2;
+	static const int maxAiSeeds = 3;
 
 private:
 	struct Data {

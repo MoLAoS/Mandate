@@ -176,6 +176,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 }
 
 void AttackCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *target = command->getUnit();
@@ -239,6 +240,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 // =====================================================
 
 void PatrolCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *target = command->getUnit();
@@ -271,6 +273,7 @@ void PatrolCommandType::update(Unit *unit) const {
 // =====================================================
 
 void GuardCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Unit *target = command->getUnit();

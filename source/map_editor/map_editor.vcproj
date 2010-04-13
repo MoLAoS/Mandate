@@ -124,6 +124,7 @@
 				PreprocessorDefinitions="WIN32;USE_PCH=1"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				ForceConformanceInForLoopScope="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="pch.h"
 				WarningLevel="3"

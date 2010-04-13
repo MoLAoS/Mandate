@@ -14,36 +14,22 @@
 
 #include <string>
 
-#include "particle.h"
-#include "factory.h"
-#include "texture.h"
-#include "vec.h"
-#include "xml_parser.h"
-
 #include "game_particle.h"
 
 using std::string;
-
-namespace Glest{ namespace Game{
-
+using Shared::Util::Random;
+using Shared::Xml::XmlNode;
 using Shared::Graphics::ParticleSystemBase;
 using Shared::Graphics::ParticleSystem;
-//using Shared::Graphics::AttackParticleSystem;
-//using Shared::Graphics::ProjectileParticleSystem;
-//using Shared::Graphics::SplashParticleSystem;
-using Shared::Graphics::Texture2D;
-using Shared::Math::Vec3f;
-using Shared::Math::Vec4f;
-using Shared::Graphics::Model;
-using Shared::Util::MultiFactory;
-using Shared::Xml::XmlNode;
+
+namespace Glest{ namespace Game{
 
 // ===========================================================
 //	class ParticleSystemType
 //
 ///	A type of particle system
 // ===========================================================
-
+/// base class for particle system proto-types
 class ParticleSystemType : public ParticleSystemBase {
 public:
 	ParticleSystemType();

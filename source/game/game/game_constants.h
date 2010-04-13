@@ -45,25 +45,21 @@ using Shared::Util::EnumNames;
 
 namespace Glest { namespace Game {
 
-#if !defined(NDEBUG) || (defined(LOG_STUFF) && LOG_STUFF)
+#if defined(LOG_STUFF) && LOG_STUFF
 #	define LOG(x) theLogger.add(x)
 #	define STREAM_LOG(x) {stringstream ss; ss << x; theLogger.add(ss.str()); }
-	void no_op();
-#	define DEBUG_HOOK() no_op()
 #else
 #	define LOG(x)
 #	define STREAM_LOG(x)
+#endif
+
+#if !defined(NDEBUG)
+	void no_op();
+#	define DEBUG_HOOK() no_op()
+#else
 #	define DEBUG_HOOK()
 #endif
 
-// =====================================================
-//	Enumerations
-// =====================================================
-	 /* doxygen enum template
-	  * <ul><li><b>VALUE</b> description</li>
-	  *		<li><b>VALUE</b> description</li>
-	  *		<li><b>VALUE</b> description</li></ul>
-	  */
 // =====================================================
 //	namespace GameConstants
 // =====================================================
@@ -90,6 +86,16 @@ namespace GameConstants {
 	const int cellScale = 2;
 	const int mapScale = 2;
 }
+
+
+// =====================================================
+//	Enumerations
+// =====================================================
+	 /* doxygen enum template
+	  * <ul><li><b>VALUE</b> description</li>
+	  *		<li><b>VALUE</b> description</li>
+	  *		<li><b>VALUE</b> description</li></ul>
+	  */
 
 namespace Search {
 	/** result set for path finding 

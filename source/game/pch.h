@@ -46,8 +46,10 @@
 #include "sigslot.h"
 #include "util.h"
 
-#define FIXED_THROW_ON_OVERFLOW 1
-#define FIXED_THROW_ON_DIVIDE_BY_ZERO 1
+#ifndef NDEBUG
+#	define FIXED_THROW_ON_OVERFLOW 1
+#	define FIXED_THROW_ON_DIVIDE_BY_ZERO 1
+#endif
 #include "fixed.h"
 
 // POSIX base

@@ -20,14 +20,17 @@
 #include "texture_manager.h"
 #include "random.h"
 #include "entity.h"
-#include "xml_parser.h"
 #include "math_util.h"
 
 using std::list;
-using Shared::Util::Random;
-using Shared::Xml::XmlNode;
 
-namespace Shared{ namespace Graphics{
+namespace Shared{ 
+
+namespace Xml { class XmlNode; }
+using Xml::XmlNode;
+using Util::Random;
+	
+namespace Graphics{
 
 class ParticleSystem;
 class FireParticleSystem;
@@ -40,18 +43,8 @@ class ModelRenderer;
 class Model;
 
 // =====================================================
-//	class WindSystem
-// =====================================================
-/*
-class WindSystem {
-public:
-	virtual Vec3f getWind() = 0;
-};*/
-
-// =====================================================
 //	class Particle
 // =====================================================
-
 
 class Particle {
 public:
@@ -106,15 +99,12 @@ public:
 	Vec3f lastPos;
 	Vec3f speed;
 	Vec3f accel;
-	Vec4f color;
-	Vec4f color2;
+	Vec4f color;	// belongs in (or already is in) owner system's proto-type ?
+	Vec4f color2;	// belongs in (or already is in) owner system's proto-type ?
 	float size;
 	int energy;
 
 public:
-	//void init(const ParticleSystem &ps, const Vec3f &pos, const Vec3f &speed, const Vec3f &accel);
-	//void init2(const ParticleSystem &ps, const Vec3f &pos, const Vec3f &speed, const Vec3f &accel);
-
 	static BlendFactor getBlendFactor(const string &);
 	static BlendEquation getBlendEquation(const string &);
 
@@ -127,13 +117,12 @@ public:
 	Vec4f getColor2() const		{return color2;}
 	float getSize() const		{return size;}
 	int getEnergy()	const		{return energy;}
-
 };
 
 // =====================================================
 //	class ParticleSystemType
 // =====================================================
-
+/// Particle systems base class, for instance-types and proto-types (hmmm...)
 /** Defines the parameters for a particle system. */
 class ParticleSystemBase {
 protected:
@@ -143,8 +132,6 @@ protected:
 	Particle::BlendFactor destBlendFactor;
 	Particle::BlendEquation blendEquationMode;
 	Particle::PrimitiveType primitiveType;
-	Texture *texture;
-	Model *model;
 	Vec3f offset;
 	Vec4f color;
 	Vec4f color2;
@@ -154,17 +141,14 @@ protected:
 	float sizeNoEnergy;
 	float speed;
 	float gravity;
-	float mass;
-	float density;
 	int emissionRate;
 	int energy;
 	int energyVar;
 	float radius;
 	int drawCount;
 
-//	static ParticleSystemType *fireParticleSystemType;
-//	static ParticleSystemType *rainParticleSystemType;
-//	static ParticleSystemType *snowParticleSystemType;
+	Texture *texture;	// belongs only in proto-type
+	Model *model;		// belongs only in proto-type
 
 public:
 	//constructor and destructor
@@ -188,8 +172,6 @@ public:
 	float getSizeNoEnergy() const						{return sizeNoEnergy;}
 	float getSpeed() const								{return speed;}
 	float getGravity() const							{return gravity;}
-	float getMass() const								{return mass;}
-	float getDensity() const							{return density;}
 	int getEmissionRate() const							{return emissionRate;}
 	int getEnergy() const								{return energy;}
 	int getEnergyVar() const							{return energyVar;}
@@ -212,18 +194,13 @@ public:
 	void setSizeNoEnergy(float v)						{sizeNoEnergy = v;}
 	void setSpeed(float v)								{speed = v;}
 	void setGravity(float v)							{gravity = v;}
-	void setMass(float v)								{mass = v;}
 	void setEmissionRate(int v)							{emissionRate = v;}
 	void setEnergy(int v)								{energy = v;}
 	void setEnergyVar(int v)							{energyVar = v;}
 	void setRadius(float v)								{radius = v;}
 	void setDrawCount(int v)							{drawCount = v;}
 
-//	void load(const XmlNode *particleSystemNode, const string &dir);
-//	virtual ParticleSystem *create() = 0;
 	int getRandEnergy() 				{return energy + random.randRange(-energyVar, energyVar);}
-	void fudgeGravity()					{gravity = mass * density;}
-	void fudgeMassDensity()				{mass = 1.f; density = gravity;}
 
 	virtual bool isProjectile() const	{ return false; }
 };
@@ -231,7 +208,7 @@ public:
 // =====================================================
 //	class ParticleSystem
 // =====================================================
-
+/// base class for particle system instances
 class ParticleSystem : public ParticleSystemBase {
 protected:
 	enum State {
@@ -253,7 +230,7 @@ protected:
 public:
 	//constructor and destructor
 	ParticleSystem(int particleCount = 1000);
-	ParticleSystem(const ParticleSystemBase &type, int particleCount = 1000);
+	ParticleSystem(const ParticleSystemBase &protoType, int particleCount = 1000);
 	virtual ~ParticleSystem();
 
 	//public

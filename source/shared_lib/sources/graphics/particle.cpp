@@ -109,8 +109,8 @@ ParticleSystemBase::ParticleSystemBase() :
 		sizeNoEnergy(1.f),
 		speed(1.f),
 		gravity(0.f),
-		mass(0.f),
-		density(0.f),
+		//mass(0.f),
+		//density(0.f),
 		emissionRate(15),
 		energy(250),
 		energyVar(50),
@@ -118,30 +118,30 @@ ParticleSystemBase::ParticleSystemBase() :
 		drawCount(1) {
 }
 
-ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &model) :
+ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
 		random(0),
-		srcBlendFactor(model.srcBlendFactor),
-		destBlendFactor(model.destBlendFactor),
-		blendEquationMode(model.blendEquationMode),
-		primitiveType(model.primitiveType),
-		texture(model.texture),
-		model(model.model),
-		offset(model.offset),
-		color(model.color),
-		color2(model.color2),
-		colorNoEnergy(model.colorNoEnergy),
-		color2NoEnergy(model.color2NoEnergy),
-		size(model.size),
-		sizeNoEnergy(model.sizeNoEnergy),
-		speed(model.speed),
-		gravity(model.gravity),
-		mass(model.mass),
-		density(model.density),
-		emissionRate(model.emissionRate),
-		energy(model.energy),
-		energyVar(model.energyVar),
-		radius(model.radius),
-		drawCount(model.drawCount) {
+		srcBlendFactor(protoType.srcBlendFactor),
+		destBlendFactor(protoType.destBlendFactor),
+		blendEquationMode(protoType.blendEquationMode),
+		primitiveType(protoType.primitiveType),
+		texture(protoType.texture),
+		model(protoType.model),
+		offset(protoType.offset),
+		color(protoType.color),
+		color2(protoType.color2),
+		colorNoEnergy(protoType.colorNoEnergy),
+		color2NoEnergy(protoType.color2NoEnergy),
+		size(protoType.size),
+		sizeNoEnergy(protoType.sizeNoEnergy),
+		speed(protoType.speed),
+		gravity(protoType.gravity),
+		//mass(protoType.mass),
+		//density(protoType.density),
+		emissionRate(protoType.emissionRate),
+		energy(protoType.energy),
+		energyVar(protoType.energyVar),
+		radius(protoType.radius),
+		drawCount(protoType.drawCount) {
 }
 
 // =====================================================
@@ -252,7 +252,6 @@ inline void ParticleSystem::initParticle(Particle *p, int particleIndex) {
 	p->color2 = getColor2();
 	p->size = getSize();
 	p->energy = getRandEnergy();
-//	p->color = Vec4f(1.0f, 1.0f, 1.0f, 1.0);
 }
 
 inline void ParticleSystem::updateParticle(Particle *p) {
@@ -286,14 +285,16 @@ void FireParticleSystem::initParticle(Particle *p, int particleIndex) {
 	Vec4f halfColorNoEnergy = colorNoEnergy * 0.5f;
 
 	p->color = halfColorNoEnergy + halfColorNoEnergy * radRatio;
-	p->energy = static_cast<int>(energy * radRatio) + random.randRange(-energyVar, energyVar);
+	p->energy = int(energy * radRatio) + random.randRange(-energyVar, energyVar);
 	float halfRadius = radius * 0.5f;
 	p->pos = Vec3f(pos.x + x, pos.y + random.randRange(-halfRadius, halfRadius), pos.z + y);
 	p->lastPos = pos;
 	p->size = size;
-	p->speed = Vec3f(speed * random.randRange(-0.125f, 0.125f),
+	p->speed = Vec3f(
+			speed * random.randRange(-0.125f, 0.125f),
 			speed * random.randRange(0.5f, 1.5f),
-			speed * random.randRange(-0.125f, 0.125f));
+			speed * random.randRange(-0.125f, 0.125f)
+	);
 }
 
 inline void FireParticleSystem::updateParticle(Particle *p) {

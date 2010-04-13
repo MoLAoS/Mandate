@@ -24,6 +24,8 @@
 #include "upgrade_type.h"
 #include "game_constants.h"
 
+#define _PROFILE_COMMAND_UPDATE() _PROFILE_FUNCTION()
+
 namespace Glest { namespace Game {
 
 using Shared::Util::MultiFactory;

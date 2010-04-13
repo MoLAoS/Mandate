@@ -383,15 +383,13 @@ private:
 	static int lastDeadUnitName(LuaHandle* luaHandle);		// deprecate, use unitEvent
 	static int lastDeadUnit(LuaHandle* luaHandle);			// deprecate, use unitEvent
 
-#	if _GAE_DEBUG_EDITION_
-
-	static int hilightRegion(LuaHandle *luaHandle);
-	static int hilightCell(LuaHandle *luaHandle);
-	static int clearHilights(LuaHandle *luaHandle);
-	static int debugSet(LuaHandle *luaHandle);
-	static int setFarClip(LuaHandle *luaHandle);
-
-#	endif
+	IF_DEBUG_EDITION(
+		static int hilightRegion(LuaHandle *luaHandle);
+		static int hilightCell(LuaHandle *luaHandle);
+		static int clearHilights(LuaHandle *luaHandle);
+		static int debugSet(LuaHandle *luaHandle);
+		static int setFarClip(LuaHandle *luaHandle);
+	)
 
 };
 

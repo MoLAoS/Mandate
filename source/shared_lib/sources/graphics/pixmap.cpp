@@ -126,25 +126,24 @@ void PixmapIoTga::read(uint8 *pixels){
 	read(pixels, components);
 }
 
-void PixmapIoTga::read(uint8 *pixels, int components){
+void PixmapIoTga::read(uint8 *pixels, int components) {
 	_PROFILE_FUNCTION();
 	size_t dataSize = h * w * components;
 	uint8 *buf = new uint8[dataSize];
 	file->read(buf, dataSize, 1);
 
-	for (int i=0; i < dataSize; i+=components) {
+	for (int i=0; i < dataSize; i += components) {
 		uint8 r, g, b, a, l;
 
-		if (this->components==1) {
+		if (this->components == 1) {
 			//file->read(&l, 1, 1);
 			l = *(buf + i);
 			r= l;
 			g= l;
 			b= l;
 			a= 255;
-		}
-		else{
-			b = *(buf + i);
+		} else {
+			b = *(buf + i + 0);
 			g = *(buf + i + 1);
 			r = *(buf + i + 2);
 			//file->read(&b, 1, 1);
@@ -153,28 +152,27 @@ void PixmapIoTga::read(uint8 *pixels, int components){
 			if (this->components == 4) {
 				a  = *(buf + i + 3);
 				//file->read(&a, 1, 1);
-			}
-			else{
+			} else {
 				a = 255;
 			}
 			l = (r + g + b) / 3;
 		}
 
-		switch(components){
-		case 1:
-			pixels[i]= l;
-			break;
-		case 3:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			break;
-		case 4:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			pixels[i+3]= a;
-			break;
+		switch(components) {
+			case 1:
+				pixels[i+0]= l;
+				break;
+			case 3:
+				pixels[i+0]= r;
+				pixels[i+1]= g;
+				pixels[i+2]= b;
+				break;
+			case 4:
+				pixels[i+0]= r;
+				pixels[i+1]= g;
+				pixels[i+2]= b;
+				pixels[i+3]= a;
+				break;
 		}
 	}
 	delete [] buf;
@@ -220,11 +218,11 @@ void PixmapIoTga::write(uint8 *pixels){
 // =====================================================
 
 PixmapIoBmp::PixmapIoBmp(){
-	file= NULL;
+	file = NULL;
 }
 
 PixmapIoBmp::~PixmapIoBmp(){
-	if(file!=NULL){
+	if (file != NULL) {
 		delete file;
 	}
 }
@@ -236,19 +234,19 @@ void PixmapIoBmp::openRead(const string &path){
 	//read file header
     BitmapFileHeader fileHeader;
     file->read(&fileHeader, sizeof(BitmapFileHeader), 1);
-	if(fileHeader.type1!='B' || fileHeader.type2!='M'){
+	if (fileHeader.type1!='B' || fileHeader.type2!='M') {
 		throw runtime_error(path +" is not a bitmap");
 	}
 
 	//read info header
 	BitmapInfoHeader infoHeader;
 	file->read(&infoHeader, sizeof(BitmapInfoHeader), 1);
-	if(infoHeader.bitCount!=24){
+	if (infoHeader.bitCount != 24) {
         throw runtime_error(path+" is not a 24 bit bitmap");
 	}
 
-    h= infoHeader.height;
-    w= infoHeader.width;
+    h = infoHeader.height;
+    w = infoHeader.width;
 	components= 3;
 }
 
@@ -258,37 +256,39 @@ void PixmapIoBmp::read(uint8 *pixels){
 
 void PixmapIoBmp::read(uint8 *pixels, int components){
 	_PROFILE_FUNCTION();
+	const int alignOffset = (w * this->components) % 4;
+	const int rowPad = alignOffset ? 4 - alignOffset : 0;
+	const int rowSize = w * this->components + rowPad;
+	uint8 *rowBuf = new uint8[rowSize];
+	int pix = 0;
+	assert(file->bytesRemaining() >= rowSize * h); // some bmps seem to have 2 extra bytes... ?!?
 
-	size_t dataSize = h * w * components;
-	uint8 *buf = new uint8[dataSize];
-	file->read(buf, dataSize, 1);
-
-    for(int i=0; i < dataSize; i += components) {
-		uint8	&b = *(buf + i),
-				&g = *(buf + i + 1),
-				&r = *(buf + i + 2);
-		//file->read(&b, 1, 1);
-		//file->read(&g, 1, 1);
-		//file->read(&r, 1, 1);
-
-		switch(components){
-		case 1:
-			pixels[i]= (r+g+b)/3;
-			break;
-		case 3:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			break;
-		case 4:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			pixels[i+3]= 255;
-			break;
+	for (int y=0; y < h; ++y) {
+		file->read(rowBuf, rowSize, 1);
+		for (int x=0; x < w; ++x) {
+			uint8 &b = *(rowBuf + x * this->components + 0);
+			uint8 &g = *(rowBuf + x * this->components + 1);
+			uint8 &r = *(rowBuf + x * this->components + 2);
+			switch (components) {
+				case 1:
+					pixels[pix++] = (r + g + b) / 3;
+					break;
+				case 3:
+					pixels[pix++] = r;
+					pixels[pix++] = g;
+					pixels[pix++] = b;
+					break;
+				case 4:
+					pixels[pix++] = r;
+					pixels[pix++] = g;
+					pixels[pix++] = b;
+					pixels[pix++] = 255;
+					break;
+			}
 		}
-    }
-	delete [] buf;
+	}
+	assert(pix == components * w * h);
+	delete [] rowBuf;
 }
 
 void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){

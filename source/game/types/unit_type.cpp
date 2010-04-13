@@ -337,10 +337,7 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		Logger::getErrorLog().addXmlError(path, e.what());
 		loadOk = false;
 	}
-
 	if ( !loadOk ) return false; // unsafe to keep going...
-
-	//REFACTOR: sort all CommandTypes by class, into commandTypesByClass
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if(meetingPoint) {
@@ -349,7 +346,8 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 	}
 
 	computeFirstStOfClass();
-	computeFirstCtOfClass();
+	sortCommandTypes();
+
 	try { // Logger::addXmlError() expects a char*, so it's easier just to throw & catch ;)
 		if(!getFirstStOfClass(SkillClass::STOP)) {
 			throw runtime_error("Every unit must have at least one stop skill: "+ path);
@@ -526,20 +524,14 @@ bool UnitType::hasSkillClass(SkillClass skillClass) const {
 	return firstSkillTypeOfClass[skillClass] != NULL;
 }
 
-//REIMPLEMENT with commandTypesByClass ?
-bool UnitType::hasCommandType(const CommandType *commandType) const {
-	assert(commandType != NULL);
-	for (int i = 0; i < commandTypes.size(); ++i) {
-		if (commandTypes[i] == commandType) {
+bool UnitType::hasCommandType(const CommandType *ct) const {
+	assert(ct);
+	foreach_const (CommandTypes, it, commandTypesByClass[ct->getClass()]) {
+		if (*it == ct) {
 			return true;
 		}
 	}
 	return false;
-}
-
-//REIMPLEMENT with commandTypesByClass
-bool UnitType::hasCommandClass(CommandClass commandClass) const{
-	return firstCommandTypeOfClass[commandClass] != NULL;
 }
 
 //REIMPLEMENT with skillTypesByClass
@@ -583,26 +575,17 @@ void UnitType::computeFirstStOfClass(){
 }
 
 //REFACTOR: sortCommandTypes() : sort commandTypes into commandTypesByClass
-void UnitType::computeFirstCtOfClass() {
-	for (int j = 0; j < CommandClass::COUNT; ++j) {
-		firstCommandTypeOfClass[j]= NULL;
-		for (int i = 0; i < commandTypes.size(); ++i) {
-			if (commandTypes[i]->getClass() == enum_cast<CommandClass>(j)) {
-				firstCommandTypeOfClass[j] = commandTypes[i];
-				break;
+void UnitType::sortCommandTypes() {
+	foreach_enum (CommandClass, cc) {
+		foreach (CommandTypes, it, commandTypes) {
+			if ((*it)->getClass() == cc) {
+				commandTypesByClass[cc].push_back(*it);
 			}
 		}
 	}
-}
-
-const CommandType* UnitType::findCommandTypeById(int id) const {
-	for (int i = 0; i < getCommandTypeCount(); ++i) {
-		const CommandType* commandType = getCommandType(i);
-		if (commandType->getId() == id) {
-			return commandType;
-		}
+	foreach (CommandTypes, it, commandTypes) {
+		commandTypeMap[(*it)->getId()] = *it;
 	}
-	return NULL;
 }
 
 }}//end namespace

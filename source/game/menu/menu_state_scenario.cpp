@@ -189,22 +189,13 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 	const XmlNode *scenarioNode = xmlTree.getRootNode();
 	const XmlNode *difficultyNode = scenarioNode->getChild("difficulty");
 	scenarioInfo->difficulty = difficultyNode->getAttribute("value")->getIntValue();
+
 	if (scenarioInfo->difficulty < dVeryEasy || scenarioInfo->difficulty > dInsane) {
 		throw std::runtime_error("Invalid difficulty");
 	}
 
-	const XmlNode *tmp = scenarioNode->getOptionalChild("fog-of-war");
-	if ( tmp ) {
-		scenarioInfo->fogOfWar = tmp->getAttribute("value")->getBoolValue();
-	} else {
-		scenarioInfo->fogOfWar = true;
-	}
-	tmp = scenarioNode->getOptionalChild("shroud-of-darkness");
-	if ( tmp ) {
-		scenarioInfo->shroudOfDarkness = tmp->getAttribute("value")->getBoolValue();
-	} else {
-		scenarioInfo->shroudOfDarkness = true;
-	}
+	scenarioInfo->fogOfWar = scenarioNode->getOptionalBoolValue("fog-of-war", true);
+	scenarioInfo->shroudOfDarkness = scenarioNode->getOptionalBoolValue("shroud-of-darkness", true);
 
 	const XmlNode *playersNode = scenarioNode->getChild("players");
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -312,13 +303,18 @@ void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameS
 	gs->setFactionCount(factionCount);
 }
 
+//REFACTOR: Delete. Use ControlTypeNames.match()
 ControlType MenuStateScenario::strToControllerType(const string &str) {
 	if (str == "closed") {
 		return ControlType::CLOSED;
+	} else if (str == "cpu-easy") {
+		return ControlType::CPU_EASY;
 	} else if (str == "cpu") {
 		return ControlType::CPU;
 	} else if (str == "cpu-ultra") {
 		return ControlType::CPU_ULTRA;
+	} else if (str == "cpu-mega") {
+		return ControlType::CPU_MEGA;
 	} else if (str == "human") {
 		return ControlType::HUMAN;
 	}

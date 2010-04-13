@@ -11,6 +11,7 @@
 // ==============================================================
 
 #include "pch.h"
+#include "types.h"
 #include "util.h"
 
 #include <ctime>

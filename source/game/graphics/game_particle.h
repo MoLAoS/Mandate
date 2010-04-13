@@ -13,7 +13,7 @@
 
 #include "particle.h"
 
-
+using Shared::Util::Random;
 using namespace Shared::Graphics;
 
 namespace Glest { namespace Game {
@@ -28,10 +28,9 @@ class SplashParticleSystem;
 /// Base class for Projectiles and Splashes
 // ===========================================================================
 
-class AttackParticleSystem: public ParticleSystem {
+class AttackParticleSystem : public ParticleSystem {
 protected:
 	Vec3f direction;
-
 
 public:
 	AttackParticleSystem(int particleCount);
@@ -46,9 +45,9 @@ public:
 //	class ProjectileParticleSystem
 // =====================================================
 
-class ProjectileParticleSystem: public AttackParticleSystem {
-public:
+class ProjectileParticleSystem : public AttackParticleSystem {
 	friend class SplashParticleSystem;
+public:
 
 	enum Trajectory {
 		tLinear,
@@ -118,7 +117,7 @@ public:
 //	class SplashParticleSystem
 // =====================================================
 
-class SplashParticleSystem: public AttackParticleSystem {
+class SplashParticleSystem : public AttackParticleSystem {
 public:
 	friend class ProjectileParticleSystem;
 

@@ -47,6 +47,7 @@ namespace Glest { namespace Game {
 bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int centreSize,
 		Unit **rangedPtr, const RepairCommandType *rct, const RepairSkillType *rst,
 		int range, bool allowSelf, bool militaryOnly, bool damagedOnly) {
+	_PROFILE_COMMAND_UPDATE();
 	Targets repairables;
 
 	fixedVec2 fixedCentre(centre.x + centreSize / fixed(2), centre.y + centreSize / fixed(2));
@@ -84,7 +85,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 			&& (!militaryOnly || candidate->getType()->hasCommandClass(CommandClass::ATTACK))
 			&& rct->isRepairableUnitType(candidate->getType())) {
 				//record the nearest distance to target (target may be on multiple cells)
-				repairables.record(candidate, distance.intp());
+				repairables.record(candidate, distance);
 			}
 		}
 	}
@@ -188,6 +189,7 @@ bool RepairCommandType::isRepairableUnitType(const UnitType *unitType) const{
 #endif
 
 void RepairCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const RepairSkillType * const &rst = repairSkillType;
@@ -432,6 +434,7 @@ const string cmdCancelMsg = " Command cancelled.";
 #endif
 
 void BuildCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const UnitType *builtUnitType = command->getUnitType();
@@ -743,6 +746,7 @@ Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 }
 
 void HarvestCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Vec2i targetPos;

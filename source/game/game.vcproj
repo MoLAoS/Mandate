@@ -268,6 +268,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\facilities\logger.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\facilities\logger.h"
 				>
 			</File>
@@ -425,6 +429,14 @@
 			</File>
 			<File
 				RelativePath=".\graphics\debug_renderer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\graphics\game_particle.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\graphics\game_particle.h"
 				>
 			</File>
 			<File
@@ -692,6 +704,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\sound\sound_container.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\sound\sound_container.h"
 				>
 			</File>
@@ -910,6 +926,18 @@
 			Name="types"
 			>
 			<File
+				RelativePath=".\types\cmd_types_attack.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\types\cmd_types_general.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\types\cmd_types_worker.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\types\command_type.h"
 				>
 			</File>
@@ -919,6 +947,14 @@
 			</File>
 			<File
 				RelativePath=".\types\damage_multiplier.h"
+				>
+			</File>
+			<File
+				RelativePath=".\types\earthquake_type.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\types\earthquake_type.h"
 				>
 			</File>
 			<File
@@ -1075,39 +1111,7 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\types\cmd_types_attack.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\types\cmd_types_general.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\types\cmd_types_worker.cpp"
-			>
-		</File>
-		<File
 			RelativePath=".\config.db"
-			>
-		</File>
-		<File
-			RelativePath=".\types\earthquake_type.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\types\earthquake_type.h"
-			>
-		</File>
-		<File
-			RelativePath=".\graphics\game_particle.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\graphics\game_particle.h"
-			>
-		</File>
-		<File
-			RelativePath=".\facilities\logger.cpp"
 			>
 		</File>
 		<File
@@ -1136,10 +1140,6 @@
 		</File>
 		<File
 			RelativePath="..\resources.rc"
-			>
-		</File>
-		<File
-			RelativePath=".\sound\sound_container.cpp"
 			>
 		</File>
 	</Files>

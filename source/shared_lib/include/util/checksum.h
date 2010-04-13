@@ -45,7 +45,7 @@ public:
 
 	int32 getSum() const	{return sum;}
 
-	template <typename T> void add(T val) {
+	template <typename T> void add(const T &val) {
 		for (unsigned i=0; i < sizeof(T); ++i) {
 			int8 *byte = (int8*)&val + i;
 			addByte(*byte);
@@ -53,7 +53,8 @@ public:
 	}
 };
 
-template <> inline void Checksum::add<string>(string value) {
+// specialise for strings
+template <> inline void Checksum::add<string>(const string &value) {
 	for(int i=0; i < value.size(); ++i) {
 		addByte(value[i]);
 	}

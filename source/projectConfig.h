@@ -3,10 +3,10 @@
 #define _PROJECTCONFIG_H_
 
 
-#define VERSION_STRING "v0.2.12"
+#define VERSION_STRING "v0.3.0"
 #define CONTACT_STRING "glestae-devel@lists.sourceforge.net"
 
-// trailed slash is needed
+// trailing slash is needed
 #define DEFAULT_CONFIG_DIR "./"
 #define DEFAULT_DATA_DIR   "./"
 

@@ -43,6 +43,9 @@
 #	define CONSOLE_LOG(x) {}
 #endif
 
+#define _PROFILE_PATHFINDER()
+//#define _PROFILE_PATHFINDER() _PROFILE_FUNCTION()
+
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
@@ -202,6 +205,7 @@ float RoutePlanner::quickSearch(Field field, int size, const Vec2i &start, const
 }
 
 HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &dest, TransitionGoal &goalFunc) {
+	_PROFILE_PATHFINDER();
 	// get Transitions for start cluster
 	Transitions transitions;
 	Vec2i startCluster = ClusterMap::cellToCluster(unit->getPos());
@@ -286,6 +290,7 @@ HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &des
 }
 
 HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, WaypointPath &waypoints) {
+	_PROFILE_PATHFINDER();
 	TransitionGoal goal;
 	HAAStarResult setupResult = setupHierarchicalSearch(unit, dest, goal);
 	GridNeighbours::setSearchSpace(SearchSpace::CELLMAP);
@@ -313,6 +318,7 @@ HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, Wayp
   * @return true if successful, in which case waypoint will have been popped.
   * false on failure, in which case waypoint will not be popped. */
 bool RoutePlanner::refinePath(Unit *unit) {
+	_PROFILE_PATHFINDER();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	UnitPath &path = *unit->getPath();
 	assert(!wpPath.empty());
@@ -349,6 +355,7 @@ bool RoutePlanner::refinePath(Unit *unit) {
 #undef max
 
 void RoutePlanner::smoothPath(Unit *unit) {
+	_PROFILE_PATHFINDER();
 	if (unit->getPath()->size() < 3) {
 		return;
 	}
@@ -448,6 +455,7 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 }
 
 TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
+	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
 	UnitPath &path = *unit->getPath();
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
@@ -474,6 +482,7 @@ TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
 }
 
 TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
+	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	UnitPath &path = *unit->getPath();
 	PosGoal goal(targetPos);
@@ -603,6 +612,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 }
 
 TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Vec2i &target) {
+	_PROFILE_PATHFINDER();
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	const Vec2i &start = unit->getPos();
@@ -702,6 +712,7 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
   * @param unit unit whose path is blocked 
   * @return true if repair succeeded */
 bool RoutePlanner::repairPath(Unit *unit) {
+	_PROFILE_FUNCTION();
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	
@@ -821,6 +832,7 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
   * @todo reimplement with Dijkstra search
   */
 Vec2i RoutePlanner::computeNearestFreePos(const Unit *unit, const Vec2i &finalPos) {
+	_PROFILE_FUNCTION();
 	//unit data
 	Vec2i unitPos= unit->getPos();
 	int size= unit->getType()->getSize();

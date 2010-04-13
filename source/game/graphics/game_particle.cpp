@@ -29,8 +29,8 @@ AttackParticleSystem::AttackParticleSystem(int particleCount)
 		, direction(1.0f, 0.0f, 0.0f) {
 }
 
-AttackParticleSystem::AttackParticleSystem(const ParticleSystemBase &type, int particleCount)
-		: ParticleSystem(type, particleCount) 
+AttackParticleSystem::AttackParticleSystem(const ParticleSystemBase &protoType, int particleCount)
+		: ParticleSystem(protoType, particleCount) 
 		, direction(1.0f, 0.0f, 0.0f) {	
 }
 
@@ -74,8 +74,8 @@ ProjectileParticleSystem::ProjectileParticleSystem(int particleCount)
 }
 
 
-ProjectileParticleSystem::ProjectileParticleSystem(const ParticleSystemBase &model, int particleCount)
-		: AttackParticleSystem(model, particleCount)
+ProjectileParticleSystem::ProjectileParticleSystem(const ParticleSystemBase &protoType, int particleCount)
+		: AttackParticleSystem(protoType, particleCount)
 		, nextParticleSystem(0)
 		, target(0)
 		, trajectory(tLinear)
@@ -113,9 +113,7 @@ void ProjectileParticleSystem::update() {
 
 		assert(startFrame >= 0 && endFrame >= 0 && startFrame < endFrame);
 
-		float t = clamp(
-			(float(theWorld.getFrameCount()) - float(startFrame))
-			/ (float(endFrame) - float(startFrame)), 0.f, 1.f);
+		float t = clamp((theWorld.getFrameCount() - startFrame) / float(endFrame - startFrame), 0.f, 1.f);
 
 		//Vec3f flatVector;
 /*
@@ -207,7 +205,7 @@ void ProjectileParticleSystem::update() {
 void ProjectileParticleSystem::initParticle(Particle *p, int particleIndex) {
 	ParticleSystem::initParticle(p, particleIndex);
 
-	float t = static_cast<float>(particleIndex) / emissionRate;
+	float t = float(particleIndex) / emissionRate;
 
 	p->pos = pos + (lastPos - pos) * t;
 	p->lastPos = lastPos;
@@ -218,7 +216,7 @@ void ProjectileParticleSystem::initParticle(Particle *p, int particleIndex) {
 }
 
 inline void ProjectileParticleSystem::updateParticle(Particle *p) {
-	float energyRatio = clamp(static_cast<float>(p->energy) / energy, 0.f, 1.f);
+	float energyRatio = clamp(float(p->energy) / energy, 0.f, 1.f);
 
 	p->lastPos += p->speed;
 	p->pos += p->speed;

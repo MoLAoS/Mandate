@@ -84,6 +84,7 @@ private:
 	typedef vector<Level> Levels;
 	typedef vector<ParticleSystemType*> particleSystemTypes;
 //	typedef vector<PetRule*> PetRules;
+	typedef map<int, const CommandType*> CommandTypeMap;
 
 private:
 	//basic
@@ -113,13 +114,15 @@ private:
 	// we can just get _all_ command types of a class
 
 	//REFACTOR: in trunk, uncomment these.
-	//CommandTypes commandTypesByClass[CommandClass::COUNT];
+	CommandTypes commandTypesByClass[CommandClass::COUNT]; // command types mapped by CommandClass
 	//SkillTypes skillTypesByClass[SkillClass::COUNT];
+
+	CommandTypeMap commandTypeMap; // command types mapped by id
 
 	//REFACTOR: use above, remove these
 	//OPTIMIZATIONS:
 	//store first command type and skill type of each class
-	const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
+	//const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
 	const SkillType *firstSkillTypeOfClass[SkillClass::COUNT];
 	fixed halfSize;
 	fixed halfHeight;
@@ -151,32 +154,40 @@ public:
 		const SkillType *st = getFirstStOfClass(SkillClass::MOVE);
 		return st && st->getSpeed() > 0 ? true: false;
 	}
+
 	//cellmap
 	bool *cellMap;
-
-	int getStoredResourceCount() const					{return storedResources.size();}
-	const Resource *getStoredResource(int i) const		{return &storedResources[i];}
 	bool getCellMapCell(int x, int y) const				{
 		assert(size * y + x >= 0 && size * y + x < size * size);
 		return cellMap[size * y + x];
 	}
+
+	// resources
+	int getStoredResourceCount() const					{return storedResources.size();}
+	const Resource *getStoredResource(int i) const		{return &storedResources[i];}
+	int getStore(const ResourceType *rt) const;
+
+	// meeting point
 	bool hasMeetingPoint() const						{return meetingPoint;}
 	Texture2D *getMeetingPointImage() const				{return meetingPointImage;}
+
+	// sounds
 	StaticSound *getSelectionSound() const				{return selectionSounds.getRandSound();}
 	StaticSound *getCommandSound() const				{return commandSounds.getRandSound();}
 
-	int getStore(const ResourceType *rt) const;
 	const SkillType *getSkillType(const string &skillName, SkillClass skillClass = SkillClass::COUNT) const;
 
-	const CommandType *getFirstCtOfClass(CommandClass commandClass) const {return firstCommandTypeOfClass[commandClass];}
+	const CommandType *getFirstCtOfClass(CommandClass cc) const {
+		return commandTypesByClass[cc].empty() ? 0 : commandTypesByClass[cc].front();
+	}
 	const SkillType *getFirstStOfClass(SkillClass skillClass) const {return firstSkillTypeOfClass[skillClass];}
     const HarvestCommandType *getFirstHarvestCommand(const ResourceType *resourceType) const;
 	const AttackCommandType *getFirstAttackCommand(Zone zone) const;
 	const RepairCommandType *getFirstRepairCommand(const UnitType *repaired) const;
 
 	//has
-    bool hasCommandType(const CommandType *commandType) const;
-	bool hasCommandClass(CommandClass commandClass) const;
+	bool hasCommandType(const CommandType *ct) const;
+	bool hasCommandClass(CommandClass cc) const { return !commandTypesByClass[cc].empty(); }
     bool hasSkillType(const SkillType *skillType) const;
     bool hasSkillClass(SkillClass skillClass) const;
 	bool hasCellMap() const								{return cellMap!=NULL;}
@@ -185,11 +196,16 @@ public:
 	bool isOfClass(UnitClass uc) const;
 
 	//find
-	const CommandType* findCommandTypeById(int id) const;
+	// this is only used to convert NetworkCOmmand to Command, have a single map in CommandTypeFactory,
+	// which will be taking control of ids... see comments in command_type.h [above decl. of resetIdCounter()]
+	const CommandType* findCommandTypeById(int id) const {
+		CommandTypeMap::const_iterator it = commandTypeMap.find(id);
+		return (it != commandTypeMap.end() ? it->second : 0);
+	}
 
 private:
     void computeFirstStOfClass();
-    void computeFirstCtOfClass();
+    void sortCommandTypes();
 };
 
 
