@@ -115,7 +115,7 @@ Gui::Gui(Game &game) : game(game), input(game.getInput()) {
 	currentGroup= invalidGroupIndex;
 }
 
-void Gui::init(){
+void Gui::init() {
 	this->commander= game.getCommander();
 	this->gameCamera= game.getGameCamera();
 	this->console= game.getConsole();
@@ -124,26 +124,26 @@ void Gui::init(){
 	selection.init(this, world->getThisFactionIndex());
 }
 
-void Gui::end(){
+void Gui::end() {
 	selection.clear();
 }
 
 // ==================== get ====================
 
-const UnitType *Gui::getBuilding() const{
+const UnitType *Gui::getBuilding() const {
 	assert(selectingBuilding);
 	return choosenBuildingType;
 }
 
 // ==================== is ====================
 
-bool Gui::isPlacingBuilding() const{
+bool Gui::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType!=NULL && activeCommandType->getClass()==CommandClass::BUILD;
 }
 
 // ==================== reset state ====================
 
-void Gui::resetState(){
+void Gui::resetState() {
 	selectingBuilding= false;
 	selectingPos= false;
 	selectingMeetingPoint= false;

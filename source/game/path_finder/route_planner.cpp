@@ -10,7 +10,7 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-// Does not use pre-compiled header because it's optimized in debug build.
+#include "pch.h"
 
 #include <algorithm>
 #include <list>

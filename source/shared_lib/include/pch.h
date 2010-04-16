@@ -12,10 +12,11 @@
 #ifndef USE_PCH
 #	define USE_PCH 0
 #endif
+#include "projectConfig.h"
 
 #ifndef _SHARED_PCH_H_
-#	define _SHARED_PCH_H_
-//#include "projectConfig.h"
+#define _SHARED_PCH_H_
+
 #if USE_PCH
 
 #if defined(WIN32) || defined(WIN64)

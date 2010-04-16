@@ -12,7 +12,6 @@
 #ifndef _FILEOPS_HPP_
 #define _FILEOPS_HPP_
 
-
 class FileOps{
 public:
 	FileOps();
@@ -32,18 +31,8 @@ public:
 
 	// these were added to make sanity checks easier, and are not really
 	// intended to be called outside of an assert()
-	int fileSize() {
-		int pos = tell();
-		seek(0, SEEK_END);
-		int len = tell();
-		seek(pos, SEEK_SET);
-		return len;
-	}
-
-	int bytesRemaining() {
-		return fileSize() - tell();
-	}
-
+	int fileSize();
+	int bytesRemaining();
 };
 
 #endif

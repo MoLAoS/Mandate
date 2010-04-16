@@ -38,7 +38,7 @@ namespace Glest{ namespace Game{
 
 SkillType::SkillType(SkillClass skillClass, const char* typeName) 
 		: NameIdPair()
-		, skillClass(skillClass)
+		//, skillClass(skillClass)
 		, effectTypes()
 		, epCost(0)
 		//, speed(0.f)
@@ -168,7 +168,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 }
 
 void SkillType::doChecksum(Checksum &checksum) const {
-	checksum.add<SkillClass>(skillClass);
+	checksum.add<SkillClass>(getClass());
 	foreach_const (EffectTypes, it, effectTypes) {
 		(*it)->doChecksum(checksum);
 	}
@@ -240,6 +240,7 @@ void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) 
 }
 
 CycleInfo SkillType::calculateCycleTime() const {
+	const SkillClass skillClass = getClass();
 	static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
 	if (skillClass == SkillClass::MOVE) {
 		return CycleInfo(-1, -1);
@@ -278,7 +279,6 @@ string SkillType::skillClassToStr(SkillClass skillClass){
 		case SkillClass::BE_BUILT: return "Be Built";
 		case SkillClass::PRODUCE: return "Produce";
 		case SkillClass::UPGRADE: return "Upgrade";
-		case SkillClass::CAST_SPELL: return "Cast Spell";
 		default:
 			assert(false);
 			return "";
@@ -404,7 +404,7 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 // =====================================================
 
 AttackSkillType::~AttackSkillType() { 
-	delete earthquakeType; 
+//	delete earthquakeType; 
 }
 
 void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
@@ -430,13 +430,14 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 		attackPctStolen = 0;
 		attackPctVar = 0;
 	}
-
+#ifdef EARTHQUAKE_CODE
 	earthquakeType = NULL;
 	XmlNode *earthquakeNode = sn->getChild("earthquake", 0, false);
 	if(earthquakeNode) {
 		earthquakeType = new EarthquakeType(float(attackStrength), attackType);
 		earthquakeType->load(earthquakeNode, dir, tt, ft);
 	}
+#endif
 }
 
 void AttackSkillType::doChecksum(Checksum &checksum) const {
@@ -613,41 +614,6 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<int>(maxPets);
 }
 
-// ===============================
-// 	class FallDownSkillType
-// ===============================
-
-FallDownSkillType::FallDownSkillType(const SkillType *model) : SkillType(SkillClass::FALL_DOWN, "Fall down") {
-    speed = model->getSpeed();
-    animSpeed = model->getAnimSpeed();
-    animations.push_back((Model *)model->getAnimation());
-	agility = 0.5f;
-}
-
-void FallDownSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
-	SkillType::load(sn, dir, tt, ft);
-
-	agility = sn->getChildFloatValue("agility");
-}
-
-void FallDownSkillType::doChecksum(Checksum &checksum) const {
-	SkillType::doChecksum(checksum);
-	checksum.add<float>(agility);
-}
-// ===============================
-// 	class GetUpSkillType
-// ===============================
-
-GetUpSkillType::GetUpSkillType(const SkillType *model) : SkillType(SkillClass::GET_UP, "Get up") {
-    speed = 50;//model->getSpeed();
-    animSpeed = model->getAnimSpeed();
-    animations.push_back((Model *)model->getAnimation());
-}
-
-void GetUpSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
-	SkillType::load(sn, dir, tt, ft);
-}
-
 // =====================================================
 // 	class SkillTypeFactory
 // =====================================================
@@ -664,16 +630,7 @@ SkillTypeFactory::SkillTypeFactory(){
 	registerClass<UpgradeSkillType>("upgrade");
 	registerClass<MorphSkillType>("morph");
 	registerClass<DieSkillType>("die");
-	registerClass<CastSpellSkillType>("cast_spell");
-	registerClass<FallDownSkillType>("fall_down");
-	registerClass<GetUpSkillType>("get_up");
 }
-
-SkillTypeFactory &SkillTypeFactory::getInstance(){
-	static SkillTypeFactory ctf;
-	return ctf;
-}
-
 
 // =====================================================
 // 	class AttackSkillTypes & enum AttackSkillPreferenceFlags

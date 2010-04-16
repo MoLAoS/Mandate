@@ -299,11 +299,13 @@ public:
 	void computeNormals();
 	void computeInterpolatedHeights();
 
+#ifdef EARTHQUAKE_CODE
 	void computeNormals(Rect2i range);
 	void computeInterpolatedHeights(Rect2i range);
 
 	void add(Earthquake *earthquake) 			{earthquakes.push_back(earthquake);}
 	void update(float slice);
+#endif
 
 	//assertions
 	#ifdef DEBUG

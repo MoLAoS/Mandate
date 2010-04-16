@@ -479,25 +479,22 @@ bool Unit::isPet(const Unit *u) const {
 	return false;
 }
 
-/** find a repair command type that can repair a unit
+/** find a repair command type that can repair a unit with
   * @param u the unit in need of repairing 
   * @return a RepairCommandType that can repair u, or NULL
   */
 const RepairCommandType * Unit::getRepairCommandType(const Unit *u) const {
-	for(int i = 0; i < type->getCommandTypeCount(); i++) {
-		const CommandType *ct = type->getCommandType(i);
-		if(ct->getClass() == CommandClass::REPAIR) {
-			const RepairCommandType *rct = (const RepairCommandType *)ct;
-			const RepairSkillType *rst = rct->getRepairSkillType();
-			if((!rst->isPetOnly() || isPet(u))
-					&& (!rst->isSelfOnly() || this == u)
-					&& (rst->isSelfAllowed() || this != u)
-					&& (rct->isRepairableUnitType(u->type))) {
-				return rct;
-			}
+	for(int i = 0; i < type->getCommandTypeCount<RepairCommandType>(); i++) {
+		const RepairCommandType *rct = type->getCommandType<RepairCommandType>(i);
+		const RepairSkillType *rst = rct->getRepairSkillType();
+		if((!rst->isPetOnly() || isPet(u))
+				&& (!rst->isSelfOnly() || this == u)
+				&& (rst->isSelfAllowed() || this != u)
+				&& (rct->canRepair(u->type))) {
+			return rct;
 		}
 	}
-	return NULL;
+	return 0;
 }
 
 float Unit::getProgress() const {
@@ -620,7 +617,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 			psProj->link(psSplash);
 		}
 	}
-
+#ifdef EARTHQUAKE_CODE
 	const EarthquakeType *et = ast->getEarthquakeType();
 	if (et) {
 		et->spawn(*map, this, this->getTargetPos(), 1.f);
@@ -631,6 +628,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		// FIXME: hacky mechanism of keeping attackers from walking into their own earthquake :(
 		this->finishCommand();
 	}
+#endif
 }
 
 // =============================== Render related ==================================
@@ -659,6 +657,15 @@ Vec3f Unit::getCurrVectorFlat() const {
   * @return the first executable CommandType matching commandClass, or NULL
   */
 const CommandType *Unit::getFirstAvailableCt(CommandClass commandClass) const {
+	typedef vector<CommandType*> CommandTypes;
+	const  CommandTypes &cmdTypes = type->getCommandTypes(commandClass);
+	foreach_const (CommandTypes, it, cmdTypes) {
+		if (faction->reqsOk(*it)) {
+			return *it;
+		}
+	}
+	return 0;
+	/*
 	for(int i = 0; i < type->getCommandTypeCount(); ++i) {
 		const CommandType *ct = type->getCommandType(i);
 		if(ct && ct->getClass() == commandClass && faction->reqsOk(ct)) {
@@ -666,6 +673,7 @@ const CommandType *Unit::getFirstAvailableCt(CommandClass commandClass) const {
 		}
 	}
 	return NULL;
+	*/
 }
 
 /**get Number of commands
@@ -960,7 +968,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 	if (targetUnit) {
 		//attack enemies
 		if (!isAlly(targetUnit)) {
-			commandType = type->getFirstAttackCommand(targetUnit->getCurrZone());
+			commandType = type->getAttackCommand(targetUnit->getCurrZone());
 
 		//repair allies
 		} else {
@@ -970,7 +978,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		//check harvest command
 		Resource *resource = sc->getResource();
 		if (resource != NULL) {
-			commandType = type->getFirstHarvestCommand(resource->getType());
+			commandType = type->getHarvestCommand(resource->getType());
 		}
 	}
 
@@ -1843,7 +1851,6 @@ int Unit::getSpeed(const SkillType *st) const {
 	fixed speed = st->getSpeed();
 	switch(st->getClass()) {
 		case SkillClass::MOVE:
-		case SkillClass::GET_UP:
 			speed = speed * moveSpeedMult + moveSpeed;
 			break;
 
@@ -1869,8 +1876,6 @@ int Unit::getSpeed(const SkillType *st) const {
 		case SkillClass::BE_BUILT:
 		case SkillClass::STOP:
 		case SkillClass::DIE:
-		case SkillClass::CAST_SPELL:
-		case SkillClass::FALL_DOWN:
 		case SkillClass::COUNT:
 			break;
 		default:

@@ -32,10 +32,14 @@ foreach(folder ${folders})
 	source_group("${folder}" FILES ${srcs})
 endforeach(folder)
 
-# add glprocs.c needed on windows
 if(WIN32)
+	# add glprocs.c needed on windows
 	list(APPEND glestshared_srcs ${GLPROCS_FILE})
-	source_group("" FILES ${GLPROCS_FILE})
+	
+	# pre-compiled headers...
+	set(pch "${CMAKE_CURRENT_SOURCE_DIR}/include/pch.h" "${CMAKE_CURRENT_SOURCE_DIR}/sources/pch.cpp")
+	list(APPEND glestshared_srcs "${pch}")
+	source_group("" FILES ${GLPROCS_FILE} ${pch})
 endif(WIN32)
 
 # ugly, but otherwise not the updated stuff
@@ -49,4 +53,14 @@ if(WIN32)
 	target_link_libraries(glestshared ${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
 else(WIN32)
 	target_link_libraries(glestshared ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
+endif(WIN32)
+
+if (WIN32)
+	# set linker flags for Release to use link time code gen.
+	set_target_properties(glestshared PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
+
+	# set-up precompiled headers (for windows)
+	set_target_properties(glestshared PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
+	set_source_files_properties(sources/pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
+	set_source_files_properties(${GLPROCS_FILE} PROPERTIES COMPILE_FLAGS "/Y-")
 endif(WIN32)

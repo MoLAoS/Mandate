@@ -112,26 +112,16 @@ void GameInterface::processTextMessage(NetworkMessageText &msg) {
 void GameInterface::doUpdateUnitCommand(Unit *unit) {
 	const SkillType *old_st = unit->getCurrSkill();
 
-	//commands aren't updated for these skills
-	switch (old_st->getClass()) {
-		case SkillClass::FALL_DOWN:
-		case SkillClass::GET_UP:
-			return;
-		default:
-			break;
-	}
-
-	//if unit has command process it
+	// if unit has command process it
 	if (unit->anyCommand()) {
 		// check if a command being 'watched' has finished
 		if (unit->getCommandCallback() && unit->getCommandCallback() != unit->getCurrCommand()) {
-			// Trigger Time...
 			ScriptManager::commandCallback(unit);
 		}
 		unit->getCurrCommand()->getType()->update(unit);
 	}
 
-	//if no commands stop and add stop command or guard command for pets
+	// if no commands, add stop (or guard for pets) command
 	if (!unit->anyCommand() && unit->isOperative()) {
 		const UnitType *ut = unit->getType();
 		unit->setCurrSkill(SkillClass::STOP);
@@ -166,16 +156,18 @@ void GameInterface::doUpdateUnitCommand(Unit *unit) {
 		Checksum cs;
 		cs.add(unit->getId());
 		cs.add(unit->getFactionIndex());
-		cs.add(unit->getCurrSkill()->getClass());
-		cs.add(unit->getCurrSkill()->getName());
-		if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
-			cs.add(unit->getNextPos());
-		}
-		if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
-		|| unit->getCurrSkill()->getClass() == SkillClass::REPAIR) {
-			if (unit->getTarget()) {
-				cs.add(unit->getTarget()->getId());
-			}
+		cs.add(unit->getCurrSkill()->getId());
+		switch (unit->getCurrSkill()->getClass()) {
+			case SkillClass::MOVE:
+				cs.add(unit->getNextPos());
+				break;
+			case SkillClass::ATTACK:
+			case SkillClass::REPAIR:
+			case SkillClass::BUILD:
+				if (unit->getTarget()) {
+					cs.add(unit->getTarget()->getId());
+				}
+				break;
 		}
 		updateUnitCommand(unit, cs.getSum());
 	} catch (runtime_error &e) {

@@ -59,7 +59,9 @@ World::World(Game *game)
 		, stats(game->getGameSettings())
 		, cartographer(NULL)
 		, routePlanner(NULL)
-		, posIteratorFactory(65) {
+		, posIteratorFactory(65)
+		, skillTypeFactory(0)
+		, commandTypeFactory(0) {
 	Config &config = Config::getInstance();
 
 	fogOfWar = gs.getFogOfWar();
@@ -74,6 +76,10 @@ World::World(Game *game)
 	assert(!singleton);
 	singleton = this;
 	alive = false;
+	unitTypeFactory = new UnitTypeFactory();
+	upgradeTypeFactory = new UpgradeTypeFactory();
+	skillTypeFactory = new SkillTypeFactory();
+	commandTypeFactory = new CommandTypeFactory();
 }
 
 World::~World() {
@@ -90,6 +96,11 @@ void World::end() {
 	delete scenario;
 	delete cartographer;
 	delete routePlanner;
+
+	delete unitTypeFactory;
+	delete upgradeTypeFactory;
+	delete skillTypeFactory;
+	delete commandTypeFactory;
 	//stats will be deleted by BattleEnd
 }
 
@@ -207,7 +218,7 @@ bool World::loadScenario(const string &path) {
 }
 
 // ==================== misc ====================
-
+#ifdef EARTHQUAKE_CODE
 void World::updateEarthquakes(float seconds) {
 
 	map.update(seconds);
@@ -254,6 +265,7 @@ void World::updateEarthquakes(float seconds) {
 		}
 	}
 }
+#endif // Disable Earthquakes
 
 void World::update() {
 	_PROFILE_FUNCTION();
@@ -276,21 +288,15 @@ void World::update() {
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
 		const Units &units = f->getUnits();
 		for (int i = 0;  i < f->getUnitCount(); ++i) {
-			//unitUpdater.updateUnit(f->getUnit(i));
 			Unit *unit = f->getUnit(i);
+			
 			if (unit->update()) {
-				const UnitType *ut = unit->getType();
 
-				if (unit->getCurrSkill()->getClass() == SkillClass::FALL_DOWN) {
-					assert(ut->getFirstStOfClass(SkillClass::GET_UP));
-					unit->setCurrSkill(SkillClass::GET_UP);
-				} else if (unit->getCurrSkill()->getClass() == SkillClass::GET_UP) {
-					unit->setCurrSkill(SkillClass::STOP);
-				}
 				gni->doUpdateUnitCommand(unit);
 
 				//move unit in cells
 				if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+
 					moveUnitCells(unit);
 
 					//play water sound
@@ -311,7 +317,7 @@ void World::update() {
 		}
 	}
 
-	updateEarthquakes(1.f / 40.f);
+//	updateEarthquakes(1.f / 40.f);
 
 	//undertake the dead
 	for (int i = 0; i < getFactionCount(); ++i) {
@@ -772,14 +778,11 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 		if (!r) {
 			cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
 		} else {
-			for (int i=0; i < unit->getType()->getCommandTypeCount(); ++i) {
-				cmdType = unit->getType()->getCommandType(i);
-				if (cmdType->getClass() == CommandClass::HARVEST) {
-					HarvestCommandType *hct = (HarvestCommandType*)cmdType;
-					if (hct->canHarvest(r->getType())) {
-						found = true;
-						break;
-					}
+			for (int i=0; i < unit->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
+				const HarvestCommandType *hct = unit->getType()->getCommandType<HarvestCommandType>(i);
+				if (hct->canHarvest(r->getType())) {
+					found = true;
+					break;
 				}
 			}
 			if (!found) {
@@ -803,7 +806,8 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	return 1; // command fail
 }
 
-/** @return 0 if ok, -1 if unitId or targetId invalid, -2 unit could attack target, -3 illegal cmd name */
+/** @return 0 if ok, -1 if unitId or targetId invalid, -2 unit could not attack/repair target,
+  * -3 illegal cmd name */
 int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) {
 	Unit *unit = findUnitById(unitId);
 	Unit *target = findUnitById(targetId);
@@ -812,30 +816,22 @@ int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) 
 	}
 	const CommandType *cmdType = NULL;
 	if (cmdName == "attack") {
-		for (int i=0; i < unit->getType()->getCommandTypeCount(); ++i) {
-			if (unit->getType()->getCommandType (i)->getClass () == CommandClass::ATTACK) {
-				const AttackCommandType *act = (AttackCommandType *)unit->getType()->getCommandType (i);
-				const AttackSkillTypes *asts = act->getAttackSkillTypes ();
-				if (asts->getZone(target->getCurrZone())) {
-					if (unit->giveCommand(new Command(act, CommandFlags(), target))) {
-						return 0; // ok
-					}
-					return 1; // command fail			
-				}
+		const AttackCommandType *act = unit->getType()->getAttackCommand(target->getCurrZone());
+		if (act) {
+			if (unit->giveCommand(new Command(act, CommandFlags(), target)) == CommandResult::SUCCESS) {
+				return 0; // ok
 			}
+			return 1; // command fail			
 		}
 		return -2;
 	} else if (cmdName == "repair") {
-		for (int i=0; i < unit->getType()->getCommandTypeCount(); ++i) {
-			if (unit->getType()->getCommandType(i)->getClass () == CommandClass::REPAIR) {
-				RepairCommandType *rct = (RepairCommandType*)unit->getType()->getCommandType (i);
-				if (rct->isRepairableUnitType (target->getType())) {
-					if (unit->giveCommand(new Command(rct, CommandFlags(), target))) {
-						return 0; // ok
-					}
-					return 1; // command fail
-				}
+		const RepairCommandType *rct = unit->getType()->getRepairCommand(target->getType());
+		if (rct) {
+			if (unit->giveCommand(new Command(rct, CommandFlags(), target)) == CommandResult::SUCCESS) {
+				return 0; // ok
 			}
+			return 1; // command fail
+
 		}
 		return -2;
 
@@ -846,7 +842,7 @@ int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) 
 	} else {
 		return -3;
 	}
-	if (unit->giveCommand(new Command(cmdType, CommandFlags(), target))) {
+	if (cmdType && unit->giveCommand(new Command(cmdType, CommandFlags(), target))) {
 		return 0; // ok
 	}
 	return 1; // command fail

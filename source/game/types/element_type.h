@@ -60,6 +60,9 @@ protected:
 	int id;				//id
 	string name;		//name
 
+protected:
+	void setId(int v) { id = v; }
+
 public:
 	static const int invalidId = -1;
 

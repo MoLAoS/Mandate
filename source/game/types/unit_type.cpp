@@ -23,6 +23,7 @@
 #include "tech_tree.h"
 #include "resource.h"
 #include "renderer.h"
+#include "world.h"
 
 #include "leak_dumper.h"
 
@@ -71,9 +72,9 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 // ===============================
 /*
 void PetRule::load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft){
-string unitTypeName = prn->getAttribute("type")->getRestrictedValue();
-type = ft->getUnitType(unitTypeName);
-count = prn->getAttribute("count")->getIntValue();
+	string unitTypeName = prn->getAttribute("type")->getRestrictedValue();
+	type = ft->getUnitType(unitTypeName);
+	count = prn->getAttribute("count")->getIntValue();
 }
 */
 
@@ -104,8 +105,7 @@ void UnitType::preLoad(const string &dir){
 	name= basename(dir);
 }
 
-bool UnitType::load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType){
-	this->id = id;
+bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType){
 	string path;
 
 	Logger::getInstance().add("Unit type: " + dir, true);
@@ -302,15 +302,15 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 	try
 	{
 		const XmlNode *skillsNode= unitNode->getChild("skills");
-		skillTypes.resize(skillsNode->getChildCount());
-		for(int i=0, sc=0; i<skillTypes.size(); ++i){
-			const XmlNode *sn= skillsNode->getChild("skill", i);
-			const XmlNode *typeNode= sn->getChild("type");
-			string classId= typeNode->getAttribute("value")->getRestrictedValue();
-			SkillType *skillType= SkillTypeFactory::getInstance().newInstance(classId);
+		//skillTypes.resize(skillsNode->getChildCount());
+		for (int i=0; i < skillsNode->getChildCount(); ++i) {
+			const XmlNode *sn = skillsNode->getChild(i);
+			if (sn->getName() != "skill") continue;
+			const XmlNode *typeNode = sn->getChild("type");
+			string classId = typeNode->getAttribute("value")->getRestrictedValue();
+			SkillType *skillType = theWorld.getSkillTypeFactory()->newInstance(classId);
 			skillType->load(sn, dir, techTree, factionType);
-			skillType->setId(sc++);
-			skillTypes[i]= skillType;
+			skillTypes.push_back(skillType);
 		}
 	}
 	catch (runtime_error e) {
@@ -318,19 +318,18 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		return false; // if skills are screwy, stop
 	}
 
-	//REFACTOR: sort all skill types into skillTypesByClass
+	sortSkillTypes();
 
 	//commands
 	try {
 		const XmlNode *commandsNode = unitNode->getChild("commands");
-		commandTypes.resize(commandsNode->getChildCount());
-		for (int i = 0; i < commandTypes.size(); ++i) {
-			const XmlNode *commandNode = commandsNode->getChild("command", i);
+		for (int i = 0; i < commandsNode->getChildCount(); ++i) {
+			const XmlNode *commandNode = commandsNode->getChild(i);
+			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = CommandTypeFactory::getInstance().newInstance(classId);
-			commandType->setUnitTypeAndIndex(this, i);
+			CommandType *commandType = theWorld.getCommandTypeFactory()->newInstance(classId, this);
 			commandType->load(commandNode, dir, techTree, factionType);
-			commandTypes[i] = commandType;
+			commandTypes.push_back(commandType);
 		}
 	}
 	catch (runtime_error e) {
@@ -341,11 +340,10 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if(meetingPoint) {
-		commandTypes.push_back(new SetMeetingPointCommandType());
-		commandTypes.back()->setUnitTypeAndIndex(this, commandTypes.size() - 1);
+		CommandType *smpct = theWorld.getCommandTypeFactory()->newInstance("set-meeting-point", this);
+		commandTypes.push_back(smpct);
 	}
 
-	computeFirstStOfClass();
 	sortCommandTypes();
 
 	try { // Logger::addXmlError() expects a char*, so it's easier just to throw & catch ;)
@@ -360,29 +358,20 @@ bool UnitType::load(int id, const string &dir, const TechTree *techTree, const F
 		Logger::getErrorLog().addXmlError(path, e.what());
 		loadOk = false;
 	}
-	// if it's mobile and doesn't have a fall down skill, give it one
-	if(!firstSkillTypeOfClass[SkillClass::FALL_DOWN] && firstSkillTypeOfClass[SkillClass::MOVE]) {
-		skillTypes.push_back(new FallDownSkillType(firstSkillTypeOfClass[SkillClass::DIE]));
-	}
-
-	if(!firstSkillTypeOfClass[SkillClass::GET_UP] && firstSkillTypeOfClass[SkillClass::MOVE]) {
-		skillTypes.push_back(new GetUpSkillType(firstSkillTypeOfClass[SkillClass::MOVE]));
-	}
-
-	// recalculate first of skill cache
-	computeFirstStOfClass();
+	
+	// GET_UP and FALL_DOWN should not be new skill classes & types, use stop skills with custom anims.
 
 	/*
 	//petRules
 	const XmlNode *petRulesNode= unitNode->getChild("pet-rules", 0, false);
-	if(petRulesNode) {
-	PetRule *petRule;
-	petRules.resize(petRulesNode->getChildCount());
-	for(int i=0; i<petRules.size(); ++i) {
-	const XmlNode *n= petRulesNode->getChild("pet-rule", i);
-	petRules.push_back(petRule = new PetRule());
-	petRule->load(n, dir, techTree, factionType);
-	}
+	if (petRulesNode) {
+		PetRule *petRule;
+		petRules.resize(petRulesNode->getChildCount());
+		for (int i=0; i<petRules.size(); ++i) {
+			const XmlNode *n= petRulesNode->getChild("pet-rule", i);
+			petRules.push_back(petRule = new PetRule());
+			petRule->load(n, dir, techTree, factionType);
+		}
 	}
 	*/
 
@@ -445,63 +434,54 @@ void UnitType::doChecksum(Checksum &checksum) const {
 // ==================== get ====================
 
 const CommandType *UnitType::getCommandType(const string &name) const {
-	for(CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {
-		if((*i)->getName() == name) {
+	for (CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {
+		if ((*i)->getName() == name) {
 			return (*i);
 		}
 	}
 	return NULL;
 }
 
-//REIMPLEMENT with commandTypesByClass
-const HarvestCommandType *UnitType::getFirstHarvestCommand(const ResourceType *resourceType) const{
-	for(int i=0; i<commandTypes.size(); ++i){
-		if(commandTypes[i]->getClass()== CommandClass::HARVEST){
-			const HarvestCommandType *hct= static_cast<const HarvestCommandType*>(commandTypes[i]);
-			if(hct->canHarvest(resourceType)){
-				return hct;
-			}
-		}
-	}
-	return NULL;
-}
-
-//REIMPLEMENT with commandTypesByClass
-const AttackCommandType *UnitType::getFirstAttackCommand(Zone zone) const{
-	for(int i=0; i<commandTypes.size(); ++i){
-		if(commandTypes[i]->getClass()== CommandClass::ATTACK){
-			const AttackCommandType *act= static_cast<const AttackCommandType*>(commandTypes[i]);
-			if(act->getAttackSkillTypes()->getZone(zone)){
-				return act;
-			}
-		}
-	}
-	return NULL;
-}
-
-//REIMPLEMENT with commandTypesByClass
-const RepairCommandType *UnitType::getFirstRepairCommand(const UnitType *repaired) const{
-	for(int i=0; i<commandTypes.size(); ++i){
-		if(commandTypes[i]->getClass()== CommandClass::REPAIR){
-			const RepairCommandType *rct= static_cast<const RepairCommandType*>(commandTypes[i]);
-			if(rct->isRepairableUnitType(repaired)){
-				return rct;
-			}
-		}
-	}
-	return NULL;
-}
-
-int UnitType::getStore(const ResourceType *rt) const{
-	for(int i=0; i<storedResources.size(); ++i){
-		if(storedResources[i].getType()==rt){
-			return storedResources[i].getAmount();
+const HarvestCommandType *UnitType::getHarvestCommand(const ResourceType *rt) const {
+	foreach_const (CommandTypes, it, commandTypesByClass[CommandClass::HARVEST]) {
+		const HarvestCommandType *hct = static_cast<const HarvestCommandType*>(*it);
+		if (hct->canHarvest(rt)) {
+			return hct;
 		}
 	}
 	return 0;
 }
 
-//REIMPLEMENT with skillTypesByClass
+const AttackCommandType *UnitType::getAttackCommand(Zone zone) const {
+	foreach_const (CommandTypes, it, commandTypesByClass[CommandClass::ATTACK]) {
+		const AttackCommandType *act = static_cast<const AttackCommandType*>(*it);
+		if (act->getAttackSkillTypes()->getZone(zone)) {
+			return act;
+		}
+	}
+	return 0;
+}
+
+const RepairCommandType *UnitType::getRepairCommand(const UnitType *repaired) const {
+	foreach_const (CommandTypes, it, commandTypesByClass[CommandClass::REPAIR]) {
+		const RepairCommandType *rct = static_cast<const RepairCommandType*>(*it);
+		if (rct->canRepair(repaired)) {
+			return rct;
+		}
+	}
+	return 0;
+}
+
+int UnitType::getStore(const ResourceType *rt) const {
+	foreach_const (StoredResources, it, storedResources) {
+		if (it->getType() == rt) {
+			return it->getAmount();
+		}
+	}
+	return 0;
+}
+
+// only used for matching while loading commands
 const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skillClass) const{
 	for(int i=0; i<skillTypes.size(); ++i){
 		if(skillTypes[i]->getName()==skillName){
@@ -519,9 +499,8 @@ const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skil
 
 // ==================== has ====================
 
-//REIMPLEMENT with skillTypesByClass
 bool UnitType::hasSkillClass(SkillClass skillClass) const {
-	return firstSkillTypeOfClass[skillClass] != NULL;
+	return !skillTypesByClass[skillClass].empty();
 }
 
 bool UnitType::hasCommandType(const CommandType *ct) const {
@@ -534,11 +513,10 @@ bool UnitType::hasCommandType(const CommandType *ct) const {
 	return false;
 }
 
-//REIMPLEMENT with skillTypesByClass
-bool UnitType::hasSkillType(const SkillType *skillType) const{
-	assert(skillType != NULL);
-	for (int i = 0; i < skillTypes.size(); ++i) {
-		if (skillTypes[i] == skillType) {
+bool UnitType::hasSkillType(const SkillType *st) const {
+	assert(st);
+	foreach_const (SkillTypes, it, skillTypesByClass[st->getClass()]) {
+		if (*it == st) {
 			return true;
 		}
 	}
@@ -561,20 +539,16 @@ bool UnitType::isOfClass(UnitClass uc) const{
 
 // ==================== PRIVATE ====================
 
-//REFACTOR: sortSkillTypes() : sort skillTypes into skillTypesByClass
-void UnitType::computeFirstStOfClass(){
-	for (int j = 0; j < SkillClass::COUNT; ++j) {
-		firstSkillTypeOfClass[j] = NULL;
-		for (int i= 0; i < skillTypes.size(); ++i) {
-			if (skillTypes[i]->getClass() == enum_cast<SkillClass>(j)) {
-				firstSkillTypeOfClass[j] = skillTypes[i];
-				break;
+void UnitType::sortSkillTypes() {
+	foreach_enum (SkillClass, sc) {
+		foreach (SkillTypes, it, skillTypes) {
+			if ((*it)->getClass() == sc) {
+				skillTypesByClass[sc].push_back(*it);
 			}
 		}
 	}
 }
 
-//REFACTOR: sortCommandTypes() : sort commandTypes into commandTypesByClass
 void UnitType::sortCommandTypes() {
 	foreach_enum (CommandClass, cc) {
 		foreach (CommandTypes, it, commandTypes) {
@@ -583,9 +557,9 @@ void UnitType::sortCommandTypes() {
 			}
 		}
 	}
-	foreach (CommandTypes, it, commandTypes) {
-		commandTypeMap[(*it)->getId()] = *it;
-	}
+//	foreach (CommandTypes, it, commandTypes) {
+//		commandTypeMap[(*it)->getId()] = *it;
+//	}
 }
 
 }}//end namespace

@@ -565,21 +565,16 @@ Vec2i Map::getNearestPos(const Vec2i &start, const Vec2i &target, int minRange, 
 	}
 
 	fixedVec2 fstart(start.x, start.y);
-	//Vec2f ftarget(target.x, target.y);
 	fixed len = fstart.dist(ftarget);
 
 	if(len >= minRange && len <= maxRange) {
 		return start;
 	} else {
-		// make sure we don't divide by zero, that's how this whole universe
-		// thing got started in the first place (fyi, it wasn't a big bang).
 		assert(minRange == 0 || start.x != target.x || start.y != target.y);
-		
 		fixed t = (len <= minRange ? minRange : maxRange) / len;
 		fixedVec2 res(
-			ftarget.x + (ftarget.x + fstart.x) * t,
-			ftarget.y + (ftarget.y + fstart.y) * t);
-
+			ftarget.x + (ftarget.x - fstart.x) * t,
+			ftarget.y + (ftarget.y - fstart.y) * t);
  		return Vec2i(res.x.round(), res.y.round());
 	}
 }
@@ -830,6 +825,7 @@ void Map::prepareTerrain(const Unit *unit) {
 	computeInterpolatedHeights();
 }
 
+#ifdef EARTHQUAKE_CODE
 void Map::update(float slice) {
 	for(Earthquakes::iterator i = earthquakes.begin(); i != earthquakes.end(); ++i) {
 		(*i)->resetSurface();
@@ -845,7 +841,7 @@ void Map::update(float slice) {
 		}
 	}
 }
-
+#endif
 // ==================== PRIVATE ====================
 
 // ==================== compute ====================
@@ -912,7 +908,7 @@ void Map::computeInterpolatedHeights() {
 	}
 }
 
-
+#ifdef EARTHQUAKE_CODE
 //================================================================================================
 // Earthquake friendly versions, these are broken for maps with either dimension <= 32
 //================================================================================================
@@ -975,6 +971,7 @@ void Map::computeInterpolatedHeights(Rect2i range){
 	}
 }
 //================================================================================================
+#endif
 
 void Map::smoothSurface() {
 	float *oldHeights = new float[tileW * tileH];

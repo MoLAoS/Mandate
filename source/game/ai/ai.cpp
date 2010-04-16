@@ -329,36 +329,34 @@ void Ai::updateStatistics() {
 	//them.  Copy unit types that are buildings into builtOrBuilding.
 	for(uti = unitTypeCount.begin(); uti != unitTypeCount.end(); ++uti) {
 
-		//all commands for UnitType
-		for(int i = 0; i < uti->first->getCommandTypeCount(); ++i) {
-			const CommandType *ct = uti->first->getCommandType(i);
-			if(ct->getClass() == CommandClass::BUILD) {
-				const BuildCommandType *bct = (const BuildCommandType *)ct;
+		// build commands
+		for (int i=0; i < uti->first->getCommandTypeCount<BuildCommandType>(); ++i) {
+			const BuildCommandType *bct = uti->first->getCommandType<BuildCommandType>(i);
 
-				//all buildings that we can build now
-				for(int j = 0; j < bct->getBuildingCount(); ++j) {
-					const UnitType *buildingType = bct->getBuilding(j);
+			//all buildings that we can build now
+			for(int j = 0; j < bct->getBuildingCount(); ++j) {
+				const UnitType *buildingType = bct->getBuilding(j);
 
-					if(aiInterface->reqsOk(bct) && aiInterface->reqsOk(buildingType)) {
-						utj = availableBuildings.find(buildingType);
-						if(utj == availableBuildings.end()) {
-							availableBuildings[buildingType] = uti->second;
-						} else {
-							utj->second += uti->second;
-						}
+				if(aiInterface->reqsOk(bct) && aiInterface->reqsOk(buildingType)) {
+					utj = availableBuildings.find(buildingType);
+					if(utj == availableBuildings.end()) {
+						availableBuildings[buildingType] = uti->second;
+					} else {
+						utj->second += uti->second;
 					}
-				}
-			} else if (ct->getClass() == CommandClass::UPGRADE) {
-				const UpgradeCommandType *uct = (const UpgradeCommandType*)ct;
-				const UpgradeType *upgrade = uct->getProducedUpgrade();
-
-				if (aiInterface->reqsOk(uct) && aiInterface->reqsOk(upgrade)) {
-					availableUpgrades.push_back(upgrade);
 				}
 			}
 		}
+		// upgrade commands
+		for (int i=0; i < uti->first->getCommandTypeCount<UpgradeCommandType>(); ++i) {
+			const UpgradeCommandType *uct = uti->first->getCommandType<UpgradeCommandType>(i);
+			const UpgradeType *upgrade = uct->getProducedUpgrade();
 
-		if(uti->first->hasSkillClass(SkillClass::BE_BUILT)) {
+			if (aiInterface->reqsOk(uct) && aiInterface->reqsOk(upgrade)) {
+				availableUpgrades.push_back(upgrade);
+			}
+		}
+		if (uti->first->hasSkillClass(SkillClass::BE_BUILT)) {
 			buildingTypeCount[uti->first] = uti->second;
 		}
 	}
@@ -492,7 +490,7 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
     for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
     	bool isWarrior;
         const Unit *unit= aiInterface->getMyUnit(i);
-		const AttackCommandType *act= unit->getType()->getFirstAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
+		const AttackCommandType *act= unit->getType()->getAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
 		if(act!=NULL && unit->getType()->hasCommandClass(CommandClass::PRODUCE))
 		{
 			producerWarriorCount++;
@@ -573,7 +571,7 @@ void Ai::harvest(int unitIndex){
 	const ResourceType *rt= getNeededResource();
 
 	if(rt!=NULL){
-		const HarvestCommandType *hct= aiInterface->getMyUnit(unitIndex)->getType()->getFirstHarvestCommand(rt);
+		const HarvestCommandType *hct= aiInterface->getMyUnit(unitIndex)->getType()->getHarvestCommand(rt);
 		Vec2i resPos;
 		if(hct!=NULL && aiInterface->getNearestSightedResource(rt, aiInterface->getHomeLocation(), resPos)){
 			resPos= resPos+Vec2i(random.randRange(-2, 2), random.randRange(-2, 2));

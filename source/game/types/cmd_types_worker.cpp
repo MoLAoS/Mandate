@@ -48,31 +48,37 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 		Unit **rangedPtr, const RepairCommandType *rct, const RepairSkillType *rst,
 		int range, bool allowSelf, bool militaryOnly, bool damagedOnly) {
 	_PROFILE_COMMAND_UPDATE();
-	Targets repairables;
+	REPAIR_LOG2( 
+		__FUNCTION__ << "(): with unit: " << *unit << " @ " << unit->getPos() << ", "
+		<< " centre: " << centre << ", centreSize: " << centreSize;		
+	);
 
+	Targets repairables;
 	fixedVec2 fixedCentre(centre.x + centreSize / fixed(2), centre.y + centreSize / fixed(2));
 	fixed targetRange = fixed::max_int();
 	Unit *target = *rangedPtr;
 	range += centreSize / 2;
 
-	if (target && target->isAlive() && target->isDamaged() && rct->isRepairableUnitType(target->getType())) {
+	if (target && target->isAlive() && target->isDamaged() && rct->canRepair(target->getType())) {
 		fixed rangeToTarget = fixedCentre.dist(target->getFixedCenteredPos()) - (centreSize + target->getSize()) / fixed(2);
-		if (rangeToTarget <= range) {
-			// current target is good
+		REPAIR_LOG2( "\tRange check to target : " << (rangeToTarget > range ? "not " : "") << "in range." );
+
+		if (rangeToTarget <= range) { // current target is in range
 			return true;
-		} else {
+		} else { // current target not in range
 			return false;
 		}
 	}
+	// no target unit, or target no longer of interest (dead or fully repaired)
 	target = NULL;
 
-	//nearby cells
+	// nearby cells
 	Vec2i pos;
 	fixed distance;
 	const Map* map = theWorld.getMap();
 	PosCircularIteratorSimple pci(map->getBounds(), centre, range);
 	while (pci.getNext(pos, distance)) {
-		//all zones
+		// all zones
 		for (int z = 0; z < Zone::COUNT; z++) {
 			Unit *candidate = map->getCell(pos)->getUnit(enum_cast<Field>(z));
 	
@@ -83,7 +89,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 			&& (!rst->isPetOnly() || unit->isPet(candidate))
 			&& (!damagedOnly || candidate->isDamaged())
 			&& (!militaryOnly || candidate->getType()->hasCommandClass(CommandClass::ATTACK))
-			&& rct->isRepairableUnitType(candidate->getType())) {
+			&& rct->canRepair(candidate->getType())) {
 				//record the nearest distance to target (target may be on multiple cells)
 				repairables.record(candidate, distance);
 			}
@@ -91,9 +97,12 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 	}
 	// if no repairables or just one then it's a simple choice.
 	if (repairables.empty()) {
+		REPAIR_LOG2( "\tSearch found no targets." );
 		return false;
 	} else if (repairables.size() == 1) {
 		*rangedPtr = repairables.begin()->first;
+		REPAIR_LOG2( "\tSearch found single possible target. Unit: " 
+			<< **rangedPtr << " @ " << (*rangedPtr)->getPos() );
 		return true;
 	}
 	//heal cloesest ally that can attack (and are probably fighting) first.
@@ -102,8 +111,13 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 	if(!(*rangedPtr = repairables.getNearestSkillClass(SkillClass::ATTACK))
 	&& !(*rangedPtr = repairables.getNearestHpRatio(fixed(2) / 10))
 	&& !(*rangedPtr = repairables.getNearest())) {
+		REPAIR_LOG2( "\tSomething very odd happened..." );
+		// this is unreachable, we've already established repaiables is not empty, so
+		// getNearest() will always return something for us...
 		return false;
 	}
+	REPAIR_LOG2( "\tSearch found " << repairables.size() << " possible targets. Selected Unit: " 
+		<< **rangedPtr << " @ " << (*rangedPtr)->getPos() );
 	return true;
 }
 
@@ -172,7 +186,7 @@ void RepairCommandType::getDesc(string &str, const Unit *unit) const{
 }
 
 //get
-bool RepairCommandType::isRepairableUnitType(const UnitType *unitType) const{
+bool RepairCommandType::canRepair(const UnitType *unitType) const{
 	for(int i=0; i<repairableUnits.size(); ++i){
 		if(static_cast<const UnitType*>(repairableUnits[i])==unitType){
 			return true;
@@ -180,13 +194,6 @@ bool RepairCommandType::isRepairableUnitType(const UnitType *unitType) const{
 	}
 	return false;
 }
-
-
-#if defined(LOG_REPAIR_COMMAND) && LOG_REPAIR_COMMAND
-#	define REPAIR_LOG(x) STREAM_LOG(x)
-#else
-#	define REPAIR_LOG(x)
-#endif
 
 void RepairCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
@@ -337,9 +344,14 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 	Unit *sighted = NULL;
 	if (unit->getEp() >= repairSkillType->getEpCost()
 	&& repairableInSight(unit, &sighted, this, repairSkillType->isSelfAllowed())) {
+		REPAIR_LOG( __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
+			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );
 		Command *newCommand;
-		newCommand = new Command(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO),
-			Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange()));
+		
+		Vec2i pos = Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange());
+		REPAIR_LOG( "\tMap::getNearestPos(): " << pos );
+
+		newCommand = new Command(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
 		newCommand->setPos2(unit->getPos());
 		return newCommand;
 	}
@@ -426,12 +438,6 @@ void BuildCommandType::doChecksum(Checksum &checksum) const {
 }
 
 const string cmdCancelMsg = " Command cancelled.";
-
-#if LOG_BUILD_COMMAND
-#	define BUILD_LOG(x) STREAM_LOG(x)
-#else
-#	define BUILD_LOG(x)
-#endif
 
 void BuildCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();

@@ -18,6 +18,7 @@
 #include "tech_tree.h"
 #include "resource.h"
 #include "platform_util.h"
+#include "world.h"
 
 #include "leak_dumper.h"
 
@@ -53,11 +54,18 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		Logger::getErrorLog().add(e.what());
 		loadOk = false;
 	}
+	for (int i = 0; i < unitFilenames.size(); ++i) {
+		string path = dir + "/units/" + unitFilenames[i];
+		UnitType *ut = theWorld.getUnitTypeFactory()->newInstance();
+		unitTypes.push_back(ut);
+		unitTypes.back()->preLoad(path);
+	}
+	/*
 	unitTypes.resize(unitFilenames.size());
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str= dir + "/units/" + unitFilenames[i];
-		unitTypes[i].preLoad(str);
-	}
+		unitTypes[i]->preLoad(str);
+	}*/
 
 	// a2) preload upgrades
 	string upgradesPath= dir + "/upgrades/*.";
@@ -68,11 +76,18 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		Logger::getErrorLog().add(e.what());
 		loadOk = false;
 	}
+	for (int i = 0; i < upgradeFilenames.size(); ++i) {
+		string path = dir + "/upgrades/" + upgradeFilenames[i];
+		UpgradeType *ut = theWorld.getUpgradeTypeFactory()->newInstance();
+		upgradeTypes.push_back(ut);
+		upgradeTypes.back()->preLoad(path);
+	}
+	/*
 	upgradeTypes.resize(upgradeFilenames.size());
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeFilenames[i];
-		upgradeTypes[i].preLoad(str);
-	}
+		upgradeTypes[i]->preLoad(str);
+	}*/
 	return loadOk;
 }
 
@@ -119,8 +134,8 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	// b1) load units
 	for (int i = 0; i < unitTypes.size(); ++i) {
-		string str = dir + "/units/" + unitTypes[i].getName();
-		if (!unitTypes[i].load(i, str, techTree, this)) {
+		string str = dir + "/units/" + unitTypes[i]->getName();
+		if (!unitTypes[i]->load(str, techTree, this)) {
 			loadOk = false;
 		}
 		logger.unitLoaded();
@@ -128,8 +143,8 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	// b2) load upgrades
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
-		string str= dir + "/upgrades/" + upgradeTypes[i].getName();
-		if (!upgradeTypes[i].load(str, techTree, this)) {
+		string str= dir + "/upgrades/" + upgradeTypes[i]->getName();
+		if (!upgradeTypes[i]->load(str, techTree, this)) {
 			loadOk = false;
 		}
 	}
@@ -226,10 +241,10 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 void FactionType::doChecksum(Checksum &checksum) const {
 	checksum.add(name);
 	foreach_const (UnitTypes, it, unitTypes) {
-		it->doChecksum(checksum);
+		(*it)->doChecksum(checksum);
 	}
 	foreach_const (UpgradeTypes, it, upgradeTypes) {
-		it->doChecksum(checksum);
+		(*it)->doChecksum(checksum);
 	}
 	foreach_const (StartingUnits, it, startingUnits) {
 		checksum.add(it->first->getName());
@@ -269,8 +284,8 @@ int FactionType::getSubfactionIndex(const string &name) const {
 
 const UnitType *FactionType::getUnitType(const string &name) const{
     for (int i = 0; i < unitTypes.size(); ++i) {
-		if (unitTypes[i].getName() == name) {
-            return &unitTypes[i];
+		if (unitTypes[i]->getName() == name) {
+            return unitTypes[i];
 		}
     }
 	throw runtime_error("Unit not found: " + name);
@@ -278,8 +293,8 @@ const UnitType *FactionType::getUnitType(const string &name) const{
 
 const UpgradeType *FactionType::getUpgradeType(const string &name) const{
     for (int i = 0; i < upgradeTypes.size(); ++i) {
-		if (upgradeTypes[i].getName() == name) {
-            return &upgradeTypes[i];
+		if (upgradeTypes[i]->getName() == name) {
+            return upgradeTypes[i];
 		}
     }
 	throw runtime_error("Upgrade not found: " + name);

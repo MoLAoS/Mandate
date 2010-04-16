@@ -110,26 +110,27 @@ WRAPPED_ENUM( NetworkCommandType,
 	SET_MEETING_POINT
 );
 
-//OSX: use bigger structure to avoid values accross byte boundaries 
-#pragma pack(push, 1)
-	class NetworkCommand{
+#pragma pack(push, 4)
+	class NetworkCommand {
 	private:
-		uint32 networkCommandType	:  8; //  8 
-		int32 unitId				: 20; // 24 
-											//OSX: first word == netCmdType & unitId
-		int32 commandTypeId			: 16; // 16 
-											//OSX: second word == commandTypeId & unitTypeId
-		int32 targetId				: 20; // 24
-											//OSX: third word == targetId & commandFlags
-		int32 positionX				: 16; // 16 
-		int32 positionY				: 16; // 16 
-											//OSX: fourth word == posX & posY
-		int32 unitTypeId			: 12; // 16 
-		uint32 flags_padding		:  2; // flags :  8 
-		uint32 no_reserve_res		:  1;  
-		uint32 queue				:  1;  
-									// 112 bits (14 bytes) 
-									//OSX 128 bits (16 bytes)
+		struct CmdFlags { enum { QUEUE = 1, NO_RESERVE_RESOURCES = 2 }; };
+		uint32 networkCommandType	:  8;
+		int32 unitId				: 24;
+			//OSX: first int32 == netCmdType & unitId
+
+		int32 commandTypeId			: 16;
+		int32 unitTypeId			: 16;
+			//OSX: second int32 == commandTypeId & unitTypeId
+
+		int32 targetId				: 24;
+		uint32 flags				:  8;
+			//OSX: third int32 == targetId & commandFlags
+
+		int32 positionX				: 16;
+		int32 positionY				: 16;
+			//OSX: fourth int32 == posX & posY
+
+									// 128 bits (16 bytes)
 	public:
 		NetworkCommand(){};
 		NetworkCommand(Command *command);
@@ -144,7 +145,9 @@ WRAPPED_ENUM( NetworkCommandType,
 		int getUnitTypeId() const							{return unitTypeId;}
 		int getTargetId() const								{return targetId;}
 	};
+#pragma pack(pop)
 
+#pragma pack(push, 2)
 	struct MoveSkillUpdate {
 		int8	offsetX		:  2;
 		int8	offsetY		:  2;
@@ -154,7 +157,9 @@ WRAPPED_ENUM( NetworkCommandType,
 		MoveSkillUpdate(const char *ptr) { *this = *((MoveSkillUpdate*)ptr); }
 		Vec2i posOffset() const { return Vec2i(offsetX, offsetY); }
 	};
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 	struct ProjectileUpdate {
 		uint8 end_offset	:  8;
 		ProjectileUpdate(const Unit *unit, ProjectileParticleSystem *pps);
@@ -166,21 +171,24 @@ WRAPPED_ENUM( NetworkCommandType,
 #define _RECORD_GAME_STATE_ 1
 
 #if _RECORD_GAME_STATE_
+
 struct UnitStateRecord {
-	uint32	unit_id		: 24;
-	int32	cmd_class	:  8;
-	uint32	skill_cl	:  8;
+
+	uint32	unit_id		: 32;
+	int32	cmd_id		: 16;
+	uint32	skill_id	: 16; // 8
 	int32	curr_pos_x	: 12;
 	int32	curr_pos_y	: 12;
 	int32	next_pos_x	: 12;
-	int32	next_pos_y	: 12;
+	int32	next_pos_y	: 12; // 16
 	int32	targ_pos_x	: 12;
 	int32	targ_pos_y	: 12;
-	int32	target_id	: 24;
+	int32	target_id	: 32; // 24
 
 	UnitStateRecord(Unit *unit);
 	UnitStateRecord() {}
-};					//	: 20 bytes
+
+};					//	: 24 bytes
 
 ostream& operator<<(ostream &lhs, const UnitStateRecord&);
 

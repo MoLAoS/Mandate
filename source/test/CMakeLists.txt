@@ -36,3 +36,6 @@ set(test_srcs
 include_directories(${glestshared_incs} ${game_incs} ${CPPUNIT_INCLUDE_DIR})
 add_executable(testsuite ${test_srcs})
 target_link_libraries(testsuite glestshared ${CPPUNIT_LIBRARY} ${PHYSFS_LIBRARY})
+if (WIN32)
+	target_link_libraries(testsuite wsock32)
+endif(WIN32)

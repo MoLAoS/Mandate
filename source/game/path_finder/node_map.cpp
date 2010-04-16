@@ -9,8 +9,8 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-//opt
-//#include "pch.h"
+#include "pch.h"
+
 #include <algorithm>
 
 #include "node_map.h"

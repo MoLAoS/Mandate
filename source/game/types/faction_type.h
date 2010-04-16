@@ -43,8 +43,8 @@ private:
 class FactionType : public NameIdPair {
 private:
 	typedef pair<const UnitType*, int> PairPUnitTypeInt;
-	typedef vector<UnitType> UnitTypes;
-	typedef vector<UpgradeType> UpgradeTypes;
+	typedef vector<UnitType*> UnitTypes;
+	typedef vector<UpgradeType*> UpgradeTypes;
 	typedef vector<PairPUnitTypeInt> StartingUnits;
 	typedef vector<Resource> Resources;
 	typedef vector<string> Subfactions;
@@ -74,8 +74,8 @@ public:
 	int getUnitTypeCount() const						{return unitTypes.size();}
 	int getUpgradeTypeCount() const						{return upgradeTypes.size();}
 	int getSubfactionCount() const						{return subfactions.size();}
-	const UnitType *getUnitType(int i) const			{return &unitTypes[i];}
-	const UpgradeType *getUpgradeType(int i) const		{return &upgradeTypes[i];}
+	const UnitType *getUnitType(int i) const			{return unitTypes[i];}
+	const UpgradeType *getUpgradeType(int i) const		{return upgradeTypes[i];}
 	const string &getSubfaction(int i) const			{return subfactions[i];}
 	int getSubfactionIndex(const string &name) const;
 	StrSound *getMusic() const							{return music;}

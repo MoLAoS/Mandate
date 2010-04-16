@@ -255,10 +255,8 @@ void Socket::readAll() {
 	bool limit;
 	int n = buffer.getMaxWrite(limit);
 	int r = recv(sock, buffer.getWritePos(), n, 0);
-	if (r == SOCKET_ERROR) {
-		if (get_error() != NO_DATA_AVAILABLE) {
-			handleError(__FUNCTION__);
-		}
+	if (r == SOCKET_ERROR && get_error() != NO_DATA_AVAILABLE) {
+		handleError(__FUNCTION__);
 	}
 	if (r > 0) {
 		buffer += r;

@@ -41,36 +41,12 @@ namespace Glest { namespace Game {
 // 	class CommandType
 // =====================================================
 
-int CommandType::nextId = 0;
-
-CommandType::CommandType(const char* name, CommandClass cc, Clicks clicks, bool queuable)
-		: RequirableType(getNextId(), name, NULL)
-		, cc(cc)
+CommandType::CommandType(const char* name, /*CommandClass cc,*/ Clicks clicks, bool queuable)
+		: RequirableType(-1, name, NULL)
+		//, cc(cc)
 		, clicks(clicks)
 		, queuable(queuable)
-		, unitType(NULL)
-		, unitTypeIndex(-1) {
-}
-
-void CommandType::setUnitTypeAndIndex(const UnitType *unitType, int unitTypeIndex) {
-	if(unitType->getId() > UCHAR_MAX) {
-		stringstream str;
-		str <<  "A maximum of " << UCHAR_MAX << " unit types are currently allowed per faction.  "
-			"This limit is only imposed for network data compactness and can be easily changed "
-			"if you *really* need that many different unit types. Do you really?";
-		throw runtime_error(str.str());
-	}
-
-	if(unitType->getId() > UCHAR_MAX) {
-		stringstream str;
-		str <<  "A maximum of " << UCHAR_MAX << " commands are currently allowed per unit.  "
-			"This limit is only imposed for network data compactness and can be easily changed "
-			"if you *really* need that many commands. Do you really?";
-		throw runtime_error(str.str());
-	}
-
-	this->unitType = unitType;
-	this->unitTypeIndex = unitTypeIndex;
+		, unitType(NULL) {
 }
 
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
@@ -82,7 +58,7 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 
 void CommandType::doChecksum(Checksum &checksum) const {
 	RequirableType::doChecksum(checksum);
-	checksum.add<CommandClass>(cc);
+	checksum.add<CommandClass>(getClass());
 }
 
 typedef const AttackStoppedCommandType* AttackStoppedCmd;
@@ -92,25 +68,32 @@ typedef const RepairCommandType* RepairCmd;
 ///@todo fixme
 Command* CommandType::doAutoCommand(Unit *unit) const {
 	Command *autoCmd;
+	const UnitType *ut = unit->getType();
 	// can we attack any enemy ? ///@todo check all attack commands
-	const AttackCommandType *act = unit->getType()->getFirstAttackCommand(Zone::LAND);
+	const AttackCommandType *act = ut->getAttackCommand(Zone::LAND);
 	if (act && (autoCmd = act->doAutoAttack(unit))) {
 		return autoCmd;
 	}
 	///@todo check all attack-stopped commands
-	AttackStoppedCmd asct = 
-		static_cast<AttackStoppedCmd>(unit->getType()->getFirstCtOfClass(CommandClass::ATTACK_STOPPED));
+	AttackStoppedCmd asct = static_cast<AttackStoppedCmd>(ut->getFirstCtOfClass(CommandClass::ATTACK_STOPPED));
 	if (asct && (autoCmd = asct->doAutoAttack(unit))) {
 		return autoCmd;
 	}
 	// can we repair any ally ? ///@todo check all repair commands
-	RepairCmd rct = static_cast<RepairCmd>(unit->getType()->getFirstCtOfClass(CommandClass::REPAIR));
+	RepairCmd rct = static_cast<RepairCmd>(ut->getFirstCtOfClass(CommandClass::REPAIR));
 	if (rct && (autoCmd = rct->doAutoRepair(unit))) {
+		//REMOVE
+		if (autoCmd->getUnit()) {
+			REPAIR_LOG( "Auto-Repair command generated, target unit: "
+				<< *autoCmd->getUnit() << ", command pos:" << autoCmd->getPos()
+			);
+		} else {
+			REPAIR_LOG( "Auto-Repair command generated, no target unit, command pos:" << autoCmd->getPos() );
+		}
 		return autoCmd;
 	}
 	// can we see an enemy we cant attack ? can we run ?
-	MoveBaseCmdType mct = 
-		static_cast<MoveBaseCmdType>(unit->getType()->getFirstCtOfClass(CommandClass::MOVE));
+	MoveBaseCmdType mct = static_cast<MoveBaseCmdType>(ut->getFirstCtOfClass(CommandClass::MOVE));
 	if (mct && (autoCmd = mct->doAutoFlee(unit))) {
 		return autoCmd;
 	}
@@ -495,32 +478,6 @@ void MorphCommandType::update(Unit *unit) const {
 	}
 }
 
-// =====================================================
-// 	class CastSpellCommandType
-// =====================================================
-
-bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
-
-	//cast spell
-	try {
-		string skillName= n->getChild("cast-spell-skill")->getAttribute("value")->getRestrictedValue();
-		castSpellSkillType= static_cast<const CastSpellSkillType*>(unitType->getSkillType(skillName, SkillClass::CAST_SPELL));
-	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
-		loadOk = false;
-	}
-	return loadOk;
-}
-
-void CastSpellCommandType::getDesc(string &str, const Unit *unit) const{
-	castSpellSkillType->getDesc(str, unit);
-	castSpellSkillType->descSpeed(str, unit, "Speed");
-
-	//movement speed
-	MoveBaseCommandType::getDesc(str, unit);
-}
-
 // Update helpers...
 
 /** Check for enemies unit can smite (or who can smite him)
@@ -610,7 +567,8 @@ bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr,
 // 	class CommandFactory
 // =====================================================
 
-CommandTypeFactory::CommandTypeFactory(){
+CommandTypeFactory::CommandTypeFactory()
+		: idCounter(0) {
 	registerClass<StopCommandType>("stop");
 	registerClass<MoveCommandType>("move");
 	registerClass<AttackCommandType>("attack");
@@ -621,19 +579,9 @@ CommandTypeFactory::CommandTypeFactory(){
 	registerClass<ProduceCommandType>("produce");
 	registerClass<UpgradeCommandType>("upgrade");
 	registerClass<MorphCommandType>("morph");
-	registerClass<CastSpellCommandType>("cast-spell");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");
-}
-
-CommandTypeFactory &CommandTypeFactory::getInstance(){
-	static CommandTypeFactory ctf;
-	return ctf;
-}
-
-void CastSpellCommandType::update(Unit *unit) const {
-	//surprise! it never got implemented
 }
 
 }}//end namespace

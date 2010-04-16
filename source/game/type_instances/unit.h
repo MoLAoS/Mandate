@@ -27,6 +27,8 @@
 #include "timer.h"
 #include "logger.h"
 
+#define LOG_COMMAND_ISSUE 1
+
 #ifndef LOG_UNIT_LIFECYCLE
 #	define LOG_UNIT_LIFECYCLE 0
 #endif
@@ -514,6 +516,10 @@ private:
 	void recalculateStats();
 	Command *popCommand();
 };
+
+inline ostream& operator<<(ostream &stream, const Unit &unit) {
+	return stream << "[id:" << unit.getId() << "|" << unit.getType()->getName() << "]";
+}
 
 }}// end namespace
 

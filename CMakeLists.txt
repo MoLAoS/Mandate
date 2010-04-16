@@ -4,15 +4,17 @@ cmake_minimum_required (VERSION 2.6)
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 endif(NOT DEFINED CMAKE_BUILD_TYPE)
-if(WIN32 AND MSVC)
-	# change default compile flags for VC on windows
-	if(NOT DEFINED CMAKE_CXX_FLAGS)
-		set(CMAKE_CXX_FLAGS "/DWIN32 /D_WINDOWS /W2 /Zm1000 /EHsc /GR- /Ob2 /arch:SSE2 /fp:fast /Zc:forScope-" CACHE STRING "Flags used by the compiler during all build types.")
-	endif()
-	if(NOT DEFINED CMAKE_CXX_FLAGS_RELEASE)
-		set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2 /DNDEBUG /Oi /Ot" CACHE STRING "Flags used by the compiler during release builds (/MD /Ob1 /Oi /Ot /Oy /Gs will produce slightly less optimized but smaller files).")
-	endif()
-endif(WIN32 AND MSVC)
+#TODO Make certain things 'options' in the cmake gui, ie static Vs dynamic runtime for VC (/MT Vs /MD)
+# set compiler flags...
+if (WIN32)
+	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2")
+	set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od /Gy /RTC1 /Zi /DDEBUG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 -g /Zi /DNDEBUG") 
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG")
+else (WIN32)
+	# Use defaults ? 
+	#set(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
+endif (WIN32)
 
 project(glestae CXX C)
 
@@ -67,7 +69,12 @@ if(NOT DEFINED USE_PHYSFS)
 endif()
 if(USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
+	#TO-DECIDE: write stuff into projetConfig.h or just define stuff here?
+	#add_definitions(-DUSE_PHYSFS=1)
 endif()
+
+#TODO options for gui, _GAE_DEBUG_EDITION_ (rename MODDING_EDITION ?), LOG_STUFF, PROFILE_STUFF etc, etc
+#add_definitions(-D_GAE_DEBUG_EDITION_=1)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
 
@@ -159,13 +166,12 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src")
 # get it written to CPackConfig.cmake
 include(CPack)
 
-
 # create projectConfig.h, used in source files
 configure_file(${PROJECT_SOURCE_DIR}/projectConfig.h.in ${PROJECT_BINARY_DIR}/projectConfig.h)
 include_directories(${PROJECT_BINARY_DIR})
 
+# add stuff
 add_subdirectory(source)
-
 
 # data directory
 # if(NOT WIN32)

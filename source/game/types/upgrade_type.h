@@ -18,15 +18,17 @@
 #include "checksum.h"
 #include "xml_parser.h"
 #include "unit_stats_base.h"
+#include "factory.h"
 
 using Shared::Util::Checksum;
 using namespace Shared::Xml;
+using Shared::Util::SingleTypeFactory;
 
 namespace Glest { namespace Game {
 
 class UnitType;
 class Unit;
-
+class UpgradeTypeFactory;
 // ===============================
 // 	class UpgradeType
 // ===============================
@@ -37,6 +39,7 @@ class Unit;
  * classes.
  */
 class UpgradeType: public EnhancementType, public ProducibleType {
+	friend class UpgradeTypeFactory;
 private:
 	vector<const UnitType*> effects;
 
@@ -55,6 +58,35 @@ public:
 
 	//other methods
 	string getDesc() const;
+};
+
+
+
+// ===============================
+//  class UpgradeTypeFactory
+// ===============================
+
+class UpgradeTypeFactory: private SingleTypeFactory<UpgradeType> {
+private:
+	int idCounter;
+	vector<UpgradeType *> types;
+
+public:
+	UpgradeTypeFactory() : idCounter(0) { }
+
+	UpgradeType *newInstance() {
+		UpgradeType *ut = SingleTypeFactory<UpgradeType>::newInstance();
+		ut->setId(idCounter++);
+		types.push_back(ut);
+		return ut;
+	}
+
+	UpgradeType* getType(int id) {
+		if (id < 0 || id >= types.size()) {
+			throw runtime_error("Error: Unknown upgrade type id: " + intToStr(id));
+		}
+		return types[id];
+	}
 };
 
 }}//end namespace

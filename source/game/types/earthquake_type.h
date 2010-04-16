@@ -12,7 +12,7 @@
 
 #ifndef _GLEST_GAME_EARTHQUAKE_H_
 #define _GLEST_GAME_EARTHQUAKE_H_
-
+#ifdef EARTHQUAKE_CODE
 #include <cassert>
 #include <map>
 
@@ -134,4 +134,5 @@ private:
 
 }} //end namespace
 
+#endif
 #endif

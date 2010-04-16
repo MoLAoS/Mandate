@@ -43,12 +43,21 @@ public:
 	virtual void *newInstance()	{return new T();}
 };
 
+template <typename T>
+class SingleTypeFactory {
+	SingleFactory<T> singleFactory;
+public:
+	T* newInstance() {
+		return static_cast<T*>(singleFactory.newInstance());
+	}
+};
+
 // =====================================================
 //	class MultiFactory
 // =====================================================
 
 template<typename T>
-class MultiFactory{
+class MultiFactory {
 private:
 	typedef map<string, SingleFactoryBase*> Factories;
 	typedef pair<string, SingleFactoryBase*> FactoryPair;

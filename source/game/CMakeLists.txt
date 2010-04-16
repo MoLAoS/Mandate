@@ -40,3 +40,18 @@ else(WIN32)
 endif(WIN32)
 
 install(TARGETS glestadv DESTINATION bin)
+
+if (WIN32)
+	# set linker flags for Release to use link time code gen.
+	set_target_properties(glestadv PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
+
+	# set-up precompiled headers (for windows)
+	# project wide setting
+	set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
+	# create through pch.cpp
+	set_source_files_properties(pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
+	# game_constants.cpp must not use precompiled header (then we'd get no EnumNames objects)
+	set_source_files_properties(game/game_constants.cpp PROPERTIES COMPILE_FLAGS "/Y-")
+	
+endif(WIN32)
+

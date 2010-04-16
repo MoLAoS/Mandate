@@ -139,8 +139,6 @@ void Game::load(){
 		logger.setSubtitle(formatString(scenarioName));
 	}
 	
-	CommandType::resetIdCounter();
-
 	//preload
 	world.preload();
 	//tileset

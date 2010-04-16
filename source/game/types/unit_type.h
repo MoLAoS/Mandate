@@ -19,11 +19,13 @@
 #include "checksum.h"
 #include "unit_stats_base.h"
 #include "particle_type.h"
+#include "factory.h"
 
 namespace Glest{ namespace Game{
 
 using Shared::Sound::StaticSound;
 using Shared::Util::Checksum;
+using Shared::Util::SingleFactory;
 
 class UpgradeType;
 class UnitType;
@@ -68,15 +70,15 @@ public:
 	virtual void load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
 };
 */
-
+class UnitTypeFactory;
 // ===============================
 // 	class UnitType
 //
 ///	A unit or building type
 // ===============================
 
-
-class UnitType: public ProducibleType, public UnitStats {
+class UnitType : public ProducibleType, public UnitStats {
+	friend class UnitTypeFactory;
 private:
 	typedef vector<SkillType*> SkillTypes;
 	typedef vector<CommandType*> CommandTypes;
@@ -84,7 +86,7 @@ private:
 	typedef vector<Level> Levels;
 	typedef vector<ParticleSystemType*> particleSystemTypes;
 //	typedef vector<PetRule*> PetRules;
-	typedef map<int, const CommandType*> CommandTypeMap;
+	//typedef map<int, const CommandType*> CommandTypeMap;
 
 private:
 	//basic
@@ -96,8 +98,6 @@ private:
 	SoundContainer commandSounds;
 
 	//info
-	SkillTypes skillTypes;
-	CommandTypes commandTypes;
 	StoredResources storedResources;
 	Levels levels;
 //	PetRules petRules;
@@ -107,23 +107,17 @@ private:
 	bool meetingPoint;
 	Texture2D *meetingPointImage;
 
-	//REFACTOR: types are limited in the number, and more than just the first command/Skill-TypeOfClass() 
-	// is often of interest, let's have vectors per Command/Skill-class for all Command/Skill-Types
-
-	// then, instead of iterating over a vector of all command types and checking their class,
-	// we can just get _all_ command types of a class
-
-	//REFACTOR: in trunk, uncomment these.
+	CommandTypes commandTypes;
 	CommandTypes commandTypesByClass[CommandClass::COUNT]; // command types mapped by CommandClass
-	//SkillTypes skillTypesByClass[SkillClass::COUNT];
 
-	CommandTypeMap commandTypeMap; // command types mapped by id
+	SkillTypes skillTypes;
+	SkillTypes skillTypesByClass[SkillClass::COUNT];
 
 	//REFACTOR: use above, remove these
 	//OPTIMIZATIONS:
 	//store first command type and skill type of each class
 	//const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
-	const SkillType *firstSkillTypeOfClass[SkillClass::COUNT];
+	//const SkillType *firstSkillTypeOfClass[SkillClass::COUNT];
 	fixed halfSize;
 	fixed halfHeight;
 
@@ -132,18 +126,38 @@ public:
 	UnitType();
 	virtual ~UnitType();
 	void preLoad(const string &dir);
-	bool load(int id, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
 	virtual void doChecksum(Checksum &checksum) const;
 
 	//get
 	bool getMultiSelect() const							{return multiSelect;}
 
 	const SkillType *getSkillType(int i) const			{return skillTypes[i];}
+	
+	int getCommandTypeCount() const						{return commandTypes.size();}
 	const CommandType *getCommandType(int i) const		{return commandTypes[i];}
 	const CommandType *getCommandType(const string &name) const;
+	
+	template <typename ConcreteType>
+	int getCommandTypeCount() const {
+		return commandTypesByClass[ConcreteType::typeClass()].size();
+	}
+	template <typename ConcreteType>
+	const ConcreteType* getCommandType(int i) const {
+		return static_cast<const ConcreteType*>(commandTypesByClass[ConcreteType::typeClass()][i]);
+	}
+	const CommandTypes& getCommandTypes(CommandClass cc) const {
+		return commandTypesByClass[cc];
+	}
+	const CommandType *getFirstCtOfClass(CommandClass cc) const {
+		return commandTypesByClass[cc].empty() ? 0 : commandTypesByClass[cc].front();
+	}
+    const HarvestCommandType *getHarvestCommand(const ResourceType *resourceType) const;
+	const AttackCommandType *getAttackCommand(Zone zone) const;
+	const RepairCommandType *getRepairCommand(const UnitType *repaired) const;
+
 	const Level *getLevel(int i) const					{return &levels[i];}
 	int getSkillTypeCount() const						{return skillTypes.size();}
-	int getCommandTypeCount() const						{return commandTypes.size();}
 	int getLevelCount() const							{return levels.size();}
 //	const PetRules &getPetRules() const					{return petRules;}
 	const Emanations &getEmanations() const				{return emanations;}
@@ -176,38 +190,60 @@ public:
 	StaticSound *getCommandSound() const				{return commandSounds.getRandSound();}
 
 	const SkillType *getSkillType(const string &skillName, SkillClass skillClass = SkillClass::COUNT) const;
-
-	const CommandType *getFirstCtOfClass(CommandClass cc) const {
-		return commandTypesByClass[cc].empty() ? 0 : commandTypesByClass[cc].front();
+	const SkillType *getFirstStOfClass(SkillClass sc) const {
+		return skillTypesByClass[sc].empty() ? 0 : skillTypesByClass[sc].front();
 	}
-	const SkillType *getFirstStOfClass(SkillClass skillClass) const {return firstSkillTypeOfClass[skillClass];}
-    const HarvestCommandType *getFirstHarvestCommand(const ResourceType *resourceType) const;
-	const AttackCommandType *getFirstAttackCommand(Zone zone) const;
-	const RepairCommandType *getFirstRepairCommand(const UnitType *repaired) const;
 
-	//has
+	// has
 	bool hasCommandType(const CommandType *ct) const;
 	bool hasCommandClass(CommandClass cc) const { return !commandTypesByClass[cc].empty(); }
     bool hasSkillType(const SkillType *skillType) const;
     bool hasSkillClass(SkillClass skillClass) const;
 	bool hasCellMap() const								{return cellMap!=NULL;}
 
-	//is
+	// is
 	bool isOfClass(UnitClass uc) const;
 
-	//find
-	// this is only used to convert NetworkCOmmand to Command, have a single map in CommandTypeFactory,
+	// find
+	// this is only used to convert NetworkCOmmand to Command, replace with a single map in CommandTypeFactory,
 	// which will be taking control of ids... see comments in command_type.h [above decl. of resetIdCounter()]
-	const CommandType* findCommandTypeById(int id) const {
-		CommandTypeMap::const_iterator it = commandTypeMap.find(id);
-		return (it != commandTypeMap.end() ? it->second : 0);
-	}
+	//const CommandType* findCommandTypeById(int id) const {
+	//	CommandTypeMap::const_iterator it = commandTypeMap.find(id);
+	//	return (it != commandTypeMap.end() ? it->second : 0);
+	//}
 
 private:
-    void computeFirstStOfClass();
+    void sortSkillTypes();
     void sortCommandTypes();
 };
 
+
+// ===============================
+//  class UnitTypeFactory
+// ===============================
+
+class UnitTypeFactory: private SingleTypeFactory<UnitType> {
+private:
+	int idCounter;
+	vector<UnitType *> types;
+
+public:
+	UnitTypeFactory() : idCounter(0) { }
+
+	UnitType *newInstance() {
+		UnitType *ut = SingleTypeFactory<UnitType>::newInstance();
+		ut->setId(idCounter++);
+		types.push_back(ut);
+		return ut;
+	}
+
+	UnitType* getType(int id) {
+		if (id < 0 || id >= types.size()) {
+			throw runtime_error("Error: Unknown unit type id: " + intToStr(id));
+		}
+		return types[id];
+	}
+};
 
 }}//end namespace
 

@@ -111,6 +111,12 @@ private:
 	Units newlydead;
 	PosCircularIteratorFactory posIteratorFactory;
 
+	UnitTypeFactory *unitTypeFactory;
+	UpgradeTypeFactory *upgradeTypeFactory;
+
+	SkillTypeFactory *skillTypeFactory;
+	CommandTypeFactory *commandTypeFactory;
+
 public:
 	World(Game *game);
 	~World();
@@ -123,6 +129,10 @@ public:
 	static bool isConstructed() { return singleton != 0; }
 
 	//get
+	UnitTypeFactory* getUnitTypeFactory()			{return unitTypeFactory;}
+	UpgradeTypeFactory* getUpgradeTypeFactory()		{return upgradeTypeFactory;}
+	SkillTypeFactory* getSkillTypeFactory()			{return skillTypeFactory;}
+	CommandTypeFactory* getCommandTypeFactory()		{return commandTypeFactory;}
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getThisTeamIndex() const					{return thisTeamIndex;}
@@ -218,15 +228,15 @@ private:
 	void initNetworkServer();
 
 	//misc
-	void updateClient();
-	void updateEarthquakes(float seconds);
+	//void updateClient();
+	//void updateEarthquakes(float seconds);
 	void tick();
 	void computeFow();
 	void doUnfog();
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
-	void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
+	//void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
 	void doHackyCleanUp();
 };
 

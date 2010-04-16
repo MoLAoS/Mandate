@@ -41,9 +41,11 @@ class FactionType;
 class TechTree;
 class EnhancementType;
 class Unit;
-class EarthquakeType;
+//class EarthquakeType;
 
 class CycleInfo;
+
+class SkillTypeFactory;
 
 // =====================================================
 // 	class SkillType
@@ -52,6 +54,8 @@ class CycleInfo;
 // =====================================================
 
 class SkillType : public NameIdPair{
+	friend class SkillTypeFactory;
+
 public:
 	typedef vector<Model *> Animations;
 
@@ -62,7 +66,7 @@ public:
 	)
 
 protected:
-	SkillClass skillClass;
+	//SkillClass skillClass;
 	EffectTypes effectTypes;
 	int epCost;
 	int speed;
@@ -97,7 +101,6 @@ public:
 	SkillType(SkillClass skillClass, const char* typeName);
 	virtual ~SkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
-	void setId(int val) { id = val; }
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	void descEffects(string &str, const Unit *unit) const;
@@ -114,8 +117,8 @@ public:
 	CycleInfo calculateCycleTime() const;
 
 	//get
+	virtual SkillClass getClass() const	= 0;
 	const string &getName() const		{return name;}
-	SkillClass getClass() const			{return skillClass;}
 	const EffectTypes &getEffectTypes() const	{return effectTypes;}
 	bool isHasEffects() const			{return effectTypes.size() > 0;}
 	int getEpCost() const				{return epCost;}
@@ -155,7 +158,7 @@ public:
 // 	class StopSkillType
 // ===============================
 
-class StopSkillType: public SkillType{
+class StopSkillType: public SkillType {
 public:
 	StopSkillType() : SkillType(SkillClass::STOP, "Stop"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
@@ -163,6 +166,8 @@ public:
 		str+= lang.get("ReactionSpeed")+": "+ intToStr(speed)+"\n";
 		descEpCost(str, unit);
 	}
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::STOP; }
 };
 
 // ===============================
@@ -181,6 +186,8 @@ public:
 		descEpCost(str, unit);
 	}
 	//virtual void doChecksum(Checksum &checksum) const;
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::MOVE; }
 };
 /*
 class RangedType {
@@ -229,10 +236,10 @@ private:
 	fixed attackPctStolen;
 	fixed attackPctVar;
 	const AttackType *attackType;
-	EarthquakeType *earthquakeType;
+//	EarthquakeType *earthquakeType;
 
 public:
-	AttackSkillType() : TargetBasedSkillType(SkillClass::ATTACK, "Attack"), attackType(NULL), earthquakeType(NULL) {}
+	AttackSkillType() : TargetBasedSkillType(SkillClass::ATTACK, "Attack"), attackType(NULL)/*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -245,7 +252,10 @@ public:
 	//fixed getAttackPctStolen() const			{return attackPctStolen;}
 	//fixed getAttackPctVar() const				{return attackPctVar;}
 	const AttackType *getAttackType() const		{return attackType;}
-	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
+//	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::ATTACK; }
 };
 
 // ===============================
@@ -259,6 +269,9 @@ public:
 		descSpeed(str, unit, "BuildSpeed");
 		descEpCost(str, unit);
 	}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::BUILD; }
 };
 
 // ===============================
@@ -269,6 +282,9 @@ class HarvestSkillType: public SkillType{
 public:
 	HarvestSkillType() : SkillType(SkillClass::HARVEST, "Harvest") {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::HARVEST; }
 };
 
 // ===============================
@@ -298,6 +314,9 @@ public:
 	bool isPetOnly() const		{return petOnly;}
 	bool isSelfOnly() const		{return selfOnly;}
 	bool isSelfAllowed() const	{return selfAllowed;}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::REPAIR; }
 };
 
 // ===============================
@@ -320,6 +339,9 @@ public:
 
 	bool isPet() const		{return pet;}
 	int getMaxPets() const	{return maxPets;}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::PRODUCE; }
 };
 
 // ===============================
@@ -333,6 +355,9 @@ public:
 		descSpeed(str, unit, "UpgradeSpeed");
 		descEpCost(str, unit);
 	}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::UPGRADE; }
 };
 
 
@@ -344,6 +369,9 @@ class BeBuiltSkillType: public SkillType{
 public:
 	BeBuiltSkillType() : SkillType(SkillClass::BE_BUILT, "Be built"){}
 	virtual void getDesc(string &str, const Unit *unit) const {}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::BE_BUILT; }
 };
 
 // ===============================
@@ -357,6 +385,9 @@ public:
 		descSpeed(str, unit, "MorphSpeed");
 		descEpCost(str, unit);
 	}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::MORPH; }
 };
 
 // ===============================
@@ -374,48 +405,9 @@ public:
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const {}
-};
 
-// ===============================
-// 	class CastSpellSkillType
-// ===============================
-
-class CastSpellSkillType: public TargetBasedSkillType{
-public:
-	CastSpellSkillType() : TargetBasedSkillType(SkillClass::CAST_SPELL, "Cast spell"){}
-	virtual void getDesc(string &str, const Unit *unit) const {}
-};
-
-// ===============================
-// 	class FallDownSkillType
-// ===============================
-
-class FallDownSkillType: public SkillType {
-private:
-	float agility;
-
-public:
-	FallDownSkillType() : SkillType(SkillClass::FALL_DOWN, "Fall down") {}
-	FallDownSkillType(const SkillType *model);
-
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const {}
-
-	float getAgility() const {return agility;}
-};
-
-// ===============================
-// 	class GetUpSkillType
-// ===============================
-
-class GetUpSkillType: public SkillType {
-public:
-	GetUpSkillType() : SkillType(SkillClass::GET_UP, "Get up") {}
-	GetUpSkillType(const SkillType *model);
-
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::DIE; }
 };
 
 // ===============================
@@ -424,11 +416,32 @@ public:
 
 class SkillTypeFactory: public MultiFactory<SkillType>{
 private:
-	SkillTypeFactory();
+	vector<SkillType*> types;
+	int idCounter;
+
 public:
-	static SkillTypeFactory &getInstance();
+	SkillTypeFactory();
+
+	SkillType *newInstance(string classId) {
+		SkillType *st = MultiFactory<SkillType>::newInstance(classId);
+		st->setId(idCounter++);
+		types.push_back(st);
+		return st;
+	}
+
+	SkillType* getType(int id) {
+		if (id < 0 || id >= types.size()) {
+			throw runtime_error("Error: Unknown skill type id: " + intToStr(id));
+		}
+		return types[id];
+	}
+
 };
 
+
+// ===============================
+// 	class AttackSkillPreferences
+// ===============================
 
 class AttackSkillPreferences : public XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT> {
 public:

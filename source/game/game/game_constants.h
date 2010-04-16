@@ -402,10 +402,7 @@ STRINGY_ENUM( SkillClass,
 					PRODUCE,
 					UPGRADE,
 					MORPH,
-					DIE,		// == 10, == 11 skill classes
-					CAST_SPELL,
-					FALL_DOWN,
-					GET_UP		// == 13, == 14 skill classes
+					DIE		// == 10, == 11 skill classes
 			);
 
 /** weather set

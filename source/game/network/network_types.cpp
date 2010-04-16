@@ -25,17 +25,18 @@ namespace Glest { namespace Game {
 
 /** Construct from command with archetype == GIVE_COMMAND */
 NetworkCommand::NetworkCommand(Command *command) {
-	this->networkCommandType= command->getArchetype();
-	this->unitId= command->getCommandedUnit()->getId();
-	this->commandTypeId= command->getType()->getId();
-	this->positionX= command->getPos().x;
-	this->positionY= command->getPos().y;
-	this->unitTypeId = command->getUnitType()
+	networkCommandType = command->getArchetype();
+	unitId = command->getCommandedUnit()->getId();
+	commandTypeId = command->getType()->getId();
+	positionX = command->getPos().x;
+	positionY = command->getPos().y;
+	unitTypeId = command->getUnitType()
 							? command->getUnitType()->getId()
 							: command->getCommandedUnit()->getType()->getId();
-	this->targetId = command->getUnit() ? command->getUnit()->getId() : -1;
-	this->no_reserve_res = command->isReserveResources() ? 0 : 1;
-	this->queue = command->isQueue() ? 1 : 0;
+	targetId = command->getUnit() ? command->getUnit()->getId() : -1;
+	flags = 0;
+	if (command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
+	if (command->isQueue()) flags |= CmdFlags::QUEUE;
 }
 
 /** Construct archetype CANCEL_COMMAND */
@@ -47,8 +48,7 @@ NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, const 
 	this->positionY= pos.y;
 	this->unitTypeId = -1;
 	this->targetId = -1;
-	this->no_reserve_res = 0;
-	this->queue = 0;
+	this->flags = 0;
 }
 /*
 NetworkCommand::NetworkCommand(int networkCommandType, int unitId, int commandTypeId, const Vec2i &pos, int unitTypeId, int targetId){
@@ -76,7 +76,7 @@ Command *NetworkCommand::toCommand() const {
 
 	//validate command type
 	const UnitType* unitType= world.findUnitTypeById(unit->getFaction()->getType(), unitTypeId);
-	const CommandType* ct = unit->getType()->findCommandTypeById(commandTypeId);
+	const CommandType* ct = theWorld.getCommandTypeFactory()->getType(commandTypeId);
 	if (!ct) {
 		throw runtime_error("Can not find command type with id: " + intToStr(commandTypeId) + " in unit: " + unit->getType()->getName() + ". Game out of synch.");
 	}
@@ -89,7 +89,10 @@ Command *NetworkCommand::toCommand() const {
 
 	//create command
 	Command *command= NULL;
+	bool queue = flags & CmdFlags::QUEUE;
+	bool no_reserve_res = flags & CmdFlags::NO_RESERVE_RESOURCES;
 	CommandFlags flags(CommandProperties::QUEUE, queue, CommandProperties::DONT_RESERVE_RESOURCES, no_reserve_res);
+	
 	if (target) {
 		command= new Command(ct, flags, target, unit);
 	} else if(unitType){
@@ -127,8 +130,8 @@ ProjectileUpdate::ProjectileUpdate(const Unit *unit, ProjectileParticleSystem *p
 
 UnitStateRecord::UnitStateRecord(Unit *unit) {
 	this->unit_id = unit->getId();
-	this->cmd_class = unit->anyCommand() ? unit->getCurrCommand()->getType()->getClass() : -1;
-	this->skill_cl = unit->getCurrSkill()->getClass();
+	this->cmd_id = unit->anyCommand() ? unit->getCurrCommand()->getType()->getId() : -1;
+	this->skill_id = unit->getCurrSkill()->getId();
 	this->curr_pos_x = unit->getPos().x;
 	this->curr_pos_y = unit->getPos().y;
 	this->next_pos_x = unit->getNextPos().x;
@@ -141,8 +144,8 @@ UnitStateRecord::UnitStateRecord(Unit *unit) {
 ostream& operator<<(ostream &lhs, const UnitStateRecord& state) {
 	return lhs	
 		<< "Unit: " << state.unit_id 
-		<< ", CommandClass: " << CommandClassNames[CommandClass(state.cmd_class)]
-		<< ", SkillClass: " << SkillClassNames[SkillClass(state.skill_cl)]
+		<< ", CommandId: " << state.cmd_id 
+		<< ", SkillId: " << state.skill_id
 		<< "\n\tCurr Pos: " << Vec2i(state.curr_pos_x, state.curr_pos_y)
 		<< ", Next Pos: " << Vec2i(state.next_pos_x, state.next_pos_y)
 		<< "\n\tTarg Pos: " << Vec2i(state.targ_pos_x, state.targ_pos_y)

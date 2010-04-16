@@ -9,15 +9,15 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#include "projectConfig.h"
 #ifndef USE_PCH
 #	define USE_PCH 0
 #endif
 
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
-//#include "projectConfig.h"
-#if USE_PCH
 
+#if USE_PCH
 
 #if defined(WIN32) || defined(WIN64)
 #	if defined (USE_POSIX_SOCKETS)

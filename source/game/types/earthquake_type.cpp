@@ -11,6 +11,8 @@
 // ==============================================================
 
 #include "pch.h"
+
+#ifdef EARTHQUAKE_CODE
 #include "earthquake_type.h"
 
 #include <cassert>
@@ -224,3 +226,4 @@ void Earthquake::resetSurface() {
 
 
 }}//end namespace
+#endif

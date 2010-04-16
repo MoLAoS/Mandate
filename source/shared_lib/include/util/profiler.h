@@ -27,29 +27,30 @@ namespace Shared { namespace Util {
 #ifndef SL_PROFILE
 #	define _PROFILE_FUNCTION() {}
 #	define _PROFILE_SCOPE(name) {}
+
 #else // SL_PROFILE
 
-namespace Profile {
-	void sectionBegin(const string &name);
-	void sectionEnd(const string &name);
-}
-
-/** Helper, created on stack at start of functions to profile */
-class ProfileSection {
-private:
-	const string name;
-
-public:
-	ProfileSection(const char *name) : name(name) {
-		Profile::sectionBegin(name);
+	namespace Profile {
+		void sectionBegin(const string &name);
+		void sectionEnd(const string &name);
 	}
-	~ProfileSection() {
-		Profile::sectionEnd(name);
-	}
-};
 
-#define _PROFILE_FUNCTION() Shared::Util::ProfileSection _func_profile(__FUNCTION__)
-#define _PROFILE_SCOPE(name) Shared::Util::ProfileSection _func_profile(name)
+	/** Helper, created on stack at start of functions to profile */
+	class ProfileSection {
+	private:
+		const string name;
+
+	public:
+		ProfileSection(const char *name) : name(name) {
+			Profile::sectionBegin(name);
+		}
+		~ProfileSection() {
+			Profile::sectionEnd(name);
+		}
+	};
+
+#	define _PROFILE_FUNCTION() Shared::Util::ProfileSection _func_profile(__FUNCTION__)
+#	define _PROFILE_SCOPE(name) Shared::Util::ProfileSection _func_profile(name)
 
 #endif //SL_PROFILE
 

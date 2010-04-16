@@ -25,3 +25,15 @@ FileOps::~FileOps(){
 void FileOps::rewind(){
 	(void)this->seek(0L, SEEK_SET);
 }
+
+int FileOps::fileSize() {
+	int pos = tell();
+	seek(0, SEEK_END);
+	int len = tell();
+	seek(pos, SEEK_SET);
+	return len;
+}
+
+int FileOps::bytesRemaining() {
+	return fileSize() - tell();
+}
