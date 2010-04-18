@@ -31,6 +31,7 @@ namespace Shared { namespace Util {
 #else // SL_PROFILE
 
 	namespace Profile {
+		void profilerClose();
 		void sectionBegin(const string &name);
 		void sectionEnd(const string &name);
 	}

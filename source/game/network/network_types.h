@@ -18,6 +18,8 @@
 #include "game_constants.h"
 #include "types.h"
 #include "vec.h"
+#include "FSFactory.hpp"
+
 
 using std::string;
 using Shared::Math::Vec2i;
@@ -199,12 +201,15 @@ struct FrameRecord : public vector<UnitStateRecord> {
 ostream& operator<<(ostream &lhs, const FrameRecord&);
 
 class GameStateLog {
+private:
 	FrameRecord currFrame;
 
+	FileOps *fdata, *findex;
 	void writeFrame();
 
 public:
 	GameStateLog();
+	~GameStateLog();
 
 	int getCurrFrame() const { return currFrame.frame; }
 

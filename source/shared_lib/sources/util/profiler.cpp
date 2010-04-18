@@ -17,6 +17,7 @@
 
 #include "platform_util.h"
 #include "timer.h"
+#include "FSFactory.hpp"
 
 #include <map>
 
@@ -59,7 +60,7 @@ public:
 	void addChild(Section *child)	{children[child->name] = child;}
 	Section *getChild(const string &name);
 
-	void print(FILE *outSream, int tabLevel=0);
+	void print(ostream *outSream, int tabLevel=0);
 };
 
 // =====================================================
@@ -81,36 +82,37 @@ Section *Section::getChild(const string &name){
 	return it->second;
 }
 
-void Section::print(FILE *outStream, int tabLevel){
+void Section::print(ostream *outStream, int tabLevel){
 	float percent = ( parent == NULL || parent->microsElapsed == 0 )
 					? 100.0f : 100.0f * microsElapsed / parent->microsElapsed;
 	string pname= parent==NULL? "": parent->getName();
 
 	for(int i=0; i<tabLevel; ++i)
-		fprintf(outStream, "\t");
+		*outStream << "\t";
 
-	fprintf(outStream, "%s: ", name.c_str());
+	*outStream << name << ": ";
 
 	if ( microsElapsed ) {
-		fprintf(outStream, "%d us", int(microsElapsed));
+		*outStream << int(microsElapsed) << " us";
 		unsigned int milliseconds = microsElapsed / 1000;
 		unsigned int seconds = milliseconds / 1000;
 		unsigned int minutes = seconds / 60;
 		if ( minutes ) {
-			fprintf ( outStream, " (%dmin %dsec)", minutes, seconds % 60 );
+			*outStream << " (" << minutes << "min " << seconds % 60 << "sec)";
 		}
 		else if ( seconds ) {
-			fprintf ( outStream, " (%dsec %dms)", seconds, milliseconds % 1000 );
+			*outStream << " (" << seconds << "sec " << milliseconds % 1000 << "ms)";
 		}
 		else if ( milliseconds ) {
-			fprintf ( outStream, " (%dms)", milliseconds );
+			*outStream << " (" << milliseconds << "ms)";
 		}
-		fprintf(outStream, ", %.1f%%", percent );
+		outStream->precision(1);
+		*outStream << fixed << ", " << percent << "%";
 	}
 	if ( calls ) {
-		fprintf(outStream, ", %u calls", calls );
+		*outStream << ", " << calls << " calls";
 	}
-	fprintf( outStream, "\n" );
+	*outStream << "\n";
 
 	SectionContainer::iterator it;
 	for(it= children.begin(); it!=children.end(); ++it){
@@ -131,6 +133,7 @@ public:
 	Profiler();
 	~Profiler();
 
+	void close();
 	void sectionBegin(const string &name);
 	void sectionEnd(const string &name);
 };
@@ -146,14 +149,15 @@ Profiler::Profiler(){
 }
 
 Profiler::~Profiler(){
+}
+
+void Profiler::close(){
 	rootSection->stop();
 
-	FILE *f= fopen("profiler.log", "w");
-	if ( f ) {
-		fprintf(f, "Profiler Results\n\n");
-		rootSection->print(f);
-		fclose(f);
-	}
+	ostream *ofs = FSFactory::getInstance()->getOStream("profiler.log");
+	*ofs << "Profiler Results\n\n";
+	rootSection->print(ofs);
+	delete ofs;
 }
 
 void Profiler::sectionBegin(const string &name ){
@@ -180,6 +184,10 @@ void Profiler::sectionEnd(const string &name){
 Profiler& getProfiler() {
 	static Profiler profiler;
 	return profiler;
+}
+
+void profilerClose(){
+	getProfiler().close();
 }
 
 void sectionBegin(const string &name) {

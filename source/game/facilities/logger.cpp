@@ -71,9 +71,9 @@ void Logger::add(const string &str,  bool renderScreen){
 	delete f;
 	
 	if (loadingGame && renderScreen) {
-		if (f == NULL) {
-			throw runtime_error("Error opening log file" + fileName);
-		}
+// 		if (f == NULL) {
+// 			throw runtime_error("Error opening log file" + fileName);
+// 		}
 
 		logLines.push_back(str);
 		if(logLines.size() > logLineCount) {
@@ -105,17 +105,9 @@ void Logger::addNetworkMsg(const string &msg) {
 }
 
 void Logger::clear() {
-	string s="Log file\n";
-
-	FILE *f= fopen(fileName.c_str(), "wt+");
-	if (!f) {
-		throw runtime_error("Error opening log file" + fileName);
-	}
-
-	fprintf(f, "%s", s.c_str());
-	fprintf(f, "\n");
-
-	fclose(f);
+	ostream *ofs = FSFactory::getInstance()->getOStream(fileName.c_str());
+	*ofs << "Log file\n\n";
+	delete ofs;
 }
 
 // ==================== PRIVATE ====================

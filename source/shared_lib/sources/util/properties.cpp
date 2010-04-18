@@ -35,7 +35,6 @@ Properties::Properties() {}
 
 void Properties::load(const string &path, bool trim) {
 	locale loc;
-	//ifstream fileStream;
 	char lineBuffer[maxLine];
 	string line, key, value;
 	int pos;
@@ -44,7 +43,6 @@ void Properties::load(const string &path, bool trim) {
 
 	istream *fileStream = FSFactory::getInstance()->getIStream(path.c_str());
 //	fileStream.exceptions(ios::failbit | ios::badbit);
-	//fileStream.open(path.c_str(), ios_base::in);
 	if (fileStream->fail()) {
 		throw runtime_error("Can't open propertyMap file: " + path);
 	}
@@ -95,23 +93,20 @@ void Properties::load(const string &path, bool trim) {
 		propertyVector.push_back(PropertyPair(key, value));
 	}
 
-	//fileStream.close();
 	delete fileStream;
 }
 
 void Properties::save(const string &path) {
-	ofstream fileStream;
+	ostream *fileStream = FSFactory::getInstance()->getOStream(path.c_str());
 
-	fileStream.open(path.c_str(), ios_base::out | ios_base::trunc);
-
-	fileStream << "; === propertyMap File === \n";
-	fileStream << '\n';
+	*fileStream << "; === propertyMap File === \n";
+	*fileStream << '\n';
 
 	for (PropertyMap::iterator pi = propertyMap.begin(); pi != propertyMap.end(); ++pi) {
-		fileStream << pi->first << '=' << pi->second << '\n';
+		*fileStream << pi->first << '=' << pi->second << '\n';
 	}
 
-	fileStream.close();
+	delete fileStream;
 }
 
 void Properties::clear(){

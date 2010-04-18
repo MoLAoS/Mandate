@@ -567,7 +567,7 @@ Vec2i Map::getNearestPos(const Vec2i &start, const Vec2i &target, int minRange, 
 	fixedVec2 fstart(start.x, start.y);
 	fixed len = fstart.dist(ftarget);
 
-	if(len >= minRange && len <= maxRange) {
+	if(!len || (len >= minRange && len <= maxRange)) {
 		return start;
 	} else {
 		assert(minRange == 0 || start.x != target.x || start.y != target.y);

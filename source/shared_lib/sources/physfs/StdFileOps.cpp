@@ -14,6 +14,7 @@
 #include "StdFileOps.hpp"
 
 #include <stdexcept>
+using namespace std;
 
 
 StdFileOps::StdFileOps(){
@@ -28,14 +29,23 @@ StdFileOps::~StdFileOps(){
 
 void StdFileOps::openRead(const char *fname){
 	this->f = fopen(fname, "rb");
+	if(!this->f){
+		throw runtime_error(string("can't open for read: ") + fname);
+	}
 }
 
 void StdFileOps::openWrite(const char *fname){
 	this->f = fopen(fname, "wb");
+	if(!this->f){
+		throw runtime_error(string("can't open for write: ") + fname);
+	}
 }
 
 void StdFileOps::openAppend(const char *fname){
 	this->f = fopen(fname, "ab");
+	if(!this->f){
+		throw runtime_error(string("can't open for append: ") + fname);
+	}
 }
 
 int StdFileOps::read(void *buf, int size, int num){

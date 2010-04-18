@@ -98,8 +98,6 @@ ParticleSystemBase::ParticleSystemBase() :
 		destBlendFactor(Particle::BLEND_FUNC_ONE),
 		blendEquationMode(Particle::BLEND_EQUATION_FUNC_ADD),
 		primitiveType(Particle::ptQuad),
-		texture(NULL),
-		model(NULL),
 		offset(0.f),
 		color(1.f),
 		color2(1.f),
@@ -115,7 +113,9 @@ ParticleSystemBase::ParticleSystemBase() :
 		energy(250),
 		energyVar(50),
 		radius(0.f),
-		drawCount(1) {
+		drawCount(1),
+		texture(NULL),
+		model(NULL) {
 }
 
 ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
@@ -124,8 +124,6 @@ ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
 		destBlendFactor(protoType.destBlendFactor),
 		blendEquationMode(protoType.blendEquationMode),
 		primitiveType(protoType.primitiveType),
-		texture(protoType.texture),
-		model(protoType.model),
 		offset(protoType.offset),
 		color(protoType.color),
 		color2(protoType.color2),
@@ -141,7 +139,9 @@ ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
 		energy(protoType.energy),
 		energyVar(protoType.energyVar),
 		radius(protoType.radius),
-		drawCount(protoType.drawCount) {
+		drawCount(protoType.drawCount),
+		texture(protoType.texture),
+		model(protoType.model) {
 }
 
 // =====================================================

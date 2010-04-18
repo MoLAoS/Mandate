@@ -44,6 +44,7 @@ if(DEFINED WINDEPS)
 	set(ENV{LUA_DIR} ${WINDEPS})
 	set(ENV{VORBISDIR} ${WINDEPS})
 	set(ENV{PHYSFSDIR} ${WINDEPS})
+	set(ENV{CPPUNITDIR} ${WINDEPS})
 	# sadly FindZLIB does not support HINTS, set it directly
 	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
 	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
@@ -117,7 +118,7 @@ set(CPACK_PACKAGE_VERSION ${GLEST_VERSION})
 # set(CPACK_PACKAGE_VERSION_MINOR "2")
 # set(CPACK_PACKAGE_VERSION_PATCH "3")
 set(CPACK_PACKAGE_CONTACT ${CONTACT})
-set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_SOURCE_DIR}/docs/license.txt)
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/docs/license.txt)
 if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES
 			"glestadv" "Glest Advanced Engine"
@@ -144,7 +145,7 @@ if(WIN32)
 		"share/glestae" "data folder"
 	)
 	# a bug in NSIS, last one needs to be \ and 2 times escaped to get there
-	set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/data/game\\\\glest.ico")
+	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
 	
 	if(DEFINED WINDEPS)
 		# only lua and physfs are linked dynamic, install it next to the binary
@@ -167,8 +168,8 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src")
 include(CPack)
 
 # create projectConfig.h, used in source files
-configure_file(${PROJECT_SOURCE_DIR}/projectConfig.h.in ${PROJECT_BINARY_DIR}/projectConfig.h)
-include_directories(${PROJECT_BINARY_DIR})
+configure_file(${CMAKE_SOURCE_DIR}/projectConfig.h.in ${CMAKE_BINARY_DIR}/projectConfig.h)
+include_directories(${CMAKE_BINARY_DIR})
 
 # add stuff
 add_subdirectory(source)

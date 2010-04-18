@@ -214,7 +214,7 @@ void Game::init() {
 			aiInterfaces[i]= NULL;
 		}
 	}
-	delete seeds;
+	delete[] seeds;
 
 	gni->doCreateSkillCycleTable(world.getTechTree());
 

@@ -169,10 +169,15 @@ const char *gs_indexfile = "game_state.gsi";
 GameStateLog::GameStateLog() {
 	currFrame.frame = 0;
 	// clear old data and index files
-	FILE *fp = fopen(gs_datafile, "wb");
-	fclose(fp);
-	fp = fopen(gs_indexfile, "wb");
-	fclose(fp);
+	fdata = FSFactory::getInstance()->getFileOps();
+	fdata->openWrite(gs_datafile);
+	findex = FSFactory::getInstance()->getFileOps();
+	findex->openWrite(gs_indexfile);
+}
+
+GameStateLog::~GameStateLog(){
+	delete fdata;
+	delete findex;
 }
 
 struct StateLogIndexEntry {
@@ -182,28 +187,15 @@ struct StateLogIndexEntry {
 };
 
 void GameStateLog::writeFrame() {
-	FILE *fp = fopen(gs_datafile, "ab");
-	if (!fp) {
-		cout << "error: cannot open game_state data file for writing: " << gs_datafile << endl;
-		return;
-	}
 	StateLogIndexEntry ndxEntry;
-	fseek(fp, 0, SEEK_END);
-	ndxEntry.start = ftell(fp);
+	ndxEntry.start = fdata->tell();
 	foreach (FrameRecord, it, currFrame) {
-		fwrite(&(*it), sizeof(UnitStateRecord), 1, fp);
+		fdata->write(&(*it), sizeof(UnitStateRecord), 1);
 	}
-	ndxEntry.end = ftell(fp);
-	fclose(fp);
+	ndxEntry.end = fdata->tell();
 
 	ndxEntry.frame = currFrame.frame;
-	fp = fopen(gs_indexfile, "ab");
-	if (!fp) {
-		cout << "error: cannot open game_state index file for writing: " << gs_indexfile << endl;
-		return;
-	}
-	fwrite(&ndxEntry, sizeof(StateLogIndexEntry), 1, fp);
-	fclose(fp);
+	findex->write(&ndxEntry, sizeof(StateLogIndexEntry), 1);
 }
 
 void GameStateLog::logFrame(int frame) {
@@ -213,19 +205,17 @@ void GameStateLog::logFrame(int frame) {
 		LOG_NETWORK( ss.str() );
 	} else {
 		assert(frame > 0);
-		FILE *fp = fopen(gs_indexfile, "rb");
-		if (!fp) {
-			cout << "error: cannot open game_state index file for reading: " << gs_indexfile << endl;
-			return;
-		}
+		FileOps *f = FSFactory::getInstance()->getFileOps();
+		f->openRead(gs_indexfile);
 		long pos = (frame - 1) * sizeof(StateLogIndexEntry);
 		StateLogIndexEntry ndxEntry;
-		fseek(fp, pos, SEEK_SET);
-		fread(&ndxEntry, sizeof(StateLogIndexEntry), 1, fp);
-		fclose(fp);
+		f->seek(pos, SEEK_SET);
+		f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
+		delete f;
 
-		fp = fopen(gs_datafile, "rb");
-		fseek(fp, ndxEntry.start, SEEK_SET);
+		f = FSFactory::getInstance()->getFileOps();
+		f->openRead(gs_datafile);
+		f->seek(ndxEntry.start, SEEK_SET);
 		FrameRecord record;
 		record.frame = frame;
 		int numUpdates = (ndxEntry.end - ndxEntry.start) / sizeof(UnitStateRecord);
@@ -234,7 +224,7 @@ void GameStateLog::logFrame(int frame) {
 			
 		if (numUpdates) {
 			UnitStateRecord *unitRecords = new UnitStateRecord[numUpdates];
-			fread(unitRecords, sizeof(UnitStateRecord), numUpdates, fp);
+			f->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
 			for (int i=0; i < numUpdates; ++i) {
 				record.push_back(unitRecords[i]);
 			}
@@ -245,7 +235,7 @@ void GameStateLog::logFrame(int frame) {
 		} else {
 			LOG_NETWORK( "Frame " + intToStr(frame) + " has no updates." );
 		}
-		fclose(fp);
+		delete f;
 	}
 }
 

@@ -4,21 +4,13 @@
 #  CPPUNIT_LIBRARY     - path to library
 #  CPPUNIT_FOUND       - true if cppunit found.
 
-#TODO This should be just a generic extra path, CPPUNIT_BASE or somesuch
-# then it would be defined in the root dir CMakeFiles.txt with all the other WINDEPS stuff
-if(DEFINED WINDEPS)
-	set(path_hints ${WINDEPS} $ENV{CPPUNITDIR})
-else(DEFINED WINDEPS)
-	set(path_hints $ENV{CPPUNITDIR})
-endif(DEFINED WINDEPS)
-
 find_path(CPPUNIT_INCLUDE_DIR cppunit/Test.h
-	HINTS ${path_hints}
+	HINTS $ENV{CPPUNITDIR}
 	PATH_SUFFIXES include
 )
 
 find_library(CPPUNIT_LIBRARY cppunit
-	HINTS ${path_hints}
+	HINTS $ENV{CPPUNITDIR}
 	PATH_SUFFIXES lib64 lib
 )
 
