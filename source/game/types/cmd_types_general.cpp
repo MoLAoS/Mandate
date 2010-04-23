@@ -32,6 +32,9 @@
 
 #include "leak_dumper.h"
 #include "logger.h"
+#include "sim_interface.h"
+
+using namespace Glest::Sim;
 
 using namespace Shared::Util;
 
@@ -288,7 +291,7 @@ void ProduceCommandType::update(Unit *unit) const {
 				produced->create();
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
-				theWorld.getStats().produce(unit->getFactionIndex());
+				theSimInterface->getStats()->produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 
 				if (ct) {
@@ -433,16 +436,8 @@ void MorphCommandType::update(Unit *unit) const {
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
 		//if not morphing, check space
-		// determine morph unit field
-		Fields mfs = morphUnit->getFields();
-		Field mf;
-		if (mfs.get(Field::LAND)) mf = Field::LAND;
-		else if (mfs.get(Field::AIR)) mf = Field::AIR;
-		if (mfs.get(Field::AMPHIBIOUS)) mf = Field::AMPHIBIOUS;
-		else if (mfs.get(Field::ANY_WATER)) mf = Field::ANY_WATER;
-		else if (mfs.get(Field::DEEP_WATER)) mf = Field::DEEP_WATER;
-
-		if (map->areFreeCellsOrHasUnit (unit->getPos(), morphUnit->getSize(), mf, unit)) {
+		Field mf = morphUnit->getField();
+		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphUnit->getSize(), mf, unit)) {
 			unit->setCurrSkill(morphSkillType);
 			unit->getFaction()->checkAdvanceSubfaction(morphUnit, false);
 		} else {

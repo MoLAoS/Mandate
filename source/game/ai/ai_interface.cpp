@@ -22,8 +22,9 @@
 #include "config.h"
 
 #include "leak_dumper.h"
+#include "sim_interface.h"
 
-
+using namespace Glest::Sim;
 using namespace Shared::Util;
 using namespace Shared::Graphics;
 
@@ -33,9 +34,9 @@ using namespace Shared::Graphics;
 
 namespace Glest{ namespace Game{
 
-AiInterface::AiInterface(Game &game, int factionIndex, int teamIndex, int32 randomSeed){
-	this->world= game.getWorld();
-	this->commander= game.getCommander();
+AiInterface::AiInterface(GameState &game, int factionIndex, int teamIndex, int32 randomSeed){
+	this->world= theSimInterface->getWorld();
+	this->commander= theSimInterface->getCommander();
 	this->console= game.getConsole();
 
 	this->factionIndex= factionIndex;

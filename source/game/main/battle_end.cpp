@@ -26,6 +26,9 @@
 
 #include "leak_dumper.h"
 
+#include "sim_interface.h"
+using namespace Glest::Sim;
+
 
 using namespace Shared::Util;
 
@@ -35,10 +38,12 @@ namespace Glest { namespace Game {
 //  class BattleEnd
 // =====================================================
 
-BattleEnd::BattleEnd(Program &program, const Stats &stats) : ProgramState(program), stats(stats) {
+BattleEnd::BattleEnd(Program &program) : ProgramState(program) {
+	_TRACE_FUNCTION();
 }
 
 BattleEnd::~BattleEnd() {
+	_TRACE_FUNCTION();
 	SoundRenderer::getInstance().playMusic(CoreData::getInstance().getMenuMusic());
 }
 
@@ -55,6 +60,9 @@ void BattleEnd::render() {
 	TextRenderer2D *textRenderer = renderer.getTextRenderer();
 	Lang &lang = Lang::getInstance();
 
+	const Stats &stats = *theSimInterface->getStats();
+	const GameSettings &gs = theSimInterface->getGameSettings();
+
 	renderer.clearBuffers();
 	renderer.reset2d();
 	renderer.renderBackground(CoreData::getInstance().getBackgroundTexture());
@@ -64,8 +72,6 @@ void BattleEnd::render() {
 	int lm = 80;
 	int bm = 100;
 	
-	const GameSettings &gs = stats.getGameSettings();
-
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
 
 		int textX = lm + 300 + i * 120;

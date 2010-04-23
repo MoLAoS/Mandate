@@ -56,6 +56,19 @@ public:
 //	class MultiFactory
 // =====================================================
 
+class UnknownType: public std::exception {
+public:
+	UnknownType(const string &typeName) : typeName(typeName) {}
+	const char* what() const {
+		static char msgBuf[512];
+		sprintf(msgBuf, "Unknown class identifier: %s.", typeName.c_str());
+		return msgBuf;
+	}
+
+private:
+	string typeName;
+};
+
 template<typename T>
 class MultiFactory {
 private:
@@ -80,7 +93,7 @@ public:
 	T *newInstance(string classId){
 		Factories::iterator it= factories.find(classId);
 		if(it == factories.end()){
-			throw runtime_error("Unknown class identifier: " + classId);
+			throw UnknownType(classId);
 		}
 		return static_cast<T*>(it->second->newInstance());
 	}

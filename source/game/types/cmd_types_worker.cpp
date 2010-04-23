@@ -33,6 +33,9 @@
 
 #include "leak_dumper.h"
 #include "logger.h"
+#include "sim_interface.h"
+
+using namespace Glest::Sim;
 
 using namespace Shared::Util;
 
@@ -509,12 +512,6 @@ void BuildCommandType::update(Unit *unit) const {
 			BUILD_LOG( "in position, starting construction." );
 			builtUnit = new Unit(theWorld.getNextUnitId(), command->getPos(), builtUnitType, unit->getFaction(), theWorld.getMap());
 			builtUnit->create();
-
-			if (!builtUnitType->hasSkillClass(SkillClass::BE_BUILT)) {
-				throw runtime_error("Unit " + builtUnitType->getName() + " has no be_built skill");
-			}
-
-			builtUnit->setCurrSkill(SkillClass::BE_BUILT);
 			unit->setCurrSkill(this->getBuildSkillType());
 			unit->setTarget(builtUnit, true, true);
 			map->prepareTerrain(builtUnit);
@@ -819,11 +816,11 @@ void HarvestCommandType::update(Unit *unit) const {
 					int resourceAmount = unit->getLoadCount();
 					// Just do this for all players ???
 					if (unit->getFaction()->getCpuUltraControl()) {
-						resourceAmount = (int)(resourceAmount * theGame.getGameSettings().getResourceMultilpier(unit->getFactionIndex()));
+						resourceAmount = (int)(resourceAmount * theSimInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex()));
 						//resourceAmount *= ultraRes/*/*/*/*/ourceFactor; // Pull from GameSettings
 					}
 					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
-					theWorld.getStats().harvest(unit->getFactionIndex(), resourceAmount);
+					theSimInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
 					ScriptManager::onResourceHarvested();
 
 					// if next to a store unload resources

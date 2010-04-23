@@ -1,5 +1,5 @@
 // ==============================================================
-//	This file is part of Glest Shared Library (www.glest.org)
+//	This file is part of Glest Advanced Engine
 //
 //	Copyright (C) 2008 Daniel Santos <daniel.santos@pobox.com>
 //
@@ -42,6 +42,7 @@
 // some local headers of importance
 #include "types.h"
 #include "lang_features.h"
+#include "profiler.h"
 
 // POSIX base
 #include <stdlib.h>

@@ -30,6 +30,7 @@
 #include "auto_test.h"
 
 #include "leak_dumper.h"
+using namespace Glest::Net;
 
 namespace Glest{ namespace Game{
 
@@ -61,7 +62,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu):
 	labelVersion.setText("Advanced Engine " + gaeVersionString);
 
 	// end network interface
-	NetworkManager::getInstance().end();
+	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 
 	msgBox = NULL;
 }

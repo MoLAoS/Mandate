@@ -16,6 +16,10 @@
 
 #include "keymap.h"
 
+namespace Glest { namespace Sim {
+	class SimulationInterface;
+}}
+using Glest::Sim::SimulationInterface;
 using std::string;
 using Shared::Platform::Key;
 
@@ -32,6 +36,7 @@ private:
 	static const int maxTextLenght;
 
 private:
+	SimulationInterface *iSim;
 	const Keymap &keymap;
 	bool editEnabled;
 	bool teamMode;
@@ -40,7 +45,7 @@ private:
 	string text;
 
 public:
-	ChatManager(const Keymap &keymap);
+	ChatManager(SimulationInterface *si, const Keymap &keymap);
 	void init(Console* console, int thisTeamIndex);
 
 	bool keyDown(const Key &key);

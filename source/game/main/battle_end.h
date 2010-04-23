@@ -24,11 +24,8 @@ namespace Glest { namespace Game {
 // =====================================================
 
 class BattleEnd: public ProgramState {
-private:
-	Stats stats;
-
 public:
-	BattleEnd(Program &program, const Stats &stats);
+	BattleEnd(Program &program);
 	~BattleEnd();
 	virtual void update();
 	virtual void render();

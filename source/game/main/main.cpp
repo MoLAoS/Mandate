@@ -29,8 +29,6 @@
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
-using namespace Shared::Util::Profile;
-
 
 namespace Glest{ namespace Game{
 
@@ -157,7 +155,7 @@ int glestMain(int argc, char** argv) {
 		program.loop();
 	}
 
-	profilerClose();  // to write profiler data out
+	Profile::profileEnd();  // to write profiler data out
 	CoreData::getInstance().closeSounds(); // close audio stuff with ogg files
 #ifdef USE_PHYSFS
 	fsfac->deinitPhysFS();

@@ -32,20 +32,25 @@
 using std::vector;
 using std::ifstream;
 
+namespace Glest { namespace Sim {
+class SimulationInterface;
+}}
+
+
 namespace Glest { namespace Game {
 
 class GraphicMessageBox;
 class GraphicTextEntryBox;
 
 // =====================================================
-// 	class Game
+// 	class GameState
 //
 //	Main game class
 // =====================================================
 
-class Game: public ProgramState {
+class GameState: public ProgramState {
 public:
-	WRAPPED_ENUM( GameSpeed,
+	/*WRAPPED_ENUM( GameSpeed,
 		SLOWEST,
 		VERY_SLOW,
 		SLOW,
@@ -53,27 +58,27 @@ public:
 		FAST,
 		VERY_FAST,
 		FASTEST
-	)
-	static const char*SpeedDesc[GameSpeed::COUNT];
-
+	)*/
+	
 private:
 	typedef vector<Ai*> Ais;
 	typedef vector<AiInterface*> AiInterfaces;
 
 protected:
-	static Game *singleton;
+	static GameState *singleton;
 
 	//main data
-	GameSettings gameSettings;
-	XmlNode *savedGame;
+	SimulationInterface *simInterface;
+	//const GameSettings &gameSettings;
+	//XmlNode *savedGame;
 	Keymap &keymap;
 	const Input &input;
 	const Config &config;
-	World world;
-	AiInterfaces aiInterfaces;
+	//World world;
+	//AiInterfaces aiInterfaces;
 	Gui gui;
 	GameCamera gameCamera;
-	Commander commander;
+	//Commander commander;
 	Console console;
 	ChatManager chatManager;
 
@@ -85,13 +90,14 @@ protected:
 	int worldFps, lastWorldFps;
 	int updateFps, lastUpdateFps;
 	int renderFps, lastRenderFps;
-	bool paused;
+	//bool paused;
 	bool noInput;
-	bool gameOver;
+	//bool gameOver;
+	bool netError;
 	float scrollSpeed;
-	GameSpeed speed;
-	float fUpdateLoops;
-	float lastUpdateLoopsFraction;
+	//GameSpeed speed;
+	//float fUpdateLoops;
+	//float lastUpdateLoopsFraction;
 	GraphicMessageBox mainMessageBox;
 
 	GraphicTextEntryBox *saveBox;
@@ -101,25 +107,26 @@ protected:
 	ParticleSystem *weatherParticleSystem;
 
 public:
-	Game(Program &program, const GameSettings &gs, XmlNode *savedGame = NULL);
-	virtual ~Game();
-	static Game *getInstance()				{return singleton;}
+	GameState(Program &program, XmlNode *savedGame = NULL);
+	//GameState(Program &program, const GameSettings &gs, XmlNode *savedGame = NULL);
+	virtual ~GameState();
+	static GameState *getInstance()				{return singleton;}
 
 	//get
-	GameSettings &getGameSettings()			{return gameSettings;}
+	const GameSettings &getGameSettings();
 	const Keymap &getKeymap() const			{return keymap;}
 	const Input &getInput() const			{return input;}
 
 	const GameCamera *getGameCamera() const	{return &gameCamera;}
 	GameCamera *getGameCamera()				{return &gameCamera;}
-	const Commander *getCommander() const	{return &commander;}
-	Gui *getGui()							{return &gui;}
+	//const Commander *getCommander() const	{return &commander;}
+	//Commander *getCommander()				{return &commander;}
 	const Gui *getGui() const				{return &gui;}
-	Commander *getCommander()				{return &commander;}
+	Gui *getGui()							{return &gui;}
 	Console *getConsole()					{return &console;}
-	World *getWorld()						{return &world;}
-	const World *getWorld() const			{return &world;}
-
+//	const World *getWorld() const			{return &world;}
+//	World *getWorld()						{return &world;}
+	
 	// ProgramState implementation
 
 	// init
@@ -152,8 +159,8 @@ public:
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
 	virtual void quitGame();
-	void pause()							{paused = true;}
-	void resume()							{paused = false;}
+	//void pause()							{paused = true;}
+	//void resume()							{paused = false;}
 
 protected:
 	// render
@@ -161,17 +168,17 @@ protected:
 	virtual void render2d();
 	
 	// game over checks
-	void checkWinner();
-	void checkWinnerStandard();
-	void checkWinnerScripted();
-	bool hasBuilding(const Faction *faction);
+	//void checkWinner();
+	//void checkWinnerStandard();
+	//void checkWinnerScripted();
+	//bool hasBuilding(const Faction *faction);
 
 	// game speed control
-	void incSpeed();
-	void decSpeed();
-	void resetSpeed();
-	void updateSpeed();
-	int getUpdateLoops();
+	//void incSpeed();
+	//void decSpeed();
+	//void resetSpeed();
+	//void updateSpeed();
+	//int getUpdateLoops();
 
 	// show messages
 	void showLoseMessageBox();
@@ -180,17 +187,17 @@ protected:
 
 //	void showExitMessageBox(const string &text, bool toggle);
 	string controllerTypeToStr(ControlType ct);
-	Unit *findUnit(int id);
-	char getStringFromFile(ifstream *fileStream, string *str);
+	
+	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
-	void displayError(runtime_error &e);
+	void displayError(std::exception &e);
 };
 
 
-//TODO: better integrate with Game, much duplicated code
-class ShowMap : public Game {
+//TODO: better integrate with GameState, much duplicated code
+class ShowMap : public GameState {
 public:
-	ShowMap(Program &program, const GameSettings &gs) : Game(program, gs){}
+	ShowMap(Program &program) : GameState(program) { }
 	~ShowMap(){}
 	void quitGame() { program.exit(); }
 	void init();

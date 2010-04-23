@@ -38,7 +38,7 @@ class FactionType;
 class RequirableType;
 class CommandType;
 class UnitType;
-class Game;
+class GameState;
 class World;
 
 // =====================================================

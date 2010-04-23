@@ -22,48 +22,51 @@
 using std::vector;
 using Shared::Platform::ServerSocket;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Net {
 
 // =====================================================
 //	class ServerInterface
 // =====================================================
 
-class ServerInterface: public GameInterface{
+/** A concrete SimulationInterface for network servers */
+class ServerInterface: public NetworkInterface {
 private:
 	ConnectionSlot* slots[GameConstants::maxPlayers];
 	ServerSocket serverSocket;
 
 public:
-	ServerInterface();
+	ServerInterface(Program &prog);
 	virtual ~ServerInterface();
 
 	virtual Socket* getSocket()				{return &serverSocket;}
 	virtual const Socket* getSocket() const	{return &serverSocket;}
 
-#	if _RECORD_GAME_STATE_
+	virtual GameRole getNetworkRole() const { return GameRole::SERVER; }
+
+#	if _GAE_DEBUG_EDITION_
 		void dumpFrame(int frame);
 #	endif
 
 protected:
+	// SimulationInterface and NetworkInterface virtuals
+	// See documentation in sim_interface.h
+
 	//message processing
 	virtual void update();
-	virtual void updateLobby(){};
 	virtual void updateKeyframe(int frameCount);
 	virtual void waitUntilReady(Checksum &checksum);
 	virtual void syncAiSeeds(int aiCount, int *seeds);
 	virtual void createSkillCycleTable(const TechTree *techTree);
 
-	// message sending
-	virtual void sendTextMessage(const string &text, int teamIndex);
-	virtual void quitGame();
-
 	// unit/projectile updates
-	virtual void updateUnitCommand(Unit *unit, int32);
-	virtual void unitBorn(Unit *unit, int32);
-	virtual void updateProjectile(Unit *unit, int, int32);
-	virtual void updateAnim(Unit *unit, int32);
+	virtual void checkCommandUpdate(Unit *unit, int32);
+	virtual void checkUnitBorn(Unit *unit, int32);
+	virtual void checkProjectileUpdate(Unit *unit, int, int32);
+	virtual void checkAnimUpdate(Unit *unit, int32);
 
-	virtual void updateMove(Unit *unit);
+	virtual void updateSkillCycle(Unit *unit);
+
+	//virtual void updateMove(Unit *unit);
 	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
 
 	//misc
@@ -78,11 +81,15 @@ public:
 	ConnectionSlot* getSlot(int playerIndex);
 	int getConnectedSlotCount();
 	
-	void launchGame(const GameSettings* gameSettings);
-	void process(NetworkMessageText &msg, int requestor);
+	void doLaunchBroadcast();
+	void process(TextMessage &msg, int requestor);
 	
+	// message sending
+	virtual void sendTextMessage(const string &text, int teamIndex);
+	virtual void quitGame(QuitSource);
+
 private:
-	void broadcastMessage(const NetworkMessage* networkMessage, int excludeSlot= -1);
+	void broadcastMessage(const Message* networkMessage, int excludeSlot= -1);
 	void updateListen();
 };
 

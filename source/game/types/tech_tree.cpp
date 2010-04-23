@@ -24,7 +24,7 @@
 #include "components.h"
 
 #include "leak_dumper.h"
-
+#include "profiler.h"
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
@@ -36,6 +36,7 @@ namespace Glest{ namespace Game{
 // =====================================================
 
 bool TechTree::preload(const string &dir, const set<string> &factionNames){
+	_TRACE_FUNCTION();
 	Logger &logger = Logger::getInstance();
 	bool loadOk = true;
 
@@ -113,14 +114,14 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 			try {
 				const XmlNode *dmNode= damageMultipliersNode->getChild("damage-multiplier", i);
 				const AttackType *attackType= getAttackType(dmNode->getRestrictedAttribute("attack"));
-				const ArmorType *armorType= getArmorType(dmNode->getRestrictedAttribute("armor"));
+				const ArmourType *armourType= getArmourType(dmNode->getRestrictedAttribute("armor"));
 
 				fixed fixedMult = dmNode->getFixedAttribute("value");
 				//float multiplier= dmNode->getFloatAttribute("value");
 				
 				//cout << "Damage Multiplier as float: " << multiplier << ", as fixed " << fixedMult << endl;
 								
-				damageMultiplierTable.setDamageMultiplier(attackType, armorType, fixedMult);
+				damageMultiplierTable.setDamageMultiplier(attackType, armourType, fixedMult);
 			} catch (runtime_error e) {
 				Logger::getErrorLog().addXmlError(path, e.what());
 				loadOk = false;
@@ -156,6 +157,7 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 }
 
 bool TechTree::load(const string &dir, const set<string> &factionNames){
+	_TRACE_FUNCTION();
 	int i;
 	set<string>::const_iterator fn;
 	bool loadOk=true;
@@ -198,7 +200,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 }
 
 TechTree::~TechTree(){
-	Logger::getInstance().add("Tech tree", !Program::getInstance()->isTerminating());
+	Logger::getInstance().add("~TechTree", !Program::getInstance()->isTerminating());
 }
 
 void TechTree::doChecksum(Checksum &checksum) const {
@@ -215,7 +217,7 @@ void TechTree::doChecksum(Checksum &checksum) const {
 	}
 
 	foreach_const (ArmorTypes, armourIt, armorTypes) {
-		const ArmorType *armourType 
+		const ArmourType *armourType 
 			= (*const_cast<ArmorTypeMap*>(&armorTypeMap))[armourIt->getName()];
 		foreach_const (AttackTypes, attackIt, attackTypes) {
 			const AttackType *attackType 
@@ -252,6 +254,7 @@ const ResourceType *TechTree::getFirstTechResourceType() const{
 	throw runtime_error("This tech tree has no tech resources, one at least is required");
 }
 
+//REFACTOR: Move to EffectTypeFactory
 int TechTree::addEffectType(EffectType *et) {
 	EffectTypeMap::const_iterator i;
 	const string &name = et->getName();

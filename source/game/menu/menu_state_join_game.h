@@ -19,7 +19,7 @@ using Shared::Util::Properties;
 
 namespace Glest { namespace Game {
 
-class NetworkMessageIntro;
+class IntroMessage;
 
 // ===============================
 // 	class MenuStateJoinGame

@@ -93,6 +93,15 @@ private:
 	bool multiBuild;
 	bool multiSelect;
 
+	const ArmourType *armourType;
+
+    /** size in cells square (i.e., size x size) */
+    int size;
+    int height;
+
+	bool light;			// ??? UnitStats?
+    Vec3f lightColour;	// ??? UnitStats?
+
 	//sounds
 	SoundContainer selectionSounds;
 	SoundContainer commandSounds;
@@ -100,7 +109,6 @@ private:
 	//info
 	StoredResources storedResources;
 	Levels levels;
-//	PetRules petRules;
 	Emanations emanations;
 
 	//meeting point
@@ -113,13 +121,17 @@ private:
 	SkillTypes skillTypes;
 	SkillTypes skillTypesByClass[SkillClass::COUNT];
 
-	//REFACTOR: use above, remove these
-	//OPTIMIZATIONS:
-	//store first command type and skill type of each class
-	//const CommandType *firstCommandTypeOfClass[CommandClass::COUNT];
-	//const SkillType *firstSkillTypeOfClass[SkillClass::COUNT];
+	SkillType *startSkill;
+
 	fixed halfSize;
 	fixed halfHeight;
+
+	bool *cellMap;
+
+	UnitProperties properties;
+	//Fields fields;
+	Field field;
+	Zone zone;
 
 public:
 	//creation and loading
@@ -130,12 +142,26 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 
 	//get
-	bool getMultiSelect() const							{return multiSelect;}
+	bool getMultiSelect() const				{return multiSelect;}
+	const ArmourType *getArmourType() const	{return armourType;}
+	bool getLight() const					{return light;}
+	Vec3f getLightColour() const			{return lightColour;}
+	int getSize() const						{return size;}
+	int getHeight() const					{return height;}
+	Field getField() const					{return field;}
+	Zone getZone() const					{return zone;}
 
+	const UnitProperties &getProperties() const	{return properties;}
+	bool getProperty(Property property) const	{return properties.get(property);}
+
+	const SkillType *getStartSkill() const				{return startSkill;}
+
+	int getSkillTypeCount() const						{return skillTypes.size();}
 	const SkillType *getSkillType(int i) const			{return skillTypes[i];}
-	
+
 	int getCommandTypeCount() const						{return commandTypes.size();}
 	const CommandType *getCommandType(int i) const		{return commandTypes[i];}
+
 	const CommandType *getCommandType(const string &name) const;
 	
 	template <typename ConcreteType>
@@ -157,7 +183,6 @@ public:
 	const RepairCommandType *getRepairCommand(const UnitType *repaired) const;
 
 	const Level *getLevel(int i) const					{return &levels[i];}
-	int getSkillTypeCount() const						{return skillTypes.size();}
 	int getLevelCount() const							{return levels.size();}
 //	const PetRules &getPetRules() const					{return petRules;}
 	const Emanations &getEmanations() const				{return emanations;}
@@ -170,7 +195,6 @@ public:
 	}
 
 	//cellmap
-	bool *cellMap;
 	bool getCellMapCell(int x, int y) const				{
 		assert(size * y + x >= 0 && size * y + x < size * size);
 		return cellMap[size * y + x];

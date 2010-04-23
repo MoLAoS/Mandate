@@ -22,8 +22,6 @@ using Shared::Platform::Chrono;
 
 namespace Glest { namespace Game {
 
-GameSettings::GameSettings() {}
-
 GameSettings::GameSettings(const XmlNode *node) {
 	description = node->getChildStringValue("description");
 	mapPath = node->getChildStringValue("mapPath");

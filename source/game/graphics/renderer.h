@@ -43,7 +43,7 @@ using namespace Shared::Graphics;
 
 //non shared classes
 class Config;
-class Game;
+class GameState;
 class MainMenu;
 class Console;
 class MenuBackground;
@@ -123,7 +123,7 @@ private:
 	Shadows shadows;
 
 	//game
-	const Game *game;
+	const GameState *game;
 
 	//misc
 	int triangleCount;
@@ -170,7 +170,7 @@ public:
 
     //init
 	void init();
-	void initGame(Game *game);
+	void initGame(GameState *game);
 	void initMenu(MainMenu *mm);
 	void reset3d();
 	void reset2d();

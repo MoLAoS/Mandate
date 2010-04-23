@@ -34,7 +34,6 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
 using namespace Shared::Platform;
 using Shared::Xml::XmlNode;
 
@@ -165,13 +164,14 @@ float Random::randRange(float min, float max) {
 	assert(res >= min && res <= max);
 	return res;
 }
-/*
-fixed Random::randRange(fixed min, fixed max) {
-	fixed res;
-	res.raw() = randRange(min.raw(), max.raw());
+
+fixed Random::randPercent() {
+	fixed res = rand() % 100;
+	int32 frac_bit = rand() % (fixed::scale_factor());
+	res.raw() += frac_bit;
 	return res;
 }
-*/
+
 
 #if 0
 // =====================================================

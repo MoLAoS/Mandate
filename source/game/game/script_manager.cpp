@@ -23,6 +23,9 @@
 #include "renderer.h"
 
 #include "leak_dumper.h"
+#include "sim_interface.h"
+
+using namespace Glest::Sim;
 
 #if _GAE_DEBUG_EDITION_
 #	include "renderer.h"
@@ -308,8 +311,8 @@ vector<ScriptTimer> ScriptManager::timers;
 vector<ScriptTimer> ScriptManager::newTimerQueue;
 set<string>			ScriptManager::definedEvents;
 
-Game  *ScriptManager::game  = NULL;
-World *ScriptManager::world = NULL;
+GameState	*ScriptManager::game  = NULL;
+World		*ScriptManager::world = NULL;
 
 Console *ScriptManager::dialogConsole = NULL;
 map<string, Vec3f> ScriptManager::actorColours;
@@ -340,9 +343,9 @@ void ScriptManager::cleanUp() {
 	dialogConsole = 0;
 }
 
-void ScriptManager::init(Game *g) {
+void ScriptManager::init(GameState *g) {
 	game = g;
-	world = game->getWorld();
+	world = &theWorld;
 	const Scenario*	scenario = world->getScenario();
 
 	//setup message box
@@ -493,7 +496,7 @@ void ScriptManager::onMessageBoxOk() {
 	//close the messageBox now all messages have been shown
 	if (messageQueue.empty()) {
 		messageBox.setEnabled(false);
-		theGame.resume();
+		theSimInterface->resume();
 	}
 }
 
@@ -607,7 +610,7 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 	theConsole.addLine(err);
 	
 	if (!quietly) {
-		theGame.pause();
+		theSimInterface->pause();
 		ScriptManagerMessage msg(err, "Error");
 		messageQueue.push(msg);
 		if (!messageBox.getEnabled()) {
@@ -904,7 +907,7 @@ int ScriptManager::showMessage(LuaHandle* luaHandle) {
 	Lang &lang = Lang::getInstance();
 	string txt, hdr;
 	if (extractArgs(args, "showMessage", "str,str", &txt, &hdr)) {
-		theGame.pause();
+		//theSimInterface->pause();
 		ScriptManagerMessage msg(txt, hdr);
 		messageQueue.push(msg);
 		if (!messageBox.getEnabled()) {
@@ -959,11 +962,11 @@ int ScriptManager::addActor(LuaHandle* luaHandle) {
 		}
 		if (colour.size() == 6 && isHex(colour)) {
 			string tmp = colour.substr(0, 2);
-			gl_colour.r = Conversion::strToInt(tmp, 16);
+			gl_colour.r = float(Conversion::strToInt(tmp, 16));
 			tmp = colour.substr(2, 2);
-			gl_colour.g = Conversion::strToInt(tmp, 16);
+			gl_colour.g = float(Conversion::strToInt(tmp, 16));
 			tmp = colour.substr(4, 2);
-			gl_colour.b = Conversion::strToInt(tmp, 16);
+			gl_colour.b = float(Conversion::strToInt(tmp, 16));
 		} else {
 			throw runtime_error("bad colour string " + colour);
 		}
@@ -1024,9 +1027,9 @@ int ScriptManager::setCameraAngles(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	int hAngle, vAngle;
 	if (extractArgs(args, 0, "int,int", &hAngle, &vAngle)) {
-		theCamera.setAngles(hAngle, vAngle);
+		theCamera.setAngles(float(hAngle), float(vAngle));
 	} else if (extractArgs(args, "setCameraPosition", "int", &hAngle)) {
-		theCamera.setAngles(hAngle, FLOATINFINITY);
+		theCamera.setAngles(float(hAngle), FLOATINFINITY);
 	}
 	return args.getReturnCount();
 }
@@ -1036,9 +1039,9 @@ int ScriptManager::setCameraDestination(LuaHandle* luaHandle) {
 	Vec2i pos;
 	int height, hAngle, vAngle;
 	if (extractArgs(args, 0, "int,int,int,int,int", &pos.x, &pos.y, &height, &hAngle, &vAngle)) {
-		theCamera.setDest(pos, height, hAngle, vAngle);	
+		theCamera.setDest(pos, height, float(hAngle), float(vAngle));	
 	} else if (extractArgs(args, 0, "int,int,int,int", &pos.x, &pos.y, &height, &hAngle)) {
-		theCamera.setDest(pos, height, hAngle);
+		theCamera.setDest(pos, height, float(hAngle));
 	} else if (extractArgs(args, 0, "int,int,int", &pos.x, &pos.y, &height)) {
 		theCamera.setDest(pos, height);
 	} else if (extractArgs(args, "setCameraPosition", "v2i", &pos)) {

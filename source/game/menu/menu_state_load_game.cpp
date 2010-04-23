@@ -21,7 +21,10 @@
 #include "xml_parser.h"
 
 #include "leak_dumper.h"
+#include "sim_interface.h"
 
+using namespace Glest::Sim;
+using namespace Glest::Net;
 
 namespace Glest{ namespace Game{
 
@@ -79,12 +82,12 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu) :
 
 	Lang &lang= Lang::getInstance();
 
-	//create
+	// create
 	buttonReturn.init(350, 200, 100);
 	buttonDelete.init(462, 200, 100);
 	buttonPlayNow.init(575, 200, 100);
 
-	//savegames listBoxGames
+	// savegames listBoxGames
 	listBoxGames.init(400, 300, 225);
 	if(!loadGameList()) {
 		msgBox = new GraphicMessageBox();
@@ -93,12 +96,12 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu) :
 		return;
 	}
 
-	//texts
+	// texts
 	buttonReturn.setText(lang.get("Return"));
 	buttonDelete.setText(lang.get("Delete"));
 	buttonPlayNow.setText(lang.get("Load"));
 
-	//game info lables
+	// game info lables
 	labelInfoHeader.init(350, 500, 440, 225, false);
 
     for(int i=0; i<GameConstants::maxPlayers; ++i){
@@ -108,16 +111,9 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu) :
 		labelTeams[i].init(575, 450-i*30, 60);
 		labelNetStatus[i].init(600, 450-i*30, 60);
 	}
-	//initialize network interface
-	NetworkManager &networkManager= NetworkManager::getInstance();
-	networkManager.init(nrServer);
-	labelNetwork.init(50, 50);
-	try {
-		labelNetwork.setText(lang.get("Address") + ": " + networkManager.getServerInterface()->getIp() + ":" + intToStr(GameConstants::serverPort));
-	} catch(const exception &e) {
-		labelNetwork.setText(lang.get("Address") + ": ? " + e.what());
-	}
-	//updateNetworkSlots();
+	// initialize network interface
+	// stay LOCAL...
+	//program.getSimulationInterface()->changeRole(GameRole::SERVER);
 	selectionChanged();
 }
 
@@ -227,7 +223,7 @@ void MenuStateLoadGame::render(){
 		renderer.renderLabel(&labelNetStatus[i]);
 	}
 
-	renderer.renderLabel(&labelNetwork);
+//	renderer.renderLabel(&labelNetwork);
 	renderer.renderListBox(&listBoxGames);
 	renderer.renderButton(&buttonReturn);
 	renderer.renderButton(&buttonDelete);
@@ -248,7 +244,7 @@ void MenuStateLoadGame::update(){
 		return;
 	}
 
-	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
+	ServerInterface* serverInterface = theSimInterface->asServerInterface();
 	Lang& lang = Lang::getInstance();
 
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -328,7 +324,7 @@ bool MenuStateLoadGame::loadGame() {
 	for(int i = 0; i < gs->getFactionCount(); ++i) {
 		if(gs->getFactionControl(i) == ControlType::NETWORK) {
 			if(!serverInterface) {
-				serverInterface = NetworkManager::getInstance().getServerInterface();
+				serverInterface = theSimInterface->asServerInterface();
 			}
 
 			if(!serverInterface->getSlot(i)->isConnected()) {
@@ -339,10 +335,11 @@ bool MenuStateLoadGame::loadGame() {
 
 	root = XmlIo::getInstance().load(getFileName());
 
-	if(serverInterface) {
-		serverInterface->launchGame(gs/* NETWORK: , getFileName()*/);
-	}
-	program.setState(new Game(program, *gs, root));
+	theSimInterface->getGameSettings() = *gs;
+	//if(serverInterface) {
+	//	serverInterface->launchGame();
+	//}
+	program.setState(new GameState(program, root));
 	return true;
 }
 
@@ -381,8 +378,8 @@ void MenuStateLoadGame::initGameInfo() {
 		} catch (...) {
 			version = 0;
 		}
-		if (version != 3) {
-			throw runtime_error(version < 3 ? oldSaveMsg : unknownSaveMsg);
+		if (version != GameConstants::saveGameVersion) {
+			throw runtime_error(version < GameConstants::saveGameVersion ? oldSaveMsg : unknownSaveMsg);
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
 		string techPath = gs->getTechPath();
@@ -477,7 +474,7 @@ void MenuStateLoadGame::initGameInfo() {
 }
 
 void MenuStateLoadGame::updateNetworkSlots(){
-	ServerInterface* serverInterface= NetworkManager::getInstance().getServerInterface();
+	ServerInterface* serverInterface= theSimInterface->asServerInterface();
 	assert(gs);
 
 	for(int i= 0; i<GameConstants::maxPlayers; ++i){

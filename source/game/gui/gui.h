@@ -30,12 +30,12 @@ namespace Shared { namespace Xml {
 
 using Shared::Xml::XmlNode;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 class Unit;
 class World;
 class CommandType;
-class Game;
+class GameState;
 
 enum DisplayState {
 	dsEmpty,
@@ -114,7 +114,7 @@ public:
 
 private:
 	//External objects
-	Game &game;
+	GameState &game;
 	const Input &input;
 	const Commander *commander;
 	const World *world;
@@ -157,7 +157,7 @@ private:
 
 
 public:
-	Gui(Game &game);
+	Gui(GameState &game);
 	~Gui() {
 		currentGui = NULL;
 	}

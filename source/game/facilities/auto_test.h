@@ -23,7 +23,7 @@ namespace Glest{ namespace Game{
 class Program;
 class MainMenu;
 class MenuStateScenario;
-class Game;
+class GameState;
 
 // =====================================================
 //	class AutoTest  
@@ -48,7 +48,7 @@ public:
 	void updateRoot(Program &program, MainMenu *mainMenu);
 	void updateNewGame(Program &program, MainMenu *mainMenu);
 	void updateScenario(MenuStateScenario *menuStateScenario);
-	void updateGame(Game *game);
+	void updateGame(GameState *game);
 	void updateBattleEnd(Program &program);
 };
 

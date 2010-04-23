@@ -22,6 +22,10 @@
 #include "auto_test.h"
 
 #include "leak_dumper.h"
+#include "sim_interface.h"
+
+using Glest::Sim::SimulationInterface;
+using namespace Glest::Net;
 
 namespace Glest { namespace Game {
 
@@ -35,7 +39,6 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 		MenuState(program, mainMenu, "scenario") {
 	Config &config = Config::getInstance();
 	Lang &lang = Lang::getInstance();
-	NetworkManager &networkManager = NetworkManager::getInstance();
 	vector<string> results;
 	int match = 0;
 
@@ -73,8 +76,8 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 	listBoxCategory.setItems(results);
 	listBoxCategory.setSelectedItemIndex(match);
 	updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()], true);
-
-	networkManager.init(nrServer);
+	// stay LOCAL
+	//program.getSimulationInterface()->changeRole(GameRole::SERVER);
 }
 
 
@@ -138,9 +141,8 @@ void MenuStateScenario::update() {
 }
 
 void MenuStateScenario::launchGame() {
-	GameSettings gameSettings;
-	loadGameSettings(&scenarioInfo, &gameSettings);
-	program.setState(new Game(program, gameSettings));
+	loadGameSettings(&scenarioInfo);
+	program.setState(new GameState(program));
 }
 
 void MenuStateScenario::setScenario(int i) {
@@ -264,12 +266,15 @@ void MenuStateScenario::loadScenarioInfo(string file, ScenarioInfo *scenarioInfo
 	scenarioInfo->desc += lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
 }
 
-void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gs) {
+void MenuStateScenario::loadGameSettings(const ScenarioInfo *scenarioInfo) {
+	GameSettings *gs = &theSimInterface->getGameSettings();
+	gs->clear();
+
 	string scenarioPath = "gae/scenarios/" + categories[listBoxCategory.getSelectedItemIndex()]
 							+ "/" + scenarioFiles[listBoxScenario.getSelectedItemIndex()];
 	// map in scenario dir ?
 	string test = scenarioPath + "/" + scenarioInfo->mapName + ".gbm";
-	if ( fileExists(test) ) {
+	if (fileExists(test)) {
 		gs->setMapPath(test);
 	} else {
 		gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");

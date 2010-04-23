@@ -26,6 +26,7 @@
 #include "entity.h"
 #include "timer.h"
 #include "logger.h"
+#include "factory.h"
 
 #define LOG_COMMAND_ISSUE 1
 
@@ -50,14 +51,11 @@
 
 namespace Glest { namespace Game {
 
-using Shared::Graphics::ParticleSystem;
-using Shared::Math::Vec4f;
-using Shared::Math::Vec2f;
-using Shared::Math::Vec3f;
-using Shared::Math::Vec2i;
-using Shared::Graphics::Model;
-using Shared::Graphics::Entity;
+using namespace Shared::Math;
+using namespace Shared::Graphics;
+
 using Shared::Platform::Chrono;
+using Shared::Util::SingleTypeFactory;
 
 class Map;
 class Faction;
@@ -71,13 +69,13 @@ class UpgradeType;
 class Level;
 class MorphCommandType;
 class RepairCommandType;
-class Game;
+class GameState;
 class World;
 
 // =====================================================
 // 	class UnitObserver
 // =====================================================
-
+///@todo deprecate, use signals
 class UnitObserver {
 public:
 	enum Event {
@@ -163,45 +161,37 @@ private:
 	int ep;					/**< current energy points */
 	int loadCount;			/**< current 'load' (resources carried) */
 	int deadCount;			/**< how many frames this unit has been dead */
-	
-	//todo: deprecate, interpolate using lastCommandUpdate -> nextCommandUpdate
-	//float progress;			/**< skill progress, between 0 and 1 */
 
-	//todo: wont need these anymore
-	//float progressSpeed;	/**< cached progress */
-	//float animProgressSpeed;/**< cached animation progress */
+	int lastAnimReset;		/**< the frame the current animation cycle was started */
+	int nextAnimReset;		/**< the frame the next animation cycle will begin */
 
-	int lastAnimReset;		/**< the frame the current animation cycle was last reset to 0 */
-	int nextAnimReset;		/**< the frame the current animation cycle will nect be reset to 0 */
-
-	int lastCommandUpdate;	//**< the frame this unit last updated its command */
-	int nextCommandUpdate;	/**< frame next command update will occur */
+	int lastCommandUpdate;	/**< the frame this unit last updated its command */
+	int nextCommandUpdate;	/**< the frame next command update will occur */
 
 	int attackStartFrame;	/**< the frame the unit will start an attack system */
 	int soundStartFrame;	/**< the frame the sound for the current skill should be started */
 
-	//todo: deprecate, interpolate from current frame using lastAnimReset (0.f) to nextAnimReset - 1 (1.f)
-	//float lastAnimProgress;	/**< animation progress last frame, between 0 and 1 */
-	//float animProgress;		/**< animation progress, between 0 and 1 */
-
-	float highlight;		/**< alpha for selection circle effects */
-	int progress2;			/**< 'secondary' skill progress counter */
+	int progress2;			/**< 'secondary' skill progress counter (progress for Produce/Morph) */
 	int kills;				/**< number of kills */
 
-	UnitReference targetRef; 
+	float highlight;		/**< alpha for selection circle effects */
 
-	Field currField;		/**< */
-	Field targetField;		/**< */
-	const Level *level;		/**< */
+	// target
+	UnitReference targetRef; 
+	Field targetField;		/**< Field target travels in @todo replace with Zone ? */
+	bool faceTarget;				/**< If true and target is set, we continue to face target. */
+	bool useNearestOccupiedCell;	/**< If true, targetPos is set to target->getNearestOccupiedCell() */
+
+	const Level *level;		/**< current Level */
 
 	Vec2i pos;				/**< Current position */
 	Vec2i lastPos;			/**< The last position before current */
-	Vec2i nextPos;			/**< Position unit is moving into next. */
+	Vec2i nextPos;			/**< Position unit is moving into next. Note: this will almost always == pos */
+
 	Vec2i targetPos;		/**< Position of the target, or the cell of the target we care about. */
-	Vec3f targetVec;
-	Vec2i meetingPos;
-	bool faceTarget;				/**< If true and target is set, we continue to face target. */
-	bool useNearestOccupiedCell;	/**< If true, targetPos is set to target->getNearestOccupiedCell() */
+	Vec3f targetVec;		/**< 3D position of target (centre) */
+
+	Vec2i meetingPos;		/**< Cell position of metting point */
 
 	float lastRotation;		/**< facing last frame, in degrees */
 	float targetRotation;	/**< desired facing, in degrees*/
@@ -212,9 +202,7 @@ private:
 	const SkillType *currSkill;		/**< the SkillType currently being executed */
 
 	bool toBeUndertaken;		/**< awaiting a date with the grim reaper */
-//	bool alive;
 	bool autoRepairEnabled;		/**< is auto repair enabled */
-	bool dirty;					/**< need a bath? */
 
 	/** Effects (spells, etc.) currently effecting unit. */
 	Effects effects;
@@ -224,6 +212,8 @@ private:
 
 	/** All stat changes from upgrades and level ups */
 	EnhancementType totalUpgrade;
+	/** All stat changes from upgrades, level ups & effects */
+	//EnhancementType totalEnhancement;
 	Faction *faction;
 	ParticleSystem *fire;
 	Map *map;
@@ -269,9 +259,10 @@ public:
 
 	//queries
 	int getId() const							{return id;}
-	Field getCurrField() const					{return currField;}
-	Zone getCurrZone() const					{return currField == Field::AIR ? Zone::AIR : Zone::LAND;}
+	Field getCurrField() const					{return type->getField();}
+	Zone getCurrZone() const					{return type->getZone();}
 	int getLoadCount() const					{return loadCount;}
+	int getSize() const							{return type->getSize();}
 	//float getLastAnimProgress() const			{return lastAnimProgress;}
 	float getProgress() const;
 	float getAnimProgress() const;
@@ -331,8 +322,7 @@ public:
 	void petDied(Unit *u)						{pets.remove(u);}
 	int killPets();
 
-	//void clearAttackStartFrame()				{ attackStartFrame = -1; }
-
+	///@todo move to a helper of ScriptManager, connect signals...
 	void setCommandCallback()					{ commandCallback = commands.front(); }
 	void clearCommandCallback()					{ commandCallback = NULL; }
 	const Command* getCommandCallback() const	{ return commandCallback; }
@@ -400,12 +390,10 @@ public:
 	bool isPet(const Unit *u) const;
 	bool isAPet() const					{return master;}
 	bool isAutoRepairEnabled() const	{return autoRepairEnabled;}
-	bool isDirty()						{return dirty;}
 
 	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
 
 	//set
-	void setCurrField(Field currField)					{this->currField = currField;}
 	void setCurrSkill(const SkillType *currSkill);
 	void setCurrSkill(SkillClass sc)					{setCurrSkill(getType()->getFirstStOfClass(sc));}
 	void setLoadCount(int loadCount)					{this->loadCount = loadCount;}
@@ -421,10 +409,6 @@ public:
 		this->autoRepairEnabled = autoRepairEnabled;
 		notifyObservers(UnitObserver::eStateChange);
 	}
-	void setDirty(bool dirty)							{this->dirty = dirty;}
-
-	//void setNextCommandUpdate(int frame)			{ nextCommandUpdate = frame; }
-	//void setAttackStartFrame(int frame)				{ attackStartFrame = frame; }
 
 	//render related
 	const Model *getCurrentModel() const				{return currSkill->getAnimation();}
@@ -521,6 +505,40 @@ inline ostream& operator<<(ostream &stream, const Unit &unit) {
 	return stream << "[id:" << unit.getId() << "|" << unit.getType()->getName() << "]";
 }
 
+/*
+class UnitFactory : private SingleTypeFactory<Unit> : public sigslot::has_slots {
+private:
+	int		idCounter;
+	UnitMap unitMap;
+	//Units	unitList;
+
+public:
+	UnitFactory() : idCounter(0) { }
+
+	Unit* newInstance(...) {
+		Unit *unit = SingleTypeFactory<Unit>::newInstance();
+		unit->setId(idCounter);
+		unitMap[idCounter] = unit;
+		//unitList.push_back(unit);
+		unit->Died.connect(this, &UnitFactory::onUnitDied);
+		++idCounter;
+		return unit;
+	}
+
+	Unit* getUnit(int id) {
+
+		UnitMap::iterator it = unitMap.find(id);
+		if (it != unitMap.end()) {
+			return it->second;
+		}
+		return 0;
+	}
+
+	void onUnitDied(Unit *unit) {
+		unitMap.erase(unitMap.find(unit->getId()));
+	}
+};
+*/
 }}// end namespace
 
 #endif

@@ -22,7 +22,6 @@
 #include "scenario.h"
 #include "minimap.h"
 #include "logger.h"
-#include "stats.h"
 #include "time_flow.h"
 #include "upgrade.h"
 #include "water_effects.h"
@@ -30,6 +29,11 @@
 #include "random.h"
 #include "game_constants.h"
 #include "pos_iterator.h"
+
+namespace Glest { namespace Sim {
+class SimulationInterface;
+}}
+using Glest::Sim::SimulationInterface;
 
 namespace Glest{ namespace Game{
 
@@ -41,7 +45,7 @@ using Glest::Game::Util::PosCircularIteratorFactory;
 class Faction;
 class Unit;
 class Config;
-class Game;
+class GameState;
 class GameSettings;
 class ScriptManager;
 namespace Search { class Cartographer; class RoutePlanner; }
@@ -53,7 +57,7 @@ using namespace Search;
 ///	The game world: Map + Tileset + TechTree
 // =====================================================
 
-class World{
+class World {
 private:
 	typedef vector<Faction> Factions;
 	typedef std::map< string,set<string> > UnitTypes;
@@ -69,36 +73,45 @@ public:
 private:
 	Map map;
 	Tileset tileset;
-	TechTree techTree;
+	TechTree techTree; // < to SimulationInterface ?
 	TimeFlow timeFlow;
-	Scenario *scenario;
-	Game &game;
-	const GameSettings &gs;
+	Scenario *scenario; // < to SimulationInterface ?
+	GameState &game;
 
+	SimulationInterface *iSim;
+
+	// WaterEffects == Eye candy, not game data, send to GameGuiState
 	WaterEffects waterEffects;
+	// MiniMap == World-View data, built from game data, but belongs in GameGuiState
 	Minimap minimap;
-	Stats stats;
 
-	//REFACTOR: add this...
+	//REFACTOR: add this... No: have it in the 'SingleTypeFactory<Unit>'
 	//UnitMap units;
 
-	Factions factions;
+	Factions factions; // < to SimulationInterface ?
 
 	Random random;
 
 	Cartographer *cartographer;
 	RoutePlanner *routePlanner;
 
-	int thisFactionIndex;
+	// to GameGuiState, code using these should ultimately be reimplemented
+	// by Connecting signals from 'this' factions/teams units to the GameGuiState
+	int thisFactionIndex;	
 	int thisTeamIndex;
+
 	int frameCount;
-	int nextUnitId;
+	
+	int nextUnitId; // < to Shared::Util::SingleTypeFactory<Unit> Simulation::unitFactory;
 
 	//config
 	bool fogOfWar, shroudOfDarkness;
-	int fogOfWarSmoothingFrameSkip;
-	bool fogOfWarSmoothing;
+	int fogOfWarSmoothingFrameSkip;  // GameGuiState
+	bool fogOfWarSmoothing;			// GameGuiState
 
+	// re-implement:
+	//	struct MapReveal { ... };
+	//	vector<MapReveal> mapReveals;
 	bool unfogActive;
 	int unfogTTL;
 	Vec4i unfogArea;
@@ -106,7 +119,7 @@ private:
 	static World *singleton;
 	bool alive;
 
-	UnitTypes unitTypes;
+	UnitTypes unitTypes; // ?? unit-types by faction-type ?
 
 	Units newlydead;
 	PosCircularIteratorFactory posIteratorFactory;
@@ -118,13 +131,11 @@ private:
 	CommandTypeFactory *commandTypeFactory;
 
 public:
-	World(Game *game);
+	World(SimulationInterface *iSim);
 	~World();
-	void end(); //to die before selection does
 
 	void save(XmlNode *node) const;
 	
-
 	static World& getInstance() { return *singleton; }
 	static bool isConstructed() { return singleton != 0; }
 
@@ -133,6 +144,7 @@ public:
 	UpgradeTypeFactory* getUpgradeTypeFactory()		{return upgradeTypeFactory;}
 	SkillTypeFactory* getSkillTypeFactory()			{return skillTypeFactory;}
 	CommandTypeFactory* getCommandTypeFactory()		{return commandTypeFactory;}
+
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getThisTeamIndex() const					{return thisTeamIndex;}
@@ -150,7 +162,7 @@ public:
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
 	const Minimap *getMinimap() const				{return &minimap;}
-	Stats &getStats() 								{return stats;}
+//	Stats &getStats() 								{return stats;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}
 	int getNextUnitId()								{return nextUnitId++;}
 	int getFrameCount() const						{return frameCount;}
@@ -167,8 +179,10 @@ public:
 	bool loadScenario(const string &path);
 	void activateUnits();
 
+	// update
+	void processFrame();
+
 	//misc
-	void update();
 	void moveUnitCells(Unit *unit);
 	Unit* findUnitById(int id) const;
 	const UnitType* findUnitTypeById(const FactionType* factionType, int id);

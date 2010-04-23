@@ -227,7 +227,7 @@ void Tileset::doChecksum(Checksum &checksum) const {
 }
 
 Tileset::~Tileset(){
-	Logger::getInstance().add("Tileset", !Program::getInstance()->isTerminating());
+	Logger::getInstance().add("~Tileset", !Program::getInstance()->isTerminating());
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type, int var) const{

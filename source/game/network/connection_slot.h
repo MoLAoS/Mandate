@@ -18,7 +18,7 @@
 using Shared::Platform::ServerSocket;
 using Shared::Platform::Socket;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Net {
 
 class ServerInterface;
 
@@ -26,7 +26,7 @@ class ServerInterface;
 //	class ConnectionSlot
 // =====================================================
 
-class ConnectionSlot: public NetworkInterface {
+class ConnectionSlot: public NetworkConnection {
 private:
 	ServerInterface* serverInterface;
 	Socket* socket;

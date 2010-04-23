@@ -28,9 +28,10 @@
 #include "leak_dumper.h"
 #include "logger.h"
 
-namespace Glest { namespace Game {
-
 using namespace Shared::Util;
+using namespace Glest::Net;
+
+namespace Glest { namespace Game {
 
 // ===============================
 //  class MenuStateJoinGame
@@ -43,7 +44,6 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 		MenuState(program, mainMenu, "join-game") {
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
-	NetworkManager &networkManager = NetworkManager::getInstance();
 
 	servers.load(serverFileName);
 
@@ -84,7 +84,7 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 	labelInfo.init(330, 370);
 	labelInfo.setText("");
 
-	networkManager.init(nrClient);
+	program.getSimulationInterface()->changeRole(GameRole::CLIENT);
 	connected = false;
 	playerIndex = -1;
 
@@ -100,11 +100,9 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 }
 
 void MenuStateJoinGame::mouseClick(int x, int y, MouseButton mouseButton) {
-
 	CoreData &coreData = CoreData::getInstance();
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-	NetworkManager &networkManager = NetworkManager::getInstance();
-	ClientInterface* clientInterface = networkManager.getClientInterface();
+	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
 		//server type
@@ -134,8 +132,6 @@ void MenuStateJoinGame::mouseClick(int x, int y, MouseButton mouseButton) {
 		}
 	//connect
 	} else if (buttonConnect.mouseClick(x, y)) {
-		ClientInterface* clientInterface = networkManager.getClientInterface();
-
 		soundRenderer.playFx(coreData.getClickSoundA());
 		labelInfo.setText("");
 
@@ -188,8 +184,12 @@ void MenuStateJoinGame::render() {
 }
 
 void MenuStateJoinGame::update() {
-	ClientInterface* clientInterface = NetworkManager::getInstance().getClientInterface();
+	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 	Lang &lang = Lang::getInstance();
+
+	if (!clientInterface) {
+		DEBUG_HOOK();
+	}
 
 	//update status label
 	if (clientInterface->isConnected()) {
@@ -205,7 +205,7 @@ void MenuStateJoinGame::update() {
 	if (clientInterface->isConnected()) {
 
 		//update lobby
-		clientInterface->doUpdateLobby();
+		clientInterface->updateLobby();
 
 		//intro
 		if (clientInterface->getIntroDone()) {
@@ -216,20 +216,13 @@ void MenuStateJoinGame::update() {
 		//launch
 		if (clientInterface->getLaunchGame()) {
 			servers.save(serverFileName);
-// NETWORK:	if (clientInterface->getSavedGameFile() == "") {
-				program.setState(new Game(program, *clientInterface->getGameSettings()));
-		/* NETWORK:	
-		} else {
-				XmlNode *root = XmlIo::getInstance().load(clientInterface->getSavedGameFile());
-				program.setState(new Game(program, *clientInterface->getGameSettings(), root));
-			}
-			*/
+			program.setState(new GameState(program));
 		}
 	}
 }
 
 void MenuStateJoinGame::keyDown(const Key &key) {
-	ClientInterface* clientInterface = NetworkManager::getInstance().getClientInterface();
+	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
 		if (key == keyBackspace) {
@@ -249,7 +242,7 @@ void MenuStateJoinGame::keyDown(const Key &key) {
 }
 
 void MenuStateJoinGame::keyPress(char c) {
-	ClientInterface* clientInterface = NetworkManager::getInstance().getClientInterface();
+	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
 		int maxTextSize = 16;
@@ -276,7 +269,7 @@ void MenuStateJoinGame::keyPress(char c) {
 }
 
 void MenuStateJoinGame::connectToServer() {
-	ClientInterface* clientInterface = NetworkManager::getInstance().getClientInterface();
+	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 	Config& config = Config::getInstance();
 	Lang &lang = Lang::getInstance();
 	Ip serverIp(labelServerIp.getText());

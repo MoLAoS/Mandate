@@ -87,10 +87,16 @@ void PetRule::load(const XmlNode *prn, const string &dir, const TechTree *tt, co
 
 // ==================== creation and loading ====================
 
-UnitType::UnitType(){
+UnitType::UnitType()
+		: multiBuild(false), multiSelect(false)
+		, armourType(0)
+		, size(0), height(0)
+		, light(false), lightColour(0.f)
+		, meetingPoint(false), meetingPointImage(0)
+		, startSkill(0)
+		, halfSize(0), halfHeight(0)
+		, cellMap(0) {
 	reset();
-	multiSelect= false;
-	cellMap= NULL;
 }
 
 UnitType::~UnitType(){
@@ -106,6 +112,7 @@ void UnitType::preLoad(const string &dir){
 }
 
 bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType){
+	_TRACE_FUNCTION();
 	string path;
 
 	Logger::getInstance().add("Unit type: " + dir, true);
@@ -133,10 +140,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		Logger::getErrorLog().addXmlError(path, e.what());
 		return false; // bail out
 	}
-	if ( ! UnitStats::load(parametersNode, dir, techTree, factionType) )
+	if (!UnitStats::load(parametersNode, dir, techTree, factionType))
 		loadOk = false;
-	halfSize = size / fixed(2);
-	halfHeight = height / fixed(2);
+
 	//prod time
 	try { productionTime= parametersNode->getChildIntValue("time"); }
 	catch (runtime_error e) {
@@ -155,6 +161,41 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		Logger::getErrorLog().addXmlError(path, e.what());
 		loadOk = false;
 	}
+	//armor type string
+	try {
+		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
+		armourType = techTree->getArmourType(armorTypeName);
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//light & lightColour
+	try {
+		const XmlNode *lightNode = parametersNode->getChild("light");
+		light = lightNode->getAttribute("enabled")->getBoolValue();
+		if (light)
+			lightColour = lightNode->getColor3Value();
+	}
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//size
+	try { size = parametersNode->getChildIntValue("size"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//height
+	try { height = parametersNode->getChildIntValue("height"); }
+	catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	halfSize = size / fixed(2);
+	halfHeight = height / fixed(2);
+
 	//cellmap
 	try {
 		const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
@@ -197,9 +238,21 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		Logger::getErrorLog().addXmlError(path, e.what());
 		loadOk = false;
 	}
-	//fields
-	try { fields.load(parametersNode->getChild("fields"), dir, techTree, factionType); }
-	catch (runtime_error e) {
+	// fields: begin clumsy... multiple fields are 'allowed' here, but we only want one...
+	Fields fields;
+	try {
+		fields.load(parametersNode->getChild("fields"), dir, techTree, factionType);
+
+		// extract ONE, making sure to chose Land over Air (for magitech compatability)
+		field = Field::INVALID;
+		if (fields.get(Field::AMPHIBIOUS))		field = Field::AMPHIBIOUS;
+		else if (fields.get(Field::ANY_WATER))	field = Field::ANY_WATER;
+		else if (fields.get(Field::DEEP_WATER))	field = Field::DEEP_WATER;
+		else if(fields.get(Field::LAND))		field = Field::LAND;
+		else if(fields.get(Field::AIR))			field = Field::AIR;
+		else throw runtime_error("unit prototypes must specify a field");
+		zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
+	} catch (runtime_error e) {
 		Logger::getErrorLog().addXmlError(path, e.what());
 		loadOk = false;
 	}
@@ -359,22 +412,6 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 	
-	// GET_UP and FALL_DOWN should not be new skill classes & types, use stop skills with custom anims.
-
-	/*
-	//petRules
-	const XmlNode *petRulesNode= unitNode->getChild("pet-rules", 0, false);
-	if (petRulesNode) {
-		PetRule *petRule;
-		petRules.resize(petRulesNode->getChildCount());
-		for (int i=0; i<petRules.size(); ++i) {
-			const XmlNode *n= petRulesNode->getChild("pet-rule", i);
-			petRules.push_back(petRule = new PetRule());
-			petRule->load(n, dir, techTree, factionType);
-		}
-	}
-	*/
-
 	//emanations
 	try {
 		const XmlNode *emanationsNode = parametersNode->getChild("emanations", 0, false);
@@ -405,6 +442,12 @@ void UnitType::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
 	UnitStats::doChecksum(checksum);
 
+	if (armourType) checksum.add(armourType->getName());
+	checksum.add(light);
+	checksum.add(lightColour);
+	checksum.add(size);
+	checksum.add(height);
+
 	checksum.add(multiBuild);
 	checksum.add(multiSelect);
 	foreach_const (SkillTypes, it, skillTypes) {
@@ -423,7 +466,6 @@ void UnitType::doChecksum(Checksum &checksum) const {
 	foreach_const (Emanations, it, emanations) {
 		(*it)->doChecksum(checksum);
 	}
-
 	//meeting point
 	checksum.add(meetingPoint);
 	checksum.add(halfSize);
@@ -546,6 +588,11 @@ void UnitType::sortSkillTypes() {
 				skillTypesByClass[sc].push_back(*it);
 			}
 		}
+	}
+	if (!skillTypesByClass[SkillClass::BE_BUILT].empty()) {
+		startSkill = skillTypesByClass[SkillClass::BE_BUILT].front();
+	} else {
+		startSkill = skillTypesByClass[SkillClass::STOP].front();
 	}
 }
 

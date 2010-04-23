@@ -20,6 +20,7 @@
 #include "network_message.h"
 #include "network_types.h"
 //#include "network_status.h"
+#include "sim_interface.h"
 
 #include "logger.h"
 
@@ -31,16 +32,20 @@ using Shared::Util::Checksum;
 using Shared::Math::Vec3f;
 
 namespace Glest { namespace Game {
+	class Unit;
+	class ProjectileParticleSystem;
+	class UnitUpdater;
+}}
+using namespace Glest::Sim;
+using namespace Glest::Game;
 
-class Unit;
-class ProjectileParticleSystem;
-class UnitUpdater;
+namespace Glest { namespace Net {
 
 // =====================================================
-//	class NetworkInterface
+//	class NetworkConnection
 // =====================================================
 
-class NetworkInterface {
+class NetworkConnection {
 protected:
 	static const int readyWaitTimeout;
 
@@ -50,7 +55,7 @@ private:
 	string description;
 
 public:
-	virtual ~NetworkInterface() {}
+	virtual ~NetworkConnection() {}
 
 	virtual Socket* getSocket() = 0;
 	virtual const Socket* getSocket() const = 0;
@@ -65,9 +70,9 @@ public:
 
 	int dataAvailable();
 
-	void send(const NetworkMessage* networkMessage);
-	NetworkMessageType getNextMessageType();
-	bool receiveMessage(NetworkMessage* networkMessage);
+	void send(const Message* networkMessage);
+	MessageType getNextMessageType();
+	bool receiveMessage(Message* networkMessage);
 
 	bool isConnected() {
 		return getSocket() && getSocket()->isConnected();
@@ -75,29 +80,23 @@ public:
 };
 
 // =====================================================
-//	class GameInterface
+//	class NetworkInterface
 //
 // Adds functions common to servers and clients
 // but not connection slots
 // =====================================================
 
-class GameInterface: public NetworkInterface {
-private:
+/** An abstract SimulationInterface for network games */
+class NetworkInterface: public NetworkConnection, public SimulationInterface {
+public:
 	typedef vector<NetworkCommand> Commands;
 
 protected:
 	typedef ProjectileParticleSystem* Projectile;
 
-	Commands requestedCommands;	//commands requested by the user
-	Commands pendingCommands;	//commands ready to be given
-	bool quit;
-
 	KeyFrame keyFrame;
-	SkillCycleTable skillCycleTable;
-#	if _RECORD_GAME_STATE_
-		GameStateLog stateLog;
-#	endif
 
+	// chat messages
 	struct ChatMsg {
 		string text;
 		string sender;
@@ -105,83 +104,46 @@ protected:
 	};
 	std::vector<ChatMsg> chatMessages;
 
-	// All network accessing virtuals were made protected so the exception handling
-	// can be done in the same place for clients and servers.
-	//
-	// For users of GameInterface, non virtual wrappers are used, see below.
+	/** Called after each frame is processed, SimulationInterface virtual */
+	virtual void frameProccessed();
 
-	//message processimg
-	virtual void update() = 0;
-	virtual void updateLobby() = 0;
+	/** send/receive key-frame, issue queued commands */
 	virtual void updateKeyframe(int frameCount) = 0;
-	virtual void waitUntilReady(Checksum &checksum) = 0;
-	virtual void syncAiSeeds(int aiCount, int *seeds) = 0;
-	virtual void createSkillCycleTable(const TechTree *techTree) = 0;
 
-	// unit/projectile updates
-	virtual void updateUnitCommand(Unit *unit, int32 checksum) = 0;
-	virtual void updateProjectile(Unit *unit, int endFrame, int32 checksum) = 0;
-	virtual void updateAnim(Unit *unit, int32 checksum) = 0;
-	virtual void unitBorn(Unit *unit, int32 checksum) = 0;
-
-	virtual void updateMove(Unit *unit) = 0;
-	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) = 0;
-
-	//message sending
-	virtual void sendTextMessage(const string &text, int teamIndex) = 0;
-	virtual void quitGame() = 0;
-	
 	//misc
 	virtual string getStatus() const = 0;
 
+	/** 'Interesting event' handlers, for insane checksum comparisons */
+	virtual void checkCommandUpdate(Unit *unit, int32 checksum) = 0;
+	virtual void checkProjectileUpdate(Unit *unit, int endFrame, int32 checksum) = 0;
+	virtual void checkAnimUpdate(Unit *unit, int32 checksum) = 0;
+	virtual void checkUnitBorn(Unit *unit, int32 checksum) = 0;
+
+	/** SimulationInterface post 'interesting event' virtuals (calc checksum and pass to checkXxxXxx()) */
+	virtual void postCommandUpdate(Unit *unit);
+	virtual void postProjectileUpdate(Unit *unit, int endFrame);
+	virtual void postAnimUpdate(Unit *unit);
+	virtual void postUnitBorn(Unit *unit);
+
 public:
-	GameInterface();
+	NetworkInterface(Program &prog);
 
 	KeyFrame& getKeyFrame() { return keyFrame; }
 
-	void frameStart(int frame);
-	void frameEnd(int frame);
+	/** Called frequently to check for and/or send new network messages */
+	virtual void update() = 0;
 
-#	define TRY_CATCH_LOG_THROW(methodCall)	\
-		try { methodCall; }					\
-		catch (runtime_error &e) {			\
-			LOG_NETWORK(e.what());			\
-			throw e;						\
-		}
+	// send chat message
+	virtual void sendTextMessage(const string &text, int teamIndex) = 0;
 
-	// wrappers for the pure virtuals
-	void doUpdate()										{ TRY_CATCH_LOG_THROW(update())						}
-	void doUpdateLobby()								{ TRY_CATCH_LOG_THROW(updateLobby())				}
-	void doUpdateKeyframe(int frameCount)				{ TRY_CATCH_LOG_THROW(updateKeyframe(frameCount))	}
-	void doWaitUntilReady(Checksum &checksum)			{ TRY_CATCH_LOG_THROW(waitUntilReady(checksum))		}
-	void doSyncAiSeeds(int aiCount, int *seeds)			{ TRY_CATCH_LOG_THROW(syncAiSeeds(aiCount, seeds))	}
-	void doSendTextMessage(const string &text, int team){ TRY_CATCH_LOG_THROW(sendTextMessage(text, team))	}
-	void doCreateSkillCycleTable(const TechTree *tt)	{ TRY_CATCH_LOG_THROW(createSkillCycleTable(tt))	}
-	void doQuitGame()									{ TRY_CATCH_LOG_THROW(quitGame())					}
-
-	void doUnitBorn(Unit *unit);
-	void doUpdateProjectile(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
-	void doUpdateUnitCommand(Unit *unit);
-	void doUpdateAnim(Unit *unit);
-
-	// commands
-	virtual void requestCommand(const NetworkCommand *networkCommand) {
-		requestedCommands.push_back(*networkCommand);
-	} 
-	virtual void requestCommand(Command *command);
+	// place message on chat queue
+	void processTextMessage(TextMessage &msg);
 	
-	int getPendingCommandCount() const				{return pendingCommands.size();}
-	Command *getPendingCommand(int i)				{return pendingCommands[i].toCommand();}
-	const NetworkCommand *getPendingNetworkCommand(int i) const			{return &pendingCommands[i];}
-	void clearPendingCommands()						{pendingCommands.clear();}
-	bool getQuit() const							{return quit;}
-
-	// chat message
+	// chat message queue
 	bool hasChatMsg() const							{ return !chatMessages.empty(); }
 	void popChatMsg()								{ chatMessages.pop_back();}
-	void processTextMessage(NetworkMessageText &msg);
-	const string getChatText() const				{return chatMessages.back().text;}
-	const string getChatSender() const				{return chatMessages.back().sender;}
+	const string& getChatText() const				{return chatMessages.back().text;}
+	const string& getChatSender() const				{return chatMessages.back().sender;}
 };
 
 }}//end namespace

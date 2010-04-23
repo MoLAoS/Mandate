@@ -15,8 +15,8 @@
 #include "leak_dumper.h"
 #include "unit.h"
 
-namespace Glest { namespace Game {
-
+namespace Glest { namespace Net {
+/*
 // =====================================================
 //	class NetworkManager
 // =====================================================
@@ -27,30 +27,17 @@ NetworkManager &NetworkManager::getInstance() {
 }
 
 NetworkManager::NetworkManager() {
-	gameInterface = NULL;
-	networkRole = nrIdle;
+	//netInterface = NULL;
+	//networkRole = GameRole::NONE;
 }
 
-void NetworkManager::init(NetworkRole networkRole) {
-	assert(gameInterface == NULL);
-
-	this->networkRole = networkRole;
-
-	if(networkRole == nrServer) {
-		gameInterface = new ServerInterface();
-	} else {
-		gameInterface = new ClientInterface();
-	}
+void NetworkManager::init(GameRole networkRole) {
+	theSimInterface->changeRole(networkRole);
+	//this->networkRole = networkRole;
 }
 
 NetworkManager::~NetworkManager() {
-	delete gameInterface;
 }
-
-void NetworkManager::end() {
-	delete gameInterface;
-	gameInterface = NULL;
-	networkRole = nrIdle;
-}
+*/
 
 }}//end namespace

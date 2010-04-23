@@ -13,9 +13,11 @@
 
 #include "StdFileOps.hpp"
 
+#include <string>
 #include <stdexcept>
-using namespace std;
 
+using std::string;
+using std::runtime_error;
 
 StdFileOps::StdFileOps(){
 	this->f = NULL;

@@ -24,51 +24,62 @@ using Shared::Platform::Ip;
 using Shared::Platform::ClientSocket;
 using std::vector; //using std::deque;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Net {
 
 // =====================================================
 //	class ClientInterface
 // =====================================================
-class ClientInterface: public GameInterface{
+/** A concrete SimulationInterface for network clients */
+class ClientInterface: public NetworkInterface {
 private:
 	static const int messageWaitTimeout;
 	static const int waitSleepTime;
 
 	ClientSocket *clientSocket;
-	GameSettings gameSettings;
+	//GameSettings gameSettings;
 	string serverName;
 	bool introDone;
 	bool launchGame;
 	int playerIndex;
 
 public:
-	ClientInterface();
+	ClientInterface(Program &prog);
 	virtual ~ClientInterface();
 
 	virtual Socket* getSocket()					{return clientSocket;}
 	virtual const Socket* getSocket() const		{return clientSocket;}
 
-protected:
-	//message processing
-	virtual void update();
+	virtual GameRole getNetworkRole() const { return GameRole::CLIENT; }
+
+	/** Called instead of update() while in MenuStateJoinGame */
 	virtual void updateLobby();
-	virtual void updateKeyframe(int frameCount);
+
+protected:
+	// SimulationInterface and NetworkInterface virtuals
+	// See documentation in sim_interface.h & net_interface.h
+
+	// Game launch hooks, SimulationInterface virtuals
 	virtual void waitUntilReady(Checksum &checksum);
 	virtual void syncAiSeeds(int aiCount, int *seeds);
 	virtual void createSkillCycleTable(const TechTree *);
+	virtual void startGame();
 
-	// message sending
-	virtual void sendTextMessage(const string &text, int teamIndex);
-	virtual void quitGame();
+	// Game progress, NetworkInterface virtuals
+	virtual void update();
+	virtual void updateKeyframe(int frameCount);
 
-	// unit/projectile updates
-	virtual void updateUnitCommand(Unit *unit, int32);
-	virtual void unitBorn(Unit *unit, int32);
-	virtual void updateProjectile(Unit *unit, int endFrame, int32);
-	virtual void updateAnim(Unit *unit, int32);
-
-	virtual void updateMove(Unit *unit);
+	// unit-skill/projectile updates, SimulationInterface virtuals
+	virtual void updateSkillCycle(Unit *unit);
 	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
+
+	// move skill needs special handling, NetworkInterface virtual
+	virtual void updateMove(Unit *unit);
+
+	// unit/projectile checks, NetworkInterface virtuals
+	virtual void checkCommandUpdate(Unit *unit, int32);
+	virtual void checkUnitBorn(Unit *unit, int32);
+	virtual void checkProjectileUpdate(Unit *unit, int endFrame, int32);
+	virtual void checkAnimUpdate(Unit *unit, int32);
 
 	//misc
 	virtual string getStatus() const;
@@ -79,10 +90,14 @@ public:
 	bool getLaunchGame() const				{return launchGame;}
 	bool getIntroDone() const				{return introDone;}
 	int getPlayerIndex() const				{return playerIndex;}
-	const GameSettings *getGameSettings()	{return &gameSettings;}
+//	const GameSettings *getGameSettings()	{return &gameSettings;}
 
 	void connect(const Ip &ip, int port);
 	void reset();
+
+	// message sending
+	virtual void sendTextMessage(const string &text, int teamIndex);
+	virtual void quitGame(QuitSource);
 
 private:
 	void waitForMessage();

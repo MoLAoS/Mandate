@@ -27,41 +27,47 @@
 #include "auto_test.h"
 #include "profiler.h"
 #include "cluster_map.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
 
+using namespace Glest::Net;
+using namespace Glest::Sim;
+
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 using namespace Shared::Platform;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Game {
 
 // =====================================================
-// 	class Game
+// 	class GameState
 // =====================================================
 
 // ===================== PUBLIC ========================
 
-Game *Game::singleton = NULL;
+GameState *GameState::singleton = NULL;
 
-Game::Game(Program &program, const GameSettings &gs, XmlNode *savedGame)
+const GameSettings &GameState::getGameSettings()	{return theSimInterface->getGameSettings();}
+
+GameState::GameState(Program &program, XmlNode *savedGame)
 		//main data
 		: ProgramState(program)
-		, gameSettings(gs)
-		, savedGame(savedGame)
+		, simInterface(program.getSimulationInterface())
+		//, savedGame(savedGame)
 		, keymap(program.getKeymap())
 		, input(program.getInput())
 		, config(Config::getInstance())
-		, world(this)
-		, aiInterfaces()
+		//, world(this)
+		//, aiInterfaces()
 		, gui(*this)
 		, gameCamera()
-		, commander()
+		//, commander()
 		, console()
-		, chatManager(keymap/*, console, world.getThisTeamIndex()*/)
+		, chatManager(simInterface, keymap)
 		//misc
 		, checksum()
 		, loadingText("")
@@ -72,21 +78,27 @@ Game::Game(Program &program, const GameSettings &gs, XmlNode *savedGame)
 		, lastUpdateFps(0)
 		, renderFps(0)
 		, lastRenderFps(0)
-		, paused(false)
+		//, paused(false)
 		, noInput(false)
-		, gameOver(false)
+		//, gameOver(false)
+		, netError(false)
 		, scrollSpeed(config.getUiScrollSpeed())
-		, speed(GameSpeed::NORMAL)
-		, fUpdateLoops(1.f)
-		, lastUpdateLoopsFraction(0.f)
+		//, speed(GameSpeed::NORMAL)
+		//, fUpdateLoops(1.f)
+		//, lastUpdateLoopsFraction(0.f)
 		, saveBox(NULL)
 		, lastMousePos(0)
-		, weatherParticleSystem(NULL) {
+		, weatherParticleSystem(0) {
 	assert(!singleton);
 	singleton = this;
+	
+	simInterface->constructGameWorld(this);
+	//gameSettings(simInterface->getGameSettings());
+
 }
 
-const char *Game::SpeedDesc[GameSpeed::COUNT] = {
+const char *SpeedDesc[GameSpeed::COUNT] = {
+	"Paused",
 	"Slowest",
 	"VerySlow",
 	"Slow",
@@ -96,36 +108,44 @@ const char *Game::SpeedDesc[GameSpeed::COUNT] = {
 	"Fastest"
 };
 
-Game::~Game() {
+GameState::~GameState() {
+	_TRACE_FUNCTION();
 	Logger &logger= Logger::getInstance();
 	Renderer &renderer= Renderer::getInstance();
 
 	logger.setState(Lang::getInstance().get("Deleting"));
-	logger.add("Game", !Program::getInstance()->isTerminating());
+	logger.add("~GameState", !program.isTerminating());
 
 	renderer.endGame();
+	weatherParticleSystem = 0;
 	SoundRenderer::getInstance().stopAllSounds();
 
 	delete saveBox;
-	deleteValues(aiInterfaces.begin(), aiInterfaces.end());
+	saveBox = 0;
 
-	gui.end();		//selection must be cleared before deleting units
-	world.end();	//must die before selection because of referencers
-	singleton = NULL;
+	gui.end(); //selection must be cleared before deleting units
+	singleton = 0;
 	logger.setLoading(true);
+
+	// reset max update backlog, to prevent super-speed in menus
 	program.setMaxUpdateBacklog(1);
+
+	// delete the World
+	simInterface->destroyGameWorld();
 }
 
 
 // ==================== init and load ====================
 
-void Game::load(){
+void GameState::load() {
+	_TRACE_FUNCTION();
+	GameSettings &gameSettings = theSimInterface->getGameSettings();
 	Logger &logger= Logger::getInstance();
-	string mapName= gameSettings.getMapPath();
-	string tilesetName= gameSettings.getTilesetPath();
-	string techName= gameSettings.getTechPath();
-	string scenarioPath= gameSettings.getScenarioPath();
-	string scenarioName= basename(scenarioPath);
+	const string &mapName = gameSettings.getMapPath();
+	const string &tilesetName = gameSettings.getTilesetPath();
+	const string &techName = gameSettings.getTechPath();
+	const string &scenarioPath = gameSettings.getScenarioPath();
+	string scenarioName = basename(scenarioPath);
 
 	GraphicProgressBar progressBar;
 	progressBar.init(345, 550, 300, 20);
@@ -139,37 +159,20 @@ void Game::load(){
 		logger.setSubtitle(formatString(scenarioName));
 	}
 	
-	//preload
-	world.preload();
-	//tileset
-	if (!world.loadTileset()) {
-		throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
-	}
-	//tech, load before map because of resources
-	if (!world.loadTech()) {
-		throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
-	}
-	//map
-	world.loadMap();
-
-	//scenario
-	if (!scenarioName.empty()) {
-		Lang::getInstance().loadScenarioStrings(scenarioPath, scenarioName);
-		world.loadScenario(scenarioPath + "/" + scenarioName + ".xml");
-	}
+	simInterface->loadWorld();
 
 	// finished loading
 	progressBar.setProgress(100);
 	logger.setProgressBar(NULL);
 }
 
-void Game::init() {
+void GameState::init() {
+	_TRACE_FUNCTION();
 	Lang &lang= Lang::getInstance();
 	Logger &logger= Logger::getInstance();
 	CoreData &coreData= CoreData::getInstance();
 	Renderer &renderer= Renderer::getInstance();
-	Map *map= world.getMap();
-	NetworkManager &networkManager= NetworkManager::getInstance();
+	Map *map = simInterface->getWorld()->getMap();
 
 	logger.setState(lang.get("Initializing"));
 
@@ -178,56 +181,25 @@ void Game::init() {
 	mainMessageBox.setEnabled(false);
 
 	// init world, and place camera
-	commander.init(&world);
-	world.init(savedGame ? savedGame->getChild("world") : NULL);
+	simInterface->initWorld();
 	gui.init();
-	chatManager.init(&console, world.getThisTeamIndex());
-	
+	//REFACTOR: ThisTeamIndex belong in here, not the World
+	chatManager.init(&console, simInterface->getWorld()->getThisTeamIndex());
 	gameCamera.init(map->getW(), map->getH());
-	const Vec2i &v = map->getStartLocation(world.getThisFaction()->getStartLocationIndex());
+	const Vec2i &v = map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());
 	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
-	if (savedGame) {
-		gui.load(savedGame->getChild("gui"));
+	if (simInterface->getSavedGame()) {
+		gui.load(simInterface->getSavedGame()->getChild("gui"));
 	}
-	GameInterface *gni = networkManager.getGameInterface();
-	// create (or receive) random number seeds for AIs
-	int aiCount = 0;
-	for (int i=0; i < world.getFactionCount(); ++i) {
-		if (world.getFaction(i)->getCpuControl()) {
-			++aiCount;
-		}
-	}
-	int32 *seeds = (aiCount ? new int32[aiCount] : NULL);
-	if (seeds) {
-		gni->doSyncAiSeeds(aiCount, seeds);
-	}
-	int seedCount = 0;
-
-	//create AIs
-	aiInterfaces.resize(world.getFactionCount());
-	for (int i=0; i < world.getFactionCount(); ++i) {
-		Faction *faction = world.getFaction(i);
-		if (faction->getCpuControl() && ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
-			aiInterfaces[i] = new AiInterface(*this, i, faction->getTeam(), seeds[seedCount++]);
-			logger.add("Creating AI for faction " + intToStr(i), true);
-		} else {
-			aiInterfaces[i]= NULL;
-		}
-	}
-	delete[] seeds;
-
-	gni->doCreateSkillCycleTable(world.getTechTree());
-
-	ScriptManager::init(this);
 
 	//wheather particle systems
-	if(world.getTileset()->getWeather() == Weather::RAINY){
+	if(simInterface->getWorld()->getTileset()->getWeather() == Weather::RAINY){
 		logger.add("Creating rain particle system", true);
 		weatherParticleSystem= new RainParticleSystem();
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
-	} else if(world.getTileset()->getWeather() == Weather::SNOWY){
+	} else if(simInterface->getWorld()->getTileset()->getWeather() == Weather::SNOWY){
 		logger.add("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());
@@ -243,8 +215,8 @@ void Game::init() {
 	//sounds
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 
-	Tileset *tileset= world.getTileset();
-	const TechTree *techTree = world.getTechTree();
+	Tileset *tileset= simInterface->getWorld()->getTileset();
+	const TechTree *techTree = simInterface->getWorld()->getTechTree();
 	AmbientSounds *ambientSounds= tileset->getAmbientSounds();
 
 	//rain
@@ -257,34 +229,12 @@ void Game::init() {
 		logger.add("Starting ambient stream", true);
 		soundRenderer.playAmbient(ambientSounds->getSnow());
 	}
-	// ready ?
-	if (isNetworkGame()) {
-		logger.add("Waiting for network", true);
-		tileset->doChecksum(checksum);
-		techTree->doChecksum(checksum);
-		map->doChecksum(checksum);
-		gni->doWaitUntilReady(checksum);
-	}
-	// if client, wait for first key frame
-	if (isNetworkClient()) {
-		cout << "Waiting for first key frame...\n";
-		ClientInterface *iClient = theNetworkManager.getClientInterface();
-		iClient->doUpdateKeyframe(0);
-		cout << "got first key frame.\n";
-		LOG_NETWORK( "Got first key frame, starting game.\n" );
 
-		// set maximum update timer back log
-		program.setMaxUpdateBacklog(-1); // network games must always catch up
-	} else {
-		program.setMaxUpdateBacklog(2); // non-network game, may drop frames
-	}
-
-	cout << "Activating units...\n";
-	world.activateUnits();
-	cout << "Units activated\n";
+	int maxUpdtBacklog = simInterface->launchGame();
+	program.setMaxUpdateBacklog(maxUpdtBacklog);
 
 	logger.add("Starting music stream", true);
-	StrSound *gameMusic= world.getThisFaction()->getType()->getMusic();
+	StrSound *gameMusic = simInterface->getWorld()->getThisFaction()->getType()->getMusic();
 	soundRenderer.playMusic(gameMusic);
 
 	logger.add("Launching game");
@@ -296,8 +246,12 @@ void Game::init() {
 // ==================== update ====================
 
 //update
-void Game::update() {
+void GameState::update() {
+	_TRACE_FUNCTION();
 	// a) Updates non dependant on speed
+	if (netError) {
+		return;
+	}
 
 	//misc
 	updateFps++;
@@ -309,51 +263,41 @@ void Game::update() {
 
 	// b) Updates depandant on speed
 
-	int updateLoops= getUpdateLoops();
+	///@todo clean-up, this should be done in SimulationInterface::updateWorld()
+	// but the particle stuff still lives here, so we still need to process each loop here
+	int updateLoops = simInterface->getUpdateLoops();
 
-	//update
-	for (int i = 0; i < updateLoops; ++i) {
-		Renderer &renderer = Renderer::getInstance();
+	try {
+		//update
+		for (int i = 0; i < updateLoops; ++i) {
+			simInterface->updateWorld();
+			++worldFps;
 
-		//AiInterface
-		for (int i = 0; i < world.getFactionCount(); ++i)
-			if ( world.getFaction(i)->getCpuControl()
-			&&   ScriptManager::getPlayerModifiers(i)->getAiEnabled() ) {
-				aiInterfaces[i]->update();
+			//Gui
+			gui.update();
+
+			//Particle systems
+			if(weatherParticleSystem != NULL){
+				weatherParticleSystem->setPos(gameCamera.getPos());
 			}
+			theRenderer.updateParticleManager(rsGame);
 
-		//World
-		world.update();
-		++worldFps;
-
-		try { // Commander
-			commander.updateNetwork();
-		} catch (runtime_error e) {
-			LOG_NETWORK(e.what());
-			displayError(e);
-			return;
+			//call the chat manager		
+			chatManager.updateNetwork();
 		}
-
-		//Gui
-		gui.update();
-
-		//Particle systems
-		if(weatherParticleSystem != NULL){
-			weatherParticleSystem->setPos(gameCamera.getPos());
-		}
-		renderer.updateParticleManager(rsGame);
-	}
-
-	try { //call the chat manager		
-		chatManager.updateNetwork();
-	} catch (SocketException e) {
+	} catch (Net::NetworkError &e) {
 		LOG_NETWORK(e.what());
+		displayError(e);
+		netError = true;
+		return;
+		///@todo return to menu...
+	} catch (std::runtime_error &e) {
 		displayError(e);
 		return;
 	}
 
 	//check for quiting status
-	if(NetworkManager::getInstance().getGameInterface()->getQuit()) {
+	if(theSimInterface->getQuit()) {
 		quitGame();
 	}
 
@@ -363,31 +307,23 @@ void Game::update() {
 	}
 }
 
-void Game::displayError(runtime_error &e) {
+void GameState::displayError(std::exception &e) {
 	Lang &lang = Lang::getInstance();
-	paused = true;
+	simInterface->pause();
 	stringstream errmsg;
-	char buf[512];
-	/* NETWORK:
-	const char* saveName = NetworkManager::getInstance().isServer()
-			? "network_server_auto_save" : "network_client_auto_save";
-	saveGame(saveName);
-	snprintf(buf, sizeof(buf) - 1, lang.get("YourGameWasSaved").c_str(), saveName);
-	*/
-	errmsg << e.what() << endl << buf;
-
-	mainMessageBox.init ( errmsg.str(), lang.get("Ok") );
-	mainMessageBox.setEnabled ( true );
+	errmsg << e.what() << endl;// << buf;
+	mainMessageBox.init(errmsg.str(), lang.get("Ok"));
+	mainMessageBox.setEnabled(true);
 }
 
-void Game::updateCamera() {
+void GameState::updateCamera() {
 	gameCamera.update();
 }
 
 // ==================== render ====================
 
 //render
-void Game::render(){
+void GameState::render(){
 	renderFps++;
 	render3d();
 	render2d();
@@ -396,7 +332,7 @@ void Game::render(){
 
 // ==================== tick ====================
 
-void Game::tick(){
+void GameState::tick(){
 	lastWorldFps = worldFps;
 	lastUpdateFps= updateFps;
 	lastRenderFps= renderFps;
@@ -404,15 +340,21 @@ void Game::tick(){
 	updateFps= 0;
 	renderFps= 0;
 
+	if (netError) return;
+
 	//Win/lose check
-	checkWinner();
+	GameStatus status = simInterface->checkWinner();
+	if (status == GameStatus::WON) {
+		showWinMessageBox();
+	} else if (status == GameStatus::LOST) {
+		showLoseMessageBox();
+	}
 	gui.tick();
 }
 
 // ==================== events ====================
 
-void Game::mouseDownLeft(int x, int y){
-	NetworkManager &networkManager= NetworkManager::getInstance();
+void GameState::mouseDownLeft(int x, int y) {
 	Vec2i mmCell;
 
 	const Metrics &metrics= Metrics::getInstance();
@@ -427,13 +369,13 @@ void Game::mouseDownLeft(int x, int y){
 		}
 	}
 
-	//exit message box, has to be the last thing to do in this function
+	//exit message box
 	if ( mainMessageBox.getEnabled() ) {
 		int button= 1;
 		if ( mainMessageBox.mouseClick(x, y, button) ) {
 			if ( button == 1 ) {
-				networkManager.getGameInterface()->doQuitGame();
-				quitGame();
+				theSimInterface->doQuitGame(QuitSource::LOCAL);
+				//quitGame();
 			} else {
 				//close message box
 				mainMessageBox.setEnabled(false);
@@ -456,7 +398,7 @@ void Game::mouseDownLeft(int x, int y){
 	}
 }
 
-void Game::mouseDoubleClickLeft(int x, int y)
+void GameState::mouseDoubleClickLeft(int x, int y)
 {
 	if ( noInput ) return;
 	if (!(mainMessageBox.getEnabled()  && mainMessageBox.isInBounds(x, y))
@@ -465,7 +407,7 @@ void Game::mouseDoubleClickLeft(int x, int y)
 	}
 }
 
-void Game::mouseMove(int x, int y, const MouseState &ms) {
+void GameState::mouseMove(int x, int y, const MouseState &ms) {
 	const Metrics &metrics = Metrics::getInstance();
 
 	mouseX = x;
@@ -527,17 +469,16 @@ void Game::mouseMove(int x, int y, const MouseState &ms) {
 	lastMousePos.y = y;
 }
 
-void Game::eventMouseWheel(int x, int y, int zDelta) {
-	if ( noInput ) return;
+void GameState::eventMouseWheel(int x, int y, int zDelta) {
+	if (noInput) return;
 	//gameCamera.transitionXYZ(0.0f, -(float)zDelta / 30.0f, 0.0f);
 	gameCamera.zoom((float)zDelta / 30.0f);
 }
 
-void Game::keyDown(const Key &key) {
+void GameState::keyDown(const Key &key) {
 	UserCommand cmd = keymap.getCommand(key);
 	Lang &lang = Lang::getInstance();
-	bool isNetworkGame = NetworkManager::getInstance().isNetworkGame();
-	bool speedChangesAllowed = !isNetworkGame;
+	bool speedChangesAllowed = theSimInterface->isNetworkInterface();
 
 	if (config.getMiscDebugKeys()) {
 		stringstream str;
@@ -567,7 +508,6 @@ void Game::keyDown(const Key &key) {
 	if (chatManager.keyDown(key)) {
 		return; // key consumed, we're done here
 	}
-	// if ChatManger does not use this key, we keep processing
 	if (cmd == ucSaveScreenshot) {
 		Shared::Platform::mkdir("screens", true);
 		int i;
@@ -578,12 +518,11 @@ void Game::keyDown(const Key &key) {
 		for (i = 0; i < MAX_SCREENSHOTS; ++i) {
 			string path = "screens/screen" + intToStr(i) + ".tga";
 
-			if(fileExists(path)){
+			if (!fileExists(path)) {
 				Renderer::getInstance().saveScreen(path);
 				break;
 			}
 		}
-
 		if (i > MAX_SCREENSHOTS) {
 			console.addLine(lang.get("ScreenshotDirectoryFull"));
 		}
@@ -609,37 +548,41 @@ void Game::keyDown(const Key &key) {
 		console.addLine(lang.get("CameraModeSet") + " " + stateString);
 	//pause
 	} else if (speedChangesAllowed) {
-		bool prevPausedValue = paused;
+		GameSpeed curSpeed = simInterface->getSpeed();
+		GameSpeed newSpeed = curSpeed;
 		// on
 		if (cmd == ucPauseOn) {
-			paused = true;
+			newSpeed = simInterface->pause();
+			//paused = true;
 		// off
 		} else if (cmd == ucPauseOff) {
-			paused = false;
+			newSpeed = simInterface->resume();
+			//paused = false;
 		// toggle
 		} else if (cmd == ucPauseToggle) {
-			paused = !paused;
-		}
-		if (prevPausedValue != paused) {
-			if (paused) {
-				console.addLine(lang.get("GamePaused"));
+			if (curSpeed == GameSpeed::PAUSED) {
+				newSpeed = simInterface->resume();
 			} else {
-				console.addLine(lang.get("GameResumed"));
+				newSpeed = simInterface->pause();
 			}
-			return;
-		}
 		//increment speed
-		if (cmd == ucSpeedInc) {
-			incSpeed();
-			return;
+		} else if (cmd == ucSpeedInc) {
+			newSpeed = simInterface->incSpeed();
 		//decrement speed
 		} else if (cmd == ucSpeedDec) {
-			decSpeed();
-			return;
-
+			newSpeed = simInterface->decSpeed();
 		// reset speed
 		} else if (cmd == ucSpeedReset) {
-			resetSpeed();
+			newSpeed = simInterface->resetSpeed();
+		}
+		if (curSpeed != newSpeed) {
+			if (newSpeed == GameSpeed::PAUSED) {
+				console.addLine(lang.get("GamePaused"));
+			} else if (curSpeed == GameSpeed::PAUSED) {
+				console.addLine(lang.get("GameResumed"));
+			} else {
+				console.addLine(lang.get("GameSpeedSet") + " " + lang.get(SpeedDesc[newSpeed]));
+			}
 			return;
 		}
 	}
@@ -692,7 +635,7 @@ void Game::keyDown(const Key &key) {
 	*/
 }
 
-void Game::keyUp(const Key &key) {
+void GameState::keyUp(const Key &key) {
 	if (!chatManager.getEditEnabled()) {
 		switch (keymap.getCommand(key)) {
 			case ucCameraRotateLeft:
@@ -721,7 +664,7 @@ void Game::keyUp(const Key &key) {
 	}
 }
 
-void Game::keyPress(char c) {
+void GameState::keyPress(char c) {
 	if (saveBox) {
 		if (saveBox->getEntry()->isActivated()) {
 			switch (c) {
@@ -745,15 +688,16 @@ void Game::keyPress(char c) {
 	}
 }
 
-void Game::quitGame(){
-	program.setState(new BattleEnd(program, world.getStats()));
+void GameState::quitGame() {
+	_TRACE_FUNCTION();
+	program.setState(new BattleEnd(program));
 }
 
 // ==================== PRIVATE ====================
 
 // ==================== render ====================
 
-void Game::render3d(){
+void GameState::render3d(){
 	_PROFILE_FUNCTION();
 	Renderer &renderer= Renderer::getInstance();
 
@@ -793,12 +737,11 @@ void Game::render3d(){
 	renderer.renderMouse3d();
 }
 
-void Game::render2d(){
+void GameState::render2d(){
 	_PROFILE_FUNCTION();
 	Renderer &renderer= Renderer::getInstance();
 	Config &config= Config::getInstance();
 	CoreData &coreData= CoreData::getInstance();
-	NetworkManager &networkManager= NetworkManager::getInstance();
 
 	//init
 	renderer.reset2d();
@@ -850,25 +793,23 @@ void Game::render2d(){
 			<< "GameCamera pos: " << gameCamera.getPos().x
 				<< "," << gameCamera.getPos().y
 				<< "," << gameCamera.getPos().z << endl
-			<< "Time: " << world.getTimeFlow()->getTime() << endl
+			<< "Time: " << simInterface->getWorld()->getTimeFlow()->getTime() << endl
 			<< "Triangle count: " << renderer.getTriangleCount() << endl
 			<< "Vertex count: " << renderer.getPointCount() << endl
-			<< "Frame count: " << world.getFrameCount() << endl;
-
-		str << "Camera VAng : " << gameCamera.getVAng() << endl;
+			<< "Frame count: " << simInterface->getWorld()->getFrameCount() << endl
+			<< "Camera VAng : " << gameCamera.getVAng() << endl;
 
 		// resources
-		for(int i=0; i<world.getFactionCount(); ++i){
+		for (int i=0; i<simInterface->getWorld()->getFactionCount(); ++i){
 			str << "Player " << i << " res: ";
-			for(int j=0; j<world.getTechTree()->getResourceTypeCount(); ++j){
-				str << world.getFaction(i)->getResource(j)->getAmount() << " ";
+			for (int j=0; j < simInterface->getWorld()->getTechTree()->getResourceTypeCount(); ++j) {
+				str << simInterface->getWorld()->getFaction(i)->getResource(j)->getAmount() << " ";
 			}
 			str << endl;
 		}
-
-		// cluster map
-		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl;
-		str << "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl;
+		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl
+			<< "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl
+			<< "GameRole::" << GameRoleNames[theSimInterface->getNetworkRole()] << endl;
 
 		renderer.renderText(
 			str.str(), coreData.getMenuFontNormal(),
@@ -885,7 +826,7 @@ void Game::render2d(){
 	}
 	*/
 
-	//resource info
+	// resource info & consoles
 	if(!config.getUiPhotoMode()){
 		renderer.renderResourceStatus();
 		renderer.renderConsole(&console);
@@ -900,139 +841,17 @@ void Game::render2d(){
 // ==================== misc ====================
 
 
-void Game::checkWinner(){
-	if(!gameOver){
-		if(gameSettings.getDefaultVictoryConditions()){
-			checkWinnerStandard();
-		}
-		else
-		{
-			checkWinnerScripted();
-		}
-	}
-}
-
-void Game::checkWinnerStandard(){
-	//lose
-	bool lose= false;
-	if(!hasBuilding(world.getThisFaction())){
-		lose= true;
-		for(int i=0; i<world.getFactionCount(); ++i){
-			if(!world.getFaction(i)->isAlly(world.getThisFaction())){
-				world.getStats().setVictorious(i);
-			}
-		}
-		gameOver= true;
-		showLoseMessageBox();
-	}
-
-	//win
-	if(!lose){
-		bool win= true;
-		for(int i=0; i<world.getFactionCount(); ++i){
-			if(i!=world.getThisFactionIndex()){
-				if(hasBuilding(world.getFaction(i)) && !world.getFaction(i)->isAlly(world.getThisFaction())){
-					win= false;
-				}
-			}
-		}
-
-		//if win
-		if(win){
-			for(int i=0; i< world.getFactionCount(); ++i){
-				if(world.getFaction(i)->isAlly(world.getThisFaction())){
-					world.getStats().setVictorious(i);
-				}
-			}
-			gameOver= true;
-			showWinMessageBox();
-		}
-	}
-}
-
-void Game::checkWinnerScripted(){
-	if(ScriptManager::getGameOver()){
-		gameOver= true;
-		for(int i= 0; i<world.getFactionCount(); ++i){
-			if(ScriptManager::getPlayerModifiers(i)->getWinner()){
-				world.getStats().setVictorious(i);
-			}
-		}
-		if(ScriptManager::getPlayerModifiers(world.getThisFactionIndex())->getWinner()){
-			showWinMessageBox();
-		}
-		else{
-			showLoseMessageBox();
-		}
-	}
-}
-
-
-bool Game::hasBuilding(const Faction *faction){
-	for(int i=0; i<faction->getUnitCount(); ++i){
-		Unit *unit = faction->getUnit(i);
-		if(unit->getType()->hasSkillClass(SkillClass::BE_BUILT) && unit->isAlive()){
-			return true;
-		}
-	}
-	return false;
-}
-
-void Game::updateSpeed() {
-	Lang &lang= Lang::getInstance();
-	console.addLine(lang.get("GameSpeedSet") + " " + lang.get(SpeedDesc[speed]));
-	
-	if (speed == GameSpeed::NORMAL) {
-		fUpdateLoops = 1.0f;
-	} else if (speed > GameSpeed::NORMAL) {
-		fUpdateLoops = 1.0f + float(speed - GameSpeed::NORMAL) / float(GameSpeed::FASTEST - GameSpeed::NORMAL)
-			* (theConfig.getGsSpeedFastest() - 1.0f);
-	} else {
-		fUpdateLoops = theConfig.getGsSpeedSlowest() + float(speed) / float(GameSpeed::NORMAL)
-			* (1.0f - theConfig.getGsSpeedSlowest());
-	}
-}
-
-void Game::incSpeed() {
-	if (speed < GameSpeed::FASTEST) {
-		++speed;
-		updateSpeed();
-	}
-}
-
-void Game::decSpeed() {
-	if (speed > GameSpeed::SLOWEST) {
-		--speed;
-		updateSpeed();
-	}
-}
-
-void Game::resetSpeed() {
-	speed = GameSpeed::NORMAL;
-	updateSpeed();
-}
-
-int Game::getUpdateLoops(){
-	if (paused || (!NetworkManager::getInstance().isNetworkGame() && (saveBox || mainMessageBox.getEnabled()))) {
-		return 0;
-	} else {
-		int updateLoops = (int)(fUpdateLoops + lastUpdateLoopsFraction);
-		lastUpdateLoopsFraction = fUpdateLoops + lastUpdateLoopsFraction - (float)updateLoops;
-		return updateLoops;
-	}
-}
-
-void Game::showLoseMessageBox() {
+void GameState::showLoseMessageBox() {
 	Lang &lang = Lang::getInstance();
 	showMessageBox(lang.get("YouLose") + ", " + lang.get("ExitGame?"), lang.get("BattleOver"), false);
 }
 
-void Game::showWinMessageBox() {
+void GameState::showWinMessageBox() {
 	Lang &lang = Lang::getInstance();
 	showMessageBox(lang.get("YouWin") + ", " + lang.get("ExitGame?"), lang.get("BattleOver"), false);
 }
 
-void Game::showMessageBox(const string &text, const string &header, bool toggle) {
+void GameState::showMessageBox(const string &text, const string &header, bool toggle) {
 	if (!toggle) {
 		mainMessageBox.setEnabled(false);
 	}
@@ -1046,23 +865,21 @@ void Game::showMessageBox(const string &text, const string &header, bool toggle)
 	}
 }
 
-void Game::saveGame(string name) const {
+void GameState::saveGame(string name) const {
 	XmlNode root("saved-game");
-	root.addAttribute("version", "3");
+	root.addAttribute("version", GameConstants::saveGameVersion);
 	gui.save(root.addChild("gui"));
-	gameSettings.save(root.addChild("settings"));
-	world.save(root.addChild("world"));
+	theSimInterface->getGameSettings().save(root.addChild("settings"));
+	simInterface->getWorld()->save(root.addChild("world"));
 	XmlIo::getInstance().save("savegames/" + name + ".sav", &root);
 }
-
-
 
 void ShowMap::init() {
 	Lang &lang= Lang::getInstance();
 	Logger &logger= Logger::getInstance();
 	CoreData &coreData= CoreData::getInstance();
 	Renderer &renderer= Renderer::getInstance();
-	Map *map= world.getMap();
+	Map *map= simInterface->getWorld()->getMap();
 
 	logger.setState(lang.get("Initializing"));
 
@@ -1071,14 +888,14 @@ void ShowMap::init() {
 	mainMessageBox.setEnabled(false);
 
 	// init world, and place camera
-	commander.init(&world);
+	simInterface->getCommander()->init(simInterface->getWorld());
 
 	// setup progress bar (used for ClusterMap init)
 	GraphicProgressBar progressBar;
 	progressBar.init(345, 550, 300, 20);
 	logger.setProgressBar(&progressBar);
 
-	world.init();
+	simInterface->getWorld()->init();
 	logger.setProgressBar(NULL);
 
 	gui.init();
@@ -1087,13 +904,13 @@ void ShowMap::init() {
 	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
 
 	//wheather particle systems
-	if(world.getTileset()->getWeather() == Weather::RAINY){
+	if(simInterface->getWorld()->getTileset()->getWeather() == Weather::RAINY){
 		logger.add("Creating rain particle system", true);
 		weatherParticleSystem= new RainParticleSystem();
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
-	} else if(world.getTileset()->getWeather() == Weather::SNOWY){
+	} else if(simInterface->getWorld()->getTileset()->getWeather() == Weather::SNOWY){
 		logger.add("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());
@@ -1109,8 +926,8 @@ void ShowMap::init() {
 	//sounds
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 
-	Tileset *tileset= world.getTileset();
-	const TechTree *techTree = world.getTechTree();
+	Tileset *tileset= simInterface->getWorld()->getTileset();
+	const TechTree *techTree = simInterface->getWorld()->getTechTree();
 	AmbientSounds *ambientSounds= tileset->getAmbientSounds();
 
 	//rain

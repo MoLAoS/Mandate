@@ -17,7 +17,7 @@
 
 #include "leak_dumper.h"
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Net {
 
 // =====================================================
 //	class NetworkCommand
@@ -125,120 +125,5 @@ ProjectileUpdate::ProjectileUpdate(const Unit *unit, ProjectileParticleSystem *p
 	assert(pps->getEndFrame() - theWorld.getFrameCount() < 256);
 	this->end_offset = pps->getEndFrame() - theWorld.getFrameCount();
 }
-
-#if _RECORD_GAME_STATE_
-
-UnitStateRecord::UnitStateRecord(Unit *unit) {
-	this->unit_id = unit->getId();
-	this->cmd_id = unit->anyCommand() ? unit->getCurrCommand()->getType()->getId() : -1;
-	this->skill_id = unit->getCurrSkill()->getId();
-	this->curr_pos_x = unit->getPos().x;
-	this->curr_pos_y = unit->getPos().y;
-	this->next_pos_x = unit->getNextPos().x;
-	this->next_pos_y = unit->getNextPos().y;
-	this->targ_pos_x = unit->getTargetPos().x;
-	this->targ_pos_y = unit->getTargetPos().y;
-	this->target_id  = unit->getTarget() ? unit->getTarget()->getId() : -1;
-}
-
-ostream& operator<<(ostream &lhs, const UnitStateRecord& state) {
-	return lhs	
-		<< "Unit: " << state.unit_id 
-		<< ", CommandId: " << state.cmd_id 
-		<< ", SkillId: " << state.skill_id
-		<< "\n\tCurr Pos: " << Vec2i(state.curr_pos_x, state.curr_pos_y)
-		<< ", Next Pos: " << Vec2i(state.next_pos_x, state.next_pos_y)
-		<< "\n\tTarg Pos: " << Vec2i(state.targ_pos_x, state.targ_pos_y)
-		<< ", Targ Id: " << state.target_id 
-		<< endl;
-}
-
-ostream& operator<<(ostream &lhs, const FrameRecord& record) {
-	if (record.frame != -1) {
-		lhs	<< "Frame Record, frame number: " << record.frame << endl;
-		foreach_const (FrameRecord, it, record) {
-			lhs << *it;
-		}
-	}
-	return lhs;
-}
-
-const char *gs_datafile = "game_state.gsd";
-const char *gs_indexfile = "game_state.gsi";
-
-GameStateLog::GameStateLog() {
-	currFrame.frame = 0;
-	// clear old data and index files
-	fdata = FSFactory::getInstance()->getFileOps();
-	fdata->openWrite(gs_datafile);
-	findex = FSFactory::getInstance()->getFileOps();
-	findex->openWrite(gs_indexfile);
-}
-
-GameStateLog::~GameStateLog(){
-	delete fdata;
-	delete findex;
-}
-
-struct StateLogIndexEntry {
-	int32	frame;
-	int32	start;
-	int32	end;
-};
-
-void GameStateLog::writeFrame() {
-	StateLogIndexEntry ndxEntry;
-	ndxEntry.start = fdata->tell();
-	foreach (FrameRecord, it, currFrame) {
-		fdata->write(&(*it), sizeof(UnitStateRecord), 1);
-	}
-	ndxEntry.end = fdata->tell();
-
-	ndxEntry.frame = currFrame.frame;
-	findex->write(&ndxEntry, sizeof(StateLogIndexEntry), 1);
-}
-
-void GameStateLog::logFrame(int frame) {
-	if (frame == -1) {
-		stringstream ss;
-		ss << currFrame;
-		LOG_NETWORK( ss.str() );
-	} else {
-		assert(frame > 0);
-		FileOps *f = FSFactory::getInstance()->getFileOps();
-		f->openRead(gs_indexfile);
-		long pos = (frame - 1) * sizeof(StateLogIndexEntry);
-		StateLogIndexEntry ndxEntry;
-		f->seek(pos, SEEK_SET);
-		f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
-		delete f;
-
-		f = FSFactory::getInstance()->getFileOps();
-		f->openRead(gs_datafile);
-		f->seek(ndxEntry.start, SEEK_SET);
-		FrameRecord record;
-		record.frame = frame;
-		int numUpdates = (ndxEntry.end - ndxEntry.start) / sizeof(UnitStateRecord);
-		assert((ndxEntry.end - ndxEntry.start) % sizeof(UnitStateRecord) == 0);
-		cout << "\nEntries == " << numUpdates << endl;
-			
-		if (numUpdates) {
-			UnitStateRecord *unitRecords = new UnitStateRecord[numUpdates];
-			f->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
-			for (int i=0; i < numUpdates; ++i) {
-				record.push_back(unitRecords[i]);
-			}
-			delete [] unitRecords;
-			stringstream ss;
-			ss << record;
-			LOG_NETWORK( ss.str() );
-		} else {
-			LOG_NETWORK( "Frame " + intToStr(frame) + " has no updates." );
-		}
-		delete f;
-	}
-}
-
-#endif
 
 }}//end namespace

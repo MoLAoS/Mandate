@@ -17,6 +17,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
+#include <limits>
 
 using namespace Shared::Platform;
 using std::cout;
@@ -102,9 +103,16 @@ private:
 	static const int64 MIN_RAW = ~MAX_RAW;
 
 public:
-	static int64 max_frac()	{ return SCALE_FACTOR - 1;	}
+	static int32 scale_factor() { return SCALE_FACTOR; }
+	static int32 max_frac()	{ return SCALE_FACTOR - 1;	}
 	static int64 max_int()	{ return MAX_INTEGER;		}
 	static int64 min_int()	{ return ~MAX_INTEGER;		}
+
+	static fixed max_value() { 
+		fixed max_fixed;
+		max_fixed.datum = int32(MAX_RAW);
+		return max_fixed;
+	}
 
 private:
 	union {

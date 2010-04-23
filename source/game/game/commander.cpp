@@ -22,9 +22,9 @@
 #include "console.h"
 #include "config.h"
 #include "platform_util.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
-
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;
@@ -175,7 +175,6 @@ CommandResult Commander::computeResult(const CommandResultContainer &results) co
 
 CommandResult Commander::pushCommand(Command *command) const {
 	assert(command->getCommandedUnit());
-	GameInterface *gameInterface = NetworkManager::getInstance().getGameInterface();
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
 	if (command->getArchetype() != CommandArchetype::CANCEL_COMMAND) {
 		COMMAND_LOG(
@@ -183,24 +182,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 			<< command->getType()->getName() << " result = " << CommandResultNames[result];
 		);
 	}
-	gameInterface->requestCommand(command);
+	iSim->requestCommand(command);
 	return result;
-}
-
-void Commander::updateNetwork() {
-	NetworkManager &networkManager = NetworkManager::getInstance();
-	GameInterface *gni = NetworkManager::getInstance().getGameInterface();
-
-	if (!networkManager.isNetworkGame() || world->getFrameCount() % GameConstants::networkFramePeriod == 0) {
-		//update the keyframe
-		gni->doUpdateKeyframe(world->getFrameCount());
-		//give pending commands
-		for (int i = 0; i < gni->getPendingCommandCount(); ++i) {
-			Command *cmd = gni->getPendingCommand(i);
-			giveCommand(cmd);
-		}
-		gni->clearPendingCommands();
-	}
 }
 
 void Commander::giveCommand(Command *command) const {

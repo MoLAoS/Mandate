@@ -23,7 +23,7 @@ namespace Glest{ namespace Game{
 
 class Unit;
 class UpgradeType;
-class Game;
+class GameState;
 
 class UpgradeManager;
 class EnhancementType;

@@ -29,8 +29,9 @@
 #include "xml_parser.h"
 
 #include "leak_dumper.h"
+#include "sim_interface.h"
 
-
+using namespace Glest::Sim;
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 using Shared::Xml::XmlNode;
@@ -97,7 +98,7 @@ void SelectionQuad::disable(){
 Gui* Gui::currentGui = NULL;
 
 //constructor
-Gui::Gui(Game &game) : game(game), input(game.getInput()) {
+Gui::Gui(GameState &game) : game(game), input(game.getInput()) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -116,10 +117,10 @@ Gui::Gui(Game &game) : game(game), input(game.getInput()) {
 }
 
 void Gui::init() {
-	this->commander= game.getCommander();
+	this->commander= theSimInterface->getCommander();
 	this->gameCamera= game.getGameCamera();
 	this->console= game.getConsole();
-	this->world= game.getWorld();
+	this->world= &theWorld;
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
 }
@@ -896,7 +897,7 @@ void Gui::computeDisplay() {
 
 	// ================ PART 1 ================
 
-	int thisTeam = Game::getInstance()->getWorld()->getThisTeamIndex();
+	int thisTeam = theWorld.getThisTeamIndex();
 	//title, text and progress bar
 	if (selection.getCount() == 1) {
 		const Unit *unit = selection.getFrontUnit();

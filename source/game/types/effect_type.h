@@ -62,9 +62,10 @@ private:
 	unsigned int effectflags;
 
 	int duration;
-	float chance;
+	fixed chance;
+	//float chance;
 	bool light;
-	Vec3f lightColor;
+	Vec3f lightColour;
 	ParticleSystemType *particleSystemType;
 	StaticSound *sound;
 	float soundStartTime;
@@ -100,10 +101,10 @@ public:
 	bool isTickImmediately() const			{return getFlag(EffectTypeFlag::TICK_IMMEDIATELY);}
 
 	int getDuration() const								{return duration;}
-	float getChance() const								{return chance;}
+	fixed getChance() const								{return chance;}
 	bool isLight() const								{return light;}
 	bool isDisplay() const								{return display;}
-	Vec3f getLightColor() const							{return lightColor;}
+	Vec3f getLightColour() const							{return lightColour;}
 	ParticleSystemType *getParticleSystemType() const	{return particleSystemType;}
 	StaticSound *getSound() const						{return sound;}
 	float getSoundStartTime() const						{return soundStartTime;}

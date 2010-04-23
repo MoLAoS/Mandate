@@ -39,11 +39,11 @@ void DamageMultiplierTable::init(int attackTypeCount, int armorTypeCount){
 	}
 }
 
-fixed DamageMultiplierTable::getDamageMultiplier(const AttackType *att, const ArmorType *art) const {
+fixed DamageMultiplierTable::getDamageMultiplier(const AttackType *att, const ArmourType *art) const {
 	return values[attackTypeCount*art->getId()+att->getId()];
 }
 
-void DamageMultiplierTable::setDamageMultiplier(const AttackType *att, const ArmorType *art, fixed value) {
+void DamageMultiplierTable::setDamageMultiplier(const AttackType *att, const ArmourType *art, fixed value) {
 	values[attackTypeCount*art->getId()+att->getId()]= value;
 }
 

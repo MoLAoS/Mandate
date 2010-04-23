@@ -28,6 +28,10 @@
 #include "auto_test.h"
 
 #include "leak_dumper.h"
+#include "sim_interface.h"
+
+using Glest::Sim::SimulationInterface;
+using namespace Glest::Net;
 
 namespace Glest { namespace Game {
 
@@ -37,16 +41,14 @@ using namespace Shared::Util;
 //  class MenuStateNewGame
 // =====================================================
 
-MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots) :
-		MenuStateStartGameBase(program, mainMenu, "new-game") {
-
+MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots)
+		: MenuStateStartGameBase(program, mainMenu, "new-game") {
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
-	NetworkManager &networkManager = NetworkManager::getInstance();
+	
 	vector<string> results;
 	vector<string> teamItems;
 	vector<string> controlItems;
-	int match = 0;
 
 	//create
 	buttonReturn.init(350, 170, 125);
@@ -70,8 +72,9 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		throw runtime_error("There are no maps");
 	}
 	mapFiles = results;
+	int match = 0;
 	for (int i = 0; i < results.size(); ++i) {
-		if(results[i] == config.getUiLastMap()) {
+		if (results[i] == config.getUiLastMap()) {
 			match = i;
 		}
 		results[i] = formatString(results[i]);
@@ -138,11 +141,9 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	for (ControlType i = enum_cast<ControlType>(0); i < ControlType::COUNT; ++i) {
 		controlItems.push_back(lang.get(ControlTypeNames[i]));
 	}
-	teamItems.push_back("1");
-	teamItems.push_back("2");
-	teamItems.push_back("3");
-	teamItems.push_back("4");
-
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		teamItems.push_back(intToStr(i));
+	}
 	reloadFactions();
 
 	findAll("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()] + "/factions/*.", results);
@@ -169,11 +170,13 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	labelMapInfo.setText(mapInfo.desc);
 
-	//initialize network interface
-	networkManager.init(nrServer);
+	// initialize network interface
+	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
+	program.getSimulationInterface()->changeRole(GameRole::SERVER);
+
 	labelNetwork.init(50, 50);
 	try {
-		labelNetwork.setText(lang.get("Address") + ": " + networkManager.getServerInterface()->getIp() 
+		labelNetwork.setText(lang.get("Address") + ": " + theSimInterface->asServerInterface()->getIp() 
 			+ ":" + intToStr(GameConstants::serverPort));
 	} catch (const exception &e) {
 		labelNetwork.setText(lang.get("Address") + ": ? " + e.what());
@@ -213,7 +216,6 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
 	Config &config = Config::getInstance();
 	CoreData &coreData = CoreData::getInstance();
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
 
 	if (msgBox) {
 		if (msgBox->mouseClick(x, y)) {
@@ -226,23 +228,27 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
 		config.save();
 		for (int i=0; i < GameConstants::maxPlayers; ++i) {
 			if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
-				serverInterface->removeSlot(i);
+				theSimInterface->asServerInterface()->removeSlot(i);
 			}
 		}		
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
 	} else if (buttonPlayNow.mouseClick(x, y)) {
-		if (isUnconnectedSlots()) {
+		if (hasUnconnectedSlots()) {
 			buttonPlayNow.mouseMove(1, 1);
 			msgBox = new GraphicMessageBox();
 			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
 		} else {
-			GameSettings gameSettings;
-
 			config.save();
 			soundRenderer.playFx(coreData.getClickSoundC());
-			loadGameSettings(&gameSettings);
-			serverInterface->launchGame(&gameSettings);
-			program.setState(new Game(program, gameSettings));
+			if (!hasNetworkSlots()) {
+				program.getSimulationInterface()->changeRole(GameRole::LOCAL);
+				loadGameSettings();
+				program.setState(new GameState(program));
+			} else {
+				loadGameSettings();
+				theSimInterface->asServerInterface()->doLaunchBroadcast();
+				program.setState(new GameState(program));
+			}
 		}
 	} else if (listBoxMap.mouseClick(x, y)) {
 		string mapBaseName = mapFiles[listBoxMap.getSelectedItemIndex()];
@@ -364,7 +370,7 @@ void MenuStateNewGame::update() {
 		AutoTest::getInstance().updateNewGame(program, mainMenu);
 	}
 
-	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
+	ServerInterface* serverInterface = theSimInterface->asServerInterface();
 	Lang& lang = Lang::getInstance();
 
 	for (int i = 0; i < mapInfo.players; ++i) {
@@ -384,11 +390,15 @@ void MenuStateNewGame::update() {
 	}
 }
 
-void MenuStateNewGame::loadGameSettings(GameSettings *gameSettings) {
+void MenuStateNewGame::loadGameSettings() {
 	Random rand;
 	rand.init(Shared::Platform::Chrono::getCurMillis());
 
 	int factionCount = 0;
+
+	GameSettings &gs = theSimInterface->getGameSettings();
+	gs.clear();
+	GameSettings *gameSettings = &gs;
 
 	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
 	gameSettings->setMapPath(string("maps/") + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm");
@@ -475,8 +485,8 @@ void MenuStateNewGame::updateControlers() {
 	}
 }
 
-bool MenuStateNewGame::isUnconnectedSlots() {
-	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
+bool MenuStateNewGame::hasUnconnectedSlots() {
+	ServerInterface* serverInterface = theSimInterface->asServerInterface();
 	for (int i = 0; i < mapInfo.players; ++i) {
 		if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
 			if (!serverInterface->getSlot(i)->isConnected()) {
@@ -487,10 +497,17 @@ bool MenuStateNewGame::isUnconnectedSlots() {
 	return false;
 }
 
+bool MenuStateNewGame::hasNetworkSlots() {
+	for (int i = 0; i < mapInfo.players; ++i) {
+		if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void MenuStateNewGame::updateNetworkSlots() {
-	ServerInterface* serverInterface = NetworkManager::getInstance().getServerInterface();
-
-
+	ServerInterface* serverInterface = theSimInterface->asServerInterface();
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		if (serverInterface->getSlot(i) == NULL && listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
 			serverInterface->addSlot(i);

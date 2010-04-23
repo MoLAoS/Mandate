@@ -26,19 +26,125 @@ using Shared::Math::Vec2i;
 using namespace Shared::Platform;
 
 namespace Glest { namespace Game {
+	class Unit;
+	class Command;
+	class ProjectileParticleSystem;
+}}
+using namespace Glest::Game;
 
-class Unit;
-class Command;
-class ProjectileParticleSystem;
+namespace Glest { namespace Net {
+
+WRAPPED_ENUM( NetSource, CLIENT, SERVER )
 
 // =====================================================
-//	class NetworkException
+//	class NetworkError & Derivitives
 // =====================================================
 
-class NetworkException : public std::runtime_error {
+class NetworkError : public std::exception {};
+
+class TimeOut : public NetworkError {
 public:
-	NetworkException(const string &msg) : runtime_error(msg) {}
-	NetworkException(const char *msg) : runtime_error(msg) {}
+	TimeOut(NetSource waitingFor) : source(waitingFor) {}
+
+	NetSource getSource() const { return source; }
+
+	const char* what() const {
+		if (source == NetSource::SERVER) {
+			return "Time out waiting for server.";
+		} else {
+			return "Time out waiting for client(s).";
+		}
+	}
+
+private:
+	NetSource source;
+};
+
+class InvalidMessage : public NetworkError {
+public:
+	InvalidMessage(MessageType expected, MessageType got) 
+		: expected(expected), received(got) {}
+
+	InvalidMessage(MessageType got) 
+		: expected(MessageType::INVALID), received(got) {}
+
+	const char* what() const {
+		static char msgBuf[512];
+		if (expected != MessageType::INVALID) {
+			sprintf(msgBuf, "Expected message type %d(%s), got type %d(%s).",
+				int(expected), MessageTypeNames[expected], int(received), MessageTypeNames[received]);
+		} else {
+			sprintf(msgBuf, "Unexpected message type received: %d(%s).",
+				int(received), MessageTypeNames[received]);
+		}
+		return msgBuf;
+	}
+
+private:
+	MessageType expected, received;
+};
+
+class GarbledMessage : public NetworkError {
+public:
+	GarbledMessage(MessageType type, NetSource sender) : type(type), sender(sender) {}
+
+	const char* what() const {
+		static char msgBuf[512];
+		sprintf(msgBuf, "While processing %s message from %s, encountered invalid data.",
+			MessageTypeNames[type], (sender == NetSource::SERVER ? "server" : "client"));
+		return msgBuf;
+	}
+
+private:
+	MessageType type;
+	NetSource sender;
+};
+
+class DataSyncError : public NetworkError {
+public:
+	DataSyncError(NetSource role) : role(role) {}
+
+	const char* what() const {
+		if (role == NetSource::CLIENT) {
+			return "Your data does not match the server's.";
+		} else {
+			return "Client data does not match yours.";
+		}
+	}
+
+private:
+	NetSource role;
+};
+
+class GameSyncError : public NetworkError {
+public:
+	const char* what() const {
+		return "A network synchronisation error has occured.";
+	}
+};
+
+class VersionMismatch : public NetworkError {
+public:
+	VersionMismatch(NetSource role, const string &v1, const string &v2)
+			: role(role), v1(v1), v2(v2) {}
+
+	const char* what() const {
+		static char msgBuf[512];
+		sprintf(msgBuf, "Version mismatch, your version: %s, %s version: %s",
+			v1.c_str(), (role == NetSource::SERVER ? "Client" : "Server"), v2.c_str());
+		return msgBuf;
+	}
+
+private:
+	NetSource role;
+	string v1, v2;
+};
+
+class Disconnect : public NetworkError {
+public:
+	const char* what() const {
+		return "The network connection was severed.";
+	}
 };
 
 // =====================================================
@@ -46,60 +152,14 @@ public:
 // =====================================================
 
 template<int S>
-class NetworkString{
+class NetworkString {
 private:
 	char buffer[S];
 
 public:
-#if 0
-	NetworkString() /*: s() */{
-		assert(S && S < USHRT_MAX);
-		size = 0;
-		*buffer = 0;
-	}
-	NetworkString(const string &str) {
-		assert(S && S < USHRT_MAX);
-		(*this) = str;
-	}
-#endif
 	NetworkString()						{memset(buffer, 0, S);}
 	void operator=(const string& str)	{strncpy(buffer, str.c_str(), S-1);}
 	string getString() const			{return buffer;}
-
-#if 0
-	void operator=(const string &str) {
-		/*
-		s = str;
-		if(s.size() > S) {
-			s.resize(S);
-		}
-		*/
-		size = (uint16)(str.size() < S ? str.size() : S - 1);
-		strncpy(buffer, str.c_str(), size);
-		buffer[size] = 0;
-	}
-
-	size_t getNetSize() const {
-		//return s.size() + sizeof(uint16);
-		return sizeof(size) + size;
-	}
-
-	size_t getMaxNetSize() const {
-		return sizeof(size) + sizeof(buffer);
-	}
-
-	void write(NetworkDataBuffer &buf) const {
-		buf.write(size);
-		buf.write(buffer, size);
-	}
-
-	void read(NetworkDataBuffer &buf) {
-		buf.read(size);
-		assert(size < S);
-		buf.read(buffer, size);
-		buffer[size] = 0;
-	}
-#endif
 };
 
 // =====================================================
@@ -168,68 +228,6 @@ WRAPPED_ENUM( NetworkCommandType,
 		ProjectileUpdate(const char *ptr) { *this = *((ProjectileUpdate*)ptr); }
 	}; // 2 bytes
 #pragma pack(pop)
-
-
-#define _RECORD_GAME_STATE_ 1
-
-#if _RECORD_GAME_STATE_
-
-struct UnitStateRecord {
-
-	uint32	unit_id		: 32;
-	int32	cmd_id		: 16;
-	uint32	skill_id	: 16; // 8
-	int32	curr_pos_x	: 12;
-	int32	curr_pos_y	: 12;
-	int32	next_pos_x	: 12;
-	int32	next_pos_y	: 12; // 16
-	int32	targ_pos_x	: 12;
-	int32	targ_pos_y	: 12;
-	int32	target_id	: 32; // 24
-
-	UnitStateRecord(Unit *unit);
-	UnitStateRecord() {}
-
-};					//	: 24 bytes
-
-ostream& operator<<(ostream &lhs, const UnitStateRecord&);
-
-struct FrameRecord : public vector<UnitStateRecord> {
-	int32	frame;
-};
-
-ostream& operator<<(ostream &lhs, const FrameRecord&);
-
-class GameStateLog {
-private:
-	FrameRecord currFrame;
-
-	FileOps *fdata, *findex;
-	void writeFrame();
-
-public:
-	GameStateLog();
-	~GameStateLog();
-
-	int getCurrFrame() const { return currFrame.frame; }
-
-	void addUnitRecord(UnitStateRecord &usr) {
-		currFrame.push_back(usr);
-	}
-
-	void newFrame(int frame) {
-		if (currFrame.frame) {
-			writeFrame();
-		}
-		currFrame.clear();
-		assert(frame == currFrame.frame + 1);
-		currFrame.frame = frame;
-	}
-
-	void logFrame(int frame = -1);
-};
-
-#endif
 
 }}//end namespace
 

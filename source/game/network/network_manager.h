@@ -18,37 +18,41 @@
 #include "checksum.h"
 #include "server_interface.h"
 #include "client_interface.h"
+#include "sim_interface.h"
+#include "program.h"
 
 using Shared::Util::Checksum;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Net {
 
 // =====================================================
 //	class NetworkManager
 // =====================================================
-
-enum NetworkRole{
+/*
+enum GameRole{
 	nrServer,
 	nrClient,
 	nrIdle
-};
-
+};*/
+/*
 class NetworkManager{
 private:
-	GameInterface* gameInterface;
-	NetworkRole networkRole;
+	//NetworkInterface* netInterface;
+	//GameRole networkRole;
 
 public:
 	static NetworkManager &getInstance();
 
 	NetworkManager();
 	~NetworkManager();
-	void init(NetworkRole networkRole);
-	void end();
+	//void init(GameRole networkRole);
+	//void end();
 
+	//REFACTOR: get this into Program ?
 	void update() {
-		if(gameInterface) {
-			gameInterface->doUpdate();
+		NetworkInterface *netInterface = theSimInterface->asNetworkInterface();
+		if (netInterface) {
+			netInterface->update();
 		}
 	}
 
@@ -57,39 +61,45 @@ public:
 	}
 
 	bool isServer() {
-		return networkRole == nrServer;
+		return theSimInterface->getNetworkRole() == GameRole::SERVER;
 	}
 
 	bool isNetworkServer() {
-		return networkRole == nrServer && getServerInterface()->getConnectedSlotCount() > 0;
+		return theSimInterface->getNetworkRole() == GameRole::SERVER 
+			&& getServerInterface()->getConnectedSlotCount() > 0;
 	}
 
 	bool isNetworkClient() {
-		return networkRole == nrClient;
+		return theSimInterface->getNetworkRole() == GameRole::NONE;
 	}
 
 	bool isNetworkGame() {
-		return networkRole == nrClient || getServerInterface()->getConnectedSlotCount() > 0;
+		return theSimInterface->getNetworkRole() == GameRole::NONE 
+			|| getServerInterface()->getConnectedSlotCount() > 0;
 	}
 
-	GameInterface* getGameInterface() {
-		assert(gameInterface != NULL);
-		return gameInterface;
+	NetworkInterface* getNetworkInterface() {
+		if (theSimInterface->getNetworkRole() != GameRole::NONE) {
+			return static_cast<NetworkInterface*>(theSimInterface);
+		}
+		return 0;
 	}
 
 	ServerInterface* getServerInterface() {
-		assert(gameInterface != NULL);
-		assert(networkRole == nrServer);
-		return static_cast<ServerInterface*>(gameInterface);
+		if (theSimInterface->getNetworkRole() == GameRole::SERVER) {
+			return static_cast<ServerInterface*>(theSimInterface);
+		}
+		return 0;
 	}
 
 	ClientInterface* getClientInterface() {
-		assert(gameInterface != NULL);
-		assert(networkRole == nrClient);
-		return static_cast<ClientInterface*>(gameInterface);
+		if (theSimInterface->getNetworkRole() == GameRole::NONE) {
+			return static_cast<ClientInterface*>(theSimInterface);
+		}
+		return 0;
 	}
-};
+};*/
 
-}}//end namespace
+}}// namespace Game::Net
 
 #endif

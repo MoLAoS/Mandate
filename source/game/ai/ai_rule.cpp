@@ -53,7 +53,7 @@ AiRuleRefreshHarvester::AiRuleRefreshHarvester(Ai *ai)
 }
 
 bool AiRuleRefreshHarvester::test() {
-	return ai->findAbleUnit(&workerIndex, CommandClass::HARVEST, true);
+	return ai->findAbleUnit(&workerIndex, CommandClass::HARVEST, true); // should be idleOnly == false ?
 }
 
 void AiRuleRefreshHarvester::execute() {
@@ -94,7 +94,7 @@ bool AiRuleRepair::test() {
 			repairable.push_back(u);
 		}
 	}
-	return (bool)repairable.size();
+	return !repairable.empty();
 }
 
 void AiRuleRepair::execute() {
@@ -118,8 +118,7 @@ void AiRuleRepair::execute() {
 			if ((u->getCurrSkill()->getClass() == SkillClass::STOP 
 			||   u->getCurrSkill()->getClass() == SkillClass::MOVE)
 			&& (rct = u->getRepairCommandType(damagedUnit))) {
-				fixed dist = fpos.dist(u->getFixedCenteredPos())
-							+ size + u->getType()->getHalfSize();
+				fixed dist = fpos.dist(u->getFixedCenteredPos()) + size + u->getType()->getHalfSize();
 				if (minDist > dist) {
 					nearestRct = rct;
 					nearest = i;

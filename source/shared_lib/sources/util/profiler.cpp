@@ -13,7 +13,6 @@
 #include "pch.h"
 #include "profiler.h"
 
-#ifdef SL_PROFILE
 
 #include "platform_util.h"
 #include "timer.h"
@@ -21,12 +20,16 @@
 
 #include <map>
 
+namespace Shared { namespace Util { 
+
+#ifdef SL_PROFILE
+
 using Shared::Platform::Chrono;
 
 using namespace std;
 using Shared::Platform::Chrono;
 
-namespace Shared { namespace Util { namespace Profile {
+namespace Profile {
 
 // =====================================================
 //	class Section
@@ -138,10 +141,6 @@ public:
 	void sectionEnd(const string &name);
 };
 
-// =====================================================
-//	class Profiler
-// =====================================================
-
 Profiler::Profiler(){
 	rootSection= new Section("Root");
 	currSection= rootSection;
@@ -198,6 +197,65 @@ void sectionEnd(const string &name) {
 	getProfiler().sectionEnd(name);
 }
 
-}}} //end namespace Shared::Util::Profile
+} // namespace Profile
 
 #endif
+
+#ifdef SL_TRACE
+
+namespace Trace {
+	
+	static int currDepth = 0;
+	
+	const char *trace_filename = "gae_trace.txt";
+	char space20[] = "                    ";
+
+	FileOps *traceFile;
+
+	struct TraceLogFileContainer {
+		TraceLogFileContainer() {
+			traceFile = FSFactory::getInstance()->getFileOps();
+			traceFile->openWrite(trace_filename);
+		}
+		~TraceLogFileContainer() {
+			traceFile->close();
+		}
+	};
+
+	FunctionTrace::FunctionTrace(const char *name) : name(name), callDepth(currDepth) {
+		static TraceLogFileContainer startLog;
+		int space = callDepth;
+		while (space >= 20) {
+			traceFile->write(space20, 20, 1);
+			space -= 20;
+		}
+		if (space) {
+			traceFile->write(space20, space, 1);
+		}
+		static char buf[1024];
+		int len = sprintf(buf, "+ %s()\n", name);
+		traceFile->write(buf, len, 1);
+		++currDepth;
+	}
+
+	FunctionTrace::~FunctionTrace() {
+		int space = callDepth;
+		while (space >= 20) {
+			traceFile->write(space20, 20, 1);
+			space -= 20;
+		}
+		if (space) {
+			traceFile->write(space20, space, 1);
+		}
+		static char buf[1024];
+		int len = sprintf(buf, "- %s()\n", name);
+		traceFile->write(buf, len, 1);
+		--currDepth;
+	}
+
+} // namespace Trace
+
+
+#endif
+
+}} //end namespace Shared::Util

@@ -28,14 +28,15 @@
 #include "network_manager.h"
 #include "menu_state_new_game.h"
 #include "menu_state_join_game.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
+using namespace Glest::Net;
 
 using namespace Shared::Util;
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
-
 
 namespace Glest { namespace Game {
 
@@ -107,11 +108,13 @@ Program::Program(Config &config, CmdArgs &args)
 		, updateTimer(float(GameConstants::updateFps), maxTimes, 1) 
 #		endif
 		, updateCameraTimer(float(GameConstants::cameraFps), maxTimes, 10)
-		, programState(NULL)
+		, simulationInterface(0)
+		, programState(0)
 		, crashed(false)
 		, terminating(false)
 		, visible(true)
 		, keymap(getInput(), "keymap.ini") {
+	_TRACE_FUNCTION();
 	//set video mode
 	setDisplaySettings();
 
@@ -154,6 +157,8 @@ Program::Program(Config &config, CmdArgs &args)
 	keymap.save("keymap.ini");
 	keymap.load("keymap.ini");
 
+	simulationInterface = new SimulationInterface(*this);
+
 	// startup and immediately host a game
 	if(args.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this);
@@ -165,7 +170,8 @@ Program::Program(Config &config, CmdArgs &args)
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
 	} else if(!args.getLoadmap().empty()) {
-		GameSettings gs;
+		GameSettings &gs = simulationInterface->getGameSettings();
+		gs.clear();
 		gs.setDefaultResources(false);
 		gs.setDefaultUnits(false);
 		gs.setDefaultVictoryConditions(false);
@@ -176,10 +182,9 @@ Program::Program(Config &config, CmdArgs &args)
 		gs.setFactionCount(0);
 
 		//needed because Game::update -> updateLoops -> isNetworkGame
-		NetworkManager &networkManager= NetworkManager::getInstance();
-		networkManager.init(nrServer);
+		//simulationInterface->changeRole(GameRole::SERVER);
 		
-		ShowMap *game = new ShowMap(*this, gs);
+		ShowMap *game = new ShowMap(*this);
 		setState(game);
 	// normal startup
 	} else {
@@ -190,13 +195,17 @@ Program::Program(Config &config, CmdArgs &args)
 }
 
 Program::~Program() {
-	if(programState) {
+	_TRACE_FUNCTION();
+	Renderer::getInstance().end();
+
+	if (programState) {
 		delete programState;
 	}
-	Renderer::getInstance().end();
+	delete simulationInterface;
+
 	//restore video mode
 	restoreDisplaySettings();
-	singleton = NULL;
+	singleton = 0;
 }
 
 void Program::loop() {
@@ -226,7 +235,9 @@ void Program::loop() {
 			GraphicComponent::update();
 			programState->update();
 			SoundRenderer::getInstance().update();
-			NetworkManager::getInstance().update();
+			if (simulationInterface->isNetworkInterface()) {
+				simulationInterface->asNetworkInterface()->update();
+			}
 		}
 	
 		//tick timer
@@ -255,9 +266,15 @@ void Program::eventResize(SizeState sizeState) {
 
 // ==================== misc ====================
 
-void Program::setState(ProgramState *programState){
+void Program::setSimInterface(SimulationInterface *si) {
+	_TRACE_FUNCTION();
+	delete simulationInterface;
+	simulationInterface = si;
+}
 
-	if(programState) {
+void Program::setState(ProgramState *programState){
+	_TRACE_FUNCTION();
+	if (programState) {
 		delete this->programState;
 	}
 
@@ -272,10 +289,12 @@ void Program::setState(ProgramState *programState){
 }
 
 void Program::exit() {
+	_TRACE_FUNCTION();
 	destroy();
 }
 
 void Program::resetTimers() {
+	_TRACE_FUNCTION();
 	renderTimer.reset();
 	tickTimer.reset();
 	updateTimer.reset();
@@ -285,7 +304,7 @@ void Program::resetTimers() {
 // ==================== PRIVATE ====================
 
 void Program::setDisplaySettings(){
-
+	_TRACE_FUNCTION();
 	Config &config= Config::getInstance();
 	// bool multisamplingSupported = isGlExtensionSupported("WGL_ARB_multisample");
 

@@ -61,7 +61,7 @@ public:
 private:
 	void updateScenarioList(const string &category, bool selectDefault = false);
     void loadScenarioInfo(string file, ScenarioInfo *scenarioInfo);
-    void loadGameSettings(const ScenarioInfo *scenarioInfo, GameSettings *gameSettings);
+    void loadGameSettings(const ScenarioInfo *scenarioInfo);
 	Difficulty computeDifficulty(const ScenarioInfo *scenarioInfo);
     ControlType strToControllerType(const string &str);
 

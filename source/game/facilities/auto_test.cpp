@@ -62,7 +62,7 @@ void AutoTest::updateScenario(MenuStateScenario *menuStateScenario){
 	menuStateScenario->launchGame();
 }
 
-void AutoTest::updateGame(Game *game){
+void AutoTest::updateGame(GameState *game){
 	
 	// record start time
 	if(gameStartTime==invalidTime)

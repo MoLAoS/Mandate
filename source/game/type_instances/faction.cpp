@@ -563,4 +563,5 @@ void Faction::checkAdvanceSubfaction(const ProducibleType *pt, bool finished) {
 		}
 	}
 }
+
 }}//end namespace

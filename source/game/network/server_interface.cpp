@@ -19,20 +19,26 @@
 #include "world.h"
 #include "game.h"
 #include "network_types.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 #include "logger.h"
+#include "profiler.h"
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
 
-namespace Glest { namespace Game {
+using Glest::Sim::SimulationInterface;
+
+namespace Glest { namespace Net {
 
 // =====================================================
 //	class ServerInterface
 // =====================================================
 
-ServerInterface::ServerInterface() {
+ServerInterface::ServerInterface(Program &prog) 
+		: NetworkInterface(prog) {
+	_TRACE_FUNCTION();
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		slots[i] = NULL;
 	}
@@ -45,8 +51,9 @@ ServerInterface::ServerInterface() {
 	}
 }
 
-ServerInterface::~ServerInterface(){
-	quitGame();
+ServerInterface::~ServerInterface() {
+	_TRACE_FUNCTION();
+	quitGame(QuitSource::LOCAL);
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		delete slots[i];
 	}
@@ -91,52 +98,55 @@ void ServerInterface::update() {
 			} catch (SocketException e) {
 				const string &name = slots[i]->getName();
 				removeSlot(i);
-				doSendTextMessage("Player " + intToStr(i) + " [" + name + "] diconnected.", -1);
+				sendTextMessage("Player " + intToStr(i) + " [" + name + "] diconnected.", -1);
 			}
 		}
 	}
 }
 
 void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
-	skillCycleTable.create(techTree);
+	_TRACE_FUNCTION();
+	SimulationInterface::createSkillCycleTable(techTree);
 	this->broadcastMessage(&skillCycleTable);
 }
 
-void ServerInterface::unitBorn(Unit *unit, int32 cs) {
-	//LOG_NETWORK( "Unit born, adding checksum " + intToHex(cs) );
+void ServerInterface::checkUnitBorn(Unit *unit, int32 cs) {
+	//LOG_NETWORK( __FUNCTION__", adding checksum " + intToHex(cs) );
 	keyFrame.addChecksum(cs);
 }
 
-void ServerInterface::updateUnitCommand(Unit*, int32 cs) {
+void ServerInterface::checkCommandUpdate(Unit*, int32 cs) {
 	keyFrame.addChecksum(cs);
 }
 
-void ServerInterface::updateProjectile(Unit*, int, int32 cs) {
-	keyFrame.addChecksum(cs);	
-}
-
-void ServerInterface::updateAnim(Unit*, int32 cs) {
+void ServerInterface::checkProjectileUpdate(Unit*, int, int32 cs) {
 	keyFrame.addChecksum(cs);
 }
 
-void ServerInterface::updateMove(Unit *unit) {
-	unit->updateMoveSkillCycle();
-	MoveSkillUpdate updt(unit);
-	keyFrame.addUpdate(updt);
+void ServerInterface::checkAnimUpdate(Unit*, int32 cs) {
+	keyFrame.addChecksum(cs);
+}
+
+void ServerInterface::updateSkillCycle(Unit *unit) {
+	SimulationInterface::updateSkillCycle(unit);
+	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+		MoveSkillUpdate updt(unit);
+		keyFrame.addUpdate(updt);
+	}
 }
 
 void ServerInterface::updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
-	pps->setPath(start, end);
+	SimulationInterface::updateProjectilePath(u, pps, start, end);
 	ProjectileUpdate updt(u, pps);
 	keyFrame.addUpdate(updt);
 }
 
-void ServerInterface::process(NetworkMessageText &msg, int requestor) {
+void ServerInterface::process(TextMessage &msg, int requestor) {
 	broadcastMessage(&msg, requestor);
-	GameInterface::processTextMessage(msg);
+	NetworkInterface::processTextMessage(msg);
 }
 
-void ServerInterface::updateKeyframe(int frameCount){
+void ServerInterface::updateKeyframe(int frameCount) {
 	//build command list, remove commands from requested and add to pending
 	while(!requestedCommands.empty()){
 		keyFrame.add(requestedCommands.back());
@@ -151,6 +161,7 @@ void ServerInterface::updateKeyframe(int frameCount){
 }
 
 void ServerInterface::waitUntilReady(Checksum &checksum) {
+	_TRACE_FUNCTION();
 	Chrono chrono;
 	chrono.start();
 	bool allReady = false;
@@ -161,12 +172,12 @@ void ServerInterface::waitUntilReady(Checksum &checksum) {
 		for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 			ConnectionSlot* slot = slots[i];
 			if (slot && !slot->isReady()) {
-				NetworkMessageType msgType = slot->getNextMessageType();
-				NetworkMessageReady readyMsg;
-				if (msgType == NetworkMessageType::READY && slot->receiveMessage(&readyMsg)) {
+				MessageType msgType = slot->getNextMessageType();
+				ReadyMessage readyMsg;
+				if (msgType == MessageType::READY && slot->receiveMessage(&readyMsg)) {
 					LOG_NETWORK( "Received ready message, slot " + intToStr(i) );
 					slot->setReady();
-				} else if (msgType != NetworkMessageType::NO_MSG) {
+				} else if (msgType != MessageType::NO_MSG) {
 					throw runtime_error("Unexpected network message: " + intToStr(msgType));
 				} else {
 					allReady = false;
@@ -185,7 +196,7 @@ void ServerInterface::waitUntilReady(Checksum &checksum) {
 	
 	//send ready message after, so clients start delayed
 	for (int i= 0; i < GameConstants::maxPlayers; ++i) {
-		NetworkMessageReady readyMsg(checksum.getSum());
+		ReadyMessage readyMsg(checksum.getSum());
 		if (slots[i]) {
 			slots[i]->send(&readyMsg);
 		}
@@ -193,21 +204,25 @@ void ServerInterface::waitUntilReady(Checksum &checksum) {
 }
 
 void ServerInterface::sendTextMessage(const string &text, int teamIndex){
-	NetworkMessageText networkMessageText(text, Config::getInstance().getNetPlayerName(), teamIndex);
+	TextMessage networkMessageText(text, Config::getInstance().getNetPlayerName(), teamIndex);
 	broadcastMessage(&networkMessageText);
 }
 
-void ServerInterface::quitGame() {
+void ServerInterface::quitGame(QuitSource source) {
+	_TRACE_FUNCTION();
 	LOG_NETWORK( "aborting game" );
 	string text = getHostName() + " has ended the game!";
-	NetworkMessageText networkMessageText(text,getHostName(),-1);
+	TextMessage networkMessageText(text,getHostName(),-1);
 	broadcastMessage(&networkMessageText, -1);
 
-	NetworkMessageQuit networkMessageQuit;
+	QuitMessage networkMessageQuit;
 	broadcastMessage(&networkMessageQuit);
+	if (game && !program.isTerminating()) {
+		game->quitGame();
+	}
 }
 
-string ServerInterface::getStatus() const{
+string ServerInterface::getStatus() const {
 	string str;
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		str += intToStr(i) + ": ";
@@ -222,27 +237,22 @@ string ServerInterface::getStatus() const{
 }
 
 void ServerInterface::syncAiSeeds(int aiCount, int *seeds) {
+	_TRACE_FUNCTION();
 	assert(aiCount && seeds);
-	Random r;
-	r.init(Chrono::getCurMillis());
-	for (int i=0; i < aiCount; ++i) {
-		seeds[i] = r.rand();
-	}
+	SimulationInterface::syncAiSeeds(aiCount, seeds);
 	LOG_NETWORK("sending " + intToStr(aiCount) + " Ai random number seeds...");
-	NetworkMessageAiSeedSync seedSyncMsg(aiCount, seeds);
+	AiSeedSyncMessage seedSyncMsg(aiCount, seeds);
 	broadcastMessage(&seedSyncMsg);
 }
 
-void ServerInterface::launchGame(const GameSettings* gameSettings){
-	NetworkMessageLaunch networkMessageLaunch(gameSettings);
+void ServerInterface::doLaunchBroadcast() {
+	_TRACE_FUNCTION();
+	LaunchMessage networkMessageLaunch(&gameSettings);
 	LOG_NETWORK( "Launching game, sending launch message(s)" );
 	broadcastMessage(&networkMessageLaunch);	
 }
 
-// NETWORK: I'm thinking the file stuff should go somewhere else.
-// I agree, /dev/null will do for now ;-) We can resuurect it later.
-
-void ServerInterface::broadcastMessage(const NetworkMessage* networkMessage, int excludeSlot) {
+void ServerInterface::broadcastMessage(const Message* networkMessage, int excludeSlot) {
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		if(i != excludeSlot && slots[i]) {
 			if(slots[i]->isConnected()) {
@@ -253,7 +263,7 @@ void ServerInterface::broadcastMessage(const NetworkMessage* networkMessage, int
 						+ intToStr(slots[i]->getPlayerIndex() + 1) + ") " + lang.get("Disconnected");
 				removeSlot(i);
 				LOG_NETWORK(errmsg);
-				Game::getInstance()->getConsole()->addLine(errmsg);
+				theGame.getConsole()->addLine(errmsg);
 				//throw SocketException(errmsg);
 			}
 		}
@@ -270,9 +280,10 @@ void ServerInterface::updateListen() {
 	serverSocket.listen(openSlotCount);
 }
 
-#if _RECORD_GAME_STATE_
+#if _GAE_DEBUG_EDITION_
 	void ServerInterface::dumpFrame(int frame) {
-		stateLog.logFrame(frame);
+		worldLog.logFrame(frame);
+		throw GameSyncError();
 	}
 #endif
 

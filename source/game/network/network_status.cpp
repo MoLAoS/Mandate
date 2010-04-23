@@ -16,9 +16,9 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
+namespace Glest { namespace Net {
 
-namespace Glest { namespace Game {
+#if 0 // Not currently in use
 
 // =====================================================
 //	class NetworkStatus
@@ -68,5 +68,6 @@ void NetworkStatus::update() {
 		updateStatusStr();
 	}
 }
+#endif
 
 }}//end namespace

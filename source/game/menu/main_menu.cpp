@@ -30,7 +30,6 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Sound;
 using namespace Shared::Platform;
 using namespace Shared::Util;
@@ -50,7 +49,6 @@ MainMenu::MainMenu(Program &program) : ProgramState(program) {
 	mouseY = 100;
 
 	state = NULL;
-	//this->program = program;
 
 	fps = 0;
 	lastFps = 0;
@@ -114,14 +112,12 @@ void MainMenu::tick() {
 	fps = 0;
 }
 
-//event magangement: mouse click
 void MainMenu::mouseMove(int x, int y, const MouseState &ms) {
 	mouseX = x;
 	mouseY = y;
 	state->mouseMove(x, y, ms);
 }
 
-//returns if exiting
 void MainMenu::mouseDownLeft(int x, int y) {
 	state->mouseClick(x, y, mbLeft);
 }

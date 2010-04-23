@@ -14,18 +14,18 @@
 
 #include "network_manager.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Net {
 
 class ServerInterface;
 class ClientInterface;
 
 // need to be inline, or you get multiple defs if you use them from more than one translation unit
-inline bool isLocal()							{return NetworkManager::getInstance().isLocal();}
-inline bool isNetworkGame()						{return NetworkManager::getInstance().isNetworkGame();}
-inline bool isNetworkServer()					{return NetworkManager::getInstance().isNetworkServer();}
-inline bool isNetworkClient()					{return NetworkManager::getInstance().isNetworkClient();}
-inline ServerInterface *getServerInterface()	{return NetworkManager::getInstance().getServerInterface();}
-inline ClientInterface *getClientInterface()	{return NetworkManager::getInstance().getClientInterface();}
+//inline bool isLocal()							{return NetworkManager::getInstance().isLocal();}
+//inline bool isNetworkGame()						{return NetworkManager::getInstance().isNetworkGame();}
+//inline bool isNetworkServer()					{return NetworkManager::getInstance().isNetworkServer();}
+//inline bool isNetworkClient()					{return NetworkManager::getInstance().isNetworkClient();}
+//inline ServerInterface *getServerInterface()	{return NetworkManager::getInstance().getServerInterface();}
+//inline ClientInterface *getClientInterface()	{return NetworkManager::getInstance().getClientInterface();}
 
 }}//end namespace
 

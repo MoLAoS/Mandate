@@ -32,10 +32,10 @@ public:
 };
 
 // ===============================
-//  class ArmorType
+//  class ArmourType
 // ===============================
 
-class ArmorType : public NameIdPair {
+class ArmourType : public NameIdPair {
 public:
 	void setName(const string &name)	{this->name = name;}
 	void setId(int id)					{this->id = id;}
@@ -59,8 +59,8 @@ public:
 	~DamageMultiplierTable();
 
 	void init(int attackTypeCount, int armorTypeCount);
-	fixed getDamageMultiplier(const AttackType *att, const ArmorType *art) const;
-	void setDamageMultiplier(const AttackType *att, const ArmorType *art, fixed value);
+	fixed getDamageMultiplier(const AttackType *att, const ArmourType *art) const;
+	void setDamageMultiplier(const AttackType *att, const ArmourType *art, fixed value);
 };
 
 }}//end namespace

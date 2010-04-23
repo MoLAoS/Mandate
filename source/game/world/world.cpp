@@ -30,6 +30,7 @@
 #include "earthquake_type.h"
 #include "renderer.h"
 #include "network_manager.h"
+#include "sim_interface.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -51,19 +52,22 @@ World *World::singleton = 0;
 
 // ===================== PUBLIC ========================
 
-World::World(Game *game) 
+World::World(SimulationInterface *iSim) 
 		: scenario(NULL)
-		, game(*game)
-		, gs(game->getGameSettings())
-		, minimap(gs.getFogOfWar())
-		, stats(game->getGameSettings())
+		, iSim(iSim)
+		, game(*iSim->getGameState())
+		, minimap(iSim->getGameSettings().getFogOfWar())
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, posIteratorFactory(65)
+		, unitTypeFactory(0)
+		, upgradeTypeFactory(0)
 		, skillTypeFactory(0)
 		, commandTypeFactory(0) {
+	_TRACE_FUNCTION();
 	Config &config = Config::getInstance();
 
+	GameSettings &gs = iSim->getGameSettings();
 	fogOfWar = gs.getFogOfWar();
 	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
 	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
@@ -83,11 +87,8 @@ World::World(Game *game)
 }
 
 World::~World() {
-	singleton = NULL;
-}
-
-void World::end() {
-	Logger::getInstance().add("World", !Program::getInstance()->isTerminating());
+	_TRACE_FUNCTION();
+	Logger::getInstance().add("~World", !Program::getInstance()->isTerminating());
 	alive = false;
 
 	for (int i = 0; i < factions.size(); ++i) {
@@ -101,13 +102,13 @@ void World::end() {
 	delete upgradeTypeFactory;
 	delete skillTypeFactory;
 	delete commandTypeFactory;
-	//stats will be deleted by BattleEnd
+	singleton = 0;
 }
 
 void World::save(XmlNode *node) const {
 	node->addChild("frameCount", frameCount);
 	node->addChild("nextUnitId", nextUnitId);
-	stats.save(node->addChild("stats"));
+	iSim->getStats()->save(node->addChild("stats"));
 	timeFlow.save(node->addChild("timeFlow"));
 	XmlNode *factionsNode = node->addChild("factions");
 	foreach_const (Factions, i, factions) {
@@ -119,6 +120,7 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
+	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
 	initFactionTypes();
 	initCells(); //must be done after knowing faction number and dimensions
@@ -135,7 +137,7 @@ void World::init(const XmlNode *worldNode) {
 		loadSaved(worldNode);
 		initMinimap(true);
 		theCartographer.loadMapState(worldNode->getChild("mapState"));
-	} else if (game.getGameSettings().getDefaultUnits()) {
+	} else if (iSim->getGameSettings().getDefaultUnits()) {
 		initMinimap();
 		initUnits();
 		initExplorationState();
@@ -150,13 +152,14 @@ void World::init(const XmlNode *worldNode) {
 //load saved game
 void World::loadSaved(const XmlNode *worldNode) {
 	Logger::getInstance().add("Loading saved game", true);
+	GameSettings &gs = iSim->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
 
 	frameCount = worldNode->getChildIntValue("frameCount");
 	nextUnitId = worldNode->getChildIntValue("nextUnitId");
 
-	stats.load(worldNode->getChild("stats"));
+	iSim->getStats()->load(worldNode->getChild("stats"));
 	timeFlow.load(worldNode->getChild("timeFlow"));
 
 	const XmlNode *factionsNode = worldNode->getChild("factions");
@@ -175,6 +178,8 @@ void World::loadSaved(const XmlNode *worldNode) {
 
 // preload tileset and techtree for progressbar
 void World::preload() {
+	_TRACE_FUNCTION();
+	GameSettings &gs = iSim->getGameSettings();
 	tileset.count(gs.getTilesetPath());
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
@@ -187,13 +192,16 @@ void World::preload() {
 
 //load tileset
 bool World::loadTileset() {
-	tileset.load(game.getGameSettings().getTilesetPath());
+	_TRACE_FUNCTION();
+	tileset.load(iSim->getGameSettings().getTilesetPath());
 	timeFlow.init(&tileset);
 	return true;
 }
 
 //load tech
 bool World::loadTech() {
+	_TRACE_FUNCTION();
+	GameSettings &gs = iSim->getGameSettings();
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
 		if (gs.getFactionTypeName(i).size()) {
@@ -205,12 +213,14 @@ bool World::loadTech() {
 
 //load map
 bool World::loadMap() {
-	const string &path = gs.getMapPath();
+	_TRACE_FUNCTION();
+	const string &path = iSim->getGameSettings().getMapPath();
 	map.load(path, &techTree, &tileset);
 	return true;
 }
 
 bool World::loadScenario(const string &path) {
+	_TRACE_FUNCTION();
 	assert(!scenario);
 	scenario = new Scenario();
 	scenario->load(path);
@@ -238,7 +248,7 @@ void World::updateEarthquakes(float seconds) {
 
 			for (dri = damageReport.begin(); dri != damageReport.end(); ++dri) {
 				fixed multiplier = techTree.getDamageMultiplier(
-						at, dri->first->getType()->getArmorType());
+						at, dri->first->getType()->getArmourType());
 
 				///@todo make fixed point ... use multiplier
 
@@ -267,11 +277,12 @@ void World::updateEarthquakes(float seconds) {
 }
 #endif // Disable Earthquakes
 
-void World::update() {
+void World::processFrame() {
+	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
-	++frameCount;
 
-	theNetworkManager.getGameInterface()->frameStart(frameCount);
+	++frameCount;
+	iSim->startFrame(frameCount);
 
 	// check ScriptTimers
 	ScriptManager::update();
@@ -282,8 +293,6 @@ void World::update() {
 	//water effects
 	waterEffects.update();
 
-	GameInterface *gni = theNetworkManager.getGameInterface();
-
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
 		const Units &units = f->getUnits();
@@ -292,7 +301,7 @@ void World::update() {
 			
 			if (unit->update()) {
 
-				gni->doUpdateUnitCommand(unit);
+				iSim->doUpdateUnitCommand(unit);
 
 				//move unit in cells
 				if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
@@ -335,7 +344,7 @@ void World::update() {
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
 		const ResourceType *rt = techTree.getResourceType(i);
 		if (rt->getClass() == ResourceClass::CONSUMABLE 
-		&& frameCount % (rt->getInterval()*Config::getInstance().getGsWorldUpdateFps()) == 0) {
+		&& frameCount % (rt->getInterval() * WORLD_FPS) == 0) {
 			for (int i = 0; i < getFactionCount(); ++i) {
 				getFaction(i)->applyCostsOnInterval();
 			}
@@ -344,19 +353,16 @@ void World::update() {
 
 	//fow smoothing
 	if (fogOfWarSmoothing && ((frameCount + 1) % (fogOfWarSmoothingFrameSkip + 1)) == 0) {
-		float fogFactor = float(frameCount % Config::getInstance().getGsWorldUpdateFps()) 
-									/ Config::getInstance().getGsWorldUpdateFps();
+		float fogFactor = float(frameCount % WORLD_FPS) / WORLD_FPS;
 		minimap.updateFowTex(clamp(fogFactor, 0.f, 1.f));
 	}
 
 	//tick
-	if (frameCount % Config::getInstance().getGsWorldUpdateFps() == 0) {
+	if (frameCount % WORLD_FPS == 0) {
 		computeFow();
 		tick();
 	}
 	assertConsistiency();
-
-	theNetworkManager.getGameInterface()->frameEnd(frameCount);
 }
 
 
@@ -366,6 +372,7 @@ void World::hit(Unit *attacker) {
 }
 
 void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked) {
+	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
 	typedef std::map<Unit*, fixed> DistMap;
 	//hit attack positions
@@ -382,7 +389,7 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		}
 		foreach (DistMap, it, hitSet) {
 			damage(attacker, ast, it->first, it->second);
-			if (ast->isHasEffects()) {
+			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
 			}
 		}
@@ -392,7 +399,7 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		}
 		if (attacked) {
 			damage(attacker, ast, attacked, 0);
-			if (ast->isHasEffects()) {
+			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
 			}
 		}
@@ -401,6 +408,7 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 
 // to world
 void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) {
+	_TRACE_FUNCTION();
 	//get vars
 	fixed fDamage = attacker->getAttackStrength(ast);
 	//int damage = attacker->getAttackStrength(ast);
@@ -408,7 +416,7 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	int armor = attacked->getArmor();
 
 	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
-							 attacked->getType()->getArmorType());
+							 attacked->getType()->getArmourType());
 	
 	//compute damage
 	fDamage += random.randRange(-var, var);
@@ -425,39 +433,17 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
 		actualDamage = startingHealth;
-	} 
-	else {
+	} else {
 		actualDamage = damage;
 	}
-
-	///@todo make effects stuff fixed point
-
-	//add stolen health to attacker
-	/*
-	if (attacker->getAttackPctStolen(ast) != 0 || ast->getAttackPctVar() != 0) {
-		
-		fixed pct = attacker->getAttackPctStolen(ast)
-				+ random.randRange(-ast->getAttackPctVar(), ast->getAttackPctVar());
-		int stolen = (fixed(actualDamage) * pct).intp();
-		if (stolen && attacker->doRegen(stolen, 0)) {
-			// stealing a negative percentage and dying?
-			world->doKill(attacker, attacker);
-		}
-	}
-	*/
-	//complain
-	/*
-	const Vec3f &attackerVec = attacked->getCurrVector();
-	if (!gui->isVisible(Vec2i((int)roundf(attackerVec.x), (int)roundf(attackerVec.y)))) {
-		attacked->getFaction()->attackNotice(attacked);
-	}*/
 }
 
 void World::doKill(Unit *killer, Unit *killed) {
+	_TRACE_FUNCTION();
 	ScriptManager::onUnitDied(killed);
 	int kills = 1 + killed->getPets().size();
 	for (int i = 0; i < kills; i++) {
-		stats.kill(killer->getFactionIndex(), killed->getFactionIndex());
+		iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
 		if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
 			killer->incKills();
 		}
@@ -517,7 +503,7 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 		if ((source->isAlly(target) ? e->isEffectsAlly() : e->isEffectsFoe())
 		&&	(target->isOfClass(UnitClass::BUILDING) ? e->isEffectsBuildings() : e->isEffectsNormalUnits())
 		&&	(e->isEffectsPetsOnly() ? source->isPet(target) : true)
-		&&	(e->getChance() != 100.0f ? random.randRange(0.0f, 100.0f) < e->getChance() : true)) {
+		&&	(e->getChance() != 100 ? random.randPercent() < e->getChance() : true)) {
 
 			fixed strength = e->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
 			Effect *primaryEffect = new Effect(e, source, NULL, strength, target, &techTree);
@@ -536,16 +522,18 @@ void World::appyEffect(Unit *u, Effect *e) {
 	if (u->add(e)) {
 		Unit *attacker = e->getSource();
 		if (attacker) {
-			stats.kill(attacker->getFactionIndex(), u->getFactionIndex());
+			iSim->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
 			attacker->incKills();
 		} else if (e->getRoot()) {
 			// if killed by a recourse effect, this was suicide
-			stats.kill(u->getFactionIndex(), u->getFactionIndex());
+			iSim->getStats()->kill(u->getFactionIndex(), u->getFactionIndex());
 		}
 	}
 }
 
+/** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
 void World::tick() {
+	_TRACE_FUNCTION();
 	if (!fogOfWarSmoothing) {
 		minimap.updateFowTex(1.f);
 	}
@@ -611,6 +599,7 @@ Unit* World::findUnitById(int id) const {
 	return NULL;
 }
 
+//REFACTOR
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
 	for (int i = 0; i < factionType->getUnitTypeCount(); ++i) {
 		const UnitType* unitType = factionType->getUnitType(i);
@@ -1055,7 +1044,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 
 //init basic cell state
 void World::initCells() {
-
+	GameSettings &gs = iSim->getGameSettings();
 	Logger::getInstance().add("State cells", true);
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
@@ -1098,7 +1087,7 @@ void World::initSplattedTextures() {
 //creates each faction looking at each faction name contained in GameSettings
 void World::initFactionTypes() {
 	Logger::getInstance().add("Faction types", true);
-	
+	GameSettings &gs = iSim->getGameSettings();
 	if (!gs.getFactionCount()) return;
 
 	if (gs.getFactionCount() > map.getMaxPlayers()) {
@@ -1120,9 +1109,9 @@ void World::initFactionTypes() {
 				unitTypes[ft->getName()].insert(ft->getUnitType(j)->getName());
 			}
 		}
-		//  stats.setTeam(i, gs.getTeam(i));
-		//  stats.setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
-		//  stats.setControl(i, gs.getFactionControl(i));
+		//  iSim->getStats()->setTeam(i, gs.getTeam(i));
+		//  iSim->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
+		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
 	}
 
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
@@ -1258,7 +1247,7 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
 //computes the fog of war texture, contained in the minimap
 void World::computeFow() {
-
+	GameSettings &gs = iSim->getGameSettings();
 	//reset texture
 	minimap.resetFowTex();
 

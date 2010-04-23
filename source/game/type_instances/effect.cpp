@@ -41,7 +41,7 @@ Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strengt
 	this->recourse = root != NULL;
 	if(type->getHpRegeneration() < 0 && type->getDamageType()) {
 		fixed fregen = type->getHpRegeneration() * tt->getDamageMultiplier(
-				type->getDamageType(), recipient->getType()->getArmorType()/*, recipient->getType()->getBodyType()*/);
+				type->getDamageType(), recipient->getType()->getArmourType()/*, recipient->getType()->getBodyType()*/);
 		this->actualHpRegen = fregen.intp();
 	} else {
 		this->actualHpRegen = type->getHpRegeneration();

@@ -13,7 +13,7 @@
 #include "stats.h"
 
 #include "leak_dumper.h"
-
+#include "sim_interface.h"
 
 namespace Glest { namespace Game {
 
@@ -30,7 +30,7 @@ Stats::PlayerStats::PlayerStats() :
 // =====================================================
 
 void Stats::load(const XmlNode *node) {
-	for(int i = 0; i < gs.getFactionCount(); ++i) {
+	for(int i = 0; i < iSim->getGameSettings().getFactionCount(); ++i) {
 		const XmlNode *n = node->getChild("player", i);
 		playerStats[i].victory = n->getChildBoolValue("victory");
 		playerStats[i].kills = n->getChildIntValue("kills");
@@ -41,7 +41,7 @@ void Stats::load(const XmlNode *node) {
 }
 
 void Stats::save(XmlNode *node) const {
-	for(int i = 0; i < gs.getFactionCount(); ++i) {
+	for(int i = 0; i < iSim->getGameSettings().getFactionCount(); ++i) {
 		XmlNode *n = node->addChild("player");
 		n->addChild("victory", playerStats[i].victory);
 		n->addChild("kills", playerStats[i].kills);

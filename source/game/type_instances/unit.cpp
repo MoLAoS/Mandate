@@ -29,12 +29,14 @@
 #include "game.h"
 #include "earthquake_type.h"
 #include "sound_renderer.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 #include "network_util.h"
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;
+using namespace Glest::Net;
 
 namespace Glest{ namespace Game{
 
@@ -95,10 +97,7 @@ void WaypointPath::condense() {
 
 /** Construct Unit object */
 Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master)
-		: /*progressSpeed(0.f)
-		, animProgressSpeed(0.f)
-		, */
-		  lastCommandUpdate(0)
+		: lastCommandUpdate(0)
 		, nextCommandUpdate(0)
 		, pos(pos)
 		, lastPos(pos)
@@ -119,29 +118,16 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	ep = 0;
 	loadCount = 0;
 	deadCount = 0;
-//	progress= 0;
-//	lastAnimProgress = 0;
-//	animProgress = 0;
 	highlight = 0.f;
 	progress2 = 0;
 	kills = 0;
-
-	// UnitType needs modifiying, the new pathfinder does not support
-	// units with multiple fields (nor did the old one), 'switching' fields
-	// will need to  be done with morphs. 
-	if(type->getField(Field::LAND)) currField = Field::LAND;
-	else if(type->getField(Field::AIR)) currField = Field::AIR;
-
-	if (type->getField (Field::AMPHIBIOUS)) currField = Field::AMPHIBIOUS;
-	else if (type->getField (Field::ANY_WATER)) currField = Field::ANY_WATER;
-	else if (type->getField (Field::DEEP_WATER)) currField = Field::DEEP_WATER;
 
 	targetField = Field::LAND;		// init just to keep it pretty in memory
 	level= NULL;
 
 	Random random(id);
 	float rot = 0.f;
-	rot += random.randRange(-5, 5);
+	//rot += random.randRange(-5, 5);
 
 	lastRotation = rot;
 	targetRotation = rot;
@@ -150,11 +136,9 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	this->type = type;
 	loadType = NULL;
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
-//	lastSkill = currSkill;
 	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
 
 	toBeUndertaken = false;
-//	alive= true;
 	autoRepairEnabled = true;
 
 	computeTotalUpgrade();
@@ -178,11 +162,6 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	ep = node->getChildIntValue("ep");
 	loadCount = node->getChildIntValue("loadCount");
 	deadCount = node->getChildIntValue("deadCount");
-	// these fields updated later
-	//progress 
-	//lastAnimProgress
-	//animProgress
-	//highlight
 	kills = node->getChildIntValue("kills");
 	type = faction->getType()->getUnitType(node->getChildStringValue("type"));
 
@@ -194,7 +173,6 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	rotation = node->getChildFloatValue("rotation");
 
 	progress2 = node->getChildIntValue("progress2");
-	currField = (Field)node->getChildIntValue("currField");
 	targetField = (Field)node->getChildIntValue("targetField");
 
 	pos = node->getChildVec2iValue("pos"); //map->putUnitCells() will set this, so we reload it later
@@ -284,7 +262,6 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("progress2", progress2);
 	node->addChild("kills", kills);
 	targetRef.save(node->addChild("targetRef"));
-	node->addChild("currField", currField);
 	node->addChild("targetField", targetField);
 	node->addChild("pos", pos);
 	node->addChild("lastPos", lastPos);
@@ -541,7 +518,7 @@ void Unit::setPos(const Vec2i &pos){
 	
 	// make sure it's not invalid if they build at 0,0
 	if(pos.x == 0 && pos.y == 0) {
-		this->meetingPos = pos + Vec2i(size);
+		this->meetingPos = pos + Vec2i(type->getSize());
 	}
 }
 
@@ -592,8 +569,9 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 				break;
 		}
 
+		theSimInterface->doUpdateProjectile(this, psProj, startPos, endPos);
 		// game network interface calls setPath() on psProj, differently for clients/servers
-		theNetworkManager.getGameInterface()->doUpdateProjectile(this, psProj, startPos, endPos);
+		//theNetworkManager.getNetworkInterface()->doUpdateProjectile(this, psProj, startPos, endPos);
 		
 		if(pstProj->isTracking() && this->getTarget()) {
 			psProj->setTarget(this->getTarget());
@@ -859,12 +837,13 @@ CommandResult Unit::cancelCurrCommand() {
 void Unit::create(bool startingUnit) {
 	UNIT_LOG( theWorld.getFrameCount() << "::Unit:" << id << " created." );
 	faction->add(this);
-	lastPos.x = lastPos.y = -1;
+	lastPos = Vec2i(-1);
 	map->putUnitCells(this, pos);
 	if(startingUnit){
 		faction->applyStaticCosts(type);
 	}
 	nextCommandUpdate = -1;
+	setCurrSkill(type->getStartSkill());
 }
 
 /** Give a unit life. Called when a unit becomes 'operative'
@@ -879,9 +858,7 @@ void Unit::born(){
 	hp= type->getMaxHp();
 	faction->checkAdvanceSubfaction(type, true);
 	theWorld.getCartographer()->applyUnitVisibility(this);
-
-	GameInterface *iNet = theNetworkManager.getGameInterface();
-	iNet->doUnitBorn(this);
+	theSimInterface->doUnitBorn(this);
 }
 
 void checkTargets(const Unit *dead) {
@@ -1043,14 +1020,14 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 /** called after a command is updated and a skill is selected
   * @param frameOffset the number of frames the next skill cycle with take */
 void Unit::updateSkillCycle(int frameOffset) {
-	assert(currSkill->getClass() != SkillClass::MOVE || isNetworkClient());
+	//assert(currSkill->getClass() != SkillClass::MOVE || isNetworkClient());
 	lastCommandUpdate = theWorld.getFrameCount();
 	nextCommandUpdate = theWorld.getFrameCount() + frameOffset;
 }
 
 /** called by the server only, updates a skill cycle for the move skill */
 void Unit::updateMoveSkillCycle() {
-	assert(!isNetworkClient());
+//	assert(!isNetworkClient());
 	assert(currSkill->getClass() == SkillClass::MOVE);
 	static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
 
@@ -1072,7 +1049,6 @@ void Unit::updateMoveSkillCycle() {
 bool Unit::update() {
 	_PROFILE_FUNCTION();
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-	GameInterface *gni = theNetworkManager.getGameInterface();
 
 	// start skill sound ?
 	if (currSkill->getSound()) {
@@ -1092,7 +1068,7 @@ bool Unit::update() {
 	// update anim cycle ?
 	if (theWorld.getFrameCount() >= getNextAnimReset()) {
 		// new anim cycle (or reset)
-		gni->doUpdateAnim(this);
+		theSimInterface->doUpdateAnim(this);
 	}
 
 	// update emanations every 8 frames
@@ -1193,25 +1169,23 @@ Unit* Unit::tick() {
 			case CommandClass::MOVE:
 			case CommandClass::REPAIR:
 			case CommandClass::GUARD:
-			case CommandClass::PATROL:
+			case CommandClass::PATROL: {
+					const Unit* unit1 = (*i)->getUnit();
+					if(unit1 && unit1->isDead()) {
+						(*i)->setUnit(NULL);
+						(*i)->setPos(unit1->getPos());
+					}
+					const Unit* unit2 = (*i)->getUnit2();
+					if(unit2 && unit2->isDead()) {
+						(*i)->setUnit2(NULL);
+						(*i)->setPos2(unit2->getPos());
+					}
+				}
 				break;
 			default:
-				continue;
-		}
-
-		const Unit* unit1 = (*i)->getUnit();
-		if(unit1 && unit1->isDead()) {
-			(*i)->setUnit(NULL);
-			(*i)->setPos(unit1->getPos());
-		}
-
-		const Unit* unit2 = (*i)->getUnit2();
-		if(unit2 && unit2->isDead()) {
-			(*i)->setUnit2(NULL);
-			(*i)->setPos2(unit2->getPos());
+				break;
 		}
 	}
-
 	if(isAlive()) {
 		if(doRegen(getHpRegeneration(), getEpRegeneration())) {
 			if(!(killer = effects.getKiller())) {
@@ -1390,7 +1364,7 @@ string Unit::getDesc(bool full) const {
 		}
 		str += intToStr(armorBonus);
 	}
-	str += " (" + type->getArmorType()->getName() + ")";
+	str += " (" + type->getArmourType()->getName() + ")";
 
 	//sight
 	str += "\n" + lang.get("Sight") + ": " + intToStr(type->getSight());
@@ -1460,7 +1434,7 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType){
 }
 
 /** recompute stats, re-evaluate upgrades & level and recalculate totalUpgrade */
-void Unit::computeTotalUpgrade(){
+void Unit::computeTotalUpgrade() {
 	faction->getUpgradeManager()->computeTotalUpgrade(this, &totalUpgrade);
 	level = NULL;
 	for(int i = 0; i < type->getLevelCount(); ++i){
@@ -1475,67 +1449,55 @@ void Unit::computeTotalUpgrade(){
 	recalculateStats();
 }
 
-/** Another one bites the dust. Increment 'kills' & check level */
-void Unit::incKills() {
-	++kills;
 
-	const Level *nextLevel = getNextLevel();
-	if (nextLevel != NULL && kills >= nextLevel->getKills()) {
-		level = nextLevel;
-		totalUpgrade.sum(level);
-		recalculateStats();
+/**
+ * Recalculate the unit's stats (contained in base class
+ * EnhancementType) to take into account changes in the effects and/or
+ * totalUpgrade objects.
+ */
+void Unit::recalculateStats() {
+	int oldMaxHp = getMaxHp();
+	int oldHp = hp;
+
+	reset();
+	setValues(*type); // => setValues(UnitStats &)
+
+	// add up all multipliers first and then apply (multiply) once.
+	// See EnhancementType::addMultipliers() for the 'adding' strategy
+	addMultipliers(totalUpgrade);
+	for(Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
+		addMultipliers(*(*i)->getType(), (*i)->getStrength());
 	}
-}
+	applyMultipliers(*this);
 
-/** Perform a morph @param mct the CommandType describing the morph @return true if successful */
-bool Unit::morph(const MorphCommandType *mct) {
-	const UnitType *morphUnitType = mct->getMorphUnit();
+	addStatic(totalUpgrade);
+	for(Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
+		addStatic(*(*i)->getType(), (*i)->getStrength());
 
-	// redo field
-	Field newField;
-	if(morphUnitType->getField(Field::LAND)) newField = Field::LAND;
-	else if(morphUnitType->getField(Field::AIR)) newField = Field::AIR;
-	if ( morphUnitType->getField (Field::AMPHIBIOUS) ) newField = Field::AMPHIBIOUS;
-	else if ( morphUnitType->getField (Field::ANY_WATER) ) newField = Field::ANY_WATER;
-	else if ( morphUnitType->getField (Field::DEEP_WATER) ) newField = Field::DEEP_WATER;
+		// take care of effect damage type
+		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
+	}
 
-	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
-		map->clearUnitCells(this, pos);
-		faction->deApplyStaticCosts(type);
-		type = morphUnitType;
-		currField = newField;
-		computeTotalUpgrade();
-		map->putUnitCells(this, pos);
-		faction->applyDiscount(morphUnitType, mct->getDiscount());
-		
-		// reprocess commands
-		Commands newCommands;
-		Commands::const_iterator i;
+	effects.clearDirty();
 
-		// add current command, which should be the morph command
-		assert(commands.size() > 0 && commands.front()->getType()->getClass() == CommandClass::MORPH);
-		newCommands.push_back(commands.front());
-		i = commands.begin();
-		++i;
-
-		// add (any) remaining if possible
-		for(; i != commands.end(); ++i) {
-			// first see if the new unit type has a command by the same name
-			const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
-			// if not, lets see if we can find any command of the same class
-			if(!newCmdType) {
-				newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
-			}
-			// if still not found, we drop the comand, otherwise, we add it to the new list
-			if(newCmdType) {
-				(*i)->setType(newCmdType);
-				newCommands.push_back(*i);
-			}
-		}
-		commands = newCommands;
-		return true;
-	} else {
-		return false;
+	if(getMaxHp() > oldMaxHp) {
+		hp += getMaxHp() - oldMaxHp;
+	} else if(hp > getMaxHp()) {
+		hp = getMaxHp();
+	}
+	// correct nagatives
+	if(sight < 0) {
+		sight = 0;
+	}
+	if(maxEp < 0) {
+		maxEp = 0;
+	}
+	if(maxHp < 0) {
+		maxHp = 0;
+	}
+	// If this guy is dead, make sure they stay dead
+	if(oldHp < 1) {
+		hp = 0;
 	}
 }
 
@@ -1596,6 +1558,60 @@ void Unit::effectExpired(Effect *e){
 	}
 }
 
+/** Another one bites the dust. Increment 'kills' & check level */
+void Unit::incKills() {
+	++kills;
+
+	const Level *nextLevel = getNextLevel();
+	if (nextLevel != NULL && kills >= nextLevel->getKills()) {
+		level = nextLevel;
+		totalUpgrade.sum(level);
+		recalculateStats();
+	}
+}
+
+/** Perform a morph @param mct the CommandType describing the morph @return true if successful */
+bool Unit::morph(const MorphCommandType *mct) {
+	const UnitType *morphUnitType = mct->getMorphUnit();
+	Field newField = morphUnitType->getField();
+	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
+		map->clearUnitCells(this, pos);
+		faction->deApplyStaticCosts(type);
+		type = morphUnitType;
+		computeTotalUpgrade();
+		map->putUnitCells(this, pos);
+		faction->applyDiscount(morphUnitType, mct->getDiscount());
+		
+		// reprocess commands
+		Commands newCommands;
+		Commands::const_iterator i;
+
+		// add current command, which should be the morph command
+		assert(commands.size() > 0 && commands.front()->getType()->getClass() == CommandClass::MORPH);
+		newCommands.push_back(commands.front());
+		i = commands.begin();
+		++i;
+
+		// add (any) remaining if possible
+		for(; i != commands.end(); ++i) {
+			// first see if the new unit type has a command by the same name
+			const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
+			// if not, lets see if we can find any command of the same class
+			if(!newCmdType) {
+				newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+			}
+			// if still not found, we drop the comand, otherwise, we add it to the new list
+			if(newCmdType) {
+				(*i)->setType(newCmdType);
+				newCommands.push_back(*i);
+			}
+		}
+		commands = newCommands;
+		return true;
+	} else {
+		return false;
+	}
+}
 
 // ==================== PRIVATE ====================
 
@@ -1606,10 +1622,9 @@ void Unit::effectExpired(Effect *e){
 float Unit::computeHeight(const Vec2i &pos) const {
 	float height = map->getCell(pos)->getHeight();
 
-	if (currField == Field::AIR) {
+	if (type->getZone() == Zone::AIR) {
 		height += World::airHeight;
 	}
-
 	return height;
 }
 
@@ -1774,73 +1789,6 @@ CommandResult Unit::undoCommand(const Command &command) {
 	}
 
 	return CommandResult::SUCCESS;
-}
-
-/**
- * Recalculate the unit's stats (contained in base class
- * EnhancementType) to take into account changes in the effects and/or
- * totalUpgrade objects.
- */
-void Unit::recalculateStats() {
-	int oldMaxHp = getMaxHp();
-	int oldHp = hp;
-	reset();
-	setValues(*type);
-
-	// add up all multipliers first and then apply (multiply) once.  e.g.:
-	//	baseStat * (multiplier + multiplier)
-	// and not:
-	//	baseStat * multiplier * multiplier
-	addMultipliers(totalUpgrade);
-	for(Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
-		addMultipliers(*(*i)->getType(), (*i)->getStrength());
-	}
-	applyMultipliers(*this);
-
-	addStatic(totalUpgrade);
-	for(Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
-		addStatic(*(*i)->getType(), (*i)->getStrength());
-
-		// take care of effect damage type
-		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
-	}
-
-	effects.clearDirty();
-
-	if(getMaxHp() > oldMaxHp) {
-		hp += getMaxHp() - oldMaxHp;
-	} else if(hp > getMaxHp()) {
-		hp = getMaxHp();
-	}
-
-	// correct nagatives
-	if(sight < 0) {
-		sight = 0;
-	}
-	if(maxEp < 0) {
-		maxEp = 0;
-	}
-	if(maxHp < 0) {
-		maxHp = 0;
-	}
-
-
-	// If this guy is dead, make sure they stay dead
-	if(oldHp < 1) {
-		hp = 0;
-	}
-
-	// if not available in subfaction, it has to decay
-	/* maybe not, we need rules in faction.xml to specify this if we're going to do it
-	if(!faction->isAvailable(type)) {
-		int decAmount = (int)roundf(type->getMaxHp() / 200.f);
-		hpRegeneration -= decAmount;
-
-		// if still not degenerating give them one more dose
-		if(hpRegeneration >= 0) {
-			hpRegeneration -= decAmount;
-		}
-	}*/
 }
 
 /** query the speed at which a skill type is executed 

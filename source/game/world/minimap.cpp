@@ -78,7 +78,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 }
 
 Minimap::~Minimap(){
-	Logger::getInstance().add("Minimap", !Program::getInstance()->isTerminating());
+	Logger::getInstance().add("~Minimap", !Program::getInstance()->isTerminating());
 	delete fowPixmap0;
 	delete fowPixmap1;
 }

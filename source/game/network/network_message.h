@@ -23,27 +23,32 @@ using Shared::Platform::Socket;
 using Shared::Platform::int8;
 using Shared::Platform::int16;
 
-namespace Glest { namespace Game {
+namespace Glest { 
+	
+namespace Game {
+	class GameSettings;
+	class Command;
 
-class GameSettings;
-class Command;
+	class TechTree;
+	class FactionType;
+	class UnitType;
+	class SkillType;
+	class Unit;
+}
 
-class TechTree;
-class FactionType;
-class UnitType;
-class SkillType;
-class Unit;
-class NetworkInterface;
+namespace Net {
+
+class NetworkConnection;
 
 // ==============================================================
-//	class NetworkMessage
+//	class Message
 // ==============================================================
 /** Abstract base class for network messages, requires concrete subclasses 
   * to implement receive(Socket*)/send(Socket*), and provides send/receive methods
   * for them to use to accomplish this. */
-class NetworkMessage {
+class Message {
 public:
-	virtual ~NetworkMessage(){}
+	virtual ~Message(){}
 	virtual bool receive(Socket* socket)= 0;
 	virtual void send(Socket* socket) const = 0;
 
@@ -54,11 +59,11 @@ protected:
 };
 
 // ==============================================================
-//	class NetworkMessageIntro
+//	class IntroMessage
 // ==============================================================
 /**	Message sent from the server to the client
   *	when the client connects and vice versa */
-class NetworkMessageIntro : public NetworkMessage {
+class IntroMessage : public Message {
 private:
 	static const int maxVersionStringSize= 64;
 	static const int maxNameSize= 16;
@@ -73,8 +78,8 @@ private:
 	} data;
 
 public:
-	NetworkMessageIntro();
-	NetworkMessageIntro(const string &versionString, const string &pName, const string &hName, int playerIndex);
+	IntroMessage();
+	IntroMessage(const string &versionString, const string &pName, const string &hName, int playerIndex);
 
 	string getVersionString() const		{return data.versionString.getString();}
 	string getPlayerName() const		{return data.playerName.getString();}
@@ -87,10 +92,10 @@ public:
 };
 
 // ==============================================================
-//	class NetworkMessageAiSeedSync
+//	class AiSeedSyncMessage
 // ==============================================================
 /** Message sent if there are AI players, to seed their Random objects */
-class NetworkMessageAiSeedSync : public NetworkMessage {
+class AiSeedSyncMessage : public Message {
 private:
 	static const int maxAiSeeds = 3;
 
@@ -102,8 +107,8 @@ private:
 	} data;
 
 public:
-	NetworkMessageAiSeedSync();
-	NetworkMessageAiSeedSync(int count, int32 *seeds);
+	AiSeedSyncMessage();
+	AiSeedSyncMessage(int count, int32 *seeds);
 
 	int getSeedCount() const { return data.seedCount; }
 	int32 getSeed(int i) const { return data.seeds[i]; }
@@ -114,10 +119,10 @@ public:
 };
 
 // ==============================================================
-//	class NetworkMessageReady
+//	class ReadyMessage
 // ==============================================================
 /**	Message sent at the beggining of the game */
-class NetworkMessageReady : public NetworkMessage {
+class ReadyMessage : public Message {
 private:
 	struct Data{
 		int8 messageType;
@@ -125,8 +130,8 @@ private:
 	} data;
 
 public:
-	NetworkMessageReady();
-	NetworkMessageReady(int32 checksum);
+	ReadyMessage();
+	ReadyMessage(int32 checksum);
 
 	int32 getChecksum() const	{return data.checksum;}
 
@@ -136,10 +141,10 @@ public:
 };
 
 // ==============================================================
-//	class NetworkMessageLaunch
+//	class LaunchMessage
 // ==============================================================
 /**	Message sent from the server to the client to launch the game */
-class NetworkMessageLaunch : public NetworkMessage {
+class LaunchMessage : public Message {
 private:
 	static const int maxStringSize= 256;
 
@@ -166,8 +171,8 @@ private:
 	} data;
 
 public:
-	NetworkMessageLaunch();
-	NetworkMessageLaunch(const GameSettings *gameSettings);
+	LaunchMessage();
+	LaunchMessage(const GameSettings *gameSettings);
 
 	void buildGameSettings(GameSettings *gameSettings) const;
 
@@ -181,8 +186,8 @@ public:
 // ==============================================================
 /**	Message to issue commands to several units */
 #pragma pack(push, 2)
-class NetworkMessageCommandList : public NetworkMessage {
-	friend class NetworkInterface;
+class CommandListMessage : public Message {
+	friend class NetworkConnection;
 private:
 	static const int maxCommandCount= 16*4;
 	
@@ -196,7 +201,7 @@ private:
 	} data;
 
 public:
-	NetworkMessageCommandList(int32 frameCount= -1);
+	CommandListMessage(int32 frameCount= -1);
 
 	bool addCommand(const NetworkCommand* networkCommand);
 	void clear()									{data.commandCount= 0;}
@@ -210,10 +215,10 @@ public:
 #pragma pack(pop)
 
 // ==============================================================
-//	class NetworkMessageText
+//	class TextMessage
 // ==============================================================
 /**	Chat text message */
-class NetworkMessageText : public NetworkMessage {
+class TextMessage : public Message {
 private:
 	static const int maxStringSize= 64;
 
@@ -226,8 +231,8 @@ private:
 	} data;
 
 public:
-	NetworkMessageText(){}
-	NetworkMessageText(const string &text, const string &sender, int teamIndex);
+	TextMessage(){}
+	TextMessage(const string &text, const string &sender, int teamIndex);
 
 	string getText() const		{return data.text.getString();}
 	string getSender() const	{return data.sender.getString();}
@@ -239,105 +244,27 @@ public:
 };
 
 // =====================================================
-//	class NetworkMessageQuit
+//	class QuitMessage
 // =====================================================
 /** Message sent by clients to quit nicely, or by the server to terminate the game */
-class NetworkMessageQuit: public NetworkMessage {
+class QuitMessage: public Message {
 private:
 	struct Data{
 		int8 messageType;
 	} data;
 
 public:
-	NetworkMessageQuit();
+	QuitMessage();
 
 	virtual bool receive(Socket* socket);
 	virtual void send(Socket* socket) const;
 	static size_t getSize() { return sizeof(Data); }
 };
 
-class SkillIdTriple {
-	int factionTypeId;
-	int unitTypeId;
-	int skillTypeId;
-
-public:
-	SkillIdTriple(int ftId, int utId, int stId) 
-			: factionTypeId(ftId)
-			, unitTypeId(utId)
-			, skillTypeId(stId) {
-	}
-
-	int getFactionTypeId() const { return factionTypeId; }
-	int getUnitTypeId() const { return unitTypeId; }
-	int getSkillTypeId() const { return skillTypeId; }
-
-	bool operator==(const SkillIdTriple &other) const {
-		return memcmp(this, &other, sizeof(SkillIdTriple));
-	}
-
-	bool operator<(const SkillIdTriple &other) const {
-		if (factionTypeId < other.getFactionTypeId()) return true;
-		if (factionTypeId > other.getFactionTypeId()) return false;
-
-		if (unitTypeId < other.getUnitTypeId()) return true;
-		if (unitTypeId > other.getUnitTypeId()) return false;
-
-		if (skillTypeId < other.getSkillTypeId()) return true;
-		// (skillTypeId >= other.getSkillTypeId())
-		return false;
-	}
-};
-
-class CycleInfo {
-	int skillFrames, animFrames;
-	int soundOffset, attackOffset;
-
-public:
-	CycleInfo()
-			: skillFrames(-1)
-			, animFrames(-1)
-			, soundOffset(-1)
-			, attackOffset(-1) {
-	}
-
-	CycleInfo(int sFrames, int aFrames, int sOffset = -1, int aOffset = -1) 
-			: skillFrames(sFrames)
-			, animFrames(aFrames)
-			, soundOffset(sOffset)
-			, attackOffset(aOffset) {
-	}
-
-	int getSkillFrames() const	{ return skillFrames;	}
-	int getAnimFrames() const	{ return animFrames;	}
-	int getSoundOffset() const	{ return soundOffset;	}
-	int getAttackOffset() const { return attackOffset;	}
-
-};
-
-class SkillCycleTable : public NetworkMessage {
-private:
-	typedef std::map<SkillIdTriple, CycleInfo> CycleMap;
-	CycleMap cycleTable;
-
-public:
-	SkillCycleTable() {}
-
-	void create(const TechTree *techTree);
-
-	const CycleInfo& lookUp(SkillIdTriple id) {
-		return cycleTable[id];
-	}
-	const CycleInfo& lookUp(int ftId, int utId, int stId) {
-		return cycleTable[SkillIdTriple(ftId, utId, stId)];
-	}
-	const CycleInfo& lookUp(const Unit *unit);
-
-	virtual bool receive(Socket* socket);
-	virtual void send(Socket* socket) const;
-};
-
-class KeyFrame : public NetworkMessage {
+// =====================================================
+//	class KeyFrame
+// =====================================================
+class KeyFrame : public Message {
 private:
 	static const int buffer_size = 1024 * 4;
 	static const int max_cmds = 512;
@@ -383,20 +310,20 @@ public:
 	ProjectileUpdate getProjUpdate();
 };
 
-#if _RECORD_GAME_STATE_
+#if _GAE_DEBUG_EDITION_
 
-class SyncError : public NetworkMessage {
+class SyncErrorMsg : public Message {
 	struct Data{
 		int32	messageType	:  8;
 		uint32	frameCount	: 24;
 	} data;
 
 public:
-	SyncError(int frame) {
-		data.messageType = NetworkMessageType::SYNC_ERROR;
+	SyncErrorMsg(int frame) {
+		data.messageType = MessageType::SYNC_ERROR;
 		data.frameCount = frame;
 	}
-	SyncError() {}
+	SyncErrorMsg() {}
 
 	int getFrame() const { return data.frameCount; }
 

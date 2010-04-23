@@ -26,6 +26,8 @@
 	#define snprintf _snprintf
 #endif
 
+using std::numeric_limits;
+
 namespace Glest{ namespace Game{
 
 // =====================================================

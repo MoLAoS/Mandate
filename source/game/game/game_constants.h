@@ -13,13 +13,13 @@
 #define _GLEST_GAME_GAMECONSTANTS_H_
 
 // The 'Globals'
-#define theGame				(*Game::getInstance())
+#define theGame				(*GameState::getInstance())
 #define theWorld			(World::getInstance())
 #define theMap				(*World::getInstance().getMap())
-#define theCamera			(*Game::getInstance()->getGameCamera())
-#define theGameSettings		(Game::getInstance()->getGameSettings())
+#define theCamera			(*GameState::getInstance()->getGameCamera())
+#define theGameSettings		(GameState::getInstance()->getGameSettings())
 #define theGui				(*Gui::getCurrentGui())
-#define theConsole			(*Game::getInstance()->getConsole())
+#define theConsole			(*GameState::getInstance()->getConsole())
 #define theConfig			(Config::getInstance())
 #define theRoutePlanner		(*World::getInstance().getRoutePlanner())
 #define theCartographer		(*World::getInstance().getCartographer())
@@ -28,6 +28,7 @@
 #define theSoundRenderer	(SoundRenderer::getInstance())
 #define theLogger			(Logger::getInstance())
 #define theLang				(Lang::getInstance())
+#define theFileFactory		(*FSFactory::getInstance())
 
 #if _GAE_DEBUG_EDITION_
 #	define theDebugRenderer	(Renderer::getInstance().debugRenderer)
@@ -42,6 +43,38 @@
 
 #include "util.h"
 using Shared::Util::EnumNames;
+
+namespace Glest {
+	
+	namespace Sim {
+
+		STRINGY_ENUM(
+			GameRole, 
+				LOCAL,
+				SERVER,
+				CLIENT
+		)
+	}	
+
+	namespace Net {
+
+		STRINGY_ENUM(
+			MessageType,
+					NO_MSG,
+					INTRO,
+					PING,
+					AI_SYNC,
+					READY,
+					LAUNCH,
+					COMMAND_LIST,
+					TEXT,
+					KEY_FRAME,
+					SKILL_CYCLE_TABLE,
+					SYNC_ERROR,
+					QUIT
+		)
+	}
+}
 
 namespace Glest { namespace Game {
 
@@ -81,10 +114,12 @@ namespace GameConstants {
 	)
 	const int cameraFps = 100;
 	const int networkFramePeriod = 5;
-	const int networkExtraLatency = 100;
+	const int networkExtraLatency = 250;
 
 	const int cellScale = 2;
 	const int mapScale = 2;
+
+	const int saveGameVersion = 3;
 }
 
 
@@ -146,21 +181,6 @@ namespace Search {
 
 } // end namespace Search
 
-//[could be WRAPPED_ENUM in NetworkMessage ?]
-REGULAR_ENUM( NetworkMessageType,
-				NO_MSG,
-				INTRO,
-				PING,
-				AI_SYNC,
-				READY,
-				LAUNCH,
-				COMMAND_LIST,
-				TEXT,
-				KEY_FRAME,
-				SKILL_CYCLE_TABLE,
-				SYNC_ERROR,
-				QUIT
-			)
 
 /** The control type of a 'faction' (aka, player)
   * <ul><li><b>CLOSED</b> Slot closed, no faction</li>

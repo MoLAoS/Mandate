@@ -70,7 +70,7 @@ class GridTextureCallback {
 public:
 	Texture2D *tex;
 
-	void reset() { if (tex) tex->end(); tex = 0; }
+	void reset() {/* if (tex) tex->end(); */tex = 0; }
 	void loadTextures();
 
 	GridTextureCallback() : tex(0) {}

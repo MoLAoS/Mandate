@@ -14,7 +14,7 @@
 
 #include "window.h"
 #include "console.h"
-#include "network_manager.h"
+#include "network_interface.h"
 #include "lang.h"
 #include "keymap.h"
 #include "script_manager.h"
@@ -22,8 +22,8 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Platform;
+using namespace Glest::Net;
 
 namespace Glest { namespace Game {
 
@@ -33,13 +33,14 @@ namespace Glest { namespace Game {
 
 const int ChatManager::maxTextLenght = 256;
 
-ChatManager::ChatManager(const Keymap &keymap) :
-		keymap(keymap),
-		editEnabled(false),
-		teamMode(false),
-		console(NULL),
-		thisTeamIndex(-1),
-		text() {
+ChatManager::ChatManager(SimulationInterface *si, const Keymap &keymap)
+		: iSim(si)
+		, keymap(keymap)
+		, editEnabled(false)
+		, teamMode(false)
+		, console(NULL)
+		, thisTeamIndex(-1)
+		, text() {
 }
 
 void ChatManager::init(Console* console, int thisTeamIndex) {
@@ -81,7 +82,6 @@ bool ChatManager::keyDown(const Key &key) {
 		}
 		return true;
 	}
-
 	
 	if (key == keyReturn && editEnabled) {
 		editEnabled = false;
@@ -93,9 +93,11 @@ bool ChatManager::keyDown(const Key &key) {
 					ScriptManager::doSomeLua(codeline);
 				} else {
 			)
-					GameInterface *gameInterface = NetworkManager::getInstance().getGameInterface();
-					console->addLine(theConfig.getNetPlayerName() + ": " + text);
-					gameInterface->doSendTextMessage(text, teamMode ? thisTeamIndex : -1);
+			console->addLine(theConfig.getNetPlayerName() + ": " + text);
+			NetworkInterface *netInterface = iSim->asNetworkInterface();
+			if (netInterface) {
+				netInterface->sendTextMessage(text, teamMode ? thisTeamIndex : -1);
+			}
 			IF_DEBUG_EDITION(
 				}
 			)
@@ -122,10 +124,10 @@ void ChatManager::keyPress(char c) {
 }
 
 void ChatManager::updateNetwork() {
-	GameInterface *gni = NetworkManager::getInstance().getGameInterface();
-	while (gni->hasChatMsg()) {
-		console->addLine(gni->getChatSender() + ": " + gni->getChatText(), true);
-		gni->popChatMsg();
+	NetworkInterface *netInterface = iSim->asNetworkInterface();
+	while (netInterface && netInterface->hasChatMsg()) {
+		console->addLine(netInterface->getChatSender() + ": " + netInterface->getChatText(), true);
+		netInterface->popChatMsg();
 	}
 }
 

@@ -31,6 +31,12 @@ using Shared::Xml::XmlNode;
 using Shared::Math::Vec3f;
 using Shared::Graphics::Model;
 
+namespace Glest { namespace Sim {
+class CycleInfo;
+}}
+
+using Glest::Sim::CycleInfo;
+
 namespace Glest{ namespace Game{
 
 using Shared::Util::MultiFactory;
@@ -42,8 +48,6 @@ class TechTree;
 class EnhancementType;
 class Unit;
 //class EarthquakeType;
-
-class CycleInfo;
 
 class SkillTypeFactory;
 
@@ -67,7 +71,6 @@ public:
 
 protected:
 	//SkillClass skillClass;
-	EffectTypes effectTypes;
 	int epCost;
 	int speed;
 	int animSpeed;
@@ -78,12 +81,6 @@ protected:
 	const char* typeName;
 	int minRange;
 	int maxRange;
-
-	int effectsRemoved;
-	bool removeBenificialEffects;
-	bool removeDetrimentalEffects;
-	bool removeAllyEffects;
-	bool removeEnemyEffects;
 
 	float startTime;
 
@@ -96,6 +93,8 @@ protected:
 	int splashRadius;
 	ParticleSystemTypeSplash* splashParticleSystemType;
 
+	EffectTypes effectTypes;
+
 public:
 	//varios
 	SkillType(SkillClass skillClass, const char* typeName);
@@ -104,7 +103,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	void descEffects(string &str, const Unit *unit) const;
-	void descEffectsRemoved(string &str, const Unit *unit) const;
+	//void descEffectsRemoved(string &str, const Unit *unit) const;
 	void descSpeed(string &str, const Unit *unit, const char* speedType) const;
 	void descRange(string &str, const Unit *unit, const char* rangeDesc) const;
 
@@ -119,8 +118,6 @@ public:
 	//get
 	virtual SkillClass getClass() const	= 0;
 	const string &getName() const		{return name;}
-	const EffectTypes &getEffectTypes() const	{return effectTypes;}
-	bool isHasEffects() const			{return effectTypes.size() > 0;}
 	int getEpCost() const				{return epCost;}
 	int getSpeed() const				{return speed;}
 	int getAnimSpeed() const			{return animSpeed;}
@@ -136,13 +133,6 @@ public:
 	static string skillClassToStr(SkillClass skillClass);
 	static string fieldToStr(Zone field);
 
-	// get removing effects
-	int getEffectsRemoved() const			{return effectsRemoved;}
-	bool isRemoveBenificialEffects() const	{return removeBenificialEffects;}
-	bool isRemoveDetrimentalEffects() const	{return removeDetrimentalEffects;}
-	bool isRemoveAllyEffects() const		{return removeAllyEffects;}
-	bool isRemoveEnemyEffects() const		{return removeEnemyEffects;}
-
 	//get proj
 	bool getProjectile() const									{return projectile;}
 	ParticleSystemTypeProjectile * getProjParticleType() const	{return projectileParticleSystemType;}
@@ -152,7 +142,12 @@ public:
 	bool getSplash() const										{return splash;}
 	bool getSplashDamageAll() const								{return splashDamageAll;}
 	int getSplashRadius() const									{return splashRadius;}
-	ParticleSystemTypeSplash * getSplashParticleType() const	{return splashParticleSystemType;}};
+	ParticleSystemTypeSplash * getSplashParticleType() const	{return splashParticleSystemType;}
+
+	// get effects
+	const EffectTypes &getEffectTypes() const	{return effectTypes;}
+	bool hasEffects() const			{return effectTypes.size() > 0;}
+};
 
 // ===============================
 // 	class StopSkillType
@@ -436,6 +431,7 @@ public:
 		return types[id];
 	}
 
+	int getSkillTypeCount() const { return idCounter; }
 };
 
 

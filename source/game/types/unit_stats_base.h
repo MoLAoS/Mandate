@@ -73,6 +73,7 @@ public:
 		XmlBasedFlags<Property, Property::COUNT>::load(node, dir, tt, ft, "property", PropertyNames);
 	}
 };
+
 // ===============================
 // 	class UnitStats
 // ===============================
@@ -89,14 +90,6 @@ protected:
 
     int sight;
 	int armor;
-	const ArmorType *armorType; // ??? UnitStats?
-
-    /** size in cells square (i.e., size x size) */
-    int size;
-    int height;
-
-	bool light;			// ??? UnitStats?
-    Vec3f lightColor;	// ??? UnitStats?
 
 	// these are skill stats
 	int attackStrength;		// ??? UnitStats?
@@ -109,16 +102,12 @@ protected:
 	int repairSpeed;		// ??? UnitStats?
 	int harvestSpeed;		// ??? UnitStats?
 
-
-	// move these 'down' (to UnitType)
-	UnitProperties properties;
-	Fields fields;
-	/** Resistance / Damage Multipliers */
+	/** Resistance / Damage Multipliers ( => Enhancement ) */
 	static size_t damageMultiplierCount;
 	vector<float> damageMultipliers;
 
 public:
-	UnitStats() {damageMultipliers.resize(damageMultiplierCount);}
+	UnitStats() : damageMultipliers(damageMultiplierCount) { }
 	virtual ~UnitStats() {}
 
 	virtual void doChecksum(Checksum &checksum) const;
@@ -131,11 +120,6 @@ public:
 	int getEpRegeneration() const			{return epRegeneration;}
 	int getSight() const					{return sight;}
 	int getArmor() const					{return armor;}
-	const ArmorType *getArmorType() const	{return armorType;}
-	bool getLight() const					{return light;}
-	Vec3f getLightColor() const				{return lightColor;}
-	int getSize() const						{return size;}
-	int getHeight() const					{return height;}
 
 	int getAttackStrength() const			{return attackStrength;}
 	fixed getEffectStrength() const			{return effectStrength;}
@@ -146,10 +130,6 @@ public:
 	int getProdSpeed() const				{return prodSpeed;}
 	int getRepairSpeed() const				{return repairSpeed;}
 	int getHarvestSpeed() const				{return harvestSpeed;}
-	const Fields &getFields() const			{return fields;}
-	bool getField(Field field) const		{return fields.get(field);}
-	const UnitProperties &getProperties() const	{return properties;}
-	bool getProperty(Property property) const	{return properties.get(property);}
 
 	static size_t getDamageMultiplierCount()	{return damageMultiplierCount;}
 	float getDamageMultiplier(size_t i) const	{assert(i < damageMultiplierCount); return damageMultipliers[i];}
@@ -180,7 +160,7 @@ public:
 	void setValues(const UnitStats &us);
 
 	/**
-	 * Apply all the multipliers to in the supplied EnhancementType to the
+	 * Apply all the multipliers in the supplied EnhancementType to the
 	 * applicable static value (i.e., addition/subtraction values) in this
 	 * object.
 	 */
@@ -189,14 +169,47 @@ public:
 	/**
 	 * Add all static values (i.e., addition/subtraction values) in to this
 	 * object, using the supplied multiplier strength before adding. I.e., stat =
-	 * e.stat * strength. This includes adding and removing effected fields and
-	 * properties as well as overwriting light and/or armor if either of those
-	 * are specified in the object e.
+	 * e.stat * strength.
 	 */
 	void addStatic(const EnhancementType &e, fixed strength = 1);
-
-
 };
+
+#ifdef SILNARM_IS_WORKING_HERE
+// ===============================================
+// 	enum UnitStat, UnitAttribute & SkillAttribute
+// ===============================================
+
+WRAPPED_ENUM( UnitStat, HP, EP )
+
+WRAPPED_ENUM( UnitAttribute, MAX_HP, REGEN_HP, MAX_EP, REGEN_EP, SIGHT, ARMOUR )
+
+WRAPPED_ENUM( SkillAttribute, SPEED, /*ANIM_SPEED,*/ EP_COST, STRENGTH, VARIANCE, RANGE, SPLASH_RADIUS )
+
+// =========================================
+// 	class AttributeModifier & SkillModifier
+// =========================================
+
+class AttributeModifier {
+	UnitAttribute attrib;
+	fixed addition;
+	fixed multiplier;
+
+public:
+	AttributeModifier(UnitAttribute attr, fixed add, fixed mult = 1)
+			: attrib(attr), addition(add), multiplier(mult) { }
+};
+
+class SkillModifier {
+	//SkillClass sc;
+	SkillAttribute attrib;
+	fixed addition;
+	fixed multiplier;
+
+public:
+	SkillSpeedModifier(SkillAttribute attr, fixed add, fixed mult = 1)
+			: attrib(attr), addition(add), multiplier(mult) { }
+};
+#endif // def SILNARM_IS_WORKING_HERE
 
 // ===============================
 // 	class EnhancementType
@@ -215,24 +228,17 @@ protected:
 	fixed epRegenerationMult;
 	fixed sightMult;
 	fixed armorMult;
+
 	fixed attackStrengthMult;
 	fixed effectStrengthMult;
 	fixed attackPctStolenMult;
 	fixed attackRangeMult;
+
 	fixed moveSpeedMult;
 	fixed attackSpeedMult;
 	fixed prodSpeedMult;
 	fixed repairSpeedMult;
 	fixed harvestSpeedMult;
-	//Note: the member variables fields, properties, armorType, bodyType, light,
-	//lightColor, size and height don't get multipliers.
-
-	/** Fields which are removed by this enhancement/degridation object. */
-	// replace with generic immobilize ?
-	Fields antiFields;
-
-	/** Properties which are removed by this enhancement/degridation object. */
-	UnitProperties antiProperties;
 
 public:
 	EnhancementType() {
@@ -254,11 +260,6 @@ public:
 	fixed getProdSpeedMult() const		{return prodSpeedMult;}
 	fixed getRepairSpeedMult() const	{return repairSpeedMult;}
 	fixed getHarvestSpeedMult() const	{return harvestSpeedMult;}
-
-	const Fields &getRemovedFields() const				{return antiFields;}
-	bool getRemovedField(Field field) const				{return antiFields.get(field);}
-	const UnitProperties &getRemovedProperties() const	{return antiProperties;}
-	bool getRemovedProperty(Property property) const	{return antiProperties.get(property);}
 
 	/**
 	 * Adds multipliers, normalizing and adjusting for strength. The formula
@@ -283,7 +284,6 @@ public:
 
 	/**
 	 * Initializes this object from the specified XmlNode object.
-	 * TODO: explain better.
 	 */
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 
@@ -299,8 +299,8 @@ public:
 	 * descriptions.
 	 */
 	static void describeModifier(string &str, int value) {
-		if(value != 0) {
-			if(value > 0) {
+		if (value != 0) {
+			if (value > 0) {
 				str += "+";
 			}
 			str += intToStr(value);
@@ -318,8 +318,6 @@ private:
 
 	/** Initialize value from <multipliers> node */
 	void initMultiplier(const XmlNode *node, const string &dir);
-
-	static void formatModifier(string &str, const char *pre, const char* label, int value, fixed multiplier);
 };
 
 }}//end namespace

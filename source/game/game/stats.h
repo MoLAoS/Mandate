@@ -22,6 +22,11 @@
 using std::string;
 using Shared::Xml::XmlNode;
 
+namespace Glest { namespace Sim {
+	class SimulationInterface;
+}}
+using Glest::Sim::SimulationInterface;
+
 namespace Glest { namespace Game {
 
 // =====================================================
@@ -42,15 +47,15 @@ public:
 	};
 
 private:
-	GameSettings gs;
 	PlayerStats playerStats[GameConstants::maxPlayers];
 
+	SimulationInterface *iSim;
+
 public:
-	Stats(const GameSettings &gs) : gs(gs), playerStats() {}
+	Stats(SimulationInterface *si) : playerStats(), iSim(si) {}
 	void load(const XmlNode *n);
 	void save(XmlNode *n) const;
 
-	const GameSettings & getGameSettings() const	{return gs;}
 	bool getVictory(int i) const					{return playerStats[i].victory;}
 	int getKills(int i) const						{return playerStats[i].kills;}
 	int getDeaths(int i) const						{return playerStats[i].deaths;}

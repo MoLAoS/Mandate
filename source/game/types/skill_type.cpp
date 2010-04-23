@@ -23,7 +23,8 @@
 #include "faction_type.h"
 #include "map.h"
 #include "earthquake_type.h"
-#include "network_message.h"
+//#include "network_message.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
@@ -49,12 +50,7 @@ SkillType::SkillType(SkillClass skillClass, const char* typeName)
 		, soundStartTime(0.f)
 		, typeName(typeName)
 		, minRange(0)
-		, maxRange(0)
-		, effectsRemoved(0)
-		, removeBenificialEffects(false)
-		, removeDetrimentalEffects(false)
-		, removeAllyEffects(false)
-		, removeEnemyEffects(false) {
+		, maxRange(0) {
 }
 
 SkillType::~SkillType(){
@@ -111,18 +107,6 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 		}
 	}
 
-	//removing effects
-	const XmlNode *removeEffectsNode = sn->getChild("remove-effects", 0, false);
-	if(removeEffectsNode) {
-		effectsRemoved = removeEffectsNode->getIntAttribute("count");
-		removeBenificialEffects = removeEffectsNode->getChildBoolValue("benificial");
-		removeDetrimentalEffects = removeEffectsNode->getChildBoolValue("detrimental");
-		removeAllyEffects = removeEffectsNode->getChildBoolValue("allies");
-		removeEnemyEffects = removeEffectsNode->getChildBoolValue("foes");
-	} else {
-		effectsRemoved = 0;
-	}
-
 	startTime= sn->getOptionalFloatValue("start-time");
 
 	//projectile
@@ -173,22 +157,16 @@ void SkillType::doChecksum(Checksum &checksum) const {
 		(*it)->doChecksum(checksum);
 	}
 	checksum.add(name);
-	checksum.add<int>(epCost);
-	checksum.add<int>(speed);
-	checksum.add<int>(animSpeed);
-	checksum.add<int>(minRange);
-	checksum.add<int>(maxRange);
-	checksum.add<int>(effectsRemoved);
-	checksum.add<bool>(removeBenificialEffects);
-	checksum.add<bool>(removeDetrimentalEffects);
-	checksum.add<bool>(removeAllyEffects);
-	checksum.add<bool>(removeEnemyEffects);
-	checksum.add<float>(startTime);
-	checksum.add<bool>(projectile);
-	checksum.add<bool>(splash);
-	checksum.add<bool>(splashDamageAll);
-	checksum.add<int>(splashRadius);
-
+	checksum.add(epCost);
+	checksum.add(speed);
+	checksum.add(animSpeed);
+	checksum.add(minRange);
+	checksum.add(maxRange);
+	checksum.add(startTime);
+	checksum.add(projectile);
+	checksum.add(splash);
+	checksum.add(splashDamageAll);
+	checksum.add(splashRadius);
 }
 
 void SkillType::descEffects(string &str, const Unit *unit) const {
@@ -206,31 +184,6 @@ void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) 
 	str += intToStr(maxRange);
 	EnhancementType::describeModifier(str, unit->getMaxRange(this) - maxRange);
 	str+="\n";
-}
-
-
-void SkillType::descEffectsRemoved(string &str, const Unit *unit) const {
-	Lang &lang= Lang::getInstance();
-
-	if(effectsRemoved) {
-		str+= lang.get("Removes") + " " + intToStr(effectsRemoved) + " ";
-		if(removeBenificialEffects) {
-			str += lang.get("benificial");
-		}
-		if(removeDetrimentalEffects) {
-			if(removeBenificialEffects) {
-				str += " " + lang.get("or") + " ";
-			}
-			str += lang.get("detrimental");
-		}
-		str += " " + lang.get("EffectsFrom") + ": ";
-		if(removeAllyEffects) {
-			str += lang.get("ally") + " ";
-		}
-		if(removeEnemyEffects) {
-			str += lang.get("enemy") + " ";
-		}
-	}
 }
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
@@ -463,31 +416,16 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	EnhancementType::describeModifier(str, unit->getAttackStrength(this) - attackStrength);
 	str+= " ("+ attackType->getName() +")";
 	str+= "\n";
-/*
-	if(unit->getAttackPctStolen(this) != 0 || attackPctVar != 0) {
-		str+= lang.get("HealthStolen") + ": ";
-		fixed fhigh = unit->getAttackPctStolen(this) + attackPctVar;
-		fixed flow = unit->getAttackPctStolen(this) - attackPctVar;
 
-		str += Conversion::toStr(flow * 100);
-		if(fhigh != flow) {
-			str += "% ... ";
-			str += Conversion::toStr(fhigh * 100);
-		}
-		str += "%\n";
-	}
-*/
 	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
 
 	descSpeed(str, unit, "AttackSpeed");
 	descEffects(str, unit);
-	descEffectsRemoved(str, unit);
 }
 
 // ===============================
 // 	class BuildSkillType
 // ===============================
-
 
 // ===============================
 // 	class HarvestSkillType
@@ -618,7 +556,8 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 // 	class SkillTypeFactory
 // =====================================================
 
-SkillTypeFactory::SkillTypeFactory(){
+SkillTypeFactory::SkillTypeFactory()
+		: idCounter(0) {
 	registerClass<StopSkillType>("stop");
 	registerClass<MoveSkillType>("move");
 	registerClass<AttackSkillType>("attack");

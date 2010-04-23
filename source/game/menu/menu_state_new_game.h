@@ -13,6 +13,7 @@
 #define _GLEST_GAME_MENUSTATENEWGAME_H_
 
 #include "menu_state_start_game_base.h"
+#include "sim_interface.h"
 
 namespace Glest{ namespace Game{
 
@@ -51,7 +52,6 @@ private:
 	GraphicListBox listBoxFogOfWar;
 	//GraphicMessageBox *msgBox;
 
-
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
 
@@ -61,12 +61,14 @@ public:
 	void update();
 
 private:
-    void loadGameSettings(GameSettings *gameSettings);
+    void loadGameSettings();
 	//void loadMapInfo(string file, MapInfo *mapInfo);
 	void reloadFactions();
 	void updateControlers();
-	bool isUnconnectedSlots();
 	void updateNetworkSlots();
+
+	bool hasUnconnectedSlots();
+	bool hasNetworkSlots();
 };
 
 }}//end namespace

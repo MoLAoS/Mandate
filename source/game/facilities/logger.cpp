@@ -25,6 +25,7 @@
 #include "network_util.h"
 
 using namespace Shared::Graphics;
+using namespace Glest::Net;
 
 namespace Glest{ namespace Game{
 
@@ -154,9 +155,10 @@ void Logger::renderLoadingScreen(){
 }
 
 void logNetwork(const string &msg) {
-	if (isNetworkServer()) {
+	GameRole role = theSimInterface->getNetworkRole();
+	if (role == GameRole::SERVER) {
 		Logger::getServerLog().addNetworkMsg(msg);
-	} else if (isNetworkClient()) {
+	} else if (role = GameRole::CLIENT) {
 		Logger::getClientLog().addNetworkMsg(msg);
 	} else {
 		// what the ...

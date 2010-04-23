@@ -48,9 +48,11 @@ public:
 
 	// defined in util.cpp
 	int rand();
+
 	int randRange(int min, int max);
 	float randRange(float min, float max);
-	//fixed randRange(fixed min, fixed max);
+
+	fixed randPercent();
 
 	template<typename T> Vec2<T> randRange(const Vec2<T> &min, const Vec2<T> &max) {
 		return Vec2<T>(

@@ -41,26 +41,24 @@ AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap)
 		maxClearance[f] = 0;
 	}
 	const FactionType *factionType;
-	for ( int i = 0; i < ftCount; ++i ) {
+	for (int i = 0; i < ftCount; ++i) {
 		factionType = world->getTechTree()->getFactionType(i);
 		const UnitType *unitType;
-		for ( int j = 0; j < factionType->getUnitTypeCount(); ++j ) {
+		for (int j = 0; j < factionType->getUnitTypeCount(); ++j) {
 			unitType = factionType->getUnitType(j);
-			for ( Field f = enum_cast<Field>(0); f < Field::COUNT; ++f ) {			
-				if ( unitType->isMobile() && unitType->getField(f) ) {
-					if ( unitType->getSize() > maxClearance[f] ) {
-						maxClearance[f] = unitType->getSize();
-					}
+			if (unitType->isMobile()) {
+				if (unitType->getSize() > maxClearance[unitType->getField()]) {
+					maxClearance[unitType->getField()] = unitType->getSize();
 				}
 			}
 		}
 	}
 #	ifndef NDEBUG
-		for ( Field f(0); f < Field::COUNT; ++f ) {
+		foreach_enum (Field, f) {
 			cout << "max clearance in " << FieldNames[f] << " = " << maxClearance[f] << "\n";
 		}
 #	endif
-	if ( !eMap ) {
+	if (!eMap) {
 		initMapMetrics();
 	} else {
 		metrics.zero();

@@ -562,7 +562,7 @@ private:
 	fixed distance;
 
 public:
-	Targets() : nearest(0), distance(fixed::max_int()) {}
+	Targets() : nearest(0), distance(fixed::max_value()) {}
 	void record(Unit *target, fixed dist);
 	Unit* getNearest() { return nearest; }
 	Unit* getNearestSkillClass(SkillClass sc);

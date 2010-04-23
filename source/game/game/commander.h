@@ -21,12 +21,18 @@
 
 using std::vector;
 
+namespace Glest { namespace Sim {
+	class SimulationInterface;
+}}
+using Glest::Sim::SimulationInterface;
+
 namespace Glest { namespace Game {
 
 using Shared::Math::Vec2i;
 
 class World;
 class Unit;
+
 
 // =====================================================
 // 	class Commander
@@ -39,8 +45,10 @@ private:
 	typedef vector<CommandResult> CommandResultContainer;
 	typedef CommandResultContainer::const_iterator CRIterator;
 	World *world;
+	SimulationInterface *iSim;
 
 public:
+	Commander(SimulationInterface *iSim) : world(0), iSim(iSim) { }
     void init(World *world)		{this->world = world;}
 	void updateNetwork();
 
@@ -56,9 +64,10 @@ public:
 	
 	void trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const;
 
+	void giveCommand(Command *command) const;
+
 private:
 	CommandResult pushCommand(Command *command) const;
-	void giveCommand(Command *command) const;
     Vec2i computeRefPos(const Selection &selection) const;
     Vec2i computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, const Vec2i &commandPos) const;
     CommandResult computeResult(const CommandResultContainer &results) const;

@@ -46,21 +46,24 @@ endif(WIN32)
 set(glestshared_incs ${glestshared_incs} PARENT_SCOPE)
 
 include_directories(${glestshared_incs})
-add_library(glestshared STATIC ${glestshared_srcs})
-target_link_libraries(glestshared ${LUA_LIBRARIES} ${PHYSFS_LIBRARY} ${ZLIB_LIBRARIES})
+
+add_library(shared_lib STATIC ${glestshared_srcs})
+
+target_link_libraries(shared_lib ${LUA_LIBRARIES} ${PHYSFS_LIBRARY} ${ZLIB_LIBRARIES})
+
 if(WIN32)
 	# FIXME: VC project needs static vorbis/ogg libs
-	target_link_libraries(glestshared ${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
+	target_link_libraries(shared_lib ${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
 else(WIN32)
-	target_link_libraries(glestshared ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
+	target_link_libraries(shared_lib ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
 endif(WIN32)
 
 if (WIN32)
 	# set linker flags for Release to use link time code gen.
-	set_target_properties(glestshared PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
+	set_target_properties(shared_lib PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
 
 	# set-up precompiled headers (for windows)
-	set_target_properties(glestshared PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
+	set_target_properties(shared_lib PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
 	set_source_files_properties(sources/pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
 	set_source_files_properties(${GLPROCS_FILE} PROPERTIES COMPILE_FLAGS "/Y-")
 endif(WIN32)

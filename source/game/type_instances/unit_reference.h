@@ -39,7 +39,6 @@ public:
 	UnitReference(): id(-1), faction(NULL) {}
 	UnitReference(const XmlNode *node);
 	UnitReference(const Unit* unit)			{*this = unit;}
-//	UnitReference(int id, Faction *faction): id(id), faction(faction) {}
 
 	void operator=(const Unit *unit);
 	operator Unit *() const					{return getUnit();}

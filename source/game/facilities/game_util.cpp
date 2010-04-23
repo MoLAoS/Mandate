@@ -32,9 +32,9 @@ const string glestVersionString= "v3.2.2";
 
 #if _GAE_DEBUG_EDITION_
 	//const string gaeVersionString= "v0.3.0-alpha_DE-beta1";
-	const string gaeVersionString= VERSION_STRING;
+	const string gaeVersionString= VERSION_STRING"_DE";
 #else
-	const string gaeVersionString= "v0.3.0-alpha";
+	const string gaeVersionString= VERSION_STRING;
 #endif
 
 string getCrashDumpFileName(){

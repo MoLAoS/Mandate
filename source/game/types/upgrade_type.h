@@ -29,6 +29,7 @@ namespace Glest { namespace Game {
 class UnitType;
 class Unit;
 class UpgradeTypeFactory;
+
 // ===============================
 // 	class UpgradeType
 // ===============================

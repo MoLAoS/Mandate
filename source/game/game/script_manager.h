@@ -40,7 +40,7 @@ class World;
 class Unit;
 class GameCamera;
 class GameSettings;
-class Game;
+class GameState;
 class UnitType;
 class Console;
 
@@ -261,7 +261,7 @@ private:
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
 
-	static Game *game;
+	static GameState *game;
 	static World *world;
 
 	static Console *dialogConsole;
@@ -269,7 +269,7 @@ private:
 
 public:
 	static void cleanUp();
-	static void init(Game *game);
+	static void init(GameState *game);
 
 	static void doSomeLua(string &code);
 

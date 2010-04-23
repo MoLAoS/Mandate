@@ -80,7 +80,7 @@ private:
 	// <== only modify with mutex locked
 
 	GraphicListBox listBoxGames;
-	GraphicLabel labelNetwork;
+	//GraphicLabel labelNetwork;
 
 	GraphicMessageBox *confirmMessageBox;
 	//GraphicMessageBox *msgBox;

@@ -50,8 +50,10 @@ private:
 	bool fogOfWar;
 
 public:
-	GameSettings();
+	GameSettings() { clear(); }
 	GameSettings(const XmlNode *node);
+
+	void clear() { memset(this, 0, sizeof(GameSettings)); }
 	// use default copy ctor
 	//GameSettings(const GameSettings &gs);
 

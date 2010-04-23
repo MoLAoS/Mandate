@@ -36,12 +36,12 @@ class TechTree{
 private:
 	typedef vector<ResourceType> ResourceTypes;
 	typedef vector<FactionType> FactionTypes;
-	typedef vector<ArmorType> ArmorTypes;
+	typedef vector<ArmourType> ArmorTypes;
 	typedef vector<AttackType> AttackTypes;
 	typedef vector<EffectType*> EffectTypes;
 	typedef map<string, ResourceType*> ResourceTypeMap;
 	typedef map<string, FactionType*> FactionTypeMap;
-	typedef map<string, ArmorType*> ArmorTypeMap;
+	typedef map<string, ArmourType*> ArmorTypeMap;
 	typedef map<string, AttackType*> AttackTypeMap;
 	typedef map<string, EffectType*> EffectTypeMap;
 
@@ -77,7 +77,7 @@ public:
 	// get by index
 	const ResourceType *getResourceType(int i) const			{return &resourceTypes[i];}
 	const FactionType *getFactionType(int i) const				{return &factionTypes[i];}
-	const ArmorType *getArmorType(int i) const					{return &armorTypes[i];}
+	const ArmourType *getArmourType(int i) const					{return &armorTypes[i];}
 	const AttackType *getAttackType(int i) const				{return &attackTypes[i];}
 	const EffectType *getEffectType(int i) const				{return effectTypes[i];}
 
@@ -99,7 +99,7 @@ public:
 		   throw runtime_error("Faction Type not found: " + name);
 		}
 	}
-	const ArmorType *getArmorType(const string &name) const {
+	const ArmourType *getArmourType(const string &name) const {
 		ArmorTypeMap::const_iterator i = armorTypeMap.find(name);
 		if(i != armorTypeMap.end()) {
 			return i->second;
@@ -130,7 +130,7 @@ public:
     const ResourceType *getTechResourceType(int i) const;
     const ResourceType *getFirstTechResourceType() const;
     const string &getDesc() const								{return desc;}
-	fixed getDamageMultiplier(const AttackType *att, const ArmorType *art) const {
+	fixed getDamageMultiplier(const AttackType *att, const ArmourType *art) const {
 		return damageMultiplierTable.getDamageMultiplier(att, art);
 	}
 

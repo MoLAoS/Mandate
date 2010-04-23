@@ -24,6 +24,12 @@
 
 using namespace Shared::Platform;
 
+namespace Glest { namespace Sim {
+	class SimulationInterface;
+}}
+
+using Glest::Sim::SimulationInterface;
+
 namespace Glest { namespace Game {
 
 class Program;
@@ -72,6 +78,7 @@ public:
 // ===============================
 
 class Program : public WindowGl {
+	friend class SimulationInterface;
 private:
 	class CrashProgramState : public ProgramState {
 		GraphicMessageBox msgBox;
@@ -97,6 +104,8 @@ private:
 	PerformanceTimer updateTimer;
 	PerformanceTimer updateCameraTimer;
 
+	SimulationInterface *simulationInterface;
+
 	ProgramState *programState;
 	bool crashed;
 	bool terminating;
@@ -107,6 +116,8 @@ private:
 	Program(const Program &);
 	const Program &operator =(const Program &);
 	
+	void setSimInterface(SimulationInterface *si);
+
 public:
 	Program(Config &config, CmdArgs &args);
 	~Program();
@@ -115,6 +126,8 @@ public:
 	bool isTerminating() const		{ return terminating;	}
 	bool isVisible() const			{ return visible;		}
 	Keymap &getKeymap() 			{ return keymap;		}
+
+	SimulationInterface* getSimulationInterface() { return simulationInterface; }
 
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) {
 		const Metrics &metrics = Metrics::getInstance();
@@ -230,6 +243,8 @@ private:
 	void setDisplaySettings();
 	void restoreDisplaySettings();
 };
+
+#define theSimInterface (Program::getInstance()->getSimulationInterface())
 
 }} //end namespace
 

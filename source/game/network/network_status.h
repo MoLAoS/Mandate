@@ -24,10 +24,9 @@
 using Shared::Platform::Chrono;
 using Shared::Platform::int64;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Net {
 
-using namespace std;
-
+#if 0 // Not currently in use
 class NetworkStatus {
 public:
 	class DataInfo {		
@@ -113,7 +112,7 @@ protected:
 private:
 	void updateStatusStr();
 };
-
+#endif
 }}//end namespace
 
 #endif
