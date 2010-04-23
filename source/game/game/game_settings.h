@@ -53,7 +53,7 @@ public:
 	GameSettings() { clear(); }
 	GameSettings(const XmlNode *node);
 
-	void clear() { memset(this, 0, sizeof(GameSettings)); }
+	void clear();
 	// use default copy ctor
 	//GameSettings(const GameSettings &gs);
 

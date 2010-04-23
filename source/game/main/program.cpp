@@ -46,7 +46,7 @@ namespace Glest { namespace Game {
 
 Program::CrashProgramState::CrashProgramState(Program &program, const exception *e) :
 		ProgramState(program) {
-	try { 
+	try {
 		Renderer::getInstance().saveScreen("glestadv-crash.tga");
 	} catch(runtime_error &e) {
 		printf("%s", e.what());
@@ -105,7 +105,7 @@ Program::Program(Config &config, CmdArgs &args)
 #		if _GAE_DEBUG_EDITION_
 		, updateTimer(float(config.getGsWorldUpdateFps()), maxTimes, 1)
 #		else
-		, updateTimer(float(GameConstants::updateFps), maxTimes, 1) 
+		, updateTimer(float(GameConstants::updateFps), maxTimes, 1)
 #		endif
 		, updateCameraTimer(float(GameConstants::cameraFps), maxTimes, 10)
 		, simulationInterface(0)
@@ -183,7 +183,7 @@ Program::Program(Config &config, CmdArgs &args)
 
 		//needed because Game::update -> updateLoops -> isNetworkGame
 		//simulationInterface->changeRole(GameRole::SERVER);
-		
+
 		ShowMap *game = new ShowMap(*this);
 		setState(game);
 	// normal startup
@@ -211,25 +211,25 @@ Program::~Program() {
 void Program::loop() {
 	while(handleEvent()) {
 		size_t sleepTime = renderTimer.timeToWait();
-	
+
 		sleepTime = sleepTime < updateCameraTimer.timeToWait() ? sleepTime : updateCameraTimer.timeToWait();
 		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
-	
+
 		if(sleepTime) {
 			Shared::Platform::sleep(sleepTime);
 		}
-	
+
 		//render
 		while(renderTimer.isTime() && visible){
 			programState->render();
 		}
-	
+
 		//update camera
 		while(updateCameraTimer.isTime()){
 			programState->updateCamera();
 		}
-	
+
 		//update world
 		while(updateTimer.isTime()){
 			GraphicComponent::update();
@@ -239,7 +239,7 @@ void Program::loop() {
 				simulationInterface->asNetworkInterface()->update();
 			}
 		}
-	
+
 		//tick timer
 		while(tickTimer.isTime()){
 			programState->tick();
@@ -279,6 +279,7 @@ void Program::setState(ProgramState *programState){
 	}
 
 	this->programState= programState;
+
 	programState->load();
 	programState->init();
 

@@ -45,10 +45,11 @@ class NetworkError : public std::exception {};
 class TimeOut : public NetworkError {
 public:
 	TimeOut(NetSource waitingFor) : source(waitingFor) {}
+	~TimeOut() throw() {}
 
 	NetSource getSource() const { return source; }
 
-	const char* what() const {
+	const char* what() const throw() {
 		if (source == NetSource::SERVER) {
 			return "Time out waiting for server.";
 		} else {
@@ -62,13 +63,15 @@ private:
 
 class InvalidMessage : public NetworkError {
 public:
-	InvalidMessage(MessageType expected, MessageType got) 
+	InvalidMessage(MessageType expected, MessageType got)
 		: expected(expected), received(got) {}
 
-	InvalidMessage(MessageType got) 
+	InvalidMessage(MessageType got)
 		: expected(MessageType::INVALID), received(got) {}
 
-	const char* what() const {
+	~InvalidMessage() throw() {}
+
+	const char* what() const throw() {
 		static char msgBuf[512];
 		if (expected != MessageType::INVALID) {
 			sprintf(msgBuf, "Expected message type %d(%s), got type %d(%s).",
@@ -87,8 +90,9 @@ private:
 class GarbledMessage : public NetworkError {
 public:
 	GarbledMessage(MessageType type, NetSource sender) : type(type), sender(sender) {}
+	~GarbledMessage() throw() {}
 
-	const char* what() const {
+	const char* what() const throw() {
 		static char msgBuf[512];
 		sprintf(msgBuf, "While processing %s message from %s, encountered invalid data.",
 			MessageTypeNames[type], (sender == NetSource::SERVER ? "server" : "client"));
@@ -103,8 +107,9 @@ private:
 class DataSyncError : public NetworkError {
 public:
 	DataSyncError(NetSource role) : role(role) {}
+	~DataSyncError() throw() {}
 
-	const char* what() const {
+	const char* what() const throw() {
 		if (role == NetSource::CLIENT) {
 			return "Your data does not match the server's.";
 		} else {
@@ -118,7 +123,9 @@ private:
 
 class GameSyncError : public NetworkError {
 public:
-	const char* what() const {
+	~GameSyncError() throw() {}
+
+	const char* what() const throw() {
 		return "A network synchronisation error has occured.";
 	}
 };
@@ -127,8 +134,9 @@ class VersionMismatch : public NetworkError {
 public:
 	VersionMismatch(NetSource role, const string &v1, const string &v2)
 			: role(role), v1(v1), v2(v2) {}
+	~VersionMismatch() throw() {}
 
-	const char* what() const {
+	const char* what() const throw() {
 		static char msgBuf[512];
 		sprintf(msgBuf, "Version mismatch, your version: %s, %s version: %s",
 			v1.c_str(), (role == NetSource::SERVER ? "Client" : "Server"), v2.c_str());
@@ -142,7 +150,9 @@ private:
 
 class Disconnect : public NetworkError {
 public:
-	const char* what() const {
+	~Disconnect() throw() {}
+
+	const char* what() const throw() {
 		return "The network connection was severed.";
 	}
 };

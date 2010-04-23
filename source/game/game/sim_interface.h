@@ -37,7 +37,7 @@ namespace Glest { namespace Game {
 }}
 using namespace Glest::Game;
 
-namespace Glest { 
+namespace Glest {
 
 #if _GAE_DEBUG_EDITION_
 
@@ -103,7 +103,7 @@ public:
 using namespace Debug;
 
 #endif // _GAE_DEBUG_EDITION_
-	
+
 namespace Sim {
 
 WRAPPED_ENUM( GameSpeed, PAUSED, SLOWEST, VERY_SLOW, SLOW, NORMAL, FAST, VERY_FAST, FASTEST )
@@ -122,7 +122,7 @@ public:
 			, attackOffset(-1) {
 	}
 
-	CycleInfo(int sFrames, int aFrames, int sOffset = -1, int aOffset = -1) 
+	CycleInfo(int sFrames, int aFrames, int sOffset = -1, int aOffset = -1)
 			: skillFrames(sFrames)
 			, animFrames(aFrames)
 			, soundOffset(sOffset)
@@ -213,7 +213,7 @@ public:
 	void initWorld();
 	int launchGame();
 	void updateWorld();
-	
+
 	// game speed
 	GameSpeed pause();
 	GameSpeed resume();
@@ -241,12 +241,12 @@ public:
 	// commands
 	virtual void requestCommand(const NetworkCommand *networkCommand) {
 		requestedCommands.push_back(*networkCommand);
-	} 
+	}
 	virtual void requestCommand(Command *command);
 
 	// change interface type
 	void changeRole(GameRole role);
-	
+
 	// query interface type
 	virtual GameRole getNetworkRole() const { return GameRole::LOCAL; }
 	bool isNetworkInterface() const { return getNetworkRole() != GameRole::LOCAL; }
@@ -275,28 +275,29 @@ protected:
 
 	/** Wait on network until all players are ready to start the game, only for network games */
 	virtual void waitUntilReady(Checksum&)  { }
-	
+
 	/** Indicator that the game should now start, only used by ClientInterface */
 	virtual void startGame() { }
-	
+
 	/** Called after each world frame is processed, issues pending commands */
 	virtual void frameProccessed() {
 		std::copy(requestedCommands.begin(), requestedCommands.end(), std::back_inserter(pendingCommands));
+		requestedCommands.clear();
 	}
-	
+
 	/** Called when a quit request is received */
 	virtual void quitGame(QuitSource) { }
 
 	/** Called after a command has been updated, determines skill cycle length */
 	virtual void updateSkillCycle(Unit*);
-	
+
 	/** Calculates and sets 'arrival time' for a new projectile */
 	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
 		pps->setPath(start, end);
 	}
 
 	// post event hooks, The following four functions are used by NetworkInterfaces to collect and compare
-	// checksums of all interesting events... once network play has stabalised, they should either 
+	// checksums of all interesting events... once network play has stabalised, they should either
 	// be removed or compiled into only the debug ed.
 
 	/** Called after a command update, after the skill cycle length is set */
@@ -304,10 +305,10 @@ protected:
 
 	/** Called after a projectile's 'path' is set */
 	virtual void postProjectileUpdate(Unit *unit, int endFrame) {}
-	
+
 	/** Called after a unit's animatioin cycle is updated */
 	virtual void postAnimUpdate(Unit *unit) {}
-	
+
 	/** Called afer a unit is born */
 	virtual void postUnitBorn(Unit *unit) {}
 };
@@ -315,4 +316,3 @@ protected:
 }}
 
 #endif
- 

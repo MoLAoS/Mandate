@@ -112,12 +112,6 @@ private:
 	bool visible;
 	Keymap keymap;
 
-private:
-	Program(const Program &);
-	const Program &operator =(const Program &);
-	
-	void setSimInterface(SimulationInterface *si);
-
 public:
 	Program(Config &config, CmdArgs &args);
 	~Program();
@@ -128,6 +122,7 @@ public:
 	Keymap &getKeymap() 			{ return keymap;		}
 
 	SimulationInterface* getSimulationInterface() { return simulationInterface; }
+	void setSimInterface(SimulationInterface *si);
 
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) {
 		const Metrics &metrics = Metrics::getInstance();

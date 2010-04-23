@@ -214,7 +214,7 @@ void ParticleSystemTypeProjectile::load(const string &dir, const string &path){
 		const XmlNode *trackingNode = tajectoryNode->getChild("tracking", 0, false);
 		tracking = trackingNode && trackingNode->getBoolAttribute("value");
 
-	} catch(const exception &e) {
+	} catch (const std::exception &e) {
 		throw runtime_error("Error loading ParticleSystem: " + path + "\n" + e.what());
 	}
 }
@@ -226,7 +226,7 @@ ParticleSystem *ParticleSystemTypeProjectile::create() {
 	ps->setTrajectorySpeed(trajectorySpeed);
 	ps->setTrajectoryScale(trajectoryScale);
 	ps->setTrajectoryFrequency(trajectoryFrequency);
-	
+
 	return ps;
 }
 
@@ -256,7 +256,7 @@ void ParticleSystemTypeSplash::load(const string &dir, const string &path){
 		horizontalSpreadA= horizontalSpreadNode->getAttribute("a")->getFloatValue(0.0f, 1.0f);
 		horizontalSpreadB= horizontalSpreadNode->getAttribute("b")->getFloatValue(-1.0f, 1.0f);
 	}
-	catch(const exception &e){
+	catch(const std::exception &e){
 		throw runtime_error("Error loading ParticleSystem: "+ path + "\n" +e.what());
 	}
 }

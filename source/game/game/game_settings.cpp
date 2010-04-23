@@ -45,6 +45,29 @@ GameSettings::GameSettings(const XmlNode *node) {
 	}
 }
 
+void GameSettings::clear() {
+	description = "";
+	mapPath = "";
+	tilesetPath = "";
+	techPath = "";
+	scenarioPath = "";
+
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		factionTypeNames[i] = "";
+		playerNames[i] = "";
+		factionControls[i] = ControlType::CLOSED;
+		resourceMultipliers[i] = 1.f;
+		teams[i] = 0;
+		startLocationIndex[i] = 0;
+	}
+	thisFactionIndex = -1;
+	factionCount = 0;
+	defaultUnits = true;
+	defaultResources = true;
+	defaultVictoryConditions = true;
+	fogOfWar = true;
+}
+
 void GameSettings::save(XmlNode *node) const {
 	node->addChild("description", description);
 	node->addChild("mapPath", mapPath);

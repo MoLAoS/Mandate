@@ -47,7 +47,7 @@ namespace Glest { namespace Net {
 const int ClientInterface::messageWaitTimeout = 10000;	//10 seconds
 const int ClientInterface::waitSleepTime = 5; // changed from 50, no obvious effect
 
-ClientInterface::ClientInterface(Program &prog) 
+ClientInterface::ClientInterface(Program &prog)
 		: NetworkInterface(prog) {
 	_TRACE_FUNCTION();
 	clientSocket = NULL;
@@ -372,7 +372,7 @@ void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {
 	int32 server_cs = keyFrame.getNextChecksum();
 	if (cs != server_cs) {
 		stringstream ss;
-		ss << "Sync Error: "__FUNCTION__" , unit type: " << unit->getType()->getName()
+		ss << "Sync Error: " << __FUNCTION__ << " , unit type: " << unit->getType()->getName()
 			<< " unit id: " << unit->getId() << " faction: " << unit->getFactionIndex();
 		LOG_NETWORK( ss.str() );
 		LOG_NETWORK( "\tserver checksum " + Conversion::toHex(server_cs) + " my checksum " + Conversion::toHex(cs) );
@@ -383,7 +383,7 @@ void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {
 void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 	if (cs != keyFrame.getNextChecksum()) {
 		stringstream ss;
-		ss << "Sync Error: "__FUNCTION__" , unit type: " << unit->getType()->getName()
+		ss << "Sync Error: " << __FUNCTION__ << " , unit type: " << unit->getType()->getName()
 			<< ", skill class: " << SkillClassNames[unit->getCurrSkill()->getClass()];
 		LOG_NETWORK( ss.str() );
 		IF_DEBUG_EDITION(
@@ -399,7 +399,7 @@ void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 void ClientInterface::checkProjectileUpdate(Unit *unit, int endFrame, int32 cs) {
 	if (cs != keyFrame.getNextChecksum()) {
 		stringstream ss;
-		ss << "Sync Error: "__FUNCTION__", unit id: " << unit->getId() << " skill: "
+		ss << "Sync Error: " << __FUNCTION__ << ", unit id: " << unit->getId() << " skill: "
 			<< unit->getCurrSkill()->getName();
 		if (unit->getCurrCommand()->getUnit()) {
 			ss << " target id: " << unit->getCurrCommand()->getUnit()->getId();
@@ -416,7 +416,7 @@ void ClientInterface::checkAnimUpdate(Unit *unit, int32 cs) {
 	if (cs != keyFrame.getNextChecksum()) {
 		const CycleInfo &inf = skillCycleTable.lookUp(unit);
 		stringstream ss;
-		ss << "Sync Error: "__FUNCTION__" unit id: " << unit->getId() 
+		ss << "Sync Error: " << __FUNCTION__ << " unit id: " << unit->getId()
 			<< " attack offset: " << inf.getAttackOffset();
 		LOG_NETWORK( ss.str() );
 		throw GameSyncError(); // graceful exit to Menu please...

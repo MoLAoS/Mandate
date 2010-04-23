@@ -45,7 +45,7 @@ void SkillCycleTable::create(const TechTree *techTree) {
 	_TRACE_FUNCTION();
 	numEntries = theWorld.getSkillTypeFactory()->getSkillTypeCount();
 	assert(numEntries);
-	
+
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {
 		cycleTable[i] = theWorld.getSkillTypeFactory()->getType(i)->calculateCycleTime();
@@ -63,7 +63,7 @@ void SkillCycleTable::send(Socket *socket) const {
 
 	assert(dataSize < 16777216);
 	assert( (1<<24) == 16777216);
-	
+
 	SkillCycleTableMsgHeader hdr;
 	hdr.type = MessageType::SKILL_CYCLE_TABLE;
 	hdr.count = numEntries;
@@ -88,8 +88,8 @@ bool SkillCycleTable::receive(Socket *socket) {
 		|| !socket->receive(cycleTable, payloadSize)) {
 			delete cycleTable;
 			cycleTable = 0;
-			throw runtime_error(
-				__FUNCTION__"() : Socket lied, getDataToRead() said ok, receive() couldn't deliver");
+			throw std::runtime_error(
+				"SkillCycleTable::receive() : Socket lied, getDataToRead() said ok, receive() couldn't deliver");
 		}
 		return true;
 	}
@@ -334,7 +334,7 @@ bool SimulationInterface::hasBuilding(const Faction *faction){
 
 GameSpeed SimulationInterface::pause() {
 	if (speed != GameSpeed::PAUSED) {
-		prevSpeed = speed; 
+		prevSpeed = speed;
 		speed = GameSpeed::PAUSED;
 	}
 	return speed;
@@ -380,7 +380,7 @@ void SimulationInterface::doQuitGame(QuitSource source) {
 
 void SimulationInterface::requestCommand(Command *command) {
 	Unit *unit = command->getCommandedUnit();
-	
+
 	if (command->isAuto()) {
 		// Auto & AI generated commands go straight though
 		pendingCommands.push_back(command);
@@ -410,7 +410,7 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 		const UnitType *ut = unit->getType();
 		unit->setCurrSkill(SkillClass::STOP);
 		if (unit->getMaster() && ut->hasCommandClass(CommandClass::GUARD)) {
-			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::GUARD), 
+			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::GUARD),
 							CommandFlags(CommandProperties::AUTO), unit->getMaster()));
 		} else {
 			if (ut->hasCommandClass(CommandClass::STOP)) {
@@ -488,7 +488,7 @@ void SimulationInterface::changeRole(GameRole role) {
 			newThis = new ServerInterface(program);
 			break;
 		default:
-			throw std::runtime_error("Invalid GameRole passed to "__FUNCTION__"()");
+			throw std::runtime_error("Invalid GameRole passed to SimulationInterface::changeRole()");
 	}
 	program.setSimInterface(newThis);
 }
@@ -513,14 +513,14 @@ UnitStateRecord::UnitStateRecord(Unit *unit) {
 }
 
 ostream& operator<<(ostream &lhs, const UnitStateRecord& state) {
-	return lhs	
-		<< "Unit: " << state.unit_id 
-		<< ", CommandId: " << state.cmd_id 
+	return lhs
+		<< "Unit: " << state.unit_id
+		<< ", CommandId: " << state.cmd_id
 		<< ", SkillId: " << state.skill_id
 		<< "\n\tCurr Pos: " << Vec2i(state.curr_pos_x, state.curr_pos_y)
 		<< ", Next Pos: " << Vec2i(state.next_pos_x, state.next_pos_y)
 		<< "\n\tTarg Pos: " << Vec2i(state.targ_pos_x, state.targ_pos_y)
-		<< ", Targ Id: " << state.target_id 
+		<< ", Targ Id: " << state.target_id
 		<< endl;
 }
 
@@ -579,7 +579,7 @@ void WorldLog::logFrame(int frame) {
 		long pos = (frame - 1) * sizeof(StateLogIndexEntry);
 		StateLogIndexEntry ndxEntry;
 		f->seek(pos, SEEK_SET);
-		f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1); 
+		f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
 		delete f;
 		f = theFileFactory.getFileOps();
  		f->openRead(gs_datafile);
@@ -589,7 +589,7 @@ void WorldLog::logFrame(int frame) {
 		record.frame = frame;
 		int numUpdates = (ndxEntry.end - ndxEntry.start) / sizeof(UnitStateRecord);
 		assert((ndxEntry.end - ndxEntry.start) % sizeof(UnitStateRecord) == 0);
-			
+
 		if (numUpdates) {
 			UnitStateRecord *unitRecords = new UnitStateRecord[numUpdates];
 			f->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
