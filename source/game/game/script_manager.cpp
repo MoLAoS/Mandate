@@ -441,7 +441,7 @@ void ScriptManager::init(GameState *g) {
 		const Script* script= scenario->getScript(i);
 		bool ok;
 		if (script->getName().substr(0,9) == "unitEvent") {
-			ok = luaScript.loadCode("function " + script->getName() + "(unit_id)" + script->getCode() + "\nend\n", script->getName());
+			ok = luaScript.loadCode("function " + script->getName() + "(unit_id, user_data)" + script->getCode() + "\nend\n", script->getName());
 		} else {
 			ok = luaScript.loadCode("function " + script->getName() + "()" + script->getCode() + "\nend\n", script->getName());
 		}
@@ -812,7 +812,7 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 		did_something = true;
 	} else if (cond == "enemy_sighted") { // nop
 	} else if (cond == "command_callback") {
-		if (triggerManager.addCommandCallback(id,evnt) == -1) {
+		if (triggerManager.addCommandCallback(id,evnt, ud) == -1) {
 			addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
 		}
 		did_something = true;
@@ -826,7 +826,7 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 				if (threshold < 1) {
 					addErrorMessage("setUnitTrigger(): invalid hp_below condition = '" + val + "'");
 				} else {
-					int res = triggerManager.addHPBelowTrigger(id, threshold, evnt);
+					int res = triggerManager.addHPBelowTrigger(id, threshold, evnt, ud);
 					if (res == -1) {
 						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
 					} else if (res == -2) {
@@ -839,7 +839,7 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 				if (threshold < 1) {
 					addErrorMessage("setUnitTrigger(): invalid hp_above condition = '" + val + "'");
 				} else {
-					int res = triggerManager.addHPAboveTrigger(id, threshold, evnt);
+					int res = triggerManager.addHPAboveTrigger(id, threshold, evnt, ud);
 					if (res == -1) {
 						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
 					} else if (res == -2) {

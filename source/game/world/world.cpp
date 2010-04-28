@@ -402,6 +402,10 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
 			}
+			if (attacked->getAttackedTrigger()) {
+				ScriptManager::onAttackedTrigger(attacked);
+				attacked->setAttackedTrigger(false);
+			}
 		}
 	}
 }

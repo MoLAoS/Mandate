@@ -402,8 +402,14 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 		// check if a command being 'watched' has finished
 		if (unit->getCommandCallback() && unit->getCommandCallback() != unit->getCurrCommand()) {
 			ScriptManager::commandCallback(unit);
+			unit->clearCommandCallback();
 		}
-		unit->getCurrCommand()->getType()->update(unit);
+		// If the unit still has commands after the callback was cleared execute them
+		// Very redundent, but if the lua did not give a command to the unit,
+		// the getCurrCommand() call will seg fault
+		if (unit->anyCommand()) {
+			unit->getCurrCommand()->getType()->update(unit);
+		}
 	}
 	// if no commands, add stop (or guard for pets) command
 	if (!unit->anyCommand() && unit->isOperative()) {

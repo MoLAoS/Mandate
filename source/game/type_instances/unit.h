@@ -430,7 +430,7 @@ public:
 
 	//command related
 	const CommandType *getFirstAvailableCt(CommandClass commandClass) const;
-	bool anyCommand() const								{return !commands.empty();}
+	bool anyCommand() const								{return !commands.empty() || commandCallback != NULL;}
 
 	/** return current command, assert that there is always one command */
 	Command *getCurrCommand() const {
