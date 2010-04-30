@@ -225,12 +225,12 @@ private:
 	Observers observers;
 	Pets pets;
 	UnitReference master;
-	
-	const Command *commandCallback; // for script 'command callbacks'
+
+	int commandCallback;		// for script 'command callbacks'
 	int hp_below_trigger;		// if non-zero, call the Trigger manager when HP falls below this
 	int hp_above_trigger;		// if non-zero, call the Trigger manager when HP rises above this
 	bool attacked_trigger;
- 	
+
 public:
 	// signals, should prob replace the UnitObserver stuff
 	//
@@ -323,9 +323,9 @@ public:
 	int killPets();
 
 	///@todo move to a helper of ScriptManager, connect signals...
-	void setCommandCallback()					{ commandCallback = commands.front(); }
+	void setCommandCallback();
 	void clearCommandCallback()					{ commandCallback = NULL; }
-	const Command* getCommandCallback() const	{ return commandCallback; }
+	const int getCommandCallback() const	{ return commandCallback; }
 	void setHPBelowTrigger(int i)				{ hp_below_trigger = i; }
 	void setHPAboveTrigger(int i)				{ hp_above_trigger = i; }
 	void setAttackedTrigger(bool val)			{ attacked_trigger = val; }
@@ -430,7 +430,7 @@ public:
 
 	//command related
 	const CommandType *getFirstAvailableCt(CommandClass commandClass) const;
-	bool anyCommand() const								{return !commands.empty() || commandCallback != NULL;}
+	bool anyCommand() const								{return !commands.empty();}
 
 	/** return current command, assert that there is always one command */
 	Command *getCurrCommand() const {

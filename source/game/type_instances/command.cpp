@@ -26,6 +26,7 @@ namespace Glest{ namespace Game{
 // =====================================================
 
 const Vec2i Command::invalidPos = Vec2i(-1);
+int Command::lastId = -1;
 
 Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
 		: archetype(archetype)
@@ -37,6 +38,8 @@ Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &po
 		, unitRef2()
 		, unitType(NULL)
 		, commandedUnit(commandedUnit) {
+	lastId++;
+	id = lastId;
 }
 
 Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
@@ -49,6 +52,8 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, unitRef2()
 		, unitType(NULL)
 		, commandedUnit(commandedUnit) {
+	lastId++;
+	id = lastId;
 }
 
 Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit)
@@ -61,6 +66,8 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 		, unitRef2()
 		, unitType(NULL)
 		, commandedUnit(commandedUnit) {
+	lastId++;
+	id = lastId;
 	if (unit) {
 		pos = unit->getCenteredPos();
 	}
@@ -81,6 +88,8 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, unitRef2()
 		, unitType(unitType)
 		, commandedUnit(commandedUnit) {
+	lastId++;
+	id = lastId;
 }
 
 Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)

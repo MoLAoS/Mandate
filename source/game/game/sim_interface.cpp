@@ -400,16 +400,16 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	// if unit has command process it
 	if (unit->anyCommand()) {
 		// check if a command being 'watched' has finished
-		if (unit->getCommandCallback() && unit->getCommandCallback() != unit->getCurrCommand()) {
+		if (unit->getCommandCallback() != unit->getCurrCommand()->getId()) {
+			int last = unit->getCommandCallback();
 			ScriptManager::commandCallback(unit);
-			unit->clearCommandCallback();
+			// if the callback set a new callback we don't want to clear it
+			// only clear if the callback id's are the same
+			if (last == unit->getCommandCallback()) {
+				unit->clearCommandCallback();
+			}
 		}
-		// If the unit still has commands after the callback was cleared execute them
-		// Very redundent, but if the lua did not give a command to the unit,
-		// the getCurrCommand() call will seg fault
-		if (unit->anyCommand()) {
-			unit->getCurrCommand()->getType()->update(unit);
-		}
+		unit->getCurrCommand()->getType()->update(unit);
 	}
 	// if no commands, add stop (or guard for pets) command
 	if (!unit->anyCommand() && unit->isOperative()) {

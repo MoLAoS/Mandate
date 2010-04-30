@@ -39,6 +39,7 @@ class Command {
 public:
 
 	static const Vec2i invalidPos;
+	static int lastId;
 
 private:
 	CommandArchetype archetype;
@@ -50,6 +51,7 @@ private:
 	UnitReference unitRef2;		//for patrol command, the unit traveling away from.
 	const UnitType *unitType;	//used for build
 	Unit *commandedUnit;
+	int id;						//give each command a unique id so it is distinguishable
 
 public:
 	//constructor
@@ -75,6 +77,7 @@ public:
 	Unit* getUnit2() const						{return unitRef2.getUnit();}
 	const UnitType* getUnitType() const			{return unitType;}
 	Unit *getCommandedUnit() const				{return commandedUnit;}
+	int getId() const							{return id;}
 
 	bool hasPos() const							{return pos.x != -1;}
 	bool hasPos2() const						{return pos2.x != -1;}

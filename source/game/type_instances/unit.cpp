@@ -475,16 +475,20 @@ const RepairCommandType * Unit::getRepairCommandType(const Unit *u) const {
 }
 
 float Unit::getProgress() const {
-	return float(theWorld.getFrameCount() - lastCommandUpdate) 
+	return float(theWorld.getFrameCount() - lastCommandUpdate)
 			/	float(nextCommandUpdate - lastCommandUpdate);
 }
 
 float Unit::getAnimProgress() const {
-	return float(theWorld.getFrameCount() - lastAnimReset) 
+	return float(theWorld.getFrameCount() - lastAnimReset)
 			/	float(nextAnimReset - lastAnimReset);
 }
 
 // ====================================== set ======================================
+
+void Unit::setCommandCallback() {
+	commandCallback = commands.front()->getId();
+}
 
 /** sets the current skill */
 void Unit::setCurrSkill(const SkillType *newSkill) {
