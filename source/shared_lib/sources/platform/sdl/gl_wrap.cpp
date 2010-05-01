@@ -18,7 +18,13 @@
 
 #include <SDL.h>
 #ifdef X11_AVAILABLE
-#include <GL/glx.h>
+#	ifdef __APPLE__
+#		include <OpenGL/OpenGL.h>
+//#		include <X11/Xlib.h>
+//#		include <OpenGL/glx.h> // Need this... but it doesn't come with the OS-X OpenGL framework... :(
+#	else
+#		include <GL/glx.h>	
+#	endif
 #endif
 
 #include "opengl.h"
@@ -66,7 +72,7 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits) {
 
 void createGlFontBitmaps(uint32 &base, const string &type, int size, int width,
 						 int charCount, FontMetrics &metrics) {
-#ifdef X11_AVAILABLE
+#if defined(X11_AVAILABLE)
 	Display* display = glXGetCurrentDisplay();
 	if(display == 0) {
 		throw std::runtime_error("Couldn't create font: display is 0");

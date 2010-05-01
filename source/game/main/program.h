@@ -78,7 +78,7 @@ public:
 // ===============================
 
 class Program : public WindowGl {
-	friend class SimulationInterface;
+	friend class Glest::Sim::SimulationInterface;
 private:
 	class CrashProgramState : public ProgramState {
 		GraphicMessageBox msgBox;
@@ -239,8 +239,8 @@ private:
 	void restoreDisplaySettings();
 };
 
-#define theSimInterface (Program::getInstance()->getSimulationInterface())
-
 }} //end namespace
+
+#define theSimInterface (Program::getInstance()->getSimulationInterface())
 
 #endif
