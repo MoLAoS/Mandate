@@ -210,7 +210,7 @@ void deleteValues(T beginIt, T endIt){
 
 template<typename ContainerType>
 void deleteValues(ContainerType container){
-	for (ContainerType::iterator it = container.begin(); it != container.end(); ++it) {
+	for (typename ContainerType::iterator it = container.begin(); it != container.end(); ++it) {
 		delete *it;
 	}
 }
@@ -224,7 +224,7 @@ void deleteMapValues(T beginIt, T endIt){
 
 template<typename MapType>
 void deleteMapValues(MapType map) {
-	for (MapType::iterator it = map.begin(); it != map.end(); ++it) {
+	for (typename MapType::iterator it = map.begin(); it != map.end(); ++it) {
 		delete it->second;
 	}
 }

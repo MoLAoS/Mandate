@@ -133,45 +133,20 @@ void PixmapIoTga::read(uint8 *pixels, int components) {
 	file->read(buf, dataSize, 1);
 
 	for (int i=0; i < dataSize; i += components) {
-		uint8 r, g, b, a, l;
-
-		if (this->components == 1) {
-			//file->read(&l, 1, 1);
-			l = *(buf + i);
-			r= l;
-			g= l;
-			b= l;
-			a= 255;
-		} else {
-			b = *(buf + i + 0);
-			g = *(buf + i + 1);
-			r = *(buf + i + 2);
-			//file->read(&b, 1, 1);
-			//file->read(&g, 1, 1);
-			//file->read(&r, 1, 1);
-			if (this->components == 4) {
-				a  = *(buf + i + 3);
-				//file->read(&a, 1, 1);
-			} else {
-				a = 255;
-			}
-			l = (r + g + b) / 3;
-		}
-
 		switch(components) {
 			case 1:
-				pixels[i+0]= l;
+				pixels[i+0]= buf[i];
 				break;
 			case 3:
-				pixels[i+0]= r;
-				pixels[i+1]= g;
-				pixels[i+2]= b;
+				pixels[i+0]= buf[i+2];
+				pixels[i+1]= buf[i+1];
+				pixels[i+2]= buf[i];
 				break;
 			case 4:
-				pixels[i+0]= r;
-				pixels[i+1]= g;
-				pixels[i+2]= b;
-				pixels[i+3]= a;
+				pixels[i+0]= buf[i+2];
+				pixels[i+1]= buf[i+1];
+				pixels[i+2]= buf[i];
+				pixels[i+3]= buf[i+3];
 				break;
 		}
 	}

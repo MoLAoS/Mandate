@@ -17,6 +17,7 @@
 
 using std::set;
 using std::map;
+using std::list;
 using std::numeric_limits;
 using Glest::Sim::Field;
 using Shared::Util::deleteValues;

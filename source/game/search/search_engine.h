@@ -18,6 +18,7 @@
 #include "vec.h"
 #include "game_constants.h"
 
+using std::numeric_limits;
 using Shared::Math::Vec2i;
 
 static const float SQRT2 = 1.41421356f;

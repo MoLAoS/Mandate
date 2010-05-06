@@ -169,6 +169,7 @@ Program::Program(Config &config, CmdArgs &args)
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
+	// load map and tileset without players
 	} else if(!args.getLoadmap().empty()) {
 		GameSettings &gs = simulationInterface->getGameSettings();
 		gs.clear();
@@ -180,9 +181,6 @@ Program::Program(Config &config, CmdArgs &args)
 		gs.setTechPath(string("techs/magitech"));
 		gs.setFogOfWar(false);
 		gs.setFactionCount(0);
-
-		//needed because Game::update -> updateLoops -> isNetworkGame
-		//simulationInterface->changeRole(GameRole::SERVER);
 
 		ShowMap *game = new ShowMap(*this);
 		setState(game);

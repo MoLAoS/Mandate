@@ -104,7 +104,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, targetPos(0)
 		, targetVec(0.0f)
 		, meetingPos(pos)
-		, commandCallback(NULL)
+		, commandCallback(0)
 		, hp_below_trigger(0)
 		, hp_above_trigger(0)
 		, attacked_trigger(false) {

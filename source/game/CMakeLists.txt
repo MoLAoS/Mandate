@@ -18,7 +18,6 @@ set(folders
 	sound
 	world
 )
-file(GLOB game_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
 source_group("" FILES ${game_srcs})
 foreach(folder ${folders})
 	file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h")
@@ -59,9 +58,3 @@ if (WIN32)
 		set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/DUSE_PCH=0")
 	endif (GAE_USE_PRECOMPILED_HDR)
 endif (WIN32)
-
-if(GAE_DEBUG_EDITION)
-	set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/D_GAE_DEBUG_EDITION_=1")
-else(GAE_DEBUG_EDITION)
-	set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/D_GAE_DEBUG_EDITION_=0")
-endif(GAE_DEBUG_EDITION)

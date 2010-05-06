@@ -8,6 +8,8 @@
 #cmakedefine X11_AVAILABLE
 #cmakedefine USE_PHYSFS
 
+#cmakedefine01 _GAE_DEBUG_EDITION_
+
 #cmakedefine HAVE_GLOB_H
 #cmakedefine HAVE_SYS_IOCTL_H
 #cmakedefine HAVE_SYS_FILIO_H
@@ -15,11 +17,10 @@
 #cmakedefine HAVE_BYTESWAP_H
 
 
-#define VERSION_STRING "@GLEST_VERSION@"
-#define CONTACT_STRING "@CONTACT@"
+#define VERSION_STRING "@GAE_VERSION@"
+#define CONTACT_STRING "@GAE_CONTACT@"
 
-// trailed slash is needed
-#define DEFAULT_CONFIG_DIR "@CONFIG_DIR@"
-#define DEFAULT_DATA_DIR   "@DATA_DIR@"
+#define DEFAULT_CONFIG_DIR "@GAE_CONFIG_DIR@"
+#define DEFAULT_DATA_DIR   "@GAE_DATA_DIR@"
 
 #endif

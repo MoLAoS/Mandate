@@ -304,7 +304,7 @@ public:
 
 	///@todo move to a helper of ScriptManager, connect signals...
 	void setCommandCallback();
-	void clearCommandCallback()					{ commandCallback = NULL; }
+	void clearCommandCallback()					{ commandCallback = 0; }
 	const int getCommandCallback() const	{ return commandCallback; }
 	void setHPBelowTrigger(int i)				{ hp_below_trigger = i; }
 	void setHPAboveTrigger(int i)				{ hp_above_trigger = i; }

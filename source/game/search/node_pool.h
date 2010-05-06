@@ -154,7 +154,7 @@ private:
 			marker = new unsigned int[w * h]; 
 			memset(marker, 0, w * h * sizeof(unsigned int)); 
 			pArray = new AStarNode*[w * h]; 
-			memset(pArray, NULL, w * h * sizeof(AStarNode*)); 
+			memset(pArray, 0, w * h * sizeof(AStarNode*)); 
 		}
 		~MarkerArray() { delete [] marker; delete [] pArray; }
 		inline void newSearch() { counter += 2; }

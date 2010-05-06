@@ -5,6 +5,9 @@
 AC_PREREQ([2.54])
 
 AC_INIT([gae], [0.2.13_rc1], [http://sf.net/apps/trac/glestae])
+
+AC_CONFIG_HEADER([projectConfig.h])
+
 AC_CONFIG_SRCDIR([mk/jam/build.jam])
 AC_CONFIG_AUX_DIR([mk/autoconf])
 
@@ -134,8 +137,6 @@ AM_CONDITIONAL([ZLIB], [test "x$have_zlib" = "xyes"])
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG([2.6.0], [WX_AVAILABLE="yes"], [WX_AVAILABLE="no"], [std,gl], [--unicode=yes])
 AC_SUBST([WX_AVAILABLE])
-
-AC_CONFIG_HEADER([projectConfig.h])
 
 AC_INIT_JAM
 AC_CONFIG_FILES([Jamconfig])

@@ -63,12 +63,12 @@ void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	PHYSFS_init(argv0);
 	PHYSFS_permitSymbolicLinks(1);
 	
-	if(!PHYSFS_mount(dataDir, NULL, 1)){
-		throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
-	}
 	PHYSFS_setWriteDir(configDir);
 	if(!PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 1)){
 		throw runtime_error(string("Couldn't mount configDir: ") + configDir);
+	}
+	if(!PHYSFS_mount(dataDir, NULL, 1)){
+		throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
 	}
 	// check for addons
 	char **list = PHYSFS_enumerateFiles("addons");
@@ -89,7 +89,7 @@ void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 
 	//FIXME: debug
 	for(char **i=PHYSFS_getSearchPath(); *i; i++){
-		cout << "[" << *i << "] is in the search path.\n";
+		std::cout << "[" << *i << "] is in the search path.\n";
 	}
 #endif
 }

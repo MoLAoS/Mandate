@@ -17,6 +17,7 @@
 namespace sigslot {
 
 class has_slots;
+template<class SlotClass, typename ArgType> class connection;
 
 class signal_base {
 public:
@@ -85,7 +86,7 @@ public:
 			if ((*it)->getdest() == pclass) {
 				delete *it;
 				connections.erase(it);
-				pclass->signal_disconnect(this);
+				(*it)->getdest()/*pclass*/->signal_disconnect(this);
 				return;
 			}
 			++it;

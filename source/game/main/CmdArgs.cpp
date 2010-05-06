@@ -1,3 +1,13 @@
+// ==============================================================
+//	This file is part of Glest (www.glest.org)
+//
+//	Copyright (C) 2010 Frank Tetzel <tetzank@users.sourceforge.net>
+//
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
+//	License, or (at your option) any later version
+// ==============================================================
 
 #include "pch.h"
 #include "CmdArgs.h"
@@ -36,6 +46,8 @@ bool CmdArgs::parse(int argc, char **argv){
 		}else if(arg=="-loadmap" && (i+2)<argc){
 			this->map = argv[++i];
 			this->tileset = argv[++i];
+		//}else if(arg=="-scenario" && (i+1)<argc){
+			//TODO: reuse MenuStateScenario::loadGameSettings and MenuStateScenario::loadScenarioInfo
 		}else if(arg=="--help" || arg=="-h"){
 			cout << "usage: " << argv[0] << " [options]\n"
 				<< "  -server               startup and immediately host a game\n"
@@ -43,9 +55,10 @@ bool CmdArgs::parse(int argc, char **argv){
 				<< "  -configdir path       set location of configs and logs to path\n"
 				<< "  -datadir path         set location of data\n"
 				<< "  -loadmap map tileset  load maps/map.gbm with tilesets/tileset for map preview\n";
+				//<< "  -scenario name        load \n"; //TODO
 			return true;
 		}else{
-			cout << "unknown argument: " << argv[i] << endl;
+			cout << "unknown argument: " << arg << endl;
 			return true;
 		}
 	}

@@ -61,22 +61,15 @@ find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 
 # PhysFS
-if(NOT DEFINED GAE_USE_PHYSFS)
-	set(GAE_USE_PHYSFS "OFF" CACHE BOOL "enable PhysicsFS support")
-endif()
-if(GAE_USE_PHYSFS)
+option(USE_PHYSFS "enable PhysicsFS support")
+if(USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
 endif()
 
 # debug edition
-if (NOT DEFINED GAE_DEBUG_EDITION)
-	set(GAE_DEBUG_EDITION false CACHE BOOL "")
-endif (NOT DEFINED GAE_DEBUG_EDITION)
-
+option(_GAE_DEBUG_EDITION_ "")
 # pre-compiled headers (windoze only atm)
-if (NOT DEFINED GAE_USE_PRECOMPILED_HDR)
-	set(GAE_USE_PRECOMPILED_HDR false CACHE BOOL "Enable pre-compiled headers, windows only atm.")
-endif (NOT DEFINED GAE_USE_PRECOMPILED_HDR)
+option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, windows only atm.")
 
 # set compiler flags...
 if (WIN32)
