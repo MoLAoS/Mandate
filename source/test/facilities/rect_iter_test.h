@@ -18,7 +18,7 @@
 
 #include "pos_iterator.h"
 
-using Glest::Game::Util::RectIterator;
+using Glest::Util::RectIterator;
 
 namespace Test {
 

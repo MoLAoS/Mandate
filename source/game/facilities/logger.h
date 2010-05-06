@@ -22,9 +22,14 @@
 using std::deque;
 using std::string;
 
-namespace Glest { namespace Game {
+namespace Glest {
 
-class GraphicProgressBar;
+namespace Graphics {
+	class GraphicProgressBar;
+}
+using Graphics::GraphicProgressBar;
+
+namespace Util {
 
 // =====================================================
 // class Logger
@@ -170,6 +175,6 @@ public:
 };
 #endif
 
-}}//end namespace
+}} // namespace Glest::Util
 
 #endif

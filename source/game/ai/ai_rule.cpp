@@ -24,7 +24,7 @@
 
 using Shared::Math::Vec2i;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Plan {
 
 // =====================================================
 //	class AiRuleWorkerHarvest
@@ -84,7 +84,7 @@ AiRuleRepair::AiRuleRepair(Ai *ai)
 }
 
 bool AiRuleRepair::test() {
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 	repairable.clear();
 
 	//look for a damaged unit that we can repair
@@ -98,7 +98,7 @@ bool AiRuleRepair::test() {
 }
 
 void AiRuleRepair::execute() {
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 	const RepairCommandType *nearestRct = NULL;
 	int nearest = -1;
 	fixed minDist = fixed::max_int();
@@ -188,7 +188,7 @@ bool AiRuleAddTasks::test() {
 }
 
 void AiRuleAddTasks::execute() {
-	AiInterface *aii = ai->getAiInterface();
+	GlestAiInterface *aii = ai->getAiInterface();
 	Random *rand = ai->getRandom();
 	int buildingCount = ai->getCountOfClass(UnitClass::BUILDING);
 	int warriorCount = ai->getCountOfClass(UnitClass::WARRIOR);
@@ -349,7 +349,7 @@ AiRuleBuildOneFarm::AiRuleBuildOneFarm(Ai *ai)
 }
 
 bool AiRuleBuildOneFarm::test() {
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 
 	//for all units
 	for(int i = 0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
@@ -393,7 +393,7 @@ AiRuleProduceResourceProducer::AiRuleProduceResourceProducer(Ai *ai)
 
 bool AiRuleProduceResourceProducer::test() {
 	//emergency tasks: resource buildings
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 
 	//consumables first
 	for (int i = 0; i < aiInterface->getTechTree()->getResourceTypeCount(); ++i) {
@@ -463,7 +463,7 @@ void AiRuleProduce::execute() {
 void AiRuleProduce::produceGeneric(const ProduceTask *pt) {
 	typedef vector<const UnitType*> UnitTypes;
 	UnitTypes ableUnits;
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 	//for each unit, produce it if possible
 	for(int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		//for each command
@@ -515,7 +515,7 @@ void AiRuleProduce::produceGeneric(const ProduceTask *pt) {
 }
 
 void AiRuleProduce::produceSpecific(const ProduceTask *pt) {
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 	//if unit meets requirements
 	if (aiInterface->reqsOk(pt->getUnitType())) {
 		//if unit doesnt meet resources retry
@@ -725,7 +725,7 @@ void AiRuleBuild::execute(){
 void AiRuleBuild::buildGeneric(const BuildTask *bt){
 
 	//find buildings that can be built
-	AiInterface *aiInterface= ai->getAiInterface();
+	GlestAiInterface *aiInterface= ai->getAiInterface();
 	typedef vector<const UnitType*> UnitTypes;
 	UnitTypes buildings;
 
@@ -817,7 +817,7 @@ void AiRuleBuild::buildBestBuilding(const vector<const UnitType*> &buildings){
 }
 
 void AiRuleBuild::buildSpecific(const BuildTask *bt){
-	AiInterface *aiInterface= ai->getAiInterface();
+	GlestAiInterface *aiInterface= ai->getAiInterface();
 	//if reqs ok
 	if(aiInterface->reqsOk(bt->getUnitType())){
 
@@ -947,7 +947,7 @@ void AiRuleUpgrade::execute(){
 void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt){
 
 	typedef vector<const UpgradeType*> UpgradeTypes;
-	AiInterface *aiInterface= ai->getAiInterface();
+	GlestAiInterface *aiInterface= ai->getAiInterface();
 
 	//find upgrades that can be upgraded
 	UpgradeTypes upgrades;
@@ -979,7 +979,7 @@ void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt){
 
 void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt){
 
-	AiInterface *aiInterface= ai->getAiInterface();
+	GlestAiInterface *aiInterface= ai->getAiInterface();
 
 	//if reqs ok
 	if(aiInterface->reqsOk(upgt->getUpgradeType())){
@@ -1027,7 +1027,7 @@ AiRuleExpand::AiRuleExpand(Ai *ai):
 }
 
 bool AiRuleExpand::test(){
-	AiInterface *aiInterface = ai->getAiInterface();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
 
 	for(int i= 0; i<aiInterface->getTechTree()->getResourceTypeCount(); ++i){
 		const ResourceType *rt = aiInterface->getTechTree()->getResourceType(i);

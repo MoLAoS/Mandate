@@ -15,12 +15,9 @@
 #include "tileset.h"
 #include "sound.h"
 
-namespace Glest{ namespace Game{
+using namespace Shared::Sound;
 
-using Shared::Sound::StrSound;
-using Shared::Sound::StrSound;
-using Shared::Sound::StaticSound;
-
+namespace Glest { namespace Sim {
 
 // =====================================================
 // 	class TimeFlow
@@ -28,7 +25,7 @@ using Shared::Sound::StaticSound;
 /// Raises time related events (day/night cycle)
 // =====================================================
 
-class TimeFlow{
+class TimeFlow {
 public:
 	static const float dusk;
 	static const float dawn;

@@ -18,7 +18,6 @@
 #include "upgrade.h"
 #include "command.h"
 #include "command_type.h"
-#include "network_manager.h"
 #include "console.h"
 #include "config.h"
 #include "platform_util.h"
@@ -30,7 +29,7 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 using namespace Shared::Platform;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Sim {
 
 // =====================================================
 // 	class Commander
@@ -60,10 +59,6 @@ CommandResult Commander::tryGiveCommand(
 
 	//give orders to all selected units
 	const Selection::UnitContainer &units = selection.getUnits();
-
-	if (units.size() > 2) {
-		DEBUG_HOOK();
-	}
 
 	foreach_const (Selection::UnitContainer, i, units) {
 		const CommandType *effectiveCt;

@@ -17,16 +17,12 @@
 #include "pixmap.h"
 #include "texture.h"
 
-namespace Glest{ namespace Game{
+using namespace Shared::Math;
+using namespace Shared::Graphics;
 
-using Shared::Math::Vec4f;
-using Shared::Math::Vec3f;
-using Shared::Math::Vec2i;
-using Shared::Graphics::Pixmap2D;
-using Shared::Graphics::Texture2D;
+namespace Glest { namespace Sim {
 
 class World;
-class Map;
 
 enum ExplorationState{
 	esNotExplored,
@@ -40,7 +36,7 @@ enum ExplorationState{
 /// State of the in-game minimap
 // =====================================================
 
-class Minimap{
+class Minimap {
 private:
 	Pixmap2D *fowPixmap0;
 	Pixmap2D *fowPixmap1;

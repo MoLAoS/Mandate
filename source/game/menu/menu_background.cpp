@@ -23,12 +23,12 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Util;
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
+using namespace Glest::Graphics;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
 
 // =====================================================
 // 	class MenuBackground
@@ -51,7 +51,7 @@ MenuBackground::MenuBackground(){
 		waterHeight= waterNode->getAttribute("height")->getFloatValue();
 
 		//water texture
-		waterTexture= renderer.newTexture2D(rsMenu);
+		waterTexture= renderer.newTexture2D(ResourceScope::MENU);
 		waterTexture->getPixmap()->init(4);
 		waterTexture->getPixmap()->load("data/core/menu/textures/water.tga");
 	}
@@ -73,7 +73,7 @@ MenuBackground::MenuBackground(){
 		rps->setPos(Vec3f(0.f, 25.f, 0.f));
 		rps->setColor(Vec4f(1.f, 1.f, 1.f, 0.2f));
 		rps->setRadius(30.f);
-		renderer.manageParticleSystem(rps, rsMenu);
+		renderer.manageParticleSystem(rps, ResourceScope::MENU);
 
 		for(int i=0; i<raindropCount; ++i){
 			raindropStates[i]= random.randRange(0.f, 1.f);
@@ -104,12 +104,12 @@ MenuBackground::MenuBackground(){
 		degToRad(startRotation.z))));
 
 	//load main model
-	mainModel= renderer.newModel(rsMenu);
+	mainModel= renderer.newModel(ResourceScope::MENU);
 	mainModel->load("data/core/menu/main_model/menu_main.g3d");
 
 	//models
 	for(int i=0; i<5; ++i){
-		characterModels[i]= renderer.newModel(rsMenu);
+		characterModels[i]= renderer.newModel(ResourceScope::MENU);
 		characterModels[i]->load("data/core/menu/about_models/character"+intToStr(i)+".g3d");
 	}
 

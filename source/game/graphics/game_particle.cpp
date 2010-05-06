@@ -18,7 +18,7 @@
 
 #define PARTICLE_LOG(x) {}//{ theLogger.add(intToStr(theWorld.getFrameCount()) + " :: " + x); }
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Entities {
 
 // ===========================================================================
 //  AttackParticleSystem
@@ -53,10 +53,10 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 }
 
 // ===========================================================================
-//  ProjectileParticleSystem
+//  Projectile
 // ===========================================================================
 
-ProjectileParticleSystem::ProjectileParticleSystem(int particleCount)
+Projectile::Projectile(int particleCount)
 		: AttackParticleSystem(particleCount)
 		, nextParticleSystem(0)
 		, target(0)
@@ -74,7 +74,7 @@ ProjectileParticleSystem::ProjectileParticleSystem(int particleCount)
 }
 
 
-ProjectileParticleSystem::ProjectileParticleSystem(const ParticleSystemBase &protoType, int particleCount)
+Projectile::Projectile(const ParticleSystemBase &protoType, int particleCount)
 		: AttackParticleSystem(protoType, particleCount)
 		, nextParticleSystem(0)
 		, target(0)
@@ -85,26 +85,26 @@ ProjectileParticleSystem::ProjectileParticleSystem(const ParticleSystemBase &pro
 		, damager(0) {
 }
 
-ProjectileParticleSystem::~ProjectileParticleSystem() {
+Projectile::~Projectile() {
 	if (nextParticleSystem != NULL) {
 		nextParticleSystem->prevParticleSystem = NULL;
 	}
 	delete damager;
 }
 
-void ProjectileParticleSystem::setDamager(ParticleDamager *dmgr) {
+void Projectile::setDamager(ParticleDamager *dmgr) {
 	assert(!damager);
 	damager = dmgr;
 }
 
 
-void ProjectileParticleSystem::link(SplashParticleSystem *particleSystem) {
+void Projectile::link(Splash *particleSystem) {
 	nextParticleSystem = particleSystem;
 	nextParticleSystem->setState(sPause);
 	nextParticleSystem->prevParticleSystem = this;
 }
 
-void ProjectileParticleSystem::update() {
+void Projectile::update() {
 	if (state == sPlay) {
 		if (target) {
 			endPos = target->getCurrVector();
@@ -202,7 +202,7 @@ void ProjectileParticleSystem::update() {
 	ParticleSystem::update();
 }
 
-void ProjectileParticleSystem::initParticle(Particle *p, int particleIndex) {
+void Projectile::initParticle(Particle *p, int particleIndex) {
 	ParticleSystem::initParticle(p, particleIndex);
 
 	float t = float(particleIndex) / emissionRate;
@@ -215,7 +215,7 @@ void ProjectileParticleSystem::initParticle(Particle *p, int particleIndex) {
 	updateParticle(p);
 }
 
-inline void ProjectileParticleSystem::updateParticle(Particle *p) {
+inline void Projectile::updateParticle(Particle *p) {
 	float energyRatio = clamp(float(p->energy) / energy, 0.f, 1.f);
 
 	p->lastPos += p->speed;
@@ -227,7 +227,7 @@ inline void ProjectileParticleSystem::updateParticle(Particle *p) {
 	p->energy--;
 }
 
-void ProjectileParticleSystem::setPath(Vec3f startPos, Vec3f endPos, int frames) {
+void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 	//compute axis
 	zVector = endPos - startPos;
 	zVector.normalize();
@@ -270,7 +270,7 @@ void ProjectileParticleSystem::setPath(Vec3f startPos, Vec3f endPos, int frames)
 	PARTICLE_LOG( "Projectile should arrive at " + intToStr(endFrame) )
 }
 
-ProjectileParticleSystem::Trajectory ProjectileParticleSystem::strToTrajectory(const string &str) {
+Projectile::Trajectory Projectile::strToTrajectory(const string &str) {
 	if(str == "linear") {
 		return tLinear;
 	} else if(str == "parabolic") {
@@ -285,10 +285,10 @@ ProjectileParticleSystem::Trajectory ProjectileParticleSystem::strToTrajectory(c
 }
 
 // ===========================================================================
-//  SplashParticleSystem
+//  Splash
 // ===========================================================================
 
-SplashParticleSystem::SplashParticleSystem(const ParticleSystemBase &model,  int particleCount)
+Splash::Splash(const ParticleSystemBase &model,  int particleCount)
 		: AttackParticleSystem(model, particleCount)
 		, prevParticleSystem(0)
 		, emissionRateFade(1)
@@ -298,7 +298,7 @@ SplashParticleSystem::SplashParticleSystem(const ParticleSystemBase &model,  int
 		, horizontalSpreadB(0.f) {
 }
 
-SplashParticleSystem::SplashParticleSystem(int particleCount)
+Splash::Splash(int particleCount)
 		: AttackParticleSystem(particleCount) 
 		, prevParticleSystem(0)
 		, emissionRateFade(1)
@@ -313,20 +313,20 @@ SplashParticleSystem::SplashParticleSystem(int particleCount)
 	setSpeed(0.003f);
 }
 
-SplashParticleSystem::~SplashParticleSystem() {
+Splash::~Splash() {
 	if (prevParticleSystem != NULL) {
 		prevParticleSystem->nextParticleSystem = NULL;
 	}
 }
 
-inline void SplashParticleSystem::update() {
+inline void Splash::update() {
 	ParticleSystem::update();
 	if (state != sPause) {
 		emissionRate -= emissionRateFade;
 	}
 }
 
-void SplashParticleSystem::initParticle(Particle *p, int particleIndex){
+void Splash::initParticle(Particle *p, int particleIndex){
 	p->pos = pos;
 	p->lastPos = p->pos;
 	p->energy = energy;
@@ -341,7 +341,7 @@ void SplashParticleSystem::initParticle(Particle *p, int particleIndex){
 	p->accel = Vec3f(0.0f, -gravity, 0.0f);
 }
 
-inline void SplashParticleSystem::updateParticle(Particle *p) {
+inline void Splash::updateParticle(Particle *p) {
 	float energyRatio = clamp(static_cast<float>(p->energy) / energy, 0.f, 1.f);
 
 	p->lastPos = p->pos;

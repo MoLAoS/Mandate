@@ -22,7 +22,10 @@ using Shared::Xml::XmlNode;
 using Shared::Graphics::ParticleSystemBase;
 using Shared::Graphics::ParticleSystem;
 
-namespace Glest{ namespace Game{
+using Glest::Entities::Projectile;
+using Glest::Entities::Splash;
+
+namespace Glest { namespace ProtoTypes {
 
 // ===========================================================
 //	class ParticleSystemType
@@ -41,10 +44,10 @@ public:
 };
 
 // ===========================================================
-//	class ParticleSystemTypeProjectile
+//	class ProjectileType
 // ===========================================================
 
-class ParticleSystemTypeProjectile: public ParticleSystemType {
+class ProjectileType: public ParticleSystemType {
 public:
 	enum ProjectileStart {
 		psSelf,
@@ -63,17 +66,17 @@ private:
 public:
 	void load(const string &dir, const string &path);
 	virtual ParticleSystem *create();
-	ProjectileParticleSystem *createProjectileParticleSystem() {return (ProjectileParticleSystem*)create();}
+	Projectile *createProjectileParticleSystem() {return (Projectile*)create();}
 
 	ProjectileStart getStart() const	{return start;}
 	bool isTracking() const				{return tracking;}
 };
 
 // ===========================================================
-//	class ParticleSystemTypeSplash
+//	class SplashType
 // ===========================================================
 
-class ParticleSystemTypeSplash: public ParticleSystemType {
+class SplashType: public ParticleSystemType {
 private:
 	int emissionRateFade;
 	float verticalSpreadA;
@@ -84,10 +87,10 @@ private:
 public:
 	void load(const string &dir, const string &path);
 	virtual ParticleSystem *create();
-	SplashParticleSystem *createSplashParticleSystem() {return (SplashParticleSystem*)create();}
+	Splash *createSplashParticleSystem() {return (Splash*)create();}
 };
 
-class ParticleSystemTypeCompound: public ParticleSystemTypeSplash {
+class ParticleSystemTypeCompound: public SplashType {
 public:
 	void load(const string &dir, const string &path);
 };

@@ -26,8 +26,9 @@ using std::string;
 using Shared::Graphics::Texture2D;
 using Shared::Math::Vec3f;
 using Shared::Util::replaceBy;
+using Glest::Global::Metrics;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class Display
@@ -79,9 +80,9 @@ public:
 	int getDownSelectedPos() const					{return downSelectedPos;}
 
 	//set
-	void setTitle(const string title)					{this->title= formatString(title);}
-	void setText(const string &text)					{this->text= formatString(text);}
-	void setInfoText(const string infoText)				{this->infoText= formatString(infoText);}
+	void setTitle(const string title)					{this->title= Util::formatString(title);}
+	void setText(const string &text)					{this->text= Util::formatString(text);}
+	void setInfoText(const string infoText)				{this->infoText= Util::formatString(infoText);}
 	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image;}
 	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image;}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}

@@ -21,12 +21,12 @@
 #include "random.h"
 #include "entity.h"
 #include "math_util.h"
+#include "xml_parser.h"
 
 using std::list;
 
 namespace Shared{ 
 
-namespace Xml { class XmlNode; }
 using Xml::XmlNode;
 using Util::Random;
 	
@@ -36,8 +36,8 @@ class ParticleSystem;
 class FireParticleSystem;
 class RainParticleSystem;
 class SnowParticleSystem;
-//class ProjectileParticleSystem;
-//class SplashParticleSystem;
+//class Projectile;
+//class Splash;
 class ParticleRenderer;
 class ModelRenderer;
 class Model;

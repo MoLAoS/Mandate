@@ -14,12 +14,5 @@
 
 #define GAME_CONSTANTS_DEF
 #include "game_constants.h"
+#include "simulation_enums.h"
 
-namespace Glest { namespace Game {
-
-#if !defined(NDEBUG)
-	void no_op() {
-	}
-#endif
-
-}} // end namespace Game

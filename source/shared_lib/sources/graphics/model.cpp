@@ -24,7 +24,7 @@
 
 #include "FSFactory.hpp"
 
-using namespace std;
+using std::exception;
 using namespace Shared::Platform;
 
 namespace Shared{ namespace Graphics{

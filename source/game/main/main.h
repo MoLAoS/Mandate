@@ -20,7 +20,7 @@
 using Shared::Platform::MouseButton;
 using Shared::Platform::MouseState;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Main {
 
 
 }}//end namespace

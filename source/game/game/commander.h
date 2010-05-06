@@ -20,19 +20,15 @@
 #include "command_type.h"
 
 using std::vector;
+using Shared::Math::Vec2i;
 
 namespace Glest { namespace Sim {
 	class SimulationInterface;
 }}
 using Glest::Sim::SimulationInterface;
 
-namespace Glest { namespace Game {
-
-using Shared::Math::Vec2i;
-
-class World;
-class Unit;
-
+namespace Glest { namespace Sim {
+using namespace Gui;
 
 // =====================================================
 // 	class Commander

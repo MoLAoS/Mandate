@@ -14,6 +14,8 @@
 
 #include "vec.h"
 #include "math_util.h"
+#include "config.h"
+
 #include <limits>
 
 namespace Shared { namespace Xml {
@@ -27,9 +29,8 @@ using std::numeric_limits;
 
 #define FLOATINFINITY numeric_limits<float>::infinity()
 
-namespace Glest{ namespace Game{
-
-class Config;
+namespace Glest { namespace Gui {
+using Global::Config;
 
 // =====================================================
 // 	class GameCamera

@@ -22,7 +22,6 @@
 
 #include "leak_dumper.h"
 #include "logger.h"
-#include "network_util.h"
 #include "network_message.h"
 #include "script_manager.h"
 #include "command.h"
@@ -113,7 +112,7 @@ void NetworkInterface::postCommandUpdate(Unit *unit) {
 		case SkillClass::REPAIR:
 		case SkillClass::BUILD:
 			if (unit->getTarget()) {
-				cs.add(unit->getTarget()->getId());
+				cs.add(unit->getTarget());
 			}
 			break;
 	}

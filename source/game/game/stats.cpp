@@ -15,7 +15,7 @@
 #include "leak_dumper.h"
 #include "sim_interface.h"
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Sim {
 
 Stats::PlayerStats::PlayerStats() :
 		victory(false),

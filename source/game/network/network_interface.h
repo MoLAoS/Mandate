@@ -14,30 +14,18 @@
 
 #include <string>
 #include <vector>
-//#include <deque>
 
 #include "checksum.h"
 #include "network_message.h"
 #include "network_types.h"
-//#include "network_status.h"
 #include "sim_interface.h"
 
 #include "logger.h"
 
 using std::string;
 using std::vector;
-//using std::deque;
 using Shared::Util::Checksum;
-//using Shared::Platform::int64;
 using Shared::Math::Vec3f;
-
-namespace Glest { namespace Game {
-	class Unit;
-	class ProjectileParticleSystem;
-	class UnitUpdater;
-}}
-using namespace Glest::Sim;
-using namespace Glest::Game;
 
 namespace Glest { namespace Net {
 
@@ -92,8 +80,6 @@ public:
 	typedef vector<NetworkCommand> Commands;
 
 protected:
-	typedef ProjectileParticleSystem* Projectile;
-
 	KeyFrame keyFrame;
 
 	// chat messages

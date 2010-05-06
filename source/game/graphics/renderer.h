@@ -32,30 +32,19 @@
 #include "components.h"
 #include "scene_culler.h"
 
-#if _GAE_DEBUG_EDITION_
-#	include "debug_renderer.h"
-#endif
-
-namespace Glest { namespace Game {
-
 using namespace Shared::Math;
 using namespace Shared::Graphics;
+using namespace Glest::Global;
+using namespace Glest::Gui;
+using namespace Glest::Menu;
 
-//non shared classes
-class Config;
-class GameState;
-class MainMenu;
-class Console;
-class MenuBackground;
-class ChatManager;
+namespace Glest { namespace Graphics {
 
-enum ResourceScope{
-	rsGlobal,
-	rsMenu,
-	rsGame,
-
-	rsCount
-};
+WRAPPED_ENUM ( ResourceScope,
+	GLOBAL,
+	MENU,
+	GAME
+)
 
 // ===========================================================
 // 	class Renderer
@@ -64,7 +53,7 @@ enum ResourceScope{
 // ===========================================================
 
 class Renderer{
-	IF_DEBUG_EDITION( friend class ScriptManager; )
+	IF_DEBUG_EDITION( friend class Script::ScriptManager; )
 public:
 	//progress bar
 	static const int maxProgressBar;
@@ -136,10 +125,10 @@ private:
 	ParticleRenderer *particleRenderer;
 
 	//texture managers
-	ModelManager *modelManager[rsCount];
-	TextureManager *textureManager[rsCount];
-	FontManager *fontManager[rsCount];
-	ParticleManager *particleManager[rsCount];
+	ModelManager *modelManager[ResourceScope::COUNT];
+	TextureManager *textureManager[ResourceScope::COUNT];
+	FontManager *fontManager[ResourceScope::COUNT];
+	ParticleManager *particleManager[ResourceScope::COUNT];
 
 	//state lists
 	GLuint list3d;
@@ -203,7 +192,7 @@ public:
 
 	const SceneCuller& getCuller() const { return culler; }
 
-	ParticleManager* getParticleManager() { return particleManager[rsGame]; }
+	ParticleManager* getParticleManager() { return particleManager[ResourceScope::GAME]; }
 
 	//lights and camera
 	void setupLighting();
@@ -244,8 +233,6 @@ public:
 	void renderMinimap();
     void renderDisplay();
 	void renderMenuBackground(const MenuBackground *menuBackground);
-
-	IF_DEBUG_EDITION( DebugRenderer debugRenderer; )
 
 	//computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);

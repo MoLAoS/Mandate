@@ -24,7 +24,6 @@
 #include "menu_state_options.h"
 #include "menu_state_about.h"
 #include "metrics.h"
-#include "network_manager.h"
 #include "network_message.h"
 #include "socket.h"
 #include "auto_test.h"
@@ -32,7 +31,7 @@
 #include "leak_dumper.h"
 using namespace Glest::Net;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
 
 // =====================================================
 // 	class MenuStateRoot

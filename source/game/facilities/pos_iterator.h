@@ -18,10 +18,8 @@
 #include "fixed.h"
 #include "math_util.h"
 
-
-namespace Glest { namespace Game { namespace Util {
-
-using namespace std;
+using std::runtime_error;
+namespace Glest { namespace Util {
 
 using Shared::Math::Vec2i;
 using Shared::Math::Rect2i;
@@ -393,6 +391,6 @@ public:
 	}
 };
 
-}}} // namespace Glest::Game::Util
+}} // namespace Glest::Util
 
 #endif // _GLEST_GAME_UTIL_POSITERATOR_H_

@@ -19,7 +19,7 @@
 #include "influence_map.h"
 #include "vec.h"
 
-using namespace Glest::Game::Search;
+using namespace Glest::Search;
 using Shared::Math::Vec2i;
 
 namespace Test {

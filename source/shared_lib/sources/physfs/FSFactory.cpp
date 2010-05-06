@@ -26,11 +26,15 @@
 #	include "PhysFileOps.hpp"
 #endif
 #include "StdFileOps.hpp"
-
 #include "util.h"
 
+using std::ios;
+using std::istream;
+using std::ifstream;
+using std::ostream;
+using std::ofstream;
+
 using namespace Shared::Util;
-using namespace std;
 
 FSFactory *FSFactory::instance = NULL;
 

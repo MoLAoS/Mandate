@@ -30,19 +30,14 @@
 #include "pos_iterator.h"
 #include "fixed.h"
 
-namespace Glest{ namespace Game{
+#include "unit.h"
 
 using namespace Shared::Math;
 using Shared::Graphics::Texture2D;
-using namespace Glest::Game::Util;
+using namespace Glest::Util;
+using Glest::Gui::Selection;
 
-class Tileset;
-class Unit;
-class Resource;
-class TechTree;
-class World;
-class UnitContainer;
-class Earthquake;
+namespace Glest { namespace Sim {
 
 inline Zone fieldZone(Field f) {
 	return f == Field::AIR ? Zone::AIR : Zone::LAND;
@@ -93,7 +88,7 @@ public:
 //	A heightmap cell, each Tile is composed by more than one Cell
 // =====================================================
 
-class Tile{
+class Tile {
 private:
 	//geometry
 	Vec3f vertex;
@@ -170,7 +165,7 @@ public:
 
 class Map {
 public:
-	typedef vector<Earthquake*> Earthquakes;
+//	typedef vector<Earthquake*> Earthquakes;
 
 private:
 	string title;
@@ -187,7 +182,7 @@ private:
 	Vec2i *startLocations;
 	//float *surfaceHeights;
 
-	Earthquakes earthquakes;
+//	Earthquakes earthquakes;
 
 private:
 	Map(Map&);
@@ -234,7 +229,7 @@ public:
 	//bool getDeepSubmerged(const Cell *c) const			{return c->getHeight()<waterLevel-(1.5f/heightFactor);}
 	//float getSurfaceHeight(const Vec2i &pos) const;
 
-	const Earthquakes &getEarthquakes() const			{return earthquakes;}
+//	const Earthquakes &getEarthquakes() const			{return earthquakes;}
 
 	//is
 	bool isInside(int x, int y) const					{return x >= 0 && y >= 0 && x < w && y < h;}

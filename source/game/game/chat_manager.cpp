@@ -25,7 +25,7 @@
 using namespace Shared::Platform;
 using namespace Glest::Net;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
 
 // =====================================================
 // class ChatManager

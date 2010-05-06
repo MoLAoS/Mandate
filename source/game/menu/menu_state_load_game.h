@@ -16,7 +16,7 @@
 #include "menu_state_start_game_base.h"
 #include "thread.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
 
 class MenuStateLoadGame;
 

@@ -20,7 +20,12 @@
 
 using Shared::Util::intToStr;
 
-namespace Glest{ namespace Game{
+namespace Glest{ namespace Plan {
+
+class AiInterface {
+public:
+	virtual void update() = 0;
+};
 
 // =====================================================
 // 	class AiInterface
@@ -28,30 +33,26 @@ namespace Glest{ namespace Game{
 ///	The AI will interact with the game through this interface
 // =====================================================
 
-class AiInterface{
+class GlestAiInterface : public AiInterface {
 private:
+	Faction *faction;
 	World *world;
-	Commander *commander;
-	Console *console;
 	Ai ai;
 
 	int timer;
-	int factionIndex;
-	int teamIndex;
 
 	//config
 	bool redir;
 	int logLevel;
 
 public:
-	AiInterface(GameState &game, int factionIndex, int teamIndex, int32 randomSeed);
+	GlestAiInterface(Faction *faction, int32 randomSeed);
 
 	//main
 	void update();
 
 	//get
 	int getTimer() const		{return timer;}
-	int getFactionIndex() const	{return factionIndex;}
 
 	//misc
 	void printLog(int logLevel, const string &s);
@@ -67,6 +68,7 @@ public:
 	int getMapMaxPlayers();
 	Vec2i getHomeLocation();
 	Vec2i getStartLocation(int locationIndex);
+	int getFactionIndex() const			{ return faction->getIndex(); }
 	int getFactionCount();
 	int getMyUnitCount() const;
 	int getMyUpgradeCount() const;
@@ -83,10 +85,10 @@ public:
 	bool reqsOk(const CommandType *ct);
 	bool checkCosts(const ProducibleType *pt);
 	bool areFreeCells(const Vec2i &pos, int size, Field field);
-	bool isUltra() const {return world->getFaction(factionIndex)->getCpuUltraControl();}
+	bool isUltra() const {return faction->getCpuUltraControl();}
 
 private:
-	string getLogFilename() const	{return "ai"+intToStr(factionIndex)+".log";}
+	string getLogFilename() const	{return "ai"+intToStr(faction->getIndex())+".log";}
 };
 
 }}//end namespace

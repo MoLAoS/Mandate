@@ -20,7 +20,7 @@
 
 using namespace Shared::Graphics;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class Display

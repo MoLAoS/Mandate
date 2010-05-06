@@ -16,12 +16,20 @@
 using Shared::Util::Random;
 using namespace Shared::Graphics;
 
-namespace Glest { namespace Game {
+namespace Glest { 
 
-class Unit;
-class ParticleDamager;
-class SplashParticleSystem;
+namespace Entities {
+	class Unit;
+}
+using Entities::Unit;
 
+namespace Sim {
+	class ParticleDamager;
+}
+
+namespace Entities {
+
+class Splash;
 // ===========================================================================
 //  AttackParticleSystem
 //
@@ -42,11 +50,11 @@ public:
 };
 
 // =====================================================
-//	class ProjectileParticleSystem
+//	class Projectile
 // =====================================================
 
-class ProjectileParticleSystem : public AttackParticleSystem {
-	friend class SplashParticleSystem;
+class Projectile : public AttackParticleSystem {
+	friend class Splash;
 public:
 
 	enum Trajectory {
@@ -58,7 +66,7 @@ public:
 	static Trajectory strToTrajectory(const string &str);
 
 private:
-	SplashParticleSystem *nextParticleSystem;
+	Splash *nextParticleSystem;
 
 	Vec3f lastPos;
 	Vec3f startPos;
@@ -84,15 +92,15 @@ private:
 	Random random;
 	int id;
 
-	ParticleDamager *damager;
+	Sim::ParticleDamager *damager;
 
 public:
-	ProjectileParticleSystem(int particleCount= 1000);
-	ProjectileParticleSystem(const ParticleSystemBase &model, int particleCount= 1000);
-	virtual ~ProjectileParticleSystem();
+	Projectile(int particleCount= 1000);
+	Projectile(const ParticleSystemBase &model, int particleCount= 1000);
+	virtual ~Projectile();
 
-	void link(SplashParticleSystem *particleSystem);
-	void setDamager(ParticleDamager *damager);
+	void link(Splash *particleSystem);
+	void setDamager(Sim::ParticleDamager *damager);
 
 	virtual void update();
 	virtual void initParticle(Particle *p, int particleIndex);
@@ -114,15 +122,15 @@ public:
 };
 
 // =====================================================
-//	class SplashParticleSystem
+//	class Splash
 // =====================================================
 
-class SplashParticleSystem : public AttackParticleSystem {
+class Splash : public AttackParticleSystem {
 public:
-	friend class ProjectileParticleSystem;
+	friend class Projectile;
 
 private:
-	ProjectileParticleSystem *prevParticleSystem;
+	Projectile *prevParticleSystem;
 
 	int emissionRateFade;
 	float verticalSpreadA;
@@ -131,9 +139,9 @@ private:
 	float horizontalSpreadB;
 
 public:
-	SplashParticleSystem(int particleCount = 1000);
-	SplashParticleSystem(const ParticleSystemBase &model, int particleCount = 1000);
-	virtual ~SplashParticleSystem();
+	Splash(int particleCount = 1000);
+	Splash(const ParticleSystemBase &model, int particleCount = 1000);
+	virtual ~Splash();
 
 	virtual void update();
 	virtual void initParticle(Particle *p, int particleIndex);

@@ -3,10 +3,9 @@
 //
 //	Copyright (C) 2010	James McCulloch <silnarm at gmail>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  Based on code Copyright (C) 2001-2008 Martiño Figueroa
+//
+//  GPL V2, see source/liscence.txt
 // ==============================================================
 
 #ifndef _GAME_SIMULATION_INTERFACE_H_
@@ -24,18 +23,14 @@
 #include "FSFactory.hpp"
 #include "util.h"
 
+using Shared::Graphics::ParticleSystem;
+
 namespace Glest { namespace Net {
 	class NetworkInterface;
 	class ClientInterface;
 	class ServerInterface;
 }}
 using namespace Glest::Net;
-using Shared::Graphics::ParticleSystem;
-
-namespace Glest { namespace Game {
-	class ProjectileParticleSystem;
-}}
-using namespace Glest::Game;
 
 namespace Glest {
 
@@ -156,8 +151,7 @@ public:
 
 class SimulationInterface {
 public:
-	typedef vector<AiInterface*> AiInterfaces;
-	typedef ProjectileParticleSystem* Projectile;
+	typedef vector<Plan::AiInterface*> AiInterfaces;
 	typedef vector<NetworkCommand> Commands;
 
 protected:
@@ -173,6 +167,8 @@ protected:
 
 	AiInterfaces aiInterfaces;
 	Commander *commander;
+
+	UnitFactory unitFactory;
 
 	bool paused;
 	bool gameOver;
@@ -193,6 +189,7 @@ public:
 	SimulationInterface(const SimulationInterface &si);
 	virtual ~SimulationInterface();
 
+	UnitFactory& getUnitFactory()			{ return unitFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }
 	XmlNode* getSavedGame() const			{ return savedGame; }
 	Commander *getCommander()				{ return commander; }
@@ -232,7 +229,7 @@ public:
 	// world interface [all for networking]
 	void startFrame(int frame);
 	void doUnitBorn(Unit *unit);
-	void doUpdateProjectile(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
+	void doUpdateProjectile(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end);
 	void doUpdateUnitCommand(Unit *unit);
 	void doUpdateAnim(Unit *unit);
 
@@ -292,7 +289,7 @@ protected:
 	virtual void updateSkillCycle(Unit*);
 
 	/** Calculates and sets 'arrival time' for a new projectile */
-	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
+	virtual void updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
 		pps->setPath(start, end);
 	}
 

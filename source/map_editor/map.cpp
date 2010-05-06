@@ -27,9 +27,9 @@ namespace MapEditor {
 // ie, use Vec2i pos; rather than, int posX, posY;
 // if you absolutely can't live without it, just declare it in map.h, leave the definition here.
 int get_dist(int delta_x, int delta_y) {
-	float dx = delta_x;
-	float dy = delta_y;
-	return static_cast<int>(sqrtf(dx * dx + dy * dy));
+	float dx = float(delta_x);
+	float dy = float(delta_y);
+	return int(sqrtf(dx * dx + dy * dy));
 }
 
 // ===============================================
@@ -131,7 +131,7 @@ void Map::pirateChangeHeight(int x, int y, int height, int radius) {
 	// If the radius is 1 don't bother doing any calculations
 	if (radius == 1) {
 		if(inside(x, y)){
-			cells[x][y].height = goalAlt;
+			cells[x][y].height = float(goalAlt);
 		}
 		return;
 	}
@@ -146,8 +146,8 @@ void Map::pirateChangeHeight(int x, int y, int height, int radius) {
 			// round off the corners
 			int ti, tj;
 			if (abs(i - x) == abs(j - y)) {
-				ti = (i - x) * 0.707 + x + 0.5;
-				tj = (j - y) * 0.707 + y + 0.5;
+				ti = int((i - x) * 0.707f + x + 0.5f);
+				tj = int((j - y) * 0.707f + y + 0.5f);
 			} else {
 				ti = i;
 				tj = j;

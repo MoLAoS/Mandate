@@ -15,7 +15,7 @@
 
 #include <vector>
 
-#include "gui.h"
+#include "user_interface.h"
 #include "game_camera.h"
 #include "world.h"
 #include "ai_interface.h"
@@ -33,14 +33,18 @@ using std::vector;
 using std::ifstream;
 
 namespace Glest { namespace Sim {
-class SimulationInterface;
+	class SimulationInterface;
 }}
 
+namespace Glest { 
+namespace Graphics {
+	class GraphicMessageBox;
+	class GraphicTextEntryBox;
+}
+using namespace Graphics;
+using namespace Main;
 
-namespace Glest { namespace Game {
-
-class GraphicMessageBox;
-class GraphicTextEntryBox;
+namespace Gui {
 
 // =====================================================
 // 	class GameState
@@ -49,36 +53,20 @@ class GraphicTextEntryBox;
 // =====================================================
 
 class GameState: public ProgramState {
-public:
-	/*WRAPPED_ENUM( GameSpeed,
-		SLOWEST,
-		VERY_SLOW,
-		SLOW,
-		NORMAL,
-		FAST,
-		VERY_FAST,
-		FASTEST
-	)*/
-	
 private:
-	typedef vector<Ai*> Ais;
-	typedef vector<AiInterface*> AiInterfaces;
+	typedef vector<Plan::Ai*> Ais;
+	typedef vector<Plan::AiInterface*> AiInterfaces;
 
 protected:
 	static GameState *singleton;
 
 	//main data
 	SimulationInterface *simInterface;
-	//const GameSettings &gameSettings;
-	//XmlNode *savedGame;
 	Keymap &keymap;
 	const Input &input;
 	const Config &config;
-	//World world;
-	//AiInterfaces aiInterfaces;
-	Gui gui;
+	UserInterface gui;
 	GameCamera gameCamera;
-	//Commander commander;
 	Console console;
 	ChatManager chatManager;
 
@@ -90,14 +78,9 @@ protected:
 	int worldFps, lastWorldFps;
 	int updateFps, lastUpdateFps;
 	int renderFps, lastRenderFps;
-	//bool paused;
 	bool noInput;
-	//bool gameOver;
 	bool netError;
 	float scrollSpeed;
-	//GameSpeed speed;
-	//float fUpdateLoops;
-	//float lastUpdateLoopsFraction;
 	GraphicMessageBox mainMessageBox;
 
 	GraphicTextEntryBox *saveBox;
@@ -108,7 +91,6 @@ protected:
 
 public:
 	GameState(Program &program, XmlNode *savedGame = NULL);
-	//GameState(Program &program, const GameSettings &gs, XmlNode *savedGame = NULL);
 	virtual ~GameState();
 	static GameState *getInstance()				{return singleton;}
 
@@ -119,13 +101,9 @@ public:
 
 	const GameCamera *getGameCamera() const	{return &gameCamera;}
 	GameCamera *getGameCamera()				{return &gameCamera;}
-	//const Commander *getCommander() const	{return &commander;}
-	//Commander *getCommander()				{return &commander;}
-	const Gui *getGui() const				{return &gui;}
-	Gui *getGui()							{return &gui;}
+	const UserInterface *getGui() const		{return &gui;}
+	UserInterface *getGui()					{return &gui;}
 	Console *getConsole()					{return &console;}
-//	const World *getWorld() const			{return &world;}
-//	World *getWorld()						{return &world;}
 	
 	// ProgramState implementation
 
@@ -159,27 +137,12 @@ public:
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
 	virtual void quitGame();
-	//void pause()							{paused = true;}
-	//void resume()							{paused = false;}
 
 protected:
 	// render
 	void render3d();
 	virtual void render2d();
 	
-	// game over checks
-	//void checkWinner();
-	//void checkWinnerStandard();
-	//void checkWinnerScripted();
-	//bool hasBuilding(const Faction *faction);
-
-	// game speed control
-	//void incSpeed();
-	//void decSpeed();
-	//void resetSpeed();
-	//void updateSpeed();
-	//int getUpdateLoops();
-
 	// show messages
 	void showLoseMessageBox();
 	void showWinMessageBox();

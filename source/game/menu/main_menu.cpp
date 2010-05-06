@@ -23,7 +23,6 @@
 #include "core_data.h"
 #include "faction.h"
 #include "metrics.h"
-#include "network_manager.h"
 #include "network_message.h"
 #include "socket.h"
 #include "menu_state_root.h"
@@ -36,7 +35,7 @@ using namespace Shared::Util;
 using namespace Shared::Graphics;
 using namespace Shared::Xml;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Menu {
 
 // =====================================================
 //  class MainMenu
@@ -83,7 +82,7 @@ void MainMenu::render() {
 	renderer.clearZBuffer();
 	renderer.loadCameraMatrix(menuBackground.getCamera());
 	renderer.renderMenuBackground(&menuBackground);
-	renderer.renderParticleManager(rsMenu);
+	renderer.renderParticleManager(ResourceScope::MENU);
 
 	//2d
 	renderer.reset2d();
@@ -101,7 +100,7 @@ void MainMenu::render() {
 
 //syncronus update
 void MainMenu::update() {
-	Renderer::getInstance().updateParticleManager(rsMenu);
+	Renderer::getInstance().updateParticleManager(ResourceScope::MENU);
 	mouse2dAnim = (mouse2dAnim + 1) % Renderer::maxMouse2dAnim;
 	menuBackground.update();
 	state->update();

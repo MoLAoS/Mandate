@@ -22,8 +22,7 @@
 
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
-
-using namespace std;
+using std::exception;
 
 namespace Shared { namespace Util {
 
@@ -34,7 +33,7 @@ namespace Shared { namespace Util {
 Properties::Properties() {}
 
 void Properties::load(const string &path, bool trim) {
-	locale loc;
+	std::locale loc;
 	char lineBuffer[maxLine];
 	string line, key, value;
 	int pos;

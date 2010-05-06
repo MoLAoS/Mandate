@@ -25,7 +25,8 @@ using std::numeric_limits;
 using namespace Shared::Math;
 using Shared::Xml::XmlNode;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
+using Global::Metrics;
 
 // =====================================================
 // 	class GameCamera

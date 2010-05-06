@@ -18,7 +18,7 @@
 
 #include "pos_iterator.h"
 
-using Glest::Game::Util::ReverseRectIterator;
+using Glest::Util::ReverseRectIterator;
 
 namespace Test {
 

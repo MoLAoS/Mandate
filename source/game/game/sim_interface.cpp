@@ -3,26 +3,19 @@
 //
 //	Copyright (C) 2010	James McCulloch <silnarm at gmail>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  Based on code Copyright (C) 2001-2008 Martiño Figueroa
+//
+//  GPL V2, see source/liscence.txt
 // ==============================================================
 
 #include "pch.h"
 
-#include "network_util.h"
-
-#include "sim_interface.h"
-
-#include "network_interface.h"
 #include "client_interface.h"
 #include "server_interface.h"
 
 #include "profiler.h"
 
 using namespace Glest::Net;
-using namespace Glest::Game;
 
 namespace Glest { namespace Sim {
 
@@ -209,7 +202,12 @@ void SimulationInterface::initWorld() {
 	for (int i=0; i < world->getFactionCount(); ++i) {
 		Faction *faction = world->getFaction(i);
 		if (faction->getCpuControl() && ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
-			aiInterfaces[i] = new AiInterface(*game, i, faction->getTeam(), seeds[seedCount++]);
+			ControlType ctrl = faction->getControlType();
+			if (ctrl >= ControlType::CPU_EASY || ctrl <= ControlType::CPU_MEGA) {
+				aiInterfaces[i] = new Plan::GlestAiInterface(faction, seeds[seedCount++]);
+			} //else if (ctrl == ControlType::PROTO_AI) {
+				//aiInterfaces[i] = new AdvancedAiInterface(*game, i, faction->getTeam(), seeds[seedCount++]);
+			//}
 			theLogger.add("Creating AI for faction " + intToStr(i), true);
 		} else {
 			aiInterfaces[i] = 0;
@@ -415,13 +413,8 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	if (!unit->anyCommand() && unit->isOperative()) {
 		const UnitType *ut = unit->getType();
 		unit->setCurrSkill(SkillClass::STOP);
-		if (unit->getMaster() && ut->hasCommandClass(CommandClass::GUARD)) {
-			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::GUARD),
-							CommandFlags(CommandProperties::AUTO), unit->getMaster()));
-		} else {
-			if (ut->hasCommandClass(CommandClass::STOP)) {
-				unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
-			}
+		if (ut->hasCommandClass(CommandClass::STOP)) {
+			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
 		}
 	}
 	//if unit is out of EP, it stops
@@ -475,7 +468,7 @@ void SimulationInterface::doUnitBorn(Unit *unit) {
 	postUnitBorn(unit);
 }
 
-void SimulationInterface::doUpdateProjectile(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
+void SimulationInterface::doUpdateProjectile(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
 	updateProjectilePath(u, pps, start, end);
 	postProjectileUpdate(u, pps->getEndFrame());
 }
@@ -515,7 +508,7 @@ UnitStateRecord::UnitStateRecord(Unit *unit) {
 	this->next_pos_y = unit->getNextPos().y;
 	this->targ_pos_x = unit->getTargetPos().x;
 	this->targ_pos_y = unit->getTargetPos().y;
-	this->target_id  = unit->getTarget() ? unit->getTarget()->getId() : -1;
+	this->target_id  = unit->getTarget();
 }
 
 ostream& operator<<(ostream &lhs, const UnitStateRecord& state) {

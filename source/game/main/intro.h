@@ -27,7 +27,7 @@ using Shared::Math::Vec3f;
 using Shared::Graphics::Font2D;
 using Shared::Graphics::Texture2D;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Main {
 
 // =====================================================
 //	class Text

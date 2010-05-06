@@ -20,7 +20,6 @@
 #include "conversion.h"
 #include "config.h"
 #include "lang.h"
-#include "network_util.h"
 #include "game.h"
 #include "world.h"
 
@@ -363,7 +362,7 @@ void ClientInterface::updateMove(Unit *unit) {
 	unit->updateSkillCycle(updt.end_offset);
 }
 
-void ClientInterface::updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
+void ClientInterface::updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
 	ProjectileUpdate updt = keyFrame.getProjUpdate();
 	pps->setPath(start, end, updt.end_offset);
 }

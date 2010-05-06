@@ -29,7 +29,8 @@
 using namespace Shared::Graphics;
 using Shared::Platform::uint8;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Sim {
+using Main::Program;
 
 // =====================================================
 // 	class Minimap
@@ -62,7 +63,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	}
 
 	//fow tex
-	fowTex= renderer.newTexture2D(rsGame);
+	fowTex= renderer.newTexture2D(ResourceScope::GAME);
 	fowTex->setMipmap(false);
 	fowTex->setPixmapInit(false);
 	fowTex->setFormat(Texture::fAlpha);
@@ -70,7 +71,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	fowTex->getPixmap()->setPixels(&f);
 
 	//tex
-	tex= renderer.newTexture2D(rsGame);
+	tex= renderer.newTexture2D(ResourceScope::GAME);
 	tex->getPixmap()->init(scaledW, scaledH, 3);
 	tex->setMipmap(false);
 

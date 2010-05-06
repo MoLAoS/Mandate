@@ -17,15 +17,14 @@
 #include "sound_renderer.h"
 #include "core_data.h"
 #include "game.h"
-#include "network_manager.h"
 #include "xml_parser.h"
 #include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
-namespace Glest { namespace Game {
-
 using namespace Shared::Util;
+
+namespace Glest { namespace Menu {
 
 // =====================================================
 // 	class MenuStateStartGameBase

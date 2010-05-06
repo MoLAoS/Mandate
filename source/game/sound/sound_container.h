@@ -21,7 +21,7 @@ using std::vector;
 using Shared::Util::Random;
 using Shared::Sound::StaticSound;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Sound {
 
 // =====================================================
 // 	class SoundContainer

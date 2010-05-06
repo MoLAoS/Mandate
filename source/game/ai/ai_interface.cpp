@@ -29,18 +29,17 @@ using namespace Shared::Util;
 using namespace Shared::Graphics;
 
 // =====================================================
-// 	class AiInterface
+// 	class GlestAiInterface
 // =====================================================
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Plan {
 
-AiInterface::AiInterface(GameState &game, int factionIndex, int teamIndex, int32 randomSeed){
+GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
+	this->faction = faction;
 	this->world= theSimInterface->getWorld();
-	this->commander= theSimInterface->getCommander();
-	this->console= game.getConsole();
+	//this->commander= theSimInterface->getCommander();
+	//this->console= theSimInterface->getGameState()->getConsole();
 
-	this->factionIndex= factionIndex;
-	this->teamIndex= teamIndex;
 	timer= 0;
 
 	//init ai
@@ -63,16 +62,16 @@ AiInterface::AiInterface(GameState &game, int factionIndex, int teamIndex, int32
 
 // ==================== main ====================
 
-void AiInterface::update(){
+void GlestAiInterface::update(){
 	timer++;
 	ai.update();
 }
 
 // ==================== misc ====================
 
-void AiInterface::printLog(int logLevel, const string &s){
+void GlestAiInterface::printLog(int logLevel, const string &s){
 	if(this->logLevel>=logLevel){
-		string logString= "(" + intToStr(factionIndex) + ") " + s;
+		string logString= "(" + intToStr(faction->getIndex()) + ") " + s;
 
 		//print log to file
 		FILE *f= fopen(getLogFilename().c_str(), "at");
@@ -83,64 +82,64 @@ void AiInterface::printLog(int logLevel, const string &s){
 		fclose(f);
 
 		//redirect to console
-		if(redir) {
-			console->addLine(logString);
+		if (redir) {
+			theSimInterface->getGameState()->getConsole()->addLine(logString);
 		}
 	}
 }
 
 // ==================== interaction ====================
 
-CommandResult AiInterface::giveCommand(int unitIndex, CommandClass commandClass, const Vec2i &pos){
-	Command *c= new Command (world->getFaction(factionIndex)->getUnit(unitIndex)->getType()->getFirstCtOfClass(commandClass), CommandFlags(), pos);
-	return world->getFaction(factionIndex)->getUnit(unitIndex)->giveCommand(c);
+CommandResult GlestAiInterface::giveCommand(int unitIndex, CommandClass commandClass, const Vec2i &pos){
+	Command *c= new Command (faction->getUnit(unitIndex)->getType()->getFirstCtOfClass(commandClass), CommandFlags(), pos);
+	return faction->getUnit(unitIndex)->giveCommand(c);
 }
 
-CommandResult AiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos){
-	return world->getFaction(factionIndex)->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos));
+CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos){
+	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos));
 }
 
-CommandResult AiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos, const UnitType *ut){
-	return world->getFaction(factionIndex)->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos, ut));
+CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos, const UnitType *ut){
+	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos, ut));
 }
 
-CommandResult AiInterface::giveCommand(int unitIndex, const CommandType *commandType, Unit *u){
-	return world->getFaction(factionIndex)->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), u));
+CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, Unit *u){
+	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), u));
 }
 
 // ==================== get data ====================
 
-int AiInterface::getMapMaxPlayers(){
+int GlestAiInterface::getMapMaxPlayers(){
 	return world->getMaxPlayers();
 }
 
-Vec2i AiInterface::getHomeLocation(){
-	return world->getMap()->getStartLocation(world->getFaction(factionIndex)->getStartLocationIndex());
+Vec2i GlestAiInterface::getHomeLocation(){
+	return world->getMap()->getStartLocation(faction->getStartLocationIndex());
 }
 
-Vec2i AiInterface::getStartLocation(int loactionIndex){
+Vec2i GlestAiInterface::getStartLocation(int loactionIndex){
 	return world->getMap()->getStartLocation(loactionIndex);
 }
 
-int AiInterface::getFactionCount(){
+int GlestAiInterface::getFactionCount(){
 	return world->getFactionCount();
 }
 
-int AiInterface::getMyUnitCount() const{
-	return world->getFaction(factionIndex)->getUnitCount();
+int GlestAiInterface::getMyUnitCount() const{
+	return faction->getUnitCount();
 }
 
-int AiInterface::getMyUpgradeCount() const{
-	return world->getFaction(factionIndex)->getUpgradeManager()->getUpgradeCount();
+int GlestAiInterface::getMyUpgradeCount() const{
+	return faction->getUpgradeManager()->getUpgradeCount();
 }
 
-int AiInterface::onSightUnitCount(){
+int GlestAiInterface::onSightUnitCount(){
 	int count=0;
 	Map *map= world->getMap();
 	for(int i=0; i<world->getFactionCount(); ++i){
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			Tile *sc= map->getTile(Map::toTileCoords(world->getFaction(i)->getUnit(j)->getPos()));
-			if(sc->isVisible(teamIndex)){
+			if(sc->isVisible(faction->getTeam())){
 				count++;
 			}
 		}
@@ -148,15 +147,15 @@ int AiInterface::onSightUnitCount(){
 	return count;
 }
 
-const Resource *AiInterface::getResource(const ResourceType *rt){
-	return world->getFaction(factionIndex)->getResource(rt);
+const Resource *GlestAiInterface::getResource(const ResourceType *rt){
+	return faction->getResource(rt);
 }
 
-const Unit *AiInterface::getMyUnit(int unitIndex){
-	return world->getFaction(factionIndex)->getUnit(unitIndex);
+const Unit *GlestAiInterface::getMyUnit(int unitIndex){
+	return faction->getUnit(unitIndex);
 }
 
-const Unit *AiInterface::getOnSightUnit(int unitIndex){
+const Unit *GlestAiInterface::getOnSightUnit(int unitIndex){
 
 	int count=0;
 	Map *map= world->getMap();
@@ -164,7 +163,7 @@ const Unit *AiInterface::getOnSightUnit(int unitIndex){
 	for(int i=0; i<world->getFactionCount(); ++i){
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			Unit *u= world->getFaction(i)->getUnit(j);
-			if(map->getTile(Map::toTileCoords(u->getPos()))->isVisible(teamIndex)){
+			if(map->getTile(Map::toTileCoords(u->getPos()))->isVisible(faction->getTeam())){
 				if(count==unitIndex){
 					return u;
 				}
@@ -177,19 +176,19 @@ const Unit *AiInterface::getOnSightUnit(int unitIndex){
 	return NULL;
 }
 
-const FactionType * AiInterface::getMyFactionType(){
-	return world->getFaction(factionIndex)->getType();
+const FactionType * GlestAiInterface::getMyFactionType(){
+	return faction->getType();
 }
 
-const ControlType AiInterface::getControlType(){
-	return world->getFaction(factionIndex)->getControlType();
+const ControlType GlestAiInterface::getControlType(){
+	return faction->getControlType();
 }
 
-const TechTree *AiInterface::getTechTree(){
+const TechTree *GlestAiInterface::getTechTree(){
 	return world->getTechTree();
 }
 
-bool AiInterface::getNearestSightedResource(const ResourceType *rt, const Vec2i &pos, Vec2i &resultPos){
+bool GlestAiInterface::getNearestSightedResource(const ResourceType *rt, const Vec2i &pos, Vec2i &resultPos){
 	float tmpDist;
 
 	float nearestDist = numeric_limits<float>::infinity();
@@ -202,7 +201,7 @@ bool AiInterface::getNearestSightedResource(const ResourceType *rt, const Vec2i 
 			Vec2i surfPos= Map::toTileCoords(Vec2i(i, j));
 
 			//if explored cell
-			if(map->getTile(surfPos)->isExplored(teamIndex)){
+			if(map->getTile(surfPos)->isExplored(faction->getTeam())){
 				Resource *r= map->getTile(surfPos)->getResource();
 
 				//if resource cell
@@ -220,22 +219,22 @@ bool AiInterface::getNearestSightedResource(const ResourceType *rt, const Vec2i 
 	return anyResource;
 }
 
-bool AiInterface::isAlly(const Unit *unit) const{
-	return world->getFaction(factionIndex)->isAlly(unit->getFaction());
+bool GlestAiInterface::isAlly(const Unit *unit) const{
+	return faction->isAlly(unit->getFaction());
 }
-bool AiInterface::reqsOk(const RequirableType *rt){
-	return world->getFaction(factionIndex)->reqsOk(rt);
-}
-
-bool AiInterface::reqsOk(const CommandType *ct){
-	return world->getFaction(factionIndex)->reqsOk(ct);
+bool GlestAiInterface::reqsOk(const RequirableType *rt){
+	return faction->reqsOk(rt);
 }
 
-bool AiInterface::checkCosts(const ProducibleType *pt){
-	return world->getFaction(factionIndex)->checkCosts(pt);
+bool GlestAiInterface::reqsOk(const CommandType *ct){
+	return faction->reqsOk(ct);
 }
 
-bool AiInterface::areFreeCells(const Vec2i &pos, int size, Field field){
+bool GlestAiInterface::checkCosts(const ProducibleType *pt){
+	return faction->checkCosts(pt);
+}
+
+bool GlestAiInterface::areFreeCells(const Vec2i &pos, int size, Field field){
 	return world->getMap()->areFreeCells(pos, size, field);
 }
 

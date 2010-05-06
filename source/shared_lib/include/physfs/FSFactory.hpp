@@ -21,7 +21,6 @@
 
 #include "FileOps.hpp"
 
-//using namespace std;
 using std::vector;
 using std::ostream;
 using std::istream;

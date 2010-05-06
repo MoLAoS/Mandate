@@ -20,17 +20,14 @@
 #include "vec.h"
 #include "FSFactory.hpp"
 
+#include "forward_decs.h"
 
 using std::string;
 using Shared::Math::Vec2i;
 using namespace Shared::Platform;
-
-namespace Glest { namespace Game {
-	class Unit;
-	class Command;
-	class ProjectileParticleSystem;
-}}
-using namespace Glest::Game;
+using namespace Glest::Entities;
+using namespace Glest::Sim;
+using namespace Glest::ProtoTypes;
 
 namespace Glest { namespace Net {
 
@@ -234,7 +231,7 @@ WRAPPED_ENUM( NetworkCommandType,
 #pragma pack(push, 1)
 	struct ProjectileUpdate {
 		uint8 end_offset	:  8;
-		ProjectileUpdate(const Unit *unit, ProjectileParticleSystem *pps);
+		ProjectileUpdate(const Unit *unit, Projectile *pps);
 		ProjectileUpdate(const char *ptr) { *this = *((ProjectileUpdate*)ptr); }
 	}; // 2 bytes
 #pragma pack(pop)

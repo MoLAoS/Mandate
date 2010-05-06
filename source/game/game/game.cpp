@@ -22,7 +22,6 @@
 #include "core_data.h"
 #include "metrics.h"
 #include "faction.h"
-#include "network_util.h"
 #include "checksum.h"
 #include "auto_test.h"
 #include "profiler.h"
@@ -34,14 +33,15 @@
 #define snprintf _snprintf
 #endif
 
+using Glest::Util::Logger;
+
 using namespace Glest::Net;
 using namespace Glest::Sim;
-
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 using namespace Shared::Platform;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class GameState
@@ -198,14 +198,14 @@ void GameState::init() {
 		weatherParticleSystem= new RainParticleSystem();
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
-		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
+		renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
 	} else if(simInterface->getWorld()->getTileset()->getWeather() == Weather::SNOWY){
 		logger.add("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		weatherParticleSystem->setTexture(coreData.getSnowTexture());
-		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
+		renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
 	}
 
 	//init renderer state
@@ -280,7 +280,7 @@ void GameState::update() {
 			if(weatherParticleSystem != NULL){
 				weatherParticleSystem->setPos(gameCamera.getPos());
 			}
-			theRenderer.updateParticleManager(rsGame);
+			theRenderer.updateParticleManager(ResourceScope::GAME);
 
 			//call the chat manager		
 			chatManager.updateNetwork();
@@ -731,7 +731,7 @@ void GameState::render3d(){
 	renderer.renderWaterEffects();
 
 	//particles
-	renderer.renderParticleManager(rsGame);
+	renderer.renderParticleManager(ResourceScope::GAME);
 
 	//mouse 3d
 	renderer.renderMouse3d();
@@ -909,14 +909,14 @@ void ShowMap::init() {
 		weatherParticleSystem= new RainParticleSystem();
 		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
-		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
+		renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
 	} else if(simInterface->getWorld()->getTileset()->getWeather() == Weather::SNOWY){
 		logger.add("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		weatherParticleSystem->setTexture(coreData.getSnowTexture());
-		renderer.manageParticleSystem(weatherParticleSystem, rsGame);
+		renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
 	}
 
 	//init renderer state

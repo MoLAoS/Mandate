@@ -21,16 +21,15 @@
 #include "components.h"
 #include "keymap.h"
 #include "CmdArgs.h"
+#include "forward_decs.h"
 
 using namespace Shared::Platform;
-
-namespace Glest { namespace Sim {
-	class SimulationInterface;
-}}
-
+using namespace Glest::Graphics;
+using namespace Glest::Global;
 using Glest::Sim::SimulationInterface;
+using Glest::Gui::Keymap;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Main {
 
 class Program;
 class MainWindow;
@@ -39,7 +38,7 @@ class MainWindow;
 // 	class ProgramState
 //
 ///	Base class for all program states:
-/// Intro, MainMenu, Game, BattleEnd (State Design pattern)
+/// Intro, MainMenu, GameState, BattleEnd (State Design pattern)
 // =====================================================
 
 class ProgramState {

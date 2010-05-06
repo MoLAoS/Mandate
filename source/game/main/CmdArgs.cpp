@@ -8,7 +8,7 @@ using std::cout;
 using std::endl;
 
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Main {
 
 CmdArgs::CmdArgs(){
 	this->server = false;

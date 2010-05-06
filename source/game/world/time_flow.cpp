@@ -18,7 +18,9 @@
 
 #include "leak_dumper.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Sim {
+using namespace Sound;
+using Global::Config;
 
 // =====================================================
 // 	class TimeFlow

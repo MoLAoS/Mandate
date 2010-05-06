@@ -78,6 +78,7 @@ public:
 
 	int	 size() const	{ return counter;	}
 	void clear()		{ counter = 0;		}
+	bool empty() const	{ return !counter;	}
 
 private:
 	inline int parent(int ndx) const	{ return (ndx - 1) / 2; }

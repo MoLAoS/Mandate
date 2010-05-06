@@ -35,7 +35,14 @@ set(test_srcs
 
 include_directories(${glestshared_incs} ${game_incs} ${CPPUNIT_INCLUDE_DIR})
 add_executable(test_suite ${test_srcs})
-target_link_libraries(test_suite shared_lib ${CPPUNIT_LIBRARY} ${PHYSFS_LIBRARY})
+
 if (WIN32)
-	target_link_libraries(test_suite wsock32)
+	target_link_libraries(test_suite
+		shared_lib 
+		optimized ${CPPUNIT_LIBRARY} debug ${CPPUNIT_DEBUG_LIB}
+		${PHYSFS_LIBRARY}
+		wsock32
+	)
+else(WIN32)
+	target_link_libraries(test_suite shared_lib ${CPPUNIT_LIBRARY} ${PHYSFS_LIBRARY})
 endif(WIN32)

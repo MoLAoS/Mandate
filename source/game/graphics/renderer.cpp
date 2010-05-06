@@ -28,11 +28,15 @@
 
 #include "leak_dumper.h"
 
+#if _GAE_DEBUG_EDITION_
+#	include "debug_renderer.h"
+#endif
+
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
 
-namespace Glest { namespace Game{
+namespace Glest { namespace Graphics {
 
 // =====================================================
 // 	class MeshCallbackTeamColor
@@ -156,7 +160,7 @@ Renderer::Renderer() {
 	particleRenderer= graphicsFactory->newParticleRenderer();
 
 	//resources
-	for(int i=0; i<rsCount; ++i){
+	for(int i=0; i<ResourceScope::COUNT; ++i){
 		modelManager[i]= graphicsFactory->newModelManager();
 		textureManager[i]= graphicsFactory->newTextureManager();
 		modelManager[i]->setTextureManager(textureManager[i]);
@@ -174,7 +178,7 @@ Renderer::~Renderer(){
 	delete particleRenderer;
 
 	//resources
-	for(int i=0; i<rsCount; ++i){
+	for(int i=0; i<ResourceScope::COUNT; ++i){
 		delete modelManager[i];
 		delete textureManager[i];
 		delete particleManager[i];
@@ -206,9 +210,9 @@ void Renderer::init(){
 		config.save();
 	}
 
-	modelManager[rsGlobal]->init();
-	textureManager[rsGlobal]->init();
-	fontManager[rsGlobal]->init();
+	modelManager[ResourceScope::GLOBAL]->init();
+	textureManager[ResourceScope::GLOBAL]->init();
+	fontManager[ResourceScope::GLOBAL]->init();
 
 	init2dList();
 }
@@ -258,20 +262,22 @@ void Renderer::initGame(GameState *game){
 		shadowMapFrame= -1;
 	}
 
-	IF_DEBUG_EDITION( debugRenderer.init(); )
+	IF_DEBUG_EDITION(
+		Debug::getDebugRenderer().init(); 
+	)
 
 	//texture init
-	modelManager[rsGame]->init();
-	textureManager[rsGame]->init();
-	fontManager[rsGame]->init();
+	modelManager[ResourceScope::GAME]->init();
+	textureManager[ResourceScope::GAME]->init();
+	fontManager[ResourceScope::GAME]->init();
 
 	init3dList();
 }
 
 void Renderer::initMenu(MainMenu *mm){
-	modelManager[rsMenu]->init();
-	textureManager[rsMenu]->init();
-	fontManager[rsMenu]->init();
+	modelManager[ResourceScope::MENU]->init();
+	textureManager[ResourceScope::MENU]->init();
+	fontManager[ResourceScope::MENU]->init();
 	//modelRenderer->setCustomTexture(CoreData::getInstance().getCustomTexture());
 
 	init3dListMenu(mm);
@@ -306,10 +312,10 @@ void Renderer::reset3dMenu(){
 void Renderer::end(){
 
 	//delete resources
-	modelManager[rsGlobal]->end();
-	textureManager[rsGlobal]->end();
-	fontManager[rsGlobal]->end();
-	particleManager[rsGlobal]->end();
+	modelManager[ResourceScope::GLOBAL]->end();
+	textureManager[ResourceScope::GLOBAL]->end();
+	fontManager[ResourceScope::GLOBAL]->end();
+	particleManager[ResourceScope::GLOBAL]->end();
 
 	//delete 2d list
 	glDeleteLists(list2d, 1);
@@ -319,10 +325,10 @@ void Renderer::endGame(){
 	game= NULL;
 
 	//delete resources
-	modelManager[rsGame]->end();
-	textureManager[rsGame]->end();
-	fontManager[rsGame]->end();
-	particleManager[rsGame]->end();
+	modelManager[ResourceScope::GAME]->end();
+	textureManager[ResourceScope::GAME]->end();
+	fontManager[ResourceScope::GAME]->end();
+	particleManager[ResourceScope::GAME]->end();
 
 	if(shadows==sProjected || shadows==sShadowMapping){
 		glDeleteTextures(1, &shadowMapHandle);
@@ -333,21 +339,21 @@ void Renderer::endGame(){
 
 void Renderer::endMenu(){
 	//delete resources
-	modelManager[rsMenu]->end();
-	textureManager[rsMenu]->end();
-	fontManager[rsMenu]->end();
-	particleManager[rsMenu]->end();
+	modelManager[ResourceScope::MENU]->end();
+	textureManager[ResourceScope::MENU]->end();
+	fontManager[ResourceScope::MENU]->end();
+	particleManager[ResourceScope::MENU]->end();
 
 	glDeleteLists(list3dMenu, 1);
 }
 
 void Renderer::reloadResources(){
-	for(int i=0; i<rsCount; ++i){
+	for(int i=0; i<ResourceScope::COUNT; ++i){
 		modelManager[i]->end();
 		textureManager[i]->end();
 		fontManager[i]->end();
 	}
-	for(int i=0; i<rsCount; ++i){
+	for(int i=0; i<ResourceScope::COUNT; ++i){
 		modelManager[i]->init();
 		textureManager[i]->init();
 		fontManager[i]->init();
@@ -484,7 +490,7 @@ void Renderer::loadCameraMatrix(const Camera *camera){
 
 void Renderer::computeVisibleArea() {
 	culler.establishScene();
-	IF_DEBUG_EDITION( debugRenderer.sceneEstablished(culler); )
+	IF_DEBUG_EDITION( Debug::getDebugRenderer().sceneEstablished(culler); )
 }
 
 // =======================================
@@ -527,7 +533,7 @@ void Renderer::renderMouse2d(int x, int y, int anim, float fade){
 
 void Renderer::renderMouse3d(){
 
-	const Gui *gui= game->getGui();
+	const UserInterface *gui= game->getGui();
 	const Mouse3d *mouse3d= gui->getMouse3d();
 	const Map *map= theWorld.getMap();
 
@@ -539,14 +545,14 @@ void Renderer::renderMouse3d(){
 	if((mouse3d->isEnabled() || gui->isPlacingBuilding()) && gui->isValidPosObjWorld()){
 
 		if(gui->isPlacingBuilding()) {
-			const Gui::BuildPositions &bp = gui->getBuildPositions();
+			const UserInterface::BuildPositions &bp = gui->getBuildPositions();
 			const UnitType *building= gui->getBuilding();
 			const Selection::UnitContainer &units = gui->getSelection()->getUnits();
 
 			//selection building emplacement
 			float offset= building->getSize()/2.f-0.5f;
 
-			for(Gui::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); i++) {
+			for(UserInterface::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); i++) {
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
 				glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
@@ -756,7 +762,7 @@ void Renderer::renderResourceStatus() {
 
 void Renderer::renderSelectionQuad(){
 
-	const Gui *gui= game->getGui();
+	const UserInterface *gui= game->getGui();
 	const SelectionQuad *sq= gui->getSelectionQuad();
 
 	Vec2i down= sq->getPosDown();
@@ -1123,8 +1129,8 @@ void Renderer::renderTextEntryBox(const GraphicTextEntryBox *textEntryBox){
 
 void Renderer::renderSurface() {
 	IF_DEBUG_EDITION(
-		if (debugRenderer.willRenderSurface()) {
-			debugRenderer.renderSurface(culler);
+		if (Debug::getDebugRenderer().willRenderSurface()) {
+			Debug::getDebugRenderer().renderSurface(culler);
 		} else {
 	)
 
@@ -1225,7 +1231,7 @@ void Renderer::renderSurface() {
 
 	IF_DEBUG_EDITION(
 		} // end else, if not renderering textures instead of terrain
-		debugRenderer.renderEffects(culler);
+		Debug::getDebugRenderer().renderEffects(culler);
 	)
 }
 
@@ -2069,7 +2075,7 @@ bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
 
 void Renderer::computeSelected(Selection::UnitContainer &units, const Vec2i &posDown, const Vec2i &posUp){
 	//declarations
-	GLuint selectBuffer[Gui::maxSelBuff];
+	GLuint selectBuffer[UserInterface::maxSelBuff];
 	const Metrics &metrics= Metrics::getInstance();
 
 	//compute center and dimensions of selection rectangle
@@ -2081,7 +2087,7 @@ void Renderer::computeSelected(Selection::UnitContainer &units, const Vec2i &pos
 	if(h<1) h=1;
 
 	//setup matrices
-	glSelectBuffer(Gui::maxSelBuff, selectBuffer);
+	glSelectBuffer(UserInterface::maxSelBuff, selectBuffer);
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	GLint view[]= {0, 0, metrics.getVirtualW(), metrics.getVirtualH()};
@@ -2324,7 +2330,7 @@ void Renderer::loadConfig(){
 	//load filter settings
 	Texture2D::Filter textureFilter= strToTextureFilter(config.getRenderFilter());
 	int maxAnisotropy= config.getRenderFilterMaxAnisotropy();
-	for(int i=0; i<rsCount; ++i){
+	for(int i=0; i<ResourceScope::COUNT; ++i){
 		textureManager[i]->setFilter(textureFilter);
 		textureManager[i]->setMaxAnisotropy(maxAnisotropy);
 	}

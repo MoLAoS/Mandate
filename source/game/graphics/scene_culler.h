@@ -27,7 +27,13 @@ using std::vector;
 using std::pair;
 using namespace Shared::Math;
 
-namespace Glest { namespace Game {
+namespace Glest {
+
+namespace Debug {
+	class DebugRenderer;
+}
+
+namespace Graphics {
 
 template <typename T>
 inline void swap(T& a, T& b) { T temp = a; a = b; b = temp; }
@@ -106,16 +112,8 @@ struct GLMatrix {
 };
 
 struct Plane {
-	//union {
-		//struct {
-			Vec3f n;
-			float d;
-		//};
-		//struct {
-		//	float x, y, z, d;
-		//};
-		//float v[4];
-	//};
+	Vec3f n;
+	float d;
 
 	Plane() : n(0.f), d(0.f) {}
 	Plane(Vec3f normal, float dist) 
@@ -126,10 +124,8 @@ struct Plane {
 	}
 };
 
-class DebugRenderer;
-
 class SceneCuller {
-	friend class DebugRenderer;
+	friend class Debug::DebugRenderer;
 private:
 	enum { Left, Right, Top, Bottom, Near, Far };
 	Plane frstmPlanes[6];

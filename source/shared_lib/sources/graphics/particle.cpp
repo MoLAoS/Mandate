@@ -24,7 +24,7 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
+using std::range_error;
 using namespace Shared::Util;
 
 namespace Shared{ namespace Graphics{

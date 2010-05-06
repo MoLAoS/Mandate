@@ -23,7 +23,8 @@
 using namespace Shared::Graphics;
 using namespace Shared::Sound;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Sound {
+using Global::Config;
 
 const int SoundRenderer::ambientFade= 6000;
 const float SoundRenderer::audibleDist= 50.f;

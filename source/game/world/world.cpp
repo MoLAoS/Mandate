@@ -29,7 +29,6 @@
 #include "lang_features.h"
 #include "earthquake_type.h"
 #include "renderer.h"
-#include "network_manager.h"
 #include "sim_interface.h"
 
 #if _GAE_DEBUG_EDITION_
@@ -41,7 +40,7 @@
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Sim {
 
 // =====================================================
 // 	class World
@@ -91,9 +90,6 @@ World::~World() {
 	Logger::getInstance().add("~World", !Program::getInstance()->isTerminating());
 	alive = false;
 
-	for (int i = 0; i < factions.size(); ++i) {
-		factions[i].end();
-	}
 	delete scenario;
 	delete cartographer;
 	delete routePlanner;
@@ -122,7 +118,7 @@ void World::save(XmlNode *node) const {
 void World::init(const XmlNode *worldNode) {
 	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
-	initFactionTypes();
+	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
 
@@ -329,6 +325,8 @@ void World::processFrame() {
 //	updateEarthquakes(1.f / 40.f);
 
 	//undertake the dead
+	iSim->getUnitFactory().update();
+/*
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
@@ -338,7 +336,7 @@ void World::processFrame() {
 				j--;
 			}
 		}
-	}
+	}*/
 
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
@@ -362,7 +360,6 @@ void World::processFrame() {
 		computeFow();
 		tick();
 	}
-	assertConsistiency();
 }
 
 
@@ -445,12 +442,9 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 void World::doKill(Unit *killer, Unit *killed) {
 	_TRACE_FUNCTION();
 	ScriptManager::onUnitDied(killed);
-	int kills = 1 + killed->getPets().size();
-	for (int i = 0; i < kills; i++) {
-		iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
-		if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
-			killer->incKills();
-		}
+	iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
+	if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
+		killer->incKills();
 	}
 
 	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
@@ -506,7 +500,6 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 		// lots of tests, roughly in order of speed of evaluation.
 		if ((source->isAlly(target) ? e->isEffectsAlly() : e->isEffectsFoe())
 		&&	(target->isOfClass(UnitClass::BUILDING) ? e->isEffectsBuildings() : e->isEffectsNormalUnits())
-		&&	(e->isEffectsPetsOnly() ? source->isPet(target) : true)
 		&&	(e->getChance() != 100 ? random.randPercent() < e->getChance() : true)) {
 
 			fixed strength = e->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
@@ -524,7 +517,7 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 //CLEAN: this is never called, and has a silly name considering what it appears to be for...
 void World::appyEffect(Unit *u, Effect *e) {
 	if (u->add(e)) {
-		Unit *attacker = e->getSource();
+		Unit *attacker = iSim->getUnitFactory().getUnit(e->getSource());
 		if (attacker) {
 			iSim->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
 			attacker->incKills();
@@ -541,8 +534,6 @@ void World::tick() {
 	if (!fogOfWarSmoothing) {
 		minimap.updateFowTex(1.f);
 	}
-	//apply hack cleanup
-	doHackyCleanUp();
 
 	cartographer->tick();
 
@@ -709,7 +700,8 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	if (!map.isInside(pos)) {
 		return -4;
 	}
-	Unit* unit= new Unit(getNextUnitId(), pos, ut, faction, &map);
+	Unit *unit = iSim->getUnitFactory().newInstance(pos, ut, faction, &map);
+	//Unit* unit= new Unit(getNextUnitId(), pos, ut, faction, &map);
 	if (placeUnit(pos, generationArea, unit, true)) {
 		unit->create(true);
 		unit->born();
@@ -719,7 +711,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		ScriptManager::onUnitCreated(unit);
 		return unit->getId();
 	} else {
-		delete unit;
+		iSim->getUnitFactory().deleteUnit(unit);
 		return -3;
 	}
 }
@@ -1089,7 +1081,7 @@ void World::initSplattedTextures() {
 }
 
 //creates each faction looking at each faction name contained in GameSettings
-void World::initFactionTypes() {
+void World::initFactions() {
 	Logger::getInstance().add("Faction types", true);
 	GameSettings &gs = iSim->getGameSettings();
 	if (!gs.getFactionCount()) return;
@@ -1139,7 +1131,8 @@ void World::initUnits() {
 			const UnitType *ut = ft->getStartingUnit(j);
 			int initNumber = ft->getStartingUnitAmount(j);
 			for (int l = 0; l < initNumber; l++) {
-				Unit *unit = new Unit(getNextUnitId(), Vec2i(0), ut, f, &map);
+				Unit *unit = iSim->getUnitFactory().newInstance(Vec2i(0), ut, f, &map);
+					//new Unit(getNextUnitId(), Vec2i(0), ut, f, &map);
 				int startLocationIndex = f->getStartLocationIndex();
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
@@ -1152,9 +1145,6 @@ void World::initUnits() {
 						"is no enough place to put the units near its start location, make a "
 						"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
 				}
-				//if (!unit->isMobile())
-				//   unitUpdater.routePlanner->updateMapMetrics (unit->getPos(),
-				//                unit->getSize(), true, unit->getCurrField ());
 				if (unit->getType()->hasSkillClass(SkillClass::BE_BUILT)) {
 					map.flatternTerrain(unit);
 					cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
@@ -1349,8 +1339,8 @@ void World::hackyCleanUp(Unit *unit) {
 
 ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera) {
 	this->gameCamera = gameCamera;
-	this->attackerRef = attacker;
-	this->targetRef = target;
+	this->attackerRef = attacker->getId();
+	this->targetRef = target ? target->getId() : -1;
 	this->ast = static_cast<const AttackSkillType*>(attacker->getCurrSkill());
 	this->targetPos = attacker->getTargetPos();
 	this->targetField = attacker->getTargetField();
@@ -1358,10 +1348,10 @@ ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, con
 }
 
 void ParticleDamager::execute(ParticleSystem *particleSystem) {
-	Unit *attacker = attackerRef.getUnit();
+	Unit *attacker = theSimInterface->getUnitFactory().getUnit(attackerRef);
 
 	if (attacker) {
-		Unit *target = targetRef.getUnit();
+		Unit *target = theSimInterface->getUnitFactory().getUnit(targetRef);
 		if (target) {
 			targetPos = target->getCenteredPos();
 			// manually feed the attacked unit here to avoid problems with cell maps and such

@@ -19,16 +19,12 @@
 #include "model.h"
 #include "random.h"
 
-using Shared::Graphics::RainParticleSystem;
-using Shared::Graphics::FireParticleSystem;
-using Shared::Graphics::Camera;
+using namespace Shared::Graphics;
 using Shared::Math::Vec3f;
 using Shared::Math::Vec2f;
-using Shared::Graphics::Texture2D;
-using Shared::Graphics::Model;
 using Shared::Util::Random;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
 
 // ===========================================================
 // 	class MenuBackground  

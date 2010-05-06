@@ -24,8 +24,9 @@
 
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
+using namespace Glest::Graphics;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace ProtoTypes {
 
 // =====================================================
 // 	class ParticleSystemType
@@ -53,7 +54,7 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 	const XmlNode *textureNode = particleSystemNode->getChild("texture");
     //texture enabled
 	if (textureNode->getAttribute("value")->getBoolValue()) {
-		Texture2D *texture = renderer.newTexture2D(rsGame);
+		Texture2D *texture = renderer.newTexture2D(ResourceScope::GAME);
 		if (textureNode->getAttribute("luminance")->getBoolValue()) {
 			texture->setFormat(Texture::fAlpha);
 			texture->getPixmap()->init(1);
@@ -71,7 +72,7 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
     //model enabled
 	if (modelNode->getAttribute("value")->getBoolValue()) {
 		string path = modelNode->getAttribute("path")->getRestrictedValue();
-		model = renderer.newModel(rsGame);
+		model = renderer.newModel(ResourceScope::GAME);
 		model->load(dir + "/" + path);
 	} else {
 		model = NULL;
@@ -162,10 +163,10 @@ void ParticleSystemType::setValues(AttackParticleSystem *ats){
 }*/
 
 // ===========================================================
-//	class ParticleSystemTypeProjectile
+//	class ProjectileType
 // ===========================================================
 
-void ParticleSystemTypeProjectile::load(const string &dir, const string &path){
+void ProjectileType::load(const string &dir, const string &path){
 
 	try {
 		XmlTree xmlTree;
@@ -219,10 +220,10 @@ void ParticleSystemTypeProjectile::load(const string &dir, const string &path){
 	}
 }
 
-ParticleSystem *ParticleSystemTypeProjectile::create() {
-	ProjectileParticleSystem *ps = new ProjectileParticleSystem(*this);
+ParticleSystem *ProjectileType::create() {
+	Projectile *ps = new Projectile(*this);
 
-	ps->setTrajectory(ProjectileParticleSystem::strToTrajectory(trajectory));
+	ps->setTrajectory(Projectile::strToTrajectory(trajectory));
 	ps->setTrajectorySpeed(trajectorySpeed);
 	ps->setTrajectoryScale(trajectoryScale);
 	ps->setTrajectoryFrequency(trajectoryFrequency);
@@ -231,10 +232,10 @@ ParticleSystem *ParticleSystemTypeProjectile::create() {
 }
 
 // ===========================================================
-//	class ParticleSystemTypeSplash
+//	class SplashType
 // ===========================================================
 
-void ParticleSystemTypeSplash::load(const string &dir, const string &path){
+void SplashType::load(const string &dir, const string &path){
 
 	try{
 		XmlTree xmlTree;
@@ -261,8 +262,8 @@ void ParticleSystemTypeSplash::load(const string &dir, const string &path){
 	}
 }
 
-ParticleSystem *ParticleSystemTypeSplash::create(){
-	SplashParticleSystem *ps =  new SplashParticleSystem(*this);
+ParticleSystem *SplashType::create(){
+	Splash *ps =  new Splash(*this);
 
 	ps->setEmissionRateFade(emissionRateFade);
 	ps->setVerticalSpreadA(verticalSpreadA);

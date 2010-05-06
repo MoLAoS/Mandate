@@ -18,12 +18,24 @@
 
 using Shared::Util::Random;
 
-namespace Glest{ namespace Game{
+namespace Glest { 
+namespace Main {
+	class Program;
+}
+using Main::Program;
 
-class Program;
-class MainMenu;
-class MenuStateScenario;
+namespace Menu {
+	class MainMenu;
+	class MenuStateScenario;
+}
+using namespace Menu;
+	
+namespace Gui {
 class GameState;
+}
+using Gui::GameState;
+
+namespace Main {
 
 // =====================================================
 //	class AutoTest  

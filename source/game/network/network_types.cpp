@@ -121,7 +121,7 @@ MoveSkillUpdate::MoveSkillUpdate(const Unit *unit) {
 	this->end_offset = unit->getNextCommandUpdate() - theWorld.getFrameCount();
 }
 
-ProjectileUpdate::ProjectileUpdate(const Unit *unit, ProjectileParticleSystem *pps) {
+ProjectileUpdate::ProjectileUpdate(const Unit *unit, Projectile *pps) {
 	assert(pps->getEndFrame() - theWorld.getFrameCount() < 256);
 	this->end_offset = pps->getEndFrame() - theWorld.getFrameCount();
 }

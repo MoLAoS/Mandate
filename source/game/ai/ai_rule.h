@@ -21,15 +21,12 @@ using std::string;
 
 using Shared::Math::Vec2i;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Plan {
 
 class Ai;
-class Unit;
-class UnitType;
 class ProduceTask;
 class BuildTask;
 class UpgradeTask;
-class ResourceType;
 
 // =====================================================
 //	class AiRule

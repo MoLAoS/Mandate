@@ -5,8 +5,7 @@
 
 using std::string;
 
-
-namespace Glest{ namespace Game{
+namespace Glest { namespace Main {
 
 /**
  * "parser" for commandline arguments

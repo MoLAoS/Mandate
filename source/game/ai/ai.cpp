@@ -24,12 +24,10 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Graphics;
 using namespace Shared::Util;
 
-
-namespace Glest{ namespace Game{
+namespace Glest { namespace Plan {
 
 // =====================================================
 // 	class ProduceTask
@@ -117,7 +115,7 @@ string UpgradeTask::toString() const {
 // 	class Ai
 // =====================================================
 
-void Ai::init(AiInterface *aiInterface, int32 randomSeed) {
+void Ai::init(GlestAiInterface *aiInterface, int32 randomSeed) {
 	this->aiInterface = aiInterface;
 	random.init(randomSeed);
 	startLoc = random.randRange(0, aiInterface->getMapMaxPlayers() - 1);
@@ -152,10 +150,9 @@ Ai::~Ai() {
 void Ai::update() {
 	//process ai rules
 	for (AiRules::iterator it = aiRules.begin(); it != aiRules.end(); ++it) {
-		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * Config::getInstance().getGsWorldUpdateFps() / 1000)) == 0) {
+		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * WORLD_FPS / 1000)) == 0) {
 			if ((*it)->test()) {
-				aiInterface->printLog(3,
-						intToStr(1000 * aiInterface->getTimer() / Config::getInstance().getGsWorldUpdateFps())
+				aiInterface->printLog(3, intToStr(1000 * aiInterface->getTimer() / WORLD_FPS)
 						+ ": Executing rule: " + (*it)->getName() + '\n');
 				(*it)->execute();
 			}
@@ -195,15 +192,15 @@ float Ai::getRatioOfClass(UnitClass uc) {
 }
 
 const ResourceType *Ai::getNeededResource() {
-	int amount = -1;
+	int amount = numeric_limits<int>::max();
 	const ResourceType *neededResource = NULL;
 	const TechTree *tt = aiInterface->getTechTree();
 
 	for (int i = 0; i < tt->getResourceTypeCount(); ++i) {
 		const ResourceType *rt = tt->getResourceType(i);
 		const Resource *r = aiInterface->getResource(rt);
-		if (rt->getClass() != ResourceClass::STATIC && rt->getClass() != ResourceClass::CONSUMABLE
-		&& (r->getAmount() < amount || amount == -1)) {
+		if (rt->getClass() != ResourceClass::STATIC 
+		&& rt->getClass() != ResourceClass::CONSUMABLE && r->getAmount() < amount) {
 			amount = r->getAmount();
 			neededResource = rt;
 		}
@@ -247,7 +244,7 @@ bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly) {
 	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		const Unit *unit = aiInterface->getMyUnit(i);
 		if (unit->getType()->hasCommandClass(ability)) {
-			if ((!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() == CommandClass::STOP) && !unit->isAPet()) {
+			if ((!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() == CommandClass::STOP)) {
 				units.push_back(i);
 			}
 		}
@@ -268,7 +265,7 @@ bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, CommandClass current
 	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		const Unit *unit = aiInterface->getMyUnit(i);
 		if (unit->getType()->hasCommandClass(ability)) {
-			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == currentCommand && !unit->isAPet()) {
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == currentCommand) {
 				units.push_back(i);
 			}
 		}

@@ -26,7 +26,7 @@ using std::ofstream;
 using std::endl;
 using std::ios_base;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
 
 static const char *modNames[4] = {"Shift", "Ctrl", "Alt", "Meta"};
 	

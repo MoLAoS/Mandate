@@ -25,9 +25,9 @@ using std::vector;
 using std::list;
 using Shared::Util::Random;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Plan {
 
-class AiInterface;
+class GlestAiInterface;
 class AiRule;
 
 // =====================================================
@@ -135,7 +135,7 @@ private:
 	typedef vector<Unit *> repairers;
 
 private:
-	AiInterface *aiInterface;
+	GlestAiInterface *aiInterface;
 	AiRules aiRules;
 	int startLoc;
 	bool randomMinWarriorsReached;
@@ -158,12 +158,12 @@ private:
 
 public:
 	~Ai();
-	void init(AiInterface *aiInterface, int32 randomSeed);
+	void init(GlestAiInterface *aiInterface, int32 randomSeed);
 	void update();
 
 	//state requests
-	AiInterface *getAiInterface() const		{return aiInterface;}
-	Random* getRandom()						{return &random;}
+	GlestAiInterface *getAiInterface() const	{return aiInterface;}
+	Random* getRandom()							{return &random;}
 	int getCountOfType(const UnitType *ut);
 
 	int getCountOfClass(UnitClass uc);

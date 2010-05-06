@@ -11,6 +11,7 @@
 
 #include "pch.h"
 
+#include <ctime>
 #include "map_maker.h"
 
 namespace MapEditor {
@@ -53,11 +54,11 @@ void MapMaker::randomize() {
 	// randomizeHeights() was taken out because there is already a button
 	// for it and much more realistic terrain should be randomized
 	int baseHeight = random.randRange(8, 12);
-	map->reset(MAP_WIDTH, MAP_WIDTH, baseHeight, 1);
+	map->reset(MAP_WIDTH, MAP_WIDTH, float(baseHeight), 1);
 
 	///@todo pass more parameters to these functions
-	setStartLocations(baseHeight);
-	diamondSquare(baseHeight);
+	setStartLocations(float(baseHeight));
+	diamondSquare(float(baseHeight));
 
 
 	growForestsMountaintop(5, 19, 800, 8);
@@ -103,8 +104,9 @@ void MapMaker::setStartLocations(float baseHeight, int numFactions, float minDis
 				// on an early iteration of the diamond-square algorithm and are thus good seed points
 				//int X1 = ((int)(((map->startLocations[i].x + x*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5f)) * (MAP_WIDTH / 8.f);
 				//int Y1 = ((int)(((map->startLocations[i].y + y*(MAP_WIDTH / 8.f)) / (MAP_WIDTH / 8.f)) + 0.5f)) * (MAP_WIDTH / 8.f);
-				int X2 = ((int)(((map->startLocations[i].x + x*(MAP_WIDTH / 16.f)) / (MAP_WIDTH / 16.f)) + 0.5f)) * (MAP_WIDTH / 16.f);
-				int Y2 = ((int)(((map->startLocations[i].y + y*(MAP_WIDTH / 16.f)) / (MAP_WIDTH / 16.f)) + 0.5f)) * (MAP_WIDTH / 16.f);
+				const float divisor = MAP_WIDTH / 16.f;
+				int X2 = int( int(((map->startLocations[i].x + x * divisor) / divisor) + 0.5f) * divisor );
+				int Y2 = int( int(((map->startLocations[i].y + y * divisor) / divisor) + 0.5f) * divisor );
 				//if (map->inside (X1, Y1)) {
 				//	map->cells[X1][Y1].height = baseHeight + 3;
 				//}

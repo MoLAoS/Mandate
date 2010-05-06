@@ -38,9 +38,10 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 using namespace Shared::Math;
 
-namespace Glest{ namespace Game{
-
+namespace Glest { namespace Sim {
+using Main::Program;
 using Search::Cartographer;
+using Gui::Selection;
 
 // =====================================================
 // 	class Map
@@ -62,7 +63,8 @@ Map::Map()
 		, tiles(NULL)
 		, startLocations(NULL)
 		//, surfaceHeights(NULL)
-		, earthquakes() {
+		//, earthquakes() 
+		{
 
 	// If this is expanded, maintain Tile::read() and write()
 	assert(Tileset::objCount < 256);

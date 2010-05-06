@@ -22,12 +22,12 @@
 
 #include "leak_dumper.h"
 #include "world.h"
-#include "network_util.h"
+#include "sim_interface.h"
 
 using namespace Shared::Graphics;
 using namespace Glest::Net;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Util {
 
 // =====================================================
 //	class Logger
@@ -166,4 +166,4 @@ void logNetwork(const string &msg) {
 	}
 }
 
-}}//end namespace
+}} // namespace Glest::Util

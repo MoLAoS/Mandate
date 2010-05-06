@@ -20,11 +20,10 @@
 
 #include "FSFactory.hpp"
 
+using std::ios_base;
 using namespace Shared::Platform;
 
 namespace Shared{ namespace Sound{
-
-using namespace std;
 
 // =====================================================
 //	class WavSoundFileLoader

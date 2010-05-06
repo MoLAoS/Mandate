@@ -14,6 +14,7 @@
 
 #include <map>
 
+#include "game_constants.h"
 #include "graphics_interface.h"
 #include "xml_parser.h"
 #include "object_type.h"
@@ -22,34 +23,31 @@
 #include "surface_atlas.h"
 #include "checksum.h"
 #include "game_constants.h"
-
-namespace Glest{ namespace Game{
-
-using Shared::Xml::XmlNode;
-using Shared::Sound::StaticSound;
-using Shared::Sound::StrSound;
-using Shared::Graphics::Model;
-using Shared::Math::Vec3f;
-using Shared::Graphics::Texture2D;
-using Shared::Graphics::Texture3D;
-using Shared::Util::Random;
-using Shared::Util::Checksum;
+#include "renderer.h"
 
 using std::map;
+using namespace Shared::Util;
+using namespace Shared::Sound;
+using namespace Shared::Graphics;
+using Shared::Xml::XmlNode;
+using Shared::Math::Vec3f;
+using namespace Glest::ProtoTypes;
+using namespace Glest::Graphics;
+
+namespace Glest { namespace Sim {
 
 enum FogMode{
 	fmExp,
 	fmExp2
 };
 
-class Renderer;
 class Tile;
 
 // =====================================================
 //	class AmbientSounds
 // =====================================================
-
-class AmbientSounds{
+///@todo move to Glest::Sound?
+class AmbientSounds {
 private:
 	bool enabledDay;
 	bool enabledNight;
@@ -119,7 +117,7 @@ private:
 	Vec3f fogColor;
 	Vec3f sunLightColor;
 	Vec3f moonLightColor;
-	Weather weather;
+	Gui::Weather weather;
 
 	AmbientSounds ambientSounds;
 
@@ -142,7 +140,7 @@ public:
 	const Vec3f &getFogColor() const				{return fogColor;}
 	const Vec3f &getSunLightColor() const			{return sunLightColor;}
 	const Vec3f &getMoonLightColor() const			{return moonLightColor;}
-	Weather getWeather() const						{return weather;}
+	Gui::Weather getWeather() const						{return weather;}
 
 	//surface textures
 	const Pixmap2D *getSurfPixmap(int type, int var) const;

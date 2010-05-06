@@ -27,12 +27,12 @@
 #include "leak_dumper.h"
 
 #include "sim_interface.h"
-using namespace Glest::Sim;
-
 
 using namespace Shared::Util;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Main {
+using namespace Sim;
+using namespace Menu;
 
 // =====================================================
 //  class BattleEnd

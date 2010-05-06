@@ -26,7 +26,6 @@ namespace Shared { namespace Util {
 
 using Shared::Platform::Chrono;
 
-using namespace std;
 using Shared::Platform::Chrono;
 
 namespace Profile {

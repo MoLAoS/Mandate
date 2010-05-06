@@ -23,7 +23,7 @@ using Glest::Sim::SimulationInterface;
 using std::string;
 using Shared::Platform::Key;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
 
 class Console;
 

@@ -23,20 +23,7 @@ using Shared::Platform::Socket;
 using Shared::Platform::int8;
 using Shared::Platform::int16;
 
-namespace Glest { 
-	
-namespace Game {
-	class GameSettings;
-	class Command;
-
-	class TechTree;
-	class FactionType;
-	class UnitType;
-	class SkillType;
-	class Unit;
-}
-
-namespace Net {
+namespace Glest { namespace Net {
 
 class NetworkConnection;
 

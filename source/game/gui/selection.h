@@ -18,9 +18,9 @@
 
 using std::vector;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
 
-class Gui;
+class UserInterface;
 
 enum AutoRepairState {
 	arsOn,
@@ -55,12 +55,12 @@ private:
 	int factionIndex;
 	UnitContainer selectedUnits;
 	UnitContainer groups[maxGroups];
-	Gui *gui;
+	UserInterface *gui;
 
 public:
 	Selection();
 	virtual ~Selection();
-	void init(Gui *gui, int factionIndex);
+	void init(UserInterface *gui, int factionIndex);
 
 	void select(Unit *unit);
 	void select(const UnitContainer &units) {

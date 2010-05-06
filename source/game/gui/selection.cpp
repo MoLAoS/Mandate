@@ -15,11 +15,14 @@
 #include <algorithm>
 
 #include "unit_type.h"
-#include "gui.h"
+#include "user_interface.h"
+
+#include "sim_interface.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class Selection
@@ -29,14 +32,14 @@ Selection::Selection()	{
 	gui = NULL;
 }
 
-void Selection::init(Gui *gui, int factionIndex){
+void Selection::init(UserInterface *gui, int factionIndex) {
 	uniform = false;
 	commandable = false;
 	cancelable = false;
 	meetable = false;
 	canRepair = false;
-	this->factionIndex= factionIndex;
-	this->gui= gui;
+	this->factionIndex = factionIndex;
+	this->gui = gui;
 }
 
 Selection::~Selection(){
@@ -207,7 +210,6 @@ void Selection::update() {
 			if(ut != frontUT){
 				uniform = false;
 			}
-
 			if(ut->hasCommandClass(CommandClass::REPAIR)) {
 				if(((*i)->isAutoRepairEnabled() ? arsOn : arsOff) != autoRepairState) {
 					autoRepairState = arsMixed;
@@ -215,15 +217,12 @@ void Selection::update() {
 			} else {
 				canRepair = false;
 			}
-
 			cancelable = cancelable || ((*i)->anyCommand()
 					&& (*i)->getCurrCommand()->getType()->getClass() != CommandClass::STOP);
 			commandable = commandable || (*i)->isOperative();
 		}
-
 		meetable = uniform && commandable && frontUT->hasMeetingPoint();
 	}
-
 	//in case Game::init() isn't called, eg crash at loading data
 	if (gui) {
 		gui->onSelectionUpdated();
@@ -238,10 +237,9 @@ void Selection::load(const XmlNode *node) {
 		if(index < 0 || index > maxGroups) {
 			throw runtime_error("invalid group index");
 		}
-
 		groups[index].clear();
 		for(int j = 0; j < groupNode->getChildCount(); ++j) {
-			Unit *unit = UnitReference(groupNode->getChild("unit", j)).getUnit();
+			Unit *unit = theSimInterface->getUnitFactory().getUnit(groupNode->getChildIntValue("unit", j));
 			if(unit) {
 				groups[index].push_back(unit);
 			}
@@ -254,11 +252,10 @@ void Selection::save(XmlNode *node) const {
 		if(groups[i].empty()) {
 			continue;
 		}
-
 		XmlNode *groupNode = node->addChild("group");
 		groupNode->addAttribute("index", i);
 		for(UnitContainer::const_iterator j = groups[i].begin(); j != groups[i].end(); ++j) {
-			UnitReference(*j).save(groupNode->addChild("unit"));
+			groupNode->addChild("unit", (*j)->getId());
 		}
 	}
 }

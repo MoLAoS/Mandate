@@ -17,16 +17,16 @@
 #include "sound_renderer.h"
 #include "core_data.h"
 #include "game.h"
-#include "network_manager.h"
 #include "xml_parser.h"
+#include "sim_interface.h"
+#include "server_interface.h"
 
 #include "leak_dumper.h"
-#include "sim_interface.h"
 
 using namespace Glest::Sim;
 using namespace Glest::Net;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
 
 using namespace Shared::Util;
 // =====================================================

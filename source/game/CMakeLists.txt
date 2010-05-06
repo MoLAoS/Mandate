@@ -1,7 +1,9 @@
 # glest game
 
 set(folders
+	.
 	ai
+	entities
 	facilities
 	game
 	global
@@ -10,10 +12,10 @@ set(folders
 	main
 	menu
 	network
-	path_finder
+	prototypes
+	script
+	search
 	sound
-	type_instances
-	types
 	world
 )
 file(GLOB game_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
@@ -45,13 +47,21 @@ if (WIN32)
 	# set linker flags for Release to use link time code gen.
 	set_target_properties(glestadv PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
 
-	# set-up precompiled headers (for windows)
-	# project wide setting
-	set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
-	# create through pch.cpp
-	set_source_files_properties(pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
-	# game_constants.cpp must not use precompiled header (then we'd get no EnumNames objects)
-	set_source_files_properties(game/game_constants.cpp PROPERTIES COMPILE_FLAGS "/Y-")
-	
-endif(WIN32)
+	if (GAE_USE_PRECOMPILED_HDR)
+		# set-up precompiled headers (for windows)
+		# project wide setting
+		set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
+		# create through pch.cpp
+		set_source_files_properties(pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
+		# game_constants.cpp must not use precompiled header (then we'd get no EnumNames objects)
+		set_source_files_properties(game/game_constants.cpp PROPERTIES COMPILE_FLAGS "/Y-")
+	else (GAE_USE_PRECOMPILED_HDR)
+		set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/DUSE_PCH=0")
+	endif (GAE_USE_PRECOMPILED_HDR)
+endif (WIN32)
 
+if(GAE_DEBUG_EDITION)
+	set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/D_GAE_DEBUG_EDITION_=1")
+else(GAE_DEBUG_EDITION)
+	set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/D_GAE_DEBUG_EDITION_=0")
+endif(GAE_DEBUG_EDITION)

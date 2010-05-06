@@ -20,8 +20,9 @@ using Shared::Util::Properties;
 using namespace Shared::Platform;
 using Shared::Platform::Key;
 using Shared::Platform::KeyCode;
+using Glest::Global::Lang;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class Keymap

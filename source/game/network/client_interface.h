@@ -70,7 +70,7 @@ protected:
 
 	// unit-skill/projectile updates, SimulationInterface virtuals
 	virtual void updateSkillCycle(Unit *unit);
-	virtual void updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end);
+	virtual void updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end);
 
 	// move skill needs special handling, NetworkInterface virtual
 	virtual void updateMove(Unit *unit);

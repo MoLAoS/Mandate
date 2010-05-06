@@ -20,10 +20,10 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Util;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Util {
+using Global::Lang;
 
 const string mailString= "contact_game@glest.org";
 const string gaeMailString= CONTACT_STRING;
@@ -47,32 +47,32 @@ string getNetworkVersionString(){
 
 string getAboutString1(int i){
 	switch(i){
-	case 0: return "Glest Advanced Engine " + gaeVersionString + " based on Glest "
-			+ glestVersionString + " (" + "Shared Library " + sharedLibVersionString + ")";
-	case 1: return "Built: " + string(__DATE__);
-	case 2: return "Copyright 2001-2008 The Glest Team, 2008-2010 The GAE Team";
+		case 0: return "Glest Advanced Engine " + gaeVersionString + " based on Glest "
+				+ glestVersionString + " (" + "Shared Library " + sharedLibVersionString + ")";
+		case 1: return "Built: " + string(__DATE__);
+		case 2: return "Copyright 2001-2008 The Glest Team, 2008-2010 The GAE Team";
 	}
 	return "";
 }
 
 string getAboutString2(int i){
 	switch(i){
-	case 0: return "Web: http://glest.codemonger.org, http://glest.org";
-	case 1: return "Mail: " + gaeMailString + ", " + mailString;
-	case 2: return "Irc: irc://irc.freenode.net/glest";
+		case 0: return "Web: http://glest.codemonger.org, http://glest.org";
+		case 1: return "Mail: " + gaeMailString + ", " + mailString;
+		case 2: return "Irc: irc://irc.freenode.net/glest";
 	}
 	return "";
 }
 
 string getTeammateName(int i){
 	switch(i){
-	case 0: return "Martiño Figueroa";
-	case 1: return "José Luis González";
-	case 2: return "Tucho Fernández";
-	case 3: return "José Zanni";
-	case 4: return "Félix Menéndez";
-	case 5: return "Marcos Caruncho";
-	case 6: return "Matthias Braun";
+		case 0: return "Martiño Figueroa";
+		case 1: return "José Luis González";
+		case 2: return "Tucho Fernández";
+		case 3: return "José Zanni";
+		case 4: return "Félix Menéndez";
+		case 5: return "Marcos Caruncho";
+		case 6: return "Matthias Braun";
 	}
 	return "";
 }
@@ -81,13 +81,13 @@ string getTeammateRole(int i){
 	Lang &l= Lang::getInstance();
 
 	switch(i){
-	case 0: return l.get("Programming");
-	case 1: return l.get("SoundAndMusic");
-	case 2: return l.get("3dAnd2dArt");
-	case 3: return l.get("2dArtAndWeb");
-	case 4: return l.get("Animation");
-	case 5: return l.get("3dArt");
-	case 6: return l.get("LinuxPort");
+		case 0: return l.get("Programming");
+		case 1: return l.get("SoundAndMusic");
+		case 2: return l.get("3dAnd2dArt");
+		case 3: return l.get("2dArtAndWeb");
+		case 4: return l.get("Animation");
+		case 5: return l.get("3dArt");
+		case 6: return l.get("LinuxPort");
 	}
 	return "";
 }

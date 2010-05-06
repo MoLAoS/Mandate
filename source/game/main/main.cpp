@@ -30,7 +30,7 @@
 using namespace Shared::Platform;
 using namespace Shared::Util;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Main {
 
 // =====================================================
 // 	class ExceptionHandler
@@ -166,4 +166,4 @@ int glestMain(int argc, char** argv) {
 
 }}//end namespace
 
-MAIN_FUNCTION(Glest::Game::glestMain)
+MAIN_FUNCTION(Glest::Main::glestMain)

@@ -20,7 +20,7 @@
 
 #include "leak_dumper.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Main {
 
 // =====================================================
 //	class AutoTest

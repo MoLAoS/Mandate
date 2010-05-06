@@ -18,7 +18,6 @@
 #include "config.h"
 #include "menu_state_root.h"
 #include "metrics.h"
-#include "network_manager.h"
 #include "network_message.h"
 #include "client_interface.h"
 #include "conversion.h"
@@ -31,7 +30,7 @@
 using namespace Shared::Util;
 using namespace Glest::Net;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Menu {
 
 // ===============================
 //  class MenuStateJoinGame
@@ -186,10 +185,6 @@ void MenuStateJoinGame::render() {
 void MenuStateJoinGame::update() {
 	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 	Lang &lang = Lang::getInstance();
-
-	if (!clientInterface) {
-		DEBUG_HOOK();
-	}
 
 	//update status label
 	if (clientInterface->isConnected()) {

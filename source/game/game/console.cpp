@@ -28,7 +28,7 @@
 
 using std::numeric_limits;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class Console

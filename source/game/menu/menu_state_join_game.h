@@ -17,7 +17,7 @@
 
 using Shared::Util::Properties;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Menu {
 
 class IntroMessage;
 

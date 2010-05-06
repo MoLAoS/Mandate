@@ -19,7 +19,9 @@
 using std::string;
 using Shared::Xml::XmlNode;
 
-namespace Glest { namespace Game {
+using namespace Glest::GameConstants;
+
+namespace Glest { namespace Sim {
 
 // =====================================================
 //	class GameSettings
@@ -31,17 +33,17 @@ private:
 	string mapPath;
 	string tilesetPath;
 	string techPath;
-	string factionTypeNames[GameConstants::maxPlayers]; //faction names
-	string playerNames[GameConstants::maxPlayers];
+	string factionTypeNames[maxPlayers]; //faction names
+	string playerNames[maxPlayers];
 	string scenarioPath;
 
-	ControlType factionControls[GameConstants::maxPlayers];
-	float resourceMultipliers [GameConstants::maxPlayers];
+	ControlType factionControls[maxPlayers];
+	float resourceMultipliers [maxPlayers];
 
 	int thisFactionIndex;
 	int factionCount;
-	int teams[GameConstants::maxPlayers];
-	int startLocationIndex[GameConstants::maxPlayers];
+	int teams[maxPlayers];
+	int startLocationIndex[maxPlayers];
 
 	bool defaultUnits;
 	bool defaultResources;

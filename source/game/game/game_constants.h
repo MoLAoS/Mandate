@@ -18,7 +18,7 @@
 #define theMap				(*World::getInstance().getMap())
 #define theCamera			(*GameState::getInstance()->getGameCamera())
 #define theGameSettings		(GameState::getInstance()->getGameSettings())
-#define theGui				(*Gui::getCurrentGui())
+#define theGui				(*Gui::UserInterface::getCurrentGui())
 #define theConsole			(*GameState::getInstance()->getConsole())
 #define theConfig			(Config::getInstance())
 #define theRoutePlanner		(*World::getInstance().getRoutePlanner())
@@ -31,7 +31,7 @@
 #define theFileFactory		(*FSFactory::getInstance())
 
 #if _GAE_DEBUG_EDITION_
-#	define theDebugRenderer	(Renderer::getInstance().debugRenderer)
+#	define theDebugRenderer	(Glest::Debug::getDebugRenderer())
 #	define IF_DEBUG_EDITION(x) x
 #	define IF_NOT_DEBUG_EDITION(x)
 #	define WORLD_FPS (theConfig.getGsWorldUpdateFps())
@@ -44,18 +44,12 @@
 #include "util.h"
 using Shared::Util::EnumNames;
 
+#include "simulation_enums.h"
+#include "prototypes_enums.h"
+#include "entities_enums.h"
+#include "search_enums.h"
+
 namespace Glest {
-	
-	namespace Sim {
-
-		STRINGY_ENUM(
-			GameRole, 
-				LOCAL,
-				SERVER,
-				CLIENT
-		)
-	}	
-
 	namespace Net {
 
 		STRINGY_ENUM(
@@ -76,7 +70,7 @@ namespace Glest {
 	}
 }
 
-namespace Glest { namespace Game {
+namespace Glest { 
 
 #if defined(LOG_STUFF) && LOG_STUFF
 #	define LOG(x) theLogger.add(x)
@@ -86,13 +80,6 @@ namespace Glest { namespace Game {
 #	define STREAM_LOG(x)
 #endif
 
-#if !defined(NDEBUG)
-	void no_op();
-#	define DEBUG_HOOK() no_op()
-#else
-#	define DEBUG_HOOK()
-#endif
-
 // =====================================================
 //	namespace GameConstants
 // =====================================================
@@ -100,9 +87,9 @@ namespace Glest { namespace Game {
 namespace GameConstants {
 	/** skill speed divider @see somewhere else */
 	const float speedDivider = 100.f;
-	/** number of frames until a corpse is removed */
-	const int maxDeadCount = 1000;	//time in until the corpse disapears
-	/** time of selection circle effect 'flashes' */
+	/** number of frames until a corpse is removed, (world frames) */
+	const int maxDeadCount = 1000;
+	/** time of selection circle effect 'flashes' (fraction of updateFps world frames) */ 
 	const float highlightTime = 0.5f;
 	/** the invalid unit ID */
 	const int invalidId = -1;
@@ -118,311 +105,18 @@ namespace GameConstants {
 
 	const int cellScale = 2;
 	const int mapScale = 2;
+	const int clusterSize = 16;
 
 	const int saveGameVersion = 3;
 }
 
-
-// =====================================================
-//	Enumerations
-// =====================================================
-	 /* doxygen enum template
-	  * <ul><li><b>VALUE</b> description</li>
-	  *		<li><b>VALUE</b> description</li>
-	  *		<li><b>VALUE</b> description</li></ul>
-	  */
-
-namespace Search {
-	/** result set for path finding 
-	  * <ul><li><b>ARRIVED</b> Arrived at destination (or as close as unit can get to target)</li>
-	  *		<li><b>MOVING</b> On the way to destination</li>
-	  *		<li><b>BLOCKED</b> path is blocked</li></ul>
-	  */
-	REGULAR_ENUM( TravelState, 
-						ARRIVED, MOVING, BLOCKED, IMPOSSIBLE
-				);
-
-	/** result set for A*
-	  * <ul><li><b>FAILURE</b> No path exists</li>
-	  *		<li><b>COMPLETE</b> complete path found</li>
-	  *		<li><b>NODE_LIMIT</b> node limit reached, partial path available</li>
-	  *		<li><b>TIME_LIMIT</b> search ongoing (time limit reached)</li></ul>
-	  */
-	REGULAR_ENUM( AStarResult, 
-					FAILURE, COMPLETE, NODE_LIMIT, TIME_LIMIT
-				);
-
-	/** result set for HAA*
-	  * <ul><li><b>FAILURE</b> No path exists</li>
-	  *		<li><b>COMPLETE</b> path found</li>
-	  *		<li><b>START_TRAP</b> path found, but transitions in start cluster are blocked</li>
-	  *		<li><b>GOAL_TRAP</b> path found, but transitions in destination cluster are blocked</li></ul>
-	  */
-	REGULAR_ENUM( HAAStarResult,
-					FAILURE, COMPLETE, START_TRAP, GOAL_TRAP
-				);
-
-	/** Specifies a 'space' to search 
-	  * <ul><li><b>CELLMAP</b> search on cell map</li>
-	  *		<li><b>TILEMAP</b> search on tile map</li></ul>
-	  */
-	REGULAR_ENUM( SearchSpace,
-						CELLMAP, TILEMAP
-				);
-
-	/** The cardinal and ordinal directions enumerated for convenience */
-	REGULAR_ENUM( OrdinalDir,
-						NORTH, NORTH_EAST, EAST, SOUTH_EAST, SOUTH, SOUTH_WEST, WEST, NORTH_WEST
-				);
-
-	REGULAR_ENUM( CardinalDir, 
-						NORTH, EAST, SOUTH, WEST 
-				);
-
-} // end namespace Search
-
-
-/** The control type of a 'faction' (aka, player)
-  * <ul><li><b>CLOSED</b> Slot closed, no faction</li>
-  *		<li><b>CPU_EASY</b> CPU easy player</li>
-  *		<li><b>CPU</b> CPU player</li>
-  *		<li><b>CPU_ULTRA</b> Cheating CPU player</li>
-  *		<li><b>CPU_MEGA</b> Extreemly cheating CPU player</li>
-  *		<li><b>NETWORK</b> Network player</li>
-  *		<li><b>HUMAN</b> Local Player</li></ul>
-  */
-STRINGY_ENUM( ControlType, 
-					CLOSED, CPU_EASY, CPU, CPU_ULTRA, CPU_MEGA, NETWORK, HUMAN 
-			);
-
-/** fields of movement
-  * <ul><li><b>LAND</b> land traveller</li>
-  *		<li><b>AIR</b> flying units</li>
-  *		<li><b>ANY_WATER</b> travel on water only</li>
-  *		<li><b>DEEP_WATER</b> travel in deep water only</li>
-  *		<li><b>AMPHIBIOUS</b> land or water</li></ul>
-  */
-STRINGY_ENUM( Field,
-				   LAND,
-				   AIR,
-				   ANY_WATER,
-				   DEEP_WATER,
-				   AMPHIBIOUS
-			);
-
-/** surface type for cells
-  * <ul><li><b>LAND</b> land (above sea level)</li>
-  *		<li><b>FORDABLE</b> shallow (fordable) water</li>
-  *		<li><b>DEEP_WATER</b> deep (non-fordable) water</li></ul>
-  */
-REGULAR_ENUM( SurfaceType,
-				   LAND, 
-				   FORDABLE, 
-				   DEEP_WATER
-			);
-
-/** zones of unit occupance
-  * <ul><li><b>SURFACE_PROP</b> A surface prop, not used yet.</li>
-  *		<li><b>SURFACE</b> the surface zone</li>
-  *		<li><b>AIR</b> the air zone</li></ul>
-  */
-STRINGY_ENUM( Zone,
-				   SURFACE_PROP,
-				   LAND,
-				   AIR
-			);
-
-/** unit properties
-  * <ul><li><b>BURNABLE</b> can catch fire.</li>
-  *		<li><b>ROTATED_CLIMB</b> currently deprecated</li>
-  *		<li><b>WALL</b> is a wall</li></ul>
-  */
-STRINGY_ENUM( Property,
-					BURNABLE,
-					ROTATED_CLIMB,
-					WALL
-			);
-
-/** Whether the effect is detrimental, neutral or benificial */
-STRINGY_ENUM( EffectBias,
-	DETRIMENTAL,
-	NEUTRAL,
-	BENIFICIAL
-)
-
-/**
- * How an attempt to apply multiple instances of an effect should be
- * handled
- */
-STRINGY_ENUM( EffectStacking,
-	STACK,
-	EXTEND,
-	OVERWRITE,
-	REJECT
-)
-
-/** effects flags
-  * effect properties:
-  * <ul><li><b>ALLY</b> effects allies.</li>
-  *		<li><b>FOE</b> effects foes.</li>
-  *		<li><b>NO_NORMAL_UNITS</b> doesn't effects normal units.</li>
-  *		<li><b>BUILDINGS</b> effects buildings.</li>
-  *		<li><b>PETS_ONLY</b> only effects pets of the originator.</li>
-  *		<li><b>NON_LIVING</b> .</li>
-  *		<li><b>SCALE_SPLASH_STRENGTH</b> decrease strength when applied from splash.</li>
-  *		<li><b>ENDS_WITH_SOURCE</b> ends when the unit causing the effect dies.</li>
-  *		<li><b>RECOURsE_ENDS_WITH_ROOT</b> ends when root effect ends (recourse effects only).</li>
-  *		<li><b>PERMANENT</b> the effect has an infinite duration.</li>
-  *		<li><b>ALLOW_NEGATIVE_SPEED</b> .</li>
-  *		<li><b>TICK_IMMEDIATELY</b> .</li></ul>
-  * AI hints:
-  *	<ul><li><b>AI_DAMAGED</b> use on damaged units (benificials only).</li>
-  *		<li><b>AI_RANGED</b> use on ranged attack units.</li>
-  *		<li><b>AI_MELEE</b> use on melee units.</li>
-  *		<li><b>AI_WORKER</b> use on worker units.</li>
-  *		<li><b>AI_BUILDING</b> use on buildings.</li>
-  *		<li><b>AI_HEAVY</b> perfer to use on heavy units.</li>
-  *		<li><b>AI_SCOUT</b> useful for scouting units.</li>
-  *		<li><b>AI_COMBAT</b> don't use outside of combat (benificials only).</li>
-  *		<li><b>AI_SPARINGLY</b> use sparingly.</li>
-  *		<li><b>AI_LIBERALLY</b> use liberally.</li></ul>
-  */
-STRINGY_ENUM( EffectTypeFlag,
-					ALLY,
-					FOE,
-					NO_NORMAL_UNITS,
-					BUILDINGS,
-					PETS_ONLY,
-					NON_LIVING,
-					SCALE_SPLASH_STRENGTH,
-					ENDS_WITH_SOURCE,
-					RECOURSE_ENDS_WITH_ROOT,
-					PERMANENT,
-					ALLOW_NEGATIVE_SPEED,
-					TICK_IMMEDIATELY,
-					AI_DAMAGED,
-					AI_RANGED,
-					AI_MELEE,
-					AI_WORKER,
-					AI_BUILDING,
-					AI_HEAVY,
-					AI_SCOUT,
-					AI_COMBAT,
-					AI_USE_SPARINGLY,
-					AI_USE_LIBERALLY
-			);
-
-/** attack skill preferences
-  */
-STRINGY_ENUM( AttackSkillPreference,
-					WHENEVER_POSSIBLE,
-					AT_MAX_RANGE,
-					ON_LARGE,
-					ON_BUILDING,
-					WHEN_DAMAGED
-			);
-
-/** unit classes [could be WRAPPED_ENUM in Unit ?]
-  */
-REGULAR_ENUM( UnitClass,
-					WARRIOR,
-					WORKER,
-					BUILDING
-			);
-
-/** command result set [could be WRAPPED_ENUM in Command ?? or will we want this in debug ed?]
-  * <ul><li><b>SUCCESS</b> command succeeded.</li>
-  *		<li><b>FAIL_RESOURCES</b> failed, resource requirements not met.</li>
-  *		<li><b>FAIL_REQUIREMENTS</b> failed, unit/upgrade requirements not met.</li>
-  *		<li><b>FAIL_PET_LIMIT</b> failed, would exceed pet limit.</li>
-  *		<li><b>FAIL_UNDEFINED</b> failed.</li>
-  *		<li><b>SOME_FAILED</b> partially failed.</li></ul>
-  */
-STRINGY_ENUM( CommandResult,
-					SUCCESS,
-					FAIL_RESOURCES,
-					FAIL_REQUIREMENTS,
-					FAIL_PET_LIMIT,
-					FAIL_UNDEFINED,
-					SOME_FAILED
-			);
-
-/** interesting unit types [not WRAPPED, will want stringy version in debug edition]
-  */
-REGULAR_ENUM( InterestingUnitType,
-					IDLE_BUILDER,
-					IDLE_HARVESTER,
-					IDLE_WORKER,
-					IDLE_REPAIRER,
-					IDLE_RESTORER,
-					BUILT_BUILDING,
-					PRODUCER,
-					IDLE_PRODUCER,
-					DAMAGED,
-					STORE
-			);
-
-/** upgrade states [could be WRAPPED_ENUM in Upgrade ?]
-  */
-REGULAR_ENUM( UpgradeState,
-					UPGRADING,
-					UPGRADED
-			);
-
-/** command classes
-  */
-STRINGY_ENUM( CommandClass,
-					STOP,
-					MOVE,
-					ATTACK,
-					ATTACK_STOPPED,
-					BUILD,
-					HARVEST,
-					REPAIR,
-					PRODUCE,
-					UPGRADE,
-					MORPH,
-					CAST_SPELL,
-					GUARD,
-					PATROL,
-					SET_MEETING_POINT,
-					NULL_COMMAND
-			);
+namespace Gui {
 
 /** click count [could be WRAPPED_ENUM in Gui ?]
   */
 REGULAR_ENUM( Clicks,
 					ONE,
 					TWO
-			);
-			
-/** resource classes
-  * <ul><li><b>TECH</b> resource is defined in tech tree.</li>
-  *		<li><b>TILESET</b> resource is defined in tileset.</li>
-  *		<li><b>STATIC</b> resource is static.</li>
-  *		<li><b>CONSUMABLE</b> resource is consumable.</li></ul>
-  */
-STRINGY_ENUM( ResourceClass,
-					TECHTREE,
-					TILESET,
-					STATIC,
-					CONSUMABLE
-			);
-
-/** skill classes
-  */
-STRINGY_ENUM( SkillClass,
-					STOP,
-					MOVE,
-					ATTACK,
-					BUILD,
-					HARVEST,
-					REPAIR,
-					BE_BUILT,
-					PRODUCE,
-					UPGRADE,
-					MORPH,
-					DIE		// == 10, == 11 skill classes
 			);
 
 /** weather set
@@ -436,24 +130,9 @@ REGULAR_ENUM( Weather,
 					SNOWY
 			);
 
-/** command properties
-  */
-REGULAR_ENUM( CommandProperties,
-					QUEUE,
-					AUTO,
-					DONT_RESERVE_RESOURCES,
-					AUTO_REPAIR_ENABLED
-			);
+} // namespace Game
 
-/** Command Archetypes
-  */
-REGULAR_ENUM( CommandArchetype,
-					GIVE_COMMAND,
-					CANCEL_COMMAND
-				//	SET_MEETING_POINT
-				//	SET_AUTO_REPAIR
-			);
 
-}}//end namespace
+}//end namespace
 
 #endif

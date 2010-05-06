@@ -20,7 +20,7 @@
 using std::string;
 using Shared::Util::sharedLibVersionString;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Util {
 
 extern const string mailString;
 extern const string gaeMailString;
@@ -36,6 +36,6 @@ string getTeammateRole(int i);
 string getCrashDumpFileName();
 string formatString(const string &str);
 
-}}//end namespace
+}} // namespace Glest::Util
 
 #endif

@@ -135,7 +135,7 @@ void ServerInterface::updateSkillCycle(Unit *unit) {
 	}
 }
 
-void ServerInterface::updateProjectilePath(Unit *u, Projectile pps, const Vec3f &start, const Vec3f &end) {
+void ServerInterface::updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
 	SimulationInterface::updateProjectilePath(u, pps, start, end);
 	ProjectileUpdate updt(u, pps);
 	keyFrame.addUpdate(updt);

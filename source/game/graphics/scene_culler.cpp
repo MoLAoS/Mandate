@@ -16,7 +16,7 @@
 #include "game_camera.h"
 #include "game.h"
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Graphics {
 
 #undef max
 

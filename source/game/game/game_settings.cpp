@@ -20,7 +20,7 @@
 using Shared::Util::Random;
 using Shared::Platform::Chrono;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Sim {
 
 GameSettings::GameSettings(const XmlNode *node) {
 	description = node->getChildStringValue("description");

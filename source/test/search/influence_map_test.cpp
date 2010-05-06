@@ -79,7 +79,7 @@ void InfluenceMapTest::testSquareTypeMap () {
 	// Tests default values and set values around corner points of a square
 	// TypeMap (with type == float), and diagonally through it, and miles out 
 	// of it.
-	Glest::Game::Search::Rectangle bounds(64,64, 64,64); // rect from points 64,64 -> 127,127 (inclusive)
+	Glest::Search::Rectangle bounds(64,64, 64,64); // rect from points 64,64 -> 127,127 (inclusive)
 
 	// init float map, set 'default' return val to 100.1
 	TypeMap<float> iMap(bounds, 100.1f);
@@ -138,7 +138,7 @@ void InfluenceMapTest::testSquareTypeMap () {
 }
 
 void InfluenceMapTest::testRectPatchMap () {
-	Glest::Game::Search::Rectangle pMapBounds(8,8,32,16);
+	Glest::Search::Rectangle pMapBounds(8,8,32,16);
 	PatchMap<6> iMap(pMapBounds, 0);
 	iMap.clearMap(1);
 
@@ -178,7 +178,7 @@ void InfluenceMapTest::testRectPatchMap () {
 }
 
 void InfluenceMapTest::testRectFlowMap () {
-	Glest::Game::Search::Rectangle pMapBounds(8,8,32,48);
+	Glest::Search::Rectangle pMapBounds(8,8,32,48);
 	Point noDir(0,0), north(0,-1), east(1,0), west(-1,0), northwest(-1,-1), southeast(1,1);
 	FlowMap iMap(pMapBounds, noDir);
 	iMap.clearMap(north);
@@ -215,7 +215,7 @@ void InfluenceMapTest::testRectFlowMap () {
 }
 
 void InfluenceMapTest::testPatchMap1() {
-	Glest::Game::Search::Rectangle bounds(8,8,72,4);
+	Glest::Search::Rectangle bounds(8,8,72,4);
 	PatchMap<1> iMap(bounds, 0);
 	iMap.zeroMap();
 
@@ -245,7 +245,7 @@ void InfluenceMapTest::testPatchMap1() {
 		TEST_SET_AND_RESET(p,0,1);
 	}
 
-	bounds = Glest::Game::Search::Rectangle(107,107,7,7);
+	bounds = Glest::Search::Rectangle(107,107,7,7);
 	iMap = PatchMap<1>(bounds, 0);
 	iMap.zeroMap();
 
@@ -261,7 +261,7 @@ void InfluenceMapTest::testPatchMap1() {
 }
 
 void InfluenceMapTest::testPatchMap2() {
-	Glest::Game::Search::Rectangle bounds(8,8,40,4);
+	Glest::Search::Rectangle bounds(8,8,40,4);
 	PatchMap<2> iMap(bounds, 0);
 	iMap.zeroMap();
 
@@ -293,7 +293,7 @@ void InfluenceMapTest::testPatchMap2() {
 }
 
 void InfluenceMapTest::testPatchMap3() {
-	Glest::Game::Search::Rectangle bounds(8,8,25,4);
+	Glest::Search::Rectangle bounds(8,8,25,4);
 	PatchMap<3> iMap(bounds, 0);
 	iMap.zeroMap();
 
@@ -324,7 +324,7 @@ void InfluenceMapTest::testPatchMap3() {
 	}
 }
 void InfluenceMapTest::testPatchMap4() {
-	Glest::Game::Search::Rectangle bounds(8,8,20,4);
+	Glest::Search::Rectangle bounds(8,8,20,4);
 	PatchMap<4> iMap(bounds, 0);
 	iMap.zeroMap();
 
@@ -355,7 +355,7 @@ void InfluenceMapTest::testPatchMap4() {
 	}
 }
 void InfluenceMapTest::testPatchMap5() {
-	Glest::Game::Search::Rectangle bounds(8,8,15,4);
+	Glest::Search::Rectangle bounds(8,8,15,4);
 	PatchMap<5> iMap(bounds, 0);
 	iMap.zeroMap();
 
@@ -386,7 +386,7 @@ void InfluenceMapTest::testPatchMap5() {
 	}
 }
 void InfluenceMapTest::testPatchMap6() {
-	Glest::Game::Search::Rectangle bounds(8,8,12,4);
+	Glest::Search::Rectangle bounds(8,8,12,4);
 	PatchMap<6> iMap(bounds, 0);
 	iMap.zeroMap();
 

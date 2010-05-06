@@ -22,11 +22,13 @@
 #include "leak_dumper.h"
 #include "profiler.h"
 
+using Glest::Util::Logger;
 using namespace Shared::Sound;
 using namespace Shared::Graphics;
 using namespace Shared::Util;
+using namespace Glest::Graphics;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Global {
 
 // =====================================================
 // 	class CoreData
@@ -50,74 +52,74 @@ void CoreData::load() {
 	Renderer &renderer= Renderer::getInstance();
 
 	//textures
-	backgroundTexture= renderer.newTexture2D(rsGlobal);
+	backgroundTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	backgroundTexture->setMipmap(false);
 	backgroundTexture->getPixmap()->load(dir+"/menu/textures/back.tga");
 
-	fireTexture= renderer.newTexture2D(rsGlobal);
+	fireTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	fireTexture->setFormat(Texture::fAlpha);
 	fireTexture->getPixmap()->init(1);
 	fireTexture->getPixmap()->load(dir+"/misc_textures/fire_particle.tga");
 
-	snowTexture= renderer.newTexture2D(rsGlobal);
+	snowTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	snowTexture->setMipmap(false);
 	snowTexture->setFormat(Texture::fAlpha);
 	snowTexture->getPixmap()->init(1);
 	snowTexture->getPixmap()->load(dir+"/misc_textures/snow_particle.tga");
 
-	customTexture= renderer.newTexture2D(rsGlobal);
+	customTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	customTexture->getPixmap()->load("data/core/menu/textures/custom_texture.tga");
 
-	logoTexture= renderer.newTexture2D(rsGlobal);
+	logoTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	logoTexture->setMipmap(false);
 	logoTexture->getPixmap()->load(dir+"/menu/textures/logo.tga");
 
-	waterSplashTexture= renderer.newTexture2D(rsGlobal);
+	waterSplashTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	waterSplashTexture->setFormat(Texture::fAlpha);
 	waterSplashTexture->getPixmap()->init(1);
 	waterSplashTexture->getPixmap()->load(dir+"/misc_textures/water_splash.tga");
 
-	buttonSmallTexture= renderer.newTexture2D(rsGlobal);
+	buttonSmallTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	buttonSmallTexture->getPixmap()->load(dir+"/menu/textures/button_small.tga");
 
-	buttonBigTexture= renderer.newTexture2D(rsGlobal);
+	buttonBigTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	buttonBigTexture->getPixmap()->load(dir+"/menu/textures/button_big.tga");
 
-	textEntryTexture= renderer.newTexture2D(rsGlobal);
+	textEntryTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	textEntryTexture->getPixmap()->load(dir+"/menu/textures/textentry.tga");
 
 	//display font
 	Config &config= Config::getInstance();
 	string displayFontName= config.getRenderFontDisplay();
 
-	displayFont= renderer.newFont(rsGlobal);
+	displayFont= renderer.newFont(ResourceScope::GLOBAL);
 	displayFont->setType(displayFontName);
 	displayFont->setSize(computeFontSize(15));
 
 	//menu fonts
 	string menuFontName= config.getRenderFontMenu();
 
-	menuFontSmall= renderer.newFont(rsGlobal);
+	menuFontSmall= renderer.newFont(ResourceScope::GLOBAL);
 	menuFontSmall->setType(menuFontName);
 	menuFontSmall->setSize(computeFontSize(12));
 
-	menuFontNormal= renderer.newFont(rsGlobal);
+	menuFontNormal= renderer.newFont(ResourceScope::GLOBAL);
 	menuFontNormal->setType(menuFontName);
 	menuFontNormal->setSize(computeFontSize(16));
 	menuFontNormal->setWidth(Font::wBold);
 
-	menuFontBig= renderer.newFont(rsGlobal);
+	menuFontBig= renderer.newFont(ResourceScope::GLOBAL);
 	menuFontBig->setType(menuFontName);
 	menuFontBig->setSize(computeFontSize(20));
 
-	menuFontVeryBig= renderer.newFont(rsGlobal);
+	menuFontVeryBig= renderer.newFont(ResourceScope::GLOBAL);
 	menuFontVeryBig->setType(menuFontName);
 	menuFontVeryBig->setSize(computeFontSize(25));
 
 	//console font
 	string consoleFontName= Config::getInstance().getRenderFontConsole();
 
-	consoleFont= renderer.newFont(rsGlobal);
+	consoleFont= renderer.newFont(ResourceScope::GLOBAL);
 	consoleFont->setType(consoleFontName);
 	consoleFont->setSize(computeFontSize(16));
 

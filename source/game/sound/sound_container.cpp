@@ -19,7 +19,7 @@
 
 using namespace Shared::Util;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Sound {
 
 // =====================================================
 // 	class SoundContainer

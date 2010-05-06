@@ -21,7 +21,8 @@
 #include "menu_background.h"
 #include "game_settings.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
+using namespace Main;
 
 //misc consts
 struct MapInfo {

@@ -26,7 +26,9 @@ using namespace Shared::Util;
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
 
-namespace Glest{ namespace Game{
+namespace Glest{ namespace Sim {
+using namespace Util;
+using Main::Program;
 
 // =====================================================
 // 	class AmbientSounds
@@ -149,7 +151,7 @@ void Tileset::load(const string &dir){
 
 		//water
 		const XmlNode *waterNode= parametersNode->getChild("water");
-		waterTex= renderer.newTexture3D(rsGame);
+		waterTex= renderer.newTexture3D(ResourceScope::GAME);
 		waterTex->setMipmap(false);
 		waterTex->setWrapMode(Texture::wmRepeat);
 		waterEffects= waterNode->getAttribute("effects")->getBoolValue();

@@ -25,10 +25,10 @@
 #include "profiler.h"
 #include "core_data.h"
 #include "metrics.h"
-#include "network_manager.h"
 #include "menu_state_new_game.h"
 #include "menu_state_join_game.h"
 #include "sim_interface.h"
+#include "network_interface.h"
 
 #include "leak_dumper.h"
 
@@ -38,7 +38,7 @@ using namespace Shared::Util;
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Main {
 
 // =====================================================
 // 	class Program::CrashProgramState

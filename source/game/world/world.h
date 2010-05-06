@@ -30,26 +30,18 @@
 #include "game_constants.h"
 #include "pos_iterator.h"
 
-namespace Glest { namespace Sim {
-class SimulationInterface;
-}}
-using Glest::Sim::SimulationInterface;
-
-namespace Glest{ namespace Game{
+#include "forward_decs.h"
 
 using Shared::Math::Quad2i;
 using Shared::Math::Rect2i;
 using Shared::Util::Random;
-using Glest::Game::Util::PosCircularIteratorFactory;
+using Glest::Util::PosCircularIteratorFactory;
+using namespace Glest::Entities;
+using namespace Glest::Script;
+using namespace Glest::Gui;
+using namespace Glest::Search;
 
-class Faction;
-class Unit;
-class Config;
-class GameState;
-class GameSettings;
-class ScriptManager;
-namespace Search { class Cartographer; class RoutePlanner; }
-using namespace Search;
+namespace Glest { namespace Sim {
 
 // =====================================================
 // 	class World
@@ -189,7 +181,6 @@ public:
 	bool placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated= false);
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
 	void doKill(Unit *killer, Unit *killed);
-	void assertConsistiency();
 	void hackyCleanUp(Unit *unit);
 	
 	bool toRenderUnit(const Unit *unit) const {
@@ -234,7 +225,7 @@ public:
 private:
 	void initCells();
 	void initSplattedTextures();
-	void initFactionTypes();
+	void initFactions();
 	void initMinimap(bool resuming = false);
 	void initUnits();
 	void initMap();
@@ -250,11 +241,7 @@ private:
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
-	//void doClientUnitUpdate(XmlNode *n, bool minor, vector<Unit*> &evicted, float nextAdvanceFrames);
-	void doHackyCleanUp();
 };
-
-class GameCamera;
 
 // =====================================================
 //	class ParticleDamager
@@ -262,13 +249,13 @@ class GameCamera;
 
 class ParticleDamager {
 public:
-	UnitReference attackerRef;
+	UnitId attackerRef;
 	const AttackSkillType* ast;
 	World *world;
 	const GameCamera *gameCamera;
 	Vec2i targetPos;
 	Field targetField;
-	UnitReference targetRef;
+	UnitId targetRef;
 
 public:
 	ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera);

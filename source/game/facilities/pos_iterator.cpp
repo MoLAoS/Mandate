@@ -14,7 +14,7 @@
 
 #include "leak_dumper.h"
 
-namespace Glest { namespace Game { namespace Util {
+namespace Glest { namespace Util {
 
 PosCircularIteratorFactory::PosCircularIteratorFactory(int maxRadius) :
 		maxRadius(maxRadius),
@@ -87,5 +87,5 @@ PosCircularIterator *PosCircularIteratorFactory::getIterator(bool reversed, int 
 			: new PosCircularIterator(first - 1, first, last, 7);
 }
 
-}}}//end namespace
+}}//end namespace
 

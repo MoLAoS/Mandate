@@ -23,11 +23,8 @@ using std::string;
 using Shared::Xml::XmlNode;
 
 namespace Glest { namespace Sim {
-	class SimulationInterface;
-}}
-using Glest::Sim::SimulationInterface;
 
-namespace Glest { namespace Game {
+class SimulationInterface;
 
 // =====================================================
 // 	class Stats

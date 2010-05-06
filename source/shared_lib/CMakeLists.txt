@@ -62,8 +62,15 @@ if (WIN32)
 	# set linker flags for Release to use link time code gen.
 	set_target_properties(shared_lib PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
 
-	# set-up precompiled headers (for windows)
-	set_target_properties(shared_lib PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
-	set_source_files_properties(sources/pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
-	set_source_files_properties(${GLPROCS_FILE} PROPERTIES COMPILE_FLAGS "/Y-")
+	if (GAE_USE_PRECOMPILED_HDR)
+		# set-up precompiled headers (for windows)
+		# project wide,
+		set_target_properties(shared_lib PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
+		# create through pch.cpp
+		set_source_files_properties(sources/pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
+		# but not for glprocs.c
+		set_source_files_properties(${GLPROCS_FILE} PROPERTIES COMPILE_FLAGS "/Y-")
+	else (GAE_USE_PRECOMPILED_HDR)
+		set_target_properties(shared_lib PROPERTIES COMPILE_FLAGS "/DUSE_PCH=0")
+	endif (GAE_USE_PRECOMPILED_HDR)
 endif(WIN32)

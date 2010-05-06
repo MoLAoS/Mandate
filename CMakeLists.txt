@@ -4,17 +4,6 @@ cmake_minimum_required (VERSION 2.6)
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel.")
 endif(NOT DEFINED CMAKE_BUILD_TYPE)
-#TODO Make certain things 'options' in the cmake gui, ie static Vs dynamic runtime for VC (/MT Vs /MD)
-# set compiler flags...
-if (WIN32)
-	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2")
-	set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od /Gy /RTC1 /Zi /DDEBUG")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 -g /Zi /DNDEBUG") 
-	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG")
-else (WIN32)
-	# Use defaults ? 
-	#set(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
-endif (WIN32)
 
 project(glestae CXX C)
 
@@ -30,32 +19,38 @@ CHECK_INCLUDE_FILE(sys/time.h HAVE_SYS_TIME_H)
 CHECK_INCLUDE_FILE(byteswap.h HAVE_BYTESWAP_H)
 
 # set paths for config and data
-if(NOT DEFINED CONFIG_DIR)
-	set(CONFIG_DIR "" CACHE PATH "user specific directory for configs and logs")
-endif(NOT DEFINED CONFIG_DIR)
-if(NOT DEFINED DATA_DIR)
-	set(DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE PATH "root directory of data")
-endif(NOT DEFINED DATA_DIR)
+if(NOT DEFINED GAE_CONFIG_DIR)
+	set(GAE_CONFIG_DIR "" CACHE PATH "user specific directory for configs and logs")
+endif(NOT DEFINED GAE_CONFIG_DIR)
+if(NOT DEFINED GAE_DATA_DIR)
+	set(GAE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE PATH "root directory of data")
+endif(NOT DEFINED GAE_DATA_DIR)
 
 # help the windows people with their deps folder
-if(DEFINED WINDEPS)
+if(DEFINED GAE_WINDEPS)
 	message(STATUS "setting windeps...")
-	#set(ENV{SDLDIR} ${WINDEPS})
-	set(ENV{LUA_DIR} ${WINDEPS})
-	set(ENV{VORBISDIR} ${WINDEPS})
-	set(ENV{PHYSFSDIR} ${WINDEPS})
-	set(ENV{CPPUNITDIR} ${WINDEPS})
+	#set(ENV{SDLDIR} ${GAE_WINDEPS})
+	set(ENV{LUA_DIR} ${GAE_WINDEPS})
+	set(ENV{VORBISDIR} ${GAE_WINDEPS})
+	set(ENV{PHYSFSDIR} ${GAE_WINDEPS})
+	set(ENV{CPPUNITDIR} ${GAE_WINDEPS})
 	# sadly FindZLIB does not support HINTS, set it directly
-	set(ZLIB_INCLUDE_DIR ${WINDEPS}/include)
-	set(ZLIB_LIBRARY ${WINDEPS}/lib/zlib.lib)
+	set(ZLIB_INCLUDE_DIR ${GAE_WINDEPS}/include)
+	set(ZLIB_LIBRARY ${GAE_WINDEPS}/lib/zlib.lib)
 	# FindLibXml2 uses PkgConfig as HINTS on non win, set them directly
-	set(PC_LIBXML_INCLUDEDIR ${WINDEPS}/include)
-	set(PC_LIBXML_LIBDIR ${WINDEPS}/lib)
+	set(PC_LIBXML_INCLUDEDIR ${GAE_WINDEPS}/include)
+	set(PC_LIBXML_LIBDIR ${GAE_WINDEPS}/lib)
 	# root folder of wxWidgets
 	if(DEFINED WXWIN)
+		#message("WXWIN Defined")
 		set(ENV{WXWIN} ${WXWIN})
+	else(DEFINED WXWIN)
+		#message("WXWIN Not Defined, setting wxWidgets_ROOT_DIR to windeps/wx")
+		set(wxWidgets_ROOT_DIR ${GAE_WINDEPS}/wx)
 	endif(DEFINED WXWIN)
-endif(DEFINED WINDEPS)
+else(DEFINED GAE_WINDEPS)
+	set (GAE_WINDEPS "" CACHE PATH "Windows dependencies folder")
+endif(DEFINED GAE_WINDEPS)
 
 find_package(Lua51 5.1 REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -65,32 +60,50 @@ find_package(CppUnit)
 find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 
-if(NOT DEFINED USE_PHYSFS)
-	set(USE_PHYSFS "OFF" CACHE BOOL "enable PhysicsFS support")
+# PhysFS
+if(NOT DEFINED GAE_USE_PHYSFS)
+	set(GAE_USE_PHYSFS "OFF" CACHE BOOL "enable PhysicsFS support")
 endif()
-if(USE_PHYSFS)
+if(GAE_USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
-	#TO-DECIDE: write stuff into projetConfig.h or just define stuff here?
-	#add_definitions(-DUSE_PHYSFS=1)
 endif()
 
-#TODO options for gui, _GAE_DEBUG_EDITION_ (rename MODDING_EDITION ?), LOG_STUFF, PROFILE_STUFF etc, etc
-#add_definitions(-D_GAE_DEBUG_EDITION_=1)
+# debug edition
+if (NOT DEFINED GAE_DEBUG_EDITION)
+	set(GAE_DEBUG_EDITION false CACHE BOOL "")
+endif (NOT DEFINED GAE_DEBUG_EDITION)
+
+# pre-compiled headers (windoze only atm)
+if (NOT DEFINED GAE_USE_PRECOMPILED_HDR)
+	set(GAE_USE_PRECOMPILED_HDR false CACHE BOOL "Enable pre-compiled headers, windows only atm.")
+endif (NOT DEFINED GAE_USE_PRECOMPILED_HDR)
+
+# set compiler flags...
+if (WIN32)
+	set(CMAKE_C_FLAGS "/wd4250 /wd4355 /wd4996 /wd4018")
+	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2")
+	set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od /Gy /RTC1 /Zi /DDEBUG")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 -g /Zi /DNDEBUG") 
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG")
+else (WIN32)
+	# Use defaults ? 
+	#set(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
+endif (WIN32)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library
-	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${WINDEPS} PATH_SUFFIXES include)
-	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${WINDEPS} PATH_SUFFIXES lib)
-	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${GAE_WINDEPS} PATH_SUFFIXES include)
+	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
+	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
 	# needs to be compiled as C (done automatically because *.c and project() has C), extra file for shared_lib
-	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${WINDEPS}/src)
+	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${GAE_WINDEPS}/src)
 	include_directories(${DSOUND_INCLUDE_DIR})
 	# FIXME: VC project needs to be build with static vorbis/ogg libs
-	find_library(VORBISFILE_STATIC_LIBRARY NAMES vorbisfile_static HINTS ${WINDEPS} PATH_SUFFIXES lib)
-	find_library(VORBIS_STATIC_LIBRARY NAMES vorbis_static HINTS ${WINDEPS} PATH_SUFFIXES lib)
-	find_library(OGG_STATIC_LIBRARY NAMES ogg_static HINTS ${WINDEPS} PATH_SUFFIXES lib)
+	find_library(VORBISFILE_STATIC_LIBRARY NAMES vorbisfile_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
+	find_library(VORBIS_STATIC_LIBRARY NAMES vorbis_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
+	find_library(OGG_STATIC_LIBRARY NAMES ogg_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
 else(WIN32)
 	find_package(SDL 1.2 REQUIRED)
 	find_package(OpenAL REQUIRED)
@@ -101,11 +114,11 @@ else(WIN32)
 	set(X11_AVAILABLE "ON")
 endif(WIN32)
 
-if(NOT DEFINED GLEST_VERSION)
-	set(GLEST_VERSION "svn" CACHE STRING "Version of glest advanced engine")
+if(NOT DEFINED GAE_VERSION)
+	set(GAE_VERSION "svn" CACHE STRING "Version of glest advanced engine")
 endif()
-if(NOT DEFINED CONTACT)
-	set(CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")
+if(NOT DEFINED GAE_CONTACT)
+	set(GAE_CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")
 endif()
 
 # cpack stuff
@@ -113,7 +126,7 @@ endif()
 set(CPACK_PACKAGE_NAME "glestae")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "glest advanced engine")
 set(CPACK_PACKAGE_VENDOR "gae developers")
-set(CPACK_PACKAGE_VERSION ${GLEST_VERSION})
+set(CPACK_PACKAGE_VERSION ${GAE_VERSION})
 # set(CPACK_PACKAGE_VERSION_MAJOR "1")
 # set(CPACK_PACKAGE_VERSION_MINOR "2")
 # set(CPACK_PACKAGE_VERSION_PATCH "3")
@@ -122,17 +135,17 @@ set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/docs/license.txt)
 if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES
 			"glestadv" "Glest Advanced Engine"
-			"glest_editor" "Map Editor"
-			"glest_configurator" "Configurator"
-			"glest_g3dviewer" "G3D Viewer"
+			"map_editor" "Map Editor"
+			"configurator" "Configurator"
+			"g3d_viewer" "G3D Viewer"
 	)
 else(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES "glestadv" "Glest Advanced Engine")
 endif(wxWidgets_FOUND)
 
 if(WIN32)
-	# install runtime libs from VC
-	include(InstallRequiredSystemLibraries)
+	# install runtime libs from VC [Don't need this, we static link everything]
+	#include(InstallRequiredSystemLibraries)
 
 	set(CPACK_GENERATOR "NSIS")
 	set(CPACK_NSIS_DISPLAY_NAME "glest advanced engine")
@@ -148,9 +161,9 @@ if(WIN32)
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
 	
 	if(DEFINED WINDEPS)
-		# only lua and physfs are linked dynamic, install it next to the binary
-		install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
-		install(FILES ${WINDEPS}/bin/physfs.dll DESTINATION bin)
+		# only lua and physfs are linked dynamic, install it next to the binary [Not true anymore]
+		#install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
+		#install(FILES ${WINDEPS}/bin/physfs.dll DESTINATION bin)
 	endif(DEFINED WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'

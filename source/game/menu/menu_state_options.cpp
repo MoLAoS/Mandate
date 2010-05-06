@@ -25,7 +25,7 @@
 
 using namespace Shared::Util;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Menu {
 
 // =====================================================
 // 	class MenuStateOptions

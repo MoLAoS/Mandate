@@ -23,7 +23,9 @@
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
 
-using namespace std;
+using std::exception;
+using std::range_error;
+
 using namespace Shared::Util;
 
 namespace Shared { namespace Xml {

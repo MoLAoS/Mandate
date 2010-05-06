@@ -26,7 +26,7 @@ using std::vector;
 
 using Shared::Math::Vec3f;
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Gui {
 
 // =====================================================
 // 	class Console

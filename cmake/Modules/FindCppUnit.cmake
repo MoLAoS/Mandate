@@ -2,6 +2,7 @@
 #
 #  CPPUNIT_INCLUDE_DIR - where to find Test.h, etc.
 #  CPPUNIT_LIBRARY     - path to library
+#  CPPUNIT_DEBUG_LIB   - path to debug library
 #  CPPUNIT_FOUND       - true if cppunit found.
 
 find_path(CPPUNIT_INCLUDE_DIR cppunit/Test.h
@@ -10,6 +11,11 @@ find_path(CPPUNIT_INCLUDE_DIR cppunit/Test.h
 )
 
 find_library(CPPUNIT_LIBRARY cppunit
+	HINTS $ENV{CPPUNITDIR}
+	PATH_SUFFIXES lib64 lib
+)
+
+find_library(CPPUNIT_DEBUG_LIB cppunitd
 	HINTS $ENV{CPPUNITDIR}
 	PATH_SUFFIXES lib64 lib
 )

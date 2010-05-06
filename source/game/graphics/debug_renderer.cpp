@@ -13,7 +13,7 @@
 
 #if _GAE_DEBUG_EDITION_
 
-#include "renderer.h"
+#include "debug_renderer.h"
 #include "route_planner.h"   
 #include "influence_map.h"
 #include "cartographer.h"
@@ -21,15 +21,14 @@
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
-using Glest::Game::Search::InfluenceMap;
-using Glest::Game::Search::Cartographer;
+using Glest::Search::InfluenceMap;
+using Glest::Search::Cartographer;
 
-namespace Glest { namespace Game {
-//namespace Game { namespace Debug {
+namespace Glest { namespace Debug {
 
 // texture loading helper
 void _load_debug_tex(Texture2D* &texPtr, const char *fileName) {
-	texPtr = theRenderer.newTexture2D(rsGame);
+	texPtr = theRenderer.newTexture2D(ResourceScope::GAME);
 	texPtr->setMipmap(false);
 	texPtr->getPixmap()->load(fileName);
 }
@@ -78,12 +77,62 @@ void PathFinderTextureCallback::loadTextures() {
 #	undef _load_tex
 }
 
+Texture2DGl* PathFinderTextureCallback::operator()(const Vec2i &cell) {
+	int ndx = -1;
+	if (pathStart == cell) ndx = 9;
+	else if (pathDest == cell) ndx = 10;
+	else if (pathSet.find(cell) != pathSet.end()) ndx = 14; // on path
+	else if (closedSet.find(cell) != closedSet.end()) ndx = 16; // closed nodes
+	else if (openSet.find(cell) != openSet.end()) ndx = 15; // open nodes
+	else if (localAnnotations.find(cell) != localAnnotations.end()) // local annotation
+		ndx = 17 + localAnnotations.find(cell)->second;
+	else ndx = theWorld.getCartographer()->getMasterMap()->metrics[cell].get(debugField); // else use cell metric for debug field
+	return (Texture2DGl*)PFDebugTextures[ndx];
+}
+
 // =====================================================
 //  class GridTextureCallback
 // =====================================================
 
 void GridTextureCallback::loadTextures() {
 	_load_debug_tex(tex, "data/core/misc_textures/grid.bmp");
+}
+
+bool ResourceMapOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
+	PatchMap<1> *pMap = theWorld.getCartographer()->getResourceMap(rt);
+	if (pMap && pMap->getInfluence(cell)) {
+		colour = Vec4f(1.f, 1.f, 0.f, 0.7f);
+		return true;
+	}
+	return false;
+}
+
+bool StoreMapOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
+	for (UnitList::iterator it = stores.begin(); it != stores.end(); ++it) {
+		PatchMap<1> *pMap = theWorld.getCartographer()->getStoreMap(*it);
+		if (pMap && pMap->getInfluence(cell)) {
+			colour = Vec4f(0.f, 1.f, 0.3f, 0.7f);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool TeamSightOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
+	const Vec2i &tile = Map::toTileCoords(cell);
+	int vis = theWorld.getCartographer()->getTeamVisibility(theWorld.getThisTeamIndex(), tile);
+	if (!vis) {
+		return false;
+	}
+	colour = Vec4f(0.f, 0.f, 1.f, 0.3f);
+	switch (vis) {
+		case 1:  colour.w = 0.05f;	break;
+		case 2:  colour.w = 0.1f;	break;
+		case 3:  colour.w = 0.15f;	break;
+		case 4:  colour.w = 0.2f;	break;
+		case 5:  colour.w = 0.25f;	break;
+	}
+	return true;
 }
 
 // =====================================================
@@ -540,6 +589,11 @@ void DebugRenderer::renderEffects(SceneCuller &culler) {
 	}
 }
 
-}} // end namespace Glest::Game
+DebugRenderer& getDebugRenderer() {
+	static DebugRenderer debugRenderer;
+	return debugRenderer;
+}
+
+}} // end namespace Glest::Debug
 
 #endif // _GAE_DEBUG_EDITION_

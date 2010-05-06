@@ -15,7 +15,7 @@
 #include "program.h"
 #include "stats.h"
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Main {
 
 // =====================================================
 // 	class BattleEnd  

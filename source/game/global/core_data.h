@@ -19,7 +19,9 @@
 #include "texture.h"
 #include "sound_container.h"
 
-namespace Glest{ namespace Game{
+using namespace Glest::Sound;
+
+namespace Glest { namespace Global {
 
 using Shared::Graphics::Texture2D;
 using Shared::Graphics::Texture3D;

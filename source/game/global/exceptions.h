@@ -17,7 +17,7 @@
 using std::string;
 using std::runtime_error;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Global {
 
 class GameException : public runtime_error {
 	string fileName;

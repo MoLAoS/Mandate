@@ -16,28 +16,26 @@
 #ifndef _GLEST_GAME_DEBUG_RENDERER_
 #define _GLEST_GAME_DEBUG_RENDERER_
 
-#include "route_planner.h"   
-#include "influence_map.h"
-#include "cartographer.h"
-#include "cluster_map.h"
-
 #include "vec.h"
 #include "math_util.h"
 #include "pixmap.h"
 #include "texture.h"
 #include "graphics_factory_gl.h"
+
+#include "route_planner.h"   
+#include "influence_map.h"
+#include "cartographer.h"
+#include "cluster_map.h"
+
 #include "scene_culler.h"
 #include "game.h"
 
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
-using Glest::Game::Search::InfluenceMap;
-using Glest::Game::Search::ClusterMap;
-using Glest::Game::Search::Cartographer;
+using namespace Glest::Search;
 
-namespace Glest { namespace Game {
-//namespace Game { namespace Debug {
+namespace Glest { namespace Debug {
 
 class PathFinderTextureCallback {
 public:
@@ -51,19 +49,7 @@ public:
 
 	void reset();
 	void loadTextures();
-
-	Texture2DGl* operator()(const Vec2i &cell) {
-		int ndx = -1;
-		if (pathStart == cell) ndx = 9;
-		else if (pathDest == cell) ndx = 10;
-		else if (pathSet.find(cell) != pathSet.end()) ndx = 14; // on path
-		else if (closedSet.find(cell) != closedSet.end()) ndx = 16; // closed nodes
-		else if (openSet.find(cell) != openSet.end()) ndx = 15; // open nodes
-		else if (localAnnotations.find(cell) != localAnnotations.end()) // local annotation
-			ndx = 17 + localAnnotations.find(cell)->second;
-		else ndx = theWorld.getCartographer()->getMasterMap()->metrics[cell].get(debugField); // else use cell metric for debug field
-		return (Texture2DGl*)PFDebugTextures[ndx];
-   }
+	Texture2DGl* operator()(const Vec2i &cell);
 };
 
 class GridTextureCallback {
@@ -134,22 +120,7 @@ public:
 
 class TeamSightOverlay {
 public:
-	bool operator()(const Vec2i &cell, Vec4f &colour) {
-		const Vec2i &tile = Map::toTileCoords(cell);
-		int vis = theWorld.getCartographer()->getTeamVisibility(theWorld.getThisTeamIndex(), tile);
-		if (!vis) {
-			return false;
-		}
-		colour = Vec4f(0.f, 0.f, 1.f, 0.3f);
-		switch (vis) {
-			case 1:  colour.w = 0.05f;	break;
-			case 2:  colour.w = 0.1f;	break;
-			case 3:  colour.w = 0.15f;	break;
-			case 4:  colour.w = 0.2f;	break;
-			case 5:  colour.w = 0.25f;	break;
-		}
-		return true;
-	}
+	bool operator()(const Vec2i &cell, Vec4f &colour);
 };
 
 class ClusterMapOverlay {
@@ -163,7 +134,7 @@ public:
 	}
 
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
-		const int &clusterSize = Search::clusterSize;
+		const int &clusterSize = GameConstants::clusterSize;
 		if ( cell.x % clusterSize == clusterSize - 1 
 		|| cell.y % clusterSize == clusterSize - 1  ) {
 			if ( entranceCells.find(cell) != entranceCells.end() ) {
@@ -187,14 +158,7 @@ public:
 	ResourceMapOverlay() : rt(0) {}
 	void reset() { rt = 0; }
 
-	bool operator()(const Vec2i &cell, Vec4f &colour) {
-		PatchMap<1> *pMap = theWorld.getCartographer()->getResourceMap(rt);
-		if (pMap && pMap->getInfluence(cell)) {
-			colour = Vec4f(1.f, 1.f, 0.f, 0.7f);
-			return true;
-		}
-		return false;
-	}
+	bool operator()(const Vec2i &cell, Vec4f &colour);
 };
 
 class StoreMapOverlay {
@@ -204,16 +168,7 @@ public:
 
 	void reset() { stores.clear(); }
 
-	bool operator()(const Vec2i &cell, Vec4f &colour) {
-		for (UnitList::iterator it = stores.begin(); it != stores.end(); ++it) {
-			PatchMap<1> *pMap = theWorld.getCartographer()->getStoreMap(*it);
-			if (pMap && pMap->getInfluence(cell)) {
-				colour = Vec4f(0.f, 1.f, 0.3f, 0.7f);
-				return true;
-			}
-		}
-		return false;
-	}
+	bool operator()(const Vec2i &cell, Vec4f &colour);
 };
 
 class BuildSiteMapOverlay {
@@ -258,8 +213,8 @@ public:
 	void commandLine(string &line);
 
 	bool	gridTextures,		// show cell grid
-			AAStarTextures,		// AA* search space and results of last low-level search visualisation
-			HAAStarOverlay,		// HAA* search space and results of last hierarchical search visualisation
+			AAStarTextures,		// AA* search space and results of last low-level search
+			HAAStarOverlay,		// HAA* search space and results of last hierarchical search
 			showVisibleQuad,	// set to show visualisation of last captured scene cull
 			captureVisibleQuad, // set to trigger a capture of the next scene cull
 			captureFrustum,		// set to trigger a capture of the view frustum
@@ -421,6 +376,8 @@ public:
 	}
 	void renderEffects(SceneCuller &culler);
 };
+
+DebugRenderer& getDebugRenderer();
 
 }}
 

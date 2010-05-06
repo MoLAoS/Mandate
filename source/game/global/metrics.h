@@ -14,7 +14,7 @@
 
 #include "config.h"
 
-namespace Glest{ namespace Game{
+namespace Glest { namespace Global {
 
 // =====================================================
 //	class Metrics

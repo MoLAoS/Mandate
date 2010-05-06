@@ -18,9 +18,8 @@
 #include "config.h"
 #include "menu_state_root.h"
 #include "metrics.h"
-#include "network_manager.h"
 #include "network_message.h"
-#include "client_interface.h"
+#include "server_interface.h"
 #include "conversion.h"
 #include "socket.h"
 #include "game.h"
@@ -33,7 +32,7 @@
 using Glest::Sim::SimulationInterface;
 using namespace Glest::Net;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Menu {
 
 using namespace Shared::Util;
 

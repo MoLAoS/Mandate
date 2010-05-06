@@ -18,10 +18,10 @@
 
 #include "leak_dumper.h"
 
-using namespace std;
+using std::exception;
 using namespace Shared::Util;
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Global {
 
 // =====================================================
 //  class Lang
