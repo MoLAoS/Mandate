@@ -15,8 +15,8 @@
 #	define USE_PCH 0
 #endif
 
-#ifndef _SHARED_PCH_H_
-#define _SHARED_PCH_H_
+#ifndef _GAME_PCH_H_
+#define _GAME_PCH_H_
 
 #if USE_PCH
 
@@ -168,4 +168,4 @@ using std::pair;
 using std::numeric_limits;
 
 #endif // USE_PCH
-#endif // _SHARED_PCH_H_
+#endif // _GAME_PCH_H_

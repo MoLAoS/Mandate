@@ -28,7 +28,7 @@ endif(NOT DEFINED GAE_DATA_DIR)
 
 # help the windows people with their deps folder
 if(DEFINED GAE_WINDEPS)
-	message(STATUS "setting windeps...")
+	message(STATUS "setting windeps: " ${GAE_WINDEPS})
 	#set(ENV{SDLDIR} ${GAE_WINDEPS})
 	set(ENV{LUA_DIR} ${GAE_WINDEPS})
 	set(ENV{VORBISDIR} ${GAE_WINDEPS})
@@ -61,27 +61,28 @@ find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 
 # PhysFS
-option(USE_PHYSFS "enable PhysicsFS support")
-if(USE_PHYSFS)
+option(GAE_USE_PHYSFS "Enable PhysicsFS support")
+if(GAE_USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
 endif()
 
 # debug edition
-option(_GAE_DEBUG_EDITION_ "")
-# pre-compiled headers (windoze only atm)
-option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, windows only atm.")
+option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
+
+# pre-compiled headers (MSVC only atm)
+option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, MSVC only atm.")
 
 # set compiler flags...
-if (WIN32)
+if (MSVC)
 	set(CMAKE_C_FLAGS "/wd4250 /wd4355 /wd4996 /wd4018")
 	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2")
 	set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od /Gy /RTC1 /Zi /DDEBUG")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 -g /Zi /DNDEBUG") 
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG")
-else (WIN32)
+else (MSVC)
 	# Use defaults ? 
 	#set(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
-endif (WIN32)
+endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${PHYSFS_INCLUDE_DIR})
 
@@ -153,11 +154,11 @@ if(WIN32)
 	# a bug in NSIS, last one needs to be \ and 2 times escaped to get there
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
 	
-	if(DEFINED WINDEPS)
+	if(DEFINED GAE_WINDEPS)
 		# only lua and physfs are linked dynamic, install it next to the binary [Not true anymore]
 		#install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
 		#install(FILES ${WINDEPS}/bin/physfs.dll DESTINATION bin)
-	endif(DEFINED WINDEPS)
+	endif(DEFINED GAE_WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm

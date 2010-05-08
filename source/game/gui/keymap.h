@@ -139,7 +139,7 @@ public:
 		
 		KeyCode getKey() const			{return key;}
 		int getMod() const				{return mod;}
-		void clear() 					{key = keyNone; mod = bkmNone;}
+		void clear() 					{key = KeyCode::NONE; mod = bkmNone;}
 		void init(const string &str);
 		string toString() const;
 	};
@@ -184,7 +184,7 @@ public:
 	bool isMapped(Key key, UserCommand cmd) const {
 		assert(cmd >= 0 && cmd < ucCount);
 		KeyCode keyCode = key.getCode();
-		if(keyCode <= keyUnknown) {
+		if(keyCode <= KeyCode::UNKNOWN) {
 			return false;
 		}
 		return entries[cmd].matches(keyCode, getCurrentMods());
@@ -192,7 +192,7 @@ public:
 	
 	UserCommand getCommand(Key key) const {
 		KeyCode keyCode = key.getCode();
-		if(keyCode > keyUnknown) {
+		if(keyCode > KeyCode::UNKNOWN) {
 			map<Entry, UserCommand>::const_iterator i = entryCmdMap.find(
 					Entry(keyCode, getCurrentMods()));
 			return i == entryCmdMap.end() ? ucNone : i->second;

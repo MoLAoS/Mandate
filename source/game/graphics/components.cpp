@@ -361,11 +361,11 @@ void GraphicTextEntry::keyDown(const Key &key) {
 			text += key;
 
 		// delete
-		} else*/ if (key == keyDelete) {
+		} else*/ if (key == KeyCode::DELETE_) {
 			text = "";
 
 		// backspace
-		} else if (key == keyBackspace && text.size()) {
+		} else if (key == KeyCode::BACK_SPACE && text.size()) {
 			text.erase(text.end() - 1);
 		}
 	}

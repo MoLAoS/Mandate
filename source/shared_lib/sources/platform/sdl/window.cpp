@@ -71,9 +71,9 @@ bool Window::handleEvent() {
 				}
 
 			case SDL_MOUSEMOTION:
-				input.setMouseState(mbLeft, event.motion.state & SDL_BUTTON_LMASK);
-				input.setMouseState(mbRight, event.motion.state & SDL_BUTTON_RMASK);
-				input.setMouseState(mbCenter, event.motion.state & SDL_BUTTON_MMASK);
+				input.setMouseState(MouseButton::LEFT, event.motion.state & SDL_BUTTON_LMASK);
+				input.setMouseState(MouseButton::RIGHT, event.motion.state & SDL_BUTTON_RMASK);
+				input.setMouseState(MouseButton::MIDDLE, event.motion.state & SDL_BUTTON_MMASK);
 				eventMouseMove(event.motion.x, event.motion.y, input.getMouseState());
 				break;
 
@@ -196,10 +196,10 @@ void Window::handleMouseDown(SDL_Event event) {
 	// wheel notch.  However, newer mice have finer resolutions.  I dunno if SDL
 	// handles those, but for now we're going to say that each mouse wheel
 	// movement is 120.
-	if(button == mbWheelUp) {
+	if(button == MouseButton::WHEEL_UP) {
 		eventMouseWheel(event.button.x, event.button.y, 120);
 		return;
-	} else if(button == mbWheelDown) {
+	} else if(button == MouseButton::WHEEL_DOWN) {
 		eventMouseWheel(event.button.x, event.button.y, -120);
 		return;
 	}
@@ -211,7 +211,7 @@ void Window::handleMouseDown(SDL_Event event) {
 			&& abs(lastMouse[button].y - event.button.y) < DOUBLECLICKDELTA) {
 		eventMouseDown(event.button.x, event.button.y, button);
 		eventMouseDoubleClick(event.button.x, event.button.y, button);
-	} else {
+	} else {	
 		eventMouseDown(event.button.x, event.button.y, button);
 	}
 	lastMouseDown[button] = input.getLastMouseEvent();

@@ -29,6 +29,7 @@
 #		define SDL_BUTTON_X2		7
 #	endif
 #elif defined(WIN32)  || defined(WIN64)
+#	define NOMINMAX
 #	include <windows.h>
 #	ifndef VK_OEM_102
 #		define VK_OEM_102		0xE2
@@ -37,6 +38,7 @@
 
 #include "types.h"
 #include "vec.h"
+#include "input_enums.h"
 
 using std::map;
 using std::string;
@@ -46,31 +48,9 @@ namespace Shared { namespace Platform {
 
 class Key;
 
-enum MouseButton {
-	mbUnknown,
-	mbLeft,
-	mbCenter,
-	mbRight,
-	mbWheelUp,
-	mbWheelDown,
-	mbButtonX1,
-	mbButtonX2,
-
-	mbCount
-};
-
-enum MouseEvent {
-	meDown,
-	meDoubleClick,
-	meUp,
-	meHWheel,
-	meWheel,
-	meMove
-};
-
 class MouseState {
 private:
-	bool states[mbCount];
+	bool states[MouseButton::COUNT];
 
 private:
 	MouseState(const MouseState &);
@@ -82,320 +62,16 @@ public:
 	}
 
 	bool get(MouseButton b) const {
-		assert(b > 0 && b < mbCount);
+		assert(b > 0 && b < MouseButton::COUNT);
 		return states[b];
 	}
 
 	void set(MouseButton b, bool state) {
-		assert(b > 0 && b < mbCount);
+		assert(b > 0 && b < MouseButton::COUNT);
 		states[b] = state;
 	}
 };
 
-enum KeyCode {
-	keyNone,
-	keyUnknown,
-	keyLButton,		// left mouse
-	keyRButton,		// right mouse
-	keyMButton,		// middle mouse
-	keyXButton1,	// x1 mouse button (perhaps horizontal wheel)
-	keyXButton2,	// x2 mouse button (perhaps horizontal wheel)
-	keyBackspace,
-	keyTab,
-	keyClear,
-	keyReturn,
-	keyPause,
-	keyIMEKana,
-	keyIMEHangul,
-	keyIMEJunja,
-	keyIMEFinal,
-	keyIMEHanja,
-	keyIMEKanji,
-	keyEscape,
-	keyIMEConvert,
-	keyIMENonConvert,
-	keyIMEAccept,
-	keyIMEModeChange,
-	keyIMEProcess,
-	keySpace,
-	keyExclaim,
-	keyQuoteDbl,
-	keyHash,
-	keyDollar,
-	keyPercent,
-	keyAmpersand,
-	keyQuote,
-	keyLeftParen,
-	keyRightParen,
-	keyAsterisk,
-	keyPlus,
-	keyComma,
-	keyMinus,
-	keyPeriod,
-	keySlash,
-	key0,
-	key1,
-	key2,
-	key3,
-	key4,
-	key5,
-	key6,
-	key7,
-	key8,
-	key9,
-	keyColon,
-	keySemicolon,
-	keyLess,
-	keyEquals,
-	keyGreater,
-	keyQuestion,
-	keyAt,
-	keyA,
-	keyB,
-	keyC,
-	keyD,
-	keyE,
-	keyF,
-	keyG,
-	keyH,
-	keyI,
-	keyJ,
-	keyK,
-	keyL,
-	keyM,
-	keyN,
-	keyO,
-	keyP,
-	keyQ,
-	keyR,
-	keyS,
-	keyT,
-	keyU,
-	keyV,
-	keyW,
-	keyX,
-	keyY,
-	keyZ,
-	keyLeftBracket,
-	keyBackslash,
-	keyRightBracket,
-	keyCaret,
-	keyUnderscore,
-	keyBackquote,
-	keyDelete,
-	keyWorld0,
-	keyWorld1,
-	keyWorld2,
-	keyWorld3,
-	keyWorld4,
-	keyWorld5,
-	keyWorld6,
-	keyWorld7,
-	keyWorld8,
-	keyWorld9,
-	keyWorld10,
-	keyWorld11,
-	keyWorld12,
-	keyWorld13,
-	keyWorld14,
-	keyWorld15,
-	keyWorld16,
-	keyWorld17,
-	keyWorld18,
-	keyWorld19,
-	keyWorld20,
-	keyWorld21,
-	keyWorld22,
-	keyWorld23,
-	keyWorld24,
-	keyWorld25,
-	keyWorld26,
-	keyWorld27,
-	keyWorld28,
-	keyWorld29,
-	keyWorld30,
-	keyWorld31,
-	keyWorld32,
-	keyWorld33,
-	keyWorld34,
-	keyWorld35,
-	keyWorld36,
-	keyWorld37,
-	keyWorld38,
-	keyWorld39,
-	keyWorld40,
-	keyWorld41,
-	keyWorld42,
-	keyWorld43,
-	keyWorld44,
-	keyWorld45,
-	keyWorld46,
-	keyWorld47,
-	keyWorld48,
-	keyWorld49,
-	keyWorld50,
-	keyWorld51,
-	keyWorld52,
-	keyWorld53,
-	keyWorld54,
-	keyWorld55,
-	keyWorld56,
-	keyWorld57,
-	keyWorld58,
-	keyWorld59,
-	keyWorld60,
-	keyWorld61,
-	keyWorld62,
-	keyWorld63,
-	keyWorld64,
-	keyWorld65,
-	keyWorld66,
-	keyWorld67,
-	keyWorld68,
-	keyWorld69,
-	keyWorld70,
-	keyWorld71,
-	keyWorld72,
-	keyWorld73,
-	keyWorld74,
-	keyWorld75,
-	keyWorld76,
-	keyWorld77,
-	keyWorld78,
-	keyWorld79,
-	keyWorld80,
-	keyWorld81,
-	keyWorld82,
-	keyWorld83,
-	keyWorld84,
-	keyWorld85,
-	keyWorld86,
-	keyWorld87,
-	keyWorld88,
-	keyWorld89,
-	keyWorld90,
-	keyWorld91,
-	keyWorld92,
-	keyWorld93,
-	keyWorld94,
-	keyWorld95,
-	keyKP0,
-	keyKP1,
-	keyKP2,
-	keyKP3,
-	keyKP4,
-	keyKP5,
-	keyKP6,
-	keyKP7,
-	keyKP8,
-	keyKP9,
-	keyKPPeriod,
-	keyKPDivide,
-	keyKPMultiply,
-	keyKPMinus,
-	keyKPPlus,
-	keyKPEnter,
-	keyKPEquals,
-	keyUp,
-	keyDown,
-	keyRight,
-	keyLeft,
-	keyInsert,
-	keyHome,
-	keyEnd,
-	keyPageUp,
-	keyPageDown,
-	keyF1,
-	keyF2,
-	keyF3,
-	keyF4,
-	keyF5,
-	keyF6,
-	keyF7,
-	keyF8,
-	keyF9,
-	keyF10,
-	keyF11,
-	keyF12,
-	keyF13,
-	keyF14,
-	keyF15,
-	keyF16,
-	keyF17,
-	keyF18,
-	keyF19,
-	keyF20,
-	keyF21,
-	keyF22,
-	keyF23,
-	keyF24,
-	keyNumLock,
-	keyCapsLock,
-	keyScrollLock,
-	keyLShift,
-	keyRShift,
-	keyLCtrl,
- 	keyRCtrl,
-	keyLAlt,
-	keyRAlt,
-	keyLMeta,
-	keyRMeta,
-	keyRSuper,
-	keyLSuper,
-	keyMode,
-	keyCompose,
-	keyHelp,
-	keyPrint,
-	keySysreq,
-	keyBreak,
-	keyMenu,
-	keyPower,
-	keyEuro,
-	keyUndo,
-	keyBrowserBack,
-	keyBrowserForward,
-	keyBrowserRefresh,
-	keyBrowserStop,
-	keyBrowserSearch,
-	keyBrowserFavorites,
-	keyBrowserHome,
-	keyVolumeMute,
-	keyVolumeDown,
-	keyVolumeUp,
-	keyMediaNext,
-	keyMediaPrev,
-	keyMediaStop,
-	keyMediaPlayPause,
-	keyLaunchMail,
-	keyLaunchMediaSelect,
-	keyLaunchApp1,
-	keyLaunchApp2,
-	keyPlay,
-	keyZoom,
-
-	keyCount
-};
-
-
-enum KeyModifier {
-	kmNone		= 0x0000,
-	kmLShift	= 0x0001,
-	kmRShift	= 0x0002,/*
-	kmAnyShift	= 0x0004,
-	kmAnyCtrl	= 0x0008,
-	kmAnyAlt	= 0x0010,
-	kmAnyMeta	= 0x0020,*/
-	kmLCtrl		= 0x0040,
-	kmRCtrl		= 0x0080,
-	kmLAlt		= 0x0100,
-	kmRAlt		= 0x0200,
-	kmLMeta		= 0x0400,
-	kmRMeta		= 0x0800,
-	kmNum		= 0x1000,
-	kmCaps		= 0x2000,
-	kmMode		= 0x4000,
-	kmSuper		= 0x8000,
-};
 /*
 class MouseEvent {
 public:
@@ -421,9 +97,9 @@ public:
 
 private:
 	static const unsigned char native2mb[NATIVE_MOUSE_BUTTON_LAST + 1];
-	static const unsigned char mb2native[mbCount];
+	static const unsigned char mb2native[MouseButton::COUNT];
 	static const short native2kc[NATIVE_KEY_CODE_LAST + 1];
-	static const NativeKeyCodeCompact kc2native[keyCount];
+	static const NativeKeyCodeCompact kc2native[KeyCode::COUNT];
 
 	Vec2i mousePos;
 	MouseState mouseState;
@@ -437,33 +113,33 @@ public:
 
 	static KeyCode getKeyCode(NativeKeyCode nativeKey) {
 		// This assertion can fail after new devices and their drivers come out.  If it does fail,
-		// we want to catch it in a debug build.  If not in debug build, we translate to keyUnknown.
+		// we want to catch it in a debug build.  If not in debug build, we translate to KeyCode::UNKNOWN.
 		assert(nativeKey >= 0 && nativeKey <= NATIVE_KEY_CODE_LAST);
 		if(nativeKey >= 0 && nativeKey <= NATIVE_KEY_CODE_LAST) {
 			return static_cast<KeyCode>(native2kc[nativeKey]);
 		} else {
-			return keyUnknown;
+			return KeyCode::UNKNOWN;
 		}
 	}
 
 	static NativeKeyCode getNativeKeyCode(KeyCode key) {
-		assert(key >= 0 && key < keyCount);
+		assert(key >= 0 && key < KeyCode::COUNT);
 		return static_cast<NativeKeyCode>(kc2native[key]);
 	}
 
 	static MouseButton getMouseButton(int nativeButton) {
 		// Fail an assertion for debug builds so we can add the new mouse button codes, otherwise
-		// send mbUnknown.
+		// send MouseButton::UNKNOWN.
 		assert(nativeButton >= 0 && nativeButton <= NATIVE_MOUSE_BUTTON_LAST);
 		if(nativeButton >= 0 && nativeButton <= NATIVE_MOUSE_BUTTON_LAST) {
 			return static_cast<MouseButton>(native2mb[nativeButton]);
 		} else {
-			return mbUnknown;
+			return MouseButton::UNKNOWN;
 		}
 	}
 
 	static int getNativeMouseButton(int button) {
-		assert(button >= 0 && button <= mbCount);
+		assert(button >= 0 && button <= MouseButton::COUNT);
 		return mb2native[button];
 	}
 
@@ -477,22 +153,22 @@ public:
 //	void setMouseState(const MouseState &mouseState)	{this->mouseState = mouseState;}
 	void setLastMouseEvent(unsigned int lastMouseEvent)	{this->lastMouseEvent = lastMouseEvent;}
 	void updateKeyModifiers(KeyCode key, bool enabled) {
-		if(key >= keyLShift && key <= keyRMeta) {
+		if(key >= KeyCode::LEFT_SHIFT && key <= KeyCode::RIGHT_META) {
 			KeyModifier mask;
 			switch(key) {
-				case keyNumLock:	mask = kmNum; break;
-				case keyCapsLock:	mask = kmCaps; break;
-				case keyLShift:		mask = kmLShift; break;
-				case keyRShift:		mask = kmRShift; break;
-				case keyLCtrl:		mask = kmLCtrl; break;
-				case keyRCtrl:		mask = kmRCtrl; break;
-				case keyLAlt:		mask = kmLAlt; break;
-				case keyRAlt:		mask = kmRAlt; break;
-				case keyLMeta:		mask = kmLMeta; break;
-				case keyRMeta:		mask = kmRMeta; break;
-				case keyRSuper:
-				case keyLSuper:		mask = kmSuper; break;
-				default:			return;
+				case KeyCode::NUM_LOCK:		mask = kmNum; break;
+				case KeyCode::CAPS_LOCK:	mask = kmCaps; break;
+				case KeyCode::LEFT_SHIFT:	mask = kmLShift; break;
+				case KeyCode::RIGHT_SHIFT:	mask = kmRShift; break;
+				case KeyCode::LEFT_CTRL:	mask = kmLCtrl; break;
+				case KeyCode::RIGHT_CTRL:	mask = kmRCtrl; break;
+				case KeyCode::LEFT_ALT:		mask = kmLAlt; break;
+				case KeyCode::RIGHT_ALT:	mask = kmRAlt; break;
+				case KeyCode::LEFT_META:	mask = kmLMeta; break;
+				case KeyCode::RIGHT_META:	mask = kmRMeta; break;
+				case KeyCode::RIGHT_SUPER:
+				case KeyCode::LEFT_SUPER:	mask = kmSuper; break;
+				default:					return;
 			}
 			if(enabled) {
 				keyModifiers = keyModifiers | mask;
@@ -512,7 +188,7 @@ public:
 	bool isModeOn() const		{return SDL_GetModState() & kmMode;}
 
 	bool isKeyDown(KeyCode key) const {
-		assert(key >= 0 && key < keyCount);
+		assert(key >= 0 && key < KeyCode::COUNT);
 		return SDL_GetKeyState(0)[getNativeKeyCode(key)];
 	}
 
@@ -526,7 +202,7 @@ public:
 //	bool isModeOn() const		{return GetKeyState(0);}
 
 	bool isKeyDown(KeyCode key) const {
-		assert(key >= 0 && key < keyCount);
+		assert(key >= 0 && key < KeyCode::COUNT);
 		return (GetKeyState(getNativeKeyCode(key)) & 0x8000) != 0;
 	}
 
@@ -541,7 +217,7 @@ private:
 	KeyCode key;
 	char ascii;
 
-	static const char*names[keyCount];
+	//static const char*names[KeyCode::COUNT];
 
 public:
 #ifdef USE_SDL
@@ -554,15 +230,16 @@ public:
 #endif
 
 	operator KeyCode() const	{return key;}
+	bool operator==(const KeyCode keyCode) const { return key == keyCode; }
 
 	KeyCode getCode() const		{return key;}
 	char getAscii() const		{return ascii;}
-	bool isModifier() const		{return key >= keyNumLock && key <= keyMode;}
+	bool isModifier() const		{return key >= KeyCode::NUM_LOCK && key <= KeyCode::MODE;}
 
 	static KeyCode findByName(const char *name);
 	static const char* getName(KeyCode key) {
-		assert(key >= 0 && key < keyCount);
-		return names[key];
+		assert(key >= 0 && key < KeyCode::COUNT);
+		return KeyCodeNames[key];
 	}
 
 };

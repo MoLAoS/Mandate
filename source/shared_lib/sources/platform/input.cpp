@@ -30,2025 +30,2024 @@ namespace Shared { namespace Platform {
 #ifdef USE_SDL
 #pragma pack(push, 1)
 const unsigned char Input::native2mb[Input::NATIVE_MOUSE_BUTTON_LAST + 1] = {
-	mbUnknown,		// 0 
-	mbLeft,			// 1 SDL_BUTTON_LEFT
-	mbCenter,		// 2 SDL_BUTTON_MIDDLE
-	mbRight,		// 3 SDL_BUTTON_RIGHT
-	mbWheelUp,		// 4 SDL_BUTTON_WHEELUP
-	mbWheelDown,	// 5 SDL_BUTTON_WHEELDOWN
-	mbButtonX1,		// 6 SDL_BUTTON_X1
-	mbButtonX2		// 7 SDL_BUTTON_X2
+	MouseButton::UNKNOWN,	// 0 
+	MouseButton::LEFT,		// 1 SDL_BUTTON_LEFT
+	MouseButton::MIDDLE,	// 2 SDL_BUTTON_MIDDLE
+	MouseButton::RIGHT,		// 3 SDL_BUTTON_RIGHT
+	MouseButton::WHEEL_UP,		// 4 SDL_BUTTON_WHEELUP
+	MouseButton::WHEEL_DOWN,	// 5 SDL_BUTTON_WHEELDOWN
+	MouseButton::BUTTON_X1,	// 6 SDL_BUTTON_X1
+	MouseButton::BUTTON_X2	// 7 SDL_BUTTON_X2
 };
 
-const unsigned char Input::mb2native[mbCount] = {
-	0,						// mbUnknown
-	SDL_BUTTON_LEFT,		// mbLeft
-	SDL_BUTTON_MIDDLE,		// mbCenter
-	SDL_BUTTON_RIGHT,		// mbRight
+const unsigned char Input::mb2native[MouseButton::COUNT] = {
+	0,						// MouseButton::UNKNOWN
+	SDL_BUTTON_LEFT,		// MouseButton::LEFT
+	SDL_BUTTON_MIDDLE,		// MouseButton::MIDDLE
+	SDL_BUTTON_RIGHT,		// MouseButton::RIGHT
 #ifdef SDL_BUTTON_WHEELUP
-	SDL_BUTTON_WHEELUP,		// mbWheelUp
-	SDL_BUTTON_WHEELDOWN,	// mbWheelDown
+	SDL_BUTTON_WHEELUP,		// MouseButton::WHEEL_UP
+	SDL_BUTTON_WHEELDOWN,	// MouseButton::WHEEL_DOWN
 #else
-	0,						// mbWheelUp
-	0,						// mbWheelDown
+	0,						// MouseButton::WHEEL_UP
+	0,						// MouseButton::WHEEL_DOWN
 #endif
 #ifdef SDL_BUTTON_X1
-	SDL_BUTTON_X1,			// mbButtonX1
-	SDL_BUTTON_X2			// mbButtonX2
+	SDL_BUTTON_X1,			// MouseButton::BUTTON_X1
+	SDL_BUTTON_X2			// MouseButton::BUTTON_X2
 #else
-	0,						// mbButtonX1
-	0						// mbButtonX2
+	0,						// MouseButton::BUTTON_X1
+	0						// MouseButton::BUTTON_X2
 #endif
 };
 
 const short Input::native2kc[Input::NATIVE_KEY_CODE_LAST + 1] = {
-	keyUnknown,		// 0 SDLK_UNKNOWN
-	keyUnknown,		// 1
-	keyUnknown,		// 2
-	keyUnknown,		// 3
-	keyUnknown,		// 4
-	keyUnknown,		// 5
-	keyUnknown,		// 6
-	keyUnknown,		// 7
-	keyBackspace,	// 8 SDLK_BACKSPACE
-	keyTab,			// 9 SDLK_TAB
-	keyUnknown,		// 10
-	keyUnknown,		// 11
-	keyClear,		// 12 SDLK_CLEAR
-	keyReturn,		// 13 SDLK_RETURN
-	keyUnknown,		// 14
-	keyUnknown,		// 15
-	keyUnknown,		// 16
-	keyUnknown,		// 17
-	keyUnknown,		// 18
-	keyPause,		// 19 SDLK_PAUSE
-	keyUnknown,		// 20
-	keyUnknown,		// 21
-	keyUnknown,		// 22
-	keyUnknown,		// 23
-	keyUnknown,		// 24
-	keyUnknown,		// 25
-	keyUnknown,		// 26
-	keyEscape,		// 27 SDLK_ESCAPE
-	keyUnknown,		// 28
-	keyUnknown,		// 29
-	keyUnknown,		// 30
-	keyUnknown,		// 31
-	keySpace,		// 32 SDLK_SPACE
-	keyExclaim,		// 33 SDLK_EXCLAIM
-	keyQuoteDbl,	// 34 SDLK_QUOTEDBL
-	keyHash,		// 35 SDLK_HASH
-	keyDollar,		// 36 SDLK_DOLLAR
-	keyUnknown,		// 37
-	keyAmpersand,	// 38 SDLK_AMPERSAND
-	keyQuote,		// 39 SDLK_QUOTE
-	keyLeftParen,	// 40 SDLK_LEFTPAREN
-	keyRightParen,	// 41 SDLK_RIGHTPAREN
-	keyAsterisk,	// 42 SDLK_ASTERISK
-	keyPlus,		// 43 SDLK_PLUS
-	keyComma,		// 44 SDLK_COMMA
-	keyMinus,		// 45 SDLK_MINUS
-	keyPeriod,		// 46 SDLK_PERIOD
-	keySlash,		// 47 SDLK_SLASH
-	key0,			// 48 SDLK_0
-	key1,			// 49 SDLK_1
-	key2,			// 50 SDLK_2
-	key3,			// 51 SDLK_3
-	key4,			// 52 SDLK_4
-	key5,			// 53 SDLK_5
-	key6,			// 54 SDLK_6
-	key7,			// 55 SDLK_7
-	key8,			// 56 SDLK_8
-	key9,			// 57 SDLK_9
-	keyColon,		// 58 SDLK_COLON
-	keySemicolon,	// 59 SDLK_SEMICOLON
-	keyLess,		// 60 SDLK_LESS
-	keyEquals,		// 61 SDLK_EQUALS
-	keyGreater,		// 62 SDLK_GREATER
-	keyQuestion,	// 63 SDLK_QUESTION
-	keyAt,			// 64 SDLK_AT
-	keyA,			// 65 'A'
-	keyB,			// 66 'B'
-	keyC,			// 67 'C'
-	keyD,			// 68 'D'
-	keyE,			// 69 'E'
-	keyF,			// 70 'F'
-	keyG,			// 71 'G'
-	keyH,			// 72 'H'
-	keyI,			// 73 'I'
-	keyJ,			// 74 'J'
-	keyK,			// 75 'K'
-	keyL,			// 76 'L'
-	keyM,			// 77 'M'
-	keyN,			// 78 'N'
-	keyO,			// 79 'O'
-	keyP,			// 80 'P'
-	keyQ,			// 81 'Q'
-	keyR,			// 82 'R'
-	keyS,			// 83 'S'
-	keyT,			// 84 'T'
-	keyU,			// 85 'U'
-	keyV,			// 86 'V'
-	keyW,			// 87 'W'
-	keyX,			// 88 'X'
-	keyY,			// 89 'Y'
-	keyZ,			// 90 'Z'
-	keyLeftBracket,	// 91 SDLK_LEFTBRACKET
-	keyBackslash,	// 92 SDLK_BACKSLASH
-	keyRightBracket,	// 93 SDLK_RIGHTBRACKET
-	keyCaret,		// 94 SDLK_CARET
-	keyUnderscore,	// 95 SDLK_UNDERSCORE
-	keyBackquote,	// 96 SDLK_BACKQUOTE
-	keyA,			// 97 SDLK_a
-	keyB,			// 98 SDLK_b
-	keyC,			// 99 SDLK_c
-	keyD,			// 100 SDLK_d
-	keyE,			// 101 SDLK_e
-	keyF,			// 102 SDLK_f
-	keyG,			// 103 SDLK_g
-	keyH,			// 104 SDLK_h
-	keyI,			// 105 SDLK_i
-	keyJ,			// 106 SDLK_j
-	keyK,			// 107 SDLK_k
-	keyL,			// 108 SDLK_l
-	keyM,			// 109 SDLK_m
-	keyN,			// 110 SDLK_n
-	keyO,			// 111 SDLK_o
-	keyP,			// 112 SDLK_p
-	keyQ,			// 113 SDLK_q
-	keyR,			// 114 SDLK_r
-	keyS,			// 115 SDLK_s
-	keyT,			// 116 SDLK_t
-	keyU,			// 117 SDLK_u
-	keyV,			// 118 SDLK_v
-	keyW,			// 119 SDLK_w
-	keyX,			// 120 SDLK_x
-	keyY,			// 121 SDLK_y
-	keyZ,			// 122 SDLK_z
-	keyUnknown,		// 123
-	keyUnknown,		// 124
-	keyUnknown,		// 125
-	keyUnknown,		// 126
-	keyDelete,		// 127 SDLK_DELETE
-	keyUnknown,		// 128
-	keyUnknown,		// 129
-	keyUnknown,		// 130
-	keyUnknown,		// 131
-	keyUnknown,		// 132
-	keyUnknown,		// 133
-	keyUnknown,		// 134
-	keyUnknown,		// 135
-	keyUnknown,		// 136
-	keyUnknown,		// 137
-	keyUnknown,		// 138
-	keyUnknown,		// 139
-	keyUnknown,		// 140
-	keyUnknown,		// 141
-	keyUnknown,		// 142
-	keyUnknown,		// 143
-	keyUnknown,		// 144
-	keyUnknown,		// 145
-	keyUnknown,		// 146
-	keyUnknown,		// 147
-	keyUnknown,		// 148
-	keyUnknown,		// 149
-	keyUnknown,		// 150
-	keyUnknown,		// 151
-	keyUnknown,		// 152
-	keyUnknown,		// 153
-	keyUnknown,		// 154
-	keyUnknown,		// 155
-	keyUnknown,		// 156
-	keyUnknown,		// 157
-	keyUnknown,		// 158
-	keyUnknown,		// 159
-	keyWorld0,		// 160 SDLK_WORLD_0
-	keyWorld1,		// 161 SDLK_WORLD_1
-	keyWorld2,		// 162 SDLK_WORLD_2
-	keyWorld3,		// 163 SDLK_WORLD_3
-	keyWorld4,		// 164 SDLK_WORLD_4
-	keyWorld5,		// 165 SDLK_WORLD_5
-	keyWorld6,		// 166 SDLK_WORLD_6
-	keyWorld7,		// 167 SDLK_WORLD_7
-	keyWorld8,		// 168 SDLK_WORLD_8
-	keyWorld9,		// 169 SDLK_WORLD_9
-	keyWorld10,		// 170 SDLK_WORLD_10
-	keyWorld11,		// 171 SDLK_WORLD_11
-	keyWorld12,		// 172 SDLK_WORLD_12
-	keyWorld13,		// 173 SDLK_WORLD_13
-	keyWorld14,		// 174 SDLK_WORLD_14
-	keyWorld15,		// 175 SDLK_WORLD_15
-	keyWorld16,		// 176 SDLK_WORLD_16
-	keyWorld17,		// 177 SDLK_WORLD_17
-	keyWorld18,		// 178 SDLK_WORLD_18
-	keyWorld19,		// 179 SDLK_WORLD_19
-	keyWorld20,		// 180 SDLK_WORLD_20
-	keyWorld21,		// 181 SDLK_WORLD_21
-	keyWorld22,		// 182 SDLK_WORLD_22
-	keyWorld23,		// 183 SDLK_WORLD_23
-	keyWorld24,		// 184 SDLK_WORLD_24
-	keyWorld25,		// 185 SDLK_WORLD_25
-	keyWorld26,		// 186 SDLK_WORLD_26
-	keyWorld27,		// 187 SDLK_WORLD_27
-	keyWorld28,		// 188 SDLK_WORLD_28
-	keyWorld29,		// 189 SDLK_WORLD_29
-	keyWorld30,		// 190 SDLK_WORLD_30
-	keyWorld31,		// 191 SDLK_WORLD_31
-	keyWorld32,		// 192 SDLK_WORLD_32
-	keyWorld33,		// 193 SDLK_WORLD_33
-	keyWorld34,		// 194 SDLK_WORLD_34
-	keyWorld35,		// 195 SDLK_WORLD_35
-	keyWorld36,		// 196 SDLK_WORLD_36
-	keyWorld37,		// 197 SDLK_WORLD_37
-	keyWorld38,		// 198 SDLK_WORLD_38
-	keyWorld39,		// 199 SDLK_WORLD_39
-	keyWorld40,		// 200 SDLK_WORLD_40
-	keyWorld41,		// 201 SDLK_WORLD_41
-	keyWorld42,		// 202 SDLK_WORLD_42
-	keyWorld43,		// 203 SDLK_WORLD_43
-	keyWorld44,		// 204 SDLK_WORLD_44
-	keyWorld45,		// 205 SDLK_WORLD_45
-	keyWorld46,		// 206 SDLK_WORLD_46
-	keyWorld47,		// 207 SDLK_WORLD_47
-	keyWorld48,		// 208 SDLK_WORLD_48
-	keyWorld49,		// 209 SDLK_WORLD_49
-	keyWorld50,		// 210 SDLK_WORLD_50
-	keyWorld51,		// 211 SDLK_WORLD_51
-	keyWorld52,		// 212 SDLK_WORLD_52
-	keyWorld53,		// 213 SDLK_WORLD_53
-	keyWorld54,		// 214 SDLK_WORLD_54
-	keyWorld55,		// 215 SDLK_WORLD_55
-	keyWorld56,		// 216 SDLK_WORLD_56
-	keyWorld57,		// 217 SDLK_WORLD_57
-	keyWorld58,		// 218 SDLK_WORLD_58
-	keyWorld59,		// 219 SDLK_WORLD_59
-	keyWorld60,		// 220 SDLK_WORLD_60
-	keyWorld61,		// 221 SDLK_WORLD_61
-	keyWorld62,		// 222 SDLK_WORLD_62
-	keyWorld63,		// 223 SDLK_WORLD_63
-	keyWorld64,		// 224 SDLK_WORLD_64
-	keyWorld65,		// 225 SDLK_WORLD_65
-	keyWorld66,		// 226 SDLK_WORLD_66
-	keyWorld67,		// 227 SDLK_WORLD_67
-	keyWorld68,		// 228 SDLK_WORLD_68
-	keyWorld69,		// 229 SDLK_WORLD_69
-	keyWorld70,		// 230 SDLK_WORLD_70
-	keyWorld71,		// 231 SDLK_WORLD_71
-	keyWorld72,		// 232 SDLK_WORLD_72
-	keyWorld73,		// 233 SDLK_WORLD_73
-	keyWorld74,		// 234 SDLK_WORLD_74
-	keyWorld75,		// 235 SDLK_WORLD_75
-	keyWorld76,		// 236 SDLK_WORLD_76
-	keyWorld77,		// 237 SDLK_WORLD_77
-	keyWorld78,		// 238 SDLK_WORLD_78
-	keyWorld79,		// 239 SDLK_WORLD_79
-	keyWorld80,		// 240 SDLK_WORLD_80
-	keyWorld81,		// 241 SDLK_WORLD_81
-	keyWorld82,		// 242 SDLK_WORLD_82
-	keyWorld83,		// 243 SDLK_WORLD_83
-	keyWorld84,		// 244 SDLK_WORLD_84
-	keyWorld85,		// 245 SDLK_WORLD_85
-	keyWorld86,		// 246 SDLK_WORLD_86
-	keyWorld87,		// 247 SDLK_WORLD_87
-	keyWorld88,		// 248 SDLK_WORLD_88
-	keyWorld89,		// 249 SDLK_WORLD_89
-	keyWorld90,		// 250 SDLK_WORLD_90
-	keyWorld91,		// 251 SDLK_WORLD_91
-	keyWorld92,		// 252 SDLK_WORLD_92
-	keyWorld93,		// 253 SDLK_WORLD_93
-	keyWorld94,		// 254 SDLK_WORLD_94
-	keyWorld95,		// 255 SDLK_WORLD_95
-	keyKP0,			// 256 SDLK_KP0
-	keyKP1,			// 257 SDLK_KP1
-	keyKP2,			// 258 SDLK_KP2
-	keyKP3,			// 259 SDLK_KP3
-	keyKP4,			// 260 SDLK_KP4
-	keyKP5,			// 261 SDLK_KP5
-	keyKP6,			// 262 SDLK_KP6
-	keyKP7,			// 263 SDLK_KP7
-	keyKP8,			// 264 SDLK_KP8
-	keyKP9,			// 265 SDLK_KP9
-	keyKPPeriod,	// 266 SDLK_KP_PERIOD
-	keyKPDivide,	// 267 SDLK_KP_DIVIDE
-	keyKPMultiply,	// 268 SDLK_KP_MULTIPLY
-	keyKPMinus,		// 269 SDLK_KP_MINUS
-	keyKPPlus,		// 270 SDLK_KP_PLUS
-	keyKPEnter,		// 271 SDLK_KP_ENTER
-	keyKPEquals,	// 272 SDLK_KP_EQUALS
-	keyUp,			// 273 SDLK_UP
-	keyDown,		// 274 SDLK_DOWN
-	keyRight,		// 275 SDLK_RIGHT
-	keyLeft,		// 276 SDLK_LEFT
-	keyInsert,		// 277 SDLK_INSERT
-	keyHome,		// 278 SDLK_HOME
-	keyEnd,			// 279 SDLK_END
-	keyPageUp,		// 280 SDLK_PAGEUP
-	keyPageDown,	// 281 SDLK_PAGEDOWN
-	keyF1,			// 282 SDLK_F1
-	keyF2,			// 283 SDLK_F2
-	keyF3,			// 284 SDLK_F3
-	keyF4,			// 285 SDLK_F4
-	keyF5,			// 286 SDLK_F5
-	keyF6,			// 287 SDLK_F6
-	keyF7,			// 288 SDLK_F7
-	keyF8,			// 289 SDLK_F8
-	keyF9,			// 290 SDLK_F9
-	keyF10,			// 291 SDLK_F10
-	keyF11,			// 292 SDLK_F11
-	keyF12,			// 293 SDLK_F12
-	keyF13,			// 294 SDLK_F13
-	keyF14,			// 295 SDLK_F14
-	keyF15,			// 296 SDLK_F15
-	keyUnknown,		// 297
-	keyUnknown,		// 298
-	keyUnknown,		// 299
-	keyNumLock,		// 300 SDLK_NUMLOCK
-	keyCapsLock,	// 301 SDLK_CAPSLOCK
-	keyScrollLock,	// 302 SDLK_SCROLLOCK
-	keyRShift,		// 303 SDLK_RSHIFT
-	keyLShift,		// 304 SDLK_LSHIFT
-	keyRCtrl,		// 305 SDLK_RCTRL
-	keyLCtrl,		// 306 SDLK_LCTRL
-	keyRAlt,		// 307 SDLK_RALT
-	keyLAlt,		// 308 SDLK_LALT
-	keyRMeta,		// 309 SDLK_RMETA
-	keyLMeta,		// 310 SDLK_LMETA
-	keyLSuper,		// 311 SDLK_LSUPER
-	keyRSuper,		// 312 SDLK_RSUPER
-	keyMode,		// 313 SDLK_MODE
-	keyCompose,		// 314 SDLK_COMPOSE
-	keyHelp,		// 315 SDLK_HELP
-	keyPrint,		// 316 SDLK_PRINT
-	keySysreq,		// 317 SDLK_SYSREQ
-	keyBreak,		// 318 SDLK_BREAK
-	keyMenu,		// 319 SDLK_MENU
-	keyPower,		// 320 SDLK_POWER
-	keyEuro,		// 321 SDLK_EURO
-	keyUndo			// 322 SDLK_UNDO
+	KeyCode::UNKNOWN,			// 0 SDLK_UNKNOWN
+	KeyCode::UNKNOWN,			// 1
+	KeyCode::UNKNOWN,			// 2
+	KeyCode::UNKNOWN,			// 3
+	KeyCode::UNKNOWN,			// 4
+	KeyCode::UNKNOWN,			// 5
+	KeyCode::UNKNOWN,			// 6
+	KeyCode::UNKNOWN,			// 7
+	KeyCode::BACK_SPACE,		// 8 SDLK_BACKSPACE
+	KeyCode::TAB,				// 9 SDLK_TAB
+	KeyCode::UNKNOWN,			// 10
+	KeyCode::UNKNOWN,			// 11
+	KeyCode::CLEAR,				// 12 SDLK_CLEAR
+	KeyCode::RETURN,			// 13 SDLK_RETURN
+	KeyCode::UNKNOWN,			// 14
+	KeyCode::UNKNOWN,			// 15
+	KeyCode::UNKNOWN,			// 16
+	KeyCode::UNKNOWN,			// 17
+	KeyCode::UNKNOWN,			// 18
+	KeyCode::PAUSE,				// 19 SDLK_PAUSE
+	KeyCode::UNKNOWN,			// 20
+	KeyCode::UNKNOWN,			// 21
+	KeyCode::UNKNOWN,			// 22
+	KeyCode::UNKNOWN,			// 23
+	KeyCode::UNKNOWN,			// 24
+	KeyCode::UNKNOWN,			// 25
+	KeyCode::UNKNOWN,			// 26
+	KeyCode::ESCAPE,			// 27 SDLK_ESCAPE
+	KeyCode::UNKNOWN,			// 28
+	KeyCode::UNKNOWN,			// 29
+	KeyCode::UNKNOWN,			// 30
+	KeyCode::UNKNOWN,			// 31
+	KeyCode::SPACE,				// 32 SDLK_SPACE
+	KeyCode::EXCLAIM,			// 33 SDLK_EXCLAIM
+	KeyCode::DOUBLE_QUOTE,		// 34 SDLK_QUOTEDBL
+	KeyCode::HASH,				// 35 SDLK_HASH
+	KeyCode::DOLLAR,			// 36 SDLK_DOLLAR
+	KeyCode::UNKNOWN,			// 37
+	KeyCode::AMPERSAND,			// 38 SDLK_AMPERSAND
+	KeyCode::QUOTE,				// 39 SDLK_QUOTE
+	KeyCode::LEFT_PAREN,		// 40 SDLK_LEFTPAREN
+	KeyCode::RIGHT_PAREN,		// 41 SDLK_RIGHTPAREN
+	KeyCode::ASTERISK,			// 42 SDLK_ASTERISK
+	KeyCode::PLUS,				// 43 SDLK_PLUS
+	KeyCode::COMMA,				// 44 SDLK_COMMA
+	KeyCode::MINUS,				// 45 SDLK_MINUS
+	KeyCode::PERIOD,			// 46 SDLK_PERIOD
+	KeyCode::SLASH,				// 47 SDLK_SLASH
+	KeyCode::ZERO,				// 48 SDLK_0
+	KeyCode::ONE,				// 49 SDLK_1
+	KeyCode::TWO,				// 50 SDLK_2
+	KeyCode::THREE,				// 51 SDLK_3
+	KeyCode::FOUR,				// 52 SDLK_4
+	KeyCode::FIVE,				// 53 SDLK_5
+	KeyCode::SIX,				// 54 SDLK_6
+	KeyCode::SEVEN,				// 55 SDLK_7
+	KeyCode::EIGHT,				// 56 SDLK_8
+	KeyCode::NINE,				// 57 SDLK_9
+	KeyCode::COLON,				// 58 SDLK_COLON
+	KeyCode::SEMI_COLON,		// 59 SDLK_SEMICOLON
+	KeyCode::LESS,				// 60 SDLK_LESS
+	KeyCode::EQUAL,				// 61 SDLK_EQUALS
+	KeyCode::GREATER,			// 62 SDLK_GREATER
+	KeyCode::QUESTION,			// 63 SDLK_QUESTION
+	KeyCode::AT,				// 64 SDLK_AT
+	KeyCode::A,					// 65 'A'
+	KeyCode::B,					// 66 'B'
+	KeyCode::C,					// 67 'C'
+	KeyCode::D,					// 68 'D'
+	KeyCode::E,					// 69 'E'
+	KeyCode::F,					// 70 'F'
+	KeyCode::G,					// 71 'G'
+	KeyCode::H,					// 72 'H'
+	KeyCode::I,					// 73 'I'
+	KeyCode::J,					// 74 'J'
+	KeyCode::K,					// 75 'K'
+	KeyCode::L,					// 76 'L'
+	KeyCode::M,					// 77 'M'
+	KeyCode::N,					// 78 'N'
+	KeyCode::O,					// 79 'O'
+	KeyCode::P,					// 80 'P'
+	KeyCode::Q,					// 81 'Q'
+	KeyCode::R,					// 82 'R'
+	KeyCode::S,					// 83 'S'
+	KeyCode::T,					// 84 'T'
+	KeyCode::U,					// 85 'U'
+	KeyCode::V,					// 86 'V'
+	KeyCode::W,					// 87 'W'
+	KeyCode::X,					// 88 'X'
+	KeyCode::Y,					// 89 'Y'
+	KeyCode::Z,					// 90 'Z'
+	KeyCode::LEFT_BRACKET,		// 91 SDLK_LEFTBRACKET
+	KeyCode::BACK_SLASH,		// 92 SDLK_BACKSLASH
+	KeyCode::RIGHT_BRACKET,		// 93 SDLK_RIGHTBRACKET
+	KeyCode::CARET,				// 94 SDLK_CARET
+	KeyCode::UNDER_SCORE,		// 95 SDLK_UNDERSCORE
+	KeyCode::BACK_QUOTE,		// 96 SDLK_BACKQUOTE
+	KeyCode::A,					// 97 SDLK_a
+	KeyCode::B,					// 98 SDLK_b
+	KeyCode::C,					// 99 SDLK_c
+	KeyCode::D,					// 100 SDLK_d
+	KeyCode::E,					// 101 SDLK_e
+	KeyCode::F,					// 102 SDLK_f
+	KeyCode::G,					// 103 SDLK_g
+	KeyCode::H,					// 104 SDLK_h
+	KeyCode::I,					// 105 SDLK_i
+	KeyCode::J,					// 106 SDLK_j
+	KeyCode::K,					// 107 SDLK_k
+	KeyCode::L,					// 108 SDLK_l
+	KeyCode::M,					// 109 SDLK_m
+	KeyCode::N,					// 110 SDLK_n
+	KeyCode::O,					// 111 SDLK_o
+	KeyCode::P,					// 112 SDLK_p
+	KeyCode::Q,					// 113 SDLK_q
+	KeyCode::R,					// 114 SDLK_r
+	KeyCode::S,					// 115 SDLK_s
+	KeyCode::T,					// 116 SDLK_t
+	KeyCode::U,					// 117 SDLK_u
+	KeyCode::V,					// 118 SDLK_v
+	KeyCode::W,					// 119 SDLK_w
+	KeyCode::X,					// 120 SDLK_x
+	KeyCode::Y,					// 121 SDLK_y
+	KeyCode::Z,					// 122 SDLK_z
+	KeyCode::UNKNOWN,			// 123
+	KeyCode::UNKNOWN,			// 124
+	KeyCode::UNKNOWN,			// 125
+	KeyCode::UNKNOWN,			// 126
+	KeyCode::DELETE_,			// 127 SDLK_DELETE
+	KeyCode::UNKNOWN,			// 128
+	KeyCode::UNKNOWN,			// 129
+	KeyCode::UNKNOWN,			// 130
+	KeyCode::UNKNOWN,			// 131
+	KeyCode::UNKNOWN,			// 132
+	KeyCode::UNKNOWN,			// 133
+	KeyCode::UNKNOWN,			// 134
+	KeyCode::UNKNOWN,			// 135
+	KeyCode::UNKNOWN,			// 136
+	KeyCode::UNKNOWN,			// 137
+	KeyCode::UNKNOWN,			// 138
+	KeyCode::UNKNOWN,			// 139
+	KeyCode::UNKNOWN,			// 140
+	KeyCode::UNKNOWN,			// 141
+	KeyCode::UNKNOWN,			// 142
+	KeyCode::UNKNOWN,			// 143
+	KeyCode::UNKNOWN,			// 144
+	KeyCode::UNKNOWN,			// 145
+	KeyCode::UNKNOWN,			// 146
+	KeyCode::UNKNOWN,			// 147
+	KeyCode::UNKNOWN,			// 148
+	KeyCode::UNKNOWN,			// 149
+	KeyCode::UNKNOWN,			// 150
+	KeyCode::UNKNOWN,			// 151
+	KeyCode::UNKNOWN,			// 152
+	KeyCode::UNKNOWN,			// 153
+	KeyCode::UNKNOWN,			// 154
+	KeyCode::UNKNOWN,			// 155
+	KeyCode::UNKNOWN,			// 156
+	KeyCode::UNKNOWN,			// 157
+	KeyCode::UNKNOWN,			// 158
+	KeyCode::UNKNOWN,			// 159
+	KeyCode::WORLD_0,			// 160 SDLK_WORLD_0
+	KeyCode::WORLD_1,			// 161 SDLK_WORLD_1
+	KeyCode::WORLD_2,			// 162 SDLK_WORLD_2
+	KeyCode::WORLD_3,			// 163 SDLK_WORLD_3
+	KeyCode::WORLD_4,			// 164 SDLK_WORLD_4
+	KeyCode::WORLD_5,			// 165 SDLK_WORLD_5
+	KeyCode::WORLD_6,			// 166 SDLK_WORLD_6
+	KeyCode::WORLD_7,			// 167 SDLK_WORLD_7
+	KeyCode::WORLD_8,			// 168 SDLK_WORLD_8
+	KeyCode::WORLD_9,			// 169 SDLK_WORLD_9
+	KeyCode::WORLD_10,			// 170 SDLK_WORLD_10
+	KeyCode::WORLD_11,			// 171 SDLK_WORLD_11
+	KeyCode::WORLD_12,			// 172 SDLK_WORLD_12
+	KeyCode::WORLD_13,			// 173 SDLK_WORLD_13
+	KeyCode::WORLD_14,			// 174 SDLK_WORLD_14
+	KeyCode::WORLD_15,			// 175 SDLK_WORLD_15
+	KeyCode::WORLD_16,			// 176 SDLK_WORLD_16
+	KeyCode::WORLD_17,			// 177 SDLK_WORLD_17
+	KeyCode::WORLD_18,			// 178 SDLK_WORLD_18
+	KeyCode::WORLD_19,			// 179 SDLK_WORLD_19
+	KeyCode::WORLD_20,			// 180 SDLK_WORLD_20
+	KeyCode::WORLD_21,			// 181 SDLK_WORLD_21
+	KeyCode::WORLD_22,			// 182 SDLK_WORLD_22
+	KeyCode::WORLD_23,			// 183 SDLK_WORLD_23
+	KeyCode::WORLD_24,			// 184 SDLK_WORLD_24
+	KeyCode::WORLD_25,			// 185 SDLK_WORLD_25
+	KeyCode::WORLD_26,			// 186 SDLK_WORLD_26
+	KeyCode::WORLD_27,			// 187 SDLK_WORLD_27
+	KeyCode::WORLD_28,			// 188 SDLK_WORLD_28
+	KeyCode::WORLD_29,			// 189 SDLK_WORLD_29
+	KeyCode::WORLD_30,			// 190 SDLK_WORLD_30
+	KeyCode::WORLD_31,			// 191 SDLK_WORLD_31
+	KeyCode::WORLD_32,			// 192 SDLK_WORLD_32
+	KeyCode::WORLD_33,			// 193 SDLK_WORLD_33
+	KeyCode::WORLD_34,			// 194 SDLK_WORLD_34
+	KeyCode::WORLD_35,			// 195 SDLK_WORLD_35
+	KeyCode::WORLD_36,			// 196 SDLK_WORLD_36
+	KeyCode::WORLD_37,			// 197 SDLK_WORLD_37
+	KeyCode::WORLD_38,			// 198 SDLK_WORLD_38
+	KeyCode::WORLD_39,			// 199 SDLK_WORLD_39
+	KeyCode::WORLD_40,			// 200 SDLK_WORLD_40
+	KeyCode::WORLD_41,			// 201 SDLK_WORLD_41
+	KeyCode::WORLD_42,			// 202 SDLK_WORLD_42
+	KeyCode::WORLD_43,			// 203 SDLK_WORLD_43
+	KeyCode::WORLD_44,			// 204 SDLK_WORLD_44
+	KeyCode::WORLD_45,			// 205 SDLK_WORLD_45
+	KeyCode::WORLD_46,			// 206 SDLK_WORLD_46
+	KeyCode::WORLD_47,			// 207 SDLK_WORLD_47
+	KeyCode::WORLD_48,			// 208 SDLK_WORLD_48
+	KeyCode::WORLD_49,			// 209 SDLK_WORLD_49
+	KeyCode::WORLD_50,			// 210 SDLK_WORLD_50
+	KeyCode::WORLD_51,			// 211 SDLK_WORLD_51
+	KeyCode::WORLD_52,			// 212 SDLK_WORLD_52
+	KeyCode::WORLD_53,			// 213 SDLK_WORLD_53
+	KeyCode::WORLD_54,			// 214 SDLK_WORLD_54
+	KeyCode::WORLD_55,			// 215 SDLK_WORLD_55
+	KeyCode::WORLD_56,			// 216 SDLK_WORLD_56
+	KeyCode::WORLD_57,			// 217 SDLK_WORLD_57
+	KeyCode::WORLD_58,			// 218 SDLK_WORLD_58
+	KeyCode::WORLD_59,			// 219 SDLK_WORLD_59
+	KeyCode::WORLD_60,			// 220 SDLK_WORLD_60
+	KeyCode::WORLD_61,			// 221 SDLK_WORLD_61
+	KeyCode::WORLD_62,			// 222 SDLK_WORLD_62
+	KeyCode::WORLD_63,			// 223 SDLK_WORLD_63
+	KeyCode::WORLD_64,			// 224 SDLK_WORLD_64
+	KeyCode::WORLD_65,			// 225 SDLK_WORLD_65
+	KeyCode::WORLD_66,			// 226 SDLK_WORLD_66
+	KeyCode::WORLD_67,			// 227 SDLK_WORLD_67
+	KeyCode::WORLD_68,			// 228 SDLK_WORLD_68
+	KeyCode::WORLD_69,			// 229 SDLK_WORLD_69
+	KeyCode::WORLD_70,			// 230 SDLK_WORLD_70
+	KeyCode::WORLD_71,			// 231 SDLK_WORLD_71
+	KeyCode::WORLD_72,			// 232 SDLK_WORLD_72
+	KeyCode::WORLD_73,			// 233 SDLK_WORLD_73
+	KeyCode::WORLD_74,			// 234 SDLK_WORLD_74
+	KeyCode::WORLD_75,			// 235 SDLK_WORLD_75
+	KeyCode::WORLD_76,			// 236 SDLK_WORLD_76
+	KeyCode::WORLD_77,			// 237 SDLK_WORLD_77
+	KeyCode::WORLD_78,			// 238 SDLK_WORLD_78
+	KeyCode::WORLD_79,			// 239 SDLK_WORLD_79
+	KeyCode::WORLD_80,			// 240 SDLK_WORLD_80
+	KeyCode::WORLD_81,			// 241 SDLK_WORLD_81
+	KeyCode::WORLD_82,			// 242 SDLK_WORLD_82
+	KeyCode::WORLD_83,			// 243 SDLK_WORLD_83
+	KeyCode::WORLD_84,			// 244 SDLK_WORLD_84
+	KeyCode::WORLD_85,			// 245 SDLK_WORLD_85
+	KeyCode::WORLD_86,			// 246 SDLK_WORLD_86
+	KeyCode::WORLD_87,			// 247 SDLK_WORLD_87
+	KeyCode::WORLD_88,			// 248 SDLK_WORLD_88
+	KeyCode::WORLD_89,			// 249 SDLK_WORLD_89
+	KeyCode::WORLD_90,			// 250 SDLK_WORLD_90
+	KeyCode::WORLD_91,			// 251 SDLK_WORLD_91
+	KeyCode::WORLD_92,			// 252 SDLK_WORLD_92
+	KeyCode::WORLD_93,			// 253 SDLK_WORLD_93
+	KeyCode::WORLD_94,			// 254 SDLK_WORLD_94
+	KeyCode::WORLD_95,			// 255 SDLK_WORLD_95
+	KeyCode::KEYPAD_0,			// 256 SDLK_KP0
+	KeyCode::KEYPAD_1,			// 257 SDLK_KP1
+	KeyCode::KEYPAD_2,			// 258 SDLK_KP2
+	KeyCode::KEYPAD_3,			// 259 SDLK_KP3
+	KeyCode::KEYPAD_4,			// 260 SDLK_KP4
+	KeyCode::KEYPAD_5,			// 261 SDLK_KP5
+	KeyCode::KEYPAD_6,			// 262 SDLK_KP6
+	KeyCode::KEYPAD_7,			// 263 SDLK_KP7
+	KeyCode::KEYPAD_8,			// 264 SDLK_KP8
+	KeyCode::KEYPAD_9,			// 265 SDLK_KP9
+	KeyCode::KEYPAD_PERIOD,		// 266 SDLK_KP_PERIOD
+	KeyCode::KEYPAD_DIVIDE,		// 267 SDLK_KP_DIVIDE
+	KeyCode::KEYPAD_MULTIPLY,	// 268 SDLK_KP_MULTIPLY
+	KeyCode::KEYPAD_MINUS,		// 269 SDLK_KP_MINUS
+	KeyCode::KEYPAD_PLUS,		// 270 SDLK_KP_PLUS
+	KeyCode::KEYPAD_ENTER,		// 271 SDLK_KP_ENTER
+	KeyCode::KEYPAD_EQUAL,		// 272 SDLK_KP_EQUALS
+	KeyCode::ARROW_UP,			// 273 SDLK_UP
+	KeyCode::ARROW_DOWN,		// 274 SDLK_DOWN
+	KeyCode::ARROW_RIGHT,		// 275 SDLK_RIGHT
+	KeyCode::ARROW_LEFT,		// 276 SDLK_LEFT
+	KeyCode::INSERT,			// 277 SDLK_INSERT
+	KeyCode::HOME,				// 278 SDLK_HOME
+	KeyCode::END,				// 279 SDLK_END
+	KeyCode::PAGE_UP,			// 280 SDLK_PAGEUP
+	KeyCode::PAGE_DOWN,			// 281 SDLK_PAGEDOWN
+	KeyCode::FUNCTION_1,		// 282 SDLK_F1
+	KeyCode::FUNCTION_2,		// 283 SDLK_F2
+	KeyCode::FUNCTION_3,		// 284 SDLK_F3
+	KeyCode::FUNCTION_4,		// 285 SDLK_F4
+	KeyCode::FUNCTION_5,		// 286 SDLK_F5
+	KeyCode::FUNCTION_6,		// 287 SDLK_F6
+	KeyCode::FUNCTION_7,		// 288 SDLK_F7
+	KeyCode::FUNCTION_8,		// 289 SDLK_F8
+	KeyCode::FUNCTION_9,		// 290 SDLK_F9
+	KeyCode::FUNCTION_10,		// 291 SDLK_F10
+	KeyCode::FUNCTION_11,		// 292 SDLK_F11
+	KeyCode::FUNCTION_12,		// 293 SDLK_F12
+	KeyCode::FUNCTION_13,		// 294 SDLK_F13
+	KeyCode::FUNCTION_14,		// 295 SDLK_F14
+	KeyCode::FUNCTION_15,		// 296 SDLK_F15
+	KeyCode::UNKNOWN,			// 297
+	KeyCode::UNKNOWN,			// 298
+	KeyCode::UNKNOWN,			// 299
+	KeyCode::NUM_LOCK,			// 300 SDLK_NUMLOCK
+	KeyCode::CAPS_LOCK,			// 301 SDLK_CAPSLOCK
+	KeyCode::SCROLL_LOCK,		// 302 SDLK_SCROLLOCK
+	KeyCode::RIGHT_SHIFT,		// 303 SDLK_RSHIFT
+	KeyCode::LEFT_SHIFT,		// 304 SDLK_LSHIFT
+	KeyCode::RIGHT_CTRL,		// 305 SDLK_RCTRL
+	KeyCode::LEFT_CTRL,			// 306 SDLK_LCTRL
+	KeyCode::RIGHT_ALT,			// 307 SDLK_RALT
+	KeyCode::LEFT_ALT,			// 308 SDLK_LALT
+	KeyCode::RIGHT_META,		// 309 SDLK_RMETA
+	KeyCode::LEFT_META,			// 310 SDLK_LMETA
+	KeyCode::LEFT_SUPER,		// 311 SDLK_LSUPER
+	KeyCode::RIGHT_SUPER,		// 312 SDLK_RSUPER
+	KeyCode::MODE,				// 313 SDLK_MODE
+	KeyCode::COMPOSE,			// 314 SDLK_COMPOSE
+	KeyCode::HELP,				// 315 SDLK_HELP
+	KeyCode::PRINT,				// 316 SDLK_PRINT
+	KeyCode::SYS_REQ,			// 317 SDLK_SYSREQ
+	KeyCode::BREAK,				// 318 SDLK_BREAK
+	KeyCode::MENU,				// 319 SDLK_MENU
+	KeyCode::POWER,				// 320 SDLK_POWER
+	KeyCode::EURO,				// 321 SDLK_EURO
+	KeyCode::UNDO				// 322 SDLK_UNDO
 };
 
-const NativeKeyCodeCompact Input::kc2native[keyCount] = {
-	SDLK_UNKNOWN,		// keyNone
-	SDLK_UNKNOWN,		// keyUnknown
-	SDLK_UNKNOWN,		// keyLButton
-	SDLK_UNKNOWN,		// keyRButton
-	SDLK_UNKNOWN,		// keyMButton
-	SDLK_UNKNOWN,		// keyXButton1
-	SDLK_UNKNOWN,		// keyXButton2
-	SDLK_BACKSPACE,		// keyBackspace
-	SDLK_TAB,			// keyTab
-	SDLK_CLEAR,			// keyClear
-	SDLK_RETURN,		// keyReturn
-	SDLK_PAUSE,			// keyPause
-	SDLK_UNKNOWN,		// keyIMEKana
-	SDLK_UNKNOWN,		// keyIMEHangul
-	SDLK_UNKNOWN,		// keyIMEJunja
-	SDLK_UNKNOWN,		// keyIMEFinal
-	SDLK_UNKNOWN,		// keyIMEHanja
-	SDLK_UNKNOWN,		// keyIMEKanji
-	SDLK_ESCAPE,		// keyEscape
-	SDLK_UNKNOWN,		// keyIMEConvert
-	SDLK_UNKNOWN,		// keyIMENonConvert
-	SDLK_UNKNOWN,		// keyIMEAccept
-	SDLK_UNKNOWN,		// keyIMEModeChange
-	SDLK_UNKNOWN,		// keyIMEProcess
-	SDLK_SPACE,			// keySpace
-	SDLK_EXCLAIM,		// keyExclaim
-	SDLK_QUOTEDBL,		// keyQuoteDbl
-	SDLK_HASH,			// keyHash
-	SDLK_DOLLAR,		// keyDollar
-	SDLK_UNKNOWN,		// keyPercent
-	SDLK_AMPERSAND,		// keyAmpersand
-	SDLK_QUOTE,			// keyQuote
-	SDLK_LEFTPAREN,		// keyLeftParen
-	SDLK_RIGHTPAREN,	// keyRightParen
-	SDLK_ASTERISK,		// keyAsterisk
-	SDLK_PLUS,			// keyPlus
-	SDLK_COMMA,			// keyComma
-	SDLK_MINUS,			// keyMinus
-	SDLK_PERIOD,		// keyPeriod
-	SDLK_SLASH,			// keySlash
-	SDLK_0,				// key0
-	SDLK_1,				// key1
-	SDLK_2,				// key2
-	SDLK_3,				// key3
-	SDLK_4,				// key4
-	SDLK_5,				// key5
-	SDLK_6,				// key6
-	SDLK_7,				// key7
-	SDLK_8,				// key8
-	SDLK_9,				// key9
-	SDLK_COLON,			// keyColon
-	SDLK_SEMICOLON,		// keySemicolon
-	SDLK_LESS,			// keyLess
-	SDLK_EQUALS,		// keyEquals
-	SDLK_GREATER,		// keyGreater
-	SDLK_QUESTION,		// keyQuestion
-	SDLK_AT,			// keyAt
-	'A',				// keyA
-	'B',				// keyB
-	'C',				// keyC
-	'D',				// keyD
-	'E',				// keyE
-	'F',				// keyF
-	'G',				// keyG
-	'H',				// keyH
-	'I',				// keyI
-	'J',				// keyJ
-	'K',				// keyK
-	'L',				// keyL
-	'M',				// keyM
-	'N',				// keyN
-	'O',				// keyO
-	'P',				// keyP
-	'Q',				// keyQ
-	'R',				// keyR
-	'S',				// keyS
-	'T',				// keyT
-	'U',				// keyU
-	'V',				// keyV
-	'W',				// keyW
-	'X',				// keyX
-	'Y',				// keyY
-	'Z',				// keyZ
-	SDLK_LEFTBRACKET,	// keyLeftBracket
-	SDLK_BACKSLASH,		// keyBackslash
-	SDLK_RIGHTBRACKET,	// keyRightBracket
-	SDLK_CARET,			// keyCaret
-	SDLK_UNDERSCORE,	// keyUnderscore
-	SDLK_BACKQUOTE,		// keyBackquote
-	SDLK_DELETE,		// keyDelete
-	SDLK_WORLD_0,		// keyWorld0
-	SDLK_WORLD_1,		// keyWorld1
-	SDLK_WORLD_2,		// keyWorld2
-	SDLK_WORLD_3,		// keyWorld3
-	SDLK_WORLD_4,		// keyWorld4
-	SDLK_WORLD_5,		// keyWorld5
-	SDLK_WORLD_6,		// keyWorld6
-	SDLK_WORLD_7,		// keyWorld7
-	SDLK_WORLD_8,		// keyWorld8
-	SDLK_WORLD_9,		// keyWorld9
-	SDLK_WORLD_10,		// keyWorld10
-	SDLK_WORLD_11,		// keyWorld11
-	SDLK_WORLD_12,		// keyWorld12
-	SDLK_WORLD_13,		// keyWorld13
-	SDLK_WORLD_14,		// keyWorld14
-	SDLK_WORLD_15,		// keyWorld15
-	SDLK_WORLD_16,		// keyWorld16
-	SDLK_WORLD_17,		// keyWorld17
-	SDLK_WORLD_18,		// keyWorld18
-	SDLK_WORLD_19,		// keyWorld19
-	SDLK_WORLD_20,		// keyWorld20
-	SDLK_WORLD_21,		// keyWorld21
-	SDLK_WORLD_22,		// keyWorld22
-	SDLK_WORLD_23,		// keyWorld23
-	SDLK_WORLD_24,		// keyWorld24
-	SDLK_WORLD_25,		// keyWorld25
-	SDLK_WORLD_26,		// keyWorld26
-	SDLK_WORLD_27,		// keyWorld27
-	SDLK_WORLD_28,		// keyWorld28
-	SDLK_WORLD_29,		// keyWorld29
-	SDLK_WORLD_30,		// keyWorld30
-	SDLK_WORLD_31,		// keyWorld31
-	SDLK_WORLD_32,		// keyWorld32
-	SDLK_WORLD_33,		// keyWorld33
-	SDLK_WORLD_34,		// keyWorld34
-	SDLK_WORLD_35,		// keyWorld35
-	SDLK_WORLD_36,		// keyWorld36
-	SDLK_WORLD_37,		// keyWorld37
-	SDLK_WORLD_38,		// keyWorld38
-	SDLK_WORLD_39,		// keyWorld39
-	SDLK_WORLD_40,		// keyWorld40
-	SDLK_WORLD_41,		// keyWorld41
-	SDLK_WORLD_42,		// keyWorld42
-	SDLK_WORLD_43,		// keyWorld43
-	SDLK_WORLD_44,		// keyWorld44
-	SDLK_WORLD_45,		// keyWorld45
-	SDLK_WORLD_46,		// keyWorld46
-	SDLK_WORLD_47,		// keyWorld47
-	SDLK_WORLD_48,		// keyWorld48
-	SDLK_WORLD_49,		// keyWorld49
-	SDLK_WORLD_50,		// keyWorld50
-	SDLK_WORLD_51,		// keyWorld51
-	SDLK_WORLD_52,		// keyWorld52
-	SDLK_WORLD_53,		// keyWorld53
-	SDLK_WORLD_54,		// keyWorld54
-	SDLK_WORLD_55,		// keyWorld55
-	SDLK_WORLD_56,		// keyWorld56
-	SDLK_WORLD_57,		// keyWorld57
-	SDLK_WORLD_58,		// keyWorld58
-	SDLK_WORLD_59,		// keyWorld59
-	SDLK_WORLD_60,		// keyWorld60
-	SDLK_WORLD_61,		// keyWorld61
-	SDLK_WORLD_62,		// keyWorld62
-	SDLK_WORLD_63,		// keyWorld63
-	SDLK_WORLD_64,		// keyWorld64
-	SDLK_WORLD_65,		// keyWorld65
-	SDLK_WORLD_66,		// keyWorld66
-	SDLK_WORLD_67,		// keyWorld67
-	SDLK_WORLD_68,		// keyWorld68
-	SDLK_WORLD_69,		// keyWorld69
-	SDLK_WORLD_70,		// keyWorld70
-	SDLK_WORLD_71,		// keyWorld71
-	SDLK_WORLD_72,		// keyWorld72
-	SDLK_WORLD_73,		// keyWorld73
-	SDLK_WORLD_74,		// keyWorld74
-	SDLK_WORLD_75,		// keyWorld75
-	SDLK_WORLD_76,		// keyWorld76
-	SDLK_WORLD_77,		// keyWorld77
-	SDLK_WORLD_78,		// keyWorld78
-	SDLK_WORLD_79,		// keyWorld79
-	SDLK_WORLD_80,		// keyWorld80
-	SDLK_WORLD_81,		// keyWorld81
-	SDLK_WORLD_82,		// keyWorld82
-	SDLK_WORLD_83,		// keyWorld83
-	SDLK_WORLD_84,		// keyWorld84
-	SDLK_WORLD_85,		// keyWorld85
-	SDLK_WORLD_86,		// keyWorld86
-	SDLK_WORLD_87,		// keyWorld87
-	SDLK_WORLD_88,		// keyWorld88
-	SDLK_WORLD_89,		// keyWorld89
-	SDLK_WORLD_90,		// keyWorld90
-	SDLK_WORLD_91,		// keyWorld91
-	SDLK_WORLD_92,		// keyWorld92
-	SDLK_WORLD_93,		// keyWorld93
-	SDLK_WORLD_94,		// keyWorld94
-	SDLK_WORLD_95,		// keyWorld95
-	SDLK_KP0,			// keyKP0
-	SDLK_KP1,			// keyKP1
-	SDLK_KP2,			// keyKP2
-	SDLK_KP3,			// keyKP3
-	SDLK_KP4,			// keyKP4
-	SDLK_KP5,			// keyKP5
-	SDLK_KP6,			// keyKP6
-	SDLK_KP7,			// keyKP7
-	SDLK_KP8,			// keyKP8
-	SDLK_KP9,			// keyKP9
-	SDLK_KP_PERIOD,		// keyKPPeriod
-	SDLK_KP_DIVIDE,		// keyKPDivide
-	SDLK_KP_MULTIPLY,	// keyKPMultiply
-	SDLK_KP_MINUS,		// keyKPMinus
-	SDLK_KP_PLUS,		// keyKPPlus
-	SDLK_KP_ENTER,		// keyKPEnter
-	SDLK_KP_EQUALS,		// keyKPEquals
-	SDLK_UP,			// keyUp
-	SDLK_DOWN,			// keyDown
-	SDLK_RIGHT,			// keyRight
-	SDLK_LEFT,			// keyLeft
-	SDLK_INSERT,		// keyInsert
-	SDLK_HOME,			// keyHome
-	SDLK_END,			// keyEnd
-	SDLK_PAGEUP,		// keyPageUp
-	SDLK_PAGEDOWN,		// keyPageDown
-	SDLK_F1,			// keyF1
-	SDLK_F2,			// keyF2
-	SDLK_F3,			// keyF3
-	SDLK_F4,			// keyF4
-	SDLK_F5,			// keyF5
-	SDLK_F6,			// keyF6
-	SDLK_F7,			// keyF7
-	SDLK_F8,			// keyF8
-	SDLK_F9,			// keyF9
-	SDLK_F10,			// keyF10
-	SDLK_F11,			// keyF11
-	SDLK_F12,			// keyF12
-	SDLK_F13,			// keyF13
-	SDLK_F14,			// keyF14
-	SDLK_F15,			// keyF15
-	SDLK_UNKNOWN,		// keyF16
-	SDLK_UNKNOWN,		// keyF17
-	SDLK_UNKNOWN,		// keyF18
-	SDLK_UNKNOWN,		// keyF19
-	SDLK_UNKNOWN,		// keyF20
-	SDLK_UNKNOWN,		// keyF21
-	SDLK_UNKNOWN,		// keyF22
-	SDLK_UNKNOWN,		// keyF23
-	SDLK_UNKNOWN,		// keyF24
-	SDLK_NUMLOCK,		// keyNumLock
-	SDLK_CAPSLOCK,		// keyCapsLock
-	SDLK_SCROLLOCK,		// keyScrollLock
-	SDLK_LSHIFT,		// keyLShift
-	SDLK_RSHIFT,		// keyRShift
-	SDLK_LCTRL,			// keyLCtrl
-	SDLK_RCTRL,			// keyRCtrl
-	SDLK_LALT,			// keyLAlt
-	SDLK_RALT,			// keyRAlt
-	SDLK_LMETA,			// keyLMeta
-	SDLK_RMETA,			// keyRMeta
-	SDLK_RSUPER,		// keyRSuper
-	SDLK_LSUPER,		// keyLSuper
-	SDLK_MODE,			// keyMode
-	SDLK_COMPOSE,		// keyCompose
-	SDLK_HELP,			// keyHelp
-	SDLK_PRINT,			// keyPrint
-	SDLK_SYSREQ,		// keySysreq
-	SDLK_BREAK,			// keyBreak
-	SDLK_MENU,			// keyMenu
-	SDLK_POWER,			// keyPower
-	SDLK_EURO,			// keyEuro
-	SDLK_UNDO,			// keyUndo
-	SDLK_UNKNOWN,		// keyBrowserBack
-	SDLK_UNKNOWN,		// keyBrowserForward
-	SDLK_UNKNOWN,		// keyBrowserRefresh
-	SDLK_UNKNOWN,		// keyBrowserStop
-	SDLK_UNKNOWN,		// keyBrowserSearch
-	SDLK_UNKNOWN,		// keyBrowserFavorites
-	SDLK_UNKNOWN,		// keyBrowserHome
-	SDLK_UNKNOWN,		// keyVolumeMute
-	SDLK_UNKNOWN,		// keyVolumeDown
-	SDLK_UNKNOWN,		// keyVolumeUp
-	SDLK_UNKNOWN,		// keyMediaNext
-	SDLK_UNKNOWN,		// keyMediaPrev
-	SDLK_UNKNOWN,		// keyMediaStop
-	SDLK_UNKNOWN,		// keyMediaPlayPause
-	SDLK_UNKNOWN,		// keyLaunchMail
-	SDLK_UNKNOWN,		// keyLaunchMediaSelect
-	SDLK_UNKNOWN,		// keyLaunchApp1
-	SDLK_UNKNOWN,		// keyLaunchApp2
-	SDLK_UNKNOWN,		// keyPlay
-	SDLK_UNKNOWN		// keyZoom
+const NativeKeyCodeCompact Input::kc2native[KeyCode::COUNT] = {
+	SDLK_UNKNOWN,		// KeyCode::NONE
+	SDLK_UNKNOWN,		// KeyCode::UNKNOWN
+	SDLK_UNKNOWN,		// KeyCode::L_BUTTON
+	SDLK_UNKNOWN,		// KeyCode::R_BUTTON
+	SDLK_UNKNOWN,		// KeyCode::M_BUTTON
+	SDLK_UNKNOWN,		// KeyCode::X_BUTTON1
+	SDLK_UNKNOWN,		// KeyCode::X_BUTTON2
+	SDLK_BACKSPACE,		// KeyCode::BACK_SPACE
+	SDLK_TAB,			// KeyCode::TAB
+	SDLK_CLEAR,			// KeyCode::CLEAR
+	SDLK_RETURN,		// KeyCode::RETURN
+	SDLK_PAUSE,			// KeyCode::PAUSE
+	SDLK_UNKNOWN,		// KeyCode::IME_KANA
+	SDLK_UNKNOWN,		// KeyCode::IME_HANGUL
+	SDLK_UNKNOWN,		// KeyCode::IME_JUNJA
+	SDLK_UNKNOWN,		// KeyCode::IME_FINAL
+	SDLK_UNKNOWN,		// KeyCode::IME_HANJA
+	SDLK_UNKNOWN,		// KeyCode::IME_KANJI
+	SDLK_ESCAPE,		// KeyCode::ESCAPE
+	SDLK_UNKNOWN,		// KeyCode::IME_CONVERT
+	SDLK_UNKNOWN,		// KeyCode::IME_NON_CONVERT
+	SDLK_UNKNOWN,		// KeyCode::IME_ACCEPT
+	SDLK_UNKNOWN,		// KeyCode::IME_MODE_CHANGE
+	SDLK_UNKNOWN,		// KeyCode::IME_PROCESS
+	SDLK_SPACE,			// KeyCode::SPACE
+	SDLK_EXCLAIM,		// KeyCode::EXCLAIM
+	SDLK_QUOTEDBL,		// KeyCode::DOUBLE_QUOTE
+	SDLK_HASH,			// KeyCode::HASH
+	SDLK_DOLLAR,		// KeyCode::DOLLAR
+	SDLK_UNKNOWN,		// KeyCode::PERCENT
+	SDLK_AMPERSAND,		// KeyCode::AMPERSAND
+	SDLK_QUOTE,			// KeyCode::QUOTE
+	SDLK_LEFTPAREN,		// KeyCode::LEFT_PAREN
+	SDLK_RIGHTPAREN,	// KeyCode::RIGHT_PAREN
+	SDLK_ASTERISK,		// KeyCode::ASTERISK
+	SDLK_PLUS,			// KeyCode::PLUS
+	SDLK_COMMA,			// KeyCode::COMMA
+	SDLK_MINUS,			// KeyCode::MINUS
+	SDLK_PERIOD,		// KeyCode::PERIOD
+	SDLK_SLASH,			// KeyCode::SLASH
+	SDLK_0,				// KeyCode::ZERO
+	SDLK_1,				// KeyCode::ONE
+	SDLK_2,				// KeyCode::TWO
+	SDLK_3,				// KeyCode::THREE
+	SDLK_4,				// KeyCode::FOUR
+	SDLK_5,				// KeyCode::FIVE
+	SDLK_6,				// KeyCode::SIX
+	SDLK_7,				// KeyCode::SEVEN
+	SDLK_8,				// KeyCode::EIGHT
+	SDLK_9,				// KeyCode::NINE
+	SDLK_COLON,			// KeyCode::COLON
+	SDLK_SEMICOLON,		// KeyCode::SEMI_COLON
+	SDLK_LESS,			// KeyCode::LESS
+	SDLK_EQUALS,		// KeyCode::EQUAL
+	SDLK_GREATER,		// KeyCode::GREATER
+	SDLK_QUESTION,		// KeyCode::QUESTION
+	SDLK_AT,			// KeyCode::AT
+	'A',				// KeyCode::A
+	'B',				// KeyCode::B
+	'C',				// KeyCode::C
+	'D',				// KeyCode::D
+	'E',				// KeyCode::E
+	'F',				// KeyCode::F
+	'G',				// KeyCode::G
+	'H',				// KeyCode::H
+	'I',				// KeyCode::I
+	'J',				// KeyCode::J
+	'K',				// KeyCode::K
+	'L',				// KeyCode::L
+	'M',				// KeyCode::M
+	'N',				// KeyCode::N
+	'O',				// KeyCode::O
+	'P',				// KeyCode::P
+	'Q',				// KeyCode::Q
+	'R',				// KeyCode::R
+	'S',				// KeyCode::S
+	'T',				// KeyCode::T
+	'U',				// KeyCode::U
+	'V',				// KeyCode::V
+	'W',				// KeyCode::W
+	'X',				// KeyCode::X
+	'Y',				// KeyCode::Y
+	'Z',				// KeyCode::Z
+	SDLK_LEFTBRACKET,	// KeyCode::LEFT_BRACKET
+	SDLK_BACKSLASH,		// KeyCode::BACK_SLASH
+	SDLK_RIGHTBRACKET,	// KeyCode::RIGHT_BRACKET
+	SDLK_CARET,			// KeyCode::CARET
+	SDLK_UNDERSCORE,	// KeyCode::UNDER_SCORE
+	SDLK_BACKQUOTE,		// KeyCode::BACK_QUOTE
+	SDLK_DELETE,		// KeyCode::DELETE_
+	SDLK_WORLD_0,		// KeyCode::WORLD_0
+	SDLK_WORLD_1,		// KeyCode::WORLD_1
+	SDLK_WORLD_2,		// KeyCode::WORLD_2
+	SDLK_WORLD_3,		// KeyCode::WORLD_3
+	SDLK_WORLD_4,		// KeyCode::WORLD_4
+	SDLK_WORLD_5,		// KeyCode::WORLD_5
+	SDLK_WORLD_6,		// KeyCode::WORLD_6
+	SDLK_WORLD_7,		// KeyCode::WORLD_7
+	SDLK_WORLD_8,		// KeyCode::WORLD_8
+	SDLK_WORLD_9,		// KeyCode::WORLD_9
+	SDLK_WORLD_10,		// KeyCode::WORLD_10
+	SDLK_WORLD_11,		// KeyCode::WORLD_11
+	SDLK_WORLD_12,		// KeyCode::WORLD_12
+	SDLK_WORLD_13,		// KeyCode::WORLD_13
+	SDLK_WORLD_14,		// KeyCode::WORLD_14
+	SDLK_WORLD_15,		// KeyCode::WORLD_15
+	SDLK_WORLD_16,		// KeyCode::WORLD_16
+	SDLK_WORLD_17,		// KeyCode::WORLD_17
+	SDLK_WORLD_18,		// KeyCode::WORLD_18
+	SDLK_WORLD_19,		// KeyCode::WORLD_19
+	SDLK_WORLD_20,		// KeyCode::WORLD_20
+	SDLK_WORLD_21,		// KeyCode::WORLD_21
+	SDLK_WORLD_22,		// KeyCode::WORLD_22
+	SDLK_WORLD_23,		// KeyCode::WORLD_23
+	SDLK_WORLD_24,		// KeyCode::WORLD_24
+	SDLK_WORLD_25,		// KeyCode::WORLD_25
+	SDLK_WORLD_26,		// KeyCode::WORLD_26
+	SDLK_WORLD_27,		// KeyCode::WORLD_27
+	SDLK_WORLD_28,		// KeyCode::WORLD_28
+	SDLK_WORLD_29,		// KeyCode::WORLD_29
+	SDLK_WORLD_30,		// KeyCode::WORLD_30
+	SDLK_WORLD_31,		// KeyCode::WORLD_31
+	SDLK_WORLD_32,		// KeyCode::WORLD_32
+	SDLK_WORLD_33,		// KeyCode::WORLD_33
+	SDLK_WORLD_34,		// KeyCode::WORLD_34
+	SDLK_WORLD_35,		// KeyCode::WORLD_35
+	SDLK_WORLD_36,		// KeyCode::WORLD_36
+	SDLK_WORLD_37,		// KeyCode::WORLD_37
+	SDLK_WORLD_38,		// KeyCode::WORLD_38
+	SDLK_WORLD_39,		// KeyCode::WORLD_39
+	SDLK_WORLD_40,		// KeyCode::WORLD_40
+	SDLK_WORLD_41,		// KeyCode::WORLD_41
+	SDLK_WORLD_42,		// KeyCode::WORLD_42
+	SDLK_WORLD_43,		// KeyCode::WORLD_43
+	SDLK_WORLD_44,		// KeyCode::WORLD_44
+	SDLK_WORLD_45,		// KeyCode::WORLD_45
+	SDLK_WORLD_46,		// KeyCode::WORLD_46
+	SDLK_WORLD_47,		// KeyCode::WORLD_47
+	SDLK_WORLD_48,		// KeyCode::WORLD_48
+	SDLK_WORLD_49,		// KeyCode::WORLD_49
+	SDLK_WORLD_50,		// KeyCode::WORLD_50
+	SDLK_WORLD_51,		// KeyCode::WORLD_51
+	SDLK_WORLD_52,		// KeyCode::WORLD_52
+	SDLK_WORLD_53,		// KeyCode::WORLD_53
+	SDLK_WORLD_54,		// KeyCode::WORLD_54
+	SDLK_WORLD_55,		// KeyCode::WORLD_55
+	SDLK_WORLD_56,		// KeyCode::WORLD_56
+	SDLK_WORLD_57,		// KeyCode::WORLD_57
+	SDLK_WORLD_58,		// KeyCode::WORLD_58
+	SDLK_WORLD_59,		// KeyCode::WORLD_59
+	SDLK_WORLD_60,		// KeyCode::WORLD_60
+	SDLK_WORLD_61,		// KeyCode::WORLD_61
+	SDLK_WORLD_62,		// KeyCode::WORLD_62
+	SDLK_WORLD_63,		// KeyCode::WORLD_63
+	SDLK_WORLD_64,		// KeyCode::WORLD_64
+	SDLK_WORLD_65,		// KeyCode::WORLD_65
+	SDLK_WORLD_66,		// KeyCode::WORLD_66
+	SDLK_WORLD_67,		// KeyCode::WORLD_67
+	SDLK_WORLD_68,		// KeyCode::WORLD_68
+	SDLK_WORLD_69,		// KeyCode::WORLD_69
+	SDLK_WORLD_70,		// KeyCode::WORLD_70
+	SDLK_WORLD_71,		// KeyCode::WORLD_71
+	SDLK_WORLD_72,		// KeyCode::WORLD_72
+	SDLK_WORLD_73,		// KeyCode::WORLD_73
+	SDLK_WORLD_74,		// KeyCode::WORLD_74
+	SDLK_WORLD_75,		// KeyCode::WORLD_75
+	SDLK_WORLD_76,		// KeyCode::WORLD_76
+	SDLK_WORLD_77,		// KeyCode::WORLD_77
+	SDLK_WORLD_78,		// KeyCode::WORLD_78
+	SDLK_WORLD_79,		// KeyCode::WORLD_79
+	SDLK_WORLD_80,		// KeyCode::WORLD_80
+	SDLK_WORLD_81,		// KeyCode::WORLD_81
+	SDLK_WORLD_82,		// KeyCode::WORLD_82
+	SDLK_WORLD_83,		// KeyCode::WORLD_83
+	SDLK_WORLD_84,		// KeyCode::WORLD_84
+	SDLK_WORLD_85,		// KeyCode::WORLD_85
+	SDLK_WORLD_86,		// KeyCode::WORLD_86
+	SDLK_WORLD_87,		// KeyCode::WORLD_87
+	SDLK_WORLD_88,		// KeyCode::WORLD_88
+	SDLK_WORLD_89,		// KeyCode::WORLD_89
+	SDLK_WORLD_90,		// KeyCode::WORLD_90
+	SDLK_WORLD_91,		// KeyCode::WORLD_91
+	SDLK_WORLD_92,		// KeyCode::WORLD_92
+	SDLK_WORLD_93,		// KeyCode::WORLD_93
+	SDLK_WORLD_94,		// KeyCode::WORLD_94
+	SDLK_WORLD_95,		// KeyCode::WORLD_95
+	SDLK_KP0,			// KeyCode::KEYPAD_0
+	SDLK_KP1,			// KeyCode::KEYPAD_1
+	SDLK_KP2,			// KeyCode::KEYPAD_2
+	SDLK_KP3,			// KeyCode::KEYPAD_3
+	SDLK_KP4,			// KeyCode::KEYPAD_4
+	SDLK_KP5,			// KeyCode::KEYPAD_5
+	SDLK_KP6,			// KeyCode::KEYPAD_6
+	SDLK_KP7,			// KeyCode::KEYPAD_7
+	SDLK_KP8,			// KeyCode::KEYPAD_8
+	SDLK_KP9,			// KeyCode::KEYPAD_9
+	SDLK_KP_PERIOD,		// KeyCode::KEYPAD_PERIOD
+	SDLK_KP_DIVIDE,		// KeyCode::KEYPAD_DIVIDE
+	SDLK_KP_MULTIPLY,	// KeyCode::KEYPAD_MULTIPLY
+	SDLK_KP_MINUS,		// KeyCode::KEYPAD_MINUS
+	SDLK_KP_PLUS,		// KeyCode::KEYPAD_PLUS
+	SDLK_KP_ENTER,		// KeyCode::KEYPAD_ENTER
+	SDLK_KP_EQUALS,		// KeyCode::KEYPAD_EQUAL
+	SDLK_UP,			// KeyCode::ARROW_UP
+	SDLK_DOWN,			// KeyCode::ARROW_DOWN
+	SDLK_RIGHT,			// KeyCode::ARROW_RIGHT
+	SDLK_LEFT,			// KeyCode::ARROW_LEFT
+	SDLK_INSERT,		// KeyCode::INSERT
+	SDLK_HOME,			// KeyCode::HOME
+	SDLK_END,			// KeyCode::END
+	SDLK_PAGEUP,		// KeyCode::PAGE_UP
+	SDLK_PAGEDOWN,		// KeyCode::PAGE_DOWN
+	SDLK_F1,			// KeyCode::FUNCTION_1
+	SDLK_F2,			// KeyCode::FUNCTION_2
+	SDLK_F3,			// KeyCode::FUNCTION_3
+	SDLK_F4,			// KeyCode::FUNCTION_4
+	SDLK_F5,			// KeyCode::FUNCTION_5
+	SDLK_F6,			// KeyCode::FUNCTION_6
+	SDLK_F7,			// KeyCode::FUNCTION_7
+	SDLK_F8,			// KeyCode::FUNCTION_8
+	SDLK_F9,			// KeyCode::FUNCTION_9
+	SDLK_F10,			// KeyCode::FUNCTION_10
+	SDLK_F11,			// KeyCode::FUNCTION_11
+	SDLK_F12,			// KeyCode::FUNCTION_12
+	SDLK_F13,			// KeyCode::FUNCTION_13
+	SDLK_F14,			// KeyCode::FUNCTION_14
+	SDLK_F15,			// KeyCode::FUNCTION_15
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_16
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_17
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_18
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_19
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_20
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_21
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_22
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_23
+	SDLK_UNKNOWN,		// KeyCode::FUNCTION_24
+	SDLK_NUMLOCK,		// KeyCode::NUM_LOCK
+	SDLK_CAPSLOCK,		// KeyCode::CAPS_LOCK
+	SDLK_SCROLLOCK,		// KeyCode::SCROLL_LOCK
+	SDLK_LSHIFT,		// KeyCode::LEFT_SHIFT
+	SDLK_RSHIFT,		// KeyCode::RIGHT_SHIFT
+	SDLK_LCTRL,			// KeyCode::LEFT_CTRL
+	SDLK_RCTRL,			// KeyCode::RIGHT_CTRL
+	SDLK_LALT,			// KeyCode::LEFT_ALT
+	SDLK_RALT,			// KeyCode::RIGHT_ALT
+	SDLK_LMETA,			// KeyCode::LEFT_META
+	SDLK_RMETA,			// KeyCode::RIGHT_META
+	SDLK_RSUPER,		// KeyCode::RIGHT_SUPER
+	SDLK_LSUPER,		// KeyCode::LEFT_SUPER
+	SDLK_MODE,			// KeyCode::MODE
+	SDLK_COMPOSE,		// KeyCode::COMPOSE
+	SDLK_HELP,			// KeyCode::HELP
+	SDLK_PRINT,			// KeyCode::PRINT
+	SDLK_SYSREQ,		// KeyCode::SYS_REQ
+	SDLK_BREAK,			// KeyCode::BREAK
+	SDLK_MENU,			// KeyCode::MENU
+	SDLK_POWER,			// KeyCode::POWER
+	SDLK_EURO,			// KeyCode::EURO
+	SDLK_UNDO,			// KeyCode::UNDO
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_BACK
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_FORWARD
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_REFRESH
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_STOP
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_SEARCH
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_FAVORITES
+	SDLK_UNKNOWN,		// KeyCode::BROWSER_HOME
+	SDLK_UNKNOWN,		// KeyCode::VOLUME_MUTE
+	SDLK_UNKNOWN,		// KeyCode::VOLUME_DOWN
+	SDLK_UNKNOWN,		// KeyCode::VOLUME_UP
+	SDLK_UNKNOWN,		// KeyCode::MEDIA_NEXT
+	SDLK_UNKNOWN,		// KeyCode::MEDIA_PREV
+	SDLK_UNKNOWN,		// KeyCode::MEDIA_STOP
+	SDLK_UNKNOWN,		// KeyCode::MEDIA_PLAY_PAUSE
+	SDLK_UNKNOWN,		// KeyCode::LAUNCH_MAIL
+	SDLK_UNKNOWN,		// KeyCode::LAUNCH_MEDIA
+	SDLK_UNKNOWN,		// KeyCode::LAUNCH_APP1
+	SDLK_UNKNOWN,		// KeyCode::LAUNCH_APP2
+	SDLK_UNKNOWN,		// KeyCode::PLAY
+	SDLK_UNKNOWN		// KeyCode::ZOOM
 };
 
 #pragma pack(pop)
 
 void Input::verifyTranslationTables() {
 	// verify integrity of SDL to KeyCode table
-	assert(native2kc[SDLK_UNKNOWN] == keyUnknown);
-	assert(native2kc[SDLK_BACKSPACE] == keyBackspace);
-	assert(native2kc[SDLK_TAB] == keyTab);
-	assert(native2kc[SDLK_CLEAR] == keyClear);
-	assert(native2kc[SDLK_RETURN] == keyReturn);
-	assert(native2kc[SDLK_PAUSE] == keyPause);
-	assert(native2kc[SDLK_ESCAPE] == keyEscape);
-	assert(native2kc[SDLK_SPACE] == keySpace);
-	assert(native2kc[SDLK_EXCLAIM] == keyExclaim);
-	assert(native2kc[SDLK_QUOTEDBL] == keyQuoteDbl);
-	assert(native2kc[SDLK_HASH] == keyHash);
-	assert(native2kc[SDLK_DOLLAR] == keyDollar);
-	assert(native2kc[SDLK_AMPERSAND] == keyAmpersand);
-	assert(native2kc[SDLK_QUOTE] == keyQuote);
-	assert(native2kc[SDLK_LEFTPAREN] == keyLeftParen);
-	assert(native2kc[SDLK_RIGHTPAREN] == keyRightParen);
-	assert(native2kc[SDLK_ASTERISK] == keyAsterisk);
-	assert(native2kc[SDLK_PLUS] == keyPlus);
-	assert(native2kc[SDLK_COMMA] == keyComma);
-	assert(native2kc[SDLK_MINUS] == keyMinus);
-	assert(native2kc[SDLK_PERIOD] == keyPeriod);
-	assert(native2kc[SDLK_SLASH] == keySlash);
-	assert(native2kc[SDLK_0] == key0);
-	assert(native2kc[SDLK_1] == key1);
-	assert(native2kc[SDLK_2] == key2);
-	assert(native2kc[SDLK_3] == key3);
-	assert(native2kc[SDLK_4] == key4);
-	assert(native2kc[SDLK_5] == key5);
-	assert(native2kc[SDLK_6] == key6);
-	assert(native2kc[SDLK_7] == key7);
-	assert(native2kc[SDLK_8] == key8);
-	assert(native2kc[SDLK_9] == key9);
-	assert(native2kc[SDLK_COLON] == keyColon);
-	assert(native2kc[SDLK_SEMICOLON] == keySemicolon);
-	assert(native2kc[SDLK_LESS] == keyLess);
-	assert(native2kc[SDLK_EQUALS] == keyEquals);
-	assert(native2kc[SDLK_GREATER] == keyGreater);
-	assert(native2kc[SDLK_QUESTION] == keyQuestion);
-	assert(native2kc[SDLK_AT] == keyAt);
-	assert(native2kc['A'] == keyA);
-	assert(native2kc['B'] == keyB);
-	assert(native2kc['C'] == keyC);
-	assert(native2kc['D'] == keyD);
-	assert(native2kc['E'] == keyE);
-	assert(native2kc['F'] == keyF);
-	assert(native2kc['G'] == keyG);
-	assert(native2kc['H'] == keyH);
-	assert(native2kc['I'] == keyI);
-	assert(native2kc['J'] == keyJ);
-	assert(native2kc['K'] == keyK);
-	assert(native2kc['L'] == keyL);
-	assert(native2kc['M'] == keyM);
-	assert(native2kc['N'] == keyN);
-	assert(native2kc['O'] == keyO);
-	assert(native2kc['P'] == keyP);
-	assert(native2kc['Q'] == keyQ);
-	assert(native2kc['R'] == keyR);
-	assert(native2kc['S'] == keyS);
-	assert(native2kc['T'] == keyT);
-	assert(native2kc['U'] == keyU);
-	assert(native2kc['V'] == keyV);
-	assert(native2kc['W'] == keyW);
-	assert(native2kc['X'] == keyX);
-	assert(native2kc['Y'] == keyY);
-	assert(native2kc['Z'] == keyZ);
-	assert(native2kc[SDLK_LEFTBRACKET] == keyLeftBracket);
-	assert(native2kc[SDLK_BACKSLASH] == keyBackslash);
-	assert(native2kc[SDLK_RIGHTBRACKET] == keyRightBracket);
-	assert(native2kc[SDLK_CARET] == keyCaret);
-	assert(native2kc[SDLK_UNDERSCORE] == keyUnderscore);
-	assert(native2kc[SDLK_BACKQUOTE] == keyBackquote);
-	assert(native2kc[SDLK_a] == keyA);
-	assert(native2kc[SDLK_b] == keyB);
-	assert(native2kc[SDLK_c] == keyC);
-	assert(native2kc[SDLK_d] == keyD);
-	assert(native2kc[SDLK_e] == keyE);
-	assert(native2kc[SDLK_f] == keyF);
-	assert(native2kc[SDLK_g] == keyG);
-	assert(native2kc[SDLK_h] == keyH);
-	assert(native2kc[SDLK_i] == keyI);
-	assert(native2kc[SDLK_j] == keyJ);
-	assert(native2kc[SDLK_k] == keyK);
-	assert(native2kc[SDLK_l] == keyL);
-	assert(native2kc[SDLK_m] == keyM);
-	assert(native2kc[SDLK_n] == keyN);
-	assert(native2kc[SDLK_o] == keyO);
-	assert(native2kc[SDLK_p] == keyP);
-	assert(native2kc[SDLK_q] == keyQ);
-	assert(native2kc[SDLK_r] == keyR);
-	assert(native2kc[SDLK_s] == keyS);
-	assert(native2kc[SDLK_t] == keyT);
-	assert(native2kc[SDLK_u] == keyU);
-	assert(native2kc[SDLK_v] == keyV);
-	assert(native2kc[SDLK_w] == keyW);
-	assert(native2kc[SDLK_x] == keyX);
-	assert(native2kc[SDLK_y] == keyY);
-	assert(native2kc[SDLK_z] == keyZ);
-	assert(native2kc[SDLK_DELETE] == keyDelete);
-	assert(native2kc[SDLK_DELETE] == keyDelete);
-	assert(native2kc[SDLK_WORLD_0] == keyWorld0);
-	assert(native2kc[SDLK_WORLD_1] == keyWorld1);
-	assert(native2kc[SDLK_WORLD_2] == keyWorld2);
-	assert(native2kc[SDLK_WORLD_3] == keyWorld3);
-	assert(native2kc[SDLK_WORLD_4] == keyWorld4);
-	assert(native2kc[SDLK_WORLD_5] == keyWorld5);
-	assert(native2kc[SDLK_WORLD_6] == keyWorld6);
-	assert(native2kc[SDLK_WORLD_7] == keyWorld7);
-	assert(native2kc[SDLK_WORLD_8] == keyWorld8);
-	assert(native2kc[SDLK_WORLD_9] == keyWorld9);
-	assert(native2kc[SDLK_WORLD_10] == keyWorld10);
-	assert(native2kc[SDLK_WORLD_11] == keyWorld11);
-	assert(native2kc[SDLK_WORLD_12] == keyWorld12);
-	assert(native2kc[SDLK_WORLD_13] == keyWorld13);
-	assert(native2kc[SDLK_WORLD_14] == keyWorld14);
-	assert(native2kc[SDLK_WORLD_15] == keyWorld15);
-	assert(native2kc[SDLK_WORLD_16] == keyWorld16);
-	assert(native2kc[SDLK_WORLD_17] == keyWorld17);
-	assert(native2kc[SDLK_WORLD_18] == keyWorld18);
-	assert(native2kc[SDLK_WORLD_19] == keyWorld19);
-	assert(native2kc[SDLK_WORLD_20] == keyWorld20);
-	assert(native2kc[SDLK_WORLD_21] == keyWorld21);
-	assert(native2kc[SDLK_WORLD_22] == keyWorld22);
-	assert(native2kc[SDLK_WORLD_23] == keyWorld23);
-	assert(native2kc[SDLK_WORLD_24] == keyWorld24);
-	assert(native2kc[SDLK_WORLD_25] == keyWorld25);
-	assert(native2kc[SDLK_WORLD_26] == keyWorld26);
-	assert(native2kc[SDLK_WORLD_27] == keyWorld27);
-	assert(native2kc[SDLK_WORLD_28] == keyWorld28);
-	assert(native2kc[SDLK_WORLD_29] == keyWorld29);
-	assert(native2kc[SDLK_WORLD_30] == keyWorld30);
-	assert(native2kc[SDLK_WORLD_31] == keyWorld31);
-	assert(native2kc[SDLK_WORLD_32] == keyWorld32);
-	assert(native2kc[SDLK_WORLD_33] == keyWorld33);
-	assert(native2kc[SDLK_WORLD_34] == keyWorld34);
-	assert(native2kc[SDLK_WORLD_35] == keyWorld35);
-	assert(native2kc[SDLK_WORLD_36] == keyWorld36);
-	assert(native2kc[SDLK_WORLD_37] == keyWorld37);
-	assert(native2kc[SDLK_WORLD_38] == keyWorld38);
-	assert(native2kc[SDLK_WORLD_39] == keyWorld39);
-	assert(native2kc[SDLK_WORLD_40] == keyWorld40);
-	assert(native2kc[SDLK_WORLD_41] == keyWorld41);
-	assert(native2kc[SDLK_WORLD_42] == keyWorld42);
-	assert(native2kc[SDLK_WORLD_43] == keyWorld43);
-	assert(native2kc[SDLK_WORLD_44] == keyWorld44);
-	assert(native2kc[SDLK_WORLD_45] == keyWorld45);
-	assert(native2kc[SDLK_WORLD_46] == keyWorld46);
-	assert(native2kc[SDLK_WORLD_47] == keyWorld47);
-	assert(native2kc[SDLK_WORLD_48] == keyWorld48);
-	assert(native2kc[SDLK_WORLD_49] == keyWorld49);
-	assert(native2kc[SDLK_WORLD_50] == keyWorld50);
-	assert(native2kc[SDLK_WORLD_51] == keyWorld51);
-	assert(native2kc[SDLK_WORLD_52] == keyWorld52);
-	assert(native2kc[SDLK_WORLD_53] == keyWorld53);
-	assert(native2kc[SDLK_WORLD_54] == keyWorld54);
-	assert(native2kc[SDLK_WORLD_55] == keyWorld55);
-	assert(native2kc[SDLK_WORLD_56] == keyWorld56);
-	assert(native2kc[SDLK_WORLD_57] == keyWorld57);
-	assert(native2kc[SDLK_WORLD_58] == keyWorld58);
-	assert(native2kc[SDLK_WORLD_59] == keyWorld59);
-	assert(native2kc[SDLK_WORLD_60] == keyWorld60);
-	assert(native2kc[SDLK_WORLD_61] == keyWorld61);
-	assert(native2kc[SDLK_WORLD_62] == keyWorld62);
-	assert(native2kc[SDLK_WORLD_63] == keyWorld63);
-	assert(native2kc[SDLK_WORLD_64] == keyWorld64);
-	assert(native2kc[SDLK_WORLD_65] == keyWorld65);
-	assert(native2kc[SDLK_WORLD_66] == keyWorld66);
-	assert(native2kc[SDLK_WORLD_67] == keyWorld67);
-	assert(native2kc[SDLK_WORLD_68] == keyWorld68);
-	assert(native2kc[SDLK_WORLD_69] == keyWorld69);
-	assert(native2kc[SDLK_WORLD_70] == keyWorld70);
-	assert(native2kc[SDLK_WORLD_71] == keyWorld71);
-	assert(native2kc[SDLK_WORLD_72] == keyWorld72);
-	assert(native2kc[SDLK_WORLD_73] == keyWorld73);
-	assert(native2kc[SDLK_WORLD_74] == keyWorld74);
-	assert(native2kc[SDLK_WORLD_75] == keyWorld75);
-	assert(native2kc[SDLK_WORLD_76] == keyWorld76);
-	assert(native2kc[SDLK_WORLD_77] == keyWorld77);
-	assert(native2kc[SDLK_WORLD_78] == keyWorld78);
-	assert(native2kc[SDLK_WORLD_79] == keyWorld79);
-	assert(native2kc[SDLK_WORLD_80] == keyWorld80);
-	assert(native2kc[SDLK_WORLD_81] == keyWorld81);
-	assert(native2kc[SDLK_WORLD_82] == keyWorld82);
-	assert(native2kc[SDLK_WORLD_83] == keyWorld83);
-	assert(native2kc[SDLK_WORLD_84] == keyWorld84);
-	assert(native2kc[SDLK_WORLD_85] == keyWorld85);
-	assert(native2kc[SDLK_WORLD_86] == keyWorld86);
-	assert(native2kc[SDLK_WORLD_87] == keyWorld87);
-	assert(native2kc[SDLK_WORLD_88] == keyWorld88);
-	assert(native2kc[SDLK_WORLD_89] == keyWorld89);
-	assert(native2kc[SDLK_WORLD_90] == keyWorld90);
-	assert(native2kc[SDLK_WORLD_91] == keyWorld91);
-	assert(native2kc[SDLK_WORLD_92] == keyWorld92);
-	assert(native2kc[SDLK_WORLD_93] == keyWorld93);
-	assert(native2kc[SDLK_WORLD_94] == keyWorld94);
-	assert(native2kc[SDLK_WORLD_95] == keyWorld95);
-	assert(native2kc[SDLK_KP0] == keyKP0);
-	assert(native2kc[SDLK_KP1] == keyKP1);
-	assert(native2kc[SDLK_KP2] == keyKP2);
-	assert(native2kc[SDLK_KP3] == keyKP3);
-	assert(native2kc[SDLK_KP4] == keyKP4);
-	assert(native2kc[SDLK_KP5] == keyKP5);
-	assert(native2kc[SDLK_KP6] == keyKP6);
-	assert(native2kc[SDLK_KP7] == keyKP7);
-	assert(native2kc[SDLK_KP8] == keyKP8);
-	assert(native2kc[SDLK_KP9] == keyKP9);
-	assert(native2kc[SDLK_KP_PERIOD] == keyKPPeriod);
-	assert(native2kc[SDLK_KP_DIVIDE] == keyKPDivide);
-	assert(native2kc[SDLK_KP_MULTIPLY] == keyKPMultiply);
-	assert(native2kc[SDLK_KP_MINUS] == keyKPMinus);
-	assert(native2kc[SDLK_KP_PLUS] == keyKPPlus);
-	assert(native2kc[SDLK_KP_ENTER] == keyKPEnter);
-	assert(native2kc[SDLK_KP_EQUALS] == keyKPEquals);
-	assert(native2kc[SDLK_UP] == keyUp);
-	assert(native2kc[SDLK_DOWN] == keyDown);
-	assert(native2kc[SDLK_RIGHT] == keyRight);
-	assert(native2kc[SDLK_LEFT] == keyLeft);
-	assert(native2kc[SDLK_INSERT] == keyInsert);
-	assert(native2kc[SDLK_HOME] == keyHome);
-	assert(native2kc[SDLK_END] == keyEnd);
-	assert(native2kc[SDLK_PAGEUP] == keyPageUp);
-	assert(native2kc[SDLK_PAGEDOWN] == keyPageDown);
-	assert(native2kc[SDLK_F1] == keyF1);
-	assert(native2kc[SDLK_F2] == keyF2);
-	assert(native2kc[SDLK_F3] == keyF3);
-	assert(native2kc[SDLK_F4] == keyF4);
-	assert(native2kc[SDLK_F5] == keyF5);
-	assert(native2kc[SDLK_F6] == keyF6);
-	assert(native2kc[SDLK_F7] == keyF7);
-	assert(native2kc[SDLK_F8] == keyF8);
-	assert(native2kc[SDLK_F9] == keyF9);
-	assert(native2kc[SDLK_F10] == keyF10);
-	assert(native2kc[SDLK_F11] == keyF11);
-	assert(native2kc[SDLK_F12] == keyF12);
-	assert(native2kc[SDLK_F13] == keyF13);
-	assert(native2kc[SDLK_F14] == keyF14);
-	assert(native2kc[SDLK_F15] == keyF15);
-	assert(native2kc[SDLK_NUMLOCK] == keyNumLock);
-	assert(native2kc[SDLK_CAPSLOCK] == keyCapsLock);
-	assert(native2kc[SDLK_SCROLLOCK] == keyScrollLock);
-	assert(native2kc[SDLK_RSHIFT] == keyRShift);
-	assert(native2kc[SDLK_LSHIFT] == keyLShift);
-	assert(native2kc[SDLK_RCTRL] == keyRCtrl);
-	assert(native2kc[SDLK_LCTRL] == keyLCtrl);
-	assert(native2kc[SDLK_RALT] == keyRAlt);
-	assert(native2kc[SDLK_LALT] == keyLAlt);
-	assert(native2kc[SDLK_RMETA] == keyRMeta);
-	assert(native2kc[SDLK_LMETA] == keyLMeta);
-	assert(native2kc[SDLK_LSUPER] == keyLSuper);
-	assert(native2kc[SDLK_RSUPER] == keyRSuper);
-	assert(native2kc[SDLK_MODE] == keyMode);
-	assert(native2kc[SDLK_COMPOSE] == keyCompose);
-	assert(native2kc[SDLK_HELP] == keyHelp);
-	assert(native2kc[SDLK_PRINT] == keyPrint);
-	assert(native2kc[SDLK_SYSREQ] == keySysreq);
-	assert(native2kc[SDLK_BREAK] == keyBreak);
-	assert(native2kc[SDLK_MENU] == keyMenu);
-	assert(native2kc[SDLK_POWER] == keyPower);
-	assert(native2kc[SDLK_EURO] == keyEuro);
-	assert(native2kc[SDLK_UNDO] == keyUndo);
-	assert(kc2native[keyUnknown] == SDLK_UNKNOWN);
-	assert(kc2native[keyBackspace] == SDLK_BACKSPACE);
-	assert(kc2native[keyTab] == SDLK_TAB);
-	assert(kc2native[keyClear] == SDLK_CLEAR);
-	assert(kc2native[keyReturn] == SDLK_RETURN);
-	assert(kc2native[keyPause] == SDLK_PAUSE);
-	assert(kc2native[keyEscape] == SDLK_ESCAPE);
-	assert(kc2native[keySpace] == SDLK_SPACE);
-	assert(kc2native[keyExclaim] == SDLK_EXCLAIM);
-	assert(kc2native[keyQuoteDbl] == SDLK_QUOTEDBL);
-	assert(kc2native[keyHash] == SDLK_HASH);
-	assert(kc2native[keyDollar] == SDLK_DOLLAR);
-	assert(kc2native[keyAmpersand] == SDLK_AMPERSAND);
-	assert(kc2native[keyQuote] == SDLK_QUOTE);
-	assert(kc2native[keyLeftParen] == SDLK_LEFTPAREN);
-	assert(kc2native[keyRightParen] == SDLK_RIGHTPAREN);
-	assert(kc2native[keyAsterisk] == SDLK_ASTERISK);
-	assert(kc2native[keyPlus] == SDLK_PLUS);
-	assert(kc2native[keyComma] == SDLK_COMMA);
-	assert(kc2native[keyMinus] == SDLK_MINUS);
-	assert(kc2native[keyPeriod] == SDLK_PERIOD);
-	assert(kc2native[keySlash] == SDLK_SLASH);
-	assert(kc2native[key0] == SDLK_0);
-	assert(kc2native[key1] == SDLK_1);
-	assert(kc2native[key2] == SDLK_2);
-	assert(kc2native[key3] == SDLK_3);
-	assert(kc2native[key4] == SDLK_4);
-	assert(kc2native[key5] == SDLK_5);
-	assert(kc2native[key6] == SDLK_6);
-	assert(kc2native[key7] == SDLK_7);
-	assert(kc2native[key8] == SDLK_8);
-	assert(kc2native[key9] == SDLK_9);
-	assert(kc2native[keyColon] == SDLK_COLON);
-	assert(kc2native[keySemicolon] == SDLK_SEMICOLON);
-	assert(kc2native[keyLess] == SDLK_LESS);
-	assert(kc2native[keyEquals] == SDLK_EQUALS);
-	assert(kc2native[keyGreater] == SDLK_GREATER);
-	assert(kc2native[keyQuestion] == SDLK_QUESTION);
-	assert(kc2native[keyAt] == SDLK_AT);
-	assert(kc2native[keyA] == 'A');
-	assert(kc2native[keyB] == 'B');
-	assert(kc2native[keyC] == 'C');
-	assert(kc2native[keyD] == 'D');
-	assert(kc2native[keyE] == 'E');
-	assert(kc2native[keyF] == 'F');
-	assert(kc2native[keyG] == 'G');
-	assert(kc2native[keyH] == 'H');
-	assert(kc2native[keyI] == 'I');
-	assert(kc2native[keyJ] == 'J');
-	assert(kc2native[keyK] == 'K');
-	assert(kc2native[keyL] == 'L');
-	assert(kc2native[keyM] == 'M');
-	assert(kc2native[keyN] == 'N');
-	assert(kc2native[keyO] == 'O');
-	assert(kc2native[keyP] == 'P');
-	assert(kc2native[keyQ] == 'Q');
-	assert(kc2native[keyR] == 'R');
-	assert(kc2native[keyS] == 'S');
-	assert(kc2native[keyT] == 'T');
-	assert(kc2native[keyU] == 'U');
-	assert(kc2native[keyV] == 'V');
-	assert(kc2native[keyW] == 'W');
-	assert(kc2native[keyX] == 'X');
-	assert(kc2native[keyY] == 'Y');
-	assert(kc2native[keyZ] == 'Z');
-	assert(kc2native[keyLeftBracket] == SDLK_LEFTBRACKET);
-	assert(kc2native[keyBackslash] == SDLK_BACKSLASH);
-	assert(kc2native[keyRightBracket] == SDLK_RIGHTBRACKET);
-	assert(kc2native[keyCaret] == SDLK_CARET);
-	assert(kc2native[keyUnderscore] == SDLK_UNDERSCORE);
-	assert(kc2native[keyBackquote] == SDLK_BACKQUOTE);
-	assert(kc2native[keyDelete] == SDLK_DELETE);
-	assert(kc2native[keyWorld0] == SDLK_WORLD_0);
-	assert(kc2native[keyWorld1] == SDLK_WORLD_1);
-	assert(kc2native[keyWorld2] == SDLK_WORLD_2);
-	assert(kc2native[keyWorld3] == SDLK_WORLD_3);
-	assert(kc2native[keyWorld4] == SDLK_WORLD_4);
-	assert(kc2native[keyWorld5] == SDLK_WORLD_5);
-	assert(kc2native[keyWorld6] == SDLK_WORLD_6);
-	assert(kc2native[keyWorld7] == SDLK_WORLD_7);
-	assert(kc2native[keyWorld8] == SDLK_WORLD_8);
-	assert(kc2native[keyWorld9] == SDLK_WORLD_9);
-	assert(kc2native[keyWorld10] == SDLK_WORLD_10);
-	assert(kc2native[keyWorld11] == SDLK_WORLD_11);
-	assert(kc2native[keyWorld12] == SDLK_WORLD_12);
-	assert(kc2native[keyWorld13] == SDLK_WORLD_13);
-	assert(kc2native[keyWorld14] == SDLK_WORLD_14);
-	assert(kc2native[keyWorld15] == SDLK_WORLD_15);
-	assert(kc2native[keyWorld16] == SDLK_WORLD_16);
-	assert(kc2native[keyWorld17] == SDLK_WORLD_17);
-	assert(kc2native[keyWorld18] == SDLK_WORLD_18);
-	assert(kc2native[keyWorld19] == SDLK_WORLD_19);
-	assert(kc2native[keyWorld20] == SDLK_WORLD_20);
-	assert(kc2native[keyWorld21] == SDLK_WORLD_21);
-	assert(kc2native[keyWorld22] == SDLK_WORLD_22);
-	assert(kc2native[keyWorld23] == SDLK_WORLD_23);
-	assert(kc2native[keyWorld24] == SDLK_WORLD_24);
-	assert(kc2native[keyWorld25] == SDLK_WORLD_25);
-	assert(kc2native[keyWorld26] == SDLK_WORLD_26);
-	assert(kc2native[keyWorld27] == SDLK_WORLD_27);
-	assert(kc2native[keyWorld28] == SDLK_WORLD_28);
-	assert(kc2native[keyWorld29] == SDLK_WORLD_29);
-	assert(kc2native[keyWorld30] == SDLK_WORLD_30);
-	assert(kc2native[keyWorld31] == SDLK_WORLD_31);
-	assert(kc2native[keyWorld32] == SDLK_WORLD_32);
-	assert(kc2native[keyWorld33] == SDLK_WORLD_33);
-	assert(kc2native[keyWorld34] == SDLK_WORLD_34);
-	assert(kc2native[keyWorld35] == SDLK_WORLD_35);
-	assert(kc2native[keyWorld36] == SDLK_WORLD_36);
-	assert(kc2native[keyWorld37] == SDLK_WORLD_37);
-	assert(kc2native[keyWorld38] == SDLK_WORLD_38);
-	assert(kc2native[keyWorld39] == SDLK_WORLD_39);
-	assert(kc2native[keyWorld40] == SDLK_WORLD_40);
-	assert(kc2native[keyWorld41] == SDLK_WORLD_41);
-	assert(kc2native[keyWorld42] == SDLK_WORLD_42);
-	assert(kc2native[keyWorld43] == SDLK_WORLD_43);
-	assert(kc2native[keyWorld44] == SDLK_WORLD_44);
-	assert(kc2native[keyWorld45] == SDLK_WORLD_45);
-	assert(kc2native[keyWorld46] == SDLK_WORLD_46);
-	assert(kc2native[keyWorld47] == SDLK_WORLD_47);
-	assert(kc2native[keyWorld48] == SDLK_WORLD_48);
-	assert(kc2native[keyWorld49] == SDLK_WORLD_49);
-	assert(kc2native[keyWorld50] == SDLK_WORLD_50);
-	assert(kc2native[keyWorld51] == SDLK_WORLD_51);
-	assert(kc2native[keyWorld52] == SDLK_WORLD_52);
-	assert(kc2native[keyWorld53] == SDLK_WORLD_53);
-	assert(kc2native[keyWorld54] == SDLK_WORLD_54);
-	assert(kc2native[keyWorld55] == SDLK_WORLD_55);
-	assert(kc2native[keyWorld56] == SDLK_WORLD_56);
-	assert(kc2native[keyWorld57] == SDLK_WORLD_57);
-	assert(kc2native[keyWorld58] == SDLK_WORLD_58);
-	assert(kc2native[keyWorld59] == SDLK_WORLD_59);
-	assert(kc2native[keyWorld60] == SDLK_WORLD_60);
-	assert(kc2native[keyWorld61] == SDLK_WORLD_61);
-	assert(kc2native[keyWorld62] == SDLK_WORLD_62);
-	assert(kc2native[keyWorld63] == SDLK_WORLD_63);
-	assert(kc2native[keyWorld64] == SDLK_WORLD_64);
-	assert(kc2native[keyWorld65] == SDLK_WORLD_65);
-	assert(kc2native[keyWorld66] == SDLK_WORLD_66);
-	assert(kc2native[keyWorld67] == SDLK_WORLD_67);
-	assert(kc2native[keyWorld68] == SDLK_WORLD_68);
-	assert(kc2native[keyWorld69] == SDLK_WORLD_69);
-	assert(kc2native[keyWorld70] == SDLK_WORLD_70);
-	assert(kc2native[keyWorld71] == SDLK_WORLD_71);
-	assert(kc2native[keyWorld72] == SDLK_WORLD_72);
-	assert(kc2native[keyWorld73] == SDLK_WORLD_73);
-	assert(kc2native[keyWorld74] == SDLK_WORLD_74);
-	assert(kc2native[keyWorld75] == SDLK_WORLD_75);
-	assert(kc2native[keyWorld76] == SDLK_WORLD_76);
-	assert(kc2native[keyWorld77] == SDLK_WORLD_77);
-	assert(kc2native[keyWorld78] == SDLK_WORLD_78);
-	assert(kc2native[keyWorld79] == SDLK_WORLD_79);
-	assert(kc2native[keyWorld80] == SDLK_WORLD_80);
-	assert(kc2native[keyWorld81] == SDLK_WORLD_81);
-	assert(kc2native[keyWorld82] == SDLK_WORLD_82);
-	assert(kc2native[keyWorld83] == SDLK_WORLD_83);
-	assert(kc2native[keyWorld84] == SDLK_WORLD_84);
-	assert(kc2native[keyWorld85] == SDLK_WORLD_85);
-	assert(kc2native[keyWorld86] == SDLK_WORLD_86);
-	assert(kc2native[keyWorld87] == SDLK_WORLD_87);
-	assert(kc2native[keyWorld88] == SDLK_WORLD_88);
-	assert(kc2native[keyWorld89] == SDLK_WORLD_89);
-	assert(kc2native[keyWorld90] == SDLK_WORLD_90);
-	assert(kc2native[keyWorld91] == SDLK_WORLD_91);
-	assert(kc2native[keyWorld92] == SDLK_WORLD_92);
-	assert(kc2native[keyWorld93] == SDLK_WORLD_93);
-	assert(kc2native[keyWorld94] == SDLK_WORLD_94);
-	assert(kc2native[keyWorld95] == SDLK_WORLD_95);
-	assert(kc2native[keyKP0] == SDLK_KP0);
-	assert(kc2native[keyKP1] == SDLK_KP1);
-	assert(kc2native[keyKP2] == SDLK_KP2);
-	assert(kc2native[keyKP3] == SDLK_KP3);
-	assert(kc2native[keyKP4] == SDLK_KP4);
-	assert(kc2native[keyKP5] == SDLK_KP5);
-	assert(kc2native[keyKP6] == SDLK_KP6);
-	assert(kc2native[keyKP7] == SDLK_KP7);
-	assert(kc2native[keyKP8] == SDLK_KP8);
-	assert(kc2native[keyKP9] == SDLK_KP9);
-	assert(kc2native[keyKPPeriod] == SDLK_KP_PERIOD);
-	assert(kc2native[keyKPDivide] == SDLK_KP_DIVIDE);
-	assert(kc2native[keyKPMultiply] == SDLK_KP_MULTIPLY);
-	assert(kc2native[keyKPMinus] == SDLK_KP_MINUS);
-	assert(kc2native[keyKPPlus] == SDLK_KP_PLUS);
-	assert(kc2native[keyKPEnter] == SDLK_KP_ENTER);
-	assert(kc2native[keyKPEquals] == SDLK_KP_EQUALS);
-	assert(kc2native[keyUp] == SDLK_UP);
-	assert(kc2native[keyDown] == SDLK_DOWN);
-	assert(kc2native[keyRight] == SDLK_RIGHT);
-	assert(kc2native[keyLeft] == SDLK_LEFT);
-	assert(kc2native[keyInsert] == SDLK_INSERT);
-	assert(kc2native[keyHome] == SDLK_HOME);
-	assert(kc2native[keyEnd] == SDLK_END);
-	assert(kc2native[keyPageUp] == SDLK_PAGEUP);
-	assert(kc2native[keyPageDown] == SDLK_PAGEDOWN);
-	assert(kc2native[keyF1] == SDLK_F1);
-	assert(kc2native[keyF2] == SDLK_F2);
-	assert(kc2native[keyF3] == SDLK_F3);
-	assert(kc2native[keyF4] == SDLK_F4);
-	assert(kc2native[keyF5] == SDLK_F5);
-	assert(kc2native[keyF6] == SDLK_F6);
-	assert(kc2native[keyF7] == SDLK_F7);
-	assert(kc2native[keyF8] == SDLK_F8);
-	assert(kc2native[keyF9] == SDLK_F9);
-	assert(kc2native[keyF10] == SDLK_F10);
-	assert(kc2native[keyF11] == SDLK_F11);
-	assert(kc2native[keyF12] == SDLK_F12);
-	assert(kc2native[keyF13] == SDLK_F13);
-	assert(kc2native[keyF14] == SDLK_F14);
-	assert(kc2native[keyF15] == SDLK_F15);
-	assert(kc2native[keyNumLock] == SDLK_NUMLOCK);
-	assert(kc2native[keyCapsLock] == SDLK_CAPSLOCK);
-	assert(kc2native[keyScrollLock] == SDLK_SCROLLOCK);
-	assert(kc2native[keyLShift] == SDLK_LSHIFT);
-	assert(kc2native[keyRShift] == SDLK_RSHIFT);
-	assert(kc2native[keyLCtrl] == SDLK_LCTRL);
-	assert(kc2native[keyRCtrl] == SDLK_RCTRL);
-	assert(kc2native[keyLAlt] == SDLK_LALT);
-	assert(kc2native[keyRAlt] == SDLK_RALT);
-	assert(kc2native[keyLMeta] == SDLK_LMETA);
-	assert(kc2native[keyRMeta] == SDLK_RMETA);
-	assert(kc2native[keyRSuper] == SDLK_RSUPER);
-	assert(kc2native[keyLSuper] == SDLK_LSUPER);
-	assert(kc2native[keyMode] == SDLK_MODE);
-	assert(kc2native[keyCompose] == SDLK_COMPOSE);
-	assert(kc2native[keyHelp] == SDLK_HELP);
-	assert(kc2native[keyPrint] == SDLK_PRINT);
-	assert(kc2native[keySysreq] == SDLK_SYSREQ);
-	assert(kc2native[keyBreak] == SDLK_BREAK);
-	assert(kc2native[keyMenu] == SDLK_MENU);
-	assert(kc2native[keyPower] == SDLK_POWER);
-	assert(kc2native[keyEuro] == SDLK_EURO);
-	assert(kc2native[keyUndo] == SDLK_UNDO);
+	assert(native2kc[SDLK_UNKNOWN] == KeyCode::UNKNOWN);
+	assert(native2kc[SDLK_BACKSPACE] == KeyCode::BACK_SPACE);
+	assert(native2kc[SDLK_TAB] == KeyCode::TAB);
+	assert(native2kc[SDLK_CLEAR] == KeyCode::CLEAR);
+	assert(native2kc[SDLK_RETURN] == KeyCode::RETURN);
+	assert(native2kc[SDLK_PAUSE] == KeyCode::PAUSE);
+	assert(native2kc[SDLK_ESCAPE] == KeyCode::ESCAPE);
+	assert(native2kc[SDLK_SPACE] == KeyCode::SPACE);
+	assert(native2kc[SDLK_EXCLAIM] == KeyCode::EXCLAIM);
+	assert(native2kc[SDLK_QUOTEDBL] == KeyCode::DOUBLE_QUOTE);
+	assert(native2kc[SDLK_HASH] == KeyCode::HASH);
+	assert(native2kc[SDLK_DOLLAR] == KeyCode::DOLLAR);
+	assert(native2kc[SDLK_AMPERSAND] == KeyCode::AMPERSAND);
+	assert(native2kc[SDLK_QUOTE] == KeyCode::QUOTE);
+	assert(native2kc[SDLK_LEFTPAREN] == KeyCode::LEFT_PAREN);
+	assert(native2kc[SDLK_RIGHTPAREN] == KeyCode::RIGHT_PAREN);
+	assert(native2kc[SDLK_ASTERISK] == KeyCode::ASTERISK);
+	assert(native2kc[SDLK_PLUS] == KeyCode::PLUS);
+	assert(native2kc[SDLK_COMMA] == KeyCode::COMMA);
+	assert(native2kc[SDLK_MINUS] == KeyCode::MINUS);
+	assert(native2kc[SDLK_PERIOD] == KeyCode::PERIOD);
+	assert(native2kc[SDLK_SLASH] == KeyCode::SLASH);
+	assert(native2kc[SDLK_0] == KeyCode::ZERO);
+	assert(native2kc[SDLK_1] == KeyCode::ONE);
+	assert(native2kc[SDLK_2] == KeyCode::TWO);
+	assert(native2kc[SDLK_3] == KeyCode::THREE);
+	assert(native2kc[SDLK_4] == KeyCode::FOUR);
+	assert(native2kc[SDLK_5] == KeyCode::FIVE);
+	assert(native2kc[SDLK_6] == KeyCode::SIX);
+	assert(native2kc[SDLK_7] == KeyCode::SEVEN);
+	assert(native2kc[SDLK_8] == KeyCode::EIGHT);
+	assert(native2kc[SDLK_9] == KeyCode::NINE);
+	assert(native2kc[SDLK_COLON] == KeyCode::COLON);
+	assert(native2kc[SDLK_SEMICOLON] == KeyCode::SEMI_COLON);
+	assert(native2kc[SDLK_LESS] == KeyCode::LESS);
+	assert(native2kc[SDLK_EQUALS] == KeyCode::EQUAL);
+	assert(native2kc[SDLK_GREATER] == KeyCode::GREATER);
+	assert(native2kc[SDLK_QUESTION] == KeyCode::QUESTION);
+	assert(native2kc[SDLK_AT] == KeyCode::AT);
+	assert(native2kc['A'] == KeyCode::A);
+	assert(native2kc['B'] == KeyCode::B);
+	assert(native2kc['C'] == KeyCode::C);
+	assert(native2kc['D'] == KeyCode::D);
+	assert(native2kc['E'] == KeyCode::E);
+	assert(native2kc['F'] == KeyCode::F);
+	assert(native2kc['G'] == KeyCode::G);
+	assert(native2kc['H'] == KeyCode::H);
+	assert(native2kc['I'] == KeyCode::I);
+	assert(native2kc['J'] == KeyCode::J);
+	assert(native2kc['K'] == KeyCode::K);
+	assert(native2kc['L'] == KeyCode::L);
+	assert(native2kc['M'] == KeyCode::M);
+	assert(native2kc['N'] == KeyCode::N);
+	assert(native2kc['O'] == KeyCode::O);
+	assert(native2kc['P'] == KeyCode::P);
+	assert(native2kc['Q'] == KeyCode::Q);
+	assert(native2kc['R'] == KeyCode::R);
+	assert(native2kc['S'] == KeyCode::S);
+	assert(native2kc['T'] == KeyCode::T);
+	assert(native2kc['U'] == KeyCode::U);
+	assert(native2kc['V'] == KeyCode::V);
+	assert(native2kc['W'] == KeyCode::W);
+	assert(native2kc['X'] == KeyCode::X);
+	assert(native2kc['Y'] == KeyCode::Y);
+	assert(native2kc['Z'] == KeyCode::Z);
+	assert(native2kc[SDLK_LEFTBRACKET] == KeyCode::LEFT_BRACKET);
+	assert(native2kc[SDLK_BACKSLASH] == KeyCode::BACK_SLASH);
+	assert(native2kc[SDLK_RIGHTBRACKET] == KeyCode::RIGHT_BRACKET);
+	assert(native2kc[SDLK_CARET] == KeyCode::CARET);
+	assert(native2kc[SDLK_UNDERSCORE] == KeyCode::UNDER_SCORE);
+	assert(native2kc[SDLK_BACKQUOTE] == KeyCode::BACK_QUOTE);
+	assert(native2kc[SDLK_a] == KeyCode::A);
+	assert(native2kc[SDLK_b] == KeyCode::B);
+	assert(native2kc[SDLK_c] == KeyCode::C);
+	assert(native2kc[SDLK_d] == KeyCode::D);
+	assert(native2kc[SDLK_e] == KeyCode::E);
+	assert(native2kc[SDLK_f] == KeyCode::F);
+	assert(native2kc[SDLK_g] == KeyCode::G);
+	assert(native2kc[SDLK_h] == KeyCode::H);
+	assert(native2kc[SDLK_i] == KeyCode::I);
+	assert(native2kc[SDLK_j] == KeyCode::J);
+	assert(native2kc[SDLK_k] == KeyCode::K);
+	assert(native2kc[SDLK_l] == KeyCode::L);
+	assert(native2kc[SDLK_m] == KeyCode::M);
+	assert(native2kc[SDLK_n] == KeyCode::N);
+	assert(native2kc[SDLK_o] == KeyCode::O);
+	assert(native2kc[SDLK_p] == KeyCode::P);
+	assert(native2kc[SDLK_q] == KeyCode::Q);
+	assert(native2kc[SDLK_r] == KeyCode::R);
+	assert(native2kc[SDLK_s] == KeyCode::S);
+	assert(native2kc[SDLK_t] == KeyCode::T);
+	assert(native2kc[SDLK_u] == KeyCode::U);
+	assert(native2kc[SDLK_v] == KeyCode::V);
+	assert(native2kc[SDLK_w] == KeyCode::W);
+	assert(native2kc[SDLK_x] == KeyCode::X);
+	assert(native2kc[SDLK_y] == KeyCode::Y);
+	assert(native2kc[SDLK_z] == KeyCode::Z);
+	assert(native2kc[SDLK_DELETE] == KeyCode::DELETE_);
+	assert(native2kc[SDLK_DELETE] == KeyCode::DELETE_);
+	assert(native2kc[SDLK_WORLD_0] == KeyCode::WORLD_0);
+	assert(native2kc[SDLK_WORLD_1] == KeyCode::WORLD_1);
+	assert(native2kc[SDLK_WORLD_2] == KeyCode::WORLD_2);
+	assert(native2kc[SDLK_WORLD_3] == KeyCode::WORLD_3);
+	assert(native2kc[SDLK_WORLD_4] == KeyCode::WORLD_4);
+	assert(native2kc[SDLK_WORLD_5] == KeyCode::WORLD_5);
+	assert(native2kc[SDLK_WORLD_6] == KeyCode::WORLD_6);
+	assert(native2kc[SDLK_WORLD_7] == KeyCode::WORLD_7);
+	assert(native2kc[SDLK_WORLD_8] == KeyCode::WORLD_8);
+	assert(native2kc[SDLK_WORLD_9] == KeyCode::WORLD_9);
+	assert(native2kc[SDLK_WORLD_10] == KeyCode::WORLD_10);
+	assert(native2kc[SDLK_WORLD_11] == KeyCode::WORLD_11);
+	assert(native2kc[SDLK_WORLD_12] == KeyCode::WORLD_12);
+	assert(native2kc[SDLK_WORLD_13] == KeyCode::WORLD_13);
+	assert(native2kc[SDLK_WORLD_14] == KeyCode::WORLD_14);
+	assert(native2kc[SDLK_WORLD_15] == KeyCode::WORLD_15);
+	assert(native2kc[SDLK_WORLD_16] == KeyCode::WORLD_16);
+	assert(native2kc[SDLK_WORLD_17] == KeyCode::WORLD_17);
+	assert(native2kc[SDLK_WORLD_18] == KeyCode::WORLD_18);
+	assert(native2kc[SDLK_WORLD_19] == KeyCode::WORLD_19);
+	assert(native2kc[SDLK_WORLD_20] == KeyCode::WORLD_20);
+	assert(native2kc[SDLK_WORLD_21] == KeyCode::WORLD_21);
+	assert(native2kc[SDLK_WORLD_22] == KeyCode::WORLD_22);
+	assert(native2kc[SDLK_WORLD_23] == KeyCode::WORLD_23);
+	assert(native2kc[SDLK_WORLD_24] == KeyCode::WORLD_24);
+	assert(native2kc[SDLK_WORLD_25] == KeyCode::WORLD_25);
+	assert(native2kc[SDLK_WORLD_26] == KeyCode::WORLD_26);
+	assert(native2kc[SDLK_WORLD_27] == KeyCode::WORLD_27);
+	assert(native2kc[SDLK_WORLD_28] == KeyCode::WORLD_28);
+	assert(native2kc[SDLK_WORLD_29] == KeyCode::WORLD_29);
+	assert(native2kc[SDLK_WORLD_30] == KeyCode::WORLD_30);
+	assert(native2kc[SDLK_WORLD_31] == KeyCode::WORLD_31);
+	assert(native2kc[SDLK_WORLD_32] == KeyCode::WORLD_32);
+	assert(native2kc[SDLK_WORLD_33] == KeyCode::WORLD_33);
+	assert(native2kc[SDLK_WORLD_34] == KeyCode::WORLD_34);
+	assert(native2kc[SDLK_WORLD_35] == KeyCode::WORLD_35);
+	assert(native2kc[SDLK_WORLD_36] == KeyCode::WORLD_36);
+	assert(native2kc[SDLK_WORLD_37] == KeyCode::WORLD_37);
+	assert(native2kc[SDLK_WORLD_38] == KeyCode::WORLD_38);
+	assert(native2kc[SDLK_WORLD_39] == KeyCode::WORLD_39);
+	assert(native2kc[SDLK_WORLD_40] == KeyCode::WORLD_40);
+	assert(native2kc[SDLK_WORLD_41] == KeyCode::WORLD_41);
+	assert(native2kc[SDLK_WORLD_42] == KeyCode::WORLD_42);
+	assert(native2kc[SDLK_WORLD_43] == KeyCode::WORLD_43);
+	assert(native2kc[SDLK_WORLD_44] == KeyCode::WORLD_44);
+	assert(native2kc[SDLK_WORLD_45] == KeyCode::WORLD_45);
+	assert(native2kc[SDLK_WORLD_46] == KeyCode::WORLD_46);
+	assert(native2kc[SDLK_WORLD_47] == KeyCode::WORLD_47);
+	assert(native2kc[SDLK_WORLD_48] == KeyCode::WORLD_48);
+	assert(native2kc[SDLK_WORLD_49] == KeyCode::WORLD_49);
+	assert(native2kc[SDLK_WORLD_50] == KeyCode::WORLD_50);
+	assert(native2kc[SDLK_WORLD_51] == KeyCode::WORLD_51);
+	assert(native2kc[SDLK_WORLD_52] == KeyCode::WORLD_52);
+	assert(native2kc[SDLK_WORLD_53] == KeyCode::WORLD_53);
+	assert(native2kc[SDLK_WORLD_54] == KeyCode::WORLD_54);
+	assert(native2kc[SDLK_WORLD_55] == KeyCode::WORLD_55);
+	assert(native2kc[SDLK_WORLD_56] == KeyCode::WORLD_56);
+	assert(native2kc[SDLK_WORLD_57] == KeyCode::WORLD_57);
+	assert(native2kc[SDLK_WORLD_58] == KeyCode::WORLD_58);
+	assert(native2kc[SDLK_WORLD_59] == KeyCode::WORLD_59);
+	assert(native2kc[SDLK_WORLD_60] == KeyCode::WORLD_60);
+	assert(native2kc[SDLK_WORLD_61] == KeyCode::WORLD_61);
+	assert(native2kc[SDLK_WORLD_62] == KeyCode::WORLD_62);
+	assert(native2kc[SDLK_WORLD_63] == KeyCode::WORLD_63);
+	assert(native2kc[SDLK_WORLD_64] == KeyCode::WORLD_64);
+	assert(native2kc[SDLK_WORLD_65] == KeyCode::WORLD_65);
+	assert(native2kc[SDLK_WORLD_66] == KeyCode::WORLD_66);
+	assert(native2kc[SDLK_WORLD_67] == KeyCode::WORLD_67);
+	assert(native2kc[SDLK_WORLD_68] == KeyCode::WORLD_68);
+	assert(native2kc[SDLK_WORLD_69] == KeyCode::WORLD_69);
+	assert(native2kc[SDLK_WORLD_70] == KeyCode::WORLD_70);
+	assert(native2kc[SDLK_WORLD_71] == KeyCode::WORLD_71);
+	assert(native2kc[SDLK_WORLD_72] == KeyCode::WORLD_72);
+	assert(native2kc[SDLK_WORLD_73] == KeyCode::WORLD_73);
+	assert(native2kc[SDLK_WORLD_74] == KeyCode::WORLD_74);
+	assert(native2kc[SDLK_WORLD_75] == KeyCode::WORLD_75);
+	assert(native2kc[SDLK_WORLD_76] == KeyCode::WORLD_76);
+	assert(native2kc[SDLK_WORLD_77] == KeyCode::WORLD_77);
+	assert(native2kc[SDLK_WORLD_78] == KeyCode::WORLD_78);
+	assert(native2kc[SDLK_WORLD_79] == KeyCode::WORLD_79);
+	assert(native2kc[SDLK_WORLD_80] == KeyCode::WORLD_80);
+	assert(native2kc[SDLK_WORLD_81] == KeyCode::WORLD_81);
+	assert(native2kc[SDLK_WORLD_82] == KeyCode::WORLD_82);
+	assert(native2kc[SDLK_WORLD_83] == KeyCode::WORLD_83);
+	assert(native2kc[SDLK_WORLD_84] == KeyCode::WORLD_84);
+	assert(native2kc[SDLK_WORLD_85] == KeyCode::WORLD_85);
+	assert(native2kc[SDLK_WORLD_86] == KeyCode::WORLD_86);
+	assert(native2kc[SDLK_WORLD_87] == KeyCode::WORLD_87);
+	assert(native2kc[SDLK_WORLD_88] == KeyCode::WORLD_88);
+	assert(native2kc[SDLK_WORLD_89] == KeyCode::WORLD_89);
+	assert(native2kc[SDLK_WORLD_90] == KeyCode::WORLD_90);
+	assert(native2kc[SDLK_WORLD_91] == KeyCode::WORLD_91);
+	assert(native2kc[SDLK_WORLD_92] == KeyCode::WORLD_92);
+	assert(native2kc[SDLK_WORLD_93] == KeyCode::WORLD_93);
+	assert(native2kc[SDLK_WORLD_94] == KeyCode::WORLD_94);
+	assert(native2kc[SDLK_WORLD_95] == KeyCode::WORLD_95);
+	assert(native2kc[SDLK_KP0] == KeyCode::KEYPAD_0);
+	assert(native2kc[SDLK_KP1] == KeyCode::KEYPAD_1);
+	assert(native2kc[SDLK_KP2] == KeyCode::KEYPAD_2);
+	assert(native2kc[SDLK_KP3] == KeyCode::KEYPAD_3);
+	assert(native2kc[SDLK_KP4] == KeyCode::KEYPAD_4);
+	assert(native2kc[SDLK_KP5] == KeyCode::KEYPAD_5);
+	assert(native2kc[SDLK_KP6] == KeyCode::KEYPAD_6);
+	assert(native2kc[SDLK_KP7] == KeyCode::KEYPAD_7);
+	assert(native2kc[SDLK_KP8] == KeyCode::KEYPAD_8);
+	assert(native2kc[SDLK_KP9] == KeyCode::KEYPAD_9);
+	assert(native2kc[SDLK_KP_PERIOD] == KeyCode::KEYPAD_PERIOD);
+	assert(native2kc[SDLK_KP_DIVIDE] == KeyCode::KEYPAD_DIVIDE);
+	assert(native2kc[SDLK_KP_MULTIPLY] == KeyCode::KEYPAD_MULTIPLY);
+	assert(native2kc[SDLK_KP_MINUS] == KeyCode::KEYPAD_MINUS);
+	assert(native2kc[SDLK_KP_PLUS] == KeyCode::KEYPAD_PLUS);
+	assert(native2kc[SDLK_KP_ENTER] == KeyCode::KEYPAD_ENTER);
+	assert(native2kc[SDLK_KP_EQUALS] == KeyCode::KEYPAD_EQUAL);
+	assert(native2kc[SDLK_UP] == KeyCode::ARROW_UP);
+	assert(native2kc[SDLK_DOWN] == KeyCode::ARROW_DOWN);
+	assert(native2kc[SDLK_RIGHT] == KeyCode::ARROW_RIGHT);
+	assert(native2kc[SDLK_LEFT] == KeyCode::ARROW_LEFT);
+	assert(native2kc[SDLK_INSERT] == KeyCode::INSERT);
+	assert(native2kc[SDLK_HOME] == KeyCode::HOME);
+	assert(native2kc[SDLK_END] == KeyCode::END);
+	assert(native2kc[SDLK_PAGEUP] == KeyCode::PAGE_UP);
+	assert(native2kc[SDLK_PAGEDOWN] == KeyCode::PAGE_DOWN);
+	assert(native2kc[SDLK_F1] == KeyCode::FUNCTION_1);
+	assert(native2kc[SDLK_F2] == KeyCode::FUNCTION_2);
+	assert(native2kc[SDLK_F3] == KeyCode::FUNCTION_3);
+	assert(native2kc[SDLK_F4] == KeyCode::FUNCTION_4);
+	assert(native2kc[SDLK_F5] == KeyCode::FUNCTION_5);
+	assert(native2kc[SDLK_F6] == KeyCode::FUNCTION_6);
+	assert(native2kc[SDLK_F7] == KeyCode::FUNCTION_7);
+	assert(native2kc[SDLK_F8] == KeyCode::FUNCTION_8);
+	assert(native2kc[SDLK_F9] == KeyCode::FUNCTION_9);
+	assert(native2kc[SDLK_F10] == KeyCode::FUNCTION_10);
+	assert(native2kc[SDLK_F11] == KeyCode::FUNCTION_11);
+	assert(native2kc[SDLK_F12] == KeyCode::FUNCTION_12);
+	assert(native2kc[SDLK_F13] == KeyCode::FUNCTION_13);
+	assert(native2kc[SDLK_F14] == KeyCode::FUNCTION_14);
+	assert(native2kc[SDLK_F15] == KeyCode::FUNCTION_15);
+	assert(native2kc[SDLK_NUMLOCK] == KeyCode::NUM_LOCK);
+	assert(native2kc[SDLK_CAPSLOCK] == KeyCode::CAPS_LOCK);
+	assert(native2kc[SDLK_SCROLLOCK] == KeyCode::SCROLL_LOCK);
+	assert(native2kc[SDLK_RSHIFT] == KeyCode::RIGHT_SHIFT);
+	assert(native2kc[SDLK_LSHIFT] == KeyCode::LEFT_SHIFT);
+	assert(native2kc[SDLK_RCTRL] == KeyCode::RIGHT_CTRL);
+	assert(native2kc[SDLK_LCTRL] == KeyCode::LEFT_CTRL);
+	assert(native2kc[SDLK_RALT] == KeyCode::RIGHT_ALT);
+	assert(native2kc[SDLK_LALT] == KeyCode::LEFT_ALT);
+	assert(native2kc[SDLK_RMETA] == KeyCode::RIGHT_META);
+	assert(native2kc[SDLK_LMETA] == KeyCode::LEFT_META);
+	assert(native2kc[SDLK_LSUPER] == KeyCode::LEFT_SUPER);
+	assert(native2kc[SDLK_RSUPER] == KeyCode::RIGHT_SUPER);
+	assert(native2kc[SDLK_MODE] == KeyCode::MODE);
+	assert(native2kc[SDLK_COMPOSE] == KeyCode::COMPOSE);
+	assert(native2kc[SDLK_HELP] == KeyCode::HELP);
+	assert(native2kc[SDLK_PRINT] == KeyCode::PRINT);
+	assert(native2kc[SDLK_SYSREQ] == KeyCode::SYS_REQ);
+	assert(native2kc[SDLK_BREAK] == KeyCode::BREAK);
+	assert(native2kc[SDLK_MENU] == KeyCode::MENU);
+	assert(native2kc[SDLK_POWER] == KeyCode::POWER);
+	assert(native2kc[SDLK_EURO] == KeyCode::EURO);
+	assert(native2kc[SDLK_UNDO] == KeyCode::UNDO);
+	assert(kc2native[KeyCode::UNKNOWN] == SDLK_UNKNOWN);
+	assert(kc2native[KeyCode::BACK_SPACE] == SDLK_BACKSPACE);
+	assert(kc2native[KeyCode::TAB] == SDLK_TAB);
+	assert(kc2native[KeyCode::CLEAR] == SDLK_CLEAR);
+	assert(kc2native[KeyCode::RETURN] == SDLK_RETURN);
+	assert(kc2native[KeyCode::PAUSE] == SDLK_PAUSE);
+	assert(kc2native[KeyCode::ESCAPE] == SDLK_ESCAPE);
+	assert(kc2native[KeyCode::SPACE] == SDLK_SPACE);
+	assert(kc2native[KeyCode::EXCLAIM] == SDLK_EXCLAIM);
+	assert(kc2native[KeyCode::DOUBLE_QUOTE] == SDLK_QUOTEDBL);
+	assert(kc2native[KeyCode::HASH] == SDLK_HASH);
+	assert(kc2native[KeyCode::DOLLAR] == SDLK_DOLLAR);
+	assert(kc2native[KeyCode::AMPERSAND] == SDLK_AMPERSAND);
+	assert(kc2native[KeyCode::QUOTE] == SDLK_QUOTE);
+	assert(kc2native[KeyCode::LEFT_PAREN] == SDLK_LEFTPAREN);
+	assert(kc2native[KeyCode::RIGHT_PAREN] == SDLK_RIGHTPAREN);
+	assert(kc2native[KeyCode::ASTERISK] == SDLK_ASTERISK);
+	assert(kc2native[KeyCode::PLUS] == SDLK_PLUS);
+	assert(kc2native[KeyCode::COMMA] == SDLK_COMMA);
+	assert(kc2native[KeyCode::MINUS] == SDLK_MINUS);
+	assert(kc2native[KeyCode::PERIOD] == SDLK_PERIOD);
+	assert(kc2native[KeyCode::SLASH] == SDLK_SLASH);
+	assert(kc2native[KeyCode::ZERO] == SDLK_0);
+	assert(kc2native[KeyCode::ONE] == SDLK_1);
+	assert(kc2native[KeyCode::TWO] == SDLK_2);
+	assert(kc2native[KeyCode::THREE] == SDLK_3);
+	assert(kc2native[KeyCode::FOUR] == SDLK_4);
+	assert(kc2native[KeyCode::FIVE] == SDLK_5);
+	assert(kc2native[KeyCode::SIX] == SDLK_6);
+	assert(kc2native[KeyCode::SEVEN] == SDLK_7);
+	assert(kc2native[KeyCode::EIGHT] == SDLK_8);
+	assert(kc2native[KeyCode::NINE] == SDLK_9);
+	assert(kc2native[KeyCode::COLON] == SDLK_COLON);
+	assert(kc2native[KeyCode::SEMI_COLON] == SDLK_SEMICOLON);
+	assert(kc2native[KeyCode::LESS] == SDLK_LESS);
+	assert(kc2native[KeyCode::EQUAL] == SDLK_EQUALS);
+	assert(kc2native[KeyCode::GREATER] == SDLK_GREATER);
+	assert(kc2native[KeyCode::QUESTION] == SDLK_QUESTION);
+	assert(kc2native[KeyCode::AT] == SDLK_AT);
+	assert(kc2native[KeyCode::A] == 'A');
+	assert(kc2native[KeyCode::B] == 'B');
+	assert(kc2native[KeyCode::C] == 'C');
+	assert(kc2native[KeyCode::D] == 'D');
+	assert(kc2native[KeyCode::E] == 'E');
+	assert(kc2native[KeyCode::F] == 'F');
+	assert(kc2native[KeyCode::G] == 'G');
+	assert(kc2native[KeyCode::H] == 'H');
+	assert(kc2native[KeyCode::I] == 'I');
+	assert(kc2native[KeyCode::J] == 'J');
+	assert(kc2native[KeyCode::K] == 'K');
+	assert(kc2native[KeyCode::L] == 'L');
+	assert(kc2native[KeyCode::M] == 'M');
+	assert(kc2native[KeyCode::N] == 'N');
+	assert(kc2native[KeyCode::O] == 'O');
+	assert(kc2native[KeyCode::P] == 'P');
+	assert(kc2native[KeyCode::Q] == 'Q');
+	assert(kc2native[KeyCode::R] == 'R');
+	assert(kc2native[KeyCode::S] == 'S');
+	assert(kc2native[KeyCode::T] == 'T');
+	assert(kc2native[KeyCode::U] == 'U');
+	assert(kc2native[KeyCode::V] == 'V');
+	assert(kc2native[KeyCode::W] == 'W');
+	assert(kc2native[KeyCode::X] == 'X');
+	assert(kc2native[KeyCode::Y] == 'Y');
+	assert(kc2native[KeyCode::Z] == 'Z');
+	assert(kc2native[KeyCode::LEFT_BRACKET] == SDLK_LEFTBRACKET);
+	assert(kc2native[KeyCode::BACK_SLASH] == SDLK_BACKSLASH);
+	assert(kc2native[KeyCode::RIGHT_BRACKET] == SDLK_RIGHTBRACKET);
+	assert(kc2native[KeyCode::CARET] == SDLK_CARET);
+	assert(kc2native[KeyCode::UNDER_SCORE] == SDLK_UNDERSCORE);
+	assert(kc2native[KeyCode::BACK_QUOTE] == SDLK_BACKQUOTE);
+	assert(kc2native[KeyCode::DELETE_] == SDLK_DELETE);
+	assert(kc2native[KeyCode::WORLD_0] == SDLK_WORLD_0);
+	assert(kc2native[KeyCode::WORLD_1] == SDLK_WORLD_1);
+	assert(kc2native[KeyCode::WORLD_2] == SDLK_WORLD_2);
+	assert(kc2native[KeyCode::WORLD_3] == SDLK_WORLD_3);
+	assert(kc2native[KeyCode::WORLD_4] == SDLK_WORLD_4);
+	assert(kc2native[KeyCode::WORLD_5] == SDLK_WORLD_5);
+	assert(kc2native[KeyCode::WORLD_6] == SDLK_WORLD_6);
+	assert(kc2native[KeyCode::WORLD_7] == SDLK_WORLD_7);
+	assert(kc2native[KeyCode::WORLD_8] == SDLK_WORLD_8);
+	assert(kc2native[KeyCode::WORLD_9] == SDLK_WORLD_9);
+	assert(kc2native[KeyCode::WORLD_10] == SDLK_WORLD_10);
+	assert(kc2native[KeyCode::WORLD_11] == SDLK_WORLD_11);
+	assert(kc2native[KeyCode::WORLD_12] == SDLK_WORLD_12);
+	assert(kc2native[KeyCode::WORLD_13] == SDLK_WORLD_13);
+	assert(kc2native[KeyCode::WORLD_14] == SDLK_WORLD_14);
+	assert(kc2native[KeyCode::WORLD_15] == SDLK_WORLD_15);
+	assert(kc2native[KeyCode::WORLD_16] == SDLK_WORLD_16);
+	assert(kc2native[KeyCode::WORLD_17] == SDLK_WORLD_17);
+	assert(kc2native[KeyCode::WORLD_18] == SDLK_WORLD_18);
+	assert(kc2native[KeyCode::WORLD_19] == SDLK_WORLD_19);
+	assert(kc2native[KeyCode::WORLD_20] == SDLK_WORLD_20);
+	assert(kc2native[KeyCode::WORLD_21] == SDLK_WORLD_21);
+	assert(kc2native[KeyCode::WORLD_22] == SDLK_WORLD_22);
+	assert(kc2native[KeyCode::WORLD_23] == SDLK_WORLD_23);
+	assert(kc2native[KeyCode::WORLD_24] == SDLK_WORLD_24);
+	assert(kc2native[KeyCode::WORLD_25] == SDLK_WORLD_25);
+	assert(kc2native[KeyCode::WORLD_26] == SDLK_WORLD_26);
+	assert(kc2native[KeyCode::WORLD_27] == SDLK_WORLD_27);
+	assert(kc2native[KeyCode::WORLD_28] == SDLK_WORLD_28);
+	assert(kc2native[KeyCode::WORLD_29] == SDLK_WORLD_29);
+	assert(kc2native[KeyCode::WORLD_30] == SDLK_WORLD_30);
+	assert(kc2native[KeyCode::WORLD_31] == SDLK_WORLD_31);
+	assert(kc2native[KeyCode::WORLD_32] == SDLK_WORLD_32);
+	assert(kc2native[KeyCode::WORLD_33] == SDLK_WORLD_33);
+	assert(kc2native[KeyCode::WORLD_34] == SDLK_WORLD_34);
+	assert(kc2native[KeyCode::WORLD_35] == SDLK_WORLD_35);
+	assert(kc2native[KeyCode::WORLD_36] == SDLK_WORLD_36);
+	assert(kc2native[KeyCode::WORLD_37] == SDLK_WORLD_37);
+	assert(kc2native[KeyCode::WORLD_38] == SDLK_WORLD_38);
+	assert(kc2native[KeyCode::WORLD_39] == SDLK_WORLD_39);
+	assert(kc2native[KeyCode::WORLD_40] == SDLK_WORLD_40);
+	assert(kc2native[KeyCode::WORLD_41] == SDLK_WORLD_41);
+	assert(kc2native[KeyCode::WORLD_42] == SDLK_WORLD_42);
+	assert(kc2native[KeyCode::WORLD_43] == SDLK_WORLD_43);
+	assert(kc2native[KeyCode::WORLD_44] == SDLK_WORLD_44);
+	assert(kc2native[KeyCode::WORLD_45] == SDLK_WORLD_45);
+	assert(kc2native[KeyCode::WORLD_46] == SDLK_WORLD_46);
+	assert(kc2native[KeyCode::WORLD_47] == SDLK_WORLD_47);
+	assert(kc2native[KeyCode::WORLD_48] == SDLK_WORLD_48);
+	assert(kc2native[KeyCode::WORLD_49] == SDLK_WORLD_49);
+	assert(kc2native[KeyCode::WORLD_50] == SDLK_WORLD_50);
+	assert(kc2native[KeyCode::WORLD_51] == SDLK_WORLD_51);
+	assert(kc2native[KeyCode::WORLD_52] == SDLK_WORLD_52);
+	assert(kc2native[KeyCode::WORLD_53] == SDLK_WORLD_53);
+	assert(kc2native[KeyCode::WORLD_54] == SDLK_WORLD_54);
+	assert(kc2native[KeyCode::WORLD_55] == SDLK_WORLD_55);
+	assert(kc2native[KeyCode::WORLD_56] == SDLK_WORLD_56);
+	assert(kc2native[KeyCode::WORLD_57] == SDLK_WORLD_57);
+	assert(kc2native[KeyCode::WORLD_58] == SDLK_WORLD_58);
+	assert(kc2native[KeyCode::WORLD_59] == SDLK_WORLD_59);
+	assert(kc2native[KeyCode::WORLD_60] == SDLK_WORLD_60);
+	assert(kc2native[KeyCode::WORLD_61] == SDLK_WORLD_61);
+	assert(kc2native[KeyCode::WORLD_62] == SDLK_WORLD_62);
+	assert(kc2native[KeyCode::WORLD_63] == SDLK_WORLD_63);
+	assert(kc2native[KeyCode::WORLD_64] == SDLK_WORLD_64);
+	assert(kc2native[KeyCode::WORLD_65] == SDLK_WORLD_65);
+	assert(kc2native[KeyCode::WORLD_66] == SDLK_WORLD_66);
+	assert(kc2native[KeyCode::WORLD_67] == SDLK_WORLD_67);
+	assert(kc2native[KeyCode::WORLD_68] == SDLK_WORLD_68);
+	assert(kc2native[KeyCode::WORLD_69] == SDLK_WORLD_69);
+	assert(kc2native[KeyCode::WORLD_70] == SDLK_WORLD_70);
+	assert(kc2native[KeyCode::WORLD_71] == SDLK_WORLD_71);
+	assert(kc2native[KeyCode::WORLD_72] == SDLK_WORLD_72);
+	assert(kc2native[KeyCode::WORLD_73] == SDLK_WORLD_73);
+	assert(kc2native[KeyCode::WORLD_74] == SDLK_WORLD_74);
+	assert(kc2native[KeyCode::WORLD_75] == SDLK_WORLD_75);
+	assert(kc2native[KeyCode::WORLD_76] == SDLK_WORLD_76);
+	assert(kc2native[KeyCode::WORLD_77] == SDLK_WORLD_77);
+	assert(kc2native[KeyCode::WORLD_78] == SDLK_WORLD_78);
+	assert(kc2native[KeyCode::WORLD_79] == SDLK_WORLD_79);
+	assert(kc2native[KeyCode::WORLD_80] == SDLK_WORLD_80);
+	assert(kc2native[KeyCode::WORLD_81] == SDLK_WORLD_81);
+	assert(kc2native[KeyCode::WORLD_82] == SDLK_WORLD_82);
+	assert(kc2native[KeyCode::WORLD_83] == SDLK_WORLD_83);
+	assert(kc2native[KeyCode::WORLD_84] == SDLK_WORLD_84);
+	assert(kc2native[KeyCode::WORLD_85] == SDLK_WORLD_85);
+	assert(kc2native[KeyCode::WORLD_86] == SDLK_WORLD_86);
+	assert(kc2native[KeyCode::WORLD_87] == SDLK_WORLD_87);
+	assert(kc2native[KeyCode::WORLD_88] == SDLK_WORLD_88);
+	assert(kc2native[KeyCode::WORLD_89] == SDLK_WORLD_89);
+	assert(kc2native[KeyCode::WORLD_90] == SDLK_WORLD_90);
+	assert(kc2native[KeyCode::WORLD_91] == SDLK_WORLD_91);
+	assert(kc2native[KeyCode::WORLD_92] == SDLK_WORLD_92);
+	assert(kc2native[KeyCode::WORLD_93] == SDLK_WORLD_93);
+	assert(kc2native[KeyCode::WORLD_94] == SDLK_WORLD_94);
+	assert(kc2native[KeyCode::WORLD_95] == SDLK_WORLD_95);
+	assert(kc2native[KeyCode::KEYPAD_0] == SDLK_KP0);
+	assert(kc2native[KeyCode::KEYPAD_1] == SDLK_KP1);
+	assert(kc2native[KeyCode::KEYPAD_2] == SDLK_KP2);
+	assert(kc2native[KeyCode::KEYPAD_3] == SDLK_KP3);
+	assert(kc2native[KeyCode::KEYPAD_4] == SDLK_KP4);
+	assert(kc2native[KeyCode::KEYPAD_5] == SDLK_KP5);
+	assert(kc2native[KeyCode::KEYPAD_6] == SDLK_KP6);
+	assert(kc2native[KeyCode::KEYPAD_7] == SDLK_KP7);
+	assert(kc2native[KeyCode::KEYPAD_8] == SDLK_KP8);
+	assert(kc2native[KeyCode::KEYPAD_9] == SDLK_KP9);
+	assert(kc2native[KeyCode::KEYPAD_PERIOD] == SDLK_KP_PERIOD);
+	assert(kc2native[KeyCode::KEYPAD_DIVIDE] == SDLK_KP_DIVIDE);
+	assert(kc2native[KeyCode::KEYPAD_MULTIPLY] == SDLK_KP_MULTIPLY);
+	assert(kc2native[KeyCode::KEYPAD_MINUS] == SDLK_KP_MINUS);
+	assert(kc2native[KeyCode::KEYPAD_PLUS] == SDLK_KP_PLUS);
+	assert(kc2native[KeyCode::KEYPAD_ENTER] == SDLK_KP_ENTER);
+	assert(kc2native[KeyCode::KEYPAD_EQUAL] == SDLK_KP_EQUALS);
+	assert(kc2native[KeyCode::ARROW_UP] == SDLK_UP);
+	assert(kc2native[KeyCode::ARROW_DOWN] == SDLK_DOWN);
+	assert(kc2native[KeyCode::ARROW_RIGHT] == SDLK_RIGHT);
+	assert(kc2native[KeyCode::ARROW_LEFT] == SDLK_LEFT);
+	assert(kc2native[KeyCode::INSERT] == SDLK_INSERT);
+	assert(kc2native[KeyCode::HOME] == SDLK_HOME);
+	assert(kc2native[KeyCode::END] == SDLK_END);
+	assert(kc2native[KeyCode::PAGE_UP] == SDLK_PAGEUP);
+	assert(kc2native[KeyCode::PAGE_DOWN] == SDLK_PAGEDOWN);
+	assert(kc2native[KeyCode::FUNCTION_1] == SDLK_F1);
+	assert(kc2native[KeyCode::FUNCTION_2] == SDLK_F2);
+	assert(kc2native[KeyCode::FUNCTION_3] == SDLK_F3);
+	assert(kc2native[KeyCode::FUNCTION_4] == SDLK_F4);
+	assert(kc2native[KeyCode::FUNCTION_5] == SDLK_F5);
+	assert(kc2native[KeyCode::FUNCTION_6] == SDLK_F6);
+	assert(kc2native[KeyCode::FUNCTION_7] == SDLK_F7);
+	assert(kc2native[KeyCode::FUNCTION_8] == SDLK_F8);
+	assert(kc2native[KeyCode::FUNCTION_9] == SDLK_F9);
+	assert(kc2native[KeyCode::FUNCTION_10] == SDLK_F10);
+	assert(kc2native[KeyCode::FUNCTION_11] == SDLK_F11);
+	assert(kc2native[KeyCode::FUNCTION_12] == SDLK_F12);
+	assert(kc2native[KeyCode::FUNCTION_13] == SDLK_F13);
+	assert(kc2native[KeyCode::FUNCTION_14] == SDLK_F14);
+	assert(kc2native[KeyCode::FUNCTION_15] == SDLK_F15);
+	assert(kc2native[KeyCode::NUM_LOCK] == SDLK_NUMLOCK);
+	assert(kc2native[KeyCode::CAPS_LOCK] == SDLK_CAPSLOCK);
+	assert(kc2native[KeyCode::SCROLL_LOCK] == SDLK_SCROLLOCK);
+	assert(kc2native[KeyCode::LEFT_SHIFT] == SDLK_LSHIFT);
+	assert(kc2native[KeyCode::RIGHT_SHIFT] == SDLK_RSHIFT);
+	assert(kc2native[KeyCode::LEFT_CTRL] == SDLK_LCTRL);
+	assert(kc2native[KeyCode::RIGHT_CTRL] == SDLK_RCTRL);
+	assert(kc2native[KeyCode::LEFT_ALT] == SDLK_LALT);
+	assert(kc2native[KeyCode::RIGHT_ALT] == SDLK_RALT);
+	assert(kc2native[KeyCode::LEFT_META] == SDLK_LMETA);
+	assert(kc2native[KeyCode::RIGHT_META] == SDLK_RMETA);
+	assert(kc2native[KeyCode::RIGHT_SUPER] == SDLK_RSUPER);
+	assert(kc2native[KeyCode::LEFT_SUPER] == SDLK_LSUPER);
+	assert(kc2native[KeyCode::MODE] == SDLK_MODE);
+	assert(kc2native[KeyCode::COMPOSE] == SDLK_COMPOSE);
+	assert(kc2native[KeyCode::HELP] == SDLK_HELP);
+	assert(kc2native[KeyCode::PRINT] == SDLK_PRINT);
+	assert(kc2native[KeyCode::SYS_REQ] == SDLK_SYSREQ);
+	assert(kc2native[KeyCode::BREAK] == SDLK_BREAK);
+	assert(kc2native[KeyCode::MENU] == SDLK_MENU);
+	assert(kc2native[KeyCode::POWER] == SDLK_POWER);
+	assert(kc2native[KeyCode::EURO] == SDLK_EURO);
+	assert(kc2native[KeyCode::UNDO] == SDLK_UNDO);
 
 }
 
 #elif defined(WIN32)  || defined(WIN64)
 #pragma pack(push, 1)
 const unsigned char Input::native2mb[Input::NATIVE_MOUSE_BUTTON_LAST + 1] = {
-	mbUnknown,		// 0 
-	mbLeft,			// 1 VK_LBUTTON
-	mbRight,		// 2 VK_RBUTTON
-	mbUnknown,		// 3
-	mbCenter,		// 4 VK_MBUTTON
-	mbButtonX1,		// 5 VK_XBUTTON1
-	mbButtonX2		// 6 VK_XBUTTON2
+	MouseButton::UNKNOWN,		// 0 
+	MouseButton::LEFT,			// 1 VK_LBUTTON
+	MouseButton::RIGHT,			// 2 VK_RBUTTON
+	MouseButton::UNKNOWN,		// 3
+	MouseButton::MIDDLE,		// 4 VK_MBUTTON
+	MouseButton::BUTTON_X1,		// 5 VK_XBUTTON1
+	MouseButton::BUTTON_X2		// 6 VK_XBUTTON2
 };
 
-const unsigned char Input::mb2native[mbCount] = {
-	0 ,						// mbUnknown
-	VK_LBUTTON,				// mbLeft
-	VK_MBUTTON,				// mbCenter
-	VK_RBUTTON,				// mbRight
-	0,						// mbWheelUp
-	0,						// mbWheelDown
-	VK_XBUTTON1,			// mbButtonX1
-	VK_XBUTTON2,			// mbButtonX2
+const unsigned char Input::mb2native[MouseButton::COUNT] = {
+	0 ,						// MouseButton::UNKNOWN
+	VK_LBUTTON,				// MouseButton::LEFT
+	VK_MBUTTON,				// MouseButton::MIDDLE
+	VK_RBUTTON,				// MouseButton::RIGHT
+	0,						// MouseButton::WHEEL_UP
+	0,						// MouseButton::WHEEL_DOWN
+	VK_XBUTTON1,			// MouseButton::BUTTON_X1
+	VK_XBUTTON2,			// MouseButton::BUTTON_X2
 };
 
 const short Input::native2kc[Input::NATIVE_KEY_CODE_LAST + 1] = {
-	keyNone,				// 0
-	keyLButton,				// 1 VK_LBUTTON
-	keyRButton,				// 2 VK_RBUTTON
-	keyBreak,				// 3 VK_CANCEL
-	keyMButton,				// 4 VK_MBUTTON
-	keyXButton1,			// 5 VK_XBUTTON1
-	keyXButton2,			// 6 VK_XBUTTON2
-	keyNone,				// 7
-	keyBackspace,			// 8 VK_BACK
-	keyTab,					// 9 VK_TAB
-	keyNone,				// 10
-	keyNone,				// 11
-	keyClear,				// 12 VK_CLEAR
-	keyReturn,				// 13 VK_RETURN
-	keyNone,				// 14
-	keyNone,				// 15
-	keyLShift,				// 16 VK_SHIFT
-	keyLCtrl,				// 17 VK_CONTROL
-	keyLAlt,				// 18 VK_MENU
-	keyPause,				// 19 VK_PAUSE
-	keyCapsLock,			// 20 VK_CAPITAL
-	keyIMEKana,				// 21 VK_KANA
-	keyNone,				// 22
-	keyIMEJunja,			// 23 VK_JUNJA
-	keyIMEFinal,			// 24 VK_FINAL
-	keyIMEHanja,			// 25 VK_HANJA
-	keyNone,				// 26
-	keyEscape,				// 27 VK_ESCAPE
-	keyIMEConvert,			// 28 VK_CONVERT
-	keyIMENonConvert,		// 29 VK_NONCONVERT
-	keyIMEAccept,			// 30 VK_ACCEPT
-	keyIMEModeChange,		// 31 VK_MODECHANGE
-	keySpace,				// 32 VK_SPACE
-	keyPageUp,				// 33 VK_PRIOR
-	keyPageDown,			// 34 VK_NEXT
-	keyEnd,					// 35 VK_END
-	keyHome,				// 36 VK_HOME
-	keyLeft,				// 37 VK_LEFT
-	keyUp,					// 38 VK_UP
-	keyRight,				// 39 VK_RIGHT
-	keyDown,				// 40 VK_DOWN
-	keyNone,				// 41 VK_SELECT
-	keyPrint,				// 42 VK_PRINT
-	keyNone,				// 43 VK_EXECUTE
-	keyPrint,				// 44 VK_SNAPSHOT
-	keyInsert,				// 45 VK_INSERT
-	keyDelete,				// 46 VK_DELETE
-	keyHelp,				// 47 VK_HELP
-	key0,					// 48 '0'
-	key1,					// 49 '1'
-	key2,					// 50 '2'
-	key3,					// 51 '3'
-	key4,					// 52 '4'
-	key5,					// 53 '5'
-	key6,					// 54 '6'
-	key7,					// 55 '7'
-	key8,					// 56 '8'
-	key9,					// 57 '9'
-	keyNone,				// 58
-	keyNone,				// 59
-	keyNone,				// 60
-	keyNone,				// 61
-	keyNone,				// 62
-	keyNone,				// 63
-	keyNone,				// 64
-	keyA,					// 65 'A'
-	keyB,					// 66 'B'
-	keyC,					// 67 'C'
-	keyD,					// 68 'D'
-	keyE,					// 69 'E'
-	keyF,					// 70 'F'
-	keyG,					// 71 'G'
-	keyH,					// 72 'H'
-	keyI,					// 73 'I'
-	keyJ,					// 74 'J'
-	keyK,					// 75 'K'
-	keyL,					// 76 'L'
-	keyM,					// 77 'M'
-	keyN,					// 78 'N'
-	keyO,					// 79 'O'
-	keyP,					// 80 'P'
-	keyQ,					// 81 'Q'
-	keyR,					// 82 'R'
-	keyS,					// 83 'S'
-	keyT,					// 84 'T'
-	keyU,					// 85 'U'
-	keyV,					// 86 'V'
-	keyW,					// 87 'W'
-	keyX,					// 88 'X'
-	keyY,					// 89 'Y'
-	keyZ,					// 90 'Z'
-	keyLSuper,				// 91 VK_LWIN
-	keyRSuper,				// 92 VK_RWIN
-	keyMenu,				// 93 VK_APPS
-	keyNone,				// 94
-	keyNone,				// 95 VK_SLEEP
-	keyKP0,					// 96 VK_NUMPAD0
-	keyKP1,					// 97 VK_NUMPAD1
-	keyKP2,					// 98 VK_NUMPAD2
-	keyKP3,					// 99 VK_NUMPAD3
-	keyKP4,					// 100 VK_NUMPAD4
-	keyKP5,					// 101 VK_NUMPAD5
-	keyKP6,					// 102 VK_NUMPAD6
-	keyKP7,					// 103 VK_NUMPAD7
-	keyKP8,					// 104 VK_NUMPAD8
-	keyKP9,					// 105 VK_NUMPAD9
-	keyKPMultiply,			// 106 VK_MULTIPLY
-	keyKPPlus,				// 107 VK_ADD
-	keyKPEnter,				// 108 VK_SEPARATOR
-	keyKPMinus,				// 109 VK_SUBTRACT
-	keyKPPeriod,			// 110 VK_DECIMAL
-	keyKPDivide,			// 111 VK_DIVIDE
-	keyF1,					// 112 VK_F1
-	keyF2,					// 113 VK_F2
-	keyF3,					// 114 VK_F3
-	keyF4,					// 115 VK_F4
-	keyF5,					// 116 VK_F5
-	keyF6,					// 117 VK_F6
-	keyF7,					// 118 VK_F7
-	keyF8,					// 119 VK_F8
-	keyF9,					// 120 VK_F9
-	keyF10,					// 121 VK_F10
-	keyF11,					// 122 VK_F11
-	keyF12,					// 123 VK_F12
-	keyF13,					// 124 VK_F13
-	keyF14,					// 125 VK_F14
-	keyF15,					// 126 VK_F15
-	keyF16,					// 127 VK_F16
-	keyF17,					// 128 VK_F17
-	keyF18,					// 129 VK_F18
-	keyF19,					// 130 VK_F19
-	keyF20,					// 131 VK_F20
-	keyF21,					// 132 VK_F21
-	keyF22,					// 133 VK_F22
-	keyF23,					// 134 VK_F23
-	keyF24,					// 135 VK_F24
-	keyNone,				// 136
-	keyNone,				// 137
-	keyNone,				// 138
-	keyNone,				// 139
-	keyNone,				// 140
-	keyNone,				// 141
-	keyNone,				// 142
-	keyNone,				// 143
-	keyNumLock,				// 144 VK_NUMLOCK
-	keyScrollLock,			// 145 VK_SCROLL
-	keyNone,				// 146
-	keyNone,				// 147
-	keyNone,				// 148
-	keyNone,				// 149
-	keyNone,				// 150
-	keyNone,				// 151
-	keyNone,				// 152
-	keyNone,				// 153
-	keyNone,				// 154
-	keyNone,				// 155
-	keyNone,				// 156
-	keyNone,				// 157
-	keyNone,				// 158
-	keyNone,				// 159
-	keyLShift,				// 160 VK_LSHIFT
-	keyRShift,				// 161 VK_RSHIFT
-	keyLCtrl,				// 162 VK_LCONTROL
-	keyRCtrl,				// 163 VK_RCONTROL
-	keyLAlt,				// 164 VK_LMENU
-	keyRAlt,				// 165 VK_RMENU
-	keyBrowserBack,			// 166 VK_BROWSER_BACK
-	keyBrowserForward,		// 167 VK_BROWSER_FORWARD
-	keyBrowserRefresh,		// 168 VK_BROWSER_REFRESH
-	keyBrowserStop,			// 169 VK_BROWSER_STOP
-	keyBrowserSearch,		// 170 VK_BROWSER_SEARCH
-	keyBrowserFavorites,	// 171 VK_BROWSER_FAVORITES
-	keyBrowserHome,			// 172 VK_BROWSER_HOME
-	keyVolumeMute,			// 173 VK_VOLUME_MUTE
-	keyVolumeDown,			// 174 VK_VOLUME_DOWN
-	keyVolumeUp,			// 175 VK_VOLUME_UP
-	keyMediaNext,			// 176 VK_MEDIA_NEXT_TRACK
-	keyMediaPrev,			// 177 VK_MEDIA_PREV_TRACK
-	keyMediaStop,			// 178 VK_MEDIA_STOP
-	keyMediaPlayPause,		// 179 VK_MEDIA_PLAY_PAUSE
-	keyLaunchMail,			// 180 VK_LAUNCH_MAIL
-	keyLaunchMediaSelect,	// 181 VK_LAUNCH_MEDIA_SELECT
-	keyLaunchApp1,			// 182 VK_LAUNCH_APP1
-	keyLaunchApp2,			// 183 VK_LAUNCH_APP2
-	keyNone,				// 184
-	keyNone,				// 185
-	keySemicolon,			// 186 VK_OEM_1
-//	keyPlus,				// 187 VK_OEM_PLUS
-	keyEquals,				// 187 VK_OEM_PLUS
-	keyComma,				// 188 VK_OEM_COMMA
-	keyMinus,				// 189 VK_OEM_MINUS
-	keyPeriod,				// 190 VK_OEM_PERIOD
-	keySlash,				// 191 VK_OEM_2
-	keyBackquote,			// 192 VK_OEM_3
-	keyNone,				// 193
-	keyNone,				// 194
-	keyNone,				// 195
-	keyNone,				// 196
-	keyNone,				// 197
-	keyNone,				// 198
-	keyNone,				// 199
-	keyNone,				// 200
-	keyNone,				// 201
-	keyNone,				// 202
-	keyNone,				// 203
-	keyNone,				// 204
-	keyNone,				// 205
-	keyNone,				// 206
-	keyNone,				// 207
-	keyNone,				// 208
-	keyNone,				// 209
-	keyNone,				// 210
-	keyNone,				// 211
-	keyNone,				// 212
-	keyNone,				// 213
-	keyNone,				// 214
-	keyNone,				// 215
-	keyNone,				// 216
-	keyNone,				// 217
-	keyNone,				// 218
-	keyLeftBracket,			// 219 VK_OEM_4
-	keyBackslash,			// 220 VK_OEM_5
-	keyRightBracket,		// 221 VK_OEM_6
-	keyQuote,				// 222 VK_OEM_7
-	keyBackquote,			// 223 VK_OEM_8
-	keyNone,				// 224
-	keyNone,				// 225
-	keyNone,				// 226 VK_OEM_102
-	keyNone,				// 227
-	keyNone,				// 228
-	keyIMEProcess,			// 229 VK_PROCESSKEY
-	keyNone,				// 230
-	keyNone,				// 231 VK_PACKET
-	keyNone,				// 232
-	keyNone,				// 233
-	keyNone,				// 234
-	keyNone,				// 235
-	keyNone,				// 236
-	keyNone,				// 237
-	keyNone,				// 238
-	keyNone,				// 239
-	keyNone,				// 240
-	keyNone,				// 241
-	keyNone,				// 242
-	keyNone,				// 243
-	keyNone,				// 244
-	keyNone,				// 245
-	keyNone,				// 246 VK_ATTN
-	keyNone,				// 247 VK_CRSEL
-	keyNone,				// 248 VK_EXSEL
-	keyNone,				// 249 VK_EREOF
-	keyPlay,				// 250 VK_PLAY
-	keyZoom,				// 251 VK_ZOOM
-	keyNone,				// 252 VK_NONAME
-	keyNone,				// 253 VK_PA1
-	keyNone,				// 254 VK_OEM_CLEAR
-	keyNone					// 255
+	KeyCode::NONE,				// 0
+	KeyCode::L_BUTTON,			// 1 VK_LBUTTON
+	KeyCode::R_BUTTON,			// 2 VK_RBUTTON
+	KeyCode::BREAK,				// 3 VK_CANCEL
+	KeyCode::M_BUTTON,			// 4 VK_MBUTTON
+	KeyCode::X_BUTTON1,			// 5 VK_XBUTTON1
+	KeyCode::X_BUTTON2,			// 6 VK_XBUTTON2
+	KeyCode::NONE,				// 7
+	KeyCode::BACK_SPACE,		// 8 VK_BACK
+	KeyCode::TAB,				// 9 VK_TAB
+	KeyCode::NONE,				// 10
+	KeyCode::NONE,				// 11
+	KeyCode::CLEAR,				// 12 VK_CLEAR
+	KeyCode::RETURN,			// 13 VK_RETURN
+	KeyCode::NONE,				// 14
+	KeyCode::NONE,				// 15
+	KeyCode::LEFT_SHIFT,		// 16 VK_SHIFT
+	KeyCode::LEFT_CTRL,			// 17 VK_CONTROL
+	KeyCode::LEFT_ALT,			// 18 VK_MENU
+	KeyCode::PAUSE,				// 19 VK_PAUSE
+	KeyCode::CAPS_LOCK,			// 20 VK_CAPITAL
+	KeyCode::IME_KANA,			// 21 VK_KANA
+	KeyCode::NONE,				// 22
+	KeyCode::IME_JUNJA,			// 23 VK_JUNJA
+	KeyCode::IME_FINAL,			// 24 VK_FINAL
+	KeyCode::IME_HANJA,			// 25 VK_HANJA
+	KeyCode::NONE,				// 26
+	KeyCode::ESCAPE,			// 27 VK_ESCAPE
+	KeyCode::IME_CONVERT,		// 28 VK_CONVERT
+	KeyCode::IME_NON_CONVERT,	// 29 VK_NONCONVERT
+	KeyCode::IME_ACCEPT,		// 30 VK_ACCEPT
+	KeyCode::IME_MODE_CHANGE,	// 31 VK_MODECHANGE
+	KeyCode::SPACE,				// 32 VK_SPACE
+	KeyCode::PAGE_UP,			// 33 VK_PRIOR
+	KeyCode::PAGE_DOWN,			// 34 VK_NEXT
+	KeyCode::END,				// 35 VK_END
+	KeyCode::HOME,				// 36 VK_HOME
+	KeyCode::ARROW_LEFT,		// 37 VK_LEFT
+	KeyCode::ARROW_UP,			// 38 VK_UP
+	KeyCode::ARROW_RIGHT,		// 39 VK_RIGHT
+	KeyCode::ARROW_DOWN,		// 40 VK_DOWN
+	KeyCode::NONE,				// 41 VK_SELECT
+	KeyCode::PRINT,				// 42 VK_PRINT
+	KeyCode::NONE,				// 43 VK_EXECUTE
+	KeyCode::PRINT,				// 44 VK_SNAPSHOT
+	KeyCode::INSERT,			// 45 VK_INSERT
+	KeyCode::DELETE_,			// 46 VK_DELETE
+	KeyCode::HELP,				// 47 VK_HELP
+	KeyCode::ZERO,				// 48 '0'
+	KeyCode::ONE,				// 49 '1'
+	KeyCode::TWO,				// 50 '2'
+	KeyCode::THREE,				// 51 '3'
+	KeyCode::FOUR,				// 52 '4'
+	KeyCode::FIVE,				// 53 '5'
+	KeyCode::SIX,				// 54 '6'
+	KeyCode::SEVEN,				// 55 '7'
+	KeyCode::EIGHT,				// 56 '8'
+	KeyCode::NINE,				// 57 '9'
+	KeyCode::NONE,				// 58
+	KeyCode::NONE,				// 59
+	KeyCode::NONE,				// 60
+	KeyCode::NONE,				// 61
+	KeyCode::NONE,				// 62
+	KeyCode::NONE,				// 63
+	KeyCode::NONE,				// 64
+	KeyCode::A,					// 65 'A'
+	KeyCode::B,					// 66 'B'
+	KeyCode::C,					// 67 'C'
+	KeyCode::D,					// 68 'D'
+	KeyCode::E,					// 69 'E'
+	KeyCode::F,					// 70 'F'
+	KeyCode::G,					// 71 'G'
+	KeyCode::H,					// 72 'H'
+	KeyCode::I,					// 73 'I'
+	KeyCode::J,					// 74 'J'
+	KeyCode::K,					// 75 'K'
+	KeyCode::L,					// 76 'L'
+	KeyCode::M,					// 77 'M'
+	KeyCode::N,					// 78 'N'
+	KeyCode::O,					// 79 'O'
+	KeyCode::P,					// 80 'P'
+	KeyCode::Q,					// 81 'Q'
+	KeyCode::R,					// 82 'R'
+	KeyCode::S,					// 83 'S'
+	KeyCode::T,					// 84 'T'
+	KeyCode::U,					// 85 'U'
+	KeyCode::V,					// 86 'V'
+	KeyCode::W,					// 87 'W'
+	KeyCode::X,					// 88 'X'
+	KeyCode::Y,					// 89 'Y'
+	KeyCode::Z,					// 90 'Z'
+	KeyCode::LEFT_SUPER,		// 91 VK_LWIN
+	KeyCode::RIGHT_SUPER,		// 92 VK_RWIN
+	KeyCode::MENU,				// 93 VK_APPS
+	KeyCode::NONE,				// 94
+	KeyCode::NONE,				// 95 VK_SLEEP
+	KeyCode::KEYPAD_0,			// 96 VK_NUMPAD0
+	KeyCode::KEYPAD_1,			// 97 VK_NUMPAD1
+	KeyCode::KEYPAD_2,			// 98 VK_NUMPAD2
+	KeyCode::KEYPAD_3,			// 99 VK_NUMPAD3
+	KeyCode::KEYPAD_4,			// 100 VK_NUMPAD4
+	KeyCode::KEYPAD_5,			// 101 VK_NUMPAD5
+	KeyCode::KEYPAD_6,			// 102 VK_NUMPAD6
+	KeyCode::KEYPAD_7,			// 103 VK_NUMPAD7
+	KeyCode::KEYPAD_8,			// 104 VK_NUMPAD8
+	KeyCode::KEYPAD_9,			// 105 VK_NUMPAD9
+	KeyCode::KEYPAD_MULTIPLY,	// 106 VK_MULTIPLY
+	KeyCode::KEYPAD_PLUS,		// 107 VK_ADD
+	KeyCode::KEYPAD_ENTER,		// 108 VK_SEPARATOR
+	KeyCode::KEYPAD_MINUS,		// 109 VK_SUBTRACT
+	KeyCode::KEYPAD_PERIOD,		// 110 VK_DECIMAL
+	KeyCode::KEYPAD_DIVIDE,		// 111 VK_DIVIDE
+	KeyCode::FUNCTION_1,		// 112 VK_F1
+	KeyCode::FUNCTION_2,		// 113 VK_F2
+	KeyCode::FUNCTION_3,		// 114 VK_F3
+	KeyCode::FUNCTION_4,		// 115 VK_F4
+	KeyCode::FUNCTION_5,		// 116 VK_F5
+	KeyCode::FUNCTION_6,		// 117 VK_F6
+	KeyCode::FUNCTION_7,		// 118 VK_F7
+	KeyCode::FUNCTION_8,		// 119 VK_F8
+	KeyCode::FUNCTION_9,		// 120 VK_F9
+	KeyCode::FUNCTION_10,		// 121 VK_F10
+	KeyCode::FUNCTION_11,		// 122 VK_F11
+	KeyCode::FUNCTION_12,		// 123 VK_F12
+	KeyCode::FUNCTION_13,		// 124 VK_F13
+	KeyCode::FUNCTION_14,		// 125 VK_F14
+	KeyCode::FUNCTION_15,		// 126 VK_F15
+	KeyCode::FUNCTION_16,		// 127 VK_F16
+	KeyCode::FUNCTION_17,		// 128 VK_F17
+	KeyCode::FUNCTION_18,		// 129 VK_F18
+	KeyCode::FUNCTION_19,		// 130 VK_F19
+	KeyCode::FUNCTION_20,		// 131 VK_F20
+	KeyCode::FUNCTION_21,		// 132 VK_F21
+	KeyCode::FUNCTION_22,		// 133 VK_F22
+	KeyCode::FUNCTION_23,		// 134 VK_F23
+	KeyCode::FUNCTION_24,		// 135 VK_F24
+	KeyCode::NONE,				// 136
+	KeyCode::NONE,				// 137
+	KeyCode::NONE,				// 138
+	KeyCode::NONE,				// 139
+	KeyCode::NONE,				// 140
+	KeyCode::NONE,				// 141
+	KeyCode::NONE,				// 142
+	KeyCode::NONE,				// 143
+	KeyCode::NUM_LOCK,			// 144 VK_NUMLOCK
+	KeyCode::SCROLL_LOCK,		// 145 VK_SCROLL
+	KeyCode::NONE,				// 146
+	KeyCode::NONE,				// 147
+	KeyCode::NONE,				// 148
+	KeyCode::NONE,				// 149
+	KeyCode::NONE,				// 150
+	KeyCode::NONE,				// 151
+	KeyCode::NONE,				// 152
+	KeyCode::NONE,				// 153
+	KeyCode::NONE,				// 154
+	KeyCode::NONE,				// 155
+	KeyCode::NONE,				// 156
+	KeyCode::NONE,				// 157
+	KeyCode::NONE,				// 158
+	KeyCode::NONE,				// 159
+	KeyCode::LEFT_SHIFT,		// 160 VK_LSHIFT
+	KeyCode::RIGHT_SHIFT,		// 161 VK_RSHIFT
+	KeyCode::LEFT_CTRL,			// 162 VK_LCONTROL
+	KeyCode::RIGHT_CTRL,		// 163 VK_RCONTROL
+	KeyCode::LEFT_ALT,			// 164 VK_LMENU
+	KeyCode::RIGHT_ALT,			// 165 VK_RMENU
+	KeyCode::BROWSER_BACK,		// 166 VK_BROWSER_BACK
+	KeyCode::BROWSER_FORWARD,	// 167 VK_BROWSER_FORWARD
+	KeyCode::BROWSER_REFRESH,	// 168 VK_BROWSER_REFRESH
+	KeyCode::BROWSER_STOP,		// 169 VK_BROWSER_STOP
+	KeyCode::BROWSER_SEARCH,	// 170 VK_BROWSER_SEARCH
+	KeyCode::BROWSER_FAVORITES,	// 171 VK_BROWSER_FAVORITES
+	KeyCode::BROWSER_HOME,		// 172 VK_BROWSER_HOME
+	KeyCode::VOLUME_MUTE,		// 173 VK_VOLUME_MUTE
+	KeyCode::VOLUME_DOWN,		// 174 VK_VOLUME_DOWN
+	KeyCode::VOLUME_UP,			// 175 VK_VOLUME_UP
+	KeyCode::MEDIA_NEXT,		// 176 VK_MEDIA_NEXT_TRACK
+	KeyCode::MEDIA_PREV,		// 177 VK_MEDIA_PREV_TRACK
+	KeyCode::MEDIA_STOP,		// 178 VK_MEDIA_STOP
+	KeyCode::MEDIA_PLAY_PAUSE,	// 179 VK_MEDIA_PLAY_PAUSE
+	KeyCode::LAUNCH_MAIL,		// 180 VK_LAUNCH_MAIL
+	KeyCode::LAUNCH_MEDIA,		// 181 VK_LAUNCH_MEDIA_SELECT
+	KeyCode::LAUNCH_APP1,		// 182 VK_LAUNCH_APP1
+	KeyCode::LAUNCH_APP2,		// 183 VK_LAUNCH_APP2
+	KeyCode::NONE,				// 184
+	KeyCode::NONE,				// 185
+	KeyCode::SEMI_COLON,		// 186 VK_OEM_1
+	KeyCode::EQUAL,				// 187 VK_OEM_PLUS
+	KeyCode::COMMA,				// 188 VK_OEM_COMMA
+	KeyCode::MINUS,				// 189 VK_OEM_MINUS
+	KeyCode::PERIOD,			// 190 VK_OEM_PERIOD
+	KeyCode::SLASH,				// 191 VK_OEM_2
+	KeyCode::BACK_QUOTE,		// 192 VK_OEM_3
+	KeyCode::NONE,				// 193
+	KeyCode::NONE,				// 194
+	KeyCode::NONE,				// 195
+	KeyCode::NONE,				// 196
+	KeyCode::NONE,				// 197
+	KeyCode::NONE,				// 198
+	KeyCode::NONE,				// 199
+	KeyCode::NONE,				// 200
+	KeyCode::NONE,				// 201
+	KeyCode::NONE,				// 202
+	KeyCode::NONE,				// 203
+	KeyCode::NONE,				// 204
+	KeyCode::NONE,				// 205
+	KeyCode::NONE,				// 206
+	KeyCode::NONE,				// 207
+	KeyCode::NONE,				// 208
+	KeyCode::NONE,				// 209
+	KeyCode::NONE,				// 210
+	KeyCode::NONE,				// 211
+	KeyCode::NONE,				// 212
+	KeyCode::NONE,				// 213
+	KeyCode::NONE,				// 214
+	KeyCode::NONE,				// 215
+	KeyCode::NONE,				// 216
+	KeyCode::NONE,				// 217
+	KeyCode::NONE,				// 218
+	KeyCode::LEFT_BRACKET,		// 219 VK_OEM_4
+	KeyCode::BACK_SLASH,		// 220 VK_OEM_5
+	KeyCode::RIGHT_BRACKET,		// 221 VK_OEM_6
+	KeyCode::QUOTE,				// 222 VK_OEM_7
+	KeyCode::BACK_QUOTE,		// 223 VK_OEM_8
+	KeyCode::NONE,				// 224
+	KeyCode::NONE,				// 225
+	KeyCode::NONE,				// 226 VK_OEM_102
+	KeyCode::NONE,				// 227
+	KeyCode::NONE,				// 228
+	KeyCode::IME_PROCESS,		// 229 VK_PROCESSKEY
+	KeyCode::NONE,				// 230
+	KeyCode::NONE,				// 231 VK_PACKET
+	KeyCode::NONE,				// 232
+	KeyCode::NONE,				// 233
+	KeyCode::NONE,				// 234
+	KeyCode::NONE,				// 235
+	KeyCode::NONE,				// 236
+	KeyCode::NONE,				// 237
+	KeyCode::NONE,				// 238
+	KeyCode::NONE,				// 239
+	KeyCode::NONE,				// 240
+	KeyCode::NONE,				// 241
+	KeyCode::NONE,				// 242
+	KeyCode::NONE,				// 243
+	KeyCode::NONE,				// 244
+	KeyCode::NONE,				// 245
+	KeyCode::NONE,				// 246 VK_ATTN
+	KeyCode::NONE,				// 247 VK_CRSEL
+	KeyCode::NONE,				// 248 VK_EXSEL
+	KeyCode::NONE,				// 249 VK_EREOF
+	KeyCode::PLAY,				// 250 VK_PLAY
+	KeyCode::ZOOM,				// 251 VK_ZOOM
+	KeyCode::NONE,				// 252 VK_NONAME
+	KeyCode::NONE,				// 253 VK_PA1
+	KeyCode::NONE,				// 254 VK_OEM_CLEAR
+	KeyCode::NONE				// 255
 };
 
-const NativeKeyCodeCompact Input::kc2native[keyCount] = {
-	0,						// keyNone
-	0,						// keyUnknown
-	VK_LBUTTON,				// keyLButton
-	VK_RBUTTON,				// keyRButton
-	VK_MBUTTON,				// keyMButton
-	VK_XBUTTON1,			// keyXButton1
-	VK_XBUTTON2,			// keyXButton2
-	VK_BACK,				// keyBackspace
-	VK_TAB,					// keyTab
-	VK_CLEAR,				// keyClear
-	VK_RETURN,				// keyReturn
-	VK_PAUSE,				// keyPause
-	VK_KANA,				// keyIMEKana
-	0,						// keyIMEHangul
-	VK_JUNJA,				// keyIMEJunja
-	VK_FINAL,				// keyIMEFinal
-	VK_HANJA,				// keyIMEHanja
-	0,						// keyIMEKanji
-	VK_ESCAPE,				// keyEscape
-	VK_CONVERT,				// keyIMEConvert
-	VK_NONCONVERT,			// keyIMENonConvert
-	VK_ACCEPT,				// keyIMEAccept
-	VK_MODECHANGE,			// keyIMEModeChange
-	VK_PROCESSKEY,			// keyIMEProcess
-	VK_SPACE,				// keySpace
-	0,						// keyExclaim
-	0,						// keyQuoteDbl
-	0,						// keyHash
-	0,						// keyDollar
-	0,						// keyPercent
-	0,						// keyAmpersand
-	VK_OEM_7,				// keyQuote
-	0,						// keyLeftParen
-	0,						// keyRightParen
-	0,						// keyAsterisk
-	VK_OEM_PLUS,			// keyPlus
-	VK_OEM_COMMA,			// keyComma
-	VK_OEM_MINUS,			// keyMinus
-	VK_OEM_PERIOD,			// keyPeriod
-	VK_OEM_2,				// keySlash
-	'0',					// key0
-	'1',					// key1
-	'2',					// key2
-	'3',					// key3
-	'4',					// key4
-	'5',					// key5
-	'6',					// key6
-	'7',					// key7
-	'8',					// key8
-	'9',					// key9
-	0,						// keyColon
-	VK_OEM_1,				// keySemicolon
-	0,						// keyLess
-	VK_OEM_PLUS,			// keyEquals
-	0,						// keyGreater
-	0,						// keyQuestion
-	0,						// keyAt
-	'A',					// keyA
-	'B',					// keyB
-	'C',					// keyC
-	'D',					// keyD
-	'E',					// keyE
-	'F',					// keyF
-	'G',					// keyG
-	'H',					// keyH
-	'I',					// keyI
-	'J',					// keyJ
-	'K',					// keyK
-	'L',					// keyL
-	'M',					// keyM
-	'N',					// keyN
-	'O',					// keyO
-	'P',					// keyP
-	'Q',					// keyQ
-	'R',					// keyR
-	'S',					// keyS
-	'T',					// keyT
-	'U',					// keyU
-	'V',					// keyV
-	'W',					// keyW
-	'X',					// keyX
-	'Y',					// keyY
-	'Z',					// keyZ
-	VK_OEM_4,				// keyLeftBracket
-	VK_OEM_5,				// keyBackslash
-	VK_OEM_6,				// keyRightBracket
-	0,						// keyCaret
-	0,						// keyUnderscore
-	VK_OEM_3,				// keyBackquote
-	VK_DELETE,				// keyDelete
-	0,						// keyWorld0
-	0,						// keyWorld1
-	0,						// keyWorld2
-	0,						// keyWorld3
-	0,						// keyWorld4
-	0,						// keyWorld5
-	0,						// keyWorld6
-	0,						// keyWorld7
-	0,						// keyWorld8
-	0,						// keyWorld9
-	0,						// keyWorld10
-	0,						// keyWorld11
-	0,						// keyWorld12
-	0,						// keyWorld13
-	0,						// keyWorld14
-	0,						// keyWorld15
-	0,						// keyWorld16
-	0,						// keyWorld17
-	0,						// keyWorld18
-	0,						// keyWorld19
-	0,						// keyWorld20
-	0,						// keyWorld21
-	0,						// keyWorld22
-	0,						// keyWorld23
-	0,						// keyWorld24
-	0,						// keyWorld25
-	0,						// keyWorld26
-	0,						// keyWorld27
-	0,						// keyWorld28
-	0,						// keyWorld29
-	0,						// keyWorld30
-	0,						// keyWorld31
-	0,						// keyWorld32
-	0,						// keyWorld33
-	0,						// keyWorld34
-	0,						// keyWorld35
-	0,						// keyWorld36
-	0,						// keyWorld37
-	0,						// keyWorld38
-	0,						// keyWorld39
-	0,						// keyWorld40
-	0,						// keyWorld41
-	0,						// keyWorld42
-	0,						// keyWorld43
-	0,						// keyWorld44
-	0,						// keyWorld45
-	0,						// keyWorld46
-	0,						// keyWorld47
-	0,						// keyWorld48
-	0,						// keyWorld49
-	0,						// keyWorld50
-	0,						// keyWorld51
-	0,						// keyWorld52
-	0,						// keyWorld53
-	0,						// keyWorld54
-	0,						// keyWorld55
-	0,						// keyWorld56
-	0,						// keyWorld57
-	0,						// keyWorld58
-	0,						// keyWorld59
-	0,						// keyWorld60
-	0,						// keyWorld61
-	0,						// keyWorld62
-	0,						// keyWorld63
-	0,						// keyWorld64
-	0,						// keyWorld65
-	0,						// keyWorld66
-	0,						// keyWorld67
-	0,						// keyWorld68
-	0,						// keyWorld69
-	0,						// keyWorld70
-	0,						// keyWorld71
-	0,						// keyWorld72
-	0,						// keyWorld73
-	0,						// keyWorld74
-	0,						// keyWorld75
-	0,						// keyWorld76
-	0,						// keyWorld77
-	0,						// keyWorld78
-	0,						// keyWorld79
-	0,						// keyWorld80
-	0,						// keyWorld81
-	0,						// keyWorld82
-	0,						// keyWorld83
-	0,						// keyWorld84
-	0,						// keyWorld85
-	0,						// keyWorld86
-	0,						// keyWorld87
-	0,						// keyWorld88
-	0,						// keyWorld89
-	0,						// keyWorld90
-	0,						// keyWorld91
-	0,						// keyWorld92
-	0,						// keyWorld93
-	0,						// keyWorld94
-	0,						// keyWorld95
-	VK_NUMPAD0,				// keyKP0
-	VK_NUMPAD1,				// keyKP1
-	VK_NUMPAD2,				// keyKP2
-	VK_NUMPAD3,				// keyKP3
-	VK_NUMPAD4,				// keyKP4
-	VK_NUMPAD5,				// keyKP5
-	VK_NUMPAD6,				// keyKP6
-	VK_NUMPAD7,				// keyKP7
-	VK_NUMPAD8,				// keyKP8
-	VK_NUMPAD9,				// keyKP9
-	VK_DECIMAL,				// keyKPPeriod
-	VK_DIVIDE,				// keyKPDivide
-	VK_MULTIPLY,			// keyKPMultiply
-	VK_SUBTRACT,			// keyKPMinus
-	VK_ADD,					// keyKPPlus
-	VK_SEPARATOR,			// keyKPEnter
-	0,						// keyKPEquals
-	VK_UP,					// keyUp
-	VK_DOWN,				// keyDown
-	VK_RIGHT,				// keyRight
-	VK_LEFT,				// keyLeft
-	VK_INSERT,				// keyInsert
-	VK_HOME,				// keyHome
-	VK_END,					// keyEnd
-	VK_PRIOR,				// keyPageUp
-	VK_NEXT,				// keyPageDown
-	VK_F1,					// keyF1
-	VK_F2,					// keyF2
-	VK_F3,					// keyF3
-	VK_F4,					// keyF4
-	VK_F5,					// keyF5
-	VK_F6,					// keyF6
-	VK_F7,					// keyF7
-	VK_F8,					// keyF8
-	VK_F9,					// keyF9
-	VK_F10,					// keyF10
-	VK_F11,					// keyF11
-	VK_F12,					// keyF12
-	VK_F13,					// keyF13
-	VK_F14,					// keyF14
-	VK_F15,					// keyF15
-	VK_F16,					// keyF16
-	VK_F17,					// keyF17
-	VK_F18,					// keyF18
-	VK_F19,					// keyF19
-	VK_F20,					// keyF20
-	VK_F21,					// keyF21
-	VK_F22,					// keyF22
-	VK_F23,					// keyF23
-	VK_F24,					// keyF24
-	VK_NUMLOCK,				// keyNumLock
-	VK_CAPITAL,				// keyCapsLock
-	VK_SCROLL,				// keyScrollLock
-	VK_SHIFT,				// keyLShift
-	VK_RSHIFT,				// keyRShift
-	VK_CONTROL,				// keyLCtrl
-	VK_RCONTROL,			// keyRCtrl
-	VK_MENU,				// keyLAlt
-	VK_RMENU,				// keyRAlt
-	0,						// keyLMeta
-	0,						// keyRMeta
-	VK_RWIN,				// keyRSuper
-	VK_LWIN,				// keyLSuper
-	0,						// keyMode
-	0,						// keyCompose
-	VK_HELP,				// keyHelp
-	VK_PRINT,				// keyPrint
-	0,						// keySysreq
-	VK_CANCEL,				// keyBreak
-	VK_APPS,				// keyMenu
-	0,						// keyPower
-	0,						// keyEuro
-	0,						// keyUndo
-	VK_BROWSER_BACK,		// keyBrowserBack
-	VK_BROWSER_FORWARD,		// keyBrowserForward
-	VK_BROWSER_REFRESH,		// keyBrowserRefresh
-	VK_BROWSER_STOP,		// keyBrowserStop
-	VK_BROWSER_SEARCH,		// keyBrowserSearch
-	VK_BROWSER_FAVORITES,	// keyBrowserFavorites
-	VK_BROWSER_HOME,		// keyBrowserHome
-	VK_VOLUME_MUTE,			// keyVolumeMute
-	VK_VOLUME_DOWN,			// keyVolumeDown
-	VK_VOLUME_UP,			// keyVolumeUp
-	VK_MEDIA_NEXT_TRACK,	// keyMediaNext
-	VK_MEDIA_PREV_TRACK,	// keyMediaPrev
-	VK_MEDIA_STOP,			// keyMediaStop
-	VK_MEDIA_PLAY_PAUSE,	// keyMediaPlayPause
-	VK_LAUNCH_MAIL,			// keyLaunchMail
-	VK_LAUNCH_MEDIA_SELECT,	// keyLaunchMediaSelect
-	VK_LAUNCH_APP1,			// keyLaunchApp1
-	VK_LAUNCH_APP2,			// keyLaunchApp2
-	VK_PLAY,				// keyPlay
-	VK_ZOOM					// keyZoom
+const NativeKeyCodeCompact Input::kc2native[KeyCode::COUNT] = {
+	0,						// KeyCode::NONE
+	0,						// KeyCode::UNKNOWN
+	VK_LBUTTON,				// KeyCode::L_BUTTON
+	VK_RBUTTON,				// KeyCode::R_BUTTON
+	VK_MBUTTON,				// KeyCode::M_BUTTON
+	VK_XBUTTON1,			// KeyCode::X_BUTTON1
+	VK_XBUTTON2,			// KeyCode::X_BUTTON2
+	VK_BACK,				// KeyCode::BACK_SPACE
+	VK_TAB,					// KeyCode::TAB
+	VK_CLEAR,				// KeyCode::CLEAR
+	VK_RETURN,				// KeyCode::RETURN
+	VK_PAUSE,				// KeyCode::PAUSE
+	VK_KANA,				// KeyCode::IME_KANA
+	0,						// KeyCode::IME_HANGUL
+	VK_JUNJA,				// KeyCode::IME_JUNJA
+	VK_FINAL,				// KeyCode::IME_FINAL
+	VK_HANJA,				// KeyCode::IME_HANJA
+	0,						// KeyCode::IME_KANJI
+	VK_ESCAPE,				// KeyCode::ESCAPE
+	VK_CONVERT,				// KeyCode::IME_CONVERT
+	VK_NONCONVERT,			// KeyCode::IME_NON_CONVERT
+	VK_ACCEPT,				// KeyCode::IME_ACCEPT
+	VK_MODECHANGE,			// KeyCode::IME_MODE_CHANGE
+	VK_PROCESSKEY,			// KeyCode::IME_PROCESS
+	VK_SPACE,				// KeyCode::SPACE
+	0,						// KeyCode::EXCLAIM
+	0,						// KeyCode::DOUBLE_QUOTE
+	0,						// KeyCode::HASH
+	0,						// KeyCode::DOLLAR
+	0,						// KeyCode::PERCENT
+	0,						// KeyCode::AMPERSAND
+	VK_OEM_7,				// KeyCode::QUOTE
+	0,						// KeyCode::LEFT_PAREN
+	0,						// KeyCode::RIGHT_PAREN
+	0,						// KeyCode::ASTERISK
+	VK_OEM_PLUS,			// KeyCode::PLUS
+	VK_OEM_COMMA,			// KeyCode::COMMA
+	VK_OEM_MINUS,			// KeyCode::MINUS
+	VK_OEM_PERIOD,			// KeyCode::PERIOD
+	VK_OEM_2,				// KeyCode::SLASH
+	'0',					// KeyCode::ZERO
+	'1',					// KeyCode::ONE
+	'2',					// KeyCode::TWO
+	'3',					// KeyCode::THREE
+	'4',					// KeyCode::FOUR
+	'5',					// KeyCode::FIVE
+	'6',					// KeyCode::SIX
+	'7',					// KeyCode::SEVEN
+	'8',					// KeyCode::EIGHT
+	'9',					// KeyCode::NINE
+	0,						// KeyCode::COLON
+	VK_OEM_1,				// KeyCode::SEMI_COLON
+	0,						// KeyCode::LESS
+	VK_OEM_PLUS,			// KeyCode::EQUAL
+	0,						// KeyCode::GREATER
+	0,						// KeyCode::QUESTION
+	0,						// KeyCode::AT
+	'A',					// KeyCode::A
+	'B',					// KeyCode::B
+	'C',					// KeyCode::C
+	'D',					// KeyCode::D
+	'E',					// KeyCode::E
+	'F',					// KeyCode::F
+	'G',					// KeyCode::G
+	'H',					// KeyCode::H
+	'I',					// KeyCode::I
+	'J',					// KeyCode::J
+	'K',					// KeyCode::K
+	'L',					// KeyCode::L
+	'M',					// KeyCode::M
+	'N',					// KeyCode::N
+	'O',					// KeyCode::O
+	'P',					// KeyCode::P
+	'Q',					// KeyCode::Q
+	'R',					// KeyCode::R
+	'S',					// KeyCode::S
+	'T',					// KeyCode::T
+	'U',					// KeyCode::U
+	'V',					// KeyCode::V
+	'W',					// KeyCode::W
+	'X',					// KeyCode::X
+	'Y',					// KeyCode::Y
+	'Z',					// KeyCode::Z
+	VK_OEM_4,				// KeyCode::LEFT_BRACKET
+	VK_OEM_5,				// KeyCode::BACK_SLASH
+	VK_OEM_6,				// KeyCode::RIGHT_BRACKET
+	0,						// KeyCode::CARET
+	0,						// KeyCode::UNDER_SCORE
+	VK_OEM_3,				// KeyCode::BACK_QUOTE
+	VK_DELETE,				// KeyCode::DELETE_
+	0,						// KeyCode::WORLD_0
+	0,						// KeyCode::WORLD_1
+	0,						// KeyCode::WORLD_2
+	0,						// KeyCode::WORLD_3
+	0,						// KeyCode::WORLD_4
+	0,						// KeyCode::WORLD_5
+	0,						// KeyCode::WORLD_6
+	0,						// KeyCode::WORLD_7
+	0,						// KeyCode::WORLD_8
+	0,						// KeyCode::WORLD_9
+	0,						// KeyCode::WORLD_10
+	0,						// KeyCode::WORLD_11
+	0,						// KeyCode::WORLD_12
+	0,						// KeyCode::WORLD_13
+	0,						// KeyCode::WORLD_14
+	0,						// KeyCode::WORLD_15
+	0,						// KeyCode::WORLD_16
+	0,						// KeyCode::WORLD_17
+	0,						// KeyCode::WORLD_18
+	0,						// KeyCode::WORLD_19
+	0,						// KeyCode::WORLD_20
+	0,						// KeyCode::WORLD_21
+	0,						// KeyCode::WORLD_22
+	0,						// KeyCode::WORLD_23
+	0,						// KeyCode::WORLD_24
+	0,						// KeyCode::WORLD_25
+	0,						// KeyCode::WORLD_26
+	0,						// KeyCode::WORLD_27
+	0,						// KeyCode::WORLD_28
+	0,						// KeyCode::WORLD_29
+	0,						// KeyCode::WORLD_30
+	0,						// KeyCode::WORLD_31
+	0,						// KeyCode::WORLD_32
+	0,						// KeyCode::WORLD_33
+	0,						// KeyCode::WORLD_34
+	0,						// KeyCode::WORLD_35
+	0,						// KeyCode::WORLD_36
+	0,						// KeyCode::WORLD_37
+	0,						// KeyCode::WORLD_38
+	0,						// KeyCode::WORLD_39
+	0,						// KeyCode::WORLD_40
+	0,						// KeyCode::WORLD_41
+	0,						// KeyCode::WORLD_42
+	0,						// KeyCode::WORLD_43
+	0,						// KeyCode::WORLD_44
+	0,						// KeyCode::WORLD_45
+	0,						// KeyCode::WORLD_46
+	0,						// KeyCode::WORLD_47
+	0,						// KeyCode::WORLD_48
+	0,						// KeyCode::WORLD_49
+	0,						// KeyCode::WORLD_50
+	0,						// KeyCode::WORLD_51
+	0,						// KeyCode::WORLD_52
+	0,						// KeyCode::WORLD_53
+	0,						// KeyCode::WORLD_54
+	0,						// KeyCode::WORLD_55
+	0,						// KeyCode::WORLD_56
+	0,						// KeyCode::WORLD_57
+	0,						// KeyCode::WORLD_58
+	0,						// KeyCode::WORLD_59
+	0,						// KeyCode::WORLD_60
+	0,						// KeyCode::WORLD_61
+	0,						// KeyCode::WORLD_62
+	0,						// KeyCode::WORLD_63
+	0,						// KeyCode::WORLD_64
+	0,						// KeyCode::WORLD_65
+	0,						// KeyCode::WORLD_66
+	0,						// KeyCode::WORLD_67
+	0,						// KeyCode::WORLD_68
+	0,						// KeyCode::WORLD_69
+	0,						// KeyCode::WORLD_70
+	0,						// KeyCode::WORLD_71
+	0,						// KeyCode::WORLD_72
+	0,						// KeyCode::WORLD_73
+	0,						// KeyCode::WORLD_74
+	0,						// KeyCode::WORLD_75
+	0,						// KeyCode::WORLD_76
+	0,						// KeyCode::WORLD_77
+	0,						// KeyCode::WORLD_78
+	0,						// KeyCode::WORLD_79
+	0,						// KeyCode::WORLD_80
+	0,						// KeyCode::WORLD_81
+	0,						// KeyCode::WORLD_82
+	0,						// KeyCode::WORLD_83
+	0,						// KeyCode::WORLD_84
+	0,						// KeyCode::WORLD_85
+	0,						// KeyCode::WORLD_86
+	0,						// KeyCode::WORLD_87
+	0,						// KeyCode::WORLD_88
+	0,						// KeyCode::WORLD_89
+	0,						// KeyCode::WORLD_90
+	0,						// KeyCode::WORLD_91
+	0,						// KeyCode::WORLD_92
+	0,						// KeyCode::WORLD_93
+	0,						// KeyCode::WORLD_94
+	0,						// KeyCode::WORLD_95
+	VK_NUMPAD0,				// KeyCode::KEYPAD_0
+	VK_NUMPAD1,				// KeyCode::KEYPAD_1
+	VK_NUMPAD2,				// KeyCode::KEYPAD_2
+	VK_NUMPAD3,				// KeyCode::KEYPAD_3
+	VK_NUMPAD4,				// KeyCode::KEYPAD_4
+	VK_NUMPAD5,				// KeyCode::KEYPAD_5
+	VK_NUMPAD6,				// KeyCode::KEYPAD_6
+	VK_NUMPAD7,				// KeyCode::KEYPAD_7
+	VK_NUMPAD8,				// KeyCode::KEYPAD_8
+	VK_NUMPAD9,				// KeyCode::KEYPAD_9
+	VK_DECIMAL,				// KeyCode::KEYPAD_PERIOD
+	VK_DIVIDE,				// KeyCode::KEYPAD_DIVIDE
+	VK_MULTIPLY,			// KeyCode::KEYPAD_MULTIPLY
+	VK_SUBTRACT,			// KeyCode::KEYPAD_MINUS
+	VK_ADD,					// KeyCode::KEYPAD_PLUS
+	VK_SEPARATOR,			// KeyCode::KEYPAD_ENTER
+	0,						// KeyCode::KEYPAD_EQUAL
+	VK_UP,					// KeyCode::ARROW_UP
+	VK_DOWN,				// KeyCode::ARROW_DOWN
+	VK_RIGHT,				// KeyCode::ARROW_RIGHT
+	VK_LEFT,				// KeyCode::ARROW_LEFT
+	VK_INSERT,				// KeyCode::INSERT
+	VK_HOME,				// KeyCode::HOME
+	VK_END,					// KeyCode::END
+	VK_PRIOR,				// KeyCode::PAGE_UP
+	VK_NEXT,				// KeyCode::PAGE_DOWN
+	VK_F1,					// KeyCode::FUNCTION_1
+	VK_F2,					// KeyCode::FUNCTION_2
+	VK_F3,					// KeyCode::FUNCTION_3
+	VK_F4,					// KeyCode::FUNCTION_4
+	VK_F5,					// KeyCode::FUNCTION_5
+	VK_F6,					// KeyCode::FUNCTION_6
+	VK_F7,					// KeyCode::FUNCTION_7
+	VK_F8,					// KeyCode::FUNCTION_8
+	VK_F9,					// KeyCode::FUNCTION_9
+	VK_F10,					// KeyCode::FUNCTION_10
+	VK_F11,					// KeyCode::FUNCTION_11
+	VK_F12,					// KeyCode::FUNCTION_12
+	VK_F13,					// KeyCode::FUNCTION_13
+	VK_F14,					// KeyCode::FUNCTION_14
+	VK_F15,					// KeyCode::FUNCTION_15
+	VK_F16,					// KeyCode::FUNCTION_16
+	VK_F17,					// KeyCode::FUNCTION_17
+	VK_F18,					// KeyCode::FUNCTION_18
+	VK_F19,					// KeyCode::FUNCTION_19
+	VK_F20,					// KeyCode::FUNCTION_20
+	VK_F21,					// KeyCode::FUNCTION_21
+	VK_F22,					// KeyCode::FUNCTION_22
+	VK_F23,					// KeyCode::FUNCTION_23
+	VK_F24,					// KeyCode::FUNCTION_24
+	VK_NUMLOCK,				// KeyCode::NUM_LOCK
+	VK_CAPITAL,				// KeyCode::CAPS_LOCK
+	VK_SCROLL,				// KeyCode::SCROLL_LOCK
+	VK_SHIFT,				// KeyCode::LEFT_SHIFT
+	VK_RSHIFT,				// KeyCode::RIGHT_SHIFT
+	VK_CONTROL,				// KeyCode::LEFT_CTRL
+	VK_RCONTROL,			// KeyCode::RIGHT_CTRL
+	VK_MENU,				// KeyCode::LEFT_ALT
+	VK_RMENU,				// KeyCode::RIGHT_ALT
+	0,						// KeyCode::LEFT_META
+	0,						// KeyCode::RIGHT_META
+	VK_RWIN,				// KeyCode::RIGHT_SUPER
+	VK_LWIN,				// KeyCode::LEFT_SUPER
+	0,						// KeyCode::MODE
+	0,						// KeyCode::COMPOSE
+	VK_HELP,				// KeyCode::HELP
+	VK_PRINT,				// KeyCode::PRINT
+	0,						// KeyCode::SYS_REQ
+	VK_CANCEL,				// KeyCode::BREAK
+	VK_APPS,				// KeyCode::MENU
+	0,						// KeyCode::POWER
+	0,						// KeyCode::EURO
+	0,						// KeyCode::UNDO
+	VK_BROWSER_BACK,		// KeyCode::BROWSER_BACK
+	VK_BROWSER_FORWARD,		// KeyCode::BROWSER_FORWARD
+	VK_BROWSER_REFRESH,		// KeyCode::BROWSER_REFRESH
+	VK_BROWSER_STOP,		// KeyCode::BROWSER_STOP
+	VK_BROWSER_SEARCH,		// KeyCode::BROWSER_SEARCH
+	VK_BROWSER_FAVORITES,	// KeyCode::BROWSER_FAVORITES
+	VK_BROWSER_HOME,		// KeyCode::BROWSER_HOME
+	VK_VOLUME_MUTE,			// KeyCode::VOLUME_MUTE
+	VK_VOLUME_DOWN,			// KeyCode::VOLUME_DOWN
+	VK_VOLUME_UP,			// KeyCode::VOLUME_UP
+	VK_MEDIA_NEXT_TRACK,	// KeyCode::MEDIA_NEXT
+	VK_MEDIA_PREV_TRACK,	// KeyCode::MEDIA_PREV
+	VK_MEDIA_STOP,			// KeyCode::MEDIA_STOP
+	VK_MEDIA_PLAY_PAUSE,	// KeyCode::MEDIA_PLAY_PAUSE
+	VK_LAUNCH_MAIL,			// KeyCode::LAUNCH_MAIL
+	VK_LAUNCH_MEDIA_SELECT,	// KeyCode::LAUNCH_MEDIA
+	VK_LAUNCH_APP1,			// KeyCode::LAUNCH_APP1
+	VK_LAUNCH_APP2,			// KeyCode::LAUNCH_APP2
+	VK_PLAY,				// KeyCode::PLAY
+	VK_ZOOM					// KeyCode::ZOOM
 };
 
 #pragma pack(pop)
 
 void Input::verifyTranslationTables() {
 	// verify integrity of Windows to KeyCode table
-	assert(native2kc[VK_LBUTTON] == keyLButton);
-	assert(native2kc[VK_RBUTTON] == keyRButton);
-	assert(native2kc[VK_CANCEL] == keyBreak);
-	assert(native2kc[VK_MBUTTON] == keyMButton);
-	assert(native2kc[VK_XBUTTON1] == keyXButton1);
-	assert(native2kc[VK_XBUTTON2] == keyXButton2);
-	assert(native2kc[VK_BACK] == keyBackspace);
-	assert(native2kc[VK_TAB] == keyTab);
-	assert(native2kc[VK_CLEAR] == keyClear);
-	assert(native2kc[VK_RETURN] == keyReturn);
-	assert(native2kc[VK_SHIFT] == keyLShift);
-	assert(native2kc[VK_CONTROL] == keyLCtrl);
-	assert(native2kc[VK_MENU] == keyLAlt);
-	assert(native2kc[VK_PAUSE] == keyPause);
-	assert(native2kc[VK_CAPITAL] == keyCapsLock);
-	assert(native2kc[VK_KANA] == keyIMEKana);
-	assert(native2kc[VK_JUNJA] == keyIMEJunja);
-	assert(native2kc[VK_FINAL] == keyIMEFinal);
-	assert(native2kc[VK_HANJA] == keyIMEHanja);
-	assert(native2kc[VK_ESCAPE] == keyEscape);
-	assert(native2kc[VK_CONVERT] == keyIMEConvert);
-	assert(native2kc[VK_NONCONVERT] == keyIMENonConvert);
-	assert(native2kc[VK_ACCEPT] == keyIMEAccept);
-	assert(native2kc[VK_MODECHANGE] == keyIMEModeChange);
-	assert(native2kc[VK_SPACE] == keySpace);
-	assert(native2kc[VK_PRIOR] == keyPageUp);
-	assert(native2kc[VK_NEXT] == keyPageDown);
-	assert(native2kc[VK_END] == keyEnd);
-	assert(native2kc[VK_HOME] == keyHome);
-	assert(native2kc[VK_LEFT] == keyLeft);
-	assert(native2kc[VK_UP] == keyUp);
-	assert(native2kc[VK_RIGHT] == keyRight);
-	assert(native2kc[VK_DOWN] == keyDown);
-	assert(native2kc[VK_PRINT] == keyPrint);
-	assert(native2kc[VK_SNAPSHOT] == keyPrint);
-	assert(native2kc[VK_INSERT] == keyInsert);
-	assert(native2kc[VK_DELETE] == keyDelete);
-	assert(native2kc[VK_HELP] == keyHelp);
-	assert(native2kc['0'] == key0);
-	assert(native2kc['1'] == key1);
-	assert(native2kc['2'] == key2);
-	assert(native2kc['3'] == key3);
-	assert(native2kc['4'] == key4);
-	assert(native2kc['5'] == key5);
-	assert(native2kc['6'] == key6);
-	assert(native2kc['7'] == key7);
-	assert(native2kc['8'] == key8);
-	assert(native2kc['9'] == key9);
-	assert(native2kc['A'] == keyA);
-	assert(native2kc['B'] == keyB);
-	assert(native2kc['C'] == keyC);
-	assert(native2kc['D'] == keyD);
-	assert(native2kc['E'] == keyE);
-	assert(native2kc['F'] == keyF);
-	assert(native2kc['G'] == keyG);
-	assert(native2kc['H'] == keyH);
-	assert(native2kc['I'] == keyI);
-	assert(native2kc['J'] == keyJ);
-	assert(native2kc['K'] == keyK);
-	assert(native2kc['L'] == keyL);
-	assert(native2kc['M'] == keyM);
-	assert(native2kc['N'] == keyN);
-	assert(native2kc['O'] == keyO);
-	assert(native2kc['P'] == keyP);
-	assert(native2kc['Q'] == keyQ);
-	assert(native2kc['R'] == keyR);
-	assert(native2kc['S'] == keyS);
-	assert(native2kc['T'] == keyT);
-	assert(native2kc['U'] == keyU);
-	assert(native2kc['V'] == keyV);
-	assert(native2kc['W'] == keyW);
-	assert(native2kc['X'] == keyX);
-	assert(native2kc['Y'] == keyY);
-	assert(native2kc['Z'] == keyZ);
-	assert(native2kc[VK_LWIN] == keyLSuper);
-	assert(native2kc[VK_RWIN] == keyRSuper);
-	assert(native2kc[VK_APPS] == keyMenu);
-	assert(native2kc[VK_NUMPAD0] == keyKP0);
-	assert(native2kc[VK_NUMPAD1] == keyKP1);
-	assert(native2kc[VK_NUMPAD2] == keyKP2);
-	assert(native2kc[VK_NUMPAD3] == keyKP3);
-	assert(native2kc[VK_NUMPAD4] == keyKP4);
-	assert(native2kc[VK_NUMPAD5] == keyKP5);
-	assert(native2kc[VK_NUMPAD6] == keyKP6);
-	assert(native2kc[VK_NUMPAD7] == keyKP7);
-	assert(native2kc[VK_NUMPAD8] == keyKP8);
-	assert(native2kc[VK_NUMPAD9] == keyKP9);
-	assert(native2kc[VK_MULTIPLY] == keyKPMultiply);
-	assert(native2kc[VK_ADD] == keyKPPlus);
-	assert(native2kc[VK_SEPARATOR] == keyKPEnter);
-	assert(native2kc[VK_SUBTRACT] == keyKPMinus);
-	assert(native2kc[VK_DECIMAL] == keyKPPeriod);
-	assert(native2kc[VK_DIVIDE] == keyKPDivide);
-	assert(native2kc[VK_F1] == keyF1);
-	assert(native2kc[VK_F2] == keyF2);
-	assert(native2kc[VK_F3] == keyF3);
-	assert(native2kc[VK_F4] == keyF4);
-	assert(native2kc[VK_F5] == keyF5);
-	assert(native2kc[VK_F6] == keyF6);
-	assert(native2kc[VK_F7] == keyF7);
-	assert(native2kc[VK_F8] == keyF8);
-	assert(native2kc[VK_F9] == keyF9);
-	assert(native2kc[VK_F10] == keyF10);
-	assert(native2kc[VK_F11] == keyF11);
-	assert(native2kc[VK_F12] == keyF12);
-	assert(native2kc[VK_F13] == keyF13);
-	assert(native2kc[VK_F14] == keyF14);
-	assert(native2kc[VK_F15] == keyF15);
-	assert(native2kc[VK_F16] == keyF16);
-	assert(native2kc[VK_F17] == keyF17);
-	assert(native2kc[VK_F18] == keyF18);
-	assert(native2kc[VK_F19] == keyF19);
-	assert(native2kc[VK_F20] == keyF20);
-	assert(native2kc[VK_F21] == keyF21);
-	assert(native2kc[VK_F22] == keyF22);
-	assert(native2kc[VK_F23] == keyF23);
-	assert(native2kc[VK_F24] == keyF24);
-	assert(native2kc[VK_NUMLOCK] == keyNumLock);
-	assert(native2kc[VK_SCROLL] == keyScrollLock);
-	assert(native2kc[VK_LSHIFT] == keyLShift);
-	assert(native2kc[VK_RSHIFT] == keyRShift);
-	assert(native2kc[VK_LCONTROL] == keyLCtrl);
-	assert(native2kc[VK_RCONTROL] == keyRCtrl);
-	assert(native2kc[VK_LMENU] == keyLAlt);
-	assert(native2kc[VK_RMENU] == keyRAlt);
-	assert(native2kc[VK_BROWSER_BACK] == keyBrowserBack);
-	assert(native2kc[VK_BROWSER_FORWARD] == keyBrowserForward);
-	assert(native2kc[VK_BROWSER_REFRESH] == keyBrowserRefresh);
-	assert(native2kc[VK_BROWSER_STOP] == keyBrowserStop);
-	assert(native2kc[VK_BROWSER_SEARCH] == keyBrowserSearch);
-	assert(native2kc[VK_BROWSER_FAVORITES] == keyBrowserFavorites);
-	assert(native2kc[VK_BROWSER_HOME] == keyBrowserHome);
-	assert(native2kc[VK_VOLUME_MUTE] == keyVolumeMute);
-	assert(native2kc[VK_VOLUME_DOWN] == keyVolumeDown);
-	assert(native2kc[VK_VOLUME_UP] == keyVolumeUp);
-	assert(native2kc[VK_MEDIA_NEXT_TRACK] == keyMediaNext);
-	assert(native2kc[VK_MEDIA_PREV_TRACK] == keyMediaPrev);
-	assert(native2kc[VK_MEDIA_STOP] == keyMediaStop);
-	assert(native2kc[VK_MEDIA_PLAY_PAUSE] == keyMediaPlayPause);
-	assert(native2kc[VK_LAUNCH_MAIL] == keyLaunchMail);
-	assert(native2kc[VK_LAUNCH_MEDIA_SELECT] == keyLaunchMediaSelect);
-	assert(native2kc[VK_LAUNCH_APP1] == keyLaunchApp1);
-	assert(native2kc[VK_LAUNCH_APP2] == keyLaunchApp2);
-	assert(native2kc[VK_OEM_1] == keySemicolon);
-//	assert(native2kc[VK_OEM_PLUS] == keyPlus);
-//	assert(native2kc[VK_OEM_PLUS] == keyEquals);
-	assert(native2kc[VK_OEM_COMMA] == keyComma);
-	assert(native2kc[VK_OEM_MINUS] == keyMinus);
-	assert(native2kc[VK_OEM_PERIOD] == keyPeriod);
-	assert(native2kc[VK_OEM_2] == keySlash);
-	assert(native2kc[VK_OEM_3] == keyBackquote);
-	assert(native2kc[VK_OEM_4] == keyLeftBracket);
-	assert(native2kc[VK_OEM_5] == keyBackslash);
-	assert(native2kc[VK_OEM_6] == keyRightBracket);
-	assert(native2kc[VK_OEM_7] == keyQuote);
-	assert(native2kc[VK_OEM_8] == keyBackquote);
-	assert(native2kc[VK_PROCESSKEY] == keyIMEProcess);
-	assert(native2kc[VK_PLAY] == keyPlay);
-	assert(native2kc[VK_ZOOM] == keyZoom);
-	assert(kc2native[keyLButton] == VK_LBUTTON);
-	assert(kc2native[keyRButton] == VK_RBUTTON);
-	assert(kc2native[keyMButton] == VK_MBUTTON);
-	assert(kc2native[keyXButton1] == VK_XBUTTON1);
-	assert(kc2native[keyXButton2] == VK_XBUTTON2);
-	assert(kc2native[keyBackspace] == VK_BACK);
-	assert(kc2native[keyTab] == VK_TAB);
-	assert(kc2native[keyClear] == VK_CLEAR);
-	assert(kc2native[keyReturn] == VK_RETURN);
-	assert(kc2native[keyPause] == VK_PAUSE);
-	assert(kc2native[keyIMEKana] == VK_KANA);
-	assert(kc2native[keyIMEJunja] == VK_JUNJA);
-	assert(kc2native[keyIMEFinal] == VK_FINAL);
-	assert(kc2native[keyIMEHanja] == VK_HANJA);
-	assert(kc2native[keyEscape] == VK_ESCAPE);
-	assert(kc2native[keyIMEConvert] == VK_CONVERT);
-	assert(kc2native[keyIMENonConvert] == VK_NONCONVERT);
-	assert(kc2native[keyIMEAccept] == VK_ACCEPT);
-	assert(kc2native[keyIMEModeChange] == VK_MODECHANGE);
-	assert(kc2native[keyIMEProcess] == VK_PROCESSKEY);
-	assert(kc2native[keySpace] == VK_SPACE);
-	assert(kc2native[keyQuote] == VK_OEM_7);
-//	assert(kc2native[keyPlus] == VK_OEM_PLUS);
-	assert(kc2native[keyEquals] == VK_OEM_PLUS);
-	assert(kc2native[keyComma] == VK_OEM_COMMA);
-	assert(kc2native[keyMinus] == VK_OEM_MINUS);
-	assert(kc2native[keyPeriod] == VK_OEM_PERIOD);
-	assert(kc2native[keySlash] == VK_OEM_2);
-	assert(kc2native[key0] == '0');
-	assert(kc2native[key1] == '1');
-	assert(kc2native[key2] == '2');
-	assert(kc2native[key3] == '3');
-	assert(kc2native[key4] == '4');
-	assert(kc2native[key5] == '5');
-	assert(kc2native[key6] == '6');
-	assert(kc2native[key7] == '7');
-	assert(kc2native[key8] == '8');
-	assert(kc2native[key9] == '9');
-	assert(kc2native[keySemicolon] == VK_OEM_1);
-	assert(kc2native[keyA] == 'A');
-	assert(kc2native[keyB] == 'B');
-	assert(kc2native[keyC] == 'C');
-	assert(kc2native[keyD] == 'D');
-	assert(kc2native[keyE] == 'E');
-	assert(kc2native[keyF] == 'F');
-	assert(kc2native[keyG] == 'G');
-	assert(kc2native[keyH] == 'H');
-	assert(kc2native[keyI] == 'I');
-	assert(kc2native[keyJ] == 'J');
-	assert(kc2native[keyK] == 'K');
-	assert(kc2native[keyL] == 'L');
-	assert(kc2native[keyM] == 'M');
-	assert(kc2native[keyN] == 'N');
-	assert(kc2native[keyO] == 'O');
-	assert(kc2native[keyP] == 'P');
-	assert(kc2native[keyQ] == 'Q');
-	assert(kc2native[keyR] == 'R');
-	assert(kc2native[keyS] == 'S');
-	assert(kc2native[keyT] == 'T');
-	assert(kc2native[keyU] == 'U');
-	assert(kc2native[keyV] == 'V');
-	assert(kc2native[keyW] == 'W');
-	assert(kc2native[keyX] == 'X');
-	assert(kc2native[keyY] == 'Y');
-	assert(kc2native[keyZ] == 'Z');
-	assert(kc2native[keyLeftBracket] == VK_OEM_4);
-	assert(kc2native[keyBackslash] == VK_OEM_5);
-	assert(kc2native[keyRightBracket] == VK_OEM_6);
-	assert(kc2native[keyBackquote] == VK_OEM_3);
-	assert(kc2native[keyDelete] == VK_DELETE);
-	assert(kc2native[keyKP0] == VK_NUMPAD0);
-	assert(kc2native[keyKP1] == VK_NUMPAD1);
-	assert(kc2native[keyKP2] == VK_NUMPAD2);
-	assert(kc2native[keyKP3] == VK_NUMPAD3);
-	assert(kc2native[keyKP4] == VK_NUMPAD4);
-	assert(kc2native[keyKP5] == VK_NUMPAD5);
-	assert(kc2native[keyKP6] == VK_NUMPAD6);
-	assert(kc2native[keyKP7] == VK_NUMPAD7);
-	assert(kc2native[keyKP8] == VK_NUMPAD8);
-	assert(kc2native[keyKP9] == VK_NUMPAD9);
-	assert(kc2native[keyKPPeriod] == VK_DECIMAL);
-	assert(kc2native[keyKPDivide] == VK_DIVIDE);
-	assert(kc2native[keyKPMultiply] == VK_MULTIPLY);
-	assert(kc2native[keyKPMinus] == VK_SUBTRACT);
-	assert(kc2native[keyKPPlus] == VK_ADD);
-	assert(kc2native[keyKPEnter] == VK_SEPARATOR);
-	assert(kc2native[keyUp] == VK_UP);
-	assert(kc2native[keyDown] == VK_DOWN);
-	assert(kc2native[keyRight] == VK_RIGHT);
-	assert(kc2native[keyLeft] == VK_LEFT);
-	assert(kc2native[keyInsert] == VK_INSERT);
-	assert(kc2native[keyHome] == VK_HOME);
-	assert(kc2native[keyEnd] == VK_END);
-	assert(kc2native[keyPageUp] == VK_PRIOR);
-	assert(kc2native[keyPageDown] == VK_NEXT);
-	assert(kc2native[keyF1] == VK_F1);
-	assert(kc2native[keyF2] == VK_F2);
-	assert(kc2native[keyF3] == VK_F3);
-	assert(kc2native[keyF4] == VK_F4);
-	assert(kc2native[keyF5] == VK_F5);
-	assert(kc2native[keyF6] == VK_F6);
-	assert(kc2native[keyF7] == VK_F7);
-	assert(kc2native[keyF8] == VK_F8);
-	assert(kc2native[keyF9] == VK_F9);
-	assert(kc2native[keyF10] == VK_F10);
-	assert(kc2native[keyF11] == VK_F11);
-	assert(kc2native[keyF12] == VK_F12);
-	assert(kc2native[keyF13] == VK_F13);
-	assert(kc2native[keyF14] == VK_F14);
-	assert(kc2native[keyF15] == VK_F15);
-	assert(kc2native[keyF16] == VK_F16);
-	assert(kc2native[keyF17] == VK_F17);
-	assert(kc2native[keyF18] == VK_F18);
-	assert(kc2native[keyF19] == VK_F19);
-	assert(kc2native[keyF20] == VK_F20);
-	assert(kc2native[keyF21] == VK_F21);
-	assert(kc2native[keyF22] == VK_F22);
-	assert(kc2native[keyF23] == VK_F23);
-	assert(kc2native[keyF24] == VK_F24);
-	assert(kc2native[keyNumLock] == VK_NUMLOCK);
-	assert(kc2native[keyCapsLock] == VK_CAPITAL);
-	assert(kc2native[keyScrollLock] == VK_SCROLL);
-	assert(kc2native[keyLShift] == VK_SHIFT);
-	assert(kc2native[keyRShift] == VK_RSHIFT);
-	assert(kc2native[keyLCtrl] == VK_CONTROL);
-	assert(kc2native[keyRCtrl] == VK_RCONTROL);
-	assert(kc2native[keyLAlt] == VK_MENU);
-	assert(kc2native[keyRAlt] == VK_RMENU);
-	assert(kc2native[keyRSuper] == VK_RWIN);
-	assert(kc2native[keyLSuper] == VK_LWIN);
-	assert(kc2native[keyHelp] == VK_HELP);
-	assert(kc2native[keyPrint] == VK_PRINT);
-	assert(kc2native[keyBreak] == VK_CANCEL);
-	assert(kc2native[keyMenu] == VK_APPS);
-	assert(kc2native[keyBrowserBack] == VK_BROWSER_BACK);
-	assert(kc2native[keyBrowserForward] == VK_BROWSER_FORWARD);
-	assert(kc2native[keyBrowserRefresh] == VK_BROWSER_REFRESH);
-	assert(kc2native[keyBrowserStop] == VK_BROWSER_STOP);
-	assert(kc2native[keyBrowserSearch] == VK_BROWSER_SEARCH);
-	assert(kc2native[keyBrowserFavorites] == VK_BROWSER_FAVORITES);
-	assert(kc2native[keyBrowserHome] == VK_BROWSER_HOME);
-	assert(kc2native[keyVolumeMute] == VK_VOLUME_MUTE);
-	assert(kc2native[keyVolumeDown] == VK_VOLUME_DOWN);
-	assert(kc2native[keyVolumeUp] == VK_VOLUME_UP);
-	assert(kc2native[keyMediaNext] == VK_MEDIA_NEXT_TRACK);
-	assert(kc2native[keyMediaPrev] == VK_MEDIA_PREV_TRACK);
-	assert(kc2native[keyMediaStop] == VK_MEDIA_STOP);
-	assert(kc2native[keyMediaPlayPause] == VK_MEDIA_PLAY_PAUSE);
-	assert(kc2native[keyLaunchMail] == VK_LAUNCH_MAIL);
-	assert(kc2native[keyLaunchMediaSelect] == VK_LAUNCH_MEDIA_SELECT);
-	assert(kc2native[keyLaunchApp1] == VK_LAUNCH_APP1);
-	assert(kc2native[keyLaunchApp2] == VK_LAUNCH_APP2);
-	assert(kc2native[keyPlay] == VK_PLAY);
-	assert(kc2native[keyZoom] == VK_ZOOM);
+	assert(native2kc[VK_LBUTTON] == KeyCode::L_BUTTON);
+	assert(native2kc[VK_RBUTTON] == KeyCode::R_BUTTON);
+	assert(native2kc[VK_CANCEL] == KeyCode::BREAK);
+	assert(native2kc[VK_MBUTTON] == KeyCode::M_BUTTON);
+	assert(native2kc[VK_XBUTTON1] == KeyCode::X_BUTTON1);
+	assert(native2kc[VK_XBUTTON2] == KeyCode::X_BUTTON2);
+	assert(native2kc[VK_BACK] == KeyCode::BACK_SPACE);
+	assert(native2kc[VK_TAB] == KeyCode::TAB);
+	assert(native2kc[VK_CLEAR] == KeyCode::CLEAR);
+	assert(native2kc[VK_RETURN] == KeyCode::RETURN);
+	assert(native2kc[VK_SHIFT] == KeyCode::LEFT_SHIFT);
+	assert(native2kc[VK_CONTROL] == KeyCode::LEFT_CTRL);
+	assert(native2kc[VK_MENU] == KeyCode::LEFT_ALT);
+	assert(native2kc[VK_PAUSE] == KeyCode::PAUSE);
+	assert(native2kc[VK_CAPITAL] == KeyCode::CAPS_LOCK);
+	assert(native2kc[VK_KANA] == KeyCode::IME_KANA);
+	assert(native2kc[VK_JUNJA] == KeyCode::IME_JUNJA);
+	assert(native2kc[VK_FINAL] == KeyCode::IME_FINAL);
+	assert(native2kc[VK_HANJA] == KeyCode::IME_HANJA);
+	assert(native2kc[VK_ESCAPE] == KeyCode::ESCAPE);
+	assert(native2kc[VK_CONVERT] == KeyCode::IME_CONVERT);
+	assert(native2kc[VK_NONCONVERT] == KeyCode::IME_NON_CONVERT);
+	assert(native2kc[VK_ACCEPT] == KeyCode::IME_ACCEPT);
+	assert(native2kc[VK_MODECHANGE] == KeyCode::IME_MODE_CHANGE);
+	assert(native2kc[VK_SPACE] == KeyCode::SPACE);
+	assert(native2kc[VK_PRIOR] == KeyCode::PAGE_UP);
+	assert(native2kc[VK_NEXT] == KeyCode::PAGE_DOWN);
+	assert(native2kc[VK_END] == KeyCode::END);
+	assert(native2kc[VK_HOME] == KeyCode::HOME);
+	assert(native2kc[VK_LEFT] == KeyCode::ARROW_LEFT);
+	assert(native2kc[VK_UP] == KeyCode::ARROW_UP);
+	assert(native2kc[VK_RIGHT] == KeyCode::ARROW_RIGHT);
+	assert(native2kc[VK_DOWN] == KeyCode::ARROW_DOWN);
+	assert(native2kc[VK_PRINT] == KeyCode::PRINT);
+	assert(native2kc[VK_SNAPSHOT] == KeyCode::PRINT);
+	assert(native2kc[VK_INSERT] == KeyCode::INSERT);
+	assert(native2kc[VK_DELETE] == KeyCode::DELETE_);
+	assert(native2kc[VK_HELP] == KeyCode::HELP);
+	assert(native2kc['0'] == KeyCode::ZERO);
+	assert(native2kc['1'] == KeyCode::ONE);
+	assert(native2kc['2'] == KeyCode::TWO);
+	assert(native2kc['3'] == KeyCode::THREE);
+	assert(native2kc['4'] == KeyCode::FOUR);
+	assert(native2kc['5'] == KeyCode::FIVE);
+	assert(native2kc['6'] == KeyCode::SIX);
+	assert(native2kc['7'] == KeyCode::SEVEN);
+	assert(native2kc['8'] == KeyCode::EIGHT);
+	assert(native2kc['9'] == KeyCode::NINE);
+	assert(native2kc['A'] == KeyCode::A);
+	assert(native2kc['B'] == KeyCode::B);
+	assert(native2kc['C'] == KeyCode::C);
+	assert(native2kc['D'] == KeyCode::D);
+	assert(native2kc['E'] == KeyCode::E);
+	assert(native2kc['F'] == KeyCode::F);
+	assert(native2kc['G'] == KeyCode::G);
+	assert(native2kc['H'] == KeyCode::H);
+	assert(native2kc['I'] == KeyCode::I);
+	assert(native2kc['J'] == KeyCode::J);
+	assert(native2kc['K'] == KeyCode::K);
+	assert(native2kc['L'] == KeyCode::L);
+	assert(native2kc['M'] == KeyCode::M);
+	assert(native2kc['N'] == KeyCode::N);
+	assert(native2kc['O'] == KeyCode::O);
+	assert(native2kc['P'] == KeyCode::P);
+	assert(native2kc['Q'] == KeyCode::Q);
+	assert(native2kc['R'] == KeyCode::R);
+	assert(native2kc['S'] == KeyCode::S);
+	assert(native2kc['T'] == KeyCode::T);
+	assert(native2kc['U'] == KeyCode::U);
+	assert(native2kc['V'] == KeyCode::V);
+	assert(native2kc['W'] == KeyCode::W);
+	assert(native2kc['X'] == KeyCode::X);
+	assert(native2kc['Y'] == KeyCode::Y);
+	assert(native2kc['Z'] == KeyCode::Z);
+	assert(native2kc[VK_LWIN] == KeyCode::LEFT_SUPER);
+	assert(native2kc[VK_RWIN] == KeyCode::RIGHT_SUPER);
+	assert(native2kc[VK_APPS] == KeyCode::MENU);
+	assert(native2kc[VK_NUMPAD0] == KeyCode::KEYPAD_0);
+	assert(native2kc[VK_NUMPAD1] == KeyCode::KEYPAD_1);
+	assert(native2kc[VK_NUMPAD2] == KeyCode::KEYPAD_2);
+	assert(native2kc[VK_NUMPAD3] == KeyCode::KEYPAD_3);
+	assert(native2kc[VK_NUMPAD4] == KeyCode::KEYPAD_4);
+	assert(native2kc[VK_NUMPAD5] == KeyCode::KEYPAD_5);
+	assert(native2kc[VK_NUMPAD6] == KeyCode::KEYPAD_6);
+	assert(native2kc[VK_NUMPAD7] == KeyCode::KEYPAD_7);
+	assert(native2kc[VK_NUMPAD8] == KeyCode::KEYPAD_8);
+	assert(native2kc[VK_NUMPAD9] == KeyCode::KEYPAD_9);
+	assert(native2kc[VK_MULTIPLY] == KeyCode::KEYPAD_MULTIPLY);
+	assert(native2kc[VK_ADD] == KeyCode::KEYPAD_PLUS);
+	assert(native2kc[VK_SEPARATOR] == KeyCode::KEYPAD_ENTER);
+	assert(native2kc[VK_SUBTRACT] == KeyCode::KEYPAD_MINUS);
+	assert(native2kc[VK_DECIMAL] == KeyCode::KEYPAD_PERIOD);
+	assert(native2kc[VK_DIVIDE] == KeyCode::KEYPAD_DIVIDE);
+	assert(native2kc[VK_F1] == KeyCode::FUNCTION_1);
+	assert(native2kc[VK_F2] == KeyCode::FUNCTION_2);
+	assert(native2kc[VK_F3] == KeyCode::FUNCTION_3);
+	assert(native2kc[VK_F4] == KeyCode::FUNCTION_4);
+	assert(native2kc[VK_F5] == KeyCode::FUNCTION_5);
+	assert(native2kc[VK_F6] == KeyCode::FUNCTION_6);
+	assert(native2kc[VK_F7] == KeyCode::FUNCTION_7);
+	assert(native2kc[VK_F8] == KeyCode::FUNCTION_8);
+	assert(native2kc[VK_F9] == KeyCode::FUNCTION_9);
+	assert(native2kc[VK_F10] == KeyCode::FUNCTION_10);
+	assert(native2kc[VK_F11] == KeyCode::FUNCTION_11);
+	assert(native2kc[VK_F12] == KeyCode::FUNCTION_12);
+	assert(native2kc[VK_F13] == KeyCode::FUNCTION_13);
+	assert(native2kc[VK_F14] == KeyCode::FUNCTION_14);
+	assert(native2kc[VK_F15] == KeyCode::FUNCTION_15);
+	assert(native2kc[VK_F16] == KeyCode::FUNCTION_16);
+	assert(native2kc[VK_F17] == KeyCode::FUNCTION_17);
+	assert(native2kc[VK_F18] == KeyCode::FUNCTION_18);
+	assert(native2kc[VK_F19] == KeyCode::FUNCTION_19);
+	assert(native2kc[VK_F20] == KeyCode::FUNCTION_20);
+	assert(native2kc[VK_F21] == KeyCode::FUNCTION_21);
+	assert(native2kc[VK_F22] == KeyCode::FUNCTION_22);
+	assert(native2kc[VK_F23] == KeyCode::FUNCTION_23);
+	assert(native2kc[VK_F24] == KeyCode::FUNCTION_24);
+	assert(native2kc[VK_NUMLOCK] == KeyCode::NUM_LOCK);
+	assert(native2kc[VK_SCROLL] == KeyCode::SCROLL_LOCK);
+	assert(native2kc[VK_LSHIFT] == KeyCode::LEFT_SHIFT);
+	assert(native2kc[VK_RSHIFT] == KeyCode::RIGHT_SHIFT);
+	assert(native2kc[VK_LCONTROL] == KeyCode::LEFT_CTRL);
+	assert(native2kc[VK_RCONTROL] == KeyCode::RIGHT_CTRL);
+	assert(native2kc[VK_LMENU] == KeyCode::LEFT_ALT);
+	assert(native2kc[VK_RMENU] == KeyCode::RIGHT_ALT);
+	assert(native2kc[VK_BROWSER_BACK] == KeyCode::BROWSER_BACK);
+	assert(native2kc[VK_BROWSER_FORWARD] == KeyCode::BROWSER_FORWARD);
+	assert(native2kc[VK_BROWSER_REFRESH] == KeyCode::BROWSER_REFRESH);
+	assert(native2kc[VK_BROWSER_STOP] == KeyCode::BROWSER_STOP);
+	assert(native2kc[VK_BROWSER_SEARCH] == KeyCode::BROWSER_SEARCH);
+	assert(native2kc[VK_BROWSER_FAVORITES] == KeyCode::BROWSER_FAVORITES);
+	assert(native2kc[VK_BROWSER_HOME] == KeyCode::BROWSER_HOME);
+	assert(native2kc[VK_VOLUME_MUTE] == KeyCode::VOLUME_MUTE);
+	assert(native2kc[VK_VOLUME_DOWN] == KeyCode::VOLUME_DOWN);
+	assert(native2kc[VK_VOLUME_UP] == KeyCode::VOLUME_UP);
+	assert(native2kc[VK_MEDIA_NEXT_TRACK] == KeyCode::MEDIA_NEXT);
+	assert(native2kc[VK_MEDIA_PREV_TRACK] == KeyCode::MEDIA_PREV);
+	assert(native2kc[VK_MEDIA_STOP] == KeyCode::MEDIA_STOP);
+	assert(native2kc[VK_MEDIA_PLAY_PAUSE] == KeyCode::MEDIA_PLAY_PAUSE);
+	assert(native2kc[VK_LAUNCH_MAIL] == KeyCode::LAUNCH_MAIL);
+	assert(native2kc[VK_LAUNCH_MEDIA_SELECT] == KeyCode::LAUNCH_MEDIA);
+	assert(native2kc[VK_LAUNCH_APP1] == KeyCode::LAUNCH_APP1);
+	assert(native2kc[VK_LAUNCH_APP2] == KeyCode::LAUNCH_APP2);
+	assert(native2kc[VK_OEM_1] == KeyCode::SEMI_COLON);
+//	assert(native2kc[VK_OEM_PLUS] == KeyCode::PLUS);
+//	assert(native2kc[VK_OEM_PLUS] == KeyCode::EQUAL);
+	assert(native2kc[VK_OEM_COMMA] == KeyCode::COMMA);
+	assert(native2kc[VK_OEM_MINUS] == KeyCode::MINUS);
+	assert(native2kc[VK_OEM_PERIOD] == KeyCode::PERIOD);
+	assert(native2kc[VK_OEM_2] == KeyCode::SLASH);
+	assert(native2kc[VK_OEM_3] == KeyCode::BACK_QUOTE);
+	assert(native2kc[VK_OEM_4] == KeyCode::LEFT_BRACKET);
+	assert(native2kc[VK_OEM_5] == KeyCode::BACK_SLASH);
+	assert(native2kc[VK_OEM_6] == KeyCode::RIGHT_BRACKET);
+	assert(native2kc[VK_OEM_7] == KeyCode::QUOTE);
+	assert(native2kc[VK_OEM_8] == KeyCode::BACK_QUOTE);
+	assert(native2kc[VK_PROCESSKEY] == KeyCode::IME_PROCESS);
+	assert(native2kc[VK_PLAY] == KeyCode::PLAY);
+	assert(native2kc[VK_ZOOM] == KeyCode::ZOOM);
+	assert(kc2native[KeyCode::L_BUTTON] == VK_LBUTTON);
+	assert(kc2native[KeyCode::R_BUTTON] == VK_RBUTTON);
+	assert(kc2native[KeyCode::M_BUTTON] == VK_MBUTTON);
+	assert(kc2native[KeyCode::X_BUTTON1] == VK_XBUTTON1);
+	assert(kc2native[KeyCode::X_BUTTON2] == VK_XBUTTON2);
+	assert(kc2native[KeyCode::BACK_SPACE] == VK_BACK);
+	assert(kc2native[KeyCode::TAB] == VK_TAB);
+	assert(kc2native[KeyCode::CLEAR] == VK_CLEAR);
+	assert(kc2native[KeyCode::RETURN] == VK_RETURN);
+	assert(kc2native[KeyCode::PAUSE] == VK_PAUSE);
+	assert(kc2native[KeyCode::IME_KANA] == VK_KANA);
+	assert(kc2native[KeyCode::IME_JUNJA] == VK_JUNJA);
+	assert(kc2native[KeyCode::IME_FINAL] == VK_FINAL);
+	assert(kc2native[KeyCode::IME_HANJA] == VK_HANJA);
+	assert(kc2native[KeyCode::ESCAPE] == VK_ESCAPE);
+	assert(kc2native[KeyCode::IME_CONVERT] == VK_CONVERT);
+	assert(kc2native[KeyCode::IME_NON_CONVERT] == VK_NONCONVERT);
+	assert(kc2native[KeyCode::IME_ACCEPT] == VK_ACCEPT);
+	assert(kc2native[KeyCode::IME_MODE_CHANGE] == VK_MODECHANGE);
+	assert(kc2native[KeyCode::IME_PROCESS] == VK_PROCESSKEY);
+	assert(kc2native[KeyCode::SPACE] == VK_SPACE);
+	assert(kc2native[KeyCode::QUOTE] == VK_OEM_7);
+//	assert(kc2native[KeyCode::PLUS] == VK_OEM_PLUS);
+	assert(kc2native[KeyCode::EQUAL] == VK_OEM_PLUS);
+	assert(kc2native[KeyCode::COMMA] == VK_OEM_COMMA);
+	assert(kc2native[KeyCode::MINUS] == VK_OEM_MINUS);
+	assert(kc2native[KeyCode::PERIOD] == VK_OEM_PERIOD);
+	assert(kc2native[KeyCode::SLASH] == VK_OEM_2);
+	assert(kc2native[KeyCode::ZERO] == '0');
+	assert(kc2native[KeyCode::ONE] == '1');
+	assert(kc2native[KeyCode::TWO] == '2');
+	assert(kc2native[KeyCode::THREE] == '3');
+	assert(kc2native[KeyCode::FOUR] == '4');
+	assert(kc2native[KeyCode::FIVE] == '5');
+	assert(kc2native[KeyCode::SIX] == '6');
+	assert(kc2native[KeyCode::SEVEN] == '7');
+	assert(kc2native[KeyCode::EIGHT] == '8');
+	assert(kc2native[KeyCode::NINE] == '9');
+	assert(kc2native[KeyCode::SEMI_COLON] == VK_OEM_1);
+	assert(kc2native[KeyCode::A] == 'A');
+	assert(kc2native[KeyCode::B] == 'B');
+	assert(kc2native[KeyCode::C] == 'C');
+	assert(kc2native[KeyCode::D] == 'D');
+	assert(kc2native[KeyCode::E] == 'E');
+	assert(kc2native[KeyCode::F] == 'F');
+	assert(kc2native[KeyCode::G] == 'G');
+	assert(kc2native[KeyCode::H] == 'H');
+	assert(kc2native[KeyCode::I] == 'I');
+	assert(kc2native[KeyCode::J] == 'J');
+	assert(kc2native[KeyCode::K] == 'K');
+	assert(kc2native[KeyCode::L] == 'L');
+	assert(kc2native[KeyCode::M] == 'M');
+	assert(kc2native[KeyCode::N] == 'N');
+	assert(kc2native[KeyCode::O] == 'O');
+	assert(kc2native[KeyCode::P] == 'P');
+	assert(kc2native[KeyCode::Q] == 'Q');
+	assert(kc2native[KeyCode::R] == 'R');
+	assert(kc2native[KeyCode::S] == 'S');
+	assert(kc2native[KeyCode::T] == 'T');
+	assert(kc2native[KeyCode::U] == 'U');
+	assert(kc2native[KeyCode::V] == 'V');
+	assert(kc2native[KeyCode::W] == 'W');
+	assert(kc2native[KeyCode::X] == 'X');
+	assert(kc2native[KeyCode::Y] == 'Y');
+	assert(kc2native[KeyCode::Z] == 'Z');
+	assert(kc2native[KeyCode::LEFT_BRACKET] == VK_OEM_4);
+	assert(kc2native[KeyCode::BACK_SLASH] == VK_OEM_5);
+	assert(kc2native[KeyCode::RIGHT_BRACKET] == VK_OEM_6);
+	assert(kc2native[KeyCode::BACK_QUOTE] == VK_OEM_3);
+	assert(kc2native[KeyCode::DELETE_] == VK_DELETE);
+	assert(kc2native[KeyCode::KEYPAD_0] == VK_NUMPAD0);
+	assert(kc2native[KeyCode::KEYPAD_1] == VK_NUMPAD1);
+	assert(kc2native[KeyCode::KEYPAD_2] == VK_NUMPAD2);
+	assert(kc2native[KeyCode::KEYPAD_3] == VK_NUMPAD3);
+	assert(kc2native[KeyCode::KEYPAD_4] == VK_NUMPAD4);
+	assert(kc2native[KeyCode::KEYPAD_5] == VK_NUMPAD5);
+	assert(kc2native[KeyCode::KEYPAD_6] == VK_NUMPAD6);
+	assert(kc2native[KeyCode::KEYPAD_7] == VK_NUMPAD7);
+	assert(kc2native[KeyCode::KEYPAD_8] == VK_NUMPAD8);
+	assert(kc2native[KeyCode::KEYPAD_9] == VK_NUMPAD9);
+	assert(kc2native[KeyCode::KEYPAD_PERIOD] == VK_DECIMAL);
+	assert(kc2native[KeyCode::KEYPAD_DIVIDE] == VK_DIVIDE);
+	assert(kc2native[KeyCode::KEYPAD_MULTIPLY] == VK_MULTIPLY);
+	assert(kc2native[KeyCode::KEYPAD_MINUS] == VK_SUBTRACT);
+	assert(kc2native[KeyCode::KEYPAD_PLUS] == VK_ADD);
+	assert(kc2native[KeyCode::KEYPAD_ENTER] == VK_SEPARATOR);
+	assert(kc2native[KeyCode::ARROW_UP] == VK_UP);
+	assert(kc2native[KeyCode::ARROW_DOWN] == VK_DOWN);
+	assert(kc2native[KeyCode::ARROW_RIGHT] == VK_RIGHT);
+	assert(kc2native[KeyCode::ARROW_LEFT] == VK_LEFT);
+	assert(kc2native[KeyCode::INSERT] == VK_INSERT);
+	assert(kc2native[KeyCode::HOME] == VK_HOME);
+	assert(kc2native[KeyCode::END] == VK_END);
+	assert(kc2native[KeyCode::PAGE_UP] == VK_PRIOR);
+	assert(kc2native[KeyCode::PAGE_DOWN] == VK_NEXT);
+	assert(kc2native[KeyCode::FUNCTION_1] == VK_F1);
+	assert(kc2native[KeyCode::FUNCTION_2] == VK_F2);
+	assert(kc2native[KeyCode::FUNCTION_3] == VK_F3);
+	assert(kc2native[KeyCode::FUNCTION_4] == VK_F4);
+	assert(kc2native[KeyCode::FUNCTION_5] == VK_F5);
+	assert(kc2native[KeyCode::FUNCTION_6] == VK_F6);
+	assert(kc2native[KeyCode::FUNCTION_7] == VK_F7);
+	assert(kc2native[KeyCode::FUNCTION_8] == VK_F8);
+	assert(kc2native[KeyCode::FUNCTION_9] == VK_F9);
+	assert(kc2native[KeyCode::FUNCTION_10] == VK_F10);
+	assert(kc2native[KeyCode::FUNCTION_11] == VK_F11);
+	assert(kc2native[KeyCode::FUNCTION_12] == VK_F12);
+	assert(kc2native[KeyCode::FUNCTION_13] == VK_F13);
+	assert(kc2native[KeyCode::FUNCTION_14] == VK_F14);
+	assert(kc2native[KeyCode::FUNCTION_15] == VK_F15);
+	assert(kc2native[KeyCode::FUNCTION_16] == VK_F16);
+	assert(kc2native[KeyCode::FUNCTION_17] == VK_F17);
+	assert(kc2native[KeyCode::FUNCTION_18] == VK_F18);
+	assert(kc2native[KeyCode::FUNCTION_19] == VK_F19);
+	assert(kc2native[KeyCode::FUNCTION_20] == VK_F20);
+	assert(kc2native[KeyCode::FUNCTION_21] == VK_F21);
+	assert(kc2native[KeyCode::FUNCTION_22] == VK_F22);
+	assert(kc2native[KeyCode::FUNCTION_23] == VK_F23);
+	assert(kc2native[KeyCode::FUNCTION_24] == VK_F24);
+	assert(kc2native[KeyCode::NUM_LOCK] == VK_NUMLOCK);
+	assert(kc2native[KeyCode::CAPS_LOCK] == VK_CAPITAL);
+	assert(kc2native[KeyCode::SCROLL_LOCK] == VK_SCROLL);
+	assert(kc2native[KeyCode::LEFT_SHIFT] == VK_SHIFT);
+	assert(kc2native[KeyCode::RIGHT_SHIFT] == VK_RSHIFT);
+	assert(kc2native[KeyCode::LEFT_CTRL] == VK_CONTROL);
+	assert(kc2native[KeyCode::RIGHT_CTRL] == VK_RCONTROL);
+	assert(kc2native[KeyCode::LEFT_ALT] == VK_MENU);
+	assert(kc2native[KeyCode::RIGHT_ALT] == VK_RMENU);
+	assert(kc2native[KeyCode::RIGHT_SUPER] == VK_RWIN);
+	assert(kc2native[KeyCode::LEFT_SUPER] == VK_LWIN);
+	assert(kc2native[KeyCode::HELP] == VK_HELP);
+	assert(kc2native[KeyCode::PRINT] == VK_PRINT);
+	assert(kc2native[KeyCode::BREAK] == VK_CANCEL);
+	assert(kc2native[KeyCode::MENU] == VK_APPS);
+	assert(kc2native[KeyCode::BROWSER_BACK] == VK_BROWSER_BACK);
+	assert(kc2native[KeyCode::BROWSER_FORWARD] == VK_BROWSER_FORWARD);
+	assert(kc2native[KeyCode::BROWSER_REFRESH] == VK_BROWSER_REFRESH);
+	assert(kc2native[KeyCode::BROWSER_STOP] == VK_BROWSER_STOP);
+	assert(kc2native[KeyCode::BROWSER_SEARCH] == VK_BROWSER_SEARCH);
+	assert(kc2native[KeyCode::BROWSER_FAVORITES] == VK_BROWSER_FAVORITES);
+	assert(kc2native[KeyCode::BROWSER_HOME] == VK_BROWSER_HOME);
+	assert(kc2native[KeyCode::VOLUME_MUTE] == VK_VOLUME_MUTE);
+	assert(kc2native[KeyCode::VOLUME_DOWN] == VK_VOLUME_DOWN);
+	assert(kc2native[KeyCode::VOLUME_UP] == VK_VOLUME_UP);
+	assert(kc2native[KeyCode::MEDIA_NEXT] == VK_MEDIA_NEXT_TRACK);
+	assert(kc2native[KeyCode::MEDIA_PREV] == VK_MEDIA_PREV_TRACK);
+	assert(kc2native[KeyCode::MEDIA_STOP] == VK_MEDIA_STOP);
+	assert(kc2native[KeyCode::MEDIA_PLAY_PAUSE] == VK_MEDIA_PLAY_PAUSE);
+	assert(kc2native[KeyCode::LAUNCH_MAIL] == VK_LAUNCH_MAIL);
+	assert(kc2native[KeyCode::LAUNCH_MEDIA] == VK_LAUNCH_MEDIA_SELECT);
+	assert(kc2native[KeyCode::LAUNCH_APP1] == VK_LAUNCH_APP1);
+	assert(kc2native[KeyCode::LAUNCH_APP2] == VK_LAUNCH_APP2);
+	assert(kc2native[KeyCode::PLAY] == VK_PLAY);
+	assert(kc2native[KeyCode::ZOOM] == VK_ZOOM);
 }
 #endif
 
@@ -2056,303 +2055,16 @@ void Input::verifyTranslationTables() {
 // class Key
 // =======================================
 
-const char* Key::names[keyCount] = {
-	"None",
-	"Unknown",
-	"LButton",
-	"RButton",
-	"MButton",
-	"XButton1",
-	"XButton2",
-	"Backspace",
-	"Tab",
-	"Clear",
-	"Return",
-	"Pause",
-	"IMEKana",
-	"IMEHangul",
-	"IMEJunja",
-	"IMEFinal",
-	"IMEHanja",
-	"IMEKanji",
-	"Escape",
-	"IMEConvert",
-	"IMENonConvert",
-	"IMEAccept",
-	"IMEModeChange",
-	"IMEProcess",
-	"Space",
-	"Exclaim",
-	"QuoteDbl",
-	"Hash",
-	"Dollar",
-	"Percent",
-	"Ampersand",
-	"Quote",
-	"LeftParen",
-	"RightParen",
-	"Asterisk",
-	"Plus",
-	"Comma",
-	"Minus",
-	"Period",
-	"Slash",
-	"0",
-	"1",
-	"2",
-	"3",
-	"4",
-	"5",
-	"6",
-	"7",
-	"8",
-	"9",
-	"Colon",
-	"Semicolon",
-	"Less",
-	"Equals",
-	"Greater",
-	"Question",
-	"At",
-	"A",
-	"B",
-	"C",
-	"D",
-	"E",
-	"F",
-	"G",
-	"H",
-	"I",
-	"J",
-	"K",
-	"L",
-	"M",
-	"N",
-	"O",
-	"P",
-	"Q",
-	"R",
-	"S",
-	"T",
-	"U",
-	"V",
-	"W",
-	"X",
-	"Y",
-	"Z",
-	"LeftBracket",
-	"Backslash",
-	"RightBracket",
-	"Caret",
-	"Underscore",
-	"Backquote",
-	"Delete",
-	"keyWorld0",
-	"keyWorld1",
-	"keyWorld2",
-	"keyWorld3",
-	"keyWorld4",
-	"keyWorld5",
-	"keyWorld6",
-	"keyWorld7",
-	"keyWorld8",
-	"keyWorld9",
-	"keyWorld10",
-	"keyWorld11",
-	"keyWorld12",
-	"keyWorld13",
-	"keyWorld14",
-	"keyWorld15",
-	"keyWorld16",
-	"keyWorld17",
-	"keyWorld18",
-	"keyWorld19",
-	"keyWorld20",
-	"keyWorld21",
-	"keyWorld22",
-	"keyWorld23",
-	"keyWorld24",
-	"keyWorld25",
-	"keyWorld26",
-	"keyWorld27",
-	"keyWorld28",
-	"keyWorld29",
-	"keyWorld30",
-	"keyWorld31",
-	"keyWorld32",
-	"keyWorld33",
-	"keyWorld34",
-	"keyWorld35",
-	"keyWorld36",
-	"keyWorld37",
-	"keyWorld38",
-	"keyWorld39",
-	"keyWorld40",
-	"keyWorld41",
-	"keyWorld42",
-	"keyWorld43",
-	"keyWorld44",
-	"keyWorld45",
-	"keyWorld46",
-	"keyWorld47",
-	"keyWorld48",
-	"keyWorld49",
-	"keyWorld50",
-	"keyWorld51",
-	"keyWorld52",
-	"keyWorld53",
-	"keyWorld54",
-	"keyWorld55",
-	"keyWorld56",
-	"keyWorld57",
-	"keyWorld58",
-	"keyWorld59",
-	"keyWorld60",
-	"keyWorld61",
-	"keyWorld62",
-	"keyWorld63",
-	"keyWorld64",
-	"keyWorld65",
-	"keyWorld66",
-	"keyWorld67",
-	"keyWorld68",
-	"keyWorld69",
-	"keyWorld70",
-	"keyWorld71",
-	"keyWorld72",
-	"keyWorld73",
-	"keyWorld74",
-	"keyWorld75",
-	"keyWorld76",
-	"keyWorld77",
-	"keyWorld78",
-	"keyWorld79",
-	"keyWorld80",
-	"keyWorld81",
-	"keyWorld82",
-	"keyWorld83",
-	"keyWorld84",
-	"keyWorld85",
-	"keyWorld86",
-	"keyWorld87",
-	"keyWorld88",
-	"keyWorld89",
-	"keyWorld90",
-	"keyWorld91",
-	"keyWorld92",
-	"keyWorld93",
-	"keyWorld94",
-	"keyWorld95",
-	"KP0",
-	"KP1",
-	"KP2",
-	"KP3",
-	"KP4",
-	"KP5",
-	"KP6",
-	"KP7",
-	"KP8",
-	"KP9",
-	"KPPeriod",
-	"KPDivide",
-	"KPMultiply",
-	"KPMinus",
-	"KPPlus",
-	"KPEnter",
-	"KPEquals",
-	"Up",
-	"Down",
-	"Right",
-	"Left",
-	"Insert",
-	"Home",
-	"End",
-	"PageUp",
-	"PageDown",
-	"F1",
-	"F2",
-	"F3",
-	"F4",
-	"F5",
-	"F6",
-	"F7",
-	"F8",
-	"F9",
-	"F10",
-	"F11",
-	"F12",
-	"F13",
-	"F14",
-	"F15",
-	"F16",
-	"F17",
-	"F18",
-	"F19",
-	"F20",
-	"F21",
-	"F22",
-	"F23",
-	"F24",
-	"NumLock",
-	"CapsLock",
-	"ScrollLock",
-	"LShift",
-	"RShift",
-	"LCtrl",
-	"RCtrl",
-	"LAlt",
-	"RAlt",
-	"LMeta",
-	"RMeta",
-	"RSuper",
-	"LSuper",
-	"Mode",
-	"Compose",
-	"Help",
-	"Print",
-	"Sysreq",
-	"Break",
-	"Menu",
-	"Power",
-	"Euro",
-	"Undo",
-	"BrowserBack",
-	"BrowserForward",
-	"BrowserRefresh",
-	"BrowserStop",
-	"BrowserSearch",
-	"BrowserFavorites",
-	"BrowserHome",
-	"VolumeMute",
-	"VolumeDown",
-	"VolumeUp",
-	"MediaNext",
-	"MediaPrev",
-	"MediaStop",
-	"MediaPlayPause",
-	"LaunchMail",
-	"LaunchMediaSelect",
-	"LaunchApp1",
-	"LaunchApp2",
-	"Play",
-	"Zoom"
-};
-
 /**
  * Find a KeyCode by name.  Note that this function was never meant to be fast because we aren't
  * indexing, using std::map or anything.
  */
 KeyCode Key::findByName(const char *name) {
-	for(size_t i = 0; i < keyCount; ++i) {
-		if(!strcasecmp(name, names[i])) {
-			return (KeyCode)i;
-		}
+	KeyCode code = KeyCodeNames.match(name);
+	if (code == KeyCode::INVALID) {
+		throw range_error(string("Invalid key name: ") + name);
 	}
-	{
-		stringstream str;
-		str << "Invalid key name: " << name;
-		throw range_error(str.str());
-	}
+	return code;
 }
 
 }}//end namespace

@@ -159,6 +159,13 @@ Program::Program(Config &config, CmdArgs &args)
 
 	simulationInterface = new SimulationInterface(*this);
 
+
+	cout << "VirtualW : ScreenW == " << Metrics::getInstance().getVirtualW() << " : " 
+		<< Metrics::getInstance().getScreenW() << endl
+		<< "VirtualH : ScreenH == " << Metrics::getInstance().getVirtualH() << " : "
+		<< Metrics::getInstance().getScreenH() << endl;
+
+
 	// startup and immediately host a game
 	if(args.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this);

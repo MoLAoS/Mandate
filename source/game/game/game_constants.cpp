@@ -15,4 +15,5 @@
 #define GAME_CONSTANTS_DEF
 #include "game_constants.h"
 #include "simulation_enums.h"
+#include "input_enums.h"
 

@@ -6,9 +6,6 @@
 #cmakedefine USE_SDL
 #cmakedefine USE_POSIX_SOCKETS
 #cmakedefine X11_AVAILABLE
-#cmakedefine USE_PHYSFS
-
-#cmakedefine01 _GAE_DEBUG_EDITION_
 
 #cmakedefine HAVE_GLOB_H
 #cmakedefine HAVE_SYS_IOCTL_H
@@ -16,6 +13,11 @@
 #cmakedefine HAVE_SYS_TIME_H
 #cmakedefine HAVE_BYTESWAP_H
 
+#define ON 1
+#define OFF 0
+
+#define USE_PHYSFS @GAE_USE_PHYSFS@
+#define _GAE_DEBUG_EDITION_ @GAE_DEBUG_EDITION@
 
 #define VERSION_STRING "@GAE_VERSION@"
 #define CONTACT_STRING "@GAE_CONTACT@"

@@ -220,7 +220,7 @@ void MenuStateJoinGame::keyDown(const Key &key) {
 	ClientInterface* clientInterface = theSimInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
-		if (key == keyBackspace) {
+		if (key == KeyCode::BACK_SPACE) {
 			string text = labelServerIp.getText();
 
 			if (text.size() > 1) {
@@ -231,7 +231,7 @@ void MenuStateJoinGame::keyDown(const Key &key) {
 		}
 	}
 
-	if(key == keyEscape) {
+	if(key == KeyCode::ESCAPE) {
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
 	}
 }

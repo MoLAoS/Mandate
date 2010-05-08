@@ -34,7 +34,7 @@ static const char *modNames[4] = {"Shift", "Ctrl", "Alt", "Meta"};
 // 	class Keymap::Entry
 // =====================================================
 void Keymap::Entry::init(const string &str) {
-	key = keyNone;
+	key = KeyCode::NONE;
 	mod = 0;
 	if(str.empty()) {
 		return;
@@ -70,10 +70,10 @@ string Keymap::Entry::toString() const {
 			for(int i = 0; i < 4; ++i) {
 				if((1 << i) & mod) {
 					switch(i) {
-						case 0: if(key == keyLShift || key == keyRShift) continue; break;
-						case 1: if(key == keyLCtrl  || key == keyRCtrl)  continue; break;
-						case 2: if(key == keyLAlt   || key == keyRAlt)   continue; break;
-						case 3: if(key == keyLMeta  || key == keyRMeta)  continue; break;
+						case 0: if(key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT) continue; break;
+						case 1: if(key == KeyCode::LEFT_CTRL  || key == KeyCode::RIGHT_CTRL)  continue; break;
+						case 2: if(key == KeyCode::LEFT_ALT   || key == KeyCode::RIGHT_ALT)   continue; break;
+						case 3: if(key == KeyCode::LEFT_META  || key == KeyCode::RIGHT_META)  continue; break;
 					}
 					ret << modNames[i] << "+";
 				}
@@ -136,57 +136,57 @@ const Keymap::UserCommandInfo Keymap::commandInfo[ucCount] = {
 	{"None",					0,			0,			0,			0},
 	{"ChatAudienceAll",			0,			0,			0,			0},
 	{"ChatAudienceTeam",		0,			0,			0,			0},
-	{"ChatAudienceToggle",		keyH,		0,			0,			0},
-	{"EnterChatMode",			keyReturn,	0,			0,			0},
+	{"ChatAudienceToggle",		KeyCode::H,		0,			0,			0},
+	{"EnterChatMode",			KeyCode::RETURN,	0,			0,			0},
 	{"MenuMain",				0,			0,			0,			0},
-	{"MenuQuit",				keyEscape,	0,			0,			0},
-	{"MenuSave",				keyZ,		0,			0,			0},
+	{"MenuQuit",				KeyCode::ESCAPE,	0,			0,			0},
+	{"MenuSave",				KeyCode::Z,		0,			0,			0},
 	{"MenuLoad",				0,			0,			0,			0},
 	{"QuitNow",					0,			0,			0,			0},
 	{"QuickSave",				0,			0,			0,			0},
 	{"QuickLoad",				0,			0,			0,			0},
 	{"PauseOn",					0,			0,			0,			0},
 	{"PauseOff",				0,			0,			0,			0},
-	{"PauseToggle",				keyP,		0,			0,			0},
-	{"SpeedInc",				keyEquals,	0,			keyKPPlus,	0},
-	{"SpeedDec",				keyMinus,	0,			keyKPMinus,	0},
+	{"PauseToggle",				KeyCode::P,		0,			0,			0},
+	{"SpeedInc",				KeyCode::EQUAL,	0,			KeyCode::KEYPAD_PLUS,	0},
+	{"SpeedDec",				KeyCode::MINUS,	0,			KeyCode::KEYPAD_MINUS,	0},
 	{"SpeedReset",				0,			0,			0,			0},
 	{"NetworkStatusOn",			0,			0,			0,			0},
 	{"NetworkStatusOff",		0,			0,			0,			0},
-	{"NetworkStatusToggle",		keyN,		0,			0,			0},
-	{"SaveScreenshot",			keyE,		0,			0,			0},
-	{"CycleDisplayColor",		keyC,		0,			0,			0},
+	{"NetworkStatusToggle",		KeyCode::N,		0,			0,			0},
+	{"SaveScreenshot",			KeyCode::E,		0,			0,			0},
+	{"CycleDisplayColor",		KeyCode::C,		0,			0,			0},
 	{"CameraCycleMode",			0,			0,			0,			0},
-	{"CameraZoomIn",			keyPageUp,	0,			0,			0},
-	{"CameraZoomOut",			keyPageDown,0,			0,			0},
+	{"CameraZoomIn",			KeyCode::PAGE_UP,	0,			0,			0},
+	{"CameraZoomOut",			KeyCode::PAGE_DOWN,0,			0,			0},
 	{"CameraZoomReset",			0,			0,			0,			0},
-	{"CameraPitchUp",			keyW,		bkmShift,	0,			0},
-	{"CameraPitchDown",			keyS,		bkmShift,	0,			0},
-	{"CameraRotateLeft",		keyA,		bkmShift,	0,			0},
-	{"CameraRotateRight",		keyD,		bkmShift,	0,			0},
+	{"CameraPitchUp",			KeyCode::W,		bkmShift,	0,			0},
+	{"CameraPitchDown",			KeyCode::S,		bkmShift,	0,			0},
+	{"CameraRotateLeft",		KeyCode::A,		bkmShift,	0,			0},
+	{"CameraRotateRight",		KeyCode::D,		bkmShift,	0,			0},
 	{"CameraAngleReset",		0,			0,			0,			0},
 	{"CameraZoomAndAngleReset",	0,			0,			0,			0},
-	{"CameraPosLeft",			keyLeft,	0,			0,			0},
-	{"CameraPosRight",			keyRight,	0,			0,			0},
-	{"CameraPosUp",				keyUp,		0,			0,			0},
-	{"CameraPosDown",			keyDown,	0,			0,			0},
-	{"CameraGotoSelection",		keySpace,	0,			0,			0},
-	{"CameraGotoLastEvent",		keySpace,	bkmShift,	0,			0},
-	{"SelectNextIdleHarvester",	keyI,		0,			0,			0},
+	{"CameraPosLeft",			KeyCode::ARROW_LEFT,	0,			0,			0},
+	{"CameraPosRight",			KeyCode::ARROW_RIGHT,	0,			0,			0},
+	{"CameraPosUp",				KeyCode::ARROW_UP,		0,			0,			0},
+	{"CameraPosDown",			KeyCode::ARROW_DOWN,	0,			0,			0},
+	{"CameraGotoSelection",		KeyCode::SPACE,	0,			0,			0},
+	{"CameraGotoLastEvent",		KeyCode::SPACE,	bkmShift,	0,			0},
+	{"SelectNextIdleHarvester",	KeyCode::I,		0,			0,			0},
 	{"SelectNextIdleBuilder",	0,			0,			0,			0},
 	{"SelectNextIdleRepairer",	0,			0,			0,			0},
 	{"SelectNextIdleWorker",	0,			0,			0,			0},
 	{"SelectNextIdleRestorer",	0,			0,			0,			0},
 	{"SelectNextIdleProducer",	0,			0,			0,			0},
-	{"SelectNextProducer",		keyR,		0,			0,			0},
-	{"SelectNextDamaged",		keyD,		0,			0,			0},
-	{"SelectNextBuiltBuilding",	keyB,		0,			0,			0},
-	{"SelectNextStore",			keyT,		0,			0,			0},
-	{"Attack",					keyA,		0,			0,			0},
-	{"Stop",					keyS,		0,			0,			0},
-	{"Move",					keyM,		0,			0,			0},
+	{"SelectNextProducer",		KeyCode::R,		0,			0,			0},
+	{"SelectNextDamaged",		KeyCode::D,		0,			0,			0},
+	{"SelectNextBuiltBuilding",	KeyCode::B,		0,			0,			0},
+	{"SelectNextStore",			KeyCode::T,		0,			0,			0},
+	{"Attack",					KeyCode::A,		0,			0,			0},
+	{"Stop",					KeyCode::S,		0,			0,			0},
+	{"Move",					KeyCode::M,		0,			0,			0},
 	{"Replenish",				0,			0,			0,			0},
-	{"Guard",					keyG,		0,			0,			0},
+	{"Guard",					KeyCode::G,		0,			0,			0},
 	{"Follow",					0,			0,			0,			0},
 	{"Patrol",					0,			0,			0,			0}
 };

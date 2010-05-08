@@ -413,7 +413,7 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 	mouseX = x;
 	mouseY = y;
 
-	if (ms.get(mbCenter)) {
+	if (ms.get(MouseButton::MIDDLE)) {
 		if ( !noInput ) {
 			if (input.isCtrlDown()) {
 				float speed = input.isShiftDown() ? 1.f : 0.125f;
@@ -491,10 +491,10 @@ void GameState::keyDown(const Key &key) {
 	}
 	if (saveBox && saveBox->getEntry()->isActivated()) {
 		switch (key.getCode()) {
-			case keyReturn:
+			case KeyCode::RETURN:
 				saveGame(saveBox->getEntry()->getText());
 				//intentional fall-through
-			case keyEscape:
+			case KeyCode::ESCAPE:
 				delete saveBox;
 				saveBox = NULL;
 				break;
@@ -599,8 +599,8 @@ void GameState::keyDown(const Key &key) {
 			saveBox->init(lang.get("Save"), lang.get("Cancel"), lang.get("SaveGame"), lang.get("Name"));
 		}
 	//group
-	} else if (key.getCode() >= key0 && key.getCode() < key0 + Selection::maxGroups) {
-		gui.groupKey(key.getCode() - key0);
+	} else if (key.getCode() >= KeyCode::ZERO && key.getCode() < KeyCode::ZERO + Selection::maxGroups) {
+		gui.groupKey(key.getCode() - KeyCode::ZERO);
 	//hotkeys
 	} else if (gameCamera.getState() == GameCamera::sGame) {
 		gui.hotKey(cmd);

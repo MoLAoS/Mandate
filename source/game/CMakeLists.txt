@@ -51,7 +51,7 @@ if (WIN32)
 		# project wide setting
 		set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/Yu\"pch.h\" /DUSE_PCH=1")
 		# create through pch.cpp
-		set_source_files_properties(pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
+		set_source_files_properties(./pch.cpp PROPERTIES COMPILE_FLAGS "/Yc\"pch.h\"")
 		# game_constants.cpp must not use precompiled header (then we'd get no EnumNames objects)
 		set_source_files_properties(game/game_constants.cpp PROPERTIES COMPILE_FLAGS "/Y-")
 	else (GAE_USE_PRECOMPILED_HDR)

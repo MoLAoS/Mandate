@@ -78,7 +78,7 @@ public:
 	
 	virtual bool mouseMove(int x, int y);
 	virtual bool mouseClick(int x, int y);
-	virtual void render() {} // TODO: should this have a no implementation warning?
+	virtual void render() {} // TODO: should this have an implementation ? YES!
 	
 	static void update();
 	static void resetFade();

@@ -19,11 +19,19 @@ namespace sigslot {
 class has_slots;
 template<class SlotClass, typename ArgType> class connection;
 
+// =====================================================
+//  class signal_base
+// =====================================================
+/// base class for signals, so they can be treated generically by slot classes
 class signal_base {
 public:
 	virtual void slot_disconnect(has_slots* pslot) = 0;
 };
 
+// =====================================================
+//  class connection_base
+// =====================================================
+/// template base classes for connections, so they can be treated generically by signals
 template<typename ArgType> class connection_base {
 public:
 	virtual ~connection_base() { }
@@ -31,6 +39,11 @@ public:
 	virtual void emit(ArgType) = 0;
 };
 
+// =====================================================
+//  class signal
+// =====================================================
+/// The workhorse. Can be connected to any number of SlotClass::slotMethod 'listeners'
+/// [note: uses std::list to keep connection.end() valid when erasing]
 template<typename ArgType> class signal : public signal_base {
 public:
 	typedef typename std::list<connection_base<ArgType> *>  connections_list;
@@ -108,7 +121,10 @@ public:
 	}
 };
 
-
+// =====================================================
+//  class connection
+// =====================================================
+/// concrete connection, to SlotClass::slotMethod(ArgType a1);
 template<class SlotClass, typename ArgType> class connection : public connection_base<ArgType> {
 public:
 	connection() : slotObject(0), slotMethod(0) { }
@@ -125,6 +141,10 @@ private:
 	void (SlotClass::*slotMethod)(ArgType);
 };
 
+// =====================================================
+//  class has_slots
+// =====================================================
+/// slot class, signal listeners all need to inherit this
 class has_slots {
 private:
 	typedef std::set<signal_base*> sender_set;

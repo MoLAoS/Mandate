@@ -118,11 +118,11 @@ void MainMenu::mouseMove(int x, int y, const MouseState &ms) {
 }
 
 void MainMenu::mouseDownLeft(int x, int y) {
-	state->mouseClick(x, y, mbLeft);
+	state->mouseClick(x, y, MouseButton::LEFT);
 }
 
 void MainMenu::mouseDownRight(int x, int y) {
-	state->mouseClick(x, y, mbRight);
+	state->mouseClick(x, y, MouseButton::RIGHT);
 }
 
 void MainMenu::keyDown(const Key &key) {

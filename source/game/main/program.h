@@ -56,6 +56,7 @@ public:
 	virtual void init(){}
 	virtual void load(){}
 	virtual void end(){}
+
 	virtual void mouseDownLeft(int x, int y){}
 	virtual void mouseDownRight(int x, int y){}
 	virtual void mouseDownCenter(int x, int y){}
@@ -129,13 +130,13 @@ public:
 		int vy = metrics.toVirtualY(getH() - y);
 
 		switch(mouseButton) {
-		case mbLeft:
+		case MouseButton::LEFT:
 			programState->mouseDownLeft(vx, vy);
 			break;
-		case mbRight:
+		case MouseButton::RIGHT:
 			programState->mouseDownRight(vx, vy);
 			break;
-		case mbCenter:
+		case MouseButton::MIDDLE:
 			programState->mouseDownCenter(vx, vy);
 			break;
 		default:
@@ -149,13 +150,13 @@ public:
 		int vy = metrics.toVirtualY(getH() - y);
 
 		switch(mouseButton) {
-		case mbLeft:
+		case MouseButton::LEFT:
 			programState->mouseUpLeft(vx, vy);
 			break;
-		case mbRight:
+		case MouseButton::RIGHT:
 			programState->mouseUpRight(vx, vy);
 			break;
-		case mbCenter:
+		case MouseButton::MIDDLE:
 			programState->mouseUpCenter(vx, vy);
 			break;
 		default:
@@ -177,13 +178,13 @@ public:
 		int vy = metrics.toVirtualY(getH() - y);
 
 		switch(mouseButton){
-		case mbLeft:
+		case MouseButton::LEFT:
 			programState->mouseDoubleClickLeft(vx, vy);
 			break;
-		case mbRight:
+		case MouseButton::RIGHT:
 			programState->mouseDoubleClickRight(vx, vy);
 			break;
-		case mbCenter:
+		case MouseButton::MIDDLE:
 			programState->mouseDoubleClickCenter(vx, vy);
 			break;
 		default:

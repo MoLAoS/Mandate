@@ -83,7 +83,7 @@ bool ChatManager::keyDown(const Key &key) {
 		return true;
 	}
 	
-	if (key == keyReturn && editEnabled) {
+	if (key == KeyCode::RETURN && editEnabled) {
 		editEnabled = false;
 		if (!text.empty()) {
 			IF_DEBUG_EDITION(
@@ -102,11 +102,11 @@ bool ChatManager::keyDown(const Key &key) {
 				}
 			)
 		}
-	} else if (key == keyBackspace) {
+	} else if (key == KeyCode::BACK_SPACE) {
 		if (!text.empty()) {
 			text.erase(text.end() - 1);
 		}
-	} else if (key == keyEscape) {
+	} else if (key == KeyCode::ESCAPE) {
 		editEnabled = false;
 	} else {
 		return key.getAscii() >= ' ' && key.getAscii() <= 0x79;

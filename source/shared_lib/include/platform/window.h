@@ -51,8 +51,8 @@ enum WindowStyle {
 class Window {
 private:
 #ifdef USE_SDL
-	int64 lastMouseDown[mbCount];
-	Vec2i lastMouse[mbCount];
+	int64 lastMouseDown[MouseButton::COUNT];
+	Vec2i lastMouse[MouseButton::COUNT];
 #elif defined(WIN32)  || defined(WIN64)
 	typedef map<WindowHandle, Window*> WindowMap;
 

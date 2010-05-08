@@ -273,39 +273,39 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			eventWindow->input.setMousePos(Vec2i(mousePos.x, mousePos.y));
 			switch(msg) {
 			case WM_LBUTTONDOWN:
-				eventWindow->mouseyVent(0, mbLeft);
+				eventWindow->mouseyVent(0, MouseButton::LEFT);
 				return 0;
 
 			case WM_LBUTTONUP:
-				eventWindow->mouseyVent(1, mbLeft);
+				eventWindow->mouseyVent(1, MouseButton::LEFT);
 				return 0;
 
 			case WM_LBUTTONDBLCLK:
-				eventWindow->mouseyVent(2, mbLeft);
+				eventWindow->mouseyVent(2, MouseButton::LEFT);
 				return 0;
 
 			case WM_RBUTTONDOWN:
-				eventWindow->mouseyVent(0, mbRight);
+				eventWindow->mouseyVent(0, MouseButton::RIGHT);
 				return 0;
 
 			case WM_RBUTTONUP:
-				eventWindow->mouseyVent(1, mbRight);
+				eventWindow->mouseyVent(1, MouseButton::RIGHT);
 				return 0;
 
 			case WM_RBUTTONDBLCLK:
-				eventWindow->mouseyVent(2, mbRight);
+				eventWindow->mouseyVent(2, MouseButton::RIGHT);
 				return 0;
 
 			case WM_MBUTTONDOWN:
-				eventWindow->mouseyVent(0, mbCenter);
+				eventWindow->mouseyVent(0, MouseButton::MIDDLE);
 				return 0;
 
 			case WM_MBUTTONUP:
-				eventWindow->mouseyVent(1, mbCenter);
+				eventWindow->mouseyVent(1, MouseButton::MIDDLE);
 				return 0;
 
 			case WM_MBUTTONDBLCLK:
-				eventWindow->mouseyVent(2, mbCenter);
+				eventWindow->mouseyVent(2, MouseButton::MIDDLE);
 				return 0;
 
 			case WM_XBUTTONDOWN:
@@ -313,11 +313,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				// DefWindowProc take these.
 				switch(HIWORD(wParam)) {
 				case XBUTTON1:
-					eventWindow->mouseyVent(0, mbButtonX1);
+					eventWindow->mouseyVent(0, MouseButton::BUTTON_X1);
 					return TRUE;// don't ask me why it wants TRUE instead of zero like
 								// everything else
 				case XBUTTON2:
-					eventWindow->mouseyVent(0, mbButtonX2);
+					eventWindow->mouseyVent(0, MouseButton::BUTTON_X2);
 					return TRUE;
 				}
 				break;
@@ -325,11 +325,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			case WM_XBUTTONUP:
 				switch(HIWORD(wParam)) {
 				case XBUTTON1:
-					eventWindow->mouseyVent(1, mbButtonX1);
+					eventWindow->mouseyVent(1, MouseButton::BUTTON_X1);
 					return TRUE;// don't ask me why it wants TRUE instead of zero like
 								// everything else
 				case XBUTTON2:
-					eventWindow->mouseyVent(1, mbButtonX2);
+					eventWindow->mouseyVent(1, MouseButton::BUTTON_X2);
 					return TRUE;
 				}
 				break;
@@ -337,11 +337,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			case WM_XBUTTONDBLCLK:
 				switch(HIWORD(wParam)) {
 				case XBUTTON1:
-					eventWindow->mouseyVent(2, mbButtonX1);
+					eventWindow->mouseyVent(2, MouseButton::BUTTON_X1);
 					return TRUE;// don't ask me why it wants TRUE instead of zero like
 								// everything else
 				case XBUTTON2:
-					eventWindow->mouseyVent(2, mbButtonX2);
+					eventWindow->mouseyVent(2, MouseButton::BUTTON_X2);
 					return TRUE;
 				}
 				break;
@@ -355,11 +355,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				break; // not handled, send to DefWindowProc
 
 			case WM_MOUSEMOVE:
-				eventWindow->input.setMouseState(mbLeft, wParam & MK_LBUTTON);
-				eventWindow->input.setMouseState(mbRight, wParam & MK_RBUTTON);
-				eventWindow->input.setMouseState(mbCenter, wParam & MK_MBUTTON);
-				eventWindow->input.setMouseState(mbButtonX1, wParam & MK_XBUTTON1);
-				eventWindow->input.setMouseState(mbButtonX2, wParam & MK_XBUTTON2);
+				eventWindow->input.setMouseState(MouseButton::LEFT, wParam & MK_LBUTTON);
+				eventWindow->input.setMouseState(MouseButton::RIGHT, wParam & MK_RBUTTON);
+				eventWindow->input.setMouseState(MouseButton::MIDDLE, wParam & MK_MBUTTON);
+				eventWindow->input.setMouseState(MouseButton::BUTTON_X1, wParam & MK_XBUTTON1);
+				eventWindow->input.setMouseState(MouseButton::BUTTON_X2, wParam & MK_XBUTTON2);
 				eventWindow->eventMouseMove(mousePos.x, mousePos.y, eventWindow->input.getMouseState());
 				return 0;
 			}
