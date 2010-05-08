@@ -19,7 +19,6 @@
 #include "network_message.h"
 #include "network_types.h"
 #include "sim_interface.h"
-
 #include "logger.h"
 
 using std::string;
@@ -29,18 +28,24 @@ using Shared::Math::Vec3f;
 
 namespace Glest { namespace Net {
 
+WRAPPED_ENUM( NetworkState, LOBBY, GAME )
+
 // =====================================================
 //	class NetworkConnection
 // =====================================================
 
 class NetworkConnection {
 protected:
-	static const int readyWaitTimeout;
+	typedef deque<RawMessage> MessageQueue;
+	static const int readyWaitTimeout = 10000; ///@todo made really low for testing, bump back up
 
 private:
 	string remoteHostName;
 	string remotePlayerName;
 	string description;
+
+	// received but not processed messages
+	MessageQueue messageQueue;
 
 public:
 	virtual ~NetworkConnection() {}
@@ -55,16 +60,19 @@ public:
 	string getDescription() const		{return description;}
 
 	void setRemoteNames(const string &hostName, const string &playerName);
-
 	int dataAvailable();
-
 	void send(const Message* networkMessage);
-	MessageType getNextMessageType();
-	bool receiveMessage(Message* networkMessage);
 
-	bool isConnected() {
-		return getSocket() && getSocket()->isConnected();
-	}
+	// old way to get messages
+	//MessageType getNextMessageType();
+	//bool receiveMessage(Message* networkMessage);
+
+	// new way to get messages
+	void receiveMessages();
+	bool hasMessage()					{ return !messageQueue.empty(); }
+	RawMessage getNextMessage();
+	bool isConnected()					{ return getSocket() && getSocket()->isConnected(); }
+	void pushMessage(RawMessage raw)	{ messageQueue.push_back(raw); }
 };
 
 // =====================================================

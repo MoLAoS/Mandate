@@ -214,29 +214,29 @@ Program::~Program() {
 }
 
 void Program::loop() {
-	while(handleEvent()) {
+	while (handleEvent()) {
 		size_t sleepTime = renderTimer.timeToWait();
 
 		sleepTime = sleepTime < updateCameraTimer.timeToWait() ? sleepTime : updateCameraTimer.timeToWait();
 		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
 
-		if(sleepTime) {
+		if (sleepTime) {
 			Shared::Platform::sleep(sleepTime);
 		}
 
 		//render
-		while(renderTimer.isTime() && visible){
+		while (renderTimer.isTime() && visible) {
 			programState->render();
 		}
 
 		//update camera
-		while(updateCameraTimer.isTime()){
+		while (updateCameraTimer.isTime()) {
 			programState->updateCamera();
 		}
 
 		//update world
-		while(updateTimer.isTime()){
+		while (updateTimer.isTime()) {
 			GraphicComponent::update();
 			programState->update();
 			SoundRenderer::getInstance().update();
@@ -246,7 +246,7 @@ void Program::loop() {
 		}
 
 		//tick timer
-		while(tickTimer.isTime()){
+		while (tickTimer.isTime()) {
 			programState->tick();
 		}
 	}
@@ -254,18 +254,17 @@ void Program::loop() {
 }
 
 void Program::eventResize(SizeState sizeState) {
-
-	switch(sizeState){
-	case ssMinimized:
-		visible = false;
-		//restoreVideoMode();
-		break;
-	case ssMaximized:
-	case ssRestored:
-		visible = true;
-		//setDisplaySettings();
-		//renderer.reloadResources();
-		break;
+	switch (sizeState) {
+		case ssMinimized:
+			visible = false;
+			//restoreVideoMode();
+			break;
+		case ssMaximized:
+		case ssRestored:
+			visible = true;
+			//setDisplaySettings();
+			//renderer.reloadResources();
+			break;
 	}
 }
 

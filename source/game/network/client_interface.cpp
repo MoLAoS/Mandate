@@ -43,9 +43,6 @@ namespace Glest { namespace Net {
 //	class ClientInterface
 // =====================================================
 
-const int ClientInterface::messageWaitTimeout = 10000;	//10 seconds
-const int ClientInterface::waitSleepTime = 5; // changed from 50, no obvious effect
-
 ClientInterface::ClientInterface(Program &prog)
 		: NetworkInterface(prog) {
 	_TRACE_FUNCTION();
@@ -77,155 +74,139 @@ void ClientInterface::reset() {
 	clientSocket = NULL;
 }
 
-void ClientInterface::createSkillCycleTable(const TechTree *) {
-	_TRACE_FUNCTION();
-	Chrono chrono;
-	chrono.start();
-	LOG_NETWORK( "waiting for server to send Skill Cycle Table." );
-	while (true) {
-		MessageType msgType = getNextMessageType();
-		if (msgType == MessageType::SKILL_CYCLE_TABLE) {
-			if (receiveMessage(&skillCycleTable)) {
-				LOG_NETWORK( "Received Skill Cycle Table." );
-				break;
-			}
-		} else if (msgType == MessageType::NO_MSG) {
-			if (chrono.getMillis() > readyWaitTimeout) {
-				throw TimeOut(NetSource::SERVER);
-			}
-		} else {
-			throw InvalidMessage(MessageType::SKILL_CYCLE_TABLE, msgType);
-		}
-		sleep(2);
+void ClientInterface::doIntroMessage() {
+	RawMessage msg = getNextMessage();
+	if (msg.type != MessageType::INTRO) {
+		throw InvalidMessage(MessageType::INTRO, msg.type);
 	}
+	IntroMessage introMsg(msg);
+	if (introMsg.getVersionString() != getNetworkVersionString()) {
+		throw VersionMismatch(NetSource::CLIENT, getNetworkVersionString(), introMsg.getVersionString());
+	}
+	playerIndex = introMsg.getPlayerIndex();
+	if (playerIndex < 0 || playerIndex >= GameConstants::maxPlayers) {
+		throw GarbledMessage(MessageType::INTRO, NetSource::SERVER);
+	}
+	serverName = introMsg.getHostName();
+
+	setRemoteNames(introMsg.getHostName(), introMsg.getPlayerName());
+	//send reply
+	IntroMessage replyMsg(getNetworkVersionString(), theConfig.getNetPlayerName(), getHostName(), -1);
+	send(&replyMsg);
+	introDone= true;
 }
 
+void ClientInterface::doLaunchMessage() {
+	RawMessage msg = getNextMessage();
+	if (msg.type != MessageType::LAUNCH) {
+		throw InvalidMessage(MessageType::LAUNCH, msg.type);
+	}
+	LaunchMessage launchMsg(msg);
+	GameSettings &gameSettings = theSimInterface->getGameSettings();
+	gameSettings.clear();
+	launchMsg.buildGameSettings(&gameSettings);
+	// replace server player by network
+	for (int i=0; i < gameSettings.getFactionCount(); ++i) {
+		// replace by network
+		if (gameSettings.getFactionControl(i) == ControlType::HUMAN) {
+			gameSettings.setFactionControl(i, ControlType::NETWORK);
+		}
+		// set the faction index
+		if (gameSettings.getStartLocationIndex(i) == playerIndex) {
+			gameSettings.setThisFactionIndex(i);
+			gameSettings.setFactionControl(i, ControlType::HUMAN);
+		}
+	}
+	launchGame = true;
+	LOG_NETWORK( "Received launch message." );
+}
+
+void ClientInterface::createSkillCycleTable(const TechTree *) {
+	_TRACE_FUNCTION();
+	int skillCount = theWorld.getSkillTypeFactory()->getSkillTypeCount();
+	int expectedSize = skillCount * sizeof(CycleInfo);
+	LOG_NETWORK( "waiting for server to send Skill Cycle Table." );
+	waitForMessage(readyWaitTimeout);
+	RawMessage raw = getNextMessage();
+	if (raw.type != MessageType::SKILL_CYCLE_TABLE) {
+		throw InvalidMessage(MessageType::SKILL_CYCLE_TABLE, raw.type);
+	}
+	if (raw.size != expectedSize) {
+		throw GarbledMessage(MessageType::SKILL_CYCLE_TABLE, NetSource::SERVER);
+	}
+	skillCycleTable = SkillCycleTable(raw);
+	LOG_NETWORK( "Received Skill Cycle Table." );
+}
 
 void ClientInterface::updateLobby() {
-	// NETWORK: this method is very different
-	MessageType msgType = getNextMessageType();
-
-	if (msgType == MessageType::INTRO) {
-		IntroMessage introMsg;
-		if (receiveMessage(&introMsg)) {
-			//check consistency
-			if(theConfig.getNetConsistencyChecks() && introMsg.getVersionString() != getNetworkVersionString()) {
-				throw VersionMismatch(NetSource::CLIENT, getNetworkVersionString(), introMsg.getVersionString());
-			}
-			LOG_NETWORK( "Received intro message, sending intro message reply." );
-			playerIndex = introMsg.getPlayerIndex();
-			serverName = introMsg.getHostName();
-
-			setRemoteNames(introMsg.getHostName(), introMsg.getPlayerName());
-
-			if (playerIndex < 0 || playerIndex >= GameConstants::maxPlayers) {
-				throw GarbledMessage(MessageType::INTRO, NetSource::SERVER);
-			}
-
-			//send reply
-			IntroMessage replyMsg(
-				getNetworkVersionString(), theConfig.getNetPlayerName(), getHostName(), -1);
-
-			send(&replyMsg);
-			introDone= true;
-		}
-	} else if (msgType == MessageType::LAUNCH) {
-		LaunchMessage launchMsg;
-		if (receiveMessage(&launchMsg)) {
-			GameSettings &gameSettings = theSimInterface->getGameSettings();
-			gameSettings.clear();
-			launchMsg.buildGameSettings(&gameSettings);
-			//replace server player by network
-			for (int i= 0; i < gameSettings.getFactionCount(); ++i) {
-				//replace by network
-				if (gameSettings.getFactionControl(i) == ControlType::HUMAN) {
-					gameSettings.setFactionControl(i, ControlType::NETWORK);
-				}
-				//set the faction index
-				if (gameSettings.getStartLocationIndex(i)==playerIndex) {
-					gameSettings.setThisFactionIndex(i);
-					gameSettings.setFactionControl(i, ControlType::HUMAN);
-				}
-			}
-			launchGame= true;
-			LOG_NETWORK( "Received launch message." );
-		}
-	} else if (msgType != MessageType::NO_MSG) {
-		LOG_NETWORK( "Received bad message type : " + intToStr(msgType) + ". Resetting connection." );
-		reset();
+	receiveMessages();
+	if (!hasMessage()) {
+		return;
+	}
+	if (!introDone) {
+		doIntroMessage();
+	} else {
+		doLaunchMessage();
 	}
 }
 
 void ClientInterface::syncAiSeeds(int aiCount, int *seeds) {
 	_TRACE_FUNCTION();
+	waitForMessage(readyWaitTimeout);
+	RawMessage raw = getNextMessage();
+	if (raw.type != MessageType::AI_SYNC) {
+		throw InvalidMessage(MessageType::AI_SYNC, raw.type);
+	}
+	AiSeedSyncMessage seedSyncMsg(raw);
 	assert(aiCount && seeds);
-	AiSeedSyncMessage seedSyncMsg;
-	Chrono chrono;
-	chrono.start();
-	LOG_NETWORK( "Ready, waiting for server to send Ai random number seeds." );
-	//wait until we get an ai seed sync message from the server
-	while (true) {
-		MessageType msgType = getNextMessageType();
-		switch (msgType) {
-			case MessageType::AI_SYNC:
-				if (receiveMessage(&seedSyncMsg)) {
-					LOG_NETWORK( "Received AI random number seed message." );
-					assert(seedSyncMsg.getSeedCount());
-					for (int i=0; i < seedSyncMsg.getSeedCount(); ++i) {
-						seeds[i] = seedSyncMsg.getSeed(i);
-					}
-					return;
-				}
-				break;
-			case MessageType::NO_MSG:
-				if (chrono.getMillis() > readyWaitTimeout) {
-					throw TimeOut(NetSource::SERVER);
-				}
-			default:
-				throw InvalidMessage(MessageType::AI_SYNC, msgType);
-		}
-		sleep(2);
+	assert(seedSyncMsg.getSeedCount());
+	for (int i=0; i < seedSyncMsg.getSeedCount(); ++i) {
+		seeds[i] = seedSyncMsg.getSeed(i);
 	}
 }
 
-void ClientInterface::waitUntilReady(Checksum &checksum) {
+void ClientInterface::waitUntilReady(Checksum *checksums) {
 	_TRACE_FUNCTION();
-	// NETWORK: this method is very different
+	// Should send checksums, then the server will know if something is screwed up...
 	ReadyMessage readyMsg;
-	Chrono chrono;
-	chrono.start();
-
-	//send ready message
 	send(&readyMsg);
-	LOG_NETWORK( "Ready, waiting for server ready message." );
 
-	bool ready = false;
-	//wait until we get a ready message from the server
-	while (!ready) {
-		MessageType msgType = getNextMessageType();
-		switch (msgType) {
-			case MessageType::READY:
-				if (receiveMessage(&readyMsg)) {
-					LOG_NETWORK( "Received ready message." );
-					ready = true;
-				}
-				break;
-			case MessageType::NO_MSG:
-				if (chrono.getMillis() > readyWaitTimeout) {
-					throw TimeOut(NetSource::SERVER);
-				}
-				break;
-			default:
-				throw runtime_error("Unexpected network message: " + intToStr(msgType) );
+	const TechTree *tt = world->getTechTree();
+	const int &n = tt->getFactionTypeCount();
+	string factionChecks;
+	for (int i=0; i < n; ++i) {
+		factionChecks += "Faction " + tt->getFactionType(i)->getName() + " = " 
+			+ intToHex(checksums[4+i].getSum()) + "\n";
+	}
+	NETWORK_LOG( 
+		"Ready, waiting for server ready message. My checksums:\n"
+		<< "Tileset = " << intToHex(checksums[0].getSum()) << endl
+		<< "Map = " << intToHex(checksums[1].getSum()) << endl
+		<< "Damage Multipliers = " << intToHex(checksums[2].getSum()) << endl
+		<< "Resources = " << intToHex(checksums[3].getSum()) << endl
+		<< factionChecks;
+	);
+	waitForMessage(readyWaitTimeout);
+	RawMessage raw = getNextMessage();
+	if (raw.type != MessageType::READY) {
+		throw InvalidMessage(MessageType::READY, raw.type);
+	}
+	readyMsg = ReadyMessage(raw);
+	//check checksums
+	bool checks[12];
+	bool anyFalse = false;
+	for (int i=0; i < 4 + n; ++i) {
+		if (readyMsg.getChecksum(i) == checksums[i].getSum()) {
+			checks[i] = true;
+		} else {
+			checks[i] = false;
+			anyFalse = true;
 		}
-		sleep(waitSleepTime);
 	}
-	//check checksum
-	if (theConfig.getNetConsistencyChecks() && readyMsg.getChecksum() != checksum.getSum()) {
-		///@todo send a message to the server explaining what happened ...
-		throw DataSyncError(NetSource::CLIENT);
+	if (anyFalse) {
+		throw DataSyncError(checks, n, NetSource::CLIENT);
 	}
-	//delay the start a bit, so clients have nore room to get messages
+	//delay the start a bit, so clients have more room to get messages
 	sleep(GameConstants::networkExtraLatency);
 }
 
@@ -239,18 +220,21 @@ string ClientInterface::getStatus() const {
 	//	return getRemotePlayerName() + ": " + NetworkStatus::getStatus();
 }
 
-void ClientInterface::waitForMessage() {
+void ClientInterface::waitForMessage(int timeout) {
 	Chrono chrono;
 	chrono.start();
-	MessageType nextType;
-	while ((nextType = getNextMessageType()) == MessageType::NO_MSG) {
-		if (!isConnected()) {
-			throw Disconnect();
+	receiveMessages();
+	while (true) {
+		if (hasMessage()) {
+			return;
 		}
-		if (chrono.getMillis() > messageWaitTimeout) {
+		if (chrono.getMillis() > timeout) {
 			throw TimeOut(NetSource::SERVER);
+		} else {
+			sleep(2);
+			receiveMessages();
+			continue;
 		}
-		sleep(waitSleepTime);
 	}
 }
 
@@ -261,8 +245,6 @@ void ClientInterface::quitGame(QuitSource source) {
 		send(&networkMessageQuit);
 		LOG_NETWORK( "Sent quit message." );
 	}
-	delete clientSocket;
-	clientSocket = NULL;
 
 	if (game) {
 		if (source == QuitSource::SERVER) {
@@ -283,15 +265,15 @@ void ClientInterface::startGame() {
 }
 
 void ClientInterface::update() {
+	if (requestedCommands.empty()) {
+		return;
+	}
+	// send as many commands as we can
 	CommandListMessage cmdList;
-
-	//send as many commands as we can
 	while (!requestedCommands.empty() && cmdList.addCommand(&requestedCommands.back())) {
 		requestedCommands.pop_back();
 	}
-	if (cmdList.getCommandCount() > 0) {
-		send(&cmdList);
-	}
+	send(&cmdList);
 }
 
 void ClientInterface::updateKeyframe(int frameCount) {
@@ -300,45 +282,27 @@ void ClientInterface::updateKeyframe(int frameCount) {
 	for (size_t i=0; i < keyFrame.getCmdCount(); ++i) {
 		pendingCommands.push_back(*keyFrame.getCmd(i));
 	}
-	keyFrame.reset();
 	while (true) {
 		waitForMessage();
-		MessageType msgType = getNextMessageType();
-		switch (msgType) {
-			case MessageType::KEY_FRAME:
-				// make sure we read the message
-				{	Chrono chrono;
-					chrono.start();
-					while (!receiveMessage(&keyFrame)) {
-						sleep(waitSleepTime);
-						if (chrono.getMillis() > messageWaitTimeout) {
-							throw TimeOut(NetSource::SERVER);
-						}
-					}
-				}
-				// check that we are in the right frame
-				if (keyFrame.getFrameCount() != frameCount + GameConstants::networkFramePeriod) {
-					throw GameSyncError();
-				}
-				return;
-			case MessageType::QUIT: {
-					QuitMessage quitMsg;
-					receiveMessage(&quitMsg);
-					quitGame(QuitSource::SERVER);
-				}
-				return;
-			case MessageType::TEXT: {
-					TextMessage textMsg;
-					receiveMessage(&textMsg);
-					NetworkInterface::processTextMessage(textMsg);
-				}
-				break;
-			default:
-				throw InvalidMessage(msgType);
+		RawMessage raw = getNextMessage();
+		if (raw.type == MessageType::KEY_FRAME) {
+			keyFrame = KeyFrame(raw);
+			if (keyFrame.getFrameCount() != frameCount + GameConstants::networkFramePeriod) {
+				throw GameSyncError();
+			}
+			return;
+		} else if (raw.type == MessageType::TEXT) {
+			TextMessage textMsg(raw);
+			NetworkInterface::processTextMessage(textMsg);
+		} else if (raw.type == MessageType::QUIT) {
+			QuitMessage quitMsg(raw);
+			quitGame(QuitSource::SERVER);
+			return;
+		} else {
+			throw InvalidMessage(MessageType::KEY_FRAME, raw.type);
 		}
 	}
 }
-
 
 void ClientInterface::updateSkillCycle(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
@@ -387,7 +351,7 @@ void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 		LOG_NETWORK( ss.str() );
 		IF_DEBUG_EDITION(
 			assert(theWorld.getFrameCount());
-			worldLog.logFrame();		// dump frame log
+			worldLog.logFrame(); // dump frame log
 			SyncErrorMsg se(theWorld.getFrameCount());
 			send(&se); // ask server to also dump a frame log.
 		)

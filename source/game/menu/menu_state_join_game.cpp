@@ -109,7 +109,6 @@ void MenuStateJoinGame::mouseClick(int x, int y, MouseButton mouseButton) {
 			if (!listBoxServers.getText().empty()) {
 				labelServerIp.setText(servers.getString(listBoxServers.getText()) + "_");
 			}
-
 		//server list
 		} else if (listBoxServerType.getSelectedItemIndex() != newServerIndex) {
 			if (listBoxServers.mouseClick(x, y)) {
@@ -117,7 +116,6 @@ void MenuStateJoinGame::mouseClick(int x, int y, MouseButton mouseButton) {
 			}
 		}
 	}
-
 	//return
 	if (buttonReturn.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundA());

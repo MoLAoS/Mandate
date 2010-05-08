@@ -32,10 +32,9 @@ private:
 	Socket* socket;
 	int playerIndex;
 	bool ready;
-	bool resumeSaved;
 
 public:
-	ConnectionSlot(ServerInterface* serverInterface, int playerIndex, bool resumeSaved);
+	ConnectionSlot(ServerInterface* serverInterface, int playerIndex);
 	~ConnectionSlot();
 
 	virtual void update();
@@ -45,9 +44,9 @@ public:
 	bool isReady() const			{return ready;}
 	string getName() const			{return getRemotePlayerName();}
 
-protected:
-	virtual Socket* getSocket()				{return socket;}
-	virtual Socket* getSocket() const		{return socket;}
+//protected:
+	virtual Socket* getSocket()					{return socket;}
+	virtual const Socket* getSocket() const		{return socket;}
 
 private:
 	void close();

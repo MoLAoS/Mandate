@@ -16,7 +16,7 @@
 
 #include "pch.h"
 #include "projectConfig.h"
-#ifdef USE_PHYSFS
+#if USE_PHYSFS
 
 #include "ifile_streambuf.hpp"
 

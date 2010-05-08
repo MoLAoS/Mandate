@@ -101,7 +101,7 @@ void Logger::addNetworkMsg(const string &msg) {
 	} else {
 		ss << "Frame: 0";
 	}
-	ss << " timestamp: " << Chrono::getCurMillis() << " :: " << msg;
+	ss << " :: " << msg;
 	add(ss.str());
 }
 

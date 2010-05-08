@@ -64,7 +64,12 @@ private:
 public:
 	bool preload(const string &dir, const set<string> &factionNames);
 	bool load(const string &dir, const set<string> &factionNames);
+
+	void doChecksumResources(Checksum &checksum) const;
+	void doChecksumDamageMult(Checksum &checksum) const;
+	void doChecksumFaction(Checksum &checksum, int ndx) const;
 	void doChecksum(Checksum &checksum) const;
+
 	~TechTree();
 
 	// get count

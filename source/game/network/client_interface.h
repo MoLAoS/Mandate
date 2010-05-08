@@ -32,11 +32,10 @@ namespace Glest { namespace Net {
 /** A concrete SimulationInterface for network clients */
 class ClientInterface: public NetworkInterface {
 private:
-	static const int messageWaitTimeout;
-	static const int waitSleepTime;
+	static const int messageWaitTimeout = 10000; // 10 seconds
+	static const int waitSleepTime = 5; // 5 milli-seconds
 
 	ClientSocket *clientSocket;
-	//GameSettings gameSettings;
 	string serverName;
 	bool introDone;
 	bool launchGame;
@@ -59,7 +58,7 @@ protected:
 	// See documentation in sim_interface.h & net_interface.h
 
 	// Game launch hooks, SimulationInterface virtuals
-	virtual void waitUntilReady(Checksum &checksum);
+	virtual void waitUntilReady(Checksum *checksums);
 	virtual void syncAiSeeds(int aiCount, int *seeds);
 	virtual void createSkillCycleTable(const TechTree *);
 	virtual void startGame();
@@ -90,7 +89,6 @@ public:
 	bool getLaunchGame() const				{return launchGame;}
 	bool getIntroDone() const				{return introDone;}
 	int getPlayerIndex() const				{return playerIndex;}
-//	const GameSettings *getGameSettings()	{return &gameSettings;}
 
 	void connect(const Ip &ip, int port);
 	void reset();
@@ -100,7 +98,10 @@ public:
 	virtual void quitGame(QuitSource);
 
 private:
-	void waitForMessage();
+	void waitForMessage(int timeout = messageWaitTimeout);
+
+	void doIntroMessage();
+	void doLaunchMessage();
 };
 
 }}//end namespace

@@ -112,13 +112,28 @@ private:
 		}
 		~CircularBuffer() { delete [] buffer; }
 
+		/** retrieve the current write position */
 		char_ptr getWritePos() const { return buffer + head; }
-		void operator+=(size_t b);
-		void operator-=(size_t b);
+
+		void operator+=(size_t b);	/**< record that we have added b bytes to the buffer */
+		void operator-=(size_t b);	/**< record that we have removed b bytes from the buffer */
+
+		/** Number of bytes available to read */
 		size_t bytesAvailable() const;
-		bool peekBytes(void *dst, size_t n);
+
+		/** peek the next n bytes, copying them to dst if the request can be satisfied
+		  * @return true if ok, false if not enough bytes are available */
+		bool peekBytes(void *dst, size_t n);	
+
+		/** read n bytes to dst, advancing tail offset ('removing' them from the buffer)
+		  * @return true if all ok, false if not enough bytes available, in which case none will be read */
 		bool readBytes(void *dst, int n);
+
+		/** returns the maximum write length from the head, if no more bytes can be written
+		  * after this (because the head would be at the tail) limit is set to true */
 		int getMaxWrite(bool &limit) const;
+
+		/** free space in buffer */
 		size_t getFreeBytes() const;
 	};
 
@@ -133,8 +148,9 @@ public:
 
 	int getDataToRead();
 	int send(const void *data, int dataSize);
-	int receive(void *data, int dataSize);
-	int peek(void *data, int dataSize);
+	bool receive(void *data, int dataSize);
+	bool peek(void *data, int dataSize);
+	bool skip(int skipSize);
 
 	void setNoDelay();
 	void setBlock(bool block);

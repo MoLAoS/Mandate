@@ -25,6 +25,8 @@
 #include "tech_tree.h"
 #include "unit.h"
 #include "world.h"
+#include "network_interface.h"
+#include "profiler.h"
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
@@ -35,41 +37,42 @@ namespace Glest { namespace Net {
 //	class Message
 // =====================================================
 
-bool Message::receive(Socket* socket, void* data, int dataSize){
+bool Message::receive(NetworkConnection* connection, void* data, int dataSize) {
+	_TRACE_FUNCTION();
+	Socket *socket = connection->getSocket();
 	if (socket->getDataToRead() >= dataSize) {
-		if (socket->receive(data, dataSize) == dataSize) {
+		if (socket->receive(data, dataSize)) {
 			return true;
 		}
-		if (socket && socket->isConnected() /*&&socket->getSocketId() > 0*/) {
-			throw runtime_error("Error receiving Message");
-		} else {
-			LOG_NETWORK( "socket disconnected, trying to read message." );
-		}
+		LOG_NETWORK( "connection severed, trying to read message." );
+		throw Disconnect();
 	}
 	return false;
 }
 
-bool Message::peek(Socket *socket, void *data, int dataSize) {
+bool Message::peek(NetworkConnection* connection, void *data, int dataSize) {
+	_TRACE_FUNCTION();
+	Socket *socket = connection->getSocket();
 	if (socket->getDataToRead() >= dataSize) {
-		if (socket->peek(data, dataSize) == dataSize) {
+		if (socket->peek(data, dataSize)) {
 			return true;
 		}
-		if (socket && socket->isConnected() /*&&socket->getSocketId() > 0*/) {
-			throw runtime_error("Error receiving Message");
-		} else {
-			LOG_NETWORK( "socket disconnected, trying to read message." );
-		}
+		LOG_NETWORK( "connection severed, trying to read message." );
+		throw Disconnect();
 	}
 	return false;
+}
+
+void Message::send(NetworkConnection* connection, const void* data, int dataSize) const {
+	_TRACE_FUNCTION();
+	Socket *socket = connection->getSocket();
+	send(socket, data, dataSize);
 }
 
 void Message::send(Socket* socket, const void* data, int dataSize) const {
-	if (socket->send(data, dataSize)!=dataSize) {
-		if (socket /*&& socket->getSocketId() > 0*/) {
-			throw runtime_error("Error sending Message");
-		} else {
-			LOG_NETWORK( "socket disconnected, trying to send message.." );
-		}
+	if (socket->send(data, dataSize) != dataSize) {
+		LOG_NETWORK( "connection severed, trying to send message.." );
+		throw Disconnect();
 	}
 }
 
@@ -78,77 +81,174 @@ void Message::send(Socket* socket, const void* data, int dataSize) const {
 // =====================================================
 
 IntroMessage::IntroMessage(){
-	data.messageType= -1; 
-	data.playerIndex= -1;
+	data.messageType = MessageType::INVALID_MSG;
+	data.playerIndex = -1;
 }
 
 IntroMessage::IntroMessage(const string &versionString, const string &pName, const string &hName, int playerIndex){
-	data.messageType = MessageType::INTRO; 
+	data.messageType = MessageType::INTRO;
+	data.messageSize = sizeof(Data) - 4;
 	data.versionString = versionString;
 	data.playerName = pName;
 	data.hostName = hName;
-	data.playerIndex= static_cast<int16>(playerIndex);
+	data.playerIndex = static_cast<int16>(playerIndex);
+	cout << "IntroMessage constructed, Version string: " << versionString << endl;
 }
 
-bool IntroMessage::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+IntroMessage::IntroMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data.versionString, raw.data, raw.size);
+	delete raw.data;
+	cout << "IntroMessage received, Version string: " << data.versionString.getString() << endl;
+}
+
+bool IntroMessage::receive(NetworkConnection* connection) {
+	_TRACE_FUNCTION();
+	bool ok = Message::receive(connection, &data, sizeof(Data));
+	if (ok) {
+		NETWORK_LOG( 
+			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
+			<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
+			<< ", host name: " << data.hostName.getString() << ", player index: " << data.playerIndex
+		);
+	}
+	return ok;
+}
+
+void IntroMessage::send(NetworkConnection* connection) const{
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::INTRO);
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
+		<< ", host name: " << data.hostName.getString() << ", player index: " << data.playerIndex
+	);
+	Message::send(connection, &data, sizeof(Data));
 }
 
 void IntroMessage::send(Socket* socket) const{
-	assert(data.messageType==MessageType::INTRO);
-	Message::send(socket, &data, sizeof(data));
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::INTRO);
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
+		<< ", host name: " << data.hostName.getString() << ", player index: " << data.playerIndex
+	);
+	Message::send(socket, &data, sizeof(Data));
 }
 
 // =====================================================
 //	class ReadyMessage
 // =====================================================
 
-ReadyMessage::ReadyMessage(){
-	data.messageType= MessageType::READY; 
+ReadyMessage::ReadyMessage() {
+	data.messageType = MessageType::READY;
+	data.messageSize = sizeof(Data) - 4;
+	for (int i=0; i < 12; ++i) {
+		data.checksums[i] = 0;
+	}
 }
 
-ReadyMessage::ReadyMessage(int32 checksum){
-	data.messageType= MessageType::READY; 
-	data.checksum= checksum;
+ReadyMessage::ReadyMessage(Checksum *checksums) {
+	data.messageType = MessageType::READY;
+	data.messageSize = sizeof(Data) - 4;
+	for (int i=0; i < 12; ++i) {
+		data.checksums[i] = checksums[i].getSum();
+	}
 }
 
-bool ReadyMessage::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+ReadyMessage::ReadyMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data.checksums, raw.data, raw.size);
+	delete raw.data;
+}
+
+bool ReadyMessage::receive(NetworkConnection* connection){
+	_TRACE_FUNCTION();
+	bool ok = Message::receive(connection, &data, sizeof(data));
+	if (ok) {
+		NETWORK_LOG( 
+			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
+			<< ", messageSize: " << data.messageSize
+		);
+	}
+	return ok;
+}
+
+void ReadyMessage::send(NetworkConnection* connection) const{
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::READY);
+	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: " 
+		<< MessageTypeNames[MessageType(data.messageType)] << ", messageSize: " << data.messageSize
+	);
+	Message::send(connection, &data, sizeof(data));
 }
 
 void ReadyMessage::send(Socket* socket) const{
-	assert(data.messageType==MessageType::READY);
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::READY);
+	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: " 
+		<< MessageTypeNames[MessageType(data.messageType)] << ", messageSize: " << data.messageSize
+	);
 	Message::send(socket, &data, sizeof(data));
 }
-
 
 // =====================================================
 //	class AiSeedSyncMessage
 // =====================================================
 
 AiSeedSyncMessage::AiSeedSyncMessage(){
-	data.msgType = -1; 
+	data.messageType = MessageType::INVALID_MSG;
+	data.messageSize = -1;
 	data.seedCount = -1;
 }
 
 AiSeedSyncMessage::AiSeedSyncMessage(int count, int32 *seeds) {
 	assert(count > 0 && count <= maxAiSeeds);
-	data.msgType = MessageType::AI_SYNC; 
+	data.messageType = MessageType::AI_SYNC; 
+	data.messageSize = sizeof(Data) - 4;
 	data.seedCount = count;
 	for (int i=0; i < count; ++i) {
 		data.seeds[i] = seeds[i];
 	}
 }
 
-bool AiSeedSyncMessage::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+AiSeedSyncMessage::AiSeedSyncMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data.seedCount, raw.data, raw.size);
+	delete raw.data;
+}
+
+bool AiSeedSyncMessage::receive(NetworkConnection* connection){
+	_TRACE_FUNCTION();
+	bool ok = Message::receive(connection, &data, sizeof(Data));
+	if (ok) {
+		NETWORK_LOG( 
+			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
+			<< ", messageSize: " << data.messageSize
+		);
+	}
+	return ok;
+}
+
+void AiSeedSyncMessage::send(NetworkConnection* connection) const{
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::AI_SYNC);
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize
+	);
+	Message::send(connection, &data, sizeof(Data));
 }
 
 void AiSeedSyncMessage::send(Socket* socket) const{
-	assert(data.msgType == MessageType::AI_SYNC);
-	Message::send(socket, &data, sizeof(data));
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::AI_SYNC);
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize
+	);
+	Message::send(socket, &data, sizeof(Data));
 }
-
 
 // =====================================================
 //	class LaunchMessage
@@ -156,12 +256,13 @@ void AiSeedSyncMessage::send(Socket* socket) const{
 
 /** Construct empty message (for clients to receive gamesettings into) */
 LaunchMessage::LaunchMessage(){
-	data.messageType=-1; 
+	data.messageType = MessageType::INVALID_MSG;
 }
 
 /** Construct from GameSettings (for the server to send out) */
 LaunchMessage::LaunchMessage(const GameSettings *gameSettings){
-	data.messageType=MessageType::LAUNCH;
+	data.messageType = MessageType::LAUNCH;
+	data.messageSize = sizeof(Data) - 4;
 
 	data.description= gameSettings->getDescription();
 	data.map= gameSettings->getMapPath();
@@ -183,8 +284,16 @@ LaunchMessage::LaunchMessage(const GameSettings *gameSettings){
 	}
 }
 
+LaunchMessage::LaunchMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data.description, raw.data, raw.size);
+	delete raw.data;
+}
+
 /** Fills in a GameSettings object from this message (for clients) */
 void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
+	_TRACE_FUNCTION();
 	gameSettings->setDescription(data.description.getString());
 	gameSettings->setMapPath(data.map.getString());
 	gameSettings->setTilesetPath(data.tileset.getString());
@@ -205,44 +314,97 @@ void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
 	}
 }
 
-bool LaunchMessage::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+bool LaunchMessage::receive(NetworkConnection* connection){
+	_TRACE_FUNCTION();
+	bool ok = Message::receive(connection, &data, sizeof(Data));
+	if (ok) {
+		NETWORK_LOG( 
+			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
+			<< ", messageSize: " << data.messageSize
+		);
+	}
+	return ok;
 }
 
-void LaunchMessage::send(Socket* socket) const{
+void LaunchMessage::send(NetworkConnection* connection) const {
+	_TRACE_FUNCTION();
 	assert(data.messageType==MessageType::LAUNCH);
-	Message::send(socket, &data, sizeof(data));
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize
+	);
+	Message::send(connection, &data, sizeof(Data));
+}
+
+void LaunchMessage::send(Socket* socket) const {
+	_TRACE_FUNCTION();
+	assert(data.messageType==MessageType::LAUNCH);
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize
+	);
+	Message::send(socket, &data, sizeof(Data));
 }
 
 // =====================================================
 //	class NetworkCommandList
 // =====================================================
 
-CommandListMessage::CommandListMessage(int32 frameCount){
-	data.messageType= MessageType::COMMAND_LIST;
-	data.frameCount= frameCount;
-	data.commandCount= 0;
+CommandListMessage::CommandListMessage(int32 frameCount) {
+	data.messageType = MessageType::COMMAND_LIST;
+	data.messageSize = 4;
+	data.frameCount = frameCount;
+	data.commandCount = 0;
 }
 
 bool CommandListMessage::addCommand(const NetworkCommand* networkCommand){
+	_TRACE_FUNCTION();
 	if (data.commandCount < maxCommandCount) {
 		data.commands[data.commandCount++]= *networkCommand;
+		data.messageSize += sizeof(NetworkCommand);
 		return true;
 	}
 	return false;
 }
 
-bool CommandListMessage::receive(Socket* socket) {
-	// peek type, commandCount & frame num first.
-	if (!Message::peek(socket, &data, dataHeaderSize)) {
+CommandListMessage::CommandListMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	uint8* ptr = reinterpret_cast<uint8*>(&data);
+	ptr += 4;
+	memcpy(ptr, raw.data, raw.size);
+	delete raw.data;
+}
+
+bool CommandListMessage::receive(NetworkConnection* connection) {
+	_TRACE_FUNCTION();
+	MsgHeader header; // peek Message Header first
+	if (!Message::peek(connection, &header, sizeof(MsgHeader))) {
 		return false;
 	}
-	// read 'header' (we only had a 'peek' above) + data.commandCount commands.
-	return Message::receive(socket, &data, dataHeaderSize + sizeof(NetworkCommand) * data.commandCount);
+	bool ok = Message::receive(connection, &data, sizeof(MsgHeader) + header.messageSize);
+	if (ok) {
+		NETWORK_LOG( 
+			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
+			<< ", messageSize: " << data.messageSize << ", number of commands: " << data.commandCount
+		);
+	}
+	return ok;
+}
+
+void CommandListMessage::send(NetworkConnection* connection) const {
+	assert(data.messageType == MessageType::COMMAND_LIST);
+	NETWORK_LOG( 
+		__FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize << ", number of commands: " << data.commandCount
+	);
+	Message::send(connection, &data, dataHeaderSize + sizeof(NetworkCommand) * data.commandCount);
 }
 
 void CommandListMessage::send(Socket* socket) const {
 	assert(data.messageType == MessageType::COMMAND_LIST);
+	NETWORK_LOG( 
+		__FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
+		<< ", messageSize: " << data.messageSize << ", number of commands: " << data.commandCount
+	);
 	Message::send(socket, &data, dataHeaderSize + sizeof(NetworkCommand) * data.commandCount);
 }
 
@@ -251,36 +413,67 @@ void CommandListMessage::send(Socket* socket) const {
 // =====================================================
 
 TextMessage::TextMessage(const string &text, const string &sender, int teamIndex){
-	data.messageType= MessageType::TEXT; 
-	data.text= text;
-	data.sender= sender;
-	data.teamIndex= teamIndex;
+	data.messageType = MessageType::TEXT; 
+	data.messageSize = sizeof(*this) - 4;
+	data.text = text;
+	data.sender = sender;
+	data.teamIndex = teamIndex;
 }
 
-bool TextMessage::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+TextMessage::TextMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data.text, raw.data, raw.size);
+	delete raw.data;
+}
+
+bool TextMessage::receive(NetworkConnection* connection){
+	_TRACE_FUNCTION();
+	return Message::receive(connection, &data, sizeof(Data));
+}
+
+void TextMessage::send(NetworkConnection* connection) const{
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::TEXT);
+	Message::send(connection, &data, sizeof(Data));
 }
 
 void TextMessage::send(Socket* socket) const{
-	assert(data.messageType==MessageType::TEXT);
-	Message::send(socket, &data, sizeof(data));
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::TEXT);
+	Message::send(socket, &data, sizeof(Data));
 }
 
 // =====================================================
 //	class QuitMessage
 // =====================================================
 
-QuitMessage::QuitMessage(){
-	data.messageType= MessageType::QUIT; 
+QuitMessage::QuitMessage() {
+	data.messageType = MessageType::QUIT; 
+	data.messageSize = 0;
 }
 
-bool QuitMessage::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+QuitMessage::QuitMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	assert(raw.size == 0);
 }
 
-void QuitMessage::send(Socket* socket) const{
+bool QuitMessage::receive(NetworkConnection* connection) {
+	_TRACE_FUNCTION();
+	return Message::receive(connection, &data, sizeof(Data));
+}
+
+void QuitMessage::send(NetworkConnection* connection) const {
+	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::QUIT);
-	Message::send(socket, &data, sizeof(data));
+	Message::send(connection, &data, sizeof(Data));
+}
+
+void QuitMessage::send(Socket* socket) const {
+	_TRACE_FUNCTION();
+	assert(data.messageType == MessageType::QUIT);
+	Message::send(socket, &data, sizeof(Data));
 }
 
 // =====================================================
@@ -288,7 +481,6 @@ void QuitMessage::send(Socket* socket) const{
 // =====================================================
 
 struct KeyFrameMsgHeader {
-	int8	type;
 	uint8	cmdCount;
 	uint16	checksumCount;
 	uint16 moveUpdateCount;
@@ -298,58 +490,99 @@ struct KeyFrameMsgHeader {
 
 };
 
-bool KeyFrame::receive(Socket* socket) {
-	KeyFrameMsgHeader  header;
-	if (socket->peek(&header, sizeof(KeyFrameMsgHeader ))) {
-		assert(header.type == MessageType::KEY_FRAME);
-		this->frame = header.frame;
-		this->checksumCount = header.checksumCount;
-		
-		this->moveUpdateCount = header.moveUpdateCount;
-		this->projUpdateCount = header.projUpdateCount;
-		this->updateSize = header.updateSize;
-		
-		this->cmdCount = header.cmdCount;
-		size_t headerSize = sizeof(KeyFrameMsgHeader );
-		size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
-		size_t totalSize = headerSize + checksumCount * sizeof(int32) + commandsSize + updateSize;
+KeyFrame::KeyFrame(RawMessage raw) {
+	reset();
+	uint8 *ptr = raw.data;
+	KeyFrameMsgHeader header;
+	memcpy(&header, ptr, sizeof(KeyFrameMsgHeader));
+	ptr += sizeof(KeyFrameMsgHeader);
 
-		if (socket->getDataToRead() >= totalSize) {
-			socket->receive(&header, headerSize);
-			if (checksumCount) {
-				socket->receive(checksums, checksumCount * sizeof(int32));
-			}
-			if (updateSize) {
-				socket->receive(updateBuffer, updateSize);
-			}
-			if (commandsSize) {
-				socket->receive(commands, commandsSize);
-			}
-			return true;
-		} else {
-			return false;
-		}
+	frame = header.frame;
+	checksumCount = header.checksumCount;
+	moveUpdateCount = header.moveUpdateCount;
+	projUpdateCount = header.projUpdateCount;
+	updateSize = header.updateSize;
+	cmdCount = header.cmdCount;
+
+	if (checksumCount) {
+		memcpy(checksums, ptr, checksumCount * sizeof(int32));
+		ptr += checksumCount * sizeof(int32);
 	}
-	return false;
+	if (updateSize) {
+		memcpy(updateBuffer, ptr, updateSize);
+		ptr += updateSize;
+	}
+	if (cmdCount) {
+		memcpy(commands, ptr, cmdCount * sizeof(NetworkCommand));
+	}
+	delete raw.data;
 }
 
-void KeyFrame::send(Socket* socket) const {
+bool KeyFrame::receive(NetworkConnection* connection) {
+	_TRACE_FUNCTION();
+	MsgHeader msgHeader;
 	KeyFrameMsgHeader header;
-	header.type = MessageType::KEY_FRAME;
+	Socket *socket = connection->getSocket();
+
+	if (!socket->peek(&msgHeader, sizeof(MsgHeader))) {
+		return false;
+	}
+	uint8 *buf = new uint8[msgHeader.messageSize + sizeof(MsgHeader)];
+	if (!socket->receive(buf, sizeof(MsgHeader) + msgHeader.messageSize)) {
+		delete [] buf;
+		return false;
+	}
+	uint8 *ptr = buf + sizeof(MsgHeader);
+	memcpy(&header, ptr, sizeof(KeyFrameMsgHeader));
+	ptr += sizeof(KeyFrameMsgHeader);
+
+	frame = header.frame;
+	checksumCount = header.checksumCount;
+	moveUpdateCount = header.moveUpdateCount;
+	projUpdateCount = header.projUpdateCount;
+	updateSize = header.updateSize;
+	cmdCount = header.cmdCount;
+	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
+
+	if (header.checksumCount) {
+		memcpy(checksums, ptr, checksumCount * sizeof(int32));
+		ptr += checksumCount * sizeof(int32);
+	}
+	if (updateSize) {
+		memcpy(updateBuffer, ptr, updateSize);
+		ptr += updateSize;
+	}
+	if (commandsSize) {
+		memcpy(commands, ptr, commandsSize);
+		ptr += commandsSize;
+	}
+	delete [] buf;
+	assert(ptr - buf == msgHeader.messageSize + sizeof(MsgHeader));
+	return true;
+}
+
+void KeyFrame::send(NetworkConnection* connection) const {
+	_TRACE_FUNCTION();
+	MsgHeader msgHeader;
+	KeyFrameMsgHeader header;
+	msgHeader.messageType = MessageType::KEY_FRAME;
 	header.frame = this->frame;
 	header.cmdCount = this->cmdCount;
 	header.checksumCount = this->checksumCount;
-
 	header.moveUpdateCount = this->moveUpdateCount;
 	header.projUpdateCount = this->projUpdateCount;
 	header.updateSize = this->updateSize;
 
 	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
 	size_t headerSize = sizeof(KeyFrameMsgHeader);
+	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32) 
+		+ updateSize + commandsSize;
+	size_t totalSize = msgHeader.messageSize + sizeof(MsgHeader);
 
-	size_t totalSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32) + updateSize + commandsSize;
-	char *buf = new char[totalSize];
-	char *ptr = buf;
+	uint8 *buf = new uint8[totalSize];
+	uint8 *ptr = buf;
+	memcpy(ptr, &msgHeader, sizeof(MsgHeader));
+	ptr += sizeof(MsgHeader);
 	memcpy(ptr, &header, sizeof(KeyFrameMsgHeader));
 	ptr += sizeof(KeyFrameMsgHeader);
 	if (checksumCount) {
@@ -364,7 +597,7 @@ void KeyFrame::send(Socket* socket) const {
 		memcpy(ptr, commands, commandsSize);
 	}
 	try {
-		Message::send(socket, buf, totalSize);
+		Message::send(connection, buf, totalSize);
 	} catch (...) {
 		delete [] buf;
 		throw;
@@ -372,16 +605,17 @@ void KeyFrame::send(Socket* socket) const {
 	delete [] buf;
 }
 
-int32 KeyFrame::getNextChecksum() { 
-	assert(checksumCounter < checksumCount);
+int32 KeyFrame::getNextChecksum() {
 	if (checksumCounter >= checksumCount) {
-		throw runtime_error("sync error: insufficient checksums in keyframe.");
+		NETWORK_LOG( "Attempt to retrieve checksum #" << checksumCounter
+			<< ", Insufficient checksums in keyFrame. Sync Error."
+		);
+		throw GameSyncError();
 	}
 	return checksums[checksumCounter++];
 }
 
 void KeyFrame::addChecksum(int32 cs) {
-	assert(checksumCount < max_checksums);
 	if (checksumCount >= max_checksums) {
 		throw runtime_error("Error: insufficient room for checksums in keyframe, increase KeyFrame::max_checksums.");
 	}
@@ -441,13 +675,20 @@ ProjectileUpdate KeyFrame::getProjUpdate() {
 
 #if _GAE_DEBUG_EDITION_
 
-bool SyncErrorMsg::receive(Socket* socket){
-	return Message::receive(socket, &data, sizeof(data));
+SyncErrorMsg::SyncErrorMsg(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data.frameCount, raw.data, raw.size);
+	delete data.raw;
 }
 
-void SyncErrorMsg::send(Socket* socket) const{
+bool SyncErrorMsg::receive(NetworkConnection* connection){
+	return Message::receive(connection, &data, sizeof(data));
+}
+
+void SyncErrorMsg::send(NetworkConnection* connection) const{
 	assert(data.messageType == MessageType::SYNC_ERROR);
-	Message::send(socket, &data, sizeof(data));
+	Message::send(connection, &data, sizeof(data));
 }
 
 #endif

@@ -35,35 +35,67 @@ namespace Glest { namespace Net {
 //	class NetworkConnection
 // =====================================================
 
-const int NetworkConnection::readyWaitTimeout = 60000;	// 1 minute
-
 void NetworkConnection::send(const Message* networkMessage) {
-	Socket* socket= getSocket();
-	networkMessage->send(socket);
+	networkMessage->send(this);
 }
 
-MessageType NetworkConnection::getNextMessageType() {
+/*MessageType NetworkConnection::getNextMessageType() {
 	Socket* socket = getSocket();
-	int8 messageType = MessageType::NO_MSG;
-
+	int8 messageType;
 	//peek message type
-	socket->peek(&messageType, sizeof(messageType));
-	
-	//sanity check new message type
-	if (messageType < 0 || messageType >= MessageType::COUNT){
-		throw runtime_error("Invalid message type: " + intToStr(messageType));
+	if (socket->peek(&messageType, sizeof(messageType))) {
+		//sanity check new message type
+		if (messageType < 0 || messageType >= MessageType::COUNT){
+			throw InvalidMessage(messageType);
+		}
+		return MessageType(messageType);
 	}
-	return MessageType(messageType);
-}
+	return MessageType::NO_MSG;
+}*/
 
 int NetworkConnection::dataAvailable() {
 	return getSocket()->getDataToRead();
 }
 
-bool NetworkConnection::receiveMessage(Message* networkMessage) {
-	Socket* socket= getSocket();
-	return networkMessage->receive(socket);
+/*bool NetworkConnection::receiveMessage(Message* networkMessage) {
+	return networkMessage->receive(this);
+}*/
+
+void NetworkConnection::receiveMessages() {
+	Socket *socket = getSocket();
+	if (!socket->isConnected()) {
+		return;
+	}
+	size_t n = socket->getDataToRead();
+	while (n >= MsgHeader::headerSize) {
+		MsgHeader header;
+		socket->peek(&header, MsgHeader::headerSize);
+		if (n >= MsgHeader::headerSize + header.messageSize) {
+			RawMessage rawMsg;
+			rawMsg.type = header.messageType;
+			rawMsg.size = header.messageSize;
+			rawMsg.data = new uint8[header.messageSize];
+			socket->skip(MsgHeader::headerSize);
+			if (header.messageSize) {
+				socket->receive(rawMsg.data, header.messageSize);
+			} else {
+				rawMsg.data = 0;
+			}
+			messageQueue.push_back(rawMsg);
+			n = socket->getDataToRead();
+		} else {
+			return;
+		}
+	}
 }
+
+RawMessage NetworkConnection::getNextMessage() {
+	assert(hasMessage());
+	RawMessage res = messageQueue.front();
+	messageQueue.pop_front();
+	return res;
+}
+
 
 void NetworkConnection::setRemoteNames(const string &hostName, const string &playerName) {
 	remoteHostName = hostName;

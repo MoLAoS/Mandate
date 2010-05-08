@@ -60,10 +60,10 @@ private:
 
 class InvalidMessage : public NetworkError {
 public:
-	InvalidMessage(MessageType expected, MessageType got)
+	InvalidMessage(MessageType expected, int8 got)
 		: expected(expected), received(got) {}
 
-	InvalidMessage(MessageType got)
+	InvalidMessage(int8 got)
 		: expected(MessageType::INVALID), received(got) {}
 
 	~InvalidMessage() throw() {}
@@ -72,16 +72,18 @@ public:
 		static char msgBuf[512];
 		if (expected != MessageType::INVALID) {
 			sprintf(msgBuf, "Expected message type %d(%s), got type %d(%s).",
-				int(expected), MessageTypeNames[expected], int(received), MessageTypeNames[received]);
+				int(expected), MessageTypeNames[expected], int(received), 
+				MessageTypeNames[MessageType(received)]);
 		} else {
 			sprintf(msgBuf, "Unexpected message type received: %d(%s).",
-				int(received), MessageTypeNames[received]);
+				int(received), MessageTypeNames[MessageType(received)]);
 		}
 		return msgBuf;
 	}
 
 private:
-	MessageType expected, received;
+	MessageType expected;
+	int8 received;
 };
 
 class GarbledMessage : public NetworkError {
@@ -103,19 +105,46 @@ private:
 
 class DataSyncError : public NetworkError {
 public:
-	DataSyncError(NetSource role) : role(role) {}
+	DataSyncError(bool *checks, int numFactionTypes, NetSource role)
+			: role(role), numFactionTypes(numFactionTypes) {
+		for (int i=0; i < 3; ++i) {
+			this->checks[i] = checks[i];
+		}
+	}
 	~DataSyncError() throw() {}
 
 	const char* what() const throw() {
+		static char msgBuf[1024];
+		char *ptr = msgBuf;
 		if (role == NetSource::CLIENT) {
-			return "Your data does not match the server's.";
+			ptr += sprintf(ptr, "Your data does not match the server's.\n");
 		} else {
-			return "Client data does not match yours.";
+			ptr += sprintf(ptr, "Client data does not match yours.\n");
 		}
+		if (!checks[0]) {
+			ptr += sprintf(ptr, "Tileset data does not match.\n");
+		}
+		if (!checks[1]) {
+			ptr += sprintf(ptr, "Map data does not match.\n");
+		}
+		if (!checks[2]) {
+			ptr += sprintf(ptr, "Attack/Armour Types and/or Damage Multipliers do not match.\n");
+		}
+		if (!checks[3]) {
+			ptr += sprintf(ptr, "Resource data does not match.\n");
+		}
+		for (int i=0; i < numFactionTypes; ++i) {
+			if (!checks[4+i]) {
+				ptr += sprintf(ptr, "Faction Type %d data does not match.\n", i);
+			}
+		}
+		return msgBuf;
 	}
 
 private:
 	NetSource role;
+	bool checks[12];
+	int numFactionTypes;
 };
 
 class GameSyncError : public NetworkError {

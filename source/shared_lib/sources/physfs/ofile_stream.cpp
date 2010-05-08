@@ -19,7 +19,7 @@
 
 #include "pch.h"
 #include "projectConfig.h"
-#ifdef USE_PHYSFS
+#if USE_PHYSFS
 
 #include "ofile_stream.hpp"
 #include "ofile_streambuf.hpp"

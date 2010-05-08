@@ -35,10 +35,9 @@ namespace Glest { namespace Net {
 //	class ClientConnection
 // =====================================================
 
-ConnectionSlot::ConnectionSlot(ServerInterface* serverInterface, int playerIndex, bool resumeSaved) {
+ConnectionSlot::ConnectionSlot(ServerInterface* serverInterface, int playerIndex) {
 	this->serverInterface = serverInterface;
 	this->playerIndex = playerIndex;
-	this->resumeSaved = resumeSaved;
 	socket = NULL;
 	ready = false;
 }
@@ -51,14 +50,14 @@ void ConnectionSlot::update() {
 	if (!socket) {
 		socket = serverInterface->getServerSocket()->accept();
 
-		//send intro message when connected
+		// send intro message when connected
 		if (socket) {
+			LOG_NETWORK( "Connection established, slot " + intToStr(playerIndex) +  " sending intro message." );
 			socket->setBlock(false);
 			socket->setNoDelay();
-			IntroMessage networkMessageIntro(
-				getNetworkVersionString(), theConfig.getNetPlayerName(), socket->getHostName(), playerIndex);
+			IntroMessage networkMessageIntro(getNetworkVersionString(), 
+				theConfig.getNetPlayerName(), socket->getHostName(), playerIndex);
 			send(&networkMessageIntro);
-			LOG_NETWORK( "Connection established, slot " + intToStr(playerIndex) +  " sending intro message." );
 		}
 		return;
 	}
@@ -67,68 +66,67 @@ void ConnectionSlot::update() {
 		close();
 		return;
 	}
-	MessageType networkMessageType = getNextMessageType();
 	//process incoming commands
-	switch (networkMessageType) {
-		case MessageType::NO_MSG:
-			break;
-		case MessageType::TEXT: {
-				TextMessage textMsg;
-				if (receiveMessage(&textMsg)) {
-					serverInterface->process(textMsg, playerIndex);
-					LOG_NETWORK( "Received text message on slot " + intToStr(playerIndex) + " : " + textMsg.getText() );
-				}
+	try {
+		receiveMessages();
+	} catch (SocketException &e) {
+		NETWORK_LOG(
+			"Slot " << playerIndex << " [" << getRemotePlayerName() << "]"
+			<< " : " << e.what()
+		);
+		string msg = getRemotePlayerName() + " [" + getRemoteHostName() + "] has disconnected.";
+		ServerInterface *si = serverInterface;
+		serverInterface->removeSlot(playerIndex);
+		si->sendTextMessage(msg, -1);
+		return;
+	}
+	while (hasMessage()) {
+		RawMessage raw = getNextMessage();
+		if (raw.type == MessageType::TEXT) {
+			LOG_NETWORK( "Received text message on slot " + intToStr(playerIndex) );
+			TextMessage textMsg(raw);
+			serverInterface->process(textMsg, playerIndex);
+		} else if (raw.type == MessageType::INTRO) {
+			IntroMessage msg(raw);
+			LOG_NETWORK(
+				"Received intro message on slot " + intToStr(playerIndex) + ", host name = "
+				+ msg.getHostName() + ", player name = " + msg.getPlayerName()
+			);
+			setRemoteNames(msg.getHostName(), msg.getPlayerName());
+		} else if (raw.type == MessageType::COMMAND_LIST) {
+			LOG_NETWORK( "Received command list message on slot " + intToStr(playerIndex) );
+			CommandListMessage cmdList(raw);
+			for (int i=0; i < cmdList.getCommandCount(); ++i) {
+				serverInterface->requestCommand(cmdList.getCommand(i));
 			}
-			break;
-		case MessageType::COMMAND_LIST: {
-				CommandListMessage cmdList;
-				if(receiveMessage(&cmdList)){
-					for (int i=0; i < cmdList.getCommandCount(); ++i) {
-						theSimInterface->requestCommand(cmdList.getCommand(i));
-					}
-				}
-			}
-			break;
-		case MessageType::INTRO: {
-				IntroMessage msg;
-				if (receiveMessage(&msg)) {
-					LOG_NETWORK(
-						"Received intro message on slot " + intToStr(playerIndex) + ", host name = "
-						+ msg.getHostName() + ", player name = " + msg.getPlayerName()
-					);
-					setRemoteNames(msg.getHostName(), msg.getPlayerName());
-				}
-			}
-			break;
-
-		case MessageType::QUIT: {
-				LOG_NETWORK( "Received quit message in slot " + intToStr(playerIndex) );
-				string msg = getRemotePlayerName() + " [" + getRemoteHostName() + "] has quit the game!";
-				close();
-				serverInterface->sendTextMessage(msg, -1);
-			}
-			break;
-#		if _GAE_EDBUG_EDITION_
-		case MessageType::SYNC_ERROR: {
-				SyncErrorMsg e;
-				receiveMessage(&e);
-				int frame = e.getFrame();
-				serverInterface->dumpFrame(frame);
-				throw runtime_error("Sync error. GameState records dumped.");
-			}
-			break;
-#		endif
-		default: {
-				stringstream ss;
-				ss << "Unexpected message type: " << networkMessageType << " on slot: " << playerIndex;
-				LOG_NETWORK( ss.str() );
-				ss.clear();
-				ss << "Player " << playerIndex << " [" << getName()
-					<< "] was disconnected because they sent the server bad data.";
-				serverInterface->sendTextMessage(ss.str(), -1);
-				close();
-			}
+		} else if (raw.type == MessageType::QUIT) {
+			QuitMessage quitMsg(raw);
+			LOG_NETWORK( "Received quit message on slot " + intToStr(playerIndex) );
+			string msg = getRemotePlayerName() + " [" + getRemoteHostName() + "] has quit the game!";
+			ServerInterface *si = serverInterface;
+			serverInterface->removeSlot(playerIndex);
+			si->sendTextMessage(msg, -1);
 			return;
+#		if _GAE_EDBUG_EDITION_
+		} else if (raw.type == MessageType::SYNC_ERROR) {
+			SyncErrorMsg e;
+			receiveMessage(&e);
+			int frame = e.getFrame();
+			serverInterface->dumpFrame(frame);
+			throw GameSyncError();
+#		endif
+		} else {
+			stringstream ss;
+			ss << "Unexpected message type: " << raw.type << " on slot: " << playerIndex;
+			LOG_NETWORK( ss.str() );
+			ss.clear();
+			ss << "Player " << playerIndex << " [" << getName()
+				<< "] was disconnected because they sent the server bad data.";
+			ServerInterface *si = serverInterface;
+			serverInterface->removeSlot(playerIndex);
+			si->sendTextMessage(ss.str(), -1);
+			return;
+		}
 	}
 }
 

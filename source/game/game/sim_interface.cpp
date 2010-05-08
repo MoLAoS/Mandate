@@ -34,9 +34,17 @@ const int speedValues[GameSpeed::COUNT] = {
 //	class SkillCycleTable
 // =====================================================
 
+SkillCycleTable::SkillCycleTable(RawMessage raw) {
+	numEntries = raw.size / sizeof(NetworkCommand);
+	cycleTable = reinterpret_cast<CycleInfo*>(raw.data);
+}
+
 void SkillCycleTable::create(const TechTree *techTree) {
 	_TRACE_FUNCTION();
 	numEntries = theWorld.getSkillTypeFactory()->getSkillTypeCount();
+	header.messageSize = numEntries * sizeof(CycleInfo);
+	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
+		<< ", messageSize = " << header.messageSize << " (@" << sizeof(CycleInfo) << ")" );
 	assert(numEntries);
 
 	cycleTable = new CycleInfo[numEntries];
@@ -45,45 +53,34 @@ void SkillCycleTable::create(const TechTree *techTree) {
 	}
 }
 
-struct SkillCycleTableMsgHeader {
-	int32  type		:  8;
-	uint32 count	: 24;
-};
-
-void SkillCycleTable::send(Socket *socket) const {
+void SkillCycleTable::send(NetworkConnection* connection) const {
 	_TRACE_FUNCTION();
-	size_t dataSize = numEntries * sizeof(CycleInfo);
-
-	assert(dataSize < 16777216);
-	assert( (1<<24) == 16777216);
-
-	SkillCycleTableMsgHeader hdr;
-	hdr.type = MessageType::SKILL_CYCLE_TABLE;
-	hdr.count = numEntries;
-	Message::send(socket, &hdr, sizeof(SkillCycleTableMsgHeader));
-	Message::send(socket, cycleTable, dataSize);
+	Message::send(connection, &header, sizeof(MsgHeader));
+	Message::send(connection, cycleTable, header.messageSize);
+	NETWORK_LOG( "SkillCycleTable sent." );
 }
 
-bool SkillCycleTable::receive(Socket *socket) {
+bool SkillCycleTable::receive(NetworkConnection* connection) {
 	_TRACE_FUNCTION();
 	delete cycleTable;
 	cycleTable = 0;
 
-	SkillCycleTableMsgHeader hdr;
-	const size_t &hdrSize = sizeof(SkillCycleTableMsgHeader);
-	if (!socket->peek(&hdr, hdrSize)) {
+	Socket *socket = connection->getSocket();
+	if (!socket->peek(&header, sizeof(MsgHeader))) {
 		return false;
 	}
-	const size_t payloadSize = hdr.count * sizeof(CycleInfo);
-	if (socket->getDataToRead() >= hdrSize + payloadSize) {
-		cycleTable = new CycleInfo[hdr.count];
-		if (!socket->receive(&hdr, hdrSize)
-		|| !socket->receive(cycleTable, payloadSize)) {
+	if (socket->getDataToRead() >= sizeof(MsgHeader) + header.messageSize) {
+		cycleTable = new CycleInfo[header.messageSize / sizeof(CycleInfo)];
+		if (!socket->receive(&header, sizeof(MsgHeader))
+		|| !socket->receive(cycleTable, header.messageSize)) {
 			delete cycleTable;
 			cycleTable = 0;
 			throw std::runtime_error(
 				"SkillCycleTable::receive() : Socket lied, getDataToRead() said ok, receive() couldn't deliver");
 		}
+		NETWORK_LOG( __FUNCTION__ << "(): got message, type: " << MessageTypeNames[MessageType(header.messageType)]
+			<< ", messageSize: " << header.messageSize
+		);
 		return true;
 	}
 	return false;
@@ -220,14 +217,28 @@ void SimulationInterface::initWorld() {
 
 int SimulationInterface::launchGame() {
 	_TRACE_FUNCTION();
-	Checksum checksum;
-	world->getTileset()->doChecksum(checksum);
-	world->getTechTree()->doChecksum(checksum);
-	world->getMap()->doChecksum(checksum);
+	Checksum checksums[12];
+	
+	world->getTileset()->doChecksum(checksums[0]);
+	world->getMap()->doChecksum(checksums[1]);
+	
+	const TechTree *tt = world->getTechTree();
+	tt->doChecksumDamageMult(checksums[2]);
+	tt->doChecksumResources(checksums[3]);
 
+	const int &n = tt->getFactionTypeCount();
+	for (int i=0; i < n; ++i) {
+		tt->doChecksumFaction(checksums[4+i], i);
+	}
+	
 	// ready ?
 	theLogger.add("Waiting for players...", true);
-	waitUntilReady(checksum);
+	try {
+		waitUntilReady(checksums);
+	} catch (NetworkError &e) {
+		LOG_NETWORK( e.what() );
+		throw e;
+	}
 	startGame();
 	world->activateUnits();
 	return getNetworkRole() == GameRole::LOCAL ? 2 : -1;

@@ -15,6 +15,7 @@
 #include "socket.h"
 #include "game_constants.h"
 #include "network_types.h"
+#include "checksum.h"
 
 #include <map>
 
@@ -22,10 +23,23 @@ using std::map;
 using Shared::Platform::Socket;
 using Shared::Platform::int8;
 using Shared::Platform::int16;
+using Shared::Util::Checksum;
 
 namespace Glest { namespace Net {
 
 class NetworkConnection;
+
+struct RawMessage {
+	uint32 type;
+	uint32 size;
+	uint8* data;
+};
+
+struct MsgHeader {
+	static const size_t headerSize = 4;
+	uint32 messageType :  8;
+	uint32 messageSize : 24;
+};
 
 // ==============================================================
 //	class Message
@@ -36,12 +50,14 @@ class NetworkConnection;
 class Message {
 public:
 	virtual ~Message(){}
-	virtual bool receive(Socket* socket)= 0;
-	virtual void send(Socket* socket) const = 0;
+	virtual bool receive(NetworkConnection* connection) = 0;
+	virtual void send(NetworkConnection* connection) const = 0;
+	virtual void send(Socket *socket) const = 0;
 
 protected:
-	bool receive(Socket* socket, void* data, int dataSize);
-	bool peek(Socket* socket, void *data, int dataSize);
+	bool receive(NetworkConnection* connection, void* data, int dataSize);
+	bool peek(NetworkConnection* connection, void *data, int dataSize);
+	void send(NetworkConnection* connection, const void* data, int dataSize) const;
 	void send(Socket* socket, const void* data, int dataSize) const;
 };
 
@@ -52,30 +68,34 @@ protected:
   *	when the client connects and vice versa */
 class IntroMessage : public Message {
 private:
-	static const int maxVersionStringSize= 64;
-	static const int maxNameSize= 16;
+	static const int maxVersionStringSize = 64;
+	static const int maxNameSize = 16;
 
 private:
-	struct Data{
-		int8 messageType;
-		NetworkString<maxVersionStringSize> versionString; // change to uint32 ?
+	struct Data {
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
+		NetworkString<maxVersionStringSize> versionString;
 		NetworkString<maxNameSize> playerName;
 		NetworkString<maxNameSize> hostName;
 		int16 playerIndex;
-	} data;
+	} data; // 4 + 64 + 32 + 2 == 102
+
+	// 0x 01 00 00 66
 
 public:
 	IntroMessage();
 	IntroMessage(const string &versionString, const string &pName, const string &hName, int playerIndex);
+	IntroMessage(RawMessage raw);
 
 	string getVersionString() const		{return data.versionString.getString();}
 	string getPlayerName() const		{return data.playerName.getString();}
 	string getHostName() const			{return data.hostName.getString();}
 	int getPlayerIndex() const			{return data.playerIndex;}
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
-	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -88,7 +108,8 @@ private:
 
 private:
 	struct Data {
-		int8 msgType;
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
 		int8 seedCount;
 		int32 seeds[maxAiSeeds];
 	} data;
@@ -96,13 +117,14 @@ private:
 public:
 	AiSeedSyncMessage();
 	AiSeedSyncMessage(int count, int32 *seeds);
+	AiSeedSyncMessage(RawMessage raw);
 
 	int getSeedCount() const { return data.seedCount; }
 	int32 getSeed(int i) const { return data.seeds[i]; }
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
-	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -112,19 +134,21 @@ public:
 class ReadyMessage : public Message {
 private:
 	struct Data{
-		int8 messageType;
-		int32 checksum;
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
+		int32 checksums[12];	// tileset, map, tech(damage table), tech(resources), 8 * faction
 	} data;
 
 public:
 	ReadyMessage();
-	ReadyMessage(int32 checksum);
+	ReadyMessage(Checksum *checksums);
+	ReadyMessage(RawMessage raw);
 
-	int32 getChecksum() const	{return data.checksum;}
+	int32 getChecksum(int i) const	{return data.checksums[i];}
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
-	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
@@ -137,7 +161,8 @@ private:
 
 private:
 	struct Data{
-		int8 messageType;
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
 		NetworkString<maxStringSize> description;
 		NetworkString<maxStringSize> map;
 		NetworkString<maxStringSize> tileset;
@@ -160,43 +185,47 @@ private:
 public:
 	LaunchMessage();
 	LaunchMessage(const GameSettings *gameSettings);
+	LaunchMessage(RawMessage raw);
 
 	void buildGameSettings(GameSettings *gameSettings) const;
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
-	static size_t getSize() { return sizeof(Data); }
 };
 
 // ==============================================================
 //	class CommandList
 // ==============================================================
 /**	Message to issue commands to several units */
-#pragma pack(push, 2)
+#pragma pack(push, 4)
 class CommandListMessage : public Message {
 	friend class NetworkConnection;
 private:
-	static const int maxCommandCount= 16*4;
-	
+	static const int maxCommandCount = 16 * 4;
+	static const int dataHeaderSize = 8;
+
 private:
-	static const int dataHeaderSize = 6;
-	struct Data{
-		int8 messageType;
-		int8 commandCount;
-		int32 frameCount;
+	struct Data {
+		uint32 messageType	:  8;
+		uint32 messageSize	: 24;
+		uint32 commandCount	:  8;
+		uint32 frameCount	: 24;
 		NetworkCommand commands[maxCommandCount];
 	} data;
 
 public:
 	CommandListMessage(int32 frameCount= -1);
-
+	CommandListMessage(RawMessage raw);
+	
 	bool addCommand(const NetworkCommand* networkCommand);
-	void clear()									{data.commandCount= 0;}
+	void clear()									{data.commandCount = 0;}
 	int getCommandCount() const						{return data.commandCount;}
 	int getFrameCount() const						{return data.frameCount;}
 	const NetworkCommand* getCommand(int i) const	{return &data.commands[i];}
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
 };
 #pragma pack(pop)
@@ -211,7 +240,8 @@ private:
 
 private:
 	struct Data{
-		int8 messageType;
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
 		NetworkString<maxStringSize> text;
 		NetworkString<maxStringSize> sender;
 		int8 teamIndex;
@@ -220,14 +250,15 @@ private:
 public:
 	TextMessage(){}
 	TextMessage(const string &text, const string &sender, int teamIndex);
+	TextMessage(RawMessage raw);
 
 	string getText() const		{return data.text.getString();}
 	string getSender() const	{return data.sender.getString();}
 	int getTeamIndex() const	{return data.teamIndex;}
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
-	static size_t getSize() { return sizeof(Data); }
 };
 
 // =====================================================
@@ -236,16 +267,18 @@ public:
 /** Message sent by clients to quit nicely, or by the server to terminate the game */
 class QuitMessage: public Message {
 private:
-	struct Data{
-		int8 messageType;
+	struct Data {
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
 	} data;
 
 public:
 	QuitMessage();
+	QuitMessage(RawMessage raw);
 
-	virtual bool receive(Socket* socket);
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 	virtual void send(Socket* socket) const;
-	static size_t getSize() { return sizeof(Data); }
 };
 
 // =====================================================
@@ -256,7 +289,7 @@ private:
 	static const int buffer_size = 1024 * 4;
 	static const int max_cmds = 512;
 	static const int max_checksums = 2048;
-	typedef char* byte_ptr;
+	typedef uint8* byte_ptr;
 
 	int32	frame;
 
@@ -264,7 +297,7 @@ private:
 	int32	checksumCount;
 	uint32	checksumCounter;
 	
-	char	 updateBuffer[buffer_size];
+	uint8	 updateBuffer[buffer_size];
 	size_t	 updateSize;
 	uint32	 projUpdateCount;
 	uint32	 moveUpdateCount;
@@ -274,12 +307,13 @@ private:
 	NetworkCommand commands[max_cmds];
 	size_t cmdCount;
 
-
 public:
 	KeyFrame()		{ reset(); }
+	KeyFrame(RawMessage raw);
 
-	virtual bool receive(Socket* socket);
-	virtual void send(Socket* socket) const;
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
+	virtual void send(Socket* socket) const { throw runtime_error("you should implement "__FUNCTION__); }
 
 	void setFrameCount(int fc) { frame = fc; }
 	int getFrameCount() const { return frame; }
@@ -301,21 +335,24 @@ public:
 
 class SyncErrorMsg : public Message {
 	struct Data{
-		int32	messageType	:  8;
-		uint32	frameCount	: 24;
+		uint32 messageType :  8;
+		uint32 messageSize : 24;
+		uint32	frameCount : 24;
 	} data;
 
 public:
 	SyncErrorMsg(int frame) {
 		data.messageType = MessageType::SYNC_ERROR;
+		data.messageSize = 4;
 		data.frameCount = frame;
 	}
 	SyncErrorMsg() {}
+	SyncErrorMsg(RawMessage raw);
 
 	int getFrame() const { return data.frameCount; }
 
-	virtual bool receive(Socket* socket);
-	virtual void send(Socket* socket) const;
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 };
 
 #endif

@@ -118,8 +118,10 @@ inline void logNetwork(const char *msg) {
 
 #if LOG_NETWORKING
 #	define LOG_NETWORK(x) logNetwork(x)
+#	define NETWORK_LOG(x) {stringstream _ss; _ss << x; logNetwork(_ss.str()); }
 #else
-#	define LOG_NETWORK(x) 
+#	define LOG_NETWORK(x)
+#	define NETWORK_LOG(x)
 #endif
 
 #if defined(WIN32) | defined(WIN64)

@@ -38,16 +38,16 @@ using namespace Shared::Util;
 
 #ifdef USE_POSIX_SOCKETS
 #	include <netinet/tcp.h>
-
 #	define socket_close ::close
 #	define get_error() errno
-#	define NO_DATA_AVAILABLE EAGAIN
+#	define WOULD_BLOCK EAGAIN
 #	define TIMEVAL struct timeval
 #elif defined(WIN32) || defined(WIN64)
 #	define socket_close closesocket
 #	define get_error() WSAGetLastError()
-#	define NO_DATA_AVAILABLE WSAEWOULDBLOCK
+#	define WOULD_BLOCK WSAEWOULDBLOCK
 	typedef int ssize_t;
+	typedef int socklen_t;
 #else
 #	error not Windows and USE_POSIX_SOCKETS not defined
 #endif
@@ -109,7 +109,6 @@ string Ip::getString() const{
 //	class Socket::CircularBuffer
 // =====================================================
 
-/** record that we have added b bytes to the buffer */
 void Socket::CircularBuffer::operator+=(size_t b) {
 	assert(b && head + b <= buffer_size);
 	head += b;
@@ -117,7 +116,6 @@ void Socket::CircularBuffer::operator+=(size_t b) {
 	if (head == tail) full = true;
 }
 
-/** record that we have removed b bytes from the buffer */
 void Socket::CircularBuffer::operator-=(size_t b) {
 	assert(b);
 	if (tail + b <= buffer_size) {
@@ -129,7 +127,6 @@ void Socket::CircularBuffer::operator-=(size_t b) {
 	if (full) full = false;
 }
 
-/** Number of bytes available to read */
 size_t Socket::CircularBuffer::bytesAvailable() const {
 	if (full) {
 		return buffer_size;
@@ -140,8 +137,6 @@ size_t Socket::CircularBuffer::bytesAvailable() const {
 	}
 }
 
-/** peek the next n bytes, copying them to dst if the request can be satisfied
-  * @return true if ok, false if not enough bytes are available */
 bool Socket::CircularBuffer::peekBytes(void *dst, size_t n) {
 	if (bytesAvailable() < n) {
 		return false;
@@ -158,8 +153,6 @@ bool Socket::CircularBuffer::peekBytes(void *dst, size_t n) {
 	return true;
 }
 
-/** read n bytes to dst, advancing tail offset ('removing' them from the buffer)
-  * @return true if all ok, false if not enough bytes available, in which case none will be read */
 bool Socket::CircularBuffer::readBytes(void *dst, int n) {
 	if (peekBytes(dst, n)) {
 		*this -= n;
@@ -168,8 +161,6 @@ bool Socket::CircularBuffer::readBytes(void *dst, int n) {
 	return false;
 }
 
-/** returns the maximum write length from the head, if no more bytes can be written
-  * after this (because the head would be at the tail) limit is set to true */
 int Socket::CircularBuffer::getMaxWrite(bool &limit) const {
 	if (full) {
 		limit = true;
@@ -184,7 +175,6 @@ int Socket::CircularBuffer::getMaxWrite(bool &limit) const {
 	}
 }
 
-/** free space in buffer */
 size_t Socket::CircularBuffer::getFreeBytes() const {
 	if (full) return 0;
 	if (tail > head) {
@@ -201,7 +191,6 @@ size_t Socket::CircularBuffer::getFreeBytes() const {
 Socket::Socket(SOCKET sock){
 	this->sock = sock;
 }
-
 
 Socket::Socket() {
 	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -238,7 +227,7 @@ int Socket::getDataToRead(){
 int Socket::send(const void *data, int dataSize) {
 	ssize_t res = ::send(sock, reinterpret_cast<const char*>(data), dataSize, 0);
 	if (res == SOCKET_ERROR) {
-		if (get_error() != NO_DATA_AVAILABLE) {
+		if (get_error() != WOULD_BLOCK) {
 			handleError(__FUNCTION__);
 		} else {
 
@@ -255,7 +244,7 @@ void Socket::readAll() {
 	bool limit;
 	int n = buffer.getMaxWrite(limit);
 	int r = recv(sock, buffer.getWritePos(), n, 0);
-	if (r == SOCKET_ERROR && get_error() != NO_DATA_AVAILABLE) {
+	if (r == SOCKET_ERROR && get_error() != WOULD_BLOCK) {
 		handleError(__FUNCTION__);
 	}
 	if (r > 0) {
@@ -266,7 +255,7 @@ void Socket::readAll() {
 			int r2 = recv(sock, buffer.getWritePos(), n, 0);
 			if (r2 > 0) {
 				buffer += r2;
-			} else if (r2 == SOCKET_ERROR && get_error() != NO_DATA_AVAILABLE) {
+			} else if (r2 == SOCKET_ERROR && get_error() != WOULD_BLOCK) {
 				handleError(__FUNCTION__);
 			}
 			//cout << "Socket::readALL() read " << r + r2 << " bytes.\n";
@@ -276,20 +265,28 @@ void Socket::readAll() {
 	}
 }
 
-int Socket::receive(void *data, int dataSize) {
+bool Socket::receive(void *data, int dataSize) {
 	readAll();
 	if (buffer.readBytes(data, dataSize)) {
-		return dataSize;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-int Socket::peek(void *data, int dataSize) {
+bool Socket::peek(void *data, int dataSize) {
 	readAll();
 	if (buffer.peekBytes(data, dataSize)) {
-		return dataSize;
+		return true;
 	}
-	return 0;
+	return false;
+}
+
+bool Socket::skip(int skipSize) {
+	if (buffer.bytesAvailable() >= skipSize) {
+		buffer -= skipSize;
+		return true;
+	}
+	return false;
 }
 
 void Socket::setNoDelay() {
@@ -423,14 +420,14 @@ void ClientSocket::connect(const Ip &ip, int port) {
 	sockaddr_in addr;
 	memset(&addr, 0, sizeof(addr));
 
-	addr.sin_family= AF_INET;
-	addr.sin_addr.s_addr= inet_addr(ip.getString().c_str());
-	addr.sin_port= htons(port);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr(ip.getString().c_str());
+	addr.sin_port = htons(port);
 
 	int res = ::connect(sock, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr));
 	if (res == SOCKET_ERROR) {
 		int errCode = get_error();
-		if (errCode != NO_DATA_AVAILABLE) {
+		if (errCode != WOULD_BLOCK) {
 			handleError(__FUNCTION__);
 		} else {
 
@@ -474,7 +471,7 @@ void ServerSocket::listen(int connectionQueueSize) {
 Socket *ServerSocket::accept() {
 	SOCKET newSock = ::accept(sock, NULL, NULL);
 	if (newSock == INVALID_SOCKET) {
-		if (get_error() == NO_DATA_AVAILABLE) {
+		if (get_error() == WOULD_BLOCK) {
 			return NULL;
 		}
 		handleError(__FUNCTION__);

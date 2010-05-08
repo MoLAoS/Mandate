@@ -132,11 +132,15 @@ public:
 
 class SkillCycleTable : public Net::Message {
 private:
+	MsgHeader header;
 	CycleInfo *cycleTable;
 	int numEntries;
 
 public:
-	SkillCycleTable() : cycleTable(0) {}
+	SkillCycleTable() : cycleTable(0) {
+		header.messageType = MessageType::SKILL_CYCLE_TABLE;
+	}
+	SkillCycleTable(RawMessage raw);
 
 	void create(const TechTree *techTree);
 
@@ -145,8 +149,9 @@ public:
 
 	int size() const { return numEntries; }
 
-	virtual bool receive(Socket* socket);
-	virtual void send(Socket* socket) const;
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
+	virtual void send(Socket* socket) const { throw runtime_error("you should implement "__FUNCTION__); }
 };
 
 class SimulationInterface {
@@ -271,7 +276,7 @@ protected:
 	}
 
 	/** Wait on network until all players are ready to start the game, only for network games */
-	virtual void waitUntilReady(Checksum&)  { }
+	virtual void waitUntilReady(Checksum*)  { }
 
 	/** Indicator that the game should now start, only used by ClientInterface */
 	virtual void startGame() { }

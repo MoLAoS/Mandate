@@ -65,7 +65,8 @@ namespace Glest {
 					KEY_FRAME,
 					SKILL_CYCLE_TABLE,
 					SYNC_ERROR,
-					QUIT
+					QUIT,
+					INVALID_MSG
 		)
 	}
 }

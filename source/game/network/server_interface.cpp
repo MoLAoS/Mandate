@@ -63,7 +63,7 @@ void ServerInterface::addSlot(int playerIndex) {
 	assert(playerIndex >= 0 && playerIndex < GameConstants::maxPlayers);
 	LOG_NETWORK( "Opening slot " + intToStr(playerIndex) );
 	delete slots[playerIndex];
-	slots[playerIndex] = new ConnectionSlot(this, playerIndex, false);
+	slots[playerIndex] = new ConnectionSlot(this, playerIndex);
 	updateListen();
 }
 
@@ -81,8 +81,8 @@ ConnectionSlot* ServerInterface::getSlot(int playerIndex) {
 int ServerInterface::getConnectedSlotCount() {
 	int connectedSlotCount = 0;
 	
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
-		if(slots[i] && slots[i]->isConnected()) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		if (slots[i] && slots[i]->isConnected()) {
 			++connectedSlotCount;
 		}
 	}
@@ -95,7 +95,8 @@ void ServerInterface::update() {
 		if (slots[i]) {
 			try {
 				slots[i]->update();
-			} catch (SocketException e) {
+			} catch (NetworkError &e) {
+				LOG_NETWORK( e.what() );
 				const string &name = slots[i]->getName();
 				removeSlot(i);
 				sendTextMessage("Player " + intToStr(i) + " [" + name + "] diconnected.", -1);
@@ -106,6 +107,7 @@ void ServerInterface::update() {
 
 void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
 	_TRACE_FUNCTION();
+	LOG_NETWORK( "Creating and sending SkillCycleTable." );
 	SimulationInterface::createSkillCycleTable(techTree);
 	this->broadcastMessage(&skillCycleTable);
 }
@@ -147,56 +149,81 @@ void ServerInterface::process(TextMessage &msg, int requestor) {
 }
 
 void ServerInterface::updateKeyframe(int frameCount) {
-	//build command list, remove commands from requested and add to pending
-	while(!requestedCommands.empty()){
+	// build command list, remove commands from requested and add to pending
+	while (!requestedCommands.empty()) {
 		keyFrame.add(requestedCommands.back());
 		pendingCommands.push_back(requestedCommands.back());
 		requestedCommands.pop_back();
 	}
 	keyFrame.setFrameCount(frameCount);
-	//cout << "sending keyframe, frameCount == " << keyFrame.getFrameCount() << endl;
 	broadcastMessage(&keyFrame);
-	//cout << "keyframe sent." << endl;
 	keyFrame.reset();
 }
 
-void ServerInterface::waitUntilReady(Checksum &checksum) {
+void ServerInterface::waitUntilReady(Checksum *checksums) {
 	_TRACE_FUNCTION();
 	Chrono chrono;
 	chrono.start();
 	bool allReady = false;
-	LOG_NETWORK( "Waiting for ready messages from all clients" );
-	//wait until we get a ready message from all clients
-	while(!allReady) {
+	const TechTree *tt = world->getTechTree();
+	const int &n = tt->getFactionTypeCount();
+	string factionChecks;
+	for (int i=0; i < n; ++i) {
+		factionChecks += "Faction " + tt->getFactionType(i)->getName() + " = " 
+			+ intToHex(checksums[4+i].getSum()) + "\n";
+	}
+	NETWORK_LOG( 
+		"Waiting for ready messages from all clients. My Chcecksums:\n"
+		<< "Tileset = " << intToHex(checksums[0].getSum()) << endl
+		<< "Map = " << intToHex(checksums[1].getSum()) << endl
+		<< "Damage Multipliers = " << intToHex(checksums[2].getSum()) << endl
+		<< "Resources = " << intToHex(checksums[3].getSum()) << endl
+		<< factionChecks;
+	);	
+	// wait until we get a ready message from all clients
+	while (!allReady) {
 		allReady = true;
-		for(int i = 0; i < GameConstants::maxPlayers; ++i) {
+		for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 			ConnectionSlot* slot = slots[i];
 			if (slot && !slot->isReady()) {
-				MessageType msgType = slot->getNextMessageType();
-				ReadyMessage readyMsg;
-				if (msgType == MessageType::READY && slot->receiveMessage(&readyMsg)) {
-					LOG_NETWORK( "Received ready message, slot " + intToStr(i) );
-					slot->setReady();
-				} else if (msgType != MessageType::NO_MSG) {
-					throw runtime_error("Unexpected network message: " + intToStr(msgType));
-				} else {
+				slot->receiveMessages();
+				if (!slot->hasMessage()) {
 					allReady = false;
+					continue;
 				}
+				RawMessage raw = slot->getNextMessage();
+				if (raw.type != MessageType::READY) {
+					throw InvalidMessage(MessageType::READY, raw.type);
+				}
+				LOG_NETWORK( "Received ready message, slot " + intToStr(i) );
+				ReadyMessage readyMsg(raw);
+				slot->setReady();
 			}
 		}
-
-		//check for timeout
+		// check for timeout
 		if (chrono.getMillis() > readyWaitTimeout) {
-			throw runtime_error("Timeout waiting for clients");
+			LOG_NETWORK( "Timed Out." );
+			for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+				if (slots[i]) {
+					Socket *sock = slots[i]->getSocket();
+					int n = sock->getDataToRead();
+					NETWORK_LOG( "Slot[" << i << "] : data to read: " << n );
+					if (n >= 4) {
+						MsgHeader hdr;
+						sock->receive(&hdr, 4);
+						NETWORK_LOG( "Message type: " << MessageTypeNames[MessageType(hdr.messageType)]
+							<< ", message size: " << hdr.messageSize );
+					}
+				}
+			}
+			throw TimeOut(NetSource::CLIENT);
 		}
 		sleep(2);
 	}
-
 	LOG_NETWORK( "Received all ready messages, sending ready message(s)." );
-	
-	//send ready message after, so clients start delayed
+	// send ready message after, so clients start delayed
+	ReadyMessage readyMsg(checksums);
 	for (int i= 0; i < GameConstants::maxPlayers; ++i) {
-		ReadyMessage readyMsg(checksum.getSum());
 		if (slots[i]) {
 			slots[i]->send(&readyMsg);
 		}
@@ -204,8 +231,9 @@ void ServerInterface::waitUntilReady(Checksum &checksum) {
 }
 
 void ServerInterface::sendTextMessage(const string &text, int teamIndex){
-	TextMessage networkMessageText(text, Config::getInstance().getNetPlayerName(), teamIndex);
-	broadcastMessage(&networkMessageText);
+	TextMessage txtMsg(text, Config::getInstance().getNetPlayerName(), teamIndex);
+	broadcastMessage(&txtMsg);
+	NetworkInterface::processTextMessage(txtMsg);
 }
 
 void ServerInterface::quitGame(QuitSource source) {
@@ -253,14 +281,14 @@ void ServerInterface::doLaunchBroadcast() {
 }
 
 void ServerInterface::broadcastMessage(const Message* networkMessage, int excludeSlot) {
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
-		if(i != excludeSlot && slots[i]) {
-			if(slots[i]->isConnected()) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		if (i != excludeSlot && slots[i]) {
+			if (slots[i]->isConnected()) {
 				slots[i]->send(networkMessage);
 			} else {
 				Lang &lang = Lang::getInstance();
 				string errmsg = slots[i]->getDescription() + " (" + lang.get("Player") + " "
-						+ intToStr(slots[i]->getPlayerIndex() + 1) + ") " + lang.get("Disconnected");
+					+ intToStr(slots[i]->getPlayerIndex() + 1) + ") " + lang.get("Disconnected");
 				removeSlot(i);
 				LOG_NETWORK(errmsg);
 				theGame.getConsole()->addLine(errmsg);

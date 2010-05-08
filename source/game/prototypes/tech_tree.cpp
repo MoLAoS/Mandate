@@ -205,19 +205,20 @@ TechTree::~TechTree(){
 	Logger::getInstance().add("~TechTree", !Program::getInstance()->isTerminating());
 }
 
-void TechTree::doChecksum(Checksum &checksum) const {
-	checksum.add(desc);
-
+void TechTree::doChecksumResources(Checksum &checksum) const {
 	foreach_const (ResourceTypes, it, resourceTypes) {
 		it->doChecksum(checksum);
 	}
+}
+
+void TechTree::doChecksumDamageMult(Checksum &checksum) const {
+	checksum.add(desc);
 	foreach_const (ArmorTypes, it, armorTypes) {
 		it->doChecksum(checksum);
 	}
 	foreach_const (AttackTypes, it, attackTypes) {
 		it->doChecksum(checksum);
 	}
-
 	foreach_const (ArmorTypes, armourIt, armorTypes) {
 		const ArmourType *armourType 
 			= (*const_cast<ArmorTypeMap*>(&armorTypeMap))[armourIt->getName()];
@@ -227,10 +228,17 @@ void TechTree::doChecksum(Checksum &checksum) const {
 			checksum.add(damageMultiplierTable.getDamageMultiplier(attackType, armourType));
 		}
 	}
-	// Effects... ?
+}
 
-	foreach_const (FactionTypes, it, factionTypes) {
-		it->doChecksum(checksum);
+void TechTree::doChecksumFaction(Checksum &checksum, int i) const {
+	factionTypes[i].doChecksum(checksum);
+}
+
+void TechTree::doChecksum(Checksum &checksum) const {
+	doChecksumDamageMult(checksum);
+	doChecksumResources(checksum);
+	for (int i=0; i < factionTypes.size(); ++i) {
+		factionTypes[i].doChecksum(checksum);
 	}
 }
 

@@ -54,7 +54,7 @@ protected:
 	//message processing
 	virtual void update();
 	virtual void updateKeyframe(int frameCount);
-	virtual void waitUntilReady(Checksum &checksum);
+	virtual void waitUntilReady(Checksum *checksums);
 	virtual void syncAiSeeds(int aiCount, int *seeds);
 	virtual void createSkillCycleTable(const TechTree *techTree);
 
@@ -73,6 +73,7 @@ protected:
 	virtual string getStatus() const;
 
 public:
+	// used to listen for new connections
 	ServerSocket* getServerSocket()		{return &serverSocket;}
 
 	// ConnectionSlot management
