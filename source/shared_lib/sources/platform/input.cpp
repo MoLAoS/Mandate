@@ -30,7 +30,7 @@ namespace Shared { namespace Platform {
 #ifdef USE_SDL
 #pragma pack(push, 1)
 const unsigned char Input::native2mb[Input::NATIVE_MOUSE_BUTTON_LAST + 1] = {
-	MouseButton::UNKNOWN,	// 0 
+	MouseButton::UNKNOWN,	// 0
 	MouseButton::LEFT,		// 1 SDL_BUTTON_LEFT
 	MouseButton::MIDDLE,	// 2 SDL_BUTTON_MIDDLE
 	MouseButton::RIGHT,		// 3 SDL_BUTTON_RIGHT
@@ -125,7 +125,7 @@ const short Input::native2kc[Input::NATIVE_KEY_CODE_LAST + 1] = {
 	KeyCode::LESS,				// 60 SDLK_LESS
 	KeyCode::EQUAL,				// 61 SDLK_EQUALS
 	KeyCode::GREATER,			// 62 SDLK_GREATER
-	KeyCode::QUESTION,			// 63 SDLK_QUESTION
+	KeyCode::QUESTION_MARK,		// 63 SDLK_QUESTION
 	KeyCode::AT,				// 64 SDLK_AT
 	KeyCode::A,					// 65 'A'
 	KeyCode::B,					// 66 'B'
@@ -1170,7 +1170,7 @@ void Input::verifyTranslationTables() {
 #elif defined(WIN32)  || defined(WIN64)
 #pragma pack(push, 1)
 const unsigned char Input::native2mb[Input::NATIVE_MOUSE_BUTTON_LAST + 1] = {
-	MouseButton::UNKNOWN,		// 0 
+	MouseButton::UNKNOWN,		// 0
 	MouseButton::LEFT,			// 1 VK_LBUTTON
 	MouseButton::RIGHT,			// 2 VK_RBUTTON
 	MouseButton::UNKNOWN,		// 3
