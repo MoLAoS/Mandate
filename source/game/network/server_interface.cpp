@@ -90,6 +90,12 @@ int ServerInterface::getConnectedSlotCount() {
 }
 
 void ServerInterface::update() {
+	// chat messages
+	while (hasChatMsg()) {
+		getGameState()->getConsole()->addLine(getChatSender() + ": " + getChatText(), true);
+		popChatMsg();
+	}
+
 	//update all slots
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i]) {

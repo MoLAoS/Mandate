@@ -34,12 +34,13 @@
 #	define theDebugRenderer	(Glest::Debug::getDebugRenderer())
 #	define IF_DEBUG_EDITION(x) x
 #	define IF_NOT_DEBUG_EDITION(x)
-#	define WORLD_FPS (theConfig.getGsWorldUpdateFps())
 #else
 #	define IF_DEBUG_EDITION(x)
 #	define IF_NOT_DEBUG_EDITION(x) x
-#	define WORLD_FPS (GameConstants::updateFps)
 #endif
+
+#define WORLD_FPS (GameConstants::updateFps / GameConstants::defaultUpdateInterval)
+
 
 #include "util.h"
 using Shared::Util::EnumNames;
@@ -60,6 +61,7 @@ namespace Glest {
 					AI_SYNC,
 					READY,
 					LAUNCH,
+					GAME_SPEED,
 					COMMAND_LIST,
 					TEXT,
 					KEY_FRAME,
@@ -97,9 +99,9 @@ namespace GameConstants {
 
 	const int maxPlayers = 4;
 	const int serverPort = 61357;
-	IF_NOT_DEBUG_EDITION(
-		const int updateFps = 40;
-	)
+
+	const int defaultUpdateInterval = 6;
+	const int updateFps = 240; // == GameSpeeds_lcm
 	const int cameraFps = 100;
 	const int networkFramePeriod = 5;
 	const int networkExtraLatency = 250;

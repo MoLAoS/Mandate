@@ -265,6 +265,12 @@ void ClientInterface::startGame() {
 }
 
 void ClientInterface::update() {
+	// chat messages
+	while (hasChatMsg()) {
+		getGameState()->getConsole()->addLine(getChatSender() + ": " + getChatText(), true);
+		popChatMsg();
+	}
+
 	if (requestedCommands.empty()) {
 		return;
 	}

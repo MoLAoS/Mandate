@@ -94,6 +94,8 @@ public:
 	virtual ~GameState();
 	static GameState *getInstance()				{return singleton;}
 
+	virtual int getUpdateInterval() const;
+
 	//get
 	const GameSettings &getGameSettings();
 	const Keymap &getKeymap() const			{return keymap;}

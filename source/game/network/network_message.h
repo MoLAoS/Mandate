@@ -24,6 +24,7 @@ using Shared::Platform::Socket;
 using Shared::Platform::int8;
 using Shared::Platform::int16;
 using Shared::Util::Checksum;
+using Glest::Sim::GameSpeed;
 
 namespace Glest { namespace Net {
 
@@ -52,7 +53,6 @@ public:
 	virtual ~Message(){}
 	virtual bool receive(NetworkConnection* connection) = 0;
 	virtual void send(NetworkConnection* connection) const = 0;
-	virtual void send(Socket *socket) const = 0;
 
 protected:
 	bool receive(NetworkConnection* connection, void* data, int dataSize);
@@ -95,7 +95,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
 };
 
 // ==============================================================
@@ -124,7 +123,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
 };
 
 // ==============================================================
@@ -148,7 +146,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
 };
 
 // ==============================================================
@@ -191,7 +188,26 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
+};
+
+class GameSpeedMessage : public Message {
+private:
+	struct Data {
+		uint32 messageType	:  8;
+		uint32 messageSize	: 24;
+		uint32 frame		: 24;
+		uint32 setting		:  8;
+	} data;
+
+public:
+	GameSpeedMessage(int frame, GameSpeed setting);
+	GameSpeedMessage(RawMessage raw);
+
+	int getFrame() const { return data.frame; }
+	GameSpeed getSetting() const { return enum_cast<GameSpeed>(data.setting); }
+
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
 };
 
 // ==============================================================
@@ -226,7 +242,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
 };
 #pragma pack(pop)
 
@@ -258,7 +273,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
 };
 
 // =====================================================
@@ -278,7 +292,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const;
 };
 
 // =====================================================
@@ -313,7 +326,6 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const { throw runtime_error("you should implement "__FUNCTION__); }
 
 	void setFrameCount(int fc) { frame = fc; }
 	int getFrameCount() const { return frame; }

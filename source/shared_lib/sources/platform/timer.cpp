@@ -45,6 +45,7 @@ bool Chrono::init() {
 #endif
 #ifdef _CHRONO_USE_SDL
 
+#error SDL timers are shit.
 bool Chrono::init() {
 	freq = 1000;
 	return true;
@@ -67,7 +68,7 @@ bool Chrono::init() {
 //	class PerformanceTimer
 // =====================================================
 
-PerformanceTimer::PerformanceTimer(float fps, int maxTimes, int maxBacklog)
+PerformanceTimer::PerformanceTimer(int fps, int maxTimes, int maxBacklog)
 		: times(0)
 		, maxTimes(maxTimes)
 		, maxBacklog(maxBacklog) {
@@ -77,16 +78,28 @@ PerformanceTimer::PerformanceTimer(float fps, int maxTimes, int maxBacklog)
 	setFps(fps);
 }
 
+uint32 PerformanceTimer::timeToWait() {
+	const int64 &now = Chrono::getCurTicks();
+	if (now > nextRollOver) {
+		nextRollOver += Chrono::getResolution();
+		lastTicks += padTicks; // delay next tick by padTicks
+	}
+	int64 elapsed = now - lastTicks;
+	return elapsed >= updateTicks ? 0 : (updateTicks - elapsed) * 1000 / now;
+}
+
 bool PerformanceTimer::isTime() {
-	int64 curTicks;
-	Chrono::getCurTicks(curTicks);
-	int64 elapsed = curTicks - lastTicks;
+	const int64 &now = Chrono::getCurTicks();
+	int64 elapsed = now - lastTicks;
 	int64 cyclesDue = elapsed / updateTicks;
 
 	if(cyclesDue && (times < maxTimes || maxTimes == -1)) {
 		--cyclesDue;
 		if(maxBacklog >= 0 && cyclesDue > maxBacklog) {
-			lastTicks = curTicks - updateTicks * maxBacklog;
+			if (updateTicks == 14914) {
+				cout << "dropping ticks ... " << (cyclesDue - maxBacklog) << endl;
+			}
+			lastTicks = now - updateTicks * maxBacklog; // drop ticks
 		} else {
 			lastTicks += updateTicks;
 		}
@@ -97,6 +110,17 @@ bool PerformanceTimer::isTime() {
 
 	times = 0;
 	return false;
+}
+
+void PerformanceTimer::reset() {
+	Chrono::getCurTicks(lastTicks);
+	nextRollOver = lastTicks + Chrono::getResolution();
+}
+
+void PerformanceTimer::setFps(int fps) {
+	updateTicks = Chrono::getResolution() / fps;
+	padTicks = Chrono::getResolution() - updateTicks * fps;
+	cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;
 }
 
 }}//end namespace

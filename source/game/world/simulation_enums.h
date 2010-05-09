@@ -26,6 +26,15 @@ STRINGY_ENUM( GameRole,
 	CLIENT
 )
 
+STRINGY_ENUM( GameSpeed,
+	PAUSED,
+	SLOWEST,
+	SLOW,
+	NORMAL,
+	FAST,
+	FASTEST
+)
+
 /** The control type of a 'faction' (aka, player)
   * <ul><li><b>CLOSED</b> Slot closed, no faction</li>
   *		<li><b>CPU_EASY</b> CPU easy player</li>

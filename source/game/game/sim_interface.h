@@ -101,7 +101,6 @@ using namespace Debug;
 
 namespace Sim {
 
-WRAPPED_ENUM( GameSpeed, PAUSED, SLOWEST, VERY_SLOW, SLOW, NORMAL, FAST, VERY_FAST, FASTEST )
 WRAPPED_ENUM( QuitSource, LOCAL, SERVER )
 WRAPPED_ENUM( GameStatus, NO_CHANGE, LOST, WON )
 
@@ -193,6 +192,8 @@ public:
 	SimulationInterface(Program &program);
 	SimulationInterface(const SimulationInterface &si);
 	virtual ~SimulationInterface();
+
+	int getUpdateInterval() const;
 
 	UnitFactory& getUnitFactory()			{ return unitFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }

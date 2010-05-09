@@ -57,6 +57,8 @@ public:
 	virtual void load(){}
 	virtual void end(){}
 
+	virtual int getUpdateInterval() const { return GameConstants::defaultUpdateInterval; }
+
 	virtual void mouseDownLeft(int x, int y){}
 	virtual void mouseDownRight(int x, int y){}
 	virtual void mouseDownCenter(int x, int y){}

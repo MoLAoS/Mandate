@@ -106,14 +106,14 @@ int glestMain(int argc, char** argv) {
 		dataDir = args.getDataDir();
 	}
 	
-	if(configDir.empty()){
-#ifdef WIN32
-		configDir = getenv("UserProfile");
-		configDir += "/glestadv/";
-#else
-		configDir = getenv("HOME");
-		configDir += "/.glestadv/";
-#endif
+	if (configDir.empty()) {
+#		ifdef WIN32
+			configDir = getenv("UserProfile");
+			configDir += "/glestadv/";
+#		else
+			configDir = getenv("HOME");
+			configDir += "/.glestadv/";
+#		endif
 	}
 	//FIXME: debug
 	cout << "config: " << configDir << "\ndata: " << dataDir << endl;
@@ -122,10 +122,10 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir+"/addons/", true);
 	
 	FSFactory *fsfac = FSFactory::getInstance();
-#if USE_PHYSFS
-	fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-	fsfac->usePhysFS(true);
-#endif
+#	if USE_PHYSFS
+		fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+		fsfac->usePhysFS(true);
+#	endif
 
 	Config &config = Config::getInstance();
 
@@ -157,9 +157,9 @@ int glestMain(int argc, char** argv) {
 
 	Profile::profileEnd();  // to write profiler data out
 	CoreData::getInstance().closeSounds(); // close audio stuff with ogg files
-#if USE_PHYSFS
-	fsfac->deinitPhysFS();
-#endif
+#	if USE_PHYSFS
+		fsfac->deinitPhysFS();
+#	endif
 	delete fsfac;
 	return 0;
 }

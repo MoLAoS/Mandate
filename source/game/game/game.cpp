@@ -97,16 +97,9 @@ GameState::GameState(Program &program, XmlNode *savedGame)
 
 }
 
-const char *SpeedDesc[GameSpeed::COUNT] = {
-	"Paused",
-	"Slowest",
-	"VerySlow",
-	"Slow",
-	"Normal",
-	"Fast",
-	"VeryFast",
-	"Fastest"
-};
+int GameState::getUpdateInterval() const {
+	return simInterface->getUpdateInterval();
+}
 
 GameState::~GameState() {
 	_TRACE_FUNCTION();
@@ -265,26 +258,21 @@ void GameState::update() {
 
 	///@todo clean-up, this should be done in SimulationInterface::updateWorld()
 	// but the particle stuff still lives here, so we still need to process each loop here
-	int updateLoops = simInterface->getUpdateLoops();
 
 	try {
-		//update
-		for (int i = 0; i < updateLoops; ++i) {
-			simInterface->updateWorld();
+		//update simulation
+		simInterface->updateWorld();
 			++worldFps;
 
-			//Gui
-			gui.update();
+		//Gui
+		gui.update();
 
-			//Particle systems
-			if(weatherParticleSystem != NULL){
-				weatherParticleSystem->setPos(gameCamera.getPos());
-			}
-			theRenderer.updateParticleManager(ResourceScope::GAME);
-
-			//call the chat manager		
-			chatManager.updateNetwork();
+		//Particle systems
+		if(weatherParticleSystem != NULL){
+			weatherParticleSystem->setPos(gameCamera.getPos());
 		}
+		theRenderer.updateParticleManager(ResourceScope::GAME);
+
 	} catch (Net::NetworkError &e) {
 		LOG_NETWORK(e.what());
 		displayError(e);
@@ -297,7 +285,7 @@ void GameState::update() {
 	}
 
 	//check for quiting status
-	if(theSimInterface->getQuit()) {
+	if (theSimInterface->getQuit()) {
 		quitGame();
 	}
 
@@ -478,7 +466,7 @@ void GameState::eventMouseWheel(int x, int y, int zDelta) {
 void GameState::keyDown(const Key &key) {
 	UserCommand cmd = keymap.getCommand(key);
 	Lang &lang = Lang::getInstance();
-	bool speedChangesAllowed = theSimInterface->isNetworkInterface();
+	bool speedChangesAllowed = !theSimInterface->isNetworkInterface();
 
 	if (config.getMiscDebugKeys()) {
 		stringstream str;
@@ -581,7 +569,7 @@ void GameState::keyDown(const Key &key) {
 			} else if (curSpeed == GameSpeed::PAUSED) {
 				console.addLine(lang.get("GameResumed"));
 			} else {
-				console.addLine(lang.get("GameSpeedSet") + " " + lang.get(SpeedDesc[newSpeed]));
+				console.addLine(lang.get("GameSpeedSet") + " " + lang.get(GameSpeedNames[newSpeed]));
 			}
 			return;
 		}

@@ -45,10 +45,6 @@ namespace Shared { namespace Xml {
 	class XmlNode;
 }}
 
-namespace Shared { namespace Util {
-
-const string sharedLibVersionString= "v0.5";
-
 #define WRAPPED_ENUM(Name,...)							\
 	struct Name {										\
 		enum Enum { INVALID = -1, __VA_ARGS__, COUNT };	\
@@ -93,6 +89,10 @@ template<typename E>
 E enum_cast(unsigned i) {
 	return i < E::COUNT ? static_cast<typename E::Enum>(i) : E::INVALID;
 }
+
+namespace Shared { namespace Util {
+
+const string sharedLibVersionString= "v0.5";
 
 // =====================================================
 //	class EnumNames

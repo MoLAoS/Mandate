@@ -19,16 +19,30 @@ using namespace Glest::Net;
 
 namespace Glest { namespace Sim {
 
+/* if speed values are changed, lcm must be recalculated. Try to keep the lcm low, 
+ * don't use values with lots of different factors */
+const int GameSpeeds_lcm = GameConstants::updateFps; // least common multiple of speed values
 const int speedValues[GameSpeed::COUNT] = {
-	0,
-	10,
-	20,
-	30,
-	40,
-	50,
-	60,
-	70
+	0,	// PAUSED
+	20,	// SLOWEST
+	30, // SLOW
+	40, // NORMAL
+	60, // FAST
+	80	// FASTEST
 };
+
+const int speedIntervals[GameSpeed::COUNT] = {
+	0,
+	GameSpeeds_lcm / speedValues[GameSpeed::SLOWEST],	// 12,
+	GameSpeeds_lcm / speedValues[GameSpeed::SLOW],		//  8,
+	GameSpeeds_lcm / speedValues[GameSpeed::NORMAL],	//  6,
+	GameSpeeds_lcm / speedValues[GameSpeed::FAST],		//  4,
+	GameSpeeds_lcm / speedValues[GameSpeed::FASTEST]	//  3
+};
+
+int SimulationInterface::getUpdateInterval() const {
+	return speedIntervals[speed];
+}
 
 // =====================================================
 //	class SkillCycleTable
@@ -241,7 +255,8 @@ int SimulationInterface::launchGame() {
 	}
 	startGame();
 	world->activateUnits();
-	return getNetworkRole() == GameRole::LOCAL ? 2 : -1;
+	return getNetworkRole() == GameRole::LOCAL ? 12 : -1;
+	//
 }
 
 void SimulationInterface::updateWorld() {

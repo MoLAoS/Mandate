@@ -50,7 +50,6 @@ public:
 
 	bool keyDown(const Key &key);
 	void keyPress(char c);
-	void updateNetwork();
 
 	bool getEditEnabled() const {return editEnabled;}
 	bool getTeamMode() const {return teamMode;}

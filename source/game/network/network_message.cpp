@@ -126,16 +126,6 @@ void IntroMessage::send(NetworkConnection* connection) const{
 	Message::send(connection, &data, sizeof(Data));
 }
 
-void IntroMessage::send(Socket* socket) const{
-	_TRACE_FUNCTION();
-	assert(data.messageType == MessageType::INTRO);
-	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
-		<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
-		<< ", host name: " << data.hostName.getString() << ", player index: " << data.playerIndex
-	);
-	Message::send(socket, &data, sizeof(Data));
-}
-
 // =====================================================
 //	class ReadyMessage
 // =====================================================
@@ -184,15 +174,6 @@ void ReadyMessage::send(NetworkConnection* connection) const{
 	Message::send(connection, &data, sizeof(data));
 }
 
-void ReadyMessage::send(Socket* socket) const{
-	_TRACE_FUNCTION();
-	assert(data.messageType == MessageType::READY);
-	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: " 
-		<< MessageTypeNames[MessageType(data.messageType)] << ", messageSize: " << data.messageSize
-	);
-	Message::send(socket, &data, sizeof(data));
-}
-
 // =====================================================
 //	class AiSeedSyncMessage
 // =====================================================
@@ -239,15 +220,6 @@ void AiSeedSyncMessage::send(NetworkConnection* connection) const{
 		<< ", messageSize: " << data.messageSize
 	);
 	Message::send(connection, &data, sizeof(Data));
-}
-
-void AiSeedSyncMessage::send(Socket* socket) const{
-	_TRACE_FUNCTION();
-	assert(data.messageType == MessageType::AI_SYNC);
-	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
-		<< ", messageSize: " << data.messageSize
-	);
-	Message::send(socket, &data, sizeof(Data));
 }
 
 // =====================================================
@@ -335,14 +307,31 @@ void LaunchMessage::send(NetworkConnection* connection) const {
 	Message::send(connection, &data, sizeof(Data));
 }
 
-void LaunchMessage::send(Socket* socket) const {
-	_TRACE_FUNCTION();
-	assert(data.messageType==MessageType::LAUNCH);
-	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
-		<< ", messageSize: " << data.messageSize
-	);
-	Message::send(socket, &data, sizeof(Data));
+// =====================================================
+//	class GameSpeedMessage
+// =====================================================
+
+GameSpeedMessage::GameSpeedMessage(int frame, GameSpeed setting) {
+	data.messageType = MessageType::GAME_SPEED;
+	data.messageSize = sizeof(Data) - sizeof(MsgHeader);
+	data.frame = frame;
+	data.setting = setting;
 }
+
+GameSpeedMessage::GameSpeedMessage(RawMessage raw) {
+	data.messageType = raw.type;
+	data.messageSize = raw.size;
+	memcpy(&data + sizeof(MsgHeader), raw.data, raw.size);
+	delete raw.data;
+}
+
+bool GameSpeedMessage::receive(NetworkConnection* connection) {
+	return false;
+}
+
+void GameSpeedMessage::send(NetworkConnection* connection) const {
+}
+
 
 // =====================================================
 //	class NetworkCommandList
@@ -399,15 +388,6 @@ void CommandListMessage::send(NetworkConnection* connection) const {
 	Message::send(connection, &data, dataHeaderSize + sizeof(NetworkCommand) * data.commandCount);
 }
 
-void CommandListMessage::send(Socket* socket) const {
-	assert(data.messageType == MessageType::COMMAND_LIST);
-	NETWORK_LOG( 
-		__FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
-		<< ", messageSize: " << data.messageSize << ", number of commands: " << data.commandCount
-	);
-	Message::send(socket, &data, dataHeaderSize + sizeof(NetworkCommand) * data.commandCount);
-}
-
 // =====================================================
 //	class TextMessage
 // =====================================================
@@ -438,12 +418,6 @@ void TextMessage::send(NetworkConnection* connection) const{
 	Message::send(connection, &data, sizeof(Data));
 }
 
-void TextMessage::send(Socket* socket) const{
-	_TRACE_FUNCTION();
-	assert(data.messageType == MessageType::TEXT);
-	Message::send(socket, &data, sizeof(Data));
-}
-
 // =====================================================
 //	class QuitMessage
 // =====================================================
@@ -468,12 +442,6 @@ void QuitMessage::send(NetworkConnection* connection) const {
 	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::QUIT);
 	Message::send(connection, &data, sizeof(Data));
-}
-
-void QuitMessage::send(Socket* socket) const {
-	_TRACE_FUNCTION();
-	assert(data.messageType == MessageType::QUIT);
-	Message::send(socket, &data, sizeof(Data));
 }
 
 // =====================================================

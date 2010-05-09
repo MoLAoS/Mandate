@@ -94,20 +94,18 @@ void Program::CrashProgramState::update() {
 // 	class Program
 // =====================================================
 
+const int maxUpdateTimes = 5 * 6;
+const int maxUpdateBackLog = 12; ///@todo should be speed dependant
 const int Program::maxTimes = 5;
 Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
 Program::Program(Config &config, CmdArgs &args)
-		: renderTimer(float(config.getRenderFpsMax()), 1, 0)
-		, tickTimer(1.f, maxTimes, -1)
-#		if _GAE_DEBUG_EDITION_
-		, updateTimer(float(config.getGsWorldUpdateFps()), maxTimes, 1)
-#		else
-		, updateTimer(float(GameConstants::updateFps), maxTimes, 1)
-#		endif
-		, updateCameraTimer(float(GameConstants::cameraFps), maxTimes, 10)
+		: renderTimer(config.getRenderFpsMax(), 1, 0)
+		, tickTimer(1, maxTimes, -1)
+		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
+		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
 		, simulationInterface(0)
 		, programState(0)
 		, crashed(false)
@@ -214,6 +212,8 @@ Program::~Program() {
 }
 
 void Program::loop() {
+	int updateCounter = 0;
+
 	while (handleEvent()) {
 		size_t sleepTime = renderTimer.timeToWait();
 
@@ -237,9 +237,13 @@ void Program::loop() {
 
 		//update world
 		while (updateTimer.isTime()) {
-			GraphicComponent::update();
-			programState->update();
-			SoundRenderer::getInstance().update();
+			++updateCounter;
+			const int &interval = programState->getUpdateInterval();
+			if (interval && updateCounter % interval == 0) {
+				GraphicComponent::update();
+				programState->update();
+				SoundRenderer::getInstance().update();
+			}
 			if (simulationInterface->isNetworkInterface()) {
 				simulationInterface->asNetworkInterface()->update();
 			}

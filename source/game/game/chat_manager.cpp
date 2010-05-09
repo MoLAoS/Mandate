@@ -123,12 +123,5 @@ void ChatManager::keyPress(char c) {
 	}
 }
 
-void ChatManager::updateNetwork() {
-	NetworkInterface *netInterface = iSim->asNetworkInterface();
-	while (netInterface && netInterface->hasChatMsg()) {
-		console->addLine(netInterface->getChatSender() + ": " + netInterface->getChatText(), true);
-		netInterface->popChatMsg();
-	}
-}
 
 }}//end namespace

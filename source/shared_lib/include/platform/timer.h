@@ -134,27 +134,24 @@ private:
 
 class PerformanceTimer {
 private:
-	int64 lastTicks;
-	int64 updateTicks;
+	int64 lastTicks;	/**< clock ticks when this timer last 'fired' */
+	int64 updateTicks;	/**< clock ticks between firing */
+	int64 padTicks;		/**< padding 'ticks' applied per second, to realign with clock freq */
+	int64 nextRollOver;	/**< clock tick count of next one second cycle */
 
-	int times;			// number of consecutive times
-	int maxTimes;		// maximum number consecutive times
-	int maxBacklog;		// maxiumum backlog to allow after maxTimes is reached
+	int times;			/**< number of consecutive times to fire */
+	int maxTimes;		/**< maximum number consecutive times to fire */
+	int maxBacklog;		/**< maxiumum backlog to allow after maxTimes is reached */
 
 public:
-	PerformanceTimer(float fps, int maxTimes = -1, int maxBacklog = -1);
+	PerformanceTimer(int fps, int maxTimes = -1, int maxBacklog = -1);
 
-	/** Returns the amount of time to wait in milliseconds before the timer is due. */
-	uint32 timeToWait() {
-		int64 elapsed = Chrono::getCurTicks() - lastTicks;
-		return elapsed >= updateTicks ? 0 : (updateTicks - elapsed) * 1000 / Chrono::getResolution();
-	}
-
-	bool isTime();
-	void reset() 						{Chrono::getCurTicks(lastTicks);}
-	void setFps(float fps)				{updateTicks = (int64)((float)Chrono::getResolution() / fps);}
-	void setMaxTimes(int maxTimes)		{this->maxTimes = maxTimes;}
-	void setMaxBacklog(int maxBacklog)	{this->maxBacklog = maxBacklog;}
+	uint32 timeToWait(); /**< Returns the amount of time to wait in milliseconds before the timer is due. */
+	bool isTime(); /**< Returns true if timer is (over)due for a tick (and counts as a tick) */
+	void reset();
+	void setFps(int fps);
+	void setMaxTimes(int v)		{ maxTimes = v;		}
+	void setMaxBacklog(int v)	{ maxBacklog = v;	}
 };
 
 }}//end namespace
