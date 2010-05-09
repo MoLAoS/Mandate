@@ -16,14 +16,40 @@
 #include <vector>
 
 #include "xml_parser.h"
+#include "game_constants.h"
 
 using std::string;
 using std::vector;
 using std::pair;
 
 using Shared::Xml::XmlNode;
+using Glest::Sim::ControlType;
 
 namespace Glest { namespace Script {
+
+struct ScenarioInfo {
+	int difficulty;
+	ControlType factionControls[GameConstants::maxPlayers];
+	int teams[GameConstants::maxPlayers];
+	string factionTypeNames[GameConstants::maxPlayers];
+	string playerNames[GameConstants::maxPlayers];
+	float resourceMultipliers[GameConstants::maxPlayers];
+
+	string mapName;
+	string tilesetName;
+	string techTreeName;
+	string scenarioName;
+
+	bool defaultUnits;
+	bool defaultResources;
+	bool defaultVictoryConditions;
+
+	bool fogOfWar;
+	bool shroudOfDarkness;
+
+	string desc;
+};
+
 
 // =====================================================
 //	class Script
@@ -47,6 +73,15 @@ public:
 
 class Scenario{
 private:
+	enum Difficulty{
+		dVeryEasy,
+		dEasy,
+		dMedium,
+		dHard,
+		dVeryHard,
+		dInsane
+	};
+
 	typedef pair<string, string> NameScriptPair;
 	typedef vector<Script> Scripts;
 
@@ -60,6 +95,10 @@ public:
 	const Script* getScript(int i) const	{return &scripts[i];}
 
 //	static string getScenarioPath(const string &scenarioPath);
+
+	static void loadScenarioInfo(string scenario, string category, ScenarioInfo *scenarioInfo);
+	static void loadGameSettings(string scenario, string category, const ScenarioInfo *scenarioInfo);
+	static ControlType strToControllerType(const string &str);
 
 private:
 	string getFunctionName(const XmlNode *scriptNode);

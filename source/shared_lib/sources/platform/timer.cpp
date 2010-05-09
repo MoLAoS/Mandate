@@ -18,11 +18,14 @@
 //#include "util.h"
 //#include "conversion.h"
 //#include "leak_dumper.h"
+#include <iostream>
 
 //using namespace Shared::Util;
 
 namespace Shared { namespace Platform {
 
+using std::cout;
+using std::endl;
 
 // =====================================================
 //	class Chrono

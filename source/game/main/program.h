@@ -22,6 +22,7 @@
 #include "keymap.h"
 #include "CmdArgs.h"
 #include "forward_decs.h"
+#include "game_constants.h"
 
 using namespace Shared::Platform;
 using namespace Glest::Graphics;
@@ -115,9 +116,11 @@ private:
 	Keymap keymap;
 
 public:
-	Program(Config &config, CmdArgs &args);
+	Program(Config &config);
 	~Program();
 	static Program *getInstance()	{return singleton;}
+	
+	void init(CmdArgs &args);
 
 	bool isTerminating() const		{ return terminating;	}
 	bool isVisible() const			{ return visible;		}

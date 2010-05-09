@@ -101,7 +101,7 @@ Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(Config &config, CmdArgs &args)
+Program::Program(Config &config)
 		: renderTimer(config.getRenderFpsMax(), 1, 0)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
@@ -163,37 +163,6 @@ Program::Program(Config &config, CmdArgs &args)
 		<< "VirtualH : ScreenH == " << Metrics::getInstance().getVirtualH() << " : "
 		<< Metrics::getInstance().getScreenH() << endl;
 
-
-	// startup and immediately host a game
-	if(args.isServer()) {
-		MainMenu* mainMenu = new MainMenu(*this);
-		setState(mainMenu);
-		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
-	// startup and immediately connect to server
-	} else if(!args.getClientIP().empty()) {
-		MainMenu* mainMenu = new MainMenu(*this);
-		setState(mainMenu);
-		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
-	// load map and tileset without players
-	} else if(!args.getLoadmap().empty()) {
-		GameSettings &gs = simulationInterface->getGameSettings();
-		gs.clear();
-		gs.setDefaultResources(false);
-		gs.setDefaultUnits(false);
-		gs.setDefaultVictoryConditions(false);
-		gs.setMapPath(string("maps/") + args.getLoadmap() + ".gbm");
-		gs.setTilesetPath(string("tilesets/") + args.getLoadTileset());
-		gs.setTechPath(string("techs/magitech"));
-		gs.setFogOfWar(false);
-		gs.setFactionCount(0);
-
-		ShowMap *game = new ShowMap(*this);
-		setState(game);
-	// normal startup
-	} else {
-		setState(new Intro(*this));
-	}
-
 	singleton = this;
 }
 
@@ -209,6 +178,43 @@ Program::~Program() {
 	//restore video mode
 	restoreDisplaySettings();
 	singleton = 0;
+}
+
+void Program::init(CmdArgs &args){
+	// startup and immediately host a game
+	if(args.isServer()) {
+		MainMenu* mainMenu = new MainMenu(*this);
+		setState(mainMenu);
+		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
+	// startup and immediately connect to server
+	} else if(!args.getClientIP().empty()) {
+		MainMenu* mainMenu = new MainMenu(*this);
+		setState(mainMenu);
+		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
+	// load map and tileset without players
+	} else if(!args.getLoadmap().empty()) {  //FIXME: broken, refactor ShowMap
+		GameSettings &gs = simulationInterface->getGameSettings();
+		gs.clear();
+		gs.setDefaultResources(false);
+		gs.setDefaultUnits(false);
+		gs.setDefaultVictoryConditions(false);
+		gs.setMapPath(string("maps/") + args.getLoadmap() + ".gbm");
+		gs.setTilesetPath(string("tilesets/") + args.getLoadTileset());
+		gs.setTechPath(string("techs/magitech"));
+		gs.setFogOfWar(false);
+		gs.setFactionCount(0);
+
+		setState(new ShowMap(*this));
+	} else if(!args.getScenario().empty()) {
+		ScenarioInfo scenarioInfo;
+		Scenario::loadScenarioInfo(args.getScenario(), args.getCategory(), &scenarioInfo);
+		Scenario::loadGameSettings(args.getScenario(), args.getCategory(), &scenarioInfo);
+		setState(new GameState(*this));
+
+	// normal startup
+	} else {
+		setState(new Intro(*this));
+	}
 }
 
 void Program::loop() {

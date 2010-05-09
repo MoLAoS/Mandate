@@ -35,6 +35,9 @@ private:
 	///
 	string map;
 	string tileset;
+	///
+	string category;
+	string scenario;
 
 public:
 	CmdArgs();
@@ -47,11 +50,13 @@ public:
 	
 	// getters
 	bool isServer()         { return server; }
-	string getClientIP()    { return clientIP; }
-	string getConfigDir()   { return configDir; }
-	string getDataDir()     { return dataDir; }
-	string getLoadmap()     { return map; }
-	string getLoadTileset() { return tileset; }
+	string &getClientIP()    { return clientIP; }
+	string &getConfigDir()   { return configDir; }
+	string &getDataDir()     { return dataDir; }
+	string &getLoadmap()     { return map; }
+	string &getLoadTileset() { return tileset; }
+	string &getCategory()    { return category; }
+	string &getScenario()    { return scenario; }
 
 };
 

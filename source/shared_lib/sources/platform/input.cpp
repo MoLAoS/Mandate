@@ -710,7 +710,7 @@ void Input::verifyTranslationTables() {
 	assert(native2kc[SDLK_LESS] == KeyCode::LESS);
 	assert(native2kc[SDLK_EQUALS] == KeyCode::EQUAL);
 	assert(native2kc[SDLK_GREATER] == KeyCode::GREATER);
-	assert(native2kc[SDLK_QUESTION] == KeyCode::QUESTION);
+	assert(native2kc[SDLK_QUESTION] == KeyCode::QUESTION_MARK);
 	assert(native2kc[SDLK_AT] == KeyCode::AT);
 	assert(native2kc['A'] == KeyCode::A);
 	assert(native2kc['B'] == KeyCode::B);
@@ -969,7 +969,7 @@ void Input::verifyTranslationTables() {
 	assert(kc2native[KeyCode::LESS] == SDLK_LESS);
 	assert(kc2native[KeyCode::EQUAL] == SDLK_EQUALS);
 	assert(kc2native[KeyCode::GREATER] == SDLK_GREATER);
-	assert(kc2native[KeyCode::QUESTION] == SDLK_QUESTION);
+	assert(kc2native[KeyCode::QUESTION_MARK] == SDLK_QUESTION);
 	assert(kc2native[KeyCode::AT] == SDLK_AT);
 	assert(kc2native[KeyCode::A] == 'A');
 	assert(kc2native[KeyCode::B] == 'B');

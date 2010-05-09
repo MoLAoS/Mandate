@@ -18,13 +18,19 @@
 #include "util.h"
 #include "game_util.h"
 #include "leak_dumper.h"
+#include "simulation_enums.h"
+#include "sim_interface.h"
+#include "lang.h"
 
 using std::exception;
 using namespace Shared::Xml;
 using namespace Shared::Util;
 
 namespace Glest { namespace Script {
+
 using namespace Util;
+using Sim::SimulationInterface;
+using Global::Lang;
 
 // =====================================================
 //	class Scenario
@@ -60,6 +66,153 @@ void Scenario::load(const string &path){
 /*string Scenario::getScenarioPath(const string &scenarioPath) {
 	return scenarioPath + "/" + basename(scenarioPath) + ".xml";
 }*/
+
+void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *scenarioInfo) {
+
+	Lang &lang = Lang::getInstance();
+
+	XmlTree xmlTree;
+	//gae/scenarios/[category]/[scenario]/[scenario].xml
+	xmlTree.load("gae/scenarios/" + category + "/" + scenario + "/" + scenario + ".xml");
+
+	const XmlNode *scenarioNode = xmlTree.getRootNode();
+	const XmlNode *difficultyNode = scenarioNode->getChild("difficulty");
+	scenarioInfo->difficulty = difficultyNode->getAttribute("value")->getIntValue();
+
+	if (scenarioInfo->difficulty < dVeryEasy || scenarioInfo->difficulty > dInsane) {
+		throw std::runtime_error("Invalid difficulty");
+	}
+
+	scenarioInfo->fogOfWar = scenarioNode->getOptionalBoolValue("fog-of-war", true);
+	scenarioInfo->shroudOfDarkness = scenarioNode->getOptionalBoolValue("shroud-of-darkness", true);
+
+	const XmlNode *playersNode = scenarioNode->getChild("players");
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		const XmlNode* playerNode = playersNode->getChild("player", i);
+		ControlType factionControl = strToControllerType(playerNode->getAttribute("control")->getValue());
+		string factionTypeName;
+
+		scenarioInfo->factionControls[i] = factionControl;
+
+		if (factionControl != ControlType::CLOSED) {
+			int teamIndex = playerNode->getAttribute("team")->getIntValue();
+			XmlAttribute *nameAttrib = playerNode->getAttribute("name", false);
+			XmlAttribute *resMultAttrib = playerNode->getAttribute("resource-multiplier", false);
+			if (nameAttrib) {
+				scenarioInfo->playerNames[i] = nameAttrib->getValue();
+			} else if (factionControl == ControlType::HUMAN) {
+				scenarioInfo->playerNames[i] = Config::getInstance().getNetPlayerName();
+			} else {
+				scenarioInfo->playerNames[i] = "CPU Player";
+			}
+			if (resMultAttrib) {
+				scenarioInfo->resourceMultipliers[i] = resMultAttrib->getFloatValue();
+			} else {
+				if (factionControl == ControlType::CPU_MEGA) {
+					scenarioInfo->resourceMultipliers[i] = 4.f;
+				}
+				else if (factionControl == ControlType::CPU_ULTRA) {
+					scenarioInfo->resourceMultipliers[i] = 3.f;
+				} 
+				else {
+					scenarioInfo->resourceMultipliers[i] = 1.f;
+				}
+			}
+			if (teamIndex < 1 || teamIndex > GameConstants::maxPlayers) {
+				throw runtime_error("Team out of range: " + intToStr(teamIndex));
+			}
+
+			scenarioInfo->teams[i] = playerNode->getAttribute("team")->getIntValue();
+			scenarioInfo->factionTypeNames[i] = playerNode->getAttribute("faction")->getValue();
+		}
+
+		scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
+		scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
+		scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
+		scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
+		scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
+		scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
+	}
+
+	//add player info
+	scenarioInfo->desc = lang.get("Player") + ": ";
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		if (scenarioInfo->factionControls[i] == ControlType::HUMAN) {
+			scenarioInfo->desc += formatString(scenarioInfo->factionTypeNames[i]);
+			break;
+		}
+	}
+
+	//add misc info
+	string difficultyString = "Difficulty" + intToStr(scenarioInfo->difficulty);
+
+	scenarioInfo->desc += "\n";
+	scenarioInfo->desc += lang.get("Difficulty") + ": " + lang.get(difficultyString) + "\n";
+	scenarioInfo->desc += lang.get("Map") + ": " + formatString(scenarioInfo->mapName) + "\n";
+	scenarioInfo->desc += lang.get("Tileset") + ": " + formatString(scenarioInfo->tilesetName) + "\n";
+	scenarioInfo->desc += lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
+}
+
+void Scenario::loadGameSettings(string scenario, string category, const ScenarioInfo *scenarioInfo) {
+	GameSettings *gs = &theSimInterface->getGameSettings();
+	gs->clear();
+
+	string scenarioPath = "gae/scenarios/" + category + "/" + scenario;
+	// map in scenario dir ?
+	string test = scenarioPath + "/" + scenarioInfo->mapName + ".gbm";
+	if (fileExists(test)) {
+		gs->setMapPath(test);
+	} else {
+		gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
+	}
+	gs->setDescription(formatString(scenario));
+	gs->setTilesetPath(string("tilesets/") + scenarioInfo->tilesetName);
+	gs->setTechPath(string("techs/") + scenarioInfo->techTreeName);
+	gs->setScenarioPath(scenarioPath);
+	gs->setDefaultUnits(scenarioInfo->defaultUnits);
+	gs->setDefaultResources(scenarioInfo->defaultResources);
+	gs->setDefaultVictoryConditions(scenarioInfo->defaultVictoryConditions);
+
+	int factionCount = 0;
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		ControlType ct = static_cast<ControlType>(scenarioInfo->factionControls[i]);
+		if (ct != ControlType::CLOSED) {
+			if (ct == ControlType::HUMAN) {
+				gs->setThisFactionIndex(factionCount);
+			}
+			gs->setFactionControl(factionCount, ct);
+			gs->setPlayerName(factionCount, scenarioInfo->playerNames[i]);
+			gs->setTeam(factionCount, scenarioInfo->teams[i] - 1);
+			gs->setStartLocationIndex(factionCount, i);
+			gs->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
+			gs->setResourceMultiplier(factionCount, scenarioInfo->resourceMultipliers[i]);
+			factionCount++;
+		}
+	}
+	gs->setFogOfWar(scenarioInfo->fogOfWar);
+	//Config::getInstance().setGsShroudOfDarknessEnabled(scenarioInfo->shroudOfDarkness);
+	gs->setFactionCount(factionCount);
+}
+
+//REFACTOR: Delete. Use ControlTypeNames.match()
+ControlType Scenario::strToControllerType(const string &str) {
+	if (str == "closed") {
+		return ControlType::CLOSED;
+	} else if (str == "cpu-easy") {
+		return ControlType::CPU_EASY;
+	} else if (str == "cpu") {
+		return ControlType::CPU;
+	} else if (str == "cpu-ultra") {
+		return ControlType::CPU_ULTRA;
+	} else if (str == "cpu-mega") {
+		return ControlType::CPU_MEGA;
+	} else if (str == "human") {
+		return ControlType::HUMAN;
+	}
+
+	throw std::runtime_error("Unknown controller type: " + str);
+}
+
 
 string Scenario::getFunctionName(const XmlNode *scriptNode){
 	string name= scriptNode->getName();

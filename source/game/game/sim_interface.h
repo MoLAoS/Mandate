@@ -150,7 +150,7 @@ public:
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
-	virtual void send(Socket* socket) const { throw runtime_error("you should implement "__FUNCTION__); }
+	virtual void send(Socket* socket) const { throw runtime_error(string("you should implement ") + __FUNCTION__); }
 };
 
 class SimulationInterface {
