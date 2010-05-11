@@ -22,6 +22,10 @@
 
 #include "leak_dumper.h"
 
+#include <limits>
+
+using std::numeric_limits;
+
 #if defined(WIN32) || defined(WIN64)
 	#define snprintf _snprintf
 #endif

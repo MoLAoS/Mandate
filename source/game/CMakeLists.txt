@@ -20,7 +20,12 @@ set(folders
 )
 source_group("" FILES ${game_srcs})
 foreach(folder ${folders})
-	file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h")
+	if(WIN32)
+		file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h" "${folder}/*.rc")
+	else(WIN32)
+		file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h")
+	endif(WIN32)
+
 # 	include_directories(${folder})
 	list(APPEND game_incs "${CMAKE_CURRENT_SOURCE_DIR}/${folder}")
 	list(APPEND game_srcs ${srcs})

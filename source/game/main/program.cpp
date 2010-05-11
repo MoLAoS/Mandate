@@ -152,7 +152,9 @@ Program::Program(Config &config)
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 	soundRenderer.init(this);
 
-	keymap.save("keymap.ini");
+	if (!fileExists("keymap.ini")) {
+		keymap.save("keymap.ini");
+	}
 	keymap.load("keymap.ini");
 
 	simulationInterface = new SimulationInterface(*this);

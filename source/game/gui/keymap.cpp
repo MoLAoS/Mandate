@@ -156,7 +156,7 @@ const Keymap::UserCommandInfo Keymap::commandInfo[ucCount] = {
 	{"NetworkStatusToggle",		KeyCode::N,		0,			0,			0},
 	{"SaveScreenshot",			KeyCode::E,		0,			0,			0},
 	{"CycleDisplayColor",		KeyCode::C,		0,			0,			0},
-	{"CameraCycleMode",			0,			0,			0,			0},
+	{"CameraCycleMode",			KeyCode::F,		0,			0,			0},
 	{"CameraZoomIn",			KeyCode::PAGE_UP,	0,			0,			0},
 	{"CameraZoomOut",			KeyCode::PAGE_DOWN,0,			0,			0},
 	{"CameraZoomReset",			0,			0,			0,			0},
@@ -231,17 +231,11 @@ void Keymap::load(const char *path) {
 			} catch (runtime_error &e) {
 				stringstream str;
 				str << "Failed to parse key map file " << path << ". Failed entry:" << endl
-						<< cmdName << " = " << it->second << endl << e.what();
+					<< cmdName << " = " << it->second << endl << e.what();
 				throw runtime_error(str.str());
 			}
-		} /*else {
-			stringstream str;
-			str << "Failed to parse key map file " << path << ". Invalid command name: "
-					<< cmdName << ".";
-			throw runtime_error(str.str());
-		}*/
+		}
 	}
-
 	reinit();
 }
 
@@ -270,6 +264,37 @@ void Keymap::save(const char *path) {
 		str << "Failed to save key map file: " << path << endl << e.what();
 		throw runtime_error(str.str());
 	}
+}
+
+bool Keymap::isMapped(Key key, UserCommand cmd) const {
+	assert(cmd >= 0 && cmd < ucCount);
+	KeyCode keyCode = key.getCode();
+	if(keyCode <= KeyCode::UNKNOWN) {
+		return false;
+	}
+	return entries[cmd].matches(keyCode, getCurrentMods());
+}
+
+UserCommand Keymap::getCommand(Key key) const {
+	KeyCode keyCode = key.getCode();
+	if(keyCode > KeyCode::UNKNOWN) {
+		map<Entry, UserCommand>::const_iterator i = entryCmdMap.find(
+				Entry(keyCode, getCurrentMods()));
+		return i == entryCmdMap.end() ? ucNone : i->second;
+	}
+	return ucNone;
+}
+
+int Keymap::getCurrentMods() const {
+	return	  (input.isShiftDown()	? bkmShift	: 0)
+			| (input.isCtrlDown()	? bkmCtrl	: 0)
+			| (input.isAltDown()	? bkmAlt	: 0)
+			| (input.isMetaDown()	? bkmMeta	: 0);
+}
+
+const char* Keymap::getCommandName(UserCommand cmd) {
+	assert(cmd >= 0 && cmd < ucCount);
+	return commandInfo[cmd].name;
 }
 
 }}//end namespace

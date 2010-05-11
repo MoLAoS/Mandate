@@ -903,8 +903,8 @@ int ScriptManager::showMessage(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	Lang &lang = Lang::getInstance();
 	string txt, hdr;
-	if (extractArgs(args, "showMessage", "str,str", &txt, &hdr)) {
-		//theSimInterface->pause();
+	if ( extractArgs(args, "showMessage", "str,str", &txt, &hdr) ) {
+		//theGame.pause (); // this needs to be optional, default false
 		ScriptManagerMessage msg(txt, hdr);
 		messageQueue.push(msg);
 		if (!messageBox.getEnabled()) {

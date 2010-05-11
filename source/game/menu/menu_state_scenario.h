@@ -20,8 +20,22 @@ namespace Glest { namespace Menu {
 // 	class MenuStateScenario
 // ===============================
 
-class MenuStateScenario: public MenuState{
+class MenuStateScenario: public MenuState {
 private:
+	WRAPPED_ENUM( FailAction,
+		MAIN_MENU,
+		SCENARIO_MENU
+	);
+
+    enum Difficulty{
+        dVeryEasy,
+        dEasy,
+        dMedium,
+        dHard,
+        dVeryHard,
+        dInsane
+    };
+
 	GraphicButton buttonReturn;
 	GraphicButton buttonPlayNow;
 
@@ -31,11 +45,13 @@ private:
 
 	GraphicLabel labelCategory;
 	GraphicListBox listBoxCategory;
+	GraphicMessageBox *msgBox;
+
     vector<string> categories;
-
 	vector<string> scenarioFiles;
-
     ScenarioInfo scenarioInfo;
+
+	FailAction failAction;
 
 public:
 	MenuStateScenario(Program &program, MainMenu *mainMenu);

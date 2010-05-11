@@ -57,9 +57,9 @@ string getAboutString1(int i){
 
 string getAboutString2(int i){
 	switch(i){
-		case 0: return "Web: http://glest.codemonger.org, http://glest.org";
-		case 1: return "Mail: " + gaeMailString + ", " + mailString;
-		case 2: return "Irc: irc://irc.freenode.net/glest";
+	case 0: return "Web: http://sf.net/apps/trac/glestae, http://glest.org";
+	case 1: return "Mail: " + gaeMailString + ", " + mailString;
+	case 2: return "Irc: irc://irc.freenode.net/glest";
 	}
 	return "";
 }

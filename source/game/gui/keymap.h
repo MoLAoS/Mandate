@@ -124,19 +124,14 @@ public:
 		Entry(const Entry &v) : key(v.key), mod(v.mod) {}
 
 		bool operator <(const Entry &arg) const {
-			return key != arg.key
-					? key < arg.key
-					: mod < arg.mod;
+			return key != arg.key ? key < arg.key : mod < arg.mod;
 		}
-
 		bool operator ==(const Entry &arg) const {
 			return key == arg.key && mod == arg.mod;
 		}
-		
 		bool matches(KeyCode key, int mod) const {
 			return this->key == key && this->mod == mod;
 		}
-		
 		KeyCode getKey() const			{return key;}
 		int getMod() const				{return mod;}
 		void clear() 					{key = KeyCode::NONE; mod = bkmNone;}
@@ -149,16 +144,15 @@ public:
 		Entry b;
 
 	public:
-		EntryPair(const UserCommandInfo &info) :
-				a((KeyCode)info.defKey1, (BasicKeyModifier)info.defMod1),
-				b((KeyCode)info.defKey2, (BasicKeyModifier)info.defMod2) {
+		EntryPair(const UserCommandInfo &info) 
+				: a((KeyCode)info.defKey1, (BasicKeyModifier)info.defMod1)
+				, b((KeyCode)info.defKey2, (BasicKeyModifier)info.defMod2) {
 		}
 		EntryPair(const EntryPair &v) : a(v.a), b(v.b) {}
 
 		bool matches(KeyCode keyCode, int mod) const {
 			return a.matches(keyCode, mod) || b.matches(keyCode, mod);
 		}
-		
 		const Entry &getA() const	{return a;}
 		const Entry &getB() const	{return b;}
 		void clear() 				{a.clear(); b.clear();}
@@ -180,40 +174,14 @@ private:
 
 public:
 	Keymap(const Input &input, const char* fileName);
-
-	bool isMapped(Key key, UserCommand cmd) const {
-		assert(cmd >= 0 && cmd < ucCount);
-		KeyCode keyCode = key.getCode();
-		if(keyCode <= KeyCode::UNKNOWN) {
-			return false;
-		}
-		return entries[cmd].matches(keyCode, getCurrentMods());
-	}
-	
-	UserCommand getCommand(Key key) const {
-		KeyCode keyCode = key.getCode();
-		if(keyCode > KeyCode::UNKNOWN) {
-			map<Entry, UserCommand>::const_iterator i = entryCmdMap.find(
-					Entry(keyCode, getCurrentMods()));
-			return i == entryCmdMap.end() ? ucNone : i->second;
-		}
-		return ucNone;
-	}
-	
-	int getCurrentMods() const {
-		return	  (input.isShiftDown()	? bkmShift	: 0)
-				| (input.isCtrlDown()	? bkmCtrl	: 0)
-				| (input.isAltDown()	? bkmAlt	: 0)
-				| (input.isMetaDown()	? bkmMeta	: 0);
-	}
-	
-	static const char* getCommandName(UserCommand cmd) {
-		assert(cmd >= 0 && cmd < ucCount);
-		return commandInfo[cmd].name;
-	}
+	bool isMapped(Key key, UserCommand cmd) const;	
+	UserCommand getCommand(Key key) const;	
+	int getCurrentMods() const;
 
 	void load(const char *path);
 	void save(const char *path);
+
+	static const char* getCommandName(UserCommand cmd);
 
 private:
 	void reinit();

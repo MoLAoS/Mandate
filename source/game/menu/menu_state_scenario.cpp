@@ -33,13 +33,13 @@ using namespace Shared::Xml;
 //  class MenuStateScenario
 // =====================================================
 
-MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
-		MenuState(program, mainMenu, "scenario") {
+MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu, "scenario")
+		, msgBox(0), failAction(FailAction::INVALID) {
 	Config &config = Config::getInstance();
-	Lang &lang = Lang::getInstance();
 	vector<string> results;
-	int match = 0;
-
+	int match = -1;
+	
 	labelInfo.init(350, 350);
 	labelInfo.setFont(CoreData::getInstance().getMenuFontNormal());
 
@@ -52,18 +52,31 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 	listBoxScenario.init(350, 400, 190);
 	labelScenario.init(350, 430);
 
-	buttonReturn.setText(lang.get("Return"));
-	buttonPlayNow.setText(lang.get("PlayNow"));
+	buttonReturn.setText(theLang.get("Return"));
+	buttonPlayNow.setText(theLang.get("PlayNow"));
 
-	labelCategory.setText(lang.get("Category"));
-	labelScenario.setText(lang.get("Scenario"));
+	labelCategory.setText(theLang.get("Category"));
+	labelScenario.setText(theLang.get("Scenario"));
 
 	//categories listBox
 	findAll("gae/scenarios/*.", results);
-	categories = results;
-
-	if (results.size() == 0) {
-		throw runtime_error("There are no categories");
+	
+	// remove empty directories...
+	for (vector<string>::iterator cat = results.begin(); cat != results.end(); ) {
+		vector<string> scenarios;
+		findAll("gae/scenarios/" + *cat + "/*.", scenarios);
+		if (scenarios.empty()) {
+			cat = results.erase(cat);
+		} else {
+			++cat;
+		}
+	}
+	// fail gracefully
+	if (results.empty()) {
+		msgBox = new GraphicMessageBox();
+		msgBox->init(theLang.get("NoCategoryDirectories"), theLang.get("Ok"));
+		failAction = FailAction::MAIN_MENU;
+		return;
 	}
 	for(int i = 0; i < results.size(); ++i) {
 		if (results[i] == config.getUiLastScenarioCatagory()) {
@@ -71,8 +84,11 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu):
 		}
 	}
 
+	categories = results;
 	listBoxCategory.setItems(results);
-	listBoxCategory.setSelectedItemIndex(match);
+	if (match != -1) {
+		listBoxCategory.setSelectedItemIndex(match);
+	}
 	updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()], true);
 	// stay LOCAL
 	//program.getSimulationInterface()->changeRole(GameRole::SERVER);
@@ -84,6 +100,22 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton) {
 	CoreData &coreData = CoreData::getInstance();
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
 
+	if (msgBox) {
+		if (msgBox->mouseClick(x,y)) {
+			delete msgBox;
+			msgBox = 0;
+			switch (failAction) {
+				case FailAction::MAIN_MENU:
+					soundRenderer.playFx(coreData.getClickSoundA());
+					mainMenu->setState(new MenuStateRoot(program, mainMenu));
+					return;
+				case FailAction::SCENARIO_MENU:
+					soundRenderer.playFx(coreData.getClickSoundA());
+					break;
+			}
+		}
+		return;
+	}
 	if (buttonReturn.mouseClick(x, y)) {
 		soundRenderer.playFx(coreData.getClickSoundA());
 		config.save();
@@ -108,18 +140,24 @@ void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton) {
 }
 
 void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms) {
+	if (!msgBox) {
+		listBoxScenario.mouseMove(x, y);
+		listBoxCategory.mouseMove(x, y);
 
-	listBoxScenario.mouseMove(x, y);
-	listBoxCategory.mouseMove(x, y);
-
-	buttonReturn.mouseMove(x, y);
-	buttonPlayNow.mouseMove(x, y);
+		buttonReturn.mouseMove(x, y);
+		buttonPlayNow.mouseMove(x, y);
+	} else {
+		msgBox->mouseMove(x, y);
+	}
 }
 
 void MenuStateScenario::render() {
-
 	Renderer &renderer = Renderer::getInstance();
 
+	if(msgBox) {
+		renderer.renderMessageBox(msgBox);
+		return;
+	}
 	renderer.renderLabel(&labelInfo);
 
 	renderer.renderLabel(&labelCategory);
@@ -155,14 +193,15 @@ void MenuStateScenario::setScenario(int i) {
 void MenuStateScenario::updateScenarioList(const string &category, bool selectDefault) {
 	const Config &config = Config::getInstance();
 	vector<string> results;
-	int match = 0;
+	int match = -1;
 
 	findAll("gae/scenarios/" + category + "/*.", results);
 
 	//update scenarioFiles
 	scenarioFiles = results;
-	if (results.size() == 0) {
-		throw runtime_error("There are no scenarios for category, " + category + ".");
+	if (results.empty()) {
+		// this shouldn't happen, empty directories have been weeded out earlier
+		throw runtime_error("No scenario directories found for category: " + category);
 	}
 	for (int i = 0; i < results.size(); ++i) {
 		string path = category + "/" + results[i];
@@ -173,7 +212,7 @@ void MenuStateScenario::updateScenarioList(const string &category, bool selectDe
 		results[i] = formatString(results[i]);
 	}
 	listBoxScenario.setItems(results);
-	if(selectDefault) {
+	if (selectDefault && match != -1) {
 		listBoxScenario.setSelectedItemIndex(match);
 	}
 
