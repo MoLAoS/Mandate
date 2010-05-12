@@ -190,20 +190,20 @@ Vec2i LuaArguments::getVec2i(int argumentIndex) const{
 		throw LuaError(emsg);
 	}
 
-	// push a key to the top of the stack since lua_gettable requires the key to be on top
-	lua_pushinteger(luaState, 1);
-	// table is now one index back, pop the the key we just pushed
+	// push a nil key to the top of the stack since lua_next requires the key to be on top
+	lua_pushnil(luaState);
+	// table is now one index back
 	// lookup the value at the key and push it onto the stack
-	lua_gettable(luaState, argumentIndex-1);
-	// store the value into the vector and pop it
+	lua_next(luaState, argumentIndex-1);
+	// store the value into the vector and pop it off the stack
 	v.x = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	// push the next key to the top of the stack
-	lua_pushinteger(luaState, 2);
-	lua_gettable(luaState, argumentIndex-1);
+	// next key is still on top of the stack
+	lua_next(luaState, argumentIndex-1);
 	v.y = lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
+	//pop the key and the value from the stack
+	lua_pop(luaState, 2);
 
 	return v;
 }
@@ -220,17 +220,19 @@ Vec3i LuaArguments::getVec3i(int ndx) const {
 		throw LuaError(emsg);
 	}
 
-	lua_rawgeti(luaState, ndx, 1);
-	v.x= luaL_checkint(luaState, ndx);
+	lua_pushnil(luaState);
+
+	lua_next(luaState, ndx-1);
+	v.x = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	lua_rawgeti(luaState, ndx, 2);
-	v.y= luaL_checkint(luaState, ndx);
+	lua_next(luaState, ndx-1);
+	v.y = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	lua_rawgeti(luaState, ndx, 3);
-	v.z= luaL_checkint(luaState, ndx);
-	lua_pop(luaState, 1);
+	lua_next(luaState, ndx-1);
+	v.z = lua_tonumber(luaState, -1);
+	lua_pop(luaState, 2);
 
 	return v;
 }
@@ -247,21 +249,23 @@ Vec4i LuaArguments::getVec4i(int ndx) const {
 		throw LuaError(emsg);
 	}
 
-	lua_rawgeti(luaState, ndx, 1);
-	v.x= luaL_checkint(luaState, ndx);
+	lua_pushnil(luaState);
+
+	lua_next(luaState, ndx-1);
+	v.x = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	lua_rawgeti(luaState, ndx, 2);
-	v.y= luaL_checkint(luaState, ndx);
+	lua_next(luaState, ndx-1);
+	v.y = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	lua_rawgeti(luaState, ndx, 3);
-	v.z= luaL_checkint(luaState, ndx);
+	lua_next(luaState, ndx-1);
+	v.z = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	lua_rawgeti(luaState, ndx, 4);
-	v.w= luaL_checkint(luaState, ndx);
-	lua_pop(luaState, 1);
+	lua_next(luaState, ndx-1);
+	v.w = lua_tonumber(luaState, -1);
+	lua_pop(luaState, 2);
 
 	return v;
 }
