@@ -180,22 +180,56 @@ string LuaArguments::getString(int argumentIndex) const{
 
 Vec2i LuaArguments::getVec2i(int argumentIndex) const{
 	Vec2i v;
-	
 	if ( ! lua_istable(luaState, argumentIndex ) ) {
 		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table, got " + getType(argumentIndex) + ".\n";
 		throw LuaError(emsg);
 	}
 	if ( luaL_getn(luaState, argumentIndex) != 2 ) {
-		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table with two elements, got Table with " 
+		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table with two elements, got Table with "
 			+ intToStr(luaL_getn(luaState, argumentIndex)) + " elements.\n";
 		throw LuaError(emsg);
 	}
-	lua_rawgeti(luaState, argumentIndex, 1);
-	v.x= luaL_checkint(luaState, argumentIndex);
+
+	// push a key to the top of the stack since lua_gettable requires the key to be on top
+	lua_pushinteger(luaState, 1);
+	// table is now one index back, pop the the key we just pushed
+	// lookup the value at the key and push it onto the stack
+	lua_gettable(luaState, argumentIndex-1);
+	// store the value into the vector and pop it
+	v.x = lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
-	lua_rawgeti(luaState, argumentIndex, 2);
-	v.y= luaL_checkint(luaState, argumentIndex);
+	// push the next key to the top of the stack
+	lua_pushinteger(luaState, 2);
+	lua_gettable(luaState, argumentIndex-1);
+	v.y = lua_tonumber(luaState, -1);
+	lua_pop(luaState, 1);
+
+	return v;
+}
+
+Vec3i LuaArguments::getVec3i(int ndx) const {
+	Vec3i v;
+	if ( ! lua_istable(luaState, ndx) ) {
+		string emsg = "Argument " + intToStr(ndx) + " expected Table, got " + getType(ndx) + ".\n";
+		throw LuaError ( emsg );
+	}
+	if ( luaL_getn(luaState, ndx) != 3 ) {
+		string emsg = "Argument " + intToStr(ndx) + " expected Table with three elements, got Table with "
+			+ intToStr(luaL_getn(luaState, ndx)) + " elements.\n";
+		throw LuaError(emsg);
+	}
+
+	lua_rawgeti(luaState, ndx, 1);
+	v.x= luaL_checkint(luaState, ndx);
+	lua_pop(luaState, 1);
+
+	lua_rawgeti(luaState, ndx, 2);
+	v.y= luaL_checkint(luaState, ndx);
+	lua_pop(luaState, 1);
+
+	lua_rawgeti(luaState, ndx, 3);
+	v.z= luaL_checkint(luaState, ndx);
 	lua_pop(luaState, 1);
 
 	return v;
@@ -208,7 +242,7 @@ Vec4i LuaArguments::getVec4i(int ndx) const {
 		throw LuaError ( emsg );
 	}
 	if ( luaL_getn(luaState, ndx) != 4 ) {
-		string emsg = "Argument " + intToStr(ndx) + " expected Table with four elements, got Table with " 
+		string emsg = "Argument " + intToStr(ndx) + " expected Table with four elements, got Table with "
 			+ intToStr(luaL_getn(luaState, ndx)) + " elements.\n";
 		throw LuaError(emsg);
 	}

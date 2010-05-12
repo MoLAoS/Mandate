@@ -21,6 +21,7 @@
 
 using std::string;
 using Shared::Math::Vec2i;
+using Shared::Math::Vec3i;
 using Shared::Math::Vec4i;
 using namespace Shared::Util;
 
@@ -90,6 +91,7 @@ public:
 	int getInt(int argumentIndex) const;
 	string getString(int argumentIndex) const;
 	Vec2i getVec2i(int argumentIndex) const;
+	Vec3i getVec3i(int argumentIndex) const;
 	Vec4i getVec4i(int argumentIndex) const;
 	int getReturnCount() const					{return returnCount;}
 	int getArgumentCount() const				{return args;}

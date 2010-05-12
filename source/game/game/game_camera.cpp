@@ -36,26 +36,27 @@ using Global::Metrics;
 
 const float GameCamera::startingVAng= -60.f;
 const float GameCamera::startingHAng= 0.f;
-const float GameCamera::vTransitionMult= 0.125f;
-const float GameCamera::hTransitionMult= 0.125f;
+float GameCamera::vTransitionMult= 8.f;
+float GameCamera::hTransitionMult= 8.f;
 const float GameCamera::defaultHeight= 20.f;
 const float GameCamera::centerOffsetZ= 8.0f;
+float GameCamera::moveScale = 32.f;
 
 // ================= Constructor =================
 
 GameCamera::GameCamera() : pos(0.f, defaultHeight, 0.f),
 		destPos(0.f, defaultHeight, 0.f), destAng(startingVAng, startingHAng) {
 	Config &config = Config::getInstance();
-    state= sFree;
+	state= sFree;
 
 	//config
 	speed= 15.f / GameConstants::cameraFps;
 	clampBounds= !Config::getInstance().getUiPhotoMode();
 
 	vAng= startingVAng;
-    hAng= startingHAng;
+	hAng= startingHAng;
 
-    rotate=0;
+	rotate=0;
 
 	moveMouse= Vec3f(0.f);
 	moveKey= Vec3f(0.f);
@@ -65,14 +66,14 @@ GameCamera::GameCamera() : pos(0.f, defaultHeight, 0.f),
 	minHeight = config.getCameraMinDistance();
 	maxCameraDist = config.getCameraMaxDistance();
 	minCameraDist = config.getCameraMinDistance();
-	
+
 	minVAng = -config.getCameraMaxYaw();
 	//maxVAng = -config.getCameraMinYaw();
 
 	fov = config.getRenderFov();
 
 	float vFov = fov / Metrics::getInstance().getAspectRatio();
-	
+
 	maxVAng = -(vFov / 2);
 }
 
@@ -111,71 +112,123 @@ void GameCamera::setDest(const Vec2i &pos, int height, float hAngle, float vAngl
 	clampAng();
 }
 
+void GameCamera::setCameraMotion(const Vec2i &posit, const Vec2i &angle,
+		int linearFrameCount, int angularFrameCount,
+		int linearFrameDelay, int angularFrameDelay){
+	switchState(sScenario);
+	destPos.x = posit.x;
+	destPos.y = pos.y;
+	destPos.z = posit.y;
+	// To be consistent with setDest(..) swap x and y in the rotation.
+	destAng.x = angle.y;
+	destAng.y = angle.x;
+	totalLinearFrames = linearFrameCount;
+	totalAngularFrames = angularFrameCount;
+	linearDelay = linearFrameDelay;
+	angularDelay = angularFrameDelay;
+	linearVelocity = Vec3f(destPos - pos) / linearFrameCount;
+	angularVelocity.x = float(destAng.x - vAng) / angularFrameCount;
+	angularVelocity.y = float(destAng.y - hAng) / angularFrameCount;
+}
+
 void GameCamera::update() {
 	Vec3f move = moveMouse + moveKey;
 
 	//move XZ
 	if(move.z){
-        moveForwardH(speed * move.z, 0.9f);
+		moveForwardH(speed * move.z, 0.9f);
 	}
 	if(move.x){
-        moveSideH(speed * move.x, 0.9f);
+		moveSideH(speed * move.x, 0.9f);
 	}
 
-	//free state
-	//if(state==sFree){
-		if(fabs(rotate) == 1.f){
-			rotateHV(speed*5*rotate, 0);
-		}
-		if (move.y > 0.f) {
-			moveUp(speed * move.y);
-			if (clampBounds && pos.y < maxHeight) {
-				rotateHV(0.f, -speed * 1.7f * move.y);
-			}
-		}
-		if (move.y < 0.f) {
-			moveUp(speed * move.y);
-			if (clampBounds && pos.y > minHeight) {
-				rotateHV(0.f, -speed * 1.7f * move.y);
-			}
-		}
-	//}
-
-	//game state
-	if(abs(destAng.x - vAng) > 0.01f) {
-		vAng+= (destAng.x - vAng) * hTransitionMult;
-	}
-	if(abs(destAng.y - hAng) > 0.01f) {
-		if(abs(destAng.y - hAng) > 180) {
-			if(destAng.y > hAng) {
-				hAng+= (destAng.y - hAng - 360) * vTransitionMult;
+	if (state == sScenario) {
+		if (currLinearFrame < totalLinearFrames) {
+			if (linearDelay == 0) {
+				pos += linearVelocity;
+				currLinearFrame++;
 			} else {
-				hAng+= (destAng.y - hAng + 360) * vTransitionMult;
+				linearDelay--;
 			}
-		} else {
-			hAng+= (destAng.y - hAng) * vTransitionMult;
+		}
+		if (currAngularFrame < totalAngularFrames) {
+			if (angularDelay == 0) {
+				hAng += angularVelocity.y;
+				vAng += angularVelocity.x;
+				currAngularFrame++;
+			} else {
+				angularDelay--;
+			}
+		}
+		if (currAngularFrame == totalAngularFrames && currLinearFrame == totalLinearFrames) {
+			state = sFree;
+		}
+	} else {
+		//free state
+		//if(state==sFree){
+			if(fabs(rotate) == 1.f){
+				rotateHV(speed*5*rotate, 0);
+			}
+			if (move.y > 0.f) {
+				moveUp(speed * move.y);
+				if (clampBounds && pos.y < maxHeight) {
+					rotateHV(0.f, -speed * 1.7f * move.y);
+				}
+			}
+			if (move.y < 0.f) {
+				moveUp(speed * move.y);
+				if (clampBounds && pos.y > minHeight) {
+					rotateHV(0.f, -speed * 1.7f * move.y);
+				}
+			}
+		//}
+
+		//game state
+		if(abs(destAng.x - vAng) > 0.01f) {
+			vAng+= (destAng.x - vAng) / hTransitionMult;
+		}
+		if(abs(destAng.y - hAng) > 0.01f) {
+			if(abs(destAng.y - hAng) > 180) {
+				if(destAng.y > hAng) {
+					hAng+= (destAng.y - hAng - 360) / vTransitionMult;
+				} else {
+					hAng+= (destAng.y - hAng + 360) / vTransitionMult;
+				}
+			} else {
+				hAng+= (destAng.y - hAng) / vTransitionMult;
+			}
+		}
+		if(abs(destPos.x - pos.x) > 0.01f) {
+			pos.x += (destPos.x - pos.x) / moveScale;
+		}
+		if(abs(destPos.y - pos.y) > 0.01f) {
+			pos.y += (destPos.y - pos.y) / moveScale;
+		}
+		if(abs(destPos.z - pos.z) > 0.01f) {
+			pos.z += (destPos.z - pos.z) / moveScale;
 		}
 	}
-	const float move_scale = 32.f;
-	if(abs(destPos.x - pos.x) > 0.01f) {
-		pos.x += (destPos.x - pos.x) / move_scale;
-	}
-	if(abs(destPos.y - pos.y) > 0.01f) {
-		pos.y += (destPos.y - pos.y) / move_scale;
-	}
-	if(abs(destPos.z - pos.z) > 0.01f) {
-		pos.z += (destPos.z - pos.z) / move_scale;
-	}
+		clampAng();
 
-	clampAng();
-
-	if(clampBounds){
-		clampPosXYZ(0.0f, (float)limitX, minHeight, maxHeight, 0.0f, (float)limitY);
-	}
+		if(clampBounds){
+			clampPosXYZ(0.0f, (float)limitX, minHeight, maxHeight, 0.0f, (float)limitY);
+		}
 }
 
 // is just a reset pos & angle now... should rename it, & ucCameraCycleMode & the keymap string, etc
-void GameCamera::switchState(){
+void GameCamera::switchState(State s){
+	if (s == sScenario) {
+		linearVelocity = Vec3f(0.f);
+		angularVelocity = Vec2f(0.f);
+		linearDelay = 0;
+		angularDelay = 0;
+		currAngularFrame = 0;
+		currLinearFrame = 0;
+		totalAngularFrames = 0;
+		totalLinearFrames = 0;
+		state = sScenario;
+		return;
+	}
 	destAng.x = startingVAng;
 	destAng.y = startingHAng;
 	destPos.y = defaultHeight;

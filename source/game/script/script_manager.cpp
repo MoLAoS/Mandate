@@ -63,7 +63,7 @@ TriggerManager::~TriggerManager() {
 		delete it->second;
 	}
 }
-	
+
 void TriggerManager::reset(World *world) {
 	deleteMapValues(regions.begin(), regions.end());
 	regions.clear();
@@ -141,14 +141,14 @@ void TriggerManager::unitMoved(const Unit *unit) {
 	// check id
 	int id = unit->getId();
 	PosTriggerMap::iterator tmit = unitPosTriggers.find(id);
-	
+
 	if (tmit != unitPosTriggers.end()) {
 		PosTriggers &triggers = tmit->second;
 	start:
 		PosTriggers::iterator it = triggers.begin();
  		while (it != triggers.end()) {
 			if (it->region->isInside(unit->getPos())) {
-				// setting another trigger on this unit in response to this trigger will cause our 
+				// setting another trigger on this unit in response to this trigger will cause our
 				// iterators here to go bad... :(
 				string evnt = it->evnt;
 				int ud = it->user_dat;
@@ -190,7 +190,7 @@ void TriggerManager::unitDied(const Unit *unit) {
 	if (it != deathTriggers.end()) {
 		ScriptManager::onTrigger(it->second.evnt, unit->getId(), it->second.user_dat);
 		deathTriggers.erase(it);
-	}	
+	}
 }
 
 void TriggerManager::commandCallback(const Unit *unit) {
@@ -371,6 +371,7 @@ void ScriptManager::init(GameState *g) {
 	LUA_FUNC(setCameraPosition);
 	LUA_FUNC(setCameraDestination);
 	LUA_FUNC(setCameraAngles);
+	LUA_FUNC(setCameraMotion);
 	LUA_FUNC(unfogMap);
 
 	// messaging
@@ -401,7 +402,7 @@ void ScriptManager::init(GameState *g) {
 	LUA_FUNC(setUnitTrigger);
 	LUA_FUNC(setUnitTriggerX);
 	LUA_FUNC(setFactionTrigger);
-	
+
 	// queries
 	LUA_FUNC(playerName);
 	LUA_FUNC(factionTypeName);
@@ -416,7 +417,7 @@ void ScriptManager::init(GameState *g) {
 	LUA_FUNC(lastDeadUnit);
 	LUA_FUNC(unitCount);
 	LUA_FUNC(unitCountOfType);
-	
+
 	// debug
 	LUA_FUNC(debugLog);
 	LUA_FUNC(consoleMsg);
@@ -447,8 +448,8 @@ void ScriptManager::init(GameState *g) {
 		}
 
 	}
-	
-	// get globs, startup, unitDied, unitDiedOfType_xxxx (archer, worker, etc...) etc. 
+
+	// get globs, startup, unitDied, unitDiedOfType_xxxx (archer, worker, etc...) etc.
 	//  need unit names of all loaded factions
 	// put defined function names in definedEvents, check membership before doing luaCall()
 	set<string> funcNames;
@@ -481,7 +482,7 @@ void ScriptManager::init(GameState *g) {
 
 void ScriptManager::onMessageBoxOk() {
 	Lang &lang= Lang::getInstance();
-	
+
 	if(!messageQueue.empty()) {
 		messageQueue.pop();
 		if(!messageQueue.empty()) {
@@ -557,7 +558,7 @@ void ScriptManager::update() {
 			}
 			if (timer->isPeriodic() && timer->isAlive()) {
 				timer->reset();
-			} 
+			}
 			else {
 				timer = timers.erase(timer); //returns next element
 				continue;
@@ -605,7 +606,7 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 	string err = txt ? txt : luaScript.getLastError();
 	theLogger.getErrorLog().add(err);
 	theConsole.addLine(err);
-	
+
 	if (!quietly) {
 		theSimInterface->pause();
 		ScriptManagerMessage msg(err, "Error");
@@ -619,8 +620,8 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 }
 
 /** Extracts arguments for Lua callbacks.
-  * <p>uses a string description of the expected arguments in arg_desc, then takes pointers the 
-  * variables of the corresponding types to populate with the results 
+  * <p>uses a string description of the expected arguments in arg_desc, then takes pointers the
+  * variables of the corresponding types to populate with the results
   * using va_args obviously, so there is no type checking, be careful.</p>
   * @param luaArgs the LuaArguments object to extract arguments from
   * @param caller if NULL, errors will not be reported, otherwise this is name of the lua callback
@@ -630,6 +631,7 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
   *		<li>'str' for a string</li>
   *		<li>'bln' for a boolean</li>
   *		<li>'v2i' for a Vec2i</li>
+  *		<li>'v3i' for a Vec3i</li>
   *		<li>'v4i' for a Vec4i</li></ul>
   * @param ... a pointer to the appropriate type for each argument specified in arg_desc
   * @return true if arguments were extracted successfully, false if there was an error
@@ -638,7 +640,7 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 	if (!*arg_desc) {
 		if (luaArgs.getArgumentCount()) {
 			if (caller) {
-				addErrorMessage(string(caller) + "(): expected 0 arguments, got " 
+				addErrorMessage(string(caller) + "(): expected 0 arguments, got "
 						+ intToStr(luaArgs.getArgumentCount()));
 			}
 			return false;
@@ -653,7 +655,7 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 	}
 	if (expected != luaArgs.getArgumentCount()) {
 		if (caller) {
-			addErrorMessage(string(caller) + "(): expected " + intToStr(expected) 
+			addErrorMessage(string(caller) + "(): expected " + intToStr(expected)
 				+ " arguments, got " + intToStr(luaArgs.getArgumentCount()));
 		}
 		return false;
@@ -672,6 +674,8 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 				*va_arg(vArgs,bool*) = luaArgs.getBoolean(-expected);
 			} else if (strcmp(tok,"v2i") == 0) {
 				*va_arg(vArgs,Vec2i*) = luaArgs.getVec2i(-expected);
+			} else if (strcmp(tok,"v3i") == 0) {
+				*va_arg(vArgs,Vec3i*) = luaArgs.getVec3i(-expected);
 			} else if (strcmp(tok,"v4i") == 0) {
 				*va_arg(vArgs,Vec4i*) = luaArgs.getVec4i(-expected);
 			} else {
@@ -748,7 +752,7 @@ int ScriptManager::stopTimer(LuaHandle* luaHandle) {
 		if (!killed) {
 			addErrorMessage("stopTimer(): timer '" + name + "' not found.");
 		}
-	} 
+	}
 	return args.getReturnCount();
 }
 
@@ -761,7 +765,7 @@ int ScriptManager::registerRegion(LuaHandle* luaHandle) {
 			stringstream ss;
 			ss << "registerRegion(): with name='" << name << "' at " << rect
 				<< "failed, a region with that name is already registered.";
-			addErrorMessage(ss.str()); 
+			addErrorMessage(ss.str());
 		}
 	}
 	return args.getReturnCount();
@@ -801,7 +805,7 @@ int ScriptManager::setUnitTrigger(LuaHandle* luaHandle) {
 
 void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 	bool did_something = false;
-	if (cond == "attacked") { 
+	if (cond == "attacked") {
 		triggerManager.addAttackedTrigger(id, evnt, ud);
 		did_something = true;
 	} else if (cond == "death") {
@@ -853,7 +857,7 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 				} else if (res == -3) {
 					addErrorMessage("setUnitTrigger(): unkown region  '" + val + "'");
 				} else if (res == -4) {
-					addErrorMessage("setUnitTrigger(): unit " + intToStr(id) 
+					addErrorMessage("setUnitTrigger(): unit " + intToStr(id)
 						+ " already has a trigger for this region,event pair "
 						+ "'" + val + ", " + evnt + "'");
 				}
@@ -885,7 +889,7 @@ int ScriptManager::setFactionTrigger(LuaHandle* luaHandle) {
 				} else if (res == -3) {
 					addErrorMessage("setFactionTrigger(): unkown region  '" + val + "'");
 				} else if (res == -4) {
-					addErrorMessage("setFactionTrigger(): faction " + intToStr(ndx) 
+					addErrorMessage("setFactionTrigger(): faction " + intToStr(ndx)
 						+ " already has a trigger for this region,event pair "
 						+ "'" + val + ", " + evnt + "'");
 				}
@@ -941,32 +945,37 @@ bool isHex(string s) {
 	return true;
 }
 
+Vec3f extractColour(string s) {
+	Vec3f colour;
+	if (s.size() > 6) { // trim pre/post-fixes
+		if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+			s = s.substr(2);
+		} else if (s[0] == '#') {
+			s = s.substr(1);
+		} else if (s[s.size()-1] == 'h' || s[s.size()-1] == 'H') {
+			s = s.substr(0, s.size() - 1);
+		}
+	}
+	if (s.size() == 6 && isHex(s)) {
+		string tmp = s.substr(0, 2);
+		colour.r = float(Conversion::strToInt(tmp, 16));
+		tmp = s.substr(2, 2);
+		colour.g = float(Conversion::strToInt(tmp, 16));
+		tmp = s.substr(4, 2);
+		colour.b = float(Conversion::strToInt(tmp, 16));
+	} else {
+		throw runtime_error("bad colour string " + s);
+	}
+	return colour;
+}
+
 int ScriptManager::addActor(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	string name, colour;
 	int r,g,b;
 	Vec3f gl_colour;
 	if (extractArgs(args, 0, "str,str", &name, &colour)) {
-		///@todo this may be useful elsewhere, refactor this out into Vec3f extractColour(string s)
-		if (colour.size() > 6) { // trim pre/post-fixes
-			if (colour[0] == '0' && (colour[1] == 'x' || colour[1] == 'X')) {
-				colour = colour.substr(2);
-			} else if (colour[0] == '#') {
-				colour = colour.substr(1);
-			} else if (colour[colour.size()-1] == 'h' || colour[colour.size()-1] == 'H') {
-				colour = colour.substr(0, colour.size() - 1);
-			}
-		}
-		if (colour.size() == 6 && isHex(colour)) {
-			string tmp = colour.substr(0, 2);
-			gl_colour.r = float(Conversion::strToInt(tmp, 16));
-			tmp = colour.substr(2, 2);
-			gl_colour.g = float(Conversion::strToInt(tmp, 16));
-			tmp = colour.substr(4, 2);
-			gl_colour.b = float(Conversion::strToInt(tmp, 16));
-		} else {
-			throw runtime_error("bad colour string " + colour);
-		}
+		gl_colour = extractColour(colour);
 	} else if (extractArgs(args,"addActor", "str,int,int,int", &name, &r, &g, &b)) {
 		gl_colour.r = float(r);
 		gl_colour.g = float(g);
@@ -1031,18 +1040,30 @@ int ScriptManager::setCameraAngles(LuaHandle* luaHandle) {
 	return args.getReturnCount();
 }
 
-int ScriptManager::setCameraDestination(LuaHandle* luaHandle) {	
-	LuaArguments args(luaHandle);	
+int ScriptManager::setCameraDestination(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
 	Vec2i pos;
 	int height, hAngle, vAngle;
 	if (extractArgs(args, 0, "int,int,int,int,int", &pos.x, &pos.y, &height, &hAngle, &vAngle)) {
-		theCamera.setDest(pos, height, float(hAngle), float(vAngle));	
+		theCamera.setDest(pos, height, float(hAngle), float(vAngle));
 	} else if (extractArgs(args, 0, "int,int,int,int", &pos.x, &pos.y, &height, &hAngle)) {
 		theCamera.setDest(pos, height, float(hAngle));
 	} else if (extractArgs(args, 0, "int,int,int", &pos.x, &pos.y, &height)) {
 		theCamera.setDest(pos, height);
 	} else if (extractArgs(args, "setCameraPosition", "v2i", &pos)) {
 		theCamera.setDest(pos);
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::setCameraMotion(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	Vec2i move;
+	Vec2i angle;
+	int linFCount, angFCount;
+	int linFDelay, angFDelay;
+	if (extractArgs(args, "setCameraMotion", "v2i,v2i,int,int,int,int", &move, &angle, &linFCount, &angFCount, &linFDelay, &angFDelay)) {
+		theCamera.setCameraMotion(move, angle, linFCount, angFCount, linFDelay, angFDelay);
 	}
 	return args.getReturnCount();
 }
@@ -1078,7 +1099,7 @@ int ScriptManager::giveResource(LuaHandle* luaHandle) {
 		if (err == -1) {
 			addErrorMessage("giveResource(): invalid faction index " + intToStr(fNdx));
 		} else if (err == -2) {
-			addErrorMessage("giveResource(): invalid resource '" + resource + "'");			
+			addErrorMessage("giveResource(): invalid resource '" + resource + "'");
 		}
 	}
 	return args.getReturnCount();
@@ -1101,7 +1122,7 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle) {
 				default: throw runtime_error("In ScriptManager::givePositionCommand, World::givePositionCommand() returned unknown error code.");
 			}
 			addErrorMessage(ss.str());
-		}	
+		}
 	}
 	return args.getReturnCount();
 }
@@ -1122,7 +1143,7 @@ int ScriptManager::giveTargetCommand (LuaHandle * luaHandle) {
 				default: throw runtime_error("In ScriptManager::giveTargetCommand, World::giveTargetCommand() returned unknown error code.");
 			}
 			addErrorMessage(ss.str());
-		}	
+		}
 	}
 	return args.getReturnCount();
 }
@@ -1145,7 +1166,7 @@ int ScriptManager::giveStopCommand (LuaHandle * luaHandle) {
 			addErrorMessage(ss.str());
 		}
 	}
-	return args.getReturnCount();	
+	return args.getReturnCount();
 }
 
 int ScriptManager::giveProductionCommand(LuaHandle* luaHandle) {

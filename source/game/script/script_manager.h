@@ -145,7 +145,7 @@ struct Trigger {
 // =====================================================
 
 class TriggerManager {
-	typedef map<string,Region*>			Regions; 
+	typedef map<string,Region*>			Regions;
 	typedef set<string>					Events;
 	typedef vector<PosTrigger>			PosTriggers;
 	typedef map<int,PosTriggers>		PosTriggerMap;
@@ -342,6 +342,7 @@ private:
 	static int setCameraPosition(LuaHandle* luaHandle);	// Gui.setCameraPosition()
 	static int setCameraAngles(LuaHandle* luaHandle);
 	static int setCameraDestination(LuaHandle* luaHandle);
+	static int setCameraMotion(LuaHandle* luaHandle);
 	static int unfogMap(LuaHandle *luaHandle);			// Gui.unfogMap()
 
 	// create units / hand-out resources

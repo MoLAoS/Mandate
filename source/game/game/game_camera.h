@@ -42,25 +42,27 @@ class GameCamera{
 public:
 	static const float startingVAng;
 	static const float startingHAng;
-	static const float vTransitionMult;
-	static const float hTransitionMult;
+	static float vTransitionMult;
+	static float hTransitionMult;
 	static const float defaultHeight;
 	static const float centerOffsetZ;
+	static float moveScale;
 
 public:
 	enum State{
 		sGame,
-		sFree
+		sFree,
+		sScenario
 	};
 
 private:
 	Vec3f pos;
 	Vec3f destPos;
 
-    float hAng;	//YZ plane positive -Z axis
-    float vAng;	//XZ plane positive +Z axis
+	float hAng;	//YZ plane positive -Z axis
+	float vAng;	//XZ plane positive +Z axis
 	float lastHAng;
-    float lastVAng;
+	float lastVAng;
 	Vec2f destAng;
 
 	float rotate;
@@ -85,22 +87,37 @@ private:
 	float maxVAng;
 	float fov;
 
+	//Scenario camera vectors
+	// DO NOT set these directly from LUA, calculate them based on move time.
+	Vec3f linearVelocity;
+	Vec2f angularVelocity;
+	// frame delay before moving for different effects.
+	int linearDelay;
+	int angularDelay;
+	// keep track of how many frames the camera has been moving for.
+	int currLinearFrame, totalLinearFrames;
+	int currAngularFrame, totalAngularFrames;
+
 public:
-    GameCamera();
+	GameCamera();
 
 	void init(int limitX, int limitY);
 
-    //get
+	//get
 	float getHAng() const		{return hAng;};
 	float getVAng() const		{return vAng;}
 	State getState() const		{return state;}
 	const Vec3f &getPos() const	{return pos;}
 
-    //set
+	//set
 	void setRotate(float rotate){this->rotate= rotate;}
 	void setPos(Vec2f pos);
 	void setAngles(float hAng, float vAng);
 	void setDest(const Vec2i &pos, int height = -1, float hAngle = FLOATINFINITY, float vAngle = FLOATINFINITY);
+
+	void setCameraMotion(const Vec2i &posit, const Vec2i &angle,
+			int linearFrameCount = 40, int angularFrameCount = 40,
+			int linearFrameDelay = 0, int angularFrameDelay = 0);
 
 	void setMoveX(float f, bool mouse){
 		if(mouse){
@@ -124,9 +141,9 @@ public:
 		destAng.y = hAng;
 	}
 
-    //other
-    void update();
-	void switchState();
+	//other
+	void update();
+	void switchState(State s = sFree);
 
 	void centerXZ(float x, float z);
 	void rotateHV(float h, float v);
