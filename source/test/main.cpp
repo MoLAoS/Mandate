@@ -41,12 +41,14 @@ int main(int argc, char **argv) {
 	tester.addTest(MinHeapTest::suite());
 	tester.addTest(LineAlgorithmTest::suite());
 
-	tester.run();
+	bool res = tester.run();
 
+#ifdef WIN32
 	char line[256];
 	std::cout << "[Enter] to exit.";
 	std::cin.getline(line,256);
-	return 0;
+#endif
+	return (res)? 0: 1;  // for ctest
 }
 
 

@@ -211,7 +211,7 @@ void Program::init(CmdArgs &args){
 		ScenarioInfo scenarioInfo;
 		Scenario::loadScenarioInfo(args.getScenario(), args.getCategory(), &scenarioInfo);
 		Scenario::loadGameSettings(args.getScenario(), args.getCategory(), &scenarioInfo);
-		setState(new GameState(*this));
+		setState(new QuickScenario(*this));
 
 	// normal startup
 	} else {

@@ -162,7 +162,7 @@ if(WIN32)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm
-	set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, physfs >= 2.0, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
+	#set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
 
 	set(CPACK_GENERATOR "TBZ2")
 	set(CPACK_STRIP_FILES "TRUE")
@@ -177,6 +177,13 @@ include(CPack)
 # create projectConfig.h, used in source files
 configure_file(${CMAKE_SOURCE_DIR}/projectConfig.h.in ${CMAKE_BINARY_DIR}/projectConfig.h)
 include_directories(${CMAKE_BINARY_DIR})
+
+# ctest
+#include(CTest)
+ENABLE_TESTING()
+#set(MEMORYCHECK_COMMAND /usr/bin/valgrind)
+# add_test() called in subdirectory
+
 
 # add stuff
 add_subdirectory(source)

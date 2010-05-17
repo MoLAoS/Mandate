@@ -24,8 +24,10 @@ namespace Glest { namespace Main {
 // =====================================================
 
 class BattleEnd: public ProgramState {
+private:
+	bool isQuickExit;
 public:
-	BattleEnd(Program &program);
+	BattleEnd(Program &program, bool quickExit=false);
 	~BattleEnd();
 	virtual void update();
 	virtual void render();

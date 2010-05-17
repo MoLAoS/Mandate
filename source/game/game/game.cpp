@@ -179,8 +179,13 @@ void GameState::init() {
 	//REFACTOR: ThisTeamIndex belong in here, not the World
 	chatManager.init(&console, simInterface->getWorld()->getThisTeamIndex());
 	gameCamera.init(map->getW(), map->getH());
-	const Vec2i &v = map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());
-	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
+	/*const*/ Vec2i *v;// = new Vec2i(0, 0);
+	if(simInterface->getWorld()->getThisFaction()){
+		v = &map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());  //FIXME: -loadmap has no players
+	}else{
+		v = &Vec2i(0, 0);
+	}
+	gameCamera.setPos(Vec2f((float)v->x, (float)v->y));
 	if (simInterface->getSavedGame()) {
 		gui.load(simInterface->getSavedGame()->getChild("gui"));
 	}
@@ -227,8 +232,10 @@ void GameState::init() {
 	program.setMaxUpdateBacklog(maxUpdtBacklog);
 
 	logger.add("Starting music stream", true);
-	StrSound *gameMusic = simInterface->getWorld()->getThisFaction()->getType()->getMusic();
-	soundRenderer.playMusic(gameMusic);
+	if(simInterface->getWorld()->getThisFaction()){
+		StrSound *gameMusic = simInterface->getWorld()->getThisFaction()->getType()->getMusic();
+		soundRenderer.playMusic(gameMusic);
+	}
 
 	logger.add("Launching game");
 	logger.setLoading(false);
@@ -825,79 +832,6 @@ void GameState::saveGame(string name) const {
 	XmlIo::getInstance().save("savegames/" + name + ".sav", &root);
 }
 
-void ShowMap::init() {
-	Lang &lang= Lang::getInstance();
-	Logger &logger= Logger::getInstance();
-	CoreData &coreData= CoreData::getInstance();
-	Renderer &renderer= Renderer::getInstance();
-	Map *map= simInterface->getWorld()->getMap();
-
-	logger.setState(lang.get("Initializing"));
-
-	//mesage box
-	mainMessageBox.init("", lang.get("Yes"), lang.get("No"));
-	mainMessageBox.setEnabled(false);
-
-	// init world, and place camera
-	simInterface->getCommander()->init(simInterface->getWorld());
-
-	// setup progress bar (used for ClusterMap init)
-	GraphicProgressBar progressBar;
-	progressBar.init(345, 550, 300, 20);
-	logger.setProgressBar(&progressBar);
-
-	simInterface->getWorld()->init();
-	logger.setProgressBar(NULL);
-
-	gui.init();
-	const Vec2i &v= map->getStartLocation(0);
-	gameCamera.init(map->getW(), map->getH());
-	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
-
-	//wheather particle systems
-	if(simInterface->getWorld()->getTileset()->getWeather() == Weather::RAINY){
-		logger.add("Creating rain particle system", true);
-		weatherParticleSystem= new RainParticleSystem();
-		weatherParticleSystem->setSpeed(12.f / config.getGsWorldUpdateFps());
-		weatherParticleSystem->setPos(gameCamera.getPos());
-		renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
-	} else if(simInterface->getWorld()->getTileset()->getWeather() == Weather::SNOWY){
-		logger.add("Creating snow particle system", true);
-		weatherParticleSystem= new SnowParticleSystem(1200);
-		weatherParticleSystem->setSpeed(1.5f / config.getGsWorldUpdateFps());
-		weatherParticleSystem->setPos(gameCamera.getPos());
-		weatherParticleSystem->setTexture(coreData.getSnowTexture());
-		renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
-	}
-
-	//init renderer state
-	logger.add("Initializing renderer", true);
-	renderer.initGame(this);
-
-	//sounds
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-
-	Tileset *tileset= simInterface->getWorld()->getTileset();
-	const TechTree *techTree = simInterface->getWorld()->getTechTree();
-	AmbientSounds *ambientSounds= tileset->getAmbientSounds();
-
-	//rain
-	if(tileset->getWeather()==Weather::RAINY && ambientSounds->isEnabledRain()){
-		logger.add("Starting ambient stream", true);
-		soundRenderer.playAmbient(ambientSounds->getRain());
-	}
-	//snow
-	if(tileset->getWeather()==Weather::SNOWY && ambientSounds->isEnabledSnow()){
-		logger.add("Starting ambient stream", true);
-		soundRenderer.playAmbient(ambientSounds->getSnow());
-	}
-	// set maximum update timer back log
-	program.setMaxUpdateBacklog(2); // non-network game, may drop frames
-
-	logger.add("Launching game");
-	logger.setLoading(false);
-	program.resetTimers();
-}
 
 void ShowMap::render2d(){
 	Renderer &renderer= Renderer::getInstance();

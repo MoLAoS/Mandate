@@ -59,7 +59,11 @@ void SkillCycleTable::create(const TechTree *techTree) {
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
 		<< ", messageSize = " << header.messageSize << " (@" << sizeof(CycleInfo) << ")" );
-	assert(numEntries);
+	//assert(numEntries);
+	if(!numEntries){
+		cycleTable = NULL;
+		return;
+	}
 
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {

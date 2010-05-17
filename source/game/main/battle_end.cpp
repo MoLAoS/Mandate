@@ -38,8 +38,9 @@ using namespace Menu;
 //  class BattleEnd
 // =====================================================
 
-BattleEnd::BattleEnd(Program &program) : ProgramState(program) {
+BattleEnd::BattleEnd(Program &program, bool quickExit) : ProgramState(program) {
 	_TRACE_FUNCTION();
+	this->isQuickExit = quickExit;
 }
 
 BattleEnd::~BattleEnd() {
@@ -157,12 +158,20 @@ void BattleEnd::render() {
 
 void BattleEnd::keyDown(const Key &key) {
 	if(!key.isModifier()) {
-		program.setState(new MainMenu(program));
+		if(this->isQuickExit){
+			program.exit();
+		}else{
+			program.setState(new MainMenu(program));
+		}
 	}
 }
 
 void BattleEnd::mouseDownLeft(int x, int y) {
-	program.setState(new MainMenu(program));
+	if(this->isQuickExit){
+		program.exit();
+	}else{
+		program.setState(new MainMenu(program));
+	}
 }
 
 }}//end namespace

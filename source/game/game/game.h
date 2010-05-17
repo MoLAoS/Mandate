@@ -25,6 +25,7 @@
 #include "game_settings.h"
 #include "config.h"
 #include "keymap.h"
+#include "battle_end.h"
 
 // weather system not yet ready
 //#include "../physics/weather.h"
@@ -160,12 +161,18 @@ protected:
 
 
 //TODO: better integrate with GameState, much duplicated code
+class QuickScenario : public GameState {
+public:
+	QuickScenario(Program &program) : GameState(program) {}
+	virtual ~QuickScenario() {}
+	void quitGame() { program.setState(new BattleEnd(program, true)); }
+};
+
 class ShowMap : public GameState {
 public:
 	ShowMap(Program &program) : GameState(program) { }
 	~ShowMap(){}
 	void quitGame() { program.exit(); }
-	void init();
 	void render2d();
 	void keyDown(const Key &key);
 };

@@ -41,3 +41,6 @@ if (WIN32)
 else(WIN32)
 	target_link_libraries(test_suite shared_lib ${CPPUNIT_LIBRARY})
 endif(WIN32)
+
+# ctest
+add_test(test ${CMAKE_CURRENT_BINARY_DIR}/test_suite)

@@ -696,7 +696,12 @@ void MainWindow::onMenuMiscHelp(wxCommandEvent &event) {
 void MainWindow::onShowMap(wxCommandEvent& event){
 	wxArrayString arrstr;
 	vector<string> results;
-	findAll("tilesets/*", results);
+	try{
+		findAll("tilesets/*", results);
+	}catch(...){
+		wxMessageBox(_("Error: couldn't find tilesets."), _("Error"), wxOK | wxICON_ERROR);
+		return;
+	}
 	for(vector<string>::iterator it=results.begin(); it!=results.end(); ++it){
 		arrstr.Add(ToUnicode(*it));
 	}
