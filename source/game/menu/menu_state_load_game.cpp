@@ -475,6 +475,9 @@ void MenuStateLoadGame::initGameInfo() {
 
 void MenuStateLoadGame::updateNetworkSlots(){
 	ServerInterface* serverInterface= theSimInterface->asServerInterface();
+	if (!serverInterface) {
+		return;
+	}
 	assert(gs);
 
 	for(int i= 0; i<GameConstants::maxPlayers; ++i){
