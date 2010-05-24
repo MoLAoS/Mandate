@@ -65,12 +65,16 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 	this->e = e;
 }
 
-void Program::CrashProgramState::render() {
+void Program::CrashProgramState::renderBg() {
 	Renderer &renderer= Renderer::getInstance();
 	renderer.clearBuffers();
 	renderer.reset2d();
 	renderer.renderMessageBox(&msgBox);
 	renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
+}
+
+void Program::CrashProgramState::renderFg() {
+	Renderer &renderer= Renderer::getInstance();
 	renderer.swapBuffers();
 }
 
@@ -94,15 +98,14 @@ void Program::CrashProgramState::update() {
 // 	class Program
 // =====================================================
 
-const int maxUpdateTimes = 5 * 6;
-const int maxUpdateBackLog = 12; ///@todo should be speed dependant
-const int Program::maxTimes = 5;
 Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(Config &config)
-		: renderTimer(config.getRenderFpsMax(), 1, 0)
+Program::Program(Config &config, CmdArgs &args)
+		: Widget(this)
+		, cmdArgs(args)
+		, renderTimer(config.getRenderFpsMax(), 1, 0)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
@@ -117,11 +120,11 @@ Program::Program(Config &config)
 	setDisplaySettings();
 
 	//window
-	setText("Glest Advanced Engine");
-	setStyle(config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
-	setPos(0, 0);
-	setSize(config.getDisplayWidth(), config.getDisplayHeight());
-	create();
+	Window::setText("Glest Advanced Engine");
+	Window::setStyle(config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
+	Window::setPos(0, 0);
+	Window::setSize(config.getDisplayWidth(), config.getDisplayHeight());
+	Window::create();
 
 	//log start
 	Logger &logger= Logger::getInstance();
@@ -159,13 +162,13 @@ Program::Program(Config &config)
 
 	simulationInterface = new SimulationInterface(*this);
 
-
 	cout << "VirtualW : ScreenW == " << Metrics::getInstance().getVirtualW() << " : " 
 		<< Metrics::getInstance().getScreenW() << endl
 		<< "VirtualH : ScreenH == " << Metrics::getInstance().getVirtualH() << " : "
 		<< Metrics::getInstance().getScreenH() << endl;
 
 	singleton = this;
+	init();
 }
 
 Program::~Program() {
@@ -182,35 +185,35 @@ Program::~Program() {
 	singleton = 0;
 }
 
-void Program::init(CmdArgs &args){
+void Program::init() {
 	// startup and immediately host a game
-	if(args.isServer()) {
+	if(cmdArgs.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
 	// startup and immediately connect to server
-	} else if(!args.getClientIP().empty()) {
+	} else if(!cmdArgs.getClientIP().empty()) {
 		MainMenu* mainMenu = new MainMenu(*this);
 		setState(mainMenu);
-		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(args.getClientIP())));
+		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(cmdArgs.getClientIP())));
 	// load map and tileset without players
-	} else if(!args.getLoadmap().empty()) {  //FIXME: broken, refactor ShowMap
+	} else if(!cmdArgs.getLoadmap().empty()) {  //FIXME: broken, refactor ShowMap
 		GameSettings &gs = simulationInterface->getGameSettings();
 		gs.clear();
 		gs.setDefaultResources(false);
 		gs.setDefaultUnits(false);
 		gs.setDefaultVictoryConditions(false);
-		gs.setMapPath(string("maps/") + args.getLoadmap() + ".gbm");
-		gs.setTilesetPath(string("tilesets/") + args.getLoadTileset());
+		gs.setMapPath(string("maps/") + cmdArgs.getLoadmap() + ".gbm");
+		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
 		gs.setTechPath(string("techs/magitech"));
 		gs.setFogOfWar(false);
 		gs.setFactionCount(0);
 
 		setState(new ShowMap(*this));
-	} else if(!args.getScenario().empty()) {
+	} else if(!cmdArgs.getScenario().empty()) {
 		ScenarioInfo scenarioInfo;
-		Scenario::loadScenarioInfo(args.getScenario(), args.getCategory(), &scenarioInfo);
-		Scenario::loadGameSettings(args.getScenario(), args.getCategory(), &scenarioInfo);
+		Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
+		Scenario::loadGameSettings(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 		setState(new QuickScenario(*this));
 
 	// normal startup
@@ -235,7 +238,10 @@ void Program::loop() {
 
 		//render
 		while (renderTimer.isTime() && visible) {
-			programState->render();
+			programState->renderBg();
+			Renderer::getInstance().reset2d(true);
+			WidgetWindow::render();
+			programState->renderFg();
 		}
 
 		//update camera
@@ -244,13 +250,16 @@ void Program::loop() {
 		}
 
 		//update world
-		while (updateTimer.isTime()) {
+		while (updateTimer.isTime() && !terminating) {
 			++updateCounter;
+			if (updateCounter % 4 == 0) {
+				WidgetWindow::update();
+				SoundRenderer::getInstance().update();
+				GraphicComponent::update();
+			}
 			const int &interval = programState->getUpdateInterval();
 			if (interval && updateCounter % interval == 0) {
-				GraphicComponent::update();
 				programState->update();
-				SoundRenderer::getInstance().update();
 			}
 			if (simulationInterface->isNetworkInterface()) {
 				simulationInterface->asNetworkInterface()->update();
@@ -258,7 +267,7 @@ void Program::loop() {
 		}
 
 		//tick timer
-		while (tickTimer.isTime()) {
+		while (tickTimer.isTime() && !terminating) {
 			programState->tick();
 		}
 	}
@@ -279,6 +288,103 @@ void Program::eventResize(SizeState sizeState) {
 			break;
 	}
 }
+
+bool Program::mouseDown(MouseButton btn, Vec2i pos) {
+	const Metrics &metrics = Metrics::getInstance();
+	int vx = metrics.toVirtualX(pos.x);
+	int vy = metrics.toVirtualY(pos.y);
+
+	switch (btn) {
+		case MouseButton::LEFT:
+			programState->mouseDownLeft(vx, vy);
+			break;
+		case MouseButton::RIGHT:
+			programState->mouseDownRight(vx, vy);
+			break;
+		case MouseButton::MIDDLE:
+			programState->mouseDownCenter(vx, vy);
+			break;
+		default:
+			break;
+	}
+	return true;
+}
+
+bool Program::mouseUp(MouseButton btn, Vec2i pos) {
+	const Metrics &metrics = Metrics::getInstance();
+	int vx = metrics.toVirtualX(pos.x);
+	int vy = metrics.toVirtualY(pos.y);
+
+	switch (btn) {
+		case MouseButton::LEFT:
+			programState->mouseUpLeft(vx, vy);
+			break;
+		case MouseButton::RIGHT:
+			programState->mouseUpRight(vx, vy);
+			break;
+		case MouseButton::MIDDLE:
+			programState->mouseUpCenter(vx, vy);
+			break;
+		default:
+			break;
+	}
+	return true;
+}
+
+bool Program::mouseMove(Vec2i pos) {
+	const Metrics &metrics = Metrics::getInstance();
+	int vx = metrics.toVirtualX(pos.x);
+	int vy = metrics.toVirtualY(pos.y);
+
+	programState->mouseMove(vx, vy, input.getMouseState());
+	return true;
+}
+
+bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
+	const Metrics &metrics = Metrics::getInstance();
+	int vx = metrics.toVirtualX(pos.x);
+	int vy = metrics.toVirtualY(pos.y);
+
+	switch (btn){
+		case MouseButton::LEFT:
+			programState->mouseDoubleClickLeft(vx, vy);
+			break;
+		case MouseButton::RIGHT:
+			programState->mouseDoubleClickRight(vx, vy);
+			break;
+		case MouseButton::MIDDLE:
+			programState->mouseDoubleClickCenter(vx, vy);
+			break;
+		default:
+			break;
+	}
+	return true;
+}
+
+bool Program::mouseWheel(Vec2i pos, int zDelta) {
+	const Metrics &metrics = Metrics::getInstance();
+	int vx = metrics.toVirtualX(pos.x);
+	int vy = metrics.toVirtualY(pos.y);
+
+	programState->eventMouseWheel(vx, vy, zDelta);
+	return true;
+}
+
+bool Program::keyDown(Key key) {
+	programState->keyDown(key);
+	return true;
+}
+
+bool Program::keyUp(Key key) {
+	programState->keyUp(key);
+	return true;
+}
+
+bool Program::keyPress(char c) {
+	programState->keyPress(c);
+	return true;
+}
+
 
 // ==================== misc ====================
 
@@ -308,6 +414,7 @@ void Program::setState(ProgramState *programState){
 void Program::exit() {
 	_TRACE_FUNCTION();
 	destroy();
+	terminating = true;
 }
 
 void Program::resetTimers() {

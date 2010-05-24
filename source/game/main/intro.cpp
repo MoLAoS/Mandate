@@ -29,96 +29,92 @@ using namespace Shared::Graphics;
 namespace Glest { namespace Main {
 
 // =====================================================
-// 	class Text
-// =====================================================
-
-Text::Text(const string &text, const Vec2i &pos, int time, const Font2D *font){
-	this->text= text;
-	this->pos= pos;
-	this->time= time;
-	this->texture= NULL;
-	this->font= font;
-}
-
-Text::Text(const Texture2D *texture, const Vec2i &pos, const Vec2i &size, int time){
-	this->pos= pos;
-	this->size= size;
-	this->time= time;
-	this->texture= texture;
-	this->font= NULL;
-}
-
-// =====================================================
 // 	class Intro
 // =====================================================
-
-const int Intro::introTime= 24000;
-const int Intro::appearTime= 2500;
-const int Intro::showTime= 2500;
-const int Intro::disapearTime= 2500;
 
 Intro::Intro(Program &program) : ProgramState(program) {
 	CoreData &coreData= CoreData::getInstance();
 	const Metrics &metrics= Metrics::getInstance();
-	int w= metrics.getVirtualW();
-	int h= metrics.getVirtualH();
 	timer=0;
 
-	texts.push_back(Text(coreData.getLogoTexture(), Vec2i(w/2-128, h/2-64), Vec2i(256, 128), 4000));
-	texts.push_back(Text("Advanced Engine " + gaeVersionString, Vec2i(w / 2 + 80, h / 2 - 32), 4000, coreData.getMenuFontNormal()));
-	texts.push_back(Text("www.glest.org", Vec2i(w/2, h/2), 12000, coreData.getMenuFontVeryBig()));
+	Vec2i screenSize = metrics.getScreenDims();
+	Vec2i logoSize(512, 256);
+	Vec2i pos(screenSize.x / 2 - logoSize.x / 2, screenSize.y / 2 - logoSize.y / 2);
+	
+	logoPanel = new Widgets::PicturePanel(&program, pos, logoSize);
+	logoPanel->setImage(coreData.getLogoTexture());
+	logoPanel->setAutoLayout(false);
+
+	Font *font = coreData.getAdvancedEngineFont();
+	lblAdvanced = new Widgets::StaticText(logoPanel);
+	lblAdvanced->setTextParams("Advanced", Vec4f(1.f), font, true);
+	Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
+	lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
+	lblAdvanced->setSize(sz);
+
+	lblEngine = new Widgets::StaticText(logoPanel);
+	lblEngine->setTextParams("Engine", Vec4f(1.f), font, true);
+	lblEngine->setPos(Vec2i(285, 60));
+	lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
+
+	// Version label
+	font = coreData.getFreeTypeFont();
+	pos = Vec2i(285 + lblEngine->getSize().x, 62);
+	lblVersion = new Widgets::StaticText(logoPanel);
+	lblVersion->setTextParams("0.3.0"/*gaeVersionString*/, Vec4f(1.f), font, true);
+	lblVersion->setPos(pos);
+	lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
+
+	lblWebsite = 0;
+
+	// make everything invisible
+	program.setFade(0.f);
+
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 	soundRenderer.playMusic(CoreData::getInstance().getIntroMusic());
 }
 
 void Intro::update(){
 	timer++;
-	if (timer > introTime * Config::getInstance().getGsWorldUpdateFps() / 1000) {
+	if (timer <= 300) {
+		float fade = timer / 300.f;
+		logoPanel->setFade(fade);
+	} else if (timer <= 600) {
+		// fade == 1.f, do nothing
+	} else if (timer <= 800) {
+		float fade = 1.f - (timer - 600) / 200.f;
+		logoPanel->setFade(fade);
+
+	} else if (timer == 801) {
+		CoreData &coreData= CoreData::getInstance();
+		const Metrics &metrics= Metrics::getInstance();
+		program.clear();
+		lblWebsite = new Widgets::StaticText(&program);
+		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getFreeTypeFont(), true);
+		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
+		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
+		lblWebsite->setFade(0.f);
+	} else if (timer <= 1101) {
+		float fade = (timer - 801) / 300.f;
+		lblWebsite->setFade(fade);
+	} else if (timer <= 1401) {
+	} else if (timer <= 1601) {
+		float fade = 1.f - (timer - 1401) / 200.f;
+		lblWebsite->setFade(fade);
+	} else {
+		program.clear();
 		program.setState(new MainMenu(program));
 	}
-
-	//TOOD: add AutoTest to config
-	/*
-	if(Config::getInstance().getBool("AutoTest")){
-		AutoTest::getInstance().updateIntro(program);
-	}
-	*/
 }
 
-void Intro::render(){
+void Intro::renderBg(){
 	Renderer &renderer= Renderer::getInstance();
-	int difTime;
-
 	renderer.reset2d();
 	renderer.clearBuffers();
-	for(int i=0; i<texts.size(); ++i){
-		Text *text= &texts[i];
+}
 
-		difTime= 1000*timer / Config::getInstance().getGsWorldUpdateFps() - text->getTime();
-
-		if(difTime>0 && difTime<appearTime+showTime+disapearTime){
-			float alpha= 1.f;
-			if(difTime>0 && difTime<appearTime){
-				//apearing
-				alpha= static_cast<float>(difTime)/appearTime;
-			}
-			else if(difTime>0 && difTime<appearTime+showTime+disapearTime){
-				//disappearing
-				alpha= 1.f- static_cast<float>(difTime-appearTime-showTime)/disapearTime;
-			}
-			if(!text->getText().empty()){
-				renderer.renderText(
-					text->getText(), text->getFont(), alpha,
-					text->getPos().x, text->getPos().y, true);
-			}
-			if(text->getTexture()!=NULL){
-				renderer.renderTextureQuad(
-					text->getPos().x, text->getPos().y,
-					text->getSize().x, text->getSize().y,
-					text->getTexture(), alpha);
-			}
-		}
-	}
+void Intro::renderFg() {
+	Renderer &renderer= Renderer::getInstance();
 	renderer.swapBuffers();
 }
 
@@ -132,6 +128,7 @@ void Intro::mouseUpLeft(int x, int y){
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 	soundRenderer.stopMusic(CoreData::getInstance().getIntroMusic());
 	soundRenderer.playMusic(CoreData::getInstance().getMenuMusic());
+	program.clear();
 	program.setState(new MainMenu(program));
 }
 

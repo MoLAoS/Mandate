@@ -156,7 +156,8 @@ Renderer::Renderer() {
 	GraphicsFactory *graphicsFactory= GraphicsInterface::getInstance().getFactory();
 
 	modelRenderer= graphicsFactory->newModelRenderer();
-	textRenderer= graphicsFactory->newTextRenderer2D();
+	textRenderer= graphicsFactory->newTextRendererBM();
+	textRendererFT = graphicsFactory->newTextRendererFT();
 	particleRenderer= graphicsFactory->newParticleRenderer();
 
 	//resources
@@ -175,6 +176,7 @@ Renderer::Renderer() {
 Renderer::~Renderer(){
 	delete modelRenderer;
 	delete textRenderer;
+	delete textRendererFT;
 	delete particleRenderer;
 
 	//resources
@@ -215,6 +217,7 @@ void Renderer::init(){
 	fontManager[ResourceScope::GLOBAL]->init();
 
 	init2dList();
+	init2dNonVirtList();
 }
 
 void Renderer::initGame(GameState *game){
@@ -293,10 +296,10 @@ void Renderer::reset3d(){
 	assertGl();
 }
 
-void Renderer::reset2d(){
+void Renderer::reset2d(bool nonVirt){
 	assertGl();
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
-	glCallList(list2d);
+	glCallList(nonVirt ? list2dNonVirt : list2d);
 	assertGl();
 }
 
@@ -375,8 +378,12 @@ Texture3D *Renderer::newTexture3D(ResourceScope rs){
 	return textureManager[rs]->newTexture3D();
 }
 
-Font2D *Renderer::newFont(ResourceScope rs){
-	return fontManager[rs]->newFont2D();
+Font *Renderer::newFont(ResourceScope rs){
+	return fontManager[rs]->newBitMapFont();
+}
+
+Font *Renderer::newFreeTypeFont(ResourceScope rs){
+	return fontManager[rs]->newFreeTypeFont();
 }
 
 void Renderer::manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs){
@@ -663,7 +670,7 @@ void Renderer::renderConsole(const Console *console){
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
 
-	Font2D *font = CoreData::getInstance().getConsoleFont();
+	Font *font = CoreData::getInstance().getConsoleFont();
 	const FontMetrics *fm = font->getMetrics();
 
 	int yPos = console->getYPos();
@@ -751,7 +758,7 @@ void Renderer::renderResourceStatus() {
 				str += intToStr(r->getBalance()) + ")";
 			}
 			glDisable(GL_TEXTURE_2D);
-			const Font2D* font = CoreData::getInstance().getMenuFontSmall();
+			const Font* font = CoreData::getInstance().getMenuFontSmall();
 			renderTextShadow(str, font, j * 100 + 220, metrics.getVirtualH() - 30, false);
 			++j;
 		}
@@ -781,7 +788,7 @@ void Renderer::renderSelectionQuad(){
 	}
 }
 
-Vec2i computeCenteredPos(const string &text, const Font2D *font, int x, int y){
+Vec2i computeCenteredPos(const string &text, const Font *font, int x, int y){
 	Vec2i textPos;
 
 	const Metrics &metrics= Metrics::getInstance();
@@ -794,7 +801,7 @@ Vec2i computeCenteredPos(const string &text, const Font2D *font, int x, int y){
 	return textPos;
 }
 
-void Renderer::renderText(const string &text, const Font2D *font, float alpha, int x, int y, bool centered){
+void Renderer::renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered){
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glEnable(GL_BLEND);
 	glColor4fv(Vec4f(1.f, 1.f, 1.f, alpha).ptr());
@@ -808,7 +815,7 @@ void Renderer::renderText(const string &text, const Font2D *font, float alpha, i
 	glPopAttrib();
 }
 
-void Renderer::renderText(const string &text, const Font2D *font, const Vec3f &color, int x, int y, bool centered){
+void Renderer::renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered){
 	glPushAttrib(GL_CURRENT_BIT);
 	glColor3fv(color.ptr());
 
@@ -821,9 +828,10 @@ void Renderer::renderText(const string &text, const Font2D *font, const Vec3f &c
 	glPopAttrib();
 }
 
-void Renderer::renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered, Vec3f colour) {
+void Renderer::renderTextShadow(const string &text, const Font *font, int x, int y, bool centered, Vec3f colour) {
 	glPushAttrib(GL_CURRENT_BIT);
-	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);	textRenderer->begin(font);
+	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
+	textRenderer->begin(font);
 	glColor3f(0.0f, 0.0f, 0.0f);
 	textRenderer->render(text, pos.x - 1, pos.y - 1);
 	glColor3fv(colour.ptr());
@@ -2735,6 +2743,48 @@ void Renderer::init2dList(){
 	assertGl();
 }
 
+void Renderer::init2dNonVirtList(){
+
+	const Metrics &metrics= Metrics::getInstance();
+
+	//this list sets the state for the 2d rendering without 'virtual' co-ordinates
+	list2dNonVirt = glGenLists(1);
+	glNewList(list2dNonVirt, GL_COMPILE);
+
+		//projection
+		glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, metrics.getScreenW(), 0, metrics.getScreenH(), 0, 1);
+
+		//modelview
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		//disable everything
+		glDisable(GL_BLEND);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_STENCIL_TEST);
+		glDisable(GL_FOG);
+		glDisable(GL_CULL_FACE);
+		glFrontFace(GL_CCW);
+		glActiveTexture(baseTexUnit);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glDisable(GL_TEXTURE_2D);
+
+		//blend func
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		//color
+		glColor4f(1.f, 1.f, 1.f, 1.f);
+
+	glEndList();
+
+	assertGl();
+}
+
 void Renderer::init3dListMenu(MainMenu *mm){
 	assertGl();
 
@@ -2890,7 +2940,7 @@ void Renderer::renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &co
 	glEnd();
 }
 
-void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const Font2D *font){
+void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const Font *font){
 	assert(progress <= maxProgressBar);
 	assert(x >= maxProgressBar);
 

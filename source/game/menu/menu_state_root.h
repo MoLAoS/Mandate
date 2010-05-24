@@ -20,18 +20,22 @@ namespace Glest { namespace Menu {
 // 	class MenuStateRoot  
 // ===============================
 
-class MenuStateRoot: public MenuState {
-private:
-	GraphicButton buttonNewGame;
-	GraphicButton buttonJoinGame;
-	GraphicButton buttonScenario;
-	GraphicButton buttonLoadGame;
-	GraphicButton buttonOptions;
-	GraphicButton buttonAbout;
-	GraphicButton buttonExit;
-	GraphicLabel labelVersion;
+STRINGY_ENUM( RootMenuItem,
+	NEWGAME,
+	JOINGAME,
+	SCENARIO,
+	LOADGAME,
+	OPTIONS,
+	ABOUT,
+	EXIT
+);
 
-	GraphicMessageBox *msgBox;
+class MenuStateRoot: public MenuState, public sigslot::has_slots {
+private:
+	Widgets::Button *buttons[RootMenuItem::COUNT];
+	RootMenuItem selectedItem;
+	float fade;
+	bool fadeIn, fadeOut, transition;
 
 private:
 	MenuStateRoot(const MenuStateRoot &);
@@ -40,12 +44,19 @@ private:
 public:
 	MenuStateRoot(Program &program, MainMenu *mainMenu);
 
-	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState &mouseState);
-	void render();
+	// MenuState::update()
 	void update();
-};
 
+	// Event handler
+	void onButtonClick(Widgets::ButtonPtr);
+	void onTextChanged(Widgets::TextBoxPtr);
+	void onListBoxChanged(Widgets::ListBasePtr);
+
+	void onComboBoxExpanded(Widgets::ComboBoxPtr);
+	void onComboBoxCollapsed(Widgets::ComboBoxPtr);
+
+	MenuStates getIndex() const { return MenuStates::ROOT; }
+};
 
 }}//end namespace
 

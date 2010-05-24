@@ -113,11 +113,11 @@ private:
 	Config(const char* fileName);
 
 	static bool isWindows() {
-#if defined(WIN32) || defined(WIN64)
-		return true;
-#else
-		return false;
-#endif
+#		if defined(WIN32)
+			return true;
+#		else
+			return false;
+#		endif
 	}
 
 	const char *getDefaultFontStr() const {

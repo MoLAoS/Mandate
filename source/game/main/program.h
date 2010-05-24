@@ -15,7 +15,6 @@
 #include "context.h"
 #include "timer.h"
 #include "platform_util.h"
-#include "window_gl.h"
 #include "socket.h"
 #include "metrics.h"
 #include "components.h"
@@ -23,6 +22,7 @@
 #include "CmdArgs.h"
 #include "forward_decs.h"
 #include "game_constants.h"
+#include "widget_window.h"
 
 using namespace Shared::Platform;
 using namespace Glest::Graphics;
@@ -31,6 +31,8 @@ using Glest::Sim::SimulationInterface;
 using Glest::Gui::Keymap;
 
 namespace Glest { namespace Main {
+
+using Widgets::WidgetWindow;
 
 class Program;
 class MainWindow;
@@ -50,7 +52,8 @@ public:
 	ProgramState(Program &program) : program(program) {}
 	virtual ~ProgramState(){}
 
-	virtual void render() = 0;
+    virtual void renderBg() = 0;
+    virtual void renderFg() = 0;
 	virtual void update(){}
 	virtual void updateCamera(){}
 	virtual void tick(){}
@@ -80,7 +83,7 @@ public:
 // 	class Program
 // ===============================
 
-class Program : public WindowGl {
+class Program : public WidgetWindow {
 	friend class Glest::Sim::SimulationInterface;
 private:
 	class CrashProgramState : public ProgramState {
@@ -93,14 +96,19 @@ private:
 	public:
 		CrashProgramState(Program &program, const exception *e);
 
-		virtual void render();
+		virtual void renderBg();
+		virtual void renderFg();
 		virtual void mouseDownLeft(int x, int y);
 		virtual void mouseMove(int x, int y, const MouseState &mouseState);
 		virtual void update();
 	};
 
-	static const int maxTimes;
+	static const int maxUpdateTimes = 5 * 6;
+	static const int maxUpdateBackLog = 12; ///@todo should be speed dependant
+	static const int maxTimes = 5;
+
 	static Program *singleton;
+	CmdArgs cmdArgs;
 
 	PerformanceTimer renderTimer;
 	PerformanceTimer tickTimer;
@@ -115,12 +123,13 @@ private:
 	bool visible;
 	Keymap keymap;
 
+	void init();
+
 public:
-	Program(Config &config);
+	Program(Config &config, CmdArgs &args);
 	~Program();
 	static Program *getInstance()	{return singleton;}
-	
-	void init(CmdArgs &args);
+	const CmdArgs& getCmdArgs()	const { return cmdArgs; }
 
 	bool isTerminating() const		{ return terminating;	}
 	bool isVisible() const			{ return visible;		}
@@ -129,98 +138,21 @@ public:
 	SimulationInterface* getSimulationInterface() { return simulationInterface; }
 	void setSimInterface(SimulationInterface *si);
 
-	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) {
-		const Metrics &metrics = Metrics::getInstance();
-		int vx = metrics.toVirtualX(x);
-		int vy = metrics.toVirtualY(getH() - y);
+	// Widget virtuals
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
+	virtual bool mouseWheel(Vec2i pos, int zDelta);
+	virtual bool keyDown(Key key);
+	virtual bool keyUp(Key key);
+	virtual bool keyPress(char c);
 
-		switch(mouseButton) {
-		case MouseButton::LEFT:
-			programState->mouseDownLeft(vx, vy);
-			break;
-		case MouseButton::RIGHT:
-			programState->mouseDownRight(vx, vy);
-			break;
-		case MouseButton::MIDDLE:
-			programState->mouseDownCenter(vx, vy);
-			break;
-		default:
-			break;
-		}
-	}
-
-	virtual void eventMouseUp(int x, int y, MouseButton mouseButton) {
-		const Metrics &metrics = Metrics::getInstance();
-		int vx = metrics.toVirtualX(x);
-		int vy = metrics.toVirtualY(getH() - y);
-
-		switch(mouseButton) {
-		case MouseButton::LEFT:
-			programState->mouseUpLeft(vx, vy);
-			break;
-		case MouseButton::RIGHT:
-			programState->mouseUpRight(vx, vy);
-			break;
-		case MouseButton::MIDDLE:
-			programState->mouseUpCenter(vx, vy);
-			break;
-		default:
-			break;
-		}
-	}
-
-	virtual void eventMouseMove(int x, int y, const MouseState &ms) {
-		const Metrics &metrics= Metrics::getInstance();
-		int vx = metrics.toVirtualX(x);
-		int vy = metrics.toVirtualY(getH() - y);
-
-		programState->mouseMove(vx, vy, ms);
-	}
-
-	virtual void eventMouseDoubleClick(int x, int y, MouseButton mouseButton) {
-		const Metrics &metrics= Metrics::getInstance();
-		int vx = metrics.toVirtualX(x);
-		int vy = metrics.toVirtualY(getH() - y);
-
-		switch(mouseButton){
-		case MouseButton::LEFT:
-			programState->mouseDoubleClickLeft(vx, vy);
-			break;
-		case MouseButton::RIGHT:
-			programState->mouseDoubleClickRight(vx, vy);
-			break;
-		case MouseButton::MIDDLE:
-			programState->mouseDoubleClickCenter(vx, vy);
-			break;
-		default:
-			break;
-		}
-	}
-
-	virtual void eventMouseWheel(int x, int y, int zDelta) {
-		const Metrics &metrics= Metrics::getInstance();
-		int vx = metrics.toVirtualX(x);
-		int vy = metrics.toVirtualY(getH() - y);
-
-		programState->eventMouseWheel(vx, vy, zDelta);
-	}
-
-	// FIXME: using both left & right alt/control/shift at the same time will cause these to be
-	// incorrect on some platforms (not sure that anybody cares though).
-	virtual void eventKeyDown(const Key &key)	{programState->keyDown(key);}
-	virtual void eventKeyUp(const Key &key)		{programState->keyUp(key);}
-	virtual void eventKeyPress(char c)			{programState->keyPress(c);}
-
-	virtual void eventActivate(bool active) {
-		if (!active) {
-			//minimize();
-		}
-	}
-
+		// Window virtuals
+	virtual void eventActivate(bool active) {}
 	virtual void eventResize(SizeState sizeState);
-
-	/*
 	// Unused events of Window
+	/*
 	virtual void eventCreate(){}
 	virtual void eventClose(){}
 	virtual void eventResize(){};

@@ -99,9 +99,9 @@ bool PerformanceTimer::isTime() {
 	if(cyclesDue && (times < maxTimes || maxTimes == -1)) {
 		--cyclesDue;
 		if(maxBacklog >= 0 && cyclesDue > maxBacklog) {
-			if (updateTicks == 14914) {
-				cout << "dropping ticks ... " << (cyclesDue - maxBacklog) << endl;
-			}
+			//if (updateTicks == 14914) { // if updateTimer on Silnarm's computer ;)
+			//	cout << "dropping ticks ... " << (cyclesDue - maxBacklog) << endl;
+			//}
 			lastTicks = now - updateTicks * maxBacklog; // drop ticks
 		} else {
 			lastTicks += updateTicks;
@@ -123,7 +123,7 @@ void PerformanceTimer::reset() {
 void PerformanceTimer::setFps(int fps) {
 	updateTicks = Chrono::getResolution() / fps;
 	padTicks = Chrono::getResolution() - updateTicks * fps;
-	cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;
+	//cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;
 }
 
 }}//end namespace

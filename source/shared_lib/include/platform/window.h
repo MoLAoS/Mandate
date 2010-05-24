@@ -19,9 +19,6 @@
 
 #include "types.h"
 #include "input.h"
-#if defined(WIN32)  || defined(WIN64)
-//#	include "platform_menu.h"
-#endif
 #include "timer.h"
 
 using std::map;
@@ -50,19 +47,20 @@ enum WindowStyle {
 
 class Window {
 private:
-#ifdef USE_SDL
-	int64 lastMouseDown[MouseButton::COUNT];
-	Vec2i lastMouse[MouseButton::COUNT];
-#elif defined(WIN32)  || defined(WIN64)
-	typedef map<WindowHandle, Window*> WindowMap;
+#	ifdef USE_SDL
+		int64 lastMouseDown[MouseButton::COUNT];
+		Vec2i lastMouse[MouseButton::COUNT];
 
-	static const DWORD fullscreenStyle;
-	static const DWORD windowedFixedStyle;
-	static const DWORD windowedResizeableStyle;
+#	elif defined(WIN32)
+		typedef map<WindowHandle, Window*> WindowMap;
 
-	static int nextClassName;
-	static WindowMap createdWindows;
-#endif
+		static const DWORD fullscreenStyle;
+		static const DWORD windowedFixedStyle;
+		static const DWORD windowedResizeableStyle;
+
+		static int nextClassName;
+		static WindowMap createdWindows;
+#	endif
 
 protected:
 	Input input;
@@ -71,14 +69,15 @@ protected:
 	int w;
 	int h;
 	WindowHandle handle;
-#if defined(WIN32)  || defined(WIN64)
-	string text;
-	WindowStyle windowStyle;
-	string className;
-	DWORD style;
-	DWORD exStyle;
-	bool ownDc;
-#endif
+
+#	if defined(WIN32)
+		string text;
+		WindowStyle windowStyle;
+		string className;
+		DWORD style;
+		DWORD exStyle;
+		bool ownDc;
+#	endif
 
 public:
 	Window();
@@ -136,31 +135,32 @@ protected:
 	virtual void eventDestroy() {}
 
 private:
-#ifdef USE_SDL
-	/// needed to detect double clicks
-	void handleMouseDown(SDL_Event event);
-#elif defined(WIN32)  || defined(WIN64)
-	static LRESULT CALLBACK eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	static int getNextClassName();
-	void registerWindow(WNDPROC wndProc = NULL);
-	void createWindow(LPVOID creationData = NULL);
-	void mouseyVent(int asdf, MouseButton mouseButton) {
-		const Vec2i &mousePos = input.getMousePos();
-		switch(asdf) {
-		case 0:
-			input.setMouseState(mouseButton, true);
-			eventMouseDown(mousePos.x, mousePos.y, mouseButton);
-			break;
-		case 1:
-			input.setMouseState(mouseButton, false);
-			eventMouseUp(mousePos.x, mousePos.y, mouseButton);
-			break;
-		case 2:
-			eventMouseDoubleClick(mousePos.x, mousePos.y, mouseButton);
-			break;
+#	ifdef USE_SDL
+		/// needed to detect double clicks
+		void handleMouseDown(SDL_Event event);
+
+#	elif defined(WIN32)
+		static LRESULT CALLBACK eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		static int getNextClassName();
+		void registerWindow(WNDPROC wndProc = NULL);
+		void createWindow(LPVOID creationData = NULL);
+		void mouseEvent(int asdf, MouseButton mouseButton) {
+			const Vec2i &mousePos = input.getMousePos();
+			switch(asdf) {
+			case 0:
+				input.setMouseState(mouseButton, true);
+				eventMouseDown(mousePos.x, mousePos.y, mouseButton);
+				break;
+			case 1:
+				input.setMouseState(mouseButton, false);
+				eventMouseUp(mousePos.x, mousePos.y, mouseButton);
+				break;
+			case 2:
+				eventMouseDoubleClick(mousePos.x, mousePos.y, mouseButton);
+				break;
+			}
 		}
-	}
-#endif
+#	endif
 };
 
 }}//end namespace

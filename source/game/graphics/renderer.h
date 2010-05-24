@@ -121,7 +121,8 @@ private:
 
 	//renderers
 	ModelRenderer *modelRenderer;
-	TextRenderer2D *textRenderer;
+	TextRenderer *textRenderer;
+	TextRenderer *textRendererFT;
 	ParticleRenderer *particleRenderer;
 
 	//texture managers
@@ -133,6 +134,7 @@ private:
 	//state lists
 	GLuint list3d;
 	GLuint list2d;
+	GLuint list2dNonVirt;
 	GLuint list3dMenu;
 
 	//shadows
@@ -162,7 +164,7 @@ public:
 	void initGame(GameState *game);
 	void initMenu(MainMenu *mm);
 	void reset3d();
-	void reset2d();
+	void reset2d(bool nonVirt = false);
 	void reset3dMenu();
 
 	//end
@@ -183,8 +185,12 @@ public:
 	Model *newModel(ResourceScope rs);
 	Texture2D *newTexture2D(ResourceScope rs);
 	Texture3D *newTexture3D(ResourceScope rs);
-	Font2D *newFont(ResourceScope rs);
-	TextRenderer2D *getTextRenderer() const	{return textRenderer;}
+	Font *newFont(ResourceScope rs);
+	Font *newFreeTypeFont(ResourceScope rs);
+	
+	TextRenderer *getTextRenderer() const	{return textRenderer;}
+	TextRenderer *getFreeTypeRenderer() const	{return textRendererFT;}
+
 	void manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs);
 	void updateParticleManager(ResourceScope rs);
 	void renderParticleManager(ResourceScope rs);
@@ -210,9 +216,9 @@ public:
 	void renderChatManager(const ChatManager *chatManager);
 	void renderResourceStatus();
 	void renderSelectionQuad();
-	void renderText(const string &text, const Font2D *font, float alpha, int x, int y, bool centered= false);
-	void renderText(const string &text, const Font2D *font, const Vec3f &color, int x, int y, bool centered= false);
-	void renderTextShadow(const string &text, const Font2D *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(1.f));
+	void renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered= false);
+	void renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered= false);
+	void renderTextShadow(const string &text, const Font *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(1.f));
 
     //components
 	void renderLabel(const GraphicLabel *label);
@@ -221,7 +227,7 @@ public:
 	void renderMessageBox(const GraphicMessageBox *listBox);
 	void renderTextEntry(const GraphicTextEntry *textEntry);
 	void renderTextEntryBox(const GraphicTextEntryBox *textEntryBox);
-	void renderProgressBar(int size, int x, int y, int w, int h, const Font2D *font);
+	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
     //complex rendering
     void renderSurface();
@@ -280,6 +286,7 @@ private:
 	//gl init
 	void init3dList();
     void init2dList();
+	void init2dNonVirtList();
 	void init3dListMenu(MainMenu *mm);
 
 	//misc

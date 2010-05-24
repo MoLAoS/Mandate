@@ -32,7 +32,7 @@ namespace Glest { namespace Menu {
 // =====================================================
 
 MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
-	MenuState(program, mainMenu, "config")
+	MenuState(program, mainMenu/*, "config"*/)
 {
 	Lang &lang= Lang::getInstance();
 	Config &config= Config::getInstance();

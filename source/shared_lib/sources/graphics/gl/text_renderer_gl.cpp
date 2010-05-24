@@ -14,6 +14,7 @@
 
 #include "opengl.h"
 #include "font_gl.h"
+#include "ft_font.h"
 
 #include "leak_dumper.h"
 
@@ -21,21 +22,21 @@
 namespace Shared{ namespace Graphics{ namespace Gl{
 
 // =====================================================
-//	class TextRenderer2DGl
+//	class TextRendererBM
 // =====================================================
 
-TextRenderer2DGl::TextRenderer2DGl(){
+TextRendererBM::TextRendererBM(){
 	rendering= false;
 }
 
-void TextRenderer2DGl::begin(const Font2D *font){
+void TextRendererBM::begin(const Font *font){
 	assert(!rendering);
 	rendering= true;
 
-	this->font= static_cast<const Font2DGl*>(font);
+	this->font= static_cast<const BitMapFont*>(font);
 }
 
-void TextRenderer2DGl::render(const string &text, int x, int y, bool centered){
+void TextRendererBM::render(const string &text, int x, int y, bool centered){
 	assert(rendering);
 
 	assertGl();
@@ -58,88 +59,57 @@ void TextRenderer2DGl::render(const string &text, int x, int y, bool centered){
 
 	for (int i = 0; utext[i]; ++i) {
 		switch(utext[i]) {
-		case '\t':
-			rasterPos.x += size;
-			glRasterPos2f(rasterPos.x, rasterPos.y);
-			break;
-		case '\n':
-			line++;
-			rasterPos= Vec2f(static_cast<float>(x), y-(metrics->getHeight()*2.f)*line);
-			glRasterPos2f(rasterPos.x, rasterPos.y);
-			break;
-		default:
-			glCallList(font->getHandle() + utext[i]);
+			case '\t':
+				rasterPos.x += size;
+				glRasterPos2f(rasterPos.x, rasterPos.y);
+				break;
+			case '\n':
+				line++;
+				rasterPos= Vec2f(static_cast<float>(x), y-(metrics->getHeight()*2.f)*line);
+				glRasterPos2f(rasterPos.x, rasterPos.y);
+				break;
+			default:
+				glCallList(font->getHandle() + utext[i]);
 		}
 	}
 
 	assertGl();
 }
 
-void TextRenderer2DGl::end(){
+void TextRendererBM::end(){
 	assert(rendering);
 	rendering= false;
 }
 
 // =====================================================
-//	class TextRenderer3DGl
+//	class TextRendererFT
 // =====================================================
 
-TextRenderer3DGl::TextRenderer3DGl(){
-	rendering= false;
+TextRendererFT::TextRendererFT(){
+	rendering = false;
 }
 
-void TextRenderer3DGl::begin(const Font3D *font){
+void TextRendererFT::begin(const Font *font){
+	assertGl();
 	assert(!rendering);
-	rendering= true;
-
-	this->font= static_cast<const Font3DGl*>(font);
-
-	assertGl();
-
-	//load color
+	rendering = true;
+	this->font = static_cast<const FreeTypeFont*>(font);
 	glPushAttrib(GL_TRANSFORM_BIT);
-
 	assertGl();
 }
 
-void TextRenderer3DGl::render(const string &text, float  x, float y, float size, bool centered){
+void TextRendererFT::render(const string &text, int x, int y, bool centered) {
+	assertGl();
 	assert(rendering);
-
-	assertGl();
-
 	const unsigned char *utext= reinterpret_cast<const unsigned char*>(text.c_str());
-
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glPushAttrib(GL_POLYGON_BIT);
-	float scale= size/10.f;
-	if(centered) {
-		Vec2f textDiminsions = font->getMetrics()->getTextDiminsions(text);
-		glTranslatef(x-scale * textDiminsions.x / 2.f, y - scale * textDiminsions.y / 2.f, 0);
-	}
-	else{
-		glTranslatef(x-scale, y-scale, 0);
-	}
-	glScalef(scale, scale, scale);
-
-	for (int i=0; utext[i]!='\0'; ++i) {
-		glCallList(font->getHandle()+utext[i]);
-	}
-
-	glPopMatrix();
-	glPopAttrib();
-
+	Freetype::print(font->fontData, float(x), y + font->getMetrics()->getMaxDescent(), utext);
 	assertGl();
 }
 
-void TextRenderer3DGl::end(){
+void TextRendererFT::end(){
 	assert(rendering);
 	rendering= false;
-
-	assertGl();
-
 	glPopAttrib();
-
 	assertGl();
 }
 

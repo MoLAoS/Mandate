@@ -25,10 +25,14 @@ namespace Shared { namespace Graphics {
 //	class FontMetrics
 // =====================================================
 
-class FontMetrics{
+class FontMetrics {
 private:
 	float *widths;
 	float height;
+
+	bool freeType;
+	float maxAscent;
+	float maxDescent;
 
 public:
 	FontMetrics();
@@ -37,20 +41,28 @@ public:
 	void setWidth(int i, float width)	{widths[i] = width;}
 	void setHeight(float height)		{this->height = height;}
 
+	void setMaxAscent(float ascent)		{maxAscent = ascent;}
+	void setMaxDescent(float descent)	{maxDescent = descent;}
+
+	void setFreeType(bool val)			{freeType = val;}
+
 	Vec2f getTextDiminsions(const string &str) const;
+	bool isFreeType() const { return freeType; }
 	float getHeight() const;
+	float getMaxAscent() const { return maxAscent; }
+	float getMaxDescent() const { return maxDescent; }
 };
 
 // =====================================================
 //	class Font
 // =====================================================
 
-class Font{
+class Font {
 public:
 	static const int charCount;
 
 public:
-	enum Width{
+	enum Width {
 		wNormal = 400,
 		wBold = 700
 	};
@@ -58,6 +70,7 @@ public:
 protected:
 	string type;
 	int width;
+	int size;
 	bool inited;
 	FontMetrics metrics;
 
@@ -69,43 +82,16 @@ public:
 	virtual void end() = 0;
 
 	//get
-	string getType() const					{return type;}
-	int getWidth() const					{return width;}
+	string getType() const			{return type;}
+	int getWidth() const			{return width;}
+	int getSize() const				{return size;}
+	void setSize(int size)			{this->size= size;}
+
 	const FontMetrics *getMetrics() const	{return &metrics;}
 
 	//set
 	void setType(string type)		{this->type= type;}
 	void setWidth(int width)		{this->width= width;}
-};
-
-// =====================================================
-//	class Font2D
-// =====================================================
-
-class Font2D: public Font{
-protected:
-	int size;
-
-public:
-	Font2D();
-
-	int getSize() const				{return size;}
-	void setSize(int size)			{this->size= size;}
-};
-
-// =====================================================
-//	class Font3D
-// =====================================================
-
-class Font3D: public Font{
-protected:
-	float depth;
-
-public:
-	Font3D();
-
-	float getDepth() const			{return depth;}
-	void setDepth(float depth)		{this->depth= depth;}
 };
 
 }}//end namespace

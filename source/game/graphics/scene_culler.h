@@ -175,11 +175,13 @@ private:
 	vector<Vec2f> visiblePoly;
 
 	typedef pair<Vec2i,Vec2i> Edge;
+
 	static bool EdgeComp(const Edge &e0, const Edge &e1) {
 		return (e0.first.y < e1.first.y);
 	}
 
 	typedef pair<int,int> RowExtrema;
+
 	struct Extrema {
 		int min_y, max_y;
 		int min_x, max_x;

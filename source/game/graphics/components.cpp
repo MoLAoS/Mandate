@@ -30,8 +30,10 @@
 using std::max;
 using namespace Shared::Graphics;
 
-namespace Glest { namespace Graphics {
+namespace Glest { 
 using namespace Global;
+
+namespace Graphics {
 
 // =====================================================
 // class GraphicComponent

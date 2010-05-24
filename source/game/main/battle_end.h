@@ -30,7 +30,8 @@ public:
 	BattleEnd(Program &program, bool quickExit=false);
 	~BattleEnd();
 	virtual void update();
-	virtual void render();
+	virtual void renderBg();
+	virtual void renderFg();
 	virtual void keyDown(const Key &key);
 	virtual void mouseDownLeft(int x, int y);
 };

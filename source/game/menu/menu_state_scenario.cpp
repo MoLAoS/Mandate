@@ -34,7 +34,7 @@ using namespace Shared::Xml;
 // =====================================================
 
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
-		: MenuState(program, mainMenu, "scenario")
+		: MenuState(program, mainMenu/*, "scenario"*/)
 		, msgBox(0), failAction(FailAction::INVALID) {
 	Config &config = Config::getInstance();
 	vector<string> results;

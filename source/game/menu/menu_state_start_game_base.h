@@ -33,7 +33,7 @@ protected:
 	GraphicMessageBox *msgBox;
 
 public:
-	MenuStateStartGameBase(Program &program, MainMenu *mainMenu, const string &stateName);
+	MenuStateStartGameBase(Program &program, MainMenu *mainMenu/*, const string &stateName*/);
 
 	//void mouseClick(int x, int y, MouseButton mouseButton);
 	//void mouseMove(int x, int y, const MouseState &mouseState);

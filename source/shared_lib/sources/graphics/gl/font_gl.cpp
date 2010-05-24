@@ -23,10 +23,10 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 using namespace Platform;
 
 // =====================================================
-//	class Font2DGl
+//	class BitMapFont
 // =====================================================
 
-void Font2DGl::init(){
+void BitMapFont::init(){
 	assertGl();
 
 	if(!inited){
@@ -38,40 +38,13 @@ void Font2DGl::init(){
 	assertGl();
 }
 
-void Font2DGl::end(){
+void BitMapFont::end(){
 	assertGl();
 
 	if(inited){
 		assert(glIsList(handle));
 		glDeleteLists(handle, 1);
 		inited= false;
-	}
-
-	assertGl();
-}
-
-// =====================================================
-//	class Font3DGl
-// =====================================================
-
-void Font3DGl::init(){
-	assertGl();
-
-	if(!inited){
-		handle= glGenLists(charCount);
-		createGlFontOutlines(handle, type, width, depth, charCount, metrics);
-		inited= true;
-	}
-
-	assertGl();
-}
-
-void Font3DGl::end(){
-	assertGl();
-
-	if(inited){
-		assert(glIsList(handle));
-		glDeleteLists(handle, 1);
 	}
 
 	assertGl();

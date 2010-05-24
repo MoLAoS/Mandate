@@ -129,7 +129,7 @@ void Logger::renderLoadingScreen(){
 	);
 	if ( loadingGame ) {
 		int offset= 0;
-		Font2D *font= coreData.getMenuFontNormal();
+		Font *font= coreData.getMenuFontNormal();
 		for(Strings::reverse_iterator it= logLines.rbegin(); it!=logLines.rend(); ++it){
 			float alpha= offset==0? 1.0f: 0.8f-0.8f*static_cast<float>(offset)/logLines.size();
 			renderer.renderText(

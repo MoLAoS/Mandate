@@ -25,7 +25,7 @@ namespace Glest { namespace Global {
 
 using Shared::Graphics::Texture2D;
 using Shared::Graphics::Texture3D;
-using Shared::Graphics::Font2D;
+using Shared::Graphics::Font;
 using Shared::Sound::StrSound;
 using Shared::Sound::StaticSound;
 
@@ -45,6 +45,7 @@ private:
 	SoundContainer waterSounds;
 	
 	Texture2D *logoTexture;
+	Texture2D *gplTexture;
     Texture2D *backgroundTexture;
     Texture2D *fireTexture;
     Texture2D *snowTexture;
@@ -53,13 +54,19 @@ private:
 	Texture2D *buttonSmallTexture;
 	Texture2D *buttonBigTexture;
 	Texture2D *textEntryTexture;
+	Texture2D *checkBoxTickTexture;
+	Texture2D *checkBoxCrossTexture;
 
-    Font2D *displayFont;
-	Font2D *menuFontNormal;
-	Font2D *menuFontSmall;
-	Font2D *menuFontBig;
-	Font2D *menuFontVeryBig;
-	Font2D *consoleFont;
+    Font *displayFont;
+	Font *menuFontNormal;
+	Font *menuFontSmall;
+	Font *menuFontBig;
+	Font *menuFontVeryBig;
+	Font *consoleFont;
+
+	Font *freeTypeFont;
+	Font *advancedEngineFont;
+	Font *freeTypeMenuFont;
 	
 public:
 	static CoreData &getInstance();
@@ -72,11 +79,15 @@ public:
 	Texture2D *getFireTexture() const			{return fireTexture;}
 	Texture2D *getSnowTexture() const			{return snowTexture;}
 	Texture2D *getLogoTexture() const			{return logoTexture;}
+	Texture2D *getGplTexture() const			{return gplTexture;}
 	Texture2D *getWaterSplashTexture() const	{return waterSplashTexture;}
 	Texture2D *getCustomTexture() const			{return customTexture;}
 	Texture2D *getButtonSmallTexture() const	{return buttonSmallTexture;}
 	Texture2D *getButtonBigTexture() const		{return buttonBigTexture;}
 	Texture2D *getTextEntryTexture() const		{return textEntryTexture;}
+	
+	Texture2D *getCheckBoxTickTexture() const	{return checkBoxTickTexture;}
+	Texture2D *getCheckBoxCrossTexture() const	{return checkBoxCrossTexture;}
 
 	StrSound *getIntroMusic() 				{return &introMusic;}
 	StrSound *getMenuMusic() 				{return &menuMusic;}
@@ -85,12 +96,15 @@ public:
     StaticSound *getClickSoundC()			{return &clickSoundC;}
 	StaticSound *getWaterSound()			{return waterSounds.getRandSound();}
 
-	Font2D *getDisplayFont() const			{return displayFont;}
-    Font2D *getMenuFontSmall() const		{return menuFontSmall;}
-    Font2D *getMenuFontNormal() const		{return menuFontNormal;}
-    Font2D *getMenuFontBig() const			{return menuFontBig;}
-	Font2D *getMenuFontVeryBig() const		{return menuFontVeryBig;}
-    Font2D *getConsoleFont() const			{return consoleFont;}
+	Font *getDisplayFont() const			{return displayFont;}
+    Font *getMenuFontSmall() const		{return menuFontSmall;}
+    Font *getMenuFontNormal() const		{return menuFontNormal;}
+    Font *getMenuFontBig() const			{return menuFontBig;}
+	Font *getMenuFontVeryBig() const		{return menuFontVeryBig;}
+    Font *getConsoleFont() const			{return consoleFont;}
+	Font *getFreeTypeFont() const			{return freeTypeFont;}
+	Font *getAdvancedEngineFont() const	{return advancedEngineFont;}
+	Font *getfreeTypeMenuFont() const		{return freeTypeMenuFont;}
 
 private:
 	CoreData(){};

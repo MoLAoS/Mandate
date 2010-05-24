@@ -318,9 +318,12 @@ void GameState::updateCamera() {
 // ==================== render ====================
 
 //render
-void GameState::render(){
+void GameState::renderBg(){
 	renderFps++;
 	render3d();
+}
+
+void GameState::renderFg(){
 	render2d();
 	Renderer::getInstance().swapBuffers();
 }

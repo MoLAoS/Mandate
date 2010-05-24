@@ -56,9 +56,9 @@ void BattleEnd::update(){
 	}*/
 }
 
-void BattleEnd::render() {
+void BattleEnd::renderBg() {
 	Renderer &renderer = Renderer::getInstance();
-	TextRenderer2D *textRenderer = renderer.getTextRenderer();
+	TextRenderer *textRenderer = renderer.getTextRenderer();
 	Lang &lang = Lang::getInstance();
 
 	const Stats &stats = *theSimInterface->getStats();
@@ -153,6 +153,10 @@ void BattleEnd::render() {
 	textRenderer->render(header, lm + 250, bm + 550);
 
 	textRenderer->end();
+}
+
+void BattleEnd::renderFg() {
+	Renderer &renderer= Renderer::getInstance();
 	renderer.swapBuffers();
 }
 

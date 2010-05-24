@@ -410,32 +410,19 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 // to world
 void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) {
 	_TRACE_FUNCTION();
-	//get vars
-	fixed fDamage = attacker->getAttackStrength(ast);
-	//int damage = attacker->getAttackStrength(ast);
 	int var = ast->getAttackVar();
 	int armor = attacked->getArmor();
-
 	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
 							 attacked->getType()->getArmourType());
-	
 	//compute damage
-	fDamage += random.randRange(-var, var);
-	fDamage /= (distance + 1);
-	fDamage -= armor;
-	fDamage *= damageMultiplier;
+	fixed fDamage = attacker->getAttackStrength(ast);
+	fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
 	if (fDamage < 1) {
 		fDamage = 1;
 	}
 	int damage = fDamage.intp();
-	int startingHealth = attacked->getHp();
-	int actualDamage;
-	//damage the unit
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
-		actualDamage = startingHealth;
-	} else {
-		actualDamage = damage;
 	}
 }
 

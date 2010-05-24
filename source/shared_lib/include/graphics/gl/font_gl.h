@@ -21,7 +21,7 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 //	class FontGl
 // =====================================================
 
-class FontGl{
+class FontGl {
 protected:
 	GLuint handle;
 
@@ -30,24 +30,12 @@ public:
 };
 
 // =====================================================
-//	class Font2DGl
+//	class BitMapFont
 //
 ///	OpenGL bitmap font
 // =====================================================
 
-class Font2DGl: public Font2D, public FontGl{
-public:
-	virtual void init();
-	virtual void end();
-};
-
-// =====================================================
-//	class Font3DGl
-//
-///	OpenGL outline font
-// =====================================================
-
-class Font3DGl: public Font3D, public FontGl{
+class BitMapFont: public Font, public FontGl {
 public:
 	virtual void init();
 	virtual void end();

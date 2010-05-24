@@ -20,6 +20,7 @@
 #include "components.h"
 #include "menu_background.h"
 #include "game_settings.h"
+#include "widgets.h"
 
 namespace Glest { namespace Menu {
 using namespace Main;
@@ -33,6 +34,17 @@ struct MapInfo {
 
 class MenuState;
 
+WRAPPED_ENUM( MenuStates,
+	ROOT,
+	NEW_GAME,
+	JOIN_GAME,
+	SCENARIO,
+	LOAD_GAME,
+	OPTIONS,
+	ABOUT,
+	GFX_INFO
+);
+
 // =====================================================
 // 	class MainMenu
 //
@@ -41,13 +53,14 @@ class MenuState;
 
 class MainMenu: public ProgramState {
 private:
-	//shared
-	GameSettings gameSettings;
 	MenuBackground menuBackground;
-
 	MenuState *state;
 
-	//shared
+	static const string stateNames[MenuStates::COUNT];
+	Camera stateCameras[MenuStates::COUNT];
+
+	bool setCameraOnSetState;
+
     int mouseX, mouseY;
     int mouse2dAnim;
 	int fps, lastFps;
@@ -56,13 +69,16 @@ private:
 	MainMenu(const MainMenu &);
 	const MainMenu &operator =(const MainMenu &);
 
+	void loadStateCameras();
+
 public:
 	MainMenu(Program &program);
     ~MainMenu();
 
 	MenuBackground *getMenuBackground()	{return &menuBackground;}
 
-    virtual void render();
+    virtual void renderBg();
+    virtual void renderFg();
     virtual void update();
 	virtual void tick();
 	virtual void init();
@@ -73,8 +89,8 @@ public:
 	virtual void keyPress(char c);
 
 	void setState(MenuState *state);
+	void setCameraTarget(MenuStates state);
 };
-
 
 // ===============================
 // 	class MenuState
@@ -85,23 +101,26 @@ protected:
 	Program &program;
 
 	MainMenu *mainMenu;
-	Camera camera;
+	//Camera camera;
 
 private:
 	//MenuState(const MenuState &);
 	const MenuState &operator =(const MenuState &);
 
 public:
-	MenuState(Program &program, MainMenu *mainMenu, const string &stateName);
+	MenuState(Program &program, MainMenu *mainMenu/*, const string &stateName*/)
+			: program(program), mainMenu(mainMenu) {}
+
 	virtual ~MenuState(){}
-	virtual void mouseClick(int x, int y, MouseButton mouseButton) = 0;
-	virtual void mouseMove(int x, int y, const MouseState &mouseState) = 0;
-	virtual void render() = 0;
-	virtual void update(){}
+	virtual void mouseClick(int x, int y, MouseButton mouseButton) {}
+	virtual void mouseMove(int x, int y, const MouseState &mouseState) {}
+	virtual void render() {}
+	virtual void update() {}
 	virtual void keyDown(const Key &key){}
 	virtual void keyPress(char c){}
 
-	const Camera *getCamera() const			{return &camera;}
+	virtual MenuStates getIndex() const = 0;
+	//const Camera *getCamera() const			{return &camera;}
 };
 
 }}//end namespace

@@ -40,7 +40,7 @@ const int MenuStateJoinGame::newServerIndex = 0;
 const string MenuStateJoinGame::serverFileName = "servers.ini";
 
 MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool connect, Ip serverIp):
-		MenuState(program, mainMenu, "join-game") {
+		MenuState(program, mainMenu/*, "join-game"*/) {
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
 

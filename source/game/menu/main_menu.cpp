@@ -41,9 +41,22 @@ namespace Glest { namespace Menu {
 //  class MainMenu
 // =====================================================
 
+const string MainMenu::stateNames[] = {
+	"root",
+	"new-game",
+	"join-game",
+	"scenario",
+	"loadgame",
+	"config",
+	"about",
+	"info"
+};
+
 // ===================== PUBLIC ========================
 
-MainMenu::MainMenu(Program &program) : ProgramState(program) {
+MainMenu::MainMenu(Program &program)
+		: ProgramState(program)
+		, setCameraOnSetState(true) {
 	mouseX = 100;
 	mouseY = 100;
 
@@ -51,6 +64,8 @@ MainMenu::MainMenu(Program &program) : ProgramState(program) {
 
 	fps = 0;
 	lastFps = 0;
+
+	loadStateCameras();
 
 	setState(new MenuStateRoot(program, this));
 }
@@ -66,15 +81,12 @@ void MainMenu::init() {
 	Renderer::getInstance().initMenu(this);
 }
 
-//asynchronus render update
-void MainMenu::render() {
-
-	Config &config = Config::getInstance();
+// synchronous render update
+void MainMenu::renderBg() {
 	Renderer &renderer = Renderer::getInstance();
 	CoreData &coreData = CoreData::getInstance();
 
 	fps++;
-
 	renderer.clearBuffers();
 
 	//3d
@@ -83,6 +95,12 @@ void MainMenu::render() {
 	renderer.loadCameraMatrix(menuBackground.getCamera());
 	renderer.renderMenuBackground(&menuBackground);
 	renderer.renderParticleManager(ResourceScope::MENU);
+}
+
+void MainMenu::renderFg() {
+	Config &config = Config::getInstance();
+	Renderer &renderer = Renderer::getInstance();
+	CoreData &coreData = CoreData::getInstance();
 
 	//2d
 	renderer.reset2d();
@@ -90,15 +108,13 @@ void MainMenu::render() {
 	renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
 
 	if (config.getMiscDebugMode()) {
-		renderer.renderText(
-				"FPS: " + intToStr(lastFps),
-				coreData.getMenuFontNormal(), Vec3f(1.f), 10, 10, false);
+		Font *font = coreData.getMenuFontNormal();
+		renderer.renderText("FPS: " + intToStr(lastFps), font, Vec3f(1.f), 10, 10, false);
 	}
-
 	renderer.swapBuffers();
 }
 
-//syncronus update
+// synchronous update
 void MainMenu::update() {
 	Renderer::getInstance().updateParticleManager(ResourceScope::MENU);
 	mouse2dAnim = (mouse2dAnim + 1) % Renderer::maxMouse2dAnim;
@@ -138,41 +154,45 @@ void MainMenu::setState(MenuState *state) {
 	this->state = state;
 	GraphicComponent::resetFade();
 
-	menuBackground.setTargetCamera(state->getCamera());
+	if (setCameraOnSetState) {
+		menuBackground.setTargetCamera(&stateCameras[state->getIndex()]);
+	} else {
+		setCameraOnSetState = true;
+	}
 }
 
+void MainMenu::setCameraTarget(MenuStates state) {
+	menuBackground.setTargetCamera(&stateCameras[state]);
+	setCameraOnSetState = false;
+}
 
-// =====================================================
-//  class MenuState
-// =====================================================
-
-MenuState::MenuState(Program &program, MainMenu *mainMenu, const string &stateName)
-		: program(program), mainMenu(mainMenu), camera() {
-
+void MainMenu::loadStateCameras() {
 	//camera
 	XmlTree xmlTree;
 	xmlTree.load("data/core/menu/menu.xml");
 	const XmlNode *menuNode = xmlTree.getRootNode();
 	const XmlNode *cameraNode = menuNode->getChild("camera");
 
-	//position
-	const XmlNode *positionNode = cameraNode->getChild(stateName + "-position");
-	Vec3f startPosition;
-	startPosition.x = positionNode->getAttribute("x")->getFloatValue();
-	startPosition.y = positionNode->getAttribute("y")->getFloatValue();
-	startPosition.z = positionNode->getAttribute("z")->getFloatValue();
-	camera.setPosition(startPosition);
+	foreach_enum (MenuStates, state) {
+		//position
+		const XmlNode *positionNode = cameraNode->getChild(stateNames[state] + "-position");
+		Vec3f startPosition;
+		startPosition.x = positionNode->getAttribute("x")->getFloatValue();
+		startPosition.y = positionNode->getAttribute("y")->getFloatValue();
+		startPosition.z = positionNode->getAttribute("z")->getFloatValue();
+		stateCameras[state].setPosition(startPosition);
 
-	//rotation
-	const XmlNode *rotationNode = cameraNode->getChild(stateName + "-rotation");
-	Vec3f startRotation;
-	startRotation.x = rotationNode->getAttribute("x")->getFloatValue();
-	startRotation.y = rotationNode->getAttribute("y")->getFloatValue();
-	startRotation.z = rotationNode->getAttribute("z")->getFloatValue();
-	camera.setOrientation(Quaternion(EulerAngles(
-			degToRad(startRotation.x),
-			degToRad(startRotation.y),
-			degToRad(startRotation.z))));
+		//rotation
+		const XmlNode *rotationNode = cameraNode->getChild(stateNames[state] + "-rotation");
+		Vec3f startRotation;
+		startRotation.x = rotationNode->getAttribute("x")->getFloatValue();
+		startRotation.y = rotationNode->getAttribute("y")->getFloatValue();
+		startRotation.z = rotationNode->getAttribute("z")->getFloatValue();
+		stateCameras[state].setOrientation(Quaternion(EulerAngles(
+				degToRad(startRotation.x),
+				degToRad(startRotation.y),
+				degToRad(startRotation.z))));
+	}
 }
 
 }}//end namespace

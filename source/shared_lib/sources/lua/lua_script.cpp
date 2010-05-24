@@ -196,12 +196,12 @@ Vec2i LuaArguments::getVec2i(int argumentIndex) const{
 	// lookup the value at the key and push it onto the stack
 	lua_next(luaState, argumentIndex-1);
 	// store the value into the vector and pop it off the stack
-	v.x = lua_tonumber(luaState, -1);
+	v.x = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
 	// next key is still on top of the stack
 	lua_next(luaState, argumentIndex-1);
-	v.y = lua_tonumber(luaState, -1);
+	v.y = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	//pop the key and the value from the stack
 	lua_pop(luaState, 2);
 
@@ -223,15 +223,15 @@ Vec3i LuaArguments::getVec3i(int ndx) const {
 	lua_pushnil(luaState);
 
 	lua_next(luaState, ndx-1);
-	v.x = lua_tonumber(luaState, -1);
+	v.x = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
 	lua_next(luaState, ndx-1);
-	v.y = lua_tonumber(luaState, -1);
+	v.y = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
 	lua_next(luaState, ndx-1);
-	v.z = lua_tonumber(luaState, -1);
+	v.z = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 2);
 
 	return v;
@@ -252,19 +252,19 @@ Vec4i LuaArguments::getVec4i(int ndx) const {
 	lua_pushnil(luaState);
 
 	lua_next(luaState, ndx-1);
-	v.x = lua_tonumber(luaState, -1);
+	v.x = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
 	lua_next(luaState, ndx-1);
-	v.y = lua_tonumber(luaState, -1);
+	v.y = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
 	lua_next(luaState, ndx-1);
-	v.z = lua_tonumber(luaState, -1);
+	v.z = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 1);
 
 	lua_next(luaState, ndx-1);
-	v.w = lua_tonumber(luaState, -1);
+	v.w = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
 	lua_pop(luaState, 2);
 
 	return v;

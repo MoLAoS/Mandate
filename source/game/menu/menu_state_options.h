@@ -57,6 +57,8 @@ public:
 	void mouseMove(int x, int y, const MouseState &mouseState);
 	void render();
 
+	MenuStates getIndex() const { return MenuStates::OPTIONS; }
+
 private:
 	void saveConfig();
 	void setupListBoxLang();

@@ -47,8 +47,8 @@ public:
 	}
 
 	template<typename S> explicit Vec2(const Vec2<S> &v) {
-		this->x = v.x;
-		this->y = v.y;
+		this->x = T(v.x);
+		this->y = T(v.y);
 	}
 
 	Vec2(T x, T y) {
@@ -70,66 +70,69 @@ public:
 		return reinterpret_cast<const T*>(this);
 	}
 
-	bool operator ==(const Vec2<T> &v) const {
+	bool operator==(const Vec2<T> &v) const {
 		return x == v.x && y == v.y;
 	}
 
-	bool operator !=(const Vec2<T> &v) const {
+	bool operator!=(const Vec2<T> &v) const {
 		return x != v.x || y != v.y;
 	}
 
-   bool operator < ( const Vec2<T> &v ) const
-   {
-      return x < v.x || ( x == v.x && y < v.y );
-   }
+	bool operator< ( const Vec2<T> &v ) const {
+		return x < v.x && y < v.y;
+	}
 
-	Vec2<T> operator +(const Vec2<T> &v) const {
+	bool operator>= ( const Vec2<T> &v ) const {
+		return x >= v.x && y >= v.y;
+	}
+
+	Vec2<T> operator+(const Vec2<T> &v) const {
 		return Vec2(x + v.x, y + v.y);
 	}
 
-	Vec2<T> operator -(const Vec2<T> &v) const {
+	Vec2<T> operator-(const Vec2<T> &v) const {
 		return Vec2(x -v.x, y - v.y);
 	}
 
-	Vec2<T> operator -() const {
+	Vec2<T> operator-() const {
 		return Vec2(-x, -y);
 	}
 
-	Vec2<T> operator *(const Vec2<T> &v) const {
+	Vec2<T> operator*(const Vec2<T> &v) const {
 		return Vec2(x*v.x, y*v.y);
 	}
 
-	Vec2<T> operator *(T s) const {
+	Vec2<T> operator*(T s) const {
 		return Vec2(x * s, y * s);
 	}
 
-	Vec2<T> operator /(const Vec2<T> &v) const {
+	Vec2<T> operator/(const Vec2<T> &v) const {
 		return Vec2(x / v.x, y / v.y);
 	}
 
-	Vec2<T> operator /(T s) const {
+	Vec2<T> operator/(T s) const {
 		return Vec2(x / s, y / s);
 	}
 
-	Vec2<T> operator +=(const Vec2<T> &v) {
+	Vec2<T> operator+=(const Vec2<T> &v) {
 		x += v.x;
 		y += v.y;
 		return *this;
 	}
 
-	Vec2<T> operator -=(const Vec2<T> &v) {
+	Vec2<T> operator-=(const Vec2<T> &v) {
 		x -= v.x;
 		y -= v.y;
 		return *this;
 	}
 
-	Vec2<T>& operator *=(const T &v) {
+	Vec2<T>& operator*=(const T &v) {
 		x *= v;
 		y *= v;
 		return *this;
 	}
 
-	Vec2<T>& operator /=(const T &v) {
+	Vec2<T>& operator/=(const T &v) {
 		x /= v;
 		y /= v;
 		return *this;
@@ -168,7 +171,7 @@ public:
 // class Vec3
 // =====================================================
 
-ALIGN_VEC12_DECL template<typename T> class Vec3 {
+template<typename T> class Vec3 {
 public:
 	union {
 		struct { T x, y, z; };
@@ -342,21 +345,13 @@ public:
 			dest[i] = srcA[i].lerp(t, srcB[i]);
 		}
 	}
-
-#ifdef ALIGN_12BYTE_VECTORS
-	static void* operator new(size_t size)		{return _mm_malloc(size, 16);}
-	static void* operator new[](size_t size)	{return _mm_malloc(size, 16);}
-	static void operator delete(void* ptr)		{_mm_free(ptr);}
-	static void operator delete[](void* ptr)	{_mm_free(ptr);}
-#endif
-
-} ALIGN_VEC12_ATTR;
+};
 
 // =====================================================
 // class Vec4
 // =====================================================
 
-ALIGN_VEC_DECL template<typename T> class Vec4 {
+template<typename T> class Vec4 {
 public:
 	union {
 		struct { T x, y, z, w; };
@@ -489,15 +484,7 @@ public:
 			dest[i] = srcB[i].lerp(t, srcA[i]);
 		}
 	}
-
-#ifdef ALIGN_VECTORS
-	static void* operator new(size_t size)		{return _mm_malloc(size, 16);}
-	static void* operator new[](size_t size)	{return _mm_malloc(size, 16);}
-	static void operator delete(void* ptr)		{_mm_free(ptr);}
-	static void operator delete[](void* ptr)	{_mm_free(ptr);}
-#endif
-
-} ALIGN_VEC_ATTR;
+};
 
 typedef Vec2<int> Vec2i;
 typedef Vec3<int> Vec3i;

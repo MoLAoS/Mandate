@@ -28,6 +28,8 @@
 #include "socket.h"
 #include "auto_test.h"
 
+#include "widgets.h"
+
 #include "leak_dumper.h"
 using namespace Glest::Net;
 
@@ -37,119 +39,211 @@ namespace Glest { namespace Menu {
 // 	class MenuStateRoot
 // =====================================================
 
-MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu):
-	MenuState(program, mainMenu, "root")
-{
+MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu/*, "root"*/)
+		, selectedItem(RootMenuItem::INVALID)
+		, fade(0.f)
+		, fadeIn(true)
+		, fadeOut(false)
+		, transition(false) {
 	Lang &lang= Lang::getInstance();
+	const Metrics &metrics = Metrics::getInstance();
+	const CoreData &coreData = CoreData::getInstance();
 
-	buttonNewGame.init(425, 370, 150);
-    buttonJoinGame.init(425, 330, 150);
-    buttonScenario.init(425, 290, 150);
-	buttonLoadGame.init(425, 250, 150);
-    buttonOptions.init(425, 210, 150);
-    buttonAbout.init(425, 170, 150);
-    buttonExit.init(425, 130, 150);
-	labelVersion.init(520, 460);
+	// Buttons Panel
+	Vec2i pos(metrics.getScreenW() / 2 - 125, 100);
+	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, 350));
+	pnl->setPaddingParams(10, 15);
+	pnl->setBorderStyle(Widgets::BorderStyle::RAISE);
 
-	buttonNewGame.setText(lang.get("NewGame"));
-	buttonJoinGame.setText(lang.get("JoinGame"));
-	buttonScenario.setText(lang.get("Scenario"));
-	buttonLoadGame.setText(lang.get("LoadGame"));
-	buttonOptions.setText(lang.get("Options"));
-	buttonAbout.setText(lang.get("About"));
-	buttonExit.setText(lang.get("Exit"));
-	labelVersion.setText("Advanced Engine " + gaeVersionString);
+	// Buttons
+	Font *font = coreData.getfreeTypeMenuFont();//coreData.getMenuFontNormal();
+	foreach_enum (RootMenuItem, i) {
+		buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200,30));
+		buttons[i]->setTextParams(lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
+		buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
+	}
+
+	program.addNewLayer("bg");
+
+	// Glest Logo PicturePanel
+	pos = Vec2i(metrics.getScreenW() / 2 - 256, 450);
+	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(512, 256));
+	pp->setImage(coreData.getLogoTexture());
+	pp->setAutoLayout(false);
+	
+	// Advanced Engine labels
+	font = coreData.getAdvancedEngineFont();
+	Widgets::StaticText *label = new Widgets::StaticText(pp);
+	label->setTextParams("Advanced", Vec4f(1.f), font, true);
+	Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
+	label->setPos(Vec2i(255 - sz.x, 60));
+	label->setSize(sz);
+
+	label = new Widgets::StaticText(pp);
+	label->setTextParams("Engine", Vec4f(1.f), font, true);
+	label->setPos(Vec2i(285, 60));
+	label->setSize(label->getTextDimensions() + Vec2i(10,5));
+
+	pos = Vec2i(285 + label->getSize().x, 62);
+	// Version label
+	font = coreData.getFreeTypeFont();
+	label = new Widgets::StaticText(pp);
+	label->setTextParams("0.3.0"/*gaeVersionString*/, Vec4f(1.f), font, true);
+	
+	sz = label->getTextDimensions() + Vec2i(10,5);
+	label->setPos(pos/*Vec2i(256 - sz.x / 2, 10)*/);
+	label->setSize(sz);
+	
+	// gpl logo
+	pos = Vec2i(metrics.getScreenW() / 2 - 64, 25);
+	new Widgets::StaticImage(&program, pos, Vec2i(128, 64), coreData.getGplTexture());
+
+	program.setActiveLayer("root");
+
+	if (program.getCmdArgs().isTest("widgets")) {
+		// testing TextBox
+		font = coreData.getfreeTypeMenuFont();
+		int h = int(font->getMetrics()->getHeight() + 1.f);
+		Widgets::TextBox *txtBox = new Widgets::TextBox(&program, Vec2i(10,10), Vec2i(200, h));
+		txtBox->setTextParams("", Vec4f(1.f), font, true, false);
+		txtBox->setTextPos(Vec2i(5,0));
+		txtBox->TextChanged.connect(this, &MenuStateRoot::onTextChanged);
+
+		// testing ListBox
+		int yPos = 10 + txtBox->getHeight() + 20;
+		Widgets::ListBox *listBox = new Widgets::ListBox(&program, Vec2i(10, yPos), Vec2i(200, 250));
+		vector<string> items;
+		items.push_back("Carrot");
+		items.push_back("Broccoli");
+		items.push_back("Capsicum");
+		items.push_back("Cauliflower");
+		items.push_back("Asparagus");
+		items.push_back("Cucumber");
+		items.push_back("Eggplant");
+		items.push_back("Avacado");
+
+		listBox->addItems(items);
+		listBox->SelectionChanged.connect(this, &MenuStateRoot::onListBoxChanged);
+
+		listBox->setSize(Vec2i(listBox->getWidth(), listBox->getPrefHeight()));
+
+		items.clear();
+		items.push_back("Pear");
+		items.push_back("Apple");
+		items.push_back("Orange");
+		items.push_back("Banana");
+
+		// testing ComboBox
+		yPos = listBox->getScreenPos().y + listBox->getHeight() + 20;
+		Widgets::ComboBox *cmbBox = new Widgets::ComboBox(&program, Vec2i(10, yPos), Vec2i(200, h + 6));
+		cmbBox->addItems(items);
+		cmbBox->setSelected(0);
+
+		cmbBox->ListExpanded.connect(this, &MenuStateRoot::onComboBoxExpanded);
+		cmbBox->ListCollapsed.connect(this, &MenuStateRoot::onComboBoxCollapsed);
+
+		// CheckBox
+		yPos += cmbBox->getHeight() + 20;
+		Widgets::CheckBox *checkBox = new Widgets::CheckBox(&program);
+		checkBox->setPos(Vec2i(10, yPos));
+		checkBox->setSize(checkBox->getPrefSize());
+
+	} // test_widgets
+
+	// set fade == 0
+	program.setFade(fade);
 
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
-
-	msgBox = NULL;
 }
 
-void MenuStateRoot::mouseClick(int x, int y, MouseButton mouseButton){
-
-	CoreData &coreData=  CoreData::getInstance();
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-	Lang &lang= Lang::getInstance();
-
-	if(buttonNewGame.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateNewGame(program, mainMenu));
-    }
-	else if(buttonJoinGame.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateJoinGame(program, mainMenu));
-    }
-	else if(buttonScenario.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateScenario(program, mainMenu));
-    }
-    else if(buttonOptions.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateOptions(program, mainMenu));
-    }
-	else if(buttonLoadGame.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateLoadGame(program, mainMenu));
-	}
-    else if(buttonAbout.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateAbout(program, mainMenu));
-    }
-    else if(buttonExit.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundA());
-		program.exit();
-	} 
-	else if(msgBox && msgBox->mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundC());
-		delete msgBox;
-		msgBox = NULL;
-	}
+void MenuStateRoot::onTextChanged(Widgets::TextBox *txtBox) {
+	cout << "TextChanged: " << txtBox->getText() << endl;
 }
 
-void MenuStateRoot::mouseMove(int x, int y, const MouseState &ms){
-	buttonNewGame.mouseMove(x, y);
-    buttonJoinGame.mouseMove(x, y);
-    buttonScenario.mouseMove(x, y);
-	buttonLoadGame.mouseMove(x, y);
-    buttonOptions.mouseMove(x, y);
-    buttonAbout.mouseMove(x, y);
-    buttonExit.mouseMove(x,y);
-
-	if(msgBox) {
-		msgBox->mouseMove(x, y);
-		return;
-	}
+void MenuStateRoot::onListBoxChanged(Widgets::ListBase *lst) {
+	cout << "SelectionChanged: " << lst->getSelectedItem()->getText() << endl;
 }
 
-void MenuStateRoot::render(){
-	Renderer &renderer= Renderer::getInstance();
-	CoreData &coreData= CoreData::getInstance();
-	const Metrics &metrics= Metrics::getInstance();
+void MenuStateRoot::onComboBoxExpanded(Widgets::ComboBoxPtr cb) {
+	program.getLayer("root")->setFade(0.5f);
+}
 
-	int w= 300;
-	int h= 150;
+void MenuStateRoot::onComboBoxCollapsed(Widgets::ComboBoxPtr cb) {
+	program.getLayer("root")->setFade(1.f);
+}
 
-	renderer.renderTextureQuad(
-		(metrics.getVirtualW()-w)/2, 495-h/2, w, h,
-		coreData.getLogoTexture(), GraphicComponent::getFade());
-	renderer.renderButton(&buttonNewGame);
-	renderer.renderButton(&buttonJoinGame);
-	renderer.renderButton(&buttonScenario);
-	renderer.renderButton(&buttonLoadGame);
-	renderer.renderButton(&buttonOptions);
-	renderer.renderButton(&buttonAbout);
-	renderer.renderButton(&buttonExit);
-	renderer.renderLabel(&labelVersion);
-
-	if(msgBox) {
-		renderer.renderMessageBox(msgBox);
+void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
+	// which button ?
+	foreach_enum (RootMenuItem, i) {
+		buttons[i]->setEnabled(false);
+		if (btn == buttons[i]) {
+			selectedItem = i;
+		}
 	}
+	MenuStates targetState = MenuStates::INVALID;
+	switch (selectedItem) {
+		case RootMenuItem::NEWGAME:	 targetState = MenuStates::NEW_GAME;	break;
+		case RootMenuItem::JOINGAME: targetState = MenuStates::JOIN_GAME;	break;
+		case RootMenuItem::SCENARIO: targetState = MenuStates::SCENARIO;	break;
+		case RootMenuItem::OPTIONS:  targetState = MenuStates::OPTIONS;		break;
+		case RootMenuItem::LOADGAME: targetState = MenuStates::LOAD_GAME;	break;
+		case RootMenuItem::ABOUT:	 targetState = MenuStates::ABOUT;		break;
+		default: break;
+	}
+	if (targetState != MenuStates::INVALID) {
+		mainMenu->setCameraTarget(targetState);
+	}
+	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
+	CoreData &coreData = CoreData::getInstance();
+	StaticSound *clickSound;
+	if (selectedItem == RootMenuItem::EXIT) {
+		clickSound = coreData.getClickSoundA();
+	} else {
+		clickSound = coreData.getClickSoundB();
+	}
+	soundRenderer.playFx(clickSound);
+	fadeOut = true;
 }
 
 void MenuStateRoot::update(){
 	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateRoot(program, mainMenu);
+	}
+	if (fadeIn) {
+		fade += 0.05;
+		if (fade > 1.f) {
+			fade = 1.f;
+			fadeIn = false;
+		}
+		program.setFade(fade);
+	} else if (fadeOut) {
+		fade -= 0.05;
+		if (fade < 0.f) {
+			fade = 0.f;
+			transition = true;
+			fadeOut = false;
+		}
+		program.setFade(fade);
+	}
+	if (transition) {
+		program.clear();
+		MenuState *newState = 0;
+		switch (selectedItem) {
+			case RootMenuItem::NEWGAME: newState = new MenuStateNewGame(program, mainMenu); break;
+			case RootMenuItem::JOINGAME: newState = new MenuStateJoinGame(program, mainMenu); break;
+			case RootMenuItem::SCENARIO: newState = new MenuStateScenario(program, mainMenu); break;
+			case RootMenuItem::OPTIONS: newState = new MenuStateOptions(program, mainMenu); break;
+			case RootMenuItem::LOADGAME: newState = new MenuStateLoadGame(program, mainMenu); break;
+			case RootMenuItem::ABOUT: newState = new MenuStateAbout(program, mainMenu); break;
+			default: break;
+		}
+		if (newState) {
+			mainMenu->setState(newState);
+		} else {
+			program.exit();
+		}
 	}
 }
 

@@ -30,8 +30,8 @@ namespace Glest { namespace Menu {
 // 	class MenuStateStartGameBase
 // =====================================================
 
-MenuStateStartGameBase::MenuStateStartGameBase(Program &program, MainMenu *mainMenu, const string &stateName) :
-		MenuState(program, mainMenu, stateName) {
+MenuStateStartGameBase::MenuStateStartGameBase(Program &program, MainMenu *mainMenu/*, const string &stateName*/) :
+		MenuState(program, mainMenu/*, stateName*/) {
 	msgBox = NULL;
 }
 

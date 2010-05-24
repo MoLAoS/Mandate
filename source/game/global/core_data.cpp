@@ -74,6 +74,18 @@ void CoreData::load() {
 	logoTexture->setMipmap(false);
 	logoTexture->getPixmap()->load(dir+"/menu/textures/logo.tga");
 
+	gplTexture = renderer.newTexture2D(ResourceScope::GLOBAL);
+	gplTexture->setMipmap(false);
+	gplTexture->getPixmap()->load(dir+"/menu/textures/gplv3.tga");
+
+	checkBoxCrossTexture = renderer.newTexture2D(ResourceScope::GLOBAL);
+	checkBoxCrossTexture ->setMipmap(false);
+	checkBoxCrossTexture ->getPixmap()->load(dir+"/menu/textures/button_small_unchecked.tga");
+
+	checkBoxTickTexture = renderer.newTexture2D(ResourceScope::GLOBAL);
+	checkBoxTickTexture->setMipmap(false);
+	checkBoxTickTexture->getPixmap()->load(dir+"/menu/textures/button_small_checked.tga");
+
 	waterSplashTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
 	waterSplashTexture->setFormat(Texture::fAlpha);
 	waterSplashTexture->getPixmap()->init(1);
@@ -122,6 +134,23 @@ void CoreData::load() {
 	consoleFont= renderer.newFont(ResourceScope::GLOBAL);
 	consoleFont->setType(consoleFontName);
 	consoleFont->setSize(computeFontSize(16));
+
+	// FreeType fonts...
+	string fontName = dir + "/menu/fonts/dum1.ttf";
+	freeTypeFont = renderer.newFreeTypeFont(ResourceScope::GLOBAL);
+	freeTypeFont->setType(fontName);
+	freeTypeFont->setSize(24);
+	//freeTypeFont->setWidth(Font::wBold);
+
+	fontName = dir + "/menu/fonts/dum1wide.ttf";
+	advancedEngineFont = renderer.newFreeTypeFont(ResourceScope::GLOBAL);
+	advancedEngineFont->setType(fontName);
+	advancedEngineFont->setSize(36);
+
+	fontName = dir + "/menu/fonts/zekton_free.ttf";
+	freeTypeMenuFont = renderer.newFreeTypeFont(ResourceScope::GLOBAL);
+	freeTypeMenuFont->setType(fontName);
+	freeTypeMenuFont->setSize(14);
 
 	//sounds
     clickSoundA.load(dir+"/menu/sound/click_a.wav");

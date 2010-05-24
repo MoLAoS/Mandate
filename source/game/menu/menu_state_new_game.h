@@ -60,6 +60,8 @@ public:
 	void render();
 	void update();
 
+	MenuStates getIndex() const { return MenuStates::NEW_GAME; }
+
 private:
     void loadGameSettings();
 	//void loadMapInfo(string file, MapInfo *mapInfo);

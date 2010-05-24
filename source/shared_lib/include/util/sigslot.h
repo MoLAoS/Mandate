@@ -67,15 +67,19 @@ public:
 
 	void emit(ArgType a1) {
 		const_iterator itEnd = connections.end();
-		for (const_iterator it = connections.begin(); it != itEnd; ++it) {
+		const_iterator it = connections.begin();
+		while (it != itEnd) {
 			(*it)->emit(a1);
+			++it;
 		}
 	}
 
 	void operator()(ArgType a1) {
 		const_iterator itEnd = connections.end();
-		for (const_iterator it = connections.begin(); it != itEnd; ++it) {
+		const_iterator it = connections.begin();
+		while (it != itEnd) {
 			(*it)->emit(a1);
+			++it;
 		}
 	}
 
@@ -99,7 +103,7 @@ public:
 			if ((*it)->getdest() == pclass) {
 				delete *it;
 				connections.erase(it);
-				(*it)->getdest()/*pclass*/->signal_disconnect(this);
+				pclass->signal_disconnect(this);
 				return;
 			}
 			++it;

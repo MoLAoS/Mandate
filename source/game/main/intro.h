@@ -16,43 +16,10 @@
 
 #include "program.h"
 #include "font.h"
-#include "vec.h"
 #include "texture.h"
-
-using std::vector;
-
-using Shared::Math::Vec2i;
-using Shared::Math::Vec2f;
-using Shared::Math::Vec3f;
-using Shared::Graphics::Font2D;
-using Shared::Graphics::Texture2D;
+#include "widgets.h"
 
 namespace Glest { namespace Main {
-
-// =====================================================
-//	class Text
-// =====================================================
-
-class Text{
-private:
-	string text;
-	Vec2i pos;
-    Vec2i size;
-	int time;
-	const Font2D *font;
-	const Texture2D *texture;
-
-public:
-	Text(const string &text, const Vec2i &pos, int time, const Font2D *font);
-	Text(const Texture2D *texture, const Vec2i &pos, const Vec2i &size, int time);
-
-	const string &getText() const		{return text;}
-	const Font2D *getFont() const		{return font;}
-	const Vec2i &getPos() const			{return pos;}
-	const Vec2i &getSize() const		{return size;}
-	int getTime() const					{return time;}
-	const Texture2D *getTexture() const	{return texture;}
-};
 
 // =====================================================
 // 	class Intro  
@@ -62,21 +29,20 @@ public:
 
 class Intro: public ProgramState {
 private:
-	static const int introTime;
-	static const int appearTime;
-	static const int showTime;
-	static const int disapearTime;
-
-private:
-	vector<Text> texts;
 	int timer;
+
+	Widgets::PicturePanel *logoPanel;
+	Widgets::StaticText *lblAdvanced, *lblEngine, *lblVersion, *lblWebsite;
 
 public:
 	Intro(Program &program);
 	virtual void update();
-	virtual void render();
+	virtual void renderBg();
+	virtual void renderFg();
 	virtual void keyDown(const Key &key);
 	virtual void mouseUpLeft(int x, int y);
+
+	virtual int getUpdateInterval() const { return 4; } // get 60 updates per second.
 };
 
 }}//end namespace

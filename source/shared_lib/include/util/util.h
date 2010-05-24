@@ -134,6 +134,7 @@ public:
 		: EnumNamesBase(valueList, count, lazy, enumName) {}
 	~EnumNames() {}
 
+	const char* operator[](int i) const {return get(i, E::COUNT);} 
 	const char* operator[](E e) const {return get(e, E::COUNT);} // passing E::COUNT here will inline the value in EnumNamesBase::get()
 	E match(const char *value) const {return enum_cast<E>(_match(value));} // this will inline a function call to the fairly large _match() function
 };

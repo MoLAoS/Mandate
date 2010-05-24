@@ -19,6 +19,7 @@
 #include "model_gl.h"
 #include "texture_gl.h"
 #include "font_gl.h"
+#include "ft_font.h"
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
@@ -28,14 +29,13 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 
 class GraphicsFactoryBasicGl: public GraphicsFactory{
 public:
-	virtual TextRenderer2D *newTextRenderer2D()	{return new TextRenderer2DGl();}
-	virtual TextRenderer3D *newTextRenderer3D()	{return new TextRenderer3DGl();}
+	virtual TextRenderer *newTextRendererBM()	{return new TextRendererBM();}
 	virtual ModelRenderer *newModelRenderer()	{return new ModelRendererGl();}
 	virtual Context *newContext()				{return new ContextGl();}
 	virtual Model *newModel()					{return new ModelGl();}
 	virtual Texture2D *newTexture2D()			{return new Texture2DGl();}
-	virtual Font2D *newFont2D()					{return new Font2DGl();}
-	virtual Font3D *newFont3D()					{return new Font3DGl();}
+	virtual Font *newBitMapFont()					{return new BitMapFont();}
+	virtual Font *newFreeTypeFont()			{return new FreeTypeFont();}
 };
 
 }}}//end namespace

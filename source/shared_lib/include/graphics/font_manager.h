@@ -35,8 +35,8 @@ protected:
 public:
 	virtual ~FontManager();
 
-	Font2D *newFont2D();
-	Font3D *newFont3D();
+	Font* newBitMapFont();
+	Font* newFreeTypeFont();
 
 	void init();
 	void end();

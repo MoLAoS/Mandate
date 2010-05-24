@@ -33,11 +33,10 @@
 using std::vector;
 using std::ifstream;
 
-namespace Glest { namespace Sim {
-	class SimulationInterface;
-}}
-
 namespace Glest { 
+namespace Sim {
+	class SimulationInterface;
+}
 namespace Graphics {
 	class GraphicMessageBox;
 	class GraphicTextEntryBox;
@@ -115,7 +114,8 @@ public:
 	virtual void init();
 	virtual void update();
 	virtual void updateCamera();
-	virtual void render();
+	virtual void renderBg();
+	virtual void renderFg();
 	virtual void tick();
 
 	// event handlers

@@ -48,8 +48,11 @@ if(DEFINED GAE_WINDEPS)
 		#message("WXWIN Not Defined, setting wxWidgets_ROOT_DIR to windeps/wx")
 		set(wxWidgets_ROOT_DIR ${GAE_WINDEPS}/wx)
 	endif(DEFINED WXWIN)
-#else(DEFINED GAE_WINDEPS) # it's defined after first run which breaks non windows next run
-	#set (GAE_WINDEPS "" CACHE PATH "Windows dependencies folder")
+	set(ENV{FREETYPE_DIR} ${GAE_WINDEPS})
+else(DEFINED GAE_WINDEPS)
+	if (WIN32)
+		set (GAE_WINDEPS "" CACHE PATH "Windows dependencies folder")
+	endif(WIN32)
 endif(DEFINED GAE_WINDEPS)
 
 find_package(Lua51 5.1 REQUIRED)
@@ -59,6 +62,7 @@ find_package(ZLIB REQUIRED)
 find_package(CppUnit)
 find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
+find_package(Freetype REQUIRED)
 
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support")

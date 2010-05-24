@@ -273,39 +273,39 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			eventWindow->input.setMousePos(Vec2i(mousePos.x, mousePos.y));
 			switch(msg) {
 			case WM_LBUTTONDOWN:
-				eventWindow->mouseyVent(0, MouseButton::LEFT);
+				eventWindow->mouseEvent(0, MouseButton::LEFT);
 				return 0;
 
 			case WM_LBUTTONUP:
-				eventWindow->mouseyVent(1, MouseButton::LEFT);
+				eventWindow->mouseEvent(1, MouseButton::LEFT);
 				return 0;
 
 			case WM_LBUTTONDBLCLK:
-				eventWindow->mouseyVent(2, MouseButton::LEFT);
+				eventWindow->mouseEvent(2, MouseButton::LEFT);
 				return 0;
 
 			case WM_RBUTTONDOWN:
-				eventWindow->mouseyVent(0, MouseButton::RIGHT);
+				eventWindow->mouseEvent(0, MouseButton::RIGHT);
 				return 0;
 
 			case WM_RBUTTONUP:
-				eventWindow->mouseyVent(1, MouseButton::RIGHT);
+				eventWindow->mouseEvent(1, MouseButton::RIGHT);
 				return 0;
 
 			case WM_RBUTTONDBLCLK:
-				eventWindow->mouseyVent(2, MouseButton::RIGHT);
+				eventWindow->mouseEvent(2, MouseButton::RIGHT);
 				return 0;
 
 			case WM_MBUTTONDOWN:
-				eventWindow->mouseyVent(0, MouseButton::MIDDLE);
+				eventWindow->mouseEvent(0, MouseButton::MIDDLE);
 				return 0;
 
 			case WM_MBUTTONUP:
-				eventWindow->mouseyVent(1, MouseButton::MIDDLE);
+				eventWindow->mouseEvent(1, MouseButton::MIDDLE);
 				return 0;
 
 			case WM_MBUTTONDBLCLK:
-				eventWindow->mouseyVent(2, MouseButton::MIDDLE);
+				eventWindow->mouseEvent(2, MouseButton::MIDDLE);
 				return 0;
 
 			case WM_XBUTTONDOWN:
@@ -313,11 +313,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				// DefWindowProc take these.
 				switch(HIWORD(wParam)) {
 				case XBUTTON1:
-					eventWindow->mouseyVent(0, MouseButton::BUTTON_X1);
+					eventWindow->mouseEvent(0, MouseButton::BUTTON_X1);
 					return TRUE;// don't ask me why it wants TRUE instead of zero like
 								// everything else
 				case XBUTTON2:
-					eventWindow->mouseyVent(0, MouseButton::BUTTON_X2);
+					eventWindow->mouseEvent(0, MouseButton::BUTTON_X2);
 					return TRUE;
 				}
 				break;
@@ -325,11 +325,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			case WM_XBUTTONUP:
 				switch(HIWORD(wParam)) {
 				case XBUTTON1:
-					eventWindow->mouseyVent(1, MouseButton::BUTTON_X1);
+					eventWindow->mouseEvent(1, MouseButton::BUTTON_X1);
 					return TRUE;// don't ask me why it wants TRUE instead of zero like
 								// everything else
 				case XBUTTON2:
-					eventWindow->mouseyVent(1, MouseButton::BUTTON_X2);
+					eventWindow->mouseEvent(1, MouseButton::BUTTON_X2);
 					return TRUE;
 				}
 				break;
@@ -337,11 +337,11 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			case WM_XBUTTONDBLCLK:
 				switch(HIWORD(wParam)) {
 				case XBUTTON1:
-					eventWindow->mouseyVent(2, MouseButton::BUTTON_X1);
+					eventWindow->mouseEvent(2, MouseButton::BUTTON_X1);
 					return TRUE;// don't ask me why it wants TRUE instead of zero like
 								// everything else
 				case XBUTTON2:
-					eventWindow->mouseyVent(2, MouseButton::BUTTON_X2);
+					eventWindow->mouseEvent(2, MouseButton::BUTTON_X2);
 					return TRUE;
 				}
 				break;

@@ -160,6 +160,7 @@ void OggSoundFileLoader::open(const string &path, SoundInfo *soundInfo){
 }
 
 uint32 OggSoundFileLoader::read(int8 *samples, uint32 size){
+	_PROFILE_FUNCTION();
 	int section;
 	int totalBytesRead= 0;
 

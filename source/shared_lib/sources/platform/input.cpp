@@ -34,8 +34,8 @@ const unsigned char Input::native2mb[Input::NATIVE_MOUSE_BUTTON_LAST + 1] = {
 	MouseButton::LEFT,		// 1 SDL_BUTTON_LEFT
 	MouseButton::MIDDLE,	// 2 SDL_BUTTON_MIDDLE
 	MouseButton::RIGHT,		// 3 SDL_BUTTON_RIGHT
-	MouseButton::WHEEL_UP,		// 4 SDL_BUTTON_WHEELUP
-	MouseButton::WHEEL_DOWN,	// 5 SDL_BUTTON_WHEELDOWN
+	MouseButton::WHEEL_UP,	// 4 SDL_BUTTON_WHEELUP
+	MouseButton::WHEEL_DOWN,// 5 SDL_BUTTON_WHEELDOWN
 	MouseButton::BUTTON_X1,	// 6 SDL_BUTTON_X1
 	MouseButton::BUTTON_X2	// 7 SDL_BUTTON_X2
 };

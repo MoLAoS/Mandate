@@ -39,6 +39,9 @@ private:
 	string category;
 	string scenario;
 
+	bool test;
+	string testType;
+
 public:
 	CmdArgs();
 	~CmdArgs();
@@ -58,6 +61,7 @@ public:
 	string &getCategory()    { return category; }
 	string &getScenario()    { return scenario; }
 
+	bool isTest(const string &type) const { return (test && testType == type); }
 };
 
 }} //namespaces

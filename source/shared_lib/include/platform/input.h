@@ -72,15 +72,25 @@ public:
 	}
 };
 
-/*
-class MouseEvent {
-public:
-	enum EventType
-	Vec2i pos;
-	MouseButton button;
+struct MouseEvent {
+	int x, y;
 
+	MouseEvent(int x, int y) : x(x), y(y) {}
 };
-*/
+
+struct ClickEvent {
+	MouseButton button;
+	int x, y;
+
+	ClickEvent(MouseButton btn, int x, int y) : button(btn), x(x), y(y) {}
+};
+
+struct WheelEvent {
+	int x, y, zDelta;
+
+	WheelEvent(int x, int y, int z) : x(x), y(y), zDelta(z) {}
+};
+
 class Input {
 public:
 #ifdef USE_SDL

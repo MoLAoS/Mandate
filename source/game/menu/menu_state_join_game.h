@@ -56,6 +56,8 @@ public:
 	void keyDown(const Key &key);
 	void keyPress(char c);
 
+	MenuStates getIndex() const { return MenuStates::JOIN_GAME; }
+
 private:
 	void connectToServer();
 };

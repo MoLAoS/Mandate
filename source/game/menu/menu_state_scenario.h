@@ -65,6 +65,8 @@ public:
 	void setScenario(int i);
 	int getScenarioCount() const	{ return listBoxScenario.getItemCount(); }
 
+	MenuStates getIndex() const { return MenuStates::SCENARIO; }
+
 private:
 	void updateScenarioList(const string &category, bool selectDefault = false);
 };

@@ -15,13 +15,14 @@
 #include <string>
 #include <vector>
 
+#include "math_util.h"
 #include "font.h"
 #include "input.h"
 
 using std::string;
 using std::vector;
 
-using Shared::Graphics::Font2D;
+using Shared::Graphics::Font;
 using Shared::Platform::Key;
 
 namespace Glest { namespace Graphics {
@@ -40,7 +41,7 @@ public:
 protected:
 	int x, y, w, h;
 	string text;
-	const Font2D *font;
+	const Font *font;
 	bool enabled;
 	bool visible;
 
@@ -61,9 +62,9 @@ public:
 	void setEnabled ( bool enable ) { enabled = enable; }
 	void show() { visible = true; }
 	void hide() { visible = false; }
-	bool isVisible() { return visible; }
+	bool isVisible() const { return visible; }
 	const string &getText() const		{return text;}
-	const Font2D *getFont() const		{return font;}
+	const Font *getFont() const		{return font;}
 	bool isInBounds(int x, int y) const {
 		return	   x >= this->x
 				&& x < this->x + w
@@ -74,7 +75,7 @@ public:
 	void setX(int x)					{this->x= x;}
 	void setY(int y)					{this->y= y;}
 	void setText(const string &text)	{this->text= text;}
-	void setFont(const Font2D *font)	{this->font= font;}
+	void setFont(const Font *font)	{this->font= font;}
 	
 	virtual bool mouseMove(int x, int y);
 	virtual bool mouseClick(int x, int y);
@@ -303,7 +304,7 @@ public:
 class GraphicProgressBar: public GraphicComponent {
 private:
 	int progress;
-	Font2D *font;
+	Font *font;
 
 public:
 	GraphicProgressBar();

@@ -72,7 +72,7 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 // =====================================================
 
 MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu) :
-		MenuStateStartGameBase(program, mainMenu, "loadgame"), loaderThread(*this) {
+		MenuStateStartGameBase(program, mainMenu/*, "loadgame"*/), loaderThread(*this) {
 	confirmMessageBox = NULL;
 	//msgBox = NULL;
 	savedGame = NULL;

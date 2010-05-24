@@ -25,6 +25,7 @@ CmdArgs::CmdArgs(){
 	this->clientIP = "";
 	this->configDir = "";
 	this->dataDir = "";
+	test = false;
 }
 
 CmdArgs::~CmdArgs(){
@@ -50,7 +51,10 @@ bool CmdArgs::parse(int argc, char **argv){
 			//TODO: reuse MenuStateScenario::loadGameSettings and MenuStateScenario::loadScenarioInfo
 			this->category = argv[++i];
 			this->scenario = argv[++i];
-		}else if(arg=="--help" || arg=="-h"){
+		} else if (arg == "-test" && (i+1) < argc) {
+			test = true;
+			testType = argv[++i];
+		} else if(arg=="--help" || arg=="-h") {
 			cout << "usage: " << argv[0] << " [options]\n"
 				<< "  -server                  startup and immediately host a game\n"
 				<< "  -client IP               startup and immediately connect to server IP\n"
@@ -59,7 +63,7 @@ bool CmdArgs::parse(int argc, char **argv){
 				<< "  -loadmap map tileset     load maps/map.gbm with tilesets/tileset for map preview\n"
 				<< "  -scenario category name  load immediately scenario/category/name\n"; //TODO
 			return true;
-		}else{
+		} else {
 			cout << "unknown argument: " << arg << endl;
 			return true;
 		}

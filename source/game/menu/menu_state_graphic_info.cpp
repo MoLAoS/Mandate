@@ -26,7 +26,7 @@ namespace Glest { namespace Menu {
 // =====================================================
 
 MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu):
-	MenuState(program, mainMenu, "info")
+	MenuState(program, mainMenu/*, "info"*/)
 {
 	buttonReturn.init(387, 100, 125);
 	labelInfo.init(100, 700);

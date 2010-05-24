@@ -41,7 +41,7 @@ using namespace Shared::Util;
 // =====================================================
 
 MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots)
-		: MenuStateStartGameBase(program, mainMenu, "new-game") {
+		: MenuStateStartGameBase(program, mainMenu/*, "new-game"*/) {
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
 	

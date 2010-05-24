@@ -116,17 +116,17 @@ void GameCamera::setCameraMotion(const Vec2i &posit, const Vec2i &angle,
 		int linearFrameCount, int angularFrameCount,
 		int linearFrameDelay, int angularFrameDelay){
 	switchState(sScenario);
-	destPos.x = posit.x;
+	destPos.x = float(posit.x);
 	destPos.y = pos.y;
-	destPos.z = posit.y;
+	destPos.z = float(posit.y);
 	// To be consistent with setDest(..) swap x and y in the rotation.
-	destAng.x = angle.y;
-	destAng.y = angle.x;
+	destAng.x = float(angle.y);
+	destAng.y = float(angle.x);
 	totalLinearFrames = linearFrameCount;
 	totalAngularFrames = angularFrameCount;
 	linearDelay = linearFrameDelay;
 	angularDelay = angularFrameDelay;
-	linearVelocity = Vec3f(destPos - pos) / linearFrameCount;
+	linearVelocity = Vec3f(destPos - pos) / float(linearFrameCount);
 	angularVelocity.x = float(destAng.x - vAng) / angularFrameCount;
 	angularVelocity.y = float(destAng.y - hAng) / angularFrameCount;
 }

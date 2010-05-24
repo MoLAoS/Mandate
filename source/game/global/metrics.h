@@ -48,6 +48,7 @@ public:
 	int getVirtualH() const	{return virtualH;}
 	int getScreenW() const	{return screenW;}
 	int getScreenH() const	{return screenH;}
+	Vec2i getScreenDims() const { return Vec2i(screenW, screenH); }
 	int getMinimapX() const	{return minimapX;}
 	int getMinimapY() const	{return minimapY;}
 	int getMinimapW() const	{return minimapW;}

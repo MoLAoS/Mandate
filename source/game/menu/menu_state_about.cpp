@@ -28,7 +28,7 @@ namespace Glest { namespace Menu {
 // =====================================================
 
 MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu):
-	MenuState(program, mainMenu, "about")
+	MenuState(program, mainMenu/*, "about"*/)
 {
 	Lang &lang= Lang::getInstance();
 
