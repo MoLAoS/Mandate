@@ -41,7 +41,7 @@ private:
 	float anim;
 	void unwindMouseOverStack();
 	void doMouseInto(WidgetPtr widget);
-	void changeActiveLayer(list<LayerPtr>::iterator &it);
+	void changeActiveLayer(std::list<LayerPtr>::iterator &it);
 	Vec2i mousePos;
 
 public:
@@ -60,7 +60,7 @@ public:
 
 	void setFloatingWidget(WidgetPtr floater);
 	void removeFloatingWidget(WidgetPtr floater);
-	
+
 	void aquireKeyboardFocus(WidgetPtr widget);
 	void releaseKeyboardFocus(WidgetPtr widget);
 

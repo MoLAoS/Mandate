@@ -1,5 +1,5 @@
 // sigslot.h: Signal/Slot classes
-// 
+//
 // Written by Sarah Thompson (sarah@telergy.com) 2002.
 //
 // License: Public domain. You are free to use this code however you like, with the proviso that
@@ -40,6 +40,37 @@ public:
 };
 
 // =====================================================
+//  class has_slots
+// =====================================================
+/// slot class, signal listeners all need to inherit this
+class has_slots {
+private:
+	typedef std::set<signal_base*> sender_set;
+	typedef sender_set::const_iterator const_iterator;
+
+public:
+	has_slots() { }
+	virtual ~has_slots() { disconnect_all(); }
+
+	void signal_connect(signal_base* sender) {		m_senders.insert(sender); }
+	void signal_disconnect(signal_base* sender) {	m_senders.erase(sender); }
+
+	void disconnect_all() {
+		const_iterator it = m_senders.begin();
+		const_iterator itEnd = m_senders.end();
+
+		while (it != itEnd) {
+			(*it)->slot_disconnect(this);
+			++it;
+		}
+		m_senders.clear();
+	}
+
+private:
+	sender_set m_senders;
+};
+
+// =====================================================
 //  class signal
 // =====================================================
 /// The workhorse. Can be connected to any number of SlotClass::slotMethod 'listeners'
@@ -59,7 +90,7 @@ public:
 
 	template<class SlotClass>
 	void connect(SlotClass* pclass, void (SlotClass::*pmemfun)(ArgType)) {
-		connection<SlotClass, ArgType>* conn = 
+		connection<SlotClass, ArgType>* conn =
 			new connection<SlotClass, ArgType>(pclass, pmemfun);
 		connections.push_back(conn);
 		pclass->signal_connect(this);
@@ -143,37 +174,6 @@ public:
 private:
 	SlotClass* slotObject;
 	void (SlotClass::*slotMethod)(ArgType);
-};
-
-// =====================================================
-//  class has_slots
-// =====================================================
-/// slot class, signal listeners all need to inherit this
-class has_slots {
-private:
-	typedef std::set<signal_base*> sender_set;
-	typedef sender_set::const_iterator const_iterator;
-
-public:
-	has_slots() { }
-	virtual ~has_slots() { disconnect_all(); }
-
-	void signal_connect(signal_base* sender) {		m_senders.insert(sender); }
-	void signal_disconnect(signal_base* sender) {	m_senders.erase(sender); }
-
-	void disconnect_all() {
-		const_iterator it = m_senders.begin();
-		const_iterator itEnd = m_senders.end();
-
-		while (it != itEnd) {
-			(*it)->slot_disconnect(this);
-			++it;
-		}
-		m_senders.clear();
-	}
-
-private:
-	sender_set m_senders;
 };
 
 } // namespace sigslot

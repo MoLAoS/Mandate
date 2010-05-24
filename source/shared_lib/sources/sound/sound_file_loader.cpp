@@ -17,7 +17,7 @@
 
 #include "sound.h"
 #include "leak_dumper.h"
-
+#include "profiler.h"
 #include "FSFactory.hpp"
 
 using std::ios_base;

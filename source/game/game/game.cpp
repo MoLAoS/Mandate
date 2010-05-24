@@ -91,7 +91,7 @@ GameState::GameState(Program &program, XmlNode *savedGame)
 		, weatherParticleSystem(0) {
 	assert(!singleton);
 	singleton = this;
-	
+
 	simInterface->constructGameWorld(this);
 	//gameSettings(simInterface->getGameSettings());
 
@@ -151,7 +151,7 @@ void GameState::load() {
 	} else {
 		logger.setSubtitle(formatString(scenarioName));
 	}
-	
+
 	simInterface->loadWorld();
 
 	// finished loading
@@ -179,13 +179,13 @@ void GameState::init() {
 	//REFACTOR: ThisTeamIndex belong in here, not the World
 	chatManager.init(&console, simInterface->getWorld()->getThisTeamIndex());
 	gameCamera.init(map->getW(), map->getH());
-	/*const*/ Vec2i *v;// = new Vec2i(0, 0);
-	if(simInterface->getWorld()->getThisFaction()){
-		v = &map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());  //FIXME: -loadmap has no players
-	}else{
-		v = &Vec2i(0, 0);
+	/*const*/ Vec2i v;// = new Vec2i(0, 0);
+	if (simInterface->getWorld()->getThisFaction()) {
+		v = map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());  //FIXME: -loadmap has no players
+	} else {
+		v = Vec2i(0, 0);
 	}
-	gameCamera.setPos(Vec2f((float)v->x, (float)v->y));
+	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
 	if (simInterface->getSavedGame()) {
 		gui.load(simInterface->getSavedGame()->getChild("gui"));
 	}
@@ -255,7 +255,7 @@ void GameState::update() {
 
 	//misc
 	updateFps++;
-	
+
 	mouse2d = (mouse2d + 1) % Renderer::maxMouse2dAnim;
 
 	//console
@@ -501,7 +501,7 @@ void GameState::keyDown(const Key &key) {
 				saveBox->keyDown(key);
 		};
 		return;
-	
+
 	}
 	if (chatManager.keyDown(key)) {
 		return; // key consumed, we're done here
@@ -536,7 +536,7 @@ void GameState::keyDown(const Key &key) {
 		gameCamera.setRotate(-1);
 	} else if (cmd == ucCameraRotateRight ) { // rotate camera right
 		gameCamera.setRotate(1);
-	} else if (cmd == ucCameraPitchUp) { // camera pitch up	
+	} else if (cmd == ucCameraPitchUp) { // camera pitch up
 		gameCamera.setMoveY(1);
 	} else if ( cmd == ucCameraPitchDown) { // camera pitch down
 		gameCamera.setMoveY(-1);
@@ -664,17 +664,17 @@ void GameState::render3d(){
 
 	//init
 	renderer.reset3d();
-	
+
 	renderer.loadGameCameraMatrix();
 	renderer.computeVisibleArea();
 	renderer.setupLighting();
-	
+
 	//shadow map
 	renderer.renderShadowsToTexture();
-	
+
 	//clear buffers
 	renderer.clearBuffers();
-	
+
 	//surface
 	renderer.renderSurface();
 

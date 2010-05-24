@@ -15,6 +15,8 @@
 #include "pch.h"
 #include "ft_font.h"
 
+#include <stdexcept>
+
 namespace Shared { namespace Graphics {
 
 namespace Freetype {
@@ -33,7 +35,7 @@ inline int next_p2(int n) {
 
 /// Create a display list coresponding to the give character.
 void make_dlist(FT_Face face, unsigned char ch, GLuint list_base, GLuint *tex_base) {
-	
+
 	// 1. Get Glyph and render to texture
 
 	// Load the Glyph for our character.
@@ -58,7 +60,7 @@ void make_dlist(FT_Face face, unsigned char ch, GLuint list_base, GLuint *tex_ba
 	// Fill in the data for the expanded bitmap.
 	for (int j = 0; j < height; ++j) {
 		for (int i = 0; i < width; ++i) {
-			expanded_data[2 * (i + j * width)] = expanded_data[2 * (i + j * width) + 1] = 
+			expanded_data[2 * (i + j * width)] = expanded_data[2 * (i + j * width) + 1] =
 				(i >= bitmap.width || j >= bitmap.rows) ? 0 : bitmap.buffer[i + bitmap.width * j];
 		}
 	}
@@ -121,11 +123,11 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 	metrics.setFreeType(true);
 	metrics.setMaxAscent(0.f);
 	metrics.setMaxDescent(0.f);
-	
+
 	// Create display lists for the fonts glyphs
 	for (unsigned i = 0; i <= 255U; ++i) {
 		// make list
-		make_dlist(face, unsigned char(i), list_base, textures);
+		make_dlist(face, (unsigned char)i, list_base, textures);
 
 		// set metrics
 		float ascent = _26_6_TO_FLOAT(face->glyph->metrics.horiBearingY);
@@ -175,11 +177,11 @@ inline void pop_projection_matrix() {
 void print(const font_data &ft_font, float x, float y, const unsigned char *text)  {
 	typedef const unsigned char * uchar_ptr;
 	// We want a coordinate system where things coresponding to window pixels.
-	pushScreenCoordinateMatrix();					
+	pushScreenCoordinateMatrix();
 	GLuint font = ft_font.list_base;
 	float h = ft_font.h / .63f;
 
-	// Here is some code to split the text that we have been given into a set of lines.  
+	// Here is some code to split the text that we have been given into a set of lines.
 	uchar_ptr start_line = text;
 	vector<string> lines;
 	uchar_ptr c = text;
@@ -201,17 +203,17 @@ void print(const font_data &ft_font, float x, float y, const unsigned char *text
 		lines.push_back(line);
 	}
 
-	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);	
+	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glListBase(font);
 
-	float modelview_matrix[16];	
+	float modelview_matrix[16];
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelview_matrix);
 
 	// This is where the text display actually happens.
@@ -223,7 +225,7 @@ void print(const font_data &ft_font, float x, float y, const unsigned char *text
 			glCallLists(lines[i].length(), GL_UNSIGNED_BYTE, lines[i].c_str());
 		glPopMatrix();
 	}
-	glPopAttrib();		
+	glPopAttrib();
 	pop_projection_matrix();
 }
 

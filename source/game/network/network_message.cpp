@@ -107,7 +107,7 @@ bool IntroMessage::receive(NetworkConnection* connection) {
 	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
-		NETWORK_LOG( 
+		NETWORK_LOG(
 			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
 			<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
 			<< ", host name: " << data.hostName.getString() << ", player index: " << data.playerIndex
@@ -157,7 +157,7 @@ bool ReadyMessage::receive(NetworkConnection* connection){
 	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(data));
 	if (ok) {
-		NETWORK_LOG( 
+		NETWORK_LOG(
 			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
 			<< ", messageSize: " << data.messageSize
 		);
@@ -168,7 +168,7 @@ bool ReadyMessage::receive(NetworkConnection* connection){
 void ReadyMessage::send(NetworkConnection* connection) const{
 	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::READY);
-	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: " 
+	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: "
 		<< MessageTypeNames[MessageType(data.messageType)] << ", messageSize: " << data.messageSize
 	);
 	Message::send(connection, &data, sizeof(data));
@@ -180,13 +180,13 @@ void ReadyMessage::send(NetworkConnection* connection) const{
 
 AiSeedSyncMessage::AiSeedSyncMessage(){
 	data.messageType = MessageType::INVALID_MSG;
-	data.messageSize = -1;
+	data.messageSize = 0;
 	data.seedCount = -1;
 }
 
 AiSeedSyncMessage::AiSeedSyncMessage(int count, int32 *seeds) {
 	assert(count > 0 && count <= maxAiSeeds);
-	data.messageType = MessageType::AI_SYNC; 
+	data.messageType = MessageType::AI_SYNC;
 	data.messageSize = sizeof(Data) - 4;
 	data.seedCount = count;
 	for (int i=0; i < count; ++i) {
@@ -205,7 +205,7 @@ bool AiSeedSyncMessage::receive(NetworkConnection* connection){
 	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
-		NETWORK_LOG( 
+		NETWORK_LOG(
 			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
 			<< ", messageSize: " << data.messageSize
 		);
@@ -290,7 +290,7 @@ bool LaunchMessage::receive(NetworkConnection* connection){
 	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
-		NETWORK_LOG( 
+		NETWORK_LOG(
 			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
 			<< ", messageSize: " << data.messageSize
 		);
@@ -371,7 +371,7 @@ bool CommandListMessage::receive(NetworkConnection* connection) {
 	}
 	bool ok = Message::receive(connection, &data, sizeof(MsgHeader) + header.messageSize);
 	if (ok) {
-		NETWORK_LOG( 
+		NETWORK_LOG(
 			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
 			<< ", messageSize: " << data.messageSize << ", number of commands: " << data.commandCount
 		);
@@ -381,7 +381,7 @@ bool CommandListMessage::receive(NetworkConnection* connection) {
 
 void CommandListMessage::send(NetworkConnection* connection) const {
 	assert(data.messageType == MessageType::COMMAND_LIST);
-	NETWORK_LOG( 
+	NETWORK_LOG(
 		__FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
 		<< ", messageSize: " << data.messageSize << ", number of commands: " << data.commandCount
 	);
@@ -393,7 +393,7 @@ void CommandListMessage::send(NetworkConnection* connection) const {
 // =====================================================
 
 TextMessage::TextMessage(const string &text, const string &sender, int teamIndex){
-	data.messageType = MessageType::TEXT; 
+	data.messageType = MessageType::TEXT;
 	data.messageSize = sizeof(*this) - 4;
 	data.text = text;
 	data.sender = sender;
@@ -423,7 +423,7 @@ void TextMessage::send(NetworkConnection* connection) const{
 // =====================================================
 
 QuitMessage::QuitMessage() {
-	data.messageType = MessageType::QUIT; 
+	data.messageType = MessageType::QUIT;
 	data.messageSize = 0;
 }
 
@@ -543,7 +543,7 @@ void KeyFrame::send(NetworkConnection* connection) const {
 
 	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
 	size_t headerSize = sizeof(KeyFrameMsgHeader);
-	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32) 
+	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32)
 		+ updateSize + commandsSize;
 	size_t totalSize = msgHeader.messageSize + sizeof(MsgHeader);
 
@@ -592,7 +592,7 @@ void KeyFrame::addChecksum(int32 cs) {
 
 void KeyFrame::add(NetworkCommand &nc) {
 	assert(cmdCount < max_cmds);
-	memcpy(&commands[cmdCount++], &nc, sizeof(NetworkCommand));		
+	memcpy(&commands[cmdCount++], &nc, sizeof(NetworkCommand));
 }
 
 void KeyFrame::reset() {
