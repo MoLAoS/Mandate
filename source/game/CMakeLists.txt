@@ -36,7 +36,7 @@ endforeach(folder)
 # ugly, but otherwise not the updated stuff
 set(game_incs ${game_incs} PARENT_SCOPE)
 
-include_directories(${glestshared_incs} ${game_incs} ${FREETYPE_INCLUDE_DIRS})
+include_directories(${glestshared_incs} ${game_incs})
 
 add_executable(glestadv ${game_srcs})
 target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})

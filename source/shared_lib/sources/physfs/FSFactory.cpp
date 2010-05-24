@@ -201,3 +201,41 @@ int FSFactory::cb_seek(void *source, ogg_int64_t offset, int whence){
 long int FSFactory::cb_tell(void *source){
 	return ((FileOps*)source)->tell();
 }
+
+
+//freetype
+unsigned long stream_load(FT_Stream stream, unsigned long offset, unsigned char* buffer, unsigned long count) {
+	FileOps *fd = (FileOps*)stream->descriptor.pointer;
+	fd->seek(offset, SEEK_SET);
+	return fd->read(buffer, 1, count);
+}
+void stream_close(FT_Stream stream) {
+	FileOps *fd = (FileOps*)stream->descriptor.pointer;
+	fd->close();
+	delete fd;
+}
+
+int FSFactory::openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face *face){
+	FileOps *fops = instance->getFileOps();
+	fops->openRead(fname);
+	
+	FT_StreamDesc desc;
+	desc.pointer = fops;
+	
+	FT_StreamRec *stream = new FT_StreamRec;
+	memset(stream, 0, sizeof(FT_StreamRec));
+	stream->base = 0;
+	stream->size = fops->fileSize();
+	stream->pos = 0;
+	stream->descriptor = desc;
+	stream->read = stream_load;
+	stream->close = stream_close;
+	
+	FT_Open_Args args;// = new FT_Open_Args;
+	memset(&args, 0, sizeof(FT_Open_Args));
+	args.flags = FT_OPEN_STREAM;
+	args.stream = stream;
+
+	return FT_Open_Face(lib, &args, 0, face);
+	//FIXME: stream is deleted in ft_font.cpp
+}

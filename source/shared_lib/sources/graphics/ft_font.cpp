@@ -15,6 +15,8 @@
 #include "pch.h"
 #include "ft_font.h"
 
+#include "FSFactory.hpp"
+
 #include <stdexcept>
 
 namespace Shared { namespace Graphics {
@@ -113,7 +115,8 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 		throw std::runtime_error("FT_Init_FreeType failed");
 	}
 	FT_Face face;
-	if (FT_New_Face(library, fname, 0, &face)) {
+	//if (FT_New_Face(library, FSFactory::getRealPath(fname).c_str(), 0, &face)) {
+	if (FSFactory::openFace(library, fname, 0, &face)) {
 		throw std::runtime_error("FT_New_Face failed (there is probably a problem with your font file)");
 	}
 	FT_Set_Char_Size(face, h << 6, h << 6, 96, 96);
@@ -142,6 +145,7 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 			metrics.setMaxDescent(descent);
 		}
 	}
+	delete face->stream;  //FIXME: allocated in FSFactory::openFace, better delete it in FSFactory
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
 }

@@ -47,7 +47,7 @@ endif(MSVC)
 # ugly, but otherwise not the updated stuff
 set(glestshared_incs ${glestshared_incs} PARENT_SCOPE)
 
-include_directories(${glestshared_incs} ${FREETYPE_INCLUDE_DIRS})
+include_directories(${glestshared_incs})
 
 add_library(shared_lib STATIC ${glestshared_srcs})
 

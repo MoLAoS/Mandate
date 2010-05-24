@@ -19,6 +19,10 @@
 //FIXME: Ogg callbacks
 #include <vorbis/vorbisfile.h>
 
+//FIXME: freetype
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include "FileOps.hpp"
 
 using std::vector;
@@ -55,6 +59,9 @@ class FSFactory{
 		static int cb_seek(void *source, ogg_int64_t offset, int whence);
 		static int cb_close(void *source);
 		static long cb_tell(void *source);
+		
+		//freetype stuff
+		static int openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face *face);
 };
 
 #endif

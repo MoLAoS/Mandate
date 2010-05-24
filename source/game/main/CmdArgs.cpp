@@ -48,7 +48,6 @@ bool CmdArgs::parse(int argc, char **argv){
 			this->map = argv[++i];
 			this->tileset = argv[++i];
 		}else if(arg=="-scenario" && (i+2)<argc){
-			//TODO: reuse MenuStateScenario::loadGameSettings and MenuStateScenario::loadScenarioInfo
 			this->category = argv[++i];
 			this->scenario = argv[++i];
 		} else if (arg == "-test" && (i+1) < argc) {
@@ -61,7 +60,7 @@ bool CmdArgs::parse(int argc, char **argv){
 				<< "  -configdir path          set location of configs and logs to path\n"
 				<< "  -datadir path            set location of data\n"
 				<< "  -loadmap map tileset     load maps/map.gbm with tilesets/tileset for map preview\n"
-				<< "  -scenario category name  load immediately scenario/category/name\n"; //TODO
+				<< "  -scenario category name  load immediately scenario/category/name\n";
 			return true;
 		} else {
 			cout << "unknown argument: " << arg << endl;
