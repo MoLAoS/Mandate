@@ -248,11 +248,7 @@ void ParticleRendererGl::renderSingleModel(ParticleSystem *ps, ModelRenderer *mr
 // ============== PRIVATE =====================================
 
 void ParticleRendererGl::renderBufferQuads(int quadCount) {
-#ifdef ALIGN_12BYTE_VECTORS
-	glVertexPointer(3, GL_FLOAT, 16, vertexBuffer);
-#else
 	glVertexPointer(3, GL_FLOAT, 0, vertexBuffer);
-#endif
 	glTexCoordPointer(2, GL_FLOAT, 0, texCoordBuffer);
 	glColorPointer(4, GL_FLOAT, 0, colorBuffer);
 
@@ -260,11 +256,7 @@ void ParticleRendererGl::renderBufferQuads(int quadCount) {
 }
 
 void ParticleRendererGl::renderBufferLines(int lineCount) {
-#ifdef ALIGN_12BYTE_VECTORS
-	glVertexPointer(3, GL_FLOAT, 16, vertexBuffer);
-#else
 	glVertexPointer(3, GL_FLOAT, 0, vertexBuffer);
-#endif
 	glColorPointer(4, GL_FLOAT, 0, colorBuffer);
 
 	glDrawArrays(GL_LINES, 0, lineCount);

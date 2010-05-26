@@ -109,7 +109,7 @@ void Section::print(ostream *outStream, int tabLevel){
 			*outStream << " (" << milliseconds << "ms)";
 		}
 		outStream->precision(1);
-		*outStream << fixed << ", " << percent << "%";
+		*outStream << std::fixed << ", " << percent << "%";
 	}
 	if ( calls ) {
 		*outStream << ", " << calls << " calls";
@@ -184,7 +184,7 @@ Profiler& getProfiler() {
 	return profiler;
 }
 
-void profilerClose(){
+void profileEnd(){
 	getProfiler().close();
 }
 

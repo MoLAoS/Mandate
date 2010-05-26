@@ -32,6 +32,12 @@ class ShadowVolumeData;
 class InterpolationData;
 class TextureManager;
 
+//temp
+extern bool use_simd_interpolation;
+
+Vec3f* allocate_aligned_vec3_array(unsigned n);
+void free_aligned_vec3_array(Vec3f *ptr);
+
 // =====================================================
 // class Mesh
 //
@@ -50,8 +56,14 @@ private:
 	uint32 indexCount;
 
 	//vertex data
-	Vec3f *vertices;
-	Vec3f *normals;
+//#	if USE_SSE2_INTRINSICS
+		Vec3f **vertArrays;
+		Vec3f **normArrays;
+//#	else
+		Vec3f *vertices;
+		Vec3f *normals;
+//#	endif
+
 	Vec2f *texCoords;
 	Vec3f *tangents;
 	uint32 *indices;
@@ -81,12 +93,19 @@ public:
 	//counts
 	uint32 getFrameCount() const			{return frameCount;}
 	uint32 getVertexCount() const			{return vertexCount;}
+
 	uint32 getIndexCount() const			{return indexCount;}
 	uint32 getTriangleCount() const;
 
 	//data
-	const Vec3f *getVertices() const 		{return vertices;}
-	const Vec3f *getNormals() const 		{return normals;}
+//#	if USE_SSE2_INTRINSICS
+		const Vec3f *getVertArray(int n) const	{return vertArrays[n]; }
+		const Vec3f *getNormArray(int n) const	{return normArrays[n]; }
+//#	else
+		const Vec3f *getVertices() const 		{return vertices;}
+		const Vec3f *getNormals() const 		{return normals;}
+//#	endif
+
 	const Vec2f *getTexCoords() const		{return texCoords;}
 	const Vec3f *getTangents() const		{return tangents;}
 	const uint32 *getIndices() const 		{return indices;}

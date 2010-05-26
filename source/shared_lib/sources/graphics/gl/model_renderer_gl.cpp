@@ -122,19 +122,12 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 	assertGl();
 
 	//vertices
-#ifdef ALIGN_12BYTE_VECTORS
-	glVertexPointer(3, GL_FLOAT, 16, mesh->getInterpolationData()->getVertices());
-#else
 	glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());
-#endif
+
 	//normals
 	if (renderNormals) {
 		glEnableClientState(GL_NORMAL_ARRAY);
-#ifdef ALIGN_12BYTE_VECTORS
-		glNormalPointer(GL_FLOAT, 16, mesh->getInterpolationData()->getNormals());
-#else
 		glNormalPointer(GL_FLOAT, 0, mesh->getInterpolationData()->getNormals());
-#endif
 	} else {
 		glDisableClientState(GL_NORMAL_ARRAY);
 	}

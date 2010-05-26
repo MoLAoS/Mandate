@@ -80,6 +80,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	renderFov = p->getFloat("RenderFov", 60.f, 0.01f, 360.f);
 	renderFpsMax = p->getInt("RenderFpsMax", 60, 0, 1000000);
 	renderGraphicsFactory = p->getString("RenderGraphicsFactory", "OpenGL");
+	renderInterpolateWithSIMD = p->getBool("RenderInterpolateWithSIMD", true);
 	renderLightsMax = p->getInt("RenderLightsMax", 1, 0, 8);
 	renderShadowAlpha = p->getFloat("RenderShadowAlpha", 0.2f, 0.f, 1.f);
 	renderShadowFrameSkip = p->getInt("RenderShadowFrameSkip", 2);
@@ -163,6 +164,7 @@ void Config::save(const char *path) {
 	p->setFloat("RenderFov", renderFov);
 	p->setInt("RenderFpsMax", renderFpsMax);
 	p->setString("RenderGraphicsFactory", renderGraphicsFactory);
+	p->setBool("RenderInterpolateWithSIMD", renderInterpolateWithSIMD);
 	p->setInt("RenderLightsMax", renderLightsMax);
 	p->setFloat("RenderShadowAlpha", renderShadowAlpha);
 	p->setInt("RenderShadowFrameSkip", renderShadowFrameSkip);

@@ -32,6 +32,8 @@
 
 #include "leak_dumper.h"
 
+#include "interpolation.h"
+
 using namespace Glest::Net;
 
 using namespace Shared::Util;
@@ -138,6 +140,8 @@ Program::Program(Config &config, CmdArgs &args)
 	Lang &lang= Lang::getInstance();
 	lang.setLocale(config.getUiLocale());
 
+	Shared::Graphics::use_simd_interpolation = config.getRenderInterpolateWithSIMD();
+	
 	//render
 	Renderer &renderer= Renderer::getInstance();
 
@@ -169,6 +173,10 @@ Program::Program(Config &config, CmdArgs &args)
 
 	singleton = this;
 	init();
+
+	if (cmdArgs.isTest("interpolation")) {
+		Shared::Graphics::test_interpolate();
+	}
 }
 
 Program::~Program() {

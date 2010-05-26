@@ -103,4 +103,8 @@ int PhysFileOps::eof(){
 	return PHYSFS_eof(this->f);
 }
 
+const char * PhysFileOps::getLastError() {
+	return PHYSFS_getLastError();
+}
+
 #endif

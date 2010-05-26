@@ -31,6 +31,21 @@ namespace Shared{ namespace Graphics{
 
 using namespace Util;
 
+bool use_simd_interpolation;
+
+Vec3f* allocate_aligned_vec3_array(unsigned n) {
+	int numFloat = n * 3;
+	int padFloat = (numFloat % 4 == 0 ? 0 : 4 - (numFloat % 4));
+	int bytes = (numFloat + padFloat) * 4;
+	assert(bytes % 16 == 0);
+	void *res = _aligned_malloc(bytes, 16);
+	return static_cast<Vec3f*>(res);
+}
+
+void free_aligned_vec3_array(Vec3f *ptr) {
+	_aligned_free(ptr);
+}
+
 // =====================================================
 //	class Mesh
 // =====================================================
@@ -42,8 +57,12 @@ Mesh::Mesh() {
 	vertexCount = 0;
 	indexCount = 0;
 
+	vertArrays = 0;
+	normArrays = 0;
+
 	vertices = NULL;
 	normals = NULL;
+
 	texCoords = NULL;
 	tangents = NULL;
 	indices = NULL;
@@ -62,15 +81,35 @@ Mesh::~Mesh() {
 }
 
 void Mesh::init() {
-	vertices = new Vec3f[frameCount * vertexCount];
-	normals = new Vec3f[frameCount * vertexCount];
+	if (use_simd_interpolation) {
+		vertArrays = new Vec3f*[frameCount];
+		normArrays = new Vec3f*[frameCount];
+		for (int i=0; i < frameCount; ++i) {
+			vertArrays[i] = allocate_aligned_vec3_array(vertexCount);
+		}
+		for (int i=0; i < frameCount; ++i) {
+			normArrays[i] = allocate_aligned_vec3_array(vertexCount);
+		}
+	} else {
+		vertices = new Vec3f[frameCount * vertexCount];
+		normals = new Vec3f[frameCount * vertexCount];
+	}
 	texCoords = new Vec2f[vertexCount];
 	indices = new uint32[indexCount];
 }
 
 void Mesh::end() {
-	delete [] vertices;
-	delete [] normals;
+	if (use_simd_interpolation) {
+		for (int i=0; i < frameCount; ++i) {
+			free_aligned_vec3_array(vertArrays[i]);
+			free_aligned_vec3_array(normArrays[i]);
+		}
+		delete [] vertArrays;
+		delete [] normArrays;
+	} else {
+		delete [] vertices;
+		delete [] normals;
+	}
 	delete [] texCoords;
 	delete [] tangents;
 	delete [] indices;
@@ -94,7 +133,8 @@ void Mesh::updateInterpolationVertices(float t, bool cycle) const{
 
 // ==================== load ====================
 
-void Mesh::loadV2(const string &dir, FileOps *f, TextureManager *textureManager){
+void Mesh::loadV2(const string &dir, FileOps *f, TextureManager *textureManager) {
+#if 0
 	//read header
 	MeshHeaderV2 meshHeader;
 	f->read(&meshHeader, sizeof(MeshHeaderV2), 1);
@@ -143,6 +183,7 @@ void Mesh::loadV2(const string &dir, FileOps *f, TextureManager *textureManager)
 	f->read(&opacity, sizeof(float32), 1);
 	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
+#endif
 }
 
 void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager){
@@ -179,10 +220,31 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	}
 
 	//read data
-	size_t vfCount = frameCount * vertexCount;
-	f->read(vertices, sizeof(Vec3f)*vfCount, 1);
-	f->read(normals, sizeof(Vec3f)*vfCount, 1);
+	if (use_simd_interpolation) {
+		assert(sizeof(Vec3f) == 12);
+		int frameRead = sizeof(Vec3f) * vertexCount;
+		int nFloats = vertexCount * 3;
+		int framePad = nFloats % 4 == 0 ? 0 : 4 - (nFloats % 4);
 
+		for (int i=0; i < frameCount; ++i) {
+			f->read(vertArrays[i], frameRead, 1);
+			float *ptr = vertArrays[i][vertexCount].raw;
+			for (int j=0; j < framePad; ++j) {
+				*ptr++ = 0.f;
+			}
+		}
+		for (int i=0; i < frameCount; ++i) {
+			f->read(normArrays[i], frameRead, 1);
+			float *ptr = normArrays[i][vertexCount].raw;
+			for (int j=0; j < framePad; ++j) {
+				*ptr++ = 0.f;
+			}
+		}
+	} else {
+		size_t vfCount = frameCount * vertexCount;
+		f->read(vertices, sizeof(Vec3f)*vfCount, 1);
+		f->read(normals, sizeof(Vec3f)*vfCount, 1);
+	}
 	if(textures[mtDiffuse]!=NULL){
 		for(int i=0; i<meshHeader.texCoordFrameCount; ++i){
 			f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
@@ -240,16 +302,44 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		flag*= 2;
 	}
 
-	// read data
-	size_t vfCount = frameCount * vertexCount;
-
 	// Assume packed vectors.
-	if (f->read(vertices, 12 * vfCount, 1) != 1) {
-		throw runtime_error("error reading mesh, insufficient vertex data.");
+	//read data
+	if (use_simd_interpolation) {
+		assert(sizeof(Vec3f) == 12);
+		int frameRead = sizeof(Vec3f) * vertexCount;
+		int nFloats = vertexCount * 3;
+		int framePad = nFloats % 4 == 0 ? 0 : 4 - (nFloats % 4);
+
+		for (int i=0; i < frameCount; ++i) {
+			if (f->read(vertArrays[i], frameRead, 1) != 1) {
+				//cout << "read() Failed! getLastError() == " << f->getLastError() << endl;
+			}
+			float *ptr = vertArrays[i][vertexCount].raw;
+			for (int j=0; j < framePad; ++j) {
+				*ptr++ = 0.f;
+			}
+		}
+		for (int i=0; i < frameCount; ++i) {
+			if (f->read(normArrays[i], frameRead, 1) != 1) {
+				//cout << "read() Failed! getLastError() == " << f->getLastError() << endl;
+			}
+			float *ptr = normArrays[i][vertexCount].raw;
+			for (int j=0; j < framePad; ++j) {
+				*ptr++ = 0.f;
+			}
+		}
+	} else {
+		size_t vfCount = frameCount * vertexCount;
+		cout << "reading " << (vfCount * 12) << " bytes of vertex data.\n";
+		if (f->read(vertices, 12 * vfCount, 1) != 1) {
+			throw runtime_error("error reading mesh, insufficient vertex data.");
+		}
+		cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
+		if (f->read(normals, 12 * vfCount, 1) != 1) {
+			throw runtime_error("error reading mesh, insufficient normal vector data.");
+		}
 	}
-	if (f->read(normals, 12 * vfCount, 1) != 1) {
-		throw runtime_error("error reading mesh, insufficient normal vector data.");
-	}
+
 	if (meshHeader.textures && f->read(texCoords, sizeof(Vec2f)*vertexCount, 1) != 1) {
 		throw runtime_error("error reading mesh, insufficient texture co-ordinate data.");
 	}
@@ -294,6 +384,7 @@ void Mesh::save(const string &dir, FileOps *f){
 }
 
 void Mesh::computeTangents(){
+#if 0
 	delete [] tangents;
 	tangents= new Vec3f[vertexCount];
 	for(int i=0; i<vertexCount; ++i){
@@ -329,6 +420,7 @@ void Mesh::computeTangents(){
 		tangents[i]+= binormal.cross(normals[i]);*/
 		tangents[i].normalize();
 	}
+#endif
 }
 
 // ===============================================

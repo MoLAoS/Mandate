@@ -82,6 +82,7 @@ private:
 	float renderFov;
 	int renderFpsMax;
 	string renderGraphicsFactory;
+	bool renderInterpolateWithSIMD;
 	int renderLightsMax;
 	float renderShadowAlpha;
 	int renderShadowFrameSkip;
@@ -185,6 +186,7 @@ public:
 	float getRenderFov() const						{return renderFov;}
 	int getRenderFpsMax() const						{return renderFpsMax;}
 	const string &getRenderGraphicsFactory() const	{return renderGraphicsFactory;}
+	bool getRenderInterpolateWithSIMD() const		{return renderInterpolateWithSIMD; }
 	int getRenderLightsMax() const					{return renderLightsMax;}
 	float getRenderShadowAlpha() const				{return renderShadowAlpha;}
 	int getRenderShadowFrameSkip() const			{return renderShadowFrameSkip;}
@@ -262,6 +264,7 @@ public:
 	void setRenderFov(float v)						{renderFov = v;}
 	void setRenderFpsMax(int v)						{renderFpsMax = v;}
 	void setRenderGraphicsFactory(const string &v)	{renderGraphicsFactory = v;}
+	void setRenderInterpolateWithSIMD(bool v)		{renderInterpolateWithSIMD = v;}
 	void setRenderLightsMax(int v)					{renderLightsMax = v;}
 	void setRenderShadowAlpha(float v)				{renderShadowAlpha = v;}
 	void setRenderShadowFrameSkip(int v)			{renderShadowFrameSkip = v;}

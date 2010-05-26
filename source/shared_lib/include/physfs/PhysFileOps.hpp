@@ -34,6 +34,7 @@ public:
 	int tell();
 	int close();
 	int eof();
+	const char * getLastError();
 };
 
 #endif

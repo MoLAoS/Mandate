@@ -145,7 +145,8 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 			metrics.setMaxDescent(descent);
 		}
 	}
-	delete face->stream;  //FIXME: allocated in FSFactory::openFace, better delete it in FSFactory
+	//delete face->stream;  //FIXME: allocated in FSFactory::openFace, better delete it in FSFactory
+	// ^^^ causing double delete [FT_Done_Face() also deletes ?]
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
 }

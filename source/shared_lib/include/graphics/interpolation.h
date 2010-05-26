@@ -17,6 +17,8 @@
 
 namespace Shared{ namespace Graphics{
 
+void test_interpolate();
+
 // =====================================================
 //	class InterpolationData
 // =====================================================
@@ -32,8 +34,14 @@ public:
 	InterpolationData(const Mesh *mesh);
 	~InterpolationData();
 
-	const Vec3f *getVertices() const	{return vertices==NULL? mesh->getVertices(): vertices;}
-	const Vec3f *getNormals() const		{return normals==NULL? mesh->getNormals(): normals;}
+	const Vec3f *getVertices() const {
+		return vertices != 0 ? vertices 
+			: (use_simd_interpolation ? mesh->getVertArray(0) : mesh->getVertices());
+	}
+	const Vec3f *getNormals() const {
+		return normals != 0 ? normals 
+			: (use_simd_interpolation ? mesh->getNormArray(0) : mesh->getNormals());
+	}
 	
 	void update(float t, bool cycle);
 	void updateVertices(float t, bool cycle);

@@ -26,6 +26,7 @@ public:
 	virtual int tell()=0;
 	virtual int close()=0;
 	virtual int eof()=0;
+	virtual const char * getLastError() { return 0; }
 	
 	void rewind();
 
