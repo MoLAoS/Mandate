@@ -14,14 +14,18 @@
 
 #include <types.h>
 
-// simd headers and vector types
-#if (defined __i386__ || defined __x86_64__ || defined(_MSC_VER) )
-#	if defined(USE_SSE2_INTRINSICS)
-#		include <emmintrin.h>	// SSE2
+#ifdef _MSC_VER
+#	if defined _M_IX86 || defined _M_X64 || defined _M_IA64
+#		include <emmintrin.h>
+#	else
+#		error Unsupported architecture
+#	endif
+#else
+#	if defined __i386__ || defined __x86_64__ || defined __IA64__
+#		include <emmintrin.h>
+#	else
+#		error Unsupported architecture
 #	endif
 #endif
-
-namespace Shared { namespace Util {
-}}//end namespace
 
 #endif // _SHARED_UTIL_SIMD_H_
