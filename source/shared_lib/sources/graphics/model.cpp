@@ -38,12 +38,20 @@ Vec3f* allocate_aligned_vec3_array(unsigned n) {
 	int padFloat = (numFloat % 4 == 0 ? 0 : 4 - (numFloat % 4));
 	int bytes = (numFloat + padFloat) * 4;
 	assert(bytes % 16 == 0);
+#ifdef _MSC_VER
 	void *res = _aligned_malloc(bytes, 16);
+#else
+	void *res = _mm_malloc(bytes, 16);
+#endif
 	return static_cast<Vec3f*>(res);
 }
 
 void free_aligned_vec3_array(Vec3f *ptr) {
+#ifdef _MSC_VER
 	_aligned_free(ptr);
+#else
+	_mm_free(ptr);
+#endif
 }
 
 // =====================================================

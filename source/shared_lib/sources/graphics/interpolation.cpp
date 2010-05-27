@@ -20,11 +20,13 @@
 #include "leak_dumper.h"
 
 using std::min;
+using std::cout;
+using std::endl;
 
 namespace Shared { namespace Graphics {
 
 // macro to assert x is a multiple of 16, ie, x = 16n, for some natural number n
-#define ASSERT_16n(x) assert((unsigned(x) & 0xF) == 0)
+#define ASSERT_16n(x) assert((size_t(x) & 0xF) == 0)
 
 /** Interpolate Vec3f arrays using SSE2, dest[n] = srcA[n] + dt * (srcB[n] - srcA[n]).
   * Arrays must be on a 16 byte aligned address and padded to a 16 byte multiple
