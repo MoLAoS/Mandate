@@ -28,7 +28,7 @@ using namespace Glest::Global;
 namespace Glest { namespace Widgets {
 
 // =====================================================
-// class StaticText
+//  class StaticText
 // =====================================================
 
 void StaticText::render() {
@@ -55,8 +55,33 @@ void StaticText::render() {
 	renderText();
 }
 
+Vec2i StaticText::getMinSize() const {
+	Vec2i txtDim = getTextDimensions();
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
+	return txtDim + Vec2i(xtra);
+}
+
+Vec2i StaticText::getPrefSize() const {
+	return getMinSize();
+}
+
 // =====================================================
-// class Button
+//  class StaticImage
+// =====================================================
+
+Vec2i StaticImage::getMinSize() const {
+	const Pixmap2D *pixmap = getImage()->getPixmap();
+	Vec2i imgDim = Vec2i(pixmap->getW(), pixmap->getH());
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
+	return imgDim + Vec2i(xtra);
+}
+
+Vec2i StaticImage::getPrefSize() const {
+	return getMinSize();
+}
+
+// =====================================================
+//  class Button
 // =====================================================
 
 Button::Button(ContainerPtr parent)
@@ -76,9 +101,30 @@ Button::Button(ContainerPtr parent, Vec2i pos, Vec2i size)
 	setImage(tex);
 }
 
+Vec2i Button::getPrefSize() const {
+	const Pixmap2D *pixmap = ImageWidget::getImage()->getPixmap();
+	Vec2i imgSize(pixmap->getW(), pixmap->getH());
+	Vec2i txtSize(getMinSize());
+	Vec2i res(
+		imgSize.x > txtSize.x ? imgSize.x : txtSize.x,
+		imgSize.y > txtSize.y ? imgSize.y : txtSize.y);
+	return res;
+}
+
+Vec2i Button::getMinSize() const {
+	Vec2i res = TextWidget::getTextDimensions();
+	res += Vec2i(getBorderSize() * 2 + getPadding() * 2);
+	return res;
+}
+
+//Vec2i Button::getMaxSize() const {
+//	return Vec2i(-1);
+//}
+
 void Button::setSize(const Vec2i &sz) {
 	Widget::setSize(sz);
 	CoreData &coreData = CoreData::getInstance();
+	Vec2i size = getSize();
 	Texture2D *tex = size.x > 3 * size.y / 2 
 		? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
 	setImage(tex);
@@ -89,7 +135,7 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 		pressed = true;
 		return true;
 	}
-	return parent->mouseDown(btn, pos);
+	return getParent()->mouseDown(btn, pos);
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
@@ -100,7 +146,7 @@ bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 		pressed = false;
 		return true;
 	}
-	return parent->mouseDown(btn, pos);
+	return getParent()->mouseDown(btn, pos);
 }
 
 void Button::render() {
@@ -109,7 +155,7 @@ void Button::render() {
 
 	// render hilight
 	if (hover) {
-		float anim = rootWindow->getAnim();
+		float anim = getRootWindow()->getAnim();
 		if (anim > 0.5f) {
 			anim = 1.f - anim;
 		}
@@ -119,11 +165,13 @@ void Button::render() {
 	}
 
 	// render label
-	TextWidget::renderText();
+	if (hasText()) {
+		TextWidget::renderText();
+	}
 }
 
 // =====================================================
-// class CheckBox
+//  class CheckBox
 // =====================================================
 
 CheckBox::CheckBox(ContainerPtr parent)
@@ -155,21 +203,33 @@ void CheckBox::setSize(const Vec2i &sz) {
 	setTextPos(Vec2i(40, y));
 }
 
-Vec2i CheckBox::getPrefSize() {
+Vec2i CheckBox::getMinSize() const {
+	Vec2i txtDim = getTextDimensions();
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
+	Vec2i res(txtDim.x + txtDim.y + 2 + xtra, txtDim.y + xtra);
+	return res;
+}
+
+Vec2i CheckBox::getPrefSize() const {
 	Vec2i dim = getTextDimensions();
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
 	dim.x += 40;
 	if (dim.y < 32) {
 		dim.y = 32;
 	}
+	dim += Vec2i(xtra);
 	return dim;
 }
+
+//Vec2i CheckBox::getMaxSize() const {
+//}
 
 bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
-	return parent->mouseDown(btn, pos);
+	return getParent()->mouseDown(btn, pos);
 }
 
 bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
@@ -181,7 +241,7 @@ bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
 		pressed = false;
 		return true;
 	}
-	return parent->mouseDown(btn, pos);
+	return getParent()->mouseDown(btn, pos);
 }
 
 void CheckBox::render() {
@@ -190,13 +250,14 @@ void CheckBox::render() {
 
 	// render hilight
 	if (hover) {
-		float anim = rootWindow->getAnim();
+		float anim = getRootWindow()->getAnim();
 		if (anim > 0.5f) {
 			anim = 1.f - anim;
 		}
 		float borderAlpha = 0.1f + anim * 0.5f;
 		float centreAlpha = 0.3f + anim;
-		Widget::renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, Vec2i(0), Vec2i(32));
+		int offset = getBorderSize() + getPadding();
+		Widget::renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, Vec2i(offset), Vec2i(32));
 	}
 
 	// render label
@@ -204,7 +265,7 @@ void CheckBox::render() {
 }
 
 // =====================================================
-// class TextBox
+//  class TextBox
 // =====================================================
 
 TextBox::TextBox(ContainerPtr parent)
@@ -213,7 +274,7 @@ TextBox::TextBox(ContainerPtr parent)
 		, focus(false)
 		, changed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
-	borderStyle = BorderStyle::EMBED;
+	setBorderStyle(BorderStyle::EMBED);
 	setBorderSize(2);
 }
 		
@@ -223,14 +284,14 @@ TextBox::TextBox(ContainerPtr parent, Vec2i pos, Vec2i size)
 		, focus(false)
 		, changed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
-	borderStyle = BorderStyle::EMBED;
+	setBorderStyle(BorderStyle::EMBED);
 	setBorderSize(2);
 }
 
 bool TextBox::mouseDown(MouseButton btn, Vec2i pos) {
-	if (enabled) {
+	if (isEnabled()) {
 		focus = true;
-		rootWindow->aquireKeyboardFocus(this);
+		getRootWindow()->aquireKeyboardFocus(this);
 		return true;
 	}
 	return Widget::mouseDown(btn, pos);
@@ -252,7 +313,7 @@ bool TextBox::keyDown(Key key) {
 			return true;
 		}
 		case KeyCode::RETURN:
-			rootWindow->releaseKeyboardFocus(this);
+			getRootWindow()->releaseKeyboardFocus(this);
 			if (changed) {
 				TextChanged(this);
 				changed = false;
@@ -304,28 +365,232 @@ void TextBox::render() {
 	TextWidget::renderText();
 }
 
+Vec2i TextBox::getMinSize() const {
+	Vec2i txtDim = getTextDimensions();
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
+	return Vec2i(200, txtDim.y + xtra);
+}
+
+Vec2i TextBox::getPrefSize() const {
+	Vec2i dim = getTextDimensions();
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
+	return Vec2i(400, dim.y + xtra);
+}
+
 // =====================================================
-// class Panel
+//  class VerticalScrollBar
+// =====================================================
+
+VerticalScrollBar::VerticalScrollBar(ContainerPtr parent)
+		: Widget(parent) 
+		, hoverPart(0), pressedPart(0)
+		//, fullThumb(false), smallThumb(false)
+		, shaftOffset(0), shaftHeight(0)
+		, thumbOffset(0), thumbSize(0)
+		, totalRange(0), availRange(0), lineSize(0)
+		, timeCounter(0) {
+	setBorderSize(0);
+	setPadding(0);
+	setBorderParams(BorderStyle::NONE, 0, Vec3f(0.5f), 0.6f);
+	CoreData &coreData = CoreData::getInstance();
+	addImage(coreData.getVertScrollUpTexture());
+	addImage(coreData.getVertScrollUpHoverTex());
+	addImage(coreData.getVertScrollDownTexture());
+	addImage(coreData.getVertScrollDownHoverTex());
+}
+
+VerticalScrollBar::VerticalScrollBar(ContainerPtr parent, Vec2i pos, Vec2i size)
+		: Widget(parent, pos, size)
+		, hoverPart(0), pressedPart(0)
+		//, fullThumb(false), smallThumb(false)
+		, shaftOffset(0), shaftHeight(0)
+		, thumbOffset(0), thumbSize(0)
+		, totalRange(0), availRange(0), lineSize(0)
+		, timeCounter(0) {
+	setBorderSize(0);
+	setPadding(0);
+	setBorderParams(BorderStyle::NONE, 0, Vec3f(0.5f), 0.6f);
+	Vec2i imgSize(size.x);
+	Vec2i downPos(0,0);
+	Vec2i upPos(0, size.y - imgSize.y);
+	CoreData &coreData = CoreData::getInstance();
+	addImage(coreData.getVertScrollUpTexture());
+	addImage(coreData.getVertScrollUpHoverTex());
+	addImage(coreData.getVertScrollDownTexture());
+	addImage(coreData.getVertScrollDownHoverTex());
+	recalc();
+}
+
+void VerticalScrollBar::recalc() {
+	Vec2i size = getSize();
+	Vec2i imgSize = Vec2i(size.x);
+	Vec2i downPos(0,0);
+	Vec2i upPos(0, size.y - imgSize.y);
+	setImageX(0, 0, upPos, imgSize);
+	setImageX(0, 1, upPos, imgSize);
+	setImageX(0, 2, downPos, imgSize);
+	setImageX(0, 3, downPos, imgSize);
+	shaftOffset = imgSize.y;
+	shaftHeight = size.y - imgSize.y * 2;
+	thumbOffset = size.y - imgSize.y;
+	float availRatio = availRange / float(totalRange);
+	thumbSize = int(availRatio * shaftHeight);
+}
+
+bool VerticalScrollBar::mouseDown(MouseButton btn, Vec2i pos) {
+	Vec2i localPos = pos - getScreenPos();
+	pressedPart = hoverPart;
+	if (pressedPart == Part::UPPER_SHAFT || pressedPart == Part::LOWER_SHAFT) {
+		thumbOffset = clamp(localPos.y + thumbSize / 2, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		pressedPart = hoverPart = Part::THUMB;
+	} else if (pressedPart == Part::UP_BUTTON || pressedPart == Part::DOWN_BUTTON) {
+		getRootWindow()->registerUpdate(this);
+		timeCounter = 0;
+		moveOnMouseUp = true;
+	}
+	return getParent()->mouseDown(btn, pos);
+}
+
+bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
+	Vec2i localPos = pos - getScreenPos();
+	Part upPart = partAt(localPos);
+
+	if (pressedPart == Part::UP_BUTTON || pressedPart == Part::DOWN_BUTTON) {
+		getRootWindow()->unregisterUpdate(this);
+	}
+	if (pressedPart == upPart && moveOnMouseUp) {
+		if (pressedPart == Part::UP_BUTTON) {
+			thumbOffset += lineSize;
+			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		} else if (pressedPart == Part::DOWN_BUTTON) {
+			thumbOffset -= lineSize;
+			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		}
+	}
+	pressedPart = Part::NONE;
+	return getParent()->mouseUp(btn, pos);
+}
+
+void VerticalScrollBar::update() {
+	++timeCounter;
+	if (timeCounter % 7 != 0) {
+		return;
+	}
+	if (pressedPart == Part::UP_BUTTON) {
+		if (hoverPart == Part::UP_BUTTON) {
+			thumbOffset += lineSize;
+			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		}
+	} else if (pressedPart == Part::DOWN_BUTTON) {
+		if (hoverPart == Part::DOWN_BUTTON) {
+			thumbOffset -= lineSize;
+			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		}
+	} else {
+		assert(false);
+	}
+	moveOnMouseUp = false;
+}
+
+VerticalScrollBar::Part VerticalScrollBar::partAt(const Vec2i &pos) {
+	if (pos.y < shaftOffset) {
+		return Part::DOWN_BUTTON;
+	} else if (pos.y > shaftOffset + shaftHeight) {
+		return Part::UP_BUTTON;
+	} else if (pos.y < thumbOffset - thumbSize) {
+		return Part::LOWER_SHAFT;
+	} else if (pos.y > thumbOffset) {
+		return Part::UPPER_SHAFT;
+	} else {
+		return Part::THUMB;
+	}
+}
+
+bool VerticalScrollBar::mouseMove(Vec2i pos) {
+	Vec2i localPos = pos - getScreenPos();
+	if (pressedPart == Part::NONE) {
+		hoverPart = partAt(localPos);
+	} else {
+		if (pressedPart == Part::DOWN_BUTTON) {
+			if (hoverPart == Part::DOWN_BUTTON && localPos.y >= shaftOffset) {
+				hoverPart = Part::NONE;
+			} else if (hoverPart == Part::NONE && localPos.y < shaftOffset) {
+				hoverPart = Part::DOWN_BUTTON;
+			}
+		} else if (pressedPart == Part::UP_BUTTON) {
+			if (hoverPart == Part::UP_BUTTON && localPos.y <= shaftOffset + shaftHeight) {
+				hoverPart = Part::NONE;
+			} else if (hoverPart == Part::NONE && localPos.y > shaftOffset + shaftHeight) {
+				hoverPart = Part::UP_BUTTON;
+			}
+		} else if (pressedPart == Part::THUMB) {
+			thumbOffset = clamp(localPos.y + thumbSize / 2, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		} else {
+			// don't care for shaft clicked here
+		}
+	}
+	return getParent()->mouseMove(pos);
+}
+
+Vec2i VerticalScrollBar::getPrefSize() const {return Vec2i(-1);}
+Vec2i VerticalScrollBar::getMinSize() const {return Vec2i(-1);}
+
+void VerticalScrollBar::render() {
+	// buttons
+	renderImage((pressedPart == Part::UP_BUTTON) ? 1 : 0);	// up arrow
+	renderImage((pressedPart == Part::DOWN_BUTTON) ? 3 : 2); // down arrow
+	
+	if (hoverPart == Part::UP_BUTTON || hoverPart == Part::DOWN_BUTTON) {
+		float anim = getRootWindow()->getAnim();
+		if (anim > 0.5f) {
+			anim = 1.f - anim;
+		}
+		float borderAlpha = 0.1f + anim * 0.5f;
+		float centreAlpha = 0.3f + anim;
+
+		Vec2i pos(0, hoverPart == Part::UP_BUTTON ? shaftOffset + shaftHeight: 0);
+		Vec2i size(getSize().x);
+		renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, pos, size);
+	}
+
+	// shaft
+	Vec2i shaftPos(0, shaftOffset);
+	Vec2i shaftSize(shaftOffset, shaftHeight);
+	renderBorders(BorderStyle::EMBED, shaftPos, shaftSize, 1);
+
+	// thumb
+	Vec2i thumbPos(1, thumbOffset - thumbSize);
+	Vec2i thumbSize(shaftOffset - 2, thumbSize);
+	renderBorders(BorderStyle::RAISE, thumbPos, thumbSize, 1);
+	if (hoverPart == Part::THUMB) {
+		renderHighLight(Vec3f(1.f), 0.2f, 0.5f, thumbPos, thumbSize);
+	}
+}
+
+// =====================================================
+//  class Panel
 // =====================================================
 
 Panel::Panel(ContainerPtr parent)
 		: Widget(parent)
-		, autoLayout(true) {
+		, autoLayout(true)
+		, layoutOrigin(LayoutOrigin::CENTRE) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
 	setPaddingParams(10, 5);
-	borderSize = 2;
+	setBorderSize(2);
 }
 
 Panel::Panel(ContainerPtr parent, Vec2i pos, Vec2i sz)
 		: Widget(parent, pos, sz)
-		, autoLayout(true) {
+		, autoLayout(true)
+		, layoutOrigin(LayoutOrigin::CENTRE) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
 	setPaddingParams(10, 5);
-	borderSize = 2;
+	setBorderSize(2);
 }
 
 void Panel::setPaddingParams(int panelPad, int widgetPad) {
-	panelPadding = panelPad;
+	setPadding(panelPad);
 	widgetPadding = widgetPad;
 }
 
@@ -334,9 +599,38 @@ void Panel::layoutChildren() {
 		return;
 	}
 	vector<int> widgetYPos;
+	const int borderPlusPad = getBorderSize() + getPadding();
 	int wh = 0;
-	int yPos = size.y - panelPadding - borderSize;
-	int ySpace = size.y - (panelPadding * 2 + borderSize * 2);
+	Vec2i size = getSize();
+	Vec2i room = size - Vec2i(borderPlusPad * 2);
+	foreach (WidgetList, it, children) {
+		wh += (*it)->getHeight();
+		widgetYPos.push_back(wh);
+		wh += widgetPadding;
+	}
+	wh -= widgetPadding;
+	
+	Vec2i topLeft(borderPlusPad, size.y - borderPlusPad);
+	int offset;
+	switch (layoutOrigin) {
+		case LayoutOrigin::FROM_TOP: offset = borderPlusPad; break;
+		case LayoutOrigin::CENTRE: offset = (size.y - wh) / 2; break;
+		case LayoutOrigin::FROM_BOTTOM: offset = size.y - wh - borderPlusPad; break;
+	}
+	int offset_y = size.y - offset;
+	int ndx = 0;
+	foreach (WidgetList, it, children) {
+		int ww = (*it)->getWidth();
+		int x = topLeft.x + (room.x - ww) / 2;
+		int y = offset_y - widgetYPos[ndx++];
+		(*it)->setPos(x, y);
+	}/*
+
+	vector<int> widgetYPos;
+	int wh = 0;
+	Vec2i size = getSize();
+	int yPos = size.y - panelPadding - getBorderSize();
+	int ySpace = size.y - (panelPadding * 2 + getBorderSize() * 2);
 	foreach (WidgetList, it, children) {
 		yPos -= (*it)->getHeight();
 		wh += (*it)->getHeight();
@@ -350,7 +644,16 @@ void Panel::layoutChildren() {
 		int ww = (*it)->getWidth();
 		int x = (size.x - ww) / 2;
 		(*it)->setPos(x, widgetYPos[ndx++] - offset);
-	}
+	}*/
+}
+
+Vec2i Panel::getMinSize() const {
+	///TODO Compositor...
+	return Vec2i(-1);
+}
+
+Vec2i Panel::getPrefSize() const {
+	return Vec2i(-1);
 }
 
 void Panel::addChild(WidgetPtr child) {
@@ -359,7 +662,7 @@ void Panel::addChild(WidgetPtr child) {
 		return;
 	}
 	Vec2i sz = child->getSize();
-	Vec2i space = size - Vec2i(panelPadding * 2 + borderSize * 2);
+	Vec2i space = getSize() - Vec2i(getPadding() * 2 + getBorderSize() * 2);
 	if (sz.x > space.x) {
 		child->setSize(space.x, sz.y);
 	}
@@ -368,11 +671,32 @@ void Panel::addChild(WidgetPtr child) {
 
 void Panel::render() {
 	Widget::renderBgAndBorders();
+	int brdrPad = getBorderSize() + getPadding();
+	Vec2i pos = getScreenPos() + Vec2i(brdrPad);
+	Vec2i size = getSize() - Vec2i(brdrPad) * 2;
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(pos.x, pos.y, size.x, size.y);
 	Container::render();
+	glDisable(GL_SCISSOR_TEST);
 }
 
 // =====================================================
-// class ListBase
+//  class PicturePanel
+// =====================================================
+
+Vec2i PicturePanel::getMinSize() const {
+	const Pixmap2D *pixmap = getImage()->getPixmap();
+	Vec2i imgDim = Vec2i(pixmap->getW(), pixmap->getH());
+	int xtra = getBorderSize() * 2 + getPadding() + 2;
+	return imgDim + Vec2i(xtra);
+}
+
+Vec2i PicturePanel::getPrefSize() const {
+	return Vec2i(-1);
+}
+
+// =====================================================
+//  class ListBase
 // =====================================================
 
 ListBase::ListBase()
@@ -385,27 +709,36 @@ ListBase::ListBase()
 }
 
 // =====================================================
-// class ListBox
+//  class ListBox
 // =====================================================
 
 ListBox::ListBox(ContainerPtr parent)
-		: Widget(parent) {
+		: Widget(parent)
+		, scrollBar(0)
+		, scrollSetting(ScrollSetting::AUTO)
+		, scrollWidth(24) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
-	borderStyle = BorderStyle::EMBED;
+	setBorderStyle(BorderStyle::EMBED);
 	setBorderSize(2);
 }
 
 ListBox::ListBox(ContainerPtr parent, Vec2i pos, Vec2i size) 
-		: Widget(parent, pos, size) {
+		: Widget(parent, pos, size)
+		, scrollBar(0)
+		, scrollSetting(ScrollSetting::AUTO)
+		, scrollWidth(24) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
-	borderStyle = BorderStyle::EMBED;
+	setBorderStyle(BorderStyle::EMBED);
 	setBorderSize(2);
 }
 
 ListBox::ListBox(WindowPtr window)
-		: Widget(window) {
+		: Widget(window)
+		, scrollBar(0)
+		, scrollSetting(ScrollSetting::AUTO)
+		, scrollWidth(24) {
 	WIDGET_LOG( __FUNCTION__ << "(WindowPtr)" );
-	borderStyle = BorderStyle::EMBED;
+	setBorderStyle(BorderStyle::EMBED);
 	setBorderSize(2);
 }
 
@@ -427,17 +760,18 @@ void ListBox::onSelected(ListBoxItemPtr item) {
 }
 
 void ListBox::addItems(const vector<string> &items) {
-	Vec2i sz(size.x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
+	Vec2i sz(getSize().x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
 	foreach_const (vector<string>, it, items) {
 		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz);
 		nItem->setTextParams(*it, Vec4f(1.f), itemFont, true, true);
 		listBoxItems.push_back(nItem);
 		nItem->Selected.connect(this, &ListBox::onSelected);
 	}
+
 }
 
 void ListBox::addItem(const string &item) {
-	Vec2i sz(size.x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
+	Vec2i sz(getSize().x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
 	ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz);
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true, true);
 	listBoxItems.push_back(nItem);
@@ -450,7 +784,7 @@ void ListBox::setSize(const Vec2i &sz) {
 }
 
 int ListBox::getPrefHeight(int childCount) {
-	int res = borderSize * 2 + panelPadding * 2;
+	int res = getBorderSize() * 2 + getPadding() * 2;
 	int iSize = int(CoreData::getInstance().getfreeTypeMenuFont()->getMetrics()->getHeight()) + 4;
 	if (childCount == -1) {
 		childCount = listBoxItems.size();
@@ -460,6 +794,29 @@ int ListBox::getPrefHeight(int childCount) {
 		res += widgetPadding * (childCount - 1);
 	}
 	return res;
+}
+
+Vec2i ListBox::getMinSize() const {
+	Vec2i itemPref(0);
+	foreach_const (WidgetList, it, children) {
+		Vec2i ips = (*it)->getPrefSize();
+		if (ips.x > itemPref.x) itemPref.x = ips.x;
+		if (ips.y > itemPref.y) itemPref.y = ips.y;
+	}
+	itemPref.y *= 3;
+	int xtra = getBorderSize() * 2 + getPadding() * 2;
+	return itemPref + Vec2i(xtra);	
+}
+
+Vec2i ListBox::getPrefSize() const {
+	Vec2i itemPref(0);
+	foreach_const (WidgetList, it, children) {
+		Vec2i ips = (*it)->getPrefSize();
+		if (ips.x > itemPref.x) itemPref.x = ips.x;
+		itemPref.y += ips.y;
+	}
+	int xtra = getBorderSize() * 2 + getPadding() * 2;
+	return itemPref + Vec2i(xtra);
 }
 
 void ListBox::setSelected(int index) {
@@ -488,7 +845,7 @@ void ListBox::setSelected(int index) {
 }
 
 // =====================================================
-// class ListBoxItem
+//  class ListBoxItem
 // =====================================================
 
 ListBoxItem::ListBoxItem(ListBasePtr parent)
@@ -497,10 +854,7 @@ ListBoxItem::ListBoxItem(ListBasePtr parent)
 		, hover(false)
 		, pressed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(ListBasePtr)" );
-	borderStyle = BorderStyle::SOLID;
-	setBgAlphaValue(0.4f);
-	setBorderColour(Vec3f(0.f));
-	setBorderSize(2);
+	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.4f);
 }
 
 ListBoxItem::ListBoxItem(ListBasePtr parent, Vec2i pos, Vec2i sz)
@@ -509,10 +863,18 @@ ListBoxItem::ListBoxItem(ListBasePtr parent, Vec2i pos, Vec2i sz)
 		, hover(false)
 		, pressed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(ListBasePtr, Vec2i, Vec2i)" );
-	borderStyle = BorderStyle::SOLID;
-	setBgAlphaValue(0.4f);
-	setBorderColour(Vec3f(0.f));
-	setBorderSize(2);
+	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.4f);
+}
+
+
+Vec2i ListBoxItem::getMinSize() const {
+	Vec2i dims = getTextDimensions();
+	int xtra = getBorderSize() * 2 + getPadding() * 2;
+	return dims + Vec2i(xtra);
+}
+
+Vec2i ListBoxItem::getPrefSize() const {
+	return getMinSize();
 }
 
 void ListBoxItem::render() {
@@ -547,7 +909,7 @@ bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 }
 
 // =====================================================
-// class ComboBox
+//  class ComboBox
 // =====================================================
 
 ComboBox::ComboBox(ContainerPtr parent)
@@ -555,6 +917,7 @@ ComboBox::ComboBox(ContainerPtr parent)
 		, floatingList(0) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
 	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.6f);
+	setPadding(0);
 	setAutoLayout(false);
 	button = new Button(this);
 	button->Clicked.connect(this, &ComboBox::onExpandList);
@@ -567,19 +930,38 @@ ComboBox::ComboBox(ContainerPtr parent, Vec2i pos, Vec2i size)
 		, floatingList(0) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
 	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.6f);
+	setPadding(0);
 	setAutoLayout(false);
+	const int borderSize = getBorderSize();
 	int btn_sz = size.y - borderSize * 2;
 	button = new Button(this, Vec2i(size.x - btn_sz - borderSize, borderSize), Vec2i(btn_sz));
 	button->Clicked.connect(this, &ComboBox::onExpandList);
-	Vec2i liPos(borderSize);
-	Vec2i liSz(size.x - btn_sz - borderSize * 3, btn_sz);
+	Vec2i liPos(borderSize + getPadding());
+	Vec2i liSz(size.x - btn_sz - borderSize * 2 - getPadding(), btn_sz);
 	selectedItem = new ListBoxItem(this, liPos, liSz);
 	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true, true);
 	selectedItem->Clicked.connect(this, &ComboBox::onBoxClicked);
 }
 
-void ComboBox::setSize(const Vec2i &sz) {
-	Widget::setSize(sz);
+Vec2i ComboBox::getPrefSize() const {
+	Vec2i res = selectedItem->getPrefSize();
+	int xtra = getBorderSize() * 2 + getPadding() * 2;
+	int btn_sz = res.y - getBorderSize() * 2;
+	res.x += btn_sz;
+	return  res + Vec2i(xtra); 
+}
+
+Vec2i ComboBox::getMinSize() const {
+	Vec2i res = selectedItem->getMinSize();
+	int xtra = getBorderSize() * 2 + getPadding() * 2;
+	int btn_sz = res.y - getBorderSize() * 2;
+	res.x += btn_sz;
+	return  res + Vec2i(xtra); 
+}
+
+void ComboBox::setSize(const Vec2i &size) {
+	Widget::setSize(size);
+	const int borderSize = getBorderSize();
 	int btn_sz = size.y - borderSize * 2;
 	button->setSize(Vec2i(btn_sz));
 	button->setPos(Vec2i(size.x - btn_sz - borderSize, borderSize));
@@ -617,9 +999,11 @@ void ComboBox::setSelected(int index) {
 }
 
 void ComboBox::expandList() {
-	floatingList = new ListBox(rootWindow);
-	rootWindow->setFloatingWidget(floatingList);
+	floatingList = new ListBox(getRootWindow());
+	getRootWindow()->setFloatingWidget(floatingList);
 	floatingList->setPaddingParams(0, 0);
+	const Vec2i &size = getSize();
+	const Vec2i &screenPos = getScreenPos();
 	Vec2i sz(size.x, floatingList->getPrefHeight(listItems.size()));
 	Vec2i pos(screenPos.x, screenPos.y - sz.y + size.y);
 	floatingList->setPos(pos);
@@ -647,7 +1031,7 @@ void ComboBox::onSelectionMade(ListBasePtr lb) {
 	setSelected(lb->getSelectedIndex());
 	floatingList->Destroyed.disconnect(this);
 	onListDisposed(lb);
-	rootWindow->removeFloatingWidget(lb);
+	getRootWindow()->removeFloatingWidget(lb);
 }
 
 void ComboBox::onListDisposed(WidgetPtr) {

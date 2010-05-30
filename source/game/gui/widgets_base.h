@@ -46,62 +46,7 @@ using std::string;
 #	define WIDGET_LOG(x)
 #endif
 
-// =====================================================
-// class WidgetBase
-// =====================================================
-/// dataless widget abstraction
-/*
-class WidgetBase {
-	friend class WidgetWindow;
-
-public:
-	virtual ~WidgetBase();
-
-	// get/is
-	virtual ContainerPtr getParent() const = 0;
-	virtual WindowPtr getRootWindow() const = 0;
-	virtual WidgetBase* getWidgetAt(const Vec2i &pos) = 0;
-
-	virtual Vec2i getScreenPos() const = 0;
-	virtual Vec2i getSize() const = 0;
-	virtual int   getWidth() const = 0;
-	virtual int   getHeight() const = 0;
-	virtual float getFade() const = 0;
-
-	virtual bool isVisible() const = 0;
-	virtual bool isInside(const Vec2i &pos) const = 0;
-	virtual bool isEnabled() const = 0;
-
-	// set
-	virtual void setEnabled(bool v) = 0;
-	virtual void setSize(const Vec2i &sz) = 0;
-	virtual void setPos(const Vec2i &p) = 0;
-	virtual void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
-	virtual void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
-	virtual void setVisible(bool vis) = 0;
-	virtual void setFade(float v) = 0;
-	virtual void setParent(ContainerPtr p) = 0;
-
-	virtual bool mouseDown(MouseButton btn, Vec2i pos) = 0;
-	virtual bool mouseUp(MouseButton btn, Vec2i pos) = 0;
-	virtual bool mouseMove(Vec2i pos) = 0;
-	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos) = 0;
-	virtual bool mouseWheel(Vec2i pos, int z) = 0;
-	virtual void mouseIn() = 0;
-	virtual void mouseOut() = 0;
-	virtual bool keyDown(Key key) = 0;
-	virtual bool keyUp(Key key) = 0;
-	virtual bool keyPress(char c) = 0;
-
-	virtual void lostKeyboardFocus() = 0;
-
-	virtual void render() = 0;
-	virtual string descPosDim() = 0;
-	virtual string desc() = 0;
-
-	sigslot::signal<WidgetBase*> Destroyed;
-};
-*/
+#define ASSERT_RANGE(var, size)	assert(var >= 0 && var < size)
 
 // =====================================================
 // enum BackgroundStyle
@@ -110,7 +55,9 @@ public:
 WRAPPED_ENUM( BackgroundStyle,
 	NONE,
 	SOLID_COLOUR,
-	ALPHA_COLOUR
+	ALPHA_COLOUR,
+	CUSTOM_4_COLOUR,
+	CUSTOM_5_COLOUR
 );
 
 // =====================================================
@@ -121,18 +68,48 @@ WRAPPED_ENUM( BorderStyle,
 	NONE,		/**< Draw nothing */
 	RAISE,		/**< Draw a raised widget */
 	EMBED,		/**< Draw a lowered widget */
-	SOLID//,		/**< Draw a solid border */
+	SOLID,		/**< Draw a solid border */
+	CUSTOM		/**< Use colour values from attached ColourValues4 */
 	//EMBOSS,		/**< Draw a raised border */
 	//ETCH		/**< Draw an etched (lowered) border */
 );
+/*
+struct SideValues {
+	int top, right, bottom, left;
+};
+
+struct ColourValues4 {
+	Vec4f topLeft, topRight, bottomRight, bottomLeft;
+};
+
+struct ColourValues5 {
+	Vec4f centre, topLeft, topRight, bottomRight, bottomLeft;
+};
+
+struct WidgetStyle {
+	BorderStyle borderStyle;
+
+	Vec3f borderColour;
+	ColourValues4 *customBorderColours;
+	
+	SideValues borderSizes;
+	SideValues paddingSizes;
+
+	BackGroundStyle backgroundStyle;
+	Vec3f backgroundColour;
+	float backgroundAlpha;
+	ColourValues4 *customBackgroundColours4;
+	ColourValues5 *customBackgroundColours5;
+};
+*/
 
 // =====================================================
 // class Widget
 // =====================================================
 
-class Widget /*: public WidgetBase */{
+class Widget {
 	friend class WidgetWindow;
-protected:
+private:
 	//int id;
 	ContainerPtr parent;
 	WindowPtr rootWindow;
@@ -148,6 +125,8 @@ protected:
 	int borderSize;
 	float bgAlpha;
 
+	int padding;
+
 protected:
 	Widget(WindowPtr window);
 	Widget() {} // dangerous perhaps, but needed to avoid virtual inheritence problems (double inits)
@@ -157,6 +136,7 @@ public:
 	Widget(ContainerPtr parent, Vec2i pos, Vec2i size);
 	virtual ~Widget();
 
+	// de-virtualise ??
 	// get/is
 	virtual Vec2i getScreenPos() const { return screenPos; }
 	virtual ContainerPtr getParent() const { return parent; }
@@ -168,6 +148,12 @@ public:
 	virtual int   getHeight() const		{ return size.y;	 }
 	virtual float getFade() const		{ return fade;		 }
 	virtual int	  getBorderSize() const	{ return borderSize; }
+	virtual int	  getPadding() const	{ return padding;	 }
+
+	// layout helpers
+	virtual Vec2i getPrefSize() const = 0; // may return (-1,-1) to indicate 'as big as possible'
+	virtual Vec2i getMinSize() const = 0; // may not return (-1,-1)
+	virtual Vec2i getMaxSize() const {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
 
 	virtual bool isVisible() const		{ return visible; }
 	virtual bool isInside(const Vec2i &pos) const { return pos >= screenPos && pos < screenPos + size; }
@@ -183,13 +169,12 @@ public:
 	virtual void setFade(float v) { fade = v; }
 	virtual void setParent(ContainerPtr p) { parent = p; }
 
-	// to decorator
 	void setBorderSize(int sz) { borderSize = sz; }
 	void setBorderStyle(BorderStyle style) { borderStyle = style; }
 	void setBgAlphaValue(float v) { bgAlpha = v; }
 	void setBorderColour(Vec3f colour) { borderColour = colour; }
-
 	void setBorderParams(BorderStyle st, int sz, Vec3f col, float alp);
+	void setPadding(int pad) { padding = pad; }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);
@@ -202,14 +187,17 @@ public:
 	virtual bool keyUp(Key key);
 	virtual bool keyPress(char c);
 
+	virtual void update() {} // must 'register' with WidgetWindow to receive
+
 	virtual void lostKeyboardFocus() {}
 
 	virtual void render() = 0;
 
+	void renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize);
 	void renderBgAndBorders();
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
-
+	
 	virtual string descPosDim();
 	virtual string desc() = 0;
 
@@ -250,6 +238,11 @@ public:
 	void setImage(Texture2D *tex, int ndx = 0);
 	int addImageX(Texture2D *tex, Vec2i offset, Vec2i sz);
 	void setImageX(Texture2D *tex, int ndx, Vec2i offset, Vec2i sz);
+
+	const Texture2D* getImage(int ndx=0) const {
+		ASSERT_RANGE(ndx, textures.size());
+		return textures[ndx];
+	}
 };
 
 // =====================================================
@@ -296,6 +289,7 @@ public:
 	const Vec2i& getTextPos() const	  { return txtPos; }
 	const Font* getTextFont() const { return font; }
 	Vec2i getTextDimensions() const;
+	bool hasText() const { return !texts.empty(); }
 };
 
 // =====================================================
@@ -345,6 +339,9 @@ public:
 
 	int getId() const { return id; }
 	const string& getName() const { return name; }
+
+	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
+	virtual Vec2i getMinSize() const { return Vec2i(-1); }
 
 	virtual string desc() { return string("[Layer '") + name + "':" + descPosDim() + "]"; }
 };

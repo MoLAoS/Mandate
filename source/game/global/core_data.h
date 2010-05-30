@@ -44,18 +44,25 @@ private:
     StaticSound clickSoundC;
 	SoundContainer waterSounds;
 	
-	Texture2D *logoTexture;
-	Texture2D *gplTexture;
-    Texture2D *backgroundTexture;
-    Texture2D *fireTexture;
-    Texture2D *snowTexture;
-	Texture2D *waterSplashTexture;
-    Texture2D *customTexture;
-	Texture2D *buttonSmallTexture;
-	Texture2D *buttonBigTexture;
-	Texture2D *textEntryTexture;
-	Texture2D *checkBoxTickTexture;
-	Texture2D *checkBoxCrossTexture;
+	typedef Texture2D* TexPtr;
+
+	TexPtr	logoTexture,
+			gplTexture,
+			backgroundTexture,
+			fireTexture,
+			snowTexture,
+			waterSplashTexture,
+			customTexture,
+			buttonSmallTexture,
+			buttonBigTexture,
+			textEntryTexture,
+			checkBoxTickTexture,
+			checkBoxCrossTexture,
+			vertScrollUpTexture,
+			vertScrollDownTexture,
+			vertScrollUpHoverTex,
+			vertScrollDownHoverTex;
+	
 
     Font *displayFont;
 	Font *menuFontNormal;
@@ -75,19 +82,22 @@ public:
     void load();
 	void closeSounds();
 
-	Texture2D *getBackgroundTexture() const		{return backgroundTexture;}
-	Texture2D *getFireTexture() const			{return fireTexture;}
-	Texture2D *getSnowTexture() const			{return snowTexture;}
-	Texture2D *getLogoTexture() const			{return logoTexture;}
-	Texture2D *getGplTexture() const			{return gplTexture;}
-	Texture2D *getWaterSplashTexture() const	{return waterSplashTexture;}
-	Texture2D *getCustomTexture() const			{return customTexture;}
-	Texture2D *getButtonSmallTexture() const	{return buttonSmallTexture;}
-	Texture2D *getButtonBigTexture() const		{return buttonBigTexture;}
-	Texture2D *getTextEntryTexture() const		{return textEntryTexture;}
-	
-	Texture2D *getCheckBoxTickTexture() const	{return checkBoxTickTexture;}
-	Texture2D *getCheckBoxCrossTexture() const	{return checkBoxCrossTexture;}
+	TexPtr getBackgroundTexture() const		{return backgroundTexture;}
+	TexPtr getFireTexture() const			{return fireTexture;}
+	TexPtr getSnowTexture() const			{return snowTexture;}
+	TexPtr getLogoTexture() const			{return logoTexture;}
+	TexPtr getGplTexture() const			{return gplTexture;}
+	TexPtr getWaterSplashTexture() const	{return waterSplashTexture;}
+	TexPtr getCustomTexture() const			{return customTexture;}
+	TexPtr getButtonSmallTexture() const	{return buttonSmallTexture;}
+	TexPtr getButtonBigTexture() const		{return buttonBigTexture;}
+	TexPtr getTextEntryTexture() const		{return textEntryTexture;}
+	TexPtr getVertScrollUpTexture() const	{return vertScrollUpTexture;}
+	TexPtr getVertScrollDownTexture() const {return vertScrollDownTexture;}
+	TexPtr getVertScrollUpHoverTex() const	{return vertScrollUpHoverTex;}
+	TexPtr getVertScrollDownHoverTex() const{return vertScrollDownHoverTex;}
+	TexPtr getCheckBoxTickTexture() const	{return checkBoxTickTexture;}
+	TexPtr getCheckBoxCrossTexture() const	{return checkBoxCrossTexture;}
 
 	StrSound *getIntroMusic() 				{return &introMusic;}
 	StrSound *getMenuMusic() 				{return &menuMusic;}

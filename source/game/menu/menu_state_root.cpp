@@ -113,6 +113,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		// testing ListBox
 		int yPos = 10 + txtBox->getHeight() + 20;
 		Widgets::ListBox *listBox = new Widgets::ListBox(&program, Vec2i(10, yPos), Vec2i(200, 250));
+		
 		vector<string> items;
 		items.push_back("Carrot");
 		items.push_back("Broccoli");
@@ -122,11 +123,11 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		items.push_back("Cucumber");
 		items.push_back("Eggplant");
 		items.push_back("Avacado");
-
+		
 		listBox->addItems(items);
 		listBox->SelectionChanged.connect(this, &MenuStateRoot::onListBoxChanged);
-
 		listBox->setSize(Vec2i(listBox->getWidth(), listBox->getPrefHeight()));
+		//listBox->addItem("Crash-acado");		
 
 		items.clear();
 		items.push_back("Pear");
@@ -148,6 +149,11 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		Widgets::CheckBox *checkBox = new Widgets::CheckBox(&program);
 		checkBox->setPos(Vec2i(10, yPos));
 		checkBox->setSize(checkBox->getPrefSize());
+
+		pos = Vec2i(250, 128);
+		sz = Vec2i(32,256);
+		Widgets::VerticalScrollBar *vsb = new Widgets::VerticalScrollBar(&program, pos, sz);
+		vsb->setRanges(100, 35);
 
 	} // test_widgets
 

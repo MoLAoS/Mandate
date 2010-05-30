@@ -29,16 +29,21 @@ class WidgetWindow : public Container, public WindowGl {
 private:
 	WidgetPtr	keyboardFocused,
 				floatingWidget,
-				mouseDownWidgets[MouseButton::COUNT];
+				mouseDownWidgets[MouseButton::COUNT],
+				lastMouseDownWidget;
 	std::stack<WidgetPtr> mouseOverStack;
 	std::list<LayerPtr> layers;
 	std::set<string> layerNames;
 	int layerIdCounter;
 	LayerPtr rootLayer;
 	WidgetList toClean;
+	WidgetList updateList;
+
 	TextRenderer *textRendererBM, *textRendererFT;
 
 	float anim;
+	WidgetPtr findCommonAncestor(WidgetPtr widget1, WidgetPtr widget2);
+	void unwindMouseOverStack(WidgetPtr newTop);
 	void unwindMouseOverStack();
 	void doMouseInto(WidgetPtr widget);
 	void changeActiveLayer(std::list<LayerPtr>::iterator &it);
@@ -57,6 +62,9 @@ public:
 	LayerPtr addNewLayer(const string &name, bool activate = true);
 	LayerPtr getLayer(const string &layer);
 	LayerPtr getLayer(const int layer);
+
+	void registerUpdate(WidgetPtr widget);
+	void unregisterUpdate(WidgetPtr widget);
 
 	void setFloatingWidget(WidgetPtr floater);
 	void removeFloatingWidget(WidgetPtr floater);
@@ -83,6 +91,10 @@ public: // Glest::Widgets::Widget virtual events
 	virtual bool keyDown(Key key)								{ return false; }
 	virtual bool keyUp(Key key)									{ return false; }
 	virtual bool keyPress(char c)								{ return false; }
+
+	virtual Vec2i getPrefSize() const	{ return Vec2i(-1);			}
+	virtual Vec2i getMinSize() const	{ return Vec2i(800, 600);	}
+	virtual Vec2i getMaxSize() const	{ return Vec2i(-1);			}
 
 	TextRenderer* getTextRenderer(bool ft) {
 		return ft ? textRendererFT : textRendererBM;

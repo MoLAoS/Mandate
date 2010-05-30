@@ -38,7 +38,8 @@ Widget::Widget(ContainerPtr parent)
 		, borderStyle(BorderStyle::NONE)
 		, borderColour(0.f)
 		, borderSize(0)
-		, bgAlpha(0.2f) {
+		, bgAlpha(0.2f)
+		, padding(0) {
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
@@ -54,7 +55,8 @@ Widget::Widget(ContainerPtr parent, Vec2i pos, Vec2i size)
 		, borderStyle(BorderStyle::NONE)
 		, borderColour(0.f)
 		, borderSize(0)
-		, bgAlpha(0.2f) {
+		, bgAlpha(0.2f)
+		, padding(0) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
 	screenPos = parent->getScreenPos() + pos;
 	rootWindow = parent->getRootWindow();
@@ -72,7 +74,8 @@ Widget::Widget(WindowPtr window)
 		, borderStyle(BorderStyle::NONE)
 		, borderColour(0.f)
 		, borderSize(0)
-		, bgAlpha(0.2f) {
+		, bgAlpha(0.2f)
+		, padding(0) {
 	WIDGET_LOG( __FUNCTION__ << "(WindowPtr)" );
 	rootWindow = window;
 }
@@ -153,12 +156,12 @@ void Widget::setBorderParams(BorderStyle st, int sz, Vec3f col, float alph) {
 	bgAlpha = alph;
 }
 
-void Widget::renderBgAndBorders() {
-	if (borderStyle != BorderStyle::NONE && borderSize > 0) {
+void Widget::renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize) {
+	if (style != BorderStyle::NONE && borderSize > 0) {
 		Vec4f colourBackground(0.5f, 0.5f, 0.5f, bgAlpha * fade);
 		Vec4f colourTopLeft;
 		Vec4f colourBottomRight;
-		switch (borderStyle) {
+		switch (style) {
 			case BorderStyle::RAISE:
 				colourTopLeft = Vec4f(1.f, 1.f, 1.f, bgAlpha * fade);
 				colourBottomRight = Vec4f(0.f, 0.f, 0.f, bgAlpha * fade);
@@ -178,13 +181,13 @@ void Widget::renderBgAndBorders() {
 
 		float border = float(borderSize);
 		Vec2f verts[8];
-		verts[0] = Vec2f(screenPos);
+		verts[0] = Vec2f(screenPos + offset);
 		verts[1] = verts[0] + Vec2f(border, border);
-		verts[2] = Vec2f(screenPos) + Vec2f(0.f, float(size.y));
+		verts[2] = verts[0] + Vec2f(0.f, float(size.y));
 		verts[3] = verts[2] + Vec2f(border, -border);
-		verts[4] = Vec2f(screenPos) + Vec2f(size);
+		verts[4] = verts[0] + Vec2f(size);
 		verts[5] = verts[4] + Vec2f(-border, -border);
-		verts[6] = Vec2f(screenPos) + Vec2f(float(size.x), 0.f);
+		verts[6] = verts[0] + Vec2f(float(size.x), 0.f);
 		verts[7] = verts[6] + Vec2f(-border, border);
 
 		glColor4fv(colourTopLeft.ptr());
@@ -218,6 +221,10 @@ void Widget::renderBgAndBorders() {
 	}
 }
 
+void Widget::renderBgAndBorders() {
+	renderBorders(borderStyle, Vec2i(0), size, borderSize);
+}
+
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size) {
 	const Vec4f borderColour = Vec4f(colour, borderAlpha * fade);
 	const Vec4f centreColour = Vec4f(colour, centreAlpha * fade);
@@ -242,7 +249,6 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha,
 		glVertex2f(x1, y1);
 	glEnd();
 	glPopAttrib();
-
 }
 
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha) {
@@ -266,17 +272,17 @@ ImageWidget::ImageWidget(Texture2D *tex) {
 }
 
 void ImageWidget::renderImage(int ndx) {
-	if (ndx < 0 || ndx >= textures.size()) {
-		return;
-	}
+	ASSERT_RANGE(ndx, textures.size());
+
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
 	int x1, x2, y1, y2;
-	x1 = screenPos.x;
-	y1 = screenPos.y;
+	Vec2i pos = getScreenPos();
+	x1 = pos.x;
+	y1 = pos.y;
 	if (imageInfo[ndx].hasOffset) {
 		x1 += imageInfo[ndx].offset.x;
 		y1 += imageInfo[ndx].offset.y;
@@ -285,10 +291,11 @@ void ImageWidget::renderImage(int ndx) {
 		x2 = x1 + imageInfo[ndx].size.x;
 		y2 = y1 + imageInfo[ndx].size.y;
 	} else {
-		x2 = x1 + size.x;
-		y2 = y1 + size.y;
+		Vec2i sz = getSize();
+		x2 = x1 + sz.x;
+		y2 = y1 + sz.y;
 	}
-	glColor4f(1.f, 1.f, 1.f, fade);
+	glColor4f(1.f, 1.f, 1.f, getFade());
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(textures[ndx])->getHandle());
 	glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2i(0, 1);
@@ -316,10 +323,9 @@ void ImageWidget::setImage(Texture2D *tex, int ndx) {
 		textures.push_back(tex);
 		imageInfo.push_back(ImageRenderInfo());
 	}
-	if (ndx >= 0 && ndx < textures.size()) {
-		textures[ndx] = tex;
-		imageInfo[ndx] = ImageRenderInfo();
-	}
+	ASSERT_RANGE(ndx, textures.size());
+	textures[ndx] = tex;
+	imageInfo[ndx] = ImageRenderInfo();
 }
 
 int ImageWidget::addImageX(Texture2D *tex, Vec2i offset, Vec2i sz) {
@@ -333,16 +339,15 @@ int ImageWidget::addImageX(Texture2D *tex, Vec2i offset, Vec2i sz) {
 
 void ImageWidget::setImageX(Texture2D *tex, int ndx, Vec2i offset, Vec2i sz) {
 	if (textures.empty() && !ndx) {
+		assert(tex);
 		textures.push_back(tex);
 		imageInfo.push_back(ImageRenderInfo());
-	} else if (ndx >= 0 && ndx < textures.size()) {
-		textures[ndx] = tex;
-	} else {
-		return;
 	}
-	bool hasOffset = offset != Vec2i(0);
-	bool hasSize = sz != Vec2i(0);
-	ImageRenderInfo info(hasOffset, offset, hasSize, sz);
+	ASSERT_RANGE(ndx, textures.size());
+	if (tex) {
+		textures[ndx] = tex;
+	}
+	ImageRenderInfo info(offset != Vec2i(0), offset, sz != Vec2i(0), sz);
 	imageInfo[ndx] = info;
 }
 
@@ -361,11 +366,12 @@ TextWidget::TextWidget()
 }
 
 void TextWidget::centreText(int ndx) {
+	ASSERT_RANGE(ndx, texts.size());
 	const Metrics &metrics = Metrics::getInstance();
 	Vec2f txtDims = font->getMetrics()->getTextDiminsions(texts[ndx]);
-	Vec2i centre = screenPos + (size / 2);
+	Vec2i centre = getScreenPos() + (getSize() / 2);
 	txtPos = Vec2i(centre.x - int(txtDims.x / 2.f), centre.y - int(txtDims.y / 2.f));
-	txtPos -= screenPos;
+	txtPos -= getScreenPos();
 }
 
 void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
@@ -375,7 +381,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glEnable(GL_BLEND);
 	glColor4fv(colour.ptr());
-	TextRenderer *tr = rootWindow->getTextRenderer(isFreeTypeFont);
+	TextRenderer *tr = getRootWindow()->getTextRenderer(isFreeTypeFont);
 	tr->begin(font);
 	tr->render(txt, x, y);
 	tr->end();
@@ -383,23 +389,18 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 }
 
 void TextWidget::renderText(int ndx) {
-	if (texts.empty() || ndx < 0 || ndx >= texts.size()) {
-		return;
-	}
-	Vec2i pos(screenPos.x + txtPos.x, screenPos.y + txtPos.y);
-	txtColour.a = fade;
+	ASSERT_RANGE(ndx, texts.size());
+	Vec2i pos = getScreenPos() + txtPos;
+	txtColour.a = getFade();
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
 
 void TextWidget::renderTextShadowed(int ndx) {
-	if (texts.empty() || ndx < 0 || ndx >= texts.size()) {
-		return;
-	}
-	Vec2i pos(screenPos.x + txtPos.x, screenPos.y + txtPos.y);
+	ASSERT_RANGE(ndx, texts.size());
+	Vec2i pos = getScreenPos() + txtPos;
 	Vec2i sPos = pos + Vec2i(2, -2);
-	txtShadowColour.a = fade;
+	txtShadowColour.a = txtColour.a = getFade();
 	renderText(texts[ndx], sPos.x, sPos.y, txtShadowColour);
-	txtColour.a = fade;
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
 
@@ -442,15 +443,10 @@ int TextWidget::addText(const string &txt) {
 }
 
 void TextWidget::setText(const string &txt, int ndx) {
-	if (texts.empty()) {
-		if (ndx) {
-			throw runtime_error("bad index passed to TextWidget::setText()");
-		}
+	if (texts.empty() && !ndx) {
 		texts.push_back(txt);
 	} else {
-		if (ndx < 0 || ndx >= texts.size()) {
-			throw runtime_error("bad index passed to TextWidget::setText()");
-		}
+		ASSERT_RANGE(ndx, texts.size());
 		texts[ndx] = txt;
 	}
 	if (centre && texts.size() == 1) {

@@ -45,127 +45,92 @@ CoreData::~CoreData(){
 	deleteValues(waterSounds.getSounds().begin(), waterSounds.getSounds().end());
 }
 
+Texture2D* loadTexture(const string &path, bool mipmap = false) {
+	Texture2D *tex = theRenderer.newTexture2D(ResourceScope::GLOBAL);
+	tex->setMipmap(mipmap);
+	tex->getPixmap()->load(path);
+	return tex;
+}
+
+Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
+	Texture2D *tex = theRenderer.newTexture2D(ResourceScope::GLOBAL);
+	tex->setMipmap(mipmap);
+	tex->setFormat(Texture::fAlpha);
+	tex->getPixmap()->init(1);
+	tex->getPixmap()->load(path);
+	return tex;
+}
+
+Font* loadBitmapFont(string name, int size, int width = Font::wNormal) {
+	Font *font = theRenderer.newFont(ResourceScope::GLOBAL);
+	font->setType(name);
+	font->setSize(size);
+	font->setWidth(width);
+	return font;
+}
+
+Font* loadFreeTypeFont(string path, int size) {
+	Font *font = theRenderer.newFreeTypeFont(ResourceScope::GLOBAL);
+	font->setType(path);
+	font->setSize(size);
+	return font;
+}
+
 void CoreData::load() {
-	const string dir="data/core";
+	Config &config = Config::getInstance();
+	Renderer &renderer = Renderer::getInstance();
 	Logger::getInstance().add("Core data");
 
-	Renderer &renderer= Renderer::getInstance();
+	const string dir = "data/core";
 
 	//textures
-	backgroundTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	backgroundTexture->setMipmap(false);
-	backgroundTexture->getPixmap()->load(dir+"/menu/textures/back.tga");
-
-	fireTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	fireTexture->setFormat(Texture::fAlpha);
-	fireTexture->getPixmap()->init(1);
-	fireTexture->getPixmap()->load(dir+"/misc_textures/fire_particle.tga");
-
-	snowTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	snowTexture->setMipmap(false);
-	snowTexture->setFormat(Texture::fAlpha);
-	snowTexture->getPixmap()->init(1);
-	snowTexture->getPixmap()->load(dir+"/misc_textures/snow_particle.tga");
-
-	customTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	customTexture->getPixmap()->load("data/core/menu/textures/custom_texture.tga");
-
-	logoTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	logoTexture->setMipmap(false);
-	logoTexture->getPixmap()->load(dir+"/menu/textures/logo.tga");
-
-	gplTexture = renderer.newTexture2D(ResourceScope::GLOBAL);
-	gplTexture->setMipmap(false);
-	gplTexture->getPixmap()->load(dir+"/menu/textures/gplv3.tga");
-
-	checkBoxCrossTexture = renderer.newTexture2D(ResourceScope::GLOBAL);
-	checkBoxCrossTexture ->setMipmap(false);
-	checkBoxCrossTexture ->getPixmap()->load(dir+"/menu/textures/button_small_unchecked.tga");
-
-	checkBoxTickTexture = renderer.newTexture2D(ResourceScope::GLOBAL);
-	checkBoxTickTexture->setMipmap(false);
-	checkBoxTickTexture->getPixmap()->load(dir+"/menu/textures/button_small_checked.tga");
-
-	waterSplashTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	waterSplashTexture->setFormat(Texture::fAlpha);
-	waterSplashTexture->getPixmap()->init(1);
-	waterSplashTexture->getPixmap()->load(dir+"/misc_textures/water_splash.tga");
-
-	buttonSmallTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	buttonSmallTexture->getPixmap()->load(dir+"/menu/textures/button_small.tga");
-
-	buttonBigTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	buttonBigTexture->getPixmap()->load(dir+"/menu/textures/button_big.tga");
-
-	textEntryTexture= renderer.newTexture2D(ResourceScope::GLOBAL);
-	textEntryTexture->getPixmap()->load(dir+"/menu/textures/textentry.tga");
+	backgroundTexture = loadTexture(dir + "/menu/textures/back.tga");
+	fireTexture = loadAlphaTexture(dir + "/misc_textures/fire_particle.tga");
+	snowTexture = loadAlphaTexture(dir + "/misc_textures/snow_particle.tga");
+	customTexture = loadTexture(dir + "/menu/textures/custom_texture.tga");
+	logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
+	gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
+	checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
+	checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
+	vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
+	vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
+	vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
+	vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
+	waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
+	buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
+	buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
+	textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
 
 	//display font
-	Config &config= Config::getInstance();
-	string displayFontName= config.getRenderFontDisplay();
-
-	displayFont= renderer.newFont(ResourceScope::GLOBAL);
-	displayFont->setType(displayFontName);
-	displayFont->setSize(computeFontSize(15));
+	displayFont = loadBitmapFont(config.getRenderFontDisplay(), computeFontSize(15));
 
 	//menu fonts
-	string menuFontName= config.getRenderFontMenu();
-
-	menuFontSmall= renderer.newFont(ResourceScope::GLOBAL);
-	menuFontSmall->setType(menuFontName);
-	menuFontSmall->setSize(computeFontSize(12));
-
-	menuFontNormal= renderer.newFont(ResourceScope::GLOBAL);
-	menuFontNormal->setType(menuFontName);
-	menuFontNormal->setSize(computeFontSize(16));
-	menuFontNormal->setWidth(Font::wBold);
-
-	menuFontBig= renderer.newFont(ResourceScope::GLOBAL);
-	menuFontBig->setType(menuFontName);
-	menuFontBig->setSize(computeFontSize(20));
-
-	menuFontVeryBig= renderer.newFont(ResourceScope::GLOBAL);
-	menuFontVeryBig->setType(menuFontName);
-	menuFontVeryBig->setSize(computeFontSize(25));
+	menuFontSmall = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(12));
+	menuFontNormal = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(16), Font::wBold);
+	menuFontBig = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(20));
+	menuFontVeryBig = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(25));
 
 	//console font
-	string consoleFontName= Config::getInstance().getRenderFontConsole();
-
-	consoleFont= renderer.newFont(ResourceScope::GLOBAL);
-	consoleFont->setType(consoleFontName);
-	consoleFont->setSize(computeFontSize(16));
+	consoleFont = loadBitmapFont(Config::getInstance().getRenderFontConsole(), computeFontSize(16));
 
 	// FreeType fonts...
-	string fontName = dir + "/menu/fonts/dum1.ttf";
-	freeTypeFont = renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-	freeTypeFont->setType(fontName);
-	freeTypeFont->setSize(24);
-	//freeTypeFont->setWidth(Font::wBold);
-
-	fontName = dir + "/menu/fonts/dum1wide.ttf";
-	advancedEngineFont = renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-	advancedEngineFont->setType(fontName);
-	advancedEngineFont->setSize(36);
-
-	fontName = dir + "/menu/fonts/zekton_free.ttf";
-	freeTypeMenuFont = renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-	freeTypeMenuFont->setType(fontName);
-	freeTypeMenuFont->setSize(14);
+	freeTypeFont = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", 24);
+	advancedEngineFont = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", 36);
+	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/zekton_free.ttf", 14);
 
 	//sounds
-    clickSoundA.load(dir+"/menu/sound/click_a.wav");
-    clickSoundB.load(dir+"/menu/sound/click_b.wav");
-    clickSoundC.load(dir+"/menu/sound/click_c.wav");
-	introMusic.open(dir+"/menu/music/intro_music.ogg");
+    clickSoundA.load(dir + "/menu/sound/click_a.wav");
+    clickSoundB.load(dir + "/menu/sound/click_b.wav");
+    clickSoundC.load(dir + "/menu/sound/click_c.wav");
+	introMusic.open(dir + "/menu/music/intro_music.ogg");
 	introMusic.setNext(&menuMusic);
-	menuMusic.open(dir+"/menu/music/menu_music.ogg");
+	menuMusic.open(dir + "/menu/music/menu_music.ogg");
 	menuMusic.setNext(&menuMusic);
 	waterSounds.resize(6);
-	for(int i=0; i<6; ++i){
+	for (int i = 0; i < 6; ++i) {
 		waterSounds[i]= new StaticSound();
-		waterSounds[i]->load(dir+"/water_sounds/water"+intToStr(i)+".wav");
+		waterSounds[i]->load(dir + "/water_sounds/water" + intToStr(i) + ".wav");
 	}
-
 }
 
 void CoreData::closeSounds(){
