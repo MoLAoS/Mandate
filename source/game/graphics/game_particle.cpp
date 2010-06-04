@@ -40,10 +40,10 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 			pr->renderSingleModel(this, mr);
 		}
 		switch (primitiveType) {
-		case Particle::ptQuad:
+		case PrimitiveType::QUAD:
 			pr->renderSystem(this);
 			break;
-		case Particle::ptLine:
+		case PrimitiveType::LINE:
 			pr->renderSystemLine(this);
 			break;
 		default:
@@ -60,7 +60,7 @@ Projectile::Projectile(int particleCount)
 		: AttackParticleSystem(particleCount)
 		, nextParticleSystem(0)
 		, target(0)
-		, trajectory(tLinear)
+		, trajectory(TrajectoryType::LINEAR)
 		, trajectorySpeed(1.f)
 		, trajectoryScale(1.f)
 		, trajectoryFrequency(1.f)
@@ -78,7 +78,7 @@ Projectile::Projectile(const ParticleSystemBase &protoType, int particleCount)
 		: AttackParticleSystem(protoType, particleCount)
 		, nextParticleSystem(0)
 		, target(0)
-		, trajectory(tLinear)
+		, trajectory(TrajectoryType::LINEAR)
 		, trajectorySpeed(1.f)
 		, trajectoryScale(1.f)
 		, trajectoryFrequency(1.f)
@@ -117,7 +117,7 @@ void Projectile::update() {
 
 		//Vec3f flatVector;
 /*
-		if (trajectory == tRandom) {
+		if (trajectory == TrajectoryType::RANDOM) {
 			Vec3f currentTargetVector = endPos - pos;
 			currentTargetVector.normalize();
 
@@ -151,11 +151,11 @@ void Projectile::update() {
 
 		// trajectory
 		switch (trajectory) {
-			case tLinear:
+			case TrajectoryType::LINEAR:
 				pos = flatPos;
 				break;
 
-			case tParabolic: {
+			case TrajectoryType::PARABOLIC: {
 					float scaledT = 2.0f * (t - 0.5f);
 					float paraboleY = (1.0f - scaledT * scaledT) * trajectoryScale;
 
@@ -164,13 +164,13 @@ void Projectile::update() {
 				}
 				break;
 
-			case tSpiral:
+			case TrajectoryType::SPIRAL:
 				pos = flatPos;
 				pos += xVector * cosf(t * trajectoryFrequency * targetVector.length()) * trajectoryScale;
 				pos += yVector * sinf(t * trajectoryFrequency * targetVector.length()) * trajectoryScale;
 				break;
 
-			case tRandom:
+			case TrajectoryType::RANDOM:
 				if (flatPos.dist(endPos) < 0.5f) {
 					pos = flatPos;
 				} else {
@@ -270,20 +270,6 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 	PARTICLE_LOG( "Projectile should arrive at " + intToStr(endFrame) )
 }
 
-Projectile::Trajectory Projectile::strToTrajectory(const string &str) {
-	if(str == "linear") {
-		return tLinear;
-	} else if(str == "parabolic") {
-		return tParabolic;
-	} else if(str == "spiral") {
-		return tSpiral;
-	} else if(str == "random") {
-		return tRandom;
-	} else {
-		throw runtime_error("Unknown particle system trajectory: " + str);
-	}
-}
-
 // ===========================================================================
 //  Splash
 // ===========================================================================
@@ -352,5 +338,160 @@ inline void Splash::updateParticle(Particle *p) {
 	p->size = size * energyRatio + sizeNoEnergy * (1.0f - energyRatio);
 }
 
+
+// ===========================================================================
+//  UnitParticleSystem
+// ===========================================================================
+
+UnitParticleSystem::UnitParticleSystem(int particleCount): ParticleSystem(particleCount){
+	radius = 0.5f;
+	speed = 0.01f;
+//	windSpeed = Vec3f(0.f);
+
+	size = 0.6f;
+	colorNoEnergy = Vec4f(1.f, 0.5f, 0.f, 1.f);
+
+	primitiveType = PrimitiveType::QUAD;
+	offset = Vec3f(0.0f);
+	direction = Vec3f(0.0f, 1.0f, 0.0f);
+	gravity = 0.0f;
+
+	fixed = false;
+	rotation = 0.0f;
+	relativeDirection=true;
+
+	cRotation = Vec3f(1.f, 1.f, 1.f);
+	fixedAddition = Vec3f(0.f, 0.f, 0.f);
+
+}
+
+UnitParticleSystem::UnitParticleSystem(const UnitParticleSystemType &protoType, int particleCount)
+		: ParticleSystem(protoType, particleCount){
+	// are these not set in prototype?
+	
+	radius = 0.5f; // not set in prototype?
+	
+	rotation = 0.0f;
+	cRotation = Vec3f(1.f, 1.f, 1.f);
+	fixedAddition = Vec3f(0.f, 0.f, 0.f);
+
+	direction = protoType.getDirection();
+	relative = protoType.isRelative();
+	relativeDirection = protoType.isRelativeDirection();
+	fixed = protoType.isFixed();
+	teamColorEnergy = protoType.hasTeamColorEnergy();
+	teamColorNoEnergy = protoType.hasTeamColorNoEnergy();
+
+	varParticleEnergy = protoType.getEnergyVar();
+	maxParticleEnergy = protoType.getEnergy();
+}
+
+
+void UnitParticleSystem::render(ParticleRenderer *pr,ModelRenderer *mr){
+	switch (primitiveType) {
+		case PrimitiveType::QUAD:
+			pr->renderSystem(this);
+			break;
+		case PrimitiveType::LINE:
+			pr->renderSystemLine(this);
+			break;
+		default:
+			assert(false);
+	}
+}
+ 
+void UnitParticleSystem::setTeamColour(Vec3f teamColour) {
+	this->teamColour = teamColour;
+	Vec3f tmpCol;
+
+	//REFACTOR: teamColorEnergy & teamColorNoEnergy are in the proto-type
+	// why are they also here in the instance ???
+	if (teamColorEnergy) {
+		color = Vec4f(teamColour.x, teamColour.y, teamColour.z, color.w);
+	}
+	if (teamColorNoEnergy) {
+		colorNoEnergy = Vec4f(teamColour.x, teamColour.y, teamColour.z, colorNoEnergy.w);
+	}
+}
+
+void UnitParticleSystem::initParticle(Particle *p, int particleIndex) {
+	ParticleSystem::initParticle(p, particleIndex);
+
+	float ang = random.randRange(-2.f * pi, 2.f * pi);
+	float mod = fabsf(random.randRange(-radius, radius));
+
+	float x = sinf(ang) * mod;
+	float y = cosf(ang) * mod;
+
+	float radRatio = sqrtf(sqrtf(mod / radius));
+
+	p->color = color;
+	p->energy = int(maxParticleEnergy * radRatio) + random.randRange(-varParticleEnergy, varParticleEnergy);
+
+	p->lastPos = pos;
+	oldPos = pos;
+	p->size = size;
+
+	p->speed = Vec3f(
+				direction.x + direction.x * random.randRange(-0.5f, 0.5f),
+				direction.y + direction.y * random.randRange(-0.5f, 0.5f),
+				direction.z + direction.z * random.randRange(-0.5f, 0.5f)
+	);
+	p->speed = p->speed * speed;
+	p->accel = Vec3f(0.0f, -gravity, 0.0f);
+
+	if (!relative) {
+		p->pos = Vec3f(
+			pos.x + x + offset.x, 
+			pos.y + random.randRange(-radius/2, radius/2) + offset.y, 
+			pos.z + y + offset.z
+		);
+	} else { // rotate it according to rotation
+		float rad = degToRad(rotation);
+		p->pos = Vec3f(
+				pos.x + x + offset.z * sinf(rad) + offset.x * cosf(rad),
+				pos.y + random.randRange(-radius / 2, radius / 2) + offset.y, 
+				pos.z + y + (offset.z * cosf(rad) - offset.x * sinf(rad))
+		); 
+		if (relativeDirection) {
+			p->speed = Vec3f(
+				p->speed.z * sinf(rad) + p->speed.x * cosf(rad), 
+				p->speed.y, 
+				(p->speed.z * cosf(rad) - p->speed.x * sinf(rad))
+			);
+		}
+	}
+}
+
+void UnitParticleSystem::update() {
+	if (fixed) {
+		fixedAddition = Vec3f(pos.x - oldPos.x, pos.y - oldPos.y, pos.z - oldPos.z);
+		oldPos = pos;
+	}
+	ParticleSystem::update();
+}
+
+void UnitParticleSystem::updateParticle(Particle *p) {
+	float energyRatio = clamp(float(p->energy) / maxParticleEnergy, 0.f, 1.f);
+
+	p->lastPos += p->speed;
+	p->pos += p->speed;
+	if (fixed) {
+		p->lastPos += fixedAddition;
+		p->pos += fixedAddition;
+	}
+	p->speed += p->accel;
+	p->color = color * energyRatio + colorNoEnergy * (1.f - energyRatio);
+	p->size = size * energyRatio + sizeNoEnergy * (1.f - energyRatio);
+	--p->energy;
+}
+
+// ================= SET PARAMS ====================
+
+/*void UnitParticleSystem::setWind(float windAngle, float windSpeed) {
+	this->windSpeed.x = sinf(degToRad(windAngle)) * windSpeed;
+	this->windSpeed.y = 0.f;
+	this->windSpeed.z = cosf(degToRad(windAngle)) * windSpeed;
+}*/
 
 }}

@@ -18,17 +18,12 @@ using namespace Shared::Graphics;
 
 namespace Glest { 
 
-namespace Entities {
-	class Unit;
-}
-using Entities::Unit;
-
-namespace Sim {
-	class ParticleDamager;
-}
+namespace Sim { class ParticleDamager; }
+namespace ProtoTypes { class UnitParticleSystemType; }
+using ProtoTypes::UnitParticleSystemType;
 
 namespace Entities {
-
+class Unit;
 class Splash;
 // ===========================================================================
 //  AttackParticleSystem
@@ -55,16 +50,6 @@ public:
 
 class Projectile : public AttackParticleSystem {
 	friend class Splash;
-public:
-
-	enum Trajectory {
-		tLinear,
-		tParabolic,
-		tSpiral,
-		tRandom
-	};
-	static Trajectory strToTrajectory(const string &str);
-
 private:
 	Splash *nextParticleSystem;
 
@@ -82,7 +67,7 @@ private:
 	Vec3f yVector;
 	Vec3f zVector;
 
-	Trajectory trajectory;
+	TrajectoryType trajectory;
 	float trajectorySpeed;
 
 	//parabolic
@@ -106,14 +91,14 @@ public:
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual void updateParticle(Particle *p);
 
-	void setTrajectory(Trajectory trajectory)				{this->trajectory= trajectory;}
+	void setTrajectory(TrajectoryType trajectory)			{this->trajectory= trajectory;}
 	void setTrajectorySpeed(float trajectorySpeed)			{this->trajectorySpeed= trajectorySpeed;}
 	void setTrajectoryScale(float trajectoryScale)			{this->trajectoryScale= trajectoryScale;}
 	void setTrajectoryFrequency(float trajectoryFrequency)	{this->trajectoryFrequency= trajectoryFrequency;}
 	
 	void setPath(Vec3f startPos, Vec3f endPos, int endFrameOffset = -1);
 
-	void setTarget(const Unit *target)					{this->target = target;}
+	void setTarget(const Unit *target)						{this->target = target;}
 	const Unit* getTarget() const							{return this->target; }
 
 	virtual bool isProjectile() const						{ return true; }
@@ -154,6 +139,57 @@ public:
 	void setHorizontalSpreadB(float horizontalSpreadB)	{this->horizontalSpreadB = horizontalSpreadB;}
 
 };
+
+// =====================================================
+//	class UnitParticleSystem
+// =====================================================
+
+class UnitParticleSystem : public ParticleSystem {
+private:
+	Vec3f cRotation;
+	Vec3f fixedAddition; // ??
+	Vec3f oldPos;
+
+	Vec3f direction;
+	Vec3f teamColour;
+
+	//REFACTOR: see note in definition of setTeamColour()
+	bool teamColorEnergy;
+	bool teamColorNoEnergy;
+
+	// belong in proto-type ??
+	int maxParticleEnergy;
+	int varParticleEnergy;
+
+	bool relative;
+	bool relativeDirection;
+	bool fixed;
+	float rotation;
+
+public:
+	UnitParticleSystem(int particleCount = 2000);
+	UnitParticleSystem(const UnitParticleSystemType &model, int particleCount = 2000);
+
+	//virtual
+	virtual void initParticle(Particle *p, int particleIndex);
+	virtual void updateParticle(Particle *p);
+	virtual void update();
+	virtual void render(ParticleRenderer *pr, ModelRenderer *mr);
+
+	//set params
+	//void setWind(float windAngle, float windSpeed); // ??
+
+	void setDirection(Vec3f direction)					{this->direction = direction;}
+	
+	void setRotation(float rotation)					{this->rotation = rotation;}
+	void setRelative(bool relative)						{this->relative = relative;}
+	void setRelativeDirection(bool relativeDirection)	{this->relativeDirection = relativeDirection;}
+	void setFixed(bool fixed)							{this->fixed = fixed;}
+	void setTeamColour(Vec3f teamColour);
+	
+};
+typedef vector<UnitParticleSystem*> UnitParticleSystems;
+
 
 }}
 

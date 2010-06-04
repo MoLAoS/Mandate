@@ -465,9 +465,22 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	if (newSkill->getClass() == SkillClass::STOP && currSkill->getClass() == SkillClass::STOP) {
 		return;
 	}
+	if (newSkill != currSkill) {
+		while(!eyeCandy.empty()){
+			eyeCandy.back()->fade();
+			eyeCandy.pop_back();
+		}
+	}
 	progress2 = 0;
 	currSkill = newSkill;
 	notifyObservers(UnitObserver::eStateChange);
+	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
+		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem();
+		ups->setPos(getCurrVector());
+		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
+		eyeCandy.push_back(ups);
+		theRenderer.manageParticleSystem(ups, ResourceScope::GAME);
+	}
 }
 
 /** sets unit's target */
@@ -524,14 +537,14 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		psProj = pstProj->createProjectileParticleSystem();
 
 		switch (pstProj->getStart()) {
-			case ProjectileType::psSelf:
+			case ProjectileStart::SELF:
 				break;
 
-			case ProjectileType::psTarget:
+			case ProjectileStart::TARGET:
 				startPos = this->getTargetVec();
 				break;
 
-			case ProjectileType::psSky: {
+			case ProjectileStart::SKY: {
 					Random random(id);
 					float skyAltitude = 30.f;
 					startPos = endPos;
@@ -1036,10 +1049,13 @@ bool Unit::update() {
 	//update target
 	updateTarget();
 	//rotation
+	bool moved = currSkill->getClass() == SkillClass::MOVE;
+	bool rotated = false;
 	if(currSkill->getClass() != SkillClass::STOP) {
 		const int rotFactor = 2;
 		if(getProgress() < 1.f / rotFactor) {
 			if(type->getFirstStOfClass(SkillClass::MOVE)) {
+				rotated = true;
 				if(abs(lastRotation - targetRotation) < 180) {
 					rotation = lastRotation + (targetRotation - lastRotation) * getProgress() * rotFactor;
 				} else {
@@ -1050,6 +1066,17 @@ bool Unit::update() {
 			}
 		}
 	}
+
+	if (fire && moved) {
+		fire->setPos(getCurrVector());
+	}
+	if (moved || rotated) {
+		foreach (UnitParticleSystems, it, eyeCandy) {
+			if (moved) (*it)->setPos(getCurrVector());
+			if (rotated) (*it)->setRotation(getRotation());
+		}
+	}
+
 	// check for cycle completion	
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead
 	if (theWorld.getFrameCount() >= getNextCommandUpdate()) {

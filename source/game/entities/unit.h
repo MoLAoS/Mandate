@@ -28,6 +28,8 @@
 #include "logger.h"
 #include "factory.h"
 
+#include "game_particle.h"
+
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
 #include "entities_enums.h"
@@ -217,6 +219,8 @@ private:
 
 	Commands commands;
 	Observers observers;
+
+	UnitParticleSystems eyeCandy;
 
 	int commandCallback;		// for script 'command callbacks'
 	int hp_below_trigger;		// if non-zero, call the Trigger manager when HP falls below this

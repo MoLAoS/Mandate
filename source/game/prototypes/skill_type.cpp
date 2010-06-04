@@ -94,24 +94,50 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			sounds.add(sound);
 		}
 	}
-
+	
+	// particle systems
+	const XmlNode *particlesNode = sn->getOptionalChild("particle-systems");
+	if (particlesNode) {
+		for (int i=0; i < particlesNode->getChildCount(); ++i) {
+			const XmlNode *particleFileNode = particlesNode->getChild("particle", i);
+			string path = particleFileNode->getAttribute("path")->getRestrictedValue();
+			UnitParticleSystemType *unitParticleSystemType = new UnitParticleSystemType();
+			unitParticleSystemType->load(dir,  dir + "/" + path);
+			eyeCandySystems.push_back(unitParticleSystemType);
+		}
+	} else { // megaglest style?
+		particlesNode = sn->getOptionalChild("particles");
+		if (particlesNode) {
+			bool particleEnabled = particlesNode->getAttribute("value")->getBoolValue();
+			if (particleEnabled) {
+				for (int i=0; i < particlesNode->getChildCount(); ++i) {
+					const XmlNode *particleFileNode = particlesNode->getChild("particle-file", i);
+					string path= particleFileNode->getAttribute("path")->getRestrictedValue();
+					UnitParticleSystemType *unitParticleSystemType = new UnitParticleSystemType();
+					unitParticleSystemType->load(dir,  dir + "/" + path);
+					eyeCandySystems.push_back(unitParticleSystemType);
+				}
+			}
+		}
+	}
+	
 	//effects
-	const XmlNode *effectsNode= sn->getChild("effects", 0, false);
-	if(effectsNode) {
+	const XmlNode *effectsNode = sn->getChild("effects", 0, false);
+	if (effectsNode) {
 		effectTypes.resize(effectsNode->getChildCount());
-		for(int i=0; i<effectsNode->getChildCount(); ++i){
-			const XmlNode *effectNode= effectsNode->getChild("effect", i);
+		for(int i=0; i < effectsNode->getChildCount(); ++i) {
+			const XmlNode *effectNode = effectsNode->getChild("effect", i);
 			EffectType *effectType = new EffectType();
 			effectType->load(effectNode, dir, tt, ft);
-			effectTypes[i]= effectType;
+			effectTypes[i] = effectType;
 		}
 	}
 
-	startTime= sn->getOptionalFloatValue("start-time");
+	startTime = sn->getOptionalFloatValue("start-time");
 
 	//projectile
-	const XmlNode *projectileNode= sn->getChild("projectile", 0, false);
-	if(projectileNode && projectileNode->getAttribute("value")->getBoolValue()) {
+	const XmlNode *projectileNode = sn->getChild("projectile", 0, false);
+	if (projectileNode && projectileNode->getAttribute("value")->getBoolValue()) {
 
 		//proj particle
 		const XmlNode *particleNode= projectileNode->getChild("particle", 0, false);
@@ -199,20 +225,26 @@ CycleInfo SkillType::calculateCycleTime() const {
 		return CycleInfo(-1, -1);
 	}
 	float progressSpeed = getSpeed() * speedModifier;
-	float animProgressSpeed = getAnimSpeed() * speedModifier;
+
 	int skillFrames = int(1.0000001f / progressSpeed);
-	int animFrames = int(1.0000001f / animProgressSpeed);
-	int attackOffset = -1;
-	if (skillClass == SkillClass::ATTACK) {
-		attackOffset = int(startTime / animProgressSpeed);
-		if (!attackOffset) attackOffset = 1;
-		assert(attackOffset > 0 && attackOffset < 256);
-	}
+	int animFrames = 1;
 	int soundOffset = -1;
-	if (!sounds.getSounds().empty()) {
-		soundOffset = int(soundStartTime / animProgressSpeed);
-		if (soundOffset < 1) ++soundOffset;
-		assert(soundOffset > 0);
+	int attackOffset = -1;
+
+	if (getAnimSpeed() != 0) {
+		float animProgressSpeed = getAnimSpeed() * speedModifier;
+		animFrames = int(1.0000001f / animProgressSpeed);
+	
+		if (skillClass == SkillClass::ATTACK) {
+			attackOffset = int(startTime / animProgressSpeed);
+			if (!attackOffset) attackOffset = 1;
+			assert(attackOffset > 0 && attackOffset < 256);
+		}
+		if (!sounds.getSounds().empty()) {
+			soundOffset = int(soundStartTime / animProgressSpeed);
+			if (soundOffset < 1) ++soundOffset;
+			assert(soundOffset > 0);
+		}
 	}
 	assert(skillFrames > 0 && animFrames > 0);
 	return CycleInfo(skillFrames, animFrames, soundOffset, attackOffset);

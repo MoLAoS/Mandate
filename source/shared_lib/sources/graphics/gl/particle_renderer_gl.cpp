@@ -26,7 +26,7 @@ namespace Shared { namespace Graphics { namespace Gl {
 // class ParticleRendererGl
 // =====================================================
 
-const GLenum ParticleRendererGl::glBlendFactors[Particle::BLEND_FUNC_COUNT] = {
+const GLenum ParticleRendererGl::glBlendFactors[BlendFactor::COUNT] = {
 	GL_ZERO,
 	GL_ONE,
 	GL_SRC_COLOR,
@@ -44,7 +44,7 @@ const GLenum ParticleRendererGl::glBlendFactors[Particle::BLEND_FUNC_COUNT] = {
 	GL_SRC_ALPHA_SATURATE
 };
 
-const GLenum ParticleRendererGl::glBlendEquations[Particle::BLEND_EQUATION_COUNT] = {
+const GLenum ParticleRendererGl::glBlendEquations[BlendMode::COUNT] = {
 	GL_FUNC_ADD,
 	GL_FUNC_SUBTRACT,
 	GL_FUNC_REVERSE_SUBTRACT,

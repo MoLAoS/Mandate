@@ -29,32 +29,6 @@ using namespace Shared::Util;
 
 namespace Shared{ namespace Graphics{
 
-const char* Particle::blendFactorNames[BLEND_FUNC_COUNT] = {
-	"zero",
-	"one",
-	"src_color",
-	"one_minus_src_color",
-	"dst_color",
-	"one_minus_dst_color",
-	"src_alpha",
-	"one_minus_src_alpha",
-	"dst_alpha",
-	"one_minus_dst_alpha",
-	"constant_color",
-	"one_minus_constant_color",
-	"constant_alpha",
-	"one_minus_constant_alpha",
-	"src_alpha_saturate"
-};
-
-const char* Particle::blendEquationNames[BLEND_EQUATION_COUNT] = {
-	"func_add",
-	"func_subtract",
-	"func_reverse_subtract",
-	"min",
-	"max"
-};
-
 static __cold __noreturn void puke(const char*options[], size_t optionCount,
 		const string &badValue, const string &typeDesc) {
 	stringstream str;
@@ -64,24 +38,6 @@ static __cold __noreturn void puke(const char*options[], size_t optionCount,
 	}
 	str << ".";
 	throw range_error(str.str());
-}
-
-Particle::BlendFactor Particle::getBlendFactor(const string &s) {
-	for(size_t i = 0; i < BLEND_FUNC_COUNT; ++i) {
-		if(s == blendFactorNames[i]) {
-			return static_cast<Particle::BlendFactor>(i);
-		}
-	}
-	puke(blendFactorNames, BLEND_FUNC_COUNT, s, "blend function factor");
-}
-
-Particle::BlendEquation Particle::getBlendEquation(const string &s) {
-	for(size_t i = 0; i < BLEND_EQUATION_COUNT; ++i) {
-		if(s == blendEquationNames[i]) {
-			return static_cast<Particle::BlendEquation>(i);
-		}
-	}
-	puke(blendEquationNames, BLEND_EQUATION_COUNT, s, "blend equation mode");
 }
 
 // =====================================================
@@ -94,10 +50,10 @@ Particle::BlendEquation Particle::getBlendEquation(const string &s) {
 
 ParticleSystemBase::ParticleSystemBase() :
 		random(0),
-		srcBlendFactor(Particle::BLEND_FUNC_SRC_ALPHA),
-		destBlendFactor(Particle::BLEND_FUNC_ONE),
-		blendEquationMode(Particle::BLEND_EQUATION_FUNC_ADD),
-		primitiveType(Particle::ptQuad),
+		srcBlendFactor(BlendFactor::SRC_ALPHA),
+		destBlendFactor(BlendFactor::ONE),
+		blendEquationMode(BlendMode::FUNC_ADD),
+		primitiveType(PrimitiveType::QUAD),
 		offset(0.f),
 		color(1.f),
 		color2(1.f),
@@ -107,8 +63,6 @@ ParticleSystemBase::ParticleSystemBase() :
 		sizeNoEnergy(1.f),
 		speed(1.f),
 		gravity(0.f),
-		//mass(0.f),
-		//density(0.f),
 		emissionRate(15),
 		energy(250),
 		energyVar(50),
@@ -133,8 +87,6 @@ ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
 		sizeNoEnergy(protoType.sizeNoEnergy),
 		speed(protoType.speed),
 		gravity(protoType.gravity),
-		//mass(protoType.mass),
-		//density(protoType.density),
 		emissionRate(protoType.emissionRate),
 		energy(protoType.energy),
 		energyVar(protoType.energyVar),
@@ -302,14 +254,14 @@ inline void FireParticleSystem::updateParticle(Particle *p) {
 	p->pos = p->pos+p->speed;
 	p->energy--;
 
-	if(p->color.x > 0.0f)
-		p->color.x *= 0.98f;
-	if(p->color.y > 0.0f)
-		p->color.y *= 0.98f;
-	if(p->color.w > 0.0f)
-		p->color.w *= 0.98f;
+	if(p->color.r > 0.0f)
+		p->color.r *= 0.98f;
+	if(p->color.g > 0.0f)
+		p->color.g *= 0.98f;
+	if(p->color.a > 0.0f)
+		p->color.a *= 0.98f;
 
-	p->speed.x *= 1.001f;
+	p->speed.x *= 1.001f; // wind
 }
 
 

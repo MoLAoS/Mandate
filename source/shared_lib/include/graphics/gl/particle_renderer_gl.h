@@ -24,8 +24,8 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 class ParticleRendererGl: public ParticleRenderer {
 public:
 	static const int bufferSize = 1024;
-	static const GLenum glBlendFactors[Particle::BLEND_FUNC_COUNT];
-	static const GLenum glBlendEquations[Particle::BLEND_EQUATION_COUNT];
+	static const GLenum glBlendFactors[BlendFactor::COUNT];
+	static const GLenum glBlendEquations[BlendMode::COUNT];
 
 private:
 	bool rendering;
@@ -41,28 +41,28 @@ public:
 	virtual void renderSystemLine(ParticleSystem *ps);
 	virtual void renderSingleModel(ParticleSystem *ps, ModelRenderer *mr);
 
-	/** Translate a Particle::BlendFactor into an OpenGL GLenum value for glBlendFunc() */
-	static GLenum translate(Particle::BlendFactor v) {
-		assert(v >= 0 && v < Particle::BLEND_FUNC_COUNT);
-		return glBlendFactors[v];
+	/** Translate a BlendFactor into an OpenGL GLenum value for glBlendFunc() */
+	static GLenum toGLenum(BlendFactor blendFactor) {
+		assert(blendFactor > BlendFactor::INVALID && blendFactor < BlendFactor::COUNT);
+		return glBlendFactors[blendFactor];
 	}
 
-	/** Translate a Particle::BlendEquation into an OpenGL GLenum value for glBlendEquation() */
-	static GLenum translate(Particle::BlendEquation v) {
-		assert(v >= 0 && v < Particle::BLEND_EQUATION_COUNT);
-		return glBlendEquations[v];
+	/** Translate a BlendMode into an OpenGL GLenum value for glBlendEquation() */
+	static GLenum toGLenum(BlendMode blendMode) {
+		assert(blendMode > BlendMode::INVALID && blendMode < BlendMode::COUNT);
+		return glBlendEquations[blendMode];
 	}
 
 protected:
 	void renderBufferQuads(int quadCount);
 	void renderBufferLines(int lineCount);
 
-	static void setBlendFunc(Particle::BlendFactor sfactor, Particle::BlendFactor dfactor) {
-		glBlendFunc(translate(sfactor), translate(dfactor));
+	static void setBlendFunc(BlendFactor sfactor, BlendFactor dfactor) {
+		glBlendFunc(toGLenum(sfactor), toGLenum(dfactor));
 	}
 
-	static void setBlendEquation(Particle::BlendEquation equation) {
-		glBlendEquation(translate(equation));
+	static void setBlendEquation(BlendMode equation) {
+		glBlendEquation(toGLenum(equation));
 	}
 };
 

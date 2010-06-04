@@ -22,6 +22,7 @@
 #include "entity.h"
 #include "math_util.h"
 #include "xml_parser.h"
+#include "util.h"
 
 using std::list;
 
@@ -42,57 +43,55 @@ class ParticleRenderer;
 class ModelRenderer;
 class Model;
 
+STRINGY_ENUM( BlendFactor,
+	ZERO,
+	ONE,
+	SRC_COLOR,
+	ONE_MINUS_SRC_COLOR,
+	DST_COLOR,
+	ONE_MINUS_DST_COLOR,
+	SRC_ALPHA,
+	ONE_MINUS_SRC_ALPHA,
+	DST_ALPHA,
+	ONE_MINUS_DST_ALPHA,
+	CONSTANT_COLOR,
+	ONE_MINUS_CONSTANT_COLOR,
+	CONSTANT_ALPHA,
+	ONE_MINUS_CONSTANT_ALPHA,
+	SRC_ALPHA_SATURATE
+);
+
+STRINGY_ENUM( BlendMode,
+	FUNC_ADD,
+	FUNC_SUBTRACT,
+	FUNC_REVERSE_SUBTRACT,
+	MIN,
+	MAX
+);
+
+STRINGY_ENUM( PrimitiveType,
+	QUAD,
+	LINE
+);
+
+STRINGY_ENUM( TrajectoryType,
+	LINEAR,
+	PARABOLIC,
+	SPIRAL,
+	RANDOM
+);
+
+STRINGY_ENUM( ProjectileStart,
+	SELF,
+	TARGET,
+	SKY
+);
+
 // =====================================================
 //	class Particle
 // =====================================================
 
 class Particle {
-public:
-	enum BlendFactor {
-		BLEND_FUNC_ZERO,
-		BLEND_FUNC_ONE,
-		BLEND_FUNC_SRC_COLOR,
-		BLEND_FUNC_ONE_MINUS_SRC_COLOR,
-		BLEND_FUNC_DST_COLOR,
-		BLEND_FUNC_ONE_MINUS_DST_COLOR,
-		BLEND_FUNC_SRC_ALPHA,
-		BLEND_FUNC_ONE_MINUS_SRC_ALPHA,
-		BLEND_FUNC_DST_ALPHA,
-		BLEND_FUNC_ONE_MINUS_DST_ALPHA,
-		BLEND_FUNC_CONSTANT_COLOR,
-		BLEND_FUNC_ONE_MINUS_CONSTANT_COLOR,
-		BLEND_FUNC_CONSTANT_ALPHA,
-		BLEND_FUNC_ONE_MINUS_CONSTANT_ALPHA,
-		BLEND_FUNC_SRC_ALPHA_SATURATE,
-
-		BLEND_FUNC_COUNT
-	};
-
-	static const char* blendFactorNames[BLEND_FUNC_COUNT];
-
-	enum BlendEquation {
-		BLEND_EQUATION_FUNC_ADD,
-		BLEND_EQUATION_FUNC_SUBTRACT,
-		BLEND_EQUATION_FUNC_REVERSE_SUBTRACT,
-		BLEND_EQUATION_MIN,
-		BLEND_EQUATION_MAX,
-
-		BLEND_EQUATION_COUNT
-	};
-
-	static const char* blendEquationNames[BLEND_EQUATION_COUNT];
-
-	enum PrimitiveType {
-		ptQuad,
-		ptLine
-	};
-
-	enum ProjectileStart {
-		psSelf,
-		psTarget,
-		psSky
-	};
-
 public:
 	//attributes
 	Vec3f pos;
@@ -105,9 +104,6 @@ public:
 	int energy;
 
 public:
-	static BlendFactor getBlendFactor(const string &);
-	static BlendEquation getBlendEquation(const string &);
-
 	//get
 	Vec3f getPos() const		{return pos;}
 	Vec3f getLastPos() const	{return lastPos;}
@@ -128,22 +124,26 @@ class ParticleSystemBase {
 protected:
 	Random random;
 
-	Particle::BlendFactor srcBlendFactor;
-	Particle::BlendFactor destBlendFactor;
-	Particle::BlendEquation blendEquationMode;
-	Particle::PrimitiveType primitiveType;
+	BlendFactor		srcBlendFactor;		// belongs only in proto-type
+	BlendFactor		destBlendFactor;	// belongs only in proto-type
+	BlendMode		blendEquationMode;	// belongs only in proto-type
+	PrimitiveType	primitiveType;		// belongs only in proto-type
+
 	Vec3f offset;
 	Vec4f color;
 	Vec4f color2;
 	Vec4f colorNoEnergy;
 	Vec4f color2NoEnergy;
+
 	float size;
 	float sizeNoEnergy;
 	float speed;
 	float gravity;
+	
 	int emissionRate;
 	int energy;
 	int energyVar;
+	
 	float radius;
 	int drawCount;
 
@@ -157,10 +157,10 @@ public:
 	virtual ~ParticleSystemBase(){}
 
 	//get
-	Particle::BlendFactor getSrcBlendFactor() const		{return srcBlendFactor;}
-	Particle::BlendFactor getDestBlendFactor() const	{return destBlendFactor;}
-	Particle::BlendEquation getBlendEquationMode() const{return blendEquationMode;}
-	Particle::PrimitiveType getPrimitiveType() const	{return primitiveType;}
+	BlendFactor getSrcBlendFactor() const				{return srcBlendFactor;}
+	BlendFactor getDestBlendFactor() const				{return destBlendFactor;}
+	BlendMode getBlendEquationMode() const				{return blendEquationMode;}
+	PrimitiveType getPrimitiveType() const				{return primitiveType;}
 	Texture *getTexture() const							{return texture;}
 	Model *getModel() const								{return model;}
 	const Vec3f &getOffset() const						{return offset;}
@@ -179,10 +179,10 @@ public:
 	int getDrawCount() const							{return drawCount;}
 
 	//set
-	void setSrcBlendFactor(Particle::BlendFactor v)		{srcBlendFactor = v;}
-	void setDestBlendFactor(Particle::BlendFactor v)	{destBlendFactor = v;}
-	void setBlendEquationMode(Particle::BlendEquation v){blendEquationMode = v;}
-	void setPrimitiveType(Particle::PrimitiveType v)	{primitiveType = v;}
+	void setSrcBlendFactor(BlendFactor v)				{srcBlendFactor = v;}
+	void setDestBlendFactor(BlendFactor v)				{destBlendFactor = v;}
+	void setBlendEquationMode(BlendMode v)				{blendEquationMode = v;}
+	void setPrimitiveType(PrimitiveType v)				{primitiveType = v;}
 	void setTexture(Texture *v)							{texture = v;}
 	void setModel(Model *v)								{model = v;}
 	void setOffset(const Vec3f &v)						{offset = v;}
@@ -327,8 +327,11 @@ public:
 // =====================================================
 
 class ParticleManager {
+public:
+	typedef list<ParticleSystem*> ParticleSystemList;
+
 protected:
-	list<ParticleSystem*> particleSystems;
+	ParticleSystemList particleSystems;
 
 public:
 	virtual ~ParticleManager();
@@ -341,7 +344,10 @@ public:
 			particleSystems.pop_front();
 		}
 	}
-	const list<ParticleSystem*>& getList() const { return particleSystems; }
+	// used to remove dead targets from target tracking projectiles, to be replaced by target's 
+	// Unit::Died being connected to tracking proj's Projectile::onTargetDied().
+	///@todo remove me, I'm dangerous.
+	const ParticleSystemList& getList() const { return particleSystems; }
 };
 
 }}//end namespace

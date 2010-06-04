@@ -22,6 +22,7 @@ using Shared::Xml::XmlNode;
 using Shared::Graphics::ParticleSystemBase;
 using Shared::Graphics::ParticleSystem;
 
+using Glest::Entities::UnitParticleSystem;
 using Glest::Entities::Projectile;
 using Glest::Entities::Splash;
 
@@ -48,15 +49,8 @@ public:
 // ===========================================================
 
 class ProjectileType: public ParticleSystemType {
-public:
-	enum ProjectileStart {
-		psSelf,
-		psTarget,
-		psSky
-	};
-
 private:
-	string trajectory;
+	TrajectoryType trajectory;
 	float trajectorySpeed;
 	float trajectoryScale;
 	float trajectoryFrequency;
@@ -94,6 +88,45 @@ class ParticleSystemTypeCompound: public SplashType {
 public:
 	void load(const string &dir, const string &path);
 };
+
+// ===========================================================
+//	class UnitParticleSystemType 
+//
+///	A particle system type that is attached to units.
+// ===========================================================
+
+class UnitParticleSystemType : public ParticleSystemType {
+protected:
+	//string type;
+	Vec3f direction;
+	bool relative;
+	bool relativeDirection; // ?
+	bool fixed;
+
+	bool teamColorEnergy;
+	bool teamColorNoEnergy;
+
+	//string mode; // ?
+
+public:
+	UnitParticleSystemType();
+	void load(const XmlNode *particleSystemNode, const string &dir);
+	void load(const string &dir, const string &path);
+
+	Vec3f getDirection() const { return direction; }
+	bool isRelative() const { return relative; }
+	bool isRelativeDirection() const { return relativeDirection; }
+	bool isFixed() const { return fixed; }
+
+	bool hasTeamColorEnergy() const { return teamColorEnergy; }
+	bool hasTeamColorNoEnergy() const { return teamColorNoEnergy; }
+
+	UnitParticleSystem* createUnitParticleSystem() const {
+		return new UnitParticleSystem(*this, 200);
+	}
+	virtual ParticleSystem* create() { return createUnitParticleSystem(); }
+};
+typedef vector<UnitParticleSystemType*> UnitParticleSystemTypes;
 
 
 }}//end namespace

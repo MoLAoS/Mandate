@@ -234,7 +234,9 @@ void GameState::init() {
 	logger.add("Starting music stream", true);
 	if(simInterface->getWorld()->getThisFaction()){
 		StrSound *gameMusic = simInterface->getWorld()->getThisFaction()->getType()->getMusic();
-		soundRenderer.playMusic(gameMusic);
+		if (gameMusic) {
+			soundRenderer.playMusic(gameMusic);
+		}
 	}
 
 	logger.add("Launching game");

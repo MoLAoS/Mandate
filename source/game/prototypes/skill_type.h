@@ -33,6 +33,7 @@ using Shared::Util::MultiFactory;
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
 #include "entities_enums.h"
+#include "particle_type.h"
 
 namespace Glest {
 using namespace Sound;
@@ -60,8 +61,12 @@ public:
 		RANDOM
 	)
 
+private:
+	UnitParticleSystemTypes eyeCandySystems;
+
 protected:
-	//SkillClass skillClass;
+	// protected data... should be private...
+	///@todo privatise
 	int epCost;
 	int speed;
 	int animSpeed;
@@ -70,11 +75,12 @@ protected:
 	SoundContainer sounds;
 	float soundStartTime;
 	const char* typeName;
-	int minRange;
-	int maxRange;
+	int minRange; // Refactor? Push down? Used for anything other than attack?
+	int maxRange; // ditto?
 
 	float startTime;
 
+	///REFACTOR: push-down
 	bool projectile;
 	ProjectileType* projectileParticleSystemType;
 	SoundContainer projSounds;
@@ -83,6 +89,7 @@ protected:
 	bool splashDamageAll;
 	int splashRadius;
 	SplashType* splashParticleSystemType;
+	///END REFACTOR
 
 	EffectTypes effectTypes;
 
@@ -119,11 +126,18 @@ public:
 	int getMinRange() const				{return minRange;}
 	float getStartTime() const			{return startTime;}
 
+	unsigned getEyeCandySystemCount() const { return eyeCandySystems.size(); }
+	const UnitParticleSystemType* getEyeCandySystem(unsigned i) const {
+		assert(i < eyeCandySystems.size());
+		return eyeCandySystems[i];
+	}
+
 	//other
 	virtual string toString() const		{return Lang::getInstance().get(typeName);}
 	static string skillClassToStr(SkillClass skillClass);
 	static string fieldToStr(Zone field);
 
+	///REFACTOR: push-down
 	//get proj
 	bool getProjectile() const									{return projectile;}
 	ProjectileType * getProjParticleType() const	{return projectileParticleSystemType;}
@@ -134,6 +148,7 @@ public:
 	bool getSplashDamageAll() const								{return splashDamageAll;}
 	int getSplashRadius() const									{return splashRadius;}
 	SplashType * getSplashParticleType() const	{return splashParticleSystemType;}
+	///END REFACTOR
 
 	// get effects
 	const EffectTypes &getEffectTypes() const	{return effectTypes;}

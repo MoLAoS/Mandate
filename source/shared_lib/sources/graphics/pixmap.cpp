@@ -128,25 +128,51 @@ void PixmapIoTga::read(uint8 *pixels){
 
 void PixmapIoTga::read(uint8 *pixels, int components) {
 	_PROFILE_FUNCTION();
-	size_t dataSize = h * w * components;
-	uint8 *buf = new uint8[dataSize];
-	file->read(buf, dataSize, 1);
+	assert(this->components > 0 && components > 0);
+	size_t imgDataSize = h * w * this->components;
+	size_t pixmapDataSize = h * w * components;
+	uint8 *buf = new uint8[imgDataSize];
+	file->read(buf, imgDataSize, 1);
 
-	for (int i=0; i < dataSize; i += components) {
-		switch(components) {
+	for (int i=0, ndx = 0; i < imgDataSize; i += this->components, ndx += components) {
+		uint8 r, g, b, a, l;
+		switch(this->components) {
 			case 1:
-				pixels[i+0]= buf[i];
+				r = g = b = l = buf[i];
+				a = 255U;
 				break;
 			case 3:
-				pixels[i+0]= buf[i+2];
-				pixels[i+1]= buf[i+1];
-				pixels[i+2]= buf[i];
+				b = buf[i+0];
+				g = buf[i+1];
+				r = buf[i+2];
+				a = 255U;
+				if (components == 1) {
+					l = uint8((int(r) + g + b) / 3);
+				}
 				break;
 			case 4:
-				pixels[i+0]= buf[i+2];
-				pixels[i+1]= buf[i+1];
-				pixels[i+2]= buf[i];
-				pixels[i+3]= buf[i+3];
+				b = buf[i+0];
+				g = buf[i+1];
+				r = buf[i+2];
+				a = buf[i+3];
+				if (components == 1) {
+					l = uint8((int(r) + g + b) / 3);
+				}
+		}
+		switch(components) {
+			case 1:
+				pixels[ndx+0] = l;
+				break;
+			case 3:
+				pixels[ndx+0] = r;
+				pixels[ndx+1] = g;
+				pixels[ndx+2] = b;
+				break;
+			case 4:
+				pixels[ndx+0]= r;
+				pixels[ndx+1]= g;
+				pixels[ndx+2]= b;
+				pixels[ndx+3]= a;
 				break;
 		}
 	}
@@ -231,8 +257,8 @@ void PixmapIoBmp::read(uint8 *pixels){
 
 void PixmapIoBmp::read(uint8 *pixels, int components){
 	_PROFILE_FUNCTION();
-	const int alignOffset = (w * this->components) % 4;
-	const int rowPad = alignOffset ? 4 - alignOffset : 0;
+	//const int alignOffset = (w * this->components) % 4;
+	const int rowPad = 0;//alignOffset ? 4 - alignOffset : 0;
 	const int rowSize = w * this->components + rowPad;
 	uint8 *rowBuf = new uint8[rowSize];
 	int pix = 0;
