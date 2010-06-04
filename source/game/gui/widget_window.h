@@ -27,34 +27,58 @@ namespace Glest { namespace Widgets {
 /** top level container */
 class WidgetWindow : public Container, public WindowGl {
 private:
+	typedef std::stack<WidgetPtr>	WidgetStack;
+	typedef std::list<LayerPtr>		LayerList;
+	typedef std::set<string>		NameSet;
+
+	typedef std::map<WidgetPtr, MouseWidgetPtr>		MouseWidgetMap;
+	typedef std::map<WidgetPtr, KeyboardWidgetPtr>	KeyboardWidgetMap;
+
+protected:
+	static WidgetWindow *instance;
+
+private:
 	WidgetPtr	keyboardFocused,
 				floatingWidget,
 				mouseDownWidgets[MouseButton::COUNT],
 				lastMouseDownWidget;
-	std::stack<WidgetPtr> mouseOverStack;
-	std::list<LayerPtr> layers;
-	std::set<string> layerNames;
-	int layerIdCounter;
-	LayerPtr rootLayer;
-	WidgetList toClean;
-	WidgetList updateList;
+	WidgetList	toClean;
+	WidgetList	updateList;
+	WidgetStack mouseOverStack;
+
+	MouseWidgetMap mouseWidgetMap;
+	KeyboardWidgetMap keyboardWidgetMap;
+
+	LayerPtr	rootLayer;
+	LayerList	layers;
+	NameSet		layerNames;
+	int			layerIdCounter;
 
 	TextRenderer *textRendererBM, *textRendererFT;
 
 	float anim;
+	Vec2i mousePos;
+
 	WidgetPtr findCommonAncestor(WidgetPtr widget1, WidgetPtr widget2);
 	void unwindMouseOverStack(WidgetPtr newTop);
 	void unwindMouseOverStack();
 	void doMouseInto(WidgetPtr widget);
 	void changeActiveLayer(std::list<LayerPtr>::iterator &it);
-	Vec2i mousePos;
+
+	LayerList::iterator findLayer(int id);
+	LayerList::iterator findLayer(const string &name);
+
+	MouseWidgetPtr asMouseWidget(WidgetPtr);
+	KeyboardWidgetPtr asKeyboardWidget(WidgetPtr);
 
 public:
 	WidgetWindow();
 	virtual ~WidgetWindow();
+
+	static WidgetWindow* getInstance() { return instance; }
+
 	void update();
 	float getAnim() const { return anim; }
-
 	virtual void clear();
 
 	void setActiveLayer(const string &layer);
@@ -71,6 +95,12 @@ public:
 
 	void aquireKeyboardFocus(WidgetPtr widget);
 	void releaseKeyboardFocus(WidgetPtr widget);
+
+	void registerMouseWidget(WidgetPtr asWidget, MouseWidgetPtr asMouseWidget);
+	void unregisterMouseWidget(WidgetPtr widget);
+
+	void registerKeyboardWidget(WidgetPtr asWidget, KeyboardWidgetPtr asKeyboardWidget);
+	void unregisterKeyboardWidget(WidgetPtr widget);
 
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);
@@ -100,7 +130,7 @@ public: // Glest::Widgets::Widget virtual events
 		return ft ? textRendererFT : textRendererBM;
 	}
 
-	virtual WidgetPtr getWidgetAt(const Vec2i &pos) { return layers.front()->getWidgetAt(pos); }
+	virtual WidgetPtr getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
 	virtual void addChild(WidgetPtr child) { layers.front()->addChild(child); child->setParent(layers.front()); }
 	virtual void remChild(WidgetPtr child) { layers.front()->remChild(child); child->setParent(layers.front()); }
 

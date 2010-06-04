@@ -70,13 +70,13 @@ public:
 // class Button
 // =====================================================
 
-class Button : public TextWidget, public ImageWidget {
+class Button : public TextWidget, public ImageWidget, public MouseWidget {
 protected:
 	bool hover;
 	bool pressed;
 
 protected:
-	Button() : hover(false), pressed(false) {}
+	Button() : MouseWidget(this), hover(false), pressed(false) {}
 
 public:
 	Button(ContainerPtr parent);
@@ -86,6 +86,9 @@ public:
 
 	virtual void mouseIn()	{ Widget::mouseIn(); hover = true;		}
 	virtual void mouseOut() { Widget::mouseOut(); hover = false;	}
+
+	virtual void EW_mouseIn() { cout << "EW_mouseIn()\n"; }
+	virtual void EW_mouseOut() { cout << "EW_mouseOut()\n"; }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);
@@ -138,7 +141,7 @@ public:
 // class TextBox
 // =====================================================
 
-class TextBox : public TextWidget {
+class TextBox : public TextWidget, public MouseWidget, public KeyboardWidget {
 private:
 	bool hover;
 	bool focus;
@@ -174,7 +177,7 @@ typedef TextBox* TextBoxPtr;
 //  class VerticalScrollBar
 // =====================================================
 
-class VerticalScrollBar : public ImageWidget {
+class VerticalScrollBar : public ImageWidget, public MouseWidget {
 private:
 	WRAPPED_ENUM( Part, NONE, UP_BUTTON, DOWN_BUTTON, THUMB, UPPER_SHAFT, LOWER_SHAFT );
 	
@@ -391,7 +394,7 @@ typedef ListBox* ListBoxPtr;
 // class ListBoxItem
 // =====================================================
 
-class ListBoxItem : public TextWidget {
+class ListBoxItem : public TextWidget, public MouseWidget {
 private:
 	bool selected;
 	bool hover;

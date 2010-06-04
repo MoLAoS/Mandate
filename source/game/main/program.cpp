@@ -171,7 +171,9 @@ Program::Program(Config &config, CmdArgs &args)
 		<< "VirtualH : ScreenH == " << Metrics::getInstance().getVirtualH() << " : "
 		<< Metrics::getInstance().getScreenH() << endl;
 
+	WidgetWindow::instance = this;
 	singleton = this;
+
 	init();
 
 	if (cmdArgs.isTest("interpolation")) {

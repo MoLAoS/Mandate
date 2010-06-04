@@ -86,12 +86,14 @@ Vec2i StaticImage::getPrefSize() const {
 
 Button::Button(ContainerPtr parent)
 		: Widget(parent)
+		, MouseWidget(this)
 		, hover(false), pressed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
 }
 
 Button::Button(ContainerPtr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
+		, MouseWidget(this)
 		, hover(false), pressed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
 	// background texture
@@ -270,6 +272,8 @@ void CheckBox::render() {
 
 TextBox::TextBox(ContainerPtr parent)
 		: Widget(parent)
+		, MouseWidget(this)
+		, KeyboardWidget(this)
 		, hover(false)
 		, focus(false)
 		, changed(false) {
@@ -280,6 +284,8 @@ TextBox::TextBox(ContainerPtr parent)
 		
 TextBox::TextBox(ContainerPtr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
+		, MouseWidget(this)
+		, KeyboardWidget(this)
 		, hover(false)
 		, focus(false)
 		, changed(false) {
@@ -383,6 +389,7 @@ Vec2i TextBox::getPrefSize() const {
 
 VerticalScrollBar::VerticalScrollBar(ContainerPtr parent)
 		: Widget(parent) 
+		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
 		//, fullThumb(false), smallThumb(false)
 		, shaftOffset(0), shaftHeight(0)
@@ -401,6 +408,7 @@ VerticalScrollBar::VerticalScrollBar(ContainerPtr parent)
 
 VerticalScrollBar::VerticalScrollBar(ContainerPtr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
+		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
 		//, fullThumb(false), smallThumb(false)
 		, shaftOffset(0), shaftHeight(0)
@@ -850,6 +858,7 @@ void ListBox::setSelected(int index) {
 
 ListBoxItem::ListBoxItem(ListBasePtr parent)
 		: Widget(parent) 
+		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
 		, pressed(false) {
@@ -859,6 +868,7 @@ ListBoxItem::ListBoxItem(ListBasePtr parent)
 
 ListBoxItem::ListBoxItem(ListBasePtr parent, Vec2i pos, Vec2i sz)
 		: Widget(parent, pos, sz)
+		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
 		, pressed(false) {

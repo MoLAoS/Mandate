@@ -23,6 +23,24 @@ using namespace Glest::Global;
 
 namespace Glest { namespace Widgets {
 
+MouseWidget::MouseWidget(WidgetPtr widget) {
+	me = widget;
+	WidgetWindow::getInstance()->registerMouseWidget(me, this);
+}
+
+MouseWidget::~MouseWidget() {
+	WidgetWindow::getInstance()->unregisterMouseWidget(me);
+}
+
+KeyboardWidget::KeyboardWidget(WidgetPtr widget) {
+	me = widget;
+	WidgetWindow::getInstance()->registerKeyboardWidget(me, this);
+}
+
+KeyboardWidget::~KeyboardWidget() {
+	WidgetWindow::getInstance()->unregisterKeyboardWidget(me);
+}
+
 // =====================================================
 // class Widget
 // =====================================================
@@ -527,12 +545,11 @@ void Container::setFade(float v) {
 
 WidgetPtr Container::getWidgetAt(const Vec2i &pos) {
 	WIDGET_LOG( __FUNCTION__ );
-	if (isInside(pos)) {
-		foreach (WidgetList, it, children) {
-			WidgetPtr widget = *it;
-			if (widget->isVisible() && widget->isInside(pos)) {
-				return widget->getWidgetAt(pos);
-			}
+	assert(isInside(pos));
+	foreach (WidgetList, it, children) {
+		WidgetPtr widget = *it;
+		if (widget->isVisible() && widget->isInside(pos)) {
+			return widget->getWidgetAt(pos);
 		}
 	}
 	return this;

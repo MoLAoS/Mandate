@@ -183,6 +183,7 @@ public:
 	virtual bool mouseWheel(Vec2i pos, int z);
 	virtual void mouseIn();
 	virtual void mouseOut();
+
 	virtual bool keyDown(Key key);
 	virtual bool keyUp(Key key);
 	virtual bool keyPress(char c);
@@ -204,6 +205,47 @@ public:
 	sigslot::signal<WidgetPtr> Destroyed;
 
 };
+
+class MouseWidget {
+	friend class WidgetWindow;
+private:
+	WidgetPtr me;
+
+public:
+	MouseWidget(WidgetPtr widget);
+	~MouseWidget();
+
+private:
+	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos)			{ return false; }
+	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos)			{ return false; }
+	virtual bool EW_mouseMove(Vec2i pos)							{ return false; }
+	virtual bool EW_mouseDoubleClick(MouseButton btn, Vec2i pos)	{ return false; }
+	virtual bool EW_mouseWheel(Vec2i pos, int z)					{ return false; }
+
+	virtual void EW_mouseIn() {}
+	virtual void EW_mouseOut() {}
+};
+
+typedef MouseWidget* MouseWidgetPtr;
+
+class KeyboardWidget {
+	friend class WidgetWindow;
+private:
+	WidgetPtr me;
+
+public:
+	KeyboardWidget(WidgetPtr widget);
+	~KeyboardWidget();
+
+private:
+	virtual bool EW_keyDown(Key key)	{ return false; }
+	virtual bool EW_keyUp(Key key)		{ return false; }
+	virtual bool EW_keyPress(char c)	{ return false; }
+
+	virtual void EW_lostKeyboardFocus() {}
+};
+
+typedef KeyboardWidget* KeyboardWidgetPtr;
 
 struct ImageRenderInfo {
 	bool hasOffset, hasCustomSize;
