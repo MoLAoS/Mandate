@@ -68,13 +68,20 @@ find_package(Freetype REQUIRED)
 option(GAE_USE_PHYSFS "Enable PhysicsFS support")
 if(GAE_USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
-endif()
+endif(GAE_USE_PHYSFS)
 
 # debug edition
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 
 # pre-compiled headers (MSVC only atm)
 option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, MSVC only atm.")
+
+if(NOT WIN32)
+	try_compile(HAVE_SSE2 ${CMAKE_BINARY_DIR}/test_sse ${CMAKE_SOURCE_DIR}/cmake/tests/sse.cpp COMPILE_DEFINITIONS "-msse2")
+	if(NOT HAVE_SSE2)
+		message(FATAL_ERROR "SSE2 support is needed, sorry")
+	endif(NOT HAVE_SSE2)
+endif(NOT WIN32)
 
 # set compiler flags...
 if (MSVC)
@@ -86,6 +93,9 @@ if (MSVC)
 else (MSVC)
 	# Use defaults ? 
 	#set(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
+	if(NOT CMAKE_CXX_FLAGS MATCHES -msse2)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2" CACHE STRING "" FORCE)
+	endif()
 endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR}
