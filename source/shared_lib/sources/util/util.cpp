@@ -434,56 +434,57 @@ void uudecode(void *dest, size_t *destSize, const char *src) {
 //finds all filenames like path and stores them in results
 void findAll(const string &path, vector<string> &results, bool cutExtension){
 	FSFactory *fsfac = FSFactory::getInstance();
-	if(fsfac->physFS){
+	if (fsfac->physFS) {
 		results.clear();
 		vector<string> strings = FSFactory::findAll(path, cutExtension);
 		results.insert(results.begin(), strings.begin(), strings.end());
-	}else{
-	
-	slist<string> l;
-	DirIterator di;
-	char *p = initDirIterator(path, di);
-
-	if(!p) {
-		throw runtime_error("No files found: " + path);
-	}
-
-	do {
-		// exclude current and parent directory as well as any files that start
-		// with a dot, but do not exclude files with a leading relative path
-		// component, although the path component will be stripped later.
-		if(p[0] == '.' && !(p[1] == '/' || (p[1] == '.' && p[2] == '/'))) {
-			continue;
+		if (results.empty()) {
+			throw runtime_error("No files found: " + path);
 		}
-		char* begin = p;
-		char* dot = NULL;
+	} else {
+		slist<string> l;
+		DirIterator di;
+		char *p = initDirIterator(path, di);
 
-		for( ; *p != 0; ++p) {
-			// strip the path component
-			switch(*p) {
-			case '/':
-				begin = p + 1;
-				break;
-			case '.':
-				dot = p;
+		if(!p) {
+			throw runtime_error("No files found: " + path);
+		}
+
+		do {
+			// exclude current and parent directory as well as any files that start
+			// with a dot, but do not exclude files with a leading relative path
+			// component, although the path component will be stripped later.
+			if(p[0] == '.' && !(p[1] == '/' || (p[1] == '.' && p[2] == '/'))) {
+				continue;
 			}
-		}
-		// this may zero out a dot preceding the base file name, but we
-		// don't care
-		if(cutExtension && dot) {
-			*dot = 0;
-		}
-		l.push_front(begin);
-	} while((p = getNextFile(di)));
+			char* begin = p;
+			char* dot = NULL;
 
-	freeDirIterator(di);
+			for( ; *p != 0; ++p) {
+				// strip the path component
+				switch(*p) {
+				case '/':
+					begin = p + 1;
+					break;
+				case '.':
+					dot = p;
+				}
+			}
+			// this may zero out a dot preceding the base file name, but we
+			// don't care
+			if(cutExtension && dot) {
+				*dot = 0;
+			}
+			l.push_front(begin);
+		} while((p = getNextFile(di)));
 
-	l.sort();
-	results.clear();
-	for(slist<string>::iterator li = l.begin(); li != l.end(); ++li) {
-		results.push_back(*li);
-	}
-	
+		freeDirIterator(di);
+
+		l.sort();
+		results.clear();
+		for(slist<string>::iterator li = l.begin(); li != l.end(); ++li) {
+			results.push_back(*li);
+		}
 	}
 }
 

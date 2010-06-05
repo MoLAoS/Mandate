@@ -195,6 +195,10 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	toBeUndertaken = node->getChildBoolValue("toBeUndertaken");
 	autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
 
+	if (type->hasMeetingPoint()) {
+		meetingPos = node->getChildVec2iValue("meeting-point");
+	}
+
 	XmlNode *n = node->getChild("commands");
 	for(int i = 0; i < n->getChildCount(); ++i) {
 		commands.push_back(new Command(n->getChild("command", i), type, faction->getType()));
@@ -268,6 +272,10 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("toBeUndertaken", toBeUndertaken);
 //	node->addChild("alive", alive);
 	node->addChild("autoRepairEnabled", autoRepairEnabled);
+
+	if (type->hasMeetingPoint()) {
+		node->addChild("meeting-point", meetingPos);
+	}
 
 	effects.save(node->addChild("effects"));
 	effectsCreated.save(node->addChild("effectsCreated"));

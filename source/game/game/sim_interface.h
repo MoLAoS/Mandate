@@ -197,7 +197,7 @@ public:
 
 	UnitFactory& getUnitFactory()			{ return unitFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }
-	XmlNode* getSavedGame() const			{ return savedGame; }
+	XmlNode*& getSavedGame()				{ return savedGame; }
 	Commander *getCommander()				{ return commander; }
 	const Commander *getCommander() const	{ return commander; }
 	GameState* getGameState()				{ return game; }

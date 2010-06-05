@@ -336,10 +336,8 @@ bool MenuStateLoadGame::loadGame() {
 	root = XmlIo::getInstance().load(getFileName());
 
 	theSimInterface->getGameSettings() = *gs;
-	//if(serverInterface) {
-	//	serverInterface->launchGame();
-	//}
-	program.setState(new GameState(program, root));
+	theSimInterface->getSavedGame() = root;
+	program.setState(new GameState(program));
 	return true;
 }
 

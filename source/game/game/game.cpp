@@ -53,7 +53,7 @@ GameState *GameState::singleton = NULL;
 
 const GameSettings &GameState::getGameSettings()	{return theSimInterface->getGameSettings();}
 
-GameState::GameState(Program &program, XmlNode *savedGame)
+GameState::GameState(Program &program)
 		//main data
 		: ProgramState(program)
 		, simInterface(program.getSimulationInterface())

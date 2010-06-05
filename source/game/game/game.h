@@ -90,7 +90,7 @@ protected:
 	ParticleSystem *weatherParticleSystem;
 
 public:
-	GameState(Program &program, XmlNode *savedGame = NULL);
+	GameState(Program &program);
 	virtual ~GameState();
 	static GameState *getInstance()				{return singleton;}
 
