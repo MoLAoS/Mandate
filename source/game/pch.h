@@ -15,6 +15,8 @@
 #	define USE_PCH 0
 #endif
 
+#define ASSERT(condition, message) assert((condition) && message)
+
 #ifndef _GAME_PCH_H_
 #define _GAME_PCH_H_
 
@@ -138,7 +140,7 @@
 	#include <winsock.h>
 	#include <dsound.h>
 #endif
-
+/*
 using std::string;
 using std::stringstream;
 
@@ -166,6 +168,6 @@ using std::map;
 using std::pair;
 
 using std::numeric_limits;
-
+*/
 #endif // USE_PCH
 #endif // _GAME_PCH_H_

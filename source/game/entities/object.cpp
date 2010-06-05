@@ -32,9 +32,10 @@ namespace Glest { namespace Entities {
 // 	class Object
 // =====================================================
 
-Object::Object(ObjectType *objType, const Vec3f &p){
-	objectType = objType;
-	resource = NULL;
+Object::Object(int id, ObjectType *objType, const Vec3f &p)
+		: id(id)
+		, objectType(objType)
+		, resource(0) {
 	Random random(int(p.x * p.z));
 	pos = p + Vec3f(random.randRange(-0.6f, 0.6f), 0.0f, random.randRange(-0.6f, 0.6f));
 	rotation = random.randRange(0.f, 360.f);

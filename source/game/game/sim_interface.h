@@ -173,6 +173,7 @@ protected:
 	Commander *commander;
 
 	UnitFactory unitFactory;
+	ObjectFactory objectFactory;
 
 	bool paused;
 	bool gameOver;
@@ -196,6 +197,7 @@ public:
 	int getUpdateInterval() const;
 
 	UnitFactory& getUnitFactory()			{ return unitFactory; }
+	ObjectFactory& getObjectFactory()		{ return objectFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }
 	XmlNode*& getSavedGame()				{ return savedGame; }
 	Commander *getCommander()				{ return commander; }

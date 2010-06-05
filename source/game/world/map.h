@@ -193,7 +193,7 @@ public:
 	~Map();
 
 	void init();
-	void load(const string &path, TechTree *techTree, Tileset *tileset);
+	void load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory);
 	void doChecksum(Checksum &checksum);
 
 	void saveExplorationState(XmlNode *node) const;

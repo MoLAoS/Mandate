@@ -233,9 +233,10 @@ void SimulationInterface::initWorld() {
 	ScriptManager::init(game);
 }
 
+/** @return maximum update backlog (must be -1 for multiplayer) */
 int SimulationInterface::launchGame() {
 	_TRACE_FUNCTION();
-	Checksum checksums[12];
+	Checksum checksums[4 + GameConstants::maxPlayers];
 	
 	world->getTileset()->doChecksum(checksums[0]);
 	world->getMap()->doChecksum(checksums[1]);

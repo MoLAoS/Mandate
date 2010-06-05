@@ -138,6 +138,7 @@ private:
 	Mouse3d mouse3d;
 	Selection selection;
 	SelectionQuad selectionQuad;
+	const Object *selectedObject;
 
 	//states
 	bool selectingBuilding;
@@ -179,7 +180,6 @@ public:
 	bool isSelectingBuilding() const		{return selectingBuilding;}
 	bool isSelected(const Unit *unit) const	{return selection.hasUnit(unit);}
 	bool isPlacingBuilding() const;
-	//bool isVisible(const Vec2i &pos) const	{return gameCamera->computeVisibleQuad().isInside(pos);}
 	bool isDragging() const					{return dragging;}
 	bool isDraggingMinimap() const			{return draggingMinimap;}
 	bool isNeedSelectionUpdate() const		{return needSelectionUpdate;}
@@ -276,7 +276,7 @@ private:
 public:
 	void updateSelection(bool doubleClick, Selection::UnitContainer &units);
 private:
-	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units);
+	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units, bool setObj);
 	void computeBuildPositions(const Vec2i &end);
 };
 

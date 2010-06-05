@@ -211,7 +211,7 @@ bool World::loadTech() {
 bool World::loadMap() {
 	_TRACE_FUNCTION();
 	const string &path = iSim->getGameSettings().getMapPath();
-	map.load(path, &techTree, &tileset);
+	map.load(path, &techTree, &tileset, iSim->getObjectFactory());
 	return true;
 }
 

@@ -134,7 +134,8 @@ private:
 	struct Data{
 		uint32 messageType :  8;
 		uint32 messageSize : 24;
-		int32 checksums[12];	// tileset, map, tech(damage table), tech(resources), 8 * faction
+		// tileset, map, tech(damage table), tech(resources), maxPlayers * faction
+		int32 checksums[4 + GameConstants::maxPlayers];
 	} data;
 
 public:

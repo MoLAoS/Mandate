@@ -193,7 +193,7 @@ void ClientInterface::waitUntilReady(Checksum *checksums) {
 	}
 	readyMsg = ReadyMessage(raw);
 	//check checksums
-	bool checks[12];
+	bool checks[4 + GameConstants::maxPlayers];
 	bool anyFalse = false;
 	for (int i=0; i < 4 + n; ++i) {
 		if (readyMsg.getChecksum(i) == checksums[i].getSum()) {

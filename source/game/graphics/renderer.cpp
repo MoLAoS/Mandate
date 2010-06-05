@@ -25,6 +25,7 @@
 #include "opengl.h"
 #include "faction.h"
 #include "factory_repository.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
@@ -2081,7 +2082,16 @@ bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
 	return map->isInside(worldPos);
 }
 
-void Renderer::computeSelected(Selection::UnitContainer &units, const Vec2i &posDown, const Vec2i &posUp){
+struct PickHit {
+	GLuint	nearDist, name1, name2;
+
+	PickHit(GLuint nearDist, GLuint name1, GLuint name2)
+			: nearDist(nearDist), name1(name1), name2(name2) {}
+
+	bool operator<(const PickHit &that) const { return nearDist < that.nearDist; }
+};
+
+void Renderer::computeSelected(Selection::UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
 	//declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
 	const Metrics &metrics= Metrics::getInstance();
@@ -2105,27 +2115,52 @@ void Renderer::computeSelected(Selection::UnitContainer &units, const Vec2i &pos
 	gluPerspective(perspFov, metrics.getAspectRatio(), perspNearPlane, perspFarPlane);
 	loadGameCameraMatrix();
 
+	glInitNames();
+
 	//render units
 	renderUnitsFast();
+	renderObjectsFast();
 
 	//pop matrices
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 
-	//select units
-	int selCount= glRenderMode(GL_RENDER);
-	for(int i=1; i<=selCount; ++i){
-		int factionIndex= selectBuffer[i*5-2];
-		//int unitIndex= selectBuffer[i*5-1];
-		int uid = selectBuffer[i*5-1];
-		const World *world= &theWorld;
-		//if (factionIndex < world->getFactionCount() && unitIndex < world->getFaction(factionIndex)->getUnitCount()) {
-			Unit *unit = world->findUnitById(uid);
-			//Unit *unit= world->getFaction(factionIndex)->getUnit(unitIndex);
-			if (unit && unit->isAlive()) {
-				units.push_back(unit);
+	// process hits
+	int selCount = glRenderMode(GL_RENDER);
+	set<PickHit> unitHits, objectHits;
+	GLuint *ptr = selectBuffer;
+	for (int i = 0; i < selCount; ++i) {
+		ASSERT(*ptr == 2, "something was rendered in selection mode without 2 names on the stack");
+		++ptr;
+		GLuint nearDist = *ptr++;
+		++ptr;
+		GLuint name1 = *ptr++;
+		GLuint name2 = *ptr++;
+
+		if (name1 < GameConstants::maxPlayers) {
+			unitHits.insert(PickHit(nearDist, name1, name2));
+		} else {
+			objectHits.insert(PickHit(nearDist, name1, name2));
+		}
+	}
+	units.clear();
+	obj = 0;
+	if (unitHits.empty()) { // no units, check objects
+		if (!objectHits.empty()) { 
+			foreach_const (set<PickHit>, it, objectHits) {
+				if (it->name1 == 0x101) { // closest resource hit
+					obj = theSimInterface->getObjectFactory().getObject(it->name2);
+					break;
+				}
 			}
-		//}
+			if (!obj) { // no resources, get closest object
+				obj = theSimInterface->getObjectFactory().getObject(objectHits.begin()->name2);
+			}
+		}
+	} else {
+		foreach_const (set<PickHit>, it, unitHits) {
+			units.push_back(theSimInterface->getUnitFactory().getUnit(it->name2));
+		}
 	}
 }
 
@@ -2195,7 +2230,7 @@ void Renderer::renderShadowsToTexture() {
 			}
 			//render 3d
 			renderUnitsFast(true);
-			renderObjectsFast();
+			renderObjectsFast(true);
 			//read color buffer
 			glBindTexture(GL_TEXTURE_2D, shadowMapHandle);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, shadowTextureSize, shadowTextureSize);
@@ -2432,7 +2467,6 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 	glDisable(GL_LIGHTING);
 
 	modelRenderer->begin(false, false, false);
-	glInitNames();
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers];
 	set<const Unit*> unitsSeen;
@@ -2523,7 +2557,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 }
 
 //render objects for shadows
-void Renderer::renderObjectsFast(){
+void Renderer::renderObjectsFast(bool shadows) {
 	const World *world= &theWorld;
 	const Map *map= world->getMap();
 
@@ -2531,22 +2565,25 @@ void Renderer::renderObjectsFast(){
 
 	glPushAttrib(GL_ENABLE_BIT| GL_TEXTURE_BIT);
 	glDisable(GL_LIGHTING);
+	if (!shadows) {
+		glDisable(GL_TEXTURE_2D);
+	} else {
+		glAlphaFunc(GL_GREATER, 0.5f);
 
-	glAlphaFunc(GL_GREATER, 0.5f);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+		//set color to the texture alpha
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
 
-	//set color to the texture alpha
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+		//set alpha to the texture alpha
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+	}
 
-	//set alpha to the texture alpha
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-
-	modelRenderer->begin(false, true, false);
+	modelRenderer->begin(false, shadows, false);
 	int thisTeamIndex= world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();
@@ -2556,6 +2593,14 @@ void Renderer::renderObjectsFast(){
 		Tile *sc= map->getTile(pos);
 		Object *o= sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
+			Resource *r = o->getResource();
+			if (r) {
+				glPushName(0x101);	// resource
+			} else {
+				glPushName(0x102);	// object (non resource)
+			}
+			glPushName(o->getId());	// obj id
+
 			const Model *objModel= sc->getObject()->getModel();
 			Vec3f v= o->getPos();
 			v.x += GameConstants::cellScale / 2;
@@ -2566,6 +2611,9 @@ void Renderer::renderObjectsFast(){
 				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
 				modelRenderer->render(objModel);
 			glPopMatrix();
+
+			glPopName();
+			glPopName();
 		}
 	}
 	modelRenderer->end();

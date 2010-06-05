@@ -25,6 +25,7 @@ using Glest::ProtoTypes::ResourceType;
 namespace Glest { namespace Entities {
 
 class Resource;
+class ObjectFactory;
 
 // =====================================================
 // 	class Object
@@ -32,21 +33,25 @@ class Resource;
 ///	A map object: tree, stone...
 // =====================================================
 
-class Object{
+class Object {
+	friend class ObjectFactory;
 private:
+	int id;
 	ObjectType *objectType;
 	Resource *resource;
 	Vec3f pos;
 	float rotation;
 	int variation;
 
+	Object(int id, ObjectType *objectType, const Vec3f &pos);
+
 public:
-	Object(ObjectType *objectType, const Vec3f &pos);
 	~Object();
 
 //	void setHeight(float height)		{pos.y= height;}
 	void setPos(const Vec3f &pos)		{this->pos = pos;}
 
+	int getId() const { return id; }
 	const ObjectType *getType() const	{return objectType;}
 	Resource *getResource() const		{return resource;}
 	Vec3f getPos() const				{return pos;}
@@ -55,6 +60,27 @@ public:
 	bool getWalkable() const;
 
 	void setResource(const ResourceType *resourceType, const Vec2i &pos);
+};
+
+class ObjectFactory {
+private:
+	int idCounter;
+	std::map<int, Object*> objects;
+
+public:
+	ObjectFactory() : idCounter(0) {}
+
+	Object* newInstance(ObjectType *objectType, const Vec3f &pos) {
+		Object *obj = new Object(idCounter, objectType, pos);
+		objects[idCounter] = obj;
+		++idCounter;
+		return obj;
+	}
+
+	Object* getObject(int id) {
+		assert(id >= 0 && id < idCounter);
+		return objects[id];
+	}
 };
 
 }}//end namespace

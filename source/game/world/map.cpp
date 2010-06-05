@@ -134,7 +134,7 @@ void Map::loadExplorationState(XmlNode *node) {
 	}
 }
 
-void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
+void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory) {
 	FileOps *f = FSFactory::getInstance()->getFileOps();
 
 	struct MapFileHeader {
@@ -217,14 +217,13 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 		//read objects and resources
 		for (int y = 0; y < h; y += GameConstants::cellScale) {
 			for (int x = 0; x < w; x += GameConstants::cellScale) {
-
 				int8 objNumber;
 				f->read(&objNumber, sizeof(int8), 1);
 				Tile *sc = getTile(toTileCoords(Vec2i(x, y)));
 				if (objNumber == 0) {
 					sc->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
-					Object *o = new Object(tileset->getObjectType(objNumber - 1), sc->getVertex());
+					Object *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), sc->getVertex());
 					sc->setObject(o);
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
@@ -234,7 +233,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
-					Object *o = new Object(NULL, sc->getVertex());
+					Object *o = objFactory.newInstance(NULL, sc->getVertex());
 					o->setResource(rt, Vec2i(x, y));
 					sc->setObject(o);
 				}

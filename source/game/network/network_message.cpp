@@ -133,7 +133,7 @@ void IntroMessage::send(NetworkConnection* connection) const{
 ReadyMessage::ReadyMessage() {
 	data.messageType = MessageType::READY;
 	data.messageSize = sizeof(Data) - 4;
-	for (int i=0; i < 12; ++i) {
+	for (int i=0; i < 4 + GameConstants::maxPlayers; ++i) {
 		data.checksums[i] = 0;
 	}
 }
@@ -141,7 +141,7 @@ ReadyMessage::ReadyMessage() {
 ReadyMessage::ReadyMessage(Checksum *checksums) {
 	data.messageType = MessageType::READY;
 	data.messageSize = sizeof(Data) - 4;
-	for (int i=0; i < 12; ++i) {
+	for (int i=0; i < 4 + GameConstants::maxPlayers; ++i) {
 		data.checksums[i] = checksums[i].getSum();
 	}
 }

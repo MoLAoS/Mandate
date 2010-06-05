@@ -38,7 +38,10 @@ using namespace Glest::Global;
 using namespace Glest::Gui;
 using namespace Glest::Menu;
 
-namespace Glest { namespace Graphics {
+namespace Glest {
+	namespace Entities { class Object; }
+
+namespace Graphics {
 
 WRAPPED_ENUM ( ResourceScope,
 	GLOBAL,
@@ -242,7 +245,7 @@ public:
 
 	//computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);
-	void computeSelected(Selection::UnitContainer &units, const Vec2i &posDown, const Vec2i &posUp);
+	void computeSelected(Selection::UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp);
 
     //gl wrap
 	string getGlInfo();
@@ -259,7 +262,6 @@ public:
 	//misc
 	void loadConfig();
 	void saveScreen(const string &path);
-//	Quad2i getVisibleQuad() const		{return visibleQuad;}
 
 	//static
 	static Shadows strToShadows(const string &s);
@@ -275,8 +277,8 @@ private:
 	Vec4f computeWaterColor(float waterLevel, float cellHeight);
 	void checkExtension(const string &extension, const string &msg);
 
-	//selection render
-	void renderObjectsFast();
+	// selection or shadows render
+	void renderObjectsFast(bool shadows = false);
 	void renderUnitsFast(bool renderingShadows = false);
 
 	//gl requirements

@@ -99,7 +99,10 @@ void SelectionQuad::disable(){
 UserInterface* UserInterface::currentGui = NULL;
 
 //constructor
-UserInterface::UserInterface(GameState &game) : game(game), input(game.getInput()) {
+UserInterface::UserInterface(GameState &game)
+		: game(game)
+		, input(game.getInput()) 
+		, selectedObject(0) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -224,7 +227,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 			return;
 		}
 	} else {
-		validWorldPos = computeTarget(Vec2i(x, y), worldPos, units);
+		validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 	}
 
 	//graphics panel
@@ -285,7 +288,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 		giveDefaultOrders(worldPos, NULL);
 	} else if(selection.isComandable()) {
 		Selection::UnitContainer units;
-		if(computeTarget(Vec2i(x, y), worldPos, units)) {
+		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			Unit *targetUnit = units.size() ? units.front() : NULL;
 			giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
 		} else {
@@ -360,7 +363,7 @@ void UserInterface::mouseUpLeftGraphics(int x, int y){
 		Selection::UnitContainer units;
 
 		//FIXME: we don't have to do the expensivce calculations of this computeTarget for this.
-		if(computeTarget(Vec2i(x, y), worldPos, units)) {
+		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			giveTwoClickOrders(worldPos, NULL);
 		} else {
 			console->addStdMessage("InvalidPosition");
@@ -381,7 +384,7 @@ void UserInterface::mouseMoveGraphics(int x, int y){
 		selectionQuad.setPosUp(Vec2i(x, y));
 		Selection::UnitContainer units;
 		if(computeSelection) {
-			Renderer::getInstance().computeSelected(units, selectionQuad.getPosDown(), selectionQuad.getPosUp());
+			Renderer::getInstance().computeSelected(units, selectedObject, selectionQuad.getPosDown(), selectionQuad.getPosUp());
 			computeSelection = false;
 			updateSelection(false, units);
 		}
@@ -407,7 +410,8 @@ void UserInterface::mouseDoubleClickLeftGraphics(int x, int y){
 		Vec2i pos(x, y);
 
 		selectionQuad.setPosDown(pos);
-		Renderer::getInstance().computeSelected(units, pos, pos);
+		const Object *obj;
+		Renderer::getInstance().computeSelected(units, obj, pos, pos);
 		calculateNearest(units, gameCamera->getPos());
 		updateSelection(true, units);
 		computeDisplay();
@@ -989,6 +993,16 @@ void UserInterface::computeDisplay() {
 			}
 		}
 	}
+
+	if (selection.isEmpty() && selectedObject) {
+		Resource *r = selectedObject->getResource();
+		if (r) {
+			display.setTitle(r->getType()->getName());
+			display.setText(theLang.get("amount") + ":" + intToStr(r->getAmount()));
+			///@todo icon
+			
+		} ///@todo else
+	}
 }
 
 int UserInterface::computePosDisplay(int x, int y) {
@@ -1173,11 +1187,12 @@ void UserInterface::updateSelection(bool doubleClick, Selection::UnitContainer &
  * @return true if the position is a valid world position, false if the position is outside of the
  * world.
  */
-bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units) {
+bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units, bool setObj) {
 	units.clear();
 	Renderer &renderer = Renderer::getInstance();
 	validPosObjWorld = renderer.computePosition(screenPos, worldPos);
-	renderer.computeSelected(units, screenPos, screenPos);
+	const Object *junk;
+	renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
 
 	if (!units.empty()) {
 		return true;
