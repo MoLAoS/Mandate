@@ -568,10 +568,10 @@ void VerticalScrollBar::render() {
 
 	// thumb
 	Vec2i thumbPos(1, thumbOffset - thumbSize);
-	Vec2i thumbSize(shaftOffset - 2, thumbSize);
-	renderBorders(BorderStyle::RAISE, thumbPos, thumbSize, 1);
+	Vec2i thumbSizev(shaftOffset - 2, thumbSize);
+	renderBorders(BorderStyle::RAISE, thumbPos, thumbSizev, 1);
 	if (hoverPart == Part::THUMB) {
-		renderHighLight(Vec3f(1.f), 0.2f, 0.5f, thumbPos, thumbSize);
+		renderHighLight(Vec3f(1.f), 0.2f, 0.5f, thumbPos, thumbSizev);
 	}
 }
 

@@ -306,7 +306,7 @@ void UnitParticleSystemType::load(const XmlNode *particleSystemNode, const strin
 		if (mode == "black") {
 			setDestBlendFactor(BlendFactor::ONE_MINUS_SRC_ALPHA);
 		}
-	} catch (const exception &e) {
+	} catch (const std::exception &e) {
 		throw runtime_error("Error loading ParticleSystem: "+ path + "\n" +e.what());
 	}
 }
@@ -316,7 +316,7 @@ void UnitParticleSystemType::load(const string &dir, const string &path) {
 		XmlTree xmlTree;
 		xmlTree.load(path);
 		load(xmlTree.getRootNode(), dir);
-	} catch (const exception &e) {
+	} catch (const std::exception &e) {
 		throw runtime_error("Error loading ParticleSystem: "+ path + "\n" +e.what());
 	}
 }

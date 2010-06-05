@@ -87,8 +87,8 @@ public:
 	virtual void mouseIn()	{ Widget::mouseIn(); hover = true;		}
 	virtual void mouseOut() { Widget::mouseOut(); hover = false;	}
 
-	virtual void EW_mouseIn() { cout << "EW_mouseIn()\n"; }
-	virtual void EW_mouseOut() { cout << "EW_mouseOut()\n"; }
+	virtual void EW_mouseIn() { std::cout << "EW_mouseIn()\n"; }
+	virtual void EW_mouseOut() { std::cout << "EW_mouseOut()\n"; }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);
