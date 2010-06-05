@@ -999,8 +999,7 @@ void UserInterface::computeDisplay() {
 		if (r) {
 			display.setTitle(r->getType()->getName());
 			display.setText(theLang.get("amount") + ":" + intToStr(r->getAmount()));
-			///@todo icon
-			
+			display.setUpImage(0, r->getType()->getImage());
 		} ///@todo else
 	}
 }

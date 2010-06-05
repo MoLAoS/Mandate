@@ -1584,11 +1584,11 @@ void Renderer::renderUnits(){
 	assertGl();
 }
 
-void Renderer::renderSelectionEffects(){
-
+void Renderer::renderSelectionEffects() {
 	const World *world= &theWorld;
 	const Map *map= world->getMap();
-	const Selection *selection= game->getGui()->getSelection();
+	const Selection *selection = game->getGui()->getSelection();
+	const Object *selectedObj =  game->getGui()->getSelectedObject();
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_LIGHTING);
@@ -1622,6 +1622,17 @@ void Renderer::renderSelectionEffects(){
 			glColor4f(unit->getEpRatio()/2.f, unit->getEpRatio(), unit->getEpRatio(), 0.5f);
 			renderSelectionCircle(currVec, unit->getType()->getSize(), magicCircleRadius);
 		}
+	}
+
+	if (selectedObj) {
+		Resource *r = selectedObj->getResource();
+		if (r) {
+			const float offset = float(GameConstants::cellScale / 2);
+			const float ratio = r->getType()->getDefResPerPatch() / float(r->getAmount());
+			Vec3f currVec = selectedObj->getPos() + Vec3f(offset, 0.3f, offset);
+			glColor4f(0.f, 0.f, ratio, 0.3f);
+			renderSelectionCircle(currVec, GameConstants::cellScale, selectionCircleRadius);
+		}		
 	}
 
 	//target arrow
