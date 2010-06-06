@@ -15,6 +15,7 @@
 
 #include <cstdio>
 
+namespace Shared { namespace PhysFS { 
 
 FileOps::FileOps(){
 }
@@ -37,3 +38,5 @@ int FileOps::fileSize() {
 int FileOps::bytesRemaining() {
 	return fileSize() - tell();
 }
+
+}} // namespace Shared::PhysFS

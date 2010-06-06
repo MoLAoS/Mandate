@@ -26,6 +26,8 @@ using std::exception;
 
 namespace Shared { namespace Util {
 
+using namespace PhysFS;
+
 // =====================================================
 // class Properties
 // =====================================================

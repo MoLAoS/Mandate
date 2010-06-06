@@ -16,6 +16,8 @@
 #include <string>
 #include <stdexcept>
 
+namespace Shared { namespace PhysFS {
+
 using std::string;
 using std::runtime_error;
 
@@ -75,3 +77,5 @@ int StdFileOps::close(){
 int StdFileOps::eof(){
 	return feof(this->f);
 }
+
+}} // namespace Shared::PhysFS

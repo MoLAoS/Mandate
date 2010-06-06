@@ -26,9 +26,9 @@
 using std::exception;
 using std::range_error;
 
-using namespace Shared::Util;
-
 namespace Shared { namespace Xml {
+using namespace Util;
+using namespace PhysFS;
 
 const string defaultIndent = string("  ");
 

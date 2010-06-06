@@ -21,6 +21,7 @@
 #include "ifile_stream.hpp"
 #include "ifile_streambuf.hpp"
 
+namespace Shared { namespace PhysFS {
 
 IFileStream::IFileStream(const std::string& filename) :
   std::istream(new IFileStreambuf(filename))
@@ -31,6 +32,8 @@ IFileStream::~IFileStream()
 {
   delete rdbuf();
 }
+
+}} // namespace Shared::PhysFS
 
 #endif
 /* EOF */

@@ -29,6 +29,8 @@ using namespace Glest::Net;
 
 namespace Glest { namespace Util {
 
+using namespace Shared::PhysFS;
+
 // =====================================================
 //	class Logger
 // =====================================================

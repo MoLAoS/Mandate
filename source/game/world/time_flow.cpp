@@ -92,14 +92,12 @@ void TimeFlow::save(XmlNode *node) const {
 	node->addChild("firstTime", firstTime);
 	node->addChild("time", time);
 	node->addChild("lastTime", lastTime);
-	node->addChild("timeInc", timeInc);
 }
 
 void TimeFlow::load(const XmlNode *node) {
 	firstTime = node->getChildBoolValue("firstTime");
 	time = node->getChildFloatValue("time");
 	lastTime = node->getChildFloatValue("lastTime");
-	timeInc = node->getChildFloatValue("timeInc");
 }
 
 

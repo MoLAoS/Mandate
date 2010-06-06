@@ -28,13 +28,14 @@
 #include "StdFileOps.hpp"
 #include "util.h"
 
+namespace Shared { namespace PhysFS {
+using namespace Util;
+
 using std::ios;
 using std::istream;
 using std::ifstream;
 using std::ostream;
 using std::ofstream;
-
-using namespace Shared::Util;
 
 FSFactory *FSFactory::instance = NULL;
 
@@ -239,3 +240,5 @@ int FSFactory::openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face
 	return FT_Open_Face(lib, &args, 0, face);
 	//FIXME: stream is deleted in ft_font.cpp
 }
+
+}} // namespace Shared::PhysFS

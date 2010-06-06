@@ -19,7 +19,8 @@
 
 #include "util.h"
 
-using Shared::Util::cleanPath;
+namespace Shared { namespace PhysFS {
+using Util::cleanPath;
 
 PhysFileOps::PhysFileOps(){
 	this->f = NULL;
@@ -106,5 +107,7 @@ int PhysFileOps::eof(){
 const char * PhysFileOps::getLastError() {
 	return PHYSFS_getLastError();
 }
+
+}} // namespace Shared::PhysFS
 
 #endif

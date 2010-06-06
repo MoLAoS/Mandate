@@ -23,6 +23,8 @@
 #include <sstream>
 #include <stdexcept>
 
+namespace Shared { namespace PhysFS {
+
 OFileStreambuf::OFileStreambuf(const std::string& filename) :
   file()
 {
@@ -72,6 +74,7 @@ OFileStreambuf::sync()
   return overflow(traits_type::eof());
 }
 
+}} // namespace Shared::PhysFS
 
 #endif
 /* EOF */

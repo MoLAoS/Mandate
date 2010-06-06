@@ -21,6 +21,8 @@
 
 namespace Shared { namespace Graphics {
 
+using namespace PhysFS;
+
 namespace Freetype {
 
 /// This function gets the first power of 2 >= the int that we pass it.

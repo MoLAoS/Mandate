@@ -16,6 +16,7 @@
 
 #include <physfs.h>
 
+namespace Shared { namespace PhysFS {
 
 class PhysFileOps : public FileOps{
 private:
@@ -36,5 +37,7 @@ public:
 	int eof();
 	const char * getLastError();
 };
+
+}} // namespace Shared::PhysFS
 
 #endif

@@ -24,6 +24,7 @@
 #include "ofile_stream.hpp"
 #include "ofile_streambuf.hpp"
 
+namespace Shared { namespace PhysFS {
 
 OFileStream::OFileStream(const std::string& filename) :
   std::ostream(new OFileStreambuf(filename))
@@ -34,6 +35,8 @@ OFileStream::~OFileStream()
 {
   delete rdbuf();
 }
+
+}} // namespace Shared::PhysFS
 
 #endif
 

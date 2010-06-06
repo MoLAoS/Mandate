@@ -39,6 +39,8 @@ using Shared::Xml::XmlNode;
 
 namespace Shared{ namespace Util{
 
+using namespace PhysFS;
+
 EnumNamesBase::EnumNamesBase(const char *valueList, size_t count, bool lazy, const char *enumName)
 		: valueList(valueList)
 		, names(NULL)

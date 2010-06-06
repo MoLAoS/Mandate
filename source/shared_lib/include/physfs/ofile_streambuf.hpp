@@ -20,6 +20,8 @@
 #include <streambuf>
 #include <physfs.h>
 
+namespace Shared { namespace PhysFS {
+
 class OFileStreambuf : public std::streambuf
 {
 public:
@@ -38,6 +40,8 @@ private:
   OFileStreambuf(const OFileStreambuf&);
   OFileStreambuf& operator=(const OFileStreambuf&);
 };
+
+}} // namespace Shared::PhysFS
 
 #endif
 

@@ -20,12 +20,16 @@
 #include <ostream>
 #include <physfs.h>
 
+namespace Shared { namespace PhysFS {
+
 class OFileStream : public std::ostream
 {
 public:
   OFileStream(const std::string& filename);
   ~OFileStream();
 };
+
+}} // namespace Shared::PhysFS
 
 #endif
 

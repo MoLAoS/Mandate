@@ -20,6 +20,8 @@
 #include <streambuf>
 #include <physfs.h>
 
+namespace Shared { namespace PhysFS {
+
 /** This class implements a C++ streambuf object for physfs files.
  * So that you can use normal istream operations on them
  */
@@ -43,6 +45,8 @@ private:
   IFileStreambuf(const IFileStreambuf&);
   IFileStreambuf& operator=(const IFileStreambuf&);
 };
+
+}} // namespace Shared::PhysFS
 
 #endif
 

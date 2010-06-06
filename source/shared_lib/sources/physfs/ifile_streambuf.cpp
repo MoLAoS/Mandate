@@ -25,6 +25,8 @@
 
 #include <assert.h>
 
+namespace Shared { namespace PhysFS {
+
 IFileStreambuf::IFileStreambuf(const std::string& filename) :
   file()
 {
@@ -101,6 +103,7 @@ IFileStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
   return seekpos(static_cast<pos_type> (pos), mode);
 }
 
+}} // namespace Shared::PhysFS
 
 #endif
 /* EOF */

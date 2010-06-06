@@ -28,6 +28,8 @@ using std::ios_base;
 
 namespace Glest { namespace Gui {
 
+using namespace Shared::PhysFS;
+
 static const char *modNames[4] = {"Shift", "Ctrl", "Alt", "Meta"};
 	
 // =====================================================

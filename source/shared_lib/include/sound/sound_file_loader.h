@@ -25,10 +25,10 @@ using std::string;
 using std::istream;
 
 namespace Shared{ namespace Sound{
-
 using Platform::uint32;
 using Platform::int8;
 using Util::MultiFactory;
+using namespace PhysFS;
 
 class SoundInfo;
 

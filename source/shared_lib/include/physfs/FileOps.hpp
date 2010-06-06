@@ -12,6 +12,8 @@
 #ifndef _FILEOPS_HPP_
 #define _FILEOPS_HPP_
 
+namespace Shared { namespace PhysFS { 
+
 class FileOps{
 public:
 	FileOps();
@@ -35,5 +37,7 @@ public:
 	int fileSize();
 	int bytesRemaining();
 };
+
+}} // namespace Shared::PhysFS
 
 #endif

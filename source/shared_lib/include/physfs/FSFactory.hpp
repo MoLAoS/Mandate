@@ -25,6 +25,8 @@
 
 #include "FileOps.hpp"
 
+namespace Shared { namespace PhysFS { 
+
 using std::vector;
 using std::ostream;
 using std::istream;
@@ -63,5 +65,7 @@ class FSFactory{
 		//freetype stuff
 		static int openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face *face);
 };
+
+}}
 
 #endif

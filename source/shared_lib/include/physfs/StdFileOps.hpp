@@ -16,6 +16,8 @@
 
 #include <cstdio>
 
+namespace Shared { namespace PhysFS {
+
 class StdFileOps : public FileOps{
 private:
 	FILE *f;
@@ -34,5 +36,7 @@ public:
 	int close();
 	int eof();
 };
+
+}} // namespace Shared::PhysFS
 
 #endif

@@ -19,11 +19,12 @@
 
 #include "FileOps.hpp"
 
-using std::string;
-using namespace Shared::Platform;
-using namespace Shared::Math;
-
 namespace Shared { namespace Graphics {
+
+using std::string;
+using namespace Platform;
+using namespace Math;
+using namespace PhysFS;
 
 // =====================================================
 //	class PixmapIo
