@@ -156,7 +156,10 @@ public:
 	virtual Vec2i getMaxSize() const {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
 
 	virtual bool isVisible() const		{ return visible; }
-	virtual bool isInside(const Vec2i &pos) const { return pos >= screenPos && pos < screenPos + size; }
+	virtual bool isInside(const Vec2i &pos) const {
+		return pos.southEastOf(screenPos) && pos.northWestOf(screenPos + size);
+	}
+
 	virtual bool isEnabled() const	{ return enabled;	}
 
 	// set

@@ -78,11 +78,15 @@ public:
 		return x != v.x || y != v.y;
 	}
 
-	bool operator< ( const Vec2<T> &v ) const {
+	bool operator<(const Vec2<T> &v) const {
+		return x < v.x || (x == v.x && y < v.y);
+	}
+
+	bool northWestOf(const Vec2<T> &v) const {
 		return x < v.x && y < v.y;
 	}
 
-	bool operator>= ( const Vec2<T> &v ) const {
+	bool southEastOf(const Vec2<T> &v) const {
 		return x >= v.x && y >= v.y;
 	}
 
