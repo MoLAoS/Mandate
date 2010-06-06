@@ -13,8 +13,7 @@
 #define _SHARED_SOUND_SOUNDFILELOADER_H_
 
 #include <string>
-//#include <fstream>
-#include <istream>
+#include "FileOps.hpp"
 
 #include "types.h"
 #include "factory.h"
@@ -63,8 +62,7 @@ private:
 	uint32 dataOffset;
 	uint32 dataSize;
 	uint32 bytesPerSecond;
-	//ifstream f;
-	istream *f;
+	FileOps *f;
 
 public:
 	virtual void open(const string &path, SoundInfo *soundInfo);
