@@ -72,6 +72,8 @@ namespace Conversion {
 	string toStr(fixed f);
 	string toStr(float f);
 
+	string trimStr(string str);
+
 	// ugly (i.e., fat) catch-all
 	template<typename T> string toStr(T v) {
 		stringstream str;

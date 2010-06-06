@@ -15,7 +15,6 @@
 #define STRCONV(x) x
 #endif
 
-
 using std::string;
 using std::vector;
 
@@ -58,6 +57,8 @@ public:
 
 	int getFieldGroupCount() const			{return fieldGroups.size();}
 	FieldGroup *getFieldGroup(int i) const	{return fieldGroups[i];}
+
+	bool intBool;
 };
 
 // ===============================
@@ -106,19 +107,19 @@ public:
 	const string &getValue() const			{return value;}
 	const string &getDefaultValue() const	{return defaultValue;}
 
-	void setName(const string &name)					{this->name= name;}
-	void setVariableName(const string &variableName)	{this->variableName= variableName;}
-	void setDescription(const string &description)		{this->description= description;}
-	void setValue(const string &value)					{this->value= value;}
-	void setDefaultValue(const string &defaultValue)	{this->defaultValue= defaultValue;}
+	void setName(const string &name)					{this->name = name;}
+	void setVariableName(const string &variableName)	{this->variableName = variableName;}
+	void setDescription(const string &description)		{this->description = description;}
+	void setValue(const string &value)					{this->value = value;}
+	void setDefaultValue(const string &defaultValue)	{this->defaultValue = defaultValue;}
 
 	virtual void loadSpecific(const XmlNode *fieldNode){};
 	virtual string getInfo() const;
 
-	virtual void createControl(wxWindow *parent, wxSizer *sizer)= 0;
-	virtual void updateValue()= 0;
-	virtual void updateControl()= 0;
-	virtual bool isValueValid(const string &value)= 0;
+	virtual void createControl(wxWindow *parent, wxSizer *sizer) = 0;
+	virtual void updateValue() = 0;
+	virtual void updateControl() = 0;
+	virtual bool isValueValid(const string &value) = 0;
 };
 
 // ===============================
@@ -128,6 +129,8 @@ public:
 class BoolField: public Field{
 private:
 	wxCheckBox *checkBox;
+
+	bool intBool;
 
 public:
 	virtual void createControl(wxWindow *parent, wxSizer *sizer);

@@ -1,0 +1,209 @@
+<?xml version="1.0" standalone="yes"?>
+<configuration>
+	<title value="Glest"/>
+	<file-name value="glestadv.ini"/>
+  <bool-mode value="bool"/>
+	<icon value="true" path="robotics.ico"/>
+	<field-groups>
+		<field-group name="Video">
+			<field type="Int">
+				<name value="Screen width"/>
+				<variable-name value="DisplayWidth"/>
+				<description value=""/>
+				<default value="1024"/>
+			</field>
+			<field type="Int">
+				<name value="Screen height"/>
+				<variable-name value="DisplayHeight"/>
+				<description value=""/>
+				<default value="768"/>
+			</field>
+			<field type="Int">
+				<name value="Refresh frequency"/>
+				<variable-name value="DisplayRefreshFrequency"/>
+				<description value=""/>
+				<default value="75"/>
+			</field>
+			<field type="Bool">
+				<name value="Windowed"/>
+				<variable-name value="DisplayWindowed"/>
+				<description value="Execute in a window"/>
+				<default value="false"/>
+			</field>
+			<field type="Enum">
+				<name value="Depth bits"/>
+				<variable-name value="RenderDepthBits"/>
+				<description value="Z buffer precision"/>
+				<default value="32"/>
+				<enums>
+					<enum value="16"/>
+					<enum value="24"/>
+					<enum value="32"/>
+				</enums>
+			</field>
+			<field type="Enum">
+				<name value="Filter"/>
+				<variable-name value="RenderFilter"/>
+				<description value=""/>
+				<default value="Bilinear"/>
+				<enums>
+					<enum value="Bilinear"/>
+					<enum value="Trilinear"/>
+				</enums>
+			</field>
+			<field type="Bool">
+				<name value="3D Textures"/>
+				<variable-name value="RenderTextures3D"/>
+				<description value="If enabled, 3D textures are used for water animation, disable on old cards"/>
+				<default value="true"/>
+			</field>
+			<field type="Enum">
+				<name value="Shadows"/>
+				<variable-name value="RenderShadows"/>
+				<description value="Projected shadows are fast but only create units and object shadows and in some cases are incorrect.  Shadow mapping creates everything over everything shadows, but are slow and look aliased in some cards"/>
+				<default value="Projected"/>
+				<enums>
+					<enum value="Disabled"/>
+					<enum value="Projected"/>
+					<enum value="ShadowMapping"/>
+				</enums>
+			</field>
+			<field type="Enum">
+				<name value="Shadow texture size"/>
+				<variable-name value="RenderShadowTextureSize"/>
+				<description value="Size of the texture used for projected shadows and shadow mapping, bigger sizes result in less pixelized shadows but are much slower"/>
+				<default value="512"/>
+				<enums>
+					<enum value="256"/>
+					<enum value="512"/>			
+				</enums>
+			</field>
+			<field type="FloatRange">
+				<name value="Shadow alpha"/>
+				<variable-name value="RenderShadowAlpha"/>
+				<description value="Shadow transparency"/>
+				<default value="0.2"/>
+				<min value="0"/>
+				<max value="1"/>
+			</field>
+			<field type="IntRange">
+				<name value="Shadow frame skip"/>
+				<variable-name value="RenderShadowFrameSkip"/>
+				<description value=""/>
+				<default value="2"/>
+				<min value="0"/>
+				<max value="5"/>
+			</field>
+		</field-group>
+		
+		<field-group name="Misc">
+			<field type="Bool">
+				<name value="Focus arrows"/>
+				<variable-name value="UiFocusArrows"/>
+				<description value="If enabled, arrows are displayed under units when they are issued a command"/>
+				<default value="true"/>
+			</field>
+			<field type="FloatRange">
+				<name value="Day time"/>
+				<variable-name value="GsDayTime"/>
+				<description value="Day/Night cycle duration, in seconds"/>
+				<default value="1000"/>
+				<min value="100"/>
+				<max value="2000"/>
+			</field>
+			<field type="String">
+				<name value="Menu font"/>
+				<variable-name value="RenderFontMenu"/>
+				<description value=""/>
+				<default value="Verdana"/>
+			</field>
+			<field type="String">
+				<name value="Console font"/>
+				<variable-name value="RenderFontConsole"/>
+				<description value=""/>
+				<default value="Verdana"/>
+			</field>
+			<field type="String">
+				<name value="Display font"/>
+				<variable-name value="RenderFontDisplay"/>
+				<description value=""/>
+				<default value="Verdana"/>
+			</field>
+			<field type="String">
+				<name value="Language"/>
+				<variable-name value="UiLocale"/>
+				<description value=""/>
+				<default value="en"/>
+			</field>
+			<field type="Bool">
+				<name value="Fog of war smoothing"/>
+				<variable-name value="RenderFogOfWarSmoothing"/>
+				<description value=""/>
+				<default value="true"/>
+			</field>
+			<field type="IntRange">
+				<name value="Fog of war sm. frame skip"/>
+				<variable-name value="RenderFogOfWarSmoothingFrameSkip"/>
+				<description value=""/>
+				<default value="3"/>
+				<min value="0"/>
+				<max value="5"/>
+			</field>
+		</field-group>
+
+		<field-group name="Sound">
+			<field type="IntRange">
+				<name value="FX volume"/>
+				<variable-name value="SoundVolumeFx"/>
+				<description value=""/>
+				<default value="80"/>
+				<min value="0"/>
+				<max value="100"/>
+			</field>
+			<field type="IntRange">
+				<name value="Music volume"/>
+				<variable-name value="SoundVolumeMusic"/>
+				<description value=""/>
+				<default value="90"/>
+				<min value="0"/>
+				<max value="100"/>
+			</field>
+			<field type="IntRange">
+				<name value="Ambient volume"/>
+				<variable-name value="SoundVolumeAmbient"/>
+				<description value=""/>
+				<default value="80"/>
+				<min value="0"/>
+				<max value="100"/>
+			</field>
+		</field-group>
+		<field-group name="Advanced">
+			<field type="Bool">
+				<name value="Debug mode"/>
+				<variable-name value="MiscDebugMode"/>
+				<description value=""/>
+				<default value="false"/>
+			</field>
+			<field type="IntRange">
+				<name value="AI log"/>
+				<variable-name value="MiscAiLog"/>
+				<description value=""/>
+				<default value="0"/>
+				<min value="0"/>
+				<max value="4"/>
+			</field>
+			<field type="Bool">
+				<name value="AI log console redirection"/>
+				<variable-name value="MiscAiRedir"/>
+				<description value=""/>
+				<default value="false"/>
+			</field>
+			<field type="Bool">
+				<name value="First time"/>
+				<variable-name value="MiscFirstTime"/>
+				<description value=""/>
+				<default value="true"/>
+			</field>
+		</field-group>	
+	</field-groups>
+</configuration>

@@ -8,126 +8,122 @@
 #include <wx/bitmap.h>
 #include <wx/icon.h>
 
-
 using namespace std;
 
-namespace Configurator{
+namespace Configurator {
 
 // ===============================================
 // 	class MainWindow
 // ===============================================
 
+const int MainWindow::margin = 10;
+const int MainWindow::panelMargin = 20;
+const int MainWindow::gridMarginHorizontal = 30;
 
-const int MainWindow::margin= 10;
-const int MainWindow::panelMargin= 20;
-const int MainWindow::gridMarginHorizontal= 30;
-
-MainWindow::MainWindow(){
-	
+MainWindow::MainWindow() {
 	SetExtraStyle(wxFRAME_EX_CONTEXTHELP);
-	
+
 	configuration.load("configuration.xml");
 
-	Create(NULL, -1, wxT(""), wxDefaultPosition,  wxDefaultSize, wxCAPTION | wxSYSTEM_MENU);
+	Create(NULL, -1, wxT(""), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE | wxMINIMIZE_BOX | wxMAXIMIZE_BOX);
 
 	SetTitle(STRCONV(("Configurator - " + configuration.getTitle() + " - Editing " + configuration.getFileName()).c_str()));
 
-	if(configuration.getIcon()){
+	if (configuration.getIcon()) {
 		wxIcon icon;
 		icon.LoadFile(STRCONV(configuration.getIconPath().c_str()), wxBITMAP_TYPE_ICO);
 		SetIcon(icon);
 	}
 
-	notebook= new wxNotebook(this, -1);
+	notebook = new wxNotebook(this, -1);
 
-	wxSizer *mainSizer= new wxBoxSizer(wxVERTICAL);
-	wxSizer *topSizer= new wxBoxSizer(wxHORIZONTAL);
-	topSizer->Add(notebook, 0, wxALL, 0);
-	mainSizer->Add(topSizer, 0, wxALL, margin);
+	wxSizer *mainSizer = new wxBoxSizer(wxVERTICAL);
+	mainSizer->Add(notebook, 1, wxGROW | wxALL, margin);
 
-	for(int i=0; i<configuration.getFieldGroupCount(); ++i){
-
+	for (int fgI = 0; fgI < configuration.getFieldGroupCount(); ++fgI) {
 		//create page
-		FieldGroup *fg= configuration.getFieldGroup(i);
-		wxPanel *panel= new wxPanel(notebook, -1);
+		FieldGroup *fg = configuration.getFieldGroup(fgI);
+		wxPanel *panel = new wxPanel(notebook, -1);
 		notebook->AddPage(panel, STRCONV(fg->getName().c_str()));
 
 		//sizers
-		wxSizer *gridSizer= new wxFlexGridSizer(2, margin, gridMarginHorizontal);
-		wxSizer *panelSizer= new wxBoxSizer(wxVERTICAL);
-		panelSizer->Add(gridSizer, 0, wxALL, panelMargin);
+		wxFlexGridSizer *gridSizer = new wxFlexGridSizer(2, margin, gridMarginHorizontal);
+		wxSizer *panelSizer = new wxBoxSizer(wxVERTICAL);
+		panelSizer->Add(gridSizer, 0, wxGROW | wxALL | wxALIGN_CENTER, panelMargin);
 		panel->SetSizer(panelSizer);
-			
-		for(int j=0; j<fg->getFieldCount(); ++j){
-			Field *f= fg->getField(j);
-			FieldText *staticText= new FieldText(panel, this, f);
+		panelSizer->Fit(panel);
+
+		for (int fI = 0; fI < fg->getFieldCount(); ++fI) {
+			Field *f = fg->getField(fI);
+			FieldText *staticText = new FieldText(panel, this, f);
 			staticText->SetAutoLayout(true);
 			gridSizer->Add(staticText);
+			gridSizer->AddGrowableCol((fI * 2) + 1);
 			f->createControl(panel, gridSizer);
 			idMap.insert(IdPair(staticText->GetId(), staticText));
 		}
 	}
 
 	//buttons
-	wxSizer *bottomSizer= new wxBoxSizer(wxHORIZONTAL);
-	
-	buttonOk= new wxButton(this, biOk, wxT("OK"));
-	buttonApply= new wxButton(this, biApply, wxT("Apply"));
-	buttonCancel= new wxButton(this, biCancel, wxT("Cancel"));
-	buttonDefault= new wxButton(this, biDefault, wxT("Default"));
-	bottomSizer->Add(buttonOk, 0, wxALL, margin);
-	bottomSizer->Add(buttonApply, 0, wxRIGHT | wxDOWN | wxUP, margin);
-	bottomSizer->Add(buttonCancel, 0, wxRIGHT | wxDOWN | wxUP, margin);
-	bottomSizer->Add(buttonDefault, 0, wxRIGHT | wxDOWN | wxUP, margin);
+	wxSizer *bottomSizer = new wxBoxSizer(wxHORIZONTAL);
 
-	infoText= new wxTextCtrl(this, -1, wxT("Info text."), wxDefaultPosition,
+	buttonOk = new wxButton(this, biOk, wxT("OK"));
+	buttonApply = new wxButton(this, biApply, wxT("Apply"));
+	buttonCancel = new wxButton(this, biCancel, wxT("Cancel"));
+	buttonDefault = new wxButton(this, biDefault, wxT("Default"));
+	bottomSizer->Add(buttonOk, 0, wxALL, margin);
+	bottomSizer->Add(buttonApply, 0, wxRIGHT | wxBOTTOM | wxTOP, margin);
+	bottomSizer->Add(buttonCancel, 0, wxRIGHT | wxBOTTOM | wxTOP, margin);
+	bottomSizer->Add(buttonDefault, 0, wxRIGHT | wxBOTTOM | wxTOP, margin);
+
+	infoText = new wxTextCtrl(this, -1, wxT("Info text."), wxDefaultPosition,
 							wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
-	infoText->SetSize(infoText->GetSize().x, 2*infoText->GetSize().y/3);
 	infoText->SetBackgroundColour(buttonOk->GetBackgroundColour());
-	
-	mainSizer->Add(infoText, 1, wxGROW | wxALL | wxALIGN_CENTER, margin);
+
+	mainSizer->Add(infoText, 0, wxGROW | wxALL, margin);
 	mainSizer->Add(bottomSizer, 0, wxALIGN_CENTER);
 
 	SetBackgroundColour(buttonOk->GetBackgroundColour());
-	
+
 	SetSizerAndFit(mainSizer);
-	
+
 	Refresh();
 }
 
-void MainWindow::onButtonOk(wxCommandEvent &event){
+void MainWindow::onButtonOk(wxCommandEvent &event) {
 	configuration.save();
 	Close();
 }
 
-void MainWindow::onButtonApply(wxCommandEvent &event){
+void MainWindow::onButtonApply(wxCommandEvent &event) {
 	configuration.save();
 }
 
-void MainWindow::onButtonCancel(wxCommandEvent &event){
+void MainWindow::onButtonCancel(wxCommandEvent &event) {
 	Close();
 }
 
-void MainWindow::onButtonDefault(wxCommandEvent &event){
-	for(int i=0; i<configuration.getFieldGroupCount(); ++i){
-		FieldGroup *fg= configuration.getFieldGroup(i);
-		for(int j=0; j<fg->getFieldCount(); ++j){
-			Field *f= fg->getField(j);
+void MainWindow::onButtonDefault(wxCommandEvent &event) {
+	for (int fgI = 0; fgI < configuration.getFieldGroupCount(); ++fgI) {
+		FieldGroup *fg = configuration.getFieldGroup(fgI);
+
+		for (int fI = 0; fI < fg->getFieldCount(); ++fI) {
+			Field *f = fg->getField(fI);
 			f->setValue(f->getDefaultValue());
 			f->updateControl();
 		}
 	}
 }
 
-void MainWindow::onClose(wxCloseEvent &event){
+void MainWindow::onClose(wxCloseEvent &event) {
 	Destroy();
 }
 
-void MainWindow::onMouseDown(wxMouseEvent &event){
-	setInfoText("");
+void MainWindow::onMouseDown(wxMouseEvent &event) {
+	setInfoText("Info text.");
 }
 
-void MainWindow::setInfoText(const string &str){
+void MainWindow::setInfoText(const string &str) {
 	infoText->SetValue(STRCONV(str.c_str()));
 }
 
@@ -146,16 +142,18 @@ END_EVENT_TABLE()
 
 FieldText::FieldText(wxWindow *parent, MainWindow *mainWindow, const Field *field):
 	wxStaticText(parent, -1, STRCONV(field->getName().c_str()))
-{
-	this->mainWindow= mainWindow;
-	this->field= field;
+ {
+	this->mainWindow = mainWindow;
+	this->field = field;
 }
 
-void FieldText::onHelp(wxHelpEvent &event){
-	string str= field->getInfo()+".";
-	if(!field->getDescription().empty()){
-		str+= "\n"+field->getDescription()+".";
+void FieldText::onHelp(wxHelpEvent &event) {
+	string str = field->getInfo() + ".";
+
+	if (!field->getDescription().empty()) {
+		str += "\n" + field->getDescription() + ".";
 	}
+
 	mainWindow->setInfoText(str);
 }
 
@@ -168,29 +166,31 @@ END_EVENT_TABLE()
 // 	class App
 // ===============================================
 
-bool App::OnInit(){
-	try{
-		mainWindow= new MainWindow();
+bool App::OnInit() {
+	try {
+		mainWindow = new MainWindow();
 		mainWindow->Show();
 	}
-	catch(const exception &e){
+	catch (const exception &e) {
 		wxMessageDialog(NULL, STRCONV(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 		return 0;
 	}
+
 	return true;
 }
 
-int App::MainLoop(){
-	try{
+int App::MainLoop() {
+	try {
 		return wxApp::MainLoop();
 	}
-	catch(const exception &e){
+	catch (const exception &e) {
 		wxMessageDialog(NULL, STRCONV(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
+
 		return 0;
 	}
 }
 
-int App::OnExit(){
+int App::OnExit() {
 	return 0;
 }
 

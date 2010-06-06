@@ -101,6 +101,7 @@ bool strToBool(const string &s) {
 	if (s == str_one || s == str_true) {
 		return true;
 	}
+
 	throwException(str_bool, s, 1);
 	return false;
 }
@@ -134,7 +135,7 @@ fixed strToFixed(const string &s) {
 	string fPart = s.substr(n + 1);
 	fixed res = strToInt(iPart);
 	fixed denom = 10;
-	for (int i=0; i < fPart.size() - 1; ++i) {
+	for (int i = 0; i < fPart.size() - 1; ++i) {
 		denom *= 10;
 	}
 	fixed numer = strToInt(fPart);
@@ -212,6 +213,21 @@ string toStr(float f) {
 	char str[24];
 	sprintf(str, "%.2f", f);
 	return str;
+}
+
+string trimStr(string str)
+{
+	string trimmedStr = str;
+
+	while (!trimmedStr.empty() && isspace(trimmedStr[0])) {
+		trimmedStr.erase(0, 1);
+	}
+
+	while (!trimmedStr.empty() && isspace(trimmedStr[trimmedStr.size() - 1])) {
+		trimmedStr.erase(trimmedStr.size() - 1);
+	}
+
+	return trimmedStr;
 }
 
 }
