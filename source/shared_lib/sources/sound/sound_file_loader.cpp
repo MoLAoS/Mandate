@@ -126,7 +126,7 @@ void WavSoundFileLoader::close(){
 }
 
 void WavSoundFileLoader::restart() {
-	f->seek(0, SEEK_SET);
+	f->seek(dataOffset, SEEK_SET);
 }
 
 // =======================================
