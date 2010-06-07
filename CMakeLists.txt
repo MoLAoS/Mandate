@@ -65,7 +65,7 @@ find_package(wxWidgets COMPONENTS base core gl)
 find_package(Freetype REQUIRED)
 
 # PhysFS
-option(GAE_USE_PHYSFS "Enable PhysicsFS support")
+option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
 if(GAE_USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
 endif(GAE_USE_PHYSFS)
@@ -184,8 +184,8 @@ else(WIN32)
 endif(WIN32)
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;/data/;/build/;.*~;/docs/html/;/mk/")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/data/;/build/;.*~;/docs/html/")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)
 

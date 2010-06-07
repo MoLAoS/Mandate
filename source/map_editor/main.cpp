@@ -23,6 +23,7 @@
 
 using std::exception;
 using namespace Shared::Util;
+using Shared::PhysFS::FSFactory;
 
 namespace MapEditor {
 

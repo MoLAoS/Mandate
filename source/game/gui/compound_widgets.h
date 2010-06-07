@@ -10,6 +10,7 @@
 #define _GLEST_COMPOUND_WIDGETS_INCLUDED_
 
 #include "widgets.h"
+#include "game_constants.h"
 
 namespace Glest { namespace Widgets {
 using Sim::ControlType;

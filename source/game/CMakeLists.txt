@@ -18,7 +18,8 @@ set(folders
 	sound
 	world
 )
-source_group("" FILES ${game_srcs})
+#file(GLOB game_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
+#source_group("" FILES ${game_srcs})  # . now in folders
 foreach(folder ${folders})
 	if(WIN32)
 		file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h" "${folder}/*.rc")
@@ -36,7 +37,7 @@ endforeach(folder)
 # ugly, but otherwise not the updated stuff
 set(game_incs ${game_incs} PARENT_SCOPE)
 
-include_directories(${glestshared_incs} ${game_incs})
+include_directories(${game_incs} ${glestshared_incs}) # order important because different pch.h in both
 
 add_executable(glestadv ${game_srcs})
 target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
