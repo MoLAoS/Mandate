@@ -116,7 +116,9 @@ void CoreData::load() {
 	// FreeType fonts...
 	freeTypeFont = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", 24);
 	advancedEngineFont = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", 36);
-	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/zekton_free.ttf", 14);
+	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", 18);
+	
+//	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/zekton_free.ttf", 14);
 
 	//sounds
     clickSoundA.load(dir + "/menu/sound/click_a.wav");

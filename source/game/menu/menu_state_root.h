@@ -48,12 +48,12 @@ public:
 	void update();
 
 	// Event handler
-	void onButtonClick(Widgets::ButtonPtr);
-	void onTextChanged(Widgets::TextBoxPtr);
-	void onListBoxChanged(Widgets::ListBasePtr);
+	void onButtonClick(Widgets::Button::Ptr);
+	void onTextChanged(Widgets::TextBox::Ptr);
+	void onListBoxChanged(Widgets::ListBase::Ptr);
 
-	void onComboBoxExpanded(Widgets::ComboBoxPtr);
-	void onComboBoxCollapsed(Widgets::ComboBoxPtr);
+	void onComboBoxExpanded(Widgets::DropList::Ptr);
+	void onComboBoxCollapsed(Widgets::DropList::Ptr);
 
 	MenuStates getIndex() const { return MenuStates::ROOT; }
 };

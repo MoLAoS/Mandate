@@ -23,7 +23,7 @@ using namespace Glest::Global;
 
 namespace Glest { namespace Widgets {
 
-MouseWidget::MouseWidget(WidgetPtr widget) {
+MouseWidget::MouseWidget(Widget::Ptr widget) {
 	me = widget;
 	WidgetWindow::getInstance()->registerMouseWidget(me, this);
 }
@@ -32,7 +32,7 @@ MouseWidget::~MouseWidget() {
 	WidgetWindow::getInstance()->unregisterMouseWidget(me);
 }
 
-KeyboardWidget::KeyboardWidget(WidgetPtr widget) {
+KeyboardWidget::KeyboardWidget(Widget::Ptr widget) {
 	me = widget;
 	WidgetWindow::getInstance()->registerKeyboardWidget(me, this);
 }
@@ -45,7 +45,7 @@ KeyboardWidget::~KeyboardWidget() {
 // class Widget
 // =====================================================
 
-Widget::Widget(ContainerPtr parent)
+Widget::Widget(Container::Ptr parent)
 		: parent(parent)
 		, pos(0)
 		, screenPos(0)
@@ -60,10 +60,10 @@ Widget::Widget(ContainerPtr parent)
 		, padding(0) {
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
-	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr)" );
+	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 }
 
-Widget::Widget(ContainerPtr parent, Vec2i pos, Vec2i size)
+Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: parent(parent)
 		, pos(pos)
 		, size(size)
@@ -75,13 +75,13 @@ Widget::Widget(ContainerPtr parent, Vec2i pos, Vec2i size)
 		, borderSize(0)
 		, bgAlpha(0.2f)
 		, padding(0) {
-	WIDGET_LOG( __FUNCTION__ << "(ContainerPtr, Vec2i, Vec2i)" );
+	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	screenPos = parent->getScreenPos() + pos;
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
 }
 
-Widget::Widget(WindowPtr window)
+Widget::Widget(WidgetWindow::Ptr window)
 		: parent(0)
 		, pos(0)
 		, screenPos(0)
@@ -94,7 +94,7 @@ Widget::Widget(WindowPtr window)
 		, borderSize(0)
 		, bgAlpha(0.2f)
 		, padding(0) {
-	WIDGET_LOG( __FUNCTION__ << "(WindowPtr)" );
+	WIDGET_LOG( __FUNCTION__ << "(WidgetWindow::Ptr)" );
 	rootWindow = window;
 }
 
@@ -106,7 +106,7 @@ Widget::~Widget() {
 	}
 }
 
-WidgetPtr Widget::getWidgetAt(const Vec2i &pos) {
+Widget::Ptr Widget::getWidgetAt(const Vec2i &pos) {
 	WIDGET_LOG( __FUNCTION__ );
 	assert(isInside(pos));
 	return this;
@@ -510,12 +510,12 @@ Container::~Container() {
 	clear();
 }
 
-void Container::addChild(WidgetPtr child) {
+void Container::addChild(Widget::Ptr child) {
 	WIDGET_LOG( __FUNCTION__ );
 	children.push_back(child);
 }
 
-void Container::remChild(WidgetPtr child) {
+void Container::remChild(Widget::Ptr child) {
 	WIDGET_LOG( __FUNCTION__ );
 	WidgetList::iterator it = std::find(children.begin(), children.end(), child);
 	if (it != children.end()) {
@@ -543,11 +543,11 @@ void Container::setFade(float v) {
 	}
 }
 
-WidgetPtr Container::getWidgetAt(const Vec2i &pos) {
+Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
 	WIDGET_LOG( __FUNCTION__ );
 	assert(isInside(pos));
 	foreach (WidgetList, it, children) {
-		WidgetPtr widget = *it;
+		Widget::Ptr widget = *it;
 		if (widget->isVisible() && widget->isInside(pos)) {
 			return widget->getWidgetAt(pos);
 		}
@@ -557,7 +557,7 @@ WidgetPtr Container::getWidgetAt(const Vec2i &pos) {
 
 void Container::render() {
 	foreach (WidgetList, it, children) {
-		WidgetPtr widget = *it;
+		Widget::Ptr widget = *it;
 		if (widget->isVisible()) {
 			widget->render();
 		}

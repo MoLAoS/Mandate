@@ -31,10 +31,6 @@ class Widget;
 class Container;
 class WidgetWindow;
 
-typedef Widget* WidgetPtr;
-typedef Container* ContainerPtr;
-typedef WidgetWindow* WindowPtr;
-
 using std::string;
 
 #ifndef WIDGET_LOGGING
@@ -109,10 +105,13 @@ struct WidgetStyle {
 
 class Widget {
 	friend class WidgetWindow;
+public:
+	typedef Widget* Ptr;
+
 private:
 	//int id;
-	ContainerPtr parent;
-	WindowPtr rootWindow;
+	Container* parent;
+	WidgetWindow* rootWindow;
 	Vec2i	pos, 
 			screenPos, 
 			size;
@@ -128,20 +127,20 @@ private:
 	int padding;
 
 protected:
-	Widget(WindowPtr window);
+	Widget(WidgetWindow* window);
 	Widget() {} // dangerous perhaps, but needed to avoid virtual inheritence problems (double inits)
 
 public:
-	Widget(ContainerPtr parent);
-	Widget(ContainerPtr parent, Vec2i pos, Vec2i size);
+	Widget(Container* parent);
+	Widget(Container* parent, Vec2i pos, Vec2i size);
 	virtual ~Widget();
 
 	// de-virtualise ??
 	// get/is
 	virtual Vec2i getScreenPos() const { return screenPos; }
-	virtual ContainerPtr getParent() const { return parent; }
-	virtual WindowPtr getRootWindow() const { return rootWindow; }
-	virtual WidgetPtr getWidgetAt(const Vec2i &pos);
+	virtual Container* getParent() const { return parent; }
+	virtual WidgetWindow* getRootWindow() const { return rootWindow; }
+	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
 
 	virtual Vec2i getSize() const		{ return size;		 }
 	virtual int   getWidth() const		{ return size.x;	 }
@@ -170,7 +169,7 @@ public:
 	virtual void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
 	virtual void setVisible(bool vis) { visible = vis; }
 	virtual void setFade(float v) { fade = v; }
-	virtual void setParent(ContainerPtr p) { parent = p; }
+	virtual void setParent(Container* p) { parent = p; }
 
 	void setBorderSize(int sz) { borderSize = sz; }
 	void setBorderStyle(BorderStyle style) { borderStyle = style; }
@@ -205,17 +204,20 @@ public:
 	virtual string descPosDim();
 	virtual string desc() = 0;
 
-	sigslot::signal<WidgetPtr> Destroyed;
+	sigslot::signal<Widget::Ptr> Destroyed;
 
 };
 
 class MouseWidget {
 	friend class WidgetWindow;
+public:
+	typedef MouseWidget* Ptr;
+
 private:
-	WidgetPtr me;
+	Widget::Ptr me;
 
 public:
-	MouseWidget(WidgetPtr widget);
+	MouseWidget(Widget::Ptr widget);
 	~MouseWidget();
 
 private:
@@ -229,15 +231,16 @@ private:
 	virtual void EW_mouseOut() {}
 };
 
-typedef MouseWidget* MouseWidgetPtr;
-
 class KeyboardWidget {
 	friend class WidgetWindow;
+public:
+	typedef KeyboardWidget* Ptr;
+
 private:
-	WidgetPtr me;
+	Widget::Ptr me;
 
 public:
-	KeyboardWidget(WidgetPtr widget);
+	KeyboardWidget(Widget::Ptr widget);
 	~KeyboardWidget();
 
 private:
@@ -247,8 +250,6 @@ private:
 
 	virtual void EW_lostKeyboardFocus() {}
 };
-
-typedef KeyboardWidget* KeyboardWidgetPtr;
 
 struct ImageRenderInfo {
 	bool hasOffset, hasCustomSize;
@@ -343,7 +344,8 @@ public:
 
 class Container : public virtual Widget {
 public:
-	typedef vector<WidgetPtr> WidgetList;
+	typedef Container* Ptr;
+	typedef vector<Widget::Ptr> WidgetList;
 
 protected:
 	WidgetList children;
@@ -352,10 +354,10 @@ public:
 	Container();
 	virtual ~Container();
 
-	virtual WidgetPtr getWidgetAt(const Vec2i &pos);
+	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
 
-	virtual void addChild(WidgetPtr child);
-	virtual void remChild(WidgetPtr child);
+	virtual void addChild(Widget::Ptr child);
+	virtual void remChild(Widget::Ptr child);
 	virtual void clear();
 	virtual void setEnabled(bool v);
 	virtual void setFade(float v);
@@ -367,6 +369,9 @@ public:
 // =====================================================
 
 class Layer : public Container {
+public:
+	typedef Layer* Ptr;
+
 private:
 	const string name;
 	const int id;
@@ -390,8 +395,6 @@ public:
 
 	virtual string desc() { return string("[Layer '") + name + "':" + descPosDim() + "]"; }
 };
-
-typedef Layer* LayerPtr;
 
 }}
 

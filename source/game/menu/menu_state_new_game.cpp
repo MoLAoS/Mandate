@@ -45,6 +45,16 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
 	
+	if (program.getCmdArgs().isTest("widgets")) { 
+		int psx = (Metrics::getInstance().getScreenW() - 600) / 2;
+		Vec2i p(psx, 650), s(600, 40);
+		psOne = new Widgets::PlayerSlotWidget(&program, p, s);
+		
+		psOne->setNameText("Player #1");
+		psOne->setSelectedControl(ControlType::HUMAN);
+		psOne->setSelectedTeam(1);
+	}
+
 	vector<string> results;
 	vector<string> teamItems;
 	vector<string> controlItems;
@@ -83,6 +93,12 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	listBoxMap.setSelectedItemIndex(match);
 	labelMap.init(200, 320);
 	labelMapInfo.init(200, 260, 200, 40);
+
+	if (program.getCmdArgs().isTest("widgets")) { 
+		Widgets::DropList::Ptr cbMaps = new Widgets::DropList(&program, Vec2i(150, 150), Vec2i(200, 30));
+		cbMaps->addItems(results);
+		cbMaps->setDropBoxHeight(140);
+	}
 
 	//tileset listBox
 	match = 0;
@@ -140,7 +156,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	for (ControlType i = enum_cast<ControlType>(0); i < ControlType::COUNT; ++i) {
 		controlItems.push_back(lang.get(ControlTypeNames[i]));
 	}
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		teamItems.push_back(intToStr(i));
 	}
 	reloadFactions();
@@ -157,7 +173,6 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		listBoxControls[i].setItems(controlItems);
 		labelNetStatus[i].setText("");
 	}
-
 	labelMap.setText(lang.get("Map"));
 	labelTileset.setText(lang.get("Tileset"));
 	labelTechTree.setText(lang.get("TechTree"));
@@ -229,7 +244,8 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
 			if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
 				theSimInterface->asServerInterface()->removeSlot(i);
 			}
-		}		
+		}
+		program.clear();
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
 	} else if (buttonPlayNow.mouseClick(x, y)) {
 		if (hasUnconnectedSlots()) {
@@ -237,6 +253,7 @@ void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
 			msgBox = new GraphicMessageBox();
 			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
 		} else {
+			program.clear();
 			config.save();
 			soundRenderer.playFx(coreData.getClickSoundC());
 			if (!hasNetworkSlots()) {
@@ -463,6 +480,10 @@ void MenuStateNewGame::reloadFactions() {
 		listBoxFactions[i].setItems(results);
 		listBoxFactions[i].pushBackItem(Lang::getInstance().get("Random"));
 		listBoxFactions[i].setSelectedItemIndex(i % results.size());
+	}
+	if (program.getCmdArgs().isTest("widgets")) { 
+		psOne->setFactionItems(results);
+		psOne->setSelectedFaction(0);
 	}
 }
 

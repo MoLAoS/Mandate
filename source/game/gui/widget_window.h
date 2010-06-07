@@ -26,19 +26,22 @@ namespace Glest { namespace Widgets {
 // =====================================================
 /** top level container */
 class WidgetWindow : public Container, public WindowGl {
+public:
+	typedef WidgetWindow* Ptr;
+
 private:
-	typedef std::stack<WidgetPtr>	WidgetStack;
-	typedef std::list<LayerPtr>		LayerList;
+	typedef std::stack<Widget::Ptr>	WidgetStack;
+	typedef std::list<Layer::Ptr>		LayerList;
 	typedef std::set<string>		NameSet;
 
-	typedef std::map<WidgetPtr, MouseWidgetPtr>		MouseWidgetMap;
-	typedef std::map<WidgetPtr, KeyboardWidgetPtr>	KeyboardWidgetMap;
+	typedef std::map<Widget::Ptr, MouseWidget::Ptr>		MouseWidgetMap;
+	typedef std::map<Widget::Ptr, KeyboardWidget::Ptr>	KeyboardWidgetMap;
 
 protected:
 	static WidgetWindow *instance;
 
 private:
-	WidgetPtr	keyboardFocused,
+	Widget::Ptr	keyboardFocused,
 				floatingWidget,
 				mouseDownWidgets[MouseButton::COUNT],
 				lastMouseDownWidget;
@@ -49,7 +52,7 @@ private:
 	MouseWidgetMap mouseWidgetMap;
 	KeyboardWidgetMap keyboardWidgetMap;
 
-	LayerPtr	rootLayer;
+	Layer::Ptr	rootLayer;
 	LayerList	layers;
 	NameSet		layerNames;
 	int			layerIdCounter;
@@ -59,17 +62,17 @@ private:
 	float anim;
 	Vec2i mousePos;
 
-	WidgetPtr findCommonAncestor(WidgetPtr widget1, WidgetPtr widget2);
-	void unwindMouseOverStack(WidgetPtr newTop);
+	Widget::Ptr findCommonAncestor(Widget::Ptr widget1, Widget::Ptr widget2);
+	void unwindMouseOverStack(Widget::Ptr newTop);
 	void unwindMouseOverStack();
-	void doMouseInto(WidgetPtr widget);
-	void changeActiveLayer(std::list<LayerPtr>::iterator &it);
+	void doMouseInto(Widget::Ptr widget);
+	void changeActiveLayer(std::list<Layer::Ptr>::iterator &it);
 
 	LayerList::iterator findLayer(int id);
 	LayerList::iterator findLayer(const string &name);
 
-	MouseWidgetPtr asMouseWidget(WidgetPtr);
-	KeyboardWidgetPtr asKeyboardWidget(WidgetPtr);
+	MouseWidget::Ptr asMouseWidget(Widget::Ptr);
+	KeyboardWidget::Ptr asKeyboardWidget(Widget::Ptr);
 
 public:
 	WidgetWindow();
@@ -83,24 +86,24 @@ public:
 
 	void setActiveLayer(const string &layer);
 	void setActiveLayer(const int layer);
-	LayerPtr addNewLayer(const string &name, bool activate = true);
-	LayerPtr getLayer(const string &layer);
-	LayerPtr getLayer(const int layer);
+	Layer::Ptr addNewLayer(const string &name, bool activate = true);
+	Layer::Ptr getLayer(const string &layer);
+	Layer::Ptr getLayer(const int layer);
 
-	void registerUpdate(WidgetPtr widget);
-	void unregisterUpdate(WidgetPtr widget);
+	void registerUpdate(Widget::Ptr widget);
+	void unregisterUpdate(Widget::Ptr widget);
 
-	void setFloatingWidget(WidgetPtr floater);
-	void removeFloatingWidget(WidgetPtr floater);
+	void setFloatingWidget(Widget::Ptr floater);
+	void removeFloatingWidget(Widget::Ptr floater);
 
-	void aquireKeyboardFocus(WidgetPtr widget);
-	void releaseKeyboardFocus(WidgetPtr widget);
+	void aquireKeyboardFocus(Widget::Ptr widget);
+	void releaseKeyboardFocus(Widget::Ptr widget);
 
-	void registerMouseWidget(WidgetPtr asWidget, MouseWidgetPtr asMouseWidget);
-	void unregisterMouseWidget(WidgetPtr widget);
+	void registerMouseWidget(Widget::Ptr asWidget, MouseWidget::Ptr asMouseWidget);
+	void unregisterMouseWidget(Widget::Ptr widget);
 
-	void registerKeyboardWidget(WidgetPtr asWidget, KeyboardWidgetPtr asKeyboardWidget);
-	void unregisterKeyboardWidget(WidgetPtr widget);
+	void registerKeyboardWidget(Widget::Ptr asWidget, KeyboardWidget::Ptr asKeyboardWidget);
+	void unregisterKeyboardWidget(Widget::Ptr widget);
 
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);
@@ -130,9 +133,9 @@ public: // Glest::Widgets::Widget virtual events
 		return ft ? textRendererFT : textRendererBM;
 	}
 
-	virtual WidgetPtr getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
-	virtual void addChild(WidgetPtr child) { layers.front()->addChild(child); child->setParent(layers.front()); }
-	virtual void remChild(WidgetPtr child) { layers.front()->remChild(child); child->setParent(layers.front()); }
+	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
+	virtual void addChild(Widget::Ptr child) { layers.front()->addChild(child); child->setParent(layers.front()); }
+	virtual void remChild(Widget::Ptr child) { layers.front()->remChild(child); child->setParent(layers.front()); }
 
 	virtual void render();
 

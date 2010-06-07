@@ -15,6 +15,8 @@
 #include "menu_state_start_game_base.h"
 #include "sim_interface.h"
 
+#include "compound_widgets.h"
+
 namespace Glest { namespace Menu {
 
 // ===============================
@@ -23,6 +25,8 @@ namespace Glest { namespace Menu {
 
 class MenuStateNewGame: public MenuStateStartGameBase {
 private:
+	Widgets::PlayerSlotWidget::Ptr psOne;
+
 	//GraphicButton buttonReturn;
 	//GraphicButton buttonPlayNow;
 	GraphicLabel labelNetwork;
@@ -54,6 +58,7 @@ private:
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
+
 
 	void mouseClick(int x, int y, MouseButton mouseButton);
 	void mouseMove(int x, int y, const MouseState &mouseState);

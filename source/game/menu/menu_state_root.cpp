@@ -126,8 +126,8 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		
 		listBox->addItems(items);
 		listBox->SelectionChanged.connect(this, &MenuStateRoot::onListBoxChanged);
-		listBox->setSize(Vec2i(listBox->getWidth(), listBox->getPrefHeight()));
-		//listBox->addItem("Crash-acado");		
+		
+		Vec2i lbSize(listBox->getWidth(), listBox->getPrefHeight());
 
 		items.clear();
 		items.push_back("Pear");
@@ -135,9 +135,12 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		items.push_back("Orange");
 		items.push_back("Banana");
 
-		// testing ComboBox
+		listBox->addItems(items);
+		listBox->setSize(lbSize);
+
+		// testing DropList
 		yPos = listBox->getScreenPos().y + listBox->getHeight() + 20;
-		Widgets::ComboBox *cmbBox = new Widgets::ComboBox(&program, Vec2i(10, yPos), Vec2i(200, h + 6));
+		Widgets::DropList *cmbBox = new Widgets::DropList(&program, Vec2i(10, yPos), Vec2i(200, h + 6));
 		cmbBox->addItems(items);
 		cmbBox->setSelected(0);
 
@@ -172,11 +175,11 @@ void MenuStateRoot::onListBoxChanged(Widgets::ListBase *lst) {
 	cout << "SelectionChanged: " << lst->getSelectedItem()->getText() << endl;
 }
 
-void MenuStateRoot::onComboBoxExpanded(Widgets::ComboBoxPtr cb) {
+void MenuStateRoot::onComboBoxExpanded(Widgets::DropList::Ptr cb) {
 	program.getLayer("root")->setFade(0.5f);
 }
 
-void MenuStateRoot::onComboBoxCollapsed(Widgets::ComboBoxPtr cb) {
+void MenuStateRoot::onComboBoxCollapsed(Widgets::DropList::Ptr cb) {
 	program.getLayer("root")->setFade(1.f);
 }
 

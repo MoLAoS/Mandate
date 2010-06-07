@@ -111,7 +111,7 @@ public:
 	MenuState(Program &program, MainMenu *mainMenu/*, const string &stateName*/)
 			: program(program), mainMenu(mainMenu) {}
 
-	virtual ~MenuState(){}
+	virtual ~MenuState() {}
 	virtual void mouseClick(int x, int y, MouseButton mouseButton) {}
 	virtual void mouseMove(int x, int y, const MouseState &mouseState) {}
 	virtual void render() {}
