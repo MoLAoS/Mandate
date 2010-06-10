@@ -97,7 +97,15 @@ PixmapIoTga::~PixmapIoTga(){
 
 void PixmapIoTga::openRead(const string &path){
 	file = FSFactory::getInstance()->getFileOps();
-	file->openRead(path.c_str());
+	try {
+		file->openRead(path.c_str());
+	} catch (runtime_error &e) {
+		// FIXME: path should really be in game but this is the common load function, maybe have a
+		// member for default/missing texture path that's set from game.
+		printf("%s\n", e.what());
+		// will then throw exception again if even this texture is missing
+		file->openRead("data/core/misc_textures/default.tga");
+	}
 
 	//read header
 	TargaFileHeader fileHeader;
