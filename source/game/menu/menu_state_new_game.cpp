@@ -29,6 +29,10 @@
 #include "leak_dumper.h"
 #include "sim_interface.h"
 
+// debug
+#include "xml_parser.h"
+using namespace Shared::Xml;
+
 using Glest::Sim::SimulationInterface;
 using namespace Glest::Net;
 
@@ -41,27 +45,40 @@ using namespace Shared::Util;
 // =====================================================
 
 MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots)
-		: MenuStateStartGameBase(program, mainMenu/*, "new-game"*/) {
+		: MenuState/*StartGameBase*/(program, mainMenu)
+		, targetTransition(MenuTransition::INVALID)
+		, humanSlot(0)
+		, fade(0.f)
+		, fadeIn(true)
+		, fadeOut(false)
+		, transition(false) {
+	const Metrics &metrics = Metrics::getInstance();
+	const CoreData &coreData = CoreData::getInstance();
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
-	
-	if (program.getCmdArgs().isTest("widgets")) { 
-		int psx = (Metrics::getInstance().getScreenW() - 600) / 2;
-		Vec2i p(psx, 650), s(600, 40);
-		psOne = new Widgets::PlayerSlotWidget(&program, p, s);
-		
-		psOne->setNameText("Player #1");
-		psOne->setSelectedControl(ControlType::HUMAN);
-		psOne->setSelectedTeam(1);
-	}
+
+	Font *font = coreData.getfreeTypeMenuFont();
+
+	// initialize network interface
+	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
+	program.getSimulationInterface()->changeRole(GameRole::SERVER);
+	GameSettings &gs = theSimInterface->getGameSettings();
 
 	vector<string> results;
-	vector<string> teamItems;
-	vector<string> controlItems;
 
-	//create
-	buttonReturn.init(350, 170, 125);
-	buttonPlayNow.init(525, 170, 125);
+	// create
+	int gap = (metrics.getScreenW() - 300) / 3;
+	int x = gap, w = 150, y = 50, h = 30;
+	btnReturn = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	btnReturn->setTextParams(lang.get("Return"), Vec4f(1.f), font, true);
+	btnReturn->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
+
+	x += w + gap;
+	btnPlayNow = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	btnPlayNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font, true);
+	btnPlayNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
+
+	gap = (metrics.getScreenW() - 600) / 4;
 
 	//map listBox
 	findAll("maps/*.gbm", results, false);
@@ -88,17 +105,23 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxMap.init(200, 290, 150);
-	listBoxMap.setItems(results);
-	listBoxMap.setSelectedItemIndex(match);
-	labelMap.init(200, 320);
-	labelMapInfo.init(200, 260, 200, 40);
+	x = gap, w = 200, y = 170, h = 30;
+	dlMaps = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
+	dlMaps->addItems(results);
+	dlMaps->setDropBoxHeight(140);
+	dlMaps->setSelected(match);
+	dlMaps->SelectionChanged.connect(this, &MenuStateNewGame::onChangeMap);
 
-	if (program.getCmdArgs().isTest("widgets")) { 
-		Widgets::DropList::Ptr cbMaps = new Widgets::DropList(&program, Vec2i(150, 150), Vec2i(200, 30));
-		cbMaps->addItems(results);
-		cbMaps->setDropBoxHeight(140);
-	}
+	stMap = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
+	stMap->setTextParams(lang.get("Map"), Vec4f(1.f), font, true);
+	
+	gs.setDescription(results[match]);
+	gs.setMapPath(string("maps/") + mapFiles[match] + ".gbm");
+
+	mapInfo.load("maps/" + mapFiles[match] + ".gbm");
+
+	stMapInfo = new StaticText(&program, Vec2i(x, y - (h + 10)), Vec2i(w, h * 2));
+	stMapInfo->setTextParams(mapInfo.desc, Vec4f(1.f), font, true);
 
 	//tileset listBox
 	match = 0;
@@ -113,10 +136,15 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxTileset.init(400, 290, 150);
-	listBoxTileset.setItems(results);
-	listBoxTileset.setSelectedItemIndex(match);
-	labelTileset.init(400, 320);
+	x = gap * 2 + w;
+	dlTileset = new DropList(&program, Vec2i(x, y), Vec2i(w, 30));
+	dlTileset->addItems(results);
+	dlTileset->setDropBoxHeight(140);
+	dlTileset->setSelected(match);
+	dlTileset->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
+
+	stTileset = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
+	stTileset->setTextParams(lang.get("Tileset"), Vec4f(1.f), font, true);
 
 	//tech Tree listBox
 	match = 0;
@@ -131,384 +159,299 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxTechTree.init(600, 290, 150);
-	listBoxTechTree.setItems(results);
-	listBoxTechTree.setSelectedItemIndex(match);
-	labelTechTree.init(600, 320);
+	x = gap * 3 + w * 2;
+	dlTechtree = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
+	dlTechtree->addItems(results);
+	dlTechtree->setDropBoxHeight(140);
+	dlTechtree->setSelected(match);
+	dlTechtree->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
-	//list boxes
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		labelPlayers[i].init(200, 500 - i*30);
-		listBoxControls[i].init(300, 500 - i*30);
-		listBoxFactions[i].init(500, 500 - i*30);
-		listBoxTeams[i].init(700, 500 - i*30, 60);
-		labelNetStatus[i].init(800, 500 - i*30, 60);
+	stTechtree = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
+	stTechtree->setTextParams(lang.get("Techtree"), Vec4f(1.f), font, true);
+
+	gs.setTilesetPath(string("tilesets/") + tilesetFiles[match]);
+
+	gap = (metrics.getScreenW() - 400) / 3, x = gap, y += 70, h = 30;
+	int cbw = 75, stw = 200;
+	
+	cbRandomLocs = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
+	cout << "CheckBox pref size = " << cbRandomLocs->getPrefSize() << endl;
+	
+	stRandomLocs = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
+	stRandomLocs->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font, true);
+
+	x = gap * 2 + stw;
+	cbFogOfWar = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
+	cbFogOfWar->setChecked(true);
+
+	stFogOfWar = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
+	stFogOfWar->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font, true);
+
+	y += 75, h = 35, x = (metrics.getScreenW() - 700) / 2, w = 700;
+
+	int sty = metrics.getScreenH() - 70;
+	stControl = new StaticText(&program, Vec2i(x + 150, sty), Vec2i(200, 30));
+	stFaction = new StaticText(&program, Vec2i(x + 390, sty), Vec2i(200, 30));
+	stTeam = new StaticText(&program, Vec2i(x + 620, sty), Vec2i(80, 30));
+
+	stControl->setTextParams("Control", Vec4f(1.f), font, true);
+	stFaction->setTextParams("Faction", Vec4f(1.f), font, true);
+	stTeam->setTextParams("Team", Vec4f(1.f), font, true);
+
+	int numPlayer = GameConstants::maxPlayers;
+
+	int vSpace = (sty - y);
+	int vgap = (vSpace - (numPlayer * 35)) / (numPlayer + 1);
+
+	for (int i = 0; i < numPlayer; ++i) {
+		y = sty - (vgap * (i + 1)) - (h * (i + 1));
+		psWidgets[i] = new PlayerSlotWidget(&program, Vec2i(x, y), Vec2i(w, h));
+		psWidgets[i]->setNameText(string("Player #") + intToStr(i+1));
 	}
 
-	labelControl.init(300, 550, GraphicListBox::defW, GraphicListBox::defH, true);
-	labelFaction.init(500, 550, GraphicListBox::defW, GraphicListBox::defH, true);
-	labelTeam.init(700, 550, 60, GraphicListBox::defH, true);
-
-	//texts
-	buttonReturn.setText(lang.get("Return"));
-	buttonPlayNow.setText(lang.get("PlayNow"));
-
-	for (ControlType i = enum_cast<ControlType>(0); i < ControlType::COUNT; ++i) {
-		controlItems.push_back(lang.get(ControlTypeNames[i]));
-	}
-	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
-		teamItems.push_back(intToStr(i));
-	}
 	reloadFactions();
 
-	findAll("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()] + "/factions/*.", results);
-	if (results.size() == 0) {
-		throw runtime_error("There are no factions for this tech tree");
-	}
-
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		labelPlayers[i].setText(lang.get("Player") + " " + intToStr(i));
-		listBoxTeams[i].setItems(teamItems);
-		listBoxTeams[i].setSelectedItemIndex(i);
-		listBoxControls[i].setItems(controlItems);
-		labelNetStatus[i].setText("");
-	}
-	labelMap.setText(lang.get("Map"));
-	labelTileset.setText(lang.get("Tileset"));
-	labelTechTree.setText(lang.get("TechTree"));
-	labelControl.setText(lang.get("Control"));
-	labelFaction.setText(lang.get("Faction"));
-	labelTeam.setText(lang.get("Team"));
-
-	loadMapInfo("maps/" + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm", &mapInfo);
-
-	labelMapInfo.setText(mapInfo.desc);
-
-	// initialize network interface
-	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
-	program.getSimulationInterface()->changeRole(GameRole::SERVER);
-
-	labelNetwork.init(50, 50);
-	try {
-		labelNetwork.setText(lang.get("Address") + ": " + theSimInterface->asServerInterface()->getIp() 
-			+ ":" + intToStr(GameConstants::serverPort));
-	} catch (const exception &e) {
-		labelNetwork.setText(lang.get("Address") + ": ? " + e.what());
-	}
-
-	//init controllers
-	listBoxControls[0].setSelectedItemIndex(ControlType::HUMAN);
+	// init controllers
+	psWidgets[0]->setSelectedControl(ControlType::HUMAN);
+	psWidgets[0]->setSelectedTeam(0);
+	int i = 1;
 	if (openNetworkSlots) {
-		for (int i = 1; i < mapInfo.players; ++i) {
-			listBoxControls[i].setSelectedItemIndex(ControlType::NETWORK);
+		for (; i < mapInfo.players; ++i) {
+			psWidgets[i]->setSelectedControl(ControlType::NETWORK);
+			psWidgets[i]->setSelectedTeam(i);
 		}
 	} else {
-		listBoxControls[1].setSelectedItemIndex(ControlType::CPU);
+		psWidgets[i]->setSelectedControl(ControlType::CPU);
+		psWidgets[i]->setSelectedTeam(1);
+		++i;
+	}
+	for ( ; i < GameConstants::maxPlayers; ++i) {
+		psWidgets[i]->setSelectedControl(ControlType::CLOSED);
 	}
 	updateControlers();
 	updateNetworkSlots();
 
-	labelRandomize.init(200, 500 - GameConstants::maxPlayers * 30);
-	labelRandomize.setText(lang.get("RandomizeLocations"));
-	listBoxRandomize.init(237, 470 - GameConstants::maxPlayers * 30, 75);
-	listBoxRandomize.pushBackItem(lang.get("No"));
-	listBoxRandomize.pushBackItem(lang.get("Yes"));
-	listBoxRandomize.setSelectedItemIndex(config.getUiLastRandStartLocs() ? 1 : 0);
-
-	labelFogOfWar.init(400, 500 - GameConstants::maxPlayers * 30);
-	labelFogOfWar.setText(lang.get("FogOfWar"));
-	listBoxFogOfWar.init(437, 470 - GameConstants::maxPlayers * 30, 75);
-	listBoxFogOfWar.pushBackItem(lang.get("No"));
-	listBoxFogOfWar.pushBackItem(lang.get("Yes"));
-	listBoxFogOfWar.setSelectedItemIndex(1);
-
+	for (int i = 0; i < numPlayer; ++i) {
+		psWidgets[i]->ControlChanged.connect(this, &MenuStateNewGame::onChangeControl);
+		psWidgets[i]->FactionChanged.connect(this, &MenuStateNewGame::onChangeFaction);
+		psWidgets[i]->TeamChanged.connect(this, &MenuStateNewGame::onChangeTeam);
+	}
 	//msgBox = NULL;
+	program.setFade(0.f);
 }
 
-
-void MenuStateNewGame::mouseClick(int x, int y, MouseButton mouseButton) {
-	Config &config = Config::getInstance();
-	CoreData &coreData = CoreData::getInstance();
-	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-
-	if (msgBox) {
-		if (msgBox->mouseClick(x, y)) {
-			soundRenderer.playFx(coreData.getClickSoundC());
-			delete msgBox;
-			msgBox = NULL;
+void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
+	GameSettings &gs = theSimInterface->getGameSettings();
+	int ndx = -1;
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (psw == psWidgets[i]) {
+			ndx = i;
+			break;
 		}
-	} else if (buttonReturn.mouseClick(x, y)) {
-		soundRenderer.playFx(coreData.getClickSoundA());
-		config.save();
-		for (int i=0; i < GameConstants::maxPlayers; ++i) {
-			if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
-				theSimInterface->asServerInterface()->removeSlot(i);
-			}
-		}
-		program.clear();
-		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-	} else if (buttonPlayNow.mouseClick(x, y)) {
-		if (hasUnconnectedSlots()) {
-			buttonPlayNow.mouseMove(1, 1);
-			msgBox = new GraphicMessageBox();
-			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
-		} else {
-			program.clear();
-			config.save();
-			soundRenderer.playFx(coreData.getClickSoundC());
-			if (!hasNetworkSlots()) {
-				program.getSimulationInterface()->changeRole(GameRole::LOCAL);
-				loadGameSettings();
-				program.setState(new GameState(program));
-			} else {
-				loadGameSettings();
-				theSimInterface->asServerInterface()->doLaunchBroadcast();
-				program.setState(new GameState(program));
-			}
-		}
-	} else if (listBoxMap.mouseClick(x, y)) {
-		string mapBaseName = mapFiles[listBoxMap.getSelectedItemIndex()];
-		string mapFile = "maps/" + mapBaseName + ".gbm";
-
-		loadMapInfo(mapFile, &mapInfo);
-		labelMapInfo.setText(mapInfo.desc);
-		updateControlers();
-		config.setUiLastMap(mapBaseName);
-	} else if (listBoxTileset.mouseClick(x, y)) {
-		config.setUiLastTileset(tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-	} else if (listBoxTechTree.mouseClick(x, y)) {
-		reloadFactions();
-		config.setUiLastTechTree(techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
-	} else if (listBoxRandomize.mouseClick(x, y)) {
-		config.setUiLastRandStartLocs(listBoxRandomize.getSelectedItemIndex());
-	} else if (listBoxFogOfWar.mouseClick(x, y)) {
-		//config.setGsFogOfWarEnabled(listBoxFogOfWar.getSelectedItemIndex());
+	}
+	assert(ndx != -1);
+	if (psw->getSelectedFactionIndex() >= 0) {
+		gs.setFactionTypeName(ndx, factionFiles[psw->getSelectedFactionIndex()]);
 	} else {
-		for (int i = 0; i < mapInfo.players; ++i) {
-			//ensure thet only 1 human player is present
-			if (listBoxControls[i].mouseClick(x, y)) {
-
-				//look for human players
-				int humanIndex1 = -1;
-				int humanIndex2 = -1;
-				for (int j = 0; j < GameConstants::maxPlayers; ++j) {
-					ControlType ct = enum_cast<ControlType>(listBoxControls[j].getSelectedItemIndex());
-					if (ct == ControlType::HUMAN) {
-						if (humanIndex1 == -1) {
-							humanIndex1 = j;
-						} else {
-							humanIndex2 = j;
-						}
-					}
-				}
-
-				//no human
-				if (humanIndex1 == -1 && humanIndex2 == -1) {
-					listBoxControls[i].setSelectedItemIndex(ControlType::HUMAN);
-				}
-
-				//2 humans
-				if (humanIndex1 != -1 && humanIndex2 != -1) {
-					listBoxControls[humanIndex1==i? humanIndex2: humanIndex1].setSelectedItemIndex(ControlType::CLOSED);
-				}
-				updateNetworkSlots();
-			} else if (listBoxFactions[i].mouseClick(x, y)) {
-			} else if (listBoxTeams[i].mouseClick(x, y)) {
-			}
-		}
+		gs.setFactionTypeName(ndx, "");
 	}
 }
 
-void MenuStateNewGame::mouseMove(int x, int y, const MouseState &ms) {
-
-	if (msgBox != NULL) {
-		msgBox->mouseMove(x, y);
-		return;
+void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
+	static bool noRecurse = false;
+	if (noRecurse) {
+		return; // control was changed progmatically
 	}
-
-	buttonReturn.mouseMove(x, y);
-	buttonPlayNow.mouseMove(x, y);
-
+	noRecurse = true;
+	// check for humanity
+	bool humanInPrevSlot = psWidgets[humanSlot]->getControlType() == ControlType::HUMAN;
+	int newHumanSlot = -1;
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		listBoxControls[i].mouseMove(x, y);
-		listBoxFactions[i].mouseMove(x, y);
-		listBoxTeams[i].mouseMove(x, y);
-	}
-	listBoxMap.mouseMove(x, y);
-	listBoxTileset.mouseMove(x, y);
-	listBoxTechTree.mouseMove(x, y);
-	listBoxRandomize.mouseMove(x, y);
-	listBoxFogOfWar.mouseMove(x, y);
-}
-
-void MenuStateNewGame::render() {
-
-	Renderer &renderer = Renderer::getInstance();
-
-	int i;
-
-	renderer.renderButton(&buttonReturn);
-	renderer.renderButton(&buttonPlayNow);
-
-	for (i = 0; i < GameConstants::maxPlayers; ++i) {
-		renderer.renderLabel(&labelPlayers[i]);
-		renderer.renderListBox(&listBoxControls[i]);
-		if (listBoxControls[i].getSelectedItemIndex() != ControlType::CLOSED) {
-			renderer.renderListBox(&listBoxFactions[i]);
-			renderer.renderListBox(&listBoxTeams[i]);
-			renderer.renderLabel(&labelNetStatus[i]);
+		if (i == humanSlot) continue;
+		if (psWidgets[i]->getControlType() == ControlType::HUMAN) {
+			newHumanSlot = i;
+			break;
 		}
 	}
-	renderer.renderLabel(&labelNetwork);
-	renderer.renderLabel(&labelMap);
-	renderer.renderLabel(&labelTileset);
-	renderer.renderLabel(&labelTechTree);
-	renderer.renderLabel(&labelControl);
-	renderer.renderLabel(&labelFaction);
-	renderer.renderLabel(&labelTeam);
-	renderer.renderLabel(&labelMapInfo);
-	renderer.renderLabel(&labelRandomize);
-	renderer.renderLabel(&labelFogOfWar);
-
-	renderer.renderListBox(&listBoxMap);
-	renderer.renderListBox(&listBoxTileset);
-	renderer.renderListBox(&listBoxTechTree);
-	renderer.renderListBox(&listBoxRandomize);
-	renderer.renderListBox(&listBoxFogOfWar);
-
-	if (msgBox != NULL) {
-		renderer.renderMessageBox(msgBox);
+	if (humanInPrevSlot) {
+		if (newHumanSlot != -1) { // human moved slots
+			psWidgets[humanSlot]->setSelectedControl(ControlType::CLOSED);
+			humanSlot = newHumanSlot;
+		}
+	} else {
+		if (newHumanSlot == -1) { // human went away
+			psWidgets[0]->setSelectedControl(ControlType::HUMAN);
+			humanSlot = 0;
+		}
 	}
+	updateControlers();
+	updateNetworkSlots();
+	noRecurse = false;
+}
+
+void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
+	GameSettings &gs = theSimInterface->getGameSettings();
+	int ndx = -1;
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (psw == psWidgets[i]) {
+			ndx = i;
+			break;
+		}
+	}
+	assert(ndx != -1);
+	gs.setTeam(ndx, psw->getSelectedTeamIndex());
+}
+
+void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
+	string mapBaseName = mapFiles[dlMaps->getSelectedIndex()];
+	string mapFile = "maps/" + mapBaseName + ".gbm";
+
+	mapInfo.load(mapFile);
+	stMapInfo->setText(mapInfo.desc);
+	updateControlers();
+	theConfig.setUiLastMap(mapBaseName);
+
+	GameSettings &gs = theSimInterface->getGameSettings();
+	gs.setDescription(formatString(mapBaseName));
+	gs.setMapPath(mapFile);
+}
+
+void MenuStateNewGame::onChangeTileset(ListBase::Ptr) {
+	theConfig.setUiLastTileset(tilesetFiles[dlTileset->getSelectedIndex()]);
+	GameSettings &gs = theSimInterface->getGameSettings();
+	gs.setTilesetPath(string("tilesets/") + tilesetFiles[dlTileset->getSelectedIndex()]);
+}
+
+void MenuStateNewGame::onChangeTechtree(ListBase::Ptr) {
+	reloadFactions();
+	theConfig.setUiLastTechTree(techTreeFiles[dlTechtree->getSelectedIndex()]);
+}
+
+void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
+	if (btn == btnReturn) {
+		targetTransition = MenuTransition::RETURN;
+		mainMenu->setCameraTarget(MenuStates::ROOT);
+		theSoundRenderer.playFx(CoreData::getInstance().getClickSoundA());
+	} else {
+		targetTransition = MenuTransition::PLAY;
+		//GameSettings &gs = theSimInterface->getGameSettings();
+		//Shared::Xml::XmlTree xmlTree("game-settings");
+		//gs.save(xmlTree.getRootNode());
+		//xmlTree.save("game-settings.xml");
+		theSoundRenderer.playFx(CoreData::getInstance().getClickSoundC());
+	}
+	fadeIn = false;
+	fadeOut = true;
 }
 
 void MenuStateNewGame::update() {
-	if (Config::getInstance().getMiscAutoTest()) {
-		AutoTest::getInstance().updateNewGame(program, mainMenu);
-	}
-
-	ServerInterface* serverInterface = theSimInterface->asServerInterface();
-	Lang& lang = Lang::getInstance();
-
-	for (int i = 0; i < mapInfo.players; ++i) {
-		if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
-			ConnectionSlot* connectionSlot = serverInterface->getSlot(i);
-
-			assert(connectionSlot != NULL);
-
-			if (connectionSlot->isConnected()) {
-				labelNetStatus[i].setText(connectionSlot->getDescription());
-			} else {
-				labelNetStatus[i].setText(lang.get("NotConnected"));
-			}
-		} else {
-			labelNetStatus[i].setText("");
+	if (fadeIn) {
+		fade += 0.05;
+		if (fade > 1.f) {
+			fade = 1.f;
+			fadeIn = false;
 		}
-	}
-}
-
-void MenuStateNewGame::loadGameSettings() {
-	Random rand;
-	rand.init(Shared::Platform::Chrono::getCurMillis());
-
-	int factionCount = 0;
-
-	GameSettings &gs = theSimInterface->getGameSettings();
-	gs.clear();
-	GameSettings *gameSettings = &gs;
-
-	gameSettings->setDescription(formatString(mapFiles[listBoxMap.getSelectedItemIndex()]));
-	gameSettings->setMapPath(string("maps/") + mapFiles[listBoxMap.getSelectedItemIndex()] + ".gbm");
-	gameSettings->setTilesetPath(string("tilesets/") + tilesetFiles[listBoxTileset.getSelectedItemIndex()]);
-	gameSettings->setTechPath(string("techs/") + techTreeFiles[listBoxTechTree.getSelectedItemIndex()]);
-	gameSettings->setScenarioPath("");
-	gameSettings->setDefaultVictoryConditions(true);
-	gameSettings->setDefaultResources(true);
-	gameSettings->setDefaultUnits(true);
-	gameSettings->setFogOfWar(listBoxFogOfWar.getSelectedItemIndex() == 1);
-
-	for (int i = 0; i < mapInfo.players; ++i) {
-		ControlType ct = enum_cast<ControlType>(listBoxControls[i].getSelectedItemIndex());
-		if (ct != ControlType::CLOSED) {
-			if (ct == ControlType::HUMAN) {
-				gameSettings->setThisFactionIndex(factionCount);
-			}
-			if (ct == ControlType::CPU_ULTRA) {
-				gameSettings->setResourceMultiplier(factionCount, 3.f);
-			}
-			else if (ct == ControlType::CPU_MEGA) {
-				gameSettings->setResourceMultiplier(factionCount, 4.f);
-			}
-			else {
-				gameSettings->setResourceMultiplier(factionCount, 1.f);
-			}
-			gameSettings->setFactionControl(factionCount, ct);
-			gameSettings->setTeam(factionCount, listBoxTeams[i].getSelectedItemIndex());
-			gameSettings->setStartLocationIndex(factionCount, i);
-			if (listBoxFactions[i].getSelectedItemIndex() >= factionFiles.size()) {
-				gameSettings->setFactionTypeName(factionCount, factionFiles[rand.randRange(0, factionFiles.size() - 1)]);
-			} else {
-				gameSettings->setFactionTypeName(factionCount, factionFiles[listBoxFactions[i].getSelectedItemIndex()]);
-			}
-			factionCount++;
+		program.setFade(fade);
+	} else if (fadeOut) {
+		fade -= 0.05;
+		if (fade < 0.f) {
+			fade = 0.f;
+			transition = true;
+			fadeOut = false;
 		}
+		program.setFade(fade);
 	}
-	gameSettings->setFactionCount(factionCount);
-
-	if (listBoxRandomize.getSelectedItemIndex()) {
-		gameSettings->randomizeLocs(mapInfo.players);
+	if (transition) {
+		if (targetTransition == MenuTransition::RETURN) {
+			program.clear();
+			mainMenu->setState(new MenuStateRoot(program, mainMenu));
+		} else if (targetTransition == MenuTransition::PLAY) {
+			if (hasUnconnectedSlots()) {
+				msgBox = new GraphicMessageBox();
+				msgBox->init(theLang.get("WaitingForConnections"), theLang.get("Ok"));
+				transition = false;
+				///@todo MessageBox Widget, onDissmiss reset fadeIn
+			} else {
+				theSimInterface->getGameSettings().compact();
+				theConfig.save();
+				if (!hasNetworkSlots()) {
+					GameSettings gs = theSimInterface->getGameSettings();
+					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
+					theSimInterface->getGameSettings() = gs;
+					program.clear();
+					program.setState(new GameState(program));
+				} else {
+					theSimInterface->asServerInterface()->doLaunchBroadcast();
+					program.clear();
+					program.setState(new GameState(program));
+				}
+			}
+		}
 	}
 }
 
 // ============ PRIVATE ===========================
 
-
 void MenuStateNewGame::reloadFactions() {
-
+	GameSettings &gs = theSimInterface->getGameSettings();
 	vector<string> results;
-
-	findAll("techs/" + techTreeFiles[listBoxTechTree.getSelectedItemIndex()] + "/factions/*.", results);
-
-	if (results.size() == 0) {
-		throw runtime_error("There is no factions for this tech tree");
+	findAll("techs/" + techTreeFiles[dlTechtree->getSelectedIndex()] + "/factions/*.", results);
+	if (results.empty()) {
+		throw runtime_error("There are no factions for this tech tree");
 	}
+	gs.setTechPath(string("techs/") + techTreeFiles[dlTechtree->getSelectedIndex()]);
+
 	factionFiles.clear();
 	factionFiles = results;
 	for (int i = 0; i < results.size(); ++i) {
 		results[i] = formatString(results[i]);
 	}
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		listBoxFactions[i].setItems(results);
-		listBoxFactions[i].pushBackItem(Lang::getInstance().get("Random"));
-		listBoxFactions[i].setSelectedItemIndex(i % results.size());
-	}
-	if (program.getCmdArgs().isTest("widgets")) { 
-		psOne->setFactionItems(results);
-		psOne->setSelectedFaction(0);
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		psWidgets[i]->setFactionItems(results);
+		if (psWidgets[i]->getControlType() != ControlType::CLOSED) {
+			psWidgets[i]->setSelectedFaction(i % results.size());
+		}
 	}
 }
 
 void MenuStateNewGame::updateControlers() {
-	bool humanPlayer = false;
-
-	for (int i = 0; i < mapInfo.players; ++i) {
-		if (listBoxControls[i].getSelectedItemIndex() == ControlType::HUMAN) {
-			humanPlayer = true;
-		}
+	GameSettings &gs = theSimInterface->getGameSettings();
+	if (psWidgets[humanSlot]->getControlType() != ControlType::HUMAN) {
+		psWidgets[0]->setSelectedControl(ControlType::HUMAN);
+		humanSlot = 0;
 	}
-
-	if (!humanPlayer) {
-		listBoxControls[0].setSelectedItemIndex(ControlType::HUMAN);
-	}
-
 	for (int i = mapInfo.players; i < GameConstants::maxPlayers; ++i) {
-		listBoxControls[i].setSelectedItemIndex(ControlType::CLOSED);
+		psWidgets[i]->setSelectedControl(ControlType::CLOSED);
+	}
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		gs.setFactionControl(i, psWidgets[i]->getControlType());
+		if (psWidgets[i]->getControlType() == ControlType::CLOSED) {
+			gs.setFactionTypeName(i, "");
+			gs.setTeam(i, -1);
+			gs.setStartLocationIndex(i, -1);
+			psWidgets[i]->setSelectedFaction(-1);
+			psWidgets[i]->setSelectedTeam(-1);
+		} else {
+			if (psWidgets[i]->getSelectedFactionIndex() == -1) {
+				psWidgets[i]->setSelectedFaction(i % factionFiles.size());
+			}
+			gs.setFactionTypeName(i, factionFiles[psWidgets[i]->getSelectedFactionIndex()]);
+			if (psWidgets[i]->getSelectedTeamIndex() == -1) {
+				psWidgets[i]->setSelectedTeam(i);
+			}
+			gs.setTeam(i, psWidgets[i]->getSelectedTeamIndex());
+			gs.setStartLocationIndex(i, i);
+		}
+		if (psWidgets[i]->getControlType() == ControlType::HUMAN) {
+			gs.setThisFactionIndex(i);
+		}
 	}
 }
 
 bool MenuStateNewGame::hasUnconnectedSlots() {
 	ServerInterface* serverInterface = theSimInterface->asServerInterface();
 	for (int i = 0; i < mapInfo.players; ++i) {
-		if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
+		if (psWidgets[i]->getControlType() == ControlType::NETWORK) {
 			if (!serverInterface->getSlot(i)->isConnected()) {
 				return true;
 			}
@@ -519,7 +462,7 @@ bool MenuStateNewGame::hasUnconnectedSlots() {
 
 bool MenuStateNewGame::hasNetworkSlots() {
 	for (int i = 0; i < mapInfo.players; ++i) {
-		if (listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
+		if (psWidgets[i]->getControlType() == ControlType::NETWORK) {
 			return true;
 		}
 	}
@@ -529,10 +472,12 @@ bool MenuStateNewGame::hasNetworkSlots() {
 void MenuStateNewGame::updateNetworkSlots() {
 	ServerInterface* serverInterface = theSimInterface->asServerInterface();
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		if (serverInterface->getSlot(i) == NULL && listBoxControls[i].getSelectedItemIndex() == ControlType::NETWORK) {
+		if (serverInterface->getSlot(i) == NULL
+		&& psWidgets[i]->getControlType() == ControlType::NETWORK) {
 			serverInterface->addSlot(i);
 		}
-		if (serverInterface->getSlot(i) != NULL && listBoxControls[i].getSelectedItemIndex() != ControlType::NETWORK) {
+		if (serverInterface->getSlot(i) != NULL
+		&& psWidgets[i]->getControlType() != ControlType::NETWORK) {
 			serverInterface->removeSlot(i);
 		}
 	}

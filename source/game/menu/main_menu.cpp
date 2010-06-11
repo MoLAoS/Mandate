@@ -26,6 +26,7 @@
 #include "network_message.h"
 #include "socket.h"
 #include "menu_state_root.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
@@ -34,8 +35,43 @@ using namespace Shared::Platform;
 using namespace Shared::Util;
 using namespace Shared::Graphics;
 using namespace Shared::Xml;
+using namespace Shared::PhysFS;
 
 namespace Glest { namespace Menu {
+
+// =====================================================
+//  class MapInfo
+// =====================================================
+
+void MapInfo::load(string file) {
+	struct MapFileHeader {
+		int32 version;
+		int32 maxPlayers;
+		int32 width;
+		int32 height;
+		int32 altFactor;
+		int32 waterLevel;
+		int8 title[128];
+	};
+
+	Lang &lang = Lang::getInstance();
+
+	try {
+		FileOps *f = FSFactory::getInstance()->getFileOps();
+		f->openRead(file.c_str());
+
+		MapFileHeader header;
+		f->read(&header, sizeof(MapFileHeader), 1);
+		size.x = header.width;
+		size.y = header.height;
+		players = header.maxPlayers;
+		desc = lang.get("MaxPlayers") + ": " + intToStr(players) + "\n";
+		desc += lang.get("Size") + ": " + intToStr(size.x) + " x " + intToStr(size.y);
+		delete f;
+	} catch (exception e) {
+		throw runtime_error("Error loading map file: " + file + '\n' + e.what());
+	}
+}
 
 // =====================================================
 //  class MainMenu

@@ -55,7 +55,8 @@ class FSFactory{
 
 		static vector<string> findAll(const string &path, bool cutExtension);
 		static bool fileExists(const string &path);
-		
+		static bool removeFile(const string &path);
+
 		//Ogg callbacks, FIXME: move to better location
 		static size_t cb_read(void *ptr, size_t size, size_t nmemb, void *source);
 		static int cb_seek(void *source, ogg_int64_t offset, int whence);

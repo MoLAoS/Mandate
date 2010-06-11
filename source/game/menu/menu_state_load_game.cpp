@@ -27,7 +27,7 @@ using namespace Glest::Sim;
 using namespace Glest::Net;
 
 namespace Glest { namespace Menu {
-
+using Shared::PhysFS::FSFactory;
 using namespace Shared::Util;
 // =====================================================
 // 	class MenuStateLoadGame
@@ -71,10 +71,11 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 // 	class MenuStateLoadGame
 // =====================================================
 
-MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu) :
-		MenuStateStartGameBase(program, mainMenu/*, "loadgame"*/), loaderThread(*this) {
+MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu)
+		, loaderThread(*this) {
 	confirmMessageBox = NULL;
-	//msgBox = NULL;
+	msgBox = NULL;
 	savedGame = NULL;
 	gs = NULL;
 
@@ -138,7 +139,7 @@ void MenuStateLoadGame::mouseClick(int x, int y, MouseButton mouseButton){
 		int button = 1;
 		if(confirmMessageBox->mouseClick(x,y, button)){
 			if (button == 1){
-				remove(getFileName().c_str());
+				FSFactory::getInstance()->removeFile(getFileName());
 				if(!loadGameList()) {
 					mainMenu->setState(new MenuStateRoot(program, mainMenu));
 					return;
@@ -390,7 +391,8 @@ void MenuStateLoadGame::initGameInfo() {
 		elapsedSeconds = elapsedSeconds % 60;
 		elapsedMinutes = elapsedMinutes % 60;
 		char elapsedTime[0x100];
-		loadMapInfo(mapPath, &mapInfo);
+		MapInfo mapInfo;
+		mapInfo.load(mapPath);
 /*
 		if(techTree.size() > strlen("techs/")) {
 			techTree.erase(0, strlen("techs/"));
@@ -403,7 +405,8 @@ void MenuStateLoadGame::initGameInfo() {
 		}
 		if(map.size() > strlen(".gbm")) {
 			map.resize(map.size() - strlen(".gbm"));
-		}*/
+		}
+*/
 		if(elapsedHours) {
 			sprintf(elapsedTime, "%d:%02d:%02d", elapsedHours, elapsedMinutes, elapsedSeconds);
 		} else {

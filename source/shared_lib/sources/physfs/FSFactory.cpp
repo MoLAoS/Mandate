@@ -183,6 +183,14 @@ bool FSFactory::fileExists(const string &path){
 #endif
 }
 
+bool FSFactory::removeFile(const string &path) {
+#if USE_PHYSFS
+	return PHYSFS_delete(path.c_str());
+#else
+	return remove(path.c_str());
+#endif
+}
+
 
 //Ogg callbacks
 size_t FSFactory::cb_read(void *ptr, size_t size, size_t nmemb, void *source){

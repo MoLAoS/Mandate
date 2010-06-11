@@ -12,70 +12,77 @@
 #ifndef _GLEST_GAME_MENUSTATENEWGAME_H_
 #define _GLEST_GAME_MENUSTATENEWGAME_H_
 
-#include "menu_state_start_game_base.h"
+#include "main_menu.h"
 #include "sim_interface.h"
 
 #include "compound_widgets.h"
 
 namespace Glest { namespace Menu {
+using namespace Widgets;
+
+WRAPPED_ENUM( MenuTransition, RETURN, PLAY );
 
 // ===============================
 // 	class MenuStateNewGame
 // ===============================
 
-class MenuStateNewGame: public MenuStateStartGameBase {
+class MenuStateNewGame: public MenuState/*StartGameBase*/, public sigslot::has_slots {
 private:
-	Widgets::PlayerSlotWidget::Ptr psOne;
+	MenuTransition targetTransition;
+	int humanSlot;
 
-	//GraphicButton buttonReturn;
-	//GraphicButton buttonPlayNow;
-	GraphicLabel labelNetwork;
-	GraphicLabel labelControl;
-	GraphicLabel labelFaction;
-	GraphicLabel labelTeam;
-	GraphicLabel labelMap;
-	GraphicLabel labelTechTree;
-	GraphicLabel labelTileset;
-	GraphicLabel labelMapInfo;
-	GraphicListBox listBoxMap;
-	GraphicListBox listBoxTechTree;
-	GraphicListBox listBoxTileset;
+	Button::Ptr btnReturn, btnPlayNow;
+
+	StaticText::Ptr stControl, stFaction, stTeam;
+	PlayerSlotWidget::Ptr psWidgets[GameConstants::maxPlayers];
+
+	StaticText::Ptr stMap, stMapInfo;
+	DropList::Ptr dlMaps;
+
+	StaticText::Ptr stTechtree, stTileset;
+	DropList::Ptr dlTechtree, dlTileset;
+
+	StaticText::Ptr stFogOfWar;
+	CheckBox::Ptr cbFogOfWar;
+
+	StaticText::Ptr stRandomLocs;
+	CheckBox::Ptr cbRandomLocs;
+
 	vector<string> mapFiles;
 	vector<string> techTreeFiles;
 	vector<string> tilesetFiles;
 	vector<string> factionFiles;
-	//GraphicLabel labelPlayers[GameConstants::maxPlayers];
-	GraphicListBox listBoxControls[GameConstants::maxPlayers];
-	GraphicListBox listBoxFactions[GameConstants::maxPlayers];
-	GraphicListBox listBoxTeams[GameConstants::maxPlayers];
-	//GraphicLabel labelNetStatus[GameConstants::maxPlayers];
-	//MapInfo mapInfo;
-	GraphicLabel labelRandomize;
-	GraphicListBox listBoxRandomize;
-	GraphicLabel labelFogOfWar;
-	GraphicListBox listBoxFogOfWar;
-	//GraphicMessageBox *msgBox;
+
+	MapInfo mapInfo;
+	GraphicMessageBox *msgBox;
+
+	float fade;
+	bool fadeIn, fadeOut, transition;
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
 
-
-	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState &mouseState);
-	void render();
 	void update();
 
 	MenuStates getIndex() const { return MenuStates::NEW_GAME; }
 
 private:
-    void loadGameSettings();
-	//void loadMapInfo(string file, MapInfo *mapInfo);
 	void reloadFactions();
 	void updateControlers();
 	void updateNetworkSlots();
 
 	bool hasUnconnectedSlots();
 	bool hasNetworkSlots();
+
+	void onChangeFaction(PlayerSlotWidget::Ptr);
+	void onChangeControl(PlayerSlotWidget::Ptr);
+	void onChangeTeam(PlayerSlotWidget::Ptr);
+
+	void onChangeMap(ListBase::Ptr);
+	void onChangeTileset(ListBase::Ptr);
+	void onChangeTechtree(ListBase::Ptr);
+
+	void onButtonClick(Button::Ptr ptr);
 };
 
 }}//end namespace

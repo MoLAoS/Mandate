@@ -132,6 +132,7 @@ public:
 	CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size);
 
 	virtual void setSize(const Vec2i &sz);
+	void setChecked(bool v) { checked = v; }
 
 	virtual void mouseIn()	{ Button::mouseIn(); }
 	virtual void mouseOut() { Button::mouseOut();}

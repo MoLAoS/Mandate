@@ -57,15 +57,63 @@ void GameSettings::clear() {
 		playerNames[i] = "";
 		factionControls[i] = ControlType::CLOSED;
 		resourceMultipliers[i] = 1.f;
-		teams[i] = 0;
-		startLocationIndex[i] = 0;
+		teams[i] = -1;
+		startLocationIndex[i] = -1;
 	}
 	thisFactionIndex = -1;
-	factionCount = 0;
 	defaultUnits = true;
 	defaultResources = true;
 	defaultVictoryConditions = true;
 	fogOfWar = true;
+	randomStartLocs = false;
+}
+
+void GameSettings::compact() {
+	struct {
+		string factionType;
+		string playerName;
+		ControlType control;
+		float resourceMult;
+		int team;
+		int startLoc;
+	} tmp;
+
+	bool slotFlags[GameConstants::maxPlayers];
+	int count = 0;
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		slotFlags[i] = factionControls[i] != ControlType::CLOSED;
+		if (slotFlags[i]) ++count;
+	}
+	factionCount = count;
+	for (int i = 0; i < GameConstants::maxPlayers; ) {
+		if (!slotFlags[i]) { // need to shuffle everything from here down one slot
+			bool done = true; // if everything else is false, we're finished
+			for (int j = i + 1; j < GameConstants::maxPlayers; ++j) {
+				factionTypeNames[j - 1] = factionTypeNames[j];
+				playerNames[j - 1] = playerNames[j];
+				factionControls[j - 1] = factionControls[j];
+				resourceMultipliers[j - 1] = resourceMultipliers[j];
+				teams[j - 1] = teams[j];
+				startLocationIndex[j - 1] = startLocationIndex[j];
+				if (thisFactionIndex == j) --thisFactionIndex;
+				slotFlags[j - 1] = slotFlags[j];
+				if (slotFlags[j]) done = false;
+			}
+			// copied last entry down, but didn't copy over it, reset
+			int k = GameConstants::maxPlayers - 1;
+			factionTypeNames[k] = "";
+			playerNames[k] = "";
+			factionControls[k] = ControlType::CLOSED;
+			resourceMultipliers[k] = 1.f;
+			teams[k] = -1;
+			startLocationIndex[k] = -1;
+			slotFlags[k] = false;
+
+			if (done) break;
+		} else {
+			++i;
+		}
+	}
 }
 
 void GameSettings::save(XmlNode *node) const {
@@ -77,6 +125,7 @@ void GameSettings::save(XmlNode *node) const {
 	node->addChild("thisFactionIndex", thisFactionIndex);
 	node->addChild("factionCount", factionCount);
 	node->addChild("fogOfWar", fogOfWar);
+	node->addChild("randomStartLocs", randomStartLocs);
 
 	XmlNode *factionsNode = node->addChild("factions");
 	for (int i = 0; i < factionCount; ++i) {

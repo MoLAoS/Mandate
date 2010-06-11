@@ -326,17 +326,6 @@ void World::processFrame() {
 
 	//undertake the dead
 	iSim->getUnitFactory().update();
-/*
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-			Unit *unit = getFaction(i)->getUnit(j);
-			if (unit->getToBeUndertaken()) {
-				unit->undertake();
-				delete unit;
-				j--;
-			}
-		}
-	}*/
 
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
@@ -423,6 +412,10 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	int damage = fDamage.intp();
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
+	}
+	if (attacked->getFaction()->isThisFaction()
+	&& !theRenderer.getCuller().isInside(attacked->getPos())) {
+		attacked->getFaction()->attackNotice(attacked);
 	}
 }
 
@@ -565,32 +558,12 @@ void World::tick() {
 	}
 }
 
-//REFACTOR: Yikes!!!map<int, Unit*> ...
 Unit* World::findUnitById(int id) const {
-	for (int i = 0; i < getFactionCount(); ++i) {
-		const Faction* faction = getFaction(i);
-
-		for (int j = 0; j < faction->getUnitCount(); ++j) {
-			Unit* unit = faction->getUnit(j);
-
-			if (unit->getId() == id) {
-				return unit;
-			}
-		}
-	}
-	return NULL;
+	return iSim->getUnitFactory().getUnit(id);
 }
 
-//REFACTOR
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	for (int i = 0; i < factionType->getUnitTypeCount(); ++i) {
-		const UnitType* unitType = factionType->getUnitType(i);
-
-		if (unitType->getId() == id) {
-			return unitType;
-		}
-	}
-	return NULL;
+	return unitTypeFactory->getType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded
@@ -1084,7 +1057,7 @@ void World::initFactions() {
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
 		factions[i].init(
 			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
-			gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources ()
+			gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources()
 		);
 		if (unitTypes.find(ft->getName()) == unitTypes.end()) {
 			unitTypes.insert(pair< string,set<string> >(ft->getName(),set<string>()));

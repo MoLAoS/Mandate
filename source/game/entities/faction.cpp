@@ -531,7 +531,7 @@ void Faction::resetResourceAmount(const ResourceType *rt) {
  * recently
  */
 void Faction::attackNotice(const Unit *u) {
-	if (thisFaction && factionType->getAttackNotice()) {
+	if (factionType->getAttackNotice()) {
 		time_t curTime;
 		time(&curTime);
 

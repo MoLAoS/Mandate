@@ -22,7 +22,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, Panel(false) {
 	Widget::setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.4f);
-	Widget::setPadding(2);
+	Widget::setPadding(0);
 	assert(size.x > 200);
 	float size_x = float(size.x - 25);
 	float fwidths[] = { size_x * 20.f / 100.f, size_x * 35.f / 100.f, size_x * 35.f / 100.f, size_x * 10.f / 100.f};
@@ -30,7 +30,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	for (int i=0; i < 4; ++i) {
 		widths[i] = int(fwidths[i]);
 	}
-	Vec2i cpos(5, 5);
+	Vec2i cpos(5, 2);
 	
 	CoreData &coreData = CoreData::getInstance();
 
@@ -54,8 +54,10 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		dlTeam->addItem(intToStr(i));
 	}
 	dlTeam->setBorderSize(0);
+
+	dlControl->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);
+	dlFaction->SelectionChanged.connect(this, &PlayerSlotWidget::onFactionChanged);
+	dlTeam->SelectionChanged.connect(this, &PlayerSlotWidget::onTeamChanged);
 }
-
-
 
 }}

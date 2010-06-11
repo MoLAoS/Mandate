@@ -30,6 +30,8 @@ struct MapInfo {
 	Vec2i size;
 	int players;
 	string desc;
+
+	void load(string file);
 };
 
 class MenuState;

@@ -19,9 +19,8 @@
 using std::string;
 using Shared::Xml::XmlNode;
 
-using namespace Glest::GameConstants;
-
 namespace Glest { namespace Sim {
+using namespace GameConstants;
 
 // =====================================================
 //	class GameSettings
@@ -38,7 +37,7 @@ private:
 	string scenarioPath;
 
 	ControlType factionControls[maxPlayers];
-	float resourceMultipliers [maxPlayers];
+	float resourceMultipliers[maxPlayers];
 
 	int thisFactionIndex;
 	int factionCount;
@@ -50,12 +49,14 @@ private:
 	bool defaultVictoryConditions;
 
 	bool fogOfWar;
+	bool randomStartLocs;
 
 public:
 	GameSettings() { clear(); }
 	GameSettings(const XmlNode *node);
 
 	void clear();
+	void compact();
 	// use default copy ctor
 	//GameSettings(const GameSettings &gs);
 
@@ -78,6 +79,7 @@ public:
 	bool getDefaultResources() const				{return defaultResources;}
 	bool getDefaultVictoryConditions() const		{return defaultVictoryConditions;}
 	bool getFogOfWar() const						{ return fogOfWar; }
+	bool getRandomStartLocs() const					{ return randomStartLocs; }
 
 	//set
 	void setDescription(const string& v)			{description = v;}
@@ -98,6 +100,7 @@ public:
 	void setDefaultResources(bool v) 				{defaultResources = v;}
 	void setDefaultVictoryConditions(bool v) 		{defaultVictoryConditions = v;}
 	void setFogOfWar(bool v)						{ fogOfWar = v; }
+	void setRandomStartLocs(bool v)					{ randomStartLocs = v; }
 
 	//misc
 	void randomizeLocs(int maxPlayers);

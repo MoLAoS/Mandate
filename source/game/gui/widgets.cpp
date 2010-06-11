@@ -54,6 +54,7 @@ void StaticText::render() {
 	glEnd();
 	glPopAttrib();
 */
+	Widget::renderBgAndBorders();
 	renderText();
 }
 
@@ -1093,7 +1094,9 @@ void DropList::expandList() {
 	floatingList->setPaddingParams(0, 0);
 	const Vec2i &size = getSize();
 	const Vec2i &screenPos = getScreenPos();
-	int h = dropBoxHeight == 0 ? floatingList->getPrefHeight(listItems.size()) : dropBoxHeight;
+	int ph = floatingList->getPrefHeight(listItems.size());
+	int h = dropBoxHeight == 0 ? ph : ph > dropBoxHeight ? dropBoxHeight : ph;
+
 	Vec2i sz(size.x, h);
 	Vec2i pos(screenPos.x, screenPos.y - sz.y + size.y);
 	floatingList->setPos(pos);
@@ -1127,7 +1130,6 @@ void DropList::onSelectionMade(ListBase::Ptr lb) {
 void DropList::onListDisposed(Widget::Ptr) {
 	setVisible(true);
 	floatingList = 0;
-	//rootWindow->setFade(1.f);
 	ListCollapsed(this);
 }
 

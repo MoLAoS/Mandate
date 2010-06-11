@@ -297,7 +297,9 @@ void ServerInterface::broadcastMessage(const Message* networkMessage, int exclud
 					+ intToStr(slots[i]->getPlayerIndex() + 1) + ") " + lang.get("Disconnected");
 				removeSlot(i);
 				LOG_NETWORK(errmsg);
-				theGame.getConsole()->addLine(errmsg);
+				if (World::isConstructed()) {
+					theGame.getConsole()->addLine(errmsg);
+				}
 				//throw SocketException(errmsg);
 			}
 		}

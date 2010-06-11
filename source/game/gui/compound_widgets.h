@@ -15,7 +15,7 @@
 namespace Glest { namespace Widgets {
 using Sim::ControlType;
 
-class PlayerSlotWidget : public Panel {
+class PlayerSlotWidget : public Panel, public sigslot::has_slots {
 public:
 	typedef PlayerSlotWidget* Ptr;
 private:
@@ -42,13 +42,22 @@ public:
 	}
 
 	void setSelectedTeam(int team) {
-		assert (team >= 1 && team < GameConstants::maxPlayers);
-		dlTeam->setSelected(team - 1);
+		assert (team >= -1 && team < GameConstants::maxPlayers);
+		dlTeam->setSelected(team);
 	}
+
+	ControlType getControlType() const { return ControlType(dlControl->getSelectedIndex()); }
+	int getSelectedFactionIndex() const { return dlFaction->getSelectedIndex(); }
+	int getSelectedTeamIndex() const { return dlTeam->getSelectedIndex(); }
 
 	sigslot::signal<Ptr> ControlChanged;
 	sigslot::signal<Ptr> FactionChanged;
 	sigslot::signal<Ptr> TeamChanged;
+
+private: // re-route signals from DropLists
+	void onControlChanged(ListBase::Ptr) { ControlChanged(this); }
+	void onFactionChanged(ListBase::Ptr) { FactionChanged(this); }
+	void onTeamChanged(ListBase::Ptr)	 { TeamChanged(this);	 }
 };
 
 }} // namespace Glest::Widgets

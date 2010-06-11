@@ -13,7 +13,7 @@
 #ifndef _GLEST_GAME_MENUSTATELOADGAME_H_
 #define _GLEST_GAME_MENUSTATELOADGAME_H_
 
-#include "menu_state_start_game_base.h"
+#include "main_menu.h"
 #include "thread.h"
 
 namespace Glest { namespace Menu {
@@ -59,12 +59,12 @@ private:
 // 	class MenuStateLoadGame
 // ===============================
 
-class MenuStateLoadGame: public MenuStateStartGameBase {
+class MenuStateLoadGame: public MenuState {
 private:
 	SavedGamePreviewLoader loaderThread;
-	//GraphicButton buttonReturn;
+	GraphicButton buttonReturn;
 	GraphicButton buttonDelete;
-	//GraphicButton buttonPlayNow;
+	GraphicButton buttonPlayNow;
 
 	// only modify with mutex locked ==>
 	GraphicLabel labelInfoHeader;
@@ -72,7 +72,7 @@ private:
 	GraphicLabel labelControls[GameConstants::maxPlayers];
 	GraphicLabel labelFactions[GameConstants::maxPlayers];
 	GraphicLabel labelTeams[GameConstants::maxPlayers];
-	//GraphicLabel labelNetStatus[GameConstants::maxPlayers];
+	GraphicLabel labelNetStatus[GameConstants::maxPlayers];
 	ControlType controlTypes[GameConstants::maxPlayers];
 	string fileName;
 	const XmlNode *savedGame;
@@ -80,10 +80,10 @@ private:
 	// <== only modify with mutex locked
 
 	GraphicListBox listBoxGames;
-	//GraphicLabel labelNetwork;
+	GraphicLabel labelNetwork;
 
 	GraphicMessageBox *confirmMessageBox;
-	//GraphicMessageBox *msgBox;
+	GraphicMessageBox *msgBox;
 	bool criticalError;
 	Mutex mutex;
 	vector<string> fileNames;
