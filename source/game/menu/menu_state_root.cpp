@@ -79,11 +79,13 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 	label->setPos(Vec2i(255 - sz.x, 60));
 	label->setSize(sz);
+	label->centreText();
 
 	label = new Widgets::StaticText(pp);
 	label->setTextParams("Engine", Vec4f(1.f), font, true);
 	label->setPos(Vec2i(285, 60));
 	label->setSize(label->getTextDimensions() + Vec2i(10,5));
+	label->centreText();
 
 	pos = Vec2i(285 + label->getSize().x, 62);
 	// Version label
@@ -94,6 +96,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	sz = label->getTextDimensions() + Vec2i(10,5);
 	label->setPos(pos/*Vec2i(256 - sz.x / 2, 10)*/);
 	label->setSize(sz);
+	label->centreText();
 	
 	// gpl logo
 	pos = Vec2i(metrics.getScreenW() / 2 - 64, 25);

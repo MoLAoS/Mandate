@@ -19,8 +19,8 @@ using Global::Lang;
 using Sim::ControlTypeNames;
 
 PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size)
-		, Panel(false) {
+		: Panel(parent, pos, size) {
+	Panel::setAutoLayout(false);
 	Widget::setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.4f);
 	Widget::setPadding(0);
 	assert(size.x > 200);

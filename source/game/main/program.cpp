@@ -105,8 +105,7 @@ Program *Program::singleton = NULL;
 // ===================== PUBLIC ========================
 
 Program::Program(Config &config, CmdArgs &args)
-		: Widget(this)
-		, cmdArgs(args)
+		: cmdArgs(args)
 		, renderTimer(config.getRenderFpsMax(), 1, 0)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)

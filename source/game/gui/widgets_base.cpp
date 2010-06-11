@@ -279,11 +279,13 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 // class ImageWidget
 // =====================================================
 
-ImageWidget::ImageWidget() {
+ImageWidget::ImageWidget(Widget::Ptr me) 
+		: me(me) {
 	WIDGET_LOG( __FUNCTION__ );
 }
 
-ImageWidget::ImageWidget(Texture2D *tex) {
+ImageWidget::ImageWidget(Widget::Ptr me, Texture2D *tex)
+		: me(me) {
 	WIDGET_LOG( __FUNCTION__ << "(Texture2D*)" );
 	textures.push_back(tex);
 	imageInfo.push_back(ImageRenderInfo());
@@ -298,7 +300,7 @@ void ImageWidget::renderImage(int ndx) {
 	glEnable(GL_BLEND);
 
 	int x1, x2, y1, y2;
-	Vec2i pos = getScreenPos();
+	Vec2i pos = me->getScreenPos();
 	x1 = pos.x;
 	y1 = pos.y;
 	if (imageInfo[ndx].hasOffset) {
@@ -309,11 +311,11 @@ void ImageWidget::renderImage(int ndx) {
 		x2 = x1 + imageInfo[ndx].size.x;
 		y2 = y1 + imageInfo[ndx].size.y;
 	} else {
-		Vec2i sz = getSize();
+		Vec2i sz = me->getSize();
 		x2 = x1 + sz.x;
 		y2 = y1 + sz.y;
 	}
-	glColor4f(1.f, 1.f, 1.f, getFade());
+	glColor4f(1.f, 1.f, 1.f, me->getFade());
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(textures[ndx])->getHandle());
 	glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2i(0, 1);
@@ -373,8 +375,9 @@ void ImageWidget::setImageX(Texture2D *tex, int ndx, Vec2i offset, Vec2i sz) {
 // class TextWidget
 // =====================================================
 
-TextWidget::TextWidget() 
-		: txtColour(1.f)
+TextWidget::TextWidget(Widget::Ptr me)
+		: me(me)
+		, txtColour(1.f)
 		, txtShadowColour(0.f)
 		, txtPos(0)
 		, font(0)
@@ -387,9 +390,9 @@ void TextWidget::centreText(int ndx) {
 	ASSERT_RANGE(ndx, texts.size());
 	const Metrics &metrics = Metrics::getInstance();
 	Vec2f txtDims = font->getMetrics()->getTextDiminsions(texts[ndx]);
-	Vec2i centre = getScreenPos() + (getSize() / 2);
+	Vec2i centre = me->getScreenPos() + (me->getSize() / 2);
 	txtPos = Vec2i(centre.x - int(txtDims.x / 2.f), centre.y - int(txtDims.y / 2.f));
-	txtPos -= getScreenPos();
+	txtPos -= me->getScreenPos();
 }
 
 void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
@@ -399,8 +402,9 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glEnable(GL_BLEND);
 	glColor4fv(colour.ptr());
-	TextRenderer *tr = getRootWindow()->getTextRenderer(isFreeTypeFont);
+	TextRenderer *tr = me->getRootWindow()->getTextRenderer(isFreeTypeFont);
 	tr->begin(font);
+	// glScissor ??
 	tr->render(txt, x, y);
 	tr->end();
 	glPopAttrib();
@@ -408,16 +412,16 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 
 void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, texts.size());
-	Vec2i pos = getScreenPos() + txtPos;
-	txtColour.a = getFade();
+	Vec2i pos = me->getScreenPos() + txtPos;
+	txtColour.a = me->getFade();
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
 
 void TextWidget::renderTextShadowed(int ndx) {
 	ASSERT_RANGE(ndx, texts.size());
-	Vec2i pos = getScreenPos() + txtPos;
+	Vec2i pos = me->getScreenPos() + txtPos;
 	Vec2i sPos = pos + Vec2i(2, -2);
-	txtShadowColour.a = txtColour.a = getFade();
+	txtShadowColour.a = txtColour.a = me->getFade();
 	renderText(texts[ndx], sPos.x, sPos.y, txtShadowColour);
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
@@ -483,30 +487,23 @@ void TextWidget::setTextPos(const Vec2i &pos) {
 	txtPos = pos;
 }
 
-void TextWidget::setSize(const Vec2i &sz) {
-	Widget::setSize(sz);
-	if (centre && texts.size() == 1) {
-		centreText();
-	}
-}
-
-void TextWidget::setPos(const Vec2i &p) {
-	Widget::setPos(p);
-	if (centre && texts.size() == 1) {
-		centreText();
-	}
-}
-
 // =====================================================
 // class Container
 // =====================================================
 
-Container::Container() {
-	WIDGET_LOG( __FUNCTION__ );
+Container::Container(Container::Ptr parent) 
+		: Widget(parent) {
+}
+
+Container::Container(Container::Ptr parent, Vec2i pos, Vec2i size) 
+		: Widget(parent, pos, size) {
+}
+
+Container::Container(WidgetWindow::Ptr window)
+		: Widget(window) {
 }
 
 Container::~Container() {
-	WIDGET_LOG( __FUNCTION__ );
 	clear();
 }
 

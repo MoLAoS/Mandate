@@ -42,6 +42,8 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	Vec2i pos(screenSize.x / 2 - logoSize.x / 2, screenSize.y / 2 - logoSize.y / 2);
 	
 	logoPanel = new Widgets::PicturePanel(&program, pos, logoSize);
+	logoPanel->setPaddingParams(0,0);
+	logoPanel->setBorderSize(0);
 	logoPanel->setImage(coreData.getLogoTexture());
 	logoPanel->setAutoLayout(false);
 
@@ -51,11 +53,13 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
 	lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
 	lblAdvanced->setSize(sz);
+	lblAdvanced->centreText();
 
 	lblEngine = new Widgets::StaticText(logoPanel);
 	lblEngine->setTextParams("Engine", Vec4f(1.f), font, true);
 	lblEngine->setPos(Vec2i(285, 60));
 	lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
+	lblEngine->centreText();
 
 	// Version label
 	font = coreData.getFreeTypeFont();
@@ -64,6 +68,7 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	lblVersion->setTextParams("0.3.0"/*gaeVersionString*/, Vec4f(1.f), font, true);
 	lblVersion->setPos(pos);
 	lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
+	lblVersion->centreText();
 
 	lblWebsite = 0;
 

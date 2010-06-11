@@ -265,20 +265,20 @@ struct ImageRenderInfo {
 // class ImageWidget
 // =====================================================
 
-class ImageWidget : public virtual Widget {
+class ImageWidget /*: public virtual Widget */{
 private:
-	typedef vector<Texture2D*> Textures;
-	Textures textures;
+ 	typedef vector<Texture2D*> Textures;
 
+	Widget::Ptr me;
+	Textures textures;
 	vector<ImageRenderInfo> imageInfo;
-	//Texture2D *texture;
 
 protected:
 	void renderImage(int ndx = 0);
 
 public:
-	ImageWidget();
-	ImageWidget(Texture2D *tex);
+	ImageWidget(Widget::Ptr me);
+	ImageWidget(Widget::Ptr me, Texture2D *tex);
 
 	int addImage(Texture2D *tex);
 	void setImage(Texture2D *tex, int ndx = 0);
@@ -295,10 +295,10 @@ public:
 // class TextWidget
 // =====================================================
 
-class TextWidget : public virtual Widget {
+class TextWidget /*: public virtual Widget */{
 private:
+	Widget::Ptr me;
 	vector<string> texts;
-	//string text;
 	Vec4f txtColour;
 	Vec4f txtShadowColour;
 	Vec2i txtPos;
@@ -309,12 +309,11 @@ private:
 	void renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font = 0);
 
 protected:
-	void centreText(int ndx = 0);
 	void renderText(int ndx = 0);
 	void renderTextShadowed(int ndx = 0);
 
 public:
-	TextWidget();
+	TextWidget(Widget::Ptr me);
 
 	// set
 	void setCentre(bool val)	{ centre = val; }
@@ -325,9 +324,9 @@ public:
 	void setTextPos(const Vec2i &pos);
 	void setTextFont(const Font *f);
 
-	// virtual set
-	virtual void setSize(const Vec2i &sz);
-	virtual void setPos(const Vec2i &p);
+	void centreText(int ndx = 0);
+	//void setWidgetSize(const Vec2i &sz);
+	//void setWidgetPos(const Vec2i &p);
 
 	// get
 	const string& getText(int ndx=0) const	{ return texts[ndx];	}
@@ -342,7 +341,7 @@ public:
 // class Container
 // =====================================================
 
-class Container : public virtual Widget {
+class Container : public /*virtual*/ Widget {
 public:
 	typedef Container* Ptr;
 	typedef vector<Widget::Ptr> WidgetList;
@@ -351,7 +350,9 @@ protected:
 	WidgetList children;
 
 public:
-	Container();
+	Container(Container::Ptr parent);
+	Container(Container::Ptr parent, Vec2i pos, Vec2i size);
+	Container(WidgetWindow* window);
 	virtual ~Container();
 
 	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
@@ -378,7 +379,7 @@ private:
 
 public:
 	Layer(WidgetWindow *window, const string &name, int id)
-			: Widget(window)
+			: Container(window)
 			, name(name), id(id) {
 		WIDGET_LOG( __FUNCTION__ << endl );
 	}

@@ -69,15 +69,6 @@ void GameSettings::clear() {
 }
 
 void GameSettings::compact() {
-	struct {
-		string factionType;
-		string playerName;
-		ControlType control;
-		float resourceMult;
-		int team;
-		int startLoc;
-	} tmp;
-
 	bool slotFlags[GameConstants::maxPlayers];
 	int count = 0;
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {

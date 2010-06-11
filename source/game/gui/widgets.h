@@ -24,7 +24,7 @@ namespace Glest { namespace Widgets {
 // class StaticImage
 // =====================================================
 
-class StaticImage : public ImageWidget {
+class StaticImage : public Widget, public ImageWidget {
 public:
 	typedef StaticImage* Ptr;
 
@@ -33,14 +33,16 @@ private:
 
 public:
 	StaticImage(Container::Ptr parent)
-			: Widget(parent) {}
+			: Widget(parent)
+			, ImageWidget(this) {}
 
 	StaticImage(Container::Ptr parent, Vec2i pos, Vec2i size) 
-			: Widget(parent, pos, size) {}
+			: Widget(parent, pos, size)
+			, ImageWidget(this) {}
 
 	StaticImage(Container::Ptr parent, Vec2i pos, Vec2i size, Texture2D *tex)
 			: Widget(parent, pos, size)
-			, ImageWidget(tex) {}
+			, ImageWidget(this, tex) {}
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -53,16 +55,18 @@ public:
 // class StaticText
 // =====================================================
 
-class StaticText : public TextWidget {
+class StaticText : public Widget, public TextWidget {
 public:
 	typedef StaticText* Ptr;
 
 public:
 	StaticText(Container::Ptr parent)
-			: Widget(parent) {}
+			: Widget(parent)
+			, TextWidget(this) {}
 
 	StaticText(Container::Ptr parent, Vec2i pos, Vec2i size)
-			: Widget(parent, pos, size) {}
+			: Widget(parent, pos, size)
+			, TextWidget(this) {}
 
 public:
 	virtual Vec2i getPrefSize() const;
@@ -76,7 +80,7 @@ public:
 // class Button
 // =====================================================
 
-class Button : public TextWidget, public ImageWidget, public MouseWidget {
+class Button : public Widget, public TextWidget, public ImageWidget, public MouseWidget {
 public:
 	typedef Button* Ptr;
 
@@ -84,12 +88,9 @@ protected:
 	bool hover;
 	bool pressed;
 
-protected:
-	Button() : MouseWidget(this), hover(false), pressed(false) {}
-
 public:
 	Button(Container::Ptr parent);
-	Button(Container::Ptr parent, Vec2i pos, Vec2i size);
+	Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTex = true);
 
 	virtual void setSize(const Vec2i &sz);
 
@@ -151,7 +152,7 @@ public:
 // class TextBox
 // =====================================================
 
-class TextBox : public TextWidget, public MouseWidget, public KeyboardWidget {
+class TextBox : public Widget, public TextWidget, public MouseWidget, public KeyboardWidget {
 public:
 	typedef TextBox* Ptr;
 
@@ -188,7 +189,7 @@ public:
 //  class VerticalScrollBar
 // =====================================================
 
-class VerticalScrollBar : public ImageWidget, public MouseWidget {
+class VerticalScrollBar : public Widget, public ImageWidget, public MouseWidget {
 public:
 	typedef VerticalScrollBar* Ptr;
 
@@ -266,27 +267,12 @@ protected:
 	bool autoLayout;
 	LayoutOrigin layoutOrigin;
 
-protected:
-	Panel() : autoLayout(true), layoutOrigin(LayoutOrigin::CENTRE) {
-		WIDGET_LOG( __FUNCTION__ );
-		setPaddingParams(10, 5);
+public:
+	void setLayoutParams(bool autoLayout, LayoutOrigin layoutOrigin = LayoutOrigin::CENTRE) {
+		this->autoLayout = autoLayout;
+		this->layoutOrigin = layoutOrigin;
 	}
 	
-	Panel(bool autoLayout)
-			: autoLayout(autoLayout)
-			, layoutOrigin(LayoutOrigin::CENTRE) {
-		WIDGET_LOG( __FUNCTION__ );
-		setPaddingParams(10, 5);
-	}
-
-	Panel(int panelPad, int widgetPad, bool autoLayout=true)
-			: widgetPadding(widgetPad)
-			, autoLayout(autoLayout)
-			, layoutOrigin(LayoutOrigin::CENTRE) {
-		WIDGET_LOG( __FUNCTION__ );
-		setPadding(panelPad);
-	}
-
 public:
 	Panel(Container::Ptr parent);
 	Panel(Container::Ptr parent, Vec2i pos, Vec2i size);
@@ -316,12 +302,14 @@ public:
 
 public:
 	PicturePanel(Container::Ptr parent)
-			: Widget(parent) {
+			: Panel(parent)
+			, ImageWidget(this) {
 		WIDGET_LOG( __FUNCTION__ );
 	}
 
 	PicturePanel(Container::Ptr parent, Vec2i pos, Vec2i size) 
-			: Widget(parent, pos, size) {
+			: Panel(parent, pos, size)
+			, ImageWidget(this) {
 		WIDGET_LOG( __FUNCTION__ );
 	}
 
@@ -353,7 +341,8 @@ protected:
 	vector<string> listItems;
 
 public:
-	ListBase();
+	ListBase(Container::Ptr parent);
+	ListBase(Container::Ptr parent, Vec2i pos, Vec2i size);
 
 	virtual void addItems(const vector<string> &items) = 0;
 	virtual void addItem(const string &item) = 0;
@@ -423,7 +412,7 @@ public:
 // class ListBoxItem
 // =====================================================
 
-class ListBoxItem : public TextWidget, public MouseWidget {
+class ListBoxItem : public Widget, public TextWidget, public MouseWidget {
 public:
 	typedef ListBoxItem* Ptr;
 

@@ -89,21 +89,28 @@ Vec2i StaticImage::getPrefSize() const {
 
 Button::Button(Container::Ptr parent)
 		: Widget(parent)
+		, TextWidget(this)
+		, ImageWidget(this)
 		, MouseWidget(this)
-		, hover(false), pressed(false) {
+		, hover(false)
+		, pressed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 }
 
-Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size)
+Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTexture)
 		: Widget(parent, pos, size)
+		, TextWidget(this)
+		, ImageWidget(this)
 		, MouseWidget(this)
 		, hover(false), pressed(false) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	// background texture
-	CoreData &coreData = CoreData::getInstance();
-	Texture2D *tex = size.x > 3 * size.y / 2 
-		? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
-	setImage(tex);
+	if (defaultTexture) {
+		CoreData &coreData = CoreData::getInstance();
+		Texture2D *tex = size.x > 3 * size.y / 2 
+			? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
+		setImage(tex);
+	}
 }
 
 Vec2i Button::getPrefSize() const {
@@ -180,7 +187,7 @@ void Button::render() {
 // =====================================================
 
 CheckBox::CheckBox(Container::Ptr parent)
-		: Widget(parent), checked(false) {
+		: Button(parent), checked(false) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
@@ -190,7 +197,7 @@ CheckBox::CheckBox(Container::Ptr parent)
 }
 
 CheckBox::CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size), checked(false) {
+		: Button(parent, pos, size, false), checked(false) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
@@ -275,6 +282,7 @@ void CheckBox::render() {
 
 TextBox::TextBox(Container::Ptr parent)
 		: Widget(parent)
+		, TextWidget(this)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, hover(false)
@@ -287,6 +295,7 @@ TextBox::TextBox(Container::Ptr parent)
 		
 TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
+		, TextWidget(this)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, hover(false)
@@ -391,7 +400,8 @@ Vec2i TextBox::getPrefSize() const {
 // =====================================================
 
 VerticalScrollBar::VerticalScrollBar(Container::Ptr parent)
-		: Widget(parent) 
+		: Widget(parent)
+		, ImageWidget(this)
 		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
 		//, fullThumb(false), smallThumb(false)
@@ -411,6 +421,7 @@ VerticalScrollBar::VerticalScrollBar(Container::Ptr parent)
 
 VerticalScrollBar::VerticalScrollBar(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
+		, ImageWidget(this)
 		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
 		//, fullThumb(false), smallThumb(false)
@@ -589,7 +600,7 @@ void VerticalScrollBar::render() {
 // =====================================================
 
 Panel::Panel(Container::Ptr parent)
-		: Widget(parent)
+		: Container(parent)
 		, autoLayout(true)
 		, layoutOrigin(LayoutOrigin::CENTRE) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
@@ -598,7 +609,7 @@ Panel::Panel(Container::Ptr parent)
 }
 
 Panel::Panel(Container::Ptr parent, Vec2i pos, Vec2i sz)
-		: Widget(parent, pos, sz)
+		: Container(parent, pos, sz)
 		, autoLayout(true)
 		, layoutOrigin(LayoutOrigin::CENTRE) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
@@ -696,12 +707,23 @@ Vec2i PicturePanel::getPrefSize() const {
 //  class ListBase
 // =====================================================
 
-ListBase::ListBase()
-		: Panel(2, 0, false)
+ListBase::ListBase(Container::Ptr parent)
+		: Panel(parent)
 		, selectedItem(0)
 		, selectedIndex(-1)
 		, itemFont(0) {
-	WIDGET_LOG( __FUNCTION__ << "()" );
+	setPaddingParams(2, 0);
+	setAutoLayout(false);
+	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
+}
+
+ListBase::ListBase(Container::Ptr parent, Vec2i pos, Vec2i size)
+		: Panel(parent, pos, size)
+		, selectedItem(0)
+		, selectedIndex(-1)
+		, itemFont(0) {
+	setPaddingParams(2, 0);
+	setAutoLayout(false);
 	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
 }
 
@@ -710,7 +732,7 @@ ListBase::ListBase()
 // =====================================================
 
 ListBox::ListBox(Container::Ptr parent)
-		: Widget(parent)
+		: ListBase(parent)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -721,7 +743,7 @@ ListBox::ListBox(Container::Ptr parent)
 }
 
 ListBox::ListBox(Container::Ptr parent, Vec2i pos, Vec2i size) 
-		: Widget(parent, pos, size)
+		: ListBase(parent, pos, size)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -732,7 +754,7 @@ ListBox::ListBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 }
 
 ListBox::ListBox(WidgetWindow::Ptr window)
-		: Widget(window)
+		: ListBase(window)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -839,6 +861,7 @@ void ListBox::layoutChildren() {
 		int y = offset_y - widgetYPos[ndx++];
 		(*it)->setPos(topLeft.x, y);
 		(*it)->setSize(room.x, (*it)->getHeight());
+		static_cast<ListBoxItem::Ptr>(*it)->centreText();
 		yPositions.push_back(y);
 	}
 }
@@ -925,6 +948,7 @@ void ListBox::setSelected(int index) {
 
 ListBoxItem::ListBoxItem(ListBase::Ptr parent)
 		: Widget(parent) 
+		, TextWidget(this)
 		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
@@ -935,6 +959,7 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent)
 
 ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz)
 		: Widget(parent, pos, sz)
+		, TextWidget(this)
 		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
@@ -990,7 +1015,7 @@ bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 // =====================================================
 
 DropList::DropList(Container::Ptr parent)
-		: Widget(parent)
+		: ListBase(parent)
 		, floatingList(0)
 		, dropBoxHeight(0) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
@@ -1004,7 +1029,7 @@ DropList::DropList(Container::Ptr parent)
 }
 
 DropList::DropList(Container::Ptr parent, Vec2i pos, Vec2i size) 
-		: Widget(parent, pos, size)
+		: ListBase(parent, pos, size)
 		, floatingList(0)
 		, dropBoxHeight(0) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );

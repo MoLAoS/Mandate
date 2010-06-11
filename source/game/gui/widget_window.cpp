@@ -31,7 +31,7 @@ namespace Glest { namespace Widgets {
 WidgetWindow* WidgetWindow::instance;
 
 WidgetWindow::WidgetWindow()
-		: Widget(this)
+		: Container(this)
 		, floatingWidget(0)
 		, anim(0.f)
 		, layerIdCounter(0) {
