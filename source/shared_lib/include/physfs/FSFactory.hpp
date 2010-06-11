@@ -16,10 +16,10 @@
 #include <string>
 #include <vector>
 
-//FIXME: Ogg callbacks
+// Ogg, for callbacks
 #include <vorbis/vorbisfile.h>
 
-//FIXME: freetype
+// freetype, for callbacks
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -43,7 +43,7 @@ class FSFactory{
 		static FSFactory *getInstance();
 		~FSFactory();
 
-		bool physFS;
+		bool physFS;  //FIXME: would be better when private
 
 		void initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
 		void deinitPhysFS();
@@ -57,13 +57,15 @@ class FSFactory{
 		static bool fileExists(const string &path);
 		static bool removeFile(const string &path);
 
-		//Ogg callbacks, FIXME: move to better location
+		//Ogg callbacks
 		static size_t cb_read(void *ptr, size_t size, size_t nmemb, void *source);
 		static int cb_seek(void *source, ogg_int64_t offset, int whence);
 		static int cb_close(void *source);
 		static long cb_tell(void *source);
-		
+
 		//freetype stuff
+		static unsigned long stream_load(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
+		static void stream_close(FT_Stream stream);
 		static int openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face *face);
 };
 

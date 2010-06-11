@@ -142,9 +142,6 @@ vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 	
 #if USE_PHYSFS
 	// FIXME: currently assumes there's always a dir before wildcard
-	//int pos = path.find_last_of('/');
-	//const string dir = path.substr(0, pos);
-	//const string basestr = path.substr(pos+1);  // +1 to skip /
 	const string dir = dirname(path);
 	const string basestr = basename(path);
 	const char *base = basestr.c_str();  // otherwise something is not correctly allocated
@@ -154,7 +151,7 @@ vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 		if(**i=='.'){  //skip files/folders with leading .
 			continue;
 		}
-		b = base + strlen(base) -1;
+		b = base + strlen(base) -1;  // start at end
 		f = *i + strlen(*i) -1;
 		while(*b==*f && (*b!='*' || *b!='.')){  // base=="*." -> wants all
 			b--;
@@ -162,7 +159,7 @@ vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 		}
 		if(*b=='*' || *b=='.'){
 			if(cutExtension){
-				string str = *i;
+				string str(*i);
 				str = cutLastExt(str);
 				res.push_back(str);
 			}else{
@@ -213,19 +210,20 @@ long int FSFactory::cb_tell(void *source){
 
 
 //freetype
-unsigned long stream_load(FT_Stream stream, unsigned long offset, unsigned char* buffer, unsigned long count) {
+unsigned long FSFactory::stream_load(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count) {
 	FileOps *fd = (FileOps*)stream->descriptor.pointer;
 	fd->seek(offset, SEEK_SET);
 	return fd->read(buffer, 1, count);
 }
-void stream_close(FT_Stream stream) {
+
+void FSFactory::stream_close(FT_Stream stream) {
 	FileOps *fd = (FileOps*)stream->descriptor.pointer;
 	fd->close();
 	delete fd;
 }
 
 int FSFactory::openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face *face){
-	FileOps *fops = instance->getFileOps();
+	FileOps *fops = FSFactory::instance->getFileOps();
 	fops->openRead(fname);
 	
 	FT_StreamDesc desc;
@@ -237,15 +235,15 @@ int FSFactory::openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face
 	stream->size = fops->fileSize();
 	stream->pos = 0;
 	stream->descriptor = desc;
-	stream->read = stream_load;
-	stream->close = stream_close;
+	stream->read = FSFactory::stream_load;
+	stream->close = FSFactory::stream_close;
 	
 	FT_Open_Args args;// = new FT_Open_Args;
 	memset(&args, 0, sizeof(FT_Open_Args));
 	args.flags = FT_OPEN_STREAM;
 	args.stream = stream;
 
-	return FT_Open_Face(lib, &args, 0, face);
+	return FT_Open_Face(lib, &args, indx, face);
 	//FIXME: stream is deleted in ft_font.cpp
 }
 

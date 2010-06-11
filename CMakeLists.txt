@@ -200,6 +200,16 @@ ENABLE_TESTING()
 # add_test() called in subdirectory
 
 
+# doxygen
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+	configure_file(${CMAKE_SOURCE_DIR}/Doxyfile.in ${CMAKE_BINARY_DIR}/Doxyfile)
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/Doxyfile)
+else(DOXYGEN_FOUND)
+	message(STATUS "disabled doc")
+endif(DOXYGEN_FOUND)
+
+
 # add stuff
 add_subdirectory(source)
 
