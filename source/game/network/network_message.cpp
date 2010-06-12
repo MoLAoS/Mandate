@@ -38,7 +38,6 @@ namespace Glest { namespace Net {
 // =====================================================
 
 bool Message::receive(NetworkConnection* connection, void* data, int dataSize) {
-	_TRACE_FUNCTION();
 	Socket *socket = connection->getSocket();
 	if (socket->getDataToRead() >= dataSize) {
 		if (socket->receive(data, dataSize)) {
@@ -51,7 +50,6 @@ bool Message::receive(NetworkConnection* connection, void* data, int dataSize) {
 }
 
 bool Message::peek(NetworkConnection* connection, void *data, int dataSize) {
-	_TRACE_FUNCTION();
 	Socket *socket = connection->getSocket();
 	if (socket->getDataToRead() >= dataSize) {
 		if (socket->peek(data, dataSize)) {
@@ -64,7 +62,6 @@ bool Message::peek(NetworkConnection* connection, void *data, int dataSize) {
 }
 
 void Message::send(NetworkConnection* connection, const void* data, int dataSize) const {
-	_TRACE_FUNCTION();
 	Socket *socket = connection->getSocket();
 	send(socket, data, dataSize);
 }
@@ -104,7 +101,6 @@ IntroMessage::IntroMessage(RawMessage raw) {
 }
 
 bool IntroMessage::receive(NetworkConnection* connection) {
-	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
 		NETWORK_LOG(
@@ -117,7 +113,6 @@ bool IntroMessage::receive(NetworkConnection* connection) {
 }
 
 void IntroMessage::send(NetworkConnection* connection) const{
-	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::INTRO);
 	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
 		<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
@@ -154,7 +149,6 @@ ReadyMessage::ReadyMessage(RawMessage raw) {
 }
 
 bool ReadyMessage::receive(NetworkConnection* connection){
-	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(data));
 	if (ok) {
 		NETWORK_LOG(
@@ -166,7 +160,6 @@ bool ReadyMessage::receive(NetworkConnection* connection){
 }
 
 void ReadyMessage::send(NetworkConnection* connection) const{
-	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::READY);
 	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: "
 		<< MessageTypeNames[MessageType(data.messageType)] << ", messageSize: " << data.messageSize
@@ -202,7 +195,6 @@ AiSeedSyncMessage::AiSeedSyncMessage(RawMessage raw) {
 }
 
 bool AiSeedSyncMessage::receive(NetworkConnection* connection){
-	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
 		NETWORK_LOG(
@@ -214,7 +206,6 @@ bool AiSeedSyncMessage::receive(NetworkConnection* connection){
 }
 
 void AiSeedSyncMessage::send(NetworkConnection* connection) const{
-	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::AI_SYNC);
 	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
 		<< ", messageSize: " << data.messageSize
@@ -265,7 +256,6 @@ LaunchMessage::LaunchMessage(RawMessage raw) {
 
 /** Fills in a GameSettings object from this message (for clients) */
 void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
-	_TRACE_FUNCTION();
 	gameSettings->setDescription(data.description.getString());
 	gameSettings->setMapPath(data.map.getString());
 	gameSettings->setTilesetPath(data.tileset.getString());
@@ -287,7 +277,6 @@ void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
 }
 
 bool LaunchMessage::receive(NetworkConnection* connection){
-	_TRACE_FUNCTION();
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
 		NETWORK_LOG(
@@ -299,7 +288,6 @@ bool LaunchMessage::receive(NetworkConnection* connection){
 }
 
 void LaunchMessage::send(NetworkConnection* connection) const {
-	_TRACE_FUNCTION();
 	assert(data.messageType==MessageType::LAUNCH);
 	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(data.messageType)]
 		<< ", messageSize: " << data.messageSize
@@ -345,7 +333,6 @@ CommandListMessage::CommandListMessage(int32 frameCount) {
 }
 
 bool CommandListMessage::addCommand(const NetworkCommand* networkCommand){
-	_TRACE_FUNCTION();
 	if (data.commandCount < maxCommandCount) {
 		data.commands[data.commandCount++]= *networkCommand;
 		data.messageSize += sizeof(NetworkCommand);
@@ -364,7 +351,6 @@ CommandListMessage::CommandListMessage(RawMessage raw) {
 }
 
 bool CommandListMessage::receive(NetworkConnection* connection) {
-	_TRACE_FUNCTION();
 	MsgHeader header; // peek Message Header first
 	if (!Message::peek(connection, &header, sizeof(MsgHeader))) {
 		return false;
@@ -408,12 +394,10 @@ TextMessage::TextMessage(RawMessage raw) {
 }
 
 bool TextMessage::receive(NetworkConnection* connection){
-	_TRACE_FUNCTION();
 	return Message::receive(connection, &data, sizeof(Data));
 }
 
 void TextMessage::send(NetworkConnection* connection) const{
-	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::TEXT);
 	Message::send(connection, &data, sizeof(Data));
 }
@@ -434,12 +418,10 @@ QuitMessage::QuitMessage(RawMessage raw) {
 }
 
 bool QuitMessage::receive(NetworkConnection* connection) {
-	_TRACE_FUNCTION();
 	return Message::receive(connection, &data, sizeof(Data));
 }
 
 void QuitMessage::send(NetworkConnection* connection) const {
-	_TRACE_FUNCTION();
 	assert(data.messageType == MessageType::QUIT);
 	Message::send(connection, &data, sizeof(Data));
 }
@@ -487,7 +469,6 @@ KeyFrame::KeyFrame(RawMessage raw) {
 }
 
 bool KeyFrame::receive(NetworkConnection* connection) {
-	_TRACE_FUNCTION();
 	MsgHeader msgHeader;
 	KeyFrameMsgHeader header;
 	Socket *socket = connection->getSocket();
@@ -530,7 +511,6 @@ bool KeyFrame::receive(NetworkConnection* connection) {
 }
 
 void KeyFrame::send(NetworkConnection* connection) const {
-	_TRACE_FUNCTION();
 	MsgHeader msgHeader;
 	KeyFrameMsgHeader header;
 	msgHeader.messageType = MessageType::KEY_FRAME;

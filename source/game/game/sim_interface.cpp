@@ -54,7 +54,6 @@ SkillCycleTable::SkillCycleTable(RawMessage raw) {
 }
 
 void SkillCycleTable::create(const TechTree *techTree) {
-	_TRACE_FUNCTION();
 	numEntries = theWorld.getSkillTypeFactory()->getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
@@ -72,14 +71,12 @@ void SkillCycleTable::create(const TechTree *techTree) {
 }
 
 void SkillCycleTable::send(NetworkConnection* connection) const {
-	_TRACE_FUNCTION();
 	Message::send(connection, &header, sizeof(MsgHeader));
 	Message::send(connection, cycleTable, header.messageSize);
 	NETWORK_LOG( "SkillCycleTable sent." );
 }
 
 bool SkillCycleTable::receive(NetworkConnection* connection) {
-	_TRACE_FUNCTION();
 	delete cycleTable;
 	cycleTable = 0;
 
@@ -122,14 +119,12 @@ SimulationInterface::SimulationInterface(Program &program)
 }
 
 SimulationInterface::~SimulationInterface() {
-	_TRACE_FUNCTION();
 	delete stats;
 	stats = 0;
 }
 
 
 void SimulationInterface::constructGameWorld(GameState *g) {
-	_TRACE_FUNCTION();
 	delete stats;
 	game = g;
 	world = new World(this);
@@ -138,7 +133,6 @@ void SimulationInterface::constructGameWorld(GameState *g) {
 }
 
 void SimulationInterface::destroyGameWorld() {
-	_TRACE_FUNCTION();
 	deleteValues(aiInterfaces.begin(), aiInterfaces.end());
 	aiInterfaces.clear();
 	delete world;
@@ -172,7 +166,6 @@ ServerInterface* SimulationInterface::asServerInterface() {
 }
 
 void SimulationInterface::loadWorld() {
-	_TRACE_FUNCTION();
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
 	//preload
@@ -196,7 +189,6 @@ void SimulationInterface::loadWorld() {
 }
 
 void SimulationInterface::initWorld() {
-	_TRACE_FUNCTION();
 	commander->init(world);
 	world->init(savedGame ? savedGame->getChild("world") : NULL);
 
@@ -235,7 +227,6 @@ void SimulationInterface::initWorld() {
 
 /** @return maximum update backlog (must be -1 for multiplayer) */
 int SimulationInterface::launchGame() {
-	_TRACE_FUNCTION();
 	Checksum checksums[4 + GameConstants::maxPlayers];
 	
 	world->getTileset()->doChecksum(checksums[0]);
@@ -402,7 +393,6 @@ int SimulationInterface::getUpdateLoops() {
 }
 
 void SimulationInterface::doQuitGame(QuitSource source) {
-	_TRACE_FUNCTION();
 	quitGame(source);
 	quit = true;
 }
@@ -505,7 +495,6 @@ void SimulationInterface::doUpdateProjectile(Unit *u, Projectile *pps, const Vec
 }
 
 void SimulationInterface::changeRole(GameRole role) {
-	_TRACE_FUNCTION();
 	SimulationInterface *newThis = 0;
 	switch (role) {
 		case GameRole::LOCAL:

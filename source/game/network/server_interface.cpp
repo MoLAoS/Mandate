@@ -38,7 +38,6 @@ namespace Glest { namespace Net {
 
 ServerInterface::ServerInterface(Program &prog) 
 		: NetworkInterface(prog) {
-	_TRACE_FUNCTION();
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		slots[i] = NULL;
 	}
@@ -52,7 +51,6 @@ ServerInterface::ServerInterface(Program &prog)
 }
 
 ServerInterface::~ServerInterface() {
-	_TRACE_FUNCTION();
 	quitGame(QuitSource::LOCAL);
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		delete slots[i];
@@ -112,7 +110,6 @@ void ServerInterface::update() {
 }
 
 void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
-	_TRACE_FUNCTION();
 	LOG_NETWORK( "Creating and sending SkillCycleTable." );
 	SimulationInterface::createSkillCycleTable(techTree);
 	this->broadcastMessage(&skillCycleTable);
@@ -167,7 +164,6 @@ void ServerInterface::updateKeyframe(int frameCount) {
 }
 
 void ServerInterface::waitUntilReady(Checksum *checksums) {
-	_TRACE_FUNCTION();
 	Chrono chrono;
 	chrono.start();
 	bool allReady = false;
@@ -243,7 +239,6 @@ void ServerInterface::sendTextMessage(const string &text, int teamIndex){
 }
 
 void ServerInterface::quitGame(QuitSource source) {
-	_TRACE_FUNCTION();
 	LOG_NETWORK( "aborting game" );
 	string text = getHostName() + " has ended the game!";
 	TextMessage networkMessageText(text,getHostName(),-1);
@@ -271,7 +266,6 @@ string ServerInterface::getStatus() const {
 }
 
 void ServerInterface::syncAiSeeds(int aiCount, int *seeds) {
-	_TRACE_FUNCTION();
 	assert(aiCount && seeds);
 	SimulationInterface::syncAiSeeds(aiCount, seeds);
 	LOG_NETWORK("sending " + intToStr(aiCount) + " Ai random number seeds...");
@@ -280,7 +274,6 @@ void ServerInterface::syncAiSeeds(int aiCount, int *seeds) {
 }
 
 void ServerInterface::doLaunchBroadcast() {
-	_TRACE_FUNCTION();
 	LaunchMessage networkMessageLaunch(&gameSettings);
 	LOG_NETWORK( "Launching game, sending launch message(s)" );
 	broadcastMessage(&networkMessageLaunch);	

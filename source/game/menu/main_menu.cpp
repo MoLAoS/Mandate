@@ -141,7 +141,7 @@ void MainMenu::renderFg() {
 	//2d
 	renderer.reset2d();
 	state->render();
-	renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
+	//renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
 
 	if (config.getMiscDebugMode()) {
 		Font *font = coreData.getMenuFontNormal();
@@ -186,6 +186,7 @@ void MainMenu::keyPress(char c) {
 }
 
 void MainMenu::setState(MenuState *state) {
+	_PROFILE_FUNCTION();
 	delete this->state;
 	this->state = state;
 	GraphicComponent::resetFade();

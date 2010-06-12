@@ -32,9 +32,10 @@ WidgetWindow* WidgetWindow::instance;
 
 WidgetWindow::WidgetWindow()
 		: Container(this)
+		, MouseWidget(this)
+		, KeyboardWidget(this)
 		, floatingWidget(0)
-		, anim(0.f)
-		, layerIdCounter(0) {
+		, anim(0.f), slowAnim(0.f) {
 	size.x = Metrics::getInstance().getScreenW();
 	size.y = Metrics::getInstance().getScreenH();
 	cout << "WidgetWindow created, " << size.x << " x " << size.y << endl;
@@ -45,19 +46,10 @@ WidgetWindow::WidgetWindow()
 		mouseDownWidgets[btn] = 0;
 	}
 	lastMouseDownWidget = 0;
+	keyboardFocused = keyboardWidget;
 
 	textRendererBM = theRenderer.getTextRenderer();
 	textRendererFT = theRenderer.getFreeTypeRenderer();
-
-	rootLayer = new Layer(this, "root", layerIdCounter++);
-	rootLayer->setSize(size);
-	layerNames.insert("root");
-	layers.push_front(rootLayer);
-	children.push_back(rootLayer);
-	rootLayer->setParent(this);
-
-	keyboardFocused = rootLayer;
-	mouseOverStack.push(rootLayer);
 }
 
 WidgetWindow::~WidgetWindow() {
@@ -65,173 +57,48 @@ WidgetWindow::~WidgetWindow() {
 }
 
 void WidgetWindow::clear() {
+	_PROFILE_FUNCTION();
 	while (mouseOverStack.top() != this) {
 		mouseOverStack.pop();
 	}
-	keyboardFocused = this;
+	keyboardFocused = keyboardWidget;
 	foreach_enum (MouseButton, btn) {
 		mouseDownWidgets[btn] = 0;
 	}
 	lastMouseDownWidget = 0;
 
-	rootLayer->clear();
-	Container::remChild(rootLayer);
+	if (floatingWidget) {
+		delete floatingWidget;
+		floatingWidget = 0;
+	}
 	Container::clear();
-	layers.clear();
-	layers.push_front(rootLayer);
-	layerNames.clear();
-	layerNames.insert("root");
-	Container::addChild(rootLayer);
 }
 
 void WidgetWindow::render() {
-	LayerList::reverse_iterator it = layers.rbegin();
-	LayerList::reverse_iterator itEnd = layers.rend();
-	while (it != itEnd) {
-		(*it)->render();
-		++it;
-	}
+	Container::render();
 	if (floatingWidget) {
 		floatingWidget->render();
 	}
+	renderMouseCursor();
 }
 
-void WidgetWindow::aquireKeyboardFocus(Widget::Ptr widget) {
+void WidgetWindow::aquireKeyboardFocus(KeyboardWidget::Ptr widget) {
 	assert(widget);
 	keyboardFocused = widget;
 }
 
-void WidgetWindow::releaseKeyboardFocus(Widget::Ptr widget) {
+void WidgetWindow::releaseKeyboardFocus(KeyboardWidget::Ptr widget) {
 	if (keyboardFocused == widget) {
-		keyboardFocused = this;
+		keyboardFocused = keyboardWidget;
 	}
-}
-
-WidgetWindow::LayerList::iterator WidgetWindow::findLayer(int id) {
-	foreach (LayerList, it, layers) {
-		if ((*it)->getId() == id) {
-			return it;
-		}
-	}
-	return layers.end();
-}
-
-WidgetWindow::LayerList::iterator WidgetWindow::findLayer(const string &name) {
-	foreach (LayerList, it, layers) {
-		if ((*it)->getName() == name) {
-			return it;
-		}
-	}
-	return layers.end();
-}
-
-
-void WidgetWindow::changeActiveLayer(LayerList::iterator &it) {
-	if (it == layers.end()) {
-		throw runtime_error("Layer not found.");
-	} else if (it == layers.begin()) {
-		return;
-	}
-	Layer::Ptr ptr = *it;
-	layers.erase(it);
-	layers.push_front(ptr);
-	unwindMouseOverStack();
-	doMouseInto(ptr->getWidgetAt(mousePos));
-}
-
-
-void WidgetWindow::setActiveLayer(const string &layer) {
-	LayerList::iterator it = findLayer(layer);
-	changeActiveLayer(it);
-}
-
-void WidgetWindow::setActiveLayer(const int layer) {
-	LayerList::iterator it = findLayer(layer);
-	changeActiveLayer(it);
-}
-
-Layer::Ptr WidgetWindow::getLayer(const string &layer) {
-	LayerList::iterator it = findLayer(layer);
-	return (it != layers.end()) ? *it : 0;
-}
-
-Layer::Ptr WidgetWindow::getLayer(const int layer) {
-	LayerList::iterator it = findLayer(layer);
-	return (it != layers.end()) ? *it : 0;
-}
-
-Layer::Ptr WidgetWindow::addNewLayer(const string &name, bool activate) {
-	if (layerNames.find(name) != layerNames.end()) {
-		throw runtime_error("Error: duplicate layer names.");
-	}
-	Layer::Ptr ptr = new Layer(this, name, layerIdCounter++);
-	ptr->setParent(this);
-	ptr->setSize(size);
-	layerNames.insert(name);
-	layers.push_back(ptr);
-	children.push_back(ptr);
-	if (activate) {
-		layers.push_front(ptr);
-	} else {
-		layers.push_back(ptr);
-	}
-	return ptr;
-}
-
-Widget::Ptr WidgetWindow::getWidgetAt(const Vec2i &pos) {
-	Layer::Ptr layer;
-	foreach (LayerList, it, layers) {
-		layer = *it;
-		if (layer->isEnabled() && layer->isInside(pos)) {
-			return layer->getWidgetAt(pos);
-		}
-	}
-	return this;
-}
-
-void WidgetWindow::registerMouseWidget(Widget::Ptr asWidget, MouseWidget::Ptr asMouseWidget) {
-	assert(mouseWidgetMap.find(asWidget) == mouseWidgetMap.end());
-	mouseWidgetMap[asWidget] = asMouseWidget;
-}
-
-void WidgetWindow::unregisterMouseWidget(Widget::Ptr mouseWidget) {
-	assert(mouseWidgetMap.find(mouseWidget) != mouseWidgetMap.end());
-	mouseWidgetMap.erase(mouseWidget);
-}
-
-MouseWidget::Ptr WidgetWindow::asMouseWidget(Widget::Ptr widget) {
-	MouseWidgetMap::iterator it = mouseWidgetMap.find(widget);
-	if (it == mouseWidgetMap.end()) {
-		return 0;
-	}
-	return it->second;
-}
-
-void WidgetWindow::registerKeyboardWidget(Widget::Ptr asWidget, KeyboardWidget::Ptr asKeyboardWidget) {
-	assert(keyboardWidgetMap.find(asWidget) == keyboardWidgetMap.end());
-	keyboardWidgetMap[asWidget] = asKeyboardWidget;
-}
-
-void WidgetWindow::unregisterKeyboardWidget(Widget::Ptr widget) {
-	assert(keyboardWidgetMap.find(widget) != keyboardWidgetMap.end());
-	keyboardWidgetMap.erase(widget);
-}
-
-KeyboardWidget::Ptr WidgetWindow::asKeyboardWidget(Widget::Ptr widget) {
-	KeyboardWidgetMap::iterator it = keyboardWidgetMap.find(widget);
-	if (it == keyboardWidgetMap.end()) {
-		return 0;
-	}
-	return it->second;
 }
 
 void WidgetWindow::unwindMouseOverStack(Widget::Ptr newTop) {
 	while (mouseOverStack.top() != newTop) {
-		MouseWidget::Ptr mouseWidget = asMouseWidget(mouseOverStack.top());
-		if (mouseWidget) {
-			mouseWidget->EW_mouseOut();
+		MouseWidget::Ptr mw = mouseOverStack.top()->asMouseWidget();
+		if (mw) {
+			mw->EW_mouseOut();
 		}
-		mouseOverStack.top()->mouseOut();
 		mouseOverStack.pop();
 	}
 }
@@ -266,11 +133,10 @@ void WidgetWindow::doMouseInto(Widget::Ptr widget) {
 			assert(widget);
 		}
 		while (!tmpStack.empty()) {
-			MouseWidget::Ptr mouseWidget = asMouseWidget(tmpStack.top());
-			if (mouseWidget) {
-				mouseWidget->EW_mouseIn();
+			MouseWidget::Ptr mw = tmpStack.top()->asMouseWidget();
+			if (mw) {
+				mw->EW_mouseIn();
 			}
-			tmpStack.top()->mouseIn();
 			mouseOverStack.push(tmpStack.top());
 			tmpStack.pop();
 		}
@@ -316,6 +182,10 @@ void WidgetWindow::update() {
 	if (anim > 1.f) {
 		anim -= 1.f;
 	}
+	slowAnim += animSpeed / 3.f;
+	if (slowAnim > 1.f) {
+		slowAnim -= 1.f;
+	}
 	if (!toClean.empty()) {
 		foreach (WidgetList, it, toClean) {
 			delete *it;
@@ -327,6 +197,20 @@ void WidgetWindow::update() {
 	}
 }
 
+void WidgetWindow::destroyFloater() {
+	// destroy floater
+	delete floatingWidget;
+	floatingWidget = 0;
+	while (mouseOverStack.top() != this) {
+		mouseOverStack.pop();
+	}
+	doMouseInto(getWidgetAt(mousePos));
+	if (lastMouseDownWidget) {
+		lastMouseDownWidget = 0;
+		mouseDownWidgets[lastMouseDownButton] = 0;
+	}
+}
+
 void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 	mousePos.x = x;
 	mousePos.y = getH() - y;
@@ -335,46 +219,42 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
 		} else {
-			// destroy floater
-			delete floatingWidget;
-			floatingWidget = 0;
-			doMouseInto(layers.front()->getWidgetAt(mousePos));
+			destroyFloater();
 			return;
 		}
 	} else {
-		widget = layers.front()->getWidgetAt(mousePos);
+		widget = getWidgetAt(mousePos);
 	}
-
-	if (lastMouseDownWidget && lastMouseDownWidget != widget) {
-		Widget::Ptr ancestor = findCommonAncestor(lastMouseDownWidget, widget);
+	if (lastMouseDownWidget && lastMouseDownWidget != widget->asMouseWidget()) {
+		Widget::Ptr ancestor = findCommonAncestor(lastMouseDownWidget->me, widget);
 		unwindMouseOverStack(ancestor);
 		doMouseInto(widget);
 	}
-
-	if (keyboardFocused != this && keyboardFocused != widget) {
-		keyboardFocused->lostKeyboardFocus();
-		keyboardFocused = this;
+	if (keyboardFocused != keyboardWidget && keyboardFocused != widget->asKeyboardWidget()) {
+		keyboardFocused->EW_lostKeyboardFocus();
+		keyboardFocused = keyboardWidget;
 	}
-	mouseDownWidgets[msBtn] = lastMouseDownWidget = widget;
-	widget->mouseDown(msBtn, mousePos);
-	
 	while (widget) {
-		MouseWidget::Ptr mouseWidget = asMouseWidget(widget);
-		if (mouseWidget) {
-			if (mouseWidget->EW_mouseDown(msBtn, mousePos)) {
-				return;
+		MouseWidget::Ptr mw = widget->asMouseWidget();
+		if (mw && mw->EW_mouseDown(msBtn, mousePos)) {
+			if (lastMouseDownWidget) {
+				mouseDownWidgets[lastMouseDownButton] = 0;
 			}
+			mouseDownWidgets[msBtn] = lastMouseDownWidget = mw;
+			lastMouseDownButton = msBtn;
+			return;
 		}
 		widget = widget->getParent();
 	}
+	mouseDownWidgets[msBtn] = lastMouseDownWidget = 0;
 }
 
 void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	Widget::Ptr downWidget = mouseDownWidgets[msBtn];
+	MouseWidget::Ptr downWidget = mouseDownWidgets[msBtn];
 	if (downWidget) {
-		downWidget->mouseUp(msBtn, mousePos);
+		downWidget->EW_mouseUp(msBtn, mousePos);
 		mouseDownWidgets[msBtn] = 0;
 	}
 	if (lastMouseDownWidget == downWidget) {
@@ -382,12 +262,11 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 		if (floatingWidget) {
 			doMouseInto(floatingWidget->getWidgetAt(mousePos));
 		} else {
-			doMouseInto(layers.front()->getWidgetAt(mousePos));
+			doMouseInto(getWidgetAt(mousePos));
 		}
 	}
 }
 
-///@todo a badly configured Gui can crash this pretty easily.. add sanity checks
 void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	assert(!mouseOverStack.empty());
 	mousePos.x = x;
@@ -399,8 +278,8 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 			widget = floatingWidget->getWidgetAt(mousePos);
 		}
 	} else {
-		if (layers.front()->isInside(mousePos)) {
-			widget = layers.front()->getWidgetAt(mousePos);
+		if (isInside(mousePos)) {
+			widget = getWidgetAt(mousePos);
 		}
 	}
 	if (!widget) {
@@ -408,37 +287,104 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	}
 	assert(widget);
 	if (lastMouseDownWidget) {
-		lastMouseDownWidget->mouseMove(mousePos);
+		lastMouseDownWidget->EW_mouseMove(mousePos);
 	} else {
 		doMouseInto(widget);
-		widget->mouseMove(mousePos);
+		while (widget) {
+			if (widget->asMouseWidget()) {
+				if (widget->asMouseWidget()->EW_mouseMove(mousePos)) {
+					return;
+				}
+			}
+			widget = widget->getParent();
+		}
 	}
 }
 
 void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	///@todo floatingWidget
-	layers.front()->getWidgetAt(mousePos)->mouseDoubleClick(msBtn, mousePos);
+	Widget::Ptr widget = 0;
+	if (floatingWidget) {
+		if (floatingWidget->isInside(mousePos)) {
+			widget = floatingWidget->getWidgetAt(mousePos);
+		} else {
+			destroyFloater();
+			return;
+		}
+	} else {
+		widget = getWidgetAt(mousePos);
+	}
+	while (widget) {
+		if (widget->asMouseWidget()
+		&& widget->asMouseWidget()->EW_mouseDoubleClick(msBtn, mousePos)) {
+			return;
+		}
+		widget = widget->getParent();
+	}
 }
 
 void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	///@todo floatingWidget
-	layers.front()->getWidgetAt(mousePos)->mouseWheel(mousePos, zDelta);
+	Widget::Ptr widget = 0;
+	if (floatingWidget && floatingWidget->isInside(mousePos)) {
+		widget = floatingWidget->getWidgetAt(mousePos);
+	} else {
+		widget = getWidgetAt(mousePos);
+	}
+	while (widget) {
+		if (widget->asMouseWidget()
+		&& widget->asMouseWidget()->EW_mouseWheel(mousePos, zDelta)) {
+			return;
+		}
+		widget = widget->getParent();
+	}
 }
 
 void WidgetWindow::eventKeyDown(const Key &key) {
-	keyboardFocused->keyDown(key);
+	keyboardFocused->EW_keyDown(key);
 }
 
 void WidgetWindow::eventKeyUp(const Key &key) {
-	keyboardFocused->keyUp(key);
+	keyboardFocused->EW_keyUp(key);
 }
 
 void WidgetWindow::eventKeyPress(char c) {
-	keyboardFocused->keyPress(c);
+	keyboardFocused->EW_keyPress(c);
+}
+
+void WidgetWindow::renderMouseCursor() {
+	float color1, color2;
+
+	int mAnim = int(slowAnim * 200) - 100;
+	color2 = float(abs(mAnim)) / 100.f / 2.f + 0.4f;
+	color1 = float(abs(mAnim)) / 100.f / 2.f + 0.8f;
+
+	Vec2i aPos = mousePos;// + Vec2i(25,0);
+
+	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
+		glEnable(GL_BLEND);
+
+		//inside
+		glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
+		glBegin(GL_TRIANGLES);
+			glVertex2i(aPos.x, aPos.y);
+			glVertex2i(aPos.x+20, aPos.y-10);
+			glVertex2i(aPos.x+10, aPos.y-20);
+		glEnd();
+
+		//border
+		glLineWidth(2);
+		glBegin(GL_LINE_LOOP);
+			glColor4f(1.f, 0.2f, 0, color1);
+			glVertex2i(aPos.x, aPos.y);
+			glColor4f(1.f, 0.4f, 0, color2);
+			glVertex2i(aPos.x+20, aPos.y-10);
+			glColor4f(1.f, 0.4f, 0, color2);
+			glVertex2i(aPos.x+10, aPos.y-20);
+		glEnd();
+	glPopAttrib();
 }
 
 }}

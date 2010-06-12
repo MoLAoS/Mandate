@@ -142,15 +142,15 @@ void Button::setSize(const Vec2i &sz) {
 	setImage(tex);
 }
 
-bool Button::mouseDown(MouseButton btn, Vec2i pos) {
+bool Button::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
-	return getParent()->mouseDown(btn, pos);
+	return true;
 }
 
-bool Button::mouseUp(MouseButton btn, Vec2i pos) {
+bool Button::EW_mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (pressed && hover) {
 			Clicked(this);
@@ -158,7 +158,7 @@ bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 		pressed = false;
 		return true;
 	}
-	return getParent()->mouseDown(btn, pos);
+	return false;
 }
 
 void Button::render() {
@@ -192,7 +192,7 @@ CheckBox::CheckBox(Container::Ptr parent)
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), true, false);
+	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), false);
 	addText("Yes");
 }
 
@@ -202,7 +202,7 @@ CheckBox::CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), true, false);
+	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), false);
 	addText("Yes");
 	int y = int((size.y - getTextFont()->getMetrics()->getHeight()) / 2);
 	setTextPos(Vec2i(40, y));
@@ -236,15 +236,15 @@ Vec2i CheckBox::getPrefSize() const {
 //Vec2i CheckBox::getMaxSize() const {
 //}
 
-bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
+bool CheckBox::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
-	return getParent()->mouseDown(btn, pos);
+	return false;
 }
 
-bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
+bool CheckBox::EW_mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (pressed && hover) {
 			checked = !checked;
@@ -253,7 +253,7 @@ bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
 		pressed = false;
 		return true;
 	}
-	return getParent()->mouseDown(btn, pos);
+	return false;
 }
 
 void CheckBox::render() {
@@ -306,20 +306,20 @@ TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 	setBorderSize(2);
 }
 
-bool TextBox::mouseDown(MouseButton btn, Vec2i pos) {
+bool TextBox::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	if (isEnabled()) {
 		focus = true;
 		getRootWindow()->aquireKeyboardFocus(this);
 		return true;
 	}
-	return Widget::mouseDown(btn, pos);
+	return false;
 }
 
-bool TextBox::mouseUp(MouseButton btn, Vec2i pos) {
-	return Widget::mouseUp(btn, pos);
+bool TextBox::EW_mouseUp(MouseButton btn, Vec2i pos) {
+	return true;
 }
 
-bool TextBox::keyDown(Key key) {
+bool TextBox::EW_keyDown(Key key) {
 	KeyCode code = key.getCode();
 	switch (code) {
 		case KeyCode::BACK_SPACE: {
@@ -351,14 +351,14 @@ bool TextBox::keyDown(Key key) {
 		default:
 			break;
 	}
-	return Widget::keyDown(key);
+	return false;
 }
 
-bool TextBox::keyUp(Key key) {
-	return Widget::keyUp(key);
+bool TextBox::EW_keyUp(Key key) {
+	return false;
 }
 
-bool TextBox::keyPress(char c) {
+bool TextBox::EW_keyPress(char c) {
 	if (c >= 32 && c <= 126) { // 'space' -> 'tilde' [printable ascii char]
 		cout << "KeyPress: ASCII=='" << c << "' [" << int(c) << "]\n";
 		string s(getText());
@@ -367,10 +367,10 @@ bool TextBox::keyPress(char c) {
 		changed = true;
 		return true;
 	}
-	return Widget::keyPress(c);
+	return false;
 }
 
-void TextBox::lostKeyboardFocus() {
+void TextBox::EW_lostKeyboardFocus() {
 	focus = false;
 	if (changed) {
 		TextChanged(this);
@@ -459,7 +459,7 @@ void VerticalScrollBar::recalc() {
 	thumbSize = int(availRatio * shaftHeight);
 }
 
-bool VerticalScrollBar::mouseDown(MouseButton btn, Vec2i pos) {
+bool VerticalScrollBar::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	pressedPart = hoverPart;
 	if (pressedPart == Part::UPPER_SHAFT || pressedPart == Part::LOWER_SHAFT) {
@@ -471,10 +471,10 @@ bool VerticalScrollBar::mouseDown(MouseButton btn, Vec2i pos) {
 		timeCounter = 0;
 		moveOnMouseUp = true;
 	}
-	return getParent()->mouseDown(btn, pos);
+	return true;
 }
 
-bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
+bool VerticalScrollBar::EW_mouseUp(MouseButton btn, Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	Part upPart = partAt(localPos);
 
@@ -493,7 +493,7 @@ bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
 		}
 	}
 	pressedPart = Part::NONE;
-	return getParent()->mouseUp(btn, pos);
+	return true;
 }
 
 void VerticalScrollBar::update() {
@@ -533,7 +533,7 @@ VerticalScrollBar::Part VerticalScrollBar::partAt(const Vec2i &pos) {
 	}
 }
 
-bool VerticalScrollBar::mouseMove(Vec2i pos) {
+bool VerticalScrollBar::EW_mouseMove(Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	if (pressedPart == Part::NONE) {
 		hoverPart = partAt(localPos);
@@ -557,7 +557,7 @@ bool VerticalScrollBar::mouseMove(Vec2i pos) {
 			// don't care for shaft clicked here
 		}
 	}
-	return getParent()->mouseMove(pos);
+	return true;
 }
 
 Vec2i VerticalScrollBar::getPrefSize() const {return Vec2i(-1);}
@@ -615,6 +615,10 @@ Panel::Panel(Container::Ptr parent, Vec2i pos, Vec2i sz)
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	setPaddingParams(10, 5);
 	setBorderSize(2);
+}
+
+Panel::Panel(WidgetWindow::Ptr window)
+		: Container(window) {
 }
 
 void Panel::setPaddingParams(int panelPad, int widgetPad) {
@@ -727,6 +731,13 @@ ListBase::ListBase(Container::Ptr parent, Vec2i pos, Vec2i size)
 	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
 }
 
+ListBase::ListBase(WidgetWindow* window) 
+		: Panel(window)
+		, selectedItem(0)
+		, selectedIndex(-1) {
+	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
+}
+
 // =====================================================
 //  class ListBox
 // =====================================================
@@ -785,7 +796,7 @@ void ListBox::addItems(const vector<string> &items) {
 	Vec2i sz(getSize().x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
 	foreach_const (vector<string>, it, items) {
 		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz);
-		nItem->setTextParams(*it, Vec4f(1.f), itemFont, true, true);
+		nItem->setTextParams(*it, Vec4f(1.f), itemFont, true);
 		listBoxItems.push_back(nItem);
 		nItem->Selected.connect(this, &ListBox::onSelected);
 	}
@@ -795,7 +806,7 @@ void ListBox::addItems(const vector<string> &items) {
 void ListBox::addItem(const string &item) {
 	Vec2i sz(getSize().x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
 	ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz);
-	nItem->setTextParams(item, Vec4f(1.f), itemFont, true, true);
+	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);
 }
@@ -987,15 +998,15 @@ void ListBoxItem::render() {
 	}
 }
 
-bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
+bool ListBoxItem::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
-	return Widget::mouseDown(btn, pos);
+	return false;
 }
 
-bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
+bool ListBoxItem::EW_mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (hover && !selected) {
 			Selected(this);
@@ -1007,7 +1018,7 @@ bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 		pressed = false;
 		return true;
 	}
-	return Widget::mouseUp(btn, pos);
+	return false;
 }
 
 // =====================================================
@@ -1043,7 +1054,7 @@ DropList::DropList(Container::Ptr parent, Vec2i pos, Vec2i size)
 	Vec2i liPos(borderSize + getPadding());
 	Vec2i liSz(size.x - btn_sz - borderSize * 2 - getPadding(), btn_sz);
 	selectedItem = new ListBoxItem(this, liPos, liSz);
-	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true, true);
+	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
 	selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 }
 

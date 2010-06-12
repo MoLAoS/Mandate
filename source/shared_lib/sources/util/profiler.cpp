@@ -24,9 +24,8 @@ namespace Shared { namespace Util {
 
 #ifdef SL_PROFILE
 
-using Shared::Platform::Chrono;
-
-using Shared::Platform::Chrono;
+using Platform::Chrono;
+using namespace PhysFS;
 
 namespace Profile {
 
@@ -197,63 +196,6 @@ void sectionEnd(const string &name) {
 }
 
 } // namespace Profile
-
-#endif
-
-#ifdef SL_TRACE
-
-namespace Trace {
-	
-	static int currDepth = 0;
-	
-	const char *trace_filename = "gae_trace.txt";
-	char space20[] = "                    ";
-
-	FileOps *traceFile;
-
-	struct TraceLogFileContainer {
-		TraceLogFileContainer() {
-			traceFile = FSFactory::getInstance()->getFileOps();
-			traceFile->openWrite(trace_filename);
-		}
-		~TraceLogFileContainer() {
-			traceFile->close();
-		}
-	};
-
-	FunctionTrace::FunctionTrace(const char *name) : name(name), callDepth(currDepth) {
-		static TraceLogFileContainer startLog;
-		int space = callDepth;
-		while (space >= 20) {
-			traceFile->write(space20, 20, 1);
-			space -= 20;
-		}
-		if (space) {
-			traceFile->write(space20, space, 1);
-		}
-		static char buf[1024];
-		int len = sprintf(buf, "+ %s()\n", name);
-		traceFile->write(buf, len, 1);
-		++currDepth;
-	}
-
-	FunctionTrace::~FunctionTrace() {
-		int space = callDepth;
-		while (space >= 20) {
-			traceFile->write(space20, 20, 1);
-			space -= 20;
-		}
-		if (space) {
-			traceFile->write(space20, space, 1);
-		}
-		static char buf[1024];
-		int len = sprintf(buf, "- %s()\n", name);
-		traceFile->write(buf, len, 1);
-		--currDepth;
-	}
-
-} // namespace Trace
-
 
 #endif
 

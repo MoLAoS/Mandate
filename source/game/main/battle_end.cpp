@@ -39,12 +39,10 @@ using namespace Menu;
 // =====================================================
 
 BattleEnd::BattleEnd(Program &program, bool quickExit) : ProgramState(program) {
-	_TRACE_FUNCTION();
 	this->isQuickExit = quickExit;
 }
 
 BattleEnd::~BattleEnd() {
-	_TRACE_FUNCTION();
 	SoundRenderer::getInstance().playMusic(CoreData::getInstance().getMenuMusic());
 }
 

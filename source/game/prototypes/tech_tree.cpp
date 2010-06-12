@@ -38,7 +38,6 @@ using Main::Program;
 // =====================================================
 
 bool TechTree::preload(const string &dir, const set<string> &factionNames){
-	_TRACE_FUNCTION();
 	Logger &logger = Logger::getInstance();
 	bool loadOk = true;
 
@@ -159,7 +158,6 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 }
 
 bool TechTree::load(const string &dir, const set<string> &factionNames){
-	_TRACE_FUNCTION();
 	int i;
 	set<string>::const_iterator fn;
 	bool loadOk=true;

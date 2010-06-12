@@ -102,7 +102,6 @@ int GameState::getUpdateInterval() const {
 }
 
 GameState::~GameState() {
-	_TRACE_FUNCTION();
 	Logger &logger= Logger::getInstance();
 	Renderer &renderer= Renderer::getInstance();
 
@@ -131,7 +130,6 @@ GameState::~GameState() {
 // ==================== init and load ====================
 
 void GameState::load() {
-	_TRACE_FUNCTION();
 	GameSettings &gameSettings = theSimInterface->getGameSettings();
 	Logger &logger= Logger::getInstance();
 	const string &mapName = gameSettings.getMapPath();
@@ -160,7 +158,6 @@ void GameState::load() {
 }
 
 void GameState::init() {
-	_TRACE_FUNCTION();
 	Lang &lang= Lang::getInstance();
 	Logger &logger= Logger::getInstance();
 	CoreData &coreData= CoreData::getInstance();
@@ -249,7 +246,6 @@ void GameState::init() {
 
 //update
 void GameState::update() {
-	_TRACE_FUNCTION();
 	// a) Updates non dependant on speed
 	if (netError) {
 		return;
@@ -652,7 +648,6 @@ void GameState::keyPress(char c) {
 }
 
 void GameState::quitGame() {
-	_TRACE_FUNCTION();
 	program.setState(new BattleEnd(program));
 }
 
@@ -797,7 +792,7 @@ void GameState::render2d(){
 	}
 
 	//2d mouse
-	renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos()? 1.f: 0.f);
+	//renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos()? 1.f: 0.f);
 }
 
 

@@ -63,7 +63,6 @@ World::World(SimulationInterface *iSim)
 		, upgradeTypeFactory(0)
 		, skillTypeFactory(0)
 		, commandTypeFactory(0) {
-	_TRACE_FUNCTION();
 	Config &config = Config::getInstance();
 
 	GameSettings &gs = iSim->getGameSettings();
@@ -86,7 +85,6 @@ World::World(SimulationInterface *iSim)
 }
 
 World::~World() {
-	_TRACE_FUNCTION();
 	Logger::getInstance().add("~World", !Program::getInstance()->isTerminating());
 	alive = false;
 
@@ -116,7 +114,6 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
 	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
@@ -174,7 +171,6 @@ void World::loadSaved(const XmlNode *worldNode) {
 
 // preload tileset and techtree for progressbar
 void World::preload() {
-	_TRACE_FUNCTION();
 	GameSettings &gs = iSim->getGameSettings();
 	tileset.count(gs.getTilesetPath());
 	set<string> names;
@@ -188,7 +184,6 @@ void World::preload() {
 
 //load tileset
 bool World::loadTileset() {
-	_TRACE_FUNCTION();
 	tileset.load(iSim->getGameSettings().getTilesetPath());
 	timeFlow.init(&tileset);
 	return true;
@@ -196,7 +191,6 @@ bool World::loadTileset() {
 
 //load tech
 bool World::loadTech() {
-	_TRACE_FUNCTION();
 	GameSettings &gs = iSim->getGameSettings();
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
@@ -209,14 +203,12 @@ bool World::loadTech() {
 
 //load map
 bool World::loadMap() {
-	_TRACE_FUNCTION();
 	const string &path = iSim->getGameSettings().getMapPath();
 	map.load(path, &techTree, &tileset, iSim->getObjectFactory());
 	return true;
 }
 
 bool World::loadScenario(const string &path) {
-	_TRACE_FUNCTION();
 	assert(!scenario);
 	scenario = new Scenario();
 	scenario->load(path);
@@ -274,7 +266,6 @@ void World::updateEarthquakes(float seconds) {
 #endif // Disable Earthquakes
 
 void World::processFrame() {
-	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
 
 	++frameCount;
@@ -358,7 +349,6 @@ void World::hit(Unit *attacker) {
 }
 
 void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked) {
-	_TRACE_FUNCTION();
 	_PROFILE_FUNCTION();
 	typedef std::map<Unit*, fixed> DistMap;
 	//hit attack positions
@@ -398,7 +388,6 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 
 // to world
 void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) {
-	_TRACE_FUNCTION();
 	int var = ast->getAttackVar();
 	int armor = attacked->getArmor();
 	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
@@ -420,7 +409,6 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 }
 
 void World::doKill(Unit *killer, Unit *killed) {
-	_TRACE_FUNCTION();
 	ScriptManager::onUnitDied(killed);
 	iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
 	if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
@@ -510,7 +498,6 @@ void World::appyEffect(Unit *u, Effect *e) {
 
 /** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
 void World::tick() {
-	_TRACE_FUNCTION();
 	if (!fogOfWarSmoothing) {
 		minimap.updateFowTex(1.f);
 	}

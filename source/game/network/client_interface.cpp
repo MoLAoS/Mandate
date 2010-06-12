@@ -45,7 +45,6 @@ namespace Glest { namespace Net {
 
 ClientInterface::ClientInterface(Program &prog)
 		: NetworkInterface(prog) {
-	_TRACE_FUNCTION();
 	clientSocket = NULL;
 	launchGame = false;
 	introDone = false;
@@ -53,14 +52,12 @@ ClientInterface::ClientInterface(Program &prog)
 }
 
 ClientInterface::~ClientInterface() {
-	_TRACE_FUNCTION();
 	quitGame(QuitSource::LOCAL);
 	delete clientSocket;
 	clientSocket = NULL;
 }
 
 void ClientInterface::connect(const Ip &ip, int port) {
-	_TRACE_FUNCTION();
 	delete clientSocket;
 	clientSocket = new ClientSocket();
 	clientSocket->connect(ip, port);
@@ -69,7 +66,6 @@ void ClientInterface::connect(const Ip &ip, int port) {
 }
 
 void ClientInterface::reset() {
-	_TRACE_FUNCTION();
 	delete clientSocket;
 	clientSocket = NULL;
 }
@@ -122,7 +118,6 @@ void ClientInterface::doLaunchMessage() {
 }
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
-	_TRACE_FUNCTION();
 	int skillCount = theWorld.getSkillTypeFactory()->getSkillTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
 	LOG_NETWORK( "waiting for server to send Skill Cycle Table." );
@@ -151,7 +146,6 @@ void ClientInterface::updateLobby() {
 }
 
 void ClientInterface::syncAiSeeds(int aiCount, int *seeds) {
-	_TRACE_FUNCTION();
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();
 	if (raw.type != MessageType::AI_SYNC) {
@@ -166,7 +160,6 @@ void ClientInterface::syncAiSeeds(int aiCount, int *seeds) {
 }
 
 void ClientInterface::waitUntilReady(Checksum *checksums) {
-	_TRACE_FUNCTION();
 	// Should send checksums, then the server will know if something is screwed up...
 	ReadyMessage readyMsg;
 	send(&readyMsg);
@@ -260,7 +253,6 @@ void ClientInterface::quitGame(QuitSource source) {
 }
 
 void ClientInterface::startGame() {
-	_TRACE_FUNCTION();
 	updateKeyframe(0);
 }
 
@@ -283,7 +275,6 @@ void ClientInterface::update() {
 }
 
 void ClientInterface::updateKeyframe(int frameCount) {
-	_TRACE_FUNCTION();
 	// give all commands from last KeyFrame
 	for (size_t i=0; i < keyFrame.getCmdCount(); ++i) {
 		pendingCommands.push_back(*keyFrame.getCmd(i));

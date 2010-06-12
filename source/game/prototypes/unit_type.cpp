@@ -111,7 +111,6 @@ void UnitType::preLoad(const string &dir){
 }
 
 bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType){
-	_TRACE_FUNCTION();
 	string path;
 
 	Logger::getInstance().add("Unit type: " + dir, true);

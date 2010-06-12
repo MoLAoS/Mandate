@@ -33,8 +33,9 @@ namespace Glest { namespace Main {
 // =====================================================
 
 Intro::Intro(Program &program) : ProgramState(program) {
-	CoreData &coreData= CoreData::getInstance();
-	const Metrics &metrics= Metrics::getInstance();
+	CoreData &coreData = CoreData::getInstance();
+	Lang &lang = Lang::getInstance();
+	const Metrics &metrics = Metrics::getInstance();
 	timer=0;
 
 	Vec2i screenSize = metrics.getScreenDims();
@@ -49,14 +50,14 @@ Intro::Intro(Program &program) : ProgramState(program) {
 
 	Font *font = coreData.getAdvancedEngineFont();
 	lblAdvanced = new Widgets::StaticText(logoPanel);
-	lblAdvanced->setTextParams("Advanced", Vec4f(1.f), font, true);
+	lblAdvanced->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
 	Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
 	lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
 	lblAdvanced->setSize(sz);
 	lblAdvanced->centreText();
 
 	lblEngine = new Widgets::StaticText(logoPanel);
-	lblEngine->setTextParams("Engine", Vec4f(1.f), font, true);
+	lblEngine->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
 	lblEngine->setPos(Vec2i(285, 60));
 	lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
 	lblEngine->centreText();
@@ -65,7 +66,7 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	font = coreData.getFreeTypeFont();
 	pos = Vec2i(285 + lblEngine->getSize().x, 62);
 	lblVersion = new Widgets::StaticText(logoPanel);
-	lblVersion->setTextParams("0.3.0"/*gaeVersionString*/, Vec4f(1.f), font, true);
+	lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);
 	lblVersion->setPos(pos);
 	lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
 	lblVersion->centreText();
@@ -95,9 +96,11 @@ void Intro::update(){
 		const Metrics &metrics= Metrics::getInstance();
 		program.clear();
 		lblWebsite = new Widgets::StaticText(&program);
-		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getFreeTypeFont(), true);
+		lblWebsite->setBorderParams(Widgets::BorderStyle::SOLID, 2, Vec3f(1.f), 0.5f);
+		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getFreeTypeFont());
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
+		lblWebsite->centreText();
 		lblWebsite->setFade(0.f);
 	} else if (timer <= 1101) {
 		float fade = (timer - 801) / 300.f;

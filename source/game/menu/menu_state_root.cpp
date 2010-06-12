@@ -40,12 +40,13 @@ namespace Glest { namespace Menu {
 // =====================================================
 
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
-		: MenuState(program, mainMenu/*, "root"*/)
+		: MenuState(program, mainMenu)
 		, selectedItem(RootMenuItem::INVALID)
 		, fade(0.f)
 		, fadeIn(true)
 		, fadeOut(false)
 		, transition(false) {
+	_PROFILE_FUNCTION();
 	Lang &lang= Lang::getInstance();
 	const Metrics &metrics = Metrics::getInstance();
 	const CoreData &coreData = CoreData::getInstance();
@@ -64,25 +65,25 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
 
-	program.addNewLayer("bg");
-
 	// Glest Logo PicturePanel
 	pos = Vec2i(metrics.getScreenW() / 2 - 256, 450);
 	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(512, 256));
+	pp->setBorderSize(0);
+	pp->setPadding(0);
 	pp->setImage(coreData.getLogoTexture());
 	pp->setAutoLayout(false);
 	
 	// Advanced Engine labels
 	font = coreData.getAdvancedEngineFont();
 	Widgets::StaticText *label = new Widgets::StaticText(pp);
-	label->setTextParams("Advanced", Vec4f(1.f), font, true);
+	label->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
 	Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 	label->setPos(Vec2i(255 - sz.x, 60));
 	label->setSize(sz);
 	label->centreText();
 
 	label = new Widgets::StaticText(pp);
-	label->setTextParams("Engine", Vec4f(1.f), font, true);
+	label->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
 	label->setPos(Vec2i(285, 60));
 	label->setSize(label->getTextDimensions() + Vec2i(10,5));
 	label->centreText();
@@ -91,7 +92,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	// Version label
 	font = coreData.getFreeTypeFont();
 	label = new Widgets::StaticText(pp);
-	label->setTextParams("0.3.0"/*gaeVersionString*/, Vec4f(1.f), font, true);
+	label->setTextParams(gaeVersionString, Vec4f(1.f), font);
 	
 	sz = label->getTextDimensions() + Vec2i(10,5);
 	label->setPos(pos/*Vec2i(256 - sz.x / 2, 10)*/);
@@ -102,14 +103,12 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pos = Vec2i(metrics.getScreenW() / 2 - 64, 25);
 	new Widgets::StaticImage(&program, pos, Vec2i(128, 64), coreData.getGplTexture());
 
-	program.setActiveLayer("root");
-
 	if (program.getCmdArgs().isTest("widgets")) {
 		// testing TextBox
 		font = coreData.getfreeTypeMenuFont();
 		int h = int(font->getMetrics()->getHeight() + 1.f);
 		Widgets::TextBox *txtBox = new Widgets::TextBox(&program, Vec2i(10,10), Vec2i(200, h));
-		txtBox->setTextParams("", Vec4f(1.f), font, true, false);
+		txtBox->setTextParams("", Vec4f(1.f), font, false);
 		txtBox->setTextPos(Vec2i(5,0));
 		txtBox->TextChanged.connect(this, &MenuStateRoot::onTextChanged);
 
@@ -179,11 +178,11 @@ void MenuStateRoot::onListBoxChanged(Widgets::ListBase *lst) {
 }
 
 void MenuStateRoot::onComboBoxExpanded(Widgets::DropList::Ptr cb) {
-	program.getLayer("root")->setFade(0.5f);
+//	program.getLayer("root")->setFade(0.5f);
 }
 
 void MenuStateRoot::onComboBoxCollapsed(Widgets::DropList::Ptr cb) {
-	program.getLayer("root")->setFade(1.f);
+//	program.getLayer("root")->setFade(1.f);
 }
 
 void MenuStateRoot::onButtonClick(Widgets::Button *btn) {

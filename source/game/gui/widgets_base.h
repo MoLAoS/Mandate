@@ -99,15 +99,23 @@ struct WidgetStyle {
 };
 */
 
+class MouseWidget;
+class KeyboardWidget;
+class TextWidget;
+
 // =====================================================
 // class Widget
 // =====================================================
 
 class Widget {
 	friend class WidgetWindow;
+	friend class MouseWidget;
+	friend class KeyboardWidget;
+	friend class TextWidget;
+
 public:
 	typedef Widget* Ptr;
-
+	
 private:
 	//int id;
 	Container* parent;
@@ -123,16 +131,27 @@ private:
 	Vec3f borderColour;
 	int borderSize;
 	float bgAlpha;
-
 	int padding;
+
+	MouseWidget *mouseWidget;
+	KeyboardWidget *keyboardWidget;
+	TextWidget *textWidget;
+
+private:
+	void setMouseWidget(MouseWidget *mw) { mouseWidget = mw; }
+	void setKeyboardWidget(KeyboardWidget *kw) { keyboardWidget = kw; }
+
+	MouseWidget * asMouseWidget() const			{ return mouseWidget; }
+	KeyboardWidget * asKeyboardWidget() const		{ return keyboardWidget; }
+
+	void init(const Vec2i &pos, const Vec2i &size);
 
 protected:
 	Widget(WidgetWindow* window);
-	Widget() {} // dangerous perhaps, but needed to avoid virtual inheritence problems (double inits)
-
-public:
 	Widget(Container* parent);
 	Widget(Container* parent, Vec2i pos, Vec2i size);
+
+public:
 	virtual ~Widget();
 
 	// de-virtualise ??
@@ -178,21 +197,7 @@ public:
 	void setBorderParams(BorderStyle st, int sz, Vec3f col, float alp);
 	void setPadding(int pad) { padding = pad; }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
-	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
-	virtual bool mouseWheel(Vec2i pos, int z);
-	virtual void mouseIn();
-	virtual void mouseOut();
-
-	virtual bool keyDown(Key key);
-	virtual bool keyUp(Key key);
-	virtual bool keyPress(char c);
-
 	virtual void update() {} // must 'register' with WidgetWindow to receive
-
-	virtual void lostKeyboardFocus() {}
 
 	virtual void render() = 0;
 
@@ -218,7 +223,7 @@ private:
 
 public:
 	MouseWidget(Widget::Ptr widget);
-	~MouseWidget();
+	~MouseWidget() {}
 
 private:
 	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos)			{ return false; }
@@ -241,7 +246,7 @@ private:
 
 public:
 	KeyboardWidget(Widget::Ptr widget);
-	~KeyboardWidget();
+	~KeyboardWidget() {}
 
 private:
 	virtual bool EW_keyDown(Key key)	{ return false; }
@@ -265,7 +270,7 @@ struct ImageRenderInfo {
 // class ImageWidget
 // =====================================================
 
-class ImageWidget /*: public virtual Widget */{
+class ImageWidget {
 private:
  	typedef vector<Texture2D*> Textures;
 
@@ -295,7 +300,7 @@ public:
 // class TextWidget
 // =====================================================
 
-class TextWidget /*: public virtual Widget */{
+class TextWidget {
 private:
 	Widget::Ptr me;
 	vector<string> texts;
@@ -317,7 +322,7 @@ public:
 
 	// set
 	void setCentre(bool val)	{ centre = val; }
-	void setTextParams(const string&, const Vec4f, const Font*, bool ft=false, bool cntr=true);
+	void setTextParams(const string&, const Vec4f, const Font*, bool cntr=true);
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col) { txtColour = col;	 }
@@ -325,8 +330,7 @@ public:
 	void setTextFont(const Font *f);
 
 	void centreText(int ndx = 0);
-	//void setWidgetSize(const Vec2i &sz);
-	//void setWidgetPos(const Vec2i &p);
+	void widgetReSized();
 
 	// get
 	const string& getText(int ndx=0) const	{ return texts[ndx];	}
@@ -341,7 +345,7 @@ public:
 // class Container
 // =====================================================
 
-class Container : public /*virtual*/ Widget {
+class Container : public Widget {
 public:
 	typedef Container* Ptr;
 	typedef vector<Widget::Ptr> WidgetList;
@@ -363,38 +367,6 @@ public:
 	virtual void setEnabled(bool v);
 	virtual void setFade(float v);
 	virtual void render();
-};
-
-// =====================================================
-// class Layer
-// =====================================================
-
-class Layer : public Container {
-public:
-	typedef Layer* Ptr;
-
-private:
-	const string name;
-	const int id;
-
-public:
-	Layer(WidgetWindow *window, const string &name, int id)
-			: Container(window)
-			, name(name), id(id) {
-		WIDGET_LOG( __FUNCTION__ << endl );
-	}
-
-	~Layer() {
-		WIDGET_LOG( __FUNCTION__ << endl );
-	}
-
-	int getId() const { return id; }
-	const string& getName() const { return name; }
-
-	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
-	virtual Vec2i getMinSize() const { return Vec2i(-1); }
-
-	virtual string desc() { return string("[Layer '") + name + "':" + descPosDim() + "]"; }
 };
 
 }}

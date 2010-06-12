@@ -116,7 +116,6 @@ Program::Program(Config &config, CmdArgs &args)
 		, terminating(false)
 		, visible(true)
 		, keymap(getInput(), "keymap.ini") {
-	_TRACE_FUNCTION();
 	//set video mode
 	setDisplaySettings();
 
@@ -181,7 +180,6 @@ Program::Program(Config &config, CmdArgs &args)
 }
 
 Program::~Program() {
-	_TRACE_FUNCTION();
 	Renderer::getInstance().end();
 
 	if (programState) {
@@ -298,7 +296,7 @@ void Program::eventResize(SizeState sizeState) {
 	}
 }
 
-bool Program::mouseDown(MouseButton btn, Vec2i pos) {
+bool Program::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -319,7 +317,7 @@ bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Program::mouseUp(MouseButton btn, Vec2i pos) {
+bool Program::EW_mouseUp(MouseButton btn, Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -340,7 +338,7 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Program::mouseMove(Vec2i pos) {
+bool Program::EW_mouseMove(Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -349,7 +347,7 @@ bool Program::mouseMove(Vec2i pos) {
 	return true;
 }
 
-bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
+bool Program::EW_mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -370,7 +368,7 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Program::mouseWheel(Vec2i pos, int zDelta) {
+bool Program::EW_mouseWheel(Vec2i pos, int zDelta) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -379,17 +377,17 @@ bool Program::mouseWheel(Vec2i pos, int zDelta) {
 	return true;
 }
 
-bool Program::keyDown(Key key) {
+bool Program::EW_keyDown(Key key) {
 	programState->keyDown(key);
 	return true;
 }
 
-bool Program::keyUp(Key key) {
+bool Program::EW_keyUp(Key key) {
 	programState->keyUp(key);
 	return true;
 }
 
-bool Program::keyPress(char c) {
+bool Program::EW_keyPress(char c) {
 	programState->keyPress(c);
 	return true;
 }
@@ -398,13 +396,11 @@ bool Program::keyPress(char c) {
 // ==================== misc ====================
 
 void Program::setSimInterface(SimulationInterface *si) {
-	_TRACE_FUNCTION();
 	delete simulationInterface;
 	simulationInterface = si;
 }
 
 void Program::setState(ProgramState *programState){
-	_TRACE_FUNCTION();
 	if (programState) {
 		delete this->programState;
 	}
@@ -421,13 +417,11 @@ void Program::setState(ProgramState *programState){
 }
 
 void Program::exit() {
-	_TRACE_FUNCTION();
 	destroy();
 	terminating = true;
 }
 
 void Program::resetTimers() {
-	_TRACE_FUNCTION();
 	renderTimer.reset();
 	tickTimer.reset();
 	updateTimer.reset();
@@ -437,7 +431,6 @@ void Program::resetTimers() {
 // ==================== PRIVATE ====================
 
 void Program::setDisplaySettings(){
-	_TRACE_FUNCTION();
 	Config &config= Config::getInstance();
 	// bool multisamplingSupported = isGlExtensionSupported("WGL_ARB_multisample");
 

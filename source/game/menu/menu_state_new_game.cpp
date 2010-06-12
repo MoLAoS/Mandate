@@ -52,6 +52,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		, fadeIn(true)
 		, fadeOut(false)
 		, transition(false) {
+	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	const CoreData &coreData = CoreData::getInstance();
 	Lang &lang = Lang::getInstance();
@@ -70,12 +71,12 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	int gap = (metrics.getScreenW() - 300) / 3;
 	int x = gap, w = 150, y = 50, h = 30;
 	btnReturn = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	btnReturn->setTextParams(lang.get("Return"), Vec4f(1.f), font, true);
+	btnReturn->setTextParams(lang.get("Return"), Vec4f(1.f), font);
 	btnReturn->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
 	x += w + gap;
 	btnPlayNow = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	btnPlayNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font, true);
+	btnPlayNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
 	btnPlayNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
 	gap = (metrics.getScreenW() - 600) / 4;
@@ -113,7 +114,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	dlMaps->SelectionChanged.connect(this, &MenuStateNewGame::onChangeMap);
 
 	stMap = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
-	stMap->setTextParams(lang.get("Map"), Vec4f(1.f), font, true);
+	stMap->setTextParams(lang.get("Map"), Vec4f(1.f), font);
 	
 	gs.setDescription(results[match]);
 	gs.setMapPath(string("maps/") + mapFiles[match] + ".gbm");
@@ -121,7 +122,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	mapInfo.load("maps/" + mapFiles[match] + ".gbm");
 
 	stMapInfo = new StaticText(&program, Vec2i(x, y - (h + 10)), Vec2i(w, h * 2));
-	stMapInfo->setTextParams(mapInfo.desc, Vec4f(1.f), font, true);
+	stMapInfo->setTextParams(mapInfo.desc, Vec4f(1.f), font);
 
 	//tileset listBox
 	match = 0;
@@ -144,7 +145,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	dlTileset->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
 
 	stTileset = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
-	stTileset->setTextParams(lang.get("Tileset"), Vec4f(1.f), font, true);
+	stTileset->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
 
 	//tech Tree listBox
 	match = 0;
@@ -167,7 +168,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	dlTechtree->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
 	stTechtree = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
-	stTechtree->setTextParams(lang.get("Techtree"), Vec4f(1.f), font, true);
+	stTechtree->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
 
 	gs.setTilesetPath(string("tilesets/") + tilesetFiles[match]);
 
@@ -178,14 +179,14 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	cout << "CheckBox pref size = " << cbRandomLocs->getPrefSize() << endl;
 	
 	stRandomLocs = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
-	stRandomLocs->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font, true);
+	stRandomLocs->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
 
 	x = gap * 2 + stw;
 	cbFogOfWar = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
 	cbFogOfWar->setChecked(true);
 
 	stFogOfWar = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
-	stFogOfWar->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font, true);
+	stFogOfWar->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
 
 	y += 75, h = 35, x = (metrics.getScreenW() - 700) / 2, w = 700;
 
@@ -194,9 +195,9 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	stFaction = new StaticText(&program, Vec2i(x + 390, sty), Vec2i(200, 30));
 	stTeam = new StaticText(&program, Vec2i(x + 620, sty), Vec2i(80, 30));
 
-	stControl->setTextParams("Control", Vec4f(1.f), font, true);
-	stFaction->setTextParams("Faction", Vec4f(1.f), font, true);
-	stTeam->setTextParams("Team", Vec4f(1.f), font, true);
+	stControl->setTextParams("Control", Vec4f(1.f), font);
+	stFaction->setTextParams("Faction", Vec4f(1.f), font);
+	stTeam->setTextParams("Team", Vec4f(1.f), font);
 
 	int numPlayer = GameConstants::maxPlayers;
 

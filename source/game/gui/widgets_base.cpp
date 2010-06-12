@@ -25,20 +25,12 @@ namespace Glest { namespace Widgets {
 
 MouseWidget::MouseWidget(Widget::Ptr widget) {
 	me = widget;
-	WidgetWindow::getInstance()->registerMouseWidget(me, this);
-}
-
-MouseWidget::~MouseWidget() {
-	WidgetWindow::getInstance()->unregisterMouseWidget(me);
+	me->setMouseWidget(this);
 }
 
 KeyboardWidget::KeyboardWidget(Widget::Ptr widget) {
 	me = widget;
-	WidgetWindow::getInstance()->registerKeyboardWidget(me, this);
-}
-
-KeyboardWidget::~KeyboardWidget() {
-	WidgetWindow::getInstance()->unregisterKeyboardWidget(me);
+	me->setKeyboardWidget(this);
 }
 
 // =====================================================
@@ -46,36 +38,17 @@ KeyboardWidget::~KeyboardWidget() {
 // =====================================================
 
 Widget::Widget(Container::Ptr parent)
-		: parent(parent)
-		, pos(0)
-		, screenPos(0)
-		, size(0)
-		, visible(true)
-		, enabled(true)
-		, fade(1.f)
-		, borderStyle(BorderStyle::NONE)
-		, borderColour(0.f)
-		, borderSize(0)
-		, bgAlpha(0.2f)
-		, padding(0) {
+		: parent(parent) {
+	init(Vec2i(0), Vec2i(0));
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 }
 
 Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: parent(parent)
-		, pos(pos)
-		, size(size)
-		, visible(true)
-		, enabled(true)
-		, fade(1.f)
-		, borderStyle(BorderStyle::NONE)
-		, borderColour(0.f)
-		, borderSize(0)
-		, bgAlpha(0.2f)
-		, padding(0) {
+		: parent(parent) {
 	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
+	init(pos, size);
 	screenPos = parent->getScreenPos() + pos;
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
@@ -83,18 +56,9 @@ Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
 
 Widget::Widget(WidgetWindow::Ptr window)
 		: parent(0)
-		, pos(0)
-		, screenPos(0)
-		, size(0)
-		, visible(true)
-		, enabled(true)
-		, fade(1.f)
-		, borderStyle(BorderStyle::NONE)
-		, borderColour(0.f)
-		, borderSize(0)
-		, bgAlpha(0.2f)
-		, padding(0) {
+		, screenPos(0) {
 	WIDGET_LOG( __FUNCTION__ << "(WidgetWindow::Ptr)" );
+	init(Vec2i(0), Vec2i(0));
 	rootWindow = window;
 }
 
@@ -104,6 +68,19 @@ Widget::~Widget() {
 	if (rootWindow != this) {
 		parent->remChild(this);
 	}
+}
+
+void Widget::init(const Vec2i &pos, const Vec2i &size) {
+	this->pos = pos;
+	this->size = size;
+	visible = true;
+	enabled = true;
+	fade = 1.f;
+	setBorderParams(BorderStyle::NONE, 0, Vec3f(0.f), 0.2f);
+	padding = 0;
+	mouseWidget = 0;
+	keyboardWidget = 0;
+	textWidget = 0;
 }
 
 Widget::Ptr Widget::getWidgetAt(const Vec2i &pos) {
@@ -118,48 +95,11 @@ string Widget::descPosDim() {
 	return ss.str();
 }
 
-bool Widget::mouseDown(MouseButton btn, Vec2i pos) {
-	return parent->mouseDown(btn, pos);
-}
-
-bool Widget::mouseUp(MouseButton btn, Vec2i pos) {
-	return parent->mouseUp(btn, pos);
-}
-
-bool Widget::mouseMove(Vec2i pos) {
-	return parent->mouseMove(pos);
-}
-
-bool Widget::mouseDoubleClick(MouseButton btn, Vec2i pos) {
-	return parent->mouseDoubleClick(btn, pos);
-}
-
-bool Widget::mouseWheel(Vec2i pos, int z) {
-	return parent->mouseWheel(pos, z);
-}
-
-void Widget::mouseIn() {
-	WIDGET_LOG( "mouseIn() : " << desc() );
-}
-
-void Widget::mouseOut() {
-	WIDGET_LOG( "mouseOut() : " << desc() );
-}
-
-bool Widget::keyDown(Key key) {
-	return parent->keyDown(key);
-}
-
-bool Widget::keyUp(Key key) {
-	return parent->keyUp(key);
-}
-
-bool Widget::keyPress(char c) {
-	return parent->keyPress(c);
-}
-
 void Widget::setSize(const Vec2i &sz) {
 	size = sz;
+	if (textWidget) {
+		textWidget->widgetReSized();
+	}
 }
 
 void Widget::setPos(const Vec2i &p) {
@@ -384,6 +324,7 @@ TextWidget::TextWidget(Widget::Ptr me)
 		, isFreeTypeFont(false)
 		, centre(true) {
 	WIDGET_LOG( __FUNCTION__ );
+	me->textWidget = this;
 }
 
 void TextWidget::centreText(int ndx) {
@@ -393,6 +334,12 @@ void TextWidget::centreText(int ndx) {
 	Vec2i centre = me->getScreenPos() + (me->getSize() / 2);
 	txtPos = Vec2i(centre.x - int(txtDims.x / 2.f), centre.y - int(txtDims.y / 2.f));
 	txtPos -= me->getScreenPos();
+}
+
+void TextWidget::widgetReSized() {
+	if (centre) {
+		centreText();
+	}
 }
 
 void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
@@ -441,7 +388,7 @@ Vec2i TextWidget::getTextDimensions() const {
 	return max;
 }
 
-void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font *font, bool freeType, bool centre) {
+void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font *font, bool cntr) {
 	if (texts.empty()) {
 		texts.push_back(txt);
 	} else {
@@ -449,8 +396,8 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 	}
 	txtColour = colour;
 	this->font = font;
-	isFreeTypeFont = freeType;
-	this->centre = centre;
+	isFreeTypeFont = font->getMetrics()->isFreeType();
+	centre = cntr;
 	if (centre) {
 		centreText();
 	}
@@ -458,9 +405,6 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 
 int TextWidget::addText(const string &txt) {
 	texts.push_back(txt);
-	if (centre && texts.size() == 1) {
-		centreText();
-	}
 	return texts.size() - 1;
 }
 
@@ -471,16 +415,13 @@ void TextWidget::setText(const string &txt, int ndx) {
 		ASSERT_RANGE(ndx, texts.size());
 		texts[ndx] = txt;
 	}
-	if (centre && texts.size() == 1) {
+	if (centre && ndx == 0) {
 		centreText();
 	}
 }
 
 void TextWidget::setTextFont(const Font *f) {
 	font = f;
-	if (centre && texts.size() == 1) {
-		centreText();
-	}
 }
 
 void TextWidget::setTextPos(const Vec2i &pos) { 
@@ -542,7 +483,6 @@ void Container::setFade(float v) {
 
 Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
 	WIDGET_LOG( __FUNCTION__ );
-	assert(isInside(pos));
 	foreach (WidgetList, it, children) {
 		Widget::Ptr widget = *it;
 		if (widget->isVisible() && widget->isInside(pos)) {
