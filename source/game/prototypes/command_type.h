@@ -305,6 +305,15 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::BUILD; }
+
+private:
+	bool hasArrived(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
+	void existingBuild(Unit *unit, Command *command, Unit *builtUnit) const;
+	/** @returns true if successful */
+	bool attemptMoveUnits(const vector<Unit *> &occupants) const;
+	void blockedBuild(Unit *unit) const;
+	void acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const;
+	void newBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
 };
 
 

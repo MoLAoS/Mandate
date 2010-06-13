@@ -446,10 +446,6 @@ void BuildCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const UnitType *builtUnitType = command->getUnitType();
-	Unit *builtUnit = NULL;
-	Unit *target = theSimInterface->getUnitFactory().getUnit(unit->getTarget());
-
-	Map *map = theWorld.getMap();
 
 	BUILD_LOG( 
 		__FUNCTION__ << " : Updating unit " << unit->getId() << ", building type = " << builtUnitType->getName()
@@ -457,139 +453,176 @@ void BuildCommandType::update(Unit *unit) const {
 	);
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
-		// if not building
-		// this is just a 'search target', the SiteMap will tell the search when/where it has found a goal cell
-		Vec2i targetPos = command->getPos() + Vec2i(builtUnitType->getSize() / 2);
-		unit->setTargetPos(targetPos);
-		switch (theRoutePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos())) {
-			case TravelState::MOVING:
-				unit->setCurrSkill(this->getMoveSkillType());
-				unit->face(unit->getNextPos());
-				BUILD_LOG( "Moving." );
-				return;
-
-			case TravelState::BLOCKED:
-				unit->setCurrSkill(SkillClass::STOP);
-				if(unit->getPath()->isBlocked()) {
-					theConsole.addStdMessage("Blocked");
-					unit->cancelCurrCommand();
-					BUILD_LOG( "Blocked." << cmdCancelMsg );
-				}
-				return;
-
-			case TravelState::ARRIVED:
-				break;
-
-			case TravelState::IMPOSSIBLE:
-				theConsole.addStdMessage("Unreachable");
-				unit->cancelCurrCommand();
-				BUILD_LOG( "Route impossible," << cmdCancelMsg );
-				return;
-
-			default: throw runtime_error("Error: RoutePlanner::findPath() returned invalid result.");
-		}
-
-		// if arrived destination
-		assert(command->getUnitType() != NULL);
-		const int &buildingSize = builtUnitType->getSize();
-
+		Map *map = theWorld.getMap();
 		if (map->canOccupy(command->getPos(), Field::LAND, builtUnitType)) {
-			// late resource allocation
-			if (!command->isReserveResources()) {
-				command->setReserveResources(true);
-				if (unit->checkCommand(*command) != CommandResult::SUCCESS) {
-					if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-						theConsole.addStdMessage("BuildingNoRes");
-					}
-					BUILD_LOG( "in positioin, late resource allocation failed." << cmdCancelMsg );
-					unit->finishCommand();
-					return;
-				}
-				unit->getFaction()->applyCosts(command->getUnitType());
+			// move
+			if (!hasArrived(unit, command, builtUnitType)) {
+				return; // not there yet, try next update
 			}
-
-			BUILD_LOG( "in position, starting construction." );
-			builtUnit = theSimInterface->getUnitFactory().newInstance(command->getPos(), builtUnitType, unit->getFaction(), theWorld.getMap());
-			builtUnit->create();
-			unit->setCurrSkill(buildSkillType);
-			unit->setTarget(builtUnit, true, true);
-			map->prepareTerrain(builtUnit);
-			command->setUnit(builtUnit);
-
-			if (!builtUnit->isMobile()) {
-				theWorld.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
-			}
-			
-			//play start sound
-			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-				SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), theGame.getGameCamera()->getPos());
-			}
+			acceptBuild(unit, command, builtUnitType);
 		} else {
 			// there are no free cells
-			vector<Unit *>occupants;
-			map->getOccupants(occupants, command->getPos(), buildingSize, Zone::LAND);
-
+			vector<Unit *> occupants;
+			map->getOccupants(occupants, command->getPos(), builtUnitType->getSize(), Zone::LAND);
+			
 			// is construction already under way?
 			Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
 			if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
-				// if we pre-reserved the resources, we have to deallocate them now
-				if (command->isReserveResources()) {
-					unit->getFaction()->deApplyCosts(command->getUnitType());
-					command->setReserveResources(false);
+				// move
+				if (!hasArrived(unit, command, builtUnitType)) {
+					return; // not there yet, try next update
 				}
-				unit->setTarget(builtUnit, true, true);
-				unit->setCurrSkill(this->getBuildSkillType());
-				command->setUnit(builtUnit);
-				BUILD_LOG( "in position, building already under construction." );
-
+				existingBuild(unit, command, builtUnit);
+			} else if (occupants.size() && attemptMoveUnits(occupants)) {
+				return; // success, wait for units to move
 			} else {
-				// is it not free because there are units in the way?
-				if (occupants.size()) {
-					// Can they get the fuck out of the way?
-					vector<Unit *>::const_iterator i;
-					for (i = occupants.begin();
-							i != occupants.end() && (*i)->getType()->hasSkillClass(SkillClass::MOVE); ++i) ;
-					if (i == occupants.end()) {
-						BUILD_LOG( "in position, site blocked, waiting for people to get out of the way." );
-						// they all have a move command, so we'll wait
-						return;
-					}
-					//TODO: Check for idle units and tell them to get the fuck out of the way.
-					//TODO: Possibly add a unit notification to let player know builder is waiting
-				}
-
-				// blocked by non-moving units, surface objects (trees, rocks, etc.) or build area
-				// contains deeply submerged terain
-				unit->cancelCurrCommand();
-				unit->setCurrSkill(SkillClass::STOP);
-				if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-					theConsole.addStdMessage("BuildingNoPlace");
-				}
-				BUILD_LOG( "in position, site blocked." << cmdCancelMsg );
+				blockedBuild(unit);
 			}
 		}
 	} else {
-		//if building
-		BUILD_LOG( "building." );
-		Unit *builtUnit = command->getUnit();
+		newBuild(unit, command, builtUnitType);
+	}
+}
 
-		if (builtUnit && builtUnit->getType() != builtUnitType) {
+// --- Private ---
+
+bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
+	// if not building
+	// this is just a 'search target', the SiteMap will tell the search when/where it has found a goal cell
+	Vec2i targetPos = command->getPos() + Vec2i(builtUnitType->getSize() / 2); /// @todo replace with getHalfSize()? -hail 13June2010
+	unit->setTargetPos(targetPos);
+	bool arrived = false;
+
+	switch (theRoutePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos())) {
+		case TravelState::MOVING:
+			unit->setCurrSkill(this->getMoveSkillType());
+			unit->face(unit->getNextPos());
+			BUILD_LOG( "Moving." );
+			break;
+
+		case TravelState::BLOCKED:
 			unit->setCurrSkill(SkillClass::STOP);
-		} else if (!builtUnit || builtUnit->isBuilt()) {
-			unit->finishCommand();
-			unit->setCurrSkill(SkillClass::STOP);
-		} else if (builtUnit->repair()) {
-			//building finished
-			unit->finishCommand();
-			unit->setCurrSkill(SkillClass::STOP);
-			unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
-			ScriptManager::onUnitCreated(builtUnit);
-			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-				SoundRenderer::getInstance().playFx(
-					this->getBuiltSound(),
-					unit->getCurrVector(),
-					theGame.getGameCamera()->getPos());
+			if(unit->getPath()->isBlocked()) {
+				theConsole.addStdMessage("Blocked");
+				unit->cancelCurrCommand();
+				BUILD_LOG( "Blocked." << cmdCancelMsg );
 			}
+			break;
+
+		case TravelState::ARRIVED:
+			arrived = true;
+			break;
+
+		case TravelState::IMPOSSIBLE:
+			theConsole.addStdMessage("Unreachable");
+			unit->cancelCurrCommand();
+			BUILD_LOG( "Route impossible," << cmdCancelMsg );
+			break;
+
+		default:
+			throw runtime_error("Error: RoutePlanner::findPath() returned invalid result.");
+	}
+
+	return arrived;
+}
+
+void BuildCommandType::existingBuild(Unit *unit, Command *command, Unit *builtUnit) const {
+	// if we pre-reserved the resources, we have to deallocate them now
+	if (command->isReserveResources()) {
+		unit->getFaction()->deApplyCosts(command->getUnitType());
+		command->setReserveResources(false);
+	}
+	unit->setTarget(builtUnit, true, true);
+	unit->setCurrSkill(this->getBuildSkillType());
+	command->setUnit(builtUnit);
+	BUILD_LOG( "in position, building already under construction." );
+}
+
+bool BuildCommandType::attemptMoveUnits(const vector<Unit *> &occupants) const {
+	// Can they get the fuck out of the way?
+	vector<Unit *>::const_iterator i;
+	for (i = occupants.begin();	i != occupants.end(); ++i) {
+		// NOTE: this might be useful to move units but not to test if they are already moving. If
+		// that's not meant to be the case then it's a bug.
+		//if (!(*i)->getType()->hasSkillClass(SkillClass::MOVE)) {
+		if ((*i)->getCurrSkill()->getClass() != SkillClass::MOVE) {
+			return false;
+		}
+	}
+	BUILD_LOG( "in position, site blocked, waiting for people to get out of the way." );
+	// they all have a move command, so we'll wait
+	return true;
+
+	/// @TODO: Check for idle units and tell them to get the fuck out of the way.
+	/// @TODO: Possibly add a unit notification to let player know builder is waiting
+}
+
+void BuildCommandType::blockedBuild(Unit *unit) const {
+	// blocked by non-moving units, surface objects (trees, rocks, etc.) or build area
+	// contains deeply submerged terain
+	unit->cancelCurrCommand();
+	unit->setCurrSkill(SkillClass::STOP);
+	if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+		theConsole.addStdMessage("BuildingNoPlace");
+	}
+	BUILD_LOG( "site blocked." << cmdCancelMsg );
+}
+
+void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const {
+	Map *map = theWorld.getMap();
+	Unit *builtUnit = NULL;
+	// late resource allocation
+	if (!command->isReserveResources()) {
+		command->setReserveResources(true);
+		if (unit->checkCommand(*command) != CommandResult::SUCCESS) {
+			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+				theConsole.addStdMessage("BuildingNoRes");
+			}
+			BUILD_LOG( "in positioin, late resource allocation failed." << cmdCancelMsg );
+			unit->finishCommand();
+			return;
+		}
+		unit->getFaction()->applyCosts(command->getUnitType());
+	}
+
+	BUILD_LOG( "in position, starting construction." );
+	builtUnit = theSimInterface->getUnitFactory().newInstance(command->getPos(), builtUnitType, unit->getFaction(), map);
+	builtUnit->create();
+	unit->setCurrSkill(buildSkillType);
+	unit->setTarget(builtUnit, true, true);
+	map->prepareTerrain(builtUnit);
+	command->setUnit(builtUnit);
+
+	if (!builtUnit->isMobile()) {
+		theWorld.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
+	}
+	
+	//play start sound
+	if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+		SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), theGame.getGameCamera()->getPos());
+	}
+}
+
+void BuildCommandType::newBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
+	BUILD_LOG( "building." );
+	Unit *builtUnit = command->getUnit();
+
+	if (builtUnit && builtUnit->getType() != builtUnitType) {
+		unit->setCurrSkill(SkillClass::STOP);
+	} else if (!builtUnit || builtUnit->isBuilt()) {
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+	} else if (builtUnit->repair()) {
+		//building finished
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+		unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
+		ScriptManager::onUnitCreated(builtUnit);
+		if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+			SoundRenderer::getInstance().playFx(
+				this->getBuiltSound(),
+				unit->getCurrVector(),
+				theGame.getGameCamera()->getPos());
 		}
 	}
 }
