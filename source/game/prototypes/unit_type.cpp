@@ -566,11 +566,15 @@ bool UnitType::hasSkillType(const SkillType *st) const {
 bool UnitType::isOfClass(UnitClass uc) const{
 	switch (uc) {
 		case UnitClass::WARRIOR:
-			return hasSkillClass(SkillClass::ATTACK) && !hasSkillClass(SkillClass::HARVEST);
+			return hasSkillClass(SkillClass::ATTACK) 
+				&& !hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::WORKER:
-			return hasSkillClass(SkillClass::BUILD) || hasSkillClass(SkillClass::REPAIR);
+			return hasSkillClass(SkillClass::BUILD) 
+				|| hasSkillClass(SkillClass::REPAIR)
+				|| hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::BUILDING:
-			return hasSkillClass(SkillClass::BE_BUILT) && !hasSkillClass(SkillClass::MOVE);
+			return hasSkillClass(SkillClass::BE_BUILT)
+				&& !hasSkillClass(SkillClass::MOVE);
 		default:
 			throw runtime_error("Unknown UnitClass passed to UnitType::isOfClass()");
 	}

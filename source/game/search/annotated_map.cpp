@@ -34,11 +34,10 @@ AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap)
 	width = cellMap->getW();
 	height = cellMap->getH();
 	metrics.init(width, height);
-
-	const int &ftCount = world->getTechTree()->getFactionTypeCount();
-	for ( Field f = enum_cast<Field>(0); f < Field::COUNT; ++f ) {
+	foreach_enum (Field, f) {
 		maxClearance[f] = 0;
 	}
+	const int &ftCount = world->getTechTree()->getFactionTypeCount();
 	const FactionType *factionType;
 	for (int i = 0; i < ftCount; ++i) {
 		factionType = world->getTechTree()->getFactionType(i);
@@ -53,7 +52,7 @@ AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap)
 		}
 	}
 #	ifndef NDEBUG
-		foreach_enum (Field, f) {
+		for ( Field f(0); f < Field::COUNT; ++f ) {
 			cout << "max clearance in " << FieldNames[f] << " = " << maxClearance[f] << "\n";
 		}
 #	endif
@@ -69,25 +68,10 @@ AnnotatedMap::~AnnotatedMap() {
 
 /** Initialise clearance data for a master map. */
 void AnnotatedMap::initMapMetrics() {
-	//_PROFILE_FUNCTION();
-	const int east = cellMap->getW() - 1;
-	int x = east;
-	int y = cellMap->getH() - 1;
-
-	// set southern two rows to zero.
-	for ( ; x >= 0; --x ) {
-		metrics[Vec2i(x,y)].setAll(0);
-		metrics[Vec2i(x,y-1)].setAll(0);
-	}
-	for ( y -= 2; y >= 0; -- y) {
-		for ( x = east; x >= 0; --x ) {
-			Vec2i pos(x, y);
-			if ( x > east - 2 ) { // far east tile, not valid
-				metrics[pos].setAll(0);
-			} else {
-				computeClearances(pos);
-			}
-		}
+	_PROFILE_FUNCTION();
+	Util::ReverseRectIterator iter(Vec2i(0,0), Vec2i(width - 1, height - 1));
+	while (iter.more()) {
+		computeClearances(iter.next());
 	}
 }
 
@@ -280,11 +264,11 @@ bool AnnotatedMap::updateCell(const Vec2i &pos, const Field field) {
   */
 void AnnotatedMap::computeClearances(const Vec2i &pos) {
 	assert(cellMap->isInside(pos));
-	assert(pos.x <= cellMap->getW() - 2);
-	assert(pos.y <= cellMap->getH() - 2);
-
+	if (pos.x >= cellMap->getW() - 2 || pos.y >= cellMap->getH() - 2) {
+		metrics[pos].setAll(0);
+		return;
+	}
 	Cell *cell = cellMap->getCell(pos);
-
 	// is there a building here, or an object on the tile ??
 	bool surfaceBlocked = ( cell->getUnit(Zone::LAND) && !cell->getUnit(Zone::LAND)->isMobile() )
 							||   !cellMap->getTile(cellMap->toTileCoords(pos))->isFree();
@@ -312,7 +296,7 @@ void AnnotatedMap::computeClearances(const Vec2i &pos) {
 	computeClearance(pos, Field::AIR);
 }
 
-/** Computes clearance based on metrics to the sout and east.
+/** Computes clearance based on metrics to the south and east.
   * Does NOT check if this cell is an obstactle, assumes metrics of cells to 
   * the south, south-east & east are correct
   * @param pos the co-ordinates of the cell

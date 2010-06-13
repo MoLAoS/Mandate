@@ -29,6 +29,7 @@
 #include "selection.h"
 #include "program.h"
 #include "script_manager.h"
+#include "cartographer.h"
 #include "FSFactory.hpp"
 
 #include "leak_dumper.h"
@@ -186,13 +187,9 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 			startLocations[i] = Vec2i(x, y) * GameConstants::cellScale;
 		}
 
-
 		// Tiles & Cells
 		cells = new Cell[w * h];
 		tiles = new Tile[tileW * tileH];
-		//surfaceHeights = new float[tileW * tileH]; // unused ???
-
-		//float *surfaceHeight = surfaceHeights;
 
 		const int &scale = GameConstants::mapScale;
 		//read heightmap
@@ -215,12 +212,12 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		}
 
 		//read objects and resources
-		for (int y = 0; y < h; y += GameConstants::cellScale) {
-			for (int x = 0; x < w; x += GameConstants::cellScale) {
+		for (int y = 0; y < tileH; ++y) {
+			for (int x = 0; x < tileW; ++x) {
 				int8 objNumber;
 				f->read(&objNumber, sizeof(int8), 1);
-				Tile *sc = getTile(toTileCoords(Vec2i(x, y)));
-				if (objNumber == 0) {
+				Tile *sc = getTile(Vec2i(x, y));
+				if (objNumber == 0 || x == tileW - 1 || y == tileH - 1) {
 					sc->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
 					Object *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), sc->getVertex());
@@ -228,13 +225,13 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
 						if (rt->getClass() == ResourceClass::TILESET && rt->getTilesetObject() == objNumber) {
-							o->setResource(rt, Vec2i(x, y));
+							o->setResource(rt, Vec2i(x, y) * cellScale);
 						}
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
 					Object *o = objFactory.newInstance(NULL, sc->getVertex());
-					o->setResource(rt, Vec2i(x, y));
+					o->setResource(rt, Vec2i(x, y) * cellScale);
 					sc->setObject(o);
 				}
 			}
@@ -313,26 +310,26 @@ void Map::calcAvgAltitude() {
 
 // ==================== is ====================
 
-/**
- * @returns if there is a resource next to a unit, in "resourcePos" is stored the relative position
- * of the resource
- */
-bool Map::isResourceNear(const Vec2i &pos, const ResourceType *rt, Vec2i &resourcePos) const {
-	for (int x = -1; x <= 1; ++x) {
-		for (int y = -1; y <= 1; ++y) {
-			Vec2i cur = Vec2i(x, y) + pos;
-			if (isInside(cur)) {
-				Resource *r = getTile(toTileCoords(cur))->getResource();
-				if (r && r->getType() == rt) {
-					resourcePos = cur;
-					return true;
-				}
+/** @returns if there is a resource next to a unit
+  * @param pos unit position @param size unit size
+  * @param rt Resource type of interest
+  * @param resourcePos stores position of the resource if found */
+bool Map::isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec2i &resourcePos) const {
+	Vec2i p1 = pos + Vec2i(-1);
+	Vec2i p2 = pos + Vec2i(size);
+	Util::PerimeterIterator iter(p1, p2);
+	while (iter.more()) {
+		Vec2i cur = iter.next();
+		if (isInside(cur)) {
+			Resource *r = getTile(toTileCoords(cur))->getResource();
+			if (r && r->getType() == rt) {
+				resourcePos = cur;
+				return true;
 			}
 		}
 	}
 	return false;
 }
-
 
 // ==================== free cells ====================
 bool Map::fieldsCompatible(Cell *cell, Field mf) const {
@@ -346,23 +343,13 @@ bool Map::fieldsCompatible(Cell *cell, Field mf) const {
 }
 
 bool Map::isFreeCell(const Vec2i &pos, Field field) const {
-	if ( !isInside(pos) || !getCell(pos)->isFree(field == Field::AIR ? Zone::AIR : Zone::LAND) )
+	if (!isInside(pos) || !getCell(pos)->isFree(field == Field::AIR ? Zone::AIR : Zone::LAND)) {
 		return false;
-	if ( field != Field::AIR && !getTile(toTileCoords(pos))->isFree() )
+	}
+	if (field != Field::AIR && !getTile(toTileCoords(pos))->isFree()) {
 		return false;
-	// leave ^^^ that
-	// replace all the rest with lookups into the map metrics...
-	//return masterMap->canOccupy ( pos, 1, field );
-	// placeUnit() needs to use this... and the metrics aren't constructed at that point...
-	if ( field == Field::LAND && getCell(pos)->isDeepSubmerged() )
-		return false;
-	if ( field == Field::LAND && (pos.x > getW() - 4 || pos.y > getH() - 4) )
-		return false;
-	if ( field == Field::ANY_WATER && !getCell(pos)->isSubmerged() )
-		return false;
-	if ( field == Field::DEEP_WATER && !getCell(pos)->isDeepSubmerged() )
-		return false;
-	return true;
+	}
+	return theCartographer.getMasterMap()->canOccupy(pos, 1, field); 
 }
 
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {
@@ -772,52 +759,26 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 	}
 }
 
-/**
- * Evicts current inhabitants of cells and adds them to the supplied vector<Unit *>
- */
-void Map::evict(Unit *unit, const Vec2i &pos, vector<Unit *> &evicted) {
-	assert(unit);
-	const UnitType *ut = unit->getType();
-	int size = ut->getSize();
-	Zone field = unit->getCurrField()==Field::AIR?Zone::AIR:Zone::LAND;
-
-	for(int x = 0; x < size; ++x) {
-		for(int y = 0; y < size; ++y) {
-			Vec2i currPos(pos.x + x, pos.y + y);
-			assert(isInside(currPos));
-
-			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
-				Unit *evictedUnit = getCell(currPos)->getUnit(field);
-				if(evictedUnit) {
-					clearUnitCells(evictedUnit, evictedUnit->getPos());
-					evicted.push_back(evictedUnit);
-				}
-			}
-		}
-	}
-}
-
-
 // ==================== misc ====================
 
-//returnis if unit is next to pos
+//returns if unit is next to pos
 bool Map::isNextTo(const Vec2i &pos, const Unit *unit) const{
-	for(int i=-1; i<=1; ++i){
-		for(int j=-1; j<=1; ++j){
-			if(isInside(pos.x+i, pos.y+j)) {
-				if(getCell(pos.x+i, pos.y+j)->getUnit(Zone::LAND)==unit){
-					return true;
-				}
+	Zone z = unit->getCurrZone();
+	Util::RectIterator iter(pos - Vec2i(1), pos + Vec2i(1));
+	while (iter.more()) {
+		Vec2i cpos = iter.next();
+		if (isInside(cpos)) {
+			if (getCell(cpos)->getUnit(z) == unit) {
+				return true;
 			}
 		}
 	}
-    return false;
+	return false;
 }
+
 void Map::clampPos(Vec2i &pos) const{
-	if(pos.x<0) pos.x=0;
-	if(pos.y<0) pos.y=0;
-	if(pos.x>=w) pos.x=w-1;
-	if(pos.y>=h) pos.y=h-1;
+	pos.x = clamp(pos.x, 0, w-1);
+	pos.y = clamp(pos.y, 0, h-1);
 }
 
 void Map::prepareTerrain(const Unit *unit) {
@@ -848,16 +809,15 @@ void Map::update(float slice) {
 // ==================== compute ====================
 
 void Map::flatternTerrain(const Unit *unit){
-	float refHeight= getTile(toTileCoords(unit->getCenteredPos()))->getHeight();
-	for(int i=-1; i<=unit->getType()->getSize(); ++i){
-		for(int j=-1; j<=unit->getType()->getSize(); ++j){
-			Vec2i pos= unit->getPos()+Vec2i(i, j);
-			Cell *c= getCell(pos);
-			Tile *sc= getTile(toTileCoords(pos));
-			//we change height if pos is inside world, if its free or ocupied by the currenty building
-			if(isInside(pos) && sc->getObject()==NULL && (c->getUnit(Zone::LAND)==NULL || c->getUnit(Zone::LAND)==unit)){
-				sc->setHeight(refHeight);
-			}
+	float refHeight = getTile(toTileCoords(unit->getCenteredPos()))->getHeight();
+	Vec2i tile_tl = toTileCoords(unit->getPos());
+	Vec2i tile_br = toTileCoords(unit->getPos() + Vec2i(unit->getSize()));
+	Util::RectIterator iter(tile_tl, tile_br);
+	while (iter.more()) {
+		Vec2i tile_pos = iter.next();
+		Tile *tile = getTile(tile_pos);
+		if (isInsideTile(tile_pos) && !tile->getObject()) {
+			tile->setHeight(refHeight);
 		}
 	}
 }

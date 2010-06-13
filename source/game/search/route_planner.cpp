@@ -145,16 +145,12 @@ RoutePlanner::~RoutePlanner() {
   */
 bool RoutePlanner::isLegalMove(Unit *unit, const Vec2i &pos2) const {
 	assert(world->getMap()->isInside(pos2));
-	//assert(unit->getPos().dist(pos2) < 1.5);
+	assert(unit->getPos().dist(pos2) < 1.5);
+
 	if (unit->getPos().dist(pos2) > 1.5) {
-		//TODO: figure out why we need this!  because blocked paths are popping...
-
-		cout << "Unit is at " << unit->getPos() << " next step is " << pos2  
-			 << " dist is " << unit->getPos().dist(pos2) << endl;
-		cout.flush();
-
-		return false;
+		throw runtime_error("Boo!!!");
 	}
+
 	const Vec2i &pos1 = unit->getPos();
 	const int &size = unit->getSize();
 	const Field &field = unit->getCurrField();
@@ -204,7 +200,6 @@ float RoutePlanner::quickSearch(Field field, int size, const Vec2i &start, const
 }
 
 HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &dest, TransitionGoal &goalFunc) {
-	_PROFILE_PATHFINDER();
 	// get Transitions for start cluster
 	Transitions transitions;
 	Vec2i startCluster = ClusterMap::cellToCluster(unit->getPos());
@@ -289,7 +284,6 @@ HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &des
 }
 
 HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, WaypointPath &waypoints) {
-	_PROFILE_PATHFINDER();
 	TransitionGoal goal;
 	HAAStarResult setupResult = setupHierarchicalSearch(unit, dest, goal);
 	nsgSearchEngine->getNeighbourFunc().setSearchSpace(SearchSpace::CELLMAP);
@@ -317,7 +311,6 @@ HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, Wayp
   * @return true if successful, in which case waypoint will have been popped.
   * false on failure, in which case waypoint will not be popped. */
 bool RoutePlanner::refinePath(Unit *unit) {
-	_PROFILE_PATHFINDER();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	UnitPath &path = *unit->getPath();
 	assert(!wpPath.empty());
@@ -354,7 +347,6 @@ bool RoutePlanner::refinePath(Unit *unit) {
 #undef max
 
 void RoutePlanner::smoothPath(Unit *unit) {
-	_PROFILE_PATHFINDER();
 	if (unit->getPath()->size() < 3) {
 		return;
 	}
@@ -454,7 +446,6 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 }
 
 TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
-	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
 	UnitPath &path = *unit->getPath();
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
@@ -481,7 +472,6 @@ TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
 }
 
 TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
-	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	UnitPath &path = *unit->getPath();
 	PosGoal goal(targetPos);
@@ -611,7 +601,6 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 }
 
 TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Vec2i &target) {
-	_PROFILE_PATHFINDER();
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	const Vec2i &start = unit->getPos();
@@ -711,7 +700,6 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
   * @param unit unit whose path is blocked 
   * @return true if repair succeeded */
 bool RoutePlanner::repairPath(Unit *unit) {
-	_PROFILE_FUNCTION();
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	
@@ -814,14 +802,12 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 	return TravelState::BLOCKED;
 }
 
-#endif
+#endif // _GAE_DEBUG_EDITION_
 
 // ==================== PRIVATE ====================
 
 // return finalPos if free, else a nearest free pos within maxFreeSearchRadius
 // cells, or unit's current position if none found
-//
-// Move me to Cartographer, as findFreePos(), rewrite using a Dijkstra Search
 //
 /** find nearest free position a unit can occupy 
   * @param unit the unit in question
@@ -831,7 +817,6 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
   * @todo reimplement with Dijkstra search
   */
 Vec2i RoutePlanner::computeNearestFreePos(const Unit *unit, const Vec2i &finalPos) {
-	_PROFILE_FUNCTION();
 	//unit data
 	Vec2i unitPos= unit->getPos();
 	int size= unit->getType()->getSize();
@@ -839,38 +824,28 @@ Vec2i RoutePlanner::computeNearestFreePos(const Unit *unit, const Vec2i &finalPo
 	int teamIndex= unit->getTeam();
 
 	//if finalPos is free return it
-	if ( world->getMap()->areAproxFreeCells(finalPos, size, field, teamIndex) ) {
+	if (world->getMap()->areAproxFreeCells(finalPos, size, field, teamIndex)) {
 		return finalPos;
 	}
 
 	//find nearest pos
-
-	// Local annotate target if visible
-	// set 
-
-	// REPLACE ME!
-	//
-	// Use the new super-dooper SearchEngine, do a Dijkstra search from target, 
-	// with a GoalFunc that returns true if the cell is unoccupid (and clearnce > unit.size).
-	// Now that's efficient... ;-)
-
 	Vec2i nearestPos = unitPos;
 	float nearestDist = unitPos.dist(finalPos);
-	for ( int i = -maxFreeSearchRadius; i <= maxFreeSearchRadius; ++i ) {
-		for ( int j = -maxFreeSearchRadius; j <= maxFreeSearchRadius; ++j ) {
+	for (int i = -maxFreeSearchRadius; i <= maxFreeSearchRadius; ++i) {
+		for (int j = -maxFreeSearchRadius; j <= maxFreeSearchRadius; ++j) {
 			Vec2i currPos = finalPos + Vec2i(i, j);
-			if ( world->getMap()->areAproxFreeCells(currPos, size, field, teamIndex) ){
+			if (world->getMap()->areAproxFreeCells(currPos, size, field, teamIndex)) {
 				float dist = currPos.dist(finalPos);
 
 				//if nearer from finalPos
-				if ( dist < nearestDist ) {
+				if (dist < nearestDist) {
 					nearestPos = currPos;
 					nearestDist = dist;
-				}
 				//if the distance is the same compare distance to unit
-				else if ( dist == nearestDist ) {
-					if ( currPos.dist(unitPos) < nearestPos.dist(unitPos) )
+				} else if (dist == nearestDist) {
+					if (currPos.dist(unitPos) < nearestPos.dist(unitPos)) {
 						nearestPos = currPos;
+					}
 				}
 			}
 		}
@@ -878,4 +853,5 @@ Vec2i RoutePlanner::computeNearestFreePos(const Unit *unit, const Vec2i &finalPo
 	return nearestPos;
 }
 
-}} //end namespace
+}} // end namespace Glest::Game::Search
+

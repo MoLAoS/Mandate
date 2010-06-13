@@ -454,7 +454,7 @@ void BuildCommandType::update(Unit *unit) const {
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
 		Map *map = theWorld.getMap();
-		if (map->canOccupy(command->getPos(), Field::LAND, builtUnitType)) {
+		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType)) {
 			// move
 			if (!hasArrived(unit, command, builtUnitType)) {
 				return; // not there yet, try next update
@@ -590,7 +590,12 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	builtUnit->create();
 	unit->setCurrSkill(buildSkillType);
 	unit->setTarget(builtUnit, true, true);
-	map->prepareTerrain(builtUnit);
+
+	const Tile *const &refTile = map->getTile(Map::toTileCoords(builtUnit->getCenteredPos())); 
+	if (builtUnitType->getField() == Field::LAND 
+	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->getSubmerged(refTile))) {
+		map->prepareTerrain(builtUnit);
+	}
 	command->setUnit(builtUnit);
 
 	if (!builtUnit->isMobile()) {
@@ -788,24 +793,28 @@ void HarvestCommandType::update(Unit *unit) const {
 
 	Tile *tile = map->getTile(Map::toTileCoords(unit->getCurrCommand()->getPos()));
 	Resource *res = tile->getResource();
+
 	if (!res) { // reset command pos, but not Unit::targetPos
 		HARVEST_LOG( "No resource at command target." );
 		if (!(res = searchForResource(unit, this))) {
-			unit->finishCommand();
-			unit->setCurrSkill(SkillClass::STOP);
-			HARVEST_LOG( "No resource found nearby, command finished." );
-			return;
+			if (!unit->getLoadCount()) {
+				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+				HARVEST_LOG( "No resource found nearby, command finished." );
+				return;
+			}
+			HARVEST_LOG( "No resource found nearby, returning to store." );
 		}
 		HARVEST_LOG( "Found resource nearby, command target reset." );
 	}
 	if (unit->getCurrSkill()->getClass() != SkillClass::HARVEST) { // if not working
-		if  (!unit->getLoadCount() || (unit->getLoadType() == res->getType()
+		if  (!unit->getLoadCount() || (res && unit->getLoadType() == res->getType()
 		&& unit->getLoadCount() < this->getMaxLoad() / 2)) {
 			// if current load is correct resource type and not more than half loaded, go for resources
 			if (res && canHarvest(res->getType())) {
 				switch (theRoutePlanner.findPathToResource(unit, command->getPos(), res->getType())) {
 					case TravelState::ARRIVED:
-						if (map->isResourceNear(unit->getPos(), res->getType(), targetPos)) {
+						if (map->isResourceNear(unit->getPos(), unit->getSize(), res->getType(), targetPos)) {
 							HARVEST_LOG( "Arrived, my pos: " << unit->getPos() << ", targetPos" << targetPos );
 							// if it finds resources it starts harvesting
 							unit->setCurrSkill(this->getHarvestSkillType());
@@ -825,53 +834,52 @@ void HarvestCommandType::update(Unit *unit) const {
 						unit->setCurrSkill(SkillClass::STOP);
 						break;
 				}
+				return;
 			} else { // if can't harvest, search for another resource
 				unit->setCurrSkill(SkillClass::STOP);
 				if (!searchForResource(unit, this)) {
-					unit->finishCommand();
-					HARVEST_LOG( "Arrived, but no resources, and none found nearby, finsihed." );
-					//FIXME don't just stand around at the store!!
-					//insert move command here.
-				}
-			}
-		} else { // if load is wrong type, or more than half loaded, return to store
-			HARVEST_LOG( "returning to store, load: " << unit->getLoadCount() );
-			Unit *store = theWorld.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
-			if (store) {
-				switch (theRoutePlanner.findPathToStore(unit, store)) {
-					case TravelState::MOVING:
-						unit->setCurrSkill(getMoveLoadedSkill(unit));
-						unit->face(unit->getNextPos());
-						HARVEST_LOG( "Moving, pos: " << unit->getPos() << ", nextPos: " << unit->getNextPos() );
-						break;
-					case TravelState::BLOCKED:
-						HARVEST_LOG( "Blcoked, setting stop-loaded." );
-						unit->setCurrSkill(getStopLoadedSkill(unit));
-						break;
-					default:
-						; // otherwise, we fall through
-				}
-				if (map->isNextTo(unit->getPos(), store)) {
-					HARVEST_LOG( "At store, unloading " << unit->getLoadCount() << " " << unit->getLoadType()->getName() );
-					// update resources
-					int resourceAmount = unit->getLoadCount();
-					// Just do this for all players ???
-					if (unit->getFaction()->getCpuUltraControl()) {
-						resourceAmount = (int)(resourceAmount * theSimInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex()));
-						//resourceAmount *= ultraRes/*/*/*/*/ourceFactor; // Pull from GameSettings
+					if (!unit->getLoadCount()) {
+						unit->finishCommand();
+						return;
 					}
-					unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
-					theSimInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
-					ScriptManager::onResourceHarvested();
-
-					// if next to a store unload resources
-					unit->getPath()->clear();
-					unit->setCurrSkill(SkillClass::STOP);
-					unit->setLoadCount(0);
 				}
-			} else { // no store found, give up
-				unit->finishCommand();
 			}
+		} 
+		// if load is wrong type, or more than half loaded, or no more resource to harvest, return to store
+		Unit *store = theWorld.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
+		if (store) {
+			switch (theRoutePlanner.findPathToStore(unit, store)) {
+				case TravelState::MOVING:
+					unit->setCurrSkill(getMoveLoadedSkill(unit));
+					unit->face(unit->getNextPos());
+					return;
+				case TravelState::BLOCKED:
+					unit->setCurrSkill(getStopLoadedSkill(unit));
+					return;
+				case TravelState::IMPOSSIBLE:
+					unit->setCurrSkill(SkillClass::STOP);
+					unit->cancelCurrCommand();
+					return;
+				case TravelState::ARRIVED: 
+					break;
+			}
+			// update resources
+			int resourceAmount = unit->getLoadCount();
+			// Just do this for all players ???
+			if (unit->getFaction()->getCpuControl()) {
+				const float &mult = theSimInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+				resourceAmount = int(resourceAmount * mult);
+			}
+			unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
+			theSimInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
+			ScriptManager::onResourceHarvested();
+
+			// if next to a store unload resources
+			unit->getPath()->clear();
+			unit->setCurrSkill(SkillClass::STOP);
+			unit->setLoadCount(0);
+		} else { // no store found, give up
+			unit->finishCommand();
 		}
 	} else { // if working
 		HARVEST_LOG( "Working, targetPos: " << unit->getTargetPos() );
@@ -895,10 +903,7 @@ void HarvestCommandType::update(Unit *unit) const {
 				if (res->decAmount(1)) {
 					Vec2i rPos = res->getPos();
 					tile->deleteResource();
-					
-					// remove: Resource.Depleted is connected to Cartographer.onResourceDepleted
 					theWorld.getCartographer()->updateMapMetrics(rPos, GameConstants::cellScale);
-
 					unit->setCurrSkill(getStopLoadedSkill(unit));
 				}
 				if (unit->getLoadCount() == this->getMaxLoad()) {

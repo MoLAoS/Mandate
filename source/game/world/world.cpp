@@ -356,7 +356,7 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		Vec2i pos;
 		fixed distance;
 		DistMap hitSet;
-		PosCircularIteratorSimple pci(map.getBounds(), targetPos, ast->getSplashRadius());
+		Util::PosCircularIteratorSimple pci(map.getBounds(), targetPos, ast->getSplashRadius());
 		while (pci.getNext(pos, distance)) {
 			if ((attacked = map.getCell(pos)->getUnit(targetField))
 			&& (hitSet.find(attacked) == hitSet.end() || hitSet[attacked] > distance)) {

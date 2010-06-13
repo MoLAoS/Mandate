@@ -236,7 +236,7 @@ public:
 	bool isInside(const Vec2i &pos) const				{return isInside(pos.x, pos.y);}
 	bool isInsideTile(int sx, int sy) const			{return sx >= 0 && sy >= 0 && sx < tileW && sy < tileH;}
 	bool isInsideTile(const Vec2i &sPos) const		{return isInsideTile(sPos.x, sPos.y);}
-	bool isResourceNear(const Vec2i &pos, const ResourceType *rt, Vec2i &resourcePos) const;
+	bool isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec2i &resourcePos) const;
 
 	//free cells
 	// This should just do a look up in the map metrics (currently maintained by the Cartographer object)

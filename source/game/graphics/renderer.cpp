@@ -558,7 +558,8 @@ void Renderer::renderMouse3d(){
 			const Selection::UnitContainer &units = gui->getSelection()->getUnits();
 
 			//selection building emplacement
-			float offset= building->getSize()/2.f-0.5f;
+			float offset = building->getSize() / 2.f;
+			Field buildField = building->getField();
 
 			for(UserInterface::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); i++) {
 				glMatrixMode(GL_MODELVIEW);
@@ -575,7 +576,7 @@ void Renderer::renderMouse3d(){
 				glTranslatef(pos3f.x+offset, pos3f.y, pos3f.z+offset);
 
 				//choose color
-				if(map->areFreeCellsOrHaveUnits(*i, building->getSize(), Field::LAND, units)) {
+				if(map->areFreeCellsOrHaveUnits(*i, building->getSize(), buildField, units)) {
 					color= Vec4f(1.f, 1.f, 1.f, 0.5f);
 				} else {
 					color= Vec4f(1.f, 0.f, 0.f, 0.5f);
@@ -1480,21 +1481,6 @@ void Renderer::renderUnits(){
 			}
 		}
 	}
-	/*
-	vector<const Unit*> toRender[GameConstants::maxPlayers];
-	set<const Unit*> unitsSeen;
-	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
-		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) continue;
-		for (Zone z(0); z < Zone::COUNT; ++z) {
-			const Unit *unit = map->getCell(pos)->getUnit(z);
-			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
-				unitsSeen.insert(unit);
-				toRender[unit->getFactionIndex()].push_back(unit);
-			}
-		}
-	}
-	*/
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (toRender[i].empty()) continue;
 
@@ -1511,20 +1497,6 @@ void Renderer::renderUnits(){
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();
 			
-			//TODO: floating units should maintain their 'y' coord properly...
-			// Quick fix: float boats
-			const Field f = unit->getCurrField ();
-			const Map *map = world->getMap ();
-			if ( f == Field::AMPHIBIOUS ) {
-				SurfaceType st = map->getCell(unit->getPos())->getType();
-				if ( st == SurfaceType::DEEP_WATER || st == SurfaceType::FORDABLE ) {
-					currVec.y = map->getWaterLevel ();
-				}
-			}
-			if ( f == Field::DEEP_WATER || f == Field::ANY_WATER ) {
-				currVec.y = map->getWaterLevel ();
-			}
-
 			// let dead units start sinking before they go away
 			if(framesUntilDead <= 200 && !ut->isOfClass(UnitClass::BUILDING)) {
 				float baseline = logf(20.125f) / 5.f;

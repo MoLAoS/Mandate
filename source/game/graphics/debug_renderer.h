@@ -34,6 +34,7 @@ using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
 using namespace Glest::Search;
+using Glest::Game::Search::StoreMapKey;
 
 namespace Glest { namespace Debug {
 
@@ -56,7 +57,7 @@ class GridTextureCallback {
 public:
 	Texture2D *tex;
 
-	void reset() {/* if (tex) tex->end(); */tex = 0; }
+	void reset() { tex = 0; }
 	void loadTextures();
 
 	GridTextureCallback() : tex(0) {}
@@ -163,10 +164,10 @@ public:
 
 class StoreMapOverlay {
 public:
-	typedef vector<const Unit *> UnitList;
-	UnitList stores;
+	typedef vector<StoreMapKey> KeyList;
+	KeyList storeMaps;
 
-	void reset() { stores.clear(); }
+	void reset() { storeMaps.clear(); }
 
 	bool operator()(const Vec2i &cell, Vec4f &colour);
 };

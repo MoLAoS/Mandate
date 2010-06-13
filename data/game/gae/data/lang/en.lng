@@ -5,6 +5,7 @@
 3dArt=3D art
 About=About
 Address=Address
+Advanced=Advanced
 All=All
 AlreadyUpgraded=Already Upgraded
 AmbientVolume=Ambient Volume
@@ -83,6 +84,7 @@ Disconnect=Disconnect
 Disconnected=disconnected
 Discount=Discount
 Effects=Effects
+Engine=Engine
 EnterChatMode=Enter chat mode
 Ep=EP
 EpCost=EP cost

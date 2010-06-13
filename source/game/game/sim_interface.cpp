@@ -345,7 +345,8 @@ GameStatus SimulationInterface::checkWinnerScripted(){
 bool SimulationInterface::hasBuilding(const Faction *faction){
 	for(int i=0; i<faction->getUnitCount(); ++i){
 		Unit *unit = faction->getUnit(i);
-		if(unit->getType()->hasSkillClass(SkillClass::BE_BUILT) && unit->isAlive()){
+		if (unit->getType()->hasSkillClass(SkillClass::BE_BUILT)
+		&& unit->isAlive() && !unit->getType()->getProperty(Property::WALL)) {
 			return true;
 		}
 	}

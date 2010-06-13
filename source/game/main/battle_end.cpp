@@ -81,31 +81,7 @@ void BattleEnd::renderBg() {
 		int resourcesHarvested = stats.getResourcesHarvested(i);
 
 		int score = kills * 100 + unitsProduced * 50 + resourcesHarvested / 10;
-		string controlString;
-
-		switch (gs.getFactionControl(i)) {
-		case ControlType::CPU_EASY:
-			controlString = lang.get("CpuEasy");
-			break;
-		case ControlType::CPU:
-			controlString = lang.get("Cpu");
-			break;
-		case ControlType::CPU_ULTRA:
-			controlString = lang.get("CpuUltra");
-			break;
-		case ControlType::CPU_MEGA:
-			controlString = lang.get("CpuMega");
-			break;
-		case ControlType::NETWORK:
-			controlString = lang.get("Network");
-			break;
-		case ControlType::HUMAN:
-			controlString = lang.get("Human");
-			break;
-		default:
-			assert(false);
-		};
-
+		string controlString = lang.get(ControlTypeNames[gs.getFactionControl(i)]);
 		string playerName = gs.getPlayerName(i).empty()
 				? (lang.get("Player") + " " + intToStr(i + 1))
 				: gs.getPlayerName(i);
