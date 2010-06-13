@@ -114,9 +114,9 @@ void CoreData::load() {
 	consoleFont = loadBitmapFont(Config::getInstance().getRenderFontConsole(), computeFontSize(16));
 
 	// FreeType fonts...
-	freeTypeFont = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", 24);
-	advancedEngineFont = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", 36);
-	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", 18);
+	freeTypeFont = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));
+	advancedEngineFont = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(36));
+	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(18));
 	
 //	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/zekton_free.ttf", 14);
 
@@ -142,7 +142,7 @@ void CoreData::closeSounds(){
 
 int CoreData::computeFontSize(int size){
 	int screenH = Config::getInstance().getDisplayHeight();
-	int rs= size * screenH / 800;
+	int rs= int(size * float(screenH) / 768.f);
 	if (rs < 12) {
 		rs = 12;
 	}

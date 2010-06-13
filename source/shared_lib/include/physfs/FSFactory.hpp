@@ -45,9 +45,11 @@ class FSFactory{
 
 		bool physFS;  //FIXME: would be better when private
 
-		void initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
+		bool initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
+		bool mountSystemDir(const string &systemPath, const string &mapToPath);
 		void deinitPhysFS();
 		void usePhysFS(bool enable);
+
 		istream *getIStream(const char *fname);
 		ostream *getOStream(const char *fname);
 		
@@ -56,6 +58,7 @@ class FSFactory{
 		static vector<string> findAll(const string &path, bool cutExtension);
 		static bool fileExists(const string &path);
 		static bool removeFile(const string &path);
+		static bool dirExists(const string &path);
 
 		//Ogg callbacks
 		static size_t cb_read(void *ptr, size_t size, size_t nmemb, void *source);

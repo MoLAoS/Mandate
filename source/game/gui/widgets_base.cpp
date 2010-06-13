@@ -319,7 +319,6 @@ TextWidget::TextWidget(Widget::Ptr me)
 		: me(me)
 		, txtColour(1.f)
 		, txtShadowColour(0.f)
-		, txtPos(0)
 		, font(0)
 		, isFreeTypeFont(false)
 		, centre(true) {
@@ -328,12 +327,15 @@ TextWidget::TextWidget(Widget::Ptr me)
 }
 
 void TextWidget::centreText(int ndx) {
+	if (texts.empty()) {
+		return;
+	}
 	ASSERT_RANGE(ndx, texts.size());
 	const Metrics &metrics = Metrics::getInstance();
 	Vec2f txtDims = font->getMetrics()->getTextDiminsions(texts[ndx]);
+	Vec2i halfText = Vec2i(txtDims) / 2;
 	Vec2i centre = me->getScreenPos() + (me->getSize() / 2);
-	txtPos = Vec2i(centre.x - int(txtDims.x / 2.f), centre.y - int(txtDims.y / 2.f));
-	txtPos -= me->getScreenPos();
+	txtPositions[ndx] = centre - halfText - me->getScreenPos();
 }
 
 void TextWidget::widgetReSized() {
@@ -359,14 +361,14 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 
 void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, texts.size());
-	Vec2i pos = me->getScreenPos() + txtPos;
+	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
 	txtColour.a = me->getFade();
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
 
 void TextWidget::renderTextShadowed(int ndx) {
 	ASSERT_RANGE(ndx, texts.size());
-	Vec2i pos = me->getScreenPos() + txtPos;
+	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
 	Vec2i sPos = pos + Vec2i(2, -2);
 	txtShadowColour.a = txtColour.a = me->getFade();
 	renderText(texts[ndx], sPos.x, sPos.y, txtShadowColour);
@@ -391,6 +393,7 @@ Vec2i TextWidget::getTextDimensions() const {
 void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font *font, bool cntr) {
 	if (texts.empty()) {
 		texts.push_back(txt);
+		txtPositions.push_back(Vec2i(0));
 	} else {
 		texts[0] = txt;
 	}
@@ -405,12 +408,14 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 
 int TextWidget::addText(const string &txt) {
 	texts.push_back(txt);
+	txtPositions.push_back(Vec2i(0));
 	return texts.size() - 1;
 }
 
 void TextWidget::setText(const string &txt, int ndx) {
 	if (texts.empty() && !ndx) {
 		texts.push_back(txt);
+		txtPositions.push_back(Vec2i(0));
 	} else {
 		ASSERT_RANGE(ndx, texts.size());
 		texts[ndx] = txt;
@@ -424,8 +429,9 @@ void TextWidget::setTextFont(const Font *f) {
 	font = f;
 }
 
-void TextWidget::setTextPos(const Vec2i &pos) { 
-	txtPos = pos;
+void TextWidget::setTextPos(const Vec2i &pos, int ndx) {
+	ASSERT_RANGE(ndx, texts.size());
+	txtPositions[ndx] = pos;
 }
 
 // =====================================================
@@ -483,7 +489,7 @@ void Container::setFade(float v) {
 
 Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
 	WIDGET_LOG( __FUNCTION__ );
-	foreach (WidgetList, it, children) {
+	foreach_rev (WidgetList, it, children) {
 		Widget::Ptr widget = *it;
 		if (widget->isVisible() && widget->isInside(pos)) {
 			return widget->getWidgetAt(pos);

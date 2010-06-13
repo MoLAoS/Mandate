@@ -13,38 +13,37 @@
 #define _GLEST_GAME_MENUSTATEOPTIONS_H_
 
 #include "main_menu.h"
+#include "compound_widgets.h"
 
 namespace Glest { namespace Menu {
+using namespace Widgets;
+
+WRAPPED_ENUM( OptionsTransition, RETURN, GL_INFO, RE_LOAD );
 
 // ===============================
 // 	class MenuStateOptions  
 // ===============================
 
-class MenuStateOptions: public MenuState{
+class MenuStateOptions: public MenuState, public sigslot::has_slots {
 private:
-	GraphicButton buttonReturn;	
-	GraphicButton buttonAutoConfig;	
-	GraphicButton buttonOpenglInfo;
+	Button::Ptr m_returnButton,
+				m_autoConfigButton,
+				m_openGlInfoButton;
+
+	DropList::Ptr	m_langList,
+					m_shadowsList,
+					m_filterList,
+					m_lightsList;
+							
+	CheckBox::Ptr	m_3dTexCheckBox;
 	
-	GraphicLabel labelLang;
-	GraphicLabel labelShadows;
-	GraphicLabel labelFilter;
-	GraphicLabel labelTextures3D;
-	GraphicLabel labelLights;
-	GraphicLabel labelVolumeFx;
-	GraphicLabel labelVolumeAmbient;
-	GraphicLabel labelVolumeMusic;
-	GraphicListBox listBoxLang;
-	GraphicListBox listBoxShadows;
-	GraphicListBox listBoxFilter;
-	GraphicListBox listBoxTextures3D;
-	GraphicListBox listBoxLights;
-	GraphicListBox listBoxVolumeFx;
-	GraphicListBox listBoxVolumeAmbient;
-	GraphicListBox listBoxVolumeMusic;
-	GraphicListBox listBoxMusicSelect;
+	Slider::Ptr		m_volFxSlider,
+					m_volAmbientSlider,
+					m_volMusicSlider;
 
 	map<string,string> langMap;
+
+	OptionsTransition transitionTarget;
 
 private:
 	MenuStateOptions(const MenuStateOptions &);
@@ -53,9 +52,7 @@ private:
 public:
 	MenuStateOptions(Program &program, MainMenu *mainMenu);
 
-	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState &mouseState);
-	void render();
+	void update();
 
 	MenuStates getIndex() const { return MenuStates::OPTIONS; }
 
@@ -65,6 +62,11 @@ private:
 	void initLabels();
 	void initListBoxes();
 	void setTexts();
+
+	void onButtonClick(Button::Ptr btn);
+	void on3dTexturesToggle(Button::Ptr cb);
+	void onSliderValueChanged(Slider::Ptr slider);
+	void onDropListSelectionChanged(ListBase::Ptr list);
 };
 
 }}//end namespace

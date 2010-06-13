@@ -140,6 +140,7 @@ public:
 };
 
 #define foreach(CollectionClass, it, collection) for(CollectionClass::iterator it = (collection).begin(); it != (collection).end(); ++it)
+#define foreach_rev(CollectionClass, it, collection) for(CollectionClass::reverse_iterator it = (collection).rbegin(); it != (collection).rend(); ++it)
 #define foreach_const(CollectionClass, it, collection) for(CollectionClass::const_iterator it = (collection).begin(); it != (collection).end(); ++it)
 #define foreach_enum(Enum, val) for(Enum val(0); val < Enum::COUNT; ++val)
 

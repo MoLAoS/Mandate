@@ -205,14 +205,16 @@ CheckBox::CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), false);
 	addText("Yes");
 	int y = int((size.y - getTextFont()->getMetrics()->getHeight()) / 2);
-	setTextPos(Vec2i(40, y));
+	setTextPos(Vec2i(40, y), 0);
+	setTextPos(Vec2i(40, y), 1);
 }
 
 void CheckBox::setSize(const Vec2i &sz) {
 	// bypass Button::setSize()
 	Widget::setSize(sz);
 	int y = int((sz.y - getTextFont()->getMetrics()->getHeight()) / 2);
-	setTextPos(Vec2i(40, y));
+	setTextPos(Vec2i(40, y), 0);
+	setTextPos(Vec2i(40, y), 1);
 }
 
 Vec2i CheckBox::getMinSize() const {
@@ -282,9 +284,9 @@ void CheckBox::render() {
 
 TextBox::TextBox(Container::Ptr parent)
 		: Widget(parent)
-		, TextWidget(this)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
+		, TextWidget(this)
 		, hover(false)
 		, focus(false)
 		, changed(false) {
@@ -295,9 +297,9 @@ TextBox::TextBox(Container::Ptr parent)
 		
 TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
-		, TextWidget(this)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
+		, TextWidget(this)
 		, hover(false)
 		, focus(false)
 		, changed(false) {
@@ -393,6 +395,172 @@ Vec2i TextBox::getPrefSize() const {
 	Vec2i dim = getTextDimensions();
 	int xtra = getBorderSize() * 2 + getPadding() + 2;
 	return Vec2i(400, dim.y + xtra);
+}
+
+// =====================================================
+//  class Slider
+// =====================================================
+
+Slider::Slider(Container::Ptr parent, Vec2i pos, Vec2i size, const string &title)
+		: Widget(parent, pos, size)
+		, MouseWidget(this)
+		, ImageWidget(this)
+		, TextWidget(this)
+		, m_sliderValue(0.f)
+		, m_thumbHover(false)
+		, m_thumbPressed(false)
+		, m_shaftHover(false)
+		, m_title(title) {
+	const CoreData &coreData = CoreData::getInstance();
+	Font *font = coreData.getfreeTypeMenuFont();
+	addImage(coreData.getButtonSmallTexture());
+	setTextParams(m_title, Vec4f(1.f), font, false);
+	addText("0 %");
+	
+	setBorderSize(0);
+	//setBorderParams(BorderStyle::EMBED, 2, Vec3f(0.f), 0.4f);
+
+	string maxVal = "100 %";
+	Vec2f dims = getTextFont()->getMetrics()->getTextDiminsions(maxVal);
+	m_valSize = int(dims.x + 5.f);
+
+	recalc();
+}
+
+void Slider::recalc() {
+	Vec2i size = getSize();	
+
+	int space = size.x - m_valSize;
+	m_shaftOffset = int(space * 0.35f);
+	m_shaftSize = int(space * 0.60f);
+
+	m_thumbCentre = m_shaftOffset + 5 + int(m_sliderValue * (m_shaftSize - 10));
+
+	space = size.y - getBorderSize() * 2;
+	m_thumbPos = Vec2i(m_thumbCentre - space / 4 + getBorderSize(), getBorderSize());
+	m_thumbSize = Vec2i(space / 2, space);
+	setImageX(0, 0, m_thumbPos, m_thumbSize);
+
+	Vec2f dims = getTextFont()->getMetrics()->getTextDiminsions(m_title);
+	m_titlePos = Vec2i(m_shaftOffset / 2 - int(dims.x / 2), size.y / 2 - int(dims.y / 2));
+
+	string sliderString = Conversion::toStr(int(m_sliderValue * 100.f)) + " %";
+	setText(sliderString, 1);
+	dims = getTextFont()->getMetrics()->getTextDiminsions(sliderString);
+	int valWidth = size.x - m_shaftOffset - m_shaftSize;
+	m_valuePos = Vec2i(m_shaftOffset + m_shaftSize + (valWidth / 2 - int(dims.x / 2)), size.y / 2 - int(dims.y / 2));
+	setTextPos(m_titlePos, 0);
+	setTextPos(m_valuePos, 1);
+}
+
+bool Slider::EW_mouseMove(Vec2i pos) {
+	pos -= getScreenPos();
+	if (m_thumbPressed) {
+		int x_pos = clamp(pos.x - m_shaftOffset - 5, 0, m_shaftSize - 10);
+		float oldVal = m_sliderValue;
+		m_sliderValue = x_pos / float(m_shaftSize - 10);
+		recalc();
+		if (oldVal != m_sliderValue) {
+			ValueChanged(this);
+		}
+		return true;
+	}
+	if (Vec2i::isInside(pos, m_thumbPos, m_thumbSize)) {
+		m_thumbHover = true;
+	} else {
+		m_thumbHover = false;
+	}
+	if (!m_thumbHover) {
+		if (pos.x >= m_shaftOffset + 3 && pos.x < m_shaftOffset + m_shaftSize - 3) {
+			m_shaftHover = true;
+		} else {
+			m_shaftHover = false;
+		}
+	} else {
+		m_shaftHover = true;
+	}
+	return true;
+}
+
+void Slider::EW_mouseOut() {
+	if (!m_thumbPressed) {
+		m_shaftHover = m_thumbHover = false;
+	}
+}
+
+bool Slider::EW_mouseDown(MouseButton btn, Vec2i pos) {
+	if (btn != MouseButton::LEFT) {
+		return false;
+	}
+	pos -= getScreenPos();
+	if (m_thumbHover || m_shaftHover) {
+		m_thumbHover = true;
+		m_shaftHover = false;
+		m_thumbPressed = true;
+
+		int x_pos = clamp(pos.x - m_shaftOffset - 5, 0, m_shaftSize - 10);
+		float oldVal = m_sliderValue;
+		m_sliderValue = x_pos / float(m_shaftSize - 10);
+		recalc();
+		if (oldVal != m_sliderValue) {
+			ValueChanged(this);
+		}
+	}
+	return true;
+}
+
+bool Slider::EW_mouseUp(MouseButton btn, Vec2i pos) {
+	if (btn != MouseButton::LEFT) {
+		return false;
+	}
+	if (m_thumbPressed) {
+		m_thumbPressed = false;
+	}
+	if (isInside(pos)) {
+		pos -= getScreenPos();
+		if (Vec2i::isInside(pos, m_thumbPos, m_thumbSize)) {
+			m_thumbHover = true;
+		} else {
+			m_thumbHover = false;
+		}
+		if (!m_thumbHover) {
+			if (pos.x >= m_shaftOffset + 3 && pos.x < m_shaftOffset + m_shaftSize - 3) {
+				m_shaftHover = true;
+			} else {
+				m_shaftHover = false;
+			}
+		} else {
+			m_shaftHover = false;
+		}
+
+	} else {
+		m_shaftHover = m_thumbHover = false;
+	}
+	return true;
+}
+
+void Slider::render() {
+	Widget::renderBgAndBorders();
+	TextWidget::renderText(0);
+	TextWidget::renderText(1);
+
+	Vec2i size = getSize();
+	int cy = size.y / 2;
+	Vec2i pos(m_shaftOffset + 5, cy - 3);
+	Vec2i sz(m_shaftSize - 10, 6);
+
+	Widget::renderBorders(BorderStyle::RAISE, pos, sz, 2);
+	ImageWidget::renderImage();
+	if (m_thumbHover || m_shaftHover) {
+		float anim = getRootWindow()->getAnim();
+		if (anim > 0.5f) {
+			anim = 1.f - anim;
+		}
+		float borderAlpha = 0.1f + anim * 0.5f;
+		float centreAlpha = 0.3f + anim;
+		int offset = getBorderSize() + getPadding();
+		Widget::renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, m_thumbPos, m_thumbSize);
+	}
 }
 
 // =====================================================
@@ -626,6 +794,19 @@ void Panel::setPaddingParams(int panelPad, int widgetPad) {
 	widgetPadding = widgetPad;
 }
 
+void Panel::setLayoutParams(bool autoLayout, LayoutDirection dir, LayoutOrigin origin) {
+	assert(
+		origin == LayoutOrigin::CENTRE
+		|| ((origin == LayoutOrigin::FROM_BOTTOM || origin == LayoutOrigin::FROM_TOP)
+			&& dir == LayoutDirection::VERTICAL)
+		|| ((origin == LayoutOrigin::FROM_LEFT || origin == LayoutOrigin::FROM_RIGHT)
+			&& dir == LayoutDirection::HORIZONTAL)
+	);
+	this->layoutDirection = dir;
+	this->layoutOrigin = origin;		
+	this->autoLayout = autoLayout;
+}
+
 void Panel::layoutChildren() {
 	if (!autoLayout || children.empty()) {
 		return;
@@ -681,15 +862,21 @@ void Panel::addChild(Widget::Ptr child) {
 	layoutChildren();
 }
 
+void Panel::remChild(Widget::Ptr child) {
+	Container::remChild(child);
+}
+
 void Panel::render() {
 	Widget::renderBgAndBorders();
 	int brdrPad = getBorderSize() + getPadding();
 	Vec2i pos = getScreenPos() + Vec2i(brdrPad);
 	Vec2i size = getSize() - Vec2i(brdrPad) * 2;
-	glEnable(GL_SCISSOR_TEST);
-	glScissor(pos.x, pos.y, size.x, size.y);
-	Container::render();
-	glDisable(GL_SCISSOR_TEST);
+	glPushAttrib(GL_SCISSOR_BIT);
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(pos.x, pos.y, size.x, size.y);
+		Container::render();
+		glDisable(GL_SCISSOR_TEST);
+	glPopAttrib();
 }
 
 // =====================================================
@@ -1036,6 +1223,7 @@ DropList::DropList(Container::Ptr parent)
 	button = new Button(this);
 	button->Clicked.connect(this, &DropList::onExpandList);
 	selectedItem = new ListBoxItem(this);
+	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
 	selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 }
 
@@ -1122,6 +1310,19 @@ void DropList::setSelected(int index) {
 		selectedIndex = index;
 	}
 	SelectionChanged(this);
+}
+
+void DropList::setSelected(const string &item) {
+	int ndx = -1;
+	for (int i=0; i < listItems.size(); ++i) {
+		if (listItems[i] == item) {
+			ndx = i;
+			break;
+		}
+	}
+	if (ndx != -1) {
+		setSelected(ndx);
+	}
 }
 
 void DropList::expandList() {

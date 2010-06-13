@@ -41,33 +41,48 @@ namespace Glest { namespace Menu {
 
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
-		, selectedItem(RootMenuItem::INVALID)
-		, fade(0.f)
-		, fadeIn(true)
-		, fadeOut(false)
-		, transition(false) {
+		, selectedItem(RootMenuItem::INVALID) {
 	_PROFILE_FUNCTION();
 	Lang &lang= Lang::getInstance();
 	const Metrics &metrics = Metrics::getInstance();
 	const CoreData &coreData = CoreData::getInstance();
 
+	int sh = metrics.getScreenH();
+	int sixtyPercent = int(0.6f * sh);
+
+	int logoHeight = sh - sixtyPercent;
+	int logoYPos = sixtyPercent;
+	
+	int fiftyPercent = int(0.5f * sh);
+	int tenPercent = int(0.1f * sh);
+
+	int btnPnlHeight = fiftyPercent;
+	int btnPnlYPos = tenPercent + sh / 25;
+
+	int gplHeight = tenPercent;
+	int gplYPos = sh / 50;
+
+	int widgetPad = btnPnlHeight / 25;
+
 	// Buttons Panel
-	Vec2i pos(metrics.getScreenW() / 2 - 125, 100);
-	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, 350));
-	pnl->setPaddingParams(10, 15);
+	Vec2i pos(metrics.getScreenW() / 2 - 125, btnPnlYPos);
+	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, btnPnlHeight));
+	pnl->setPaddingParams(10, widgetPad);
 	pnl->setBorderStyle(Widgets::BorderStyle::RAISE);
 
 	// Buttons
 	Font *font = coreData.getfreeTypeMenuFont();//coreData.getMenuFontNormal();
 	foreach_enum (RootMenuItem, i) {
-		buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200,30));
+		Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
+		buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 3.f)));				
 		buttons[i]->setTextParams(lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
 
 	// Glest Logo PicturePanel
-	pos = Vec2i(metrics.getScreenW() / 2 - 256, 450);
-	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(512, 256));
+	int logoWidth = logoHeight * 2;
+	pos = Vec2i(metrics.getScreenW() / 2 - logoHeight, logoYPos);
+	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(logoWidth, logoHeight));
 	pp->setBorderSize(0);
 	pp->setPadding(0);
 	pp->setImage(coreData.getLogoTexture());
@@ -78,17 +93,20 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	Widgets::StaticText *label = new Widgets::StaticText(pp);
 	label->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
 	Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
-	label->setPos(Vec2i(255 - sz.x, 60));
+	int tx = int(255.f / 512.f * logoWidth);
+	int ty = int(60.f / 256.f * logoHeight);
+	label->setPos(Vec2i(tx - sz.x, ty));
 	label->setSize(sz);
 	label->centreText();
 
 	label = new Widgets::StaticText(pp);
 	label->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
-	label->setPos(Vec2i(285, 60));
+	tx = int(285.f / 512.f * logoWidth);
+	label->setPos(Vec2i(tx, ty));
 	label->setSize(label->getTextDimensions() + Vec2i(10,5));
 	label->centreText();
 
-	pos = Vec2i(285 + label->getSize().x, 62);
+	pos = Vec2i(tx + label->getSize().x, ty + 3);
 	// Version label
 	font = coreData.getFreeTypeFont();
 	label = new Widgets::StaticText(pp);
@@ -100,8 +118,9 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	label->centreText();
 	
 	// gpl logo
-	pos = Vec2i(metrics.getScreenW() / 2 - 64, 25);
-	new Widgets::StaticImage(&program, pos, Vec2i(128, 64), coreData.getGplTexture());
+	int gplWidth = gplHeight * 2;
+	pos = Vec2i(metrics.getScreenW() / 2 - gplHeight, gplYPos);
+	new Widgets::StaticImage(&program, pos, Vec2i(gplWidth, gplHeight), coreData.getGplTexture());
 
 	if (program.getCmdArgs().isTest("widgets")) {
 		// testing TextBox
@@ -159,6 +178,12 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		sz = Vec2i(32,256);
 		Widgets::VerticalScrollBar *vsb = new Widgets::VerticalScrollBar(&program, pos, sz);
 		vsb->setRanges(100, 35);
+
+		//yPos += checkBox->getHeight() + 15;
+		Vec2i sliderPos(250, 10);
+		Vec2i sliderSize(400, 32);
+		Widgets::Slider::Ptr slider = new Widgets::Slider(&program, sliderPos, sliderSize, "Test Slider");
+
 
 	} // test_widgets
 
@@ -222,22 +247,7 @@ void MenuStateRoot::update(){
 	if (Config::getInstance().getMiscAutoTest()) {
 		AutoTest::getInstance().updateRoot(program, mainMenu);
 	}
-	if (fadeIn) {
-		fade += 0.05;
-		if (fade > 1.f) {
-			fade = 1.f;
-			fadeIn = false;
-		}
-		program.setFade(fade);
-	} else if (fadeOut) {
-		fade -= 0.05;
-		if (fade < 0.f) {
-			fade = 0.f;
-			transition = true;
-			fadeOut = false;
-		}
-		program.setFade(fade);
-	}
+	MenuState::update();
 	if (transition) {
 		program.clear();
 		MenuState *newState = 0;

@@ -34,8 +34,6 @@ class MenuStateRoot: public MenuState, public sigslot::has_slots {
 private:
 	Widgets::Button *buttons[RootMenuItem::COUNT];
 	RootMenuItem selectedItem;
-	float fade;
-	bool fadeIn, fadeOut, transition;
 
 private:
 	MenuStateRoot(const MenuStateRoot &);

@@ -67,7 +67,7 @@ WRAPPED_ENUM( BorderStyle,
 	SOLID,		/**< Draw a solid border */
 	CUSTOM		/**< Use colour values from attached ColourValues4 */
 	//EMBOSS,		/**< Draw a raised border */
-	//ETCH		/**< Draw an etched (lowered) border */
+	//ETCH		/**< Draw an etched border */
 );
 /*
 struct SideValues {
@@ -306,7 +306,7 @@ private:
 	vector<string> texts;
 	Vec4f txtColour;
 	Vec4f txtShadowColour;
-	Vec2i txtPos;
+	vector<Vec2i> txtPositions;
 	const Font *font;
 	bool isFreeTypeFont;
 	bool centre;
@@ -326,16 +326,16 @@ public:
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col) { txtColour = col;	 }
-	void setTextPos(const Vec2i &pos);
+	void setTextPos(const Vec2i &pos, int ndx=0);
 	void setTextFont(const Font *f);
 
 	void centreText(int ndx = 0);
 	void widgetReSized();
 
 	// get
-	const string& getText(int ndx=0) const	{ return texts[ndx];	}
+	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, texts.size()); return texts[ndx];	}
 	const Vec4f& getTextColour() const	 { return txtColour; }
-	const Vec2i& getTextPos() const	  { return txtPos; }
+	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, txtPositions.size()); return txtPositions[ndx]; }
 	const Font* getTextFont() const { return font; }
 	Vec2i getTextDimensions() const;
 	bool hasText() const { return !texts.empty(); }

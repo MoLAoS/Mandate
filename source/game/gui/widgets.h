@@ -94,8 +94,8 @@ public:
 
 	virtual void setSize(const Vec2i &sz);
 
-	virtual void EW_mouseIn() { std::cout << __FUNCTION__ << "\n"; hover = true; }
-	virtual void EW_mouseOut() { std::cout << __FUNCTION__ << "\n"; hover = false; }
+	virtual void EW_mouseIn() { hover = true; }
+	virtual void EW_mouseOut() { hover = false; }
 
 	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
@@ -109,15 +109,9 @@ public:
 	sigslot::signal<Button*> Clicked;
 };
 
-class StateButton : public Button {
-protected:
-	int state;
-	int numStates;
-
-public:
-	StateButton(Container::Ptr parent);
-	StateButton(Container::Ptr parent, Vec2i pos, Vec2i size);
-};
+// =====================================================
+// class CheckBox
+// =====================================================
 
 class CheckBox : public Button {
 public:
@@ -131,6 +125,7 @@ public:
 
 	virtual void setSize(const Vec2i &sz);
 	void setChecked(bool v) { checked = v; }
+	bool isChecked() const { return checked; }
 
 	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
@@ -146,7 +141,7 @@ public:
 // class TextBox
 // =====================================================
 
-class TextBox : public Widget, public TextWidget, public MouseWidget, public KeyboardWidget {
+class TextBox : public Widget, public MouseWidget, public KeyboardWidget, public TextWidget {
 public:
 	typedef TextBox* Ptr;
 
@@ -177,6 +172,57 @@ public:
 	virtual string desc() { return string("[Button: ") + descPosDim() + "]"; }
 
 	sigslot::signal<TextBox*> TextChanged;
+};
+
+// =====================================================
+//  class Slider
+// =====================================================
+
+class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+public:
+	typedef Slider* Ptr;
+
+private:
+	float	m_sliderValue;
+	bool	m_thumbHover,
+			m_thumbPressed,
+			m_shaftHover;
+	int		m_shaftOffset, 
+			m_shaftSize,
+			m_thumbCentre,
+			m_valSize;
+	Vec2i	m_thumbPos,
+			m_thumbSize;
+	Vec2i	m_titlePos,
+			m_valuePos;
+	string	m_title;
+
+	void recalc();
+
+public:
+	Slider(Container::Ptr parent, Vec2i pos, Vec2i size, const string &title);
+
+	void setValue(float val) { m_sliderValue = val; recalc(); }
+	float getValue() const { return m_sliderValue; }
+
+	void setSize(const Vec2i &size) {
+		Widget::setSize(size);
+		recalc();
+	}
+
+	virtual void EW_mouseOut();
+
+	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool EW_mouseMove(Vec2i pos);
+
+	void render();
+
+	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
+	virtual Vec2i getMinSize() const { return Vec2i(300,32); }
+	virtual string desc() { return string("[Slider: ") + descPosDim() + "]"; }
+
+	sigslot::signal<Ptr> ValueChanged;
 };
 
 // =====================================================
@@ -252,21 +298,19 @@ public:
 	typedef Panel* Ptr;
 
 public:
-	WRAPPED_ENUM( LayoutOrigin, FROM_TOP, CENTRE, FROM_BOTTOM );
+	WRAPPED_ENUM( LayoutDirection, VERTICAL, HORIZONTAL );
+	WRAPPED_ENUM( LayoutOrigin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
 
 protected:
-	//int panelPadding;	// padding between panel edges and child widgets
-	int widgetPadding;	// padding between child widgets
-	bool autoLayout;
-	LayoutOrigin layoutOrigin;
+	int		widgetPadding;	// padding between child widgets
+	bool	autoLayout;
+	LayoutDirection	layoutDirection;
+	LayoutOrigin	layoutOrigin;
 
 	Panel(WidgetWindow* window);
 
 public:
-	void setLayoutParams(bool autoLayout, LayoutOrigin layoutOrigin = LayoutOrigin::CENTRE) {
-		this->autoLayout = autoLayout;
-		this->layoutOrigin = layoutOrigin;
-	}
+	void setLayoutParams(bool autoLayout, LayoutDirection dir, LayoutOrigin origin = LayoutOrigin::CENTRE);
 	
 public:
 	Panel(Container::Ptr parent);
@@ -276,6 +320,7 @@ public:
 	void setPaddingParams(int panelPad, int widgetPad);
 
 	void addChild(Widget::Ptr child);
+	void remChild(Widget::Ptr child);
 
 	void setLayoutOrigin(LayoutOrigin lo) { layoutOrigin = lo; }
 	virtual void layoutChildren();
@@ -472,6 +517,7 @@ public:
 	void clearItems();
 
 	void setSelected(int index);
+	void setSelected(const string &item);
 
 	// event handlers
 	void onBoxClicked(ListBoxItem::Ptr);

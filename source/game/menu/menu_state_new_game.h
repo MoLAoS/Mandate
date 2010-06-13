@@ -20,7 +20,7 @@
 namespace Glest { namespace Menu {
 using namespace Widgets;
 
-WRAPPED_ENUM( MenuTransition, RETURN, PLAY );
+WRAPPED_ENUM( NewGameTransition, RETURN, PLAY );
 
 // ===============================
 // 	class MenuStateNewGame
@@ -28,7 +28,7 @@ WRAPPED_ENUM( MenuTransition, RETURN, PLAY );
 
 class MenuStateNewGame: public MenuState/*StartGameBase*/, public sigslot::has_slots {
 private:
-	MenuTransition targetTransition;
+	NewGameTransition targetTransition;
 	int humanSlot;
 
 	Button::Ptr btnReturn, btnPlayNow;
@@ -55,9 +55,6 @@ private:
 
 	MapInfo mapInfo;
 	GraphicMessageBox *msgBox;
-
-	float fade;
-	bool fadeIn, fadeOut, transition;
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);

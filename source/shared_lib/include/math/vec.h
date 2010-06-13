@@ -169,6 +169,15 @@ public:
 			dest[i] = srcB[i].lerp(t, srcA[i]);
 		}
 	}
+
+	static bool isInside(const Vec2 &point, const Vec2 &pos, const Vec2 &size) {
+		return (
+			point.x >= pos.x 
+			&& point.y >= pos.y 
+			&& point.x < pos.x + size.x
+			&& point.y < pos.y + size.y
+		);
+	}
 };
 
 // =====================================================

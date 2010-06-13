@@ -103,26 +103,29 @@ protected:
 	Program &program;
 
 	MainMenu *mainMenu;
-	//Camera camera;
+	float fade;
+	bool fadeIn, fadeOut, transition;
 
 private:
-	//MenuState(const MenuState &);
 	const MenuState &operator =(const MenuState &);
 
 public:
-	MenuState(Program &program, MainMenu *mainMenu/*, const string &stateName*/)
-			: program(program), mainMenu(mainMenu) {}
+	MenuState(Program &program, MainMenu *mainMenu)
+			: program(program), mainMenu(mainMenu)
+	 		, fade(0.f)
+			, fadeIn(true)
+			, fadeOut(false)
+			, transition(false) {}
 
 	virtual ~MenuState() {}
 	virtual void mouseClick(int x, int y, MouseButton mouseButton) {}
 	virtual void mouseMove(int x, int y, const MouseState &mouseState) {}
 	virtual void render() {}
-	virtual void update() {}
+	virtual void update();
 	virtual void keyDown(const Key &key){}
 	virtual void keyPress(char c){}
 
 	virtual MenuStates getIndex() const = 0;
-	//const Camera *getCamera() const			{return &camera;}
 };
 
 }}//end namespace

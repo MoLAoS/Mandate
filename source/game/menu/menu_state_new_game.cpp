@@ -45,13 +45,9 @@ using namespace Shared::Util;
 // =====================================================
 
 MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots)
-		: MenuState/*StartGameBase*/(program, mainMenu)
-		, targetTransition(MenuTransition::INVALID)
-		, humanSlot(0)
-		, fade(0.f)
-		, fadeIn(true)
-		, fadeOut(false)
-		, transition(false) {
+		: MenuState(program, mainMenu)
+		, targetTransition(NewGameTransition::INVALID)
+		, humanSlot(0) {
 	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	const CoreData &coreData = CoreData::getInstance();
@@ -330,11 +326,11 @@ void MenuStateNewGame::onChangeTechtree(ListBase::Ptr) {
 
 void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
 	if (btn == btnReturn) {
-		targetTransition = MenuTransition::RETURN;
+		targetTransition = NewGameTransition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
 		theSoundRenderer.playFx(CoreData::getInstance().getClickSoundA());
 	} else {
-		targetTransition = MenuTransition::PLAY;
+		targetTransition = NewGameTransition::PLAY;
 		//GameSettings &gs = theSimInterface->getGameSettings();
 		//Shared::Xml::XmlTree xmlTree("game-settings");
 		//gs.save(xmlTree.getRootNode());
@@ -346,27 +342,12 @@ void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
 }
 
 void MenuStateNewGame::update() {
-	if (fadeIn) {
-		fade += 0.05;
-		if (fade > 1.f) {
-			fade = 1.f;
-			fadeIn = false;
-		}
-		program.setFade(fade);
-	} else if (fadeOut) {
-		fade -= 0.05;
-		if (fade < 0.f) {
-			fade = 0.f;
-			transition = true;
-			fadeOut = false;
-		}
-		program.setFade(fade);
-	}
+	MenuState::update();
 	if (transition) {
-		if (targetTransition == MenuTransition::RETURN) {
+		if (targetTransition == NewGameTransition::RETURN) {
 			program.clear();
 			mainMenu->setState(new MenuStateRoot(program, mainMenu));
-		} else if (targetTransition == MenuTransition::PLAY) {
+		} else if (targetTransition == NewGameTransition::PLAY) {
 			if (hasUnconnectedSlots()) {
 				msgBox = new GraphicMessageBox();
 				msgBox->init(theLang.get("WaitingForConnections"), theLang.get("Ok"));

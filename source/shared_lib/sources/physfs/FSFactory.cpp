@@ -59,9 +59,11 @@ FSFactory *FSFactory::getInstance(){
 	return instance;
 }
 
-void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
+bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
 #if USE_PHYSFS
-	PHYSFS_init(argv0);
+	if (!PHYSFS_init(argv0)) {
+		return false;
+	}
 	PHYSFS_permitSymbolicLinks(1);
 	
 	PHYSFS_setWriteDir(configDir);
@@ -93,6 +95,17 @@ void FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 		std::cout << "[" << *i << "] is in the search path.\n";
 	}
 #endif
+	return true;
+}
+
+bool FSFactory::mountSystemDir(const string &systemPath, const string &mapToPath) {
+#if USE_PHYSFS
+	if (!PHYSFS_mount(systemPath.c_str(), mapToPath.c_str(), 1)) {
+		return false;
+	}
+	return true;
+#endif
+	return false;
 }
 
 void FSFactory::deinitPhysFS(){
@@ -178,6 +191,10 @@ bool FSFactory::fileExists(const string &path){
 #else
 	return false;
 #endif
+}
+
+bool FSFactory::dirExists(const string &path) {
+	return PHYSFS_isDirectory(path.c_str());
 }
 
 bool FSFactory::removeFile(const string &path) {

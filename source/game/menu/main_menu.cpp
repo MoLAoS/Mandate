@@ -232,4 +232,23 @@ void MainMenu::loadStateCameras() {
 	}
 }
 
+void MenuState::update() {
+	if (fadeIn) {
+		fade += 0.05;
+		if (fade > 1.f) {
+			fade = 1.f;
+			fadeIn = false;
+		}
+		program.setFade(fade);
+	} else if (fadeOut) {
+		fade -= 0.05;
+		if (fade < 0.f) {
+			fade = 0.f;
+			transition = true;
+			fadeOut = false;
+		}
+		program.setFade(fade);
+	}
+}
+
 }}//end namespace

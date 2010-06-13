@@ -31,171 +31,211 @@ namespace Glest { namespace Menu {
 // 	class MenuStateOptions
 // =====================================================
 
-MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu) :
-	MenuState(program, mainMenu/*, "config"*/)
-{
+MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu)
+		, transitionTarget(OptionsTransition::INVALID) {
 	Lang &lang= Lang::getInstance();
 	Config &config= Config::getInstance();
+	const Metrics &metrics = Metrics::getInstance();
+	CoreData &coreData = CoreData::getInstance();
 
-	//buttons
-	buttonReturn.init(200, 150, 100);
-	buttonAutoConfig.init(320, 150, 100);
-	buttonOpenglInfo.init(440, 150, 100);
+	Font *font = coreData.getfreeTypeMenuFont();
+	// create
+	int gap = (metrics.getScreenW() - 450) / 4;
+	int x = gap, w = 150, y = 50, h = 30;
+	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
 
-	//labels
-	initLabels();
+	x += w + gap;
+	m_autoConfigButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_autoConfigButton->setTextParams(lang.get("AutoConfig"), Vec4f(1.f), font);
+	m_autoConfigButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
+	
+	x += w + gap;
+	m_openGlInfoButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_openGlInfoButton->setTextParams(lang.get("GraphicInfo"), Vec4f(1.f), font);
+	m_openGlInfoButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
+	
+	int y_space = metrics.getScreenH() - 150; // -100 bottom, -50 top
+	const int nItems = 10; // 2 spacers
+	int itemHeight = int(font->getMetrics()->getHeight() + 5.f);
+	int y_gap = (y_space - itemHeight * nItems) / 11;
 
-	//list boxes
-	initListBoxes();
+	x = metrics.getScreenW() / 2 - 300;
+	y = 100 + y_gap;
+	w = 600;
+	h = itemHeight;
+	int yInc = h + y_gap;
+	
+	OptionContainer::Ptr ocPtr;
 
-	//set text for the above components
-	setTexts();
+	// lights
+	ocPtr = new OptionContainer(&program,  Vec2i(x, y), Vec2i(w, h), lang.get("MaxLights"));
+	m_lightsList = new DropList(ocPtr);
+	ocPtr->setWidget(m_lightsList );
+	m_lightsList->setSize(Vec2i(150, m_lightsList ->getHeight()));
+	for (int i = 1; i <= 8; ++i) {
+		m_lightsList->addItem(intToStr(i));
+	}
+	m_lightsList->setSelected(clamp(config.getRenderLightsMax()-1, 0, 7));
+	m_lightsList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 
-	//sound
+	// 3D Textures
+	y += yInc;
+	ocPtr = new OptionContainer(&program,  Vec2i(x, y), Vec2i(w, h), lang.get("Textures3D"));
+	m_3dTexCheckBox = new CheckBox(ocPtr);
+	ocPtr->setWidget(m_3dTexCheckBox);
+	m_3dTexCheckBox->setChecked(config.getRenderTextures3D());
+	m_3dTexCheckBox->Clicked.connect(this, &MenuStateOptions::on3dTexturesToggle);
 
-	//lang
-	setupListBoxLang();
+	// Texture filter
+	y += yInc;
+	ocPtr = new OptionContainer(&program,  Vec2i(x, y), Vec2i(w, h), lang.get("Filter"));
+	m_filterList = new DropList(ocPtr);
+	ocPtr->setWidget(m_filterList);
 
-	//shadows
+	m_filterList->setSize(Vec2i(350, m_filterList->getHeight()));
+	m_filterList->addItem("Bilinear");
+	m_filterList->addItem("Triliniear");
+	m_filterList->setSelected(config.getRenderFilter());
+	m_filterList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
+
+	// Shadows
+	y += yInc;
+	ocPtr = new OptionContainer(&program,  Vec2i(x, y), Vec2i(w, h), lang.get("Shadows"));
+	m_shadowsList = new DropList(ocPtr);
+	ocPtr->setWidget(m_shadowsList);
+
+	m_shadowsList->setSize(Vec2i(350, m_shadowsList->getHeight()));
 	for(int i= 0; i<Renderer::sCount; ++i){
-		listBoxShadows.pushBackItem(lang.get(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(i))));
+		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(i))));
 	}
-
 	string str= config.getRenderShadows();
-	listBoxShadows.setSelectedItemIndex(
-		clamp(int(Renderer::strToShadows(str)), 0, Renderer::sCount - 1));
+	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, Renderer::sCount - 1));
+	m_shadowsList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 
-	//filter
-	listBoxFilter.pushBackItem("Bilinear");
-	listBoxFilter.pushBackItem("Trilinear");
-	listBoxFilter.setSelectedItem(config.getRenderFilter());
+	// Language
+	y += yInc * 2;
+	ocPtr = new OptionContainer(&program, Vec2i(x, y), Vec2i(w, h), "Language");
+	m_langList = new DropList(ocPtr);
+	ocPtr->setWidget(m_langList);
+	m_langList->setSize(Vec2i(350, m_langList->getHeight()));
+	setupListBoxLang();
+	m_langList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 
-	//textures 3d
-	listBoxTextures3D.pushBackItem(lang.get("No"));
-	listBoxTextures3D.pushBackItem(lang.get("Yes"));
-	listBoxTextures3D.setSelectedItemIndex(clamp(int(config.getRenderTextures3D()), 0, 1));
+	y += yInc * 2;
 
-	//lights
-	for(int i= 1; i<=8; ++i){
-		listBoxLights.pushBackItem(intToStr(i));
-	}
-	listBoxLights.setSelectedItemIndex(clamp(config.getRenderLightsMax()-1, 0, 7));
+	m_volMusicSlider = new Slider(&program, Vec2i(x, y), Vec2i(w, h), lang.get("MusicVolume"));
+	float val = clamp(float(config.getSoundVolumeMusic()) / 100.f, 0.f, 1.f);
+	m_volMusicSlider->setValue(val);
+	m_volMusicSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
 
-	//sound
-	for(int i=0; i<=100; i+=5){
-		listBoxVolumeFx.pushBackItem(intToStr(i));
-		listBoxVolumeAmbient.pushBackItem(intToStr(i));
-		listBoxVolumeMusic.pushBackItem(intToStr(i));
-	}
-	listBoxVolumeFx.setSelectedItem(intToStr(config.getSoundVolumeFx()/5*5));
-	listBoxVolumeAmbient.setSelectedItem(intToStr(config.getSoundVolumeAmbient()/5*5));
-	listBoxVolumeMusic.setSelectedItem(intToStr(config.getSoundVolumeMusic()/5*5));
+	y += yInc;
+	m_volAmbientSlider = new Slider(&program, Vec2i(x, y), Vec2i(w, h), lang.get("AmbientVolume"));
+	val = clamp(float(config.getSoundVolumeAmbient()) / 100.f, 0.f, 1.f);
+	m_volAmbientSlider->setValue(val);
+	m_volAmbientSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
+
+	y += yInc;
+	m_volFxSlider = new Slider(&program, Vec2i(x, y), Vec2i(w, h), lang.get("FxVolume"));
+	val = clamp(float(config.getSoundVolumeFx()) / 100.f, 0.f, 1.f);
+	m_volFxSlider->setValue(val);
+	m_volFxSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
+
+	program.setFade(0.f);
 }
 
-void MenuStateOptions::mouseClick(int x, int y, MouseButton mouseButton){
-
+void MenuStateOptions::onButtonClick(Button::Ptr btn) {
 	Config &config= Config::getInstance();
 	Lang &lang= Lang::getInstance();
 	CoreData &coreData= CoreData::getInstance();
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 
-	if(buttonReturn.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundA());
-		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-    }
-	else if(buttonAutoConfig.mouseClick(x, y)){
+	if (btn == m_autoConfigButton) {
 		soundRenderer.playFx(coreData.getClickSoundA());
 		Renderer::getInstance().autoConfig();
 		saveConfig();
-		mainMenu->setState(new MenuStateOptions(program, mainMenu));
-	}
-	else if(buttonOpenglInfo.mouseClick(x, y)){
+		transitionTarget = OptionsTransition::RE_LOAD;
+	} else if (btn == m_returnButton) {
+		soundRenderer.playFx(coreData.getClickSoundA());
+		transitionTarget = OptionsTransition::RETURN;
+		mainMenu->setCameraTarget(MenuStates::ROOT);
+	} else if (btn == m_openGlInfoButton) {
 		soundRenderer.playFx(coreData.getClickSoundB());
-		mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
+		transitionTarget = OptionsTransition::GL_INFO;
+		mainMenu->setCameraTarget(MenuStates::GFX_INFO);
 	}
-	else if(listBoxLang.mouseClick(x, y)){
-		map<string,string>::iterator it = langMap.find(listBoxLang.getSelectedItem());
+	fadeIn = false;
+	fadeOut = true;
+}
+
+void MenuStateOptions::on3dTexturesToggle(Button::Ptr cb) {
+	Config &config= Config::getInstance();
+	config.setRenderTextures3D(m_3dTexCheckBox->isChecked());
+	saveConfig();
+}
+
+
+void MenuStateOptions::onDropListSelectionChanged(ListBase::Ptr list) {
+	Config &config= Config::getInstance();
+	Lang &lang= Lang::getInstance();
+	if (list == m_langList) {
+		map<string,string>::iterator it = langMap.find(list->getSelectedItem()->getText());
 		string lng;
 		if ( it != langMap.end() ) {
 			lng = it->second;
 		} else {
-			lng = listBoxLang.getSelectedItem();
+			lng = list->getSelectedItem()->getText();
 		}
 		config.setUiLocale(lng);
-		lang.setLocale(config.getUiLocale());
+		transitionTarget = OptionsTransition::RE_LOAD;
+		fadeIn = false;
+		fadeOut = true;
+	} else if (list == m_filterList) {
+		config.setRenderFilter(m_filterList->getSelectedItem()->getText());
 		saveConfig();
-		mainMenu->setState(new MenuStateOptions(program, mainMenu));
-
-	}
-	else if(listBoxShadows.mouseClick(x, y)){
-		int index= listBoxShadows.getSelectedItemIndex();
+	} else if (list == m_shadowsList) {
+		int index = m_shadowsList->getSelectedIndex();
 		config.setRenderShadows(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(index)));
 		saveConfig();
-	}
-	else if(listBoxFilter.mouseClick(x, y)){
-		config.setRenderFilter(listBoxFilter.getSelectedItem());
-		saveConfig();
-	}
-	else if(listBoxTextures3D.mouseClick(x, y)){
-		config.setRenderTextures3D(listBoxTextures3D.getSelectedItemIndex());
-		saveConfig();
-	}
-	else if(listBoxLights.mouseClick(x, y)){
-		config.setRenderLightsMax(listBoxLights.getSelectedItemIndex()+1);
-		saveConfig();
-	}
-	else if(listBoxVolumeFx.mouseClick(x, y)){
-		config.setSoundVolumeFx(atoi(listBoxVolumeFx.getSelectedItem().c_str()));
-		saveConfig();
-	}
-	else if(listBoxVolumeAmbient.mouseClick(x, y)){
-		config.setSoundVolumeAmbient(atoi(listBoxVolumeAmbient.getSelectedItem().c_str()));
-		saveConfig();
-	}
-	else if(listBoxVolumeMusic.mouseClick(x, y)){
-		CoreData::getInstance().getMenuMusic()->setVolume(Conversion::strToInt(listBoxVolumeMusic.getSelectedItem())/100.f);
-		config.setSoundVolumeMusic(atoi(listBoxVolumeMusic.getSelectedItem().c_str()));
+	} else if (list == m_lightsList) {
+		config.setRenderLightsMax(list->getSelectedIndex() + 1);
 		saveConfig();
 	}
 }
 
-void MenuStateOptions::mouseMove(int x, int y, const MouseState &ms){
-	buttonReturn.mouseMove(x, y);
-	buttonAutoConfig.mouseMove(x, y);
-	buttonOpenglInfo.mouseMove(x, y);
-	listBoxLang.mouseMove(x, y);
-	listBoxVolumeFx.mouseMove(x, y);
-	listBoxVolumeAmbient.mouseMove(x, y);
-	listBoxVolumeMusic.mouseMove(x, y);
-	listBoxLang.mouseMove(x, y);
-	listBoxFilter.mouseMove(x, y);
-	listBoxShadows.mouseMove(x, y);
-	listBoxTextures3D.mouseMove(x, y);
-	listBoxLights.mouseMove(x, y);
+void MenuStateOptions::update() {
+	MenuState::update();
+	if (transition) {
+		program.clear();
+		switch (transitionTarget) {
+			case OptionsTransition::RETURN:
+				mainMenu->setState(new MenuStateRoot(program, mainMenu));
+				break;
+			case OptionsTransition::GL_INFO:
+				mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
+				break;
+			case OptionsTransition::RE_LOAD:
+				theLang.setLocale(theConfig.getUiLocale());
+				saveConfig();
+				mainMenu->setState(new MenuStateOptions(program, mainMenu));
+				break;
+		}
+	}
 }
 
-void MenuStateOptions::render(){
-	Renderer &renderer= Renderer::getInstance();
-
-	renderer.renderButton(&buttonReturn);
-	renderer.renderButton(&buttonAutoConfig);
-	renderer.renderButton(&buttonOpenglInfo);
-	renderer.renderListBox(&listBoxLang);
-	renderer.renderListBox(&listBoxShadows);
-	renderer.renderListBox(&listBoxTextures3D);
-	renderer.renderListBox(&listBoxLights);
-	renderer.renderListBox(&listBoxFilter);
-	renderer.renderListBox(&listBoxVolumeFx);
-	renderer.renderListBox(&listBoxVolumeAmbient);
-	renderer.renderListBox(&listBoxVolumeMusic);
-	renderer.renderLabel(&labelLang);
-	renderer.renderLabel(&labelShadows);
-	renderer.renderLabel(&labelTextures3D);
-	renderer.renderLabel(&labelLights);
-	renderer.renderLabel(&labelFilter);
-	renderer.renderLabel(&labelVolumeFx);
-	renderer.renderLabel(&labelVolumeAmbient);
-	renderer.renderLabel(&labelVolumeMusic);
+void MenuStateOptions::onSliderValueChanged(Slider::Ptr slider) {
+	Config &config= Config::getInstance();
+	if (slider == m_volFxSlider) {
+		config.setSoundVolumeFx(int(slider->getValue() * 100));
+		saveConfig();
+	} else if (slider == m_volAmbientSlider) {
+		config.setSoundVolumeAmbient(int(slider->getValue() * 100));
+	} else if (slider == m_volMusicSlider) {
+		config.setSoundVolumeMusic(int(slider->getValue() * 100));
+	}
+	saveConfig();
 }
 
 // private
@@ -223,7 +263,7 @@ void MenuStateOptions::setupListBoxLang() {
 	const string langListPath = langDir + "langlist.txt";
 	istream *fp = FSFactory::getInstance()->getIStream(langListPath.c_str());
 	
-	// insert values into table from file
+	// insert values into table from file (all possible lang codes)
 	map<string,string> langTable;
 	char buf[128];
 	//while ( fgets(buf, 128, fp) ) {
@@ -236,11 +276,14 @@ void MenuStateOptions::setupListBoxLang() {
 	}
 	delete fp;
 
-	// insert the values for langNames
+	// insert the values for langNames (the locales we care about (have lang files for))
 	vector<string> langNames;
 	for ( vector<string>::iterator it = langResults.begin(); it != langResults.end(); ++it ) {
 		map<string,string>::iterator lcit = langTable.find(*it);
 		if ( lcit != langTable.end() ) {
+			if (lcit->second[lcit->second.size() - 1] == 13) {
+				lcit->second[lcit->second.size() - 1] = '\0';
+			}
 			langNames.push_back(lcit->second);
 			langMap[lcit->second] = *it;
 		} else {
@@ -249,57 +292,13 @@ void MenuStateOptions::setupListBoxLang() {
 	}
 
 	// insert values and initial value for listBoxLang
-    listBoxLang.setItems(langNames);
+	m_langList->addItems(langNames);
 	const string &loc = config.getUiLocale();
-	if ( langTable.find(loc) != langTable.end() ) {
-		listBoxLang.setSelectedItem(langTable[loc]);
+	if (langTable.find(loc) != langTable.end()) {
+		m_langList->setSelected(langTable[loc]);
 	} else {
-		listBoxLang.setSelectedItem(loc);
+		m_langList->setSelected(loc);
 	}
-}
-
-void MenuStateOptions::initLabels() {
-	labelVolumeFx.init(200, 530);
-	labelVolumeAmbient.init(200, 500);
-	labelVolumeMusic.init(200, 470);
-
-	labelLang.init(200, 400);
-
-	labelFilter.init(200, 340);
-	labelShadows.init(200, 310);
-	labelTextures3D.init(200, 280);
-	labelLights.init(200, 250);
-}
-
-void MenuStateOptions::initListBoxes() {
-	listBoxVolumeFx.init(350, 530, 80);
-	listBoxVolumeAmbient.init(350, 500, 80);
-	listBoxVolumeMusic.init(350, 470, 80);
-	listBoxMusicSelect.init(350, 440, 150);
-
-	listBoxLang.init(350, 400, 170);
-
-	listBoxFilter.init(350, 340, 170);
-	listBoxShadows.init(350, 310, 170);
-	listBoxTextures3D.init(350, 280, 80);
-	listBoxLights.init(350, 250, 80);
-}
-
-void MenuStateOptions::setTexts() {
-	Lang &lang= Lang::getInstance();
-
-	buttonReturn.setText(lang.get("Return"));
-	buttonAutoConfig.setText(lang.get("AutoConfig"));
-	buttonOpenglInfo.setText(lang.get("GraphicInfo"));
-
-	labelLang.setText(lang.get("Language"));
-	labelShadows.setText(lang.get("Shadows"));
-	labelFilter.setText(lang.get("Filter"));
-	labelTextures3D.setText(lang.get("Textures3D"));
-	labelLights.setText(lang.get("MaxLights"));
-	labelVolumeFx.setText(lang.get("FxVolume"));
-	labelVolumeAmbient.setText(lang.get("AmbientVolume"));
-	labelVolumeMusic.setText(lang.get("MusicVolume"));
 }
 
 }}//end namespace
