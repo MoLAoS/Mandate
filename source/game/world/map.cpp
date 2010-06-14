@@ -30,6 +30,7 @@
 #include "program.h"
 #include "script_manager.h"
 #include "cartographer.h"
+#include "annotated_map.h"
 #include "FSFactory.hpp"
 
 #include "leak_dumper.h"

@@ -209,19 +209,15 @@ const ResourceType *Ai::getNeededResource() {
 }
 
 bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
-	int count = aiInterface->onSightUnitCount();
-	const Unit *unit;
-
-	for (int i = 0; i < count; ++i) {
-		unit = aiInterface->getOnSightUnit(i);
-		if (!aiInterface->isAlly(unit) && unit->isAlive()) {
-			pos = unit->getPos();
-			field = unit->getCurrField();
-			if (pos.dist(aiInterface->getHomeLocation()) < radius) {
-				baseSeen = true;
-				aiInterface->printLog(2, "Being attacked at pos " + intToStr(pos.x) + "," + intToStr(pos.y) + "\n");
-				return true;
-			}
+	UnitList enemies;
+	aiInterface->getUnitsSeen(enemies);
+	foreach_const (UnitList, it, enemies) {
+		pos = (*it)->getPos();
+		field = (*it)->getCurrField();
+		if (pos.dist(aiInterface->getHomeLocation()) < radius) {
+			baseSeen = true;
+			aiInterface->printLog(2, "Being attacked at pos " + intToStr(pos.x) + "," + intToStr(pos.y) + "\n");
+			return true;
 		}
 	}
 	return false;

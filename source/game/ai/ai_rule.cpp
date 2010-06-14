@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <limits>
 
 #include "ai_rule.h"
 #include "ai.h"
@@ -21,7 +22,7 @@
 
 #include "leak_dumper.h"
 
-
+using std::numeric_limits;
 using Shared::Math::Vec2i;
 
 namespace Glest { namespace Plan {
@@ -99,6 +100,7 @@ bool AiRuleRepair::test() {
 
 void AiRuleRepair::execute() {
 	GlestAiInterface *aiInterface = ai->getAiInterface();
+
 	const RepairCommandType *nearestRct = NULL;
 	int nearest = -1;
 	fixed minDist = fixed::max_int();
@@ -128,7 +130,7 @@ void AiRuleRepair::execute() {
 		}
 
 		if (nearestRct) {
-			aiInterface->giveCommand(nearest, nearestRct, (Unit *)damagedUnit);
+			aiInterface->giveCommand(nearest, nearestRct, const_cast<Unit*>(damagedUnit));
 			aiInterface->printLog(3, "Repairing order issued");
 			return;
 		}
@@ -202,50 +204,6 @@ void AiRuleAddTasks::execute() {
 
 	//standard tasks
 
-//	//emergency workers
-//	if (workerCount < 4) {
-//		ai->addPriorityTask(new ProduceTask(UnitClass::WORKER));
-//	} else {
-//		if (workerCount < 5) ai->addTask(new ProduceTask(UnitClass::WORKER));
-//		if (warriorCount < 10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-//		if (warriorRatio < 0.20) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-//
-//		//TODO: Check production queue and build buildings that have significant
-//		//production backlogs
-//		if (workerCount > 7 && (ai->isStableBase() || rand->randRange(0, 100) <= (aii->isUltra() ? 20 : 5))) {
-//			if(ai->getNeededUpgrades() && rand->randRange(0, 100) <= (aii->isUltra() ? 90 : 60)) {
-//				ai->addTask(new UpgradeTask());
-//			}
-//			if(ai->getNeededBuildings() && rand->randRange(0, 100) <= (aii->isUltra() ? 50 : 25)) {
-//				ai->addTask(new BuildTask());
-//			}
-//		}
-//
-//		//workers
-//		if (workerCount < 10) ai->addTask(new ProduceTask(UnitClass::WORKER));
-//		if (workerRatio < 0.20) ai->addTask(new ProduceTask(UnitClass::WORKER));
-//		if (workerRatio < 0.30) ai->addTask(new ProduceTask(UnitClass::WORKER));
-//
-//		//warriors
-//		if (warriorRatio < 0.30) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-//		if (workerCount >= 10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-//		if (workerCount >= 15) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-//
-//		ai->updateStatistics();
-//		//buildings
-//		if (ai->getNeededBuildings() || !ai->getNeededUpgrades()) {
-//			//if(buildingCount<6 || buildingRatio<0.20) ai->addTask(new BuildTask());
-//			if (buildingCount < 10 && workerCount > 12) ai->addTask(new BuildTask());
-//		}
-//
-//		//upgrades
-//		if (upgradeCount == 0 && workerCount > 5) ai->addTask(new UpgradeTask());
-//		if (upgradeCount == 1 && workerCount > 10) ai->addTask(new UpgradeTask());
-//		if (upgradeCount == 2 && workerCount > 15) ai->addTask(new UpgradeTask());
-//		//		if (ai->isStableBase()) ai->addTask(new UpgradeTask());
-//
-//
-//
 	//emergency workers
 	if (workerCount < 4) {
 		ai->addPriorityTask(new ProduceTask(UnitClass::WORKER));
@@ -430,6 +388,8 @@ void AiRuleProduceResourceProducer::execute() {
 //	class AiRuleProduce
 // =====================================================
 
+#define RAND_RANGE(min, max) (ai->getRandom()->randRange(min, max))
+
 AiRuleProduce::AiRuleProduce(Ai *ai)
 		: AiRule(ai) {
 	produceTask = NULL;
@@ -461,8 +421,11 @@ void AiRuleProduce::execute() {
 }
 
 void AiRuleProduce::produceGeneric(const ProduceTask *pt) {
-	typedef vector<const UnitType*> UnitTypes;
-	UnitTypes ableUnits;
+	typedef vector<const UnitType*> UnitTypeList;
+	typedef set<const UnitType*> UnitTypeSet;
+
+	UnitTypeSet typesSeen;
+	UnitTypeList candidateTypes;
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	//for each unit, produce it if possible
 	for(int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
@@ -490,8 +453,9 @@ void AiRuleProduce::produceGeneric(const ProduceTask *pt) {
 				}
 				if (produceIt) {
 					//if the unit is not already on the list
-					if (find(ableUnits.begin(), ableUnits.end(), producedUnit) == ableUnits.end()) {
-						ableUnits.push_back(producedUnit);
+					if (typesSeen.find(producedUnit) == typesSeen.end()) {
+						typesSeen.insert(producedUnit);
+						candidateTypes.push_back(producedUnit);
 					}
 				}
 			}
@@ -499,188 +463,156 @@ void AiRuleProduce::produceGeneric(const ProduceTask *pt) {
 	} // for each unit
 
 	//add specific produce task
-	if (!ableUnits.empty()) {
+	if (!candidateTypes.empty()) {
 		//priority for non produced units
-		for (int i=0; i < ableUnits.size(); ++i) {
-			if (ai->getCountOfType(ableUnits[i]) == 0) {
+		for (int i=0; i < candidateTypes.size(); ++i) {
+			if (ai->getCountOfType(candidateTypes[i]) == 0) {
 				if (ai->getRandom()->randRange(0, 1) == 0) {
-					ai->addTask(new ProduceTask(ableUnits[i]));
+					ai->addTask(new ProduceTask(candidateTypes[i]));
 					return;
 				}
 			}
 		}
 		//normal case
-		ai->addTask(new ProduceTask( ableUnits[ai->getRandom()->randRange(0, ableUnits.size() - 1)] ));
+		ai->addTask(new ProduceTask( candidateTypes[ai->getRandom()->randRange(0, candidateTypes.size() - 1)] ));
+	}
+}
+
+void AiRuleProduce::findProducerTypes(const UnitType *produce, CmdByUtMap &cmdMap) {
+	const FactionType *factionType = ai->getAiInterface()->getMyFactionType();
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+		const UnitType *ut = factionType->getUnitType(i);
+		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getCommandType(j);
+			//if the command is produce
+			if (ct->getClass() == CommandClass::PRODUCE || ct->getClass() == CommandClass::MORPH) {
+				const UnitType *producedUnit = static_cast<const UnitType*>(ct->getProduced());
+				//if units match
+				if (producedUnit == produce) {
+					if (ai->getAiInterface()->reqsOk(ct)) {
+						cmdMap[ut] = ct;
+					}
+				}
+			}
+		}
+	}
+}
+
+void AiRuleProduce::findProducerTypes(CmdByUtMap &cmdMap) {
+	const FactionType *factionType = ai->getAiInterface()->getMyFactionType();
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+		const UnitType *ut = factionType->getUnitType(i);
+		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getCommandType(j);
+			if (ct->getClass() == CommandClass::PRODUCE) { // if the command is produce
+				const UnitType *producedUnit = static_cast<const UnitType*>(ct->getProduced());
+				if (producedUnit->hasSkillClass(SkillClass::ATTACK)
+				&& !producedUnit->hasSkillClass(SkillClass::HARVEST)
+				&& ai->getAiInterface()->reqsOk(ct)) {
+					cmdMap[ut] = ct;
+				}
+			}
+		}
+	}
+}
+
+void AiRuleProduce::findLowestCommandQueue(UnitList &list, const Unit **best) {
+	int lowestCommandCount = numeric_limits<int>::max();
+	*best = 0;
+	int cmds;
+	foreach (UnitList, it, list) {
+		const Unit *&unit = *it;
+		cmds = unit->getCommandSize();
+		if (!cmds || (cmds == 1 && unit->getCurrCommand()->getType()->getClass() == CommandClass::STOP)) {
+			*best = unit;
+			return;
+		}
+		if (cmds < lowestCommandCount) {
+			lowestCommandCount = cmds;
+			*best = unit;
+		}
 	}
 }
 
 void AiRuleProduce::produceSpecific(const ProduceTask *pt) {
+	
+	assert(pt->getUnitType());
 	GlestAiInterface *aiInterface = ai->getAiInterface();
-	//if unit meets requirements
-	if (aiInterface->reqsOk(pt->getUnitType())) {
-		//if unit doesnt meet resources retry
-		if (!aiInterface->checkCosts(pt->getUnitType())) {
-			ai->retryTask(pt);
-			return;
-		}
-		//produce specific unit
-		vector<int> producers;
-		const CommandType *defCt = NULL;
-		//for each unit
-		for (int i=0; i < aiInterface->getMyUnitCount(); ++i) {
-			//for each command
-			const UnitType *ut = aiInterface->getMyUnit(i)->getType();
-			for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
-				const CommandType *ct = ut->getCommandType(j);
-				//if the command is produce
-				if (ct->getClass() == CommandClass::PRODUCE || ct->getClass() == CommandClass::MORPH) {
-					const UnitType *producedUnit = static_cast<const UnitType*>(ct->getProduced());
-					//if units match
-					if (producedUnit == pt->getUnitType()) {
-						if (aiInterface->reqsOk(ct)) {
-							defCt = ct;
-							producers.push_back(i);
-						}
-					}
-				}
-			}
-		}
+	const FactionType *factionType = aiInterface->getMyFactionType();
+	Faction *faction = aiInterface->getMyFaction();
+	const Units &units = faction->getUnits();
 
-		//produce from random producer
-		if(!producers.empty()){
-			if(aiInterface->getControlType()==ControlType::CPU_MEGA)
-			{// mega cpu trys to balance the commands to the producers
-				int randomstart=ai->getRandom()->randRange(0, producers.size()-1);
-				int lowestCommandCount=1000000;
-				int currentProducerIndex=producers[randomstart];
-				int bestIndex=-1;
-				int besti=0;
-				int currentCommandCount=0;
-//				printf("command sizes: ");
-				for(unsigned int i=randomstart; i<producers.size()+randomstart; i++)
-				{
-					currentProducerIndex=producers[i%(producers.size())];
-//					printf("%d ,",aiInterface->getMyUnit(currentProducerIndex)->getCommandSize());
-					currentCommandCount=aiInterface->getMyUnit(currentProducerIndex)->getCommandSize();
-					if( currentCommandCount==1 &&
-						aiInterface->getMyUnit(currentProducerIndex)->getCurrCommand()->getType()->getClass()==CommandClass::STOP)
-					{// special for non buildings
-						currentCommandCount=0;
-					}
-				    if(lowestCommandCount>currentCommandCount)
-					{
-						lowestCommandCount=aiInterface->getMyUnit(currentProducerIndex)->getCommandSize();
-						bestIndex=currentProducerIndex;
-						besti=i%(producers.size());
-					}
-				}
-				
-//				printf("\ncurrent team=%d  producercount=%d   bestindex=%d  commandsize=%d besti=%d\n",
-//					aiInterface->getMyUnit(currentProducerIndex)->getTeam(),
-//					producers.size(),
-//					bestIndex,
-//					aiInterface->getMyUnit(currentProducerIndex)->getCommandSize(),
-//					besti
-//					);
-				
-				if(	aiInterface->getMyUnit(bestIndex)->getCommandSize()>2)
-				{
-					// maybe we need another producer of this kind if possible!
-					if(aiInterface->reqsOk(aiInterface->getMyUnit(bestIndex)->getType()))
-					{ 
-						if(ai->getCountOfClass(UnitClass::BUILDING)>5)
-							ai->addTask(new BuildTask(aiInterface->getMyUnit(bestIndex)->getType()));
-					}
-					// need to calculte another producer, maybe its better to produce another warrior with another producer 
-					vector<int> backupProducers;
-//					printf("start ----- need to calculate a new producer! \n");
-					// find another producer unit which is free and produce any kind of warrior.
-					//for each unit
-					for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-						const UnitType *ut= aiInterface->getMyUnit(i)->getType();
-//						printf("unit%d\n",i);
-						//for each command
-						for(int j=0; j<ut->getCommandTypeCount(); ++j){
-							const CommandType *ct= ut->getCommandType(j);
-//							printf("command%d\n",j);
-							//if the command is produce
-							if(ct->getClass()==CommandClass::PRODUCE)
-							{
-								const UnitType *unitType= static_cast<const UnitType*>(ct->getProduced());								
-								if(unitType->hasSkillClass(SkillClass::ATTACK) && !unitType->hasCommandClass(CommandClass::HARVEST) && aiInterface->reqsOk(ct))
-								{//this can produce a warrior
-										backupProducers.push_back(i);
-								} 
-							}
-						}	
-					}
-					if(!backupProducers.empty())
-					{
-//						printf("Number of possible backupproducers %d",backupProducers.size());
-					
-						vector<int> productionCommandIndexes;
-						int randomstart=ai->getRandom()->randRange(0, backupProducers.size()-1);
-						int lowestCommandCount=1000000;
-						int currentProducerIndex=backupProducers[randomstart];
-						int bestIndex=-1;
-						int currentCommandCount=0;
-//						printf("command sizes: ");
-						for(unsigned int i=randomstart; i<backupProducers.size()+randomstart; i++)
-						{
-							currentProducerIndex=backupProducers[i%(backupProducers.size())];
-//							printf("%d ,",aiInterface->getMyUnit(currentProducerIndex)->getCommandSize());
-							currentCommandCount=aiInterface->getMyUnit(currentProducerIndex)->getCommandSize();
-							if( currentCommandCount==1 &&
-								aiInterface->getMyUnit(currentProducerIndex)->getCurrCommand()->getType()->getClass()==CommandClass::STOP)
-							{// special for non buildings
-								currentCommandCount=0;
-							}
-						    if(lowestCommandCount>currentCommandCount)
-							{
-								lowestCommandCount=currentCommandCount;
-								bestIndex=currentProducerIndex;
-								if(lowestCommandCount==0) break;
-							}
-						}
-						// a good producer is found, lets choose a warrior production
-						const UnitType *ut=aiInterface->getMyUnit(bestIndex)->getType();
-						for(int j=0; j<ut->getCommandTypeCount(); ++j){
-							const CommandType *ct= ut->getCommandType(j);
-				
-							//if the command is produce
-							if(ct->getClass()==CommandClass::PRODUCE)
-							{
-								const UnitType *unitType= static_cast<const UnitType*>(ct->getProduced());								
-								if(unitType->hasSkillClass(SkillClass::ATTACK) && !unitType->hasCommandClass(CommandClass::HARVEST) && aiInterface->reqsOk(ct))
-								{//this can produce a warrior
-										productionCommandIndexes.push_back(j);
-								} 
-							}
-						}
-						int commandIndex=productionCommandIndexes[ai->getRandom()->randRange(0, productionCommandIndexes.size()-1)];
-						aiInterface->giveCommand(bestIndex, ut->getCommandType(commandIndex));
-//						printf("\nbestindex=%d\n",bestIndex);
-//						printf("end ----- need to calculate a new producer! \n");
-					}
-					else
-					{// do it like normal CPU
-						aiInterface->giveCommand(bestIndex, defCt);
-					}
-				}
-				else
-				{	
-					if(currentCommandCount==0)
-					{
-						aiInterface->giveCommand(bestIndex, defCt);
-					}
-					aiInterface->giveCommand(bestIndex, defCt);
+	if (!aiInterface->reqsOk(pt->getUnitType())) { // if unit meets requirements
+		return;
+	}
+	if (!aiInterface->checkCosts(pt->getUnitType())) { //if unit doesnt meet resources retry
+		ai->retryTask(pt);
+		return;
+	}		
+	// produce specific unit
+	// find all units who can produce or morph to required type
+	CmdByUtMap l_commandMap;
+	findProducerTypes(pt->getUnitType(), l_commandMap);
+	UnitList l_producers;
+	foreach_const (Units, it, units) {
+		if (l_commandMap.find((*it)->getType()) != l_commandMap.end()) {
+			l_producers.push_back(*it);
+		}
+	}
+	if (l_producers.empty()) {
+		return;
+	}
+	// produce from random producer
+	if (aiInterface->getControlType() != ControlType::CPU_MEGA) {
+		const Unit *unit = l_producers[RAND_RANGE(0, l_producers.size() - 1)];
+		aiInterface->giveCommand(unit, l_commandMap[unit->getType()]);
+	} else {
+		// mega cpu trys to balance the commands to the producers
+		const Unit *bestSeen = 0;
+		findLowestCommandQueue(l_producers, &bestSeen);
+		assert(bestSeen);
+		if (bestSeen->getCommandSize() > 2) { // maybe we need another producer of this kind if possible!
+			if (aiInterface->reqsOk(bestSeen->getType())) { 
+				if (ai->getCountOfClass(UnitClass::BUILDING) > 5) {
+					ai->addTask(new BuildTask(bestSeen->getType()));
 				}
 			}
-			else
-			{
-				int producerIndex= producers[ai->getRandom()->randRange(0, producers.size()-1)];
-				aiInterface->giveCommand(producerIndex, defCt);
+			// need to calculte another producer, maybe its better to produce another warrior with another producer 
+			l_producers.clear();
+			CmdByUtMap l_commandMap2;
+			findProducerTypes(l_commandMap2);
+			foreach_const (Units, it, units) {
+				if (l_commandMap2.find((*it)->getType()) != l_commandMap2.end()) {
+					l_producers.push_back(*it);
+				}
 			}
+			if (!l_producers.empty()) { // a good producer is found, lets choose a warrior production
+				findLowestCommandQueue(l_producers, &bestSeen);
+				assert(bestSeen);
+				const UnitType *ut = bestSeen->getType();
+				vector<const CommandType *> usableCommands;
+				for (int j=0; j < ut->getCommandTypeCount(); ++j) {
+					const CommandType *ct = ut->getCommandType(j);
+					if (ct->getClass() == CommandClass::PRODUCE) { // if the command is produce
+						const UnitType *unitType= static_cast<const UnitType*>(ct->getProduced());								
+						if (unitType->hasSkillClass(SkillClass::ATTACK) 
+						&& !unitType->hasSkillClass(SkillClass::HARVEST) 
+						&& aiInterface->reqsOk(ct)) { //this can produce a warrior
+							usableCommands.push_back(ct);
+						} 
+					}
+				}
+				const CommandType *ct = usableCommands[RAND_RANGE(0, usableCommands.size() - 1)];
+				aiInterface->giveCommand(bestSeen, l_commandMap2[bestSeen->getType()]);
+
+			} else { // do it like normal CPU
+				aiInterface->giveCommand(bestSeen, l_commandMap[bestSeen->getType()]);
+			}
+		} else {
+			if (bestSeen->getCommandSize() == 0) { // idle, double up
+				aiInterface->giveCommand(bestSeen, l_commandMap[bestSeen->getType()]);
+			}
+			aiInterface->giveCommand(bestSeen, l_commandMap[bestSeen->getType()]);
 		}
 	}
 }
@@ -704,112 +636,123 @@ bool AiRuleBuild::test() {
 }
 
 
-void AiRuleBuild::execute(){
-
-	if(buildTask!=NULL){
-
-		//generic build task, build random building that can be built
-		if(buildTask->getUnitType()==NULL){
+void AiRuleBuild::execute() {
+	if (buildTask) {
+		// generic build task, build random building that can be built
+		if (buildTask->getUnitType()==NULL) {
 			buildGeneric(buildTask);
-		}
-		//specific building task, build if possible, retry if not enough resources or not position
-		else{
+
+		// specific building task, build if possible, retry if not enough resources or not position
+		} else {
 			buildSpecific(buildTask);
 		}
-
 		//remove the task
 		ai->removeTask(buildTask);
 	}
 }
 
-void AiRuleBuild::buildGeneric(const BuildTask *bt){
-
-	//find buildings that can be built
+void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt) {
+	// for each UnitType
 	GlestAiInterface *aiInterface= ai->getAiInterface();
-	typedef vector<const UnitType*> UnitTypes;
-	UnitTypes buildings;
-
-	//for each unit
-	for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-
-		//for each command
-		const UnitType *ut= aiInterface->getMyUnit(i)->getType();
-		for(int j=0; j<ut->getCommandTypeCount(); ++j){
-			const CommandType *ct= ut->getCommandType(j);
-
-			//if the command is build
-			if(ct->getClass()==CommandClass::BUILD){
+	const FactionType *factionType = ai->getAiInterface()->getMyFactionType();
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+		const UnitType *ut = factionType->getUnitType(i);
+		if (!ai->getCountOfType(ut)) {
+			continue;
+		}
+		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getCommandType(j);
+			if (ct->getClass() == CommandClass::BUILD) { // if the command is build
 				const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
-
 				//for each building
-				for(int k=0; k<bct->getBuildingCount(); ++k){
-					const UnitType *building= bct->getBuilding(k);
-					if(aiInterface->reqsOk(bct) && aiInterface->reqsOk(building)){
-
+				for (int k=0; k < bct->getBuildingCount(); ++k) {
+					const UnitType *buildingType = bct->getBuilding(k);
+					if (aiInterface->reqsOk(bct) && aiInterface->reqsOk(buildingType)) {
 						//if any building, or produces resource
-						const ResourceType *rt= bt->getResourceType();
-						const Resource *cost= building->getCost(rt);
-						if(rt==NULL || (cost!=NULL && cost->getAmount()<0)){
-							buildings.push_back(building);
+						const Resource *cost= buildingType->getCost(rt);
+						if (rt || (cost && cost->getAmount() < 0)) {
+							utList.push_back(buildingType);
 						}
 					}
 				}
 			}
 		}
 	}
-
-	//add specific build task
-	buildBestBuilding(buildings);
 }
 
-void AiRuleBuild::buildBestBuilding(const vector<const UnitType*> &buildings){
+void AiRuleBuild::buildGeneric(const BuildTask *bt){
+	//find buildings that can be built
+	GlestAiInterface *aiInterface= ai->getAiInterface();
+	Faction *faction = aiInterface->getMyFaction();
+	const Units &units = faction->getUnits();
 
-	if(!buildings.empty()){
+	UnitTypeList buildingTypes;
+	findBuildingTypes(buildingTypes, bt->getResourceType());
 
-		//build the least built building
-		bool buildingFound= false;
-		for(int i=0; i<10 && !buildingFound; ++i){
+	//add specific build task
+	buildBestBuilding(buildingTypes);
+}
 
-			if(i>0){
-
-				//Defensive buildings have priority
-				for(int j=0; j<buildings.size() && !buildingFound; ++j){
-					const UnitType *building= buildings[j];
-					if(ai->getCountOfType(building)<=i+1 && isDefensive(building))
-					{
-						ai->addTask(new BuildTask(building));
-						buildingFound= true;
-					}
-				}
-
-				//Warrior producers next
-				for(int j=0; j<buildings.size() && !buildingFound; ++j){
-					const UnitType *building= buildings[j];
-					if(ai->getCountOfType(building)<=i+1 && isWarriorProducer(building))
-					{
-						ai->addTask(new BuildTask(building));
-						buildingFound= true;
-					}
-				}
-
-				//Resource producers next
-				for(int j=0; j<buildings.size() && !buildingFound; ++j){
-					const UnitType *building= buildings[j];
-					if(ai->getCountOfType(building)<=i+1 && isResourceProducer(building))
-					{
-						ai->addTask(new BuildTask(building));
-						buildingFound= true;
-					}
+void AiRuleBuild::buildBestBuilding(const UnitTypeList &buildingTypes) {
+	if (buildingTypes.empty()) {
+		return;
+	}
+	// build the least built buildingType
+	for (int i=0; i < 10; ++i) {
+		if (i > 0) {
+			//Defensive buildings have priority
+			for (int j=0; j < buildingTypes.size(); ++j) {
+				const UnitType *buildingType = buildingTypes[j];
+				if (ai->getCountOfType(buildingType) <= i + 1 && isDefensive(buildingType)) {
+					ai->addTask(new BuildTask(buildingType));
+					return;
 				}
 			}
+			// Warrior producers next
+			for (int j=0; j < buildingTypes.size(); ++j) {
+				const UnitType *buildingType = buildingTypes[j];
+				if (ai->getCountOfType(buildingType) <= i + 1 && isWarriorProducer(buildingType)) {
+					ai->addTask(new BuildTask(buildingType));
+					return;
+				}
+			}
+			//Resource producers next
+			for (int j=0; j < buildingTypes.size(); ++j) {
+				const UnitType *buildingType = buildingTypes[j];
+				if (ai->getCountOfType(buildingType) <= i + 1 && isResourceProducer(buildingType)) {
+					ai->addTask(new BuildTask(buildingType));
+					return;
+				}
+			}
+		}
+		// Any buildingType
+		for (int j=0; j < buildingTypes.size(); ++j) {
+			const UnitType *buildingType = buildingTypes[j];
+			if (ai->getCountOfType(buildingType) <= i) {
+				ai->addTask(new BuildTask(buildingType));
+				return;
+			}
+		}
+	}
+}
 
-			//Any building
-			for(int j=0; j<buildings.size() && !buildingFound; ++j){
-				const UnitType *building= buildings[j];
-				if(ai->getCountOfType(building)<=i)
-				{
-					ai->addTask(new BuildTask(building));
-					buildingFound= true;
+void AiRuleBuild::findBuilderTypes(const UnitType *buildingType, CmdByUtMap &cmdMap) {
+	const FactionType *factionType = ai->getAiInterface()->getMyFactionType();
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) { // for each UnitType
+		const UnitType *ut = factionType->getUnitType(i);
+		if (!ai->getCountOfType(ut)) {
+			continue;
+		}
+		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getCommandType(j);
+			if (ct->getClass() == CommandClass::BUILD) { // if the command is build
+				const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
+				for (int k=0; k < bct->getBuildingCount(); ++k) { // for each building
+					const UnitType *canBuildType = bct->getBuilding(k);
+					if (buildingType == canBuildType) {
+						cmdMap[ut] = ct;
+						continue;
+					}
 				}
 			}
 		}
@@ -818,66 +761,40 @@ void AiRuleBuild::buildBestBuilding(const vector<const UnitType*> &buildings){
 
 void AiRuleBuild::buildSpecific(const BuildTask *bt){
 	GlestAiInterface *aiInterface= ai->getAiInterface();
-	//if reqs ok
-	if(aiInterface->reqsOk(bt->getUnitType())){
+	Faction *faction = aiInterface->getMyFaction();
+	const Units &units = faction->getUnits();
 
-		//retry if not enough resources
-		if(!aiInterface->checkCosts(bt->getUnitType())){
-			ai->retryTask(bt);
-			return;
+	if (!aiInterface->reqsOk(bt->getUnitType())) { // if reqs not met, bail
+		return;
+	}
+	if (!aiInterface->checkCosts(bt->getUnitType())) { // retry if not enough resources
+		ai->retryTask(bt);
+		return;
+	}
+
+	CmdByUtMap cmdMap;
+	findBuilderTypes(bt->getUnitType(), cmdMap);
+	UnitList potentialBuilders;
+
+	foreach_const (Units, it, units) {
+		const Unit *const &unit = *it;
+		if (cmdMap.find(unit->getType()) != cmdMap.end()
+		&& (!unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() != CommandClass::BUILD)) {
+			potentialBuilders.push_back(unit);
 		}
-
-		vector<int> builders;
-		const BuildCommandType *defBct= NULL;
-
-		//for each unit
-		for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-
-			//if the unit is not going to build
-			const Unit *u= aiInterface->getMyUnit(i);
-			if(!u->anyCommand() || u->getCurrCommand()->getType()->getClass()!=CommandClass::BUILD){
-
-				//for each command
-				const UnitType *ut= aiInterface->getMyUnit(i)->getType();
-				for(int j=0; j<ut->getCommandTypeCount(); ++j){
-					const CommandType *ct= ut->getCommandType(j);
-
-					//if the command is build
-					if(ct->getClass()==CommandClass::BUILD){
-						const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
-
-						//for each building
-						for(int k=0; k<bct->getBuildingCount(); ++k){
-							const UnitType *building= bct->getBuilding(k);
-
-							//if building match
-							if(bt->getUnitType()==building){
-								if(aiInterface->reqsOk(bct)){
-									builders.push_back(i);
-									defBct= bct;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		//use random builder to build
-		if(!builders.empty()){
-			int builderIndex= builders[ai->getRandom()->randRange(0, builders.size()-1)];
-			Vec2i pos;
-			Vec2i searchPos= bt->getForcePos()? bt->getPos(): ai->getRandomHomePosition();
-
-			//if free pos give command, else retry
-			if(ai->findPosForBuilding(bt->getUnitType(), searchPos, pos)){
-				aiInterface->giveCommand(builderIndex, defBct, pos, bt->getUnitType());
-			}
-			else{
-				ai->retryTask(bt);
-				return;
-			}
-		}
+	}
+	//use random builder to build
+	if (potentialBuilders.empty()) {
+		return;
+	}
+	const Unit *unit = potentialBuilders[RAND_RANGE(0, potentialBuilders.size() - 1)];
+	Vec2i pos;
+	Vec2i searchPos = bt->getForcePos() ? bt->getPos() : ai->getRandomHomePosition();
+	// if free pos give command, else retry
+	if (ai->findPosForBuilding(bt->getUnitType(), searchPos, pos)) {
+		aiInterface->giveCommand(unit, cmdMap[unit->getType()], pos, bt->getUnitType());
+	} else {
+		ai->retryTask(bt);
 	}
 }
 

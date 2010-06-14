@@ -35,6 +35,7 @@ using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
 using namespace Glest::Search;
 using Glest::Game::Search::StoreMapKey;
+using Glest::Game::Search::StoreMapKey;
 
 namespace Glest { namespace Debug {
 

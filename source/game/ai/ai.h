@@ -30,6 +30,8 @@ namespace Glest { namespace Plan {
 class GlestAiInterface;
 class AiRule;
 
+typedef vector<const Unit*> UnitList;
+
 // =====================================================
 // 	class Task
 //
@@ -132,7 +134,6 @@ private:
 	typedef map<const UnitType *, int> UnitTypeCount;
 	typedef vector<const UnitType*> UnitTypes;
 	typedef vector<const UpgradeType*> UpgradeTypes;
-	typedef vector<Unit *> repairers;
 
 private:
 	GlestAiInterface *aiInterface;

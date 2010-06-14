@@ -179,6 +179,7 @@ public:
 	int getTriangleCount() const	{return triangleCount;}
 	int getPointCount() const		{return pointCount;}
 
+	const SceneCuller& getCuller() const { return culler; }
 	void setFarClip(float clip) { perspFarPlane = clip; }
 
 	//misc
@@ -198,8 +199,6 @@ public:
 	void updateParticleManager(ResourceScope rs);
 	void renderParticleManager(ResourceScope rs);
 	void swapBuffers();
-
-	const SceneCuller& getCuller() const { return culler; }
 
 	ParticleManager* getParticleManager() { return particleManager[ResourceScope::GAME]; }
 

@@ -107,6 +107,14 @@ CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *co
 	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), u));
 }
 
+CommandResult GlestAiInterface::giveCommand(const Unit *unit, const CommandType *commandType) {
+	return const_cast<Unit*>(unit)->giveCommand(new Command(commandType, CommandFlags()));
+}
+
+CommandResult GlestAiInterface::giveCommand(const Unit *unit, const CommandType *commandType, const Vec2i &pos, const UnitType* unitType) {
+	return const_cast<Unit*>(unit)->giveCommand(new Command(commandType, CommandFlags(), pos, unitType));
+}
+
 // ==================== get data ====================
 
 int GlestAiInterface::getMapMaxPlayers(){
@@ -133,18 +141,22 @@ int GlestAiInterface::getMyUpgradeCount() const{
 	return faction->getUpgradeManager()->getUpgradeCount();
 }
 
-int GlestAiInterface::onSightUnitCount(){
-	int count=0;
+void GlestAiInterface::getUnitsSeen(UnitList &list) {
+	assert(list.empty());
 	Map *map= world->getMap();
-	for(int i=0; i<world->getFactionCount(); ++i){
-		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
-			Tile *sc= map->getTile(Map::toTileCoords(world->getFaction(i)->getUnit(j)->getPos()));
-			if(sc->isVisible(faction->getTeam())){
-				count++;
+	for (int i=0; i < world->getFactionCount(); ++i) {
+		Faction *f = world->getFaction(i);
+		if (faction == f || faction->getTeam() == f->getTeam()) { 
+			// don't care about our own or allies units
+			continue;
+		}
+		foreach_const (Units, it, f->getUnits()) {
+			Tile *tile= map->getTile(Map::toTileCoords((*it)->getPos()));
+			if ((*it)->isAlive() && tile->isVisible(faction->getTeam())) {
+				list.push_back(*it);
 			}
 		}
 	}
-	return count;
 }
 
 const Resource *GlestAiInterface::getResource(const ResourceType *rt){
@@ -153,27 +165,6 @@ const Resource *GlestAiInterface::getResource(const ResourceType *rt){
 
 const Unit *GlestAiInterface::getMyUnit(int unitIndex){
 	return faction->getUnit(unitIndex);
-}
-
-const Unit *GlestAiInterface::getOnSightUnit(int unitIndex){
-
-	int count=0;
-	Map *map= world->getMap();
-
-	for(int i=0; i<world->getFactionCount(); ++i){
-		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
-			Unit *u= world->getFaction(i)->getUnit(j);
-			if(map->getTile(Map::toTileCoords(u->getPos()))->isVisible(faction->getTeam())){
-				if(count==unitIndex){
-					return u;
-				}
-				else{
-					count ++;
-				}
-			}
-		}
-	}
-	return NULL;
 }
 
 const FactionType * GlestAiInterface::getMyFactionType(){

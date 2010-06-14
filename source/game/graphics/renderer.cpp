@@ -1496,7 +1496,7 @@ void Renderer::renderUnits(){
 
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();
-			
+
 			// let dead units start sinking before they go away
 			if(framesUntilDead <= 200 && !ut->isOfClass(UnitClass::BUILDING)) {
 				float baseline = logf(20.125f) / 5.f;
@@ -1577,15 +1577,14 @@ void Renderer::renderSelectionEffects() {
 		const Unit *unit= selection->getUnit(i);
 
 		//translate
-		Vec3f currVec= unit->getCurrVectorFlat();
-		currVec.y+= 0.3f;
+		Vec3f currVec = unit->getCurrVectorFlat();
+		currVec.y += 0.3f;
 
-		//selection circle
-		if(world->getThisFactionIndex()==unit->getFactionIndex()){
-			glColor4f(0, unit->getHpRatio(), 0, 0.3f);
-		}
-		else{
-			glColor4f(unit->getHpRatio(), 0, 0, 0.3f);
+		// selection circle colour
+		if (world->getThisFactionIndex()==unit->getFactionIndex()) {
+			glColor4f(0.f, unit->getHpRatio(), 0.f, 0.3f);
+		} else {
+			glColor4f(unit->getHpRatio(), 0.f, 0.f, 0.3f);
 		}
 		renderSelectionCircle(currVec, unit->getType()->getSize(), selectionCircleRadius);
 

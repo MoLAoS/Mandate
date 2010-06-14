@@ -282,8 +282,7 @@ public:
 	//unit placement
     void putUnitCells(Unit *unit, const Vec2i &pos);
 	void clearUnitCells(Unit *unit, const Vec2i &pos);
-	void evict(Unit *unit, const Vec2i &pos, vector<Unit*> &evicted);
-
+	
 	//misc
 	bool isNextTo(const Vec2i &pos, const Unit *unit) const;
 	void clampPos(Vec2i &pos) const;

@@ -832,7 +832,6 @@ void GameState::saveGame(string name) const {
 	XmlIo::getInstance().save("savegames/" + name + ".sav", &root);
 }
 
-
 void ShowMap::render2d(){
 	Renderer &renderer= Renderer::getInstance();
 	Config &config= Config::getInstance();

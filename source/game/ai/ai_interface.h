@@ -63,6 +63,8 @@ public:
 	CommandResult giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos);
 	CommandResult giveCommand(int unitIndex, const CommandType *commandType, Unit *u= NULL);
 
+	CommandResult giveCommand(const Unit *unit, const CommandType *commandType);
+	CommandResult giveCommand(const Unit *unit, const CommandType *commandType, const Vec2i &pos, const UnitType* unitType);
 	//get data
 	const ControlType getControlType();
 	int getMapMaxPlayers();
@@ -72,11 +74,11 @@ public:
 	int getFactionCount();
 	int getMyUnitCount() const;
 	int getMyUpgradeCount() const;
-	int onSightUnitCount();
 	const Resource *getResource(const ResourceType *rt);
 	const Unit *getMyUnit(int unitIndex);
-	const Unit *getOnSightUnit(int unitIndex);
+	void getUnitsSeen(UnitList &list);
 	const FactionType *getMyFactionType();
+	Faction* getMyFaction() { return faction; }
 	const TechTree *getTechTree();
 	bool getNearestSightedResource(const ResourceType *rt, const Vec2i &pos, Vec2i &resultPos);
 	bool isAlly(const Unit *unit) const;

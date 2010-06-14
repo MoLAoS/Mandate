@@ -597,7 +597,7 @@ void DebugRenderer::renderEffects(SceneCuller &culler) {
 	if (resourceMapOverlay && rmOverlay.rt) {
 		renderCellOverlay(culler, rmOverlay);
 	}
-	if (storeMapOverlay && !smOverlay.stores.empty()) {
+	if (storeMapOverlay && !smOverlay.storeMaps.empty()) {
 		renderCellOverlay(culler, smOverlay);
 	}
 	if (buildSiteMaps && !bsOverlay.cells.empty()) {
