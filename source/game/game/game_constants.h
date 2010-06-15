@@ -75,17 +75,22 @@ namespace Glest {
 
 namespace Glest { 
 
+#ifndef NDEBUG
+	void no_op();
+#	define DEBUG_HOOK() no_op()
+#else
+#	define DEBUG_HOOK()
+#endif
+
+
 #if defined(LOG_STUFF) && LOG_STUFF
 #	define LOG(x) theLogger.add(x)
 #	define STREAM_LOG(x) {stringstream ss; ss << x; theLogger.add(ss.str()); }
 #	define GAME_LOG(x) STREAM_LOG( "Frame " << theWorld.getFrameCount() << ": " << x )
-	void no_op();
-#	define DEBUG_HOOK() no_op()
 #else
 #	define LOG(x)
 #	define STREAM_LOG(x)
 #	define GAME_LOG(x)
-#	define DEBUG_HOOK()
 #endif
 
 // =====================================================

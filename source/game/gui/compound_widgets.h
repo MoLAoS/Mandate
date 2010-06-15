@@ -86,6 +86,23 @@ public:
 	virtual string desc() { return string("[OptionBox: ") + descPosDim() + "]"; }
 };
 
+class ScrollText : public Panel, public MouseWidget, public TextWidget, public sigslot::has_slots {
+public:
+	typedef ScrollText* Ptr;
+
+private:
+	VerticalScrollBar::Ptr m_scrollBar;
+	int m_textBase;
+
+public:
+	ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size);
+
+	void init();
+	void onScroll(VerticalScrollBar::Ptr);
+
+	void render();
+};
+
 class TitleBar : public Container, public MouseWidget, public TextWidget {
 public:
 	typedef TitleBar* Ptr;

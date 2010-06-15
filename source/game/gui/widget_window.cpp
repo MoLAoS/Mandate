@@ -197,6 +197,15 @@ void WidgetWindow::update() {
 	}
 }
 
+//void WidgetWindow::setFade(float v) {
+//	Container::setFade(v);
+//	static float lastFade = 0.f;
+//	if (v > lastFade + 0.05f || v < lastFade - 0.05f) {
+//		DEBUG_HOOK();
+//	}
+//	lastFade = v;
+//}
+
 void WidgetWindow::destroyFloater() {
 	// destroy floater
 	delete floatingWidget;

@@ -114,7 +114,7 @@ void Widget::setBorderParams(BorderStyle st, int sz, Vec3f col, float alph) {
 	bgAlpha = alph;
 }
 
-void Widget::renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize) {
+void Widget::renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize, bool bg) {
 	if (style != BorderStyle::NONE && borderSize > 0) {
 		Vec4f colourBackground(0.5f, 0.5f, 0.5f, bgAlpha * fade);
 		Vec4f colourTopLeft;
@@ -168,19 +168,22 @@ void Widget::renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &
 			glVertex2fv(verts[1].ptr());
 		glEnd();
 
-		glColor4fv(colourBackground.ptr());
-		glBegin(GL_TRIANGLE_FAN);
-			glVertex2fv(verts[1].ptr());
-			glVertex2fv(verts[3].ptr());
-			glVertex2fv(verts[5].ptr());
-			glVertex2fv(verts[7].ptr());
-		glEnd();
+		if (bg) {
+			glColor4fv(colourBackground.ptr());
+			glBegin(GL_TRIANGLE_FAN);
+				glVertex2fv(verts[1].ptr());
+				glVertex2fv(verts[3].ptr());
+				glVertex2fv(verts[5].ptr());
+				glVertex2fv(verts[7].ptr());
+			glEnd();
+		}
+
 		glPopAttrib();
 	}
 }
 
-void Widget::renderBgAndBorders() {
-	renderBorders(borderStyle, Vec2i(0), size, borderSize);
+void Widget::renderBgAndBorders(bool bg) {
+	renderBorders(borderStyle, Vec2i(0), size, borderSize, bg);
 }
 
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size) {
@@ -334,8 +337,8 @@ void TextWidget::centreText(int ndx) {
 	const Metrics &metrics = Metrics::getInstance();
 	Vec2f txtDims = font->getMetrics()->getTextDiminsions(texts[ndx]);
 	Vec2i halfText = Vec2i(txtDims) / 2;
-	Vec2i centre = me->getScreenPos() + (me->getSize() / 2);
-	txtPositions[ndx] = centre - halfText - me->getScreenPos();
+	Vec2i centre = me->getSize() / 2;
+	txtPositions[ndx] = centre - halfText;
 }
 
 void TextWidget::widgetReSized() {
@@ -457,6 +460,7 @@ Container::~Container() {
 void Container::addChild(Widget::Ptr child) {
 	WIDGET_LOG( __FUNCTION__ );
 	children.push_back(child);
+	child->setFade(getFade());
 }
 
 void Container::remChild(Widget::Ptr child) {

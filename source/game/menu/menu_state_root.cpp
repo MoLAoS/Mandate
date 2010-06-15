@@ -187,9 +187,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	} // test_widgets
 
-	// set fade == 0
-	program.setFade(fade);
-
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }

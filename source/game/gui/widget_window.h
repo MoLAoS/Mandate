@@ -71,6 +71,7 @@ public:
 	void update();
 	float getAnim() const { return anim; }
 	virtual void clear();
+	//void setFade(float v);
 
 	void registerUpdate(Widget::Ptr widget);
 	void unregisterUpdate(Widget::Ptr widget);

@@ -24,7 +24,7 @@ WRAPPED_ENUM( OptionsTransition, RETURN, GL_INFO, RE_LOAD );
 // 	class MenuStateOptions  
 // ===============================
 
-class MenuStateOptions: public MenuState, public sigslot::has_slots {
+class MenuStateOptions: public MenuState {
 private:
 	Button::Ptr m_returnButton,
 				m_autoConfigButton,

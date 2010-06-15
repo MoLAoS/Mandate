@@ -2271,35 +2271,52 @@ string Renderer::getGlInfo(){
 	return infoStr;
 }
 
-string Renderer::getGlMoreInfo(){
-	string infoStr;
+string Renderer::getGlMoreInfo() {
+	stringstream ss;
 	Lang &lang= Lang::getInstance();
-	//gl extensions
-	infoStr+= lang.get("OpenGlExtensions")+":\n   ";
+	
+	// gl extensions
+	ss << lang.get("OpenGlExtensions")+":\n";
 	string extensions= getGlExtensions();
-	int charCount= 0;
-	for(int i=0; i<extensions.size(); ++i){
-		infoStr+= extensions[i];
-		if(charCount>120 && extensions[i]==' '){
-			infoStr+= "\n   ";
-			charCount= 0;
+	string::size_type start = 0, length = 0;
+	bool restart = false;
+	for (int i=0; i < extensions.size(); ++i, ++length) {
+		if (restart) {
+			start = i;
+			length = 0;
+			restart = false;
 		}
-		++charCount;
+		if (extensions[i] == ' ') {
+			ss << "   " << extensions.substr(start, length) << "\n";
+			restart = true;
+		}
 	}
+	ss << "   " << extensions.substr(start, length) << "\n";
+	return ss.str();
+}
+
+string Renderer::getGlMoreInfo2() {
+	stringstream ss;
+	Lang &lang= Lang::getInstance();
+	
 	//platform extensions
-	infoStr+= "\n\n";
-	infoStr+= lang.get("OpenGlPlatformExtensions")+":\n   ";
-	charCount= 0;
+	ss << lang.get("OpenGlPlatformExtensions")+":\n";
 	string platformExtensions= getGlPlatformExtensions();
-	for(int i=0; i<platformExtensions.size(); ++i){
-		infoStr+= platformExtensions[i];
-		if(charCount>120 && platformExtensions[i]==' '){
-			infoStr+= "\n   ";
-			charCount= 0;
+	string::size_type start = 0, length = 0;
+	bool restart = false;
+	for (int i=0; i < platformExtensions.size(); ++i, ++length) {
+		if (restart) {
+			start = i;
+			length = 0;
+			restart = false;
 		}
-		++charCount;
+		if (platformExtensions[i] == ' ') {
+			ss << "   " << platformExtensions.substr(start, length) << "\n";
+			restart = true;
+		}
 	}
-	return infoStr;
+	ss << "   " << platformExtensions.substr(start, length) << "\n";
+	return ss.str();
 }
 
 void Renderer::autoConfig(){

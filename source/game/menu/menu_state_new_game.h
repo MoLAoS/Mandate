@@ -26,7 +26,7 @@ WRAPPED_ENUM( NewGameTransition, RETURN, PLAY );
 // 	class MenuStateNewGame
 // ===============================
 
-class MenuStateNewGame: public MenuState/*StartGameBase*/, public sigslot::has_slots {
+class MenuStateNewGame: public MenuState {
 private:
 	NewGameTransition targetTransition;
 	int humanSlot;

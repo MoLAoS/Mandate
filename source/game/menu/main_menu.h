@@ -22,6 +22,8 @@
 #include "game_settings.h"
 #include "widgets.h"
 
+#include "sigslot.h"
+
 namespace Glest { namespace Menu {
 using namespace Main;
 
@@ -98,7 +100,7 @@ public:
 // 	class MenuState
 // ===============================
 
-class MenuState {
+class MenuState: public sigslot::has_slots {
 protected:
 	Program &program;
 
@@ -115,7 +117,9 @@ public:
 	 		, fade(0.f)
 			, fadeIn(true)
 			, fadeOut(false)
-			, transition(false) {}
+			, transition(false) {
+		program.setFade(0.f);
+	}
 
 	virtual ~MenuState() {}
 	virtual void mouseClick(int x, int y, MouseButton mouseButton) {}

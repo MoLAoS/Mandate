@@ -112,6 +112,45 @@ Vec2i OptionContainer::getMinSize() const {
 	return Vec2i(400, 30);
 }
 
+ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
+		: Panel(parent, pos, size)
+		, MouseWidget(this)
+		, TextWidget(this) {
+	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.5f);
+	setAutoLayout(false);
+	setPaddingParams(2, 0);
+	Vec2i sbp(size.x - 26, 2);
+	Vec2i sbs(24, size.y - 4);
+	m_scrollBar = new VerticalScrollBar(this, sbp, sbs);
+}
+
+void ScrollText::init() {
+	int th = getTextDimensions().y;
+	int ch = getSize().y - getBorderSize() * 2 - getPadding() * 2;
+	m_textBase = -(th - ch);
+	m_scrollBar->setRanges(th, ch);
+	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
+	setTextPos(Vec2i(5, m_textBase));
+}
+
+void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
+	int offset = sb->getRangeOffset();
+	setTextPos(Vec2i(5, m_textBase - offset));
+}
+
+void ScrollText::render() {
+	Widget::renderBgAndBorders(false);
+	Vec2i pos = getScreenPos() + Vec2i(getBorderSize());
+	Vec2i size = getSize() - Vec2i(getBorderSize()) * 2;
+	glPushAttrib(GL_SCISSOR_BIT);
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(pos.x, pos.y, size.x, size.y);
+		Container::render();
+		TextWidget::renderText();
+		glDisable(GL_SCISSOR_TEST);
+	glPopAttrib();
+}
+
 TitleBar::TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
 		: Container(parent, pos, size)
 		, MouseWidget(this)

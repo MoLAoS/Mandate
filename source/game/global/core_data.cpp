@@ -118,6 +118,11 @@ void CoreData::load() {
 	advancedEngineFont = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(36));
 	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(18));
 	
+	m_FTMenuFontNormal = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(18));
+	m_FTMenuFontSmall = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(14));
+	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(22));
+	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(26));
+
 //	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/zekton_free.ttf", 14);
 
 	//sounds

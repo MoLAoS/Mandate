@@ -117,7 +117,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	mapInfo.load("maps/" + mapFiles[match] + ".gbm");
 
-	stMapInfo = new StaticText(&program, Vec2i(x, y - (h + 10)), Vec2i(w, h * 2));
+	stMapInfo = new StaticText(&program, Vec2i(x, y - (h*2 + 10)), Vec2i(w, h * 2));
+	//stMapInfo->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.7f);
 	stMapInfo->setTextParams(mapInfo.desc, Vec4f(1.f), font);
 
 	//tileset listBox
@@ -233,8 +234,6 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		psWidgets[i]->FactionChanged.connect(this, &MenuStateNewGame::onChangeFaction);
 		psWidgets[i]->TeamChanged.connect(this, &MenuStateNewGame::onChangeTeam);
 	}
-	//msgBox = NULL;
-	program.setFade(0.f);
 }
 
 void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {

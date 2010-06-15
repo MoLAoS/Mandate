@@ -26,3 +26,11 @@
 #include "menu_state_root.h"
 
 #include "particle.h"
+
+namespace Glest {
+
+	void no_op() {
+
+	}
+
+}

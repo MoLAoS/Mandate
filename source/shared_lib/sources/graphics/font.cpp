@@ -34,9 +34,12 @@ FontMetrics::~FontMetrics() {
 }
 
 Vec2f FontMetrics::getTextDiminsions(const string &str) const {
-	Vec2f dim(0.f, getHeight());
+	Vec2f dim(0.f, 0.f);
 	float width = 0.f;
 
+	if (str.empty()) {
+		return dim;
+	}
 	for(int i = 0; i < str.size(); ++i) {
 		if(str[i] == '\n') {
 			if(dim.x < width) {
@@ -49,11 +52,12 @@ Vec2f FontMetrics::getTextDiminsions(const string &str) const {
 			width += widths[str[i]];
 		}
 	}
-
 	if(dim.x < width) {
 		dim.x = width;
 	}
-
+	if (str[str.size()-1] != '\n') {
+		dim.y += getHeight();
+	}
 	return dim;
 }
 

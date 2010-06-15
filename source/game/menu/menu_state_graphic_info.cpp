@@ -25,45 +25,71 @@ namespace Glest { namespace Menu {
 // 	class MenuStateGraphicInfo
 // =====================================================
 
-MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu):
-	MenuState(program, mainMenu/*, "info"*/)
-{
-	buttonReturn.init(387, 100, 125);
-	labelInfo.init(100, 700);
-	labelMoreInfo.init(100, 500);
-	labelMoreInfo.setFont(CoreData::getInstance().getMenuFontSmall());
-
-	Renderer &renderer= Renderer::getInstance();
-	glInfo= renderer.getGlInfo();
-	glMoreInfo= renderer.getGlMoreInfo();
-}
-
-void MenuStateGraphicInfo::mouseClick(int x, int y, MouseButton mouseButton){
-	CoreData &coreData= CoreData::getInstance();
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-
-	if(buttonReturn.mouseClick(x,y)){
-		soundRenderer.playFx(coreData.getClickSoundA());
-		mainMenu->setState(new MenuStateOptions(program, mainMenu));
-    }
-}
-
-void MenuStateGraphicInfo::mouseMove(int x, int y, const MouseState &ms){
-	buttonReturn.mouseMove(x, y);
-}
-
-void MenuStateGraphicInfo::render(){
-
-	Renderer &renderer= Renderer::getInstance();
+MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu) {
 	Lang &lang= Lang::getInstance();
+	Renderer &renderer = Renderer::getInstance();
 
-	buttonReturn.setText(lang.get("Return"));
-	labelInfo.setText(glInfo);
-	labelMoreInfo.setText(glMoreInfo);
+	string glInfo = renderer.getGlInfo();
+	string glExt = renderer.getGlMoreInfo();
+	string glExt2 = renderer.getGlMoreInfo2();
 
-	renderer.renderButton(&buttonReturn);
-	renderer.renderLabel(&labelInfo);
-	renderer.renderLabel(&labelMoreInfo);
+	Font *normFont = CoreData::getInstance().getFTMenuFontNormal();
+	Font *smallFont = CoreData::getInstance().getFTMenuFontSmall();
+
+	// text dimensions
+	Vec2f infoDims = normFont->getMetrics()->getTextDiminsions(glInfo);
+	Vec2f glExtDims = smallFont->getMetrics()->getTextDiminsions(glExt);
+	Vec2f plExtDims = smallFont->getMetrics()->getTextDiminsions(glExt2);
+
+	const Metrics &metrics = Metrics::getInstance();
+	int w = std::max(infoDims.x, std::max(glExtDims.x, plExtDims.x));
+	w += 10;
+	int gap = (metrics.getScreenW() - 3 * w) / 4;
+
+	// basic info
+	int x = gap;
+	int y = metrics.getScreenH() - 110 - infoDims.y;
+	int h = infoDims.y + 10;
+	Widgets::StaticText::Ptr l_text = new Widgets::StaticText(&program, Vec2i(x, y), Vec2i(w, h));
+	l_text->setTextParams(glInfo, Vec4f(1.f), normFont);
+
+	// gl extensions
+	x += gap + w;
+	y = 200;
+	h = metrics.getScreenH() - 300;
+	ScrollText::Ptr l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
+	l_stext->setTextParams(glExt, Vec4f(1.f), smallFont, false);
+	l_stext->init();
+
+	// platform extensions
+	x += gap + w;
+	l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
+	l_stext->setTextParams(glExt2, Vec4f(1.f), smallFont, false);
+	l_stext->init();
+
+	// return button
+	x = (metrics.getScreenW() - 150) / 2;
+	w = 150, y = 85, h = 30;
+	Button::Ptr l_button = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	l_button->setTextParams(lang.get("Return"), Vec4f(1.f), normFont);
+	l_button->Clicked.connect(this, &MenuStateGraphicInfo::onButtonClick);
+
+	//program.setFade(0.f);
+}
+
+void MenuStateGraphicInfo::onButtonClick(Button::Ptr btn) {
+	mainMenu->setCameraTarget(MenuStates::OPTIONS);
+	fadeIn = false;
+	fadeOut = true;
+}
+
+void MenuStateGraphicInfo::update() {
+	MenuState::update();
+	if (transition) {
+		program.clear();
+		mainMenu->setState(new MenuStateOptions(program, mainMenu));
+	}
 }
 
 }}//end namespace

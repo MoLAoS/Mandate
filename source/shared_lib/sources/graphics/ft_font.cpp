@@ -108,7 +108,6 @@ void make_dlist(FT_Face face, unsigned char ch, GLuint list_base, GLuint *tex_ba
 }
 
 void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
-	this->h = float(h);
 	textures = new GLuint[256];
 
 	// Create and initilize a freetype font library.
@@ -147,6 +146,7 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 			metrics.setMaxDescent(descent);
 		}
 	}
+	this->h = metrics.getHeight();
 	//delete face->stream;  //FIXME: allocated in FSFactory::openFace, better delete it in FSFactory
 	// ^^^ causing double delete [FT_Done_Face() also deletes ?]
 	FT_Done_Face(face);
@@ -186,7 +186,7 @@ void print(const font_data &ft_font, float x, float y, const unsigned char *text
 	// We want a coordinate system where things coresponding to window pixels.
 	pushScreenCoordinateMatrix();
 	GLuint font = ft_font.list_base;
-	float h = ft_font.h / .63f;
+	float h = ft_font.h;// / .63f;
 
 	// Here is some code to split the text that we have been given into a set of lines.
 	uchar_ptr start_line = text;
@@ -202,12 +202,16 @@ void print(const font_data &ft_font, float x, float y, const unsigned char *text
 			start_line = c + 1;
 		}
 	}
-	if (start_line) {
+	if (*start_line) {
 		string line;
 		for (uchar_ptr n = start_line; n < c; ++n) {
 			line.append(1, *n);
 		}
 		lines.push_back(line);
+	}
+
+	if (lines.size() > 1) {
+		y += ft_font.h * (lines.size() - 1);
 	}
 
 	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);

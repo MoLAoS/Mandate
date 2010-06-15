@@ -249,6 +249,7 @@ public:
     //gl wrap
 	string getGlInfo();
 	string getGlMoreInfo();
+	string getGlMoreInfo2();
 	void autoConfig();
 
 	//clear

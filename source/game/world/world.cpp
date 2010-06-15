@@ -1044,7 +1044,8 @@ void World::initFactions() {
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
 		factions[i].init(
 			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
-			gs.getStartLocationIndex(i), i==thisFactionIndex, gs.getDefaultResources()
+			gs.getStartLocationIndex(i), gs.getStartLocationIndex(i),
+			i==thisFactionIndex, gs.getDefaultResources()
 		);
 		if (unitTypes.find(ft->getName()) == unitTypes.end()) {
 			unitTypes.insert(pair< string,set<string> >(ft->getName(),set<string>()));

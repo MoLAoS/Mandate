@@ -30,7 +30,7 @@ STRINGY_ENUM( RootMenuItem,
 	EXIT
 );
 
-class MenuStateRoot: public MenuState, public sigslot::has_slots {
+class MenuStateRoot: public MenuState {
 private:
 	Widgets::Button *buttons[RootMenuItem::COUNT];
 	RootMenuItem selectedItem;

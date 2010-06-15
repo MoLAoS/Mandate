@@ -49,6 +49,8 @@ class Faction : public NameIdPair {
 public:
 	typedef vector<const ResourceType *> ResourceTypes;
 
+	static Vec3f factionColours[GameConstants::maxPlayers];
+
 private:
     typedef vector<Resource> Resources;
     typedef vector<Resource> Store;
@@ -67,6 +69,7 @@ private:
 
 	int teamIndex;
 	int startLocationIndex;
+	int colourIndex;
 
 	bool thisFaction;
 	int subfaction;			// the current subfaction index starting at zero
@@ -78,7 +81,8 @@ private:
 
 public:
 	void init(const FactionType *factionType, ControlType control, TechTree *techTree,
-		int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources);
+		int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,
+		bool thisFaction, bool giveResources);
 
 	void save(XmlNode *node) const;
 	void load(const XmlNode *node, World *world, const FactionType *ft, ControlType control, TechTree *tt);

@@ -52,8 +52,8 @@ WRAPPED_ENUM( BackgroundStyle,
 	NONE,
 	SOLID_COLOUR,
 	ALPHA_COLOUR,
-	CUSTOM_4_COLOUR,
-	CUSTOM_5_COLOUR
+	CUSTOM_COLOURS,
+	TEXTURE
 );
 
 // =====================================================
@@ -70,32 +70,20 @@ WRAPPED_ENUM( BorderStyle,
 	//ETCH		/**< Draw an etched border */
 );
 /*
-struct SideValues {
-	int top, right, bottom, left;
-};
-
-struct ColourValues4 {
-	Vec4f topLeft, topRight, bottomRight, bottomLeft;
-};
-
-struct ColourValues5 {
-	Vec4f centre, topLeft, topRight, bottomRight, bottomLeft;
-};
+WRAPPED_ENUM( Border, TOP, RIGHT, BOTTOM, LEFT );
+WRAPPED_ENUM( Corner, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT );
 
 struct WidgetStyle {
-	BorderStyle borderStyle;
 
-	Vec3f borderColour;
-	ColourValues4 *customBorderColours;
-	
-	SideValues borderSizes;
-	SideValues paddingSizes;
+	BorderStyle borderStyle;
+	Vec4f borderColours[Corner::COUNT];
+	int borderSizes[Border::COUNT];
+
+	int paddingSizes[Border::COUNT];
 
 	BackGroundStyle backgroundStyle;
-	Vec3f backgroundColour;
-	float backgroundAlpha;
-	ColourValues4 *customBackgroundColours4;
-	ColourValues5 *customBackgroundColours5;
+	Vec4f backgroundColours[Corner::COUNT];
+	Texture2D *backgroundTexture;
 };
 */
 
@@ -201,8 +189,8 @@ public:
 
 	virtual void render() = 0;
 
-	void renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize);
-	void renderBgAndBorders();
+	void renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize, bool bg = true);
+	void renderBgAndBorders(bool bg = true);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
 	

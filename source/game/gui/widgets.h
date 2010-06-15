@@ -254,7 +254,10 @@ public:
 	VerticalScrollBar(Container::Ptr parent);
 	VerticalScrollBar(Container::Ptr parent, Vec2i pos, Vec2i size);
 
-	void setRanges(int total, int avail, int line = 10) { 
+	void setRanges(int total, int avail, int line = 10) {
+		if (total < avail) {
+			total = avail;
+		}
 		totalRange = total;
 		availRange = avail;
 		lineSize = line;
@@ -266,6 +269,9 @@ public:
 	void setLineSize(int line) { lineSize = line; }
 
 	int getRangeOffset() const { return int((thumbOffset - topOffset) / float(shaftHeight) * totalRange); }
+	void setRangeOffset() {
+
+	}
 
 //	int getTotalRange() const { return totalRange; }
 //	int getActualRange() const { return actualRange; }

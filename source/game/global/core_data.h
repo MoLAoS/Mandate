@@ -71,6 +71,11 @@ private:
 	Font *menuFontVeryBig;
 	Font *consoleFont;
 
+	Font *m_FTMenuFontNormal;
+	Font *m_FTMenuFontSmall;
+	Font *m_FTMenuFontBig;
+	Font *m_FTMenuFontVeryBig;
+
 	Font *freeTypeFont;
 	Font *advancedEngineFont;
 	Font *freeTypeMenuFont;
@@ -115,6 +120,11 @@ public:
 	Font *getFreeTypeFont() const			{return freeTypeFont;}
 	Font *getAdvancedEngineFont() const	{return advancedEngineFont;}
 	Font *getfreeTypeMenuFont() const		{return freeTypeMenuFont;}
+
+	Font* getFTMenuFontNormal() const	{ return m_FTMenuFontNormal;	}
+	Font* getFTMenuFontSmall() const	{ return m_FTMenuFontSmall;		}
+	Font* getFTMenuFontBig() const		{ return m_FTMenuFontBig;		}
+	Font* getFTMenuFontVeryBig() const	{ return m_FTMenuFontVeryBig;	}
 
 private:
 	CoreData(){};

@@ -39,13 +39,22 @@ namespace Glest { namespace Entities {
 // =====================================================
 Faction::ResourceTypes Faction::neededResources;
 
+Vec3f Faction::factionColours[] = {
+	Vec3f(1.f, 0.f, 0.f),
+	Vec3f(0.f, 0.f, 1.f),
+	Vec3f(0.f, 0.35f, 0.125f),
+	Vec3f(1.f, 1.f, 0.f)
+};
+
 void Faction::init(const FactionType *factionType, ControlType control, TechTree *techTree,
-      int factionIndex, int teamIndex, int startLocationIndex, bool thisFaction, bool giveResources ) {
+					int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,
+					bool thisFaction, bool giveResources ) {
 	this->control = control;
 	this->factionType = factionType;
 	this->startLocationIndex = startLocationIndex;
 	this->id = factionIndex;
 	this->teamIndex = teamIndex;
+	this->colourIndex = colourIndex;
 	this->thisFaction = thisFaction;
 	this->subfaction = 0;
 	this->lastAttackNotice = 0;
@@ -61,7 +70,10 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 		store[i].init(rt, 0);
 	}
 	texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-	texture->load("data/core/faction_textures/faction" + intToStr(id) + ".tga");
+	//texture->load("data/core/faction_textures/faction" + intToStr(id) + ".tga");
+	Pixmap2D *pixmap = texture->getPixmap();
+	pixmap->init(1, 1, 3);
+	pixmap->setPixel(0, 0, factionColours[colourIndex]);
 }
 
 void Faction::save(XmlNode *node) const {
@@ -71,6 +83,7 @@ void Faction::save(XmlNode *node) const {
 	node->addChild("name", name);
 	node->addChild("teamIndex", teamIndex);
 	node->addChild("startLocationIndex", startLocationIndex);
+	node->addChild("colourIndex", colourIndex);
 	node->addChild("thisFaction", thisFaction);
 	node->addChild("subfaction", subfaction);
 	node->addChild("lastEventLoc", lastEventLoc);

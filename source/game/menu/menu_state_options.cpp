@@ -80,6 +80,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	}
 	m_lightsList->setSelected(clamp(config.getRenderLightsMax()-1, 0, 7));
 	m_lightsList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
+	m_lightsList->setDropBoxHeight(std::max(y - 100, 150));
 
 	// 3D Textures
 	y += yInc;
@@ -123,6 +124,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	m_langList->setSize(Vec2i(350, m_langList->getHeight()));
 	setupListBoxLang();
 	m_langList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
+	m_langList->setDropBoxHeight(std::max(y - 150, 200));
 
 	y += yInc * 2;
 
@@ -142,8 +144,6 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	val = clamp(float(config.getSoundVolumeFx()) / 100.f, 0.f, 1.f);
 	m_volFxSlider->setValue(val);
 	m_volFxSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
-
-	program.setFade(0.f);
 }
 
 void MenuStateOptions::onButtonClick(Button::Ptr btn) {
@@ -229,13 +229,12 @@ void MenuStateOptions::onSliderValueChanged(Slider::Ptr slider) {
 	Config &config= Config::getInstance();
 	if (slider == m_volFxSlider) {
 		config.setSoundVolumeFx(int(slider->getValue() * 100));
-		saveConfig();
 	} else if (slider == m_volAmbientSlider) {
 		config.setSoundVolumeAmbient(int(slider->getValue() * 100));
 	} else if (slider == m_volMusicSlider) {
 		config.setSoundVolumeMusic(int(slider->getValue() * 100));
+		CoreData::getInstance().getMenuMusic()->setVolume(slider->getValue());
 	}
-	saveConfig();
 }
 
 // private
