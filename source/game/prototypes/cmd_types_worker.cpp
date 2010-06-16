@@ -453,12 +453,14 @@ void BuildCommandType::update(Unit *unit) const {
 	);
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
+		if (!hasArrived(unit, command, builtUnitType)) {
+			return; // not there yet, try next update
+		}
+
+		// the blocking checks are done before the command is issued and again when the unit arrives
+
 		Map *map = theWorld.getMap();
 		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType)) {
-			// move
-			if (!hasArrived(unit, command, builtUnitType)) {
-				return; // not there yet, try next update
-			}
 			acceptBuild(unit, command, builtUnitType);
 		} else {
 			// there are no free cells
@@ -468,10 +470,6 @@ void BuildCommandType::update(Unit *unit) const {
 			// is construction already under way?
 			Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
 			if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
-				// move
-				if (!hasArrived(unit, command, builtUnitType)) {
-					return; // not there yet, try next update
-				}
 				existingBuild(unit, command, builtUnit);
 			} else if (occupants.size() && attemptMoveUnits(occupants)) {
 				return; // success, wait for units to move
@@ -482,6 +480,29 @@ void BuildCommandType::update(Unit *unit) const {
 	} else {
 		newBuild(unit, command, builtUnitType);
 	}
+}
+
+bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos) const {
+	bool blocked = false;
+	
+	Map *map = theWorld.getMap();
+	if (!map->canOccupy(pos, builtUnitType->getField(), builtUnitType)) {
+		// there are no free cells
+		vector<Unit *> occupants;
+		map->getOccupants(occupants, pos, builtUnitType->getSize(), Zone::LAND);
+		
+		// if no existing construction and can't move units then is blocked
+		Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
+		if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
+			// existing build
+		} else if (occupants.size() && attemptMoveUnits(occupants)) {
+			// units can move
+		} else {
+			blocked = true;
+		}
+	}
+
+	return blocked;
 }
 
 // --- Private ---

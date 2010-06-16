@@ -1680,6 +1680,9 @@ CommandResult Unit::checkCommand(const Command &command) const {
 	//build command specific, check resources and requirements for building
 	if(ct->getClass() == CommandClass::BUILD) {
 		const UnitType *builtUnit = command.getUnitType();
+		if(static_cast<const BuildCommandType*>(ct)->isBlocked(builtUnit, command.getPos())) {
+			return CommandResult::FAIL_BLOCKED;
+		}
 		if(!faction->reqsOk(builtUnit)) {
 			return CommandResult::FAIL_REQUIREMENTS;
 		}

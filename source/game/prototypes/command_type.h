@@ -296,6 +296,12 @@ public:
 	}
 	virtual void update(Unit *unit) const;
 
+	// prechecks
+	/** @param builtUnitType the unitType to build
+	  * @param pos the position to put the unit
+	  */
+	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos) const;
+
 	//get
 	const BuildSkillType *getBuildSkillType() const	{return buildSkillType;}
 	int getBuildingCount() const					{return buildings.size();}

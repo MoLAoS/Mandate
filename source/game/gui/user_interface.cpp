@@ -650,9 +650,12 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 				selection.getFrontUnit()->getCurrVector(),
 				gameCamera->getPos());
 		}
+		resetState();
+	} else if (result == CommandResult::FAIL_BLOCKED) {
+		// let the player choose again
+	} else {
+		resetState();
 	}
-
-	resetState();
 }
 
 void UserInterface::centerCameraOnSelection(){
@@ -1051,6 +1054,9 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 
 	switch(result){
 	case CommandResult::SUCCESS:
+		break;
+	case CommandResult::FAIL_BLOCKED:
+		theConsole.addStdMessage("BuildingNoPlace");
 		break;
 	case CommandResult::FAIL_REQUIREMENTS:
 		switch(cc){

@@ -112,6 +112,7 @@ REGULAR_ENUM( UnitClass,
 
 /** command result set [could be WRAPPED_ENUM in Command ?? or will we want this in debug ed?]
   * <ul><li><b>SUCCESS</b> command succeeded.</li>
+  *		<li><b>FAIL_BLOCKED</b> failed, an obstacle prevents the command occuring.</li>
   *		<li><b>FAIL_RESOURCES</b> failed, resource requirements not met.</li>
   *		<li><b>FAIL_REQUIREMENTS</b> failed, unit/upgrade requirements not met.</li>
   *		<li><b>FAIL_PET_LIMIT</b> failed, would exceed pet limit.</li>
@@ -120,6 +121,7 @@ REGULAR_ENUM( UnitClass,
   */
 STRINGY_ENUM( CommandResult,
 	SUCCESS,
+	FAIL_BLOCKED,
 	FAIL_RESOURCES,
 	FAIL_REQUIREMENTS,
 	FAIL_PET_LIMIT,
