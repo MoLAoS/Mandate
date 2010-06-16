@@ -59,8 +59,8 @@ void BattleEnd::renderBg() {
 	TextRenderer *textRenderer = renderer.getTextRenderer();
 	Lang &lang = Lang::getInstance();
 
-	const Stats &stats = *theSimInterface->getStats();
-	const GameSettings &gs = theSimInterface->getGameSettings();
+	const Stats &stats = *g_simInterface->getStats();
+	const GameSettings &gs = g_simInterface->getGameSettings();
 
 	renderer.clearBuffers();
 	renderer.reset2d();

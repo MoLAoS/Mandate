@@ -258,7 +258,7 @@ string ServerInterface::getStatus() const {
 		if (slots[i] && slots[i]->isConnected()) {
 				str += slots[i]->getName(); //str += connectionSlot->getRemotePlayerName() + ": " + connectionSlot->getStatus();
 		} else {
-			str += theLang.get("NotConnected");
+			str += g_lang.get("NotConnected");
 		}
 		str += '\n';
 	}
@@ -291,7 +291,7 @@ void ServerInterface::broadcastMessage(const Message* networkMessage, int exclud
 				removeSlot(i);
 				LOG_NETWORK(errmsg);
 				if (World::isConstructed()) {
-					theGame.getConsole()->addLine(errmsg);
+					g_gameState.getConsole()->addLine(errmsg);
 				}
 				//throw SocketException(errmsg);
 			}

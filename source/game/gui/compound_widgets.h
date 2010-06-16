@@ -95,6 +95,7 @@ private:
 	int m_textBase;
 
 public:
+	ScrollText(Container::Ptr parent);
 	ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size);
 
 	void init();
@@ -103,7 +104,7 @@ public:
 	void render();
 };
 
-class TitleBar : public Container, public MouseWidget, public TextWidget {
+class TitleBar : public Container, public TextWidget {
 public:
 	typedef TitleBar* Ptr;
 
@@ -112,21 +113,57 @@ private:
 	Button::Ptr m_closeButton;
 
 public:
+	TitleBar(Container::Ptr parent);
 	TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, bool closeBtn);
+
+	void render();
+
+	virtual Vec2i getPrefSize() const;
+	virtual Vec2i getMinSize() const;
+
+	virtual string desc() { return string("[TitleBar: ") + descPosDim() + "]"; }
 };
 
-class Frame : public Container, public MouseWidget {
+class MessageDialog : public Container, public MouseWidget, public sigslot::has_slots {
 public:
-	typedef Frame* Ptr;
+	typedef MessageDialog* Ptr;
 
 private:
-	TitleBar::Ptr			m_titleBar;
-	VerticalScrollBar::Ptr	m_scrollBar;
-	Panel::Ptr				m_bodyPanel;
+	TitleBar::Ptr	m_titleBar;
+	ScrollText::Ptr	m_scrollText;
+	Button::Ptr		m_button1,
+					m_button2;
+
+	int				m_buttonCount;
+	bool			m_pressed;
+	Vec2i			m_lastPos;
+
+	void onButtonClicked(Button::Ptr);
+	void init();
 
 public:
-	Frame(Container::Ptr parent, Vec2i pos, Vec2i size);
+	MessageDialog(WidgetWindow*);
+	MessageDialog(Container::Ptr parent, Vec2i pos, Vec2i size);
 
+	virtual void setSize(const Vec2i &sz);
+
+	void setTitleText(const string &text);
+	void setMessageText(const string &text);
+	void setButtonText(const string &btn1Text, const string &btn2Text = "");
+
+	sigslot::signal<Ptr> Button1Clicked,
+						 Button2Clicked;
+
+	bool EW_mouseDown(MouseButton btn, Vec2i pos);
+	bool EW_mouseMove(Vec2i pos);
+	bool EW_mouseUp(MouseButton btn, Vec2i pos);
+
+	void render();
+
+	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
+	virtual Vec2i getMinSize() const { return Vec2i(-1); }
+
+	virtual string desc() { return string("[MessageDialog: ") + descPosDim() + "]"; }
 };
 
 }} // namespace Glest::Widgets

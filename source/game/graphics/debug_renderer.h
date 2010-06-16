@@ -246,8 +246,8 @@ private:
 	/***/
 	template<typename TextureCallback>
 	void renderCellTextures(SceneCuller &culler, TextureCallback callback) {
-		const Rect2i mapBounds(0, 0, theMap.getTileW()-1, theMap.getTileH()-1);
-		float coordStep= theWorld.getTileset()->getSurfaceAtlas()->getCoordStep();
+		const Rect2i mapBounds(0, 0, g_map.getTileW()-1, g_map.getTileH()-1);
+		float coordStep= g_world.getTileset()->getSurfaceAtlas()->getCoordStep();
 		assertGl();
 
 		glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
@@ -263,8 +263,8 @@ private:
 			cx = pos.x * 2;
 			cy = pos.y * 2;
 			if(mapBounds.isInside(pos)){
-				Tile *tc00 = theMap.getTile(pos.x, pos.y), *tc10 = theMap.getTile(pos.x+1, pos.y),
-					 *tc01 = theMap.getTile(pos.x, pos.y+1), *tc11 = theMap.getTile(pos.x+1, pos.y+1);
+				Tile *tc00 = g_map.getTile(pos.x, pos.y), *tc10 = g_map.getTile(pos.x+1, pos.y),
+					 *tc01 = g_map.getTile(pos.x, pos.y+1), *tc11 = g_map.getTile(pos.x+1, pos.y+1);
 				Vec3f tl = tc00->getVertex (), tr = tc10->getVertex (),
 					  bl = tc01->getVertex (), br = tc11->getVertex ();
 				Vec3f tc = tl + (tr - tl) / 2,  ml = tl + (bl - tl) / 2,
@@ -295,8 +295,8 @@ private:
 	/***/
 	template< typename ColourCallback >
 	void renderCellOverlay(SceneCuller &culler, ColourCallback callback) {
-		const Rect2i mapBounds( 0, 0, theMap.getTileW() - 1, theMap.getTileH() - 1 );
-		float coordStep = theWorld.getTileset()->getSurfaceAtlas()->getCoordStep();
+		const Rect2i mapBounds( 0, 0, g_map.getTileW() - 1, g_map.getTileH() - 1 );
+		float coordStep = g_world.getTileset()->getSurfaceAtlas()->getCoordStep();
 		Vec4f colour;
 		assertGl();
 		glPushAttrib( GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT );
@@ -313,8 +313,8 @@ private:
 			cx = pos.x * 2;
 			cy = pos.y * 2;
 			if ( mapBounds.isInside( pos ) ) {
-				Tile *tc00= theMap.getTile(pos.x, pos.y),	*tc10= theMap.getTile(pos.x+1, pos.y),
-					 *tc01= theMap.getTile(pos.x, pos.y+1),	*tc11= theMap.getTile(pos.x+1, pos.y+1);
+				Tile *tc00= g_map.getTile(pos.x, pos.y),	*tc10= g_map.getTile(pos.x+1, pos.y),
+					 *tc01= g_map.getTile(pos.x, pos.y+1),	*tc11= g_map.getTile(pos.x+1, pos.y+1);
 				Vec3f tl = tc00->getVertex(),	tr = tc10->getVertex(),
 					  bl = tc01->getVertex(),	br = tc11->getVertex(); 
 				tl.y += 0.1f; tr.y += 0.1f; bl.y += 0.1f; br.y += 0.1f;

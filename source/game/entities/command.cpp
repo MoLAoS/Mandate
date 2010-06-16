@@ -109,11 +109,11 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 }
 
 Unit* Command::getUnit() const {
-	return theSimInterface->getUnitFactory().getUnit(unitRef);
+	return g_simInterface->getUnitFactory().getUnit(unitRef);
 }
 
 Unit* Command::getUnit2() const {
-	return theSimInterface->getUnitFactory().getUnit(unitRef2);
+	return g_simInterface->getUnitFactory().getUnit(unitRef2);
 }
 
 void Command::save(XmlNode *node) const {

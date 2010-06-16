@@ -101,7 +101,7 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 void MenuStateJoinGame::mouseClick(int x, int y, MouseButton mouseButton) {
 	CoreData &coreData = CoreData::getInstance();
 	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-	ClientInterface* clientInterface = theSimInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
 		//server type
@@ -181,7 +181,7 @@ void MenuStateJoinGame::render() {
 }
 
 void MenuStateJoinGame::update() {
-	ClientInterface* clientInterface = theSimInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface->asClientInterface();
 	Lang &lang = Lang::getInstance();
 
 	//update status label
@@ -215,7 +215,7 @@ void MenuStateJoinGame::update() {
 }
 
 void MenuStateJoinGame::keyDown(const Key &key) {
-	ClientInterface* clientInterface = theSimInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
 		if (key == KeyCode::BACK_SPACE) {
@@ -235,7 +235,7 @@ void MenuStateJoinGame::keyDown(const Key &key) {
 }
 
 void MenuStateJoinGame::keyPress(char c) {
-	ClientInterface* clientInterface = theSimInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface->asClientInterface();
 
 	if (!clientInterface->isConnected()) {
 		int maxTextSize = 16;
@@ -262,7 +262,7 @@ void MenuStateJoinGame::keyPress(char c) {
 }
 
 void MenuStateJoinGame::connectToServer() {
-	ClientInterface* clientInterface = theSimInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface->asClientInterface();
 	Config& config = Config::getInstance();
 	Lang &lang = Lang::getInstance();
 	Ip serverIp(labelServerIp.getText());

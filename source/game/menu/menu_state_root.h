@@ -32,8 +32,8 @@ STRINGY_ENUM( RootMenuItem,
 
 class MenuStateRoot: public MenuState {
 private:
-	Widgets::Button *buttons[RootMenuItem::COUNT];
-	RootMenuItem selectedItem;
+	Widgets::Button *	m_buttons[RootMenuItem::COUNT];
+	RootMenuItem		m_selectedItem;
 
 private:
 	MenuStateRoot(const MenuStateRoot &);

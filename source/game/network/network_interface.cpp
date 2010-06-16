@@ -120,7 +120,7 @@ NetworkInterface::NetworkInterface(Program &prog)
 
 void NetworkInterface::processTextMessage(TextMessage &msg) {
 	if (msg.getTeamIndex() == -1 
-	|| msg.getTeamIndex() == theWorld.getThisFaction()->getTeam()) {
+	|| msg.getTeamIndex() == g_world.getThisFaction()->getTeam()) {
 		chatMessages.push_back(ChatMsg(msg.getText(), msg.getSender()));
 	}
 }

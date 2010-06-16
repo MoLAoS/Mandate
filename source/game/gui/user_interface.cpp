@@ -121,10 +121,10 @@ UserInterface::UserInterface(GameState &game)
 }
 
 void UserInterface::init() {
-	this->commander= theSimInterface->getCommander();
+	this->commander= g_simInterface->getCommander();
 	this->gameCamera= game.getGameCamera();
 	this->console= game.getConsole();
-	this->world= &theWorld;
+	this->world= &g_world;
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
 }
@@ -905,7 +905,7 @@ void UserInterface::computeDisplay() {
 
 	// ================ PART 1 ================
 
-	int thisTeam = theWorld.getThisTeamIndex();
+	int thisTeam = g_world.getThisTeamIndex();
 	//title, text and progress bar
 	if (selection.getCount() == 1) {
 		const Unit *unit = selection.getFrontUnit();
@@ -1001,7 +1001,7 @@ void UserInterface::computeDisplay() {
 		Resource *r = selectedObject->getResource();
 		if (r) {
 			display.setTitle(r->getType()->getName());
-			display.setText(theLang.get("amount") + ":" + intToStr(r->getAmount()));
+			display.setText(g_lang.get("amount") + ":" + intToStr(r->getAmount()));
 			display.setUpImage(0, r->getType()->getImage());
 		} ///@todo else
 	}
@@ -1056,7 +1056,7 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 	case CommandResult::SUCCESS:
 		break;
 	case CommandResult::FAIL_BLOCKED:
-		theConsole.addStdMessage("BuildingNoPlace");
+		console->addStdMessage("BuildingNoPlace");
 		break;
 	case CommandResult::FAIL_REQUIREMENTS:
 		switch(cc){

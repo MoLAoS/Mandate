@@ -43,14 +43,14 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	Vec2f plExtDims = smallFont->getMetrics()->getTextDiminsions(glExt2);
 
 	const Metrics &metrics = Metrics::getInstance();
-	int w = std::max(infoDims.x, std::max(glExtDims.x, plExtDims.x));
+	int w = int(std::max(infoDims.x, std::max(glExtDims.x, plExtDims.x)));
 	w += 10;
 	int gap = (metrics.getScreenW() - 3 * w) / 4;
 
 	// basic info
 	int x = gap;
-	int y = metrics.getScreenH() - 110 - infoDims.y;
-	int h = infoDims.y + 10;
+	int y = metrics.getScreenH() - 110 - int(infoDims.y);
+	int h = int(infoDims.y) + 10;
 	Widgets::StaticText::Ptr l_text = new Widgets::StaticText(&program, Vec2i(x, y), Vec2i(w, h));
 	l_text->setTextParams(glInfo, Vec4f(1.f), normFont);
 
@@ -80,13 +80,12 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 
 void MenuStateGraphicInfo::onButtonClick(Button::Ptr btn) {
 	mainMenu->setCameraTarget(MenuStates::OPTIONS);
-	fadeIn = false;
-	fadeOut = true;
+	doFadeOut();
 }
 
 void MenuStateGraphicInfo::update() {
 	MenuState::update();
-	if (transition) {
+	if (m_transition) {
 		program.clear();
 		mainMenu->setState(new MenuStateOptions(program, mainMenu));
 	}

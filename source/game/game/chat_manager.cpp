@@ -93,7 +93,7 @@ bool ChatManager::keyDown(const Key &key) {
 					ScriptManager::doSomeLua(codeline);
 				} else {
 			)
-			console->addLine(theConfig.getNetPlayerName() + ": " + text);
+			console->addLine(g_config.getNetPlayerName() + ": " + text);
 			NetworkInterface *netInterface = iSim->asNetworkInterface();
 			if (netInterface) {
 				netInterface->sendTextMessage(text, teamMode ? thisTeamIndex : -1);

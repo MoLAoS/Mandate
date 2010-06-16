@@ -33,7 +33,7 @@ namespace Glest { namespace Menu {
 
 MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
-		, transitionTarget(OptionsTransition::INVALID) {
+		, m_transitionTarget(Transition::INVALID) {
 	Lang &lang= Lang::getInstance();
 	Config &config= Config::getInstance();
 	const Metrics &metrics = Metrics::getInstance();
@@ -156,18 +156,17 @@ void MenuStateOptions::onButtonClick(Button::Ptr btn) {
 		soundRenderer.playFx(coreData.getClickSoundA());
 		Renderer::getInstance().autoConfig();
 		saveConfig();
-		transitionTarget = OptionsTransition::RE_LOAD;
+		m_transitionTarget = Transition::RE_LOAD;
 	} else if (btn == m_returnButton) {
 		soundRenderer.playFx(coreData.getClickSoundA());
-		transitionTarget = OptionsTransition::RETURN;
+		m_transitionTarget = Transition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
 	} else if (btn == m_openGlInfoButton) {
 		soundRenderer.playFx(coreData.getClickSoundB());
-		transitionTarget = OptionsTransition::GL_INFO;
+		m_transitionTarget = Transition::GL_INFO;
 		mainMenu->setCameraTarget(MenuStates::GFX_INFO);
 	}
-	fadeIn = false;
-	fadeOut = true;
+	doFadeOut();
 }
 
 void MenuStateOptions::on3dTexturesToggle(Button::Ptr cb) {
@@ -189,9 +188,8 @@ void MenuStateOptions::onDropListSelectionChanged(ListBase::Ptr list) {
 			lng = list->getSelectedItem()->getText();
 		}
 		config.setUiLocale(lng);
-		transitionTarget = OptionsTransition::RE_LOAD;
-		fadeIn = false;
-		fadeOut = true;
+		m_transitionTarget = Transition::RE_LOAD;
+		doFadeOut();
 	} else if (list == m_filterList) {
 		config.setRenderFilter(m_filterList->getSelectedItem()->getText());
 		saveConfig();
@@ -207,17 +205,17 @@ void MenuStateOptions::onDropListSelectionChanged(ListBase::Ptr list) {
 
 void MenuStateOptions::update() {
 	MenuState::update();
-	if (transition) {
+	if (m_transition) {
 		program.clear();
-		switch (transitionTarget) {
-			case OptionsTransition::RETURN:
+		switch (m_transitionTarget) {
+			case Transition::RETURN:
 				mainMenu->setState(new MenuStateRoot(program, mainMenu));
 				break;
-			case OptionsTransition::GL_INFO:
+			case Transition::GL_INFO:
 				mainMenu->setState(new MenuStateGraphicInfo(program, mainMenu));
 				break;
-			case OptionsTransition::RE_LOAD:
-				theLang.setLocale(theConfig.getUiLocale());
+			case Transition::RE_LOAD:
+				g_lang.setLocale(g_config.getUiLocale());
 				saveConfig();
 				mainMenu->setState(new MenuStateOptions(program, mainMenu));
 				break;

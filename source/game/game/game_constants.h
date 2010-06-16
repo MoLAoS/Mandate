@@ -13,22 +13,24 @@
 #define _GLEST_GAME_GAMECONSTANTS_H_
 
 // The 'Globals'
-#define theGame				(*GameState::getInstance())
-#define theWorld			(World::getInstance())
-#define theMap				(*World::getInstance().getMap())
-#define theCamera			(*GameState::getInstance()->getGameCamera())
-#define theGameSettings		(GameState::getInstance()->getGameSettings())
-#define theGui				(*Gui::UserInterface::getCurrentGui())
-#define theConsole			(*GameState::getInstance()->getConsole())
-#define theConfig			(Config::getInstance())
-#define theRoutePlanner		(*World::getInstance().getRoutePlanner())
-#define theCartographer		(*World::getInstance().getCartographer())
-#define theRenderer			(Renderer::getInstance())
-#define theNetworkManager	(NetworkManager::getInstance())
-#define theSoundRenderer	(SoundRenderer::getInstance())
-#define theLogger			(Logger::getInstance())
-#define theLang				(Lang::getInstance())
-#define theFileFactory		(*FSFactory::getInstance())
+#define g_gameState				(*GameState::getInstance())
+#define g_world			(World::getInstance())
+#define g_map				(*World::getInstance().getMap())
+#define g_camera			(*GameState::getInstance()->getGameCamera())
+#define g_gameSettings		(GameState::getInstance()->getGameSettings())
+#define g_userInterface				(*Gui::UserInterface::getCurrentGui())
+#define g_console			(*GameState::getInstance()->getConsole())
+#define g_config			(Config::getInstance())
+#define g_routePlanner		(*World::getInstance().getRoutePlanner())
+#define g_cartographer		(*World::getInstance().getCartographer())
+#define g_renderer			(Renderer::getInstance())
+#define g_soundRenderer	(SoundRenderer::getInstance())
+#define g_logger			(Logger::getInstance())
+#define g_lang				(Lang::getInstance())
+#define g_metrics			(Metrics::getInstance())
+#define g_coreData			(CoreData::getInstance())
+#define g_fileFactory		(*FSFactory::getInstance())
+#define g_simInterface		(Program::getInstance()->getSimulationInterface())
 
 #if _GAE_DEBUG_EDITION_
 #	define theDebugRenderer	(Glest::Debug::getDebugRenderer())
@@ -84,9 +86,9 @@ namespace Glest {
 
 
 #if defined(LOG_STUFF) && LOG_STUFF
-#	define LOG(x) theLogger.add(x)
-#	define STREAM_LOG(x) {stringstream ss; ss << x; theLogger.add(ss.str()); }
-#	define GAME_LOG(x) STREAM_LOG( "Frame " << theWorld.getFrameCount() << ": " << x )
+#	define LOG(x) g_logger.add(x)
+#	define STREAM_LOG(x) {stringstream ss; ss << x; g_logger.add(ss.str()); }
+#	define GAME_LOG(x) STREAM_LOG( "Frame " << g_world.getFrameCount() << ": " << x )
 #else
 #	define LOG(x)
 #	define STREAM_LOG(x)

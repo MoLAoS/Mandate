@@ -152,11 +152,11 @@ void MoveCommandType::update(Unit *unit) const {
 		pos = command->getPos();
 	}
 
-	switch (theRoutePlanner.findPath(unit, pos)) {
+	switch (g_routePlanner.findPath(unit, pos)) {
 		case TravelState::MOVING:
 			unit->setCurrSkill(moveSkillType);
 			unit->face(unit->getNextPos());
-			//MOVE_LOG( theWorld.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
+			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
 			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
 			break;
 		case TravelState::BLOCKED:
@@ -212,7 +212,7 @@ void StopCommandType::update(Unit *unit) const {
 	// if we have another command then stop sitting on your ass
 	if (unit->getCommands().size() > 1) {
 		unit->finishCommand();
-		UNIT_LOG( theWorld.getFrameCount() << "::Unit:" << unit->getId() << " cancelling stop" );
+		UNIT_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " cancelling stop" );
 		return;
 	}
 	unit->setCurrSkill(stopSkillType);
@@ -283,16 +283,16 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->update2();
 
 		if (unit->getProgress2() > producedUnit->getProductionTime()) {
-			Unit *produced = theSimInterface->getUnitFactory().newInstance(Vec2i(0), producedUnit, unit->getFaction(), theWorld.getMap());
-				//new Unit(theWorld.getNextUnitId(), Vec2i(0), producedUnit, unit->getFaction(), theWorld.getMap());
-			if (!theWorld.placeUnit(unit->getCenteredPos(), 10, produced)) {
+			Unit *produced = g_simInterface->getUnitFactory().newInstance(Vec2i(0), producedUnit, unit->getFaction(), g_world.getMap());
+				//new Unit(g_world.getNextUnitId(), Vec2i(0), producedUnit, unit->getFaction(), g_world.getMap());
+			if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 				unit->cancelCurrCommand();
-				theSimInterface->getUnitFactory().deleteUnit(unit);
+				g_simInterface->getUnitFactory().deleteUnit(unit);
 			} else {
 				produced->create();
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
-				theSimInterface->getStats()->produce(unit->getFactionIndex());
+				g_simInterface->getStats()->produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 
 				if (ct) {
@@ -426,7 +426,7 @@ void MorphCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	const Map *map = theWorld.getMap();
+	const Map *map = g_world.getMap();
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
 		//if not morphing, check space
@@ -435,8 +435,8 @@ void MorphCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(morphSkillType);
 			unit->getFaction()->checkAdvanceSubfaction(morphUnit, false);
 		} else {
-			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-				theConsole.addStdMessage("InvalidPosition");
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				g_console.addStdMessage("InvalidPosition");
 			}
 			unit->cancelCurrCommand();
 		}
@@ -448,18 +448,18 @@ void MorphCommandType::update(Unit *unit) const {
 			//finish the command
 			if (unit->morph(this)) {
 				unit->finishCommand();
-				if (theGui.isSelected(unit)) {
-					theGui.onSelectionChanged();
+				if (g_userInterface.isSelected(unit)) {
+					g_userInterface.onSelectionChanged();
 				}
 				ScriptManager::onUnitCreated(unit);
 				if (mapUpdate) {
 					// obstacle added or removed, update annotated maps
-					theWorld.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
+					g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				}
 			} else {
 				unit->cancelCurrCommand();
-				if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-					theConsole.addStdMessage("InvalidPosition");
+				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					g_console.addStdMessage("InvalidPosition");
 				}
 			}
 			unit->setCurrSkill(SkillClass::STOP);
@@ -492,10 +492,10 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	} else {
 		Targets enemies;
 		Vec2i pos;
-		PosCircularIteratorOrdered pci(theWorld.getMap()->getBounds(), unit->getPos(), 
-			theWorld.getPosIteratorFactory().getInsideOutIterator(1, range + halfSize.intp()));
+		PosCircularIteratorOrdered pci(g_world.getMap()->getBounds(), unit->getPos(), 
+			g_world.getPosIteratorFactory().getInsideOutIterator(1, range + halfSize.intp()));
 
-		Map *map = theWorld.getMap();
+		Map *map = g_world.getMap();
 		while (pci.getNext(pos, distance)) {
 			foreach_enum (Zone, z) { // all zones
 				if (!asts || asts->getZone(z)) { // looking for target in z?

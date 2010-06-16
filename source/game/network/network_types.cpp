@@ -76,7 +76,7 @@ Command *NetworkCommand::toCommand() const {
 
 	//validate command type
 	const UnitType* unitType= world.findUnitTypeById(unit->getFaction()->getType(), unitTypeId);
-	const CommandType* ct = theWorld.getCommandTypeFactory()->getType(commandTypeId);
+	const CommandType* ct = g_world.getCommandTypeFactory()->getType(commandTypeId);
 	if (!ct) {
 		throw runtime_error("Can not find command type with id: " + intToStr(commandTypeId) + " in unit: " + unit->getType()->getName() + ". Game out of synch.");
 	}
@@ -114,16 +114,16 @@ MoveSkillUpdate::MoveSkillUpdate(const Unit *unit) {
 	}
 	assert(offset.x >= -1 && offset.x <= 1 && offset.y >= -1 && offset.y <= 1);
 	assert(offset.x || offset.y);
-	assert(unit->getNextCommandUpdate() - theWorld.getFrameCount() < 256);
+	assert(unit->getNextCommandUpdate() - g_world.getFrameCount() < 256);
 
 	this->offsetX = offset.x;
 	this->offsetY = offset.y;
-	this->end_offset = unit->getNextCommandUpdate() - theWorld.getFrameCount();
+	this->end_offset = unit->getNextCommandUpdate() - g_world.getFrameCount();
 }
 
 ProjectileUpdate::ProjectileUpdate(const Unit *unit, Projectile *pps) {
-	assert(pps->getEndFrame() - theWorld.getFrameCount() < 256);
-	this->end_offset = pps->getEndFrame() - theWorld.getFrameCount();
+	assert(pps->getEndFrame() - g_world.getFrameCount() < 256);
+	this->end_offset = pps->getEndFrame() - g_world.getFrameCount();
 }
 
 }}//end namespace

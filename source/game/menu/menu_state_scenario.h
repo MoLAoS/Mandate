@@ -13,8 +13,10 @@
 #define _GLEST_GAME_MENUSTATESCENARIO_H_
 
 #include "main_menu.h"
+#include "compound_widgets.h"
 
 namespace Glest { namespace Menu {
+using namespace Widgets;
 
 // ===============================
 // 	class MenuStateScenario
@@ -22,48 +24,50 @@ namespace Glest { namespace Menu {
 
 class MenuStateScenario: public MenuState {
 private:
-	WRAPPED_ENUM( FailAction,
-		MAIN_MENU,
-		SCENARIO_MENU
-	);
+	WRAPPED_ENUM( Transition, RETURN, PLAY );
+	WRAPPED_ENUM( Difficulty,
+        VERY_EASY,
+        EASY,
+        MEDIUM,
+        HARD,
+        VERY_HARD,
+        INSANE
+    );
 
-    enum Difficulty{
-        dVeryEasy,
-        dEasy,
-        dMedium,
-        dHard,
-        dVeryHard,
-        dInsane
-    };
+private:
+	Transition			m_targetTansition;
 
-	GraphicButton buttonReturn;
-	GraphicButton buttonPlayNow;
+	Button::Ptr			m_returnButton, 
+						m_playNowButton;
 
-	GraphicLabel labelInfo;
-	GraphicLabel labelScenario;
-	GraphicListBox listBoxScenario;
+	DropList::Ptr		m_categoryList,
+						m_scenarioList;
 
-	GraphicLabel labelCategory;
-	GraphicListBox listBoxCategory;
-	GraphicMessageBox *msgBox;
+	StaticText::Ptr		m_infoLabel;
+
+	MessageDialog::Ptr	m_messageDialog;
 
     vector<string> categories;
 	vector<string> scenarioFiles;
     ScenarioInfo scenarioInfo;
 
-	FailAction failAction;
+
+	void onButtonClick(Button::Ptr);
+	void onCategoryChanged(ListBase::Ptr);
+	void onScenarioChanged(ListBase::Ptr);
+
+	void onConfirmReturn(MessageDialog::Ptr);
+
+	void updateConfig();
 
 public:
 	MenuStateScenario(Program &program, MainMenu *mainMenu);
 
-    void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState &mouseState);
-	void render();
 	void update();
 
 	void launchGame();
 	void setScenario(int i);
-	int getScenarioCount() const	{ return listBoxScenario.getItemCount(); }
+	int getScenarioCount() const	{ return scenarioFiles.size(); }
 
 	MenuStates getIndex() const { return MenuStates::SCENARIO; }
 

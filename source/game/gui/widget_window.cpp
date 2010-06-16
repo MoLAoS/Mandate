@@ -48,8 +48,8 @@ WidgetWindow::WidgetWindow()
 	lastMouseDownWidget = 0;
 	keyboardFocused = keyboardWidget;
 
-	textRendererBM = theRenderer.getTextRenderer();
-	textRendererFT = theRenderer.getFreeTypeRenderer();
+	textRendererBM = g_renderer.getTextRenderer();
+	textRendererFT = g_renderer.getFreeTypeRenderer();
 }
 
 WidgetWindow::~WidgetWindow() {
@@ -143,11 +143,12 @@ void WidgetWindow::doMouseInto(Widget::Ptr widget) {
 	}
 }
 
-void WidgetWindow::setFloatingWidget(Widget::Ptr floater) {
+void WidgetWindow::setFloatingWidget(Widget::Ptr floater, bool modal) {
 	delete floatingWidget;
 	floatingWidget = floater;
 	floatingWidget->setParent(this);
 	unwindMouseOverStack(this);
+	modalFloater = modal;
 }
 
 void WidgetWindow::removeFloatingWidget(Widget::Ptr floater) {
@@ -228,7 +229,9 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
 		} else {
-			destroyFloater();
+			if (!modalFloater) {
+				destroyFloater();
+			}
 			return;
 		}
 	} else {
@@ -318,7 +321,9 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
 		} else {
-			destroyFloater();
+			if (!modalFloater) {
+				destroyFloater();
+			}
 			return;
 		}
 	} else {
@@ -337,8 +342,10 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	Widget::Ptr widget = 0;
-	if (floatingWidget && floatingWidget->isInside(mousePos)) {
-		widget = floatingWidget->getWidgetAt(mousePos);
+	if (floatingWidget) {
+		if (floatingWidget->isInside(mousePos)) {
+			widget = floatingWidget->getWidgetAt(mousePos);
+		}
 	} else {
 		widget = getWidgetAt(mousePos);
 	}

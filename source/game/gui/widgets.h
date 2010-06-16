@@ -394,6 +394,7 @@ public:
 
 	virtual void addItems(const vector<string> &items) = 0;
 	virtual void addItem(const string &item) = 0;
+//	virtual void clearItems() = 0;
 
 	virtual void setSelected(int index) = 0;
 
@@ -431,6 +432,7 @@ public:
 
 	virtual void addItems(const vector<string> &items);
 	virtual void addItem(const string &item);
+//	virtual void clearItems();
 
 	virtual void setSelected(int index);
 	//virtual void setSelected(ListBoxItem *item);
@@ -519,7 +521,6 @@ public:
 
 	void addItems(const vector<string> &items);
 	void addItem(const string &item);
-
 	void clearItems();
 
 	void setSelected(int index);

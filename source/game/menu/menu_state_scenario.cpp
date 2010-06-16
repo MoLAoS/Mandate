@@ -34,29 +34,49 @@ using namespace Shared::Xml;
 // =====================================================
 
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
-		: MenuState(program, mainMenu/*, "scenario"*/)
-		, msgBox(0), failAction(FailAction::INVALID) {
-	Config &config = Config::getInstance();
+		: MenuState(program, mainMenu)
+		, m_targetTansition(Transition::INVALID) {
+	Font *font = g_coreData.getfreeTypeMenuFont();
+
+	// create
+	int gap = (g_metrics.getScreenW() - 300) / 3;
+	int x = gap, w = 150, y = 150, h = 30;
+	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
+
+	x += w + gap;
+	m_playNowButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
+
+	w = 200;
+	h = int(font->getMetrics()->getHeight()) + 6;
+	x = g_metrics.getScreenW() / 2 - (w * 2 + 50) / 2;
+	y = g_metrics.getScreenH() / 2 + (h * 2) / 2 + 100;
+	StaticText::Ptr l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w, h));
+	l_text->setTextParams(g_lang.get("Category"), Vec4f(1.f), font);
+//	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
+
+	y = g_metrics.getScreenH() / 2 - (h * 2) / 2 + 100;
+	l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w,h));
+	l_text->setTextParams(g_lang.get("Scenario"), Vec4f(1.f), font);
+//	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
+
+	m_infoLabel = new StaticText(&program, Vec2i(x, y - 220), Vec2i(450, 200));
+	m_infoLabel->setTextParams("", Vec4f(1.f), font);
+//	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
+
+	x += 220;
+	w = 230;
+	y = g_metrics.getScreenH() / 2 + (h * 2) / 2 + 100;
+	m_categoryList = new DropList(&program, Vec2i(x, y), Vec2i(w,h));
+	y = g_metrics.getScreenH() / 2 - (h * 2) / 2 + 100;
+	m_scenarioList = new DropList(&program, Vec2i(x, y), Vec2i(w,h));
+	m_scenarioList->SelectionChanged.connect(this, &MenuStateScenario::onScenarioChanged);
+
 	vector<string> results;
-	int match = -1;
-	
-	labelInfo.init(350, 350);
-	labelInfo.setFont(CoreData::getInstance().getMenuFontNormal());
-
-	buttonReturn.init(350, 200, 125);
-	buttonPlayNow.init(525, 200, 125);
-
-	listBoxCategory.init(350, 500, 190);
-	labelCategory.init(350, 530);
-
-	listBoxScenario.init(350, 400, 190);
-	labelScenario.init(350, 430);
-
-	buttonReturn.setText(theLang.get("Return"));
-	buttonPlayNow.setText(theLang.get("PlayNow"));
-
-	labelCategory.setText(theLang.get("Category"));
-	labelScenario.setText(theLang.get("Scenario"));
+	int match = -1;	
 
 	//categories listBox
 	findAll("gae/scenarios/*.", results);
@@ -73,131 +93,107 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	}
 	// fail gracefully
 	if (results.empty()) {
-		msgBox = new GraphicMessageBox();
-		msgBox->init(theLang.get("NoCategoryDirectories"), theLang.get("Ok"));
-		failAction = FailAction::MAIN_MENU;
+		program.clear();
+		m_messageDialog = new MessageDialog(&program);
+		Vec2i sz(330, 256);
+		program.setFloatingWidget(m_messageDialog, true);
+		m_messageDialog->setPos(g_metrics.getScreenDims() / 2 - sz / 2);
+		m_messageDialog->setSize(sz);
+		m_messageDialog->setTitleText(g_lang.get("Error"));
+		m_messageDialog->setMessageText(g_lang.get("NoCategoryDirectories"));
+		m_messageDialog->setButtonText(g_lang.get("Yes"));
+		m_messageDialog->Button1Clicked.connect(this, &MenuStateScenario::onConfirmReturn);
 		return;
 	}
 	for(int i = 0; i < results.size(); ++i) {
-		if (results[i] == config.getUiLastScenarioCatagory()) {
+		if (results[i] == g_config.getUiLastScenarioCatagory()) {
 			match = i;
 		}
 	}
-
 	categories = results;
-	listBoxCategory.setItems(results);
+	m_categoryList->addItems(categories);
+	m_categoryList->SelectionChanged.connect(this, &MenuStateScenario::onCategoryChanged);
 	if (match != -1) {
-		listBoxCategory.setSelectedItemIndex(match);
-	}
-	updateScenarioList(categories[listBoxCategory.getSelectedItemIndex()], true);
-	// stay LOCAL
-	//program.getSimulationInterface()->changeRole(GameRole::SERVER);
-}
-
-
-void MenuStateScenario::mouseClick(int x, int y, MouseButton mouseButton) {
-	Config &config = Config::getInstance();
-	CoreData &coreData = CoreData::getInstance();
-	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-
-	if (msgBox) {
-		if (msgBox->mouseClick(x,y)) {
-			delete msgBox;
-			msgBox = 0;
-			switch (failAction) {
-				case FailAction::MAIN_MENU:
-					soundRenderer.playFx(coreData.getClickSoundA());
-					mainMenu->setState(new MenuStateRoot(program, mainMenu));
-					return;
-				case FailAction::SCENARIO_MENU:
-					soundRenderer.playFx(coreData.getClickSoundA());
-					break;
-			}
-		}
-		return;
-	}
-	if (buttonReturn.mouseClick(x, y)) {
-		soundRenderer.playFx(coreData.getClickSoundA());
-		config.save();
-		mainMenu->setState(new MenuStateRoot(program, mainMenu)); //TO CHANGE
-	} else if (buttonPlayNow.mouseClick(x, y)) {
-		soundRenderer.playFx(coreData.getClickSoundC());
-		config.save();
-		launchGame();
-	} else if (listBoxScenario.mouseClick(x, y)) {
-		const string &category = categories[listBoxCategory.getSelectedItemIndex()];
-		const string &scenario = scenarioFiles[listBoxScenario.getSelectedItemIndex()];
-
-		Scenario::loadScenarioInfo(scenario, category, &scenarioInfo);
-		labelInfo.setText(scenarioInfo.desc);
-		config.setUiLastScenario(category + "/" + scenario);
-	} else if (listBoxCategory.mouseClick(x, y)) {
-		const string &catagory = categories[listBoxCategory.getSelectedItemIndex()];
-
-		updateScenarioList(catagory);
-		config.setUiLastScenarioCatagory(catagory);
-	}
-}
-
-void MenuStateScenario::mouseMove(int x, int y, const MouseState &ms) {
-	if (!msgBox) {
-		listBoxScenario.mouseMove(x, y);
-		listBoxCategory.mouseMove(x, y);
-
-		buttonReturn.mouseMove(x, y);
-		buttonPlayNow.mouseMove(x, y);
+		m_categoryList->setSelected(match);
 	} else {
-		msgBox->mouseMove(x, y);
+		m_categoryList->setSelected(0);
 	}
 }
 
-void MenuStateScenario::render() {
-	Renderer &renderer = Renderer::getInstance();
+void MenuStateScenario::onConfirmReturn(MessageDialog::Ptr) {
+	m_targetTansition = Transition::RETURN;
+	g_soundRenderer.playFx(g_coreData.getClickSoundA());
+	mainMenu->setCameraTarget(MenuStates::ROOT);
+	doFadeOut();
+}
 
-	if(msgBox) {
-		renderer.renderMessageBox(msgBox);
-		return;
+void MenuStateScenario::onButtonClick(Button::Ptr btn) {
+	if (btn == m_returnButton) {
+		m_targetTansition = Transition::RETURN;
+		g_soundRenderer.playFx(g_coreData.getClickSoundA());
+		mainMenu->setCameraTarget(MenuStates::ROOT);
+	} else {
+		m_targetTansition = Transition::PLAY;
+		g_soundRenderer.playFx(g_coreData.getClickSoundC());
 	}
-	renderer.renderLabel(&labelInfo);
-
-	renderer.renderLabel(&labelCategory);
-	renderer.renderListBox(&listBoxCategory);
-
-	renderer.renderLabel(&labelScenario);
-	renderer.renderListBox(&listBoxScenario);
-
-	renderer.renderButton(&buttonReturn);
-	renderer.renderButton(&buttonPlayNow);
+	doFadeOut();
 }
 
 void MenuStateScenario::update() {
-	if (Config::getInstance().getMiscAutoTest()) {
+	if (g_config.getMiscAutoTest()) {
 		AutoTest::getInstance().updateScenario(this);
+	}
+	MenuState::update();
+	if (m_transition) {
+		switch (m_targetTansition) {
+			case Transition::RETURN:
+				program.clear();
+				mainMenu->setState(new MenuStateRoot(program, mainMenu));
+				break;
+			case Transition::PLAY:
+				launchGame();
+				break;
+		}
 	}
 }
 
 void MenuStateScenario::launchGame() {
-	Scenario::loadGameSettings(scenarioFiles[listBoxScenario.getSelectedItemIndex()],
-					categories[listBoxCategory.getSelectedItemIndex()],
-					&scenarioInfo);
+	Scenario::loadGameSettings(scenarioFiles[m_scenarioList->getSelectedIndex()],
+					categories[m_categoryList->getSelectedIndex()], &scenarioInfo);
+	program.clear();
 	program.setState(new GameState(program));
 }
 
 void MenuStateScenario::setScenario(int i) {
-	listBoxScenario.setSelectedItemIndex(i);
-	Scenario::loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()],
-					categories[listBoxCategory.getSelectedItemIndex()],
-					&scenarioInfo);
+	m_scenarioList->setSelected(i);
+}
+
+void MenuStateScenario::onCategoryChanged(ListBase::Ptr) {
+	updateScenarioList(categories[m_categoryList->getSelectedIndex()]);
+	updateConfig();
+}
+
+void MenuStateScenario::onScenarioChanged(ListBase::Ptr) {
+	//update scenario info
+	Scenario::loadScenarioInfo(scenarioFiles[m_scenarioList->getSelectedIndex()],
+					categories[m_categoryList->getSelectedIndex()], &scenarioInfo);
+	m_infoLabel->setText(scenarioInfo.desc);
+	updateConfig();
+}
+
+void MenuStateScenario::updateConfig() {
+	const string &category = categories[m_categoryList->getSelectedIndex()];
+	const string &scenario = scenarioFiles[m_scenarioList->getSelectedIndex()];
+	g_config.setUiLastScenario(category + "/" + scenario);
 }
 
 void MenuStateScenario::updateScenarioList(const string &category, bool selectDefault) {
-	const Config &config = Config::getInstance();
 	vector<string> results;
 	int match = -1;
 
 	findAll("gae/scenarios/" + category + "/*.", results);
 
-	//update scenarioFiles
+	// update scenarioFiles
 	scenarioFiles = results;
 	if (results.empty()) {
 		// this shouldn't happen, empty directories have been weeded out earlier
@@ -205,22 +201,19 @@ void MenuStateScenario::updateScenarioList(const string &category, bool selectDe
 	}
 	for (int i = 0; i < results.size(); ++i) {
 		string path = category + "/" + results[i];
-		cout << path << " / " << config.getUiLastScenario() << endl;
-		if (path == config.getUiLastScenario()) {
+		cout << path << " / " << g_config.getUiLastScenario() << endl;
+		if (path == g_config.getUiLastScenario()) {
 			match = i;
 		}
 		results[i] = formatString(results[i]);
 	}
-	listBoxScenario.setItems(results);
+	m_scenarioList->clearItems();
+	m_scenarioList->addItems(results);
 	if (selectDefault && match != -1) {
-		listBoxScenario.setSelectedItemIndex(match);
+		m_scenarioList->setSelected(match);
+	} else {
+		m_scenarioList->setSelected(0);
 	}
-
-	//update scenario info
-	Scenario::loadScenarioInfo(scenarioFiles[listBoxScenario.getSelectedItemIndex()],
-					categories[listBoxCategory.getSelectedItemIndex()],
-					&scenarioInfo);
-	labelInfo.setText(scenarioInfo.desc);
 }
 
 }}//end namespace

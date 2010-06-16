@@ -41,13 +41,9 @@ namespace Glest { namespace Menu {
 
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
-		, selectedItem(RootMenuItem::INVALID) {
+		, m_selectedItem(RootMenuItem::INVALID) {
 	_PROFILE_FUNCTION();
-	Lang &lang= Lang::getInstance();
-	const Metrics &metrics = Metrics::getInstance();
-	const CoreData &coreData = CoreData::getInstance();
-
-	int sh = metrics.getScreenH();
+	int sh = g_metrics.getScreenH();
 	int sixtyPercent = int(0.6f * sh);
 
 	int logoHeight = sh - sixtyPercent;
@@ -65,33 +61,33 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	int widgetPad = btnPnlHeight / 25;
 
 	// Buttons Panel
-	Vec2i pos(metrics.getScreenW() / 2 - 125, btnPnlYPos);
+	Vec2i pos(g_metrics.getScreenW() / 2 - 125, btnPnlYPos);
 	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, btnPnlHeight));
 	pnl->setPaddingParams(10, widgetPad);
 	pnl->setBorderStyle(Widgets::BorderStyle::RAISE);
 
 	// Buttons
-	Font *font = coreData.getfreeTypeMenuFont();//coreData.getMenuFontNormal();
+	Font *font = g_coreData.getfreeTypeMenuFont();//g_coreData.getMenuFontNormal();
 	foreach_enum (RootMenuItem, i) {
 		Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
-		buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 3.f)));				
-		buttons[i]->setTextParams(lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
-		buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
+		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 3.f)));				
+		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
+		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
 
 	// Glest Logo PicturePanel
 	int logoWidth = logoHeight * 2;
-	pos = Vec2i(metrics.getScreenW() / 2 - logoHeight, logoYPos);
+	pos = Vec2i(g_metrics.getScreenW() / 2 - logoHeight, logoYPos);
 	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(logoWidth, logoHeight));
 	pp->setBorderSize(0);
 	pp->setPadding(0);
-	pp->setImage(coreData.getLogoTexture());
+	pp->setImage(g_coreData.getLogoTexture());
 	pp->setAutoLayout(false);
 	
 	// Advanced Engine labels
-	font = coreData.getAdvancedEngineFont();
+	font = g_coreData.getAdvancedEngineFont();
 	Widgets::StaticText *label = new Widgets::StaticText(pp);
-	label->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
+	label->setTextParams(g_lang.get("Advanced"), Vec4f(1.f), font);
 	Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 	int tx = int(255.f / 512.f * logoWidth);
 	int ty = int(60.f / 256.f * logoHeight);
@@ -100,7 +96,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	label->centreText();
 
 	label = new Widgets::StaticText(pp);
-	label->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
+	label->setTextParams(g_lang.get("Engine"), Vec4f(1.f), font);
 	tx = int(285.f / 512.f * logoWidth);
 	label->setPos(Vec2i(tx, ty));
 	label->setSize(label->getTextDimensions() + Vec2i(10,5));
@@ -108,7 +104,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	pos = Vec2i(tx + label->getSize().x, ty + 3);
 	// Version label
-	font = coreData.getFreeTypeFont();
+	font = g_coreData.getFreeTypeFont();
 	label = new Widgets::StaticText(pp);
 	label->setTextParams(gaeVersionString, Vec4f(1.f), font);
 	
@@ -119,12 +115,12 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	
 	// gpl logo
 	int gplWidth = gplHeight * 2;
-	pos = Vec2i(metrics.getScreenW() / 2 - gplHeight, gplYPos);
-	new Widgets::StaticImage(&program, pos, Vec2i(gplWidth, gplHeight), coreData.getGplTexture());
+	pos = Vec2i(g_metrics.getScreenW() / 2 - gplHeight, gplYPos);
+	new Widgets::StaticImage(&program, pos, Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
 
 	if (program.getCmdArgs().isTest("widgets")) {
 		// testing TextBox
-		font = coreData.getfreeTypeMenuFont();
+		font = g_coreData.getfreeTypeMenuFont();
 		int h = int(font->getMetrics()->getHeight() + 1.f);
 		Widgets::TextBox *txtBox = new Widgets::TextBox(&program, Vec2i(10,10), Vec2i(200, h));
 		txtBox->setTextParams("", Vec4f(1.f), font, false);
@@ -179,10 +175,17 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		Widgets::VerticalScrollBar *vsb = new Widgets::VerticalScrollBar(&program, pos, sz);
 		vsb->setRanges(100, 35);
 
-		//yPos += checkBox->getHeight() + 15;
+		yPos += checkBox->getHeight() + 15;
+		sz = Vec2i(330, 256);
+
+		MessageDialog::Ptr msg = new MessageDialog(&program, Vec2i(10, yPos), sz);
+		msg->setTitleText("Test MessageDialog");
+		msg->setButtonText(g_lang.get("Ok"), g_lang.get("Cancel"));
+
 		Vec2i sliderPos(250, 10);
 		Vec2i sliderSize(400, 32);
-		Widgets::Slider::Ptr slider = new Widgets::Slider(&program, sliderPos, sliderSize, "Test Slider");
+		string title = "Test Slider";
+		Widgets::Slider::Ptr slider = new Widgets::Slider(&program, sliderPos, sliderSize, title);
 
 
 	} // test_widgets
@@ -210,13 +213,13 @@ void MenuStateRoot::onComboBoxCollapsed(Widgets::DropList::Ptr cb) {
 void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
 	// which button ?
 	foreach_enum (RootMenuItem, i) {
-		buttons[i]->setEnabled(false);
-		if (btn == buttons[i]) {
-			selectedItem = i;
+		m_buttons[i]->setEnabled(false);
+		if (btn == m_buttons[i]) {
+			m_selectedItem = i;
 		}
 	}
 	MenuStates targetState = MenuStates::INVALID;
-	switch (selectedItem) {
+	switch (m_selectedItem) {
 		case RootMenuItem::NEWGAME:	 targetState = MenuStates::NEW_GAME;	break;
 		case RootMenuItem::JOINGAME: targetState = MenuStates::JOIN_GAME;	break;
 		case RootMenuItem::SCENARIO: targetState = MenuStates::SCENARIO;	break;
@@ -228,16 +231,14 @@ void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
 	if (targetState != MenuStates::INVALID) {
 		mainMenu->setCameraTarget(targetState);
 	}
-	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-	CoreData &coreData = CoreData::getInstance();
-	StaticSound *clickSound;
-	if (selectedItem == RootMenuItem::EXIT) {
-		clickSound = coreData.getClickSoundA();
+	StaticSound *l_clickSound;
+	if (m_selectedItem == RootMenuItem::EXIT) {
+		l_clickSound = g_coreData.getClickSoundA();
 	} else {
-		clickSound = coreData.getClickSoundB();
+		l_clickSound = g_coreData.getClickSoundB();
 	}
-	soundRenderer.playFx(clickSound);
-	fadeOut = true;
+	g_soundRenderer.playFx(l_clickSound);
+	doFadeOut();
 }
 
 void MenuStateRoot::update(){
@@ -245,10 +246,10 @@ void MenuStateRoot::update(){
 		AutoTest::getInstance().updateRoot(program, mainMenu);
 	}
 	MenuState::update();
-	if (transition) {
+	if (m_transition) {
 		program.clear();
 		MenuState *newState = 0;
-		switch (selectedItem) {
+		switch (m_selectedItem) {
 			case RootMenuItem::NEWGAME: newState = new MenuStateNewGame(program, mainMenu); break;
 			case RootMenuItem::JOINGAME: newState = new MenuStateJoinGame(program, mainMenu); break;
 			case RootMenuItem::SCENARIO: newState = new MenuStateScenario(program, mainMenu); break;

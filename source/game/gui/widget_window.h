@@ -52,6 +52,7 @@ private:
 
 	float anim, slowAnim;
 	Vec2i mousePos;
+	bool modalFloater;
 
 	Widget::Ptr findCommonAncestor(Widget::Ptr widget1, Widget::Ptr widget2);
 	void unwindMouseOverStack(Widget::Ptr newTop);
@@ -76,7 +77,7 @@ public:
 	void registerUpdate(Widget::Ptr widget);
 	void unregisterUpdate(Widget::Ptr widget);
 
-	void setFloatingWidget(Widget::Ptr floater);
+	void setFloatingWidget(Widget::Ptr floater, bool modal = false);
 	void removeFloatingWidget(Widget::Ptr floater);
 
 	void aquireKeyboardFocus(KeyboardWidget::Ptr widget);

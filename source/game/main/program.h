@@ -178,6 +178,4 @@ private:
 
 }} //end namespace
 
-#define theSimInterface (Program::getInstance()->getSimulationInterface())
-
 #endif

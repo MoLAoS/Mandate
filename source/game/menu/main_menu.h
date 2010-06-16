@@ -103,10 +103,13 @@ public:
 class MenuState: public sigslot::has_slots {
 protected:
 	Program &program;
-
 	MainMenu *mainMenu;
-	float fade;
-	bool fadeIn, fadeOut, transition;
+	bool	m_transition;
+
+private:
+	float	m_fade;
+	bool	m_fadeIn, 
+			m_fadeOut;
 
 private:
 	const MenuState &operator =(const MenuState &);
@@ -114,11 +117,11 @@ private:
 public:
 	MenuState(Program &program, MainMenu *mainMenu)
 			: program(program), mainMenu(mainMenu)
-	 		, fade(0.f)
-			, fadeIn(true)
-			, fadeOut(false)
-			, transition(false) {
-		program.setFade(0.f);
+	 		, m_fade(0.f)
+			, m_fadeIn(true)
+			, m_fadeOut(false)
+			, m_transition(false) {
+		program.setFade(m_fade);
 	}
 
 	virtual ~MenuState() {}
@@ -130,6 +133,9 @@ public:
 	virtual void keyPress(char c){}
 
 	virtual MenuStates getIndex() const = 0;
+
+	void doFadeIn() { m_fadeIn = true; m_fadeOut = false; }
+	void doFadeOut() { m_fadeIn = false; m_fadeOut = true; }
 };
 
 }}//end namespace

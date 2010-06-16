@@ -110,14 +110,14 @@ public:
 	  * @return cost of move, possibly infinite */
 	float operator()(const Vec2i &p1, const Vec2i &p2) const {
 		assert(p1.dist(p2) < 1.5 && p1 != p2);
-		assert(theMap.isInside(p2));
+		assert(g_map.isInside(p2));
 		if (!aMap->canOccupy(p2, size, field)) {
 			return numeric_limits<float>::infinity();
 		}
 		if (p1.x != p2.x && p1.y != p2.y) {
 			Vec2i d1, d2;
 			getDiags(p1, p2, size, d1, d2);
-			assert(theMap.isInside(d1) && theMap.isInside(d2));
+			assert(g_map.isInside(d1) && g_map.isInside(d2));
 			if (!aMap->canOccupy(d1, 1, field) || !aMap->canOccupy(d2, 1, field) ) {
 				return numeric_limits<float>::infinity();
 			}

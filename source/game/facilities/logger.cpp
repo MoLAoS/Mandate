@@ -99,7 +99,7 @@ void Logger::addXmlError(const string &path, const char *error) {
 void Logger::addNetworkMsg(const string &msg) {
 	stringstream ss;
 	if (World::isConstructed()) {
-		ss << "Frame: " << theWorld.getFrameCount(); 
+		ss << "Frame: " << g_world.getFrameCount(); 
 	} else {
 		ss << "Frame: 0";
 	}
@@ -157,7 +157,7 @@ void Logger::renderLoadingScreen(){
 }
 
 void logNetwork(const string &msg) {
-	GameRole role = theSimInterface->getNetworkRole();
+	GameRole role = g_simInterface->getNetworkRole();
 	if (role == GameRole::SERVER) {
 		Logger::getServerLog().addNetworkMsg(msg);
 	} else if (role = GameRole::CLIENT) {

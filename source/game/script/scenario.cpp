@@ -43,7 +43,7 @@ Scenario::~Scenario(){
 void Scenario::load(const string &path){
 	try{
 		string name= dirname(basename(path));
-		Logger::getInstance().add("Scenario: "+Util::formatString(name), true);
+		g_logger.add("Scenario: "+Util::formatString(name), true);
 
 		//parse xml
 		XmlTree xmlTree;
@@ -68,9 +68,6 @@ void Scenario::load(const string &path){
 }*/
 
 void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *scenarioInfo) {
-
-	Lang &lang = Lang::getInstance();
-
 	XmlTree xmlTree;
 	//gae/scenarios/[category]/[scenario]/[scenario].xml
 	xmlTree.load("gae/scenarios/" + category + "/" + scenario + "/" + scenario + ".xml");
@@ -135,7 +132,7 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 	}
 
 	//add player info
-	scenarioInfo->desc = lang.get("Player") + ": ";
+	scenarioInfo->desc = g_lang.get("Player") + ": ";
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		if (scenarioInfo->factionControls[i] == ControlType::HUMAN) {
 			scenarioInfo->desc += formatString(scenarioInfo->factionTypeNames[i]);
@@ -147,14 +144,14 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 	string difficultyString = "Difficulty" + intToStr(scenarioInfo->difficulty);
 
 	scenarioInfo->desc += "\n";
-	scenarioInfo->desc += lang.get("Difficulty") + ": " + lang.get(difficultyString) + "\n";
-	scenarioInfo->desc += lang.get("Map") + ": " + formatString(scenarioInfo->mapName) + "\n";
-	scenarioInfo->desc += lang.get("Tileset") + ": " + formatString(scenarioInfo->tilesetName) + "\n";
-	scenarioInfo->desc += lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
+	scenarioInfo->desc += g_lang.get("Difficulty") + ": " + g_lang.get(difficultyString) + "\n";
+	scenarioInfo->desc += g_lang.get("Map") + ": " + formatString(scenarioInfo->mapName) + "\n";
+	scenarioInfo->desc += g_lang.get("Tileset") + ": " + formatString(scenarioInfo->tilesetName) + "\n";
+	scenarioInfo->desc += g_lang.get("TechTree") + ": " + formatString(scenarioInfo->techTreeName) + "\n";
 }
 
 void Scenario::loadGameSettings(string scenario, string category, const ScenarioInfo *scenarioInfo) {
-	GameSettings *gs = &theSimInterface->getGameSettings();
+	GameSettings *gs = &g_simInterface->getGameSettings();
 	gs->clear();
 
 	string scenarioPath = "gae/scenarios/" + category + "/" + scenario;

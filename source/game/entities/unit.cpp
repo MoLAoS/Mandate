@@ -136,7 +136,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	this->type = type;
 	loadType = NULL;
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
-	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
+	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
 
 	toBeUndertaken = false;
 	autoRepairEnabled = true;
@@ -235,7 +235,7 @@ Unit::~Unit() {
 		delete commands.back();
 		commands.pop_back();
 	}
-	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id << " deleted." );
+	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
 }
 
 void Unit::save(XmlNode *node) const {
@@ -451,12 +451,12 @@ const RepairCommandType * Unit::getRepairCommandType(const Unit *u) const {
 }
 
 float Unit::getProgress() const {
-	return float(theWorld.getFrameCount() - lastCommandUpdate)
+	return float(g_world.getFrameCount() - lastCommandUpdate)
 			/	float(nextCommandUpdate - lastCommandUpdate);
 }
 
 float Unit::getAnimProgress() const {
-	return float(theWorld.getFrameCount() - lastAnimReset)
+	return float(g_world.getFrameCount() - lastAnimReset)
 			/	float(nextAnimReset - lastAnimReset);
 }
 
@@ -469,7 +469,7 @@ void Unit::setCommandCallback() {
 /** sets the current skill */
 void Unit::setCurrSkill(const SkillType *newSkill) {
 	assert(newSkill);
-	//COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << id << " skill set => " << SkillClassNames[currSkill->getClass()] );
+	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " skill set => " << SkillClassNames[currSkill->getClass()] );
 	if (newSkill->getClass() == SkillClass::STOP && currSkill->getClass() == SkillClass::STOP) {
 		return;
 	}
@@ -487,7 +487,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 		ups->setPos(getCurrVector());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		eyeCandy.push_back(ups);
-		theRenderer.manageParticleSystem(ups, ResourceScope::GAME);
+		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
 	}
 }
 
@@ -538,7 +538,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 	//make particle system
 	const Tile *sc = map->getTile(Map::toTileCoords(this->getPos()));
 	const Tile *tsc = map->getTile(Map::toTileCoords(this->getTargetPos()));
-	bool visible = sc->isVisible(theWorld.getThisTeamIndex()) || tsc->isVisible(theWorld.getThisTeamIndex());
+	bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
 
 	//projectile
 	if (pstProj != NULL) {
@@ -563,21 +563,21 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 				break;
 		}
 
-		theSimInterface->doUpdateProjectile(this, psProj, startPos, endPos);
+		g_simInterface->doUpdateProjectile(this, psProj, startPos, endPos);
 		// game network interface calls setPath() on psProj, differently for clients/servers
 		//theNetworkManager.getNetworkInterface()->doUpdateProjectile(this, psProj, startPos, endPos);
 		
 		if(pstProj->isTracking() && targetRef != -1) {
-			Unit *target = theSimInterface->getUnitFactory().getUnit(targetRef);
+			Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
 			psProj->setTarget(target);
-			psProj->setDamager(new ParticleDamager(this, target, &theWorld, theGame.getGameCamera()));
+			psProj->setDamager(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
 		} else {
-			psProj->setDamager(new ParticleDamager(this, NULL, &theWorld, theGame.getGameCamera()));
+			psProj->setDamager(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
 		}
 		psProj->setVisible(visible);
 		renderer.manageParticleSystem(psProj, ResourceScope::GAME);
 	} else {
-		theWorld.hit(this);
+		g_world.hit(this);
 	}
 
 	//splash
@@ -596,7 +596,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		et->spawn(*map, this, this->getTargetPos(), 1.f);
 		if (et->getSound()) {
 			// play rather visible or not
-			theSoundRenderer.playFx(et->getSound(), getTargetVec(), theGame.getGameCamera()->getPos());
+			g_soundRenderer.playFx(et->getSound(), getTargetVec(), g_gameState.getGameCamera()->getPos());
 		}
 		// FIXME: hacky mechanism of keeping attackers from walking into their own earthquake :(
 		this->finishCommand();
@@ -663,7 +663,7 @@ unsigned int Unit::getCommandSize() const{
 CommandResult Unit::giveCommand(Command *command) {
 	const CommandType *ct = command->getType();
 	COMMAND_LOG(
-		theWorld.getFrameCount() << "::Unit:" << id << " command given: " 
+		g_world.getFrameCount() << "::Unit:" << id << " command given: " 
 		<< CommandClassNames[command->getType()->getClass()]
 	);
 	if(ct->getClass() == CommandClass::SET_MEETING_POINT) {
@@ -717,7 +717,7 @@ CommandResult Unit::giveCommand(Command *command) {
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
 	//pop front
-	//COMMAND_LOG( theWorld.getFrameCount() << "::Unit:" << id << " " 
+	//COMMAND_LOG( g_world.getFrameCount() << "::Unit:" << id << " " 
 	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command popped." );
 	delete commands.front();
 	commands.erase(commands.begin());
@@ -733,7 +733,7 @@ Command *Unit::popCommand() {
 		command = commands.empty() ? NULL : commands.front();
 	}
 	//if ( command ) {
-	//	COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << id << " " 
+	//	COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " " 
 	//		<< CommandClassNames[commands.front()->getType()->getClass()] << " command now front of queue." );
 	//}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
@@ -749,7 +749,7 @@ CommandResult Unit::finishCommand() {
 	if(commands.empty()) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//COMMAND_LOG( theWorld.getFrameCount() << "::Unit:" << intToStr(id) << " " 
+	//COMMAND_LOG( g_world.getFrameCount() << "::Unit:" << intToStr(id) << " " 
 	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command finished." );
 
 	Command *command = popCommand();
@@ -771,7 +771,7 @@ CommandResult Unit::cancelCommand() {
 	if(commands.empty()){
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << id << " queued " 
+	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " queued " 
 	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command cancelled." );
 
 	//undo command
@@ -795,7 +795,7 @@ CommandResult Unit::cancelCurrCommand() {
 	if(commands.empty()) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//COMMAND_LOG(theWorld.getFrameCount() << "::Unit:" << intToStr(id) << " current " 
+	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << intToStr(id) << " current " 
 	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command cancelled." );
 
 	//undo command
@@ -814,7 +814,7 @@ CommandResult Unit::cancelCurrCommand() {
   * @param startingUnit true if this is a starting unit.
   */
 void Unit::create(bool startingUnit) {
-	UNIT_LOG( theWorld.getFrameCount() << "::Unit:" << id << " created." );
+	UNIT_LOG( g_world.getFrameCount() << "::Unit:" << id << " created." );
 	faction->add(this);
 	lastPos = Vec2i(-1);
 	map->putUnitCells(this, pos);
@@ -828,7 +828,7 @@ void Unit::create(bool startingUnit) {
 /** Give a unit life. Called when a unit becomes 'operative'
   */
 void Unit::born(){
-	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id + " born." );
+	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id + " born." );
 	faction->addStore(type);
 	faction->applyStaticProduction(type);
 	setCurrSkill(SkillClass::STOP);
@@ -836,13 +836,13 @@ void Unit::born(){
 	recalculateStats();
 	hp= type->getMaxHp();
 	faction->checkAdvanceSubfaction(type, true);
-	theWorld.getCartographer()->applyUnitVisibility(this);
-	theSimInterface->doUnitBorn(this);
+	g_world.getCartographer()->applyUnitVisibility(this);
+	g_simInterface->doUnitBorn(this);
 }
 
 void checkTargets(const Unit *dead) {
 	typedef list<ParticleSystem*> psList;
-	const psList &list = theRenderer.getParticleManager()->getList();
+	const psList &list = g_renderer.getParticleManager()->getList();
 	foreach_const (psList, it, list) {
 		if (*it && (*it)->isProjectile()) {
 			Projectile* pps = static_cast<Projectile*>(*it);
@@ -860,11 +860,11 @@ void checkTargets(const Unit *dead) {
  */
 void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
 	assert(hp <= 0);
-	UNIT_LOG(theWorld.getFrameCount() << "::Unit:" << id + " killed." );
+	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id + " killed." );
 	hp = 0;
 
 	World::getCurrWorld()->hackyCleanUp(this);
-	theWorld.getCartographer()->removeUnitVisibility(this);
+	g_world.getCartographer()->removeUnitVisibility(this);
 
 	if (fire != NULL) {
 		fire->fade();
@@ -950,7 +950,7 @@ void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
 	// if dead, set startFrame to last frame, endFrame to this frame
 	// to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
-	const int &frame = theWorld.getFrameCount();
+	const int &frame = g_world.getFrameCount();
 	this->lastAnimReset = frame - 1;
 	this->nextAnimReset = frame;
 }
@@ -974,7 +974,7 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 		// calculate skill cycle length
 		frameOffset = int(1.0000001f / animSpeed);
 	}
-	const int &frame = theWorld.getFrameCount();
+	const int &frame = g_world.getFrameCount();
 	assert(frameOffset > 0);
 	this->lastAnimReset = frame;
 	this->nextAnimReset = frame + frameOffset;
@@ -995,8 +995,8 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
   * @param frameOffset the number of frames the next skill cycle with take */
 void Unit::updateSkillCycle(int frameOffset) {
 	//assert(currSkill->getClass() != SkillClass::MOVE || isNetworkClient());
-	lastCommandUpdate = theWorld.getFrameCount();
-	nextCommandUpdate = theWorld.getFrameCount() + frameOffset;
+	lastCommandUpdate = g_world.getFrameCount();
+	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
 }
 
 /** called by the server only, updates a skill cycle for the move skill */
@@ -1015,8 +1015,8 @@ void Unit::updateMoveSkillCycle() {
 	progressSpeed *= heightFactor;
 
 	// reset lastCommandUpdate and calculate next skill cycle length	
-	lastCommandUpdate = theWorld.getFrameCount();
-	nextCommandUpdate = theWorld.getFrameCount() + int(1.0000001f / progressSpeed) + 1;
+	lastCommandUpdate = g_world.getFrameCount();
+	nextCommandUpdate = g_world.getFrameCount() + int(1.0000001f / progressSpeed) + 1;
 }
 
 /** @return true when the current skill has completed a cycle */
@@ -1026,27 +1026,27 @@ bool Unit::update() {
 
 	// start skill sound ?
 	if (currSkill->getSound()) {
-		if (theWorld.getFrameCount() == getSoundStartFrame()) {
-			if (map->getTile(Map::toTileCoords(getPos()))->isVisible(theWorld.getThisTeamIndex())) {
-				soundRenderer.playFx(currSkill->getSound(), getCurrVector(), theGame.getGameCamera()->getPos());
+		if (g_world.getFrameCount() == getSoundStartFrame()) {
+			if (map->getTile(Map::toTileCoords(getPos()))->isVisible(g_world.getThisTeamIndex())) {
+				soundRenderer.playFx(currSkill->getSound(), getCurrVector(), g_gameState.getGameCamera()->getPos());
 			}
 		}
 	}
 
 	// start attack systems ?
 	if (currSkill->getClass() == SkillClass::ATTACK
-	&& getNextAttackFrame() == theWorld.getFrameCount()) {
+	&& getNextAttackFrame() == g_world.getFrameCount()) {
 		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
 	}
 
 	// update anim cycle ?
-	if (theWorld.getFrameCount() >= getNextAnimReset()) {
+	if (g_world.getFrameCount() >= getNextAnimReset()) {
 		// new anim cycle (or reset)
-		theSimInterface->doUpdateAnim(this);
+		g_simInterface->doUpdateAnim(this);
 	}
 
 	// update emanations every 8 frames
-	if (this->getEmanations().size() && !((theWorld.getFrameCount() + id) % 8) && isOperative()) {
+	if (this->getEmanations().size() && !((g_world.getFrameCount() + id) % 8) && isOperative()) {
 		updateEmanations();
 	}
 
@@ -1087,7 +1087,7 @@ bool Unit::update() {
 
 	// check for cycle completion	
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead
-	if (theWorld.getFrameCount() >= getNextCommandUpdate()) {
+	if (g_world.getFrameCount() >= getNextCommandUpdate()) {
 		lastRotation = targetRotation;
 		if (currSkill->getClass() != SkillClass::DIE) {
 			return true;
@@ -1107,8 +1107,8 @@ void Unit::updateEmanations() {
 	static EffectTypes singleEmanation(1);
 	foreach_const (Emanations, i, getEmanations()) {
 		singleEmanation[0] = *i;
-		theWorld.applyEffects(this, singleEmanation, pos, Field::LAND, (*i)->getRadius());
-		theWorld.applyEffects(this, singleEmanation, pos, Field::AIR, (*i)->getRadius());
+		g_world.applyEffects(this, singleEmanation, pos, Field::LAND, (*i)->getRadius());
+		g_world.applyEffects(this, singleEmanation, pos, Field::AIR, (*i)->getRadius());
 	}
 }
 
@@ -1613,7 +1613,7 @@ inline float Unit::computeHeight(const Vec2i &pos) const {
   * @param target the unit we are tracking */
 void Unit::updateTarget(const Unit *target) {
 	if(!target) {
-		target = theSimInterface->getUnitFactory().getUnit(targetRef);
+		target = g_simInterface->getUnitFactory().getUnit(targetRef);
 	}
 
 	//find a free pos in cellmap

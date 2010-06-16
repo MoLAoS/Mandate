@@ -108,7 +108,7 @@ void World::save(XmlNode *node) const {
 	foreach_const (Factions, i, factions) {
 		i->save(factionsNode->addChild("faction"));
 	}
-	theCartographer.saveMapState(node->addChild("mapState"));
+	g_cartographer.saveMapState(node->addChild("mapState"));
 }
 
 // ========================== init ===============================================
@@ -129,7 +129,7 @@ void World::init(const XmlNode *worldNode) {
 		initExplorationState();
 		loadSaved(worldNode);
 		initMinimap(true);
-		theCartographer.loadMapState(worldNode->getChild("mapState"));
+		g_cartographer.loadMapState(worldNode->getChild("mapState"));
 	} else if (iSim->getGameSettings().getDefaultUnits()) {
 		initMinimap();
 		initUnits();
@@ -299,8 +299,8 @@ void World::processFrame() {
 					if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
 					&& unit->getCurrField() == Field::LAND
 					&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
-					&& theRenderer.getCuller().isInside(unit->getPos())) {
-						theSoundRenderer.playFx(CoreData::getInstance().getWaterSound());
+					&& g_renderer.getCuller().isInside(unit->getPos())) {
+						g_soundRenderer.playFx(CoreData::getInstance().getWaterSound());
 					}
 				}
 			}
@@ -403,7 +403,7 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 		doKill(attacker, attacked);
 	}
 	if (attacked->getFaction()->isThisFaction()
-	&& !theRenderer.getCuller().isInside(attacked->getPos())) {
+	&& !g_renderer.getCuller().isInside(attacked->getPos())) {
 		attacked->getFaction()->attackNotice(attacked);
 	}
 }
@@ -837,14 +837,14 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 			if (pct->getProducedUnit() == put) {
 				CommandResult res = unit->giveCommand(new Command(pct, CommandFlags()));
 				if (res == CommandResult::SUCCESS) {
-					//theConsole.addLine("produce command success");
+					//g_console.addLine("produce command success");
 					return 0; //Ok
 				//} else if (res == CommandResult::FAIL_RESOURCES) {
-				//	theConsole.addLine("produce command failed, resources");
+				//	g_console.addLine("produce command failed, resources");
 				//} else if (res == CommandResult::FAIL_REQUIREMENTS) {
-				//	theConsole.addLine("produce command failed, requirements");
+				//	g_console.addLine("produce command failed, requirements");
 				//} else {
-				//	theConsole.addLine("produce command failed");
+				//	g_console.addLine("produce command failed");
 				}
 				return 1; // command fail	
 
@@ -861,10 +861,10 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 	if (mct) {
 		CommandResult res = unit->giveCommand(new Command (mct, CommandFlags()));
 		if (res == CommandResult::SUCCESS) {
-			theConsole.addLine("morph command success");
+			//g_console.addLine("morph command success");
 			return 0; // ok
 		} else {
-			theConsole.addLine("morph command failed");
+			//g_console.addLine("morph command failed");
 			return 1; // fail
 		}
 	} else {
@@ -1296,10 +1296,10 @@ ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, con
 }
 
 void ParticleDamager::execute(ParticleSystem *particleSystem) {
-	Unit *attacker = theSimInterface->getUnitFactory().getUnit(attackerRef);
+	Unit *attacker = g_simInterface->getUnitFactory().getUnit(attackerRef);
 
 	if (attacker) {
-		Unit *target = theSimInterface->getUnitFactory().getUnit(targetRef);
+		Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
 		if (target) {
 			targetPos = target->getCenteredPos();
 			// manually feed the attacked unit here to avoid problems with cell maps and such

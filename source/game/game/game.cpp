@@ -51,7 +51,7 @@ namespace Glest { namespace Gui {
 
 GameState *GameState::singleton = NULL;
 
-const GameSettings &GameState::getGameSettings()	{return theSimInterface->getGameSettings();}
+const GameSettings &GameState::getGameSettings()	{return g_simInterface->getGameSettings();}
 
 GameState::GameState(Program &program)
 		//main data
@@ -130,7 +130,7 @@ GameState::~GameState() {
 // ==================== init and load ====================
 
 void GameState::load() {
-	GameSettings &gameSettings = theSimInterface->getGameSettings();
+	GameSettings &gameSettings = g_simInterface->getGameSettings();
 	Logger &logger= Logger::getInstance();
 	const string &mapName = gameSettings.getMapPath();
 	const string &tilesetName = gameSettings.getTilesetPath();
@@ -276,7 +276,7 @@ void GameState::update() {
 		if(weatherParticleSystem != NULL){
 			weatherParticleSystem->setPos(gameCamera.getPos());
 		}
-		theRenderer.updateParticleManager(ResourceScope::GAME);
+		g_renderer.updateParticleManager(ResourceScope::GAME);
 
 	} catch (Net::NetworkError &e) {
 		LOG_NETWORK(e.what());
@@ -290,7 +290,7 @@ void GameState::update() {
 	}
 
 	//check for quiting status
-	if (theSimInterface->getQuit()) {
+	if (g_simInterface->getQuit()) {
 		quitGame();
 	}
 
@@ -370,7 +370,7 @@ void GameState::mouseDownLeft(int x, int y) {
 		int button= 1;
 		if ( mainMessageBox.mouseClick(x, y, button) ) {
 			if ( button == 1 ) {
-				theSimInterface->doQuitGame(QuitSource::LOCAL);
+				g_simInterface->doQuitGame(QuitSource::LOCAL);
 				//quitGame();
 			} else {
 				//close message box
@@ -474,7 +474,7 @@ void GameState::eventMouseWheel(int x, int y, int zDelta) {
 void GameState::keyDown(const Key &key) {
 	UserCommand cmd = keymap.getCommand(key);
 	Lang &lang = Lang::getInstance();
-	bool speedChangesAllowed = !theSimInterface->isNetworkInterface();
+	bool speedChangesAllowed = !g_simInterface->isNetworkInterface();
 
 	if (config.getMiscDebugKeys()) {
 		stringstream str;
@@ -767,7 +767,7 @@ void GameState::render2d(){
 		}
 		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl
 			<< "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl
-			<< "GameRole::" << GameRoleNames[theSimInterface->getNetworkRole()] << endl;
+			<< "GameRole::" << GameRoleNames[g_simInterface->getNetworkRole()] << endl;
 
 		renderer.renderText(
 			str.str(), coreData.getMenuFontNormal(),
@@ -827,7 +827,7 @@ void GameState::saveGame(string name) const {
 	XmlNode root("saved-game");
 	root.addAttribute("version", GameConstants::saveGameVersion);
 	gui.save(root.addChild("gui"));
-	theSimInterface->getGameSettings().save(root.addChild("settings"));
+	g_simInterface->getGameSettings().save(root.addChild("settings"));
 	simInterface->getWorld()->save(root.addChild("world"));
 	XmlIo::getInstance().save("savegames/" + name + ".sav", &root);
 }

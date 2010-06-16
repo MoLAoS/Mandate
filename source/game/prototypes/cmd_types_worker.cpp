@@ -78,7 +78,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 	// nearby cells
 	Vec2i pos;
 	fixed distance;
-	const Map* map = theWorld.getMap();
+	const Map* map = g_world.getMap();
 	PosCircularIteratorSimple pci(map->getBounds(), centre, range);
 	while (pci.getNext(pos, distance)) {
 		// all zones
@@ -226,7 +226,7 @@ void RepairCommandType::update(Unit *unit) const {
 		Vec2i targetPos;
 		if (repairableInSight(unit, &repaired, this, rst->isSelfAllowed())) {
 			if (repaired->isMobile()) {
-				if (!theWorld.getMap()->getNearestFreePos(targetPos, unit, repaired, 1, rst->getMaxRange())) {
+				if (!g_world.getMap()->getNearestFreePos(targetPos, unit, repaired, 1, rst->getMaxRange())) {
 					unit->setCurrSkill(SkillClass::STOP);
 					unit->finishCommand();
 					return;
@@ -254,9 +254,9 @@ void RepairCommandType::update(Unit *unit) const {
 		TravelState result;
 		if (repaired && !repaired->isMobile()) {
 			unit->setTargetPos(targetPos);
-			result = theRoutePlanner.findPathToBuildSite(unit, repaired->getType(), repaired->getPos());
+			result = g_routePlanner.findPathToBuildSite(unit, repaired->getType(), repaired->getPos());
 		} else {
-			result = theRoutePlanner.findPath(unit, targetPos);
+			result = g_routePlanner.findPath(unit, targetPos);
 		}
 		switch (result) {
 			case TravelState::ARRIVED:
@@ -306,13 +306,13 @@ void RepairCommandType::update(Unit *unit) const {
 
 			//shiney
 			if (rst->getSplashParticleSystemType()) {
-				const Tile *sc = theWorld.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
-				bool visible = sc->isVisible(theWorld.getThisTeamIndex());
+				const Tile *sc = g_world.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
+				bool visible = sc->isVisible(g_world.getThisTeamIndex());
 
 				Splash *psSplash = rst->getSplashParticleSystemType()->createSplashParticleSystem();
 				psSplash->setPos(repaired->getCurrVector());
 				psSplash->setVisible(visible);
-				theRenderer.manageParticleSystem(psSplash, ResourceScope::GAME);
+				g_renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
 			}
 
 			bool wasBuilt = repaired->isBuilt();
@@ -324,12 +324,12 @@ void RepairCommandType::update(Unit *unit) const {
 				if (!wasBuilt) {
 					//building finished
 					ScriptManager::onUnitCreated(repaired);
-					if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+					if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::BUILD);
 						if (bct) {
-							theSoundRenderer.playFx(bct->getBuiltSound(), 
-								unit->getCurrVector(), theGame.getGameCamera()->getPos());
+							g_soundRenderer.playFx(bct->getBuiltSound(), 
+								unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 						}
 					}
 				}
@@ -459,7 +459,7 @@ void BuildCommandType::update(Unit *unit) const {
 
 		// the blocking checks are done before the command is issued and again when the unit arrives
 
-		Map *map = theWorld.getMap();
+		Map *map = g_world.getMap();
 		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType)) {
 			acceptBuild(unit, command, builtUnitType);
 		} else {
@@ -485,7 +485,7 @@ void BuildCommandType::update(Unit *unit) const {
 bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos) const {
 	bool blocked = false;
 	
-	Map *map = theWorld.getMap();
+	Map *map = g_world.getMap();
 	if (!map->canOccupy(pos, builtUnitType->getField(), builtUnitType)) {
 		// there are no free cells
 		vector<Unit *> occupants;
@@ -514,7 +514,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 	unit->setTargetPos(targetPos);
 	bool arrived = false;
 
-	switch (theRoutePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos())) {
+	switch (g_routePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos())) {
 		case TravelState::MOVING:
 			unit->setCurrSkill(this->getMoveSkillType());
 			unit->face(unit->getNextPos());
@@ -524,7 +524,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 		case TravelState::BLOCKED:
 			unit->setCurrSkill(SkillClass::STOP);
 			if(unit->getPath()->isBlocked()) {
-				theConsole.addStdMessage("Blocked");
+				g_console.addStdMessage("Blocked");
 				unit->cancelCurrCommand();
 				BUILD_LOG( "Blocked." << cmdCancelMsg );
 			}
@@ -535,7 +535,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 			break;
 
 		case TravelState::IMPOSSIBLE:
-			theConsole.addStdMessage("Unreachable");
+			g_console.addStdMessage("Unreachable");
 			unit->cancelCurrCommand();
 			BUILD_LOG( "Route impossible," << cmdCancelMsg );
 			break;
@@ -583,21 +583,21 @@ void BuildCommandType::blockedBuild(Unit *unit) const {
 	// contains deeply submerged terain
 	unit->cancelCurrCommand();
 	unit->setCurrSkill(SkillClass::STOP);
-	if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-		theConsole.addStdMessage("BuildingNoPlace");
+	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+		g_console.addStdMessage("BuildingNoPlace");
 	}
 	BUILD_LOG( "site blocked." << cmdCancelMsg );
 }
 
 void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const {
-	Map *map = theWorld.getMap();
+	Map *map = g_world.getMap();
 	Unit *builtUnit = NULL;
 	// late resource allocation
 	if (!command->isReserveResources()) {
 		command->setReserveResources(true);
 		if (unit->checkCommand(*command) != CommandResult::SUCCESS) {
-			if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-				theConsole.addStdMessage("BuildingNoRes");
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				g_console.addStdMessage("BuildingNoRes");
 			}
 			BUILD_LOG( "in positioin, late resource allocation failed." << cmdCancelMsg );
 			unit->finishCommand();
@@ -607,7 +607,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 
 	BUILD_LOG( "in position, starting construction." );
-	builtUnit = theSimInterface->getUnitFactory().newInstance(command->getPos(), builtUnitType, unit->getFaction(), map);
+	builtUnit = g_simInterface->getUnitFactory().newInstance(command->getPos(), builtUnitType, unit->getFaction(), map);
 	builtUnit->create();
 	unit->setCurrSkill(buildSkillType);
 	unit->setTarget(builtUnit, true, true);
@@ -620,12 +620,12 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	command->setUnit(builtUnit);
 
 	if (!builtUnit->isMobile()) {
-		theWorld.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
+		g_world.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
 	}
 	
 	//play start sound
-	if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
-		SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), theGame.getGameCamera()->getPos());
+	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+		SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 	}
 }
 
@@ -644,11 +644,11 @@ void BuildCommandType::newBuild(Unit *unit, const Command *command, const UnitTy
 		unit->setCurrSkill(SkillClass::STOP);
 		unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
 		ScriptManager::onUnitCreated(builtUnit);
-		if (unit->getFactionIndex() == theWorld.getThisFactionIndex()) {
+		if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 			SoundRenderer::getInstance().playFx(
 				this->getBuiltSound(),
 				unit->getCurrVector(),
-				theGame.getGameCamera()->getPos());
+				g_gameState.getGameCamera()->getPos());
 		}
 	}
 }
@@ -790,10 +790,10 @@ const int maxResSearchRadius= 10;
 /// NULL if no resource was found within UnitUpdater::maxResSearchRadius.
 Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
-	Map *map = theWorld.getMap();
+	Map *map = g_world.getMap();
 
 	PosCircularIteratorOrdered pci(map->getBounds(), unit->getCurrCommand()->getPos(),
-			theWorld.getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
+			g_world.getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
 
 	while (pci.getNext(pos)) {
 		Resource *r = map->getTile(Map::toTileCoords(pos))->getResource();
@@ -810,7 +810,7 @@ void HarvestCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Vec2i targetPos;
-	Map *map = theWorld.getMap();
+	Map *map = g_world.getMap();
 
 	Tile *tile = map->getTile(Map::toTileCoords(unit->getCurrCommand()->getPos()));
 	Resource *res = tile->getResource();
@@ -833,7 +833,7 @@ void HarvestCommandType::update(Unit *unit) const {
 		&& unit->getLoadCount() < this->getMaxLoad() / 2)) {
 			// if current load is correct resource type and not more than half loaded, go for resources
 			if (res && canHarvest(res->getType())) {
-				switch (theRoutePlanner.findPathToResource(unit, command->getPos(), res->getType())) {
+				switch (g_routePlanner.findPathToResource(unit, command->getPos(), res->getType())) {
 					case TravelState::ARRIVED:
 						if (map->isResourceNear(unit->getPos(), unit->getSize(), res->getType(), targetPos)) {
 							HARVEST_LOG( "Arrived, my pos: " << unit->getPos() << ", targetPos" << targetPos );
@@ -867,9 +867,9 @@ void HarvestCommandType::update(Unit *unit) const {
 			}
 		} 
 		// if load is wrong type, or more than half loaded, or no more resource to harvest, return to store
-		Unit *store = theWorld.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
+		Unit *store = g_world.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
 		if (store) {
-			switch (theRoutePlanner.findPathToStore(unit, store)) {
+			switch (g_routePlanner.findPathToStore(unit, store)) {
 				case TravelState::MOVING:
 					unit->setCurrSkill(getMoveLoadedSkill(unit));
 					unit->face(unit->getNextPos());
@@ -888,11 +888,11 @@ void HarvestCommandType::update(Unit *unit) const {
 			int resourceAmount = unit->getLoadCount();
 			// Just do this for all players ???
 			if (unit->getFaction()->getCpuControl()) {
-				const float &mult = theSimInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+				const float &mult = g_simInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex());
 				resourceAmount = int(resourceAmount * mult);
 			}
 			unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
-			theSimInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
+			g_simInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
 			ScriptManager::onResourceHarvested();
 
 			// if next to a store unload resources
@@ -924,7 +924,7 @@ void HarvestCommandType::update(Unit *unit) const {
 				if (res->decAmount(1)) {
 					Vec2i rPos = res->getPos();
 					tile->deleteResource();
-					theWorld.getCartographer()->updateMapMetrics(rPos, GameConstants::cellScale);
+					g_world.getCartographer()->updateMapMetrics(rPos, GameConstants::cellScale);
 					unit->setCurrSkill(getStopLoadedSkill(unit));
 				}
 				if (unit->getLoadCount() == this->getMaxLoad()) {

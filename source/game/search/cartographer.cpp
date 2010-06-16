@@ -44,7 +44,7 @@ namespace Glest { namespace Search {
   */
 Cartographer::Cartographer(World *world)
 		: world(world), cellMap(0), routePlanner(0) {
-	theLogger.add("Cartographer", true);
+	g_logger.add("Cartographer", true);
 	_PROFILE_FUNCTION();
 
 	cellMap = world->getMap();

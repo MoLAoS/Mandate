@@ -36,9 +36,9 @@ namespace Glest { namespace Plan {
 
 GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 	this->faction = faction;
-	this->world= theSimInterface->getWorld();
-	//this->commander= theSimInterface->getCommander();
-	//this->console= theSimInterface->getGameState()->getConsole();
+	this->world= g_simInterface->getWorld();
+	//this->commander= g_simInterface->getCommander();
+	//this->console= g_simInterface->getGameState()->getConsole();
 
 	timer= 0;
 
@@ -83,7 +83,7 @@ void GlestAiInterface::printLog(int logLevel, const string &s){
 
 		//redirect to console
 		if (redir) {
-			theSimInterface->getGameState()->getConsole()->addLine(logString);
+			g_simInterface->getGameState()->getConsole()->addLine(logString);
 		}
 	}
 }

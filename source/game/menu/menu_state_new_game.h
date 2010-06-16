@@ -20,41 +20,52 @@
 namespace Glest { namespace Menu {
 using namespace Widgets;
 
-WRAPPED_ENUM( NewGameTransition, RETURN, PLAY );
-
 // ===============================
 // 	class MenuStateNewGame
 // ===============================
 
 class MenuStateNewGame: public MenuState {
 private:
-	NewGameTransition targetTransition;
-	int humanSlot;
+	WRAPPED_ENUM( Transition, RETURN, PLAY );
 
-	Button::Ptr btnReturn, btnPlayNow;
+private:
+	Transition				m_targetTransition;
+	int						m_humanSlot;
 
-	StaticText::Ptr stControl, stFaction, stTeam;
-	PlayerSlotWidget::Ptr psWidgets[GameConstants::maxPlayers];
+	Button::Ptr				m_returnButton,
+							m_playNow;
 
-	StaticText::Ptr stMap, stMapInfo;
-	DropList::Ptr dlMaps;
+	StaticText::Ptr			m_controlLabel,
+							m_factionLabel,
+							m_teamLabel;
 
-	StaticText::Ptr stTechtree, stTileset;
-	DropList::Ptr dlTechtree, dlTileset;
+	PlayerSlotWidget::Ptr	m_playerSlots[GameConstants::maxPlayers];
 
-	StaticText::Ptr stFogOfWar;
-	CheckBox::Ptr cbFogOfWar;
+	StaticText::Ptr			m_mapLabel,
+							m_mapInfoLabel;
 
-	StaticText::Ptr stRandomLocs;
-	CheckBox::Ptr cbRandomLocs;
+	DropList::Ptr			m_mapList;
 
-	vector<string> mapFiles;
-	vector<string> techTreeFiles;
-	vector<string> tilesetFiles;
-	vector<string> factionFiles;
+	StaticText::Ptr			m_techTreeLabel,
+							m_tilesetLabel;
 
-	MapInfo mapInfo;
-	GraphicMessageBox *msgBox;
+	DropList::Ptr			m_techTreeList,
+							m_tilesetList;
+
+	StaticText::Ptr			m_fogOfWarLabel;
+	CheckBox::Ptr			m_fogOfWarCheckbox;
+
+	StaticText::Ptr			m_randomLocsLabel;
+	CheckBox::Ptr			m_randomLocsCheckbox;
+
+	MessageDialog::Ptr		m_messageDialog;
+
+	vector<string> m_mapFiles;
+	vector<string> m_techTreeFiles;
+	vector<string> m_tilesetFiles;
+	vector<string> m_factionFiles;
+
+	MapInfo m_mapInfo;
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
@@ -80,6 +91,7 @@ private:
 	void onChangeTechtree(ListBase::Ptr);
 
 	void onButtonClick(Button::Ptr ptr);
+	void onDismissDialog(MessageDialog::Ptr);
 };
 
 }}//end namespace

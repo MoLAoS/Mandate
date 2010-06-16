@@ -15,8 +15,11 @@
 
 #include "main_menu.h"
 #include "thread.h"
+#include "compound_widgets.h"
 
 namespace Glest { namespace Menu {
+
+using namespace Widgets;
 
 class MenuStateLoadGame;
 
@@ -61,11 +64,33 @@ private:
 
 class MenuStateLoadGame: public MenuState {
 private:
-	SavedGamePreviewLoader loaderThread;
-	GraphicButton buttonReturn;
-	GraphicButton buttonDelete;
-	GraphicButton buttonPlayNow;
+	WRAPPED_ENUM( Transition, RETURN, PLAY );
 
+private:
+	SavedGamePreviewLoader loaderThread;
+
+	Transition			m_targetTransition;
+
+	Button::Ptr			m_returnButton,
+						m_deleteButton,
+						m_playNowButton;
+
+	StaticText::Ptr		m_infoLabel;
+
+	DropList::Ptr		m_savedGameList;
+
+	MessageDialog::Ptr	m_messageDialog;
+
+private:
+	void onButtonClick(Button::Ptr);
+	void onSaveSelected(ListBase::Ptr);
+
+	void onConfirmDelete(MessageDialog::Ptr);
+	void onCancelDelete(MessageDialog::Ptr);
+
+	void onConfirmReturn(MessageDialog::Ptr);
+
+private:
 	// only modify with mutex locked ==>
 	GraphicLabel labelInfoHeader;
 	GraphicLabel labelPlayers[GameConstants::maxPlayers];
@@ -79,12 +104,9 @@ private:
 	GameSettings *gs;
 	// <== only modify with mutex locked
 
-	GraphicListBox listBoxGames;
-	GraphicLabel labelNetwork;
-
-	GraphicMessageBox *confirmMessageBox;
-	GraphicMessageBox *msgBox;
-	bool criticalError;
+	//GraphicMessageBox *confirmMessageBox;
+	//GraphicMessageBox *msgBox;
+	//bool criticalError;
 	Mutex mutex;
 	vector<string> fileNames;
 	vector<string> prettyNames;
@@ -109,7 +131,7 @@ public:
 
 private:
 	bool loadGameList();
-	bool loadGame();
+	void loadGame();
 	string getFileName();
 	void selectionChanged();
 	void initGameInfo();

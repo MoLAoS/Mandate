@@ -89,6 +89,7 @@ EnterChatMode=Enter chat mode
 Ep=EP
 EpCost=EP cost
 EpRegeneration=EP Regeneration
+Error=Error
 ErrorVersionMismatch=The remote host has a different and incompatible of GAE, you have %s and they have %s.
 Exit=Exit
 ExitGame?=Exit game?

@@ -56,7 +56,7 @@ void ConnectionSlot::update() {
 			socket->setBlock(false);
 			socket->setNoDelay();
 			IntroMessage networkMessageIntro(getNetworkVersionString(), 
-				theConfig.getNetPlayerName(), socket->getHostName(), playerIndex);
+				g_config.getNetPlayerName(), socket->getHostName(), playerIndex);
 			send(&networkMessageIntro);
 		}
 		return;

@@ -162,13 +162,11 @@ class TriggerManager {
 	TriggerMap		commandCallbacks;
 	TriggerMap		deathTriggers;
 
-	World *world;
-
 public:
-	TriggerManager() : world(NULL) {}
+	TriggerManager() {}
 	~TriggerManager();
 
-	void reset(World *world);
+	void reset();
 	bool registerRegion(const string &name, const Rect &rect);
 	int  registerEvent(const string &name);
 
@@ -262,15 +260,12 @@ private:
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
 
-	static GameState *game;
-	static World *world;
-
 	static Console *dialogConsole;
 	static map<string, Vec3f> actorColours;
 
 public:
 	static void cleanUp();
-	static void init(GameState *game);
+	static void init();
 
 	static void doSomeLua(string &code);
 

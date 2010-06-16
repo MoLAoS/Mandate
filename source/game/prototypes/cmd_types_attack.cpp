@@ -148,7 +148,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 			pos = targetPos;
 		}
 	}
-	switch (theRoutePlanner.findPath(unit, pos)) { // head to target pos
+	switch (g_routePlanner.findPath(unit, pos)) { // head to target pos
 		
 		case TravelState::MOVING:
 			unit->setCurrSkill(act->getMoveSkillType());

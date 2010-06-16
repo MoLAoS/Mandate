@@ -28,7 +28,7 @@ namespace Glest { namespace Debug {
 
 // texture loading helper
 void _load_debug_tex(Texture2D* &texPtr, const char *fileName) {
-	texPtr = theRenderer.newTexture2D(ResourceScope::GAME);
+	texPtr = g_renderer.newTexture2D(ResourceScope::GAME);
 	texPtr->setMipmap(false);
 	texPtr->getPixmap()->load(fileName);
 }
@@ -86,7 +86,7 @@ Texture2DGl* PathFinderTextureCallback::operator()(const Vec2i &cell) {
 	else if (openSet.find(cell) != openSet.end()) ndx = 15; // open nodes
 	else if (localAnnotations.find(cell) != localAnnotations.end()) // local annotation
 		ndx = 17 + localAnnotations.find(cell)->second;
-	else ndx = theWorld.getCartographer()->getMasterMap()->metrics[cell].get(debugField); // else use cell metric for debug field
+	else ndx = g_world.getCartographer()->getMasterMap()->metrics[cell].get(debugField); // else use cell metric for debug field
 	return (Texture2DGl*)PFDebugTextures[ndx];
 }
 
@@ -100,7 +100,7 @@ void GridTextureCallback::loadTextures() {
 
 bool ResourceMapOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
 	ResourceMapKey mapKey(rt, Field::LAND, 1);
-	PatchMap<1> *pMap = theWorld.getCartographer()->getResourceMap(mapKey);
+	PatchMap<1> *pMap = g_world.getCartographer()->getResourceMap(mapKey);
 	if (pMap && pMap->getInfluence(cell)) {
 		colour = Vec4f(1.f, 1.f, 0.f, 0.7f);
 		return true;
@@ -110,7 +110,7 @@ bool ResourceMapOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
 
 bool StoreMapOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
 	foreach (KeyList, it, storeMaps) {
-		PatchMap<1> *pMap = theWorld.getCartographer()->getStoreMap(*it, false);
+		PatchMap<1> *pMap = g_world.getCartographer()->getStoreMap(*it, false);
 		if (pMap && pMap->getInfluence(cell)) {
 			colour = Vec4f(0.f, 1.f, 0.3f, 0.7f);
 			return true;
@@ -121,7 +121,7 @@ bool StoreMapOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
 
 bool TeamSightOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
 	const Vec2i &tile = Map::toTileCoords(cell);
-	int vis = theWorld.getCartographer()->getTeamVisibility(theWorld.getThisTeamIndex(), tile);
+	int vis = g_world.getCartographer()->getTeamVisibility(g_world.getThisTeamIndex(), tile);
 	if (!vis) {
 		return false;
 	}
@@ -160,9 +160,9 @@ DebugRenderer::DebugRenderer() {
 }
 
 const ResourceType* findResourceMapRes(const string &res) {
-	const int &n = theWorld.getTechTree()->getResourceTypeCount();
+	const int &n = g_world.getTechTree()->getResourceTypeCount();
 	for (int i=0; i < n; ++i) {
-		const ResourceType *rt = theWorld.getTechTree()->getResourceType(i);
+		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
 		if (rt->getName() == res) {
 			return rt;
 		}
@@ -276,7 +276,7 @@ void DebugRenderer::commandLine(string &line) {
 		if ( f != Field::INVALID ) {
 			pfCallback.debugField = f;
 		} else {
-			theConsole.addLine("Bad field: " + val);
+			g_console.addLine("Bad field: " + val);
 		}
 	} else if (key == "Frustum") {
 		if (val == "capture" || val == "Capture") {
@@ -296,7 +296,7 @@ void DebugRenderer::commandLine(string &line) {
 			} else {
 				// else find resource
 				if (!( rt = findResourceMapRes(val))) {
-					theConsole.addLine("Error: value='" + val + "' not valid.");
+					g_console.addLine("Error: value='" + val + "' not valid.");
 					resourceMapOverlay = false;
 				}
 				resourceMapOverlay = true;
@@ -306,7 +306,7 @@ void DebugRenderer::commandLine(string &line) {
 	} else if (key == "StoreMap") {
 		n = val.find(',');
 		if (n == string::npos) {
-			theConsole.addLine("Error: value='" + val + "' not valid");
+			g_console.addLine("Error: value='" + val + "' not valid");
 			return;
 		}
 		storeMapOverlay = false;
@@ -319,25 +319,25 @@ void DebugRenderer::commandLine(string &line) {
 			id = Conversion::strToInt(idString);
 			sz = Conversion::strToInt(szString);
 		} catch (runtime_error &e) {
-			theConsole.addLine("Error: value='" + val + "' not valid: expected id, size (two integers)");
+			g_console.addLine("Error: value='" + val + "' not valid: expected id, size (two integers)");
 			return;
 		}
-		Unit *store = theWorld.findUnitById(id);
+		Unit *store = g_world.findUnitById(id);
 		if (!store) {
-			theConsole.addLine("Error: unit id " + idString + " not found");
+			g_console.addLine("Error: unit id " + idString + " not found");
 			return;
 		}
 		StoreMapKey smkey(store, Field::LAND, sz);
-		PatchMap<1> *pMap = theWorld.getCartographer()->getStoreMap(smkey, false);
+		PatchMap<1> *pMap = g_world.getCartographer()->getStoreMap(smkey, false);
 		if (pMap) {
 			smOverlay.storeMaps.push_back(smkey);
 			storeMapOverlay = true;
 		} else {
-			theConsole.addLine("Error: no StoreMap found for unit " + idString 
+			g_console.addLine("Error: no StoreMap found for unit " + idString 
 				+ " in Field::LAND with size " + szString);
 		}
 	} else if (key == "AssertClusterMap") {
-		theWorld.getCartographer()->getClusterMap()->assertValid();
+		g_world.getCartographer()->getClusterMap()->assertValid();
 	} else if (key == "TransitionEdges") {
 		if (val == "clear") {
 			clusterEdgesNorth.clear();
@@ -345,7 +345,7 @@ void DebugRenderer::commandLine(string &line) {
 		} else {
 			n = val.find(',');
 			if (n == string::npos) {
-				theConsole.addLine("Error: value=" + val + "not valid");
+				g_console.addLine("Error: value=" + val + "not valid");
 				return;
 			}
 			string xs = val.substr(0, n);
@@ -353,7 +353,7 @@ void DebugRenderer::commandLine(string &line) {
 			int x = atoi(xs.c_str());
 			n = val.find(':');
 			if (n == string::npos) {
-				theConsole.addLine("Error: value=" + val + "not valid");
+				g_console.addLine("Error: value=" + val + "not valid");
 				return;
 			}
 			string ys = val.substr(0, n);
@@ -373,7 +373,7 @@ void DebugRenderer::commandLine(string &line) {
 				clusterEdgesWest.insert(Vec2i(x, y));
 				clusterEdgesWest.insert(Vec2i(x + 1, y));
 			} else {
-				theConsole.addLine("Error: value=" + val + "not valid");
+				g_console.addLine("Error: value=" + val + "not valid");
 			}
 		}
 	}
@@ -491,8 +491,8 @@ void DebugRenderer::renderPathOverlay() {
 }
 
 void DebugRenderer::renderIntraClusterEdges(const Vec2i &cluster, CardinalDir dir) {
-	ClusterMap *cm = theWorld.getCartographer()->getClusterMap();
-	const Map *map = theWorld.getMap();
+	ClusterMap *cm = g_world.getCartographer()->getClusterMap();
+	const Map *map = g_world.getMap();
 	
 	if (cluster.x < 0 || cluster.x >= cm->getWidth()
 	|| cluster.y < 0 || cluster.y >= cm->getHeight()) {

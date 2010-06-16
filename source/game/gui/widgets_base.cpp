@@ -477,6 +477,13 @@ void Container::clear() {
 	children.clear();
 }
 
+void Container::setPos(const Vec2i &p) {
+	Widget::setPos(p);
+	foreach (WidgetList, it, children) {
+		(*it)->setPos((*it)->getPos());
+	}
+}
+
 void Container::setEnabled(bool v) {
 	Widget::setEnabled(v);
 	foreach (WidgetList, it, children) {

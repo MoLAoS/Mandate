@@ -46,14 +46,14 @@ CoreData::~CoreData(){
 }
 
 Texture2D* loadTexture(const string &path, bool mipmap = false) {
-	Texture2D *tex = theRenderer.newTexture2D(ResourceScope::GLOBAL);
+	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 	tex->setMipmap(mipmap);
 	tex->getPixmap()->load(path);
 	return tex;
 }
 
 Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
-	Texture2D *tex = theRenderer.newTexture2D(ResourceScope::GLOBAL);
+	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 	tex->setMipmap(mipmap);
 	tex->setFormat(Texture::fAlpha);
 	tex->getPixmap()->init(1);
@@ -62,7 +62,7 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 }
 
 Font* loadBitmapFont(string name, int size, int width = Font::wNormal) {
-	Font *font = theRenderer.newFont(ResourceScope::GLOBAL);
+	Font *font = g_renderer.newFont(ResourceScope::GLOBAL);
 	font->setType(name);
 	font->setSize(size);
 	font->setWidth(width);
@@ -70,7 +70,7 @@ Font* loadBitmapFont(string name, int size, int width = Font::wNormal) {
 }
 
 Font* loadFreeTypeFont(string path, int size) {
-	Font *font = theRenderer.newFreeTypeFont(ResourceScope::GLOBAL);
+	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
 	font->setType(path);
 	font->setSize(size);
 	return font;

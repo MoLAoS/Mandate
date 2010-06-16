@@ -413,7 +413,7 @@ void Renderer::swapBuffers(){
 void Renderer::setupLighting(){
 
 	int lightCount= 0;
-	const World *world = &theWorld;
+	const World *world = &g_world;
 	const GameCamera *gameCamera = game->getGameCamera();
 	const TimeFlow *timeFlow = world->getTimeFlow();
 	float time = timeFlow->getTime();
@@ -543,7 +543,7 @@ void Renderer::renderMouse3d(){
 
 	const UserInterface *gui= game->getGui();
 	const Mouse3d *mouse3d= gui->getMouse3d();
-	const Map *map= theWorld.getMap();
+	const Map *map= g_world.getMap();
 
 	GLUquadricObj *cilQuadric;
 	Vec4f color;
@@ -713,7 +713,7 @@ void Renderer::renderChatManager(const ChatManager *chatManager){
 
 void Renderer::renderResourceStatus() {
 	const Metrics &metrics = Metrics::getInstance();
-	const Faction *thisFaction = theWorld.getThisFaction();
+	const Faction *thisFaction = g_world.getThisFaction();
 	int subfaction = thisFaction->getSubfaction();
 
 	assertGl();
@@ -722,8 +722,8 @@ void Renderer::renderResourceStatus() {
 	glColor3f(1.f, 1.f, 1.f);
 
 	int j= 0;
-	for (int i= 0; i < theWorld.getTechTree()->getResourceTypeCount(); ++i) {
-		const ResourceType *rt = theWorld.getTechTree()->getResourceType(i);
+	for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
+		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
 		const Resource *r = thisFaction->getResource(rt);
 
 		//is this a hidden resource?
@@ -1147,13 +1147,13 @@ void Renderer::renderSurface() {
 	int lastTex=-1;
 
 	int currTex;
-	const Map *map= theWorld.getMap();
+	const Map *map= g_world.getMap();
 	const Rect2i mapBounds(0, 0, map->getTileW()-1, map->getTileH()-1);
-	float coordStep= theWorld.getTileset()->getSurfaceAtlas()->getCoordStep();
+	float coordStep= g_world.getTileset()->getSurfaceAtlas()->getCoordStep();
 
 	assertGl();
 
-	const Texture2D *fowTex= theWorld.getMinimap()->getFowTexture();
+	const Texture2D *fowTex= g_world.getMinimap()->getFowTexture();
 
 	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
 
@@ -1246,7 +1246,7 @@ void Renderer::renderSurface() {
 }
 
 void Renderer::renderObjects(){
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const Map *map= world->getMap();
 
 	assertGl();
@@ -1324,7 +1324,7 @@ void Renderer::renderObjects(){
 void Renderer::renderWater(){
 
 	bool closed= false;
-	const World *world = &theWorld;
+	const World *world = &g_world;
 	const Map *map= world->getMap();
 
 	float waterAnim= world->getWaterEffects()->getAmin();
@@ -1448,7 +1448,7 @@ void Renderer::renderUnits(){
 	const Unit *unit;
 	const UnitType *ut;
 	int framesUntilDead;
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const Map *map = world->getMap();
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
@@ -1557,7 +1557,7 @@ void Renderer::renderUnits(){
 }
 
 void Renderer::renderSelectionEffects() {
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const Map *map= world->getMap();
 	const Selection *selection = game->getGui()->getSelection();
 	const Object *selectedObj =  game->getGui()->getSelectedObject();
@@ -1660,7 +1660,7 @@ void Renderer::renderSelectionEffects() {
 
 			if(unit->isHighlighted()){
 				float highlight= unit->getHightlight();
-				if(theWorld.getThisFactionIndex()==unit->getFactionIndex()){
+				if(g_world.getThisFactionIndex()==unit->getFactionIndex()){
 					glColor4f(0.f, 1.f, 0.f, highlight);
 				}
 				else{
@@ -1678,7 +1678,7 @@ void Renderer::renderSelectionEffects() {
 }
 
 void Renderer::renderWaterEffects(){
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const WaterEffects *we= world->getWaterEffects();
 	const Map *map= world->getMap();
 	const CoreData &coreData= CoreData::getInstance();
@@ -1730,7 +1730,7 @@ void Renderer::renderWaterEffects(){
 }
 
 void Renderer::renderMinimap(){
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const Minimap *minimap= world->getMinimap();
 	const GameCamera *gameCamera= game->getGameCamera();
 	const Pixmap2D *pixmap= minimap->getTexture()->getPixmap();
@@ -2028,7 +2028,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 
 bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
 	assertGl();
-	const Map* map= theWorld.getMap();
+	const Map* map= g_world.getMap();
 	const Metrics &metrics= Metrics::getInstance();
 	float depth= 0.0f;
 	GLdouble modelviewMatrix[16];
@@ -2131,17 +2131,17 @@ void Renderer::computeSelected(Selection::UnitContainer &units, const Object *&o
 		if (!objectHits.empty()) { 
 			foreach_const (set<PickHit>, it, objectHits) {
 				if (it->name1 == 0x101) { // closest resource hit
-					obj = theSimInterface->getObjectFactory().getObject(it->name2);
+					obj = g_simInterface->getObjectFactory().getObject(it->name2);
 					break;
 				}
 			}
 			if (!obj) { // no resources, get closest object
-				obj = theSimInterface->getObjectFactory().getObject(objectHits.begin()->name2);
+				obj = g_simInterface->getObjectFactory().getObject(objectHits.begin()->name2);
 			}
 		}
 	} else {
 		foreach_const (set<PickHit>, it, unitHits) {
-			units.push_back(theSimInterface->getUnitFactory().getUnit(it->name2));
+			units.push_back(g_simInterface->getUnitFactory().getUnit(it->name2));
 		}
 	}
 }
@@ -2171,7 +2171,7 @@ void Renderer::renderShadowsToTexture() {
 			if (nearestLightPos.w == 0.f) {
 				//directional light
 				//light pos
-				const TimeFlow *tf = theWorld.getTimeFlow();
+				const TimeFlow *tf = g_world.getTimeFlow();
 				float ang = tf->isDay() ? computeSunAngle(tf->getTime()) : computeMoonAngle(tf->getTime());
 				ang = radToDeg(ang);
 				//push and set projection
@@ -2419,7 +2419,7 @@ Vec4f Renderer::computeMoonPos(float time){
 }
 
 Vec3f Renderer::computeLightColor(float time){
-	const Tileset *tileset= theWorld.getTileset();
+	const Tileset *tileset= g_world.getTileset();
 	Vec3f color;
 
 	const float transition= 2;
@@ -2456,7 +2456,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 	const UnitType *ut;
 	int framesUntilDead;
 	bool changeColor = false;
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const Map *map = world->getMap();
 
 	assertGl();
@@ -2557,7 +2557,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 //render objects for shadows
 void Renderer::renderObjectsFast(bool shadows) {
-	const World *world= &theWorld;
+	const World *world= &g_world;
 	const Map *map= world->getMap();
 
 	assertGl();
@@ -2727,7 +2727,7 @@ void Renderer::init3dList(){
 		glDisable(GL_STENCIL_TEST);
 
 		//fog
-		const Tileset *tileset= theWorld.getTileset();
+		const Tileset *tileset= g_world.getTileset();
 		if(tileset->getFog()){
 			glEnable(GL_FOG);
 			if(tileset->getFogMode()==fmExp){
@@ -3026,7 +3026,7 @@ void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const
 
 void Renderer::renderTile(const Vec2i &pos){
 
-	const Map *map= theWorld.getMap();
+	const Map *map= g_world.getMap();
 	Vec2i scaledPos= pos * GameConstants::cellScale;
 
 	glMatrixMode(GL_MODELVIEW);

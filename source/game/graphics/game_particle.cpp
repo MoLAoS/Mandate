@@ -16,7 +16,7 @@
 #include "logger.h"
 #include "world.h"
 
-#define PARTICLE_LOG(x) {}//{ theLogger.add(intToStr(theWorld.getFrameCount()) + " :: " + x); }
+#define PARTICLE_LOG(x) {}//{ g_logger.add(intToStr(g_world.getFrameCount()) + " :: " + x); }
 
 namespace Glest { namespace Entities {
 
@@ -113,7 +113,7 @@ void Projectile::update() {
 
 		assert(startFrame >= 0 && endFrame >= 0 && startFrame < endFrame);
 
-		float t = clamp((theWorld.getFrameCount() - startFrame) / float(endFrame - startFrame), 0.f, 1.f);
+		float t = clamp((g_world.getFrameCount() - startFrame) / float(endFrame - startFrame), 0.f, 1.f);
 
 		//Vec3f flatVector;
 /*
@@ -187,7 +187,7 @@ void Projectile::update() {
 	direction = pos - lastPos;
 	direction.normalize();
 
-	if (theWorld.getFrameCount() == endFrame) {
+	if (g_world.getFrameCount() == endFrame) {
 		state = sFade;
 		model = NULL;
 
@@ -263,7 +263,7 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 		if (frames < 1) frames = 1;
 	}
 
-	startFrame = theWorld.getFrameCount();
+	startFrame = g_world.getFrameCount();
 	endFrame = startFrame + frames;
 	// preProcess updates, when will it arrive ??
 	PARTICLE_LOG( "Creating projectile @ " + Vec3fToStr(startPos) + " going to " + Vec3fToStr(endPos) )

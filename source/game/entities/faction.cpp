@@ -70,7 +70,6 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 		store[i].init(rt, 0);
 	}
 	texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-	//texture->load("data/core/faction_textures/faction" + intToStr(id) + ".tga");
 	Pixmap2D *pixmap = texture->getPixmap();
 	pixmap->init(1, 1, 3);
 	pixmap->setPixel(0, 0, factionColours[colourIndex]);
@@ -140,12 +139,16 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	units.reserve(n->getChildCount());
 	assert(units.empty() && unitMap.empty());
 	for (int i = 0; i < n->getChildCount(); ++i) {
-		theSimInterface->getUnitFactory().newInstance(n->getChild("unit", i), this, map, tt);
+		g_simInterface->getUnitFactory().newInstance(n->getChild("unit", i), this, map, tt);
 	}
-
 	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
+	colourIndex = node->getChildIntValue("colourIndex");
+
 	texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-	texture->load("data/core/faction_textures/faction" + intToStr(id) + ".tga");
+	Pixmap2D *pixmap = texture->getPixmap();
+	pixmap->init(1, 1, 3);
+	pixmap->setPixel(0, 0, factionColours[colourIndex]);
+
 	assert(units.size() == unitMap.size());
 }
 

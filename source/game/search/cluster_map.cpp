@@ -59,7 +59,7 @@ ClusterMap::ClusterMap(AnnotatedMap *aMap, Cartographer *carto)
 	Edge::zeroCounters();
 	Transition::zeroCounters();
 
-	//theLogger.setClusterCount(w * h);
+	//g_logger.setClusterCount(w * h);
 
 	// init Borders (and hence inter-cluster edges) & evaluate clusters (intra-cluster edges)
 	for (int i = h - 1; i >= 0; --i) {
@@ -67,7 +67,7 @@ ClusterMap::ClusterMap(AnnotatedMap *aMap, Cartographer *carto)
 			Vec2i cluster(j, i);
 			initCluster(cluster);
 			evalCluster(cluster);
-			//theLogger.clusterInit();
+			//g_logger.clusterInit();
 		}
 	}
 }
@@ -591,13 +591,13 @@ bool TransitionNodeStore::assertOpen() {
 	seen.insert((*it1)->pos);
 	for (++it2; it2 != openList.end(); ++it2) {
 		if (seen.find((*it2)->pos) != seen.end()) {
-			theLogger.add("open list has cycle... that's bad.");
+			g_logger.add("open list has cycle... that's bad.");
 			cout << "open list has cycle... that's bad." << endl;
 			return false;
 		}
 		seen.insert((*it2)->pos);
 		if ((*it1)->est() > (*it2)->est() + 0.0001f) { // stupid inaccurate fp
-			theLogger.add("open list is not ordered correctly.");
+			g_logger.add("open list is not ordered correctly.");
 			cout << "Open list corrupt: it1.est() == " << (*it1)->est() 
 				<< " > it2.est() == " << (*it2)->est() << endl;
 			return false;
@@ -606,7 +606,7 @@ bool TransitionNodeStore::assertOpen() {
 	set<const Transition*>::iterator it = open.begin();
 	for ( ; it != open.end(); ++it) {
 		if (seen.find(*it) == seen.end()) {
-			theLogger.add("node marked open not on open list.");
+			g_logger.add("node marked open not on open list.");
 			cout << "node marked open not on open list." << endl;
 			return false;
 		}
@@ -614,7 +614,7 @@ bool TransitionNodeStore::assertOpen() {
 	it = seen.begin();
 	for ( ; it != seen.end(); ++it) {
 		if (open.find(*it) == open.end()) {
-			theLogger.add("node on open list not marked open.");
+			g_logger.add("node on open list not marked open.");
 			cout << "node on open list not marked open." << endl;
 			return false;
 		}

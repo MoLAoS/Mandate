@@ -74,33 +74,9 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, loaderThread(*this) {
-	confirmMessageBox = NULL;
-	msgBox = NULL;
+	Shared::Platform::mkdir("savegames", true);
 	savedGame = NULL;
 	gs = NULL;
-
-	Shared::Platform::mkdir("savegames", true);
-
-	Lang &lang= Lang::getInstance();
-
-	// create
-	buttonReturn.init(350, 200, 100);
-	buttonDelete.init(462, 200, 100);
-	buttonPlayNow.init(575, 200, 100);
-
-	// savegames listBoxGames
-	listBoxGames.init(400, 300, 225);
-	if(!loadGameList()) {
-		msgBox = new GraphicMessageBox();
-		msgBox->init(Lang::getInstance().get("NoSavedGames"), Lang::getInstance().get("Ok"));
-		criticalError = true;
-		return;
-	}
-
-	// texts
-	buttonReturn.setText(lang.get("Return"));
-	buttonDelete.setText(lang.get("Delete"));
-	buttonPlayNow.setText(lang.get("Load"));
 
 	// game info lables
 	labelInfoHeader.init(350, 500, 440, 225, false);
@@ -112,106 +88,108 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 		labelTeams[i].init(575, 450-i*30, 60);
 		labelNetStatus[i].init(600, 450-i*30, 60);
 	}
-	// initialize network interface
-	// stay LOCAL...
-	//program.getSimulationInterface()->changeRole(GameRole::SERVER);
-	selectionChanged();
+
+	Font *font = g_coreData.getFTMenuFontNormal();
+	int gap = (g_metrics.getScreenW() - 450) / 4;
+	int x = gap, w = 150, y = 150, h = 30;
+	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+
+	x += w + gap;
+	m_deleteButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_deleteButton->setTextParams(g_lang.get("Delete"), Vec4f(1.f), font);
+	m_deleteButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+
+	x += w + gap;
+	m_playNowButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+
+	Vec2i dim = g_metrics.getScreenDims();
+
+	m_infoLabel = new StaticText(&program, Vec2i(dim.x / 2 - 200, dim.y / 2 ), Vec2i(400, 200));
+	m_infoLabel->setTextParams("", Vec4f(1.f), font);
+	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
+
+	m_savedGameList = new DropList(&program, Vec2i(dim.x / 2 - 150, dim.y / 2 - 100), Vec2i(300, 30));
+	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
+
+	// savegames listBoxGames
+	if(!loadGameList()) {
+		Vec2i sz(330, 256);
+		program.clear();
+		m_messageDialog = new MessageDialog(&program, g_metrics.getScreenDims() / 2 - sz / 2, sz);
+		m_messageDialog->setTitleText(g_lang.get("Error"));
+		m_messageDialog->setMessageText(g_lang.get("NoSavedGames"));
+		m_messageDialog->setButtonText(g_lang.get("Ok"));
+		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmReturn);
+	}
 }
 
 MenuStateLoadGame::~MenuStateLoadGame() {
 	loaderThread.goAway();
-	if(confirmMessageBox) {
-		delete confirmMessageBox;
-	}
-	if(msgBox) {
-		delete msgBox;
-	}
 	loaderThread.join();
 }
 
-void MenuStateLoadGame::mouseClick(int x, int y, MouseButton mouseButton){
+void MenuStateLoadGame::onButtonClick(Button::Ptr btn) {
+	if (btn == m_returnButton) {
+		m_targetTransition = Transition::RETURN;
+		g_soundRenderer.playFx(g_coreData.getClickSoundA());
+		doFadeOut();
+	} else if (btn == m_deleteButton) {
+		g_soundRenderer.playFx(g_coreData.getClickSoundC());
+		Vec2i sz(330, 256);
 
-	CoreData &coreData= CoreData::getInstance();
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-	Lang &lang= Lang::getInstance();
+		m_messageDialog = new MessageDialog(&program);
+		program.setFloatingWidget(m_messageDialog, true);
+		m_messageDialog->setPos(g_metrics.getScreenDims() / 2 - sz / 2);
+		m_messageDialog->setSize(sz);
+		m_messageDialog->setTitleText(g_lang.get("Confirm"));
+		m_messageDialog->setMessageText(g_lang.get("Delete") + " " + m_savedGameList->getSelectedItem()->getText() + "?");
+		m_messageDialog->setButtonText(g_lang.get("Yes"), g_lang.get("No"));
+		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmDelete);
+		m_messageDialog->Button2Clicked.connect(this, &MenuStateLoadGame::onCancelDelete);
+		program.setFade(0.5f);
 
-	if (confirmMessageBox != NULL){
-		int button = 1;
-		if(confirmMessageBox->mouseClick(x,y, button)){
-			if (button == 1){
-				FSFactory::getInstance()->removeFile(getFileName());
-				if(!loadGameList()) {
-					mainMenu->setState(new MenuStateRoot(program, mainMenu));
-					return;
-				}
-				selectionChanged();
-			}
-			delete confirmMessageBox;
-			confirmMessageBox = NULL;
-		}
-		return;
-	}
-
-	if((msgBox && criticalError && msgBox->mouseClick(x,y)) || buttonReturn.mouseClick(x,y)){
-		soundRenderer.playFx(coreData.getClickSoundA());
-		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-		return;
-	}
-
-	if(msgBox) {
-		if(msgBox->mouseClick(x,y)) {
-			soundRenderer.playFx(coreData.getClickSoundC());
-			delete msgBox;
-			msgBox = NULL;
-		}
-	}
-	else if(buttonDelete.mouseClick(x,y)){
-		soundRenderer.playFx(coreData.getClickSoundC());
-		confirmMessageBox = new GraphicMessageBox();
-		confirmMessageBox->init(lang.get("Delete") + " " + listBoxGames.getSelectedItem() + "?",
-				lang.get("Yes"), lang.get("No"));
-	}
-	else if(buttonPlayNow.mouseClick(x,y) && gs){
-		soundRenderer.playFx(coreData.getClickSoundC());
-		if(!loadGame()) {
-			buttonPlayNow.mouseMove(1, 1);
-			msgBox = new GraphicMessageBox();
-			msgBox->init(Lang::getInstance().get("WaitingForConnections"), Lang::getInstance().get("Ok"));
-			criticalError = false;
-		}
-	}
-	else if(listBoxGames.mouseClick(x, y)){
-		selectionChanged();
+	} else if (btn == m_playNowButton) {
+		m_targetTransition = Transition::PLAY;
+		g_soundRenderer.playFx(g_coreData.getClickSoundC());
+		doFadeOut();
 	}
 }
 
-void MenuStateLoadGame::mouseMove(int x, int y, const MouseState &ms){
+void MenuStateLoadGame::onCancelDelete(MessageDialog::Ptr) {
+	program.setFade(1.0f);
+	program.removeFloatingWidget(m_messageDialog);
+}
 
-	if (confirmMessageBox != NULL){
-		confirmMessageBox->mouseMove(x,y);
-		return;
+void MenuStateLoadGame::onConfirmDelete(MessageDialog::Ptr) {
+	program.setFade(1.0f);
+	program.removeFloatingWidget(m_messageDialog);
+
+	FSFactory::getInstance()->removeFile(getFileName());
+	if (!loadGameList()) {
+		m_targetTransition = Transition::RETURN;
+		doFadeOut();
 	}
+}
 
-	if (msgBox != NULL){
-		msgBox->mouseMove(x,y);
-		return;
-	}
+void MenuStateLoadGame::onConfirmReturn(MessageDialog::Ptr) {
+	g_soundRenderer.playFx(g_coreData.getClickSoundA());
+	m_targetTransition = Transition::RETURN;
+	mainMenu->setCameraTarget(MenuStates::ROOT);
+	doFadeOut();
+}
 
-	listBoxGames.mouseMove(x, y);
-
-	buttonReturn.mouseMove(x, y);
-	buttonDelete.mouseMove(x, y);
-	buttonPlayNow.mouseMove(x, y);
+void MenuStateLoadGame::onSaveSelected(ListBase::Ptr list) {
+	selectionChanged();
 }
 
 void MenuStateLoadGame::render(){
 	Renderer &renderer= Renderer::getInstance();
-	if(msgBox && criticalError) {
-		renderer.renderMessageBox(msgBox);
-		return;
-	}
 
-	if(savedGame) {
+	if (savedGame) {
 		initGameInfo();
 	}
 
@@ -223,44 +201,20 @@ void MenuStateLoadGame::render(){
 		renderer.renderLabel(&labelTeams[i]);
 		renderer.renderLabel(&labelNetStatus[i]);
 	}
-
-//	renderer.renderLabel(&labelNetwork);
-	renderer.renderListBox(&listBoxGames);
-	renderer.renderButton(&buttonReturn);
-	renderer.renderButton(&buttonDelete);
-	renderer.renderButton(&buttonPlayNow);
-
-	if(confirmMessageBox) {
-		renderer.renderMessageBox(confirmMessageBox);
-	}
-
-	if(msgBox) {
-		renderer.renderMessageBox(msgBox);
-	}
-
 }
 
-void MenuStateLoadGame::update(){
-	if (!gs) {
-		return;
-	}
+void MenuStateLoadGame::update() {
+	MenuState::update();
 
-	ServerInterface* serverInterface = theSimInterface->asServerInterface();
-	Lang& lang = Lang::getInstance();
-
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		if (gs->getFactionControl(i) == ControlType::NETWORK) {
-			ConnectionSlot* connectionSlot = serverInterface->getSlot(i);
-
-			assert(connectionSlot != NULL);
-
-			if (connectionSlot->isConnected()) {
-//NETWORK:				labelNetStatus[i].setText(connectionSlot->getDescription());
-			} else {
-				labelNetStatus[i].setText(lang.get("NotConnected"));
-			}
-		} else {
-			labelNetStatus[i].setText("");
+	if (m_transition) {
+		switch (m_targetTransition) {
+			case Transition::RETURN:
+				program.clear();
+				mainMenu->setState(new MenuStateRoot(program, mainMenu));
+				break;
+			case Transition::PLAY:
+				loadGame();
+				break;
 		}
 	}
 }
@@ -285,7 +239,7 @@ string *MenuStateLoadGame::setGameInfo(const string &fileName, const XmlNode *ro
 		return NULL;
 	}
 
-	if(savedGame) {
+	if (savedGame) {
 		//oops, that shouldn't happen
 		delete root;
 	}
@@ -310,41 +264,27 @@ bool MenuStateLoadGame::loadGameList() {
 	for(int i = 0; i < fileNames.size(); ++i){
 		prettyNames[i] = formatString(fileNames[i]);
 	}
-	listBoxGames.setItems(prettyNames);
+	m_savedGameList->clearItems();
+	m_savedGameList->addItems(prettyNames);
+	m_savedGameList->setSelected(0);
 	return true;
 }
 
-bool MenuStateLoadGame::loadGame() {
+void MenuStateLoadGame::loadGame() {
 	XmlNode *root;
-	ServerInterface* serverInterface = NULL;
-
-	if(!gs) {
-		return false;
-	}
-
-	for(int i = 0; i < gs->getFactionCount(); ++i) {
-		if(gs->getFactionControl(i) == ControlType::NETWORK) {
-			if(!serverInterface) {
-				serverInterface = theSimInterface->asServerInterface();
-			}
-
-			if(!serverInterface->getSlot(i)->isConnected()) {
-				return false;
-			}
-		}
-	}
-
 	root = XmlIo::getInstance().load(getFileName());
-
-	theSimInterface->getGameSettings() = *gs;
-	theSimInterface->getSavedGame() = root;
+	g_simInterface->getGameSettings() = *gs;
+	g_simInterface->getSavedGame() = root;
+	program.clear();
 	program.setState(new GameState(program));
-	return true;
 }
 
 string MenuStateLoadGame::getFileName() {
-	return "savegames/" + fileNames[listBoxGames.getSelectedItemIndex()] + ".sav";
+	return "savegames/" + fileNames[m_savedGameList->getSelectedIndex()] + ".sav";
 }
+
+void MenuStateLoadGame::mouseClick(int, int, MouseButton) {}
+void MenuStateLoadGame::mouseMove(int, int, const MouseState&) {}
 
 void MenuStateLoadGame::selectionChanged() {
 	{
@@ -416,7 +356,8 @@ void MenuStateLoadGame::initGameInfo() {
 		string mapDescr = " (Max Players: " + intToStr(mapInfo.players)
 				+ ", Size: " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
 
-		labelInfoHeader.setText(listBoxGames.getSelectedItem() + ": " + gs->getDescription()
+		labelInfoHeader.setText(m_savedGameList->getSelectedItem()->getText()
+				+ ": " + gs->getDescription()
 				+ "\nTech Tree: " + formatString(basename(techPath))
 				+ "\nTileset: " + formatString(basename(tilesetPath))
 				+ "\nMap: " + formatString(basename(cutLastExt(mapPath))) + mapDescr
@@ -475,7 +416,7 @@ void MenuStateLoadGame::initGameInfo() {
 }
 
 void MenuStateLoadGame::updateNetworkSlots(){
-	ServerInterface* serverInterface= theSimInterface->asServerInterface();
+	ServerInterface* serverInterface= g_simInterface->asServerInterface();
 	if (!serverInterface) {
 		return;
 	}

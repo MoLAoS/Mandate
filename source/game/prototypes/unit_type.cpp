@@ -359,7 +359,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (sn->getName() != "skill") continue;
 			const XmlNode *typeNode = sn->getChild("type");
 			string classId = typeNode->getAttribute("value")->getRestrictedValue();
-			SkillType *skillType = theWorld.getSkillTypeFactory()->newInstance(classId);
+			SkillType *skillType = g_world.getSkillTypeFactory()->newInstance(classId);
 			skillType->load(sn, dir, techTree, factionType);
 			skillTypes.push_back(skillType);
 		}
@@ -378,7 +378,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			const XmlNode *commandNode = commandsNode->getChild(i);
 			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = theWorld.getCommandTypeFactory()->newInstance(classId, this);
+			CommandType *commandType = g_world.getCommandTypeFactory()->newInstance(classId, this);
 			commandType->load(commandNode, dir, techTree, factionType);
 			commandTypes.push_back(commandType);
 		}
@@ -391,7 +391,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if(meetingPoint) {
-		CommandType *smpct = theWorld.getCommandTypeFactory()->newInstance("set-meeting-point", this);
+		CommandType *smpct = g_world.getCommandTypeFactory()->newInstance("set-meeting-point", this);
 		commandTypes.push_back(smpct);
 	}
 

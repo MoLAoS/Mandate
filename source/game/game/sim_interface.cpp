@@ -54,7 +54,7 @@ SkillCycleTable::SkillCycleTable(RawMessage raw) {
 }
 
 void SkillCycleTable::create(const TechTree *techTree) {
-	numEntries = theWorld.getSkillTypeFactory()->getSkillTypeCount();
+	numEntries = g_world.getSkillTypeFactory()->getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
 		<< ", messageSize = " << header.messageSize << " (@" << sizeof(CycleInfo) << ")" );
@@ -66,7 +66,7 @@ void SkillCycleTable::create(const TechTree *techTree) {
 
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {
-		cycleTable[i] = theWorld.getSkillTypeFactory()->getType(i)->calculateCycleTime();
+		cycleTable[i] = g_world.getSkillTypeFactory()->getType(i)->calculateCycleTime();
 	}
 }
 
@@ -183,7 +183,7 @@ void SimulationInterface::loadWorld() {
 
 	//scenario
 	if (!scenarioName.empty()) {
-		theLang.loadScenarioStrings(scenarioPath, scenarioName);
+		g_lang.loadScenarioStrings(scenarioPath, scenarioName);
 		world->loadScenario(scenarioPath + "/" + scenarioName + ".xml");
 	}
 }
@@ -215,14 +215,14 @@ void SimulationInterface::initWorld() {
 			} //else if (ctrl == ControlType::PROTO_AI) {
 				//aiInterfaces[i] = new AdvancedAiInterface(*game, i, faction->getTeam(), seeds[seedCount++]);
 			//}
-			theLogger.add("Creating AI for faction " + intToStr(i), true);
+			g_logger.add("Creating AI for faction " + intToStr(i), true);
 		} else {
 			aiInterfaces[i] = 0;
 		}
 	}
 	delete [] seeds;
 	createSkillCycleTable(world->getTechTree());
-	ScriptManager::init(game);
+	ScriptManager::init();
 }
 
 /** @return maximum update backlog (must be -1 for multiplayer) */
@@ -242,7 +242,7 @@ int SimulationInterface::launchGame() {
 	}
 	
 	// ready ?
-	theLogger.add("Waiting for players...", true);
+	g_logger.add("Waiting for players...", true);
 	try {
 		waitUntilReady(checksums);
 	} catch (NetworkError &e) {
@@ -449,7 +449,7 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	updateSkillCycle(unit);
 
 	if (unit->getCurrSkill() != old_st) {	// if starting new skill
-		unit->resetAnim(theWorld.getFrameCount() + 1); // reset animation cycle for next frame
+		unit->resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
 	}
 	IF_DEBUG_EDITION(
 		UnitStateRecord usr(unit);
@@ -560,9 +560,9 @@ const char *gs_indexfile = "game_state.gsi";
 WorldLog::WorldLog() {
 	currFrame.frame = 0;
 	// clear old data and index files
-	indexFile = theFileFactory.getFileOps();
+	indexFile = g_fileFactory.getFileOps();
 	indexFile->openWrite(gs_indexfile);
-	dataFile = theFileFactory.getFileOps();
+	dataFile = g_fileFactory.getFileOps();
 	dataFile->openWrite(gs_datafile);
 }
 WorldLog::~WorldLog() {
@@ -594,14 +594,14 @@ void WorldLog::logFrame(int frame) {
 		LOG_NETWORK( ss.str() );
 	} else {
 		assert(frame > 0);
-		FileOps *f = theFileFactory.getFileOps();
+		FileOps *f = g_fileFactory.getFileOps();
 		f->openRead(gs_indexfile);
 		long pos = (frame - 1) * sizeof(StateLogIndexEntry);
 		StateLogIndexEntry ndxEntry;
 		f->seek(pos, SEEK_SET);
 		f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
 		delete f;
-		f = theFileFactory.getFileOps();
+		f = g_fileFactory.getFileOps();
  		f->openRead(gs_datafile);
  		f->seek(ndxEntry.start, SEEK_SET);
 

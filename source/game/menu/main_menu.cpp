@@ -233,21 +233,21 @@ void MainMenu::loadStateCameras() {
 }
 
 void MenuState::update() {
-	if (fadeIn) {
-		fade += 0.05;
-		if (fade > 1.f) {
-			fade = 1.f;
-			fadeIn = false;
+	if (m_fadeIn) {
+		m_fade += 0.05;
+		if (m_fade > 1.f) {
+			m_fade = 1.f;
+			m_fadeIn = false;
 		}
-		program.setFade(fade);
-	} else if (fadeOut) {
-		fade -= 0.05;
-		if (fade < 0.f) {
-			fade = 0.f;
-			transition = true;
-			fadeOut = false;
+		program.setFade(m_fade);
+	} else if (m_fadeOut) {
+		m_fade -= 0.05;
+		if (m_fade < 0.f) {
+			m_fade = 0.f;
+			m_transition = true;
+			m_fadeOut = false;
 		}
-		program.setFade(fade);
+		program.setFade(m_fade);
 	}
 }
 

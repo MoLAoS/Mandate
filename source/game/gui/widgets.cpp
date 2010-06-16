@@ -541,15 +541,17 @@ bool Slider::EW_mouseUp(MouseButton btn, Vec2i pos) {
 
 void Slider::render() {
 	Widget::renderBgAndBorders();
-	TextWidget::renderText(0);
-	TextWidget::renderText(1);
+	TextWidget::renderText(0); // label
+	TextWidget::renderText(1); // value %
 
+	// slide bar
 	Vec2i size = getSize();
 	int cy = size.y / 2;
 	Vec2i pos(m_shaftOffset + 5, cy - 3);
 	Vec2i sz(m_shaftSize - 10, 6);
-
 	Widget::renderBorders(BorderStyle::RAISE, pos, sz, 2);
+
+	// slider thumb
 	ImageWidget::renderImage();
 	if (m_thumbHover || m_shaftHover) {
 		float anim = getRootWindow()->getAnim();

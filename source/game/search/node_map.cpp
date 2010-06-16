@@ -222,8 +222,8 @@ bool NodeMap::assertOpen() {
 	}
 	// scan entire grid, check that all nodes marked open are indeed on the open list...
 	set<Vec2i> valid;
-	for ( int y=0; y < theMap.getH(); ++y ) {
-		for ( int x=0; x < theMap.getW(); ++x ) {
+	for ( int y=0; y < g_map.getH(); ++y ) {
+		for ( int x=0; x < g_map.getW(); ++x ) {
 			Vec2i pos(x, y);
 			if ( isOpen(pos) ) {
 				if ( seen.find(pos) == seen.end() ) {

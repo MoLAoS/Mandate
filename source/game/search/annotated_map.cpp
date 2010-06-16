@@ -22,7 +22,7 @@
 
 namespace Glest { namespace Search {
 
-/** Construct AnnotatedMap object, 'theMap' must be constructed and loaded
+/** Construct AnnotatedMap object, 'g_map' must be constructed and loaded
   * @param master true if this is the master map, false for a foggy map (default true)
   */
 AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap) 

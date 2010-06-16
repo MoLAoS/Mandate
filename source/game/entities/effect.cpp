@@ -62,7 +62,7 @@ Effect::Effect(const XmlNode *node) {
 }
 
 Effect::~Effect() {
-	if (Unit *unit = theSimInterface->getUnitFactory().getUnit(source)) {
+	if (Unit *unit = g_simInterface->getUnitFactory().getUnit(source)) {
 		unit->effectExpired(this);
 	}
 }
@@ -257,7 +257,7 @@ void Effects::getDesc(string &str) const {
 //who killed Kenny?
 Unit *Effects::getKiller() const {
 	for (const_iterator i = begin(); i != end(); i++) {
-		Unit *source = theSimInterface->getUnitFactory().getUnit((*i)->getSource());
+		Unit *source = g_simInterface->getUnitFactory().getUnit((*i)->getSource());
 		//If more than two other units hit this unit with a DOT and it died,
 		//credit goes to the one 1st in the list.
 

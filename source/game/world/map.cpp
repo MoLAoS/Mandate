@@ -350,7 +350,7 @@ bool Map::isFreeCell(const Vec2i &pos, Field field) const {
 	if (field != Field::AIR && !getTile(toTileCoords(pos))->isFree()) {
 		return false;
 	}
-	return theCartographer.getMasterMap()->canOccupy(pos, 1, field); 
+	return g_cartographer.getMasterMap()->canOccupy(pos, 1, field); 
 }
 
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {

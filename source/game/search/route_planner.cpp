@@ -40,7 +40,7 @@
 #endif
 
 #if PATHFINDER_DEBUG_MESSAGES
-#	define CONSOLE_LOG(x) {theConsole.addLine(x); theLogger.add(x);}
+#	define CONSOLE_LOG(x) {g_console.addLine(x); g_logger.add(x);}
 #else
 #	define CONSOLE_LOG(x) {}
 #endif
@@ -81,7 +81,7 @@ namespace Glest { namespace Search {
 		theDebugRenderer.clearWaypoints();
 		WaypointPath::const_iterator it = path.begin();
 		for ( ; it != path.end(); ++it) {
-			Vec3f vert = theWorld.getMap()->getTile(Map::toTileCoords(*it))->getVertex();
+			Vec3f vert = g_world.getMap()->getTile(Map::toTileCoords(*it))->getVertex();
 			vert.x += it->x % GameConstants::cellScale + 0.5f;
 			vert.z += it->y % GameConstants::cellScale + 0.5f;
 			vert.y += 0.15f;
@@ -111,7 +111,7 @@ RoutePlanner::RoutePlanner(World *world)
 		, nodeStore(NULL)
 		, tSearchEngine(NULL)
 		, tNodeStore(NULL) {
-	theLogger.add( "Initialising SearchEngine", true );
+	g_logger.add( "Initialising SearchEngine", true );
 
 	const int &w = world->getMap()->getW();
 	const int &h = world->getMap()->getH();
@@ -551,7 +551,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	HAAStarResult res = findWaypointPath(unit, target, wpPath);
 	if (res == HAAStarResult::FAILURE) {
 		if (unit->getFaction()->isThisFaction()) {
-			theConsole.addLine("Can not reach destination.");
+			g_console.addLine("Can not reach destination.");
 		}
 		return TravelState::IMPOSSIBLE;
 	} else if (res == HAAStarResult::START_TRAP) {
@@ -757,8 +757,8 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 	// Low Level Search with NodeMap (this is for testing purposes only, not node limited)
 
 	// this is the 'straight' A* using the NodeMap (no node limit)
-	AnnotatedMap *aMap = theWorld.getCartographer()->getAnnotatedMap(unit);
-	SearchEngine<NodeMap> *se = theWorld.getCartographer()->getSearchEngine();
+	AnnotatedMap *aMap = g_world.getCartographer()->getAnnotatedMap(unit);
+	SearchEngine<NodeMap> *se = g_world.getCartographer()->getSearchEngine();
 	DiagonalDistance dd(target);
 	MoveCost cost(unit, aMap);
 	PosGoal goal(target);

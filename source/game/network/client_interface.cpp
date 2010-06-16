@@ -87,7 +87,7 @@ void ClientInterface::doIntroMessage() {
 
 	setRemoteNames(introMsg.getHostName(), introMsg.getPlayerName());
 	//send reply
-	IntroMessage replyMsg(getNetworkVersionString(), theConfig.getNetPlayerName(), getHostName(), -1);
+	IntroMessage replyMsg(getNetworkVersionString(), g_config.getNetPlayerName(), getHostName(), -1);
 	send(&replyMsg);
 	introDone= true;
 }
@@ -98,7 +98,7 @@ void ClientInterface::doLaunchMessage() {
 		throw InvalidMessage(MessageType::LAUNCH, msg.type);
 	}
 	LaunchMessage launchMsg(msg);
-	GameSettings &gameSettings = theSimInterface->getGameSettings();
+	GameSettings &gameSettings = g_simInterface->getGameSettings();
 	gameSettings.clear();
 	launchMsg.buildGameSettings(&gameSettings);
 	// replace server player by network
@@ -118,7 +118,7 @@ void ClientInterface::doLaunchMessage() {
 }
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
-	int skillCount = theWorld.getSkillTypeFactory()->getSkillTypeCount();
+	int skillCount = g_world.getSkillTypeFactory()->getSkillTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
 	LOG_NETWORK( "waiting for server to send Skill Cycle Table." );
 	waitForMessage(readyWaitTimeout);
@@ -204,12 +204,12 @@ void ClientInterface::waitUntilReady(Checksum *checksums) {
 }
 
 void ClientInterface::sendTextMessage(const string &text, int teamIndex) {
-	TextMessage textMsg(text, theConfig.getNetPlayerName(), teamIndex);
+	TextMessage textMsg(text, g_config.getNetPlayerName(), teamIndex);
 	send(&textMsg);
 }
 
 string ClientInterface::getStatus() const {
-	return theLang.get("Server") + ": " + serverName;
+	return g_lang.get("Server") + ": " + serverName;
 	//	return getRemotePlayerName() + ": " + NetworkStatus::getStatus();
 }
 
@@ -347,9 +347,9 @@ void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 			<< ", skill class: " << SkillClassNames[unit->getCurrSkill()->getClass()];
 		LOG_NETWORK( ss.str() );
 		IF_DEBUG_EDITION(
-			assert(theWorld.getFrameCount());
+			assert(g_world.getFrameCount());
 			worldLog.logFrame(); // dump frame log
-			SyncErrorMsg se(theWorld.getFrameCount());
+			SyncErrorMsg se(g_world.getFrameCount());
 			send(&se); // ask server to also dump a frame log.
 		)
 		throw GameSyncError(); // nice message & graceful exit to Menu please...

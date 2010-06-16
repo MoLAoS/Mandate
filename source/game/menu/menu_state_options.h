@@ -18,14 +18,17 @@
 namespace Glest { namespace Menu {
 using namespace Widgets;
 
-WRAPPED_ENUM( OptionsTransition, RETURN, GL_INFO, RE_LOAD );
-
 // ===============================
 // 	class MenuStateOptions  
 // ===============================
 
 class MenuStateOptions: public MenuState {
 private:
+	WRAPPED_ENUM( Transition, RETURN, GL_INFO, RE_LOAD );
+
+private:
+	Transition m_transitionTarget;
+
 	Button::Ptr m_returnButton,
 				m_autoConfigButton,
 				m_openGlInfoButton;
@@ -42,8 +45,6 @@ private:
 					m_volMusicSlider;
 
 	map<string,string> langMap;
-
-	OptionsTransition transitionTarget;
 
 private:
 	MenuStateOptions(const MenuStateOptions &);

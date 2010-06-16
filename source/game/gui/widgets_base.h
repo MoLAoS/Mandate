@@ -66,27 +66,46 @@ WRAPPED_ENUM( BorderStyle,
 	EMBED,		/**< Draw a lowered widget */
 	SOLID,		/**< Draw a solid border */
 	CUSTOM		/**< Use colour values from attached ColourValues4 */
-	//EMBOSS,		/**< Draw a raised border */
-	//ETCH		/**< Draw an etched border */
 );
 /*
 WRAPPED_ENUM( Border, TOP, RIGHT, BOTTOM, LEFT );
 WRAPPED_ENUM( Corner, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT );
 
+struct BorderValues {
+	WRAPPED_ENUM( Style, NONE, RAISE, EMBED, SOLID, CUSTOM );
+
+	Style	m_style;
+	Vec4f	m_colours[Corner::COUNT];
+	int		m_sizes[Border::COUNT];
+};
+
+struct PaddingValues {
+	int	m_sizes[Border::COUNT];
+};
+
+struct BackgroundValues {
+	WRAPPED_ENUM( Style, NONE, SOLID_COLOUR, ALPHA_COLOUR, CUSTOM_COLOURS, TEXTURE );
+
+	Style		m_style
+	Vec4f		m_colours[Corner::COUNT];
+	Texture2D*	m_texture;
+	bool		m_insideBorders; // render within borders
+};
+
+struct TextValues {
+	Font*	m_font;
+	Vec4f	m_colour;
+	Vec4f	m_shadowColour;
+	bool	m_shadow;
+};
+
 struct WidgetStyle {
-
-	BorderStyle borderStyle;
-	Vec4f borderColours[Corner::COUNT];
-	int borderSizes[Border::COUNT];
-
-	int paddingSizes[Border::COUNT];
-
-	BackGroundStyle backgroundStyle;
-	Vec4f backgroundColours[Corner::COUNT];
-	Texture2D *backgroundTexture;
+	BorderValues*		m_borderParams;
+	PaddingValues*		m_paddingParams;
+	BackgoundValues*	m_backgroundParams;
+	TextValues*			m_textParams;
 };
 */
-
 class MouseWidget;
 class KeyboardWidget;
 class TextWidget;
@@ -145,6 +164,8 @@ public:
 	// de-virtualise ??
 	// get/is
 	virtual Vec2i getScreenPos() const { return screenPos; }
+	virtual Vec2i getPos() const { return pos; }
+
 	virtual Container* getParent() const { return parent; }
 	virtual WidgetWindow* getRootWindow() const { return rootWindow; }
 	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
@@ -348,6 +369,8 @@ public:
 	virtual ~Container();
 
 	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
+
+	virtual void setPos(const Vec2i &p);
 
 	virtual void addChild(Widget::Ptr child);
 	virtual void remChild(Widget::Ptr child);
