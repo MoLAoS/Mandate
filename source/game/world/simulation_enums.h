@@ -107,7 +107,8 @@ STRINGY_ENUM( Property,
 REGULAR_ENUM( UnitClass,
 	WARRIOR,
 	WORKER,
-	BUILDING
+	BUILDING,
+	CARRIER
 );
 
 /** command result set [could be WRAPPED_ENUM in Command ?? or will we want this in debug ed?]

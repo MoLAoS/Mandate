@@ -40,6 +40,8 @@ STRINGY_ENUM( SkillClass,
 	PRODUCE,
 	UPGRADE,
 	MORPH,
+	LOAD,
+	UNLOAD,
 	DIE		// == 10, == 11 skill classes
 );
 
@@ -60,6 +62,7 @@ STRINGY_ENUM( CommandClass,
 	GUARD,
 	PATROL,
 	SET_MEETING_POINT,
+	CARRY,
 	NULL_COMMAND
 );
 

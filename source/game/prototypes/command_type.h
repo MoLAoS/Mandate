@@ -483,6 +483,33 @@ public:
 };
 
 // ===============================
+//  class CarryCommandType
+// ===============================
+
+class CarryCommandType: public CommandType {
+private:
+	const LoadSkillType *loadSkillType;
+	const UnloadSkillType *unloadSkillType;
+
+public:
+	CarryCommandType() : CommandType("Carry", Clicks::ONE), loadSkillType(NULL), unloadSkillType(NULL) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void update(Unit *unit) const;
+	virtual string getReqDesc() const;
+
+	//get
+	const LoadSkillType *getLoadSkillType() const	{return loadSkillType;}
+	const UnloadSkillType *getUnloadSkillType() const	{return unloadSkillType;}
+
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::CARRY; }
+private:
+	bool inRange(const Vec2i &thisPos, const Vec2i &targetPos, int maxRange) const;
+};
+
+// ===============================
 //  class GuardCommandType
 // ===============================
 

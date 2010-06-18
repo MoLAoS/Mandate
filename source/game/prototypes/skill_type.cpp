@@ -585,6 +585,28 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 }
 
 // =====================================================
+// 	class LoadSkillType
+// =====================================================
+
+LoadSkillType::LoadSkillType() : SkillType(SkillClass::LOAD, "Load") {
+	maxUnits = 0;
+}
+
+void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+
+	XmlNode *node = sn->getChild("max-load", 0, true);
+	if (node) {
+		maxUnits = node->getAttribute("value")->getIntValue();
+	}
+}
+
+void LoadSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add<int>(maxUnits);
+}
+
+// =====================================================
 // 	class SkillTypeFactory
 // =====================================================
 
@@ -601,6 +623,8 @@ SkillTypeFactory::SkillTypeFactory()
 	registerClass<UpgradeSkillType>("upgrade");
 	registerClass<MorphSkillType>("morph");
 	registerClass<DieSkillType>("die");
+	registerClass<LoadSkillType>("load");
+	registerClass<UnloadSkillType>("unload");
 }
 
 // =====================================================

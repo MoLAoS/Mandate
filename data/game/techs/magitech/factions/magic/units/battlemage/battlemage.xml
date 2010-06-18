@@ -150,10 +150,46 @@
 			</sound>			
 			<fade value="false"/>
 		</skill>
+        
+        <skill>
+			<type value="load"/>
+			<name value="load_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="120"/>
+			<anim-speed value="50"/>
+			<animation path="models/battlemage_dying.g3d"/>
+			<sound enabled="true" start-time="0">
+				<sound-file path="sounds/battlemage_die1.wav"/>
+			</sound>
+            <max-range value="2"/>
+            <max-load value="10"/>
+		</skill>
+        
+        <skill>
+			<type value="unload"/>
+			<name value="unload_skill"/>	
+			<ep-cost value="0"/>
+			<speed value="120"/>
+			<anim-speed value="50"/>
+			<animation path="models/battlemage_dying.g3d"/>
+			<sound enabled="true" start-time="0">
+				<sound-file path="sounds/battlemage_die1.wav"/>
+			</sound>
+            <max-range value="50"/>
+		</skill>
 
 	</skills>
 
 	<commands>
+    
+        <command>
+			<type value="carry"/>
+			<name value="unload"/>
+			<image path="images/magic_unload.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<unload-skill value="unload_skill"/>
+		</command>
 
 		<command>
 			<type value="stop"/>

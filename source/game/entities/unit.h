@@ -150,8 +150,12 @@ public:
 	typedef list<Command*> Commands;
 	typedef list<UnitObserver*> Observers;
 	typedef list<UnitId> Pets;
+	typedef vector<Unit*> UnitContainer;
 
 private:
+	UnitContainer carriedUnits;
+	bool visible;
+
 	int id;					/**< unique identifier  */
 	int hp;					/**< current hit points */
 	int ep;					/**< current energy points */
@@ -305,6 +309,12 @@ public:
 	const RepairCommandType *getRepairCommandType(const Unit *u) const;
 	int getDeadCount() const					{return deadCount;}
 	bool isMobile ()							{ return type->isMobile(); }
+	//-- for carry units
+	const UnitContainer &getCarriedUnits() const {return carriedUnits;}
+	UnitContainer &getCarriedUnits()			{return carriedUnits;}
+	bool isVisible() const						{return visible;}
+	void setVisible(bool v)						{visible = v;}
+	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
 	void setCommandCallback();
@@ -316,6 +326,7 @@ public:
 	bool getAttackedTrigger() const				{ return attacked_trigger; }
 
 	void resetAnim(int frame) { nextAnimReset = frame; }
+
 
 	/**
 	 * Returns the total attack strength (base damage) for this unit using the

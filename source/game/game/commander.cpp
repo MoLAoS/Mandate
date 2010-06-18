@@ -76,6 +76,13 @@ CommandResult Commander::tryGiveCommand(
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if(targetUnit) { // 'target' based command
 				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
+				if(targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
+					// do a load
+					targetUnit->setCurrSkill(SkillClass::LOAD);
+					const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::CARRY);
+					result = pushCommand(new Command(carryCt, NULL, *i, targetUnit));
+					g_console.addLine("added command to load units when they arrive");
+				}
 			} else if(pos != Command::invalidPos) { // 'position' based command
 				//every unit is ordered to a different pos
 				Vec2i currPos = computeDestPos(refPos, (*i)->getPos(), pos);

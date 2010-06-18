@@ -575,6 +575,9 @@ bool UnitType::isOfClass(UnitClass uc) const{
 		case UnitClass::BUILDING:
 			return hasSkillClass(SkillClass::BE_BUILT)
 				&& !hasSkillClass(SkillClass::MOVE);
+		case UnitClass::CARRIER:
+			return hasSkillClass(SkillClass::LOAD)
+				&& hasSkillClass(SkillClass::UNLOAD);
 		default:
 			throw runtime_error("Unknown UnitClass passed to UnitType::isOfClass()");
 	}

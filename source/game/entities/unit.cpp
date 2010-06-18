@@ -111,6 +111,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	this->faction = faction;
 	this->map = map;
 
+	visible = true;
 	this->id = id;
 	hp = 1;
 	ep = 0;
@@ -920,9 +921,11 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		//attack enemies
 		if (!isAlly(targetUnit)) {
 			commandType = type->getAttackCommand(targetUnit->getCurrZone());
-
-		//repair allies
+		} else if (targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
+			//move to be loaded
+			commandType = type->getFirstCtOfClass(CommandClass::MOVE);
 		} else {
+			//repair allies
 			commandType = getRepairCommandType(targetUnit);
 		}
 	} else {

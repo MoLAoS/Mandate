@@ -49,6 +49,10 @@ void Display::clear(){
 		commandClasses[i]= CommandClass::NULL_COMMAND;
 	}
 
+	for(int i=0; i<carryCellCount; ++i){
+		carryImages[i]= NULL;
+	}
+
 	downSelectedPos= invalidPos;
 	title.clear();
 	text.clear();
@@ -67,6 +71,24 @@ int Display::computeDownIndex(int x, int y){
 	int index= (cellSideCount-cellY-1)*cellSideCount+cellX;;
 
 	if(index<0 || index>=downCellCount || downImages[index]==NULL){
+		index= invalidPos;
+	}
+
+	return index;
+}
+
+int Display::computeCarryIndex(int x, int y){
+	y= y-(carryY-cellSideCount*imageSize);
+
+	if(y>imageSize*cellSideCount){
+		return invalidPos;
+	}
+
+	int cellX= x/imageSize;
+	int cellY= (y/imageSize) % cellSideCount;
+	int index= (cellSideCount-cellY-1)*cellSideCount+cellX;;
+
+	if(index<0 || index>=carryCellCount || carryImages[index]==NULL){
 		index= invalidPos;
 	}
 

@@ -923,6 +923,14 @@ void UserInterface::computeDisplay() {
 		display.setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
 
+	if (selection.getCount() && selection.getFrontUnit()->getType()->isOfClass(UnitClass::CARRIER)) {
+		const Unit *unit = selection.getFrontUnit();
+		Unit::UnitContainer carriedUnits = unit->getCarriedUnits();
+		for (int i = 0; i < carriedUnits.size(); ++i) {
+			display.setCarryImage(i, carriedUnits[i]->getType()->getImage());
+		}
+	}
+
 	// ================ PART 2 ================
 
 	if (selectingPos || selectingMeetingPoint) {

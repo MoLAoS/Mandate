@@ -412,6 +412,39 @@ public:
 };
 
 // ===============================
+// 	class LoadSkillType
+// ===============================
+
+class LoadSkillType: public SkillType{
+private:
+	int maxUnits;
+
+public:
+	LoadSkillType();
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const {}
+
+	int getMaxUnits() const	{ return maxUnits; }
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::LOAD; }
+};
+
+// ===============================
+// 	class UnloadSkillType
+// ===============================
+
+class UnloadSkillType: public SkillType{
+public:
+	UnloadSkillType() : SkillType(SkillClass::UNLOAD, "Unload"){}
+	virtual void getDesc(string &str, const Unit *unit) const {}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::UNLOAD; }
+};
+
+// ===============================
 // 	class SkillFactory
 // ===============================
 

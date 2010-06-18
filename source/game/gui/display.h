@@ -41,10 +41,12 @@ public:
     static const int cellSideCount = 4;
     static const int upCellCount = cellSideCount * cellSideCount;
     static const int downCellCount = cellSideCount * cellSideCount;
+	static const int carryCellCount = cellSideCount * cellSideCount;
     static const int colorCount = 4;
     static const int imageSize = 32;
     static const int invalidPos = -1;
     static const int downY = imageSize * 9;
+	static const int carryY = imageSize * 2;
     static const int infoStringY = imageSize * 4;
 
 private:
@@ -53,6 +55,7 @@ private:
 	string infoText;
 	const Texture2D *upImages[upCellCount];
 	const Texture2D *downImages[downCellCount];
+	const Texture2D *carryImages[carryCellCount];
 	bool downLighted[downCellCount];
 	int index[downCellCount];
 	const CommandType *commandTypes[downCellCount];
@@ -71,6 +74,7 @@ public:
 	string getInfoText() const						{return infoText;}
 	const Texture2D *getUpImage(int index) const	{return upImages[index];}
 	const Texture2D *getDownImage(int index) const	{return downImages[index];}
+	const Texture2D *getCarryImage(int index) const	{return carryImages[index];}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
@@ -85,6 +89,7 @@ public:
 	void setInfoText(const string infoText)				{this->infoText= Util::formatString(infoText);}
 	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image;}
 	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image;}
+	void setCarryImage(int i, const Texture2D *image)	{carryImages[i]= image;}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}
@@ -95,7 +100,16 @@ public:
 	//misc
 	void clear();
 	int computeDownIndex(int x, int y);
+	int computeCarryIndex(int x, int y);
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
+
+	int computeCarryX(int index) const {
+		return (index % cellSideCount) * imageSize;
+	}
+	
+	int computeCarryY(int index) const {
+		return Display::carryY - (index / cellSideCount)*imageSize - imageSize;
+	}
 
 	int computeDownX(int index) const {
 		return (index % cellSideCount) * imageSize;

@@ -467,6 +467,97 @@ void MorphCommandType::update(Unit *unit) const {
 	}
 }
 
+// =====================================================
+// 	class CarryCommandType
+// =====================================================
+
+bool CarryCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+	//load skill
+	try {
+		const XmlNode *skillNode = n->getChild("load-skill",0,false);
+		if (skillNode) {
+			string skillName= skillNode->getAttribute("value")->getRestrictedValue();
+			loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
+		}
+	} catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	if (!loadSkillType) {
+		//unload skill
+		try {
+			string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
+			unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
+		} catch (runtime_error e) {
+			Logger::getErrorLog().addXmlError(dir, e.what());
+			loadOk = false;
+		}
+	}
+	
+	return loadOk;
+}
+
+void CarryCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	if (loadSkillType) {
+		checksum.add(loadSkillType->getName());
+	} else if (unloadSkillType) {
+		checksum.add(unloadSkillType->getName());
+	}
+}
+
+void CarryCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+
+	if (loadSkillType) {
+		str+= "\n" + loadSkillType->getName();
+	} else if (unloadSkillType) {
+		str+= "\n" + unloadSkillType->getName();
+	}
+}
+
+string CarryCommandType::getReqDesc() const{
+	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
+}
+
+void CarryCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	const Map *map = g_world.getMap();
+
+	if (unit->getCurrSkill()->getClass() == SkillClass::UNLOAD) {
+		// move all units it contains
+		//for each unit
+		// move and enable
+	} else if (unit->getCurrSkill()->getClass() == SkillClass::LOAD) {
+		Unit *targetUnit = command->getUnit();
+		const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
+		if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
+			g_console.addLine("doing load");
+			//targetUnit->getCommands().clear()
+			//targetUnit->setAlpha(0.0f);
+			targetUnit->setVisible(false);
+			//targetUnit->setEnabled(false); //interaction
+			unit->getCarriedUnits().push_back(targetUnit);
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
+}
+
+// --- Private ---
+
+bool CarryCommandType::inRange(const Vec2i &thisPos, const Vec2i &targetPos, int maxRange) const {
+	if (thisPos.dist(targetPos) < maxRange) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 // Update helpers...
 
 /** Check for enemies unit can smite (or who can smite him)
@@ -568,6 +659,7 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<ProduceCommandType>("produce");
 	registerClass<UpgradeCommandType>("upgrade");
 	registerClass<MorphCommandType>("morph");
+	registerClass<CarryCommandType>("carry");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");

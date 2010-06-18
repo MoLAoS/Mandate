@@ -1536,12 +1536,14 @@ void Renderer::renderUnits(){
 				glEnable(GL_COLOR_MATERIAL);
 			}
 
-			//render
-			const Model *model= unit->getCurrentModel();
-			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
-			modelRenderer->render(model);
-			triangleCount+= model->getTriangleCount();
-			pointCount+= model->getVertexCount();
+			if (unit->isVisible()) {
+				//render
+				const Model *model= unit->getCurrentModel();
+				model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
+				modelRenderer->render(model);
+				triangleCount+= model->getTriangleCount();
+				pointCount+= model->getVertexCount();
+			}
 
 			glPopMatrix();
 		}
@@ -1906,6 +1908,20 @@ void Renderer::renderDisplay(){
 			renderQuad(x, y, size, size, display->getDownImage(i));
 		}
 	}
+
+	//carry images
+	glColor3f(1.f, 1.f, 1.f);
+	for (int i=0; i < Display::carryCellCount; ++i) {
+		if(display->getCarryImage(i) != NULL){
+			int x= metrics.getDisplayX()+display->computeCarryX(i);
+			int y= metrics.getDisplayY()+display->computeCarryY(i);
+			int size= Display::imageSize;
+
+			renderQuad(x, y, size, size, display->getCarryImage(i));
+		}
+	}
+
+
 	//selection
 	int downPos= display->getDownSelectedPos();
 	if(downPos!=Display::invalidPos){
