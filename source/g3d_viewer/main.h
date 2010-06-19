@@ -55,7 +55,6 @@ public:
 
 	enum MenuId{
 		miFileLoad,
-		miSplashLoad,
 		miModeWireframe,
 		miModeNormals,
 		miModeGrid,
@@ -105,7 +104,6 @@ public:
 	void onPaint(wxPaintEvent &event);
 	void onClose(wxCloseEvent &event);
 	void onMenuFileLoad(wxCommandEvent &event);
-	void onMenuSplashLoad(wxCommandEvent &event);
 	void onMenuExit(wxCommandEvent &event);
 	void onMenuModeNormals(wxCommandEvent &event);
 	void onMenuModeWireframe(wxCommandEvent &event);

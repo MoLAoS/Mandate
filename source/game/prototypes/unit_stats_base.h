@@ -164,7 +164,7 @@ public:
 	 */
 	bool load(const XmlNode *parametersNode, const string &dir, const TechTree *tt, const FactionType *ft);
 
-	virtual void save(XmlNode *node);
+	virtual void save(XmlNode *node) const;
 
 	/** Equivilant to an assignment operator; initializes values based on supplied object. */
 	void setValues(const UnitStats &us);

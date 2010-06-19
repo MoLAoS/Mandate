@@ -140,7 +140,7 @@ public:
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getThisTeamIndex() const					{return thisTeamIndex;}
-	const Faction *getThisFaction() const			{return &factions[thisFactionIndex];}
+	const Faction *getThisFaction() const			{return (thisFactionIndex >= 0)? &factions[thisFactionIndex] : NULL;}
 	int getFactionCount() const						{return factions.size();}
 	const Map *getMap() const 						{return &map;}
 	const Tileset *getTileset() const 				{return &tileset;}

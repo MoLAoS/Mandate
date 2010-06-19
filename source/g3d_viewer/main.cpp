@@ -109,7 +109,6 @@ MainWindow::MainWindow(const string &modelPath)
 	//menu
 	menuFile= new wxMenu();
 	menuFile->Append(miFileLoad, wxT("Load Model\tCTRL+O"));
-	menuFile->Append(miSplashLoad, wxT("Load Splash"));
 	menuFile->Append(wxID_EXIT);
 	menu->Append(menuFile, wxT("&File"));
 
@@ -247,17 +246,6 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event){
 	}
 }
 
-void MainWindow::onMenuSplashLoad(wxCommandEvent &event){
-	string fileName;
-	wxFileDialog fileDialog(this);
-	fileDialog.SetWildcard(wxT("XML files (*.xml)|*.xml"));
-	if(fileDialog.ShowModal()==wxID_OK){
-		fileName = wxFNCONV(fileDialog.GetPath());
-/*		SplashType *splashType = new SplashType();*/
-		dirname(fileName);
-	}
-}
-
 void MainWindow::onMenuExit(wxCommandEvent& event){
 	Close();
 }
@@ -360,7 +348,6 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_TIMER(-1, MainWindow::onTimer)
 	EVT_CLOSE(MainWindow::onClose)
 	EVT_MENU(miFileLoad, MainWindow::onMenuFileLoad)
-	EVT_MENU(miSplashLoad, MainWindow::onMenuSplashLoad)
 	EVT_MENU(wxID_EXIT, MainWindow::onMenuExit)
 
 	EVT_MENU(miModeWireframe, MainWindow::onMenuModeWireframe)

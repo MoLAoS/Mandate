@@ -191,7 +191,7 @@ void UnitStats::doChecksum(Checksum &checksum) const {
 	checksum.add(harvestSpeed);
 }
 
-void UnitStats::save(XmlNode *node) {
+void UnitStats::save(XmlNode *node) const {
 	node->addChild("max-ep", maxHp);
 	node->addChild("hp-regeneration", hpRegeneration);
 	node->addChild("max-ep", maxEp);

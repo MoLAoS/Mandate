@@ -80,7 +80,7 @@ CommandResult Commander::tryGiveCommand(
 					// do a load
 					targetUnit->setCurrSkill(SkillClass::LOAD);
 					const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::CARRY);
-					result = pushCommand(new Command(carryCt, NULL, *i, targetUnit));
+					result = pushCommand(new Command(carryCt, NULL, *i, targetUnit));  //FIXME: NULL on non-pointer, 3. constr used
 					g_console.addLine("added command to load units when they arrive");
 				}
 			} else if(pos != Command::invalidPos) { // 'position' based command

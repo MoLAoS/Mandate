@@ -164,7 +164,7 @@ protected:
 class QuickScenario : public GameState {
 public:
 	QuickScenario(Program &program) : GameState(program) {}
-	virtual ~QuickScenario() {}
+	~QuickScenario() {}
 	void quitGame() { program.setState(new BattleEnd(program, true)); }
 };
 

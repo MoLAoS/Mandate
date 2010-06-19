@@ -176,11 +176,9 @@ void GameState::init() {
 	//REFACTOR: ThisTeamIndex belong in here, not the World
 	chatManager.init(&console, simInterface->getWorld()->getThisTeamIndex());
 	gameCamera.init(map->getW(), map->getH());
-	/*const*/ Vec2i v;// = new Vec2i(0, 0);
-	if (simInterface->getWorld()->getThisFaction()) {
-		v = map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());  //FIXME: -loadmap has no players
-	} else {
-		v = Vec2i(0, 0);
+	Vec2i v(0, 0);
+	if (simInterface->getWorld()->getThisFaction()) {  //e.g. -loadmap has no players
+		v = map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());
 	}
 	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
 	if (simInterface->getSavedGame()) {

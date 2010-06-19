@@ -91,9 +91,11 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	PHYSFS_freeList(list);
 
 	//FIXME: debug
-	for(char **i=PHYSFS_getSearchPath(); *i; i++){
+	list = PHYSFS_getSearchPath();
+	for(char **i=list; *i; i++){
 		std::cout << "[" << *i << "] is in the search path.\n";
 	}
+	PHYSFS_freeList(list);
 #endif
 	return true;
 }

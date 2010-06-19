@@ -35,7 +35,7 @@ namespace Profile {
 
 class Section {
 public:
-	typedef map<string, Section*> SectionContainer;
+	typedef std::map<string, Section*> SectionContainer;
 private:
 	string name;
 	Chrono chrono;
@@ -174,7 +174,7 @@ void Profiler::sectionEnd(const string &name){
 		currSection= currSection->getParent();
 	}
 	else{
-		throw runtime_error("Profile: Leaving section is not current section: "+name);
+		throw std::runtime_error("Profile: Leaving section is not current section: "+name);
 	}
 }
 
