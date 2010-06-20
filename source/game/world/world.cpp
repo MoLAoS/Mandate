@@ -185,7 +185,7 @@ void World::preload() {
 
 //load tileset
 bool World::loadTileset() {
-	tileset.load(iSim->getGameSettings().getTilesetPath());
+	tileset.load(iSim->getGameSettings().getTilesetPath(), &techTree);
 	timeFlow.init(&tileset);
 	return true;
 }
@@ -1058,8 +1058,9 @@ void World::initFactions() {
 		//  iSim->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
 		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
 	}
-
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
+	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+		&techTree, -1, -1, -1, -1, false, false);
 }
 
 void World::initMinimap(bool resuming) {

@@ -25,6 +25,8 @@
 #include "game_constants.h"
 #include "renderer.h"
 
+#include "faction_type.h"
+
 using std::map;
 using namespace Shared::Util;
 using namespace Shared::Sound;
@@ -34,7 +36,11 @@ using Shared::Math::Vec3f;
 using namespace Glest::ProtoTypes;
 using namespace Glest::Graphics;
 
+namespace Glest { namespace ProtoTypes { class TechTree; } }
+
 namespace Glest { namespace Sim {
+using ProtoTypes::FactionType;
+using ProtoTypes::TechTree;
 
 enum FogMode{
 	fmExp,
@@ -90,7 +96,7 @@ public:
 ///	Containt textures, models and parameters for a tileset
 // =====================================================
 
-class Tileset{
+class Tileset {
 public:
 	static const int waterTexCount= 1;
 	static const int surfCount= 5;
@@ -121,11 +127,13 @@ private:
 
 	AmbientSounds ambientSounds;
 
+	FactionType glestimalFactionType;
+
 public:
 	~Tileset();
 
 	void count(const string &dir);
-	void load(const string &dir);
+	void load(const string &dir, TechTree *tt);
 	void doChecksum(Checksum &checksum) const;
 
 	//get
@@ -140,7 +148,8 @@ public:
 	const Vec3f &getFogColor() const				{return fogColor;}
 	const Vec3f &getSunLightColor() const			{return sunLightColor;}
 	const Vec3f &getMoonLightColor() const			{return moonLightColor;}
-	Gui::Weather getWeather() const						{return weather;}
+	Gui::Weather getWeather() const					{return weather;}
+	FactionType& getGlestimalFactionType()			{return glestimalFactionType;}
 
 	//surface textures
 	const Pixmap2D *getSurfPixmap(int type, int var) const;

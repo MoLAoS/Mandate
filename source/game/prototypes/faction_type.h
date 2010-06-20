@@ -64,8 +64,13 @@ private:
 public:
 	//init
 	FactionType();
+
 	bool preLoad(const string &dir, const TechTree *techTree);
 	bool load(int ndx, const string &dir, const TechTree *techTree);
+
+	bool preLoadGlestimals(const string &dir, const TechTree *techTree);
+	bool loadGlestimals(const string &dir, const TechTree *techTree);
+
 	void doChecksum(Checksum &checksum) const;
 	~FactionType();
 

@@ -123,7 +123,7 @@ public:
 	UnitType();
 	virtual ~UnitType();
 	void preLoad(const string &dir);
-	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal = false);
 	virtual void doChecksum(Checksum &checksum) const;
 
 	//get

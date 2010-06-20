@@ -60,13 +60,6 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
-	/*
-	unitTypes.resize(unitFilenames.size());
-	for (int i = 0; i < unitTypes.size(); ++i) {
-		string str= dir + "/units/" + unitFilenames[i];
-		unitTypes[i]->preLoad(str);
-	}*/
-
 	// a2) preload upgrades
 	string upgradesPath= dir + "/upgrades/*.";
 	vector<string> upgradeFilenames;
@@ -82,12 +75,28 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
 	}
-	/*
-	upgradeTypes.resize(upgradeFilenames.size());
-	for (int i = 0; i < upgradeTypes.size(); ++i) {
-		string str = dir + "/upgrades/" + upgradeFilenames[i];
-		upgradeTypes[i]->preLoad(str);
-	}*/
+	return loadOk;
+}
+
+bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree) {
+	name = basename(dir);
+
+	// a1) preload units
+	string unitsPath = dir + "/glestimals/*.";
+	vector<string> unitFilenames;
+	bool loadOk = true;
+	try { 
+		findAll(unitsPath, unitFilenames); 
+	} catch (runtime_error e) {
+		Logger::getErrorLog().add(e.what());
+		loadOk = false;
+	}
+	for (int i = 0; i < unitFilenames.size(); ++i) {
+		string path = dir + "/glestimals/" + unitFilenames[i];
+		UnitType *ut = g_world.getUnitTypeFactory()->newInstance();
+		unitTypes.push_back(ut);
+		unitTypes.back()->preLoad(path);
+	}
 	return loadOk;
 }
 
@@ -234,6 +243,25 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		if (enemyNotice->getSounds().size() == 0) {
 			throw runtime_error("An enabled enemy-notice must contain at least one sound-file: "+ dir);
 		}
+	}
+	return loadOk;
+}
+
+bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
+	Logger &logger = Logger::getInstance();
+	logger.add("Faction type: "+ dir, true);
+	id = -1;
+	name = basename(dir);
+	bool loadOk = true;
+
+	// load glestimals
+	for (int i = 0; i < unitTypes.size(); ++i) {
+		string str = dir + "/glestimals/" + unitTypes[i]->getName();
+		if (!unitTypes[i]->load(str, techTree, this, true)) {
+			loadOk = false;
+		}
+		///@todo count glestimals
+		//logger.unitLoaded();
 	}
 	return loadOk;
 }

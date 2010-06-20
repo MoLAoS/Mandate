@@ -98,7 +98,7 @@ void Tileset::count(const string &dir){
 	logger.setUnitCount(objCount);
 }
 
-void Tileset::load(const string &dir){
+void Tileset::load(const string &dir, TechTree *tt){
 	random.init(time(NULL));
 	string path= dir+"/"+basename(dir)+".xml";
 
@@ -201,7 +201,8 @@ void Tileset::load(const string &dir){
 		else{
 			weather= Weather::SNOWY;
 		}
-
+		glestimalFactionType.preLoadGlestimals(dir, tt);
+		glestimalFactionType.loadGlestimals(dir, tt);
 	}
 	//Exception handling (conversions and so on);
 	catch(const exception &e){

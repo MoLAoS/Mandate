@@ -81,6 +81,7 @@ private:
 	//UnitMap units;
 
 	Factions factions; // < to SimulationInterface ?
+	Faction glestimals;
 
 	Random random;
 

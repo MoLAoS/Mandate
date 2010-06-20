@@ -174,13 +174,13 @@ void SimulationInterface::loadWorld() {
 	string scenarioName = basename(scenarioPath);
 	//preload
 	world->preload();
-	//tileset
-	if (!world->loadTileset()) {
-		throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
-	}
 	//tech, load before map because of resources
 	if (!world->loadTech()) {
 		throw runtime_error ( "The techtree could not be loaded. See glestadv-error.log" );
+	}
+	//tileset
+	if (!world->loadTileset()) {
+		throw runtime_error ( "The tileset could not be loaded. See glestadv-error.log" );
 	}
 	//map
 	world->loadMap();

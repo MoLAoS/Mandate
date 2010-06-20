@@ -139,8 +139,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetList = new DropList(&program, Vec2i(x, y), Vec2i(w, 30));
 	m_tilesetList->addItems(results);
 	m_tilesetList->setDropBoxHeight(140);
-	m_tilesetList->setSelected(match);
 	m_tilesetList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
+	m_tilesetList->setSelected(match);
 
 	m_tilesetLabel = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
 	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
@@ -167,8 +167,6 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_techTreeLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
 	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
-
-	gs.setTilesetPath(string("tilesets/") + m_tilesetFiles[match]);
 
 	gap = (metrics.getScreenW() - 400) / 3, x = gap, y += 70, h = 30;
 	int cbw = 75, stw = 200;
