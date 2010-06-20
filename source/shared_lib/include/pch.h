@@ -17,6 +17,8 @@
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
 
+#define ASSERT(condition, message) assert((condition) && message)
+
 #if USE_PCH
 
 #if defined(WIN32) || defined(WIN64)

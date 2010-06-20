@@ -45,16 +45,16 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	const XmlNode *node;
 
 	bool loadOk = true;
-	//name
+	// name
 	try { name = en->getAttribute("name")->getRestrictedValue(); }
 	catch (runtime_error e) {
 		Logger::getErrorLog().addXmlError(dir, e.what ());
 		loadOk = false;
 	}
-	//bigtime hack (REFACTOR: Move to EffectTypeFactory)
+	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
 	id = const_cast<TechTree*>(tt)->addEffectType(this);
 
-	//bias
+	// bias
 	try {
 		tmp = en->getAttribute("bias")->getRestrictedValue();
 		bias = EffectBiasNames.match(tmp.c_str());
@@ -66,7 +66,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//stacking
+	// stacking
 	try {
 		tmp = en->getAttribute("stacking")->getRestrictedValue();
 		stacking = EffectStackingNames.match(tmp.c_str());
@@ -78,7 +78,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//target (default all)
+	// target (default all)
 	try {
 		attr = en->getAttribute("target", false);
 		if(attr) {
@@ -185,8 +185,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		} else {
 			light = false;
 		}
-	}
-	catch (runtime_error e) {
+	} catch (runtime_error e) {
 		Logger::getErrorLog().addXmlError(dir, e.what ());
 		loadOk = false;
 	}

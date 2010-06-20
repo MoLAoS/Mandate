@@ -11,12 +11,10 @@
 
 #include <stack>
 
-#include "window_gl.h"
 #include "sigslot.h"
 
 #include "widgets_base.h"
-
-using Shared::Platform::WindowGl;
+#include "widget_config.h"
 
 namespace Glest { namespace Widgets {
 
@@ -61,12 +59,14 @@ public:
 
 public:
 	StaticText(Container::Ptr parent)
-			: Widget(parent)
-			, TextWidget(this) {}
+			: Widget(parent) , TextWidget(this) {
+		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	}
 
 	StaticText(Container::Ptr parent, Vec2i pos, Vec2i size)
-			: Widget(parent, pos, size)
-			, TextWidget(this) {}
+			: Widget(parent, pos, size) , TextWidget(this) {
+		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	}
 
 public:
 	virtual Vec2i getPrefSize() const;
@@ -197,6 +197,8 @@ private:
 			m_valuePos;
 	string	m_title;
 
+	BorderStyle m_shaftStyle;
+
 	void recalc();
 
 public:
@@ -247,6 +249,10 @@ private:
 	bool moveOnMouseUp;
 	int topOffset;
 
+	BorderStyle m_shaftStyle;
+	BorderStyle m_thumbStyle;
+
+	void init();
 	void recalc();
 	Part partAt(const Vec2i &pos);
 
@@ -479,8 +485,8 @@ public:
 
 	void setSelected(bool s) { selected = s; }
 
-	virtual void EW_mouseIn() { setBorderColour(Vec3f(1.f)); hover = true; }
-	virtual void EW_mouseOut() { setBorderColour(Vec3f(0.f)); hover = false; }
+	virtual void EW_mouseIn();
+	virtual void EW_mouseOut();
 	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
 

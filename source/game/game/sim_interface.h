@@ -186,7 +186,7 @@ protected:
 	SkillCycleTable skillCycleTable;
 
 #	if _GAE_DEBUG_EDITION_
-		WorldLog worldLog;
+		WorldLog *worldLog;
 #	endif
 
 public:

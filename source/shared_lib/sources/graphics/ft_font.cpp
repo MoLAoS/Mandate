@@ -14,7 +14,7 @@
 
 #include "pch.h"
 #include "ft_font.h"
-
+#include "math_util.h"
 #include "FSFactory.hpp"
 
 #include <stdexcept>
@@ -22,17 +22,9 @@
 namespace Shared { namespace Graphics {
 
 using namespace PhysFS;
+using Math::nextPowerOf2;
 
 namespace Freetype {
-
-/// This function gets the first power of 2 >= the int that we pass it.
-inline int next_p2(int n) {
-	int rval = 1;
-	while (rval < n) {
-		rval <<= 1;
-	}
-	return rval;
-}
 
 // macro to convert 26.6 fixed point format to float
 #define _26_6_TO_FLOAT(x) (float(x >> 6) + float(x & 0x3F) / 64.f)
@@ -57,8 +49,8 @@ void make_dlist(FT_Face face, unsigned char ch, GLuint list_base, GLuint *tex_ba
 	FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 
 	// Create bitmap, padded to power of two dimensions
-	int width = next_p2(bitmap.width);
-	int height = next_p2(bitmap.rows);
+	int width = nextPowerOf2(bitmap.width);
+	int height = nextPowerOf2(bitmap.rows);
 	GLubyte* expanded_data = new GLubyte[2 * width * height];
 
 	// Fill in the data for the expanded bitmap.

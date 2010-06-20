@@ -57,7 +57,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		Logger::getErrorLog().addXmlError ( dir, e.what() );
 		return false;
 	}
-	//image
+	// image
 	try {
 		const XmlNode *imageNode= upgradeNode->getChild("image");
 		image= Renderer::getInstance().newTexture2D(ResourceScope::GAME);
@@ -67,7 +67,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		Logger::getErrorLog().addXmlError ( dir, e.what() );
 		return false;
 	}
-	//image cancel
+	// image cancel
 	try {
 		const XmlNode *imageCancelNode= upgradeNode->getChild("image-cancel");
 		cancelImage= Renderer::getInstance().newTexture2D(ResourceScope::GAME);
@@ -78,21 +78,21 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		return false;
 	}
 
-	//upgrade time
+	// upgrade time
 	try { productionTime= upgradeNode->getChildIntValue("time"); }
 	catch (runtime_error e) { 
 		Logger::getErrorLog().addXmlError ( dir, e.what() );
 		return false;
 	}
 
-	//ProducibleType parameters
+	// ProducibleType parameters (unit/upgrade reqs and resource reqs)
 	try { ProducibleType::load(upgradeNode, dir, techTree, factionType); }
 	catch (runtime_error e) { 
 		Logger::getErrorLog().addXmlError ( dir, e.what() );
 		return false;
 	}
 
-	//effects
+	// units effected by this upgrade
 	try {
 		const XmlNode *effectsNode= upgradeNode->getChild("effects", 0, false);
 		if(effectsNode) {
@@ -108,8 +108,8 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		return false;
 	}
 
-	//values
-	//maintain backward compatibility using legacy format
+	// values
+	// maintain backward compatibility using legacy format
 	maxHp = upgradeNode->getOptionalIntValue("max-hp");
 	maxEp = upgradeNode->getOptionalIntValue("max-ep");
 	sight = upgradeNode->getOptionalIntValue("sight");
@@ -120,9 +120,9 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 	prodSpeed = upgradeNode->getOptionalIntValue("production-speed");
 
 	//initialize values using new format if nodes are present
-	if(upgradeNode->getChild("static-modifiers", 0, false)
+	if (upgradeNode->getChild("static-modifiers", 0, false)
 	|| upgradeNode->getChild("multipliers", 0, false)) {
-		if (! EnhancementType::load(upgradeNode, dir, techTree, factionType)) {
+		if (!EnhancementType::load(upgradeNode, dir, techTree, factionType)) {
 			loadOk = false;
 		}
 	}

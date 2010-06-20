@@ -213,7 +213,7 @@ typedef Quad2<double> Quad2d;
 //	Misc
 // =====================================================
 
-inline int next2Power(int n){
+inline int nextPowerOf2(int n){
 	int i;
 	for (i = 1; i < n; i *= 2) ;
 	return i;

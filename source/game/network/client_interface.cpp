@@ -348,7 +348,7 @@ void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 		LOG_NETWORK( ss.str() );
 		IF_DEBUG_EDITION(
 			assert(g_world.getFrameCount());
-			worldLog.logFrame(); // dump frame log
+			worldLog->logFrame(); // dump frame log
 			SyncErrorMsg se(g_world.getFrameCount());
 			send(&se); // ask server to also dump a frame log.
 		)

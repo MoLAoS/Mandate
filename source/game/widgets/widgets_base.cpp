@@ -9,6 +9,7 @@
 #include "pch.h"
 #include "widgets_base.h"
 #include "widget_window.h"
+#include "widget_config.h"
 
 #include "metrics.h"
 #include "texture_gl.h"
@@ -74,9 +75,9 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	this->pos = pos;
 	this->size = size;
 	visible = true;
-	enabled = true;
+	m_enabled = true;
 	fade = 1.f;
-	setBorderParams(BorderStyle::NONE, 0, Vec3f(0.f), 0.2f);
+
 	padding = 0;
 	mouseWidget = 0;
 	keyboardWidget = 0;
@@ -107,83 +108,195 @@ void Widget::setPos(const Vec2i &p) {
 	screenPos = parent->getScreenPos() + pos;
 }
 
-void Widget::setBorderParams(BorderStyle st, int sz, Vec3f col, float alph) {
-	borderStyle = st;
-	borderSize = sz;
-	borderColour = col;
-	bgAlpha = alph;
+void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
+	assert(style.m_type != BorderType::NONE);
+	assert(size.x >= style.m_sizes[Border::LEFT] + style.m_sizes[Border::RIGHT]);
+	assert(size.y >= style.m_sizes[Border::TOP] + style.m_sizes[Border::BOTTOM]);
+
+	enum { OBL, OTL, OTR, OBR, IBL, ITL, ITR, IBR };
+	Vec2i verts[8];
+	verts[OBL] = screenPos + offset;
+	verts[OTL] = verts[OBL] + Vec2i(0, size.y);
+	verts[OTR] = verts[OBL] + size;
+	verts[OBR] = verts[OBL] + Vec2i(size.x, 0);
+
+	verts[IBL] = verts[OBL] + Vec2i(style.m_sizes[Border::LEFT], style.m_sizes[Border::BOTTOM]);
+	verts[ITL] = verts[OTL] + Vec2i(style.m_sizes[Border::LEFT], -style.m_sizes[Border::TOP]);
+	verts[ITR] = verts[OTR] + Vec2i(-style.m_sizes[Border::RIGHT], -style.m_sizes[Border::TOP]);
+	verts[IBR] = verts[OBR] + Vec2i(-style.m_sizes[Border::RIGHT], style.m_sizes[Border::BOTTOM]);
+
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+
+	bool raised = false;
+
+	switch (style.m_type) {
+		case BorderType::SOLID:
+			glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+			glBegin(GL_QUAD_STRIP);
+				glVertex2iv(verts[OBL].ptr());
+				glVertex2iv(verts[IBL].ptr());
+				glVertex2iv(verts[OTL].ptr());
+				glVertex2iv(verts[ITL].ptr());
+				glVertex2iv(verts[OTR].ptr());
+				glVertex2iv(verts[ITR].ptr());
+				glVertex2iv(verts[OBR].ptr());
+				glVertex2iv(verts[IBR].ptr());
+				glVertex2iv(verts[OBL].ptr());
+				glVertex2iv(verts[IBL].ptr());
+			glEnd();
+
+			break;
+
+		case BorderType::RAISE:
+			raised = true;
+		case BorderType::EMBED: {
+				const Colour &tlColour = g_widgetConfig.getColour(style.m_colourIndices[raised ? 0 : 1]);
+				const Colour &brColour = g_widgetConfig.getColour(style.m_colourIndices[raised ? 1 : 0]);
+				glBegin(GL_QUAD_STRIP);
+					glColor4ubv(tlColour.ptr());
+					glVertex2iv(verts[OBL].ptr());
+					glVertex2iv(verts[IBL].ptr());
+					glVertex2iv(verts[OTL].ptr());
+					glVertex2iv(verts[ITL].ptr());
+					glVertex2iv(verts[OTR].ptr());
+					glVertex2iv(verts[ITR].ptr());
+				glEnd();
+				glBegin(GL_QUAD_STRIP);
+					glColor4ubv(brColour.ptr());
+					glVertex2iv(verts[OTR].ptr());
+					glVertex2iv(verts[ITR].ptr());
+					glVertex2iv(verts[OBR].ptr());
+					glVertex2iv(verts[IBR].ptr());
+					glVertex2iv(verts[OBL].ptr());
+					glVertex2iv(verts[IBL].ptr());
+				glEnd();
+			}
+			break;
+
+		case BorderType::CUSTOM_SIDES:
+			glBegin(GL_QUADS);
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				glVertex2iv(verts[OBL].ptr());
+				glVertex2iv(verts[IBL].ptr());
+				glVertex2iv(verts[OTL].ptr());
+				glVertex2iv(verts[ITL].ptr());
+			glEnd();
+			glBegin(GL_QUADS);
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[1]).ptr());
+				glVertex2iv(verts[OTL].ptr());
+				glVertex2iv(verts[ITL].ptr());
+				glVertex2iv(verts[OTR].ptr());
+				glVertex2iv(verts[ITR].ptr());
+			glEnd();
+			glBegin(GL_QUADS);
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[2]).ptr());
+				glVertex2iv(verts[OTR].ptr());
+				glVertex2iv(verts[ITR].ptr());
+				glVertex2iv(verts[OBR].ptr());
+				glVertex2iv(verts[IBR].ptr());
+			glEnd();
+			glBegin(GL_QUADS);
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[3]).ptr());
+				glVertex2iv(verts[OBR].ptr());
+				glVertex2iv(verts[IBR].ptr());
+				glVertex2iv(verts[OBL].ptr());
+				glVertex2iv(verts[IBL].ptr());
+			glEnd();
+
+			break;
+
+		case BorderType::CUSTOM_CORNERS:
+			glBegin(GL_QUAD_STRIP);
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				glVertex2iv(verts[OBL].ptr());
+				glVertex2iv(verts[IBL].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[1]).ptr());
+				glVertex2iv(verts[OTL].ptr());
+				glVertex2iv(verts[ITL].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[2]).ptr());
+				glVertex2iv(verts[OTR].ptr());
+				glVertex2iv(verts[ITR].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[3]).ptr());
+				glVertex2iv(verts[OBR].ptr());
+				glVertex2iv(verts[IBR].ptr());
+			glEnd();
+
+			break;
+	}
+	glPopAttrib();
 }
 
-void Widget::renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize, bool bg) {
-	if (style != BorderStyle::NONE && borderSize > 0) {
-		Vec4f colourBackground(0.5f, 0.5f, 0.5f, bgAlpha * fade);
-		Vec4f colourTopLeft;
-		Vec4f colourBottomRight;
-		switch (style) {
-			case BorderStyle::RAISE:
-				colourTopLeft = Vec4f(1.f, 1.f, 1.f, bgAlpha * fade);
-				colourBottomRight = Vec4f(0.f, 0.f, 0.f, bgAlpha * fade);
-				break;
-			case BorderStyle::EMBED:
-				colourTopLeft = Vec4f(0.f, 0.f, 0.f, bgAlpha * fade);
-				colourBottomRight = Vec4f(1.f, 1.f, 1.f, bgAlpha * fade);
-				break;
-			case BorderStyle::SOLID:
-				colourTopLeft = Vec4f(borderColour, bgAlpha * fade);
-				colourBottomRight = Vec4f(borderColour, bgAlpha * fade);
-				break;
-		}
-		glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
+void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size) {
+	assert(style.m_type != BackgroundType::NONE);
 
-		float border = float(borderSize);
-		Vec2f verts[8];
-		verts[0] = Vec2f(screenPos + offset);
-		verts[1] = verts[0] + Vec2f(border, border);
-		verts[2] = verts[0] + Vec2f(0.f, float(size.y));
-		verts[3] = verts[2] + Vec2f(border, -border);
-		verts[4] = verts[0] + Vec2f(size);
-		verts[5] = verts[4] + Vec2f(-border, -border);
-		verts[6] = verts[0] + Vec2f(float(size.x), 0.f);
-		verts[7] = verts[6] + Vec2f(-border, border);
+	Vec2i verts[4];
+	verts[0] = screenPos + offset;
+	verts[1] = verts[0] + Vec2i(0, size.y);
+	verts[2] = verts[0] + size;
+	verts[3] = verts[0] + Vec2i(size.x, 0);
 
-		glColor4fv(colourTopLeft.ptr());
-		glBegin(GL_QUAD_STRIP);
-			glVertex2fv(verts[0].ptr());
-			glVertex2fv(verts[1].ptr());
-			glVertex2fv(verts[2].ptr());
-			glVertex2fv(verts[3].ptr());
-			glVertex2fv(verts[4].ptr());
-			glVertex2fv(verts[5].ptr());
-		glEnd();
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+	glEnable(GL_BLEND);
+	glDisable(GL_LIGHTING);
 
-		glColor4fv(colourBottomRight.ptr());
-		glBegin(GL_QUAD_STRIP);
-			glVertex2fv(verts[4].ptr());
-			glVertex2fv(verts[5].ptr());
-			glVertex2fv(verts[6].ptr());
-			glVertex2fv(verts[7].ptr());
-			glVertex2fv(verts[0].ptr());
-			glVertex2fv(verts[1].ptr());
-		glEnd();
-
-		if (bg) {
-			glColor4fv(colourBackground.ptr());
+	switch (style.m_type) {
+		case BackgroundType::COLOUR:
+			glDisable(GL_TEXTURE_2D);
 			glBegin(GL_TRIANGLE_FAN);
-				glVertex2fv(verts[1].ptr());
-				glVertex2fv(verts[3].ptr());
-				glVertex2fv(verts[5].ptr());
-				glVertex2fv(verts[7].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				glVertex2iv(verts[0].ptr());
+				glVertex2iv(verts[1].ptr());
+				glVertex2iv(verts[2].ptr());
+				glVertex2iv(verts[3].ptr());
 			glEnd();
-		}
 
-		glPopAttrib();
+			break;
+
+		case BackgroundType::CUSTOM_COLOURS:
+			glDisable(GL_TEXTURE_2D);
+			glBegin(GL_TRIANGLE_FAN);
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				glVertex2iv(verts[0].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[1]).ptr());
+				glVertex2iv(verts[1].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[2]).ptr());
+				glVertex2iv(verts[2].ptr());
+				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[3]).ptr());
+				glVertex2iv(verts[3].ptr());
+			glEnd();
+
+			break;
+
+		case BackgroundType::TEXTURE:
+			glEnable(GL_TEXTURE_2D);
+			const Texture2D *tex = g_widgetConfig.getTexture(style.m_imageIndex);
+			glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
+			glBegin(GL_TRIANGLE_FAN);
+				glTexCoord2i(0, 0);
+				glVertex2iv(verts[0].ptr());
+				glTexCoord2i(0, 1);
+				glVertex2iv(verts[1].ptr());
+				glTexCoord2i(1, 0);
+				glVertex2iv(verts[2].ptr());
+				glTexCoord2i(1, 1);
+				glVertex2iv(verts[3].ptr());
+			glEnd();
+
+			break;
 	}
+	glPopAttrib();
 }
 
 void Widget::renderBgAndBorders(bool bg) {
-	renderBorders(borderStyle, Vec2i(0), size, borderSize, bg);
+	if (m_backgroundStyle.m_type) {
+		renderBackground(m_backgroundStyle, Vec2i(0), size);
+	}
+	if (m_borderStyle.m_type) {
+		renderBorders(m_borderStyle, Vec2i(0), size);
+	}
 }
 
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size) {
@@ -213,8 +326,9 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha,
 }
 
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha) {
-	Vec2i offset(borderSize);
-	Vec2i sz = Vec2i(size) - (offset * 2);
+	Vec2i offset(m_borderStyle.m_sizes[Border::LEFT], m_borderStyle.m_sizes[Border::BOTTOM]);
+	Vec2i inset(m_borderStyle.m_sizes[Border::RIGHT], m_borderStyle.m_sizes[Border::TOP]);
+	Vec2i sz = Vec2i(size) - offset - inset;
 	renderHighLight(colour, centreAlpha, borderAlpha, offset, sz);
 }
 

@@ -9,7 +9,14 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
+#ifndef _GAME_PCH_H_
+#define _GAME_PCH_H_
+
 #include "projectConfig.h"
+
+// some local headers of importance
+#include "types.h"
+#include "game_constants.h"
 
 #ifndef USE_PCH
 #	define USE_PCH 0
@@ -17,12 +24,9 @@
 
 #define ASSERT(condition, message) assert((condition) && message)
 
-#ifndef _GAME_PCH_H_
-#define _GAME_PCH_H_
-
 #if USE_PCH
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN32)
 #	if defined (USE_POSIX_SOCKETS)
 #		error USE_POSIX_SOCKETS is not compatible with WIN32 or WIN64
 #	endif
@@ -36,24 +40,12 @@
 #	include <unistd.h>
 #	include <signal.h>
 #	if !defined(USE_SDL)
-#		error not WIN32 || WIN64 and USE_SDL not defined
+#		error not WIN32 and USE_SDL not defined
 #	endif
 #	if !defined(USE_POSIX_SOCKETS)
 #		error not WIN32 || WIN64 and USE_POSIX_SOCKETS not defined
 #	endif
 #endif
-
-// some local headers of importance
-#include "types.h"
-#include "game_constants.h"
-#include "sigslot.h"
-#include "util.h"
-
-#ifndef NDEBUG
-#	define FIXED_THROW_ON_OVERFLOW 1
-#	define FIXED_THROW_ON_DIVIDE_BY_ZERO 1
-#endif
-#include "fixed.h"
 
 // POSIX base
 #include <stdlib.h>
@@ -126,7 +118,7 @@
 // opengl
 #include <GL/gl.h>
 #include <GL/glu.h>
-#if !(defined(WIN32) || defined(WIN64))
+#if !defined(WIN32)
 	#include <GL/glx.h>
 #endif
 
@@ -135,39 +127,12 @@
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN32)
 	#include <glprocs.h>
 	#include <winsock.h>
 	#include <dsound.h>
 #endif
-/*
-using std::string;
-using std::stringstream;
 
-using std::exception;
-using std::runtime_error;
-using std::range_error;
-
-using std::fstream;
-using std::ifstream;
-using std::ofstream;
-
-using std::istream;
-using std::ostream;
-using std::ios_base;
-
-using std::cout;
-using std::endl;
-
-using std::vector;
-using std::list;
-using std::deque;
-using std::queue;
-using std::set;
-using std::map;
-using std::pair;
-
-using std::numeric_limits;
-*/
 #endif // USE_PCH
+
 #endif // _GAME_PCH_H_

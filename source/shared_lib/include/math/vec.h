@@ -31,8 +31,10 @@ template<typename T> class Vec4;
 
 template<typename T> class Vec2 {
 public:
-	T x;
-	T y;
+	union {
+		struct { T x, y; };
+		T raw[2];
+	};
 
 	Vec2() {}
 
@@ -518,6 +520,9 @@ typedef Vec4<float> Vec4f;
 typedef Vec2<double> Vec2d;
 typedef Vec3<double> Vec3d;
 typedef Vec4<double> Vec4d;
+
+//typedef Vec3<Platform::uint8> ColourRGB;
+typedef Vec4<Platform::uint8> Colour;
 
 template <typename T> inline ostream& operator<<(ostream &stream, const Vec2<T> &vec) {
 	return stream << "(" << vec.x << ", " << vec.y << ")";

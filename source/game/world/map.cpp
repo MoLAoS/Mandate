@@ -161,11 +161,11 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		// etc.
 		f->read(&header, sizeof(MapFileHeader), 1);
 
-		if (next2Power(header.width) != header.width) {
+		if (nextPowerOf2(header.width) != header.width) {
 			throw runtime_error("Map width is not a power of 2");
 		}
 
-		if (next2Power(header.height) != header.height) {
+		if (nextPowerOf2(header.height) != header.height) {
 			throw runtime_error("Map height is not a power of 2");
 		}
 
@@ -354,25 +354,27 @@ bool Map::isFreeCell(const Vec2i &pos, Field field) const {
 }
 
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {
-	if ( isInside(pos) ) {
+	if (isInside(pos)) {
 		Cell *c = getCell(pos);
-		if ( c->getUnit(unit->getCurrField()) == unit 
-		&&   fieldsCompatible( c, field) ) 
+		if (c->getUnit(unit->getCurrField()) == unit && fieldsCompatible(c, field)) {
 			return true;
-		else 
+		} else {
 			return isFreeCell(pos, field);
+		}
 	}
 	return false;
 }
 // Is the Cell at 'pos' (for the given 'field') either free or does it contain any of the units in 'units'
 bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const Selection::UnitContainer &units) const {
-	if(isInside(pos)) {
+	if (isInside(pos)) {
 		Unit *containedUnit = getCell(pos)->getUnit(field);
-		if ( containedUnit && fieldsCompatible(getCell(pos), field) ) {
+		if (containedUnit && fieldsCompatible(getCell(pos), field)) {
 			Selection::UnitContainer::const_iterator i;
-			for(i = units.begin(); i != units.end(); ++i) 
-				if(containedUnit == *i)
+			for (i = units.begin(); i != units.end(); ++i) {
+				if (containedUnit == *i) {
 					return true;
+				}
+			}
 		}
 		return isFreeCell(pos, field);
 	}
@@ -414,9 +416,9 @@ bool Map::isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const {
 }
 
 bool Map::areFreeCells(const Vec2i & pos, int size, Field field) const {
-	for ( int i=pos.x; i<pos.x+size; ++i ) {
-		for ( int j=pos.y; j<pos.y+size; ++j ) {
-			if ( !isFreeCell(Vec2i(i,j), field) ) {
+	for (int i=pos.x; i<pos.x+size; ++i) {
+		for (int j=pos.y; j<pos.y+size; ++j) {
+			if (!isFreeCell(Vec2i(i,j), field)) {
 				return false;
 			}
 		}
@@ -425,17 +427,17 @@ bool Map::areFreeCells(const Vec2i & pos, int size, Field field) const {
 }
 
 bool Map::areFreeCells(const Vec2i &pos, int size, char *fieldMap) const {
-	for ( int i = 0; i < size; ++i) {
-		for ( int j = 0; j < size; ++j) {
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
 			Field field;
-			switch ( fieldMap[j*size+i] ) {
+			switch (fieldMap[j*size+i]) {
 				case 'l': field = Field::LAND; break;
 				case 'a': field = Field::AMPHIBIOUS; break;
 				case 'w': field = Field::DEEP_WATER; break;
 				case 'r': field = Field::LAND; break;
-				default: throw runtime_error ( "Bad value in fieldMap" );
+				default: throw runtime_error("Bad value in fieldMap");
 			}
-			if ( !isFreeCell(Vec2i(pos.x+i, pos.y+j), field) ) {
+			if (!isFreeCell(Vec2i(pos.x+i, pos.y+j), field)) {
 				return false;
 			}
 		}
@@ -451,7 +453,7 @@ bool Map::areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const U
 			}
 		}
 	}
-    return true;
+	return true;
 }
 
 bool Map::areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const Selection::UnitContainer &units) const {
@@ -462,7 +464,7 @@ bool Map::areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const
 			}
 		}
 	}
-    return true;
+	return true;
 }
 
 bool Map::areAproxFreeCells(const Vec2i &pos, int size, Field field, int teamIndex) const {
@@ -703,13 +705,12 @@ void panic(Vec2i currPos, Unit *unit, Unit *other) {
 	Zone zone = unit->getCurrZone();
 	Zone o_zone = other->getCurrZone();
 
-	string str = string() + "Error: " + ut->getName() + "[id:" + intToStr(unit->getId())
-		+ "] putting in cell ("  + intToStr(currPos.x) + ", " + intToStr(currPos.y) + ")"
-		+ (zone == Zone::LAND ? "{LAND} " : zone == Zone::AIR ? "{AIR} " : "{OTHER} ")
-		+ " cell is already occupied by a " + other->getType()->getName() + "[id:"
-		+ intToStr(other->getId()) + "]"
-		+ (o_zone == Zone::LAND ? "{LAND} " : o_zone == Zone::AIR ? "{AIR} " : "{OTHER} ");
-	Logger::getErrorLog().add(str);
+	stringstream ss;
+	ss << "Error: " << ut->getName() << " [id:" << unit->getId() << "] putting in cell ("
+		<< currPos << "{" << ZoneNames[zone] << "}" << " cell is already occupied by a " 
+		<< other->getType()->getName() << " [id:" << other->getId() << "] {"
+		<< ZoneNames[o_zone] << "}";
+	Logger::getErrorLog().add(ss.str());
 	throw runtime_error ( "Ooops... see glestadv-error.log" );
 }
 

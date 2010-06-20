@@ -24,7 +24,7 @@
 #include "input_enums.h"
 
 #include "menu_state_root.h"
-
+#include "widget_style.h"
 #include "particle.h"
 
 namespace Glest {

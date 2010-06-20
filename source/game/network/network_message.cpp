@@ -627,7 +627,7 @@ SyncErrorMsg::SyncErrorMsg(RawMessage raw) {
 	data.messageType = raw.type;
 	data.messageSize = raw.size;
 	memcpy(&data.frameCount, raw.data, raw.size);
-	delete data.raw;
+	delete raw.data;
 }
 
 bool SyncErrorMsg::receive(NetworkConnection* connection){

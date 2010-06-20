@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
+//				  2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -64,7 +65,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	Vec2i pos(g_metrics.getScreenW() / 2 - 125, btnPnlYPos);
 	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, btnPnlHeight));
 	pnl->setPaddingParams(10, widgetPad);
-	pnl->setBorderStyle(Widgets::BorderStyle::RAISE);
+//	pnl->setBorderStyle(Widgets::BorderStyle::RAISE);
 
 	// Buttons
 	Font *font = g_coreData.getfreeTypeMenuFont();//g_coreData.getMenuFontNormal();
@@ -79,7 +80,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	int logoWidth = logoHeight * 2;
 	pos = Vec2i(g_metrics.getScreenW() / 2 - logoHeight, logoYPos);
 	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(logoWidth, logoHeight));
-	pp->setBorderSize(0);
+//	pp->setBorderSize(0);
 	pp->setPadding(0);
 	pp->setImage(g_coreData.getLogoTexture());
 	pp->setAutoLayout(false);

@@ -22,7 +22,7 @@ using Sim::ControlTypeNames;
 PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size) {
 	Panel::setAutoLayout(false);
-	Widget::setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.4f);
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
 	Widget::setPadding(0);
 	assert(size.x > 200);
 	float size_x = float(size.x - 25);
@@ -40,21 +40,18 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	
 	cpos.x += widths[0] + 5;
 	m_controlList = new DropList(this, cpos, Vec2i(widths[1], 30));
-	m_controlList->setBorderSize(0);
 	foreach_enum (ControlType, ct) {
 		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
 	}
 	
 	cpos.x += widths[1] + 5;	
 	m_factionList = new DropList(this, cpos, Vec2i(widths[2], 30));
-	m_factionList->setBorderSize(0);
 
 	cpos.x += widths[2] + 5;	
 	m_teamList = new DropList(this, cpos, Vec2i(widths[3], 30));
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
 	}
-	m_teamList->setBorderSize(0);
 
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);
 	m_factionList->SelectionChanged.connect(this, &PlayerSlotWidget::onFactionChanged);
@@ -117,7 +114,8 @@ ScrollText::ScrollText(Container::Ptr parent)
 		: Panel(parent)
 		, MouseWidget(this)
 		, TextWidget(this) {
-	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.5f);
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
+//	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 	setAutoLayout(false);
 	setPaddingParams(2, 0);
 	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
@@ -128,7 +126,8 @@ ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
 		, MouseWidget(this)
 		, TextWidget(this) {
-	setBorderParams(BorderStyle::SOLID, 2, Vec3f(0.f), 0.5f);
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
+//	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 	setAutoLayout(false);
 	setPaddingParams(2, 0);
 	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
@@ -139,14 +138,14 @@ ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
 
 void ScrollText::init() {
 	int th = getTextDimensions().y;
-	int ch = getSize().y - getBorderSize() * 2 - getPadding() * 2;
+	int ch = getHeight() - getBordersVert() - getPadding() * 2;
 	m_textBase = -(th - ch);
 	m_scrollBar->setRanges(th, ch);
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 	setTextPos(Vec2i(5, m_textBase));
 
-	Vec2i sbp(getWidth() - 24 - getBorderSize(), getBorderSize());
-	Vec2i sbs(24, getHeight() - getBorderSize() * 2);
+	Vec2i sbp(getWidth() - 24 - getBorderRight(), getBorderBottom());
+	Vec2i sbs(24, getHeight() - getBordersVert());
 	m_scrollBar->setPos(sbp);
 	m_scrollBar->setSize(sbs);
 }
@@ -158,8 +157,8 @@ void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
 
 void ScrollText::render() {
 	Widget::renderBgAndBorders(false);
-	Vec2i pos = getScreenPos() + Vec2i(getBorderSize());
-	Vec2i size = getSize() - Vec2i(getBorderSize()) * 2;
+	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderBottom());
+	Vec2i size = getSize() - getBordersAll();
 	glPushAttrib(GL_SCISSOR_BIT);
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(pos.x, pos.y, size.x, size.y);
@@ -174,7 +173,12 @@ TitleBar::TitleBar(Container::Ptr parent)
 		, TextWidget(this)
 		, m_title("")
 		, m_closeButton(0) {
-	setBorderParams(BorderStyle::RAISE, 2, Vec3f(1.f), 0.6f);
+	//m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
+	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
+	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
+	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
+	m_backgroundStyle.m_colourIndices[3] = g_widgetConfig.getColourIndex(Colour(91u, 91u, 91u, 255u));
+	m_backgroundStyle.m_type = BackgroundType::CUSTOM_COLOURS;
 	setTextParams(m_title, Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
 	setTextPos(Vec2i(5, 2));
 }
@@ -185,7 +189,12 @@ TitleBar::TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, b
 		, TextWidget(this)
 		, m_title(title)
 		, m_closeButton(0) {
-	setBorderParams(BorderStyle::RAISE, 2, Vec3f(1.f), 0.6f);
+	//m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
+	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
+	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
+	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
+	m_backgroundStyle.m_colourIndices[3] = g_widgetConfig.getColourIndex(Colour(91u, 91u, 91u, 255u));
+	m_backgroundStyle.m_type = BackgroundType::CUSTOM_COLOURS;
 	setTextParams(title, Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
 	setTextPos(Vec2i(5, 2));
 	if (closeBtn) {
@@ -212,24 +221,24 @@ MessageDialog::MessageDialog(Container::Ptr parent, Vec2i pos, Vec2i size)
 		, m_button2(0)
 		, m_buttonCount(0)
 		, m_pressed(false) {
-	setBorderParams(BorderStyle::SOLID, 3, Vec3f(0.f), 0.7f);
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+
 	Vec2i p, s;
 	Font *font = g_coreData.getFTMenuFontNormal();
 	const FontMetrics *fm = font->getMetrics();
 	
 	int a = int(fm->getHeight() + 1.f) + 4;
-	p = Vec2i(3, size.y - a - 3);
-	s = Vec2i(size.x - 6, a);
+	p = Vec2i(getBorderLeft(), size.y - a - getBorderTop());
+	s = Vec2i(size.x - getBordersHoriz(), a);
 	
 	m_titleBar = new TitleBar(this, p, s, "", false);
 
-	p = Vec2i(3, 3);
-	s = Vec2i(size.x - 6, size.y - a - 6);
+	p = Vec2i(getBorderLeft(), getBorderBottom());
+	s = Vec2i(size.x - getBordersHoriz(), size.y - a - getBordersVert());
 	m_scrollText = new ScrollText(this, p, s);
 	string title = "test text\ntext test\ntesting text\ntexting text\n";
 	m_scrollText->setTextParams(title, Vec4f(1.f), font, false);
-	m_scrollText->setBorderSize(0);
-	//m_scrollText->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
 	m_scrollText->init();
 }
 
@@ -240,7 +249,8 @@ MessageDialog::MessageDialog(WidgetWindow::Ptr window)
 		, m_button2(0)
 		, m_buttonCount(0)
 		, m_pressed(false) {
-	setBorderParams(BorderStyle::SOLID, 3, Vec3f(0.f), 0.7f);
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
 	m_titleBar = new TitleBar(this);
 	m_scrollText = new ScrollText(this);
 }
@@ -256,14 +266,14 @@ void MessageDialog::init() {
 	const FontMetrics *fm = font->getMetrics();
 	
 	int a = int(fm->getHeight() + 1.f) + 4;
-	p = Vec2i(3, getHeight() - a - 3);
-	s = Vec2i(getWidth() - 6, a);
+	p = Vec2i(getBorderLeft(), getHeight() - a - getBorderTop());
+	s = Vec2i(getWidth() - getBordersHoriz(), a);
 
 	m_titleBar->setPos(p);
 	m_titleBar->setSize(s);
 
-	p = Vec2i(3, 3);
-	s = Vec2i(getWidth() - 6, getHeight() - a - 6);
+	p = Vec2i(getBorderLeft(), getBorderBottom());
+	s = Vec2i(getWidth() - getBordersHoriz(), getHeight() - a - getBordersVert());
 	m_scrollText->setPos(p);
 	m_scrollText->setSize(s);
 	m_scrollText->init();
@@ -281,19 +291,17 @@ void MessageDialog::setMessageText(const string &text) {
 
 void MessageDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
 	Font *font = g_coreData.getFTMenuFontNormal();
-	if (m_button1) {
-		delete m_button1;
-	}
-	if (m_button2) {
-		delete m_button2;
-	}
+	delete m_button1;
+	m_button1 = 0;
+	delete m_button2;
+	m_button2 = 0;
 	if (btn2Text.empty()) {
 		m_buttonCount = 1;
 	} else {
 		m_buttonCount = 2;
 	}
-	int gap = (getSize().x - 150 * m_buttonCount) / (m_buttonCount + 1);
-	Vec2i p(gap, 10);
+	int gap = (getWidth() - 150 * m_buttonCount) / (m_buttonCount + 1);
+	Vec2i p(gap, 10 + getBorderBottom());
 	Vec2i s(150, 30);
 	m_button1 = new Button(this, p, s);
 	m_button1->setTextParams(btn1Text, Vec4f(1.f), font);
@@ -306,8 +314,9 @@ void MessageDialog::setButtonText(const string &btn1Text, const string &btn2Text
 		m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
 	}
 
-	m_scrollText->setSize(getWidth() - 6, getHeight() - 6 - m_titleBar->getHeight() - 50);
-	m_scrollText->setPos(Vec2i(3, 50));
+	m_scrollText->setSize(getWidth() - getBordersHoriz(),
+		getHeight() - getBordersVert() - m_titleBar->getHeight() - 50);
+	m_scrollText->setPos(Vec2i(getBorderLeft(), 50 + getBorderBottom()));
 	m_scrollText->init();
 }
 

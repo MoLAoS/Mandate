@@ -31,6 +31,11 @@ private:
 	static const string serverFileName;
 
 private:
+//	Button::Ptr		m_returnButton;
+
+//	Panel::Ptr		m_connectPanel;
+//	Panel::Ptr		m_gameSetupPanel;
+
 	GraphicButton buttonReturn;
 	GraphicButton buttonConnect;
 	GraphicLabel labelServer;

@@ -21,6 +21,8 @@
 #include "sigslot.h"
 #include "logger.h"
 
+#include "widget_style.h"
+
 using namespace Shared::Math;
 using namespace Shared::Graphics;
 using Glest::Util::Logger;
@@ -44,68 +46,6 @@ using std::string;
 
 #define ASSERT_RANGE(var, size)	assert(var >= 0 && var < size)
 
-// =====================================================
-// enum BackgroundStyle
-// =====================================================
-
-WRAPPED_ENUM( BackgroundStyle,
-	NONE,
-	SOLID_COLOUR,
-	ALPHA_COLOUR,
-	CUSTOM_COLOURS,
-	TEXTURE
-);
-
-// =====================================================
-// enum BorderStyle - for '3d' borders
-// =====================================================
-
-WRAPPED_ENUM( BorderStyle,
-	NONE,		/**< Draw nothing */
-	RAISE,		/**< Draw a raised widget */
-	EMBED,		/**< Draw a lowered widget */
-	SOLID,		/**< Draw a solid border */
-	CUSTOM		/**< Use colour values from attached ColourValues4 */
-);
-/*
-WRAPPED_ENUM( Border, TOP, RIGHT, BOTTOM, LEFT );
-WRAPPED_ENUM( Corner, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT );
-
-struct BorderValues {
-	WRAPPED_ENUM( Style, NONE, RAISE, EMBED, SOLID, CUSTOM );
-
-	Style	m_style;
-	Vec4f	m_colours[Corner::COUNT];
-	int		m_sizes[Border::COUNT];
-};
-
-struct PaddingValues {
-	int	m_sizes[Border::COUNT];
-};
-
-struct BackgroundValues {
-	WRAPPED_ENUM( Style, NONE, SOLID_COLOUR, ALPHA_COLOUR, CUSTOM_COLOURS, TEXTURE );
-
-	Style		m_style
-	Vec4f		m_colours[Corner::COUNT];
-	Texture2D*	m_texture;
-	bool		m_insideBorders; // render within borders
-};
-
-struct TextValues {
-	Font*	m_font;
-	Vec4f	m_colour;
-	Vec4f	m_shadowColour;
-	bool	m_shadow;
-};
-
-struct WidgetStyle {
-	BorderValues*		m_borderParams;
-	PaddingValues*		m_paddingParams;
-	BackgoundValues*	m_backgroundParams;
-	TextValues*			m_textParams;
-};
-*/
 class MouseWidget;
 class KeyboardWidget;
 class TextWidget;
@@ -131,23 +71,37 @@ private:
 			screenPos, 
 			size;
 	bool	visible;
-	bool	enabled;
+
+	bool	m_enabled;
 	float	fade;
 
-	BorderStyle borderStyle;
-	Vec3f borderColour;
-	int borderSize;
-	float bgAlpha;
 	int padding;
 
 	MouseWidget *mouseWidget;
 	KeyboardWidget *keyboardWidget;
 	TextWidget *textWidget;
 
+protected:
+	BorderStyle		m_borderStyle;
+	BackgroundStyle m_backgroundStyle;
+
+	int	getBorderLeft() const	{ return m_borderStyle.m_sizes[Border::LEFT]; }
+	int	getBorderRight() const	{ return m_borderStyle.m_sizes[Border::RIGHT]; }
+	int	getBorderTop() const	{ return m_borderStyle.m_sizes[Border::TOP]; }
+	int	getBorderBottom() const { return m_borderStyle.m_sizes[Border::BOTTOM]; }
+	int	getBordersHoriz() const {
+		return m_borderStyle.m_sizes[Border::LEFT] + m_borderStyle.m_sizes[Border::RIGHT];
+	}
+	int	getBordersVert() const	{
+		return m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM];
+	}
+	Vec2i getBordersAll() const	{ return Vec2i(getBordersHoriz(), getBordersVert()); }
+
 private:
 	void setMouseWidget(MouseWidget *mw) { mouseWidget = mw; }
 	void setKeyboardWidget(KeyboardWidget *kw) { keyboardWidget = kw; }
 
+	// as
 	MouseWidget * asMouseWidget() const			{ return mouseWidget; }
 	KeyboardWidget * asKeyboardWidget() const		{ return keyboardWidget; }
 
@@ -174,23 +128,23 @@ public:
 	virtual int   getWidth() const		{ return size.x;	 }
 	virtual int   getHeight() const		{ return size.y;	 }
 	virtual float getFade() const		{ return fade;		 }
-	virtual int	  getBorderSize() const	{ return borderSize; }
+//	virtual int	  getBorderSize() const	{ return borderSize; }
 	virtual int	  getPadding() const	{ return padding;	 }
 
 	// layout helpers
-	virtual Vec2i getPrefSize() const = 0; // may return (-1,-1) to indicate 'as big as possible'
-	virtual Vec2i getMinSize() const = 0; // may not return (-1,-1)
-	virtual Vec2i getMaxSize() const {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
+	virtual Vec2i getPrefSize() const {return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
+	virtual Vec2i getMinSize() const  {return Vec2i(-1); } // should not return (-1,-1)
+	virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
 
 	virtual bool isVisible() const		{ return visible; }
 	virtual bool isInside(const Vec2i &pos) const {
 		return pos.southEastOf(screenPos) && pos.northWestOf(screenPos + size);
 	}
 
-	virtual bool isEnabled() const	{ return enabled;	}
+	virtual bool isEnabled() const	{ return m_enabled;	}
 
 	// set
-	virtual void setEnabled(bool v) { enabled = v;	}
+	virtual void setEnabled(bool v) { m_enabled = v;	}
 	virtual void setSize(const Vec2i &sz);
 	virtual void setPos(const Vec2i &p);
 	virtual void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
@@ -199,18 +153,19 @@ public:
 	virtual void setFade(float v) { fade = v; }
 	virtual void setParent(Container* p) { parent = p; }
 
-	void setBorderSize(int sz) { borderSize = sz; }
-	void setBorderStyle(BorderStyle style) { borderStyle = style; }
-	void setBgAlphaValue(float v) { bgAlpha = v; }
-	void setBorderColour(Vec3f colour) { borderColour = colour; }
-	void setBorderParams(BorderStyle st, int sz, Vec3f col, float alp);
+	void setBorderStyle(const BorderStyle &style);
+	void setBackgroundStyle(const BackgroundStyle &style);
+	
 	void setPadding(int pad) { padding = pad; }
 
 	virtual void update() {} // must 'register' with WidgetWindow to receive
 
 	virtual void render() = 0;
 
-	void renderBorders(BorderStyle style, const Vec2i &offset, const Vec2i &size, int borderSize, bool bg = true);
+	void renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
+	void renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size);
+
+	//void renderBorders(BorderType type, const Vec2i &offset, const Vec2i &size, int borderSize, bool bg = true);
 	void renderBgAndBorders(bool bg = true);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);

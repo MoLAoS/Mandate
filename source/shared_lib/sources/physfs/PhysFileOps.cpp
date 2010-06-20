@@ -36,7 +36,7 @@ void PhysFileOps::openRead(const char *fname){
 	string str(fname);
 	str = cleanPath(str);  // get rid of ../ and ./
 	if(!(this->f = PHYSFS_openRead(str.c_str()))){
-		throw runtime_error("PHYSFS_openRead failed: " + str);
+		throw runtime_error("PHYSFS_openRead failed: " + str+ "\nError: " + getLastError());
 	}
 }
 
@@ -44,7 +44,7 @@ void PhysFileOps::openWrite(const char *fname){
 	string str(fname);
 	str = cleanPath(str);
 	if(!(this->f = PHYSFS_openWrite(str.c_str()))){
-		throw runtime_error("PHYSFS_openWrite failed: " + str);
+		throw runtime_error("PHYSFS_openWrite failed:\nFile: " + str + "\nError: " + getLastError());
 	}
 }
 
@@ -52,7 +52,7 @@ void PhysFileOps::openAppend(const char *fname){
 	string str(fname);
 	str = cleanPath(str);
 	if(!(this->f = PHYSFS_openAppend(str.c_str()))){
-		throw runtime_error("PHYSFS_openAppend failed: " + str);
+		throw runtime_error("PHYSFS_openWrite failed:\nFile: " + str + "\nError: " + getLastError());
 	}
 }
 

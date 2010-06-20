@@ -55,7 +55,16 @@ public:
 	sigslot::signal<Ptr> TeamChanged;
 
 private: // re-route signals from DropLists
-	void onControlChanged(ListBase::Ptr) { ControlChanged(this); }
+	void onControlChanged(ListBase::Ptr) {
+		ControlChanged(this);
+		if (m_controlList->getSelectedIndex() == ControlType::CLOSED) {
+			m_factionList->setEnabled(false);
+			m_teamList->setEnabled(false);
+		} else {
+			m_factionList->setEnabled(true);
+			m_teamList->setEnabled(true);
+		}
+	}
 	void onFactionChanged(ListBase::Ptr) { FactionChanged(this); }
 	void onTeamChanged(ListBase::Ptr)	 { TeamChanged(this);	 }
 };

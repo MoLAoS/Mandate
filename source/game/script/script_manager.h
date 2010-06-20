@@ -265,7 +265,7 @@ private:
 
 public:
 	static void cleanUp();
-	static void init();
+	static void initGame();
 
 	static void doSomeLua(string &code);
 

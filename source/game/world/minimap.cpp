@@ -53,8 +53,8 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 
 	//fow pixmaps
 	float f= 0.f;
-	fowPixmap0= new Pixmap2D(next2Power(scaledW), next2Power(scaledH), 1);
-	fowPixmap1= new Pixmap2D(next2Power(scaledW), next2Power(scaledH), 1);
+	fowPixmap0= new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
+	fowPixmap1= new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
 	fowPixmap0->setPixels(&f);
 	fowPixmap1->setPixels(&f);
 
@@ -67,7 +67,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	fowTex->setMipmap(false);
 	fowTex->setPixmapInit(false);
 	fowTex->setFormat(Texture::fAlpha);
-	fowTex->getPixmap()->init(next2Power(scaledW), next2Power(scaledH), 1);
+	fowTex->getPixmap()->init(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
 	fowTex->getPixmap()->setPixels(&f);
 
 	//tex

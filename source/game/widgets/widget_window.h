@@ -58,9 +58,7 @@ private:
 	void unwindMouseOverStack(Widget::Ptr newTop);
 	void unwindMouseOverStack();
 	void doMouseInto(Widget::Ptr widget);
-
 	void destroyFloater();
-
 	void renderMouseCursor();
 
 public:

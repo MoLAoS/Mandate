@@ -336,7 +336,7 @@ void ScriptManager::cleanUp() {
 	dialogConsole = 0;
 }
 
-void ScriptManager::init() {
+void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
 
 	//setup message box
@@ -429,7 +429,7 @@ void ScriptManager::init() {
 		return;
 	}
 	//load code
-	for(int i= 0; i<scenario->getScriptCount(); ++i) {
+	for(int i = 0; i < scenario->getScriptCount(); ++i) {
 		const Script* script= scenario->getScript(i);
 		bool ok;
 		if (script->getName().substr(0,9) == "unitEvent") {
@@ -540,20 +540,19 @@ void ScriptManager::update() {
 	// when a timer is ready, call the corresponding lua function
 	// and remove the timer, or reset to repeat.
 
-	vector<ScriptTimer>::iterator timer;
+	vector<ScriptTimer>::iterator timer = timers.begin();
 
-	for (timer = timers.begin(); timer != timers.end();) {
+	while (timer != timers.end()) {
 		if (timer->isReady()) {
 			if (timer->isAlive()) {
-				if (! luaScript.luaCall("timer_" + timer->getName())) {
+				if (!luaScript.luaCall("timer_" + timer->getName())) {
 					timer->kill();
 					addErrorMessage();
 				}
 			}
 			if (timer->isPeriodic() && timer->isAlive()) {
 				timer->reset();
-			}
-			else {
+			} else {
 				timer = timers.erase(timer); //returns next element
 				continue;
 			}
@@ -615,8 +614,8 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 
 /** Extracts arguments for Lua callbacks.
   * <p>uses a string description of the expected arguments in arg_desc, then takes pointers the
-  * variables of the corresponding types to populate with the results
-  * using va_args obviously, so there is no type checking, be careful.</p>
+  * variables of the corresponding types to populate with the results</p>
+  * <p>Uses va_args obviously, so there is no type checking, be careful.</p>
   * @param luaArgs the LuaArguments object to extract arguments from
   * @param caller if NULL, errors will not be reported, otherwise this is name of the lua callback
   *  that called this function, used for error reporting.

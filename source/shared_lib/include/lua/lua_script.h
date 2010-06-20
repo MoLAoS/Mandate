@@ -18,6 +18,7 @@
 
 #include "vec.h"
 #include "conversion.h"
+#include "util.h"
 
 using std::string;
 using Shared::Math::Vec2i;
@@ -27,6 +28,8 @@ using namespace Shared::Util;
 
 namespace Shared { namespace Lua {
 
+WRAPPED_ENUM( LuaType, NIL, NUMBER, STRING, BOOLEAN, TABLE, FUNCTION );
+
 typedef lua_State LuaHandle;
 typedef int(*LuaFunction)(LuaHandle*);
 
@@ -34,6 +37,18 @@ class LuaError : public runtime_error {
 public:
 	LuaError(const string &msg = string("Lua Error")) : runtime_error(msg) {}
 	string desc() const {return what();}
+};
+
+class StringSet {
+	string values[4];
+
+public:
+	StringSet(){}
+
+	string& operator[](unsigned i) {
+		assert(i < 4);
+		return values[i];
+	}
 };
 
 // =====================================================
@@ -57,7 +72,15 @@ public:
 
 	bool loadCode(const string &code, const string &name);
 
-	bool isDefined( const string &functionName );
+	bool getGlobal(const char *tableName);
+	bool getTable(const char *tableName);
+	void popTable();
+	void popAll();
+	Vec4i getVec4iField(const char *key);
+	string getStringField(const char *key);
+	StringSet getStringSet(const char *key);
+
+	bool isDefined(const string &functionName);
 	bool luaCallback(const string& functionName, int id, int userData);
 	bool luaCall(const string& functionName);
 
@@ -93,6 +116,7 @@ public:
 	Vec2i getVec2i(int argumentIndex) const;
 	Vec3i getVec3i(int argumentIndex) const;
 	Vec4i getVec4i(int argumentIndex) const;
+	StringSet getStringSet(int ndx) const;
 	int getReturnCount() const					{return returnCount;}
 	int getArgumentCount() const				{return args;}
 
@@ -101,7 +125,17 @@ public:
 	void returnVec2i(const Vec2i &value);
 	void returnBool(bool val);
 
-	const char* getType ( int ndx ) const;
+	const char* getType(int ndx) const;
+
+private:
+	// check type of item on top of stack
+	bool checkType(LuaType type, int ndx = -1) const;
+
+	// check for the presence of a table with the given size on the stack at index ndx
+	void checkTable(int ndx, size_t size) const;
+	size_t checkTable(int ndx, size_t minSize, size_t maxSize) const;
+
+	string descArgPos(int ndx) const;
 };
 
 }}//end namespace

@@ -78,17 +78,6 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	savedGame = NULL;
 	gs = NULL;
 
-	// game info lables
-	labelInfoHeader.init(350, 500, 440, 225, false);
-
-    for(int i=0; i<GameConstants::maxPlayers; ++i){
-		labelPlayers[i].init(350, 450-i*30);
-        labelControls[i].init(425, 450-i*30);
-        labelFactions[i].init(500, 450-i*30);
-		labelTeams[i].init(575, 450-i*30, 60);
-		labelNetStatus[i].init(600, 450-i*30, 60);
-	}
-
 	Font *font = g_coreData.getFTMenuFontNormal();
 	int gap = (g_metrics.getScreenW() - 450) / 4;
 	int x = gap, w = 150, y = 150, h = 30;
@@ -108,9 +97,10 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 
 	Vec2i dim = g_metrics.getScreenDims();
 
-	m_infoLabel = new StaticText(&program, Vec2i(dim.x / 2 - 200, dim.y / 2 ), Vec2i(400, 200));
-	m_infoLabel->setTextParams("", Vec4f(1.f), font);
-	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
+	m_infoLabel = new ScrollText(&program, Vec2i(dim.x / 2 - 200, dim.y / 2 ), Vec2i(400, 200));
+	m_infoLabel->init();
+	//m_infoLabel->setTextParams("", Vec4f(1.f), font);
+//	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
 
 	m_savedGameList = new DropList(&program, Vec2i(dim.x / 2 - 150, dim.y / 2 - 100), Vec2i(300, 30));
 	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
@@ -186,26 +176,12 @@ void MenuStateLoadGame::onSaveSelected(ListBase::Ptr list) {
 	selectionChanged();
 }
 
-void MenuStateLoadGame::render(){
-	Renderer &renderer= Renderer::getInstance();
+void MenuStateLoadGame::update() {
+	MenuState::update();
 
 	if (savedGame) {
 		initGameInfo();
 	}
-
-	renderer.renderLabel(&labelInfoHeader);
-	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
-		renderer.renderLabel(&labelPlayers[i]);
-		renderer.renderLabel(&labelControls[i]);
-		renderer.renderLabel(&labelFactions[i]);
-		renderer.renderLabel(&labelTeams[i]);
-		renderer.renderLabel(&labelNetStatus[i]);
-	}
-}
-
-void MenuStateLoadGame::update() {
-	MenuState::update();
-
 	if (m_transition) {
 		switch (m_targetTransition) {
 			case Transition::RETURN:
@@ -223,19 +199,12 @@ void MenuStateLoadGame::update() {
 
 string *MenuStateLoadGame::setGameInfo(const string &fileName, const XmlNode *root, const string &err) {
 	MutexLock lock(mutex);
-	if(this->fileName != fileName) {
+	if (this->fileName != fileName) {
 		return new string(this->fileName);
 	}
 
-	if(!root) {
-		labelInfoHeader.setText(err);
-		for(int i=0; i<GameConstants::maxPlayers; ++i){
-			labelPlayers[i].setText("");
-			labelControls[i].setText("");
-			labelFactions[i].setText("");
-			labelTeams[i].setText("");
-			labelNetStatus[i].setText("");
-		}
+	if (!root) {
+		m_infoLabel->setText(err);
 		return NULL;
 	}
 
@@ -283,21 +252,11 @@ string MenuStateLoadGame::getFileName() {
 	return "savegames/" + fileNames[m_savedGameList->getSelectedIndex()] + ".sav";
 }
 
-void MenuStateLoadGame::mouseClick(int, int, MouseButton) {}
-void MenuStateLoadGame::mouseMove(int, int, const MouseState&) {}
-
 void MenuStateLoadGame::selectionChanged() {
 	{
 		MutexLock lock(mutex);
 		fileName = getFileName();
-		labelInfoHeader.setText("Loading...");
-		for(int i=0; i<GameConstants::maxPlayers; ++i){
-			labelPlayers[i].setText("");
-			labelControls[i].setText("");
-			labelFactions[i].setText("");
-			labelTeams[i].setText("");
-			labelNetStatus[i].setText("");
-		}
+		m_infoLabel->setText("Loading...");
 	}
 	loaderThread.setFileName(fileName);
 }
@@ -321,33 +280,17 @@ void MenuStateLoadGame::initGameInfo() {
 			throw runtime_error(version < GameConstants::saveGameVersion ? oldSaveMsg : unknownSaveMsg);
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
-		string techPath = gs->getTechPath();
-		string tilesetPath = gs->getTilesetPath();
-		string mapPath = gs->getMapPath();
-		string scenarioPath = gs->getScenarioPath();
+
 		int elapsedSeconds = savedGame->getChild("world")->getChildIntValue("frameCount") / 60;
 		int elapsedMinutes = elapsedSeconds / 60;
 		int elapsedHours = elapsedMinutes / 60;
 		elapsedSeconds = elapsedSeconds % 60;
 		elapsedMinutes = elapsedMinutes % 60;
-		char elapsedTime[0x100];
+		char elapsedTime[256];
 		MapInfo mapInfo;
-		mapInfo.load(mapPath);
-/*
-		if(techTree.size() > strlen("techs/")) {
-			techTree.erase(0, strlen("techs/"));
-		}
-		if(tileset.size() > strlen("tilesets/")) {
-			tileset.erase(0, strlen("tilesets/"));
-		}
-		if(map.size() > strlen("maps/")) {
-			map.erase(0, strlen("maps/"));
-		}
-		if(map.size() > strlen(".gbm")) {
-			map.resize(map.size() - strlen(".gbm"));
-		}
-*/
-		if(elapsedHours) {
+		mapInfo.load(gs->getMapPath());
+
+		if (elapsedHours) {
 			sprintf(elapsedTime, "%d:%02d:%02d", elapsedHours, elapsedMinutes, elapsedSeconds);
 		} else {
 			sprintf(elapsedTime, "%02d:%02d", elapsedMinutes, elapsedSeconds);
@@ -356,79 +299,44 @@ void MenuStateLoadGame::initGameInfo() {
 		string mapDescr = " (Max Players: " + intToStr(mapInfo.players)
 				+ ", Size: " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
 
-		labelInfoHeader.setText(m_savedGameList->getSelectedItem()->getText()
-				+ ": " + gs->getDescription()
-				+ "\nTech Tree: " + formatString(basename(techPath))
-				+ "\nTileset: " + formatString(basename(tilesetPath))
-				+ "\nMap: " + formatString(basename(cutLastExt(mapPath))) + mapDescr
-				+ "\nScenario: " + formatString(basename(scenarioPath))
-				+ "\nElapsed Time: " + elapsedTime);
 
-		if(gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {
+		stringstream ss;
+		ss  << m_savedGameList->getSelectedItem()->getText() << ": " << gs->getDescription()
+			<< "\nTech-tree: " << formatString(basename(gs->getTechPath()))
+			<< "\nTileset: " << formatString(basename(gs->getTilesetPath()))
+			<< "\nMap: " << formatString(basename(cutLastExt(gs->getMapPath()))) << mapDescr
+			<< "\nElapsed Time: " << elapsedTime
+			<< "\n";
+
+		if (gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {
 			throw runtime_error("Invalid faction count (" + intToStr(gs->getFactionCount())
 					+ ") in saved game.");
 		}
 
-		for(int i = 0; i < GameConstants::maxPlayers; ++i){
-			if(i < gs->getFactionCount()) {
-				int control = gs->getFactionControl(i);
-				//beware the buffer overflow -- it's possible for others to send
-				//saved game files that are intended to exploit buffer overruns
-				if(control >= ControlType::COUNT || control < 0) {
-					throw runtime_error("Invalid control type (" + intToStr(control)
-							+ ") in saved game.");
-				}
-
-				labelPlayers[i].setText(string("Player ") + intToStr(i));
-				labelControls[i].setText(ControlTypeNames[gs->getFactionControl(i)]);
-				labelFactions[i].setText(gs->getFactionTypeName(i));
-				labelTeams[i].setText(intToStr(gs->getTeam(i)));
-				labelNetStatus[i].setText("");
-			} else {
-				labelPlayers[i].setText("");
-				labelControls[i].setText("");
-				labelFactions[i].setText("");
-				labelTeams[i].setText("");
-				labelNetStatus[i].setText("");
+		for(int i = 0; i < gs->getFactionCount(); ++i){
+			int control = gs->getFactionControl(i);
+			//beware the buffer overflow -- it's possible for others to send
+			//saved game files that are intended to exploit buffer overruns
+			if(control >= ControlType::COUNT || control < 0) {
+				throw runtime_error("Invalid control type (" + intToStr(control)
+						+ ") in saved game.");
 			}
+			ss	<< "\nPlayer " << i << ": " << ControlTypeNames[gs->getFactionControl(i)]
+				<< " : " << gs->getFactionTypeName(i)
+				<< " Team: " << gs->getTeam(i);
 		}
+		m_infoLabel->setText(ss.str());
+		m_infoLabel->init();
 
 	} catch (exception &e) {
-		labelInfoHeader.setText(string("Bad game file.\n") + e.what());
-		for(int i = 0; i < GameConstants::maxPlayers; ++i){
-			labelPlayers[i].setText("");
-			labelControls[i].setText("");
-			labelFactions[i].setText("");
-			labelTeams[i].setText("");
-			labelNetStatus[i].setText("");
-		}
+		m_infoLabel->setText(string("Bad game file.\n") + e.what());
 		if(gs) {
 			delete gs;
 			gs = NULL;
 		}
 	}
-	if(gs) {
-		updateNetworkSlots();
-	}
-
 	delete savedGame;
 	savedGame = NULL;
 }
 
-void MenuStateLoadGame::updateNetworkSlots(){
-	ServerInterface* serverInterface= g_simInterface->asServerInterface();
-	if (!serverInterface) {
-		return;
-	}
-	assert(gs);
-
-	for(int i= 0; i<GameConstants::maxPlayers; ++i){
-		if(serverInterface->getSlot(i)==NULL && gs->getFactionControl(i) == ControlType::NETWORK){
-			serverInterface->addSlot(i);
-		}
-		if(serverInterface->getSlot(i) != NULL && gs->getFactionControl(i) != ControlType::NETWORK){
-			serverInterface->removeSlot(i);
-		}
-	}
-}
 }}//end namespace

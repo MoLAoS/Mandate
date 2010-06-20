@@ -13,18 +13,18 @@
 #define _GLEST_GAME_GAMECONSTANTS_H_
 
 // The 'Globals'
-#define g_gameState				(*GameState::getInstance())
-#define g_world			(World::getInstance())
+#define g_gameState			(*GameState::getInstance())
+#define g_world				(World::getInstance())
 #define g_map				(*World::getInstance().getMap())
 #define g_camera			(*GameState::getInstance()->getGameCamera())
 #define g_gameSettings		(GameState::getInstance()->getGameSettings())
-#define g_userInterface				(*Gui::UserInterface::getCurrentGui())
+#define g_userInterface		(*Gui::UserInterface::getCurrentGui())
 #define g_console			(*GameState::getInstance()->getConsole())
 #define g_config			(Config::getInstance())
 #define g_routePlanner		(*World::getInstance().getRoutePlanner())
 #define g_cartographer		(*World::getInstance().getCartographer())
 #define g_renderer			(Renderer::getInstance())
-#define g_soundRenderer	(SoundRenderer::getInstance())
+#define g_soundRenderer		(SoundRenderer::getInstance())
 #define g_logger			(Logger::getInstance())
 #define g_lang				(Lang::getInstance())
 #define g_metrics			(Metrics::getInstance())

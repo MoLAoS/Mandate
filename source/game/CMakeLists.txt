@@ -16,6 +16,7 @@ set(folders
 	script
 	search
 	sound
+	widgets
 	world
 )
 #file(GLOB game_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")

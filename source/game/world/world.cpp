@@ -996,7 +996,7 @@ void World::initCells() {
 			Tile *sc= map.getTile(i, j);
 
 			sc->setFowTexCoord(
-				Vec2f(i / (next2Power(map.getTileW()) - 1.f),j / (next2Power(map.getTileH()) - 1.f)));
+				Vec2f(i / (nextPowerOf2(map.getTileW()) - 1.f),j / (nextPowerOf2(map.getTileH()) - 1.f)));
 
 			for (int k = 0; k < GameConstants::maxPlayers; k++) {
 				sc->setExplored(k, !gs.getFogOfWar());

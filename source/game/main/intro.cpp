@@ -44,7 +44,7 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	
 	logoPanel = new Widgets::PicturePanel(&program, pos, logoSize);
 	logoPanel->setPaddingParams(0,0);
-	logoPanel->setBorderSize(0);
+//	logoPanel->setBorderSize(0);
 	logoPanel->setImage(coreData.getLogoTexture());
 	logoPanel->setAutoLayout(false);
 
@@ -96,7 +96,7 @@ void Intro::update(){
 		const Metrics &metrics= Metrics::getInstance();
 		program.clear();
 		lblWebsite = new Widgets::StaticText(&program);
-		lblWebsite->setBorderParams(Widgets::BorderStyle::SOLID, 2, Vec3f(1.f), 0.5f);
+//		lblWebsite->setBorderParams(Widgets::BorderStyle::SOLID, 2, Vec3f(1.f), 0.5f);
 		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getFreeTypeFont());
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);

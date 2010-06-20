@@ -311,7 +311,7 @@ void ServerInterface::updateListen() {
 
 #if _GAE_DEBUG_EDITION_
 	void ServerInterface::dumpFrame(int frame) {
-		worldLog.logFrame(frame);
+		worldLog->logFrame(frame);
 		throw GameSyncError();
 	}
 #endif

@@ -72,6 +72,7 @@ bool LuaScript::loadCode(const string &code, const string &name) {
 	}
 	return true;
 }
+
 bool LuaScript::isDefined(const string &name) {
 	bool defined = false;
 	lua_getglobal(luaState, name.c_str());
@@ -79,15 +80,66 @@ bool LuaScript::isDefined(const string &name) {
 		defined = true;
 	}
 	lua_pop(luaState, 1);
-
 	return defined;
+}
+
+bool LuaScript::getGlobal(const char *name) {
+	lua_getglobal(luaState, name);
+	if (lua_istable(luaState, -1)) {
+		return true;
+	} else {
+		lua_pop(luaState, -1);
+		return false;
+	}	
+}
+
+bool LuaScript::getTable(const char *name) {
+	lua_getfield(luaState, -1, name);
+	if (lua_istable(luaState, -1)) {
+		return true;
+	} else {
+		lua_pop(luaState, 1);
+		return false;
+	}	
+}
+
+void LuaScript::popTable() {
+	lua_pop(luaState, 1);
+}
+
+void LuaScript::popAll() {
+	lua_pop(luaState, -1);
+}
+
+Vec4i LuaScript::getVec4iField(const char *key) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	Vec4i res = args.getVec4i(-1);
+	lua_pop(luaState, 1);
+	return res;
+}
+
+string LuaScript::getStringField(const char *key) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	string res = args.getString(-1);
+	lua_pop(luaState, 1);
+	return res;
+}
+
+StringSet LuaScript::getStringSet(const char *key) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	StringSet res = args.getStringSet(-1);
+	lua_pop(luaState, 1);
+	return res;
 }
 
 bool LuaScript::luaCallback(const string& functionName, int id, int userData) {
 	lua_getglobal(luaState, functionName.c_str());
 	lua_pushnumber(luaState, id);
 	lua_pushnumber(luaState, userData);
-	if ( lua_pcall(luaState, 2, 0, 0) ) {
+	if (lua_pcall(luaState, 2, 0, 0)) {
 		lastError = luaL_checkstring(luaState, 1);
 		return false; // error
 	}
@@ -97,7 +149,7 @@ bool LuaScript::luaCallback(const string& functionName, int id, int userData) {
 bool LuaScript::luaCall(const string& functionName) {
 	lua_getglobal(luaState, functionName.c_str());
 	argumentCount= 0;
-	if ( lua_pcall(luaState, argumentCount, 0, 0) ) {
+	if (lua_pcall(luaState, argumentCount, 0, 0)) {
 		lastError = luaL_checkstring(luaState, 1);
 		return false; // error
 	}
@@ -105,7 +157,7 @@ bool LuaScript::luaCall(const string& functionName) {
 }
 
 bool LuaScript::luaDoLine(const string &str) {
-	if ( luaL_dostring(luaState, str.c_str()) ) {
+	if (luaL_dostring(luaState, str.c_str())) {
 		lastError = luaL_checkstring(luaState, 1);
 		return false;
 	}
@@ -154,120 +206,113 @@ LuaArguments::LuaArguments(lua_State *luaState){
  * has been made with invalid arguments, throw a LuaError with a description of the problem,
  * the 'callback' that called this will construct a nice error message.
  */
-bool LuaArguments::getBoolean ( int ndx ) const {
-	if ( !lua_isboolean ( luaState, ndx ) ) {
-		string emsg = "Argument " + intToStr(-ndx) + " expected Boolean, got " + getType(ndx) + ".\n";
+bool LuaArguments::getBoolean(int ndx) const {
+	if (!checkType(LuaType::BOOLEAN, ndx)) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Boolean, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
 	}
 	return lua_toboolean(luaState, ndx);
 }
 
-int LuaArguments::getInt(int argumentIndex) const{
-	if(!lua_isnumber(luaState, argumentIndex)){
-		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Number, got " + getType(argumentIndex) + ".\n";
+int LuaArguments::getInt(int ndx) const{
+	if (!checkType(LuaType::NUMBER, ndx)) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Number, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
 	}
-	return luaL_checkint(luaState, argumentIndex);
+	return luaL_checkint(luaState, ndx);
 }
 
-string LuaArguments::getString(int argumentIndex) const{
-	if(!lua_isstring(luaState, argumentIndex)){
-		string emsg = "Argument " + intToStr(-argumentIndex) + " expected String, got " + getType(argumentIndex) + ".\n";
+string LuaArguments::getString(int ndx) const{
+	if (!checkType(LuaType::STRING, ndx)) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected String, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
 	}
-	return luaL_checkstring(luaState, argumentIndex);
+	return luaL_checkstring(luaState, ndx);
 }
 
-Vec2i LuaArguments::getVec2i(int argumentIndex) const{
+Vec2i LuaArguments::getVec2i(int ndx) const{
+	checkTable(ndx, 2u);
 	Vec2i v;
-	if ( ! lua_istable(luaState, argumentIndex ) ) {
-		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table, got " + getType(argumentIndex) + ".\n";
-		throw LuaError(emsg);
+	try {
+		// push a nil key to the top of the stack since lua_next requires the key to be on top
+		lua_pushnil(luaState);
+		for (int i = 1; i <= 3; ++i) {
+			lua_next(luaState, ndx-1); // table is now one index back, push next element on top
+			if (!checkType(LuaType::NUMBER)) throw i;
+			v.raw[i - 1] = lua_tointeger(luaState, -1); // store the value into the vector
+			lua_pop(luaState, 1);	// and pop it off the stack
+		}
+		lua_pop(luaState, 1); // pop our nil key
+	} catch (int element) {
+		string badType = getType(-1);
+		lua_pop(luaState, 2);
+		throw LuaError("Argument " + descArgPos(ndx) + " element " + intToStr(element)
+			+ " expected Number got " + badType + ".\n");
 	}
-	if ( luaL_getn(luaState, argumentIndex) != 2 ) {
-		string emsg = "Argument " + intToStr(-argumentIndex) + " expected Table with two elements, got Table with "
-			+ intToStr(luaL_getn(luaState, argumentIndex)) + " elements.\n";
-		throw LuaError(emsg);
-	}
-
-	// push a nil key to the top of the stack since lua_next requires the key to be on top
-	lua_pushnil(luaState);
-	// table is now one index back
-	// lookup the value at the key and push it onto the stack
-	lua_next(luaState, argumentIndex-1);
-	// store the value into the vector and pop it off the stack
-	v.x = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
-
-	// next key is still on top of the stack
-	lua_next(luaState, argumentIndex-1);
-	v.y = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	//pop the key and the value from the stack
-	lua_pop(luaState, 2);
-
 	return v;
 }
 
 Vec3i LuaArguments::getVec3i(int ndx) const {
+	checkTable(ndx, 3u);
 	Vec3i v;
-	if ( ! lua_istable(luaState, ndx) ) {
-		string emsg = "Argument " + intToStr(ndx) + " expected Table, got " + getType(ndx) + ".\n";
-		throw LuaError ( emsg );
+	try {
+		lua_pushnil(luaState);
+		for (int i = 1; i <= 3; ++i) {
+			lua_next(luaState, ndx-1);
+			if (!checkType(LuaType::NUMBER)) throw i;
+			v.raw[i - 1] = lua_tointeger(luaState, -1);
+			lua_pop(luaState, 1);
+		}
+		lua_pop(luaState, 1);
+	} catch (int element) {
+		string badType = getType(-1);
+		lua_pop(luaState, 2);
+		throw LuaError("Argument " + descArgPos(ndx) + " element " + intToStr(element)
+			+ " expected Number got " + badType + ".\n");
 	}
-	if ( luaL_getn(luaState, ndx) != 3 ) {
-		string emsg = "Argument " + intToStr(ndx) + " expected Table with three elements, got Table with "
-			+ intToStr(luaL_getn(luaState, ndx)) + " elements.\n";
-		throw LuaError(emsg);
-	}
-
-	lua_pushnil(luaState);
-
-	lua_next(luaState, ndx-1);
-	v.x = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
-
-	lua_next(luaState, ndx-1);
-	v.y = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
-
-	lua_next(luaState, ndx-1);
-	v.z = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 2);
-
 	return v;
 }
 
 Vec4i LuaArguments::getVec4i(int ndx) const {
+	checkTable(ndx, 4);
 	Vec4i v;
-	if ( ! lua_istable(luaState, ndx) ) {
-		string emsg = "Argument " + intToStr(ndx) + " expected Table, got " + getType(ndx) + ".\n";
-		throw LuaError ( emsg );
+	try {
+		lua_pushnil(luaState);
+		for (int i = 1; i <= 4; ++i) {
+			lua_next(luaState, ndx-1);
+			if (!checkType(LuaType::NUMBER)) throw i;
+			v.raw[i - 1] = lua_tointeger(luaState, -1);
+			lua_pop(luaState, 1);
+		}
+		lua_pop(luaState, 1);
+	} catch (int element) {
+		string badType = getType(-1);
+		lua_pop(luaState, 2);
+		throw LuaError("Argument " + descArgPos(ndx) + " element " + intToStr(element)
+			+ " expected Number got " + badType + ".\n");
 	}
-	if ( luaL_getn(luaState, ndx) != 4 ) {
-		string emsg = "Argument " + intToStr(ndx) + " expected Table with four elements, got Table with "
-			+ intToStr(luaL_getn(luaState, ndx)) + " elements.\n";
-		throw LuaError(emsg);
-	}
-
-	lua_pushnil(luaState);
-
-	lua_next(luaState, ndx-1);
-	v.x = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
-
-	lua_next(luaState, ndx-1);
-	v.y = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
-
-	lua_next(luaState, ndx-1);
-	v.z = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 1);
-
-	lua_next(luaState, ndx-1);
-	v.w = lua_tointeger(luaState, -1);//lua_tonumber(luaState, -1);
-	lua_pop(luaState, 2);
-
 	return v;
+}
+
+StringSet LuaArguments::getStringSet(int ndx) const {
+	size_t n = checkTable(ndx, 1, 4);
+	StringSet res;
+	try {
+		lua_pushnil(luaState);
+		for (int i = 1; i <= n; ++i) {
+			lua_next(luaState, ndx - 1);
+			if (!checkType(LuaType::STRING)) throw i;
+			res[i - 1] = luaL_checkstring(luaState, -1);
+			lua_pop(luaState, 1);
+		}
+		lua_pop(luaState, 1);
+	} catch (int element) {
+		string badType = getType(-1);
+		lua_pop(luaState, 2);
+		throw LuaError("Argument " + descArgPos(ndx) + " element " + intToStr(element)
+			+ " expected String got " + badType + ".\n");
+	}
+	return res;
 }
 
 void LuaArguments::returnInt(int value){
@@ -297,25 +342,78 @@ void LuaArguments::returnBool(bool value){
 	lua_pushboolean(luaState, value);
 }
 
+
+
 const char* LuaArguments::getType(int ndx) const {
-	if ( lua_isnumber(luaState, ndx) ) {
+	if (lua_isnumber(luaState, ndx)) {
 		return "Number";
-	}
-	else if ( lua_isstring(luaState, ndx) ) {
+	} else if (lua_isstring(luaState, ndx)) {
 		return "String";
-	}
-	else if ( lua_istable(luaState, ndx) ) {
+	} else if (lua_istable(luaState, ndx)) {
 		return "Table";
-	}
-	else if (lua_isboolean(luaState, ndx) ) {
+	} else if (lua_isboolean(luaState, ndx)) {
 		return "Boolean";
-	}
-	else if ( lua_isnil(luaState, ndx) ) {
+	} else if (lua_isnil(luaState, ndx)) {
 		return "Nil";
-	}
-	else {
+	} else {
 		return "Unknown";
 	}
+}
+
+bool LuaArguments::checkType(LuaType type, int ndx) const {
+	switch (type) {
+		case LuaType::NIL:
+			return lua_isnil(luaState, ndx);
+		case LuaType::NUMBER:
+			return lua_isnumber(luaState, ndx);
+		case LuaType::STRING:
+			return lua_isstring(luaState, ndx);
+		case LuaType::BOOLEAN:
+			return lua_isboolean(luaState, ndx);
+		case LuaType::TABLE:
+			return lua_istable(luaState, ndx);
+		case LuaType::FUNCTION:
+			return lua_isfunction(luaState, ndx);
+		default:
+			ASSERT(false, "LuaArguments::checkType() passed bad arg.");
+			return false;
+	}
+}
+
+void LuaArguments::checkTable(int ndx, size_t size) const {
+	if (!checkType(LuaType::TABLE, ndx)) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Table, got " + getType(ndx) + ".\n";
+		throw LuaError(emsg);
+	}
+	size_t tableSize = lua_objlen(luaState, ndx);
+	if (tableSize != size) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Table with " + intToStr(size) 
+			+ " elements, got Table with " + intToStr(tableSize) + " elements.\n";
+		throw LuaError(emsg);
+	}
+}
+
+size_t LuaArguments::checkTable(int ndx, size_t minSize, size_t maxSize) const {
+	if (!checkType(LuaType::TABLE, ndx)) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Table, got " + getType(ndx) + ".\n";
+		throw LuaError(emsg);
+	}
+	size_t tableSize = lua_objlen(luaState, ndx);
+	if (tableSize < minSize || tableSize > maxSize) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Table with " 
+			+ intToStr(minSize) + " to " + intToStr(maxSize) + " elements, got Table with "
+			+ intToStr(tableSize) + " elements.\n";
+		throw LuaError(emsg);
+	}
+	return tableSize;
+}
+
+string LuaArguments::descArgPos(int ndx) const {
+	ASSERT(ndx, "LuaArguments::descArgPos() passed 0. Invalid stack index.");
+	if (ndx > 0) {
+		return intToStr(ndx);
+	}
+	return intToStr(args + 1 + ndx);
 }
 
 }}//end namespace

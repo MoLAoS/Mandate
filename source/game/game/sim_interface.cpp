@@ -130,6 +130,9 @@ void SimulationInterface::constructGameWorld(GameState *g) {
 	world = new World(this);
 	stats = new Stats(this);
 	commander = new Commander(this);
+	IF_DEBUG_EDITION(
+		worldLog = new WorldLog();
+	);
 }
 
 void SimulationInterface::destroyGameWorld() {
@@ -139,9 +142,10 @@ void SimulationInterface::destroyGameWorld() {
 	world = 0;
 	delete commander;
 	commander = 0;
-
-	// game was deleted, that's why we're here, null our ptr
-	game = 0;
+	game = 0; // game was deleted, that's why we're here, null our ptr
+	IF_DEBUG_EDITION(
+		delete worldLog;
+	);
 }
 
 NetworkInterface* SimulationInterface::asNetworkInterface() {
@@ -222,7 +226,7 @@ void SimulationInterface::initWorld() {
 	}
 	delete [] seeds;
 	createSkillCycleTable(world->getTechTree());
-	ScriptManager::init();
+	ScriptManager::initGame();
 }
 
 /** @return maximum update backlog (must be -1 for multiplayer) */
@@ -453,7 +457,7 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	}
 	IF_DEBUG_EDITION(
 		UnitStateRecord usr(unit);
-		worldLog.addUnitRecord(usr);
+		worldLog->addUnitRecord(usr);
 	)
 	postCommandUpdate(unit);
 }
@@ -469,7 +473,7 @@ void SimulationInterface::updateSkillCycle(Unit *unit) {
 void SimulationInterface::startFrame(int frame) {
 	IF_DEBUG_EDITION(
 		assert(frame);
-		worldLog.newFrame(frame);
+		worldLog->newFrame(frame);
 	)
 }
 
@@ -565,6 +569,7 @@ WorldLog::WorldLog() {
 	dataFile = g_fileFactory.getFileOps();
 	dataFile->openWrite(gs_datafile);
 }
+
 WorldLog::~WorldLog() {
 	delete indexFile;
 	delete dataFile;

@@ -17,12 +17,14 @@
 
 #include "metrics.h"
 #include "renderer.h"
+#include "core_data.h"
 
 using Shared::Platform::WindowGl;
 using namespace Glest::Global;
 using Glest::Graphics::Renderer;
 
 namespace Glest { namespace Widgets {
+using Global::CoreData;
 
 // =====================================================
 // class WidgetWindow
@@ -50,6 +52,7 @@ WidgetWindow::WidgetWindow()
 
 	textRendererBM = g_renderer.getTextRenderer();
 	textRendererFT = g_renderer.getFreeTypeRenderer();
+
 }
 
 WidgetWindow::~WidgetWindow() {
