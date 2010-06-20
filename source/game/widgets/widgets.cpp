@@ -102,7 +102,6 @@ Button::Button(Container::Ptr parent)
 		, MouseWidget(this)
 		, hover(false)
 		, pressed(false) {
-	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 }
 
 Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTexture)
@@ -111,7 +110,6 @@ Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTexture
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hover(false), pressed(false) {
-	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	// background texture
 	if (defaultTexture) {
 		CoreData &coreData = CoreData::getInstance();
@@ -150,7 +148,7 @@ void Button::setSize(const Vec2i &sz) {
 	setImage(tex);
 }
 
-bool Button::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
@@ -158,7 +156,7 @@ bool Button::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Button::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (pressed && hover) {
 			Clicked(this);
@@ -196,7 +194,6 @@ void Button::render() {
 
 CheckBox::CheckBox(Container::Ptr parent)
 		: Button(parent), checked(false) {
-	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
@@ -206,7 +203,6 @@ CheckBox::CheckBox(Container::Ptr parent)
 
 CheckBox::CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Button(parent, pos, size, false), checked(false) {
-	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
@@ -250,7 +246,7 @@ Vec2i CheckBox::getPrefSize() const {
 	return dim + xtra;
 }
 
-bool CheckBox::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
@@ -258,7 +254,7 @@ bool CheckBox::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-bool CheckBox::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (pressed && hover) {
 			checked = !checked;
@@ -319,7 +315,7 @@ TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 }
 
-bool TextBox::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool TextBox::mouseDown(MouseButton btn, Vec2i pos) {
 	if (isEnabled()) {
 		focus = true;
 		getRootWindow()->aquireKeyboardFocus(this);
@@ -328,11 +324,11 @@ bool TextBox::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-bool TextBox::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool TextBox::mouseUp(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool TextBox::EW_keyDown(Key key) {
+bool TextBox::keyDown(Key key) {
 	KeyCode code = key.getCode();
 	switch (code) {
 		case KeyCode::BACK_SPACE: {
@@ -367,11 +363,11 @@ bool TextBox::EW_keyDown(Key key) {
 	return false;
 }
 
-bool TextBox::EW_keyUp(Key key) {
+bool TextBox::keyUp(Key key) {
 	return false;
 }
 
-bool TextBox::EW_keyPress(char c) {
+bool TextBox::keyPress(char c) {
 	if (c >= 32 && c <= 126) { // 'space' -> 'tilde' [printable ascii char]
 		cout << "KeyPress: ASCII=='" << c << "' [" << int(c) << "]\n";
 		string s(getText());
@@ -383,7 +379,7 @@ bool TextBox::EW_keyPress(char c) {
 	return false;
 }
 
-void TextBox::EW_lostKeyboardFocus() {
+void TextBox::lostKeyboardFocus() {
 	focus = false;
 	if (changed) {
 		TextChanged(this);
@@ -464,7 +460,7 @@ void Slider::recalc() {
 	setTextPos(m_valuePos, 1);
 }
 
-bool Slider::EW_mouseMove(Vec2i pos) {
+bool Slider::mouseMove(Vec2i pos) {
 	pos -= getScreenPos();
 	if (m_thumbPressed) {
 		int x_pos = clamp(pos.x - m_shaftOffset - 5, 0, m_shaftSize - 10);
@@ -493,13 +489,13 @@ bool Slider::EW_mouseMove(Vec2i pos) {
 	return true;
 }
 
-void Slider::EW_mouseOut() {
+void Slider::mouseOut() {
 	if (!m_thumbPressed) {
 		m_shaftHover = m_thumbHover = false;
 	}
 }
 
-bool Slider::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool Slider::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn != MouseButton::LEFT) {
 		return false;
 	}
@@ -520,7 +516,7 @@ bool Slider::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Slider::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool Slider::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn != MouseButton::LEFT) {
 		return false;
 	}
@@ -638,7 +634,7 @@ void VerticalScrollBar::recalc() {
 	thumbSize = int(availRatio * shaftHeight);
 }
 
-bool VerticalScrollBar::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool VerticalScrollBar::mouseDown(MouseButton btn, Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	pressedPart = hoverPart;
 	if (pressedPart == Part::UPPER_SHAFT || pressedPart == Part::LOWER_SHAFT) {
@@ -653,7 +649,7 @@ bool VerticalScrollBar::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool VerticalScrollBar::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	Part upPart = partAt(localPos);
 
@@ -712,7 +708,7 @@ VerticalScrollBar::Part VerticalScrollBar::partAt(const Vec2i &pos) {
 	}
 }
 
-bool VerticalScrollBar::EW_mouseMove(Vec2i pos) {
+bool VerticalScrollBar::mouseMove(Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	if (pressedPart == Part::NONE) {
 		hoverPart = partAt(localPos);
@@ -1205,19 +1201,19 @@ void ListBoxItem::render() {
 	}
 }
 
-void ListBoxItem::EW_mouseIn() {
+void ListBoxItem::mouseIn() {
 	if (isEnabled()) {
 		m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[2];
 		hover = true;
 	}
 }
 
-void ListBoxItem::EW_mouseOut() {
+void ListBoxItem::mouseOut() {
 	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
 	hover = false;
 }
 
-bool ListBoxItem::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
@@ -1225,7 +1221,7 @@ bool ListBoxItem::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-bool ListBoxItem::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (hover && !selected) {
 			Selected(this);

@@ -189,7 +189,9 @@ TitleBar::TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, b
 		, TextWidget(this)
 		, m_title(title)
 		, m_closeButton(0) {
-	//m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
+	///@todo specify in widget.cfg
+	//m_backgroundStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
+	//m_borderStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TITLE_BAR);
 	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
 	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
 	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
@@ -328,7 +330,7 @@ void MessageDialog::onButtonClicked(Button::Ptr btn) {
 	}
 }
 
-bool MessageDialog::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool MessageDialog::mouseDown(MouseButton btn, Vec2i pos) {
 	if (m_titleBar->isInside(pos) && btn == MouseButton::LEFT) {
 		m_pressed = true;
 		m_lastPos = pos;
@@ -337,7 +339,7 @@ bool MessageDialog::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-bool MessageDialog::EW_mouseMove(Vec2i pos) {
+bool MessageDialog::mouseMove(Vec2i pos) {
 	if (m_pressed) {
 		Vec2i offset = pos - m_lastPos;
 		Vec2i newPos = getPos() + offset;
@@ -348,7 +350,7 @@ bool MessageDialog::EW_mouseMove(Vec2i pos) {
 	return false;
 }
 
-bool MessageDialog::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool MessageDialog::mouseUp(MouseButton btn, Vec2i pos) {
 	if (m_pressed && btn == MouseButton::LEFT) {
 		m_pressed = false;
 		return true;

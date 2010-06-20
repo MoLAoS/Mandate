@@ -94,11 +94,11 @@ public:
 
 	virtual void setSize(const Vec2i &sz);
 
-	virtual void EW_mouseIn() { hover = true; }
-	virtual void EW_mouseOut() { hover = false; }
+	virtual void mouseIn() { hover = true; }
+	virtual void mouseOut() { hover = false; }
 
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -127,8 +127,8 @@ public:
 	void setChecked(bool v) { checked = v; }
 	bool isChecked() const { return checked; }
 
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -154,16 +154,16 @@ public:
 	TextBox(Container::Ptr parent);
 	TextBox(Container::Ptr parent, Vec2i pos, Vec2i size);
 
-	virtual void EW_mouseIn()	{ hover = true;	 }
-	virtual void EW_mouseOut() { hover = false;	}
+	virtual void mouseIn()	{ hover = true;	 }
+	virtual void mouseOut() { hover = false;	}
 
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
 
-	virtual bool EW_keyDown(Key key);
-	virtual bool EW_keyUp(Key key);
-	virtual bool EW_keyPress(char c);
-	virtual void EW_lostKeyboardFocus();
+	virtual bool keyDown(Key key);
+	virtual bool keyUp(Key key);
+	virtual bool keyPress(char c);
+	virtual void lostKeyboardFocus();
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -212,11 +212,11 @@ public:
 		recalc();
 	}
 
-	virtual void EW_mouseOut();
+	virtual void mouseOut();
 
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseMove(Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
 
 	void render();
 
@@ -285,11 +285,11 @@ public:
 	virtual void setSize(const Vec2i &sz) { Widget::setSize(sz); recalc(); }
 
 	virtual void update();
-	virtual void EW_mouseOut() { hoverPart = Part::NONE; }
+	virtual void mouseOut() { hoverPart = Part::NONE; }
 
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseMove(Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -356,13 +356,11 @@ public:
 	PicturePanel(Container::Ptr parent)
 			: Panel(parent)
 			, ImageWidget(this) {
-		WIDGET_LOG( __FUNCTION__ );
 	}
 
 	PicturePanel(Container::Ptr parent, Vec2i pos, Vec2i size) 
 			: Panel(parent, pos, size)
 			, ImageWidget(this) {
-		WIDGET_LOG( __FUNCTION__ );
 	}
 
 	virtual Vec2i getPrefSize() const;
@@ -485,10 +483,10 @@ public:
 
 	void setSelected(bool s) { selected = s; }
 
-	virtual void EW_mouseIn();
-	virtual void EW_mouseOut();
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
+	virtual void mouseIn();
+	virtual void mouseOut();
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;

@@ -163,9 +163,9 @@ public:
 	sigslot::signal<Ptr> Button1Clicked,
 						 Button2Clicked;
 
-	bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	bool EW_mouseMove(Vec2i pos);
-	bool EW_mouseUp(MouseButton btn, Vec2i pos);
+	bool mouseDown(MouseButton btn, Vec2i pos);
+	bool mouseMove(Vec2i pos);
+	bool mouseUp(MouseButton btn, Vec2i pos);
 
 	void render();
 

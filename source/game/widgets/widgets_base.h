@@ -35,15 +35,6 @@ class WidgetWindow;
 
 using std::string;
 
-#ifndef WIDGET_LOGGING
-#	define WIDGET_LOGGING 0
-#endif
-#if WIDGET_LOGGING
-#	define WIDGET_LOG(x) STREAM_LOG(x)
-#else
-#	define WIDGET_LOG(x)
-#endif
-
 #define ASSERT_RANGE(var, size)	assert(var >= 0 && var < size)
 
 class MouseWidget;
@@ -190,14 +181,14 @@ public:
 	~MouseWidget() {}
 
 private:
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos)			{ return false; }
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos)			{ return false; }
-	virtual bool EW_mouseMove(Vec2i pos)							{ return false; }
-	virtual bool EW_mouseDoubleClick(MouseButton btn, Vec2i pos)	{ return false; }
-	virtual bool EW_mouseWheel(Vec2i pos, int z)					{ return false; }
+	virtual bool mouseDown(MouseButton btn, Vec2i pos)			{ return false; }
+	virtual bool mouseUp(MouseButton btn, Vec2i pos)			{ return false; }
+	virtual bool mouseMove(Vec2i pos)							{ return false; }
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos)	{ return false; }
+	virtual bool mouseWheel(Vec2i pos, int z)					{ return false; }
 
-	virtual void EW_mouseIn() {}
-	virtual void EW_mouseOut() {}
+	virtual void mouseIn() {}
+	virtual void mouseOut() {}
 };
 
 class KeyboardWidget {
@@ -213,11 +204,11 @@ public:
 	~KeyboardWidget() {}
 
 private:
-	virtual bool EW_keyDown(Key key)	{ return false; }
-	virtual bool EW_keyUp(Key key)		{ return false; }
-	virtual bool EW_keyPress(char c)	{ return false; }
+	virtual bool keyDown(Key key)	{ return false; }
+	virtual bool keyUp(Key key)		{ return false; }
+	virtual bool keyPress(char c)	{ return false; }
 
-	virtual void EW_lostKeyboardFocus() {}
+	virtual void lostKeyboardFocus() {}
 };
 
 struct ImageRenderInfo {

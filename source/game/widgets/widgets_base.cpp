@@ -43,12 +43,10 @@ Widget::Widget(Container::Ptr parent)
 	init(Vec2i(0), Vec2i(0));
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
-	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr)" );
 }
 
 Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: parent(parent) {
-	WIDGET_LOG( __FUNCTION__ << "(Container::Ptr, Vec2i, Vec2i)" );
 	init(pos, size);
 	screenPos = parent->getScreenPos() + pos;
 	rootWindow = parent->getRootWindow();
@@ -58,13 +56,11 @@ Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
 Widget::Widget(WidgetWindow::Ptr window)
 		: parent(0)
 		, screenPos(0) {
-	WIDGET_LOG( __FUNCTION__ << "(WidgetWindow::Ptr)" );
 	init(Vec2i(0), Vec2i(0));
 	rootWindow = window;
 }
 
 Widget::~Widget() {
-	WIDGET_LOG( __FUNCTION__ );
 	Destroyed(this);
 	if (rootWindow != this) {
 		parent->remChild(this);
@@ -85,7 +81,6 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 }
 
 Widget::Ptr Widget::getWidgetAt(const Vec2i &pos) {
-	WIDGET_LOG( __FUNCTION__ );
 	assert(isInside(pos));
 	return this;
 }
@@ -106,6 +101,12 @@ void Widget::setSize(const Vec2i &sz) {
 void Widget::setPos(const Vec2i &p) {
 	pos = p;
 	screenPos = parent->getScreenPos() + pos;
+}
+
+inline Colour calcColour(const Colour &c, float fade) {
+	Colour res(c);
+	res.a = clamp(unsigned(float(c.a) * fade), 0u, 255u);
+	return res;
 }
 
 void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
@@ -132,9 +133,12 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 	bool raised = false;
 
+	Colour colour;
 	switch (style.m_type) {
 		case BorderType::SOLID:
-			glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+			// alpha ?
+			colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[0]), getFade());
+			glColor4ubv(colour.ptr());
 			glBegin(GL_QUAD_STRIP);
 				glVertex2iv(verts[OBL].ptr());
 				glVertex2iv(verts[IBL].ptr());
@@ -153,10 +157,10 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 		case BorderType::RAISE:
 			raised = true;
 		case BorderType::EMBED: {
-				const Colour &tlColour = g_widgetConfig.getColour(style.m_colourIndices[raised ? 0 : 1]);
-				const Colour &brColour = g_widgetConfig.getColour(style.m_colourIndices[raised ? 1 : 0]);
+				colour = calcColour(
+					g_widgetConfig.getColour(style.m_colourIndices[raised ? 0 : 1]), getFade());
 				glBegin(GL_QUAD_STRIP);
-					glColor4ubv(tlColour.ptr());
+					glColor4ubv(colour.ptr());
 					glVertex2iv(verts[OBL].ptr());
 					glVertex2iv(verts[IBL].ptr());
 					glVertex2iv(verts[OTL].ptr());
@@ -164,8 +168,10 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 					glVertex2iv(verts[OTR].ptr());
 					glVertex2iv(verts[ITR].ptr());
 				glEnd();
+				colour = calcColour(
+					g_widgetConfig.getColour(style.m_colourIndices[raised ? 1 : 0]), getFade());
 				glBegin(GL_QUAD_STRIP);
-					glColor4ubv(brColour.ptr());
+					glColor4ubv(colour.ptr());
 					glVertex2iv(verts[OTR].ptr());
 					glVertex2iv(verts[ITR].ptr());
 					glVertex2iv(verts[OBR].ptr());
@@ -178,28 +184,32 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 		case BorderType::CUSTOM_SIDES:
 			glBegin(GL_QUADS);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[0]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OBL].ptr());
 				glVertex2iv(verts[IBL].ptr());
 				glVertex2iv(verts[OTL].ptr());
 				glVertex2iv(verts[ITL].ptr());
 			glEnd();
 			glBegin(GL_QUADS);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[1]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[1]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OTL].ptr());
 				glVertex2iv(verts[ITL].ptr());
 				glVertex2iv(verts[OTR].ptr());
 				glVertex2iv(verts[ITR].ptr());
 			glEnd();
 			glBegin(GL_QUADS);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[2]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[2]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OTR].ptr());
 				glVertex2iv(verts[ITR].ptr());
 				glVertex2iv(verts[OBR].ptr());
 				glVertex2iv(verts[IBR].ptr());
 			glEnd();
 			glBegin(GL_QUADS);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[3]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[3]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OBR].ptr());
 				glVertex2iv(verts[IBR].ptr());
 				glVertex2iv(verts[OBL].ptr());
@@ -210,16 +220,20 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 		case BorderType::CUSTOM_CORNERS:
 			glBegin(GL_QUAD_STRIP);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[0]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OBL].ptr());
 				glVertex2iv(verts[IBL].ptr());
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[1]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[1]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OTL].ptr());
 				glVertex2iv(verts[ITL].ptr());
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[2]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[2]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OTR].ptr());
 				glVertex2iv(verts[ITR].ptr());
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[3]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[3]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[OBR].ptr());
 				glVertex2iv(verts[IBR].ptr());
 			glEnd();
@@ -242,11 +256,14 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 	glEnable(GL_BLEND);
 	glDisable(GL_LIGHTING);
 
+	Colour colour;
 	switch (style.m_type) {
 		case BackgroundType::COLOUR:
 			glDisable(GL_TEXTURE_2D);
 			glBegin(GL_TRIANGLE_FAN);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				// alpha ?
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[0]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[0].ptr());
 				glVertex2iv(verts[1].ptr());
 				glVertex2iv(verts[2].ptr());
@@ -258,13 +275,17 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 		case BackgroundType::CUSTOM_COLOURS:
 			glDisable(GL_TEXTURE_2D);
 			glBegin(GL_TRIANGLE_FAN);
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[0]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[0]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[0].ptr());
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[1]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[1]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[1].ptr());
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[2]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[2]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[2].ptr());
-				glColor4ubv(g_widgetConfig.getColour(style.m_colourIndices[3]).ptr());
+				colour = calcColour(g_widgetConfig.getColour(style.m_colourIndices[3]), getFade());
+				glColor4ubv(colour.ptr());
 				glVertex2iv(verts[3].ptr());
 			glEnd();
 
@@ -275,6 +296,7 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 			const Texture2D *tex = g_widgetConfig.getTexture(style.m_imageIndex);
 			glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
 			glBegin(GL_TRIANGLE_FAN);
+			glColor4f(1.f, 1.f, 1.f, getFade());
 				glTexCoord2i(0, 0);
 				glVertex2iv(verts[0].ptr());
 				glTexCoord2i(0, 1);
@@ -338,12 +360,10 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 
 ImageWidget::ImageWidget(Widget::Ptr me) 
 		: me(me) {
-	WIDGET_LOG( __FUNCTION__ );
 }
 
 ImageWidget::ImageWidget(Widget::Ptr me, Texture2D *tex)
 		: me(me) {
-	WIDGET_LOG( __FUNCTION__ << "(Texture2D*)" );
 	textures.push_back(tex);
 	imageInfo.push_back(ImageRenderInfo());
 }
@@ -439,7 +459,6 @@ TextWidget::TextWidget(Widget::Ptr me)
 		, font(0)
 		, isFreeTypeFont(false)
 		, centre(true) {
-	WIDGET_LOG( __FUNCTION__ );
 	me->textWidget = this;
 }
 
@@ -572,13 +591,11 @@ Container::~Container() {
 }
 
 void Container::addChild(Widget::Ptr child) {
-	WIDGET_LOG( __FUNCTION__ );
 	children.push_back(child);
 	child->setFade(getFade());
 }
 
 void Container::remChild(Widget::Ptr child) {
-	WIDGET_LOG( __FUNCTION__ );
 	WidgetList::iterator it = std::find(children.begin(), children.end(), child);
 	if (it != children.end()) {
 		children.erase(it);
@@ -586,7 +603,6 @@ void Container::remChild(Widget::Ptr child) {
 }
 
 void Container::clear() {
-	WIDGET_LOG( __FUNCTION__ );
 	deleteValues(children);
 	children.clear();
 }
@@ -613,7 +629,6 @@ void Container::setFade(float v) {
 }
 
 Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
-	WIDGET_LOG( __FUNCTION__ );
 	foreach_rev (WidgetList, it, children) {
 		Widget::Ptr widget = *it;
 		if (widget->isVisible() && widget->isInside(pos)) {

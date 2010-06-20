@@ -100,7 +100,7 @@ void WidgetWindow::unwindMouseOverStack(Widget::Ptr newTop) {
 	while (mouseOverStack.top() != newTop) {
 		MouseWidget::Ptr mw = mouseOverStack.top()->asMouseWidget();
 		if (mw) {
-			mw->EW_mouseOut();
+			mw->mouseOut();
 		}
 		mouseOverStack.pop();
 	}
@@ -138,7 +138,7 @@ void WidgetWindow::doMouseInto(Widget::Ptr widget) {
 		while (!tmpStack.empty()) {
 			MouseWidget::Ptr mw = tmpStack.top()->asMouseWidget();
 			if (mw) {
-				mw->EW_mouseIn();
+				mw->mouseIn();
 			}
 			mouseOverStack.push(tmpStack.top());
 			tmpStack.pop();
@@ -246,12 +246,12 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 		doMouseInto(widget);
 	}
 	if (keyboardFocused != keyboardWidget && keyboardFocused != widget->asKeyboardWidget()) {
-		keyboardFocused->EW_lostKeyboardFocus();
+		keyboardFocused->lostKeyboardFocus();
 		keyboardFocused = keyboardWidget;
 	}
 	while (widget) {
 		MouseWidget::Ptr mw = widget->asMouseWidget();
-		if (mw && mw->EW_mouseDown(msBtn, mousePos)) {
+		if (mw && mw->mouseDown(msBtn, mousePos)) {
 			if (lastMouseDownWidget) {
 				mouseDownWidgets[lastMouseDownButton] = 0;
 			}
@@ -269,7 +269,7 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 	mousePos.y = getH() - y;
 	MouseWidget::Ptr downWidget = mouseDownWidgets[msBtn];
 	if (downWidget) {
-		downWidget->EW_mouseUp(msBtn, mousePos);
+		downWidget->mouseUp(msBtn, mousePos);
 		mouseDownWidgets[msBtn] = 0;
 	}
 	if (lastMouseDownWidget == downWidget) {
@@ -302,12 +302,12 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	}
 	assert(widget);
 	if (lastMouseDownWidget) {
-		lastMouseDownWidget->EW_mouseMove(mousePos);
+		lastMouseDownWidget->mouseMove(mousePos);
 	} else {
 		doMouseInto(widget);
 		while (widget) {
 			if (widget->asMouseWidget()) {
-				if (widget->asMouseWidget()->EW_mouseMove(mousePos)) {
+				if (widget->asMouseWidget()->mouseMove(mousePos)) {
 					return;
 				}
 			}
@@ -334,7 +334,7 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 	}
 	while (widget) {
 		if (widget->asMouseWidget()
-		&& widget->asMouseWidget()->EW_mouseDoubleClick(msBtn, mousePos)) {
+		&& widget->asMouseWidget()->mouseDoubleClick(msBtn, mousePos)) {
 			return;
 		}
 		widget = widget->getParent();
@@ -354,7 +354,7 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	}
 	while (widget) {
 		if (widget->asMouseWidget()
-		&& widget->asMouseWidget()->EW_mouseWheel(mousePos, zDelta)) {
+		&& widget->asMouseWidget()->mouseWheel(mousePos, zDelta)) {
 			return;
 		}
 		widget = widget->getParent();
@@ -362,15 +362,15 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 }
 
 void WidgetWindow::eventKeyDown(const Key &key) {
-	keyboardFocused->EW_keyDown(key);
+	keyboardFocused->keyDown(key);
 }
 
 void WidgetWindow::eventKeyUp(const Key &key) {
-	keyboardFocused->EW_keyUp(key);
+	keyboardFocused->keyUp(key);
 }
 
 void WidgetWindow::eventKeyPress(char c) {
-	keyboardFocused->EW_keyPress(c);
+	keyboardFocused->keyPress(c);
 }
 
 void WidgetWindow::renderMouseCursor() {

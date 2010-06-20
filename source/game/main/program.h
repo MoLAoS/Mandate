@@ -139,14 +139,14 @@ public:
 	void setSimInterface(SimulationInterface *si);
 
 	// InputWidget virtuals
-	virtual bool EW_mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseMove(Vec2i pos);
-	virtual bool EW_mouseDoubleClick(MouseButton btn, Vec2i pos);
-	virtual bool EW_mouseWheel(Vec2i pos, int zDelta);
-	virtual bool EW_keyDown(Key key);
-	virtual bool EW_keyUp(Key key);
-	virtual bool EW_keyPress(char c);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
+	virtual bool mouseWheel(Vec2i pos, int zDelta);
+	virtual bool keyDown(Key key);
+	virtual bool keyUp(Key key);
+	virtual bool keyPress(char c);
 
 		// Window virtuals
 	virtual void eventActivate(bool active) {}

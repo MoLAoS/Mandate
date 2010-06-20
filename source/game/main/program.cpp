@@ -296,7 +296,7 @@ void Program::eventResize(SizeState sizeState) {
 	}
 }
 
-bool Program::EW_mouseDown(MouseButton btn, Vec2i pos) {
+bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -317,7 +317,7 @@ bool Program::EW_mouseDown(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Program::EW_mouseUp(MouseButton btn, Vec2i pos) {
+bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -338,7 +338,7 @@ bool Program::EW_mouseUp(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Program::EW_mouseMove(Vec2i pos) {
+bool Program::mouseMove(Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -347,7 +347,7 @@ bool Program::EW_mouseMove(Vec2i pos) {
 	return true;
 }
 
-bool Program::EW_mouseDoubleClick(MouseButton btn, Vec2i pos) {
+bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -368,7 +368,7 @@ bool Program::EW_mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-bool Program::EW_mouseWheel(Vec2i pos, int zDelta) {
+bool Program::mouseWheel(Vec2i pos, int zDelta) {
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -377,17 +377,17 @@ bool Program::EW_mouseWheel(Vec2i pos, int zDelta) {
 	return true;
 }
 
-bool Program::EW_keyDown(Key key) {
+bool Program::keyDown(Key key) {
 	programState->keyDown(key);
 	return true;
 }
 
-bool Program::EW_keyUp(Key key) {
+bool Program::keyUp(Key key) {
 	programState->keyUp(key);
 	return true;
 }
 
-bool Program::EW_keyPress(char c) {
+bool Program::keyPress(char c) {
 	programState->keyPress(c);
 	return true;
 }
