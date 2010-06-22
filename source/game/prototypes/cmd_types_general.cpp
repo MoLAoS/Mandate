@@ -528,23 +528,49 @@ void CarryCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	if (unit->getCurrSkill()->getClass() == SkillClass::UNLOAD) {
-		// move all units it contains
-		//for each unit
-		// move and enable
-	} else if (unit->getCurrSkill()->getClass() == SkillClass::LOAD) {
+	// order of these is important
+	if (unit->getCurrSkill()->getClass() == SkillClass::LOAD || loadSkillType) {
 		Unit *targetUnit = command->getUnit();
 		const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
 		if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
 			g_console.addLine("doing load");
 			//targetUnit->getCommands().clear()
-			//targetUnit->setAlpha(0.0f);
-			targetUnit->setVisible(false);
-			//targetUnit->setEnabled(false); //interaction
+			//targetUnit->setVisible(false);
+			g_map.clearUnitCells(targetUnit, targetUnit->getPos());
+			//targetUnit->setEnabled(false); // disable interaction is done when it can't be seen, remove from cell, deselect
 			unit->getCarriedUnits().push_back(targetUnit);
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
 		}
+	} else if (unit->getCurrSkill()->getClass() == SkillClass::UNLOAD || unloadSkillType) {
+		Unit::UnitContainer &units = unit->getCarriedUnits();
+
+		float maxRange = (unloadSkillType ? unloadSkillType : unit->getCurrSkill())->getMaxRange();
+		PosCircularIteratorSimple posIter(g_map.getBounds(), unit->getPos(), maxRange);
+		Unit::UnitContainer::iterator i = units.begin();
+		// unload each carried unit to a free space if possible
+		while (i != units.end()) {
+			Unit *targetUnit = (*i);
+			Vec2i pos;
+			g_console.addLine("unloading unit");
+		
+			if (posIter.getNext(pos, maxRange)) { // g_map.getNearestFreePos(pos, unit, targetUnit, 1, maxRange)????
+				// pick a free space to move the unit to
+				/// @todo perhaps combine the next two statements into a unit move/relocate(pos) method
+				targetUnit->setPos(pos);
+				g_map.putUnitCells(targetUnit, pos);
+				targetUnit->setVisible(true);
+				i = units.erase(i);
+			} else {
+				// must be crowded, stop unloading
+				g_console.addLine("too crowded to unload"); /// @todo change with localised version
+				break;
+			}		
+		}
+
+		// no more units to deal with
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
 	}
 }
 

@@ -1488,6 +1488,11 @@ void Renderer::renderUnits(){
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
+			
+			if (!unit->isVisible()) {
+				continue;
+			}
+
 			ut = unit->getType();
 			int framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
 
@@ -1536,14 +1541,12 @@ void Renderer::renderUnits(){
 				glEnable(GL_COLOR_MATERIAL);
 			}
 
-			if (unit->isVisible()) {
-				//render
-				const Model *model= unit->getCurrentModel();
-				model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
-				modelRenderer->render(model);
-				triangleCount+= model->getTriangleCount();
-				pointCount+= model->getVertexCount();
-			}
+			//render
+			const Model *model= unit->getCurrentModel();
+			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
+			modelRenderer->render(model);
+			triangleCount+= model->getTriangleCount();
+			pointCount+= model->getVertexCount();
 
 			glPopMatrix();
 		}
@@ -2504,6 +2507,11 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
+
+			if (!unit->isVisible()) {
+				continue;
+			}
+
 			glPushName(unit->getId());
 			glMatrixMode(GL_MODELVIEW);
 
