@@ -154,6 +154,7 @@ DebugRenderer::DebugRenderer() {
 	captureFrustum = 
 	gridTextures = 
 	buildSiteMaps =
+	influenceMap =
 					false;
 
 //					true;
@@ -573,6 +574,13 @@ void DebugRenderer::renderFrustum() const {
 	glPopAttrib();
 }
 
+void DebugRenderer::setInfluenceMap(TypeMap<float> *iMap, Vec3f colour, float max) {
+	imOverlay.iMap = iMap;
+	imOverlay.baseColour = colour;
+	imOverlay.max = max;
+	influenceMap = true;
+}
+
 void DebugRenderer::renderEffects(SceneCuller &culler) {
 	if (regionHilights && !rhCallback.empty()) {
 		renderCellOverlay(culler, rhCallback);
@@ -605,6 +613,9 @@ void DebugRenderer::renderEffects(SceneCuller &culler) {
 	}
 	if (showFrustum) {
 		renderFrustum();
+	}
+	if (influenceMap) {
+		renderCellOverlay(culler, imOverlay);
 	}
 }
 

@@ -545,7 +545,7 @@ void CarryCommandType::update(Unit *unit) const {
 	} else if (unit->getCurrSkill()->getClass() == SkillClass::UNLOAD || unloadSkillType) {
 		Unit::UnitContainer &units = unit->getCarriedUnits();
 
-		float maxRange = (unloadSkillType ? unloadSkillType : unit->getCurrSkill())->getMaxRange();
+		int maxRange = (unloadSkillType ? unloadSkillType : unit->getCurrSkill())->getMaxRange();
 		PosCircularIteratorSimple posIter(g_map.getBounds(), unit->getPos(), maxRange);
 		Unit::UnitContainer::iterator i = units.begin();
 		// unload each carried unit to a free space if possible
@@ -554,7 +554,8 @@ void CarryCommandType::update(Unit *unit) const {
 			Vec2i pos;
 			g_console.addLine("unloading unit");
 		
-			if (posIter.getNext(pos, maxRange)) { // g_map.getNearestFreePos(pos, unit, targetUnit, 1, maxRange)????
+			fixed d;
+			if (posIter.getNext(pos, d)) { // g_map.getNearestFreePos(pos, unit, targetUnit, 1, maxRange)????
 				// pick a free space to move the unit to
 				/// @todo perhaps combine the next two statements into a unit move/relocate(pos) method
 				targetUnit->setPos(pos);

@@ -33,7 +33,7 @@
 #define g_simInterface		(Program::getInstance()->getSimulationInterface())
 
 #if _GAE_DEBUG_EDITION_
-#	define theDebugRenderer	(Glest::Debug::getDebugRenderer())
+#	define g_debugRenderer	(Glest::Debug::getDebugRenderer())
 #	define IF_DEBUG_EDITION(x) x
 #	define IF_NOT_DEBUG_EDITION(x)
 #else

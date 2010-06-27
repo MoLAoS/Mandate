@@ -349,6 +349,12 @@ private:
 	int cx, cy;
 
 public:
+	RectIterator(const Rect2i &rect)
+			: RectIteratorBase(rect.p[0], rect.p[1]) {
+		cx = wx;
+		cy = ny;
+	}
+
 	RectIterator(const Vec2i &p1, const Vec2i &p2)
 			: RectIteratorBase(p1, p2) {
 		cx = wx;

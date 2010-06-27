@@ -14,9 +14,7 @@
 #include <algorithm>
 
 #include "game_constants.h"
-#include "cartographer.h"
-#include "search_engine.h"
-#include "cluster_map.h"
+#include "route_planner.h"
 #include "node_map.h"
 
 #include "pos_iterator.h"
@@ -308,7 +306,7 @@ IF_DEBUG_EDITION(
 			for (int lx = 0; lx < mapBounds.w; ++lx) {
 				Vec2i pos(mapBounds.x + lx, y);
 				if (siteMap->getInfluence(pos)) {
-					theDebugRenderer.addBuildSiteCell(pos);
+					g_debugRenderer.addBuildSiteCell(pos);
 				}
 			}
 		}
@@ -327,6 +325,87 @@ void Cartographer::tick() {
 			it->second.clear();
 		}
 	}
+}
+
+/** SearchEngine<>::aStar<>() goal function, used to build distance maps. */
+class DistanceBuilderGoal {
+private:
+	TypeMap<float> *iMap; /**< inluence map to write distance data into.	  */
+	float maxRange;
+
+public:
+	DistanceBuilderGoal(TypeMap<float> *iMap, float maxRange = numeric_limits<float>::infinity())
+			: iMap(iMap), maxRange(maxRange) {}
+	
+	/** The goal function, writes costSoFar into the influence map.
+	  * @param pos position to test @param costSoFar the cost of the shortest path to pos
+	  * @return true if maxRange is exceeded. */
+	bool operator()(const Vec2i &pos, const float costSoFar) const {
+		if (costSoFar > maxRange) {
+			return true;
+		}
+		iMap->setInfluence(pos, costSoFar);
+		return false;
+	}
+};
+
+void Cartographer::adjustGlestimalMap(Field f, TypeMap<float> &iMap, const Vec2i &pos, float range) {
+	// Set pos open, write distance data to iMap from pos to 'range' in field f
+	nmSearchEngine->setStart(pos, 0.f);
+	MoveCost cost(f, 1, masterMap);
+	DistanceBuilderGoal goal(&iMap, range);
+	nmSearchEngine->aStar(goal, cost, ZeroHeuristic());
+}
+
+/** constructs an influence map using djkstra search from all tech resources, fills 'positions' with
+  * a collection of Vec2i that are each at least 25 cells distant from a tech resource, and at 
+  * least 15 cells distant from each other. */
+void Cartographer::buildGlestimalMap(Field f, V2iList &positions) {
+	Rectangle rect(0, 0, cellMap->getW() - 2, cellMap->getH() - 2);
+	TypeMap<float> iMap(rect, 0.f);
+
+	// 1. Setup search. Reset NodeMap and set positions of all Techtree resources open
+	nmSearchEngine->reset();
+	foreach (ResourcePosMap, it, resourceLocations) {
+		if (it->first->getClass() == ResourceClass::TECHTREE) {
+			foreach (V2iList, tPos, it->second) {
+				Vec2i cPos = *tPos * 2;
+				//FIXME: assumes Map::cellScale == 2, use a Util::RectIterator
+				nmSearchEngine->setOpen(cPos, 0.f);
+				nmSearchEngine->setOpen(cPos + OrdinalOffsets[OrdinalDir::EAST], 0.f);
+				nmSearchEngine->setOpen(cPos + OrdinalOffsets[OrdinalDir::SOUTH], 0.f);
+				nmSearchEngine->setOpen(cPos + OrdinalOffsets[OrdinalDir::SOUTH_EAST], 0.f);
+			}
+		}
+	}
+	// 2. Zap. Build distance map (distance at each cell in Field f to nearest tech resource)
+	MoveCost cost(f, 1, masterMap);
+	DistanceBuilderGoal goal(&iMap);
+	nmSearchEngine->aStar(goal, cost, ZeroHeuristic());
+
+	// 3. Find spawn points
+	float big;
+	do {
+		// 3a. scan iMap, find largest value
+		big = 0.f;
+		Vec2i bigPos(-1);
+		Util::RectIterator iter(cellMap->getBounds());
+		while (iter.more()) {
+			Vec2i pos = iter.next();
+			float inf = iMap.getInfluence(pos);
+			if (inf > big) {
+				big = inf;
+				bigPos = pos;
+			}
+		}
+		// 3b. add cell with largest value to positioins, and adjust the influence map
+		if (bigPos != Vec2i(-1)) {
+			positions.push_back(bigPos);
+			adjustGlestimalMap(f, iMap, bigPos, 15.f);
+		}
+	// while the best pos we found is at least 25 cells from a tech resource 
+	// and at least 15 cells from another spawn point (travelling in Field f)
+	} while (big > 25.f);
 }
 
 /** Initialise annotated maps for each team, call after initial units visibility is applied */

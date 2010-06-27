@@ -263,6 +263,9 @@ public:
 		return getSiteMap(key);
 	}
 
+	void adjustGlestimalMap(Field f, TypeMap<float> &iMap, const Vec2i &pos, float range);
+	void buildGlestimalMap(Field f, V2iList &positions);
+
 	ClusterMap* getClusterMap() const { return clusterMap; }
 
 	AnnotatedMap* getMasterMap()				const	{ return masterMap;							  }

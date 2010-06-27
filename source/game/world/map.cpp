@@ -603,7 +603,7 @@ bool Map::getNearestFreePos(Vec2i &result, const Unit *unit, const Vec2i &target
 		}
 	}
 
-	return minDistance <= 10000;
+	return minDistance < fixed::max_int();
 
 }
 

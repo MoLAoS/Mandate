@@ -91,6 +91,8 @@ private:
 	void onChangeTileset(ListBase::Ptr);
 	void onChangeTechtree(ListBase::Ptr);
 
+	void onCheckChanged(Button::Ptr);
+
 	void onButtonClick(Button::Ptr ptr);
 	void onDismissDialog(MessageDialog::Ptr);
 };

@@ -101,6 +101,22 @@ public:
 	}
 };
 
+class InfluenceMapOverlay {
+public:
+	TypeMap<float> *iMap;
+	Vec3f baseColour;
+	float max;
+
+	bool operator()(const Vec2i &cell, Vec4f &colour) {
+		const float influence = iMap->getInfluence(cell);
+		if (influence != 0.f) {
+			colour = Vec4f(baseColour, clamp(influence / max, 0.f, 1.f));
+			return true;
+		}
+		return false;
+	}
+};
+
 class VisibleAreaOverlay {
 public:
 	set<Vec2i> quadSet;
@@ -208,6 +224,7 @@ private:
 	ResourceMapOverlay			rmOverlay;
 	StoreMapOverlay				smOverlay;
 	BuildSiteMapOverlay			bsOverlay;
+	InfluenceMapOverlay			imOverlay;
 
 public:
 	DebugRenderer();
@@ -225,7 +242,8 @@ public:
 			teamSight,			// currently useless ;)
 			resourceMapOverlay,	// show resource goal map overlay
 			storeMapOverlay,	// show store goal map overlay
-			buildSiteMaps;		// show building site goal maps
+			buildSiteMaps,		// show building site goal maps
+			influenceMap;		// visualise an inluence map, [TypeMap<float> only]
 
 	void addCellHighlight(const Vec2i &pos, HighlightColour c = HighlightColour::BLUE) {
 		rhCallback.cells[pos] = c;
@@ -238,6 +256,8 @@ public:
 	void addBuildSiteCell(const Vec2i &pos) {
 		bsOverlay.cells.insert(pos);
 	}
+
+	void setInfluenceMap(TypeMap<float> *iMap, Vec3f colour, float max);
 
 	PathFinderTextureCallback& getPFCallback() { return pfCallback; }
 	ClusterMapOverlay&	getCMOverlay() { return cmOverlay; }

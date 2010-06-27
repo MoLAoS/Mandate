@@ -17,6 +17,7 @@
 #include "game_settings.h"
 #include "config.h"
 #include "ai_interface.h"
+#include "gaia.h"
 #include "network_types.h"
 #include "network_message.h"
 #include "stats.h"
@@ -159,21 +160,22 @@ public:
 	typedef vector<NetworkCommand> Commands;
 
 protected:
-	Program &program;
-	GameState *game;
-	World *world;
-	Stats *stats;
+	Program&		program;
+	GameState*		game;
+	World*			world;
+	Stats*			stats;
 
-	UnitMap units;
+	UnitMap			units;
 
-	GameSettings gameSettings;
-	XmlNode *savedGame;
+	GameSettings	gameSettings;
+	XmlNode*		savedGame;
 
-	AiInterfaces aiInterfaces;
-	Commander *commander;
+	AiInterfaces	aiInterfaces;
+	Plan::Gaia*		m_gaia;
+	Commander*		commander;
 
-	UnitFactory unitFactory;
-	ObjectFactory objectFactory;
+	UnitFactory		unitFactory;
+	ObjectFactory	objectFactory;
 
 	bool paused;
 	bool gameOver;
@@ -185,9 +187,9 @@ protected:
 
 	SkillCycleTable skillCycleTable;
 
-#	if _GAE_DEBUG_EDITION_
+	IF_DEBUG_EDITION(
 		WorldLog *worldLog;
-#	endif
+	)
 
 public:
 	SimulationInterface(Program &program);
@@ -260,6 +262,10 @@ public:
 	NetworkInterface*	asNetworkInterface();
 	ClientInterface*	asClientInterface();
 	ServerInterface*	asServerInterface();
+
+	IF_DEBUG_EDITION(
+		Plan::Gaia* getGaia() { return m_gaia; }
+	)
 
 protected:
 	// game life-cycle

@@ -172,6 +172,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	int cbw = 75, stw = 200;
 	
 	m_randomLocsCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
+	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 	cout << "CheckBox pref size = " << m_randomLocsCheckbox->getPrefSize() << endl;
 	
 	m_randomLocsLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
@@ -180,6 +181,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	x = gap * 2 + stw;
 	m_fogOfWarCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
 	m_fogOfWarCheckbox->setChecked(true);
+	m_fogOfWarCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
 	m_fogOfWarLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
 	m_fogOfWarLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
@@ -295,6 +297,18 @@ void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
 	}
 	assert(ndx != -1);
 	gs.setTeam(ndx, psw->getSelectedTeamIndex());
+}
+
+void MenuStateNewGame::onCheckChanged(Button::Ptr cb) {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	if (cb == m_fogOfWarCheckbox) {
+		gs.setFogOfWar(m_fogOfWarCheckbox->isChecked());
+	} else if (cb == m_randomLocsCheckbox) {
+		gs.setRandomStartLocs(m_randomLocsCheckbox->isChecked());
+	} else {
+		ASSERT(false, "Unknown CheckBox!?!");
+	}
+
 }
 
 void MenuStateNewGame::onChangeMap(ListBase::Ptr) {

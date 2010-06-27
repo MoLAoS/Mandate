@@ -79,7 +79,7 @@ public:
 	}
 	~TypeMap() { delete [] data; }
 	void zeroMap() { memset(data, 0, sizeof(type) * this->w * this->h); }
-	void clearMap(type val) { fill_n(data, this->w * this->h, val); }
+	void clearMap(type val) { std::fill_n(data, this->w * this->h, val); }
 
 private:
 	type get(Point p) { return data[p.y * this->w + p.x]; }

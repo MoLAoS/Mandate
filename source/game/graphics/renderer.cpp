@@ -1470,21 +1470,32 @@ void Renderer::renderUnits(){
 
 	modelRenderer->begin(true, true, true, &meshCallbackTeamColor);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers];
+	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 
+	for (int j=0; j < world->getGlestimals()->getUnitCount(); ++j) {
+		unit = world->getGlestimals()->getUnit(j);
+		if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
+			toRender[0].push_back(unit);
+		}
+	}
 	for (int i=0; i < world->getFactionCount(); ++i) { 
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
 			//@todo take unit size into account
 			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
-				toRender[i].push_back(unit);
+				toRender[i + 1].push_back(unit);
 			}
 		}
 	}
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
-		meshCallbackTeamColor.setTeamTexture(world->getFaction(i)->getTexture());
+		if (i) {
+			meshCallbackTeamColor.setTeamTexture(world->getFaction(i-1)->getTexture());
+		} else {
+			meshCallbackTeamColor.setTeamTexture(0);
+		}
+
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
@@ -2486,7 +2497,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 	modelRenderer->begin(false, false, false);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers];
+	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 	set<const Unit*> unitsSeen;
 	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
 		const Vec2i &pos = *it;
@@ -2495,12 +2506,12 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			const Unit *unit = map->getCell(pos)->getUnit(z);
 			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
 				unitsSeen.insert(unit);
-				toRender[unit->getFactionIndex()].push_back(unit);
+				toRender[unit->getFactionIndex() + 1].push_back(unit);
 			}
 		}
 	}
 
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
 		glPushName(i);

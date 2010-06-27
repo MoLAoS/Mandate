@@ -266,6 +266,38 @@ void World::updateEarthquakes(float seconds) {
 }
 #endif // Disable Earthquakes
 
+void updateFaction(const Faction *f) {
+	const Units &units = f->getUnits();
+	for (int i = 0;  i < f->getUnitCount(); ++i) {
+		Unit *unit = f->getUnit(i);
+		
+		if (unit->update()) {
+
+			g_simInterface->doUpdateUnitCommand(unit);
+
+			//move unit in cells
+			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+
+				g_world.moveUnitCells(unit);
+
+				//play water sound
+				if (g_map.getCell(unit->getPos())->getHeight() < g_map.getWaterLevel() 
+				&& unit->getCurrField() == Field::LAND
+				&& g_map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(g_world.getThisTeamIndex())
+				&& g_renderer.getCuller().isInside(unit->getPos())) {
+					g_soundRenderer.playFx(g_coreData.getWaterSound());
+				}
+			}
+		}
+
+		//unit death
+		if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
+			unit->kill();
+		}
+		g_map.assertUnitCells(unit);
+	}
+}
+
 void World::processFrame() {
 	_PROFILE_FUNCTION();
 
@@ -283,36 +315,9 @@ void World::processFrame() {
 
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
-		const Units &units = f->getUnits();
-		for (int i = 0;  i < f->getUnitCount(); ++i) {
-			Unit *unit = f->getUnit(i);
-			
-			if (unit->update()) {
-
-				iSim->doUpdateUnitCommand(unit);
-
-				//move unit in cells
-				if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
-
-					moveUnitCells(unit);
-
-					//play water sound
-					if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
-					&& unit->getCurrField() == Field::LAND
-					&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
-					&& g_renderer.getCuller().isInside(unit->getPos())) {
-						g_soundRenderer.playFx(CoreData::getInstance().getWaterSound());
-					}
-				}
-			}
-
-			//unit death
-			if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
-				unit->kill();
-			}
-			map.assertUnitCells(unit);
-		}
+		updateFaction(&*f);
 	}
+	updateFaction(&glestimals);
 
 //	updateEarthquakes(1.f / 40.f);
 
@@ -1061,6 +1066,7 @@ void World::initFactions() {
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
 	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
 		&techTree, -1, -1, -1, -1, false, false);
+	
 }
 
 void World::initMinimap(bool resuming) {
@@ -1111,6 +1117,9 @@ void World::activateUnits() {
 		foreach_const (Units, uIt, fIt->getUnits()) {
 			(*uIt)->born();
 		}
+	}
+	foreach_const (Units, uIt, glestimals.getUnits()) {
+		(*uIt)->born();
 	}
 }
 

@@ -513,17 +513,16 @@ int UnitType::getStore(const ResourceType *rt) const {
 
 // only used for matching while loading commands
 const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skillClass) const{
-	for(int i=0; i<skillTypes.size(); ++i){
-		if(skillTypes[i]->getName()==skillName){
-			if(skillTypes[i]->getClass() == skillClass || skillClass == SkillClass::COUNT){
+	for (int i=0; i < skillTypes.size(); ++i) {
+		if (skillTypes[i]->getName() == skillName) {
+			if (skillTypes[i]->getClass() == skillClass || skillClass == SkillClass::COUNT) {
 				return skillTypes[i];
-			}
-			else{
-				throw runtime_error("Skill \""+skillName+"\" is not of class \""+SkillType::skillClassToStr(skillClass));
+			} else {
+				throw runtime_error("Skill '" + skillName + "' is not of class " + SkillClassNames[skillClass]);
 			}
 		}
 	}
-	throw runtime_error("No skill named \""+skillName+"\"");
+	throw runtime_error("No skill named '" + skillName + "'");
 }
 
 

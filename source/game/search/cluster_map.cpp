@@ -308,7 +308,7 @@ void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
 			IF_DEBUG_EDITION(
 				if (f == Field::LAND) {	
 					for (int i=0; i < cb->transitions[f].n; ++i) {
-						theDebugRenderer.getCMOverlay().entranceCells.erase(
+						g_debugRenderer.getCMOverlay().entranceCells.erase(
 							cb->transitions[f].transitions[i]->nwPos
 						);
 					}
@@ -358,7 +358,7 @@ void ClusterMap::initClusterBorder(const Vec2i &cluster, bool north) {
 
 		IF_DEBUG_EDITION(
 			for (int i=0; i < cb->transitions[Field::LAND].n; ++i) {
-				theDebugRenderer.getCMOverlay().entranceCells.insert(
+				g_debugRenderer.getCMOverlay().entranceCells.insert(
 					cb->transitions[Field::LAND].transitions[i]->nwPos
 				);
 			}

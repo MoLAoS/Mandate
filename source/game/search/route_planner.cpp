@@ -62,39 +62,39 @@ namespace Glest { namespace Search {
 		list<Vec2i> *nodes = ns->getOpenNodes();
 		list<Vec2i>::iterator nit = nodes->begin();
 		for ( ; nit != nodes->end(); ++nit ) 
-			theDebugRenderer.getPFCallback().openSet.insert(*nit);
+			g_debugRenderer.getPFCallback().openSet.insert(*nit);
 		delete nodes;
 		nodes = ns->getClosedNodes();
 		for ( nit = nodes->begin(); nit != nodes->end(); ++nit )
-			theDebugRenderer.getPFCallback().closedSet.insert(*nit);
+			g_debugRenderer.getPFCallback().closedSet.insert(*nit);
 		delete nodes;					
 	}
 
 	void collectPath(const Unit *unit) {
 		const UnitPath &path = *unit->getPath();
 		for (UnitPath::const_iterator pit = path.begin(); pit != path.end(); ++pit) 
-			theDebugRenderer.getPFCallback().pathSet.insert(*pit);
+			g_debugRenderer.getPFCallback().pathSet.insert(*pit);
 	}
 
 	void collectWaypointPath(const Unit *unit) {
 		const WaypointPath &path = *unit->getWaypointPath();
-		theDebugRenderer.clearWaypoints();
+		g_debugRenderer.clearWaypoints();
 		WaypointPath::const_iterator it = path.begin();
 		for ( ; it != path.end(); ++it) {
 			Vec3f vert = g_world.getMap()->getTile(Map::toTileCoords(*it))->getVertex();
 			vert.x += it->x % GameConstants::cellScale + 0.5f;
 			vert.z += it->y % GameConstants::cellScale + 0.5f;
 			vert.y += 0.15f;
-			theDebugRenderer.addWaypoint(vert);
+			g_debugRenderer.addWaypoint(vert);
 		}
 	}
 
 	void clearOpenClosed(const Vec2i &start, const Vec2i &target) {
-		theDebugRenderer.getPFCallback().pathStart = start;
-		theDebugRenderer.getPFCallback().pathDest = target;
-		theDebugRenderer.getPFCallback().pathSet.clear();
-		theDebugRenderer.getPFCallback().openSet.clear();
-		theDebugRenderer.getPFCallback().closedSet.clear();
+		g_debugRenderer.getPFCallback().pathStart = start;
+		g_debugRenderer.getPFCallback().pathDest = target;
+		g_debugRenderer.getPFCallback().pathSet.clear();
+		g_debugRenderer.getPFCallback().openSet.clear();
+		g_debugRenderer.getPFCallback().closedSet.clear();
 	}
 #endif  // _GAE_DEBUG_EDITION_
 

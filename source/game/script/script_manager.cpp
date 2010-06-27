@@ -1403,7 +1403,7 @@ IF_DEBUG_EDITION(
 				const Rect *rect = static_cast<const Rect*>(r);
 				for (int y = rect->y; y < rect->y + rect->h; ++y) {
 					for (int x = rect->x; x < rect->x + rect->w; ++x) {
-						theDebugRenderer.addCellHighlight(Vec2i(x,y));
+						g_debugRenderer.addCellHighlight(Vec2i(x,y));
 					}
 				}
 			} else {
@@ -1417,14 +1417,14 @@ IF_DEBUG_EDITION(
 		LuaArguments args(luaHandle);
 		Vec2i cell;
 		if (extractArgs(args, "hilightCell", "v2i", &cell)) {
-			theDebugRenderer.addCellHighlight(cell);
+			g_debugRenderer.addCellHighlight(cell);
 		}
 		return args.getReturnCount();
 	}
 
 	int ScriptManager::clearHilights(LuaHandle *luaHandle) {
 		LuaArguments args(luaHandle);
-		theDebugRenderer.clearCellHilights();
+		g_debugRenderer.clearCellHilights();
 		return args.getReturnCount();
 	}
 
@@ -1432,7 +1432,7 @@ IF_DEBUG_EDITION(
 		LuaArguments args(luaHandle);
 		string line;
 		if (extractArgs(args, "debugSet", "str", &line)) {
-			theDebugRenderer.commandLine(line);
+			g_debugRenderer.commandLine(line);
 		}
 		return args.getReturnCount();
 	}

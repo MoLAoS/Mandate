@@ -61,18 +61,22 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 	this->lastEnemyNotice = 0;
 	lastEventLoc.x = -1.0f;  // -1 x indicates uninitialized, no last event
 
-	resources.resize(techTree->getResourceTypeCount());
-	store.resize(techTree->getResourceTypeCount());
-	for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
-		const ResourceType *rt = techTree->getResourceType(i);
-		int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
-		resources[i].init(rt, resourceAmount);
-		store[i].init(rt, 0);
+	if (factionIndex != -1) {
+		resources.resize(techTree->getResourceTypeCount());
+		store.resize(techTree->getResourceTypeCount());
+		for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
+			const ResourceType *rt = techTree->getResourceType(i);
+			int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
+			resources[i].init(rt, resourceAmount);
+			store[i].init(rt, 0);
+		}
+		texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
+		Pixmap2D *pixmap = texture->getPixmap();
+		pixmap->init(1, 1, 3);
+		pixmap->setPixel(0, 0, factionColours[colourIndex]);
+	} else {
+		texture = 0;
 	}
-	texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-	Pixmap2D *pixmap = texture->getPixmap();
-	pixmap->init(1, 1, 3);
-	pixmap->setPixel(0, 0, factionColours[colourIndex]);
 }
 
 void Faction::save(XmlNode *node) const {

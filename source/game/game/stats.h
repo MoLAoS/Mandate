@@ -64,6 +64,9 @@ public:
 	void produce(int i)								{playerStats[i].unitsProduced++;}
 	void harvest(int i, int amount)					{playerStats[i].resourcesHarvested += amount;}
 	void kill(int killerIndex, int killedIndex) {
+		if (killerIndex == -1) {
+			return; // glestimal
+		}
 		if(killerIndex != killedIndex) {
 			playerStats[killerIndex].kills++;
 		}

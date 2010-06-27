@@ -66,6 +66,7 @@ public:
 	~LuaScript();
 
 	void startUp();
+	void close();
 	void atPanic(lua_CFunction func) {
 		lua_atpanic(luaState, func);
 	}
@@ -92,7 +93,6 @@ public:
 
 private:
 	string errorToString(int errorCode);
-	void close();
 };
 
 // =====================================================

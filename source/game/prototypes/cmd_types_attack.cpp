@@ -194,7 +194,8 @@ bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree
 Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	// look for someone to smite
 	Unit *sighted = NULL;
-	if (!unit->getFaction()->isAvailable(this) || !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
+	if (!unit->getFaction()->isAvailable(this) 
+	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
 	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO), sighted->getPos());

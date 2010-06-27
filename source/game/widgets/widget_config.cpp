@@ -193,6 +193,7 @@ WidgetConfig::WidgetConfig() {
 		m_borderStyles[WidgetType::MESSAGE_BOX].setSizes(2);
 		m_backgroundStyles[WidgetType::MESSAGE_BOX].setColour(WidgetColour::DARK_BACKGROUND);
 	}
+	luaScript.close();
 }
 
 uint32 WidgetConfig::getColourIndex(const Colour &c) {

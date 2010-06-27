@@ -154,6 +154,8 @@ public:
 	RoutePlanner* getRoutePlanner()					{return routePlanner;}
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
+	const Faction *getGlestimals() const			{return &glestimals;}
+	Faction *getGlestimals()						{return &glestimals;}
 	const Minimap *getMinimap() const				{return &minimap;}
 //	Stats &getStats() 								{return stats;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}

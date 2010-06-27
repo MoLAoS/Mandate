@@ -86,7 +86,7 @@ REGULAR_ENUM( SurfaceType,
   *		<li><b>AIR</b> the air zone</li></ul>
   */
 STRINGY_ENUM( Zone,
-	SURFACE_PROP,
+//	SURFACE_PROP,
 	LAND,
 	AIR
 );

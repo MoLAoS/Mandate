@@ -250,69 +250,6 @@ CycleInfo SkillType::calculateCycleTime() const {
 	return CycleInfo(skillFrames, animFrames, soundOffset, attackOffset);
 }
 
-
-/** obsolete??? use SkillClassNames[sc] ?? */
-string SkillType::skillClassToStr(SkillClass skillClass){
-	switch(skillClass){
-		case SkillClass::STOP: return "Stop";
-		case SkillClass::MOVE: return "Move";
-		case SkillClass::ATTACK: return "Attack";
-		case SkillClass::HARVEST: return "Harvest";
-		case SkillClass::REPAIR: return "Repair";
-		case SkillClass::BUILD: return "Build";
-		case SkillClass::DIE: return "Die";
-		case SkillClass::BE_BUILT: return "Be Built";
-		case SkillClass::PRODUCE: return "Produce";
-		case SkillClass::UPGRADE: return "Upgrade";
-		default:
-			assert(false);
-			return "";
-	};
-}
-
-/** obsolete??? use FieldNames[f] ?? */
-string SkillType::fieldToStr(Zone field){
-	switch (field) {
-		case Zone::SURFACE_PROP: return "SurfaceProp";
-		case Zone::LAND: return "Surface";
-		case Zone::AIR: return "Air";
-			//	case fSubsurface: return "Subsurface";
-
-		default:
-			assert(false);
-			return "";
-	};
-}
-// ===============================
-// 	class MoveSkillType
-// ===============================
-
-
-// ===============================
-// 	class RangedType
-// ===============================
-/*
-RangedType::RangedType() {
-	minRange = 0;
-	maxRange = 1;
-}
-
-void RangedType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
-	minRange= sn->getOptionalIntValue("min-range");
-	maxRange= sn->getOptionalIntValue("max-range");
-}
-
-void RangedType::getDesc(string &str, const Unit *unit, const char* rangeDesc) const {
-	str+= Language::getInstance().get(rangeDesc)+": ";
-	if(minRange > 1) {
-		str += 	intToStr(minRange) + "...";
-	}
-	str += intToStr(maxRange);
-	EnhancementType::describeModifier(str, unit->getMaxRange(this) - maxRange);
-	str+="\n";
-}
-*/
-
 // =====================================================
 // 	class TargetBasedSkillType
 // =====================================================
@@ -363,25 +300,20 @@ void TargetBasedSkillType::doChecksum(Checksum &checksum) const {
 
 void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* rangeDesc) const {
 	Lang &lang= Lang::getInstance();
-
 	descEpCost(str, unit);
-
 	//splash radius
-	if(splashRadius){
-		str+= lang.get("SplashRadius")+": "+intToStr(splashRadius)+"\n";
+	if (splashRadius) {
+		str += lang.get("SplashRadius") + ": " + intToStr(splashRadius) + "\n";
 	}
-
 	descRange(str, unit, rangeDesc);
-
 	//fields
 	str+= lang.get("Zones") + ": ";
-	for(int i= 0; i < Zone::COUNT; i++){
-		Zone zone = enum_cast<Zone>(i);
-		if(zones.get(zone)){
-			str+= fieldToStr(zone) + " ";
+	foreach_enum (Zone, z) {
+		if (zones.get(z)) {
+			str += string(ZoneNames[z]) + " ";
 		}
 	}
-	str+="\n";
+	str += "\n";
 }
 
 // =====================================================

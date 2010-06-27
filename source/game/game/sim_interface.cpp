@@ -123,7 +123,6 @@ SimulationInterface::~SimulationInterface() {
 	stats = 0;
 }
 
-
 void SimulationInterface::constructGameWorld(GameState *g) {
 	delete stats;
 	game = g;
@@ -225,6 +224,10 @@ void SimulationInterface::initWorld() {
 		}
 	}
 	delete [] seeds;
+
+	m_gaia = new Plan::Gaia(world->getGlestimals());
+	m_gaia->init();
+
 	createSkillCycleTable(world->getTechTree());
 	ScriptManager::initGame();
 }
@@ -267,6 +270,7 @@ void SimulationInterface::updateWorld() {
 			aiInterfaces[i]->update();
 		}
 	}
+	m_gaia->update();
 	// World
 	world->processFrame();
 	frameProccessed();

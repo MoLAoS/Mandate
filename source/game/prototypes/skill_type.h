@@ -134,8 +134,6 @@ public:
 
 	//other
 	virtual string toString() const		{return Lang::getInstance().get(typeName);}
-	static string skillClassToStr(SkillClass skillClass);
-	static string fieldToStr(Zone field);
 
 	///REFACTOR: push-down
 	//get proj
