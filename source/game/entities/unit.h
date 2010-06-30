@@ -203,6 +203,7 @@ private:
 
 	bool toBeUndertaken;		/**< awaiting a date with the grim reaper */
 	bool autoRepairEnabled;		/**< is auto repair enabled */
+	bool carried;				/**< is the unit being carried */
 
 	/** Effects (spells, etc.) currently effecting unit. */
 	Effects effects;
@@ -314,6 +315,7 @@ public:
 	UnitContainer &getCarriedUnits()			{return carriedUnits;}
 	bool isVisible() const						{return visible;}
 	void setVisible(bool v)						{visible = v;}
+	void setCarried(bool v)						{carried = v;}
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -372,6 +374,7 @@ public:
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
 	//is
+	bool isCarried() const				{return carried;}
 	bool isHighlighted() const			{return highlight > 0.f;}
 	bool isDead() const					{return !hp;}
 	bool isAlive() const				{return hp;}
@@ -435,6 +438,7 @@ public:
 	CommandResult finishCommand();						//command finished
 	CommandResult cancelCommand();						//cancel command on back of queue
 	CommandResult cancelCurrCommand();					//cancel current command
+	void removeCommands();
 
 	//lifecycle
 	void create(bool startingUnit = false);

@@ -1013,7 +1013,7 @@ void Map::assertUnitCells(const Unit * unit) {
 			assert(isInside(currPos));
 
 			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
-				if(unit->getCurrSkill()->getClass() != SkillClass::DIE) {
+				if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
 					assert(getCell(currPos)->getUnit(field) == unit);
 				} else {
 					assert(getCell(currPos)->getUnit(field) != unit);

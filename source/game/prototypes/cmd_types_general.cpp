@@ -468,81 +468,144 @@ void MorphCommandType::update(Unit *unit) const {
 }
 
 // =====================================================
-// 	class CarryCommandType
+// 	class LoadCommandType
 // =====================================================
 
-bool CarryCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = CommandType::load(n, dir, tt, ft);
+bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
+	
 	//load skill
 	try {
-		const XmlNode *skillNode = n->getChild("load-skill",0,false);
-		if (skillNode) {
-			string skillName= skillNode->getAttribute("value")->getRestrictedValue();
-			loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
-		}
+		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
+		loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
 	} catch (runtime_error e) {
 		Logger::getErrorLog().addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
-	if (!loadSkillType) {
-		//unload skill
-		try {
-			string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
-			unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
-		} catch (runtime_error e) {
-			Logger::getErrorLog().addXmlError(dir, e.what());
-			loadOk = false;
-		}
-	}
-	
 	return loadOk;
 }
 
-void CarryCommandType::doChecksum(Checksum &checksum) const {
+void LoadCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	if (loadSkillType) {
-		checksum.add(loadSkillType->getName());
-	} else if (unloadSkillType) {
-		checksum.add(unloadSkillType->getName());
-	}
+	checksum.add(loadSkillType->getName());
 }
 
-void CarryCommandType::getDesc(string &str, const Unit *unit) const{
+void LoadCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-
-	if (loadSkillType) {
-		str+= "\n" + loadSkillType->getName();
-	} else if (unloadSkillType) {
-		str+= "\n" + unloadSkillType->getName();
-	}
+	str+= "\n" + loadSkillType->getName();
 }
 
-string CarryCommandType::getReqDesc() const{
+string LoadCommandType::getReqDesc() const{
 	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
-void CarryCommandType::update(Unit *unit) const {
+void LoadCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	// order of these is important
-	if (unit->getCurrSkill()->getClass() == SkillClass::LOAD || loadSkillType) {
+	if (unit->getCurrSkill()->getClass() != SkillClass::LOAD) {
+		unit->setCurrSkill(SkillClass::LOAD);
+	} else {
 		Unit *targetUnit = command->getUnit();
+
+		if (targetUnit->getCurrSkill()->getClass() != SkillClass::MOVE) {
+			// move the carrier to the unit
+			/* BUG: cache messes up
+			Vec2i targetPos = command->getPos() + Vec2i(targetUnit->getType()->getSize() / 2);
+			unit->setTargetPos(targetPos);
+
+			switch (g_routePlanner.findPathToLocation(unit, command->getPos())) {
+				case TravelState::MOVING:
+					unit->setCurrSkill(this->getMoveSkillType());
+					unit->face(unit->getNextPos());
+				case TravelState::BLOCKED:
+					unit->setCurrSkill(SkillClass::STOP);
+					if(unit->getPath()->isBlocked()) {
+						g_console.addStdMessage("Blocked");
+						unit->cancelCurrCommand();
+						BUILD_LOG( "Blocked." << cmdCancelMsg );
+					}
+					break;
+
+				case TravelState::ARRIVED:
+					// do nothing
+					break;
+
+				case TravelState::IMPOSSIBLE:
+					g_console.addStdMessage("Unreachable");
+					unit->cancelCurrCommand();
+					BUILD_LOG( "Route impossible," << cmdCancelMsg );
+					break;
+				default:
+					throw runtime_error("Error: RoutePlanner::findPath() returned invalid result.");
+			}*/
+		}
+
 		const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
 		if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
 			g_console.addLine("doing load");
-			//targetUnit->getCommands().clear()
-			//targetUnit->setVisible(false);
+			targetUnit->removeCommands();
+			targetUnit->setVisible(false);
 			g_map.clearUnitCells(targetUnit, targetUnit->getPos());
-			//targetUnit->setEnabled(false); // disable interaction is done when it can't be seen, remove from cell, deselect
+			targetUnit->setCarried(true);
 			unit->getCarriedUnits().push_back(targetUnit);
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
 		}
-	} else if (unit->getCurrSkill()->getClass() == SkillClass::UNLOAD || unloadSkillType) {
+	}
+}
+
+// --- Private ---
+
+bool LoadCommandType::inRange(const Vec2i &thisPos, const Vec2i &targetPos, int maxRange) const {
+	return (thisPos.dist(targetPos) < maxRange);
+}
+
+// =====================================================
+// 	class UnloadCommandType
+// =====================================================
+
+bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	//unload skill
+	try {
+		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
+		unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
+	} catch (runtime_error e) {
+		Logger::getErrorLog().addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	
+	return loadOk;
+}
+
+void UnloadCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	checksum.add(unloadSkillType->getName());
+}
+
+void UnloadCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	str+= "\n" + unloadSkillType->getName();
+}
+
+string UnloadCommandType::getReqDesc() const{
+	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
+}
+
+void UnloadCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	const Map *map = g_world.getMap();
+
+	if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
+		unit->setCurrSkill(SkillClass::UNLOAD);
+	} else {
 		Unit::UnitContainer &units = unit->getCarriedUnits();
 
 		int maxRange = (unloadSkillType ? unloadSkillType : unit->getCurrSkill())->getMaxRange();
@@ -561,6 +624,7 @@ void CarryCommandType::update(Unit *unit) const {
 				targetUnit->setPos(pos);
 				g_map.putUnitCells(targetUnit, pos);
 				targetUnit->setVisible(true);
+				targetUnit->setCarried(false);
 				i = units.erase(i);
 			} else {
 				// must be crowded, stop unloading
@@ -572,16 +636,6 @@ void CarryCommandType::update(Unit *unit) const {
 		// no more units to deal with
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
-	}
-}
-
-// --- Private ---
-
-bool CarryCommandType::inRange(const Vec2i &thisPos, const Vec2i &targetPos, int maxRange) const {
-	if (thisPos.dist(targetPos) < maxRange) {
-		return true;
-	} else {
-		return false;
 	}
 }
 
@@ -686,7 +740,8 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<ProduceCommandType>("produce");
 	registerClass<UpgradeCommandType>("upgrade");
 	registerClass<MorphCommandType>("morph");
-	registerClass<CarryCommandType>("carry");
+	registerClass<LoadCommandType>("load");
+	registerClass<UnloadCommandType>("unload");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");

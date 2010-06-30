@@ -205,6 +205,18 @@ void Selection::update() {
 		canRepair = true;
 		autoRepairState = selectedUnits.front()->isAutoRepairEnabled() ? arsOn : arsOff;
 
+		// remove carried units from selection
+		{
+			UnitContainer::iterator i = selectedUnits.begin();
+			while (i != selectedUnits.end()) {
+				if ((*i)->isCarried()) {
+					i = selectedUnits.erase(i);
+				} else {
+					++i;
+				}
+			}
+		}
+
 		for(UnitContainer::iterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
 			const UnitType *ut = (*i)->getType();
 			if(ut != frontUT){

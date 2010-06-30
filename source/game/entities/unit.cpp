@@ -141,6 +141,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 
 	toBeUndertaken = false;
 	autoRepairEnabled = true;
+	carried = false;
 
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
@@ -231,11 +232,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 
 /** delete stuff */
 Unit::~Unit() {
-	//remove commands
-	while (!commands.empty()) {
-		delete commands.back();
-		commands.pop_back();
-	}
+	removeCommands();
 	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
 }
 
@@ -807,6 +804,13 @@ CommandResult Unit::cancelCurrCommand() {
 		notifyObservers(UnitObserver::eStateChange);
 	}
 	return CommandResult::SUCCESS;
+}
+
+void Unit::removeCommands() {
+	while (!commands.empty()) {
+		delete commands.back();
+		commands.pop_back();
+	}
 }
 
 // =================== route stack ===================
