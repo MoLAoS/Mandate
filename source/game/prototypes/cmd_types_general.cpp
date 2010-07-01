@@ -513,35 +513,36 @@ void LoadCommandType::update(Unit *unit) const {
 
 		if (targetUnit->getCurrSkill()->getClass() != SkillClass::MOVE) {
 			// move the carrier to the unit
-			/* BUG: cache messes up
-			Vec2i targetPos = command->getPos() + Vec2i(targetUnit->getType()->getSize() / 2);
-			unit->setTargetPos(targetPos);
+			/// @todo this was taken from MoveCommandType so there might be a need 
+			/// for a common function to move a unit or there might be a way to 
+			/// add the command to move?
+			Vec2i pos;
+			if (command->getUnit()) {
+				pos = command->getUnit()->getCenteredPos();
+				if (!command->getUnit()->isAlive()) {
+					command->setPos(pos);
+					command->setUnit(NULL);
+				}
+			} else {
+				pos = command->getPos();
+			}
 
-			switch (g_routePlanner.findPathToLocation(unit, command->getPos())) {
+			switch (g_routePlanner.findPath(unit, pos)) {
 				case TravelState::MOVING:
-					unit->setCurrSkill(this->getMoveSkillType());
+					unit->setCurrSkill(moveSkillType);
 					unit->face(unit->getNextPos());
+					break;
 				case TravelState::BLOCKED:
 					unit->setCurrSkill(SkillClass::STOP);
-					if(unit->getPath()->isBlocked()) {
-						g_console.addStdMessage("Blocked");
-						unit->cancelCurrCommand();
-						BUILD_LOG( "Blocked." << cmdCancelMsg );
+					if (unit->getPath()->isBlocked() && !command->getUnit()) {
+						unit->finishCommand();
+						break;
 					}
+					break;	
+				default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
+					unit->finishCommand();
 					break;
-
-				case TravelState::ARRIVED:
-					// do nothing
-					break;
-
-				case TravelState::IMPOSSIBLE:
-					g_console.addStdMessage("Unreachable");
-					unit->cancelCurrCommand();
-					BUILD_LOG( "Route impossible," << cmdCancelMsg );
-					break;
-				default:
-					throw runtime_error("Error: RoutePlanner::findPath() returned invalid result.");
-			}*/
+			}
 		}
 
 		const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
@@ -549,6 +550,7 @@ void LoadCommandType::update(Unit *unit) const {
 			g_console.addLine("doing load");
 			targetUnit->removeCommands();
 			targetUnit->setVisible(false);
+			/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
 			g_map.clearUnitCells(targetUnit, targetUnit->getPos());
 			targetUnit->setCarried(true);
 			unit->getCarriedUnits().push_back(targetUnit);
@@ -608,21 +610,22 @@ void UnloadCommandType::update(Unit *unit) const {
 	} else {
 		Unit::UnitContainer &units = unit->getCarriedUnits();
 
-		int maxRange = (unloadSkillType ? unloadSkillType : unit->getCurrSkill())->getMaxRange();
-		PosCircularIteratorSimple posIter(g_map.getBounds(), unit->getPos(), maxRange);
+		int maxRange = unloadSkillType->getMaxRange();
+		//PosCircularIteratorSimple posIter(g_map.getBounds(), unit->getPos(), maxRange);
 		Unit::UnitContainer::iterator i = units.begin();
 		// unload each carried unit to a free space if possible
 		while (i != units.end()) {
 			Unit *targetUnit = (*i);
-			Vec2i pos;
+			//Vec2i pos;
 			g_console.addLine("unloading unit");
 		
-			fixed d;
-			if (posIter.getNext(pos, d)) { // g_map.getNearestFreePos(pos, unit, targetUnit, 1, maxRange)????
+			//fixed d;
+			//if (posIter.getNext(pos, d)) { // g_map.getNearestFreePos(pos, unit, targetUnit, 1, maxRange)????
+			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to move the unit to
 				/// @todo perhaps combine the next two statements into a unit move/relocate(pos) method
-				targetUnit->setPos(pos);
-				g_map.putUnitCells(targetUnit, pos);
+				//targetUnit->setPos(pos);
+				g_map.putUnitCells(targetUnit, /*pos*/targetUnit->getPos());
 				targetUnit->setVisible(true);
 				targetUnit->setCarried(false);
 				i = units.erase(i);
