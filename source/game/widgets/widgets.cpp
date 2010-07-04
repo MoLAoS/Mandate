@@ -60,11 +60,7 @@ void StaticText::render() {
 
 Vec2i StaticText::getMinSize() const {
 	Vec2i txtDim = getTextDimensions();
-	Vec2i xtra(
-		m_borderStyle.m_sizes[Border::LEFT] + m_borderStyle.m_sizes[Border::RIGHT],
-		m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM]
-	);
-	xtra += Vec2i(getPadding());
+	Vec2i xtra = getBordersAll() + Vec2i(getPadding());
 	return txtDim + xtra;
 }
 
@@ -79,11 +75,7 @@ Vec2i StaticText::getPrefSize() const {
 Vec2i StaticImage::getMinSize() const {
 	const Pixmap2D *pixmap = getImage()->getPixmap();
 	Vec2i imgDim = Vec2i(pixmap->getW(), pixmap->getH());
-	Vec2i xtra(
-		m_borderStyle.m_sizes[Border::LEFT] + m_borderStyle.m_sizes[Border::RIGHT],
-		m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM]
-	);
-	xtra += Vec2i(getPadding());
+	Vec2i xtra = getBordersAll() + Vec2i(getPadding());
 	return imgDim + xtra;
 }
 
@@ -131,11 +123,7 @@ Vec2i Button::getPrefSize() const {
 
 Vec2i Button::getMinSize() const {
 	Vec2i txt = TextWidget::getTextDimensions();
-	Vec2i xtra(
-		m_borderStyle.m_sizes[Border::LEFT] + m_borderStyle.m_sizes[Border::RIGHT],
-		m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM]
-	);
-	xtra += Vec2i(getPadding());
+	Vec2i xtra = getBordersAll() + Vec2i(getPadding());
 	return txt + xtra;
 }
 

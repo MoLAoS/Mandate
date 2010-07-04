@@ -110,7 +110,6 @@ private:
 	static Program *singleton;
 	CmdArgs cmdArgs;
 
-	PerformanceTimer renderTimer;
 	PerformanceTimer tickTimer;
 	PerformanceTimer updateTimer;
 	PerformanceTimer updateCameraTimer;

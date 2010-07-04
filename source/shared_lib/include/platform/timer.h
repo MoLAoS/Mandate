@@ -150,8 +150,8 @@ public:
 	bool isTime(); /**< Returns true if timer is (over)due for a tick (and counts as a tick) */
 	void reset();
 	void setFps(int fps);
-	void setMaxTimes(int v)		{ maxTimes = v;		}
-	void setMaxBacklog(int v)	{ maxBacklog = v;	}
+	void setMaxTimes(int v);
+	void setMaxBacklog(int v);
 };
 
 }}//end namespace

@@ -98,8 +98,7 @@ MainMenu::MainMenu(Program &program)
 
 	state = NULL;
 
-	fps = 0;
-	lastFps = 0;
+	fps = lastFps = ups = lastUps = updateTime = updateAvgTime = 0;
 
 	loadStateCameras();
 
@@ -108,59 +107,64 @@ MainMenu::MainMenu(Program &program)
 
 MainMenu::~MainMenu() {
 	delete state;
-	Renderer::getInstance().endMenu();
-	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
-	soundRenderer.stopAllSounds();
+	g_renderer.endMenu();
+	g_soundRenderer.stopAllSounds();
 }
 
 void MainMenu::init() {
-	Renderer::getInstance().initMenu(this);
+	g_renderer.initMenu(this);
 }
 
 // synchronous render update
 void MainMenu::renderBg() {
-	Renderer &renderer = Renderer::getInstance();
-	CoreData &coreData = CoreData::getInstance();
-
-	fps++;
-	renderer.clearBuffers();
+	++fps;
+	g_renderer.clearBuffers();
 
 	//3d
-	renderer.reset3dMenu();
-	renderer.clearZBuffer();
-	renderer.loadCameraMatrix(menuBackground.getCamera());
-	renderer.renderMenuBackground(&menuBackground);
-	renderer.renderParticleManager(ResourceScope::MENU);
+	g_renderer.reset3dMenu();
+	g_renderer.clearZBuffer();
+	g_renderer.loadCameraMatrix(menuBackground.getCamera());
+	g_renderer.renderMenuBackground(&menuBackground);
+	g_renderer.renderParticleManager(ResourceScope::MENU);
 }
 
 void MainMenu::renderFg() {
-	Config &config = Config::getInstance();
-	Renderer &renderer = Renderer::getInstance();
-	CoreData &coreData = CoreData::getInstance();
-
 	//2d
-	renderer.reset2d();
+	g_renderer.reset2d();
 	state->render();
 	//renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
 
-	if (config.getMiscDebugMode()) {
-		Font *font = coreData.getMenuFontNormal();
-		renderer.renderText("FPS: " + intToStr(lastFps), font, Vec3f(1.f), 10, 10, false);
+	if (g_config.getMiscDebugMode()) {
+		Font *font = g_coreData.getMenuFontNormal();
+		string s = "FPS: " + intToStr(lastFps) + "\nUPS: " + intToStr(lastUps)
+			+ "\nAvg update = " + intToStr(updateAvgTime) + " ticks.\n"
+			+ "update interval = " + intToStr(getUpdateInterval());
+		
+		g_renderer.renderText(s, font, Vec3f(1.f), 10, 60, false);
 	}
-	renderer.swapBuffers();
+	g_renderer.swapBuffers();
 }
 
 // synchronous update
 void MainMenu::update() {
-	Renderer::getInstance().updateParticleManager(ResourceScope::MENU);
+	Chrono timer;
+	timer.start();
+	g_renderer.updateParticleManager(ResourceScope::MENU);
 	mouse2dAnim = (mouse2dAnim + 1) % Renderer::maxMouse2dAnim;
 	menuBackground.update();
 	state->update();
+	timer.stop();
+	updateTime += timer.getAccumTime();
+	++ups;
 }
 
 void MainMenu::tick() {
 	lastFps = fps;
 	fps = 0;
+	lastUps = ups;
+	ups = 0;
+	updateAvgTime = updateTime / lastUps;
+	updateTime = 0;
 }
 
 void MainMenu::mouseMove(int x, int y, const MouseState &ms) {
@@ -226,9 +230,7 @@ void MainMenu::loadStateCameras() {
 		startRotation.y = rotationNode->getAttribute("y")->getFloatValue();
 		startRotation.z = rotationNode->getAttribute("z")->getFloatValue();
 		stateCameras[state].setOrientation(Quaternion(EulerAngles(
-				degToRad(startRotation.x),
-				degToRad(startRotation.y),
-				degToRad(startRotation.z))));
+			degToRad(startRotation.x), degToRad(startRotation.y), degToRad(startRotation.z))));
 	}
 }
 

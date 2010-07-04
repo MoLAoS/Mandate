@@ -65,9 +65,11 @@ private:
 
 	bool setCameraOnSetState;
 
-    int mouseX, mouseY;
-    int mouse2dAnim;
+	int mouseX, mouseY;
+	int mouse2dAnim;
 	int fps, lastFps;
+	int ups, lastUps;
+	int64 updateTime, updateAvgTime;
 
 private:
 	MainMenu(const MainMenu &);
@@ -77,18 +79,18 @@ private:
 
 public:
 	MainMenu(Program &program);
-    ~MainMenu();
+	~MainMenu();
 
 	MenuBackground *getMenuBackground()	{return &menuBackground;}
 
-    virtual void renderBg();
-    virtual void renderFg();
-    virtual void update();
+	virtual void renderBg();
+	virtual void renderFg();
+	virtual void update();
 	virtual void tick();
 	virtual void init();
-    virtual void mouseMove(int x, int y, const MouseState &mouseState);
-    virtual void mouseDownLeft(int x, int y);
-    virtual void mouseDownRight(int x, int y);
+	virtual void mouseMove(int x, int y, const MouseState &mouseState);
+	virtual void mouseDownLeft(int x, int y);
+	virtual void mouseDownRight(int x, int y);
 	virtual void keyDown(const Key &key);
 	virtual void keyPress(char c);
 

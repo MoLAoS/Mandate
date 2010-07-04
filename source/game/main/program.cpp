@@ -106,7 +106,6 @@ Program *Program::singleton = NULL;
 
 Program::Program(Config &config, CmdArgs &args)
 		: cmdArgs(args)
-		, renderTimer(config.getRenderFpsMax(), 1, 0)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
@@ -116,46 +115,39 @@ Program::Program(Config &config, CmdArgs &args)
 		, terminating(false)
 		, visible(true)
 		, keymap(getInput(), "keymap.ini") {
-	//set video mode
+	// set video mode
 	setDisplaySettings();
 
-	//window
+	// window
 	Window::setText("Glest Advanced Engine");
 	Window::setStyle(config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
 	Window::setPos(0, 0);
 	Window::setSize(config.getDisplayWidth(), config.getDisplayHeight());
 	Window::create();
 
-	//log start
-	Logger &logger= Logger::getInstance();
-	//logger.setFile("glest.log");
-	logger.clear();
+	// log start
+	Logger::getInstance().clear();
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
 	Logger::getErrorLog().clear();
 
 	//lang
-	Lang &lang= Lang::getInstance();
-	lang.setLocale(config.getUiLocale());
+	g_lang.setLocale(config.getUiLocale());
 
 	Shared::Graphics::use_simd_interpolation = config.getRenderInterpolateWithSIMD();
 	
-	//render
-	Renderer &renderer= Renderer::getInstance();
-
+	// render
 	initGl(config.getRenderColorBits(), config.getRenderDepthBits(), config.getRenderStencilBits());
 	makeCurrentGl();
 
-	//coreData, needs renderer, but must load before renderer init
-	CoreData &coreData= CoreData::getInstance();
-	coreData.load();
+	// coreData, needs renderer, but must load before renderer init
+	g_coreData.load();
 
-	//init renderer (load global textures)
-	renderer.init();
+	// init renderer (load global textures)
+	g_renderer.init();
 
 	//sound
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-	soundRenderer.init(this);
+	g_soundRenderer.init(this);
 
 	if (!fileExists("keymap.ini")) {
 		keymap.save("keymap.ini");
@@ -163,11 +155,6 @@ Program::Program(Config &config, CmdArgs &args)
 	keymap.load("keymap.ini");
 
 	simulationInterface = new SimulationInterface(*this);
-
-	cout << "VirtualW : ScreenW == " << Metrics::getInstance().getVirtualW() << " : " 
-		<< Metrics::getInstance().getScreenW() << endl
-		<< "VirtualH : ScreenH == " << Metrics::getInstance().getVirtualH() << " : "
-		<< Metrics::getInstance().getScreenH() << endl;
 
 	WidgetWindow::instance = this;
 	singleton = this;
@@ -231,24 +218,23 @@ void Program::init() {
 
 void Program::loop() {
 	int updateCounter = 0;
+	int64 lastRender = 0;
 
 	while (handleEvent()) {
-		size_t sleepTime = renderTimer.timeToWait();
+		// render
+		if (visible) {
+			programState->renderBg();
+			Renderer::getInstance().reset2d(true);
+			WidgetWindow::render();
+			programState->renderFg();
+		}
 
-		sleepTime = sleepTime < updateCameraTimer.timeToWait() ? sleepTime : updateCameraTimer.timeToWait();
+		size_t sleepTime = updateCameraTimer.timeToWait();
 		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
 
 		if (sleepTime) {
 			Shared::Platform::sleep(sleepTime);
-		}
-
-		//render
-		while (renderTimer.isTime() && visible) {
-			programState->renderBg();
-			Renderer::getInstance().reset2d(true);
-			WidgetWindow::render();
-			programState->renderFg();
 		}
 
 		//update camera
@@ -400,20 +386,17 @@ void Program::setSimInterface(SimulationInterface *si) {
 	simulationInterface = si;
 }
 
-void Program::setState(ProgramState *programState){
+void Program::setState(ProgramState *programState) {
 	if (programState) {
 		delete this->programState;
 	}
 
-	this->programState= programState;
+	this->programState = programState;
 
 	programState->load();
 	programState->init();
 
-	renderTimer.reset();
-	updateTimer.reset();
-	updateCameraTimer.reset();
-	tickTimer.reset();
+	resetTimers();
 }
 
 void Program::exit() {
@@ -422,7 +405,6 @@ void Program::exit() {
 }
 
 void Program::resetTimers() {
-	renderTimer.reset();
 	tickTimer.reset();
 	updateTimer.reset();
 	updateCameraTimer.reset();
@@ -430,22 +412,18 @@ void Program::resetTimers() {
 
 // ==================== PRIVATE ====================
 
-void Program::setDisplaySettings(){
+void Program::setDisplaySettings() {
 	Config &config= Config::getInstance();
-	// bool multisamplingSupported = isGlExtensionSupported("WGL_ARB_multisample");
 
-	if(!config.getDisplayWindowed()){
-
+	if (!config.getDisplayWindowed()) {
 		int freq= config.getDisplayRefreshFrequency();
 		int colorBits= config.getRenderColorBits();
 		int screenWidth= config.getDisplayWidth();
 		int screenHeight= config.getDisplayHeight();
 
-		if(!(changeVideoMode(screenWidth, screenHeight, colorBits, freq) ||
-			changeVideoMode(screenWidth, screenHeight, colorBits, 0)))
-		{
-			throw runtime_error(
-				"Error setting video mode: " +
+		if (!(changeVideoMode(screenWidth, screenHeight, colorBits, freq)
+		|| changeVideoMode(screenWidth, screenHeight, colorBits, 0))) {
+			throw runtime_error( "Error setting video mode: " +
 				intToStr(screenWidth) + "x" + intToStr(screenHeight) + "x" + intToStr(colorBits));
 		}
 	}

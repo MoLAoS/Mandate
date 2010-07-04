@@ -120,7 +120,7 @@ GameState::~GameState() {
 	logger.setLoading(true);
 
 	// reset max update backlog, to prevent super-speed in menus
-	program.setMaxUpdateBacklog(1);
+	program.setMaxUpdateBacklog(12);
 
 	// delete the World
 	simInterface->destroyGameWorld();

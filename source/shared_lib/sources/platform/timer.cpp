@@ -79,6 +79,7 @@ PerformanceTimer::PerformanceTimer(int fps, int maxTimes, int maxBacklog)
 	assert(maxBacklog >= -1);
 	reset();
 	setFps(fps);
+	//cout << "Timer maxTimes : " << maxTimes << ", maxBackLog == " << maxBacklog << endl;
 }
 
 uint32 PerformanceTimer::timeToWait() {
@@ -98,7 +99,7 @@ bool PerformanceTimer::isTime() {
 
 	if(cyclesDue && (times < maxTimes || maxTimes == -1)) {
 		--cyclesDue;
-		if(maxBacklog >= 0 && cyclesDue > maxBacklog) {
+		if (maxBacklog >= 0 && cyclesDue > maxBacklog) {
 			//if (updateTicks == 14914) { // if updateTimer on Silnarm's computer ;)
 			//	cout << "dropping ticks ... " << (cyclesDue - maxBacklog) << endl;
 			//}
@@ -118,12 +119,24 @@ bool PerformanceTimer::isTime() {
 void PerformanceTimer::reset() {
 	Chrono::getCurTicks(lastTicks);
 	nextRollOver = lastTicks + Chrono::getResolution();
+	times = 0;
 }
 
 void PerformanceTimer::setFps(int fps) {
 	updateTicks = Chrono::getResolution() / fps;
 	padTicks = Chrono::getResolution() - updateTicks * fps;
-	//cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;
+	cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;
 }
+
+void PerformanceTimer::setMaxTimes(int v) {
+	maxTimes = v;
+	//cout << "Timer maxTimes set : " << maxTimes << endl;
+}
+
+void PerformanceTimer::setMaxBacklog(int v) {
+	maxBacklog = v;
+	//cout << "Timer maxBacklog set : " << maxBacklog << endl;
+}
+
 
 }}//end namespace
