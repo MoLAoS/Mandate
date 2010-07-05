@@ -95,9 +95,17 @@ uint32 PerformanceTimer::timeToWait() {
 bool PerformanceTimer::isTime() {
 	const int64 &now = Chrono::getCurTicks();
 	int64 elapsed = now - lastTicks;
+	
+	if (now > nextRollOver) {
+		nextRollOver += Chrono::getResolution();
+		lastTicks += padTicks; // delay next tick by padTicks
+	}
+
+	assert(updateTicks > 0);
+
 	int64 cyclesDue = elapsed / updateTicks;
 
-	if(cyclesDue && (times < maxTimes || maxTimes == -1)) {
+	if (cyclesDue && (times < maxTimes || maxTimes == -1)) {
 		--cyclesDue;
 		if (maxBacklog >= 0 && cyclesDue > maxBacklog) {
 			//if (updateTicks == 14914) { // if updateTimer on Silnarm's computer ;)
@@ -123,6 +131,7 @@ void PerformanceTimer::reset() {
 }
 
 void PerformanceTimer::setFps(int fps) {
+	assert(fps > 0);
 	updateTicks = Chrono::getResolution() / fps;
 	padTicks = Chrono::getResolution() - updateTicks * fps;
 	cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;

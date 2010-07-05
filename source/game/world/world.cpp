@@ -348,8 +348,6 @@ void World::processFrame() {
 	}
 }
 
-
-// to World
 void World::hit(Unit *attacker) {
 	hit(attacker, static_cast<const AttackSkillType*>(attacker->getCurrSkill()), attacker->getTargetPos(), attacker->getTargetField());
 }
@@ -392,7 +390,6 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 	}
 }
 
-// to world
 void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) {
 	int var = ast->getAttackVar();
 	int armor = attacked->getArmor();
@@ -429,7 +426,6 @@ void World::doKill(Unit *killer, Unit *killed) {
 		cartographer->updateMapMetrics(killed->getPos(), killed->getSize());
 	}
 }
-
 
 // Apply effects to a specific location, with or without splash
 void World::applyEffects(Unit *source, const EffectTypes &effectTypes,

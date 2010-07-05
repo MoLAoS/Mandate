@@ -389,6 +389,7 @@ protected:
 	Font *itemFont;
 	int selectedIndex;
 	vector<string> listItems;
+	vector<Vec3f> itemColours;
 
 	ListBase(WidgetWindow* window);
 
@@ -424,7 +425,6 @@ private:
 protected:
 	vector<ListBoxItem*> listBoxItems;
 
-	// not in use
 	VerticalScrollBar::Ptr scrollBar;
 	//ScrollSetting scrollSetting;
 	int scrollWidth;
@@ -436,6 +436,7 @@ public:
 
 	virtual void addItems(const vector<string> &items);
 	virtual void addItem(const string &item);
+	void addColours(const vector<Vec3f> &colours);
 //	virtual void clearItems();
 
 	virtual void setSelected(int index);
@@ -480,8 +481,11 @@ protected:
 public:
 	ListBoxItem(ListBase::Ptr parent);
 	ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz);
+	ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
 
 	void setSelected(bool s) { selected = s; }
+
+	void setBackgroundColour(const Vec3f &colour);
 
 	virtual void mouseIn();
 	virtual void mouseOut();
@@ -525,10 +529,13 @@ public:
 
 	void addItems(const vector<string> &items);
 	void addItem(const string &item);
+	void addItem(const Vec3f &Colour);
 	void clearItems();
 
 	void setSelected(int index);
 	void setSelected(const string &item);
+
+	void setSelectedColour(int index);
 
 	// event handlers
 	void onBoxClicked(ListBoxItem::Ptr);

@@ -163,7 +163,7 @@ void MainMenu::tick() {
 	fps = 0;
 	lastUps = ups;
 	ups = 0;
-	updateAvgTime = updateTime / lastUps;
+	updateAvgTime = lastUps ? updateTime / lastUps : 0;
 	updateTime = 0;
 }
 

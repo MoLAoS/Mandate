@@ -44,9 +44,8 @@ namespace Glest { namespace ProtoTypes {
 // 	class CommandType
 // =====================================================
 
-CommandType::CommandType(const char* name, /*CommandClass cc,*/ Clicks clicks, bool queuable)
+CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 		: RequirableType(-1, name, NULL)
-		//, cc(cc)
 		, clicks(clicks)
 		, queuable(queuable)
 		, unitType(NULL) {

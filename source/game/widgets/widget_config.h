@@ -90,6 +90,7 @@ public:
 
 public:
 	// get index of a Colour/Font/Texture, adding to collection if needed
+	uint32 getColourIndex(const Vec3f &c);
 	uint32 getColourIndex(const Colour &c);
 	uint32 getFontIndex(const Font *f);
 	uint32 getTextureIndex(const Texture2D *t);

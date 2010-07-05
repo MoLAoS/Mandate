@@ -206,6 +206,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		y = sty - (vgap * (i + 1)) - (h * (i + 1));
 		m_playerSlots[i] = new PlayerSlotWidget(&program, Vec2i(x, y), Vec2i(w, h));
 		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i+1));
+		m_playerSlots[i]->setSelectedColour(i);
 	}
 
 	reloadFactions();
@@ -432,6 +433,7 @@ void MenuStateNewGame::updateControlers() {
 			gs.setStartLocationIndex(i, -1);
 			m_playerSlots[i]->setSelectedFaction(-1);
 			m_playerSlots[i]->setSelectedTeam(-1);
+			m_playerSlots[i]->setSelectedColour(-1);
 		} else {
 			if (m_playerSlots[i]->getSelectedFactionIndex() == -1) {
 				m_playerSlots[i]->setSelectedFaction(i % m_factionFiles.size());
@@ -442,6 +444,9 @@ void MenuStateNewGame::updateControlers() {
 			}
 			gs.setTeam(i, m_playerSlots[i]->getSelectedTeamIndex());
 			gs.setStartLocationIndex(i, i);
+
+			// FIXME: check first free colour
+			m_playerSlots[i]->setSelectedColour(i);
 		}
 		if (m_playerSlots[i]->getControlType() == ControlType::HUMAN) {
 			gs.setThisFactionIndex(i);

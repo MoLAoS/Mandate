@@ -869,12 +869,14 @@ void Panel::render() {
 				m_borderStyle.m_sizes[Border::BOTTOM] + getPadding());
 	Vec2i pos = getScreenPos() + offset;
 	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
+	assertGl();
 	glPushAttrib(GL_SCISSOR_BIT);
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(pos.x, pos.y, size.x, size.y);
 		Container::render();
 		glDisable(GL_SCISSOR_TEST);
 	glPopAttrib();
+	assertGl();
 }
 
 // =====================================================
@@ -979,7 +981,6 @@ void ListBox::addItems(const vector<string> &items) {
 		listBoxItems.push_back(nItem);
 		nItem->Selected.connect(this, &ListBox::onSelected);
 	}
-
 }
 
 void ListBox::addItem(const string &item) {
@@ -988,6 +989,16 @@ void ListBox::addItem(const string &item) {
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);
+}
+
+void ListBox::addColours(const vector<Vec3f> &colours) {
+	Vec2i sz(getSize().x - getBordersHoriz(), int(itemFont->getMetrics()->getHeight()) + 4);
+	foreach_const (vector<Vec3f>, it, colours) {
+		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz, *it);
+		nItem->setTextParams("", Vec4f(1.f), itemFont, true);
+		listBoxItems.push_back(nItem);
+		nItem->Selected.connect(this, &ListBox::onSelected);
+	}
 }
 
 void ListBox::setSize(const Vec2i &sz) {
@@ -1170,6 +1181,21 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz)
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
 }
 
+ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour)
+		: Widget(parent, pos, sz)
+		, TextWidget(this)
+		, MouseWidget(this)
+		, selected(false)
+		, hover(false)
+		, pressed(false) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
+	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
+	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
+	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
+
+	m_backgroundStyle.m_type = BackgroundType::COLOUR;
+	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(bgColour);
+}
 
 Vec2i ListBoxItem::getMinSize() const {
 	Vec2i dims = getTextDimensions();
@@ -1187,6 +1213,12 @@ void ListBoxItem::render() {
 	if (selected) {
 		Widget::renderHighLight(Vec3f(1.f), 0.1f, 0.3f);
 	}
+	assertGl();
+}
+
+void ListBoxItem::setBackgroundColour(const Vec3f &colour) {
+	m_backgroundStyle.m_type = BackgroundType::COLOUR;
+	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(colour);
 }
 
 void ListBoxItem::mouseIn() {
@@ -1298,6 +1330,10 @@ void DropList::addItem(const string &item) {
 	listItems.push_back(item);
 }
 
+void DropList::addItem(const Vec3f &c) {
+	itemColours.push_back(c);
+}
+
 void DropList::clearItems() {
 	listItems.clear();
 	selectedItem->setText("");
@@ -1305,6 +1341,10 @@ void DropList::clearItems() {
 }
 
 void DropList::setSelected(int index) {
+	if (listItems.empty()) {
+		setSelectedColour(index);
+		return;
+	}
 	if (index < 0 || index >= listItems.size()) {
 		if (selectedIndex == -1) {
 			return;
@@ -1319,6 +1359,14 @@ void DropList::setSelected(int index) {
 		selectedIndex = index;
 	}
 	SelectionChanged(this);
+}
+
+void DropList::setSelectedColour(int index) {
+	if (index < 0 || index >= GameConstants::maxPlayers) {
+		selectedItem->setBackgroundColour(Vec3f(0.5f));
+		return;
+	}
+	selectedItem->setBackgroundColour(itemColours[index]);
 }
 
 void DropList::setSelected(const string &item) {
@@ -1340,13 +1388,18 @@ void DropList::expandList() {
 	floatingList->setPaddingParams(0, 0);
 	const Vec2i &size = getSize();
 	const Vec2i &screenPos = getScreenPos();
-	int ph = floatingList->getPrefHeight(listItems.size());
+	int num = listItems.empty() ? itemColours.size() : listItems.size();
+	int ph = floatingList->getPrefHeight(num);
 	int h = dropBoxHeight == 0 ? ph : ph > dropBoxHeight ? dropBoxHeight : ph;
 
 	Vec2i sz(size.x, h);
 	Vec2i pos(screenPos.x, screenPos.y - sz.y + size.y);
 	floatingList->setPos(pos);
-	floatingList->addItems(listItems);
+	if (listItems.empty()) {
+		floatingList->addColours(itemColours);
+	} else {
+		floatingList->addItems(listItems);
+	}
 	floatingList->setSize(sz);
 
 	floatingList->setSelected(selectedIndex);

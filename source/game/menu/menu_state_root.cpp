@@ -165,6 +165,13 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		cmbBox->ListExpanded.connect(this, &MenuStateRoot::onComboBoxExpanded);
 		cmbBox->ListCollapsed.connect(this, &MenuStateRoot::onComboBoxCollapsed);
 
+		Widgets::DropList *dl = new Widgets::DropList(&program, Vec2i(700, yPos), Vec2i(60, 30));
+		dl->addItem(Entities::Faction::factionColours[0]);
+		dl->addItem(Entities::Faction::factionColours[1]);
+		dl->addItem(Entities::Faction::factionColours[2]);
+		dl->addItem(Entities::Faction::factionColours[3]);
+		dl->setSelected(0);
+
 		// CheckBox
 		yPos += cmbBox->getHeight() + 20;
 		Widgets::CheckBox *checkBox = new Widgets::CheckBox(&program);

@@ -252,7 +252,7 @@ void GameState::update() {
 	}
 
 	//misc
-	updateFps++;
+	++updateFps;
 
 	mouse2d = (mouse2d + 1) % Renderer::maxMouse2dAnim;
 
@@ -267,13 +267,13 @@ void GameState::update() {
 	try {
 		//update simulation
 		simInterface->updateWorld();
-			++worldFps;
+		++worldFps;
 
 		//Gui
 		gui.update();
 
 		//Particle systems
-		if(weatherParticleSystem != NULL){
+		if (weatherParticleSystem) {
 			weatherParticleSystem->setPos(gameCamera.getPos());
 		}
 		g_renderer.updateParticleManager(ResourceScope::GAME);
@@ -304,7 +304,7 @@ void GameState::displayError(std::exception &e) {
 	Lang &lang = Lang::getInstance();
 	simInterface->pause();
 	stringstream errmsg;
-	errmsg << e.what() << endl;// << buf;
+	errmsg << e.what() << endl;
 	mainMessageBox.init(errmsg.str(), lang.get("Ok"));
 	mainMessageBox.setEnabled(true);
 }

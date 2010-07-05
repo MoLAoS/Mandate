@@ -112,15 +112,16 @@ const string *Properties::_getString(const string &key, bool required) const {
 	PropertyMap::const_iterator it;
 	string lkey = key;
 	for (int i=0; i < lkey.size(); ++i) {
-		lkey[i] = tolower(lkey[i]);
+		if (isupper(lkey[i])) {
+			lkey[i] = tolower(lkey[i]);
+		}
 	}
 	it = propertyMap.find(lkey);
-	if(it == propertyMap.end()) {
-		if(required) {
+	if (it == propertyMap.end()) {
+		if (required) {
 			throw runtime_error("Value not found in propertyMap: " + key + ", loaded from: " + path);
 		}
-
-		return NULL;
+		return 0;
 	} else {
 		return &it->second;
 	}

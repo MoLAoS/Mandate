@@ -126,6 +126,7 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 	verts[ITR] = verts[OTR] + Vec2i(-style.m_sizes[Border::RIGHT], -style.m_sizes[Border::TOP]);
 	verts[IBR] = verts[OBR] + Vec2i(-style.m_sizes[Border::RIGHT], style.m_sizes[Border::BOTTOM]);
 
+	assertGl();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
@@ -241,6 +242,7 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 			break;
 	}
 	glPopAttrib();
+	assertGl();
 }
 
 void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size) {
@@ -252,6 +254,7 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 	verts[2] = verts[0] + size;
 	verts[3] = verts[0] + Vec2i(size.x, 0);
 
+	assertGl();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
 	glDisable(GL_LIGHTING);
@@ -310,6 +313,7 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 			break;
 	}
 	glPopAttrib();
+	assertGl();
 }
 
 void Widget::renderBgAndBorders(bool bg) {
@@ -329,6 +333,7 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha,
 	float x2 = x1 + float(size.x);
 	float y2 = y1 + float(size.y);
 	
+	assertGl();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
 
@@ -345,6 +350,7 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha,
 		glVertex2f(x1, y1);
 	glEnd();
 	glPopAttrib();
+	assertGl();
 }
 
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha) {
@@ -370,6 +376,7 @@ ImageWidget::ImageWidget(Widget::Ptr me, Texture2D *tex)
 
 void ImageWidget::renderImage(int ndx) {
 	ASSERT_RANGE(ndx, textures.size());
+	assertGl();
 
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 	glDisable(GL_LIGHTING);
@@ -484,6 +491,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	if (!font) {
 		font = this->font;
 	}
+	assertGl();
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 	glEnable(GL_BLEND);
 	glColor4fv(colour.ptr());
@@ -493,6 +501,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	tr->render(txt, x, y);
 	tr->end();
 	glPopAttrib();
+	assertGl();
 }
 
 void TextWidget::renderText(int ndx) {
@@ -639,12 +648,14 @@ Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
 }
 
 void Container::render() {
+	assertGl();
 	foreach (WidgetList, it, children) {
 		Widget::Ptr widget = *it;
 		if (widget->isVisible()) {
 			widget->render();
 		}
 	}
+	assertGl();
 }
 
 }}

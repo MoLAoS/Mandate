@@ -12,6 +12,7 @@
 #include "widget_window.h"
 #include "core_data.h"
 #include "lang.h"
+#include "faction.h"
 
 namespace Glest { namespace Widgets {
 using Shared::Util::intToStr;
@@ -25,25 +26,31 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
 	Widget::setPadding(0);
 	assert(size.x > 200);
-	float size_x = float(size.x - 25);
-	float fwidths[] = { size_x * 20.f / 100.f, size_x * 35.f / 100.f, size_x * 35.f / 100.f, size_x * 10.f / 100.f};
-	int widths[4];
-	for (int i=0; i < 4; ++i) {
+	float size_x = float(size.x - 30);
+	float fwidths[] = { 
+		size_x * 18.f / 100.f,
+		size_x * 33.f / 100.f,
+		size_x * 33.f / 100.f,
+		size_x * 8.f / 100.f,
+		size_x * 8.f / 100.f
+	};
+	int widths[5];
+	for (int i=0; i < 5; ++i) {
 		widths[i] = int(fwidths[i]);
 	}
 	Vec2i cpos(5, 2);
-	
+
 	CoreData &coreData = CoreData::getInstance();
 
 	m_label = new StaticText(this, cpos, Vec2i(widths[0], 30));
 	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getfreeTypeMenuFont(), true);
-	
+
 	cpos.x += widths[0] + 5;
 	m_controlList = new DropList(this, cpos, Vec2i(widths[1], 30));
 	foreach_enum (ControlType, ct) {
 		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
 	}
-	
+
 	cpos.x += widths[1] + 5;	
 	m_factionList = new DropList(this, cpos, Vec2i(widths[2], 30));
 
@@ -52,6 +59,13 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
 	}
+
+	cpos.x += widths[3] + 5;
+	m_colourList = new Widgets::DropList(this, cpos, Vec2i(widths[4], 30));
+	for (int i=0; i < GameConstants::maxPlayers; ++ i) {
+		m_colourList->addItem(Entities::Faction::factionColours[i]);
+	}
+	m_colourList->setSelected(0);
 
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);
 	m_factionList->SelectionChanged.connect(this, &PlayerSlotWidget::onFactionChanged);

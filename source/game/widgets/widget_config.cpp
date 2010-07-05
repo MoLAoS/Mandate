@@ -196,6 +196,10 @@ WidgetConfig::WidgetConfig() {
 	luaScript.close();
 }
 
+uint32 WidgetConfig::getColourIndex(const Vec3f &c) {
+	return getColourIndex(Colour(uint8(c.r * 255), uint8(c.g * 255), uint8(c.b * 255), 255u));
+}
+
 uint32 WidgetConfig::getColourIndex(const Colour &c) {
 	const int &n = m_colours.size();
 	for (int i = 0; i < n; ++i) {

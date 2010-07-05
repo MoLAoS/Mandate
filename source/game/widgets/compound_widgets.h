@@ -23,6 +23,7 @@ private:
 	DropList::Ptr	m_controlList;
 	DropList::Ptr	m_factionList;
 	DropList::Ptr	m_teamList;
+	DropList::Ptr	m_colourList;
 
 public:
 	PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size);
@@ -37,6 +38,7 @@ public:
 	void setSelectedControl(ControlType ct) {
 		m_controlList->setSelected(ct);
 	}
+
 	void setSelectedFaction(int ndx) {
 		m_factionList->setSelected(ndx);
 	}
@@ -44,6 +46,10 @@ public:
 	void setSelectedTeam(int team) {
 		assert (team >= -1 && team < GameConstants::maxPlayers);
 		m_teamList->setSelected(team);
+	}
+
+	void setSelectedColour(int ndx) {
+		m_colourList->setSelectedColour(ndx);
 	}
 
 	ControlType getControlType() const { return ControlType(m_controlList->getSelectedIndex()); }
