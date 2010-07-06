@@ -61,6 +61,9 @@ XmlNode *XmlIo::load(const string &path){
 
 	XmlNode *rootNode = new XmlNode(document->RootElement());
 
+	//hopefully not needed for rootNode
+	delete document;
+	
 	return rootNode;
 }
 

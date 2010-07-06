@@ -196,7 +196,11 @@ bool FSFactory::fileExists(const string &path){
 }
 
 bool FSFactory::dirExists(const string &path) {
+#if USE_PHYSFS
 	return PHYSFS_isDirectory(path.c_str());
+#else
+	return false;
+#endif
 }
 
 bool FSFactory::removeFile(const string &path) {

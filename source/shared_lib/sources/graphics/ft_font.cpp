@@ -97,6 +97,8 @@ void make_dlist(FT_Face face, unsigned char ch, GLuint list_base, GLuint *tex_ba
 		glPopMatrix();
 		glTranslatef(_26_6_TO_FLOAT(face->glyph->advance.x), 0.f, 0.f);
 	glEndList();
+	
+	FT_Done_Glyph(glyph);
 }
 
 void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
@@ -141,8 +143,11 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 	this->h = metrics.getHeight();
 	//delete face->stream;  //FIXME: allocated in FSFactory::openFace, better delete it in FSFactory
 	// ^^^ causing double delete [FT_Done_Face() also deletes ?]
+	// Yggdrasil: No, but it somehow needs it
+	FT_StreamRec *streamrec = face->stream;
 	FT_Done_Face(face);
 	FT_Done_FreeType(library);
+	delete streamrec;
 }
 
 void font_data::clean() {

@@ -114,6 +114,7 @@ SimulationInterface::SimulationInterface(Program &program)
 		, paused(false)
 		, gameOver(false)
 		, quit(false)
+		, m_gaia(0)
 		, commander(0)
 		, speed(GameSpeed::NORMAL) {
 }
@@ -121,6 +122,7 @@ SimulationInterface::SimulationInterface(Program &program)
 SimulationInterface::~SimulationInterface() {
 	delete stats;
 	stats = 0;
+	if(m_gaia) delete m_gaia;
 }
 
 void SimulationInterface::constructGameWorld(GameState *g) {

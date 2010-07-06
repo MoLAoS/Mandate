@@ -33,6 +33,7 @@ Selection::Selection()	{
 }
 
 void Selection::init(UserInterface *gui, int factionIndex) {
+	empty = true;
 	uniform = false;
 	commandable = false;
 	cancelable = false;

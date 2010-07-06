@@ -246,7 +246,7 @@ const ResourceType *TechTree::getTechResourceType(int i) const{
 
 	for(int j=0; j<getResourceTypeCount(); ++j){
 		const ResourceType *rt= getResourceType(j);
-		if(rt->getResourceNumber()==i && rt->getClass()==ResourceClass::TECHTREE)
+		if(rt->getClass()==ResourceClass::TECHTREE && rt->getResourceNumber()==i)
 			return getResourceType(j);
 	}
 

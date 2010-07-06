@@ -59,6 +59,7 @@ World::World(SimulationInterface *iSim)
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
+		, thisTeamIndex(-1)
 		, posIteratorFactory(65)
 		, unitTypeFactory(0)
 		, upgradeTypeFactory(0)
@@ -1032,6 +1033,10 @@ void World::initSplattedTextures() {
 //creates each faction looking at each faction name contained in GameSettings
 void World::initFactions() {
 	Logger::getInstance().add("Faction types", true);
+	
+	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+		&techTree, -1, -1, -1, -1, false, false);
+	
 	GameSettings &gs = iSim->getGameSettings();
 	if (!gs.getFactionCount()) return;
 
@@ -1060,9 +1065,6 @@ void World::initFactions() {
 		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
 	}
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
-	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
-		&techTree, -1, -1, -1, -1, false, false);
-	
 }
 
 void World::initMinimap(bool resuming) {

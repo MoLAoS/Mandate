@@ -124,6 +124,7 @@ Cartographer::Cartographer(World *world)
 
 /** Destruct */
 Cartographer::~Cartographer() {
+	delete nodeMap;
 	delete masterMap;
 	delete clusterMap;
 	delete nmSearchEngine;

@@ -47,7 +47,7 @@ namespace Shared { namespace Util {
 
 	public:
 		ProfileSection(const char *name) : name(name) {
-			Profile::sectionBegin(name);
+			Profile::sectionBegin(this->name);
 		}
 		~ProfileSection() {
 			Profile::sectionEnd(name);

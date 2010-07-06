@@ -500,16 +500,17 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
  * - If the resulting path is the current directory, then an empty string is returned.
  */
 string cleanPath(const string &s) {
-	string result;
-	vector<const char *> elements;
-	char *buf = strcpy(new char[s.length() + 1], s.c_str());
-	char *data;
-	bool isAbsolute;
-
 	// empty input gets empty output
 	if(!s.length()) {
 		return s;
 	}
+
+	string result;
+	vector<const char *> elements;
+	char *buf = new char[s.length() + 1];
+	strcpy(buf, s.c_str());
+	char *data;
+	bool isAbsolute;
 
 	isAbsolute = (s.at(0) == '/' || s.at(0) == '\\');
 

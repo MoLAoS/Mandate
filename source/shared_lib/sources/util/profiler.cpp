@@ -47,6 +47,7 @@ private:
 
 public:
 	Section(const string &name);
+	~Section();
 
 	Section *getParent()				{return parent;}
 	const string &getName() const		{return name;}
@@ -73,6 +74,12 @@ Section::Section(const string &name){
 	microsElapsed= 0;
 	calls = 0;
 	parent= NULL;
+}
+
+Section::~Section(){
+	for(SectionContainer::iterator it=children.begin(); it!=children.end(); ++it){
+		delete it->second;
+	}
 }
 
 Section *Section::getChild(const string &name){
@@ -146,6 +153,7 @@ Profiler::Profiler(){
 }
 
 Profiler::~Profiler(){
+	delete rootSection;
 }
 
 void Profiler::close(){

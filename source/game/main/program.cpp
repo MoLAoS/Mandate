@@ -191,7 +191,7 @@ void Program::init() {
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(cmdArgs.getClientIP())));
 	// load map and tileset without players
-	} else if(!cmdArgs.getLoadmap().empty()) {  //FIXME: broken, refactor ShowMap
+	} else if(!cmdArgs.getLoadmap().empty()) {
 		GameSettings &gs = simulationInterface->getGameSettings();
 		gs.clear();
 		gs.setDefaultResources(false);
