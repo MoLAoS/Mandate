@@ -175,7 +175,7 @@
 			<sound enabled="true" start-time="0">
 				<sound-file path="sounds/battlemage_die1.wav"/>
 			</sound>
-            <max-range value="50"/>
+            <max-range value="3"/>
 		</skill>
 
 	</skills>
@@ -183,12 +183,22 @@
 	<commands>
     
         <command>
-			<type value="carry"/>
+			<type value="unload"/>
 			<name value="unload"/>
 			<image path="images/magic_unload.bmp"/>
 			<unit-requirements/>
 			<upgrade-requirements/>
 			<unload-skill value="unload_skill"/>
+		</command>
+        
+        <command>
+			<type value="load"/>
+			<name value="load"/>
+			<image path="images/magic_unload.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<load-skill value="load_skill"/>
+            <move-skill value="move_skill"/>
 		</command>
 
 		<command>
