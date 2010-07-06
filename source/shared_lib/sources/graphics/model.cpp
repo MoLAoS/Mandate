@@ -85,7 +85,22 @@ Mesh::Mesh() {
 }
 
 Mesh::~Mesh() {
-	end();
+	if (use_simd_interpolation) {
+		for (int i=0; i < frameCount; ++i) {
+			free_aligned_vec3_array(vertArrays[i]);
+			free_aligned_vec3_array(normArrays[i]);
+		}
+		delete [] vertArrays;
+		delete [] normArrays;
+	} else {
+		delete [] vertices;
+		delete [] normals;
+	}
+	delete [] texCoords;
+	delete [] tangents;
+	delete [] indices;
+
+	delete interpolationData;
 }
 
 void Mesh::init() {
@@ -104,25 +119,6 @@ void Mesh::init() {
 	}
 	texCoords = new Vec2f[vertexCount];
 	indices = new uint32[indexCount];
-}
-
-void Mesh::end() {
-	if (use_simd_interpolation) {
-		for (int i=0; i < frameCount; ++i) {
-			free_aligned_vec3_array(vertArrays[i]);
-			free_aligned_vec3_array(normArrays[i]);
-		}
-		delete [] vertArrays;
-		delete [] normArrays;
-	} else {
-		delete [] vertices;
-		delete [] normals;
-	}
-	delete [] texCoords;
-	delete [] tangents;
-	delete [] indices;
-
-	delete interpolationData;
 }
 
 // ========================== shadows & interpolation =========================

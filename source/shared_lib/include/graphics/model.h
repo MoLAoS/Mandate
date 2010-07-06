@@ -85,7 +85,6 @@ public:
 	Mesh();
 	~Mesh();
 	void init();
-	void end();
 
 	//maps
 	const Texture2D *getTexture(int i) const	{return textures[i];}
