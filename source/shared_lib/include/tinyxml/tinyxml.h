@@ -40,6 +40,9 @@ distribution.
 #include <string.h>
 #include <assert.h>
 
+#include "FileOps.hpp"
+using namespace Shared::PhysFS;
+
 // Help out windows:
 #if defined( _DEBUG ) && !defined( DEBUG )
 #define DEBUG
@@ -1419,6 +1422,9 @@ public:
 		file location. Streaming may be added in the future.
 	*/
 	bool LoadFile( FILE*, TiXmlEncoding encoding = TIXML_DEFAULT_ENCODING );
+	
+	bool LoadFile( FileOps*, TiXmlEncoding encoding = TIXML_DEFAULT_ENCODING );
+	
 	/// Save a file using the given FILE*. Returns true if successful.
 	bool SaveFile( FILE* ) const;
 

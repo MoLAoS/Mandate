@@ -47,8 +47,12 @@ XmlNode *XmlIo::load(const string &path){
 	// creates a document from file
 
 	//TiXmlDocument document( path.c_str() );
-	TiXmlDocument *document = new TiXmlDocument();
-	istream *ifs = FSFactory::getInstance()->getIStream(path.c_str());
+	//TiXmlDocument *document = new TiXmlDocument();
+	//istream *ifs = FSFactory::getInstance()->getIStream(path.c_str());
+	TiXmlDocument document;
+	FileOps *fops = FSFactory::getInstance()->getFileOps();
+	fops->openRead(path.c_str());
+	document.LoadFile(fops);
 
 // 	if ( !document.LoadFile() )	{
 // 		char message[strSize];
@@ -56,13 +60,14 @@ XmlNode *XmlIo::load(const string &path){
 // 		throw runtime_error(message);
 // 	}
 	//FIXME: no error checking
-	*ifs >> *document;
-	delete ifs;
+	//*ifs >> document;
+	//delete ifs;
 
-	XmlNode *rootNode = new XmlNode(document->RootElement());
+	XmlNode *rootNode = new XmlNode(document.RootElement());
+	delete fops;
 
 	//hopefully not needed for rootNode
-	delete document;
+	//delete document;
 	
 	return rootNode;
 }
