@@ -235,19 +235,23 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_playerSlots[i]->ControlChanged.connect(this, &MenuStateNewGame::onChangeControl);
 		m_playerSlots[i]->FactionChanged.connect(this, &MenuStateNewGame::onChangeFaction);
 		m_playerSlots[i]->TeamChanged.connect(this, &MenuStateNewGame::onChangeTeam);
+		m_playerSlots[i]->ColourChanged.connect(this, &MenuStateNewGame::onChangeColour);
 	}
+}
+
+int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (psw == slots[i]) {
+			return i;
+		}
+	}
+	assert(false);
+	return -1;
 }
 
 void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
-	int ndx = -1;
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
-		if (psw == m_playerSlots[i]) {
-			ndx = i;
-			break;
-		}
-	}
-	assert(ndx != -1);
+	int ndx = getSlotIndex(psw, m_playerSlots);
 	if (psw->getSelectedFactionIndex() >= 0) {
 		gs.setFactionTypeName(ndx, m_factionFiles[psw->getSelectedFactionIndex()]);
 	} else {
@@ -289,15 +293,45 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
 
 void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
-	int ndx = -1;
+	int ndx = getSlotIndex(psw, m_playerSlots);
+	gs.setTeam(ndx, psw->getSelectedTeamIndex());
+}
+
+int getLowestFreeColourIndex(PlayerSlotWidget::Ptr *slots) {
+	bool slotUsed[GameConstants::maxPlayers];
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
-		if (psw == m_playerSlots[i]) {
-			ndx = i;
-			break;
+		slotUsed[i] = false;
+	}
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (slots[i]->getSelectedColourIndex() != -1) {
+			ASSERT(slots[i]->getControlType() != ControlType::CLOSED, "Closed slot has colour set.");
+			slotUsed[slots[i]->getSelectedColourIndex()] = true;
 		}
 	}
-	assert(ndx != -1);
-	gs.setTeam(ndx, psw->getSelectedTeamIndex());
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (!slotUsed[i]) {
+			return i;
+		}
+	}
+	ASSERT(false, "No free colours");
+	return -1;
+}
+
+void MenuStateNewGame::onChangeColour(PlayerSlotWidget::Ptr psw) {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	int ndx = getSlotIndex(psw, m_playerSlots);
+	int ci = psw->getSelectedColourIndex();
+	gs.setColourIndex(ndx, ci);
+	if (ci == -1) {
+		return;
+	}
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (ndx == i) continue;
+		if (m_playerSlots[i]->getSelectedColourIndex() == ci) {
+			m_playerSlots[i]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
+			gs.setColourIndex(i, m_playerSlots[i]->getSelectedColourIndex());
+		}
+	}
 }
 
 void MenuStateNewGame::onCheckChanged(Button::Ptr cb) {
@@ -431,6 +465,7 @@ void MenuStateNewGame::updateControlers() {
 			gs.setFactionTypeName(i, "");
 			gs.setTeam(i, -1);
 			gs.setStartLocationIndex(i, -1);
+			gs.setColourIndex(i, -1);
 			m_playerSlots[i]->setSelectedFaction(-1);
 			m_playerSlots[i]->setSelectedTeam(-1);
 			m_playerSlots[i]->setSelectedColour(-1);
@@ -438,15 +473,16 @@ void MenuStateNewGame::updateControlers() {
 			if (m_playerSlots[i]->getSelectedFactionIndex() == -1) {
 				m_playerSlots[i]->setSelectedFaction(i % m_factionFiles.size());
 			}
-			gs.setFactionTypeName(i, m_factionFiles[m_playerSlots[i]->getSelectedFactionIndex()]);
 			if (m_playerSlots[i]->getSelectedTeamIndex() == -1) {
 				m_playerSlots[i]->setSelectedTeam(i);
 			}
+			if (m_playerSlots[i]->getSelectedColourIndex() == -1) {
+				m_playerSlots[i]->setSelectedColour(i);
+			}
+			gs.setFactionTypeName(i, m_factionFiles[m_playerSlots[i]->getSelectedFactionIndex()]);
 			gs.setTeam(i, m_playerSlots[i]->getSelectedTeamIndex());
 			gs.setStartLocationIndex(i, i);
-
-			// FIXME: check first free colour
-			m_playerSlots[i]->setSelectedColour(i);
+			gs.setColourIndex(i, m_playerSlots[i]->getSelectedColourIndex());
 		}
 		if (m_playerSlots[i]->getControlType() == ControlType::HUMAN) {
 			gs.setThisFactionIndex(i);

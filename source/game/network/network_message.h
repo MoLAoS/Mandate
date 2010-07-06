@@ -174,6 +174,7 @@ private:
 		int8 factionCount;
 		int8 teams[GameConstants::maxPlayers];
 		int8 startLocationIndex[GameConstants::maxPlayers];
+		int8 colourIndices[GameConstants::maxPlayers];
 		int8 defaultResources;
 		int8 defaultUnits;
 		int8 defaultVictoryConditions;

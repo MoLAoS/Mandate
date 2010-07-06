@@ -55,10 +55,12 @@ public:
 	ControlType getControlType() const { return ControlType(m_controlList->getSelectedIndex()); }
 	int getSelectedFactionIndex() const { return m_factionList->getSelectedIndex(); }
 	int getSelectedTeamIndex() const { return m_teamList->getSelectedIndex(); }
+	int getSelectedColourIndex() const { return m_colourList->getSelectedIndex(); }
 
 	sigslot::signal<Ptr> ControlChanged;
 	sigslot::signal<Ptr> FactionChanged;
 	sigslot::signal<Ptr> TeamChanged;
+	sigslot::signal<Ptr> ColourChanged;
 
 private: // re-route signals from DropLists
 	void onControlChanged(ListBase::Ptr) {
@@ -73,6 +75,7 @@ private: // re-route signals from DropLists
 	}
 	void onFactionChanged(ListBase::Ptr) { FactionChanged(this); }
 	void onTeamChanged(ListBase::Ptr)	 { TeamChanged(this);	 }
+	void onColourChanged(ListBase::Ptr)	 { ColourChanged(this);	 }
 };
 
 class OptionContainer : public Container {

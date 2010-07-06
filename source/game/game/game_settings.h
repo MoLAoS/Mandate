@@ -43,6 +43,7 @@ private:
 	int factionCount;
 	int teams[maxPlayers];
 	int startLocationIndex[maxPlayers];
+	int colourIndices[maxPlayers];
 
 	bool defaultUnits;
 	bool defaultResources;
@@ -75,11 +76,13 @@ public:
 	int getFactionCount() const						{return factionCount;}
 	int getTeam(int i) const						{return teams[i];}
 	int getStartLocationIndex(int i) const			{return startLocationIndex[i];}
+	int getColourIndex(int i) const					{return colourIndices[i];}
+	
 	bool getDefaultUnits() const					{return defaultUnits;}
 	bool getDefaultResources() const				{return defaultResources;}
 	bool getDefaultVictoryConditions() const		{return defaultVictoryConditions;}
-	bool getFogOfWar() const						{ return fogOfWar; }
-	bool getRandomStartLocs() const					{ return randomStartLocs; }
+	bool getFogOfWar() const						{return fogOfWar;}
+	bool getRandomStartLocs() const					{return randomStartLocs;}
 
 	//set
 	void setDescription(const string& v)			{description = v;}
@@ -96,11 +99,13 @@ public:
 	void setFactionCount(int v)						{factionCount = v;}
 	void setTeam(int i, int v)						{teams[i] = v;}
 	void setStartLocationIndex(int i, int v)		{startLocationIndex[i] = v;}
+	void setColourIndex(int i, int v)				{colourIndices[i] = v;}
+
 	void setDefaultUnits(bool v) 					{defaultUnits = v;}
 	void setDefaultResources(bool v) 				{defaultResources = v;}
 	void setDefaultVictoryConditions(bool v) 		{defaultVictoryConditions = v;}
-	void setFogOfWar(bool v)						{ fogOfWar = v; }
-	void setRandomStartLocs(bool v)					{ randomStartLocs = v; }
+	void setFogOfWar(bool v)						{fogOfWar = v;}
+	void setRandomStartLocs(bool v)					{randomStartLocs = v;}
 
 	//misc
 	void randomizeLocs(int maxPlayers);

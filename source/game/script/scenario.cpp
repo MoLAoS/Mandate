@@ -183,6 +183,7 @@ void Scenario::loadGameSettings(string scenario, string category, const Scenario
 			gs->setStartLocationIndex(factionCount, i);
 			gs->setFactionTypeName(factionCount, scenarioInfo->factionTypeNames[i]);
 			gs->setResourceMultiplier(factionCount, scenarioInfo->resourceMultipliers[i]);
+			gs->setColourIndex(i, i);
 			factionCount++;
 		}
 	}

@@ -243,6 +243,7 @@ LaunchMessage::LaunchMessage(const GameSettings *gameSettings){
 		data.factionControls[i]= gameSettings->getFactionControl(i);
 		data.teams[i]= gameSettings->getTeam(i);
 		data.startLocationIndex[i]= gameSettings->getStartLocationIndex(i);
+		data.colourIndices[i] = gameSettings->getColourIndex(i);
 		data.resourceMultipliers[i] = gameSettings->getResourceMultilpier(i);
 	}
 }
@@ -272,6 +273,7 @@ void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
 		gameSettings->setFactionControl(i, static_cast<ControlType>(data.factionControls[i]));
 		gameSettings->setTeam(i, data.teams[i]);
 		gameSettings->setStartLocationIndex(i, data.startLocationIndex[i]);
+		gameSettings->setColourIndex(i, data.colourIndices[i]);
 		gameSettings->setResourceMultiplier(i, data.resourceMultipliers[i]);
 	}
 }

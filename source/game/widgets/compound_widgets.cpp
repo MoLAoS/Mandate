@@ -70,6 +70,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);
 	m_factionList->SelectionChanged.connect(this, &PlayerSlotWidget::onFactionChanged);
 	m_teamList->SelectionChanged.connect(this, &PlayerSlotWidget::onTeamChanged);
+	m_colourList->SelectionChanged.connect(this, &PlayerSlotWidget::onColourChanged);
 }
 
 OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, const string &text)

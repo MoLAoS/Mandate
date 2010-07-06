@@ -86,6 +86,7 @@ private:
 	void onChangeFaction(PlayerSlotWidget::Ptr);
 	void onChangeControl(PlayerSlotWidget::Ptr);
 	void onChangeTeam(PlayerSlotWidget::Ptr);
+	void onChangeColour(PlayerSlotWidget::Ptr);
 
 	void onChangeMap(ListBase::Ptr);
 	void onChangeTileset(ListBase::Ptr);

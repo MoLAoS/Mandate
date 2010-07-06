@@ -42,6 +42,7 @@ GameSettings::GameSettings(const XmlNode *node) {
 		factionControls[i] = enum_cast<ControlType>(factionNode->getChildIntValue("control"));
 		teams[i] = factionNode->getChildIntValue("team");
 		startLocationIndex[i] = factionNode->getChildIntValue("startLocationIndex");
+		colourIndices[i] = factionNode->getChildIntValue("colourIndex");
 	}
 }
 
@@ -59,6 +60,7 @@ void GameSettings::clear() {
 		resourceMultipliers[i] = 1.f;
 		teams[i] = -1;
 		startLocationIndex[i] = -1;
+		colourIndices[i] = -1;
 	}
 	thisFactionIndex = -1;
 	defaultUnits = true;
@@ -126,6 +128,7 @@ void GameSettings::save(XmlNode *node) const {
 		factionNode->addChild("control", factionControls[i]);
 		factionNode->addChild("team", teams[i]);
 		factionNode->addChild("startLocationIndex", startLocationIndex[i]);
+		factionNode->addChild("colourIndex", colourIndices[i]);
 	}
 }
 

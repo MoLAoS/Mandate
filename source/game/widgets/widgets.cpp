@@ -32,30 +32,8 @@ namespace Glest { namespace Widgets {
 // =====================================================
 
 void StaticText::render() {
-/*
-	Vec2i screenPos = getScreenPos();
-	Vec2i size = getSize();
-	Vec2f verts[4];
-	verts[0] = Vec2f(screenPos);
-	verts[1] = Vec2f(screenPos) + Vec2f(0.f, float(size.y));
-	verts[2] = Vec2f(screenPos) + Vec2f(size);
-	verts[3] = Vec2f(screenPos) + Vec2f(float(size.x), 0.f);
-
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glEnable(GL_BLEND);
-	glColor4f(1.f, 1.f, 1.f, 0.2f);
-	glBegin(GL_QUAD_STRIP);
-		glVertex2fv(verts[0].ptr());
-		glVertex2fv(verts[1].ptr());
-		glVertex2fv(verts[2].ptr());
-		glVertex2fv(verts[3].ptr());
-		glVertex2fv(verts[0].ptr());
-		glVertex2fv(verts[1].ptr());
-	glEnd();
-	glPopAttrib();
-*/
 	Widget::renderBgAndBorders();
-	renderText();
+	TextWidget::renderText();
 }
 
 Vec2i StaticText::getMinSize() const {
@@ -1343,6 +1321,8 @@ void DropList::clearItems() {
 void DropList::setSelected(int index) {
 	if (listItems.empty()) {
 		setSelectedColour(index);
+		selectedIndex = index;
+		SelectionChanged(this);
 		return;
 	}
 	if (index < 0 || index >= listItems.size()) {
@@ -1363,9 +1343,11 @@ void DropList::setSelected(int index) {
 
 void DropList::setSelectedColour(int index) {
 	if (index < 0 || index >= GameConstants::maxPlayers) {
+		selectedIndex = -1;
 		selectedItem->setBackgroundColour(Vec3f(0.5f));
 		return;
 	}
+	selectedIndex = index;
 	selectedItem->setBackgroundColour(itemColours[index]);
 }
 
