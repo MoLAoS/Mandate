@@ -510,6 +510,14 @@ void LoadCommandType::update(Unit *unit) const {
 	} else {
 		Unit *targetUnit = command->getUnit();
 
+		// prevent the unit being loaded multiple times
+		if (targetUnit->isCarried()) {
+			g_console.addLine("targetUnit already being carried");
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+			return;
+		}
+
 		if (targetUnit->getCurrSkill()->getClass() != SkillClass::MOVE) {
 			// move the carrier to the unit
 			/// @todo this was taken from MoveCommandType so there might be a need 
@@ -545,14 +553,21 @@ void LoadCommandType::update(Unit *unit) const {
 		}
 
 		const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
-		if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
-			g_console.addLine("doing load");
-			targetUnit->removeCommands();
-			targetUnit->setVisible(false);
-			/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
-			g_map.clearUnitCells(targetUnit, targetUnit->getPos());
-			targetUnit->setCarried(true);
-			unit->getCarriedUnits().push_back(targetUnit);
+		// if not full and in range
+		if (unit->getCarriedUnits().size() < static_cast<const LoadSkillType*>(st)->getMaxUnits()) {
+			if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
+				g_console.addLine("doing load");
+				targetUnit->removeCommands();
+				targetUnit->setVisible(false);
+				/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
+				g_map.clearUnitCells(targetUnit, targetUnit->getPos());
+				targetUnit->setCarried(true);
+				unit->getCarriedUnits().push_back(targetUnit);
+				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+			}
+		} else {
+			g_console.addLine("carrier full"); /// @todo add to localised version
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
 		}

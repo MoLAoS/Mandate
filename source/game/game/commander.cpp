@@ -76,13 +76,17 @@ CommandResult Commander::tryGiveCommand(
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if(targetUnit) { // 'target' based command
 				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
-				if(targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
+				if(targetUnit->getType()->isOfClass(UnitClass::CARRIER) && targetUnit != *i) {
 					// do a load
 					const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::LOAD);
 					// queue the command for each unit
 					result = pushCommand(new Command(carryCt, CommandFlags(CommandProperties::QUEUE, true), *i, targetUnit));
 					g_console.addLine("added command to load units when they arrive");
 				}
+			} else if(effectiveCt->getClass() == CommandClass::LOAD) {
+				// the player has tried to load nothing, it shouldn't get here if it has 
+				// a targetUnit
+				return CommandResult::SOME_FAILED;
 			} else if(pos != Command::invalidPos) { // 'position' based command
 				//every unit is ordered to a different pos
 				Vec2i currPos = computeDestPos(refPos, (*i)->getPos(), pos);
