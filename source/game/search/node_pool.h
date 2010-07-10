@@ -150,7 +150,7 @@ private:
 		unsigned int *marker; /**< the mark array	 */
 		AStarNode **pArray;	 /**< the pointer array	*/
 	public:
-		MarkerArray(int w, int h)	: stride(w) { 
+		MarkerArray(int w, int h)	: stride(w), counter(0) { 
 			marker = new unsigned int[w * h]; 
 			memset(marker, 0, w * h * sizeof(unsigned int)); 
 			pArray = new AStarNode*[w * h]; 

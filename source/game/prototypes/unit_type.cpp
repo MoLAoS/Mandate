@@ -100,6 +100,7 @@ UnitType::UnitType()
 
 UnitType::~UnitType(){
 	deleteValues(commandTypes.begin(), commandTypes.end());
+	deleteValues(emanations.begin(), emanations.end());
 	deleteValues(skillTypes.begin(), skillTypes.end());
 	deleteValues(selectionSounds.getSounds().begin(), selectionSounds.getSounds().end());
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());

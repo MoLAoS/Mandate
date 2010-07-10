@@ -54,6 +54,7 @@ SkillType::SkillType(SkillClass skillClass, const char* typeName)
 }
 
 SkillType::~SkillType(){
+	deleteValues(effectTypes.begin(), effectTypes.end());
 	deleteValues(sounds.getSounds().begin(), sounds.getSounds().end());
 }
 

@@ -297,6 +297,8 @@ FactionType::~FactionType(){
 		deleteValues(enemyNotice->getSounds().begin(), enemyNotice->getSounds().end());
 		delete enemyNotice;
 	}
+	deleteValues(unitTypes.begin(), unitTypes.end());
+	deleteValues(upgradeTypes.begin(), upgradeTypes.end());
 }
 
 // ==================== get ====================

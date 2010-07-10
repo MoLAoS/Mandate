@@ -53,6 +53,10 @@ SkillCycleTable::SkillCycleTable(RawMessage raw) {
 	cycleTable = reinterpret_cast<CycleInfo*>(raw.data);
 }
 
+SkillCycleTable::~SkillCycleTable(){
+	delete[] cycleTable;
+}
+
 void SkillCycleTable::create(const TechTree *techTree) {
 	numEntries = g_world.getSkillTypeFactory()->getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
@@ -77,7 +81,7 @@ void SkillCycleTable::send(NetworkConnection* connection) const {
 }
 
 bool SkillCycleTable::receive(NetworkConnection* connection) {
-	delete cycleTable;
+	delete[] cycleTable;
 	cycleTable = 0;
 
 	Socket *socket = connection->getSocket();
@@ -88,7 +92,7 @@ bool SkillCycleTable::receive(NetworkConnection* connection) {
 		cycleTable = new CycleInfo[header.messageSize / sizeof(CycleInfo)];
 		if (!socket->receive(&header, sizeof(MsgHeader))
 		|| !socket->receive(cycleTable, header.messageSize)) {
-			delete cycleTable;
+			delete[] cycleTable;
 			cycleTable = 0;
 			throw std::runtime_error(
 				"SkillCycleTable::receive() : Socket lied, getDataToRead() said ok, receive() couldn't deliver");

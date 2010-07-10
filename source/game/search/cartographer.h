@@ -43,6 +43,7 @@ public:
 		state = new ExplorationState[cellMap->getTileW() * cellMap->getTileH()];
 		memset(state, 0, sizeof(ExplorationState) * cellMap->getTileW() * cellMap->getTileH());
 	}
+	~ExplorationMap(){ delete[] state; }
 	/** @param pos cell coordinates @return number of units that can see this tile */
 	int  getVisCounter(const Vec2i &pos) const	{ return state[pos.y * cellMap->getTileH() + pos.x].visCounter; }
 	/** @param pos tile coordinates to increase visibilty on */

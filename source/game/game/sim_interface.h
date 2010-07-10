@@ -141,6 +141,7 @@ public:
 		header.messageType = MessageType::SKILL_CYCLE_TABLE;
 	}
 	SkillCycleTable(RawMessage raw);
+    virtual ~SkillCycleTable();
 
 	void create(const TechTree *techTree);
 

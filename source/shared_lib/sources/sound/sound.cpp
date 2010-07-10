@@ -55,6 +55,7 @@ void StaticSound::load(const string &path){
 	soundFileLoader= SoundFileLoaderFactory::getInstance()->newInstance(ext);
 
 	soundFileLoader->open(path, &info);
+	delete[] samples;
 	samples= new int8[info.getSize()];
 	soundFileLoader->read(samples, info.getSize());
 	soundFileLoader->close();
