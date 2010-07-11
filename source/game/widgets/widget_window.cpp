@@ -78,6 +78,7 @@ void WidgetWindow::clear() {
 }
 
 void WidgetWindow::render() {
+	_PROFILE_FUNCTION();
 	Container::render();
 	if (floatingWidget) {
 		floatingWidget->render();

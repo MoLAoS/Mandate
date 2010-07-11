@@ -34,7 +34,7 @@
 #include "simulation_enums.h"
 #include "entities_enums.h"
 
-#define LOG_COMMAND_ISSUE 1
+#define LOG_COMMAND_ISSUE 0
 
 #ifndef LOG_UNIT_LIFECYCLE
 #	define LOG_UNIT_LIFECYCLE 0

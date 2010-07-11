@@ -295,7 +295,7 @@ HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, Wayp
 	AStarResult res = tSearchEngine->aStar(goal,cost,heuristic);
 	if (res == AStarResult::COMPLETE) {
 		WaypointPath &wpPath = *unit->getWaypointPath();
-		assert(wpPath.empty());
+		wpPath.clear();
 		waypoints.push(dest);
 		const Transition *t = tSearchEngine->getGoalPos();
 		while (t) {

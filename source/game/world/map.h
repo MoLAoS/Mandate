@@ -74,10 +74,10 @@ public:
 	// is
 	bool isSubmerged () const		{ return surfaceType != SurfaceType::LAND;			}
 	bool isDeepSubmerged () const	{ return surfaceType == SurfaceType::DEEP_WATER;	}
-	bool isFree(Zone field) const	{ return !getUnit(field) || getUnit(field)->isPutrefacting(); }
+	bool isFree(Zone zone) const	{ return !getUnit(zone) || getUnit(zone)->isPutrefacting(); }
 
 	// set
-	void setUnit(Zone field, Unit *unit)	{ units[field]= unit;	}
+	void setUnit(Zone zone, Unit *unit)	{ units[zone]= unit;	}
 	void setHeight(float h)					{ height= h;			}
 	void setType(SurfaceType type)			{ surfaceType = type;	}
 };
@@ -132,8 +132,14 @@ public:
 	const Vec2f &getSurfTexCoord() const		{return surfTexCoord;	}
 	bool getNearSubmerged() const				{return nearSubmerged;	}
 
-	bool isVisible(int teamIndex) const			{return visible[teamIndex];}
-	bool isExplored(int teamIndex) const		{return explored[teamIndex];}
+	bool isVisible(int teamIndex) const			{
+		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		return visible[teamIndex];
+	}
+	bool isExplored(int teamIndex) const		{
+		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		return explored[teamIndex];
+	}
 
 	//set
 	void setVertex(const Vec3f &vertex)				{originalVertex = this->vertex = vertex;}
@@ -145,8 +151,17 @@ public:
 	void setObject(Object *object)					{this->object= object;			   }
 	void setFowTexCoord(const Vec2f &ftc)			{this->fowTexCoord= ftc;			}
 	void setTileTexCoord(const Vec2f &stc)			{this->surfTexCoord= stc;			 }
-	void setExplored(int teamIndex, bool explored)	{this->explored[teamIndex]= explored; }
-	void setVisible(int teamIndex, bool visible)	{this->visible[teamIndex]= visible;	   }
+	
+	void setExplored(int teamIndex, bool explored)	{
+		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		this->explored[teamIndex]= explored;
+	}
+
+	void setVisible(int teamIndex, bool visible)	{
+		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		this->visible[teamIndex]= visible;
+	}
+
 	void setNearSubmerged(bool nearSubmerged)		{this->nearSubmerged= nearSubmerged;	}
 
 	//misc
@@ -201,12 +216,13 @@ public:
 
 	//get
 	Cell *getCell(int x, int y) const {
-		assert ( this->isInside ( x,y ) );
+		assert(this->isInside(x,y) && "co-ordinates out of range");
 		return &cells[y * w + x];
 	}
 	Cell *getCell(const Vec2i &pos) const { return getCell(pos.x, pos.y); }
+
 	Tile *getTile(int sx, int sy) const {
-		assert(this->isInsideTile(sx, sy));
+		assert(this->isInsideTile(sx,sy) && "co-ordinates out of range");
 		return &tiles[sy*tileW+sx];
 	}
 	Tile *getTile(const Vec2i &sPos) const { return getTile(sPos.x, sPos.y); }
@@ -220,12 +236,15 @@ public:
 	float getAvgHeight() const					{ return avgHeight;			  }
 	float getWaterLevel() const					{ return waterLevel;		   }
 	Rect2i getBounds() const					{ return Rect2i(0,0, w,h);	    }
-	Vec2i getStartLocation(int locNdx) const	{ return startLocations[locNdx]; }
+	Vec2i getStartLocation(int locNdx) const	{
+		assert(locNdx >= 0 && locNdx < GameConstants::maxPlayers && "invalid faction index");
+		return startLocations[locNdx]; 
+	}
 
 	// these should be in their respective cell classes...
-	bool getSubmerged(const Tile *sc) const		{return sc->getHeight()<waterLevel;}
+	bool getSubmerged(const Tile *sc) const		{return sc->getHeight() < waterLevel;}
 	//bool getSubmerged(const Cell *c) const				{return c->getHeight()<waterLevel;}
-	bool getDeepSubmerged(const Tile *sc) const	{return sc->getHeight()<waterLevel-(1.5f/heightFactor);}
+	bool getDeepSubmerged(const Tile *sc) const	{return sc->getHeight() < waterLevel-(1.5f/heightFactor);}
 	//bool getDeepSubmerged(const Cell *c) const			{return c->getHeight()<waterLevel-(1.5f/heightFactor);}
 	//float getSurfaceHeight(const Vec2i &pos) const;
 

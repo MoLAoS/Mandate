@@ -53,16 +53,16 @@ public:
 	void load(const XmlNode *n);
 	void save(XmlNode *n) const;
 
-	bool getVictory(int i) const					{return playerStats[i].victory;}
-	int getKills(int i) const						{return playerStats[i].kills;}
-	int getDeaths(int i) const						{return playerStats[i].deaths;}
-	int getUnitsProduced(int i) const				{return playerStats[i].unitsProduced;}
-	int getResourcesHarvested(int i) const			{return playerStats[i].resourcesHarvested;}
+	bool getVictory(int i) const					{assert(i >= 0); return playerStats[i].victory;}
+	int getKills(int i) const						{assert(i >= 0); return playerStats[i].kills;}
+	int getDeaths(int i) const						{assert(i >= 0); return playerStats[i].deaths;}
+	int getUnitsProduced(int i) const				{assert(i >= 0); return playerStats[i].unitsProduced;}
+	int getResourcesHarvested(int i) const			{assert(i >= 0); return playerStats[i].resourcesHarvested;}
 
 
-	void setVictorious(int i)						{playerStats[i].victory = true;}
-	void produce(int i)								{playerStats[i].unitsProduced++;}
-	void harvest(int i, int amount)					{playerStats[i].resourcesHarvested += amount;}
+	void setVictorious(int i)						{assert(i >= 0); playerStats[i].victory = true;}
+	void produce(int i)								{assert(i >= 0); playerStats[i].unitsProduced++;}
+	void harvest(int i, int amount)					{assert(i >= 0); playerStats[i].resourcesHarvested += amount;}
 	void kill(int killerIndex, int killedIndex) {
 		if (killerIndex == -1) {
 			return; // glestimal

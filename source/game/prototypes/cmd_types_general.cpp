@@ -83,7 +83,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	}
 	// can we repair any ally ? ///@todo check all repair commands
 	RepairCmd rct = static_cast<RepairCmd>(ut->getFirstCtOfClass(CommandClass::REPAIR));
-	if (rct && (autoCmd = rct->doAutoRepair(unit))) {
+	if (!unit->getFaction()->getCpuControl() && rct && (autoCmd = rct->doAutoRepair(unit))) {
 		//REMOVE
 		if (autoCmd->getUnit()) {
 			REPAIR_LOG( "Auto-Repair command generated, target unit: "

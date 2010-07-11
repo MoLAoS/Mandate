@@ -404,7 +404,7 @@ bool Map::canOccupy(const Vec2i &pos, Field field, const UnitType *ut) {
 bool Map::isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const {
 	if (isInside(pos)) { // on map ?
 		const Tile *sc = getTile(toTileCoords(pos));
-		if (sc->isVisible(teamIndex)) {
+		if (teamIndex == -1 || sc->isVisible(teamIndex)) {
 			return sc->isFree() && isFreeCell(pos, field);
 		} else if (sc->isExplored(teamIndex)) {
 			return field == Field::LAND ? sc->isFree() && !getCell(pos)->isDeepSubmerged() : true;

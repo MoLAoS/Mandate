@@ -1008,7 +1008,7 @@ void Unit::updateSkillCycle(int frameOffset) {
 
 /** called by the server only, updates a skill cycle for the move skill */
 void Unit::updateMoveSkillCycle() {
-//	assert(!isNetworkClient());
+	assert(!g_simInterface->asClientInterface());
 	assert(currSkill->getClass() == SkillClass::MOVE);
 	static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
 

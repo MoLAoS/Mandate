@@ -77,7 +77,11 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	char **list = PHYSFS_enumerateFiles("addons");
 	for(char **i=list; *i; i++){
 		// because we use physfs functions, we need path in physfs
-		string str("addons/");
+#		ifdef WIN32 // needs leading '/' on windoze
+			string str("/addons/");
+#		else
+			string str("addons/");
+#		endif
 		str += *i;
 		// check if useful
 		if(PHYSFS_isDirectory(str.c_str()) || ext(str)=="zip"){// || ext(str)=="7z"){

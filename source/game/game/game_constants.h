@@ -85,6 +85,8 @@ namespace Glest {
 #endif
 
 
+#define LOG_STUFF 1
+
 #if defined(LOG_STUFF) && LOG_STUFF
 #	define LOG(x) g_logger.add(x)
 #	define STREAM_LOG(x) {stringstream ss; ss << x; g_logger.add(ss.str()); }

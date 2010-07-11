@@ -148,6 +148,7 @@ Ai::~Ai() {
 }
 
 void Ai::update() {
+	_PROFILE_FUNCTION();
 	//process ai rules
 	for (AiRules::iterator it = aiRules.begin(); it != aiRules.end(); ++it) {
 		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * WORLD_FPS / 1000)) == 0) {

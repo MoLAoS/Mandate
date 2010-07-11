@@ -277,6 +277,7 @@ void SimulationInterface::updateWorld() {
 		}
 	}
 	m_gaia->update();
+
 	// World
 	world->processFrame();
 	frameProccessed();

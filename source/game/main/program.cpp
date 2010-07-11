@@ -223,6 +223,7 @@ void Program::loop() {
 	while (handleEvent()) {
 		// render
 		if (visible) {
+			_PROFILE_SCOPE("Program::loop() : Render");
 			programState->renderBg();
 			Renderer::getInstance().reset2d(true);
 			WidgetWindow::render();
@@ -234,6 +235,7 @@ void Program::loop() {
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
 
 		if (sleepTime) {
+			_PROFILE_SCOPE("Program::loop() : Sleeping");
 			Shared::Platform::sleep(sleepTime);
 		}
 
@@ -246,15 +248,18 @@ void Program::loop() {
 		while (updateTimer.isTime() && !terminating) {
 			++updateCounter;
 			if (updateCounter % 4 == 0) {
+				_PROFILE_SCOPE("Program::loop() : Update Gui & Sound");
 				WidgetWindow::update();
 				SoundRenderer::getInstance().update();
 				GraphicComponent::update();
 			}
 			const int &interval = programState->getUpdateInterval();
 			if (interval && updateCounter % interval == 0) {
+				_PROFILE_SCOPE("Program::loop() : Update World/Menu");
 				programState->update();
 			}
 			if (simulationInterface->isNetworkInterface()) {
+				_PROFILE_SCOPE("Program::loop() : Update Network");
 				simulationInterface->asNetworkInterface()->update();
 			}
 		}
