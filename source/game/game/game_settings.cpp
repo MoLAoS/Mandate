@@ -88,6 +88,7 @@ void GameSettings::compact() {
 				resourceMultipliers[j - 1] = resourceMultipliers[j];
 				teams[j - 1] = teams[j];
 				startLocationIndex[j - 1] = startLocationIndex[j];
+				colourIndices[j - 1] = colourIndices[j];
 				if (thisFactionIndex == j) --thisFactionIndex;
 				slotFlags[j - 1] = slotFlags[j];
 				if (slotFlags[j]) done = false;

@@ -39,11 +39,8 @@ namespace Glest { namespace ProtoTypes {
 
 SkillType::SkillType(SkillClass skillClass, const char* typeName) 
 		: NameIdPair()
-		//, skillClass(skillClass)
 		, effectTypes()
 		, epCost(0)
-		//, speed(0.f)
-		//, animSpeed(0.f)
 		, animations()
 		, animationsStyle(AnimationsStyle::SINGLE)
 		, sounds()

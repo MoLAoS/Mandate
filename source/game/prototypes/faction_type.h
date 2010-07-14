@@ -21,6 +21,8 @@ using Shared::Sound::StaticSound;
 
 namespace Glest{ namespace ProtoTypes {
 
+class TechTree;
+
 // =====================================================
 // 	class SubfactionType
 //

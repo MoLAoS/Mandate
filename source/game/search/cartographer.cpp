@@ -53,7 +53,6 @@ Cartographer::Cartographer(World *world)
 	nodeMap = new NodeMap(w, h);
 	GridNeighbours gNeighbours(w, h);
 	nmSearchEngine = new SearchEngine<NodeMap, GridNeighbours>(gNeighbours, nodeMap, true);
-	nmSearchEngine->setStorage(nodeMap);
 	nmSearchEngine->setInvalidKey(Vec2i(-1));
 	nmSearchEngine->getNeighbourFunc().setSearchSpace(SearchSpace::CELLMAP);
 
@@ -124,7 +123,6 @@ Cartographer::Cartographer(World *world)
 
 /** Destruct */
 Cartographer::~Cartographer() {
-	delete nodeMap;
 	delete masterMap;
 	delete clusterMap;
 	delete nmSearchEngine;

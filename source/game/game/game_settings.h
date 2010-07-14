@@ -22,6 +22,8 @@ using Shared::Xml::XmlNode;
 namespace Glest { namespace Sim {
 using namespace GameConstants;
 
+#define ASSERT_I() assert(i >= 0 && i < GameConstants::maxPlayers)
+
 // =====================================================
 //	class GameSettings
 // =====================================================
@@ -68,15 +70,15 @@ public:
 	const string &getTechPath() const				{return techPath;}
 	const string &getScenarioPath() const			{return scenarioPath;}
 
-	const string &getFactionTypeName(int i) const	{return factionTypeNames[i];}
-	const string &getPlayerName(int i) const		{return playerNames[i];}
-	ControlType getFactionControl(int i) const		{return factionControls[i];}
-	float getResourceMultilpier(int i) const		{return resourceMultipliers[i];}
+	const string &getFactionTypeName(int i) const	{ASSERT_I(); return factionTypeNames[i];}
+	const string &getPlayerName(int i) const		{ASSERT_I(); return playerNames[i];}
+	ControlType getFactionControl(int i) const		{ASSERT_I(); return factionControls[i];}
+	float getResourceMultilpier(int i) const		{ASSERT_I(); return resourceMultipliers[i];}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getFactionCount() const						{return factionCount;}
-	int getTeam(int i) const						{return teams[i];}
-	int getStartLocationIndex(int i) const			{return startLocationIndex[i];}
-	int getColourIndex(int i) const					{return colourIndices[i];}
+	int getTeam(int i) const						{ASSERT_I(); return teams[i];}
+	int getStartLocationIndex(int i) const			{ASSERT_I(); return startLocationIndex[i];}
+	int getColourIndex(int i) const					{ASSERT_I(); return colourIndices[i];}
 	
 	bool getDefaultUnits() const					{return defaultUnits;}
 	bool getDefaultResources() const				{return defaultResources;}
@@ -91,15 +93,15 @@ public:
 	void setTechPath(const string& v)				{techPath = v;}
 	void setScenarioPath(const string& v)			{scenarioPath = v;}
 
-	void setFactionTypeName(int i, const string& v)	{factionTypeNames[i] = v;}
-	void setPlayerName(int i, const string &v)		{playerNames[i] = v;}
-	void setFactionControl(int i, ControlType v)	{factionControls[i]= v;}
-	void setResourceMultiplier(int i, float v)		{resourceMultipliers[i] = v;}
+	void setFactionTypeName(int i, const string& v)	{ASSERT_I(); factionTypeNames[i] = v;}
+	void setPlayerName(int i, const string &v)		{ASSERT_I(); playerNames[i] = v;}
+	void setFactionControl(int i, ControlType v)	{ASSERT_I(); factionControls[i]= v;}
+	void setResourceMultiplier(int i, float v)		{ASSERT_I(); resourceMultipliers[i] = v;}
 	void setThisFactionIndex(int v) 				{thisFactionIndex = v;}
 	void setFactionCount(int v)						{factionCount = v;}
-	void setTeam(int i, int v)						{teams[i] = v;}
-	void setStartLocationIndex(int i, int v)		{startLocationIndex[i] = v;}
-	void setColourIndex(int i, int v)				{colourIndices[i] = v;}
+	void setTeam(int i, int v)						{ASSERT_I(); teams[i] = v;}
+	void setStartLocationIndex(int i, int v)		{ASSERT_I(); startLocationIndex[i] = v;}
+	void setColourIndex(int i, int v)				{ASSERT_I(); colourIndices[i] = v;}
 
 	void setDefaultUnits(bool v) 					{defaultUnits = v;}
 	void setDefaultResources(bool v) 				{defaultResources = v;}

@@ -205,7 +205,7 @@ void GameState::init() {
 	logger.add("Initializing renderer", true);
 	renderer.initGame(this);
 
-	IF_DEBUG_EDITION( simInterface->getGaia()->showSpawnPoints(); );
+	//IF_DEBUG_EDITION( simInterface->getGaia()->showSpawnPoints(); );
 
 	//sounds
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
