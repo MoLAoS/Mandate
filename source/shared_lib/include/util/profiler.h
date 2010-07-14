@@ -13,7 +13,7 @@
 #ifndef _SHARED_UTIL_PROFILER_H_
 #define _SHARED_UTIL_PROFILER_H_
 
-#define SL_PROFILE
+//#define SL_PROFILE
 
 // SL_PROFILE controls if profile is enabled or not
 
