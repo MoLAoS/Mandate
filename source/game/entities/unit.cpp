@@ -928,6 +928,9 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		} else if (targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
 			//move to be loaded
 			commandType = type->getFirstCtOfClass(CommandClass::MOVE);
+		} else if (getType()->isOfClass(UnitClass::CARRIER)) {
+			//load
+			commandType = type->getFirstCtOfClass(CommandClass::LOAD);
 		} else {
 			//repair allies
 			commandType = getRepairCommandType(targetUnit);

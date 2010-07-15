@@ -59,6 +59,7 @@ CommandResult Commander::tryGiveCommand(
 
 	//give orders to all selected units
 	const Selection::UnitContainer &units = selection.getUnits();
+	CommandResult result;
 
 	foreach_const (Selection::UnitContainer, i, units) {
 		const CommandType *effectiveCt;
@@ -70,19 +71,14 @@ CommandResult Commander::tryGiveCommand(
 			effectiveCt = (*i)->computeCommandType(pos, targetUnit);
 		}
 		if(effectiveCt) {
-			CommandResult result;
 			if(unitType) { // build command
 				flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if(targetUnit) { // 'target' based command
-				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
-				if(targetUnit->getType()->isOfClass(UnitClass::CARRIER) && targetUnit != *i) {
-					// do a load
-					const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::LOAD);
-					// queue the command for each unit
-					result = pushCommand(new Command(carryCt, CommandFlags(CommandProperties::QUEUE, true), *i, targetUnit));
-					g_console.addLine("added command to load units when they arrive");
+				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
+					(*i)->getUnitsToCarry().push_back(targetUnit);
 				}
+				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 			} else if(effectiveCt->getClass() == CommandClass::LOAD) {
 				// the player has tried to load nothing, it shouldn't get here if it has 
 				// a targetUnit
@@ -99,8 +95,30 @@ CommandResult Commander::tryGiveCommand(
 			results.push_back(CommandResult::FAIL_UNDEFINED);
 		}
 	}
-	return computeResult(results);
 
+	// carry units command
+	/// @todo put after so the result from targeting itelf is ignored??, allowing the remaining 
+	///		units to be loaded, should be fixed properly
+	if(targetUnit) {
+		if(targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
+			// do a load
+			const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::LOAD);
+
+			targetUnit->setUnitsToCarry(units);
+			if (units.front() == targetUnit) {
+				if (units.size() > 1) {
+					result = pushCommand(new Command(carryCt, flags, units[1], targetUnit));
+				} else {
+					result = CommandResult::SOME_FAILED;
+				}
+			} else {
+				result = pushCommand(new Command(carryCt, flags, units.front(), targetUnit));
+			}
+			g_console.addLine("added command to load units when they arrive");
+		}
+	}
+
+	return computeResult(results);
 }
 
 CommandResult Commander::tryCancelCommand(const Selection *selection) const{

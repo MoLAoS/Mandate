@@ -70,6 +70,7 @@ public:
 		}
 	}
 	void unSelect(const UnitContainer &units);
+	void unSelect(const Unit *unit);
 	void clear();
 
 	bool isEmpty() const				{return empty;}
@@ -100,6 +101,7 @@ public:
 
 	virtual void unitEvent(UnitObserver::Event event, const Unit *unit);
 	void update();
+	void removeCarried();
 
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;

@@ -154,6 +154,7 @@ public:
 
 private:
 	UnitContainer carriedUnits;
+	UnitContainer unitsToCarry;
 	bool visible;
 
 	int id;					/**< unique identifier  */
@@ -311,6 +312,8 @@ public:
 	int getDeadCount() const					{return deadCount;}
 	bool isMobile ()							{ return type->isMobile(); }
 	//-- for carry units
+	UnitContainer &getUnitsToCarry()			{return unitsToCarry;}
+	void setUnitsToCarry(const UnitContainer &v) { unitsToCarry = UnitContainer(v);}
 	const UnitContainer &getCarriedUnits() const {return carriedUnits;}
 	UnitContainer &getCarriedUnits()			{return carriedUnits;}
 	bool isVisible() const						{return visible;}

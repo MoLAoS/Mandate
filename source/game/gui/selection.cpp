@@ -111,6 +111,14 @@ void Selection::unSelect(const UnitContainer &units){
 	}
 }
 
+void Selection::unSelect(const Unit *unit){
+	for(int i = 0; i < selectedUnits.size(); ++i) {
+		if(selectedUnits[i] == unit) {
+			unSelect(i);
+		}
+	}
+}
+
 void Selection::unSelect(int i){
 	//remove unit from list
 	selectedUnits.erase(selectedUnits.begin()+i);
@@ -206,17 +214,7 @@ void Selection::update() {
 		canRepair = true;
 		autoRepairState = selectedUnits.front()->isAutoRepairEnabled() ? arsOn : arsOff;
 
-		// remove carried units from selection
-		{
-			UnitContainer::iterator i = selectedUnits.begin();
-			while (i != selectedUnits.end()) {
-				if ((*i)->isCarried()) {
-					i = selectedUnits.erase(i);
-				} else {
-					++i;
-				}
-			}
-		}
+		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
 		for(UnitContainer::iterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
 			const UnitType *ut = (*i)->getType();
@@ -239,6 +237,17 @@ void Selection::update() {
 	//in case Game::init() isn't called, eg crash at loading data
 	if (gui) {
 		gui->onSelectionUpdated();
+	}
+}
+
+void Selection::removeCarried() {
+	UnitContainer::iterator i = selectedUnits.begin();
+	while (i != selectedUnits.end()) {
+		if ((*i)->isCarried()) {
+			i = selectedUnits.erase(i);
+		} else {
+			++i;
+		}
 	}
 }
 

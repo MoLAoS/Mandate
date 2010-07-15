@@ -505,71 +505,87 @@ void LoadCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
+	Unit::UnitContainer &unitsToCarry = unit->getUnitsToCarry();
+
 	if (unit->getCurrSkill()->getClass() != SkillClass::LOAD) {
 		unit->setCurrSkill(SkillClass::LOAD);
+	} else if (unitsToCarry.empty()) {
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
 	} else {
-		Unit *targetUnit = command->getUnit();
+		Unit::UnitContainer::iterator i = unitsToCarry.begin();
+		while (i != unitsToCarry.end()) {
+			Unit *targetUnit = *i;
 
-		// prevent the unit being loaded multiple times
-		if (targetUnit->isCarried()) {
-			g_console.addLine("targetUnit already being carried");
-			unit->finishCommand();
-			unit->setCurrSkill(SkillClass::STOP);
-			return;
-		}
-
-		if (targetUnit->getCurrSkill()->getClass() != SkillClass::MOVE) {
-			// move the carrier to the unit
-			/// @todo this was taken from MoveCommandType so there might be a need 
-			/// for a common function to move a unit or there might be a way to 
-			/// add the command to move?
-			Vec2i pos;
-			if (command->getUnit()) {
-				pos = command->getUnit()->getCenteredPos();
-				if (!command->getUnit()->isAlive()) {
-					command->setPos(pos);
-					command->setUnit(NULL);
-				}
-			} else {
-				pos = command->getPos();
+			// prevent the unit being loaded multiple times
+			if (targetUnit->isCarried()) {
+				g_console.addLine("targetUnit already being carried");
+				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+				return;
+			} else if (targetUnit == unit) {
+				g_console.addLine("carrier trying to load itself");
+				i = unitsToCarry.erase(i);
+				continue;
 			}
 
-			switch (g_routePlanner.findPath(unit, pos)) {
-				case TravelState::MOVING:
-					unit->setCurrSkill(moveSkillType);
-					unit->face(unit->getNextPos());
-					break;
-				case TravelState::BLOCKED:
-					unit->setCurrSkill(SkillClass::STOP);
-					if (unit->getPath()->isBlocked() && !command->getUnit()) {
+			if (targetUnit->getCurrSkill()->getClass() != SkillClass::MOVE) {
+				// move the carrier to the unit
+				/// @todo this was taken from MoveCommandType so there might be a need 
+				/// for a common function to move a unit or there might be a way to 
+				/// add the command to move?
+				Vec2i pos;
+				if (command->getUnit()) {
+					pos = command->getUnit()->getCenteredPos();
+					if (!command->getUnit()->isAlive()) {
+						command->setPos(pos);
+						command->setUnit(NULL);
+					}
+				} else {
+					pos = command->getPos();
+				}
+
+				switch (g_routePlanner.findPath(unit, pos)) {
+					case TravelState::MOVING:
+						unit->setCurrSkill(moveSkillType);
+						unit->face(unit->getNextPos());
+						break;
+					case TravelState::BLOCKED:
+						unit->setCurrSkill(SkillClass::STOP);
+						if (unit->getPath()->isBlocked() && !command->getUnit()) {
+							unit->finishCommand();
+							break;
+						}
+						break;	
+					default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
 						unit->finishCommand();
 						break;
-					}
-					break;	
-				default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-					unit->finishCommand();
-					break;
+				}
 			}
-		}
 
-		const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
-		// if not full and in range
-		if (unit->getCarriedUnits().size() < static_cast<const LoadSkillType*>(st)->getMaxUnits()) {
-			if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
-				g_console.addLine("doing load");
-				targetUnit->removeCommands();
-				targetUnit->setVisible(false);
-				/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
-				g_map.clearUnitCells(targetUnit, targetUnit->getPos());
-				targetUnit->setCarried(true);
-				unit->getCarriedUnits().push_back(targetUnit);
+			const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
+
+			// if not full and in range
+			if (unit->getCarriedUnits().size() < static_cast<const LoadSkillType*>(st)->getMaxUnits()) {
+				if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
+					g_console.addLine("doing load");
+					targetUnit->removeCommands();
+					targetUnit->setVisible(false);
+					/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
+					g_map.clearUnitCells(targetUnit, targetUnit->getPos());
+					targetUnit->setCarried(true);
+					unit->getCarriedUnits().push_back(targetUnit);
+					//selection.unselect(targetUnit);
+
+					i = unitsToCarry.erase(i);
+				} else {
+					++i; // process next unit to be carried
+				}
+			} else {
+				g_console.addLine("carrier full"); /// @todo add to localised version
 				unit->finishCommand();
 				unit->setCurrSkill(SkillClass::STOP);
 			}
-		} else {
-			g_console.addLine("carrier full"); /// @todo add to localised version
-			unit->finishCommand();
-			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
 }
