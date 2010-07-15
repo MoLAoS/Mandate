@@ -172,6 +172,7 @@ public:
 	const Mouse3d *getMouse3d() const				{return &mouse3d;}
 	const Display *getDisplay()	const				{return &display;}
 	const Selection *getSelection()	const			{return &selection;}
+	Selection *getSelection()						{return &selection;}
 	const SelectionQuad *getSelectionQuad() const	{return &selectionQuad;}
 	const Object* getSelectedObject() const			{ return selectedObject; }
 

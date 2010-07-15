@@ -1649,10 +1649,9 @@ void Renderer::renderSelectionEffects() {
 				//arrow target
 				Vec3f arrowTarget;
 				Command *c= unit->getCurrCommand();
-				if(c->getUnit()!=NULL){
+				if (c->getUnit() != NULL && !c->getUnit()->isCarried()) {
 					arrowTarget= c->getUnit()->getCurrVectorFlat();
-				}
-				else{
+				} else {
 					Vec2i pos= c->getPos();
 					arrowTarget= Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
 				}

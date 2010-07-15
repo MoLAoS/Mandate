@@ -1007,21 +1007,25 @@ void Map::assertUnitCells(const Unit * unit) {
 	int size = ut->getSize();
 	Field field = unit->getCurrField();
 
-	for(int x = 0; x < size; ++x) {
-		for(int y = 0; y < size; ++y) {
-			Vec2i currPos = unit->getPos() + Vec2i(x, y);
-			assert(isInside(currPos));
-
-			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
-				if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
-					assert(getCell(currPos)->getUnit(field) == unit);
-				} else {
-					assert(getCell(currPos)->getUnit(field) != unit);
+	if (unit->getPos() != Vec2i(-1)) {
+		for(int x = 0; x < size; ++x) {
+			for(int y = 0; y < size; ++y) {
+				Vec2i currPos = unit->getPos() + Vec2i(x, y);
+				assert(isInside(currPos));
+				if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
+					if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
+						assert(getCell(currPos)->getUnit(field) == unit);
+					} else {
+						assert(getCell(currPos)->getUnit(field) != unit);
+					}
 				}
 			}
 		}
+	} else {
+		assert(unit->isCarried());
 	}
 }
+
 #endif
 
 

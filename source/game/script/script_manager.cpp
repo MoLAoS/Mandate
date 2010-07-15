@@ -655,7 +655,7 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 	}
 	va_list vArgs;
 	va_start(vArgs, arg_desc);
-	char *tmp = strcpy (new char[strlen(arg_desc)], arg_desc);
+	char *tmp = strcpy (new char[strlen(arg_desc) + 1], arg_desc);
 	char *tok = strtok(tmp, ",");
 	try {
 		while (tok) {
@@ -682,8 +682,10 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 			addErrorMessage("Error: " + string(caller) + "() " + e.desc());
 		}
 		va_end(vArgs);
+		delete tmp;
 		return false;
 	}
+	delete tmp;
 	return true;
 }
 

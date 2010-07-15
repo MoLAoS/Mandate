@@ -575,6 +575,7 @@ void LoadCommandType::update(Unit *unit) const {
 					g_map.clearUnitCells(targetUnit, targetUnit->getPos());
 					targetUnit->setCarried(true);
 					targetUnit->setPos(Vec2i(-1));
+					g_userInterface.getSelection()->unSelect(targetUnit);
 					unit->getCarriedUnits().push_back(targetUnit);
 					//selection.unselect(targetUnit);
 

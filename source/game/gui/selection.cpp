@@ -99,9 +99,9 @@ void Selection::select(const UnitContainer &units){
 	}
 }
 */
-void Selection::unSelect(const UnitContainer &units){
 
-	//add units to gui
+/// remove units from current selction
+void Selection::unSelect(const UnitContainer &units){
 	for(UnitIterator it= units.begin(); it!=units.end(); ++it){
 		for(int i=0; i<selectedUnits.size(); ++i){
 			if(selectedUnits[i]==*it){
@@ -111,6 +111,7 @@ void Selection::unSelect(const UnitContainer &units){
 	}
 }
 
+/// remove unit from current selction
 void Selection::unSelect(const Unit *unit){
 	for(int i = 0; i < selectedUnits.size(); ++i) {
 		if(selectedUnits[i] == unit) {
