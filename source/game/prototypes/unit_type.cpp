@@ -99,9 +99,7 @@ UnitType::UnitType()
 }
 
 UnitType::~UnitType(){
-	deleteValues(commandTypes.begin(), commandTypes.end());
-	deleteValues(emanations.begin(), emanations.end());
-	deleteValues(skillTypes.begin(), skillTypes.end());
+	deleteValues(emanations.begin(), emanations.end()); ///@todo EffectTypeFactory
 	deleteValues(selectionSounds.getSounds().begin(), selectionSounds.getSounds().end());
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete [] cellMap;
@@ -353,7 +351,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (sn->getName() != "skill") continue;
 			const XmlNode *typeNode = sn->getChild("type");
 			string classId = typeNode->getAttribute("value")->getRestrictedValue();
-			SkillType *skillType = g_world.getSkillTypeFactory()->newInstance(classId);
+			SkillType *skillType = g_world.getSkillTypeFactory().newInstance(classId);
 			skillType->load(sn, dir, techTree, factionType);
 			skillTypes.push_back(skillType);
 		}
@@ -371,7 +369,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			const XmlNode *commandNode = commandsNode->getChild(i);
 			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = g_world.getCommandTypeFactory()->newInstance(classId, this);
+			CommandType *commandType = g_world.getCommandTypeFactory().newInstance(classId, this);
 			commandType->load(commandNode, dir, techTree, factionType);
 			commandTypes.push_back(commandType);
 		}
@@ -383,7 +381,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if (meetingPoint) {
-		CommandType *smpct = g_world.getCommandTypeFactory()->newInstance("set-meeting-point", this);
+		CommandType *smpct = g_world.getCommandTypeFactory().newInstance("set-meeting-point", this);
 		commandTypes.push_back(smpct);
 	}
 
@@ -602,6 +600,24 @@ void UnitType::sortCommandTypes() {
 //	foreach (CommandTypes, it, commandTypes) {
 //		commandTypeMap[(*it)->getId()] = *it;
 //	}
+}
+
+UnitTypeFactory::~UnitTypeFactory() {
+	deleteValues(types);
+}
+
+UnitType* UnitTypeFactory::newInstance() {
+	UnitType *ut = SingleTypeFactory<UnitType>::newInstance();
+	ut->setId(idCounter++);
+	types.push_back(ut);
+	return ut;
+}
+
+UnitType* UnitTypeFactory::getType(int id) {
+	if (id < 0 || id >= types.size()) {
+		throw runtime_error("Error: Unknown unit type id: " + intToStr(id));
+	}
+	return types[id];
 }
 
 }}//end namespace

@@ -66,27 +66,17 @@ public:
 //  class UpgradeTypeFactory
 // ===============================
 
-class UpgradeTypeFactory: private SingleTypeFactory<UpgradeType> {
+class UpgradeTypeFactory : private SingleTypeFactory<UpgradeType> {
 private:
 	int idCounter;
 	vector<UpgradeType *> types;
 
 public:
 	UpgradeTypeFactory() : idCounter(0) { }
+	~UpgradeTypeFactory();
 
-	UpgradeType *newInstance() {
-		UpgradeType *ut = SingleTypeFactory<UpgradeType>::newInstance();
-		ut->setId(idCounter++);
-		types.push_back(ut);
-		return ut;
-	}
-
-	UpgradeType* getType(int id) {
-		if (id < 0 || id >= types.size()) {
-			throw runtime_error("Error: Unknown upgrade type id: " + intToStr(id));
-		}
-		return types[id];
-	}
+	UpgradeType *newInstance();
+	UpgradeType* getType(int id);
 };
 
 }}//end namespace

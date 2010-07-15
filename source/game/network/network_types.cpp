@@ -76,7 +76,7 @@ Command *NetworkCommand::toCommand() const {
 
 	//validate command type
 	const UnitType* unitType= world.findUnitTypeById(unit->getFaction()->getType(), unitTypeId);
-	const CommandType* ct = g_world.getCommandTypeFactory()->getType(commandTypeId);
+	const CommandType* ct = g_world.getCommandTypeFactory().getType(commandTypeId);
 	if (!ct) {
 		throw runtime_error("Can not find command type with id: " + intToStr(commandTypeId) + " in unit: " + unit->getType()->getName() + ". Game out of synch.");
 	}

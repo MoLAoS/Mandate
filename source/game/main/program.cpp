@@ -222,8 +222,9 @@ void Program::loop() {
 
 	while (handleEvent()) {
 		// render
-		if (visible) {
+		if (visible && Chrono::getCurMillis() - lastRender >= 1000 / g_config.getRenderFpsMax()) {
 			_PROFILE_SCOPE("Program::loop() : Render");
+			lastRender = Chrono::getCurMillis();
 			programState->renderBg();
 			Renderer::getInstance().reset2d(true);
 			WidgetWindow::render();

@@ -92,8 +92,8 @@ public:
 	void setPos(const Vec2i &pos)						{this->pos = pos;}
 	void setPos2(const Vec2i &pos2)						{this->pos2 = pos2;}
 
-	void setUnit(Unit *unit)							{this->unitRef = unit->getId();}
-	void setUnit2(Unit *unit2)							{this->unitRef2 = unit2->getId();}	
+	void setUnit(Unit *unit)							{this->unitRef = unit ? unit->getId() : 0;}
+	void setUnit2(Unit *unit2)							{this->unitRef2 = unit2 ? unit2->getId() : 0;}	
 	void setUnitType(const UnitType* unitType)			{this->unitType = unitType;}
 	void setCommandedUnit(Unit *commandedUnit)			{this->commandedUnit = commandedUnit;}
 

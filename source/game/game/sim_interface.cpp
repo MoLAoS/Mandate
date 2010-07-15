@@ -58,7 +58,7 @@ SkillCycleTable::~SkillCycleTable(){
 }
 
 void SkillCycleTable::create(const TechTree *techTree) {
-	numEntries = g_world.getSkillTypeFactory()->getSkillTypeCount();
+	numEntries = g_world.getSkillTypeFactory().getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
 		<< ", messageSize = " << header.messageSize << " (@" << sizeof(CycleInfo) << ")" );
@@ -70,7 +70,7 @@ void SkillCycleTable::create(const TechTree *techTree) {
 
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {
-		cycleTable[i] = g_world.getSkillTypeFactory()->getType(i)->calculateCycleTime();
+		cycleTable[i] = g_world.getSkillTypeFactory().getType(i)->calculateCycleTime();
 	}
 }
 

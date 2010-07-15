@@ -118,7 +118,7 @@ void ClientInterface::doLaunchMessage() {
 }
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
-	int skillCount = g_world.getSkillTypeFactory()->getSkillTypeCount();
+	int skillCount = g_world.getSkillTypeFactory().getSkillTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
 	LOG_NETWORK( "waiting for server to send Skill Cycle Table." );
 	waitForMessage(readyWaitTimeout);

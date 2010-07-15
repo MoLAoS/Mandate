@@ -238,20 +238,11 @@ private:
 
 public:
 	UnitTypeFactory() : idCounter(0) { }
+	~UnitTypeFactory();
 
-	UnitType *newInstance() {
-		UnitType *ut = SingleTypeFactory<UnitType>::newInstance();
-		ut->setId(idCounter++);
-		types.push_back(ut);
-		return ut;
-	}
 
-	UnitType* getType(int id) {
-		if (id < 0 || id >= types.size()) {
-			throw runtime_error("Error: Unknown unit type id: " + intToStr(id));
-		}
-		return types[id];
-	}
+	UnitType *newInstance();
+	UnitType* getType(int id);
 };
 
 }}//end namespace

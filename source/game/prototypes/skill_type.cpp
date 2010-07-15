@@ -67,15 +67,14 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	//model
 	const XmlNode *animNode = sn->getChild("animation");
 	if (animNode->getAttribute("path")) { // single animation, lagacy style
-		string path= sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
-		animations.push_back(Renderer::getInstance().newModel(ResourceScope::GAME));
-		animations.back()->load(dir + "/" + path);
+		string path = dir + "/" + sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
+		animations.push_back(g_world.getModelFactory().getModel(cleanPath(path)));
 		animationsStyle = AnimationsStyle::SINGLE;
 	} else { // multi-anim, new style
 		for (int i=0; i < animNode->getChildCount(); ++i) {
 			string path = animNode->getChild("anim-file", i)->getAttribute("path")->getRestrictedValue();
-			animations.push_back(Renderer::getInstance().newModel(ResourceScope::GAME));
-			animations.back()->load(dir + "/" + path);
+			path = dir + "/" + path;
+			animations.push_back(g_world.getModelFactory().getModel(cleanPath(path)));
 		}
 		animationsStyle = AnimationsStyle::RANDOM;
 	}
@@ -557,6 +556,46 @@ SkillTypeFactory::SkillTypeFactory()
 	registerClass<UnloadSkillType>("unload");
 }
 
+SkillTypeFactory::~SkillTypeFactory() {
+	deleteValues(types);
+}
+
+SkillType* SkillTypeFactory::newInstance(string classId) {
+	SkillType *st = MultiFactory<SkillType>::newInstance(classId);
+	st->setId(idCounter++);
+	types.push_back(st);
+	return st;
+}
+
+SkillType* SkillTypeFactory::getType(int id) {
+	if (id < 0 || id >= types.size()) {
+		throw runtime_error("Error: Unknown skill type id: " + intToStr(id));
+	}
+	return types[id];
+}
+
+// =====================================================
+// 	class ModelFactory
+// =====================================================
+
+ModelFactory::ModelFactory(){}
+
+Model* ModelFactory::newInstance(const string &path) {
+	assert(models.find(path) == models.end());
+	Model *model = g_renderer.newModel(ResourceScope::GAME);
+	model->load(path);
+	models[path] = model;
+	return model;
+}
+
+Model* ModelFactory::getModel(const string &path) {
+	ModelMap::iterator it = models.find(path);
+	if (it != models.end()) {
+		return it->second;
+	}
+	return newInstance(path);
+}
+
 // =====================================================
 // 	class AttackSkillTypes & enum AttackSkillPreferenceFlags
 // =====================================================
@@ -638,6 +677,5 @@ const AttackSkillType *AttackSkillTypes::getPreferredAttack(
 
 	return ast;
 }
-
 
 }} //end namespace

@@ -446,8 +446,7 @@ public:
 	//lifecycle
 	void create(bool startingUnit = false);
 	void born();
-	void kill()											{kill(pos, true);}
-	void kill(const Vec2i &lastPos, bool removeFromCells);
+	void kill();
 	void undertake()									{faction->remove(this);}
 
 	//observers

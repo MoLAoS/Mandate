@@ -351,9 +351,6 @@ void SceneCuller::setVisibleExtrema() {
 	setVisibleExtrema(leftEdges.rbegin(), leftEdges.rend());
 	activeEdge = Right;
 	setVisibleExtrema(rightEdges.begin(), rightEdges.end());
-
-	// assert sanity still prevails
-	assert(cellExtrema.min_x != cellExtrema.max_x);
 }
 
 /** Liang-Barsky polygon clip.  [see Foley & Van Damn 19.1.3] */

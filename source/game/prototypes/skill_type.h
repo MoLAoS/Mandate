@@ -29,11 +29,11 @@ using Shared::Util::MultiFactory;
 #include "damage_multiplier.h"
 #include "effect_type.h"
 #include "sound_container.h"
-#include "particle_type.h"
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
 #include "entities_enums.h"
-#include "particle_type.h"
+#include "particle_type.h"	// forward decs
+
 
 namespace Glest {
 using namespace Sound;
@@ -49,7 +49,7 @@ namespace ProtoTypes {
 ///	A basic action that an unit can perform
 // =====================================================
 
-class SkillType : public NameIdPair{
+class SkillType : public NameIdPair {
 	friend class SkillTypeFactory;
 
 public:
@@ -443,7 +443,7 @@ public:
 };
 
 // ===============================
-// 	class SkillFactory
+// 	class SkillTypeFactory
 // ===============================
 
 class SkillTypeFactory: public MultiFactory<SkillType>{
@@ -453,22 +453,31 @@ private:
 
 public:
 	SkillTypeFactory();
+	~SkillTypeFactory();
 
-	SkillType *newInstance(string classId) {
-		SkillType *st = MultiFactory<SkillType>::newInstance(classId);
-		st->setId(idCounter++);
-		types.push_back(st);
-		return st;
-	}
-
-	SkillType* getType(int id) {
-		if (id < 0 || id >= types.size()) {
-			throw runtime_error("Error: Unknown skill type id: " + intToStr(id));
-		}
-		return types[id];
-	}
-
+	SkillType* newInstance(string classId);
+	SkillType* getType(int id);
 	int getSkillTypeCount() const { return idCounter; }
+};
+
+
+// ===============================
+// 	class ModelFactory
+// ===============================
+
+class ModelFactory {
+private:
+	typedef map<string, Model*> ModelMap;
+
+private:
+	ModelMap models;
+	int idCounter;
+
+	Model* newInstance(const string &path);
+
+public:
+	ModelFactory();
+	Model* getModel(const string &path);
 };
 
 

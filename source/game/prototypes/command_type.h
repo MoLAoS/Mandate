@@ -588,20 +588,11 @@ private:
 
 public:
 	CommandTypeFactory();
+	~CommandTypeFactory();
 
-	CommandType *newInstance(string classId, UnitType *owner) {
-		CommandType *ct = MultiFactory<CommandType>::newInstance(classId);
-		ct->setIdAndUnitType(idCounter++, owner);
-		types.push_back(ct);
-		return ct;
-	}
+	CommandType* newInstance(string classId, UnitType *owner);
 
-	CommandType* getType(int id) {
-		if (id < 0 || id >= types.size()) {
-			throw runtime_error("Error: Unknown command type id: " + intToStr(id));
-		}
-		return types[id];
-	}
+	CommandType* getType(int id);
 };
 
 // update helper, move somewhere sensible

@@ -56,7 +56,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/units/" + unitFilenames[i];
-		UnitType *ut = g_world.getUnitTypeFactory()->newInstance();
+		UnitType *ut = g_world.getUnitTypeFactory().newInstance();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -71,7 +71,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
-		UpgradeType *ut = g_world.getUpgradeTypeFactory()->newInstance();
+		UpgradeType *ut = g_world.getUpgradeTypeFactory().newInstance();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
 	}
@@ -93,7 +93,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/glestimals/" + unitFilenames[i];
-		UnitType *ut = g_world.getUnitTypeFactory()->newInstance();
+		UnitType *ut = g_world.getUnitTypeFactory().newInstance();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -297,8 +297,6 @@ FactionType::~FactionType(){
 		deleteValues(enemyNotice->getSounds().begin(), enemyNotice->getSounds().end());
 		delete enemyNotice;
 	}
-	deleteValues(unitTypes.begin(), unitTypes.end());
-	deleteValues(upgradeTypes.begin(), upgradeTypes.end());
 }
 
 // ==================== get ====================

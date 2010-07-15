@@ -114,14 +114,15 @@ private:
 
 	UnitTypes unitTypes; // ?? unit-types by faction-type ?
 
-	Units newlydead;
 	PosCircularIteratorFactory posIteratorFactory;
 
-	UnitTypeFactory *unitTypeFactory;
-	UpgradeTypeFactory *upgradeTypeFactory;
+	UnitTypeFactory unitTypeFactory;
+	UpgradeTypeFactory upgradeTypeFactory;
 
-	SkillTypeFactory *skillTypeFactory;
-	CommandTypeFactory *commandTypeFactory;
+	SkillTypeFactory skillTypeFactory;
+	CommandTypeFactory commandTypeFactory;
+
+	ModelFactory modelFactory;
 
 public:
 	World(SimulationInterface *iSim);
@@ -133,10 +134,11 @@ public:
 	static bool isConstructed() { return singleton != 0; }
 
 	//get
-	UnitTypeFactory* getUnitTypeFactory()			{return unitTypeFactory;}
-	UpgradeTypeFactory* getUpgradeTypeFactory()		{return upgradeTypeFactory;}
-	SkillTypeFactory* getSkillTypeFactory()			{return skillTypeFactory;}
-	CommandTypeFactory* getCommandTypeFactory()		{return commandTypeFactory;}
+	UnitTypeFactory& getUnitTypeFactory()			{return unitTypeFactory;}
+	UpgradeTypeFactory& getUpgradeTypeFactory()		{return upgradeTypeFactory;}
+	SkillTypeFactory& getSkillTypeFactory()			{return skillTypeFactory;}
+	CommandTypeFactory& getCommandTypeFactory()		{return commandTypeFactory;}
+	ModelFactory& getModelFactory()					{return modelFactory;}
 
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
@@ -184,7 +186,6 @@ public:
 	bool placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated= false);
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
 	void doKill(Unit *killer, Unit *killed);
-	void hackyCleanUp(Unit *unit);
 	
 	bool toRenderUnit(const Unit *unit) const {
 		return map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)

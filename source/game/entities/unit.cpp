@@ -293,8 +293,7 @@ void Unit::save(XmlNode *node) const {
 // ====================================== get ======================================
 
 /** @param from position to search from
-  * @return nearest cell to from that is occuppied
-  * @todo re-implement with Dijkstra search
+  * @return nearest cell to 'from' that is occuppied
   */
 Vec2i Unit::getNearestOccupiedCell(const Vec2i &from) const {
 	int size = type->getSize();
@@ -863,47 +862,34 @@ void checkTargets(const Unit *dead) {
  * Do everything that should happen when a unit dies, except remove them from the faction.  Should
  * only be called when a unit's HPs are zero or less.
  */
-void Unit::kill(const Vec2i &lastPos, bool removeFromCells) {
+void Unit::kill() {
 	assert(hp <= 0);
 	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id + " killed." );
 	hp = 0;
-
-	World::getCurrWorld()->hackyCleanUp(this);
 	g_world.getCartographer()->removeUnitVisibility(this);
 
-	if (fire != NULL) {
+	if (pos != Vec2i(-1)) { // if not in transport, clear cells
+		map->clearUnitCells(this, pos);
+	}
+
+	if (fire) {
 		fire->fade();
-		fire = NULL;
+		fire = 0;
 	}
 
-	// do the cleaning
-	if (removeFromCells) {
-		map->clearUnitCells(this, lastPos);
-	}
-
-	if (!isBeingBuilt()) {
+	if (isBeingBuilt()) { // no longer needs static resources
+		faction->deApplyStaticConsumption(type);
+	} else { 
+		faction->deApplyStaticCosts(type);
 		faction->removeStore(type);
 	}
+
 	setCurrSkill(SkillClass::DIE);
-
-	// no longer needs static resources
-	if (isBeingBuilt()) {
-		faction->deApplyStaticConsumption(type);
-	} else {
-		faction->deApplyStaticCosts(type);
-	}
-
 	Died(this);
-
 	notifyObservers(UnitObserver::eKill);
 	clearCommands();
-
-	// hack... 'tracking' particle systems might reference this, 'this' will soon be deleted...
-	checkTargets(this);
-
-	// random decay time
-	deadCount = Random(id).randRange(-256, 256);
-	//deadCount = 0;
+	checkTargets(this); // hack... 'tracking' particle systems might reference this
+	deadCount = Random(id).randRange(-256, 256); // random decay time
 }
 
 // =================== Referencers ===================
@@ -1124,28 +1110,28 @@ void Unit::updateEmanations() {
 
 /**
  * Do positive or negative Hp and Ep regeneration. This method is
- * provided to reduce redundant code in a number of other places, mostly in
- * UnitUpdater.
+ * provided to reduce redundant code in a number of other places.
  *
  * @returns true if the unit dies
  */
 bool Unit::doRegen(int hpRegeneration, int epRegeneration) {
-	if(hp < 1) {
+	if (hp < 1) {
 		// dead people don't regenerate
 		return true;
 	}
 
-	//hp regen/degen
-	if(hpRegeneration > 0)
+	// hp regen/degen
+	if (hpRegeneration > 0) {
 		repair(hpRegeneration);
-	else if(hpRegeneration < 0) {
-		if(decHp(-hpRegeneration))
+	} else if (hpRegeneration < 0) {
+		if (decHp(-hpRegeneration)) {
 			return true;
+		}
 	}
 
 	//ep regen/degen
 	ep += epRegeneration;
-	if(ep > getMaxEp()) {
+	if (ep > getMaxEp()) {
 		ep = getMaxEp();
 	} else if(ep < 0) {
 		ep = 0;
@@ -1162,19 +1148,19 @@ Unit* Unit::tick() {
 
 	//replace references to dead units with their dying position prior to their
 	//deletion for some commands
-	for(Commands::iterator i = commands.begin(); i != commands.end(); i++) {
-		switch((*i)->getType()->getClass()) {
+	for (Commands::iterator i = commands.begin(); i != commands.end(); i++) {
+		switch ((*i)->getType()->getClass()) {
 			case CommandClass::MOVE:
 			case CommandClass::REPAIR:
 			case CommandClass::GUARD:
 			case CommandClass::PATROL: {
 					const Unit* unit1 = (*i)->getUnit();
-					if(unit1 && unit1->isDead()) {
+					if (unit1 && unit1->isDead()) {
 						(*i)->setUnit(NULL);
 						(*i)->setPos(unit1->getPos());
 					}
 					const Unit* unit2 = (*i)->getUnit2();
-					if(unit2 && unit2->isDead()) {
+					if (unit2 && unit2->isDead()) {
 						(*i)->setUnit2(NULL);
 						(*i)->setPos2(unit2->getPos());
 					}
@@ -1184,9 +1170,9 @@ Unit* Unit::tick() {
 				break;
 		}
 	}
-	if(isAlive()) {
-		if(doRegen(getHpRegeneration(), getEpRegeneration())) {
-			if(!(killer = effects.getKiller())) {
+	if (isAlive()) {
+		if (doRegen(getHpRegeneration(), getEpRegeneration())) {
+			if (!(killer = effects.getKiller())) {
 				// if no killer, then this had to have been natural degeneration
 				killer = this;
 			}
@@ -1194,7 +1180,7 @@ Unit* Unit::tick() {
 	}
 
 	effects.tick();
-	if(effects.isDirty()) {
+	if (effects.isDirty()) {
 		recalculateStats();
 	}
 
@@ -1206,12 +1192,12 @@ Unit* Unit::tick() {
   */
 bool Unit::computeEp() {
 
-	//if not enough ep
+	// if not enough ep
 	if (currSkill->getEpCost() > 0 && ep - currSkill->getEpCost() < 0) {
 		return true;
 	}
 
-	//decrease ep
+	// decrease ep
 	ep -= currSkill->getEpCost();
 	if (ep > getMaxEp()) {
 		ep = getMaxEp();
@@ -1238,7 +1224,7 @@ bool Unit::repair(int amount, fixed multiplier) {
 
 	//increase hp
 	hp += amount;
-	if ( hp_above_trigger && hp > hp_above_trigger ) {
+	if (hp_above_trigger && hp > hp_above_trigger) {
 		hp_above_trigger = 0;
 		ScriptManager::onHPAboveTrigger(this);
 	}
@@ -1266,13 +1252,12 @@ bool Unit::repair(int amount, fixed multiplier) {
 bool Unit::decHp(int i) {
 	assert(i >= 0);
 	if (hp == 0) {
-		World::getCurrWorld()->hackyCleanUp(this);
 		return false;
 	}
 	// we shouldn't ever go negative
 	assert(hp > 0);
 	hp -= i;
-	if ( hp_below_trigger && hp < hp_below_trigger ) {
+	if (hp_below_trigger && hp < hp_below_trigger) {
 		hp_below_trigger = 0;
 		ScriptManager::onHPBelowTrigger(this);
 	}
@@ -1292,8 +1277,6 @@ bool Unit::decHp(int i) {
 
 	//stop fire on death
 	if (hp <= 0) {
-		World::getCurrWorld()->hackyCleanUp(this);
-//		alive = false;
 		hp = 0;
 		if (fire) {
 			fire->fade();
@@ -1406,8 +1389,8 @@ string Unit::getDesc(bool full) const {
 
 /** Apply effects of an UpgradeType 
   * @param upgradeType the type describing the Upgrade to apply*/
-void Unit::applyUpgrade(const UpgradeType *upgradeType){
-	if(upgradeType->isAffected(type)){
+void Unit::applyUpgrade(const UpgradeType *upgradeType) {
+	if (upgradeType->isAffected(type)) {
 		totalUpgrade.sum(upgradeType);
 		recalculateStats();
 	}
@@ -1417,9 +1400,9 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType){
 void Unit::computeTotalUpgrade() {
 	faction->getUpgradeManager()->computeTotalUpgrade(this, &totalUpgrade);
 	level = NULL;
-	for(int i = 0; i < type->getLevelCount(); ++i){
+	for (int i = 0; i < type->getLevelCount(); ++i) {
 		const Level *level = type->getLevel(i);
-		if(kills >= level->getKills()) {
+		if (kills >= level->getKills()) {
 			totalUpgrade.sum(level);
 			this->level = level;
 		} else {
@@ -1445,13 +1428,13 @@ void Unit::recalculateStats() {
 	// add up all multipliers first and then apply (multiply) once.
 	// See EnhancementType::addMultipliers() for the 'adding' strategy
 	addMultipliers(totalUpgrade);
-	for(Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
+	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
 		addMultipliers(*(*i)->getType(), (*i)->getStrength());
 	}
 	applyMultipliers(*this);
 
 	addStatic(totalUpgrade);
-	for(Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
+	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
 		addStatic(*(*i)->getType(), (*i)->getStrength());
 
 		// take care of effect damage type
@@ -1460,23 +1443,23 @@ void Unit::recalculateStats() {
 
 	effects.clearDirty();
 
-	if(getMaxHp() > oldMaxHp) {
+	if (getMaxHp() > oldMaxHp) {
 		hp += getMaxHp() - oldMaxHp;
-	} else if(hp > getMaxHp()) {
+	} else if (hp > getMaxHp()) {
 		hp = getMaxHp();
 	}
 	// correct nagatives
-	if(sight < 0) {
+	if (sight < 0) {
 		sight = 0;
 	}
-	if(maxEp < 0) {
+	if (maxEp < 0) {
 		maxEp = 0;
 	}
-	if(maxHp < 0) {
+	if (maxHp < 0) {
 		maxHp = 0;
 	}
 	// If this guy is dead, make sure they stay dead
-	if(oldHp < 1) {
+	if (oldHp < 1) {
 		hp = 0;
 	}
 }
@@ -1486,17 +1469,17 @@ void Unit::recalculateStats() {
  * @returns true if this effect had an immediate regen/degen that killed the unit.
  */
 bool Unit::add(Effect *e) {
-	if(!isAlive() && !e->getType()->isEffectsNonLiving()){
+	if (!isAlive() && !e->getType()->isEffectsNonLiving()) {
 		delete e;
 		return false;
 	}
 
-	if(e->getType()->isTickImmediately()) {
-		if(doRegen(e->getType()->getHpRegeneration(), e->getType()->getEpRegeneration())) {
+	if (e->getType()->isTickImmediately()) {
+		if (doRegen(e->getType()->getHpRegeneration(), e->getType()->getEpRegeneration())) {
 			delete e;
 			return true;
 		}
-		if(e->tick()) {
+		if (e->tick()) {
 			// single tick, immediate effect
 			delete e;
 			return false;
@@ -1505,7 +1488,7 @@ bool Unit::add(Effect *e) {
 
 	effects.add(e);
 
-	if(effects.isDirty()) {
+	if (effects.isDirty()) {
 		recalculateStats();
 	}
 
@@ -1519,7 +1502,7 @@ bool Unit::add(Effect *e) {
 void Unit::remove(Effect *e) {
 	effects.remove(e);
 
-	if(effects.isDirty()) {
+	if (effects.isDirty()) {
 		recalculateStats();
 	}
 }
@@ -1533,7 +1516,7 @@ void Unit::effectExpired(Effect *e){
 	effectsCreated.remove(e);
 	effects.clearRootRef(e);
 
-	if(effects.isDirty()) {
+	if (effects.isDirty()) {
 		recalculateStats();
 	}
 }
@@ -1573,15 +1556,15 @@ bool Unit::morph(const MorphCommandType *mct) {
 		++i;
 
 		// add (any) remaining if possible
-		for(; i != commands.end(); ++i) {
+		for (; i != commands.end(); ++i) {
 			// first see if the new unit type has a command by the same name
 			const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
 			// if not, lets see if we can find any command of the same class
-			if(!newCmdType) {
+			if (!newCmdType) {
 				newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
 			}
 			// if still not found, we drop the comand, otherwise, we add it to the new list
-			if(newCmdType) {
+			if (newCmdType) {
 				(*i)->setType(newCmdType);
 				newCommands.push_back(*i);
 			}
@@ -1622,21 +1605,18 @@ inline float Unit::computeHeight(const Vec2i &pos) const {
 /** updates target information, (targetPos, targetField & tagetVec) and resets targetRotation 
   * @param target the unit we are tracking */
 void Unit::updateTarget(const Unit *target) {
-	if(!target) {
+	if (!target) {
 		target = g_simInterface->getUnitFactory().getUnit(targetRef);
 	}
 
-	//find a free pos in cellmap
-//	setTargetPos(unit->getCellPos());
-	
-	if(target) {
+	if (target) {
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)
 				: targetPos = target->getCenteredPos();
 		targetField = target->getCurrField();
 		targetVec = target->getCurrVector();
 		
-		if(faceTarget) {
+		if (faceTarget) {
 			face(target->getCenteredPos());
 		}
 	}
@@ -1644,7 +1624,7 @@ void Unit::updateTarget(const Unit *target) {
 
 /** clear command queue */
 void Unit::clearCommands() {
-	while(!commands.empty()) {
+	while (!commands.empty()) {
 		undoCommand(*commands.back());
 		delete commands.back();
 		commands.pop_back();
@@ -1662,7 +1642,7 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		return CommandResult::SUCCESS;
 	}
 	
-	if(ct->getClass() == CommandClass::SET_MEETING_POINT) {
+	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		return type->hasMeetingPoint() ? CommandResult::SUCCESS : CommandResult::FAIL_UNDEFINED;
 	}
 
@@ -1688,22 +1668,22 @@ CommandResult Unit::checkCommand(const Command &command) const {
 	}
 	
 	//build command specific, check resources and requirements for building
-	if(ct->getClass() == CommandClass::BUILD) {
+	if (ct->getClass() == CommandClass::BUILD) {
 		const UnitType *builtUnit = command.getUnitType();
-		if(static_cast<const BuildCommandType*>(ct)->isBlocked(builtUnit, command.getPos())) {
+		if (static_cast<const BuildCommandType*>(ct)->isBlocked(builtUnit, command.getPos())) {
 			return CommandResult::FAIL_BLOCKED;
 		}
-		if(!faction->reqsOk(builtUnit)) {
+		if (!faction->reqsOk(builtUnit)) {
 			return CommandResult::FAIL_REQUIREMENTS;
 		}
-		if(command.isReserveResources() && !faction->checkCosts(builtUnit)) {
+		if (command.isReserveResources() && !faction->checkCosts(builtUnit)) {
 			return CommandResult::FAIL_RESOURCES;
 		}
 
 	//upgrade command specific, check that upgrade is not upgraded
-	} else if(ct->getClass() == CommandClass::UPGRADE){
+	} else if (ct->getClass() == CommandClass::UPGRADE) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-		if(faction->getUpgradeManager()->isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
+		if (faction->getUpgradeManager()->isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
 			return CommandResult::FAIL_UNDEFINED;
 		}
 	}
@@ -1719,16 +1699,16 @@ void Unit::applyCommand(const Command &command) {
 
 	//check produced
 	const ProducibleType *produced = ct->getProduced();
-	if(produced) {
+	if (produced) {
 		faction->applyCosts(produced);
 	}
 
 	//build command specific
-	if(ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
+	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
 		faction->applyCosts(command.getUnitType());
 
 	//upgrade command specific
-	} else if(ct->getClass() == CommandClass::UPGRADE) {
+	} else if (ct->getClass() == CommandClass::UPGRADE) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		faction->startUpgrade(uct->getProducedUpgrade());
 	}
@@ -1743,19 +1723,19 @@ CommandResult Unit::undoCommand(const Command &command) {
 
 	//return cost
 	const ProducibleType *produced = ct->getProduced();
-	if(produced) {
+	if (produced) {
 		faction->deApplyCosts(produced);
 	}
 
-	//return building cost if not already building it or dead
-	if(ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
-		if(currSkill->getClass() != SkillClass::BUILD && currSkill->getClass() != SkillClass::DIE){
+	// return building cost if not already building it or dead
+	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
+		if (currSkill->getClass() != SkillClass::BUILD && currSkill->getClass() != SkillClass::DIE) {
 			faction->deApplyCosts(command.getUnitType());
 		}
 	}
 
-	//upgrade command cancel from list
-	if(ct->getClass() == CommandClass::UPGRADE) {
+	// upgrade command cancel from list
+	if (ct->getClass() == CommandClass::UPGRADE) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		faction->cancelUpgrade(uct->getProducedUpgrade());
 	}
@@ -1816,9 +1796,6 @@ UnitFactory::~UnitFactory() {
 	foreach (UnitMap, it, unitMap) {
 		delete it->second;
 	}
-	foreach (Units, it, deadList) {
-		delete *it;
-	}
 }
 
 Unit* UnitFactory::newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) {
@@ -1837,10 +1814,7 @@ Unit* UnitFactory::newInstance(const XmlNode *node, Faction *faction, Map *map, 
 Unit* UnitFactory::newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master) {
 	Unit *unit = new Unit(idCounter, pos, type, faction, map, master);
 	unitMap[idCounter] = unit;
-	//unitList.push_back(unit);
-	
 	unit->Died.connect(this, &UnitFactory::onUnitDied);
-
 	// todo: more connect-o-rama
 
 	++idCounter;
@@ -1856,7 +1830,6 @@ Unit* UnitFactory::getUnit(int id) {
 }
 
 void UnitFactory::onUnitDied(Unit *unit) {
-	unitMap.erase(unitMap.find(unit->getId()));
 	deadList.push_back(unit);
 }
 
@@ -1865,9 +1838,9 @@ void UnitFactory::update() {
 	while (it != deadList.end()) {
 		if ((*it)->getToBeUndertaken()) {
 			(*it)->undertake();
+			unitMap.erase(unitMap.find((*it)->getId()));
 			delete *it;
 			it = deadList.erase(it);
-
 		} else {
 			return;
 		}

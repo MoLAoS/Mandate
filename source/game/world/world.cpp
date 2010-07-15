@@ -59,12 +59,7 @@ World::World(SimulationInterface *iSim)
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
-		, thisTeamIndex(-1)
-		, posIteratorFactory(65)
-		, unitTypeFactory(0)
-		, upgradeTypeFactory(0)
-		, skillTypeFactory(0)
-		, commandTypeFactory(0) {
+		, posIteratorFactory(65) {
 	Config &config = Config::getInstance();
 
 	GameSettings &gs = iSim->getGameSettings();
@@ -80,10 +75,6 @@ World::World(SimulationInterface *iSim)
 	assert(!singleton);
 	singleton = this;
 	alive = false;
-	unitTypeFactory = new UnitTypeFactory();
-	upgradeTypeFactory = new UpgradeTypeFactory();
-	skillTypeFactory = new SkillTypeFactory();
-	commandTypeFactory = new CommandTypeFactory();
 }
 
 World::~World() {
@@ -94,10 +85,6 @@ World::~World() {
 	delete cartographer;
 	delete routePlanner;
 
-	delete unitTypeFactory;
-	delete upgradeTypeFactory;
-	delete skillTypeFactory;
-	delete commandTypeFactory;
 	singleton = 0;
 }
 
@@ -553,7 +540,7 @@ Unit* World::findUnitById(int id) const {
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	return unitTypeFactory->getType(id);
+	return unitTypeFactory.getType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded
@@ -1280,13 +1267,6 @@ void World::computeFow() {
 				}
 			}
 		}
-	}
-}
-
-
-void World::hackyCleanUp(Unit *unit) {
-	if (std::find(newlydead.begin(), newlydead.end(), unit) == newlydead.end()) {
-		newlydead.push_back(unit);
 	}
 }
 

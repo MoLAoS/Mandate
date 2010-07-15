@@ -574,6 +574,7 @@ void LoadCommandType::update(Unit *unit) const {
 					/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
 					g_map.clearUnitCells(targetUnit, targetUnit->getPos());
 					targetUnit->setCarried(true);
+					targetUnit->setPos(Vec2i(-1));
 					unit->getCarriedUnits().push_back(targetUnit);
 					//selection.unselect(targetUnit);
 
@@ -778,6 +779,24 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");
+}
+
+CommandTypeFactory::~CommandTypeFactory() {
+	deleteValues(types);
+}
+
+CommandType* CommandTypeFactory::newInstance(string classId, UnitType *owner) {
+	CommandType *ct = MultiFactory<CommandType>::newInstance(classId);
+	ct->setIdAndUnitType(idCounter++, owner);
+	types.push_back(ct);
+	return ct;
+}
+
+CommandType* CommandTypeFactory::getType(int id) {
+	if (id < 0 || id >= types.size()) {
+		throw runtime_error("Error: Unknown command type id: " + intToStr(id));
+	}
+	return types[id];
 }
 
 }}//end namespace

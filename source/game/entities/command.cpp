@@ -130,13 +130,8 @@ void Command::save(XmlNode *node) const {
 // =============== misc ===============
 
 void Command::swap() {
-	UnitId tmpUnitRef = unitRef;
-	unitRef = unitRef2;
-	unitRef2 = tmpUnitRef;
-
-	Vec2i tmpPos = pos;
-	pos = pos2;
-	pos2 = tmpPos;
+	std::swap(unitRef, unitRef2);
+	std::swap(pos, pos2);
 }
 
 }}//end namespace

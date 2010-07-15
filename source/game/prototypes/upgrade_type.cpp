@@ -153,4 +153,23 @@ string UpgradeType::getDesc() const {
 	return str;
 }
 
+UpgradeTypeFactory::~UpgradeTypeFactory() {
+	deleteValues(types);
+}
+
+
+UpgradeType* UpgradeTypeFactory::newInstance() {
+	UpgradeType *ut = SingleTypeFactory<UpgradeType>::newInstance();
+	ut->setId(idCounter++);
+	types.push_back(ut);
+	return ut;
+}
+
+UpgradeType* UpgradeTypeFactory::getType(int id) {
+	if (id < 0 || id >= types.size()) {
+		throw runtime_error("Error: Unknown upgrade type id: " + intToStr(id));
+	}
+	return types[id];
+}
+
 }}//end namespace
