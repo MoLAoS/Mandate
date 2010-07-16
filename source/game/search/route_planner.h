@@ -181,8 +181,11 @@ private:
 	bool refinePath(Unit *unit);
 	void smoothPath(Unit *unit);
 
+	HAAStarResult setupHierarchicalOpenList(Unit *unit, const Vec2i &target);
+
 	HAAStarResult setupHierarchicalSearch(Unit *unit, const Vec2i &dest, TransitionGoal &goalFunc);
 	HAAStarResult findWaypointPath(Unit *unit, const Vec2i &dest, WaypointPath &waypoints);
+	HAAStarResult findWaypointPathUnExplored(Unit *unit, const Vec2i &dest, WaypointPath &waypoints);
 
 	World *world;
 	SearchEngine<NodePool>	 *nsgSearchEngine;
@@ -202,50 +205,24 @@ private:
 		}
 		return false;
 	}
-#if _GAE_DEBUG_EDITION_
-	TravelState doFullLowLevelAStar(Unit *unit, const Vec2i &dest);
-#endif
-#if DEBUG_SEARCH_TEXTURES
-public:
-	enum { SHOW_PATH_ONLY, SHOW_OPEN_CLOSED_SETS, SHOW_LOCAL_ANNOTATIONS } debug_texture_action;
-#endif
+
+	IF_DEBUG_EDITION(
+		TravelState doFullLowLevelAStar(Unit *unit, const Vec2i &dest);
+	)
+
 }; // class RoutePlanner
 
-
-//TODO: put these somewhere sensible
+/** Heuristic function for search on cluster map */
 class TransitionHeuristic {
+private:
 	DiagonalDistance dd;
+
 public:
 	TransitionHeuristic(const Vec2i &target) : dd(target) {}
 	bool operator()(const Transition *t) const {
 		return dd(t->nwPos);
 	}
 };
-
-#if 0 == 1
-//
-// just use DiagonalDistance to waypoint ??
-class AbstractAssistedHeuristic {
-public:
-	AbstractAssistedHeuristic(const Vec2i &target, const Vec2i &waypoint, float wpCost) 
-			: target(target), waypoint(waypoint), wpCost(wpCost) {}
-	/** search target */
-	Vec2i target, waypoint;	
-	float wpCost;
-	/** The heuristic function.
-	  * @param pos the position to calculate the heuristic for
-	  * @return an estimate of the cost to target
-	  */
-	float operator()(const Vec2i &pos) const {
-		float dx = (float)abs(pos.x - waypoint.x), 
-			  dy = (float)abs(pos.y - waypoint.y);
-		float diag = dx < dy ? dx : dy;
-		float straight = dx + dy - 2 * diag;
-		return  1.4 * diag + straight + wpCost;
-
-	}
-};
-#endif
 
 }} // namespace 
 

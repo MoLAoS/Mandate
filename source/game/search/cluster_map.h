@@ -159,7 +159,9 @@ public:
 
 /** goal function for search on cluster map */
 class TransitionGoal {
+private:
 	set<const Transition*> goals;
+
 public:
 	TransitionGoal() {}
 	set<const Transition*>& goalTransitions() {return goals;}
