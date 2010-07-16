@@ -407,7 +407,8 @@ float ClusterMap::aStarPathLength(Field f, int size, const Vec2i &start, const V
 	DiagonalDistance dd(dest);
 	se->setNodeLimit(clusterSize * clusterSize);
 	se->setStart(start, dd(start));
-	AStarResult res = se->aStar<PosGoal,MoveCost,DiagonalDistance>(PosGoal(dest), costFunc, dd);
+	PosGoal goal(dest);
+	AStarResult res = se->aStar(goal, costFunc, dd);
 	Vec2i goalPos = se->getGoalPos();
 	if (res != AStarResult::COMPLETE || goalPos != dest) {
 		return numeric_limits<float>::infinity();

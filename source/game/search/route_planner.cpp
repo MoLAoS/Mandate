@@ -192,7 +192,8 @@ float RoutePlanner::quickSearch(Field field, int size, const Vec2i &start, const
 	DiagonalDistance heuristic(dest);
 	nsgSearchEngine->setStart(start, heuristic(start));
 
-	AStarResult r = nsgSearchEngine->aStar(PosGoal(dest), moveCost, heuristic);
+	PosGoal goal(dest);
+	AStarResult r = nsgSearchEngine->aStar(goal, moveCost, heuristic);
 	if (r == AStarResult::COMPLETE && nsgSearchEngine->getGoalPos() == dest) {
 		return nsgSearchEngine->getCostTo(dest);
 	}
@@ -586,24 +587,17 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
   * @return ARRIVED, MOVING, BLOCKED or IMPOSSIBLE
   */
 TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) {
-
-	cout << "RoutePlanner::findPathToLocation() : Frame: " << g_world.getFrameCount() << endl;
-	cout << "\t\tpos " << unit->getPos() << ", dest " << finalPos << endl;
-
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 
 	// if arrived (where we wanted to go)
 	if(finalPos == unit->getPos()) {
 		unit->setCurrSkill(SkillClass::STOP);
-		cout << "\tarrived.\n";
 		return TravelState::ARRIVED;
 	}
 	// route cache
 	if (!path.empty()) {
-		cout << "\troute cache: " << path << endl;
 		if (doRouteCache(unit) == TravelState::MOVING) {
-			cout << "\troute cache hit. moving to " << unit->getNextPos() << "\n";
 			return TravelState::MOVING;
 		}
 	}
@@ -613,7 +607,6 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	// if arrived (as close as we can get to it)
 	if (target == unit->getPos()) {
 		unit->setCurrSkill(SkillClass::STOP);
-		cout << "\tarrived, as close as possible to dest.\n";
 		return TravelState::ARRIVED;
 	}
 	path.clear();
@@ -628,8 +621,6 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	Vec2i destCluster  = ClusterMap::cellToCluster(target);
 	if (startCluster.dist(destCluster) < 3.f) {
 		if (doQuickPathSearch(unit, target) == TravelState::MOVING) {
-			cout << "\tPath: " << path << endl;
-			cout << "\tquickSearch success, moving to " << unit->getNextPos() << "\n";
 			return TravelState::MOVING;
 		}
 	}
@@ -645,21 +636,19 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	}
 	if (res == HAAStarResult::FAILURE) {
 		if (unit->getFaction()->isThisFaction()) {
-			g_console.addLine("Can not reach destination.");
+			g_console.addLine("Can not reach destination."); ///@todo localise
 		}
-		cout << "\thierarchical search failed.\n";
 		return TravelState::IMPOSSIBLE;
 	} else if (res == HAAStarResult::START_TRAP) {
 		if (wpPath.size() < 2) {
 			CONSOLE_LOG( "START_TRAP" );
-			cout << "\tblocked, cluster entrances blocked.\n";
 			return TravelState::BLOCKED;
 		}
 	}
 
 	IF_DEBUG_EDITION( collectWaypointPath(unit); )
 	//CONSOLE_LOG( "WaypointPath size : " + intToStr(wpPath.size()) )
-	//TODO post process, scan wpPath, if prev.dist(pos) < 4 cull prev
+
 	if (wpPath.size() > 1) {
 		wpPath.pop();
 	}
@@ -679,7 +668,6 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 			aMap->clearLocalAnnotations(unit);
 			path.incBlockCount();
 			//CONSOLE_LOG( "   blockCount = " + intToStr(path.getBlockCount()) )
-			cout << "\tblocked, afeter refine path.\n";
 			return TravelState::BLOCKED;
 		}
 	}
@@ -688,17 +676,14 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	IF_DEBUG_EDITION( collectPath(unit); )
 	if (path.empty()) {
 		CONSOLE_LOG( "post hierarchical search failure, path empty." );
-		cout << "\tblocked. hierarchical search failed?\n";
 		return TravelState::BLOCKED;
 	}
 	if (attemptMove(unit)) {
-		cout << "\tmoving.\n";
 		return TravelState::MOVING;
 	}
 	CONSOLE_LOG( "Hierarchical refined path blocked ? valid ?!?" )
 	unit->setCurrSkill(SkillClass::STOP);
 	path.incBlockCount();
-	cout << "\tblocked...\n";
 	return TravelState::BLOCKED;
 }
 
