@@ -2497,7 +2497,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 	modelRenderer->begin(false, false, false);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
+	vector<const Unit*> toRender[GameConstants::maxPlayers];
 	set<const Unit*> unitsSeen;
 	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
 		const Vec2i &pos = *it;
@@ -2506,12 +2506,12 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			const Unit *unit = map->getCell(pos)->getUnit(z);
 			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
 				unitsSeen.insert(unit);
-				toRender[unit->getFactionIndex() + 1].push_back(unit);
+				toRender[unit->getFactionIndex()].push_back(unit);
 			}
 		}
 	}
 
-	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (toRender[i].empty()) continue;
 
 		glPushName(i);
