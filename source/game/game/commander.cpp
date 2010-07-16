@@ -76,7 +76,10 @@ CommandResult Commander::tryGiveCommand(
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if(targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
-					(*i)->getUnitsToCarry().push_back(targetUnit);
+					Unit::UnitContainer &units = (*i)->getUnitsToCarry();
+					if (find(units.begin(), units.end(), targetUnit) == units.end()) {
+						units.push_back(targetUnit);
+					}
 				}
 				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 			} else if(effectiveCt->getClass() == CommandClass::LOAD) {

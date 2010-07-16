@@ -63,6 +63,16 @@ void Vec2iList::write(XmlNode *node) const {
 	node->addAttribute("value", ss.str());
 }
 
+ostream& operator<<(ostream &stream,  Vec2iList &vec) {
+	foreach_const (Vec2iList, it, vec) {
+		if (it != vec.begin()) {
+			stream << ", ";
+		}
+		stream << *it;
+	}
+	return stream;
+}
+
 void UnitPath::read(const XmlNode *node) {
 	Vec2iList::read(node);
 	blockCount = node->getIntAttribute("blockCount");

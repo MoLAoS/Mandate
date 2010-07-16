@@ -545,6 +545,9 @@ void LoadCommandType::update(Unit *unit) const {
 					pos = command->getPos();
 				}
 
+				// ERROR: don't do this multiple times in a command update... find the closest,
+				// path to there... ONE path request. (this in a while loop)
+
 				switch (g_routePlanner.findPath(unit, pos)) {
 					case TravelState::MOVING:
 						unit->setCurrSkill(moveSkillType);

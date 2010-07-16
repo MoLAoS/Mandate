@@ -87,6 +87,8 @@ public:
 	void write(XmlNode *node) const;
 };
 
+ostream& operator<<(ostream &stream,  Vec2iList &vec);
+
 // =====================================================
 // 	class UnitPath
 // =====================================================
