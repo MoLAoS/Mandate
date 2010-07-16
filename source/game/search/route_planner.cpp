@@ -319,11 +319,11 @@ public:
 	}
 
 	/** returns the 'potential goal' transition closest to target, or null if no potential goals */
-	const Transition* getBestSeen(const Vec2i &target) {
+	const Transition* getBestSeen(const Vec2i &currPos, const Vec2i &target) {
 		const Transition *best = 0;
 		float distToBest = numeric_limits<float>::infinity();
 		foreach (set<const Transition*>, it, potentialGoals) {
-			float myDist = (*it)->nwPos.dist(target);
+			float myDist = (*it)->nwPos.dist(target) + (*it)->nwPos.dist(currPos);
 			if (myDist < distToBest) {
 				best = *it;
 				distToBest = myDist;
@@ -371,7 +371,7 @@ HAAStarResult RoutePlanner::findWaypointPathUnExplored(Unit *unit, const Vec2i &
 	UnexploredCost cost(unit->getCurrField(), unit->getSize(), unit->getTeam());
 	TransitionHeuristic heuristic(dest);
 	tSearchEngine->aStar(goal, cost, heuristic);
-	const Transition *t = goal.getBestSeen(dest);
+	const Transition *t = goal.getBestSeen(unit->getPos(), dest);
 	if (!t) {
 		return HAAStarResult::FAILURE;
 	}
@@ -660,8 +660,10 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	IF_DEBUG_EDITION( collectWaypointPath(unit); )
 	//CONSOLE_LOG( "WaypointPath size : " + intToStr(wpPath.size()) )
 	//TODO post process, scan wpPath, if prev.dist(pos) < 4 cull prev
-	assert(wpPath.size() > 1);
-	wpPath.pop();
+	if (wpPath.size() > 1) {
+		wpPath.pop();
+	}
+	assert(!wpPath.empty());
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	// refine path, to at least 20 steps (or end of path)
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
