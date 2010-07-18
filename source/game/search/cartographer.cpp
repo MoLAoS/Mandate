@@ -353,7 +353,8 @@ void Cartographer::adjustGlestimalMap(Field f, TypeMap<float> &iMap, const Vec2i
 	nmSearchEngine->setStart(pos, 0.f);
 	MoveCost cost(f, 1, masterMap);
 	DistanceBuilderGoal goal(&iMap, range);
-	nmSearchEngine->aStar(goal, cost, ZeroHeuristic());
+	ZeroHeuristic zero;
+	nmSearchEngine->aStar(goal, cost, zero);
 }
 
 /** constructs an influence map using djkstra search from all tech resources, fills 'positions' with
@@ -380,7 +381,8 @@ void Cartographer::buildGlestimalMap(Field f, V2iList &positions) {
 	// 2. Zap. Build distance map (distance at each cell in Field f to nearest tech resource)
 	MoveCost cost(f, 1, masterMap);
 	DistanceBuilderGoal goal(&iMap);
-	nmSearchEngine->aStar(goal, cost, ZeroHeuristic());
+	ZeroHeuristic zero;
+	nmSearchEngine->aStar(goal, cost, zero);
 
 	// 3. Find spawn points
 	float big;

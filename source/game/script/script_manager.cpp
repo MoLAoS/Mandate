@@ -682,10 +682,10 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 			addErrorMessage("Error: " + string(caller) + "() " + e.desc());
 		}
 		va_end(vArgs);
-		delete tmp;
+		delete[] tmp;
 		return false;
 	}
-	delete tmp;
+	delete[] tmp;
 	return true;
 }
 
