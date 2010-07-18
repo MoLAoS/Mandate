@@ -94,7 +94,6 @@ void TextRendererFT::begin(const Font *font){
 	assert(!rendering);
 	rendering = true;
 	this->font = static_cast<const FreeTypeFont*>(font);
-	glPushAttrib(GL_TRANSFORM_BIT);
 	assertGl();
 }
 
@@ -109,7 +108,6 @@ void TextRendererFT::render(const string &text, int x, int y, bool centered) {
 void TextRendererFT::end(){
 	assert(rendering);
 	rendering= false;
-	glPopAttrib();
 	assertGl();
 }
 

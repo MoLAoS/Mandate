@@ -14,8 +14,7 @@
 
 #include <cassert>
 
-#include "pixmap.h"
-#include "texture.h"
+#include "widgets.h"
 
 using namespace Shared::Math;
 using namespace Shared::Graphics;
@@ -23,6 +22,8 @@ using namespace Shared::Graphics;
 namespace Glest { namespace Sim {
 
 class World;
+
+using namespace Widgets;
 
 enum ExplorationState{
 	esNotExplored,
@@ -36,20 +37,24 @@ enum ExplorationState{
 /// State of the in-game minimap
 // =====================================================
 
-class Minimap {
+class Minimap : public Widget, public MouseWidget {
 private:
 	Pixmap2D *fowPixmap0;
 	Pixmap2D *fowPixmap1;
 	Texture2D *tex;
 	Texture2D *fowTex;    //Fog Of War Texture2D
 	bool fogOfWar, shroudOfDarkness;
+	bool m_draggingCamera, m_draggingWidget;
+	bool m_leftClickOrder, m_rightClickOrder;
+	Vec2i moveOffset;
 
 private:
 	static const float exploredAlpha;
+	static const Vec2i textureSize;
 
 public:
 	void init(int x, int y, const World *world, bool resuming);
-	Minimap(bool FoW);
+	Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size);
 	~Minimap();
 
 	const Texture2D *getFowTexture() const	{return fowTex;}
@@ -65,6 +70,19 @@ public:
 			fowPixmap1->setPixel(sPos.x, sPos.y, alpha);
 		}
 	}
+
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
+
+	virtual void render();
+	virtual string desc() { return string("[MiniMap: ") + descPosDim() + "]"; }
+
+	sigslot::signal<Vec2i> LeftClickOrder;
+	sigslot::signal<Vec2i> RightClickOrder;
+
+	void setLeftClickOrder(bool enable) { m_leftClickOrder = enable; }
+	void setRightClickOrder(bool enable) { m_rightClickOrder = enable; }
 
 private:
 	void computeTexture(const World *world);

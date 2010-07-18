@@ -238,7 +238,6 @@ public:
     void renderUnits();
 	void renderSelectionEffects();
 	void renderWaterEffects();
-	void renderMinimap();
     void renderDisplay();
 	void renderMenuBackground(const MenuBackground *menuBackground);
 

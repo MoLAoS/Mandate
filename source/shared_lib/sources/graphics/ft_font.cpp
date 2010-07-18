@@ -177,14 +177,48 @@ inline void pop_projection_matrix() {
 	glPopAttrib();
 }
 
-///Much like Nehe's glPrint function, but modified to work with freetype fonts.
-void print(const font_data &ft_font, float x, float y, const unsigned char *text)  {
-	typedef const unsigned char * uchar_ptr;
+typedef const unsigned char * uchar_ptr;
+
+void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 	// We want a coordinate system where things coresponding to window pixels.
 	pushScreenCoordinateMatrix();
 	GLuint font = ft_font.list_base;
 	float h = ft_font.h;// / .63f;
 
+	if (lines.size() > 1) {
+		pos.y += ft_font.h * (lines.size() - 1);
+	}
+
+	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glDisable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glListBase(font);
+
+	float modelview_matrix[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX, modelview_matrix);
+
+	// This is where the text display actually happens.
+	float x = pos.x;
+	float y = pos.y;
+	for (int i = 0; i < lines.size(); ++i) {
+		 glPushMatrix();
+		 glLoadIdentity();
+		 glTranslatef(x, y - h * i, 0);
+		 glMultMatrixf(modelview_matrix);
+		 glCallLists(lines[i].length(), GL_UNSIGNED_BYTE, lines[i].c_str());
+		 glPopMatrix();
+	 }
+	 glPopAttrib();
+	 pop_projection_matrix();
+}
+
+///Much like Nehe's glPrint function, but modified to work with freetype fonts.
+void print(const font_data &ft_font, float x, float y, const unsigned char *text)  {
 	// Here is some code to split the text that we have been given into a set of lines.
 	uchar_ptr start_line = text;
 	vector<string> lines;
@@ -206,35 +240,7 @@ void print(const font_data &ft_font, float x, float y, const unsigned char *text
 		}
 		lines.push_back(line);
 	}
-
-	if (lines.size() > 1) {
-		y += ft_font.h * (lines.size() - 1);
-	}
-
-	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glDisable(GL_LIGHTING);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glListBase(font);
-
-	float modelview_matrix[16];
-	glGetFloatv(GL_MODELVIEW_MATRIX, modelview_matrix);
-
-	// This is where the text display actually happens.
-	for (int i = 0; i < lines.size(); ++i) {
-		glPushMatrix();
-			glLoadIdentity();
-			glTranslatef(x,y-h*i,0);
-			glMultMatrixf(modelview_matrix);
-			glCallLists(lines[i].length(), GL_UNSIGNED_BYTE, lines[i].c_str());
-		glPopMatrix();
-	}
-	glPopAttrib();
-	pop_projection_matrix();
+	render(ft_font, Vec2i(int(x), int(y)), lines);
 }
 
 }

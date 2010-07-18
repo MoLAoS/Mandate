@@ -59,7 +59,7 @@ public:
 	static const int generationArea= 100;
 	/** height air units are drawn at. @todo this is not game data, probably belongs somewhere else */
 	static const float airHeight;
-	/** ??? anyone ? */
+	/** additional sight range that allows to see/reveal tileset objects (but not units) */
 	static const int indirectSightRange= 5;
 
 private:
@@ -72,13 +72,8 @@ private:
 
 	SimulationInterface *iSim;
 
-	// WaterEffects == Eye candy, not game data, send to GameGuiState
+	// WaterEffects == Eye candy, not game data, send to UserInterface
 	WaterEffects waterEffects;
-	// MiniMap == World-View data, built from game data, but belongs in GameGuiState
-	Minimap minimap;
-
-	//REFACTOR: add this... No: have it in the 'SingleTypeFactory<Unit>'
-	//UnitMap units;
 
 	Factions factions; // < to SimulationInterface ?
 	Faction glestimals;
@@ -88,15 +83,13 @@ private:
 	Cartographer *cartographer;
 	RoutePlanner *routePlanner;
 
-	// to GameGuiState, code using these should ultimately be reimplemented
-	// by Connecting signals from 'this' factions/teams units to the GameGuiState
+	// to UserInterface, code using these should ultimately be reimplemented
+	// by Connecting signals from 'this' factions/teams units to the UserInterface
 	int thisFactionIndex;	
 	int thisTeamIndex;
 
 	int frameCount;
 	
-	int nextUnitId; // < to Shared::Util::SingleTypeFactory<Unit> Simulation::unitFactory;
-
 	//config
 	bool fogOfWar, shroudOfDarkness;
 	int fogOfWarSmoothingFrameSkip;  // GameGuiState
@@ -143,7 +136,7 @@ public:
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getThisTeamIndex() const					{return thisTeamIndex;}
-	const Faction *getThisFaction() const			{return (thisFactionIndex >= 0)? &factions[thisFactionIndex] : NULL;}
+	const Faction *getThisFaction() const			{return factions.empty() ? 0 : &factions[thisFactionIndex];}
 	int getFactionCount() const						{return factions.size();}
 	const Map *getMap() const 						{return &map;}
 	const Tileset *getTileset() const 				{return &tileset;}
@@ -158,10 +151,7 @@ public:
 	Faction *getFaction(int i) 						{return &factions[i];}
 	const Faction *getGlestimals() const			{return &glestimals;}
 	Faction *getGlestimals()						{return &glestimals;}
-	const Minimap *getMinimap() const				{return &minimap;}
-//	Stats &getStats() 								{return stats;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}
-	int getNextUnitId()								{return nextUnitId++;}
 	int getFrameCount() const						{return frameCount;}
 	static World *getCurrWorld()					{return singleton;}
 	bool isAlive() const							{return alive;}
@@ -188,9 +178,10 @@ public:
 	void doKill(Unit *killer, Unit *killed);
 	
 	bool toRenderUnit(const Unit *unit) const {
-		return map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
+		return unit->isVisible() && 
+			(map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
 			|| (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
-			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex));
+			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex)));
 	}
 
 	// attack
@@ -230,14 +221,11 @@ private:
 	void initCells();
 	void initSplattedTextures();
 	void initFactions();
-	void initMinimap(bool resuming = false);
 	void initUnits();
 	void initMap();
 	void initExplorationState();
-	void initNetworkServer();
 
 	//misc
-	//void updateClient();
 	//void updateEarthquakes(float seconds);
 	void tick();
 	void computeFow();

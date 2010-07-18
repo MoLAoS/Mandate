@@ -9,10 +9,11 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-#include "pch.h"
-
+#include "types.h"
 #include "random.h"
 #include "timer.h"
+
+#include "vec.h"
 #include "fixed.h"
 
 using Shared::Math::fixed;
@@ -26,11 +27,12 @@ const int NUM_TRIALS = 8192;
 		Chrono chrono;														\
 		chrono.start();														\
 		for (int i=0; i < NUM_TRIALS; ++i) {								\
-		fixed_roots[i] = fixed_numbers[i].sqRtFunc();						\
+			fixed_roots[i] = fixed_numbers[i].sqRtFunc();					\
 		}																	\
 		chrono.stop();														\
 		cout << "\nDone, " << NUM_TRIALS <<	" fixed point square roots ["	\
 			<< #sqRtFunc << "].  Took " << chrono.getMicros() << "us";		\
+		cout << "\nsqrt(" << fixed_numbers[23] << ") = " << fixed_roots[23] << "\n";			\
 	}
 
 
@@ -58,11 +60,14 @@ int main(int argc, char **argv) {
 		chrono.stop();
 		cout << "\nDone, " << NUM_TRIALS << " floating point square roots.  Took " << chrono.getMicros() << "us";
 	}
-	DO_TEST(sqRt);
+	DO_TEST(sqRt_c);
 	DO_TEST(sqRt_unrolled_once);
 	DO_TEST(sqRt_unrolled_twice);
 	DO_TEST(sqRt_unrolled_thrice);
 	DO_TEST(sqRt_unrolled_completely);
+	DO_TEST(sqRt_julery);
+	DO_TEST(sqRt_julery_crowne);
+
 	cout << "\n\n[Enter]";
 	char boo[8];
 	std::cin.getline(boo, 8);

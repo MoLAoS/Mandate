@@ -43,7 +43,6 @@
 
 #define WORLD_FPS (GameConstants::updateFps / GameConstants::defaultUpdateInterval)
 
-
 #include "util.h"
 using Shared::Util::EnumNames;
 

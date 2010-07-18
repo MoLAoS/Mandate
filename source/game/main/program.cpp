@@ -197,6 +197,8 @@ void Program::init() {
 		gs.setDefaultResources(false);
 		gs.setDefaultUnits(false);
 		gs.setDefaultVictoryConditions(false);
+		gs.setThisFactionIndex(0);
+		gs.setTeam(0, 0);
 		gs.setMapPath(string("maps/") + cmdArgs.getLoadmap() + ".gbm");
 		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
 		gs.setTechPath(string("techs/magitech"));

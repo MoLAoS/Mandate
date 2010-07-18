@@ -101,8 +101,12 @@ UserInterface* UserInterface::currentGui = NULL;
 //constructor
 UserInterface::UserInterface(GameState &game)
 		: game(game)
-		, input(game.getInput()) 
-		, selectedObject(0) {
+		, input(game.getInput())
+		, commander(0)
+		, world(0)
+		, gameCamera(0)
+		, console(0)
+		, minimap(0) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -111,10 +115,10 @@ UserInterface::UserInterface(GameState &game)
 	activeCommandClass= CommandClass::STOP;
 	selectingBuilding= false;
 	selectingPos= false;
+	selectedObject = 0;
 	selectingMeetingPoint= false;
 	activePos= invalidPos;
 	dragging = false;
-	draggingMinimap = false;
 	needSelectionUpdate = false;
 	currentGui = this;
 	currentGroup= invalidGroupIndex;
@@ -129,8 +133,17 @@ void UserInterface::init() {
 	selection.init(this, world->getThisFactionIndex());
 }
 
+void UserInterface::initMinimap(bool fow, bool resuming) {
+	minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(10, g_metrics.getScreenH() - 160), Vec2i(128 + 8, 128 + 16));
+	minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
+	minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
+	minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
+}
+
 void UserInterface::end() {
 	selection.clear();
+	delete minimap;
+	minimap = 0;
 }
 
 // ==================== get ====================
@@ -156,9 +169,10 @@ void UserInterface::resetState() {
 	activeCommandClass= CommandClass::STOP;
 	activeCommandType= NULL;
 	dragging = false;
-	draggingMinimap = false;
 	needSelectionUpdate = false;
 	buildPositions.clear();
+	minimap->setLeftClickOrder(false);
+	minimap->setRightClickOrder(!selection.isEmpty());
 }
 
 /** return true if the position is valid, false otherwise */
@@ -195,13 +209,17 @@ static void calculateNearest(Selection::UnitContainer &units, const Vec3f &pos) 
 	}
 }
 
+void UserInterface::onLeftClickOrder(Vec2i cellPos) {
+	giveTwoClickOrders(cellPos, 0);
+}
+
+void UserInterface::onRightClickOrder(Vec2i cellPos) {
+	giveDefaultOrders(cellPos, 0);
+}
+
 // ==================== events ====================
 void UserInterface::mouseDownLeft(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
-	Selection::UnitContainer units;
-	const Unit *targetUnit= NULL;
-	Vec2i worldPos;
-	bool validWorldPos;
 
 	//display panel
 	if(metrics.isInDisplay(x, y)) {
@@ -216,19 +234,9 @@ void UserInterface::mouseDownLeft(int x, int y) {
 		}
 	}
 
-	// handle minimap click
-	if(getMinimapCell(x, y, worldPos)) {
-		if(isSelectingPos() && Config::getInstance().getUiEnableCommandMinimap()) {
-			targetUnit = NULL;
-			validWorldPos = true;
-		} else {
-			game.setCameraCell(worldPos.x, worldPos.y);
-			draggingMinimap = true;
-			return;
-		}
-	} else {
-		validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
-	}
+	Selection::UnitContainer units;
+	Vec2i worldPos;
+	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 
 	//graphics panel
 	if(!validWorldPos){
@@ -237,6 +245,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 	}
 
 	//remaining options will prefer the actual target unit's position
+	const Unit *targetUnit= NULL;
 	if(units.size()) {
 		targetUnit = units.front();
 		worldPos = targetUnit->getPos();
@@ -282,11 +291,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 			return;
 		}
 	}
-
-	// handle minimap click
-	if(getMinimapCell(x, y, worldPos) && Config::getInstance().getUiEnableCommandMinimap()) {
-		giveDefaultOrders(worldPos, NULL);
-	} else if(selection.isComandable()) {
+	if (selection.isComandable()) {
 		Selection::UnitContainer units;
 		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			Unit *targetUnit = units.size() ? units.front() : NULL;
@@ -301,7 +306,6 @@ void UserInterface::mouseDownRight(int x, int y) {
 
 void UserInterface::mouseUpLeft(int x, int y) {
 	mouseUpLeftGraphics(x, y);
-	draggingMinimap = false;
 }
 
 void UserInterface::mouseUpRight(int x, int y) {
@@ -372,13 +376,6 @@ void UserInterface::mouseUpLeftGraphics(int x, int y){
 }
 
 void UserInterface::mouseMoveGraphics(int x, int y){
-	Vec2i mmCell;
-
-	if(draggingMinimap && getMinimapCell(x, y, mmCell)) {
-		game.setCameraCell(mmCell.x, mmCell.y);
-		return;
-	}
-
 	//compute selection
 	if(selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
@@ -787,6 +784,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 			}
 			else{
 				selectingPos= true;
+				minimap->setLeftClickOrder(true);
 				activePos= posDisplay;
 			}
 		}
@@ -1168,6 +1166,8 @@ void UserInterface::updateSelection(bool doubleClick, Selection::UnitContainer &
 	activeCommandType = NULL;
 	needSelectionUpdate = false;
 
+	bool wasEmpty = selection.isEmpty();
+
 	//select all units of the same type if double click
 	if (doubleClick && units.size()) {
 		const Unit *refUnit = units.front();
@@ -1193,6 +1193,9 @@ void UserInterface::updateSelection(bool doubleClick, Selection::UnitContainer &
 		selection.select(units);
 	} else {
 		selection.unSelect(units);
+	}
+	if (wasEmpty != selection.isEmpty()) {
+		minimap->setRightClickOrder(!selection.isEmpty());
 	}
 }
 

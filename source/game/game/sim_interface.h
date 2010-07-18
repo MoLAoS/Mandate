@@ -175,6 +175,7 @@ protected:
 	Plan::Gaia*		m_gaia;
 	Commander*		commander;
 
+	// World objects...
 	UnitFactory		unitFactory;
 	ObjectFactory	objectFactory;
 

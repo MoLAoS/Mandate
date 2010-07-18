@@ -19,7 +19,7 @@ namespace Shared { namespace Math {
 
 /// fixed point square root, adapted from code at c.snippets.org
 /// @todo make faster? [test perfomance vs sqrtf(), if horrible, make faster.]
-fixed fixed::sqRt() const {
+fixed fixed::sqRt_c() const {
 	fixed root = 0;		/* accumulator      */
 	uint32 r = 0;		/* remainder        */
 	uint32 e = 0;		/* trial product    */
@@ -130,6 +130,61 @@ fixed fixed::sqRt_unrolled_completely() const {
 	return root;
 }
 
+
+fixed fixed::sqRt_julery() const {
+	int32 val = datum;
+	uint32 temp, g=0, b = 0x8000, bshft = 15;
+	do {
+		if (val >= (temp = (((g << 1) + b)<<bshft--))) {
+			g += b;
+			val -= temp;
+		}
+	} while (b >>= 1);
+	fixed res;
+	res.datum = g << HALF_SHIFT;
+	return res;
+}
+
+/* by Mark Crowne */
+fixed fixed::sqRt_julery_crowne() const {
+	uint32 temp, g = 0;
+	int32 val = datum;
+
+	if (val >= 0x40000000) {
+		g = 0x8000; 
+		val -= 0x40000000;
+	}
+
+#	define INNER_ISQRT(s)						\
+	temp = (g << (s)) + (1 << ((s) * 2 - 2));	\
+	if (val >= temp) {							\
+		g += 1 << ((s)-1);						\
+		val -= temp;							\
+	}
+
+	INNER_ISQRT (15)
+	INNER_ISQRT (14)
+	INNER_ISQRT (13)
+	INNER_ISQRT (12)
+	INNER_ISQRT (11)
+	INNER_ISQRT (10)
+	INNER_ISQRT ( 9)
+	INNER_ISQRT ( 8)
+	INNER_ISQRT ( 7)
+	INNER_ISQRT ( 6)
+	INNER_ISQRT ( 5)
+	INNER_ISQRT ( 4)
+	INNER_ISQRT ( 3)
+	INNER_ISQRT ( 2)
+
+#undef INNER_ISQRT
+
+	temp = g+g+1;
+	if (val >= temp) g++;
+	fixed r;
+	r.datum = g << HALF_SHIFT;
+	return r;
+}
 
 }}
 

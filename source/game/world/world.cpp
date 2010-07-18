@@ -55,7 +55,7 @@ World::World(SimulationInterface *iSim)
 		: scenario(NULL)
 		, iSim(iSim)
 		, game(*iSim->getGameState())
-		, minimap(iSim->getGameSettings().getFogOfWar())
+		//, minimap(0)
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
@@ -69,9 +69,7 @@ World::World(SimulationInterface *iSim)
 	shroudOfDarkness = gs.getFogOfWar();
 
 	unfogActive = false;
-
 	frameCount = 0;
-	nextUnitId = 0;
 	assert(!singleton);
 	singleton = this;
 	alive = false;
@@ -90,7 +88,7 @@ World::~World() {
 
 void World::save(XmlNode *node) const {
 	node->addChild("frameCount", frameCount);
-	node->addChild("nextUnitId", nextUnitId);
+	node->addChild("nextUnitId", iSim->getUnitFactory().idCounter);
 	iSim->getStats()->save(node->addChild("stats"));
 	timeFlow.save(node->addChild("timeFlow"));
 	XmlNode *factionsNode = node->addChild("factions");
@@ -117,14 +115,14 @@ void World::init(const XmlNode *worldNode) {
 	if (worldNode) {
 		initExplorationState();
 		loadSaved(worldNode);
-		initMinimap(true);
+		g_userInterface.initMinimap(fogOfWar, true);
 		g_cartographer.loadMapState(worldNode->getChild("mapState"));
 	} else if (iSim->getGameSettings().getDefaultUnits()) {
-		initMinimap();
+		g_userInterface.initMinimap(fogOfWar, false);
 		initUnits();
 		initExplorationState();
 	} else {
-		initMinimap();
+		g_userInterface.initMinimap(fogOfWar, false);
 	}
 	computeFow();
 
@@ -139,7 +137,7 @@ void World::loadSaved(const XmlNode *worldNode) {
 	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
 
 	frameCount = worldNode->getChildIntValue("frameCount");
-	nextUnitId = worldNode->getChildIntValue("nextUnitId");
+	iSim->getUnitFactory().idCounter = worldNode->getChildIntValue("nextUnitId");
 
 	iSim->getStats()->load(worldNode->getChild("stats"));
 	timeFlow.load(worldNode->getChild("timeFlow"));
@@ -326,7 +324,8 @@ void World::processFrame() {
 	//fow smoothing
 	if (fogOfWarSmoothing && ((frameCount + 1) % (fogOfWarSmoothingFrameSkip + 1)) == 0) {
 		float fogFactor = float(frameCount % WORLD_FPS) / WORLD_FPS;
-		minimap.updateFowTex(clamp(fogFactor, 0.f, 1.f));
+		
+		g_userInterface.getMinimap()->updateFowTex(clamp(fogFactor, 0.f, 1.f));
 	}
 
 	//tick
@@ -489,7 +488,7 @@ void World::appyEffect(Unit *u, Effect *e) {
 /** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
 void World::tick() {
 	if (!fogOfWarSmoothing) {
-		minimap.updateFowTex(1.f);
+		g_userInterface.getMinimap()->updateFowTex(1.f);
 	}
 
 	cartographer->tick();
@@ -1025,14 +1024,17 @@ void World::initFactions() {
 		&techTree, -1, -1, -1, -1, false, false);
 	
 	GameSettings &gs = iSim->getGameSettings();
-	if (!gs.getFactionCount()) return;
+	this->thisFactionIndex = gs.getThisFactionIndex();
+	if (!gs.getFactionCount()) {
+		thisTeamIndex = 0;
+		return;
+	}
 
 	if (gs.getFactionCount() > map.getMaxPlayers()) {
 		throw runtime_error("This map only supports " + intToStr(map.getMaxPlayers()) + " players");
 	}
 
 	//create factions
-	this->thisFactionIndex = gs.getThisFactionIndex();
 	factions.resize(gs.getFactionCount());
 	for (int i = 0; i < factions.size(); ++i) {
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
@@ -1052,11 +1054,6 @@ void World::initFactions() {
 		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
 	}
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
-}
-
-void World::initMinimap(bool resuming) {
-	Logger::getInstance().add("Compute minimap surface", true);
-	minimap.init(map.getW(), map.getH(), this, resuming);
 }
 
 //place units randomly aroud start location
@@ -1145,7 +1142,7 @@ void World::doUnfog() {
 	for (int x = start.x; x < end.x; ++x) {
 		for (int y = start.y; y < end.y; ++y) {
 			if (map.isInsideTile(x,y)) {
-				minimap.incFowTextureAlphaSurface(Vec2i(x,y), 1.f);
+				g_userInterface.getMinimap()->incFowTextureAlphaSurface(Vec2i(x,y), 1.f);
 			}
 		}
 	}
@@ -1186,8 +1183,11 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 //computes the fog of war texture, contained in the minimap
 void World::computeFow() {
 	GameSettings &gs = iSim->getGameSettings();
+	
+	//todo : move to Minimap
 	//reset texture
-	minimap.resetFowTex();
+	Minimap *minimap = g_userInterface.getMinimap();
+	minimap->resetFowTex();
 
 	//reset visibility in cells
 	for (int k = 0; k < GameConstants::maxPlayers; ++k) {
@@ -1263,7 +1263,7 @@ void World::computeFow() {
 					} else {
 						alpha = maxAlpha;
 					}
-					minimap.incFowTextureAlphaSurface(surfPos, alpha);
+					minimap->incFowTextureAlphaSurface(surfPos, alpha);
 				}
 			}
 		}

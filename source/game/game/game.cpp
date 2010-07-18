@@ -176,7 +176,7 @@ void GameState::init() {
 	//REFACTOR: ThisTeamIndex belong in here, not the World
 	chatManager.init(&console, simInterface->getWorld()->getThisTeamIndex());
 	gameCamera.init(map->getW(), map->getH());
-	Vec2i v(0, 0);
+	Vec2i v(map->getW() / 2, map->getH() / 2);
 	if (simInterface->getWorld()->getThisFaction()) {  //e.g. -loadmap has no players
 		v = map->getStartLocation(simInterface->getWorld()->getThisFaction()->getStartLocationIndex());
 	}
@@ -239,6 +239,7 @@ void GameState::init() {
 	logger.add("Launching game");
 	logger.setLoading(false);
 	program.resetTimers();
+	program.setFade(1.f);
 }
 
 
@@ -246,20 +247,15 @@ void GameState::init() {
 
 //update
 void GameState::update() {
-	// a) Updates non dependant on speed
 	if (netError) {
 		return;
 	}
 
-	//misc
 	++updateFps;
-
 	mouse2d = (mouse2d + 1) % Renderer::maxMouse2dAnim;
 
 	//console
 	console.update();
-
-	// b) Updates depandant on speed
 
 	///@todo clean-up, this should be done in SimulationInterface::updateWorld()
 	// but the particle stuff still lives here, so we still need to process each loop here
@@ -707,11 +703,6 @@ void GameState::render2d(){
 	//display
 	renderer.renderDisplay();
 
-	//minimap
-	if(!config.getUiPhotoMode()){
-		renderer.renderMinimap();
-	}
-
 	//selection
 	renderer.renderSelectionQuad();
 
@@ -842,11 +833,6 @@ void ShowMap::render2d(){
 
 	//display
 	renderer.renderDisplay();
-
-	//minimap
-	if(!config.getUiPhotoMode()){
-		renderer.renderMinimap();
-	}
 
 	//exit message box
 	if(mainMessageBox.getEnabled()){

@@ -508,6 +508,7 @@ inline ostream& operator<<(ostream &stream, const Unit &unit) {
 
 
 class UnitFactory : public sigslot::has_slots {
+	friend class World; // for saved games
 private:
 	int		idCounter;
 	UnitMap unitMap;

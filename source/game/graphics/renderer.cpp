@@ -1154,7 +1154,7 @@ void Renderer::renderSurface() {
 
 	assertGl();
 
-	const Texture2D *fowTex= g_world.getMinimap()->getFowTexture();
+	const Texture2D *fowTex= g_userInterface.getMinimap()->getFowTexture();
 
 	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
 
@@ -1251,7 +1251,7 @@ void Renderer::renderObjects(){
 	const Map *map= world->getMap();
 
 	assertGl();
-	const Texture2D *fowTex= world->getMinimap()->getFowTexture();
+	const Texture2D *fowTex= g_userInterface.getMinimap()->getFowTexture();
 	Vec3f baseFogColor= world->getTileset()->getFogColor() * computeLightColor( world->getTimeFlow()->getTime() );
 
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
@@ -1353,7 +1353,7 @@ void Renderer::renderWater(){
 	assertGl();
 
 	//fog of War texture Unit
-	const Texture2D *fowTex= world->getMinimap()->getFowTexture();
+	const Texture2D *fowTex= g_userInterface.getMinimap()->getFowTexture();
 	glActiveTexture(fowTexUnit);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
@@ -1740,120 +1740,6 @@ void Renderer::renderWaterEffects(){
 		}
 	}
 
-	glPopAttrib();
-
-	assertGl();
-}
-
-void Renderer::renderMinimap(){
-	const World *world= &g_world;
-	const Minimap *minimap= world->getMinimap();
-	const GameCamera *gameCamera= game->getGameCamera();
-	const Pixmap2D *pixmap= minimap->getTexture()->getPixmap();
-	const Metrics &metrics= Metrics::getInstance();
-
-	int mx= metrics.getMinimapX();
-	int my= metrics.getMinimapY();
-	int mw= metrics.getMinimapW();
-	int mh= metrics.getMinimapH();
-
-	Vec2f zoom= Vec2f(
-		float(mw)/ pixmap->getW(),
-		float(mh)/ pixmap->getH());
-
-	assertGl();
-
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TEXTURE_BIT);
-
-	//draw map
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-
-	glActiveTexture(fowTexUnit);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(minimap->getFowTexture())->getHandle());
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PRIMARY_COLOR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_TEXTURE);
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE);
-
-	glActiveTexture(baseTexUnit);
-	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(minimap->getTexture())->getHandle());
-
-	glColor4f(0.5f, 0.5f, 0.5f, 0.1f);
-	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(0.0f, 1.0f);
-		glMultiTexCoord2f(fowTexUnit, 0.0f, 1.0f);
-		glVertex2i(mx, my);
-		glTexCoord2f(0.0f, 0.0f);
-		glMultiTexCoord2f(fowTexUnit, 0.0f, 0.0f);
-		glVertex2i(mx, my+mh);
-		glTexCoord2f(1.0f, 1.0f);
-		glMultiTexCoord2f(fowTexUnit, 1.0f, 1.0f);
-		glVertex2i(mx+mw, my);
-		glTexCoord2f(1.0f, 0.0f);
-		glMultiTexCoord2f(fowTexUnit, 1.0f, 0.0f);
-		glVertex2i(mx+mw, my+mh);
-	glEnd();
-
-	glDisable(GL_BLEND);
-
-	glActiveTexture(fowTexUnit);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(baseTexUnit);
-	glDisable(GL_TEXTURE_2D);
-
-	//draw units
-	glBegin(GL_QUADS);
-	for(int i=0; i<world->getFactionCount(); ++i){
-		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
-			Unit *unit= world->getFaction(i)->getUnit(j);
-			if (world->toRenderUnit(unit) && unit->isAlive()) {
-				Vec2i pos= unit->getPos() / GameConstants::cellScale;
-				int size= unit->getType()->getSize();
-				Vec3f color=  world->getFaction(i)->getTexture()->getPixmap()->getPixel3f(0, 0);
-				glColor3fv(color.ptr());
-				glVertex2f(mx + pos.x*zoom.x, my + mh - (pos.y*zoom.y));
-				glVertex2f(mx + (pos.x+1)*zoom.x+size, my + mh - (pos.y*zoom.y));
-				glVertex2f(mx + (pos.x+1)*zoom.x+size, my + mh - ((pos.y+size)*zoom.y));
-				glVertex2f(mx + pos.x*zoom.x, my + mh - ((pos.y+size)*zoom.y));
-			}
-		}
-	}
-	glEnd();
-
-	//draw camera
-	float wRatio= float(metrics.getMinimapW()) / world->getMap()->getW();
-	float hRatio= float(metrics.getMinimapH()) / world->getMap()->getH();
-
-	int x= static_cast<int>(gameCamera->getPos().x * wRatio);
-	int y= static_cast<int>(gameCamera->getPos().z * hRatio);
-
-	float ang= degToRad(gameCamera->getHAng());
-
-	glEnable(GL_BLEND);
-
-	glBegin(GL_TRIANGLES);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex2i(mx+x, my+mh-y);
-
-	glColor4f(1.f, 1.f, 1.f, 0.0f);
-	glVertex2i(
-		mx + x + static_cast<int>(20*sinf(ang-pi/5)),
-		my + mh - (y-static_cast<int>(20*cosf(ang-pi/5))));
-
-	glColor4f(1.f, 1.f, 1.f, 0.0f);
-	glVertex2i(
-		mx + x + static_cast<int>(20*sinf(ang+pi/5)),
-		my + mh - (y-static_cast<int>(20*cosf(ang+pi/5))));
-
-	glEnd();
 	glPopAttrib();
 
 	assertGl();

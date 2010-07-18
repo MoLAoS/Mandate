@@ -91,7 +91,7 @@ public:
 ///	In game GUI
 // =====================================================
 
-class UserInterface {
+class UserInterface : public sigslot::has_slots {
 public:
 	static const int maxSelBuff= 128*5;
 	static const int upgradeDisplayIndex= 8;
@@ -113,6 +113,7 @@ private:
 	const World *world;
 	GameCamera *gameCamera;
 	Console *console;
+	Minimap *minimap;
 
 	Random random;
 
@@ -131,7 +132,6 @@ private:
 	Vec2i dragStartPos;		//begining coord of multi-build command
 	BuildPositions buildPositions;
 	bool dragging;
-	bool draggingMinimap;	// the mouse went down on minimap
 
 	//composite
 	Display display;
@@ -161,9 +161,13 @@ public:
 	}
 	
 	void init();
+	void initMinimap(bool fow, bool resuming);
 	void end();
 
 	//get
+	Minimap *getMinimap()							{return minimap;}
+	const Minimap *getMinimap() const				{return minimap;}
+
 	Vec2i getPosObjWorld() const					{return posObjWorld;}
 	const UnitType *getBuilding() const;
 	const Vec2i &getDragStartPos() const			{return dragStartPos;}
@@ -183,7 +187,6 @@ public:
 	bool isSelected(const Unit *unit) const	{return selection.hasUnit(unit);}
 	bool isPlacingBuilding() const;
 	bool isDragging() const					{return dragging;}
-	bool isDraggingMinimap() const			{return draggingMinimap;}
 	bool isNeedSelectionUpdate() const		{return needSelectionUpdate;}
 
 	//set
@@ -223,6 +226,10 @@ public:
 	bool mouseValid(int x, int y){
 		return computePosDisplay(x, y) != invalidPos; //in display coords
 	}
+
+	// slots (for signals from minimap)
+	void onLeftClickOrder(Vec2i cellPos);
+	void onRightClickOrder(Vec2i cellPos);
 
 	//misc
 
