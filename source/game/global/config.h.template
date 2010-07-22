@@ -18,7 +18,7 @@
 
 #include "properties.h"
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Global {
 
 using Shared::Util::Properties;
 

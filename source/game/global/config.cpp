@@ -19,6 +19,7 @@
 
 #include "leak_dumper.h"
 
+
 namespace Glest { namespace Global {
 
 // =====================================================
@@ -39,14 +40,12 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	cameraMinDistance = p->getFloat("CameraMinDistance", 8.f, 0.f, 20.f);
 	cameraMinYaw = p->getFloat("CameraMinYaw", 20.f, 0.f, 360.f);
 	displayHeight = p->getInt("DisplayHeight", 768);
-	displayRefreshFrequency = p->getInt("DisplayRefreshFrequency", 75);
+	displayRefreshFrequency = p->getInt("DisplayRefreshFrequency", 60);
 	displayWidth = p->getInt("DisplayWidth", 1024);
-	displayWindowed = p->getBool("DisplayWindowed", true);
+	displayWindowed = p->getBool("DisplayWindowed", false);
 	gsAutoRepairEnabled = p->getBool("GsAutoRepairEnabled", true);
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
 	gsDayTime = p->getFloat("GsDayTime", 1000.f);
-	//gsFogOfWarEnabled = p->getBool("GsFogOfWarEnabled", true);
-	//gsShroudOfDarknessEnabled = p->getBool("GsShroudOfDarkness", true);
 	gsSpeedFastest = p->getFloat("GsSpeedFastest", 2.f, 1.0f, 10.0f);
 	gsSpeedSlowest = p->getFloat("GsSpeedSlowest", 0.5f, 0.01f, 1.0f);
 	gsWorldUpdateFps = p->getInt("GsWorldUpdateFps", 40);
@@ -56,12 +55,9 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	miscCatchExceptions = p->getBool("MiscCatchExceptions", true);
 	miscDebugKeys = p->getBool("MiscDebugKeys", false);
 	miscDebugMode = p->getBool("MiscDebugMode", false);
+	miscEnablePhysfs = p->getBool("MiscEnablePhysfs", true);
 	miscFirstTime = p->getBool("MiscFirstTime", true);
-//	netChangeSpeedAllowed = p->getBool("NetChangeSpeedAllowed", false);
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
-//	netFps = p->getInt("NetFps", 4);
-//	netMinFullUpdateInterval = p->getInt("NetMinFullUpdateInterval", 60000, 250, 1000000000);
-//	netPauseAllowed = p->getBool("NetPauseAllowed", false);
 	netPlayerName = p->getString("NetPlayerName", "Player");
 	netServerIp = p->getString("NetServerIp", "192.168.1.1");
 	netServerPort = p->getInt("NetServerPort", 12345, 0, 65535);
@@ -129,8 +125,6 @@ void Config::save(const char *path) {
 	p->setBool("GsAutoRepairEnabled", gsAutoRepairEnabled);
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
 	p->setFloat("GsDayTime", gsDayTime);
-	//p->setBool("GsFogOfWarEnabled", gsFogOfWarEnabled);
-	//p->setBool("GsShroudOfDarknessEnabled", gsShroudOfDarknessEnabled);
 	p->setFloat("GsSpeedFastest", gsSpeedFastest);
 	p->setFloat("GsSpeedSlowest", gsSpeedSlowest);
 	p->setInt("GsWorldUpdateFps", gsWorldUpdateFps);
@@ -140,12 +134,9 @@ void Config::save(const char *path) {
 	p->setBool("MiscCatchExceptions", miscCatchExceptions);
 	p->setBool("MiscDebugKeys", miscDebugKeys);
 	p->setBool("MiscDebugMode", miscDebugMode);
+	p->setBool("MiscEnablePhysfs", miscEnablePhysfs);
 	p->setBool("MiscFirstTime", miscFirstTime);
-//	p->setBool("NetChangeSpeedAllowed", netChangeSpeedAllowed);
 	p->setBool("NetConsistencyChecks", netConsistencyChecks);
-//	p->setInt("NetFps", netFps);
-//	p->setInt("NetMinFullUpdateInterval", netMinFullUpdateInterval);
-//	p->setBool("NetPauseAllowed", netPauseAllowed);
 	p->setString("NetPlayerName", netPlayerName);
 	p->setString("NetServerIp", netServerIp);
 	p->setInt("NetServerPort", netServerPort);
@@ -197,4 +188,5 @@ void Config::save(const char *path) {
 	delete p;
 }
 
-}}// end namespace
+}} // end namespace
+

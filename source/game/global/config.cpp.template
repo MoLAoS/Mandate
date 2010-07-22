@@ -20,7 +20,7 @@
 #include "leak_dumper.h"
 
 
-namespace Glest { namespace Game {
+namespace Glest { namespace Global {
 
 // =====================================================
 // 	class Config
@@ -46,4 +46,5 @@ CONFIG_SAVE
 	delete p;
 }
 
-}}// end namespace
+}} // end namespace
+

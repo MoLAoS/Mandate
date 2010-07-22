@@ -39,7 +39,7 @@ namespace Glest { namespace Main {
 class ExceptionHandler: public PlatformExceptionHandler {
 public:
 	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) {
-		try { 
+		try {
 			Renderer::getInstance().saveScreen("glestadv-crash.tga");
 		} catch(runtime_error &e) {
 			printf("%s", e.what());
@@ -105,7 +105,7 @@ int glestMain(int argc, char** argv) {
 	if(!args.getDataDir().empty()){
 		dataDir = args.getDataDir();
 	}
-	
+
 	if (configDir.empty()) {
 #		ifdef WIN32
 			configDir = getenv("UserProfile");
@@ -120,11 +120,11 @@ int glestMain(int argc, char** argv) {
 
 	mkdir(configDir, true);
 	mkdir(configDir+"/addons/", true);
-	
+
 	FSFactory *fsfac = FSFactory::getInstance();
 #	if USE_PHYSFS
 		fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-		fsfac->usePhysFS(true);
+		fsfac->usePhysFS(g_config.getMiscEnablePhysfs());
 #	endif
 
 	Config &config = Config::getInstance();

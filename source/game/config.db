@@ -12,14 +12,12 @@ cameraMaxYaw				float	77.50f			0.f		360.f
 cameraMinDistance			float	8.f				0.f		20.f
 cameraMinYaw				float	20.f			0.f		360.f
 displayHeight				int		768
-displayRefreshFrequency		int		75
+displayRefreshFrequency		int		60
 displayWidth				int		1024
-displayWindowed				bool	true
+displayWindowed				bool	false
 gsAutoRepairEnabled			bool	true
 gsAutoReturnEnabled			bool	false
 gsDayTime					float	1000.f
-gsFogOfWarEnabled			bool	true
-gsShroudOfDarknessEnabled	bool	true
 gsSpeedFastest				float	2.f				1.0f	10.0f
 gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsWorldUpdateFps			int		40
@@ -30,12 +28,8 @@ miscCatchExceptions			bool	true
 miscDebugKeys				bool	false
 miscDebugMode				bool	false
 miscFirstTime				bool	true
-#miscLowMemory				bool	false
-netChangeSpeedAllowed		bool	false
+miscEnablePhysfs			bool	true
 netConsistencyChecks		bool	false
-netFps						int		4
-netMinFullUpdateInterval	int		60000			250		1000000000
-netPauseAllowed				bool	false
 netPlayerName				string	"Player"
 netServerIp					string	"192.168.1.1"
 netServerPort				int		12345			0		65535
@@ -54,6 +48,7 @@ renderFontMenu				string	getDefaultFontStr()
 renderFov					float	60.f			0.01f	360.f
 renderFpsMax				int		60				0		1000000
 renderGraphicsFactory		string	"OpenGL"
+renderInterpolateWithSIMD	bool	true
 renderLightsMax				int		1				0		8
 renderShadowAlpha			float	0.2f			0.f		1.f
 renderShadowFrameSkip		int		2
@@ -73,7 +68,7 @@ uiEnableCommandMinimap		bool	true
 uiFocusArrows				bool	true
 uiLastMap					string	"four_rivers"
 uiLastRandStartLocs			bool	false
-uiLastScenario				string	"glest_classic/anarchy"
+uiLastScenario				string	"glest_classic\/anarchy"
 uiLastScenarioCatagory		string	"glest_classic"
 uiLastTileset				string	"forest"
 uiLastTechTree				string	"magitech"
