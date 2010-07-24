@@ -118,6 +118,10 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 	uint32 vertexCount = mesh->getVertexCount();
 	uint32 indexCount = mesh->getIndexCount();
 
+	if (!vertexCount) {
+		return;
+	}
+
 	//assertions
 	assertGl();
 

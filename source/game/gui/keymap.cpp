@@ -243,7 +243,8 @@ void Keymap::load(const char *path) {
 
 void Keymap::save(const char *path) {
 	try {
-		ostream *out = FSFactory::getInstance()->getOStream(path);
+		stringstream ss;
+		ostream *out = &ss;//FSFactory::getInstance()->getOStream(path);
 		size_t maxSize = 0;
 		for(int i = ucNone + 1; i != ucCount; ++i) {
 			size_t size = strlen(getCommandName((UserCommand)i));
@@ -260,7 +261,13 @@ void Keymap::save(const char *path) {
 			}
 			*out << " = " << entries[i].toString() << endl;
 		}
-		delete out;
+		FileOps *f = FSFactory::getInstance()->getFileOps();
+		f->openWrite(path);
+		string str = ss.str();
+		int sz = str.size();
+		f->write(str.c_str(), sz, 1);
+		delete f;
+		//delete out;
 	} catch (runtime_error &e) {
 		stringstream str;
 		str << "Failed to save key map file: " << path << endl << e.what();

@@ -60,7 +60,7 @@ int PhysFileOps::read(void *buf, int size, int num){
 	return PHYSFS_read(this->f, buf, size, num);
 }
 
-int PhysFileOps::write(void *buf, int size, int num){
+int PhysFileOps::write(const void *buf, int size, int num){
 	return PHYSFS_write(this->f, buf, size, num);
 }
 

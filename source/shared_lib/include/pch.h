@@ -18,6 +18,11 @@
 #define _SHARED_PCH_H_
 
 #define ASSERT(condition, message) assert((condition) && message)
+#ifdef WIN32
+#	define CHECK_HEAP() assert(_CrtCheckMemory())
+#else
+#	define CHECK_HEAP()
+#endif
 
 #if USE_PCH
 
@@ -30,6 +35,7 @@
 #	endif
 #	define NOMINMAX
 #	include <windows.h>
+#	include <crtdbg.h>
 #else
 #	include <unistd.h>
 #	include <signal.h>

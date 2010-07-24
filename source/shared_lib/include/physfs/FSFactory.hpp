@@ -37,6 +37,7 @@ class FSFactory{
 		static FSFactory *instance;
 		
 		FSFactory();
+		static void shutdown();
 
 	public:
 		// singleton
@@ -47,11 +48,10 @@ class FSFactory{
 
 		bool initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
 		bool mountSystemDir(const string &systemPath, const string &mapToPath);
-		void deinitPhysFS();
 		void usePhysFS(bool enable);
 
-		istream *getIStream(const char *fname);
-		ostream *getOStream(const char *fname);
+		//istream *getIStream(const char *fname);
+		//ostream *getOStream(const char *fname);
 		
 		FileOps *getFileOps();
 

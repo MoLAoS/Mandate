@@ -108,9 +108,14 @@ void Logger::addNetworkMsg(const string &msg) {
 }
 
 void Logger::clear() {
-	ostream *ofs = FSFactory::getInstance()->getOStream(fileName.c_str());
-	*ofs << "Log file\n\n";
-	delete ofs;
+	FileOps *f = FSFactory::getInstance()->getFileOps();
+	f->openWrite(fileName.c_str());
+	//ostream *ofs = FSFactory::getInstance()->getOStream(fileName.c_str());
+	char *header = "Log file\n\n";
+	int sz = strlen(header);
+	f->write(header, sz, 1);
+	delete f;
+	//delete ofs;
 }
 
 // ==================== PRIVATE ====================

@@ -23,7 +23,7 @@ public:
 	virtual void openWrite(const char *fname)=0;
 	virtual void openAppend(const char *fname)=0;
 	virtual int read(void *buf, int size, int num)=0;
-	virtual int write(void *buf, int size, int num)=0;
+	virtual int write(const void *buf, int size, int num)=0;
 	virtual int seek(long offset, int w)=0;
 	virtual int tell()=0;
 	virtual int close()=0;

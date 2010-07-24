@@ -104,7 +104,7 @@ Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(Config &config, CmdArgs &args)
+Program::Program(CmdArgs &args)
 		: cmdArgs(args)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
@@ -120,9 +120,9 @@ Program::Program(Config &config, CmdArgs &args)
 
 	// window
 	Window::setText("Glest Advanced Engine");
-	Window::setStyle(config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
+	Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
 	Window::setPos(0, 0);
-	Window::setSize(config.getDisplayWidth(), config.getDisplayHeight());
+	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 	Window::create();
 
 	// log start
@@ -132,12 +132,12 @@ Program::Program(Config &config, CmdArgs &args)
 	Logger::getErrorLog().clear();
 
 	//lang
-	g_lang.setLocale(config.getUiLocale());
+	g_lang.setLocale(g_config.getUiLocale());
 
-	Shared::Graphics::use_simd_interpolation = config.getRenderInterpolateWithSIMD();
+	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
 	
 	// render
-	initGl(config.getRenderColorBits(), config.getRenderDepthBits(), config.getRenderStencilBits());
+	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
 	makeCurrentGl();
 
 	// coreData, needs renderer, but must load before renderer init
@@ -421,13 +421,11 @@ void Program::resetTimers() {
 // ==================== PRIVATE ====================
 
 void Program::setDisplaySettings() {
-	Config &config= Config::getInstance();
-
-	if (!config.getDisplayWindowed()) {
-		int freq= config.getDisplayRefreshFrequency();
-		int colorBits= config.getRenderColorBits();
-		int screenWidth= config.getDisplayWidth();
-		int screenHeight= config.getDisplayHeight();
+	if (!g_config.getDisplayWindowed()) {
+		int freq= g_config.getDisplayRefreshFrequency();
+		int colorBits= g_config.getRenderColorBits();
+		int screenWidth= g_config.getDisplayWidth();
+		int screenHeight= g_config.getDisplayHeight();
 
 		if (!(changeVideoMode(screenWidth, screenHeight, colorBits, freq)
 		|| changeVideoMode(screenWidth, screenHeight, colorBits, 0))) {
@@ -438,9 +436,7 @@ void Program::setDisplaySettings() {
 }
 
 void Program::restoreDisplaySettings(){
-	Config &config= Config::getInstance();
-
-	if(!config.getDisplayWindowed()){
+	if(!g_config.getDisplayWindowed()){
 		restoreVideoMode();
 	}
 }

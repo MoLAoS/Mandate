@@ -35,6 +35,7 @@ void interpolate(Vec3f *dest, const Vec3f *srcA, const Vec3f *srcB, float dt, si
 	// all arrays must must begin on 16 byte boundary
 	ASSERT_16n(dest); ASSERT_16n(srcA); ASSERT_16n(srcB);
 	assert(dt >= 0.f && dt <= 1.f); // dt should be between 0.f and 1.f inclusive
+	assert(num > 0); // must be some vertices to interpolate
 
 	// number of floats to interpolate
 	const unsigned nf = num * 3;
@@ -48,6 +49,8 @@ void interpolate(Vec3f *dest, const Vec3f *srcA, const Vec3f *srcB, float dt, si
 	const __m128 t = _mm_load1_ps(&dt);
 	register __m128 base, next, diff;
 
+	//CHECK_HEAP();
+
 	// interpolate
 	for (unsigned i=0; i < nf; i += 4) {
 		base = _mm_load_ps(&base_array[i]);
@@ -57,6 +60,8 @@ void interpolate(Vec3f *dest, const Vec3f *srcA, const Vec3f *srcB, float dt, si
 		next = _mm_add_ps(base, diff);
 		_mm_store_ps(&dest_array[i], next);
 	}
+
+	//CHECK_HEAP();
 }
 
 void test_interpolate() {
@@ -131,6 +136,8 @@ InterpolationData::InterpolationData(const Mesh *mesh) {
 InterpolationData::~InterpolationData() {
 	if (use_simd_interpolation) {
 		if (vertices) {
+			assert(((unsigned)vertices & 0xF) == 0);
+			assert(((unsigned)normals & 0xF) == 0);
 			free_aligned_vec3_array(vertices);
 			free_aligned_vec3_array(normals);
 		}
@@ -150,17 +157,18 @@ void InterpolationData::updateVertices(float t, bool cycle) {
 	uint32 frameCount = mesh->getFrameCount();
 	uint32 vertexCount = mesh->getVertexCount();
 
-	if (frameCount > 1) {
+	if (frameCount > 1 && vertexCount) {
 		// calculate key-frames to use
 		uint32 prevFrame = min<uint32>(static_cast<uint32>(t * frameCount), frameCount - 1);
 		uint32 nextFrame = cycle ? (prevFrame + 1) % frameCount : min(prevFrame + 1, frameCount - 1);
 
 		// assert sanity
-		assert(prevFrame < frameCount);
-		assert(nextFrame < frameCount);
+		assert(prevFrame >= 0 && prevFrame < frameCount);
+		assert(nextFrame >= 0 && nextFrame < frameCount);
 
 		// convert 'global' t (0-1 for entire anim) to local t (0-1 between two frames)
 		float localT = t * frameCount - prevFrame;
+		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices
 		if (use_simd_interpolation) {
@@ -183,14 +191,14 @@ void InterpolationData::updateNormals(float t, bool cycle) {
 	uint32 frameCount = mesh->getFrameCount();
 	uint32 vertexCount = mesh->getVertexCount();
 
-	if(frameCount > 1) {
+	if (frameCount > 1 && vertexCount) {
 		//misc vars
 		uint32 prevFrame = min<uint32>(static_cast<uint32>(t * frameCount), frameCount - 1);
 		uint32 nextFrame = cycle ? (prevFrame + 1) % frameCount : min(prevFrame + 1, frameCount - 1);
 
 		//assertions
-		assert(prevFrame < frameCount);
-		assert(nextFrame < frameCount);
+		assert(prevFrame >= 0 && prevFrame < frameCount);
+		assert(nextFrame >= 0 && nextFrame < frameCount);
 
 		float localT = t * frameCount - prevFrame;
 

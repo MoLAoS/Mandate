@@ -110,7 +110,7 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 				}
 				else if (factionControl == ControlType::CPU_ULTRA) {
 					scenarioInfo->resourceMultipliers[i] = 3.f;
-				} 
+				}
 				else {
 					scenarioInfo->resourceMultipliers[i] = 1.f;
 				}
@@ -188,7 +188,6 @@ void Scenario::loadGameSettings(string scenario, string category, const Scenario
 		}
 	}
 	gs->setFogOfWar(scenarioInfo->fogOfWar);
-	//Config::getInstance().setGsShroudOfDarknessEnabled(scenarioInfo->shroudOfDarkness);
 	gs->setFactionCount(factionCount);
 }
 

@@ -30,7 +30,7 @@ public:
 	void openWrite(const char *fname);
 	void openAppend(const char *fname);
 	int read(void *buf, int size, int num);
-	int write(void *buf, int size, int num);
+	int write(const void *buf, int size, int num);
 	int seek(long offset, int w);
 	int tell();
 	int close();

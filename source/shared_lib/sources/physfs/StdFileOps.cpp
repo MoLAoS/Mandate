@@ -56,7 +56,7 @@ int StdFileOps::read(void *buf, int size, int num){
 	return fread(buf, size, num, this->f);
 }
 
-int StdFileOps::write(void *buf, int size, int num){
+int StdFileOps::write(const void *buf, int size, int num){
 	return fwrite(buf, size, num, this->f);
 }
 

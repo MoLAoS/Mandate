@@ -42,14 +42,24 @@ void Properties::load(const string &path, bool trim) {
 
 	this->path = path;
 
-	istream *fileStream = FSFactory::getInstance()->getIStream(path.c_str());
+	FileOps *f = FSFactory::getInstance()->getFileOps();
+	f->openRead(path.c_str());
+	//istream *fileStream = FSFactory::getInstance()->getIStream(path.c_str());
 	//fileStream.exceptions(ios::failbit | ios::badbit);
 
-	if (fileStream->fail()) {
-		throw runtime_error("Can't find or open propertyMap file: " + path);
-	}
+	//if (fileStream->fail()) {
+	//	throw runtime_error("Can't find or open propertyMap file: " + path);
+	//}
 
 	propertyMap.clear();
+	int sz = f->fileSize();
+	char *fileBuf = new char[sz + 1];
+	f->read(fileBuf, sz, 1);
+	fileBuf[sz] = 0;
+
+	stringstream ss;
+	ss << fileBuf;
+	stringstream *fileStream = &ss;
 
 	while (!fileStream->eof()) {
 		fileStream->getline(lineBuffer, maxLine);
@@ -87,11 +97,13 @@ void Properties::load(const string &path, bool trim) {
 		propertyVector.push_back(PropertyPair(key, value));
 	}
 
-	delete fileStream;
+	delete fileBuf;
+	delete f;
+	//delete fileStream;
 }
 
 void Properties::save(const string &path) {
-	ostream *fileStream = FSFactory::getInstance()->getOStream(path.c_str());
+	ostream *fileStream = new stringstream();//FSFactory::getInstance()->getOStream(path.c_str());
 
 	*fileStream << "; === propertyMap File === \n";
 	*fileStream << '\n';
@@ -100,6 +112,13 @@ void Properties::save(const string &path) {
 		*fileStream << pi->first << '=' << pi->second << '\n';
 	}
 
+	FileOps *f = FSFactory::getInstance()->getFileOps();
+	f->openWrite(path.c_str());
+	string str = static_cast<stringstream*>(fileStream)->str();
+	int sz = str.size();
+	f->write(str.c_str(), sz, 1);
+
+	delete f;
 	delete fileStream;
 }
 

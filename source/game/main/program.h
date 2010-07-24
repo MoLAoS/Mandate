@@ -125,7 +125,7 @@ private:
 	void init();
 
 public:
-	Program(Config &config, CmdArgs &args);
+	Program(CmdArgs &args);
 	~Program();
 	static Program *getInstance()	{return singleton;}
 	const CmdArgs& getCmdArgs()	const { return cmdArgs; }
