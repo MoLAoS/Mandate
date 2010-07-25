@@ -45,8 +45,7 @@ public:
 			printf("%s", e.what());
 		}
 
-		stringstream ss;
-		ostream *ofs = &ss;//FSFactory::getInstance()->getOStream("gae-crash.txt");
+		ostream *ofs = FSFactory::getInstance()->getOStream("gae-crash.txt");
 
 		time_t t= time(NULL);
 		char *timeString = asctime(localtime(&t));
@@ -69,13 +68,7 @@ public:
 		}
 		*ofs << "\n=======================\n";
 
-		FileOps *f = FSFactory::getInstance()->getFileOps();
-		f->openWrite("gae-crash.txt");
-		string str = ss.str();
-		int sz = str.size();
-		f->write(str.c_str(), sz, 1);
-		delete f;
-		//delete ofs;
+		delete ofs;
 	}
 
 	virtual void notifyUser(bool pretty) {
@@ -99,19 +92,6 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
-/*
-	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
-	_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
-
-	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
-	_CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDOUT);
-
-	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
-	_CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDOUT);
-
-//	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_EVERY_128_DF);
-*/
 	string configDir = DEFAULT_CONFIG_DIR;
 	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;

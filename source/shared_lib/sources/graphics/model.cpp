@@ -39,11 +39,13 @@ Vec3f* allocate_aligned_vec3_array(unsigned n) {
 	int bytes = (numFloat + padFloat) * sizeof(float);
 	assert(bytes % 16 == 0);
 	void *res = _mm_malloc(bytes, 16);
-	assert(((size_t)res & 0xF) == 0);	return static_cast<Vec3f*>(res);
+	assert(((size_t)res & 0xF) == 0);
+	return static_cast<Vec3f*>(res);
 }
 
 void free_aligned_vec3_array(Vec3f *ptr) {
-	assert(((unsigned)ptr & 0xF) == 0);	_mm_free(ptr);
+	assert(((unsigned)ptr & 0xF) == 0);
+	_mm_free(ptr);
 }
 
 // =====================================================
@@ -96,7 +98,14 @@ Mesh::~Mesh() {
 }
 
 void Mesh::init() {
-	if (!vertexCount) {		assert(!indexCount);		frameCount = 0;		return;	}	assert(vertexCount > 0);	assert(indexCount > 0);	if (use_simd_interpolation) {
+	if (!vertexCount) {
+		assert(!indexCount);
+		frameCount = 0;
+		return;
+	}
+	assert(vertexCount > 0);
+	assert(indexCount > 0);
+	if (use_simd_interpolation) {
 		vertArrays = new Vec3f*[frameCount];
 		normArrays = new Vec3f*[frameCount];
 		for (int i=0; i < frameCount; ++i) {

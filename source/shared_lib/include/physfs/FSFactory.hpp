@@ -50,8 +50,8 @@ class FSFactory{
 		bool mountSystemDir(const string &systemPath, const string &mapToPath);
 		void usePhysFS(bool enable);
 
-		//istream *getIStream(const char *fname);
-		//ostream *getOStream(const char *fname);
+		istream *getIStream(const char *fname);
+		ostream *getOStream(const char *fname);
 		
 		FileOps *getFileOps();
 

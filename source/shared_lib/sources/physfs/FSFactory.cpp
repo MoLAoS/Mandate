@@ -20,8 +20,8 @@
 
 #include "projectConfig.h"
 #if USE_PHYSFS
-//#	include "ifile_stream.hpp"
-//#	include "ofile_stream.hpp"
+#	include "ifile_stream.hpp"
+#	include "ofile_stream.hpp"
 
 #	include "PhysFileOps.hpp"
 #endif
@@ -30,13 +30,13 @@
 
 namespace Shared { namespace PhysFS {
 using namespace Util;
-/*
+
 using std::ios;
 using std::istream;
 using std::ifstream;
 using std::ostream;
 using std::ofstream;
-*/
+
 FSFactory *FSFactory::instance = NULL;
 
 FSFactory::FSFactory(){
@@ -122,7 +122,7 @@ bool FSFactory::mountSystemDir(const string &systemPath, const string &mapToPath
 void FSFactory::usePhysFS(bool enable){
 	this->physFS = enable;
 }
-/*
+
 istream *FSFactory::getIStream(const char *fname){
 #if USE_PHYSFS
 	if(this->physFS){
@@ -144,7 +144,7 @@ ostream *FSFactory::getOStream(const char *fname){
 #endif
 		return new ofstream(fname, ios::out | ios::binary);
 }
-*/
+
 FileOps *FSFactory::getFileOps(){
 #if USE_PHYSFS
 	if(this->physFS){

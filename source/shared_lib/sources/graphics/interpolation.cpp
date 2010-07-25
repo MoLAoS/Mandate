@@ -49,8 +49,6 @@ void interpolate(Vec3f *dest, const Vec3f *srcA, const Vec3f *srcB, float dt, si
 	const __m128 t = _mm_load1_ps(&dt);
 	register __m128 base, next, diff;
 
-	//CHECK_HEAP();
-
 	// interpolate
 	for (unsigned i=0; i < nf; i += 4) {
 		base = _mm_load_ps(&base_array[i]);
@@ -60,8 +58,6 @@ void interpolate(Vec3f *dest, const Vec3f *srcA, const Vec3f *srcB, float dt, si
 		next = _mm_add_ps(base, diff);
 		_mm_store_ps(&dest_array[i], next);
 	}
-
-	//CHECK_HEAP();
 }
 
 void test_interpolate() {
@@ -136,8 +132,6 @@ InterpolationData::InterpolationData(const Mesh *mesh) {
 InterpolationData::~InterpolationData() {
 	if (use_simd_interpolation) {
 		if (vertices) {
-			assert(((unsigned)vertices & 0xF) == 0);
-			assert(((unsigned)normals & 0xF) == 0);
 			free_aligned_vec3_array(vertices);
 			free_aligned_vec3_array(normals);
 		}

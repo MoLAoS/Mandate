@@ -1471,31 +1471,21 @@ void Renderer::renderUnits(){
 
 	modelRenderer->begin(true, true, true, &meshCallbackTeamColor);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
+	vector<const Unit*> toRender[GameConstants::maxPlayers];
 
-	for (int j=0; j < world->getGlestimals()->getUnitCount(); ++j) {
-		unit = world->getGlestimals()->getUnit(j);
-		if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
-			toRender[0].push_back(unit);
-		}
-	}
 	for (int i=0; i < world->getFactionCount(); ++i) { 
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
 			//@todo take unit size into account
 			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
-				toRender[i + 1].push_back(unit);
+				toRender[i].push_back(unit);
 			}
 		}
 	}
-	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (toRender[i].empty()) continue;
 
-		if (i) {
-			meshCallbackTeamColor.setTeamTexture(world->getFaction(i-1)->getTexture());
-		} else {
-			meshCallbackTeamColor.setTeamTexture(0);
-		}
+		meshCallbackTeamColor.setTeamTexture(world->getFaction(i)->getTexture());
 
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {

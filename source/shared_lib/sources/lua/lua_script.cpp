@@ -236,7 +236,7 @@ Vec2i LuaArguments::getVec2i(int ndx) const{
 	try {
 		// push a nil key to the top of the stack since lua_next requires the key to be on top
 		lua_pushnil(luaState);
-		for (int i = 1; i <= 3; ++i) {
+		for (int i = 1; i <= 2; ++i) {
 			lua_next(luaState, ndx-1); // table is now one index back, push next element on top
 			if (!checkType(LuaType::NUMBER)) throw i;
 			v.raw[i - 1] = lua_tointeger(luaState, -1); // store the value into the vector

@@ -303,7 +303,7 @@ void World::processFrame() {
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
 		updateFaction(&*f);
 	}
-	updateFaction(&glestimals);
+//	updateFaction(&glestimals);
 
 //	updateEarthquakes(1.f / 40.f);
 
@@ -1020,8 +1020,8 @@ void World::initSplattedTextures() {
 void World::initFactions() {
 	Logger::getInstance().add("Faction types", true);
 	
-	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
-		&techTree, -1, -1, -1, -1, false, false);
+//	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+//		&techTree, -1, -1, -1, -1, false, false);
 	
 	GameSettings &gs = iSim->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
@@ -1054,6 +1054,9 @@ void World::initFactions() {
 		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
 	}
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
+	//glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+	//	&techTree, -1, -1, -1, -1, false, false);
+	
 }
 
 //place units randomly aroud start location
@@ -1100,9 +1103,9 @@ void World::activateUnits() {
 			(*uIt)->born();
 		}
 	}
-	foreach_const (Units, uIt, glestimals.getUnits()) {
-		(*uIt)->born();
-	}
+//	foreach_const (Units, uIt, glestimals.getUnits()) {
+//		(*uIt)->born();
+//	}
 }
 
 void World::initMap() {

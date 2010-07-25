@@ -259,18 +259,7 @@ void MenuStateOptions::setupListBoxLang() {
 	}
 
 	const string langListPath = langDir + "langlist.txt";
-	
-	FileOps *f = FSFactory::getInstance()->getFileOps();
-	f->openRead(langListPath.c_str());
-	
-	int sz = f->fileSize();
-	char *fileBuf = new char[sz + 1];
-	f->read(fileBuf, sz, 1);
-	fileBuf[sz] = 0;
-
-	stringstream ss;
-	ss << fileBuf;
-	istream *fp = &ss;//FSFactory::getInstance()->getIStream(langListPath.c_str());
+	istream *fp = FSFactory::getInstance()->getIStream(langListPath.c_str());
 	
 	// insert values into table from file (all possible lang codes)
 	map<string,string> langTable;
@@ -283,8 +272,7 @@ void MenuStateOptions::setupListBoxLang() {
 			langTable[string(code)] = string(lang);
 		}
 	}
-	delete f;
-	//delete fp;
+	delete fp;
 
 	// insert the values for langNames (the locales we care about (have lang files for))
 	vector<string> langNames;

@@ -496,7 +496,10 @@ void RoutePlanner::smoothPath(Unit *unit) {
 TravelState RoutePlanner::doRouteCache(Unit *unit) {
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
-	assert(unit->getPos().dist(path.front()) < 1.5f);
+	float step = unit->getPos().dist(path.front());
+	if (step > 1.5f || step < 0.9f) {
+		return TravelState::BLOCKED; // invalid
+	}
 	if (attemptMove(unit)) {
 		if (!wpPath.empty() && path.size() < 12) {
 			// if there are less than 12 steps left on this path, and there are more waypoints

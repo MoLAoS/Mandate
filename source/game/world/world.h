@@ -76,7 +76,7 @@ private:
 	WaterEffects waterEffects;
 
 	Factions factions; // < to SimulationInterface ?
-	Faction glestimals;
+	//Faction glestimals;
 
 	Random random;
 
@@ -149,8 +149,8 @@ public:
 	RoutePlanner* getRoutePlanner()					{return routePlanner;}
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
-	const Faction *getGlestimals() const			{return &glestimals;}
-	Faction *getGlestimals()						{return &glestimals;}
+//	const Faction *getGlestimals() const			{return &glestimals;}
+//	Faction *getGlestimals()						{return &glestimals;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}
 	int getFrameCount() const						{return frameCount;}
 	static World *getCurrWorld()					{return singleton;}
