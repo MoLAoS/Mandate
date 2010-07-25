@@ -146,7 +146,7 @@ private:
 	bool selectingMeetingPoint;
 	bool needSelectionUpdate;
 	int currentGroup;
-	
+
 	static UserInterface* currentGui;
 
 
@@ -155,11 +155,11 @@ public:
 	~UserInterface() {
 		currentGui = NULL;
 	}
-	
+
 	static UserInterface* getCurrentGui() {
 		return currentGui;
 	}
-	
+
 	void init();
 	void initMinimap(bool fow, bool resuming);
 	void end();
@@ -231,6 +231,8 @@ public:
 	void onLeftClickOrder(Vec2i cellPos);
 	void onRightClickOrder(Vec2i cellPos);
 
+    void onResourceDepleted(Vec2i cellPos);
+
 	//misc
 
 	void switchToNextDisplayColor() {display.switchColor();}
@@ -245,7 +247,7 @@ public:
 		selection.update();
 		computeDisplay();
 	}
-	
+
 	/**
 	 * Hacky backstop function to make sure units are removed from all selection groups before they
 	 * are deleted.

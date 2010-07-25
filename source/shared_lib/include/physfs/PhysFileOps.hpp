@@ -25,7 +25,7 @@ private:
 public:
 	PhysFileOps();
 	~PhysFileOps();
-	
+
 	void openRead(const char *fname);
 	void openWrite(const char *fname);
 	void openAppend(const char *fname);

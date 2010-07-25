@@ -20,6 +20,7 @@
 #include "resource.h"
 #include "util.h"
 #include "random.h"
+#include "user_interface.h"
 
 #include "leak_dumper.h"
 
@@ -57,8 +58,10 @@ bool Object::getWalkable() const{
 }
 
 void Object::setResource(const ResourceType *resourceType, const Vec2i &pos){
+    assert(!resource);
 	resource= new Resource();
 	resource->init(resourceType, pos);
+	resource->Depleted.connect(&g_userInterface, &Gui::UserInterface::onResourceDepleted);
 }
 
 }}//end namespace

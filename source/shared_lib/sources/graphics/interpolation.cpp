@@ -17,11 +17,13 @@
 
 #include "model.h"
 #include "timer.h"
+#include "util.h"
 #include "leak_dumper.h"
 
 using std::min;
 using std::cout;
 using std::endl;
+using Shared::Util::clamp;
 
 namespace Shared { namespace Graphics {
 
@@ -44,7 +46,7 @@ void interpolate(Vec3f *dest, const Vec3f *srcA, const Vec3f *srcB, float dt, si
 	const float *base_array = srcA[0].raw;
 	const float *next_array = srcB[0].raw;
 	float *dest_array = dest[0].raw;
-	
+
 	// load dt and declare 3 'scratch' __m128 vars
 	const __m128 t = _mm_load1_ps(&dt);
 	register __m128 base, next, diff;
@@ -68,7 +70,7 @@ void test_interpolate() {
 	Vec3f *srcB = allocate_aligned_vec3_array(num_verts);
 	Vec3f *result1 = allocate_aligned_vec3_array(num_verts);
 	Vec3f *result2 = allocate_aligned_vec3_array(num_verts);
-	
+
 	for (unsigned i = 0; i < num_verts; ++i) {
 		float f1 = float(i) / num_verts;
 		float f2 = 1.f - f1;
@@ -86,7 +88,7 @@ void test_interpolate() {
 	}
 	chrono1.stop();
 	cout << "\tWith SSE2, took: " << chrono1.getAccumTime() << " ticks.\n";
-	
+
 	chrono2.start();
 	for (unsigned i = 0; i < num_trials; ++i) {
 		Vec3f::lerpArray(result2, srcA, srcB, 0.5f, num_verts);
@@ -146,7 +148,12 @@ void InterpolationData::update(float t, bool cycle) {
 	updateNormals(t, cycle);
 }
 
+void nop(float t) {
+    std::cout << endl << "Error! t == " << t << endl;
+}
+
 void InterpolationData::updateVertices(float t, bool cycle) {
+    t = clamp(t, 0.f, 1.f);
 	assert(t >= 0.0f && t <= 1.0f);
 	uint32 frameCount = mesh->getFrameCount();
 	uint32 vertexCount = mesh->getVertexCount();
@@ -162,6 +169,9 @@ void InterpolationData::updateVertices(float t, bool cycle) {
 
 		// convert 'global' t (0-1 for entire anim) to local t (0-1 between two frames)
 		float localT = t * frameCount - prevFrame;
+		if (localT < 0.f || localT > 1.f) {
+		    nop(localT);
+		}
 		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices
@@ -180,7 +190,8 @@ void InterpolationData::updateVertices(float t, bool cycle) {
 }
 
 void InterpolationData::updateNormals(float t, bool cycle) {
-	assert(t >= 0.0f && t <= 1.0f);
+    t = clamp(t, 0.f, 1.f);
+    assert(t >= 0.0f && t <= 1.0f);
 
 	uint32 frameCount = mesh->getFrameCount();
 	uint32 vertexCount = mesh->getVertexCount();
@@ -195,6 +206,10 @@ void InterpolationData::updateNormals(float t, bool cycle) {
 		assert(nextFrame >= 0 && nextFrame < frameCount);
 
 		float localT = t * frameCount - prevFrame;
+		if (localT < 0.f || localT > 1.f) {
+		    nop(localT);
+		}
+		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices
 		if (use_simd_interpolation) {

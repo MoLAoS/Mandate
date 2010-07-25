@@ -217,6 +217,14 @@ void UserInterface::onRightClickOrder(Vec2i cellPos) {
 	giveDefaultOrders(cellPos, 0);
 }
 
+void UserInterface::onResourceDepleted(Vec2i cellPos) {
+    Object *o = g_map.getTile(Map::toTileCoords(cellPos))->getObject();
+    assert(o);
+    if (o == selectedObject) {
+        selectedObject = 0;
+    }
+}
+
 // ==================== events ====================
 void UserInterface::mouseDownLeft(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
@@ -937,7 +945,7 @@ void UserInterface::computeDisplay() {
 
 	if (selection.isComandable()
 	&& selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
-		if (!selectingBuilding) { 
+		if (!selectingBuilding) {
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
 			if (selection.isCancelable()) { //cancel button
