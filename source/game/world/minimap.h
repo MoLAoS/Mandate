@@ -41,8 +41,9 @@ class Minimap : public Widget, public MouseWidget {
 private:
 	Pixmap2D *fowPixmap0;
 	Pixmap2D *fowPixmap1;
-	Texture2D *tex;
-	Texture2D *fowTex;    //Fog Of War Texture2D
+	Texture2D *tex;			// base map texture
+	Texture2D *fowTex;		// Fog Of War texture
+	Texture2D *unitsTex;	// Units 'overlay'
 	bool fogOfWar, shroudOfDarkness;
 	bool m_draggingCamera, m_draggingWidget;
 	bool m_leftClickOrder, m_rightClickOrder;

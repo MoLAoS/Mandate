@@ -632,7 +632,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	HAAStarResult res;
 	// Hierarchical Search
 	tSearchEngine->reset();
-	if (g_map.getTile(Map::toTileCoords(target))->isExplored(unit->getTeam())) {
+	if (unit->getTeam() == -1 || g_map.getTile(Map::toTileCoords(target))->isExplored(unit->getTeam())) {
 		res = findWaypointPath(unit, target, wpPath);
 	} else {
 		res = findWaypointPathUnExplored(unit, target, wpPath);

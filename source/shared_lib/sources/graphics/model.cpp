@@ -219,6 +219,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 
 		textures[mtDiffuse]= static_cast<Texture2D*>(textureManager->getTexture(texPath));
 		if(textures[mtDiffuse]==NULL){
+			assert(texPath != "");
 			textures[mtDiffuse]= textureManager->newTexture2D();
 			textures[mtDiffuse]->load(texPath);
 		}
@@ -294,6 +295,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			string mapPath= toLower(reinterpret_cast<char*>(cMapPath));
 
 			string mapFullPath= dir + "/" + mapPath;
+			assert(mapFullPath != "");
 
 			textures[i]= static_cast<Texture2D*>(textureManager->getTexture(mapFullPath));
 			if(textures[i]==NULL){
@@ -301,6 +303,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 				if(meshTextureChannelCount[i]!=-1){
 					textures[i]->getPixmap()->init(meshTextureChannelCount[i]);
 				}
+				assert(mapFullPath != "");
 				textures[i]->load(mapFullPath);
 			}
 		}

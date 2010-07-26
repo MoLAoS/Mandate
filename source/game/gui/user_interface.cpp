@@ -106,7 +106,8 @@ UserInterface::UserInterface(GameState &game)
 		, world(0)
 		, gameCamera(0)
 		, console(0)
-		, minimap(0) {
+		, m_minimap(0)
+		, m_display(0) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -122,6 +123,13 @@ UserInterface::UserInterface(GameState &game)
 	needSelectionUpdate = false;
 	currentGui = this;
 	currentGroup= invalidGroupIndex;
+
+	int w = g_metrics.getDisplayW() + 6;
+	int h = g_metrics.getDisplayH() + 18;
+	int x = g_metrics.getScreenW() - 10 - w;
+	int y = (g_metrics.getScreenH() - h) / 2;
+
+	m_display = new Display(Vec2i(x,y), Vec2i(w, h));
 }
 
 void UserInterface::init() {
@@ -134,16 +142,20 @@ void UserInterface::init() {
 }
 
 void UserInterface::initMinimap(bool fow, bool resuming) {
-	minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(10, g_metrics.getScreenH() - 160), Vec2i(128 + 8, 128 + 16));
-	minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
-	minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
-	minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
+	int mx = 10;
+	int my = g_metrics.getScreenH() - 160;
+	m_minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(mx, my), Vec2i(128 + 8, 128 + 16));
+	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
+	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
+	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
 }
 
 void UserInterface::end() {
 	selection.clear();
-	delete minimap;
-	minimap = 0;
+	delete m_minimap;
+	m_minimap = 0;
+	delete m_display;
+	m_display = 0;
 }
 
 // ==================== get ====================
@@ -171,26 +183,8 @@ void UserInterface::resetState() {
 	dragging = false;
 	needSelectionUpdate = false;
 	buildPositions.clear();
-	minimap->setLeftClickOrder(false);
-	minimap->setRightClickOrder(!selection.isEmpty());
-}
-
-/** return true if the position is valid, false otherwise */
-bool UserInterface::getMinimapCell(int x, int y, Vec2i &cell) {
-	const Map *map= world->getMap();
-	const Metrics &metrics= Metrics::getInstance();
-
-	int xm= x - metrics.getMinimapX();
-	int ym= y - metrics.getMinimapY();
-	int xCell= static_cast<int>(xm * (static_cast<float>(map->getW()) / metrics.getMinimapW()));
-	int yCell= static_cast<int>(map->getH() - ym * (static_cast<float>(map->getH()) / metrics.getMinimapH()));
-	if(map->isInside(xCell, yCell)) {
-		cell.x = xCell;
-		cell.y = yCell;
-		return true;
-	} else {
-		return false;
-	}
+	m_minimap->setLeftClickOrder(false);
+	m_minimap->setRightClickOrder(!selection.isEmpty());
 }
 
 static void calculateNearest(Selection::UnitContainer &units, const Vec3f &pos) {
@@ -229,7 +223,7 @@ void UserInterface::onResourceDepleted(Vec2i cellPos) {
 void UserInterface::mouseDownLeft(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
 
-	//display panel
+	// display panel
 	if(metrics.isInDisplay(x, y)) {
 		int posDisplay = computePosDisplay(x - metrics.getDisplayX(), y - metrics.getDisplayY());
 		if(posDisplay != invalidPos){
@@ -291,10 +285,10 @@ void UserInterface::mouseDownRight(int x, int y) {
 		return;
 	}
 
-	//display panel
+	//m_display panel
 	if(metrics.isInDisplay(x, y)) {
 		int posDisplay = computePosDisplay(x - metrics.getDisplayX(), y - metrics.getDisplayY());
-		//ignore right click to display buttons, but do not pass on to graphics
+		//ignore right click to m_display buttons, but do not pass on to graphics
 		if(posDisplay != invalidPos) {
 			return;
 		}
@@ -322,7 +316,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
 
-	//display panel
+	//m_display panel
 	if(metrics.isInDisplay(x, y)){
 		int posDisplay = computePosDisplay(x - metrics.getDisplayX(), y - metrics.getDisplayY());
 		if(posDisplay != invalidPos){
@@ -406,7 +400,7 @@ void UserInterface::mouseMoveGraphics(int x, int y){
 		}
 	}
 
-	display.setInfoText("");
+	m_display->setInfoText("");
 }
 
 void UserInterface::mouseDoubleClickLeftGraphics(int x, int y){
@@ -727,9 +721,9 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 
 void UserInterface::clickCommonCommand(CommandClass commandClass) {
 	for(int i= 0; i<Display::downCellCount; ++i) {
-		const CommandType* ct = display.getCommandType(i);
-		if(((ct && ct->getClass() == commandClass) || display.getCommandClass(i) == commandClass)
-				&& display.getDownLighted(i)) {
+		const CommandType* ct = m_display->getCommandType(i);
+		if(((ct && ct->getClass() == commandClass) || m_display->getCommandClass(i) == commandClass)
+				&& m_display->getDownLighted(i)) {
 			mouseDownDisplayUnitSkills(i);
 			break;
 		}
@@ -760,8 +754,8 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 
 		//uniform selection
 		if(selection.isUniform()) {
-			if(unit->getFaction()->reqsOk(display.getCommandType(posDisplay))){
-				activeCommandType = display.getCommandType(posDisplay);
+			if(unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))){
+				activeCommandType = m_display->getCommandType(posDisplay);
 				activeCommandClass = activeCommandType->getClass();
 			}
 			else{
@@ -775,7 +769,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 		//non uniform selection
 		else{
 			activeCommandType= NULL;
-			activeCommandClass= display.getCommandClass(posDisplay);
+			activeCommandClass= m_display->getCommandClass(posDisplay);
 		}
 
 		//give orders depending on command type
@@ -792,7 +786,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 			}
 			else{
 				selectingPos= true;
-				minimap->setLeftClickOrder(true);
+				m_minimap->setLeftClickOrder(true);
 				activePos= posDisplay;
 			}
 		}
@@ -808,7 +802,7 @@ void UserInterface::mouseDownDisplayUnitBuild(int posDisplay){
 	else{
 		if(activeCommandType!=NULL && activeCommandType->getClass()==CommandClass::BUILD){
 			const BuildCommandType *bct= static_cast<const BuildCommandType*>(activeCommandType);
-			const UnitType *ut= bct->getBuilding(display.getIndex(posDisplay));
+			const UnitType *ut= bct->getBuilding(m_display->getIndex(posDisplay));
 			if(world->getFaction(factionIndex)->reqsOk(ut)){
 				choosenBuildingType= ut;
 				assert(choosenBuildingType!=NULL);
@@ -822,7 +816,7 @@ void UserInterface::mouseDownDisplayUnitBuild(int posDisplay){
 void UserInterface::computeInfoString(int posDisplay) {
 	Lang &lang = Lang::getInstance();
 
-	display.setInfoText("");
+	m_display->setInfoText("");
 
 	if(!selection.isComandable()) {
 		return;
@@ -834,9 +828,9 @@ void UserInterface::computeInfoString(int posDisplay) {
 
 	if(!selectingBuilding) {
 		if(posDisplay == cancelPos) {
-			display.setInfoText(lang.get("Cancel"));
+			m_display->setInfoText(lang.get("Cancel"));
 		} else if(posDisplay == meetingPointPos) {
-			display.setInfoText(lang.get("MeetingPoint"));
+			m_display->setInfoText(lang.get("MeetingPoint"));
 		} else if(posDisplay == autoRepairPos) {
 			string str = lang.get("AutoRepair");
 
@@ -854,29 +848,29 @@ void UserInterface::computeInfoString(int posDisplay) {
 				break;
 			}
 
-			display.setInfoText(str);
+			m_display->setInfoText(str);
 		} else {
 			//uniform selection
 			if(selection.isUniform()) {
 				const Unit *unit = selection.getFrontUnit();
-				const CommandType *ct = display.getCommandType(posDisplay);
+				const CommandType *ct = m_display->getCommandType(posDisplay);
 
 				if(ct != NULL) {
 					if(unit->getFaction()->reqsOk(ct)) {
-						display.setInfoText(ct->getDesc(unit));
+						m_display->setInfoText(ct->getDesc(unit));
 					} else {
 						if(ct->getClass() == CommandClass::UPGRADE) {
 							const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 
 							if(unit->getFaction()->getUpgradeManager()->isUpgrading(uct->getProducedUpgrade())) {
-								display.setInfoText(lang.get("Upgrading") + "\n" + ct->getDesc(unit));
+								m_display->setInfoText(lang.get("Upgrading") + "\n" + ct->getDesc(unit));
 							} else if(unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
-								display.setInfoText(lang.get("AlreadyUpgraded") + "\n" + ct->getDesc(unit));
+								m_display->setInfoText(lang.get("AlreadyUpgraded") + "\n" + ct->getDesc(unit));
 							} else {
-								display.setInfoText(ct->getReqDesc());
+								m_display->setInfoText(ct->getReqDesc());
 							}
 						} else {
-							display.setInfoText(ct->getReqDesc());
+							m_display->setInfoText(ct->getReqDesc());
 						}
 					}
 				}
@@ -885,20 +879,20 @@ void UserInterface::computeInfoString(int posDisplay) {
 			//non uniform selection
 			else {
 				const UnitType *ut = selection.getFrontUnit()->getType();
-				CommandClass cc = display.getCommandClass(posDisplay);
+				CommandClass cc = m_display->getCommandClass(posDisplay);
 
 				if(cc != CommandClass::NULL_COMMAND) {
-					display.setInfoText(lang.get("CommonCommand") + ": " + ut->getFirstCtOfClass(cc)->toString());
+					m_display->setInfoText(lang.get("CommonCommand") + ": " + ut->getFirstCtOfClass(cc)->toString());
 				}
 			}
 		}
 	} else {
 		if(posDisplay == cancelPos) {
-			display.setInfoText(lang.get("Return"));
+			m_display->setInfoText(lang.get("Return"));
 		} else {
 			if(activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
 				const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
-				display.setInfoText(bct->getBuilding(display.getIndex(posDisplay))->getReqDesc());
+				m_display->setInfoText(bct->getBuilding(m_display->getIndex(posDisplay))->getReqDesc());
 			}
 		}
  	}
@@ -907,7 +901,7 @@ void UserInterface::computeInfoString(int posDisplay) {
 void UserInterface::computeDisplay() {
 
 	//init
-	display.clear();
+	m_display->clear();
 
 	// ================ PART 1 ================
 
@@ -917,30 +911,30 @@ void UserInterface::computeDisplay() {
 		const Unit *unit = selection.getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
-		display.setTitle(unit->getFullName());
-		display.setText(unit->getDesc(friendly));
+		m_display->setTitle(unit->getFullName());
+		m_display->setText(unit->getDesc(friendly));
 		if (friendly) {
-			display.setProgressBar(selection.getFrontUnit()->getProductionPercent());
+			m_display->setProgressBar(selection.getFrontUnit()->getProductionPercent());
 		}
 	}
 
 	//portraits
 	for (int i = 0; i < selection.getCount(); ++i) {
-		display.setUpImage(i, selection.getUnit(i)->getType()->getImage());
+		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
 
 	if (selection.getCount() && selection.getFrontUnit()->getType()->isOfClass(UnitClass::CARRIER)) {
 		const Unit *unit = selection.getFrontUnit();
 		Unit::UnitContainer carriedUnits = unit->getCarriedUnits();
 		for (int i = 0; i < carriedUnits.size(); ++i) {
-			display.setCarryImage(i, carriedUnits[i]->getType()->getImage());
+			m_display->setCarryImage(i, carriedUnits[i]->getType()->getImage());
 		}
 	}
 
 	// ================ PART 2 ================
 
 	if (selectingPos || selectingMeetingPoint) {
-		display.setDownSelectedPos(activePos);
+		m_display->setDownSelectedPos(activePos);
 	}
 
 	if (selection.isComandable()
@@ -949,23 +943,23 @@ void UserInterface::computeDisplay() {
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
 			if (selection.isCancelable()) { //cancel button
-				display.setDownImage(cancelPos, ut->getCancelImage());
-				display.setDownLighted(cancelPos, true);
+				m_display->setDownImage(cancelPos, ut->getCancelImage());
+				m_display->setDownLighted(cancelPos, true);
 			}
 			if (selection.isMeetable()) { //meeting point
-				display.setDownImage(meetingPointPos, ut->getMeetingPointImage());
-				display.setDownLighted(meetingPointPos, true);
+				m_display->setDownImage(meetingPointPos, ut->getMeetingPointImage());
+				m_display->setDownLighted(meetingPointPos, true);
 			}
 
 			if (selection.isCanRepair()) {
 				if (selection.getAutoRepairState() == arsOn) {
 					const CommandType *rct = ut->getFirstCtOfClass(CommandClass::REPAIR);
 					assert(rct);
-					display.setDownImage(autoRepairPos, rct->getImage());
+					m_display->setDownImage(autoRepairPos, rct->getImage());
 				} else {
-					display.setDownImage(autoRepairPos, ut->getCancelImage());
+					m_display->setDownImage(autoRepairPos, ut->getCancelImage());
 				}
-				display.setDownLighted(autoRepairPos, true);
+				m_display->setDownLighted(autoRepairPos, true);
 			}
 
 			if (selection.isUniform()) { //uniform selection
@@ -975,9 +969,9 @@ void UserInterface::computeDisplay() {
 						const CommandType *ct = ut->getCommandType(i);
 						int displayPos = ct->getClass() == CommandClass::MORPH ? morphPos++ : j;
 						if (u->getFaction()->isAvailable(ct) && ct->getClass() != CommandClass::SET_MEETING_POINT) {
-							display.setDownImage(displayPos, ct->getImage());
-							display.setCommandType(displayPos, ct);
-							display.setDownLighted(displayPos, u->getFaction()->reqsOk(ct));
+							m_display->setDownImage(displayPos, ct->getImage());
+							m_display->setCommandType(displayPos, ct);
+							m_display->setDownLighted(displayPos, u->getFaction()->reqsOk(ct));
 							++j;
 						}
 					}
@@ -986,9 +980,9 @@ void UserInterface::computeDisplay() {
 				int lastCommand = 0;
 				foreach_enum (CommandClass, cc) {
 					if (isSharedCommandClass(cc) && cc != CommandClass::BUILD) {
-						display.setDownLighted(lastCommand, true);
-						display.setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
-						display.setCommandClass(lastCommand, cc);
+						m_display->setDownLighted(lastCommand, true);
+						m_display->setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
+						m_display->setCommandClass(lastCommand, cc);
 						lastCommand++;
 					}
 				}
@@ -999,14 +993,14 @@ void UserInterface::computeDisplay() {
 				const BuildCommandType* bct = static_cast<const BuildCommandType*>(activeCommandType);
 				for (int i = 0, j = 0; i < bct->getBuildingCount(); ++i) {
 					if (unit->getFaction()->isAvailable(bct->getBuilding(i))) {
-						display.setDownImage(j, bct->getBuilding(i)->getImage());
-						display.setDownLighted(j, unit->getFaction()->reqsOk(bct->getBuilding(i)));
-						display.setIndex(j, i);
+						m_display->setDownImage(j, bct->getBuilding(i)->getImage());
+						m_display->setDownLighted(j, unit->getFaction()->reqsOk(bct->getBuilding(i)));
+						m_display->setIndex(j, i);
 						++j;
 					}
 				}
-				display.setDownImage(cancelPos, selection.getFrontUnit()->getType()->getCancelImage());
-				display.setDownLighted(cancelPos, true);
+				m_display->setDownImage(cancelPos, selection.getFrontUnit()->getType()->getCancelImage());
+				m_display->setDownLighted(cancelPos, true);
 			}
 		}
 	}
@@ -1014,15 +1008,15 @@ void UserInterface::computeDisplay() {
 	if (selection.isEmpty() && selectedObject) {
 		Resource *r = selectedObject->getResource();
 		if (r) {
-			display.setTitle(r->getType()->getName());
-			display.setText(g_lang.get("amount") + ":" + intToStr(r->getAmount()));
-			display.setUpImage(0, r->getType()->getImage());
+			m_display->setTitle(r->getType()->getName());
+			m_display->setText(g_lang.get("amount") + ":" + intToStr(r->getAmount()));
+			m_display->setUpImage(0, r->getType()->getImage());
 		} ///@todo else
 	}
 }
 
 int UserInterface::computePosDisplay(int x, int y) {
-	int posDisplay = display.computeDownIndex(x, y);
+	int posDisplay = m_display->computeDownIndex(x, y);
 
 	if (posDisplay < 0 || posDisplay >= Display::downCellCount) {
 		posDisplay = invalidPos;
@@ -1044,7 +1038,7 @@ int UserInterface::computePosDisplay(int x, int y) {
 		} else {
 			if (!selectingBuilding) {
 				//standard selection
-				if (display.getCommandClass(posDisplay) == CommandClass::NULL_COMMAND && display.getCommandType(posDisplay) == NULL) {
+				if (m_display->getCommandClass(posDisplay) == CommandClass::NULL_COMMAND && m_display->getCommandType(posDisplay) == NULL) {
 					posDisplay = invalidPos;
 				}
 			} else {
@@ -1203,7 +1197,7 @@ void UserInterface::updateSelection(bool doubleClick, Selection::UnitContainer &
 		selection.unSelect(units);
 	}
 	if (wasEmpty != selection.isEmpty()) {
-		minimap->setRightClickOrder(!selection.isEmpty());
+		m_minimap->setRightClickOrder(!selection.isEmpty());
 	}
 }
 

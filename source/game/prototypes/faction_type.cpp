@@ -111,7 +111,6 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	//open xml file
 	string path = dir+"/"+name+".xml";
-	//checksum.addFile(path, true);
 	XmlTree xmlTree;
 	try { 
 		xmlTree.load(path); 
@@ -147,6 +146,9 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		if (!unitTypes[i]->load(str, techTree, this)) {
 			loadOk = false;
 		}
+		Checksum checksum;
+		unitTypes[i]->doChecksum(checksum);
+		g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
 		logger.unitLoaded();
 	}
 
@@ -257,7 +259,11 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 	// load glestimals
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/glestimals/" + unitTypes[i]->getName();
-		if (!unitTypes[i]->load(str, techTree, this, true)) {
+		if (unitTypes[i]->load(str, techTree, this, true)) {
+			Checksum checksum;
+			unitTypes[i]->doChecksum(checksum);
+			g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
+		} else {
 			loadOk = false;
 		}
 		///@todo count glestimals

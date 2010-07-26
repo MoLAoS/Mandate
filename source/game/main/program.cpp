@@ -401,9 +401,16 @@ void Program::setState(ProgramState *programState) {
 
 	this->programState = programState;
 
-	programState->load();
-	programState->init();
+//	bool isGame = programState->isGameState();
 
+	programState->load();
+//	if (isGame) {
+//		g_simInterface->getWorld()->getUnitTypeFactory().assertTypes();
+//	}
+	programState->init();
+//	if (isGame) {
+//		g_simInterface->getWorld()->getUnitTypeFactory().assertTypes();
+//	}
 	resetTimers();
 }
 

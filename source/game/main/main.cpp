@@ -123,7 +123,7 @@ int glestMain(int argc, char** argv) {
 
 #	if USE_PHYSFS
 		g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-		g_fileFactory.usePhysFS(true);
+		g_fileFactory.usePhysFS(g_config.getMiscEnablePhysfs());
 #	endif
 
 	if (g_config.getMiscCatchExceptions()) {

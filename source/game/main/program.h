@@ -77,6 +77,8 @@ public:
 	virtual void keyDown(const Key &key){}
 	virtual void keyUp(const Key &key){}
 	virtual void keyPress(char c){}
+
+	virtual bool isGameState() const	{ return false; }
 };
 
 // ===============================

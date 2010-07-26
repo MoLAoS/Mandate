@@ -203,9 +203,9 @@ inline int round(float f){
 //misc
 bool fileExists(const string &path);
 
-template<typename T>
-void deleteValues(T beginIt, T endIt){
-	for(T it= beginIt; it!=endIt; ++it){
+template<typename  FwdIt>
+void deleteValues(FwdIt beginIt, FwdIt endIt){
+	for(FwdIt it= beginIt; it!=endIt; ++it){
 		delete *it;
 	}
 }

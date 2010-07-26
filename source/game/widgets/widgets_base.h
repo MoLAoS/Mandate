@@ -227,7 +227,7 @@ struct ImageRenderInfo {
 
 class ImageWidget {
 private:
- 	typedef vector<Texture2D*> Textures;
+ 	typedef vector<const Texture2D*> Textures;
 
 	Widget::Ptr me;
 	Textures textures;
@@ -240,10 +240,10 @@ public:
 	ImageWidget(Widget::Ptr me);
 	ImageWidget(Widget::Ptr me, Texture2D *tex);
 
-	int addImage(Texture2D *tex);
-	void setImage(Texture2D *tex, int ndx = 0);
-	int addImageX(Texture2D *tex, Vec2i offset, Vec2i sz);
-	void setImageX(Texture2D *tex, int ndx, Vec2i offset, Vec2i sz);
+	int addImage(const Texture2D *tex);
+	void setImage(const Texture2D *tex, int ndx = 0);
+	int addImageX(const Texture2D *tex, Vec2i offset, Vec2i sz);
+	void setImageX(const Texture2D *tex, int ndx, Vec2i offset, Vec2i sz);
 
 	const Texture2D* getImage(int ndx=0) const {
 		ASSERT_RANGE(ndx, textures.size());

@@ -21,6 +21,8 @@
 #include "particle_type.h"
 #include "factory.h"
 #include "prototypes_enums.h"
+#include <set>
+using std::set;
 
 using Shared::Sound::StaticSound;
 using Shared::Util::Checksum;
@@ -226,23 +228,26 @@ private:
     void sortCommandTypes();
 };
 
-
 // ===============================
 //  class UnitTypeFactory
 // ===============================
 
 class UnitTypeFactory: private SingleTypeFactory<UnitType> {
 private:
-	int idCounter;
-	vector<UnitType *> types;
+	int m_idCounter;
+	vector<UnitType *> m_types;
+	set<UnitType *> m_typeSet;
+	map<UnitType *, int32> m_checksumTable;
 
 public:
-	UnitTypeFactory() : idCounter(0) { }
+	UnitTypeFactory() : m_idCounter(0) { }
 	~UnitTypeFactory();
-
+	void assertTypes();
 
 	UnitType *newInstance();
 	UnitType* getType(int id);
+
+	void setChecksum(UnitType *ut, int32 cs);
 };
 
 }}//end namespace

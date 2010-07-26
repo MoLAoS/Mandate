@@ -237,6 +237,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_playerSlots[i]->TeamChanged.connect(this, &MenuStateNewGame::onChangeTeam);
 		m_playerSlots[i]->ColourChanged.connect(this, &MenuStateNewGame::onChangeColour);
 	}
+
+	//CHECK_HEAP();
 }
 
 int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
@@ -252,8 +254,11 @@ int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
 void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
+	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	if (psw->getSelectedFactionIndex() >= 0) {
-		gs.setFactionTypeName(ndx, m_factionFiles[psw->getSelectedFactionIndex()]);
+		int n = psw->getSelectedFactionIndex();
+		assert(n >= 0 && n < m_factionFiles.size());
+		gs.setFactionTypeName(ndx, m_factionFiles[n]);
 	} else {
 		gs.setFactionTypeName(ndx, "");
 	}
@@ -266,6 +271,7 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
 	}
 	noRecurse = true;
 	// check for humanity
+	assert(m_humanSlot >= 0);
 	bool humanInPrevSlot = m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN;
 	int newHumanSlot = -1;
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -277,6 +283,7 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
 	}
 	if (humanInPrevSlot) {
 		if (newHumanSlot != -1) { // human moved slots
+			assert(m_humanSlot >= 0);
 			m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
 			m_humanSlot = newHumanSlot;
 		}
@@ -294,6 +301,7 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
 void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
+	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	gs.setTeam(ndx, psw->getSelectedTeamIndex());
 }
 
@@ -320,11 +328,13 @@ int getLowestFreeColourIndex(PlayerSlotWidget::Ptr *slots) {
 void MenuStateNewGame::onChangeColour(PlayerSlotWidget::Ptr psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
+	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	int ci = psw->getSelectedColourIndex();
 	gs.setColourIndex(ndx, ci);
 	if (ci == -1) {
 		return;
 	}
+	assert(ci >= 0 && ci < GameConstants::maxPlayers);
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (ndx == i) continue;
 		if (m_playerSlots[i]->getSelectedColourIndex() == ci) {
@@ -347,6 +357,7 @@ void MenuStateNewGame::onCheckChanged(Button::Ptr cb) {
 }
 
 void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
+	assert(m_mapList->getSelectedIndex() >= 0 && m_mapList->getSelectedIndex() < m_mapFiles.size());
 	string mapBaseName = m_mapFiles[m_mapList->getSelectedIndex()];
 	string mapFile = "maps/" + mapBaseName + ".gbm";
 
@@ -363,6 +374,7 @@ void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
 void MenuStateNewGame::onChangeTileset(ListBase::Ptr) {
 	g_config.setUiLastTileset(m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 	GameSettings &gs = g_simInterface->getGameSettings();
+	assert(m_tilesetList->getSelectedIndex() >= 0);
 	gs.setTilesetPath(string("tilesets/") + m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 }
 
@@ -431,6 +443,7 @@ void MenuStateNewGame::update() {
 void MenuStateNewGame::reloadFactions() {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	vector<string> results;
+	assert(m_techTreeList->getSelectedIndex() >= 0);
 	findAll("techs/" + m_techTreeFiles[m_techTreeList->getSelectedIndex()] + "/factions/*.", results);
 	if (results.empty()) {
 		throw runtime_error("There are no factions for this tech tree");
@@ -452,6 +465,7 @@ void MenuStateNewGame::reloadFactions() {
 
 void MenuStateNewGame::updateControlers() {
 	GameSettings &gs = g_simInterface->getGameSettings();
+	assert(m_humanSlot >= 0);
 	if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
 		m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
 		m_humanSlot = 0;
@@ -479,9 +493,12 @@ void MenuStateNewGame::updateControlers() {
 			if (m_playerSlots[i]->getSelectedColourIndex() == -1) {
 				m_playerSlots[i]->setSelectedColour(i);
 			}
+			assert(m_playerSlots[i]->getSelectedFactionIndex() >= 0 && m_playerSlots[i]->getSelectedFactionIndex() < GameConstants::maxPlayers);
 			gs.setFactionTypeName(i, m_factionFiles[m_playerSlots[i]->getSelectedFactionIndex()]);
+			assert(m_playerSlots[i]->getSelectedTeamIndex() >= 0 && m_playerSlots[i]->getSelectedTeamIndex() < GameConstants::maxPlayers);
 			gs.setTeam(i, m_playerSlots[i]->getSelectedTeamIndex());
 			gs.setStartLocationIndex(i, i);
+			assert(m_playerSlots[i]->getSelectedColourIndex() >= 0 && m_playerSlots[i]->getSelectedColourIndex() < GameConstants::maxPlayers);
 			gs.setColourIndex(i, m_playerSlots[i]->getSelectedColourIndex());
 		}
 		if (m_playerSlots[i]->getControlType() == ControlType::HUMAN) {

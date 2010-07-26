@@ -1471,18 +1471,25 @@ void Renderer::renderUnits(){
 
 	modelRenderer->begin(true, true, true, &meshCallbackTeamColor);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers];
+	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 
+	// TODO: Just use cells to determine the alive ones, then check all dead ones
 	for (int i=0; i < world->getFactionCount(); ++i) { 
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
 			//@todo take unit size into account
 			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
-				toRender[i].push_back(unit);
+				toRender[i + 1].push_back(unit);
 			}
 		}
 	}
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+	for (int i=0; i < world->getGlestimals()->getUnitCount(); ++i) {
+			unit = world->getGlestimals()->getUnit(i);
+			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
+				toRender[0].push_back(unit);
+			}
+	}
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
 		meshCallbackTeamColor.setTeamTexture(world->getFaction(i)->getTexture());
@@ -2025,7 +2032,7 @@ void Renderer::computeSelected(Selection::UnitContainer &units, const Object *&o
 		GLuint name1 = *ptr++;
 		GLuint name2 = *ptr++;
 
-		if (name1 < GameConstants::maxPlayers) {
+		if (name1 < GameConstants::maxPlayers + 1) {
 			unitHits.insert(PickHit(nearDist, name1, name2));
 		} else {
 			objectHits.insert(PickHit(nearDist, name1, name2));
@@ -2373,7 +2380,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 	modelRenderer->begin(false, false, false);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers];
+	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 	set<const Unit*> unitsSeen;
 	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
 		const Vec2i &pos = *it;
@@ -2382,12 +2389,12 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			const Unit *unit = map->getCell(pos)->getUnit(z);
 			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
 				unitsSeen.insert(unit);
-				toRender[unit->getFactionIndex()].push_back(unit);
+				toRender[unit->getFactionIndex() + 1].push_back(unit);
 			}
-		}
+ 		}
 	}
 
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
 		glPushName(i);

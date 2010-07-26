@@ -540,7 +540,7 @@ void LoadSkillType::doChecksum(Checksum &checksum) const {
 // =====================================================
 
 SkillTypeFactory::SkillTypeFactory()
-		: idCounter(0) {
+		: m_idCounter(0) {
 	registerClass<StopSkillType>("stop");
 	registerClass<MoveSkillType>("move");
 	registerClass<AttackSkillType>("attack");
@@ -557,21 +557,49 @@ SkillTypeFactory::SkillTypeFactory()
 }
 
 SkillTypeFactory::~SkillTypeFactory() {
-	deleteValues(types);
+	//deleteValues(m_types);
+	foreach (vector<SkillType*>, it, m_types) {
+		assert(m_typeSet.find(*it) != m_typeSet.end());
+		m_typeSet.erase(m_typeSet.find(*it));
+		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+		m_checksumTable.erase(m_checksumTable.find(*it));
+		delete *it;
+	}
+	assert(m_typeSet.empty());
+	assert(m_checksumTable.empty());
+	m_types.clear();
+}
+
+void SkillTypeFactory::assertTypes() {
+	//deleteValues(m_types);
+	foreach (vector<SkillType*>, it, m_types) {
+		assert(m_typeSet.find(*it) != m_typeSet.end());
+		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+		Checksum checksum;
+		(*it)->doChecksum(checksum);
+		assert(m_checksumTable[*it] == checksum.getSum());
+	}
 }
 
 SkillType* SkillTypeFactory::newInstance(string classId) {
 	SkillType *st = MultiFactory<SkillType>::newInstance(classId);
-	st->setId(idCounter++);
-	types.push_back(st);
+	st->setId(m_idCounter++);
+	m_types.push_back(st);
+	m_typeSet.insert(st);
 	return st;
 }
 
 SkillType* SkillTypeFactory::getType(int id) {
-	if (id < 0 || id >= types.size()) {
+	if (id < 0 || id >= m_types.size()) {
 		throw runtime_error("Error: Unknown skill type id: " + intToStr(id));
 	}
-	return types[id];
+	return m_types[id];
+}
+
+void SkillTypeFactory::setChecksum(SkillType *st, int32 cs) {
+	assert(m_typeSet.find(st) != m_typeSet.end());
+	assert(m_checksumTable.find(st) == m_checksumTable.end());
+	m_checksumTable[st] = cs;
 }
 
 // =====================================================

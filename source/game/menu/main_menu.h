@@ -68,8 +68,6 @@ private:
 	int mouseX, mouseY;
 	int mouse2dAnim;
 	int fps, lastFps;
-	int ups, lastUps;
-	int64 updateTime, updateAvgTime;
 
 private:
 	MainMenu(const MainMenu &);

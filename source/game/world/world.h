@@ -76,7 +76,7 @@ private:
 	WaterEffects waterEffects;
 
 	Factions factions; // < to SimulationInterface ?
-	//Faction glestimals;
+	Faction glestimals;
 
 	Random random;
 
@@ -109,13 +109,12 @@ private:
 
 	PosCircularIteratorFactory posIteratorFactory;
 
-	UnitTypeFactory unitTypeFactory;
-	UpgradeTypeFactory upgradeTypeFactory;
+	SkillTypeFactory	m_skillTypeFactory;
+	CommandTypeFactory	m_commandTypeFactory;
+	UpgradeTypeFactory	m_upgradeTypeFactory;
+	UnitTypeFactory		m_unitTypeFactory;
 
-	SkillTypeFactory skillTypeFactory;
-	CommandTypeFactory commandTypeFactory;
-
-	ModelFactory modelFactory;
+	ModelFactory		m_modelFactory;
 
 public:
 	World(SimulationInterface *iSim);
@@ -127,11 +126,11 @@ public:
 	static bool isConstructed() { return singleton != 0; }
 
 	//get
-	UnitTypeFactory& getUnitTypeFactory()			{return unitTypeFactory;}
-	UpgradeTypeFactory& getUpgradeTypeFactory()		{return upgradeTypeFactory;}
-	SkillTypeFactory& getSkillTypeFactory()			{return skillTypeFactory;}
-	CommandTypeFactory& getCommandTypeFactory()		{return commandTypeFactory;}
-	ModelFactory& getModelFactory()					{return modelFactory;}
+	UnitTypeFactory& getUnitTypeFactory()			{return m_unitTypeFactory;}
+	UpgradeTypeFactory& getUpgradeTypeFactory()		{return m_upgradeTypeFactory;}
+	SkillTypeFactory& getSkillTypeFactory()			{return m_skillTypeFactory;}
+	CommandTypeFactory& getCommandTypeFactory()		{return m_commandTypeFactory;}
+	ModelFactory& getModelFactory()					{return m_modelFactory;}
 
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
@@ -149,8 +148,8 @@ public:
 	RoutePlanner* getRoutePlanner()					{return routePlanner;}
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
-//	const Faction *getGlestimals() const			{return &glestimals;}
-//	Faction *getGlestimals()						{return &glestimals;}
+	const Faction *getGlestimals() const			{return &glestimals;}
+	Faction *getGlestimals()						{return &glestimals;}
 	const WaterEffects *getWaterEffects() const		{return &waterEffects;}
 	int getFrameCount() const						{return frameCount;}
 	static World *getCurrWorld()					{return singleton;}

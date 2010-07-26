@@ -767,7 +767,7 @@ bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr,
 // =====================================================
 
 CommandTypeFactory::CommandTypeFactory()
-		: idCounter(0) {
+		: m_idCounter(0) {
 	registerClass<StopCommandType>("stop");
 	registerClass<MoveCommandType>("move");
 	registerClass<AttackCommandType>("attack");
@@ -786,21 +786,47 @@ CommandTypeFactory::CommandTypeFactory()
 }
 
 CommandTypeFactory::~CommandTypeFactory() {
-	deleteValues(types);
+	foreach (vector<CommandType*>, it, m_types) {
+		assert(m_typeSet.find(*it) != m_typeSet.end());
+		m_typeSet.erase(m_typeSet.find(*it));
+		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+		m_checksumTable.erase(m_checksumTable.find(*it));
+		delete *it;
+	}
+	assert(m_typeSet.empty());
+	assert(m_checksumTable.empty());
+	m_types.clear();
+}
+
+void CommandTypeFactory::assertTypes() {
+	foreach (vector<CommandType*>, it, m_types) {
+		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+		Checksum checksum;
+		(*it)->doChecksum(checksum);
+		assert(m_checksumTable[*it] == checksum.getSum());
+	}
 }
 
 CommandType* CommandTypeFactory::newInstance(string classId, UnitType *owner) {
 	CommandType *ct = MultiFactory<CommandType>::newInstance(classId);
-	ct->setIdAndUnitType(idCounter++, owner);
-	types.push_back(ct);
+	ct->setIdAndUnitType(m_idCounter++, owner);
+	m_types.push_back(ct);
+	m_typeSet.insert(ct);
 	return ct;
 }
 
 CommandType* CommandTypeFactory::getType(int id) {
-	if (id < 0 || id >= types.size()) {
+	if (id < 0 || id >= m_types.size()) {
 		throw runtime_error("Error: Unknown command type id: " + intToStr(id));
 	}
-	return types[id];
+	return m_types[id];
+}
+
+void CommandTypeFactory::setChecksum(CommandType *ct, int32 cs) {
+	assert(m_typeSet.find(ct) != m_typeSet.end());
+	assert(m_checksumTable.find(ct) == m_checksumTable.end());
+	m_checksumTable[ct] = cs;
+
 }
 
 }}//end namespace

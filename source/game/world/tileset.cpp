@@ -201,8 +201,8 @@ void Tileset::load(const string &dir, TechTree *tt){
 		else{
 			weather= Weather::SNOWY;
 		}
-		//glestimalFactionType.preLoadGlestimals(dir, tt);
-		//glestimalFactionType.loadGlestimals(dir, tt);
+		glestimalFactionType.preLoadGlestimals(dir, tt);
+		glestimalFactionType.loadGlestimals(dir, tt);
 	}
 	//Exception handling (conversions and so on);
 	catch(const exception &e){

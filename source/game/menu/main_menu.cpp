@@ -98,7 +98,7 @@ MainMenu::MainMenu(Program &program)
 
 	state = NULL;
 
-	fps = lastFps = ups = lastUps = updateTime = updateAvgTime = 0;
+	fps = lastFps = 0;
 
 	loadStateCameras();
 
@@ -136,10 +136,7 @@ void MainMenu::renderFg() {
 
 	if (g_config.getMiscDebugMode()) {
 		Font *font = g_coreData.getMenuFontNormal();
-		string s = "FPS: " + intToStr(lastFps) + "\nUPS: " + intToStr(lastUps)
-			+ "\nAvg update = " + intToStr(updateAvgTime) + " ticks.\n"
-			+ "update interval = " + intToStr(getUpdateInterval());
-		
+		string s = "FPS: " + intToStr(lastFps);
 		g_renderer.renderText(s, font, Vec3f(1.f), 10, 60, false);
 	}
 	g_renderer.swapBuffers();
@@ -147,24 +144,15 @@ void MainMenu::renderFg() {
 
 // synchronous update
 void MainMenu::update() {
-	Chrono timer;
-	timer.start();
 	g_renderer.updateParticleManager(ResourceScope::MENU);
 	mouse2dAnim = (mouse2dAnim + 1) % Renderer::maxMouse2dAnim;
 	menuBackground.update();
 	state->update();
-	timer.stop();
-	updateTime += timer.getAccumTime();
-	++ups;
 }
 
 void MainMenu::tick() {
 	lastFps = fps;
 	fps = 0;
-	lastUps = ups;
-	ups = 0;
-	updateAvgTime = lastUps ? updateTime / lastUps : 0;
-	updateTime = 0;
 }
 
 void MainMenu::mouseMove(int x, int y, const MouseState &ms) {

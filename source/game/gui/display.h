@@ -18,17 +18,19 @@
 #include "util.h"
 #include "command_type.h"
 #include "game_util.h"
-//#include "network_status.h"
 #include "metrics.h"
+#include "widgets.h"
 
 using std::string;
 
 using Shared::Graphics::Texture2D;
-using Shared::Math::Vec3f;
+using namespace Shared::Math;
 using Shared::Util::replaceBy;
 using Glest::Global::Metrics;
 
 namespace Glest { namespace Gui {
+
+using namespace Widgets;
 
 // =====================================================
 // 	class Display
@@ -36,18 +38,18 @@ namespace Glest { namespace Gui {
 ///	Display for unit commands, and unit selection
 // =====================================================
 
-class Display {
+class Display : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
-    static const int cellSideCount = 4;
-    static const int upCellCount = cellSideCount * cellSideCount;
-    static const int downCellCount = cellSideCount * cellSideCount;
+	static const int cellSideCount = 4;
+	static const int upCellCount = cellSideCount * cellSideCount;
+	static const int downCellCount = cellSideCount * cellSideCount;
 	static const int carryCellCount = cellSideCount * cellSideCount;
-    static const int colorCount = 4;
-    static const int imageSize = 32;
-    static const int invalidPos = -1;
-    static const int downY = imageSize * 9;
+	static const int colorCount = 4;
+	static const int imageSize = 32;
+	static const int invalidPos = -1;
+	static const int downY = imageSize * 9;
 	static const int carryY = imageSize * 2;
-    static const int infoStringY = imageSize * 4;
+	static const int infoStringY = imageSize * 4;
 
 private:
 	string title;
@@ -65,8 +67,12 @@ private:
 	int currentColor;
 	int downSelectedPos;
 
+	bool m_draggingWidget;
+	Vec2i m_moveOffset;
+
+
 public:
-	Display();
+	Display(Vec2i pos, Vec2i size);
 
 	//get
 	string getTitle() const							{return title;}
@@ -87,7 +93,7 @@ public:
 	void setTitle(const string title)					{this->title= Util::formatString(title);}
 	void setText(const string &text)					{this->text= Util::formatString(text);}
 	void setInfoText(const string infoText)				{this->infoText= Util::formatString(infoText);}
-	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image;}
+	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image; setImage(image, i);}
 	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image;}
 	void setCarryImage(int i, const Texture2D *image)	{carryImages[i]= image;}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
@@ -126,6 +132,13 @@ public:
 	int computeUpY(int index) const {
 		return Metrics::getInstance().getDisplayH() - (index / cellSideCount) * imageSize - imageSize;
 	}
+
+	virtual void render();
+	virtual string desc() { return string("[DisplayPanel: ") + descPosDim() + "]"; }
+
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
 };
 
 }}//end namespace

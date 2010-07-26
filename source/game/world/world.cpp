@@ -55,7 +55,6 @@ World::World(SimulationInterface *iSim)
 		: scenario(NULL)
 		, iSim(iSim)
 		, game(*iSim->getGameState())
-		//, minimap(0)
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
@@ -84,6 +83,10 @@ World::~World() {
 	delete routePlanner;
 
 	singleton = 0;
+
+	m_unitTypeFactory.assertTypes();
+	m_commandTypeFactory.assertTypes();
+	m_skillTypeFactory.assertTypes();
 }
 
 void World::save(XmlNode *node) const {
@@ -106,6 +109,8 @@ void World::init(const XmlNode *worldNode) {
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
 
+	//m_unitTypeFactory.assertTypes();
+
 	initSplattedTextures();
 
 	// must be done after initMap()
@@ -125,6 +130,8 @@ void World::init(const XmlNode *worldNode) {
 		g_userInterface.initMinimap(fogOfWar, false);
 	}
 	computeFow();
+
+	//m_unitTypeFactory.assertTypes();
 
 	alive = true;
 }
@@ -287,6 +294,8 @@ void updateFaction(const Faction *f) {
 void World::processFrame() {
 	_PROFILE_FUNCTION();
 
+	//m_unitTypeFactory.assertTypes();
+
 	++frameCount;
 	iSim->startFrame(frameCount);
 
@@ -303,7 +312,7 @@ void World::processFrame() {
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
 		updateFaction(&*f);
 	}
-//	updateFaction(&glestimals);
+	updateFaction(&glestimals);
 
 //	updateEarthquakes(1.f / 40.f);
 
@@ -333,6 +342,8 @@ void World::processFrame() {
 		computeFow();
 		tick();
 	}
+	
+	//m_unitTypeFactory.assertTypes();
 }
 
 void World::hit(Unit *attacker) {
@@ -539,7 +550,7 @@ Unit* World::findUnitById(int id) const {
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	return unitTypeFactory.getType(id);
+	return m_unitTypeFactory.getType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded
@@ -1020,8 +1031,8 @@ void World::initSplattedTextures() {
 void World::initFactions() {
 	Logger::getInstance().add("Faction types", true);
 	
-//	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
-//		&techTree, -1, -1, -1, -1, false, false);
+	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+		&techTree, -1, -1, -1, -1, false, false);
 	
 	GameSettings &gs = iSim->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
@@ -1053,10 +1064,7 @@ void World::initFactions() {
 		//  iSim->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
 		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
 	}
-	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
-	//glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
-	//	&techTree, -1, -1, -1, -1, false, false);
-	
+	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();	
 }
 
 //place units randomly aroud start location

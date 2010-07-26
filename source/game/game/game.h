@@ -141,6 +141,8 @@ public:
 	}
 	virtual void quitGame();
 
+	virtual bool isGameState() const	{ return true; }
+
 protected:
 	// render
 	void render3d();

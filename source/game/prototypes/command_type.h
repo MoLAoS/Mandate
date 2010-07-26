@@ -25,6 +25,8 @@
 
 #include "prototypes_enums.h"
 #include "entities_enums.h"
+#include <set>
+using std::set;
 
 // All command update methods begin with _PROFILE_COMMAND_UPDATE()
 // This allows profiling of command updates to be switched on/off independently
@@ -583,16 +585,20 @@ public:
 
 class CommandTypeFactory: private MultiFactory<CommandType> {
 private:
-	int idCounter;
-	vector<CommandType *> types;
+	int m_idCounter;
+	vector<CommandType *> m_types;
+	set<CommandType *> m_typeSet;
+	map<CommandType *, int32> m_checksumTable;
 
 public:
 	CommandTypeFactory();
 	~CommandTypeFactory();
+	void assertTypes();
 
 	CommandType* newInstance(string classId, UnitType *owner);
 
 	CommandType* getType(int id);
+	void setChecksum(CommandType *ct, int32 cs);
 };
 
 // update helper, move somewhere sensible

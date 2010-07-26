@@ -354,6 +354,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			SkillType *skillType = g_world.getSkillTypeFactory().newInstance(classId);
 			skillType->load(sn, dir, techTree, factionType);
 			skillTypes.push_back(skillType);
+			Checksum checksum;
+			skillType->doChecksum(checksum);
+			g_world.getSkillTypeFactory().setChecksum(skillType, checksum.getSum());
 		}
 	} catch (runtime_error e) {
 		Logger::getErrorLog().addXmlError(path, e.what());
@@ -372,6 +375,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			CommandType *commandType = g_world.getCommandTypeFactory().newInstance(classId, this);
 			commandType->load(commandNode, dir, techTree, factionType);
 			commandTypes.push_back(commandType);
+			Checksum checksum;
+			commandType->doChecksum(checksum);
+			g_world.getCommandTypeFactory().setChecksum(commandType, checksum.getSum());
 		}
 	} catch (runtime_error e) {
 		Logger::getErrorLog().addXmlError(path, e.what());
@@ -383,6 +389,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	if (meetingPoint) {
 		CommandType *smpct = g_world.getCommandTypeFactory().newInstance("set-meeting-point", this);
 		commandTypes.push_back(smpct);
+		Checksum checksum;
+		smpct->doChecksum(checksum);
+		g_world.getCommandTypeFactory().setChecksum(smpct, checksum.getSum());
 	}
 
 	sortCommandTypes();
@@ -603,21 +612,47 @@ void UnitType::sortCommandTypes() {
 }
 
 UnitTypeFactory::~UnitTypeFactory() {
-	deleteValues(types);
+	foreach (vector<UnitType*>, it, m_types) {
+		assert(m_typeSet.find(*it) != m_typeSet.end());
+		m_typeSet.erase(m_typeSet.find(*it));
+		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+		m_checksumTable.erase(m_checksumTable.find(*it));
+		delete *it;
+	}
+	assert(m_typeSet.empty());
+	assert(m_checksumTable.empty());
+	m_types.clear();
+}
+
+void UnitTypeFactory::assertTypes() {
+	foreach (vector<UnitType*>, it, m_types) {
+		assert(m_typeSet.find(*it) != m_typeSet.end());
+		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+		Checksum checksum;
+		(*it)->doChecksum(checksum);
+		assert(m_checksumTable[*it] == checksum.getSum());
+	}
 }
 
 UnitType* UnitTypeFactory::newInstance() {
 	UnitType *ut = SingleTypeFactory<UnitType>::newInstance();
-	ut->setId(idCounter++);
-	types.push_back(ut);
+	ut->setId(m_idCounter++);
+	m_types.push_back(ut);
+	m_typeSet.insert(ut);
 	return ut;
 }
 
+void UnitTypeFactory::setChecksum(UnitType *ut, int32 cs) {
+	assert(m_typeSet.find(ut) != m_typeSet.end());
+	assert(m_checksumTable.find(ut) == m_checksumTable.end());
+	m_checksumTable[ut] = cs;
+}
+
 UnitType* UnitTypeFactory::getType(int id) {
-	if (id < 0 || id >= types.size()) {
+	if (id < 0 || id >= m_types.size()) {
 		throw runtime_error("Error: Unknown unit type id: " + intToStr(id));
 	}
-	return types[id];
+	return m_types[id];
 }
 
 }}//end namespace

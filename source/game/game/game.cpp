@@ -172,6 +172,7 @@ void GameState::init() {
 
 	// init world, and place camera
 	simInterface->initWorld();
+	//simInterface->getWorld()->getUnitTypeFactory().assertTypes();
 	gui.init();
 	//REFACTOR: ThisTeamIndex belong in here, not the World
 	chatManager.init(&console, simInterface->getWorld()->getThisTeamIndex());
@@ -236,10 +237,12 @@ void GameState::init() {
 		}
 	}
 
+	//simInterface->getWorld()->getUnitTypeFactory().assertTypes();
 	logger.add("Launching game");
 	logger.setLoading(false);
 	program.resetTimers();
 	program.setFade(1.f);
+	//simInterface->getWorld()->getUnitTypeFactory().assertTypes();
 }
 
 
@@ -250,7 +253,7 @@ void GameState::update() {
 	if (netError) {
 		return;
 	}
-
+	//simInterface->getWorld()->getUnitTypeFactory().assertTypes();
 	++updateFps;
 	mouse2d = (mouse2d + 1) % Renderer::maxMouse2dAnim;
 

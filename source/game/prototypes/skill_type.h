@@ -19,6 +19,8 @@
 #include "lang.h"
 #include "flags.h"
 #include "factory.h"
+#include <set>
+using std::set;
 
 using Shared::Sound::StaticSound;
 using Shared::Xml::XmlNode;
@@ -448,16 +450,20 @@ public:
 
 class SkillTypeFactory: public MultiFactory<SkillType>{
 private:
-	vector<SkillType*> types;
-	int idCounter;
+	vector<SkillType*> m_types;
+	int m_idCounter;
+	set<SkillType *> m_typeSet;
+	map<SkillType *, int32> m_checksumTable;
 
 public:
 	SkillTypeFactory();
 	~SkillTypeFactory();
+	void assertTypes();
 
 	SkillType* newInstance(string classId);
 	SkillType* getType(int id);
-	int getSkillTypeCount() const { return idCounter; }
+	void setChecksum(SkillType *st, int32 cs);
+	int getSkillTypeCount() const { return m_idCounter; }
 };
 
 

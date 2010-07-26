@@ -416,23 +416,23 @@ void ImageWidget::renderImage(int ndx) {
 	assertGl();
 }
 
-int ImageWidget::addImage(Texture2D *tex) {
+int ImageWidget::addImage(const Texture2D *tex) {
 	textures.push_back(tex);
 	imageInfo.push_back(ImageRenderInfo());
 	return textures.size() - 1;
 }
 
-void ImageWidget::setImage(Texture2D *tex, int ndx) {
+void ImageWidget::setImage(const Texture2D *tex, int ndx) {
 	if (textures.empty() && !ndx) {
 		textures.push_back(tex);
 		imageInfo.push_back(ImageRenderInfo());
 	}
 	ASSERT_RANGE(ndx, textures.size());
 	textures[ndx] = tex;
-	imageInfo[ndx] = ImageRenderInfo();
+	//imageInfo[ndx] = ImageRenderInfo();
 }
 
-int ImageWidget::addImageX(Texture2D *tex, Vec2i offset, Vec2i sz) {
+int ImageWidget::addImageX(const Texture2D *tex, Vec2i offset, Vec2i sz) {
 	textures.push_back(tex);
 	bool hasOffset = offset != Vec2i(0);
 	bool hasSize = sz != Vec2i(0);
@@ -441,7 +441,7 @@ int ImageWidget::addImageX(Texture2D *tex, Vec2i offset, Vec2i sz) {
 	return textures.size() - 1;
 }
 
-void ImageWidget::setImageX(Texture2D *tex, int ndx, Vec2i offset, Vec2i sz) {
+void ImageWidget::setImageX(const Texture2D *tex, int ndx, Vec2i offset, Vec2i sz) {
 	if (textures.empty() && !ndx) {
 		assert(tex);
 		textures.push_back(tex);
@@ -600,6 +600,7 @@ Container::~Container() {
 }
 
 void Container::addChild(Widget::Ptr child) {
+	assert(std::find(children.begin(), children.end(), child) == children.end());
 	children.push_back(child);
 	child->setFade(getFade());
 }

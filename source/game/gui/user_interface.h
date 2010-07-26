@@ -113,7 +113,10 @@ private:
 	const World *world;
 	GameCamera *gameCamera;
 	Console *console;
-	Minimap *minimap;
+
+	// Child Widgets
+	Minimap *m_minimap;
+	Display *m_display;
 
 	Random random;
 
@@ -134,7 +137,6 @@ private:
 	bool dragging;
 
 	//composite
-	Display display;
 	Mouse3d mouse3d;
 	Selection selection;
 	SelectionQuad selectionQuad;
@@ -165,8 +167,8 @@ public:
 	void end();
 
 	//get
-	Minimap *getMinimap()							{return minimap;}
-	const Minimap *getMinimap() const				{return minimap;}
+	Minimap *getMinimap()							{return m_minimap;}
+	const Minimap *getMinimap() const				{return m_minimap;}
 
 	Vec2i getPosObjWorld() const					{return posObjWorld;}
 	const UnitType *getBuilding() const;
@@ -174,7 +176,7 @@ public:
 	const BuildPositions &getBuildPositions() const	{return buildPositions;}
 
 	const Mouse3d *getMouse3d() const				{return &mouse3d;}
-	const Display *getDisplay()	const				{return &display;}
+	const Display *getDisplay()	const				{return m_display;}
 	const Selection *getSelection()	const			{return &selection;}
 	Selection *getSelection()						{return &selection;}
 	const SelectionQuad *getSelectionQuad() const	{return &selectionQuad;}
@@ -235,7 +237,7 @@ public:
 
 	//misc
 
-	void switchToNextDisplayColor() {display.switchColor();}
+	void switchToNextDisplayColor() {m_display->switchColor();}
 
 	void onSelectionChanged() {
 		selection.update();
@@ -255,8 +257,6 @@ public:
 	void makeSureImNotSelected(Unit *unit) {
 		selection.unitEvent(UnitObserver::eKill, unit);
 	}
-
-	bool getMinimapCell(int x, int y, Vec2i &cell);
 
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;
