@@ -136,7 +136,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glDisableClientState(GL_NORMAL_ARRAY);
 	}
 
-	//tex coords	
+	//tex coords
 	if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
 		if (duplicateTexCoords) {
 			glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);

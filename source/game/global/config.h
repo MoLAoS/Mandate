@@ -47,8 +47,6 @@ private:
 	bool gsAutoRepairEnabled;
 	bool gsAutoReturnEnabled;
 	float gsDayTime;
-	float gsSpeedFastest;
-	float gsSpeedSlowest;
 	int gsWorldUpdateFps;
 	int miscAiLog;
 	bool miscAiRedir;
@@ -56,7 +54,6 @@ private:
 	bool miscCatchExceptions;
 	bool miscDebugKeys;
 	bool miscDebugMode;
-	bool miscEnablePhysfs;
 	bool miscFirstTime;
 	bool netConsistencyChecks;
 	string netPlayerName;
@@ -146,8 +143,6 @@ public:
 	bool getGsAutoRepairEnabled() const			{return gsAutoRepairEnabled;}
 	bool getGsAutoReturnEnabled() const			{return gsAutoReturnEnabled;}
 	float getGsDayTime() const					{return gsDayTime;}
-	float getGsSpeedFastest() const				{return gsSpeedFastest;}
-	float getGsSpeedSlowest() const				{return gsSpeedSlowest;}
 	int getGsWorldUpdateFps() const				{return gsWorldUpdateFps;}
 	int getMiscAiLog() const					{return miscAiLog;}
 	bool getMiscAiRedir() const					{return miscAiRedir;}
@@ -155,7 +150,6 @@ public:
 	bool getMiscCatchExceptions() const			{return miscCatchExceptions;}
 	bool getMiscDebugKeys() const				{return miscDebugKeys;}
 	bool getMiscDebugMode() const				{return miscDebugMode;}
-	bool getMiscEnablePhysfs() const			{return miscEnablePhysfs;}
 	bool getMiscFirstTime() const				{return miscFirstTime;}
 	bool getNetConsistencyChecks() const		{return netConsistencyChecks;}
 	string getNetPlayerName() const				{return netPlayerName;}
@@ -219,8 +213,6 @@ public:
 	void setGsAutoRepairEnabled(bool val)		{gsAutoRepairEnabled = val;}
 	void setGsAutoReturnEnabled(bool val)		{gsAutoReturnEnabled = val;}
 	void setGsDayTime(float val)				{gsDayTime = val;}
-	void setGsSpeedFastest(float val)			{gsSpeedFastest = val;}
-	void setGsSpeedSlowest(float val)			{gsSpeedSlowest = val;}
 	void setGsWorldUpdateFps(int val)			{gsWorldUpdateFps = val;}
 	void setMiscAiLog(int val)					{miscAiLog = val;}
 	void setMiscAiRedir(bool val)				{miscAiRedir = val;}
@@ -228,7 +220,6 @@ public:
 	void setMiscCatchExceptions(bool val)		{miscCatchExceptions = val;}
 	void setMiscDebugKeys(bool val)				{miscDebugKeys = val;}
 	void setMiscDebugMode(bool val)				{miscDebugMode = val;}
-	void setMiscEnablePhysfs(bool val)			{miscEnablePhysfs = val;}
 	void setMiscFirstTime(bool val)				{miscFirstTime = val;}
 	void setNetConsistencyChecks(bool val)		{netConsistencyChecks = val;}
 	void setNetPlayerName(string val)			{netPlayerName = val;}

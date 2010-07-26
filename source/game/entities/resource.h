@@ -53,20 +53,20 @@ public:
 	void setAmount(int amount) {
 		if (this->amount == amount) return;
 		this->amount = amount;
-		AmountChanged(amount);
+		//AmountChanged(amount);
 	}
 	void setBalance(int balance) {
 		if (this->balance == balance) return;
 		this->balance = balance;
-		BalanceChanged(balance);
+        //BalanceChanged(balance);
 	}
 
     bool decAmount(int i);
 	void save(XmlNode *node) const;
 
 	sigslot::signal<Vec2i>		Depleted;
-	sigslot::signal<int>		AmountChanged;
-	sigslot::signal<int>		BalanceChanged;
+	//sigslot::signal<int>		AmountChanged;
+	//sigslot::signal<int>		BalanceChanged;
 
 };
 

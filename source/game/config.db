@@ -18,8 +18,6 @@ displayWindowed				bool	false
 gsAutoRepairEnabled			bool	true
 gsAutoReturnEnabled			bool	false
 gsDayTime					float	1000.f
-gsSpeedFastest				float	2.f				1.0f	10.0f
-gsSpeedSlowest				float	0.5f			0.01f	1.0f
 gsWorldUpdateFps			int		40
 miscAiLog					int		0
 miscAiRedir					bool	false
@@ -28,7 +26,6 @@ miscCatchExceptions			bool	true
 miscDebugKeys				bool	false
 miscDebugMode				bool	false
 miscFirstTime				bool	true
-miscEnablePhysfs			bool	true
 netConsistencyChecks		bool	false
 netPlayerName				string	"Player"
 netServerIp					string	"192.168.1.1"

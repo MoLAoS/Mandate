@@ -69,7 +69,7 @@ string Resource::getDescription() const{
 bool Resource::decAmount(int i){
     if (!i) return !amount;
 	amount -= i;
-	AmountChanged(amount);
+	//AmountChanged(amount);
 	if (amount)	return false;
 	Depleted(pos);
 	return true;

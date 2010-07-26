@@ -108,7 +108,7 @@ protected:
 
 private:
 	float	m_fade;
-	bool	m_fadeIn, 
+	bool	m_fadeIn,
 			m_fadeOut;
 
 private:

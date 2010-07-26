@@ -46,8 +46,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	gsAutoRepairEnabled = p->getBool("GsAutoRepairEnabled", true);
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
 	gsDayTime = p->getFloat("GsDayTime", 1000.f);
-	gsSpeedFastest = p->getFloat("GsSpeedFastest", 2.f, 1.0f, 10.0f);
-	gsSpeedSlowest = p->getFloat("GsSpeedSlowest", 0.5f, 0.01f, 1.0f);
 	gsWorldUpdateFps = p->getInt("GsWorldUpdateFps", 40);
 	miscAiLog = p->getInt("MiscAiLog", 0);
 	miscAiRedir = p->getBool("MiscAiRedir", false);
@@ -55,7 +53,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	miscCatchExceptions = p->getBool("MiscCatchExceptions", true);
 	miscDebugKeys = p->getBool("MiscDebugKeys", false);
 	miscDebugMode = p->getBool("MiscDebugMode", false);
-	miscEnablePhysfs = p->getBool("MiscEnablePhysfs", true);
 	miscFirstTime = p->getBool("MiscFirstTime", true);
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
 	netPlayerName = p->getString("NetPlayerName", "Player");
@@ -125,8 +122,6 @@ void Config::save(const char *path) {
 	p->setBool("GsAutoRepairEnabled", gsAutoRepairEnabled);
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
 	p->setFloat("GsDayTime", gsDayTime);
-	p->setFloat("GsSpeedFastest", gsSpeedFastest);
-	p->setFloat("GsSpeedSlowest", gsSpeedSlowest);
 	p->setInt("GsWorldUpdateFps", gsWorldUpdateFps);
 	p->setInt("MiscAiLog", miscAiLog);
 	p->setBool("MiscAiRedir", miscAiRedir);
@@ -134,7 +129,6 @@ void Config::save(const char *path) {
 	p->setBool("MiscCatchExceptions", miscCatchExceptions);
 	p->setBool("MiscDebugKeys", miscDebugKeys);
 	p->setBool("MiscDebugMode", miscDebugMode);
-	p->setBool("MiscEnablePhysfs", miscEnablePhysfs);
 	p->setBool("MiscFirstTime", miscFirstTime);
 	p->setBool("NetConsistencyChecks", netConsistencyChecks);
 	p->setString("NetPlayerName", netPlayerName);
