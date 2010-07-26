@@ -1492,7 +1492,9 @@ void Renderer::renderUnits(){
 	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
-		meshCallbackTeamColor.setTeamTexture(world->getFaction(i)->getTexture());
+		if (i) {
+			meshCallbackTeamColor.setTeamTexture(world->getFaction(i - 1)->getTexture());
+		}
 
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {

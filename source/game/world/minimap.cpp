@@ -57,7 +57,11 @@ Minimap::Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size)
 	
 	m_borderStyle.setSizes(4);
 	m_borderStyle.m_sizes[Border::TOP] = 12;
-	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127)));
+	m_borderStyle.m_type = BorderType::CUSTOM_CORNERS;
+	m_borderStyle.m_colourIndices[Corner::TOP_LEFT]		= g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
+	m_borderStyle.m_colourIndices[Corner::TOP_RIGHT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
+	m_borderStyle.m_colourIndices[Corner::BOTTOM_RIGHT] = g_widgetConfig.getColourIndex(Colour(63, 63, 63, 127));
+	m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
 }
 
 void Minimap::init(int w, int h, const World *world, bool resumingGame){
