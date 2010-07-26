@@ -141,13 +141,8 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 		}
 	}
 	this->h = metrics.getHeight();
-	//delete face->stream;  //FIXME: allocated in FSFactory::openFace, better delete it in FSFactory
-	// ^^^ causing double delete [FT_Done_Face() also deletes ?]
-	// Yggdrasil: No, but it somehow needs it
-	FT_StreamRec *streamrec = face->stream;
-	FT_Done_Face(face);
+	FSFactory::doneFace(face);
 	FT_Done_FreeType(library);
-	delete streamrec;
 }
 
 void font_data::clean() {

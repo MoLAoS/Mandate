@@ -40,7 +40,7 @@ using std::ofstream;
 FSFactory *FSFactory::instance = NULL;
 
 FSFactory::FSFactory(){
-	this->physFS = false;
+	this->usePhysFS = false;
 }
 
 FSFactory::~FSFactory(){
@@ -119,13 +119,10 @@ bool FSFactory::mountSystemDir(const string &systemPath, const string &mapToPath
 	return false;
 }
 
-void FSFactory::usePhysFS(bool enable){
-	this->physFS = enable;
-}
 
 istream *FSFactory::getIStream(const char *fname){
 #if USE_PHYSFS
-	if(this->physFS){
+	if(this->usePhysFS){
 		string str(fname);
 		str = cleanPath(str);  // get rid of .. and .
 		return new IFileStream(str);
@@ -136,7 +133,7 @@ istream *FSFactory::getIStream(const char *fname){
 
 ostream *FSFactory::getOStream(const char *fname){
 #if USE_PHYSFS
-	if(this->physFS){
+	if(this->usePhysFS){
 		string str(fname);
 		str = cleanPath(str);  // get rid of ../ and ./
 		return new OFileStream(str);
@@ -147,7 +144,7 @@ ostream *FSFactory::getOStream(const char *fname){
 
 FileOps *FSFactory::getFileOps(){
 #if USE_PHYSFS
-	if(this->physFS){
+	if(this->usePhysFS){
 		return new PhysFileOps();
 	}else
 #endif
@@ -270,7 +267,12 @@ int FSFactory::openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face
 	args.stream = stream;
 
 	return FT_Open_Face(lib, &args, indx, face);
-	//FIXME: stream is deleted in ft_font.cpp
+}
+
+void FSFactory::doneFace(FT_Face face){
+	FT_StreamRec *streamrec = face->stream;
+	FT_Done_Face(face);
+	delete streamrec;
 }
 
 }} // namespace Shared::PhysFS

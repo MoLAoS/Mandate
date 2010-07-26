@@ -435,8 +435,7 @@ void uudecode(void *dest, size_t *destSize, const char *src) {
 
 //finds all filenames like path and stores them in results
 void findAll(const string &path, vector<string> &results, bool cutExtension){
-	FSFactory *fsfac = FSFactory::getInstance();
-	if (fsfac->physFS) {
+	if (FSFactory::getInstance()->usePhysFS) {
 		results.clear();
 		vector<string> strings = FSFactory::findAll(path, cutExtension);
 		results.insert(results.begin(), strings.begin(), strings.end());
@@ -650,7 +649,7 @@ string replaceBy(const string &s, char c1, char c2){
 // ==================== misc ====================
 
 bool fileExists(const string &path) {
-	if (FSFactory::getInstance()->physFS) {
+	if (FSFactory::getInstance()->usePhysFS) {
 		return FSFactory::fileExists(path);
 	} else {
 		FILE* file= fopen(path.c_str(), "rb");

@@ -1058,7 +1058,7 @@ void SimpleDialog::show() {
 // ===============================================
 
 bool App::OnInit() {
-	FSFactory::getInstance()->usePhysFS(false);
+	FSFactory::getInstance()->usePhysFS = false;
 	
 	string fileparam;
 	if(argc==2){

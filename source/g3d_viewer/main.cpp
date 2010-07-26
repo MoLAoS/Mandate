@@ -387,7 +387,7 @@ END_EVENT_TABLE()
 // ===============================================
 
 bool App::OnInit(){
-	FSFactory::getInstance()->usePhysFS(false);
+	FSFactory::getInstance()->usePhysFS = false;
 	
 	string modelPath;
 	if(argc==2){

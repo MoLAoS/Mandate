@@ -44,7 +44,7 @@ Vec3f* allocate_aligned_vec3_array(unsigned n) {
 }
 
 void free_aligned_vec3_array(Vec3f *ptr) {
-	assert(((unsigned)ptr & 0xF) == 0);
+	assert(((size_t)ptr & 0xF) == 0);
 	_mm_free(ptr);
 }
 

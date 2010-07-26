@@ -44,7 +44,27 @@ void LuaScript::close() {
 void LuaScript::startUp() {
 	close();
 	luaState = luaL_newstate();
-	luaL_openlibs(luaState);
+
+// 	luaL_openlibs(luaState);
+	//copied from luaL_openlibs, commented unneeded libs
+	static const luaL_Reg lualibs[] = {
+		{"", luaopen_base},
+// 		{LUA_LOADLIBNAME, luaopen_package},
+		{LUA_TABLIBNAME, luaopen_table},
+// 		{LUA_IOLIBNAME, luaopen_io},
+// 		{LUA_OSLIBNAME, luaopen_os},
+		{LUA_STRLIBNAME, luaopen_string},
+		{LUA_MATHLIBNAME, luaopen_math},
+// 		{LUA_DBLIBNAME, luaopen_debug},
+		{NULL, NULL}
+	};
+	const luaL_Reg *lib = lualibs;
+	for (; lib->func; lib++) {
+		lua_pushcfunction(luaState, lib->func);
+		lua_pushstring(luaState, lib->name);
+		lua_call(luaState, 1, 0);
+	}
+
 	if (luaState == NULL) {
 		throw runtime_error("Can not allocate lua state");
 	}

@@ -44,11 +44,10 @@ class FSFactory{
 		static FSFactory *getInstance();
 		~FSFactory();
 
-		bool physFS;  //FIXME: would be better when private
+		bool usePhysFS;
 
 		bool initPhysFS(const char *argv0, const char *configDir, const char *dataDir);
 		bool mountSystemDir(const string &systemPath, const string &mapToPath);
-		void usePhysFS(bool enable);
 
 		istream *getIStream(const char *fname);
 		ostream *getOStream(const char *fname);
@@ -70,6 +69,7 @@ class FSFactory{
 		static unsigned long stream_load(FT_Stream stream, unsigned long offset, unsigned char *buffer, unsigned long count);
 		static void stream_close(FT_Stream stream);
 		static int openFace(FT_Library lib, const char *fname, FT_Long indx, FT_Face *face);
+		static void doneFace(FT_Face face);
 };
 
 }}

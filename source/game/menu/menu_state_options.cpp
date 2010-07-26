@@ -160,6 +160,7 @@ void MenuStateOptions::onButtonClick(Button::Ptr btn) {
 		m_transitionTarget = Transition::RE_LOAD;
 	} else if (btn == m_returnButton) {
 		soundRenderer.playFx(coreData.getClickSoundA());
+		saveConfig();
 		m_transitionTarget = Transition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
 	} else if (btn == m_openGlInfoButton) {
@@ -173,7 +174,7 @@ void MenuStateOptions::onButtonClick(Button::Ptr btn) {
 void MenuStateOptions::on3dTexturesToggle(Button::Ptr cb) {
 	Config &config= Config::getInstance();
 	config.setRenderTextures3D(m_3dTexCheckBox->isChecked());
-	saveConfig();
+// 	saveConfig();
 }
 
 
@@ -193,14 +194,14 @@ void MenuStateOptions::onDropListSelectionChanged(ListBase::Ptr list) {
 		doFadeOut();
 	} else if (list == m_filterList) {
 		config.setRenderFilter(m_filterList->getSelectedItem()->getText());
-		saveConfig();
+// 		saveConfig();
 	} else if (list == m_shadowsList) {
 		int index = m_shadowsList->getSelectedIndex();
 		config.setRenderShadows(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(index)));
-		saveConfig();
+// 		saveConfig();
 	} else if (list == m_lightsList) {
 		config.setRenderLightsMax(list->getSelectedIndex() + 1);
-		saveConfig();
+// 		saveConfig();
 	}
 }
 

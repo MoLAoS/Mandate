@@ -30,7 +30,7 @@ using Shared::Util::Properties;
 
 class Config {
 private:
-	Properties *properties;
+// 	Properties *properties;
 	string fileName;
 
 	float cameraFov;
