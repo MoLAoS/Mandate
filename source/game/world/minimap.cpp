@@ -207,6 +207,7 @@ void buildVisLists(UnitList &srfList, UnitList &airList) {
 }
 
 void processList(UnitList &units, TypeMap<int8>* overlayMap) {
+	GameSettings &gs = g_simInterface->getGameSettings();
 	foreach_const (UnitList, it, units) {
 		const Vec2i pos = (*it)->getPos();
 		const UnitType *ut = (*it)->getType();
@@ -216,14 +217,13 @@ void processList(UnitList &units, TypeMap<int8>* overlayMap) {
 			Vec2i iPos = iter.next();
 			if (pMap.getInfluence(iPos)) {
 				const Vec2i cellPos = pos + iPos;
-				overlayMap->setInfluence(cellPos, (*it)->getFactionIndex());
+				overlayMap->setInfluence(cellPos, gs.getColourIndex((*it)->getFactionIndex()));
 			}
 		}
 	}
 }
 
 void buildUnitOverlay(TypeMap<int8>* overlayMap) {
-	GameSettings &gs = g_simInterface->getGameSettings();
 
 	UnitList srfList; // visible surface units
 	UnitList airList; // visible air units
