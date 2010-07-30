@@ -21,6 +21,7 @@
 #include "particle_type.h"
 #include "factory.h"
 #include "prototypes_enums.h"
+#include "influence_map.h"
 #include <set>
 using std::set;
 
@@ -29,6 +30,8 @@ using Shared::Util::Checksum;
 using Shared::Util::SingleFactory;
 
 namespace Glest { namespace ProtoTypes {
+
+using namespace Search;
 
 // ===============================
 // 	class Level
@@ -113,7 +116,8 @@ private:
 	fixed halfSize;
 	fixed halfHeight;
 
-	bool *cellMap;
+	PatchMap<1> *m_cellMap;
+	PatchMap<1> *m_colourMap; // 'footprint' on minimap
 
 	UnitProperties properties;
 	//Fields fields;
@@ -182,10 +186,10 @@ public:
 	}
 
 	//cellmap
-	bool getCellMapCell(int x, int y) const				{
-		assert(size * y + x >= 0 && size * y + x < size * size);
-		return cellMap[size * y + x];
-	}
+	bool getCellMapCell(Vec2i pos) const { return m_cellMap->getInfluence(pos); }
+	bool getCellMapCell(int x, int y) const	{ return m_cellMap->getInfluence(Vec2i(x,y)); }
+
+	const PatchMap<1>& getMinimapFootprint() const { return *m_colourMap; }
 
 	// resources
 	int getStoredResourceCount() const					{return storedResources.size();}
@@ -208,20 +212,12 @@ public:
 	// has
 	bool hasCommandType(const CommandType *ct) const;
 	bool hasCommandClass(CommandClass cc) const { return !commandTypesByClass[cc].empty(); }
-    bool hasSkillType(const SkillType *skillType) const;
-    bool hasSkillClass(SkillClass skillClass) const;
-	bool hasCellMap() const								{return cellMap!=NULL;}
+	bool hasSkillType(const SkillType *skillType) const;
+	bool hasSkillClass(SkillClass skillClass) const;
+	bool hasCellMap() const								{return m_cellMap != NULL;}
 
 	// is
 	bool isOfClass(UnitClass uc) const;
-
-	// find
-	// this is only used to convert NetworkCOmmand to Command, replace with a single map in CommandTypeFactory,
-	// which will be taking control of ids... see comments in command_type.h [above decl. of resetIdCounter()]
-	//const CommandType* findCommandTypeById(int id) const {
-	//	CommandTypeMap::const_iterator it = commandTypeMap.find(id);
-	//	return (it != commandTypeMap.end() ? it->second : 0);
-	//}
 
 private:
     void sortSkillTypes();
@@ -236,18 +232,18 @@ class UnitTypeFactory: private SingleTypeFactory<UnitType> {
 private:
 	int m_idCounter;
 	vector<UnitType *> m_types;
-	set<UnitType *> m_typeSet;
-	map<UnitType *, int32> m_checksumTable;
+	//set<UnitType *> m_typeSet;
+	//map<UnitType *, int32> m_checksumTable;
 
 public:
 	UnitTypeFactory() : m_idCounter(0) { }
 	~UnitTypeFactory();
-	void assertTypes();
+	//void assertTypes();
 
 	UnitType *newInstance();
 	UnitType* getType(int id);
 
-	void setChecksum(UnitType *ut, int32 cs);
+	//void setChecksum(UnitType *ut, int32 cs);
 };
 
 }}//end namespace

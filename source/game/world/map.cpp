@@ -365,11 +365,11 @@ bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) c
 	return false;
 }
 // Is the Cell at 'pos' (for the given 'field') either free or does it contain any of the units in 'units'
-bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const Selection::UnitContainer &units) const {
+bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const UnitContainer &units) const {
 	if (isInside(pos)) {
 		Unit *containedUnit = getCell(pos)->getUnit(field);
 		if (containedUnit && fieldsCompatible(getCell(pos), field)) {
-			Selection::UnitContainer::const_iterator i;
+			UnitContainer::const_iterator i;
 			for (i = units.begin(); i != units.end(); ++i) {
 				if (containedUnit == *i) {
 					return true;
@@ -456,7 +456,7 @@ bool Map::areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const U
 	return true;
 }
 
-bool Map::areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const Selection::UnitContainer &units) const {
+bool Map::areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const UnitContainer &units) const {
 	for(int i=pos.x; i<pos.x+size; ++i){
 		for(int j=pos.y; j<pos.y+size; ++j){
 			if(!isFreeCellOrHaveUnits(Vec2i(i,j), field, units)){

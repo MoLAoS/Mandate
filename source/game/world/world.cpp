@@ -84,9 +84,9 @@ World::~World() {
 
 	singleton = 0;
 
-	m_unitTypeFactory.assertTypes();
-	m_commandTypeFactory.assertTypes();
-	m_skillTypeFactory.assertTypes();
+//	m_unitTypeFactory.assertTypes();
+//	m_commandTypeFactory.assertTypes();
+//	m_skillTypeFactory.assertTypes();
 }
 
 void World::save(XmlNode *node) const {
@@ -108,9 +108,6 @@ void World::init(const XmlNode *worldNode) {
 	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
-
-	//m_unitTypeFactory.assertTypes();
-
 	initSplattedTextures();
 
 	// must be done after initMap()
@@ -130,9 +127,6 @@ void World::init(const XmlNode *worldNode) {
 		g_userInterface.initMinimap(fogOfWar, false);
 	}
 	computeFow();
-
-	//m_unitTypeFactory.assertTypes();
-
 	alive = true;
 }
 
@@ -298,6 +292,9 @@ void World::processFrame() {
 
 	++frameCount;
 	iSim->startFrame(frameCount);
+	if (frameCount % 5 == 0) {
+		g_userInterface.getMinimap()->updateUnitTex();
+	}
 
 	// check ScriptTimers
 	ScriptManager::update();
@@ -1143,22 +1140,19 @@ void World::initExplorationState() {
 void World::doUnfog() {
 	const Vec2i start = Map::toTileCoords(Vec2i(unfogArea.x, unfogArea.y));
 	const Vec2i end = Map::toTileCoords(Vec2i(unfogArea.x + unfogArea.z, unfogArea.y + unfogArea.w));
-	for (int x = start.x; x < end.x; ++x) {
-		for (int y = start.y; y < end.y; ++y) {
-			if (map.isInsideTile(x,y)) {
-				map.getTile(x,y)->setVisible(thisTeamIndex, true);
-			}
-		}
-	}
-	for (int x = start.x; x < end.x; ++x) {
-		for (int y = start.y; y < end.y; ++y) {
-			if (map.isInsideTile(x,y)) {
-				g_userInterface.getMinimap()->incFowTextureAlphaSurface(Vec2i(x,y), 1.f);
-			}
+	RectIterator iter(start, end);
+	Vec2i pos;
+	while (iter.more()) {
+		pos = iter.next();
+		if (map.isInsideTile(pos)) {
+			map.getTile(pos)->setVisible(thisTeamIndex, true);
+			g_userInterface.getMinimap()->incFowTextureAlphaSurface(pos, 1.f);
 		}
 	}
 	--unfogTTL;
-	if (!unfogTTL) unfogActive = false;
+	if (!unfogTTL) {
+		unfogActive = false;
+	}
 }
 
 void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {

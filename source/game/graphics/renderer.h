@@ -243,7 +243,7 @@ public:
 
 	//computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);
-	void computeSelected(Selection::UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp);
+	void computeSelected(UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp);
 
     //gl wrap
 	string getGlInfo();

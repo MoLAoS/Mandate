@@ -174,6 +174,14 @@ public:
 	void setComponent(int x, int y, int component, float32 value)	{pixels[(w*y+x)*components+component]= static_cast<uint8>(value*255.f);}
 
 	//vector set
+	void setPixel(const Vec2i pos, const Colour &c) {
+		assert(components == 4);
+		const int ndx = (w * pos.y + pos.x) * 4;
+		pixels[ndx + 0] = c.r;
+		pixels[ndx + 1] = c.g;
+		pixels[ndx + 2] = c.b;
+		pixels[ndx + 3] = c.a;
+	}
 	void setPixel(int x, int y, const Vec3f &p);
 	void setPixel(int x, int y, const Vec4f &p);
 	void setPixel(int x, int y, float p)		{pixels[(w*y+x)*components]= static_cast<uint8>(p*255.f);}

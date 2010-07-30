@@ -142,9 +142,25 @@ void UserInterface::init() {
 }
 
 void UserInterface::initMinimap(bool fow, bool resuming) {
+	const int &mapW = g_map.getW();
+	const int &mapH = g_map.getH();
+
+	fixed ratio = fixed(mapW) / mapH;
+	cout << "Map aspect ratio : " << ratio.toFloat();
+
+	Vec2i size;
+	if (ratio == 1) {
+		size = Vec2i(128);
+	} else if (ratio < 1) {
+		size = Vec2i((ratio * 128).intp(), 128);
+	} else { // (ratio > 1) {
+		size = Vec2i(128, (128 / ratio).intp());
+	}
+	size += Vec2i(8, 16);
+
 	int mx = 10;
-	int my = g_metrics.getScreenH() - 160;
-	m_minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(mx, my), Vec2i(128 + 8, 128 + 16));
+	int my = g_metrics.getScreenH() - size.y - 30;
+	m_minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(mx, my), size);
 	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
@@ -187,11 +203,11 @@ void UserInterface::resetState() {
 	m_minimap->setRightClickOrder(!selection.isEmpty());
 }
 
-static void calculateNearest(Selection::UnitContainer &units, const Vec3f &pos) {
+static void calculateNearest(UnitContainer &units, const Vec3f &pos) {
 	if(units.size() > 1) {
 		float minDist = 100000.f;
 		Unit *nearest = NULL;
-		for(Selection::UnitContainer::const_iterator i = units.begin(); i != units.end(); ++i) {
+		for(UnitContainer::const_iterator i = units.begin(); i != units.end(); ++i) {
 			float dist = pos.dist((*i)->getCurrVector());
 			if(minDist > dist) {
 				minDist = dist;
@@ -236,7 +252,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 		}
 	}
 
-	Selection::UnitContainer units;
+	UnitContainer units;
 	Vec2i worldPos;
 	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 
@@ -294,7 +310,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 		}
 	}
 	if (selection.isComandable()) {
-		Selection::UnitContainer units;
+		UnitContainer units;
 		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			Unit *targetUnit = units.size() ? units.front() : NULL;
 			giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
@@ -366,7 +382,7 @@ void UserInterface::mouseUpLeftGraphics(int x, int y){
 		selectionQuad.disable();
 	} else if (isPlacingBuilding() && dragging) {
 		Vec2i worldPos;
-		Selection::UnitContainer units;
+		UnitContainer units;
 
 		//FIXME: we don't have to do the expensivce calculations of this computeTarget for this.
 		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
@@ -381,7 +397,7 @@ void UserInterface::mouseMoveGraphics(int x, int y){
 	//compute selection
 	if(selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
-		Selection::UnitContainer units;
+		UnitContainer units;
 		if(computeSelection) {
 			Renderer::getInstance().computeSelected(units, selectedObject, selectionQuad.getPosDown(), selectionQuad.getPosUp());
 			computeSelection = false;
@@ -405,7 +421,7 @@ void UserInterface::mouseMoveGraphics(int x, int y){
 
 void UserInterface::mouseDoubleClickLeftGraphics(int x, int y){
 	if(!selectingPos && !selectingMeetingPoint){
-		Selection::UnitContainer units;
+		UnitContainer units;
 		Vec2i pos(x, y);
 
 		selectionQuad.setPosDown(pos);
@@ -925,7 +941,7 @@ void UserInterface::computeDisplay() {
 
 	if (selection.getCount() && selection.getFrontUnit()->getType()->isOfClass(UnitClass::CARRIER)) {
 		const Unit *unit = selection.getFrontUnit();
-		Unit::UnitContainer carriedUnits = unit->getCarriedUnits();
+		UnitContainer carriedUnits = unit->getCarriedUnits();
 		for (int i = 0; i < carriedUnits.size(); ++i) {
 			m_display->setCarryImage(i, carriedUnits[i]->getType()->getImage());
 		}
@@ -1161,8 +1177,8 @@ bool UserInterface::isSharedCommandClass(CommandClass commandClass){
 	return true;
 }
 
-void UserInterface::updateSelection(bool doubleClick, Selection::UnitContainer &units) {
-	//Selection::UnitContainer units;
+void UserInterface::updateSelection(bool doubleClick, UnitContainer &units) {
+	//UnitContainer units;
 	//Renderer::getInstance().computeSelected(units, selectionQuad.getPosDown(), selectionQuad.getPosUp());
 	selectingBuilding = false;
 	activeCommandType = NULL;
@@ -1205,7 +1221,7 @@ void UserInterface::updateSelection(bool doubleClick, Selection::UnitContainer &
  * @return true if the position is a valid world position, false if the position is outside of the
  * world.
  */
-bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units, bool setObj) {
+bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitContainer &units, bool setObj) {
 	units.clear();
 	Renderer &renderer = Renderer::getInstance();
 	validPosObjWorld = renderer.computePosition(screenPos, worldPos);

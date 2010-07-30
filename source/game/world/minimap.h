@@ -15,6 +15,7 @@
 #include <cassert>
 
 #include "widgets.h"
+#include "influence_map.h"
 
 using namespace Shared::Math;
 using namespace Shared::Graphics;
@@ -22,7 +23,7 @@ using namespace Shared::Graphics;
 namespace Glest { namespace Sim {
 
 class World;
-
+using namespace Search;
 using namespace Widgets;
 
 enum ExplorationState{
@@ -39,15 +40,28 @@ enum ExplorationState{
 
 class Minimap : public Widget, public MouseWidget {
 private:
-	Pixmap2D *fowPixmap0;
-	Pixmap2D *fowPixmap1;
-	Texture2D *tex;			// base map texture
-	Texture2D *fowTex;		// Fog Of War texture
-	Texture2D *unitsTex;	// Units 'overlay'
-	bool fogOfWar, shroudOfDarkness;
-	bool m_draggingCamera, m_draggingWidget;
-	bool m_leftClickOrder, m_rightClickOrder;
-	Vec2i moveOffset;
+	Pixmap2D*		m_fowPixmap0;
+	Pixmap2D*		m_fowPixmap1;
+	Texture2D*		m_terrainTex;	// base map texture
+	Texture2D*		m_fowTex;		// Fog Of War texture
+	Texture2D*		m_unitsTex;		// Units 'overlay' texture
+	TypeMap<int8>*	m_unitsPMap;	// overlay construction helper (at cell resolution)
+
+	int		m_w, m_h;
+	fixed	m_ratio,	/**< aspect ratio of map */
+			m_currZoom,	/**< current zoom level at cell scale */
+			m_maxZoom,	/**< maximum zoom level */
+			m_minZoom;	/**< minimum zoom level */
+
+	bool	m_fogOfWar, 
+			m_shroudOfDarkness,
+
+			m_draggingCamera,
+			m_draggingWidget,
+			m_leftClickOrder,
+			m_rightClickOrder;
+
+	Vec2i	m_moveOffset;
 
 private:
 	static const float exploredAlpha;
@@ -58,17 +72,19 @@ public:
 	Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size);
 	~Minimap();
 
-	const Texture2D *getFowTexture() const	{return fowTex;}
-	const Texture2D *getTexture() const		{return tex;}
+	const Texture2D *getFowTexture() const	{return m_fowTex;}
+	const Texture2D *getTexture() const		{return m_terrainTex;}
 
 	void resetFowTex();
 	void updateFowTex(float t);
+	void updateUnitTex();
+
 	// heavy use function
 	void incFowTextureAlphaSurface(const Vec2i &sPos, float alpha) {
-		assert(sPos.x < fowPixmap1->getW() && sPos.y < fowPixmap1->getH());
+		assert(sPos.x < m_fowPixmap1->getW() && sPos.y < m_fowPixmap1->getH());
 	
-		if(fowPixmap1->getPixelf(sPos.x, sPos.y) < alpha) {
-			fowPixmap1->setPixel(sPos.x, sPos.y, alpha);
+		if(m_fowPixmap1->getPixelf(sPos.x, sPos.y) < alpha) {
+			m_fowPixmap1->setPixel(sPos.x, sPos.y, alpha);
 		}
 	}
 

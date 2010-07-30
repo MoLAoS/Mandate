@@ -46,14 +46,25 @@ const Vec2i Minimap::textureSize = Vec2i(128, 128);
 Minimap::Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
+		, m_fowPixmap0(0)
+		, m_fowPixmap1(0)
+		, m_terrainTex(0)
+		, m_fowTex(0)
+		, m_unitsTex(0)
+		, m_unitsPMap(0)
+		, m_w(0)
+		, m_h(0)
+		, m_ratio(1)
+		, m_currZoom(1)
+		, m_maxZoom(1)
+		, m_minZoom(1)
+		, m_fogOfWar(FoW)
+		, m_shroudOfDarkness(FoW)
 		, m_draggingCamera(false)
 		, m_draggingWidget(false)
 		, m_leftClickOrder(false)
-		, m_rightClickOrder(false) {
-	fowPixmap0= NULL;
-	fowPixmap1= NULL;
-	fogOfWar = FoW;
-	shroudOfDarkness = FoW;
+		, m_rightClickOrder(false)
+		, m_moveOffset(0) {
 	
 	m_borderStyle.setSizes(4);
 	m_borderStyle.m_sizes[Border::TOP] = 12;
@@ -67,75 +78,91 @@ Minimap::Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size)
 void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	int scaledW = w / GameConstants::cellScale;
 	int scaledH = h / GameConstants::cellScale;
+	m_w = w;
+	m_h = h;
 
-	Renderer &renderer= Renderer::getInstance();
+	m_ratio = fixed(w) / h;
+	m_minZoom = m_currZoom = fixed(128) / std::max(w, h);
+	m_maxZoom = std::max(w, h) / fixed(128);
 
-	//fow pixmaps
+	// fow pixmaps
 	float f= 0.f;
-	fowPixmap0= new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
-	fowPixmap1= new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
-	fowPixmap0->setPixels(&f);
-	fowPixmap1->setPixels(&f);
+	m_fowPixmap0 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
+	m_fowPixmap1 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
+	m_fowPixmap0->setPixels(&f);
+	m_fowPixmap1->setPixels(&f);
 
 	if (resumingGame) {
 		setExploredState(world);
 	}
 
-	//fow tex
-	fowTex= renderer.newTexture2D(ResourceScope::GAME);
-	fowTex->setMipmap(false);
-	fowTex->setPixmapInit(false);
-	fowTex->setFormat(Texture::fAlpha);
-	fowTex->getPixmap()->init(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
-	fowTex->getPixmap()->setPixels(&f);
+	// fow texture
+	m_fowTex = g_renderer.newTexture2D(ResourceScope::GAME);
+	m_fowTex->setMipmap(false);
+	m_fowTex->setPixmapInit(false);
+	m_fowTex->setFormat(Texture::fAlpha);
+	m_fowTex->getPixmap()->init(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
+	m_fowTex->getPixmap()->setPixels(&f);
 
-	//tex
-	tex= renderer.newTexture2D(ResourceScope::GAME);
-	tex->getPixmap()->init(scaledW, scaledH, 3);
-	tex->setMipmap(false);
+	// terrain texture
+	m_terrainTex = g_renderer.newTexture2D(ResourceScope::GAME);
+	m_terrainTex->getPixmap()->init(scaledW, scaledH, 3);
+	m_terrainTex->setMipmap(false);
 
+	m_unitsTex = g_renderer.newTexture2D(ResourceScope::GAME);
+	m_unitsTex->setMipmap(false);
+	int tw = m_ratio < 1 ? (m_ratio * 128).intp() : 128;
+	int th = m_ratio > 1 ? (128 / m_ratio).intp() : 128;
+	m_unitsTex->getPixmap()->init(tw, th, 4);
+	m_unitsTex->setFormat(Texture::fRgba);
+	Colour blank((uint8)0u);
+	m_unitsTex->getPixmap()->setPixels(blank.ptr());
+
+	m_unitsPMap = new TypeMap<int8>(Rectangle(0, 0, w, h), -1);
+	m_unitsPMap->clearMap(-1);
+	
 	computeTexture(world);
 }
 
 Minimap::~Minimap(){
-	delete fowPixmap0;
-	delete fowPixmap1;
+	delete m_fowPixmap0;
+	delete m_fowPixmap1;
 }
 
 // ==================== set ====================
 
 void Minimap::resetFowTex() {
-	Pixmap2D *tmpPixmap= fowPixmap0;
-	fowPixmap0= fowPixmap1;
-	fowPixmap1= tmpPixmap;
+	Pixmap2D *tmpPixmap= m_fowPixmap0;
+	m_fowPixmap0= m_fowPixmap1;
+	m_fowPixmap1= tmpPixmap;
 
-	for(int i=0; i<fowTex->getPixmap()->getW(); ++i){
-		for(int j=0; j<fowTex->getPixmap()->getH(); ++j){
-			if(fogOfWar){
-				float p0= fowPixmap0->getPixelf(i, j);
-				float p1= fowPixmap1->getPixelf(i, j);
+	for(int i=0; i<m_fowTex->getPixmap()->getW(); ++i){
+		for(int j=0; j<m_fowTex->getPixmap()->getH(); ++j){
+			if(m_fogOfWar){
+				float p0= m_fowPixmap0->getPixelf(i, j);
+				float p1= m_fowPixmap1->getPixelf(i, j);
 
 				if(p1>exploredAlpha){
-					fowPixmap1->setPixel(i, j, exploredAlpha);
+					m_fowPixmap1->setPixel(i, j, exploredAlpha);
 				}
 				if(p0>p1){
-					fowPixmap1->setPixel(i, j, p0);
+					m_fowPixmap1->setPixel(i, j, p0);
 				}
 			}
 			else{
-				fowPixmap1->setPixel(i, j, 1.f);
+				m_fowPixmap1->setPixel(i, j, 1.f);
 			}
 		}
 	}
 }
 
 void Minimap::updateFowTex(float t){
-	for(int i=0; i<fowPixmap0->getW(); ++i){
-		for(int j=0; j<fowPixmap0->getH(); ++j){
-			float p1= fowPixmap1->getPixelf(i, j);
-			if(p1!=fowTex->getPixmap()->getPixelf(i, j)){
-				float p0= fowPixmap0->getPixelf(i, j);
-				fowTex->getPixmap()->setPixel(i, j, p0+(t*(p1-p0)));
+	for(int i=0; i<m_fowPixmap0->getW(); ++i){
+		for(int j=0; j<m_fowPixmap0->getH(); ++j){
+			float p1= m_fowPixmap1->getPixelf(i, j);
+			if(p1!=m_fowTex->getPixmap()->getPixelf(i, j)){
+				float p0= m_fowPixmap0->getPixelf(i, j);
+				m_fowTex->getPixmap()->setPixel(i, j, p0+(t*(p1-p0)));
 			}
 		}
 	}
@@ -143,15 +170,142 @@ void Minimap::updateFowTex(float t){
 
 // ==================== PRIVATE ====================
 
+// faction colours, in RGBA format
+Colour factionColours[GameConstants::maxPlayers] = {
+	Colour(255, 0, 0, 255),
+	Colour(0, 0, 255, 255),
+	Colour(0, 92, 32, 255),
+	Colour(255, 255, 0, 255)
+};
+
+void buildVisLists(UnitList &srfList, UnitList &airList) {
+	UnitSet srfSet; // surface units seen already
+	UnitSet airSet; // air units seen already
+	RectIterator iter(Vec2i(0), Vec2i(g_map.getW() - 1, g_map.getH() - 1));
+	while (iter.more()) {
+		Vec2i pos = iter.next();
+		Tile *tile = g_map.getTile(Map::toTileCoords(pos));
+		if (tile->isVisible(g_world.getThisFaction()->getTeam())) {
+			Cell *cell = g_map.getCell(pos);
+			Unit *u = cell->getUnit(Zone::AIR);
+			if (u && u->getTeam() != -1 && !u->isCarried()) {
+				if (airSet.find(u) == airSet.end()) {
+					airSet.insert(u);
+					airList.push_back(u);
+				}
+			} else {
+				u = cell->getUnit(Zone::LAND);
+				if (u && u->getTeam() != -1 && !u->isCarried()) {
+					if (srfSet.find(u) == srfSet.end()) {
+						srfSet.insert(u);
+						srfList.push_back(u);
+					}
+				}
+			}
+		}
+	}
+}
+
+void processList(UnitList &units, TypeMap<int8>* overlayMap) {
+	foreach_const (UnitList, it, units) {
+		const Vec2i pos = (*it)->getPos();
+		const UnitType *ut = (*it)->getType();
+		const PatchMap<1> &pMap = ut->getMinimapFootprint();
+		RectIterator iter(Vec2i(0), Vec2i(ut->getSize() - 1));
+		while (iter.more()) {
+			Vec2i iPos = iter.next();
+			if (pMap.getInfluence(iPos)) {
+				const Vec2i cellPos = pos + iPos;
+				overlayMap->setInfluence(cellPos, (*it)->getFactionIndex());
+			}
+		}
+	}
+}
+
+void buildUnitOverlay(TypeMap<int8>* overlayMap) {
+	GameSettings &gs = g_simInterface->getGameSettings();
+
+	UnitList srfList; // visible surface units
+	UnitList airList; // visible air units
+	buildVisLists(srfList, airList);
+
+	overlayMap->clearMap(-1);
+	
+	processList(srfList, overlayMap);
+	processList(airList, overlayMap);
+}
+
+void Minimap::updateUnitTex() {
+	if (!g_world.getThisFaction()) {
+		return;
+	}
+
+	buildUnitOverlay(m_unitsPMap);
+	Pixmap2D *pm = m_unitsTex->getPixmap();
+
+	Colour blank((uint8)0u);
+	pm->setPixels(blank.ptr());
+
+	Vec2i sPos, pos;
+	int ndx;
+	if (m_currZoom == 1) {
+		RectIterator iter(Vec2i(0), Vec2i(m_w - 1, m_h - 1));
+		while (iter.more()) {
+			pos = iter.next();
+			ndx = m_unitsPMap->getInfluence(pos);
+			if (ndx >= 0) {
+				pm->setPixel(pos, factionColours[ndx]);
+			}
+		}
+	} else if (m_currZoom > 1) {
+		assert(m_currZoom.frac() == 0);
+		int ppc = m_currZoom.intp(); // pixels per cell
+		RectIterator iter(Vec2i(0), Vec2i(m_w - 1, m_h - 1));
+		while (iter.more()) {
+			sPos = iter.next();
+			ndx = m_unitsPMap->getInfluence(sPos);
+			if (ndx >= 0) {
+				RectIterator iter2(sPos * 2, sPos * 2 + Vec2i(ppc - 1));
+				while (iter2.more()) {
+					pm->setPixel(iter2.next(), factionColours[ndx]);
+				}
+			}
+		}
+	} else {
+		assert((1 / m_currZoom).frac() == 0);
+		int cpp = (1 / m_currZoom).intp(); // cells per pixel
+		RectIterator iter(Vec2i(0), Vec2i(m_w / cpp - 1, m_h / cpp - 1));
+		while (iter.more()) {
+			sPos = iter.next();
+			RectIterator iter2(sPos * cpp, sPos * cpp + Vec2i(cpp - 1));
+			while (iter2.more()) {
+				pos = iter2.next();
+				ndx = m_unitsPMap->getInfluence(pos);
+				if (ndx >= 0) {
+					pm->setPixel(sPos, factionColours[ndx]);
+					break;
+				}
+			}
+		}
+	}
+
+	glActiveTexture(Renderer::baseTexUnit);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_unitsTex)->getHandle());
+
+	glTexImage2D(GL_TEXTURE_2D, 0, 4, m_unitsTex->getPixmap()->getW(), m_unitsTex->getPixmap()->getH(),
+		0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
+}
+
 void Minimap::computeTexture(const World *world){
 
 	Vec3f color;
 	const Map *map= world->getMap();
 
-	tex->getPixmap()->setPixels(Vec4f(1.f, 1.f, 1.f, 0.1f).ptr());
+	m_terrainTex->getPixmap()->setPixels(Vec4f(1.f, 1.f, 1.f, 0.1f).ptr());
 
-	for(int j=0; j<tex->getPixmap()->getH(); ++j){
-		for(int i=0; i<tex->getPixmap()->getW(); ++i){
+	for(int j=0; j<m_terrainTex->getPixmap()->getH(); ++j){
+		for(int i=0; i<m_terrainTex->getPixmap()->getW(); ++i){
 			Tile *sc= map->getTile(i, j);
 
 			if(sc->getObject()==NULL || sc->getObject()->getType()==NULL){
@@ -170,7 +324,7 @@ void Minimap::computeTexture(const World *world){
 			else{
 				color= sc->getObject()->getType()->getColor();
 			}
-			tex->getPixmap()->setPixel(i, j, color);
+			m_terrainTex->getPixmap()->setPixel(i, j, color);
 		}
 	}
 }
@@ -180,8 +334,8 @@ void Minimap::setExploredState(const World *world) {
 	for (int y=0; y < map.getTileH(); ++y) {
 		for (int x=0; x < map.getTileW(); ++x) {
 			if (map.getTile(x,y)->isExplored(world->getThisFactionIndex())) {
-				fowPixmap0->setPixel(x, y, exploredAlpha);
-				fowPixmap1->setPixel(x, y, exploredAlpha);
+				m_fowPixmap0->setPixel(x, y, exploredAlpha);
+				m_fowPixmap1->setPixel(x, y, exploredAlpha);
 			}
 		}
 	}
@@ -194,7 +348,7 @@ void Minimap::render() {
 
 	Widget::renderBgAndBorders(false);
 	const GameCamera *gameCamera = g_gameState.getGameCamera();
-	const Pixmap2D *pixmap = tex->getPixmap();
+	const Pixmap2D *pixmap = m_terrainTex->getPixmap();
 
 	Vec2i pos = getScreenPos() + Vec2i(4, 4);
 	Vec2i size = getSize() - Vec2i(8, 16);
@@ -204,13 +358,17 @@ void Minimap::render() {
 	assertGl();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TEXTURE_BIT);
 
+	glPushAttrib(GL_TEXTURE_BIT);
+
 	//draw map
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
+	// FIXME ? this assumes glTexSubImage() was called in Renderer::renderSurface()
+	// may not be the case in Debug Edition.
 	glActiveTexture(Renderer::fowTexUnit);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_fowTex)->getHandle());
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
 	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
@@ -223,7 +381,7 @@ void Minimap::render() {
 	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE);
 
 	glActiveTexture(Renderer::baseTexUnit);
-	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_terrainTex)->getHandle());
 
 	glColor4f(0.5f, 0.5f, 0.5f, 0.1f);
 	glBegin(GL_TRIANGLE_STRIP);
@@ -241,13 +399,29 @@ void Minimap::render() {
 		glVertex2i(pos.x + size.x, pos.y + size.y);
 	glEnd();
 
-	glDisable(GL_BLEND);
-
+	glPopAttrib();
 	glActiveTexture(Renderer::fowTexUnit);
 	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(Renderer::baseTexUnit);
-	glDisable(GL_TEXTURE_2D);
 
+	glActiveTexture(Renderer::baseTexUnit);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_unitsTex)->getHandle());
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glBegin(GL_TRIANGLE_STRIP);
+		glTexCoord2f(0.0f, 1.0f);
+		glVertex2i(pos.x, pos.y);
+		glTexCoord2f(0.0f, 0.0f);
+		glVertex2i(pos.x, pos.y + size.y);
+		glTexCoord2f(1.0f, 1.0f);
+		glVertex2i(pos.x + size.x, pos.y);
+		glTexCoord2f(1.0f, 0.0f);
+		glVertex2i(pos.x + size.x, pos.y + size.y);
+	glEnd();
+
+
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+/*
 	// draw units
 	glBegin(GL_QUADS);
 
@@ -267,7 +441,7 @@ void Minimap::render() {
 		}
 	}
 	glEnd();
-
+*/
 	//draw camera
 	float wRatio = float(size.x) / g_map.getW();
 	float hRatio = float(size.y) / g_map.getH();
@@ -306,7 +480,7 @@ bool Minimap::mouseDown(MouseButton btn, Vec2i pos) {
 	if (pos.y > myPos.y + mySize.y - getBorderTop()) {
 		if (btn == MouseButton::LEFT) {
 			m_draggingWidget = true;
-			moveOffset = myPos - pos;
+			m_moveOffset = myPos - pos;
 			return true;
 		}
 	}
@@ -315,11 +489,11 @@ bool Minimap::mouseDown(MouseButton btn, Vec2i pos) {
 	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
 	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 		int x = pos.x - myPos.x - getBorderLeft();
-		int y = 128 - (pos.y - myPos.y - getBorderBottom());
+		int y = (m_ratio > 1 ? 128 / m_ratio.intp() : 128) - (pos.y - myPos.y - getBorderBottom());
 
-		float xratio = float(x) / 128.f;
-		float yratio = float(y) / 128.f;
-		Vec2f cellPos(xratio * g_map.getW(), yratio * g_map.getH());
+		float xratio = float(x) / (m_ratio < 1 ? m_ratio.toFloat() * 128.f : 128.f);
+		float yratio = float(y) / (m_ratio > 1 ? 128.f / m_ratio.toFloat() : 128.f);
+		Vec2f cellPos(xratio * m_w, yratio * m_h);
 
 		if (btn == MouseButton::LEFT) {
 			if (m_leftClickOrder) {
@@ -353,15 +527,15 @@ bool Minimap::mouseMove(Vec2i pos) {
 		if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
 		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 			int x = pos.x - myPos.x - getBorderLeft();
-			int y = 128 - (pos.y - myPos.y - getBorderBottom());
+			int y = (m_ratio > 1 ? 128 / m_ratio.intp() : 128) - (pos.y - myPos.y - getBorderBottom());
 
-			float xratio = float(x) / float(textureSize.x);
-			float yratio = float(y) / float(textureSize.y);
-			Vec2f cellPos(xratio * g_map.getW(), yratio * g_map.getH());
+			float xratio = float(x) / (m_ratio < 1 ? m_ratio.toFloat() * 128.f : 128.f);
+			float yratio = float(y) / (m_ratio > 1 ? 128.f / m_ratio.toFloat() : 128.f);
+			Vec2f cellPos(xratio * m_w, yratio * m_h);
 			g_gameState.getGameCamera()->setPos(cellPos);
 		}
 	} else if (m_draggingWidget) {
-		setPos(pos + moveOffset);
+		setPos(pos + m_moveOffset);
 	}
 	return true;
 }

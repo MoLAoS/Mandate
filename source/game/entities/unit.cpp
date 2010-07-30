@@ -30,6 +30,7 @@
 #include "earthquake_type.h"
 #include "sound_renderer.h"
 #include "sim_interface.h"
+#include "user_interface.h"
 
 #include "leak_dumper.h"
 
@@ -485,7 +486,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	}
 	progress2 = 0;
 	currSkill = newSkill;
-	notifyObservers(UnitObserver::eStateChange);
+	StateChanged(this);
 	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
 		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem();
 		ups->setPos(getCurrVector());
@@ -712,7 +713,7 @@ CommandResult Unit::giveCommand(Command *command) {
 		delete command;
 	}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		notifyObservers(UnitObserver::eStateChange);
+		StateChanged(this);
 	}
 	return result;
 }
@@ -741,7 +742,7 @@ Command *Unit::popCommand() {
 	//		<< CommandClassNames[commands.front()->getType()->getClass()] << " command now front of queue." );
 	//}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		notifyObservers(UnitObserver::eStateChange);
+		StateChanged(this);
 	}
 	return command;
 }
@@ -763,7 +764,7 @@ CommandResult Unit::finishCommand() {
 		command->setPos2(pos);
 	}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		notifyObservers(UnitObserver::eStateChange);
+		StateChanged(this);
 	}
 	return CommandResult::SUCCESS;
 }
@@ -788,7 +789,7 @@ CommandResult Unit::cancelCommand() {
 	//clear routes
 	unitPath.clear();
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		notifyObservers(UnitObserver::eStateChange);
+		StateChanged(this);
 	}
 	return CommandResult::SUCCESS;
 }
@@ -807,7 +808,7 @@ CommandResult Unit::cancelCurrCommand() {
 
 	Command *command = popCommand();
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		notifyObservers(UnitObserver::eStateChange);
+		StateChanged(this);
 	}
 	return CommandResult::SUCCESS;
 }
@@ -893,7 +894,6 @@ void Unit::kill() {
 
 	setCurrSkill(SkillClass::DIE);
 	Died(this);
-	notifyObservers(UnitObserver::eKill);
 	clearCommands();
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	deadCount = Random(id).randRange(-256, 256); // random decay time
@@ -1822,6 +1822,7 @@ Unit* UnitFactory::newInstance(const Vec2i &pos, const UnitType *type, Faction *
 	Unit *unit = new Unit(idCounter, pos, type, faction, map, master);
 	unitMap[idCounter] = unit;
 	unit->Died.connect(this, &UnitFactory::onUnitDied);
+	
 	// todo: more connect-o-rama
 
 	++idCounter;

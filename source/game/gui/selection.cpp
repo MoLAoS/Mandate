@@ -47,6 +47,29 @@ Selection::~Selection(){
 	clear();
 }
 
+void Selection::incRef(Unit *u) {
+	UnitRefMap::iterator it = m_referenceMap.find(u);
+	if (it != m_referenceMap.end()) {
+		++it->second;
+	} else {
+		m_referenceMap[u] = 1;
+		u->StateChanged.connect(this, &Selection::onUnitStateChanged);
+		u->Died.connect(this, &Selection::onUnitDied);
+	}
+}
+
+void Selection::decRef(Unit *u) {
+	UnitRefMap::iterator it = m_referenceMap.find(u);
+	assert(it != m_referenceMap.end() && it->second > 0);
+	if (it->second == 1) {
+		m_referenceMap.erase(u);
+		u->StateChanged.disconnect(this);
+		u->Died.disconnect(this);
+	} else {
+		--it->second;
+	}
+}
+
 void Selection::select(Unit *unit){
 
 	//check size
@@ -86,8 +109,9 @@ void Selection::select(Unit *unit){
 		clear();
 	}
 
-	unit->addObserver(this);
 	selectedUnits.push_back(unit);
+	incRef(unit);
+	update();
 	gui->onSelectionChanged();
 }
 /*
@@ -122,12 +146,17 @@ void Selection::unSelect(const Unit *unit){
 
 void Selection::unSelect(int i){
 	//remove unit from list
+	decRef(selectedUnits[i]);
 	selectedUnits.erase(selectedUnits.begin()+i);
+	update();
 	gui->onSelectionChanged();
 }
 
 void Selection::clear(){
 	//clear list
+	foreach (UnitContainer, it, selectedUnits) {
+		decRef(*it);
+	}
 	selectedUnits.clear();
 	update();
 }
@@ -138,11 +167,15 @@ Vec3f Selection::getRefPos() const{
 
 void Selection::assignGroup(int groupIndex){
 	//clear group
+	foreach (UnitContainer, it, groups[groupIndex]) {
+		decRef(*it);
+	}
 	groups[groupIndex].clear();
 
 	//assign new group
 	for(int i=0; i<selectedUnits.size(); ++i){
 		groups[groupIndex].push_back(selectedUnits[i]);
+		incRef(selectedUnits[i]);
 	}
 }
 
@@ -153,38 +186,45 @@ void Selection::recallGroup(int groupIndex){
 	}
 }
 
-void Selection::unitEvent(UnitObserver::Event event, const Unit *unit) {
+void Selection::onUnitDied(Unit *unit) {
+	
+	// mutex ... this wll be called in the Simulation thread
+	
+	// prevent resetting Gui if a unit in a selection group dies
+	bool needUpdate = false;
 
-	if (event == UnitObserver::eKill) {
-		// prevent resetting Gui if a unit in a selection group dies
-		bool needUpdate = false;
+	//remove from selection
+	for (int i = 0; i < selectedUnits.size(); ++i) {
+		if (selectedUnits[i] == unit) {
+			selectedUnits.erase(selectedUnits.begin() + i);
+			needUpdate = true;
+			break;
+		}
+	}
 
-		//remove from selection
-		for (int i = 0; i < selectedUnits.size(); ++i) {
-			if (selectedUnits[i] == unit) {
-				selectedUnits.erase(selectedUnits.begin() + i);
-				needUpdate = true;
+	//remove from groups
+	for (int i = 0; i < maxGroups; ++i) {
+		for (int j = 0; j < groups[i].size(); ++j) {
+			if (groups[i][j] == unit) {
+				groups[i].erase(groups[i].begin() + j);
 				break;
 			}
 		}
-
-		//remove from groups
-		for (int i = 0; i < maxGroups; ++i) {
-			for (int j = 0; j < groups[i].size(); ++j) {
-				if (groups[i][j] == unit) {
-					groups[i].erase(groups[i].begin() + j);
-					break;
-				}
-			}
-		}
-
-		//notify gui & stuff
-		if(needUpdate) {
-			gui->onSelectionChanged();
-		}
-	} else {
-		gui->onSelectionStateChanged();
 	}
+
+	//notify gui & stuff
+	if(needUpdate) {
+		update();
+		gui->onSelectionChanged();
+	}
+}
+
+void Selection::onUnitStateChanged(Unit *unit) {
+
+	// mutex ... this wll be called in the Simulation thread
+
+	update();
+	gui->onSelectionStateChanged();
 }
 
 void Selection::update() {

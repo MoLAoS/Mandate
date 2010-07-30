@@ -148,10 +148,6 @@ void InterpolationData::update(float t, bool cycle) {
 	updateNormals(t, cycle);
 }
 
-void nop(float t) {
-    std::cout << endl << "Error! t == " << t << endl;
-}
-
 void InterpolationData::updateVertices(float t, bool cycle) {
     t = clamp(t, 0.f, 1.f);
 	assert(t >= 0.0f && t <= 1.0f);
@@ -163,15 +159,18 @@ void InterpolationData::updateVertices(float t, bool cycle) {
 		uint32 prevFrame = min<uint32>(static_cast<uint32>(t * frameCount), frameCount - 1);
 		uint32 nextFrame = cycle ? (prevFrame + 1) % frameCount : min(prevFrame + 1, frameCount - 1);
 
+		// TODO:
+		// The above calculations are faulty, this assert should not fail.
+		// does though, with nextFrame == prevFrame
+		//assert((nextFrame > prevFrame && nextFrame == prevFrame + 1)
+		//	|| (nextFrame == 0 && prevFrame == frameCount - 1));
+
 		// assert sanity
 		assert(prevFrame >= 0 && prevFrame < frameCount);
 		assert(nextFrame >= 0 && nextFrame < frameCount);
 
 		// convert 'global' t (0-1 for entire anim) to local t (0-1 between two frames)
 		float localT = t * frameCount - prevFrame;
-		if (localT < 0.f || localT > 1.f) {
-		    nop(localT);
-		}
 		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices
@@ -206,9 +205,6 @@ void InterpolationData::updateNormals(float t, bool cycle) {
 		assert(nextFrame >= 0 && nextFrame < frameCount);
 
 		float localT = t * frameCount - prevFrame;
-		if (localT < 0.f || localT > 1.f) {
-		    nop(localT);
-		}
 		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices

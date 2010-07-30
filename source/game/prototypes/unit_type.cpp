@@ -94,7 +94,8 @@ UnitType::UnitType()
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
-		, cellMap(0) {
+		, m_cellMap(0)
+		, m_colourMap(0) {
 	reset();
 }
 
@@ -102,7 +103,8 @@ UnitType::~UnitType(){
 	deleteValues(emanations.begin(), emanations.end()); ///@todo EffectTypeFactory
 	deleteValues(selectionSounds.getSounds().begin(), selectionSounds.getSounds().end());
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
-	delete [] cellMap;
+	delete m_cellMap;
+	delete m_colourMap;
 }
 
 void UnitType::preLoad(const string &dir){
@@ -201,16 +203,18 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		try {
 			const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
 			if(cellMapNode && cellMapNode->getAttribute("value")->getBoolValue()){
-				cellMap= new bool[size*size];
+				//cellMap= new bool[size*size];
+				m_cellMap = new PatchMap<1>(Rectangle(0,0, size, size), 0);
 				for(int i=0; i<size; ++i){
 					try {
 						const XmlNode *rowNode= cellMapNode->getChild("row", i);
 						string row= rowNode->getAttribute("value")->getRestrictedValue();
 						if(row.size()!=size){
-							throw runtime_error("Cellmap row has not the same length as unit size");
+							throw runtime_error("Cellmap row is not the same as unit size");
 						}
 						for(int j=0; j<row.size(); ++j){
-							cellMap[i*size+j]= row[j]=='0'? false: true;
+							m_cellMap->setInfluence(Vec2i(j, i), row[j]=='0'? 0: 1);
+//							cellMap[i*size+j]= row[j]=='0'? false: true;
 						}
 					} catch (runtime_error e) {
 						Logger::getErrorLog().addXmlError(path, e.what());
@@ -431,6 +435,26 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 	}
+	m_colourMap = new PatchMap<1>(Rectangle(0,0, size, size), 0);
+	RectIterator iter(Rect2i(0, 0, size - 1, size - 1));
+	while (iter.more()) {
+		Vec2i pos = iter.next();
+		if (!hasCellMap() || m_cellMap->getInfluence(pos)) {
+			m_colourMap->setInfluence(pos, 1);
+		} else {
+			int ncount = 0;
+			PerimeterIterator pIter(Vec2i(pos.x - 1, pos.y - 1), Vec2i(pos.x + 1, pos.y + 1));
+			while (pIter.more()) {
+				Vec2i nPos = pIter.next();
+				if (m_cellMap->getInfluence(nPos)) {
+					++ncount;
+				}
+			}
+			if (ncount >= 2) {
+				m_colourMap->setInfluence(pos, 1);
+			}
+		}
+	}
 	return loadOk;   
 }
 
@@ -613,17 +637,18 @@ void UnitType::sortCommandTypes() {
 
 UnitTypeFactory::~UnitTypeFactory() {
 	foreach (vector<UnitType*>, it, m_types) {
-		assert(m_typeSet.find(*it) != m_typeSet.end());
-		m_typeSet.erase(m_typeSet.find(*it));
-		assert(m_checksumTable.find(*it) != m_checksumTable.end());
-		m_checksumTable.erase(m_checksumTable.find(*it));
+//		assert(m_typeSet.find(*it) != m_typeSet.end());
+//		m_typeSet.erase(m_typeSet.find(*it));
+//		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+//		m_checksumTable.erase(m_checksumTable.find(*it));
 		delete *it;
 	}
-	assert(m_typeSet.empty());
-	assert(m_checksumTable.empty());
+//	assert(m_typeSet.empty());
+//	assert(m_checksumTable.empty());
 	m_types.clear();
 }
 
+/*
 void UnitTypeFactory::assertTypes() {
 	foreach (vector<UnitType*>, it, m_types) {
 		assert(m_typeSet.find(*it) != m_typeSet.end());
@@ -633,20 +658,23 @@ void UnitTypeFactory::assertTypes() {
 		assert(m_checksumTable[*it] == checksum.getSum());
 	}
 }
+*/
 
 UnitType* UnitTypeFactory::newInstance() {
 	UnitType *ut = SingleTypeFactory<UnitType>::newInstance();
 	ut->setId(m_idCounter++);
 	m_types.push_back(ut);
-	m_typeSet.insert(ut);
+//	m_typeSet.insert(ut);
 	return ut;
 }
 
+/*
 void UnitTypeFactory::setChecksum(UnitType *ut, int32 cs) {
 	assert(m_typeSet.find(ut) != m_typeSet.end());
 	assert(m_checksumTable.find(ut) == m_checksumTable.end());
 	m_checksumTable[ut] = cs;
 }
+*/
 
 UnitType* UnitTypeFactory::getType(int id) {
 	if (id < 0 || id >= m_types.size()) {

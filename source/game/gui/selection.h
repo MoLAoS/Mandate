@@ -13,10 +13,13 @@
 #define _GLEST_GAME_SELECTION_
 
 #include <vector>
+#include <map>
 
 #include "unit.h"
+#include "sigslot.h"
 
 using std::vector;
+using std::map;
 
 namespace Glest { namespace Gui {
 
@@ -34,10 +37,10 @@ enum AutoRepairState {
 ///	List of selected units and groups
 // =====================================================
 
-class Selection: public UnitObserver {
+class Selection: public sigslot::has_slots {
 public:
-	typedef vector<Unit*> UnitContainer;
 	typedef UnitContainer::const_iterator UnitIterator;
+	typedef map<Unit*, int> UnitRefMap;
 
 public:
 	static const int maxGroups = 10;
@@ -56,6 +59,10 @@ private:
 	UnitContainer selectedUnits;
 	UnitContainer groups[maxGroups];
 	UserInterface *gui;
+	UnitRefMap m_referenceMap;
+
+	void incRef(Unit *u);
+	void decRef(Unit *u);
 
 public:
 	Selection();
@@ -99,12 +106,14 @@ public:
 	void assignGroup(int groupIndex);
 	void recallGroup(int groupIndex);
 
-	virtual void unitEvent(UnitObserver::Event event, const Unit *unit);
 	void update();
 	void removeCarried();
 
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;
+
+	void onUnitDied(Unit *unit);
+	void onUnitStateChanged(Unit *unit);
 
 protected:
 	void unSelect(int unitIndex);

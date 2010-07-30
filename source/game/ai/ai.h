@@ -30,8 +30,6 @@ namespace Glest { namespace Plan {
 class GlestAiInterface;
 class AiRule;
 
-typedef vector<const Unit*> UnitList;
-
 // =====================================================
 // 	class Task
 //

@@ -505,7 +505,7 @@ void LoadCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	Unit::UnitContainer &unitsToCarry = unit->getUnitsToCarry();
+	UnitContainer &unitsToCarry = unit->getUnitsToCarry();
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::LOAD) {
 		unit->setCurrSkill(SkillClass::LOAD);
@@ -513,7 +513,7 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
 	} else {
-		Unit::UnitContainer::iterator i = unitsToCarry.begin();
+		UnitContainer::iterator i = unitsToCarry.begin();
 		while (i != unitsToCarry.end()) {
 			Unit *targetUnit = *i;
 
@@ -643,11 +643,11 @@ void UnloadCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
 		unit->setCurrSkill(SkillClass::UNLOAD);
 	} else {
-		Unit::UnitContainer &units = unit->getCarriedUnits();
+		UnitContainer &units = unit->getCarriedUnits();
 
 		int maxRange = unloadSkillType->getMaxRange();
 		//PosCircularIteratorSimple posIter(g_map.getBounds(), unit->getPos(), maxRange);
-		Unit::UnitContainer::iterator i = units.begin();
+		UnitContainer::iterator i = units.begin();
 		// unload each carried unit to a free space if possible
 		while (i != units.end()) {
 			Unit *targetUnit = (*i);

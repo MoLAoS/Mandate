@@ -37,10 +37,10 @@ template<typename iType, typename MapType> class InfluenceMap {
 public:
 	InfluenceMap(Rectangle b, iType def) : def(def), x(b.x), y(b.y), w(b.w), h(b.h) {}
 	
-	iType getInfluence(Point pos) {
+	iType getInfluence(Point pos) const {
 		pos = translate(pos);
 		if (pos != invalidPos) {
-			return static_cast<MapType*>(this)->get(pos);
+			return static_cast<const MapType*>(this)->get(pos);
 		}
 		return def;
 	}
@@ -52,7 +52,7 @@ public:
 		}
 		return false;
 	}
-	Point translate(Point p) {
+	Point translate(Point p) const {
 		const int nx = p.x - x;
 		const int ny = p.y - y;
 		if (nx >= 0 && ny >=0 && nx < w && ny < h) {
@@ -82,7 +82,7 @@ public:
 	void clearMap(type val) { std::fill_n(data, this->w * this->h, val); }
 
 private:
-	type get(Point p) { return data[p.y * this->w + p.x]; }
+	type get(Point p) const { return data[p.y * this->w + p.x]; }
 	void  set(Point p, type v) { data[p.y * this->w + p.x] = v; }
 	type *data;
 };
@@ -138,7 +138,7 @@ public:
 		}
 	}
 private:
-	uint32 get(Point p) {
+	uint32 get(Point p) const {
 		int sectionNdx = p.y * sectionsPerRow + p.x / sectionSize;
 		int subSectionNdx = p.x % sectionSize;
 		uint32 val = (data[sectionNdx] >> (subSectionNdx * bits)) & max_value;
@@ -180,7 +180,7 @@ private:
 class FlowMap : public InfluenceMap<Point, FlowMap> {
 	friend class InfluenceMap<Point, FlowMap>;
 private:
-	Point expand(uint32 v) {
+	Point expand(uint32 v) const {
 		Point res(0,0);
 		if ( v & 8 ) { res.x = -1; }
 		else if ( v & 4 ) { res.x = 1; }
@@ -220,7 +220,7 @@ public:
 	}
 
 private:
-	Point get(Point p) {
+	Point get(Point p) const {
 		const int blockNdx = p.y * blocksPerRow + p.x / 8;
 		const int subBlockNdx = p.x % 8;
 		uint32 val = (data[blockNdx] >> (subBlockNdx * 4)) & 15;

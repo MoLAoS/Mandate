@@ -556,7 +556,7 @@ void Renderer::renderMouse3d(){
 		if(gui->isPlacingBuilding()) {
 			const UserInterface::BuildPositions &bp = gui->getBuildPositions();
 			const UnitType *building= gui->getBuilding();
-			const Selection::UnitContainer &units = gui->getSelection()->getUnits();
+			const UnitContainer &units = gui->getSelection()->getUnits();
 
 			//selection building emplacement
 			float offset = building->getSize() / 2.f;
@@ -1494,6 +1494,8 @@ void Renderer::renderUnits(){
 
 		if (i) {
 			meshCallbackTeamColor.setTeamTexture(world->getFaction(i - 1)->getTexture());
+		} else {
+			meshCallbackTeamColor.setTeamTexture(0);
 		}
 
 		vector<const Unit *>::iterator it = toRender[i].begin();
@@ -1988,7 +1990,7 @@ struct PickHit {
 	bool operator<(const PickHit &that) const { return nearDist < that.nearDist; }
 };
 
-void Renderer::computeSelected(Selection::UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
+void Renderer::computeSelected(UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
 	//declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
 	const Metrics &metrics= Metrics::getInstance();

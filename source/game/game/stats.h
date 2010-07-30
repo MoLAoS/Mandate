@@ -64,13 +64,14 @@ public:
 	void produce(int i)								{assert(i >= 0); playerStats[i].unitsProduced++;}
 	void harvest(int i, int amount)					{assert(i >= 0); playerStats[i].resourcesHarvested += amount;}
 	void kill(int killerIndex, int killedIndex) {
-		if (killerIndex == -1) {
-			return; // glestimal
+		if (killerIndex != -1) {
+			if(killerIndex != killedIndex) {
+				playerStats[killerIndex].kills++;
+			}
 		}
-		if(killerIndex != killedIndex) {
-			playerStats[killerIndex].kills++;
+		if (killedIndex != -1) {
+			playerStats[killedIndex].deaths++;
 		}
-		playerStats[killedIndex].deaths++;
 	}
 };
 

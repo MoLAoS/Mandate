@@ -148,7 +148,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 		Checksum checksum;
 		unitTypes[i]->doChecksum(checksum);
-		g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
+//		g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
 		logger.unitLoaded();
 	}
 
@@ -262,7 +262,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 		if (unitTypes[i]->load(str, techTree, this, true)) {
 			Checksum checksum;
 			unitTypes[i]->doChecksum(checksum);
-			g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
+//			g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
 		} else {
 			loadOk = false;
 		}

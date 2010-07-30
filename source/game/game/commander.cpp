@@ -58,10 +58,10 @@ CommandResult Commander::tryGiveCommand(
 	CommandResultContainer results;
 
 	//give orders to all selected units
-	const Selection::UnitContainer &units = selection.getUnits();
+	const UnitContainer &units = selection.getUnits();
 	CommandResult result;
 
-	foreach_const (Selection::UnitContainer, i, units) {
+	foreach_const (UnitContainer, i, units) {
 		const CommandType *effectiveCt;
 		if(ct) {
 			effectiveCt = ct;
@@ -76,7 +76,7 @@ CommandResult Commander::tryGiveCommand(
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if(targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
-					Unit::UnitContainer &units = (*i)->getUnitsToCarry();
+					UnitContainer &units = (*i)->getUnitsToCarry();
 					if (find(units.begin(), units.end(), targetUnit) == units.end()) {
 						units.push_back(targetUnit);
 					}
@@ -125,7 +125,7 @@ CommandResult Commander::tryGiveCommand(
 }
 
 CommandResult Commander::tryCancelCommand(const Selection *selection) const{
-	const Selection::UnitContainer &units = selection->getUnits();
+	const UnitContainer &units = selection->getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
 		pushCommand(new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Command::invalidPos, *i));
 	}
@@ -135,7 +135,7 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 
 void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const{
 	/*
-	const Selection::UnitContainer &units = selection.getUnits();
+	const UnitContainer &units = selection.getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
 		pushCommand(new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled),
 				Command::invalidPos, *i));

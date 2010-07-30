@@ -77,7 +77,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_scenarioList->SelectionChanged.connect(this, &MenuStateScenario::onScenarioChanged);
 
 	vector<string> results;
-	int match = -1;	
+	int match = 0;	
 
 	//categories listBox
 	findAll("gae/scenarios/*.", results);
@@ -114,11 +114,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	categories = results;
 	m_categoryList->addItems(categories);
 	m_categoryList->SelectionChanged.connect(this, &MenuStateScenario::onCategoryChanged);
-	if (match != -1) {
-		m_categoryList->setSelected(match);
-	} else {
-		m_categoryList->setSelected(0);
-	}
+	m_categoryList->setSelected(match);
 }
 
 void MenuStateScenario::onConfirmReturn(MessageDialog::Ptr) {
@@ -186,11 +182,13 @@ void MenuStateScenario::updateConfig() {
 	const string &category = categories[m_categoryList->getSelectedIndex()];
 	const string &scenario = scenarioFiles[m_scenarioList->getSelectedIndex()];
 	g_config.setUiLastScenario(category + "/" + scenario);
+	g_config.setUiLastScenarioCatagory(category);
+	g_config.save();
 }
 
 void MenuStateScenario::updateScenarioList(const string &category, bool selectDefault) {
 	vector<string> results;
-	int match = -1;
+	int match = 0;
 
 	findAll("gae/scenarios/" + category + "/*.", results);
 
@@ -210,11 +208,7 @@ void MenuStateScenario::updateScenarioList(const string &category, bool selectDe
 	}
 	m_scenarioList->clearItems();
 	m_scenarioList->addItems(results);
-	if (selectDefault && match != -1) {
-		m_scenarioList->setSelected(match);
-	} else {
-		m_scenarioList->setSelected(0);
-	}
+	m_scenarioList->setSelected(match);
 }
 
 }}//end namespace

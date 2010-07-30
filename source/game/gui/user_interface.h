@@ -234,29 +234,12 @@ public:
 	void onRightClickOrder(Vec2i cellPos);
 
     void onResourceDepleted(Vec2i cellPos);
+	void onUnitDied(Unit *unit);
 
 	//misc
-
 	void switchToNextDisplayColor() {m_display->switchColor();}
-
-	void onSelectionChanged() {
-		selection.update();
-		resetState();
-		computeDisplay();
-	}
-
-	void onSelectionStateChanged() {
-		selection.update();
-		computeDisplay();
-	}
-
-	/**
-	 * Hacky backstop function to make sure units are removed from all selection groups before they
-	 * are deleted.
-	 */
-	void makeSureImNotSelected(Unit *unit) {
-		selection.unitEvent(UnitObserver::eKill, unit);
-	}
+	void onSelectionChanged() { resetState(); computeDisplay(); }
+	void onSelectionStateChanged() { computeDisplay(); }
 
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;
@@ -285,9 +268,9 @@ private:
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
 public:
-	void updateSelection(bool doubleClick, Selection::UnitContainer &units);
+	void updateSelection(bool doubleClick, UnitContainer &units);
 private:
-	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, Selection::UnitContainer &units, bool setObj);
+	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitContainer &units, bool setObj);
 	void computeBuildPositions(const Vec2i &end);
 };
 

@@ -65,22 +65,6 @@ using Glest::Sim::Map;
 
 namespace Glest { namespace Entities {
 
-// =====================================================
-// 	class UnitObserver
-// =====================================================
-///@todo deprecate, use signals
-class UnitObserver {
-public:
-	enum Event {
-		eKill,
-		eStateChange
-	};
-
-public:
-	virtual ~UnitObserver() {}
-	virtual void unitEvent(Event event, const Unit *unit)=0;
-};
-
 class Vec2iList : public list<Vec2i> {
 public:
 	void read(const XmlNode *node);
@@ -130,6 +114,11 @@ public:
 };
 
 class UnitFactory;
+class Unit;
+
+typedef vector<Unit*> UnitContainer;
+typedef vector<const Unit*> UnitList;
+typedef set<const Unit*>	UnitSet;
 
 // ===============================
 // 	class Unit
@@ -150,9 +139,7 @@ class Unit : public EnhancementType {
 	friend class UnitFactory;
 public:
 	typedef list<Command*> Commands;
-	typedef list<UnitObserver*> Observers;
 	typedef list<UnitId> Pets;
-	typedef vector<Unit*> UnitContainer;
 
 private:
 	UnitContainer carriedUnits;
@@ -226,7 +213,6 @@ private:
 	WaypointPath waypointPath;
 
 	Commands commands;
-	Observers observers;
 
 	UnitParticleSystems eyeCandy;
 
@@ -236,17 +222,17 @@ private:
 	bool attacked_trigger;
 
 public:
-	// signals, should prob replace the UnitObserver stuff
+	// signals
 	//
-	typedef Unit* u_ptr;
-	typedef sigslot::signal<u_ptr>		UnitSignal;
+	typedef sigslot::signal<Unit*>	UnitSignal;
 
 	UnitSignal		Created;	  /**< fires when a unit is created		   */
 	UnitSignal		Born;		 /**< fires when a unit is 'born'		  */
-	UnitSignal		Moving;		/**< fires just before a unit is moved	 */
-	UnitSignal		Moved;	   /**< fires after a unit has moved		*/
-	UnitSignal		Morphing; /**<  */
-	UnitSignal		Morphed; /**<  */
+	//UnitSignal		Moving;		/**< fires just before a unit is moved in cells	*/
+	//UnitSignal		Moved;	   /**< fires after a unit has moved in cells	*/
+	//UnitSignal		Morphing; /**<  */
+	//UnitSignal		Morphed; /**<  */
+	UnitSignal		StateChanged; /**< command changed / availability changed, etc (for gui) */
 	UnitSignal		Died;	/**<  */
 
 private:
@@ -408,7 +394,7 @@ public:
 	void setMeetingPos(const Vec2i &meetingPos)			{this->meetingPos = meetingPos;}
 	void setAutoRepairEnabled(bool autoRepairEnabled) {
 		this->autoRepairEnabled = autoRepairEnabled;
-		notifyObservers(UnitObserver::eStateChange);
+		StateChanged(this);
 	}
 
 	//render related
@@ -450,15 +436,6 @@ public:
 	void born();
 	void kill();
 	void undertake()									{faction->remove(this);}
-
-	//observers
-	void addObserver(UnitObserver *unitObserver)		{observers.push_back(unitObserver);}
-	void removeObserver(UnitObserver *unitObserver)		{observers.remove(unitObserver);}
-	void notifyObservers(UnitObserver::Event event)		{
-		for(Observers::iterator it = observers.begin(); it != observers.end(); ++it){
-			(*it)->unitEvent(event, this);
-		}
-	}
 
 	//other
 	void resetHighlight()								{highlight= 1.f;}
