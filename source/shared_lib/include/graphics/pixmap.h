@@ -13,6 +13,7 @@
 #define _SHARED_GRAPHICS_PIXMAP_H_
 
 #include <string>
+#include <cassert>
 
 #include "vec.h"
 #include "types.h"
