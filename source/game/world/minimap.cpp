@@ -224,7 +224,6 @@ void processList(UnitList &units, TypeMap<int8>* overlayMap) {
 }
 
 void buildUnitOverlay(TypeMap<int8>* overlayMap) {
-
 	UnitList srfList; // visible surface units
 	UnitList airList; // visible air units
 	buildVisLists(srfList, airList);

@@ -186,6 +186,8 @@ void GameState::init() {
 		gui.load(simInterface->getSavedGame()->getChild("gui"));
 	}
 
+	ScriptManager::initGame();
+
 	//wheather particle systems
 	if(simInterface->getWorld()->getTileset()->getWeather() == Weather::RAINY){
 		logger.add("Creating rain particle system", true);

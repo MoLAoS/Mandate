@@ -235,7 +235,6 @@ void SimulationInterface::initWorld() {
 	m_gaia->init();
 
 	createSkillCycleTable(world->getTechTree());
-	ScriptManager::initGame();
 }
 
 /** @return maximum update backlog (must be -1 for multiplayer) */
