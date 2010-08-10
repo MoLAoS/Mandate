@@ -215,6 +215,12 @@ struct EffectSummary {
 	int count;
 };
 
+void Effects::streamDesc(ostream &stream) const {
+	string str;
+	getDesc(str);
+	stream << str;
+}
+
 void Effects::getDesc(string &str) const {
 	map<const EffectType*, EffectSummary> uniqueEffects;
 	map<const EffectType*, EffectSummary>::iterator uei;

@@ -228,6 +228,7 @@ private:
 
 public:
 	DebugRenderer();
+	void reset();
 	void init();
 	void commandLine(string &line);
 

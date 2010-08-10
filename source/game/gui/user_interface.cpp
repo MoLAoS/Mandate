@@ -128,8 +128,7 @@ UserInterface::UserInterface(GameState &game)
 	int h = g_metrics.getDisplayH() + 18;
 	int x = g_metrics.getScreenW() - 10 - w;
 	int y = (g_metrics.getScreenH() - h) / 2;
-
-	m_display = new Display(Vec2i(x,y), Vec2i(w, h));
+	m_display = new Display(this, Vec2i(x,y), Vec2i(w, h));
 }
 
 void UserInterface::init() {

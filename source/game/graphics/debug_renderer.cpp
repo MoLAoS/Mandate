@@ -171,25 +171,25 @@ const ResourceType* findResourceMapRes(const string &res) {
 	return 0;
 }
 
-void DebugRenderer::init() {
-	
+void DebugRenderer::reset() {
 	pfCallback.reset();
-	pfCallback.loadTextures();
-
 	gtCallback.reset();
-	gtCallback.loadTextures();
-
 	rhCallback.reset();
 	vqCallback.reset();
 	cmOverlay.reset();
 	rmOverlay.reset();
 	smOverlay.reset();
 	bsOverlay.reset();
+	rmOverlay.reset();
+}
+
+void DebugRenderer::init() {
+	pfCallback.loadTextures();
+	gtCallback.loadTextures();
 
 	if (resourceMapOverlay) {
-		rmOverlay.rt = findResourceMapRes(string("gold"));
-	} else {
-		rmOverlay.reset();
+		string str("gold");
+		rmOverlay.rt = findResourceMapRes(str);
 	}
 }
 

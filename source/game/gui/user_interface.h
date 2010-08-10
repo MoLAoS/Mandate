@@ -264,10 +264,10 @@ private:
 	void resetState();
 	void mouseDownDisplayUnitSkills(int posDisplay);
 	void mouseDownDisplayUnitBuild(int posDisplay);
-	void computeInfoString(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
 public:
+	void computeInfoString(int posDisplay);
 	void updateSelection(bool doubleClick, UnitContainer &units);
 private:
 	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitContainer &units, bool setObj);

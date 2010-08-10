@@ -176,6 +176,7 @@ public:
 	 * collection and returns the supplied string object.
 	 */
 	void getDesc(string &str) const;
+	void streamDesc(ostream &stream) const;
 	void save(XmlNode *node) const;
 };
 

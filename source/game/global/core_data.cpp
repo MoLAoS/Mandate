@@ -103,6 +103,7 @@ void CoreData::load() {
 
 	//display font
 	displayFont = loadBitmapFont(config.getRenderFontDisplay(), computeFontSize(15));
+	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 10);
 
 	//menu fonts
 	menuFontSmall = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(12));

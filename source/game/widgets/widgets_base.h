@@ -232,9 +232,14 @@ private:
 	Widget::Ptr me;
 	Textures textures;
 	vector<ImageRenderInfo> imageInfo;
+	bool batchRender;
 
 protected:
 	void renderImage(int ndx = 0);
+	void renderImage(int ndx, const Vec4f &colour);
+
+	void startBatch();
+	void endBatch();
 
 public:
 	ImageWidget(Widget::Ptr me);

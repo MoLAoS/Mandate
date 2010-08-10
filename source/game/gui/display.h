@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -31,6 +32,7 @@ using Glest::Global::Metrics;
 namespace Glest { namespace Gui {
 
 using namespace Widgets;
+class UserInterface;
 
 // =====================================================
 // 	class Display
@@ -52,6 +54,7 @@ public:
 	static const int infoStringY = imageSize * 4;
 
 private:
+	UserInterface *m_ui;
 	string title;
 	string text;
 	string infoText;
@@ -70,9 +73,11 @@ private:
 	bool m_draggingWidget;
 	Vec2i m_moveOffset;
 
+	Vec2i m_upImageOffset, m_downImageOffset;
+	Font *m_font;
 
 public:
-	Display(Vec2i pos, Vec2i size);
+	Display(UserInterface *ui, Vec2i pos, Vec2i size);
 
 	//get
 	string getTitle() const							{return title;}
@@ -90,11 +95,12 @@ public:
 	int getDownSelectedPos() const					{return downSelectedPos;}
 
 	//set
-	void setTitle(const string title)					{this->title= Util::formatString(title);}
-	void setText(const string &text)					{this->text= Util::formatString(text);}
-	void setInfoText(const string infoText)				{this->infoText= Util::formatString(infoText);}
+	void setTitle(const string title);
+	void setText(const string &text);
+	void setInfoText(const string infoText);
+
 	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image; setImage(image, i);}
-	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image;}
+	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image; setImage(image, upCellCount + i);}
 	void setCarryImage(int i, const Texture2D *image)	{carryImages[i]= image;}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
@@ -105,6 +111,9 @@ public:
 
 	//misc
 	void clear();
+
+	int computeIndex(Vec2i imgOffset, Vec2i pos);
+
 	int computeDownIndex(int x, int y);
 	int computeCarryIndex(int x, int y);
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}

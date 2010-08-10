@@ -370,22 +370,45 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 
 ImageWidget::ImageWidget(Widget::Ptr me) 
 		: me(me) {
+	batchRender = false;
 }
 
 ImageWidget::ImageWidget(Widget::Ptr me, Texture2D *tex)
 		: me(me) {
 	textures.push_back(tex);
 	imageInfo.push_back(ImageRenderInfo());
+	batchRender = false;
 }
 
 void ImageWidget::renderImage(int ndx) {
-	ASSERT_RANGE(ndx, textures.size());
-	assertGl();
+	Vec4f colour(1.f, 1.f, 1.f, me->getFade());
+	renderImage(ndx, colour);
+}
 
+void ImageWidget::startBatch() {
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
+	batchRender = true;
+}
+
+void ImageWidget::endBatch() {
+	glPopAttrib();
+	assertGl();
+	batchRender = false;
+}
+
+void ImageWidget::renderImage(int ndx, const Vec4f &colour) {
+	ASSERT_RANGE(ndx, textures.size());
+	assertGl();
+
+	if (!batchRender) {
+		glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+		glDisable(GL_LIGHTING);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+	}
 
 	int x1, x2, y1, y2;
 	Vec2i pos = me->getScreenPos();
@@ -403,7 +426,7 @@ void ImageWidget::renderImage(int ndx) {
 		x2 = x1 + sz.x;
 		y2 = y1 + sz.y;
 	}
-	glColor4f(1.f, 1.f, 1.f, me->getFade());
+	glColor4fv(colour.ptr());
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(textures[ndx])->getHandle());
 	glBegin(GL_TRIANGLE_STRIP);
 		glTexCoord2i(0, 1);
@@ -416,8 +439,10 @@ void ImageWidget::renderImage(int ndx) {
 		glVertex2i(x2, y1);
 	glEnd();
 
-	glPopAttrib();
-	assertGl();
+	if (!batchRender) {
+		glPopAttrib();
+		assertGl();
+	}
 }
 
 int ImageWidget::addImage(const Texture2D *tex) {

@@ -79,6 +79,8 @@ private:
 	Font *freeTypeFont;
 	Font *advancedEngineFont;
 	Font *freeTypeMenuFont;
+
+	Font *m_FTDisplay;
 	
 public:
 	static CoreData &getInstance();
@@ -125,6 +127,8 @@ public:
 	Font* getFTMenuFontSmall() const	{ return m_FTMenuFontSmall;		}
 	Font* getFTMenuFontBig() const		{ return m_FTMenuFontBig;		}
 	Font* getFTMenuFontVeryBig() const	{ return m_FTMenuFontVeryBig;	}
+
+	Font* getFTDisplayFont() const		{ return m_FTDisplay;	}
 
 private:
 	CoreData(){};
