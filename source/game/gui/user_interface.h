@@ -209,6 +209,8 @@ public:
 		currentGroup= invalidGroupIndex;
 	}
 
+	void commandButtonPressed(int posDisplay);
+
 	void mouseDownLeft(int x, int y);
 	void mouseDownRight(int x, int y);
 	void mouseUpLeft(int x, int y);
@@ -216,8 +218,6 @@ public:
 	void mouseDoubleClickLeft(int x, int y);
 
 	void mouseMoveDisplay(int x, int y);
-//	void mouseDownLeftGraphics(int x, int y);
-//	void mouseDownRightGraphics(int x, int y);
 	void mouseUpLeftGraphics(int x, int y);
 	void mouseMoveGraphics(int x, int y);
 	void mouseDoubleClickLeftGraphics(int x, int y);
@@ -245,7 +245,7 @@ public:
 	void save(XmlNode *node) const;
 
 private:
-	void mouseDownLeftDisplay(int posDisplay);
+	//void mouseDownLeftDisplay(int posDisplay);
 
 	//orders
 	void giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit);

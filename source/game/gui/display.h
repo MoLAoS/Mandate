@@ -17,7 +17,6 @@
 
 #include "texture.h"
 #include "util.h"
-#include "command_type.h"
 #include "game_util.h"
 #include "metrics.h"
 #include "widgets.h"
@@ -29,9 +28,13 @@ using namespace Shared::Math;
 using Shared::Util::replaceBy;
 using Glest::Global::Metrics;
 
+namespace Glest { namespace ProtoTypes { class CommandType; }}
+
 namespace Glest { namespace Gui {
 
 using namespace Widgets;
+using ProtoTypes::CommandType;
+using ProtoTypes::CommandClass;
 class UserInterface;
 
 // =====================================================
@@ -66,15 +69,19 @@ private:
 	const CommandType *commandTypes[downCellCount];
 	CommandClass commandClasses[downCellCount];
 	Vec3f colors[colorCount];
-	int progressBar;
+	int m_progress;
 	int currentColor;
 	int downSelectedPos;
 
 	bool m_draggingWidget;
 	Vec2i m_moveOffset;
 
-	Vec2i m_upImageOffset, m_downImageOffset;
+	Vec2i m_upImageOffset, m_downImageOffset, m_progressPos;
+	int m_progPrecentPos;
 	Font *m_font;
+
+private:
+	void renderProgressBar();
 
 public:
 	Display(UserInterface *ui, Vec2i pos, Vec2i size);
@@ -91,13 +98,13 @@ public:
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
 	CommandClass getCommandClass(int i)				{return commandClasses[i];}
 	Vec3f getColor() const							{return colors[currentColor];}
-	int getProgressBar() const						{return progressBar;}
+	int getProgressBar() const						{return m_progress;}
 	int getDownSelectedPos() const					{return downSelectedPos;}
 
 	//set
 	void setTitle(const string title);
 	void setText(const string &text);
-	void setInfoText(const string infoText);
+	void setInfoText(const string &infoText);
 
 	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image; setImage(image, i);}
 	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image; setImage(image, upCellCount + i);}
@@ -106,41 +113,16 @@ public:
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}
 	void setIndex(int i, int value)						{index[i] = value;}
-	void setProgressBar(int i)							{progressBar= i;}
-	void setDownSelectedPos(int i)						{downSelectedPos= i;}
+	void setProgressBar(int i);
+	void setDownSelectedPos(int i);
 
 	//misc
 	void clear();
 
 	int computeIndex(Vec2i imgOffset, Vec2i pos);
+	int computeDownIndex(int x, int y) { return computeIndex(m_downImageOffset, Vec2i(x,y) - getPos()); }
 
-	int computeDownIndex(int x, int y);
-	int computeCarryIndex(int x, int y);
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
-
-	int computeCarryX(int index) const {
-		return (index % cellSideCount) * imageSize;
-	}
-	
-	int computeCarryY(int index) const {
-		return Display::carryY - (index / cellSideCount)*imageSize - imageSize;
-	}
-
-	int computeDownX(int index) const {
-		return (index % cellSideCount) * imageSize;
-	}
-	
-	int computeDownY(int index) const {
-		return Display::downY - (index / cellSideCount)*imageSize - imageSize;
-	}
-	
-	int computeUpX(int index) const {
-		return (index % cellSideCount) * imageSize;
-	}
-	
-	int computeUpY(int index) const {
-		return Metrics::getInstance().getDisplayH() - (index / cellSideCount) * imageSize - imageSize;
-	}
 
 	virtual void render();
 	virtual string desc() { return string("[DisplayPanel: ") + descPosDim() + "]"; }

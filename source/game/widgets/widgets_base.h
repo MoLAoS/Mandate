@@ -254,6 +254,9 @@ public:
 		ASSERT_RANGE(ndx, textures.size());
 		return textures[ndx];
 	}
+
+	Vec2i getImagePos(int ndx) const { return imageInfo[ndx].offset; }
+	Vec2i getImageSize(int ndx) const { return imageInfo[ndx].size; }
 };
 
 // =====================================================
@@ -286,6 +289,7 @@ public:
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col) { txtColour = col;	 }
+	void setTextShadowColour(const Vec4f &col) { txtShadowColour = col;	 }
 	void setTextPos(const Vec2i &pos, int ndx=0);
 	void setTextFont(const Font *f);
 
@@ -298,6 +302,7 @@ public:
 	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, txtPositions.size()); return txtPositions[ndx]; }
 	const Font* getTextFont() const { return font; }
 	Vec2i getTextDimensions() const;
+	Vec2i getTextDimensions(int ndx) const;
 	bool hasText() const { return !texts.empty(); }
 };
 

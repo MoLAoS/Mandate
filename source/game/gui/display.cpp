@@ -43,20 +43,20 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 	m_borderStyle.m_sizes[Border::TOP] = 15;
 	m_borderStyle.m_sizes[Border::LEFT] = 3;
 	
-	//m_borderStyle.setSolid(g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127)));
-
 	m_borderStyle.m_type = BorderType::CUSTOM_CORNERS;
-	m_borderStyle.m_colourIndices[Corner::TOP_LEFT]		= g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
-	m_borderStyle.m_colourIndices[Corner::TOP_RIGHT]	= g_widgetConfig.getColourIndex(Colour(0, 0, 0, 0));
-	m_borderStyle.m_colourIndices[Corner::BOTTOM_RIGHT] = g_widgetConfig.getColourIndex(Colour(0, 0, 0, 0));
-	m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= g_widgetConfig.getColourIndex(Colour(0, 0, 0, 0));
+	int opaqueIndex = g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
+	int transparantIndex = g_widgetConfig.getColourIndex(Colour(255, 255, 255, 0));
+	m_borderStyle.m_colourIndices[Corner::TOP_LEFT]		= opaqueIndex;
+	m_borderStyle.m_colourIndices[Corner::TOP_RIGHT]	= transparantIndex;
+	m_borderStyle.m_colourIndices[Corner::BOTTOM_RIGHT] = transparantIndex;
+	m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= transparantIndex;
 
-	colors[0]= Vec3f(1.f, 1.f, 1.f);
-	colors[1]= Vec3f(1.f, 0.5f, 0.5f);
-	colors[2]= Vec3f(0.f, 1.f, 0.f);
-	colors[3]= Vec3f(0.7f, 0.7f, 0.7f);
+	colors[0] = Vec3f(1.f, 1.f, 1.f);
+	colors[1] = Vec3f(1.f, 0.5f, 0.5f);
+	colors[2] = Vec3f(0.f, 1.f, 0.f);
+	colors[3] = Vec3f(0.7f, 0.7f, 0.7f);
 
-	currentColor= 0;
+	currentColor = 0;
 
 	m_font = g_coreData.getFTDisplayFont();
 
@@ -73,7 +73,7 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 	}
 
 	x = getBorderLeft();
-	y = getHeight() - getBorderTop() - int(m_font->getMetrics()->getHeight()) * 10;
+	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 10;
 	m_downImageOffset = Vec2i(x, y);
 	for (int i = 0; i < downCellCount; ++i) { // 'down' images (command buttons)
 		if (i % cellSideCount == 0) {
@@ -83,15 +83,57 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 		addImageX(0, Vec2i(x,y), Vec2i(32,32));
 		x += 32;
 	}
-	setTextParams("", Vec4f(1.f), m_font, false);
-	addText("");
-	addText("");
+	setTextParams("", Vec4f(1.f), m_font, false); // unit title
+	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
+	addText(""); // unit text
+	addText(""); // command text
+	addText(""); // progress bar
 
 	setTextPos(Vec2i(40, size.y - 40), 0);
-//	setTextPos(Vec2i(5, size.y - 160), 1); // dynamic set ?
-//	setTextPos(Vec2i(5, y), 2); // dynamic set ?
 
+	downSelectedPos = invalidPos;
+	setProgressBar(-1);
 	clear();
+}
+
+void Display::setProgressBar(int i) {
+	m_progress = i;
+	if (i >= 0) {
+		TextWidget::setText(intToStr(i) + "%", 3);
+		Vec2i sz = getTextDimensions(3);
+		m_progPrecentPos = 50 - sz.x / 2;
+	}
+}
+
+void Display::setDownSelectedPos(int i) {
+	if (downSelectedPos == i) {
+		return;
+	}
+	if (downSelectedPos != invalidPos) {
+		// shrink
+		int ndx = downSelectedPos + upCellCount;
+		Vec2i pos = getImagePos(ndx);
+		Vec2i size = getImageSize(ndx);
+		pos += Vec2i(3);
+		size -= Vec2i(6);
+		setImageX(0, ndx, pos, size);
+	}
+	downSelectedPos = i;
+	if (downSelectedPos != invalidPos) {
+		// enlarge
+		int ndx = downSelectedPos + upCellCount;
+		Vec2i pos = getImagePos(ndx);
+		Vec2i size = getImageSize(ndx);
+		pos -= Vec2i(3);
+		size += Vec2i(6);
+		setImageX(0, ndx, pos, size);
+	}
+}
+
+void trimTrailingNewlines(string &str) {
+	while (!str.empty() && *(str.end() - 1) == '\n') {
+		str.erase(str.end() - 1);
+	}
 }
 
 void Display::setTitle(const string title) {
@@ -116,27 +158,28 @@ void Display::setText(const string &text) {
 	int yPos = getHeight() - 40 - getBorderTop() - int(m_font->getMetrics()->getHeight()) * lines;
 	TextWidget::setTextPos(Vec2i(5, yPos), 1);
 	TextWidget::setText(str, 1);
+	m_progressPos = Vec2i(14, yPos - 20);
 }
 
-void Display::setInfoText(const string infoText) {
+void Display::setInfoText(const string &infoText) {
 	if (this->infoText.empty() && infoText.empty()) {
 		return;
 	}
 	string str = Util::formatString(infoText);
+	trimTrailingNewlines(str);
 	this->infoText = str;
 
 	int lines = 1;
 	foreach_const (string, it, str) {
 		if (*it == '\n') ++lines;
 	}
-	int yPos = getHeight() - getBorderTop() - imageSize * cellSideCount 
+	int yPos = getHeight() - getBorderTop() - imageSize * cellSideCount - 48
 		- (lines + 10) * int(m_font->getMetrics()->getHeight());
 	TextWidget::setTextPos(Vec2i(5, yPos), 2);
 	TextWidget::setText(str, 2);
 }
 
-
-//misc
+// misc
 void Display::clear(){
 	for(int i=0; i<upCellCount; ++i){
 		upImages[i]= NULL;
@@ -155,49 +198,46 @@ void Display::clear(){
 		carryImages[i]= NULL;
 	}
 
-	downSelectedPos= invalidPos;
+	setDownSelectedPos(invalidPos);
 	setTitle("");
 	setText("");
-//	setInfoText("");
-	progressBar= -1;
+	setProgressBar(-1);
 }
 
-int Display::computeDownIndex(int x, int y){
-	y= y-(downY-cellSideCount*imageSize);
+const Vec3f progressBarBg = Vec3f(0.3f);
+const Vec3f progressBarFg1 = Vec3f(0.f, 0.5f, 0.f);
+const Vec3f progressBarFg2 = Vec3f(0.f, 0.1f, 0.f);
 
-	if(y>imageSize*cellSideCount){
-		return invalidPos;
-	}
+void Display::renderProgressBar() {
+	const int h = 15;
+	const int w = 100;
 
-	int cellX= x/imageSize;
-	int cellY= (y/imageSize) % cellSideCount;
-	int index= (cellSideCount-cellY-1)*cellSideCount+cellX;;
+	int bw = m_progress;
+	Vec2i pos = getPos() + m_progressPos;
 
-	if(index<0 || index>=downCellCount || downImages[index]==NULL){
-		index= invalidPos;
-	}
+	// bar (green bit)
+	glBegin(GL_QUADS);
+		glColor3fv(progressBarFg2.ptr());
+		glVertex2i(pos.x, pos.y); // bottom left
+		glVertex2i(pos.x, pos.y + h); // top left
+		glColor3fv(progressBarFg1.ptr());
+		glVertex2i(pos.x + bw, pos.y + h); // top right
+		glVertex2i(pos.x + bw, pos.y); // bottom right
+	glEnd();
 
-	return index;
+	// transp bar
+	glBegin(GL_QUADS);
+		glColor3fv(progressBarBg.ptr());
+		glVertex2i(pos.x + bw, pos.y); // bottom left
+		glVertex2i(pos.x + bw, pos.y + h); // top left
+		glVertex2i(pos.x + w, pos.y + h); // top right
+		glVertex2i(pos.x + w, pos.y); // bottom right
+	glEnd();
+
+	// text
+	setTextPos(m_progressPos + Vec2i(m_progPrecentPos, 0), 3);
+	renderText(3);
 }
-
-int Display::computeCarryIndex(int x, int y){
-	y= y-(carryY-cellSideCount*imageSize);
-
-	if(y>imageSize*cellSideCount){
-		return invalidPos;
-	}
-
-	int cellX= x/imageSize;
-	int cellY= (y/imageSize) % cellSideCount;
-	int index= (cellSideCount-cellY-1)*cellSideCount+cellX;;
-
-	if(index<0 || index>=carryCellCount || carryImages[index]==NULL){
-		index= invalidPos;
-	}
-
-	return index;
-}
-
 
 void Display::render() {
 	renderBgAndBorders();
@@ -209,19 +249,26 @@ void Display::render() {
 		}
 	}
 	for (int i=0; i < downCellCount; ++i) {
-		if (getImage(i + upCellCount)) {
+		if (getImage(i + upCellCount) && i != downSelectedPos) {
 			renderImage(i + upCellCount, downLighted[i] ? light : dark);
 		}
 	}
+	if (downSelectedPos != invalidPos) {
+		assert(getImage(downSelectedPos + upCellCount));
+		renderImage(downSelectedPos + upCellCount, light);
+	}
 	ImageWidget::endBatch();
 	if (!TextWidget::getText(0).empty()) {
-		renderText(0);
+		renderTextShadowed(0);
 	}
 	if (!TextWidget::getText(1).empty()) {
-		renderText(1);
+		renderTextShadowed(1);
 	}
 	if (!TextWidget::getText(2).empty()) {
-		renderText(2);
+		renderTextShadowed(2);
+	}
+	if (m_progress >= 0) {
+		renderProgressBar();
 	}
 }
 
@@ -257,13 +304,12 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
 		int ndx = computeIndex(m_downImageOffset, tPos);
 		if (getImage(upCellCount + ndx)) {
-			//m_ui->???
+			m_ui->commandButtonPressed(ndx);
 			return true;
 		}
-		// let event through (for now)
-		return false;
 	}
-	return true;
+	// nothing 'tangible' clicked, let event through
+	return false;
 }
 
 bool Display::mouseUp(MouseButton btn, Vec2i pos) {
@@ -287,6 +333,7 @@ bool Display::mouseMove(Vec2i pos) {
 
 	if (m_draggingWidget) {
 		setPos(pos + m_moveOffset);
+		return true;
 	}
 
 	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
@@ -297,10 +344,9 @@ bool Display::mouseMove(Vec2i pos) {
 			m_ui->computeInfoString(ndx);
 			return true;
 		}
-		// let event through (for now)
-		return false;
 	}
-	return true;
+	// let event through
+	return false;
 }
 
 }}//end namespace

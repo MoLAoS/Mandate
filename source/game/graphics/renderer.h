@@ -238,7 +238,6 @@ public:
     void renderUnits();
 	void renderSelectionEffects();
 	void renderWaterEffects();
-    void renderDisplay();
 	void renderMenuBackground(const MenuBackground *menuBackground);
 
 	//computing

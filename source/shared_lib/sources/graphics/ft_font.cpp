@@ -151,32 +151,9 @@ void font_data::clean() {
 	delete [] textures;
 }
 
-/// A fairly straight forward function that pushes a projection matrix that will make object world
-/// coordinates identical to window coordinates.
-inline void pushScreenCoordinateMatrix() {
-	glPushAttrib(GL_TRANSFORM_BIT);
-		GLint viewport[4];
-		glGetIntegerv(GL_VIEWPORT, viewport);
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		gluOrtho2D(viewport[0], viewport[2], viewport[1], viewport[3]);
-	glPopAttrib();
-}
-
-/// Pops the projection matrix without changing the current MatrixMode.
-inline void pop_projection_matrix() {
-	glPushAttrib(GL_TRANSFORM_BIT);
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-	glPopAttrib();
-}
-
 typedef const unsigned char * uchar_ptr;
 
 void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
-	// We want a coordinate system where things coresponding to window pixels.
-	pushScreenCoordinateMatrix();
 	GLuint font = ft_font.list_base;
 	float h = ft_font.h;// / .63f;
 
@@ -209,7 +186,6 @@ void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 		 glPopMatrix();
 	 }
 	 glPopAttrib();
-	 pop_projection_matrix();
 }
 
 ///Much like Nehe's glPrint function, but modified to work with freetype fonts.

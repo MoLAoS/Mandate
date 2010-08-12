@@ -124,9 +124,9 @@ UserInterface::UserInterface(GameState &game)
 	currentGui = this;
 	currentGroup= invalidGroupIndex;
 
-	int w = g_metrics.getDisplayW() + 6;
-	int h = g_metrics.getDisplayH() + 18;
-	int x = g_metrics.getScreenW() - 10 - w;
+	int w = 150;
+	int h = 500;
+	int x = g_metrics.getScreenW() - 20 - w;
 	int y = (g_metrics.getScreenH() - h) / 2;
 	m_display = new Display(this, Vec2i(x,y), Vec2i(w, h));
 }
@@ -183,18 +183,19 @@ const UnitType *UserInterface::getBuilding() const {
 // ==================== is ====================
 
 bool UserInterface::isPlacingBuilding() const {
-	return isSelectingPos() && activeCommandType!=NULL && activeCommandType->getClass()==CommandClass::BUILD;
+	return isSelectingPos() && activeCommandType != NULL
+		&& activeCommandType->getClass() == CommandClass::BUILD;
 }
 
 // ==================== reset state ====================
 
 void UserInterface::resetState() {
-	selectingBuilding= false;
-	selectingPos= false;
-	selectingMeetingPoint= false;
-	activePos= invalidPos;
-	activeCommandClass= CommandClass::STOP;
-	activeCommandType= NULL;
+	selectingBuilding = false;
+	selectingPos = false;
+	selectingMeetingPoint = false;
+	activePos = invalidPos;
+	activeCommandClass = CommandClass::STOP;
+	activeCommandType = NULL;
 	dragging = false;
 	needSelectionUpdate = false;
 	buildPositions.clear();
@@ -203,12 +204,12 @@ void UserInterface::resetState() {
 }
 
 static void calculateNearest(UnitContainer &units, const Vec3f &pos) {
-	if(units.size() > 1) {
-		float minDist = 100000.f;
-		Unit *nearest = NULL;
-		for(UnitContainer::const_iterator i = units.begin(); i != units.end(); ++i) {
+	if (units.size() > 1) {
+		float minDist = numeric_limits<float>::infinity();
+		Unit *nearest = 0;
+		foreach_const (UnitContainer, i, units) {
 			float dist = pos.dist((*i)->getCurrVector());
-			if(minDist > dist) {
+			if (dist < minDist) {
 				minDist = dist;
 				nearest = *i;
 			}
@@ -227,55 +228,58 @@ void UserInterface::onRightClickOrder(Vec2i cellPos) {
 }
 
 void UserInterface::onResourceDepleted(Vec2i cellPos) {
-    Object *o = g_map.getTile(Map::toTileCoords(cellPos))->getObject();
-    assert(o);
-    if (o == selectedObject) {
-        selectedObject = 0;
-    }
+	Object *o = g_map.getTile(Map::toTileCoords(cellPos))->getObject();
+	assert(o);
+	if (o == selectedObject) {
+		selectedObject = 0;
+	}
+}
+
+void UserInterface::commandButtonPressed(int posDisplay) {
+	if (!selectingPos && !selectingMeetingPoint) {
+		if (selection.isComandable()) {
+			if (selectingBuilding) {
+				mouseDownDisplayUnitBuild(posDisplay); // showBuildingInfo()
+			} else {
+				mouseDownDisplayUnitSkills(posDisplay); // showCommandInfo()
+			}
+		} else {
+			resetState();
+		}
+		computeDisplay();
+	} else { // selectingPos || selectingMeetingPoint
+		// if they clicked on a button again, they must have changed their mind
+		resetState();
+	}
 }
 
 // ==================== events ====================
 void UserInterface::mouseDownLeft(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
 
-	// display panel
-	if(metrics.isInDisplay(x, y)) {
-		int posDisplay = computePosDisplay(x - metrics.getDisplayX(), y - metrics.getDisplayY());
-		if(posDisplay != invalidPos){
-			if(isSelectingPos()) {
-				resetState();
-			} else {
-				mouseDownLeftDisplay(posDisplay);
-			}
-			return;
-		}
-	}
-
 	UnitContainer units;
 	Vec2i worldPos;
 	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 
-	//graphics panel
-	if(!validWorldPos){
+	if (!validWorldPos) {
 		console->addStdMessage("InvalidPosition");
 		return;
 	}
 
-	//remaining options will prefer the actual target unit's position
 	const Unit *targetUnit= NULL;
-	if(units.size()) {
+	if (units.size()) {
 		targetUnit = units.front();
 		worldPos = targetUnit->getPos();
 	}
 
-	if(selectingPos) {
-		//give standard orders
+	if (selectingPos) {
+		// give standard orders
 		giveTwoClickOrders(worldPos, (Unit *)targetUnit);
 
-	//set meeting point
-	} else if(selectingMeetingPoint) {
-		if(selection.isComandable()) {
-			commander->tryGiveCommand(selection, CommandFlags(CommandProperties::QUEUE, input.isShiftDown()), NULL,
+	// set meeting point
+	} else if (selectingMeetingPoint) {
+		if (selection.isComandable()) {
+			commander->tryGiveCommand(selection, CommandFlags(), NULL,
 					CommandClass::SET_MEETING_POINT, worldPos);
 		}
 		resetState();
@@ -294,23 +298,15 @@ void UserInterface::mouseDownRight(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
 	Vec2i worldPos;
 
-	if(selectingPos || selectingMeetingPoint){
+	if (selectingPos || selectingMeetingPoint) {
 		resetState();
 		computeDisplay();
 		return;
 	}
 
-	//m_display panel
-	if(metrics.isInDisplay(x, y)) {
-		int posDisplay = computePosDisplay(x - metrics.getDisplayX(), y - metrics.getDisplayY());
-		//ignore right click to m_display buttons, but do not pass on to graphics
-		if(posDisplay != invalidPos) {
-			return;
-		}
-	}
 	if (selection.isComandable()) {
 		UnitContainer units;
-		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
+		if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			Unit *targetUnit = units.size() ? units.front() : NULL;
 			giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
 		} else {
@@ -331,38 +327,8 @@ void UserInterface::mouseUpRight(int x, int y) {
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
 	const Metrics &metrics= Metrics::getInstance();
 
-	//m_display panel
-	if(metrics.isInDisplay(x, y)){
-		int posDisplay = computePosDisplay(x - metrics.getDisplayX(), y - metrics.getDisplayY());
-		if(posDisplay != invalidPos){
-			return;
-		}
-	}
-
     //graphics panel
 	mouseDoubleClickLeftGraphics(x, y);
-}
-
-void UserInterface::mouseDownLeftDisplay(int posDisplay){
-	if(!selectingPos && !selectingMeetingPoint){
-		if(posDisplay!= invalidPos){
-			if(selection.isComandable()){
-				if(selectingBuilding){
-					mouseDownDisplayUnitBuild(posDisplay);
-				}
-				else{
-					mouseDownDisplayUnitSkills(posDisplay);
-				}
-			}
-			else{
-				resetState();
-			}
-		}
-		computeDisplay();
-	} else {
-		// if they clicked on a button again, they must have changed their mind
-		resetState();
-	}
 }
 
 void UserInterface::mouseMoveDisplay(int x, int y){
@@ -425,7 +391,7 @@ void UserInterface::mouseDoubleClickLeftGraphics(int x, int y){
 
 		selectionQuad.setPosDown(pos);
 		const Object *obj;
-		Renderer::getInstance().computeSelected(units, obj, pos, pos);
+		g_renderer.computeSelected(units, obj, pos, pos);
 		calculateNearest(units, gameCamera->getPos());
 		updateSelection(true, units);
 		computeDisplay();
@@ -654,15 +620,14 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	//graphical result
 	addOrdersResultToConsole(activeCommandClass, result);
 
-	if(result == CommandResult::SUCCESS || result == CommandResult::SOME_FAILED) {
+	if (result == CommandResult::SUCCESS || result == CommandResult::SOME_FAILED) {
 		if (!targetUnit) {
 			mouse3d.show(targetPos);
 		}
-		if(random.randRange(0, 1) == 0) {
-			SoundRenderer::getInstance().playFx(
-				selection.getFrontUnit()->getType()->getCommandSound(),
-				selection.getFrontUnit()->getCurrVector(),
-				gameCamera->getPos());
+		if (random.randRange(0, 1) == 0) {
+			const Unit *unit = selection.getFrontUnit();
+			g_soundRenderer.playFx(unit->getType()->getCommandSound(),
+				unit->getCurrVector(), gameCamera->getPos());
 		}
 		resetState();
 	} else if (result == CommandResult::FAIL_BLOCKED) {
@@ -809,78 +774,70 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 }
 
 void UserInterface::mouseDownDisplayUnitBuild(int posDisplay){
-	int factionIndex= world->getThisFactionIndex();
+	int factionIndex = world->getThisFactionIndex();
 
-	if(posDisplay == cancelPos){
+	if (posDisplay == cancelPos) {
 		resetState();
-	}
-	else{
-		if(activeCommandType!=NULL && activeCommandType->getClass()==CommandClass::BUILD){
-			const BuildCommandType *bct= static_cast<const BuildCommandType*>(activeCommandType);
-			const UnitType *ut= bct->getBuilding(m_display->getIndex(posDisplay));
-			if(world->getFaction(factionIndex)->reqsOk(ut)){
-				choosenBuildingType= ut;
-				assert(choosenBuildingType!=NULL);
-				selectingPos= true;
-				activePos= posDisplay;
+	} else {
+		if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
+			const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
+			const UnitType *ut = bct->getBuilding(m_display->getIndex(posDisplay));
+			if (world->getFaction(factionIndex)->reqsOk(ut)) {
+				choosenBuildingType = ut;
+				assert(choosenBuildingType != NULL);
+				selectingPos = true;
+				activePos = posDisplay;
 			}
 		}
 	}
 }
 
 void UserInterface::computeInfoString(int posDisplay) {
-	Lang &lang = Lang::getInstance();
-
 	m_display->setInfoText("");
 
-	if(!selection.isComandable()) {
+	if (!selection.isComandable() || posDisplay == invalidPos) {
 		return;
 	}
 
-	if(posDisplay == invalidPos) {
-		return;
-	}
-
-	if(!selectingBuilding) {
-		if(posDisplay == cancelPos) {
-			m_display->setInfoText(lang.get("Cancel"));
-		} else if(posDisplay == meetingPointPos) {
-			m_display->setInfoText(lang.get("MeetingPoint"));
-		} else if(posDisplay == autoRepairPos) {
-			string str = lang.get("AutoRepair");
+	if (!selectingBuilding) {
+		if (posDisplay == cancelPos) {
+			m_display->setInfoText(g_lang.get("Cancel"));
+		} else if (posDisplay == meetingPointPos) {
+			m_display->setInfoText(g_lang.get("MeetingPoint"));
+		} else if (posDisplay == autoRepairPos) {
+			string str = g_lang.get("AutoRepair");
 
 			switch (selection.getAutoRepairState()) {
-			case arsOn:
-				str += " " + lang.get("On");
-				break;
+				case arsOn:
+					str += " " + g_lang.get("On");
+					break;
 
-			case arsOff:
-				str += " " + lang.get("Off");
-				break;
+				case arsOff:
+					str += " " + g_lang.get("Off");
+					break;
 
-			case arsMixed:
-				str += " " + lang.get("Mixed");
-				break;
+				case arsMixed:
+					str += " " + g_lang.get("Mixed");
+					break;
 			}
-
 			m_display->setInfoText(str);
 		} else {
-			//uniform selection
-			if(selection.isUniform()) {
+			// uniform selection
+			if (selection.isUniform()) {
 				const Unit *unit = selection.getFrontUnit();
 				const CommandType *ct = m_display->getCommandType(posDisplay);
 
-				if(ct != NULL) {
-					if(unit->getFaction()->reqsOk(ct)) {
+				if (ct != NULL) {
+					if (unit->getFaction()->reqsOk(ct)) {
 						m_display->setInfoText(ct->getDesc(unit));
 					} else {
 						if(ct->getClass() == CommandClass::UPGRADE) {
 							const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 
-							if(unit->getFaction()->getUpgradeManager()->isUpgrading(uct->getProducedUpgrade())) {
-								m_display->setInfoText(lang.get("Upgrading") + "\n" + ct->getDesc(unit));
-							} else if(unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
-								m_display->setInfoText(lang.get("AlreadyUpgraded") + "\n" + ct->getDesc(unit));
+							if (unit->getFaction()->getUpgradeManager()->isUpgrading(uct->getProducedUpgrade())) {
+								m_display->setInfoText(g_lang.get("Upgrading") + "\n" + ct->getDesc(unit));
+							} else if (unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
+								m_display->setInfoText(g_lang.get("AlreadyUpgraded") + "\n" + ct->getDesc(unit));
 							} else {
 								m_display->setInfoText(ct->getReqDesc());
 							}
@@ -889,23 +846,22 @@ void UserInterface::computeInfoString(int posDisplay) {
 						}
 					}
 				}
-			}
 
-			//non uniform selection
-			else {
+			// non uniform selection
+			} else {
 				const UnitType *ut = selection.getFrontUnit()->getType();
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
-				if(cc != CommandClass::NULL_COMMAND) {
-					m_display->setInfoText(lang.get("CommonCommand") + ": " + ut->getFirstCtOfClass(cc)->toString());
+				if (cc != CommandClass::NULL_COMMAND) {
+					m_display->setInfoText(g_lang.get("CommonCommand") + ": " + ut->getFirstCtOfClass(cc)->toString());
 				}
 			}
 		}
 	} else {
-		if(posDisplay == cancelPos) {
-			m_display->setInfoText(lang.get("Return"));
+		if (posDisplay == cancelPos) {
+			m_display->setInfoText(g_lang.get("Return"));
 		} else {
-			if(activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
+			if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
 				const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
 				m_display->setInfoText(bct->getBuilding(m_display->getIndex(posDisplay))->getReqDesc());
 			}
@@ -914,14 +870,13 @@ void UserInterface::computeInfoString(int posDisplay) {
 }
 
 void UserInterface::computeDisplay() {
-
-	//init
+	// init
 	m_display->clear();
 
 	// ================ PART 1 ================
 
 	int thisTeam = g_world.getThisTeamIndex();
-	//title, text and progress bar
+	// title, text and progress bar
 	if (selection.getCount() == 1) {
 		const Unit *unit = selection.getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
@@ -1222,10 +1177,9 @@ void UserInterface::updateSelection(bool doubleClick, UnitContainer &units) {
  */
 bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitContainer &units, bool setObj) {
 	units.clear();
-	Renderer &renderer = Renderer::getInstance();
-	validPosObjWorld = renderer.computePosition(screenPos, worldPos);
+	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
 	const Object *junk;
-	renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
+	g_renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
 
 	if (!units.empty()) {
 		return true;

@@ -564,6 +564,10 @@ Vec2i TextWidget::getTextDimensions() const {
 	return max;
 }
 
+Vec2i TextWidget::getTextDimensions(int ndx) const {
+	return Vec2i(font->getMetrics()->getTextDiminsions(texts[ndx]) + Vec2f(1.f));
+}
+
 void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font *font, bool cntr) {
 	if (texts.empty()) {
 		texts.push_back(txt);

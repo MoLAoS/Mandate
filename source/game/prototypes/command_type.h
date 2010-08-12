@@ -124,12 +124,6 @@ protected:
 								const AttackSkillTypes *asts, const AttackSkillType **past);
 
 public:
-	// must be called before a new game loads anything, savegames need command types to get 
-	// the same id everytime a game is started, not just the first game in one 'program session'
-	///@todo maybe CommandTypeFactory could be made non-singleton, owned by the World (or Game)
-	// and take control of type ids, thus neatly removing the need for this kludge
-//	static void resetIdCounter() { nextId = 0; }
-
 	Command* doAutoCommand(Unit *unit) const;
 };
 

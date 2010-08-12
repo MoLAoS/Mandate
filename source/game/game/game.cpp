@@ -670,9 +670,6 @@ void GameState::render2d(){
 	//init
 	g_renderer.reset2d();
 
-	//display
-	g_renderer.renderDisplay();
-
 	//selection
 	g_renderer.renderSelectionQuad();
 
@@ -794,9 +791,6 @@ void GameState::saveGame(string name) const {
 void ShowMap::render2d(){
 	//init
 	g_renderer.reset2d();
-
-	//display
-	g_renderer.renderDisplay();
 
 	//exit message box
 	if (mainMessageBox.getEnabled()) {
