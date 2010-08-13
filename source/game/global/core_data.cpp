@@ -76,34 +76,39 @@ Font* loadFreeTypeFont(string path, int size) {
 	return font;
 }
 
-void CoreData::load() {
+bool CoreData::load() {
 	Config &config = Config::getInstance();
 	Renderer &renderer = Renderer::getInstance();
-	Logger::getInstance().add("Core data");
+	g_logger.add("Core data");
 
 	const string dir = "data/core";
 
-	//textures
-	backgroundTexture = loadTexture(dir + "/menu/textures/back.tga");
-	fireTexture = loadAlphaTexture(dir + "/misc_textures/fire_particle.tga");
-	snowTexture = loadAlphaTexture(dir + "/misc_textures/snow_particle.tga");
-	customTexture = loadTexture(dir + "/menu/textures/custom_texture.tga");
-	logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
-	gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
-	checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
-	checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
-	vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
-	vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
-	vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
-	vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
-	waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
-	buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
-	buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
-	textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
+	// textures
+	try {
+		backgroundTexture = loadTexture(dir + "/menu/textures/back.tga");
+		fireTexture = loadAlphaTexture(dir + "/misc_textures/fire_particle.tga");
+		snowTexture = loadAlphaTexture(dir + "/misc_textures/snow_particle.tga");
+		customTexture = loadTexture(dir + "/menu/textures/custom_texture.tga");
+		logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
+		gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
+		checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
+		checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
+		vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
+		vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
+		vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
+		vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
+		waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
+		buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
+		buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
+		textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
+	} catch (runtime_error &e) {
+		g_errorLog.add(string("Error loading core data.\n") + e.what());
+		return false;
+	}
 
 	//display font
-	displayFont = loadBitmapFont(config.getRenderFontDisplay(), computeFontSize(15));
 	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 10);
+	displayFont = loadBitmapFont(config.getRenderFontDisplay(), computeFontSize(15));
 
 	//menu fonts
 	menuFontSmall = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(12));
@@ -124,21 +129,25 @@ void CoreData::load() {
 	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(22));
 	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(26));
 
-//	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/zekton_free.ttf", 14);
-
 	//sounds
-    clickSoundA.load(dir + "/menu/sound/click_a.wav");
-    clickSoundB.load(dir + "/menu/sound/click_b.wav");
-    clickSoundC.load(dir + "/menu/sound/click_c.wav");
-	introMusic.open(dir + "/menu/music/intro_music.ogg");
-	introMusic.setNext(&menuMusic);
-	menuMusic.open(dir + "/menu/music/menu_music.ogg");
-	menuMusic.setNext(&menuMusic);
-	waterSounds.resize(6);
-	for (int i = 0; i < 6; ++i) {
-		waterSounds[i]= new StaticSound();
-		waterSounds[i]->load(dir + "/water_sounds/water" + intToStr(i) + ".wav");
+	try {
+		clickSoundA.load(dir + "/menu/sound/click_a.wav");
+		clickSoundB.load(dir + "/menu/sound/click_b.wav");
+		clickSoundC.load(dir + "/menu/sound/click_c.wav");
+		introMusic.open(dir + "/menu/music/intro_music.ogg");
+		introMusic.setNext(&menuMusic);
+		menuMusic.open(dir + "/menu/music/menu_music.ogg");
+		menuMusic.setNext(&menuMusic);
+		waterSounds.resize(6);
+		for (int i = 0; i < 6; ++i) {
+			waterSounds[i]= new StaticSound();
+			waterSounds[i]->load(dir + "/water_sounds/water" + intToStr(i) + ".wav");
+		}
+	} catch (runtime_error &e) {
+		g_errorLog.add(string("Error loading core data.\n") + e.what());
+		return false;		
 	}
+	return true;
 }
 
 void CoreData::closeSounds(){

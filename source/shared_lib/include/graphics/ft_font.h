@@ -35,6 +35,9 @@ struct font_data {
 	float h;			///< Holds the height of the font.
 	GLuint * textures;	///< Holds the texture id's 
 	GLuint list_base;	///< Holds the first display list id
+	bool initialised;
+
+	font_data() : textures(0), initialised(false) {}
 
 	// The init function will create a font of of the height h from the file fname.
 	void init(const char * fname, unsigned int h, FontMetrics &metrics);

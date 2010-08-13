@@ -143,11 +143,14 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 	this->h = metrics.getHeight();
 	FSFactory::doneFace(face);
 	FT_Done_FreeType(library);
+	initialised = true;
 }
 
 void font_data::clean() {
-	glDeleteLists(list_base, 256);
-	glDeleteTextures(256, textures);
+	if (initialised) {
+		glDeleteLists(list_base, 256);
+		glDeleteTextures(256, textures);
+	}
 	delete [] textures;
 }
 

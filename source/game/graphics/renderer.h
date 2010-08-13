@@ -163,7 +163,7 @@ public:
 	static Renderer &getInstance();
 
     //init
-	void init();
+	bool init();
 	void initGame(GameState *game);
 	void initMenu(MainMenu *mm);
 	void reset3d();

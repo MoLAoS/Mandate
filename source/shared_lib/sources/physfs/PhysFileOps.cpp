@@ -36,7 +36,7 @@ void PhysFileOps::openRead(const char *fname){
 	string str(fname);
 	str = cleanPath(str);  // get rid of ../ and ./
 	if(!(this->f = PHYSFS_openRead(str.c_str()))){
-		throw runtime_error("PHYSFS_openRead failed: " + str+ "\nError: " + getLastError());
+		throw runtime_error("PHYSFS_openRead failed: " + str + "\nError: " + getLastError());
 	}
 }
 

@@ -86,7 +86,7 @@ public:
 	static CoreData &getInstance();
 	~CoreData();
 
-    void load();
+	bool load();
 	void closeSounds();
 
 	TexPtr getBackgroundTexture() const		{return backgroundTexture;}

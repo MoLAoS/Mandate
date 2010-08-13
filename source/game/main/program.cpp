@@ -118,7 +118,7 @@ Program::Program(CmdArgs &args)
 	// set video mode
 	setDisplaySettings();
 
-	// window
+	// Window
 	Window::setText("Glest Advanced Engine");
 	Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
 	Window::setPos(0, 0);
@@ -131,7 +131,7 @@ Program::Program(CmdArgs &args)
 	Logger::getClientLog().clear();
 	Logger::getErrorLog().clear();
 
-	//lang
+	// lang
 	g_lang.setLocale(g_config.getUiLocale());
 
 	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
@@ -140,11 +140,10 @@ Program::Program(CmdArgs &args)
 	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
 	makeCurrentGl();
 
-	// coreData, needs renderer, but must load before renderer init
-	g_coreData.load();
-
-	// init renderer (load global textures)
-	g_renderer.init();
+	// load coreData, (needs renderer, but must load before renderer init) and init renderer
+	if (!g_coreData.load() || !g_renderer.init()) {
+		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
+	}	
 
 	//sound
 	g_soundRenderer.init(this);

@@ -197,7 +197,7 @@ Renderer &Renderer::getInstance(){
 
 // ==================== init ====================
 
-void Renderer::init(){
+bool Renderer::init(){
 
 	Config &config= Config::getInstance();
 
@@ -213,12 +213,17 @@ void Renderer::init(){
 		config.save();
 	}
 
-	modelManager[ResourceScope::GLOBAL]->init();
-	textureManager[ResourceScope::GLOBAL]->init();
-	fontManager[ResourceScope::GLOBAL]->init();
-
+	try {
+		modelManager[ResourceScope::GLOBAL]->init();
+		textureManager[ResourceScope::GLOBAL]->init();
+		fontManager[ResourceScope::GLOBAL]->init();
+	} catch (runtime_error &e) {
+		g_errorLog.add(string("Error loading core data.\n") + e.what());
+		return false;
+	}
 	init2dList();
 	init2dNonVirtList();
+	return true;
 }
 
 void Renderer::initGame(GameState *game){

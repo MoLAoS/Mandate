@@ -160,7 +160,7 @@ void logNetwork(const string &msg) {
 	GameRole role = g_simInterface->getNetworkRole();
 	if (role == GameRole::SERVER) {
 		Logger::getServerLog().addNetworkMsg(msg);
-	} else if (role = GameRole::CLIENT) {
+	} else if (role == GameRole::CLIENT) {
 		Logger::getClientLog().addNetworkMsg(msg);
 	} else {
 		// what the ...
