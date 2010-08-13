@@ -312,7 +312,7 @@ private:
 	bool attemptMoveUnits(const vector<Unit *> &occupants) const;
 	void blockedBuild(Unit *unit) const;
 	void acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const;
-	void newBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
+	void continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
 };
 
 
@@ -399,6 +399,7 @@ class ProduceCommandType: public CommandType {
 private:
 	const ProduceSkillType* produceSkillType;
 	const UnitType *producedUnit;
+	SoundContainer finishedSounds;
 
 public:
 	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true) {}
@@ -408,6 +409,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
+	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
 
 	//get
 	const ProduceSkillType *getProduceSkillType() const	{return produceSkillType;}
@@ -426,6 +428,7 @@ class UpgradeCommandType: public CommandType {
 private:
 	const UpgradeSkillType* upgradeSkillType;
 	const UpgradeType* producedUpgrade;
+	SoundContainer finishedSounds;
 
 public:
 	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true) {}
@@ -437,6 +440,7 @@ public:
 		upgradeSkillType->getDesc(str, unit);
 		str += "\n" + getProducedUpgrade()->getDesc();
 	}
+	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
 
 	//get
@@ -456,6 +460,7 @@ private:
 	const MorphSkillType* morphSkillType;
 	const UnitType* morphUnit;
 	int discount;
+	SoundContainer finishedSounds;
 
 public:
 	MorphCommandType() : CommandType("Morph", Clicks::ONE) {}
@@ -465,6 +470,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
+	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
 
 	//get
 	const MorphSkillType *getMorphSkillType() const	{return morphSkillType;}

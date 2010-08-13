@@ -478,7 +478,7 @@ void BuildCommandType::update(Unit *unit) const {
 			}
 		}
 	} else {
-		newBuild(unit, command, builtUnitType);
+		continueBuild(unit, command, builtUnitType);
 	}
 }
 
@@ -629,7 +629,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 }
 
-void BuildCommandType::newBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
+void BuildCommandType::continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
 	BUILD_LOG( "building." );
 	Unit *builtUnit = command->getUnit();
 

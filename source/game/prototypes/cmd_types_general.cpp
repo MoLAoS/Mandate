@@ -19,6 +19,7 @@
 #include "upgrade_type.h"
 #include "unit_type.h"
 #include "sound.h"
+#include "sound_renderer.h"
 #include "util.h"
 #include "leak_dumper.h"
 #include "graphics_interface.h"
@@ -115,7 +116,7 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
 		moveSkillType= static_cast<const MoveSkillType*>(st);
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		loadOk = false;
 	}
 	return loadOk;
@@ -190,7 +191,7 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		string skillName= n->getChild("stop-skill")->getAttribute("value")->getRestrictedValue();
 		stopSkillType= static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 	return loadOk;
@@ -236,7 +237,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
 		produceSkillType= static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -244,7 +245,24 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		string producedUnitName= n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
 		producedUnit= ft->getUnitType(producedUnitName);
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
+		loadOk = false;
+	}
+	// finished sound
+	try {
+		const XmlNode *finishSoundNode = n->getChild("finished-sound");
+		if (finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+			finishedSounds.resize(finishSoundNode->getChildCount());
+			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
+				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
+				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
+				sound->load(dir + "/" + path);
+				finishedSounds[i] = sound;
+			}
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -298,6 +316,10 @@ void ProduceCommandType::update(Unit *unit) const {
 					produced->giveCommand(new Command(ct, CommandFlags(), unit->getMeetingPos()));
 				}
 				unit->finishCommand();
+				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+						g_gameState.getGameCamera()->getPos());
+				}
 			}
 			unit->setCurrSkill(SkillClass::STOP);
 		}
@@ -316,14 +338,31 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		string skillName= n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
 		upgradeSkillType= static_cast<const UpgradeSkillType*>(unitType->getSkillType(skillName, SkillClass::UPGRADE));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	try {
 		string producedUpgradeName= n->getChild("produced-upgrade")->getAttribute("name")->getRestrictedValue();
 		producedUpgrade= ft->getUpgradeType(producedUpgradeName);
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
+		loadOk = false;
+	}
+	// finished sound
+	try {
+		const XmlNode *finishSoundNode = n->getChild("finished-sound");
+		if (finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+			finishedSounds.resize(finishSoundNode->getChildCount());
+			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
+				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
+				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
+				sound->load(dir + "/" + path);
+				finishedSounds[i] = sound;
+			}
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -358,6 +397,10 @@ void UpgradeCommandType::update(Unit *unit) const {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->getFaction()->finishUpgrade(producedUpgrade);
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+					g_gameState.getGameCamera()->getPos());
+			}
 		}
 	}
 }
@@ -373,7 +416,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		string skillName= n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
 		morphSkillType= static_cast<const MorphSkillType*>(unitType->getSkillType(skillName, SkillClass::MORPH));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//morph unit
@@ -381,13 +424,30 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		string morphUnitName= n->getChild("morph-unit")->getAttribute("name")->getRestrictedValue();
 		morphUnit= ft->getUnitType(morphUnitName);
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//discount
 	try { discount= n->getChild("discount")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
+		loadOk = false;
+	}
+	// finished sound
+	try {
+		const XmlNode *finishSoundNode = n->getChild("finished-sound");
+		if (finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+			finishedSounds.resize(finishSoundNode->getChildCount());
+			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
+				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
+				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
+				sound->load(dir + "/" + path);
+				finishedSounds[i] = sound;
+			}
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -455,6 +515,10 @@ void MorphCommandType::update(Unit *unit) const {
 					// obstacle added or removed, update annotated maps
 					g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				}
+				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+						g_gameState.getGameCamera()->getPos());
+				}
 			} else {
 				unit->cancelCurrCommand();
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -478,7 +542,7 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
 		loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -613,7 +677,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
 		unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	
