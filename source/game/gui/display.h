@@ -58,12 +58,6 @@ public:
 
 private:
 	UserInterface *m_ui;
-	string title;
-	string text;
-	string infoText;
-	const Texture2D *upImages[upCellCount];
-	const Texture2D *downImages[downCellCount];
-	const Texture2D *carryImages[carryCellCount];
 	bool downLighted[downCellCount];
 	int index[downCellCount];
 	const CommandType *commandTypes[downCellCount];
@@ -87,12 +81,9 @@ public:
 	Display(UserInterface *ui, Vec2i pos, Vec2i size);
 
 	//get
-	string getTitle() const							{return title;}
-	string getText() const							{return text;}
-	string getInfoText() const						{return infoText;}
-	const Texture2D *getUpImage(int index) const	{return upImages[index];}
-	const Texture2D *getDownImage(int index) const	{return downImages[index];}
-	const Texture2D *getCarryImage(int index) const	{return carryImages[index];}
+	string getTitle() const							{return TextWidget::getText(0);}
+	string getText() const							{return TextWidget::getText(1);}
+	string getInfoText() const						{return TextWidget::getText(2);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
@@ -106,9 +97,9 @@ public:
 	void setText(const string &text);
 	void setInfoText(const string &infoText);
 
-	void setUpImage(int i, const Texture2D *image) 		{upImages[i]= image; setImage(image, i);}
-	void setDownImage(int i, const Texture2D *image)	{downImages[i]= image; setImage(image, upCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	{carryImages[i]= image;}
+	void setUpImage(int i, const Texture2D *image) 		{setImage(image, i);}
+	void setDownImage(int i, const Texture2D *image)	{setImage(image, upCellCount + i);}
+	void setCarryImage(int i, const Texture2D *image)	{/* TODO */}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}

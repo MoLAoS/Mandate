@@ -137,20 +137,19 @@ void trimTrailingNewlines(string &str) {
 }
 
 void Display::setTitle(const string title) {
-	if (this->title.empty() && title.empty()) {
+	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;
-	}	string str = Util::formatString(title);
-	this->title = str;
-	
+	}
+	string str = Util::formatString(title);	
 	TextWidget::setText(str, 0);
 }
 
 void Display::setText(const string &text) {
-	if (this->text.empty() && text.empty()) {
+	if (TextWidget::getText(1).empty() && text.empty()) {
 		return;
 	}
 	string str = Util::formatString(text);
-	this->text= str;
+
 	int lines = 1;
 	foreach_const (string, it, str) {
 		if (*it == '\n') ++lines;
@@ -162,12 +161,11 @@ void Display::setText(const string &text) {
 }
 
 void Display::setInfoText(const string &infoText) {
-	if (this->infoText.empty() && infoText.empty()) {
+	if (TextWidget::getText(2).empty() && infoText.empty()) {
 		return;
 	}
 	string str = Util::formatString(infoText);
 	trimTrailingNewlines(str);
-	this->infoText = str;
 
 	int lines = 1;
 	foreach_const (string, it, str) {
@@ -182,12 +180,10 @@ void Display::setInfoText(const string &infoText) {
 // misc
 void Display::clear(){
 	for(int i=0; i<upCellCount; ++i){
-		upImages[i]= NULL;
 		setImage(0, i);
 	}
 
 	for(int i=0; i<downCellCount; ++i){
-		downImages[i]= NULL;
 		downLighted[i]= true;
 		commandTypes[i]= NULL;
 		commandClasses[i]= CommandClass::NULL_COMMAND;
@@ -195,7 +191,7 @@ void Display::clear(){
 	}
 
 	for(int i=0; i<carryCellCount; ++i){
-		carryImages[i]= NULL;
+		///@todo re-implement
 	}
 
 	setDownSelectedPos(invalidPos);
