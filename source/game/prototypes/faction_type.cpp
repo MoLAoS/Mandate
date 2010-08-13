@@ -204,8 +204,23 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		const XmlNode *musicNode= factionNode->getChild("music");
 		bool value = musicNode->getAttribute("value")->getBoolValue();
 		if (value) {
-			music = new StrSound();
-			music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());
+			XmlAttribute *playListAttr = musicNode->getAttribute("play-list", false);
+			if (playListAttr && playListAttr->getBoolValue()) {
+				StrSound *last = 0;
+				for (int i=0; i < musicNode->getChildCount(); ++i) {
+					StrSound *sound = new StrSound();
+					sound->open(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
+					if (!i) {
+						music = last = sound;
+					} else {
+						last->setNext(sound);
+						last = sound;
+					}
+				}
+			} else {
+				music = new StrSound();
+				music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());
+			}
 		}
 	} catch (runtime_error e) { 
 		Logger::getErrorLog().addXmlError(path, e.what());
