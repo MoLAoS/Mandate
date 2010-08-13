@@ -250,8 +250,8 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	}
 	// finished sound
 	try {
-		const XmlNode *finishSoundNode = n->getChild("finished-sound");
-		if (finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
+		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
 			finishedSounds.resize(finishSoundNode->getChildCount());
 			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
 				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
@@ -350,8 +350,8 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	}
 	// finished sound
 	try {
-		const XmlNode *finishSoundNode = n->getChild("finished-sound");
-		if (finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
+		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
 			finishedSounds.resize(finishSoundNode->getChildCount());
 			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
 				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
@@ -435,8 +435,8 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	}
 	// finished sound
 	try {
-		const XmlNode *finishSoundNode = n->getChild("finished-sound");
-		if (finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
+		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
 			finishedSounds.resize(finishSoundNode->getChildCount());
 			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
 				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
