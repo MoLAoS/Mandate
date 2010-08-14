@@ -62,10 +62,8 @@ private:
 
 	int duration;
 	fixed chance;
-	//float chance;
 	bool light;
 	Vec3f lightColour;
-	ParticleSystemType *particleSystemType;
 	StaticSound *sound;
 	float soundStartTime;
 	bool loopSound;
@@ -73,6 +71,7 @@ private:
 	EffectTypeFlags flags;
 	const AttackType *damageType;
 	bool display;
+	UnitParticleSystemTypes particleSystems;
 
 public:
 	EffectType();
@@ -103,8 +102,9 @@ public:
 	fixed getChance() const								{return chance;}
 	bool isLight() const								{return light;}
 	bool isDisplay() const								{return display;}
-	Vec3f getLightColour() const							{return lightColour;}
-	ParticleSystemType *getParticleSystemType() const	{return particleSystemType;}
+	Vec3f getLightColour() const						{return lightColour;}
+	UnitParticleSystemTypes& getParticleTypes()			{return particleSystems;}
+	const UnitParticleSystemTypes& getParticleTypes() const	{return particleSystems;}
 	StaticSound *getSound() const						{return sound;}
 	float getSoundStartTime() const						{return soundStartTime;}
 	bool isLoopSound() const							{return loopSound;}

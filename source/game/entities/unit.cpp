@@ -479,9 +479,9 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 		return;
 	}
 	if (newSkill != currSkill) {
-		while(!eyeCandy.empty()){
-			eyeCandy.back()->fade();
-			eyeCandy.pop_back();
+		while(!skillParticleSystems.empty()){
+			skillParticleSystems.back()->fade();
+			skillParticleSystems.pop_back();
 		}
 	}
 	progress2 = 0;
@@ -491,7 +491,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem();
 		ups->setPos(getCurrVector());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
-		eyeCandy.push_back(ups);
+		skillParticleSystems.push_back(ups);
 		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
 	}
 }
@@ -1062,12 +1062,12 @@ bool Unit::update() {
 	//rotation
 	bool moved = currSkill->getClass() == SkillClass::MOVE;
 	bool rotated = false;
-	if(currSkill->getClass() != SkillClass::STOP) {
+	if (currSkill->getClass() != SkillClass::STOP) {
 		const int rotFactor = 2;
-		if(getProgress() < 1.f / rotFactor) {
-			if(type->getFirstStOfClass(SkillClass::MOVE)) {
+		if (getProgress() < 1.f / rotFactor) {
+			if (type->getFirstStOfClass(SkillClass::MOVE)) {
 				rotated = true;
-				if(abs(lastRotation - targetRotation) < 180) {
+				if (abs(lastRotation - targetRotation) < 180) {
 					rotation = lastRotation + (targetRotation - lastRotation) * getProgress() * rotFactor;
 				} else {
 					float rotationTerm = targetRotation > lastRotation ? -360.f : + 360.f;
@@ -1082,7 +1082,11 @@ bool Unit::update() {
 		fire->setPos(getCurrVector());
 	}
 	if (moved || rotated) {
-		foreach (UnitParticleSystems, it, eyeCandy) {
+		foreach (UnitParticleSystems, it, skillParticleSystems) {
+			if (moved) (*it)->setPos(getCurrVector());
+			if (rotated) (*it)->setRotation(getRotation());
+		}
+		foreach (UnitParticleSystems, it, effectParticleSystems) {
 			if (moved) (*it)->setPos(getCurrVector());
 			if (rotated) (*it)->setRotation(getRotation());
 		}
@@ -1189,6 +1193,7 @@ Unit* Unit::tick() {
 	effects.tick();
 	if (effects.isDirty()) {
 		recalculateStats();
+		checkEffectParticles();
 	}
 
 	return killer;
@@ -1484,7 +1489,25 @@ bool Unit::add(Effect *e) {
 		}
 	}
 
+	bool startParticles = true;
+	foreach (Effects, it, effects) {
+		if (e->getType() == (*it)->getType()) {
+			startParticles = false;
+			break;
+		}
+	}
 	effects.add(e);
+
+	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
+	if (!particleTypes.empty() && startParticles) {
+		foreach_const (UnitParticleSystemTypes, it, particleTypes) {
+			UnitParticleSystem *ups = (*it)->createUnitParticleSystem();
+			ups->setPos(getCurrVector());
+			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
+			effectParticleSystems.push_back(ups);
+			g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
+		}
+	}
 
 	if (effects.isDirty()) {
 		recalculateStats();
@@ -1505,11 +1528,34 @@ void Unit::remove(Effect *e) {
 	}
 }
 
+void Unit::checkEffectParticles() {
+	set<const EffectType*> seenEffects;
+	foreach (Effects, it, effects) {
+		seenEffects.insert((*it)->getType());
+	}
+	set<const UnitParticleSystemType*> seenSystems;
+	foreach_const (set<const EffectType*>, it, seenEffects) {
+		const UnitParticleSystemTypes &types = (*it)->getParticleTypes();
+		foreach_const (UnitParticleSystemTypes, it2, types) {
+			seenSystems.insert(*it2);
+		}
+	}
+	UnitParticleSystems::iterator psIt = effectParticleSystems.begin();
+	while (psIt != effectParticleSystems.end()) {
+		if (seenSystems.find((*psIt)->getType()) == seenSystems.end()) {
+			(*psIt)->fade();
+			psIt = effectParticleSystems.erase(psIt);
+		} else {
+			++psIt;
+		}
+	}
+}
+
 /**
  * Notify this unit that the effect they gave to somebody else has expired. This effect will
  * (should) have been one that this unit caused.
  */
-void Unit::effectExpired(Effect *e){
+void Unit::effectExpired(Effect *e) {
 	e->clearSource();
 	effectsCreated.remove(e);
 	effects.clearRootRef(e);

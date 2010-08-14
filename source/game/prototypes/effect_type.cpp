@@ -32,7 +32,6 @@ EffectType::EffectType() : lightColour(0.0f) {
 	duration = 0;
 	chance = 100;
 	light = false;
-	particleSystemType = NULL;
 	sound = NULL;
 	soundStartTime = 0.0f;
 	loopSound = false;
@@ -45,17 +44,18 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	const XmlNode *node;
 
 	bool loadOk = true;
-	// name
-	try { name = en->getAttribute("name")->getRestrictedValue(); }
-	catch (runtime_error e) {
+	
+	try { // name
+		name = en->getAttribute("name")->getRestrictedValue(); 
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
+
 	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
 	id = const_cast<TechTree*>(tt)->addEffectType(this);
 
-	// bias
-	try {
+	try { // bias
 		tmp = en->getAttribute("bias")->getRestrictedValue();
 		bias = EffectBiasNames.match(tmp.c_str());
 		if (bias == EffectBias::INVALID) {
@@ -66,8 +66,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	// stacking
-	try {
+	try { // stacking
 		tmp = en->getAttribute("stacking")->getRestrictedValue();
 		stacking = EffectStackingNames.match(tmp.c_str());
 		if (stacking == EffectStacking::INVALID) {
@@ -78,8 +77,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	// target (default all)
-	try {
+	try { // target (default all)
 		attr = en->getAttribute("target", false);
 		if(attr) {
 			tmp = attr->getRestrictedValue();
@@ -96,8 +94,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			} else {
 				throw runtime_error("Not a valid value for units-effected: " + tmp + ": " + dir);
 			}
-		} else {
-			//default value
+		} else { // default value
 			flags.set(EffectTypeFlag::ALLY, true);
 			flags.set(EffectTypeFlag::FOE, true);
 		}
@@ -106,8 +103,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//chance (default 100%)
-	try {
+	try { // chance (default 100%)
 		attr = en->getAttribute("chance", false);
 		if (attr) {
 			chance = attr->getFixedValue();
@@ -119,15 +115,14 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//duration
-	try { duration = en->getAttribute("duration")->getIntValue(); }
-	catch (runtime_error e) {
+	try { // duration
+		duration = en->getAttribute("duration")->getIntValue();
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
-	//damageType (default NULL)
-	try {
+	try { // damageType (default NULL)
 		attr = en->getAttribute("damage-type", false);
 		if(attr) {
 			damageType = tt->getAttackType(attr->getRestrictedValue());
@@ -138,8 +133,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//display (default true)
-	try {
+	try { // display (default true)
 		attr = en->getAttribute("display", false);
 		if(attr) {
 			display = attr->getBoolValue();
@@ -151,8 +145,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//image (default NULL)
-	try {
+	try { // image (default NULL)
 		attr = en->getAttribute("image", false);
 		if(attr && !(attr->getRestrictedValue() == "")) {
 			image = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
@@ -163,16 +156,15 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//flags
+	// flags
 	const XmlNode *flagsNode = en->getChild("flags", 0, false);
-	if(flagsNode) {
+	if (flagsNode) {
 		flags.load(flagsNode, dir, tt, ft);
 	}
 
 	EnhancementType::load(en, dir, tt, ft);
 
-	//light & lightColour
-	try {
+	try { // light & lightColour
 		const XmlNode *lightNode = en->getChild("light", 0, false);
 		if(lightNode) {
 			light = lightNode->getAttribute("enabled")->getBoolValue();
@@ -189,21 +181,24 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
-	//particle
-	try {
-		const XmlNode *particleNode = en->getChild("particle", 0, false);
-		if(particleNode && particleNode->getAttribute("value")->getBoolValue()) {
-			string path = particleNode->getAttribute("path")->getRestrictedValue();
-			//	   	particleSystemType = new ParticleSystemType();
-			//	   	particleSystemType->load(en,  dir + "/" + path);
+	
+	try { // particle systems
+		const XmlNode *particlesNode = en->getOptionalChild("particle-systems");
+		if (particlesNode) {
+			for (int i=0; i < particlesNode->getChildCount(); ++i) {
+				const XmlNode *particleFileNode = particlesNode->getChild("particle-file", i);
+				string path = particleFileNode->getAttribute("path")->getRestrictedValue();
+				UnitParticleSystemType *unitParticleSystemType = new UnitParticleSystemType();
+				unitParticleSystemType->load(dir,  dir + "/" + path);
+				particleSystems.push_back(unitParticleSystemType);
+			}
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
-	//sound
-	try { 
+	try { // sound
 		const XmlNode *soundNode = en->getChild("sound", 0, false);
 		if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
 			soundStartTime = soundNode->getAttribute("start-time")->getFloatValue();
@@ -217,8 +212,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	//recourse
-	try {
+	try { // recourse
 		const XmlNode *recourseEffectsNode = en->getChild("recourse-effects", 0, false);
 		if(recourseEffectsNode) {
 			recourse.resize(recourseEffectsNode->getChildCount());

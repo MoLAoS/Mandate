@@ -214,7 +214,8 @@ private:
 
 	Commands commands;
 
-	UnitParticleSystems eyeCandy;
+	UnitParticleSystems skillParticleSystems;
+	UnitParticleSystems effectParticleSystems;
 
 	int commandCallback;		// for script 'command callbacks'
 	int hp_below_trigger;		// if non-zero, call the Trigger manager when HP falls below this
@@ -240,6 +241,8 @@ private:
 	Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
 	~Unit();
 
+	void checkEffectParticles();
+
 public:
 	void save(XmlNode *node) const;
 
@@ -249,7 +252,6 @@ public:
 	Zone getCurrZone() const					{return type->getZone();}
 	int getLoadCount() const					{return loadCount;}
 	int getSize() const							{return type->getSize();}
-	//float getLastAnimProgress() const			{return lastAnimProgress;}
 	float getProgress() const;
 	float getAnimProgress() const;
 	float getHightlight() const					{return highlight;}
@@ -299,6 +301,7 @@ public:
 	const RepairCommandType *getRepairCommandType(const Unit *u) const;
 	int getDeadCount() const					{return deadCount;}
 	bool isMobile ()							{ return type->isMobile(); }
+
 	//-- for carry units
 	UnitContainer &getUnitsToCarry()			{return unitsToCarry;}
 	void setUnitsToCarry(const UnitContainer &v) { unitsToCarry = UnitContainer(v);}

@@ -166,8 +166,10 @@ private:
 	bool fixed;
 	float rotation;
 
+	const UnitParticleSystemType *type;
+
 public:
-	UnitParticleSystem(int particleCount = 2000);
+	//UnitParticleSystem(int particleCount = 2000);
 	UnitParticleSystem(const UnitParticleSystemType &model, int particleCount = 2000);
 
 	//virtual
@@ -187,8 +189,9 @@ public:
 	void setFixed(bool fixed)							{this->fixed = fixed;}
 	void setTeamColour(Vec3f teamColour);
 	
+	const UnitParticleSystemType* getType() const {return type;}
 };
-typedef vector<UnitParticleSystem*> UnitParticleSystems;
+typedef list<UnitParticleSystem*> UnitParticleSystems;
 
 
 }}

@@ -343,6 +343,7 @@ inline void Splash::updateParticle(Particle *p) {
 //  UnitParticleSystem
 // ===========================================================================
 
+/*
 UnitParticleSystem::UnitParticleSystem(int particleCount): ParticleSystem(particleCount){
 	radius = 0.5f;
 	speed = 0.01f;
@@ -364,11 +365,11 @@ UnitParticleSystem::UnitParticleSystem(int particleCount): ParticleSystem(partic
 	fixedAddition = Vec3f(0.f, 0.f, 0.f);
 
 }
-
+*/
 UnitParticleSystem::UnitParticleSystem(const UnitParticleSystemType &protoType, int particleCount)
 		: ParticleSystem(protoType, particleCount){
 	// are these not set in prototype?
-	
+	type = &protoType;
 	radius = 0.5f; // not set in prototype?
 	
 	rotation = 0.0f;

@@ -301,7 +301,11 @@ void UnitParticleSystemType::load(const XmlNode *particleSystemNode, const strin
 		fixed = particleSystemNode->getChildBoolValue("fixed");
 		teamColorNoEnergy = particleSystemNode->getOptionalBoolValue("teamcolorNoEnergy", false);
 		teamColorEnergy = particleSystemNode->getOptionalBoolValue("teamcolorEnergy", false);
-		
+		maxParticles = particleSystemNode->getOptionalIntValue("max-particles", 200);
+		if (maxParticles > 200) {
+			maxParticles = 200;
+		}
+
 		string mode = particleSystemNode->getOptionalRestrictedValue("mode", "normal");
 		if (mode == "black") {
 			setDestBlendFactor(BlendFactor::ONE_MINUS_SRC_ALPHA);

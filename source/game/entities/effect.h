@@ -80,12 +80,8 @@ public:
 	void setDuration(int duration)	{this->duration = duration;}
 	void setStrength(fixed strength){this->strength = strength;}
 
-	/**
-	 * Causes the effect to age one tick and returns true when the effect has
-	 * expired (and should be removed from the Unit).
-	 */
-	//REFACTOR : Effect is-a GameEntity, this should be update(), and called 
-	// once per world frame (if it's not already) -- currently 8 frames ?
+	/** Causes the effect to age one tick and returns true when the effect has
+	  * expired (and should be removed from the Unit). */
 	bool tick() {
 		return type->isPermanent() ? false : --duration <= 0;
 	}

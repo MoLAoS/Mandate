@@ -106,7 +106,7 @@ protected:
 	bool teamColorEnergy;
 	bool teamColorNoEnergy;
 
-	//string mode; // ?
+	int maxParticles;
 
 public:
 	UnitParticleSystemType();
@@ -122,7 +122,7 @@ public:
 	bool hasTeamColorNoEnergy() const { return teamColorNoEnergy; }
 
 	UnitParticleSystem* createUnitParticleSystem() const {
-		return new UnitParticleSystem(*this, 200);
+		return new UnitParticleSystem(*this, maxParticles);
 	}
 	virtual ParticleSystem* create() { return createUnitParticleSystem(); }
 };
