@@ -54,7 +54,6 @@ private:
 	bool loadingGame;
 	static char errorBuf[];
 	int totalUnits, unitsLoaded;
-	//int totalClusters, clustersInit;
 
 	GraphicProgressBar *progressBar;
 
@@ -66,25 +65,10 @@ private:
 	}
 
 public:
-	static Logger &getInstance() {
-		static Logger logger( "glestadv.log" );
-		return logger;
-	}
-
-	static Logger &getServerLog() {
-		static Logger logger( "glestadv-server.log" );
-		return logger;
-	}
-
-	static Logger &getClientLog() {
-		static Logger logger( "glestadv-client.log" );
-		return logger;
-	}
-
-	static Logger &getErrorLog() {
-		static Logger logger( "glestadv-error.log" );
-		return logger;
-	}
+	static Logger &getInstance();
+	static Logger &getServerLog();
+	static Logger &getClientLog();
+	static Logger &getErrorLog();
 
 	//void setFile(const string &fileName) {this->fileName= fileName;}
 	void setState(const string &state);

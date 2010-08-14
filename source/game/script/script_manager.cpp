@@ -690,7 +690,7 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 }
 
 int ScriptManager::panicFunc(LuaHandle *luaHandle) {
-	Logger::getErrorLog().add("Fatal Error: Lua panic.");
+	g_errorLog.add("Fatal Error: Lua panic.");
 	return 0;
 }
 
@@ -700,7 +700,7 @@ int ScriptManager::debugLog(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string msg;
 	if (extractArgs(args, "debugLog", "str", &msg)) {
-		Logger::getErrorLog().add(msg);
+		g_errorLog.add(msg);
 	}
 	return args.getReturnCount();
 }

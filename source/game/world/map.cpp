@@ -710,7 +710,7 @@ void panic(Vec2i currPos, Unit *unit, Unit *other) {
 		<< currPos << "{" << ZoneNames[zone] << "}" << " cell is already occupied by a " 
 		<< other->getType()->getName() << " [id:" << other->getId() << "] {"
 		<< ZoneNames[o_zone] << "}";
-	Logger::getErrorLog().add(ss.str());
+	g_errorLog.add(ss.str());
 	throw runtime_error ( "Ooops... see glestadv-error.log" );
 }
 

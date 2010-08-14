@@ -44,35 +44,36 @@ float GameCamera::moveScale = 32.f;
 
 // ================= Constructor =================
 
-GameCamera::GameCamera() : pos(0.f, defaultHeight, 0.f),
-		destPos(0.f, defaultHeight, 0.f), destAng(startingVAng, startingHAng) {
-	Config &config = Config::getInstance();
-	state= sFree;
+GameCamera::GameCamera()
+		: pos(0.f, defaultHeight, 0.f)
+		, destPos(0.f, defaultHeight, 0.f)
+		, destAng(startingVAng, startingHAng) {
+	state = sFree;
 
-	//config
-	speed= 15.f / GameConstants::cameraFps;
-	clampBounds= !Config::getInstance().getUiPhotoMode();
+	// config
+	speed = 15.f / GameConstants::cameraFps;
+	clampBounds = !g_config.getUiPhotoMode();
 
-	vAng= startingVAng;
-	hAng= startingHAng;
+	vAng = startingVAng;
+	hAng = startingHAng;
 
-	rotate=0;
+	rotate = 0;
 
-	moveMouse= Vec3f(0.f);
-	moveKey= Vec3f(0.f);
+	moveMouse = Vec3f(0.f);
+	moveKey = Vec3f(0.f);
 
-	maxRenderDistance = config.getRenderDistanceMax();
-	maxHeight = config.getCameraMaxDistance();
-	minHeight = config.getCameraMinDistance();
-	maxCameraDist = config.getCameraMaxDistance();
-	minCameraDist = config.getCameraMinDistance();
+	maxRenderDistance = g_config.getRenderDistanceMax();
+	maxHeight = g_config.getCameraMaxDistance();
+	minHeight = g_config.getCameraMinDistance();
+	maxCameraDist = g_config.getCameraMaxDistance();
+	minCameraDist = g_config.getCameraMinDistance();
 
-	minVAng = -config.getCameraMaxYaw();
-	//maxVAng = -config.getCameraMinYaw();
+	minVAng = -g_config.getCameraMaxYaw();
+	//maxVAng = -config.getCameraMinYaw(); // not compatible with SceneCuller, is set below.
 
-	fov = config.getRenderFov();
+	fov = g_config.getRenderFov();
 
-	float vFov = fov / Metrics::getInstance().getAspectRatio();
+	float vFov = fov / g_metrics.getAspectRatio();
 
 	maxVAng = -(vFov / 2);
 }
@@ -208,11 +209,11 @@ void GameCamera::update() {
 			pos.z += (destPos.z - pos.z) / moveScale;
 		}
 	}
-		clampAng();
+	clampAng();
 
-		if(clampBounds){
-			clampPosXYZ(0.0f, (float)limitX, minHeight, maxHeight, 0.0f, (float)limitY);
-		}
+	if (clampBounds) {
+		clampPosXYZ(0.0f, (float)limitX, minHeight, maxHeight, 0.0f, (float)limitY);
+	}
 }
 
 // is just a reset pos & angle now... should rename it, & ucCameraCycleMode & the keymap string, etc

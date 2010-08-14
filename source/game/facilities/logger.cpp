@@ -39,6 +39,27 @@ const int Logger::logLineCount= 15;
 
 // ===================== PUBLIC ========================
 
+Logger& Logger::getInstance() {
+	static Logger logger( "glestadv.log" );
+	return logger;
+}
+
+Logger& Logger::getServerLog() {
+	static Logger logger( "glestadv-server.log" );
+	return logger;
+}
+
+Logger& Logger::getClientLog() {
+	static Logger logger( "glestadv-client.log" );
+	return logger;
+}
+
+Logger& Logger::getErrorLog() {
+	static Logger logger( "glestadv-error.log" );
+	return logger;
+}
+
+
 void Logger::setState(const string &state){
 	this->state= state;
 	logLines.clear();
@@ -164,7 +185,7 @@ void logNetwork(const string &msg) {
 		Logger::getClientLog().addNetworkMsg(msg);
 	} else {
 		// what the ...
-		Logger::getErrorLog().addNetworkMsg(msg);
+		g_errorLog.addNetworkMsg(msg);
 	}
 }
 

@@ -142,7 +142,7 @@ bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree
 		string skillName= n->getChild("repair-skill")->getAttribute("value")->getRestrictedValue();
 		repairSkillType= static_cast<const RepairSkillType*>(unitType->getSkillType(skillName, SkillClass::REPAIR));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//repaired units
@@ -153,7 +153,7 @@ bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree
 			repairableUnits.push_back(ft->getUnitType(unitNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -377,7 +377,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		string skillName= n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
 		buildSkillType= static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//buildings built
@@ -389,7 +389,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			buildings.push_back(ft->getUnitType(name));
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -407,7 +407,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -425,7 +425,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -667,7 +667,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		skillName= n->getChild("harvest-skill")->getAttribute("value")->getRestrictedValue();
 		harvestSkillType= static_cast<const HarvestSkillType*>(unitType->getSkillType(skillName, SkillClass::HARVEST));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//stop loaded
@@ -675,7 +675,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		skillName= n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
 		stopLoadedSkillType= static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -684,7 +684,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		skillName= n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
 		moveLoadedSkillType= static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//resources can harvest
@@ -695,17 +695,17 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			harvestedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	try { maxLoad= n->getChild("max-load")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	try { hitsPerUnit= n->getChild("hits-per-unit")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;

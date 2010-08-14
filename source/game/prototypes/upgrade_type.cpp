@@ -54,7 +54,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		upgradeNode= xmlTree.getRootNode();
 	}
 	catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 	// image
@@ -64,7 +64,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		image->load(dir+"/"+imageNode->getAttribute("path")->getRestrictedValue());
 	}
 	catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 	// image cancel
@@ -74,21 +74,21 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
 	}
 	catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 
 	// upgrade time
 	try { productionTime= upgradeNode->getChildIntValue("time"); }
 	catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 
 	// ProducibleType parameters (unit/upgrade reqs and resource reqs)
 	try { ProducibleType::load(upgradeNode, dir, techTree, factionType); }
 	catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 
@@ -104,7 +104,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		}
 	}
 	catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 

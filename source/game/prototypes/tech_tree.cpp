@@ -49,13 +49,13 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		xmlTree.load(path);
 	}
 	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError ( path, "File missing or wrongly named." );
+		g_errorLog.addXmlError ( path, "File missing or wrongly named." );
 		return false;
 	}
 	const XmlNode *techTreeNode;
 	try { techTreeNode= xmlTree.getRootNode(); }
 	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError ( path, "File appears to lack contents." );
+		g_errorLog.addXmlError ( path, "File appears to lack contents." );
 		return false;
 	}
 
@@ -74,13 +74,13 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 				attackTypeMap[name] = &attackTypes[i];
 			}
 			catch (runtime_error &e) { 
-				Logger::getErrorLog().addXmlError(path, e.what());
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false; 
 			}
 		}
 	}
 	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError(path, e.what());
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -98,13 +98,13 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 				armorTypeMap[name] = &armorTypes[i];
 			}
 			catch (runtime_error &e) { 
-				Logger::getErrorLog().addXmlError(path, e.what());
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false; 
 			}
 		}  
 	}
 	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError(path, e.what());
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -124,12 +124,12 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 								
 				damageMultiplierTable.setDamageMultiplier(attackType, armourType, fixedMult);
 			} catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError(path, e.what());
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -177,7 +177,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 		throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
 	}
 	if(resourceTypes.size() > 256) {
-		Logger::getErrorLog().addXmlError(str, "Glest Advanced Engine currently only supports 256 resource types.");
+		g_errorLog.addXmlError(str, "Glest Advanced Engine currently only supports 256 resource types.");
 		loadOk = false;
 	} else {
 		for(i=0; i<filenames.size(); ++i){

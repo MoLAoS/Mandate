@@ -129,7 +129,7 @@ Program::Program(CmdArgs &args)
 	Logger::getInstance().clear();
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
-	Logger::getErrorLog().clear();
+	g_errorLog.clear();
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());

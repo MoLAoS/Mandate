@@ -46,7 +46,7 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 		image = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
 		image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
 	return true;
@@ -85,7 +85,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			}
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -100,7 +100,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			}
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -116,7 +116,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			subfactionsReqs = -1; //all subfactions
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -187,13 +187,13 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
 					costs[i].init(techTree->getResourceType(name), amount);
 				} catch (runtime_error e) {
-					Logger::getErrorLog().addXmlError ( dir, e.what() );
+					g_errorLog.addXmlError ( dir, e.what() );
 					loadOk = false;
 				}
 			}
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		loadOk = false;
 	}
 
@@ -206,7 +206,7 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 			advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError ( dir, e.what() );
 		loadOk = false;
 	}
 	return loadOk;

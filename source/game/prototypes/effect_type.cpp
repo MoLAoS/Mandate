@@ -48,7 +48,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	// name
 	try { name = en->getAttribute("name")->getRestrictedValue(); }
 	catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
@@ -62,7 +62,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			throw runtime_error("Not a valid value for bias: " + tmp + ": " + dir);
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -74,7 +74,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			throw runtime_error("Not a valid value for stacking: " + tmp + ": " + dir);
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -102,7 +102,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			flags.set(EffectTypeFlag::FOE, true);
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -115,14 +115,14 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			chance = 100;
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
 	//duration
 	try { duration = en->getAttribute("duration")->getIntValue(); }
 	catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -134,7 +134,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		}
 	}
 	catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -147,7 +147,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			display = true;
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -159,7 +159,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			image->load(dir + "/" + attr->getRestrictedValue());
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -186,7 +186,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			light = false;
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//particle
@@ -198,7 +198,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			//	   	particleSystemType->load(en,  dir + "/" + path);
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -213,7 +213,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			sound->load(dir + "/" + path);
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -230,7 +230,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			}
 		}
 	} catch (runtime_error e) {
-		Logger::getErrorLog().addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	if(hpRegeneration >= 0 && damageType) {
@@ -317,7 +317,7 @@ bool Emanation::load(const XmlNode *n, const string &dir, const TechTree *tt, co
 	//radius
 	try { radius = n->getAttribute("radius")->getIntValue(); }
 	catch (runtime_error e) {
-		Logger::getErrorLog().add ( dir, e.what () );
+		g_errorLog.add ( dir, e.what () );
 		return false;
 	}
 	return true;

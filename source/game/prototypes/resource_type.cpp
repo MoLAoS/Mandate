@@ -47,12 +47,11 @@ bool ResourceType::load(const string &dir, int id) {
 		xmlTree.load(path); 
 		resourceNode = xmlTree.getRootNode();
 		if (!resourceNode) {
-			Logger::getErrorLog().addXmlError(path, "XML file appears to lack contents.");
+			g_errorLog.addXmlError(path, "XML file appears to lack contents.");
 			return false; // bail
 		}
-	}
-	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError(path, "Missing or wrong name of XML file.");
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, "Missing or wrong name of XML file.");
 		return false; // bail
 	}
 	try { // image
@@ -60,18 +59,16 @@ bool ResourceType::load(const string &dir, int id) {
 		imageNode = resourceNode->getChild("image");
 		image = renderer.newTexture2D(ResourceScope::GAME);
 		image->load( dir + "/" + imageNode->getAttribute("path")->getRestrictedValue() );
-	}
-	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError(path, e.what());
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false; // can continue, to catch other errors
 	}
 	const XmlNode *typeNode;
 	try { // type
 		typeNode = resourceNode->getChild("type");
 		resourceClass = strToRc(typeNode->getAttribute("value")->getRestrictedValue());
-	}
-	catch (runtime_error &e) {
-		Logger::getErrorLog().addXmlError(path, e.what());
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, e.what());
 		return false; // bail, can't continue without type
 	}
 
@@ -82,25 +79,22 @@ bool ResourceType::load(const string &dir, int id) {
 				string mPath = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
 				model = renderer.newModel(ResourceScope::GAME);
 				model->load(mPath);
-			}
-			catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+			} catch (runtime_error e) {
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false; // can continue, to catch other errors
 			}
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
 				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
-			}
-			catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+			} catch (runtime_error e) {
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false; // can continue, to catch other errors
 			}
 			try { // resource number
 				const XmlNode *resourceNumberNode = typeNode->getChild("resource-number");
 				resourceNumber = resourceNumberNode->getAttribute("value")->getIntValue();
-			}
-			catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+			} catch (runtime_error e) {
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;
@@ -108,17 +102,15 @@ bool ResourceType::load(const string &dir, int id) {
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
 				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
-			}
-			catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+			} catch (runtime_error e) {
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false; // can continue, to catch other errors
 			}
 			try { // object number
 				const XmlNode *tilesetObjectNode = typeNode->getChild("tileset-object");
 				tilesetObject = tilesetObjectNode->getAttribute("value")->getIntValue();
-			}
-			catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+			} catch (runtime_error e) {
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;
@@ -126,9 +118,8 @@ bool ResourceType::load(const string &dir, int id) {
 			try { // interval
 				const XmlNode *intervalNode = typeNode->getChild("interval");
 				interval = intervalNode->getAttribute("value")->getIntValue();
-			}
-			catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+			} catch (runtime_error e) {
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;
@@ -141,7 +132,7 @@ bool ResourceType::load(const string &dir, int id) {
 					recoupCost = true;
 				}
 			} catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;

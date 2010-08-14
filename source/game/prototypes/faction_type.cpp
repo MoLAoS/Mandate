@@ -51,7 +51,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	try { 
 		findAll(unitsPath, unitFilenames); 
 	} catch (runtime_error e) {
-		Logger::getErrorLog().add(e.what());
+		g_errorLog.add(e.what());
 		loadOk = false;
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
@@ -66,7 +66,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	try { 
 		findAll(upgradesPath, upgradeFilenames); 
 	} catch (runtime_error e) {
-		Logger::getErrorLog().add(e.what());
+		g_errorLog.add(e.what());
 		loadOk = false;
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
@@ -88,7 +88,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	try { 
 		findAll(unitsPath, unitFilenames); 
 	} catch (runtime_error e) {
-		Logger::getErrorLog().add(e.what());
+		g_errorLog.add(e.what());
 		loadOk = false;
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
@@ -115,14 +115,14 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	try { 
 		xmlTree.load(path); 
 	} catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError(path, "File missing or wrongly named.");
+		g_errorLog.addXmlError(path, "File missing or wrongly named.");
 		return false; // bail
 	}
 	const XmlNode *factionNode;
 	try { 
 		factionNode = xmlTree.getRootNode(); 
 	} catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError(path, "File appears to lack contents.");
+		g_errorLog.addXmlError(path, "File appears to lack contents.");
 		return false; // bail
 	}
 	//read subfaction list
@@ -171,12 +171,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				int amount= resourceNode->getAttribute("amount")->getIntValue();
 				startingResources[i].init(techTree->getResourceType(name), amount);
 			} catch (runtime_error e) {
-				Logger::getErrorLog().addXmlError(path, e.what());
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError(path, e.what());
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -190,12 +190,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				int amount = unitNode->getAttribute("amount")->getIntValue();
 				startingUnits.push_back(PairPUnitTypeInt(getUnitType(name), amount));
 			} catch (runtime_error e) { 
-				Logger::getErrorLog().addXmlError(path, e.what());
+				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError(path, e.what());
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -223,50 +223,61 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			}
 		}
 	} catch (runtime_error e) { 
-		Logger::getErrorLog().addXmlError(path, e.what());
+		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
-	//TODO try {} catch {} ... try {} catch {} ... try {} catch {} ... 
-	//notification of being attacked off screen
-	const XmlNode *attackNoticeNode= factionNode->getChild("attack-notice", 0, false);
-	if (attackNoticeNode && attackNoticeNode->getAttribute("enabled")->getRestrictedValue() == "true") {
-		attackNoticeDelay = attackNoticeNode->getAttribute("min-delay")->getIntValue();
-		attackNotice = new SoundContainer();
-		attackNotice->resize(attackNoticeNode->getChildCount());
-		for (int i=0; i<attackNoticeNode->getChildCount(); ++i) {
-			string path= attackNoticeNode->getChild("sound-file", i)->getAttribute("path")->getRestrictedValue();
-			StaticSound *sound= new StaticSound();
-			sound->load(dir + "/" + path);
-			(*attackNotice)[i]= sound;
+	// notification of being attacked off screen
+	try {
+		const XmlNode *attackNoticeNode= factionNode->getChild("attack-notice", 0, false);
+		if (attackNoticeNode && attackNoticeNode->getAttribute("enabled")->getBoolValue()) {
+			attackNoticeDelay = attackNoticeNode->getAttribute("min-delay")->getIntValue();
+			attackNotice = new SoundContainer();
+			attackNotice->resize(attackNoticeNode->getChildCount());
+			for (int i=0; i < attackNoticeNode->getChildCount(); ++i) {
+				string path = attackNoticeNode->getChild("sound-file", i)->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
+				sound->load(dir + "/" + path);
+				(*attackNotice)[i] = sound;
+			}
+			if (attackNotice->getSounds().size() == 0) {
+				g_errorLog.addXmlError(path, "An enabled attack-notice must contain at least one sound-file.");
+				loadOk = false;
+			}
 		}
-		if (attackNotice->getSounds().size() == 0) {
-			throw runtime_error("An enabled attack-notice must contain at least one sound-file: "+ dir);
-		}
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, e.what());
+		loadOk = false;
 	}
 
-	//notification of visual contact with enemy off screen
-	const XmlNode *enemyNoticeNode= factionNode->getChild("enemy-notice", 0, false);
-	if (enemyNoticeNode && enemyNoticeNode->getAttribute("enabled")->getRestrictedValue() == "true") {
-		enemyNoticeDelay = enemyNoticeNode->getAttribute("min-delay")->getIntValue();
-		enemyNotice = new SoundContainer();
-		enemyNotice->resize(enemyNoticeNode->getChildCount());
-		for (int i = 0; i < enemyNoticeNode->getChildCount(); ++i) {
-			string path= enemyNoticeNode->getChild("sound-file", i)->getAttribute("path")->getRestrictedValue();
-			StaticSound *sound= new StaticSound();
-			sound->load(dir + "/" + path);
-			(*enemyNotice)[i]= sound;
+	// notification of visual contact with enemy off screen
+	try {
+		const XmlNode *enemyNoticeNode= factionNode->getChild("enemy-notice", 0, false);
+		if (enemyNoticeNode && enemyNoticeNode->getAttribute("enabled")->getRestrictedValue() == "true") {
+			enemyNoticeDelay = enemyNoticeNode->getAttribute("min-delay")->getIntValue();
+			enemyNotice = new SoundContainer();
+			enemyNotice->resize(enemyNoticeNode->getChildCount());
+			for (int i = 0; i < enemyNoticeNode->getChildCount(); ++i) {
+				string path= enemyNoticeNode->getChild("sound-file", i)->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound= new StaticSound();
+				sound->load(dir + "/" + path);
+				(*enemyNotice)[i]= sound;
+			}
+			if (enemyNotice->getSounds().size() == 0) {
+				g_errorLog.addXmlError(path, "An enabled enemy-notice must contain at least one sound-file.");
+				loadOk = false;
+			}
 		}
-		if (enemyNotice->getSounds().size() == 0) {
-			throw runtime_error("An enabled enemy-notice must contain at least one sound-file: "+ dir);
-		}
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, e.what());
+		loadOk = false;
 	}
 	return loadOk;
 }
 
 bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
-	logger.add("Faction type: "+ dir, true);
+	logger.add("Glestimal Faction: " + dir, true);
 	id = -1;
 	name = basename(dir);
 	bool loadOk = true;
