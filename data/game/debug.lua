@@ -1,8 +1,4 @@
 
-
-dofile("../test.lua");
-
-
 function debugPathfinder()
 	debugSet("ResourceMap=off");
 	debugSet("RegionColouring=off");
