@@ -358,9 +358,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			SkillType *skillType = g_world.getSkillTypeFactory().newInstance(classId);
 			skillType->load(sn, dir, techTree, factionType);
 			skillTypes.push_back(skillType);
-			Checksum checksum;
-			skillType->doChecksum(checksum);
-			g_world.getSkillTypeFactory().setChecksum(skillType, checksum.getSum());
+//			Checksum checksum;
+//			skillType->doChecksum(checksum);
+//			g_world.getSkillTypeFactory().setChecksum(skillType, checksum.getSum());
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(path, e.what());
@@ -379,9 +379,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			CommandType *commandType = g_world.getCommandTypeFactory().newInstance(classId, this);
 			commandType->load(commandNode, dir, techTree, factionType);
 			commandTypes.push_back(commandType);
-			Checksum checksum;
-			commandType->doChecksum(checksum);
-			g_world.getCommandTypeFactory().setChecksum(commandType, checksum.getSum());
+//			Checksum checksum;
+//			commandType->doChecksum(checksum);
+//			g_world.getCommandTypeFactory().setChecksum(commandType, checksum.getSum());
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(path, e.what());
@@ -393,9 +393,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	if (meetingPoint) {
 		CommandType *smpct = g_world.getCommandTypeFactory().newInstance("set-meeting-point", this);
 		commandTypes.push_back(smpct);
-		Checksum checksum;
-		smpct->doChecksum(checksum);
-		g_world.getCommandTypeFactory().setChecksum(smpct, checksum.getSum());
+//		Checksum checksum;
+//		smpct->doChecksum(checksum);
+//		g_world.getCommandTypeFactory().setChecksum(smpct, checksum.getSum());
 	}
 
 	sortCommandTypes();

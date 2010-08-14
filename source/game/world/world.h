@@ -187,6 +187,7 @@ public:
 	void hit(Unit *attacker);
 	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked = NULL);
 	void damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance);
+	void damage(Unit *unit, int hp);
 
 	// effects
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, const Vec2i &targetPos, Field targetField, int splashRadius);

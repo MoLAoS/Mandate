@@ -378,6 +378,9 @@ void ScriptManager::initGame() {
 	// create and give ...
 	LUA_FUNC(createUnit);
 	LUA_FUNC(giveResource);
+	LUA_FUNC(giveUpgrade);
+	LUA_FUNC(damageUnit);
+	LUA_FUNC(destroyUnit);
 
 	// commands
 	LUA_FUNC(givePositionCommand);
@@ -1393,6 +1396,77 @@ int ScriptManager::unitCountOfType(LuaHandle* luaHandle) {
 	}
 	return args.getReturnCount();
 }
+
+int ScriptManager::giveUpgrade(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	string upgrade;
+	if (extractArgs(args, "giveUpgrade", "int,str", &fNdx, &upgrade)) {
+		if (fNdx >= 0 && fNdx < g_world.getFactionCount()) {
+			Faction *faction = g_world.getFaction(fNdx);
+			const FactionType *ft = faction->getType();
+			try {
+				const UpgradeType *ut = ft->getUpgradeType(upgrade);
+				faction->startUpgrade(ut);
+				faction->finishUpgrade(ut);
+			} catch (runtime_error &e) {
+				addErrorMessage("giveUpgrade(): invalid upgrade '" + upgrade + "'");
+			}
+		} else {
+			addErrorMessage("giveUpgrade(): invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::damageUnit(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int unitId, hp;
+	if (extractArgs(args, "damageUnit", "int,int", &unitId, &hp)) {
+		Unit *unit = g_simInterface->getUnitFactory().getUnit(unitId);
+		if (unit) {
+			if (hp > 0) {
+				g_world.damage(unit, hp);
+			} else {
+				addErrorMessage("damageUnit(): invalid hp amount " + intToStr(hp));
+			}
+		} else {
+			addErrorMessage("damageUnit(): invalid unit id " + intToStr(unitId));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::destroyUnit(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int unitId;
+	bool zap;
+	bool good = false;
+	if (extractArgs(args, 0,"int,bln", &unitId, &zap)) {
+		good = true;
+	} else if (extractArgs(args, "destroyUnit", "int", &unitId)) {
+		zap = false;
+		good = true;
+	}
+	if (good) {
+		Unit *unit = g_simInterface->getUnitFactory().getUnit(unitId);
+		if (unit) {
+			if (!unit->isAlive()) {
+				addErrorMessage("destroyUnit(): unit with id " + intToStr(unitId) + " is already dead.");
+			} else if (!zap) {
+				g_world.damage(unit, unit->getHp());
+			} else {
+				g_world.damage(unit, unit->getHp());
+				unit->undertake();
+				g_simInterface->getUnitFactory().deleteUnit(unit);
+			}
+		} else {
+			addErrorMessage("destroyUnit(): invalid unit id " + intToStr(unitId));
+		}
+	}
+	return args.getReturnCount();
+}
+
 
 IF_DEBUG_EDITION(
 

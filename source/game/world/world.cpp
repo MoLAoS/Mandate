@@ -406,6 +406,16 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	}
 }
 
+void World::damage(Unit *unit, int hp) {
+	if (unit->decHp(hp)) {
+		ScriptManager::onUnitDied(unit);
+		unit->kill();
+		if (!unit->isMobile()) { // obstacle removed
+			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+		}
+	}
+}
+
 void World::doKill(Unit *killer, Unit *killed) {
 	ScriptManager::onUnitDied(killed);
 	iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());

@@ -876,7 +876,7 @@ void Unit::kill() {
 	hp = 0;
 	g_world.getCartographer()->removeUnitVisibility(this);
 
-	if (pos != Vec2i(-1)) { // if not in transport, clear cells
+	if (!isCarried()) { // if not in transport, clear cells
 		map->clearUnitCells(this, pos);
 	}
 
@@ -1851,8 +1851,12 @@ void UnitFactory::deleteUnit(Unit *unit) {
 	if (it == unitMap.end()) {
 		throw runtime_error("Error: Unit not in unitMap");
 	}
-	delete unit;
 	unitMap.erase(it);
+	Units::iterator uit = std::find(deadList.begin(), deadList.end(), unit);
+	if (uit != deadList.end()) {
+		deadList.erase(uit);
+	}
+	delete unit;
 }
 
 }}//end namespace

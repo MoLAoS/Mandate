@@ -559,18 +559,18 @@ SkillTypeFactory::SkillTypeFactory()
 SkillTypeFactory::~SkillTypeFactory() {
 	//deleteValues(m_types);
 	foreach (vector<SkillType*>, it, m_types) {
-		assert(m_typeSet.find(*it) != m_typeSet.end());
-		m_typeSet.erase(m_typeSet.find(*it));
-		assert(m_checksumTable.find(*it) != m_checksumTable.end());
-		m_checksumTable.erase(m_checksumTable.find(*it));
+//		assert(m_typeSet.find(*it) != m_typeSet.end());
+//		m_typeSet.erase(m_typeSet.find(*it));
+//		assert(m_checksumTable.find(*it) != m_checksumTable.end());
+//		m_checksumTable.erase(m_checksumTable.find(*it));
 		delete *it;
 	}
-	assert(m_typeSet.empty());
-	assert(m_checksumTable.empty());
+//	assert(m_typeSet.empty());
+//	assert(m_checksumTable.empty());
 	m_types.clear();
 }
 
-void SkillTypeFactory::assertTypes() {
+/*void SkillTypeFactory::assertTypes() {
 	//deleteValues(m_types);
 	foreach (vector<SkillType*>, it, m_types) {
 		assert(m_typeSet.find(*it) != m_typeSet.end());
@@ -579,13 +579,13 @@ void SkillTypeFactory::assertTypes() {
 		(*it)->doChecksum(checksum);
 		assert(m_checksumTable[*it] == checksum.getSum());
 	}
-}
+}*/
 
 SkillType* SkillTypeFactory::newInstance(string classId) {
 	SkillType *st = MultiFactory<SkillType>::newInstance(classId);
 	st->setId(m_idCounter++);
 	m_types.push_back(st);
-	m_typeSet.insert(st);
+//	m_typeSet.insert(st);
 	return st;
 }
 
@@ -595,13 +595,13 @@ SkillType* SkillTypeFactory::getType(int id) {
 	}
 	return m_types[id];
 }
-
+/*
 void SkillTypeFactory::setChecksum(SkillType *st, int32 cs) {
 	assert(m_typeSet.find(st) != m_typeSet.end());
 	assert(m_checksumTable.find(st) == m_checksumTable.end());
 	m_checksumTable[st] = cs;
 }
-
+*/
 // =====================================================
 // 	class ModelFactory
 // =====================================================

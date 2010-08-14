@@ -101,7 +101,7 @@ int EnumNamesBase::_match(const char *value) const {
 					same = false;
 					break;
 				}
-			} else if (!(*ptr1 == '_' && (*ptr2 == ' ' || *ptr2 == '_'))) {
+			} else if (!(*ptr1 == '_' && (*ptr2 == ' ' || *ptr2 == '_' || *ptr2 == '-'))) {
 				same = false;
 				break;
 			}

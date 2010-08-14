@@ -76,37 +76,6 @@ void Effect::save(XmlNode *node) const {
 	node->addChild("recourse", recourse);
 	node->addChild("actualHpRegen", actualHpRegen);
 }
-/*
-class EffectReference : public NetworkWriteable {
-	UnitReference source;
-	int32 typeId;
-	float strength;
-	int32 duration;
-	int8 recourse;
-
-public:
-	EffectReference() : typeId(-1){}
-
-	size_t getNetSize() const				{return getMaxNetSize();}
-	size_t getMaxNetSize() const {
-		return
-			source.getNetSize()
-			+ sizeof(typeId)
-			+ sizeof(strength)
-			+ sizeof(duration)
-			+ sizeof(recourse);
-	}
-	void read(NetworkDataBuffer &buf, World *world);
-	void write(NetworkDataBuffer &buf) const;
-
-	friend Effect;
-};*/
-/*
-void Effect::writeState(EffectState &es) {
-}
-
-void Effect::readState(EffectState &es) {
-}*/
 
 // =====================================================
 //  class Effects

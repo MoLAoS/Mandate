@@ -587,18 +587,18 @@ class CommandTypeFactory: private MultiFactory<CommandType> {
 private:
 	int m_idCounter;
 	vector<CommandType *> m_types;
-	set<CommandType *> m_typeSet;
-	map<CommandType *, int32> m_checksumTable;
+//	set<CommandType *> m_typeSet;
+//	map<CommandType *, int32> m_checksumTable;
 
 public:
 	CommandTypeFactory();
 	~CommandTypeFactory();
-	void assertTypes();
+//	void assertTypes();
 
 	CommandType* newInstance(string classId, UnitType *owner);
 
 	CommandType* getType(int id);
-	void setChecksum(CommandType *ct, int32 cs);
+//	void setChecksum(CommandType *ct, int32 cs);
 };
 
 // update helper, move somewhere sensible

@@ -29,8 +29,8 @@
 #include "forward_decs.h"
 
 using namespace Shared::Lua;
-using Shared::Math::Vec2i;
-using Shared::Math::Vec4i;
+using namespace Shared::Math;
+
 using Shared::Platform::Chrono;
 using std::queue;
 using std::set;
@@ -42,7 +42,7 @@ using Glest::Gui::GameState;
 using Glest::Sim::World;
 using Glest::Graphics::GraphicMessageBox;
 
-namespace Glest{ namespace Script {
+namespace Glest { namespace Script {
 
 // =====================================================
 //	class ScriptTimer
@@ -340,9 +340,12 @@ private:
 	static int setCameraMotion(LuaHandle* luaHandle);
 	static int unfogMap(LuaHandle *luaHandle);			// Gui.unfogMap()
 
-	// create units / hand-out resources
+	// create/damage/destroy units / hand-out resources/upgrades
 	static int createUnit(LuaHandle* luaHandle);		// Faction:createUnit()
 	static int giveResource(LuaHandle* luaHandle);		// Faction:giveResource()
+	static int giveUpgrade(LuaHandle* luaHandle);
+	static int damageUnit(LuaHandle* luaHandle);
+	static int destroyUnit(LuaHandle* luaHandle);
 
 	// commands
 	static int givePositionCommand(LuaHandle* luaHandle);	// Unit:givePosCommand()

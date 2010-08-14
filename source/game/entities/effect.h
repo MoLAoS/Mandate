@@ -91,8 +91,6 @@ public:
 	}
 
 	void save(XmlNode *node) const;
-//	void writeState(EffectState *es);
-//	void readState(EffectState *es);
 };
 
 // ===============================

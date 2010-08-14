@@ -452,17 +452,17 @@ class SkillTypeFactory: public MultiFactory<SkillType>{
 private:
 	vector<SkillType*> m_types;
 	int m_idCounter;
-	set<SkillType *> m_typeSet;
-	map<SkillType *, int32> m_checksumTable;
+//	set<SkillType *> m_typeSet;
+//	map<SkillType *, int32> m_checksumTable;
 
 public:
 	SkillTypeFactory();
 	~SkillTypeFactory();
-	void assertTypes();
+//	void assertTypes();
 
 	SkillType* newInstance(string classId);
 	SkillType* getType(int id);
-	void setChecksum(SkillType *st, int32 cs);
+//	void setChecksum(SkillType *st, int32 cs);
 	int getSkillTypeCount() const { return m_idCounter; }
 };
 
