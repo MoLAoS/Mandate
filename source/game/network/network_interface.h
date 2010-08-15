@@ -37,7 +37,7 @@ WRAPPED_ENUM( NetworkState, LOBBY, GAME )
 class NetworkConnection {
 protected:
 	typedef deque<RawMessage> MessageQueue;
-	static const int readyWaitTimeout = 10000; ///@todo made really low for testing, bump back up
+	static const int readyWaitTimeout = 60000; // 60 sec
 
 private:
 	string remoteHostName;
@@ -71,8 +71,9 @@ public:
 	void receiveMessages();
 	bool hasMessage()					{ return !messageQueue.empty(); }
 	RawMessage getNextMessage();
-	bool isConnected()					{ return getSocket() && getSocket()->isConnected(); }
 	void pushMessage(RawMessage raw)	{ messageQueue.push_back(raw); }
+
+	bool isConnected()					{ return getSocket() && getSocket()->isConnected(); }
 };
 
 // =====================================================

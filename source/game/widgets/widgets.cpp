@@ -747,7 +747,6 @@ Panel::Panel(Container::Ptr parent)
 		, layoutOrigin(LayoutOrigin::CENTRE) {
 	setPaddingParams(10, 5);
 	m_borderStyle.setNone();
-
 }
 
 Panel::Panel(Container::Ptr parent, Vec2i pos, Vec2i sz)

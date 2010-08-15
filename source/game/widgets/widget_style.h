@@ -30,6 +30,7 @@ struct BorderStyle {
 	int			m_sizes[Border::COUNT];
 
 	BorderStyle();
+	BorderStyle(const BorderStyle &style);
 
 	void setSizes(int left, int top, int right, int bottom);
 	void setSizes(int all) { setSizes(all, all, all, all); }
@@ -75,6 +76,7 @@ struct BackgroundStyle {
 	bool			m_insideBorders; // render within borders
 
 	BackgroundStyle();
+	BackgroundStyle(const BackgroundStyle &style);
 
 	void setNone();
 	void setColour(int colourIndex);

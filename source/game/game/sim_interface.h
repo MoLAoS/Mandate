@@ -187,7 +187,7 @@ protected:
 	Commands requestedCommands;	//commands requested by the user
 	Commands pendingCommands;	//commands ready to be given
 
-	SkillCycleTable skillCycleTable;
+	SkillCycleTable *skillCycleTable;
 
 	IF_DEBUG_EDITION(
 		WorldLog *worldLog;
@@ -274,7 +274,9 @@ protected:
 
 	/** Create, create & send or receive the SkillCycleTable */
 	virtual void createSkillCycleTable(const TechTree *techTree) {
-		skillCycleTable.create(techTree);
+		delete skillCycleTable;
+		skillCycleTable = new SkillCycleTable();
+		skillCycleTable->create(techTree);
 	}
 
 	/** Create & Synchronise AI random number seeds */

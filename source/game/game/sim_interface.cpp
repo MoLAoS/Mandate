@@ -49,7 +49,7 @@ int SimulationInterface::getUpdateInterval() const {
 // =====================================================
 
 SkillCycleTable::SkillCycleTable(RawMessage raw) {
-	numEntries = raw.size / sizeof(NetworkCommand);
+	numEntries = raw.size / sizeof(CycleInfo);
 	cycleTable = reinterpret_cast<CycleInfo*>(raw.data);
 }
 
@@ -120,13 +120,17 @@ SimulationInterface::SimulationInterface(Program &program)
 		, quit(false)
 		, m_gaia(0)
 		, commander(0)
-		, speed(GameSpeed::NORMAL) {
+		, speed(GameSpeed::NORMAL)
+		, skillCycleTable(0) {
 }
 
 SimulationInterface::~SimulationInterface() {
 	delete stats;
 	stats = 0;
-	if(m_gaia) delete m_gaia;
+	delete m_gaia;
+	m_gaia = 0;
+	delete skillCycleTable;
+	skillCycleTable = 0;
 }
 
 void SimulationInterface::constructGameWorld(GameState *g) {
@@ -261,6 +265,7 @@ int SimulationInterface::launchGame() {
 		LOG_NETWORK( e.what() );
 		throw e;
 	}
+
 	startGame();
 	world->activateUnits();
 	return getNetworkRole() == GameRole::LOCAL ? 12 : -1;
@@ -480,7 +485,7 @@ void SimulationInterface::updateSkillCycle(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
 		unit->updateMoveSkillCycle();
 	} else {
-		unit->updateSkillCycle(skillCycleTable.lookUp(unit).getSkillFrames());
+		unit->updateSkillCycle(skillCycleTable->lookUp(unit).getSkillFrames());
 	}
 }
 
@@ -495,14 +500,14 @@ void SimulationInterface::doUpdateAnim(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() == SkillClass::DIE) {
 		unit->updateAnimDead();
 	} else {
-		const CycleInfo &inf = skillCycleTable.lookUp(unit);
+		const CycleInfo &inf = skillCycleTable->lookUp(unit);
 		unit->updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
 	}
 	postAnimUpdate(unit);
 }
 
 void SimulationInterface::doUnitBorn(Unit *unit) {
-	const CycleInfo inf = skillCycleTable.lookUp(unit);
+	const CycleInfo &inf = skillCycleTable->lookUp(unit);
 	unit->updateSkillCycle(inf.getSkillFrames());
 	unit->updateAnimCycle(inf.getAnimFrames());
 	postUnitBorn(unit);

@@ -129,7 +129,7 @@ void ClientInterface::createSkillCycleTable(const TechTree *) {
 	if (raw.size != expectedSize) {
 		throw GarbledMessage(MessageType::SKILL_CYCLE_TABLE, NetSource::SERVER);
 	}
-	skillCycleTable = SkillCycleTable(raw);
+	skillCycleTable = new SkillCycleTable(raw);
 	LOG_NETWORK( "Received Skill Cycle Table." );
 }
 
@@ -305,7 +305,7 @@ void ClientInterface::updateSkillCycle(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
 		updateMove(unit);
 	} else {
-		unit->updateSkillCycle(skillCycleTable.lookUp(unit).getSkillFrames());
+		unit->updateSkillCycle(skillCycleTable->lookUp(unit).getSkillFrames());
 	}
 }
 
@@ -374,7 +374,7 @@ void ClientInterface::checkProjectileUpdate(Unit *unit, int endFrame, int32 cs) 
 
 void ClientInterface::checkAnimUpdate(Unit *unit, int32 cs) {
 	if (cs != keyFrame.getNextChecksum()) {
-		const CycleInfo &inf = skillCycleTable.lookUp(unit);
+		const CycleInfo &inf = skillCycleTable->lookUp(unit);
 		stringstream ss;
 		ss << "Sync Error: " << __FUNCTION__ << " unit id: " << unit->getId()
 			<< " attack offset: " << inf.getAttackOffset();

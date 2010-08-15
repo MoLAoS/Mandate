@@ -109,6 +109,15 @@ inline Colour calcColour(const Colour &c, float fade) {
 	return res;
 }
 
+void Widget::setBorderStyle(const BorderStyle &style) {
+	m_borderStyle = style;
+}
+
+void Widget::setBackgroundStyle(const BackgroundStyle &style) {
+	m_backgroundStyle = style;
+}
+
+
 void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
 	assert(style.m_type != BorderType::NONE);
 	assert(size.x >= style.m_sizes[Border::LEFT] + style.m_sizes[Border::RIGHT]);

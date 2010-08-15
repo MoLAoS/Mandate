@@ -94,7 +94,7 @@ void ServerInterface::update() {
 		popChatMsg();
 	}
 
-	//update all slots
+	// update all slots
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i]) {
 			try {
@@ -112,7 +112,7 @@ void ServerInterface::update() {
 void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
 	LOG_NETWORK( "Creating and sending SkillCycleTable." );
 	SimulationInterface::createSkillCycleTable(techTree);
-	this->broadcastMessage(&skillCycleTable);
+	this->broadcastMessage(skillCycleTable);
 }
 
 void ServerInterface::checkUnitBorn(Unit *unit, int32 cs) {

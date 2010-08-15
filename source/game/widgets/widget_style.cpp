@@ -17,6 +17,10 @@ BorderStyle::BorderStyle() {
 	setNone();
 }
 
+BorderStyle::BorderStyle(const BorderStyle &style) {
+	memcpy(this, &style, sizeof(BorderStyle));
+}
+
 void BorderStyle::setSizes(int left, int top, int right, int bottom) {
 	m_sizes[Border::LEFT] = left;
 	m_sizes[Border::TOP] = top;
@@ -66,6 +70,10 @@ BackgroundStyle::BackgroundStyle() : m_type(BackgroundType::NONE) {
 	memset(&m_colourIndices, 0, sizeof(int) * Corner::COUNT);
 	m_imageIndex = 0;
 	m_insideBorders = true;
+}
+
+BackgroundStyle::BackgroundStyle(const BackgroundStyle &style) {
+	memcpy(this, &style, sizeof(BackgroundStyle));
 }
 
 void BackgroundStyle::setNone() {
