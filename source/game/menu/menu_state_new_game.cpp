@@ -56,7 +56,7 @@ void AnnouncerThread::execute() {
 			}
 			printf("announcing\n");
 		}
-		Sleep(1000);
+		sleep(1000);
 	}
 }
 
@@ -131,7 +131,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_mapLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
 	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
-	
+
 	gs.setDescription(results[match]);
 	gs.setMapPath(string("maps/") + m_mapFiles[match] + ".gbm");
 
@@ -189,11 +189,11 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	gap = (metrics.getScreenW() - 400) / 3, x = gap, y += 70, h = 30;
 	int cbw = 75, stw = 200;
-	
+
 	m_randomLocsCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 	cout << "CheckBox pref size = " << m_randomLocsCheckbox->getPrefSize() << endl;
-	
+
 	m_randomLocsLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
 	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
 
