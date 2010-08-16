@@ -458,7 +458,7 @@ Ip ClientSocket::receiveAnnounce(int port, char *message, int dataSize) {
 
 	int addr_len = sizeof(struct sockaddr);
 	int numbytes = recvfrom(udpsockfd, message, dataSize - 1, 0,
-			(struct sockaddr*)&their_addr, &addr_len);
+			(struct sockaddr*)&their_addr, (socklen_t*)&addr_len);
 	if (numbytes == SOCKET_ERROR) {
 		throw SocketException("exiting receive");
 	}
@@ -466,6 +466,10 @@ Ip ClientSocket::receiveAnnounce(int port, char *message, int dataSize) {
 	message[numbytes] = '\0';
 
 	return Ip(inet_ntoa(their_addr.sin_addr));
+}
+
+void ClientSocket::disconnectUdp() {
+    socket_close(udpsockfd);
 }
 
 
@@ -515,7 +519,7 @@ void ServerSocket::sendAnnounce(int port) {
 	memset(&(their_addr.sin_zero), 0, 8); //zero the rest of the struct
 
 	string message = getHostName();
-	
+
 	int numbytes = sendto(udpsockfd, message.c_str(), strlen(message.c_str()), 0,
 			(struct sockaddr*)&their_addr, sizeof(struct sockaddr));
 	if (numbytes == SOCKET_ERROR) {

@@ -105,11 +105,11 @@ private:
 		bool full;
 
 	public:
-		CircularBuffer(int size = 8 * 1024) 
+		CircularBuffer(int size = 8 * 1024)
 				: buffer_size(size), buffer(0)
 				, tail(0), head(0), full(false) {
 			assert(buffer_size > 0);
-			buffer = new char[buffer_size]; 
+			buffer = new char[buffer_size];
 		}
 		~CircularBuffer() { delete [] buffer; }
 
@@ -124,7 +124,7 @@ private:
 
 		/** peek the next n bytes, copying them to dst if the request can be satisfied
 		  * @return true if ok, false if not enough bytes are available */
-		bool peekBytes(void *dst, size_t n);	
+		bool peekBytes(void *dst, size_t n);
 
 		/** read n bytes to dst, advancing tail offset ('removing' them from the buffer)
 		  * @return true if all ok, false if not enough bytes available, in which case none will be read */
@@ -183,10 +183,10 @@ public:
 
 	void connect(const Ip &ip, int port);
 
-	/** @return ip of the sender 
+	/** @return ip of the sender
 	  * @throws SocketException when socket is no longer receiving */
 	Ip receiveAnnounce(int port, char *hostname, int dataSize);
-	void disconnectUdp() { closesocket(udpsockfd); }
+	void disconnectUdp();
 };
 
 // =====================================================
