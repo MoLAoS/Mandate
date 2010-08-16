@@ -27,6 +27,10 @@ class MenuStateJoinGame;
 
 WRAPPED_ENUM( ConnectResult, CANCELLED, FAILED, SUCCESS );
 
+// ===============================
+// 	class ConnectThread
+// ===============================
+
 class ConnectThread : public Thread {
 private:
 	MenuStateJoinGame &m_menu;
@@ -44,16 +48,35 @@ public:
 };
 
 // ===============================
+// 	class FindServerThread
+// ===============================
+/** A thread to listen for game announcements */
+
+class FindServerThread : public Thread {
+private:
+	MenuStateJoinGame&	m_menu;
+	ClientSocket		m_socket;
+
+public:
+	FindServerThread(MenuStateJoinGame &menu) : m_menu(menu) {
+		start();
+	}
+
+	virtual void execute();
+
+	void stop() {
+		m_socket.disconnectUdp();
+	}
+};
+
+
+// ===============================
 // 	class MenuStateJoinGame
 // ===============================
 
 class MenuStateJoinGame: public MenuState {
-	friend class ConnectThread;
-
-	WRAPPED_ENUM( Transition, RETURN, PLAY );
-
 private:
-	static const int newServerIndex;
+	WRAPPED_ENUM( Transition, RETURN, PLAY );
 	static const string serverFileName;
 
 private:
@@ -61,14 +84,17 @@ private:
 	Panel::Ptr			m_gameSetupPanel;
 	MessageDialog::Ptr	m_messageBox;
 
+	DropList::Ptr		m_historyList;
 	TextBox::Ptr		m_serverTextBox;
 	StaticText::Ptr		m_connectLabel;
 
 	ConnectThread*		m_connectThread;
+	FindServerThread*	m_findServerThread;
 
 	Transition			m_targetTansition;
 
-	Mutex				m_mutex;
+	Mutex				m_connectMutex;
+	Mutex				m_findServerMutex;
 
 	void buildConnectPanel();
 	void buildGameSetupPanel();
@@ -78,11 +104,11 @@ private:
 	void onSearchForGame(Button::Ptr);
 
 	void onServerSelected(ListBase::Ptr);
+	void onTextModified(TextBox::Ptr);
 
 	void onCancelConnect(MessageDialog::Ptr);
 	void onDisconnect(MessageDialog::Ptr);
-
-	void connectThreadDone(ConnectResult result);
+	void onCancelSearch(MessageDialog::Ptr);
 
 	bool connected;
 	int playerIndex;
@@ -94,6 +120,9 @@ public:
 	void update();
 
 	MenuStates getIndex() const { return MenuStates::JOIN_GAME; }
+
+	void connectThreadDone(ConnectResult result);
+	void foundServer(Ip ip);
 };
 
 }}//end namespace

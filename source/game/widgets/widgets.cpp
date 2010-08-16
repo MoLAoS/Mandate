@@ -301,16 +301,17 @@ bool TextBox::keyDown(Key key) {
 			const string &txt = getText();
 			if (!txt.empty()) {
 				setText(txt.substr(0, txt.size() - 1));
-				changed = true;
+				//changed = true;
+				TextChanged(this);
 			}
 			return true;
 		}
 		case KeyCode::RETURN:
 			getRootWindow()->releaseKeyboardFocus(this);
-			if (changed) {
-				TextChanged(this);
-				changed = false;
-			}
+			//if (changed) {
+			//	TextChanged(this);
+			//	changed = false;
+			//}
 			return true;
 		/*
 		case KeyCode::DELETE_:
@@ -335,11 +336,12 @@ bool TextBox::keyUp(Key key) {
 
 bool TextBox::keyPress(char c) {
 	if (c >= 32 && c <= 126) { // 'space' -> 'tilde' [printable ascii char]
-		cout << "KeyPress: ASCII=='" << c << "' [" << int(c) << "]\n";
+		//cout << "KeyPress: ASCII=='" << c << "' [" << int(c) << "]\n";
 		string s(getText());
-		cout << "Current text: " << s << ", Setting text: " << (s + c) << endl;
+		//cout << "Current text: " << s << ", Setting text: " << (s + c) << endl;
 		setText(s + c);
-		changed = true;
+		//changed = true;
+		TextChanged(this);
 		return true;
 	}
 	return false;
@@ -347,10 +349,10 @@ bool TextBox::keyPress(char c) {
 
 void TextBox::lostKeyboardFocus() {
 	focus = false;
-	if (changed) {
-		TextChanged(this);
-		changed = false;
-	}
+	//if (changed) {
+	//	TextChanged(this);
+	//	changed = false;
+	//}
 }
 
 void TextBox::render() {

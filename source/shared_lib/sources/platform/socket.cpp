@@ -42,7 +42,7 @@ using namespace Shared::Util;
 #	define get_error() errno
 #	define WOULD_BLOCK EAGAIN
 #	define TIMEVAL struct timeval
-#elif defined(WIN32) || defined(WIN64)
+#elif defined(WIN32)
 #	define socket_close closesocket
 #	define get_error() WSAGetLastError()
 #	define WOULD_BLOCK WSAEWOULDBLOCK
@@ -86,7 +86,7 @@ string Ip::getString() const{
 	return intToStr(bytes[0]) + "." + intToStr(bytes[1]) + "." + intToStr(bytes[2]) + "." + intToStr(bytes[3]);
 }
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN32)
 	// =====================================================
 	//	class Socket::LibraryManager
 	// =====================================================
@@ -197,19 +197,15 @@ Socket::Socket() {
 	if (sock == INVALID_SOCKET) {
 		throw SocketException("Error creating socket");
 	}
-	// some basic sanity checks on our types
-	assert(sizeof(int8) == 1);
-	assert(sizeof(uint8) == 1);
-	assert(sizeof(int16) == 2);
-	assert(sizeof(uint16) == 2);
-	assert(sizeof(int32) == 4);
-	assert(sizeof(uint32) == 4);
-	assert(sizeof(int64) == 8);
-	assert(sizeof(uint64) == 8);
+
+	if((udpsockfd = socket(AF_INET,SOCK_DGRAM,0)) == INVALID_SOCKET) {
+		throw runtime_error("Error creating udp socket");
+	}
 }
 
 Socket::~Socket(){
 	close();
+	socket_close(udpsockfd);
 }
 
 void Socket::close() {
@@ -394,7 +390,7 @@ void Socket::handleError(const char *caller) const {
 	int errCode = get_error();
 	msg << "Socket Error in : " << caller << "() [Error code: " << errCode << "]\n";
 
-#if defined(WIN32) || defined(WIN64)
+#if defined(WIN32)
 	LPVOID errMsg;
 	DWORD msgRes = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER  | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -409,6 +405,7 @@ void Socket::handleError(const char *caller) const {
 #else
 	msg << strerror(errCode);
 #endif
+	cout << msg.str() << endl;
 	throw SocketException(msg.str());
 }
 
@@ -433,13 +430,44 @@ void ClientSocket::connect(const Ip &ip, int port) {
 
 			// TODO
 			// wait a bit, check writable, try again
-			//cout << "::connect() error, WOULD_BLOCK.\n";
+			cout << "::connect() error, WOULD_BLOCK.\n";
 
 		}
 	} else {
 		setNoDelay();
 	}
 }
+
+Ip ClientSocket::receiveAnnounce(int port, char *message, int dataSize) {
+	if (!udpBound) {
+		udpBound = true;
+
+		// bind
+		struct sockaddr_in my_addr;
+		my_addr.sin_family = AF_INET; // host byte order
+		my_addr.sin_port = htons(port); // short, network byte order
+		my_addr.sin_addr.s_addr = INADDR_ANY; // automatically fill with my IP
+		memset(&(my_addr.sin_zero), 0, 8); // zero the rest of the struct
+
+		if (bind(udpsockfd,(struct sockaddr*)&my_addr, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+			perror("bind error");
+		}
+	}
+
+	struct sockaddr_in their_addr; // connector’s address information
+
+	int addr_len = sizeof(struct sockaddr);
+	int numbytes = recvfrom(udpsockfd, message, dataSize - 1, 0,
+			(struct sockaddr*)&their_addr, &addr_len);
+	if (numbytes == SOCKET_ERROR) {
+		throw SocketException("exiting receive");
+	}
+
+	message[numbytes] = '\0';
+
+	return Ip(inet_ntoa(their_addr.sin_addr));
+}
+
 
 // =====================================================
 //	class ServerSocket
@@ -477,6 +505,22 @@ Socket *ServerSocket::accept() {
 		handleError(__FUNCTION__);
 	}
 	return new Socket(newSock);
+}
+
+void ServerSocket::sendAnnounce(int port) {
+	struct sockaddr_in their_addr;
+	their_addr.sin_family = AF_INET; //host byte order
+	their_addr.sin_port = htons(port); //short, network byte order
+	their_addr.sin_addr.s_addr = inet_addr(broadcastAddr.getString().c_str());
+	memset(&(their_addr.sin_zero), 0, 8); //zero the rest of the struct
+
+	string message = getHostName();
+	
+	int numbytes = sendto(udpsockfd, message.c_str(), strlen(message.c_str()), 0,
+			(struct sockaddr*)&their_addr, sizeof(struct sockaddr));
+	if (numbytes == SOCKET_ERROR) {
+		throw SocketException("problem sending announce");
+	}
 }
 
 }}//end namespace

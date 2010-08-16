@@ -42,6 +42,25 @@ namespace Glest { namespace Menu {
 using namespace Shared::Util;
 
 // =====================================================
+// 	class Announcer
+// =====================================================
+
+void AnnouncerThread::execute() {
+	while (m_running) {
+		if (m_freeSlots) {
+			try {
+				m_socket.sendAnnounce(4950); //TODO: change with game constant port
+			} catch (SocketException) {
+				// do nothing
+				printf("SocketException.\n");
+			}
+			printf("announcing\n");
+		}
+		Sleep(1000);
+	}
+}
+
+// =====================================================
 //  class MenuStateNewGame
 // =====================================================
 
@@ -402,6 +421,12 @@ void MenuStateNewGame::onDismissDialog(MessageDialog::Ptr) {
 
 void MenuStateNewGame::update() {
 	MenuState::update();
+
+	bool configAnnounce = true; // TODO: put in config
+	if (configAnnounce) {
+		m_announcer.doAnnounce(hasUnconnectedSlots());
+	}
+
 	if (m_transition) {
 		if (m_targetTransition == Transition::RETURN) {
 			program.clear();

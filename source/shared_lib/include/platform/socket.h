@@ -4,6 +4,7 @@
 //	Copyright (C) 2001-2008 Martiño Figueroa,
 //				  2005 Matthias Braun <matze@braunis.de>,
 //				  2008 Daniel Santos <daniel.santos@pobox.com>
+//				  2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -139,6 +140,7 @@ private:
 
 protected:
 	SOCKET sock;
+	SOCKET udpsockfd;
 	CircularBuffer buffer;
 
 public:
@@ -173,8 +175,18 @@ protected:
 // =====================================================
 
 class ClientSocket: public Socket {
+private:
+	bool udpBound;
+
 public:
+	ClientSocket() : udpBound(false) {}
+
 	void connect(const Ip &ip, int port);
+
+	/** @return ip of the sender 
+	  * @throws SocketException when socket is no longer receiving */
+	Ip receiveAnnounce(int port, char *hostname, int dataSize);
+	void disconnectUdp() { closesocket(udpsockfd); }
 };
 
 // =====================================================
@@ -182,10 +194,25 @@ public:
 // =====================================================
 
 class ServerSocket: public Socket {
+private:
+	Ip broadcastAddr;
+
 public:
+	ServerSocket() {
+		Ip ip(getIp());
+		//TODO: allow a netmask to decide addr
+		broadcastAddr = Ip(ip.getByte(0), ip.getByte(1), ip.getByte(2), 255);
+	}
+
+	/** sends a udp packet with hostname as the message */
+	//TODO: use a network message instead so when sending to master server it can include other details
+	void sendAnnounce(int port);
+
 	void bind(int port);
 	void listen(int connectionQueueSize= SOMAXCONN);
 	Socket *accept();
+
+
 };
 
 }}//end namespace

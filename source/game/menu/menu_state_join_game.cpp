@@ -33,6 +33,10 @@ using namespace Glest::Net;
 
 namespace Glest { namespace Menu {
 
+// ===============================
+// 	class ConnectThread
+// ===============================
+
 ConnectThread::ConnectThread(MenuStateJoinGame &menu, Ip serverIp)
 		: m_menu(menu)
 		, m_server(serverIp)
@@ -47,8 +51,8 @@ void ConnectThread::execute() {
 	try {
 		clientInterface->connect(m_server, GameConstants::serverPort);
 		{
-			m_result = ConnectResult::SUCCESS;
 			MutexLock lock(m_mutex);
+			m_result = ConnectResult::SUCCESS;
 			m_connecting = false;
 		}
 	} catch (exception &e) {
@@ -75,16 +79,33 @@ string ConnectThread::getErrorMsg() {
 }
 
 // ===============================
+// 	class FindServerThread
+// ===============================
+
+void FindServerThread::execute() {
+	const int MSG_SIZE = 100;
+	char msg[MSG_SIZE];
+
+	try {
+		Ip serverIp = m_socket.receiveAnnounce(4950, msg, MSG_SIZE); // blocking call TODO: fix port
+		m_menu.foundServer(serverIp);
+	} catch(SocketException &e) {
+		// do nothing
+	}
+}
+
+// ===============================
 //  class MenuStateJoinGame
 // ===============================
 
-const int MenuStateJoinGame::newServerIndex = 0;
+//const int MenuStateJoinGame::newServerIndex = 0;
 const string MenuStateJoinGame::serverFileName = "servers.ini";
 
 MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool connect, Ip serverIp)
 		: MenuState(program, mainMenu)
+		, m_messageBox(0) 
 		, m_connectThread(0)
-		, m_messageBox(0) {
+		, m_findServerThread(0) {
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
 
@@ -94,56 +115,9 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 		servers.save(serverFileName);
 	}
 
-	////buttons
-	//buttonReturn.init(325, 300, 125);
-	//buttonReturn.setText(lang.get("Return"));
-
-	//buttonConnect.init(475, 300, 125);
-	//buttonConnect.setText(lang.get("Connect"));
-
-	////server type label
-	//labelServerType.init(330, 460);
-	//labelServerType.setText(lang.get("ServerType") + ":");
-
-	////server type list box
-	//listBoxServerType.init(465, 460);
-	//listBoxServerType.pushBackItem(lang.get("ServerTypeNew"));
-	//listBoxServerType.pushBackItem(lang.get("ServerTypePrevious"));
-
-	////server label
-	//labelServer.init(330, 430);
-	//labelServer.setText(lang.get("Server") + ": ");
-
-	////server listbox
-	//listBoxServers.init(465, 430);
-
-	//const Properties::PropertyMap &pm = servers.getPropertyMap();
-	//for (Properties::PropertyMap::const_iterator i = pm.begin(); i != pm.end(); ++i) {
-	//	listBoxServers.pushBackItem(i->first);
-	//}
-
-	////server ip
-	//labelServerIp.init(465, 430);
-
-	//labelStatus.init(330, 400);
-	//labelStatus.setText("");
-
-	//labelInfo.init(330, 370);
-	//labelInfo.setText("");
-
 	program.getSimulationInterface()->changeRole(GameRole::CLIENT);
 	connected = false;
 	playerIndex = -1;
-
-	////server ip
-	//if (connect) {
-	//	labelServerIp.setText(serverIp.getString() + "_");
-	//	connectToServer();
-	//} else {
-	//	labelServerIp.setText(config.getNetServerIp() + "_");
-	//}
-
-	//msgBox = NULL;
 
 	buildConnectPanel();
 }
@@ -195,6 +169,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	x = size.x / 2 + 5;
 	m_serverTextBox = new TextBox(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	m_serverTextBox->setTextParams("", Vec4f(1.f), font, true);
+	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
 
 	w = 200;
 	x = size.x / 2 - w - 5;
@@ -202,17 +177,17 @@ void MenuStateJoinGame::buildConnectPanel() {
 	StaticText::Ptr historyLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	historyLabel->setTextParams(g_lang.get("RecentHosts"), Vec4f(1.f), font);
 	x = size.x / 2 + 5;
-	DropList::Ptr historyList = new DropList(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	m_historyList = new DropList(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 
 	const Properties::PropertyMap &pm = servers.getPropertyMap();
 	if (pm.empty()) {
-		historyList->setEnabled(false);
+		m_historyList->setEnabled(false);
 	} else {
 		foreach_const (Properties::PropertyMap, i, pm) {
-			historyList->addItem(i->first);
+			m_historyList->addItem(i->first);
 		}
 	}
-	historyList->SelectionChanged.connect(this, &MenuStateJoinGame::onServerSelected);
+	m_historyList->SelectionChanged.connect(this, &MenuStateJoinGame::onServerSelected);
 }
 
 void MenuStateJoinGame::onReturn(Button::Ptr) {
@@ -226,13 +201,10 @@ void MenuStateJoinGame::onConnect(Button::Ptr) {
 
 	// validate Ip ??
 
-	assert(!m_connectThread);
-	m_connectThread = new ConnectThread(*this, Ip(m_serverTextBox->getText()));
 	m_connectPanel->setVisible(false);
 	Vec2i pos, size(300, 200);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 	assert(!m_messageBox);
-
 	m_messageBox = new MessageDialog(&program);
 	program.setFloatingWidget(m_messageBox, true);
 	m_messageBox->setPos(pos);
@@ -241,17 +213,22 @@ void MenuStateJoinGame::onConnect(Button::Ptr) {
 	m_messageBox->setMessageText("Connecting, Please wait.");///@todo localise
 	m_messageBox->setButtonText(g_lang.get("Cancel"));
 	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelConnect);
-
+	{
+		MutexLock lock(m_connectMutex);
+		assert(!m_connectThread);
+		m_connectThread = new ConnectThread(*this, Ip(m_serverTextBox->getText()));
+	}
 }
 
 void MenuStateJoinGame::onCancelConnect(MessageDialog::Ptr) {
-	MutexLock lock(m_mutex);
-	assert(m_connectThread);
-	m_connectThread->cancel();
+	MutexLock lock(m_connectMutex);
+	if (m_connectThread) {
+		m_connectThread->cancel();
+	} // else it had finished already
 }
 
 void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
-	MutexLock lock(m_mutex);
+	MutexLock lock(m_connectMutex);
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
 
@@ -264,7 +241,7 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 		m_messageBox->setPos(pos);
 		m_messageBox->setSize(size);
 		m_messageBox->setTitleText("Connected.");///@todo localise
-		m_messageBox->setMessageText("Connected, waiting for server to launch game.");///@todo localise
+		m_messageBox->setMessageText("Connected, waiting for server\nto launch game.");///@todo localise
 		m_messageBox->setButtonText(g_lang.get("Disconnect"));
 		m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
 
@@ -293,17 +270,63 @@ void MenuStateJoinGame::onDisconnect(MessageDialog::Ptr) {
 	m_connectLabel->setText("Not connected. Last connection terminated.");///@todo localise
 }
 
+void MenuStateJoinGame::onTextModified(TextBox::Ptr) {
+	m_historyList->setSelected(-1);
+}
+
 void MenuStateJoinGame::onSearchForGame(Button::Ptr) {
+	m_historyList->setSelected(-1);
+	m_serverTextBox->setText("");
+	m_connectPanel->setVisible(false);
+	Vec2i pos, size(300, 200);
+	pos = g_metrics.getScreenDims() / 2 - size / 2;
+	assert(!m_messageBox);
+	m_messageBox = new MessageDialog(&program);
+	program.setFloatingWidget(m_messageBox, true);
+	m_messageBox->setPos(pos);
+	m_messageBox->setSize(size);
+	m_messageBox->setTitleText("Searching...");///@todo localise
+	m_messageBox->setMessageText("Searching, Please wait.");///@todo localise
+	m_messageBox->setButtonText(g_lang.get("Cancel"));
+	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelSearch);
+	{
+		MutexLock lock(m_findServerMutex);
+		assert(!m_findServerThread);
+		m_findServerThread = new FindServerThread(*this);
+	}
+}
 
-	///@todo apply hailtone's patch
+void MenuStateJoinGame::onCancelSearch(MessageDialog::Ptr) {
+	MutexLock lock(m_findServerMutex);
+	if (m_findServerThread) {
+		m_findServerThread->stop();
+		delete m_findServerThread;
+		m_findServerThread = 0;
+		assert(m_messageBox);
+		program.removeFloatingWidget(m_messageBox);
+		m_messageBox = 0;
+		m_connectPanel->setVisible(true);
+		m_connectLabel->setText("Not connected. Last search cancelled.");///@todo localise
+	} // else it had finished already
+}
 
+void MenuStateJoinGame::foundServer(Ip ip) {
+	MutexLock lock(m_findServerMutex);
+	program.removeFloatingWidget(m_messageBox);
+	m_messageBox = 0;
+	m_serverTextBox->setText(ip.getString());
+	delete m_findServerThread;
+	m_findServerThread = 0;
+	onConnect(0);
 }
 
 void MenuStateJoinGame::onServerSelected(ListBase::Ptr list) {
 	DropList::Ptr historyList = static_cast<DropList::Ptr>(list);
-	string selected = historyList->getSelectedItem()->getText();
-	string ipString = servers.getString(selected);
-	m_serverTextBox->setText(ipString);
+	if (historyList->getSelectedIndex() != -1) {
+		string selected = historyList->getSelectedItem()->getText();
+		string ipString = servers.getString(selected);
+		m_serverTextBox->setText(ipString);
+	}
 }
 
 void MenuStateJoinGame::update() {
@@ -325,20 +348,21 @@ void MenuStateJoinGame::update() {
 
 	// process network messages
 	if (clientInterface->isConnected()) {
-		//update lobby
+		// update lobby
 		clientInterface->updateLobby();
 
-		//intro
+		// intro
 		if (clientInterface->getIntroDone()) {
 			servers.setString(clientInterface->getDescription(), m_serverTextBox->getText());
 		}
 
-		//launch
+		// launch
 		if (clientInterface->getLaunchGame()) {
 			servers.save(serverFileName);
 			m_targetTansition = Transition::PLAY;
-			doFadeOut();
-			//program.setState(new GameState(program));
+			program.clear();
+			program.setState(new GameState(program));
+			return;
 		}
 	}
 	if (m_transition) {
@@ -346,9 +370,6 @@ void MenuStateJoinGame::update() {
 		switch (m_targetTansition) {
 			case Transition::RETURN:
 				mainMenu->setState(new MenuStateRoot(program, mainMenu));
-				break;
-			case Transition::PLAY:
-				program.setState(new GameState(program));
 				break;
 		}
 	}

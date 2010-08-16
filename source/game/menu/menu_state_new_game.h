@@ -15,11 +15,40 @@
 
 #include "main_menu.h"
 #include "sim_interface.h"
+#include "thread.h"
 
 #include "compound_widgets.h"
 
 namespace Glest { namespace Menu {
 using namespace Widgets;
+
+/** Periodically announces the game, when slots are free, to the master 
+  * server or local lan.
+  * NOTE: currently only lan */
+class AnnouncerThread : public Thread {
+	Mutex	m_mutex;
+	bool	m_running;
+	bool	m_freeSlots;
+	ServerSocket m_socket;
+
+public:
+	AnnouncerThread() 
+			: m_freeSlots(false)
+			, m_running(true) {
+		start();
+	} 
+	virtual void execute();
+
+	void doAnnounce(bool v) {
+		MutexLock lock(m_mutex);
+		m_freeSlots = v;
+	}
+
+	void stop() {
+		MutexLock lock(m_mutex);
+		m_running = false;
+	}
+};
 
 // ===============================
 // 	class MenuStateNewGame
@@ -68,8 +97,14 @@ private:
 
 	MapInfo m_mapInfo;
 
+	AnnouncerThread m_announcer;
+
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
+	~MenuStateNewGame() {
+		m_announcer.stop();
+		m_announcer.join();
+	}
 
 	void update();
 
