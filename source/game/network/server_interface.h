@@ -31,8 +31,20 @@ namespace Glest { namespace Net {
 /** A concrete SimulationInterface for network servers */
 class ServerInterface: public NetworkInterface {
 private:
+	struct LostPlayerInfo {
+		string playerName;
+		string hostName;
+		int64 timeDropped;
+	};
+
+private:
 	ConnectionSlot* slots[GameConstants::maxPlayers];
 	ServerSocket serverSocket;
+	vector<LostPlayerInfo> m_lostPlayers;
+	bool m_waitingForPlayers;
+	DataSyncMessage *m_dataSync;
+	int m_syncCounter;
+	bool m_dataSyncDone;
 
 public:
 	ServerInterface(Program &prog);
@@ -42,6 +54,7 @@ public:
 	virtual const Socket* getSocket() const	{return &serverSocket;}
 
 	virtual GameRole getNetworkRole() const { return GameRole::SERVER; }
+	bool syncReady() const { return m_dataSync; }
 
 #	if _GAE_DEBUG_EDITION_
 		void dumpFrame(int frame);
@@ -52,9 +65,10 @@ protected:
 	// See documentation in sim_interface.h
 
 	//message processing
+	virtual void doDataSync();
 	virtual void update();
 	virtual void updateKeyframe(int frameCount);
-	virtual void waitUntilReady(Checksum *checksums);
+	virtual void waitUntilReady();
 	virtual void syncAiSeeds(int aiCount, int *seeds);
 	virtual void createSkillCycleTable(const TechTree *techTree);
 
@@ -82,9 +96,10 @@ public:
 	ConnectionSlot* getSlot(int playerIndex);
 	int getConnectedSlotCount();
 	
+	void dataSync(int playerNdx, DataSyncMessage &msg);
 	void doLaunchBroadcast();
 	void process(TextMessage &msg, int requestor);
-	
+
 	// message sending
 	virtual void sendTextMessage(const string &text, int teamIndex);
 	virtual void quitGame(QuitSource);

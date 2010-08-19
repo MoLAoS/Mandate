@@ -134,7 +134,7 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 	}
 
 	// this must be set before any unit types are loaded
-	UnitStats::setDamageMultiplierCount(getArmorTypeCount());
+//	UnitStats::setDamageMultiplierCount(getArmorTypeCount());
 
 	//load factions
 	factionTypes.resize(factionNames.size());

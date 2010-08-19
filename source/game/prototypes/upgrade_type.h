@@ -42,11 +42,14 @@ class UpgradeType: public EnhancementType, public ProducibleType {
 	friend class UpgradeTypeFactory;
 private:
 	vector<const UnitType*> effects;
+	const FactionType *m_factionType;
 
 public:
+	UpgradeType() : m_factionType(0) {}
 	void preLoad(const string &dir)			{name=basename(dir);}
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
 
+	const FactionType* getFactionType() const { return m_factionType; }
 	//get all
 	int getEffectCount() const				{return effects.size();}
 	const UnitType * getEffect(int i) const	{return effects[i];}
@@ -60,23 +63,25 @@ public:
 	string getDesc() const;
 };
 
-
-
 // ===============================
 //  class UpgradeTypeFactory
 // ===============================
 
 class UpgradeTypeFactory : private SingleTypeFactory<UpgradeType> {
 private:
-	int idCounter;
-	vector<UpgradeType *> types;
+	int m_idCounter;
+	vector<UpgradeType*> m_types;
+	map<UpgradeType*, int32> m_checksumTable;
 
 public:
-	UpgradeTypeFactory() : idCounter(0) { }
+	UpgradeTypeFactory() : m_idCounter(0) { }
 	~UpgradeTypeFactory();
 
 	UpgradeType *newInstance();
 	UpgradeType* getType(int id);
+	int getTypeCount() const { return m_types.size(); }
+	int32 getChecksum(UpgradeType *ut);
+	void setChecksum(UpgradeType *ut);
 };
 
 }}//end namespace

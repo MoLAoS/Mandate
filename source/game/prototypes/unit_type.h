@@ -124,6 +124,8 @@ private:
 	Field field;
 	Zone zone;
 
+	const FactionType *m_factionType;
+
 public:
 	//creation and loading
 	UnitType();
@@ -131,6 +133,7 @@ public:
 	void preLoad(const string &dir);
 	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal = false);
 	virtual void doChecksum(Checksum &checksum) const;
+	const FactionType* getFactionType() const { return m_factionType; }
 
 	//get
 	bool getMultiSelect() const				{return multiSelect;}
@@ -232,18 +235,17 @@ class UnitTypeFactory: private SingleTypeFactory<UnitType> {
 private:
 	int m_idCounter;
 	vector<UnitType *> m_types;
-	//set<UnitType *> m_typeSet;
-	//map<UnitType *, int32> m_checksumTable;
+	map<UnitType *, int32> m_checksumTable;
 
 public:
 	UnitTypeFactory() : m_idCounter(0) { }
 	~UnitTypeFactory();
-	//void assertTypes();
 
 	UnitType *newInstance();
 	UnitType* getType(int id);
-
-	//void setChecksum(UnitType *ut, int32 cs);
+	int getTypeCount() const { return m_types.size(); }
+	int32 getChecksum(UnitType *ut);
+	void setChecksum(UnitType *ut);
 };
 
 }}//end namespace

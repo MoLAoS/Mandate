@@ -101,7 +101,8 @@ IntroMessage::IntroMessage(RawMessage raw) {
 }
 
 bool IntroMessage::receive(NetworkConnection* connection) {
-	bool ok = Message::receive(connection, &data, sizeof(Data));
+	throw runtime_error("Boo!");
+	/*bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
 		NETWORK_LOG(
 			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
@@ -110,6 +111,8 @@ bool IntroMessage::receive(NetworkConnection* connection) {
 		);
 	}
 	return ok;
+	*/
+	return false;
 }
 
 void IntroMessage::send(NetworkConnection* connection) const{
@@ -127,43 +130,24 @@ void IntroMessage::send(NetworkConnection* connection) const{
 
 ReadyMessage::ReadyMessage() {
 	data.messageType = MessageType::READY;
-	data.messageSize = sizeof(Data) - 4;
-	for (int i=0; i < 4 + GameConstants::maxPlayers; ++i) {
-		data.checksums[i] = 0;
-	}
-}
-
-ReadyMessage::ReadyMessage(Checksum *checksums) {
-	data.messageType = MessageType::READY;
-	data.messageSize = sizeof(Data) - 4;
-	for (int i=0; i < 4 + GameConstants::maxPlayers; ++i) {
-		data.checksums[i] = checksums[i].getSum();
-	}
+	data.messageSize = 0;
 }
 
 ReadyMessage::ReadyMessage(RawMessage raw) {
 	data.messageType = raw.type;
 	data.messageSize = raw.size;
-	memcpy(&data.checksums, raw.data, raw.size);
-	delete raw.data;
+	if (raw.size || raw.data) {
+		throw GarbledMessage(MessageType::READY);
+	}
 }
 
 bool ReadyMessage::receive(NetworkConnection* connection){
-	bool ok = Message::receive(connection, &data, sizeof(data));
-	if (ok) {
-		NETWORK_LOG(
-			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
-			<< ", messageSize: " << data.messageSize
-		);
-	}
-	return ok;
+	throw runtime_error(string(__FUNCTION__) + "() called");
+	return false;
 }
 
 void ReadyMessage::send(NetworkConnection* connection) const{
 	assert(data.messageType == MessageType::READY);
-	NETWORK_LOG( __FUNCTION__ << "(): sent message, type: "
-		<< MessageTypeNames[MessageType(data.messageType)] << ", messageSize: " << data.messageSize
-	);
 	Message::send(connection, &data, sizeof(data));
 }
 
@@ -278,7 +262,7 @@ void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
 	}
 }
 
-bool LaunchMessage::receive(NetworkConnection* connection){
+bool LaunchMessage::receive(NetworkConnection* connection) {
 	bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
 		NETWORK_LOG(
@@ -295,6 +279,86 @@ void LaunchMessage::send(NetworkConnection* connection) const {
 		<< ", messageSize: " << data.messageSize
 	);
 	Message::send(connection, &data, sizeof(Data));
+}
+
+DataSyncMessage::DataSyncMessage(RawMessage raw)
+		: m_data(0), fromRaw(true) {
+	if (raw.size % sizeof(int32) != 0) {
+		throw GarbledMessage(MessageType::DATA_SYNC, NetSource::SERVER);
+	}
+	m_unitTypeCount  = reinterpret_cast<int32*>(raw.data)[0];
+	m_cmdTypeCount	 = reinterpret_cast<int32*>(raw.data)[1];
+	m_skillTypeCount = reinterpret_cast<int32*>(raw.data)[2];
+	m_upgrdTypeCount = reinterpret_cast<int32*>(raw.data)[3];
+
+	if (getChecksumCount()) {
+		m_data = reinterpret_cast<int32*>(raw.data) + 4;
+	}
+}
+
+DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
+	Checksum checksums[4];
+	world.getTileset()->doChecksum(checksums[0]);
+	world.getMap()->doChecksum(checksums[1]);
+	const TechTree *tt = world.getTechTree();
+	tt->doChecksumDamageMult(checksums[2]);
+	tt->doChecksumResources(checksums[3]);
+
+	UnitTypeFactory		&unitTFactory	= world.getUnitTypeFactory();
+	CommandTypeFactory	&cmdTFactory	= world.getCommandTypeFactory();
+	SkillTypeFactory	&sklTFactory	= world.getSkillTypeFactory();
+	UpgradeTypeFactory	&upgrdTFactory	= world.getUpgradeTypeFactory();
+
+	m_unitTypeCount  = unitTFactory.getTypeCount();
+	m_cmdTypeCount	 = cmdTFactory.getTypeCount();
+	m_skillTypeCount = sklTFactory.getTypeCount();
+	m_upgrdTypeCount = upgrdTFactory.getTypeCount();
+
+	m_data = new int32[getChecksumCount()];
+	int n = -1;
+	for (int i=0; i < 4; ++i) {
+		m_data[++n] = checksums[i].getSum();
+	}
+
+	if (getChecksumCount() - 4 > 0) {
+		for (int i=0; i < unitTFactory.getTypeCount(); ++i) {
+			m_data[++n] = unitTFactory.getChecksum(unitTFactory.getType(i));
+		}
+		for (int i=0; i < cmdTFactory.getTypeCount(); ++i) {
+			m_data[++n] = cmdTFactory.getChecksum(cmdTFactory.getType(i));
+		}
+		for (int i=0; i < sklTFactory.getTypeCount(); ++i) {
+			m_data[++n] = sklTFactory.getChecksum(sklTFactory.getType(i));
+		}
+		for (int i=0; i < upgrdTFactory.getTypeCount(); ++i) {
+			m_data[++n] = upgrdTFactory.getChecksum(upgrdTFactory.getType(i));
+		}
+	}
+}
+
+DataSyncMessage::~DataSyncMessage() {
+	if (fromRaw) {
+		delete [] (m_data - 4); // hacky...
+	} else {
+		delete [] m_data;
+	}
+}
+
+void DataSyncMessage::send(NetworkConnection* connection) const {
+	MsgHeader header;
+	header.messageType = MessageType::DATA_SYNC;
+	header.messageSize = sizeof(int32) * (getChecksumCount() + 4);
+	Message::send(connection, &header, sizeof(MsgHeader));
+	Message::send(connection, &m_unitTypeCount, sizeof(int32) * 4);
+	Message::send(connection, m_data, header.messageSize - sizeof(int32) * 4);
+	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(header.messageType)]
+		<< ", messageSize: " << header.messageSize
+	);
+}
+
+bool DataSyncMessage::receive(NetworkConnection* connection) {
+	throw runtime_error(string(__FUNCTION__) + "() was called");
+	return false;
 }
 
 // =====================================================
@@ -471,6 +535,8 @@ KeyFrame::KeyFrame(RawMessage raw) {
 }
 
 bool KeyFrame::receive(NetworkConnection* connection) {
+	throw runtime_error(string(__FUNCTION__) + "() called.");
+/*
 	MsgHeader msgHeader;
 	KeyFrameMsgHeader header;
 	Socket *socket = connection->getSocket();
@@ -509,6 +575,7 @@ bool KeyFrame::receive(NetworkConnection* connection) {
 	}
 	delete [] buf;
 	assert(ptr - buf == msgHeader.messageSize + sizeof(MsgHeader));
+	*/
 	return true;
 }
 
@@ -528,6 +595,8 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32)
 		+ updateSize + commandsSize;
 	size_t totalSize = msgHeader.messageSize + sizeof(MsgHeader);
+
+	NETWORK_LOG( "KeyFrame message size: " << msgHeader.messageSize );
 
 	uint8 *buf = new uint8[totalSize];
 	uint8 *ptr = buf;

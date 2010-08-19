@@ -96,6 +96,9 @@ RawMessage NetworkConnection::getNextMessage() {
 	return res;
 }
 
+MessageType NetworkConnection::peekNextMsg() const {
+	return enum_cast<MessageType>(messageQueue.front().type);
+}
 
 void NetworkConnection::setRemoteNames(const string &hostName, const string &playerName) {
 	remoteHostName = hostName;

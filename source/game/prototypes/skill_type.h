@@ -63,9 +63,6 @@ public:
 		RANDOM
 	)
 
-private:
-	UnitParticleSystemTypes eyeCandySystems;
-
 protected:
 	// protected data... should be private...
 	///@todo privatise
@@ -94,13 +91,16 @@ protected:
 	///END REFACTOR
 
 	EffectTypes effectTypes;
+	UnitParticleSystemTypes eyeCandySystems;
+	const UnitType *m_unitType;
 
 public:
 	//varios
 	SkillType(SkillClass skillClass, const char* typeName);
 	virtual ~SkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
+	const UnitType* getUnitType() const { return m_unitType; }
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	void descEffects(string &str, const Unit *unit) const;
 	//void descEffectsRemoved(string &str, const Unit *unit) const;
@@ -217,7 +217,7 @@ protected:
 public:
 	TargetBasedSkillType(SkillClass skillClass, const char* typeName);
 	virtual ~TargetBasedSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const	{getDesc(str, unit, "Range");}
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
@@ -243,7 +243,7 @@ public:
 	AttackSkillType() : TargetBasedSkillType(SkillClass::ATTACK, "Attack"), attackType(NULL)/*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void doChecksum(Checksum &checksum) const;
 
@@ -305,7 +305,7 @@ public:
 	RepairSkillType();
 	virtual ~RepairSkillType(){}// { delete splashParticleSystemType; }
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 
@@ -331,7 +331,7 @@ private:
 
 public:
 	ProduceSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "ProductionSpeed");
@@ -403,7 +403,7 @@ public:
 	DieSkillType() : SkillType(SkillClass::DIE, "Die"){}
 	bool getFade() const	{return fade;}
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const {}
 
@@ -421,7 +421,7 @@ private:
 
 public:
 	LoadSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const {}
 
@@ -452,17 +452,17 @@ class SkillTypeFactory: public MultiFactory<SkillType>{
 private:
 	vector<SkillType*> m_types;
 	int m_idCounter;
-//	set<SkillType *> m_typeSet;
-//	map<SkillType *, int32> m_checksumTable;
+	map<SkillType *, int32> m_checksumTable;
 
 public:
 	SkillTypeFactory();
 	~SkillTypeFactory();
-//	void assertTypes();
 
 	SkillType* newInstance(string classId);
 	SkillType* getType(int id);
-//	void setChecksum(SkillType *st, int32 cs);
+	int getTypeCount() const { return m_types.size(); }
+	int32 getChecksum(SkillType *st);
+	void setChecksum(SkillType *st);
 	int getSkillTypeCount() const { return m_idCounter; }
 };
 

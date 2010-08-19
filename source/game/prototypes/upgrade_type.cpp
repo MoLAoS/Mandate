@@ -42,6 +42,7 @@ namespace Glest { namespace ProtoTypes {
 
 bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	string path;
+	m_factionType = factionType;
 
 	Logger::getInstance().add("Upgrade type: "+ dir, true);
 	path = dir + "/" + name + ".xml";
@@ -154,22 +155,35 @@ string UpgradeType::getDesc() const {
 }
 
 UpgradeTypeFactory::~UpgradeTypeFactory() {
-	deleteValues(types);
+	deleteValues(m_types);
+	m_types.clear();
+	m_checksumTable.clear();
 }
-
 
 UpgradeType* UpgradeTypeFactory::newInstance() {
 	UpgradeType *ut = SingleTypeFactory<UpgradeType>::newInstance();
-	ut->setId(idCounter++);
-	types.push_back(ut);
+	ut->setId(m_idCounter++);
+	m_types.push_back(ut);
 	return ut;
 }
 
 UpgradeType* UpgradeTypeFactory::getType(int id) {
-	if (id < 0 || id >= types.size()) {
+	if (id < 0 || id >= m_types.size()) {
 		throw runtime_error("Error: Unknown upgrade type id: " + intToStr(id));
 	}
-	return types[id];
+	return m_types[id];
+}
+
+int32 UpgradeTypeFactory::getChecksum(UpgradeType *ut) {
+	assert(m_checksumTable.find(ut) != m_checksumTable.end());
+	return m_checksumTable[ut];
+}
+
+void UpgradeTypeFactory::setChecksum(UpgradeType *ut) {
+	assert(m_checksumTable.find(ut) == m_checksumTable.end());
+	Checksum checksum;
+	ut->doChecksum(checksum);
+	m_checksumTable[ut] = checksum.getSum();
 }
 
 }}//end namespace

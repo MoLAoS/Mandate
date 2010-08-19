@@ -127,11 +127,6 @@ void MenuStateJoinGame::buildConnectPanel() {
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 
 	m_connectPanel = new Panel(&program, pos, size);
-	BorderStyle bStyle;
-	Colour colour(255, 0, 0, 255);
-	bStyle.setSolid(g_widgetConfig.getColourIndex(colour));
-	bStyle.setSizes(2);
-	m_connectPanel->setBorderStyle(bStyle);
 	m_connectPanel->setAutoLayout(false);
 
 	Font *font = g_coreData.getFTMenuFontNormal();

@@ -17,6 +17,7 @@
 #include <time.h>
 #include <iomanip>
 
+#include "FSFactory.hpp"
 #include "timer.h"
 
 using std::deque;
@@ -30,6 +31,8 @@ namespace Graphics {
 using Graphics::GraphicProgressBar;
 
 namespace Util {
+
+using namespace Shared::PhysFS;
 
 // =====================================================
 // class Logger
@@ -46,7 +49,9 @@ private:
 
 private:
 	string fileName;
-	//string sectionName;
+	string header;
+	FileOps *fileOps;
+
 	string state;
 	Strings logLines;
 	string subtitle;
@@ -55,14 +60,13 @@ private:
 	static char errorBuf[];
 	int totalUnits, unitsLoaded;
 
+	bool prependTime;
+
 	GraphicProgressBar *progressBar;
 
 private:
-	Logger( const char *fileName )
-		: fileName( fileName )
-		, loadingGame(true)
-		, progressBar(NULL) {
-	}
+	Logger(const char *fileName, const string &type, bool prependTime=true);
+	~Logger();
 
 public:
 	static Logger &getInstance();
@@ -70,7 +74,6 @@ public:
 	static Logger &getClientLog();
 	static Logger &getErrorLog();
 
-	//void setFile(const string &fileName) {this->fileName= fileName;}
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
 	void setSubtitle(const string &v)	{subtitle = v;}
@@ -87,9 +90,6 @@ public:
 	void setUnitCount(int count) { totalUnits = count; unitsLoaded = 0; }
 	void addUnitCount(int val) { totalUnits += val; }
 	void unitLoaded();
-
-	//void setClusterCount(int count) { totalClusters = count; clustersInit = 0; }
-	//void clusterInit();
 };
 
 void logNetwork(const string &msg);
@@ -106,59 +106,6 @@ inline void logNetwork(const char *msg) {
 #else
 #	define LOG_NETWORK(x)
 #	define NETWORK_LOG(x)
-#endif
-
-#if defined(WIN32) | defined(WIN64)
-
-class Timer {
-public:
-	Timer( int threshold, const char* msg ) {}
-	~Timer() {}
-
-	void print( const char* msg ) {}
-
-	struct timeval getDiff() {}
-};
-
-#else
-
-class Timer {
-	struct timeval start;
-	struct timezone tz;
-	unsigned int threshold;
-	const char* msg;
-	FILE *outfile;
-
-public:
-	Timer( int threshold, const char* msg, FILE *outfile = stderr ) :
-			threshold( threshold ), msg( msg ), outfile( outfile ) {
-		tz.tz_minuteswest = 0;
-		tz.tz_dsttime = 0;
-		gettimeofday( &start, &tz );
-	}
-
-	~Timer() {
-		struct timeval diff = getDiff();
-		unsigned int diffusec = diff.tv_sec * 1000000 + diff.tv_usec;
-		if ( diffusec > threshold ) {
-			fprintf( outfile, "%s: %d\n", msg, diffusec );
-		}
-	}
-
-	void print( const char* msg ) {
-		struct timeval diff = getDiff();
-		unsigned int diffusec = diff.tv_sec * 1000000 + diff.tv_usec;
-		fprintf( outfile, "%s -> %s: %d\n", this->msg, msg, diffusec );
-	}
-
-	struct timeval getDiff() {
-		struct timeval cur, diff;
-		gettimeofday( &cur, &tz );
-		diff.tv_sec = cur.tv_sec - start.tv_sec;
-		diff.tv_usec = cur.tv_usec - start.tv_usec;
-		return diff;
-	}
-};
 #endif
 
 }} // namespace Glest::Util

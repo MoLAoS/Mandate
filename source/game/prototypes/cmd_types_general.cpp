@@ -850,33 +850,15 @@ CommandTypeFactory::CommandTypeFactory()
 }
 
 CommandTypeFactory::~CommandTypeFactory() {
-	foreach (vector<CommandType*>, it, m_types) {
-//		assert(m_typeSet.find(*it) != m_typeSet.end());
-//		m_typeSet.erase(m_typeSet.find(*it));
-//		assert(m_checksumTable.find(*it) != m_checksumTable.end());
-//		m_checksumTable.erase(m_checksumTable.find(*it));
-		delete *it;
-	}
-//	assert(m_typeSet.empty());
-//	assert(m_checksumTable.empty());
+	deleteValues(m_types);
 	m_types.clear();
+	m_checksumTable.clear();
 }
-/*
-void CommandTypeFactory::assertTypes() {
-	foreach (vector<CommandType*>, it, m_types) {
-		assert(m_checksumTable.find(*it) != m_checksumTable.end());
-		Checksum checksum;
-		(*it)->doChecksum(checksum);
-		assert(m_checksumTable[*it] == checksum.getSum());
-	}
-}
-*/
 
 CommandType* CommandTypeFactory::newInstance(string classId, UnitType *owner) {
 	CommandType *ct = MultiFactory<CommandType>::newInstance(classId);
 	ct->setIdAndUnitType(m_idCounter++, owner);
 	m_types.push_back(ct);
-//	m_typeSet.insert(ct);
 	return ct;
 }
 
@@ -886,13 +868,17 @@ CommandType* CommandTypeFactory::getType(int id) {
 	}
 	return m_types[id];
 }
-/*
-void CommandTypeFactory::setChecksum(CommandType *ct, int32 cs) {
-	assert(m_typeSet.find(ct) != m_typeSet.end());
-	assert(m_checksumTable.find(ct) == m_checksumTable.end());
-	m_checksumTable[ct] = cs;
 
+int32 CommandTypeFactory::getChecksum(CommandType *ct) {
+	assert(m_checksumTable.find(ct) != m_checksumTable.end());
+	return m_checksumTable[ct];
 }
-*/
+
+void CommandTypeFactory::setChecksum(CommandType *ct) {
+	assert(m_checksumTable.find(ct) == m_checksumTable.end());
+	Checksum checksum;
+	ct->doChecksum(checksum);
+	m_checksumTable[ct] = checksum.getSum();
+}
 
 }}//end namespace

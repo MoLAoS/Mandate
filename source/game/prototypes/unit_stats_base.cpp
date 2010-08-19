@@ -35,7 +35,7 @@ namespace Glest { namespace ProtoTypes {
 //  class UnitStats
 // ===============================
 
-size_t UnitStats::damageMultiplierCount = 0;
+//size_t UnitStats::damageMultiplierCount = 0;
 
 // ==================== misc ====================
 
@@ -57,9 +57,9 @@ void UnitStats::reset() {
 	repairSpeed = 0;
 	harvestSpeed = 0;
 
-	for(int i = 0; i < damageMultiplierCount; ++i) {
-		damageMultipliers[i] = 0.f;
-	}
+//	for(int i = 0; i < damageMultiplierCount; ++i) {
+//		damageMultipliers[i] = 0.f;
+//	}
 }
 
 void UnitStats::setValues(const UnitStats &o) {
@@ -80,9 +80,9 @@ void UnitStats::setValues(const UnitStats &o) {
 	repairSpeed = o.repairSpeed;
 	harvestSpeed = o.harvestSpeed;
 
-	for(int i = 0; i < damageMultiplierCount; ++i) {
-		damageMultipliers[i] = o.damageMultipliers[i];
-	}
+//	for(int i = 0; i < damageMultiplierCount; ++i) {
+//		damageMultipliers[i] = o.damageMultipliers[i];
+//	}
 }
 
 void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
@@ -218,7 +218,6 @@ void UnitStats::save(XmlNode *node) const {
 
 void EnhancementType::reset() {
 	UnitStats::reset();
-
 	maxHpMult = 1;
 	hpRegenerationMult = 1;
 	maxEpMult = 1;

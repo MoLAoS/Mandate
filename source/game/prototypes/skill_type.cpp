@@ -41,13 +41,18 @@ SkillType::SkillType(SkillClass skillClass, const char* typeName)
 		: NameIdPair()
 		, effectTypes()
 		, epCost(0)
-		, animations()
+		, animSpeed(0)
+		, minRange(0)
+		, maxRange(0)
+		, startTime(0.f)
+		, projectile(0)
+		, splash(false)
+		, splashDamageAll(false)
+		, splashRadius(0)
 		, animationsStyle(AnimationsStyle::SINGLE)
-		, sounds()
 		, soundStartTime(0.f)
 		, typeName(typeName)
-		, minRange(0)
-		, maxRange(0) {
+		, m_unitType(0) {
 }
 
 SkillType::~SkillType(){
@@ -55,8 +60,9 @@ SkillType::~SkillType(){
 	deleteValues(sounds.getSounds().begin(), sounds.getSounds().end());
 }
 
-void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
-
+void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
+	m_unitType = ut;
+	const FactionType *ft = ut->getFactionType();
 	name = sn->getChildStringValue("name");
 	epCost = sn->getOptionalIntValue("ep-cost");
 	speed = sn->getChildIntValue("speed");
@@ -176,9 +182,6 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 
 void SkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<SkillClass>(getClass());
-	foreach_const (EffectTypes, it, effectTypes) {
-		(*it)->doChecksum(checksum);
-	}
 	checksum.add(name);
 	checksum.add(epCost);
 	checksum.add(speed);
@@ -273,8 +276,9 @@ TargetBasedSkillType::~TargetBasedSkillType(){
 	deleteValues(projSounds.getSounds().begin(), projSounds.getSounds().end());
 }
 
-void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
-	SkillType::load(sn, dir, tt, ft);
+void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
+	SkillType::load(sn, dir, tt, ut);
+	const FactionType *ft = ut->getFactionType();
 
 	//fields
 	const XmlNode *attackFieldsNode = sn->getChild("attack-fields", 0, false);
@@ -321,8 +325,8 @@ AttackSkillType::~AttackSkillType() {
 //	delete earthquakeType; 
 }
 
-void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft){
-	TargetBasedSkillType::load(sn, dir, tt, ft);
+void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
+	TargetBasedSkillType::load(sn, dir, tt, ut);
 
 	//misc
 	if (sn->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
@@ -401,8 +405,8 @@ void DieSkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<bool>(fade);
 }
 
-void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
-	SkillType::load(sn, dir, tt, ft);
+void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
+	SkillType::load(sn, dir, tt, ut);
 
 	fade= sn->getChild("fade")->getAttribute("value")->getBoolValue();
 }
@@ -419,10 +423,10 @@ RepairSkillType::RepairSkillType() : SkillType(SkillClass::REPAIR, "Repair"), sp
 	selfOnly = false;
 }
 
-void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
+void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
 	minRange = 1;
 	maxRange = 1;
-	SkillType::load(sn, dir, tt, ft);
+	SkillType::load(sn, dir, tt, ut);
 
 	XmlNode *n;
 
@@ -497,8 +501,8 @@ ProduceSkillType::ProduceSkillType() : SkillType(SkillClass::PRODUCE, "Produce")
 	maxPets = 0;
 }
 
-void ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
-	SkillType::load(sn, dir, tt, ft);
+void ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
+	SkillType::load(sn, dir, tt, ut);
 
 	XmlNode *petNode = sn->getChild("pet", 0, false);
 	if(petNode) {
@@ -521,8 +525,8 @@ LoadSkillType::LoadSkillType() : SkillType(SkillClass::LOAD, "Load") {
 	maxUnits = 0;
 }
 
-void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft) {
-	SkillType::load(sn, dir, tt, ft);
+void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
+	SkillType::load(sn, dir, tt, ut);
 
 	XmlNode *node = sn->getChild("max-load", 0, true);
 	if (node) {
@@ -557,35 +561,15 @@ SkillTypeFactory::SkillTypeFactory()
 }
 
 SkillTypeFactory::~SkillTypeFactory() {
-	//deleteValues(m_types);
-	foreach (vector<SkillType*>, it, m_types) {
-//		assert(m_typeSet.find(*it) != m_typeSet.end());
-//		m_typeSet.erase(m_typeSet.find(*it));
-//		assert(m_checksumTable.find(*it) != m_checksumTable.end());
-//		m_checksumTable.erase(m_checksumTable.find(*it));
-		delete *it;
-	}
-//	assert(m_typeSet.empty());
-//	assert(m_checksumTable.empty());
+	deleteValues(m_types);
 	m_types.clear();
+	m_checksumTable.clear();
 }
-
-/*void SkillTypeFactory::assertTypes() {
-	//deleteValues(m_types);
-	foreach (vector<SkillType*>, it, m_types) {
-		assert(m_typeSet.find(*it) != m_typeSet.end());
-		assert(m_checksumTable.find(*it) != m_checksumTable.end());
-		Checksum checksum;
-		(*it)->doChecksum(checksum);
-		assert(m_checksumTable[*it] == checksum.getSum());
-	}
-}*/
 
 SkillType* SkillTypeFactory::newInstance(string classId) {
 	SkillType *st = MultiFactory<SkillType>::newInstance(classId);
 	st->setId(m_idCounter++);
 	m_types.push_back(st);
-//	m_typeSet.insert(st);
 	return st;
 }
 
@@ -595,13 +579,19 @@ SkillType* SkillTypeFactory::getType(int id) {
 	}
 	return m_types[id];
 }
-/*
-void SkillTypeFactory::setChecksum(SkillType *st, int32 cs) {
-	assert(m_typeSet.find(st) != m_typeSet.end());
-	assert(m_checksumTable.find(st) == m_checksumTable.end());
-	m_checksumTable[st] = cs;
+
+int32 SkillTypeFactory::getChecksum(SkillType *st) {
+	assert(m_checksumTable.find(st) != m_checksumTable.end());
+	return m_checksumTable[st];
 }
-*/
+
+void SkillTypeFactory::setChecksum(SkillType *st) {
+	assert(m_checksumTable.find(st) == m_checksumTable.end());
+	Checksum checksum;
+	st->doChecksum(checksum);
+	m_checksumTable[st] = checksum.getSum();
+}
+
 // =====================================================
 // 	class ModelFactory
 // =====================================================

@@ -18,7 +18,6 @@
 #include "metrics.h"
 #include "lang.h"
 #include "components.h"
-#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 #include "world.h"
@@ -29,36 +28,46 @@ using namespace Glest::Net;
 
 namespace Glest { namespace Util {
 
-using namespace Shared::PhysFS;
-
 // =====================================================
 //	class Logger
 // =====================================================
 
 const int Logger::logLineCount= 15;
 
+Logger::Logger(const char *fileName, const string &type, bool prependTime)
+		: fileName(fileName)
+		, fileOps(0)
+		, loadingGame(true)
+		, progressBar(NULL)
+		, prependTime(prependTime) {
+	header = "Glest Advanced Enginge: " + type + " log file.\n\n";
+}
+
+Logger::~Logger() {
+	delete fileOps;
+}
+
 // ===================== PUBLIC ========================
 
 Logger& Logger::getInstance() {
-	static Logger logger( "glestadv.log" );
+	static Logger logger("glestadv.log", "Game");
 	return logger;
 }
 
 Logger& Logger::getServerLog() {
-	static Logger logger( "glestadv-server.log" );
+	static Logger logger("glestadv-server.log", "Server", false);
 	return logger;
 }
 
 Logger& Logger::getClientLog() {
-	static Logger logger( "glestadv-client.log" );
+	static Logger logger("glestadv-client.log", "Client", false);
 	return logger;
 }
 
 Logger& Logger::getErrorLog() {
-	static Logger logger( "glestadv-error.log" );
+	static Logger logger("glestadv-error.log", "Error", false);
 	return logger;
 }
-
 
 void Logger::setState(const string &state){
 	this->state= state;
@@ -70,35 +79,18 @@ void Logger::unitLoaded() {
 	float pcnt = ((float)unitsLoaded) / ((float)totalUnits) * 100.f;
 	progressBar->setProgress(int(pcnt));
 }
-/*
-void Logger::clusterInit() {
-	_PROFILE_FUNCTION();
-	++clustersInit;
-	float pcnt = ((float)clustersInit) / ((float)totalClusters) * 100.f;
-	progressBar->setProgress(int(pcnt));
-	renderLoadingScreen();
-}
-*/
+
+string newLine = "\n";
+
 void Logger::add(const string &str,  bool renderScreen){
-/*	FILE *f=fopen(fileName.c_str(), "at+");
-	if (f) {
-		fprintf(f, "%d: %s\n", (int)(clock() / 1000), str.c_str());
-		fclose(f);
-	}*/
-	FileOps *f = FSFactory::getInstance()->getFileOps();
-	f->openAppend(fileName.c_str());
-	//FIXME: ugly
-	stringstream sstream;
-	sstream << (int)(clock() / 1000) << ": " << str << endl;
-	string s = sstream.str();
-	f->write((void*)s.c_str(), sizeof(char), s.size());
-	delete f;
+	if (prependTime) {
+		string myTime = intToStr(int(clock() / 1000)) + ": ";
+		fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
+	}
+	fileOps->write(str.c_str(), sizeof(char), str.size());
+	fileOps->write(newLine.c_str(), sizeof(char), newLine.size());
 	
 	if (loadingGame && renderScreen) {
-// 		if (f == NULL) {
-// 			throw runtime_error("Error opening log file" + fileName);
-// 		}
-
 		logLines.push_back(str);
 		if(logLines.size() > logLineCount) {
 			logLines.pop_front();
@@ -106,7 +98,7 @@ void Logger::add(const string &str,  bool renderScreen){
 	} else {
 		current = str;
 	}
-	if(renderScreen) {
+	if (renderScreen) {
 		renderLoadingScreen();
 	}
 }
@@ -129,9 +121,10 @@ void Logger::addNetworkMsg(const string &msg) {
 }
 
 void Logger::clear() {
-	ostream *ofs = FSFactory::getInstance()->getOStream(fileName.c_str());
-	*ofs << "Log file\n\n";
-	delete ofs;
+	delete fileOps;
+	fileOps = g_fileFactory.getFileOps();
+	fileOps->openWrite(fileName.c_str());
+	fileOps->write(header.c_str(), sizeof(char), header.size());
 }
 
 // ==================== PRIVATE ====================

@@ -94,7 +94,7 @@ int GameState::getUpdateInterval() const {
 }
 
 GameState::~GameState() {
-	g_logger.setState(Lang::getInstance().get("Deleting"));
+	g_logger.setState(g_lang.get("Deleting"));
 	g_logger.add("~GameState", !program.isTerminating());
 
 	g_renderer.endGame();
@@ -194,22 +194,23 @@ void GameState::init() {
 
 	//IF_DEBUG_EDITION( simInterface->getGaia()->showSpawnPoints(); );
 
-	//sounds
+	// sounds
 	Tileset *tileset = g_world.getTileset();
 	const TechTree *techTree = g_world.getTechTree();
 	AmbientSounds *ambientSounds = tileset->getAmbientSounds();
 
-	//rain
+	// rain
 	if (tileset->getWeather() == Weather::RAINY && ambientSounds->isEnabledRain()) {
 		g_logger.add("Starting ambient stream", true);
 		g_soundRenderer.playAmbient(ambientSounds->getRain());
 	}
-	//snow
+	// snow
 	if (tileset->getWeather() == Weather::SNOWY && ambientSounds->isEnabledSnow()) {
 		g_logger.add("Starting ambient stream", true);
 		g_soundRenderer.playAmbient(ambientSounds->getSnow());
 	}
 
+	// Launch
 	int maxUpdtBacklog = simInterface->launchGame();
 	program.setMaxUpdateBacklog(maxUpdtBacklog);
 
@@ -234,7 +235,6 @@ void GameState::update() {
 	if (netError) {
 		return;
 	}
-	//simInterface->getWorld()->getUnitTypeFactory().assertTypes();
 	++updateFps;
 	mouse2d = (mouse2d + 1) % Renderer::maxMouse2dAnim;
 
@@ -245,14 +245,14 @@ void GameState::update() {
 	// but the particle stuff still lives here, so we still need to process each loop here
 
 	try {
-		//update simulation
+		// update simulation
 		simInterface->updateWorld();
 		++worldFps;
 
-		//Gui
+		// Gui
 		gui.update();
 
-		//Particle systems
+		// Particle systems
 		if (weatherParticleSystem) {
 			weatherParticleSystem->setPos(gameCamera.getPos());
 		}
@@ -264,17 +264,17 @@ void GameState::update() {
 		netError = true;
 		return;
 		///@todo return to menu...
-	} catch (std::runtime_error &e) {
+	} catch (std::exception &e) {
 		displayError(e);
 		return;
 	}
 
-	//check for quiting status
+	// check for quiting status
 	if (g_simInterface->getQuit()) {
 		quitGame();
 	}
 
-	//update auto test
+	// update auto test
 	if (g_config.getMiscAutoTest()) {
 		AutoTest::getInstance().updateGame(this);
 	}

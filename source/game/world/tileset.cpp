@@ -215,18 +215,21 @@ void Tileset::doChecksum(Checksum &checksum) const {
 		checksum.add<bool>(objectTypes[i].getWalkable());
 		checksum.add<bool>(objectTypes[i].isATree());
 	}
+	/*
 	for (int i=0; i < surfCount; ++i) {
 		foreach_const (SurfProbs, it, surfProbs[i]) {
 			checksum.add<float>(*it);
 		}
+		cout << "Tileset surface " << i << ": " << intToHex(checksum.getSum()) << endl;
 	}
 	checksum.add<bool>(fog);
-	checksum.add<int>(fogMode);
-	checksum.add<float>(fogDensity);
-	checksum.add<Vec3f>(fogColor);
-	checksum.add<Vec3f>(sunLightColor);
-	checksum.add<Vec3f>(moonLightColor);
-	checksum.add<Weather>(weather);
+	cout << "Tileset fog: " << intToHex(checksum.getSum()) << endl;*/
+//	checksum.add<int>(fogMode);
+//	checksum.add<float>(fogDensity);
+//	checksum.add<Vec3f>(fogColor);
+//	checksum.add<Vec3f>(sunLightColor);
+//	checksum.add<Vec3f>(moonLightColor);
+//	checksum.add<Weather>(weather); // should sync this...
 }
 
 Tileset::~Tileset(){

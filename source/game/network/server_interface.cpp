@@ -25,6 +25,9 @@
 #include "logger.h"
 #include "profiler.h"
 
+#include "unit_type.h"
+#include "upgrade_type.h"
+
 using namespace Shared::Platform;
 using namespace Shared::Util;
 
@@ -37,14 +40,17 @@ namespace Glest { namespace Net {
 // =====================================================
 
 ServerInterface::ServerInterface(Program &prog) 
-		: NetworkInterface(prog) {
+		: NetworkInterface(prog)
+		, m_waitingForPlayers(false)
+		, m_dataSync(0)
+		, m_dataSyncDone(false){
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		slots[i] = NULL;
 	}
 	try {
 		serverSocket.setBlock(false);
 		serverSocket.bind(GameConstants::serverPort);
-	} catch (runtime_error e) {
+	} catch (runtime_error &e) {
 		LOG_NETWORK(e.what());
 		throw e;
 	}
@@ -59,14 +65,14 @@ ServerInterface::~ServerInterface() {
 
 void ServerInterface::addSlot(int playerIndex) {
 	assert(playerIndex >= 0 && playerIndex < GameConstants::maxPlayers);
-	LOG_NETWORK( "Opening slot " + intToStr(playerIndex) );
+	NETWORK_LOG( __FUNCTION__ << " Opening slot " << playerIndex );
 	delete slots[playerIndex];
 	slots[playerIndex] = new ConnectionSlot(this, playerIndex);
 	updateListen();
 }
 
 void ServerInterface::removeSlot(int playerIndex) {
-	LOG_NETWORK( "Closing slot " + intToStr(playerIndex) );
+	NETWORK_LOG( __FUNCTION__ << " Closing slot " << playerIndex );
 	delete slots[playerIndex];
 	slots[playerIndex] = NULL;
 	updateListen();
@@ -101,46 +107,172 @@ void ServerInterface::update() {
 				slots[i]->update();
 			} catch (NetworkError &e) {
 				LOG_NETWORK( e.what() );
-				const string &name = slots[i]->getName();
+				string playerName = slots[i]->getName();
 				removeSlot(i);
-				sendTextMessage("Player " + intToStr(i) + " [" + name + "] diconnected.", -1);
+				sendTextMessage("Player " + intToStr(i) + " [" + playerName + "] diconnected.", -1);
 			}
 		}
 	}
 }
 
+void ServerInterface::doDataSync() {
+	NETWORK_LOG( __FUNCTION__ );
+	m_dataSync = new DataSyncMessage(g_world);
+	m_syncCounter = getConnectedSlotCount();
+
+	while (!m_dataSyncDone) {
+		// update all slots
+		for (int i=0; i < GameConstants::maxPlayers; ++i) {
+			if (slots[i]) {
+				try {
+					slots[i]->update();
+				} catch (NetworkError &e) {
+					LOG_NETWORK( e.what() );
+					string playerName = slots[i]->getName();
+					removeSlot(i);
+					sendTextMessage("Player " + intToStr(i) + " [" + playerName + "] diconnected.", -1);
+				}
+			}
+
+		}
+		sleep(10);
+	}
+	//broadcastMessage(m_dataSync);
+}
+
+void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
+	NETWORK_LOG( __FUNCTION__ );
+	assert(m_dataSync);
+	--m_syncCounter;
+	if (!m_syncCounter) {
+		m_dataSyncDone = true;
+	}
+	bool ok = true;
+	if (m_dataSync->getChecksumCount() != msg.getChecksumCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getChecksumCount() 
+			<< " total checksums, I have " << m_dataSync->getChecksumCount() )
+		ok = false;
+	}
+	if (m_dataSync->getUnitTypeCount() != msg.getUnitTypeCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getUnitTypeCount() 
+			<< " UnitType checksums, I have " << m_dataSync->getUnitTypeCount() )
+		ok = false;
+	}
+	if (m_dataSync->getCmdTypeCount() != msg.getCmdTypeCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getCmdTypeCount() 
+			<< " CommandType checksums, I have " << m_dataSync->getCmdTypeCount() )
+		ok = false;
+	}
+	if (m_dataSync->getSkillTypeCount() != msg.getSkillTypeCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getSkillTypeCount() 
+			<< " SkillType checksums, I have " << m_dataSync->getSkillTypeCount() )
+		ok = false;
+	}
+	if (m_dataSync->getUpgrdTypeCount() != msg.getUpgrdTypeCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getUpgrdTypeCount() 
+			<< " UpgradeType checksums, I have " << m_dataSync->getUpgrdTypeCount() )
+		ok = false;
+	}
+
+	if (!ok) {
+		throw DataSyncError(NetSource::SERVER);
+	}
+
+	UnitTypeFactory		&unitTFactory	= g_world.getUnitTypeFactory();
+	CommandTypeFactory	&cmdTFactory	= g_world.getCommandTypeFactory();
+	SkillTypeFactory	&sklTFactory	= g_world.getSkillTypeFactory();
+	UpgradeTypeFactory	&upgrdTFactory	= g_world.getUpgradeTypeFactory();
+
+	// untis : 0
+	int unitOffset = 4;
+	int cmdOffset = unitOffset + unitTFactory.getTypeCount();
+	int skllOffset = cmdOffset + cmdTFactory.getTypeCount();
+	int upgrdOffset = skllOffset + sklTFactory.getTypeCount();
+
+	const int n = m_dataSync->getChecksumCount();
+	for (int i=0; i < n; ++i) {
+		if (m_dataSync->getChecksum(i) != msg.getChecksum(i)) {
+			ok = false;
+			if (i < unitOffset) {
+				string badBit;
+				switch (i) {
+					case 0: badBit = "Tileset"; break;
+					case 1: badBit = "Map"; break;
+					case 2: badBit = "Damage multiplier"; break;
+					case 3: badBit = "Resource"; break;
+				}
+				NETWORK_LOG( "DataSync Fail: " << badBit << " data does not match." )
+			} else if (i < cmdOffset) {
+				UnitType *ut = unitTFactory.getType(i - unitOffset);
+				NETWORK_LOG(
+					"DataSync Fail: UnitType '" << ut->getName() << "' of FactionType '" 
+					<< ut->getFactionType()->getName() << "'";
+				)
+			} else if (i < skllOffset) {
+				CommandType *ct = cmdTFactory.getType(i - cmdOffset);
+				NETWORK_LOG(
+					"DataSync Fail: CommandType '" << ct->getName() << "' of UnitType '"
+					<< ct->getUnitType()->getName() << "' of FactionType '"
+					<< ct->getUnitType()->getFactionType()->getName() << "'";
+				)
+			} else if (i < upgrdOffset) {
+				SkillType *skillType = sklTFactory.getType(i - skllOffset);
+				NETWORK_LOG(
+					"DataSync Fail: SkillType '" << skillType->getName() << "' of UnitType '"
+					<< skillType->getUnitType()->getName() << "' of FactionType '"
+					<< skillType->getUnitType()->getFactionType()->getName() << "'";
+				)
+			} else {
+				UpgradeType *ut = upgrdTFactory.getType(i - upgrdOffset);
+				NETWORK_LOG(
+					"DataSync Fail: UpgradeType '" << ut->getName() << "' of FactionType '" 
+					<< ut->getFactionType()->getName() << "'";
+				)
+			}
+		}
+	}
+	if (!ok) {
+		throw DataSyncError(NetSource::SERVER);
+	}
+}
+
 void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
-	LOG_NETWORK( "Creating and sending SkillCycleTable." );
+	NETWORK_LOG( __FUNCTION__ << " Creating and sending SkillCycleTable." );
 	SimulationInterface::createSkillCycleTable(techTree);
-	this->broadcastMessage(skillCycleTable);
+	broadcastMessage(skillCycleTable);
 }
 
 void ServerInterface::checkUnitBorn(Unit *unit, int32 cs) {
-	//LOG_NETWORK( __FUNCTION__", adding checksum " + intToHex(cs) );
+//	NETWORK_LOG( __FUNCTION__ << " Adding checksum " << intToHex(cs) );
 	keyFrame.addChecksum(cs);
 }
 
 void ServerInterface::checkCommandUpdate(Unit*, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ << " Adding checksum " << intToHex(cs) );
 	keyFrame.addChecksum(cs);
 }
 
 void ServerInterface::checkProjectileUpdate(Unit*, int, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ << " Adding checksum " << intToHex(cs) );
 	keyFrame.addChecksum(cs);
 }
 
 void ServerInterface::checkAnimUpdate(Unit*, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ << " Adding checksum " << intToHex(cs) );
 	keyFrame.addChecksum(cs);
 }
 
 void ServerInterface::updateSkillCycle(Unit *unit) {
 	SimulationInterface::updateSkillCycle(unit);
 	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+//		NETWORK_LOG( __FUNCTION__ << " Adding move update" );
 		MoveSkillUpdate updt(unit);
 		keyFrame.addUpdate(updt);
 	}
 }
 
 void ServerInterface::updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
+//	NETWORK_LOG( __FUNCTION__ << " Adding projectile update" );
 	SimulationInterface::updateProjectilePath(u, pps, start, end);
 	ProjectileUpdate updt(u, pps);
 	keyFrame.addUpdate(updt);
@@ -152,6 +284,8 @@ void ServerInterface::process(TextMessage &msg, int requestor) {
 }
 
 void ServerInterface::updateKeyframe(int frameCount) {
+	NETWORK_LOG( __FUNCTION__ << " building & sending keyframe " 
+		<< (frameCount / GameConstants::networkFramePeriod) );
 	// build command list, remove commands from requested and add to pending
 	while (!requestedCommands.empty()) {
 		keyFrame.add(requestedCommands.back());
@@ -160,28 +294,16 @@ void ServerInterface::updateKeyframe(int frameCount) {
 	}
 	keyFrame.setFrameCount(frameCount);
 	broadcastMessage(&keyFrame);
+	
 	keyFrame.reset();
 }
 
-void ServerInterface::waitUntilReady(Checksum *checksums) {
+void ServerInterface::waitUntilReady() {
+	NETWORK_LOG( __FUNCTION__ );
 	Chrono chrono;
 	chrono.start();
 	bool allReady = false;
-	const TechTree *tt = world->getTechTree();
-	const int &n = tt->getFactionTypeCount();
-	string factionChecks;
-	for (int i=0; i < n; ++i) {
-		factionChecks += "Faction " + tt->getFactionType(i)->getName() + " = " 
-			+ intToHex(checksums[4+i].getSum()) + "\n";
-	}
-	NETWORK_LOG( 
-		"Waiting for ready messages from all clients. My Chcecksums:\n"
-		<< "Tileset = " << intToHex(checksums[0].getSum()) << endl
-		<< "Map = " << intToHex(checksums[1].getSum()) << endl
-		<< "Damage Multipliers = " << intToHex(checksums[2].getSum()) << endl
-		<< "Resources = " << intToHex(checksums[3].getSum()) << endl
-		<< factionChecks;
-	);	
+
 	// wait until we get a ready message from all clients
 	while (!allReady) {
 		allReady = true;
@@ -197,23 +319,22 @@ void ServerInterface::waitUntilReady(Checksum *checksums) {
 				if (raw.type != MessageType::READY) {
 					throw InvalidMessage(MessageType::READY, raw.type);
 				}
-				LOG_NETWORK( "Received ready message, slot " + intToStr(i) );
-				ReadyMessage readyMsg(raw);
+				NETWORK_LOG( __FUNCTION__ << " Received ready message, slot " << i );
 				slot->setReady();
 			}
 		}
 		// check for timeout
 		if (chrono.getMillis() > readyWaitTimeout) {
-			LOG_NETWORK( "Timed Out." );
+			NETWORK_LOG( __FUNCTION__ << "Timed out." );
 			for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-				if (slots[i]) {
+				if (slots[i] && !slots[i]->isReady()) {
 					Socket *sock = slots[i]->getSocket();
 					int n = sock->getDataToRead();
-					NETWORK_LOG( "Slot[" << i << "] : data to read: " << n );
+					NETWORK_LOG( "\tSlot[" << i << "] : data to read: " << n );
 					if (n >= 4) {
 						MsgHeader hdr;
 						sock->receive(&hdr, 4);
-						NETWORK_LOG( "Message type: " << MessageTypeNames[MessageType(hdr.messageType)]
+						NETWORK_LOG( "\tMessage type: " << MessageTypeNames[MessageType(hdr.messageType)]
 							<< ", message size: " << hdr.messageSize );
 					}
 				}
@@ -222,9 +343,8 @@ void ServerInterface::waitUntilReady(Checksum *checksums) {
 		}
 		sleep(2);
 	}
-	LOG_NETWORK( "Received all ready messages, sending ready message(s)." );
-	// send ready message after, so clients start delayed
-	ReadyMessage readyMsg(checksums);
+	NETWORK_LOG( __FUNCTION__ << " Received all ready messages, sending ready message(s)." );
+	ReadyMessage readyMsg;
 	for (int i= 0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i]) {
 			slots[i]->send(&readyMsg);
@@ -233,16 +353,17 @@ void ServerInterface::waitUntilReady(Checksum *checksums) {
 }
 
 void ServerInterface::sendTextMessage(const string &text, int teamIndex){
+	NETWORK_LOG( __FUNCTION__ );
 	TextMessage txtMsg(text, Config::getInstance().getNetPlayerName(), teamIndex);
 	broadcastMessage(&txtMsg);
 	NetworkInterface::processTextMessage(txtMsg);
 }
 
 void ServerInterface::quitGame(QuitSource source) {
-	LOG_NETWORK( "aborting game" );
-	string text = getHostName() + " has ended the game!";
-	TextMessage networkMessageText(text,getHostName(),-1);
-	broadcastMessage(&networkMessageText, -1);
+	NETWORK_LOG( __FUNCTION__ << " aborting game." );
+//	string text = getHostName() + " has ended the game!";
+//	TextMessage networkMessageText(text,getHostName(),-1);
+//	broadcastMessage(&networkMessageText, -1);
 
 	QuitMessage networkMessageQuit;
 	broadcastMessage(&networkMessageQuit);
@@ -266,16 +387,16 @@ string ServerInterface::getStatus() const {
 }
 
 void ServerInterface::syncAiSeeds(int aiCount, int *seeds) {
+	NETWORK_LOG( __FUNCTION__ << " sending " << aiCount << " Ai random number seeds..." );
 	assert(aiCount && seeds);
 	SimulationInterface::syncAiSeeds(aiCount, seeds);
-	LOG_NETWORK("sending " + intToStr(aiCount) + " Ai random number seeds...");
 	AiSeedSyncMessage seedSyncMsg(aiCount, seeds);
 	broadcastMessage(&seedSyncMsg);
 }
 
 void ServerInterface::doLaunchBroadcast() {
+	NETWORK_LOG( __FUNCTION__ << " Launching game." );
 	LaunchMessage networkMessageLaunch(&gameSettings);
-	LOG_NETWORK( "Launching game, sending launch message(s)" );
 	broadcastMessage(&networkMessageLaunch);	
 }
 

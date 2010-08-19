@@ -113,11 +113,11 @@ protected:
 	int harvestSpeed;		// ??? UnitStats?
 
 	/** Resistance / Damage Multipliers ( => Enhancement ) */
-	static size_t damageMultiplierCount;
-	vector<float> damageMultipliers;
+	//static size_t damageMultiplierCount;
+	//vector<float> damageMultipliers;
 
 public:
-	UnitStats() : damageMultipliers(damageMultiplierCount) { }
+	UnitStats() /*: damageMultipliers(damageMultiplierCount)*/ { }
 	virtual ~UnitStats() {}
 
 	virtual void doChecksum(Checksum &checksum) const;
@@ -141,13 +141,13 @@ public:
 	int getRepairSpeed() const				{return repairSpeed;}
 	int getHarvestSpeed() const				{return harvestSpeed;}
 
-	static size_t getDamageMultiplierCount()	{return damageMultiplierCount;}
-	float getDamageMultiplier(size_t i) const	{assert(i < damageMultiplierCount); return damageMultipliers[i];}
+//	static size_t getDamageMultiplierCount()	{return damageMultiplierCount;}
+//	float getDamageMultiplier(size_t i) const	{assert(i < damageMultiplierCount); return damageMultipliers[i];}
 
 	// ==================== set ====================
 
 	// this is called from TechTree::load()
-	static void setDamageMultiplierCount(size_t count)	{damageMultiplierCount = count;}
+//	static void setDamageMultiplierCount(size_t count)	{damageMultiplierCount = count;}
 
 	// ==================== misc ====================
 

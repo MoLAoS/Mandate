@@ -230,7 +230,6 @@ public:
 	GameSpeed decSpeed();
 	GameSpeed resetSpeed();
 	GameSpeed getSpeed() const { return speed; }
-	int getUpdateLoops();
 
 	// game over checks
 	GameStatus checkWinner();
@@ -272,6 +271,8 @@ public:
 protected:
 	// game life-cycle
 
+	virtual void doDataSync() {}
+
 	/** Create, create & send or receive the SkillCycleTable */
 	virtual void createSkillCycleTable(const TechTree *techTree) {
 		delete skillCycleTable;
@@ -289,7 +290,7 @@ protected:
 	}
 
 	/** Wait on network until all players are ready to start the game, only for network games */
-	virtual void waitUntilReady(Checksum*)  { }
+	virtual void waitUntilReady()  { }
 
 	/** Indicator that the game should now start, only used by ClientInterface */
 	virtual void startGame() { }

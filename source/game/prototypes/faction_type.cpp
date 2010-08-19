@@ -146,9 +146,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		if (!unitTypes[i]->load(str, techTree, this)) {
 			loadOk = false;
 		}
-		Checksum checksum;
-		unitTypes[i]->doChecksum(checksum);
-//		g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
+		g_world.getUnitTypeFactory().setChecksum(unitTypes[i]);
 		logger.unitLoaded();
 	}
 
@@ -158,6 +156,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		if (!upgradeTypes[i]->load(str, techTree, this)) {
 			loadOk = false;
 		}
+		g_world.getUpgradeTypeFactory().setChecksum(upgradeTypes[i]);
 	}
 
 	//read starting resources
@@ -288,7 +287,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 		if (unitTypes[i]->load(str, techTree, this, true)) {
 			Checksum checksum;
 			unitTypes[i]->doChecksum(checksum);
-//			g_world.getUnitTypeFactory().setChecksum(unitTypes[i], checksum.getSum());
+			g_world.getUnitTypeFactory().setChecksum(unitTypes[i]);
 		} else {
 			loadOk = false;
 		}

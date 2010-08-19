@@ -131,19 +131,11 @@ public:
 /**	Message sent at the beggining of the game */
 class ReadyMessage : public Message {
 private:
-	struct Data{
-		uint32 messageType :  8;
-		uint32 messageSize : 24;
-		// tileset, map, tech(damage table), tech(resources), maxPlayers * faction
-		int32 checksums[4 + GameConstants::maxPlayers];
-	} data;
+	MsgHeader data;
 
 public:
 	ReadyMessage();
-	ReadyMessage(Checksum *checksums);
 	ReadyMessage(RawMessage raw);
-
-	int32 getChecksum(int i) const	{return data.checksums[i];}
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
@@ -187,6 +179,35 @@ public:
 	LaunchMessage(RawMessage raw);
 
 	void buildGameSettings(GameSettings *gameSettings) const;
+
+	virtual bool receive(NetworkConnection* connection);
+	virtual void send(NetworkConnection* connection) const;
+};
+
+class DataSyncMessage : public Message {
+private:
+	///@todo struct Data { ... } m_data;
+	int32 m_unitTypeCount;
+	int32 m_cmdTypeCount;
+	int32 m_skillTypeCount;
+	int32 m_upgrdTypeCount;
+	int32 *m_data;
+	bool fromRaw;
+
+public:
+	DataSyncMessage(RawMessage raw);
+	DataSyncMessage(World &world);
+	~DataSyncMessage();
+
+	int32 getChecksum(int i) { return m_data[i]; }
+
+	int32 getUnitTypeCount()  const { return m_unitTypeCount;  }
+	int32 getCmdTypeCount()	  const { return m_cmdTypeCount;   }
+	int32 getSkillTypeCount() const { return m_skillTypeCount; }
+	int32 getUpgrdTypeCount() const { return m_upgrdTypeCount; }
+	int32 getChecksumCount()  const {
+		return m_unitTypeCount + m_cmdTypeCount + m_skillTypeCount + m_upgrdTypeCount + 4;
+	}
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;

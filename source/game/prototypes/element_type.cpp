@@ -32,7 +32,7 @@ using namespace Glest::Graphics;
 namespace Glest { namespace ProtoTypes {
 
 void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
-	checksum.add<int>(id);
+	checksum.add(id);
 	checksum.add(name);
 }
 
@@ -126,13 +126,13 @@ void RequirableType::doChecksum(Checksum &checksum) const {
 	NameIdPair::doChecksum(checksum);
 	foreach_const (UnitReqs, it, unitReqs) {
 		checksum.add((*it)->getName());
-		checksum.add<int>((*it)->getId());
+		checksum.add((*it)->getId());
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
 		checksum.add((*it)->getName());
-		checksum.add<int>((*it)->getId());
+		checksum.add((*it)->getId());
 	}
-	checksum.add<int>(subfactionsReqs);
+	checksum.add(subfactionsReqs);
 }
 
 // =====================================================
@@ -215,13 +215,13 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 void ProducibleType::doChecksum(Checksum &checksum) const {
 	RequirableType::doChecksum(checksum);
 	foreach_const (Costs, it, costs) {
-		checksum.add<int>(it->getType()->getId());
+		checksum.add(it->getType()->getId());
 		checksum.add(it->getType()->getName());
-		checksum.add<int>(it->getAmount());
+		checksum.add(it->getAmount());
 	}
-	checksum.add<int>(productionTime);
-	checksum.add<int>(advancesToSubfaction);
-	checksum.add<bool>(advancementIsImmediate);
+	checksum.add(productionTime);
+	checksum.add(advancesToSubfaction);
+	checksum.add(advancementIsImmediate);
 }
 
 }}//end namespace

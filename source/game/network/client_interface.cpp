@@ -52,25 +52,29 @@ ClientInterface::ClientInterface(Program &prog)
 }
 
 ClientInterface::~ClientInterface() {
-	quitGame(QuitSource::LOCAL);
+	if (game || program.isTerminating()) {
+		quitGame(QuitSource::LOCAL);
+	}
 	delete clientSocket;
 	clientSocket = NULL;
 }
 
 void ClientInterface::connect(const Ip &ip, int port) {
+	NETWORK_LOG( __FUNCTION__ << " connecting to " << ip.getString() << ":" << port );
 	delete clientSocket;
 	clientSocket = new ClientSocket();
 	clientSocket->connect(ip, port);
 	clientSocket->setBlock(false);
-	LOG_NETWORK( "connecting to " + ip.getString() + ":" + intToStr(port) );
 }
 
 void ClientInterface::reset() {
+	NETWORK_LOG( __FUNCTION__ );
 	delete clientSocket;
 	clientSocket = NULL;
 }
 
 void ClientInterface::doIntroMessage() {
+	NETWORK_LOG( __FUNCTION__ );
 	RawMessage msg = getNextMessage();
 	if (msg.type != MessageType::INTRO) {
 		throw InvalidMessage(MessageType::INTRO, msg.type);
@@ -93,6 +97,7 @@ void ClientInterface::doIntroMessage() {
 }
 
 void ClientInterface::doLaunchMessage() {
+	NETWORK_LOG( __FUNCTION__ );
 	RawMessage msg = getNextMessage();
 	if (msg.type != MessageType::LAUNCH) {
 		throw InvalidMessage(MessageType::LAUNCH, msg.type);
@@ -114,13 +119,18 @@ void ClientInterface::doLaunchMessage() {
 		}
 	}
 	launchGame = true;
-	LOG_NETWORK( "Received launch message." );
+}
+
+void ClientInterface::doDataSync() {
+	NETWORK_LOG( __FUNCTION__ );
+	DataSyncMessage msg(g_world);
+	send(&msg);
 }
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
+	NETWORK_LOG( __FUNCTION__ << " waiting for server to send Skill Cycle Table." );
 	int skillCount = g_world.getSkillTypeFactory().getSkillTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
-	LOG_NETWORK( "waiting for server to send Skill Cycle Table." );
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();
 	if (raw.type != MessageType::SKILL_CYCLE_TABLE) {
@@ -130,7 +140,6 @@ void ClientInterface::createSkillCycleTable(const TechTree *) {
 		throw GarbledMessage(MessageType::SKILL_CYCLE_TABLE, NetSource::SERVER);
 	}
 	skillCycleTable = new SkillCycleTable(raw);
-	LOG_NETWORK( "Received Skill Cycle Table." );
 }
 
 void ClientInterface::updateLobby() {
@@ -146,6 +155,7 @@ void ClientInterface::updateLobby() {
 }
 
 void ClientInterface::syncAiSeeds(int aiCount, int *seeds) {
+	NETWORK_LOG( __FUNCTION__ );
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();
 	if (raw.type != MessageType::AI_SYNC) {
@@ -159,46 +169,17 @@ void ClientInterface::syncAiSeeds(int aiCount, int *seeds) {
 	}
 }
 
-void ClientInterface::waitUntilReady(Checksum *checksums) {
-	// Should send checksums, then the server will know if something is screwed up...
+void ClientInterface::waitUntilReady() {
+	NETWORK_LOG( __FUNCTION__ );
 	ReadyMessage readyMsg;
 	send(&readyMsg);
 
-	const TechTree *tt = world->getTechTree();
-	const int &n = tt->getFactionTypeCount();
-	string factionChecks;
-	for (int i=0; i < n; ++i) {
-		factionChecks += "Faction " + tt->getFactionType(i)->getName() + " = " 
-			+ intToHex(checksums[4+i].getSum()) + "\n";
-	}
-	NETWORK_LOG( 
-		"Ready, waiting for server ready message. My checksums:\n"
-		<< "Tileset = " << intToHex(checksums[0].getSum()) << endl
-		<< "Map = " << intToHex(checksums[1].getSum()) << endl
-		<< "Damage Multipliers = " << intToHex(checksums[2].getSum()) << endl
-		<< "Resources = " << intToHex(checksums[3].getSum()) << endl
-		<< factionChecks;
-	);
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();
 	if (raw.type != MessageType::READY) {
 		throw InvalidMessage(MessageType::READY, raw.type);
 	}
-	readyMsg = ReadyMessage(raw);
-	//check checksums
-	bool checks[4 + GameConstants::maxPlayers];
-	bool anyFalse = false;
-	for (int i=0; i < 4 + n; ++i) {
-		if (readyMsg.getChecksum(i) == checksums[i].getSum()) {
-			checks[i] = true;
-		} else {
-			checks[i] = false;
-			anyFalse = true;
-		}
-	}
-	if (anyFalse) {
-		throw DataSyncError(checks, n, NetSource::CLIENT);
-	}
+
 	//delay the start a bit, so clients have more room to get messages
 	sleep(GameConstants::networkExtraLatency);
 }
@@ -232,27 +213,23 @@ void ClientInterface::waitForMessage(int timeout) {
 }
 
 void ClientInterface::quitGame(QuitSource source) {
-	LOG_NETWORK( "Quitting" );
+	NETWORK_LOG( __FUNCTION__ << " QuitSource == " << (source == QuitSource::SERVER ? "SERVER" : "LOCAL") );
 	if (clientSocket && clientSocket->isConnected() && source != QuitSource::SERVER) {
 		QuitMessage networkMessageQuit;
 		send(&networkMessageQuit);
-		LOG_NETWORK( "Sent quit message." );
+		NETWORK_LOG( "Sent quit message." );
 	}
 
 	if (game) {
 		if (source == QuitSource::SERVER) {
-			throw Net::Disconnect();
+			throw Net::Disconnect("The server quit the game!");
 		}
-		///@todo ... if the server terminated the game, keep it running and show a message box...
-		//if (source == QuitSource::SERVER) {
-		//	//do nice stuff here
-		//} else {
-			game->quitGame();
-		//}
+		game->quitGame();
 	}
 }
 
 void ClientInterface::startGame() {
+	NETWORK_LOG( __FUNCTION__ );
 	updateKeyframe(0);
 }
 
@@ -275,6 +252,7 @@ void ClientInterface::update() {
 }
 
 void ClientInterface::updateKeyframe(int frameCount) {
+	NETWORK_LOG( __FUNCTION__ << " Updating keyframe " << (frameCount / GameConstants::networkFramePeriod) );
 	// give all commands from last KeyFrame
 	for (size_t i=0; i < keyFrame.getCmdCount(); ++i) {
 		pendingCommands.push_back(*keyFrame.getCmd(i));
@@ -289,9 +267,11 @@ void ClientInterface::updateKeyframe(int frameCount) {
 			}
 			return;
 		} else if (raw.type == MessageType::TEXT) {
+			NETWORK_LOG( "Received text message from server." );
 			TextMessage textMsg(raw);
 			NetworkInterface::processTextMessage(textMsg);
 		} else if (raw.type == MessageType::QUIT) {
+			NETWORK_LOG( "Received quit message from server." );
 			QuitMessage quitMsg(raw);
 			quitGame(QuitSource::SERVER);
 			return;
@@ -302,6 +282,7 @@ void ClientInterface::updateKeyframe(int frameCount) {
 }
 
 void ClientInterface::updateSkillCycle(Unit *unit) {
+//	NETWORK_LOG( __FUNCTION__ );
 	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
 		updateMove(unit);
 	} else {
@@ -310,13 +291,12 @@ void ClientInterface::updateSkillCycle(Unit *unit) {
 }
 
 void ClientInterface::updateMove(Unit *unit) {
+//	NETWORK_LOG( __FUNCTION__ );
 	MoveSkillUpdate updt = keyFrame.getMoveUpdate();
 	if (updt.offsetX < -1 || updt.offsetX > 1 || updt.offsetY < - 1 || updt.offsetY > 1
 	|| (!updt.offsetX && !updt.offsetY)) {
-		LOG_NETWORK(
-			"Bad server update, pos offset out of range, x="
-			+ intToStr(updt.offsetX) + ", y=" + intToStr(updt.offsetY)
-		);
+		NETWORK_LOG( __FUNCTION__ << " Bad server update, pos offset out of range, x="
+			<< updt.offsetX << ", y=" << updt.offsetY );
 		throw GameSyncError(); // msgBox and then graceful exit to Menu please...
 	}
 	unit->setNextPos(unit->getPos() + Vec2i(updt.offsetX, updt.offsetY));
@@ -324,28 +304,27 @@ void ClientInterface::updateMove(Unit *unit) {
 }
 
 void ClientInterface::updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
+//	NETWORK_LOG( __FUNCTION__ );
 	ProjectileUpdate updt = keyFrame.getProjUpdate();
 	pps->setPath(start, end, updt.end_offset);
 }
 
 void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ );
 	int32 server_cs = keyFrame.getNextChecksum();
 	if (cs != server_cs) {
-		stringstream ss;
-		ss << "Sync Error: " << __FUNCTION__ << " , unit type: " << unit->getType()->getName()
-			<< " unit id: " << unit->getId() << " faction: " << unit->getFactionIndex();
-		LOG_NETWORK( ss.str() );
-		LOG_NETWORK( "\tserver checksum " + Conversion::toHex(server_cs) + " my checksum " + Conversion::toHex(cs) );
+		NETWORK_LOG( __FUNCTION__ << " Sync Error: unit type: " << unit->getType()->getName()
+			<< " unit id: " << unit->getId() << " faction: " << unit->getFactionIndex() );
+		NETWORK_LOG( "\tserver checksum " << intToHex(server_cs) << " my checksum " << intToHex(cs) );
 		throw GameSyncError();
 	}
 }
 
 void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ );
 	if (cs != keyFrame.getNextChecksum()) {
-		stringstream ss;
-		ss << "Sync Error: " << __FUNCTION__ << " , unit type: " << unit->getType()->getName()
-			<< ", skill class: " << SkillClassNames[unit->getCurrSkill()->getClass()];
-		LOG_NETWORK( ss.str() );
+		NETWORK_LOG( __FUNCTION__ << "Sync Error: unit type: " << unit->getType()->getName()
+			<< ", skill class: " << SkillClassNames[unit->getCurrSkill()->getClass()] );
 		IF_DEBUG_EDITION(
 			assert(g_world.getFrameCount());
 			worldLog->logFrame(); // dump frame log
@@ -357,28 +336,27 @@ void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 }
 
 void ClientInterface::checkProjectileUpdate(Unit *unit, int endFrame, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ );
 	if (cs != keyFrame.getNextChecksum()) {
-		stringstream ss;
-		ss << "Sync Error: " << __FUNCTION__ << ", unit id: " << unit->getId() << " skill: "
-			<< unit->getCurrSkill()->getName();
 		if (unit->getCurrCommand()->getUnit()) {
-			ss << " target id: " << unit->getCurrCommand()->getUnit()->getId();
+			NETWORK_LOG( __FUNCTION__ << " Sync Error: unit id: " << unit->getId() << " skill: "
+				<< unit->getCurrSkill()->getName() << " target id: "
+				<< unit->getCurrCommand()->getUnit()->getId() << " end frame: " << endFrame );
 		} else {
-			ss << " target pos: " << unit->getCurrCommand()->getPos();
+			NETWORK_LOG( __FUNCTION__ << " Sync Error: unit id: " << unit->getId() << " skill: "
+				<< unit->getCurrSkill()->getName() << " target pos: "
+				<< unit->getCurrCommand()->getPos() << " end frame: " << endFrame );
 		}
-		ss << " end frame: " << endFrame;
-		LOG_NETWORK( ss.str() );
 		throw GameSyncError(); // graceful exit to Menu please...
 	}
 }
 
 void ClientInterface::checkAnimUpdate(Unit *unit, int32 cs) {
+//	NETWORK_LOG( __FUNCTION__ );
 	if (cs != keyFrame.getNextChecksum()) {
 		const CycleInfo &inf = skillCycleTable->lookUp(unit);
-		stringstream ss;
-		ss << "Sync Error: " << __FUNCTION__ << " unit id: " << unit->getId()
-			<< " attack offset: " << inf.getAttackOffset();
-		LOG_NETWORK( ss.str() );
+		NETWORK_LOG( __FUNCTION__ << " Sync Error: unit id: " << unit->getId()
+			<< " attack offset: " << inf.getAttackOffset() );
 		throw GameSyncError(); // graceful exit to Menu please...
 	}
 }

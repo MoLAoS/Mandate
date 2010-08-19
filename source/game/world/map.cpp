@@ -248,17 +248,17 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 
 void Map::doChecksum(Checksum &checksum) {
 	checksum.add(title);
-	checksum.add<float>(waterLevel);
-	checksum.add<float>(heightFactor);
-	checksum.add<float>(avgHeight);
+//	checksum.add<float>(waterLevel);
+//	checksum.add<float>(heightFactor);
+//	checksum.add<float>(avgHeight);
 	checksum.add<int>(w);
 	checksum.add<int>(h);
 	checksum.add<int>(tileW);
 	checksum.add<int>(tileH);
 	checksum.add<int>(maxPlayers);
-	for (int i=0; i < tileW * tileH; ++i) {
-		checksum.add<Vec3f>(tiles[i].getVertex());
-	}
+//	for (int i=0; i < tileW * tileH; ++i) {
+//		checksum.add<Vec3f>(tiles[i].getVertex());
+//	}
 	for (int i=0; i < maxPlayers; ++i) {
 		checksum.add<Vec2i>(startLocations[i]);
 	}

@@ -58,8 +58,9 @@ protected:
 	// See documentation in sim_interface.h & net_interface.h
 
 	// Game launch hooks, SimulationInterface virtuals
-	virtual void waitUntilReady(Checksum *checksums);
+	virtual void waitUntilReady();
 	virtual void syncAiSeeds(int aiCount, int *seeds);
+	virtual void doDataSync();
 	virtual void createSkillCycleTable(const TechTree *);
 	virtual void startGame();
 

@@ -92,6 +92,8 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 
+	const UnitType* getUnitType() const { return unitType; }
+
 	virtual string toString() const						{return Lang::getInstance().get(name);}
 
 	virtual const ProducibleType *getProduced() const	{return NULL;}
@@ -587,18 +589,17 @@ class CommandTypeFactory: private MultiFactory<CommandType> {
 private:
 	int m_idCounter;
 	vector<CommandType *> m_types;
-//	set<CommandType *> m_typeSet;
-//	map<CommandType *, int32> m_checksumTable;
+	map<CommandType*, int32> m_checksumTable;
 
 public:
 	CommandTypeFactory();
 	~CommandTypeFactory();
-//	void assertTypes();
 
 	CommandType* newInstance(string classId, UnitType *owner);
-
 	CommandType* getType(int id);
-//	void setChecksum(CommandType *ct, int32 cs);
+	int getTypeCount() const { return m_types.size(); }
+	int32 getChecksum(CommandType *ct);
+	void setChecksum(CommandType *ct);
 };
 
 // update helper, move somewhere sensible

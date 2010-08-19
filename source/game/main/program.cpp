@@ -397,19 +397,9 @@ void Program::setState(ProgramState *programState) {
 	if (programState) {
 		delete this->programState;
 	}
-
 	this->programState = programState;
-
-//	bool isGame = programState->isGameState();
-
 	programState->load();
-//	if (isGame) {
-//		g_simInterface->getWorld()->getUnitTypeFactory().assertTypes();
-//	}
 	programState->init();
-//	if (isGame) {
-//		g_simInterface->getWorld()->getUnitTypeFactory().assertTypes();
-//	}
 	resetTimers();
 }
 

@@ -89,12 +89,17 @@ private:
 class GarbledMessage : public NetworkError {
 public:
 	GarbledMessage(MessageType type, NetSource sender) : type(type), sender(sender) {}
+	GarbledMessage(MessageType type) : type(type), sender(NetSource::INVALID) {}
 	~GarbledMessage() throw() {}
 
 	const char* what() const throw() {
 		static char msgBuf[512];
-		sprintf(msgBuf, "While processing %s message from %s, encountered invalid data.",
-			MessageTypeNames[type], (sender == NetSource::SERVER ? "server" : "client"));
+		if (sender != NetSource::INVALID) {
+			sprintf(msgBuf, "While processing %s message from %s, encountered invalid data.",
+				MessageTypeNames[type], (sender == NetSource::SERVER ? "server" : "client"));
+		} else {
+			sprintf(msgBuf, "While processing %s message, encountered invalid data.", MessageTypeNames[type]);
+		}
 		return msgBuf;
 	}
 
@@ -105,46 +110,19 @@ private:
 
 class DataSyncError : public NetworkError {
 public:
-	DataSyncError(bool *checks, int numFactionTypes, NetSource role)
-			: role(role), numFactionTypes(numFactionTypes) {
-		for (int i=0; i < 3; ++i) {
-			this->checks[i] = checks[i];
-		}
+	DataSyncError(NetSource role)
+			: role(role) {
 	}
 	~DataSyncError() throw() {}
 
 	const char* what() const throw() {
-		static char msgBuf[1024];
-		char *ptr = msgBuf;
-		if (role == NetSource::CLIENT) {
-			ptr += sprintf(ptr, "Your data does not match the server's.\n");
-		} else {
-			ptr += sprintf(ptr, "Client data does not match yours.\n");
-		}
-		if (!checks[0]) {
-			ptr += sprintf(ptr, "Tileset data does not match.\n");
-		}
-		if (!checks[1]) {
-			ptr += sprintf(ptr, "Map data does not match.\n");
-		}
-		if (!checks[2]) {
-			ptr += sprintf(ptr, "Attack/Armour Types and/or Damage Multipliers do not match.\n");
-		}
-		if (!checks[3]) {
-			ptr += sprintf(ptr, "Resource data does not match.\n");
-		}
-		for (int i=0; i < numFactionTypes; ++i) {
-			if (!checks[4+i]) {
-				ptr += sprintf(ptr, "Faction Type %d data does not match.\n", i);
-			}
-		}
-		return msgBuf;
+		return (role == NetSource::CLIENT 
+			? " Your data does not match the servers, see glestadv-client.log for details."
+			: " Your data does not match the clients, see glestadv-server.log for details.");
 	}
 
 private:
 	NetSource role;
-	bool checks[12];
-	int numFactionTypes;
 };
 
 class GameSyncError : public NetworkError {
@@ -175,11 +153,20 @@ private:
 };
 
 class Disconnect : public NetworkError {
+private:
+	string msg;
+
 public:
+	Disconnect() {}
+	Disconnect(const string &msg) : msg(msg) {}
 	~Disconnect() throw() {}
 
 	const char* what() const throw() {
-		return "The network connection was severed.";
+		if (msg.empty()) {
+			return "The network connection was severed.";
+		} else {
+			return msg.c_str();
+		}
 	}
 };
 

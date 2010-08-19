@@ -134,6 +134,7 @@ SimulationInterface::~SimulationInterface() {
 }
 
 void SimulationInterface::constructGameWorld(GameState *g) {
+	NETWORK_LOG( __FUNCTION__ );
 	delete stats;
 	game = g;
 	world = new World(this);
@@ -145,6 +146,7 @@ void SimulationInterface::constructGameWorld(GameState *g) {
 }
 
 void SimulationInterface::destroyGameWorld() {
+	NETWORK_LOG( __FUNCTION__ );
 	deleteValues(aiInterfaces.begin(), aiInterfaces.end());
 	aiInterfaces.clear();
 	delete world;
@@ -179,6 +181,7 @@ ServerInterface* SimulationInterface::asServerInterface() {
 }
 
 void SimulationInterface::loadWorld() {
+	NETWORK_LOG( __FUNCTION__ );
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
 	//preload
@@ -202,6 +205,7 @@ void SimulationInterface::loadWorld() {
 }
 
 void SimulationInterface::initWorld() {
+	NETWORK_LOG( __FUNCTION__ );
 	commander->init(world);
 	world->init(savedGame ? savedGame->getChild("world") : NULL);
 
@@ -216,7 +220,7 @@ void SimulationInterface::initWorld() {
 	if (seeds) {
 		syncAiSeeds(aiCount, seeds);
 	}
-	//create AIs
+	// create AIs
 	int seedCount = 0;
 	aiInterfaces.resize(world->getFactionCount());
 	for (int i=0; i < world->getFactionCount(); ++i) {
@@ -238,29 +242,18 @@ void SimulationInterface::initWorld() {
 	m_gaia = new Plan::Gaia(world->getGlestimals());
 	m_gaia->init();
 
+	doDataSync();
+
 	createSkillCycleTable(world->getTechTree());
 }
 
 /** @return maximum update backlog (must be -1 for multiplayer) */
 int SimulationInterface::launchGame() {
-	Checksum checksums[4 + GameConstants::maxPlayers];
-	
-	world->getTileset()->doChecksum(checksums[0]);
-	world->getMap()->doChecksum(checksums[1]);
-	
-	const TechTree *tt = world->getTechTree();
-	tt->doChecksumDamageMult(checksums[2]);
-	tt->doChecksumResources(checksums[3]);
-
-	const int &n = tt->getFactionTypeCount();
-	for (int i=0; i < n; ++i) {
-		tt->doChecksumFaction(checksums[4+i], i);
-	}
-	
+	NETWORK_LOG( __FUNCTION__ );
 	// ready ?
 	g_logger.add("Waiting for players...", true);
 	try {
-		waitUntilReady(checksums);
+		waitUntilReady();
 	} catch (NetworkError &e) {
 		LOG_NETWORK( e.what() );
 		throw e;
@@ -282,13 +275,9 @@ void SimulationInterface::updateWorld() {
 	}
 	m_gaia->update();
 
-	//world->getUnitTypeFactory().assertTypes();
-
 	// World
 	world->processFrame();
 	frameProccessed();
-
-	//world->getUnitTypeFactory().assertTypes();
 
 	// give pending commands
 	foreach (Commands, it, pendingCommands) {
@@ -308,49 +297,50 @@ GameStatus SimulationInterface::checkWinner(){
 	return GameStatus::NO_CHANGE;
 }
 
-GameStatus SimulationInterface::checkWinnerStandard(){
+GameStatus SimulationInterface::checkWinnerStandard() {
 	//lose
-	bool lose= false;
-	if(!hasBuilding(world->getThisFaction())){
-		lose= true;
-		for(int i=0; i<world->getFactionCount(); ++i){
-			if(!world->getFaction(i)->isAlly(world->getThisFaction())){
+	bool lose = false;
+	if (!hasBuilding(world->getThisFaction())) {
+		lose = true;
+		for (int i=0; i < world->getFactionCount(); ++i) {
+			if (!world->getFaction(i)->isAlly(world->getThisFaction())) {
 				stats->setVictorious(i);
 			}
 		}
-		gameOver= true;
+		gameOver = true;
 		return GameStatus::LOST;
 	}
 
 	//win
-	if(!lose){
-		bool win= true;
-		for(int i=0; i<world->getFactionCount(); ++i){
-			if(i!=world->getThisFactionIndex()){
-				if(hasBuilding(world->getFaction(i)) && !world->getFaction(i)->isAlly(world->getThisFaction())){
-					win= false;
+	if (!lose) {
+		bool win = true;
+		for (int i=0; i < world->getFactionCount(); ++i) {
+			if (i != world->getThisFactionIndex()) {
+				if (hasBuilding(world->getFaction(i)) 
+				&& !world->getFaction(i)->isAlly(world->getThisFaction())) {
+					win = false;
 				}
 			}
 		}
 
 		//if win
-		if(win){
-			for(int i=0; i< world->getFactionCount(); ++i){
-				if(world->getFaction(i)->isAlly(world->getThisFaction())){
+		if (win) {
+			for (int i=0; i < world->getFactionCount(); ++i) {
+				if (world->getFaction(i)->isAlly(world->getThisFaction())) {
 					stats->setVictorious(i);
 				}
 			}
-			gameOver= true;
+			gameOver = true;
 			return GameStatus::WON;
 		}
 	}
 	return GameStatus::NO_CHANGE;
 }
 
-GameStatus SimulationInterface::checkWinnerScripted(){
+GameStatus SimulationInterface::checkWinnerScripted() {
 	if (ScriptManager::getGameOver()) {
 		gameOver = true;
-		for (int i= 0; i<world->getFactionCount(); ++i) {
+		for (int i= 0; i < world->getFactionCount(); ++i) {
 			if (ScriptManager::getPlayerModifiers(i)->getWinner()) {
 				stats->setVictorious(i);
 			}
@@ -366,7 +356,7 @@ GameStatus SimulationInterface::checkWinnerScripted(){
 
 
 bool SimulationInterface::hasBuilding(const Faction *faction){
-	for(int i=0; i<faction->getUnitCount(); ++i){
+	for (int i=0; i < faction->getUnitCount(); ++i) {
 		Unit *unit = faction->getUnit(i);
 		if (unit->getType()->hasSkillClass(SkillClass::BE_BUILT)
 		&& unit->isAlive() && !unit->getType()->getProperty(Property::WALL)) {
@@ -410,10 +400,6 @@ GameSpeed SimulationInterface::resetSpeed() {
 		speed = GameSpeed::NORMAL;
 	}
 	return speed;
-}
-
-int SimulationInterface::getUpdateLoops() {
-	return 1;///@todo fix: using speedValues[speed]; NO floating point...
 }
 
 void SimulationInterface::doQuitGame(QuitSource source) {
@@ -538,21 +524,21 @@ void SimulationInterface::changeRole(GameRole role) {
 
 } // namespace Sim
 
-#if _GAE_DEBUG_EDITION_
+#if _GAE_DEBUG_EDITION_ && LOG_NETWORKING
 
 namespace Debug {
 
 UnitStateRecord::UnitStateRecord(Unit *unit) {
-	this->unit_id = unit->getId();
-	this->cmd_id = unit->anyCommand() ? unit->getCurrCommand()->getType()->getId() : -1;
-	this->skill_id = unit->getCurrSkill()->getId();
-	this->curr_pos_x = unit->getPos().x;
-	this->curr_pos_y = unit->getPos().y;
-	this->next_pos_x = unit->getNextPos().x;
-	this->next_pos_y = unit->getNextPos().y;
-	this->targ_pos_x = unit->getTargetPos().x;
-	this->targ_pos_y = unit->getTargetPos().y;
-	this->target_id  = unit->getTarget();
+	unit_id = unit->getId();
+	cmd_id = unit->anyCommand() ? unit->getCurrCommand()->getType()->getId() : -1;
+	skill_id = unit->getCurrSkill()->getId();
+	curr_pos_x = unit->getPos().x;
+	curr_pos_y = unit->getPos().y;
+	next_pos_x = unit->getNextPos().x;
+	next_pos_y = unit->getNextPos().y;
+	targ_pos_x = unit->getTargetPos().x;
+	targ_pos_y = unit->getTargetPos().y;
+	target_id  = unit->getTarget();
 }
 
 ostream& operator<<(ostream &lhs, const UnitStateRecord& state) {
@@ -613,46 +599,42 @@ void WorldLog::writeFrame() {
 
 void WorldLog::logFrame(int frame) {
 	if (frame == -1) {
-		stringstream ss;
-		ss << currFrame;
-		LOG_NETWORK( ss.str() );
-	} else {
-		assert(frame > 0);
-		FileOps *f = g_fileFactory.getFileOps();
-		f->openRead(gs_indexfile);
-		long pos = (frame - 1) * sizeof(StateLogIndexEntry);
-		StateLogIndexEntry ndxEntry;
-		f->seek(pos, SEEK_SET);
-		f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
-		delete f;
-		f = g_fileFactory.getFileOps();
- 		f->openRead(gs_datafile);
- 		f->seek(ndxEntry.start, SEEK_SET);
-
-		FrameRecord record;
-		record.frame = frame;
-		int numUpdates = (ndxEntry.end - ndxEntry.start) / sizeof(UnitStateRecord);
-		assert((ndxEntry.end - ndxEntry.start) % sizeof(UnitStateRecord) == 0);
-
-		if (numUpdates) {
-			UnitStateRecord *unitRecords = new UnitStateRecord[numUpdates];
-			f->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
-			for (int i=0; i < numUpdates; ++i) {
-				record.push_back(unitRecords[i]);
-			}
-			delete [] unitRecords;
-			stringstream ss;
-			ss << record;
-			LOG_NETWORK( ss.str() );
-		} else {
-			LOG_NETWORK( "Frame " + intToStr(frame) + " has no updates." );
-		}
-		delete f;
+		NETWORK_LOG( currFrame );
+		return;
 	}
+	assert(frame > 0);
+	FileOps *f = g_fileFactory.getFileOps();
+	f->openRead(gs_indexfile);
+	long pos = (frame - 1) * sizeof(StateLogIndexEntry);
+	StateLogIndexEntry ndxEntry;
+	f->seek(pos, SEEK_SET);
+	f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
+	delete f;
+	f = g_fileFactory.getFileOps();
+	f->openRead(gs_datafile);
+	f->seek(ndxEntry.start, SEEK_SET);
+
+	FrameRecord record;
+	record.frame = frame;
+	int numUpdates = (ndxEntry.end - ndxEntry.start) / sizeof(UnitStateRecord);
+	assert((ndxEntry.end - ndxEntry.start) % sizeof(UnitStateRecord) == 0);
+
+	if (numUpdates) {
+		UnitStateRecord *unitRecords = new UnitStateRecord[numUpdates];
+		f->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
+		for (int i=0; i < numUpdates; ++i) {
+			record.push_back(unitRecords[i]);
+		}
+		delete [] unitRecords;
+		NETWORK_LOG( record );
+	} else {
+		NETWORK_LOG( "Frame " << frame << " has no updates." );
+	}
+	delete f;
 }
 
 } // namespace Debug
 
-#endif // _GAE_DEBUG_EDITION_
+#endif // _GAE_DEBUG_EDITION_ && LOG_NETWORKING
 
 } // namespace Game

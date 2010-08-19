@@ -71,6 +71,7 @@ public:
 	void receiveMessages();
 	bool hasMessage()					{ return !messageQueue.empty(); }
 	RawMessage getNextMessage();
+	MessageType peekNextMsg() const;
 	void pushMessage(RawMessage raw)	{ messageQueue.push_back(raw); }
 
 	bool isConnected()					{ return getSocket() && getSocket()->isConnected(); }
@@ -105,7 +106,7 @@ protected:
 	/** send/receive key-frame, issue queued commands */
 	virtual void updateKeyframe(int frameCount) = 0;
 
-	//misc
+	// misc
 	virtual string getStatus() const = 0;
 
 	/** 'Interesting event' handlers, for insane checksum comparisons */
