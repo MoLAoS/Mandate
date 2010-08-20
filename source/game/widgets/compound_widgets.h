@@ -118,6 +118,7 @@ public:
 
 	void init();
 	void onScroll(VerticalScrollBar::Ptr);
+	void setText(const string &txt);
 
 	void render();
 };
@@ -168,6 +169,9 @@ public:
 	void setTitleText(const string &text);
 	void setMessageText(const string &text);
 	void setButtonText(const string &btn1Text, const string &btn2Text = "");
+
+	const string& getTitleText() const { return m_titleBar->getText(); }
+	const string& getMessageText() const { return m_scrollText->getText(); }
 
 	sigslot::signal<Ptr> Button1Clicked,
 						 Button2Clicked;

@@ -1,8 +1,9 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
+//	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2008-2009 Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -26,6 +27,7 @@
 #include "config.h"
 #include "keymap.h"
 #include "battle_end.h"
+#include "compound_widgets.h"
 
 // weather system not yet ready
 //#include "../physics/weather.h"
@@ -46,16 +48,27 @@ using namespace Main;
 
 namespace Gui {
 
+using Widgets::MessageDialog;
+
+struct ScriptMessage {
+	string header;
+	string text;
+	ScriptMessage(const string &header, const string &text) : header(header), text(text) {}
+};
+
 // =====================================================
 // 	class GameState
 //
 //	Main game class
 // =====================================================
 
-class GameState: public ProgramState {
+class GameState: public ProgramState, public sigslot::has_slots {
 private:
+	//REMOVE? GameState does not own or know anything about AIs
 	typedef vector<Plan::Ai*> Ais;
 	typedef vector<Plan::AiInterface*> AiInterfaces;
+
+	typedef deque<ScriptMessage> MessageQueue;
 
 protected:
 	static GameState *singleton;
@@ -79,11 +92,17 @@ protected:
 	int updateFps, lastUpdateFps;
 	int renderFps, lastRenderFps;
 	bool noInput;
-	bool netError;
+	bool netError, gotoMenu, exitGame;
 	float scrollSpeed;
-	GraphicMessageBox mainMessageBox;
 
+	MessageQueue m_scriptMessages;
+
+	MessageDialog::Ptr m_msgBox;
+	MessageDialog::Ptr m_scriptMsgBox;
+
+	///@todo Remove
 	GraphicTextEntryBox *saveBox;
+
 	Vec2i lastMousePos;
 
 	//misc ptr
@@ -139,6 +158,10 @@ public:
 	void setCameraCell(int x, int y) {
 		gameCamera.setPos(Vec2f(static_cast<float>(x), static_cast<float>(y)));
 	}
+
+	void addScriptMessage(const string &header, const string &msg);
+	void onScriptMessageDismissed(MessageDialog::Ptr);
+
 	virtual void quitGame();
 
 	virtual bool isGameState() const	{ return true; }
@@ -151,14 +174,18 @@ protected:
 	// show messages
 	void showLoseMessageBox();
 	void showWinMessageBox();
-	void showMessageBox(const string &text, const string &header, bool toggle);
-
-//	void showExitMessageBox(const string &text, bool toggle);
 	string controllerTypeToStr(ControlType ct);
 	
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
 	void displayError(std::exception &e);
+	void onErrorDismissed(MessageDialog::Ptr);
+
+	void doExitMessage(const string &msg);
+	void onExitSelected(MessageDialog::Ptr);
+	void onExitCancel(MessageDialog::Ptr);
+
+	void doScriptMessage();
 };
 
 

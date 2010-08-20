@@ -216,11 +216,8 @@ public:
 	void mouseUpLeft(int x, int y);
 	void mouseUpRight(int x, int y);
 	void mouseDoubleClickLeft(int x, int y);
+	void mouseMove(int x, int y);
 
-	void mouseMoveDisplay(int x, int y);
-	void mouseUpLeftGraphics(int x, int y);
-	void mouseMoveGraphics(int x, int y);
-	void mouseDoubleClickLeftGraphics(int x, int y);
 	void groupKey(int groupIndex);
 	void hotKey(UserCommand cmd);
 	bool cancelPending();

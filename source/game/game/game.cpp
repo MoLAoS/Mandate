@@ -2,7 +2,8 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
+//				  2008-2009 Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -80,7 +81,11 @@ GameState::GameState(Program &program)
 		, lastRenderFps(0)
 		, noInput(false)
 		, netError(false)
+		, gotoMenu(false)
+		, exitGame(false)
 		, scrollSpeed(config.getUiScrollSpeed())
+		, m_msgBox(0)
+		, m_scriptMsgBox(0)
 		, saveBox(NULL)
 		, lastMousePos(0)
 		, weatherParticleSystem(0) {
@@ -148,10 +153,6 @@ void GameState::load() {
 
 void GameState::init() {
 	g_logger.setState(g_lang.get("Initializing"));
-
-	//mesage box
-	mainMessageBox.init("", g_lang.get("Yes"), g_lang.get("No"));
-	mainMessageBox.setEnabled(false);
 
 	IF_DEBUG_EDITION( g_debugRenderer.reset(); )
 
@@ -232,6 +233,14 @@ void GameState::init() {
 
 //update
 void GameState::update() {
+	if (gotoMenu) {
+		program.setState(new BattleEnd(program));
+		//program.setState(new MainMenu(program));
+		return;
+	}
+	if (exitGame) {
+		g_simInterface->doQuitGame(QuitSource::LOCAL);
+	}
 	if (netError) {
 		return;
 	}
@@ -263,7 +272,6 @@ void GameState::update() {
 		displayError(e);
 		netError = true;
 		return;
-		///@todo return to menu...
 	} catch (std::exception &e) {
 		displayError(e);
 		return;
@@ -282,10 +290,98 @@ void GameState::update() {
 
 void GameState::displayError(std::exception &e) {
 	simInterface->pause();
-	stringstream errmsg;
-	errmsg << e.what() << endl;
-	mainMessageBox.init(errmsg.str(), g_lang.get("Ok"));
-	mainMessageBox.setEnabled(true);
+	string errMsg(e.what());
+
+	if (m_msgBox) {
+		program.removeFloatingWidget(m_msgBox);
+		m_msgBox = 0;
+	}
+	if (m_scriptMsgBox) {
+		program.removeFloatingWidget(m_scriptMsgBox);
+		m_scriptMsgBox = 0;
+	}
+	m_msgBox = new MessageDialog(&program);
+	program.setFloatingWidget(m_msgBox, true);
+	Vec2i pos, size(320, 200);
+	pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_msgBox->setPos(pos);
+	m_msgBox->setSize(size);
+	m_msgBox->setTitleText("Error...");///@todo localise
+	m_msgBox->setMessageText("An error has occurred.\n" + errMsg);
+	m_msgBox->setButtonText(g_lang.get("Ok"));
+	m_msgBox->Button1Clicked.connect(this, &GameState::onErrorDismissed);
+}
+
+void GameState::onErrorDismissed(MessageDialog::Ptr) {
+	simInterface->resume();
+	program.removeFloatingWidget(m_msgBox);
+	m_msgBox = 0;
+	gotoMenu = true;
+}
+
+void GameState::doExitMessage(const string &msg) {
+	assert(!m_msgBox);
+	if (m_scriptMsgBox) {
+		program.removeFloatingWidget(m_scriptMsgBox);
+		m_scriptMessages.push_front(
+			ScriptMessage(m_scriptMsgBox->getTitleText(), m_scriptMsgBox->getMessageText()));
+		m_scriptMsgBox = 0;
+	}
+	m_msgBox = new MessageDialog(&program);
+	program.setFloatingWidget(m_msgBox, true);
+	Vec2i pos, size(320, 200);
+	pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_msgBox->setPos(pos);
+	m_msgBox->setSize(size);
+	m_msgBox->setTitleText(g_lang.get("ExitGame?"));
+	m_msgBox->setMessageText(msg);
+	m_msgBox->setButtonText(g_lang.get("Ok"), g_lang.get("Cancel"));
+	m_msgBox->Button1Clicked.connect(this, &GameState::onExitSelected);
+	m_msgBox->Button2Clicked.connect(this, &GameState::onExitCancel);
+}
+
+void GameState::onExitSelected(MessageDialog::Ptr) {
+	exitGame = true;
+	program.removeFloatingWidget(m_msgBox);
+	m_msgBox = 0;
+}
+
+void GameState::onExitCancel(MessageDialog::Ptr) {
+	program.removeFloatingWidget(m_msgBox);
+	m_msgBox = 0;
+	if (!m_scriptMessages.empty()) {
+		doScriptMessage();
+	}
+}
+
+void GameState::addScriptMessage(const string &header, const string &msg) {
+	m_scriptMessages.push_back(ScriptMessage(header, msg));
+	if (!m_scriptMsgBox && !m_msgBox) {
+		doScriptMessage();
+	}
+}
+
+void GameState::doScriptMessage() {
+	assert(!m_scriptMessages.empty());
+	m_scriptMsgBox = new MessageDialog(&program);
+	program.setFloatingWidget(m_scriptMsgBox, true);
+	Vec2i pos, size(320, 200);
+	pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_scriptMsgBox->setPos(pos);
+	m_scriptMsgBox->setSize(size);
+	m_scriptMsgBox->setTitleText(g_lang.getScenarioString(m_scriptMessages.front().header));
+	m_scriptMsgBox->setMessageText(g_lang.getScenarioString(m_scriptMessages.front().text));
+	m_scriptMsgBox->setButtonText(g_lang.get("Ok"));
+	m_scriptMsgBox->Button1Clicked.connect(this, &GameState::onScriptMessageDismissed);
+	m_scriptMessages.pop_front();
+}
+
+void GameState::onScriptMessageDismissed(MessageDialog::Ptr) {
+	program.removeFloatingWidget(m_scriptMsgBox);
+	m_scriptMsgBox = 0;
+	if (!m_scriptMessages.empty() && !m_msgBox) {
+		doScriptMessage();
+	}
 }
 
 void GameState::updateCamera() {
@@ -331,29 +427,8 @@ void GameState::tick(){
 
 void GameState::mouseDownLeft(int x, int y) {
 	bool messageBoxClick = false;
-
-	//script message box, only if the exit box is not enabled
-	if (!mainMessageBox.getEnabled() && ScriptManager::getMessageBox()->getEnabled()) {
-		int button= 1;
-		if (ScriptManager::getMessageBox()->mouseClick(x, y, button)) {
-			ScriptManager::onMessageBoxOk();
-			messageBoxClick = true;
-		}
-	}
-
-	//exit message box
-	if (mainMessageBox.getEnabled()) {
-		int button = 1;
-		if (mainMessageBox.mouseClick(x, y, button)) {
-			if (button == 1) {
-				g_simInterface->doQuitGame(QuitSource::LOCAL);
-			} else {
-				//close message box
-				mainMessageBox.setEnabled(false);
-			}
-		}
 	//save box
-	} else if (saveBox) {
+	if (saveBox) {
 		int button;
 		if (saveBox->mouseClick(x, y, button)) {
 			if (button == 1) {
@@ -371,8 +446,7 @@ void GameState::mouseDownLeft(int x, int y) {
 
 void GameState::mouseDoubleClickLeft(int x, int y) {
 	if ( noInput ) return;
-	if (!(mainMessageBox.getEnabled()  && mainMessageBox.isInBounds(x, y))
-	&& !(saveBox && saveBox->isInBounds(x, y))) {
+	if (!(saveBox && saveBox->isInBounds(x, y))) {
 		gui.mouseDoubleClickLeft(x, y);
 	}
 }
@@ -414,25 +488,13 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			}
 		}
 
-		if (mainMessageBox.getEnabled()) {
-			mainMessageBox.mouseMove(x, y);
-		} else if (ScriptManager::getMessageBox()->getEnabled()) {
-			ScriptManager::getMessageBox()->mouseMove(x, y);
-		} else if (saveBox) {
+		if (saveBox) {
 			saveBox->mouseMove(x, y);
 		} else if (!noInput) {
 			//graphics
-			gui.mouseMoveGraphics(x, y);
+			gui.mouseMove(x, y);
 		}
 	}
-
-	//display
-	if (g_metrics.isInDisplay(x, y) && !gui.isSelecting() && !gui.isSelectingPos()) {
-		if (!gui.isSelectingPos()) {
-			gui.mouseMoveDisplay(x - g_metrics.getDisplayX(), y - g_metrics.getDisplayY());
-		}
-	}
-
 	lastMousePos.x = x;
 	lastMousePos.y = y;
 }
@@ -549,7 +611,7 @@ void GameState::keyDown(const Key &key) {
 	}
 	if (cmd == ucMenuQuit) { // exit
 		if (!gui.cancelPending()) {
-			showMessageBox(g_lang.get("ExitGame?"), "Quit...", true);
+			doExitMessage(g_lang.get("ExitGame?"));
 		}
 	} else if (cmd == ucMenuSave) { // save
 		if (!saveBox) {
@@ -673,18 +735,8 @@ void GameState::render2d(){
 	//selection
 	g_renderer.renderSelectionQuad();
 
-	//exit message box
-	if (mainMessageBox.getEnabled()) {
-		g_renderer.renderMessageBox(&mainMessageBox);
-	}
-
-	//script message box
-	if (!mainMessageBox.getEnabled() && ScriptManager::getMessageBoxEnabled()) {
-		g_renderer.renderMessageBox(ScriptManager::getMessageBox());
-	}
-
 	//script display text
-	if (!ScriptManager::getDisplayText().empty() && !ScriptManager::getMessageBoxEnabled()) {
+	if (!ScriptManager::getDisplayText().empty() && !m_scriptMsgBox) {
 		g_renderer.renderText(
 			ScriptManager::getDisplayText(), g_coreData.getMenuFontNormal(),
 			gui.getDisplay()->getColor(), 200, 680, false);
@@ -758,25 +810,11 @@ void GameState::render2d(){
 
 
 void GameState::showLoseMessageBox() {
-	showMessageBox(g_lang.get("YouLose") + ", " + g_lang.get("ExitGame?"), g_lang.get("BattleOver"), false);
+	doExitMessage(g_lang.get("YouLose") + ", " + g_lang.get("ExitGame?"));
 }
 
 void GameState::showWinMessageBox() {
-	showMessageBox(g_lang.get("YouWin") + ", " + g_lang.get("ExitGame?"), g_lang.get("BattleOver"), false);
-}
-
-void GameState::showMessageBox(const string &text, const string &header, bool toggle) {
-	if (!toggle) {
-		mainMessageBox.setEnabled(false);
-	}
-
-	if (!mainMessageBox.getEnabled()) {
-		mainMessageBox.setText(text);
-		mainMessageBox.setHeader(header);
-		mainMessageBox.setEnabled(true);
-	} else {
-		mainMessageBox.setEnabled(false);
-	}
+	doExitMessage(g_lang.get("YouWin") + ", " + g_lang.get("ExitGame?"));
 }
 
 void GameState::saveGame(string name) const {
@@ -791,11 +829,6 @@ void GameState::saveGame(string name) const {
 void ShowMap::render2d(){
 	//init
 	g_renderer.reset2d();
-
-	//exit message box
-	if (mainMessageBox.getEnabled()) {
-		g_renderer.renderMessageBox(&mainMessageBox);
-	}
 
 	//2d mouse
 	g_renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos() ? 1.f : 0.f);
@@ -854,7 +887,7 @@ void ShowMap::keyDown(const Key &key) {
 	//exit
 	} else if (cmd == ucMenuQuit) {
 		if (!gui.cancelPending()) {
-			showMessageBox(g_lang.get("ExitGame?"), "Quit...", true);
+			doExitMessage(g_lang.get("ExitGame?"));
 		}
 
 	} else {

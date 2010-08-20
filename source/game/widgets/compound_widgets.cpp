@@ -170,6 +170,39 @@ void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
 	setTextPos(Vec2i(5, m_textBase - offset));
 }
 
+void ScrollText::setText(const string &txt) {
+	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
+	int width = getSize().x - getPadding() * 2 - m_scrollBar->getSize().x;
+	list<string> words, lines;
+
+	string::size_type startPos = 0;
+	string::size_type spacePos = txt.find_first_of(' ');
+	while (spacePos != string::npos) {
+		words.push_back(txt.substr(startPos, spacePos - startPos));
+		startPos = spacePos + 1;
+		spacePos = txt.find_first_of(' ', startPos);
+	}
+	words.push_back(txt.substr(startPos));
+
+	string result;
+	string currLine;
+	do {
+		currLine = words.front();
+		words.pop_front();
+		while (!words.empty()) {
+			string testLine = currLine + ' ' + words.front();
+			if (fm->getTextDiminsions(testLine).x < width) {
+				currLine = testLine;
+				words.pop_front();
+			} else {
+				break;
+			}
+		}
+		result += currLine + "\n";
+	} while (!words.empty());
+	TextWidget::setText(result);
+}
+
 void ScrollText::render() {
 	Widget::renderBgAndBorders(false);
 	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderBottom());

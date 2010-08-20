@@ -318,31 +318,11 @@ void UserInterface::mouseDownRight(int x, int y) {
 }
 
 void UserInterface::mouseUpLeft(int x, int y) {
-	mouseUpLeftGraphics(x, y);
-}
-
-void UserInterface::mouseUpRight(int x, int y) {
-}
-
-void UserInterface::mouseDoubleClickLeft(int x, int y) {
-	const Metrics &metrics= Metrics::getInstance();
-
-    //graphics panel
-	mouseDoubleClickLeftGraphics(x, y);
-}
-
-void UserInterface::mouseMoveDisplay(int x, int y){
-	computeInfoString(computePosDisplay(x, y));
-}
-
-void UserInterface::mouseUpLeftGraphics(int x, int y){
-	if(!selectingPos && !selectingMeetingPoint && selectionQuad.isEnabled()){
+	if (!selectingPos && !selectingMeetingPoint && selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
-		if(selection.isComandable() && random.randRange(0, 1)){
-			SoundRenderer::getInstance().playFx(
-				selection.getFrontUnit()->getType()->getSelectionSound(),
-				selection.getFrontUnit()->getCurrVector(),
-				gameCamera->getPos());
+		if (selection.isComandable() && random.randRange(0, 1)) {
+			g_soundRenderer.playFx(selection.getFrontUnit()->getType()->getSelectionSound(),
+				selection.getFrontUnit()->getCurrVector(), gameCamera->getPos());
 		}
 		selectionQuad.disable();
 	} else if (isPlacingBuilding() && dragging) {
@@ -350,7 +330,7 @@ void UserInterface::mouseUpLeftGraphics(int x, int y){
 		UnitContainer units;
 
 		//FIXME: we don't have to do the expensivce calculations of this computeTarget for this.
-		if(computeTarget(Vec2i(x, y), worldPos, units, false)) {
+		if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			giveTwoClickOrders(worldPos, NULL);
 		} else {
 			console->addStdMessage("InvalidPosition");
@@ -358,13 +338,31 @@ void UserInterface::mouseUpLeftGraphics(int x, int y){
 	}
 }
 
-void UserInterface::mouseMoveGraphics(int x, int y){
+void UserInterface::mouseUpRight(int x, int y) {
+}
+
+void UserInterface::mouseDoubleClickLeft(int x, int y) {
+	if (!selectingPos && !selectingMeetingPoint) {
+		UnitContainer units;
+		Vec2i pos(x, y);
+
+		selectionQuad.setPosDown(pos);
+		const Object *obj;
+		g_renderer.computeSelected(units, obj, pos, pos);
+		calculateNearest(units, gameCamera->getPos());
+		updateSelection(true, units);
+		computeDisplay();
+	}
+}
+
+void UserInterface::mouseMove(int x, int y) {
 	//compute selection
-	if(selectionQuad.isEnabled()) {
+	if (selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
 		UnitContainer units;
-		if(computeSelection) {
-			Renderer::getInstance().computeSelected(units, selectedObject, selectionQuad.getPosDown(), selectionQuad.getPosUp());
+		if (computeSelection) {
+			g_renderer.computeSelected(units, selectedObject, 
+				selectionQuad.getPosDown(), selectionQuad.getPosUp());
 			computeSelection = false;
 			updateSelection(false, units);
 		}
@@ -382,20 +380,6 @@ void UserInterface::mouseMoveGraphics(int x, int y){
 	}
 
 	m_display->setInfoText("");
-}
-
-void UserInterface::mouseDoubleClickLeftGraphics(int x, int y){
-	if(!selectingPos && !selectingMeetingPoint){
-		UnitContainer units;
-		Vec2i pos(x, y);
-
-		selectionQuad.setPosDown(pos);
-		const Object *obj;
-		g_renderer.computeSelected(units, obj, pos, pos);
-		calculateNearest(units, gameCamera->getPos());
-		updateSelection(true, units);
-		computeDisplay();
-	}
 }
 
 void UserInterface::groupKey(int groupIndex){

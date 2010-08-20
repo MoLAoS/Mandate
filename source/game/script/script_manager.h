@@ -194,21 +194,6 @@ public:
 	void onAttacked(const Unit *unit);
 };
 
-// =====================================================
-//	class ScriptManagerMessage
-// =====================================================
-
-class ScriptManagerMessage {
-private:
-	string text;
-	string header;
-
-public:
-	ScriptManagerMessage(string text, string header) : text(text), header(header) {}
-	const string &getText() const	{return text;}
-	const string &getHeader() const	{return header;}
-};
-
 class PlayerModifiers {
 private:
 	bool winner;
@@ -231,15 +216,11 @@ public:
 //REFACTOR: namespace ScriptManager [hide all the private stuff in the cpp]
 class ScriptManager {
 private:
-	typedef queue<ScriptManagerMessage> MessageQueue;
-
 	//lua
 	static string code;
 	static LuaScript luaScript;
 
 	//misc
-	static MessageQueue messageQueue;
-	static GraphicMessageBox messageBox;
 	static string displayText;
 
 	//last created unit & last dead unit
@@ -271,15 +252,11 @@ public:
 
 	static Console* getDialogConsole()	{ return dialogConsole; }
 
-	//message box functions
-	static bool getMessageBoxEnabled() 									{return !messageQueue.empty();}
-	static GraphicMessageBox* getMessageBox()							{return &messageBox;}
 	static string getDisplayText() 										{return displayText;}
 	static bool getGameOver() 											{return gameOver;}
 	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}
 
 	//events
-	static void onMessageBoxOk();
 	static void onResourceHarvested();
 	static void onUnitCreated(const Unit* unit);
 	static void onUnitDied(const Unit* unit);

@@ -299,7 +299,6 @@ const int ScriptManager::displayTextWrapCount= 64;
 
 string				ScriptManager::code;
 LuaScript			ScriptManager::luaScript;
-GraphicMessageBox	ScriptManager::messageBox;
 string				ScriptManager::displayText;
 bool				ScriptManager::gameOver;
 PlayerModifiers		ScriptManager::playerModifiers[GameConstants::maxPlayers];
@@ -310,7 +309,6 @@ set<string>			ScriptManager::definedEvents;
 Console *ScriptManager::dialogConsole = NULL;
 map<string, Vec3f> ScriptManager::actorColours;
 
-ScriptManager::MessageQueue ScriptManager::messageQueue;
 ScriptManager::UnitInfo		ScriptManager::latestCreated,
 							ScriptManager::latestCasualty;
 
@@ -327,7 +325,6 @@ void ScriptManager::cleanUp() {
 	timers.clear();
 	newTimerQueue.clear();
 	definedEvents.clear();
-	while (!messageQueue.empty()) messageQueue.pop();
 	latestCreated.id = -1;
 	latestCasualty.id = -1;
 	gameOver= false;
@@ -338,10 +335,6 @@ void ScriptManager::cleanUp() {
 
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
-
-	//setup message box
-	messageBox.init("", Lang::getInstance().get("Ok"));
-	messageBox.setEnabled(false);
 
 	cleanUp();
 
@@ -477,24 +470,6 @@ void ScriptManager::initGame() {
 
 // ========================== events ===============================================
 
-void ScriptManager::onMessageBoxOk() {
-	Lang &lang= Lang::getInstance();
-
-	if(!messageQueue.empty()) {
-		messageQueue.pop();
-		if(!messageQueue.empty()) {
-			messageBox.setText(wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount));
-			messageBox.setHeader(lang.getScenarioString(messageQueue.front().getHeader()));
-		}
-	}
-
-	//close the messageBox now all messages have been shown
-	if (messageQueue.empty()) {
-		messageBox.setEnabled(false);
-		g_simInterface->resume();
-	}
-}
-
 void ScriptManager::onResourceHarvested() {
 	if (definedEvents.find("resourceHarvested") != definedEvents.end()) {
 		if (!luaScript.luaCall("resourceHarvested")) {
@@ -605,13 +580,7 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 
 	if (!quietly) {
 		g_simInterface->pause();
-		ScriptManagerMessage msg(err, "Error");
-		messageQueue.push(msg);
-		if (!messageBox.getEnabled()) {
-			messageBox.setEnabled(true);
-			messageBox.setText(wrapString(messageQueue.front().getText(), messageWrapCount));
-			messageBox.setHeader(messageQueue.front().getHeader());
-		}
+		g_gameState.addScriptMessage("Script Error", err);
 	}
 }
 
@@ -907,13 +876,7 @@ int ScriptManager::showMessage(LuaHandle* luaHandle) {
 	string txt, hdr;
 	if ( extractArgs(args, "showMessage", "str,str", &txt, &hdr) ) {
 		//g_gameState.pause (); // this needs to be optional, default false
-		ScriptManagerMessage msg(txt, hdr);
-		messageQueue.push(msg);
-		if (!messageBox.getEnabled()) {
-			messageBox.setEnabled(true);
-			messageBox.setText(wrapString(lang.getScenarioString(messageQueue.front().getText()), messageWrapCount));
-			messageBox.setHeader(lang.getScenarioString(messageQueue.front().getHeader()));
-		}
+		g_gameState.addScriptMessage(hdr, txt);
 	}
 	return args.getReturnCount();
 }
