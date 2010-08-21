@@ -61,13 +61,13 @@ class Widget {
 
 public:
 	typedef Widget* Ptr;
-	
+
 private:
 	//int id;
 	Container* parent;
 	WidgetWindow* rootWindow;
-	Vec2i	pos, 
-			screenPos, 
+	Vec2i	pos,
+			screenPos,
 			size;
 	bool	visible;
 
@@ -154,7 +154,7 @@ public:
 
 	void setBorderStyle(const BorderStyle &style);
 	void setBackgroundStyle(const BackgroundStyle &style);
-	
+
 	void setPadding(int pad) { padding = pad; }
 
 	virtual void update() {} // must 'register' with WidgetWindow to receive
@@ -168,7 +168,7 @@ public:
 	void renderBgAndBorders(bool bg = true);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
-	
+
 	virtual string descPosDim();
 	virtual string desc() = 0;
 

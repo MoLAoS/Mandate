@@ -14,6 +14,8 @@
 #include "lang.h"
 #include "faction.h"
 
+#include <list>
+
 namespace Glest { namespace Widgets {
 using Shared::Util::intToStr;
 using Global::CoreData;
@@ -27,7 +29,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	Widget::setPadding(0);
 	assert(size.x > 200);
 	float size_x = float(size.x - 30);
-	float fwidths[] = { 
+	float fwidths[] = {
 		size_x * 18.f / 100.f,
 		size_x * 33.f / 100.f,
 		size_x * 33.f / 100.f,
@@ -51,10 +53,10 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
 	}
 
-	cpos.x += widths[1] + 5;	
+	cpos.x += widths[1] + 5;
 	m_factionList = new DropList(this, cpos, Vec2i(widths[2], 30));
 
-	cpos.x += widths[2] + 5;	
+	cpos.x += widths[2] + 5;
 	m_teamList = new DropList(this, cpos, Vec2i(widths[3], 30));
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
@@ -91,7 +93,7 @@ void OptionContainer::setWidget(Widget::Ptr widget) {
 	if (m_abosulteLabelSize) {
 		w = m_labelSize;
 	} else {
-		w = int(size.x * float(m_labelSize) / 100.f);		
+		w = int(size.x * float(m_labelSize) / 100.f);
 	}
 	m_label->setSize(Vec2i(w, size.y));
 	if (m_widget) {
@@ -108,7 +110,7 @@ void OptionContainer::setLabelWidth(int value, bool absolute) {
 	if (m_abosulteLabelSize) {
 		w = m_labelSize;
 	} else {
-		w = int(size.x * float(m_labelSize) / 100.f);		
+		w = int(size.x * float(m_labelSize) / 100.f);
 	}
 	m_label->setSize(Vec2i(w, size.y));
 	if (m_widget) {
@@ -135,7 +137,7 @@ ScrollText::ScrollText(Container::Ptr parent)
 	setPaddingParams(2, 0);
 	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
 	m_scrollBar = new VerticalScrollBar(this);
-}		
+}
 
 ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
@@ -173,7 +175,7 @@ void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
 void ScrollText::setText(const string &txt) {
 	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
 	int width = getSize().x - getPadding() * 2 - m_scrollBar->getSize().x;
-	list<string> words, lines;
+	std::list<string> words, lines;
 
 	string::size_type startPos = 0;
 	string::size_type spacePos = txt.find_first_of(' ');
@@ -277,11 +279,11 @@ MessageDialog::MessageDialog(Container::Ptr parent, Vec2i pos, Vec2i size)
 	Vec2i p, s;
 	Font *font = g_coreData.getFTMenuFontNormal();
 	const FontMetrics *fm = font->getMetrics();
-	
+
 	int a = int(fm->getHeight() + 1.f) + 4;
 	p = Vec2i(getBorderLeft(), size.y - a - getBorderTop());
 	s = Vec2i(size.x - getBordersHoriz(), a);
-	
+
 	m_titleBar = new TitleBar(this, p, s, "", false);
 
 	p = Vec2i(getBorderLeft(), getBorderBottom());
@@ -314,7 +316,7 @@ void MessageDialog::init() {
 	Vec2i p, s;
 	Font *font = g_coreData.getFTMenuFontNormal();
 	const FontMetrics *fm = font->getMetrics();
-	
+
 	int a = int(fm->getHeight() + 1.f) + 4;
 	p = Vec2i(getBorderLeft(), getHeight() - a - getBorderTop());
 	s = Vec2i(getWidth() - getBordersHoriz(), a);
