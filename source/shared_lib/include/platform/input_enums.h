@@ -14,7 +14,7 @@ using Shared::Util::EnumNames;
 
 namespace Shared { namespace Platform {
 
-WRAPPED_ENUM( MouseButton,
+STRINGY_ENUM( MouseButton,
 	UNKNOWN,
 	LEFT,
 	MIDDLE,

@@ -91,10 +91,10 @@ protected: // Shared::Platform::Window virtual events
 	virtual void eventKeyUp(const Key &key);
 	virtual void eventKeyPress(char c);
 
-public: // Glest::Widgets::Widget virtual events
+public: // MouseWidget & TextWidget virtual events
 	/*
 	virtual bool mouseDown(MouseButton btn, Vec2i pos)			{ return false; }
-	virtual bool mouseUp(MouseButton btn, Vec2i pos)				{ return false; }
+	virtual bool mouseUp(MouseButton btn, Vec2i pos)			{ return false; }
 	virtual bool mouseMove(Vec2i pos)							{ return false; }
 	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos)	{ return false; }
 	virtual bool mouseWheel(Vec2i pos, int z)					{ return false; }

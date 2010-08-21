@@ -27,6 +27,14 @@ using namespace Shared::Math;
 using namespace Shared::Graphics;
 using Glest::Util::Logger;
 
+#define LOG_WIDGET_EVENTS 0
+
+#if LOG_WIDGET_EVENTS
+#	define WIDGET_LOG(x) {stringstream ss; ss << x; g_widgetLog.add(ss.str()); }
+#else
+#	define WIDGET_LOG(x)
+#endif
+
 namespace Glest { namespace Widgets {
 
 class Widget;

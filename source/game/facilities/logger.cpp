@@ -34,12 +34,12 @@ namespace Glest { namespace Util {
 
 const int Logger::logLineCount= 15;
 
-Logger::Logger(const char *fileName, const string &type, bool prependTime)
+Logger::Logger(const char *fileName, const string &type, TimeStampType timeType)
 		: fileName(fileName)
 		, fileOps(0)
 		, loadingGame(true)
 		, progressBar(NULL)
-		, prependTime(prependTime) {
+		, timeStampType(timeType) {
 	header = "Glest Advanced Enginge: " + type + " log file.\n\n";
 }
 
@@ -50,22 +50,27 @@ Logger::~Logger() {
 // ===================== PUBLIC ========================
 
 Logger& Logger::getInstance() {
-	static Logger logger("glestadv.log", "Game");
+	static Logger logger("glestadv.log", "Game", TimeStampType::SECONDS);
 	return logger;
 }
 
 Logger& Logger::getServerLog() {
-	static Logger logger("glestadv-server.log", "Server", false);
+	static Logger logger("glestadv-server.log", "Server", TimeStampType::NONE);
 	return logger;
 }
 
 Logger& Logger::getClientLog() {
-	static Logger logger("glestadv-client.log", "Client", false);
+	static Logger logger("glestadv-client.log", "Client", TimeStampType::NONE);
 	return logger;
 }
 
 Logger& Logger::getErrorLog() {
-	static Logger logger("glestadv-error.log", "Error", false);
+	static Logger logger("glestadv-error.log", "Error", TimeStampType::NONE);
+	return logger;
+}
+
+Logger& Logger::getWidgetLog() {
+	static Logger logger("glestadv-widget.log", "Widget", TimeStampType::MILLIS);
 	return logger;
 }
 
@@ -83,8 +88,11 @@ void Logger::unitLoaded() {
 string newLine = "\n";
 
 void Logger::add(const string &str,  bool renderScreen){
-	if (prependTime) {
+	if (timeStampType == TimeStampType::SECONDS) {
 		string myTime = intToStr(int(clock() / 1000)) + ": ";
+		fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
+	} else if (timeStampType == TimeStampType::MILLIS) {
+		string myTime = intToStr(int(clock())) + ": ";
 		fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
 	}
 	fileOps->write(str.c_str(), sizeof(char), str.size());

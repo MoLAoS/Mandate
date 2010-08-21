@@ -142,9 +142,9 @@ public:
 	virtual void keyUp(const Key &key);
 	virtual void keyPress(char c);
 	virtual void mouseDownLeft(int x, int y);
-	virtual void mouseDownRight(int x, int y)			{gui.mouseDownRight(x, y);}
-	virtual void mouseUpLeft(int x, int y)				{gui.mouseUpLeft(x, y);}
-	virtual void mouseUpRight(int x, int y)				{gui.mouseUpRight(x, y);}
+	virtual void mouseDownRight(int x, int y);
+	virtual void mouseUpLeft(int x, int y);
+	virtual void mouseUpRight(int x, int y);
 	virtual void mouseDownCenter(int x, int y)			{gameCamera.stop();}
 	virtual void mouseUpCenter(int x, int y)			{}
 	virtual void mouseDoubleClickLeft(int x, int y);

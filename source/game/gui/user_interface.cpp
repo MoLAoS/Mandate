@@ -254,7 +254,9 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 }
 
 // ==================== events ====================
+
 void UserInterface::mouseDownLeft(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	const Metrics &metrics= Metrics::getInstance();
 
 	UnitContainer units;
@@ -295,6 +297,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 }
 
 void UserInterface::mouseDownRight(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	const Metrics &metrics= Metrics::getInstance();
 	Vec2i worldPos;
 
@@ -318,6 +321,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 }
 
 void UserInterface::mouseUpLeft(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	if (!selectingPos && !selectingMeetingPoint && selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
 		if (selection.isComandable() && random.randRange(0, 1)) {
@@ -327,10 +331,7 @@ void UserInterface::mouseUpLeft(int x, int y) {
 		selectionQuad.disable();
 	} else if (isPlacingBuilding() && dragging) {
 		Vec2i worldPos;
-		UnitContainer units;
-
-		//FIXME: we don't have to do the expensivce calculations of this computeTarget for this.
-		if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
+		if (g_renderer.computePosition(Vec2i(x, y), worldPos)) {
 			giveTwoClickOrders(worldPos, NULL);
 		} else {
 			console->addStdMessage("InvalidPosition");
@@ -339,14 +340,15 @@ void UserInterface::mouseUpLeft(int x, int y) {
 }
 
 void UserInterface::mouseUpRight(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 }
 
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	if (!selectingPos && !selectingMeetingPoint) {
 		UnitContainer units;
 		Vec2i pos(x, y);
 
-		selectionQuad.setPosDown(pos);
 		const Object *obj;
 		g_renderer.computeSelected(units, obj, pos, pos);
 		calculateNearest(units, gameCamera->getPos());
@@ -356,6 +358,7 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 }
 
 void UserInterface::mouseMove(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	//compute selection
 	if (selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));

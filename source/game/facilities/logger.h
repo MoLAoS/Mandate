@@ -40,6 +40,8 @@ using namespace Shared::PhysFS;
 /// Interface to write log files
 // =====================================================
 
+WRAPPED_ENUM( TimeStampType, NONE, SECONDS, MILLIS );
+
 class Logger {
 private:
 	static const int logLineCount;
@@ -60,12 +62,12 @@ private:
 	static char errorBuf[];
 	int totalUnits, unitsLoaded;
 
-	bool prependTime;
+	TimeStampType timeStampType;
 
 	GraphicProgressBar *progressBar;
 
 private:
-	Logger(const char *fileName, const string &type, bool prependTime=true);
+	Logger(const char *fileName, const string &type, TimeStampType timeType = TimeStampType::NONE);
 	~Logger();
 
 public:
@@ -73,6 +75,7 @@ public:
 	static Logger &getServerLog();
 	static Logger &getClientLog();
 	static Logger &getErrorLog();
+	static Logger &getWidgetLog();
 
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
@@ -97,6 +100,19 @@ void logNetwork(const string &msg);
 inline void logNetwork(const char *msg) { 
 	logNetwork(string(msg)); 
 }
+
+#define LOG_STUFF 1
+
+#if defined(LOG_STUFF) && LOG_STUFF
+#	define LOG(x) g_logger.add(x)
+#	define STREAM_LOG(x) {stringstream ss; ss << x; g_logger.add(ss.str()); }
+#	define GAME_LOG(x) STREAM_LOG( "Frame " << g_world.getFrameCount() << ": " << x )
+#else
+#	define LOG(x)
+#	define STREAM_LOG(x)
+#	define GAME_LOG(x)
+#endif
+
 
 #define LOG_NETWORKING 1
 

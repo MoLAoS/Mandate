@@ -426,6 +426,7 @@ void GameState::tick(){
 // ==================== events ====================
 
 void GameState::mouseDownLeft(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	bool messageBoxClick = false;
 	//save box
 	if (saveBox) {
@@ -444,7 +445,22 @@ void GameState::mouseDownLeft(int x, int y) {
 	}
 }
 
+void GameState::mouseDownRight(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	gui.mouseDownRight(x, y);
+}
+
+void GameState::mouseUpLeft(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	gui.mouseUpLeft(x, y);
+}
+void GameState::mouseUpRight(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	gui.mouseUpRight(x, y);
+}
+
 void GameState::mouseDoubleClickLeft(int x, int y) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	if ( noInput ) return;
 	if (!(saveBox && saveBox->isInBounds(x, y))) {
 		gui.mouseDoubleClickLeft(x, y);
@@ -452,6 +468,7 @@ void GameState::mouseDoubleClickLeft(int x, int y) {
 }
 
 void GameState::mouseMove(int x, int y, const MouseState &ms) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	mouseX = x;
 	mouseY = y;
 
@@ -500,11 +517,13 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 }
 
 void GameState::eventMouseWheel(int x, int y, int zDelta) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
 	if (noInput) return;
 	gameCamera.zoom(zDelta / 30.f);
 }
 
 void GameState::keyDown(const Key &key) {
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
 	UserCommand cmd = keymap.getCommand(key);
 	bool speedChangesAllowed = !g_simInterface->isNetworkInterface();
 
@@ -627,6 +646,7 @@ void GameState::keyDown(const Key &key) {
 }
 
 void GameState::keyUp(const Key &key) {
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");	
 	if (!chatManager.getEditEnabled()) {
 		switch (keymap.getCommand(key)) {
 			case ucCameraRotateLeft:
@@ -656,6 +676,7 @@ void GameState::keyUp(const Key &key) {
 }
 
 void GameState::keyPress(char c) {
+	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");	
 	if (saveBox) {
 		if (saveBox->getEntry()->isActivated()) {
 			switch (c) {

@@ -27,6 +27,7 @@
 #define g_soundRenderer		(SoundRenderer::getInstance())
 #define g_logger			(Logger::getInstance())
 #define g_errorLog			(Logger::getErrorLog())
+#define g_widgetLog			(Logger::getWidgetLog())
 #define g_lang				(Lang::getInstance())
 #define g_metrics			(Metrics::getInstance())
 #define g_coreData			(CoreData::getInstance())
@@ -89,19 +90,6 @@ namespace Glest {
 #	define DEBUG_HOOK() no_op()
 #else
 #	define DEBUG_HOOK()
-#endif
-
-
-#define LOG_STUFF 1
-
-#if defined(LOG_STUFF) && LOG_STUFF
-#	define LOG(x) g_logger.add(x)
-#	define STREAM_LOG(x) {stringstream ss; ss << x; g_logger.add(ss.str()); }
-#	define GAME_LOG(x) STREAM_LOG( "Frame " << g_world.getFrameCount() << ": " << x )
-#else
-#	define LOG(x)
-#	define STREAM_LOG(x)
-#	define GAME_LOG(x)
 #endif
 
 // =====================================================

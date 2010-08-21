@@ -226,6 +226,7 @@ void WidgetWindow::destroyFloater() {
 }
 
 void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	Widget::Ptr widget = 0;
@@ -266,6 +267,7 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 }
 
 void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	MouseWidget::Ptr downWidget = mouseDownWidgets[msBtn];
@@ -284,6 +286,7 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 }
 
 void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	assert(!mouseOverStack.empty());
 	mousePos.x = x;
 	mousePos.y = getH() - y;
@@ -318,6 +321,7 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 }
 
 void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	Widget::Ptr widget = 0;
@@ -343,6 +347,7 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 }
 
 void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	Widget::Ptr widget = 0;
@@ -363,14 +368,17 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 }
 
 void WidgetWindow::eventKeyDown(const Key &key) {
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
 	keyboardFocused->keyDown(key);
 }
 
 void WidgetWindow::eventKeyUp(const Key &key) {
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
 	keyboardFocused->keyUp(key);
 }
 
 void WidgetWindow::eventKeyPress(char c) {
+	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
 	keyboardFocused->keyPress(c);
 }
 

@@ -130,6 +130,7 @@ Program::Program(CmdArgs &args)
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
 	g_errorLog.clear();
+	g_widgetLog.clear();
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
@@ -290,6 +291,7 @@ void Program::eventResize(SizeState sizeState) {
 }
 
 bool Program::mouseDown(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "(" << MouseButtonNames[btn] << ", " << pos << ")");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -311,6 +313,7 @@ bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Program::mouseUp(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "(" << MouseButtonNames[btn] << ", " << pos << ")");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -332,6 +335,7 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 }
 
 bool Program::mouseMove(Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "(" << pos << ")");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -341,6 +345,7 @@ bool Program::mouseMove(Vec2i pos) {
 }
 
 bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "(" << MouseButtonNames[btn] << ", " << pos << ")");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -362,6 +367,7 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 }
 
 bool Program::mouseWheel(Vec2i pos, int zDelta) {
+	WIDGET_LOG( __FUNCTION__ << "(" << pos << ", " << zDelta << ")");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -371,16 +377,19 @@ bool Program::mouseWheel(Vec2i pos, int zDelta) {
 }
 
 bool Program::keyDown(Key key) {
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
 	programState->keyDown(key);
 	return true;
 }
 
 bool Program::keyUp(Key key) {
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
 	programState->keyUp(key);
 	return true;
 }
 
 bool Program::keyPress(char c) {
+	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
 	programState->keyPress(c);
 	return true;
 }
