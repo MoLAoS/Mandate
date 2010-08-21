@@ -312,6 +312,7 @@ protected:
 		pps->setPath(start, end);
 	}
 
+#if MAD_SYNC_CHECKING
 	// post event hooks, The following four functions are used by NetworkInterfaces to collect and compare
 	// checksums of all interesting events... once network play has stabalised, they should either
 	// be removed or compiled into only the debug ed.
@@ -327,6 +328,7 @@ protected:
 
 	/** Called afer a unit is born */
 	virtual void postUnitBorn(Unit *unit) {}
+#endif
 };
 
 }}

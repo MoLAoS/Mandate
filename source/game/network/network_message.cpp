@@ -61,6 +61,7 @@ bool Message::peek(NetworkConnection* connection, void *data, int dataSize) {
 	return false;
 }
 
+//REMOVE
 void Message::send(NetworkConnection* connection, const void* data, int dataSize) const {
 	Socket *socket = connection->getSocket();
 	send(socket, data, dataSize);
@@ -496,15 +497,19 @@ void QuitMessage::send(NetworkConnection* connection) const {
 //	class KeyFrame
 // =====================================================
 
+#pragma pack(push, 1)
 struct KeyFrameMsgHeader {
 	uint8	cmdCount;
-	uint16	checksumCount;
+	IF_MAD_SYNC_CHECKS(
+		uint16	checksumCount;
+	)
 	uint16 moveUpdateCount;
 	uint16 projUpdateCount;
 	uint16 updateSize;
 	int32 frame;
 
 };
+#pragma pack(pop)
 
 KeyFrame::KeyFrame(RawMessage raw) {
 	reset();
@@ -514,16 +519,20 @@ KeyFrame::KeyFrame(RawMessage raw) {
 	ptr += sizeof(KeyFrameMsgHeader);
 
 	frame = header.frame;
-	checksumCount = header.checksumCount;
+	IF_MAD_SYNC_CHECKS(
+		checksumCount = header.checksumCount;
+	)
 	moveUpdateCount = header.moveUpdateCount;
 	projUpdateCount = header.projUpdateCount;
 	updateSize = header.updateSize;
 	cmdCount = header.cmdCount;
 
-	if (checksumCount) {
-		memcpy(checksums, ptr, checksumCount * sizeof(int32));
-		ptr += checksumCount * sizeof(int32);
-	}
+	IF_MAD_SYNC_CHECKS(
+		if (checksumCount) {
+			memcpy(checksums, ptr, checksumCount * sizeof(int32));
+			ptr += checksumCount * sizeof(int32);
+		}
+	)
 	if (updateSize) {
 		memcpy(updateBuffer, ptr, updateSize);
 		ptr += updateSize;
@@ -536,46 +545,6 @@ KeyFrame::KeyFrame(RawMessage raw) {
 
 bool KeyFrame::receive(NetworkConnection* connection) {
 	throw runtime_error(string(__FUNCTION__) + "() called.");
-/*
-	MsgHeader msgHeader;
-	KeyFrameMsgHeader header;
-	Socket *socket = connection->getSocket();
-
-	if (!socket->peek(&msgHeader, sizeof(MsgHeader))) {
-		return false;
-	}
-	uint8 *buf = new uint8[msgHeader.messageSize + sizeof(MsgHeader)];
-	if (!socket->receive(buf, sizeof(MsgHeader) + msgHeader.messageSize)) {
-		delete [] buf;
-		return false;
-	}
-	uint8 *ptr = buf + sizeof(MsgHeader);
-	memcpy(&header, ptr, sizeof(KeyFrameMsgHeader));
-	ptr += sizeof(KeyFrameMsgHeader);
-
-	frame = header.frame;
-	checksumCount = header.checksumCount;
-	moveUpdateCount = header.moveUpdateCount;
-	projUpdateCount = header.projUpdateCount;
-	updateSize = header.updateSize;
-	cmdCount = header.cmdCount;
-	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
-
-	if (header.checksumCount) {
-		memcpy(checksums, ptr, checksumCount * sizeof(int32));
-		ptr += checksumCount * sizeof(int32);
-	}
-	if (updateSize) {
-		memcpy(updateBuffer, ptr, updateSize);
-		ptr += updateSize;
-	}
-	if (commandsSize) {
-		memcpy(commands, ptr, commandsSize);
-		ptr += commandsSize;
-	}
-	delete [] buf;
-	assert(ptr - buf == msgHeader.messageSize + sizeof(MsgHeader));
-	*/
 	return true;
 }
 
@@ -585,15 +554,19 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	msgHeader.messageType = MessageType::KEY_FRAME;
 	header.frame = this->frame;
 	header.cmdCount = this->cmdCount;
-	header.checksumCount = this->checksumCount;
+	IF_MAD_SYNC_CHECKS(
+		header.checksumCount = this->checksumCount;
+	)
 	header.moveUpdateCount = this->moveUpdateCount;
 	header.projUpdateCount = this->projUpdateCount;
 	header.updateSize = this->updateSize;
 
 	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
 	size_t headerSize = sizeof(KeyFrameMsgHeader);
-	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + checksumCount * sizeof(int32)
-		+ updateSize + commandsSize;
+	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + updateSize + commandsSize;
+	IF_MAD_SYNC_CHECKS(
+		msgHeader.messageSize += checksumCount * sizeof(int32);
+	)
 	size_t totalSize = msgHeader.messageSize + sizeof(MsgHeader);
 
 	NETWORK_LOG( "KeyFrame message size: " << msgHeader.messageSize );
@@ -604,10 +577,12 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	ptr += sizeof(MsgHeader);
 	memcpy(ptr, &header, sizeof(KeyFrameMsgHeader));
 	ptr += sizeof(KeyFrameMsgHeader);
-	if (checksumCount) {
-		memcpy(ptr, checksums, checksumCount * sizeof(int32));
-		ptr += checksumCount * sizeof(int32);
-	}
+	IF_MAD_SYNC_CHECKS(
+		if (checksumCount) {
+			memcpy(ptr, checksums, checksumCount * sizeof(int32));
+			ptr += checksumCount * sizeof(int32);
+		}
+	)
 	if (updateSize) {
 		memcpy(ptr, updateBuffer, updateSize);
 		ptr += updateSize;
@@ -623,6 +598,8 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	}
 	delete [] buf;
 }
+
+#if MAD_SYNC_CHECKING
 
 int32 KeyFrame::getNextChecksum() {
 	if (checksumCounter >= checksumCount) {
@@ -641,13 +618,17 @@ void KeyFrame::addChecksum(int32 cs) {
 	checksums[checksumCount++] = cs;
 }
 
+#endif
+
 void KeyFrame::add(NetworkCommand &nc) {
 	assert(cmdCount < max_cmds);
 	memcpy(&commands[cmdCount++], &nc, sizeof(NetworkCommand));
 }
 
 void KeyFrame::reset() {
-	checksumCounter = checksumCount = 0;
+	IF_MAD_SYNC_CHECKS(
+		checksumCounter = checksumCount = 0;
+	)
 	projUpdateCount = moveUpdateCount = cmdCount = 0;
 	updateSize = 0;
 	writePtr = updateBuffer;
@@ -673,7 +654,7 @@ void KeyFrame::addUpdate(ProjectileUpdate updt) {
 MoveSkillUpdate KeyFrame::getMoveUpdate() {
 	assert(readPtr < updateBuffer + updateSize - 1);
 	if (!moveUpdateCount) {
-		throw runtime_error("Sync error: Insufficient move skill updates in keyframe");
+		throw GameSyncError("Insufficient move skill updates in keyframe");
 	}
 	MoveSkillUpdate res = *((MoveSkillUpdate*)readPtr);
 	readPtr += sizeof(MoveSkillUpdate);
@@ -684,7 +665,7 @@ MoveSkillUpdate KeyFrame::getMoveUpdate() {
 ProjectileUpdate KeyFrame::getProjUpdate() {
 	assert(readPtr < updateBuffer + updateSize);
 	if (!projUpdateCount) {
-		throw runtime_error("Sync error: Insufficient projectile updates in keyframe");
+		throw GameSyncError("Insufficient projectile updates in keyframe");
 	}
 	ProjectileUpdate res = *((ProjectileUpdate*)readPtr);
 	readPtr += sizeof(ProjectileUpdate);

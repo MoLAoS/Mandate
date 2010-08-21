@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -63,11 +64,7 @@ public:
 	int dataAvailable();
 	void send(const Message* networkMessage);
 
-	// old way to get messages
-	//MessageType getNextMessageType();
-	//bool receiveMessage(Message* networkMessage);
-
-	// new way to get messages
+	// message retrieval
 	void receiveMessages();
 	bool hasMessage()					{ return !messageQueue.empty(); }
 	RawMessage getNextMessage();
@@ -109,6 +106,7 @@ protected:
 	// misc
 	virtual string getStatus() const = 0;
 
+#if MAD_SYNC_CHECKING
 	/** 'Interesting event' handlers, for insane checksum comparisons */
 	virtual void checkCommandUpdate(Unit *unit, int32 checksum) = 0;
 	virtual void checkProjectileUpdate(Unit *unit, int endFrame, int32 checksum) = 0;
@@ -120,6 +118,7 @@ protected:
 	virtual void postProjectileUpdate(Unit *unit, int endFrame);
 	virtual void postAnimUpdate(Unit *unit);
 	virtual void postUnitBorn(Unit *unit);
+#endif
 
 public:
 	NetworkInterface(Program &prog);

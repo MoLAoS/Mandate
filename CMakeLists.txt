@@ -73,6 +73,9 @@ endif(GAE_USE_PHYSFS)
 # debug edition
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 
+# mad synchronisation checking (for network play)
+option(GAE_SYNC_TEST "Enable mass synchronisation checks for multiplayer. Not compatible with Debug Edition.")
+
 # pre-compiled headers (MSVC only atm)
 option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, MSVC only atm.")
 

@@ -368,7 +368,7 @@ public:
 
 	virtual void render() {
 		renderImage();
-		Panel::render();
+		Container::render();
 	}
 
 	virtual string desc() { return string("[PicturePanel: ") + descPosDim() + "]"; }

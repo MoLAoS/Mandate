@@ -252,7 +252,6 @@ void ClientInterface::update() {
 }
 
 void ClientInterface::updateKeyframe(int frameCount) {
-	NETWORK_LOG( __FUNCTION__ << " Updating keyframe " << (frameCount / GameConstants::networkFramePeriod) );
 	// give all commands from last KeyFrame
 	for (size_t i=0; i < keyFrame.getCmdCount(); ++i) {
 		pendingCommands.push_back(*keyFrame.getCmd(i));
@@ -262,8 +261,10 @@ void ClientInterface::updateKeyframe(int frameCount) {
 		RawMessage raw = getNextMessage();
 		if (raw.type == MessageType::KEY_FRAME) {
 			keyFrame = KeyFrame(raw);
+			NETWORK_LOG( __FUNCTION__ << " received keyframe " << (keyFrame.getFrameCount() / GameConstants::networkFramePeriod)
+				<< " @ frame " << frameCount );
 			if (keyFrame.getFrameCount() != frameCount + GameConstants::networkFramePeriod) {
-				throw GameSyncError();
+				throw GameSyncError("frame count mismatch. Probable garbled message or memory corruption");
 			}
 			return;
 		} else if (raw.type == MessageType::TEXT) {
@@ -297,7 +298,7 @@ void ClientInterface::updateMove(Unit *unit) {
 	|| (!updt.offsetX && !updt.offsetY)) {
 		NETWORK_LOG( __FUNCTION__ << " Bad server update, pos offset out of range, x="
 			<< updt.offsetX << ", y=" << updt.offsetY );
-		throw GameSyncError(); // msgBox and then graceful exit to Menu please...
+		throw GameSyncError("Bad move update"); // msgBox and then graceful exit to Menu please...
 	}
 	unit->setNextPos(unit->getPos() + Vec2i(updt.offsetX, updt.offsetY));
 	unit->updateSkillCycle(updt.end_offset);
@@ -309,6 +310,16 @@ void ClientInterface::updateProjectilePath(Unit *u, Projectile *pps, const Vec3f
 	pps->setPath(start, end, updt.end_offset);
 }
 
+#if MAD_SYNC_CHECKING
+
+void ClientInterface::handleSyncError() {
+	assert(g_world.getFrameCount());
+	worldLog->logFrame(); // dump frame log
+	SyncErrorMsg se(g_world.getFrameCount());
+	send(&se); // ask server to also dump a frame log.
+	throw GameSyncError();
+}
+
 void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {
 //	NETWORK_LOG( __FUNCTION__ );
 	int32 server_cs = keyFrame.getNextChecksum();
@@ -316,7 +327,7 @@ void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {
 		NETWORK_LOG( __FUNCTION__ << " Sync Error: unit type: " << unit->getType()->getName()
 			<< " unit id: " << unit->getId() << " faction: " << unit->getFactionIndex() );
 		NETWORK_LOG( "\tserver checksum " << intToHex(server_cs) << " my checksum " << intToHex(cs) );
-		throw GameSyncError();
+		handleSyncError();
 	}
 }
 
@@ -325,13 +336,7 @@ void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 	if (cs != keyFrame.getNextChecksum()) {
 		NETWORK_LOG( __FUNCTION__ << "Sync Error: unit type: " << unit->getType()->getName()
 			<< ", skill class: " << SkillClassNames[unit->getCurrSkill()->getClass()] );
-		IF_DEBUG_EDITION(
-			assert(g_world.getFrameCount());
-			worldLog->logFrame(); // dump frame log
-			SyncErrorMsg se(g_world.getFrameCount());
-			send(&se); // ask server to also dump a frame log.
-		)
-		throw GameSyncError(); // nice message & graceful exit to Menu please...
+		handleSyncError();
 	}
 }
 
@@ -347,7 +352,7 @@ void ClientInterface::checkProjectileUpdate(Unit *unit, int endFrame, int32 cs) 
 				<< unit->getCurrSkill()->getName() << " target pos: "
 				<< unit->getCurrCommand()->getPos() << " end frame: " << endFrame );
 		}
-		throw GameSyncError(); // graceful exit to Menu please...
+		handleSyncError();
 	}
 }
 
@@ -357,9 +362,10 @@ void ClientInterface::checkAnimUpdate(Unit *unit, int32 cs) {
 		const CycleInfo &inf = skillCycleTable->lookUp(unit);
 		NETWORK_LOG( __FUNCTION__ << " Sync Error: unit id: " << unit->getId()
 			<< " attack offset: " << inf.getAttackOffset() );
-		throw GameSyncError(); // graceful exit to Menu please...
+		handleSyncError();
 	}
 }
 
+#endif
 
 }}//end namespace

@@ -75,11 +75,15 @@ protected:
 	// move skill needs special handling, NetworkInterface virtual
 	virtual void updateMove(Unit *unit);
 
-	// unit/projectile checks, NetworkInterface virtuals
-	virtual void checkCommandUpdate(Unit *unit, int32);
-	virtual void checkUnitBorn(Unit *unit, int32);
-	virtual void checkProjectileUpdate(Unit *unit, int endFrame, int32);
-	virtual void checkAnimUpdate(Unit *unit, int32);
+#	if MAD_SYNC_CHECKING
+		void handleSyncError();
+
+		// unit/projectile checks, NetworkInterface virtuals
+		virtual void checkCommandUpdate(Unit *unit, int32);
+		virtual void checkUnitBorn(Unit *unit, int32);
+		virtual void checkProjectileUpdate(Unit *unit, int, int32);
+		virtual void checkAnimUpdate(Unit *unit, int32);
+#	endif
 
 	//misc
 	virtual string getStatus() const;

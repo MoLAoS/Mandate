@@ -711,7 +711,7 @@ int ScriptManager::stopTimer(LuaHandle* luaHandle) {
 		bool killed = false;
 		for (i = timers.begin(); i != timers.end(); ++i) {
 			if (i->getName() == name) {
-				i->kill ();
+				i->kill();
 				killed = true;
 				break;
 			}

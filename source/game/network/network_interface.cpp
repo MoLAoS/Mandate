@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -39,27 +40,9 @@ void NetworkConnection::send(const Message* networkMessage) {
 	networkMessage->send(this);
 }
 
-/*MessageType NetworkConnection::getNextMessageType() {
-	Socket* socket = getSocket();
-	int8 messageType;
-	//peek message type
-	if (socket->peek(&messageType, sizeof(messageType))) {
-		//sanity check new message type
-		if (messageType < 0 || messageType >= MessageType::COUNT){
-			throw InvalidMessage(messageType);
-		}
-		return MessageType(messageType);
-	}
-	return MessageType::NO_MSG;
-}*/
-
 int NetworkConnection::dataAvailable() {
 	return getSocket()->getDataToRead();
 }
-
-/*bool NetworkConnection::receiveMessage(Message* networkMessage) {
-	return networkMessage->receive(this);
-}*/
 
 void NetworkConnection::receiveMessages() {
 	Socket *socket = getSocket();
@@ -134,6 +117,8 @@ void NetworkInterface::frameProccessed() {
 	}
 }
 
+#if MAD_SYNC_CHECKING
+
 void NetworkInterface::postCommandUpdate(Unit *unit) {
 	Checksum cs;
 	cs.add(unit->getId());
@@ -186,5 +171,6 @@ void NetworkInterface::postUnitBorn(Unit *unit) {
 	checkUnitBorn(unit, cs.getSum());
 }
 
+#endif
 
 }} // end namespace

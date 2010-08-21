@@ -105,13 +105,13 @@ void ConnectionSlot::update() {
 			string msg = getRemotePlayerName() + " [" + getRemoteHostName() + "] has quit the game!";
 			serverInterface->sendTextMessage(msg, -1);
 			throw Disconnect();
-#		if _GAE_EDBUG_EDITION_
+#		if MAD_SYNC_CHECKING
 		} else if (raw.type == MessageType::SYNC_ERROR) {
 			SyncErrorMsg e;
 			receiveMessage(&e);
 			int frame = e.getFrame();
 			serverInterface->dumpFrame(frame);
-			throw GameSyncError();
+			throw GameSyncError("Client detected sync error");
 #		endif
 		} else if (raw.type == MessageType::DATA_SYNC) {
 			DataSyncMessage msg(raw);

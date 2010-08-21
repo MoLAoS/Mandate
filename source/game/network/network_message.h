@@ -329,10 +329,12 @@ private:
 
 	int32	frame;
 
-	int32	checksums[max_checksums];
-	int32	checksumCount;
-	uint32	checksumCounter;
-	
+	IF_MAD_SYNC_CHECKS(
+		int32	checksums[max_checksums];
+		int32	checksumCount;
+		uint32	checksumCounter;
+	)
+
 	uint8	 updateBuffer[buffer_size];
 	size_t	 updateSize;
 	uint32	 projUpdateCount;
@@ -356,8 +358,10 @@ public:
 	const size_t& getCmdCount() const	{ return cmdCount; }
 	const NetworkCommand* getCmd(size_t ndx) const { return &commands[ndx]; }
 
-	int32 getNextChecksum();
-	void addChecksum(int32 cs);
+	IF_MAD_SYNC_CHECKS(
+		int32 getNextChecksum();
+		void addChecksum(int32 cs);
+	)
 	void add(NetworkCommand &nc);
 	void reset();
 	void addUpdate(MoveSkillUpdate updt);

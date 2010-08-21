@@ -242,6 +242,8 @@ void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
 	broadcastMessage(skillCycleTable);
 }
 
+#if MAD_SYNC_CHECKING
+
 void ServerInterface::checkUnitBorn(Unit *unit, int32 cs) {
 //	NETWORK_LOG( __FUNCTION__ << " Adding checksum " << intToHex(cs) );
 	keyFrame.addChecksum(cs);
@@ -261,6 +263,8 @@ void ServerInterface::checkAnimUpdate(Unit*, int32 cs) {
 //	NETWORK_LOG( __FUNCTION__ << " Adding checksum " << intToHex(cs) );
 	keyFrame.addChecksum(cs);
 }
+
+#endif
 
 void ServerInterface::updateSkillCycle(Unit *unit) {
 	SimulationInterface::updateSkillCycle(unit);
@@ -285,7 +289,7 @@ void ServerInterface::process(TextMessage &msg, int requestor) {
 
 void ServerInterface::updateKeyframe(int frameCount) {
 	NETWORK_LOG( __FUNCTION__ << " building & sending keyframe " 
-		<< (frameCount / GameConstants::networkFramePeriod) );
+		<< (frameCount / GameConstants::networkFramePeriod) << " @ frame " << frameCount);
 	// build command list, remove commands from requested and add to pending
 	while (!requestedCommands.empty()) {
 		keyFrame.add(requestedCommands.back());
@@ -361,10 +365,6 @@ void ServerInterface::sendTextMessage(const string &text, int teamIndex){
 
 void ServerInterface::quitGame(QuitSource source) {
 	NETWORK_LOG( __FUNCTION__ << " aborting game." );
-//	string text = getHostName() + " has ended the game!";
-//	TextMessage networkMessageText(text,getHostName(),-1);
-//	broadcastMessage(&networkMessageText, -1);
-
 	QuitMessage networkMessageQuit;
 	broadcastMessage(&networkMessageQuit);
 	if (game && !program.isTerminating()) {
@@ -433,7 +433,6 @@ void ServerInterface::updateListen() {
 #if _GAE_DEBUG_EDITION_
 	void ServerInterface::dumpFrame(int frame) {
 		worldLog->logFrame(frame);
-		throw GameSyncError();
 	}
 #endif
 

@@ -72,11 +72,13 @@ protected:
 	virtual void syncAiSeeds(int aiCount, int *seeds);
 	virtual void createSkillCycleTable(const TechTree *techTree);
 
-	// unit/projectile updates
-	virtual void checkCommandUpdate(Unit *unit, int32);
-	virtual void checkUnitBorn(Unit *unit, int32);
-	virtual void checkProjectileUpdate(Unit *unit, int, int32);
-	virtual void checkAnimUpdate(Unit *unit, int32);
+#	if MAD_SYNC_CHECKING
+		// unit/projectile updates
+		virtual void checkCommandUpdate(Unit *unit, int32);
+		virtual void checkUnitBorn(Unit *unit, int32);
+		virtual void checkProjectileUpdate(Unit *unit, int, int32);
+		virtual void checkAnimUpdate(Unit *unit, int32);
+#	endif
 
 	virtual void updateSkillCycle(Unit *unit);
 

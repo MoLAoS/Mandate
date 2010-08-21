@@ -464,7 +464,9 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 		UnitStateRecord usr(unit);
 		worldLog->addUnitRecord(usr);
 	)
-	postCommandUpdate(unit);
+	IF_MAD_SYNC_CHECKS(
+		postCommandUpdate(unit);
+	)
 }
 
 void SimulationInterface::updateSkillCycle(Unit *unit) {
@@ -489,19 +491,25 @@ void SimulationInterface::doUpdateAnim(Unit *unit) {
 		const CycleInfo &inf = skillCycleTable->lookUp(unit);
 		unit->updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
 	}
-	postAnimUpdate(unit);
+	IF_MAD_SYNC_CHECKS(
+		postAnimUpdate(unit);
+	)
 }
 
 void SimulationInterface::doUnitBorn(Unit *unit) {
 	const CycleInfo &inf = skillCycleTable->lookUp(unit);
 	unit->updateSkillCycle(inf.getSkillFrames());
 	unit->updateAnimCycle(inf.getAnimFrames());
-	postUnitBorn(unit);
+	IF_MAD_SYNC_CHECKS(
+		postUnitBorn(unit);
+	)
 }
 
 void SimulationInterface::doUpdateProjectile(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {
 	updateProjectilePath(u, pps, start, end);
-	postProjectileUpdate(u, pps->getEndFrame());
+	IF_MAD_SYNC_CHECKS(
+		postProjectileUpdate(u, pps->getEndFrame());
+	)
 }
 
 void SimulationInterface::changeRole(GameRole role) {

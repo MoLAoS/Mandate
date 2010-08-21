@@ -126,11 +126,16 @@ private:
 };
 
 class GameSyncError : public NetworkError {
+private:
+	string msg;
 public:
+	GameSyncError(const string &err) {
+		msg = "A game synchronisation error has occured.\n" + err;
+	}
 	~GameSyncError() throw() {}
 
 	const char* what() const throw() {
-		return "A network synchronisation error has occured.";
+		return msg.c_str();
 	}
 };
 

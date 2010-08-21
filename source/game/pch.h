@@ -14,12 +14,6 @@
 
 #include "projectConfig.h"
 
-#ifdef WIN32
-#	define CHECK_HEAP() assert(_CrtCheckMemory())
-#else
-#	define CHECK_HEAP()
-#endif
-
 // some local headers of importance
 #include "types.h"
 #include "game_constants.h"

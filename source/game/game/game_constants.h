@@ -42,6 +42,12 @@
 #	define IF_NOT_DEBUG_EDITION(x) x
 #endif
 
+#if MAD_SYNC_CHECKING
+#	define IF_MAD_SYNC_CHECKS(x) x
+#else
+#	define IF_MAD_SYNC_CHECKS(x)
+#endif
+
 #define WORLD_FPS (GameConstants::updateFps / GameConstants::defaultUpdateInterval)
 
 #include "util.h"
