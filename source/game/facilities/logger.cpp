@@ -40,7 +40,7 @@ Logger::Logger(const char *fileName, const string &type, TimeStampType timeType)
 		, loadingGame(true)
 		, progressBar(NULL)
 		, timeStampType(timeType) {
-	header = "Glest Advanced Enginge: " + type + " log file.\n\n";
+	header = "Glest Advanced Engine: " + type + " log file.\n\n";
 }
 
 Logger::~Logger() {

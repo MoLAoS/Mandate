@@ -648,29 +648,26 @@ void GameState::keyDown(const Key &key) {
 void GameState::keyUp(const Key &key) {
 	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");	
 	if (!chatManager.getEditEnabled()) {
-		switch (keymap.getCommand(key)) {
-			case ucCameraRotateLeft:
-			case ucCameraRotateRight:
-				gameCamera.setRotate(0);
-				break;
-
-			case ucCameraPitchUp:
-			case ucCameraPitchDown:
-				gameCamera.setMoveY(0);
-				break;
-
-			case ucCameraPosUp:
-			case ucCameraPosDown:
-				gameCamera.setMoveZ(0, false);
-				break;
-
-			case ucCameraPosLeft:
-			case ucCameraPosRight:
-				gameCamera.setMoveX(0, false);
-				break;
-
-			default:
-				break;
+		if (key.isModifier()) {
+			gameCamera.setRotate(0.f);
+			gameCamera.setMoveX(0.f, false);
+			gameCamera.setMoveY(0.f);
+			gameCamera.setMoveZ(0.f, false);
+		} else {
+			switch (keymap.getCommand(key)) {
+				case ucCameraRotateLeft: case ucCameraRotateRight:
+					gameCamera.setRotate(0.f);
+					break;
+				case ucCameraPitchUp: case ucCameraPitchDown:
+					gameCamera.setMoveY(0.f);
+					break;
+				case ucCameraPosUp: case ucCameraPosDown:
+					gameCamera.setMoveZ(0.f, false);
+					break;
+				case ucCameraPosLeft: case ucCameraPosRight:
+					gameCamera.setMoveX(0.f, false);
+					break;
+			}
 		}
 	}
 }
