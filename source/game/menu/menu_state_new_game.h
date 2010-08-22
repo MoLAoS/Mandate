@@ -130,7 +130,7 @@ private:
 	void onCheckChanged(Button::Ptr);
 
 	void onButtonClick(Button::Ptr ptr);
-	void onDismissDialog(MessageDialog::Ptr);
+	void onDismissDialog(BasicDialog::Ptr);
 };
 
 }}//end namespace

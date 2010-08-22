@@ -13,6 +13,7 @@
 #define _GLEST_GAME_GAMECONSTANTS_H_
 
 // The 'Globals'
+#define g_program			(*Program::getInstance())
 #define g_gameState			(*GameState::getInstance())
 #define g_world				(World::getInstance())
 #define g_map				(*World::getInstance().getMap())

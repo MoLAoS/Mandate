@@ -149,10 +149,16 @@ private:
 	bool hover;
 	bool focus;
 	bool changed;
+	string m_inputMask;
+	BorderStyle m_normBorderStyle, m_focusBorderStyle;
 
 public:
 	TextBox(Container::Ptr parent);
 	TextBox(Container::Ptr parent, Vec2i pos, Vec2i size);
+
+	void setInputMask(const string &allowMask) { m_inputMask = allowMask; }
+
+	void gainFocus();
 
 	virtual void mouseIn()	{ hover = true;	 }
 	virtual void mouseOut() { hover = false;	}
@@ -169,9 +175,10 @@ public:
 	virtual Vec2i getMinSize() const;
 
 	virtual void render();
-	virtual string desc() { return string("[Button: ") + descPosDim() + "]"; }
+	virtual string desc() { return string("[TextBox: ") + descPosDim() + "]"; }
 
-	sigslot::signal<TextBox*> TextChanged;
+	sigslot::signal<Ptr> TextChanged;
+	sigslot::signal<Ptr> InputEntered;
 };
 
 // =====================================================

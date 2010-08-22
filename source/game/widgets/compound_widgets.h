@@ -68,9 +68,11 @@ private: // re-route signals from DropLists
 		if (m_controlList->getSelectedIndex() == ControlType::CLOSED) {
 			m_factionList->setEnabled(false);
 			m_teamList->setEnabled(false);
+			m_colourList->setEnabled(false);
 		} else {
 			m_factionList->setEnabled(true);
 			m_teamList->setEnabled(true);
+			m_colourList->setEnabled(true);
 		}
 	}
 	void onFactionChanged(ListBase::Ptr) { FactionChanged(this); }
@@ -143,13 +145,13 @@ public:
 	virtual string desc() { return string("[TitleBar: ") + descPosDim() + "]"; }
 };
 
-class MessageDialog : public Container, public MouseWidget, public sigslot::has_slots {
+class BasicDialog : public Container, public MouseWidget, public sigslot::has_slots {
 public:
-	typedef MessageDialog* Ptr;
+	typedef BasicDialog* Ptr;
 
 private:
 	TitleBar::Ptr	m_titleBar;
-	ScrollText::Ptr	m_scrollText;
+	Widget::Ptr		m_content;
 	Button::Ptr		m_button1,
 					m_button2;
 
@@ -157,21 +159,19 @@ private:
 	bool			m_pressed;
 	Vec2i			m_lastPos;
 
+protected:
+	BasicDialog(WidgetWindow*);
 	void onButtonClicked(Button::Ptr);
-	void init();
+
+protected:
+	void setContent(Widget::Ptr content);
+	void init(Vec2i pos, Vec2i size, const string &title, const string &btn1, const string &btn2);
 
 public:
-	MessageDialog(WidgetWindow*);
-	MessageDialog(Container::Ptr parent, Vec2i pos, Vec2i size);
-
-	virtual void setSize(const Vec2i &sz);
-
 	void setTitleText(const string &text);
-	void setMessageText(const string &text);
 	void setButtonText(const string &btn1Text, const string &btn2Text = "");
 
 	const string& getTitleText() const { return m_titleBar->getText(); }
-	const string& getMessageText() const { return m_scrollText->getText(); }
 
 	sigslot::signal<Ptr> Button1Clicked,
 						 Button2Clicked;
@@ -181,11 +181,56 @@ public:
 	bool mouseUp(MouseButton btn, Vec2i pos);
 
 	void render();
-
 	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
 	virtual Vec2i getMinSize() const { return Vec2i(-1); }
+	virtual string desc() { return string("[BasicDialog: ") + descPosDim() + "]"; }
+};
+
+class MessageDialog : public BasicDialog {
+public:
+	typedef MessageDialog* Ptr;
+
+private:
+	ScrollText::Ptr m_scrollText;
+
+private:
+	MessageDialog(WidgetWindow*);
+
+public:
+	static MessageDialog::Ptr showDialog(Vec2i pos, Vec2i size, const string &title,
+					const string &msg, const string &btn1Text, const string &btn2Text);
+
+	void setMessageText(const string &text);
+	const string& getMessageText() const { return m_scrollText->getText(); }
 
 	virtual string desc() { return string("[MessageDialog: ") + descPosDim() + "]"; }
+};
+
+class InputDialog : public BasicDialog {
+public:
+	typedef InputDialog* Ptr;
+
+private:
+	StaticText::Ptr	m_label;
+	TextBox::Ptr	m_textBox;
+	Panel::Ptr		m_panel;
+
+private:
+	InputDialog(WidgetWindow*);
+
+	void onInputEntered(TextBox::Ptr);
+
+public:
+	static InputDialog::Ptr showDialog(Vec2i pos, Vec2i size, const string &title,
+					const string &msg, const string &btn1Text, const string &btn2Text);
+
+	void setMessageText(const string &text);
+	void setInputMask(const string &allowMask) { m_textBox->setInputMask(allowMask); }
+
+	const string& getMessageText() const { return m_label->getText(); }
+	string getInput() const { return m_textBox->getText(); }
+
+	virtual string desc() { return string("[InputDialog: ") + descPosDim() + "]"; }
 };
 
 }} // namespace Glest::Widgets

@@ -36,19 +36,19 @@ void WidgetConfig::addGlestTexture(const string &name, TexPtr tex) {
 	m_namedTextures[name] = m_textures.size() - 1;
 }
 
-void WidgetConfig::loadBorderStyle(WidgetType widgetType) {
-	if (luaScript.getTable("Borders")) {
+void WidgetConfig::loadBorderStyle(WidgetType widgetType, const char *table, BorderStyle &style) {
+	if (luaScript.getTable(table)) {
 		string type = luaScript.getStringField("Type");
 		BorderType bt = BorderTypeNames.match(type.c_str());
 		if (bt == BorderType::INVALID) {
 			///@todo warn / report error
 			bt = BorderType::NONE;
 		}
-		m_borderStyles[widgetType].m_type = bt;
+		style.m_type = bt;
 		if (bt != BorderType::NONE) {
 			try {
 				Vec4i sizes = luaScript.getVec4iField("Sizes");
-				m_borderStyles[widgetType].setSizes(sizes);
+				style.setSizes(sizes);
 			} catch (LuaError &e) {
 				///@todo warning ?					
 			}
@@ -65,7 +65,7 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType) {
 					StringSet strings = luaScript.getStringSet("Colours");
 					for (int i=0; i < numColours; ++i) {
 						if (!strings[i].empty()) {
-							m_borderStyles[widgetType].m_colourIndices[i] = getColourIndex(strings[i]);
+							style.m_colourIndices[i] = getColourIndex(strings[i]);
 						}
 					}
 				} catch (LuaError &e) {
@@ -111,7 +111,8 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType) {
 
 bool WidgetConfig::loadStyles(const char *tableName, WidgetType widgetType) {
 	if (luaScript.getGlobal(tableName)) {
-		loadBorderStyle(widgetType);
+		loadBorderStyle(widgetType, "Borders", m_borderStyles[widgetType]);
+		loadBorderStyle(widgetType, "BordersFocused", m_focusBorderStyles[widgetType]);
 		loadBackgroundStyle(widgetType);
 		luaScript.popAll();
 		return true;

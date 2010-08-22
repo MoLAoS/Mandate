@@ -414,7 +414,7 @@ void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
 	doFadeOut();
 }
 
-void MenuStateNewGame::onDismissDialog(MessageDialog::Ptr) {
+void MenuStateNewGame::onDismissDialog(BasicDialog::Ptr) {
 	program.removeFloatingWidget(m_messageDialog);
 	doFadeIn();
 }
@@ -433,16 +433,10 @@ void MenuStateNewGame::update() {
 			mainMenu->setState(new MenuStateRoot(program, mainMenu));
 		} else if (m_targetTransition == Transition::PLAY) {
 			if (hasUnconnectedSlots()) {
-				m_messageDialog = new MessageDialog(&program);
 				Vec2i sz(330, 256);
-				program.setFloatingWidget(m_messageDialog, true);
-				m_messageDialog->setPos(g_metrics.getScreenDims() / 2 - sz / 2);
-				m_messageDialog->setSize(sz);
-				m_messageDialog->setTitleText(g_lang.get("Error"));
-				m_messageDialog->setMessageText(g_lang.get("WaitingForConnections"));
-				m_messageDialog->setButtonText(g_lang.get("Ok"));
+				m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
+					sz, g_lang.get("Error"), g_lang.get("WaitingForConnections"), g_lang.get("Ok"), "");
 				m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
-
 				m_transition = false;
 			} else {
 				g_simInterface->getGameSettings().compact();

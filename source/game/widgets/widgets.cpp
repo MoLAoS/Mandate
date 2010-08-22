@@ -265,10 +265,11 @@ TextBox::TextBox(Container::Ptr parent)
 		, hover(false)
 		, focus(false)
 		, changed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
+	m_normBorderStyle = m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
+	m_focusBorderStyle = g_widgetConfig.getFocusBorderStyle(WidgetType::TEXT_BOX);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 }
-		
+
 TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
@@ -277,17 +278,22 @@ TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 		, hover(false)
 		, focus(false)
 		, changed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
+	m_normBorderStyle = m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
+	m_focusBorderStyle = g_widgetConfig.getFocusBorderStyle(WidgetType::TEXT_BOX);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 }
 
-bool TextBox::mouseDown(MouseButton btn, Vec2i pos) {
+void TextBox::gainFocus() {
 	if (isEnabled()) {
 		focus = true;
 		getRootWindow()->aquireKeyboardFocus(this);
-		return true;
+		m_borderStyle = m_focusBorderStyle;
 	}
-	return false;
+}
+
+bool TextBox::mouseDown(MouseButton btn, Vec2i pos) {
+	gainFocus();
+	return true;
 }
 
 bool TextBox::mouseUp(MouseButton btn, Vec2i pos) {
@@ -301,21 +307,19 @@ bool TextBox::keyDown(Key key) {
 			const string &txt = getText();
 			if (!txt.empty()) {
 				setText(txt.substr(0, txt.size() - 1));
-				//changed = true;
 				TextChanged(this);
 			}
 			return true;
 		}
 		case KeyCode::RETURN:
 			getRootWindow()->releaseKeyboardFocus(this);
-			//if (changed) {
-			//	TextChanged(this);
-			//	changed = false;
-			//}
+			InputEntered(this);
 			return true;
-		/*
-		case KeyCode::DELETE_:
 		case KeyCode::ESCAPE:
+			getRootWindow()->releaseKeyboardFocus(this);
+			return true;
+			/*
+		case KeyCode::DELETE_:
 		case KeyCode::ARROW_LEFT:
 		case KeyCode::ARROW_RIGHT:
 		case KeyCode::HOME:
@@ -323,7 +327,7 @@ bool TextBox::keyDown(Key key) {
 		case KeyCode::TAB:
 			cout << "KeyDown: [" << KeyCodeNames[code] << "]\n";
 			return true;
-		*/
+			*/
 		default:
 			break;
 	}
@@ -336,11 +340,13 @@ bool TextBox::keyUp(Key key) {
 
 bool TextBox::keyPress(char c) {
 	if (c >= 32 && c <= 126) { // 'space' -> 'tilde' [printable ascii char]
-		//cout << "KeyPress: ASCII=='" << c << "' [" << int(c) << "]\n";
+		if (!m_inputMask.empty()) {
+			if (m_inputMask.find_first_of(c) == string::npos) {
+				return true;
+			}
+		}
 		string s(getText());
-		//cout << "Current text: " << s << ", Setting text: " << (s + c) << endl;
 		setText(s + c);
-		//changed = true;
 		TextChanged(this);
 		return true;
 	}
@@ -349,10 +355,7 @@ bool TextBox::keyPress(char c) {
 
 void TextBox::lostKeyboardFocus() {
 	focus = false;
-	//if (changed) {
-	//	TextChanged(this);
-	//	changed = false;
-	//}
+	m_borderStyle = m_normBorderStyle;
 }
 
 void TextBox::render() {
@@ -789,7 +792,7 @@ void Panel::layoutChildren() {
 //	const int borderPlusPad = getBorderSize() + getPadding();
 	int wh = 0;
 	Vec2i size = getSize();
-	Vec2i room = size - m_borderStyle.getBorderDims();
+	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
 	foreach (WidgetList, it, children) {
 		wh += (*it)->getHeight();
 		widgetYPos.push_back(wh);

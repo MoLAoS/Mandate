@@ -84,10 +84,10 @@ private:
 	void onButtonClick(Button::Ptr);
 	void onSaveSelected(ListBase::Ptr);
 
-	void onConfirmDelete(MessageDialog::Ptr);
-	void onCancelDelete(MessageDialog::Ptr);
+	void onConfirmDelete(BasicDialog::Ptr);
+	void onCancelDelete(BasicDialog::Ptr);
 
-	void onConfirmReturn(MessageDialog::Ptr);
+	void onConfirmReturn(BasicDialog::Ptr);
 
 private:
 	Mutex mutex;

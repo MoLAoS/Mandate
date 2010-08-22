@@ -200,13 +200,8 @@ void MenuStateJoinGame::onConnect(Button::Ptr) {
 	Vec2i pos, size(300, 200);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 	assert(!m_messageBox);
-	m_messageBox = new MessageDialog(&program);
-	program.setFloatingWidget(m_messageBox, true);
-	m_messageBox->setPos(pos);
-	m_messageBox->setSize(size);
-	m_messageBox->setTitleText("Connecting...");///@todo localise
-	m_messageBox->setMessageText("Connecting, Please wait.");///@todo localise
-	m_messageBox->setButtonText(g_lang.get("Cancel"));
+	m_messageBox = MessageDialog::showDialog(pos, size, "Connecting...",
+		"Connecting, Please wait.", g_lang.get("Cancel"), "");
 	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelConnect);
 	{
 		MutexLock lock(m_connectMutex);
@@ -215,7 +210,7 @@ void MenuStateJoinGame::onConnect(Button::Ptr) {
 	}
 }
 
-void MenuStateJoinGame::onCancelConnect(MessageDialog::Ptr) {
+void MenuStateJoinGame::onCancelConnect(BasicDialog::Ptr) {
 	MutexLock lock(m_connectMutex);
 	if (m_connectThread) {
 		m_connectThread->cancel();
@@ -231,15 +226,9 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 		connected = true;
 		Vec2i pos, size(300, 200);
 		pos = g_metrics.getScreenDims() / 2 - size / 2;
-		m_messageBox = new MessageDialog(&program);
-		program.setFloatingWidget(m_messageBox, true);
-		m_messageBox->setPos(pos);
-		m_messageBox->setSize(size);
-		m_messageBox->setTitleText("Connected.");///@todo localise
-		m_messageBox->setMessageText("Connected, waiting for server\nto launch game.");///@todo localise
-		m_messageBox->setButtonText(g_lang.get("Disconnect"));
+		m_messageBox = MessageDialog::showDialog(pos, size, "Connected.",
+			"Connected, waiting for server\nto launch game.", g_lang.get("Disconnect"), "");
 		m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
-
 	} else if (result == ConnectResult::CANCELLED) {
 		m_connectPanel->setVisible(true);
 		m_connectLabel->setText("Not connected. Last attempt cancelled.");///@todo localise
@@ -257,7 +246,7 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 	m_connectThread = 0;
 }
 
-void MenuStateJoinGame::onDisconnect(MessageDialog::Ptr) {
+void MenuStateJoinGame::onDisconnect(BasicDialog::Ptr) {
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
 	g_simInterface->asClientInterface()->reset();
@@ -276,13 +265,8 @@ void MenuStateJoinGame::onSearchForGame(Button::Ptr) {
 	Vec2i pos, size(300, 200);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 	assert(!m_messageBox);
-	m_messageBox = new MessageDialog(&program);
-	program.setFloatingWidget(m_messageBox, true);
-	m_messageBox->setPos(pos);
-	m_messageBox->setSize(size);
-	m_messageBox->setTitleText("Searching...");///@todo localise
-	m_messageBox->setMessageText("Searching, Please wait.");///@todo localise
-	m_messageBox->setButtonText(g_lang.get("Cancel"));
+	m_messageBox = MessageDialog::showDialog(pos, size,"Searching...",
+		"Searching, Please wait.", g_lang.get("Cancel"), "");
 	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelSearch);
 	{
 		MutexLock lock(m_findServerMutex);
@@ -291,7 +275,7 @@ void MenuStateJoinGame::onSearchForGame(Button::Ptr) {
 	}
 }
 
-void MenuStateJoinGame::onCancelSearch(MessageDialog::Ptr) {
+void MenuStateJoinGame::onCancelSearch(BasicDialog::Ptr) {
 	MutexLock lock(m_findServerMutex);
 	if (m_findServerThread) {
 		m_findServerThread->stop();

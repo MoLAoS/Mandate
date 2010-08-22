@@ -109,10 +109,8 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	if(!loadGameList()) {
 		Vec2i sz(330, 256);
 		program.clear();
-		m_messageDialog = new MessageDialog(&program, g_metrics.getScreenDims() / 2 - sz / 2, sz);
-		m_messageDialog->setTitleText(g_lang.get("Error"));
-		m_messageDialog->setMessageText(g_lang.get("NoSavedGames"));
-		m_messageDialog->setButtonText(g_lang.get("Ok"));
+		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz,
+			g_lang.get("Error"), g_lang.get("NoSavedGames"), g_lang.get("Ok"), "");
 		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmReturn);
 	}
 }
@@ -131,13 +129,10 @@ void MenuStateLoadGame::onButtonClick(Button::Ptr btn) {
 		g_soundRenderer.playFx(g_coreData.getClickSoundC());
 		Vec2i sz(330, 256);
 
-		m_messageDialog = new MessageDialog(&program);
-		program.setFloatingWidget(m_messageDialog, true);
-		m_messageDialog->setPos(g_metrics.getScreenDims() / 2 - sz / 2);
-		m_messageDialog->setSize(sz);
-		m_messageDialog->setTitleText(g_lang.get("Confirm"));
-		m_messageDialog->setMessageText(g_lang.get("Delete") + " " + m_savedGameList->getSelectedItem()->getText() + "?");
-		m_messageDialog->setButtonText(g_lang.get("Yes"), g_lang.get("No"));
+		const string &fileName = m_savedGameList->getSelectedItem()->getText();
+		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz, 
+			g_lang.get("Confirm"), g_lang.get("Delete") + " " + fileName + "?", 
+			g_lang.get("Yes"), g_lang.get("No"));
 		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmDelete);
 		m_messageDialog->Button2Clicked.connect(this, &MenuStateLoadGame::onCancelDelete);
 		program.setFade(0.5f);
@@ -149,12 +144,12 @@ void MenuStateLoadGame::onButtonClick(Button::Ptr btn) {
 	}
 }
 
-void MenuStateLoadGame::onCancelDelete(MessageDialog::Ptr) {
+void MenuStateLoadGame::onCancelDelete(BasicDialog::Ptr) {
 	program.setFade(1.0f);
 	program.removeFloatingWidget(m_messageDialog);
 }
 
-void MenuStateLoadGame::onConfirmDelete(MessageDialog::Ptr) {
+void MenuStateLoadGame::onConfirmDelete(BasicDialog::Ptr) {
 	program.setFade(1.0f);
 	program.removeFloatingWidget(m_messageDialog);
 
@@ -165,7 +160,7 @@ void MenuStateLoadGame::onConfirmDelete(MessageDialog::Ptr) {
 	}
 }
 
-void MenuStateLoadGame::onConfirmReturn(MessageDialog::Ptr) {
+void MenuStateLoadGame::onConfirmReturn(BasicDialog::Ptr) {
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	m_targetTransition = Transition::RETURN;
 	mainMenu->setCameraTarget(MenuStates::ROOT);

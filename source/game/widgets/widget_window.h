@@ -40,6 +40,7 @@ protected:
 private:
 	Widget::Ptr	floatingWidget;
 	KeyboardWidget::Ptr keyboardFocused;
+	KeyboardWidget::Ptr lastKeyDownWidget;
 	MouseWidget::Ptr mouseDownWidgets[MouseButton::COUNT];
 	MouseWidget::Ptr lastMouseDownWidget;
 	MouseButton lastMouseDownButton;
@@ -118,6 +119,8 @@ public: // MouseWidget & TextWidget virtual events
 
 	virtual string desc() { return string("[Window: ") + descPosDim() + "]"; }
 };
+
+#define g_widgetWindow (*WidgetWindow::getInstance())
 
 }}
 

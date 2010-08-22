@@ -22,6 +22,10 @@ using Global::CoreData;
 using Global::Lang;
 using Sim::ControlTypeNames;
 
+// =====================================================
+//  class PlayerSlotWidget
+// =====================================================
+
 PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size) {
 	Panel::setAutoLayout(false);
@@ -75,6 +79,10 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	m_colourList->SelectionChanged.connect(this, &PlayerSlotWidget::onColourChanged);
 }
 
+// =====================================================
+//  class OptionContainer
+// =====================================================
+
 OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, const string &text)
 		: Container(parent, pos, size) {
 	CoreData &coreData = CoreData::getInstance();
@@ -127,6 +135,10 @@ Vec2i OptionContainer::getMinSize() const {
 	return Vec2i(400, 30);
 }
 
+// =====================================================
+//  class ScrollText
+// =====================================================
+
 ScrollText::ScrollText(Container::Ptr parent)
 		: Panel(parent)
 		, MouseWidget(this)
@@ -174,7 +186,7 @@ void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
 
 void ScrollText::setText(const string &txt) {
 	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
-	int width = getSize().x - getPadding() * 2 - m_scrollBar->getSize().x;
+	int width = getSize().x - getPadding() * 2 - 24;
 	std::list<string> words, lines;
 
 	string::size_type startPos = 0;
@@ -217,6 +229,10 @@ void ScrollText::render() {
 		glDisable(GL_SCISSOR_TEST);
 	glPopAttrib();
 }
+
+// =====================================================
+//  class TitleBar
+// =====================================================
 
 TitleBar::TitleBar(Container::Ptr parent)
 		: Container(parent)
@@ -266,53 +282,30 @@ void TitleBar::render() {
 Vec2i TitleBar::getPrefSize() const { return Vec2i(-1); }
 Vec2i TitleBar::getMinSize() const { return Vec2i(-1); }
 
-MessageDialog::MessageDialog(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: Container(parent, pos, size)
-		, MouseWidget(this)
-		, m_button1(0)
-		, m_button2(0)
-		, m_buttonCount(0)
-		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+// =====================================================
+//  class BasicDialog
+// =====================================================
 
-	Vec2i p, s;
-	Font *font = g_coreData.getFTMenuFontNormal();
-	const FontMetrics *fm = font->getMetrics();
-
-	int a = int(fm->getHeight() + 1.f) + 4;
-	p = Vec2i(getBorderLeft(), size.y - a - getBorderTop());
-	s = Vec2i(size.x - getBordersHoriz(), a);
-
-	m_titleBar = new TitleBar(this, p, s, "", false);
-
-	p = Vec2i(getBorderLeft(), getBorderBottom());
-	s = Vec2i(size.x - getBordersHoriz(), size.y - a - getBordersVert());
-	m_scrollText = new ScrollText(this, p, s);
-	string title = "test text\ntext test\ntesting text\ntexting text\n";
-	m_scrollText->setTextParams(title, Vec4f(1.f), font, false);
-	m_scrollText->init();
-}
-
-MessageDialog::MessageDialog(WidgetWindow::Ptr window)
-		: Container(window)
-		, MouseWidget(this)
-		, m_button1(0)
-		, m_button2(0)
-		, m_buttonCount(0)
-		, m_pressed(false) {
+BasicDialog::BasicDialog(WidgetWindow::Ptr window)
+		: Container(window) , MouseWidget(this)
+		, m_titleBar(0) , m_content(0)
+		, m_button1(0) , m_button2(0)
+		, m_buttonCount(0) , m_pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
 	m_titleBar = new TitleBar(this);
-	m_scrollText = new ScrollText(this);
 }
 
-void MessageDialog::setSize(const Vec2i &sz) {
-	Container::setSize(sz);
-	init();
+void BasicDialog::init(Vec2i pos, Vec2i size, const string &title, 
+					   const string &btn1Text, const string &btn2Text) {
+	setPos(pos);
+	setSize(size);
+	setTitleText(title);
+	setButtonText(btn1Text, btn2Text);
 }
 
-void MessageDialog::init() {
+void BasicDialog::setContent(Widget::Ptr content) {
+	m_content = content;
 	Vec2i p, s;
 	Font *font = g_coreData.getFTMenuFontNormal();
 	const FontMetrics *fm = font->getMetrics();
@@ -324,33 +317,33 @@ void MessageDialog::init() {
 	m_titleBar->setPos(p);
 	m_titleBar->setSize(s);
 
-	p = Vec2i(getBorderLeft(), getBorderBottom());
-	s = Vec2i(getWidth() - getBordersHoriz(), getHeight() - a - getBordersVert());
-	m_scrollText->setPos(p);
-	m_scrollText->setSize(s);
-	m_scrollText->init();
+	p = Vec2i(getBorderLeft(), getBorderBottom() + (m_button1 ? 50 : 0));
+	s = Vec2i(getWidth() - getBordersHoriz(), getHeight() - a - getBordersVert() - (m_button1 ? 50 : 0));
+	m_content->setPos(p);
+	m_content->setSize(s);
 }
 
-void MessageDialog::setTitleText(const string &text) {
+void BasicDialog::setTitleText(const string &text) {
 	m_titleBar->setText(text);
 }
 
-void MessageDialog::setMessageText(const string &text) {
-	///@todo get FontMetrics, split text into lines
-	m_scrollText->setText(text);
-	m_scrollText->init();
-}
-
-void MessageDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
+void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
 	Font *font = g_coreData.getFTMenuFontNormal();
 	delete m_button1;
 	m_button1 = 0;
 	delete m_button2;
 	m_button2 = 0;
 	if (btn2Text.empty()) {
-		m_buttonCount = 1;
+		if (btn1Text.empty()) {
+			m_buttonCount = 0;
+		} else {
+			m_buttonCount = 1;
+		}
 	} else {
 		m_buttonCount = 2;
+	}
+	if (!m_buttonCount) {
+		return;
 	}
 	int gap = (getWidth() - 150 * m_buttonCount) / (m_buttonCount + 1);
 	Vec2i p(gap, 10 + getBorderBottom());
@@ -365,14 +358,9 @@ void MessageDialog::setButtonText(const string &btn1Text, const string &btn2Text
 		m_button2->setTextParams(btn2Text, Vec4f(1.f), font);
 		m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
 	}
-
-	m_scrollText->setSize(getWidth() - getBordersHoriz(),
-		getHeight() - getBordersVert() - m_titleBar->getHeight() - 50);
-	m_scrollText->setPos(Vec2i(getBorderLeft(), 50 + getBorderBottom()));
-	m_scrollText->init();
 }
 
-void MessageDialog::onButtonClicked(Button::Ptr btn) {
+void BasicDialog::onButtonClicked(Button::Ptr btn) {
 	if (btn == m_button1) {
 		Button1Clicked(this);
 	} else {
@@ -380,7 +368,7 @@ void MessageDialog::onButtonClicked(Button::Ptr btn) {
 	}
 }
 
-bool MessageDialog::mouseDown(MouseButton btn, Vec2i pos) {
+bool BasicDialog::mouseDown(MouseButton btn, Vec2i pos) {
 	if (m_titleBar->isInside(pos) && btn == MouseButton::LEFT) {
 		m_pressed = true;
 		m_lastPos = pos;
@@ -389,7 +377,7 @@ bool MessageDialog::mouseDown(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-bool MessageDialog::mouseMove(Vec2i pos) {
+bool BasicDialog::mouseMove(Vec2i pos) {
 	if (m_pressed) {
 		Vec2i offset = pos - m_lastPos;
 		Vec2i newPos = getPos() + offset;
@@ -400,7 +388,7 @@ bool MessageDialog::mouseMove(Vec2i pos) {
 	return false;
 }
 
-bool MessageDialog::mouseUp(MouseButton btn, Vec2i pos) {
+bool BasicDialog::mouseUp(MouseButton btn, Vec2i pos) {
 	if (m_pressed && btn == MouseButton::LEFT) {
 		m_pressed = false;
 		return true;
@@ -408,9 +396,75 @@ bool MessageDialog::mouseUp(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-void MessageDialog::render() {
+void BasicDialog::render() {
 	renderBgAndBorders();
 	Container::render();
+}
+
+// =====================================================
+//  class MessageDialog
+// =====================================================
+
+MessageDialog::MessageDialog(WidgetWindow::Ptr window)
+		: BasicDialog(window) {
+	m_scrollText = new ScrollText(this);
+}
+
+MessageDialog::Ptr MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &title, 
+								const string &msg,  const string &btn1Text, const string &btn2Text) {
+	MessageDialog::Ptr msgBox = new MessageDialog(&g_widgetWindow);
+	g_widgetWindow.setFloatingWidget(msgBox, true);
+	msgBox->init(pos, size, title, btn1Text, btn2Text);
+	msgBox->setMessageText(msg);
+	return msgBox;
+}
+
+void MessageDialog::setMessageText(const string &text) {
+	setContent(m_scrollText);
+	m_scrollText->setText(text);
+	m_scrollText->init();
+}
+
+// =====================================================
+//  class InputDialog
+// =====================================================
+
+InputDialog::InputDialog(WidgetWindow::Ptr window)
+		: BasicDialog(window) {
+	m_panel = new Panel(this);
+	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
+	m_panel->setPaddingParams(10, 10);
+	m_label = new StaticText(m_panel);
+	m_label->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_textBox = new TextBox(m_panel);
+	m_textBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_textBox->InputEntered.connect(this, &InputDialog::onInputEntered);
+}
+
+InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title, const string &msg, 
+							   const string &btn1Text, const string &btn2Text) {
+	InputDialog::Ptr dlg = new InputDialog(&g_widgetWindow);
+	g_widgetWindow.setFloatingWidget(dlg, true);
+	dlg->init(pos, size, title, btn1Text, btn2Text);
+	dlg->setContent(dlg->m_panel);
+	dlg->setMessageText(msg);
+	Vec2i sz = dlg->m_label->getPrefSize() + Vec2i(4);
+	dlg->m_label->setSize(sz);
+	sz.x = dlg->m_panel->getSize().x - 20;
+	dlg->m_textBox->setSize(sz);
+	dlg->m_panel->layoutChildren();
+	dlg->m_textBox->gainFocus();
+	return dlg;
+}
+
+void InputDialog::onInputEntered(TextBox::Ptr) {
+	if (!m_textBox->getText().empty()) {
+		Button1Clicked(this);
+	}
+}
+
+void InputDialog::setMessageText(const string &text) {
+	m_label->setText(text);
 }
 
 }}

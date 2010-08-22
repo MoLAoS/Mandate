@@ -86,7 +86,7 @@ GameState::GameState(Program &program)
 		, scrollSpeed(config.getUiScrollSpeed())
 		, m_msgBox(0)
 		, m_scriptMsgBox(0)
-		, saveBox(NULL)
+		, m_saveBox(0)
 		, lastMousePos(0)
 		, weatherParticleSystem(0) {
 	assert(!singleton);
@@ -105,9 +105,6 @@ GameState::~GameState() {
 	g_renderer.endGame();
 	weatherParticleSystem = 0;
 	g_soundRenderer.stopAllSounds();
-
-	delete saveBox;
-	saveBox = 0;
 
 	gui.end(); //selection must be cleared before deleting units
 	singleton = 0;
@@ -300,19 +297,13 @@ void GameState::displayError(std::exception &e) {
 		program.removeFloatingWidget(m_scriptMsgBox);
 		m_scriptMsgBox = 0;
 	}
-	m_msgBox = new MessageDialog(&program);
-	program.setFloatingWidget(m_msgBox, true);
-	Vec2i pos, size(320, 200);
-	pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_msgBox->setPos(pos);
-	m_msgBox->setSize(size);
-	m_msgBox->setTitleText("Error...");///@todo localise
-	m_msgBox->setMessageText("An error has occurred.\n" + errMsg);
-	m_msgBox->setButtonText(g_lang.get("Ok"));
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_msgBox = MessageDialog::showDialog(pos, size, "Error...", "An error has occurred.\n" + errMsg,
+		g_lang.get("Ok"), "");
 	m_msgBox->Button1Clicked.connect(this, &GameState::onErrorDismissed);
 }
 
-void GameState::onErrorDismissed(MessageDialog::Ptr) {
+void GameState::onErrorDismissed(BasicDialog::Ptr) {
 	simInterface->resume();
 	program.removeFloatingWidget(m_msgBox);
 	m_msgBox = 0;
@@ -327,31 +318,48 @@ void GameState::doExitMessage(const string &msg) {
 			ScriptMessage(m_scriptMsgBox->getTitleText(), m_scriptMsgBox->getMessageText()));
 		m_scriptMsgBox = 0;
 	}
-	m_msgBox = new MessageDialog(&program);
-	program.setFloatingWidget(m_msgBox, true);
-	Vec2i pos, size(320, 200);
-	pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_msgBox->setPos(pos);
-	m_msgBox->setSize(size);
-	m_msgBox->setTitleText(g_lang.get("ExitGame?"));
-	m_msgBox->setMessageText(msg);
-	m_msgBox->setButtonText(g_lang.get("Ok"), g_lang.get("Cancel"));
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_msgBox = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
+		g_lang.get("Ok"), g_lang.get("Cancel"));
 	m_msgBox->Button1Clicked.connect(this, &GameState::onExitSelected);
 	m_msgBox->Button2Clicked.connect(this, &GameState::onExitCancel);
 }
 
-void GameState::onExitSelected(MessageDialog::Ptr) {
+void GameState::onExitSelected(BasicDialog::Ptr) {
 	exitGame = true;
 	program.removeFloatingWidget(m_msgBox);
 	m_msgBox = 0;
 }
 
-void GameState::onExitCancel(MessageDialog::Ptr) {
+void GameState::onExitCancel(BasicDialog::Ptr) {
 	program.removeFloatingWidget(m_msgBox);
 	m_msgBox = 0;
 	if (!m_scriptMessages.empty()) {
 		doScriptMessage();
 	}
+}
+
+const string allowMask = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
+
+void GameState::doSaveBox() {
+	assert(!m_saveBox && !m_msgBox && !m_scriptMsgBox);
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_saveBox = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
+		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
+	m_saveBox->setInputMask(allowMask);
+	m_saveBox->Button1Clicked.connect(this, &GameState::onSaveSelected);
+	m_saveBox->Button2Clicked.connect(this, &GameState::onSaveCancel);
+}
+
+void GameState::onSaveSelected(BasicDialog::Ptr) {
+	saveGame(m_saveBox->getInput());
+	program.removeFloatingWidget(m_saveBox);
+	m_saveBox = 0;
+}
+
+void GameState::onSaveCancel(BasicDialog::Ptr) {
+	program.removeFloatingWidget(m_saveBox);
+	m_saveBox = 0;
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {
@@ -363,20 +371,15 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
-	m_scriptMsgBox = new MessageDialog(&program);
-	program.setFloatingWidget(m_scriptMsgBox, true);
-	Vec2i pos, size(320, 200);
-	pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_scriptMsgBox->setPos(pos);
-	m_scriptMsgBox->setSize(size);
-	m_scriptMsgBox->setTitleText(g_lang.getScenarioString(m_scriptMessages.front().header));
-	m_scriptMsgBox->setMessageText(g_lang.getScenarioString(m_scriptMessages.front().text));
-	m_scriptMsgBox->setButtonText(g_lang.get("Ok"));
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_scriptMsgBox = MessageDialog::showDialog(pos, size, 
+		g_lang.getScenarioString(m_scriptMessages.front().header), 
+		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");
 	m_scriptMsgBox->Button1Clicked.connect(this, &GameState::onScriptMessageDismissed);
 	m_scriptMessages.pop_front();
 }
 
-void GameState::onScriptMessageDismissed(MessageDialog::Ptr) {
+void GameState::onScriptMessageDismissed(BasicDialog::Ptr) {
 	program.removeFloatingWidget(m_scriptMsgBox);
 	m_scriptMsgBox = 0;
 	if (!m_scriptMessages.empty() && !m_msgBox) {
@@ -427,42 +430,34 @@ void GameState::tick(){
 
 void GameState::mouseDownLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
-	bool messageBoxClick = false;
-	//save box
-	if (saveBox) {
-		int button;
-		if (saveBox->mouseClick(x, y, button)) {
-			if (button == 1) {
-				saveGame(saveBox->getEntry()->getText());
-			}
-			//close message box
-			delete saveBox;
-			saveBox = NULL;
-		}
-
-	} else if (!noInput) {
+	if (!noInput) {
 		gui.mouseDownLeft(x, y);
 	}
 }
 
 void GameState::mouseDownRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
-	gui.mouseDownRight(x, y);
+	if (!noInput) {
+		gui.mouseDownRight(x, y);
+	}
 }
 
 void GameState::mouseUpLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
-	gui.mouseUpLeft(x, y);
+	if (!noInput) {
+		gui.mouseUpLeft(x, y);
+	}
 }
 void GameState::mouseUpRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
-	gui.mouseUpRight(x, y);
+	if (!noInput) {
+		gui.mouseUpRight(x, y);
+	}
 }
 
 void GameState::mouseDoubleClickLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
-	if ( noInput ) return;
-	if (!(saveBox && saveBox->isInBounds(x, y))) {
+	if (!noInput) {
 		gui.mouseDoubleClickLeft(x, y);
 	}
 }
@@ -504,11 +499,7 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 				gameCamera.setMoveX(0, true);
 			}
 		}
-
-		if (saveBox) {
-			saveBox->mouseMove(x, y);
-		} else if (!noInput) {
-			//graphics
+		if (!noInput) { // graphics
 			gui.mouseMove(x, y);
 		}
 	}
@@ -518,8 +509,9 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 
 void GameState::eventMouseWheel(int x, int y, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
-	if (noInput) return;
-	gameCamera.zoom(zDelta / 30.f);
+	if (!noInput) {
+		gameCamera.zoom(zDelta / 30.f);
+	}
 }
 
 void GameState::keyDown(const Key &key) {
@@ -535,22 +527,6 @@ void GameState::keyDown(const Key &key) {
 			str << " = " << Keymap::getCommandName(cmd);
 		}
 		console.addLine(str.str());
-	}
-	if (saveBox && saveBox->getEntry()->isActivated()) {
-		switch (key.getCode()) {
-			case KeyCode::RETURN:
-				saveGame(saveBox->getEntry()->getText());
-				// intentional fall-through
-			case KeyCode::ESCAPE:
-				delete saveBox;
-				saveBox = NULL;
-				break;
-
-			default:
-				saveBox->keyDown(key);
-		};
-		return;
-
 	}
 	if (chatManager.keyDown(key)) {
 		return; // key consumed, we're done here
@@ -593,28 +569,24 @@ void GameState::keyDown(const Key &key) {
 		gui.switchToNextDisplayColor();
 	} else if (cmd == ucCameraCycleMode) { // reset camera pos & angle
 		gameCamera.switchState();
-	} else if (speedChangesAllowed) { // pause
+	} else if (speedChangesAllowed) {
 		GameSpeed curSpeed = simInterface->getSpeed();
 		GameSpeed newSpeed = curSpeed;
-		if (cmd == ucPauseOn) { // on
+		if (cmd == ucPauseOn) { // pause on
 			newSpeed = simInterface->pause();
-			//paused = true;
-		} else if (cmd == ucPauseOff) { // off
+		} else if (cmd == ucPauseOff) { // pause off
 			newSpeed = simInterface->resume();
-			//paused = false;
 		} else if (cmd == ucPauseToggle) { // toggle
 			if (curSpeed == GameSpeed::PAUSED) {
 				newSpeed = simInterface->resume();
 			} else {
 				newSpeed = simInterface->pause();
 			}
-		//increment speed
-		} else if (cmd == ucSpeedInc) {
+		} else if (cmd == ucSpeedInc) { // increment speed
 			newSpeed = simInterface->incSpeed();
 		} else if (cmd == ucSpeedDec) { // decrement speed
 			newSpeed = simInterface->decSpeed();
-		// reset speed
-		} else if (cmd == ucSpeedReset) {
+		} else if (cmd == ucSpeedReset) { // reset speed
 			newSpeed = simInterface->resetSpeed();
 		}
 		if (curSpeed != newSpeed) {
@@ -633,10 +605,9 @@ void GameState::keyDown(const Key &key) {
 			doExitMessage(g_lang.get("ExitGame?"));
 		}
 	} else if (cmd == ucMenuSave) { // save
-		if (!saveBox) {
+		if (!m_saveBox && !m_msgBox && !m_scriptMsgBox) {
 			Shared::Platform::mkdir("savegames", true);
-			saveBox = new GraphicTextEntryBox();
-			saveBox->init(g_lang.get("Save"), g_lang.get("Cancel"), g_lang.get("SaveGame"), g_lang.get("Name"));
+			doSaveBox();
 		}
 	} else if (key.getCode() >= KeyCode::ZERO && key.getCode() < KeyCode::ZERO + Selection::maxGroups) { // group
 		gui.groupKey(key.getCode() - KeyCode::ZERO);
@@ -673,28 +644,8 @@ void GameState::keyUp(const Key &key) {
 }
 
 void GameState::keyPress(char c) {
-	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");	
-	if (saveBox) {
-		if (saveBox->getEntry()->isActivated()) {
-			switch (c) {
-				case '/':
-				case '\\':
-				case ':':
-				case ';':
-				case ',':
-				case '\'':
-				case '"':
-					break;
-				default:
-					saveBox->keyPress(c);
-			}
-		} else {
-			// hacky... :(
-			saveBox->setFocus();
-		}
-	} else {
-		chatManager.keyPress(c);
-	}
+	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
+	chatManager.keyPress(c);
 }
 
 void GameState::quitGame() {
@@ -758,11 +709,6 @@ void GameState::render2d(){
 		g_renderer.renderText(
 			ScriptManager::getDisplayText(), g_coreData.getMenuFontNormal(),
 			gui.getDisplay()->getColor(), 200, 680, false);
-	}
-
-	//save box
-	if (saveBox) {
-		g_renderer.renderTextEntryBox(saveBox);
 	}
 
 	g_renderer.renderChatManager(&chatManager);

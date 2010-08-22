@@ -95,14 +95,9 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	// fail gracefully
 	if (results.empty()) {
 		program.clear();
-		m_messageDialog = new MessageDialog(&program);
 		Vec2i sz(330, 256);
-		program.setFloatingWidget(m_messageDialog, true);
-		m_messageDialog->setPos(g_metrics.getScreenDims() / 2 - sz / 2);
-		m_messageDialog->setSize(sz);
-		m_messageDialog->setTitleText(g_lang.get("Error"));
-		m_messageDialog->setMessageText(g_lang.get("NoCategoryDirectories"));
-		m_messageDialog->setButtonText(g_lang.get("Yes"));
+		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
+			sz, g_lang.get("Error"), g_lang.get("NoCategoryDirectories"), g_lang.get("Yes"), "");
 		m_messageDialog->Button1Clicked.connect(this, &MenuStateScenario::onConfirmReturn);
 		return;
 	}
@@ -117,7 +112,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_categoryList->setSelected(match);
 }
 
-void MenuStateScenario::onConfirmReturn(MessageDialog::Ptr) {
+void MenuStateScenario::onConfirmReturn(BasicDialog::Ptr) {
 	m_targetTansition = Transition::RETURN;
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	mainMenu->setCameraTarget(MenuStates::ROOT);

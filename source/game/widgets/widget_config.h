@@ -69,6 +69,7 @@ private:
 	IndexByNameMap	m_namedBgStyles;
 
 	BorderStyle		m_borderStyles[WidgetType::COUNT];
+	BorderStyle		m_focusBorderStyles[WidgetType::COUNT];
 	BackgroundStyle m_backgroundStyles[WidgetType::COUNT];
 
 	LuaScript luaScript;
@@ -82,7 +83,7 @@ private:
 
 	// load helpers
 	bool loadStyles(const char *tableName, WidgetType wType);
-	void loadBorderStyle(WidgetType widgetType);
+	void loadBorderStyle(WidgetType widgetType, const char *table, BorderStyle &style);
 	void loadBackgroundStyle(WidgetType widgetType);
 
 public:
@@ -107,6 +108,10 @@ public:
 
 	const BorderStyle& getBorderStyle(WidgetType type) const {
 		return m_borderStyles[type];
+	}
+
+	const BorderStyle& getFocusBorderStyle(WidgetType type) const {
+		return m_focusBorderStyles[type];
 	}
 
 	const BackgroundStyle& getBackgroundStyle(WidgetType type) const {

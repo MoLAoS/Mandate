@@ -48,6 +48,7 @@ WidgetWindow::WidgetWindow()
 		mouseDownWidgets[btn] = 0;
 	}
 	lastMouseDownWidget = 0;
+	lastKeyDownWidget = 0;
 	keyboardFocused = keyboardWidget;
 
 	textRendererBM = g_renderer.getTextRenderer();
@@ -88,11 +89,17 @@ void WidgetWindow::render() {
 
 void WidgetWindow::aquireKeyboardFocus(KeyboardWidget::Ptr widget) {
 	assert(widget);
-	keyboardFocused = widget;
+	if (keyboardFocused != widget) {
+		if (keyboardFocused != keyboardWidget) {
+			keyboardFocused->lostKeyboardFocus();
+		}
+		keyboardFocused = widget;
+	}
 }
 
 void WidgetWindow::releaseKeyboardFocus(KeyboardWidget::Ptr widget) {
 	if (keyboardFocused == widget) {
+		keyboardFocused->lostKeyboardFocus();
 		keyboardFocused = keyboardWidget;
 	}
 }
@@ -369,17 +376,22 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 
 void WidgetWindow::eventKeyDown(const Key &key) {
 	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	lastKeyDownWidget = keyboardFocused;
 	keyboardFocused->keyDown(key);
 }
 
 void WidgetWindow::eventKeyUp(const Key &key) {
 	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
-	keyboardFocused->keyUp(key);
+	if (keyboardFocused == lastKeyDownWidget) {
+		keyboardFocused->keyUp(key);
+	}
 }
 
 void WidgetWindow::eventKeyPress(char c) {
 	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
-	keyboardFocused->keyPress(c);
+	if (keyboardFocused == lastKeyDownWidget) {
+		keyboardFocused->keyPress(c);
+	}
 }
 
 void WidgetWindow::renderMouseCursor() {

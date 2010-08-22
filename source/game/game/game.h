@@ -97,11 +97,12 @@ protected:
 
 	MessageQueue m_scriptMessages;
 
-	MessageDialog::Ptr m_msgBox;
-	MessageDialog::Ptr m_scriptMsgBox;
+	MessageDialog::Ptr	m_msgBox;
+	MessageDialog::Ptr	m_scriptMsgBox;
+	InputDialog::Ptr	m_saveBox;
 
 	///@todo Remove
-	GraphicTextEntryBox *saveBox;
+	//GraphicTextEntryBox *saveBox;
 
 	Vec2i lastMousePos;
 
@@ -160,7 +161,7 @@ public:
 	}
 
 	void addScriptMessage(const string &header, const string &msg);
-	void onScriptMessageDismissed(MessageDialog::Ptr);
+	void onScriptMessageDismissed(BasicDialog::Ptr);
 
 	virtual void quitGame();
 
@@ -178,12 +179,17 @@ protected:
 	
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
+
+	void doSaveBox();
+	void onSaveSelected(BasicDialog::Ptr);
+	void onSaveCancel(BasicDialog::Ptr);
+
 	void displayError(std::exception &e);
-	void onErrorDismissed(MessageDialog::Ptr);
+	void onErrorDismissed(BasicDialog::Ptr);
 
 	void doExitMessage(const string &msg);
-	void onExitSelected(MessageDialog::Ptr);
-	void onExitCancel(MessageDialog::Ptr);
+	void onExitSelected(BasicDialog::Ptr);
+	void onExitCancel(BasicDialog::Ptr);
 
 	void doScriptMessage();
 };

@@ -57,7 +57,7 @@ private:
 	void onCategoryChanged(ListBase::Ptr);
 	void onScenarioChanged(ListBase::Ptr);
 
-	void onConfirmReturn(MessageDialog::Ptr);
+	void onConfirmReturn(BasicDialog::Ptr);
 
 	void updateConfig();
 

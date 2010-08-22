@@ -106,9 +106,9 @@ private:
 	void onServerSelected(ListBase::Ptr);
 	void onTextModified(TextBox::Ptr);
 
-	void onCancelConnect(MessageDialog::Ptr);
-	void onDisconnect(MessageDialog::Ptr);
-	void onCancelSearch(MessageDialog::Ptr);
+	void onCancelConnect(BasicDialog::Ptr);
+	void onDisconnect(BasicDialog::Ptr);
+	void onCancelSearch(BasicDialog::Ptr);
 
 	bool connected;
 	int playerIndex;
