@@ -216,7 +216,6 @@ public:
 	void renderTextureQuad(int x, int y, int w, int h, const Texture2D *texture, float alpha=1.f);
 	void renderConsole(const Console *console);
 	void renderChatManager(const ChatManager *chatManager);
-	void renderResourceStatus();
 	void renderSelectionQuad();
 	void renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered= false);
 	void renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered= false);

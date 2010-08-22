@@ -117,6 +117,7 @@ private:
 	// Child Widgets
 	Minimap *m_minimap;
 	Display *m_display;
+	ResourceBar *m_resourceBar;
 
 	Random random;
 
@@ -156,6 +157,7 @@ public:
 	UserInterface(GameState &game);
 	~UserInterface() {
 		currentGui = NULL;
+		delete m_resourceBar;
 	}
 
 	static UserInterface* getCurrentGui() {

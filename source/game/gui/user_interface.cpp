@@ -107,7 +107,8 @@ UserInterface::UserInterface(GameState &game)
 		, gameCamera(0)
 		, console(0)
 		, m_minimap(0)
-		, m_display(0) {
+		, m_display(0)
+		, m_resourceBar(0) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -138,6 +139,26 @@ void UserInterface::init() {
 	this->world= &g_world;
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
+
+	// get 'this' FactionType, discover what resources need to be displayed
+	const FactionType *ft = g_world.getThisFaction()->getType();
+	set<const ResourceType*> displayResources;
+	for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
+		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
+		if (!rt->isDisplay()) {
+			continue;
+		}
+		// if any UnitType needs the resource
+		for (int j=0; j < ft->getUnitTypeCount(); ++j) {
+			const UnitType *ut = ft->getUnitType(j);
+			if (ut->getCost(rt)) {
+				displayResources.insert(rt);
+				break;
+			}
+		}
+	}
+	// create ResourceBar, connect thisFactions Resources to it...
+	m_resourceBar = new ResourceBar(g_world.getThisFaction(), displayResources);
 }
 
 void UserInterface::initMinimap(bool fow, bool resuming) {

@@ -760,7 +760,6 @@ void GameState::render2d(){
 
 	// resource info & consoles
 	if (!g_config.getUiPhotoMode()) {
-		g_renderer.renderResourceStatus();
 		g_renderer.renderConsole(&console);
 		g_renderer.renderConsole(ScriptManager::getDialogConsole());
 	}

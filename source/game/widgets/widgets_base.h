@@ -298,6 +298,7 @@ public:
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col) { txtColour = col;	 }
 	void setTextShadowColour(const Vec4f &col) { txtShadowColour = col;	 }
+	void setTextCentre(bool v)	{ centre = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
 	void setTextFont(const Font *f);
 

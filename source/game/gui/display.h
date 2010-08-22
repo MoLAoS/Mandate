@@ -20,6 +20,7 @@
 #include "game_util.h"
 #include "metrics.h"
 #include "widgets.h"
+#include "forward_decs.h"
 
 using std::string;
 
@@ -28,13 +29,12 @@ using namespace Shared::Math;
 using Shared::Util::replaceBy;
 using Glest::Global::Metrics;
 
-namespace Glest { namespace ProtoTypes { class CommandType; }}
-
 namespace Glest { namespace Gui {
 
 using namespace Widgets;
-using ProtoTypes::CommandType;
-using ProtoTypes::CommandClass;
+using namespace ProtoTypes;
+using Entities::Faction;
+
 class UserInterface;
 
 // =====================================================
@@ -117,6 +117,27 @@ public:
 
 	virtual void render();
 	virtual string desc() { return string("[DisplayPanel: ") + descPosDim() + "]"; }
+
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseMove(Vec2i pos);
+};
+
+class ResourceBar : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+private:
+	const Faction *m_faction;
+	vector<const ResourceType*> m_resourceTypes;
+	vector<string> m_headerStrings;
+	bool m_draggingWidget;
+	Vec2i m_moveOffset;
+
+public:
+	ResourceBar(const Faction *faction, std::set<const ResourceType*> &types);
+	~ResourceBar();
+
+	virtual void update();
+	virtual void render();
+	virtual string desc() { return string("[ResourceBar: ") + descPosDim() + "]"; }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);

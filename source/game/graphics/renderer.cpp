@@ -717,64 +717,6 @@ void Renderer::renderChatManager(const ChatManager *chatManager){
 	}
 }
 
-void Renderer::renderResourceStatus() {
-	const Metrics &metrics = Metrics::getInstance();
-	const Faction *thisFaction = g_world.getThisFaction();
-	int subfaction = thisFaction->getSubfaction();
-
-	assertGl();
-
-	glPushAttrib(GL_ENABLE_BIT);
-	glColor3f(1.f, 1.f, 1.f);
-
-	int j= 0;
-	for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
-		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
-		const Resource *r = thisFaction->getResource(rt);
-
-		//is this a hidden resource?
-		if (!rt->isDisplay()) {
-			continue;
-		}
-
-		//if any unit produces the resource
-		bool showResource = false;
-		for (int k=0; k < thisFaction->getType()->getUnitTypeCount(); ++k) {
-			const UnitType *ut = thisFaction->getType()->getUnitType(k);
-			if (ut->getCost(rt) && ut->isAvailableInSubfaction(subfaction)) {
-				showResource = true;
-				break;
-			}
-		}
-
-		//draw resource status
-		if (showResource) {
-			string str = intToStr(r->getAmount());
-
-			glEnable(GL_TEXTURE_2D);
-			glColor3f(1.f, 1.f, 1.f);
-			renderQuad(j * 100 + 200, metrics.getVirtualH() - 30, 16, 16, rt->getImage());
-
-			if (rt->getClass() != ResourceClass::STATIC) {
-				str += "/" + intToStr(thisFaction->getStoreAmount(rt));
-			}
-			if (rt->getClass() == ResourceClass::CONSUMABLE) {
-				str += "(";
-				if (r->getBalance() > 0) {
-					str += "+";
-				}
-				str += intToStr(r->getBalance()) + ")";
-			}
-			glDisable(GL_TEXTURE_2D);
-			const Font* font = CoreData::getInstance().getMenuFontSmall();
-			renderTextShadow(str, font, j * 100 + 220, metrics.getVirtualH() - 30, false);
-			++j;
-		}
-	}
-	glPopAttrib();
-	assertGl();
-}
-
 void Renderer::renderSelectionQuad(){
 
 	const UserInterface *gui= game->getGui();

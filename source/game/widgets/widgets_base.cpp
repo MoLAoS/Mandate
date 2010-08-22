@@ -614,6 +614,7 @@ void TextWidget::setText(const string &txt, int ndx) {
 
 void TextWidget::setTextFont(const Font *f) {
 	font = f;
+	isFreeTypeFont = font->getMetrics()->isFreeType();
 }
 
 void TextWidget::setTextPos(const Vec2i &pos, int ndx) {
