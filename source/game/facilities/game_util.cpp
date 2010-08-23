@@ -45,29 +45,33 @@ string getCrashDumpFileName(){
 }
 
 string getNetworkVersionString(){
-	return gaeVersionString;// + " - " + string(__DATE__) + " - " + string(__TIME__);
+	return gaeVersionString;
 }
 
 string getAboutString1(int i){
 	switch(i){
-		case 0: return "Glest Advanced Engine " + gaeVersionString + " based on Glest "
-				+ glestVersionString + " (" + "Shared Library " + sharedLibVersionString + ")";
+		case 0: return "Glest Advanced Engine " + gaeVersionString;
 		case 1: return "Built: " + string(__DATE__);
-		case 2: return "Copyright 2001-2008 The Glest Team, 2008-2010 The GAE Team";
+		case 2: return "Copyright 2001-2008 The Glest Team";
+		case 3: return "Copyright 2008-2010 The GAE Team";
+		default: throw runtime_error("AboutString1 #" + intToStr(i) + " does not exist!");
 	}
-	return "";
 }
 
 string getAboutString2(int i){
 	switch(i){
-	case 0: return "Web: http://sf.net/apps/trac/glestae, http://glest.org";
-	case 1: return "Mail: " + gaeMailString + ", " + mailString;
-	case 2: return "Irc: irc://irc.freenode.net/glest";
+		case 0: return "Web: http://sf.net/apps/trac/glestae, http://glest.org";
+		case 1: return "Mail: " + gaeMailString;
+		case 2: return "Irc: irc://irc.freenode.net/glest";
+		default: throw runtime_error("AboutString2 #" + intToStr(i) + " does not exist!");
 	}
-	return "";
 }
 
-string getTeammateName(int i){
+int getGlestTeamMemberCount() {
+	return 7;
+}
+
+string getGlestTeamMemberName(int i) {
 	switch(i){
 		case 0: return "Martiño Figueroa";
 		case 1: return "José Luis González";
@@ -76,11 +80,25 @@ string getTeammateName(int i){
 		case 4: return "Félix Menéndez";
 		case 5: return "Marcos Caruncho";
 		case 6: return "Matthias Braun";
+		default: throw runtime_error("Glest Team Member " + intToStr(i) + " does not exist!");
 	}
-	return "";
 }
 
-string getTeammateRole(int i){
+// Font metrics are broken for characters with diacratic... so we get measurements with these.
+string getGlestTeamMemberNameNoDiacritics(int i) {
+	switch(i){
+		case 0: return "Martino Figueroa";
+		case 1: return "Jose Luis Gonzalez";
+		case 2: return "Tucho Fernandez";
+		case 3: return "Jose Zanni";
+		case 4: return "Felix Menendez";
+		case 5: return "Marcos Caruncho";
+		case 6: return "Matthias Braun";
+		default: throw runtime_error("Glest Team Member " + intToStr(i) + " does not exist!");
+	}
+}
+
+string getGlestTeamMemberRole(int i){
 	Lang &l= Lang::getInstance();
 
 	switch(i){
@@ -91,8 +109,39 @@ string getTeammateRole(int i){
 		case 4: return l.get("Animation");
 		case 5: return l.get("3dArt");
 		case 6: return l.get("LinuxPort");
+		default: throw runtime_error("Glest Team Member " + intToStr(i) + " does not exist!");
 	}
-	return "";
+}
+
+int getGAETeamMemberCount() {
+	return 5;
+}
+
+string getGAETeamMemberName(int i) {
+	switch (i) {
+		case 0: return "Daniel Santos";
+		case 1: return "James McCulloch";
+		case 2: return "Nathan Turner";
+		case 3: return "Frank Tetzel";
+		case 4: return "Eric Wilson";
+		default: throw runtime_error("GAE Team Memeber " + intToStr(i) + " does not exist!");
+	}
+}
+
+string getGAETeamMemberRole(int i) {
+	return g_lang.get("Programming");
+}
+
+int getGAEContributorCount() {
+	return 2;
+}
+
+string getGAEContributorName(int i) {
+	switch (i) {
+		case 0: return "Jaagup Repän";
+		case 1: return "Titus Tscharntke";
+		default: throw runtime_error("GAE Contributor " + intToStr(i) + " does not exist!");
+	}
 }
 
 string formatString(const string &str) {

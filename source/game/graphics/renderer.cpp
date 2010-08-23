@@ -713,11 +713,16 @@ void Renderer::renderText(const string &text, const Font *font, float alpha, int
 	glEnable(GL_BLEND);
 	glColor4fv(Vec4f(1.f, 1.f, 1.f, alpha).ptr());
 
-	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
-
-	textRenderer->begin(font);
-	textRenderer->render(text, pos.x, pos.y);
-	textRenderer->end();
+	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
+	TextRenderer *tr;
+	if (font->getMetrics()->isFreeType()) {
+		tr = textRendererFT;
+	} else {
+		tr = textRenderer;
+	}
+	tr->begin(font);
+	tr->render(text, pos.x, pos.y);
+	tr->end();
 
 	glPopAttrib();
 }
@@ -728,10 +733,16 @@ void Renderer::renderText(const string &text, const Font *font, const Vec3f &col
 
 	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
 
-	textRenderer->begin(font);
-	textRenderer->render(text, pos.x, pos.y);
-	textRenderer->end();
-
+	TextRenderer *tr;
+	if (font->getMetrics()->isFreeType()) {
+		tr = textRendererFT;
+	} else {
+		tr = textRenderer;
+	}
+	tr->begin(font);
+	tr->render(text, pos.x, pos.y);
+	tr->end();
+	
 	glPopAttrib();
 }
 
@@ -1688,7 +1699,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
-			glTranslatef(i*2.f-4.f, -1.4f, -7.5f);
+			glTranslatef(i*2.f-4.f, -3.f, -6.5f);
 			menuBackground->getCharacterModel(i)->updateInterpolationData(menuBackground->getAnim(), true);
 			modelRenderer->render(menuBackground->getCharacterModel(i));
 			glPopMatrix();

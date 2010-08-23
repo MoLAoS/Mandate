@@ -15,33 +15,24 @@
 #include "main_menu.h"
 
 namespace Glest { namespace Menu {
+using namespace Widgets;
 
 // ===============================
 // 	class MenuStateAbout  
 // ===============================
 
-class MenuStateAbout: public MenuState{
-public:
-	static const int aboutStringCount1= 3;
-	static const int aboutStringCount2= 3;
-	static const int teammateCount= 7;
-
+class MenuStateAbout: public MenuState {
 private:
-	GraphicButton buttonReturn;
-	GraphicLabel labelAbout1[aboutStringCount1];
-	GraphicLabel labelAbout2[aboutStringCount2];
-	GraphicLabel labelTeammateName[teammateCount];
-	GraphicLabel labelTeammateRole[teammateCount];
+	Button::Ptr m_returnButton;
 
 public:
 	MenuStateAbout(Program &program, MainMenu *mainMenu);
 
-	void mouseClick(int x, int y, MouseButton mouseButton);
-	void mouseMove(int x, int y, const MouseState &mouseState);
-	void render();
-
 	MenuStates getIndex() const { return MenuStates::ABOUT; }
 
+	void onReturn(Button::Ptr);
+
+	void update();
 };
 
 }}//end namespace

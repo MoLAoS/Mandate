@@ -67,7 +67,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pnl->setPaddingParams(10, widgetPad);
 
 	// Buttons
-	Font *font = g_coreData.getfreeTypeMenuFont();//g_coreData.getMenuFontNormal();
+	Font *font = g_coreData.getfreeTypeMenuFont();
 	foreach_enum (RootMenuItem, i) {
 		Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
 		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 3.f)));				

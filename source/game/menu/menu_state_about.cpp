@@ -22,72 +22,134 @@
 #include "leak_dumper.h"
 
 namespace Glest { namespace Menu {
+using namespace Util;
 
 // =====================================================
 // 	class MenuStateAbout
 // =====================================================
 
-MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu):
-	MenuState(program, mainMenu/*, "about"*/)
-{
-	Lang &lang= Lang::getInstance();
+MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu) {
+	int centreX = g_metrics.getScreenW() / 2;
+	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *fontBig = g_coreData.getFTMenuFontBig();
+	const FontMetrics *fm = font->getMetrics();
+	const FontMetrics *fmBig = fontBig->getMetrics();
+	Vec2i btnSize(150, 30);
+	Vec2i btnPos(centreX - btnSize.x / 2, 50);
+	m_returnButton = new Button(&program, btnPos, btnSize);
+	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font, true);
+	m_returnButton->Clicked.connect(this, &MenuStateAbout::onReturn);
 
-	//init
-	buttonReturn.init(460, 100, 125);
-	buttonReturn.setText(lang.get("Return"));
+	int topY = g_metrics.getScreenH();
+	int centreY = topY / 2;
+	int y = topY - 50;
+	int x;
+	int fh = int(fm->getHeight() + 1.f);
+	int fhBig = int(fmBig->getHeight() + 1.f);
 
-	for(int i= 0; i<aboutStringCount1; ++i){
-		labelAbout1[i].init(100, 650-i*20);
-		labelAbout1[i].setText(getAboutString1(i));
+	Vec2i dims;
+	StaticText::Ptr label;
+	for (int i=0; i < 4; ++i) {
+		y -= fh;
+		label = new StaticText(&program);
+		label->setTextParams(getAboutString1(i), Vec4f(1.f), font, false);
+		dims = label->getTextDimensions();
+		x = centreX - 10 - dims.x;
+		label->setPos(x, y);
+
+		if (i < 3) {
+			label = new StaticText(&program);
+			label->setTextParams(getAboutString2(i), Vec4f(1.f), font, false);
+			x = centreX + 10;
+			label->setPos(x, y - fh / 2);
+		}
 	}
 
-	for(int i= 0; i<aboutStringCount2; ++i){
-		labelAbout2[i].init(460, 650-i*20);
-		labelAbout2[i].setText(getAboutString2(i));
+	y -= fh;
+	int sy = y;
+	int thirdX = g_metrics.getScreenW() / 3;//centreX / 2;
+
+	y -= fhBig;
+	label = new StaticText(&program);
+	label->setTextParams("The Glest Team:", Vec4f(1.f), fontBig, false);
+	dims = label->getTextDimensions();
+	x = thirdX - dims.x / 2;
+	label->setPos(x, y);
+
+	for (int i=0; i < getGlestTeamMemberCount(); ++i) {
+		y -= fh;
+		label = new StaticText(&program);
+		label->setTextParams(getGlestTeamMemberName(i), Vec4f(1.f), font, false);
+		dims = Vec2i(fm->getTextDiminsions(getGlestTeamMemberNameNoDiacritics(i)) + Vec2f(1.f));
+		x = thirdX - 10 - dims.x;
+		label->setPos(x, y);
+
+		label = new StaticText(&program);
+		label->setTextParams(getGlestTeamMemberRole(i), Vec4f(1.f), font, false);
+		x = thirdX + 10;
+		label->setPos(x, y);		
 	}
 
-	for(int i= 0; i<teammateCount; ++i){
-		labelTeammateName[i].init(100+i*180, 500);
-		labelTeammateRole[i].init(100+i*180, 520);
-		labelTeammateName[i].setText(getTeammateName(i));
-		labelTeammateRole[i].setText(getTeammateRole(i));
+	y = sy;
+	thirdX *= 2;//3;
+
+	y -= fhBig;
+	label = new StaticText(&program);
+	label->setTextParams("The GAE Team:", Vec4f(1.f), fontBig, false);
+	dims = label->getTextDimensions();
+	x = thirdX - dims.x / 2;
+	label->setPos(x, y);
+
+	for (int i=0; i < getGAETeamMemberCount(); ++i) {
+		y -= fh;
+		label = new StaticText(&program);
+		label->setTextParams(getGAETeamMemberName(i), Vec4f(1.f), font, false);
+		dims = label->getTextDimensions();
+		x = thirdX - 10 - dims.x;
+		label->setPos(x, y);
+
+		label = new StaticText(&program);
+		label->setTextParams(getGAETeamMemberRole(i), Vec4f(1.f), font, false);
+		x = thirdX + 10;
+		label->setPos(x, y);		
 	}
 
-	labelTeammateName[5].init(360, 160);
-	labelTeammateRole[5].init(360, 180);
-	labelTeammateName[6].init(540, 160);
-	labelTeammateRole[6].init(540, 180);
+	y -= fh;
+	y -= fhBig;
+	label = new StaticText(&program);
+	label->setTextParams("GAE Contributors:", Vec4f(1.f), fontBig, false);
+	dims = label->getTextDimensions();
+	x = thirdX - dims.x / 2;
+	label->setPos(x, y);
+
+	for (int i=0; i < getGAEContributorCount(); ++i) {
+		y -= fh;
+		label = new StaticText(&program);
+		label->setTextParams(getGAEContributorName(i), Vec4f(1.f), font, false);
+		dims = label->getTextDimensions();
+		x = thirdX - 10 - dims.x;
+		label->setPos(x, y);
+
+		label = new StaticText(&program);
+		label->setTextParams(getGAETeamMemberRole(0), Vec4f(1.f), font, false);
+		x = thirdX + 10;
+		label->setPos(x, y);
+	}
 }
 
-void MenuStateAbout::mouseClick(int x, int y, MouseButton mouseButton){
+void MenuStateAbout::onReturn(Button::Ptr) {
+	mainMenu->setCameraTarget(MenuStates::ROOT);
+	g_soundRenderer.playFx(g_coreData.getClickSoundB());
+	doFadeOut();
+}
 
-	CoreData &coreData=  CoreData::getInstance();
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+void MenuStateAbout::update() {
+	MenuState::update();
 
-	if(buttonReturn.mouseClick(x, y)){
-		soundRenderer.playFx(coreData.getClickSoundA());
+	if (m_transition) {
+		program.clear();
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-    }
-
-}
-
-void MenuStateAbout::mouseMove(int x, int y, const MouseState &ms){
-	buttonReturn.mouseMove(x, y);
-}
-
-void MenuStateAbout::render(){
-	Renderer &renderer= Renderer::getInstance();
-
-	renderer.renderButton(&buttonReturn);
-	for(int i= 0; i<aboutStringCount1; ++i){
-		renderer.renderLabel(&labelAbout1[i]);
-	}
-	for(int i= 0; i<aboutStringCount2; ++i){
-		renderer.renderLabel(&labelAbout2[i]);
-	}
-	for(int i= 0; i<teammateCount; ++i){
-		renderer.renderLabel(&labelTeammateName[i]);
-		renderer.renderLabel(&labelTeammateRole[i]);
 	}
 }
 

@@ -742,8 +742,8 @@ void GameState::render2d(){
 	//script display text
 	if (!ScriptManager::getDisplayText().empty() && !m_scriptMsgBox) {
 		g_renderer.renderText(
-			ScriptManager::getDisplayText(), g_coreData.getMenuFontNormal(),
-			gui.getDisplay()->getColor(), 200, 680, false);
+			ScriptManager::getDisplayText(), g_coreData.getFTMenuFontNormal(),
+			gui.getDisplay()->getColor(), 200, g_metrics.getScreenH() - 100, false);
 	}
 
 	//debug info
@@ -777,8 +777,8 @@ void GameState::render2d(){
 			<< "GameRole::" << GameRoleNames[g_simInterface->getNetworkRole()] << endl;
 
 		g_renderer.renderText(
-			str.str(), g_coreData.getMenuFontNormal(),
-			gui.getDisplay()->getColor(), 10, 500, false);
+			str.str(), g_coreData.getFTDisplayFont(),
+			gui.getDisplay()->getColor(), 10, 120, false);
 	}
 }
 

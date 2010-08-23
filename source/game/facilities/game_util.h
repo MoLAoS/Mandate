@@ -26,13 +26,24 @@ extern const string mailString;
 extern const string gaeMailString;
 extern const string glestVersionString;
 extern const string gaeVersionString;
-//extern const string networkVersionString;
 
 string getNetworkVersionString();
+
 string getAboutString1(int i);
 string getAboutString2(int i);
-string getTeammateName(int i);
-string getTeammateRole(int i);
+
+int getGlestTeamMemberCount();
+string getGlestTeamMemberName(int i);
+string getGlestTeamMemberNameNoDiacritics(int i);
+string getGlestTeamMemberRole(int i);
+
+int getGAETeamMemberCount();
+string getGAETeamMemberName(int i);
+string getGAETeamMemberRole(int i);
+
+int getGAEContributorCount();
+string getGAEContributorName(int i);
+
 string getCrashDumpFileName();
 string formatString(const string &str);
 
