@@ -138,44 +138,32 @@ void Logger::clear() {
 // ==================== PRIVATE ====================
 
 void Logger::renderLoadingScreen(){
-	Renderer &renderer= Renderer::getInstance();
-	CoreData &coreData= CoreData::getInstance();
-	const Metrics &metrics= Metrics::getInstance();
+	g_renderer.reset2d(true);
+	g_renderer.clearBuffers();
 
-	renderer.reset2d();
-	renderer.clearBuffers();
+	Font *normFont = g_coreData.getFTMenuFontSmall();
+	Font *bigFont = g_coreData.getFTMenuFontNormal();
 
-	renderer.renderBackground(CoreData::getInstance().getBackgroundTexture());
-
-	renderer.renderText(
-		state, coreData.getMenuFontBig(), Vec3f(1.f),
-		metrics.getVirtualW()/4, 75*metrics.getVirtualH()/100, false
-	);
-	if ( loadingGame ) {
-		int offset= 0;
-		Font *font= coreData.getMenuFontNormal();
-		for(Strings::reverse_iterator it= logLines.rbegin(); it!=logLines.rend(); ++it){
-			float alpha= offset==0? 1.0f: 0.8f-0.8f*static_cast<float>(offset)/logLines.size();
-			renderer.renderText(
-				*it, font, alpha ,
-				metrics.getVirtualW()/4,
-				70*metrics.getVirtualH()/100 - offset*(font->getSize()+4),
-				false
-			);
+	g_renderer.renderBackground(g_coreData.getBackgroundTexture());
+	g_renderer.renderText(state, bigFont, Vec3f(1.f), g_metrics.getScreenW() / 4, 
+		75 * g_metrics.getScreenH() / 100, false);
+	if (loadingGame) {
+		int offset = 0;
+		int step = int(normFont->getMetrics()->getHeight()) + 4;
+		for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
+			float alpha = offset == 0 ? 1.0f : 0.8f - 0.8f * static_cast<float>(offset) / logLines.size();
+			g_renderer.renderText(*it, normFont, alpha, g_metrics.getScreenW() / 4,
+				70 * g_metrics.getScreenH() / 100 - offset * step, false);
 			++offset;
 		}
 		if (progressBar) {
 			progressBar->render();
 		}
+	} else {
+		g_renderer.renderText(current, normFont, 1.0f, g_metrics.getScreenW() / 4,
+			62 * g_metrics.getScreenH() / 100, false);
 	}
-	else
-	{
-		renderer.renderText(
-			current, coreData.getMenuFontNormal(), 1.0f, 
-			metrics.getVirtualW()/4, 
-			62*metrics.getVirtualH()/100, false);
-	}
-	renderer.swapBuffers();
+	g_renderer.swapBuffers();
 }
 
 void logNetwork(const string &msg) {

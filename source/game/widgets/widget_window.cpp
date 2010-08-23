@@ -51,9 +51,7 @@ WidgetWindow::WidgetWindow()
 	lastKeyDownWidget = 0;
 	keyboardFocused = keyboardWidget;
 
-	textRendererBM = g_renderer.getTextRenderer();
 	textRendererFT = g_renderer.getFreeTypeRenderer();
-
 }
 
 WidgetWindow::~WidgetWindow() {

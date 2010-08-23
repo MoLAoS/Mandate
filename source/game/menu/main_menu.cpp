@@ -135,7 +135,7 @@ void MainMenu::renderFg() {
 	//renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
 
 	if (g_config.getMiscDebugMode()) {
-		Font *font = g_coreData.getMenuFontNormal();
+		Font *font = g_coreData.getFTMenuFontNormal();
 		string s = "FPS: " + intToStr(lastFps);
 		g_renderer.renderText(s, font, Vec3f(1.f), 10, 60, false);
 	}

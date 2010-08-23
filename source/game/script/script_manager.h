@@ -40,7 +40,6 @@ using Glest::Entities::Unit;
 using Glest::Gui::Console;
 using Glest::Gui::GameState;
 using Glest::Sim::World;
-using Glest::Graphics::GraphicMessageBox;
 
 namespace Glest { namespace Script {
 

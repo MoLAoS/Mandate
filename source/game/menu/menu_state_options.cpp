@@ -40,7 +40,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	const Metrics &metrics = Metrics::getInstance();
 	CoreData &coreData = CoreData::getInstance();
 
-	Font *font = coreData.getfreeTypeMenuFont();
+	Font *font = coreData.getFTMenuFontNormal();
 	// create
 	int gap = (metrics.getScreenW() - 450) / 4;
 	int x = gap, w = 150, y = 50, h = 30;

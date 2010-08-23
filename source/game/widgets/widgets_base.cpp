@@ -502,7 +502,6 @@ TextWidget::TextWidget(Widget::Ptr me)
 		, txtColour(1.f)
 		, txtShadowColour(0.f)
 		, font(0)
-		, isFreeTypeFont(false)
 		, centre(true)
 		, m_batchRender(false) {
 	me->textWidget = this;
@@ -532,7 +531,7 @@ void TextWidget::startBatch(const Font *font) {
 	}
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
-	m_textRenderer = g_widgetWindow.getTextRenderer(font->getMetrics()->isFreeType());
+	m_textRenderer = g_widgetWindow.getTextRenderer();
 	m_textRenderer->begin(font);
 	m_batchRender = true;
 }
@@ -552,7 +551,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 		}
 		glPushAttrib(GL_ENABLE_BIT);
 		glEnable(GL_BLEND);
-		m_textRenderer = g_widgetWindow.getTextRenderer(isFreeTypeFont);
+		m_textRenderer = g_widgetWindow.getTextRenderer();
 		m_textRenderer->begin(font);
 	} 
 	glColor4fv(colour.ptr());
@@ -608,7 +607,6 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 	}
 	txtColour = colour;
 	this->font = font;
-	isFreeTypeFont = font->getMetrics()->isFreeType();
 	centre = cntr;
 	if (centre) {
 		centreText();
@@ -636,7 +634,6 @@ void TextWidget::setText(const string &txt, int ndx) {
 
 void TextWidget::setTextFont(const Font *f) {
 	font = f;
-	isFreeTypeFont = font->getMetrics()->isFreeType();
 }
 
 void TextWidget::setTextPos(const Vec2i &pos, int ndx) {

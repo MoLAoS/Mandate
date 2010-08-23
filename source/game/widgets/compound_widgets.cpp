@@ -49,7 +49,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	CoreData &coreData = CoreData::getInstance();
 
 	m_label = new StaticText(this, cpos, Vec2i(widths[0], 30));
-	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getfreeTypeMenuFont(), true);
+	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 
 	cpos.x += widths[0] + 5;
 	m_controlList = new DropList(this, cpos, Vec2i(widths[1], 30));
@@ -90,7 +90,7 @@ OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, c
 	m_labelSize = 30;
 	int w = int(size.x * float(30) / 100.f);
 	m_label = new StaticText(this, Vec2i(0), Vec2i(w, size.y));
-	m_label->setTextParams(text, Vec4f(1.f), coreData.getfreeTypeMenuFont(), true);
+	m_label->setTextParams(text, Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	m_widget = 0;
 }
 
@@ -147,7 +147,7 @@ ScrollText::ScrollText(Container::Ptr parent)
 //	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 	setAutoLayout(false);
 	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
+	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontSmall(), false);
 	m_scrollBar = new VerticalScrollBar(this);
 }
 

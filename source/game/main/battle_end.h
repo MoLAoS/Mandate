@@ -17,6 +17,13 @@
 
 namespace Glest { namespace Main {
 
+class GameStatsWidget : public Container {
+public:
+	GameStatsWidget(Container::Ptr parent, Vec2i p, Vec2i s);
+	
+	virtual string desc() { return string("[GameStatsWidget: ") + descPosDim() + "]"; }
+};
+
 // =====================================================
 // 	class BattleEnd  
 //

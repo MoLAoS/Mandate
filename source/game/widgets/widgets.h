@@ -57,14 +57,17 @@ class StaticText : public Widget, public TextWidget {
 public:
 	typedef StaticText* Ptr;
 
+private:
+	bool	m_shadow;
+	
 public:
 	StaticText(Container::Ptr parent)
-			: Widget(parent) , TextWidget(this) {
+			: Widget(parent) , TextWidget(this), m_shadow(false) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
 	StaticText(Container::Ptr parent, Vec2i pos, Vec2i size)
-			: Widget(parent, pos, size) , TextWidget(this) {
+			: Widget(parent, pos, size) , TextWidget(this), m_shadow(false) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
@@ -72,6 +75,7 @@ public:
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
+	void setShadow(const Vec4f &colour) { m_shadow = true; TextWidget::setTextShadowColour(colour); }
 	virtual void render();
 	virtual string desc() { return string("[StaticText: ") + descPosDim() + "]"; }
 };

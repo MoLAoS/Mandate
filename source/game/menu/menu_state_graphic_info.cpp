@@ -39,7 +39,7 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	Font *smallFont = CoreData::getInstance().getFTMenuFontSmall();
 
 	// text dimensions
-	Vec2f infoDims = normFont->getMetrics()->getTextDiminsions(glInfo);
+	Vec2f infoDims = smallFont->getMetrics()->getTextDiminsions(glInfo);
 	Vec2f glExtDims = smallFont->getMetrics()->getTextDiminsions(glExt);
 	Vec2f plExtDims = smallFont->getMetrics()->getTextDiminsions(glExt2);
 
@@ -53,7 +53,7 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	int y = metrics.getScreenH() - 110 - int(infoDims.y);
 	int h = int(infoDims.y) + 10;
 	Widgets::StaticText::Ptr l_text = new Widgets::StaticText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_text->setTextParams(glInfo, Vec4f(1.f), normFont);
+	l_text->setTextParams(glInfo, Vec4f(1.f), smallFont);
 
 	// gl extensions
 	x += gap + w;

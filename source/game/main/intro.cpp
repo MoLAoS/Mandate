@@ -48,7 +48,7 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	logoPanel->setImage(coreData.getLogoTexture());
 	logoPanel->setAutoLayout(false);
 
-	Font *font = coreData.getAdvancedEngineFont();
+	Font *font = coreData.getGAEFontBig();
 	lblAdvanced = new Widgets::StaticText(logoPanel);
 	lblAdvanced->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
 	Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
@@ -63,7 +63,7 @@ Intro::Intro(Program &program) : ProgramState(program) {
 	lblEngine->centreText();
 
 	// Version label
-	font = coreData.getFreeTypeFont();
+	font = coreData.getGAEFontSmall();
 	pos = Vec2i(285 + lblEngine->getSize().x, 62);
 	lblVersion = new Widgets::StaticText(logoPanel);
 	lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);
@@ -97,7 +97,7 @@ void Intro::update(){
 		program.clear();
 		lblWebsite = new Widgets::StaticText(&program);
 //		lblWebsite->setBorderParams(Widgets::BorderStyle::SOLID, 2, Vec3f(1.f), 0.5f);
-		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getFreeTypeFont());
+		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getGAEFontSmall());
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
 		lblWebsite->centreText();

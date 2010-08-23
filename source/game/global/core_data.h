@@ -63,22 +63,22 @@ private:
 			vertScrollUpHoverTex,
 			vertScrollDownHoverTex;
 	
-
+/*
     Font *displayFont;
 	Font *menuFontNormal;
 	Font *menuFontSmall;
 	Font *menuFontBig;
 	Font *menuFontVeryBig;
 	Font *consoleFont;
-
+*/
 	Font *m_FTMenuFontNormal;
 	Font *m_FTMenuFontSmall;
 	Font *m_FTMenuFontBig;
 	Font *m_FTMenuFontVeryBig;
 
-	Font *freeTypeFont;
-	Font *advancedEngineFont;
-	Font *freeTypeMenuFont;
+	Font *advancedEngineFontSmall;
+	Font *advancedEngineFontBig;
+	//Font *freeTypeMenuFont;
 
 	Font *m_FTDisplay;
 	
@@ -113,15 +113,8 @@ public:
     StaticSound *getClickSoundC()			{return &clickSoundC;}
 	StaticSound *getWaterSound()			{return waterSounds.getRandSound();}
 
-	Font *getDisplayFont() const			{return displayFont;}
-    Font *getMenuFontSmall() const		{return menuFontSmall;}
-    Font *getMenuFontNormal() const		{return menuFontNormal;}
-    Font *getMenuFontBig() const			{return menuFontBig;}
-	Font *getMenuFontVeryBig() const		{return menuFontVeryBig;}
-    Font *getConsoleFont() const			{return consoleFont;}
-	Font *getFreeTypeFont() const			{return freeTypeFont;}
-	Font *getAdvancedEngineFont() const	{return advancedEngineFont;}
-	Font *getfreeTypeMenuFont() const		{return freeTypeMenuFont;}
+	Font *getGAEFontBig() const			{ return advancedEngineFontBig;	 }
+	Font *getGAEFontSmall() const		{ return advancedEngineFontSmall;}
 
 	Font* getFTMenuFontNormal() const	{ return m_FTMenuFontNormal;	}
 	Font* getFTMenuFontSmall() const	{ return m_FTMenuFontSmall;		}

@@ -124,7 +124,7 @@ private:
 
 	//renderers
 	ModelRenderer *modelRenderer;
-	TextRenderer *textRenderer;
+	//TextRenderer *textRenderer;
 	TextRenderer *textRendererFT;
 	ParticleRenderer *particleRenderer;
 
@@ -189,10 +189,10 @@ public:
 	Model *newModel(ResourceScope rs);
 	Texture2D *newTexture2D(ResourceScope rs);
 	Texture3D *newTexture3D(ResourceScope rs);
-	Font *newFont(ResourceScope rs);
+	//Font *newFont(ResourceScope rs);
 	Font *newFreeTypeFont(ResourceScope rs);
 	
-	TextRenderer *getTextRenderer() const	{return textRenderer;}
+	//TextRenderer *getTextRenderer() const	{return textRenderer;}
 	TextRenderer *getFreeTypeRenderer() const	{return textRendererFT;}
 
 	void manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs);
@@ -217,15 +217,8 @@ public:
 	void renderSelectionQuad();
 	void renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered= false);
 	void renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered= false);
-	void renderTextShadow(const string &text, const Font *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(1.f));
+	//void renderTextShadow(const string &text, const Font *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(1.f));
 
-    //components
-	void renderLabel(const GraphicLabel *label);
-    void renderButton(const GraphicButton *button);
-    void renderListBox(const GraphicListBox *listBox);
-	void renderMessageBox(const GraphicMessageBox *listBox);
-	void renderTextEntry(const GraphicTextEntry *textEntry);
-	void renderTextEntryBox(const GraphicTextEntryBox *textEntryBox);
 	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
     //complex rendering

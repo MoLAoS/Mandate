@@ -31,7 +31,7 @@ using namespace Util;
 MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu) {
 	int centreX = g_metrics.getScreenW() / 2;
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_coreData.getFTMenuFontSmall();
 	Font *fontBig = g_coreData.getFTMenuFontBig();
 	const FontMetrics *fm = font->getMetrics();
 	const FontMetrics *fmBig = fontBig->getMetrics();

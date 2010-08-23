@@ -46,54 +46,37 @@ namespace Glest { namespace Main {
 // 	class Program::CrashProgramState
 // =====================================================
 
-Program::CrashProgramState::CrashProgramState(Program &program, const exception *e) :
-		ProgramState(program) {
+Program::CrashProgramState::CrashProgramState(Program &program, const exception *e)
+		: ProgramState(program)
+		, done(false) {
 	try {
-		Renderer::getInstance().saveScreen("glestadv-crash.tga");
+		g_renderer.saveScreen("glestadv-crash.tga");
 	} catch(runtime_error &e) {
-		printf("%s", e.what());
+		printf("Exception: %s\n", e.what());
 	}
 
-	msgBox.init("", "Exit");
+	program.clear();
+	string msg;
 	if(e) {
+		msg = string("Exception: ") + e->what();
 		fprintf(stderr, "%s\n", e->what());
-		msgBox.setText(string("Exception: ") + e->what());
 	} else {
-		msgBox.setText("Glest Advanced Engine has crashed."
-					   "\nPlease help us improve GAE by emailing the file"
-					   "\ngae-crash.txt to " + gaeMailString + ".");
+		msg = string("Glest Advanced Engine has crashed. Please help us improve GAE by emailing the file")
+			+ "gae-crash.txt to " + gaeMailString + ".";
 	}
-	mouse2dAnim = mouseY = mouseX = 0;
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	msgBox = MessageDialog::showDialog(pos, size, "Crash!", msg, g_lang.get("Exit"), "");
 	this->e = e;
 }
 
-void Program::CrashProgramState::renderBg() {
-	Renderer &renderer= Renderer::getInstance();
-	renderer.clearBuffers();
-	renderer.reset2d();
-	renderer.renderMessageBox(&msgBox);
-	renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
-}
-
-void Program::CrashProgramState::renderFg() {
-	Renderer &renderer= Renderer::getInstance();
-	renderer.swapBuffers();
-}
-
-void Program::CrashProgramState::mouseDownLeft(int x, int y) {
-	if(msgBox.mouseClick(x,y)) {
-		program.exit();
-	}
-}
-
-void Program::CrashProgramState::mouseMove(int x, int y, const MouseState &mouseState) {
-	mouseX = x;
-	mouseY = y;
-	msgBox.mouseMove(x, y);
+void Program::CrashProgramState::onExit(MessageDialog::Ptr) {
+	done = true;
 }
 
 void Program::CrashProgramState::update() {
-	mouse2dAnim = (mouse2dAnim +1) % Renderer::maxMouse2dAnim;
+	if (done) {
+		program.exit();
+	}
 }
 
 // =====================================================
@@ -108,6 +91,7 @@ Program::Program(CmdArgs &args)
 		: cmdArgs(args)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
+		, renderTimer(g_config.getRenderFpsMax(), 1, 0)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
 		, simulationInterface(0)
 		, programState(0)
@@ -220,26 +204,26 @@ void Program::init() {
 
 void Program::loop() {
 	int updateCounter = 0;
-	int64 lastRender = 0;
 
 	while (handleEvent()) {
-		// render
-		if (visible && Chrono::getCurMillis() - lastRender >= 1000 / g_config.getRenderFpsMax()) {
-			_PROFILE_SCOPE("Program::loop() : Render");
-			lastRender = Chrono::getCurMillis();
-			programState->renderBg();
-			Renderer::getInstance().reset2d(true);
-			WidgetWindow::render();
-			programState->renderFg();
-		}
-
 		size_t sleepTime = updateCameraTimer.timeToWait();
 		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
+		sleepTime = sleepTime < renderTimer.timeToWait() ? sleepTime : renderTimer.timeToWait();
 		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
 
+		// Zzzz...
 		if (sleepTime) {
 			_PROFILE_SCOPE("Program::loop() : Sleeping");
 			Shared::Platform::sleep(sleepTime);
+		}
+
+		// render
+		if (visible && renderTimer.isTime()) {
+			_PROFILE_SCOPE("Program::loop() : Render");
+			programState->renderBg();
+			g_renderer.reset2d(true);
+			WidgetWindow::render();
+			programState->renderFg();
 		}
 
 		//update camera
@@ -451,10 +435,9 @@ void Program::crash(const exception *e) {
 	if(!crashed) {
 		crashed = true;
 
-		if(programState) {
+		if (programState) {
 			delete programState;
 		}
-
 		programState = new CrashProgramState(*this, e);
 		loop();
 	} else {

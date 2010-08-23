@@ -34,19 +34,139 @@ namespace Glest { namespace Main {
 using namespace Sim;
 using namespace Menu;
 
+
+GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
+		: Container(parent, pos, size) {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	Stats &stats = *g_simInterface->getStats();
+	int y_lines = 3 + /*GameConstants::maxPlayers*/ 12 + 2; // headers, player row and 2 for spacing
+	int y_gap = g_metrics.getScreenH() / y_lines;
+	int y = g_metrics.getScreenH() - y_gap;
+
+	int w = g_metrics.getScreenW();
+	int x_centres[8];
+	int startX = w / 20; // 5% gap
+	int runningX = startX;
+	x_centres[0] = runningX + (w / 5) / 2;
+	runningX += (w / 5); // 20% for player label
+	for (int i=1; i < 8; ++i) {
+		x_centres[i] = runningX + (w / 10) / 2;
+		runningX += (w / 10); // 10% for others
+	}
+	// 5% gap at end
+
+	StaticText::Ptr label;
+
+	string header = gs.getDescription() + " - " + (stats.getVictory(gs.getThisFactionIndex())
+													? g_lang.get("Victory") : g_lang.get("Defeat"));
+	pos = Vec2i(100, y);
+	size = Vec2i(0);
+	label = new StaticText(this, pos, size);
+	label->setTextParams(header, Vec4f(1.f), g_coreData.getFTMenuFontBig(), false);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	
+	Font *font = g_coreData.getFTDisplayFont();
+	const FontMetrics *fm = font->getMetrics();
+
+	y -= y_gap;
+	int x = x_centres[5] - int(fm->getTextDiminsions(g_lang.get("Units")).x) / 2;
+	label = new StaticText(this, Vec2i(x, y), size);
+	label->setTextParams(g_lang.get("Units"), Vec4f(1.f), font, false);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	x = x_centres[7] - int(fm->getTextDiminsions(g_lang.get("Resources")).x) / 2;
+	label = new StaticText(this, Vec2i(x, y), size);
+	label->setTextParams(g_lang.get("Resources"), Vec4f(1.f), font, false);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	y -= y_gap;
+
+	const char *hdrs[] = {
+		"Result", "Score", "Team", "killed", "Lost", "Produced", "Harvested"
+	};
+	for (int i=1; i < 8; ++i) {
+		x = x_centres[i] - int(fm->getTextDiminsions(g_lang.get(hdrs[i-1])).x) / 2;
+		label = new StaticText(this, Vec2i(x, y), size);
+		label->setTextParams(g_lang.get(hdrs[i-1]), Vec4f(1.f), font, false);
+		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	}
+
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		y -= y_gap;
+		if (gs.getFactionControl(i) != ControlType::CLOSED) {
+			string name = gs.getPlayerName(i) + " [" + gs.getFactionTypeName(i) + "] - ";
+			name += g_lang.get(ControlTypeNames[gs.getFactionControl(i)]);
+			x = x_centres[0] - int(fm->getTextDiminsions(name).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(name, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			string winlose = stats.getVictory(i) ? "Victory" : "Defeat";
+			x = x_centres[1] - int(fm->getTextDiminsions(winlose).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(winlose, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			int kills = stats.getKills(i);
+			int deaths = stats.getDeaths(i);
+			int produced = stats.getUnitsProduced(i);
+			int harvested = stats.getResourcesHarvested(i);
+			int score = kills * 100 + produced * 50 + harvested / 10;
+	
+			string tmp = intToStr(score);
+			x = x_centres[2] - int(fm->getTextDiminsions(tmp).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(tmp, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			tmp = intToStr(gs.getTeam(i));
+			x = x_centres[3] - int(fm->getTextDiminsions(tmp).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(tmp, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			tmp = intToStr(kills);
+			x = x_centres[4] - int(fm->getTextDiminsions(tmp).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(tmp, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			tmp = intToStr(deaths);
+			x = x_centres[5] - int(fm->getTextDiminsions(tmp).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(tmp, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			tmp = intToStr(produced);
+			x = x_centres[6] - int(fm->getTextDiminsions(tmp).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(tmp, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+			tmp = intToStr(harvested);
+			x = x_centres[7] - int(fm->getTextDiminsions(tmp).x) / 2;
+			label = new StaticText(this, Vec2i(x, y), size);
+			label->setTextParams(tmp, Vec4f(1.f), font, false);
+			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+		}
+	}
+}
+
 // =====================================================
 //  class BattleEnd
 // =====================================================
 
-BattleEnd::BattleEnd(Program &program, bool quickExit) : ProgramState(program) {
-	this->isQuickExit = quickExit;
+BattleEnd::BattleEnd(Program &program, bool quickExit)
+		: ProgramState(program)
+		, isQuickExit(quickExit) {
+	GameStatsWidget *widget =  new GameStatsWidget(&program, Vec2i(0), g_metrics.getScreenDims());
 }
 
 BattleEnd::~BattleEnd() {
-	SoundRenderer::getInstance().playMusic(CoreData::getInstance().getMenuMusic());
+	g_soundRenderer.playMusic(g_coreData.getMenuMusic());
 }
 
-void BattleEnd::update(){
+void BattleEnd::update() {
 	//TOOD: add AutoTest to config
 	/*
 	if(Config::getInstance().getBool("AutoTest")){
@@ -55,99 +175,30 @@ void BattleEnd::update(){
 }
 
 void BattleEnd::renderBg() {
-	Renderer &renderer = Renderer::getInstance();
-	TextRenderer *textRenderer = renderer.getTextRenderer();
-	Lang &lang = Lang::getInstance();
-
-	const Stats &stats = *g_simInterface->getStats();
-	const GameSettings &gs = g_simInterface->getGameSettings();
-
-	renderer.clearBuffers();
-	renderer.reset2d();
-	renderer.renderBackground(CoreData::getInstance().getBackgroundTexture());
-
-	textRenderer->begin(CoreData::getInstance().getMenuFontBig());
-
-	int lm = 80;
-	int bm = 100;
-	
-	for (int i = 0; i < gs.getFactionCount(); ++i) {
-
-		int textX = lm + 300 + i * 120;
-		int team = gs.getTeam(i) + 1;
-		int kills = stats.getKills(i);
-		int deaths = stats.getDeaths(i);
-		int unitsProduced = stats.getUnitsProduced(i);
-		int resourcesHarvested = stats.getResourcesHarvested(i);
-
-		int score = kills * 100 + unitsProduced * 50 + resourcesHarvested / 10;
-		string controlString = lang.get(ControlTypeNames[gs.getFactionControl(i)]);
-		string playerName = gs.getPlayerName(i).empty()
-				? (lang.get("Player") + " " + intToStr(i + 1))
-				: gs.getPlayerName(i);
-		if(gs.getThisFactionIndex() == i) {
-			playerName = Config::getInstance().getNetPlayerName();
-		}
-//		textRenderer->render((lang.get("Player") + " " + intToStr(i + 1)).c_str(), textX, bm + 400);
-//		textRenderer->render(gs.getPlayerName(i), textX, bm + 400);
-		textRenderer->render(playerName, textX, bm + 400);
-		textRenderer->render(stats.getVictory(i) ? lang.get("Victory").c_str() : lang.get("Defeat").c_str(), textX, bm + 360);
-		textRenderer->render(controlString, textX, bm + 320);
-		textRenderer->render(gs.getFactionTypeName(i), textX, bm + 280);
-		textRenderer->render(intToStr(team).c_str(), textX, bm + 240);
-		textRenderer->render(intToStr(kills).c_str(), textX, bm + 200);
-		textRenderer->render(intToStr(deaths).c_str(), textX, bm + 160);
-		textRenderer->render(intToStr(unitsProduced).c_str(), textX, bm + 120);
-		textRenderer->render(intToStr(resourcesHarvested).c_str(), textX, bm + 80);
-		textRenderer->render(intToStr(score).c_str(), textX, bm + 20);
-	}
-
-	textRenderer->render(lang.get("Result"), lm + 50, bm + 360);
-	textRenderer->render(lang.get("Control"), lm + 50, bm + 320);
-	textRenderer->render(lang.get("Faction"), lm + 50, bm + 280);
-	textRenderer->render(lang.get("Team"), lm + 50, bm + 240);
-	textRenderer->render(lang.get("Kills"), lm + 50, bm + 200);
-	textRenderer->render(lang.get("Deaths"), lm + 50, bm + 160);
-	textRenderer->render(lang.get("UnitsProduced"), lm + 50, bm + 120);
-	textRenderer->render(lang.get("ResourcesHarvested"), lm + 50, bm + 80);
-	textRenderer->render(lang.get("Score"), lm + 50, bm + 20);
-
-	textRenderer->end();
-
-	textRenderer->begin(CoreData::getInstance().getMenuFontVeryBig());
-
-	string header = gs.getDescription() + " - ";
-
-	if (stats.getVictory(gs.getThisFactionIndex())) {
-		header += lang.get("Victory");
-	} else {
-		header += lang.get("Defeat");
-	}
-
-	textRenderer->render(header, lm + 250, bm + 550);
-
-	textRenderer->end();
+	g_renderer.clearBuffers();
+	g_renderer.renderBackground(g_coreData.getBackgroundTexture());
 }
 
 void BattleEnd::renderFg() {
-	Renderer &renderer= Renderer::getInstance();
-	renderer.swapBuffers();
+	g_renderer.swapBuffers();
 }
 
 void BattleEnd::keyDown(const Key &key) {
-	if(!key.isModifier()) {
-		if(this->isQuickExit){
+	if (!key.isModifier()) {
+		if (isQuickExit) {
 			program.exit();
-		}else{
+		} else {
+			program.clear();
 			program.setState(new MainMenu(program));
 		}
 	}
 }
 
 void BattleEnd::mouseDownLeft(int x, int y) {
-	if(this->isQuickExit){
+	if (isQuickExit) {
 		program.exit();
-	}else{
+	} else {
+		program.clear();
 		program.setState(new MainMenu(program));
 	}
 }

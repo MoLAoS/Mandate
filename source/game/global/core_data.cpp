@@ -62,10 +62,10 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 }
 
 Font* loadBitmapFont(string name, int size, int width = Font::wNormal) {
-	Font *font = g_renderer.newFont(ResourceScope::GLOBAL);
+	Font *font = 0;/*g_renderer.newFont(ResourceScope::GLOBAL);
 	font->setType(name);
 	font->setSize(size);
-	font->setWidth(width);
+	font->setWidth(width);*/
 	return font;
 }
 
@@ -106,28 +106,18 @@ bool CoreData::load() {
 		return false;
 	}
 
-	//display font
+	// Display/Console font
 	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 10);
-	displayFont = loadBitmapFont(config.getRenderFontDisplay(), computeFontSize(15));
 
-	//menu fonts
-	menuFontSmall = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(12));
-	menuFontNormal = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(16), Font::wBold);
-	menuFontBig = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(20));
-	menuFontVeryBig = loadBitmapFont(config.getRenderFontMenu(), computeFontSize(25));
-
-	//console font
-	consoleFont = loadBitmapFont(Config::getInstance().getRenderFontConsole(), computeFontSize(16));
-
-	// FreeType fonts...
-	freeTypeFont = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));
-	advancedEngineFont = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(36));
-	freeTypeMenuFont = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(18));
+	// Misc fonts
+	advancedEngineFontSmall = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));
+	advancedEngineFontBig = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(36));
 	
-	m_FTMenuFontNormal = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(18));
-	m_FTMenuFontSmall = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(14));
-	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(22));
-	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/circula-medium.otf", computeFontSize(26));
+	// Menu fonts...
+	m_FTMenuFontNormal = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
+	m_FTMenuFontSmall = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(14));
+	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(22));
+	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(26));
 
 	//sounds
 	try {

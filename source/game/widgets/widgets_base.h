@@ -279,7 +279,6 @@ private:
 	Vec4f txtShadowColour;
 	vector<Vec2i> txtPositions;
 	const Font *font;
-	bool isFreeTypeFont;
 	bool centre;
 	bool m_batchRender;
 	TextRenderer *m_textRenderer;

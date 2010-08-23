@@ -157,7 +157,7 @@ Renderer::Renderer() {
 	GraphicsFactory *graphicsFactory= GraphicsInterface::getInstance().getFactory();
 
 	modelRenderer= graphicsFactory->newModelRenderer();
-	textRenderer= graphicsFactory->newTextRendererBM();
+//	textRenderer= graphicsFactory->newTextRendererBM();
 	textRendererFT = graphicsFactory->newTextRendererFT();
 	particleRenderer= graphicsFactory->newParticleRenderer();
 
@@ -176,7 +176,7 @@ Renderer::Renderer() {
 
 Renderer::~Renderer(){
 	delete modelRenderer;
-	delete textRenderer;
+//	delete textRenderer;
 	delete textRendererFT;
 	delete particleRenderer;
 
@@ -384,9 +384,9 @@ Texture3D *Renderer::newTexture3D(ResourceScope rs){
 	return textureManager[rs]->newTexture3D();
 }
 
-Font *Renderer::newFont(ResourceScope rs){
-	return fontManager[rs]->newBitMapFont();
-}
+//Font *Renderer::newFont(ResourceScope rs){
+//	return fontManager[rs]->newBitMapFont();
+//}
 
 Font *Renderer::newFreeTypeFont(ResourceScope rs){
 	return fontManager[rs]->newFreeTypeFont();
@@ -709,347 +709,47 @@ Vec2i computeCenteredPos(const string &text, const Font *font, int x, int y){
 }
 
 void Renderer::renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered){
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glEnable(GL_BLEND);
+//	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+//	glEnable(GL_BLEND);
 	glColor4fv(Vec4f(1.f, 1.f, 1.f, alpha).ptr());
 
 	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
-	TextRenderer *tr;
-	if (font->getMetrics()->isFreeType()) {
-		tr = textRendererFT;
-	} else {
-		tr = textRenderer;
-	}
+	assert(font->getMetrics()->isFreeType());
+	TextRenderer *tr = textRendererFT;
 	tr->begin(font);
 	tr->render(text, pos.x, pos.y);
 	tr->end();
 
-	glPopAttrib();
+//	glPopAttrib();
 }
 
 void Renderer::renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered){
-	glPushAttrib(GL_CURRENT_BIT);
+//	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+//	glEnable(GL_BLEND);
 	glColor3fv(color.ptr());
 
-	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
-
-	TextRenderer *tr;
-	if (font->getMetrics()->isFreeType()) {
-		tr = textRendererFT;
-	} else {
-		tr = textRenderer;
-	}
+	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
+	assert(font->getMetrics()->isFreeType());
+	TextRenderer *tr = textRendererFT;
 	tr->begin(font);
 	tr->render(text, pos.x, pos.y);
 	tr->end();
 	
-	glPopAttrib();
+//	glPopAttrib();
 }
-
-void Renderer::renderTextShadow(const string &text, const Font *font, int x, int y, bool centered, Vec3f colour) {
-	glPushAttrib(GL_CURRENT_BIT);
-	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
-	textRenderer->begin(font);
-	glColor3f(0.0f, 0.0f, 0.0f);
-	textRenderer->render(text, pos.x - 1, pos.y - 1);
-	glColor3fv(colour.ptr());
-	textRenderer->render(text, pos.x, pos.y);
-	textRenderer->end();
-	
-	glPopAttrib();
-}
-
-// ============= COMPONENTS =============================
-
-void Renderer::renderLabel(const GraphicLabel *label){
-	glPushAttrib(GL_ENABLE_BIT);
-	glEnable(GL_BLEND);
-
-	Vec2i textPos;
-	int x= label->getX();
-    int y= label->getY();
-    int h= label->getH();
-    int w= label->getW();
-
-	if(label->getCentered()){
-		textPos= Vec2i(x+w/2, y+h/2);
-	}
-	else{
-		textPos= Vec2i(x, y+h/4);
-	}
-
-	renderText(label->getText(), label->getFont(), GraphicComponent::getFade(), textPos.x, textPos.y, label->getCentered());
-
-	glPopAttrib();
-}
-
-void Renderer::renderButton(const GraphicButton *button){
-	int x = button->getX(),	 y = button->getY(), h= button->getH(), w= button->getW();
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-
-	//background
-	CoreData &coreData= CoreData::getInstance();
-	Texture2D *backTexture= w>3*h/2? coreData.getButtonBigTexture(): coreData.getButtonSmallTexture();
-
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-
-	glBindTexture(GL_TEXTURE_2D, static_cast<Texture2DGl*>(backTexture)->getHandle());
-
-	//button
-	Vec4f color= Vec4f(1.f, 1.f, 1.f, GraphicComponent::getFade());
-	glColor4fv(color.ptr());
-
-	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(0.f, 0.f);
-		glVertex2f( (float)x, (float)y );
-
-		glTexCoord2f(0.f, 1.f);
-		glVertex2f( (float)x, (float)(y+h) );
-
-		glTexCoord2f(1.f, 0.f);
-		glVertex2f( (float)(x+w), (float)y );
-
-		glTexCoord2f(1.f, 1.f);
-		glVertex2f( (float)(x+w), (float)(y+h) );
-
-	glEnd();
-
-	glDisable(GL_TEXTURE_2D);
-
-	//lighting
-	float anim= GraphicComponent::getAnim();
-	if(anim>0.5f) anim= 1.f-anim;
-
-	if(button->getLighted()){
-		const int lightSize= 0;
-		const Vec4f color1= Vec4f(1.f, 1.f, 1.f, 0.1f+anim*0.5f);
-		const Vec4f color2= Vec4f(1.f, 1.f, 1.f, 0.3f+anim);
-
-		glBegin(GL_TRIANGLE_FAN);
-
-		glColor4fv(color2.ptr());
-		glVertex2f( (float)(x+w/2), (float)(y+h/2) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x+w+lightSize), (float)(y-lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x+w+lightSize), (float)(y+h+lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x+w+lightSize), (float)(y+h+lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x-lightSize), (float)(y+h+lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
-
-		glEnd();
-	}
-
-	Vec2i textPos= Vec2i(x+w/2, y+h/2);
-
-	renderText( button->getText(), button->getFont(), GraphicButton::getFade(), x+w/2, y+h/2, true);
-	glPopAttrib();
-}
-
-void Renderer::renderListBox(const GraphicListBox *listBox){
-
-	renderButton(listBox->getButton1());
-    renderButton(listBox->getButton2());
-
-	glPushAttrib(GL_ENABLE_BIT);
-	glEnable(GL_BLEND);
-
-	GraphicLabel label;
-	label.init(listBox->getX(), listBox->getY(), listBox->getW(), listBox->getH(), true);
-	label.setText(listBox->getText());
-	label.setFont(listBox->getFont());
-	renderLabel(&label);
-
-	glPopAttrib();
-}
-
-void Renderer::renderMessageBox(const GraphicMessageBox *messageBox){
-
-	//background
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glEnable(GL_BLEND);
-	glColor4f( 0.f, 0.f, 0.f, 0.5f );
-
-	glBegin(GL_TRIANGLE_STRIP);
-		glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
-		glVertex2i(messageBox->getX(), messageBox->getY());
-		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + 9*messageBox->getH()/10);
-		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY());
-	glEnd();
-	glColor4f(0.0f, 0.0f, 0.0f, 0.8f) ;   
-	glBegin(GL_TRIANGLE_STRIP);
-		glVertex2i(messageBox->getX(), messageBox->getY()+messageBox->getH());
-		glVertex2i(messageBox->getX(), messageBox->getY()+9*messageBox->getH()/10);
-		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY() + messageBox->getH());
-		glVertex2i(messageBox->getX() + messageBox->getW(), messageBox->getY()+9*messageBox->getH()/10);
-	glEnd();
-
-	glBegin(GL_LINE_LOOP);
-		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
-		glVertex2i(messageBox->getX(), messageBox->getY());
-		
-		glColor4f(0.0f, 0.0f, 0.0f, 0.25f) ;   
-		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY());
-		
-		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
-		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY() + messageBox->getH());
-		
-		glColor4f(0.25f, 0.25f, 0.25f, 0.25f) ;   
-		glVertex2i(messageBox->getX(), messageBox->getY() + messageBox->getH());
-	glEnd();
-
-	glBegin(GL_LINE_STRIP);
-		glColor4f(1.0f, 1.0f, 1.0f, 0.25f) ;   
-		glVertex2i(messageBox->getX(), messageBox->getY() + 90*messageBox->getH()/100);
-		
-		glColor4f(0.5f, 0.5f, 0.5f, 0.25f) ;   
-		glVertex2i(messageBox->getX()+ messageBox->getW(), messageBox->getY() + 90*messageBox->getH()/100);
-	glEnd();
-
-	glPopAttrib();
-
-	//buttons
-	renderButton(messageBox->getButton1());
-	if(messageBox->getButtonCount()==2){
-		renderButton(messageBox->getButton2());
-	}
-
-	//text
-	renderText(
-		messageBox->getText(), messageBox->getFont(), Vec3f(1.0f, 1.0f, 1.0f), 
-		messageBox->getX()+15, messageBox->getY()+7*messageBox->getH()/10, 
-		false );
-
-	renderText(
-		messageBox->getHeader(), messageBox->getFont(),Vec3f(1.0f, 1.0f, 1.0f), 
-		messageBox->getX()+15, messageBox->getY()+93*messageBox->getH()/100, 
-		false );
-
-}
-
-void Renderer::renderTextEntry(const GraphicTextEntry *textEntry) {
-	int x= textEntry->getX();
-	int y= textEntry->getY();
-	int h= textEntry->getH();
-	int w= textEntry->getW();
-
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-
-	//background
-	CoreData &coreData= CoreData::getInstance();
-	Texture2D *backTexture= coreData.getTextEntryTexture();
-
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-
-	glBindTexture(GL_TEXTURE_2D, static_cast<Texture2DGl*>(backTexture)->getHandle());
-
-	//textentry
-	Vec4f color= Vec4f(1.f, 1.f, 1.f, GraphicComponent::getFade());
-	glColor4fv(color.ptr());
-
-	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(0.f, 0.f);
-		glVertex2f( (float)x, (float)y );
-
-		glTexCoord2f(0.f, 1.f);
-		glVertex2f( (float)x, (float)(y+h) );
-
-		glTexCoord2f(1.f, 0.f);
-		glVertex2f( (float)(x+w), (float)y);
-
-		glTexCoord2f(1.f, 1.f);
-		glVertex2f( (float)(x+w), (float)(y+h) );
-	glEnd();
-
-	glDisable(GL_TEXTURE_2D);
-
-	//lighting
-	float anim= GraphicComponent::getAnim();
-	if(anim>0.5f) anim= 1.f-anim;
-
-	if(textEntry->isActivated()){
-		const int lightSize= 0;
-		const Vec4f color1= Vec4f(1.f, 1.f, 1.f, 0.1f+anim*0.5f);
-		const Vec4f color2= Vec4f(1.f, 1.f, 1.f, 0.3f+anim);
-
-		glBegin(GL_TRIANGLE_FAN);
-
-		glColor4fv(color2.ptr());
-		glVertex2f( (float)(x+w/2), (float)(y+h/2) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x+w+lightSize), (float)(y-lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x+w+lightSize), (float)(y+h+lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)( x+w+lightSize ), (float)(y+h+lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x-lightSize), (float)(y+h+lightSize) );
-
-		glColor4fv(color1.ptr());
-		glVertex2f( (float)(x-lightSize), (float)(y-lightSize) );
-
-		glEnd();
-	}
-
-	const Metrics &metrics= Metrics::getInstance();
-	const FontMetrics *fontMetrics= textEntry->getFont()->getMetrics();
-
-	renderText(textEntry->getText(), textEntry->getFont(), GraphicTextEntry::getFade(),
-			x+7, y+h/4, false);
-
-	glPopAttrib();
-}
-
-void Renderer::renderTextEntryBox(const GraphicTextEntryBox *textEntryBox){
-
-	//background
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glEnable(GL_BLEND);
-	glColor4f(0.5f, 0.5f, 0.5f, 0.2f) ;
-
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex2i(textEntryBox->getX(), textEntryBox->getY()+textEntryBox->getH());
-	glVertex2i(textEntryBox->getX(), textEntryBox->getY());
-	glVertex2i(textEntryBox->getX() + textEntryBox->getW(), textEntryBox->getY() + textEntryBox->getH());
-	glVertex2i(textEntryBox->getX() + textEntryBox->getW(), textEntryBox->getY());
-	glEnd();
-
-	//buttons
-	renderButton(textEntryBox->getButton1());
-	renderButton(textEntryBox->getButton2());
-
-	//text
-	renderText(textEntryBox->getText(), textEntryBox->getFont(), GraphicComponent::getFade(), textEntryBox->getX()+10, textEntryBox->getY()+textEntryBox->getH()/2, false);
-
-	//text entry
-	renderTextEntry(textEntryBox->getEntry());
-
-	//label
-	renderLabel(textEntryBox->getLabel());
-
-	glPopAttrib();
-}
-
+//
+//void Renderer::renderTextShadow(const string &text, const Font *font, int x, int y, bool centered, Vec3f colour) {
+////	glPushAttrib(GL_CURRENT_BIT);
+//	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
+//	textRenderer->begin(font);
+//	glColor3f(0.0f, 0.0f, 0.0f);
+//	textRenderer->render(text, pos.x - 1, pos.y - 1);
+//	glColor3fv(colour.ptr());
+//	textRenderer->render(text, pos.x, pos.y);
+//	textRenderer->end();
+//	
+////	glPopAttrib();
+//}
 
 // ==================== complex rendering ====================
 
@@ -2763,12 +2463,16 @@ void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const
 	glDisable(GL_BLEND);
 
 	//text
+	string msg = intToStr(progress) + "%";
+	int mx = x + maxProgressBar * widthFactor / 2;
 	glColor3fv(defColor.ptr());
-	textRenderer->begin(font);
-	textRenderer->render(intToStr(progress)+"%", x+maxProgressBar*widthFactor/2, y, true);
-	textRenderer->end();
+	textRendererFT->begin(font);
+	glColor3f(0.f, 0.f, 0.f);
+	textRendererFT->render(msg, mx + 2, y - 2, true);
+	glColor3f(1.f, 1.f, 1.f);
+	textRendererFT->render(msg, mx, y, true);
+	textRendererFT->end();
 }
-
 
 void Renderer::renderTile(const Vec2i &pos){
 

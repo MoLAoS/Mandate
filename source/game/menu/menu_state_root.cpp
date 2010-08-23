@@ -67,10 +67,10 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pnl->setPaddingParams(10, widgetPad);
 
 	// Buttons
-	Font *font = g_coreData.getfreeTypeMenuFont();
+	Font *font = g_coreData.getFTMenuFontNormal();
 	foreach_enum (RootMenuItem, i) {
 		Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
-		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 3.f)));				
+		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 5.f)));				
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
@@ -87,7 +87,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pp->setAutoLayout(false);
 	
 	// Advanced Engine labels
-	font = g_coreData.getAdvancedEngineFont();
+	font = g_coreData.getGAEFontBig();
 	Widgets::StaticText *label = new Widgets::StaticText(pp);
 	label->setTextParams(g_lang.get("Advanced"), Vec4f(1.f), font);
 	Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
@@ -106,7 +106,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	pos = Vec2i(tx + label->getSize().x, ty + 3);
 	// Version label
-	font = g_coreData.getFreeTypeFont();
+	font = g_coreData.getGAEFontSmall();
 	label = new Widgets::StaticText(pp);
 	label->setTextParams(gaeVersionString, Vec4f(1.f), font);
 	

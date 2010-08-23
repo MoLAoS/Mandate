@@ -33,7 +33,11 @@ namespace Glest { namespace Widgets {
 
 void StaticText::render() {
 	Widget::renderBgAndBorders();
-	TextWidget::renderText();
+	if (m_shadow) {
+		TextWidget::renderTextShadowed();
+	} else {
+		TextWidget::renderText();
+	}
 }
 
 Vec2i StaticText::getMinSize() const {
@@ -163,7 +167,7 @@ CheckBox::CheckBox(Container::Ptr parent)
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), false);
+	setTextParams("No", Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	addText("Yes");
 }
 
@@ -172,7 +176,7 @@ CheckBox::CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams("No", Vec4f(1.f), coreData.getfreeTypeMenuFont(), false);
+	setTextParams("No", Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	addText("Yes");
 	int y = int((size.y - getTextFont()->getMetrics()->getHeight()) / 2);
 	setTextPos(Vec2i(40, y), 0);
@@ -390,7 +394,7 @@ Slider::Slider(Container::Ptr parent, Vec2i pos, Vec2i size, const string &title
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SLIDER);
 
 	const CoreData &coreData = CoreData::getInstance();
-	Font *font = coreData.getfreeTypeMenuFont();
+	Font *font = coreData.getFTMenuFontNormal();
 	addImage(coreData.getButtonSmallTexture());
 	setTextParams(m_title, Vec4f(1.f), font, false);
 	addText("0 %");
@@ -923,7 +927,7 @@ ListBase::ListBase(Container::Ptr parent)
 		, itemFont(0) {
 	setPaddingParams(2, 0);
 	setAutoLayout(false);
-	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
+	itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
 ListBase::ListBase(Container::Ptr parent, Vec2i pos, Vec2i size)
@@ -933,14 +937,14 @@ ListBase::ListBase(Container::Ptr parent, Vec2i pos, Vec2i size)
 		, itemFont(0) {
 	setPaddingParams(2, 0);
 	setAutoLayout(false);
-	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
+	itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
 ListBase::ListBase(WidgetWindow* window) 
 		: Panel(window)
 		, selectedItem(0)
 		, selectedIndex(-1) {
-	itemFont = CoreData::getInstance().getfreeTypeMenuFont();
+	itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
 // =====================================================
@@ -994,7 +998,7 @@ void ListBox::onSelected(ListBoxItem::Ptr item) {
 void ListBox::addItems(const vector<string> &items) {
 	Vec2i sz(getSize().x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
 	foreach_const (vector<string>, it, items) {
-		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz);
+		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz, Vec3f(0.25f));
 		nItem->setTextParams(*it, Vec4f(1.f), itemFont, true);
 		listBoxItems.push_back(nItem);
 		nItem->Selected.connect(this, &ListBox::onSelected);
@@ -1003,7 +1007,7 @@ void ListBox::addItems(const vector<string> &items) {
 
 void ListBox::addItem(const string &item) {
 	Vec2i sz(getSize().x - getBordersHoriz(), int(itemFont->getMetrics()->getHeight()) + 4);
-	ListBoxItem *nItem = new ListBoxItem(this, Vec2i(getBorderLeft(), getBorderBottom()), sz);
+	ListBoxItem *nItem = new ListBoxItem(this, Vec2i(getBorderLeft(), getBorderBottom()), sz, Vec3f(0.25f));
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);

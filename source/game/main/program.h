@@ -23,6 +23,7 @@
 #include "forward_decs.h"
 #include "game_constants.h"
 #include "widget_window.h"
+#include "compound_widgets.h"
 
 using namespace Shared::Platform;
 using namespace Glest::Graphics;
@@ -32,7 +33,7 @@ using Glest::Gui::Keymap;
 
 namespace Glest { namespace Main {
 
-using Widgets::WidgetWindow;
+using namespace Widgets;
 
 class Program;
 class MainWindow;
@@ -89,20 +90,18 @@ class Program : public WidgetWindow {
 	friend class Glest::Sim::SimulationInterface;
 private:
 	class CrashProgramState : public ProgramState {
-		GraphicMessageBox msgBox;
-		int mouseX;
-		int mouseY;
-		int mouse2dAnim;
+		MessageDialog::Ptr msgBox;
 		const exception *e;
+		bool done;
 
 	public:
 		CrashProgramState(Program &program, const exception *e);
 
-		virtual void renderBg();
-		virtual void renderFg();
-		virtual void mouseDownLeft(int x, int y);
-		virtual void mouseMove(int x, int y, const MouseState &mouseState);
+		void onExit(MessageDialog::Ptr);
 		virtual void update();
+
+		virtual void renderBg() {}
+		virtual void renderFg() {}
 	};
 
 	static const int maxUpdateTimes = 5 * 6;
@@ -114,6 +113,7 @@ private:
 
 	PerformanceTimer tickTimer;
 	PerformanceTimer updateTimer;
+	PerformanceTimer renderTimer;
 	PerformanceTimer updateCameraTimer;
 
 	SimulationInterface *simulationInterface;

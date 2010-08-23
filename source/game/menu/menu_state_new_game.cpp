@@ -74,7 +74,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	Lang &lang = Lang::getInstance();
 	Config &config = Config::getInstance();
 
-	Font *font = coreData.getfreeTypeMenuFont();
+	Font *font = coreData.getFTMenuFontNormal();
 
 	// initialize network interface
 	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
@@ -496,9 +496,11 @@ void MenuStateNewGame::updateControlers() {
 		gs.setFactionControl(i, m_playerSlots[i]->getControlType());
 		if (m_playerSlots[i]->getControlType() == ControlType::CLOSED) {
 			gs.setFactionTypeName(i, "");
+			gs.setPlayerName(i, "");
 			gs.setTeam(i, -1);
 			gs.setStartLocationIndex(i, -1);
 			gs.setColourIndex(i, -1);
+			m_playerSlots[i]->setNameText("No Player");
 			m_playerSlots[i]->setSelectedFaction(-1);
 			m_playerSlots[i]->setSelectedTeam(-1);
 			m_playerSlots[i]->setSelectedColour(-1);
@@ -514,6 +516,25 @@ void MenuStateNewGame::updateControlers() {
 			}
 			assert(m_playerSlots[i]->getSelectedFactionIndex() >= 0 && m_playerSlots[i]->getSelectedFactionIndex() < GameConstants::maxPlayers);
 			gs.setFactionTypeName(i, m_factionFiles[m_playerSlots[i]->getSelectedFactionIndex()]);
+			switch (m_playerSlots[i]->getControlType()) {
+				case ControlType::HUMAN:
+					gs.setPlayerName(i, g_config.getNetPlayerName());
+					m_playerSlots[i]->setNameText(g_config.getNetPlayerName());
+					break;
+				case ControlType::NETWORK: {
+						ConnectionSlot *slot = g_simInterface->asServerInterface()->getSlot(i);
+						if (slot->isConnected()) {
+							gs.setPlayerName(i, slot->getName());
+							m_playerSlots[i]->setNameText(slot->getName());
+						} else {
+							m_playerSlots[i]->setNameText("Unconnected");
+						}
+					}
+					break;
+				default:
+					gs.setPlayerName(i, "AI Player");
+					m_playerSlots[i]->setNameText("AI Player");
+			}
 			assert(m_playerSlots[i]->getSelectedTeamIndex() >= 0 && m_playerSlots[i]->getSelectedTeamIndex() < GameConstants::maxPlayers);
 			gs.setTeam(i, m_playerSlots[i]->getSelectedTeamIndex());
 			gs.setStartLocationIndex(i, i);

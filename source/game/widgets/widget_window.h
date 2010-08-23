@@ -49,7 +49,7 @@ private:
 	WidgetList	updateList;
 	WidgetStack mouseOverStack;
 
-	TextRenderer *textRendererBM, *textRendererFT;
+	TextRenderer *textRendererFT;
 
 	float anim, slowAnim;
 	Vec2i mousePos;
@@ -107,8 +107,8 @@ public: // MouseWidget & TextWidget virtual events
 	virtual Vec2i getMinSize() const	{ return Vec2i(800, 600);	}
 	virtual Vec2i getMaxSize() const	{ return Vec2i(-1);			}
 
-	TextRenderer* getTextRenderer(bool ft) {
-		return ft ? textRendererFT : textRendererBM;
+	TextRenderer* getTextRenderer() {
+		return textRendererFT;
 	}
 
 	//virtual Widget::Ptr getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
