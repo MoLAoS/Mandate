@@ -38,8 +38,10 @@ namespace Glest { namespace Gui {
 // 	class Console
 // =====================================================
 
-Console::Console(int maxLines, int y_pos, bool fromTop)
-		: maxLines(maxLines)
+Console::Console(Container::Ptr parent, int maxLines, int y_pos, bool fromTop)
+		: Widget(parent, Vec2i(0), Vec2i(0))
+		, TextWidget(this)
+		, maxLines(maxLines)
 		, yPos(y_pos)
 		, fromTop(fromTop) {
 	//config
@@ -53,6 +55,13 @@ Console::Console(int maxLines, int y_pos, bool fromTop)
 	if (fromTop) {
 		yPos = Metrics::getInstance().getScreenH() - y_pos;
 	}
+	m_font = g_coreData.getFTDisplayFont();
+	const FontMetrics *fm = m_font->getMetrics();
+	g_widgetWindow.registerUpdate(this);
+}
+
+Console::~Console() {
+	g_widgetWindow.unregisterUpdate(this);
 }
 
 void Console::addStdMessage(const string &s){
@@ -78,7 +87,10 @@ void Console::addLine(string line, bool playSound){
 	}
 }
 
-void Console::addDialog(string speaker, Vec3f colour, string text) {
+void Console::addDialog(string speaker, Vec3f colour, string text, bool playSound) {
+	if (playSound) {
+		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
+	}
 	Message msg(speaker, colour);
 	msg.push_back(TextInfo(text));
 	lines.push_front(MessageTimePair(msg, timeElapsed));
@@ -94,12 +106,25 @@ void Console::update(){
 		if(lines.back().second < timeElapsed - timeout){
 			lines.pop_back();
 		}
-    }
+	}
 }
 
-bool Console::isEmpty(){
-	return lines.empty();
-}
+void Console::render() {
+	const FontMetrics *fm = m_font->getMetrics();
 
+	TextWidget::startBatch(m_font);
+	Vec4f black(0.f, 0.f, 0.f, 1.f);
+	for (int i=0; i < lines.size(); ++i) {
+		int x = 20;
+		int y = yPos + (fromTop ? -(int(lines.size()) - i - 1) : i) * int(fm->getHeight() + 1.f);
+		Message &msg = lines[i].first;
+		foreach (Message, snippet, msg) {
+			renderText(snippet->text, x + 2, y - 2, black, m_font);
+			renderText(snippet->text, x, y, snippet->colour, m_font);
+			x += int(fm->getTextDiminsions(snippet->text).x + 1.f);
+		}
+ 	}
+	TextWidget::endBatch();
+}
 
 }}//end namespace

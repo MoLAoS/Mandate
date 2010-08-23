@@ -15,6 +15,8 @@
 #include <string>
 
 #include "keymap.h"
+#include "compound_widgets.h"
+#include "network_message.h"
 
 namespace Glest { namespace Sim {
 	class SimulationInterface;
@@ -24,36 +26,41 @@ using std::string;
 using Shared::Platform::Key;
 
 namespace Glest { namespace Gui {
-
+using namespace Widgets;
 class Console;
 
 // =====================================================
-// class ChatManager
+//  class ChatDialog
 // =====================================================
 
-class ChatManager {
-private:
-	static const int maxTextLenght;
+class ChatDialog : public BasicDialog {
+public:
+	typedef ChatDialog* Ptr;
+	static const int maxTextLength = Net::TextMessage::maxStringSize; ///@todo implement input restriction...
 
 private:
-	SimulationInterface *iSim;
-	const Keymap &keymap;
-	bool editEnabled;
-	bool teamMode;
-	Console* console;
-	int thisTeamIndex;
-	string text;
+	StaticText::Ptr	m_label;
+	CheckBox::Ptr	m_teamCheckBox;
+	TextBox::Ptr	m_textBox;
+	Panel::Ptr		m_panel;
+	Panel::Ptr		m_subPanel;
+
+private:
+	ChatDialog(WidgetWindow*, bool teamOnly);
+
+	void onCheckChanged(Button::Ptr) { TeamChatChanged(this); }
+	void onInputEntered(TextBox::Ptr);
 
 public:
-	ChatManager(SimulationInterface *si, const Keymap &keymap);
-	void init(Console* console, int thisTeamIndex);
+	static ChatDialog::Ptr showDialog(Vec2i pos, Vec2i size, bool teamOnly);
 
-	bool keyDown(const Key &key);
-	void keyPress(char c);
+	string getInput() const		{ return m_textBox->getText(); }
+	bool getTeamChecked() const	{ return m_teamCheckBox->isChecked(); }
+	void setTeamChat(bool v)	{ m_teamCheckBox->setChecked(v); }
 
-	bool getEditEnabled() const {return editEnabled;}
-	bool getTeamMode() const {return teamMode;}
-	string getText() const  {return text;}
+	sigslot::signal<Ptr>	TeamChatChanged;
+
+	virtual string desc() { return string("[ChatDialog: ") + descPosDim() + "]"; }
 };
 
 }}//end namespace

@@ -503,7 +503,8 @@ TextWidget::TextWidget(Widget::Ptr me)
 		, txtShadowColour(0.f)
 		, font(0)
 		, isFreeTypeFont(false)
-		, centre(true) {
+		, centre(true)
+		, m_batchRender(false) {
 	me->textWidget = this;
 }
 
@@ -525,20 +526,41 @@ void TextWidget::widgetReSized() {
 	}
 }
 
-void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
+void TextWidget::startBatch(const Font *font) {
 	if (!font) {
 		font = this->font;
 	}
-	assertGl();
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_BLEND);
-	glColor4fv(colour.ptr());
-	TextRenderer *tr = me->getRootWindow()->getTextRenderer(isFreeTypeFont);
-	tr->begin(font);
-	// glScissor ??
-	tr->render(txt, x, y);
-	tr->end();
+	m_textRenderer = g_widgetWindow.getTextRenderer(font->getMetrics()->isFreeType());
+	m_textRenderer->begin(font);
+	m_batchRender = true;
+}
+
+void TextWidget::endBatch() {
+	m_textRenderer->end();
 	glPopAttrib();
+	m_batchRender = false;
+}
+
+
+void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
+	assertGl();
+	if (!m_batchRender) {
+		if (!font) {
+			font = this->font;
+		}
+		glPushAttrib(GL_ENABLE_BIT);
+		glEnable(GL_BLEND);
+		m_textRenderer = g_widgetWindow.getTextRenderer(isFreeTypeFont);
+		m_textRenderer->begin(font);
+	} 
+	glColor4fv(colour.ptr());
+	m_textRenderer->render(txt, x, y);
+	if (!m_batchRender) {
+		m_textRenderer->end();
+		glPopAttrib();
+	}
 	assertGl();
 }
 

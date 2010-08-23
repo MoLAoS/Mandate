@@ -241,7 +241,6 @@ private:
 	static const int messageWrapCount;
 	static const int displayTextWrapCount;
 
-	static Console *dialogConsole;
 	static map<string, Vec3f> actorColours;
 
 public:
@@ -249,8 +248,6 @@ public:
 	static void initGame();
 
 	static void doSomeLua(string &code);
-
-	static Console* getDialogConsole()	{ return dialogConsole; }
 
 	static string getDisplayText() 										{return displayText;}
 	static bool getGameOver() 											{return gameOver;}

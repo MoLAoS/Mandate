@@ -21,7 +21,7 @@
 #include "world.h"
 #include "ai_interface.h"
 #include "program.h"
-#include "chat_manager.h"
+#include "chat_dialog.h"
 #include "script_manager.h"
 #include "game_settings.h"
 #include "config.h"
@@ -80,8 +80,8 @@ protected:
 	const Config &config;
 	UserInterface gui;
 	GameCamera gameCamera;
-	Console console;
-	ChatManager chatManager;
+	//ChatManager chatManager;
+	bool m_teamChat;
 
 	//misc
 	Checksum checksum;
@@ -100,6 +100,7 @@ protected:
 	MessageDialog::Ptr	m_msgBox;
 	MessageDialog::Ptr	m_scriptMsgBox;
 	InputDialog::Ptr	m_saveBox;
+	ChatDialog::Ptr		m_chatBox;
 
 	///@todo Remove
 	//GraphicTextEntryBox *saveBox;
@@ -125,7 +126,6 @@ public:
 	GameCamera *getGameCamera()				{return &gameCamera;}
 	const UserInterface *getGui() const		{return &gui;}
 	UserInterface *getGui()					{return &gui;}
-	Console *getConsole()					{return &console;}
 	
 	// ProgramState implementation
 
@@ -192,6 +192,13 @@ protected:
 	void onExitCancel(BasicDialog::Ptr);
 
 	void doScriptMessage();
+
+	void doChatDialog();
+	void updateChatDialog();
+
+	void onChatEntered(BasicDialog::Ptr);
+	void onChatCancel(BasicDialog::Ptr);
+	void onTeamChatChanged(ChatDialog::Ptr ct) {m_teamChat = ct->getTeamChecked();}
 };
 
 

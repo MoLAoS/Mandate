@@ -96,7 +96,9 @@ int ServerInterface::getConnectedSlotCount() {
 void ServerInterface::update() {
 	// chat messages
 	while (hasChatMsg()) {
-		getGameState()->getConsole()->addLine(getChatSender() + ": " + getChatText(), true);
+		Console *c = g_userInterface.getDialogConsole();
+		c->addDialog(getChatSender() + ": ", Faction::factionColours[getChatColourIndex()],
+			getChatText(), true);
 		popChatMsg();
 	}
 
@@ -358,7 +360,8 @@ void ServerInterface::waitUntilReady() {
 
 void ServerInterface::sendTextMessage(const string &text, int teamIndex){
 	NETWORK_LOG( __FUNCTION__ );
-	TextMessage txtMsg(text, Config::getInstance().getNetPlayerName(), teamIndex);
+	int ci = g_world.getThisFaction()->getColourIndex();
+	TextMessage txtMsg(text, Config::getInstance().getNetPlayerName(), teamIndex, ci);
 	broadcastMessage(&txtMsg);
 	NetworkInterface::processTextMessage(txtMsg);
 }
@@ -412,7 +415,7 @@ void ServerInterface::broadcastMessage(const Message* networkMessage, int exclud
 				removeSlot(i);
 				LOG_NETWORK(errmsg);
 				if (World::isConstructed()) {
-					g_gameState.getConsole()->addLine(errmsg);
+					g_userInterface.getRegularConsole()->addLine(errmsg);
 				}
 				//throw SocketException(errmsg);
 			}

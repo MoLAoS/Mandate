@@ -112,7 +112,8 @@ private:
 	const Commander *commander;
 	const World *world;
 	GameCamera *gameCamera;
-	Console *console;
+	Console *m_console;
+	Console *m_dialogConsole;
 
 	// Child Widgets
 	Minimap *m_minimap;
@@ -155,10 +156,7 @@ private:
 
 public:
 	UserInterface(GameState &game);
-	~UserInterface() {
-		currentGui = NULL;
-		delete m_resourceBar;
-	}
+	~UserInterface();
 
 	static UserInterface* getCurrentGui() {
 		return currentGui;
@@ -166,7 +164,6 @@ public:
 
 	void init();
 	void initMinimap(bool fow, bool resuming);
-	void end();
 
 	//get
 	Minimap *getMinimap()							{return m_minimap;}
@@ -178,6 +175,8 @@ public:
 	const BuildPositions &getBuildPositions() const	{return buildPositions;}
 
 	const Mouse3d *getMouse3d() const				{return &mouse3d;}
+	Console* getRegularConsole()					{return m_console;}
+	Console* getDialogConsole()						{return m_dialogConsole;}
 	const Display *getDisplay()	const				{return m_display;}
 	const Selection *getSelection()	const			{return &selection;}
 	Selection *getSelection()						{return &selection;}

@@ -185,7 +185,9 @@ void ClientInterface::waitUntilReady() {
 }
 
 void ClientInterface::sendTextMessage(const string &text, int teamIndex) {
-	TextMessage textMsg(text, g_config.getNetPlayerName(), teamIndex);
+	int ci = g_world.getThisFaction()->getColourIndex();
+	TextMessage textMsg(text, g_config.getNetPlayerName(), teamIndex, ci);
+	NetworkInterface::processTextMessage(textMsg);
 	send(&textMsg);
 }
 
@@ -236,7 +238,9 @@ void ClientInterface::startGame() {
 void ClientInterface::update() {
 	// chat messages
 	while (hasChatMsg()) {
-		getGameState()->getConsole()->addLine(getChatSender() + ": " + getChatText(), true);
+		Console *c = g_userInterface.getDialogConsole();
+		c->addDialog(getChatSender() + ": ", Faction::factionColours[getChatColourIndex()],
+			getChatText(), true);
 		popChatMsg();
 	}
 
@@ -268,8 +272,9 @@ void ClientInterface::updateKeyframe(int frameCount) {
 			}
 			return;
 		} else if (raw.type == MessageType::TEXT) {
-			NETWORK_LOG( "Received text message from server." );
 			TextMessage textMsg(raw);
+			NETWORK_LOG( "Received text message from server. Size: " << raw.size << " from: "
+				<< textMsg.getSender() << " msg: " << textMsg.getText() );
 			NetworkInterface::processTextMessage(textMsg);
 		} else if (raw.type == MessageType::QUIT) {
 			NETWORK_LOG( "Received quit message from server." );

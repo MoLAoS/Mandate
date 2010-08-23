@@ -105,7 +105,8 @@ UserInterface::UserInterface(GameState &game)
 		, commander(0)
 		, world(0)
 		, gameCamera(0)
-		, console(0)
+		, m_console(0)
+		, m_dialogConsole(0)
 		, m_minimap(0)
 		, m_display(0)
 		, m_resourceBar(0) {
@@ -132,10 +133,20 @@ UserInterface::UserInterface(GameState &game)
 	m_display = new Display(this, Vec2i(x,y), Vec2i(w, h));
 }
 
+UserInterface::~UserInterface() {
+	currentGui = 0;
+	delete m_minimap;
+	delete m_display;
+	delete m_resourceBar;
+	delete m_console;
+	delete m_dialogConsole;
+}
+
 void UserInterface::init() {
 	this->commander= g_simInterface->getCommander();
 	this->gameCamera= game.getGameCamera();
-	this->console= game.getConsole();
+	m_console = new Console(&g_widgetWindow);
+	m_dialogConsole = new Console(&g_widgetWindow, 10, 200, true);
 	this->world= &g_world;
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
@@ -184,14 +195,6 @@ void UserInterface::initMinimap(bool fow, bool resuming) {
 	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
-}
-
-void UserInterface::end() {
-	selection.clear();
-	delete m_minimap;
-	m_minimap = 0;
-	delete m_display;
-	m_display = 0;
 }
 
 // ==================== get ====================
@@ -285,7 +288,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 
 	if (!validWorldPos) {
-		console->addStdMessage("InvalidPosition");
+		m_console->addStdMessage("InvalidPosition");
 		return;
 	}
 
@@ -334,7 +337,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 			Unit *targetUnit = units.size() ? units.front() : NULL;
 			giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
 		} else {
-			console->addStdMessage("InvalidPosition");
+			m_console->addStdMessage("InvalidPosition");
 		}
 	}
 
@@ -355,7 +358,7 @@ void UserInterface::mouseUpLeft(int x, int y) {
 		if (g_renderer.computePosition(Vec2i(x, y), worldPos)) {
 			giveTwoClickOrders(worldPos, NULL);
 		} else {
-			console->addStdMessage("InvalidPosition");
+			m_console->addStdMessage("InvalidPosition");
 		}
 	}
 }
@@ -1042,18 +1045,18 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 	case CommandResult::SUCCESS:
 		break;
 	case CommandResult::FAIL_BLOCKED:
-		console->addStdMessage("BuildingNoPlace");
+		m_console->addStdMessage("BuildingNoPlace");
 		break;
 	case CommandResult::FAIL_REQUIREMENTS:
 		switch(cc){
 		case CommandClass::BUILD:
-			console->addStdMessage("BuildingNoReqs");
+			m_console->addStdMessage("BuildingNoReqs");
 			break;
 		case CommandClass::PRODUCE:
-			console->addStdMessage("UnitNoReqs");
+			m_console->addStdMessage("UnitNoReqs");
 			break;
 		case CommandClass::UPGRADE:
-			console->addStdMessage("UpgradeNoReqs");
+			m_console->addStdMessage("UpgradeNoReqs");
 			break;
 		default:
 			break;
@@ -1076,37 +1079,37 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 			if(needed.size() == 1) {
 				switch(cc){
 				case CommandClass::BUILD:
-					console->addStdMessage("BuildingNoRes1", a);
+					m_console->addStdMessage("BuildingNoRes1", a);
 					break;
 				case CommandClass::PRODUCE:
-					console->addStdMessage("UnitNoRes1", a);
+					m_console->addStdMessage("UnitNoRes1", a);
 					break;
 				case CommandClass::UPGRADE:
-					console->addStdMessage("UpgradeNoRes1", a);
+					m_console->addStdMessage("UpgradeNoRes1", a);
 					break;
 				case CommandClass::MORPH:
-					console->addStdMessage("MorphNoRes1", a);
+					m_console->addStdMessage("MorphNoRes1", a);
 					break;
 				default:
-					console->addStdMessage("GenericNoRes1", a);
+					m_console->addStdMessage("GenericNoRes1", a);
 					break;
 				}
 			} else {
 				switch(cc){
 				case CommandClass::BUILD:
-					console->addStdMessage("BuildingNoRes2", a, b);
+					m_console->addStdMessage("BuildingNoRes2", a, b);
 					break;
 				case CommandClass::PRODUCE:
-					console->addStdMessage("UnitNoRes2", a, b);
+					m_console->addStdMessage("UnitNoRes2", a, b);
 					break;
 				case CommandClass::UPGRADE:
-					console->addStdMessage("UpgradeNoRes2", a, b);
+					m_console->addStdMessage("UpgradeNoRes2", a, b);
 					break;
 				case CommandClass::MORPH:
-					console->addStdMessage("MorphNoRes2", a, b);
+					m_console->addStdMessage("MorphNoRes2", a, b);
 					break;
 				default:
-					console->addStdMessage("GenericNoRes2", a, b);
+					m_console->addStdMessage("GenericNoRes2", a, b);
 					break;
 				}
 			}
@@ -1115,15 +1118,15 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 		break;
 
 	case CommandResult::FAIL_PET_LIMIT:
-		console->addStdMessage("PetLimitReached");
+		m_console->addStdMessage("PetLimitReached");
 		break;
 
 	case CommandResult::FAIL_UNDEFINED:
-		console->addStdMessage("InvalidOrder");
+		m_console->addStdMessage("InvalidOrder");
 		break;
 
 	case CommandResult::SOME_FAILED:
-		console->addStdMessage("SomeOrdersFailed");
+		m_console->addStdMessage("SomeOrdersFailed");
 		break;
 	default:
 		throw runtime_error("unhandled CommandResult");

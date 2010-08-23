@@ -105,6 +105,8 @@ public:
 	const UpgradeManager *getUpgradeManager() const		{return &upgradeManager;}
 	const Texture2D *getTexture() const					{return texture;}
 	int getStartLocationIndex() const					{return startLocationIndex;}
+	int getColourIndex() const							{return colourIndex;}
+	const Vec3f& getColour() const						{return factionColours[colourIndex];}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}

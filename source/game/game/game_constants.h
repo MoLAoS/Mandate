@@ -20,7 +20,7 @@
 #define g_camera			(*GameState::getInstance()->getGameCamera())
 #define g_gameSettings		(GameState::getInstance()->getGameSettings())
 #define g_userInterface		(*Gui::UserInterface::getCurrentGui())
-#define g_console			(*GameState::getInstance()->getConsole())
+#define g_console			(*Gui::UserInterface::getCurrentGui()->getRegularConsole())
 #define g_config			(Config::getInstance())
 #define g_routePlanner		(*World::getInstance().getRoutePlanner())
 #define g_cartographer		(*World::getInstance().getCartographer())

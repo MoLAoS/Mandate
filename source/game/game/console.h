@@ -23,10 +23,12 @@ using std::pair;
 using std::vector;
 
 #include "vec.h"
+#include "widgets.h"
 
 using Shared::Math::Vec3f;
 
 namespace Glest { namespace Gui {
+using namespace Widgets;
 
 // =====================================================
 // 	class Console
@@ -34,13 +36,13 @@ namespace Glest { namespace Gui {
 //	In-game console that shows various types of messages
 // =====================================================
 
-class Console {
+class Console : public Widget, public TextWidget {
 public:
 	struct TextInfo {
 		string text;
-		Vec3f colour;
+		Vec4f colour;
 		TextInfo(const string &text) : text(text), colour(1.f) {}
-		TextInfo(const string &text, Vec3f colour) : text(text), colour(colour) {}
+		TextInfo(const string &text, Vec3f colour) : text(text), colour(colour, 1.f) {}
 	};
 	struct Message : public vector<TextInfo> {
 		Message(const string &txt, Vec3f col) { push_back(TextInfo(txt, col)); }
@@ -54,9 +56,6 @@ private:
 	float timeElapsed;
 	Lines lines;
 
-	//this should be deleted from here someday
-	bool won, lost;
-
 	//config
 	int maxLines;
 	float timeout;
@@ -64,21 +63,21 @@ private:
 	int yPos;
 	bool fromTop;
 
+	Font *m_font;
+
 public:
-	Console(int maxLines = 5, int yPos = 20, bool fromTop = false);
+	Console(Container::Ptr parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
+	~Console();
 
-	int getLineCount() const		{return lines.size();}
-	Message getLine(int i) const	{return lines[i].first;}
-	int getYPos() const				{ return yPos; }
-	bool isFromTop() const			{ return fromTop; }
-
+	virtual void update();
+	virtual void render();
+	virtual string desc() { return string("[Console: ") + descPosDim() + "]"; }
 
 	void addStdMessage(const string &s);
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");
 	void addLine(string line, bool playSound=false);
-	void addDialog(string speaker, Vec3f colour, string text);
-	void update();
-	bool isEmpty();
+	void addDialog(string speaker, Vec3f colour, string text, bool playSound=false);
+
 };
 
 }}//end namespace

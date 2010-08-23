@@ -327,6 +327,8 @@ protected:
 	LayoutOrigin	layoutOrigin;
 
 	Panel(WidgetWindow* window);
+	void layoutVertical();
+	void layoutHorizontal();
 
 public:
 	void setLayoutParams(bool autoLayout, LayoutDirection dir, LayoutOrigin origin = LayoutOrigin::CENTRE);

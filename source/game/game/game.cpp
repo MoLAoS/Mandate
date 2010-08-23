@@ -28,6 +28,7 @@
 #include "profiler.h"
 #include "cluster_map.h"
 #include "sim_interface.h"
+#include "network_interface.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -67,8 +68,7 @@ GameState::GameState(Program &program)
 		, config(Config::getInstance())
 		, gui(*this)
 		, gameCamera()
-		, console()
-		, chatManager(simInterface, keymap)
+		, m_teamChat(false)
 		//misc
 		, checksum()
 		, loadingText("")
@@ -87,6 +87,7 @@ GameState::GameState(Program &program)
 		, m_msgBox(0)
 		, m_scriptMsgBox(0)
 		, m_saveBox(0)
+		, m_chatBox(0)
 		, lastMousePos(0)
 		, weatherParticleSystem(0) {
 	assert(!singleton);
@@ -106,7 +107,7 @@ GameState::~GameState() {
 	weatherParticleSystem = 0;
 	g_soundRenderer.stopAllSounds();
 
-	gui.end(); //selection must be cleared before deleting units
+//	gui.end(); //selection must be cleared before deleting units
 	singleton = 0;
 	g_logger.setLoading(true);
 
@@ -116,7 +117,6 @@ GameState::~GameState() {
 	// delete the World
 	simInterface->destroyGameWorld();
 }
-
 
 // ==================== init and load ====================
 
@@ -156,8 +156,6 @@ void GameState::init() {
 	// init world, and place camera
 	simInterface->initWorld();
 	gui.init();
-	//REFACTOR: ThisTeamIndex belongs in here, not the World
-	chatManager.init(&g_console, g_world.getThisTeamIndex());
 	gameCamera.init(g_map.getW(), g_map.getH());
 	Vec2i v(g_map.getW() / 2, g_map.getH() / 2);
 	if (g_world.getThisFaction()) {  //e.g. -loadmap has no players
@@ -243,9 +241,6 @@ void GameState::update() {
 	}
 	++updateFps;
 	mouse2d = (mouse2d + 1) % Renderer::maxMouse2dAnim;
-
-	//console
-	console.update();
 
 	///@todo clean-up, this should be done in SimulationInterface::updateWorld()
 	// but the particle stuff still lives here, so we still need to process each loop here
@@ -387,6 +382,41 @@ void GameState::onScriptMessageDismissed(BasicDialog::Ptr) {
 	}
 }
 
+void GameState::doChatDialog() {
+	if (m_chatBox) {
+		return;
+	}
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_chatBox = ChatDialog::showDialog(pos, size, m_teamChat);
+	m_chatBox->Button1Clicked.connect(this, &GameState::onChatEntered);
+	m_chatBox->Button2Clicked.connect(this, &GameState::onChatCancel);
+	m_chatBox->TeamChatChanged.connect(this, &GameState::onTeamChatChanged);
+}
+
+void GameState::updateChatDialog() {
+	if (m_chatBox) {
+		m_chatBox->setTeamChat(m_teamChat);
+	}
+}
+
+void GameState::onChatEntered(BasicDialog::Ptr) {
+	string txt = m_chatBox->getInput();
+	int team = (m_teamChat ? g_world.getThisFaction()->getTeam() : -1);
+	NetworkInterface *netInterface = simInterface->asNetworkInterface();
+	if (netInterface) {
+		netInterface->sendTextMessage(txt, team);
+	} else {
+		///@todo ? Local game...
+	}
+	program.removeFloatingWidget(m_chatBox);
+	m_chatBox = 0;
+}
+
+void GameState::onChatCancel(BasicDialog::Ptr) {
+	program.removeFloatingWidget(m_chatBox);
+	m_chatBox = 0;
+}
+
 void GameState::updateCamera() {
 	gameCamera.update();
 }
@@ -526,12 +556,20 @@ void GameState::keyDown(const Key &key) {
 		if (cmd != ucNone) {
 			str << " = " << Keymap::getCommandName(cmd);
 		}
-		console.addLine(str.str());
+		gui.getRegularConsole()->addLine(str.str());
 	}
-	if (chatManager.keyDown(key)) {
-		return; // key consumed, we're done here
-	}
-	if (cmd == ucSaveScreenshot) {
+	if (cmd == ucChatAudienceAll) {
+		m_teamChat = false;
+		updateChatDialog();
+	} else if (cmd == ucChatAudienceTeam) {
+		m_teamChat = true;
+		updateChatDialog();
+	} else if (cmd == ucChatAudienceToggle) {
+		m_teamChat = !m_teamChat;
+		updateChatDialog();
+	} else if (cmd == ucEnterChatMode) {
+		doChatDialog();
+	} else if (cmd == ucSaveScreenshot) {
 		Shared::Platform::mkdir("screens", true);
 		int i;
 		const int MAX_SCREENSHOTS = 100;
@@ -547,7 +585,7 @@ void GameState::keyDown(const Key &key) {
 			}
 		}
 		if (i > MAX_SCREENSHOTS) {
-			console.addLine(g_lang.get("ScreenshotDirectoryFull"));
+			gui.getRegularConsole()->addLine(g_lang.get("ScreenshotDirectoryFull"));
 		}
 	} else if (cmd == ucCameraPosLeft) { // move camera left
 		gameCamera.setMoveX(-scrollSpeed, false);
@@ -591,11 +629,11 @@ void GameState::keyDown(const Key &key) {
 		}
 		if (curSpeed != newSpeed) {
 			if (newSpeed == GameSpeed::PAUSED) {
-				console.addLine(g_lang.get("GamePaused"));
+				gui.getRegularConsole()->addLine(g_lang.get("GamePaused"));
 			} else if (curSpeed == GameSpeed::PAUSED) {
-				console.addLine(g_lang.get("GameResumed"));
+				gui.getRegularConsole()->addLine(g_lang.get("GameResumed"));
 			} else {
-				console.addLine(g_lang.get("GameSpeedSet") + " " + g_lang.get(GameSpeedNames[newSpeed]));
+				gui.getRegularConsole()->addLine(g_lang.get("GameSpeedSet") + " " + g_lang.get(GameSpeedNames[newSpeed]));
 			}
 			return;
 		}
@@ -617,35 +655,32 @@ void GameState::keyDown(const Key &key) {
 }
 
 void GameState::keyUp(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");	
-	if (!chatManager.getEditEnabled()) {
-		if (key.isModifier()) {
-			gameCamera.setRotate(0.f);
-			gameCamera.setMoveX(0.f, false);
-			gameCamera.setMoveY(0.f);
-			gameCamera.setMoveZ(0.f, false);
-		} else {
-			switch (keymap.getCommand(key)) {
-				case ucCameraRotateLeft: case ucCameraRotateRight:
-					gameCamera.setRotate(0.f);
-					break;
-				case ucCameraPitchUp: case ucCameraPitchDown:
-					gameCamera.setMoveY(0.f);
-					break;
-				case ucCameraPosUp: case ucCameraPosDown:
-					gameCamera.setMoveZ(0.f, false);
-					break;
-				case ucCameraPosLeft: case ucCameraPosRight:
-					gameCamera.setMoveX(0.f, false);
-					break;
-			}
+	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	if (key.isModifier()) {
+		gameCamera.setRotate(0.f);
+		gameCamera.setMoveX(0.f, false);
+		gameCamera.setMoveY(0.f);
+		gameCamera.setMoveZ(0.f, false);
+	} else {
+		switch (keymap.getCommand(key)) {
+			case ucCameraRotateLeft: case ucCameraRotateRight:
+				gameCamera.setRotate(0.f);
+				break;
+			case ucCameraPitchUp: case ucCameraPitchDown:
+				gameCamera.setMoveY(0.f);
+				break;
+			case ucCameraPosUp: case ucCameraPosDown:
+				gameCamera.setMoveZ(0.f, false);
+				break;
+			case ucCameraPosLeft: case ucCameraPosRight:
+				gameCamera.setMoveX(0.f, false);
+				break;
 		}
 	}
 }
 
 void GameState::keyPress(char c) {
 	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
-	chatManager.keyPress(c);
 }
 
 void GameState::quitGame() {
@@ -711,8 +746,6 @@ void GameState::render2d(){
 			gui.getDisplay()->getColor(), 200, 680, false);
 	}
 
-	g_renderer.renderChatManager(&chatManager);
-
 	//debug info
 	if (g_config.getMiscDebugMode()) {
 		stringstream str;
@@ -747,25 +780,6 @@ void GameState::render2d(){
 			str.str(), g_coreData.getMenuFontNormal(),
 			gui.getDisplay()->getColor(), 10, 500, false);
 	}
-
-	//network status
-	/* NETWORK:
-	if(renderNetworkStatus && networkManager.isNetworkGame()) {
-		renderer.renderText(
-			networkManager.getGameInterface()->getStatus(),
-			coreData.getMenuFontNormal(),
-			gui.getDisplay()->getColor(), 750, 75, false);
-	}
-	*/
-
-	// resource info & consoles
-	if (!g_config.getUiPhotoMode()) {
-		g_renderer.renderConsole(&console);
-		g_renderer.renderConsole(ScriptManager::getDialogConsole());
-	}
-
-	//2d mouse
-	//renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos()? 1.f: 0.f);
 }
 
 
@@ -817,7 +831,7 @@ void ShowMap::keyDown(const Key &key) {
 		}
 
 		if (i > MAX_SCREENSHOTS) {
-			console.addLine(g_lang.get("ScreenshotDirectoryFull"));
+			gui.getRegularConsole()->addLine(g_lang.get("ScreenshotDirectoryFull"));
 		}
 
 	//move camera left
@@ -845,7 +859,7 @@ void ShowMap::keyDown(const Key &key) {
 		gameCamera.switchState();
 		string stateString = gameCamera.getState() == GameCamera::sGame 
 			? g_lang.get("GameCamera") : g_lang.get("FreeCamera");
-		console.addLine(g_lang.get("CameraModeSet") + " " + stateString);
+		gui.getRegularConsole()->addLine(g_lang.get("CameraModeSet") + " " + stateString);
 
 	//exit
 	} else if (cmd == ucMenuQuit) {

@@ -445,12 +445,13 @@ void CommandListMessage::send(NetworkConnection* connection) const {
 //	class TextMessage
 // =====================================================
 
-TextMessage::TextMessage(const string &text, const string &sender, int teamIndex){
+TextMessage::TextMessage(const string &text, const string &sender, int teamIndex, int colourIndex){
 	data.messageType = MessageType::TEXT;
-	data.messageSize = sizeof(*this) - 4;
+	data.messageSize = sizeof(Data) - sizeof(MsgHeader);
 	data.text = text;
 	data.sender = sender;
 	data.teamIndex = teamIndex;
+	data.colourIndex = colourIndex;
 }
 
 TextMessage::TextMessage(RawMessage raw) {
@@ -466,6 +467,7 @@ bool TextMessage::receive(NetworkConnection* connection){
 
 void TextMessage::send(NetworkConnection* connection) const{
 	assert(data.messageType == MessageType::TEXT);
+	NETWORK_LOG( "Sending TextMessage, size: " << data.messageSize );
 	Message::send(connection, &data, sizeof(Data));
 }
 

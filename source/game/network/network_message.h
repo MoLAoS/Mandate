@@ -237,7 +237,6 @@ public:
 //	class CommandList
 // ==============================================================
 /**	Message to issue commands to several units */
-#pragma pack(push, 4)
 class CommandListMessage : public Message {
 	friend class NetworkConnection;
 private:
@@ -245,6 +244,7 @@ private:
 	static const int dataHeaderSize = 8;
 
 private:
+#	pragma pack(push, 4)
 	struct Data {
 		uint32 messageType	:  8;
 		uint32 messageSize	: 24;
@@ -252,6 +252,7 @@ private:
 		uint32 frameCount	: 24;
 		NetworkCommand commands[maxCommandCount];
 	} data;
+#	pragma pack(pop)
 
 public:
 	CommandListMessage(int32 frameCount= -1);
@@ -266,33 +267,36 @@ public:
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;
 };
-#pragma pack(pop)
 
 // ==============================================================
 //	class TextMessage
 // ==============================================================
 /**	Chat text message */
 class TextMessage : public Message {
-private:
-	static const int maxStringSize= 64;
+public:
+	static const int maxStringSize = 64;
 
 private:
+#	pragma pack(push, 2)
 	struct Data{
 		uint32 messageType :  8;
 		uint32 messageSize : 24;
 		NetworkString<maxStringSize> text;
 		NetworkString<maxStringSize> sender;
 		int8 teamIndex;
+		int8 colourIndex;
 	} data;
+#	pragma pack(pop)
 
 public:
 	TextMessage(){}
-	TextMessage(const string &text, const string &sender, int teamIndex);
+	TextMessage(const string &text, const string &sender, int teamIndex, int colourIndex);
 	TextMessage(RawMessage raw);
 
 	string getText() const		{return data.text.getString();}
 	string getSender() const	{return data.sender.getString();}
 	int getTeamIndex() const	{return data.teamIndex;}
+	int getColourIndex() const	{return data.colourIndex;}
 
 	virtual bool receive(NetworkConnection* connection);
 	virtual void send(NetworkConnection* connection) const;

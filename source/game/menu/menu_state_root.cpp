@@ -65,7 +65,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	Vec2i pos(g_metrics.getScreenW() / 2 - 125, btnPnlYPos);
 	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, btnPnlHeight));
 	pnl->setPaddingParams(10, widgetPad);
-//	pnl->setBorderStyle(Widgets::BorderStyle::RAISE);
 
 	// Buttons
 	Font *font = g_coreData.getfreeTypeMenuFont();//g_coreData.getMenuFontNormal();
@@ -75,6 +74,8 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
+	pnl->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
+	pnl->layoutChildren();
 
 	// Glest Logo PicturePanel
 	int logoWidth = logoHeight * 2;

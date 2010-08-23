@@ -83,7 +83,7 @@ void GlestAiInterface::printLog(int logLevel, const string &s){
 
 		//redirect to console
 		if (redir) {
-			g_simInterface->getGameState()->getConsole()->addLine(logString);
+			g_userInterface.getRegularConsole()->addLine(logString);
 		}
 	}
 }

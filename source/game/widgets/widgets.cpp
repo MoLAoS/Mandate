@@ -788,8 +788,15 @@ void Panel::layoutChildren() {
 	if (!autoLayout || children.empty()) {
 		return;
 	}
+	if (layoutDirection == LayoutDirection::VERTICAL) {
+		layoutVertical();
+	} else if (layoutDirection == LayoutDirection::HORIZONTAL) {
+		layoutHorizontal();
+	}
+}
+
+void Panel::layoutVertical() {
 	vector<int> widgetYPos;
-//	const int borderPlusPad = getBorderSize() + getPadding();
 	int wh = 0;
 	Vec2i size = getSize();
 	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
@@ -815,6 +822,35 @@ void Panel::layoutChildren() {
 		int ww = (*it)->getWidth();
 		int x = topLeft.x + (room.x - ww) / 2;
 		int y = offset_y - widgetYPos[ndx++];
+		(*it)->setPos(x, y);
+	}
+}
+
+void Panel::layoutHorizontal() {
+	vector<int> widgetXPos;
+	int ww = 0;
+	Vec2i size = getSize();
+	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
+	foreach (WidgetList, it, children) {
+		widgetXPos.push_back(ww);
+		ww += (*it)->getWidth();
+		ww += widgetPadding;
+	}
+	ww -= widgetPadding;
+	
+	Vec2i topLeft(getBorderLeft() + getPadding(), size.y - getBorderTop() - getPadding());
+	
+	int offset;
+	switch (layoutOrigin) {
+		case LayoutOrigin::FROM_LEFT: offset = getBorderLeft(); break;
+		case LayoutOrigin::CENTRE: offset = (size.x - ww) / 2; break;
+		case LayoutOrigin::FROM_RIGHT: offset = size.x - ww - getBorderRight(); break;
+	}
+	int ndx = 0;
+	foreach (WidgetList, it, children) {
+		int wh = (*it)->getHeight();
+		int x = offset + widgetXPos[ndx++];
+		int y = (room.y - wh) / 2;
 		(*it)->setPos(x, y);
 	}
 }

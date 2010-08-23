@@ -674,49 +674,6 @@ void Renderer::renderTextureQuad(int x, int y, int w, int h, const Texture2D *te
 	assertGl();
 }
 
-void Renderer::renderConsole(const Console *console){
-	glPushAttrib(GL_ENABLE_BIT);
-	glEnable(GL_BLEND);
-
-	Font *font = CoreData::getInstance().getConsoleFont();
-	const FontMetrics *fm = font->getMetrics();
-
-	int yPos = console->getYPos();
-	bool fromTop = console->isFromTop();
-
-	for (int i=0; i < console->getLineCount(); ++i) {
-		int x = 20;
-		int y = yPos + (fromTop ? -(console->getLineCount() - i - 1) : i) * 20;
-		Console::Message msg = console->getLine(i);
-		foreach (Console::Message, snippet, msg) {
-			renderTextShadow(snippet->text, font, x, y, false, snippet->colour);
-			x += int(fm->getTextDiminsions(snippet->text).x + 1.f);
-		}
- 	}
-	glPopAttrib();
-}
-
-void Renderer::renderChatManager(const ChatManager *chatManager){
-	Lang &lang= Lang::getInstance();
-
-	if(chatManager->getEditEnabled()){
-		string text;
-
-		if(chatManager->getTeamMode()){
-			text+= lang.get("Team");
-		}
-		else
-		{
-			text+= lang.get("All");
-		}
-		text+= ": " + chatManager->getText() + "_";
-
-		textRenderer->begin(CoreData::getInstance().getConsoleFont());
-		textRenderer->render(text, 300, 150);
-		textRenderer->end();
-	}
-}
-
 void Renderer::renderSelectionQuad(){
 
 	const UserInterface *gui= game->getGui();

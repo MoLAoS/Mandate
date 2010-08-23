@@ -281,12 +281,16 @@ private:
 	const Font *font;
 	bool isFreeTypeFont;
 	bool centre;
-
-	void renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font = 0);
+	bool m_batchRender;
+	TextRenderer *m_textRenderer;
 
 protected:
+	void renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font = 0);
 	void renderText(int ndx = 0);
 	void renderTextShadowed(int ndx = 0);
+
+	void startBatch(const Font *font);
+	void endBatch();
 
 public:
 	TextWidget(Widget::Ptr me);

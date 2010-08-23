@@ -93,7 +93,9 @@ protected:
 	struct ChatMsg {
 		string text;
 		string sender;
-		ChatMsg(const string &txt, const string &sndr) : text(txt), sender(sndr) {}
+		int colourIndex;
+		ChatMsg(const string &txt, const string &sndr, int colour)
+				: text(txt), sender(sndr), colourIndex(colour) {}
 	};
 	std::vector<ChatMsg> chatMessages;
 
@@ -139,6 +141,7 @@ public:
 	void popChatMsg()								{ chatMessages.pop_back();}
 	const string& getChatText() const				{return chatMessages.back().text;}
 	const string& getChatSender() const				{return chatMessages.back().sender;}
+	int getChatColourIndex() const					{return chatMessages.back().colourIndex;}
 };
 
 }}//end namespace

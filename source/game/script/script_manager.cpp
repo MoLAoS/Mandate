@@ -306,7 +306,6 @@ vector<ScriptTimer> ScriptManager::timers;
 vector<ScriptTimer> ScriptManager::newTimerQueue;
 set<string>			ScriptManager::definedEvents;
 
-Console *ScriptManager::dialogConsole = NULL;
 map<string, Vec3f> ScriptManager::actorColours;
 
 ScriptManager::UnitInfo		ScriptManager::latestCreated,
@@ -329,17 +328,12 @@ void ScriptManager::cleanUp() {
 	latestCasualty.id = -1;
 	gameOver= false;
 	triggerManager.reset();
-	delete dialogConsole;
-	dialogConsole = 0;
 }
 
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
 
 	cleanUp();
-
-	//TODO: calculate y co-ordinate
-	dialogConsole = new Console(10, 170, true);
 
 	luaScript.startUp();
 	luaScript.atPanic(panicFunc);
@@ -513,8 +507,6 @@ void ScriptManager::onTrigger(const string &name, int unitId, int userData) {
 }
 
 void ScriptManager::update() {
-	dialogConsole->update();
-
 	// when a timer is ready, call the corresponding lua function
 	// and remove the timer, or reset to repeat.
 
@@ -954,7 +946,8 @@ int ScriptManager::addDialog(LuaHandle* luaHandle) {
 		if (actorColours.find(actor) == actorColours.end()) {
 			actorColours[actor] = Vec3f(1.f);
 		}
-		dialogConsole->addDialog(actor + " : ", actorColours[actor], g_lang.getScenarioString(msg));
+		g_userInterface.getDialogConsole()->addDialog(
+			actor + " : ", actorColours[actor], g_lang.getScenarioString(msg));
 	}
 	return args.getReturnCount();
 }
