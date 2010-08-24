@@ -48,14 +48,11 @@ public:
     void init(World *world)		{this->world = world;}
 	void updateNetwork();
 
-	CommandResult tryGiveCommand(
-		const Selection &selection,
-		CommandFlags flags,
-		const CommandType *commandType = NULL,
-		CommandClass commandClass = CommandClass::NULL_COMMAND,
-		const Vec2i &pos = Command::invalidPos,
-		Unit *targetUnit = NULL,
-		const UnitType* unitType = NULL) const;
+	CommandResult tryGiveCommand(const Selection &selection, CommandFlags flags,
+		const CommandType *commandType = NULL, CommandClass commandClass = CommandClass::NULL_COMMAND,
+		const Vec2i &pos = Command::invalidPos, Unit *targetUnit = NULL,
+		const UnitType* unitType = NULL, CardinalDir facing = CardinalDir::NORTH) const;
+
 	CommandResult tryCancelCommand(const Selection *selection) const;
 	
 	void trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const;

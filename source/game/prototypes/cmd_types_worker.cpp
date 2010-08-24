@@ -254,7 +254,7 @@ void RepairCommandType::update(Unit *unit) const {
 		TravelState result;
 		if (repaired && !repaired->isMobile()) {
 			unit->setTargetPos(targetPos);
-			result = g_routePlanner.findPathToBuildSite(unit, repaired->getType(), repaired->getPos());
+			result = g_routePlanner.findPathToBuildSite(unit, repaired->getType(), repaired->getPos(), repaired->getModelFacing());
 		} else {
 			result = g_routePlanner.findPath(unit, targetPos);
 		}
@@ -460,7 +460,7 @@ void BuildCommandType::update(Unit *unit) const {
 		// the blocking checks are done before the command is issued and again when the unit arrives
 
 		Map *map = g_world.getMap();
-		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType)) {
+		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType, command->getFacing())) {
 			acceptBuild(unit, command, builtUnitType);
 		} else {
 			// there are no free cells
@@ -482,11 +482,11 @@ void BuildCommandType::update(Unit *unit) const {
 	}
 }
 
-bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos) const {
+bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir face) const {
 	bool blocked = false;
 	
 	Map *map = g_world.getMap();
-	if (!map->canOccupy(pos, builtUnitType->getField(), builtUnitType)) {
+	if (!map->canOccupy(pos, builtUnitType->getField(), builtUnitType, face)) {
 		// there are no free cells
 		vector<Unit *> occupants;
 		map->getOccupants(occupants, pos, builtUnitType->getSize(), Zone::LAND);
@@ -514,7 +514,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 	unit->setTargetPos(targetPos);
 	bool arrived = false;
 
-	switch (g_routePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos())) {
+	switch (g_routePlanner.findPathToBuildSite(unit, builtUnitType, command->getPos(), command->getFacing())) {
 		case TravelState::MOVING:
 			unit->setCurrSkill(this->getMoveSkillType());
 			unit->face(unit->getNextPos());
@@ -607,7 +607,8 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 
 	BUILD_LOG( "in position, starting construction." );
-	builtUnit = g_simInterface->getUnitFactory().newInstance(command->getPos(), builtUnitType, unit->getFaction(), map);
+	builtUnit = g_simInterface->getUnitFactory().newInstance(
+		command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
 	unit->setCurrSkill(buildSkillType);
 	unit->setTarget(builtUnit, true, true);

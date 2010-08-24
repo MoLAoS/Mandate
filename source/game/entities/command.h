@@ -50,6 +50,7 @@ private:
 	UnitId unitRef;		//target unit, used to move and attack optinally
 	UnitId unitRef2;		//for patrol command, the unit traveling away from.
 	const UnitType *unitType;	//used for build
+	CardinalDir facing;
 	Unit *commandedUnit;
 	int id;						//give each command a unique id so it is distinguishable
 
@@ -58,7 +59,7 @@ public:
 	Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
 	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
 	Command(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL);
-	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, Unit *commandedUnit = NULL);
+	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, CardinalDir facing, Unit *commandedUnit = NULL);
 	Command(const XmlNode *node, const UnitType *ut, const FactionType *ft);
 
 	// allow default ctor
@@ -76,6 +77,7 @@ public:
 	Unit* getUnit() const;
 	Unit* getUnit2() const;
 	const UnitType* getUnitType() const			{return unitType;}
+	CardinalDir getFacing() const				{return facing;}
 	Unit *getCommandedUnit() const				{return commandedUnit;}
 	int getId() const							{return id;}
 

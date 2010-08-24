@@ -258,7 +258,7 @@ void Cartographer::loadResourceState(XmlNode *node) {
 	}
 }
 
-PatchMap<1>* Cartographer::buildAdjacencyMap(const UnitType *uType, const Vec2i &pos, Field f, int size) {
+PatchMap<1>* Cartographer::buildAdjacencyMap(const UnitType *uType, const Vec2i &pos, CardinalDir facing, Field f, int size) {
 	const Vec2i mapPos = pos + (OrdinalOffsets[OrdinalDir::NORTH_WEST] * size);
 	const int sx = pos.x;
 	const int sy = pos.y;
@@ -274,7 +274,7 @@ PatchMap<1>* Cartographer::buildAdjacencyMap(const UnitType *uType, const Vec2i 
 	Util::RectIterator rIter(pos, pos + Vec2i(uType->getSize() - 1));
 	while (rIter.more()) {
 		Vec2i gpos = rIter.next();
-		if (!uType->hasCellMap() || uType->getCellMapCell(gpos.x - sx, gpos.y - sy)) {
+		if (!uType->hasCellMap() || uType->getCellMapCell(gpos.x - sx, gpos.y - sy, facing)) {
 			tmpMap.setInfluence(gpos, 1);
 		}
 	}

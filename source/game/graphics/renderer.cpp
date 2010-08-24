@@ -556,16 +556,17 @@ void Renderer::renderMouse3d(){
 
 	assertGl();
 
-	if((mouse3d->isEnabled() || gui->isPlacingBuilding()) && gui->isValidPosObjWorld()){
+	if ((mouse3d->isEnabled() || gui->isPlacingBuilding()) && gui->isValidPosObjWorld()) {
 
-		if(gui->isPlacingBuilding()) {
+		if (gui->isPlacingBuilding()) {
 			const UserInterface::BuildPositions &bp = gui->getBuildPositions();
-			const UnitType *building= gui->getBuilding();
+			const UnitType *building = gui->getBuilding();
 			const UnitContainer &units = gui->getSelection()->getUnits();
 
-			//selection building emplacement
+			// selection building emplacement
 			float offset = building->getSize() / 2.f;
 			Field buildField = building->getField();
+			float rotation = gui->getBuildingFacing() * 90.f;
 
 			for(UserInterface::BuildPositions::const_iterator i = bp.begin(); i != bp.end(); i++) {
 				glMatrixMode(GL_MODELVIEW);
@@ -579,13 +580,14 @@ void Renderer::renderMouse3d(){
 
 				Vec3f pos3f= Vec3f( (float)(*i).x, map->getCell(*i)->getHeight(), (float)(*i).y );
 
-				glTranslatef(pos3f.x+offset, pos3f.y, pos3f.z+offset);
+				glTranslatef(pos3f.x + offset, pos3f.y, pos3f.z + offset);
+				glRotatef(rotation, 0.f, 1.f, 0.f);
 
-				//choose color
-				if(map->areFreeCellsOrHaveUnits(*i, building->getSize(), buildField, units)) {
-					color= Vec4f(1.f, 1.f, 1.f, 0.5f);
+				// choose color
+				if (map->areFreeCellsOrHaveUnits(*i, building->getSize(), buildField, units)) {
+					color = Vec4f(1.f, 1.f, 1.f, 0.5f);
 				} else {
-					color= Vec4f(1.f, 0.f, 0.f, 0.5f);
+					color = Vec4f(1.f, 0.f, 0.f, 0.5f);
 				}
 
 				modelRenderer->begin(true, true, false);

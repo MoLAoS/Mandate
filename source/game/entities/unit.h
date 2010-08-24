@@ -59,10 +59,11 @@ using namespace Shared::Graphics;
 
 using Shared::Platform::Chrono;
 using Shared::Util::SingleTypeFactory;
-using namespace Glest::ProtoTypes;
-using Glest::Sim::Map;
 
 namespace Glest { namespace Entities {
+using namespace ProtoTypes;
+using Sim::Map;
+//using Search::CardinalDir;
 
 class Vec2iList : public list<Vec2i> {
 public:
@@ -185,6 +186,7 @@ private:
 	float lastRotation;		/**< facing last frame, in degrees */
 	float targetRotation;	/**< desired facing, in degrees*/
 	float rotation;			/**< current facing, in degrees */
+	CardinalDir m_facing;	/**< facing for buildings */
 
 	const UnitType *type;			/**< the UnitType of this unit */
 	const ResourceType *loadType;	/**< the type if resource being carried */
@@ -236,7 +238,8 @@ public:
 	UnitSignal		Died;	/**<  */
 
 private:
-	Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master = NULL);
+	Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
+		CardinalDir face = CardinalDir::NORTH, Unit* master = NULL);
 	Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
 	~Unit();
 
@@ -300,6 +303,8 @@ public:
 	const RepairCommandType *getRepairCommandType(const Unit *u) const;
 	int getDeadCount() const					{return deadCount;}
 	bool isMobile ()							{ return type->isMobile(); }
+	void setModelFacing(CardinalDir value);
+	CardinalDir getModelFacing() const			{ return m_facing; }
 
 	//-- for carry units
 	UnitContainer &getUnitsToCarry()			{return unitsToCarry;}
@@ -498,7 +503,7 @@ public:
 	UnitFactory();
 	~UnitFactory();
 	Unit* newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
-	Unit* newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master = NULL);
+	Unit* newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master = NULL);
 	Unit* getUnit(int id);
 	void onUnitDied(Unit *unit);
 	void update();

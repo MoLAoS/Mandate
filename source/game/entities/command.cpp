@@ -81,7 +81,8 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 }
 
 
-Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, Unit *commandedUnit)
+Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
+				 const UnitType *unitType, CardinalDir facing, Unit *commandedUnit)
 		: archetype(CommandArchetype::GIVE_COMMAND)
 		, type(type)
 		, flags(flags)
@@ -90,6 +91,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, unitRef(-1)
 		, unitRef2(-1)
 		, unitType(unitType)
+		, facing(facing)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -106,6 +108,7 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 
 	string unitTypeName = node->getChildStringValue("unitType");
 	unitType = unitTypeName == "none" ? NULL : ft->getUnitType(unitTypeName);
+	facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
 }
 
 Unit* Command::getUnit() const {

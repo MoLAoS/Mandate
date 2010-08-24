@@ -338,7 +338,6 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		}
 	} else {
 		size_t vfCount = frameCount * vertexCount;
-		cout << "reading " << (vfCount * 12) << " bytes of vertex data.\n";
 		if (f->read(vertices, 12 * vfCount, 1) != 1) {
 			throw runtime_error("error reading mesh, insufficient vertex data.");
 		}
@@ -351,10 +350,11 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	if (meshHeader.textures && f->read(texCoords, sizeof(Vec2f)*vertexCount, 1) != 1) {
 		throw runtime_error("error reading mesh, insufficient texture co-ordinate data.");
 	}
-	if (f->read(indices, sizeof(uint32)*indexCount, 1) != 1) {
-		throw runtime_error("error reading mesh, insufficient vertex index data.");
+	if (indexCount) {
+		if (f->read(indices, sizeof(uint32)*indexCount, 1) != 1) {
+			throw runtime_error("error reading mesh, insufficient vertex index data.");
+		}
 	}
-
 	//tangents
 	if (textures[mtNormal]) {
 		computeTangents();

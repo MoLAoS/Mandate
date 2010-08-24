@@ -276,7 +276,7 @@ public:
 
 	void getOccupants(vector<Unit *> &results, const Vec2i &pos, int size, Zone field) const;
 
-	bool canOccupy(const Vec2i &pos, Field field, const UnitType *ut);
+	bool canOccupy(const Vec2i &pos, Field field, const UnitType *ut, CardinalDir facing);
 
 	bool fieldsCompatible ( Cell *cell, Field mf ) const;
 	bool isFieldMapCompatible ( const Vec2i &pos, const UnitType *unitType ) const;

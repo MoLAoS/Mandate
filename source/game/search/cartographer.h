@@ -87,11 +87,13 @@ struct StoreMapKey {
 struct BuildSiteMapKey {
 	const UnitType *buildingType;
 	Vec2i buildingPosition;
+	CardinalDir buildingFacing;
 	Field workerField;
 	int workerSize;
 
-	BuildSiteMapKey(const UnitType *type, const Vec2i &pos, Field f, int s)
-			: buildingType(type), buildingPosition(pos), workerField(f), workerSize(s) {}
+	BuildSiteMapKey(const UnitType *type, const Vec2i &pos, CardinalDir facing, Field f, int s)
+			: buildingType(type), buildingPosition(pos), buildingFacing(facing)
+			, workerField(f), workerSize(s) {}
 
 	bool operator<(const BuildSiteMapKey &that) const {
 		return (memcmp(this, &that, sizeof(BuildSiteMapKey)) < 0);
@@ -154,22 +156,22 @@ private:
 	void initResourceMap(ResourceMapKey key, PatchMap<1> *pMap);
 	void fixupResourceMaps(const ResourceType *rt, const Vec2i &pos);
 
-	PatchMap<1>* buildAdjacencyMap(const UnitType *uType, const Vec2i &pos, Field f, int sz);
+	PatchMap<1>* buildAdjacencyMap(const UnitType *uType, const Vec2i &pos, CardinalDir facing, Field f, int sz);
 	PatchMap<1>* buildAdjacencyMap(const UnitType *uType, const Vec2i &pos) {
-		return buildAdjacencyMap(uType, pos, Field::LAND, 1);
+		return buildAdjacencyMap(uType, pos, CardinalDir::NORTH, Field::LAND, 1);
 	}
 
 	PatchMap<1>* buildStoreMap(StoreMapKey key) {
 		const_cast<Unit*>(key.storeUnit)->Died.connect(this, &Cartographer::onStoreDestroyed);
 		return (storeMaps[key] = buildAdjacencyMap(key.storeUnit->getType(), 
-			key.storeUnit->getPos(), key.workerField, key.workerSize));
+			key.storeUnit->getPos(), key.storeUnit->getModelFacing(), key.workerField, key.workerSize));
 	}
 
 	IF_DEBUG_EDITION( void debugAddBuildSiteMap(PatchMap<1>*); )
 
 	PatchMap<1>* buildSiteMap(BuildSiteMapKey key) {
 		PatchMap<1> *sMap = siteMaps[key] = buildAdjacencyMap(key.buildingType, key.buildingPosition,
-			key.workerField, key.workerSize);
+			key.buildingFacing, key.workerField, key.workerSize);
 		IF_DEBUG_EDITION( debugAddBuildSiteMap(sMap); )
 		return sMap;
 	}
@@ -259,8 +261,8 @@ public:
 
 	}
 
-	PatchMap<1>* getSiteMap(const UnitType *ut, const Vec2i &pos, Unit *worker) {
-		BuildSiteMapKey key(ut, pos, worker->getCurrField(), worker->getSize());
+	PatchMap<1>* getSiteMap(const UnitType *ut, const Vec2i &pos, CardinalDir face, Unit *worker) {
+		BuildSiteMapKey key(ut, pos, face, worker->getCurrField(), worker->getSize());
 		return getSiteMap(key);
 	}
 

@@ -189,8 +189,8 @@ public:
 	}
 
 	//cellmap
-	bool getCellMapCell(Vec2i pos) const { return m_cellMap->getInfluence(pos); }
-	bool getCellMapCell(int x, int y) const	{ return m_cellMap->getInfluence(Vec2i(x,y)); }
+	bool getCellMapCell(Vec2i pos, CardinalDir facing) const;
+	bool getCellMapCell(int x, int y, CardinalDir facing) const	{ return getCellMapCell(Vec2i(x,y), facing); }
 
 	const PatchMap<1>& getMinimapFootprint() const { return *m_colourMap; }
 

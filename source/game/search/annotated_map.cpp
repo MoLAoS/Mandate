@@ -359,19 +359,19 @@ void AnnotatedMap::annotateUnit(const Unit *unit, const Field field) {
 	assert(cellMap->isInside(pos));
 	assert(cellMap->isInside(pos.x + size - 1, pos.y + size - 1));
 	// first, re-evaluate the cells occupied
-	for ( int i = size - 1; i >= 0 ; --i ) {
-		for ( int j = size - 1; j >= 0; --j ) {
+	for (int i = size - 1; i >= 0 ; --i) {
+		for (int j = size - 1; j >= 0; --j) {
 			Vec2i occPos = pos;
 			occPos.x += i; occPos.y += j;
-			if ( !unit->getType()->hasCellMap() || unit->getType()->getCellMapCell(i, j) ) {
-				if ( localAnnt.find(occPos) == localAnnt.end() ) {
+			if (!unit->getType()->hasCellMap() || unit->getType()->getCellMapCell(i, j, unit->getModelFacing())) {
+				if (localAnnt.find(occPos) == localAnnt.end()) {
 					localAnnt[occPos] = metrics[occPos].get(field);
 				}
 				metrics[occPos].set(field, 0);
 			} else {
 				uint32 old =  metrics[occPos].get(field);
 				computeClearance(occPos, field);
-				if ( old != metrics[occPos].get(field) && localAnnt.find(occPos) == localAnnt.end() ) {
+				if (old != metrics[occPos].get(field) && localAnnt.find(occPos) == localAnnt.end()) {
 					localAnnt[occPos] = old;
 				}
 			}

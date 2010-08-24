@@ -106,7 +106,8 @@ void WaypointPath::condense() {
 // ============================ Constructor & destructor =============================
 
 /** Construct Unit object */
-Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master)
+Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
+		   CardinalDir facing, Unit* master)
         : visible(true)
         , id(id)
         , hp(1)
@@ -136,6 +137,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, lastRotation(0.f)
         , targetRotation(0.f)
         , rotation(0.f)
+		, m_facing(facing)
         , type(type)
         , loadType(0)
         , currSkill(0)
@@ -155,6 +157,8 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
+
+	setModelFacing(m_facing);
 }
 
 
@@ -181,6 +185,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	lastRotation = node->getChildFloatValue("lastRotation");
 	targetRotation = node->getChildFloatValue("targetRotation");
 	rotation = node->getChildFloatValue("rotation");
+	m_facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
 
 	progress2 = node->getChildIntValue("progress2");
 	targetField = (Field)node->getChildIntValue("targetField");
@@ -271,6 +276,7 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("lastRotation", lastRotation);
 	node->addChild("targetRotation", targetRotation);
 	node->addChild("rotation", rotation);
+	node->addChild("facing", int(m_facing));
 	node->addChild("type", type->getName());
 	node->addChild("loadType", loadType ? loadType->getName() : "null_value");
 	node->addChild("currSkill", currSkill ? currSkill->getName() : "null_value");
@@ -314,7 +320,7 @@ Vec2i Unit::getNearestOccupiedCell(const Vec2i &from) const {
 
 		for (int x = 0; x < size; ++x) {
 			for (int y = 0; y < size; ++y) {
-				if (!type->hasCellMap() || type->getCellMapCell(x, y)) {
+				if (!type->hasCellMap() || type->getCellMapCell(x, y, m_facing)) {
 					Vec2i currPos = pos + Vec2i(x, y);
 					float dist = from.dist(currPos);
 					if (dist < nearestDist) {
@@ -329,46 +335,7 @@ Vec2i Unit::getNearestOccupiedCell(const Vec2i &from) const {
 		return nearestPos;
 	}
 }
-/* *
- * If the unit has a cell map, then return the nearest position to the center that is a free cell
- * in the cell map or pos if no cell map.
- */
-/*
-Vec2i Unit::getCellPos() const {
 
-	if (type->hasCellMap()) {
-		//find nearest pos to center that is free
-		Vec2i centeredPos = getCenteredPos();
-		float nearestDist = 100000.f;
-		Vec2i nearestPos = pos;
-
-		for (int i = 0; i < type->getSize(); ++i) {
-			for (int j = 0; j < type->getSize(); ++j) {
-				if (type->getCellMapCell(i, j)) {
-					Vec2i currPos = pos + Vec2i(i, j);
-					float dist = currPos.dist(centeredPos);
-					if (dist < nearestDist) {
-						nearestDist = dist;
-						nearestPos = currPos;
-					}
-				}
-			}
-		}
-		return nearestPos;
-	}
-	return pos;
-}*/
-
-/*
-float Unit::getVerticalRotation() const{
-	/ *if(type->getProperty(UnitType::pRotatedClimb) && currSkill->getClass()==SkillClass::MOVE){
-		float heightDiff= map->getCell(pos)->getHeight() - map->getCell(targetPos)->getHeight();
-		float dist= pos.dist(targetPos);
-		return radToDeg(atan2(heightDiff, dist));
-	}* /
-	return 0.f;
-}
-*/
 /** query completeness of thing this unit is producing
   * @return percentage complete, or -1 if not currently producing anything */
 int Unit::getProductionPercent() const {
@@ -526,6 +493,11 @@ void Unit::face(const Vec2i &nextPos) {
 	Vec2i relPos = nextPos - pos;
 	Vec2f relPosf = Vec2f((float)relPos.x, (float)relPos.y);
 	targetRotation = radToDeg(atan2f(relPosf.x, relPosf.y));
+}
+
+void Unit::setModelFacing(CardinalDir value) {
+	m_facing = value;
+	lastRotation = targetRotation = rotation = value * 90.f;
 }
 
 void Unit::startAttackSystems(const AttackSkillType *ast) {
@@ -1714,7 +1686,8 @@ CommandResult Unit::checkCommand(const Command &command) const {
 	//build command specific, check resources and requirements for building
 	if (ct->getClass() == CommandClass::BUILD) {
 		const UnitType *builtUnit = command.getUnitType();
-		if (static_cast<const BuildCommandType*>(ct)->isBlocked(builtUnit, command.getPos())) {
+		const BuildCommandType *bct = static_cast<const BuildCommandType*>(ct);
+		if (bct->isBlocked(builtUnit, command.getPos(), command.getFacing())) {
 			return CommandResult::FAIL_BLOCKED;
 		}
 		if (!faction->reqsOk(builtUnit)) {
@@ -1855,8 +1828,8 @@ Unit* UnitFactory::newInstance(const XmlNode *node, Faction *faction, Map *map, 
 	return unit;
 }
 
-Unit* UnitFactory::newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, Unit* master) {
-	Unit *unit = new Unit(idCounter, pos, type, faction, map, master);
+Unit* UnitFactory::newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face,  Unit* master) {
+	Unit *unit = new Unit(idCounter, pos, type, faction, map, face, master);
 	unitMap[idCounter] = unit;
 	unit->Died.connect(this, &UnitFactory::onUnitDied);
 	

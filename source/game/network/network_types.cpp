@@ -33,7 +33,12 @@ NetworkCommand::NetworkCommand(Command *command) {
 	unitTypeId = command->getUnitType()
 							? command->getUnitType()->getId()
 							: command->getCommandedUnit()->getType()->getId();
-	targetId = command->getUnit() ? command->getUnit()->getId() : -1;
+
+	if (command->getType()->getClass() == CommandClass::BUILD) {
+		targetId = command->getFacing();
+	} else {
+		targetId = command->getUnit() ? command->getUnit()->getId() : -1;
+	}
 	flags = 0;
 	if (command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
 	if (command->isQueue()) flags |= CmdFlags::QUEUE;
@@ -83,8 +88,13 @@ Command *NetworkCommand::toCommand() const {
 
 	//get target, the target might be dead due to lag, cope with it
 	Unit* target = NULL;
-	if (targetId != GameConstants::invalidId) {
-		target = world.findUnitById(targetId);
+	CardinalDir facing = CardinalDir::NORTH;
+	if (ct->getClass() != CommandClass::BUILD) {
+		if (targetId != GameConstants::invalidId) {
+			target = world.findUnitById(targetId);
+		}
+	} else {
+		facing = enum_cast<CardinalDir>(targetId);
 	}
 
 	//create command
@@ -95,13 +105,9 @@ Command *NetworkCommand::toCommand() const {
 	
 	if (target) {
 		command= new Command(ct, flags, target, unit);
-	} else if(unitType){
-		command= new Command(ct, flags, Vec2i(positionX, positionY), unitType, unit);
-	} /*else if(!target){
-		command= new Command(ct, CommandFlags(), Vec2i(positionX, positionY));
-	} else{
-		command= new Command(ct, CommandFlags(), target);
-	}*/
+	} else if (unitType) {
+		command= new Command(ct, flags, Vec2i(positionX, positionY), unitType, facing, unit);
+	}
 
 	return command;
 }

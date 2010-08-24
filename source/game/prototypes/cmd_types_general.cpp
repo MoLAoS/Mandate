@@ -241,12 +241,25 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		loadOk = false;
 	}
 
-	try { 
-		string producedUnitName= n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
-		producedUnit= ft->getUnitType(producedUnitName);
-	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
-		loadOk = false;
+	if (n->getOptionalChild("produced-unit")) {
+		try { 
+			string producedUnitName= n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
+			m_producedUnit= ft->getUnitType(producedUnitName);
+		} catch (runtime_error e) {
+			g_errorLog.addXmlError(dir, e.what ());
+			loadOk = false;
+		}
+	} else {
+		try {
+			const XmlNode *un = n->getChild("produced-units");
+			for (int i=0; i < un->getChildCount(); ++i) {
+				string name = un->getChild("produced-unit", i)->getAttribute("name")->getRestrictedValue();
+				m_producedUnits.push_back(ft->getUnitType(name));
+			}
+		} catch (runtime_error e) {
+			g_errorLog.addXmlError(dir, e.what ());
+			loadOk = false;
+		}
 	}
 	// finished sound
 	try {
@@ -271,20 +284,32 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 void ProduceCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(produceSkillType->getName());
-	checksum.add(producedUnit->getName());
+	if (m_producedUnit) {
+		checksum.add(m_producedUnit->getName());
+	} else {
+		foreach_const (vector<const UnitType*>, it, m_producedUnits) {
+			checksum.add((*it)->getName());
+		}
+	}
 }
 
 void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
 	produceSkillType->getDesc(str, unit);
-	str+= "\n" + getProducedUnit()->getReqDesc();
+	if (m_producedUnit) {
+		str += "\n" + m_producedUnit->getReqDesc();
+	}
 }
 
-string ProduceCommandType::getReqDesc() const{
-	return RequirableType::getReqDesc()+"\n"+getProducedUnit()->getReqDesc();
+string ProduceCommandType::getReqDesc() const {
+	string res = RequirableType::getReqDesc();
+	if (m_producedUnit) {
+		res += "\n" + m_producedUnit->getReqDesc();
+	}
+	return res;
 }
 
 const ProducibleType *ProduceCommandType::getProduced() const{
-	return producedUnit;
+	return m_producedUnit;
 }
 
 /// 0: start, 1: produce, 2: finsh (ok), 3: cancel (could not place new unit)
@@ -298,10 +323,10 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(produceSkillType);
 	} else {
 		unit->update2();
-
-		if (unit->getProgress2() > producedUnit->getProductionTime()) {
-			Unit *produced = g_simInterface->getUnitFactory().newInstance(Vec2i(0), producedUnit, unit->getFaction(), g_world.getMap());
-				//new Unit(g_world.getNextUnitId(), Vec2i(0), producedUnit, unit->getFaction(), g_world.getMap());
+		const UnitType *prodType = m_producedUnit ? m_producedUnit : command->getUnitType();
+		if (unit->getProgress2() > prodType->getProductionTime()) {
+			Unit *produced = g_simInterface->getUnitFactory().newInstance(
+				Vec2i(0), prodType, unit->getFaction(), g_world.getMap(), CardinalDir::NORTH);
 			if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 				unit->cancelCurrCommand();
 				g_simInterface->getUnitFactory().deleteUnit(unit);

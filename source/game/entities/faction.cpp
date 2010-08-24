@@ -269,9 +269,14 @@ bool Faction::isAvailable(const CommandType *ct) const {
 		}
 		return false;
 
-	case CommandClass::PRODUCE:
-		return ((ProduceCommandType*)ct)->getProduced()->isAvailableInSubfaction(subfaction);
-
+	case CommandClass::PRODUCE: {
+		const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(ct);
+		if (pct->getClicks() == Clicks::ONE) {
+			return pct->getProduced()->isAvailableInSubfaction(subfaction);
+		} else {
+			return true;
+		}
+	}
 	case CommandClass::UPGRADE:
 		return ((UpgradeCommandType*)ct)->getProduced()->isAvailableInSubfaction(subfaction);
 

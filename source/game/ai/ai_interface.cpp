@@ -100,7 +100,7 @@ CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *co
 }
 
 CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos, const UnitType *ut){
-	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos, ut));
+	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos, ut, CardinalDir::NORTH));
 }
 
 CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, Unit *u){
@@ -112,7 +112,7 @@ CommandResult GlestAiInterface::giveCommand(const Unit *unit, const CommandType 
 }
 
 CommandResult GlestAiInterface::giveCommand(const Unit *unit, const CommandType *commandType, const Vec2i &pos, const UnitType* unitType) {
-	return const_cast<Unit*>(unit)->giveCommand(new Command(commandType, CommandFlags(), pos, unitType));
+	return const_cast<Unit*>(unit)->giveCommand(new Command(commandType, CommandFlags(), pos, unitType, CardinalDir::NORTH));
 }
 
 // ==================== get data ====================

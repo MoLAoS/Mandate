@@ -67,6 +67,7 @@ using namespace Glest::Entities;
 using Glest::Gui::Clicks;
 
 namespace Glest { namespace ProtoTypes {
+using Search::CardinalDir;
 
 // =====================================================
 //  class CommandType
@@ -293,9 +294,8 @@ public:
 
 	// prechecks
 	/** @param builtUnitType the unitType to build
-	  * @param pos the position to put the unit
-	  */
-	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos) const;
+	  * @param pos the position to put the unit */
+	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir facing) const;
 
 	//get
 	const BuildSkillType *getBuildSkillType() const	{return buildSkillType;}
@@ -400,11 +400,12 @@ public:
 class ProduceCommandType: public CommandType {
 private:
 	const ProduceSkillType* produceSkillType;
-	const UnitType *producedUnit;
+	const UnitType *m_producedUnit;
+	vector<const UnitType*> m_producedUnits;
 	SoundContainer finishedSounds;
 
 public:
-	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true) {}
+	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true), m_producedUnit(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -415,7 +416,10 @@ public:
 
 	//get
 	const ProduceSkillType *getProduceSkillType() const	{return produceSkillType;}
-	const UnitType *getProducedUnit() const				{return producedUnit;}
+	const UnitType *getProducedUnit() const				{return m_producedUnit;}
+	int getProducedUnitCount() const		{return m_producedUnits.size();}
+	const UnitType *getProducedUnit(int i) const		{return m_producedUnits[i];}
+	virtual Clicks getClicks() const	{ return m_producedUnit ? Clicks::ONE : Clicks::TWO; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::PRODUCE; }

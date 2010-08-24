@@ -144,9 +144,9 @@ private:
 	SelectionQuad selectionQuad;
 	const Object *selectedObject;
 
-	//states
-	bool selectingBuilding;
-	bool m_selectingMorph; // new two-click version only
+	// states
+	bool m_selectingSecond; // two tier command selection
+	CardinalDir m_selectedFacing; // facing for building
 	bool selectingPos;
 	bool selectingMeetingPoint;
 	bool needSelectionUpdate;
@@ -173,6 +173,7 @@ public:
 	const UnitType *getBuilding() const;
 	const Vec2i &getDragStartPos() const			{return dragStartPos;}
 	const BuildPositions &getBuildPositions() const	{return buildPositions;}
+	CardinalDir getBuildingFacing() const			{return m_selectedFacing;}
 
 	const Mouse3d *getMouse3d() const				{return &mouse3d;}
 	Console* getRegularConsole()					{return m_console;}
@@ -186,7 +187,6 @@ public:
 	bool isValidPosObjWorld() const			{return validPosObjWorld;}
 	bool isSelecting() const				{return selectionQuad.isEnabled();}
 	bool isSelectingPos() const				{return selectingPos;}
-	bool isSelectingBuilding() const		{return selectingBuilding;}
 	bool isSelected(const Unit *unit) const	{return selection.hasUnit(unit);}
 	bool isPlacingBuilding() const;
 	bool isDragging() const					{return dragging;}

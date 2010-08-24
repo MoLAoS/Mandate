@@ -37,14 +37,9 @@ namespace Glest { namespace Sim {
 
 // ===================== PUBLIC ========================
 
-CommandResult Commander::tryGiveCommand(
-		const Selection &selection,
-		CommandFlags flags,
-		const CommandType *ct,
-		CommandClass cc,
-		const Vec2i &pos,
-		Unit *targetUnit,
-		const UnitType* unitType) const {
+CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags flags,
+		const CommandType *ct, CommandClass cc, const Vec2i &pos, Unit *targetUnit,
+		const UnitType* unitType, CardinalDir facing) const {
 	if (selection.isEmpty()) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
@@ -74,8 +69,10 @@ CommandResult Commander::tryGiveCommand(
 			if (unitType) { // build (or morph) command
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
+					result = pushCommand(new Command(effectiveCt, flags, pos, unitType, facing, *i));
+				} else {
+					result = pushCommand(new Command(effectiveCt, flags, pos, unitType, CardinalDir::NORTH, *i));
 				}
-				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
 			} else if (targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
 					UnitContainer &units = (*i)->getUnitsToCarry();

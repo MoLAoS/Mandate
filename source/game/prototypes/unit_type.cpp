@@ -595,6 +595,29 @@ bool UnitType::isOfClass(UnitClass uc) const{
 	return false;
 }
 
+bool UnitType::getCellMapCell(Vec2i pos, CardinalDir facing) const {
+	assert(m_cellMap);
+	Vec2i tPos;
+	switch (facing) {
+		case CardinalDir::NORTH:
+			tPos = pos;
+			break;
+		case CardinalDir::EAST:
+			tPos.y = pos.x;
+			tPos.x = size - pos.y - 1;
+			break;
+		case CardinalDir::SOUTH:
+			tPos.x = size - pos.x - 1;
+			tPos.y = size - pos.y - 1;
+			break;
+		case CardinalDir::WEST:
+			tPos.x = pos.y;
+			tPos.y = size - pos.x - 1;
+			break;
+	}
+	return m_cellMap->getInfluence(tPos);
+}
+
 // ==================== PRIVATE ====================
 
 void UnitType::sortSkillTypes() {

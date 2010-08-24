@@ -381,11 +381,11 @@ bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const UnitContain
 	return false;
 }
 
-bool Map::canOccupy(const Vec2i &pos, Field field, const UnitType *ut) {
+bool Map::canOccupy(const Vec2i &pos, Field field, const UnitType *ut, CardinalDir facing) {
 	if (ut->hasCellMap()) {
 		for (int y=0; y < ut->getSize(); ++y) {
 			for (int x=0; x < ut->getSize(); ++x) {
-				if (ut->getCellMapCell(x, y)) {
+				if (ut->getCellMapCell(x, y, facing)) {
 					if (!isFreeCell(pos + Vec2i(x, y), field)) {
 						return false;
 					}
@@ -727,7 +727,7 @@ void Map::putUnitCells(Unit *unit, const Vec2i &pos){
 		for(int y = 0; y < size; ++y) {
 			Vec2i currPos = pos + Vec2i(x, y);
 			assert(isInside(currPos));
-			if (!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
+			if (!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
 				if (getCell(currPos)->getUnit(zone) != NULL) {
 					panic(currPos, unit, getCell(currPos)->getUnit(zone));
 				}
@@ -753,7 +753,7 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 			Vec2i currPos = pos + Vec2i(x, y);
 			assert(isInside(currPos));
 
-			if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
+			if (!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
 				assert(getCell(currPos)->getUnit(zone) == unit);
 				getCell(currPos)->setUnit(zone, NULL);
 			}
@@ -1012,7 +1012,7 @@ void Map::assertUnitCells(const Unit * unit) {
 			for(int y = 0; y < size; ++y) {
 				Vec2i currPos = unit->getPos() + Vec2i(x, y);
 				assert(isInside(currPos));
-				if(!ut->hasCellMap() || ut->getCellMapCell(x, y)) {
+				if(!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
 					if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
 						assert(getCell(currPos)->getUnit(field) == unit);
 					} else {

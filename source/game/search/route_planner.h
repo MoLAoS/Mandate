@@ -157,8 +157,8 @@ public:
 		return findPathToGoal(unit, goal, target);
 	}
 
-	TravelState findPathToBuildSite(Unit *unit, const UnitType *buildingType, const Vec2i &buildingPos) {
-		PMap1Goal goal(world->getCartographer()->getSiteMap(buildingType, buildingPos, unit));
+	TravelState findPathToBuildSite(Unit *unit, const UnitType *buildingType, const Vec2i &buildingPos, CardinalDir facing) {
+		PMap1Goal goal(world->getCartographer()->getSiteMap(buildingType, buildingPos, facing, unit));
 		return findPathToGoal(unit, goal, unit->getTargetPos());
 	}
 

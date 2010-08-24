@@ -58,7 +58,8 @@ void Gaia::init() {
 			int ui = m_rand.randRange(0, typesByField[f].size());
 			const UnitType *ut = typesByField[f][ui];
 			Vec2i pos = m_spawnPoints[f][i];
-			Unit *glestimal = g_simInterface->getUnitFactory().newInstance(pos, ut, m_faction, &g_map);
+			Unit *glestimal = g_simInterface->getUnitFactory().newInstance(
+				pos, ut, m_faction, &g_map, CardinalDir::NORTH);
 
 			if (g_world.placeUnit(pos, 5, glestimal)) {
 				glestimal->create();

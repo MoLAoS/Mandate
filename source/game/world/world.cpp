@@ -654,8 +654,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	if (!map.isInside(pos)) {
 		return -4;
 	}
-	Unit *unit = iSim->getUnitFactory().newInstance(pos, ut, faction, &map);
-	//Unit* unit= new Unit(getNextUnitId(), pos, ut, faction, &map);
+	Unit *unit = iSim->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
 	if (placeUnit(pos, generationArea, unit, true)) {
 		unit->create(true);
 		unit->born();
@@ -1087,8 +1086,7 @@ void World::initUnits() {
 			const UnitType *ut = ft->getStartingUnit(j);
 			int initNumber = ft->getStartingUnitAmount(j);
 			for (int l = 0; l < initNumber; l++) {
-				Unit *unit = iSim->getUnitFactory().newInstance(Vec2i(0), ut, f, &map);
-					//new Unit(getNextUnitId(), Vec2i(0), ut, f, &map);
+				Unit *unit = iSim->getUnitFactory().newInstance(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
 				int startLocationIndex = f->getStartLocationIndex();
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
