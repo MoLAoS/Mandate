@@ -275,9 +275,14 @@ bool Faction::isAvailable(const CommandType *ct) const {
 	case CommandClass::UPGRADE:
 		return ((UpgradeCommandType*)ct)->getProduced()->isAvailableInSubfaction(subfaction);
 
-	case CommandClass::MORPH:
-		return ((MorphCommandType*)ct)->getProduced()->isAvailableInSubfaction(subfaction);
-
+	case CommandClass::MORPH: {
+		const MorphCommandType *mct = static_cast<const MorphCommandType*>(ct);
+		if (mct->isTwoClickCommand()) {
+			return true;
+		} else {
+			return mct->getProduced()->isAvailableInSubfaction(subfaction);
+		}
+	}
 	default:
 		return true;
 	}

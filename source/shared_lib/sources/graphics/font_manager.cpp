@@ -28,12 +28,6 @@ FontManager::~FontManager(){
 	end();
 }
 
-Font* FontManager::newBitMapFont() {
-	Font *font= GraphicsInterface::getInstance().getFactory()->newBitMapFont();
-	fonts.push_back(font);
-	return font;
-}
-
 Font* FontManager::newFreeTypeFont() {
 	Font *font= GraphicsInterface::getInstance().getFactory()->newFreeTypeFont();
 	fonts.push_back(font);

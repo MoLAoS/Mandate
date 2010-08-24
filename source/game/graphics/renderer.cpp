@@ -1265,14 +1265,24 @@ void Renderer::renderSelectionEffects() {
 				//arrow target
 				Vec3f arrowTarget;
 				Command *c= unit->getCurrCommand();
-				if (c->getUnit() != NULL && !c->getUnit()->isCarried()) {
-					arrowTarget= c->getUnit()->getCurrVectorFlat();
+				bool doArrow = true;
+				if (c->getUnit() != NULL) {
+					if (c->getUnit()->isCarried()) {
+						doArrow = false;
+					} else {
+						arrowTarget= c->getUnit()->getCurrVectorFlat();
+					}
 				} else {
 					Vec2i pos= c->getPos();
-					arrowTarget= Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
+					if (pos == Command::invalidPos) {
+						doArrow = false;
+					} else {
+						arrowTarget = Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
+					}
 				}
-
-				renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
+				if (doArrow) {
+					renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
+				}
 			}
 		}
 

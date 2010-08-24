@@ -1578,8 +1578,8 @@ void Unit::incKills() {
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
-bool Unit::morph(const MorphCommandType *mct) {
-	const UnitType *morphUnitType = mct->getMorphUnit();
+bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
+	const UnitType *morphUnitType = ut ? ut : mct->getMorphUnit();
 	Field newField = morphUnitType->getField();
 	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);

@@ -62,9 +62,7 @@ public:
 
 	//text
 	virtual FontManager *newFontManager()			{return NULL;}
-	virtual TextRenderer *newTextRendererBM()		{return NULL;}
 	virtual TextRenderer *newTextRendererFT()		{return NULL;}
-	virtual Font *newBitMapFont()					{return NULL;}
 	virtual Font *newFreeTypeFont()					{return NULL;}
 
 	//particles

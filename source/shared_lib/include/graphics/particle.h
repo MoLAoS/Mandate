@@ -19,7 +19,6 @@
 #include "pixmap.h"
 #include "texture_manager.h"
 #include "random.h"
-#include "entity.h"
 #include "math_util.h"
 #include "xml_parser.h"
 #include "util.h"
@@ -37,8 +36,6 @@ class ParticleSystem;
 class FireParticleSystem;
 class RainParticleSystem;
 class SnowParticleSystem;
-//class Projectile;
-//class Splash;
 class ParticleRenderer;
 class ModelRenderer;
 class Model;

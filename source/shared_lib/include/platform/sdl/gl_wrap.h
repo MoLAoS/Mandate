@@ -49,19 +49,12 @@ public:
 // Global Fcs
 // =====================================================
 
-void createGlFontBitmaps(uint32 &base, const string &type, int size, int width, int charCount, FontMetrics &metrics);
-void createGlFontOutlines(uint32 &base, const string &type, int width, float depth, int charCount, FontMetrics &metrics);
 inline const char *getPlatformExtensions(const PlatformContextGl *pcgl) {return "";}
 
 inline void *getGlProcAddress(const char *procName) {
 	void* proc = SDL_GL_GetProcAddress(procName);
 	assert(proc);
 	return proc;
-}
-
-inline void createGlFontOutlines(uint32 &base, const string &type, int width, float depth,
-		int charCount, FontMetrics &metrics) {
-	NOIMPL;
 }
 
 }}//end namespace

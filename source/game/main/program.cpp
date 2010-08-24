@@ -49,13 +49,6 @@ namespace Glest { namespace Main {
 Program::CrashProgramState::CrashProgramState(Program &program, const exception *e)
 		: ProgramState(program)
 		, done(false) {
-	try {
-		g_renderer.saveScreen("glestadv-crash.tga");
-	} catch(runtime_error &e) {
-		printf("Exception: %s\n", e.what());
-	}
-
-	program.clear();
 	string msg;
 	if(e) {
 		msg = string("Exception: ") + e->what();
@@ -66,10 +59,11 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 	}
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	msgBox = MessageDialog::showDialog(pos, size, "Crash!", msg, g_lang.get("Exit"), "");
+	msgBox->Button1Clicked.connect(this, &Program::CrashProgramState::onExit);
 	this->e = e;
 }
 
-void Program::CrashProgramState::onExit(MessageDialog::Ptr) {
+void Program::CrashProgramState::onExit(BasicDialog::Ptr) {
 	done = true;
 }
 
@@ -77,6 +71,14 @@ void Program::CrashProgramState::update() {
 	if (done) {
 		program.exit();
 	}
+}
+
+void Program::CrashProgramState::renderBg() {
+	g_renderer.clearBuffers();
+}
+
+void Program::CrashProgramState::renderFg() {
+	g_renderer.swapBuffers();
 }
 
 // =====================================================
@@ -226,12 +228,12 @@ void Program::loop() {
 			programState->renderFg();
 		}
 
-		//update camera
+		// update camera
 		while (updateCameraTimer.isTime()) {
 			programState->updateCamera();
 		}
 
-		//update world
+		// update world
 		while (updateTimer.isTime() && !terminating) {
 			++updateCounter;
 			if (updateCounter % 4 == 0) {
@@ -251,7 +253,7 @@ void Program::loop() {
 			}
 		}
 
-		//tick timer
+		// tick timer
 		while (tickTimer.isTime() && !terminating) {
 			programState->tick();
 		}
@@ -433,8 +435,13 @@ void Program::restoreDisplaySettings(){
 void Program::crash(const exception *e) {
 	// if we've already crashed then we just try to exit
 	if(!crashed) {
+		try {
+			g_renderer.saveScreen("glestadv-crash.tga");
+		} catch(runtime_error &e) {
+			printf("Exception: %s\n", e.what());
+		}
 		crashed = true;
-
+		clear();
 		if (programState) {
 			delete programState;
 		}

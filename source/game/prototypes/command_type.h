@@ -102,7 +102,7 @@ public:
 
 	//get
 	virtual CommandClass getClass() const = 0;
-	Clicks getClicks() const							{return clicks;}
+	virtual Clicks getClicks() const					{return clicks;}
 	string getDesc(const Unit *unit) const {
 		string str;
 		str = name + "\n";
@@ -459,25 +459,30 @@ public:
 
 class MorphCommandType: public CommandType {
 private:
-	const MorphSkillType* morphSkillType;
-	const UnitType* morphUnit;
-	int discount;
-	SoundContainer finishedSounds;
+	const MorphSkillType*	m_morphSkillType;
+	const UnitType*			m_morphUnit;
+	vector<const UnitType*> m_morphUnits;
+	int						m_discount;
+	SoundContainer			m_finishedSounds;
 
 public:
-	MorphCommandType() : CommandType("Morph", Clicks::ONE) {}
+	MorphCommandType() : CommandType("Morph", Clicks::ONE), m_morphUnit(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
-	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
 	//get
-	const MorphSkillType *getMorphSkillType() const	{return morphSkillType;}
-	const UnitType *getMorphUnit() const			{return morphUnit;}
-	int getDiscount() const							{return discount;}
+	const MorphSkillType *getMorphSkillType() const	{return m_morphSkillType;}
+	const UnitType *getMorphUnit() const			{return m_morphUnit;}
+	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
+	int getMorphUnitCount() const					{return m_morphUnits.size();}
+	Clicks getClicks() const						{return m_morphUnit ? Clicks::ONE : Clicks::TWO;}
+	bool isTwoClickCommand() const					{return !m_morphUnit;}
+	int getDiscount() const							{return m_discount;}
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MORPH; }

@@ -146,13 +146,13 @@ private:
 
 	//states
 	bool selectingBuilding;
+	bool m_selectingMorph; // new two-click version only
 	bool selectingPos;
 	bool selectingMeetingPoint;
 	bool needSelectionUpdate;
 	int currentGroup;
 
 	static UserInterface* currentGui;
-
 
 public:
 	UserInterface(GameState &game);
@@ -261,7 +261,7 @@ private:
 	void computeDisplay();
 	void resetState();
 	void mouseDownDisplayUnitSkills(int posDisplay);
-	void mouseDownDisplayUnitBuild(int posDisplay);
+	void mouseDownSecondTier(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
 public:

@@ -109,7 +109,8 @@ UserInterface::UserInterface(GameState &game)
 		, m_dialogConsole(0)
 		, m_minimap(0)
 		, m_display(0)
-		, m_resourceBar(0) {
+		, m_resourceBar(0)
+		, m_selectingMorph(false) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -125,12 +126,6 @@ UserInterface::UserInterface(GameState &game)
 	needSelectionUpdate = false;
 	currentGui = this;
 	currentGroup= invalidGroupIndex;
-
-	int w = 150;
-	int h = 500;
-	int x = g_metrics.getScreenW() - 20 - w;
-	int y = (g_metrics.getScreenH() - h) / 2;
-	m_display = new Display(this, Vec2i(x,y), Vec2i(w, h));
 }
 
 UserInterface::~UserInterface() {
@@ -168,6 +163,11 @@ void UserInterface::init() {
 			}
 		}
 	}
+	int w = 150, h = 500;
+	int x = g_metrics.getScreenW() - 20 - w;
+	int y = (g_metrics.getScreenH() - h) / 2;
+	m_display = new Display(this, Vec2i(x,y), Vec2i(w, h));
+
 	// create ResourceBar, connect thisFactions Resources to it...
 	m_resourceBar = new ResourceBar(g_world.getThisFaction(), displayResources);
 }
@@ -215,6 +215,7 @@ bool UserInterface::isPlacingBuilding() const {
 
 void UserInterface::resetState() {
 	selectingBuilding = false;
+	m_selectingMorph = false;
 	selectingPos = false;
 	selectingMeetingPoint = false;
 	activePos = invalidPos;
@@ -262,8 +263,8 @@ void UserInterface::onResourceDepleted(Vec2i cellPos) {
 void UserInterface::commandButtonPressed(int posDisplay) {
 	if (!selectingPos && !selectingMeetingPoint) {
 		if (selection.isComandable()) {
-			if (selectingBuilding) {
-				mouseDownDisplayUnitBuild(posDisplay); // showBuildingInfo()
+			if (selectingBuilding || m_selectingMorph) {
+				mouseDownSecondTier(posDisplay); // showBuildingInfo()
 			} else {
 				mouseDownDisplayUnitSkills(posDisplay); // showCommandInfo()
 			}
@@ -525,10 +526,10 @@ void UserInterface::hotKey(UserCommand cmd) {
 }
 
 bool UserInterface::cancelPending() {
-	if(selectingPos || selectingMeetingPoint){
+	if (selectingPos || selectingMeetingPoint) {
 		resetState();
 		return true;
-	} else if(!selection.isEmpty()) {
+	} else if (!selection.isEmpty()) {
 		selection.clear();
 		return true;
 	} else {
@@ -552,66 +553,54 @@ void UserInterface::save(XmlNode *node) const {
 void UserInterface::giveOneClickOrders() {
 	CommandResult result;
 	CommandFlags flags(CommandProperties::QUEUE, input.isShiftDown());
-
 	if (selection.isUniform()) {
 		result = commander->tryGiveCommand(selection, flags, activeCommandType);
 	} else {
 		result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass);
 	}
-
 	addOrdersResultToConsole(activeCommandClass, result);
-
 	activeCommandType = NULL;
 	activeCommandClass = CommandClass::STOP;
 }
 
 void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) {
-
-	//give order
+	// give order
 	CommandResult result = commander->tryGiveCommand(selection,
 			CommandFlags(CommandProperties::QUEUE, input.isShiftDown()), NULL, CommandClass::NULL_COMMAND, targetPos, targetUnit);
 
-	//graphical result
+	// graphical result
 	addOrdersResultToConsole(activeCommandClass, result);
-	if(result == CommandResult::SUCCESS || result == CommandResult::SOME_FAILED) {
+	if (result == CommandResult::SUCCESS || result == CommandResult::SOME_FAILED) {
 		posObjWorld = targetPos;
 		if (!targetUnit) {
 			mouse3d.show(targetPos);
 		}
-
-		if(random.randRange(0, 1)==0){
-			SoundRenderer::getInstance().playFx(
-				selection.getFrontUnit()->getType()->getCommandSound(),
-				selection.getFrontUnit()->getCurrVector(),
-				gameCamera->getPos());
+		if (random.randRange(0, 1) == 0) {
+			SoundRenderer::getInstance().playFx(selection.getFrontUnit()->getType()->getCommandSound(),
+				selection.getFrontUnit()->getCurrVector(), gameCamera->getPos());
 		}
 	}
-
-	//reset
+	// reset
 	resetState();
 }
 
 void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit) {
-
 	CommandResult result;
 	CommandFlags flags(CommandProperties::QUEUE, input.isShiftDown());
 
-	//give orders to the units of this faction
-
-	if(!selectingBuilding) {
-
-		if(selection.isUniform()) {
+	// give orders to the units of this faction
+	if (!selectingBuilding) {
+		if (selection.isUniform()) {
 			result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit);
 		} else {
 			result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		//selecting building
+		// selecting building
 		assert(isPlacingBuilding());
 
-		//if this is a drag&drop then start dragging and wait for mouse up
-
-		if(choosenBuildingType->isMultiBuild() && !dragging) {
+		// if this is a drag&drop then start dragging and wait for mouse up
+		if (choosenBuildingType->isMultiBuild() && !dragging) {
 			dragging = true;
 			dragStartPos = posObjWorld;
 			return;
@@ -621,7 +610,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 		bool firstBuildPosition = true;
 
 		BuildPositions::const_iterator i;
-		for(i = buildPositions.begin(); i != buildPositions.end(); ++i) {
+		for (i = buildPositions.begin(); i != buildPositions.end(); ++i) {
 			flags.set(CommandProperties::QUEUE, input.isShiftDown() || !firstBuildPosition);
 			flags.set(CommandProperties::DONT_RESERVE_RESOURCES, selection.getCount() > 1 || !firstBuildPosition);
 			result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, *i, NULL, choosenBuildingType);
@@ -649,31 +638,30 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 }
 
 void UserInterface::centerCameraOnSelection(){
-	if(!selection.isEmpty()){
-		Vec3f refPos= selection.getRefPos();
+	if (!selection.isEmpty()) {
+		Vec3f refPos = selection.getRefPos();
 		gameCamera->centerXZ(refPos.x, refPos.z);
 	}
 }
 
 void UserInterface::centerCameraOnLastEvent(){
 	Vec3f lastEventLoc = world->getThisFaction()->getLastEventLoc();
-	if(!(lastEventLoc.x == -1.0f)){
+	if (!(lastEventLoc.x == -1.0f)) {
 		gameCamera->centerXZ(lastEventLoc.x, lastEventLoc.z);
 	}
 }
 
 void UserInterface::selectInterestingUnit(InterestingUnitType iut){
-	const Faction* thisFaction= world->getThisFaction();
-	const Unit* previousUnit= NULL;
-	bool previousFound= true;
+	const Faction* thisFaction = world->getThisFaction();
+	const Unit* previousUnit = NULL;
+	bool previousFound = true;
 
 	//start at the next harvester
-	if(selection.getCount()==1){
-		const Unit* refUnit= selection.getFrontUnit();
-
-		if(refUnit->isInteresting(iut)){
-			previousUnit= refUnit;
-			previousFound= false;
+	if (selection.getCount() == 1) {
+		const Unit* refUnit = selection.getFrontUnit();
+		if (refUnit->isInteresting(iut)) {
+			previousUnit = refUnit;
+			previousFound = false;
 		}
 	}
 
@@ -681,28 +669,24 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 	selection.clear();
 
 	//search
-	for(int i= 0; i<thisFaction->getUnitCount(); ++i){
-		Unit* unit= thisFaction->getUnit(i);
-
-		if(previousFound){
-			if(unit->isInteresting(iut)){
+	for(int i=0; i < thisFaction->getUnitCount(); ++i) {
+		Unit* unit = thisFaction->getUnit(i);
+		if (previousFound) {
+			if (unit->isInteresting(iut)) {
 				selection.select(unit);
 				break;
 			}
-		}
-		else{
-			if(unit==previousUnit){
-				previousFound= true;
+		} else {
+			if (unit == previousUnit) {
+				previousFound = true;
 			}
 		}
 	}
-
-	//search again if we have a previous
-	if(selection.isEmpty() && previousUnit!=NULL && previousFound==true) {
-		for(int i= 0; i<thisFaction->getUnitCount(); ++i) {
-			Unit* unit= thisFaction->getUnit(i);
-
-			if(unit->isInteresting(iut)) {
+	// search again if we have a previous
+	if (selection.isEmpty() && previousUnit != NULL && previousFound == true) {
+		for (int i=0; i < thisFaction->getUnitCount(); ++i) {
+			Unit* unit = thisFaction->getUnit(i);
+			if (unit->isInteresting(iut)) {
 				selection.select(unit);
 				break;
 			}
@@ -711,10 +695,10 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 }
 
 void UserInterface::clickCommonCommand(CommandClass commandClass) {
-	for(int i= 0; i<Display::downCellCount; ++i) {
+	for(int i=0; i < Display::downCellCount; ++i) {
 		const CommandType* ct = m_display->getCommandType(i);
-		if(((ct && ct->getClass() == commandClass) || m_display->getCommandClass(i) == commandClass)
-				&& m_display->getDownLighted(i)) {
+		if (((ct && ct->getClass() == commandClass) || m_display->getCommandClass(i) == commandClass)
+		&& m_display->getDownLighted(i)) {
 			mouseDownDisplayUnitSkills(i);
 			break;
 		}
@@ -722,75 +706,72 @@ void UserInterface::clickCommonCommand(CommandClass commandClass) {
 }
 
 void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
-	if(selection.isEmpty()) {
+	if (selection.isEmpty()) {
 		return;
 	}
-	if(posDisplay == cancelPos) {
-		if(isPlacingBuilding()) {
+	if (posDisplay == cancelPos) {
+		if (isPlacingBuilding()) {
 			resetState();
-		} else if(selection.isCancelable()) {
+		} else if (selection.isCancelable()) {
 			commander->tryCancelCommand(&selection);
 		} else {
 			// not our click
 		}
-	} else if(posDisplay == autoRepairPos) {
+	} else if (posDisplay == autoRepairPos) {
 		bool newState = selection.getAutoRepairState() == arsOn ? false : true;
 		commander->trySetAutoRepairEnabled(selection,
 				CommandFlags(CommandProperties::QUEUE, input.isShiftDown()), newState);
-	} else if(posDisplay == meetingPointPos) {
+	} else if (posDisplay == meetingPointPos) {
 		activePos= posDisplay;
 		selectingMeetingPoint= true;
 	} else {
 		const Unit *unit= selection.getFrontUnit();
 
-		//uniform selection
-		if(selection.isUniform()) {
-			if(unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))){
+		if (selection.isUniform()) { // uniform selection
+			if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
 				activeCommandType = m_display->getCommandType(posDisplay);
 				activeCommandClass = activeCommandType->getClass();
-			}
-			else{
+			} else {
 				posDisplay = invalidPos;
 				activeCommandType = NULL;
 				activeCommandClass = CommandClass::STOP;
 				return;
 			}
+		} else { // non uniform selection
+			activeCommandType = NULL;
+			activeCommandClass = m_display->getCommandClass(posDisplay);
 		}
 
-		//non uniform selection
-		else{
-			activeCommandType= NULL;
-			activeCommandClass= m_display->getCommandClass(posDisplay);
-		}
-
-		//give orders depending on command type
-		if(!selection.isEmpty()){
-			//selection.getUnit(0)->getType()->getFirstCtOfClass(activeCommandClass);
+		if (!selection.isEmpty()) { // give orders depending on command type
 			const CommandType *ct= selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
-			if(activeCommandType!=NULL && activeCommandType->getClass()==CommandClass::BUILD){
+			if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
 				assert(selection.isUniform());
-				selectingBuilding= true;
-			}
-			else if(ct->getClicks()==Clicks::ONE) {
+				selectingBuilding = true;
+			} else if (ct->getClicks() == Clicks::ONE) {
 				invalidatePosObjWorld();
 				giveOneClickOrders();
-			}
-			else{
-				selectingPos= true;
-				m_minimap->setLeftClickOrder(true);
-				activePos= posDisplay;
+			} else {
+				if (ct->getClass() == CommandClass::MORPH) {
+					assert(selection.isUniform());
+					m_selectingMorph = true;
+				} else {
+					selectingPos = true;
+					m_minimap->setLeftClickOrder(true);
+					activePos = posDisplay;
+				}
 			}
 		}
 	}
 }
 
-void UserInterface::mouseDownDisplayUnitBuild(int posDisplay){
+void UserInterface::mouseDownSecondTier(int posDisplay){
 	int factionIndex = world->getThisFactionIndex();
 
 	if (posDisplay == cancelPos) {
 		resetState();
 	} else {
-		if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
+		assert(activeCommandType);
+		if (activeCommandType->getClass() == CommandClass::BUILD) {
 			const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
 			const UnitType *ut = bct->getBuilding(m_display->getIndex(posDisplay));
 			if (world->getFaction(factionIndex)->reqsOk(ut)) {
@@ -799,6 +780,18 @@ void UserInterface::mouseDownDisplayUnitBuild(int posDisplay){
 				selectingPos = true;
 				activePos = posDisplay;
 			}
+		} else if (activeCommandType->getClass() == CommandClass::MORPH) {
+			const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
+			const UnitType *ut = mct->getMorphUnit(m_display->getIndex(posDisplay));
+			if (world->getFaction(factionIndex)->reqsOk(ut)) {
+				
+				// Give morph command, with 'ut'
+				CommandResult result = commander->tryGiveCommand(selection, CommandFlags(),
+					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, ut);
+				resetState();
+			}
+		} else {
+			assert(false);
 		}
 	}
 }
@@ -810,7 +803,7 @@ void UserInterface::computeInfoString(int posDisplay) {
 		return;
 	}
 
-	if (!selectingBuilding) {
+	if (!selectingBuilding && !m_selectingMorph) {
 		if (posDisplay == cancelPos) {
 			m_display->setInfoText(g_lang.get("Cancel"));
 		} else if (posDisplay == meetingPointPos) {
@@ -868,7 +861,7 @@ void UserInterface::computeInfoString(int posDisplay) {
 				}
 			}
 		}
-	} else {
+	} else if (selectingBuilding) {
 		if (posDisplay == cancelPos) {
 			m_display->setInfoText(g_lang.get("Return"));
 		} else {
@@ -877,7 +870,16 @@ void UserInterface::computeInfoString(int posDisplay) {
 				m_display->setInfoText(bct->getBuilding(m_display->getIndex(posDisplay))->getReqDesc());
 			}
 		}
- 	}
+	} else { // two-tier morph
+		if (posDisplay == cancelPos) {
+			m_display->setInfoText(g_lang.get("Return"));
+		} else {
+			if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::MORPH) {
+				const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
+				m_display->setInfoText(mct->getMorphUnit(m_display->getIndex(posDisplay))->getReqDesc());
+			}
+		}
+	}
 }
 
 void UserInterface::computeDisplay() {
@@ -899,7 +901,7 @@ void UserInterface::computeDisplay() {
 		}
 	}
 
-	//portraits
+	// portraits
 	for (int i = 0; i < selection.getCount(); ++i) {
 		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
@@ -920,7 +922,7 @@ void UserInterface::computeDisplay() {
 
 	if (selection.isComandable()
 	&& selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
-		if (!selectingBuilding) {
+		if (!selectingBuilding && !m_selectingMorph) {
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
 			if (selection.isCancelable()) { //cancel button
@@ -968,7 +970,7 @@ void UserInterface::computeDisplay() {
 					}
 				}
 			}
-		} else { //selecting building
+		} else if (selectingBuilding) { // selecting building
 			const Unit *unit = selection.getFrontUnit();
 			if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
 				const BuildCommandType* bct = static_cast<const BuildCommandType*>(activeCommandType);
@@ -983,7 +985,23 @@ void UserInterface::computeDisplay() {
 				m_display->setDownImage(cancelPos, selection.getFrontUnit()->getType()->getCancelImage());
 				m_display->setDownLighted(cancelPos, true);
 			}
+		} else { // selecting two tier morph
+			const Unit *unit = selection.getFrontUnit();
+			if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::MORPH) {
+				const MorphCommandType* mct = static_cast<const MorphCommandType*>(activeCommandType);
+				for (int i = 0, j = 0; i < mct->getMorphUnitCount(); ++i) {
+					if (unit->getFaction()->isAvailable(mct->getMorphUnit(i))) {
+						m_display->setDownImage(j, mct->getMorphUnit(i)->getImage());
+						m_display->setDownLighted(j, unit->getFaction()->reqsOk(mct->getMorphUnit(i)));
+						m_display->setIndex(j, i);
+						++j;
+					}
+				}
+				m_display->setDownImage(cancelPos, selection.getFrontUnit()->getType()->getCancelImage());
+				m_display->setDownLighted(cancelPos, true);
+			}
 		}
+
 	}
 
 	if (selection.isEmpty() && selectedObject) {
@@ -1003,12 +1021,12 @@ int UserInterface::computePosDisplay(int x, int y) {
 		posDisplay = invalidPos;
 	} else if (selection.isComandable()) {
 		if (posDisplay == cancelPos) {
-			//check cancel button
+			// check cancel button
 			if (!selection.isCancelable() && !selectingBuilding) {
 				posDisplay = invalidPos;
 			}
 		} else if (posDisplay == meetingPointPos) {
-			//check meeting point
+			// check meeting point
 			if (!selection.isMeetable()) {
 				posDisplay = invalidPos;
 			}
@@ -1017,16 +1035,24 @@ int UserInterface::computePosDisplay(int x, int y) {
 				posDisplay = invalidPos;
 			}
 		} else {
-			if (!selectingBuilding) {
-				//standard selection
+			if (!selectingBuilding && !m_selectingMorph) {
+				// standard selection
 				if (m_display->getCommandClass(posDisplay) == CommandClass::NULL_COMMAND && m_display->getCommandType(posDisplay) == NULL) {
 					posDisplay = invalidPos;
 				}
-			} else {
-				//building selection
+			} else if (selectingBuilding) {
+				// building selection
 				if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::BUILD) {
 					const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
 					if (posDisplay >= bct->getBuildingCount()) {
+						posDisplay = invalidPos;
+					}
+				}
+			} else {
+				// morph selection
+				if (activeCommandType != NULL && activeCommandType->getClass() == CommandClass::MORPH) {
+					const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
+					if (posDisplay >= mct->getMorphUnitCount()) {
 						posDisplay = invalidPos;
 					}
 				}

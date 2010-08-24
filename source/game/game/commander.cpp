@@ -51,8 +51,8 @@ CommandResult Commander::tryGiveCommand(
 	// 'build' related asserts, if unitType is non null, there mustn't be a target unit, 
 	// must be a pos, and command class must be build
 	assert(!(unitType && targetUnit));
-	assert(!unitType || pos != Command::invalidPos);
-	assert(!unitType || ((ct && ct->getClass() == CommandClass::BUILD) || cc == CommandClass::BUILD));
+	//assert(!unitType || pos != Command::invalidPos);
+	//assert(!unitType || ((ct && ct->getClass() == CommandClass::BUILD) || cc == CommandClass::BUILD));
 
 	Vec2i refPos = computeRefPos(selection);
 	CommandResultContainer results;
@@ -71,10 +71,12 @@ CommandResult Commander::tryGiveCommand(
 			effectiveCt = (*i)->computeCommandType(pos, targetUnit);
 		}
 		if(effectiveCt) {
-			if(unitType) { // build command
-				flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
+			if (unitType) { // build (or morph) command
+				if (effectiveCt->getClass() == CommandClass::BUILD) {
+					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
+				}
 				result = pushCommand(new Command(effectiveCt, flags, pos, unitType, *i));
-			} else if(targetUnit) { // 'target' based command
+			} else if (targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
 					UnitContainer &units = (*i)->getUnitsToCarry();
 					if (find(units.begin(), units.end(), targetUnit) == units.end()) {
@@ -82,7 +84,7 @@ CommandResult Commander::tryGiveCommand(
 					}
 				}
 				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
-			} else if(effectiveCt->getClass() == CommandClass::LOAD) {
+			} else if (effectiveCt->getClass() == CommandClass::LOAD) {
 				// the player has tried to load nothing, it shouldn't get here if it has 
 				// a targetUnit
 				return CommandResult::SOME_FAILED;

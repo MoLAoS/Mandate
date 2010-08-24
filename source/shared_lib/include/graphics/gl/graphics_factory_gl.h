@@ -23,7 +23,6 @@
 #include "context_gl.h"
 #include "model_gl.h"
 #include "texture_gl.h"
-#include "font_gl.h"
 #include "ft_font.h"
 
 namespace Shared{ namespace Graphics{ namespace Gl{
@@ -51,9 +50,7 @@ public:
 
 	//text
 	virtual FontManager *newFontManager()			{return new FontManager();}
-	virtual TextRenderer *newTextRendererBM()		{return new TextRendererBM();}
 	virtual TextRenderer *newTextRendererFT()		{return new TextRendererFT();}
-	virtual Font* newBitMapFont()					{return new BitMapFont();}
 	virtual Font* newFreeTypeFont()					{return new FreeTypeFont();}
 
 	//particles

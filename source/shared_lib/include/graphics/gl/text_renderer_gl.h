@@ -16,25 +16,7 @@
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
-class BitMapFont;
 class FreeTypeFont;
-
-// =====================================================
-//	class TextRendererBM
-// =====================================================
-
-class TextRendererBM: public TextRenderer {
-private:
-	const BitMapFont *font;
-	bool rendering;
-
-public:
-	TextRendererBM();
-
-	virtual void begin(const Font *font);
-	virtual void render(const string &text, int x, int y, bool centered);
-	virtual void end();
-};
 
 // =====================================================
 //	class TextRendererFT

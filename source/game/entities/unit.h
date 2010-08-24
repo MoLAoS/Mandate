@@ -23,7 +23,6 @@
 #include "stats.h"
 #include "unit_reference.h"
 #include "math_util.h"
-#include "entity.h"
 #include "timer.h"
 #include "logger.h"
 #include "factory.h"
@@ -88,7 +87,7 @@ private:
 
 public:
 	UnitPath() : blockCount(0) {} /**< Construct path object */
-	bool isBlocked()	{return blockCount >= maxBlockCount;} /**< is this path blocked @return true if this path has been blocked for at least maxBlockCount frames */
+	bool isBlocked()	{return blockCount >= maxBlockCount;} /**< is this path blocked	   */
 	bool empty()		{return list<Vec2i>::empty();}	/**< is path empty				  */
 	int  size()			{return list<Vec2i>::size();}	/**< size of path				 */
 	void clear()		{list<Vec2i>::clear(); blockCount = 0;} /**< clear the path		*/
@@ -463,7 +462,7 @@ public:
 	void applyUpgrade(const UpgradeType *upgradeType);
 	void computeTotalUpgrade();
 	void incKills();
-	bool morph(const MorphCommandType *mct);
+	bool morph(const MorphCommandType *mct, const UnitType *ut = 0);
 	CommandResult checkCommand(const Command &command) const;
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);

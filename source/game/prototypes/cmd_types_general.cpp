@@ -411,24 +411,37 @@ void UpgradeCommandType::update(Unit *unit) const {
 
 bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
 	bool loadOk = CommandType::load(n, dir, tt, ft);
-	//morph skill
+	// morph skill
 	try {
-		string skillName= n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
-		morphSkillType= static_cast<const MorphSkillType*>(unitType->getSkillType(skillName, SkillClass::MORPH));
+		string skillName = n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
+		m_morphSkillType = static_cast<const MorphSkillType*>(unitType->getSkillType(skillName, SkillClass::MORPH));
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
-	//morph unit
-	try {
-		string morphUnitName= n->getChild("morph-unit")->getAttribute("name")->getRestrictedValue();
-		morphUnit= ft->getUnitType(morphUnitName);
-	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
-		loadOk = false;
+	// morph unit(s)
+	if (n->getOptionalChild("morph-unit")) {
+		try {
+			string morphUnitName = n->getChild("morph-unit")->getAttribute("name")->getRestrictedValue();
+			m_morphUnit = ft->getUnitType(morphUnitName);
+		} catch (runtime_error e) {
+			g_errorLog.addXmlError(dir, e.what ());
+			loadOk = false;
+		}
+	} else {
+		try {
+			const XmlNode *un = n->getChild("morph-units");
+			for (int i=0; i < un->getChildCount(); ++i) {
+				string name = un->getChild("morph-unit", i)->getAttribute("name")->getRestrictedValue();
+				m_morphUnits.push_back(ft->getUnitType(name));
+			}
+		} catch (runtime_error e) {
+			g_errorLog.addXmlError(dir, e.what ());
+			loadOk = false;
+		}
 	}
-	//discount
-	try { discount= n->getChild("discount")->getAttribute("value")->getIntValue(); }
+	// discount
+	try { m_discount= n->getChild("discount")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
@@ -437,13 +450,13 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	try {
 		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
 		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
-			finishedSounds.resize(finishSoundNode->getChildCount());
+			m_finishedSounds.resize(finishSoundNode->getChildCount());
 			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
 				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
 				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
 				StaticSound *sound = new StaticSound();
 				sound->load(dir + "/" + path);
-				finishedSounds[i] = sound;
+				m_finishedSounds[i] = sound;
 			}
 		}
 	} catch (runtime_error e) {
@@ -455,22 +468,26 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 void MorphCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	checksum.add(morphSkillType->getName());
-	checksum.add(morphUnit->getName());
-	checksum.add<int>(discount);
+	checksum.add(m_morphSkillType->getName());
+	if (m_morphUnit) {
+		checksum.add(m_morphUnit->getName());
+	} else {
+		foreach_const (vector<const UnitType*>, it, m_morphUnits) {
+			checksum.add((*it)->getName());
+		}
+	}
+	checksum.add(m_discount);
 }
 
 void MorphCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-
-	morphSkillType->getDesc(str, unit);
-
-	//discount
-	if(discount!=0){
-		str+= lang.get("Discount")+": "+intToStr(discount)+"%\n";
+	m_morphSkillType->getDesc(str, unit);
+	if (m_discount != 0) { // discount
+		str += lang.get("Discount") + ": " + intToStr(m_discount) + "%\n";
 	}
-
-	str+= "\n"+getProduced()->getReqDesc();
+	if (m_morphUnit) {
+		str += "\n" + m_morphUnit->getReqDesc();
+	}
 }
 
 string MorphCommandType::getReqDesc() const{
@@ -478,7 +495,7 @@ string MorphCommandType::getReqDesc() const{
 }
 
 const ProducibleType *MorphCommandType::getProduced() const{
-	return morphUnit;
+	return m_morphUnit;
 }
 
 void MorphCommandType::update(Unit *unit) const {
@@ -487,12 +504,14 @@ void MorphCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
+	const UnitType *morphToUnit = m_morphUnit ? m_morphUnit : command->getUnitType();
+
 	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
-		//if not morphing, check space
-		Field mf = morphUnit->getField();
-		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphUnit->getSize(), mf, unit)) {
-			unit->setCurrSkill(morphSkillType);
-			unit->getFaction()->checkAdvanceSubfaction(morphUnit, false);
+		// if not morphing, check space
+		Field mf = morphToUnit->getField();
+		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphToUnit->getSize(), mf, unit)) {
+			unit->setCurrSkill(m_morphSkillType);
+			unit->getFaction()->checkAdvanceSubfaction(morphToUnit, false);
 		} else {
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				g_console.addStdMessage("InvalidPosition");
@@ -501,11 +520,10 @@ void MorphCommandType::update(Unit *unit) const {
 		}
 	} else {
 		unit->update2();
-		if (unit->getProgress2() > morphUnit->getProductionTime()) {
-			bool mapUpdate = unit->isMobile() != morphUnit->isMobile();
-			int biggerSize = std::max(unit->getSize(), morphUnit->getSize());
-			//finish the command
-			if (unit->morph(this)) {
+		if (unit->getProgress2() > morphToUnit->getProductionTime()) {
+			bool mapUpdate = unit->isMobile() != morphToUnit->isMobile();
+			int biggerSize = std::max(unit->getSize(), morphToUnit->getSize());
+			if (unit->morph(this, morphToUnit)) { // finish the command
 				unit->finishCommand();
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();

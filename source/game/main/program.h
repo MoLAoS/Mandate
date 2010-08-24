@@ -89,7 +89,7 @@ public:
 class Program : public WidgetWindow {
 	friend class Glest::Sim::SimulationInterface;
 private:
-	class CrashProgramState : public ProgramState {
+	class CrashProgramState : public ProgramState, public sigslot::has_slots {
 		MessageDialog::Ptr msgBox;
 		const exception *e;
 		bool done;
@@ -97,11 +97,11 @@ private:
 	public:
 		CrashProgramState(Program &program, const exception *e);
 
-		void onExit(MessageDialog::Ptr);
+		void onExit(BasicDialog::Ptr);
 		virtual void update();
 
-		virtual void renderBg() {}
-		virtual void renderFg() {}
+		virtual void renderBg();
+		virtual void renderFg();
 	};
 
 	static const int maxUpdateTimes = 5 * 6;
@@ -149,11 +149,11 @@ public:
 	virtual bool keyUp(Key key);
 	virtual bool keyPress(char c);
 
-		// Window virtuals
+	// Window virtuals
 	virtual void eventActivate(bool active) {}
 	virtual void eventResize(SizeState sizeState);
-	// Unused events of Window
 	/*
+	// Unused events of Window
 	virtual void eventCreate(){}
 	virtual void eventClose(){}
 	virtual void eventResize(){};
@@ -164,7 +164,7 @@ public:
 	virtual void eventDestroy(){};
 	*/
 
-	//misc
+	// misc
 	void setState(ProgramState *programState);
 	void crash(const exception *e);
 	void loop();

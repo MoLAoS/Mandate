@@ -35,7 +35,6 @@ protected:
 public:
 	virtual ~FontManager();
 
-	Font* newBitMapFont();
 	Font* newFreeTypeFont();
 
 	void init();

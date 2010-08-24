@@ -161,7 +161,7 @@ void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 	float h = ft_font.h;// / .63f;
 
 	if (lines.size() > 1) {
-		pos.y += ft_font.h * (lines.size() - 1);
+		pos.y += int(ft_font.h * (lines.size() - 1));
 	}
 
 	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
@@ -178,8 +178,8 @@ void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelview_matrix);
 
 	// This is where the text display actually happens.
-	float x = pos.x;
-	float y = pos.y;
+	float x = float(pos.x);
+	float y = float(pos.y);
 	for (int i = 0; i < lines.size(); ++i) {
 		 glPushMatrix();
 		 glLoadIdentity();

@@ -67,9 +67,6 @@ public:
 // Global Fcs
 // =====================================================
 
-void createGlFontBitmaps(uint32 &base, const string &type, int size, int width, int charCount, FontMetrics &metrics);
-void createGlFontOutlines(uint32 &base, const string &type, int width, float depth, int charCount, FontMetrics &metrics);
-
 inline PROC getGlProcAddress(const char *procName) {
 	PROC proc = wglGetProcAddress(procName);
 	assert(proc != NULL);

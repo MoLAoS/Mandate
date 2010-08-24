@@ -17,11 +17,10 @@
 #include "projectConfig.h"
 
 #include <SDL.h>
+
 #ifdef X11_AVAILABLE
 #	ifdef __APPLE__
 #		include <OpenGL/OpenGL.h>
-//#		include <X11/Xlib.h>
-//#		include <OpenGL/glx.h> // Need this... but it doesn't come with the OS-X OpenGL framework... :(
 #	else
 #		include <GL/glx.h>	
 #	endif
@@ -64,45 +63,6 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits) {
 			<< depthBits << " depth-buffer). SDL Error is: " << SDL_GetError();
 		throw std::runtime_error(msg.str());
 	}
-}
-
-// ======================================
-//	Global Fcs
-// ======================================
-
-void createGlFontBitmaps(uint32 &base, const string &type, int size, int width,
-						 int charCount, FontMetrics &metrics) {
-#if defined(X11_AVAILABLE)
-	Display* display = glXGetCurrentDisplay();
-	if(display == 0) {
-		throw std::runtime_error("Couldn't create font: display is 0");
-	}
-	XFontStruct* fontInfo = XLoadQueryFont(display, type.c_str());
-	if(!fontInfo) {
-		throw std::runtime_error("Font not found.");
-	}
-
-	// we need the height of 'a' which sould ~ be half ascent+descent
-	metrics.setHeight(static_cast<float>
-			(fontInfo->ascent + fontInfo->descent) / 2);
-	for(unsigned int i = 0; i < static_cast<unsigned int> (charCount); ++i) {
-		if(i < fontInfo->min_char_or_byte2 ||
-				i > fontInfo->max_char_or_byte2) {
-			metrics.setWidth(i, static_cast<float>(6));
-		} else {
-			int p = i - fontInfo->min_char_or_byte2;
-			metrics.setWidth(i, static_cast<float> (
-						fontInfo->per_char[p].rbearing
-						- fontInfo->per_char[p].lbearing));
-		}
-	}
-
-	glXUseXFont(fontInfo->fid, 0, charCount, base);
-	XFreeFont(display, fontInfo);
-#else
-    // we badly need a solution portable to more than just glx
-	NOIMPL;
-#endif
 }
 
 }}//end namespace
