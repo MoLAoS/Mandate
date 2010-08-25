@@ -152,7 +152,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	// b2) load upgrades
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
-		string str= dir + "/upgrades/" + upgradeTypes[i]->getName();
+		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();
 		if (!upgradeTypes[i]->load(str, techTree, this)) {
 			loadOk = false;
 		}
@@ -160,27 +160,27 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	}
 
 	//read starting resources
-	try { 
-		const XmlNode *startingResourcesNode= factionNode->getChild("starting-resources"); 
+	try {
+		const XmlNode *startingResourcesNode = factionNode->getChild("starting-resources");
 		startingResources.resize(startingResourcesNode->getChildCount());
 		for (int i = 0; i < startingResources.size(); ++i) {
-			try { 
+			try {
 				const XmlNode *resourceNode = startingResourcesNode->getChild("resource", i);
-				string name= resourceNode->getAttribute("name")->getRestrictedValue();
-				int amount= resourceNode->getAttribute("amount")->getIntValue();
+				string name = resourceNode->getAttribute("name")->getRestrictedValue();
+				int amount = resourceNode->getAttribute("amount")->getIntValue();
 				startingResources[i].init(techTree->getResourceType(name), amount);
 			} catch (runtime_error e) {
 				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
-	} catch (runtime_error e) { 
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
 	//read starting units
-	try { 
+	try {
 		const XmlNode *startingUnitsNode = factionNode->getChild("starting-units");
 		for (int i = 0; i < startingUnitsNode->getChildCount(); ++i) {
 			try {
@@ -188,12 +188,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				string name = unitNode->getAttribute("name")->getRestrictedValue();
 				int amount = unitNode->getAttribute("amount")->getIntValue();
 				startingUnits.push_back(PairPUnitTypeInt(getUnitType(name), amount));
-			} catch (runtime_error e) { 
+			} catch (runtime_error e) {
 				g_errorLog.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
-	} catch (runtime_error e) { 
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}

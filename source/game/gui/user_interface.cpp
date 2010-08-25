@@ -802,6 +802,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay){
 			if (world->getFaction(factionIndex)->reqsOk(ut)) {
 				CommandResult result = commander->tryGiveCommand(selection, CommandFlags(),
 					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, ut);
+				addOrdersResultToConsole(activeCommandClass, result);
 				resetState();
 			}
 		}

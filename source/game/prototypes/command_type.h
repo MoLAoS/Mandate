@@ -392,7 +392,6 @@ public:
 	Command* doAutoRepair(Unit *unit) const;
 };
 
-
 // ===============================
 //  class ProduceCommandType
 // ===============================
@@ -425,6 +424,32 @@ public:
 	static CommandClass typeClass() { return CommandClass::PRODUCE; }
 };
 
+// ===============================
+//  class GenerateCommandType
+// ===============================
+
+class GenerateCommandType: public CommandType {
+private:
+	const ProduceSkillType*			m_produceSkillType;
+	const ProducibleType*			m_producible;
+	SoundContainer					m_finishedSounds;
+
+public:
+	GenerateCommandType() : CommandType("Generate", Clicks::ONE, true), m_producible(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void update(Unit *unit) const;
+	virtual string getReqDesc() const;
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
+
+	//get
+	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
+	const ProducibleType *getProduced() const			{return m_producible;}
+
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::GENERATE; }
+};
 
 // ===============================
 //  class UpgradeCommandType

@@ -654,23 +654,23 @@ CommandResult Unit::giveCommand(Command *command) {
 	}
 
 	if(ct->isQueuable() || command->isQueue()) {
-		//cancel current command if it is not queuable or marked to be queued
+		// cancel current command if it is not queuable or marked to be queued
 		if(!commands.empty() && !commands.front()->getType()->isQueuable() && !command->isQueue()) {
 			cancelCommand();
 			unitPath.clear();
 		}
 	} else {
-		//empty command queue
+		// empty command queue
 		clearCommands();
 		unitPath.clear();
 
-		//for patrol commands, remember where we started from
+		// for patrol commands, remember where we started from
 		if(ct->getClass() == CommandClass::PATROL) {
 			command->setPos2(pos);
 		}
 	}
 
-	//check command
+	// check command
 	CommandResult result = checkCommand(*command);
 	//COMMAND_LOG( "NO_RESERVE_RESOURCES flag is " << (command->isReserveResources() ? "not " : "" ) << "set,"
 	//	<< " command result = " << CommandResultNames[result] );
@@ -802,7 +802,7 @@ void Unit::create(bool startingUnit) {
 	faction->add(this);
 	lastPos = Vec2i(-1);
 	map->putUnitCells(this, pos);
-	if(startingUnit){
+	if (startingUnit) {
 		faction->applyStaticCosts(type);
 	}
 	nextCommandUpdate = -1;
@@ -1683,9 +1683,8 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		}
 	}
 
-	//build command specific, check resources and requirements for building
-	if (ct->getClass() == CommandClass::BUILD) {
-		const UnitType *builtUnit = command.getUnitType();
+	if (ct->getClass() == CommandClass::BUILD) { // build command specific
+		const UnitType *builtUnit = static_cast<const UnitType*>(command.getProdType());
 		const BuildCommandType *bct = static_cast<const BuildCommandType*>(ct);
 		if (bct->isBlocked(builtUnit, command.getPos(), command.getFacing())) {
 			return CommandResult::FAIL_BLOCKED;
@@ -1696,9 +1695,17 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		if (command.isReserveResources() && !faction->checkCosts(builtUnit)) {
 			return CommandResult::FAIL_RESOURCES;
 		}
-
-	//upgrade command specific, check that upgrade is not upgraded
-	} else if (ct->getClass() == CommandClass::UPGRADE) {
+	} else if (!produced  // multi-tier selected morph or produce
+	&& (ct->getClass() == CommandClass::MORPH || ct->getClass() == CommandClass::PRODUCE)) {
+		produced = command.getProdType();
+		assert(produced);
+		if (!faction->reqsOk(produced)) {
+			return CommandResult::FAIL_REQUIREMENTS;
+		}
+		if (!faction->checkCosts(produced)) {
+			return CommandResult::FAIL_RESOURCES;
+		}
+	} else if (ct->getClass() == CommandClass::UPGRADE) { // upgrade command specific
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		if (faction->getUpgradeManager()->isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
 			return CommandResult::FAIL_UNDEFINED;
@@ -1714,18 +1721,19 @@ CommandResult Unit::checkCommand(const Command &command) const {
 void Unit::applyCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
-	//check produced
+	// check produced
 	const ProducibleType *produced = ct->getProduced();
 	if (produced) {
 		faction->applyCosts(produced);
 	}
 
-	//build command specific
-	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
-		faction->applyCosts(command.getUnitType());
-
-	//upgrade command specific
-	} else if (ct->getClass() == CommandClass::UPGRADE) {
+	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) { // build command
+		faction->applyCosts(command.getProdType());
+	} else if (ct->getClass() == CommandClass::MORPH) {
+		if (!produced) { // multi-tier selected morph
+			faction->applyCosts(command.getProdType());
+		}
+	} else if (ct->getClass() == CommandClass::UPGRADE) { // upgrade (why not handled by getProduced() ???)
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		faction->startUpgrade(uct->getProducedUpgrade());
 	}
@@ -1747,8 +1755,10 @@ CommandResult Unit::undoCommand(const Command &command) {
 	// return building cost if not already building it or dead
 	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
 		if (currSkill->getClass() != SkillClass::BUILD && currSkill->getClass() != SkillClass::DIE) {
-			faction->deApplyCosts(command.getUnitType());
+			faction->deApplyCosts(command.getProdType());
 		}
+	} else if (ct->getClass() == CommandClass::MORPH && !ct->getProduced()) { // multi-tier morph
+		faction->deApplyCosts(command.getProdType());
 	}
 
 	// upgrade command cancel from list

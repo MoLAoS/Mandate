@@ -40,6 +40,25 @@ namespace Glest { namespace Entities {
 class Unit;
 
 // =====================================================
+// 	class Product
+//
+///	Instance of a ProducibleType (Non-unit)
+// =====================================================
+// Completely unnecessary atm, but we'll probably want to add interesting things
+// to it in the future
+class Product {
+private:
+	const ProducibleType *m_type;
+
+public:
+	Product(const ProducibleType *pt) : m_type(pt) {}
+
+	const ProducibleType* getType() const { return m_type; }
+
+	// todo... other stuff. Store unit that produced this, other useful things...
+};
+
+// =====================================================
 // 	class Faction
 //
 ///	Each of the game players
@@ -54,6 +73,7 @@ public:
 private:
     typedef vector<Resource> Resources;
     typedef vector<Resource> Store;
+	typedef vector<Product>  Products;
 
 	UpgradeManager upgradeManager;
 
@@ -61,6 +81,7 @@ private:
     Store store;
 	Units units;
 	UnitMap unitMap;
+	Products products;
 
 	ControlType control;
 
@@ -91,6 +112,7 @@ public:
 	const Resource *getResource(const ResourceType *rt) const;
 	const Resource *getResource(int i) const			{assert(i < resources.size()); return &resources[i];}
 	int getStoreAmount(const ResourceType *rt) const;
+
 	const FactionType *getType() const					{return factionType;}
 	int getIndex() const								{return id;}
 	int getTeam() const									{return teamIndex;}
@@ -112,12 +134,12 @@ public:
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
 	bool isThisFaction() const							{return thisFaction;}
 
-	//upgrades
+	// upgrades
 	void startUpgrade(const UpgradeType *ut);
 	void cancelUpgrade(const UpgradeType *ut);
 	void finishUpgrade(const UpgradeType *ut);
 
-	//cost application
+	// cost application
 	bool applyCosts(const ProducibleType *p);
 	void applyDiscount(const ProducibleType *p, int discount);
 	void applyStaticCosts(const ProducibleType *p);
@@ -128,16 +150,16 @@ public:
 	void applyCostsOnInterval();
 	bool checkCosts(const ProducibleType *pt);
 
-	//reqs
+	// reqs
 	bool reqsOk(const RequirableType *rt) const;
 	bool reqsOk(const CommandType *ct) const;
 	bool isAvailable(const CommandType *ct) const;
 	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
 
-	//diplomacy
+	// diplomacy
 	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
 
-	//other
+	// other
 	Unit *findUnit(int id) {
 		assert(units.size() == unitMap.size());
 		UnitMap::iterator it = unitMap.find(id);
@@ -153,9 +175,12 @@ public:
 	void advanceSubfaction(int subfaction);
 	void checkAdvanceSubfaction(const ProducibleType *pt, bool finished);
 
-	//resources
+	// resources
 	void incResourceAmount(const ResourceType *rt, int amount);
 	void setResourceBalance(const ResourceType *rt, int balance);
+
+	// products (non unit producibles)
+	void addProduct(const ProducibleType *pt) { products.push_back(Product(pt)); }
 
 private:
 	void limitResourcesToStore();

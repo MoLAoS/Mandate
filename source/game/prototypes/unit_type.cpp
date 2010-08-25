@@ -113,13 +113,11 @@ void UnitType::preLoad(const string &dir){
 }
 
 bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal) {
-	string path;
-	m_factionType = factionType;
-
-	Logger::getInstance().add("Unit type: " + dir, true);
+	g_logger.add("Unit type: " + dir, true);
 	bool loadOk = true;
-	//file load
-	path= dir+"/"+name+".xml";
+
+	m_factionType = factionType;
+	string path = dir + "/" + name + ".xml";
 
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
@@ -141,7 +139,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 	if (!UnitStats::load(parametersNode, dir, techTree, factionType))
 		loadOk = false;
-	//armor type string
+	// armor type string
 	try {
 		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
 		armourType = techTree->getArmourType(armorTypeName);
@@ -150,13 +148,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
-	//size
+	// size
 	try { size = parametersNode->getChildIntValue("size"); }
 	catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
-	//height
+	// height
 	try { height = parametersNode->getChildIntValue("height"); }
 	catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
@@ -165,33 +163,24 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	halfSize = size / fixed(2);
 	halfHeight = height / fixed(2);
 
-	//image
-	try { DisplayableType::load(parametersNode, dir); }
-	catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+	// images, requirements, costs...
+	if (!ProducibleType::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
-
 	if (!glestimal) {
-		//prod time
-		try { productionTime= parametersNode->getChildIntValue("time"); }
-		catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
-			loadOk = false;
-		}
-		//multi-build
+		// multi-build
 		try { multiBuild = parametersNode->getOptionalBoolValue("multi-build"); }
 		catch (runtime_error e) {
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//multi selection
+		// multi selection
 		try { multiSelect= parametersNode->getChildBoolValue("multi-selection"); }
 		catch (runtime_error e) {
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//light & lightColour
+		// light & lightColour
 		try {
 			const XmlNode *lightNode = parametersNode->getChild("light");
 			light = lightNode->getAttribute("enabled")->getBoolValue();
@@ -201,22 +190,20 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(dir, e.what());
 			loadOk = false;
 		}
-		//cellmap
+		// cellmap
 		try {
 			const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
-			if(cellMapNode && cellMapNode->getAttribute("value")->getBoolValue()){
-				//cellMap= new bool[size*size];
+			if (cellMapNode && cellMapNode->getAttribute("value")->getBoolValue()) {
 				m_cellMap = new PatchMap<1>(Rectangle(0,0, size, size), 0);
-				for(int i=0; i<size; ++i){
+				for (int i=0; i < size; ++i) {
 					try {
 						const XmlNode *rowNode= cellMapNode->getChild("row", i);
 						string row= rowNode->getAttribute("value")->getRestrictedValue();
-						if(row.size()!=size){
+						if (row.size() != size) {
 							throw runtime_error("Cellmap row is not the same as unit size");
 						}
-						for(int j=0; j<row.size(); ++j){
-							m_cellMap->setInfluence(Vec2i(j, i), row[j]=='0'? 0: 1);
-//							cellMap[i*size+j]= row[j]=='0'? false: true;
+						for (int j=0; j < row.size(); ++j) {
+							m_cellMap->setInfluence(Vec2i(j, i), row[j] == '0' ? 0 : 1);
 						}
 					} catch (runtime_error e) {
 						g_errorLog.addXmlError(path, e.what());
@@ -228,7 +215,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//levels
+		// Levels
 		try {
 			const XmlNode *levelsNode= parametersNode->getChild("levels", 0, false);
 			if(levelsNode) {
@@ -263,19 +250,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 	if (!glestimal) {
-		//properties
+		// properties
 		try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
 		catch (runtime_error e) {
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//ProducibleType parameters
-		try { ProducibleType::load(parametersNode, dir, techTree, factionType); }
-		catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
-			loadOk = false;
-		}
-		//resources stored
+		// Resources stored
 		try {
 			const XmlNode *resourcesStoredNode= parametersNode->getChild("resources-stored", 0, false);
 			if (resourcesStoredNode) {
@@ -291,16 +272,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//image cancel
-		try {
-			const XmlNode *imageCancelNode= parametersNode->getChild("image-cancel");
-			cancelImage= Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-			cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
-		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
-			loadOk = false;
-		}
-		//meeting point
+		// meeting point
 		try {
 			const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
 			meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();

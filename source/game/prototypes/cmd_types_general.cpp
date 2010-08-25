@@ -323,7 +323,9 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(produceSkillType);
 	} else {
 		unit->update2();
-		const UnitType *prodType = m_producedUnit ? m_producedUnit : command->getUnitType();
+		const UnitType *prodType = 
+			m_producedUnit	? m_producedUnit 
+							: static_cast<const UnitType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			Unit *produced = g_simInterface->getUnitFactory().newInstance(
 				Vec2i(0), prodType, unit->getFaction(), g_world.getMap(), CardinalDir::NORTH);
@@ -347,6 +349,98 @@ void ProduceCommandType::update(Unit *unit) const {
 				}
 			}
 			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
+}
+
+// =====================================================
+// 	class GenerateCommandType
+// =====================================================
+
+bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	// produce skill
+	try { 
+		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
+		m_produceSkillType= static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what ());
+		loadOk = false;
+	}
+
+	// Producible(s)
+	const XmlNode *producibleNode = 0;
+	try {
+		producibleNode = n->getChild("produced");
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what ());
+		return false;
+	}
+	ProducibleType *pt = g_world.getProducibleFactory().newInstance();
+	if (!pt->load(producibleNode, dir, tt, ft)) {
+		loadOk = false;
+	}
+	m_producible = pt;
+
+	// finished sound
+	try {
+		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
+		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
+			m_finishedSounds.resize(finishSoundNode->getChildCount());
+			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
+				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
+				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
+				sound->load(dir + "/" + path);
+				m_finishedSounds[i] = sound;
+			}
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what ());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void GenerateCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	checksum.add(m_produceSkillType->getName());
+	checksum.add(m_producible->getName());
+}
+
+void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
+	m_produceSkillType->getDesc(str, unit);
+	str += "\n" + m_producible->getReqDesc();
+}
+
+string GenerateCommandType::getReqDesc() const {
+	string res = RequirableType::getReqDesc();
+	res += "\n" + m_producible->getReqDesc();
+	return res;
+}
+
+void GenerateCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	
+	// should compare _exact_ skill type, not class... in every command update...
+
+	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
+		// if not producing
+		unit->setCurrSkill(m_produceSkillType);
+	} else {
+		unit->update2();
+		if (unit->getProgress2() > m_producible->getProductionTime()) {
+			unit->getFaction()->addProduct(m_producible);
+			unit->getFaction()->applyStaticProduction(m_producible);
+			unit->setCurrSkill(SkillClass::STOP);
+			unit->finishCommand();
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
+						g_gameState.getGameCamera()->getPos());
+			}
 		}
 	}
 }
@@ -529,7 +623,9 @@ void MorphCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	const UnitType *morphToUnit = m_morphUnit ? m_morphUnit : command->getUnitType();
+	const UnitType *morphToUnit = m_morphUnit 
+			? m_morphUnit 
+			: static_cast<const UnitType*>(command->getProdType());
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
 		// if not morphing, check space
@@ -868,7 +964,6 @@ bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr,
 	return unitInRange(unit, unit->getSight(), rangedPtr, asts, past);
 }
 
-
 // =====================================================
 // 	class CommandFactory
 // =====================================================
@@ -883,6 +978,7 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<HarvestCommandType>("harvest");
 	registerClass<RepairCommandType>("repair");
 	registerClass<ProduceCommandType>("produce");
+	registerClass<GenerateCommandType>("generate");
 	registerClass<UpgradeCommandType>("upgrade");
 	registerClass<MorphCommandType>("morph");
 	registerClass<LoadCommandType>("load");

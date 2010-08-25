@@ -19,6 +19,7 @@
 #include "texture.h"
 #include "xml_parser.h"
 #include "checksum.h"
+#include "factory.h"
 
 #include "resource.h"
 #include "forward_decs.h"
@@ -29,6 +30,7 @@ using std::string;
 
 using namespace Shared::Xml;
 using Shared::Graphics::Texture2D;
+using Shared::Util::SingleTypeFactory;
 
 namespace Glest { 
 
@@ -128,13 +130,17 @@ public:
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 };
 
+class ProducibleTypeFactory;
+
 // =====================================================
 // 	class ProducibleType
 //
 ///	Base class for anything that can be produced
 // =====================================================
 
-class ProducibleType: public RequirableType {
+class ProducibleType : public RequirableType {
+	friend class ProducibleTypeFactory;
+
 private:
 	typedef vector<Resource> Costs;
 
@@ -171,6 +177,23 @@ public:
 
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc() const;
+};
+
+class ProducibleTypeFactory : private SingleTypeFactory<ProducibleType> {
+private:
+	int m_idCounter;
+	vector<ProducibleType*> m_types;
+	map<ProducibleType*, int32> m_checksumTable;
+
+public:
+	ProducibleTypeFactory() : m_idCounter(0) { }
+	~ProducibleTypeFactory();
+
+	ProducibleType* newInstance();
+	ProducibleType* getType(int id);
+	int getTypeCount() const { return m_types.size(); }
+	int32 getChecksum(ProducibleType *pt);
+	void setChecksum(ProducibleType *pt);
 };
 
 }}//end namespace

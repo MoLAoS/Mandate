@@ -58,42 +58,13 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
 	}
-	// image
-	try {
-		const XmlNode *imageNode= upgradeNode->getChild("image");
-		image= Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-		image->load(dir+"/"+imageNode->getAttribute("path")->getRestrictedValue());
-	}
-	catch (runtime_error e) { 
-		g_errorLog.addXmlError ( dir, e.what() );
-		return false;
-	}
-	// image cancel
-	try {
-		const XmlNode *imageCancelNode= upgradeNode->getChild("image-cancel");
-		cancelImage= Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
-	}
-	catch (runtime_error e) { 
-		g_errorLog.addXmlError ( dir, e.what() );
-		return false;
-	}
-
-	// upgrade time
-	try { productionTime= upgradeNode->getChildIntValue("time"); }
-	catch (runtime_error e) { 
-		g_errorLog.addXmlError ( dir, e.what() );
-		return false;
-	}
 
 	// ProducibleType parameters (unit/upgrade reqs and resource reqs)
-	try { ProducibleType::load(upgradeNode, dir, techTree, factionType); }
-	catch (runtime_error e) { 
-		g_errorLog.addXmlError ( dir, e.what() );
-		return false;
+	if (!ProducibleType::load(upgradeNode, dir, techTree, factionType)) {
+		loadOk = false;
 	}
 
-	// units effected by this upgrade
+	// Units effected by this upgrade
 	try {
 		const XmlNode *effectsNode= upgradeNode->getChild("effects", 0, false);
 		if(effectsNode) {

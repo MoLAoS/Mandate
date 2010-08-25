@@ -39,15 +39,11 @@ namespace Glest { namespace Sim {
 
 CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *ct, CommandClass cc, const Vec2i &pos, Unit *targetUnit,
-		const UnitType* unitType, CardinalDir facing) const {
+		const ProducibleType* prodType, CardinalDir facing) const {
 	if (selection.isEmpty()) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	// 'build' related asserts, if unitType is non null, there mustn't be a target unit, 
-	// must be a pos, and command class must be build
-	assert(!(unitType && targetUnit));
-	//assert(!unitType || pos != Command::invalidPos);
-	//assert(!unitType || ((ct && ct->getClass() == CommandClass::BUILD) || cc == CommandClass::BUILD));
+	assert(!(prodType && targetUnit));
 
 	Vec2i refPos = computeRefPos(selection);
 	CommandResultContainer results;
@@ -66,12 +62,12 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 			effectiveCt = (*i)->computeCommandType(pos, targetUnit);
 		}
 		if(effectiveCt) {
-			if (unitType) { // build (or morph) command
+			if (prodType) { // build (or morph) command
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
-					result = pushCommand(new Command(effectiveCt, flags, pos, unitType, facing, *i));
+					result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
 				} else {
-					result = pushCommand(new Command(effectiveCt, flags, pos, unitType, CardinalDir::NORTH, *i));
+					result = pushCommand(new Command(effectiveCt, flags, pos, prodType, CardinalDir::NORTH, *i));
 				}
 			} else if (targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {

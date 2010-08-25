@@ -37,7 +37,7 @@ Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &po
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
-		, unitType(NULL)
+		, prodType(NULL)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -51,7 +51,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
-		, unitType(NULL)
+		, prodType(NULL)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -63,7 +63,7 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 		, flags(flags)
 		, pos(-1)
 		, pos2(-1)
-		, unitType(NULL)
+		, prodType(NULL)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -82,7 +82,7 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 
 
 Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
-				 const UnitType *unitType, CardinalDir facing, Unit *commandedUnit)
+				 const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit)
 		: archetype(CommandArchetype::GIVE_COMMAND)
 		, type(type)
 		, flags(flags)
@@ -90,7 +90,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos,
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
-		, unitType(unitType)
+		, prodType(prodType)
 		, facing(facing)
 		, commandedUnit(commandedUnit) {
 	lastId++;
@@ -106,8 +106,9 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 	pos = node->getChildVec2iValue("pos");
 	pos2 = node->getChildVec2iValue("pos2");
 
-	string unitTypeName = node->getChildStringValue("unitType");
-	unitType = unitTypeName == "none" ? NULL : ft->getUnitType(unitTypeName);
+	string prodTypeName = node->getChildStringValue("prodType");
+	///TODO: FIX
+	//prodType = (prodTypeName == "none" ? NULL : ft->getUnitType(unitTypeName));
 	facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
 }
 
@@ -127,7 +128,7 @@ void Command::save(XmlNode *node) const {
 	node->addChild("pos2", pos2);
 	node->addChild("unitRef", unitRef);
 	node->addChild("unitRef2", unitRef2);
-	node->addChild("unitType", unitType ? unitType->getName() : "none");
+	node->addChild("prodType", prodType ? prodType->getName() : "none");
 }
 
 // =============== misc ===============

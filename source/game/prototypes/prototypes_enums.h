@@ -42,7 +42,7 @@ STRINGY_ENUM( SkillClass,
 	MORPH,
 	LOAD,
 	UNLOAD,
-	DIE		// == 10, == 11 skill classes
+	DIE
 );
 
 /** command classes
@@ -56,6 +56,7 @@ STRINGY_ENUM( CommandClass,
 	HARVEST,
 	REPAIR,
 	PRODUCE,
+	GENERATE,
 	UPGRADE,
 	MORPH,
 	CAST_SPELL,

@@ -49,7 +49,7 @@ private:
 	Vec2i pos2;					//for patrol command, the position traveling away from.
 	UnitId unitRef;		//target unit, used to move and attack optinally
 	UnitId unitRef2;		//for patrol command, the unit traveling away from.
-	const UnitType *unitType;	//used for build
+	const ProducibleType *prodType;	//used for build, multi-tier morph and generate
 	CardinalDir facing;
 	Unit *commandedUnit;
 	int id;						//give each command a unique id so it is distinguishable
@@ -59,7 +59,7 @@ public:
 	Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
 	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
 	Command(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL);
-	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const UnitType *unitType, CardinalDir facing, Unit *commandedUnit = NULL);
+	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL);
 	Command(const XmlNode *node, const UnitType *ut, const FactionType *ft);
 
 	// allow default ctor
@@ -76,7 +76,7 @@ public:
 	Vec2i getPos2() const						{return pos2;}
 	Unit* getUnit() const;
 	Unit* getUnit2() const;
-	const UnitType* getUnitType() const			{return unitType;}
+	const ProducibleType* getProdType() const	{return prodType;}
 	CardinalDir getFacing() const				{return facing;}
 	Unit *getCommandedUnit() const				{return commandedUnit;}
 	int getId() const							{return id;}
@@ -96,7 +96,7 @@ public:
 
 	void setUnit(Unit *unit)							{this->unitRef = unit ? unit->getId() : 0;}
 	void setUnit2(Unit *unit2)							{this->unitRef2 = unit2 ? unit2->getId() : 0;}	
-	void setUnitType(const UnitType* unitType)			{this->unitType = unitType;}
+	void setProdType(const ProducibleType* pType)		{this->prodType = prodType;}
 	void setCommandedUnit(Unit *commandedUnit)			{this->commandedUnit = commandedUnit;}
 
 	//misc

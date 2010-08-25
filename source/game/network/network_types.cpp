@@ -30,8 +30,8 @@ NetworkCommand::NetworkCommand(Command *command) {
 	commandTypeId = command->getType()->getId();
 	positionX = command->getPos().x;
 	positionY = command->getPos().y;
-	unitTypeId = command->getUnitType()
-							? command->getUnitType()->getId()
+	unitTypeId = command->getProdType()
+							? command->getProdType()->getId()
 							: command->getCommandedUnit()->getType()->getId();
 
 	if (command->getType()->getClass() == CommandClass::BUILD) {

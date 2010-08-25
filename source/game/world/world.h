@@ -114,6 +114,8 @@ private:
 	UpgradeTypeFactory	m_upgradeTypeFactory;
 	UnitTypeFactory		m_unitTypeFactory;
 
+	ProducibleTypeFactory m_producibleTypeFactory;
+
 	ModelFactory		m_modelFactory;
 
 public:
@@ -130,6 +132,7 @@ public:
 	UpgradeTypeFactory& getUpgradeTypeFactory()		{return m_upgradeTypeFactory;}
 	SkillTypeFactory& getSkillTypeFactory()			{return m_skillTypeFactory;}
 	CommandTypeFactory& getCommandTypeFactory()		{return m_commandTypeFactory;}
+	ProducibleTypeFactory& getProducibleFactory()	{return m_producibleTypeFactory;}
 	ModelFactory& getModelFactory()					{return m_modelFactory;}
 
 	int getMaxPlayers() const						{return map.getMaxPlayers();}

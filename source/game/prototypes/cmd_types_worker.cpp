@@ -445,7 +445,7 @@ void BuildCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	const UnitType *builtUnitType = command->getUnitType();
+	const UnitType *builtUnitType = static_cast<const UnitType*>(command->getProdType());
 
 	BUILD_LOG( 
 		__FUNCTION__ << " : Updating unit " << unit->getId() << ", building type = " << builtUnitType->getName()
@@ -550,7 +550,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 void BuildCommandType::existingBuild(Unit *unit, Command *command, Unit *builtUnit) const {
 	// if we pre-reserved the resources, we have to deallocate them now
 	if (command->isReserveResources()) {
-		unit->getFaction()->deApplyCosts(command->getUnitType());
+		unit->getFaction()->deApplyCosts(static_cast<const UnitType*>(command->getProdType()));
 		command->setReserveResources(false);
 	}
 	unit->setTarget(builtUnit, true, true);
@@ -603,7 +603,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 			unit->finishCommand();
 			return;
 		}
-		unit->getFaction()->applyCosts(command->getUnitType());
+		unit->getFaction()->applyCosts(static_cast<const UnitType*>(command->getProdType()));
 	}
 
 	BUILD_LOG( "in position, starting construction." );

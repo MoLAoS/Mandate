@@ -45,6 +45,9 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 		const XmlNode *imageNode = baseNode->getChild("image");
 		image = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
 		image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
+		if (baseNode->getOptionalChild("name")) {
+			name = baseNode->getChild("name")->getStringValue();
+		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError ( dir, e.what() );
 		return false;
@@ -73,9 +76,9 @@ string RequirableType::getReqDesc() const{
 }
 
 bool RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
-	bool loadOk = true;
-	//unit requirements
-	try {
+	bool loadOk = DisplayableType::load(baseNode, dir);
+	
+	try { // Unit requirements
 		const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
 		if(unitRequirementsNode) {
 			for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
@@ -89,8 +92,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 		loadOk = false;
 	}
 
-	//upgrade requirements
-	try {
+	try { // Upgrade requirements
 		const XmlNode *upgradeRequirementsNode = baseNode->getChild("upgrade-requirements", 0, false);
 		if(upgradeRequirementsNode) {
 			for(int i = 0; i < upgradeRequirementsNode->getChildCount(); ++i) {
@@ -104,8 +106,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 		loadOk = false;
 	}
 
-	//subfactions required
-	try { 
+	try { // Subfactions required
 		const XmlNode *subfactionsNode = baseNode->getChild("subfaction-restrictions", 0, false);
 		if(subfactionsNode) {
 			for(int i = 0; i < subfactionsNode->getChildCount(); ++i) {
@@ -172,10 +173,26 @@ string ProducibleType::getReqDesc() const {
 
 bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	bool loadOk = true;
-	if ( ! RequirableType::load(baseNode, dir, techTree, factionType) )
+	if (!RequirableType::load(baseNode, dir, techTree, factionType)) {
 		loadOk = false;
-
-	//resource requirements
+	}
+	
+	// Production time
+	try { productionTime = baseNode->getChildIntValue("time"); }
+	catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// Cancel image
+	try {
+		const XmlNode *imageCancelNode = baseNode->getChild("image-cancel");
+		cancelImage = g_renderer.newTexture2D(ResourceScope::GAME);
+		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// Resource requirements
 	try {
 		const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);
 		if(resourceRequirementsNode) {
@@ -187,13 +204,13 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
 					costs[i].init(techTree->getResourceType(name), amount);
 				} catch (runtime_error e) {
-					g_errorLog.addXmlError ( dir, e.what() );
+					g_errorLog.addXmlError(dir, e.what());
 					loadOk = false;
 				}
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -206,7 +223,7 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 			advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -222,6 +239,36 @@ void ProducibleType::doChecksum(Checksum &checksum) const {
 	checksum.add(productionTime);
 	checksum.add(advancesToSubfaction);
 	checksum.add(advancementIsImmediate);
+}
+
+// =====================================================
+// 	class ProducibleTypeFactory
+// =====================================================
+
+ProducibleTypeFactory::~ProducibleTypeFactory() {
+	deleteValues(m_types);
+}
+
+ProducibleType* ProducibleTypeFactory::newInstance() {
+	ProducibleType *pt = SingleTypeFactory<ProducibleType>::newInstance();
+	pt->setId(m_idCounter++);
+	m_types.push_back(pt);
+	return pt;
+}
+
+ProducibleType* ProducibleTypeFactory::getType(int id) {
+	assert(id >= 0 && id < m_types.size());
+	return m_types[id];
+}
+
+int32 ProducibleTypeFactory::getChecksum(ProducibleType *pt) {
+	return m_checksumTable[pt];
+}
+
+void ProducibleTypeFactory::setChecksum(ProducibleType *pt) {
+	Checksum cs;
+	pt->doChecksum(cs);
+	m_checksumTable[pt] = cs.getSum();
 }
 
 }}//end namespace

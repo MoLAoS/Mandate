@@ -51,7 +51,7 @@ public:
 	CommandResult tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *commandType = NULL, CommandClass commandClass = CommandClass::NULL_COMMAND,
 		const Vec2i &pos = Command::invalidPos, Unit *targetUnit = NULL,
-		const UnitType* unitType = NULL, CardinalDir facing = CardinalDir::NORTH) const;
+		const ProducibleType* prodType = NULL, CardinalDir facing = CardinalDir::NORTH) const;
 
 	CommandResult tryCancelCommand(const Selection *selection) const;
 	
