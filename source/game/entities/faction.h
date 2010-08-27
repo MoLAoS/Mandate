@@ -153,7 +153,10 @@ public:
 	// reqs
 	bool reqsOk(const RequirableType *rt) const;
 	bool reqsOk(const CommandType *ct) const;
+	bool reqsOk(const CommandType *ct, const ProducibleType *pt) const;
+
 	bool isAvailable(const CommandType *ct) const;
+	bool isAvailable(const CommandType *ct, const ProducibleType *pt) const;
 	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
 
 	// diplomacy

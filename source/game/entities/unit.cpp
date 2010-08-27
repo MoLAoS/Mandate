@@ -339,10 +339,14 @@ Vec2i Unit::getNearestOccupiedCell(const Vec2i &from) const {
 /** query completeness of thing this unit is producing
   * @return percentage complete, or -1 if not currently producing anything */
 int Unit::getProductionPercent() const {
-	if(anyCommand()) {
-		const ProducibleType *produced = commands.front()->getType()->getProduced();
-		if(produced) {
-			return clamp(progress2 * 100 / produced->getProductionTime(), 0, 100);
+	if (anyCommand()) {
+		CommandClass cmdClass = commands.front()->getType()->getClass();
+		if (cmdClass == CommandClass::PRODUCE || cmdClass == CommandClass::MORPH
+		|| cmdClass == CommandClass::GENERATE) {
+			const ProducibleType *produced = commands.front()->getProdType();
+			if (produced) {
+				return clamp(progress2 * 100 / produced->getProductionTime(), 0, 100);
+			}
 		}
 	}
 	return -1;
@@ -1551,15 +1555,14 @@ void Unit::incKills() {
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
 bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
-	const UnitType *morphUnitType = ut ? ut : mct->getMorphUnit();
-	Field newField = morphUnitType->getField();
-	if (map->areFreeCellsOrHasUnit(pos, morphUnitType->getSize(), newField, this)) {
+	Field newField = ut->getField();
+	if (map->areFreeCellsOrHasUnit(pos, ut->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
-		type = morphUnitType;
+		type = ut;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
-		faction->applyDiscount(morphUnitType, mct->getDiscount());
+		faction->applyDiscount(ut, mct->getDiscount());
 
 		// reprocess commands
 		Commands newCommands;
@@ -1673,7 +1676,7 @@ CommandResult Unit::checkCommand(const Command &command) const {
 	}
 
 	//check produced
-	const ProducibleType *produced = ct->getProduced();
+	const ProducibleType *produced = command.getProdType();
 	if (produced) {
 		if (!faction->reqsOk(produced)) {
 			return CommandResult::FAIL_REQUIREMENTS;
@@ -1722,18 +1725,13 @@ void Unit::applyCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
 	// check produced
-	const ProducibleType *produced = ct->getProduced();
+	const ProducibleType *produced = command.getProdType();
 	if (produced) {
 		faction->applyCosts(produced);
 	}
 
-	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) { // build command
-		faction->applyCosts(command.getProdType());
-	} else if (ct->getClass() == CommandClass::MORPH) {
-		if (!produced) { // multi-tier selected morph
-			faction->applyCosts(command.getProdType());
-		}
-	} else if (ct->getClass() == CommandClass::UPGRADE) { // upgrade (why not handled by getProduced() ???)
+	// todo multi-tier upgrades, and use CommandType::getProduced() and Command::prodType
+	if (ct->getClass() == CommandClass::UPGRADE) { // upgrade (why not handled by getProduced() ???)
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		faction->startUpgrade(uct->getProducedUpgrade());
 	}
@@ -1746,21 +1744,17 @@ void Unit::applyCommand(const Command &command) {
 CommandResult Unit::undoCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
-	//return cost
-	const ProducibleType *produced = ct->getProduced();
-	if (produced) {
-		faction->deApplyCosts(produced);
-	}
-
 	// return building cost if not already building it or dead
 	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
 		if (currSkill->getClass() != SkillClass::BUILD && currSkill->getClass() != SkillClass::DIE) {
 			faction->deApplyCosts(command.getProdType());
 		}
-	} else if (ct->getClass() == CommandClass::MORPH && !ct->getProduced()) { // multi-tier morph
-		faction->deApplyCosts(command.getProdType());
+	} else { //return cost
+		const ProducibleType *produced = command.getProdType();
+		if (produced) {
+			faction->deApplyCosts(produced);
+		}
 	}
-
 	// upgrade command cancel from list
 	if (ct->getClass() == CommandClass::UPGRADE) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);

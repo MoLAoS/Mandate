@@ -827,55 +827,22 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 		return -1;
 	}
 	const UnitType *ut = unit->getType();
-	const UnitType *put = NULL;
-	try {
-		put = unit->getFaction()->getType()->getUnitType(producedName);
-	} catch (runtime_error e) {
-		return -3;
-	}
-	const MorphCommandType *mct = NULL;
-	//Search for a command that can produce the unit
-	for(int i= 0; i<ut->getCommandTypeCount(); ++i) {
+	// Search for a command that can produce the producible
+	for (int i=0; i < ut->getCommandTypeCount(); ++i) {
 		const CommandType* ct= ut->getCommandType(i);
-		// if we find a suitable Produce Command, execute and return
-		if (ct->getClass()==CommandClass::PRODUCE) {
-			const ProduceCommandType *pct= static_cast<const ProduceCommandType*>(ct);
-			if (pct->getProducedUnit() == put) {
-				CommandResult res = unit->giveCommand(new Command(pct, CommandFlags()));
+		for (int j=0; j < ct->getProducedCount(); ++j) {
+			const ProducibleType *pt = ct->getProduced(j);
+			if (pt->getName() == producedName) {
+				CommandResult res = unit->giveCommand(
+					new Command(ct, CommandFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
 				if (res == CommandResult::SUCCESS) {
-					//g_console.addLine("produce command success");
 					return 0; //Ok
-				//} else if (res == CommandResult::FAIL_RESOURCES) {
-				//	g_console.addLine("produce command failed, resources");
-				//} else if (res == CommandResult::FAIL_REQUIREMENTS) {
-				//	g_console.addLine("produce command failed, requirements");
-				//} else {
-				//	g_console.addLine("produce command failed");
 				}
-				return 1; // command fail	
-
+				return 1; // fail
 			}
-		} else if (ct->getClass() == CommandClass::MORPH) { // Morph Command ?
-			if (((MorphCommandType*)ct)->getMorphUnit()->getName() == producedName) {
-				// just record it for now, and keep looking for a Produce Command
-				mct = (MorphCommandType*)ct; 
-			}
-			
 		}
 	}
-	// didn't find a Produce Command, was there are Morph Command?
-	if (mct) {
-		CommandResult res = unit->giveCommand(new Command (mct, CommandFlags()));
-		if (res == CommandResult::SUCCESS) {
-			//g_console.addLine("morph command success");
-			return 0; // ok
-		} else {
-			//g_console.addLine("morph command failed");
-			return 1; // fail
-		}
-	} else {
-		return -2;
-	}
+	return -2;
 }
 
 /** #return 0 if ok, -1 if unitId invalid, -2 if unit cannot produce upgrade,

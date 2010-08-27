@@ -33,28 +33,30 @@ namespace Glest { namespace Plan {
 // 	class ProduceTask
 // =====================================================
 
-ProduceTask::ProduceTask(UnitClass unitClass) {
-	taskClass = TaskClass::PRODUCE;
-	this->unitClass = unitClass;
-	unitType = NULL;
-	resourceType = NULL;
+ProduceTask::ProduceTask(UnitClass unitClass)
+		: Task(TaskClass::PRODUCE)
+		, unitClass(unitClass)
+		, resourceType(0)
+		, unitType(0) {
 }
 
-ProduceTask::ProduceTask(const UnitType *unitType) {
-	taskClass = TaskClass::PRODUCE;
-	this->unitType = unitType;
-	resourceType = NULL;
+ProduceTask::ProduceTask(const ResourceType *resourceType)
+		: Task(TaskClass::PRODUCE)
+		, unitClass(UnitClass::INVALID)
+		, resourceType(resourceType)
+		, unitType(0) {
 }
 
-ProduceTask::ProduceTask(const ResourceType *resourceType) {
-	taskClass = TaskClass::PRODUCE;
-	unitType = NULL;
-	this->resourceType = resourceType;
+ProduceTask::ProduceTask(const UnitType *unitType) 
+		: Task(TaskClass::PRODUCE)
+		, unitClass(UnitClass::INVALID)
+		, resourceType(0)
+		, unitType(unitType) {
 }
 
 string ProduceTask::toString() const {
 	string str = "Produce ";
-	if (unitType != NULL) {
+	if (unitType) {
 		str += unitType->getName();
 	}
 	return str;
@@ -64,22 +66,22 @@ string ProduceTask::toString() const {
 // 	class BuildTask
 // =====================================================
 
-BuildTask::BuildTask(const UnitType *unitType) {
-	taskClass = TaskClass::BUILD;
+BuildTask::BuildTask(const UnitType *unitType) 
+		: Task(TaskClass::BUILD) {
 	this->unitType = unitType;
 	resourceType = NULL;
 	forcePos = false;
 }
 
-BuildTask::BuildTask(const ResourceType *resourceType) {
-	taskClass = TaskClass::BUILD;
+BuildTask::BuildTask(const ResourceType *resourceType)
+		: Task(TaskClass::BUILD) {
 	unitType = NULL;
 	this->resourceType = resourceType;
 	forcePos = false;
 }
 
-BuildTask::BuildTask(const UnitType *unitType, const Vec2i &pos) {
-	taskClass = TaskClass::BUILD;
+BuildTask::BuildTask(const UnitType *unitType, const Vec2i &pos)
+		: Task(TaskClass::BUILD) {
 	this->unitType = unitType;
 	resourceType = NULL;
 	forcePos = true;
@@ -98,8 +100,8 @@ string BuildTask::toString() const {
 // 	class UpgradeTask
 // =====================================================
 
-UpgradeTask::UpgradeTask(const UpgradeType *upgradeType) {
-	taskClass = TaskClass::UPGRADE;
+UpgradeTask::UpgradeTask(const UpgradeType *upgradeType)
+		: Task(TaskClass::UPGRADE) {
 	this->upgradeType = upgradeType;
 }
 
@@ -140,6 +142,16 @@ void Ai::init(GlestAiInterface *aiInterface, int32 randomSeed) {
 	aiRules[11] = new AiRuleExpand(this);
 	aiRules[12] = new AiRuleRepair(this);
 	aiRules[13] = new AiRuleRepair(this);
+
+	for (int i=0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
+		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
+		for (int j=0; j < ut->getCostCount(); ++j) {
+			const Resource *r = ut->getCost(j);
+			if (r->getType()->getClass() == ResourceClass::STATIC && r->getAmount() > 0) {
+				staticResourceUsed.insert(r->getType());
+			}
+		}
+	}
 }
 
 Ai::~Ai() {
@@ -222,6 +234,11 @@ bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
 		}
 	}
 	return false;
+}
+
+bool Ai::isStaticResourceUsed(const ResourceType *rt) const {
+	assert(rt->getClass() == ResourceClass::STATIC);
+	return (staticResourceUsed.find(rt) != staticResourceUsed.end());
 }
 
 bool Ai::isStableBase() {

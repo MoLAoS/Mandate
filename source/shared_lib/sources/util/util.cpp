@@ -154,7 +154,7 @@ int Random::randRange(int min, int max) {
 	int diff = max - min;
 	assert(diff < m);
 	if (!diff) return min;
-	int res = min + (rand() % diff);
+	int res = min + (rand() % (diff + 1));
 	assert(res >= min && res <= max);
 	return res;
 }

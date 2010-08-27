@@ -426,6 +426,10 @@ void SimulationInterface::requestCommand(Command *command) {
 void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	const SkillType *old_st = unit->getCurrSkill();
 
+	if (unit->getId() == 6) {
+		DEBUG_HOOK();
+	}
+
 	// if unit has command process it
 	if (unit->anyCommand()) {
 		// check if a command being 'watched' has finished

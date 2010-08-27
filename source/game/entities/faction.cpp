@@ -232,12 +232,23 @@ bool Faction::reqsOk(const RequirableType *rt) const {
 }
 
 bool Faction::reqsOk(const CommandType *ct) const {
+	if (ct->getClass() == CommandClass::MOVE) {
+		DEBUG_HOOK();
+	}
+	if (ct->getProducedCount() == 1) {
+		return reqsOk(ct, ct->getProduced(0));
+	} else {
+		return reqsOk(ct, 0);
+	}
+}
 
-	if(ct->getClass() == CommandClass::SET_MEETING_POINT) {
+bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
+
+	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		return true;
 	}
 	
-	if ((ct->getProduced() != NULL && !reqsOk(ct->getProduced())) || !isAvailable(ct)) {
+	if ((pt && !reqsOk(pt)) || !isAvailable(ct)) {
 		return false;
 	}
 
@@ -251,46 +262,30 @@ bool Faction::reqsOk(const CommandType *ct) const {
 	return reqsOk(static_cast<const RequirableType*>(ct));
 }
 
-//checks if the command should be displayed or not
+// checks if the command should be displayed or not
 bool Faction::isAvailable(const CommandType *ct) const {
+	if (ct->getProducedCount() == 1) {
+		return isAvailable(ct, ct->getProduced(0));
+	} else {
+		return isAvailable(ct, 0);
+	}
+}
+
+//checks if the command should be displayed or not
+bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const {
 	if (!ct->isAvailableInSubfaction(subfaction)) {
 		return false;
 	}
-
-	//If this command is producing or building anything, we need to make sure
-	//that producable is also available.
-	switch (ct->getClass()) {
-	case CommandClass::BUILD:
-		// we can display as long as one of these is available
-		for (int i = 0; i < ((BuildCommandType*)ct)->getBuildingCount(); i++) {
-			if (((BuildCommandType*)ct)->getBuilding(i)->isAvailableInSubfaction(subfaction)) {
-				return true;
-			}
-		}
-		return false;
-
-	case CommandClass::PRODUCE: {
-		const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(ct);
-		if (pct->getClicks() == Clicks::ONE) {
-			return pct->getProduced()->isAvailableInSubfaction(subfaction);
-		} else {
-			return true;
-		}
-	}
-	case CommandClass::UPGRADE:
-		return ((UpgradeCommandType*)ct)->getProduced()->isAvailableInSubfaction(subfaction);
-
-	case CommandClass::MORPH: {
-		const MorphCommandType *mct = static_cast<const MorphCommandType*>(ct);
-		if (mct->isTwoClickCommand()) {
+	// If this command is producing or building anything, we need to make sure
+	// that producable is also available.
+	if (pt) {
+		if (pt->isAvailableInSubfaction(subfaction)) {
 			return true;
 		} else {
-			return mct->getProduced()->isAvailableInSubfaction(subfaction);
+			return false;
 		}
 	}
-	default:
-		return true;
-	}
+	return true;
 }
 
 // ================== cost application ==================

@@ -244,7 +244,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	if (n->getOptionalChild("produced-unit")) {
 		try { 
 			string producedUnitName= n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
-			m_producedUnit= ft->getUnitType(producedUnitName);
+			m_producedUnits.push_back(ft->getUnitType(producedUnitName));
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(dir, e.what ());
 			loadOk = false;
@@ -284,32 +284,24 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 void ProduceCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(produceSkillType->getName());
-	if (m_producedUnit) {
-		checksum.add(m_producedUnit->getName());
-	} else {
-		foreach_const (vector<const UnitType*>, it, m_producedUnits) {
-			checksum.add((*it)->getName());
-		}
+	foreach_const (vector<const UnitType*>, it, m_producedUnits) {
+		checksum.add((*it)->getName());
 	}
 }
 
 void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
 	produceSkillType->getDesc(str, unit);
-	if (m_producedUnit) {
-		str += "\n" + m_producedUnit->getReqDesc();
+	if (m_producedUnits.size() == 1) {
+		str += "\n" + m_producedUnits[0]->getReqDesc();
 	}
 }
 
 string ProduceCommandType::getReqDesc() const {
 	string res = RequirableType::getReqDesc();
-	if (m_producedUnit) {
-		res += "\n" + m_producedUnit->getReqDesc();
+	if (m_producedUnits.size() == 1) {
+		res += "\n" + m_producedUnits[0]->getReqDesc();
 	}
 	return res;
-}
-
-const ProducibleType *ProduceCommandType::getProduced() const{
-	return m_producedUnit;
 }
 
 /// 0: start, 1: produce, 2: finsh (ok), 3: cancel (could not place new unit)
@@ -323,9 +315,7 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(produceSkillType);
 	} else {
 		unit->update2();
-		const UnitType *prodType = 
-			m_producedUnit	? m_producedUnit 
-							: static_cast<const UnitType*>(command->getProdType());
+		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			Unit *produced = g_simInterface->getUnitFactory().newInstance(
 				Vec2i(0), prodType, unit->getFaction(), g_world.getMap(), CardinalDir::NORTH);
@@ -351,6 +341,10 @@ void ProduceCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
+}
+
+const ProducibleType* ProduceCommandType::getProduced(int i) const {
+	return m_producedUnits[i];
 }
 
 // =====================================================
@@ -381,7 +375,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	if (!pt->load(producibleNode, dir, tt, ft)) {
 		loadOk = false;
 	}
-	m_producible = pt;
+	m_producibles.push_back(pt);
 
 	// finished sound
 	try {
@@ -406,17 +400,23 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 void GenerateCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(m_produceSkillType->getName());
-	checksum.add(m_producible->getName());
+	foreach_const (vector<const ProducibleType*>, it, m_producibles) {
+		checksum.add((*it)->getName());
+	}
 }
 
 void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
 	m_produceSkillType->getDesc(str, unit);
-	str += "\n" + m_producible->getReqDesc();
+	if (m_producibles.size() == 1) {
+		str += "\n" + m_producibles[0]->getReqDesc();
+	}
 }
 
 string GenerateCommandType::getReqDesc() const {
 	string res = RequirableType::getReqDesc();
-	res += "\n" + m_producible->getReqDesc();
+	if (m_producibles.size() == 1) {
+		res += "\n" + m_producibles[0]->getReqDesc();
+	}
 	return res;
 }
 
@@ -432,9 +432,9 @@ void GenerateCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(m_produceSkillType);
 	} else {
 		unit->update2();
-		if (unit->getProgress2() > m_producible->getProductionTime()) {
-			unit->getFaction()->addProduct(m_producible);
-			unit->getFaction()->applyStaticProduction(m_producible);
+		if (unit->getProgress2() > command->getProdType()->getProductionTime()) {
+			unit->getFaction()->addProduct(command->getProdType());
+			unit->getFaction()->applyStaticProduction(command->getProdType());
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -542,7 +542,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	if (n->getOptionalChild("morph-unit")) {
 		try {
 			string morphUnitName = n->getChild("morph-unit")->getAttribute("name")->getRestrictedValue();
-			m_morphUnit = ft->getUnitType(morphUnitName);
+			m_morphUnits.push_back(ft->getUnitType(morphUnitName));
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(dir, e.what ());
 			loadOk = false;
@@ -588,12 +588,8 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 void MorphCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(m_morphSkillType->getName());
-	if (m_morphUnit) {
-		checksum.add(m_morphUnit->getName());
-	} else {
-		foreach_const (vector<const UnitType*>, it, m_morphUnits) {
-			checksum.add((*it)->getName());
-		}
+	foreach_const (vector<const UnitType*>, it, m_morphUnits) {
+		checksum.add((*it)->getName());
 	}
 	checksum.add(m_discount);
 }
@@ -604,17 +600,17 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const{
 	if (m_discount != 0) { // discount
 		str += lang.get("Discount") + ": " + intToStr(m_discount) + "%\n";
 	}
-	if (m_morphUnit) {
-		str += "\n" + m_morphUnit->getReqDesc();
+	if (m_morphUnits.size() == 1) {
+		str += "\n" + m_morphUnits[0]->getReqDesc();
 	}
 }
 
 string MorphCommandType::getReqDesc() const{
-	return RequirableType::getReqDesc() + "\n" + getProduced()->getReqDesc();
-}
-
-const ProducibleType *MorphCommandType::getProduced() const{
-	return m_morphUnit;
+	string res = RequirableType::getReqDesc();
+	if (m_morphUnits.size() == 1) {
+		res += "\n" + m_morphUnits[0]->getReqDesc();
+	}
+	return res;
 }
 
 void MorphCommandType::update(Unit *unit) const {
@@ -623,9 +619,7 @@ void MorphCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	const UnitType *morphToUnit = m_morphUnit 
-			? m_morphUnit 
-			: static_cast<const UnitType*>(command->getProdType());
+	const UnitType *morphToUnit = static_cast<const UnitType*>(command->getProdType());
 
 	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
 		// if not morphing, check space
@@ -667,6 +661,10 @@ void MorphCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
+}
+
+const ProducibleType* MorphCommandType::getProduced(int i) const {
+	return m_morphUnits[i];
 }
 
 // =====================================================

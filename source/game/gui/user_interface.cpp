@@ -559,7 +559,12 @@ void UserInterface::giveOneClickOrders() {
 	CommandResult result;
 	CommandFlags flags(CommandProperties::QUEUE, input.isShiftDown());
 	if (selection.isUniform()) {
-		result = commander->tryGiveCommand(selection, flags, activeCommandType);
+		if (activeCommandType->getProducedCount()) {
+			result = commander->tryGiveCommand(selection, flags, activeCommandType,
+				CommandClass::NULL_COMMAND, Command::invalidPos, 0, activeCommandType->getProduced(0));
+		} else {
+			result = commander->tryGiveCommand(selection, flags, activeCommandType);
+		}
 	} else {
 		result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass);
 	}
@@ -960,7 +965,8 @@ void UserInterface::computeDisplay() {
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
 						const CommandType *ct = ut->getCommandType(i);
 						int displayPos = ct->getClass() == CommandClass::MORPH ? morphPos++ : j;
-						if (u->getFaction()->isAvailable(ct) && ct->getClass() != CommandClass::SET_MEETING_POINT) {
+						if (u->getFaction()->isAvailable(ct) 
+						&& ct->getClass() != CommandClass::SET_MEETING_POINT) {
 							m_display->setDownImage(displayPos, ct->getImage());
 							m_display->setCommandType(displayPos, ct);
 							m_display->setDownLighted(displayPos, u->getFaction()->reqsOk(ct));

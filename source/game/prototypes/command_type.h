@@ -97,7 +97,9 @@ public:
 
 	virtual string toString() const						{return Lang::getInstance().get(name);}
 
-	virtual const ProducibleType *getProduced() const	{return NULL;}
+//	virtual const ProducibleType *getProduced() const		{return NULL;}
+	virtual const ProducibleType *getProduced(int i) const	{return NULL;}
+	virtual int getProducedCount() const					{return 0;}
 
 	bool isQueuable() const								{return queuable;}
 
@@ -399,26 +401,31 @@ public:
 class ProduceCommandType: public CommandType {
 private:
 	const ProduceSkillType* produceSkillType;
-	const UnitType *m_producedUnit;
+//	const UnitType *m_producedUnit;
 	vector<const UnitType*> m_producedUnits;
 	SoundContainer finishedSounds;
 
 public:
-	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true), m_producedUnit(0) {}
+	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
-	virtual const ProducibleType *getProduced() const;
+	
+	// get
+//	const ProducibleType* getProduced() const;
+	const ProducibleType* getProduced(int i) const;
+	int getProducedCount() const	{return m_producedUnits.size();}
+
+//	const UnitType *getProducedUnit() const				{return m_producedUnit;}
+	const UnitType *getProducedUnit(int i) const		{return m_producedUnits[i];}
+	int getProducedUnitCount() const		{return m_producedUnits.size();}
+
 	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
 
-	//get
 	const ProduceSkillType *getProduceSkillType() const	{return produceSkillType;}
-	const UnitType *getProducedUnit() const				{return m_producedUnit;}
-	int getProducedUnitCount() const		{return m_producedUnits.size();}
-	const UnitType *getProducedUnit(int i) const		{return m_producedUnits[i];}
-	virtual Clicks getClicks() const	{ return m_producedUnit ? Clicks::ONE : Clicks::TWO; }
+	virtual Clicks getClicks() const	{ return m_producedUnits.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::PRODUCE; }
@@ -431,11 +438,12 @@ public:
 class GenerateCommandType: public CommandType {
 private:
 	const ProduceSkillType*			m_produceSkillType;
-	const ProducibleType*			m_producible;
+//	const ProducibleType*			m_producible;
+	vector<const ProducibleType*>	m_producibles;
 	SoundContainer					m_finishedSounds;
 
 public:
-	GenerateCommandType() : CommandType("Generate", Clicks::ONE, true), m_producible(0) {}
+	GenerateCommandType() : CommandType("Generate", Clicks::ONE, true) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -445,7 +453,10 @@ public:
 
 	//get
 	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
-	const ProducibleType *getProduced() const			{return m_producible;}
+	const ProducibleType *getProduced(int i) const		{return m_producibles[i];}
+	int getProducedCount() const	{return m_producibles.size();}
+
+	virtual Clicks getClicks() const	{ return m_producibles.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::GENERATE; }
@@ -489,28 +500,32 @@ public:
 class MorphCommandType: public CommandType {
 private:
 	const MorphSkillType*	m_morphSkillType;
-	const UnitType*			m_morphUnit;
+//	const UnitType*			m_morphUnit;
 	vector<const UnitType*> m_morphUnits;
 	int						m_discount;
 	SoundContainer			m_finishedSounds;
 
 public:
-	MorphCommandType() : CommandType("Morph", Clicks::ONE), m_morphUnit(0) {}
+	MorphCommandType() : CommandType("Morph", Clicks::ONE) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
-	virtual const ProducibleType *getProduced() const;
-	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
-
-	//get
-	const MorphSkillType *getMorphSkillType() const	{return m_morphSkillType;}
-	const UnitType *getMorphUnit() const			{return m_morphUnit;}
+	
+	// get
+//	const ProducibleType* getProduced() const;
+	const ProducibleType* getProduced(int i) const;
+	int getProducedCount() const {return m_morphUnits.size();}
+	
+//	const UnitType *getMorphUnit() const			{return m_morphUnit;}
 	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
 	int getMorphUnitCount() const					{return m_morphUnits.size();}
-	Clicks getClicks() const						{return m_morphUnit ? Clicks::ONE : Clicks::TWO;}
-	bool isTwoClickCommand() const					{return !m_morphUnit;}
+
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
+
+	const MorphSkillType *getMorphSkillType() const	{return m_morphSkillType;}
+	Clicks getClicks() const						{return m_morphUnits.size() == 1 ? Clicks::ONE : Clicks::TWO;}
 	int getDiscount() const							{return m_discount;}
 
 	virtual CommandClass getClass() const { return typeClass(); }

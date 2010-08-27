@@ -241,13 +241,11 @@ public:
 	virtual void execute();
 
 private:
+	void produceResources(const ProduceTask *pt);
 	void produceGeneric(const ProduceTask *pt);
 	void produceSpecific(const ProduceTask *pt);
-
-	void findProducerTypes(const UnitType *produce, CmdByUtMap &cmdMap);
-	void findProducerTypes(CmdByUtMap &cmdMap);
-	void findLowestCommandQueue(UnitList &list, const Unit **best);
 };
+
 // =====================================================
 //	class AiRuleBuild
 // =====================================================

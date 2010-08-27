@@ -43,6 +43,7 @@ protected:
 	TaskClass taskClass;
 
 public:
+	Task(TaskClass taskClass) : taskClass(taskClass) {}
 	virtual ~Task(){}
 	TaskClass getClass() const	{return taskClass;}
 	virtual string toString() const= 0;
@@ -53,17 +54,17 @@ public:
 class ProduceTask: public Task{
 private:
 	UnitClass unitClass;
-	const UnitType *unitType;
 	const ResourceType *resourceType;
+	const UnitType *unitType;
 
 public:
 	ProduceTask(UnitClass unitClass);
-	ProduceTask(const UnitType *unitType);
 	ProduceTask(const ResourceType *resourceType);
+	ProduceTask(const UnitType *unitType);
 
 	UnitClass getUnitClass() const					{return unitClass;}
-	const UnitType *getUnitType() const				{return unitType;}
 	const ResourceType *getResourceType() const		{return resourceType;}
+	const UnitType *getUnitType() const				{return unitType;}
 	virtual string toString() const;
 };
 
@@ -132,6 +133,7 @@ private:
 	typedef map<const UnitType *, int> UnitTypeCount;
 	typedef vector<const UnitType*> UnitTypes;
 	typedef vector<const UpgradeType*> UpgradeTypes;
+	typedef set<const ResourceType*> ResourceTypes;
 
 private:
 	GlestAiInterface *aiInterface;
@@ -154,6 +156,7 @@ private:
 	UnitTypeCount availableBuildings;		//available buildings and how many units can build them
 	UnitTypes neededBuildings;
 	UpgradeTypes availableUpgrades;
+	ResourceTypes staticResourceUsed;
 
 public:
 	~Ai();
@@ -174,6 +177,8 @@ public:
 	bool findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly);
 	bool findAbleUnit(int *unitIndex, CommandClass ability, CommandClass currentCommand);
 	bool beingAttacked(Vec2i &pos, Field &field, int radius);
+	bool isStaticResourceUsed(const ResourceType *rt) const;
+	bool usesStaticResources() const {return !staticResourceUsed.empty();}
 	void updateStatistics();
 	int getNeededUpgrades()		{return availableUpgrades.size();}
 	int getNeededBuildings() {

@@ -1206,25 +1206,27 @@ void Renderer::renderSelectionEffects() {
 	glEnable(GL_BLEND);
 	glLineWidth(2.f);
 
-	//units
-	for(int i=0; i<selection->getCount(); ++i){
+	// units
+	for (int i=0; i<selection->getCount(); ++i) {
 
 		const Unit *unit= selection->getUnit(i);
 
-		//translate
+		// translate
 		Vec3f currVec = unit->getCurrVectorFlat();
 		currVec.y += 0.3f;
 
 		// selection circle colour
-		if (world->getThisFactionIndex()==unit->getFactionIndex()) {
+		if (world->getThisFactionIndex() == unit->getFactionIndex()) {
 			glColor4f(0.f, unit->getHpRatio(), 0.f, 0.3f);
+		} else if (world->getThisFaction()->getTeam() == unit->getTeam()) {
+			glColor4f(0, 0.f, unit->getHpRatio(), 0.3f);
 		} else {
 			glColor4f(unit->getHpRatio(), 0.f, 0.f, 0.3f);
 		}
 		renderSelectionCircle(currVec, unit->getType()->getSize(), selectionCircleRadius);
 
-		//magic circle
-		if(world->getThisFactionIndex()==unit->getFactionIndex() && unit->getType()->getMaxEp()>0){
+		// magic circle
+		if (world->getThisFactionIndex() == unit->getFactionIndex() && unit->getType()->getMaxEp() > 0) {
 			glColor4f(unit->getEpRatio()/2.f, unit->getEpRatio(), unit->getEpRatio(), 0.5f);
 			renderSelectionCircle(currVec, unit->getType()->getSize(), magicCircleRadius);
 		}
@@ -1236,7 +1238,7 @@ void Renderer::renderSelectionEffects() {
 			const float offset = float(GameConstants::cellScale / 2);
 			const float ratio = r->getType()->getDefResPerPatch() / float(r->getAmount());
 			Vec3f currVec = selectedObj->getPos() + Vec3f(offset, 0.3f, offset);
-			glColor4f(0.f, 0.f, ratio, 0.3f);
+			glColor4f(ratio, ratio / 2.f, 0.f, 0.3f);
 			renderSelectionCircle(currVec, GameConstants::cellScale, selectionCircleRadius);
 		}		
 	}

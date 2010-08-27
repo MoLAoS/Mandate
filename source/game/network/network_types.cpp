@@ -30,9 +30,7 @@ NetworkCommand::NetworkCommand(Command *command) {
 	commandTypeId = command->getType()->getId();
 	positionX = command->getPos().x;
 	positionY = command->getPos().y;
-	unitTypeId = command->getProdType()
-							? command->getProdType()->getId()
-							: command->getCommandedUnit()->getType()->getId();
+	unitTypeId = command->getProdType() ? command->getProdType()->getId() : -1;
 
 	if (command->getType()->getClass() == CommandClass::BUILD) {
 		targetId = command->getFacing();
@@ -68,7 +66,7 @@ NetworkCommand::NetworkCommand(int networkCommandType, int unitId, int commandTy
 }
 */
 Command *NetworkCommand::toCommand() const {
-	//validate unit
+	// validate unit
 	World &world = World::getInstance();
 	Unit* unit= world.findUnitById(unitId);
 	if (!unit) {
@@ -79,14 +77,13 @@ Command *NetworkCommand::toCommand() const {
 		return new Command(CommandArchetype::CANCEL_COMMAND, 0, Vec2i(-1), unit);
 	}
 
-	//validate command type
-	const UnitType* unitType= world.findUnitTypeById(unit->getFaction()->getType(), unitTypeId);
+	// validate command type
 	const CommandType* ct = g_world.getCommandTypeFactory().getType(commandTypeId);
 	if (!ct) {
 		throw runtime_error("Can not find command type with id: " + intToStr(commandTypeId) + " in unit: " + unit->getType()->getName() + ". Game out of synch.");
 	}
 
-	//get target, the target might be dead due to lag, cope with it
+	// get target, the target might be dead due to lag, cope with it
 	Unit* target = NULL;
 	CardinalDir facing = CardinalDir::NORTH;
 	if (ct->getClass() != CommandClass::BUILD) {
@@ -97,7 +94,12 @@ Command *NetworkCommand::toCommand() const {
 		facing = enum_cast<CardinalDir>(targetId);
 	}
 
-	//create command
+	const UnitType* unitType = 0;
+	if (unitTypeId != -1) {
+		unitType = world.findUnitTypeById(unit->getFaction()->getType(), unitTypeId);
+	}
+
+	// create command
 	Command *command= NULL;
 	bool queue = flags & CmdFlags::QUEUE;
 	bool no_reserve_res = flags & CmdFlags::NO_RESERVE_RESOURCES;
@@ -107,6 +109,8 @@ Command *NetworkCommand::toCommand() const {
 		command= new Command(ct, flags, target, unit);
 	} else if (unitType) {
 		command= new Command(ct, flags, Vec2i(positionX, positionY), unitType, facing, unit);
+	} else {
+		command= new Command(ct, flags, Vec2i(positionX, positionY), unit);
 	}
 
 	return command;
