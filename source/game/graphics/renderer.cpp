@@ -642,7 +642,6 @@ void Renderer::renderMouse3d(){
 }
 
 void Renderer::renderBackground(const Texture2D *texture){
-
 	const Metrics &metrics= Metrics::getInstance();
 
 	assertGl();
@@ -652,7 +651,7 @@ void Renderer::renderBackground(const Texture2D *texture){
 	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 
-	renderQuad(0, 0, metrics.getVirtualW(), metrics.getVirtualH(), texture);
+	renderQuad(0, 0, metrics.getScreenW(), metrics.getScreenH(), texture);
 
 	glPopAttrib();
 

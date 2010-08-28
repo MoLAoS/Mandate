@@ -64,7 +64,8 @@ private:
 
 	TimeStampType timeStampType;
 
-	GraphicProgressBar *progressBar;
+	bool m_progressBar;
+	int m_progress;
 
 private:
 	Logger(const char *fileName, const string &type, TimeStampType timeType = TimeStampType::NONE);
@@ -81,7 +82,7 @@ public:
 	void resetState(const string &s)	{state= s;}
 	void setSubtitle(const string &v)	{subtitle = v;}
 	void setLoading(bool v)				{loadingGame = v;}
-	void setProgressBar(GraphicProgressBar *v) { progressBar = v; }
+	void setProgressBar(bool v) { m_progressBar = v; }
 
 	void add(const string &str, bool renderScreen = false);
 	void addXmlError(const string &path, const char *error);

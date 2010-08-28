@@ -38,8 +38,9 @@ Logger::Logger(const char *fileName, const string &type, TimeStampType timeType)
 		: fileName(fileName)
 		, fileOps(0)
 		, loadingGame(true)
-		, progressBar(NULL)
-		, timeStampType(timeType) {
+		, timeStampType(timeType)
+		, m_progressBar(false)
+		, m_progress(0) {
 	header = "Glest Advanced Engine: " + type + " log file.\n\n";
 }
 
@@ -82,7 +83,7 @@ void Logger::setState(const string &state){
 void Logger::unitLoaded() {
 	++unitsLoaded;
 	float pcnt = ((float)unitsLoaded) / ((float)totalUnits) * 100.f;
-	progressBar->setProgress(int(pcnt));
+	m_progress = int(pcnt);
 }
 
 string newLine = "\n";
@@ -145,8 +146,10 @@ void Logger::renderLoadingScreen(){
 	Font *bigFont = g_coreData.getFTMenuFontNormal();
 
 	g_renderer.renderBackground(g_coreData.getBackgroundTexture());
-	g_renderer.renderText(state, bigFont, Vec3f(1.f), g_metrics.getScreenW() / 4, 
-		75 * g_metrics.getScreenH() / 100, false);
+	
+	Vec2i headerPos(g_metrics.getScreenW() / 4, 75 * g_metrics.getScreenH() / 100);
+	g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);
+
 	if (loadingGame) {
 		int offset = 0;
 		int step = int(normFont->getMetrics()->getHeight()) + 4;
@@ -156,8 +159,12 @@ void Logger::renderLoadingScreen(){
 				70 * g_metrics.getScreenH() / 100 - offset * step, false);
 			++offset;
 		}
-		if (progressBar) {
-			progressBar->render();
+		if (m_progressBar) {
+			Vec2i progBarPos = headerPos;
+			progBarPos.x += bigFont->getMetrics()->getTextDiminsions(state).x + 20;
+			int w = g_metrics.getScreenW() / 4 * 3 - progBarPos.x;
+			int h = normFont->getMetrics()->getHeight() + 6;
+			g_renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
 		}
 	} else {
 		g_renderer.renderText(current, normFont, 1.0f, g_metrics.getScreenW() / 4,

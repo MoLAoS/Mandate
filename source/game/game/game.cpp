@@ -128,10 +128,7 @@ void GameState::load() {
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
 
-	GraphicProgressBar progressBar;
-	progressBar.init(345, 550, 300, 20);
-	g_logger.setProgressBar(&progressBar);
-
+	g_logger.setProgressBar(true);
 	g_logger.setState(Lang::getInstance().get("Loading"));
 
 	if (scenarioName.empty()) {
@@ -144,8 +141,7 @@ void GameState::load() {
 	simInterface->loadWorld();
 
 	// finished loading
-	progressBar.setProgress(100);
-	g_logger.setProgressBar(NULL);
+	g_logger.setProgressBar(false);
 }
 
 void GameState::init() {

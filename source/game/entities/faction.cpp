@@ -198,7 +198,7 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 
 // ==================== reqs ====================
 
-//checks if all required units and upgrades are present
+/** Checks if all required units and upgrades are present for a RequirableType */
 bool Faction::reqsOk(const RequirableType *rt) const {
 
 	//required units
@@ -231,6 +231,9 @@ bool Faction::reqsOk(const RequirableType *rt) const {
 	return rt->isAvailableInSubfaction(subfaction);
 }
 
+/** Checks if all required units and upgrades are present for a CommandType
+  * @return true if the Command can be executed, or if is a multi-tier Produce/Morph/Generate
+  */
 bool Faction::reqsOk(const CommandType *ct) const {
 	if (ct->getClass() == CommandClass::MOVE) {
 		DEBUG_HOOK();
@@ -242,6 +245,9 @@ bool Faction::reqsOk(const CommandType *ct) const {
 	}
 }
 
+/** Checks if all required units and upgrades are present for a CommandType & a ProducibleType
+  * @return true if the Command can be executed and (optionaly) Producible produced
+  */
 bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 
 	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
@@ -262,7 +268,7 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 	return reqsOk(static_cast<const RequirableType*>(ct));
 }
 
-// checks if the command should be displayed or not
+/** Checks sub-faction availability of a command @return true if available */
 bool Faction::isAvailable(const CommandType *ct) const {
 	if (ct->getProducedCount() == 1) {
 		return isAvailable(ct, ct->getProduced(0));
@@ -271,7 +277,7 @@ bool Faction::isAvailable(const CommandType *ct) const {
 	}
 }
 
-//checks if the command should be displayed or not
+/** Checks sub-faction availability of a command and a producible @return true if available */
 bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const {
 	if (!ct->isAvailableInSubfaction(subfaction)) {
 		return false;
