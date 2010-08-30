@@ -574,6 +574,10 @@ void MenuStateNewGame::updateControlers() {
 					break;
 				case ControlType::NETWORK: {
 						ConnectionSlot *slot = g_simInterface->asServerInterface()->getSlot(i);
+						if (!slot) {
+							g_simInterface->asServerInterface()->addSlot(i);
+							slot = g_simInterface->asServerInterface()->getSlot(i);
+						}
 						if (slot->isConnected()) {
 							gs.setPlayerName(i, slot->getName());
 							m_playerSlots[i]->setNameText(slot->getName());
