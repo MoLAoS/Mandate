@@ -161,9 +161,9 @@ void Logger::renderLoadingScreen(){
 		}
 		if (m_progressBar) {
 			Vec2i progBarPos = headerPos;
-			progBarPos.x += bigFont->getMetrics()->getTextDiminsions(state).x + 20;
+			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).x) + 20;
 			int w = g_metrics.getScreenW() / 4 * 3 - progBarPos.x;
-			int h = normFont->getMetrics()->getHeight() + 6;
+			int h = int(normFont->getMetrics()->getHeight() + 2.f);
 			g_renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
 		}
 	} else {

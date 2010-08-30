@@ -41,25 +41,29 @@ public:
 private:
 	StaticText::Ptr	m_label;
 	CheckBox::Ptr	m_teamCheckBox;
-	TextBox::Ptr	m_textBox;
+	InputBox::Ptr	m_inputBox;
 	Panel::Ptr		m_panel;
 	Panel::Ptr		m_subPanel;
 
-private:
-	ChatDialog(WidgetWindow*, bool teamOnly);
+	bool m_teamChat;
 
-	void onCheckChanged(Button::Ptr) { TeamChatChanged(this); }
+private:
+	void onCheckChanged(Button::Ptr) { m_teamChat = m_teamCheckBox->isChecked(); }
 	void onInputEntered(TextBox::Ptr);
+	void onEscaped(InputBox *) { Escaped(this); }
 
 public:
-	static ChatDialog::Ptr showDialog(Vec2i pos, Vec2i size, bool teamOnly);
+	ChatDialog(Container::Ptr parent, Vec2i pos, Vec2i size);
+//	static ChatDialog::Ptr showDialog(Vec2i pos, Vec2i size, bool teamOnly);
 
-	string getInput() const		{ return m_textBox->getText(); }
-	bool getTeamChecked() const	{ return m_teamCheckBox->isChecked(); }
-	void setTeamChat(bool v)	{ m_teamCheckBox->setChecked(v); }
+	string getInput() const		{ return m_inputBox->getText(); }
+	bool isTeamOnly() const		{ return m_teamCheckBox->isChecked(); }
 
-	sigslot::signal<Ptr>	TeamChatChanged;
+	void setTeamOnly(bool v)	{ m_teamCheckBox->setChecked(v); }
+	void toggleTeamOnly()		{ m_teamCheckBox->setChecked(!m_teamCheckBox->isChecked()); }
 
+	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual void setVisible(bool vis);
 	virtual string desc() { return string("[ChatDialog: ") + descPosDim() + "]"; }
 };
 

@@ -67,12 +67,8 @@ Map::Map()
 		//, surfaceHeights(NULL)
 		//, earthquakes() 
 		{
-
 	// If this is expanded, maintain Tile::read() and write()
 	assert(Tileset::objCount < 256);
-
-	// same as above
-	assert(GameConstants::maxPlayers == 4);
 }
 
 Map::~Map() {
@@ -152,7 +148,11 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 	};
 
 	try {
-		f->openRead(path.c_str());
+		if (fileExists(path + ".mgm")) {
+			f->openRead((path + ".mgm").c_str());
+		} else {
+			f->openRead((path + ".gbm").c_str());
+		}
 
 		//read header
 		MapFileHeader header;

@@ -64,11 +64,12 @@ void WidgetWindow::clear() {
 		mouseOverStack.pop();
 	}
 	keyboardFocused = keyboardWidget;
+	lastKeyDownWidget = 0;
 	foreach_enum (MouseButton, btn) {
 		mouseDownWidgets[btn] = 0;
 	}
 	lastMouseDownWidget = 0;
-
+	
 	if (floatingWidget) {
 		delete floatingWidget;
 		floatingWidget = 0;
@@ -164,6 +165,9 @@ void WidgetWindow::removeFloatingWidget(Widget::Ptr floater) {
 	if (floater != floatingWidget) {
 		throw runtime_error("WidgetWindow::removeFloatingWidget() passed bad argument.");
 	}
+	keyboardFocused = keyboardWidget;
+	lastKeyDownWidget = 0;
+
 	toClean.push_back(floatingWidget);
 	floatingWidget = 0;
 	while (mouseOverStack.top() != this) {

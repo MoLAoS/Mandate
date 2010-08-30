@@ -52,9 +52,8 @@ void AnnouncerThread::execute() {
 				m_socket.sendAnnounce(4950); //TODO: change with game constant port
 			} catch (SocketException) {
 				// do nothing
-				printf("SocketException.\n");
+				printf("SocketException while announcing game on LAN.\n");
 			}
-			printf("announcing\n");
 		}
 		sleep(1000);
 	}
@@ -98,60 +97,52 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	gap = (metrics.getScreenW() - 600) / 4;
 
 	//map listBox
-	findAll("maps/*.gbm", results, false);
-
-	// hack... _only_ match '.gbm' (and not .gbm8 or anything else like that).
+	set<string> mapFiles;
+	findAll("maps/*.gbm", results, true);
 	foreach (vector<string>, it, results) {
-		string::size_type dotPos = it->find_last_of('.');
-		assert(dotPos != string::npos);
-		if (it->substr(dotPos + 1).size() != 3U) {
-			it = results.erase(it) - 1;
-		} else {
-			*it = cutLastExt(*it);
-		}
+		mapFiles.insert(*it);
 	}
+	results.clear();	
 
-	if (results.empty()) {
+	findAll("maps/*.mgm", results, true);
+	foreach (vector<string>, it, results) {
+		mapFiles.insert(*it);
+	}
+	results.clear();
+
+	if (mapFiles.empty()) {
 		throw runtime_error("There are no maps");
 	}
-	m_mapFiles = results;
-	int match = 0;
-	for (int i = 0; i < results.size(); ++i) {
-		if (results[i] == config.getUiLastMap()) {
-			match = i;
-		}
-		results[i] = formatString(results[i]);
+	m_mapFiles.clear();
+	foreach (set<string>, it, mapFiles) {
+		m_mapFiles.push_back(*it);
+		results.push_back(formatString(*it));
 	}
 	x = gap, w = 200, y = 170, h = 30;
 	m_mapList = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
 	m_mapList->addItems(results);
 	m_mapList->setDropBoxHeight(140);
-	m_mapList->setSelected(match);
+	m_mapList->setSelected(0);
 	m_mapList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeMap);
 
 	m_mapLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
 	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
 
-	gs.setDescription(results[match]);
-	gs.setMapPath(string("maps/") + m_mapFiles[match] + ".gbm");
+	gs.setDescription(results[0]);
+	gs.setMapPath(string("maps/") + m_mapFiles[0]);
 
-	m_mapInfo.load("maps/" + m_mapFiles[match] + ".gbm");
+	m_mapInfo.load("maps/" + m_mapFiles[0]);
 
 	m_mapInfoLabel = new StaticText(&program, Vec2i(x, y - (h*2 + 10)), Vec2i(w, h * 2));
-	//m_mapInfoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.7f);
 	m_mapInfoLabel->setTextParams(m_mapInfo.desc, Vec4f(1.f), font);
 
 	//tileset listBox
-	match = 0;
 	findAll("tilesets/*.", results);
 	if (results.size() == 0) {
 		throw runtime_error("There are no tile sets");
 	}
 	m_tilesetFiles = results;
 	for (int i = 0; i < results.size(); ++i) {
-		if(results[i] == config.getUiLastTileset()) {
-			match = i;
-		}
 		results[i] = formatString(results[i]);
 	}
 	x = gap * 2 + w;
@@ -159,29 +150,25 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetList->addItems(results);
 	m_tilesetList->setDropBoxHeight(140);
 	m_tilesetList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
-	m_tilesetList->setSelected(match);
+	m_tilesetList->setSelected(0);
 
 	m_tilesetLabel = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
 	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
 
 	//tech Tree listBox
-	match = 0;
 	findAll("techs/*.", results);
 	if (results.size() == 0) {
 		throw runtime_error("There are no tech trees");
 	}
 	m_techTreeFiles = results;
 	for (int i = 0; i < results.size(); ++i) {
-		if(results[i] == config.getUiLastTechTree()) {
-			match = i;
-		}
 		results[i] = formatString(results[i]);
 	}
 	x = gap * 3 + w * 2;
 	m_techTreeList = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
 	m_techTreeList->addItems(results);
 	m_techTreeList->setDropBoxHeight(140);
-	m_techTreeList->setSelected(match);
+	m_techTreeList->setSelected(0);
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
 	m_techTreeLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
@@ -216,19 +203,17 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_factionLabel->setTextParams("Faction", Vec4f(1.f), font);
 	m_teamLabel->setTextParams("Team", Vec4f(1.f), font);
 
-	int numPlayer = GameConstants::maxPlayers;
-
 	int vSpace = (sty - y);
-	int vgap = (vSpace - (numPlayer * 35)) / (numPlayer + 1);
+	int vgap = (vSpace - (GameConstants::maxPlayers * 35)) / (GameConstants::maxPlayers + 1);
 
-	for (int i = 0; i < numPlayer; ++i) {
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		y = sty - (vgap * (i + 1)) - (h * (i + 1));
 		m_playerSlots[i] = new PlayerSlotWidget(&program, Vec2i(x, y), Vec2i(w, h));
 		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i+1));
 		m_playerSlots[i]->setSelectedColour(i);
 	}
 
-	reloadFactions();
+	reloadFactions(true);
 
 	// init controllers
 	m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
@@ -250,14 +235,17 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	updateControlers();
 	updateNetworkSlots();
 
-	for (int i = 0; i < numPlayer; ++i) {
+	if (fileExists("last_gamesettings.gs")) {
+		if (loadGameSettings()) {
+			updateNetworkSlots();
+		}
+	}
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i]->ControlChanged.connect(this, &MenuStateNewGame::onChangeControl);
 		m_playerSlots[i]->FactionChanged.connect(this, &MenuStateNewGame::onChangeFaction);
 		m_playerSlots[i]->TeamChanged.connect(this, &MenuStateNewGame::onChangeTeam);
 		m_playerSlots[i]->ColourChanged.connect(this, &MenuStateNewGame::onChangeColour);
 	}
-
-	//CHECK_HEAP();
 }
 
 int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
@@ -378,7 +366,7 @@ void MenuStateNewGame::onCheckChanged(Button::Ptr cb) {
 void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
 	assert(m_mapList->getSelectedIndex() >= 0 && m_mapList->getSelectedIndex() < m_mapFiles.size());
 	string mapBaseName = m_mapFiles[m_mapList->getSelectedIndex()];
-	string mapFile = "maps/" + mapBaseName + ".gbm";
+	string mapFile = "maps/" + mapBaseName;
 
 	m_mapInfo.load(mapFile);
 	m_mapInfoLabel->setText(m_mapInfo.desc);
@@ -398,7 +386,7 @@ void MenuStateNewGame::onChangeTileset(ListBase::Ptr) {
 }
 
 void MenuStateNewGame::onChangeTechtree(ListBase::Ptr) {
-	reloadFactions();
+	reloadFactions(true);
 	g_config.setUiLastTechTree(m_techTreeFiles[m_techTreeList->getSelectedIndex()]);
 }
 
@@ -441,6 +429,9 @@ void MenuStateNewGame::update() {
 			} else {
 				g_simInterface->getGameSettings().compact();
 				g_config.save();
+				XmlTree *doc = new XmlTree("game-settings");		
+				g_simInterface->getGameSettings().save(doc->getRootNode());
+				doc->save("last_gamesettings.gs");
 				if (!hasNetworkSlots()) {
 					GameSettings gs = g_simInterface->getGameSettings();
 					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
@@ -459,7 +450,7 @@ void MenuStateNewGame::update() {
 
 // ============ PRIVATE ===========================
 
-void MenuStateNewGame::reloadFactions() {
+void MenuStateNewGame::reloadFactions(bool setStagger) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	vector<string> results;
 	assert(m_techTreeList->getSelectedIndex() >= 0);
@@ -476,10 +467,69 @@ void MenuStateNewGame::reloadFactions() {
 	}
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i]->setFactionItems(results);
-		if (m_playerSlots[i]->getControlType() != ControlType::CLOSED) {
-			m_playerSlots[i]->setSelectedFaction(i % results.size());
+		if (setStagger) {
+			if (m_playerSlots[i]->getControlType() != ControlType::CLOSED) {
+				m_playerSlots[i]->setSelectedFaction(i % results.size());
+			}
 		}
 	}
+}
+
+bool MenuStateNewGame::loadGameSettings() {
+	XmlTree *doc = new XmlTree();
+	try {
+		doc->load("last_gamesettings.gs");
+		GameSettings gs(doc->getRootNode());
+		g_simInterface->getGameSettings() = gs;
+	} catch (const runtime_error &e) {
+		delete doc;
+		return false;
+	}
+	GameSettings &gs = g_simInterface->getGameSettings();
+	m_techTreeList->setSelected(formatString(basename(gs.getTechPath())));
+	m_tilesetList->setSelected(formatString(basename(gs.getTilesetPath())));
+	reloadFactions(false);
+	for (int i=0 ; i < GameConstants::maxPlayers; ++i) {
+		m_playerSlots[i]->setSelectedControl(ControlType::CLOSED);
+	}
+	for (int i=0; i < gs.getFactionCount(); ++i) {
+		int slot = gs.getStartLocationIndex(i);
+		m_playerSlots[slot]->setSelectedControl(gs.getFactionControl(i));
+		switch (gs.getFactionControl(i)) {
+			case ControlType::HUMAN:
+				m_playerSlots[slot]->setNameText(g_config.getNetPlayerName());
+				break;
+			case ControlType::NETWORK:
+				m_playerSlots[slot]->setNameText("Network (Unconnected)");
+				break;
+			default:
+				m_playerSlots[slot]->setNameText("AI Player");
+				break;
+		}
+		int ndx = -1;
+		string fName = gs.getFactionTypeName(i);
+		foreach (vector<string>, it, m_factionFiles) {
+			++ndx;
+			if (*it == fName) {
+				break;
+			}
+		}
+		m_playerSlots[slot]->setSelectedFaction(ndx);
+		m_playerSlots[slot]->setSelectedTeam(gs.getTeam(i));
+		m_playerSlots[slot]->setSelectedColour(gs.getColourIndex(i));
+		//m_playerSlots[i]->setStartLocation(gs.getStartLocationIndex(i));
+	}
+	string mapFile = basename(gs.getMapPath());
+//	m_mapList->SelectionChanged.disconnect(this);
+	m_mapList->setSelected(formatString(mapFile));
+//	m_mapList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeMap);
+	m_mapInfo.load(gs.getMapPath());
+	m_mapInfoLabel->setText(m_mapInfo.desc);
+	m_randomLocsCheckbox->setChecked(gs.getRandomStartLocs());
+	m_fogOfWarCheckbox->setChecked(gs.getFogOfWar());
+
+	delete doc;
+	return true;
 }
 
 void MenuStateNewGame::updateControlers() {
@@ -500,6 +550,7 @@ void MenuStateNewGame::updateControlers() {
 			gs.setTeam(i, -1);
 			gs.setStartLocationIndex(i, -1);
 			gs.setColourIndex(i, -1);
+			gs.setResourceMultiplier(i, 1.f);
 			m_playerSlots[i]->setNameText("No Player");
 			m_playerSlots[i]->setSelectedFaction(-1);
 			m_playerSlots[i]->setSelectedTeam(-1);
@@ -530,11 +581,29 @@ void MenuStateNewGame::updateControlers() {
 							m_playerSlots[i]->setNameText("Unconnected");
 						}
 					}
+					gs.setResourceMultiplier(i, 1.f);
 					break;
 				default:
 					gs.setPlayerName(i, "AI Player");
 					m_playerSlots[i]->setNameText("AI Player");
 			}
+			switch (m_playerSlots[i]->getControlType()) {
+				case ControlType::HUMAN:
+				case ControlType::NETWORK:
+				case ControlType::CPU:
+					gs.setResourceMultiplier(i, 1.f);
+					break;
+				case ControlType::CPU_EASY:
+					gs.setResourceMultiplier(i, 0.5f);
+					break;
+				case ControlType::CPU_ULTRA:
+					gs.setResourceMultiplier(i, 3.f);
+					break;
+				case ControlType::CPU_MEGA:
+					gs.setResourceMultiplier(i, 4.f);
+					break;
+			}
+
 			assert(m_playerSlots[i]->getSelectedTeamIndex() >= 0 && m_playerSlots[i]->getSelectedTeamIndex() < GameConstants::maxPlayers);
 			gs.setTeam(i, m_playerSlots[i]->getSelectedTeamIndex());
 			gs.setStartLocationIndex(i, i);

@@ -36,7 +36,14 @@ public:
 	}
 
 	void setSelectedControl(ControlType ct) {
+		if (ControlType(m_controlList->getSelectedIndex()) == ControlType::CLOSED
+		&& ct != ControlType::CLOSED) {
+			enableSlot();
+		}
 		m_controlList->setSelected(ct);
+		if (ct == ControlType::CLOSED) {
+			disableSlot();
+		}
 	}
 
 	void setSelectedFaction(int ndx) {
@@ -49,6 +56,7 @@ public:
 	}
 
 	void setSelectedColour(int ndx) {
+		assert (ndx >= -1 && ndx < GameConstants::maxPlayers);
 		m_colourList->setSelectedColour(ndx);
 	}
 
@@ -61,6 +69,10 @@ public:
 	sigslot::signal<Ptr> FactionChanged;
 	sigslot::signal<Ptr> TeamChanged;
 	sigslot::signal<Ptr> ColourChanged;
+
+private:
+	void disableSlot();
+	void enableSlot();
 
 private: // re-route signals from DropLists
 	void onControlChanged(ListBase::Ptr) {
@@ -118,9 +130,10 @@ public:
 	ScrollText(Container::Ptr parent);
 	ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size);
 
+	void recalc();
 	void init();
 	void onScroll(VerticalScrollBar::Ptr);
-	void setText(const string &txt);
+	void setText(const string &txt, bool scrollToBottom = false);
 
 	void render();
 };
@@ -161,6 +174,7 @@ private:
 
 protected:
 	BasicDialog(WidgetWindow*);
+	BasicDialog(Container::Ptr, Vec2i pos, Vec2i sz);
 	void onButtonClicked(Button::Ptr);
 
 protected:
@@ -174,7 +188,8 @@ public:
 	const string& getTitleText() const { return m_titleBar->getText(); }
 
 	sigslot::signal<Ptr> Button1Clicked,
-						 Button2Clicked;
+						 Button2Clicked,
+						 Escaped;
 
 	bool mouseDown(MouseButton btn, Vec2i pos);
 	bool mouseMove(Vec2i pos);
@@ -206,29 +221,49 @@ public:
 	virtual string desc() { return string("[MessageDialog: ") + descPosDim() + "]"; }
 };
 
+// =====================================================
+// class InputBox
+// =====================================================
+
+class InputBox : public TextBox {
+public:
+	typedef InputBox* Ptr;
+public:
+	InputBox(Container *parent);
+	InputBox(Container *parent, Vec2i pos, Vec2i size);
+
+	virtual bool keyDown(Key key);
+	sigslot::signal<InputBox*> Escaped;
+};
+
+// =====================================================
+// class InputDialog
+// =====================================================
+
 class InputDialog : public BasicDialog {
 public:
 	typedef InputDialog* Ptr;
 
 private:
 	StaticText::Ptr	m_label;
-	TextBox::Ptr	m_textBox;
+	InputBox*	m_inputBox;
 	Panel::Ptr		m_panel;
 
 private:
 	InputDialog(WidgetWindow*);
 
 	void onInputEntered(TextBox::Ptr);
+	void onEscaped(InputBox*) { Escaped(this); }
 
 public:
 	static InputDialog::Ptr showDialog(Vec2i pos, Vec2i size, const string &title,
 					const string &msg, const string &btn1Text, const string &btn2Text);
 
 	void setMessageText(const string &text);
-	void setInputMask(const string &allowMask) { m_textBox->setInputMask(allowMask); }
+	void setInputMask(const string &allowMask) { m_inputBox->setInputMask(allowMask); }
 
 	const string& getMessageText() const { return m_label->getText(); }
-	string getInput() const { return m_textBox->getText(); }
+	string getInput() const { return m_inputBox->getText(); }
 
 	virtual string desc() { return string("[InputDialog: ") + descPosDim() + "]"; }
 };

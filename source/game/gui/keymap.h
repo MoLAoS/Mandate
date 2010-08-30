@@ -85,6 +85,7 @@ enum UserCommand {
 	ucFollow,
 	ucPatrol,
 	ucRotate,
+	ucLuaConsole,
 
 	ucCount
 };

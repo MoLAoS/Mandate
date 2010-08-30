@@ -182,8 +182,8 @@ void ProjectileType::load(const string &dir, const string &path){
 		ParticleSystemType::load(particleSystemNode, dir);
 
 		//trajectory values
-		const XmlNode *tajectoryNode = particleSystemNode->getChild("trajectory");
-		string ts = tajectoryNode->getAttribute("type")->getRestrictedValue();
+		const XmlNode *trajectoryNode = particleSystemNode->getChild("trajectory");
+		string ts = trajectoryNode->getAttribute("type")->getRestrictedValue();
 
 		trajectory = TrajectoryTypeNames.match(ts.c_str());
 		if (trajectory == TrajectoryType::INVALID) {
@@ -191,25 +191,25 @@ void ProjectileType::load(const string &dir, const string &path){
 		}
 
 		//trajectory speed
-		trajectorySpeed = tajectoryNode->getChildFloatValue("speed") / Config::getInstance().getGsWorldUpdateFps();
+		trajectorySpeed = trajectoryNode->getChildFloatValue("speed") / Config::getInstance().getGsWorldUpdateFps();
 
 		if (trajectory == TrajectoryType::PARABOLIC || trajectory == TrajectoryType::SPIRAL
 		|| trajectory == TrajectoryType::RANDOM) {
 			//trajectory scale
-			trajectoryScale = tajectoryNode->getChildFloatValue("scale");
+			trajectoryScale = trajectoryNode->getChildFloatValue("scale");
 		} else {
 			trajectoryScale = 1.0f;
 		}
 
 		if (trajectory == TrajectoryType::SPIRAL) {
 			//trajectory frequency
-			trajectoryFrequency = tajectoryNode->getChildFloatValue("frequency");
+			trajectoryFrequency = trajectoryNode->getChildFloatValue("frequency");
 		} else {
 			trajectoryFrequency = 1.0f;
 		}
 
 		// projectile start
-		const XmlNode *startNode = tajectoryNode->getChild("start", 0, false);
+		const XmlNode *startNode = trajectoryNode->getChild("start", 0, false);
 		if(startNode) {
 			string s = startNode->getStringAttribute("value");
 			start = ProjectileStartNames.match(s.c_str());
@@ -220,7 +220,7 @@ void ProjectileType::load(const string &dir, const string &path){
 			start = ProjectileStart::SELF;
 		}
 
-		const XmlNode *trackingNode = tajectoryNode->getChild("tracking", 0, false);
+		const XmlNode *trackingNode = trajectoryNode->getChild("tracking", 0, false);
 		tracking = trackingNode && trackingNode->getBoolAttribute("value");
 
 	} catch (const std::exception &e) {

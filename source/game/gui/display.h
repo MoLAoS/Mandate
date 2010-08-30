@@ -73,6 +73,7 @@ private:
 	Vec2i m_upImageOffset, m_downImageOffset, m_progressPos;
 	int m_progPrecentPos;
 	Font *m_font;
+	int m_mouseDownNdx;
 
 private:
 	void renderProgressBar();
@@ -93,6 +94,7 @@ public:
 	int getDownSelectedPos() const					{return downSelectedPos;}
 
 	//set
+	void setSize();
 	void setTitle(const string title);
 	void setText(const string &text);
 	void setInfoText(const string &infoText);
@@ -121,6 +123,8 @@ public:
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);
 	virtual bool mouseMove(Vec2i pos);
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
+	virtual void mouseOut();
 };
 
 class ResourceBar : public Widget, public MouseWidget, public ImageWidget, public TextWidget {

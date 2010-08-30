@@ -17,6 +17,7 @@
 #include "display.h"
 #include "commander.h"
 #include "console.h"
+#include "lua_console.h"
 #include "selection.h"
 #include "random.h"
 #include "game_camera.h"
@@ -119,6 +120,7 @@ private:
 	Minimap *m_minimap;
 	Display *m_display;
 	ResourceBar *m_resourceBar;
+	LuaConsole *m_luaConsole;
 
 	Random random;
 
@@ -168,7 +170,7 @@ public:
 	//get
 	Minimap *getMinimap()							{return m_minimap;}
 	const Minimap *getMinimap() const				{return m_minimap;}
-
+	LuaConsole* getLuaConsole()						{return m_luaConsole;}
 	Vec2i getPosObjWorld() const					{return posObjWorld;}
 	const UnitType *getBuilding() const;
 	const Vec2i &getDragStartPos() const			{return dragStartPos;}
@@ -207,7 +209,8 @@ public:
 	}
 
 	void onSelectionUpdated(){
-		currentGroup= invalidGroupIndex;
+		currentGroup = invalidGroupIndex;
+		m_display->setSize();
 	}
 
 	void commandButtonPressed(int posDisplay);
@@ -255,6 +258,8 @@ private:
 	void centerCameraOnLastEvent();
 	void selectInterestingUnit(InterestingUnitType iut);
 	void clickCommonCommand(CommandClass commandClass);
+
+	void onCloseLuaConsole(BasicDialog::Ptr);
 
 	//misc
 	int computePosDisplay(int x, int y);

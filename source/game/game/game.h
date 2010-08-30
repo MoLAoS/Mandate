@@ -80,8 +80,6 @@ protected:
 	const Config &config;
 	UserInterface gui;
 	GameCamera gameCamera;
-	//ChatManager chatManager;
-	bool m_teamChat;
 
 	//misc
 	Checksum checksum;
@@ -97,13 +95,8 @@ protected:
 
 	MessageQueue m_scriptMessages;
 
-	MessageDialog::Ptr	m_msgBox;
-	MessageDialog::Ptr	m_scriptMsgBox;
-	InputDialog::Ptr	m_saveBox;
-	ChatDialog::Ptr		m_chatBox;
-
-	///@todo Remove
-	//GraphicTextEntryBox *saveBox;
+	BasicDialog::Ptr	m_modalDialog;
+	ChatDialog::Ptr		m_chatDialog;
 
 	Vec2i lastMousePos;
 
@@ -161,7 +154,7 @@ public:
 	}
 
 	void addScriptMessage(const string &header, const string &msg);
-	void onScriptMessageDismissed(BasicDialog::Ptr);
+	//void onScriptMessageDismissed(BasicDialog::Ptr);
 
 	virtual void quitGame();
 
@@ -180,25 +173,24 @@ protected:
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
 
+	void destroyDialog(BasicDialog::Ptr);
+
 	void doSaveBox();
 	void onSaveSelected(BasicDialog::Ptr);
-	void onSaveCancel(BasicDialog::Ptr);
 
 	void displayError(std::exception &e);
 	void onErrorDismissed(BasicDialog::Ptr);
 
 	void doExitMessage(const string &msg);
 	void onExitSelected(BasicDialog::Ptr);
-	void onExitCancel(BasicDialog::Ptr);
 
 	void doScriptMessage();
 
 	void doChatDialog();
-	void updateChatDialog();
+	//void updateChatDialog();
 
 	void onChatEntered(BasicDialog::Ptr);
 	void onChatCancel(BasicDialog::Ptr);
-	void onTeamChatChanged(ChatDialog::Ptr ct) {m_teamChat = ct->getTeamChecked();}
 };
 
 

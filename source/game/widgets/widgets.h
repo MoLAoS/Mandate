@@ -286,9 +286,7 @@ public:
 	void setLineSize(int line) { lineSize = line; }
 
 	int getRangeOffset() const { return int((thumbOffset - topOffset) / float(shaftHeight) * totalRange); }
-	void setRangeOffset() {
-
-	}
+	void setOffset(float percent);
 
 //	int getTotalRange() const { return totalRange; }
 //	int getActualRange() const { return actualRange; }
@@ -418,6 +416,9 @@ public:
 
 	int getSelectedIndex() { return selectedIndex; }
 	ListBoxItem* getSelectedItem() { return selectedItem; }
+
+	unsigned getItemCount() const { return listItems.size(); }
+
 
 	sigslot::signal<ListBase*> SelectionChanged;
 };

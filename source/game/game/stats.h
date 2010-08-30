@@ -53,16 +53,23 @@ public:
 	void load(const XmlNode *n);
 	void save(XmlNode *n) const;
 
-	bool getVictory(int i) const					{assert(i >= 0); return playerStats[i].victory;}
-	int getKills(int i) const						{assert(i >= 0); return playerStats[i].kills;}
-	int getDeaths(int i) const						{assert(i >= 0); return playerStats[i].deaths;}
-	int getUnitsProduced(int i) const				{assert(i >= 0); return playerStats[i].unitsProduced;}
-	int getResourcesHarvested(int i) const			{assert(i >= 0); return playerStats[i].resourcesHarvested;}
+#	define ASSERT_INDEX() assert(i >= 0 && i < GameConstants::maxPlayers)
+	bool getVictory(int i) const					{ASSERT_INDEX(); return playerStats[i].victory;}
+	int getKills(int i) const						{ASSERT_INDEX(); return playerStats[i].kills;}
+	int getDeaths(int i) const						{ASSERT_INDEX(); return playerStats[i].deaths;}
+	int getUnitsProduced(int i) const				{ASSERT_INDEX(); return playerStats[i].unitsProduced;}
+	int getResourcesHarvested(int i) const			{ASSERT_INDEX(); return playerStats[i].resourcesHarvested;}
 
 
-	void setVictorious(int i)						{assert(i >= 0); playerStats[i].victory = true;}
-	void produce(int i)								{assert(i >= 0); playerStats[i].unitsProduced++;}
-	void harvest(int i, int amount)					{assert(i >= 0); playerStats[i].resourcesHarvested += amount;}
+	void setVictorious(int i)						{ASSERT_INDEX(); playerStats[i].victory = true;}
+	void produce(int i)								{ASSERT_INDEX(); playerStats[i].unitsProduced++;}
+	void harvest(int i, int amount)					{
+		ASSERT_INDEX();
+		playerStats[i].resourcesHarvested += amount;
+	}
+
+#	undef ASSERT_INDEX
+
 	void kill(int killerIndex, int killedIndex) {
 		if (killerIndex != -1) {
 			if(killerIndex != killedIndex) {

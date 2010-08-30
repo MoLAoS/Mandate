@@ -41,7 +41,13 @@ using Glest::Gui::Console;
 using Glest::Gui::GameState;
 using Glest::Sim::World;
 
-namespace Glest { namespace Script {
+namespace Glest {
+namespace Gui {
+	class LuaConsole;
+}
+using Gui::LuaConsole;
+	
+namespace Script {
 
 // =====================================================
 //	class ScriptTimer
@@ -221,6 +227,7 @@ private:
 
 	//misc
 	static string displayText;
+	static LuaConsole *luaConsole;
 
 	//last created unit & last dead unit
 	static struct UnitInfo {
@@ -246,7 +253,7 @@ public:
 	static void cleanUp();
 	static void initGame();
 
-	static void doSomeLua(string &code);
+	static void doSomeLua(const string &code);
 
 	static string getDisplayText() 										{return displayText;}
 	static bool getGameOver() 											{return gameOver;}

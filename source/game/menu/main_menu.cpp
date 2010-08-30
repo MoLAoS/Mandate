@@ -58,7 +58,13 @@ void MapInfo::load(string file) {
 
 	try {
 		FileOps *f = FSFactory::getInstance()->getFileOps();
-		f->openRead(file.c_str());
+		string path;
+		if (fileExists(file + ".mgm")) {
+			path = file + ".mgm";
+		} else {
+			path = file + ".gbm";
+		}
+		f->openRead(path.c_str());
 
 		MapFileHeader header;
 		f->read(&header, sizeof(MapFileHeader), 1);

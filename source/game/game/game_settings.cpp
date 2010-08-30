@@ -31,10 +31,16 @@ GameSettings::GameSettings(const XmlNode *node) {
 	thisFactionIndex = node->getChildIntValue("thisFactionIndex");
 	factionCount = node->getChildIntValue("factionCount");
 	fogOfWar = node->getChildBoolValue("fogOfWar");
+	randomStartLocs = node->getChildBoolValue("randomStartLocs");
+
+	defaultUnits = node->getChildBoolValue("defaultUnits");
+	defaultResources = node->getChildBoolValue("defaultResources");
+	defaultVictoryConditions = node->getChildBoolValue("defaultVictoryConditions");
 
 	XmlNode *factionsNode = node->getChild("factions");
 	assert(GameConstants::maxPlayers >= factionsNode->getChildCount());
-	for (int i = 0; i < factionsNode->getChildCount(); ++i) {
+	int i = 0;
+	for ( ; i < factionsNode->getChildCount(); ++i) {
 		XmlNode *factionNode = factionsNode->getChild("faction", i);
 
 		factionTypeNames[i] = factionNode->getChildStringValue("type");
@@ -43,6 +49,16 @@ GameSettings::GameSettings(const XmlNode *node) {
 		teams[i] = factionNode->getChildIntValue("team");
 		startLocationIndex[i] = factionNode->getChildIntValue("startLocationIndex");
 		colourIndices[i] = factionNode->getChildIntValue("colourIndex");
+		resourceMultipliers[i] = factionNode->getChildFloatValue("resourceMultiplier");
+	}
+	for ( ; i < GameConstants::maxPlayers; ++i) {
+		factionTypeNames[i] = "";
+		playerNames[i] = "";
+		factionControls[i] = ControlType::CLOSED;
+		teams[i] = -1;
+		startLocationIndex[i] = -1;
+		colourIndices[i] = -1;
+		resourceMultipliers[i] = 1.f;
 	}
 }
 
@@ -120,6 +136,9 @@ void GameSettings::save(XmlNode *node) const {
 	node->addChild("factionCount", factionCount);
 	node->addChild("fogOfWar", fogOfWar);
 	node->addChild("randomStartLocs", randomStartLocs);
+	node->addChild("defaultUnits", defaultUnits);
+	node->addChild("defaultResources", defaultResources);
+	node->addChild("defaultVictoryConditions", defaultVictoryConditions);
 
 	XmlNode *factionsNode = node->addChild("factions");
 	for (int i = 0; i < factionCount; ++i) {
@@ -130,6 +149,7 @@ void GameSettings::save(XmlNode *node) const {
 		factionNode->addChild("team", teams[i]);
 		factionNode->addChild("startLocationIndex", startLocationIndex[i]);
 		factionNode->addChild("colourIndex", colourIndices[i]);
+		factionNode->addChild("resourceMultiplier", resourceMultipliers[i]);
 	}
 }
 

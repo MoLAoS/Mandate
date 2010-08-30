@@ -112,7 +112,7 @@ void Selection::select(Unit *unit){
 	selectedUnits.push_back(unit);
 	incRef(unit);
 	update();
-	gui->onSelectionChanged();
+//	gui->onSelectionChanged();
 }
 /*
 void Selection::select(const UnitContainer &units){
@@ -228,7 +228,7 @@ void Selection::onUnitStateChanged(Unit *unit) {
 }
 
 void Selection::update() {
-	if(selectedUnits.empty()) {
+	if (selectedUnits.empty()) {
 		empty = true;
 		enemy = false;
 		uniform = false;
@@ -236,7 +236,7 @@ void Selection::update() {
 		cancelable = false;
 		meetable = false;
 		canRepair = false;
-	} else if(selectedUnits.front()->getFactionIndex() != factionIndex) {
+	} else if (selectedUnits.front()->getFactionIndex() != factionIndex) {
 		empty = false;
 		enemy = true;
 		uniform = true;
@@ -246,7 +246,6 @@ void Selection::update() {
 		canRepair = false;
 	} else {
 		const UnitType *frontUT= selectedUnits.front()->getType();
-
 		empty = false;
 		enemy = true;
 		uniform = true;
@@ -276,7 +275,7 @@ void Selection::update() {
 		meetable = uniform && commandable && frontUT->hasMeetingPoint();
 	}
 	//in case Game::init() isn't called, eg crash at loading data
-	if (gui) {
+	if (gui && UserInterface::getCurrentGui()) {
 		gui->onSelectionUpdated();
 	}
 }

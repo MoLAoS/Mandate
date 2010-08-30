@@ -107,7 +107,7 @@ namespace GameConstants {
 	/** the invalid unit ID */
 	const int invalidId = -1;
 
-	const int maxPlayers = 4;
+	const int maxPlayers = 8;
 	const int serverPort = 61357;
 
 	const int defaultUpdateInterval = 6;

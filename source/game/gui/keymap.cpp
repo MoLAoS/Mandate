@@ -191,7 +191,8 @@ const Keymap::UserCommandInfo Keymap::commandInfo[ucCount] = {
 	{"Guard",					KeyCode::G,		0,			0,				0},
 	{"Follow",					0,				0,			0,				0},
 	{"Patrol",					0,				0,			0,				0},
-	{"Rotate",					KeyCode::R,		0,			0,				0}
+	{"Rotate",					KeyCode::R,		0,			0,				0},
+	{"LuaConsole",				KeyCode::BACK_QUOTE, 0,		0,				0}
 };
 #pragma pack(pop)
 

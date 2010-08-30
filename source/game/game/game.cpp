@@ -68,7 +68,7 @@ GameState::GameState(Program &program)
 		, config(Config::getInstance())
 		, gui(*this)
 		, gameCamera()
-		, m_teamChat(false)
+		//, m_teamChat(false)
 		//misc
 		, checksum()
 		, loadingText("")
@@ -84,10 +84,11 @@ GameState::GameState(Program &program)
 		, gotoMenu(false)
 		, exitGame(false)
 		, scrollSpeed(config.getUiScrollSpeed())
-		, m_msgBox(0)
-		, m_scriptMsgBox(0)
-		, m_saveBox(0)
-		, m_chatBox(0)
+		, m_modalDialog(0)
+		//, m_exitMsgBox(0)
+		//, m_scriptMsgBox(0)
+		//, m_saveBox(0)
+		//, m_chatBox(0)
 		, lastMousePos(0)
 		, weatherParticleSystem(0) {
 	assert(!singleton);
@@ -148,6 +149,13 @@ void GameState::init() {
 	g_logger.setState(g_lang.get("Initializing"));
 
 	IF_DEBUG_EDITION( g_debugRenderer.reset(); )
+
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_chatDialog = new ChatDialog(&g_program, pos, size);
+	m_chatDialog->Button1Clicked.connect(this, &GameState::onChatEntered);
+	m_chatDialog->Button2Clicked.connect(this, &GameState::onChatCancel);
+	m_chatDialog->Escaped.connect(this, &GameState::onChatCancel);
+	m_chatDialog->setVisible(false);
 
 	// init world, and place camera
 	simInterface->initWorld();
@@ -280,82 +288,80 @@ void GameState::displayError(std::exception &e) {
 	simInterface->pause();
 	string errMsg(e.what());
 
-	if (m_msgBox) {
-		program.removeFloatingWidget(m_msgBox);
-		m_msgBox = 0;
-	}
-	if (m_scriptMsgBox) {
-		program.removeFloatingWidget(m_scriptMsgBox);
-		m_scriptMsgBox = 0;
+	if (m_modalDialog) {
+		program.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
 	}
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_msgBox = MessageDialog::showDialog(pos, size, "Error...", "An error has occurred.\n" + errMsg,
+	m_modalDialog = MessageDialog::showDialog(pos, size, "Error...", "An error has occurred.\n" + errMsg,
 		g_lang.get("Ok"), "");
-	m_msgBox->Button1Clicked.connect(this, &GameState::onErrorDismissed);
+	m_modalDialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
+	m_modalDialog->Escaped.connect(this, &GameState::onErrorDismissed);
 }
 
 void GameState::onErrorDismissed(BasicDialog::Ptr) {
 	simInterface->resume();
-	program.removeFloatingWidget(m_msgBox);
-	m_msgBox = 0;
+	program.removeFloatingWidget(m_modalDialog);
+	m_modalDialog = 0;
 	gotoMenu = true;
 }
 
 void GameState::doExitMessage(const string &msg) {
-	assert(!m_msgBox);
-	if (m_scriptMsgBox) {
-		program.removeFloatingWidget(m_scriptMsgBox);
-		m_scriptMessages.push_front(
-			ScriptMessage(m_scriptMsgBox->getTitleText(), m_scriptMsgBox->getMessageText()));
-		m_scriptMsgBox = 0;
+	if (m_modalDialog) {
+		g_widgetWindow.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
+		return;
+	}
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
 	}
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_msgBox = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
+	m_modalDialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
 		g_lang.get("Ok"), g_lang.get("Cancel"));
-	m_msgBox->Button1Clicked.connect(this, &GameState::onExitSelected);
-	m_msgBox->Button2Clicked.connect(this, &GameState::onExitCancel);
+	m_modalDialog->Button1Clicked.connect(this, &GameState::onExitSelected);
+	m_modalDialog->Button2Clicked.connect(this, &GameState::destroyDialog);
+	m_modalDialog->Escaped.connect(this, &GameState::destroyDialog);
 }
 
 void GameState::onExitSelected(BasicDialog::Ptr) {
 	exitGame = true;
-	program.removeFloatingWidget(m_msgBox);
-	m_msgBox = 0;
-}
-
-void GameState::onExitCancel(BasicDialog::Ptr) {
-	program.removeFloatingWidget(m_msgBox);
-	m_msgBox = 0;
-	if (!m_scriptMessages.empty()) {
-		doScriptMessage();
-	}
+	program.removeFloatingWidget(m_modalDialog);
+	m_modalDialog = 0;
 }
 
 const string allowMask = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
 
 void GameState::doSaveBox() {
-	assert(!m_saveBox && !m_msgBox && !m_scriptMsgBox);
+	if (!simInterface->getGameSettings().getScenarioPath().empty()) {
+		// msg ?
+		return;
+	}
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
+	}
+	if (m_modalDialog) {
+		g_widgetWindow.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
+	}
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_saveBox = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
+	m_modalDialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
-	m_saveBox->setInputMask(allowMask);
-	m_saveBox->Button1Clicked.connect(this, &GameState::onSaveSelected);
-	m_saveBox->Button2Clicked.connect(this, &GameState::onSaveCancel);
+	static_cast<InputDialog::Ptr>(m_modalDialog)->setInputMask(allowMask);
+	m_modalDialog->Button1Clicked.connect(this, &GameState::onSaveSelected);
+	m_modalDialog->Button2Clicked.connect(this, &GameState::destroyDialog);
+	m_modalDialog->Escaped.connect(this, &GameState::destroyDialog);
 }
 
 void GameState::onSaveSelected(BasicDialog::Ptr) {
-	saveGame(m_saveBox->getInput());
-	program.removeFloatingWidget(m_saveBox);
-	m_saveBox = 0;
-}
-
-void GameState::onSaveCancel(BasicDialog::Ptr) {
-	program.removeFloatingWidget(m_saveBox);
-	m_saveBox = 0;
+	InputDialog::Ptr in  = static_cast<InputDialog::Ptr>(m_modalDialog);
+	saveGame(in->getInput());
+	program.removeFloatingWidget(m_modalDialog);
+	m_modalDialog = 0;
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {
 	m_scriptMessages.push_back(ScriptMessage(header, msg));
-	if (!m_scriptMsgBox && !m_msgBox) {
+	if (!m_modalDialog) {
 		doScriptMessage();
 	}
 }
@@ -363,54 +369,51 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_scriptMsgBox = MessageDialog::showDialog(pos, size, 
+	m_modalDialog = MessageDialog::showDialog(pos, size, 
 		g_lang.getScenarioString(m_scriptMessages.front().header), 
 		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");
-	m_scriptMsgBox->Button1Clicked.connect(this, &GameState::onScriptMessageDismissed);
+	m_modalDialog->Button1Clicked.connect(this, &GameState::destroyDialog);
+	m_modalDialog->Escaped.connect(this, &GameState::destroyDialog);
 	m_scriptMessages.pop_front();
 }
 
-void GameState::onScriptMessageDismissed(BasicDialog::Ptr) {
-	program.removeFloatingWidget(m_scriptMsgBox);
-	m_scriptMsgBox = 0;
-	if (!m_scriptMessages.empty() && !m_msgBox) {
-		doScriptMessage();
-	}
-}
-
 void GameState::doChatDialog() {
-	if (m_chatBox) {
-		return;
-	}
-	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_chatBox = ChatDialog::showDialog(pos, size, m_teamChat);
-	m_chatBox->Button1Clicked.connect(this, &GameState::onChatEntered);
-	m_chatBox->Button2Clicked.connect(this, &GameState::onChatCancel);
-	m_chatBox->TeamChatChanged.connect(this, &GameState::onTeamChatChanged);
-}
-
-void GameState::updateChatDialog() {
-	if (m_chatBox) {
-		m_chatBox->setTeamChat(m_teamChat);
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
+	} else {
+		m_chatDialog->setVisible(true);
 	}
 }
 
-void GameState::onChatEntered(BasicDialog::Ptr) {
-	string txt = m_chatBox->getInput();
-	int team = (m_teamChat ? g_world.getThisFaction()->getTeam() : -1);
+//void GameState::updateChatDialog() {
+//	if (m_modalDialog) {
+//		m_modalDialog->setTeamChat(m_teamChat);
+//	}
+//}
+
+void GameState::onChatEntered(BasicDialog::Ptr ptr) {
+	string txt = m_chatDialog->getInput();
+	bool isTeamOnly = m_chatDialog->isTeamOnly();
+	int team = (isTeamOnly ? g_world.getThisFaction()->getTeam() : -1);
 	NetworkInterface *netInterface = simInterface->asNetworkInterface();
 	if (netInterface) {
 		netInterface->sendTextMessage(txt, team);
 	} else {
 		///@todo ? Local game...
 	}
-	program.removeFloatingWidget(m_chatBox);
-	m_chatBox = 0;
+	m_chatDialog->setVisible(false);
 }
 
 void GameState::onChatCancel(BasicDialog::Ptr) {
-	program.removeFloatingWidget(m_chatBox);
-	m_chatBox = 0;
+	m_chatDialog->setVisible(false);
+}
+
+void GameState::destroyDialog(BasicDialog::Ptr) {
+	program.removeFloatingWidget(m_modalDialog);
+	m_modalDialog = 0;
+	if (!m_scriptMessages.empty()) {
+		doScriptMessage();
+	}
 }
 
 void GameState::updateCamera() {
@@ -555,14 +558,11 @@ void GameState::keyDown(const Key &key) {
 		gui.getRegularConsole()->addLine(str.str());
 	}
 	if (cmd == ucChatAudienceAll) {
-		m_teamChat = false;
-		updateChatDialog();
+		m_chatDialog->setTeamOnly(false);
 	} else if (cmd == ucChatAudienceTeam) {
-		m_teamChat = true;
-		updateChatDialog();
+		m_chatDialog->setTeamOnly(true);
 	} else if (cmd == ucChatAudienceToggle) {
-		m_teamChat = !m_teamChat;
-		updateChatDialog();
+		m_chatDialog->toggleTeamOnly();
 	} else if (cmd == ucEnterChatMode) {
 		doChatDialog();
 	} else if (cmd == ucSaveScreenshot) {
@@ -635,11 +635,11 @@ void GameState::keyDown(const Key &key) {
 		}
 	}
 	if (cmd == ucMenuQuit) { // exit
-		if (!gui.cancelPending()) {
+		//if (!gui.cancelPending()) {
 			doExitMessage(g_lang.get("ExitGame?"));
-		}
+		//}
 	} else if (cmd == ucMenuSave) { // save
-		if (!m_saveBox && !m_msgBox && !m_scriptMsgBox) {
+		if (!m_modalDialog) {
 			Shared::Platform::mkdir("savegames", true);
 			doSaveBox();
 		}
@@ -736,7 +736,7 @@ void GameState::render2d(){
 	g_renderer.renderSelectionQuad();
 
 	//script display text
-	if (!ScriptManager::getDisplayText().empty() && !m_scriptMsgBox) {
+	if (!ScriptManager::getDisplayText().empty() && !m_modalDialog) {
 		g_renderer.renderText(
 			ScriptManager::getDisplayText(), g_coreData.getFTMenuFontNormal(),
 			gui.getDisplay()->getColor(), 200, g_metrics.getScreenH() - 100, false);

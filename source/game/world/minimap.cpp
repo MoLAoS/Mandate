@@ -176,7 +176,11 @@ Colour factionColours[GameConstants::maxPlayers] = {
 	Colour(255, 0, 0, 255),
 	Colour(0, 0, 255, 255),
 	Colour(0, 92, 32, 255),
-	Colour(255, 255, 0, 255)
+	Colour(255, 255, 0, 255),
+	Colour(127, 0, 127, 255),
+	Colour(0, 191, 191, 255),
+	Colour(191, 255, 127, 255),
+	Colour(255, 127, 0, 255)
 };
 
 void buildVisLists(UnitList &srfList, UnitList &airList) {

@@ -110,6 +110,7 @@ UserInterface::UserInterface(GameState &game)
 		, m_minimap(0)
 		, m_display(0)
 		, m_resourceBar(0)
+		, m_luaConsole(0)
 		, m_selectingSecond(false)
 		, m_selectedFacing(CardinalDir::NORTH) {
 	posObjWorld= Vec2i(54, 14);
@@ -170,6 +171,11 @@ void UserInterface::init() {
 
 	// create ResourceBar, connect thisFactions Resources to it...
 	m_resourceBar = new ResourceBar(g_world.getThisFaction(), displayResources);
+
+	m_luaConsole = new LuaConsole(this, &g_program, Vec2i(200,200), Vec2i(500, 300));
+	m_luaConsole->setVisible(false);
+	m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
+
 }
 
 void UserInterface::initMinimap(bool fow, bool resuming) {
@@ -407,7 +413,7 @@ void UserInterface::mouseMove(int x, int y) {
 		}
 	}
 
-	m_display->setInfoText("");
+	//m_display->setInfoText("");
 }
 
 void UserInterface::groupKey(int groupIndex){
@@ -523,6 +529,10 @@ void UserInterface::hotKey(UserCommand cmd) {
 
 	case ucRotate:
 		m_selectedFacing = enum_cast<CardinalDir>((m_selectedFacing + 1) % CardinalDir::COUNT);
+		break;
+
+	case ucLuaConsole:
+		m_luaConsole->setVisible(!m_luaConsole->isVisible());
 		break;
 
 	default:
@@ -935,7 +945,7 @@ void UserInterface::computeDisplay() {
 		m_display->setDownSelectedPos(activePos);
 	}
 
-	if (selection.isComandable() && selection.getFrontUnit()->getFaction()->getTeam() == thisTeam ) {
+	if (selection.isComandable() && selection.getFrontUnit()->getFaction()->getTeam() == thisTeam) {
 		if (!m_selectingSecond) {
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
@@ -1280,6 +1290,10 @@ void UserInterface::computeBuildPositions(const Vec2i &end) {
 		buildPositions[i].x = dragStartPos.x - offsetAdjusted.x * i / (count - 1);
 		buildPositions[i].y = dragStartPos.y - offsetAdjusted.y * i / (count - 1);
 	}
+}
+
+void UserInterface::onCloseLuaConsole(BasicDialog::Ptr) {
+	m_luaConsole->setVisible(false);
 }
 
 }}//end namespace

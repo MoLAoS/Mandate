@@ -111,7 +111,8 @@ public:
 	MenuStates getIndex() const { return MenuStates::NEW_GAME; }
 
 private:
-	void reloadFactions();
+	bool loadGameSettings();
+	void reloadFactions(bool setStagger);
 	void updateControlers();
 	void updateNetworkSlots();
 

@@ -320,8 +320,8 @@ bool TextBox::keyDown(Key key) {
 			InputEntered(this);
 			return true;
 		case KeyCode::ESCAPE:
-			getRootWindow()->releaseKeyboardFocus(this);
-			return true;
+			//getRootWindow()->releaseKeyboardFocus(this);
+			//return true;
 			/*
 		case KeyCode::DELETE_:
 		case KeyCode::ARROW_LEFT:
@@ -607,6 +607,14 @@ void VerticalScrollBar::recalc() {
 	topOffset = thumbOffset = size.y - imgSize.y;
 	float availRatio = availRange / float(totalRange);
 	thumbSize = int(availRatio * shaftHeight);
+}
+
+void VerticalScrollBar::setOffset(float percent) {
+	const int min = shaftOffset + thumbSize;
+	const int max = shaftOffset + shaftHeight;
+
+	thumbOffset = clamp(int(max - percent * (max - min) / 100.f), min, max);
+	ThumbMoved(this);
 }
 
 bool VerticalScrollBar::mouseDown(MouseButton btn, Vec2i pos) {

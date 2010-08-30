@@ -79,6 +79,21 @@ PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	m_colourList->SelectionChanged.connect(this, &PlayerSlotWidget::onColourChanged);
 }
 
+void PlayerSlotWidget::disableSlot() {
+	setSelectedFaction(-1);
+	setSelectedTeam(-1);
+	setSelectedColour(-1);
+	m_factionList->setEnabled(false);
+	m_teamList->setEnabled(false);
+	m_colourList->setEnabled(false);
+}
+
+void PlayerSlotWidget::enableSlot() {
+	m_factionList->setEnabled(true);
+	m_teamList->setEnabled(true);
+	m_colourList->setEnabled(true);
+}
+
 // =====================================================
 //  class OptionContainer
 // =====================================================
@@ -165,18 +180,21 @@ ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
 	m_scrollBar = new VerticalScrollBar(this, sbp, sbs);
 }
 
-void ScrollText::init() {
+void ScrollText::recalc() {
 	int th = getTextDimensions().y;
 	int ch = getHeight() - getBordersVert() - getPadding() * 2;
-	m_textBase = -(th - ch);
+	m_textBase = -(th - ch) + 2;
 	m_scrollBar->setRanges(th, ch);
-	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 	setTextPos(Vec2i(5, m_textBase));
+}
 
+void ScrollText::init() {
+	recalc();
 	Vec2i sbp(getWidth() - 24 - getBorderRight(), getBorderBottom());
 	Vec2i sbs(24, getHeight() - getBordersVert());
 	m_scrollBar->setPos(sbp);
 	m_scrollBar->setSize(sbs);
+	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 }
 
 void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
@@ -184,7 +202,7 @@ void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
 	setTextPos(Vec2i(5, m_textBase - offset));
 }
 
-void ScrollText::setText(const string &txt) {
+void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
 	int width = getSize().x - getPadding() * 2 - 24;
 	std::list<string> words, lines;
@@ -215,6 +233,11 @@ void ScrollText::setText(const string &txt) {
 		result += currLine + "\n";
 	} while (!words.empty());
 	TextWidget::setText(result);
+	recalc();
+	
+	if (scrollToBottom) {
+		m_scrollBar->setOffset(100.f);
+	}
 }
 
 void ScrollText::render() {
@@ -288,6 +311,17 @@ Vec2i TitleBar::getMinSize() const { return Vec2i(-1); }
 
 BasicDialog::BasicDialog(WidgetWindow::Ptr window)
 		: Container(window) , MouseWidget(this)
+		, m_titleBar(0) , m_content(0)
+		, m_button1(0) , m_button2(0)
+		, m_buttonCount(0) , m_pressed(false) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	m_titleBar = new TitleBar(this);
+}
+
+BasicDialog::BasicDialog(Container::Ptr parent, Vec2i pos, Vec2i sz)
+		: Container(parent, pos, sz)
+		, MouseWidget(this)
 		, m_titleBar(0) , m_content(0)
 		, m_button1(0) , m_button2(0)
 		, m_buttonCount(0) , m_pressed(false) {
@@ -426,6 +460,28 @@ void MessageDialog::setMessageText(const string &text) {
 }
 
 // =====================================================
+// class InputBox
+// =====================================================
+
+InputBox::InputBox(Container *parent)
+		: TextBox(parent) {
+}
+
+InputBox::InputBox(Container *parent, Vec2i pos, Vec2i size)
+		: TextBox(parent, pos, size){
+}
+
+bool InputBox::keyDown(Key key) {
+	KeyCode code = key.getCode();
+	switch (code) {
+		case KeyCode::ESCAPE:
+			Escaped(this);
+			return true;
+	}
+	return TextBox::keyDown(key);
+}
+
+// =====================================================
 //  class InputDialog
 // =====================================================
 
@@ -436,9 +492,10 @@ InputDialog::InputDialog(WidgetWindow::Ptr window)
 	m_panel->setPaddingParams(10, 10);
 	m_label = new StaticText(m_panel);
 	m_label->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
-	m_textBox = new TextBox(m_panel);
-	m_textBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
-	m_textBox->InputEntered.connect(this, &InputDialog::onInputEntered);
+	m_inputBox = new InputBox(m_panel);
+	m_inputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_inputBox->InputEntered.connect(this, &InputDialog::onInputEntered);
+	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }
 
 InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title, const string &msg, 
@@ -451,14 +508,15 @@ InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &ti
 	Vec2i sz = dlg->m_label->getPrefSize() + Vec2i(4);
 	dlg->m_label->setSize(sz);
 	sz.x = dlg->m_panel->getSize().x - 20;
-	dlg->m_textBox->setSize(sz);
+	dlg->m_inputBox->setSize(sz);
 	dlg->m_panel->layoutChildren();
-	dlg->m_textBox->gainFocus();
+	dlg->m_inputBox->gainFocus();
+	dlg->m_inputBox->Escaped.connect(dlg, &InputDialog::onEscaped);
 	return dlg;
 }
 
 void InputDialog::onInputEntered(TextBox::Ptr) {
-	if (!m_textBox->getText().empty()) {
+	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}
 }

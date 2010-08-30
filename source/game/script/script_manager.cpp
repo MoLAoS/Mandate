@@ -306,6 +306,8 @@ vector<ScriptTimer> ScriptManager::timers;
 vector<ScriptTimer> ScriptManager::newTimerQueue;
 set<string>			ScriptManager::definedEvents;
 
+LuaConsole*			ScriptManager::luaConsole;
+
 map<string, Vec3f> ScriptManager::actorColours;
 
 ScriptManager::UnitInfo		ScriptManager::latestCreated,
@@ -338,6 +340,7 @@ void ScriptManager::initGame() {
 	luaScript.startUp();
 	luaScript.atPanic(panicFunc);
 	assert(!luaScript.isDefined("startup")); // making sure old code is gone
+	luaConsole = g_userInterface.getLuaConsole();
 
 	//register functions
 
@@ -556,7 +559,7 @@ string ScriptManager::wrapString(const string &str, int wrapCount) {
 	return returnString;
 }
 
-void ScriptManager::doSomeLua(string &code) {
+void ScriptManager::doSomeLua(const string &code) {
 	if (!luaScript.luaDoLine(code)) {
 		addErrorMessage();
 	}
@@ -568,7 +571,7 @@ void ScriptManager::doSomeLua(string &code) {
 void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 	string err = txt ? txt : luaScript.getLastError();
 	g_logger.getErrorLog().add(err);
-	g_console.addLine(err);
+	luaConsole->addOutput(err);
 
 	if (!quietly) {
 		g_simInterface->pause();
