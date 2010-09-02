@@ -145,6 +145,7 @@ public:
 private:
 	UnitList carriedUnits;
 	UnitList unitsToCarry;
+	UnitList unitsToUnload;
 	bool visible;
 
 	int id;					/**< unique identifier  */
@@ -312,6 +313,7 @@ public:
 //	void setUnitsToCarry(const UnitList &v) { unitsToCarry = UnitVector(v);}
 	const UnitList& getCarriedUnits() const {return carriedUnits;}
 	UnitList& getCarriedUnits()				{return carriedUnits;}
+	UnitList& getUnitsToUnload()			{return unitsToUnload;}
 	bool isVisible() const					{return visible;}
 	void setVisible(bool v)					{visible = v;}
 	void setCarried(bool v)					{carried = v;}

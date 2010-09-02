@@ -691,6 +691,22 @@ CommandResult Unit::giveCommand(Command *command) {
 					command = 0;
 				}
 			}
+		} else if (command->getType()->getClass() == CommandClass::UNLOAD) {
+			if (command->getUnit()) {
+				if (std::find(unitsToUnload.begin(), unitsToUnload.end(), command->getUnit()) == unitsToUnload.end()) {
+					assert(std::find(carriedUnits.begin(), carriedUnits.end(), command->getUnit()) != carriedUnits.end());
+					unitsToUnload.push_back(command->getUnit());
+					COMMAND_LOG( __FUNCTION__ << "() adding unit to unload list " << *command->getUnit() )
+					if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
+						COMMAND_LOG( __FUNCTION__ << "() deleting unload command, already unloading.")
+						delete command;
+						command = 0;
+					}
+				}
+			} else {
+				unitsToUnload.clear();
+				unitsToUnload = carriedUnits;
+			}
 		}
 		if (command) {
 			commands.push_back(command);
@@ -1724,7 +1740,8 @@ CommandResult Unit::checkCommand(const Command &command) const {
 
 	if (ct->getClass() == CommandClass::LOAD) { // check load command
 		if (static_cast<const LoadCommandType*>(ct)->getLoadCapacity() > getCarriedCount()) {
-			if (static_cast<const LoadCommandType*>(ct)->canCarry(command.getUnit()->getType())) {
+			if (static_cast<const LoadCommandType*>(ct)->canCarry(command.getUnit()->getType())
+			&& command.getUnit()->getFactionIndex() == getFactionIndex()) {
 				return CommandResult::SUCCESS;
 			}
 			return CommandResult::FAIL_INVALID_LOAD;

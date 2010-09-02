@@ -48,6 +48,7 @@ public:
     void init(World *world)		{this->world = world;}
 	void updateNetwork();
 
+	CommandResult tryUnloadCommand(Unit *unit, CommandFlags flags, const Vec2i &pos, Unit *targetUnit) const;
 	CommandResult tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *commandType = NULL, CommandClass commandClass = CommandClass::NULL_COMMAND,
 		const Vec2i &pos = Command::invalidPos, Unit *targetUnit = NULL,

@@ -37,6 +37,16 @@ namespace Glest { namespace Sim {
 
 // ===================== PUBLIC ========================
 
+CommandResult Commander::tryUnloadCommand(Unit *unit, CommandFlags flags, const Vec2i &pos, Unit *targetUnit) const {
+	const CommandType *ct = unit->getFirstAvailableCt(CommandClass::UNLOAD);
+	if (!ct) {
+		assert(false);
+		return CommandResult::FAIL_UNDEFINED;
+	}
+	return pushCommand(new Command(ct, CommandFlags(), targetUnit, unit));
+}
+
+
 CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *ct, CommandClass cc, const Vec2i &pos, Unit *targetUnit,
 		const ProducibleType* prodType, CardinalDir facing) const {
@@ -118,25 +128,6 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 			results.push_back(CommandResult::FAIL_UNDEFINED);
 		}
 	}
-
-	// carry units command
-	/// @todo put after so the result from targeting itelf is ignored??, allowing the remaining 
-	///		units to be loaded, should be fixed properly
-	/*if (targetUnit) {
-		if (targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
-			// do a load
-			const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::LOAD);
-			if (units.size() > 1) {
-				foreach_const (UnitVector, it, units) {
-					if (*it != targetUnit) {
-						result = pushCommand(new Command(carryCt, flags, const_cast<Unit*>(*it), targetUnit));
-						results.push_back(result);
-					}
-				}
-				g_console.addLine("added commands to load units");
-			}
-		}
-	}*/
 
 	return computeResult(results);
 }

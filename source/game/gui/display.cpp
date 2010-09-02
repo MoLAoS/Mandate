@@ -45,15 +45,16 @@ void setFancyBorder(BorderStyle &style) {
 // 	class Display
 // =====================================================
 
-Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
-		: Widget(WidgetWindow::getInstance(), pos, size)
+Display::Display(UserInterface *ui, Vec2i pos)
+		: Widget(WidgetWindow::getInstance(), pos, Vec2i(150, 600))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
 		, m_ui(ui)
 		, m_draggingWidget(false)
 		, m_moveOffset(Vec2i(0))
-		, m_mouseDownNdx(-1) {
+		, m_pressedCommandIndex(-1) 
+		, m_pressedCarryIndex(-1) {
 	setFancyBorder(m_borderStyle);
 
 	colors[0] = Vec3f(1.f, 1.f, 1.f);
@@ -81,7 +82,7 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 	addText(""); // unit text
 	addText(""); // command text
 	addText(""); // progress bar
-	setTextPos(Vec2i(40, size.y - 40), 0);
+	setTextPos(Vec2i(40, getHeight() - 40), 0);
 
 	x = getBorderLeft();
 	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 10;
@@ -116,39 +117,42 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 }
 
 void Display::setSize() {
-	Vec2i sz(150, 500);
+	const int width = 150;
+	const int bigHeight = 600;
+	const int smallHeight = 150;
+	Vec2i sz(width, bigHeight);
 	if (m_ui->getSelection()->isEmpty()) {
 		if (m_ui->getSelectedObject()) {
-			sz = Vec2i(150, 150);
+			sz = Vec2i(width, smallHeight);
 		} else {
 			setVisible(false);
 			return;
 		}
 	} else {
 		if (!m_ui->getSelection()->isComandable()) {
-			sz = Vec2i(150, 150);
+			sz = Vec2i(width, smallHeight);
 		}
 	}
 	setVisible(true);
 	Vec2i pos = getPos();
 	Vec2i size = getSize();
 	if (size != sz) {
-		if (size.y == 500) {
-			pos.y += 350;
+		if (size.y == bigHeight) {
+			pos.y += (bigHeight - smallHeight);
 			Vec2i iPos = ImageWidget::getImagePos(0);
-			iPos.y -= 350;
+			iPos.y -= (bigHeight - smallHeight);
 			ImageWidget::setImageX(0, 0, iPos, Vec2i(32,32));
 			Vec2i tPos = TextWidget::getTextPos(0);
-			tPos.y -= 350;
+			tPos.y -= (bigHeight - smallHeight);
 			TextWidget::setTextPos(tPos, 0);
 		} else {
-			assert(size.y == 150);
-			pos.y -= 350;
+			assert(size.y == smallHeight);
+			pos.y -= (bigHeight - smallHeight);
 			Vec2i iPos = ImageWidget::getImagePos(0);
-			iPos.y += 350;
+			iPos.y += (bigHeight - smallHeight);
 			ImageWidget::setImageX(0, 0, iPos, Vec2i(32,32));
 			Vec2i tPos = TextWidget::getTextPos(0);
-			tPos.y += 350;
+			tPos.y += (bigHeight - smallHeight);
 			TextWidget::setTextPos(tPos, 0);
 		}
 		Widget::setPos(pos);
@@ -378,12 +382,16 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 			Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
 			int ndx = computeIndex(m_downImageOffset, tPos);
-			if (getImage(upCellCount + ndx)) {
-				m_mouseDownNdx = ndx;
+			if (ndx != -1 && getImage(upCellCount + ndx)) {
+				m_pressedCommandIndex = ndx;
+				return true;
+			}
+			ndx = computeIndex(m_carryImageOffset, tPos);
+			if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
 				return true;
 			}
 		}
-		m_mouseDownNdx = -1;
+		m_pressedCommandIndex = -1;
 	}
 	// nothing 'tangible' clicked, let event through
 	return false;
@@ -397,24 +405,42 @@ bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 		m_draggingWidget = false;
 		return true;
 	}
-	if (btn == MouseButton::LEFT && m_mouseDownNdx != -1) {
-		if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-			Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-			int ndx = computeIndex(m_downImageOffset, tPos);
-			if (getImage(upCellCount + ndx)) {
-				if (m_mouseDownNdx == ndx) {
-					m_ui->commandButtonPressed(ndx);
+	if (btn == MouseButton::LEFT) {
+		if (m_pressedCommandIndex != -1) {
+			if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
+			&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
+				Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
+				int ndx = computeIndex(m_downImageOffset, tPos);
+				if (ndx != -1 && getImage(upCellCount + ndx)) {
+					if (m_pressedCommandIndex == ndx) {
+						m_ui->commandButtonPressed(ndx);
+					}
+					return true;
 				}
-				return true;
+				ndx = computeIndex(m_carryImageOffset, tPos);
+				if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
+					return true;
+				}
 			}
+			m_pressedCommandIndex = -1;
 		}
-		m_mouseDownNdx = -1;
 	}
 	return false;
 }
 
 bool Display::mouseDoubleClick(MouseButton btn, Vec2i pos) {
+	Vec2i myPos = getScreenPos();
+	Vec2i mySize = getSize();
+
+	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
+	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
+		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
+		int ndx = computeIndex(m_carryImageOffset, tPos);
+		if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
+			m_ui->unloadRequest(ndx);
+			return true;
+		}
+	}
 	return mouseUp(btn, pos);
 }
 
@@ -431,24 +457,24 @@ bool Display::mouseMove(Vec2i pos) {
 	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
 		int ndx = computeIndex(m_downImageOffset, tPos);
-		if (ndx != m_mouseDownNdx) {
+		if (ndx != m_pressedCommandIndex) {
 			WIDGET_LOG( __FUNCTION__ << " : mouse now over ndx " << ndx );
 			if (ndx != invalidPos && getImage(upCellCount + ndx)) {
 				m_ui->computeInfoString(ndx);
-				m_mouseDownNdx = ndx;
+				m_pressedCommandIndex = ndx;
 				return true;
 			} else {
-				m_mouseDownNdx = ndx;
+				m_pressedCommandIndex = ndx;
 				setInfoText("");
 			}
-			m_mouseDownNdx = ndx;
+			m_pressedCommandIndex = ndx;
 		} else {
 			WIDGET_LOG( __FUNCTION__ << " : mouse still over ndx " << ndx );
 		}
 	} else {
-		if (m_mouseDownNdx != -1) {
+		if (m_pressedCommandIndex != -1) {
 			setInfoText("");
-			m_mouseDownNdx = -1;
+			m_pressedCommandIndex = -1;
 		}
 	}
 	// let event through
@@ -456,7 +482,7 @@ bool Display::mouseMove(Vec2i pos) {
 }
 
 void Display::mouseOut() {
-	m_mouseDownNdx = -1;
+	m_pressedCommandIndex = -1;
 	setInfoText("");
 }
 

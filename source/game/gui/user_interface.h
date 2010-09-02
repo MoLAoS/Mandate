@@ -214,6 +214,7 @@ public:
 	}
 
 	void commandButtonPressed(int posDisplay);
+	void unloadRequest(int carryIndex);
 
 	void mouseDownLeft(int x, int y);
 	void mouseDownRight(int x, int y);

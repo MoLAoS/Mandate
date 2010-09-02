@@ -815,7 +815,7 @@ void UnloadCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	if (unit->getCarriedUnits().empty()) {
+	if (unit->getUnitsToUnload().empty()) {
 		// no more units to deal with
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
@@ -823,7 +823,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
 			unit->setCurrSkill(SkillClass::UNLOAD);
 		} else {
-			Unit *targetUnit = unit->getCarriedUnits().front();
+			Unit *targetUnit = unit->getUnitsToUnload().front();
 			int maxRange = unloadSkillType->getMaxRange();
 			g_console.addLine("unloading unit");
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
@@ -831,7 +831,8 @@ void UnloadCommandType::update(Unit *unit) const {
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
 				targetUnit->setVisible(true);
 				targetUnit->setCarried(false);
-				unit->getCarriedUnits().pop_front();
+				unit->getUnitsToUnload().pop_front();
+				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit));
 				// keep unloading, curr skill is ok
 			} else {
 				// must be crowded, stop unloading

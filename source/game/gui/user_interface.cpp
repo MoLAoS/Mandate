@@ -164,10 +164,9 @@ void UserInterface::init() {
 			}
 		}
 	}
-	int w = 150, h = 500;
-	int x = g_metrics.getScreenW() - 20 - w;
-	int y = (g_metrics.getScreenH() - h) / 2;
-	m_display = new Display(this, Vec2i(x,y), Vec2i(w, h));
+	int x = g_metrics.getScreenW() - 20 - 150;
+	int y = (g_metrics.getScreenH() - 600) / 2;
+	m_display = new Display(this, Vec2i(x,y));
 
 	// create ResourceBar, connect thisFactions Resources to it...
 	m_resourceBar = new ResourceBar(g_world.getThisFaction(), displayResources);
@@ -281,6 +280,30 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 	} else { // m_selectingSecond
 		// if they clicked on a button again, they must have changed their mind
 		resetState();
+	}
+}
+
+void UserInterface::unloadRequest(int carryIndex) {
+	int i=0;
+	Unit *transportUnit = 0, *unloadUnit = 0;
+	for (int ndx = 0; !unloadUnit && ndx < selection.getCount(); ++ndx) {
+		if (selection.getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+			const Unit *unit = selection.getUnit(ndx);
+			UnitList carriedUnits = unit->getCarriedUnits();
+			foreach (UnitList, it, carriedUnits) {
+				if (carryIndex == i) {
+					unloadUnit = *it;
+					transportUnit = const_cast<Unit*>(unit);
+					break;
+				}
+				++i;
+			}
+		}
+	}
+	assert(transportUnit && unloadUnit);
+	CommandResult res = commander->tryUnloadCommand(transportUnit, CommandFlags(), Command::invalidPos, unloadUnit);
+	if (res != CommandResult::SUCCESS) {
+		addOrdersResultToConsole(CommandClass::UNLOAD, res);
 	}
 }
 

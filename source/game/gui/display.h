@@ -77,13 +77,14 @@ private:
 			m_progressPos;		// x,y offset for progress bar
 	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
 	Font *m_font;
-	int m_mouseDownNdx;			// index of command button that received a mouse down event
+	int m_pressedCommandIndex;	// index of command button that received a mouse down event
+	int m_pressedCarryIndex;	// index of carry image that received a mouse down event
 
 private:
 	void renderProgressBar();
 
 public:
-	Display(UserInterface *ui, Vec2i pos, Vec2i size);
+	Display(UserInterface *ui, Vec2i pos);
 
 	//get
 	string getTitle() const							{return TextWidget::getText(0);}
