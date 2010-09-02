@@ -425,7 +425,7 @@ void Minimap::render() {
 	float ang = degToRad(gameCamera->getHAng());
 	float amp = 15.f;
 	const Vec2i camPos = Vec2i(int(gameCamera->getPos().x), int(gameCamera->getPos().z));
-	Vec2i cPos((camPos.x / m_ratio).intp() + pos.x, -(camPos.y / m_ratio).intp() + pos.y + size.y);
+	Vec2i cPos((camPos.x * m_currZoom).intp() + pos.x, -(camPos.y * m_currZoom).intp() + pos.y + size.y);
 	Vec2i cPos1(cPos.x + int(amp * sinf(ang - pi / 5)), cPos.y + int(amp * cosf(ang - pi / 5)));
 	Vec2i cPos2(cPos.x + int(amp * sinf(ang + pi / 5)), cPos.y + int(amp * cosf(ang + pi / 5)));
 
