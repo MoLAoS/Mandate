@@ -5,6 +5,8 @@
 #include <stdexcept>
 
 #include "graphics_interface.h"
+#include "model_gl.h"
+#include "conversion.h"
 #include "util.h"
 #include "FSFactory.hpp"
 

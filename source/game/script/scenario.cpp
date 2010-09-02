@@ -85,7 +85,14 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 
 	const XmlNode *playersNode = scenarioNode->getChild("players");
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		const XmlNode* playerNode = playersNode->getChild("player", i);
+		const XmlNode *playerNode;
+		try{
+			playerNode = playersNode->getChild("player", i);
+		}catch(runtime_error err){
+			// old scenario -> has only 4 players
+			scenarioInfo->factionControls[i] = strToControllerType("closed");
+			continue;
+		}
 		ControlType factionControl = strToControllerType(playerNode->getAttribute("control")->getValue());
 		string factionTypeName;
 
@@ -122,14 +129,13 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 			scenarioInfo->teams[i] = playerNode->getAttribute("team")->getIntValue();
 			scenarioInfo->factionTypeNames[i] = playerNode->getAttribute("faction")->getValue();
 		}
-
-		scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
-		scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
-		scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
-		scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
-		scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
-		scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
 	}
+	scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
+	scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
+	scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
+	scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
+	scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
+	scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
 
 	//add player info
 	scenarioInfo->desc = g_lang.get("Player") + ": ";
@@ -156,11 +162,11 @@ void Scenario::loadGameSettings(string scenario, string category, const Scenario
 
 	string scenarioPath = "gae/scenarios/" + category + "/" + scenario;
 	// map in scenario dir ?
-	string test = scenarioPath + "/" + scenarioInfo->mapName + ".gbm";
+	string test = scenarioPath + "/" + scenarioInfo->mapName;
 	if (fileExists(test)) {
 		gs->setMapPath(test);
 	} else {
-		gs->setMapPath(string("maps/") + scenarioInfo->mapName + ".gbm");
+		gs->setMapPath(string("maps/") + scenarioInfo->mapName);
 	}
 	gs->setDescription(formatString(scenario));
 	gs->setTilesetPath(string("tilesets/") + scenarioInfo->tilesetName);

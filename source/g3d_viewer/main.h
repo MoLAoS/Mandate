@@ -8,7 +8,6 @@
 #include <wx/glcanvas.h>
 #include <wx/colordlg.h>
 
-#include "graphics_factory_basic_gl.h"
 #include "renderer.h"
 #include "util.h"
 #include "window.h"

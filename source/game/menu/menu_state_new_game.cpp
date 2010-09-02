@@ -104,7 +104,12 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	}
 	results.clear();	
 
-	findAll("maps/*.mgm", results, true);
+	try{
+		findAll("maps/*.mgm", results, true);
+	}catch(runtime_error err){
+		// no *.mgm files found, FIXME: change findAll to return empty result when nothing found
+		results.clear();
+	}
 	foreach (vector<string>, it, results) {
 		mapFiles.insert(*it);
 	}

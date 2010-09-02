@@ -459,7 +459,9 @@ void ScriptManager::initGame() {
 
 	//call startup function
 	if (definedEvents.find("startup") != definedEvents.end()) {
-		luaScript.luaCall("startup");
+		if(!luaScript.luaCall("startup")){
+			addErrorMessage();
+		}
 	} else {
 		addErrorMessage("Warning, no startup script defined", true);
 	}
