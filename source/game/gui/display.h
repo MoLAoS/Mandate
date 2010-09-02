@@ -67,13 +67,17 @@ private:
 	int currentColor;
 	int downSelectedPos;
 
+	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;
 	Vec2i m_moveOffset;
 
-	Vec2i m_upImageOffset, m_downImageOffset, m_progressPos;
-	int m_progPrecentPos;
+	Vec2i	m_upImageOffset,	// x,y offset for selected unit portrait(s)
+			m_downImageOffset,	// x,y offset for command buttons
+			m_carryImageOffset, // x,y offset for loaded unit portrait(s)
+			m_progressPos;		// x,y offset for progress bar
+	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
 	Font *m_font;
-	int m_mouseDownNdx;
+	int m_mouseDownNdx;			// index of command button that received a mouse down event
 
 private:
 	void renderProgressBar();
@@ -85,6 +89,7 @@ public:
 	string getTitle() const							{return TextWidget::getText(0);}
 	string getText() const							{return TextWidget::getText(1);}
 	string getInfoText() const						{return TextWidget::getText(2);}
+	string getTransportedLabel() const				{return TextWidget::getText(4);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
@@ -98,10 +103,11 @@ public:
 	void setTitle(const string title);
 	void setText(const string &text);
 	void setInfoText(const string &infoText);
+	void setTransportedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		{setImage(image, i);}
 	void setDownImage(int i, const Texture2D *image)	{setImage(image, upCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	{/* TODO */}
+	void setCarryImage(int i, const Texture2D *image)	{setImage(image, upCellCount + downCellCount + i);}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}

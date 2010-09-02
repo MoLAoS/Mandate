@@ -80,7 +80,8 @@ private:
 	Font *advancedEngineFontBig;
 	//Font *freeTypeMenuFont;
 
-	Font *m_FTDisplay;
+	Font	*m_FTDisplay, 
+			*m_FTDisplayBig;
 	
 public:
 	static CoreData &getInstance();
@@ -122,6 +123,7 @@ public:
 	Font* getFTMenuFontVeryBig() const	{ return m_FTMenuFontVeryBig;	}
 
 	Font* getFTDisplayFont() const		{ return m_FTDisplay;	}
+	Font* getFTDisplayFontBig() const	{ return m_FTDisplayBig;	}
 
 private:
 	CoreData(){};

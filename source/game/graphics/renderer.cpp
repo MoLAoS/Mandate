@@ -561,7 +561,7 @@ void Renderer::renderMouse3d(){
 		if (gui->isPlacingBuilding()) {
 			const UserInterface::BuildPositions &bp = gui->getBuildPositions();
 			const UnitType *building = gui->getBuilding();
-			const UnitContainer &units = gui->getSelection()->getUnits();
+			const UnitVector &units = gui->getSelection()->getUnits();
 
 			// selection building emplacement
 			float offset = building->getSize() / 2.f;
@@ -1303,7 +1303,7 @@ void Renderer::renderSelectionEffects() {
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			const Unit *unit= world->getFaction(i)->getUnit(j);
 
-			if(unit->isHighlighted()){
+			if (unit->isHighlighted() && unit->isVisible()) {
 				float highlight= unit->getHightlight();
 				if(g_world.getThisFactionIndex()==unit->getFactionIndex()){
 					glColor4f(0.f, 1.f, 0.f, highlight);
@@ -1527,7 +1527,7 @@ struct PickHit {
 	bool operator<(const PickHit &that) const { return nearDist < that.nearDist; }
 };
 
-void Renderer::computeSelected(UnitContainer &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
+void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
 	//declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
 	const Metrics &metrics= Metrics::getInstance();

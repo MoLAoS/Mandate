@@ -42,11 +42,11 @@ Faction::ResourceTypes Faction::neededResources;
 Vec3f Faction::factionColours[] = {
 	Vec3f(1.f, 0.f, 0.f),
 	Vec3f(0.f, 0.f, 1.f),
-	Vec3f(0.f, 0.35f, 0.125f),
+	Vec3f(0.125f, 0.5, 0.f),
 	Vec3f(1.f, 1.f, 0.f),
-	Vec3f(0.5f, 0.f, 0.5f),
+	Vec3f(0.75f, 0.f, 0.75f),
 	Vec3f(0.f, 0.75f, 0.75f),
-	Vec3f(0.75f, 1.f,  0.5f),
+	Vec3f(0.3f, 1.f,  0.3f),
 	Vec3f(1.f, 0.5f, 0.f)
 };
 

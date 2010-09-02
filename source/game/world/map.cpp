@@ -144,7 +144,14 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		int32 waterLevel;
 		int8 title[128];
 		int8 author[128];
-		int8 description[256];
+		union {
+			int8 description[256];
+			struct {
+				int8 short_desc[128];
+				int32 magic; // 0x01020304 for meta
+				int8 meta[124];
+			};
+		};
 	};
 
 	try {
@@ -365,11 +372,11 @@ bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) c
 	return false;
 }
 // Is the Cell at 'pos' (for the given 'field') either free or does it contain any of the units in 'units'
-bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const UnitContainer &units) const {
+bool Map::isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const UnitVector &units) const {
 	if (isInside(pos)) {
 		Unit *containedUnit = getCell(pos)->getUnit(field);
 		if (containedUnit && fieldsCompatible(getCell(pos), field)) {
-			UnitContainer::const_iterator i;
+			UnitVector::const_iterator i;
 			for (i = units.begin(); i != units.end(); ++i) {
 				if (containedUnit == *i) {
 					return true;
@@ -456,7 +463,7 @@ bool Map::areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const U
 	return true;
 }
 
-bool Map::areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const UnitContainer &units) const {
+bool Map::areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const UnitVector &units) const {
 	for(int i=pos.x; i<pos.x+size; ++i){
 		for(int j=pos.y; j<pos.y+size; ++j){
 			if(!isFreeCellOrHaveUnits(Vec2i(i,j), field, units)){

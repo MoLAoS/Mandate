@@ -158,19 +158,44 @@ public:
 	virtual string desc() { return string("[TitleBar: ") + descPosDim() + "]"; }
 };
 
-class BasicDialog : public Container, public MouseWidget, public sigslot::has_slots {
+class Frame : public Container, public MouseWidget {
+public:
+	typedef Frame* Ptr;
+
+protected:
+	TitleBar::Ptr	m_titleBar;
+	bool			m_pressed;
+	Vec2i			m_lastPos;
+
+protected:
+	Frame(WidgetWindow*);
+	Frame(Container::Ptr);
+	Frame(Container::Ptr, Vec2i pos, Vec2i sz);
+
+public:
+	void init(Vec2i pos, Vec2i size, const string &title);
+	void setTitleText(const string &text);
+	const string& getTitleText() const { return m_titleBar->getText(); }
+
+	bool mouseDown(MouseButton btn, Vec2i pos);
+	bool mouseMove(Vec2i pos);
+	bool mouseUp(MouseButton btn, Vec2i pos);
+
+	virtual void render();
+	virtual void setSize(Vec2i size);
+};
+
+class BasicDialog : public Frame, public sigslot::has_slots {
 public:
 	typedef BasicDialog* Ptr;
 
 private:
-	TitleBar::Ptr	m_titleBar;
+	//TitleBar::Ptr	m_titleBar;
 	Widget::Ptr		m_content;
 	Button::Ptr		m_button1,
 					m_button2;
 
 	int				m_buttonCount;
-	bool			m_pressed;
-	Vec2i			m_lastPos;
 
 protected:
 	BasicDialog(WidgetWindow*);
@@ -182,18 +207,11 @@ protected:
 	void init(Vec2i pos, Vec2i size, const string &title, const string &btn1, const string &btn2);
 
 public:
-	void setTitleText(const string &text);
 	void setButtonText(const string &btn1Text, const string &btn2Text = "");
-
-	const string& getTitleText() const { return m_titleBar->getText(); }
 
 	sigslot::signal<Ptr> Button1Clicked,
 						 Button2Clicked,
 						 Escaped;
-
-	bool mouseDown(MouseButton btn, Vec2i pos);
-	bool mouseMove(Vec2i pos);
-	bool mouseUp(MouseButton btn, Vec2i pos);
 
 	void render();
 	virtual Vec2i getPrefSize() const { return Vec2i(-1); }

@@ -95,7 +95,7 @@ protected:
 
 	MessageQueue m_scriptMessages;
 
-	BasicDialog::Ptr	m_modalDialog;
+	Frame::Ptr			m_modalDialog;
 	ChatDialog::Ptr		m_chatDialog;
 
 	Vec2i lastMousePos;
@@ -160,6 +160,8 @@ public:
 
 	virtual bool isGameState() const	{ return true; }
 
+	void destroyDialog(BasicDialog::Ptr ptr = 0);
+
 protected:
 	// render
 	void render3d();
@@ -173,14 +175,13 @@ protected:
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
 
-	void destroyDialog(BasicDialog::Ptr);
-
 	void doSaveBox();
 	void onSaveSelected(BasicDialog::Ptr);
 
 	void displayError(std::exception &e);
 	void onErrorDismissed(BasicDialog::Ptr);
 
+	void doGameMenu();
 	void doExitMessage(const string &msg);
 	void onExitSelected(BasicDialog::Ptr);
 

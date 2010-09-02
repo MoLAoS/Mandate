@@ -33,8 +33,10 @@ namespace Glest { namespace Widgets {
 
 void StaticText::render() {
 	Widget::renderBgAndBorders();
-	if (m_shadow) {
-		TextWidget::renderTextShadowed();
+	if (m_doubleShadow) {
+		TextWidget::renderTextDoubleShadowed(0, m_shadowOffset);
+	} else if (m_shadow) {
+		TextWidget::renderTextShadowed(0, m_shadowOffset);
 	} else {
 		TextWidget::renderText();
 	}

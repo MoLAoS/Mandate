@@ -234,11 +234,11 @@ void UserInterface::resetState() {
 	m_minimap->setRightClickOrder(!selection.isEmpty());
 }
 
-static void calculateNearest(UnitContainer &units, const Vec3f &pos) {
+static void calculateNearest(UnitVector &units, const Vec3f &pos) {
 	if (units.size() > 1) {
 		float minDist = numeric_limits<float>::infinity();
 		Unit *nearest = 0;
-		foreach_const (UnitContainer, i, units) {
+		foreach_const (UnitVector, i, units) {
 			float dist = pos.dist((*i)->getCurrVector());
 			if (dist < minDist) {
 				minDist = dist;
@@ -290,7 +290,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	const Metrics &metrics= Metrics::getInstance();
 
-	UnitContainer units;
+	UnitVector units;
 	Vec2i worldPos;
 	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 
@@ -339,7 +339,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 	}
 
 	if (selection.isComandable()) {
-		UnitContainer units;
+		UnitVector units;
 		if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
 			Unit *targetUnit = units.size() ? units.front() : NULL;
 			giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
@@ -377,7 +377,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
 	if (!selectingPos && !selectingMeetingPoint) {
-		UnitContainer units;
+		UnitVector units;
 		Vec2i pos(x, y);
 
 		const Object *obj;
@@ -393,7 +393,7 @@ void UserInterface::mouseMove(int x, int y) {
 	//compute selection
 	if (selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
-		UnitContainer units;
+		UnitVector units;
 		if (computeSelection) {
 			g_renderer.computeSelected(units, selectedObject, 
 				selectionQuad.getPosDown(), selectionQuad.getPosUp());
@@ -931,13 +931,23 @@ void UserInterface::computeDisplay() {
 		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
 
-	if (selection.getCount() && selection.getFrontUnit()->getType()->isOfClass(UnitClass::CARRIER)) {
-		const Unit *unit = selection.getFrontUnit();
-		UnitContainer carriedUnits = unit->getCarriedUnits();
-		for (int i = 0; i < carriedUnits.size(); ++i) {
-			m_display->setCarryImage(i, carriedUnits[i]->getType()->getImage());
+	bool transported = false;
+	int i=0;
+	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
+		if (selection.getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+			const Unit *unit = selection.getUnit(ndx);
+			UnitList carriedUnits = unit->getCarriedUnits();
+			if (!carriedUnits.empty()) {
+				transported = true;
+				foreach (UnitList, it, carriedUnits) {
+					if (i < Display::carryCellCount) {
+						m_display->setCarryImage(i++, (*it)->getType()->getImage());
+					}
+				}
+			}
 		}
 	}
+	m_display->setTransportedLabel(transported);
 
 	// ================ PART 2 ================
 
@@ -1180,6 +1190,14 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 		m_console->addStdMessage("PetLimitReached");
 		break;
 
+	case CommandResult::FAIL_LOAD_LIMIT:
+		m_console->addStdMessage("LoadLimitReached");
+		break;
+
+	case CommandResult::FAIL_INVALID_LOAD:
+		m_console->addStdMessage("CanNotLoadUnit");
+		break;
+
 	case CommandResult::FAIL_UNDEFINED:
 		m_console->addStdMessage("InvalidOrder");
 		break;
@@ -1201,7 +1219,7 @@ bool UserInterface::isSharedCommandClass(CommandClass commandClass){
 	return true;
 }
 
-void UserInterface::updateSelection(bool doubleClick, UnitContainer &units) {
+void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 	m_selectingSecond = false;
 	activeCommandType = 0;
 	needSelectionUpdate = false;
@@ -1237,13 +1255,14 @@ void UserInterface::updateSelection(bool doubleClick, UnitContainer &units) {
 	if (wasEmpty != selection.isEmpty()) {
 		m_minimap->setRightClickOrder(!selection.isEmpty());
 	}
+	computeDisplay();
 }
 
 /**
  * @return true if the position is a valid world position, false if the position is outside of the
  * world.
  */
-bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitContainer &units, bool setObj) {
+bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj) {
 	units.clear();
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
 	const Object *junk;

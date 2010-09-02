@@ -222,9 +222,9 @@ const ResourceType *Ai::getNeededResource() {
 }
 
 bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
-	UnitList enemies;
+	ConstUnitVector enemies;
 	aiInterface->getUnitsSeen(enemies);
-	foreach_const (UnitList, it, enemies) {
+	foreach_const (ConstUnitVector, it, enemies) {
 		pos = (*it)->getPos();
 		field = (*it)->getCurrField();
 		if (pos.dist(aiInterface->getHomeLocation()) < radius) {
@@ -294,7 +294,7 @@ bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, CommandClass current
 }
 
 bool Ai::findPosForBuilding(const UnitType* building, const Vec2i &searchPos, Vec2i &outPos) {
-	const int spacing = 1;
+	const int spacing = 2;
 
 	for (int currRadius = 0; currRadius < maxBuildRadius; ++currRadius) {
 		for (int i = searchPos.x - currRadius; i < searchPos.x + currRadius; ++i) {

@@ -829,7 +829,7 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 
 	CmdByUtMap cmdMap;
 	findBuilderTypes(bt->getUnitType(), cmdMap);
-	UnitList potentialBuilders;
+	ConstUnitVector potentialBuilders;
 
 	foreach_const (Units, it, units) {
 		const Unit *const &unit = *it;

@@ -236,14 +236,14 @@ void RepairCommandType::update(Unit *unit) const {
 			}
 			if (targetPos != unit->getTargetPos()) {
 				unit->setTargetPos(targetPos);
-				unit->getPath()->clear();
+				unit->clearPath();
 			}
 		} else {
 			// if no more damaged units and on auto command, turn around
 			if (command->isAuto() && command->hasPos2()) {
 				if (Config::getInstance().getGsAutoReturnEnabled()) {
 					command->popPos();
-					unit->getPath()->clear();
+					unit->clearPath();
 				} else {
 					unit->finishCommand();
 				}
@@ -277,6 +277,7 @@ void RepairCommandType::update(Unit *unit) const {
 				unit->setCurrSkill(SkillClass::STOP);
 				if(unit->getPath()->isBlocked()){
 					unit->setCurrSkill(SkillClass::STOP);
+					unit->clearPath();
 					unit->finishCommand();
 					REPAIR_LOG( "Unit: " << unit->getId() << " path blocked, cancelling." );
 				}
@@ -525,6 +526,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 			unit->setCurrSkill(SkillClass::STOP);
 			if(unit->getPath()->isBlocked()) {
 				g_console.addStdMessage("Blocked");
+				unit->clearPath();
 				unit->cancelCurrCommand();
 				BUILD_LOG( "Blocked." << cmdCancelMsg );
 			}
@@ -897,7 +899,7 @@ void HarvestCommandType::update(Unit *unit) const {
 			ScriptManager::onResourceHarvested();
 
 			// if next to a store unload resources
-			unit->getPath()->clear();
+			unit->clearPath();
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->setLoadCount(0);
 		} else { // no store found, give up
@@ -909,7 +911,7 @@ void HarvestCommandType::update(Unit *unit) const {
 		if (res) { // if there is a resource, continue working, until loaded
 			if (!this->canHarvest(res->getType())) { // wrong resource type, command changed
 				unit->setCurrSkill(getStopLoadedSkill(unit));
-				unit->getPath()->clear();
+				unit->clearPath();
 				HARVEST_LOG( "wrong resource type, command changed." );
 				return;
 			}
@@ -931,7 +933,7 @@ void HarvestCommandType::update(Unit *unit) const {
 				if (unit->getLoadCount() == this->getMaxLoad()) {
 					HARVEST_LOG( "Loaded, setting stop-loaded." );
 					unit->setCurrSkill(getStopLoadedSkill(unit));
-					unit->getPath()->clear();
+					unit->clearPath();
 				}
 			}
 		} else { // if there is no resource

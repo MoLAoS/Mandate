@@ -145,7 +145,7 @@ int GlestAiInterface::getMyUpgradeCount() const{
 	return faction->getUpgradeManager()->getUpgradeCount();
 }
 
-void GlestAiInterface::getUnitsSeen(UnitList &list) {
+void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
 	assert(list.empty());
 	Map *map= world->getMap();
 	for (int i=0; i < world->getFactionCount(); ++i) {

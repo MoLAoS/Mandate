@@ -113,10 +113,10 @@ private:
 	const Commander *commander;
 	const World *world;
 	GameCamera *gameCamera;
-	Console *m_console;
-	Console *m_dialogConsole;
 
 	// Child Widgets
+	Console *m_console;
+	Console *m_dialogConsole;
 	Minimap *m_minimap;
 	Display *m_display;
 	ResourceBar *m_resourceBar;
@@ -271,9 +271,9 @@ private:
 	bool isSharedCommandClass(CommandClass commandClass);
 public:
 	void computeInfoString(int posDisplay);
-	void updateSelection(bool doubleClick, UnitContainer &units);
+	void updateSelection(bool doubleClick, UnitVector &units);
 private:
-	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitContainer &units, bool setObj);
+	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);
 	void computeBuildPositions(const Vec2i &end);
 };
 

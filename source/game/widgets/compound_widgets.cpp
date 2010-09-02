@@ -306,40 +306,44 @@ Vec2i TitleBar::getPrefSize() const { return Vec2i(-1); }
 Vec2i TitleBar::getMinSize() const { return Vec2i(-1); }
 
 // =====================================================
-//  class BasicDialog
+//  class Frame
 // =====================================================
 
-BasicDialog::BasicDialog(WidgetWindow::Ptr window)
-		: Container(window) , MouseWidget(this)
-		, m_titleBar(0) , m_content(0)
-		, m_button1(0) , m_button2(0)
-		, m_buttonCount(0) , m_pressed(false) {
+Frame::Frame(WidgetWindow *ww)
+		: Container(ww)
+		, MouseWidget(this)
+		, m_pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
 	m_titleBar = new TitleBar(this);
 }
 
-BasicDialog::BasicDialog(Container::Ptr parent, Vec2i pos, Vec2i sz)
+Frame::Frame(Container *parent)
+		: Container(parent)
+		, MouseWidget(this)
+		, m_pressed(false) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	m_titleBar = new TitleBar(this);
+}
+
+Frame::Frame(Container *parent, Vec2i pos, Vec2i sz)
 		: Container(parent, pos, sz)
 		, MouseWidget(this)
-		, m_titleBar(0) , m_content(0)
-		, m_button1(0) , m_button2(0)
-		, m_buttonCount(0) , m_pressed(false) {
+		, m_pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
 	m_titleBar = new TitleBar(this);
 }
 
-void BasicDialog::init(Vec2i pos, Vec2i size, const string &title, 
-					   const string &btn1Text, const string &btn2Text) {
+void Frame::init(Vec2i pos, Vec2i size, const string &title) {
 	setPos(pos);
 	setSize(size);
 	setTitleText(title);
-	setButtonText(btn1Text, btn2Text);
 }
 
-void BasicDialog::setContent(Widget::Ptr content) {
-	m_content = content;
+void Frame::setSize(Vec2i size) {
+	Container::setSize(size);
 	Vec2i p, s;
 	Font *font = g_coreData.getFTMenuFontNormal();
 	const FontMetrics *fm = font->getMetrics();
@@ -350,15 +354,79 @@ void BasicDialog::setContent(Widget::Ptr content) {
 
 	m_titleBar->setPos(p);
 	m_titleBar->setSize(s);
+}
 
+void Frame::setTitleText(const string &text) {
+	m_titleBar->setText(text);
+}
+
+bool Frame::mouseDown(MouseButton btn, Vec2i pos) {
+	if (m_titleBar->isInside(pos) && btn == MouseButton::LEFT) {
+		m_pressed = true;
+		m_lastPos = pos;
+		return true;
+	}
+	return false;
+}
+
+bool Frame::mouseMove(Vec2i pos) {
+	if (m_pressed) {
+		Vec2i offset = pos - m_lastPos;
+		Vec2i newPos = getPos() + offset;
+		setPos(newPos);
+		m_lastPos = pos;
+		return true;
+	}
+	return false;
+}
+
+bool Frame::mouseUp(MouseButton btn, Vec2i pos) {
+	if (m_pressed && btn == MouseButton::LEFT) {
+		m_pressed = false;
+		return true;
+	}
+	return false;
+}
+
+void Frame::render() {
+	renderBgAndBorders();
+	Container::render();
+}
+
+// =====================================================
+//  class BasicDialog
+// =====================================================
+
+BasicDialog::BasicDialog(WidgetWindow::Ptr window)
+		: Frame(window), m_content(0)
+		, m_button1(0), m_button2(0), m_buttonCount(0) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	m_titleBar = new TitleBar(this);
+}
+
+BasicDialog::BasicDialog(Container::Ptr parent, Vec2i pos, Vec2i sz)
+		: Frame(parent, pos, sz), m_content(0)
+		, m_button1(0) , m_button2(0), m_buttonCount(0) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	m_titleBar = new TitleBar(this);
+}
+
+void BasicDialog::init(Vec2i pos, Vec2i size, const string &title, 
+					   const string &btn1Text, const string &btn2Text) {
+	Frame::init(pos, size, title);
+	setButtonText(btn1Text, btn2Text);
+}
+
+void BasicDialog::setContent(Widget::Ptr content) {
+	m_content = content;
+	Vec2i p, s;
+	int a = m_titleBar->getHeight();
 	p = Vec2i(getBorderLeft(), getBorderBottom() + (m_button1 ? 50 : 0));
 	s = Vec2i(getWidth() - getBordersHoriz(), getHeight() - a - getBordersVert() - (m_button1 ? 50 : 0));
 	m_content->setPos(p);
 	m_content->setSize(s);
-}
-
-void BasicDialog::setTitleText(const string &text) {
-	m_titleBar->setText(text);
 }
 
 void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
@@ -400,34 +468,6 @@ void BasicDialog::onButtonClicked(Button::Ptr btn) {
 	} else {
 		Button2Clicked(this);
 	}
-}
-
-bool BasicDialog::mouseDown(MouseButton btn, Vec2i pos) {
-	if (m_titleBar->isInside(pos) && btn == MouseButton::LEFT) {
-		m_pressed = true;
-		m_lastPos = pos;
-		return true;
-	}
-	return false;
-}
-
-bool BasicDialog::mouseMove(Vec2i pos) {
-	if (m_pressed) {
-		Vec2i offset = pos - m_lastPos;
-		Vec2i newPos = getPos() + offset;
-		setPos(newPos);
-		m_lastPos = pos;
-		return true;
-	}
-	return false;
-}
-
-bool BasicDialog::mouseUp(MouseButton btn, Vec2i pos) {
-	if (m_pressed && btn == MouseButton::LEFT) {
-		m_pressed = false;
-		return true;
-	}
-	return false;
 }
 
 void BasicDialog::render() {

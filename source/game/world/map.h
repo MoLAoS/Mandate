@@ -268,8 +268,8 @@ public:
 	bool isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const;
 	bool areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const Unit *unit) const;
 
-	bool isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const UnitContainer &units) const;
-	bool areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const UnitContainer &units) const;
+	bool isFreeCellOrHaveUnits(const Vec2i &pos, Field field, const UnitVector &units) const;
+	bool areFreeCellsOrHaveUnits(const Vec2i &pos, int size, Field field, const UnitVector &units) const;
 
 	bool isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const;
 	bool areAproxFreeCells(const Vec2i &pos, int size, Field field, int teamIndex) const;

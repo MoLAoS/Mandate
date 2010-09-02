@@ -54,7 +54,7 @@ Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
 }
 
 Widget::Widget(WidgetWindow::Ptr window)
-		: parent(0)
+		: parent(window)
 		, screenPos(0) {
 	init(Vec2i(0), Vec2i(0));
 	rootWindow = window;
@@ -570,12 +570,23 @@ void TextWidget::renderText(int ndx) {
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
 
-void TextWidget::renderTextShadowed(int ndx) {
+void TextWidget::renderTextShadowed(int ndx, int offset) {
 	ASSERT_RANGE(ndx, texts.size());
 	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
-	Vec2i sPos = pos + Vec2i(2, -2);
+	Vec2i sPos = pos + Vec2i(offset, -offset);
 	txtShadowColour.a = txtColour.a = me->getFade();
 	renderText(texts[ndx], sPos.x, sPos.y, txtShadowColour);
+	renderText(texts[ndx], pos.x, pos.y, txtColour);
+}
+
+void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
+	ASSERT_RANGE(ndx, texts.size());
+	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
+	Vec2i sPos1 = pos + Vec2i(offset, -offset);
+	Vec2i sPos2 = sPos1 + Vec2i(offset, -offset);
+	txtShadowColour2.a = txtShadowColour.a = txtColour.a = me->getFade();
+	renderText(texts[ndx], sPos2.x, sPos2.y, txtShadowColour2);
+	renderText(texts[ndx], sPos1.x, sPos1.y, txtShadowColour);
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
 

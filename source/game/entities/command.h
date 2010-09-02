@@ -105,6 +105,16 @@ public:
 	void save(XmlNode *node) const;
 };
 
+inline ostream& operator<<(ostream &stream, const Command &command) {
+	stream << "[Command id:" << command.getId() << "|";
+	if (command.getArchetype() == CommandArchetype::CANCEL_COMMAND) {
+		stream << "Cancel command]";
+	} else {
+		stream << command.getType()->getName() << "]";
+	}
+	return stream;
+}
+
 }}//end namespace
 
 #endif

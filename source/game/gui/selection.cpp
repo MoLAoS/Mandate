@@ -53,7 +53,7 @@ void Selection::incRef(Unit *u) {
 		++it->second;
 	} else {
 		m_referenceMap[u] = 1;
-		u->StateChanged.connect(this, &Selection::onUnitStateChanged);
+//		u->StateChanged.connect(this, &Selection::onUnitStateChanged);
 		u->Died.connect(this, &Selection::onUnitDied);
 	}
 }
@@ -63,7 +63,7 @@ void Selection::decRef(Unit *u) {
 	assert(it != m_referenceMap.end() && it->second > 0);
 	if (it->second == 1) {
 		m_referenceMap.erase(u);
-		u->StateChanged.disconnect(this);
+//		u->StateChanged.disconnect(this);
 		u->Died.disconnect(this);
 	} else {
 		--it->second;
@@ -115,7 +115,7 @@ void Selection::select(Unit *unit){
 //	gui->onSelectionChanged();
 }
 /*
-void Selection::select(const UnitContainer &units){
+void Selection::select(const UnitVector &units){
 
 	//add units to gui
 	for(UnitIterator it= units.begin(); it!=units.end(); ++it){
@@ -125,7 +125,7 @@ void Selection::select(const UnitContainer &units){
 */
 
 /// remove units from current selction
-void Selection::unSelect(const UnitContainer &units){
+void Selection::unSelect(const UnitVector &units){
 	for(UnitIterator it= units.begin(); it!=units.end(); ++it){
 		for(int i=0; i<selectedUnits.size(); ++i){
 			if(selectedUnits[i]==*it){
@@ -154,7 +154,7 @@ void Selection::unSelect(int i){
 
 void Selection::clear(){
 	//clear list
-	foreach (UnitContainer, it, selectedUnits) {
+	foreach (UnitVector, it, selectedUnits) {
 		decRef(*it);
 	}
 	selectedUnits.clear();
@@ -167,7 +167,7 @@ Vec3f Selection::getRefPos() const{
 
 void Selection::assignGroup(int groupIndex){
 	//clear group
-	foreach (UnitContainer, it, groups[groupIndex]) {
+	foreach (UnitVector, it, groups[groupIndex]) {
 		decRef(*it);
 	}
 	groups[groupIndex].clear();
@@ -256,7 +256,7 @@ void Selection::update() {
 
 		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
-		for(UnitContainer::iterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
+		for(UnitVector::iterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
 			const UnitType *ut = (*i)->getType();
 			if(ut != frontUT){
 				uniform = false;
@@ -281,7 +281,7 @@ void Selection::update() {
 }
 
 void Selection::removeCarried() {
-	UnitContainer::iterator i = selectedUnits.begin();
+	UnitVector::iterator i = selectedUnits.begin();
 	while (i != selectedUnits.end()) {
 		if ((*i)->isCarried()) {
 			i = selectedUnits.erase(i);
@@ -316,7 +316,7 @@ void Selection::save(XmlNode *node) const {
 		}
 		XmlNode *groupNode = node->addChild("group");
 		groupNode->addAttribute("index", i);
-		for(UnitContainer::const_iterator j = groups[i].begin(); j != groups[i].end(); ++j) {
+		for(UnitVector::const_iterator j = groups[i].begin(); j != groups[i].end(); ++j) {
 			groupNode->addChild("unit", (*j)->getId());
 		}
 	}

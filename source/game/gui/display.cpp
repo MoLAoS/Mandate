@@ -76,6 +76,12 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 		addImageX(0, Vec2i(x,y), Vec2i(32,32));
 		x += 32;
 	}
+	setTextParams("", Vec4f(1.f), m_font, false); // unit title
+	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
+	addText(""); // unit text
+	addText(""); // command text
+	addText(""); // progress bar
+	setTextPos(Vec2i(40, size.y - 40), 0);
 
 	x = getBorderLeft();
 	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 10;
@@ -88,13 +94,20 @@ Display::Display(UserInterface *ui, Vec2i pos, Vec2i size)
 		addImageX(0, Vec2i(x,y), Vec2i(32,32));
 		x += 32;
 	}
-	setTextParams("", Vec4f(1.f), m_font, false); // unit title
-	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
-	addText(""); // unit text
-	addText(""); // command text
-	addText(""); // progress bar
 
-	setTextPos(Vec2i(40, size.y - 40), 0);
+	x = getBorderLeft();
+	y -= (40 + int(m_font->getMetrics()->getHeight()) * 8);
+	addText(""); // 'Transported' label
+	setTextPos(Vec2i(x, y + 5), 4);
+	m_carryImageOffset = Vec2i(x, y);
+	for (int i = 0; i < carryCellCount; ++i) { // 'carry' images ('loaded' unit portraits)
+		if (i % cellSideCount == 0) {
+			y -= 32;
+			x = getBorderLeft();
+		}
+		addImageX(0, Vec2i(x,y), Vec2i(32,32));
+		x += 32;
+	}
 
 	downSelectedPos = invalidPos;
 	setProgressBar(-1);
@@ -226,22 +239,26 @@ void Display::setInfoText(const string &infoText) {
 	TextWidget::setText(str, 2);
 }
 
+void Display::setTransportedLabel(bool v) {
+	TextWidget::setText((v ? g_lang.get("Transported") : ""), 4);
+}
+
 // misc
-void Display::clear(){
+void Display::clear() {
 	WIDGET_LOG( __FUNCTION__ );
-	for(int i=0; i<upCellCount; ++i){
+	for (int i=0; i < upCellCount; ++i) {
 		setImage(0, i);
 	}
 
-	for(int i=0; i<downCellCount; ++i){
+	for (int i=0; i < downCellCount; ++i) {
 		downLighted[i]= true;
 		commandTypes[i]= NULL;
 		commandClasses[i]= CommandClass::NULL_COMMAND;
 		setImage(0, upCellCount + i);
 	}
 
-	for(int i=0; i<carryCellCount; ++i){
-		///@todo re-implement
+	for (int i=0; i < carryCellCount; ++i) {
+		setImage(0, upCellCount + downCellCount + i);
 	}
 
 	setDownSelectedPos(invalidPos);
@@ -306,6 +323,11 @@ void Display::render() {
 		assert(getImage(downSelectedPos + upCellCount));
 		renderImage(downSelectedPos + upCellCount, light);
 	}
+	for (int i=0; i < carryCellCount; ++i) {
+		if (getImage(i + upCellCount + downCellCount)) {
+			renderImage(i + upCellCount + downCellCount, light);
+		}
+	}
 	ImageWidget::endBatch();
 	if (!TextWidget::getText(0).empty()) {
 		renderTextShadowed(0);
@@ -315,6 +337,9 @@ void Display::render() {
 	}
 	if (!TextWidget::getText(2).empty()) {
 		renderTextShadowed(2);
+	}
+	if (!TextWidget::getText(4).empty()) {
+		renderTextShadowed(4);
 	}
 	if (m_progress >= 0) {
 		renderProgressBar();

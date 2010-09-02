@@ -133,14 +133,14 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		pos = target->getNearestOccupiedCell(unit->getPos());
 		if (pos != unit->getTargetPos()) {
 			unit->setTargetPos(pos);
-			unit->getPath()->clear();
+			unit->clearPath();
 		}
 	} else { // if no more targets and on auto command, then turn around
 		if (command->isAuto() && command->hasPos2()) {
 			if (Config::getInstance().getGsAutoReturnEnabled()) {
 				command->popPos();
 				pos = command->getPos();
-				unit->getPath()->clear();
+				unit->clearPath();
 			} else {
 				unit->finishCommand();
 			}
@@ -158,6 +158,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		case TravelState::BLOCKED:
 			unit->setCurrSkill(SkillClass::STOP);
 			if (unit->getPath()->isBlocked()) {
+				unit->clearPath();
 				return true;
 			}
 			return false;

@@ -47,10 +47,10 @@ GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	int x_centres[8];
 	int startX = w / 20; // 5% gap
 	int runningX = startX;
-	x_centres[0] = runningX + (w / 5) / 2;
+	x_centres[0] = runningX + (w / 5) / 2; // x pos for centre of player label
 	runningX += (w / 5); // 20% for player label
 	for (int i=1; i < 8; ++i) {
-		x_centres[i] = runningX + (w / 10) / 2;
+		x_centres[i] = runningX + (w / 10) / 2; // x pos for centres of each data column
 		runningX += (w / 10); // 10% for others
 	}
 	// 5% gap at end
@@ -65,7 +65,7 @@ GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	label->setTextParams(header, Vec4f(1.f), g_coreData.getFTMenuFontBig(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	
-	Font *font = g_coreData.getFTDisplayFont();
+	Font *font = g_coreData.getFTDisplayFontBig();
 	const FontMetrics *fm = font->getMetrics();
 
 	y -= y_gap;
@@ -95,11 +95,12 @@ GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		y -= y_gap;
 		if (gs.getFactionControl(i) != ControlType::CLOSED) {
 			string name = gs.getPlayerName(i) + " [" + gs.getFactionTypeName(i) + "] - ";
+			Vec4f colour = Vec4f(Faction::factionColours[gs.getColourIndex(i)], 1.f);
 			name += g_lang.get(ControlTypeNames[gs.getFactionControl(i)]);
 			x = x_centres[0] - int(fm->getTextDiminsions(name).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
 			label->setTextParams(name, Vec4f(1.f), font, false);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+			label->setDoubleShadow(colour, Vec4f(0.f, 0.f, 0.f, 1.f), 1);
 
 			string winlose = stats.getVictory(i) ? "Victory" : "Defeat";
 			x = x_centres[1] - int(fm->getTextDiminsions(winlose).x) / 2;

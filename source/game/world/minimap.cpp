@@ -175,15 +175,15 @@ void Minimap::updateFowTex(float t){
 Colour factionColours[GameConstants::maxPlayers] = {
 	Colour(255, 0, 0, 255),
 	Colour(0, 0, 255, 255),
-	Colour(0, 92, 32, 255),
+	Colour(31, 127, 0, 255),
 	Colour(255, 255, 0, 255),
-	Colour(127, 0, 127, 255),
+	Colour(191, 0, 191, 255),
 	Colour(0, 191, 191, 255),
-	Colour(191, 255, 127, 255),
+	Colour(72, 255, 72, 255),
 	Colour(255, 127, 0, 255)
 };
 
-void buildVisLists(UnitList &srfList, UnitList &airList) {
+void buildVisLists(ConstUnitVector &srfList, ConstUnitVector &airList) {
 	UnitSet srfSet; // surface units seen already
 	UnitSet airSet; // air units seen already
 	RectIterator iter(Vec2i(0), Vec2i(g_map.getW() - 1, g_map.getH() - 1));
@@ -211,9 +211,9 @@ void buildVisLists(UnitList &srfList, UnitList &airList) {
 	}
 }
 
-void processList(UnitList &units, TypeMap<int8>* overlayMap) {
+void processList(ConstUnitVector &units, TypeMap<int8>* overlayMap) {
 	GameSettings &gs = g_simInterface->getGameSettings();
-	foreach_const (UnitList, it, units) {
+	foreach_const (ConstUnitVector, it, units) {
 		const Vec2i pos = (*it)->getPos();
 		const UnitType *ut = (*it)->getType();
 		const PatchMap<1> &pMap = ut->getMinimapFootprint();
@@ -229,8 +229,8 @@ void processList(UnitList &units, TypeMap<int8>* overlayMap) {
 }
 
 void buildUnitOverlay(TypeMap<int8>* overlayMap) {
-	UnitList srfList; // visible surface units
-	UnitList airList; // visible air units
+	ConstUnitVector srfList; // visible surface units
+	ConstUnitVector airList; // visible air units
 	buildVisLists(srfList, airList);
 
 	overlayMap->clearMap(-1);
@@ -360,14 +360,15 @@ void Minimap::render() {
 	Vec2f zoom = Vec2f(float(size.x)/ pixmap->getW(), float(size.y)/ pixmap->getH());
 
 	assertGl();
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_TEXTURE_BIT);
+//	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+
+	glEnable(GL_BLEND);
+	glActiveTexture(Renderer::baseTexUnit);
+	glEnable(GL_TEXTURE_2D);
 
 	glPushAttrib(GL_TEXTURE_BIT);
 
 	//draw map
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-
 	// FIXME ? this assumes glTexSubImage() was called in Renderer::renderSurface()
 	// may not be the case in Debug Edition.
 	glActiveTexture(Renderer::fowTexUnit);
@@ -403,12 +404,9 @@ void Minimap::render() {
 		glVertex2i(pos.x + size.x, pos.y + size.y);
 	glEnd();
 
-	glPopAttrib();
-	glActiveTexture(Renderer::fowTexUnit);
-	glDisable(GL_TEXTURE_2D);
+	glPopAttrib(); // TEXTURE_BIT
 
 	glActiveTexture(Renderer::baseTexUnit);
-	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_unitsTex)->getHandle());
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
@@ -421,58 +419,25 @@ void Minimap::render() {
 		glTexCoord2f(1.0f, 0.0f);
 		glVertex2i(pos.x + size.x, pos.y + size.y);
 	glEnd();
-
-
-	glDisable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
-/*
-	// draw units
-	glBegin(GL_QUADS);
 
-	for(int i=0; i < g_world.getFactionCount(); ++i) {
-		int colourNdx = g_simInterface->getGameSettings().getColourIndex(i);
-		glColor3fv(Faction::factionColours[colourNdx].ptr());
-		for(int j=0; j < g_world.getFaction(i)->getUnitCount(); ++j) {
-			Unit *unit = g_world.getFaction(i)->getUnit(j);
-			if (g_world.toRenderUnit(unit) && unit->isAlive()) {
-				Vec2i upos = unit->getPos() / GameConstants::cellScale;
-				int usize = unit->getType()->getSize();
-				glVertex2f(pos.x + upos.x * zoom.x, pos.y + size.y - (upos.y * zoom.y));
-				glVertex2f(pos.x + (upos.x+1) * zoom.x + usize, pos.y + size.y - (upos.y * zoom.y));
-				glVertex2f(pos.x + (upos.x+1) * zoom.x + usize, pos.y + size.y - ((upos.y + usize) * zoom.y));
-				glVertex2f(pos.x + upos.x * zoom.x, pos.y + size.y - ((upos.y + usize) * zoom.y));
-			}
-		}
-	}
-	glEnd();
-*/
 	//draw camera
-	float wRatio = float(size.x) / g_map.getW();
-	float hRatio = float(size.y) / g_map.getH();
-
-	int x = static_cast<int>(gameCamera->getPos().x * wRatio);
-	int y = static_cast<int>(gameCamera->getPos().z * hRatio);
-
-	float ang= degToRad(gameCamera->getHAng());
-
-	glEnable(GL_BLEND);
+	float ang = degToRad(gameCamera->getHAng());
+	float amp = 15.f;
+	const Vec2i camPos = Vec2i(int(gameCamera->getPos().x), int(gameCamera->getPos().z));
+	Vec2i cPos((camPos.x / m_ratio).intp() + pos.x, -(camPos.y / m_ratio).intp() + pos.y + size.y);
+	Vec2i cPos1(cPos.x + int(amp * sinf(ang - pi / 5)), cPos.y + int(amp * cosf(ang - pi / 5)));
+	Vec2i cPos2(cPos.x + int(amp * sinf(ang + pi / 5)), cPos.y + int(amp * cosf(ang + pi / 5)));
 
 	glBegin(GL_TRIANGLES);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex2i(pos.x + x, pos.y + size.y - y);
-
-	glColor4f(1.f, 1.f, 1.f, 0.0f);
-	glVertex2i(
-		pos.x + x + static_cast<int>(20*sinf(ang-pi/5)),
-		pos.y + size.y - (y-static_cast<int>(20*cosf(ang-pi/5))));
-
-	glColor4f(1.f, 1.f, 1.f, 0.0f);
-	glVertex2i(
-		pos.x + x + static_cast<int>(20*sinf(ang+pi/5)),
-		pos.y + size.y - (y-static_cast<int>(20*cosf(ang+pi/5))));
-
+		glColor4f(1.f, 1.f, 1.f, 0.7f);
+		glVertex2iv(cPos.ptr());
+		glColor4f(1.f, 1.f, 1.f, 0.0f);
+		glVertex2iv(cPos1.ptr());
+		glVertex2iv(cPos2.ptr());
 	glEnd();
-	glPopAttrib();
+
+//	glPopAttrib();
 
 	assertGl();
 }

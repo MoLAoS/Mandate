@@ -562,28 +562,24 @@ const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) 
 
 //looks for a place for a unit around a start lociacion, returns true if succeded
 bool World::placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated) {
-	bool freeSpace;
-	int size = unit->getType()->getSize();
-	Field currField = unit->getCurrField();
+	const int spacing = spaciated ? 2 : 0;
+	Field field = unit->getCurrField();
+	int effectiveSize = unit->getSize() + spacing * 2;
 
-	for (int r = 1; r < radius; r++) {
-		for (int i = -r; i < r; ++i) {
-			for (int j = -r; j < r; ++j) {
-				Vec2i pos = Vec2i(i, j) + startLoc;
-				if (spaciated) {
-					const int spacing = 2;
-					freeSpace = map.areFreeCells(pos - Vec2i(spacing), size + spacing * 2, currField);
-				} else {
-					freeSpace = map.areFreeCells(pos, size, currField);
-				}
-
-				if (freeSpace) {
-					unit->setPos(pos);
-					unit->setMeetingPos(pos - Vec2i(1));
-					return true;
-				}
+	Vec2i tl = startLoc - Vec2i(spacing);
+	Vec2i br = tl;
+	for (int i=0; i <= radius; ++i) {
+		PerimeterIterator iter(tl, br);
+		while (iter.more()) {
+			Vec2i testPos = iter.next();
+			if (map.areFreeCells(testPos, effectiveSize, field)) {
+				unit->setPos(testPos + Vec2i(spacing));
+				unit->setMeetingPos(unit->getPos() - Vec2i(1));
+				return true;
 			}
 		}
+		tl -= Vec2i(1);
+		br += Vec2i(1);
 	}
 	return false;
 }

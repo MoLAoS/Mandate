@@ -162,6 +162,7 @@ void MoveCommandType::update(Unit *unit) const {
 		case TravelState::BLOCKED:
 			unit->setCurrSkill(SkillClass::STOP);
 			if (unit->getPath()->isBlocked() && !command->getUnit()) {
+				unit->clearPath();
 				unit->finishCommand();
 				return;
 			}
@@ -682,7 +683,23 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
-
+	try {
+		const XmlNode *canLoadNode = n->getChild("units-carried");
+		for (int i=0; i < canLoadNode->getChildCount(); ++i) {
+			string unitName = canLoadNode->getChild("unit", i)->getStringValue();
+			const UnitType *ut = ft->getUnitType(unitName);
+			m_canLoadList.push_back(ut);
+		}
+	} catch (const runtime_error &e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		m_loadCapacity = n->getChild("load-capacity")->getIntValue();
+	} catch (const runtime_error &e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
 	return loadOk;
 }
 
@@ -705,101 +722,58 @@ void LoadCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
+	UnitList &unitsToCarry = unit->getUnitsToCarry();
 
-	UnitContainer &unitsToCarry = unit->getUnitsToCarry();
-
-	if (unit->getCurrSkill()->getClass() != SkillClass::LOAD) {
-		unit->setCurrSkill(SkillClass::LOAD);
-	} else if (unitsToCarry.empty()) {
+	if (unitsToCarry.empty()) { // if no one to load, finished
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
-	} else {
-		UnitContainer::iterator i = unitsToCarry.begin();
-		while (i != unitsToCarry.end()) {
-			Unit *targetUnit = *i;
+		return;
+	}
 
-			// prevent the unit being loaded multiple times
-			if (targetUnit->isCarried()) {
-				g_console.addLine("targetUnit already being carried");
-				unit->finishCommand();
-				unit->setCurrSkill(SkillClass::STOP);
-				return;
-			} else if (targetUnit == unit) {
-				g_console.addLine("carrier trying to load itself");
-				i = unitsToCarry.erase(i);
-				continue;
-			}
-
-			if (targetUnit->getCurrSkill()->getClass() != SkillClass::MOVE) {
-				// move the carrier to the unit
-				/// @todo this was taken from MoveCommandType so there might be a need 
-				/// for a common function to move a unit or there might be a way to 
-				/// add the command to move?
-				Vec2i pos;
-				if (command->getUnit()) {
-					pos = command->getUnit()->getCenteredPos();
-					if (!command->getUnit()->isAlive()) {
-						command->setPos(pos);
-						command->setUnit(NULL);
-					}
-				} else {
-					pos = command->getPos();
-				}
-
-				// ERROR: don't do this multiple times in a command update... find the closest,
-				// path to there... ONE path request. (this in a while loop)
-
-				switch (g_routePlanner.findPath(unit, pos)) {
-					case TravelState::MOVING:
-						unit->setCurrSkill(moveSkillType);
-						unit->face(unit->getNextPos());
-						break;
-					case TravelState::BLOCKED:
-						unit->setCurrSkill(SkillClass::STOP);
-						if (unit->getPath()->isBlocked() && !command->getUnit()) {
-							unit->finishCommand();
-							break;
-						}
-						break;	
-					default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-						unit->finishCommand();
-						break;
-				}
-			}
-
-			const SkillType *st = unit->getType()->getFirstStOfClass(SkillClass::LOAD);
-
-			// if not full and in range
-			if (unit->getCarriedUnits().size() < static_cast<const LoadSkillType*>(st)->getMaxUnits()) {
-				if (inRange(unit->getPos(), targetUnit->getPos(), st->getMaxRange())) {
-					g_console.addLine("doing load");
-					targetUnit->removeCommands();
-					targetUnit->setVisible(false);
-					/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
-					g_map.clearUnitCells(targetUnit, targetUnit->getPos());
-					targetUnit->setCarried(true);
-					targetUnit->setPos(Vec2i(-1));
-					g_userInterface.getSelection()->unSelect(targetUnit);
-					unit->getCarriedUnits().push_back(targetUnit);
-					//selection.unselect(targetUnit);
-
-					i = unitsToCarry.erase(i);
-				} else {
-					++i; // process next unit to be carried
-				}
-			} else {
-				g_console.addLine("carrier full"); /// @todo add to localised version
-				unit->finishCommand();
-				unit->setCurrSkill(SkillClass::STOP);
-			}
+	const Unit *closest = 0; // else find closest
+	fixed dist = fixed::max_int();
+	foreach (UnitList, it, unitsToCarry) {
+		fixed d = fixedDist((*it)->getCenteredPos(), unit->getCenteredPos());
+		if (d < dist) {
+			closest = *it;
+			dist = d;
 		}
 	}
-}
-
-// --- Private ---
-
-bool LoadCommandType::inRange(const Vec2i &thisPos, const Vec2i &targetPos, int maxRange) const {
-	return (thisPos.dist(targetPos) < maxRange);
+	assert(closest);
+	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
+		g_console.addLine("doing load");
+		Unit *target = const_cast<Unit*>(closest);
+		target->removeCommands();
+		target->setCurrSkill(SkillClass::STOP);
+		target->setVisible(false);
+		target->setCarried(true);
+		/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
+		g_map.clearUnitCells(target, target->getPos());
+		target->setPos(Vec2i(-1));
+		g_userInterface.getSelection()->unSelect(target);
+		unit->getCarriedUnits().push_back(target);
+		unitsToCarry.erase(std::find(unitsToCarry.begin(), unitsToCarry.end(), target));
+		unit->setCurrSkill(loadSkillType);
+		unit->clearPath();
+		return;
+	}
+	Vec2i pos = closest->getCenteredPos(); // else move toward closest
+	switch (g_routePlanner.findPath(unit, pos)) {
+		case TravelState::MOVING:
+			unit->setCurrSkill(moveSkillType);
+			unit->face(unit->getNextPos());
+			break;
+		case TravelState::BLOCKED:
+			unit->setCurrSkill(SkillClass::STOP);
+			if (unit->getPath()->isBlocked() && !command->getUnit()) {
+				unit->clearPath();
+				unit->finishCommand();
+			}
+			break;
+		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
+			unit->setCurrSkill(SkillClass::STOP);
+			break;
+	}
 }
 
 // =====================================================
@@ -841,40 +815,32 @@ void UnloadCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
 
-	if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
-		unit->setCurrSkill(SkillClass::UNLOAD);
-	} else {
-		UnitContainer &units = unit->getCarriedUnits();
-
-		int maxRange = unloadSkillType->getMaxRange();
-		//PosCircularIteratorSimple posIter(g_map.getBounds(), unit->getPos(), maxRange);
-		UnitContainer::iterator i = units.begin();
-		// unload each carried unit to a free space if possible
-		while (i != units.end()) {
-			Unit *targetUnit = (*i);
-			//Vec2i pos;
-			g_console.addLine("unloading unit");
-		
-			//fixed d;
-			//if (posIter.getNext(pos, d)) { // g_map.getNearestFreePos(pos, unit, targetUnit, 1, maxRange)????
-			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
-				// pick a free space to move the unit to
-				/// @todo perhaps combine the next two statements into a unit move/relocate(pos) method
-				//targetUnit->setPos(pos);
-				g_map.putUnitCells(targetUnit, /*pos*/targetUnit->getPos());
-				targetUnit->setVisible(true);
-				targetUnit->setCarried(false);
-				i = units.erase(i);
-			} else {
-				// must be crowded, stop unloading
-				g_console.addLine("too crowded to unload"); /// @todo change with localised version
-				break;
-			}		
-		}
-
+	if (unit->getCarriedUnits().empty()) {
 		// no more units to deal with
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
+	} else {
+		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
+			unit->setCurrSkill(SkillClass::UNLOAD);
+		} else {
+			Unit *targetUnit = unit->getCarriedUnits().front();
+			int maxRange = unloadSkillType->getMaxRange();
+			g_console.addLine("unloading unit");
+			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
+				// pick a free space to put the unit
+				g_map.putUnitCells(targetUnit, targetUnit->getPos());
+				targetUnit->setVisible(true);
+				targetUnit->setCarried(false);
+				unit->getCarriedUnits().pop_front();
+				// keep unloading, curr skill is ok
+			} else {
+				// must be crowded, stop unloading
+				g_console.addLine("too crowded to unload"); /// @todo change with localised version
+				unit->setCurrSkill(SkillClass::STOP);
+				// cancel?
+				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
+			}
+		}
 	}
 }
 

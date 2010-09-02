@@ -29,6 +29,7 @@
 #include "cluster_map.h"
 #include "sim_interface.h"
 #include "network_interface.h"
+#include "game_menu.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -233,6 +234,10 @@ void GameState::init() {
 //update
 void GameState::update() {
 	if (gotoMenu) {
+		if (m_modalDialog) {
+			g_widgetWindow.removeFloatingWidget(m_modalDialog);
+			m_modalDialog = 0;
+		}
 		program.setState(new BattleEnd(program));
 		//program.setState(new MainMenu(program));
 		return;
@@ -293,10 +298,11 @@ void GameState::displayError(std::exception &e) {
 		m_modalDialog = 0;
 	}
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_modalDialog = MessageDialog::showDialog(pos, size, "Error...", "An error has occurred.\n" + errMsg,
-		g_lang.get("Ok"), "");
-	m_modalDialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
-	m_modalDialog->Escaped.connect(this, &GameState::onErrorDismissed);
+	MessageDialog::Ptr dialog = MessageDialog::showDialog(pos, size, 
+		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
+	m_modalDialog = dialog;
+	dialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
+	dialog->Escaped.connect(this, &GameState::onErrorDismissed);
 }
 
 void GameState::onErrorDismissed(BasicDialog::Ptr) {
@@ -304,6 +310,19 @@ void GameState::onErrorDismissed(BasicDialog::Ptr) {
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 	gotoMenu = true;
+}
+
+void GameState::doGameMenu() {
+	if (m_modalDialog) {
+		g_widgetWindow.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
+		return;
+	}
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
+	}
+	Vec2i size(240, 240), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	m_modalDialog = GameMenu::showDialog(pos, size);
 }
 
 void GameState::doExitMessage(const string &msg) {
@@ -315,12 +334,13 @@ void GameState::doExitMessage(const string &msg) {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
-	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_modalDialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
+	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
 		g_lang.get("Ok"), g_lang.get("Cancel"));
-	m_modalDialog->Button1Clicked.connect(this, &GameState::onExitSelected);
-	m_modalDialog->Button2Clicked.connect(this, &GameState::destroyDialog);
-	m_modalDialog->Escaped.connect(this, &GameState::destroyDialog);
+	dialog->Button1Clicked.connect(this, &GameState::onExitSelected);
+	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
+	dialog->Escaped.connect(this, &GameState::destroyDialog);
+	m_modalDialog = dialog;
 }
 
 void GameState::onExitSelected(BasicDialog::Ptr) {
@@ -344,12 +364,13 @@ void GameState::doSaveBox() {
 		m_modalDialog = 0;
 	}
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_modalDialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
+	InputDialog::Ptr dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
-	static_cast<InputDialog::Ptr>(m_modalDialog)->setInputMask(allowMask);
-	m_modalDialog->Button1Clicked.connect(this, &GameState::onSaveSelected);
-	m_modalDialog->Button2Clicked.connect(this, &GameState::destroyDialog);
-	m_modalDialog->Escaped.connect(this, &GameState::destroyDialog);
+	m_modalDialog = dialog;
+	dialog->setInputMask(allowMask);
+	dialog->Button1Clicked.connect(this, &GameState::onSaveSelected);
+	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
+	dialog->Escaped.connect(this, &GameState::destroyDialog);
 }
 
 void GameState::onSaveSelected(BasicDialog::Ptr) {
@@ -369,11 +390,12 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_modalDialog = MessageDialog::showDialog(pos, size, 
+	MessageDialog::Ptr dialog = MessageDialog::showDialog(pos, size, 
 		g_lang.getScenarioString(m_scriptMessages.front().header), 
 		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");
-	m_modalDialog->Button1Clicked.connect(this, &GameState::destroyDialog);
-	m_modalDialog->Escaped.connect(this, &GameState::destroyDialog);
+	m_modalDialog = dialog;
+	dialog->Button1Clicked.connect(this, &GameState::destroyDialog);
+	dialog->Escaped.connect(this, &GameState::destroyDialog);
 	m_scriptMessages.pop_front();
 }
 
@@ -635,9 +657,7 @@ void GameState::keyDown(const Key &key) {
 		}
 	}
 	if (cmd == ucMenuQuit) { // exit
-		//if (!gui.cancelPending()) {
-			doExitMessage(g_lang.get("ExitGame?"));
-		//}
+		doGameMenu();
 	} else if (cmd == ucMenuSave) { // save
 		if (!m_modalDialog) {
 			Shared::Platform::mkdir("savegames", true);
@@ -680,7 +700,7 @@ void GameState::keyPress(char c) {
 }
 
 void GameState::quitGame() {
-	program.setState(new BattleEnd(program));
+	gotoMenu = true;
 }
 
 // ==================== PRIVATE ====================

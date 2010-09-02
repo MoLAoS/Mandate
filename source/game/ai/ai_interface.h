@@ -79,7 +79,7 @@ public:
 	int getMyUpgradeCount() const;
 	const Resource *getResource(const ResourceType *rt);
 	const Unit *getMyUnit(int unitIndex);
-	void getUnitsSeen(UnitList &list);
+	void getUnitsSeen(ConstUnitVector &list);
 	const FactionType *getMyFactionType();
 	Faction* getMyFaction() { return faction; }
 	const TechTree *getTechTree();

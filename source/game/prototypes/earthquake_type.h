@@ -42,7 +42,7 @@ class Unit;
 class Resource;
 class TechTree;
 class World;
-class UnitContainer;
+class UnitVector;
 
 class EarthquakeType {
 private:

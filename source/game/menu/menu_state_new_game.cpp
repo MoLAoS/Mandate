@@ -127,6 +127,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_mapLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
 	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
+	m_mapLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	gs.setDescription(results[0]);
 	gs.setMapPath(string("maps/") + m_mapFiles[0]);
@@ -135,6 +136,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_mapInfoLabel = new StaticText(&program, Vec2i(x, y - (h*2 + 10)), Vec2i(w, h * 2));
 	m_mapInfoLabel->setTextParams(m_mapInfo.desc, Vec4f(1.f), font);
+	m_mapInfoLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	//tileset listBox
 	findAll("tilesets/*.", results);
@@ -154,7 +156,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_tilesetLabel = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
 	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
-
+	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	//tech Tree listBox
 	findAll("techs/*.", results);
 	if (results.size() == 0) {
@@ -173,7 +175,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_techTreeLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
 	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
-
+	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	gap = (metrics.getScreenW() - 400) / 3, x = gap, y += 70, h = 30;
 	int cbw = 75, stw = 200;
 
@@ -183,6 +185,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_randomLocsLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
 	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
+	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	x = gap * 2 + stw;
 	m_fogOfWarCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
@@ -191,17 +194,23 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_fogOfWarLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
 	m_fogOfWarLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
+	m_fogOfWarLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-	y += 75, h = 35, x = (metrics.getScreenW() - 700) / 2, w = 700;
+	int psw_width = std::min(std::max(700, g_metrics.getScreenW() - 200), 900);
+	y += 75, h = 35, x = (metrics.getScreenW() - psw_width) / 2, w = psw_width;
 
 	int sty = metrics.getScreenH() - 70;
-	m_controlLabel = new StaticText(&program, Vec2i(x + 150, sty), Vec2i(200, 30));
-	m_factionLabel = new StaticText(&program, Vec2i(x + 390, sty), Vec2i(200, 30));
-	m_teamLabel = new StaticText(&program, Vec2i(x + 620, sty), Vec2i(80, 30));
+	m_controlLabel = new StaticText(&program, Vec2i(x + 120, sty), Vec2i(200, 30));
+	m_factionLabel = new StaticText(&program, Vec2i(x + 340, sty), Vec2i(200, 30));
+	m_teamLabel = new StaticText(&program, Vec2i(x + 520, sty), Vec2i(80, 30));
 
 	m_controlLabel->setTextParams("Control", Vec4f(1.f), font);
 	m_factionLabel->setTextParams("Faction", Vec4f(1.f), font);
 	m_teamLabel->setTextParams("Team", Vec4f(1.f), font);
+
+	m_controlLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	m_factionLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	m_teamLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	int vSpace = (sty - y);
 	int vgap = (vSpace - (GameConstants::maxPlayers * 35)) / (GameConstants::maxPlayers + 1);
@@ -248,6 +257,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	}
 }
 
+//  === util ===
+
 int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (psw == slots[i]) {
@@ -256,60 +267,6 @@ int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
 	}
 	assert(false);
 	return -1;
-}
-
-void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
-	GameSettings &gs = g_simInterface->getGameSettings();
-	int ndx = getSlotIndex(psw, m_playerSlots);
-	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
-	if (psw->getSelectedFactionIndex() >= 0) {
-		int n = psw->getSelectedFactionIndex();
-		assert(n >= 0 && n < m_factionFiles.size());
-		gs.setFactionTypeName(ndx, m_factionFiles[n]);
-	} else {
-		gs.setFactionTypeName(ndx, "");
-	}
-}
-
-void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
-	static bool noRecurse = false;
-	if (noRecurse) {
-		return; // control was changed progmatically
-	}
-	noRecurse = true;
-	// check for humanity
-	assert(m_humanSlot >= 0);
-	bool humanInPrevSlot = m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN;
-	int newHumanSlot = -1;
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		if (i == m_humanSlot) continue;
-		if (m_playerSlots[i]->getControlType() == ControlType::HUMAN) {
-			newHumanSlot = i;
-			break;
-		}
-	}
-	if (humanInPrevSlot) {
-		if (newHumanSlot != -1) { // human moved slots
-			assert(m_humanSlot >= 0);
-			m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
-			m_humanSlot = newHumanSlot;
-		}
-	} else {
-		if (newHumanSlot == -1) { // human went away
-			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
-			m_humanSlot = 0;
-		}
-	}
-	updateControlers();
-	updateNetworkSlots();
-	noRecurse = false;
-}
-
-void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
-	GameSettings &gs = g_simInterface->getGameSettings();
-	int ndx = getSlotIndex(psw, m_playerSlots);
-	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
-	gs.setTeam(ndx, psw->getSelectedTeamIndex());
 }
 
 int getLowestFreeColourIndex(PlayerSlotWidget::Ptr *slots) {
@@ -330,6 +287,58 @@ int getLowestFreeColourIndex(PlayerSlotWidget::Ptr *slots) {
 	}
 	ASSERT(false, "No free colours");
 	return -1;
+}
+
+//  === === ===
+
+void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	int ndx = getSlotIndex(psw, m_playerSlots);
+	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
+	if (psw->getSelectedFactionIndex() >= 0) {
+		int n = psw->getSelectedFactionIndex();
+		assert(n >= 0 && n < m_factionFiles.size());
+		gs.setFactionTypeName(ndx, m_factionFiles[n]);
+	} else {
+		gs.setFactionTypeName(ndx, "");
+	}
+}
+
+void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
+	static bool noRecurse = false;
+	if (noRecurse) {
+		return; // control was changed progmatically
+	}
+	noRecurse = true;
+	int ndx = getSlotIndex(ps, m_playerSlots);
+	if (m_playerSlots[ndx]->getControlType() == ControlType::HUMAN && ndx != m_humanSlot) {
+		// human moved slots
+		assert(m_humanSlot >= 0);
+		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
+		m_playerSlots[ndx]->setSelectedColour(m_playerSlots[m_humanSlot]->getSelectedColourIndex());
+		m_humanSlot = ndx;
+		return;
+	}
+	// check for humanity
+	if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
+		// human tried to go away...
+		if (m_humanSlot != 0) {
+			m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
+		}
+		m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
+		m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
+		return;
+	}
+	updateControlers();
+	updateNetworkSlots();
+	noRecurse = false;
+}
+
+void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	int ndx = getSlotIndex(psw, m_playerSlots);
+	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
+	gs.setTeam(ndx, psw->getSelectedTeamIndex());
 }
 
 void MenuStateNewGame::onChangeColour(PlayerSlotWidget::Ptr psw) {
@@ -370,6 +379,7 @@ void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
 
 	m_mapInfo.load(mapFile);
 	m_mapInfoLabel->setText(m_mapInfo.desc);
+
 	updateControlers();
 	g_config.setUiLastMap(mapBaseName);
 
@@ -535,12 +545,14 @@ bool MenuStateNewGame::loadGameSettings() {
 void MenuStateNewGame::updateControlers() {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	assert(m_humanSlot >= 0);
-	if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
-		m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
-		m_humanSlot = 0;
-	}
+	assert(m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN);
 	for (int i = m_mapInfo.players; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i]->setSelectedControl(ControlType::CLOSED);
+	}
+	if (m_humanSlot >= m_mapInfo.players) {
+		m_humanSlot = 0;
+		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::HUMAN);
+		m_playerSlots[m_humanSlot]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
 	}
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		gs.setFactionControl(i, m_playerSlots[i]->getControlType());
@@ -563,7 +575,7 @@ void MenuStateNewGame::updateControlers() {
 				m_playerSlots[i]->setSelectedTeam(i);
 			}
 			if (m_playerSlots[i]->getSelectedColourIndex() == -1) {
-				m_playerSlots[i]->setSelectedColour(i);
+				m_playerSlots[i]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
 			}
 			assert(m_playerSlots[i]->getSelectedFactionIndex() >= 0 && m_playerSlots[i]->getSelectedFactionIndex() < GameConstants::maxPlayers);
 			gs.setFactionTypeName(i, m_factionFiles[m_playerSlots[i]->getSelectedFactionIndex()]);
@@ -585,7 +597,6 @@ void MenuStateNewGame::updateControlers() {
 							m_playerSlots[i]->setNameText("Unconnected");
 						}
 					}
-					gs.setResourceMultiplier(i, 1.f);
 					break;
 				default:
 					gs.setPlayerName(i, "AI Player");

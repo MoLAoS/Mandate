@@ -39,7 +39,7 @@ enum AutoRepairState {
 
 class Selection: public sigslot::has_slots {
 public:
-	typedef UnitContainer::const_iterator UnitIterator;
+	typedef UnitVector::const_iterator UnitIterator;
 	typedef map<Unit*, int> UnitRefMap;
 
 public:
@@ -56,8 +56,8 @@ private:
 	bool canRepair;
 	AutoRepairState autoRepairState;
 	int factionIndex;
-	UnitContainer selectedUnits;
-	UnitContainer groups[maxGroups];
+	UnitVector selectedUnits;
+	UnitVector groups[maxGroups];
 	UserInterface *gui;
 	UnitRefMap m_referenceMap;
 
@@ -70,13 +70,13 @@ public:
 	void init(UserInterface *gui, int factionIndex);
 
 	void select(Unit *unit);
-	void select(const UnitContainer &units) {
+	void select(const UnitVector &units) {
 		//add units to gui
 		for(UnitIterator it= units.begin(); it!=units.end(); ++it) {
 			select(*it);
 		}
 	}
-	void unSelect(const UnitContainer &units);
+	void unSelect(const UnitVector &units);
 	void unSelect(const Unit *unit);
 	void clear();
 
@@ -99,7 +99,7 @@ public:
 	int getCount() const					{return selectedUnits.size();}
 	const Unit *getUnit(int i) const		{return selectedUnits[i];}
 	const Unit *getFrontUnit() const		{return selectedUnits.front();}
-	const UnitContainer &getUnits() const	{return selectedUnits;}
+	const UnitVector &getUnits() const	{return selectedUnits;}
 	Vec3f getRefPos() const;
 	AutoRepairState getAutoRepairState() const	{return autoRepairState;}
 

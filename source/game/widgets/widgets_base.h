@@ -27,7 +27,7 @@ using namespace Shared::Math;
 using namespace Shared::Graphics;
 using Glest::Util::Logger;
 
-#define LOG_WIDGET_EVENTS 0
+#define LOG_WIDGET_EVENTS 1
 
 #if LOG_WIDGET_EVENTS
 #	define WIDGET_LOG(x) {stringstream ss; ss << x; g_widgetLog.add(ss.str()); }
@@ -146,8 +146,8 @@ public:
 	virtual void setEnabled(bool v) { m_enabled = v;	}
 	virtual void setSize(const Vec2i &sz);
 	virtual void setPos(const Vec2i &p);
-	virtual void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
-	virtual void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
+	void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
+	void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
 	virtual void setVisible(bool vis) { visible = vis; }
 	virtual void setFade(float v) { fade = v; }
 	virtual void setParent(Container* p) { parent = p; }
@@ -277,6 +277,7 @@ private:
 	vector<string> texts;
 	Vec4f txtColour;
 	Vec4f txtShadowColour;
+	Vec4f txtShadowColour2;
 	vector<Vec2i> txtPositions;
 	const Font *font;
 	bool centre;
@@ -286,7 +287,8 @@ private:
 protected:
 	void renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font = 0);
 	void renderText(int ndx = 0);
-	void renderTextShadowed(int ndx = 0);
+	void renderTextShadowed(int ndx = 0, int offset = 2);
+	void renderTextDoubleShadowed(int ndx = 0, int offset = 2);
 
 	void startBatch(const Font *font);
 	void endBatch();
@@ -301,6 +303,11 @@ public:
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col) { txtColour = col;	 }
 	void setTextShadowColour(const Vec4f &col) { txtShadowColour = col;	 }
+	void setTextShadowColour2(const Vec4f &col) { txtShadowColour = col;	 }
+	void setTextShadowColours(const Vec4f &col1, const Vec4f &col2) {
+		txtShadowColour = col1;
+		txtShadowColour2 = col2;
+	}
 	void setTextCentre(bool v)	{ centre = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
 	void setTextFont(const Font *f);

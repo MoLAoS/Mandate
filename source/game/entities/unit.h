@@ -49,7 +49,7 @@
 #endif
 
 #if LOG_COMMAND_ISSUE
-#	define COMMAND_LOG(x) STREAM_LOG(x)
+#	define COMMAND_LOG(x) GAME_LOG(x)
 #else
 #	define COMMAND_LOG(x)
 #endif
@@ -116,9 +116,10 @@ public:
 class UnitFactory;
 class Unit;
 
-typedef vector<Unit*> UnitContainer;
-typedef vector<const Unit*> UnitList;
+typedef vector<Unit*>		UnitVector;
+typedef vector<const Unit*> ConstUnitVector;
 typedef set<const Unit*>	UnitSet;
+typedef list<Unit*>			UnitList;
 
 // ===============================
 // 	class Unit
@@ -142,8 +143,8 @@ public:
 	typedef list<UnitId> Pets;
 
 private:
-	UnitContainer carriedUnits;
-	UnitContainer unitsToCarry;
+	UnitList carriedUnits;
+	UnitList unitsToCarry;
 	bool visible;
 
 	int id;					/**< unique identifier  */
@@ -225,7 +226,6 @@ private:
 
 public:
 	// signals
-	//
 	typedef sigslot::signal<Unit*>	UnitSignal;
 
 	UnitSignal		Created;	  /**< fires when a unit is created		   */
@@ -307,13 +307,14 @@ public:
 	CardinalDir getModelFacing() const			{ return m_facing; }
 
 	//-- for carry units
-	UnitContainer &getUnitsToCarry()			{return unitsToCarry;}
-	void setUnitsToCarry(const UnitContainer &v) { unitsToCarry = UnitContainer(v);}
-	const UnitContainer &getCarriedUnits() const {return carriedUnits;}
-	UnitContainer &getCarriedUnits()			{return carriedUnits;}
-	bool isVisible() const						{return visible;}
-	void setVisible(bool v)						{visible = v;}
-	void setCarried(bool v)						{carried = v;}
+	UnitList& getUnitsToCarry()				{return unitsToCarry;}
+	//void addUnitsToCarry(const UnitVector &v);
+//	void setUnitsToCarry(const UnitList &v) { unitsToCarry = UnitVector(v);}
+	const UnitList& getCarriedUnits() const {return carriedUnits;}
+	UnitList& getCarriedUnits()				{return carriedUnits;}
+	bool isVisible() const					{return visible;}
+	void setVisible(bool v)					{visible = v;}
+	void setCarried(bool v)					{carried = v;}
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -445,13 +446,14 @@ public:
 	void undertake()									{faction->remove(this);}
 
 	//other
-	void resetHighlight()								{highlight= 1.f;}
+	void resetHighlight();
 	const CommandType *computeCommandType(const Vec2i &pos, const Unit *targetUnit= NULL) const;
 	string getDesc(bool friendly) const;
 	bool computeEp();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
 	int update2()										{return ++progress2;}
+	void clearPath() { unitPath.clear(); waypointPath.clear(); }
 
 	void updateSkillCycle(int offset);
 	void updateMoveSkillCycle();
@@ -472,6 +474,8 @@ public:
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
 
+	int getCarriedCount() const { return carriedUnits.size(); }
+
 	bool add(Effect *e);
 	void remove(Effect *e);
 	void effectExpired(Effect *effect);
@@ -487,7 +491,7 @@ private:
 };
 
 inline ostream& operator<<(ostream &stream, const Unit &unit) {
-	return stream << "[id:" << unit.getId() << "|" << unit.getType()->getName() << "]";
+	return stream << "[Unit id:" << unit.getId() << "|" << unit.getType()->getName() << "]";
 }
 
 

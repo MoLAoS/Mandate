@@ -643,28 +643,28 @@ unsigned int Unit::getCommandSize() const{
   */
 CommandResult Unit::giveCommand(Command *command) {
 	const CommandType *ct = command->getType();
-	COMMAND_LOG(
-		g_world.getFrameCount() << "::Unit:" << id << " command given: "
-		<< CommandClassNames[command->getType()->getClass()]
-	);
-	if(ct->getClass() == CommandClass::SET_MEETING_POINT) {
+
+	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		if(command->isQueue() && !commands.empty()) {
 			commands.push_back(command);
 		} else {
 			meetingPos = command->getPos();
 			delete command;
 		}
+		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << *command << ", Result=" << CommandResultNames[CommandResult::SUCCESS] );
 		return CommandResult::SUCCESS;
 	}
 
-	if(ct->isQueuable() || command->isQueue()) {
+	if (ct->isQueuable() || command->isQueue()) { // user wants this queued...
 		// cancel current command if it is not queuable or marked to be queued
 		if(!commands.empty() && !commands.front()->getType()->isQueuable() && !command->isQueue()) {
+			COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << " incoming command wants queue, but current is not queable. Cancel current command" );
 			cancelCommand();
 			unitPath.clear();
 		}
 	} else {
 		// empty command queue
+		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << " incoming command is not marked to queue, Clear command queue" );
 		clearCommands();
 		unitPath.clear();
 
@@ -678,18 +678,32 @@ CommandResult Unit::giveCommand(Command *command) {
 	CommandResult result = checkCommand(*command);
 	//COMMAND_LOG( "NO_RESERVE_RESOURCES flag is " << (command->isReserveResources() ? "not " : "" ) << "set,"
 	//	<< " command result = " << CommandResultNames[result] );
-	if(result == CommandResult::SUCCESS){
+	if (result == CommandResult::SUCCESS) {
 		applyCommand(*command);
-		commands.push_back(command);
 
-		if(faction->isThisFaction() && command->getUnit() && !command->isAuto()) {
-			command->getUnit()->resetHighlight();
+		if (command->getType()->getClass() == CommandClass::LOAD) {
+			if (std::find(unitsToCarry.begin(), unitsToCarry.end(), command->getUnit()) == unitsToCarry.end()) {
+				unitsToCarry.push_back(command->getUnit());
+				COMMAND_LOG( __FUNCTION__ << "() adding unit to load list " << *command->getUnit() )
+				if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
+					COMMAND_LOG( __FUNCTION__ << "() deleting load command, already loading.")
+					delete command;
+					command = 0;
+				}
+			}
+		}
+		if (command) {
+			commands.push_back(command);
 		}
 	} else {
 		delete command;
+		command = 0;
 	}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
+	}
+	if (command) {
+		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << *command << ", Result=" << CommandResultNames[result] );
 	}
 	return result;
 }
@@ -697,9 +711,9 @@ CommandResult Unit::giveCommand(Command *command) {
 /** removes current command (and any queued Set meeting point commands)
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
-	//pop front
-	//COMMAND_LOG( g_world.getFrameCount() << "::Unit:" << id << " "
-	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command popped." );
+	// pop front
+	COMMAND_LOG(__FUNCTION__ << "() " << *this << " cancelling current " << commands.front()->getType()->getName() << " command." );
+
 	delete commands.front();
 	commands.erase(commands.begin());
 	unitPath.clear();
@@ -713,10 +727,11 @@ Command *Unit::popCommand() {
 		commands.erase(commands.begin());
 		command = commands.empty() ? NULL : commands.front();
 	}
-	//if ( command ) {
-	//	COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " "
-	//		<< CommandClassNames[commands.front()->getType()->getClass()] << " command now front of queue." );
-	//}
+	if (command) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " new current is " << command->getType()->getName() << " command." );
+	} else {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
+	}
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
 	}
@@ -728,10 +743,10 @@ Command *Unit::popCommand() {
 CommandResult Unit::finishCommand() {
 	//is empty?
 	if(commands.empty()) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " no command to finish!" );
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//COMMAND_LOG( g_world.getFrameCount() << "::Unit:" << intToStr(id) << " "
-	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command finished." );
+	COMMAND_LOG(__FUNCTION__ << "() " << *this << ", " << commands.front()->getType()->getName() << " command finished." );
 
 	Command *command = popCommand();
 
@@ -742,20 +757,25 @@ CommandResult Unit::finishCommand() {
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
 	}
+	if (commands.empty()) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
+	} else {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << ", " << commands.front()->getType()->getName() << " command next on queue." );
+	}
+
 	return CommandResult::SUCCESS;
 }
 
 /** cancel command on back of queue */
 CommandResult Unit::cancelCommand() {
-
-	//is empty?
+	// is empty?
 	if(commands.empty()){
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " No commands to cancel!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " queued "
-	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command cancelled." );
 
 	//undo command
+	const CommandType *ct = commands.back()->getType();
 	undoCommand(*commands.back());
 
 	//delete ans pop command
@@ -767,6 +787,11 @@ CommandResult Unit::cancelCommand() {
 	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
 	}
+	if (commands.empty()) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " current " << ct->getName() << " command cancelled.");
+	} else {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " a queued " << ct->getName() << " command cancelled.");
+	}
 	return CommandResult::SUCCESS;
 }
 
@@ -774,22 +799,29 @@ CommandResult Unit::cancelCommand() {
 CommandResult Unit::cancelCurrCommand() {
 	//is empty?
 	if(commands.empty()) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " No commands to cancel!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << intToStr(id) << " current "
-	//	<< CommandClassNames[commands.front()->getType()->getClass()] << " command cancelled." );
 
 	//undo command
 	undoCommand(*commands.front());
 
 	Command *command = popCommand();
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
+	if (!command || command->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
+	}
+	if (!command) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
+	} else {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << ", " << command->getType()->getName() << " command next on queue." );
 	}
 	return CommandResult::SUCCESS;
 }
 
 void Unit::removeCommands() {
+	if (!g_program.isTerminating() && World::isConstructed()) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *this << " clearing all commands." );
+	}
 	while (!commands.empty()) {
 		delete commands.back();
 		commands.pop_back();
@@ -848,7 +880,7 @@ void checkTargets(const Unit *dead) {
  */
 void Unit::kill() {
 	assert(hp <= 0);
-	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id + " killed." );
+	UNIT_LOG(g_world.getFrameCount() << *this << " killed." );
 	hp = 0;
 	g_world.getCartographer()->removeUnitVisibility(this);
 
@@ -873,6 +905,10 @@ void Unit::kill() {
 	clearCommands();
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	deadCount = Random(id).randRange(-256, 256); // random decay time
+}
+
+void Unit::resetHighlight() {
+	highlight= 1.f;
 }
 
 // =================== Referencers ===================
@@ -1683,6 +1719,17 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		}
 		if (!faction->checkCosts(produced)) {
 			return CommandResult::FAIL_RESOURCES;
+		}
+	}
+
+	if (ct->getClass() == CommandClass::LOAD) { // check load command
+		if (static_cast<const LoadCommandType*>(ct)->getLoadCapacity() > getCarriedCount()) {
+			if (static_cast<const LoadCommandType*>(ct)->canCarry(command.getUnit()->getType())) {
+				return CommandResult::SUCCESS;
+			}
+			return CommandResult::FAIL_INVALID_LOAD;
+		} else {
+			return CommandResult::FAIL_LOAD_LIMIT;
 		}
 	}
 

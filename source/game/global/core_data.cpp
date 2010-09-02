@@ -108,6 +108,7 @@ bool CoreData::load() {
 
 	// Display/Console font
 	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 10);
+	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 12);
 
 	// Misc fonts
 	advancedEngineFontSmall = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));

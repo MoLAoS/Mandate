@@ -539,9 +539,17 @@ public:
 class LoadCommandType: public MoveBaseCommandType {
 private:
 	const LoadSkillType *loadSkillType;
-
+	vector<const UnitType*> m_canLoadList;
+	int m_loadCapacity;
+/*  ///@todo: implement these:
+	bool m_countCells;	// if true, a size 2 unit occupies 4 slots
+	bool m_countSize;	// if true, a height 2 occupies 2 slots
+						// if both true, a size 2 height 2 unit would occupy 8
+*/
 public:
-	LoadCommandType() : MoveBaseCommandType("Load", Clicks::TWO), loadSkillType(NULL) {}
+	LoadCommandType() : MoveBaseCommandType("Load", Clicks::TWO), loadSkillType(NULL) {
+		queuable = true;
+	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -551,10 +559,13 @@ public:
 	//get
 	const LoadSkillType *getLoadSkillType() const	{return loadSkillType;}
 
+	int getLoadCapacity() const { return m_loadCapacity; }
+	bool canCarry(const UnitType *ut) const {
+		return (std::find(m_canLoadList.begin(), m_canLoadList.end(), ut) != m_canLoadList.end());
+	}
+
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::LOAD; }
-private:
-	bool inRange(const Vec2i &thisPos, const Vec2i &targetPos, int maxRange) const;
 };
 
 // ===============================

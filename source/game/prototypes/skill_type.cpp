@@ -522,21 +522,14 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 // =====================================================
 
 LoadSkillType::LoadSkillType() : SkillType(SkillClass::LOAD, "Load") {
-	maxUnits = 0;
 }
 
 void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
 	SkillType::load(sn, dir, tt, ut);
-
-	XmlNode *node = sn->getChild("max-load", 0, true);
-	if (node) {
-		maxUnits = node->getAttribute("value")->getIntValue();
-	}
 }
 
 void LoadSkillType::doChecksum(Checksum &checksum) const {
 	SkillType::doChecksum(checksum);
-	checksum.add<int>(maxUnits);
 }
 
 // =====================================================

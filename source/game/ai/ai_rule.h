@@ -226,7 +226,7 @@ public:
 class AiRuleProduce: public AiRule{
 private:
 	typedef map<const UnitType*, const CommandType*> CmdByUtMap;
-	typedef vector<const Unit *> UnitList;
+	typedef vector<const Unit *> ConstUnitVector;
 
 private:
 	const ProduceTask *produceTask;
@@ -254,7 +254,7 @@ class AiRuleBuild: public AiRule{
 private:
 	typedef map<const UnitType *, const CommandType*> CmdByUtMap;
 	typedef vector<const UnitType *> UnitTypeList;
-	typedef vector<const Unit*> UnitList;
+	typedef vector<const Unit*> ConstUnitVector;
 private:
 	const BuildTask *buildTask;
 

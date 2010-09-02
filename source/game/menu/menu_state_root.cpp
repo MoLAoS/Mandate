@@ -96,6 +96,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	label->setPos(Vec2i(tx - sz.x, ty));
 	label->setSize(sz);
 	label->centreText();
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	label = new Widgets::StaticText(pp);
 	label->setTextParams(g_lang.get("Engine"), Vec4f(1.f), font);
@@ -103,12 +104,14 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	label->setPos(Vec2i(tx, ty));
 	label->setSize(label->getTextDimensions() + Vec2i(10,5));
 	label->centreText();
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	pos = Vec2i(tx + label->getSize().x, ty + 3);
 	// Version label
 	font = g_coreData.getGAEFontSmall();
 	label = new Widgets::StaticText(pp);
 	label->setTextParams(gaeVersionString, Vec4f(1.f), font);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	
 	sz = label->getTextDimensions() + Vec2i(10,5);
 	label->setPos(pos/*Vec2i(256 - sz.x / 2, 10)*/);

@@ -40,7 +40,9 @@ namespace Glest { namespace Sim {
 CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *ct, CommandClass cc, const Vec2i &pos, Unit *targetUnit,
 		const ProducibleType* prodType, CardinalDir facing) const {
+	COMMAND_LOG(__FUNCTION__ << "() " << selection.getUnits().size() << " units selected.");
 	if (selection.isEmpty()) {
+		COMMAND_LOG(__FUNCTION__ << "() No units selected!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
 	assert(!(prodType && targetUnit));
@@ -49,17 +51,25 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 	CommandResultContainer results;
 
 	//give orders to all selected units
-	const UnitContainer &units = selection.getUnits();
+	const UnitVector &units = selection.getUnits();
 	CommandResult result;
 
-	foreach_const (UnitContainer, i, units) {
+	foreach_const (UnitVector, i, units) {
 		const CommandType *effectiveCt;
-		if(ct) {
+		if (ct) {
 			effectiveCt = ct;
-		} else if(cc != CommandClass::NULL_COMMAND) {
+			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying command " << ct->getName() );
+		} else if (cc != CommandClass::NULL_COMMAND) {
 			effectiveCt = (*i)->getFirstAvailableCt(cc);
+			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying first command of class " << CommandClassNames[cc] );
 		} else {
 			effectiveCt = (*i)->computeCommandType(pos, targetUnit);
+			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying default, with pos " << pos << " and target " << (targetUnit ? targetUnit->getId() : -1));
+			if (effectiveCt) {
+				COMMAND_LOG(__FUNCTION__ << "() " << **i << " computed command = " << effectiveCt->getName());
+			} else {
+				COMMAND_LOG(__FUNCTION__ << "() " << **i << " no defualt command could be computed.");
+			}
 		}
 		if(effectiveCt) {
 			if (prodType) { // build (or morph) command
@@ -71,16 +81,31 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 				}
 			} else if (targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
-					UnitContainer &units = (*i)->getUnitsToCarry();
-					if (find(units.begin(), units.end(), targetUnit) == units.end()) {
-						units.push_back(targetUnit);
+					// a carrier is selected ... and a unit was right clicked.
+					if (*i != targetUnit) {
+						// give *i a command to load targetUnit
+						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::LOAD);
+						result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
+						if (result == CommandResult::SUCCESS) {
+							// if load is ok, give targetUnit a command to move to *i
+							pushCommand(new Command(targetUnit->getFirstAvailableCt(CommandClass::MOVE), CommandFlags(), *i, targetUnit));
+						}
 					}
+				} else if (targetUnit->isOfClass(UnitClass::CARRIER)) {
+					// a carrier unit was right clicked
+					result = pushCommand(new Command(targetUnit->getFirstAvailableCt(CommandClass::LOAD), CommandFlags(), *i, targetUnit));
+					if (result == CommandResult::SUCCESS) {
+						// give *i a move command to targetUnit
+						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::MOVE);
+						pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
+					}
+				} else {
+					result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 				}
-				result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 			} else if (effectiveCt->getClass() == CommandClass::LOAD) {
 				// the player has tried to load nothing, it shouldn't get here if it has 
 				// a targetUnit
-				return CommandResult::SOME_FAILED;
+				result = CommandResult::FAIL_UNDEFINED;
 			} else if(pos != Command::invalidPos) { // 'position' based command
 				//every unit is ordered to a different pos
 				Vec2i currPos = computeDestPos(refPos, (*i)->getPos(), pos);
@@ -97,31 +122,29 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 	// carry units command
 	/// @todo put after so the result from targeting itelf is ignored??, allowing the remaining 
 	///		units to be loaded, should be fixed properly
-	if(targetUnit) {
-		if(targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
+	/*if (targetUnit) {
+		if (targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
 			// do a load
 			const CommandType *carryCt = targetUnit->getType()->getFirstCtOfClass(CommandClass::LOAD);
-
-			targetUnit->setUnitsToCarry(units);
-			if (units.front() == targetUnit) {
-				if (units.size() > 1) {
-					result = pushCommand(new Command(carryCt, flags, units[1], targetUnit));
-				} else {
-					result = CommandResult::SOME_FAILED;
+			if (units.size() > 1) {
+				foreach_const (UnitVector, it, units) {
+					if (*it != targetUnit) {
+						result = pushCommand(new Command(carryCt, flags, const_cast<Unit*>(*it), targetUnit));
+						results.push_back(result);
+					}
 				}
-			} else {
-				result = pushCommand(new Command(carryCt, flags, units.front(), targetUnit));
+				g_console.addLine("added commands to load units");
 			}
-			g_console.addLine("added command to load units when they arrive");
 		}
-	}
+	}*/
 
 	return computeResult(results);
 }
 
 CommandResult Commander::tryCancelCommand(const Selection *selection) const{
-	const UnitContainer &units = selection->getUnits();
+	const UnitVector &units = selection->getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
+		COMMAND_LOG(__FUNCTION__ << "() " << *i << " trying cancel command.");
 		pushCommand(new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Command::invalidPos, *i));
 	}
 
@@ -130,7 +153,7 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 
 void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const{
 	/*
-	const UnitContainer &units = selection.getUnits();
+	const UnitVector &units = selection.getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
 		pushCommand(new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled),
 				Command::invalidPos, *i));
@@ -198,17 +221,15 @@ CommandResult Commander::computeResult(const CommandResultContainer &results) co
 CommandResult Commander::pushCommand(Command *command) const {
 	assert(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
-	if (command->getArchetype() != CommandArchetype::CANCEL_COMMAND) {
-		COMMAND_LOG(
-			__FUNCTION__ << " Unit id: " << command->getCommandedUnit()->getId() << ", command = "
-			<< command->getType()->getName() << " result = " << CommandResultNames[result];
-		);
+	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
+	if (result == CommandResult::SUCCESS) {
+		iSim->requestCommand(command);
 	}
-	iSim->requestCommand(command);
 	return result;
 }
 
 void Commander::giveCommand(Command *command) const {
+	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command );
 	Unit* unit = command->getCommandedUnit();
 
 	//execute command, if unit is still alive and non-deleted

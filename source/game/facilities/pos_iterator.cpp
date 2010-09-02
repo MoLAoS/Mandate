@@ -93,7 +93,11 @@ Vec2i PerimeterIterator::next() {
 	switch (state) {
 		case 0: // top edge, left->right
 			if (cx == ex) {
-				state = 1;
+				if (ex == wx && sy == ny) {
+					state = 4;
+				} else {
+					state = 1;
+				}
 				++cy;
 			} else {
 				++cx;

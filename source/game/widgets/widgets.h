@@ -59,15 +59,19 @@ public:
 
 private:
 	bool	m_shadow;
+	int		m_shadowOffset;
+	bool	m_doubleShadow;
 	
 public:
 	StaticText(Container::Ptr parent)
-			: Widget(parent) , TextWidget(this), m_shadow(false) {
+			: Widget(parent) , TextWidget(this)
+			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
 	StaticText(Container::Ptr parent, Vec2i pos, Vec2i size)
-			: Widget(parent, pos, size) , TextWidget(this), m_shadow(false) {
+			: Widget(parent, pos, size), TextWidget(this)
+			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
@@ -75,7 +79,17 @@ public:
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
-	void setShadow(const Vec4f &colour) { m_shadow = true; TextWidget::setTextShadowColour(colour); }
+	void setShadow(const Vec4f &colour, int offset=2) {
+		m_shadow = true;
+		TextWidget::setTextShadowColour(colour);
+		m_shadowOffset = offset;
+	}
+	void setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset=2) {
+		m_doubleShadow = true;
+		TextWidget::setTextShadowColours(colour1, colour2);
+		m_shadowOffset = offset;
+	}
+
 	virtual void render();
 	virtual string desc() { return string("[StaticText: ") + descPosDim() + "]"; }
 };
