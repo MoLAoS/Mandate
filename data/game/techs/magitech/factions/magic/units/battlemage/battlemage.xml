@@ -151,63 +151,11 @@
 			<fade value="false"/>
 		</skill>
 
-    <skill>
-      <type value="load"/>
-      <name value="load_skill"/>
-      <ep-cost value="0"/>
-      <speed value="120"/>
-      <anim-speed value="120"/>
-      <animation path="models/battlemage_dying.g3d"/>
-      <sound enabled="true" start-time="0">
-        <sound-file path="sounds/battlemage_die1.wav"/>
-      </sound>
-      <max-range value="3"/>
-    </skill>
-
-    <skill>
-      <type value="unload"/>
-      <name value="unload_skill"/>
-      <ep-cost value="0"/>
-      <speed value="120"/>
-      <anim-speed value="120"/>
-      <animation path="models/battlemage_dying.g3d"/>
-      <sound enabled="true" start-time="0">
-        <sound-file path="sounds/battlemage_die1.wav"/>
-      </sound>
-      <max-range value="2"/>
-    </skill>
-
-  </skills>
+	</skills>
 
 	<commands>
 
-    <command>
-      <type value="unload"/>
-      <name value="unload"/>
-      <image path="images/magic_unload.bmp"/>
-      <unit-requirements/>
-      <upgrade-requirements/>
-      <unload-skill value="unload_skill"/>
-    </command>
-
-    <command>
-      <type value="load"/>
-      <name value="load"/>
-      <image path="images/magic_unload.bmp"/>
-      <unit-requirements/>
-      <upgrade-requirements/>
-      <load-skill value="load_skill"/>
-      <move-skill value="move_skill"/>
-      <units-carried>
-        <unit value="initiate"/>
-        <unit value="daemon"/>
-        <unit value="summoner"/>
-        <unit value="ghost_armor"/>
-      </units-carried>
-      <load-capacity value="6" />
-    </command>
-
-    <command>
+		<command>
 			<type value="stop"/>
 			<name value="stop"/>
 			<image path="../archmage/images/magic_stop.bmp"/>
