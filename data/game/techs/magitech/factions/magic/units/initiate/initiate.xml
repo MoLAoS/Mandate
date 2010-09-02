@@ -359,12 +359,15 @@
 
 		<command>
 			<type value="morph"/>
-			<name value="promote_to_battlemage"/>
+			<name value="promote_mage"/>
 			<image path="../battlemage/images/battlemage.bmp"/>
 			<unit-requirements/>
 			<upgrade-requirements/>
 			<morph-skill value="morph_skill"/>
-			<morph-unit name= "battlemage"/>
+      <morph-units>
+        <morph-unit name= "battlemage"/>
+        <morph-unit name= "archmage"/>
+      </morph-units>
 			<discount value="0"/>
 		</command>	
 	</commands>
