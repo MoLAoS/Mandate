@@ -143,60 +143,62 @@ public:
 	typedef list<UnitId> Pets;
 
 private:
-	UnitList carriedUnits;
-	UnitList unitsToCarry;
-	UnitList unitsToUnload;
-	bool visible;
-
+	// basic stats
 	int id;					/**< unique identifier  */
 	int hp;					/**< current hit points */
 	int ep;					/**< current energy points */
 	int loadCount;			/**< current 'load' (resources carried) */
 	int deadCount;			/**< how many frames this unit has been dead */
+	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
+	int kills;				/**< number of kills */
 
+	// misc stuff (that could probably live elsewhere?)
+	UnitList carriedUnits;
+	UnitList unitsToCarry;
+	UnitList unitsToUnload;
+
+	// engine info
 	int lastAnimReset;		/**< the frame the current animation cycle was started */
 	int nextAnimReset;		/**< the frame the next animation cycle will begin */
-
 	int lastCommandUpdate;	/**< the frame this unit last updated its command */
 	int nextCommandUpdate;	/**< the frame next command update will occur */
-
 	int attackStartFrame;	/**< the frame the unit will start an attack system */
 	int soundStartFrame;	/**< the frame the sound for the current skill should be started */
 
-	int progress2;			/**< 'secondary' skill progress counter (progress for Produce/Morph) */
-	int kills;				/**< number of kills */
-
-	float highlight;		/**< alpha for selection circle effects */
-
-	// target
+	// target info
 	UnitId targetRef; 
 	Field targetField;		/**< Field target travels in @todo replace with Zone ? */
 	bool faceTarget;				/**< If true and target is set, we continue to face target. */
 	bool useNearestOccupiedCell;	/**< If true, targetPos is set to target->getNearestOccupiedCell() */
 
-	const Level *level;		/**< current Level */
-
+	// position info (note, nextPos will virtually always equal pos)
 	Vec2i pos;				/**< Current position */
 	Vec2i lastPos;			/**< The last position before current */
 	Vec2i nextPos;			/**< Position unit is moving into next. Note: this will almost always == pos */
-
 	Vec2i targetPos;		/**< Position of the target, or the cell of the target we care about. */
 	Vec3f targetVec;		/**< 3D position of target (centre) */
-
 	Vec2i meetingPos;		/**< Cell position of metting point */
 
+	// rotation info
 	float lastRotation;		/**< facing last frame, in degrees */
 	float targetRotation;	/**< desired facing, in degrees*/
 	float rotation;			/**< current facing, in degrees */
 	CardinalDir m_facing;	/**< facing for buildings */
 
+	const Level *level;		/**< current Level */
+
 	const UnitType *type;			/**< the UnitType of this unit */
 	const ResourceType *loadType;	/**< the type if resource being carried */
 	const SkillType *currSkill;		/**< the SkillType currently being executed */
 
+	// some flags
 	bool toBeUndertaken;		/**< awaiting a date with the grim reaper */
 	bool autoRepairEnabled;		/**< is auto repair enabled */
 	bool carried;				/**< is the unit being carried */
+	bool visible;
+
+	// this should go someone else
+	float highlight;		/**< alpha for selection circle effects */
 
 	/** Effects (spells, etc.) currently effecting unit. */
 	Effects effects;
@@ -208,18 +210,24 @@ private:
 	EnhancementType totalUpgrade;
 	/** All stat changes from upgrades, level ups & effects */
 	//EnhancementType totalEnhancement;
+
+	// is this really needed here? maybe keep faction (but change to an index), ditch map
 	Faction *faction;
-	ParticleSystem *fire;
 	Map *map;
 
+	// paths
 	UnitPath unitPath;
 	WaypointPath waypointPath;
 
+	// command queue
 	Commands commands;
 
+	// eye candy particle systems
+	ParticleSystem *fire;
 	UnitParticleSystems skillParticleSystems;
 	UnitParticleSystems effectParticleSystems;
 
+	// scripting stuff
 	int commandCallback;		// for script 'command callbacks'
 	int hp_below_trigger;		// if non-zero, call the Trigger manager when HP falls below this
 	int hp_above_trigger;		// if non-zero, call the Trigger manager when HP rises above this
@@ -297,7 +305,9 @@ public:
 	UnitPath *getPath()							{return &unitPath;}
 	WaypointPath *getWaypointPath()				{return &waypointPath;}
 	const WaypointPath *getWaypointPath() const {return &waypointPath;}
+	int getBaseSpeed(const SkillType *st) const {return st->getSpeed();}
 	int getSpeed(const SkillType *st) const;
+	int getBaseSpeed() const					{return getBaseSpeed(currSkill);}
 	int getSpeed() const						{return getSpeed(currSkill);}
 	const Emanations &getEmanations() const		{return type->getEmanations();}
 	const Commands &getCommands() const			{return commands;}

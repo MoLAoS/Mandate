@@ -1023,9 +1023,21 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 }
 
 /** called after a command is updated and a skill is selected
-  * @param frameOffset the number of frames the next skill cycle with take */
+  * @param frameOffset the number of frames the next skill cycle will take */
 void Unit::updateSkillCycle(int frameOffset) {
-	//assert(currSkill->getClass() != SkillClass::MOVE || isNetworkClient());
+	// assert server doesn't use this for move...
+	assert(currSkill->getClass() != SkillClass::MOVE || g_simInterface->asClientInterface());
+
+	// modify offset for upgrades/effects/etc
+	if (currSkill->getClass() != SkillClass::MOVE) {
+		fixed ratio = getBaseSpeed() / fixed(getSpeed());
+		frameOffset = (frameOffset * ratio).round();
+		if (frameOffset < 1) {
+			frameOffset = 1;
+		}
+	}
+	// else move skill, server has already modified speed for us
+
 	lastCommandUpdate = g_world.getFrameCount();
 	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
 }
@@ -1037,10 +1049,10 @@ void Unit::updateMoveSkillCycle() {
 	static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
 
 	float progressSpeed = getSpeed() * speedModifier;
-	if (pos.x != nextPos.x && pos.y != nextPos.y) { //if moving in diagonal move slower
+	if (pos.x != nextPos.x && pos.y != nextPos.y) { // if moving in diagonal move slower
 		progressSpeed *= 0.71f;
 	}
-	//if moving to a higher cell move slower else move faster
+	// if moving to a higher cell move slower else move faster
 	float heightDiff = map->getCell(lastPos)->getHeight() - map->getCell(pos)->getHeight();
 	float heightFactor = clamp(1.f + heightDiff / 5.f, 0.2f, 5.f);
 	progressSpeed *= heightFactor;
@@ -1053,41 +1065,40 @@ void Unit::updateMoveSkillCycle() {
 /** @return true when the current skill has completed a cycle */
 bool Unit::update() {
 	_PROFILE_FUNCTION();
-	SoundRenderer &soundRenderer = SoundRenderer::getInstance();
+	const int &frame = g_world.getFrameCount();
 
 	// start skill sound ?
-	if (currSkill->getSound()) {
-		if (g_world.getFrameCount() == getSoundStartFrame()) {
-			if (map->getTile(Map::toTileCoords(getPos()))->isVisible(g_world.getThisTeamIndex())) {
-				soundRenderer.playFx(currSkill->getSound(), getCurrVector(), g_gameState.getGameCamera()->getPos());
-			}
+	if (currSkill->getSound() && frame == getSoundStartFrame()) {
+		if (map->getTile(Map::toTileCoords(getPos()))->isVisible(g_world.getThisTeamIndex())) {
+			g_soundRenderer.playFx(currSkill->getSound(), getCurrVector(), g_gameState.getGameCamera()->getPos());
 		}
 	}
 
 	// start attack systems ?
-	if (currSkill->getClass() == SkillClass::ATTACK
-	&& getNextAttackFrame() == g_world.getFrameCount()) {
+	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
 		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
 	}
 
 	// update anim cycle ?
-	if (g_world.getFrameCount() >= getNextAnimReset()) {
+	if (frame >= getNextAnimReset()) {
 		// new anim cycle (or reset)
 		g_simInterface->doUpdateAnim(this);
 	}
 
 	// update emanations every 8 frames
-	if (this->getEmanations().size() && !((g_world.getFrameCount() + id) % 8) && isOperative()) {
+	if (this->getEmanations().size() && !((frame + id) % 8) && isOperative()) {
 		updateEmanations();
 	}
 
-	//highlight
-	if(highlight > 0.f) {
+	// fade highlight
+	if (highlight > 0.f) {
 		highlight -= 1.f / (GameConstants::highlightTime * WORLD_FPS);
 	}
-	//update target
+
+	// update target
 	updateTarget();
-	//rotation
+	
+	// rotation
 	bool moved = currSkill->getClass() == SkillClass::MOVE;
 	bool rotated = false;
 	if (currSkill->getClass() != SkillClass::STOP) {
@@ -1106,6 +1117,7 @@ bool Unit::update() {
 		}
 	}
 
+	// update particle system location/orientation
 	if (fire && moved) {
 		fire->setPos(getCurrVector());
 	}
@@ -1122,12 +1134,12 @@ bool Unit::update() {
 
 	// check for cycle completion
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead
-	if (g_world.getFrameCount() >= getNextCommandUpdate()) {
+	if (frame >= getNextCommandUpdate()) {
 		lastRotation = targetRotation;
 		if (currSkill->getClass() != SkillClass::DIE) {
 			return true;
 		} else {
-			deadCount++;
+			++deadCount;
 			if (deadCount >= GameConstants::maxDeadCount) {
 				toBeUndertaken = true;
 			}
