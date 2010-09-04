@@ -43,7 +43,6 @@ namespace Glest { namespace Menu {
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
-	_PROFILE_FUNCTION();
 	int sh = g_metrics.getScreenH();
 	int sixtyPercent = int(0.6f * sh);
 

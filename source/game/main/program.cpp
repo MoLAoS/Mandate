@@ -92,7 +92,7 @@ Program *Program::singleton = NULL;
 Program::Program(CmdArgs &args)
 		: cmdArgs(args)
 		, tickTimer(1, maxTimes, -1)
-		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
+		, updateTimer(40/*GameConstants::updateFps*/, maxUpdateTimes, maxUpdateBackLog)
 		, renderTimer(g_config.getRenderFpsMax(), 1, 0)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
 		, simulationInterface(0)
@@ -145,11 +145,11 @@ Program::Program(CmdArgs &args)
 	WidgetWindow::instance = this;
 	singleton = this;
 
-	init();
-
 	if (cmdArgs.isTest("interpolation")) {
 		Shared::Graphics::test_interpolate();
 	}
+
+	init();
 }
 
 Program::~Program() {
@@ -205,13 +205,19 @@ void Program::init() {
 }
 
 void Program::loop() {
-	int updateCounter = 0;
+	size_t sleepTime;
+
+	bool didSleep, timerFired;
 
 	while (handleEvent()) {
-		size_t sleepTime = updateCameraTimer.timeToWait();
-		sleepTime = sleepTime < updateTimer.timeToWait() ? sleepTime : updateTimer.timeToWait();
-		sleepTime = sleepTime < renderTimer.timeToWait() ? sleepTime : renderTimer.timeToWait();
-		sleepTime = sleepTime < tickTimer.timeToWait() ? sleepTime : tickTimer.timeToWait();
+		{
+			_PROFILE_SCOPE("Program::loop() : Determine sleep time");
+			int64 cameraTime = updateCameraTimer.timeToWait();
+			int64 updateTime = updateTimer.timeToWait();
+			int64 renderTime = renderTimer.timeToWait();
+			int64 tickTime   = tickTimer.timeToWait();
+			sleepTime = std::min(std::min(cameraTime, updateTime), std::min(renderTime, tickTime));
+		}
 
 		// Zzzz...
 		if (sleepTime) {
@@ -220,41 +226,39 @@ void Program::loop() {
 		}
 
 		// render
-		if (visible && renderTimer.isTime()) {
-			_PROFILE_SCOPE("Program::loop() : Render");
-			programState->renderBg();
-			g_renderer.reset2d(true);
-			WidgetWindow::render();
-			programState->renderFg();
+		if (renderTimer.isTime()) {
+			{
+				_PROFILE_SCOPE("Program::loop() : Update Sound & Gui");
+				SoundRenderer::getInstance().update();
+				WidgetWindow::update();
+			}
+			if (visible) {
+				_PROFILE_SCOPE("Program::loop() : Render");
+				programState->renderBg();
+				g_renderer.reset2d(true);
+				WidgetWindow::render();
+				programState->renderFg();
+			}
 		}
 
 		// update camera
 		while (updateCameraTimer.isTime()) {
+			_PROFILE_SCOPE("Program::loop() : update camera");
 			programState->updateCamera();
 		}
 
 		// update world
 		while (updateTimer.isTime() && !terminating) {
-			++updateCounter;
-			if (updateCounter % 4 == 0) {
-				_PROFILE_SCOPE("Program::loop() : Update Gui & Sound");
-				WidgetWindow::update();
-				SoundRenderer::getInstance().update();
-				GraphicComponent::update();
-			}
-			const int &interval = programState->getUpdateInterval();
-			if (interval && updateCounter % interval == 0) {
-				_PROFILE_SCOPE("Program::loop() : Update World/Menu");
-				programState->update();
-			}
+			_PROFILE_SCOPE("Program::loop() : Update World/Menu");
+			programState->update();
 			if (simulationInterface->isNetworkInterface()) {
-				_PROFILE_SCOPE("Program::loop() : Update Network");
 				simulationInterface->asNetworkInterface()->update();
 			}
 		}
 
 		// tick timer
 		while (tickTimer.isTime() && !terminating) {
+			_PROFILE_SCOPE("Program::loop() : tick");
 			programState->tick();
 		}
 	}
@@ -395,7 +399,7 @@ void Program::setState(ProgramState *programState) {
 	this->programState = programState;
 	programState->load();
 	programState->init();
-	resetTimers();
+	resetTimers(programState->getUpdateFps());
 }
 
 void Program::exit() {
@@ -403,10 +407,15 @@ void Program::exit() {
 	terminating = true;
 }
 
-void Program::resetTimers() {
+void Program::resetTimers(int updateFps) {
 	tickTimer.reset();
+	updateTimer.setFps(updateFps);
 	updateTimer.reset();
 	updateCameraTimer.reset();
+}
+
+void Program::setUpdateFps(int updateFps) {
+	updateTimer.setFps(updateFps);
 }
 
 // ==================== PRIVATE ====================

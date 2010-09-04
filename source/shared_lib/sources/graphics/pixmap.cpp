@@ -135,7 +135,7 @@ void PixmapIoTga::read(uint8 *pixels){
 }
 
 void PixmapIoTga::read(uint8 *pixels, int components) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	assert(this->components > 0 && components > 0);
 	size_t imgDataSize = h * w * this->components;
 	size_t pixmapDataSize = h * w * components;

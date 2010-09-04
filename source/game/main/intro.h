@@ -36,13 +36,12 @@ private:
 
 public:
 	Intro(Program &program);
+	virtual int getUpdateFps() const {return 60;}
 	virtual void update();
 	virtual void renderBg();
 	virtual void renderFg();
 	virtual void keyDown(const Key &key);
 	virtual void mouseUpLeft(int x, int y);
-
-	virtual int getUpdateInterval() const { return 4; } // get 60 updates per second.
 };
 
 }}//end namespace

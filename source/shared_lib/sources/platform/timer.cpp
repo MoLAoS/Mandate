@@ -82,44 +82,38 @@ PerformanceTimer::PerformanceTimer(int fps, int maxTimes, int maxBacklog)
 	//cout << "Timer maxTimes : " << maxTimes << ", maxBackLog == " << maxBacklog << endl;
 }
 
-uint32 PerformanceTimer::timeToWait() {
-	const int64 &now = Chrono::getCurTicks();
+bool PerformanceTimer::checkTime(int64 &now, int64 &elapsed) {
+	Chrono::getCurTicks(now);
 	if (now > nextRollOver) {
 		nextRollOver += Chrono::getResolution();
 		lastTicks += padTicks; // delay next tick by padTicks
 	}
-	int64 elapsed = now - lastTicks;
-	return elapsed >= updateTicks ? 0 : (updateTicks - elapsed) * 1000 / now;
+	elapsed = now - lastTicks;
+	return (elapsed >= updateTicks);
+}
+
+uint32 PerformanceTimer::timeToWait() {
+	int64 now, elapsed;
+	if (checkTime(now, elapsed)) {
+		return 0;
+	}
+	// (updateTicks - elapsed) is 'ticks' to wait, convert to millis and return
+	return (updateTicks - elapsed) * 1000 / Chrono::getResolution();
 }
 
 bool PerformanceTimer::isTime() {
-	const int64 &now = Chrono::getCurTicks();
-	int64 elapsed = now - lastTicks;
-	
-	if (now > nextRollOver) {
-		nextRollOver += Chrono::getResolution();
-		lastTicks += padTicks; // delay next tick by padTicks
-	}
-
 	assert(updateTicks > 0);
-
-	int64 cyclesDue = elapsed / updateTicks;
-
-	if (cyclesDue && (times < maxTimes || maxTimes == -1)) {
-		--cyclesDue;
-		if (maxBacklog >= 0 && cyclesDue > maxBacklog) {
-			//if (updateTicks == 14914) { // if updateTimer on Silnarm's computer ;)
-			//	cout << "dropping ticks ... " << (cyclesDue - maxBacklog) << endl;
-			//}
+	int64 now, elapsed;
+	if (checkTime(now, elapsed) && times <= maxTimes) {
+		int64 cyclesDue = elapsed / updateTicks;
+		if (maxBacklog >= 0 && (cyclesDue - 1) > maxBacklog) {
 			lastTicks = now - updateTicks * maxBacklog; // drop ticks
 		} else {
 			lastTicks += updateTicks;
 		}
 		++times;
-
 		return true;
 	}
-
 	times = 0;
 	return false;
 }

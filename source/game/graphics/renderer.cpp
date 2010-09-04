@@ -397,7 +397,7 @@ void Renderer::manageParticleSystem(ParticleSystem *particleSystem, ResourceScop
 }
 
 void Renderer::updateParticleManager(ResourceScope rs){
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	particleManager[rs]->update();
 }
 

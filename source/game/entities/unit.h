@@ -158,58 +158,51 @@ private:
 	UnitList unitsToUnload;
 
 	// engine info
-	int lastAnimReset;		/**< the frame the current animation cycle was started */
-	int nextAnimReset;		/**< the frame the next animation cycle will begin */
-	int lastCommandUpdate;	/**< the frame this unit last updated its command */
-	int nextCommandUpdate;	/**< the frame next command update will occur */
-	int attackStartFrame;	/**< the frame the unit will start an attack system */
-	int soundStartFrame;	/**< the frame the sound for the current skill should be started */
+	int lastAnimReset;			/**< the frame the current animation cycle was started */
+	int nextAnimReset;			/**< the frame the next animation cycle will begin */
+	int lastCommandUpdate;		/**< the frame this unit last updated its command */
+	int nextCommandUpdate;		/**< the frame next command update will occur */
+	int attackStartFrame;		/**< the frame the unit will start an attack system */
+	int soundStartFrame;		/**< the frame the sound for the current skill should be started */
 
 	// target info
 	UnitId targetRef; 
-	Field targetField;		/**< Field target travels in @todo replace with Zone ? */
+	Field targetField;				/**< Field target travels in @todo replace with Zone ? */
 	bool faceTarget;				/**< If true and target is set, we continue to face target. */
 	bool useNearestOccupiedCell;	/**< If true, targetPos is set to target->getNearestOccupiedCell() */
 
-	// position info (note, nextPos will virtually always equal pos)
-	Vec2i pos;				/**< Current position */
-	Vec2i lastPos;			/**< The last position before current */
-	Vec2i nextPos;			/**< Position unit is moving into next. Note: this will almost always == pos */
-	Vec2i targetPos;		/**< Position of the target, or the cell of the target we care about. */
-	Vec3f targetVec;		/**< 3D position of target (centre) */
-	Vec2i meetingPos;		/**< Cell position of metting point */
+	// position info
+	Vec2i pos;						/**< Current position */
+	Vec2i lastPos;					/**< The last position before current */
+	Vec2i nextPos;					/**< Position unit is moving into next. Note: this will almost always == pos */
+	Vec2i targetPos;				/**< Position of the target, or the cell of the target we care about. */
+	Vec3f targetVec;				/**< 3D position of target (centre) */
+	Vec2i meetingPos;				/**< Cell position of metting point */
 
 	// rotation info
-	float lastRotation;		/**< facing last frame, in degrees */
-	float targetRotation;	/**< desired facing, in degrees*/
-	float rotation;			/**< current facing, in degrees */
-	CardinalDir m_facing;	/**< facing for buildings */
+	float lastRotation;				/**< facing last frame, in degrees */
+	float targetRotation;			/**< desired facing, in degrees*/
+	float rotation;					/**< current facing, in degrees */
+	CardinalDir m_facing;			/**< facing for buildings */
 
-	const Level *level;		/**< current Level */
+	const Level *level;				/**< current Level */
 
 	const UnitType *type;			/**< the UnitType of this unit */
 	const ResourceType *loadType;	/**< the type if resource being carried */
 	const SkillType *currSkill;		/**< the SkillType currently being executed */
 
 	// some flags
-	bool toBeUndertaken;		/**< awaiting a date with the grim reaper */
-	bool autoRepairEnabled;		/**< is auto repair enabled */
-	bool carried;				/**< is the unit being carried */
+	bool toBeUndertaken;			/**< awaiting a date with the grim reaper */
+	bool autoRepairEnabled;			/**< is auto repair enabled */
+	bool carried;					/**< is the unit being carried */
 	bool visible;
 
 	// this should go someone else
-	float highlight;		/**< alpha for selection circle effects */
+	float highlight;				/**< alpha for selection circle effects */
 
-	/** Effects (spells, etc.) currently effecting unit. */
-	Effects effects;
-
-	/** All effects created by this unit. */
-	Effects effectsCreated;
-
-	/** All stat changes from upgrades and level ups */
-	EnhancementType totalUpgrade;
-	/** All stat changes from upgrades, level ups & effects */
-	//EnhancementType totalEnhancement;
+	Effects effects;				/**< Effects (spells, etc.) currently effecting unit. */
+	Effects effectsCreated;			/**< All effects created by this unit. */
+	EnhancementType totalUpgrade;	/**< All stat changes from upgrades, level ups and effects */
 
 	// is this really needed here? maybe keep faction (but change to an index), ditch map
 	Faction *faction;
@@ -318,12 +311,11 @@ public:
 	CardinalDir getModelFacing() const			{ return m_facing; }
 
 	//-- for carry units
-	UnitList& getUnitsToCarry()				{return unitsToCarry;}
-	//void addUnitsToCarry(const UnitVector &v);
-//	void setUnitsToCarry(const UnitList &v) { unitsToCarry = UnitVector(v);}
 	const UnitList& getCarriedUnits() const {return carriedUnits;}
 	UnitList& getCarriedUnits()				{return carriedUnits;}
+	UnitList& getUnitsToCarry()				{return unitsToCarry;}
 	UnitList& getUnitsToUnload()			{return unitsToUnload;}
+
 	bool isVisible() const					{return visible;}
 	void setVisible(bool v)					{visible = v;}
 	void setCarried(bool v)					{carried = v;}
@@ -444,7 +436,7 @@ public:
 		assert(!commands.empty());
 		return commands.front();
 	}
-	unsigned int getCommandSize() const;
+	unsigned int getCommandCount() const;
 	CommandResult giveCommand(Command *command);		//give a command
 	CommandResult finishCommand();						//command finished
 	CommandResult cancelCommand();						//cancel command on back of queue
@@ -467,9 +459,9 @@ public:
 	int update2()										{return ++progress2;}
 	void clearPath() { unitPath.clear(); waypointPath.clear(); }
 
+	// update skill & animation cycles
 	void updateSkillCycle(int offset);
 	void updateMoveSkillCycle();
-	//void updateAnimationCycle();
 	void updateAnimDead();
 	void updateAnimCycle(int animOffset, int soundOffset = -1, int attackOffset = -1);
 

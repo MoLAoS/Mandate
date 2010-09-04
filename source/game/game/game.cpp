@@ -97,10 +97,6 @@ GameState::GameState(Program &program)
 	simInterface->constructGameWorld(this);
 }
 
-int GameState::getUpdateInterval() const {
-	return simInterface->getUpdateInterval();
-}
-
 GameState::~GameState() {
 	g_logger.setState(g_lang.get("Deleting"));
 	g_logger.add("~GameState", !program.isTerminating());
@@ -114,7 +110,7 @@ GameState::~GameState() {
 	g_logger.setLoading(true);
 
 	// reset max update backlog, to prevent super-speed in menus
-	program.setMaxUpdateBacklog(12);
+	program.setMaxUpdateBacklog(2);
 
 	// delete the World
 	simInterface->destroyGameWorld();
@@ -224,10 +220,9 @@ void GameState::init() {
 	}
 	g_logger.add("Launching game");
 	g_logger.setLoading(false);
-	program.resetTimers();
+	program.resetTimers(40);
 	program.setFade(1.f);
 }
-
 
 // ==================== update ====================
 

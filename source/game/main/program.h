@@ -62,7 +62,7 @@ public:
 	virtual void load(){}
 	virtual void end(){}
 
-	virtual int getUpdateInterval() const { return GameConstants::defaultUpdateInterval; }
+	virtual int getUpdateFps() const = 0 ;//{ return GameConstants::defaultUpdateInterval; }
 
 	virtual void mouseDownLeft(int x, int y){}
 	virtual void mouseDownRight(int x, int y){}
@@ -96,6 +96,7 @@ private:
 
 	public:
 		CrashProgramState(Program &program, const exception *e);
+		virtual int getUpdateFps() const {return 10;}
 
 		void onExit(BasicDialog::Ptr);
 		virtual void update();
@@ -170,7 +171,8 @@ public:
 	void loop();
 	void exit();
 	void setMaxUpdateBacklog(int maxBacklog)	{updateTimer.setMaxBacklog(maxBacklog);}
-	void resetTimers();
+	void resetTimers(int updateFps);
+	void setUpdateFps(int updateFps);
 
 private:
 	void setDisplaySettings();

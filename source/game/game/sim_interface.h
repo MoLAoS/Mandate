@@ -198,8 +198,6 @@ public:
 	SimulationInterface(const SimulationInterface &si);
 	virtual ~SimulationInterface();
 
-	int getUpdateInterval() const;
-
 	UnitFactory& getUnitFactory()			{ return unitFactory; }
 	ObjectFactory& getObjectFactory()		{ return objectFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }

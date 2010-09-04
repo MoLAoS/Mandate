@@ -631,9 +631,9 @@ const CommandType *Unit::getFirstAvailableCt(CommandClass commandClass) const {
 }
 
 /**get Number of commands
- * @return the size of the commands
+ * @return the number of commands on this unit's queue
  */
-unsigned int Unit::getCommandSize() const{
+unsigned int Unit::getCommandCount() const{
 	return commands.size();
 }
 

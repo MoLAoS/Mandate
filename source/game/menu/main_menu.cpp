@@ -184,7 +184,6 @@ void MainMenu::keyPress(char c) {
 }
 
 void MainMenu::setState(MenuState *state) {
-	_PROFILE_FUNCTION();
 	delete this->state;
 	this->state = state;
 	GraphicComponent::resetFade();

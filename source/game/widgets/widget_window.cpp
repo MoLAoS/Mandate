@@ -59,7 +59,7 @@ WidgetWindow::~WidgetWindow() {
 }
 
 void WidgetWindow::clear() {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	while (mouseOverStack.top() != this) {
 		mouseOverStack.pop();
 	}
@@ -78,7 +78,7 @@ void WidgetWindow::clear() {
 }
 
 void WidgetWindow::render() {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	Container::render();
 	if (floatingWidget) {
 		floatingWidget->render();

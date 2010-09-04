@@ -86,6 +86,7 @@ public:
 	virtual void update();
 	virtual void tick();
 	virtual void init();
+	virtual int getUpdateFps() const {return 40;}
 	virtual void mouseMove(int x, int y, const MouseState &mouseState);
 	virtual void mouseDownLeft(int x, int y);
 	virtual void mouseDownRight(int x, int y);

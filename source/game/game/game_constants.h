@@ -50,7 +50,7 @@
 #	define IF_MAD_SYNC_CHECKS(x)
 #endif
 
-#define WORLD_FPS (GameConstants::updateFps / GameConstants::defaultUpdateInterval)
+#define WORLD_FPS (40)
 
 #include "util.h"
 using Shared::Util::EnumNames;
@@ -110,8 +110,8 @@ namespace GameConstants {
 	const int maxPlayers = 8;
 	const int serverPort = 61357;
 
-	const int defaultUpdateInterval = 6;
-	const int updateFps = 240; // == GameSpeeds_lcm
+	//const int defaultUpdateInterval = 6;
+	//const int updateFps = 240; // == GameSpeeds_lcm
 	const int cameraFps = 100;
 	const int networkFramePeriod = 5;
 	const int networkExtraLatency = 250;

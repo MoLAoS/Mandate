@@ -512,7 +512,7 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 			if(producerWarriorCount>maxProducerWarriors)
 			{
 				if(
-					unit->getCommandSize()>0 &&
+					unit->getCommandCount()>0 &&
 					unit->getCurrCommand()->getType()!=NULL && (
 				    unit->getCurrCommand()->getType()->getClass()==CommandClass::BUILD || 
 					unit->getCurrCommand()->getType()->getClass()==CommandClass::MORPH || 

@@ -143,11 +143,16 @@ private:
 	int maxTimes;		/**< maximum number consecutive times to fire */
 	int maxBacklog;		/**< maxiumum backlog to allow after maxTimes is reached */
 
+private:
+	bool checkTime(int64 &now, int64 &bob);
+
 public:
 	PerformanceTimer(int fps, int maxTimes = -1, int maxBacklog = -1);
 
-	uint32 timeToWait(); /**< Returns the amount of time to wait in milliseconds before the timer is due. */
-	bool isTime(); /**< Returns true if timer is (over)due for a tick (and counts as a tick) */
+	/** Returns the amount of time to wait in milliseconds before the timer is due. */
+	uint32 timeToWait();
+	/** Returns true if timer is (over)due for a tick (and counts as a tick) */
+	bool isTime();
 	void reset();
 	void setFps(int fps);
 	void setMaxTimes(int v);
