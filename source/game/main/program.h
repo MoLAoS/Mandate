@@ -124,11 +124,12 @@ private:
 	bool terminating;
 	bool visible;
 	Keymap keymap;
+	string configDir;
 
 	void init();
 
 public:
-	Program(CmdArgs &args);
+	Program(CmdArgs &args, string configDir);
 	~Program();
 	static Program *getInstance()	{return singleton;}
 	const CmdArgs& getCmdArgs()	const { return cmdArgs; }
@@ -136,6 +137,7 @@ public:
 	bool isTerminating() const		{ return terminating;	}
 	bool isVisible() const			{ return visible;		}
 	Keymap &getKeymap() 			{ return keymap;		}
+	string getConfigDir() const		{ return configDir;		}
 
 	SimulationInterface* getSimulationInterface() { return simulationInterface; }
 	void setSimInterface(SimulationInterface *si);

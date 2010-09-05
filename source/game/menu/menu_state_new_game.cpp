@@ -446,7 +446,7 @@ void MenuStateNewGame::update() {
 				g_config.save();
 				XmlTree *doc = new XmlTree("game-settings");		
 				g_simInterface->getGameSettings().save(doc->getRootNode());
-				doc->save("last_gamesettings.gs");
+				doc->save(program.getConfigDir() + "/last_gamesettings.gs");
 				if (!hasNetworkSlots()) {
 					GameSettings gs = g_simInterface->getGameSettings();
 					program.getSimulationInterface()->changeRole(GameRole::LOCAL);

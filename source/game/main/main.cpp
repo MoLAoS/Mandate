@@ -131,7 +131,7 @@ int glestMain(int argc, char** argv) {
 
 		try {
 			exceptionHandler.install();
-			Program program(args);
+			Program program(args, configDir);
 			showCursor(false);
 
 			try {
@@ -151,7 +151,7 @@ int glestMain(int argc, char** argv) {
 			exceptionMessage(e);
 		}
 	} else {
-		Program program(args);
+		Program program(args, configDir);
 		showCursor(false);
 		program.loop();
 	}

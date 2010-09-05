@@ -89,7 +89,7 @@ Program *Program::singleton = NULL;
 
 // ===================== PUBLIC ========================
 
-Program::Program(CmdArgs &args)
+Program::Program(CmdArgs &args, string configDir)
 		: cmdArgs(args)
 		, tickTimer(1, maxTimes, -1)
 		, updateTimer(40/*GameConstants::updateFps*/, maxUpdateTimes, maxUpdateBackLog)
@@ -100,7 +100,8 @@ Program::Program(CmdArgs &args)
 		, crashed(false)
 		, terminating(false)
 		, visible(true)
-		, keymap(getInput(), "keymap.ini") {
+		, keymap(getInput(), "keymap.ini") 
+		, configDir(configDir) {
 	// set video mode
 	setDisplaySettings();
 
