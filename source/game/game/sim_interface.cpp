@@ -250,24 +250,26 @@ int SimulationInterface::launchGame() {
 }
 
 void SimulationInterface::updateWorld() {
-	// Ai-Interfaces
-	for (int i = 0; i < world->getFactionCount(); ++i) {
-		if (world->getFaction(i)->getCpuControl()
-		&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
-			aiInterfaces[i]->update();
+	if (speed != GameSpeed::PAUSED) {
+		// Ai-Interfaces
+		for (int i = 0; i < world->getFactionCount(); ++i) {
+			if (world->getFaction(i)->getCpuControl()
+			&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
+				aiInterfaces[i]->update();
+			}
 		}
-	}
-	m_gaia->update();
+		m_gaia->update();
 
-	// World
-	world->processFrame();
-	frameProccessed();
+		// World
+		world->processFrame();
+		frameProccessed();
 
-	// give pending commands
-	foreach (Commands, it, pendingCommands) {
-		commander->giveCommand(it->toCommand());
+		// give pending commands
+		foreach (Commands, it, pendingCommands) {
+			commander->giveCommand(it->toCommand());
+		}
+		pendingCommands.clear();
 	}
-	pendingCommands.clear();
 }
 
 GameStatus SimulationInterface::checkWinner(){
@@ -354,7 +356,6 @@ GameSpeed SimulationInterface::pause() {
 	if (speed != GameSpeed::PAUSED) {
 		prevSpeed = speed;
 		speed = GameSpeed::PAUSED;
-		program.setUpdateFps(speedValues[speed]);
 	}
 	return speed;
 }

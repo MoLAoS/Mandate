@@ -38,7 +38,7 @@ NetworkCommand::NetworkCommand(Command *command) {
 		targetId = command->getUnit() ? command->getUnit()->getId() : -1;
 	}
 	flags = 0;
-	if (command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
+	if (!command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
 	if (command->isQueue()) flags |= CmdFlags::QUEUE;
 }
 

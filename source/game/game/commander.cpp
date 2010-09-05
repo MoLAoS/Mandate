@@ -85,10 +85,8 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 			if (prodType) { // build (or morph) command
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
-					result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
-				} else {
-					result = pushCommand(new Command(effectiveCt, flags, pos, prodType, CardinalDir::NORTH, *i));
 				}
+				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
 			} else if (targetUnit) { // 'target' based command
 				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
 					// a carrier is selected ... and a unit was right clicked.

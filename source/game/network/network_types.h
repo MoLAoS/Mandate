@@ -206,20 +206,12 @@ WRAPPED_ENUM( NetworkCommandType,
 		struct CmdFlags { enum { QUEUE = 1, NO_RESERVE_RESOURCES = 2 }; };
 		uint32 networkCommandType	:  8;
 		int32 unitId				: 24;
-			//OSX: first int32 == netCmdType & unitId
-
 		int32 commandTypeId			: 16;
 		int32 unitTypeId			: 16;
-			//OSX: second int32 == commandTypeId & unitTypeId
-
 		int32 targetId				: 24;
 		uint32 flags				:  8;
-			//OSX: third int32 == targetId & commandFlags
-
 		int32 positionX				: 16;
 		int32 positionY				: 16;
-			//OSX: fourth int32 == posX & posY
-
 									// 128 bits (16 bytes)
 	public:
 		NetworkCommand(){};
