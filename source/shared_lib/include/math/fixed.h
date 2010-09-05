@@ -19,7 +19,6 @@
 #include <cassert>
 #include <limits>
 
-using namespace Shared::Platform;
 using std::cout;
 using std::endl;
 
@@ -65,6 +64,8 @@ using std::endl;
 #endif
 
 namespace Shared { namespace Math {
+
+using namespace Platform;
 
 /** primitive & crude, but functional, fixed point class
  *

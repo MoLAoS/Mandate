@@ -1665,7 +1665,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
   * @param pos location ground reference
   * @return the height this unit 'stands' at
   */
-inline float Unit::computeHeight(const Vec2i &pos) const {
+float Unit::computeHeight(const Vec2i &pos) const {
 	const Cell *const &cell = map->getCell(pos);
 	switch (type->getField()) {
 		case Field::LAND:
