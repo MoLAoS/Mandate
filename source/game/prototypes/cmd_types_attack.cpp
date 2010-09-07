@@ -264,7 +264,7 @@ void PatrolCommandType::update(Unit *unit) const {
 		command->setUnit2(NULL);
 		command->setPos2(target2->getCenteredPos());
 	}
-	// If destination reached or blocked, turn around on next frame.
+	// If destination reached or blocked, turn around on next update.
 	if (updateGeneric(unit, command, this, NULL, pos)) {
 		command->swap();
 	}
@@ -295,6 +295,7 @@ void GuardCommandType::update(Unit *unit) const {
 	}
 	// if within 'guard range' and no bad guys to attack
 	if (updateGeneric(unit, command, this, NULL, pos)) { 
+		unit->clearPath();
 		unit->setCurrSkill(SkillClass::STOP);  // just hang-ten
 	}
 }
