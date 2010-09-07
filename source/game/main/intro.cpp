@@ -32,7 +32,11 @@ namespace Glest { namespace Main {
 // 	class Intro
 // =====================================================
 
-Intro::Intro(Program &program) : ProgramState(program) {
+Intro::Intro(Program &program)
+		: ProgramState(program)
+		, isTotalConversion(false)
+		, gaeSplashOnRootMenu(false) {
+	loadXml();
 	CoreData &coreData = CoreData::getInstance();
 	Lang &lang = Lang::getInstance();
 	const Metrics &metrics = Metrics::getInstance();
@@ -40,36 +44,56 @@ Intro::Intro(Program &program) : ProgramState(program) {
 
 	Vec2i screenSize = metrics.getScreenDims();
 	Vec2i logoSize(512, 256);
-	Vec2i pos(screenSize.x / 2 - logoSize.x / 2, screenSize.y / 2 - logoSize.y / 2);
+	Vec2i pos;
 	
+	if (!isTotalConversion) {
+		pos = Vec2i(screenSize.x / 2 - logoSize.x / 2, screenSize.y / 2 - logoSize.y / 2);
+	} else {
+		pos = Vec2i(screenSize.x / 2 - logoSize.x / 2, screenSize.y / 3 * 2 - logoSize.y / 2);
+	}	
 	logoPanel = new Widgets::PicturePanel(&program, pos, logoSize);
 	logoPanel->setPaddingParams(0,0);
-//	logoPanel->setBorderSize(0);
 	logoPanel->setImage(coreData.getLogoTexture());
 	logoPanel->setAutoLayout(false);
 
-	Font *font = coreData.getGAEFontBig();
-	lblAdvanced = new Widgets::StaticText(logoPanel);
-	lblAdvanced->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
-	Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
-	lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
-	lblAdvanced->setSize(sz);
-	lblAdvanced->centreText();
+	if (!isTotalConversion) {
+		Font *font = coreData.getGAEFontBig();
+		lblAdvanced = new Widgets::StaticText(logoPanel);
+		lblAdvanced->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
+		Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
+		lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
+		lblAdvanced->setSize(sz);
+		lblAdvanced->centreText();
 
-	lblEngine = new Widgets::StaticText(logoPanel);
-	lblEngine->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
-	lblEngine->setPos(Vec2i(285, 60));
-	lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
-	lblEngine->centreText();
+		lblEngine = new Widgets::StaticText(logoPanel);
+		lblEngine->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
+		lblEngine->setPos(Vec2i(285, 60));
+		lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
+		lblEngine->centreText();
 
-	// Version label
-	font = coreData.getGAEFontSmall();
-	pos = Vec2i(285 + lblEngine->getSize().x, 62);
-	lblVersion = new Widgets::StaticText(logoPanel);
-	lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);
-	lblVersion->setPos(pos);
-	lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
-	lblVersion->centreText();
+		// Version label
+		font = coreData.getGAEFontSmall();
+		pos = Vec2i(285 + lblEngine->getSize().x, 62);
+		lblVersion = new Widgets::StaticText(logoPanel);
+		lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);
+		lblVersion->setPos(pos);
+		lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
+		lblVersion->centreText();
+	} else {
+		lblEngine = new Widgets::StaticText(&program);
+		Vec2i pos, size;
+		lblEngine->setTextParams("Glest Advanced Engine " + gaeVersionString, 
+			Vec4f(1.f), coreData.getGAEFontSmall());
+		size = lblEngine->getTextDimensions() + Vec2i(5,5);
+		pos = Vec2i(g_metrics.getScreenW() - size.x - 15, 10);
+		lblEngine->setPos(pos);
+		lblEngine->setSize(size);
+
+		size = Vec2i(256, 128);
+		pos = Vec2i(screenSize.x / 2 - size.x / 2, screenSize.y / 3 - size.y / 2);
+		splashImage = new Widgets::StaticImage(&program, pos, size);
+		splashImage->setImage(coreData.getGaeSplashTexture());
+	}
 
 	lblWebsite = 0;
 
@@ -81,17 +105,19 @@ Intro::Intro(Program &program) : ProgramState(program) {
 }
 
 void Intro::update(){
+	const int fadeTime = 250;
 	timer++;
-	if (timer <= 300) {
-		float fade = timer / 300.f;
-		logoPanel->setFade(fade);
-	} else if (timer <= 600) {
+	if (timer <= fadeTime) {
+		float fade = timer / float(fadeTime);
+		program.setFade(fade);
+//		logoPanel->setFade(fade);
+	} else if (timer <= fadeTime * 2) {
 		// fade == 1.f, do nothing
-	} else if (timer <= 800) {
-		float fade = 1.f - (timer - 600) / 200.f;
-		logoPanel->setFade(fade);
-
-	} else if (timer == 801) {
+	} else if (timer <= fadeTime * 3) {
+		float fade = 1.f - (timer - fadeTime * 2) / float(fadeTime);
+		program.setFade(fade);
+//		logoPanel->setFade(fade);
+	} else if (timer == fadeTime * 3 + 1) {
 		CoreData &coreData= CoreData::getInstance();
 		const Metrics &metrics= Metrics::getInstance();
 		program.clear();
@@ -101,14 +127,17 @@ void Intro::update(){
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
 		lblWebsite->centreText();
-		lblWebsite->setFade(0.f);
-	} else if (timer <= 1101) {
-		float fade = (timer - 801) / 300.f;
-		lblWebsite->setFade(fade);
-	} else if (timer <= 1401) {
-	} else if (timer <= 1601) {
-		float fade = 1.f - (timer - 1401) / 200.f;
-		lblWebsite->setFade(fade);
+		program.setFade(0.f);
+		//lblWebsite->setFade(0.f);
+	} else if (timer <= fadeTime * 4) {
+		float fade = (timer - fadeTime * 3) / float(fadeTime);
+		program.setFade(fade);
+		//lblWebsite->setFade(fade);
+	} else if (timer <= fadeTime * 5) {
+	} else if (timer <= fadeTime * 6) {
+		float fade = 1.f - (timer - fadeTime * 5) / float(fadeTime);
+		program.setFade(fade);
+		//lblWebsite->setFade(fade);
 	} else {
 		program.clear();
 		program.setState(new MainMenu(program));
@@ -138,6 +167,19 @@ void Intro::mouseUpLeft(int x, int y){
 	soundRenderer.playMusic(CoreData::getInstance().getMenuMusic());
 	program.clear();
 	program.setState(new MainMenu(program));
+}
+
+void Intro::loadXml() {
+	//camera
+	XmlTree xmlTree;
+	xmlTree.load("data/core/menu/menu.xml");
+	const XmlNode *menuNode = xmlTree.getRootNode();
+
+	const XmlNode *logoNode = menuNode->getOptionalChild("logos");
+	if (logoNode) {
+		isTotalConversion = logoNode->getOptionalBoolValue("total-conversion", false);
+		gaeSplashOnRootMenu = logoNode->getOptionalBoolValue("gae-logo", isTotalConversion);
+	}
 }
 
 }}//end namespace

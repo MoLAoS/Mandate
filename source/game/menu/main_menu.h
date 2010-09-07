@@ -64,6 +64,9 @@ private:
 	Camera stateCameras[MenuStates::COUNT];
 
 	bool setCameraOnSetState;
+	bool totalConversion;
+	bool gaeLogoOnRootMenu;
+	bool gplLogoOnRootMenu;
 
 	int mouseX, mouseY;
 	int mouse2dAnim;
@@ -73,7 +76,7 @@ private:
 	MainMenu(const MainMenu &);
 	const MainMenu &operator =(const MainMenu &);
 
-	void loadStateCameras();
+	void loadXml();
 
 public:
 	MainMenu(Program &program);
@@ -95,6 +98,10 @@ public:
 
 	void setState(MenuState *state);
 	void setCameraTarget(MenuStates state);
+
+	bool isTotalConversion() const	{ return totalConversion; }
+	bool gaeLogoOnRoot() const		{ return gaeLogoOnRootMenu; }
+	bool gplLogoOnRoot() const		{ return gplLogoOnRootMenu; }
 };
 
 // ===============================

@@ -91,6 +91,7 @@ bool CoreData::load() {
 		customTexture = loadTexture(dir + "/menu/textures/custom_texture.tga");
 		logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
 		gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
+		gaeSplashTexture = loadTexture(dir + "/menu/textures/gaesplash.tga");
 		checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
 		checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
 		vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");

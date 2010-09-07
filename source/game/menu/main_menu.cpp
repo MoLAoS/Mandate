@@ -98,15 +98,16 @@ const string MainMenu::stateNames[] = {
 
 MainMenu::MainMenu(Program &program)
 		: ProgramState(program)
-		, setCameraOnSetState(true) {
+		, setCameraOnSetState(true)
+		, totalConversion(false)
+		, gaeLogoOnRootMenu(false) {
+	loadXml();
 	mouseX = 100;
 	mouseY = 100;
 
 	state = NULL;
 
 	fps = lastFps = 0;
-
-	loadStateCameras();
 
 	setState(new MenuStateRoot(program, this));
 }
@@ -200,7 +201,7 @@ void MainMenu::setCameraTarget(MenuStates state) {
 	setCameraOnSetState = false;
 }
 
-void MainMenu::loadStateCameras() {
+void MainMenu::loadXml() {
 	//camera
 	XmlTree xmlTree;
 	xmlTree.load("data/core/menu/menu.xml");
@@ -224,6 +225,13 @@ void MainMenu::loadStateCameras() {
 		startRotation.z = rotationNode->getAttribute("z")->getFloatValue();
 		stateCameras[state].setOrientation(Quaternion(EulerAngles(
 			degToRad(startRotation.x), degToRad(startRotation.y), degToRad(startRotation.z))));
+	}
+
+	const XmlNode *logoNode = menuNode->getOptionalChild("logos");
+	if (logoNode) {
+		totalConversion = logoNode->getOptionalBoolValue("total-conversion", false);
+		gaeLogoOnRootMenu = logoNode->getOptionalBoolValue("gae-logo", totalConversion);
+		gplLogoOnRootMenu = logoNode->getOptionalBoolValue("gpl-logo", true);
 	}
 }
 

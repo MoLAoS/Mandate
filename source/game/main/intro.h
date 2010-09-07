@@ -31,8 +31,14 @@ class Intro: public ProgramState {
 private:
 	int timer;
 
-	Widgets::PicturePanel *logoPanel;
-	Widgets::StaticText *lblAdvanced, *lblEngine, *lblVersion, *lblWebsite;
+	Widgets::PicturePanel	*logoPanel;
+	Widgets::StaticImage	*splashImage;
+	Widgets::StaticText		*lblAdvanced, *lblEngine, *lblVersion, *lblWebsite;
+
+	bool isTotalConversion;
+	bool gaeSplashOnRootMenu;
+
+	void loadXml();
 
 public:
 	Intro(Program &program);

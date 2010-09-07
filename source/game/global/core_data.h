@@ -48,6 +48,7 @@ private:
 
 	TexPtr	logoTexture,
 			gplTexture,
+			gaeSplashTexture,
 			backgroundTexture,
 			fireTexture,
 			snowTexture,
@@ -63,14 +64,6 @@ private:
 			vertScrollUpHoverTex,
 			vertScrollDownHoverTex;
 	
-/*
-    Font *displayFont;
-	Font *menuFontNormal;
-	Font *menuFontSmall;
-	Font *menuFontBig;
-	Font *menuFontVeryBig;
-	Font *consoleFont;
-*/
 	Font *m_FTMenuFontNormal;
 	Font *m_FTMenuFontSmall;
 	Font *m_FTMenuFontBig;
@@ -78,7 +71,6 @@ private:
 
 	Font *advancedEngineFontSmall;
 	Font *advancedEngineFontBig;
-	//Font *freeTypeMenuFont;
 
 	Font	*m_FTDisplay, 
 			*m_FTDisplayBig;
@@ -95,6 +87,7 @@ public:
 	TexPtr getSnowTexture() const			{return snowTexture;}
 	TexPtr getLogoTexture() const			{return logoTexture;}
 	TexPtr getGplTexture() const			{return gplTexture;}
+	TexPtr getGaeSplashTexture() const		{return gaeSplashTexture;}
 	TexPtr getWaterSplashTexture() const	{return waterSplashTexture;}
 	TexPtr getCustomTexture() const			{return customTexture;}
 	TexPtr getButtonSmallTexture() const	{return buttonSmallTexture;}
