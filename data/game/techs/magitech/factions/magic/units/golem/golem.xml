@@ -184,7 +184,7 @@
     <command>
       <type value="guard"/>
       <name value="guard"/>
-      <image path="../archmage/images/magic_hold.bmp"/>
+      <image path="../archmage/images/magic_guard.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
       <move-skill value="move_skill"/>

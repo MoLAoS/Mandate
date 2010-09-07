@@ -156,7 +156,7 @@
     <command>
       <type value="patrol"/>
       <name value="patrol"/>
-      <image path="../archmage/images/magic_move.bmp"/>
+      <image path="../archmage/images/magic_patrol.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
       <move-skill value="move_skill"/>
@@ -167,7 +167,7 @@
     <command>
       <type value="guard"/>
       <name value="guard"/>
-      <image path="../archmage/images/magic_hold.bmp"/>
+      <image path="../archmage/images/magic_guard.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
       <move-skill value="move_skill"/>

@@ -369,9 +369,22 @@
     </command>
 
     <command>
+      <type value="patrol"/>
+      <name value="patrol"/>
+      <image path="../archer/images/tech_patrol.bmp"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <move-skill value="move_skill"/>
+      <attack-skills>
+        <attack-skill value="molotov_skill"/>
+      </attack-skills>
+      <max-distance value="10"/>
+    </command>
+    
+    <command>
       <type value="guard"/>
       <name value="guard"/>
-      <image path="../archer/images/tech_hold.bmp"/>
+      <image path="../archer/images/tech_guard.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
       <move-skill value="move_skill"/>
