@@ -102,7 +102,7 @@ inline void logNetwork(const char *msg) {
 	logNetwork(string(msg)); 
 }
 
-#define LOG_STUFF 1
+#define LOG_STUFF 0
 
 #if defined(LOG_STUFF) && LOG_STUFF
 #	define LOG(x) g_logger.add(x)

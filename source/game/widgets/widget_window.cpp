@@ -40,8 +40,7 @@ WidgetWindow::WidgetWindow()
 		, anim(0.f), slowAnim(0.f) {
 	size.x = Metrics::getInstance().getScreenW();
 	size.y = Metrics::getInstance().getScreenH();
-	cout << "WidgetWindow created, " << size.x << " x " << size.y << endl;
-
+	
 	mouseOverStack.push(this);
 
 	foreach_enum (MouseButton, btn) {

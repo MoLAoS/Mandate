@@ -781,7 +781,7 @@ void LoadCommandType::update(Unit *unit) const {
 // =====================================================
 
 bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = CommandType::load(n, dir, tt, ft);
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
 
 	//unload skill
 	try {
@@ -819,6 +819,26 @@ void UnloadCommandType::update(Unit *unit) const {
 		// no more units to deal with
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+	if (command->getPos() != Command::invalidPos) {
+		switch (g_routePlanner.findPathToLocation(unit, command->getPos())) {
+			case TravelState::MOVING:
+				unit->setCurrSkill(moveSkillType);
+				unit->face(unit->getNextPos());
+				break;
+			case TravelState::BLOCKED:
+				unit->setCurrSkill(SkillClass::STOP);
+				if (unit->getPath()->isBlocked()) {
+					unit->clearPath();
+					command->setPos(Command::invalidPos);
+				}
+				break;
+			default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
+				unit->setCurrSkill(SkillClass::STOP);
+				command->setPos(Command::invalidPos);
+				break;
+		}
 	} else {
 		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
 			unit->setCurrSkill(SkillClass::UNLOAD);

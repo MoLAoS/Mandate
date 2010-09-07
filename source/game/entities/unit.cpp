@@ -1846,7 +1846,7 @@ CommandResult Unit::undoCommand(const Command &command) {
   */
 int Unit::getSpeed(const SkillType *st) const {
 	fixed speed = st->getSpeed();
-	switch(st->getClass()) {
+	switch (st->getClass()) {
 		case SkillClass::MOVE:
 			speed = speed * moveSpeedMult + moveSpeed;
 			break;
@@ -1870,13 +1870,8 @@ int Unit::getSpeed(const SkillType *st) const {
 			speed =  speed * harvestSpeedMult + harvestSpeed;
 			break;
 
-		case SkillClass::BE_BUILT:
-		case SkillClass::STOP:
-		case SkillClass::DIE:
-		case SkillClass::COUNT:
-			break;
 		default:
-			throw runtime_error("unhandled SkillClass");
+			break;
 	}
 	return (speed > 0 ? speed.intp() : 0);
 }

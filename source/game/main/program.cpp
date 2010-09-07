@@ -117,7 +117,9 @@ Program::Program(CmdArgs &args, string configDir)
 	Logger::getServerLog().clear();
 	Logger::getClientLog().clear();
 	g_errorLog.clear();
-	g_widgetLog.clear();
+#	if LOG_WIDGET_EVENTS
+		g_widgetLog.clear();
+#	endif
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());

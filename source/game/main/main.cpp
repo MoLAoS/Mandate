@@ -116,7 +116,7 @@ int glestMain(int argc, char** argv) {
 #		endif
 	}
 	//FIXME: debug
-	cout << "config: " << configDir << "\ndata: " << dataDir << endl;
+	//cout << "config: " << configDir << "\ndata: " << dataDir << endl;
 
 	mkdir(configDir, true);
 	mkdir(configDir+"/addons/", true);

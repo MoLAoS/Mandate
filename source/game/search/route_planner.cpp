@@ -148,7 +148,8 @@ bool RoutePlanner::isLegalMove(Unit *unit, const Vec2i &pos2) const {
 	assert(unit->getPos().dist(pos2) < 1.5);
 
 	if (unit->getPos().dist(pos2) > 1.5) {
-		throw runtime_error("Boo!!!");
+		unit->clearPath();
+		return false;
 	}
 
 	const Vec2i &pos1 = unit->getPos();

@@ -572,12 +572,12 @@ public:
 //  class UnloadCommandType
 // ===============================
 
-class UnloadCommandType: public CommandType {
+class UnloadCommandType: public MoveBaseCommandType {
 private:
 	const UnloadSkillType *unloadSkillType;
 
 public:
-	UnloadCommandType() : CommandType("Unload", Clicks::ONE), unloadSkillType(NULL) {}
+	UnloadCommandType() : MoveBaseCommandType("Unload", Clicks::TWO), unloadSkillType(NULL) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;

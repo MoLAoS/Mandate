@@ -79,7 +79,6 @@ PerformanceTimer::PerformanceTimer(int fps, int maxTimes, int maxBacklog)
 	assert(maxBacklog >= -1);
 	reset();
 	setFps(fps);
-	//cout << "Timer maxTimes : " << maxTimes << ", maxBackLog == " << maxBacklog << endl;
 }
 
 bool PerformanceTimer::checkTime(int64 &now, int64 &elapsed) {
@@ -128,17 +127,14 @@ void PerformanceTimer::setFps(int fps) {
 	assert(fps > 0);
 	updateTicks = Chrono::getResolution() / fps;
 	padTicks = Chrono::getResolution() - updateTicks * fps;
-	cout << "Timer FPS set : " << fps << ", updateTicks == " << updateTicks << endl;
 }
 
 void PerformanceTimer::setMaxTimes(int v) {
 	maxTimes = v;
-	//cout << "Timer maxTimes set : " << maxTimes << endl;
 }
 
 void PerformanceTimer::setMaxBacklog(int v) {
 	maxBacklog = v;
-	//cout << "Timer maxBacklog set : " << maxBacklog << endl;
 }
 
 
