@@ -945,7 +945,7 @@ void UserInterface::computeDisplay() {
 		m_display->setTitle(unit->getFullName());
 		m_display->setText(unit->getDesc(friendly));
 		if (friendly) {
-			m_display->setProgressBar(selection.getFrontUnit()->getProductionPercent());
+			m_display->setProgressBar(unit->getProductionPercent());
 		}
 	}
 

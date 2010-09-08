@@ -96,7 +96,7 @@ public:
 
 	void setUnit(Unit *unit)							{this->unitRef = unit ? unit->getId() : 0;}
 	void setUnit2(Unit *unit2)							{this->unitRef2 = unit2 ? unit2->getId() : 0;}	
-	void setProdType(const ProducibleType* pType)		{this->prodType = prodType;}
+	void setProdType(const ProducibleType* pType)		{this->prodType = pType;}
 	void setCommandedUnit(Unit *commandedUnit)			{this->commandedUnit = commandedUnit;}
 
 	//misc

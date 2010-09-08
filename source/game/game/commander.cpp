@@ -60,7 +60,7 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 	Vec2i refPos = computeRefPos(selection);
 	CommandResultContainer results;
 
-	//give orders to all selected units
+	// give orders to all selected units
 	const UnitVector &units = selection.getUnits();
 	CommandResult result;
 

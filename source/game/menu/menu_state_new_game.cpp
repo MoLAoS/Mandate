@@ -322,17 +322,17 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
 		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
 		m_playerSlots[ndx]->setSelectedColour(m_playerSlots[m_humanSlot]->getSelectedColourIndex());
 		m_humanSlot = ndx;
-		return;
-	}
-	// check for humanity
-	if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
-		// human tried to go away...
-		if (m_humanSlot != 0) {
-			m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
+	} else {
+		// check for humanity
+		if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
+			// human tried to go away...
+			if (m_humanSlot != 0) {
+				m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
+			}
+			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
+			m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
+			return;
 		}
-		m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
-		m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
-		return;
 	}
 	updateControlers();
 	updateNetworkSlots();
@@ -512,6 +512,7 @@ bool MenuStateNewGame::loadGameSettings() {
 		m_playerSlots[slot]->setSelectedControl(gs.getFactionControl(i));
 		switch (gs.getFactionControl(i)) {
 			case ControlType::HUMAN:
+				m_humanSlot = slot;
 				m_playerSlots[slot]->setNameText(g_config.getNetPlayerName());
 				break;
 			case ControlType::NETWORK:
@@ -551,8 +552,12 @@ void MenuStateNewGame::updateControlers() {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	assert(m_humanSlot >= 0);
 	assert(m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN);
+	for (int i = 0; i < m_mapInfo.players; ++i) {
+		m_playerSlots[i]->setEnabled(true);
+	}
 	for (int i = m_mapInfo.players; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i]->setSelectedControl(ControlType::CLOSED);
+		m_playerSlots[i]->setEnabled(false);
 	}
 	if (m_humanSlot >= m_mapInfo.players) {
 		m_humanSlot = 0;

@@ -162,7 +162,7 @@ void GameState::init() {
 	if (g_world.getThisFaction()) {  //e.g. -loadmap has no players
 		v = g_map.getStartLocation(g_world.getThisFaction()->getStartLocationIndex());
 	}
-	gameCamera.setPos(Vec2f((float)v.x, (float)v.y));
+	gameCamera.setPos(Vec2f(float(v.x), float(v.y + 12)));
 	if (simInterface->getSavedGame()) {
 		gui.load(simInterface->getSavedGame()->getChild("gui"));
 	}

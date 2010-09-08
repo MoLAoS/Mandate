@@ -53,7 +53,7 @@ void Selection::incRef(Unit *u) {
 		++it->second;
 	} else {
 		m_referenceMap[u] = 1;
-//		u->StateChanged.connect(this, &Selection::onUnitStateChanged);
+		u->StateChanged.connect(this, &Selection::onUnitStateChanged);
 		u->Died.connect(this, &Selection::onUnitDied);
 	}
 }
@@ -63,7 +63,7 @@ void Selection::decRef(Unit *u) {
 	assert(it != m_referenceMap.end() && it->second > 0);
 	if (it->second == 1) {
 		m_referenceMap.erase(u);
-//		u->StateChanged.disconnect(this);
+		u->StateChanged.disconnect(this);
 		u->Died.disconnect(this);
 	} else {
 		--it->second;

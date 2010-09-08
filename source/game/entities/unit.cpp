@@ -342,7 +342,7 @@ int Unit::getProductionPercent() const {
 	if (anyCommand()) {
 		CommandClass cmdClass = commands.front()->getType()->getClass();
 		if (cmdClass == CommandClass::PRODUCE || cmdClass == CommandClass::MORPH
-		|| cmdClass == CommandClass::GENERATE) {
+		|| cmdClass == CommandClass::GENERATE || cmdClass == CommandClass::UPGRADE) {
 			const ProducibleType *produced = commands.front()->getProdType();
 			if (produced) {
 				return clamp(progress2 * 100 / produced->getProductionTime(), 0, 100);
@@ -681,7 +681,10 @@ CommandResult Unit::giveCommand(Command *command) {
 	if (result == CommandResult::SUCCESS) {
 		applyCommand(*command);
 
-		if (command->getType()->getClass() == CommandClass::LOAD) {
+		if (command->getType()->getClass() == CommandClass::UPGRADE) {
+			const UpgradeCommandType *uct = static_cast<const UpgradeCommandType *>(command->getType());
+			command->setProdType(uct->getProducedUpgrade());
+		} else if (command->getType()->getClass() == CommandClass::LOAD) {
 			if (std::find(unitsToCarry.begin(), unitsToCarry.end(), command->getUnit()) == unitsToCarry.end()) {
 				unitsToCarry.push_back(command->getUnit());
 				COMMAND_LOG( __FUNCTION__ << "() adding unit to load list " << *command->getUnit() )
@@ -874,6 +877,7 @@ void Unit::born(){
 	faction->checkAdvanceSubfaction(type, true);
 	g_world.getCartographer()->applyUnitVisibility(this);
 	g_simInterface->doUnitBorn(this);
+	StateChanged(this);
 }
 
 void checkTargets(const Unit *dead) {
