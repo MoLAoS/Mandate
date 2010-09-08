@@ -474,11 +474,11 @@ private:
 	ModelMap models;
 	int idCounter;
 
-	Model* newInstance(const string &path);
+	Model* newInstance(const string &path, int size, int height);
 
 public:
 	ModelFactory();
-	Model* getModel(const string &path);
+	Model* getModel(const string &path, int size, int height);
 };
 
 

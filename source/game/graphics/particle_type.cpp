@@ -18,7 +18,7 @@
 #include "renderer.h"
 #include "config.h"
 #include "game_constants.h"
-
+#include "logger.h"
 #include "leak_dumper.h"
 
 
@@ -27,6 +27,7 @@ using namespace Shared::Graphics;
 using namespace Glest::Graphics;
 
 namespace Glest { namespace ProtoTypes {
+using Util::Logger;
 
 // =====================================================
 // 	class ParticleSystemType
@@ -85,7 +86,11 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 	if (modelNode && modelNode->getAttribute("value")->getBoolValue()) {
 		string path = modelNode->getAttribute("path")->getRestrictedValue();
 		model = renderer.newModel(ResourceScope::GAME);
-		model->load(dir + "/" + path);
+		try {
+			model->load(dir + "/" + path, 1, 1);
+		} catch (runtime_error &e) {
+			g_errorLog.add(e.what());
+		}
 	} else {
 		model = NULL;
 	}

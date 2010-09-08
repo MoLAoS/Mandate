@@ -32,7 +32,7 @@ void ObjectType::init(int modelCount, int objectClass, bool walkable){
 
 void ObjectType::loadModel(const string &path){
 	Model *model= Renderer::getInstance().newModel(ResourceScope::GAME);
-	model->load(path);
+	model->load(path, GameConstants::cellScale, 2);
 	color= Vec3f(0.f);
 	if(model->getMeshCount()>0 && model->getMesh(0)->getTexture(0)!=NULL){
 		const Pixmap2D *p= model->getMesh(0)->getTexture(0)->getPixmap();

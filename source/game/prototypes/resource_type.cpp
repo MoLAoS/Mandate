@@ -78,7 +78,7 @@ bool ResourceType::load(const string &dir, int id) {
 				const XmlNode *modelNode = typeNode->getChild("model");
 				string mPath = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
 				model = renderer.newModel(ResourceScope::GAME);
-				model->load(mPath);
+				model->load(mPath, GameConstants::cellScale, 2);
 			} catch (runtime_error e) {
 				g_errorLog.addXmlError(path, e.what());
 				loadOk = false; // can continue, to catch other errors

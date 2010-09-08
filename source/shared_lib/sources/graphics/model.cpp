@@ -124,72 +124,19 @@ void Mesh::init() {
 
 // ========================== shadows & interpolation =========================
 
-void Mesh::buildInterpolationData(){
+void Mesh::buildInterpolationData() {
 	interpolationData = new InterpolationData(this);
 }
 
-void Mesh::updateInterpolationData(float t, bool cycle) const{
+void Mesh::updateInterpolationData(float t, bool cycle) const {
 	interpolationData->update(t, cycle);
 }
 
-void Mesh::updateInterpolationVertices(float t, bool cycle) const{
+void Mesh::updateInterpolationVertices(float t, bool cycle) const {
 	interpolationData->updateVertices(t, cycle);
 }
 
 // ==================== load ====================
-
-void Mesh::loadV2(const string &dir, FileOps *f, TextureManager *textureManager) {
-#if 0
-	//read header
-	MeshHeaderV2 meshHeader;
-	f->read(&meshHeader, sizeof(MeshHeaderV2), 1);
-
-
-	if(meshHeader.normalFrameCount!=meshHeader.vertexFrameCount){
-		throw runtime_error("Old model: vertex frame count different from normal frame count");
-	}
-
-	if(meshHeader.texCoordFrameCount!=1){
-		throw runtime_error("Old model: texture coord frame count is not 1");
-	}
-
-	//init
-	frameCount= meshHeader.vertexFrameCount;
-	vertexCount= meshHeader.pointCount;
-	indexCount= meshHeader.indexCount;
-
-	init();
-
-	//misc
-	twoSided= false;
-	customColor= false;
-
-	//texture
-	if(meshHeader.hasTexture && textureManager!=NULL){
-		texturePaths[mtDiffuse]= toLower(reinterpret_cast<char*>(meshHeader.texName));
-		string texPath= dir+"/"+texturePaths[mtDiffuse];
-
-		textures[mtDiffuse]= static_cast<Texture2D*>(textureManager->getTexture(texPath));
-		if(textures[mtDiffuse]==NULL){
-			textures[mtDiffuse]= textureManager->newTexture2D();
-			textures[mtDiffuse]->load(texPath);
-		}
-	}
-
-	//read data
-	size_t vfCount = frameCount * vertexCount;
-	f->read(vertices, sizeof(Vec3f)*vfCount, 1);
-	f->read(normals, sizeof(Vec3f)*vfCount, 1);
-
-	if(textures[mtDiffuse]!=NULL){
-		f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
-	}
-	f->read(&diffuseColor, sizeof(Vec3f), 1);
-	f->read(&opacity, sizeof(float32), 1);
-	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
-	f->read(indices, sizeof(uint32)*indexCount, 1);
-#endif
-}
 
 void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager){
 	//read header
@@ -263,51 +210,50 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 }
 
 void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
-	//read header
+	// read header
 	MeshHeader meshHeader;
 	if (f->read(&meshHeader, sizeof(MeshHeader), 1) != 1) {
 		throw runtime_error("Could not read mesh header");
 	}
 
-	//init
-	frameCount= meshHeader.frameCount;
-	vertexCount= meshHeader.vertexCount;
-	indexCount= meshHeader.indexCount;
+	// init
+	frameCount = meshHeader.frameCount;
+	vertexCount = meshHeader.vertexCount;
+	indexCount = meshHeader.indexCount;
 
 	init();
 
-	//properties
-	customColor= (meshHeader.properties & mpfCustomColor) != 0;
-	twoSided= (meshHeader.properties & mpfTwoSided) != 0;
+	// properties
+	customColor = (meshHeader.properties & mpfCustomColor) != 0;
+	twoSided = (meshHeader.properties & mpfTwoSided) != 0;
 
-	//material
+	// material
 	diffuseColor= Vec3f(meshHeader.diffuseColor);
 	specularColor= Vec3f(meshHeader.specularColor);
 	specularPower= meshHeader.specularPower;
 	opacity= meshHeader.opacity;
 
-	//maps
-	uint32 flag= 1;
-	for(int i=0; i<meshTextureCount; ++i){
-		if((meshHeader.textures & flag) && textureManager!=NULL){
+	// maps
+	uint32 flag = 1;
+	for (int i=0; i<meshTextureCount; ++i) {
+		if ((meshHeader.textures & flag) && textureManager != NULL) {
 			uint8 cMapPath[mapPathSize];
 			f->read(cMapPath, mapPathSize, 1);
-			string mapPath= toLower(reinterpret_cast<char*>(cMapPath));
-
-			string mapFullPath= dir + "/" + mapPath;
+			string mapPath = toLower(reinterpret_cast<char*>(cMapPath));
+			string mapFullPath = dir + "/" + mapPath;
 			assert(mapFullPath != "");
 
-			textures[i]= static_cast<Texture2D*>(textureManager->getTexture(mapFullPath));
-			if(textures[i]==NULL){
-				textures[i]= textureManager->newTexture2D();
-				if(meshTextureChannelCount[i]!=-1){
+			textures[i] = static_cast<Texture2D*>(textureManager->getTexture(mapFullPath));
+			if (textures[i] == NULL) {
+				textures[i] = textureManager->newTexture2D();
+				if (meshTextureChannelCount[i] != -1) {
 					textures[i]->getPixmap()->init(meshTextureChannelCount[i]);
 				}
 				assert(mapFullPath != "");
 				textures[i]->load(mapFullPath);
 			}
 		}
-		flag*= 2;
+		flag *= 2;
 	}
 
 	// Assume packed vectors.
@@ -320,6 +266,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 
 		for (int i=0; i < frameCount; ++i) {
 			if (f->read(vertArrays[i], frameRead, 1) != 1) {
+				throw runtime_error("error reading mesh, insufficient vertex data.");
 				//cout << "read() Failed! getLastError() == " << f->getLastError() << endl;
 			}
 			float *ptr = vertArrays[i][vertexCount].raw;
@@ -329,6 +276,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		}
 		for (int i=0; i < frameCount; ++i) {
 			if (f->read(normArrays[i], frameRead, 1) != 1) {
+				throw runtime_error("error reading mesh, insufficient normal vector data.");
 				//cout << "read() Failed! getLastError() == " << f->getLastError() << endl;
 			}
 			float *ptr = normArrays[i][vertexCount].raw;
@@ -341,7 +289,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		if (f->read(vertices, 12 * vfCount, 1) != 1) {
 			throw runtime_error("error reading mesh, insufficient vertex data.");
 		}
-		cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
+		//cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
 		if (f->read(normals, 12 * vfCount, 1) != 1) {
 			throw runtime_error("error reading mesh, insufficient normal vector data.");
 		}
@@ -355,10 +303,125 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			throw runtime_error("error reading mesh, insufficient vertex index data.");
 		}
 	}
-	//tangents
-	if (textures[mtNormal]) {
-		computeTangents();
+}
+
+void Mesh::buildCube(int size, int height, Texture2D *tex) {
+	frameCount = 1;
+	vertexCount = 5 * 4;
+	indexCount = 5 * 6;
+
+	vertArrays = new Vec3f*[frameCount];
+	normArrays = new Vec3f*[frameCount];
+	vertArrays[0] = allocate_aligned_vec3_array(vertexCount);
+	normArrays[0] = allocate_aligned_vec3_array(vertexCount);
+	texCoords = new Vec2f[vertexCount];
+	indices = new uint32[indexCount];
+
+	// normals
+	Vec3f	up(0.f, 1.f, 0.f),
+			north(0.f, 0.f, 1.f),
+			east(1.f, 0.f, 0.f),
+			south(0.f, 0.f, -1.f),
+			west(-1.f, 0.f, 0.f);
+	
+	Vec2f	tCoord[4];
+	tCoord[0] = Vec2f(0.f, 0.f);
+	tCoord[1] = Vec2f(0.f, 1.f);
+	tCoord[2] = Vec2f(1.f, 0.f);
+	tCoord[3] = Vec2f(1.f, 1.f);
+
+	float xzDist = float(size) / 2.f;
+	float yDist = float(height);
+
+	int n = 0;
+	int i = 0;
+
+	// top face
+	vertArrays[0][0] = Vec3f(-xzDist, yDist, -xzDist);
+	vertArrays[0][1] = Vec3f(xzDist,  yDist, -xzDist);
+	vertArrays[0][2] = Vec3f(-xzDist, yDist, xzDist);
+	vertArrays[0][3] = Vec3f(xzDist,  yDist, xzDist);
+	for (; n < 4; ++n) {
+		normArrays[0][n] = up;
+		texCoords[n] = tCoord[n % 4];
 	}
+	indices[0] = 2;
+	indices[1] = 1;
+	indices[2] = 0;
+	indices[3] = 1;
+	indices[4] = 2;
+	indices[5] = 3;
+
+	// 'north' face
+	vertArrays[0][4] = Vec3f(-xzDist,	0.f, xzDist);
+	vertArrays[0][5] = Vec3f(-xzDist, yDist, xzDist);
+	vertArrays[0][6] = Vec3f(xzDist,	0.f, xzDist);
+	vertArrays[0][7] = Vec3f(xzDist,  yDist, xzDist);
+	for (; n < 8; ++n) {
+		normArrays[0][n] = north;
+		texCoords[n] = tCoord[n % 4];
+	}
+	indices[6]  = 6;
+	indices[7]  = 5;
+	indices[8]  = 4;
+	indices[9]  = 5;
+	indices[10] = 6;
+	indices[11] = 7;
+
+	// 'east' face
+	vertArrays[0][8] = Vec3f(xzDist,    0.f, xzDist);
+	vertArrays[0][9] = Vec3f(xzDist,  yDist, xzDist);
+	vertArrays[0][10] = Vec3f(xzDist,   0.f, -xzDist);
+	vertArrays[0][11] = Vec3f(xzDist, yDist, -xzDist);
+	for (; n < 12; ++n) {
+		normArrays[0][n] = east;
+		texCoords[n] = tCoord[n % 4];
+	}
+	indices[12] = 10;
+	indices[13] = 9;
+	indices[14] = 8;
+	indices[15] = 9;
+	indices[16] = 10;
+	indices[17] = 11;
+
+	// south
+	vertArrays[0][12] = Vec3f(xzDist,	 0.f, -xzDist);
+	vertArrays[0][13] = Vec3f(xzDist, yDist, -xzDist);
+	vertArrays[0][14] = Vec3f(-xzDist,	 0.f, -xzDist);
+	vertArrays[0][15] = Vec3f(-xzDist,  yDist, -xzDist);
+	for (; n < 16; ++n) {
+		normArrays[0][n] = south;
+		texCoords[n] = tCoord[n % 4];
+	}
+	indices[18] = 14;
+	indices[19] = 13;
+	indices[20] = 12;
+	indices[21] = 13;
+	indices[22] = 14;
+	indices[23] = 15;
+
+	// west
+	vertArrays[0][16] = Vec3f(-xzDist,    0.f, -xzDist);
+	vertArrays[0][17] = Vec3f(-xzDist,  yDist, -xzDist);
+	vertArrays[0][18] = Vec3f(-xzDist,    0.f, xzDist);
+	vertArrays[0][19] = Vec3f(-xzDist,  yDist, xzDist);
+	for (; n < 20; ++n) {
+		normArrays[0][n] = west;
+		texCoords[n] = tCoord[n % 4];
+	}
+	indices[24] = 18;
+	indices[25] = 17;
+	indices[26] = 16;
+	indices[27] = 17;
+	indices[28] = 18;
+	indices[29] = 19;
+
+	this->textures[mtDiffuse] = tex;
+	this->customColor = false;
+	this->specularColor = this->diffuseColor = Vec3f(0.5f, 0.5f, 0.5f);
+	this->specularPower = 0.5f;
+	this->opacity = 1.f;
+	this->twoSided = false;
 }
 
 void Mesh::save(const string &dir, FileOps *f){
@@ -391,49 +454,11 @@ void Mesh::save(const string &dir, FileOps *f){
 	fwrite(indices, sizeof(uint32)*indexCount, 1, f);*/
 }
 
-void Mesh::computeTangents(){
-#if 0
-	delete [] tangents;
-	tangents= new Vec3f[vertexCount];
-	for(int i=0; i<vertexCount; ++i){
-		tangents[i]= Vec3f(0.f);
-	}
-
-	for(int i=0; i<indexCount; i+=3){
-		for(int j=0; j<3; ++j){
-			uint32 i0= indices[i+j];
-			uint32 i1= indices[i+(j+1)%3];
-			uint32 i2= indices[i+(j+2)%3];
-
-			Vec3f p0= vertices[i0];
-			Vec3f p1= vertices[i1];
-			Vec3f p2= vertices[i2];
-
-			float u0= texCoords[i0].x;
-			float u1= texCoords[i1].x;
-			float u2= texCoords[i2].x;
-
-			float v0= texCoords[i0].y;
-			float v1= texCoords[i1].y;
-			float v2= texCoords[i2].y;
-
-			tangents[i0]+=
-				((p2-p0)*(v1-v0)-(p1-p0)*(v2-v0))/
-				((u2-u0)*(v1-v0)-(u1-u0)*(v2-v0));
-		}
-	}
-
-	for(int i=0; i<vertexCount; ++i){
-		/*Vec3f binormal= normals[i].cross(tangents[i]);
-		tangents[i]+= binormal.cross(normals[i]);*/
-		tangents[i].normalize();
-	}
-#endif
-}
-
 // ===============================================
 //	class Model
 // ===============================================
+
+Texture2D* Model::defaultTexture = 0;
 
 // ==================== constructor & destructor ====================
 
@@ -470,84 +495,50 @@ uint32 Model::getVertexCount() const{
 
 // ==================== io ====================
 
-void Model::load(const string &path){
-	string extension= path.substr(path.find_last_of('.')+1);
-	if(extension=="g3d" || extension=="G3D"){
-		loadG3d(path);
-	}
-	else{
-		throw runtime_error("Unknown model format: " + extension);
+void Model::load(const string &path, int size, int height) {
+	string extension = path.substr(path.find_last_of('.') + 1);
+	try {
+		if (extension == "g3d" || extension == "G3D") {
+			loadG3d(path);
+		} else {
+			throw runtime_error("Unknown model format: " + extension);
+		}
+	} catch (runtime_error &e) {
+		meshCount = 1;
+		meshes = new Mesh[1];
+		meshes[0].buildCube(size, height, defaultTexture);
+		meshes[0].buildInterpolationData();
+		throw e;
 	}
 }
 
 void Model::save(const string &path){
-	string extension= path.substr(path.find_last_of('.')+1);
-	if(extension=="g3d" ||extension=="G3D" || extension=="s3d" || extension=="S3D"){
+	string extension = path.substr(path.find_last_of('.') + 1);
+	if (extension == "g3d" || extension == "G3D" || extension == "s3d" || extension == "S3D") {
 		saveS3d(path);
-	}
-	else{
+	} else {
 		throw runtime_error("Unknown model format: " + extension);
 	}
 }
 
-/*void Model::loadG3dOld(const string &path){
-   try{
-		FILE *f=fopen(path.c_str(),"rb");
-		if (f==NULL){
-			throw runtime_error("Error opening 3d model file");
-		}
-
-		string dir= dirname(path);
-
-		//read header
-		ModelHeaderOld modelHeader;
-		fread(&modelHeader, sizeof(ModelHeader), 1, f);
-		meshCount= modelHeader.meshCount;
-
-		if(modelHeader.id[0]!='G' || modelHeader.id[1]!='3' || modelHeader.id[2]!='D'){
-			throw runtime_error("Model: "+path+": is not a valid G3D model");
-		}
-
-		switch(modelHeader.version){
-		case 3:{
-			meshes= new Mesh[meshCount];
-			for(uint32 i=0; i<meshCount; ++i){
-				meshes[i].load(dir, f, textureManager);
-				meshes[i].buildInterpolationData();
-			}
-			break;
-		}
-		default:
-			throw runtime_error("Unknown model version");
-		}
-
-		fclose(f);
-    }
-	catch(exception &e){
-		throw runtime_error("Exception caught loading 3d file: " + path +"\n"+ e.what());
-	}
-}*/
-
-//load a model from a g3d file
+// load a model from a g3d file
 void Model::loadG3d(const string &path){
-    try{
+    try {
 		FileOps *f = FSFactory::getInstance()->getFileOps();
 		f->openRead(path.c_str());
 
-		string dir= dirname(path);
+		string dir = dirname(path);
 
-		//file header
+		// file header
 		FileHeader fileHeader;
 		f->read(&fileHeader, sizeof(FileHeader), 1);
-		if(strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3)!=0){
+		if (strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3) != 0) {
 			throw runtime_error("Not a valid S3D model");
 		}
-		fileVersion= fileHeader.version;
+		fileVersion = fileHeader.version;
 
-		//version 4
-		if (fileHeader.version == 4) {
-
-			//model header
+		if (fileHeader.version == 4) { // version 4
+			// model header
 			ModelHeader modelHeader;
 			f->read(&modelHeader, sizeof(ModelHeader), 1);
 			meshCount = modelHeader.meshCount;
@@ -561,35 +552,19 @@ void Model::loadG3d(const string &path){
 				meshes[i].load(dir, f, textureManager);
 				meshes[i].buildInterpolationData();
 			}
-		}
-		//version 3
-		else if (fileHeader.version == 3) {
-
+		} else if (fileHeader.version == 3) { // version 3
 			f->read(&meshCount, sizeof(meshCount), 1);
 			meshes= new Mesh[meshCount];
 			for(uint32 i=0; i < meshCount; ++i){
 				meshes[i].loadV3(dir, f, textureManager);
 				meshes[i].buildInterpolationData();
 			}
-		}
-		//version 2
-		else if (fileHeader.version == 2) {
-
-			f->read(&meshCount, sizeof(meshCount), 1);
-			meshes= new Mesh[meshCount];
-			for(uint32 i=0; i < meshCount; ++i){
-				meshes[i].loadV2(dir, f, textureManager);
-				meshes[i].buildInterpolationData();
-			}
-		}
-		else{
+		} else {
 			throw runtime_error("Invalid model version: "+ intToStr(fileHeader.version));
 		}
-
 		delete f;
-    }
-	catch(exception &e){
-		throw runtime_error("Exception caught loading 3d file: " + path +"\n"+ e.what());
+    } catch (exception &e) {
+		throw runtime_error("Exception caught loading 3d file: " + path + "\n" + e.what());
 	}
 }
 

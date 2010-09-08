@@ -61,14 +61,6 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 	return tex;
 }
 
-Font* loadBitmapFont(string name, int size, int width = Font::wNormal) {
-	Font *font = 0;/*g_renderer.newFont(ResourceScope::GLOBAL);
-	font->setType(name);
-	font->setSize(size);
-	font->setWidth(width);*/
-	return font;
-}
-
 Font* loadFreeTypeFont(string path, int size) {
 	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
 	font->setType(path);
@@ -102,10 +94,12 @@ bool CoreData::load() {
 		buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
 		buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
 		textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
+		defaultTexture = loadTexture("data/core/misc_textures/default.tga", true);
 	} catch (runtime_error &e) {
 		g_errorLog.add(string("Error loading core data.\n") + e.what());
 		return false;
 	}
+	Model::defaultTexture = defaultTexture;
 
 	// Display/Console font
 	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 10);

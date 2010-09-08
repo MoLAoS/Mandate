@@ -74,13 +74,13 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	const XmlNode *animNode = sn->getChild("animation");
 	if (animNode->getAttribute("path")) { // single animation, lagacy style
 		string path = dir + "/" + sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
-		animations.push_back(g_world.getModelFactory().getModel(cleanPath(path)));
+		animations.push_back(g_world.getModelFactory().getModel(cleanPath(path), ut->getSize(), ut->getHeight()));
 		animationsStyle = AnimationsStyle::SINGLE;
 	} else { // multi-anim, new style
 		for (int i=0; i < animNode->getChildCount(); ++i) {
 			string path = animNode->getChild("anim-file", i)->getAttribute("path")->getRestrictedValue();
 			path = dir + "/" + path;
-			animations.push_back(g_world.getModelFactory().getModel(cleanPath(path)));
+			animations.push_back(g_world.getModelFactory().getModel(cleanPath(path), ut->getSize(), ut->getHeight()));
 		}
 		animationsStyle = AnimationsStyle::RANDOM;
 	}
@@ -591,20 +591,24 @@ void SkillTypeFactory::setChecksum(SkillType *st) {
 
 ModelFactory::ModelFactory(){}
 
-Model* ModelFactory::newInstance(const string &path) {
+Model* ModelFactory::newInstance(const string &path, int size, int height) {
 	assert(models.find(path) == models.end());
 	Model *model = g_renderer.newModel(ResourceScope::GAME);
-	model->load(path);
+	try {
+		model->load(path, size, height);
+	} catch (runtime_error &e) {
+		g_errorLog.add(e.what());
+	}
 	models[path] = model;
 	return model;
 }
 
-Model* ModelFactory::getModel(const string &path) {
+Model* ModelFactory::getModel(const string &path, int size, int height) {
 	ModelMap::iterator it = models.find(path);
 	if (it != models.end()) {
 		return it->second;
 	}
-	return newInstance(path);
+	return newInstance(path, size, height);
 }
 
 // =====================================================

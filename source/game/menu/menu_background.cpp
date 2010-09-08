@@ -103,17 +103,20 @@ MenuBackground::MenuBackground(){
 		degToRad(startRotation.y),
 		degToRad(startRotation.z))));
 
-	//load main model
+	// load main model
 	mainModel= renderer.newModel(ResourceScope::MENU);
-	mainModel->load("data/core/menu/main_model/menu_main.g3d");
+	mainModel->load("data/core/menu/main_model/menu_main.g3d", 2, 2);
 
-	//models
+	// models
 	for(int i=0; i<5; ++i){
 		characterModels[i]= renderer.newModel(ResourceScope::MENU);
-		characterModels[i]->load("data/core/menu/about_models/character"+intToStr(i)+".g3d");
+		try {
+			characterModels[i]->load("data/core/menu/about_models/character"+intToStr(i)+".g3d", 2, 2);
+		} catch (runtime_error &e) {
+		}
 	}
 
-	//about position
+	// about position
 	positionNode= cameraNode->getChild("about-position");
 	aboutPosition.x= positionNode->getAttribute("x")->getFloatValue();
 	aboutPosition.y= positionNode->getAttribute("y")->getFloatValue();
