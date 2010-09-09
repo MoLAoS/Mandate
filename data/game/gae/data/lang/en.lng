@@ -165,6 +165,7 @@ NoCategoryDirectories=There are no category directories in gae/scenarios
 NoSavedGames=You don't have any saved games
 None=None
 Normal=normal
+NotAvailable=Function not available in network games
 NotConnected=Not connected
 Off=Off
 Ok=Ok
