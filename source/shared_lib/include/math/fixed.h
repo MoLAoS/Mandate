@@ -190,10 +190,10 @@ public:
 	}
 
 	/* positive and any top bits set == bad, negative and top bits not all set == bad */
+	static const long long neg_mask = 0xFFFFFFFF00000000ull;
 #	define IF_MULT_OVERFLOW()																\
 		int64 bigRes = (int64(datum) >> HALF_SHIFT) * (int64(that.datum) >> HALF_SHIFT);	\
-		if ((bigRes >= 0 && bigRes & 0xFFFFFFFF00000000)									\
-		|| (bigRes < 0 && (bigRes>>32) != -1))
+		if ((bigRes >= 0 && bigRes & neg_mask) || (bigRes < 0 && (bigRes>>32) != -1))
 
 	fixed& operator*=(const fixed &that) {
 		IF_WARN_ON_PRECISION_LOSS(
@@ -215,8 +215,7 @@ public:
 	/* positive and any top bits set == bad, negative and top bits not all set == bad */
 #	define IF_DIV_OVERFLOW()																\
 		int64 bigRes = (int64(datum) << HALF_SHIFT) / (int64(that.datum) >> HALF_SHIFT);	\
-		if ((bigRes >= 0 && bigRes & 0xFFFFFFFF00000000) 									\
-		|| (bigRes < 0 && (bigRes >> 32) != -1))
+		if ((bigRes >= 0 && bigRes & neg_mask) || (bigRes < 0 && (bigRes >> 32) != -1))
 
 	fixed& operator/=(const fixed &that) {
 		IF_THROW_ON_DIVIDE_BY_ZERO(
