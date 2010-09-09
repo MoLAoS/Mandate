@@ -453,10 +453,10 @@ void Program::crash(const exception *e) {
 			printf("Exception: %s\n", e.what());
 		}
 		crashed = true;
-		clear();
 		if (programState) {
 			delete programState;
 		}
+		clear();
 		programState = new CrashProgramState(*this, e);
 		loop();
 	} else {

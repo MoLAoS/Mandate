@@ -547,7 +547,7 @@ void UserInterface::hotKey(UserCommand cmd) {
 
  	// Patrol
 	case ucPatrol:
-		//clickCommonCommand(CommandClass::PATROL);
+		clickCommonCommand(CommandClass::PATROL);
 		break;
 
 	case ucRotate:
@@ -555,7 +555,11 @@ void UserInterface::hotKey(UserCommand cmd) {
 		break;
 
 	case ucLuaConsole:
-		m_luaConsole->setVisible(!m_luaConsole->isVisible());
+		if (g_simInterface->asNetworkInterface()) {
+			g_console.addLine(g_lang.get("NotAvailable"));
+		} else {
+			m_luaConsole->setVisible(!m_luaConsole->isVisible());
+		}
 		break;
 
 	default:

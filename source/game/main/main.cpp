@@ -119,7 +119,8 @@ int glestMain(int argc, char** argv) {
 	//cout << "config: " << configDir << "\ndata: " << dataDir << endl;
 
 	mkdir(configDir, true);
-	mkdir(configDir+"/addons/", true);
+	mkdir(configDir + "/addons/", true);
+	mkdir(configDir + "/screens/", true);
 
 #	if USE_PHYSFS
 		g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());

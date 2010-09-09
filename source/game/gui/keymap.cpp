@@ -29,6 +29,7 @@ using std::ios_base;
 namespace Glest { namespace Gui {
 
 using namespace Shared::PhysFS;
+using Shared::Util::toLower;
 
 static const char *modNames[4] = {"Shift", "Ctrl", "Alt", "Meta"};
 	
@@ -227,7 +228,7 @@ void Keymap::load(const char *path) {
  	const Properties::PropertyMap &pm = p.getPropertyMap();
 	Properties::PropertyMap::const_iterator it;
 	for(int i = ucNone; i != ucCount; ++i) {
-		string cmdName(getCommandName((UserCommand)i));
+		string cmdName = toLower(getCommandName((UserCommand)i));		
 		it = pm.find(cmdName);
 		if(it != pm.end()) {
 			try {
