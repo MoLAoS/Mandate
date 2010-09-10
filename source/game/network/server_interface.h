@@ -56,7 +56,7 @@ public:
 	virtual GameRole getNetworkRole() const { return GameRole::SERVER; }
 	bool syncReady() const { return m_dataSync; }
 
-#	if _GAE_DEBUG_EDITION_
+#	if MAD_SYNC_CHECKING
 		void dumpFrame(int frame);
 #	endif
 

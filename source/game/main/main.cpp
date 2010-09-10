@@ -130,19 +130,19 @@ int glestMain(int argc, char** argv) {
 	if (g_config.getMiscCatchExceptions()) {
 		ExceptionHandler exceptionHandler;
 
-#if not _GAE_DEBUG_EDITION_
+#if ! _GAE_DEBUG_EDITION_
 		try {
 #endif
 			exceptionHandler.install();
 			Program program(args, configDir);
 			showCursor(false);
 
-#if not _GAE_DEBUG_EDITION_
+#if	! _GAE_DEBUG_EDITION_
 			try {
 #endif
 				//main loop
 				program.loop();
-#if not _GAE_DEBUG_EDITION_
+#if ! _GAE_DEBUG_EDITION_
 			} catch(const exception &e) {
 				// friendlier error handling
 				program.crash(&e);

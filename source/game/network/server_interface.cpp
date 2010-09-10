@@ -107,6 +107,10 @@ void ServerInterface::update() {
 		if (slots[i]) {
 			try {
 				slots[i]->update();
+			} catch (DataSyncError &e) {
+				LOG_NETWORK( e.what() );
+				throw runtime_error("DataSync Fail : " + slots[i]->getName()
+					+ "\n" + e.what());
 			} catch (NetworkError &e) {
 				LOG_NETWORK( e.what() );
 				string playerName = slots[i]->getName();
@@ -433,10 +437,10 @@ void ServerInterface::updateListen() {
 	serverSocket.listen(openSlotCount);
 }
 
-#if _GAE_DEBUG_EDITION_
+IF_MAD_SYNC_CHECKS(
 	void ServerInterface::dumpFrame(int frame) {
 		worldLog->logFrame(frame);
 	}
-#endif
+)
 
 }}//end namespace

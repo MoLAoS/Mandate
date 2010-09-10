@@ -35,7 +35,7 @@ using namespace Glest::Net;
 
 namespace Glest {
 
-#if _GAE_DEBUG_EDITION_
+#if MAD_SYNC_CHECKING
 
 namespace Debug {
 
@@ -98,7 +98,7 @@ public:
 
 using namespace Debug;
 
-#endif // _GAE_DEBUG_EDITION_
+#endif // MAD_SYNC_CHECKING
 
 namespace Sim {
 
@@ -189,7 +189,7 @@ protected:
 
 	SkillCycleTable *skillCycleTable;
 
-	IF_DEBUG_EDITION(
+	IF_MAD_SYNC_CHECKS(
 		WorldLog *worldLog;
 	)
 

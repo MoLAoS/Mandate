@@ -107,8 +107,7 @@ void ConnectionSlot::update() {
 			throw Disconnect();
 #		if MAD_SYNC_CHECKING
 		} else if (raw.type == MessageType::SYNC_ERROR) {
-			SyncErrorMsg e;
-			receiveMessage(&e);
+			SyncErrorMsg e(raw);
 			int frame = e.getFrame();
 			serverInterface->dumpFrame(frame);
 			throw GameSyncError("Client detected sync error");

@@ -374,7 +374,7 @@ public:
 	ProjectileUpdate getProjUpdate();
 };
 
-#if _GAE_DEBUG_EDITION_
+#if MAD_SYNC_CHECKING
 
 class SyncErrorMsg : public Message {
 	struct Data{

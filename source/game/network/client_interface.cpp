@@ -322,7 +322,7 @@ void ClientInterface::handleSyncError() {
 	worldLog->logFrame(); // dump frame log
 	SyncErrorMsg se(g_world.getFrameCount());
 	send(&se); // ask server to also dump a frame log.
-	throw GameSyncError();
+	throw GameSyncError("Sync error, see glestadv_client.log");
 }
 
 void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {

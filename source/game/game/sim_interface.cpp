@@ -124,7 +124,7 @@ void SimulationInterface::constructGameWorld(GameState *g) {
 	world = new World(this);
 	stats = new Stats(this);
 	commander = new Commander(this);
-	IF_DEBUG_EDITION(
+	IF_MAD_SYNC_CHECKS(
 		worldLog = new WorldLog();
 	);
 }
@@ -138,7 +138,7 @@ void SimulationInterface::destroyGameWorld() {
 	delete commander;
 	commander = 0;
 	game = 0; // game was deleted, that's why we're here, null our ptr
-	IF_DEBUG_EDITION(
+	IF_MAD_SYNC_CHECKS(
 		delete worldLog;
 	);
 }
@@ -416,10 +416,6 @@ void SimulationInterface::requestCommand(Command *command) {
 void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	const SkillType *old_st = unit->getCurrSkill();
 
-	if (unit->getId() == 6) {
-		DEBUG_HOOK();
-	}
-
 	// if unit has command process it
 	if (unit->anyCommand()) {
 		// check if a command being 'watched' has finished
@@ -454,11 +450,9 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	if (unit->getCurrSkill() != old_st) {	// if starting new skill
 		unit->resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
 	}
-	IF_DEBUG_EDITION(
+	IF_MAD_SYNC_CHECKS(
 		UnitStateRecord usr(unit);
 		worldLog->addUnitRecord(usr);
-	)
-	IF_MAD_SYNC_CHECKS(
 		postCommandUpdate(unit);
 	)
 }
@@ -472,7 +466,7 @@ void SimulationInterface::updateSkillCycle(Unit *unit) {
 }
 
 void SimulationInterface::startFrame(int frame) {
-	IF_DEBUG_EDITION(
+	IF_MAD_SYNC_CHECKS(
 		assert(frame);
 		worldLog->newFrame(frame);
 	)
@@ -526,7 +520,7 @@ void SimulationInterface::changeRole(GameRole role) {
 
 } // namespace Sim
 
-#if _GAE_DEBUG_EDITION_ && LOG_NETWORKING
+#if MAD_SYNC_CHECKING
 
 namespace Debug {
 
@@ -637,6 +631,6 @@ void WorldLog::logFrame(int frame) {
 
 } // namespace Debug
 
-#endif // _GAE_DEBUG_EDITION_ && LOG_NETWORKING
+#endif // MAD_SYNC_CHECKING
 
 } // namespace Game

@@ -102,7 +102,7 @@ IntroMessage::IntroMessage(RawMessage raw) {
 }
 
 bool IntroMessage::receive(NetworkConnection* connection) {
-	throw runtime_error("Boo!");
+	throw runtime_error(string(__FUNCTION__) + "() was called.");
 	/*bool ok = Message::receive(connection, &data, sizeof(Data));
 	if (ok) {
 		NETWORK_LOG(
@@ -608,7 +608,7 @@ int32 KeyFrame::getNextChecksum() {
 		NETWORK_LOG( "Attempt to retrieve checksum #" << checksumCounter
 			<< ", Insufficient checksums in keyFrame. Sync Error."
 		);
-		throw GameSyncError();
+		throw GameSyncError("Insufficient checksums in keyFrame.");
 	}
 	return checksums[checksumCounter++];
 }
@@ -675,7 +675,7 @@ ProjectileUpdate KeyFrame::getProjUpdate() {
 	return res;
 }
 
-#if _GAE_DEBUG_EDITION_
+#if MAD_SYNC_CHECKING
 
 SyncErrorMsg::SyncErrorMsg(RawMessage raw) {
 	data.messageType = raw.type;
