@@ -199,7 +199,13 @@ class QuickScenario : public GameState {
 public:
 	QuickScenario(Program &program) : GameState(program) {}
 	~QuickScenario() {}
-	void quitGame() { program.setState(new BattleEnd(program, true)); }
+	void quitGame() {
+		if (m_modalDialog) {  //FIXME: shouldn't BattleEnd remove all widgets?
+			g_widgetWindow.removeFloatingWidget(m_modalDialog);
+			m_modalDialog = 0;
+		}
+		program.setState(new BattleEnd(program, true));
+	}
 };
 
 class ShowMap : public GameState {

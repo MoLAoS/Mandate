@@ -173,21 +173,21 @@ if(WIN32)
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
 	
 	if(DEFINED GAE_WINDEPS)
-		# only lua and physfs are linked dynamic, install it next to the binary [Not true anymore]
-		#install(FILES ${WINDEPS}/bin/lua5.1.dll DESTINATION bin)
-		#install(FILES ${WINDEPS}/bin/physfs.dll DESTINATION bin)
+		# only freetype is linked dynamically, install it next to the binary
+		install(FILES ${GAE_WINDEPS}/bin/freetype6.dll DESTINATION bin)
 	endif(DEFINED GAE_WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm
 	#set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
+	#set(CPACK_DEBIAN_PACKAGE_DEPENDS "libvorbis0a libogg0 lua5.1 libsdl1.2debian")
 
 	set(CPACK_GENERATOR "TBZ2")
 	set(CPACK_STRIP_FILES "TRUE")
 endif(WIN32)
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/data/;/build/;.*~;/docs/html/")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/data/;/build;.*~;/docs/html/;/package")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)
@@ -217,12 +217,8 @@ endif(DOXYGEN_FOUND)
 add_subdirectory(source)
 
 # data directory
-# if(NOT WIN32)
-# 	install(FILES data/glest.xpm DESTINATION share/pixmaps)
-# 	install(FILES data/glest.desktop DESTINATION share/applications)
-# endif(NOT WIN32)
 install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilesets data/game/gae
- 		DESTINATION share/glestae REGEX "/.svn" EXCLUDE)
+		DESTINATION share/glestae OPTIONAL REGEX "/.svn" EXCLUDE)
 
 if(NOT WIN32)
 	# add uninstall target; FIXME: does not delete created folders

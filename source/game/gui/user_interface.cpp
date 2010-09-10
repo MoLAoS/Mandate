@@ -147,34 +147,36 @@ void UserInterface::init() {
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
 
-	// get 'this' FactionType, discover what resources need to be displayed
-	const FactionType *ft = g_world.getThisFaction()->getType();
-	set<const ResourceType*> displayResources;
-	for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
-		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
-		if (!rt->isDisplay()) {
-			continue;
-		}
-		// if any UnitType needs the resource
-		for (int j=0; j < ft->getUnitTypeCount(); ++j) {
-			const UnitType *ut = ft->getUnitType(j);
-			if (ut->getCost(rt)) {
-				displayResources.insert(rt);
-				break;
-			}
-		}
-	}
 	int x = g_metrics.getScreenW() - 20 - 150;
 	int y = (g_metrics.getScreenH() - 600) / 2;
 	m_display = new Display(this, Vec2i(x,y));
 
-	// create ResourceBar, connect thisFactions Resources to it...
-	m_resourceBar = new ResourceBar(g_world.getThisFaction(), displayResources);
+	// get 'this' FactionType, discover what resources need to be displayed
+	const Faction *fac = g_world.getThisFaction();
+	if(fac){  //loadmap has no faction
+		const FactionType *ft = fac->getType();
+		set<const ResourceType*> displayResources;
+		for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
+			const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
+			if (!rt->isDisplay()) {
+				continue;
+			}
+			// if any UnitType needs the resource
+			for (int j=0; j < ft->getUnitTypeCount(); ++j) {
+				const UnitType *ut = ft->getUnitType(j);
+				if (ut->getCost(rt)) {
+					displayResources.insert(rt);
+					break;
+				}
+			}
+		}
+		// create ResourceBar, connect thisFactions Resources to it...
+		m_resourceBar = new ResourceBar(fac, displayResources);
 
-	m_luaConsole = new LuaConsole(this, &g_program, Vec2i(200,200), Vec2i(500, 300));
-	m_luaConsole->setVisible(false);
-	m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
-
+		m_luaConsole = new LuaConsole(this, &g_program, Vec2i(200,200), Vec2i(500, 300));
+		m_luaConsole->setVisible(false);
+		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
+	}
 }
 
 void UserInterface::initMinimap(bool fow, bool resuming) {

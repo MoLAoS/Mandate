@@ -158,6 +158,8 @@ public:
 	int maxClearance[Field::COUNT]; // maximum clearances needed for this world
 
 	void initMapMetrics();
+	
+	MetricMap getMetrics(){ return metrics; }
 
 	void revealTile(const Vec2i &pos);
 

@@ -86,7 +86,7 @@ Texture2DGl* PathFinderTextureCallback::operator()(const Vec2i &cell) {
 	else if (openSet.find(cell) != openSet.end()) ndx = 15; // open nodes
 	else if (localAnnotations.find(cell) != localAnnotations.end()) // local annotation
 		ndx = 17 + localAnnotations.find(cell)->second;
-	else ndx = g_world.getCartographer()->getMasterMap()->metrics[cell].get(debugField); // else use cell metric for debug field
+	else ndx = g_world.getCartographer()->getMasterMap()->getMetrics()[cell].get(debugField); // else use cell metric for debug field
 	return (Texture2DGl*)PFDebugTextures[ndx];
 }
 

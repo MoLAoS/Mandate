@@ -236,9 +236,9 @@ private:
 #if _GAE_DEBUG_EDITION_
 public:
 	// interface to support debugging textures
-	list<Vec2i>* getOpenNodes();
-	list<Vec2i>* getClosedNodes();
-	list<Vec2i> listedNodes;
+	std::list<Vec2i>* getOpenNodes();
+	std::list<Vec2i>* getClosedNodes();
+	std::list<Vec2i> listedNodes;
 #endif
 };
 
