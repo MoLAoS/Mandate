@@ -116,7 +116,7 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
 		moveSkillType= static_cast<const MoveSkillType*>(st);
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -192,7 +192,7 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		string skillName= n->getChild("stop-skill")->getAttribute("value")->getRestrictedValue();
 		stopSkillType= static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_errorLog.addXmlError(dir, e.what());
 		return false;
 	}
 	return loadOk;
@@ -673,8 +673,21 @@ const ProducibleType* MorphCommandType::getProduced(int i) const {
 // =====================================================
 
 bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
+	bool loadOk = CommandType::load(n, dir, tt, ft);
 	
+	//move
+	try { 
+		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
+		if (moveSkillNode) {
+			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
+			const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
+			moveSkillType= static_cast<const MoveSkillType*>(st);
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+
 	//load skill
 	try {
 		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
@@ -757,6 +770,11 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->clearPath();
 		return;
 	}
+	if (!moveSkillType) {
+		// can't move, just wait
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
 	Vec2i pos = closest->getCenteredPos(); // else move toward closest
 	switch (g_routePlanner.findPath(unit, pos)) {
 		case TravelState::MOVING:
@@ -781,9 +799,21 @@ void LoadCommandType::update(Unit *unit) const {
 // =====================================================
 
 bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
+	bool loadOk = CommandType::load(n, dir, tt, ft);
 
-	//unload skill
+	// move
+	try { 
+		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
+		if (moveSkillNode) {
+			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
+			const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
+			moveSkillType= static_cast<const MoveSkillType*>(st);
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// unload skill
 	try {
 		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
 		unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
@@ -822,6 +852,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		return;
 	}
 	if (command->getPos() != Command::invalidPos) {
+		assert(moveSkillType);
 		switch (g_routePlanner.findPathToLocation(unit, command->getPos())) {
 			case TravelState::MOVING:
 				unit->setCurrSkill(moveSkillType);

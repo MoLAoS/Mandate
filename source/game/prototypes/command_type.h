@@ -536,8 +536,9 @@ public:
 //  class LoadCommandType
 // ===============================
 
-class LoadCommandType: public MoveBaseCommandType {
+class LoadCommandType: public CommandType {
 private:
+	const MoveSkillType *moveSkillType;
 	const LoadSkillType *loadSkillType;
 	vector<const UnitType*> m_canLoadList;
 	int m_loadCapacity;
@@ -547,7 +548,7 @@ private:
 						// if both true, a size 2 height 2 unit would occupy 8
 */
 public:
-	LoadCommandType() : MoveBaseCommandType("Load", Clicks::TWO), loadSkillType(NULL) {
+	LoadCommandType() : CommandType("Load", Clicks::TWO), loadSkillType(0), moveSkillType(0) {
 		queuable = true;
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -557,6 +558,7 @@ public:
 	virtual string getReqDesc() const;
 
 	//get
+	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
 	const LoadSkillType *getLoadSkillType() const	{return loadSkillType;}
 
 	int getLoadCapacity() const { return m_loadCapacity; }
@@ -572,12 +574,13 @@ public:
 //  class UnloadCommandType
 // ===============================
 
-class UnloadCommandType: public MoveBaseCommandType {
+class UnloadCommandType: public CommandType {
 private:
+	const MoveSkillType *moveSkillType;
 	const UnloadSkillType *unloadSkillType;
 
 public:
-	UnloadCommandType() : MoveBaseCommandType("Unload", Clicks::TWO), unloadSkillType(NULL) {}
+	UnloadCommandType() : CommandType("Unload", Clicks::TWO), unloadSkillType(0), moveSkillType(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -585,8 +588,10 @@ public:
 	virtual string getReqDesc() const;
 
 	//get
+	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
 	const UnloadSkillType *getUnloadSkillType() const	{return unloadSkillType;}
 
+	virtual Clicks getClicks() const { return (moveSkillType ? Clicks::TWO : Clicks::ONE); }
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::UNLOAD; }
 private:
