@@ -173,8 +173,9 @@ if(WIN32)
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
 	
 	if(DEFINED GAE_WINDEPS)
-		# only freetype is linked dynamically, install it next to the binary
+		# only freetype and zlib are linked dynamically, install them next to the binary
 		install(FILES ${GAE_WINDEPS}/bin/freetype6.dll DESTINATION bin)
+		install(FILES ${GAE_WINDEPS}/bin/zlib1.dll DESTINATION bin)
 	endif(DEFINED GAE_WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
