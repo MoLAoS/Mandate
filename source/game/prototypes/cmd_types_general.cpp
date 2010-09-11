@@ -754,13 +754,12 @@ void LoadCommandType::update(Unit *unit) const {
 	}
 	assert(closest);
 	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
-		g_console.addLine("doing load");
 		Unit *target = const_cast<Unit*>(closest);
 		target->removeCommands();
 		target->setCurrSkill(SkillClass::STOP);
 		target->setVisible(false);
 		target->setCarried(true);
-		/// @bug in below function: size 2 units may overlap with the carrier or something else related to golem unit
+		/// @bug in below function?: size 2 units may overlap with the carrier or something else related to golem unit
 		g_map.clearUnitCells(target, target->getPos());
 		target->setPos(Vec2i(-1));
 		g_userInterface.getSelection()->unSelect(target);
@@ -876,7 +875,6 @@ void UnloadCommandType::update(Unit *unit) const {
 		} else {
 			Unit *targetUnit = unit->getUnitsToUnload().front();
 			int maxRange = unloadSkillType->getMaxRange();
-			g_console.addLine("unloading unit");
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
