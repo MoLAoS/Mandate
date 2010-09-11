@@ -127,7 +127,7 @@ else(WIN32)
 endif(WIN32)
 
 if(NOT DEFINED GAE_VERSION)
-	set(GAE_VERSION "svn" CACHE STRING "Version of glest advanced engine")
+	set(GAE_VERSION "svn" CACHE STRING "Version of Glest Advanced Engine")
 endif()
 if(NOT DEFINED GAE_CONTACT)
 	set(GAE_CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")
@@ -136,8 +136,8 @@ endif()
 # cpack stuff
 # FIXME: setting version from outside does not work fully
 set(CPACK_PACKAGE_NAME "glestae")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "glest advanced engine")
-set(CPACK_PACKAGE_VENDOR "gae developers")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Glest Advanced Engine")
+set(CPACK_PACKAGE_VENDOR "The GAE Team")
 set(CPACK_PACKAGE_VERSION ${GAE_VERSION})
 # set(CPACK_PACKAGE_VERSION_MAJOR "1")
 # set(CPACK_PACKAGE_VERSION_MINOR "2")
@@ -147,9 +147,9 @@ set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_SOURCE_DIR}/docs/license.txt)
 if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES
 			"glestadv" "Glest Advanced Engine"
-			"map_editor" "Map Editor"
+			"gae_mapeditor" "Map Editor"
 			"configurator" "Configurator"
-			"g3d_viewer" "G3D Viewer"
+			"gae_g3dviewer" "G3D Viewer"
 	)
 else(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES "glestadv" "Glest Advanced Engine")
