@@ -161,6 +161,8 @@ WidgetConfig::WidgetConfig() {
 	if (!loadStyles("TextBox", WidgetType::TEXT_BOX)) {
 		m_borderStyles[WidgetType::TEXT_BOX].setEmbed(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
 		m_borderStyles[WidgetType::TEXT_BOX].setSizes(2);
+		m_focusBorderStyles[WidgetType::TEXT_BOX].setSolid(WidgetColour::LIGHT_BORDER);
+		m_focusBorderStyles[WidgetType::TEXT_BOX].setSizes(2);
 		m_backgroundStyles[WidgetType::TEXT_BOX].setColour(WidgetColour::DARK_BACKGROUND);
 	}
 	if (!loadStyles("ListItem", WidgetType::LIST_ITEM)) {
