@@ -60,6 +60,8 @@ MainWindow::MainWindow()
 		, fileModified(false) {
 	fileName = "New (unsaved) map";
 
+	SetIcon(wxIcon(gae_mapeditor_xpm));
+
 	this->panel = new wxPanel(this, wxID_ANY);
 
 	//gl canvas

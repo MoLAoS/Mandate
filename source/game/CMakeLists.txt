@@ -49,10 +49,10 @@ else(WIN32)
 endif(WIN32)
 
 install(TARGETS glestadv DESTINATION bin)
-# if(UNIX AND NOT APPLE)
-# 	install(FILES glestadv.xpm DESTINATION share/pixmaps)
-# 	install(FILES glestadv.desktop DESTINATION share/applications)
-# endif(UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE)
+	install(FILES glestadv.png DESTINATION share/pixmaps)
+	install(FILES glestadv.desktop DESTINATION share/applications)
+endif(UNIX AND NOT APPLE)
 
 if (WIN32)
 	# set linker flags for Release to use link time code gen.

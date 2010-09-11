@@ -12,6 +12,8 @@
 #ifndef _MAPEDITOR_ICONS_H_
 #define _MAPEDITOR_ICONS_H_
 
+#include "gae_mapeditor.xpm"
+
 #include "icons/radius_1.xpm"
 #include "icons/radius_2.xpm"
 #include "icons/radius_3.xpm"

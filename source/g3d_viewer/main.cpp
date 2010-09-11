@@ -12,6 +12,8 @@
 
 //#include "particle_type.h"
 
+#include "gae_g3dviewer.xpm"
+
 using std::exception;
 using namespace Shared::Platform; 
 using namespace Shared::Graphics;
@@ -141,6 +143,8 @@ MainWindow::MainWindow(const string &modelPath)
 	menuCustomColor->Check(miColorOne, true);
 
 	SetMenuBar(menu);
+
+	SetIcon(wxIcon(gae_g3dviewer_xpm));
 
 	//misc
 	model= NULL;

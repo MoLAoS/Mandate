@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Glest G3D Viewer
+Comment=View Glest models in g3d format
+Exec=gae_g3dviewer
+Icon=gae_g3dviewer
+Terminal=false
+Categories=Game;StrategyGame;
+StartupNotify=true
