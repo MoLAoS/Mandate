@@ -430,6 +430,12 @@ void MenuStateNewGame::update() {
 		m_announcer.doAnnounce(hasUnconnectedSlots());
 	}
 
+	static int counter = 0;
+	if (++counter % 6 == 0) { // update controlers periodically to get network player names
+		updateControlers();
+	}
+
+
 	if (m_transition) {
 		if (m_targetTransition == Transition::RETURN) {
 			program.clear();
