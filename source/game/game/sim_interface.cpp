@@ -44,13 +44,12 @@ SkillCycleTable::~SkillCycleTable(){
 void SkillCycleTable::create(const TechTree *techTree) {
 	numEntries = g_world.getSkillTypeFactory().getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
-	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
-		<< ", messageSize = " << header.messageSize << " (@" << sizeof(CycleInfo) << ")" );
-	//assert(numEntries);
-	if(!numEntries){
-		cycleTable = NULL;
+	if (!numEntries) {
+		cycleTable = NULL; // -loadmap
 		return;
 	}
+	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
+		<< ", messageSize = " << header.messageSize << " (@" << sizeof(CycleInfo) << ")" );
 
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {
@@ -61,31 +60,11 @@ void SkillCycleTable::create(const TechTree *techTree) {
 void SkillCycleTable::send(NetworkConnection* connection) const {
 	Message::send(connection, &header, sizeof(MsgHeader));
 	Message::send(connection, cycleTable, header.messageSize);
-	NETWORK_LOG( "SkillCycleTable sent." );
+	NETWORK_LOG( "SkillCycleTable sent to " << connection->getRemotePlayerName() );
 }
 
 bool SkillCycleTable::receive(NetworkConnection* connection) {
-	delete[] cycleTable;
-	cycleTable = 0;
-
-	Socket *socket = connection->getSocket();
-	if (!socket->peek(&header, sizeof(MsgHeader))) {
-		return false;
-	}
-	if (socket->getDataToRead() >= sizeof(MsgHeader) + header.messageSize) {
-		cycleTable = new CycleInfo[header.messageSize / sizeof(CycleInfo)];
-		if (!socket->receive(&header, sizeof(MsgHeader))
-		|| !socket->receive(cycleTable, header.messageSize)) {
-			delete[] cycleTable;
-			cycleTable = 0;
-			throw std::runtime_error(
-				"SkillCycleTable::receive() : Socket lied, getDataToRead() said ok, receive() couldn't deliver");
-		}
-		NETWORK_LOG( __FUNCTION__ << "(): got message, type: " << MessageTypeNames[MessageType(header.messageType)]
-			<< ", messageSize: " << header.messageSize
-		);
-		return true;
-	}
+	throw runtime_error(string(__FUNCTION__) + "() was called.");
 	return false;
 }
 
@@ -459,6 +438,9 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 
 void SimulationInterface::updateSkillCycle(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+		if (unit->getPos() == unit->getNextPos()) {
+			throw runtime_error("Move Skill set, but pos == nextPos");
+		}
 		unit->updateMoveSkillCycle();
 	} else {
 		unit->updateSkillCycle(skillCycleTable->lookUp(unit).getSkillFrames());
@@ -591,24 +573,24 @@ void WorldLog::writeFrame() {
 	ndxEntry.end = dataFile->tell();
 	ndxEntry.frame = currFrame.frame;
 	indexFile->write(&ndxEntry, sizeof(StateLogIndexEntry), 1);
+	//NETWORK_LOG( currFrame );
 }
 
-void WorldLog::logFrame(int frame) {
+void WorldLog::logFrame(ostream &stream, int frame) {
 	if (frame == -1) {
-		NETWORK_LOG( currFrame );
+		stream << "\n" << currFrame;
 		return;
 	}
 	assert(frame > 0);
-	FileOps *f = g_fileFactory.getFileOps();
-	f->openRead(gs_indexfile);
 	long pos = (frame - 1) * sizeof(StateLogIndexEntry);
 	StateLogIndexEntry ndxEntry;
-	f->seek(pos, SEEK_SET);
-	f->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
-	delete f;
-	f = g_fileFactory.getFileOps();
-	f->openRead(gs_datafile);
-	f->seek(ndxEntry.start, SEEK_SET);
+	delete indexFile;
+	indexFile = g_fileFactory.getFileOps();
+	indexFile->openRead(gs_indexfile);
+	indexFile->seek(pos, SEEK_SET);
+	indexFile->read(&ndxEntry, sizeof(StateLogIndexEntry), 1);
+	delete indexFile;
+	indexFile = 0;
 
 	FrameRecord record;
 	record.frame = frame;
@@ -616,17 +598,22 @@ void WorldLog::logFrame(int frame) {
 	assert((ndxEntry.end - ndxEntry.start) % sizeof(UnitStateRecord) == 0);
 
 	if (numUpdates) {
+		delete dataFile;
+		dataFile = g_fileFactory.getFileOps();
+		dataFile->openRead(gs_datafile);
 		UnitStateRecord *unitRecords = new UnitStateRecord[numUpdates];
-		f->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
+		dataFile->seek(ndxEntry.start, SEEK_SET);
+		dataFile->read(unitRecords, sizeof(UnitStateRecord), numUpdates);
+		delete dataFile;
+		dataFile = 0;
 		for (int i=0; i < numUpdates; ++i) {
 			record.push_back(unitRecords[i]);
 		}
 		delete [] unitRecords;
-		NETWORK_LOG( record );
+		stream << "\n" << record;
 	} else {
-		NETWORK_LOG( "Frame " << frame << " has no updates." );
+		stream << "\nFrame " << frame << " has no updates.";
 	}
-	delete f;
 }
 
 } // namespace Debug

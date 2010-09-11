@@ -111,6 +111,10 @@ void ServerInterface::update() {
 				LOG_NETWORK( e.what() );
 				throw runtime_error("DataSync Fail : " + slots[i]->getName()
 					+ "\n" + e.what());
+			} catch (GameSyncError &e) {
+				LOG_NETWORK( e.what() );
+				removeSlot(i);
+				throw runtime_error(e.what());
 			} catch (NetworkError &e) {
 				LOG_NETWORK( e.what() );
 				string playerName = slots[i]->getName();
@@ -439,7 +443,13 @@ void ServerInterface::updateListen() {
 
 IF_MAD_SYNC_CHECKS(
 	void ServerInterface::dumpFrame(int frame) {
-		worldLog->logFrame(frame);
+		if (frame > 5) {
+			stringstream ss;
+			for (int i = 5; i >= 0; --i) {
+				worldLog->logFrame(ss, frame - i);
+			}
+			NETWORK_LOG( ss.str() );
+		}
 	}
 )
 

@@ -35,29 +35,15 @@ using namespace Shared::Graphics;
 namespace Glest { namespace Plan {
 
 GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
+	LOG_AI( __FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
+		<< faction->getType()->getName() << " Random seed: " << randomSeed );
 	this->faction = faction;
 	this->world= g_simInterface->getWorld();
-	//this->commander= g_simInterface->getCommander();
-	//this->console= g_simInterface->getGameState()->getConsole();
 
 	timer= 0;
 
 	//init ai
 	ai.init(this, randomSeed);
-
-	//config
-	logLevel= Config::getInstance().getMiscAiLog();
-	redir= Config::getInstance().getMiscAiRedir();
-
-	//clear log file
-	if(logLevel>0){
-		FILE *f= fopen(getLogFilename().c_str(), "wt");
-		if(f==NULL){
-			throw runtime_error("Can't open file: "+getLogFilename());
-		}
-		fprintf(f, "%s", "Glest AI log file\n\n");
-		fclose(f);
-	}
 }
 
 // ==================== main ====================
@@ -65,27 +51,6 @@ GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 void GlestAiInterface::update(){
 	timer++;
 	ai.update();
-}
-
-// ==================== misc ====================
-
-void GlestAiInterface::printLog(int logLevel, const string &s){
-	if(this->logLevel>=logLevel){
-		string logString= "(" + intToStr(faction->getIndex()) + ") " + s;
-
-		//print log to file
-		FILE *f= fopen(getLogFilename().c_str(), "at");
-		if(f==NULL){
-			throw runtime_error("Can't open file: "+getLogFilename());
-		}
-		fprintf(f, "%s\n", logString.c_str());
-		fclose(f);
-
-		//redirect to console
-		if (redir) {
-			g_userInterface.getRegularConsole()->addLine(logString);
-		}
-	}
 }
 
 // ==================== interaction ====================

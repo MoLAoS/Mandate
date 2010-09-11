@@ -40,6 +40,9 @@ WRAPPED_ENUM( NetSource, CLIENT, SERVER )
 class NetworkError : public std::exception {};
 
 class TimeOut : public NetworkError {
+private:
+	NetSource source;
+
 public:
 	TimeOut(NetSource waitingFor) : source(waitingFor) {}
 	~TimeOut() throw() {}
@@ -53,12 +56,13 @@ public:
 			return "Time out waiting for client(s).";
 		}
 	}
-
-private:
-	NetSource source;
 };
 
 class InvalidMessage : public NetworkError {
+private:
+	MessageType expected;
+	int8 received;
+
 public:
 	InvalidMessage(MessageType expected, int8 got)
 		: expected(expected), received(got) {}
@@ -80,13 +84,13 @@ public:
 		}
 		return msgBuf;
 	}
-
-private:
-	MessageType expected;
-	int8 received;
 };
 
 class GarbledMessage : public NetworkError {
+private:
+	MessageType type;
+	NetSource sender;
+
 public:
 	GarbledMessage(MessageType type, NetSource sender) : type(type), sender(sender) {}
 	GarbledMessage(MessageType type) : type(type), sender(NetSource::INVALID) {}
@@ -102,13 +106,12 @@ public:
 		}
 		return msgBuf;
 	}
-
-private:
-	MessageType type;
-	NetSource sender;
 };
 
 class DataSyncError : public NetworkError {
+private:
+	NetSource role;
+
 public:
 	DataSyncError(NetSource role)
 			: role(role) {
@@ -120,14 +123,12 @@ public:
 			? " Your data does not match the servers, see glestadv-client.log for details."
 			: " Your data does not match the clients, see glestadv-server.log for details.");
 	}
-
-private:
-	NetSource role;
 };
 
 class GameSyncError : public NetworkError {
 private:
 	string msg;
+
 public:
 	GameSyncError(const string &err) {
 		msg = "A game synchronisation error has occured.\n" + err;
@@ -140,6 +141,10 @@ public:
 };
 
 class VersionMismatch : public NetworkError {
+private:
+	NetSource role;
+	string v1, v2;
+
 public:
 	VersionMismatch(NetSource role, const string &v1, const string &v2)
 			: role(role), v1(v1), v2(v2) {}
@@ -151,10 +156,6 @@ public:
 			v1.c_str(), (role == NetSource::SERVER ? "Client" : "Server"), v2.c_str());
 		return msgBuf;
 	}
-
-private:
-	NetSource role;
-	string v1, v2;
 };
 
 class Disconnect : public NetworkError {
@@ -231,12 +232,12 @@ WRAPPED_ENUM( NetworkCommandType,
 
 #pragma pack(push, 2)
 	struct MoveSkillUpdate {
-		int8	offsetX		:  2;
-		int8	offsetY		:  2;
+		int16	offsetX		:  2;
+		int16	offsetY		:  2;
 		int16	end_offset	: 12;
 
 		MoveSkillUpdate(const Unit *unit);
-		MoveSkillUpdate(const char *ptr) { *this = *((MoveSkillUpdate*)ptr); }
+		MoveSkillUpdate(const uint8 *ptr) { *this = *((MoveSkillUpdate*)ptr); }
 		Vec2i posOffset() const { return Vec2i(offsetX, offsetY); }
 	};
 #pragma pack(pop)
@@ -245,7 +246,7 @@ WRAPPED_ENUM( NetworkCommandType,
 	struct ProjectileUpdate {
 		uint8 end_offset	:  8;
 		ProjectileUpdate(const Unit *unit, Projectile *pps);
-		ProjectileUpdate(const char *ptr) { *this = *((ProjectileUpdate*)ptr); }
+		ProjectileUpdate(const uint8 *ptr) { *this = *((ProjectileUpdate*)ptr); }
 	}; // 2 bytes
 #pragma pack(pop)
 

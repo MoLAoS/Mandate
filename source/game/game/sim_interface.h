@@ -91,7 +91,7 @@ public:
 		currFrame.frame = frame;
 	}
 
-	void logFrame(int frame = -1);
+	void logFrame(ostream &stream, int frame = -1);
 };
 
 } // namespace Debug

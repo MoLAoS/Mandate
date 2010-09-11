@@ -54,9 +54,6 @@ public:
 	//get
 	int getTimer() const		{return timer;}
 
-	//misc
-	void printLog(int logLevel, const string &s);
-
 	//interact
 	CommandResult giveCommand(int unitIndex, CommandClass commandClass, const Vec2i &pos=Vec2i(0));
 	CommandResult giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos,

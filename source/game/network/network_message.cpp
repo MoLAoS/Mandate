@@ -103,16 +103,6 @@ IntroMessage::IntroMessage(RawMessage raw) {
 
 bool IntroMessage::receive(NetworkConnection* connection) {
 	throw runtime_error(string(__FUNCTION__) + "() was called.");
-	/*bool ok = Message::receive(connection, &data, sizeof(Data));
-	if (ok) {
-		NETWORK_LOG(
-			__FUNCTION__ << "(): received message, type: " << MessageTypeNames[MessageType(data.messageType)]
-			<< ", messageSize: " << data.messageSize << ", player name: " << data.playerName.getString()
-			<< ", host name: " << data.hostName.getString() << ", player index: " << data.playerIndex
-		);
-	}
-	return ok;
-	*/
 	return false;
 }
 
@@ -180,14 +170,8 @@ AiSeedSyncMessage::AiSeedSyncMessage(RawMessage raw) {
 }
 
 bool AiSeedSyncMessage::receive(NetworkConnection* connection){
-	bool ok = Message::receive(connection, &data, sizeof(Data));
-	if (ok) {
-		NETWORK_LOG(
-			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
-			<< ", messageSize: " << data.messageSize
-		);
-	}
-	return ok;
+	throw runtime_error(string(__FUNCTION__) + "() called");
+	return false;
 }
 
 void AiSeedSyncMessage::send(NetworkConnection* connection) const{
@@ -264,14 +248,8 @@ void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
 }
 
 bool LaunchMessage::receive(NetworkConnection* connection) {
-	bool ok = Message::receive(connection, &data, sizeof(Data));
-	if (ok) {
-		NETWORK_LOG(
-			__FUNCTION__ << "(): message received, type: " << MessageTypeNames[MessageType(data.messageType)]
-			<< ", messageSize: " << data.messageSize
-		);
-	}
-	return ok;
+	throw runtime_error(string(__FUNCTION__) + "() called");
+	return false;
 }
 
 void LaunchMessage::send(NetworkConnection* connection) const {
@@ -281,6 +259,10 @@ void LaunchMessage::send(NetworkConnection* connection) const {
 	);
 	Message::send(connection, &data, sizeof(Data));
 }
+
+// =====================================================
+//	class DataSyncMessage
+// =====================================================
 
 DataSyncMessage::DataSyncMessage(RawMessage raw)
 		: m_data(0), fromRaw(true) {
@@ -315,6 +297,11 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 	m_skillTypeCount = sklTFactory.getTypeCount();
 	m_upgrdTypeCount = upgrdTFactory.getTypeCount();
 
+	NETWORK_LOG( "DataSync" );
+	NETWORK_LOG( "========" );
+	NETWORK_LOG( "UnitType count = " << m_unitTypeCount << ", CommandType count = " << m_cmdTypeCount
+		<< ", SkillType count = " << m_skillTypeCount << ", UpgradeType count = " << m_upgrdTypeCount );
+
 	m_data = new int32[getChecksumCount()];
 	int n = -1;
 	for (int i=0; i < 4; ++i) {
@@ -324,17 +311,25 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 	if (getChecksumCount() - 4 > 0) {
 		for (int i=0; i < unitTFactory.getTypeCount(); ++i) {
 			m_data[++n] = unitTFactory.getChecksum(unitTFactory.getType(i));
+			NETWORK_LOG( "UnitType " << i << ": " << unitTFactory.getType(i)->getName() );
 		}
 		for (int i=0; i < cmdTFactory.getTypeCount(); ++i) {
-			m_data[++n] = cmdTFactory.getChecksum(cmdTFactory.getType(i));
+			CommandType *ct = cmdTFactory.getType(i);
+			m_data[++n] = cmdTFactory.getChecksum(ct);
+			NETWORK_LOG( "CommandType " << i << ": " << ct->getName() << " of UnitType: " << ct->getUnitType()->getName() );
 		}
 		for (int i=0; i < sklTFactory.getTypeCount(); ++i) {
-			m_data[++n] = sklTFactory.getChecksum(sklTFactory.getType(i));
+			SkillType *st = sklTFactory.getType(i);
+			m_data[++n] = sklTFactory.getChecksum(st);
+			NETWORK_LOG( "SkillType " << i << ": " << st->getName() << " of UnitType: " << st->getUnitType()->getName() );
 		}
 		for (int i=0; i < upgrdTFactory.getTypeCount(); ++i) {
-			m_data[++n] = upgrdTFactory.getChecksum(upgrdTFactory.getType(i));
+			UpgradeType *ut = upgrdTFactory.getType(i);
+			m_data[++n] = upgrdTFactory.getChecksum(ut);
+			NETWORK_LOG( "UpgradeType " << i << ": " << ut->getName() << " of FactionType: " << ut->getFactionType()->getName() );
 		}
 	}
+	NETWORK_LOG( "========" );
 }
 
 DataSyncMessage::~DataSyncMessage() {
@@ -529,6 +524,9 @@ KeyFrame::KeyFrame(RawMessage raw) {
 	updateSize = header.updateSize;
 	cmdCount = header.cmdCount;
 
+	NETWORK_LOG( "KeyFrame message size: " << raw.size << ", Move updates: " << moveUpdateCount
+		<< ", Projectile updates: " << projUpdateCount << ", Commands: " << cmdCount );
+
 	IF_MAD_SYNC_CHECKS(
 		if (checksumCount) {
 			memcpy(checksums, ptr, checksumCount * sizeof(int32));
@@ -571,7 +569,9 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	)
 	size_t totalSize = msgHeader.messageSize + sizeof(MsgHeader);
 
-	NETWORK_LOG( "KeyFrame message size: " << msgHeader.messageSize );
+	NETWORK_LOG( "KeyFrame message size: " << msgHeader.messageSize << ", Move updates: " 
+		<< moveUpdateCount << ", Projectile updates: " << projUpdateCount
+		<< ", Commands: " << cmdCount );
 
 	uint8 *buf = new uint8[totalSize];
 	uint8 *ptr = buf;
@@ -638,19 +638,22 @@ void KeyFrame::reset() {
 }
 
 void KeyFrame::addUpdate(MoveSkillUpdate updt) {
-	assert(writePtr < &updateBuffer[buffer_size - 2]);
+//	assert(writePtr < &updateBuffer[buffer_size - 2]);
 	memcpy(writePtr, &updt, sizeof(MoveSkillUpdate));
 	writePtr += sizeof(MoveSkillUpdate);
 	updateSize += sizeof(MoveSkillUpdate);
 	++moveUpdateCount;
+	NETWORK_LOG( __FUNCTION__ << "(MoveSkillUpdate updt): Pos Offset:" << updt.posOffset()
+		<< " Frame Offset: " << updt.end_offset );
 }
 
 void KeyFrame::addUpdate(ProjectileUpdate updt) {
-	assert(writePtr < &updateBuffer[buffer_size - 1]);
+//	assert(writePtr < &updateBuffer[buffer_size - 1]);
 	memcpy(writePtr, &updt, sizeof(ProjectileUpdate));
 	writePtr += sizeof(ProjectileUpdate);
 	updateSize += sizeof(ProjectileUpdate);
 	++projUpdateCount;
+	NETWORK_LOG( __FUNCTION__ << "(ProjectileUpdate updt): Frame Offset: " << updt.end_offset );
 }
 
 MoveSkillUpdate KeyFrame::getMoveUpdate() {
@@ -658,9 +661,11 @@ MoveSkillUpdate KeyFrame::getMoveUpdate() {
 	if (!moveUpdateCount) {
 		throw GameSyncError("Insufficient move skill updates in keyframe");
 	}
-	MoveSkillUpdate res = *((MoveSkillUpdate*)readPtr);
+	MoveSkillUpdate res(readPtr);
 	readPtr += sizeof(MoveSkillUpdate);
 	--moveUpdateCount;
+	NETWORK_LOG( __FUNCTION__ << "(): Pos Offset:" << res.posOffset()
+		<< " Frame Offset: " << res.end_offset );
 	return res;
 }
 
@@ -669,26 +674,30 @@ ProjectileUpdate KeyFrame::getProjUpdate() {
 	if (!projUpdateCount) {
 		throw GameSyncError("Insufficient projectile updates in keyframe");
 	}
-	ProjectileUpdate res = *((ProjectileUpdate*)readPtr);
+	ProjectileUpdate res(readPtr);
 	readPtr += sizeof(ProjectileUpdate);
 	--projUpdateCount;
+	NETWORK_LOG( __FUNCTION__ << "(): Frame Offset: " << res.end_offset );
 	return res;
 }
 
 #if MAD_SYNC_CHECKING
 
 SyncErrorMsg::SyncErrorMsg(RawMessage raw) {
+	NETWORK_LOG( string(__FUNCTION__) + "(RawMessage raw)" );
 	data.messageType = raw.type;
 	data.messageSize = raw.size;
 	memcpy(&data.frameCount, raw.data, raw.size);
 	delete raw.data;
 }
 
-bool SyncErrorMsg::receive(NetworkConnection* connection){
-	return Message::receive(connection, &data, sizeof(data));
+bool SyncErrorMsg::receive(NetworkConnection* connection) {
+	throw runtime_error(string(__FUNCTION__) + "() called." );
+	return false;
 }
 
-void SyncErrorMsg::send(NetworkConnection* connection) const{
+void SyncErrorMsg::send(NetworkConnection* connection) const {
+	NETWORK_LOG( string(__FUNCTION__) + "()" );
 	assert(data.messageType == MessageType::SYNC_ERROR);
 	Message::send(connection, &data, sizeof(data));
 }

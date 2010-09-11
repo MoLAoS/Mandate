@@ -77,6 +77,7 @@ public:
 	static Logger &getClientLog();
 	static Logger &getErrorLog();
 	static Logger &getWidgetLog();
+	static Logger &getAiLog();
 
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
@@ -114,6 +115,13 @@ inline void logNetwork(const char *msg) {
 #	define GAME_LOG(x)
 #endif
 
+#define AI_LOGGING 0
+
+#if AI_LOGGING
+#	define LOG_AI(x) {stringstream _ss; _ss << g_world.getFrameCount() << " : " << x; Logger::getAiLog().add(_ss.str()); }
+#else
+#	define LOG_AI(x)
+#endif
 
 #define LOG_NETWORKING 1
 

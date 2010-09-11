@@ -75,6 +75,11 @@ Logger& Logger::getWidgetLog() {
 	return logger;
 }
 
+Logger& Logger::getAiLog() {
+	static Logger logger("glestadv-ai.log", "AI", TimeStampType::NONE);
+	return logger;
+}
+
 void Logger::setState(const string &state){
 	this->state= state;
 	logLines.clear();

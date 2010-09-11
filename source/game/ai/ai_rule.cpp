@@ -135,7 +135,7 @@ void AiRuleRepair::execute() {
 
 		if (nearestRct) {
 			aiInterface->giveCommand(nearest, nearestRct, const_cast<Unit*>(damagedUnit));
-			aiInterface->printLog(3, "Repairing order issued");
+			LOG_AI( "Repairing order issued" );
 			return;
 		}
 	}

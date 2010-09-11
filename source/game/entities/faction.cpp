@@ -503,7 +503,7 @@ void Faction::setResourceBalance(const ResourceType *rt, int balance) {
 }
 
 void Faction::add(Unit *unit) {
-	LOG_NETWORK( "Faction: " + intToStr(id) + " unit added Id: " + intToStr(unit->getId()) );
+//	LOG_NETWORK( "Faction: " + intToStr(id) + " unit added Id: " + intToStr(unit->getId()) );
 	units.push_back(unit);
 	unitMap[unit->getId()] = unit;
 }

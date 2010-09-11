@@ -193,7 +193,6 @@ void ClientInterface::sendTextMessage(const string &text, int teamIndex) {
 
 string ClientInterface::getStatus() const {
 	return g_lang.get("Server") + ": " + serverName;
-	//	return getRemotePlayerName() + ": " + NetworkStatus::getStatus();
 }
 
 void ClientInterface::waitForMessage(int timeout) {
@@ -209,7 +208,6 @@ void ClientInterface::waitForMessage(int timeout) {
 		} else {
 			sleep(2);
 			receiveMessages();
-			continue;
 		}
 	}
 }
@@ -301,8 +299,20 @@ void ClientInterface::updateMove(Unit *unit) {
 	MoveSkillUpdate updt = keyFrame.getMoveUpdate();
 	if (updt.offsetX < -1 || updt.offsetX > 1 || updt.offsetY < - 1 || updt.offsetY > 1
 	|| (!updt.offsetX && !updt.offsetY)) {
-		NETWORK_LOG( __FUNCTION__ << " Bad server update, pos offset out of range, x="
-			<< updt.offsetX << ", y=" << updt.offsetY );
+		NETWORK_LOG( __FUNCTION__ << " Bad server update, pos offset out of range: " << updt.posOffset() );
+#		if MAD_SYNC_CHECKING
+			SyncErrorMsg msg(g_world.getFrameCount());
+			send(&msg);
+			int frame = g_world.getFrameCount();
+			stringstream ss;
+			if (frame > 5) {
+				for (int i = 5; i != 0; --i) {
+					worldLog->logFrame(ss, frame - i);
+				}
+			}
+			worldLog->logFrame(ss);
+			NETWORK_LOG( ss.str() );
+#		endif
 		throw GameSyncError("Bad move update"); // msgBox and then graceful exit to Menu please...
 	}
 	unit->setNextPos(unit->getPos() + Vec2i(updt.offsetX, updt.offsetY));
@@ -319,7 +329,12 @@ void ClientInterface::updateProjectilePath(Unit *u, Projectile *pps, const Vec3f
 
 void ClientInterface::handleSyncError() {
 	assert(g_world.getFrameCount());
-	worldLog->logFrame(); // dump frame log
+	
+	stringstream ss;
+	
+	worldLog->logFrame(ss); // dump frame log
+	NETWORK_LOG( ss.str() );
+
 	SyncErrorMsg se(g_world.getFrameCount());
 	send(&se); // ask server to also dump a frame log.
 	throw GameSyncError("Sync error, see glestadv_client.log");
@@ -339,7 +354,7 @@ void ClientInterface::checkUnitBorn(Unit *unit, int32 cs) {
 void ClientInterface::checkCommandUpdate(Unit *unit, int32 cs) {
 //	NETWORK_LOG( __FUNCTION__ );
 	if (cs != keyFrame.getNextChecksum()) {
-		NETWORK_LOG( __FUNCTION__ << "Sync Error: unit type: " << unit->getType()->getName()
+		NETWORK_LOG( __FUNCTION__ << " Sync Error: unit type: " << unit->getType()->getName()
 			<< ", skill class: " << SkillClassNames[unit->getCurrSkill()->getClass()] );
 		handleSyncError();
 	}

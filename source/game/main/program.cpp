@@ -120,6 +120,9 @@ Program::Program(CmdArgs &args, string configDir)
 #	if LOG_WIDGET_EVENTS
 		g_widgetLog.clear();
 #	endif
+#	if AI_LOGGING
+		Logger::getAiLog().clear();
+#	endif
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
