@@ -205,17 +205,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	y += 75, h = 35, x = (metrics.getScreenW() - psw_width) / 2, w = psw_width;
 
 	int sty = metrics.getScreenH() - 70;
-	m_controlLabel = new StaticText(&program, Vec2i(x + 120, sty), Vec2i(200, 30));
-	m_factionLabel = new StaticText(&program, Vec2i(x + 340, sty), Vec2i(200, 30));
-	m_teamLabel = new StaticText(&program, Vec2i(x + 520, sty), Vec2i(80, 30));
-
-	m_controlLabel->setTextParams("Control", Vec4f(1.f), font);
-	m_factionLabel->setTextParams("Faction", Vec4f(1.f), font);
-	m_teamLabel->setTextParams("Team", Vec4f(1.f), font);
-
-	m_controlLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_factionLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_teamLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	PlayerSlotLabels *labels = new PlayerSlotLabels(&program, Vec2i(x, sty), Vec2i(w, h));
 
 	int vSpace = (sty - y);
 	int vgap = (vSpace - (GameConstants::maxPlayers * 35)) / (GameConstants::maxPlayers + 1);

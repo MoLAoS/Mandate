@@ -15,7 +15,24 @@
 namespace Glest { namespace Widgets {
 using Sim::ControlType;
 
-class PlayerSlotWidget : public Panel, public sigslot::has_slots {
+class PlayerSlotPanel : public Panel {
+private:
+	Widget::Ptr m_columns[5];
+	int m_childCount;
+
+public:
+	PlayerSlotPanel(Container::Ptr parent, Vec2i pos, Vec2i size);
+
+	virtual void addChild(Widget::Ptr child);
+	virtual void layoutChildren();
+};
+
+class PlayerSlotLabels : public PlayerSlotPanel {
+public:
+	PlayerSlotLabels(Container::Ptr parent, Vec2i pos, Vec2i size);
+};
+
+class PlayerSlotWidget : public PlayerSlotPanel, public sigslot::has_slots {
 public:
 	typedef PlayerSlotWidget* Ptr;
 private:

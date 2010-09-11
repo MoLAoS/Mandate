@@ -65,10 +65,6 @@ private:
 	Button::Ptr				m_returnButton,
 							m_playNow;
 
-	StaticText::Ptr			m_controlLabel,
-							m_factionLabel,
-							m_teamLabel;
-
 	PlayerSlotWidget::Ptr	m_playerSlots[GameConstants::maxPlayers];
 
 	StaticText::Ptr			m_mapLabel,
