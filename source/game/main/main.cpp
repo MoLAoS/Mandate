@@ -92,6 +92,11 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
+#	if !defined(NDEBUG) && defined(WIN32)
+	// Enable run-time checks
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#	endif
+
 	string configDir = DEFAULT_CONFIG_DIR;
 	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;
