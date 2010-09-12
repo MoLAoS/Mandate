@@ -1,6 +1,10 @@
 # glest g3d viewer
 
-file(GLOB viewer_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
+if(WIN32)
+	file(GLOB viewer_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h" "*.rc")
+else(WIN32)
+	file(GLOB viewer_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
+endif(WIN32)
 
 include_directories(${glestshared_incs})
 add_executable(gae_g3dviewer ${viewer_srcs})
