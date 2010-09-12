@@ -12,8 +12,6 @@
 #ifndef _SHARED_PLATFORM_PLATFORMUTIL_H_
 #define _SHARED_PLATFORM_PLATFORMUTIL_H_
 
-#include <windows.h>
-
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -30,82 +28,7 @@ using std::runtime_error;
 
 using Shared::Platform::int64;
 
-namespace Shared{ namespace Platform{
-
-// =====================================================
-//	class PerformanceTimer
-// =====================================================
-
-class PerformanceTimer{
-private:
-	int64 lastTicks;
-	int64 updateTicks;
-	int64 freq;
-
-	int times;			// number of consecutive times
-	int maxTimes;		// maximum number consecutive times
-	int maxBacklog;
-
-public:
-	PerformanceTimer(float fps, int maxTimes= -1, int maxBacklog = -1);
-
-	bool isTime() {
-		int64 curTicks;
-		QueryPerformanceCounter((LARGE_INTEGER*) &curTicks);
-		int64 elapsed = curTicks - lastTicks;
-		int64 cyclesDue = elapsed / updateTicks;
-
-		if(cyclesDue && (times < maxTimes || maxTimes == -1)) {
-			--cyclesDue;
-			if(maxBacklog >= 0 && cyclesDue > maxBacklog) {
-				lastTicks = curTicks - updateTicks * maxBacklog;
-			} else {
-				lastTicks += updateTicks;
-			}
-			++times;
-
-			return true;
-		}
-
-		times = 0;
-		return false;
-	}
-
-	uint32 timeToWait() {
-		int64 curTicks;
-		QueryPerformanceCounter((LARGE_INTEGER*) &curTicks);
-		int64 elapsed = curTicks - lastTicks;
-		return (uint32)(elapsed >= updateTicks ? 0 : (updateTicks - elapsed) * 1000 / freq);
-	}
-
-	void reset() 			{QueryPerformanceCounter((LARGE_INTEGER*) &lastTicks);}
-	void setFps(float fps)	{updateTicks= static_cast<int>(1000./fps);}
-	void setMaxTimes(int maxTimes)		{this->maxTimes = maxTimes;}
-	void setMaxBacklog(int maxBacklog)	{this->maxBacklog = maxBacklog;}
-};
-
-// =====================================================
-//	class Chrono
-// =====================================================
-
-class Chrono{
-private:
-	int64 startCount;
-	int64 accumCount;
-	int64 freq;
-	bool stopped;
-
-public:
-	Chrono();
-	void start();
-	void stop();
-	int64 getMicros() const;
-	int64 getMillis() const;
-	int64 getSeconds() const;
-
-private:
-	int64 queryCounter(int multiplier) const;
-};
+namespace Shared { namespace Platform {
 
 // =====================================================
 //	class PlatformExceptionHandler
@@ -119,7 +42,8 @@ private:
 	static LONG WINAPI handler(LPEXCEPTION_POINTERS pointers);
 
 public:
-	virtual ~PlatformExceptionHandler() {}
+	PlatformExceptionHandler()			{assert(!singleton); singleton = this;}
+	virtual ~PlatformExceptionHandler()	{assert(singleton == this); singleton = NULL;}
 	void install();
 	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) = 0;
 	virtual void notifyUser(bool pretty) = 0;
@@ -166,13 +90,11 @@ void message(string message);
 bool ask(string message);
 void exceptionMessage(const exception &excp);
 
-int getScreenW();
-int getScreenH();
+inline int getScreenW()			{return GetSystemMetrics(SM_CXSCREEN);}
+inline int getScreenH()			{return GetSystemMetrics(SM_CYSCREEN);}
+inline void sleep(int millis)	{Sleep(millis);}
+inline void showCursor(bool b)	{ShowCursor(b);}
 
-void sleep(int millis);
-
-void showCursor(bool b);
-bool isKeyDown(int virtualKey);
 string getCommandLine();
 
 }}//end namespace

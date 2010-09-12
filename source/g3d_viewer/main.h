@@ -6,25 +6,45 @@
 #include <wx/wx.h>
 #include <wx/timer.h>
 #include <wx/glcanvas.h>
+#include <wx/colordlg.h>
 
 #include "renderer.h"
 #include "util.h"
 #include "window.h"
 
-using Shared::Platform::Window;
-using Shared::Platform::MouseState;
-
 using std::string;
 
-namespace Shared{ namespace G3dViewer{
+namespace Shared { namespace G3dViewer {
 
 class GlCanvas;
+
+class TeamColourDialog : public wxDialog {
+	DECLARE_EVENT_TABLE()
+
+	int editIndex;
+	Renderer *renderer;
+
+	wxButton *btnColour[4];
+	wxColourDialog *colourDialog;
+
+	wxStaticBitmap *bitmaps[4];
+
+	void CreateChildren();
+
+public:
+	TeamColourDialog(Renderer *renderer);
+	~TeamColourDialog();
+
+	void onColourBtn(wxCommandEvent& event);
+
+	wxColour colours[4];
+};
 
 // ===============================
 // 	class MainWindow  
 // ===============================
 
-class MainWindow: public wxFrame{
+class MainWindow: public wxFrame {
 private:
 	DECLARE_EVENT_TABLE()
 
@@ -39,10 +59,14 @@ public:
 		miModeGrid,
 		miSpeedSlower,
 		miSpeedFaster,
-		miColorRed,
-		miColorBlue,
-		miColorYellow,
-		miColorGreen
+		miColorOne,
+		miColorTwo,
+		miColorThree,
+		miColorFour,
+		miColourAll,
+		miColourEdit,
+
+		miCount
 	};
 
 private:
@@ -57,6 +81,8 @@ private:
 	wxMenu *menuSpeed;
 	wxMenu *menuCustomColor;
 
+	TeamColourDialog *colourDialog;
+
 	Model *model;
 	string modelPath;
 
@@ -64,26 +90,31 @@ private:
 	float anim;
 	float rotX, rotY, zoom;
 	int lastX, lastY;
-	Renderer::PlayerColor playerColor;
+	int playerColor;
 
 public:
 	MainWindow(const string &modelPath);
 	~MainWindow();
+
+	void init();
 
 	void Notify();
 
 	void onPaint(wxPaintEvent &event);
 	void onClose(wxCloseEvent &event);
 	void onMenuFileLoad(wxCommandEvent &event);
+	void onMenuExit(wxCommandEvent &event);
 	void onMenuModeNormals(wxCommandEvent &event);
 	void onMenuModeWireframe(wxCommandEvent &event);
 	void onMenuModeGrid(wxCommandEvent &event);
 	void onMenuSpeedSlower(wxCommandEvent &event);
 	void onMenuSpeedFaster(wxCommandEvent &event);
-	void onMenuColorRed(wxCommandEvent &event);
-	void onMenuColorBlue(wxCommandEvent &event);
-	void onMenuColorYellow(wxCommandEvent &event);
-	void onMenuColorGreen(wxCommandEvent &event);
+	void onMenuColorOne(wxCommandEvent &event);
+	void onMenuColorTwo(wxCommandEvent &event);
+	void onMenuColorThree(wxCommandEvent &event);
+	void onMenuColorFour(wxCommandEvent &event);
+	void onMenuColorAll(wxCommandEvent &event);
+	void onMenuColorEdit(wxCommandEvent &event);
 	void onMouseMove(wxMouseEvent &event);
 	void onTimer(wxTimerEvent &event);
 
@@ -99,7 +130,7 @@ private:
 	DECLARE_EVENT_TABLE()
 
 public:
-	GlCanvas(MainWindow *mainWindow);
+	GlCanvas(MainWindow *mainWindow, int *args);
 
 	void onMouseMove(wxMouseEvent &event);
 	void onPaint(wxPaintEvent &event);

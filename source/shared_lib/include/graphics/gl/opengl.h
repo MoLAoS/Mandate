@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -25,6 +25,9 @@ using std::string;
 namespace Shared{ namespace Graphics{ namespace Gl{
 
 using Util::intToStr;
+
+#define WGL_SAMPLE_BUFFERS_ARB	0x2041
+#define WGL_SAMPLES_ARB			0x2042
 
 // =====================================================
 //	Globals
@@ -61,7 +64,7 @@ void inline _assertGl(const char *file, int line){
 #else
 
 #define assertGl() _assertGl(__FILE__, __LINE__);
-	
+
 #endif
 
 }}}//end namespace

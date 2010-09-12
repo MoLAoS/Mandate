@@ -20,7 +20,7 @@ namespace Shared { namespace Graphics {
 //	class FontMetrics
 // =====================================================
 
-FontMetrics::FontMetrics() {
+FontMetrics::FontMetrics() : freeType(false) {
 	widths = new float[Font::charCount];
 	height = 0;
 
@@ -33,10 +33,13 @@ FontMetrics::~FontMetrics() {
 	delete [] widths;
 }
 
-Vec2f FontMetrics::getTextDiminsions(const string &str) const{
-	Vec2f dim(0.f, height);
+Vec2f FontMetrics::getTextDiminsions(const string &str) const {
+	Vec2f dim(0.f, 0.f);
 	float width = 0.f;
 
+	if (str.empty()) {
+		return dim;
+	}
 	for(int i = 0; i < str.size(); ++i) {
 		if(str[i] == '\n') {
 			if(dim.x < width) {
@@ -44,21 +47,22 @@ Vec2f FontMetrics::getTextDiminsions(const string &str) const{
 			}
 
 			width = 0.f;
-			dim.y += height;
+			dim.y += getHeight();
 		} else {
 			width += widths[str[i]];
 		}
 	}
-
 	if(dim.x < width) {
 		dim.x = width;
 	}
-
+	if (str[str.size()-1] != '\n') {
+		dim.y += getHeight();
+	}
 	return dim;
 }
 
 float FontMetrics::getHeight() const {
-	return height;
+	return freeType ? maxAscent + 2/*maxDescent*/ : height;
 }
 
 // ===============================================
@@ -71,22 +75,7 @@ Font::Font() {
 	inited = false;
 	type = "Times New Roman";
 	width = 400;
-}
-
-// ===============================================
-//	class Font2D
-// ===============================================
-
-Font2D::Font2D() {
 	size = 10;
-}
-
-// ===============================================
-//	class Font3D
-// ===============================================
-
-Font3D::Font3D() {
-	depth = 10.f;
 }
 
 }}//end namespace

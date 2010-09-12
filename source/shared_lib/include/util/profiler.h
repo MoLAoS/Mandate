@@ -2,6 +2,7 @@
 //	This file is part of Glest Shared Library (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under 
 //	the terms of the GNU General Public License as published 
@@ -13,87 +14,52 @@
 #define _SHARED_UTIL_PROFILER_H_
 
 //#define SL_PROFILE
-//SL_PROFILE controls if profile is enabled or not
 
-#include "platform_util.h"
-#include <list>
+// SL_PROFILE controls if profile is enabled or not
+
+// The Profiler and Section classes have been 'hidden away', just put _PROFILE_FUNCTION(); at the 
+// beginning of any function you want timed.
+
 #include <string>
-
-using std::list;
 using std::string;
 
-using Shared::Platform::Chrono;
+namespace Shared { namespace Util {
 
-namespace Shared{ namespace Util{
+#ifndef SL_PROFILE
+#	define _PROFILE_FUNCTION() {}
+#	define _PROFILE_SCOPE(name) {}
+	namespace Profile {
+		inline void profileEnd() {}
+	}
 
-#ifdef SL_PROFILE
+#else // SL_PROFILE
 
-// =====================================================
-//	class Section
-// =====================================================
+	namespace Profile {
+		void profileEnd();
+		void sectionBegin(const string &name);
+		void sectionEnd(const string &name);
+	}
 
-class Section{
-public:
-	typedef list<Section*> SectionContainer;
-private:
-	string name;
-	Chrono chrono;
-	int64 milisElapsed;
-	Section *parent;
-	SectionContainer children;
+	/** Helper, created on stack at start of functions to profile */
+	class ProfileSection {
+	private:
+		const string name;
 
-public:
-	Section(const string &name);
+	public:
+		ProfileSection(const char *name) : name(name) {
+			Profile::sectionBegin(this->name);
+		}
+		~ProfileSection() {
+			Profile::sectionEnd(name);
+		}
+	};
 
-	Section *getParent()				{return parent;}
-	const string &getName() const		{return name;}
-
-	void setParent(Section *parent)	{this->parent= parent;}
-
-	void start()	{chrono.start();}
-	void stop()		{milisElapsed+=chrono.getMillis();}
-
-	void addChild(Section *child)	{children.push_back(child);}
-	Section *getChild(const string &name);
-
-	void print(FILE *outSream, int tabLevel=0);
-};
-
-// =====================================================
-//	class Profiler
-// =====================================================
-
-class Profiler{
-private:
-	Section *rootSection;
-	Section *currSection;
-private:
-	Profiler();
-public:
-	~Profiler();
-	static Profiler &getInstance();
-	void sectionBegin(const string &name);
-	void sectionEnd(const string &name);
-};
+#	define _PROFILE_FUNCTION() Shared::Util::ProfileSection _func_profile(__FUNCTION__)
+#	define _PROFILE_SCOPE(name) Shared::Util::ProfileSection _func_profile(name)
 
 #endif //SL_PROFILE
 
-// =====================================================
-//	class funtions
-// =====================================================
+}}//end namespace Shared::Util
 
-inline void profileBegin(const string &sectionName){
-#ifdef SL_PROFILE
-	Profiler::getInstance().sectionBegin(sectionName);
-#endif
-}
-
-inline void profileEnd(const string &sectionName){
-#ifdef SL_PROFILE
-	Profiler::getInstance().sectionEnd(sectionName);
-#endif
-}
-
-}}//end namespace
 
 #endif 

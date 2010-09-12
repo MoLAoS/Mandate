@@ -39,17 +39,9 @@ public:
 class Renderer{
 public:
 	static const int windowX= 100;
-	static const int windowY= 100;
-	static const int windowW= 640;
-	static const int windowH= 480;
-
-public:
-	enum PlayerColor{
-		pcRed,
-		pcBlue,
-		pcYellow,
-		pcGreen
-	};
+	static const int windowY= 75;
+	static const int windowW= 800;
+	static const int windowH= 600;
 
 private:
 	bool wireframe;
@@ -58,22 +50,21 @@ private:
 
 	ModelRenderer *modelRenderer;
 	TextureManager *textureManager;
-	Texture2D *customTextureRed;
-	Texture2D *customTextureBlue;
-	Texture2D *customTextureYellow;
-	Texture2D *customTextureGreen;
+	Texture2D *customTextures[4];
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
 	Renderer();
+
 
 public:
 	~Renderer();
 	static Renderer *getInstance();
 
 	void init();
-	void reset(int w, int h, PlayerColor playerColor);
+	void reset(int x, int y, int w, int h, int playerColor);
 	void transform(float rotX, float rotY, float zoom);
 	void renderGrid();
+	void resetTeamTexture(int i, uint8 r, uint8 g, uint8 b);
 
 	bool getNormals() const		{return normals;}
 	bool getWireframe() const	{return wireframe;}
@@ -85,6 +76,8 @@ public:
 
 	void loadTheModel(Model *model, string file);
 	void renderTheModel(Model *model, float f);
+
+	uint8 colours[4*3];
 };
 
 }}//end namespace

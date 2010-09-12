@@ -18,7 +18,6 @@
 #include "sound_factory.h"
 
 #include "graphics_factory_gl.h"
-#include "graphics_factory_gl2.h"
 #include "sound_factory_ds8.h"
 
 using std::string;
@@ -26,7 +25,6 @@ using std::string;
 using Shared::Graphics::GraphicsFactory;
 using Shared::Sound::SoundFactory;
 using Shared::Graphics::Gl::GraphicsFactoryGl;
-using Shared::Graphics::Gl::GraphicsFactoryGl2;
 using Shared::Sound::Ds8::SoundFactoryDs8;
 
 namespace Shared{ namespace Platform{
@@ -43,7 +41,6 @@ private:
 
 private:
 	GraphicsFactoryGl graphicsFactoryGl;
-	GraphicsFactoryGl2 graphicsFactoryGl2;
 	SoundFactoryDs8 soundFactoryDs8;
 
 public:

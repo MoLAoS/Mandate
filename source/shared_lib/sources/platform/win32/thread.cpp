@@ -14,58 +14,58 @@
 
 #include "leak_dumper.h"
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 // =====================================================
-//	class Threads
+// class Thread
 // =====================================================
 
 ThreadId nextThreadId = 1000;
 
-void Thread::start(){
+void Thread::start() {
 	thread = CreateThread(NULL, 0, beginExecution, this, 0, &nextThreadId);
 	nextThreadId++;
 }
 
-void Thread::setPriority(Thread::Priority threadPriority){
+void Thread::setPriority(Thread::Priority threadPriority) {
 	SetThreadPriority(thread, threadPriority);
 }
 
-DWORD WINAPI Thread::beginExecution(void *param){
+DWORD WINAPI Thread::beginExecution(void *param) {
 	static_cast<Thread*>(param)->execute();
 	return 0;
 }
 
-void Thread::suspend(){
+void Thread::suspend() {
 	SuspendThread(thread);
 }
 
-void Thread::resume(){
+void Thread::resume() {
 	ResumeThread(thread);
 }
 
-bool Thread::join(int maxWaitMillis){
+bool Thread::join(int maxWaitMillis) {
 	return WaitForSingleObject(thread, maxWaitMillis) == WAIT_OBJECT_0;
 }
 
 // =====================================================
-//	class Mutex
+// class Mutex
 // =====================================================
 
-Mutex::Mutex(){
-    InitializeCriticalSection(&mutex);
+Mutex::Mutex() {
+	InitializeCriticalSection(&mutex);
 }
 
-Mutex::~Mutex(){
-    DeleteCriticalSection(&mutex);
+Mutex::~Mutex() {
+	DeleteCriticalSection(&mutex);
 }
 
-void Mutex::p(){
-    EnterCriticalSection(&mutex);
+void Mutex::p() {
+	EnterCriticalSection(&mutex);
 }
 
-void Mutex::v(){
-    LeaveCriticalSection(&mutex);
+void Mutex::v() {
+	LeaveCriticalSection(&mutex);
 }
 
 }}//end namespace

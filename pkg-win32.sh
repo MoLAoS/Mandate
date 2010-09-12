@@ -18,6 +18,8 @@ cp -p ../data/glest_game/data/lang/english.lng data/lang &&
 cp -p ../data/glest_game/data/core/menu/menu.xml data/core/menu &&
 cp -p ../data/glest_game/data/core/menu/textures/textentry.tga data/core/menu/textures &&
 rar a -m5 -mdG -mt2 ${archive} README.txt glestadv-sse2.exe glestadv-i686.exe glestadv.ini data/lang/english.lng data/core/menu/menu.xml data/core/menu/textures/textentry.tga savegames &&
-scp ${archive} root@beaker.javamonger.org:/svr/www/glest.codemonger.org/apache/htdocs/files/ &&
+scp ${archive} glest@beaker.javamonger.org:www/files/ &&
 mv  ${archive} ../old
+
+
 

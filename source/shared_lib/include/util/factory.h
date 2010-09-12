@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -43,12 +43,35 @@ public:
 	virtual void *newInstance()	{return new T();}
 };
 
+template <typename T>
+class SingleTypeFactory {
+	SingleFactory<T> singleFactory;
+public:
+	T* newInstance() {
+		return static_cast<T*>(singleFactory.newInstance());
+	}
+};
+
 // =====================================================
 //	class MultiFactory
 // =====================================================
 
+class UnknownType: public std::exception {
+public:
+	UnknownType(const string &typeName) : typeName(typeName) {}
+	~UnknownType() throw() {}
+	const char* what() const throw() {
+		static char msgBuf[512];
+		sprintf(msgBuf, "Unknown class identifier: %s.", typeName.c_str());
+		return msgBuf;
+	}
+
+private:
+	string typeName;
+};
+
 template<typename T>
-class MultiFactory{
+class MultiFactory {
 private:
 	typedef map<string, SingleFactoryBase*> Factories;
 	typedef pair<string, SingleFactoryBase*> FactoryPair;
@@ -71,7 +94,7 @@ public:
 	T *newInstance(string classId){
 		Factories::iterator it= factories.find(classId);
 		if(it == factories.end()){
-			throw runtime_error("Unknown class identifier: " + classId);
+			throw UnknownType(classId);
 		}
 		return static_cast<T*>(it->second->newInstance());
 	}

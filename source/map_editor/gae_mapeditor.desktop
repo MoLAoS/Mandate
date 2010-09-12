@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Glest Map Editor
+Comment=Create maps for Glest Advanced Engine
+Exec=gae_mapeditor
+Icon=gae_mapeditor
+Terminal=false
+Categories=Game;StrategyGame;
+StartupNotify=true

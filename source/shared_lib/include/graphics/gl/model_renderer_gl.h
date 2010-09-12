@@ -22,7 +22,7 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 //	class ModelRendererGl
 // =====================================================
 
-class ModelRendererGl: public ModelRenderer{
+class ModelRendererGl: public ModelRenderer {
 private:
 	bool rendering;
 	bool duplicateTexCoords;
@@ -32,9 +32,53 @@ private:
 public:
 	ModelRendererGl();
 	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback);
-	virtual void end();
-	virtual void render(const Model *model);
-	virtual void renderNormalsOnly(const Model *model);
+
+	virtual void end() {
+		//assertions
+		assert(rendering);
+		assertGl();
+	
+		//set render state
+		rendering = false;
+	
+		//pop
+		glPopAttrib();
+		glPopClientAttrib();
+	
+		//assertions
+		assertGl();
+	}
+	
+	virtual void render(const Model *model) {
+		//assertions
+		assert(rendering);
+		assertGl();
+	
+		//render every mesh
+		for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+			renderMesh(model->getMesh(i));
+		}
+	
+		//assertions
+		assertGl();
+	}
+	
+	virtual void renderNormalsOnly(const Model *model) {
+		//assertions
+		assert(rendering);
+		assertGl();
+	
+		//render every mesh
+		for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+			renderMeshNormals(model->getMesh(i));
+		}
+	
+		//assertions
+		assertGl();
+	}
+	//virtual void end();
+	//virtual void render(const Model *model);
+	//virtual void renderNormalsOnly(const Model *model);
 
 	void setDuplicateTexCoords(bool duplicateTexCoords)			{this->duplicateTexCoords= duplicateTexCoords;}
 	void setSecondaryTexCoordUnit(int secondaryTexCoordUnit)	{this->secondaryTexCoordUnit= secondaryTexCoordUnit;}

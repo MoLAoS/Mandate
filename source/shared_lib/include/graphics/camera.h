@@ -15,7 +15,9 @@
 #include "vec.h"
 #include "quaternion.h"
 
-namespace Shared{ namespace Graphics{
+using namespace Shared::Math;
+
+namespace Shared { namespace Graphics {
 
 // =====================================================
 //	class Camera

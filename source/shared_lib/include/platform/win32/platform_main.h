@@ -12,8 +12,25 @@
 #ifndef _SHARED_PLATFORM_MAIN_H_
 #define _SHARED_PLATFORM_MAIN_H_
 
+#define NOMINMAX
 #include <windows.h>
 
-#define MAIN_FUNCTION(X) int main(int argc, char *argv[]){return X(argc, argv);}
+#if _GAE_DEBUG_EDITION_ || !defined(NDEBUG)
+
+#	define MAIN_FUNCTION(X)						\
+		int main(int argc, char **argv) {		\
+			return X(argc, argv);				\
+		}
+#else
+
+#	define MAIN_FUNCTION(X)						\
+		int main(int argc, char *argv[]) {		\
+			HWND hWnd = GetConsoleWindow();		\
+			ShowWindow(hWnd, SW_HIDE);			\
+			freopen("stdout.txt", "w", stdout);	\
+			freopen("stderr.txt", "w", stderr);	\
+			return X(argc, argv);				\
+		}
+#endif
 
 #endif

@@ -1,0 +1,75 @@
+# Config Settings file.
+# This file is processed and used to generate config.cpp and confg.h using
+# config.cpp.template and config.h.template.  NOTE: You may not use the pipe
+# character in this file unless you want to modify the script.
+#
+# variable					type	default			min		max
+cameraFov					float	45.f			0.f		360.f
+cameraInvertXAxis			bool	true
+cameraInvertYAxis			bool	true
+cameraMaxDistance			float	35.f			20.f	1024.f
+cameraMaxYaw				float	77.50f			0.f		360.f
+cameraMinDistance			float	8.f				0.f		20.f
+cameraMinYaw				float	20.f			0.f		360.f
+displayHeight				int		768
+displayRefreshFrequency		int		60
+displayWidth				int		1024
+displayWindowed				bool	false
+gsAutoRepairEnabled			bool	true
+gsAutoReturnEnabled			bool	false
+gsDayTime					float	1000.f
+gsWorldUpdateFps			int		40
+miscAiLog					int		0
+miscAiRedir					bool	false
+miscAutoTest				bool	false
+miscCatchExceptions			bool	true
+miscDebugKeys				bool	false
+miscDebugMode				bool	false
+miscFirstTime				bool	true
+netConsistencyChecks		bool	false
+netPlayerName				string	"Player"
+netServerIp					string	"192.168.1.1"
+netServerPort				int		12345			0		65535
+renderCheckGlCaps			bool	true
+renderColorBits				int		32
+renderDepthBits				int		isWindows()?32:16
+renderDistanceMax			float	64.f			1.f		65536.f
+renderDistanceMin			float	1.f				0.0f	65536.f
+renderFilter				string	"Bilinear"
+renderFilterMaxAnisotropy	int		1
+renderFogOfWarSmoothing		bool	1
+renderFogOfWarSmoothingFrameSkip int 3
+renderFontConsole			string	getDefaultFontStr()
+renderFontDisplay			string	getDefaultFontStr()
+renderFontMenu				string	getDefaultFontStr()
+renderFov					float	60.f			0.01f	360.f
+renderFpsMax				int		60				0		1000000
+renderGraphicsFactory		string	"OpenGL"
+renderInterpolateWithSIMD	bool	true
+renderLightsMax				int		1				0		8
+renderShadowAlpha			float	0.2f			0.f		1.f
+renderShadowFrameSkip		int		2
+renderShadowTextureSize		int		512
+renderShadows				string	"Projected"
+renderStencilBits			int		0
+renderTextures3D			bool	1
+soundFactory				string	isWindows()?"DirectSound8":"OpenAL"
+soundStaticBuffers			int		16
+soundStreamingBuffers		int		5
+soundVolumeAmbient			int		80
+soundVolumeFx				int		80
+soundVolumeMusic			int		90
+uiConsoleMaxLines			int		10
+uiConsoleTimeout			int		20
+uiEnableCommandMinimap		bool	true
+uiFocusArrows				bool	true
+uiLastMap					string	"four_rivers"
+uiLastRandStartLocs			bool	false
+uiLastScenario				string	"glest_classic\/anarchy"
+uiLastScenarioCatagory		string	"glest_classic"
+uiLastTileset				string	"forest"
+uiLastTechTree				string	"magitech"
+uiLocale					string	"en"
+uiPhotoMode					bool	false
+uiRandomStartLocations		bool	false
+uiScrollSpeed				float	1.5f

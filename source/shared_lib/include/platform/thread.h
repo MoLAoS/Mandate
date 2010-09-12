@@ -17,14 +17,13 @@
 #ifdef USE_SDL
 	#include <SDL_thread.h>
 	#include <SDL_mutex.h>
-#endif
-#if defined(WIN32)  || defined(WIN64)
+#elif defined(WIN32)  || defined(WIN64)
 	#include <windows.h>
 #endif
 
 #include "types.h"
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 // =====================================================
 //	class Thread
@@ -36,13 +35,12 @@ namespace Shared{ namespace Platform{
 	#define THREAD_PRIORITY_ABOVE_NORMAL	3
 	#define THREAD_PRIORITY_TIME_CRITICAL	4
 	#define INFINITE -1
-#endif
-#if defined(WIN32) || defined(WIN64)
+#elif defined(WIN32) || defined(WIN64)
 	typedef LPTHREAD_START_ROUTINE ThreadFunction;
 	typedef DWORD ThreadId;
 #endif
 
-class Thread{
+class Thread {
 public:
 	enum Priority {
 		pIdle= THREAD_PRIORITY_IDLE,
@@ -72,8 +70,7 @@ public:
 private:
 #ifdef USE_SDL
 	static int beginExecution(void *param);
-#endif
-#if defined(WIN32)  || defined(WIN64)
+#elif defined(WIN32)  || defined(WIN64)
 	static DWORD WINAPI beginExecution(void *param);
 #endif
 };
@@ -93,23 +90,22 @@ public:
 	void v();
 };
 
-/** MutexLock is a convenicnce and safety class to manage locking and unlocking
+/**
+ * MutexLock is a convenicnce and safety class to manage locking and unlocking
  * a mutex and is intended to be created on the stack.  The advantage of using
  * MutexLock over explicitly calling Mutex.p() and .v() is that you can never
  * forget to unlock the mutex.  Even if an exception is thrown, the stack unwind
  * will cause the mutex to be unlocked.
+ * 
+ * Note: Do NOT extend this class unless you modify the destructor to virutal (and then delete this
+ * notation :).
  */
 class MutexLock {
 	Mutex &mutex;
 
 public:
-	MutexLock(Mutex &mutex) : mutex(mutex) {
-		mutex.p();
-	}
-
-	~MutexLock() {
-		mutex.v();
-	}
+	MutexLock(Mutex &mutex) : mutex(mutex) {mutex.p();}
+	~MutexLock() {mutex.v();}
 };
 
 }}//end namespace

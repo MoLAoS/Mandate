@@ -16,40 +16,22 @@
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
-class Font2DGl;
-class Font3DGl;
+class FreeTypeFont;
 
 // =====================================================
-//	class TextRenderer2DGl
+//	class TextRendererFT
 // =====================================================
 
-class TextRenderer2DGl: public TextRenderer2D{
+class TextRendererFT: public TextRenderer {
 private:
-	const Font2DGl *font;
+	const FreeTypeFont *font;
 	bool rendering;
 
 public:
-	TextRenderer2DGl();
+	TextRendererFT();
 
-	virtual void begin(const Font2D *font);
+	virtual void begin(const Font *font);
 	virtual void render(const string &text, int x, int y, bool centered);
-	virtual void end();
-};
-
-// =====================================================
-//	class TextRenderer3DGl
-// =====================================================
-
-class TextRenderer3DGl: public TextRenderer3D{
-private:
-	const Font3DGl *font;
-	bool rendering;
-
-public:
-	TextRenderer3DGl();
-
-	virtual void begin(const Font3D *font);
-	virtual void render(const string &text, float x, float y, float size, bool centered);
 	virtual void end();
 };
 

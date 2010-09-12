@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Glest Advanced Engine
+Comment=Play a real-time strategy game with 3D graphics
+Exec=glestadv
+Icon=glestadv
+Terminal=false
+Categories=Game;StrategyGame;
+StartupNotify=true

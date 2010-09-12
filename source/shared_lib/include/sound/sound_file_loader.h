@@ -13,7 +13,7 @@
 #define _SHARED_SOUND_SOUNDFILELOADER_H_
 
 #include <string>
-#include <fstream>
+#include "FileOps.hpp"
 
 #include "types.h"
 #include "factory.h"
@@ -21,13 +21,14 @@
 struct OggVorbis_File;
 
 using std::string;
-using std::ifstream;
+//using std::ifstream;
+using std::istream;
 
 namespace Shared{ namespace Sound{
-
 using Platform::uint32;
 using Platform::int8;
 using Util::MultiFactory;
+using namespace PhysFS;
 
 class SoundInfo;
 
@@ -61,7 +62,7 @@ private:
 	uint32 dataOffset;
 	uint32 dataSize;
 	uint32 bytesPerSecond;
-	ifstream f;
+	FileOps *f;
 
 public:
 	virtual void open(const string &path, SoundInfo *soundInfo);

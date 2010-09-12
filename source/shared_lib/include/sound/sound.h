@@ -15,7 +15,6 @@
 #include <string>
 #include "sound_file_loader.h" 
 
-using namespace std;
 using namespace Shared::Platform;
 
 namespace Shared{ namespace Sound{

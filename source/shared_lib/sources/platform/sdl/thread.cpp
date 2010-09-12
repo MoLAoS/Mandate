@@ -21,7 +21,7 @@
 
 #include "leak_dumper.h"
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 // =====================================
 //          Threads
@@ -36,7 +36,7 @@ void Thread::setPriority(Thread::Priority threadPriority) {
 }
 
 int Thread::beginExecution(void* data) {
-	Thread* thread = static_cast<Thread*> (data);
+	Thread* thread = static_cast<Thread*>(data);
 	thread->execute();
 	return 0;
 }
@@ -49,8 +49,8 @@ void Thread::resume() {
 	NOIMPL;
 }
 
-bool Thread::join(int maxWaitMillis){
-	SDL_WaitThread(thread, NULL);
+bool Thread::join(int maxWaitMillis) {
+	SDL_WaitThread(thread, 0);
 	return true;
 }
 
@@ -60,7 +60,7 @@ bool Thread::join(int maxWaitMillis){
 
 Mutex::Mutex() {
 	mutex = SDL_CreateMutex();
-	if(mutex == 0)
+	if (mutex == 0)
 		throw std::runtime_error("Couldn't initialize mutex");
 }
 
@@ -76,4 +76,5 @@ void Mutex::v() {
 	SDL_mutexV(mutex);
 }
 
-}}//end namespace
+}
+}//end namespace

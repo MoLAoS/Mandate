@@ -15,8 +15,7 @@
 #include "font.h"
 
 #include <vector>
-
-using namespace std;
+using std::vector;
 
 namespace Shared{ namespace Graphics{
 
@@ -36,8 +35,7 @@ protected:
 public:
 	virtual ~FontManager();
 
-	Font2D *newFont2D();
-	Font3D *newFont3D();
+	Font* newFreeTypeFont();
 
 	void init();
 	void end();

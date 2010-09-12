@@ -21,10 +21,12 @@
 #include "random.h"
 
 #include "leak_dumper.h"
+#include "FSFactory.hpp"
 
+#include "profiler.h"
 
+using std::max;
 using namespace Shared::Util;
-using namespace std;
 
 namespace Shared{ namespace Graphics{
 
@@ -89,19 +91,25 @@ PixmapIoTga::PixmapIoTga(){
 
 PixmapIoTga::~PixmapIoTga(){
 	if(file!=NULL){
-		fclose(file);
+		delete file;
 	}
 }
 
 void PixmapIoTga::openRead(const string &path){
-	file= fopen(path.c_str(),"rb");
-	if (file==NULL){
-		throw runtime_error("Can't open TGA file: "+ path);
+	file = FSFactory::getInstance()->getFileOps();
+	try {
+		file->openRead(path.c_str());
+	} catch (runtime_error &e) {
+		// FIXME: path should really be in game but this is the common load function, maybe have a
+		// member for default/missing texture path that's set from game.
+		printf("%s\n", e.what());
+		// will then throw exception again if even this texture is missing
+		file->openRead("data/core/misc_textures/default.tga");
 	}
 
 	//read header
 	TargaFileHeader fileHeader;
-	fread(&fileHeader, sizeof(TargaFileHeader), 1, file);
+	file->read(&fileHeader, sizeof(TargaFileHeader), 1);
 
 	//check that we can load this tga file
 	if(fileHeader.idLength!=0){
@@ -126,47 +134,57 @@ void PixmapIoTga::read(uint8 *pixels){
 	read(pixels, components);
 }
 
-void PixmapIoTga::read(uint8 *pixels, int components){
-	for(int i=0; i<h*w*components; i+=components){
+void PixmapIoTga::read(uint8 *pixels, int components) {
+	//_PROFILE_FUNCTION();
+	assert(this->components > 0 && components > 0);
+	size_t imgDataSize = h * w * this->components;
+	size_t pixmapDataSize = h * w * components;
+	uint8 *buf = new uint8[imgDataSize];
+	file->read(buf, imgDataSize, 1);
+
+	for (int i=0, ndx = 0; i < imgDataSize; i += this->components, ndx += components) {
 		uint8 r, g, b, a, l;
-
-		if(this->components==1){
-			fread(&l, 1, 1, file);
-			r= l;
-			g= l;
-			b= l;
-			a= 255;
+		switch(this->components) {
+			case 1:
+				r = g = b = l = buf[i];
+				a = 255U;
+				break;
+			case 3:
+				b = buf[i+0];
+				g = buf[i+1];
+				r = buf[i+2];
+				a = 255U;
+				if (components == 1) {
+					l = uint8((int(r) + g + b) / 3);
+				}
+				break;
+			case 4:
+				b = buf[i+0];
+				g = buf[i+1];
+				r = buf[i+2];
+				a = buf[i+3];
+				if (components == 1) {
+					l = uint8((int(r) + g + b) / 3);
+				}
 		}
-		else{
-			fread(&b, 1, 1, file);
-			fread(&g, 1, 1, file);
-			fread(&r, 1, 1, file);
-			if(this->components==4){
-				fread(&a, 1, 1, file);
-			}
-			else{
-				a= 255;
-			}
-			l= (r+g+b)/3;
-		}
-
-		switch(components){
-		case 1:
-			pixels[i]= l;
-			break;
-		case 3:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			break;
-		case 4:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			pixels[i+3]= a;
-			break;
+		switch(components) {
+			case 1:
+				pixels[ndx+0] = l;
+				break;
+			case 3:
+				pixels[ndx+0] = r;
+				pixels[ndx+1] = g;
+				pixels[ndx+2] = b;
+				break;
+			case 4:
+				pixels[ndx+0]= r;
+				pixels[ndx+1]= g;
+				pixels[ndx+2]= b;
+				pixels[ndx+3]= a;
+				break;
 		}
 	}
+	delete [] buf;
 }
 
 void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
@@ -174,10 +192,8 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 	this->h= h;
 	this->components= components;
 
-    file= fopen(path.c_str(),"wb");
-	if (file==NULL){
-		throw runtime_error("Can't open TGA file: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openWrite(path.c_str());
 
 	TargaFileHeader fileHeader;
 	memset(&fileHeader, 0, sizeof(TargaFileHeader));
@@ -187,20 +203,20 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 	fileHeader.height= h;
 	fileHeader.imageDescriptor= components==4? 8: 0;
 
-	fwrite(&fileHeader, sizeof(TargaFileHeader), 1, file);
+	file->write(&fileHeader, sizeof(TargaFileHeader), 1);
 }
 
 void PixmapIoTga::write(uint8 *pixels){
 	if(components==1){
-		fwrite(pixels, h*w, 1, file);
+		file->write(pixels, h*w, 1);
 	}
 	else{
 		for(int i=0; i<h*w*components; i+=components){
-			fwrite(&pixels[i+2], 1, 1, file);
-			fwrite(&pixels[i+1], 1, 1, file);
-			fwrite(&pixels[i], 1, 1, file);
+			file->write(&pixels[i+2], 1, 1);
+			file->write(&pixels[i+1], 1, 1);
+			file->write(&pixels[i], 1, 1);
 			if(components==4){
-				fwrite(&pixels[i+3], 1, 1, file);
+				file->write(&pixels[i+3], 1, 1);
 			}
 		}
 	}
@@ -211,37 +227,35 @@ void PixmapIoTga::write(uint8 *pixels){
 // =====================================================
 
 PixmapIoBmp::PixmapIoBmp(){
-	file= NULL;
+	file = NULL;
 }
 
 PixmapIoBmp::~PixmapIoBmp(){
-	if(file!=NULL){
-		fclose(file);
+	if (file != NULL) {
+		delete file;
 	}
 }
 
 void PixmapIoBmp::openRead(const string &path){
-    file= fopen(path.c_str(),"rb");
-	if (file==NULL){
-		throw runtime_error("Can't open BMP file: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openRead(path.c_str());
 
 	//read file header
     BitmapFileHeader fileHeader;
-    fread(&fileHeader, sizeof(BitmapFileHeader), 1, file);
-	if(fileHeader.type1!='B' || fileHeader.type2!='M'){
+    file->read(&fileHeader, sizeof(BitmapFileHeader), 1);
+	if (fileHeader.type1!='B' || fileHeader.type2!='M') {
 		throw runtime_error(path +" is not a bitmap");
 	}
 
 	//read info header
 	BitmapInfoHeader infoHeader;
-	fread(&infoHeader, sizeof(BitmapInfoHeader), 1, file);
-	if(infoHeader.bitCount!=24){
+	file->read(&infoHeader, sizeof(BitmapInfoHeader), 1);
+	if (infoHeader.bitCount != 24) {
         throw runtime_error(path+" is not a 24 bit bitmap");
 	}
 
-    h= infoHeader.height;
-    w= infoHeader.width;
+    h = infoHeader.height;
+    w = infoHeader.width;
 	components= 3;
 }
 
@@ -250,29 +264,40 @@ void PixmapIoBmp::read(uint8 *pixels){
 }
 
 void PixmapIoBmp::read(uint8 *pixels, int components){
-    for(int i=0; i<h*w*components; i+=components){
-		uint8 r, g, b;
-		fread(&b, 1, 1, file);
-		fread(&g, 1, 1, file);
-		fread(&r, 1, 1, file);
+	_PROFILE_FUNCTION();
+	//const int alignOffset = (w * this->components) % 4;
+	const int rowPad = 0;//alignOffset ? 4 - alignOffset : 0;
+	const int rowSize = w * this->components + rowPad;
+	uint8 *rowBuf = new uint8[rowSize];
+	int pix = 0;
+	assert(file->bytesRemaining() >= rowSize * h); // some bmps seem to have 2 extra bytes... ?!?
 
-		switch(components){
-		case 1:
-			pixels[i]= (r+g+b)/3;
-			break;
-		case 3:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			break;
-		case 4:
-			pixels[i]= r;
-			pixels[i+1]= g;
-			pixels[i+2]= b;
-			pixels[i+3]= 255;
-			break;
+	for (int y=0; y < h; ++y) {
+		file->read(rowBuf, rowSize, 1);
+		for (int x=0; x < w; ++x) {
+			uint8 &b = *(rowBuf + x * this->components + 0);
+			uint8 &g = *(rowBuf + x * this->components + 1);
+			uint8 &r = *(rowBuf + x * this->components + 2);
+			switch (components) {
+				case 1:
+					pixels[pix++] = (r + g + b) / 3;
+					break;
+				case 3:
+					pixels[pix++] = r;
+					pixels[pix++] = g;
+					pixels[pix++] = b;
+					break;
+				case 4:
+					pixels[pix++] = r;
+					pixels[pix++] = g;
+					pixels[pix++] = b;
+					pixels[pix++] = 255;
+					break;
+			}
 		}
-    }
+	}
+	assert(pix == components * w * h);
+	delete [] rowBuf;
 }
 
 void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
@@ -280,10 +305,8 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	this->h= h;
 	this->components= components;
 
-	file= fopen(path.c_str(),"wb");
-	if (file==NULL){
-		throw runtime_error("Can't open BMP file for writting: "+ path);
-	}
+	file = FSFactory::getInstance()->getFileOps();
+	file->openWrite(path.c_str());
 
 	BitmapFileHeader fileHeader;
     fileHeader.type1='B';
@@ -291,7 +314,7 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	fileHeader.offsetBits=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader);
 	fileHeader.size=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader)+3*h*w;
 
-    fwrite(&fileHeader, sizeof(BitmapFileHeader), 1, file);
+    file->write(&fileHeader, sizeof(BitmapFileHeader), 1);
 
 	//info header
 	BitmapInfoHeader infoHeader;
@@ -307,14 +330,14 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	infoHeader.xPelsPerMeter= 0;
 	infoHeader.yPelsPerMeter= 0;
 
-	fwrite(&infoHeader, sizeof(BitmapInfoHeader), 1, file);
+	file->write(&infoHeader, sizeof(BitmapInfoHeader), 1);
 }
 
 void PixmapIoBmp::write(uint8 *pixels){
     for (int i=0; i<h*w*components; i+=components){
-        fwrite(&pixels[i+2], 1, 1, file);
-		fwrite(&pixels[i+1], 1, 1, file);
-		fwrite(&pixels[i], 1, 1, file);
+        file->write(&pixels[i+2], 1, 1);
+		file->write(&pixels[i+1], 1, 1);
+		file->write(&pixels[i], 1, 1);
     }
 }
 
@@ -352,9 +375,7 @@ void Pixmap1D::init(int w, int components){
 }
 
 Pixmap1D::~Pixmap1D(){
-	if(pixels) {
-		delete [] pixels;
-	}
+	delete [] pixels;
 }
 
 void Pixmap1D::load(const string &path){
@@ -371,7 +392,6 @@ void Pixmap1D::load(const string &path){
 }
 
 void Pixmap1D::loadBmp(const string &path){
-
 	PixmapIoBmp plb;
 	plb.openRead(path);
 
@@ -462,9 +482,7 @@ void Pixmap2D::init(int w, int h, int components){
 }
 
 Pixmap2D::~Pixmap2D(){
-	if(pixels) {
-		delete[] pixels;
-	}
+	delete[] pixels;
 }
 
 void Pixmap2D::load(const string &path){
@@ -778,9 +796,7 @@ void Pixmap3D::init(int d, int components){
 }
 
 Pixmap3D::~Pixmap3D(){
-	if(pixels) {
-		delete[] pixels;
-	}
+	delete[] pixels;
 }
 
 void Pixmap3D::loadSlice(const string &path, int slice){

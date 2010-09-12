@@ -27,7 +27,7 @@
 //ocurred in a file where this header is included will have
 //file and line number
 
-struct AllocInfo{
+struct AllocInfo {
 	int line;
 	const char *file;
 	size_t bytes;
@@ -40,12 +40,12 @@ struct AllocInfo{
 };
 
 // =====================================================
-//	class AllocRegistry
+// class AllocRegistry
 // =====================================================
 
-class AllocRegistry{
+class AllocRegistry {
 private:
-	static const unsigned maxAllocs= 40000;
+	static const unsigned maxAllocs = 40000;
 
 private:
 	AllocRegistry();
@@ -53,7 +53,7 @@ private:
 private:
 	AllocInfo allocs[maxAllocs];	//array to store allocation info
 	int allocCount;					//allocations
-	size_t allocBytes;					//bytes allocated
+	size_t allocBytes;				//bytes allocated
 	int nonMonitoredCount;
 	size_t nonMonitoredBytes;
 
@@ -70,54 +70,58 @@ public:
 
 //if an allocation ocurrs in a file where "leaks_dumper.h" is not included
 //this operator new is called and file and line will be unknown
-inline void * operator new (size_t bytes){
-	void *ptr= malloc(bytes);
+inline void * operator new(size_t bytes) {
+	void *ptr = malloc(bytes);
 	AllocRegistry::getInstance().allocate(AllocInfo(ptr, "unknown", 0, bytes, false));
 	return ptr;
 }
 
-inline void operator delete(void *ptr){
+inline void operator delete(void *ptr) {
 	AllocRegistry::getInstance().deallocate(ptr, false);
 	free(ptr);
 }
 
-inline void * operator new[](size_t bytes){
-	void *ptr= malloc(bytes);
+inline void * operator new[](size_t bytes) {
+	void *ptr = malloc(bytes);
 	AllocRegistry::getInstance().allocate(AllocInfo(ptr, "unknown", 0, bytes, true));
 	return ptr;
 }
 
-inline void operator delete [](void *ptr){
+inline void operator delete [](void *ptr) {
 	AllocRegistry::getInstance().deallocate(ptr, true);
 	free(ptr);
 }
 
 //if an allocation ocurrs in a file where "leaks_dumper.h" is included
 //this operator new is called and file and line will be known
-inline void * operator new (size_t bytes, char* file, int line){
-	void *ptr= malloc(bytes);
+inline void * operator new(size_t bytes, char* file, int line) {
+	void *ptr = malloc(bytes);
 	AllocRegistry::getInstance().allocate(AllocInfo(ptr, file, line, bytes, false));
 	return ptr;
 }
 
-inline void operator delete(void *ptr, char* file, int line){
+inline void operator delete(void *ptr, char* file, int line) {
 	AllocRegistry::getInstance().deallocate(ptr, false);
 	free(ptr);
 }
 
-inline void * operator new[](size_t bytes, char* file, int line){
-	void *ptr= malloc(bytes);
+inline void * operator new[](size_t bytes, char* file, int line) {
+	void *ptr = malloc(bytes);
 	AllocRegistry::getInstance().allocate(AllocInfo(ptr, file, line, bytes, true));
 	return ptr;
 }
 
-inline void operator delete [](void *ptr, char* file, int line){
+inline void operator delete [](void *ptr, char* file, int line) {
 	AllocRegistry::getInstance().deallocate(ptr, true);
 	free(ptr);
 }
 
+#ifdef USE_SSE2_INTRINSICS
+//TODO Add new_aligned_16 here for Vec3f and Vec4f classes?
+#endif
+
 #define new new(__FILE__, __LINE__)
 
-#endif
+#endif // SL_LEAK_DUMP
 
-#endif
+#endif // _LEAKDUMPER_H_

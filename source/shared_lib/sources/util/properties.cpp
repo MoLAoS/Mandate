@@ -15,156 +15,203 @@
 #include <fstream>
 #include <stdexcept>
 #include <cstring>
+#include <sstream>
+#include <locale>
 
 #include "conversion.h"
 
 #include "leak_dumper.h"
+#include "FSFactory.hpp"
+using std::exception;
 
+namespace Shared { namespace Util {
 
-using namespace std;
-
-namespace Shared{ namespace Util{
+using namespace PhysFS;
 
 // =====================================================
-//	class Properties
+// class Properties
 // =====================================================
+	
+Properties::Properties() {}
 
-void Properties::load(const string &path){
-	ifstream fileStream;
+void Properties::load(const string &path, bool trim) {
+	std::locale loc;
 	char lineBuffer[maxLine];
 	string line, key, value;
 	int pos;
 
-	this->path= path;
+	this->path = path;
 
-	fileStream.open(path.c_str(), ios_base::in);
-	if(fileStream.fail()){
-		throw runtime_error("Can't open propertyMap file: " + path);
+	istream *fileStream = FSFactory::getInstance()->getIStream(path.c_str());
+	//fileStream.exceptions(ios::failbit | ios::badbit);
+
+	if (fileStream->fail()) {
+		throw runtime_error("Can't find or open propertyMap file: " + path);
 	}
 
 	propertyMap.clear();
-	while(!fileStream.eof()){
-		fileStream.getline(lineBuffer, maxLine);
 
-		if(lineBuffer[0]==';'){
+	while (!fileStream->eof()) {
+		fileStream->getline(lineBuffer, maxLine);
+
+		lineBuffer[maxLine - 1] = '\0';
+
+		if (lineBuffer[0] == ';' || lineBuffer[0] == '#') {
 			continue;
 		}
 
 		// gracefully handle win32 \r\n line endings
-		size_t len= strlen(lineBuffer);
-   		if(len > 0 && lineBuffer[len-1] == '\r'){
-			lineBuffer[len-1]= 0;
+		size_t len = strlen(lineBuffer);
+		if (len > 0 && lineBuffer[len - 1] == '\r') {
+			lineBuffer[len-1] = 0;
 		}
 
-		line= lineBuffer;
-		pos= line.find('=');
+		line = lineBuffer;
+		pos = line.find('=');
 
-		if(pos == string::npos){
+		if (pos == string::npos) {
 			continue;
 		}
 
-		key= line.substr(0, pos);
-		value= line.substr(pos+1);
+		key = line.substr(0, pos);
+		value = line.substr(pos + 1);
+
+		if (trim) {
+			key = Conversion::trimStr(key);
+			value = Conversion::trimStr(value);
+		}
+		for (int i=0; i < key.size(); ++i) {
+			key[i] = tolower(key[i]);
+		}
 		propertyMap.insert(PropertyPair(key, value));
 		propertyVector.push_back(PropertyPair(key, value));
 	}
 
-	fileStream.close();
+	delete fileStream;
 }
 
-void Properties::save(const string &path){
-	ofstream fileStream;
+void Properties::save(const string &path) {
+	ostream *fileStream = FSFactory::getInstance()->getOStream(path.c_str());
 
-	fileStream.open(path.c_str(), ios_base::out | ios_base::trunc);
+	*fileStream << "; === propertyMap File === \n";
+	*fileStream << '\n';
 
-	fileStream << "; === propertyMap File === \n";
-	fileStream << '\n';
-
-	for(PropertyMap::iterator pi= propertyMap.begin(); pi!=propertyMap.end(); ++pi){
-		fileStream << pi->first << '=' << pi->second << '\n';
+	for (PropertyMap::iterator pi = propertyMap.begin(); pi != propertyMap.end(); ++pi) {
+		*fileStream << pi->first << '=' << pi->second << '\n';
 	}
 
-	fileStream.close();
+	delete fileStream;
 }
 
-bool Properties::getBool(const string &key) const{
-	try{
-		return strToBool(getString(key));
-	}
-	catch(exception &e){
-		throw runtime_error("Error accessing value: " + key + " in: " + path+"\n" + e.what());
-	}
+void Properties::clear(){
+	propertyMap.clear();
+	propertyVector.clear();
 }
 
-int Properties::getInt(const string &key) const{
-	try{
-		return strToInt(getString(key));
-	}
-	catch(exception &e){
-		throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
-	}
-}
-
-int Properties::getInt(const string &key, int min, int max) const{
-	int i= getInt(key);
-	if(i<min || i>max){
-		throw runtime_error("Value out of range: " + key + ", min: " + intToStr(min) + ", max: " + intToStr(max));
-	}
-	return i;
-}
-
-float Properties::getFloat(const string &key) const{
-	try{
-		return strToFloat(getString(key));
-	}
-	catch(exception &e){
-		throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
-	}
-}
-
-float Properties::getFloat(const string &key, float min, float max) const{
-	float f= getFloat(key);
-	if(f<min || f>max){
-		throw runtime_error("Value out of range: " + key + ", min: " + floatToStr(min) + ", max: " + floatToStr(max));
-	}
-	return f;
-}
-
-const string &Properties::getString(const string &key) const{
+const string *Properties::_getString(const string &key, bool required) const {
 	PropertyMap::const_iterator it;
-	it= propertyMap.find(key);
-	if(it==propertyMap.end()){
-		throw runtime_error("Value not found in propertyMap: " + key + ", loaded from: " + path);
+	string lkey = key;
+	for (int i=0; i < lkey.size(); ++i) {
+		if (isupper(lkey[i])) {
+			lkey[i] = tolower(lkey[i]);
+		}
 	}
-	else{
-		return it->second;
+	it = propertyMap.find(lkey);
+	if (it == propertyMap.end()) {
+		if (required) {
+			throw runtime_error("Value not found in propertyMap: " + key + ", loaded from: " + path);
+		}
+		return 0;
+	} else {
+		return &it->second;
 	}
 }
 
-void Properties::setInt(const string &key, int value){
-	setString(key, intToStr(value));
+template<typename T>
+static inline void checkRange(const T &val, const T *pMin, const T *pMax) {
+	if((pMin && val < *pMin) || (pMax && val > *pMax)) {
+		stringstream str;
+		str << "Value out of range: " << val << "(min = ";
+		if(pMin) {
+			str << *pMin;
+		} else {
+			str << "none";
+		}
+		str << ", max = ";
+		if(pMax) {
+			str << *pMax << ")";
+		} else {
+			str << "none)";
+		}
+		throw range_error(str.str());
+	}
 }
 
-void Properties::setBool(const string &key, bool value){
-	setString(key, boolToStr(value));
+bool Properties::_getBool(const string &key, const bool *pDef) const {
+	//try {
+		const string *pstrVal = _getString(key, !pDef);
+		if(!pstrVal) {
+			assert(pDef);
+			return *pDef;
+		}
+
+		return Conversion::strToBool(*pstrVal);
+	//} catch (exception &e) {
+	//	throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
+	//}
 }
 
-void Properties::setFloat(const string &key, float value){
-	setString(key, floatToStr(value));
+int Properties::_getInt(const string &key, const int *pDef, const int *pMin, const int *pMax) const {
+	//try {
+		const string *pstrVal = _getString(key, !pDef);
+		if(!pstrVal) {
+			assert(pDef);
+			return *pDef;
+		}
+
+		int val =  Conversion::strToInt(*pstrVal);
+		checkRange<int>(val, pMin, pMax);
+		return val;
+	//} catch (exception &e) {
+	//	throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
+	//}
 }
 
-void Properties::setString(const string &key, const string &value){
-	propertyMap.erase(key);
-	propertyMap.insert(PropertyPair(key, value));
+float Properties::_getFloat(const string &key, const float *pDef, const float *pMin, const float *pMax) const {
+	//try {
+		const string *pstrVal = _getString(key, !pDef);
+		if(!pstrVal) {
+			assert(pDef);
+			return *pDef;
+		}
+		float val =  Conversion::strToFloat(*pstrVal);
+		checkRange<float>(val, pMin, pMax);
+		return val;
+	//} catch (exception &e) {
+	//	throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
+	//}
 }
 
-string Properties::toString(){
-	string rStr;
+const string &Properties::_getString(const string &key, const string *pDef) const {
+	//try {
+		const string *pstrVal = _getString(key, !pDef);
+		if(!pstrVal) {
+			assert(pDef);
+			return *pDef;
+		}
+		return *pstrVal;
+	//} catch (exception &e) {
+	//	throw runtime_error("Error accessing value: " + key + " in: " + path + "\n" + e.what());
+	//}
+}
 
-	for(PropertyMap::iterator pi= propertyMap.begin(); pi!=propertyMap.end(); pi++)
-		rStr+= pi->first + "=" + pi->second + "\n";
+string Properties::toString() const {
+	stringstream str;
 
-	return rStr;
+	for (PropertyMap::const_iterator pi = propertyMap.begin(); pi != propertyMap.end(); ++pi)
+		str << pi->first << "=" << pi->second << endl;
+
+	return str.str();
 }
 
 }}//end namepsace

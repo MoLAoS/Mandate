@@ -12,8 +12,8 @@
 #include "platform_util.h"
 
 #include <SDL.h>
-#include <AL/alc.h>
-#include <AL/al.h>
+#include <alc.h>
+#include <al.h>
 
 #include <vector>
 

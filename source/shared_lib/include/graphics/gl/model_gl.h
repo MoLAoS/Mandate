@@ -20,10 +20,10 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 //	class ModelGl
 // =====================================================
 
-class ModelGl: public Model{
+class ModelGl: public Model {
 public:
-	virtual void init(){}
-	virtual void end(){}
+	virtual void init() {}
+	virtual void end() {}
 };
 
 }}}//end namespace

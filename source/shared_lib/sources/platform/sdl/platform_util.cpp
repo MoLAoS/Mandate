@@ -1,10 +1,13 @@
-//This file is part of Glest Shared Library (www.glest.org)
-//Copyright (C) 2005 Matthias Braun <matze@braunis.de>
-
-//You can redistribute this code and/or modify it under
-//the terms of the GNU General Public License as published by the Free Software
-//Foundation; either version 2 of the License, or (at your option) any later
-//version.
+// ==============================================================
+//	This file is part of Glest Shared Library (www.glest.org)
+//
+//	Copyright (C) 2005 Matthias Braun <matze@braunis.de>
+//
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
+//	License, or (at your option) any later version
+// ==============================================================
 
 #include "pch.h"
 #include "platform_util.h"
@@ -36,39 +39,10 @@ using namespace std;
 namespace Shared{ namespace Platform{
 
 namespace Private {
-
-bool shouldBeFullscreen = false;
-int ScreenWidth;
-int ScreenHeight;
-
+	bool shouldBeFullscreen = false;
+	int ScreenWidth;
+	int ScreenHeight;
 }
-
-// =====================================
-//          PerformanceTimer
-// =====================================
-
-PerformanceTimer::PerformanceTimer(float fps, int maxTimes, int maxBacklog) :
-		lastTicks(SDL_GetTicks()),
-		updateTicks(static_cast<int>(1000.f / fps)),
-		times(0),
-		maxTimes(maxTimes),
-		maxBacklog(maxBacklog) {
-	assert(maxTimes == -1 || maxTimes > 0);
-	assert(maxBacklog >= -1);
-}
-
-
-
-// =====================================
-//         Chrono
-// =====================================
-
-Chrono::Chrono() {
-	freq = 1000;
-	stopped= true;
-	accumCount= 0;
-}
-
 
 // =====================================================
 //	class PlatformExceptionHandler
@@ -76,21 +50,25 @@ Chrono::Chrono() {
 
 PlatformExceptionHandler *PlatformExceptionHandler::singleton = NULL;
 
-PlatformExceptionHandler::~PlatformExceptionHandler(){}
+//PlatformExceptionHandler::~PlatformExceptionHandler(){}
 
 void PlatformExceptionHandler::install() {
-	singleton = this;
+	assert(this);
+	assert(singleton == this);
 	struct sigaction action;
 	memset(&action, 0, sizeof(action));
 	action.sa_handler = NULL;
 	//action.sa_mask
 	action.sa_flags = SA_SIGINFO | SA_NODEFER;
 	action.sa_sigaction = PlatformExceptionHandler::handler;
+#ifndef DEBUG	
+#endif
 	sigaction(SIGILL, &action, NULL);
 	sigaction(SIGSEGV, &action, NULL);
-//	sigaction(SIGABRT, &action, NULL);
+	sigaction(SIGABRT, &action, NULL);
 	sigaction(SIGFPE, &action, NULL);
 	sigaction(SIGBUS, &action, NULL);
+
 }
 
 void PlatformExceptionHandler::handler(int signo, siginfo_t *info, void *context) {
@@ -255,6 +233,11 @@ void PlatformExceptionHandler::handler(int signo, siginfo_t *info, void *context
 
 			break;
 
+		case SIGABRT:
+			signame = "SIGABRT";
+			sigcode = "";
+			break;
+
 		default:
 			signame = "unexpected sinal";
 			sigcode = "(wtf?)";
@@ -346,46 +329,6 @@ bool ask(string message) {
 	int res;
 	std::cin >> res;
 	return res != 0;
-}
-
-bool isKeyDown(int virtualKey) {
-	char key = static_cast<char> (virtualKey);
-	const Uint8* keystate = SDL_GetKeyState(0);
-
-	// kinda hack and wrong...
-	if(key >= 0) {
-		return keystate[key];
-	}
-	switch(key) {
-		case vkAdd:
-			return keystate[SDLK_PLUS] | keystate[SDLK_KP_PLUS];
-		case vkSubtract:
-			return keystate[SDLK_MINUS] | keystate[SDLK_KP_MINUS];
-		case vkAlt:
-			return keystate[SDLK_LALT] | keystate[SDLK_RALT];
-		case vkControl:
-			return keystate[SDLK_LCTRL] | keystate[SDLK_RCTRL];
-		case vkShift:
-			return keystate[SDLK_LSHIFT] | keystate[SDLK_RSHIFT];
-		case vkEscape:
-			return keystate[SDLK_ESCAPE];
-		case vkUp:
-			return keystate[SDLK_UP];
-		case vkLeft:
-			return keystate[SDLK_LEFT];
-		case vkRight:
-			return keystate[SDLK_RIGHT];
-		case vkDown:
-			return keystate[SDLK_DOWN];
-		case vkReturn:
-			return keystate[SDLK_RETURN] | keystate[SDLK_KP_ENTER];
-		case vkBack:
-			return keystate[SDLK_BACKSPACE];
-		default:
-			std::cerr << "isKeyDown called with unknown key.\n";
-			break;
-	}
-	return false;
 }
 
 }}//end namespace

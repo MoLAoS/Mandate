@@ -13,20 +13,19 @@
 #define _SHARED_GRAPHICS_PIXMAP_H_
 
 #include <string>
+#include <cassert>
 
 #include "vec.h"
 #include "types.h"
 
-using std::string;
-using Shared::Platform::int8;
-using Shared::Platform::uint8;
-using Shared::Platform::int16;
-using Shared::Platform::uint16;
-using Shared::Platform::int32;
-using Shared::Platform::uint32;
-using Shared::Platform::float32;
+#include "FileOps.hpp"
 
-namespace Shared{ namespace Graphics{
+namespace Shared { namespace Graphics {
+
+using std::string;
+using namespace Platform;
+using namespace Math;
+using namespace PhysFS;
 
 // =====================================================
 //	class PixmapIo
@@ -59,7 +58,7 @@ public:
 
 class PixmapIoTga: public PixmapIo{
 private:
-	FILE *file;
+	FileOps *file;
 
 public:
 	PixmapIoTga();
@@ -79,7 +78,7 @@ public:
 
 class PixmapIoBmp: public PixmapIo{
 private:
-	FILE *file;
+	FileOps *file;
 
 public:
 	PixmapIoBmp();
@@ -176,6 +175,14 @@ public:
 	void setComponent(int x, int y, int component, float32 value)	{pixels[(w*y+x)*components+component]= static_cast<uint8>(value*255.f);}
 
 	//vector set
+	void setPixel(const Vec2i pos, const Colour &c) {
+		assert(components == 4);
+		const int ndx = (w * pos.y + pos.x) * 4;
+		pixels[ndx + 0] = c.r;
+		pixels[ndx + 1] = c.g;
+		pixels[ndx + 2] = c.b;
+		pixels[ndx + 3] = c.a;
+	}
 	void setPixel(int x, int y, const Vec3f &p);
 	void setPixel(int x, int y, const Vec4f &p);
 	void setPixel(int x, int y, float p)		{pixels[(w*y+x)*components]= static_cast<uint8>(p*255.f);}

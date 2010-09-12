@@ -13,14 +13,18 @@
 #ifndef _SHARED_PLATFORM_TYPES_H_
 #define _SHARED_PLATFORM_TYPES_H_
 
+#include "projectConfig.h"
+
 #ifdef USE_SDL
-	#include <SDL.h>
+#	include <SDL.h>
+#	include <SDL_thread.h>
 #endif
 #if defined(WIN32)  || defined(WIN64)
-	#include <windows.h>
+#	define NOMINMAX
+#	include <windows.h>
 #endif
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 #if defined(WIN32)  || defined(WIN64)
 	typedef HWND WindowHandle;
@@ -28,6 +32,8 @@ namespace Shared{ namespace Platform{
 	typedef HGLRC GlContextHandle;
 	typedef CRITICAL_SECTION MutexType;
 	typedef HANDLE ThreadType;
+	typedef DWORD NativeKeyCode;
+	typedef unsigned char NativeKeyCodeCompact;
 
 	typedef float float32;
 	typedef double float64;
@@ -39,6 +45,10 @@ namespace Shared{ namespace Platform{
 	typedef unsigned int uint32;
 	typedef long long int64;
 	typedef unsigned long long uint64;
+
+#	define strcasecmp stricmp
+#	define strtok_r(a,b,c) strtok(a,b)
+#	define log2(x) (log(float(x))/log(2.f))
 #endif
 
 #ifdef USE_SDL
@@ -48,6 +58,8 @@ namespace Shared{ namespace Platform{
 	typedef void* GlContextHandle;
 	typedef SDL_mutex* MutexType;
 	typedef SDL_Thread* ThreadType;
+	typedef SDLKey NativeKeyCode;
+	typedef unsigned short NativeKeyCodeCompact;
 
 	typedef float float32;
 	typedef double float64;
@@ -61,6 +73,10 @@ namespace Shared{ namespace Platform{
 	typedef Uint32 uint32;
 	typedef Sint64 int64;
 	typedef Uint64 uint64;
+#endif
+
+#ifdef USE_POSIX_SOCKETS
+	typedef int SOCKET;
 #endif
 
 }}//end namespace

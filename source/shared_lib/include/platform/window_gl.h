@@ -18,13 +18,13 @@
 
 using Shared::Graphics::Gl::ContextGl;
 
-namespace Shared{ namespace Platform{
+namespace Shared { namespace Platform {
 
 // =====================================================
-//	class WindowGl
+// class WindowGl
 // =====================================================
 
-class WindowGl: public Window{
+class WindowGl: public Window {
 protected:
 	ContextGl context;
 

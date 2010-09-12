@@ -1,0 +1,17 @@
+<?xml version="1.0" standalone="yes" ?> 
+<scenario>
+	<difficulty value="1"/>
+	<players>
+		<player control="cpu" faction="tech" team="1"/>
+		<player control="closed"/>
+		<player control="cpu" faction="magic" team="2"/>
+		<player control="human" faction="magic" team="1"/>	
+	</players>
+	<map value="mountains"/>
+	<tileset value="winter_forest"/>
+	<tech-tree value="magitech"/>
+	<default-resources value="true"/>
+	<default-units value="true"/>
+	<default-victory-conditions value="true"/>	
+	<scripts/>
+</scenario>

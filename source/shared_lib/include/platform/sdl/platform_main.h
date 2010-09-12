@@ -11,6 +11,9 @@
 #ifndef _SHARED_PLATFORM_MAIN_H_
 #define _SHARED_PLATFORM_MAIN_H_
 
+//#ifdef __APPLE__
+//#	include <SDLMain.m>
+//#endif
 #include <SDL.h>
 #include <iostream>
 

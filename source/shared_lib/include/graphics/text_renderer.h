@@ -22,28 +22,15 @@ using std::string;
 namespace Shared{ namespace Graphics{
 
 // =====================================================
-//	class TextRenderer2D
+//	class TextRenderer
 // =====================================================
 
-class TextRenderer2D{
+class TextRenderer {
 public:	
-	virtual ~TextRenderer2D(){};
+	virtual ~TextRenderer(){};
 
-	virtual void begin(const Font2D *font)= 0;
+	virtual void begin(const Font *font)= 0;
 	virtual void render(const string &text, int x, int y, bool centered= false)= 0;
-	virtual void end()= 0;
-};
-
-// =====================================================
-//	class TextRenderer3D
-// =====================================================
-
-class TextRenderer3D{
-public:	
-	virtual ~TextRenderer3D(){};
-
-	virtual void begin(const Font3D *font)= 0;
-	virtual void render(const string &text, float x, float y, float size, bool centered= false)= 0;
 	virtual void end()= 0;
 };
 

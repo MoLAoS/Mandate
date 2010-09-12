@@ -29,18 +29,13 @@ class ModelRenderer;
 class Model;
 
 class FontManager;
-class TextRenderer2D;
+class TextRenderer;
 class TextRenderer3D;
-class Font2D;
+class Font;
 class Font3D;
 
 class ParticleManager;
 class ParticleRenderer;
-	
-class ShaderManager;
-class ShaderProgram;
-class VertexShader;
-class FragmentShader;
 
 // =====================================================
 //	class GraphicsFactory
@@ -67,20 +62,12 @@ public:
 
 	//text
 	virtual FontManager *newFontManager()			{return NULL;}
-	virtual TextRenderer2D *newTextRenderer2D()		{return NULL;}
-	virtual TextRenderer3D *newTextRenderer3D()		{return NULL;}
-	virtual Font2D *newFont2D()						{return NULL;}
-	virtual Font3D *newFont3D()						{return NULL;}
+	virtual TextRenderer *newTextRendererFT()		{return NULL;}
+	virtual Font *newFreeTypeFont()					{return NULL;}
 
 	//particles
 	virtual ParticleManager *newParticleManager()	{return NULL;}
 	virtual ParticleRenderer *newParticleRenderer()	{return NULL;}
-	
-	//shaders
-	virtual ShaderManager *newShaderManager()		{return NULL;}
-	virtual ShaderProgram *newShaderProgram()		{return NULL;}
-	virtual VertexShader *newVertexShader()			{return NULL;}
-	virtual FragmentShader *newFragmentShader()		{return NULL;}
 };
 
 }}//end namespace

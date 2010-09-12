@@ -16,8 +16,6 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace Shared{ namespace Graphics{
 
 class TextureManager;
@@ -26,7 +24,7 @@ class TextureManager;
 //	class ModelManager
 // =====================================================
 
-class ModelManager{
+class ModelManager {
 protected:
 	typedef vector<Model*> ModelContainer;
 
