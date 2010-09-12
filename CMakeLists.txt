@@ -148,7 +148,7 @@ if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES
 			"glestadv" "Glest Advanced Engine"
 			"gae_mapeditor" "Map Editor"
-			"configurator" "Configurator"
+			#"configurator" "Configurator"
 			"gae_g3dviewer" "G3D Viewer"
 	)
 else(wxWidgets_FOUND)
@@ -160,7 +160,7 @@ if(WIN32)
 	#include(InstallRequiredSystemLibraries)
 
 	set(CPACK_GENERATOR "NSIS")
-	set(CPACK_NSIS_DISPLAY_NAME "glest advanced engine")
+	set(CPACK_NSIS_DISPLAY_NAME "Glest Advanced Engine")
 	set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.glest.org")
 	set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.glest.org")
 	set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
