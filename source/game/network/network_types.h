@@ -234,7 +234,7 @@ WRAPPED_ENUM( NetworkCommandType,
 	struct MoveSkillUpdate {
 		int16	offsetX		:  2;
 		int16	offsetY		:  2;
-		int16	end_offset	: 12;
+		int16	end_offset	: 12; // max 4095
 
 		MoveSkillUpdate(const Unit *unit);
 		MoveSkillUpdate(const uint8 *ptr) { *this = *((MoveSkillUpdate*)ptr); }

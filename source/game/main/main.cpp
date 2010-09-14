@@ -100,14 +100,14 @@ int glestMain(int argc, char** argv) {
 	string configDir = DEFAULT_CONFIG_DIR;
 	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;
-	if(args.parse(argc, argv)){
+	if (args.parse(argc, argv)) {
 		// quick exit
 		return 0;
 	}
-	if(!args.getConfigDir().empty()){
+	if (!args.getConfigDir().empty()) {
 		configDir = args.getConfigDir();
 	}
-	if(!args.getDataDir().empty()){
+	if (!args.getDataDir().empty()) {
 		dataDir = args.getDataDir();
 	}
 
@@ -127,27 +127,35 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir + "/addons/", true);
 	mkdir(configDir + "/screens/", true);
 
+
 #	if USE_PHYSFS
-		g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-		g_fileFactory.usePhysFS = true;
+		try {
+			g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+			g_fileFactory.usePhysFS = true;
+		} catch (runtime_error &e) {
+			exceptionMessage(e);
+			return 0;
+		}
 #	endif
 
 	if (g_config.getMiscCatchExceptions()) {
 		ExceptionHandler exceptionHandler;
 
-#if ! _GAE_DEBUG_EDITION_
+#if _GAE_DEBUG_EDITION_
+		exceptionHandler.install();
+		Program program(args, configDir);
+		showCursor(false);
+		//main loop
+		program.loop();
+#else
 		try {
-#endif
 			exceptionHandler.install();
 			Program program(args, configDir);
 			showCursor(false);
 
-#if	! _GAE_DEBUG_EDITION_
 			try {
-#endif
 				//main loop
 				program.loop();
-#if ! _GAE_DEBUG_EDITION_
 			} catch(const exception &e) {
 				// friendlier error handling
 				program.crash(&e);

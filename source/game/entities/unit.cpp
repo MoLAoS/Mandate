@@ -1036,14 +1036,10 @@ void Unit::updateSkillCycle(int frameOffset) {
 	if (currSkill->getClass() != SkillClass::MOVE) {
 		fixed ratio = getBaseSpeed() / fixed(getSpeed());
 		frameOffset = (frameOffset * ratio).round();
-		if (frameOffset < 1) {
-			frameOffset = 1;
-		}
 	}
 	// else move skill, server has already modified speed for us
-
 	lastCommandUpdate = g_world.getFrameCount();
-	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
+	nextCommandUpdate = g_world.getFrameCount() + clamp(frameOffset, 1, 4095);;
 }
 
 /** called by the server only, updates a skill cycle for the move skill */
@@ -1063,7 +1059,8 @@ void Unit::updateMoveSkillCycle() {
 
 	// reset lastCommandUpdate and calculate next skill cycle length
 	lastCommandUpdate = g_world.getFrameCount();
-	nextCommandUpdate = g_world.getFrameCount() + int(1.0000001f / progressSpeed) + 1;
+	int frameOffset = int(1.0000001f / progressSpeed) + 1;
+	nextCommandUpdate = g_world.getFrameCount() + clamp(frameOffset, 1, 4095);
 }
 
 /** @return true when the current skill has completed a cycle */

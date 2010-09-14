@@ -260,7 +260,7 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 		assert(traj.length() > 0.5f);
 		frames = int((traj.length() - 0.5f) / flatVector.length());
 		// just in case
-		if (frames < 1) frames = 1;
+		frames = clamp(frames, 1, 255); // as dictated by Glest::Net::ProjectileUpdate (maybe give more resolution ?)
 	}
 
 	startFrame = g_world.getFrameCount();
