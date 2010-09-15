@@ -267,11 +267,70 @@ void EnhancementType::addMultipliers(const EnhancementType &e, fixed strength){
 	effectStrengthMult += (e.getEffectStrengthMult() - 1) * strength;
 	attackPctStolenMult += (e.getAttackPctStolenMult() - 1) * strength;
 	attackRangeMult += (e.getAttackRangeMult() - 1) * strength;
+	
+//	stringstream ss;
+//	ss << "MoveSpeedMult: " << moveSpeedMult.toFloat() << " + "
+//		<< ((e.getMoveSpeedMult() - 1) * strength).toFloat() << " == ";
+
 	moveSpeedMult += (e.getMoveSpeedMult() - 1) * strength;
+
+//	ss << moveSpeedMult.toFloat();
+//	g_logger.add(ss.str());
+
 	attackSpeedMult += (e.getAttackSpeedMult() - 1) * strength;
 	prodSpeedMult += (e.getProdSpeedMult() - 1) * strength;
 	repairSpeedMult += (e.getRepairSpeedMult() - 1) * strength;
 	harvestSpeedMult += (e.getHarvestSpeedMult() - 1) * strength;
+}
+
+void EnhancementType::clampMultipliers() {
+	fixed low;
+	low.raw() = (1 << 6); 
+	if (maxHpMult <= 0) {
+		maxHpMult = low;
+	}
+	if (hpRegenerationMult <= 0) {
+		hpRegenerationMult = low;
+	}
+	if (maxEpMult <= 0) {
+		maxEpMult = low;
+	}
+	if (epRegenerationMult <= 0) {
+		epRegenerationMult = low;
+	}
+	if (sightMult <= 0) {
+		sightMult = low;
+	}
+	if (armorMult <= 0) {
+		armorMult = low;
+	}
+	if (attackStrengthMult <= 0) {
+		attackStrengthMult = low;
+	}
+	if (effectStrengthMult <= 0) {
+		effectStrengthMult = low;
+	}
+	if (attackPctStolenMult <= 0) {
+		attackPctStolenMult = low;
+	}
+	if (attackRangeMult <= 0) {
+		attackRangeMult = low;
+	}
+	if (attackSpeedMult <= 0) {
+		attackSpeedMult = low;
+	}
+	if (moveSpeedMult <= 0) {
+		moveSpeedMult = low;
+	}
+	if (prodSpeedMult <= 0) {
+		prodSpeedMult = low;
+	}
+	if (repairSpeedMult <= 0) {
+		repairSpeedMult = low;
+	}
+	if (harvestSpeedMult <= 0) {
+		harvestSpeedMult = low;
+	}
 }
 
 void formatModifier(string &str, const char *pre, const char* label, int value, fixed multiplier) {

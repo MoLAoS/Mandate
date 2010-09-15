@@ -280,6 +280,8 @@ public:
 	 */
 	void addMultipliers(const EnhancementType &e, fixed strength = 1);
 
+	void clampMultipliers();
+
 	/**
 	 * Resets all multipliers to 1.0f and all base class members to their
 	 * appropriate default values (0, NULL, etc.).

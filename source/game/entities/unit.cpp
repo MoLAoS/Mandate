@@ -1060,8 +1060,8 @@ void Unit::updateMoveSkillCycle() {
 
 	// reset lastCommandUpdate and calculate next skill cycle length
 	lastCommandUpdate = g_world.getFrameCount();
-	int frameOffset = int(1.0000001f / progressSpeed) + 1;
-	nextCommandUpdate = g_world.getFrameCount() + clamp(frameOffset, 1, 4095);
+	int frameOffset = clamp(int(1.0000001f / progressSpeed) + 1, 1, 4095);
+	nextCommandUpdate = g_world.getFrameCount() + frameOffset; 
 }
 
 /** @return true when the current skill has completed a cycle */
@@ -1467,24 +1467,30 @@ void Unit::recalculateStats() {
 	int oldMaxHp = getMaxHp();
 	int oldHp = hp;
 
-	reset();
-	setValues(*type); // => setValues(UnitStats &)
+	//g_logger.add("re-calculating stats...");
+
+	EnhancementType::reset();
+	UnitStats::setValues(*type);
 
 	// add up all multipliers first and then apply (multiply) once.
 	// See EnhancementType::addMultipliers() for the 'adding' strategy
-	addMultipliers(totalUpgrade);
+	EnhancementType::addMultipliers(totalUpgrade);
 	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
-		addMultipliers(*(*i)->getType(), (*i)->getStrength());
+		EnhancementType::addMultipliers(*(*i)->getType(), (*i)->getStrength());
 	}
-	applyMultipliers(*this);
-
-	addStatic(totalUpgrade);
+	EnhancementType::clampMultipliers();
+	UnitStats::applyMultipliers(*this);
+	UnitStats::addStatic(totalUpgrade);
 	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
-		addStatic(*(*i)->getType(), (*i)->getStrength());
+		UnitStats::addStatic(*(*i)->getType(), (*i)->getStrength());
 
 		// take care of effect damage type
 		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
 	}
+
+	//stringstream ss;
+	//ss << "recalculated, moveSpeedMult == " << getMoveSpeedMult().toFloat();
+	//g_logger.add(ss.str());
 
 	effects.clearDirty();
 
@@ -1876,7 +1882,7 @@ int Unit::getSpeed(const SkillType *st) const {
 		default:
 			break;
 	}
-	return (speed > 0 ? speed.intp() : 0);
+	return (speed > 1 ? speed.intp() : 1);
 }
 
 // =====================================================
