@@ -2042,25 +2042,26 @@ void Renderer::renderObjectsFast(bool shadows) {
 	}
 
 	modelRenderer->begin(false, shadows, false);
-	int thisTeamIndex= world->getThisTeamIndex();
+	int thisTeamIndex = world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();
 	for ( ; it != culler.tile_end(); ++it) {
 		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) continue;
-		Tile *sc= map->getTile(pos);
-		Object *o= sc->getObject();
+		if (!map->isInside(pos)) {
+			continue;
+		}
+		Tile *sc = map->getTile(pos);
+		Object *o = sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
 			Resource *r = o->getResource();
-			if (r) {
-				glPushName(0x101);	// resource
-			} else {
-				glPushName(0x102);	// object (non resource)
+			if (!r) {
+				continue;
 			}
+			glPushName(0x101);	// resource
 			glPushName(o->getId());	// obj id
 
-			const Model *objModel= sc->getObject()->getModel();
-			Vec3f v= o->getPos();
+			const Model *objModel = sc->getObject()->getModel();
+			Vec3f v = o->getPos();
 			v.x += GameConstants::cellScale / 2;
 			v.z += GameConstants::cellScale / 2;
 			glMatrixMode(GL_MODELVIEW);
