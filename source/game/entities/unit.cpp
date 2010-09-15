@@ -921,6 +921,8 @@ void Unit::kill() {
 	}
 
 	setCurrSkill(SkillClass::DIE);
+	g_simInterface->doUpdateAnimOnDeath(this);
+
 	Died(this);
 	clearCommands();
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
@@ -996,7 +998,6 @@ void Unit::updateAnimDead() {
   * @param soundOffset the number of frames from now to start the skill sound (or -1 if no sound)
   * @param attackOffset the number  of frames from now to start attack systems (or -1 if no attack)*/
 void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
-	assert(currSkill->getClass() != SkillClass::DIE);
 	if (frameOffset == -1) { // hacky handle move skill
 		assert(currSkill->getClass() == SkillClass::MOVE);
 		static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);

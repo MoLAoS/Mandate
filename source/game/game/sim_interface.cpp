@@ -454,6 +454,12 @@ void SimulationInterface::startFrame(int frame) {
 	)
 }
 
+void SimulationInterface::doUpdateAnimOnDeath(Unit *unit) {
+	assert(unit->getCurrSkill()->getClass() == SkillClass::DIE);
+	const CycleInfo &inf = skillCycleTable->lookUp(unit);
+	unit->updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
+}
+
 void SimulationInterface::doUpdateAnim(Unit *unit) {
 	if (unit->getCurrSkill()->getClass() == SkillClass::DIE) {
 		unit->updateAnimDead();

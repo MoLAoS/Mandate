@@ -240,6 +240,7 @@ public:
 	void doUnitBorn(Unit *unit);
 	void doUpdateProjectile(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end);
 	void doUpdateUnitCommand(Unit *unit);
+	void doUpdateAnimOnDeath(Unit *unit);
 	void doUpdateAnim(Unit *unit);
 
 	void doQuitGame(QuitSource source);
