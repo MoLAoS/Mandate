@@ -1746,7 +1746,8 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		if (!faction->reqsOk(produced)) {
 			return CommandResult::FAIL_REQUIREMENTS;
 		}
-		if (!faction->checkCosts(produced)) {
+		if (!command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)
+		&& !faction->checkCosts(produced)) {
 			return CommandResult::FAIL_RESOURCES;
 		}
 	}
@@ -1803,7 +1804,7 @@ void Unit::applyCommand(const Command &command) {
 
 	// check produced
 	const ProducibleType *produced = command.getProdType();
-	if (produced) {
+	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
 		faction->applyCosts(produced);
 	}
 
