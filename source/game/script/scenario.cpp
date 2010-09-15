@@ -163,7 +163,7 @@ void Scenario::loadGameSettings(string scenario, string category, const Scenario
 	string scenarioPath = "gae/scenarios/" + category + "/" + scenario;
 	// map in scenario dir ?
 	string test = scenarioPath + "/" + scenarioInfo->mapName;
-	if (fileExists(test)) {
+	if (fileExists(test + ".gbm") || fileExists(test + ".mgm")) {
 		gs->setMapPath(test);
 	} else {
 		gs->setMapPath(string("maps/") + scenarioInfo->mapName);
