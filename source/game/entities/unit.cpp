@@ -1467,8 +1467,6 @@ void Unit::recalculateStats() {
 	int oldMaxHp = getMaxHp();
 	int oldHp = hp;
 
-	//g_logger.add("re-calculating stats...");
-
 	EnhancementType::reset();
 	UnitStats::setValues(*type);
 
@@ -1487,10 +1485,6 @@ void Unit::recalculateStats() {
 		// take care of effect damage type
 		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
 	}
-
-	//stringstream ss;
-	//ss << "recalculated, moveSpeedMult == " << getMoveSpeedMult().toFloat();
-	//g_logger.add(ss.str());
 
 	effects.clearDirty();
 

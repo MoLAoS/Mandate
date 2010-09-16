@@ -116,6 +116,24 @@ protected:
 	//static size_t damageMultiplierCount;
 	//vector<float> damageMultipliers;
 
+	void setMaxHp(int v)					{maxHp = v;}
+	void setHpRegeneration(int v) 		{hpRegeneration = v;}
+	void setMaxEp(int v) 				{maxEp = v;}
+	void setEpRegeneration(int v) 		{epRegeneration = v;}
+	void setSight(int v) 				{sight = v;}
+	void setArmor(int v) 				{armor = v;}
+
+	void setAttackStrength(int v) 		{attackStrength = v;}
+	void setEffectStrength(fixed v) 	{effectStrength = v;}
+	void setAttackPctStolen(fixed v)	{attackPctStolen = v;}
+	void setAttackRange(int v) 			{attackRange = v;}
+	void setMoveSpeed(int v)			{moveSpeed = v;}
+	void setAttackSpeed(int v) 			{attackSpeed = v;}
+	void setProdSpeed(int v) 			{prodSpeed = v;}
+	void setRepairSpeed(int v)			{repairSpeed = v;}
+	void setHarvestSpeed(int v)			{harvestSpeed = v;}
+
+
 public:
 	UnitStats() /*: damageMultipliers(damageMultiplierCount)*/ { }
 	virtual ~UnitStats() {}
