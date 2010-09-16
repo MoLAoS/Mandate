@@ -95,6 +95,9 @@ private:
 
 	AnnouncerThread m_announcer;
 
+	float m_origMusicVolume;
+	bool m_fadeMusicOut;
+
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
 	~MenuStateNewGame() {

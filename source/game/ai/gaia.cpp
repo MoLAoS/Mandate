@@ -11,6 +11,7 @@
 #include "gaia.h"
 #include "sim_interface.h"
 #include "unit_type.h"
+#include "util.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -18,18 +19,11 @@
 
 namespace Glest { namespace Plan {
 using namespace Search;
+using Shared::Util::jumble;
 
 Gaia::Gaia(Faction *f) : m_faction(f), m_rand(0) {}
 
 Gaia::~Gaia() {
-}
-
-void jumble(vector<Vec2i> &list, Random &rand) {
-	for (int i=0; i < list.size(); ++i) {
-		int j = rand.randRange(0, list.size());
-		if (i == j) continue;
-		swap(list[i], list[j]);
-	}
 }
 
 const int minUpdateDelay = 800;

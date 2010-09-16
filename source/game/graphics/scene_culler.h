@@ -22,11 +22,6 @@
 #include <limits>
 #include <cassert>
 
-using std::list;
-using std::vector;
-using std::pair;
-using namespace Shared::Math;
-
 namespace Glest {
 
 namespace Debug {
@@ -34,9 +29,11 @@ namespace Debug {
 }
 
 namespace Graphics {
-
-template <typename T>
-inline void swap(T& a, T& b) { T temp = a; a = b; b = temp; }
+using std::list;
+using std::vector;
+using std::pair;
+using namespace Shared::Math;
+using Shared::Util::swap;
 
 struct GLMatrix {
     union {

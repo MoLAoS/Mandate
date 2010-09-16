@@ -114,7 +114,7 @@ protected:
 	MainMenu *mainMenu;
 	bool	m_transition;
 
-private:
+protected:
 	float	m_fade;
 	bool	m_fadeIn,
 			m_fadeOut;

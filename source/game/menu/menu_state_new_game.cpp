@@ -66,7 +66,9 @@ void AnnouncerThread::execute() {
 MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots)
 		: MenuState(program, mainMenu)
 		, m_targetTransition(Transition::INVALID)
-		, m_humanSlot(0) {
+		, m_humanSlot(0)
+		, m_origMusicVolume(1.f)
+		, m_fadeMusicOut(false) {
 	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	const CoreData &coreData = CoreData::getInstance();
@@ -403,6 +405,8 @@ void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
 	} else {
 		m_targetTransition = Transition::PLAY;
 		g_soundRenderer.playFx(CoreData::getInstance().getClickSoundC());
+		m_origMusicVolume = g_coreData.getMenuMusic()->getVolume();
+		m_fadeMusicOut = true;
 	}
 	doFadeOut();
 }
@@ -415,6 +419,11 @@ void MenuStateNewGame::onDismissDialog(BasicDialog::Ptr) {
 void MenuStateNewGame::update() {
 	MenuState::update();
 
+	if (m_fadeMusicOut) {
+		float vol = m_origMusicVolume * m_fade;
+		g_coreData.getMenuMusic()->setVolume(vol);
+	}
+
 	bool configAnnounce = true; // TODO: put in config
 	if (configAnnounce) {
 		m_announcer.doAnnounce(hasUnconnectedSlots());
@@ -424,7 +433,6 @@ void MenuStateNewGame::update() {
 	if (++counter % 6 == 0) { // update controlers periodically to get network player names
 		updateControlers();
 	}
-
 
 	if (m_transition) {
 		if (m_targetTransition == Transition::RETURN) {
