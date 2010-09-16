@@ -311,7 +311,7 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 	str+= lang.get("Zones") + ": ";
 	foreach_enum (Zone, z) {
 		if (zones.get(z)) {
-			str += string(ZoneNames[z]) + " ";
+			str += string(lang.get(ZoneNames[z])) + " ";
 		}
 	}
 	str += "\n";
@@ -633,14 +633,11 @@ void AttackSkillTypes::getDesc(string &str, const Unit *unit) const {
 		types[0]->getDesc(str, unit);
 	} else {
 		str += Lang::getInstance().get("Attacks") + ": ";
-		bool printedFirst = false;
-
 		for(int i = 0; i < types.size(); ++i) {
-			if(printedFirst) {
+			if (i) {
 				str += ", ";
 			}
 			str += types[i]->getName();
-			printedFirst = true;
 		}
 		str += "\n";
 	}
