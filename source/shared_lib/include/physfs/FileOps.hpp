@@ -32,8 +32,6 @@ public:
 	
 	void rewind();
 
-	// these were added to make sanity checks easier, and are not really
-	// intended to be called outside of an assert()
 	int fileSize();
 	int bytesRemaining();
 };

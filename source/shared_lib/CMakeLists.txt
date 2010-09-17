@@ -53,7 +53,7 @@ add_library(shared_lib STATIC ${glestshared_srcs})
 
 #message("FREETYPE_LIBRARY == " + ${FREETYPE_LIBRARY})
 #message("FREETYPE_LIBRARIES == " + ${FREETYPE_LIBRARIES})
-target_link_libraries(shared_lib ${LUA_LIBRARIES} ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES})
+target_link_libraries(shared_lib ${LUA_LIBRARIES} ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${PNG_LIBRARY})
 if (GAE_USE_PHYSFS)
 	target_link_libraries(shared_lib ${PHYSFS_LIBRARY})
 endif (GAE_USE_PHYSFS)

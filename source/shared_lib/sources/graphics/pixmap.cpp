@@ -342,6 +342,144 @@ void PixmapIoBmp::write(uint8 *pixels){
 }
 
 // =====================================================
+//	class PixmapIoPng
+// =====================================================
+
+// Callback for PNG-decompression
+static void user_read_data(png_structp read_ptr, png_bytep data, png_size_t length) {
+	FileOps *f = ((FileOps*)png_get_io_ptr(read_ptr));
+	if (f->read((void*)data, length, 1) != 1) {
+		png_error(read_ptr,"Could not read from png-file");
+	}
+}
+
+void PixmapIoPng::openRead(const string &path) {
+	file = FSFactory::getInstance()->getFileOps();
+	file->openRead(path.c_str());
+
+	int length = file->fileSize();
+	uint8 *buffer = new uint8[8];
+	file->read(buffer, 8, 1);
+
+	if (png_sig_cmp(buffer, 0, 8) != 0) {
+		delete [] buffer;
+		throw runtime_error("magic cookie mismatch, file is not PNG");
+	}
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png_ptr) {
+		delete [] buffer;
+		throw runtime_error("png_create_read_struct() failed.");
+	}
+	info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr) {
+		png_destroy_read_struct(&png_ptr, (png_infopp)NULL,(png_infopp)NULL);
+		delete [] buffer;
+		throw runtime_error("png_create_info_struct() failed.");
+	}
+	if (setjmp(png_jmpbuf(png_ptr))) {
+		png_destroy_read_struct(&png_ptr, &info_ptr,(png_infopp)NULL);
+		delete [] buffer;
+		throw runtime_error("error during init_io");
+	}
+
+	png_set_read_fn(png_ptr, file, user_read_data);
+	png_set_sig_bytes(png_ptr, 8);
+	png_read_info(png_ptr, info_ptr);
+	
+	w = info_ptr->width;
+	h = info_ptr->height;
+	int color_type = info_ptr->color_type;
+	int bit_depth = info_ptr->bit_depth;
+
+	// We want RGB, 24 bit
+	if (color_type == PNG_COLOR_TYPE_PALETTE || (color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8) || (info_ptr->valid & PNG_INFO_tRNS)) {
+		png_set_expand(png_ptr);
+	}
+
+	if (color_type == PNG_COLOR_TYPE_GRAY) {
+		png_set_gray_to_rgb(png_ptr);
+	}
+	int number_of_passes = png_set_interlace_handling(png_ptr);
+	png_read_update_info(png_ptr, info_ptr);
+
+	components = info_ptr->rowbytes / info_ptr->width;
+
+	delete [] buffer;
+}
+
+void PixmapIoPng::read(uint8 *pixels) {
+	read(pixels, 3);
+}
+
+void PixmapIoPng::read(uint8 *pixels, int components) {
+	png_bytep* row_pointers = new png_bytep[h];
+
+	if (setjmp(png_jmpbuf(png_ptr))) {
+		delete[] row_pointers;
+		throw runtime_error("error during read_image");
+	}
+	for (int y = 0; y < h; ++y) {
+		row_pointers[y] = new png_byte[info_ptr->rowbytes];
+	}
+	png_read_image(png_ptr, row_pointers);
+
+	// Copy image
+	const int rowbytes = info_ptr->rowbytes;
+	int location = 0;
+	for (int y = h - 1; y >= 0; --y) { // you have to somehow invert the lines
+		if (components == this->components) {
+			memcpy(pixels + location, row_pointers[y], rowbytes);
+		} else {
+			int r,g,b,a,l;
+			for (int xPic = 0, xFile = 0; xFile < rowbytes; xPic += components, xFile += this->components) {
+				switch (this->components) {
+					case 1:
+						r = g = b = l = row_pointers[y][xFile];
+						a = 255;
+						break;
+					case 3:
+						r = row_pointers[y][xFile];
+						g = row_pointers[y][xFile+1];
+						b = row_pointers[y][xFile+2];
+						l = (r+g+b+2)/3;
+						a = 255;
+						break;
+					case 4:
+						r = row_pointers[y][xFile];
+						g = row_pointers[y][xFile+1];
+						b = row_pointers[y][xFile+2];
+						l = (r+g+b+2)/3;
+						a = row_pointers[y][xFile+3];	
+						break;
+					default:
+						throw runtime_error("PNG file has invalid number of colour channels");
+				}
+				switch (components) {
+					case 1:
+						pixels[location+xPic] = l;
+						break;
+					case 4:
+						pixels[location+xPic+3] = a; //Next case
+					case 3:
+						pixels[location+xPic] = r;
+						pixels[location+xPic+1] = g;
+						pixels[location+xPic+2] = b;
+						break;
+					default:
+						throw runtime_error("PixmapIoPng request for invalid number of colour channels");
+				}
+			}
+		}
+		location += components * w;
+	}
+	for (int y = 0; y < h; ++y) {
+		delete [] row_pointers[y];
+	}
+	delete[] row_pointers;
+	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+}
+
+// =====================================================
 //	class Pixmap1D
 // =====================================================
 
@@ -486,69 +624,86 @@ Pixmap2D::~Pixmap2D(){
 }
 
 void Pixmap2D::load(const string &path){
-	string extension= path.substr(path.find_last_of('.')+1);
-	if(extension=="bmp"){
+	string extension = toLower(path.substr(path.find_last_of('.') + 1));	
+	if (extension == "bmp") {
 		loadBmp(path);
-	}
-	else if(extension=="tga"){
+	} else if (extension == "tga") {
 		loadTga(path);
-	}
-	else{
+	} else if (extension == "png") {
+		loadPng(path);
+	} else {
 		throw runtime_error("Unknown pixmap extension: "+extension);
 	}
 }
 
 void Pixmap2D::loadBmp(const string &path){
+	PixmapIoBmp pib;
+	pib.openRead(path);
 
-	PixmapIoBmp plb;
-	plb.openRead(path);
-
-	//init
-	w= plb.getW();
-	h= plb.getH();
-	if(components==-1){
-		components= 3;
+	// init
+	w = pib.getW();
+	h = pib.getH();
+	if (components == -1) {
+		components = 3;
 	}
-	if(pixels==NULL){
-		pixels= new uint8[w*h*components];
+	if (pixels == NULL) {
+		pixels = new uint8[w * h * components];
 	}
 
 	//data
-	plb.read(pixels, components);
+	pib.read(pixels, components);
 }
 
 void Pixmap2D::loadTga(const string &path){
 
-	PixmapIoTga plt;
-	plt.openRead(path);
-	w= plt.getW();
-	h= plt.getH();
+	PixmapIoTga pit;
+	pit.openRead(path);
+	w = pit.getW();
+	h = pit.getH();
 
-	//header
-	int fileComponents= plt.getComponents();
+	// header
+	int fileComponents = pit.getComponents();
+
+	// init
+	if (components == -1) {
+		components = fileComponents;
+	}
+	if (pixels == NULL) {
+		pixels = new uint8[w * h * components];
+	}
+
+	// read data
+	pit.read(pixels, components);
+}
+
+void Pixmap2D::loadPng(const string &path) {
+	PixmapIoPng pip;
+	pip.openRead(path);
+	w = pip.getW();
+	h = pip.getH();
+
+	int fileComponents = pip.getComponents();
 
 	//init
-	if(components==-1){
-		components= fileComponents;
+	if (components == -1) {
+		components = fileComponents;
 	}
-	if(pixels==NULL){
-		pixels= new uint8[w*h*components];
+	if (pixels == NULL) {
+		pixels = new uint8[w * h * components];
 	}
 
-	//read data
-	plt.read(pixels, components);
+	// read data
+	pip.read(pixels, components);
 }
 
 void Pixmap2D::save(const string &path){
 	string extension= path.substr(path.find_last_of('.')+1);
-	if(extension=="bmp"){
+	if (extension == "bmp") {
 		saveBmp(path);
-	}
-	else if(extension=="tga"){
+	} else if(extension == "tga") {
 		saveTga(path);
-	}
-	else{
-		throw runtime_error("Unknown pixmap extension: "+extension);
+	} else {
+		throw runtime_error("Unknown pixmap extension: " + extension);
 	}
 }
 

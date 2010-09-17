@@ -34,6 +34,7 @@ if(DEFINED GAE_WINDEPS AND WIN32)
 	set(ENV{VORBISDIR} ${GAE_WINDEPS})
 	set(ENV{PHYSFSDIR} ${GAE_WINDEPS})
 	set(ENV{CPPUNITDIR} ${GAE_WINDEPS})
+	set(ENV{PNGDIR} ${GAE_WINDEPS})
 	# sadly FindZLIB does not support HINTS, set it directly
 	set(ZLIB_INCLUDE_DIR ${GAE_WINDEPS}/include)
 	set(ZLIB_LIBRARY ${GAE_WINDEPS}/lib/zlib.lib)
@@ -63,6 +64,7 @@ find_package(CppUnit)
 find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 find_package(Freetype REQUIRED)
+find_package(PNG REQUIRED)
 
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
@@ -74,7 +76,7 @@ endif(GAE_USE_PHYSFS)
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 
 # mad synchronisation checking (for network play)
-option(GAE_SYNC_TEST "Enable mass synchronisation checks for multiplayer. Not compatible with Debug Edition.")
+option(GAE_SYNC_TEST "Enable mass synchronisation checks for multiplayer.")
 
 # pre-compiled headers (MSVC only atm)
 option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, MSVC only atm.")
@@ -102,7 +104,7 @@ else (MSVC)
 endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR}
-		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
+		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library
