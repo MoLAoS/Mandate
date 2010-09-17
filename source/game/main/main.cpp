@@ -95,6 +95,13 @@ int glestMain(int argc, char** argv) {
 #	if !defined(NDEBUG) && defined(WIN32)
 	// Enable run-time checks
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+
+	// check for SSE2
+	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)) {
+		std::exception e("Error: No SSE2 support detected. GAE requires Streaming SIMD Extensions 2");
+		exceptionMessage(e);
+		return 0;
+	}
 #	endif
 
 	string configDir = DEFAULT_CONFIG_DIR;
