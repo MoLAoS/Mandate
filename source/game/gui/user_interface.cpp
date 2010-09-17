@@ -823,29 +823,21 @@ void UserInterface::mouseDownSecondTier(int posDisplay){
 		resetState();
 	} else {
 		assert(activeCommandType);
+		int ndx = m_display->getIndex(posDisplay);
+		assert(ndx >= 0 && ndx < activeCommandType->getProducedCount());
+		const ProducibleType *pt = activeCommandType->getProduced(ndx);
+
 		if (activeCommandType->getClass() == CommandClass::BUILD) {
-			const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
-			const UnitType *ut = bct->getBuilding(m_display->getIndex(posDisplay));
-			if (world->getFaction(factionIndex)->reqsOk(ut)) {
-				choosenBuildingType = ut;
+			if (world->getFaction(factionIndex)->reqsOk(pt)) {
+				choosenBuildingType = static_cast<const UnitType*>(pt);
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
 				activePos = posDisplay;
 			}
 		} else {
-			const UnitType *ut = 0;
-			if (activeCommandType->getClass() == CommandClass::MORPH) {
-				const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
-				ut = mct->getMorphUnit(m_display->getIndex(posDisplay));
-			} else if (activeCommandType->getClass() == CommandClass::PRODUCE) {
-				const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(activeCommandType);
-				ut = pct->getProducedUnit(m_display->getIndex(posDisplay));
-			} else {
-				assert(false);
-			}
-			if (world->getFaction(factionIndex)->reqsOk(ut)) {
+			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				CommandResult result = commander->tryGiveCommand(selection, CommandFlags(),
-					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, ut);
+					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, pt);
 				addOrdersResultToConsole(activeCommandClass, result);
 				resetState();
 			}

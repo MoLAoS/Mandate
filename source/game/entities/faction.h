@@ -48,12 +48,12 @@ class Unit;
 // to it in the future
 class Product {
 private:
-	const ProducibleType *m_type;
+	const GeneratedType *m_type;
 
 public:
-	Product(const ProducibleType *pt) : m_type(pt) {}
+	Product(const GeneratedType *gt) : m_type(gt) {}
 
-	const ProducibleType* getType() const { return m_type; }
+	const GeneratedType* getType() const { return m_type; }
 
 	// todo... other stuff. Store unit that produced this, other useful things...
 };
@@ -182,8 +182,8 @@ public:
 	void incResourceAmount(const ResourceType *rt, int amount);
 	void setResourceBalance(const ResourceType *rt, int balance);
 
-	// products (non unit producibles)
-	void addProduct(const ProducibleType *pt) { products.push_back(Product(pt)); }
+	// Generated 'products' (non unit producibles)
+	void addProduct(const GeneratedType *gt) { products.push_back(Product(gt)); }
 
 private:
 	void limitResourcesToStore();

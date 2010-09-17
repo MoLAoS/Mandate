@@ -187,10 +187,11 @@ public:
 class DataSyncMessage : public Message {
 private:
 	///@todo struct Data { ... } m_data;
-	int32 m_unitTypeCount;
 	int32 m_cmdTypeCount;
 	int32 m_skillTypeCount;
-	int32 m_upgrdTypeCount;
+	int32 m_prodTypeCount;
+	//int32 m_unitTypeCount;
+	//int32 m_upgrdTypeCount;
 	int32 *m_data;
 	bool fromRaw;
 
@@ -201,12 +202,11 @@ public:
 
 	int32 getChecksum(int i) { return m_data[i]; }
 
-	int32 getUnitTypeCount()  const { return m_unitTypeCount;  }
 	int32 getCmdTypeCount()	  const { return m_cmdTypeCount;   }
 	int32 getSkillTypeCount() const { return m_skillTypeCount; }
-	int32 getUpgrdTypeCount() const { return m_upgrdTypeCount; }
+	int32 getProdTypeCount() const { return m_prodTypeCount; }
 	int32 getChecksumCount()  const {
-		return m_unitTypeCount + m_cmdTypeCount + m_skillTypeCount + m_upgrdTypeCount + 4;
+		return m_cmdTypeCount + m_skillTypeCount + m_prodTypeCount + 4;
 	}
 
 	virtual bool receive(NetworkConnection* connection);

@@ -42,7 +42,7 @@ SkillCycleTable::~SkillCycleTable(){
 }
 
 void SkillCycleTable::create(const TechTree *techTree) {
-	numEntries = g_world.getSkillTypeFactory().getSkillTypeCount();
+	numEntries = g_world.getSkillTypeFactory().getTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	if (!numEntries) {
 		cycleTable = NULL; // -loadmap

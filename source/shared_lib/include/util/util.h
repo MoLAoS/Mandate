@@ -25,6 +25,7 @@
 
 #include "math_util.h"
 #include "lang_features.h"
+#include "random.h"
 
 #if defined(WIN32) || defined(WIN64)
 	#include <list>
@@ -228,6 +229,19 @@ template<typename MapType>
 void deleteMapValues(MapType map) {
 	for (typename MapType::iterator it = map.begin(); it != map.end(); ++it) {
 		delete it->second;
+	}
+}
+
+// misc
+template <typename T>
+inline void swap(T& a, T& b) { T temp = a; a = b; b = temp; }
+
+template <typename T>
+void jumble(vector<T> &list, Random &rand) {
+	for (int i=0; i < list.size(); ++i) {
+		int j = rand.randRange(0, list.size() - 1);
+		if (i == j) continue;
+		swap(list[i], list[j]);
 	}
 }
 

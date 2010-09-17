@@ -19,7 +19,6 @@
 #include "checksum.h"
 #include "unit_stats_base.h"
 #include "particle_type.h"
-#include "factory.h"
 #include "prototypes_enums.h"
 #include "influence_map.h"
 #include <set>
@@ -27,10 +26,9 @@ using std::set;
 
 using Shared::Sound::StaticSound;
 using Shared::Util::Checksum;
-using Shared::Util::SingleFactory;
+using Shared::Util::MultiFactory;
 
 namespace Glest { namespace ProtoTypes {
-
 using namespace Search;
 
 // ===============================
@@ -59,8 +57,6 @@ public:
 	int getKills() const			{return kills;}
 };
 
-class UnitTypeFactory;
-
 // ===============================
 // 	class UnitType
 //
@@ -68,7 +64,6 @@ class UnitTypeFactory;
 // ===============================
 
 class UnitType : public ProducibleType, public UnitStats {
-	friend class UnitTypeFactory;
 private:
 	typedef vector<SkillType*> SkillTypes;
 	typedef vector<CommandType*> CommandTypes;
@@ -225,27 +220,6 @@ public:
 private:
     void sortSkillTypes();
     void sortCommandTypes();
-};
-
-// ===============================
-//  class UnitTypeFactory
-// ===============================
-
-class UnitTypeFactory: private SingleTypeFactory<UnitType> {
-private:
-	int m_idCounter;
-	vector<UnitType *> m_types;
-	map<UnitType *, int32> m_checksumTable;
-
-public:
-	UnitTypeFactory() : m_idCounter(0) { }
-	~UnitTypeFactory();
-
-	UnitType *newInstance();
-	UnitType* getType(int id);
-	int getTypeCount() const { return m_types.size(); }
-	int32 getChecksum(UnitType *ut);
-	void setChecksum(UnitType *ut);
 };
 
 }}//end namespace

@@ -620,37 +620,4 @@ void UnitType::sortCommandTypes() {
 //	}
 }
 
-UnitTypeFactory::~UnitTypeFactory() {
-	deleteValues(m_types);
-	m_types.clear();
-	m_checksumTable.clear();
-}
-
-
-UnitType* UnitTypeFactory::newInstance() {
-	UnitType *ut = SingleTypeFactory<UnitType>::newInstance();
-	ut->setId(m_idCounter++);
-	m_types.push_back(ut);
-	return ut;
-}
-
-void UnitTypeFactory::setChecksum(UnitType *ut) {
-	assert(m_checksumTable.find(ut) == m_checksumTable.end());
-	Checksum checksum;
-	ut->doChecksum(checksum);
-	m_checksumTable[ut] = checksum.getSum();
-}
-
-UnitType* UnitTypeFactory::getType(int id) {
-	if (id < 0 || id >= m_types.size()) {
-		throw runtime_error("Error: Unknown unit type id: " + intToStr(id));
-	}
-	return m_types[id];
-}
-
-int32 UnitTypeFactory::getChecksum(UnitType *ut) {
-	assert(m_checksumTable.find(ut) != m_checksumTable.end());
-	return m_checksumTable[ut];
-}
-
 }}//end namespace

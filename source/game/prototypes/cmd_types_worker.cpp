@@ -440,6 +440,11 @@ void BuildCommandType::doChecksum(Checksum &checksum) const {
 	}
 }
 
+const ProducibleType *BuildCommandType::getProduced(int i) const {
+	return buildings[i];
+}
+
+
 const string cmdCancelMsg = " Command cancelled.";
 
 void BuildCommandType::update(Unit *unit) const {

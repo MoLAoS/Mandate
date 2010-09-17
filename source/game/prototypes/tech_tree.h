@@ -46,6 +46,7 @@ private:
 	typedef map<string, EffectType*> EffectTypeMap;
 
 private:
+	string name;
     string desc;
     ResourceTypes resourceTypes;
     FactionTypes factionTypes;
@@ -71,6 +72,8 @@ public:
 	void doChecksum(Checksum &checksum) const;
 
 	~TechTree();
+
+	string getName() const			{ return name; }
 
 	// get count
 	int getResourceTypeCount() const							{return resourceTypes.size();}

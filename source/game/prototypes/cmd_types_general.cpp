@@ -282,6 +282,10 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	return loadOk;
 }
 
+const ProducibleType* ProduceCommandType::getProduced(int i) const {
+	return m_producedUnits[i];
+}
+
 void ProduceCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(produceSkillType->getName());
@@ -344,10 +348,6 @@ void ProduceCommandType::update(Unit *unit) const {
 	}
 }
 
-const ProducibleType* ProduceCommandType::getProduced(int i) const {
-	return m_producedUnits[i];
-}
-
 // =====================================================
 // 	class GenerateCommandType
 // =====================================================
@@ -372,11 +372,12 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		g_errorLog.addXmlError(dir, e.what ());
 		return false;
 	}
-	ProducibleType *pt = g_world.getProducibleFactory().newInstance();
-	if (!pt->load(producibleNode, dir, tt, ft)) {
+	GeneratedType *gt = g_world.getMasterTypeFactory().newGeneratedType();
+	if (!gt->load(producibleNode, dir, tt, ft)) {
 		loadOk = false;
 	}
-	m_producibles.push_back(pt);
+	m_producibles.push_back(gt);
+	gt->setCommandType(this);
 
 	// finished sound
 	try {
@@ -401,7 +402,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 void GenerateCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(m_produceSkillType->getName());
-	foreach_const (vector<const ProducibleType*>, it, m_producibles) {
+	foreach_const (vector<const GeneratedType*>, it, m_producibles) {
 		checksum.add((*it)->getName());
 	}
 }
@@ -426,15 +427,13 @@ void GenerateCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	
-	// should compare _exact_ skill type, not class... in every command update...
-
-	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
+	if (unit->getCurrSkill() != m_produceSkillType) {
 		// if not producing
 		unit->setCurrSkill(m_produceSkillType);
 	} else {
 		unit->update2();
 		if (unit->getProgress2() > command->getProdType()->getProductionTime()) {
-			unit->getFaction()->addProduct(command->getProdType());
+			unit->getFaction()->addProduct(static_cast<const GeneratedType*>(command->getProdType()));
 			unit->getFaction()->applyStaticProduction(command->getProdType());
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
@@ -507,7 +506,7 @@ void UpgradeCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
-	if (unit->getCurrSkill()->getClass() != SkillClass::UPGRADE) {
+	if (unit->getCurrSkill() != upgradeSkillType) {
 		//if not producing
 		unit->setCurrSkill(upgradeSkillType);
 	} else {
@@ -586,6 +585,10 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	return loadOk;
 }
 
+const ProducibleType *MorphCommandType::getProduced(int i) const {
+	return m_morphUnits[i];
+}
+
 void MorphCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(m_morphSkillType->getName());
@@ -595,7 +598,7 @@ void MorphCommandType::doChecksum(Checksum &checksum) const {
 	checksum.add(m_discount);
 }
 
-void MorphCommandType::getDesc(string &str, const Unit *unit) const{
+void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
 	m_morphSkillType->getDesc(str, unit);
 	if (m_discount != 0) { // discount
@@ -622,7 +625,7 @@ void MorphCommandType::update(Unit *unit) const {
 
 	const UnitType *morphToUnit = static_cast<const UnitType*>(command->getProdType());
 
-	if (unit->getCurrSkill()->getClass() != SkillClass::MORPH) {
+	if (unit->getCurrSkill() != m_morphSkillType) {
 		// if not morphing, check space
 		Field mf = morphToUnit->getField();
 		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphToUnit->getSize(), mf, unit)) {
@@ -662,10 +665,6 @@ void MorphCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
-}
-
-const ProducibleType* MorphCommandType::getProduced(int i) const {
-	return m_morphUnits[i];
 }
 
 // =====================================================
@@ -976,62 +975,6 @@ bool CommandType::attackableInRange(const Unit *unit, Unit **rangedPtr,
 bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr, 
 			const AttackSkillTypes *asts, const AttackSkillType **past) {
 	return unitInRange(unit, unit->getSight(), rangedPtr, asts, past);
-}
-
-// =====================================================
-// 	class CommandFactory
-// =====================================================
-
-CommandTypeFactory::CommandTypeFactory()
-		: m_idCounter(0) {
-	registerClass<StopCommandType>("stop");
-	registerClass<MoveCommandType>("move");
-	registerClass<AttackCommandType>("attack");
-	registerClass<AttackStoppedCommandType>("attack_stopped");
-	registerClass<BuildCommandType>("build");
-	registerClass<HarvestCommandType>("harvest");
-	registerClass<RepairCommandType>("repair");
-	registerClass<ProduceCommandType>("produce");
-	registerClass<GenerateCommandType>("generate");
-	registerClass<UpgradeCommandType>("upgrade");
-	registerClass<MorphCommandType>("morph");
-	registerClass<LoadCommandType>("load");
-	registerClass<UnloadCommandType>("unload");
-	registerClass<GuardCommandType>("guard");
-	registerClass<PatrolCommandType>("patrol");
-	registerClass<SetMeetingPointCommandType>("set-meeting-point");
-}
-
-CommandTypeFactory::~CommandTypeFactory() {
-	deleteValues(m_types);
-	m_types.clear();
-	m_checksumTable.clear();
-}
-
-CommandType* CommandTypeFactory::newInstance(string classId, UnitType *owner) {
-	CommandType *ct = MultiFactory<CommandType>::newInstance(classId);
-	ct->setIdAndUnitType(m_idCounter++, owner);
-	m_types.push_back(ct);
-	return ct;
-}
-
-CommandType* CommandTypeFactory::getType(int id) {
-	if (id < 0 || id >= m_types.size()) {
-		throw runtime_error("Error: Unknown command type id: " + intToStr(id));
-	}
-	return m_types[id];
-}
-
-int32 CommandTypeFactory::getChecksum(CommandType *ct) {
-	assert(m_checksumTable.find(ct) != m_checksumTable.end());
-	return m_checksumTable[ct];
-}
-
-void CommandTypeFactory::setChecksum(CommandType *ct) {
-	assert(m_checksumTable.find(ct) == m_checksumTable.end());
-	Checksum checksum;
-	ct->doChecksum(checksum);
-	m_checksumTable[ct] = checksum.getSum();
 }
 
 }}//end namespace

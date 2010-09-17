@@ -51,7 +51,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
-		, prodType(NULL)
+		, prodType(0)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -63,7 +63,7 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 		, flags(flags)
 		, pos(-1)
 		, pos2(-1)
-		, prodType(NULL)
+		, prodType(0)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;

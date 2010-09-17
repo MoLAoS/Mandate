@@ -1771,22 +1771,6 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		if (bct->isBlocked(builtUnit, command.getPos(), command.getFacing())) {
 			return CommandResult::FAIL_BLOCKED;
 		}
-		if (!faction->reqsOk(builtUnit)) {
-			return CommandResult::FAIL_REQUIREMENTS;
-		}
-		if (command.isReserveResources() && !faction->checkCosts(builtUnit)) {
-			return CommandResult::FAIL_RESOURCES;
-		}
-	} else if (!produced  // multi-tier selected morph or produce
-	&& (ct->getClass() == CommandClass::MORPH || ct->getClass() == CommandClass::PRODUCE)) {
-		produced = command.getProdType();
-		assert(produced);
-		if (!faction->reqsOk(produced)) {
-			return CommandResult::FAIL_REQUIREMENTS;
-		}
-		if (!faction->checkCosts(produced)) {
-			return CommandResult::FAIL_RESOURCES;
-		}
 	} else if (ct->getClass() == CommandClass::UPGRADE) { // upgrade command specific
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		if (faction->getUpgradeManager()->isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
@@ -1803,14 +1787,13 @@ CommandResult Unit::checkCommand(const Command &command) const {
 void Unit::applyCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
-	// check produced
+	// apply costs for produced
 	const ProducibleType *produced = command.getProdType();
 	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
 		faction->applyCosts(produced);
 	}
 
-	// todo multi-tier upgrades, and use CommandType::getProduced() and Command::prodType
-	if (ct->getClass() == CommandClass::UPGRADE) { // upgrade (why not handled by getProduced() ???)
+	if (ct->getClass() == CommandClass::UPGRADE) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		faction->startUpgrade(uct->getProducedUpgrade());
 	}

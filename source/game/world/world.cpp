@@ -557,7 +557,7 @@ Unit* World::findUnitById(int id) const {
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	return m_unitTypeFactory.getType(id);
+	return getUnitTypeFactory().getType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded

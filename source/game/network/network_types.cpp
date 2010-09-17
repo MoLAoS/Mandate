@@ -30,7 +30,7 @@ NetworkCommand::NetworkCommand(Command *command) {
 	commandTypeId = command->getType()->getId();
 	positionX = command->getPos().x;
 	positionY = command->getPos().y;
-	unitTypeId = command->getProdType() ? command->getProdType()->getId() : -1;
+	prodTypeId = command->getProdType() ? command->getProdType()->getId() : -1;
 
 	if (command->getType()->getClass() == CommandClass::BUILD) {
 		targetId = command->getFacing();
@@ -49,7 +49,7 @@ NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, const 
 	this->commandTypeId = -1;
 	this->positionX= pos.x;
 	this->positionY= pos.y;
-	this->unitTypeId = -1;
+	this->prodTypeId = -1;
 	this->targetId = -1;
 	this->flags = 0;
 }
@@ -94,9 +94,18 @@ Command *NetworkCommand::toCommand() const {
 		facing = enum_cast<CardinalDir>(targetId);
 	}
 
-	const UnitType* unitType = 0;
-	if (unitTypeId != -1) {
-		unitType = world.findUnitTypeById(unit->getFaction()->getType(), unitTypeId);
+	const ProducibleType* prodType = 0;
+	if (prodTypeId != -1) {
+		MasterTypeFactory &typeFactory = world.getMasterTypeFactory();
+		prodType = typeFactory.getType(prodTypeId);
+
+		// sanity check... 
+		assert((typeFactory.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
+			|| (typeFactory.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
+			|| (typeFactory.isUnitType(prodType)
+				&& (ct->getClass() == CommandClass::PRODUCE
+					|| ct->getClass() == CommandClass::MORPH
+					|| ct->getClass() == CommandClass::BUILD)));
 	}
 
 	// create command
@@ -107,8 +116,8 @@ Command *NetworkCommand::toCommand() const {
 	
 	if (target) {
 		command= new Command(ct, flags, target, unit);
-	} else if (unitType) {
-		command= new Command(ct, flags, Vec2i(positionX, positionY), unitType, facing, unit);
+	} else if (prodType) {
+		command= new Command(ct, flags, Vec2i(positionX, positionY), prodType, facing, unit);
 	} else {
 		command= new Command(ct, flags, Vec2i(positionX, positionY), unit);
 	}

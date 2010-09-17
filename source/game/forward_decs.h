@@ -30,6 +30,7 @@ namespace Glest {
 		class DisplayableType;
 		class RequirableType;
 		class ProducibleType;
+		class GeneratedType;
 		class AttackType;
 		class ArmourType;
 		class DamageMultiplierTable;
@@ -45,7 +46,6 @@ namespace Glest {
 		struct EffectStacking;
 		class Emanation;
 		class UnitType;
-		class UnitTypeFactory;
 		class SkillType;
 		class StopSkillType;
 		class MoveSkillType;
@@ -59,11 +59,9 @@ namespace Glest {
 		class BeBuiltSkillType;
 		class MorphSkillType;
 		class DieSkillType;
-		class SkillTypeFactory;
 		struct AttackSkillPreference;
 		class AttackSkillPreferences;
 		class UpgradeType;
-		class UpgradeTypeFactory;
 		class ProjectileType;
 		class SplashType;
 		class ResourceType;
@@ -88,6 +86,9 @@ namespace Glest {
 		class Tileset;
 		class AmbientSounds;
 		class TimeFlow;
+		class CommandTypeFactory;
+		class SkillTypeFactory;
+		template<typename Type> class TypeFactory;
 	}
 
 	namespace Entities {

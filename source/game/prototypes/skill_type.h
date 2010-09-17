@@ -440,29 +440,6 @@ public:
 };
 
 // ===============================
-// 	class SkillTypeFactory
-// ===============================
-
-class SkillTypeFactory: public MultiFactory<SkillType>{
-private:
-	vector<SkillType*> m_types;
-	int m_idCounter;
-	map<SkillType *, int32> m_checksumTable;
-
-public:
-	SkillTypeFactory();
-	~SkillTypeFactory();
-
-	SkillType* newInstance(string classId);
-	SkillType* getType(int id);
-	int getTypeCount() const { return m_types.size(); }
-	int32 getChecksum(SkillType *st);
-	void setChecksum(SkillType *st);
-	int getSkillTypeCount() const { return m_idCounter; }
-};
-
-
-// ===============================
 // 	class ModelFactory
 // ===============================
 

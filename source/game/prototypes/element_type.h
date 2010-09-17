@@ -40,9 +40,10 @@ namespace Entities {
 	typedef vector<Faction*> Factions;
 	typedef map<int, Faction*> FactionMap;
 }
-using namespace Entities;
 
 namespace ProtoTypes {
+
+using namespace Entities;
 
 // =====================================================
 // 	class NameIdPair
@@ -51,6 +52,12 @@ namespace ProtoTypes {
 // =====================================================
 
 class NameIdPair {
+	friend class Sim::SkillTypeFactory;
+	friend class Sim::CommandTypeFactory;
+	friend class Sim::TypeFactory<GeneratedType>;
+	friend class Sim::TypeFactory<UpgradeType>;
+	friend class Sim::TypeFactory<UnitType>;
+
 protected:
 	int id;				//id
 	string name;		//name
@@ -130,8 +137,6 @@ public:
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 };
 
-class ProducibleTypeFactory;
-
 // =====================================================
 // 	class ProducibleType
 //
@@ -139,8 +144,6 @@ class ProducibleTypeFactory;
 // =====================================================
 
 class ProducibleType : public RequirableType {
-	friend class ProducibleTypeFactory;
-
 private:
 	typedef vector<Resource> Costs;
 
@@ -179,21 +182,15 @@ public:
 	virtual string getReqDesc() const;
 };
 
-class ProducibleTypeFactory : private SingleTypeFactory<ProducibleType> {
+class GeneratedType : public ProducibleType {
 private:
-	int m_idCounter;
-	vector<ProducibleType*> m_types;
-	map<ProducibleType*, int32> m_checksumTable;
+	const CommandType *m_commandType;
 
 public:
-	ProducibleTypeFactory() : m_idCounter(0) { }
-	~ProducibleTypeFactory();
+	GeneratedType() {}
 
-	ProducibleType* newInstance();
-	ProducibleType* getType(int id);
-	int getTypeCount() const { return m_types.size(); }
-	int32 getChecksum(ProducibleType *pt);
-	void setChecksum(ProducibleType *pt);
+	const CommandType* getCommandType() const { return m_commandType; }
+	void setCommandType(const CommandType *ct) { m_commandType = ct; }
 };
 
 }}//end namespace

@@ -29,6 +29,7 @@
 #include "random.h"
 #include "game_constants.h"
 #include "pos_iterator.h"
+#include "type_factories.h"
 
 #include "forward_decs.h"
 
@@ -109,14 +110,15 @@ private:
 
 	PosCircularIteratorFactory posIteratorFactory;
 
-	SkillTypeFactory	m_skillTypeFactory;
-	CommandTypeFactory	m_commandTypeFactory;
-	UpgradeTypeFactory	m_upgradeTypeFactory;
-	UnitTypeFactory		m_unitTypeFactory;
+	//TODO: Move to SimulationInterface, and take UnitFactory & ObjectFactory from it
+	MasterTypeFactory	m_masterTypeFactory;
 
-	ProducibleTypeFactory m_producibleTypeFactory;
-
-	ModelFactory		m_modelFactory;
+//	TypeFactory<UpgradeType>	m_upgradeTypeFactory;
+//	TypeFactory<UnitType>  		m_unitTypeFactory;
+//	TypeFactory<ProducibleType>	m_producibleTypeFactory;
+	SkillTypeFactory		 m_skillTypeFactory;
+	CommandTypeFactory		 m_commandTypeFactory;
+	ModelFactory			 m_modelFactory;
 
 public:
 	World(SimulationInterface *iSim);
@@ -128,12 +130,15 @@ public:
 	static bool isConstructed() { return singleton != 0; }
 
 	//get
-	UnitTypeFactory& getUnitTypeFactory()			{return m_unitTypeFactory;}
-	UpgradeTypeFactory& getUpgradeTypeFactory()		{return m_upgradeTypeFactory;}
-	SkillTypeFactory& getSkillTypeFactory()			{return m_skillTypeFactory;}
-	CommandTypeFactory& getCommandTypeFactory()		{return m_commandTypeFactory;}
-	ProducibleTypeFactory& getProducibleFactory()	{return m_producibleTypeFactory;}
-	ModelFactory& getModelFactory()					{return m_modelFactory;}
+	MasterTypeFactory& getMasterTypeFactory()			{return m_masterTypeFactory; }
+	TypeFactory<UnitType>& getUnitTypeFactory()			{return m_masterTypeFactory.getUnitTypeFactory();}
+	TypeFactory<UpgradeType>& getUpgradeTypeFactory()	{return m_masterTypeFactory.getUpgradeTypeFactory();}
+	TypeFactory<GeneratedType>& getGenTypeFactory()		{return m_masterTypeFactory.getGeneratedTypeFactory();}
+
+	SkillTypeFactory& getSkillTypeFactory()				{return m_skillTypeFactory;}
+	CommandTypeFactory& getCommandTypeFactory()			{return m_commandTypeFactory;}
+
+	ModelFactory& getModelFactory()						{return m_modelFactory;}
 
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}

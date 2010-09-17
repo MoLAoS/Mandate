@@ -183,6 +183,7 @@ public:
 //	typedef vector<Earthquake*> Earthquakes;
 
 private:
+	string name;
 	string title;
 	float waterLevel;
 	float heightFactor;
@@ -215,6 +216,7 @@ public:
 	void loadExplorationState(XmlNode *node);
 
 	//get
+	string getName() const { return name; }
 	Cell *getCell(int x, int y) const {
 		assert(this->isInside(x,y) && "co-ordinates out of range");
 		return &cells[y * w + x];

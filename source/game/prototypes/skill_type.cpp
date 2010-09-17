@@ -533,59 +533,6 @@ void LoadSkillType::doChecksum(Checksum &checksum) const {
 }
 
 // =====================================================
-// 	class SkillTypeFactory
-// =====================================================
-
-SkillTypeFactory::SkillTypeFactory()
-		: m_idCounter(0) {
-	registerClass<StopSkillType>("stop");
-	registerClass<MoveSkillType>("move");
-	registerClass<AttackSkillType>("attack");
-	registerClass<BuildSkillType>("build");
-	registerClass<BeBuiltSkillType>("be_built");
-	registerClass<HarvestSkillType>("harvest");
-	registerClass<RepairSkillType>("repair");
-	registerClass<ProduceSkillType>("produce");
-	registerClass<UpgradeSkillType>("upgrade");
-	registerClass<MorphSkillType>("morph");
-	registerClass<DieSkillType>("die");
-	registerClass<LoadSkillType>("load");
-	registerClass<UnloadSkillType>("unload");
-}
-
-SkillTypeFactory::~SkillTypeFactory() {
-	deleteValues(m_types);
-	m_types.clear();
-	m_checksumTable.clear();
-}
-
-SkillType* SkillTypeFactory::newInstance(string classId) {
-	SkillType *st = MultiFactory<SkillType>::newInstance(classId);
-	st->setId(m_idCounter++);
-	m_types.push_back(st);
-	return st;
-}
-
-SkillType* SkillTypeFactory::getType(int id) {
-	if (id < 0 || id >= m_types.size()) {
-		throw runtime_error("Error: Unknown skill type id: " + intToStr(id));
-	}
-	return m_types[id];
-}
-
-int32 SkillTypeFactory::getChecksum(SkillType *st) {
-	assert(m_checksumTable.find(st) != m_checksumTable.end());
-	return m_checksumTable[st];
-}
-
-void SkillTypeFactory::setChecksum(SkillType *st) {
-	assert(m_checksumTable.find(st) == m_checksumTable.end());
-	Checksum checksum;
-	st->doChecksum(checksum);
-	m_checksumTable[st] = checksum.getSum();
-}
-
-// =====================================================
 // 	class ModelFactory
 // =====================================================
 
