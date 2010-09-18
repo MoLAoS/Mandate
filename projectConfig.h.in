@@ -13,6 +13,11 @@
 #cmakedefine HAVE_SYS_TIME_H
 #cmakedefine HAVE_BYTESWAP_H
 
+// png complains when setjmp.h is included before png.h
+// but freetype includes it itself
+// just skip this test, should be fine in most cases
+#define PNG_SKIP_SETJMP_CHECK
+
 #define ON 1
 #define OFF 0
 

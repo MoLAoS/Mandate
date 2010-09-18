@@ -76,7 +76,7 @@ using Search::CardinalDir;
 // =====================================================
 
 class CommandType : public RequirableType {
-	friend class CommandTypeFactory;
+	friend class Glest::Sim::CommandTypeFactory;
 protected:
 	Clicks clicks;
 	bool queuable;

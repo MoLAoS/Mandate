@@ -22,11 +22,7 @@ set(folders
 #file(GLOB game_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
 #source_group("" FILES ${game_srcs})  # . now in folders
 foreach(folder ${folders})
-	if(WIN32)
-		file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h" "${folder}/*.rc")
-	else(WIN32)
-		file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h")
-	endif(WIN32)
+	file(GLOB srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${folder}/*.cpp" "${folder}/*.h")
 
 # 	include_directories(${folder})
 	list(APPEND game_incs "${CMAKE_CURRENT_SOURCE_DIR}/${folder}")
@@ -34,6 +30,9 @@ foreach(folder ${folders})
 	# to get subfolders in VC project
 	source_group(${folder} FILES ${srcs})
 endforeach(folder)
+if(WIN32)
+	list(APPEND game_srcs "resources.rc")
+endif(WIN32)
 
 # ugly, but otherwise not the updated stuff
 set(game_incs ${game_incs} PARENT_SCOPE)

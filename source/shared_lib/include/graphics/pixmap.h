@@ -14,6 +14,7 @@
 
 #include <string>
 #include <cassert>
+#include <stdexcept>
 
 #include "png.h"
 

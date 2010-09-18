@@ -386,13 +386,15 @@ void PixmapIoPng::openRead(const string &path) {
 	png_set_sig_bytes(png_ptr, 8);
 	png_read_info(png_ptr, info_ptr);
 	
-	w = info_ptr->width;
-	h = info_ptr->height;
-	int color_type = info_ptr->color_type;
-	int bit_depth = info_ptr->bit_depth;
+	w = png_get_image_width(png_ptr, info_ptr);
+	h = png_get_image_height(png_ptr, info_ptr);
+	int color_type = png_get_color_type(png_ptr, info_ptr);
+	int bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
 	// We want RGB, 24 bit
-	if (color_type == PNG_COLOR_TYPE_PALETTE || (color_type == PNG_COLOR_TYPE_GRAY && info_ptr->bit_depth < 8) || (info_ptr->valid & PNG_INFO_tRNS)) {
+	if (color_type == PNG_COLOR_TYPE_PALETTE || (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+			|| png_get_valid(png_ptr,info_ptr,PNG_INFO_tRNS)) {
+
 		png_set_expand(png_ptr);
 	}
 
@@ -402,7 +404,7 @@ void PixmapIoPng::openRead(const string &path) {
 	int number_of_passes = png_set_interlace_handling(png_ptr);
 	png_read_update_info(png_ptr, info_ptr);
 
-	components = info_ptr->rowbytes / info_ptr->width;
+	components = png_get_rowbytes(png_ptr, info_ptr) / w;
 
 	delete [] buffer;
 }
@@ -418,13 +420,13 @@ void PixmapIoPng::read(uint8 *pixels, int components) {
 		delete[] row_pointers;
 		throw runtime_error("error during read_image");
 	}
+	const int rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 	for (int y = 0; y < h; ++y) {
-		row_pointers[y] = new png_byte[info_ptr->rowbytes];
+		row_pointers[y] = new png_byte[rowbytes];
 	}
 	png_read_image(png_ptr, row_pointers);
 
 	// Copy image
-	const int rowbytes = info_ptr->rowbytes;
 	int location = 0;
 	for (int y = h - 1; y >= 0; --y) { // you have to somehow invert the lines
 		if (components == this->components) {
