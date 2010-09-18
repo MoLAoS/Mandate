@@ -23,7 +23,7 @@
 #include "FileOps.hpp"
 
 namespace Shared { namespace Graphics {
-
+using std::runtime_error;
 using std::string;
 using namespace Platform;
 using namespace Math;
