@@ -42,14 +42,10 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	// create
 	int gap = (g_metrics.getScreenW() - 300) / 3;
 	int x = gap, w = 150, y = 150, h = 30;
-	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
-	m_returnButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
+	Vec2i retBtnPos(x,y), btnSize(w,h);
 
 	x += w + gap;
-	m_playNowButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
-	m_playNowButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
+	Vec2i playBtnPos(x,y);
 
 	w = 200;
 	h = int(font->getMetrics()->getHeight()) + 6;
@@ -75,6 +71,14 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	y = g_metrics.getScreenH() / 2 - (h * 2) / 2 + 100;
 	m_scenarioList = new DropList(&program, Vec2i(x, y), Vec2i(w,h));
 	m_scenarioList->SelectionChanged.connect(this, &MenuStateScenario::onScenarioChanged);
+
+	m_returnButton = new Button(&program, retBtnPos, btnSize);
+	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
+
+	m_playNowButton = new Button(&program, playBtnPos, btnSize);
+	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
 
 	vector<string> results;
 	int match = 0;	

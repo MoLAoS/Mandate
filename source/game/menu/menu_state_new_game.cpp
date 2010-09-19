@@ -98,20 +98,20 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	gap = (metrics.getScreenW() - 600) / 4;
 
-	//map listBox
+	// map listBox
 	set<string> mapFiles;
-	findAll("maps/*.gbm", results, true);
+	// FIXME: change findAll to return empty result when nothing found
+	try {
+		findAll("maps/*.gbm", results, true);
+	} catch (runtime_error err) { }
 	foreach (vector<string>, it, results) {
 		mapFiles.insert(*it);
 	}
 	results.clear();	
 
-	try{
+	try {
 		findAll("maps/*.mgm", results, true);
-	}catch(runtime_error err){
-		// no *.mgm files found, FIXME: change findAll to return empty result when nothing found
-		results.clear();
-	}
+	} catch (runtime_error err) { }
 	foreach (vector<string>, it, results) {
 		mapFiles.insert(*it);
 	}
