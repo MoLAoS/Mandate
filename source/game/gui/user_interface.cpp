@@ -147,13 +147,14 @@ void UserInterface::init() {
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
 
-	int x = g_metrics.getScreenW() - 20 - 150;
+	int x = g_metrics.getScreenW() - 20 - 195;
 	int y = (g_metrics.getScreenH() - 600) / 2;
+
 	m_display = new Display(this, Vec2i(x,y));
 
 	// get 'this' FactionType, discover what resources need to be displayed
 	const Faction *fac = g_world.getThisFaction();
-	if(fac){  //loadmap has no faction
+	if (fac) {  //loadmap has no faction
 		const FactionType *ft = fac->getType();
 		set<const ResourceType*> displayResources;
 		for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
@@ -1002,7 +1003,7 @@ void UserInterface::computeDisplay() {
 
 			if (selection.isUniform()) { // uniform selection
 				if (u->isBuilt()) {
-					int morphPos = 8;
+					int morphPos = cellWidthCount * 2;
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
 						const CommandType *ct = ut->getCommandType(i);
 						int displayPos = ct->getClass() == CommandClass::MORPH ? morphPos++ : j;

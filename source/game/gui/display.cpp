@@ -46,7 +46,7 @@ void setFancyBorder(BorderStyle &style) {
 // =====================================================
 
 Display::Display(UserInterface *ui, Vec2i pos)
-		: Widget(WidgetWindow::getInstance(), pos, Vec2i(150, 600))
+		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 600))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
@@ -70,7 +70,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	int y = getHeight() - getBorderTop();
 	m_upImageOffset = Vec2i(x, y);
 	for (int i = 0; i < upCellCount; ++i) { // 'up' images (selection potraits)
-		if (i % cellSideCount == 0) {
+		if (i % cellWidthCount == 0) {
 			y -= 32;
 			x = getBorderLeft();
 		}
@@ -88,7 +88,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 10;
 	m_downImageOffset = Vec2i(x, y);
 	for (int i = 0; i < downCellCount; ++i) { // 'down' images (command buttons)
-		if (i % cellSideCount == 0) {
+		if (i % cellWidthCount == 0) {
 			y -= 32;
 			x = getBorderLeft();
 		}
@@ -102,7 +102,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	setTextPos(Vec2i(x, y + 5), 4);
 	m_carryImageOffset = Vec2i(x, y);
 	for (int i = 0; i < carryCellCount; ++i) { // 'carry' images ('loaded' unit portraits)
-		if (i % cellSideCount == 0) {
+		if (i % cellWidthCount == 0) {
 			y -= 32;
 			x = getBorderLeft();
 		}
@@ -117,7 +117,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 }
 
 void Display::setSize() {
-	const int width = 150;
+	const int width = 195;
 	const int bigHeight = 600;
 	const int smallHeight = 150;
 	Vec2i sz(width, bigHeight);
@@ -237,7 +237,7 @@ void Display::setInfoText(const string &infoText) {
 	foreach_const (string, it, str) {
 		if (*it == '\n') ++lines;
 	}
-	int yPos = getHeight() - getBorderTop() - imageSize * cellSideCount - 48
+	int yPos = getHeight() - getBorderTop() - imageSize * cellHeightCount - 48
 		- (lines + 10) * int(m_font->getMetrics()->getHeight());
 	TextWidget::setTextPos(Vec2i(5, yPos), 2);
 	TextWidget::setText(str, 2);
@@ -351,17 +351,17 @@ void Display::render() {
 }
 
 int Display::computeIndex(Vec2i imgOffset, Vec2i pos) {
-	pos.y = pos.y - (imgOffset.y - cellSideCount * imageSize);
+	pos.y = pos.y - (imgOffset.y - cellHeightCount * imageSize);
 
-	if (pos.y < 0 || pos.y >= imageSize * cellSideCount) {
+	if (pos.y < 0 || pos.y >= imageSize * cellHeightCount) {
 		return invalidPos;
 	}
 
 	int cellX = pos.x / imageSize;
-	int cellY = (pos.y / imageSize) % cellSideCount;
-	int index = (cellSideCount - cellY - 1) * cellSideCount + cellX;
+	int cellY = (pos.y / imageSize) % cellHeightCount;
+	int index = (cellHeightCount - cellY - 1) * cellWidthCount + cellX;
 
-	if (index < 0 || index >= cellSideCount * cellSideCount) {
+	if (index < 0 || index >= cellHeightCount * cellWidthCount) {
 		index = invalidPos;
 	}
 	return index;

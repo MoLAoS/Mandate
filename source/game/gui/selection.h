@@ -44,7 +44,7 @@ public:
 
 public:
 	static const int maxGroups = 10;
-	static const int maxUnits = 16;
+	static const int maxUnits = 24;
 
 private:
 	bool empty;

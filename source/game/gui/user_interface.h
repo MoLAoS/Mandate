@@ -94,20 +94,22 @@ public:
 
 class UserInterface : public sigslot::has_slots {
 public:
-	static const int maxSelBuff= 128*5;
-	static const int upgradeDisplayIndex= 8;
-	static const int cancelPos= 15;
-	static const int meetingPointPos= 14;
-	static const int autoRepairPos= 12;
-	static const int imageCount= 16;
-	static const int invalidPos= -1;
-	static const int doubleClickSelectionRadius= 20;
-	static const int invalidGroupIndex= -1;
+	static const int cellWidthCount = Display::cellWidthCount;
+	static const int cellHeightCount = Display::cellHeightCount;
+	static const int maxSelBuff = 128 * 5;
+	static const int upgradeDisplayIndex = cellWidthCount * 2;
+	static const int cancelPos = cellWidthCount * cellHeightCount - 1;
+	static const int meetingPointPos = cellWidthCount * cellHeightCount - 2;
+	static const int autoRepairPos = cellWidthCount * cellHeightCount - cellWidthCount;
+	static const int imageCount = cellWidthCount * cellHeightCount;
+	static const int invalidPos = -1;
+	static const int doubleClickSelectionRadius = 20;
+	static const int invalidGroupIndex = -1;
 
 	typedef vector<Vec2i> BuildPositions;
 
 private:
-	//External objects
+	// External objects
 	GameState &game;
 	const Input &input;
 	const Commander *commander;
@@ -124,23 +126,23 @@ private:
 
 	Random random;
 
-	//Positions
-	Vec2i posObjWorld;		//world coords
+	// Positions
+	Vec2i posObjWorld;		// world coords
 	bool validPosObjWorld;
 	bool computeSelection;
 
-	//display
+	// display
 	const UnitType *choosenBuildingType;
 	const CommandType *activeCommandType;
 	CommandClass activeCommandClass;
 	int activePos;
 
-	//multi-build
-	Vec2i dragStartPos;		//begining coord of multi-build command
+	// multi-build
+	Vec2i dragStartPos;		// begining coord of multi-build command
 	BuildPositions buildPositions;
 	bool dragging;
 
-	//composite
+	// composite
 	Mouse3d mouse3d;
 	Selection selection;
 	SelectionQuad selectionQuad;

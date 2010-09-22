@@ -45,10 +45,12 @@ class UserInterface;
 
 class Display : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
-	static const int cellSideCount = 4;
-	static const int upCellCount = cellSideCount * cellSideCount;
-	static const int downCellCount = cellSideCount * cellSideCount;
-	static const int carryCellCount = cellSideCount * cellSideCount;
+	//static const int cellSideCount = 4;
+	static const int cellWidthCount = 6;
+	static const int cellHeightCount = 4;
+	static const int upCellCount = cellWidthCount * cellHeightCount;
+	static const int downCellCount = cellWidthCount * cellHeightCount;
+	static const int carryCellCount = cellWidthCount * cellHeightCount;
 	static const int colorCount = 4;
 	static const int imageSize = 32;
 	static const int invalidPos = -1;
