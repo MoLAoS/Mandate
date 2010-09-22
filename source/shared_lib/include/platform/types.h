@@ -73,6 +73,8 @@ namespace Shared { namespace Platform {
 	typedef Uint32 uint32;
 	typedef Sint64 int64;
 	typedef Uint64 uint64;
+
+#	define override
 #endif
 
 #ifdef USE_POSIX_SOCKETS

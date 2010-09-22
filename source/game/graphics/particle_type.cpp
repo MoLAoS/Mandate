@@ -233,8 +233,8 @@ void ProjectileType::load(const string &dir, const string &path){
 	}
 }
 
-ParticleSystem *ProjectileType::create() {
-	Projectile *ps = new Projectile(*this);
+ParticleSystem *ProjectileType::create(bool vis) {
+	Projectile *ps = new Projectile(vis, *this);
 
 	ps->setTrajectory(trajectory);
 	ps->setTrajectorySpeed(trajectorySpeed);
@@ -275,8 +275,8 @@ void SplashType::load(const string &dir, const string &path){
 	}
 }
 
-ParticleSystem *SplashType::create(){
-	Splash *ps =  new Splash(*this);
+ParticleSystem *SplashType::create(bool vis) {
+	Splash *ps = new Splash(vis, *this);
 
 	ps->setEmissionRateFade(emissionRateFade);
 	ps->setVerticalSpreadA(verticalSpreadA);

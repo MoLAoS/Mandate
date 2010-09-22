@@ -168,7 +168,7 @@ void ParticleRendererGl::renderSystemLine(ParticleSystem *ps) {
 	assertGl();
 	assert(rendering);
 
-	if (!ps->isEmpty()) {
+	if (ps->anyParticle()) {
 		const Particle *particle = ps->getParticle(0);
 
 		setBlendFunc(ps->getSrcBlendFactor(), ps->getDestBlendFactor());

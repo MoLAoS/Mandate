@@ -184,7 +184,7 @@ void UserInterface::initMinimap(bool fow, bool resuming) {
 	const int &mapH = g_map.getH();
 
 	fixed ratio = fixed(mapW) / mapH;
-	cout << "Map aspect ratio : " << ratio.toFloat();
+	//cout << "Map aspect ratio : " << ratio.toFloat();
 
 	Vec2i size;
 	if (ratio == 1) {

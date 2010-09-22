@@ -458,8 +458,13 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	progress2 = 0;
 	currSkill = newSkill;
 	StateChanged(this);
+	
+	Vec2i cPos = getCenteredPos();
+	Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+	bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+	
 	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
-		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem();
+		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
 		ups->setPos(getCurrVector());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
@@ -519,11 +524,13 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 	//make particle system
 	const Tile *sc = map->getTile(Map::toTileCoords(this->getPos()));
 	const Tile *tsc = map->getTile(Map::toTileCoords(this->getTargetPos()));
+	
 	bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
+	visible = visible && g_renderer.getCuller().isInside(getCenteredPos());
 
 	//projectile
 	if (pstProj != NULL) {
-		psProj = pstProj->createProjectileParticleSystem();
+		psProj = pstProj->createProjectileParticleSystem(visible);
 
 		switch (pstProj->getStart()) {
 			case ProjectileStart::SELF:
@@ -545,8 +552,6 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		}
 
 		g_simInterface->doUpdateProjectile(this, psProj, startPos, endPos);
-		// game network interface calls setPath() on psProj, differently for clients/servers
-		//theNetworkManager.getNetworkInterface()->doUpdateProjectile(this, psProj, startPos, endPos);
 
 		if(pstProj->isTracking() && targetRef != -1) {
 			Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
@@ -555,7 +560,6 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		} else {
 			psProj->setDamager(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
 		}
-		psProj->setVisible(visible);
 		renderer.manageParticleSystem(psProj, ResourceScope::GAME);
 	} else {
 		g_world.hit(this);
@@ -563,9 +567,8 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	//splash
 	if (pstSplash != NULL) {
-		psSplash = pstSplash->createSplashParticleSystem();
+		psSplash = pstSplash->createSplashParticleSystem(visible);
 		psSplash->setPos(endPos);
-		psSplash->setVisible(visible);
 		renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
 		if (pstProj != NULL) {
 			psProj->link(psSplash);
@@ -1316,20 +1319,23 @@ bool Unit::decHp(int i) {
 		ScriptManager::onHPBelowTrigger(this);
 	}
 
-	//fire
+	// fire
 	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2 && fire == NULL) {
 		FireParticleSystem *fps;
-		fps = new FireParticleSystem(200);
-		fps->setSpeed(2.5f / Config::getInstance().getGsWorldUpdateFps());
+		Vec2i cPos = getCenteredPos();
+		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+		bool vis = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+		fps = new FireParticleSystem(vis, 200);
+		fps->setSpeed(2.5f / g_config.getGsWorldUpdateFps());
 		fps->setPos(getCurrVector());
 		fps->setRadius(type->getSize() / 3.f);
-		fps->setTexture(CoreData::getInstance().getFireTexture());
+		fps->setTexture(g_coreData.getFireTexture());
 		fps->setSize(type->getSize() / 3.f);
 		fire = fps;
-		Renderer::getInstance().manageParticleSystem(fps, ResourceScope::GAME);
+		g_renderer.manageParticleSystem(fps, ResourceScope::GAME);
 	}
 
-	//stop fire on death
+	// stop fire on death
 	if (hp <= 0) {
 		hp = 0;
 		if (fire) {
@@ -1542,8 +1548,12 @@ bool Unit::add(Effect *e) {
 
 	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
 	if (!particleTypes.empty() && startParticles) {
+		Vec2i cPos = getCenteredPos();
+		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+		bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+
 		foreach_const (UnitParticleSystemTypes, it, particleTypes) {
-			UnitParticleSystem *ups = (*it)->createUnitParticleSystem();
+			UnitParticleSystem *ups = (*it)->createUnitParticleSystem(visible);
 			ups->setPos(getCurrVector());
 			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 			effectParticleSystems.push_back(ups);

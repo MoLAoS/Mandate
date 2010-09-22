@@ -12,8 +12,10 @@
 #define _GAME_PARTICLE_INCLUDED_
 
 #include "particle.h"
+#include "timer.h"
 
 using Shared::Util::Random;
+using Shared::Platform::Chrono;
 using namespace Shared::Graphics;
 
 namespace Glest { 
@@ -25,22 +27,78 @@ using ProtoTypes::UnitParticleSystemType;
 namespace Entities {
 class Unit;
 class Splash;
+
+// =====================================================
+//	class GameParticleSystem
+// =====================================================
+
+class GameParticleSystem : public ParticleSystem {
+protected:
+	int64 lastVisCheck; // time last visibility check was made
+
+	static const int64 test_interval = 200;
+
+	void doVisibiltyChecks();
+
+public:
+	GameParticleSystem(bool visible, int particleCount)
+			: ParticleSystem(particleCount) {
+		this->visible = visible;
+		if (visible) {
+			initArray();
+		}
+		lastVisCheck = 0;
+	}
+
+	GameParticleSystem(bool visible, const ParticleSystemBase &model, int particleCount)
+			: ParticleSystem(model, particleCount) {
+		this->visible = visible;
+		if (visible) {
+			initArray();
+		}
+		lastVisCheck = 0;
+	}
+
+	void checkVisibilty(bool log = false);
+
+	virtual bool isFinished() const override {
+		if (state == sFade) {
+			return !particles || !aliveParticleCount;
+		}
+		return false;
+	}
+
+};
+
+// =====================================================
+//	class FireParticleSystem
+// =====================================================
+
+class FireParticleSystem : public GameParticleSystem {
+public:
+	FireParticleSystem(bool visible, int particleCount = 2000);
+
+	//virtual
+	virtual void update() override;
+	virtual void initParticle(Particle *p, int particleIndex) override;
+	virtual void updateParticle(Particle *p) override;
+};
+
 // ===========================================================================
 //  AttackParticleSystem
 //
 /// Base class for Projectiles and Splashes
 // ===========================================================================
 
-class AttackParticleSystem : public ParticleSystem {
+class AttackParticleSystem : public GameParticleSystem {
 protected:
 	Vec3f direction;
 
 public:
-	AttackParticleSystem(int particleCount);
-	AttackParticleSystem(const ParticleSystemBase &model, int particleCount);
+	AttackParticleSystem(bool visible, const ParticleSystemBase &model, int particleCount);
 	virtual ~AttackParticleSystem() {}
 
-	virtual void render(ParticleRenderer *pr, ModelRenderer *mr);
+	virtual void render(ParticleRenderer *pr, ModelRenderer *mr) override;
 	virtual Vec3f getDirection() const {return direction;}
 };
 
@@ -70,26 +128,24 @@ private:
 	TrajectoryType trajectory;
 	float trajectorySpeed;
 
-	//parabolic
+	// parabolic
 	float trajectoryScale;
 	float trajectoryFrequency;
 
 	Random random;
-	int id;
 
 	Sim::ParticleDamager *damager;
 
 public:
-	Projectile(int particleCount= 1000);
-	Projectile(const ParticleSystemBase &model, int particleCount= 1000);
+	Projectile(bool visible, const ParticleSystemBase &model, int particleCount= 1000);
 	virtual ~Projectile();
 
 	void link(Splash *particleSystem);
 	void setDamager(Sim::ParticleDamager *damager);
 
-	virtual void update();
-	virtual void initParticle(Particle *p, int particleIndex);
-	virtual void updateParticle(Particle *p);
+	virtual void update() override;
+	virtual void initParticle(Particle *p, int particleIndex) override;
+	virtual void updateParticle(Particle *p) override;
 
 	void setTrajectory(TrajectoryType trajectory)			{this->trajectory= trajectory;}
 	void setTrajectorySpeed(float trajectorySpeed)			{this->trajectorySpeed= trajectorySpeed;}
@@ -101,7 +157,7 @@ public:
 	void setTarget(const Unit *target)						{this->target = target;}
 	const Unit* getTarget() const							{return this->target; }
 
-	virtual bool isProjectile() const						{ return true; }
+	virtual bool isProjectile() const override				{ return true; }
 
 	int getEndFrame() const { return endFrame;	}
 };
@@ -124,27 +180,25 @@ private:
 	float horizontalSpreadB;
 
 public:
-	Splash(int particleCount = 1000);
-	Splash(const ParticleSystemBase &model, int particleCount = 1000);
+	Splash(bool visible, const ParticleSystemBase &model, int particleCount = 1000);
 	virtual ~Splash();
 
-	virtual void update();
-	virtual void initParticle(Particle *p, int particleIndex);
-	virtual void updateParticle(Particle *p);
+	virtual void update() override;
+	virtual void initParticle(Particle *p, int particleIndex) override;
+	virtual void updateParticle(Particle *p) override;
 
 	void setEmissionRateFade(int emissionRateFade)		{this->emissionRateFade = emissionRateFade;}
 	void setVerticalSpreadA(float verticalSpreadA)		{this->verticalSpreadA = verticalSpreadA;}
 	void setVerticalSpreadB(float verticalSpreadB)		{this->verticalSpreadB = verticalSpreadB;}
 	void setHorizontalSpreadA(float horizontalSpreadA)	{this->horizontalSpreadA = horizontalSpreadA;}
 	void setHorizontalSpreadB(float horizontalSpreadB)	{this->horizontalSpreadB = horizontalSpreadB;}
-
 };
 
 // =====================================================
 //	class UnitParticleSystem
 // =====================================================
 
-class UnitParticleSystem : public ParticleSystem {
+class UnitParticleSystem : public GameParticleSystem {
 private:
 	Vec3f cRotation;
 	Vec3f fixedAddition; // ??
@@ -169,14 +223,13 @@ private:
 	const UnitParticleSystemType *type;
 
 public:
-	//UnitParticleSystem(int particleCount = 2000);
-	UnitParticleSystem(const UnitParticleSystemType &model, int particleCount = 2000);
+	UnitParticleSystem(bool visible, const UnitParticleSystemType &model, int particleCount = 2000);
 
 	//virtual
-	virtual void initParticle(Particle *p, int particleIndex);
-	virtual void updateParticle(Particle *p);
-	virtual void update();
-	virtual void render(ParticleRenderer *pr, ModelRenderer *mr);
+	virtual void initParticle(Particle *p, int particleIndex) override;
+	virtual void updateParticle(Particle *p) override;
+	virtual void update() override;
+	virtual void render(ParticleRenderer *pr, ModelRenderer *mr) override;
 
 	//set params
 	//void setWind(float windAngle, float windSpeed); // ??

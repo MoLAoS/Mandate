@@ -40,6 +40,8 @@ class ParticleRenderer;
 class ModelRenderer;
 class Model;
 
+#define PARTICLE_LOG(x) /*{cout << x << endl;}*/
+
 STRINGY_ENUM( BlendFactor,
 	ZERO,
 	ONE,
@@ -214,7 +216,11 @@ protected:
 		sFade		// No new particles
 	};
 
+private:
+	//static int idCounter;
+
 protected:
+	//int id;
 	int particleCount;
 	Particle *particles;
 	State state;
@@ -229,6 +235,9 @@ public:
 	ParticleSystem(int particleCount = 1000);
 	ParticleSystem(const ParticleSystemBase &protoType, int particleCount = 1000);
 	virtual ~ParticleSystem();
+
+	void initArray();
+	void freeArray();
 
 	//public
 	virtual void update();
@@ -260,7 +269,10 @@ public:
 
 	//misc
 	void fade();
-	int isEmpty() const {
+
+	bool anyParticle() const { return aliveParticleCount; }
+
+	virtual bool isFinished() const { // to be overridden by GameParticleSystems
 		assert(aliveParticleCount >= 0);
 		return !aliveParticleCount && state != sPause;
 	}
@@ -274,20 +286,6 @@ protected:
 	virtual void initParticle(Particle *p, int particleIndex);
 	virtual void updateParticle(Particle *p);
 	virtual bool deathTest(Particle *p)			{return p->energy <= 0;}
-};
-
-// =====================================================
-//	class FireParticleSystem
-// =====================================================
-
-class FireParticleSystem: public ParticleSystem {
-public:
-	FireParticleSystem(int particleCount = 2000);
-	FireParticleSystem(const ParticleSystemBase &type, int particleCount = 2000);
-
-	//virtual
-	virtual void initParticle(Particle *p, int particleIndex);
-	virtual void updateParticle(Particle *p);
 };
 
 // =====================================================

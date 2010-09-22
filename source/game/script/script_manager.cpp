@@ -1045,8 +1045,9 @@ int ScriptManager::createUnit(LuaHandle* luaHandle) {
 			}
 			addErrorMessage(ss.str());
 		}
+		args.returnInt(id);
 	}
-	return args.getReturnCount(); // == 0  Why not return ID ?
+	return args.getReturnCount();
 }
 
 int ScriptManager::giveResource(LuaHandle* luaHandle) {

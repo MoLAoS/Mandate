@@ -16,21 +16,96 @@
 #include "logger.h"
 #include "world.h"
 
-#define PARTICLE_LOG(x) {}//{ g_logger.add(intToStr(g_world.getFrameCount()) + " :: " + x); }
-
 namespace Glest { namespace Entities {
+using Sim::Tile;
+using Graphics::Renderer;
+using Graphics::SceneCuller;
+
+void GameParticleSystem::doVisibiltyChecks() {
+	Vec2i cellPos(int(pos.x), int(pos.z));
+	if (g_map.getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())
+	&& g_renderer.getCuller().isInside(cellPos)) { // visible
+		if (!visible) {
+			initArray();
+			visible = true;
+		}
+	} else { // not visible
+		if (visible) {
+			freeArray();
+			visible = false;
+		}
+	}
+}
+
+void GameParticleSystem::checkVisibilty(bool log) {
+	int64 now = Chrono::getCurMillis();
+	if (state != sPause && now - lastVisCheck > test_interval) {
+		lastVisCheck = now;
+		doVisibiltyChecks();
+	}
+}
+
+// ===========================================================================
+//  FireParticleSystem
+// ===========================================================================
+
+FireParticleSystem::FireParticleSystem(bool visible, int particleCount)
+		: GameParticleSystem(visible, particleCount) {
+	setRadius(0.5f);
+	setSpeed(0.01f);
+	setSize(0.6f);
+	setColorNoEnergy(Vec4f(1.0f, 0.5f, 0.0f, 1.0f));
+}
+
+void FireParticleSystem::update() {
+	ParticleSystem::update();
+	checkVisibilty();
+}
+
+void FireParticleSystem::initParticle(Particle *p, int particleIndex) {
+	float ang = random.randRange(-twopi, twopi);
+	float mod = fabsf(random.randRange(-radius, radius));
+
+	float x = sinf(ang) * mod;
+	float y = cosf(ang) * mod;
+
+	float radRatio = sqrtf(sqrtf(mod / radius));
+	Vec4f halfColorNoEnergy = colorNoEnergy * 0.5f;
+
+	p->color = halfColorNoEnergy + halfColorNoEnergy * radRatio;
+	p->energy = int(energy * radRatio) + random.randRange(-energyVar, energyVar);
+	float halfRadius = radius * 0.5f;
+	p->pos = Vec3f(pos.x + x, pos.y + random.randRange(-halfRadius, halfRadius), pos.z + y);
+	p->lastPos = pos;
+	p->size = size;
+	p->speed = Vec3f(
+			speed * random.randRange(-0.125f, 0.125f),
+			speed * random.randRange(0.5f, 1.5f),
+			speed * random.randRange(-0.125f, 0.125f)
+	);
+}
+
+void FireParticleSystem::updateParticle(Particle *p) {
+	p->lastPos = p->pos;
+	p->pos = p->pos+p->speed;
+	p->energy--;
+
+	if(p->color.r > 0.0f)
+		p->color.r *= 0.98f;
+	if(p->color.g > 0.0f)
+		p->color.g *= 0.98f;
+	if(p->color.a > 0.0f)
+		p->color.a *= 0.98f;
+
+	p->speed.x *= 1.001f; // wind
+}
 
 // ===========================================================================
 //  AttackParticleSystem
 // ===========================================================================
 
-AttackParticleSystem::AttackParticleSystem(int particleCount)
-		: ParticleSystem(particleCount)
-		, direction(1.0f, 0.0f, 0.0f) {
-}
-
-AttackParticleSystem::AttackParticleSystem(const ParticleSystemBase &protoType, int particleCount)
-		: ParticleSystem(protoType, particleCount) 
+AttackParticleSystem::AttackParticleSystem(bool visible, const ParticleSystemBase &protoType, int particleCount)
+		: GameParticleSystem(visible, protoType, particleCount) 
 		, direction(1.0f, 0.0f, 0.0f) {	
 }
 
@@ -40,14 +115,14 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 			pr->renderSingleModel(this, mr);
 		}
 		switch (primitiveType) {
-		case PrimitiveType::QUAD:
-			pr->renderSystem(this);
-			break;
-		case PrimitiveType::LINE:
-			pr->renderSystemLine(this);
-			break;
-		default:
-			assert(false);
+			case PrimitiveType::QUAD:
+				pr->renderSystem(this);
+				break;
+			case PrimitiveType::LINE:
+				pr->renderSystemLine(this);
+				break;
+			default:
+				assert(false);
 		}
 	}
 }
@@ -56,26 +131,8 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 //  Projectile
 // ===========================================================================
 
-Projectile::Projectile(int particleCount)
-		: AttackParticleSystem(particleCount)
-		, nextParticleSystem(0)
-		, target(0)
-		, trajectory(TrajectoryType::LINEAR)
-		, trajectorySpeed(1.f)
-		, trajectoryScale(1.f)
-		, trajectoryFrequency(1.f)
-		, damager(0) {
-	setEmissionRate(20);
-	setColor(Vec4f(1.0f, 0.3f, 0.0f, 0.5f));
-	setEnergy(100);
-	setEnergyVar(50);
-	setSize(0.4f);
-	setSpeed(0.14f);
-}
-
-
-Projectile::Projectile(const ParticleSystemBase &protoType, int particleCount)
-		: AttackParticleSystem(protoType, particleCount)
+Projectile::Projectile(bool visible, const ParticleSystemBase &protoType, int particleCount)
+		: AttackParticleSystem(visible, protoType, particleCount)
 		, nextParticleSystem(0)
 		, target(0)
 		, trajectory(TrajectoryType::LINEAR)
@@ -140,7 +197,7 @@ void Projectile::update() {
 			//flatVector = zVector * trajectorySpeed;
 		//}
 
-		PARTICLE_LOG( "updating particle now @" + Vec3fToStr(flatPos) )
+//		PARTICLE_LOG( "updating particle now @" + Vec3fToStr(flatPos) )
 
 		flatPos = startPos + (endPos - startPos) * t;
 		Vec3f targetVector = endPos - startPos;
@@ -197,9 +254,11 @@ void Projectile::update() {
 		if (nextParticleSystem) {
 			nextParticleSystem->setState(sPlay);
 			nextParticleSystem->setPos(endPos);
+			nextParticleSystem->checkVisibilty(true);
 		}
 	}
 	ParticleSystem::update();
+	checkVisibilty();
 }
 
 void Projectile::initParticle(Particle *p, int particleIndex) {
@@ -215,7 +274,7 @@ void Projectile::initParticle(Particle *p, int particleIndex) {
 	updateParticle(p);
 }
 
-inline void Projectile::updateParticle(Particle *p) {
+void Projectile::updateParticle(Particle *p) {
 	float energyRatio = clamp(float(p->energy) / energy, 0.f, 1.f);
 
 	p->lastPos += p->speed;
@@ -274,29 +333,14 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 //  Splash
 // ===========================================================================
 
-Splash::Splash(const ParticleSystemBase &model,  int particleCount)
-		: AttackParticleSystem(model, particleCount)
+Splash::Splash(bool visible, const ParticleSystemBase &model,  int particleCount)
+		: AttackParticleSystem(visible, model, particleCount)
 		, prevParticleSystem(0)
 		, emissionRateFade(1)
 		, verticalSpreadA(1.f)
 		, verticalSpreadB(0.f)
 		, horizontalSpreadA(1.f)
 		, horizontalSpreadB(0.f) {
-}
-
-Splash::Splash(int particleCount)
-		: AttackParticleSystem(particleCount) 
-		, prevParticleSystem(0)
-		, emissionRateFade(1)
-		, verticalSpreadA(1.f)
-		, verticalSpreadB(0.f)
-		, horizontalSpreadA(1.f)
-		, horizontalSpreadB(0.f) {
-	setColor(Vec4f(1.0f, 0.3f, 0.0f, 0.8f));
-	setEnergy(100);
-	setEnergyVar(50);
-	setSize(1.0f);
-	setSpeed(0.003f);
 }
 
 Splash::~Splash() {
@@ -305,14 +349,18 @@ Splash::~Splash() {
 	}
 }
 
-inline void Splash::update() {
+void Splash::update() {
 	ParticleSystem::update();
-	if (state != sPause) {
+	if (state == sPlay) {
 		emissionRate -= emissionRateFade;
+		if (emissionRate <= 0) {
+			state = sFade;
+		}
 	}
+	checkVisibilty();
 }
 
-void Splash::initParticle(Particle *p, int particleIndex){
+void Splash::initParticle(Particle *p, int particleIndex) {
 	p->pos = pos;
 	p->lastPos = p->pos;
 	p->energy = energy;
@@ -327,7 +375,7 @@ void Splash::initParticle(Particle *p, int particleIndex){
 	p->accel = Vec3f(0.0f, -gravity, 0.0f);
 }
 
-inline void Splash::updateParticle(Particle *p) {
+void Splash::updateParticle(Particle *p) {
 	float energyRatio = clamp(static_cast<float>(p->energy) / energy, 0.f, 1.f);
 
 	p->lastPos = p->pos;
@@ -338,36 +386,12 @@ inline void Splash::updateParticle(Particle *p) {
 	p->size = size * energyRatio + sizeNoEnergy * (1.0f - energyRatio);
 }
 
-
 // ===========================================================================
 //  UnitParticleSystem
 // ===========================================================================
 
-/*
-UnitParticleSystem::UnitParticleSystem(int particleCount): ParticleSystem(particleCount){
-	radius = 0.5f;
-	speed = 0.01f;
-//	windSpeed = Vec3f(0.f);
-
-	size = 0.6f;
-	colorNoEnergy = Vec4f(1.f, 0.5f, 0.f, 1.f);
-
-	primitiveType = PrimitiveType::QUAD;
-	offset = Vec3f(0.0f);
-	direction = Vec3f(0.0f, 1.0f, 0.0f);
-	gravity = 0.0f;
-
-	fixed = false;
-	rotation = 0.0f;
-	relativeDirection=true;
-
-	cRotation = Vec3f(1.f, 1.f, 1.f);
-	fixedAddition = Vec3f(0.f, 0.f, 0.f);
-
-}
-*/
-UnitParticleSystem::UnitParticleSystem(const UnitParticleSystemType &protoType, int particleCount)
-		: ParticleSystem(protoType, particleCount){
+UnitParticleSystem::UnitParticleSystem(bool visible, const UnitParticleSystemType &protoType, int particleCount)
+		: GameParticleSystem(visible, protoType, particleCount) {
 	// are these not set in prototype?
 	type = &protoType;
 	radius = 0.5f; // not set in prototype?
@@ -387,8 +411,7 @@ UnitParticleSystem::UnitParticleSystem(const UnitParticleSystemType &protoType, 
 	maxParticleEnergy = protoType.getEnergy();
 }
 
-
-void UnitParticleSystem::render(ParticleRenderer *pr,ModelRenderer *mr){
+void UnitParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	switch (primitiveType) {
 		case PrimitiveType::QUAD:
 			pr->renderSystem(this);
@@ -400,7 +423,7 @@ void UnitParticleSystem::render(ParticleRenderer *pr,ModelRenderer *mr){
 			assert(false);
 	}
 }
- 
+
 void UnitParticleSystem::setTeamColour(Vec3f teamColour) {
 	this->teamColour = teamColour;
 	Vec3f tmpCol;
@@ -470,6 +493,7 @@ void UnitParticleSystem::update() {
 		oldPos = pos;
 	}
 	ParticleSystem::update();
+	checkVisibilty();
 }
 
 void UnitParticleSystem::updateParticle(Particle *p) {
