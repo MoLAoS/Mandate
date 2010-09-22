@@ -257,12 +257,13 @@ void GameState::update() {
 		// Gui
 		gui.update();
 
-		// Particle systems
-		if (weatherParticleSystem) {
-			weatherParticleSystem->setPos(gameCamera.getPos());
+		if (simInterface->getSpeed() != GameSpeed::PAUSED) {
+			// Particle systems
+			if (weatherParticleSystem) {
+				weatherParticleSystem->setPos(gameCamera.getPos());
+			}
+			g_renderer.updateParticleManager(ResourceScope::GAME);
 		}
-		g_renderer.updateParticleManager(ResourceScope::GAME);
-
 	} catch (Net::NetworkError &e) {
 		LOG_NETWORK(e.what());
 		displayError(e);
