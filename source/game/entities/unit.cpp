@@ -988,8 +988,14 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 /** called to update animation cycle on a dead unit */
 void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
-	// if dead, set startFrame to last frame, endFrame to this frame
-	// to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
+	if (!skillParticleSystems.empty()) {
+		foreach (UnitParticleSystems, it, skillParticleSystems) {
+			(*it)->fade();
+		}
+		skillParticleSystems.clear();
+	}
+	// when dead and have already played one complete anim cycle, set startFrame to last frame, endFrame 
+	// to this frame to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
 	const int &frame = g_world.getFrameCount();
 	this->lastAnimReset = frame - 1;
 	this->nextAnimReset = frame;
