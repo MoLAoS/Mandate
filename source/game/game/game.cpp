@@ -84,6 +84,7 @@ GameState::GameState(Program &program)
 		, netError(false)
 		, gotoMenu(false)
 		, exitGame(false)
+		, exitProgram(false)
 		, scrollSpeed(config.getUiScrollSpeed())
 		, m_modalDialog(0)
 		//, m_exitMsgBox(0)
@@ -240,6 +241,10 @@ void GameState::update() {
 	if (exitGame) {
 		g_simInterface->doQuitGame(QuitSource::LOCAL);
 	}
+	if (exitProgram) {
+		g_program.exit();
+		return;
+	}
 	if (netError) {
 		return;
 	}
@@ -293,6 +298,7 @@ void GameState::displayError(std::exception &e) {
 		program.removeFloatingWidget(m_modalDialog);
 		m_modalDialog = 0;
 	}
+	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	MessageDialog::Ptr dialog = MessageDialog::showDialog(pos, size, 
 		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
@@ -314,6 +320,7 @@ void GameState::doGameMenu() {
 		m_modalDialog = 0;
 		return;
 	}
+	gui.resetState();
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
@@ -330,17 +337,45 @@ void GameState::doExitMessage(const string &msg) {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
+	gui.resetState();
 	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
-		g_lang.get("Ok"), g_lang.get("Cancel"));
-	dialog->Button1Clicked.connect(this, &GameState::onExitSelected);
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"),
+		msg, g_lang.get("Ok"), g_lang.get("Cancel"));
+	dialog->Button1Clicked.connect(this, &GameState::onConfirmQuitGame);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
 	m_modalDialog = dialog;
 }
 
-void GameState::onExitSelected(BasicDialog::Ptr) {
+void GameState::confirmQuitGame() {
+	doExitMessage(g_lang.get("ExitGame?"));
+}
+
+void GameState::confirmExitProgram() {
+	if (m_modalDialog) {
+		g_widgetWindow.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
+	}
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
+	}
+	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"), 
+		g_lang.get("ExitProgram?"), g_lang.get("Ok"), g_lang.get("Cancel"));
+	dialog->Button1Clicked.connect(this, &GameState::onConfirmExitProgram);
+	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
+	dialog->Escaped.connect(this, &GameState::destroyDialog);
+	m_modalDialog = dialog;
+}
+
+void GameState::onConfirmQuitGame(BasicDialog::Ptr) {
 	exitGame = true;
+	program.removeFloatingWidget(m_modalDialog);
+	m_modalDialog = 0;
+}
+
+void GameState::onConfirmExitProgram(BasicDialog::Ptr) {
+	exitProgram = true;
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 }
@@ -359,6 +394,7 @@ void GameState::doSaveBox() {
 		g_widgetWindow.removeFloatingWidget(m_modalDialog);
 		m_modalDialog = 0;
 	}
+	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	InputDialog::Ptr dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));

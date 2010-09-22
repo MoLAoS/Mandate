@@ -234,6 +234,7 @@ void UserInterface::resetState() {
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
+	g_program.setMouseCursorIcon();
 }
 
 static void calculateNearest(UnitVector &units, const Vec3f &pos) {
@@ -809,6 +810,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 					m_selectingSecond = true;
 				} else {
 					selectingPos = true;
+					g_program.setMouseCursorIcon(ct->getImage());
 					m_minimap->setLeftClickOrder(true);
 					activePos = posDisplay;
 				}
@@ -834,6 +836,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay){
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
 				activePos = posDisplay;
+				g_program.setMouseCursorIcon(choosenBuildingType->getImage());
 			}
 		} else {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {

@@ -90,7 +90,7 @@ protected:
 	int updateFps, lastUpdateFps;
 	int renderFps, lastRenderFps;
 	bool noInput;
-	bool netError, gotoMenu, exitGame;
+	bool netError, gotoMenu, exitGame, exitProgram;
 	float scrollSpeed;
 
 	MessageQueue m_scriptMessages;
@@ -158,6 +158,12 @@ public:
 	virtual void quitGame();
 
 	virtual bool isGameState() const	{ return true; }
+
+	void confirmQuitGame();
+	void confirmExitProgram();
+
+	void onConfirmQuitGame(BasicDialog::Ptr);
+	void onConfirmExitProgram(BasicDialog::Ptr);
 
 	void destroyDialog(BasicDialog::Ptr ptr = 0);
 

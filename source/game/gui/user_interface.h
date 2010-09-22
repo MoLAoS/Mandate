@@ -267,12 +267,12 @@ private:
 
 	//misc
 	int computePosDisplay(int x, int y);
-	void resetState();
 	void mouseDownDisplayUnitSkills(int posDisplay);
 	void mouseDownSecondTier(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
 public:
+	void resetState();
 	void computeDisplay();
 	void computeInfoString(int posDisplay);
 	void updateSelection(bool doubleClick, UnitVector &units);
