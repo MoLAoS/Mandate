@@ -172,6 +172,7 @@ public:
 	//get
 	Minimap *getMinimap()							{return m_minimap;}
 	const Minimap *getMinimap() const				{return m_minimap;}
+	const Input& getInput() const					{return input;}
 	LuaConsole* getLuaConsole()						{return m_luaConsole;}
 	Vec2i getPosObjWorld() const					{return posObjWorld;}
 	const UnitType *getBuilding() const;
@@ -266,13 +267,13 @@ private:
 
 	//misc
 	int computePosDisplay(int x, int y);
-	void computeDisplay();
 	void resetState();
 	void mouseDownDisplayUnitSkills(int posDisplay);
 	void mouseDownSecondTier(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
 public:
+	void computeDisplay();
 	void computeInfoString(int posDisplay);
 	void updateSelection(bool doubleClick, UnitVector &units);
 private:

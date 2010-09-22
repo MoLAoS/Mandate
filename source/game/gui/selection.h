@@ -78,6 +78,8 @@ public:
 	}
 	void unSelect(const UnitVector &units);
 	void unSelect(const Unit *unit);
+	void unSelectAllOfType(const UnitType *type);
+	void unSelectAllNotOfType(const UnitType *type);
 	void clear();
 
 	bool isEmpty() const				{return empty;}

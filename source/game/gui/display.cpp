@@ -390,6 +390,28 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 			if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
 				return true;
 			}
+			ndx = computeIndex(m_upImageOffset, tPos);
+			if (ndx != -1 && getImage(ndx)) {
+				const Unit *unit = m_ui->getSelection()->getUnit(ndx);
+				assert(unit);
+				if (m_ui->getInput().isCtrlDown()) {
+					if (m_ui->getInput().isShiftDown()) {
+						// remove all of ndx's type from selection
+						m_ui->getSelection()->unSelectAllOfType(unit->getType());
+					} else {
+						// remove ndx from selection
+						m_ui->getSelection()->unSelect(unit);
+					}
+				} else if (m_ui->getInput().isShiftDown()) {
+					// select all of ndx's type in current selection
+					m_ui->getSelection()->unSelectAllNotOfType(unit->getType());
+				} else {
+					m_ui->getSelection()->clear();
+					m_ui->getSelection()->select(const_cast<Unit*>(unit));
+				}
+				m_ui->computeDisplay();
+				return true;
+			}
 		}
 		m_pressedCommandIndex = -1;
 	}
