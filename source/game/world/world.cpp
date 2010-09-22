@@ -685,6 +685,16 @@ void World::unfogMap(const Vec4i &rect, int time) {
 	unfogActive = true;
 	unfogTTL = time;
 	unfogArea = rect;
+	const Vec2i start = Map::toTileCoords(Vec2i(unfogArea.x, unfogArea.y));
+	const Vec2i end = Map::toTileCoords(Vec2i(unfogArea.x + unfogArea.z, unfogArea.y + unfogArea.w));
+	RectIterator iter(start, end);
+	Vec2i pos;
+	while (iter.more()) {
+		pos = iter.next();
+		if (map.isInsideTile(pos)) {
+			map.getTile(pos)->setExplored(thisTeamIndex, true);
+		}
+	}
 }
 
 ///@todo
