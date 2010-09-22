@@ -13,6 +13,7 @@
 #include "script_manager.h"
 
 namespace Glest { namespace Widgets {
+using namespace Shared::PhysFS;
 using Script::ScriptManager;
 using Global::CoreData;
 
@@ -143,7 +144,15 @@ WidgetConfig::WidgetConfig() {
 	addGlestTexture("texture-vertical-scroll-down", g_coreData.getVertScrollDownTexture());
 
 	luaScript.startUp();
-	luaScript.luaDoLine("dofile('data/core/widget.cfg')");
+	FileOps *f = g_fileFactory.getFileOps();
+	f->openRead("data/core/widget.cfg");
+	int size = f->fileSize();
+	char *someLua = new char[size + 1];
+	f->read(someLua, size, 1);
+	someLua[size] = '\0';
+	delete f;
+	luaScript.luaDoLine(someLua);
+	delete [] someLua;
 	if (!loadStyles("StaticWidget", WidgetType::STATIC_WIDGET)) { // load or set default
 		m_borderStyles[WidgetType::STATIC_WIDGET].setNone();
 		m_backgroundStyles[WidgetType::STATIC_WIDGET].setNone();

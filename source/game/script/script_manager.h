@@ -371,6 +371,8 @@ private:
 		static int setFarClip(LuaHandle *luaHandle);
 	)
 
+	// Over-rides... normal Lua functions redefined
+	static int dofile(LuaHandle *luaHandle);
 };
 
 }}//end namespace
