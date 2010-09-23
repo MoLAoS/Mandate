@@ -93,6 +93,7 @@ private:
 	int colourIndex;
 
 	bool thisFaction;
+	bool defeated;
 	int subfaction;			// the current subfaction index starting at zero
 	time_t lastAttackNotice;
 	time_t lastEnemyNotice;
@@ -101,7 +102,7 @@ private:
 	static ResourceTypes neededResources;
 
 public:
-	void init(const FactionType *factionType, ControlType control, TechTree *techTree,
+	void init(const FactionType *factionType, ControlType control, string playerName, TechTree *techTree,
 		int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,
 		bool thisFaction, bool giveResources);
 
@@ -116,6 +117,7 @@ public:
 	const FactionType *getType() const					{return factionType;}
 	int getIndex() const								{return id;}
 	int getTeam() const									{return teamIndex;}
+	bool isDefeated() const								{return defeated;}
 	bool getCpuControl() const							{return control >= ControlType::CPU_EASY;}
 	bool getCpuUltraControl() const						{return control == ControlType::CPU_ULTRA;}
 	bool getCpuEasyControl() const						{return control == ControlType::CPU_EASY;}
@@ -133,6 +135,9 @@ public:
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
 	bool isThisFaction() const							{return thisFaction;}
+
+	// set
+	void setDefeated()	{ defeated = true; }
 
 	// upgrades
 	void startUpgrade(const UpgradeType *ut);

@@ -50,11 +50,12 @@ Vec3f Faction::factionColours[] = {
 	Vec3f(1.f, 0.5f, 0.f)
 };
 
-void Faction::init(const FactionType *factionType, ControlType control, TechTree *techTree,
+void Faction::init(const FactionType *factionType, ControlType control, string playerName, TechTree *techTree,
 					int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,
-					bool thisFaction, bool giveResources ) {
+					bool thisFaction, bool giveResources) {
 	this->control = control;
 	this->factionType = factionType;
+	this->name = playerName;
 	this->startLocationIndex = startLocationIndex;
 	this->id = factionIndex;
 	this->teamIndex = teamIndex;
@@ -63,6 +64,7 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 	this->subfaction = 0;
 	this->lastAttackNotice = 0;
 	this->lastEnemyNotice = 0;
+	this->defeated = false;
 	lastEventLoc.x = -1.0f;  // -1 x indicates uninitialized, no last event
 
 	if (factionIndex != -1) {

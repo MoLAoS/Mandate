@@ -1010,7 +1010,7 @@ void World::initSplattedTextures() {
 void World::initFactions() {
 	Logger::getInstance().add("Faction types", true);
 	
-	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID, "Glestimals",
 		&techTree, -1, -1, -1, -1, false, false);
 	
 	GameSettings &gs = iSim->getGameSettings();
@@ -1029,7 +1029,7 @@ void World::initFactions() {
 	for (int i = 0; i < factions.size(); ++i) {
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
 		factions[i].init(
-			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
+			ft, gs.getFactionControl(i), gs.getPlayerName(i), &techTree, i, gs.getTeam(i),
 			gs.getStartLocationIndex(i), gs.getColourIndex(i),
 			i==thisFactionIndex, gs.getDefaultResources()
 		);

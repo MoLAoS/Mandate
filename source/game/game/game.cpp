@@ -470,6 +470,21 @@ void GameState::destroyDialog(BasicDialog::Ptr) {
 	}
 }
 
+void GameState::doDefeatedMessage(Faction *f) {
+	string player = "[" + f->getName() + "] ";
+	string msg = g_lang.getDefeatedMessage();
+	
+	string::size_type n = msg.find("%s");
+	while (n != string::npos) {
+		string start = msg.substr(0, n);
+		string end = msg.substr(n + 2);
+		msg = start + f->getName() + end;
+		n = msg.find("%s");
+	}
+
+	gui.getDialogConsole()->addDialog(player, Faction::factionColours[f->getColourIndex()], msg, false);
+}
+
 void GameState::updateCamera() {
 	gameCamera.update();
 }

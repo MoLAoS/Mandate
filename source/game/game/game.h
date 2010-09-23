@@ -167,6 +167,8 @@ public:
 
 	void destroyDialog(BasicDialog::Ptr ptr = 0);
 
+	void doDefeatedMessage(Faction *f);
+
 protected:
 	// render
 	void render3d();
