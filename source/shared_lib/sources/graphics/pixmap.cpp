@@ -209,16 +209,22 @@ void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
 void PixmapIoTga::write(uint8 *pixels){
 	if(components==1){
 		file->write(pixels, h*w, 1);
-	}
-	else{
+	} else {
+		char *buffer = new char[h*w*components];
 		for(int i=0; i<h*w*components; i+=components){
-			file->write(&pixels[i+2], 1, 1);
-			file->write(&pixels[i+1], 1, 1);
-			file->write(&pixels[i], 1, 1);
+			buffer[i] = pixels[i+2];
+			buffer[i+1] = pixels[i+1];
+			buffer[i+2] = pixels[i];
+			//file->write(&pixels[i+2], 1, 1);
+			//file->write(&pixels[i+1], 1, 1);
+			//file->write(&pixels[i], 1, 1);
 			if(components==4){
-				file->write(&pixels[i+3], 1, 1);
+				buffer[i+3] = pixels[i+3];
+				//file->write(&pixels[i+3], 1, 1);
 			}
 		}
+		file->write(buffer, h * w * components, 1);
+		delete [] buffer;
 	}
 }
 
