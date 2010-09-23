@@ -96,6 +96,7 @@ UnitType::UnitType()
 		, halfSize(0), halfHeight(0)
 		, m_cellMap(0)
 		, m_colourMap(0)
+		, m_hasProjectileAttack(false)
 		, m_factionType(0) {
 	reset();
 }
@@ -604,6 +605,12 @@ void UnitType::sortSkillTypes() {
 		startSkill = skillTypesByClass[SkillClass::BE_BUILT].front();
 	} else {
 		startSkill = skillTypesByClass[SkillClass::STOP].front();
+	}
+	foreach (SkillTypes, it, skillTypesByClass[SkillClass::ATTACK]) {
+		if ((*it)->getProjectile()) {
+			m_hasProjectileAttack = true;
+			break;
+		}
 	}
 }
 

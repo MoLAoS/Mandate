@@ -156,6 +156,7 @@ private:
 	UnitList carriedUnits;
 	UnitList unitsToCarry;
 	UnitList unitsToUnload;
+	Unit*	 carrier;
 
 	// engine info
 	int lastAnimReset;			/**< the frame the current animation cycle was started */
@@ -315,10 +316,11 @@ public:
 	UnitList& getCarriedUnits()				{return carriedUnits;}
 	UnitList& getUnitsToCarry()				{return unitsToCarry;}
 	UnitList& getUnitsToUnload()			{return unitsToUnload;}
+	Unit* getCarrier() const				{return carrier;}
 
 	bool isVisible() const					{return visible;}
 	void setVisible(bool v)					{visible = v;}
-	void setCarried(bool v)					{carried = v;}
+	void setCarried(Unit *host)				{carried = host; carrier = host;}
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -369,11 +371,11 @@ public:
 	}
 
 	//pos
-	Vec2i getPos() const				{return pos;}
+	Vec2i getPos() const				{return pos;}//carried ? carrier->getPos() : pos;}
 	Vec2i getLastPos() const			{return lastPos;}
-	Vec2i getCenteredPos() const		{return Vec2i(type->getHalfSize().intp()) + pos;}
-	//Vec2f getFloatCenteredPos() const	{return Vec2f(type->getHalfSize()) + Vec2f((float)pos.x, (float)pos.y);}
+	Vec2i getCenteredPos() const		{return Vec2i(type->getHalfSize().intp()) + getPos();}
 	fixedVec2 getFixedCenteredPos() const	{ return fixedVec2(pos.x + type->getHalfSize(), pos.y + type->getHalfSize()); }
+//{ return fixedVec2(getPos().x + type->getHalfSize(), getPos().y + type->getHalfSize()); }
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
 	//is
@@ -417,6 +419,7 @@ public:
 	//Vec3f getCurrVectorFlat() const;
 	// this is a heavy use function so it's inlined even though it isn't exactly small
 	Vec3f getCurrVectorFlat() const {
+		Vec2i pos = getPos();
 		Vec3f v(float(pos.x),  computeHeight(pos), float(pos.y));
 			if (currSkill->getClass() == SkillClass::MOVE) {
 			v = Vec3f(float(lastPos.x), computeHeight(lastPos), float(lastPos.y)).lerp(getProgress(), v);

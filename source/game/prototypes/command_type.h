@@ -543,14 +543,18 @@ private:
 	const MoveSkillType *moveSkillType;
 	const LoadSkillType *loadSkillType;
 	vector<const UnitType*> m_canLoadList;
-	int m_loadCapacity;
+	int		m_loadCapacity;
+	bool	m_allowProjectiles;
+	Vec2f	m_projectileOffsets;
 /*  ///@todo: implement these:
 	bool m_countCells;	// if true, a size 2 unit occupies 4 slots
 	bool m_countSize;	// if true, a height 2 occupies 2 slots
 						// if both true, a size 2 height 2 unit would occupy 8
 */
 public:
-	LoadCommandType() : CommandType("Load", Clicks::TWO), loadSkillType(0), moveSkillType(0) {
+	LoadCommandType() 
+			: CommandType("Load", Clicks::TWO)
+			, loadSkillType(0), moveSkillType(0), m_allowProjectiles(false) {
 		queuable = true;
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -567,6 +571,9 @@ public:
 	bool canCarry(const UnitType *ut) const {
 		return (std::find(m_canLoadList.begin(), m_canLoadList.end(), ut) != m_canLoadList.end());
 	}
+
+	bool	areProjectilesAllowed() const	{ return m_allowProjectiles; }
+	Vec2f	getProjectileOffset() const		{ return m_projectileOffsets; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::LOAD; }

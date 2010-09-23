@@ -122,6 +122,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
         , soundStartFrame(-1)
         , progress2(0)
         , kills(0)
+		, carrier(0)
         , highlight(0.f)
         , targetRef(-1)
         , targetField(Field::LAND)
@@ -160,7 +161,6 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 
 	setModelFacing(m_facing);
 }
-
 
 Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
 		: targetRef(node->getOptionalIntValue("targetRef", -1))
@@ -517,19 +517,34 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	ProjectileType *pstProj = ast->getProjParticleType();
 	SplashType *pstSplash = ast->getSplashParticleType();
-
-	Vec3f startPos = this->getCurrVector();
 	Vec3f endPos = this->getTargetVec();
-
-	//make particle system
-	const Tile *sc = map->getTile(Map::toTileCoords(this->getPos()));
-	const Tile *tsc = map->getTile(Map::toTileCoords(this->getTargetPos()));
-	
-	bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
-	visible = visible && g_renderer.getCuller().isInside(getCenteredPos());
 
 	//projectile
 	if (pstProj != NULL) {
+		Vec2i effectivePos = (isCarried() ? getCarrier()->getCenteredPos() : getCenteredPos());
+		Vec3f startPos;
+		if (isCarried()) {
+			startPos = getCarrier()->getCurrVectorFlat();
+			const LoadCommandType *lct = 
+				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
+			assert(lct->areProjectilesAllowed());
+			Vec2f offsets = lct->getProjectileOffset();
+			startPos.y += offsets.y;
+			int seed = int(Chrono::getCurMicros());
+			Random random(seed);
+			float rad = degToRad(float(random.randRange(0, 359)));
+			startPos.x += cosf(rad) * offsets.x;
+			startPos.z += sinf(rad) * offsets.x;
+		} else {
+			startPos = getCurrVector();
+		}
+		//make particle system
+		const Tile *sc = map->getTile(Map::toTileCoords(effectivePos));
+		const Tile *tsc = map->getTile(Map::toTileCoords(getTargetPos()));
+		
+		bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
+		visible = visible && g_renderer.getCuller().isInside(effectivePos);
+
 		psProj = pstProj->createProjectileParticleSystem(visible);
 
 		switch (pstProj->getStart()) {
@@ -1080,8 +1095,10 @@ bool Unit::update() {
 
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
-		if (map->getTile(Map::toTileCoords(getPos()))->isVisible(g_world.getThisTeamIndex())) {
-			g_soundRenderer.playFx(currSkill->getSound(), getCurrVector(), g_gameState.getGameCamera()->getPos());
+		Vec2i cellPos = isCarried() ? carrier->getCenteredPos() : getCenteredPos();
+		Vec3f vec = isCarried() ? carrier->getCurrVector() : getCurrVector();
+		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
+			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
 	}
 

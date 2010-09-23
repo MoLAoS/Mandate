@@ -45,7 +45,7 @@ SkillType::SkillType(SkillClass skillClass, const char* typeName)
 		, minRange(0)
 		, maxRange(0)
 		, startTime(0.f)
-		, projectile(0)
+		, projectile(false)
 		, splash(false)
 		, splashDamageAll(false)
 		, splashRadius(0)
@@ -148,6 +148,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			string path= particleNode->getAttribute("path")->getRestrictedValue();
 			projectileParticleSystemType= new ProjectileType();
 			projectileParticleSystemType->load(dir,  dir + "/" + path);
+			projectile = true;
 		}
 
 		//proj sounds

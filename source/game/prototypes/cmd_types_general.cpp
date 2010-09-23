@@ -72,6 +72,14 @@ typedef const RepairCommandType* RepairCmd;
 Command* CommandType::doAutoCommand(Unit *unit) const {
 	Command *autoCmd;
 	const UnitType *ut = unit->getType();
+	if (unit->isCarried()) {
+		Unit *carrier = unit->getCarrier();
+		const LoadCommandType *lct = 
+			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
+		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
+			return 0;
+		}
+	}
 	// can we attack any enemy ? ///@todo check all attack commands
 	const AttackCommandType *act = ut->getAttackCommand(Zone::LAND);
 	if (act && (autoCmd = act->doAutoAttack(unit))) {
@@ -81,6 +89,9 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	AttackStoppedCmd asct = static_cast<AttackStoppedCmd>(ut->getFirstCtOfClass(CommandClass::ATTACK_STOPPED));
 	if (asct && (autoCmd = asct->doAutoAttack(unit))) {
 		return autoCmd;
+	}
+	if (unit->isCarried()) {
+		return 0;
 	}
 	// can we repair any ally ? ///@todo check all repair commands
 	RepairCmd rct = static_cast<RepairCmd>(ut->getFirstCtOfClass(CommandClass::REPAIR));
@@ -712,6 +723,17 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
+	const XmlNode *projNode = n->getOptionalChild("allow-projectiles");
+	if (projNode && projNode->getBoolValue()) {
+		m_allowProjectiles = true;
+		try {
+			m_projectileOffsets.x = projNode->getChild("horizontal-offset")->getFloatValue();
+			m_projectileOffsets.y = projNode->getChild("vertical-offset")->getFloatValue();
+		} catch (runtime_error &e) {
+			g_errorLog.addXmlError(dir, e.what());
+			loadOk = false;
+		}
+	}
 	return loadOk;
 }
 
@@ -757,9 +779,8 @@ void LoadCommandType::update(Unit *unit) const {
 		target->removeCommands();
 		target->setCurrSkill(SkillClass::STOP);
 		target->setVisible(false);
-		target->setCarried(true);
-		/// @bug in below function?: size 2 units may overlap with the carrier or something else related to golem unit
 		g_map.clearUnitCells(target, target->getPos());
+		target->setCarried(unit);
 		target->setPos(Vec2i(-1));
 		g_userInterface.getSelection()->unSelect(target);
 		unit->getCarriedUnits().push_back(target);
@@ -878,7 +899,7 @@ void UnloadCommandType::update(Unit *unit) const {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
 				targetUnit->setVisible(true);
-				targetUnit->setCarried(false);
+				targetUnit->setCarried(0);
 				unit->getUnitsToUnload().pop_front();
 				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit));
 				// keep unloading, curr skill is ok
@@ -905,8 +926,18 @@ void UnloadCommandType::update(Unit *unit) const {
 bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr, 
 					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	_PROFILE_COMMAND_UPDATE();
-	fixedVec2 fixedCentre = unit->getFixedCenteredPos();
-	fixed halfSize = unit->getType()->getHalfSize();
+	Vec2i effectivePos;
+	fixedVec2 fixedCentre;
+	fixed halfSize;
+	if (unit->isCarried()) {
+		effectivePos = unit->getCarrier()->getCenteredPos();
+		fixedCentre = unit->getCarrier()->getFixedCenteredPos();
+		halfSize = unit->getCarrier()->getType()->getHalfSize();
+	} else {
+		effectivePos = unit->getCenteredPos();
+		fixedCentre = unit->getFixedCenteredPos();
+		halfSize = unit->getType()->getHalfSize();
+	}
 	fixed distance;
 	bool needDistance = false;
 
@@ -918,7 +949,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	} else {
 		Targets enemies;
 		Vec2i pos;
-		PosCircularIteratorOrdered pci(g_world.getMap()->getBounds(), unit->getPos(), 
+		PosCircularIteratorOrdered pci(g_world.getMap()->getBounds(), effectivePos, 
 			g_world.getPosIteratorFactory().getInsideOutIterator(1, range + halfSize.intp()));
 
 		Map *map = g_world.getMap();

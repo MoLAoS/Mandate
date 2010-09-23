@@ -123,6 +123,9 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		}
 		return false;
 	}
+	if (unit->isCarried()) { // if housed, dont try to wander off!
+		return true;
+	}
 
 	// TODO: We've already searched out to attack-range and found nothing, rather than
 	// starting again to check visible-range, we should just keep using the same search
@@ -195,7 +198,7 @@ bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree
 Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	// look for someone to smite
 	Unit *sighted = NULL;
-	if (!unit->getFaction()->isAvailable(this) 
+	if (!unit->getFaction()->isAvailable(this)
 	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}

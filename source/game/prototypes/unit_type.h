@@ -118,6 +118,7 @@ private:
 	//Fields fields;
 	Field field;
 	Zone zone;
+	bool m_hasProjectileAttack;
 
 	const FactionType *m_factionType;
 
@@ -209,10 +210,11 @@ public:
 
 	// has
 	bool hasCommandType(const CommandType *ct) const;
-	bool hasCommandClass(CommandClass cc) const { return !commandTypesByClass[cc].empty(); }
+	bool hasCommandClass(CommandClass cc) const		{return !commandTypesByClass[cc].empty();}
 	bool hasSkillType(const SkillType *skillType) const;
 	bool hasSkillClass(SkillClass skillClass) const;
-	bool hasCellMap() const								{return m_cellMap != NULL;}
+	bool hasCellMap() const							{return m_cellMap != NULL;}
+	bool hasProjectileAttack() const				{return m_hasProjectileAttack;}
 
 	// is
 	bool isOfClass(UnitClass uc) const;
