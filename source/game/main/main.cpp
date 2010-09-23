@@ -150,14 +150,14 @@ int glestMain(int argc, char** argv) {
 
 #if _GAE_DEBUG_EDITION_
 		exceptionHandler.install();
-		Program program(args, configDir);
+		Program program(args);
 		showCursor(false);
 		//main loop
 		program.loop();
 #else
 		try {
 			exceptionHandler.install();
-			Program program(args, configDir);
+			Program program(args);
 			showCursor(false);
 
 			try {
@@ -178,7 +178,7 @@ int glestMain(int argc, char** argv) {
 		}
 #endif
 	} else {
-		Program program(args, configDir);
+		Program program(args);
 		showCursor(false);
 		program.loop();
 	}

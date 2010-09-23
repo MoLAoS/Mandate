@@ -215,12 +215,8 @@ void PixmapIoTga::write(uint8 *pixels){
 			buffer[i] = pixels[i+2];
 			buffer[i+1] = pixels[i+1];
 			buffer[i+2] = pixels[i];
-			//file->write(&pixels[i+2], 1, 1);
-			//file->write(&pixels[i+1], 1, 1);
-			//file->write(&pixels[i], 1, 1);
 			if(components==4){
 				buffer[i+3] = pixels[i+3];
-				//file->write(&pixels[i+3], 1, 1);
 			}
 		}
 		file->write(buffer, h * w * components, 1);
