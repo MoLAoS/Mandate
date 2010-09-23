@@ -59,7 +59,11 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		tmp = en->getAttribute("bias")->getRestrictedValue();
 		bias = EffectBiasNames.match(tmp.c_str());
 		if (bias == EffectBias::INVALID) {
-			throw runtime_error("Not a valid value for bias: " + tmp + ": " + dir);
+			if (tmp == "benificial") { // support old typo/spelling error
+				bias = EffectBias::BENEFICIAL;
+			} else {
+				throw runtime_error("Not a valid value for bias: " + tmp + ": " + dir);
+			}
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());

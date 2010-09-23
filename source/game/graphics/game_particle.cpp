@@ -139,6 +139,7 @@ Projectile::Projectile(bool visible, const ParticleSystemBase &protoType, int pa
 		, trajectorySpeed(1.f)
 		, trajectoryScale(1.f)
 		, trajectoryFrequency(1.f)
+		, random(Chrono::getCurMicros())
 		, damager(0) {
 }
 
@@ -172,8 +173,8 @@ void Projectile::update() {
 
 		float t = clamp((g_world.getFrameCount() - startFrame) / float(endFrame - startFrame), 0.f, 1.f);
 
-		//Vec3f flatVector;
-/*
+		Vec3f flatVector;
+
 		if (trajectory == TrajectoryType::RANDOM) {
 			Vec3f currentTargetVector = endPos - pos;
 			currentTargetVector.normalize();
@@ -193,13 +194,14 @@ void Projectile::update() {
 			float lengthVariance = 1.f;//random.randRange(0.125f, 1.f);
 			//currentEmissionRate = (int)roundf(emissionRate * lengthVariance);
 			flatVector = newVector * (trajectorySpeed * lengthVariance);
-		} else {*/
-			//flatVector = zVector * trajectorySpeed;
-		//}
+			flatPos = startPos + (endPos - startPos) * t + flatVector;
+			//flatPos += flatVector;
+		} else {
+			flatPos = startPos + (endPos - startPos) * t;
+		}
 
 //		PARTICLE_LOG( "updating particle now @" + Vec3fToStr(flatPos) )
 
-		flatPos = startPos + (endPos - startPos) * t;
 		Vec3f targetVector = endPos - startPos;
 		//Vec3f currentVector = flatPos - startPos;
 
