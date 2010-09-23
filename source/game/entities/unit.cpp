@@ -165,7 +165,8 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
 		: targetRef(node->getOptionalIntValue("targetRef", -1))
 		, effects(node->getChild("effects"))
-		, effectsCreated(node->getChild("effectsCreated")) {
+		, effectsCreated(node->getChild("effectsCreated"))
+        , carried(false) {
 	this->faction = faction;
 	this->map = map;
 
@@ -232,7 +233,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 
 	if (hp) {
-		map->putUnitCells(this, node->getChildVec2iValue("pos"));
+		map->putUnitCells(this, pos);
 		meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
 	}
 	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {

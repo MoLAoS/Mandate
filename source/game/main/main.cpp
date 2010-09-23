@@ -133,7 +133,7 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir, true);
 	mkdir(configDir + "/addons/", true);
 	mkdir(configDir + "/screens/", true);
-
+	mkdir(configDir + "/savegames/", true);
 
 #	if USE_PHYSFS
 		try {

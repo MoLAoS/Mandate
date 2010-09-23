@@ -127,6 +127,15 @@ public:
 		return m_types[id];
 	}
 
+	ProducibleType* getType(string type) {
+		for (int i=0; i < m_types.size(); ++i) {
+			if (m_types[i]->getName() == type) {
+				return m_types[i];
+			}
+		}
+		throw runtime_error("Error, could not find producible type: " + type);
+	}
+
 	int getTypeCount() const { return m_types.size(); }
 
 	int32 getChecksum(ProducibleType *pt) {
