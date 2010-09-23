@@ -452,8 +452,8 @@ void UserInterface::groupKey(int groupIndex){
 		}
 
 		selection.recallGroup(groupIndex);
-
-		currentGroup= groupIndex;
+		currentGroup = groupIndex;
+		computeDisplay();
 	}
 }
 
