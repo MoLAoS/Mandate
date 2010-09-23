@@ -92,6 +92,8 @@ GameState::GameState(Program &program)
 		//, m_saveBox(0)
 		//, m_chatBox(0)
 		, lastMousePos(0)
+		//, lastPickObject(0)
+		//, lastPickUnits()
 		, weatherParticleSystem(0) {
 	assert(!singleton);
 	singleton = this;
@@ -813,6 +815,39 @@ void GameState::render2d(){
 	if (g_config.getMiscDebugMode()) {
 		stringstream str;
 
+//		str << "Last Pick:\n";
+//		if (lastPickUnits.empty()) {
+//			str << "   No Units.\n";
+//			if (lastPickObject) {
+//				str << "   Object: " << lastPickObject->getResource()->getType()->getName() << ".\n";
+//			} else {
+//				str << "   No Object.\n";
+//			}
+//		} else {
+//			foreach (UnitVector, it, lastPickUnits) {
+//				str << "   Unit: " << (*it)->getId() << " [" << (*it)->getType()->getName() << "].\n";
+//			}
+//		}
+//
+//		str << "Raw Pick:\n";
+//		if (rawPick.empty()) {
+//			str << "   Nothing.\n";
+//		} else {
+//			foreach (vector<string>, it, rawPick) {
+//				str << "   " << *it << endl;
+//			}
+//		}
+//
+//		str << "Processed Hits:\n";
+//		if (unitPickHits.empty()) {
+//			str << "   Nothing.\n";
+//		} else {
+//			foreach (vector<string>, it, unitPickHits) {
+//				str << "   " << *it << endl;
+//			}
+//		}
+//
+///*
 		str	<< "MouseXY: " << mouseX << "," << mouseY << endl
 			<< "PosObjWord: " << gui.getPosObjWorld().x << "," << gui.getPosObjWorld().y << endl
 			<< "Render FPS: " << lastRenderFps << endl
@@ -838,7 +873,7 @@ void GameState::render2d(){
 		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl
 			<< "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl
 			<< "GameRole::" << GameRoleNames[g_simInterface->getNetworkRole()] << endl;
-
+//*/
 		g_renderer.renderText(
 			str.str(), g_coreData.getFTDisplayFont(),
 			gui.getDisplay()->getColor(), 10, 120, false);

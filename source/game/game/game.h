@@ -103,6 +103,11 @@ protected:
 	//misc ptr
 	ParticleSystem *weatherParticleSystem;
 
+	//UnitVector lastPickUnits;
+	//const Object *lastPickObject;
+	//vector<string> rawPick;
+	//vector<string> unitPickHits;
+
 public:
 	GameState(Program &program);
 	virtual ~GameState();
@@ -119,6 +124,21 @@ public:
 	UserInterface *getGui()					{return &gui;}
 	
 	// ProgramState implementation
+
+	//void resetRawPick() { rawPick.clear(); }
+	//void addRawPick(const string &str) {
+	//	rawPick.push_back(str);
+	//}
+
+	//void resetUnitPickHits() { unitPickHits.clear(); }
+	//void addUnitPickHit(const string &str) {
+	//	unitPickHits.push_back(str);
+	//}
+
+	//void lastPick(UnitVector &units, const Object *obj) {
+	//	lastPickUnits = units;
+	//	lastPickObject = obj;
+	//}
 
 	// init
 	virtual void load();

@@ -409,6 +409,7 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 
 		const Object *obj;
 		g_renderer.computeSelected(units, obj, pos, pos);
+		//g_gameState.lastPick(units, obj);
 		calculateNearest(units, gameCamera->getPos());
 		updateSelection(true, units);
 		computeDisplay();
@@ -424,6 +425,7 @@ void UserInterface::mouseMove(int x, int y) {
 		if (computeSelection) {
 			g_renderer.computeSelected(units, selectedObject, 
 				selectionQuad.getPosDown(), selectionQuad.getPosUp());
+			//g_gameState.lastPick(units, selectedObject);
 			computeSelection = false;
 			updateSelection(false, units);
 		}
@@ -1292,6 +1294,7 @@ bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitV
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
 	const Object *junk;
 	g_renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
+	//g_gameState.lastPick(units, selectedObject);
 
 	if (!units.empty()) {
 		return true;
