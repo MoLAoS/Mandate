@@ -128,6 +128,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 Minimap::~Minimap(){
 	delete m_fowPixmap0;
 	delete m_fowPixmap1;
+	delete m_unitsPMap;
 }
 
 // ==================== set ====================
