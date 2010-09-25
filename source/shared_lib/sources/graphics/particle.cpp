@@ -100,28 +100,43 @@ ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
 //	class ParticleSystem
 // =====================================================
 
-ParticleSystem::ParticleSystem(int particleCount) :
-		ParticleSystemBase(),
-		particleCount(particleCount),
-		particles(new Particle[particleCount]),
-		state(sPlay),
-		active(true),
-		visible(true),
-		aliveParticleCount(0),
-		pos(0.f),
-		windSpeed(0.f) {
+//int ParticleSystem::idCounter = 0;
+
+ParticleSystem::ParticleSystem(int particleCount)
+		: ParticleSystemBase()
+		//, id(++idCounter)
+		, particleCount(particleCount)
+		, particles(0)
+		, state(sPlay)
+		, active(true)
+		, visible(true)
+		, aliveParticleCount(0)
+		, pos(0.f)
+		, windSpeed(0.f) {
 }
 
-ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCount) :
-		ParticleSystemBase(model),
-		particleCount(particleCount),
-		particles(new Particle[particleCount]),
-		state(sPlay),
-		active(true),
-		visible(true),
-		aliveParticleCount(0),
-		pos(0.f),
-		windSpeed(0.f) {
+ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCount)
+		: ParticleSystemBase(model)
+		//, id(++idCounter)
+		, particleCount(particleCount)
+		, particles(0)
+		, state(sPlay)
+		, active(true)
+		, visible(true)
+		, aliveParticleCount(0)
+		, pos(0.f)
+		, windSpeed(0.f) {
+}
+
+void ParticleSystem::initArray() {
+	assert(!particles);
+	particles = new Particle[particleCount];
+}
+
+void ParticleSystem::freeArray() {
+	delete [] particles;
+	particles = 0;
+	aliveParticleCount = 0;
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -130,23 +145,22 @@ ParticleSystem::~ParticleSystem() {
 
 // =============== VIRTUAL ======================
 
-//updates all living particles and creates new ones
+// updates all living particles and creates new ones
 void ParticleSystem::update() {
-
-	if (state != sPause) {
+	if (visible && state != sPause) {
 		for (int i = 0; i < aliveParticleCount; ++i) {
 			updateParticle(&particles[i]);
 			if (deathTest(&particles[i])) {
-				//kill the particle
+				// kill the particle
 				killParticle(&particles[i]);
 
-				//mantain alive particles at front of the array
+				// mantain alive particles at front of the array
 				if (aliveParticleCount > 0) {
+					///@todo FIXME: this particle skips an update :(
 					particles[i] = particles[aliveParticleCount];
 				}
 			}
 		}
-
 		if (state != sFade) {
 			for (int i = 0; i < emissionRate; ++i) {
 				Particle *p = createParticle();
@@ -156,7 +170,7 @@ void ParticleSystem::update() {
 	}
 }
 
-inline void ParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
+void ParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	if (active) {
 		pr->renderSystem(this);
 	}
@@ -173,9 +187,8 @@ void ParticleSystem::fade() {
 // =============== PROTECTED =========================
 
 // if there is one dead particle it returns it else, return the particle with
-// less energy
+// the least energy
 Particle *ParticleSystem::createParticle() {
-
 	//if any dead particles
 	if (aliveParticleCount < particleCount) {
 		++aliveParticleCount;
@@ -195,7 +208,7 @@ Particle *ParticleSystem::createParticle() {
 	return &particles[minEnergyParticle];
 }
 
-inline void ParticleSystem::initParticle(Particle *p, int particleIndex) {
+void ParticleSystem::initParticle(Particle *p, int particleIndex) {
 	p->pos = pos;
 	p->lastPos = pos;
 	p->speed = Vec3f(0.0f);
@@ -206,7 +219,7 @@ inline void ParticleSystem::initParticle(Particle *p, int particleIndex) {
 	p->energy = getRandEnergy();
 }
 
-inline void ParticleSystem::updateParticle(Particle *p) {
+void ParticleSystem::updateParticle(Particle *p) {
 	p->lastPos = p->pos;
 	p->pos = p->pos + p->speed;
 	p->speed = p->speed + p->accel;
@@ -214,72 +227,19 @@ inline void ParticleSystem::updateParticle(Particle *p) {
 }
 
 // ===========================================================================
-//  FireParticleSystem
-// ===========================================================================
-
-FireParticleSystem::FireParticleSystem(int particleCount): ParticleSystem(particleCount) {
-	setRadius(0.5f);
-	setSpeed(0.01f);
-	setSize(0.6f);
-	setColorNoEnergy(Vec4f(1.0f, 0.5f, 0.0f, 1.0f));
-}
-
-void FireParticleSystem::initParticle(Particle *p, int particleIndex) {
-// ParticleSystem::initParticle(p, particleIndex);
-
-	float ang = random.randRange(-twopi, twopi);
-	float mod = fabsf(random.randRange(-radius, radius));
-
-	float x = sinf(ang) * mod;
-	float y = cosf(ang) * mod;
-
-	float radRatio = sqrtf(sqrtf(mod / radius));
-	Vec4f halfColorNoEnergy = colorNoEnergy * 0.5f;
-
-	p->color = halfColorNoEnergy + halfColorNoEnergy * radRatio;
-	p->energy = int(energy * radRatio) + random.randRange(-energyVar, energyVar);
-	float halfRadius = radius * 0.5f;
-	p->pos = Vec3f(pos.x + x, pos.y + random.randRange(-halfRadius, halfRadius), pos.z + y);
-	p->lastPos = pos;
-	p->size = size;
-	p->speed = Vec3f(
-			speed * random.randRange(-0.125f, 0.125f),
-			speed * random.randRange(0.5f, 1.5f),
-			speed * random.randRange(-0.125f, 0.125f)
-	);
-}
-
-inline void FireParticleSystem::updateParticle(Particle *p) {
-	p->lastPos = p->pos;
-	p->pos = p->pos+p->speed;
-	p->energy--;
-
-	if(p->color.r > 0.0f)
-		p->color.r *= 0.98f;
-	if(p->color.g > 0.0f)
-		p->color.g *= 0.98f;
-	if(p->color.a > 0.0f)
-		p->color.a *= 0.98f;
-
-	p->speed.x *= 1.001f; // wind
-}
-
-
-// ================= SET PARAMS ====================
-
-
-// ===========================================================================
 //  RainParticleSystem
 // ===========================================================================
 
 
-RainParticleSystem::RainParticleSystem(int particleCount):ParticleSystem(particleCount) {
+RainParticleSystem::RainParticleSystem(int particleCount)
+		: ParticleSystem(particleCount) {
 	setRadius(20.f);
 	setEmissionRate(25);
 	setSize(3.0f);
 	setColor(Vec4f(0.5f, 0.5f, 0.5f, 0.3f));
 	setColor2(Vec4f(0.5f, 0.5f, 0.5f, 0.0f));
 	setSpeed(0.2f);
+	initArray();
 }
 
 void RainParticleSystem::initParticle(Particle *p, int particleIndex){
@@ -297,11 +257,11 @@ void RainParticleSystem::initParticle(Particle *p, int particleIndex){
 			random.randRange(-speed / 10, speed / 10)) + windSpeed;
 }
 
-inline void RainParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
+void RainParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	pr->renderSystemLine(this);
 }
 
-inline bool RainParticleSystem::deathTest(Particle *p) {
+bool RainParticleSystem::deathTest(Particle *p) {
 	return p->pos.y < 0;
 }
 
@@ -315,6 +275,7 @@ SnowParticleSystem::SnowParticleSystem(int particleCount) : ParticleSystem(parti
 	setSize(0.2f);
 	setColor(Vec4f(0.8f, 0.8f, 0.8f, 0.8f));
 	setSpeed(0.025f);
+	initArray();
 }
 
 void SnowParticleSystem::initParticle(Particle *p, int particleIndex) {
@@ -331,7 +292,7 @@ void SnowParticleSystem::initParticle(Particle *p, int particleIndex) {
 	p->speed.y += random.randRange(-0.005f, 0.005f);
 }
 
-inline bool SnowParticleSystem::deathTest(Particle *p) {
+bool SnowParticleSystem::deathTest(Particle *p) {
 	return p->pos.y < 0;
 }
 
@@ -358,7 +319,7 @@ void ParticleManager::update(){
 
 	for (it = particleSystems.begin(); it != particleSystems.end(); ++it) {
 		(*it)->update();
-		if ((*it)->isEmpty()) {
+		if ((*it)->isFinished()) {
 			delete *it;
 			*it = NULL;
 		}

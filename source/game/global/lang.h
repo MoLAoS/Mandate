@@ -34,6 +34,7 @@ private:
 	script script;
 #endif
 	Properties strings;
+	vector<string> defeatStrings;
 	Properties scenarioStrings;
 
 private:
@@ -56,6 +57,7 @@ public:
 	void loadScenarioStrings(const string &scenarioDir, const string &scenarioName);
 	string getScenarioString(const string &s);
 	string get(const string &s) const;
+	string getDefeatedMessage() const;
 };
 
 }}//end namespace

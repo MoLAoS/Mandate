@@ -92,17 +92,29 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
+#	if !defined(NDEBUG) && defined(WIN32)
+	// Enable run-time checks
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+
+	// check for SSE2
+	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)) {
+		std::exception e("Error: No SSE2 support detected. GAE requires Streaming SIMD Extensions 2");
+		exceptionMessage(e);
+		return 0;
+	}
+#	endif
+
 	string configDir = DEFAULT_CONFIG_DIR;
 	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;
-	if(args.parse(argc, argv)){
+	if (args.parse(argc, argv)) {
 		// quick exit
 		return 0;
 	}
-	if(!args.getConfigDir().empty()){
+	if (!args.getConfigDir().empty()) {
 		configDir = args.getConfigDir();
 	}
-	if(!args.getDataDir().empty()){
+	if (!args.getDataDir().empty()) {
 		dataDir = args.getDataDir();
 	}
 
@@ -121,28 +133,36 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir, true);
 	mkdir(configDir + "/addons/", true);
 	mkdir(configDir + "/screens/", true);
+	mkdir(configDir + "/savegames/", true);
 
 #	if USE_PHYSFS
-		g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
-		g_fileFactory.usePhysFS = true;
+		try {
+			g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+			g_fileFactory.usePhysFS = true;
+		} catch (runtime_error &e) {
+			exceptionMessage(e);
+			return 0;
+		}
 #	endif
 
 	if (g_config.getMiscCatchExceptions()) {
 		ExceptionHandler exceptionHandler;
 
-#if ! _GAE_DEBUG_EDITION_
+#if _GAE_DEBUG_EDITION_
+		exceptionHandler.install();
+		Program program(args);
+		showCursor(false);
+		//main loop
+		program.loop();
+#else
 		try {
-#endif
 			exceptionHandler.install();
-			Program program(args, configDir);
+			Program program(args);
 			showCursor(false);
 
-#if	! _GAE_DEBUG_EDITION_
 			try {
-#endif
 				//main loop
 				program.loop();
-#if ! _GAE_DEBUG_EDITION_
 			} catch(const exception &e) {
 				// friendlier error handling
 				program.crash(&e);
@@ -158,7 +178,7 @@ int glestMain(int argc, char** argv) {
 		}
 #endif
 	} else {
-		Program program(args, configDir);
+		Program program(args);
 		showCursor(false);
 		program.loop();
 	}

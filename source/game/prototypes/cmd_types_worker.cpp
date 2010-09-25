@@ -308,11 +308,11 @@ void RepairCommandType::update(Unit *unit) const {
 			//shiney
 			if (rst->getSplashParticleSystemType()) {
 				const Tile *sc = g_world.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
-				bool visible = sc->isVisible(g_world.getThisTeamIndex());
+				bool visible = sc->isVisible(g_world.getThisTeamIndex()) 
+					&& g_renderer.getCuller().isInside(repaired->getCenteredPos());
 
-				Splash *psSplash = rst->getSplashParticleSystemType()->createSplashParticleSystem();
+				Splash *psSplash = rst->getSplashParticleSystemType()->createSplashParticleSystem(visible);
 				psSplash->setPos(repaired->getCurrVector());
-				psSplash->setVisible(visible);
 				g_renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
 			}
 
@@ -439,6 +439,11 @@ void BuildCommandType::doChecksum(Checksum &checksum) const {
 		checksum.add(buildings[i]->getName());
 	}
 }
+
+const ProducibleType *BuildCommandType::getProduced(int i) const {
+	return buildings[i];
+}
+
 
 const string cmdCancelMsg = " Command cancelled.";
 

@@ -51,7 +51,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
-		, prodType(NULL)
+		, prodType(0)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -63,7 +63,7 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 		, flags(flags)
 		, pos(-1)
 		, pos2(-1)
-		, prodType(NULL)
+		, prodType(0)
 		, commandedUnit(commandedUnit) {
 	lastId++;
 	id = lastId;
@@ -107,9 +107,15 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 	pos2 = node->getChildVec2iValue("pos2");
 
 	string prodTypeName = node->getChildStringValue("prodType");
-	///TODO: FIX
-	//prodType = (prodTypeName == "none" ? NULL : ft->getUnitType(unitTypeName));
-	facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
+	if (prodTypeName == "none") {
+		prodType = 0;
+	} else {
+		const ProducibleType *pt = g_world.getMasterTypeFactory().getType(prodTypeName);
+		prodType = pt;
+	}
+	if (node->getOptionalChild("facing") ) {
+		facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
+	}
 }
 
 Unit* Command::getUnit() const {
@@ -129,6 +135,7 @@ void Command::save(XmlNode *node) const {
 	node->addChild("unitRef", unitRef);
 	node->addChild("unitRef2", unitRef2);
 	node->addChild("prodType", prodType ? prodType->getName() : "none");
+	node->addChild("facing", int(facing));
 }
 
 // =============== misc ===============

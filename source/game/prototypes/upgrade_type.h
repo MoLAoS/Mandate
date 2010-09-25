@@ -39,7 +39,6 @@ namespace Glest { namespace ProtoTypes {
  * classes.
  */
 class UpgradeType: public EnhancementType, public ProducibleType {
-	friend class UpgradeTypeFactory;
 private:
 	vector<const UnitType*> effects;
 	const FactionType *m_factionType;
@@ -61,27 +60,6 @@ public:
 
 	//other methods
 	string getDesc() const;
-};
-
-// ===============================
-//  class UpgradeTypeFactory
-// ===============================
-
-class UpgradeTypeFactory : private SingleTypeFactory<UpgradeType> {
-private:
-	int m_idCounter;
-	vector<UpgradeType*> m_types;
-	map<UpgradeType*, int32> m_checksumTable;
-
-public:
-	UpgradeTypeFactory() : m_idCounter(0) { }
-	~UpgradeTypeFactory();
-
-	UpgradeType *newInstance();
-	UpgradeType* getType(int id);
-	int getTypeCount() const { return m_types.size(); }
-	int32 getChecksum(UpgradeType *ut);
-	void setChecksum(UpgradeType *ut);
 };
 
 }}//end namespace

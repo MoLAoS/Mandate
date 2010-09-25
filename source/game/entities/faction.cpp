@@ -50,11 +50,12 @@ Vec3f Faction::factionColours[] = {
 	Vec3f(1.f, 0.5f, 0.f)
 };
 
-void Faction::init(const FactionType *factionType, ControlType control, TechTree *techTree,
+void Faction::init(const FactionType *factionType, ControlType control, string playerName, TechTree *techTree,
 					int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,
-					bool thisFaction, bool giveResources ) {
+					bool thisFaction, bool giveResources) {
 	this->control = control;
 	this->factionType = factionType;
+	this->name = playerName;
 	this->startLocationIndex = startLocationIndex;
 	this->id = factionIndex;
 	this->teamIndex = teamIndex;
@@ -63,6 +64,7 @@ void Faction::init(const FactionType *factionType, ControlType control, TechTree
 	this->subfaction = 0;
 	this->lastAttackNotice = 0;
 	this->lastEnemyNotice = 0;
+	this->defeated = false;
 	lastEventLoc.x = -1.0f;  // -1 x indicates uninitialized, no last event
 
 	if (factionIndex != -1) {
@@ -93,7 +95,7 @@ void Faction::save(XmlNode *node) const {
 	node->addChild("colourIndex", colourIndex);
 	node->addChild("thisFaction", thisFaction);
 	node->addChild("subfaction", subfaction);
-	node->addChild("lastEventLoc", lastEventLoc);
+//	node->addChild("lastEventLoc", lastEventLoc);
 	upgradeManager.save(node->addChild("upgrades"));
 
 	n = node->addChild("resources");
@@ -129,7 +131,7 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	subfaction = node->getChildIntValue("subfaction");
 	time_t lastAttackNotice = 0;
 	time_t lastEnemyNotice = 0;
-	lastEventLoc = node->getChildVec3fValue("lastEventLoc");
+//	lastEventLoc = node->getChildVec3fValue("lastEventLoc");
 
 	upgradeManager.load(node->getChild("upgrades"), factionType);
 
@@ -152,7 +154,7 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
 
-	texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
+	texture = g_renderer.newTexture2D(ResourceScope::GAME);
 	Pixmap2D *pixmap = texture->getPixmap();
 	pixmap->init(1, 1, 3);
 	pixmap->setPixel(0, 0, factionColours[colourIndex]);

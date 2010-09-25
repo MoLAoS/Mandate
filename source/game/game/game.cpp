@@ -84,6 +84,7 @@ GameState::GameState(Program &program)
 		, netError(false)
 		, gotoMenu(false)
 		, exitGame(false)
+		, exitProgram(false)
 		, scrollSpeed(config.getUiScrollSpeed())
 		, m_modalDialog(0)
 		//, m_exitMsgBox(0)
@@ -91,6 +92,8 @@ GameState::GameState(Program &program)
 		//, m_saveBox(0)
 		//, m_chatBox(0)
 		, lastMousePos(0)
+		//, lastPickObject(0)
+		//, lastPickUnits()
 		, weatherParticleSystem(0) {
 	assert(!singleton);
 	singleton = this;
@@ -240,6 +243,10 @@ void GameState::update() {
 	if (exitGame) {
 		g_simInterface->doQuitGame(QuitSource::LOCAL);
 	}
+	if (exitProgram) {
+		g_program.exit();
+		return;
+	}
 	if (netError) {
 		return;
 	}
@@ -257,12 +264,13 @@ void GameState::update() {
 		// Gui
 		gui.update();
 
-		// Particle systems
-		if (weatherParticleSystem) {
-			weatherParticleSystem->setPos(gameCamera.getPos());
+		if (simInterface->getSpeed() != GameSpeed::PAUSED) {
+			// Particle systems
+			if (weatherParticleSystem) {
+				weatherParticleSystem->setPos(gameCamera.getPos());
+			}
+			g_renderer.updateParticleManager(ResourceScope::GAME);
 		}
-		g_renderer.updateParticleManager(ResourceScope::GAME);
-
 	} catch (Net::NetworkError &e) {
 		LOG_NETWORK(e.what());
 		displayError(e);
@@ -292,6 +300,7 @@ void GameState::displayError(std::exception &e) {
 		program.removeFloatingWidget(m_modalDialog);
 		m_modalDialog = 0;
 	}
+	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	MessageDialog::Ptr dialog = MessageDialog::showDialog(pos, size, 
 		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
@@ -313,6 +322,7 @@ void GameState::doGameMenu() {
 		m_modalDialog = 0;
 		return;
 	}
+	gui.resetState();
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
@@ -329,17 +339,45 @@ void GameState::doExitMessage(const string &msg) {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
+	gui.resetState();
 	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"), msg, 
-		g_lang.get("Ok"), g_lang.get("Cancel"));
-	dialog->Button1Clicked.connect(this, &GameState::onExitSelected);
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"),
+		msg, g_lang.get("Ok"), g_lang.get("Cancel"));
+	dialog->Button1Clicked.connect(this, &GameState::onConfirmQuitGame);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
 	m_modalDialog = dialog;
 }
 
-void GameState::onExitSelected(BasicDialog::Ptr) {
+void GameState::confirmQuitGame() {
+	doExitMessage(g_lang.get("ExitGame?"));
+}
+
+void GameState::confirmExitProgram() {
+	if (m_modalDialog) {
+		g_widgetWindow.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
+	}
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
+	}
+	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"), 
+		g_lang.get("ExitProgram?"), g_lang.get("Ok"), g_lang.get("Cancel"));
+	dialog->Button1Clicked.connect(this, &GameState::onConfirmExitProgram);
+	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
+	dialog->Escaped.connect(this, &GameState::destroyDialog);
+	m_modalDialog = dialog;
+}
+
+void GameState::onConfirmQuitGame(BasicDialog::Ptr) {
 	exitGame = true;
+	program.removeFloatingWidget(m_modalDialog);
+	m_modalDialog = 0;
+}
+
+void GameState::onConfirmExitProgram(BasicDialog::Ptr) {
+	exitProgram = true;
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 }
@@ -358,6 +396,7 @@ void GameState::doSaveBox() {
 		g_widgetWindow.removeFloatingWidget(m_modalDialog);
 		m_modalDialog = 0;
 	}
+	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	InputDialog::Ptr dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
@@ -431,6 +470,21 @@ void GameState::destroyDialog(BasicDialog::Ptr) {
 	if (!m_scriptMessages.empty()) {
 		doScriptMessage();
 	}
+}
+
+void GameState::doDefeatedMessage(Faction *f) {
+	string player = "[" + f->getName() + "] ";
+	string msg = g_lang.getDefeatedMessage();
+	
+	string::size_type n = msg.find("%s");
+	while (n != string::npos) {
+		string start = msg.substr(0, n);
+		string end = msg.substr(n + 2);
+		msg = start + f->getName() + end;
+		n = msg.find("%s");
+	}
+
+	gui.getDialogConsole()->addDialog(player, Faction::factionColours[f->getColourIndex()], msg, false);
 }
 
 void GameState::updateCamera() {
@@ -761,6 +815,39 @@ void GameState::render2d(){
 	if (g_config.getMiscDebugMode()) {
 		stringstream str;
 
+//		str << "Last Pick:\n";
+//		if (lastPickUnits.empty()) {
+//			str << "   No Units.\n";
+//			if (lastPickObject) {
+//				str << "   Object: " << lastPickObject->getResource()->getType()->getName() << ".\n";
+//			} else {
+//				str << "   No Object.\n";
+//			}
+//		} else {
+//			foreach (UnitVector, it, lastPickUnits) {
+//				str << "   Unit: " << (*it)->getId() << " [" << (*it)->getType()->getName() << "].\n";
+//			}
+//		}
+//
+//		str << "Raw Pick:\n";
+//		if (rawPick.empty()) {
+//			str << "   Nothing.\n";
+//		} else {
+//			foreach (vector<string>, it, rawPick) {
+//				str << "   " << *it << endl;
+//			}
+//		}
+//
+//		str << "Processed Hits:\n";
+//		if (unitPickHits.empty()) {
+//			str << "   Nothing.\n";
+//		} else {
+//			foreach (vector<string>, it, unitPickHits) {
+//				str << "   " << *it << endl;
+//			}
+//		}
+//
+///*
 		str	<< "MouseXY: " << mouseX << "," << mouseY << endl
 			<< "PosObjWord: " << gui.getPosObjWorld().x << "," << gui.getPosObjWorld().y << endl
 			<< "Render FPS: " << lastRenderFps << endl
@@ -786,7 +873,7 @@ void GameState::render2d(){
 		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl
 			<< "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl
 			<< "GameRole::" << GameRoleNames[g_simInterface->getNetworkRole()] << endl;
-
+//*/
 		g_renderer.renderText(
 			str.str(), g_coreData.getFTDisplayFont(),
 			gui.getDisplay()->getColor(), 10, 120, false);

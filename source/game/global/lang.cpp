@@ -15,11 +15,13 @@
 #include "lang.h"
 #include "logger.h"
 #include "util.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
 using std::exception;
 using namespace Shared::Util;
+using namespace Shared::PhysFS;
 
 namespace Glest { namespace Global {
 
@@ -33,6 +35,44 @@ void Lang::setLocale(const string &locale) {
 	setlocale(LC_CTYPE, locale.c_str());
 	string path = "gae/data/lang/" + locale + ".lng";
 	strings.load(path);
+	defeatStrings.clear();
+	FileOps *f = g_fileFactory.getFileOps();
+	path = "/gae/data/defeat_messages/" + locale + ".txt";
+	try {
+		f->openRead(path.c_str());
+		int size = f->fileSize();
+		char *buf = new char[size + 1];
+		f->read(buf, size, 1);
+		buf[size] = '\0';
+		stringstream ss(buf);
+		char buffer[1024];
+		while (!ss.eof()) {
+			ss.getline(buffer, 1023);
+			if (buffer[0] == ';' || buffer[0] == '\0' || buffer[0] == 10 || buffer[0] == 13) {
+				continue;
+			}
+			string str(buffer);
+			if (*(str.end() - 1) == 13) {
+				str = str.substr(0, str.size() - 1);
+			}
+			if (!str.empty()) {
+				defeatStrings.push_back(str);
+			}
+		}
+	} catch (runtime_error &e) {
+		defeatStrings.clear();
+	}
+}
+
+string Lang::getDefeatedMessage() const {
+	int seed = int(Chrono::getCurMicros());
+	Random random(seed);
+	if (defeatStrings.empty()) {
+		return string("%s has been defeated.");
+	} else {
+		int ndx = random.randRange(0, defeatStrings.size() - 1);
+		return defeatStrings[ndx];
+	}
 }
 
 void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenarioName) {

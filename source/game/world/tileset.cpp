@@ -100,7 +100,8 @@ void Tileset::count(const string &dir){
 
 void Tileset::load(const string &dir, TechTree *tt){
 	random.init(time(NULL));
-	string path= dir+"/"+basename(dir)+".xml";
+	name = basename(dir);
+	string path = dir + "/" + name +".xml";
 
 	try{
 		Logger::getInstance().add("Tileset: "+dir, true);

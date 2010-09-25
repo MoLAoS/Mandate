@@ -154,6 +154,8 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		};
 	};
 
+	name = basename(path);
+
 	try {
 		if (fileExists(path + ".mgm")) {
 			f->openRead((path + ".mgm").c_str());

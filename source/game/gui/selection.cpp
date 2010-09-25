@@ -144,6 +144,28 @@ void Selection::unSelect(const Unit *unit){
 	}
 }
 
+void Selection::unSelectAllOfType(const UnitType *type) {
+	UnitVector units;
+	for (UnitIterator it = selectedUnits.begin(); it != selectedUnits.end(); ++it) {
+		if ((*it)->getType() != type) {
+			units.push_back(*it);
+		}
+	}
+	clear();
+	select(units);
+}
+
+void Selection::unSelectAllNotOfType(const UnitType *type) {
+	UnitVector units;
+	for (UnitIterator it = selectedUnits.begin(); it != selectedUnits.end(); ++it) {
+		if ((*it)->getType() == type) {
+			units.push_back(*it);
+		}
+	}
+	clear();
+	select(units);
+}
+
 void Selection::unSelect(int i){
 	//remove unit from list
 	decRef(selectedUnits[i]);

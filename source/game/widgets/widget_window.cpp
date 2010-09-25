@@ -18,8 +18,10 @@
 #include "metrics.h"
 #include "renderer.h"
 #include "core_data.h"
+#include "texture_gl.h"
 
 using Shared::Platform::WindowGl;
+using Shared::Graphics::Gl::Texture2DGl;
 using namespace Glest::Global;
 using Glest::Graphics::Renderer;
 
@@ -37,7 +39,7 @@ WidgetWindow::WidgetWindow()
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, floatingWidget(0)
-		, anim(0.f), slowAnim(0.f) {
+		, anim(0.f), slowAnim(0.f), mouseIcon(0) {
 	size.x = Metrics::getInstance().getScreenW();
 	size.y = Metrics::getInstance().getScreenH();
 	
@@ -397,34 +399,65 @@ void WidgetWindow::eventKeyPress(char c) {
 
 void WidgetWindow::renderMouseCursor() {
 	float color1, color2;
+	Vec2i points[4];
+	points[0] = mousePos;
+	points[1] = mousePos + Vec2i(20, -10);
+	points[2] = mousePos + Vec2i(10, -20);
+
+	int numPoints;
+	if (mouseIcon) {
+		numPoints = 4;
+		points[3] = points[2];
+		points[2] = mousePos + Vec2i(10, -10);
+	} else {
+		numPoints = 3;
+	}
 
 	int mAnim = int(slowAnim * 200) - 100;
 	color2 = float(abs(mAnim)) / 100.f / 2.f + 0.4f;
 	color1 = float(abs(mAnim)) / 100.f / 2.f + 0.8f;
-
-	Vec2i aPos = mousePos;// + Vec2i(25,0);
 
 	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
 		glEnable(GL_BLEND);
 
 		//inside
 		glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
-		glBegin(GL_TRIANGLES);
-			glVertex2i(aPos.x, aPos.y);
-			glVertex2i(aPos.x+20, aPos.y-10);
-			glVertex2i(aPos.x+10, aPos.y-20);
+		glBegin(GL_TRIANGLE_FAN);
+		for (int i=0; i < numPoints; ++i) {
+			glVertex2iv(points[i].ptr());
+		}
 		glEnd();
 
 		//border
 		glLineWidth(2);
 		glBegin(GL_LINE_LOOP);
 			glColor4f(1.f, 0.2f, 0, color1);
-			glVertex2i(aPos.x, aPos.y);
+			glVertex2iv(points[0].ptr());
 			glColor4f(1.f, 0.4f, 0, color2);
-			glVertex2i(aPos.x+20, aPos.y-10);
-			glColor4f(1.f, 0.4f, 0, color2);
-			glVertex2i(aPos.x+10, aPos.y-20);
+			for (int i=1; i < numPoints; ++i) {
+				glVertex2iv(points[i].ptr());
+			}
 		glEnd();
+
+		if (mouseIcon) {
+			int x1 = points[2].x + 1;
+			int y2 = points[2].y - 1;
+			int x2 = x1 + 32;
+			int y1 = y2 - 32;
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(mouseIcon)->getHandle());
+			glColor4f(1.f, 1.f, 1.f, 0.5f);
+			glBegin(GL_TRIANGLE_STRIP);
+				glTexCoord2i(0, 1);
+				glVertex2i(x1, y2);
+				glTexCoord2i(0, 0);
+				glVertex2i(x1, y1);
+				glTexCoord2i(1, 1);
+				glVertex2i(x2, y2);
+				glTexCoord2i(1, 0);
+				glVertex2i(x2, y1);
+			glEnd();
+		}
 	glPopAttrib();
 }
 

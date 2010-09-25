@@ -25,8 +25,7 @@
 #include "logger.h"
 #include "profiler.h"
 
-#include "unit_type.h"
-#include "upgrade_type.h"
+#include "type_factories.h"
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
@@ -163,11 +162,6 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 			<< " total checksums, I have " << m_dataSync->getChecksumCount() )
 		ok = false;
 	}
-	if (m_dataSync->getUnitTypeCount() != msg.getUnitTypeCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getUnitTypeCount() 
-			<< " UnitType checksums, I have " << m_dataSync->getUnitTypeCount() )
-		ok = false;
-	}
 	if (m_dataSync->getCmdTypeCount() != msg.getCmdTypeCount()) {
 		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getCmdTypeCount() 
 			<< " CommandType checksums, I have " << m_dataSync->getCmdTypeCount() )
@@ -178,9 +172,9 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 			<< " SkillType checksums, I have " << m_dataSync->getSkillTypeCount() )
 		ok = false;
 	}
-	if (m_dataSync->getUpgrdTypeCount() != msg.getUpgrdTypeCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getUpgrdTypeCount() 
-			<< " UpgradeType checksums, I have " << m_dataSync->getUpgrdTypeCount() )
+	if (m_dataSync->getProdTypeCount() != msg.getProdTypeCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getProdTypeCount() 
+			<< " ProducibleType checksums, I have " << m_dataSync->getProdTypeCount() )
 		ok = false;
 	}
 
@@ -188,22 +182,19 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 		throw DataSyncError(NetSource::SERVER);
 	}
 
-	UnitTypeFactory		&unitTFactory	= g_world.getUnitTypeFactory();
-	CommandTypeFactory	&cmdTFactory	= g_world.getCommandTypeFactory();
-	SkillTypeFactory	&sklTFactory	= g_world.getSkillTypeFactory();
-	UpgradeTypeFactory	&upgrdTFactory	= g_world.getUpgradeTypeFactory();
+	CommandTypeFactory		&cmdTFactory	= g_world.getCommandTypeFactory();
+	SkillTypeFactory		&sklTFactory	= g_world.getSkillTypeFactory();
+	MasterTypeFactory		&masterTFactory	= g_world.getMasterTypeFactory();
 
-	// untis : 0
-	int unitOffset = 4;
-	int cmdOffset = unitOffset + unitTFactory.getTypeCount();
+	int cmdOffset = 4;
 	int skllOffset = cmdOffset + cmdTFactory.getTypeCount();
-	int upgrdOffset = skllOffset + sklTFactory.getTypeCount();
+	int prodOffset = skllOffset + sklTFactory.getTypeCount();
 
 	const int n = m_dataSync->getChecksumCount();
 	for (int i=0; i < n; ++i) {
 		if (m_dataSync->getChecksum(i) != msg.getChecksum(i)) {
 			ok = false;
-			if (i < unitOffset) {
+			if (i < cmdOffset) {
 				string badBit;
 				switch (i) {
 					case 0: badBit = "Tileset"; break;
@@ -212,12 +203,6 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 					case 3: badBit = "Resource"; break;
 				}
 				NETWORK_LOG( "DataSync Fail: " << badBit << " data does not match." )
-			} else if (i < cmdOffset) {
-				UnitType *ut = unitTFactory.getType(i - unitOffset);
-				NETWORK_LOG(
-					"DataSync Fail: UnitType '" << ut->getName() << "' of FactionType '" 
-					<< ut->getFactionType()->getName() << "'";
-				)
 			} else if (i < skllOffset) {
 				CommandType *ct = cmdTFactory.getType(i - cmdOffset);
 				NETWORK_LOG(
@@ -225,7 +210,7 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 					<< ct->getUnitType()->getName() << "' of FactionType '"
 					<< ct->getUnitType()->getFactionType()->getName() << "'";
 				)
-			} else if (i < upgrdOffset) {
+			} else if (i < prodOffset) {
 				SkillType *skillType = sklTFactory.getType(i - skllOffset);
 				NETWORK_LOG(
 					"DataSync Fail: SkillType '" << skillType->getName() << "' of UnitType '"
@@ -233,11 +218,23 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 					<< skillType->getUnitType()->getFactionType()->getName() << "'";
 				)
 			} else {
-				UpgradeType *ut = upgrdTFactory.getType(i - upgrdOffset);
-				NETWORK_LOG(
-					"DataSync Fail: UpgradeType '" << ut->getName() << "' of FactionType '" 
-					<< ut->getFactionType()->getName() << "'";
-				)
+				ProducibleType *pt = masterTFactory.getType(i - prodOffset);
+				if (masterTFactory.isUnitType(pt)) {
+					UnitType *ut = static_cast<UnitType*>(pt);
+					NETWORK_LOG( "DataSync Fail: UnitType " << i << ": " << ut->getName() 
+						<< " of FactionType: " << ut->getFactionType()->getName() );
+				} else if (masterTFactory.isUpgradeType(pt)) {
+					UpgradeType *ut = static_cast<UpgradeType*>(pt);
+					NETWORK_LOG( "DataSync Fail: UpgradeType " << i << ": " << ut->getName() 
+						<< " of FactionType: " << ut->getFactionType()->getName() );
+				} else if (masterTFactory.isGeneratedType(pt)) {
+					GeneratedType *gt = static_cast<GeneratedType*>(pt);
+					NETWORK_LOG( "DataSync Fail: GeneratedType " << i << ": " << gt->getName() << " of CommandType: " 
+						<< gt->getCommandType()->getName() << " of UnitType: " 
+						<< gt->getCommandType()->getUnitType()->getName() );
+				} else {
+					throw runtime_error(string("Unknown producible class for type: ") + pt->getName());
+				}
 			}
 		}
 	}

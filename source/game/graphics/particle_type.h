@@ -38,7 +38,7 @@ class ParticleSystemType : public ParticleSystemBase {
 public:
 	ParticleSystemType();
 	void load(const XmlNode *particleSystemNode, const string &dir);
-	virtual ParticleSystem *create() = 0;
+	virtual ParticleSystem *create(bool vis) = 0;
 
 //protected:
 //	void setValues(AttackParticleSystem *ats);
@@ -59,8 +59,8 @@ private:
 
 public:
 	void load(const string &dir, const string &path);
-	virtual ParticleSystem *create();
-	Projectile *createProjectileParticleSystem() {return (Projectile*)create();}
+	virtual ParticleSystem *create(bool vis);
+	Projectile *createProjectileParticleSystem(bool vis) {return (Projectile*)create(vis);}
 
 	ProjectileStart getStart() const	{return start;}
 	bool isTracking() const				{return tracking;}
@@ -80,8 +80,8 @@ private:
 
 public:
 	void load(const string &dir, const string &path);
-	virtual ParticleSystem *create();
-	Splash *createSplashParticleSystem() {return (Splash*)create();}
+	virtual ParticleSystem *create(bool vis);
+	Splash *createSplashParticleSystem(bool vis) {return (Splash*)create(vis);}
 };
 
 class ParticleSystemTypeCompound: public SplashType {
@@ -121,10 +121,10 @@ public:
 	bool hasTeamColorEnergy() const { return teamColorEnergy; }
 	bool hasTeamColorNoEnergy() const { return teamColorNoEnergy; }
 
-	UnitParticleSystem* createUnitParticleSystem() const {
-		return new UnitParticleSystem(*this, maxParticles);
+	UnitParticleSystem* createUnitParticleSystem(bool vis) const {
+		return new UnitParticleSystem(vis, *this, maxParticles);
 	}
-	virtual ParticleSystem* create() { return createUnitParticleSystem(); }
+	virtual ParticleSystem* create(bool vis) { return createUnitParticleSystem(vis); }
 };
 typedef vector<UnitParticleSystemType*> UnitParticleSystemTypes;
 

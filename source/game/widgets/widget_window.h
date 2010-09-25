@@ -54,6 +54,7 @@ private:
 	float anim, slowAnim;
 	Vec2i mousePos;
 	bool modalFloater;
+	const Texture2D *mouseIcon;
 
 	Widget::Ptr findCommonAncestor(Widget::Ptr widget1, Widget::Ptr widget2);
 	void unwindMouseOverStack(Widget::Ptr newTop);
@@ -81,6 +82,8 @@ public:
 
 	void aquireKeyboardFocus(KeyboardWidget::Ptr widget);
 	void releaseKeyboardFocus(KeyboardWidget::Ptr widget);
+
+	void setMouseCursorIcon(const Texture2D *tex = 0) { mouseIcon = tex; }
 
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);

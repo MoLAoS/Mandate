@@ -208,7 +208,7 @@ WRAPPED_ENUM( NetworkCommandType,
 		uint32 networkCommandType	:  8;
 		int32 unitId				: 24;
 		int32 commandTypeId			: 16;
-		int32 unitTypeId			: 16;
+		int32 prodTypeId			: 16;
 		int32 targetId				: 24;
 		uint32 flags				:  8;
 		int32 positionX				: 16;
@@ -225,7 +225,7 @@ WRAPPED_ENUM( NetworkCommandType,
 		int getUnitId() const								{return unitId;}
 		int getCommandTypeId() const						{return commandTypeId;}
 		Vec2i getPosition() const							{return Vec2i(positionX, positionY);}
-		int getUnitTypeId() const							{return unitTypeId;}
+		int getProdTypeId() const							{return prodTypeId;}
 		int getTargetId() const								{return targetId;}
 	};
 #pragma pack(pop)
@@ -234,7 +234,7 @@ WRAPPED_ENUM( NetworkCommandType,
 	struct MoveSkillUpdate {
 		int16	offsetX		:  2;
 		int16	offsetY		:  2;
-		int16	end_offset	: 12;
+		int16	end_offset	: 12; // max 4095
 
 		MoveSkillUpdate(const Unit *unit);
 		MoveSkillUpdate(const uint8 *ptr) { *this = *((MoveSkillUpdate*)ptr); }

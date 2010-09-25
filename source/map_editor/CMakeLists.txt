@@ -1,9 +1,8 @@
 # glest map editor
 
+file(GLOB map_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
 if(WIN32)
-	file(GLOB map_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h" "*.rc")
-else(WIN32)
-	file(GLOB map_srcs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.cpp" "*.h")
+	list(APPEND map_srcs "resources.rc")
 endif(WIN32)
 
 include_directories(${glestshared_incs})

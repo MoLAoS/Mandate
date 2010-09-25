@@ -45,7 +45,7 @@ SkillType::SkillType(SkillClass skillClass, const char* typeName)
 		, minRange(0)
 		, maxRange(0)
 		, startTime(0.f)
-		, projectile(0)
+		, projectile(false)
 		, splash(false)
 		, splashDamageAll(false)
 		, splashRadius(0)
@@ -148,6 +148,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			string path= particleNode->getAttribute("path")->getRestrictedValue();
 			projectileParticleSystemType= new ProjectileType();
 			projectileParticleSystemType->load(dir,  dir + "/" + path);
+			projectile = true;
 		}
 
 		//proj sounds
@@ -311,7 +312,7 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 	str+= lang.get("Zones") + ": ";
 	foreach_enum (Zone, z) {
 		if (zones.get(z)) {
-			str += string(ZoneNames[z]) + " ";
+			str += string(lang.get(ZoneNames[z])) + " ";
 		}
 	}
 	str += "\n";
@@ -533,59 +534,6 @@ void LoadSkillType::doChecksum(Checksum &checksum) const {
 }
 
 // =====================================================
-// 	class SkillTypeFactory
-// =====================================================
-
-SkillTypeFactory::SkillTypeFactory()
-		: m_idCounter(0) {
-	registerClass<StopSkillType>("stop");
-	registerClass<MoveSkillType>("move");
-	registerClass<AttackSkillType>("attack");
-	registerClass<BuildSkillType>("build");
-	registerClass<BeBuiltSkillType>("be_built");
-	registerClass<HarvestSkillType>("harvest");
-	registerClass<RepairSkillType>("repair");
-	registerClass<ProduceSkillType>("produce");
-	registerClass<UpgradeSkillType>("upgrade");
-	registerClass<MorphSkillType>("morph");
-	registerClass<DieSkillType>("die");
-	registerClass<LoadSkillType>("load");
-	registerClass<UnloadSkillType>("unload");
-}
-
-SkillTypeFactory::~SkillTypeFactory() {
-	deleteValues(m_types);
-	m_types.clear();
-	m_checksumTable.clear();
-}
-
-SkillType* SkillTypeFactory::newInstance(string classId) {
-	SkillType *st = MultiFactory<SkillType>::newInstance(classId);
-	st->setId(m_idCounter++);
-	m_types.push_back(st);
-	return st;
-}
-
-SkillType* SkillTypeFactory::getType(int id) {
-	if (id < 0 || id >= m_types.size()) {
-		throw runtime_error("Error: Unknown skill type id: " + intToStr(id));
-	}
-	return m_types[id];
-}
-
-int32 SkillTypeFactory::getChecksum(SkillType *st) {
-	assert(m_checksumTable.find(st) != m_checksumTable.end());
-	return m_checksumTable[st];
-}
-
-void SkillTypeFactory::setChecksum(SkillType *st) {
-	assert(m_checksumTable.find(st) == m_checksumTable.end());
-	Checksum checksum;
-	st->doChecksum(checksum);
-	m_checksumTable[st] = checksum.getSum();
-}
-
-// =====================================================
 // 	class ModelFactory
 // =====================================================
 
@@ -633,14 +581,11 @@ void AttackSkillTypes::getDesc(string &str, const Unit *unit) const {
 		types[0]->getDesc(str, unit);
 	} else {
 		str += Lang::getInstance().get("Attacks") + ": ";
-		bool printedFirst = false;
-
 		for(int i = 0; i < types.size(); ++i) {
-			if(printedFirst) {
+			if (i) {
 				str += ", ";
 			}
 			str += types[i]->getName();
-			printedFirst = true;
 		}
 		str += "\n";
 	}

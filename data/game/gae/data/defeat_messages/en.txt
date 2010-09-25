@@ -1,0 +1,6 @@
+; Defeat messages, English
+
+%s has bitten the dust.
+%s has been defeated.
+Another one bites the dust, %s has been eliminated.
+

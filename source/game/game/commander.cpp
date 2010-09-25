@@ -82,8 +82,10 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 			}
 		}
 		if(effectiveCt) {
-			if (prodType) { // build (or morph) command
+			if (prodType) { // production command
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
+					COMMAND_LOG(__FUNCTION__ << "() build command, setting DONT_RESERVE_RESOURCES flag = "
+						<< (i != units.begin() ? "true." : "false."));
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
 				}
 				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));

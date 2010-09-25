@@ -67,7 +67,7 @@ void FSFactory::shutdown() {
 bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
 #if USE_PHYSFS
 	if (!PHYSFS_init(argv0)) {
-		return false;
+		throw runtime_error(string("Couldn't init PhysFS with ") + argv0);
 	}
 	PHYSFS_permitSymbolicLinks(1);
 	
@@ -82,11 +82,7 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	char **list = PHYSFS_enumerateFiles("addons");
 	for(char **i=list; *i; i++){
 		// because we use physfs functions, we need path in physfs
-#		ifdef WIN32 // needs leading '/' on windoze
-			string str("/addons/");
-#		else
-			string str("addons/");
-#		endif
+		string str("/addons/"); // needs leading '/' on windoze, doesn't harm linux
 		str += *i;
 		// check if useful
 		if(PHYSFS_isDirectory(str.c_str()) || ext(str)=="zip"){// || ext(str)=="7z"){
@@ -99,7 +95,7 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	}
 	PHYSFS_freeList(list);
 
-	//FIXME: debug
+	// post search path
 	list = PHYSFS_getSearchPath();
 	for(char **i=list; *i; i++){
 		std::cout << "[" << *i << "] is in the search path.\n";

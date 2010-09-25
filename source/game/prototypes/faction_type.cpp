@@ -56,7 +56,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/units/" + unitFilenames[i];
-		UnitType *ut = g_world.getUnitTypeFactory().newInstance();
+		UnitType *ut = g_world.getMasterTypeFactory().newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -71,7 +71,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
-		UpgradeType *ut = g_world.getUpgradeTypeFactory().newInstance();
+		UpgradeType *ut = g_world.getMasterTypeFactory().newUpgradeType();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
 	}
@@ -93,7 +93,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/glestimals/" + unitFilenames[i];
-		UnitType *ut = g_world.getUnitTypeFactory().newInstance();
+		UnitType *ut = g_world.getMasterTypeFactory().newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -205,17 +205,30 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		if (value) {
 			XmlAttribute *playListAttr = musicNode->getAttribute("play-list", false);
 			if (playListAttr && playListAttr->getBoolValue()) {
-				StrSound *last = 0;
+				const XmlAttribute *shuffleAttrib = musicNode->getAttribute("shuffle", false);
+				bool shuffle = (shuffleAttrib && shuffleAttrib->getBoolValue() ? true : false);
+
+				vector<StrSound*> tracks;
 				for (int i=0; i < musicNode->getChildCount(); ++i) {
 					StrSound *sound = new StrSound();
 					sound->open(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
-					if (!i) {
-						music = last = sound;
-					} else {
-						last->setNext(sound);
-						last = sound;
-					}
+					tracks.push_back(sound);
 				}
+				if (tracks.empty()) {
+					throw runtime_error("No tracks in play-list!");
+				}
+				if (shuffle) {
+					int seed = int(Chrono::getCurTicks());
+					Random random(seed);
+					Shared::Util::jumble(tracks, random);
+				}
+				vector<StrSound*>::iterator it = tracks.begin();
+				vector<StrSound*>::iterator it2 = it + 1;
+				while (it2 != tracks.end()) {
+					(*it)->setNext(*it2);
+					++it; ++it2;
+				}
+				music = tracks[0];
 			} else {
 				music = new StrSound();
 				music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());

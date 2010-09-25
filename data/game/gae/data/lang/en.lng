@@ -1,5 +1,9 @@
 ; English lang file
 
+; Zones, translate 'Land' as Surface!
+Air=Air
+Land=Surface
+
 2dArtAndWeb=2D art and web
 3dAnd2dArt=3D and 2D art
 3dArt=3D art
@@ -95,7 +99,8 @@ EpRegeneration=EP Regeneration
 Error=Error
 ErrorVersionMismatch=The remote host has a different and incompatible of GAE, you have %s and they have %s.
 Exit=Exit
-ExitGame?=Exit game?
+ExitGame?=Exit Game?
+ExitProgram?=Exit Program?
 Faction=Faction
 Fast=fast
 Fastest=fastest

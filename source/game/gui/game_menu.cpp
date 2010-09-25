@@ -57,11 +57,15 @@ void GameMenu::onReturnToGame(Button::Ptr) {
 }
 
 void GameMenu::onQuit(Button::Ptr) {
-	g_gameState.quitGame();
+	g_gameState.destroyDialog();
+
+	g_gameState.confirmQuitGame();
 }
 
 void GameMenu::onExit(Button::Ptr) {
-	g_program.exit();
+	g_gameState.destroyDialog();
+
+	g_gameState.confirmExitProgram();
 }
 
 void GameMenu::onDebugToggle(Button::Ptr) {

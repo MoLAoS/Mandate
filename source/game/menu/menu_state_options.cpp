@@ -99,7 +99,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 
 	m_filterList->setSize(Vec2i(350, m_filterList->getHeight()));
 	m_filterList->addItem("Bilinear");
-	m_filterList->addItem("Triliniear");
+	m_filterList->addItem("Trilinear");
 	m_filterList->setSelected(config.getRenderFilter());
 	m_filterList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 

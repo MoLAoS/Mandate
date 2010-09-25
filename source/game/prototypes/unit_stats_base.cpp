@@ -86,22 +86,26 @@ void UnitStats::setValues(const UnitStats &o) {
 }
 
 void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
-	maxHp += (e.getMaxHp() * strength).intp();
-	hpRegeneration += (e.getHpRegeneration() * strength).intp();
-	maxEp += (e.getMaxEp() * strength).intp();
-	epRegeneration += (e.getEpRegeneration() * strength).intp();
-	sight += (e.getSight() * strength).intp();
-	armor += (e.getArmor() * strength).intp();
+#	define ADD_ATTRIB(type, X)								\
+	{	type v = get##X() + (e.get##X() * strength).intp();	\
+		set##X(v < 1 ? 1 : v);								\
+	}
+	ADD_ATTRIB(int, MaxHp);
+	ADD_ATTRIB(int, HpRegeneration);
+	ADD_ATTRIB(int, MaxEp);
+	ADD_ATTRIB(int, EpRegeneration);
+	ADD_ATTRIB(int, Sight);
+	ADD_ATTRIB(int, Armor);
 
-	attackStrength += (e.getAttackStrength() * strength).intp();
-	effectStrength += e.getEffectStrength() * strength;
-	attackPctStolen += e.getAttackPctStolen() * strength;
-	attackRange += (e.getAttackRange() * strength).intp();
-	moveSpeed += (e.getMoveSpeed() * strength).intp();
-	attackSpeed += (e.getAttackSpeed() * strength).intp();
-	prodSpeed += (e.getProdSpeed() * strength).intp();
-	repairSpeed += (e.getRepairSpeed() * strength).intp();
-	harvestSpeed += (e.getHarvestSpeed() * strength).intp();
+	ADD_ATTRIB(int, AttackStrength);
+	ADD_ATTRIB(fixed, EffectStrength);
+	ADD_ATTRIB(fixed, AttackPctStolen);
+	ADD_ATTRIB(int, AttackRange);
+	ADD_ATTRIB(int, MoveSpeed);
+	ADD_ATTRIB(int, AttackSpeed);
+	ADD_ATTRIB(int, ProdSpeed);
+	ADD_ATTRIB(int, RepairSpeed);
+	ADD_ATTRIB(int, HarvestSpeed);
 }
 
 void UnitStats::applyMultipliers(const EnhancementType &e) {
@@ -272,6 +276,57 @@ void EnhancementType::addMultipliers(const EnhancementType &e, fixed strength){
 	prodSpeedMult += (e.getProdSpeedMult() - 1) * strength;
 	repairSpeedMult += (e.getRepairSpeedMult() - 1) * strength;
 	harvestSpeedMult += (e.getHarvestSpeedMult() - 1) * strength;
+}
+
+void EnhancementType::clampMultipliers() {
+	fixed low, toLow;
+	low.raw() = (1 << 6); // lowest 'fixed' fraction that is 'safe' to multiply
+	toLow.raw() = (1 << 5);
+	if (maxHpMult <= 0) {
+		maxHpMult = low;
+	}
+	if (hpRegenerationMult <= 0) {
+		hpRegenerationMult = low;
+	}
+	if (maxEpMult <= 0) {
+		maxEpMult = low;
+	}
+	if (epRegenerationMult <= 0) {
+		epRegenerationMult = low;
+	}
+	if (sightMult <= 0) {
+		sightMult = low;
+	}
+	if (armorMult <= 0) {
+		armorMult = low;
+	}
+	if (attackStrengthMult <= 0) {
+		attackStrengthMult = low;
+	}
+	if (effectStrengthMult <= 0) {
+		effectStrengthMult = low;
+	}
+	if (attackPctStolenMult <= 0) {
+		attackPctStolenMult = low;
+	}
+	if (attackRangeMult <= 0) {
+		attackRangeMult = low;
+	}
+	if (attackSpeedMult <= 0) {
+		attackSpeedMult = low;
+	}
+	if (moveSpeedMult <= 0) {
+		moveSpeedMult = low;
+	}
+	if (prodSpeedMult <= 0) {
+		prodSpeedMult = low;
+	}
+	if (repairSpeedMult <= 0) {
+		repairSpeedMult = low;
+	}
+	if (harvestSpeedMult <= 0) {
+		harvestSpeedMult = low;
+	}
 }
 
 void formatModifier(string &str, const char *pre, const char* label, int value, fixed multiplier) {

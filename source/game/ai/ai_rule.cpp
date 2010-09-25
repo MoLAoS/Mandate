@@ -446,12 +446,12 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	map<const UnitType*, CommandList> prodMap;
 
 	// 1. Find all UnitTypes that can make ProducibleTypes that satisfy request (cost is 
-	// negative for pt->resourceType and has reqsOk() for Unit & Producible)
+	// negative for pt->resourceType and has reqsOk() for Producible)
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-		if (!faction->reqsOk(ut)) {
-			continue;
-		}
+		//if (!faction->reqsOk(ut)) {
+		//	continue;
+		//}
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct)) {
@@ -596,9 +596,9 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 	// 2. find all UnitTypes that can produce/morph-to required type
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-		if (!faction->reqsOk(ut)) {
-			continue;
-		}
+		//if (!faction->reqsOk(ut)) {
+		//	continue;
+		//}
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct) 

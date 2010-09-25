@@ -147,13 +147,14 @@ void UserInterface::init() {
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
 
-	int x = g_metrics.getScreenW() - 20 - 150;
+	int x = g_metrics.getScreenW() - 20 - 195;
 	int y = (g_metrics.getScreenH() - 600) / 2;
+
 	m_display = new Display(this, Vec2i(x,y));
 
 	// get 'this' FactionType, discover what resources need to be displayed
 	const Faction *fac = g_world.getThisFaction();
-	if(fac){  //loadmap has no faction
+	if (fac) {  //loadmap has no faction
 		const FactionType *ft = fac->getType();
 		set<const ResourceType*> displayResources;
 		for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
@@ -184,7 +185,7 @@ void UserInterface::initMinimap(bool fow, bool resuming) {
 	const int &mapH = g_map.getH();
 
 	fixed ratio = fixed(mapW) / mapH;
-	cout << "Map aspect ratio : " << ratio.toFloat();
+	//cout << "Map aspect ratio : " << ratio.toFloat();
 
 	Vec2i size;
 	if (ratio == 1) {
@@ -233,6 +234,7 @@ void UserInterface::resetState() {
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
+	g_program.setMouseCursorIcon();
 }
 
 static void calculateNearest(UnitVector &units, const Vec3f &pos) {
@@ -407,6 +409,7 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 
 		const Object *obj;
 		g_renderer.computeSelected(units, obj, pos, pos);
+		//g_gameState.lastPick(units, obj);
 		calculateNearest(units, gameCamera->getPos());
 		updateSelection(true, units);
 		computeDisplay();
@@ -422,6 +425,7 @@ void UserInterface::mouseMove(int x, int y) {
 		if (computeSelection) {
 			g_renderer.computeSelected(units, selectedObject, 
 				selectionQuad.getPosDown(), selectionQuad.getPosUp());
+			//g_gameState.lastPick(units, selectedObject);
 			computeSelection = false;
 			updateSelection(false, units);
 		}
@@ -450,8 +454,8 @@ void UserInterface::groupKey(int groupIndex){
 		}
 
 		selection.recallGroup(groupIndex);
-
-		currentGroup= groupIndex;
+		currentGroup = groupIndex;
+		computeDisplay();
 	}
 }
 
@@ -808,6 +812,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 					m_selectingSecond = true;
 				} else {
 					selectingPos = true;
+					g_program.setMouseCursorIcon(ct->getImage());
 					m_minimap->setLeftClickOrder(true);
 					activePos = posDisplay;
 				}
@@ -823,29 +828,22 @@ void UserInterface::mouseDownSecondTier(int posDisplay){
 		resetState();
 	} else {
 		assert(activeCommandType);
+		int ndx = m_display->getIndex(posDisplay);
+		assert(ndx >= 0 && ndx < activeCommandType->getProducedCount());
+		const ProducibleType *pt = activeCommandType->getProduced(ndx);
+
 		if (activeCommandType->getClass() == CommandClass::BUILD) {
-			const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
-			const UnitType *ut = bct->getBuilding(m_display->getIndex(posDisplay));
-			if (world->getFaction(factionIndex)->reqsOk(ut)) {
-				choosenBuildingType = ut;
+			if (world->getFaction(factionIndex)->reqsOk(pt)) {
+				choosenBuildingType = static_cast<const UnitType*>(pt);
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
 				activePos = posDisplay;
+				g_program.setMouseCursorIcon(choosenBuildingType->getImage());
 			}
 		} else {
-			const UnitType *ut = 0;
-			if (activeCommandType->getClass() == CommandClass::MORPH) {
-				const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
-				ut = mct->getMorphUnit(m_display->getIndex(posDisplay));
-			} else if (activeCommandType->getClass() == CommandClass::PRODUCE) {
-				const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(activeCommandType);
-				ut = pct->getProducedUnit(m_display->getIndex(posDisplay));
-			} else {
-				assert(false);
-			}
-			if (world->getFaction(factionIndex)->reqsOk(ut)) {
+			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				CommandResult result = commander->tryGiveCommand(selection, CommandFlags(),
-					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, ut);
+					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, pt);
 				addOrdersResultToConsole(activeCommandClass, result);
 				resetState();
 			}
@@ -1010,7 +1008,7 @@ void UserInterface::computeDisplay() {
 
 			if (selection.isUniform()) { // uniform selection
 				if (u->isBuilt()) {
-					int morphPos = 8;
+					int morphPos = cellWidthCount * 2;
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
 						const CommandType *ct = ut->getCommandType(i);
 						int displayPos = ct->getClass() == CommandClass::MORPH ? morphPos++ : j;
@@ -1296,6 +1294,7 @@ bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitV
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
 	const Object *junk;
 	g_renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
+	//g_gameState.lastPick(units, selectedObject);
 
 	if (!units.empty()) {
 		return true;

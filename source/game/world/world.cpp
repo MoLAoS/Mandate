@@ -557,7 +557,7 @@ Unit* World::findUnitById(int id) const {
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	return m_unitTypeFactory.getType(id);
+	return getUnitTypeFactory().getType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded
@@ -685,6 +685,16 @@ void World::unfogMap(const Vec4i &rect, int time) {
 	unfogActive = true;
 	unfogTTL = time;
 	unfogArea = rect;
+	const Vec2i start = Map::toTileCoords(Vec2i(unfogArea.x, unfogArea.y));
+	const Vec2i end = Map::toTileCoords(Vec2i(unfogArea.x + unfogArea.z, unfogArea.y + unfogArea.w));
+	RectIterator iter(start, end);
+	Vec2i pos;
+	while (iter.more()) {
+		pos = iter.next();
+		if (map.isInsideTile(pos)) {
+			map.getTile(pos)->setExplored(thisTeamIndex, true);
+		}
+	}
 }
 
 ///@todo
@@ -1000,7 +1010,7 @@ void World::initSplattedTextures() {
 void World::initFactions() {
 	Logger::getInstance().add("Faction types", true);
 	
-	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID,
+	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID, "Glestimals",
 		&techTree, -1, -1, -1, -1, false, false);
 	
 	GameSettings &gs = iSim->getGameSettings();
@@ -1019,7 +1029,7 @@ void World::initFactions() {
 	for (int i = 0; i < factions.size(); ++i) {
 		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
 		factions[i].init(
-			ft, gs.getFactionControl(i), &techTree, i, gs.getTeam(i),
+			ft, gs.getFactionControl(i), gs.getPlayerName(i), &techTree, i, gs.getTeam(i),
 			gs.getStartLocationIndex(i), gs.getColourIndex(i),
 			i==thisFactionIndex, gs.getDefaultResources()
 		);

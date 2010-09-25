@@ -44,8 +44,9 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 	//load tech tree xml info
 	XmlTree	xmlTree;
 	string path;
+	name = basename(dir);
 	try {
-		path= dir+"/"+basename(dir)+".xml";
+		path = dir + "/" + name + ".xml";
 		xmlTree.load(path);
 	}
 	catch (runtime_error &e) {

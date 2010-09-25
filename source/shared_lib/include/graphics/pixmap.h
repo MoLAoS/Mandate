@@ -14,6 +14,9 @@
 
 #include <string>
 #include <cassert>
+#include <stdexcept>
+
+#include "png.h"
 
 #include "vec.h"
 #include "types.h"
@@ -21,7 +24,7 @@
 #include "FileOps.hpp"
 
 namespace Shared { namespace Graphics {
-
+using std::runtime_error;
 using std::string;
 using namespace Platform;
 using namespace Math;
@@ -93,6 +96,35 @@ public:
 };
 
 // =====================================================
+//	class PixmapIoPng
+// =====================================================
+
+class PixmapIoPng: public PixmapIo {
+private:
+	FileOps *file;
+	png_structp png_ptr;
+	png_infop info_ptr;
+
+public:
+	PixmapIoPng(): file(0) {}
+	virtual ~PixmapIoPng() {delete file;}
+
+	virtual void openRead(const string &path);
+	virtual void read(uint8 *pixels);
+	virtual void read(uint8 *pixels, int components);
+
+	virtual void openWrite(const string &path, int w, int h, int components) {
+		throw runtime_error("Can't write PNG.");
+	}
+
+	virtual void write(uint8 *pixels) {
+		throw runtime_error("Can't write PNG.");
+	}
+};
+
+
+
+// =====================================================
 //	class Pixmap1D
 // =====================================================
 
@@ -146,6 +178,8 @@ public:
 	void load(const string &path);
 	void loadTga(const string &path);
 	void loadBmp(const string &path);
+	void loadPng(const string &path);
+
 	void save(const string &path);
 	void saveBmp(const string &path);
 	void saveTga(const string &path);

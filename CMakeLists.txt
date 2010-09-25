@@ -34,7 +34,9 @@ if(DEFINED GAE_WINDEPS AND WIN32)
 	set(ENV{VORBISDIR} ${GAE_WINDEPS})
 	set(ENV{PHYSFSDIR} ${GAE_WINDEPS})
 	set(ENV{CPPUNITDIR} ${GAE_WINDEPS})
-	# sadly FindZLIB does not support HINTS, set it directly
+	# sadly FindZLIB does not support HINTS, set it directly (seemingly the same with PNG...)
+	set(PNG_LIBRARY ${GAE_WINDEPS}/lib/libpng.lib)
+	set(PNG_PNG_INCLUDE_DIR ${GAE_WINDEPS}/include)
 	set(ZLIB_INCLUDE_DIR ${GAE_WINDEPS}/include)
 	set(ZLIB_LIBRARY ${GAE_WINDEPS}/lib/zlib.lib)
 	# FindLibXml2 uses PkgConfig as HINTS on non win, set them directly
@@ -63,6 +65,7 @@ find_package(CppUnit)
 find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 find_package(Freetype REQUIRED)
+find_package(PNG REQUIRED)
 
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
@@ -74,10 +77,12 @@ endif(GAE_USE_PHYSFS)
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 
 # mad synchronisation checking (for network play)
-option(GAE_SYNC_TEST "Enable mass synchronisation checks for multiplayer. Not compatible with Debug Edition.")
+option(GAE_SYNC_TEST "Enable mass synchronisation checks for multiplayer.")
 
 # pre-compiled headers (MSVC only atm)
-option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers, MSVC only atm.")
+if (MSVC)
+	option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers." ON)
+endif (MSVC)
 
 if(NOT WIN32)
 	try_compile(HAVE_SSE2 ${CMAKE_BINARY_DIR}/test_sse ${CMAKE_SOURCE_DIR}/cmake/tests/sse.cpp COMPILE_DEFINITIONS "-msse2")
@@ -102,7 +107,7 @@ else (MSVC)
 endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR}
-		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
+		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library
@@ -127,7 +132,7 @@ else(WIN32)
 endif(WIN32)
 
 if(NOT DEFINED GAE_VERSION)
-	set(GAE_VERSION "svn" CACHE STRING "Version of Glest Advanced Engine")
+	set(GAE_VERSION "0.3.x" CACHE STRING "Version of Glest Advanced Engine")
 endif()
 if(NOT DEFINED GAE_CONTACT)
 	set(GAE_CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")
@@ -188,7 +193,7 @@ else(WIN32)
 endif(WIN32)
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/data/;/build;.*~;/docs/html/;/package")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/build;.*~;/docs/html/;/package")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)

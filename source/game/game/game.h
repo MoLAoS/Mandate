@@ -90,7 +90,7 @@ protected:
 	int updateFps, lastUpdateFps;
 	int renderFps, lastRenderFps;
 	bool noInput;
-	bool netError, gotoMenu, exitGame;
+	bool netError, gotoMenu, exitGame, exitProgram;
 	float scrollSpeed;
 
 	MessageQueue m_scriptMessages;
@@ -102,6 +102,11 @@ protected:
 
 	//misc ptr
 	ParticleSystem *weatherParticleSystem;
+
+	//UnitVector lastPickUnits;
+	//const Object *lastPickObject;
+	//vector<string> rawPick;
+	//vector<string> unitPickHits;
 
 public:
 	GameState(Program &program);
@@ -119,6 +124,21 @@ public:
 	UserInterface *getGui()					{return &gui;}
 	
 	// ProgramState implementation
+
+	//void resetRawPick() { rawPick.clear(); }
+	//void addRawPick(const string &str) {
+	//	rawPick.push_back(str);
+	//}
+
+	//void resetUnitPickHits() { unitPickHits.clear(); }
+	//void addUnitPickHit(const string &str) {
+	//	unitPickHits.push_back(str);
+	//}
+
+	//void lastPick(UnitVector &units, const Object *obj) {
+	//	lastPickUnits = units;
+	//	lastPickObject = obj;
+	//}
 
 	// init
 	virtual void load();
@@ -159,7 +179,15 @@ public:
 
 	virtual bool isGameState() const	{ return true; }
 
+	void confirmQuitGame();
+	void confirmExitProgram();
+
+	void onConfirmQuitGame(BasicDialog::Ptr);
+	void onConfirmExitProgram(BasicDialog::Ptr);
+
 	void destroyDialog(BasicDialog::Ptr ptr = 0);
+
+	void doDefeatedMessage(Faction *f);
 
 protected:
 	// render

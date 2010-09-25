@@ -241,34 +241,4 @@ void ProducibleType::doChecksum(Checksum &checksum) const {
 	checksum.add(advancementIsImmediate);
 }
 
-// =====================================================
-// 	class ProducibleTypeFactory
-// =====================================================
-
-ProducibleTypeFactory::~ProducibleTypeFactory() {
-	deleteValues(m_types);
-}
-
-ProducibleType* ProducibleTypeFactory::newInstance() {
-	ProducibleType *pt = SingleTypeFactory<ProducibleType>::newInstance();
-	pt->setId(m_idCounter++);
-	m_types.push_back(pt);
-	return pt;
-}
-
-ProducibleType* ProducibleTypeFactory::getType(int id) {
-	assert(id >= 0 && id < m_types.size());
-	return m_types[id];
-}
-
-int32 ProducibleTypeFactory::getChecksum(ProducibleType *pt) {
-	return m_checksumTable[pt];
-}
-
-void ProducibleTypeFactory::setChecksum(ProducibleType *pt) {
-	Checksum cs;
-	pt->doChecksum(cs);
-	m_checksumTable[pt] = cs.getSum();
-}
-
 }}//end namespace

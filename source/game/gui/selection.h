@@ -44,7 +44,7 @@ public:
 
 public:
 	static const int maxGroups = 10;
-	static const int maxUnits = 16;
+	static const int maxUnits = 24;
 
 private:
 	bool empty;
@@ -78,6 +78,8 @@ public:
 	}
 	void unSelect(const UnitVector &units);
 	void unSelect(const Unit *unit);
+	void unSelectAllOfType(const UnitType *type);
+	void unSelectAllNotOfType(const UnitType *type);
 	void clear();
 
 	bool isEmpty() const				{return empty;}

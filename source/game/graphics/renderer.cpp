@@ -1524,7 +1524,9 @@ struct PickHit {
 	PickHit(GLuint nearDist, GLuint name1, GLuint name2)
 			: nearDist(nearDist), name1(name1), name2(name2) {}
 
-	bool operator<(const PickHit &that) const { return nearDist < that.nearDist; }
+	bool operator<(const PickHit &that) const {
+		return (memcmp(this, &that, sizeof(PickHit)) < 0);
+	}
 };
 
 void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
@@ -1553,13 +1555,16 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 
 	glInitNames();
 
-	//render units
+	//render units and resources
 	renderUnitsFast();
 	renderObjectsFast();
 
 	//pop matrices
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
+
+	//g_gameState.resetRawPick();
+	//g_gameState.resetUnitPickHits();
 
 	// process hits
 	int selCount = glRenderMode(GL_RENDER);
@@ -1572,6 +1577,9 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 		++ptr;
 		GLuint name1 = *ptr++;
 		GLuint name2 = *ptr++;
+
+		//string rawHit = intToStr(name1) + " : " + intToStr(name2);
+		//g_gameState.addRawPick(rawHit);
 
 		if (name1 < GameConstants::maxPlayers + 1) {
 			unitHits.insert(PickHit(nearDist, name1, name2));
@@ -1595,7 +1603,10 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 		}
 	} else {
 		foreach_const (set<PickHit>, it, unitHits) {
-			units.push_back(g_simInterface->getUnitFactory().getUnit(it->name2));
+			Unit *unit = g_simInterface->getUnitFactory().getUnit(it->name2);
+			//string str = intToStr(unit->getId()) + " : " + unit->getType()->getName();
+			//g_gameState.addUnitPickHit(str);
+			units.push_back(unit);
 		}
 	}
 }
@@ -2042,25 +2053,26 @@ void Renderer::renderObjectsFast(bool shadows) {
 	}
 
 	modelRenderer->begin(false, shadows, false);
-	int thisTeamIndex= world->getThisTeamIndex();
+	int thisTeamIndex = world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();
 	for ( ; it != culler.tile_end(); ++it) {
 		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) continue;
-		Tile *sc= map->getTile(pos);
-		Object *o= sc->getObject();
+		if (!map->isInside(pos)) {
+			continue;
+		}
+		Tile *sc = map->getTile(pos);
+		Object *o = sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
 			Resource *r = o->getResource();
-			if (r) {
-				glPushName(0x101);	// resource
-			} else {
-				glPushName(0x102);	// object (non resource)
+			if (!r) {
+				continue;
 			}
+			glPushName(0x101);	// resource
 			glPushName(o->getId());	// obj id
 
-			const Model *objModel= sc->getObject()->getModel();
-			Vec3f v= o->getPos();
+			const Model *objModel = sc->getObject()->getModel();
+			Vec3f v = o->getPos();
 			v.x += GameConstants::cellScale / 2;
 			v.z += GameConstants::cellScale / 2;
 			glMatrixMode(GL_MODELVIEW);

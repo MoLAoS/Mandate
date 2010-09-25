@@ -299,7 +299,7 @@ void MenuStateLoadGame::initGameInfo() {
 		ss  << m_savedGameList->getSelectedItem()->getText() << ": " << gs->getDescription()
 			<< "\nTech-tree: " << formatString(basename(gs->getTechPath()))
 			<< "\nTileset: " << formatString(basename(gs->getTilesetPath()))
-			<< "\nMap: " << formatString(basename(cutLastExt(gs->getMapPath()))) << mapDescr
+			<< "\nMap: " << formatString(basename(gs->getMapPath())) << mapDescr
 			<< "\nElapsed Time: " << elapsedTime
 			<< "\n";
 

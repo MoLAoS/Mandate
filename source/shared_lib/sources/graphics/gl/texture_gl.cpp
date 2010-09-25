@@ -196,23 +196,23 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		}
 
-		if(mipmap){
-			GLuint glFilter= filter==fTrilinear? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR_MIPMAP_NEAREST;
+		if (mipmap) {
+			GLuint glFilter = filter == fTrilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR_MIPMAP_NEAREST;
 
 			//build mipmaps
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			int error= gluBuild2DMipmaps(
+			int error = gluBuild2DMipmaps(
 				GL_TEXTURE_2D, glInternalFormat,
 				pixmap.getW(), pixmap.getH(),
 				glFormat, GL_UNSIGNED_BYTE, pixels);
 
-			if(error!=0){
-				throw runtime_error("Error building texture 2D mipmaps");
+			if (error != 0) {
+				string msg = (char*)gluErrorString(error);
+				throw runtime_error("Error building texture 2D mipmaps: " + msg);
 			}
-		}
-		else{
+		} else {
 			//build single texture
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -222,8 +222,8 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 				pixmap.getW(), pixmap.getH(),
 				0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
-			GLint error= glGetError();
-			if(error!=GL_NO_ERROR){
+			GLint error = glGetError();
+			if (error != GL_NO_ERROR){
 				throw runtime_error("Error creating texture 2D");
 			}
 		}

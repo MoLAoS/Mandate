@@ -76,7 +76,7 @@ using Search::CardinalDir;
 // =====================================================
 
 class CommandType : public RequirableType {
-	friend class CommandTypeFactory;
+	friend class Glest::Sim::CommandTypeFactory;
 protected:
 	Clicks clicks;
 	bool queuable;
@@ -97,9 +97,8 @@ public:
 
 	virtual string toString() const						{return Lang::getInstance().get(name);}
 
-//	virtual const ProducibleType *getProduced() const		{return NULL;}
-	virtual const ProducibleType *getProduced(int i) const	{return NULL;}
 	virtual int getProducedCount() const					{return 0;}
+	virtual const ProducibleType *getProduced(int i) const{return 0;}
 
 	bool isQueuable() const								{return queuable;}
 
@@ -301,8 +300,13 @@ public:
 
 	//get
 	const BuildSkillType *getBuildSkillType() const	{return buildSkillType;}
+
+	virtual int getProducedCount() const					{return buildings.size();}
+	virtual const ProducibleType *getProduced(int i) const;
+
 	int getBuildingCount() const					{return buildings.size();}
 	const UnitType * getBuilding(int i) const		{return buildings[i];}
+
 	StaticSound *getStartSound() const				{return startSounds.getRandSound();}
 	StaticSound *getBuiltSound() const				{return builtSounds.getRandSound();}
 
@@ -414,11 +418,9 @@ public:
 	virtual string getReqDesc() const;
 	
 	// get
-//	const ProducibleType* getProduced() const;
-	const ProducibleType* getProduced(int i) const;
-	int getProducedCount() const	{return m_producedUnits.size();}
+	virtual int getProducedCount() const	{return m_producedUnits.size();}
+	virtual const ProducibleType* getProduced(int i) const;
 
-//	const UnitType *getProducedUnit() const				{return m_producedUnit;}
 	const UnitType *getProducedUnit(int i) const		{return m_producedUnits[i];}
 	int getProducedUnitCount() const		{return m_producedUnits.size();}
 
@@ -438,8 +440,7 @@ public:
 class GenerateCommandType: public CommandType {
 private:
 	const ProduceSkillType*			m_produceSkillType;
-//	const ProducibleType*			m_producible;
-	vector<const ProducibleType*>	m_producibles;
+	vector<const GeneratedType*>	m_producibles;
 	SoundContainer					m_finishedSounds;
 
 public:
@@ -453,8 +454,9 @@ public:
 
 	//get
 	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
-	const ProducibleType *getProduced(int i) const		{return m_producibles[i];}
-	int getProducedCount() const	{return m_producibles.size();}
+
+	virtual int getProducedCount() const	{return m_producibles.size();}
+	virtual const ProducibleType *getProduced(int i) const	{return m_producibles[i];}
 
 	virtual Clicks getClicks() const	{ return m_producibles.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
@@ -486,6 +488,9 @@ public:
 	virtual void update(Unit *unit) const;
 
 	//get
+	virtual int getProducedCount() const	{return 1;}
+	virtual const ProducibleType *getProduced(int i) const	{assert(!i); return producedUpgrade;}
+
 	const UpgradeSkillType *getUpgradeSkillType() const	{return upgradeSkillType;}
 	const UpgradeType *getProducedUpgrade() const		{return producedUpgrade;}
 
@@ -500,7 +505,6 @@ public:
 class MorphCommandType: public CommandType {
 private:
 	const MorphSkillType*	m_morphSkillType;
-//	const UnitType*			m_morphUnit;
 	vector<const UnitType*> m_morphUnits;
 	int						m_discount;
 	SoundContainer			m_finishedSounds;
@@ -514,13 +518,11 @@ public:
 	virtual string getReqDesc() const;
 	
 	// get
-//	const ProducibleType* getProduced() const;
-	const ProducibleType* getProduced(int i) const;
-	int getProducedCount() const {return m_morphUnits.size();}
+	virtual int getProducedCount() const	{return m_morphUnits.size();}
+	virtual const ProducibleType* getProduced(int i) const;
 	
-//	const UnitType *getMorphUnit() const			{return m_morphUnit;}
-	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
 	int getMorphUnitCount() const					{return m_morphUnits.size();}
+	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
 
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
@@ -541,14 +543,18 @@ private:
 	const MoveSkillType *moveSkillType;
 	const LoadSkillType *loadSkillType;
 	vector<const UnitType*> m_canLoadList;
-	int m_loadCapacity;
+	int		m_loadCapacity;
+	bool	m_allowProjectiles;
+	Vec2f	m_projectileOffsets;
 /*  ///@todo: implement these:
 	bool m_countCells;	// if true, a size 2 unit occupies 4 slots
 	bool m_countSize;	// if true, a height 2 occupies 2 slots
 						// if both true, a size 2 height 2 unit would occupy 8
 */
 public:
-	LoadCommandType() : CommandType("Load", Clicks::TWO), loadSkillType(0), moveSkillType(0) {
+	LoadCommandType() 
+			: CommandType("Load", Clicks::TWO)
+			, loadSkillType(0), moveSkillType(0), m_allowProjectiles(false) {
 		queuable = true;
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -565,6 +571,9 @@ public:
 	bool canCarry(const UnitType *ut) const {
 		return (std::find(m_canLoadList.begin(), m_canLoadList.end(), ut) != m_canLoadList.end());
 	}
+
+	bool	areProjectilesAllowed() const	{ return m_allowProjectiles; }
+	Vec2f	getProjectileOffset() const		{ return m_projectileOffsets; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::LOAD; }
@@ -644,27 +653,6 @@ public:
 	}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::SET_MEETING_POINT; }
-};
-
-// ===============================
-//  class CommandFactory
-// ===============================
-
-class CommandTypeFactory: private MultiFactory<CommandType> {
-private:
-	int m_idCounter;
-	vector<CommandType *> m_types;
-	map<CommandType*, int32> m_checksumTable;
-
-public:
-	CommandTypeFactory();
-	~CommandTypeFactory();
-
-	CommandType* newInstance(string classId, UnitType *owner);
-	CommandType* getType(int id);
-	int getTypeCount() const { return m_types.size(); }
-	int32 getChecksum(CommandType *ct);
-	void setChecksum(CommandType *ct);
 };
 
 // update helper, move somewhere sensible

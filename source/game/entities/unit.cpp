@@ -122,6 +122,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
         , soundStartFrame(-1)
         , progress2(0)
         , kills(0)
+		, carrier(0)
         , highlight(0.f)
         , targetRef(-1)
         , targetField(Field::LAND)
@@ -161,11 +162,11 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	setModelFacing(m_facing);
 }
 
-
 Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
 		: targetRef(node->getOptionalIntValue("targetRef", -1))
 		, effects(node->getChild("effects"))
-		, effectsCreated(node->getChild("effectsCreated")) {
+		, effectsCreated(node->getChild("effectsCreated"))
+        , carried(false) {
 	this->faction = faction;
 	this->map = map;
 
@@ -232,7 +233,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 
 	if (hp) {
-		map->putUnitCells(this, node->getChildVec2iValue("pos"));
+		map->putUnitCells(this, pos);
 		meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
 	}
 	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
@@ -458,8 +459,13 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	progress2 = 0;
 	currSkill = newSkill;
 	StateChanged(this);
+	
+	Vec2i cPos = getCenteredPos();
+	Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+	bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+	
 	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
-		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem();
+		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
 		ups->setPos(getCurrVector());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
@@ -512,18 +518,35 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	ProjectileType *pstProj = ast->getProjParticleType();
 	SplashType *pstSplash = ast->getSplashParticleType();
-
-	Vec3f startPos = this->getCurrVector();
 	Vec3f endPos = this->getTargetVec();
-
-	//make particle system
-	const Tile *sc = map->getTile(Map::toTileCoords(this->getPos()));
-	const Tile *tsc = map->getTile(Map::toTileCoords(this->getTargetPos()));
-	bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
 
 	//projectile
 	if (pstProj != NULL) {
-		psProj = pstProj->createProjectileParticleSystem();
+		Vec2i effectivePos = (isCarried() ? getCarrier()->getCenteredPos() : getCenteredPos());
+		Vec3f startPos;
+		if (isCarried()) {
+			startPos = getCarrier()->getCurrVectorFlat();
+			const LoadCommandType *lct = 
+				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
+			assert(lct->areProjectilesAllowed());
+			Vec2f offsets = lct->getProjectileOffset();
+			startPos.y += offsets.y;
+			int seed = int(Chrono::getCurMicros());
+			Random random(seed);
+			float rad = degToRad(float(random.randRange(0, 359)));
+			startPos.x += cosf(rad) * offsets.x;
+			startPos.z += sinf(rad) * offsets.x;
+		} else {
+			startPos = getCurrVector();
+		}
+		//make particle system
+		const Tile *sc = map->getTile(Map::toTileCoords(effectivePos));
+		const Tile *tsc = map->getTile(Map::toTileCoords(getTargetPos()));
+		
+		bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
+		visible = visible && g_renderer.getCuller().isInside(effectivePos);
+
+		psProj = pstProj->createProjectileParticleSystem(visible);
 
 		switch (pstProj->getStart()) {
 			case ProjectileStart::SELF:
@@ -545,8 +568,6 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		}
 
 		g_simInterface->doUpdateProjectile(this, psProj, startPos, endPos);
-		// game network interface calls setPath() on psProj, differently for clients/servers
-		//theNetworkManager.getNetworkInterface()->doUpdateProjectile(this, psProj, startPos, endPos);
 
 		if(pstProj->isTracking() && targetRef != -1) {
 			Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
@@ -555,7 +576,6 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		} else {
 			psProj->setDamager(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
 		}
-		psProj->setVisible(visible);
 		renderer.manageParticleSystem(psProj, ResourceScope::GAME);
 	} else {
 		g_world.hit(this);
@@ -563,9 +583,8 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	//splash
 	if (pstSplash != NULL) {
-		psSplash = pstSplash->createSplashParticleSystem();
+		psSplash = pstSplash->createSplashParticleSystem(visible);
 		psSplash->setPos(endPos);
-		psSplash->setVisible(visible);
 		renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
 		if (pstProj != NULL) {
 			psProj->link(psSplash);
@@ -921,6 +940,8 @@ void Unit::kill() {
 	}
 
 	setCurrSkill(SkillClass::DIE);
+	g_simInterface->doUpdateAnimOnDeath(this);
+
 	Died(this);
 	clearCommands();
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
@@ -983,8 +1004,14 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 /** called to update animation cycle on a dead unit */
 void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
-	// if dead, set startFrame to last frame, endFrame to this frame
-	// to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
+	if (!skillParticleSystems.empty()) {
+		foreach (UnitParticleSystems, it, skillParticleSystems) {
+			(*it)->fade();
+		}
+		skillParticleSystems.clear();
+	}
+	// when dead and have already played one complete anim cycle, set startFrame to last frame, endFrame 
+	// to this frame to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
 	const int &frame = g_world.getFrameCount();
 	this->lastAnimReset = frame - 1;
 	this->nextAnimReset = frame;
@@ -996,7 +1023,6 @@ void Unit::updateAnimDead() {
   * @param soundOffset the number of frames from now to start the skill sound (or -1 if no sound)
   * @param attackOffset the number  of frames from now to start attack systems (or -1 if no attack)*/
 void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
-	assert(currSkill->getClass() != SkillClass::DIE);
 	if (frameOffset == -1) { // hacky handle move skill
 		assert(currSkill->getClass() == SkillClass::MOVE);
 		static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
@@ -1036,14 +1062,10 @@ void Unit::updateSkillCycle(int frameOffset) {
 	if (currSkill->getClass() != SkillClass::MOVE) {
 		fixed ratio = getBaseSpeed() / fixed(getSpeed());
 		frameOffset = (frameOffset * ratio).round();
-		if (frameOffset < 1) {
-			frameOffset = 1;
-		}
 	}
 	// else move skill, server has already modified speed for us
-
 	lastCommandUpdate = g_world.getFrameCount();
-	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
+	nextCommandUpdate = g_world.getFrameCount() + clamp(frameOffset, 1, 4095);;
 }
 
 /** called by the server only, updates a skill cycle for the move skill */
@@ -1063,7 +1085,8 @@ void Unit::updateMoveSkillCycle() {
 
 	// reset lastCommandUpdate and calculate next skill cycle length
 	lastCommandUpdate = g_world.getFrameCount();
-	nextCommandUpdate = g_world.getFrameCount() + int(1.0000001f / progressSpeed) + 1;
+	int frameOffset = clamp(int(1.0000001f / progressSpeed) + 1, 1, 4095);
+	nextCommandUpdate = g_world.getFrameCount() + frameOffset; 
 }
 
 /** @return true when the current skill has completed a cycle */
@@ -1073,8 +1096,10 @@ bool Unit::update() {
 
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
-		if (map->getTile(Map::toTileCoords(getPos()))->isVisible(g_world.getThisTeamIndex())) {
-			g_soundRenderer.playFx(currSkill->getSound(), getCurrVector(), g_gameState.getGameCamera()->getPos());
+		Vec2i cellPos = isCarried() ? carrier->getCenteredPos() : getCenteredPos();
+		Vec3f vec = isCarried() ? carrier->getCurrVector() : getCurrVector();
+		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
+			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
 	}
 
@@ -1318,20 +1343,23 @@ bool Unit::decHp(int i) {
 		ScriptManager::onHPBelowTrigger(this);
 	}
 
-	//fire
+	// fire
 	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2 && fire == NULL) {
 		FireParticleSystem *fps;
-		fps = new FireParticleSystem(200);
-		fps->setSpeed(2.5f / Config::getInstance().getGsWorldUpdateFps());
+		Vec2i cPos = getCenteredPos();
+		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+		bool vis = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+		fps = new FireParticleSystem(vis, 200);
+		fps->setSpeed(2.5f / g_config.getGsWorldUpdateFps());
 		fps->setPos(getCurrVector());
 		fps->setRadius(type->getSize() / 3.f);
-		fps->setTexture(CoreData::getInstance().getFireTexture());
+		fps->setTexture(g_coreData.getFireTexture());
 		fps->setSize(type->getSize() / 3.f);
 		fire = fps;
-		Renderer::getInstance().manageParticleSystem(fps, ResourceScope::GAME);
+		g_renderer.manageParticleSystem(fps, ResourceScope::GAME);
 	}
 
-	//stop fire on death
+	// stop fire on death
 	if (hp <= 0) {
 		hp = 0;
 		if (fire) {
@@ -1469,20 +1497,20 @@ void Unit::recalculateStats() {
 	int oldMaxHp = getMaxHp();
 	int oldHp = hp;
 
-	reset();
-	setValues(*type); // => setValues(UnitStats &)
+	EnhancementType::reset();
+	UnitStats::setValues(*type);
 
 	// add up all multipliers first and then apply (multiply) once.
 	// See EnhancementType::addMultipliers() for the 'adding' strategy
-	addMultipliers(totalUpgrade);
+	EnhancementType::addMultipliers(totalUpgrade);
 	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
-		addMultipliers(*(*i)->getType(), (*i)->getStrength());
+		EnhancementType::addMultipliers(*(*i)->getType(), (*i)->getStrength());
 	}
-	applyMultipliers(*this);
-
-	addStatic(totalUpgrade);
+	EnhancementType::clampMultipliers();
+	UnitStats::applyMultipliers(*this);
+	UnitStats::addStatic(totalUpgrade);
 	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
-		addStatic(*(*i)->getType(), (*i)->getStrength());
+		UnitStats::addStatic(*(*i)->getType(), (*i)->getStrength());
 
 		// take care of effect damage type
 		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
@@ -1544,8 +1572,12 @@ bool Unit::add(Effect *e) {
 
 	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
 	if (!particleTypes.empty() && startParticles) {
+		Vec2i cPos = getCenteredPos();
+		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+		bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+
 		foreach_const (UnitParticleSystemTypes, it, particleTypes) {
-			UnitParticleSystem *ups = (*it)->createUnitParticleSystem();
+			UnitParticleSystem *ups = (*it)->createUnitParticleSystem(visible);
 			ups->setPos(getCurrVector());
 			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 			effectParticleSystems.push_back(ups);
@@ -1749,7 +1781,8 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		if (!faction->reqsOk(produced)) {
 			return CommandResult::FAIL_REQUIREMENTS;
 		}
-		if (!faction->checkCosts(produced)) {
+		if (!command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)
+		&& !faction->checkCosts(produced)) {
 			return CommandResult::FAIL_RESOURCES;
 		}
 	}
@@ -1772,22 +1805,6 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		if (bct->isBlocked(builtUnit, command.getPos(), command.getFacing())) {
 			return CommandResult::FAIL_BLOCKED;
 		}
-		if (!faction->reqsOk(builtUnit)) {
-			return CommandResult::FAIL_REQUIREMENTS;
-		}
-		if (command.isReserveResources() && !faction->checkCosts(builtUnit)) {
-			return CommandResult::FAIL_RESOURCES;
-		}
-	} else if (!produced  // multi-tier selected morph or produce
-	&& (ct->getClass() == CommandClass::MORPH || ct->getClass() == CommandClass::PRODUCE)) {
-		produced = command.getProdType();
-		assert(produced);
-		if (!faction->reqsOk(produced)) {
-			return CommandResult::FAIL_REQUIREMENTS;
-		}
-		if (!faction->checkCosts(produced)) {
-			return CommandResult::FAIL_RESOURCES;
-		}
 	} else if (ct->getClass() == CommandClass::UPGRADE) { // upgrade command specific
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		if (faction->getUpgradeManager()->isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
@@ -1804,14 +1821,13 @@ CommandResult Unit::checkCommand(const Command &command) const {
 void Unit::applyCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
-	// check produced
+	// apply costs for produced
 	const ProducibleType *produced = command.getProdType();
-	if (produced) {
+	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
 		faction->applyCosts(produced);
 	}
 
-	// todo multi-tier upgrades, and use CommandType::getProduced() and Command::prodType
-	if (ct->getClass() == CommandClass::UPGRADE) { // upgrade (why not handled by getProduced() ???)
+	if (ct->getClass() == CommandClass::UPGRADE) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		faction->startUpgrade(uct->getProducedUpgrade());
 	}
@@ -1877,7 +1893,7 @@ int Unit::getSpeed(const SkillType *st) const {
 		default:
 			break;
 	}
-	return (speed > 0 ? speed.intp() : 0);
+	return (speed > 1 ? speed.intp() : 1);
 }
 
 // =====================================================
