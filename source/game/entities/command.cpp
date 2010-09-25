@@ -74,7 +74,7 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 	if (unit) {
 		pos = unit->getCenteredPos();
 	}
-	if (unit && !isAuto() && unit->getFaction()->isThisFaction()) {
+	if (unit && !isAuto() && commandedUnit->getFaction()->isThisFaction()) {
 		unit->resetHighlight();
 		//pos = unit->getCellPos();
 	}
