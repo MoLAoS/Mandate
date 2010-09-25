@@ -45,6 +45,7 @@ void Lang::setLocale(const string &locale) {
 		f->read(buf, size, 1);
 		buf[size] = '\0';
 		stringstream ss(buf);
+		delete [] buf;
 		char buffer[1024];
 		while (!ss.eof()) {
 			ss.getline(buffer, 1023);
@@ -62,6 +63,7 @@ void Lang::setLocale(const string &locale) {
 	} catch (runtime_error &e) {
 		defeatStrings.clear();
 	}
+	delete f; ///@todo since f is allocated in FSFactory it should be deleted there too.
 }
 
 string Lang::getDefeatedMessage() const {
