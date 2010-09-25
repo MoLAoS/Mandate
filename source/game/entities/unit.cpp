@@ -1663,6 +1663,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->applyDiscount(ut, mct->getDiscount());
+		faction->applyStaticProduction(ut);
 
 		// reprocess commands
 		Commands newCommands;
