@@ -157,6 +157,7 @@ private:
 	UnitTypes neededBuildings;
 	UpgradeTypes availableUpgrades;
 	ResourceTypes staticResourceUsed;
+	ResourceTypes usableResources;
 
 public:
 	~Ai();
@@ -179,6 +180,7 @@ public:
 	bool beingAttacked(Vec2i &pos, Field &field, int radius);
 	bool isStaticResourceUsed(const ResourceType *rt) const;
 	bool usesStaticResources() const {return !staticResourceUsed.empty();}
+	void updateUsableResources();
 	void updateStatistics();
 	int getNeededUpgrades()		{return availableUpgrades.size();}
 	int getNeededBuildings() {
