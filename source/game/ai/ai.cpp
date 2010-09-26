@@ -156,8 +156,11 @@ void Ai::init(GlestAiInterface *aiInterface, int32 randomSeed) {
 	updateUsableResources();
 }
 
-void Ai::updateUsableResources() {	const Faction *faction = aiInterface->getMyFaction();
+void Ai::updateUsableResources() {
+	const Faction *faction = aiInterface->getMyFaction();
 	usableResources.clear();
+
+	ResourceTypes typesNeeded;
 	for (int i=0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
 		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
 		if (!faction->reqsOk(ut)) {
@@ -178,13 +181,27 @@ void Ai::updateUsableResources() {	const Faction *faction = aiInterface->getMyFa
 					const Resource *r = pt->getCost(k);
 					if (r->getType()->getClass() != ResourceClass::STATIC
 					&& r->getType()->getClass() != ResourceClass::CONSUMABLE && r->getAmount() > 0) {
-						usableResources.insert(r->getType());
+						typesNeeded.insert(r->getType());
 					}
 				}
 			}
 		}
 	}
-
+	foreach (UnitTypeCount, it, unitTypeCount) {
+		const UnitType *ut = it->first;
+		int n = ut->getCommandTypeCount<HarvestCommandType>();
+		for (int i=0; i < n; ++i) {
+			const HarvestCommandType *hct = ut->getCommandType<HarvestCommandType>(i);
+			int rn = hct->getHarvestedResourceCount();
+			for (int j=0; j < rn; ++j) {
+				const ResourceType *rt = hct->getHarvestedResource(j);
+				if (typesNeeded.find(rt) != typesNeeded.end()) {
+					usableResources.insert(rt);
+					typesNeeded.erase(rt);
+				}
+			}
+		}
+	}
 }
 
 Ai::~Ai() {
