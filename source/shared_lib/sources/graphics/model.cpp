@@ -286,12 +286,14 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		}
 	} else {
 		size_t vfCount = frameCount * vertexCount;
-		if (f->read(vertices, 12 * vfCount, 1) != 1) {
-			throw runtime_error("error reading mesh, insufficient vertex data.");
-		}
-		//cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
-		if (f->read(normals, 12 * vfCount, 1) != 1) {
-			throw runtime_error("error reading mesh, insufficient normal vector data.");
+		if (vfCount) {
+			if (f->read(vertices, 12 * vfCount, 1) != 1) {
+				throw runtime_error("error reading mesh, insufficient vertex data.");
+			}
+			//cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
+			if (f->read(normals, 12 * vfCount, 1) != 1) {
+				throw runtime_error("error reading mesh, insufficient normal vector data.");
+			}
 		}
 	}
 

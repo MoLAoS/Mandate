@@ -1032,8 +1032,14 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 		float heightFactor = clamp(1.f + heightDiff / 5.f, 0.2f, 5.f);
 		animSpeed *= heightFactor;
 
-		// calculate skill cycle length
+		// calculate anim cycle length
 		frameOffset = int(1.0000001f / animSpeed);
+
+		if (currSkill->hasSounds()) {
+			soundOffset = int(currSkill->getSoundStartTime() / animSpeed);
+			if (soundOffset < 1) ++soundOffset;
+			assert(soundOffset > 0);
+		}
 	}
 	const int &frame = g_world.getFrameCount();
 	assert(frameOffset > 0);

@@ -202,8 +202,8 @@ void SimulationInterface::initWorld() {
 	}
 	delete [] seeds;
 
-	m_gaia = new Plan::Gaia(world->getGlestimals());
-	m_gaia->init();
+	//m_gaia = new Plan::Gaia(world->getGlestimals());
+	//m_gaia->init();
 
 	doDataSync();
 
@@ -237,7 +237,7 @@ void SimulationInterface::updateWorld() {
 				aiInterfaces[i]->update();
 			}
 		}
-		m_gaia->update();
+		//m_gaia->update();
 
 		// World
 		world->processFrame();
