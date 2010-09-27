@@ -953,6 +953,7 @@ void Renderer::renderWater(){
 
 	//water texture nit
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
 
 	glEnable(GL_BLEND);
 	if(textures3D){
