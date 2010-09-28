@@ -24,6 +24,7 @@ distribution.
 #include "pch.h"
 
 #include <ctype.h>
+#include <stdexcept>
 
 #ifdef TIXML_USE_STL
 #include <sstream>
