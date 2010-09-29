@@ -396,7 +396,6 @@ UnitParticleSystem::UnitParticleSystem(bool visible, const UnitParticleSystemTyp
 		: GameParticleSystem(visible, protoType, particleCount) {
 	// are these not set in prototype?
 	type = &protoType;
-	radius = 0.5f; // not set in prototype?
 	
 	rotation = 0.0f;
 	cRotation = Vec3f(1.f, 1.f, 1.f);
@@ -469,7 +468,7 @@ void UnitParticleSystem::initParticle(Particle *p, int particleIndex) {
 	if (!relative) {
 		p->pos = Vec3f(
 			pos.x + x + offset.x, 
-			pos.y + random.randRange(-radius/2, radius/2) + offset.y, 
+			pos.y + random.randRange(-radius / 2.f, radius / 2.f) + offset.y, 
 			pos.z + y + offset.z
 		);
 	} else { // rotate it according to rotation
