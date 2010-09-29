@@ -166,6 +166,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 		: targetRef(node->getOptionalIntValue("targetRef", -1))
 		, effects(node->getChild("effects"))
 		, effectsCreated(node->getChild("effectsCreated"))
+		, visible(true)
         , carried(false) {
 	this->faction = faction;
 	this->map = map;
