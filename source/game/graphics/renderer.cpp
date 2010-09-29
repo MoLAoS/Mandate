@@ -574,6 +574,7 @@ void Renderer::renderMouse3d(){
 				glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
 				glEnable(GL_BLEND);
 				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_ALPHA_TEST);
 				glDepthFunc(GL_LESS);
 				glEnable(GL_COLOR_MATERIAL);
 				glDepthMask(GL_FALSE);
