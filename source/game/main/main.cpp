@@ -121,6 +121,9 @@ int glestMain(int argc, char** argv) {
 			configDir += "/.glestadv/";
 #		endif
 	}
+	if (dataDir.empty()) {
+		dataDir = ".";
+	}
 	//FIXME: debug
 	//cout << "config: " << configDir << "\ndata: " << dataDir << endl;
 
@@ -180,9 +183,7 @@ int glestMain(int argc, char** argv) {
 	Profile::profileEnd();  // to write profiler data out
 	g_coreData.closeSounds(); // close audio stuff with ogg files
 
-	//FIXME: when is it deleted? not possible here, logger still has a file open
-	//delete FSFactory::getInstance();
-	
+	// FSFactory is deleted atexit(), see FSFactory::getInstance()	
 	return 0;
 }
 
