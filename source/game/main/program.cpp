@@ -190,7 +190,13 @@ void Program::init() {
 		gs.setDefaultVictoryConditions(false);
 		gs.setThisFactionIndex(0);
 		gs.setTeam(0, 0);
-		gs.setMapPath(string("maps/") + cmdArgs.getLoadmap());
+		string map = cmdArgs.getLoadmap();
+		// supporting absolute paths with extension, e.g. showmap in map editor, FIXME: a bit hacky
+		if(map[0]=='/'){
+			gs.setMapPath(map);
+		}else{
+			gs.setMapPath(string("maps/") + map);
+		}
 		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
 		gs.setTechPath(string("techs/magitech"));
 		gs.setFogOfWar(false);

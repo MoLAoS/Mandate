@@ -104,19 +104,13 @@ int glestMain(int argc, char** argv) {
 	}
 #	endif
 
-	string configDir = DEFAULT_CONFIG_DIR;
-	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;
 	if (args.parse(argc, argv)) {
 		// quick exit
 		return 0;
 	}
-	if (!args.getConfigDir().empty()) {
-		configDir = args.getConfigDir();
-	}
-	if (!args.getDataDir().empty()) {
-		dataDir = args.getDataDir();
-	}
+	string configDir = args.getConfigDir();
+	string dataDir = args.getDataDir();
 
 	if (configDir.empty()) {
 #		ifdef WIN32
@@ -186,6 +180,9 @@ int glestMain(int argc, char** argv) {
 	Profile::profileEnd();  // to write profiler data out
 	g_coreData.closeSounds(); // close audio stuff with ogg files
 
+	//FIXME: when is it deleted? not possible here, logger still has a file open
+	//delete FSFactory::getInstance();
+	
 	return 0;
 }
 

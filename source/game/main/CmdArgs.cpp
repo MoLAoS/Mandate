@@ -14,6 +14,11 @@
 
 #include <iostream>
 
+#include "projectConfig.h"
+#include "FSFactory.hpp"
+
+using Shared::PhysFS::FSFactory;
+
 using std::cout;
 using std::endl;
 
@@ -23,8 +28,8 @@ namespace Glest { namespace Main {
 CmdArgs::CmdArgs(){
 	this->server = false;
 	this->clientIP = "";
-	this->configDir = "";
-	this->dataDir = "";
+	this->configDir = DEFAULT_CONFIG_DIR;
+	this->dataDir = DEFAULT_DATA_DIR;
 	test = false;
 }
 
@@ -62,6 +67,24 @@ bool CmdArgs::parse(int argc, char **argv){
 				<< "  -loadmap map tileset     load maps/map.gbm with tilesets/tileset for map preview\n"
 				<< "  -scenario category name  load immediately scenario/category/name\n";
 			return true;
+		}else if(arg=="-list-tilesets"){  //FIXME: only works with physfs
+				cout << "config: " << configDir << "\ndata: " << dataDir << endl;
+				try{
+					// init physfs
+					if(configDir.empty()) configDir=".";  // fake configDir, won't get used anyway
+					FSFactory *fsfac = FSFactory::getInstance();
+					fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+					fsfac->usePhysFS = true;
+					vector<string> results = FSFactory::findAll("tilesets/*", false);
+					for(vector<string>::iterator it=results.begin(); it!=results.end(); ++it){
+						cout << "~" << *it << endl;  // use ~ as prefix to easily filter other output
+					}
+					delete fsfac;
+				}catch(...){
+					cout << "Error: couldn't find tilesets.\n";
+					exit(2);
+				}
+				return true;
 		} else {
 			cout << "unknown argument: " << arg << endl;
 			return true;
