@@ -394,7 +394,6 @@ void Splash::updateParticle(Particle *p) {
 
 UnitParticleSystem::UnitParticleSystem(bool visible, const UnitParticleSystemType &protoType, int particleCount)
 		: GameParticleSystem(visible, protoType, particleCount) {
-	// are these not set in prototype?
 	type = &protoType;
 	
 	rotation = 0.0f;
