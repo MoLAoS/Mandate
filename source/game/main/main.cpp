@@ -10,6 +10,7 @@
 // ==============================================================
 
 #include "pch.h"
+#include "leak_dumper.h"
 #include "main.h"
 
 #include <string>
@@ -145,13 +146,13 @@ int glestMain(int argc, char** argv) {
 	if (g_config.getMiscCatchExceptions()) {
 		ExceptionHandler exceptionHandler;
 
-#if _GAE_DEBUG_EDITION_
+#	if _GAE_DEBUG_EDITION_
 		exceptionHandler.install();
 		Program program(args);
 		showCursor(false);
 		//main loop
 		program.loop();
-#else
+#	else
 		try {
 			exceptionHandler.install();
 			Program program(args);
@@ -173,7 +174,7 @@ int glestMain(int argc, char** argv) {
 			}
 			exceptionMessage(e);
 		}
-#endif
+#	endif
 	} else {
 		Program program(args);
 		showCursor(false);
@@ -183,7 +184,8 @@ int glestMain(int argc, char** argv) {
 	Profile::profileEnd();  // to write profiler data out
 	g_coreData.closeSounds(); // close audio stuff with ogg files
 
-	// FSFactory is deleted atexit(), see FSFactory::getInstance()	
+	// FSFactory is deleted atexit(), see FSFactory::getInstance()
+
 	return 0;
 }
 

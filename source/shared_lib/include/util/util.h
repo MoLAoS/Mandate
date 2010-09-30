@@ -145,7 +145,7 @@ public:
 //
 // Memory checking stuff
 //
-#if _GAE_DEBUG_EDITION_
+#if _GAE_DEBUG_EDITION_ && !_GAE_LEAK_DUMP_
 
 #	define MEMORY_CHECK_DECLARATIONS(Class)			\
 		static void* operator new(size_t n);		\
@@ -202,7 +202,7 @@ public:
 			s_allocMap.erase(it);									\
 			::operator delete[](ptr);								\
 		}															
-#else // _GAE_DEBUG_EDITION_
+#else // !_GAE_DEBUG_EDITION_ || _GAE_LEAK_DUMP_
 #	define MEMORY_CHECK_DECLARATIONS(Class)
 #	define MEMORY_CHECK_IMPLEMENTATION(Class)
 #endif

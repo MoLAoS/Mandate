@@ -1,5 +1,5 @@
 // ==============================================================
-//	This file is part of Glest Advanced Engine
+//	This file is part of Glest Shared Library
 //
 //	Copyright (C) 2008 Daniel Santos <daniel.santos@pobox.com>
 //

@@ -884,7 +884,7 @@ void GameState::render2d(){
 			str << "   " << ParticleUseNames[use] << " : " << ParticleSystem::getParticleUse(use) << endl;
 		}
 
-#		if _GAE_DEBUG_EDITION_
+#		if _GAE_DEBUG_EDITION_ && !_GAE_LEAK_DUMP_
 #			define REPORT_MEMORY_USE(X)									\
 			{															\
 				size_t B = X::getAllocatedMemSize();					\
@@ -910,6 +910,7 @@ void GameState::render2d(){
 			REPORT_MEMORY_USE(Stats);
 			REPORT_MEMORY_USE(Widget);
 			REPORT_MEMORY_USE(Plan::Task);
+
 #		endif // _GAE_DEBUG_EDITION_
 
 //*/

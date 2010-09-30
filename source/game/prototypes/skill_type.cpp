@@ -58,6 +58,7 @@ SkillType::SkillType(SkillClass skillClass, const char* typeName)
 SkillType::~SkillType(){
 	deleteValues(effectTypes.begin(), effectTypes.end());
 	deleteValues(sounds.getSounds().begin(), sounds.getSounds().end());
+	deleteValues(eyeCandySystems);
 }
 
 void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
