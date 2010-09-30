@@ -21,12 +21,18 @@ using Sim::Tile;
 using Graphics::Renderer;
 using Graphics::SceneCuller;
 
-void GameParticleSystem::doVisibiltyChecks() {
+// ===========================================================================
+//  GameParticleSystem
+// ===========================================================================
+
+MEMORY_CHECK_IMPLEMENTATION(GameParticleSystem)
+
+void GameParticleSystem::doVisibiltyChecks(ParticleUse use) {
 	Vec2i cellPos(int(pos.x), int(pos.z));
 	if (g_map.getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())
 	&& g_renderer.getCuller().isInside(cellPos)) { // visible
 		if (!visible) {
-			initArray();
+			initArray(use);
 			visible = true;
 		}
 	} else { // not visible
@@ -37,11 +43,11 @@ void GameParticleSystem::doVisibiltyChecks() {
 	}
 }
 
-void GameParticleSystem::checkVisibilty(bool log) {
+void GameParticleSystem::checkVisibilty(ParticleUse use, bool log) {
 	int64 now = Chrono::getCurMillis();
 	if (state != sPause && now - lastVisCheck > test_interval) {
 		lastVisCheck = now;
-		doVisibiltyChecks();
+		doVisibiltyChecks(use);
 	}
 }
 
@@ -50,7 +56,7 @@ void GameParticleSystem::checkVisibilty(bool log) {
 // ===========================================================================
 
 FireParticleSystem::FireParticleSystem(bool visible, int particleCount)
-		: GameParticleSystem(visible, particleCount) {
+		: GameParticleSystem(ParticleUse::FIRE, visible, particleCount) {
 	setRadius(0.5f);
 	setSpeed(0.01f);
 	setSize(0.6f);
@@ -59,7 +65,7 @@ FireParticleSystem::FireParticleSystem(bool visible, int particleCount)
 
 void FireParticleSystem::update() {
 	ParticleSystem::update();
-	checkVisibilty();
+	checkVisibilty(ParticleUse::FIRE);
 }
 
 void FireParticleSystem::initParticle(Particle *p, int particleIndex) {
@@ -104,8 +110,8 @@ void FireParticleSystem::updateParticle(Particle *p) {
 //  AttackParticleSystem
 // ===========================================================================
 
-AttackParticleSystem::AttackParticleSystem(bool visible, const ParticleSystemBase &protoType, int particleCount)
-		: GameParticleSystem(visible, protoType, particleCount) 
+AttackParticleSystem::AttackParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &protoType, int particleCount)
+		: GameParticleSystem(use, visible, protoType, particleCount) 
 		, direction(1.0f, 0.0f, 0.0f) {	
 }
 
@@ -132,7 +138,7 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 // ===========================================================================
 
 Projectile::Projectile(bool visible, const ParticleSystemBase &protoType, int particleCount)
-		: AttackParticleSystem(visible, protoType, particleCount)
+		: AttackParticleSystem(ParticleUse::PROJECTILE, visible, protoType, particleCount)
 		, nextParticleSystem(0)
 		, target(0)
 		, trajectory(TrajectoryType::LINEAR)
@@ -256,11 +262,11 @@ void Projectile::update() {
 		if (nextParticleSystem) {
 			nextParticleSystem->setState(sPlay);
 			nextParticleSystem->setPos(endPos);
-			nextParticleSystem->checkVisibilty(true);
+			nextParticleSystem->checkVisibilty(ParticleUse::PROJECTILE, true);
 		}
 	}
 	ParticleSystem::update();
-	checkVisibilty();
+	checkVisibilty(ParticleUse::PROJECTILE);
 }
 
 void Projectile::initParticle(Particle *p, int particleIndex) {
@@ -336,7 +342,7 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 // ===========================================================================
 
 Splash::Splash(bool visible, const ParticleSystemBase &model,  int particleCount)
-		: AttackParticleSystem(visible, model, particleCount)
+		: AttackParticleSystem(ParticleUse::SPLASH, visible, model, particleCount)
 		, prevParticleSystem(0)
 		, emissionRateFade(1)
 		, verticalSpreadA(1.f)
@@ -359,7 +365,7 @@ void Splash::update() {
 			state = sFade;
 		}
 	}
-	checkVisibilty();
+	checkVisibilty(ParticleUse::SPLASH);
 }
 
 void Splash::initParticle(Particle *p, int particleIndex) {
@@ -393,7 +399,7 @@ void Splash::updateParticle(Particle *p) {
 // ===========================================================================
 
 UnitParticleSystem::UnitParticleSystem(bool visible, const UnitParticleSystemType &protoType, int particleCount)
-		: GameParticleSystem(visible, protoType, particleCount) {
+		: GameParticleSystem(ParticleUse::UNIT, visible, protoType, particleCount) {
 	type = &protoType;
 	
 	rotation = 0.0f;
@@ -409,6 +415,10 @@ UnitParticleSystem::UnitParticleSystem(bool visible, const UnitParticleSystemTyp
 
 	varParticleEnergy = protoType.getEnergyVar();
 	maxParticleEnergy = protoType.getEnergy();
+}
+
+UnitParticleSystem::~UnitParticleSystem() {
+	DEBUG_HOOK();
 }
 
 void UnitParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
@@ -493,7 +503,7 @@ void UnitParticleSystem::update() {
 		oldPos = pos;
 	}
 	ParticleSystem::update();
-	checkVisibilty();
+	checkVisibilty(ParticleUse::UNIT);
 }
 
 void UnitParticleSystem::updateParticle(Particle *p) {

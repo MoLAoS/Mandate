@@ -38,28 +38,28 @@ protected:
 
 	static const int64 test_interval = 200;
 
-	void doVisibiltyChecks();
+	void doVisibiltyChecks(ParticleUse use);
 
 public:
-	GameParticleSystem(bool visible, int particleCount)
+	GameParticleSystem(ParticleUse use, bool visible, int particleCount)
 			: ParticleSystem(particleCount) {
 		this->visible = visible;
 		if (visible) {
-			initArray();
+			initArray(use);
 		}
 		lastVisCheck = 0;
 	}
 
-	GameParticleSystem(bool visible, const ParticleSystemBase &model, int particleCount)
+	GameParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &model, int particleCount)
 			: ParticleSystem(model, particleCount) {
 		this->visible = visible;
 		if (visible) {
-			initArray();
+			initArray(use);
 		}
 		lastVisCheck = 0;
 	}
 
-	void checkVisibilty(bool log = false);
+	void checkVisibilty(ParticleUse use, bool log = false);
 
 	virtual bool isFinished() const override {
 		if (state == sFade) {
@@ -68,6 +68,7 @@ public:
 		return false;
 	}
 
+	MEMORY_CHECK_DECLARATIONS(GameParticleSystem)
 };
 
 // =====================================================
@@ -95,7 +96,7 @@ protected:
 	Vec3f direction;
 
 public:
-	AttackParticleSystem(bool visible, const ParticleSystemBase &model, int particleCount);
+	AttackParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &model, int particleCount);
 	virtual ~AttackParticleSystem() {}
 
 	virtual void render(ParticleRenderer *pr, ModelRenderer *mr) override;
@@ -224,6 +225,7 @@ private:
 
 public:
 	UnitParticleSystem(bool visible, const UnitParticleSystemType &model, int particleCount = 2000);
+	~UnitParticleSystem();
 
 	//virtual
 	virtual void initParticle(Particle *p, int particleIndex) override;

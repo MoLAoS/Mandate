@@ -243,6 +243,8 @@ void Commander::giveCommand(Command *command) const {
 			default:
 				assert(false);
 		}
+	} else {
+		delete command;
 	}
 }
 

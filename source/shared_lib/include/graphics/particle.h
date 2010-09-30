@@ -86,6 +86,14 @@ STRINGY_ENUM( ProjectileStart,
 	SKY
 );
 
+STRINGY_ENUM( ParticleUse,
+	WEATHER,
+	FIRE,
+	PROJECTILE,
+	SPLASH,
+	UNIT
+);
+
 // =====================================================
 //	class Particle
 // =====================================================
@@ -93,14 +101,15 @@ STRINGY_ENUM( ProjectileStart,
 class Particle {
 public:
 	//attributes
-	Vec3f pos;
-	Vec3f lastPos;
-	Vec3f speed;
-	Vec3f accel;
-	Vec4f color;	// belongs in (or already is in) owner system's proto-type ?
-	Vec4f color2;	// belongs in (or already is in) owner system's proto-type ?
-	float size;
-	int energy;
+	Vec3f pos;		// 12 bytes
+	Vec3f lastPos;	// 12 bytes
+	Vec3f speed;	// 12 bytes
+	Vec3f accel;	// 12 bytes
+	Vec4f color;	// 16 bytes // belongs in (or already is in) owner system's proto-type ?
+	Vec4f color2;	// 16 bytes // belongs in (or already is in) owner system's proto-type ?
+	float size;		// 4 bytes
+	int energy;		// 4 bytes
+					// 88 bytes
 
 public:
 	//get
@@ -112,6 +121,8 @@ public:
 	Vec4f getColor2() const		{return color2;}
 	float getSize() const		{return size;}
 	int getEnergy()	const		{return energy;}
+
+	MEMORY_CHECK_DECLARATIONS(Particle);
 };
 
 // =====================================================
@@ -218,9 +229,20 @@ protected:
 
 private:
 	//static int idCounter;
+	static int particleCounts[ParticleUse::COUNT];
+
+	static void addParticleUse(ParticleUse use, int n);
+	static void remParticleUse(ParticleUse use, int n);
+
+public:
+	static int getParticleUse(ParticleUse use) {
+		assert(use >= 0 && use < ParticleUse::COUNT);
+		return particleCounts[use];
+	}
 
 protected:
 	//int id;
+	ParticleUse use;
 	int particleCount;
 	Particle *particles;
 	State state;
@@ -236,7 +258,7 @@ public:
 	ParticleSystem(const ParticleSystemBase &protoType, int particleCount = 1000);
 	virtual ~ParticleSystem();
 
-	void initArray();
+	void initArray(ParticleUse use);
 	void freeArray();
 
 	//public

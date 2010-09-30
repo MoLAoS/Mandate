@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cctype>
 #include <vector>
+#include <map>
 #include <algorithm>
 
 #include "math_util.h"
@@ -39,6 +40,7 @@
 #endif
 
 using std::string;
+using std::map;
 using std::vector;
 using std::runtime_error;
 
@@ -140,10 +142,83 @@ public:
 	E match(const char *value) const {return enum_cast<E>(_match(value));} // this will inline a function call to the fairly large _match() function
 };
 
+//
+// Memory checking stuff
+//
+#if _GAE_DEBUG_EDITION_
+
+#	define MEMORY_CHECK_DECLARATIONS(Class)			\
+		static void* operator new(size_t n);		\
+		static void  operator delete(void *ptr);	\
+		static void* operator new[](size_t n);		\
+		static void  operator delete[](void *ptr);	\
+		static size_t getAllocatedMemSize();		\
+		static size_t getAllocCount();				\
+		static size_t getDeAllocCount();			
+
+	typedef map<void*, size_t> AllocationMap;
+
+#	define MEMORY_CHECK_IMPLEMENTATION(Class)						\
+		static size_t			s_allocTotal = 0;					\
+		static size_t			s_allocCount = 0;					\
+		static size_t			s_deAllocCount = 0;					\
+		static AllocationMap	s_allocMap;							\
+		size_t Class::getAllocatedMemSize() {return s_allocTotal;}	\
+		size_t Class::getAllocCount() {return s_allocCount;}		\
+		size_t Class::getDeAllocCount()	{return s_deAllocCount;}	\
+		void* Class::operator new(size_t n) {						\
+			void *res = ::operator new(n);							\
+			if (res) {												\
+				s_allocMap[res] = n;								\
+				s_allocTotal += n;									\
+			}														\
+			++s_allocCount;											\
+			return res;												\
+		}															\
+		void  Class::operator delete(void *ptr) {					\
+			if (!ptr) return;										\
+			AllocationMap::iterator it = s_allocMap.find(ptr);		\
+			ASSERT(it != s_allocMap.end(), "Bad delete!");			\
+			ASSERT(it->second != 0, "Bad alloc, size == 0.");		\
+			s_allocTotal -= it->second;								\
+			s_allocMap.erase(it);									\
+			++s_deAllocCount;										\
+			::operator delete(ptr);									\
+		}															\
+		void* Class::operator new[](size_t n) {						\
+			void *res = ::operator new[](n);						\
+			if (res) {												\
+				s_allocMap[res] = n;								\
+				s_allocTotal += n;									\
+			}														\
+			return res;												\
+		}															\
+		void Class::operator delete[](void *ptr) {					\
+			if (!ptr) return;										\
+			AllocationMap::iterator it = s_allocMap.find(ptr);		\
+			ASSERT(it != s_allocMap.end(), "Bad delete!");			\
+			ASSERT(it->second != 0, "Bad alloc, size == 0.");		\
+			s_allocTotal -= it->second;								\
+			s_allocMap.erase(it);									\
+			::operator delete[](ptr);								\
+		}															
+#else // _GAE_DEBUG_EDITION_
+#	define MEMORY_CHECK_DECLARATIONS(Class)
+#	define MEMORY_CHECK_IMPLEMENTATION(Class)
+#endif
+
+//
+// Some basic foreach loops
+//
+
 #define foreach(CollectionClass, it, collection) for(CollectionClass::iterator it = (collection).begin(); it != (collection).end(); ++it)
 #define foreach_rev(CollectionClass, it, collection) for(CollectionClass::reverse_iterator it = (collection).rbegin(); it != (collection).rend(); ++it)
 #define foreach_const(CollectionClass, it, collection) for(CollectionClass::const_iterator it = (collection).begin(); it != (collection).end(); ++it)
 #define foreach_enum(Enum, val) for(Enum val(0); val < Enum::COUNT; ++val)
+
+//
+// Util finctions
+//
 
 void findAll(const string &path, vector<string> &results, bool cutExtension = false);
 

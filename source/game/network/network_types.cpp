@@ -23,6 +23,8 @@ namespace Glest { namespace Net {
 //	class NetworkCommand
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(NetworkCommand)
+
 /** Construct from command with archetype == GIVE_COMMAND */
 NetworkCommand::NetworkCommand(Command *command) {
 	networkCommandType = command->getArchetype();

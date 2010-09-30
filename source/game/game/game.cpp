@@ -34,6 +34,7 @@
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
 #endif
+#include "ai.h"
 
 #include "leak_dumper.h"
 #ifdef _MSC_VER
@@ -815,6 +816,7 @@ void GameState::render2d(){
 	if (g_config.getMiscDebugMode()) {
 		stringstream str;
 
+//		// Picking code debug
 //		str << "Last Pick:\n";
 //		if (lastPickUnits.empty()) {
 //			str << "   No Units.\n";
@@ -852,15 +854,18 @@ void GameState::render2d(){
 			<< "PosObjWord: " << gui.getPosObjWorld().x << "," << gui.getPosObjWorld().y << endl
 			<< "Render FPS: " << lastRenderFps << endl
 			<< "Update FPS: " << lastUpdateFps << endl
-			<< "World FPS: " << lastWorldFps << endl
-			<< "GameCamera pos: " << gameCamera.getPos().x
+			<< "World FPS: " << lastWorldFps << endl;
+
+#		if ! _GAE_DEBUG_EDITION_
+			str << "GameCamera pos: " << gameCamera.getPos().x
 				<< "," << gameCamera.getPos().y
 				<< "," << gameCamera.getPos().z << endl
-			<< "Time: " << simInterface->getWorld()->getTimeFlow()->getTime() << endl
-			<< "Triangle count: " << g_renderer.getTriangleCount() << endl
-			<< "Vertex count: " << g_renderer.getPointCount() << endl
-			<< "Frame count: " << simInterface->getWorld()->getFrameCount() << endl
-			<< "Camera VAng : " << gameCamera.getVAng() << endl;
+				<< "Time: " << simInterface->getWorld()->getTimeFlow()->getTime() << endl
+				<< "Triangle count: " << g_renderer.getTriangleCount() << endl
+				<< "Vertex count: " << g_renderer.getPointCount() << endl
+				<< "Frame count: " << simInterface->getWorld()->getFrameCount() << endl
+				<< "Camera VAng : " << gameCamera.getVAng() << endl;
+#		endif // _GAE_DEBUG_EDITION
 
 		// resources
 		for (int i=0; i<simInterface->getWorld()->getFactionCount(); ++i){
@@ -873,6 +878,40 @@ void GameState::render2d(){
 		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl
 			<< "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl
 			<< "GameRole::" << GameRoleNames[g_simInterface->getNetworkRole()] << endl;
+
+		str << "Particle usage counts:\n";
+		foreach_enum (ParticleUse, use) {
+			str << "   " << ParticleUseNames[use] << " : " << ParticleSystem::getParticleUse(use) << endl;
+		}
+
+#		if _GAE_DEBUG_EDITION_
+#			define REPORT_MEMORY_USE(X)									\
+			{															\
+				size_t B = X::getAllocatedMemSize();					\
+				size_t MiB = (B > 1024 * 1024) ? B / (1024 * 1024) : 0;	\
+				size_t KiB = (B > 1024) ? B / 1024 : 0;					\
+				str << #X << " mem use: ";								\
+				if (MiB) { str << MiB << " MiB (" << KiB << " KiB)\n";}	\
+				else if (KiB) { str << KiB << " KiB (" << B << " B)\n";}\
+				else { str << B << " B\n";}								\
+			}
+#			define REPORT_MEMORY_USE_AND_SINGLE_ALLOCATIONS(X)				\
+			{																\
+				REPORT_MEMORY_USE(X)										\
+				str << "   Allocations: " << X::getAllocCount() << "\n"		\
+					<< "   DeAllocations: " << X::getDeAllocCount() << "\n";\
+			}
+			REPORT_MEMORY_USE(Unit);
+			REPORT_MEMORY_USE(Upgrade);
+			REPORT_MEMORY_USE(Effect);
+			REPORT_MEMORY_USE_AND_SINGLE_ALLOCATIONS(Command);
+			REPORT_MEMORY_USE(Particle);
+			REPORT_MEMORY_USE(GameParticleSystem);
+			REPORT_MEMORY_USE(Stats);
+			REPORT_MEMORY_USE(Widget);
+			REPORT_MEMORY_USE(Plan::Task);
+#		endif // _GAE_DEBUG_EDITION_
+
 //*/
 		g_renderer.renderText(
 			str.str(), g_coreData.getFTDisplayFont(),

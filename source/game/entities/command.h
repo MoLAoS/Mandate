@@ -64,6 +64,8 @@ public:
 
 	// allow default ctor
 
+	MEMORY_CHECK_DECLARATIONS(Command)
+
 	//get
 	CommandArchetype getArchetype() const		{return archetype;}
 	const CommandType *getType() const			{return type;}

@@ -220,6 +220,8 @@ WRAPPED_ENUM( NetworkCommandType,
 		NetworkCommand(NetworkCommandType type, const Unit *unit, const Vec2i &pos);
 		//NetworkCommand(int networkCommandType, int unitId, int commandTypeId= -1, const Vec2i &pos= Vec2i(0), int unitTypeId= -1, int targetId= -1);
 
+		MEMORY_CHECK_DECLARATIONS(NetworkCommand);
+
 		Command *toCommand() const;
 		NetworkCommandType getNetworkCommandType() const	{return static_cast<NetworkCommandType>(networkCommandType);}
 		int getUnitId() const								{return unitId;}

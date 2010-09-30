@@ -140,7 +140,8 @@ class Unit : public EnhancementType {
 	friend class UnitFactory;
 public:
 	typedef list<Command*> Commands;
-	typedef list<UnitId> Pets;
+	//typedef list<UnitId> Pets;
+	typedef list<UnitId> UnitIdList;
 
 private:
 	// basic stats
@@ -158,7 +159,14 @@ private:
 	UnitList unitsToUnload;
 	Unit*	 carrier;
 
-	// engine info
+	/* ///@todo no pointers, fix save-games...
+	UnitIdList	m_carriedUnits;
+	UnitIdList	m_unitsToCarry;
+	UnitIdList	m_unitsToUnload;
+	UnitId		m_carrier;
+	*/
+
+	// engine info	
 	int lastAnimReset;			/**< the frame the current animation cycle was started */
 	int nextAnimReset;			/**< the frame the next animation cycle will begin */
 	int lastCommandUpdate;		/**< the frame this unit last updated its command */
@@ -228,6 +236,8 @@ private:
 	bool attacked_trigger;
 
 public:
+	MEMORY_CHECK_DECLARATIONS(Unit)
+
 	// signals
 	typedef sigslot::signal<Unit*>	UnitSignal;
 
@@ -506,9 +516,11 @@ class UnitFactory : public sigslot::has_slots {
 	friend class Glest::Sim::World; // for saved games
 private:
 	int		idCounter;
-	UnitMap unitMap;
+	UnitMap unitMap;	// map of all current units (alive and recently dead)
 	//Units	unitList;
-	Units deadList;
+
+	MutUnitSet	carriedSet; // set of units not in the world (because they are housed in other units)
+	Units		deadList;	// list of dead units
 
 public:
 	UnitFactory();
@@ -516,9 +528,9 @@ public:
 	Unit* newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
 	Unit* newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master = NULL);
 	Unit* getUnit(int id);
-	void onUnitDied(Unit *unit);
-	void update();
-	void deleteUnit(Unit *unit);
+	void onUnitDied(Unit *unit);	// book a visit with the grim reaper
+	void update();					// send the grim reaper on his rounds
+	void deleteUnit(Unit *unit);	// should only be called to undo a creation
 };
 
 }}// end namespace

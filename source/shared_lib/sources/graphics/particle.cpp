@@ -41,6 +41,12 @@ static __cold __noreturn void puke(const char*options[], size_t optionCount,
 }
 
 // =====================================================
+//	class Particle
+// =====================================================
+
+MEMORY_CHECK_IMPLEMENTATION(Particle)
+
+// =====================================================
 //	class ParticleSystemBase
 // =====================================================
 
@@ -100,6 +106,19 @@ ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
 //	class ParticleSystem
 // =====================================================
 
+int ParticleSystem::particleCounts[ParticleUse::COUNT] = {
+	0, 0, 0, 0, 0
+};
+
+void ParticleSystem::addParticleUse(ParticleUse use, int n) {
+	particleCounts[use] += n;
+}
+
+void ParticleSystem::remParticleUse(ParticleUse use, int n) {
+	particleCounts[use] -= n;
+}
+
+
 //int ParticleSystem::idCounter = 0;
 
 ParticleSystem::ParticleSystem(int particleCount)
@@ -128,19 +147,23 @@ ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCoun
 		, windSpeed(0.f) {
 }
 
-void ParticleSystem::initArray() {
+void ParticleSystem::initArray(ParticleUse use) {
 	assert(!particles);
 	particles = new Particle[particleCount];
+	addParticleUse(use, particleCount);
+	this->use = use;
 }
 
 void ParticleSystem::freeArray() {
 	delete [] particles;
+	remParticleUse(use, particleCount);
 	particles = 0;
 	aliveParticleCount = 0;
 }
 
 ParticleSystem::~ParticleSystem() {
 	delete [] particles;
+	remParticleUse(use, particleCount);
 }
 
 // =============== VIRTUAL ======================
@@ -239,7 +262,8 @@ RainParticleSystem::RainParticleSystem(int particleCount)
 	setColor(Vec4f(0.5f, 0.5f, 0.5f, 0.3f));
 	setColor2(Vec4f(0.5f, 0.5f, 0.5f, 0.0f));
 	setSpeed(0.2f);
-	initArray();
+
+	initArray(ParticleUse::WEATHER);
 }
 
 void RainParticleSystem::initParticle(Particle *p, int particleIndex){
@@ -275,7 +299,7 @@ SnowParticleSystem::SnowParticleSystem(int particleCount) : ParticleSystem(parti
 	setSize(0.2f);
 	setColor(Vec4f(0.8f, 0.8f, 0.8f, 0.8f));
 	setSpeed(0.025f);
-	initArray();
+	initArray(ParticleUse::WEATHER);
 }
 
 void SnowParticleSystem::initParticle(Particle *p, int particleIndex) {

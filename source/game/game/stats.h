@@ -43,6 +43,8 @@ public:
 		int resourcesHarvested;
 	};
 
+	MEMORY_CHECK_DECLARATIONS(Stats)
+
 private:
 	PlayerStats playerStats[GameConstants::maxPlayers];
 

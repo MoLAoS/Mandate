@@ -25,6 +25,10 @@ using std::vector;
 using std::list;
 using Shared::Util::Random;
 
+#define LOG_AI_BUILD(x) /*GAME_LOG(x)*/
+#define LOG_AI_PRODUCE(x) /*GAME_LOG(x)*/
+#define LOG_AI_HARVEST(x) /*GAME_LOG(x)*/
+
 namespace Glest { namespace Plan {
 
 class GlestAiInterface;
@@ -33,7 +37,7 @@ class AiRule;
 // =====================================================
 // 	class Task
 //
-///	An action that has to be performed by the IA
+///	An action that has to be performed by the AI
 // =====================================================
 
 WRAPPED_ENUM( TaskClass, PRODUCE, BUILD, UPGRADE )
@@ -47,6 +51,8 @@ public:
 	virtual ~Task(){}
 	TaskClass getClass() const	{return taskClass;}
 	virtual string toString() const= 0;
+
+	MEMORY_CHECK_DECLARATIONS(Task)
 };
 
 // ==================== ProduceTask ====================

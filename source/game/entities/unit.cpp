@@ -103,6 +103,8 @@ void WaypointPath::condense() {
 // 	class Unit
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(Unit)
+
 // ============================ Constructor & destructor =============================
 
 /** Construct Unit object */
@@ -751,11 +753,11 @@ CommandResult Unit::giveCommand(Command *command) {
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
 	// pop front
-	COMMAND_LOG(__FUNCTION__ << "() " << *this << " cancelling current " << commands.front()->getType()->getName() << " command." );
+	COMMAND_LOG(__FUNCTION__ << "() " << *this << " popping current " << commands.front()->getType()->getName() << " command." );
 
 	delete commands.front();
 	commands.erase(commands.begin());
-	unitPath.clear();
+	clearPath();
 
 	Command *command = commands.empty() ? NULL : commands.front();
 

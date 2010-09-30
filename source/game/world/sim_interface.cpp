@@ -394,6 +394,7 @@ void SimulationInterface::requestCommand(Command *command) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::CANCEL_COMMAND, unit, Vec2i(-1)));
 		}
 	}
+	delete command;
 }
 
 void SimulationInterface::doUpdateUnitCommand(Unit *unit) {

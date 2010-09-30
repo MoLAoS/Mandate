@@ -38,6 +38,8 @@ KeyboardWidget::KeyboardWidget(Widget::Ptr widget) {
 // class Widget
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(Widget)
+
 Widget::Widget(Container::Ptr parent)
 		: parent(parent) {
 	init(Vec2i(0), Vec2i(0));

@@ -52,6 +52,8 @@ public:
 	/** Returns true if the rule should be executed. */
 	virtual bool test()= 0;
 	virtual void execute()= 0;
+
+	MEMORY_CHECK_DECLARATIONS(AiRule)
 };
 
 // =====================================================

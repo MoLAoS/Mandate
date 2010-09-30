@@ -26,6 +26,8 @@ namespace Glest { namespace Entities {
 // 	class Command
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(Command)
+
 const Vec2i Command::invalidPos = Vec2i(-1);
 int Command::lastId = -1;
 
@@ -39,8 +41,7 @@ Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &po
 		, unitRef2(-1)
 		, prodType(NULL)
 		, commandedUnit(commandedUnit) {
-	lastId++;
-	id = lastId;
+	id = ++lastId;
 }
 
 Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
@@ -53,8 +54,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
 		, unitRef2(-1)
 		, prodType(0)
 		, commandedUnit(commandedUnit) {
-	lastId++;
-	id = lastId;
+	id = ++lastId;
 }
 
 Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit)
@@ -65,8 +65,7 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 		, pos2(-1)
 		, prodType(0)
 		, commandedUnit(commandedUnit) {
-	lastId++;
-	id = lastId;
+	id = ++lastId;
 
 	unitRef = unit ? unit->getId() : -1;
 	unitRef2 = -1;
@@ -93,8 +92,7 @@ Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos,
 		, prodType(prodType)
 		, facing(facing)
 		, commandedUnit(commandedUnit) {
-	lastId++;
-	id = lastId;
+	id = ++lastId;
 }
 
 Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft) {
