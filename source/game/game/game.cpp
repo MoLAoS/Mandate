@@ -222,6 +222,7 @@ void GameState::init() {
 			g_soundRenderer.playMusic(gameMusic);
 		}
 	}
+	delete simInterface->getSavedGame();
 	g_logger.add("Launching game");
 	g_logger.setLoading(false);
 	program.resetTimers(40);
