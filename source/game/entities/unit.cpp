@@ -229,13 +229,12 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	totalUpgrade.reset();
 	computeTotalUpgrade();
 
+	hp = node->getChildIntValue("hp");
 	fire = NULL;
-	faction->add(this);
-
-	recalculateStats();
-	hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
-
 	if (hp) {
+		faction->add(this);
+		recalculateStats();
+		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 		map->putUnitCells(this, pos);
 		meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
 	}
@@ -1341,11 +1340,8 @@ bool Unit::repair(int amount, fixed multiplier) {
   */
 bool Unit::decHp(int i) {
 	assert(i >= 0);
-	if (hp == 0) {
-		return false;
-	}
 	// we shouldn't ever go negative
-	assert(hp > 0);
+	assert(hp > 0 || i == 0);
 	hp -= i;
 	if (hp_below_trigger && hp < hp_below_trigger) {
 		hp_below_trigger = 0;
@@ -1758,7 +1754,7 @@ void Unit::clearCommands() {
 		delete commands.back();
 		commands.pop_back();
 	}
-}
+}												
 
 /** Check if a command can be executed
   * @param command the command to check
@@ -1922,11 +1918,12 @@ UnitFactory::~UnitFactory() {
 
 Unit* UnitFactory::newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) {
 	Unit *unit = new Unit(node, faction, map, tt, putInWorld);
+	if (unitMap.find(unit->getId()) != unitMap.end()) {
+		throw runtime_error("Error: duplicate Unit id.");
+	}
+	unitMap[unit->getId()] = unit;
 	if (unit->isAlive()) {
-		if (unitMap.find(unit->getId()) != unitMap.end()) {
-			throw runtime_error("Error: duplicate Unit id.");
-		}
-		unitMap[unit->getId()] = unit;
+		unit->Died.connect(this, &UnitFactory::onUnitDied);
 	} else {
 		deadList.push_back(unit);
 	}
