@@ -209,8 +209,15 @@ CommandResult Commander::computeResult(const CommandResultContainer &results) co
 	}
 }
 
+#define RUNTIME_CHECK(x)												\
+	if (!(x)) {															\
+		string fStr(__FUNCTION__);										\
+		throw runtime_error("In " + fStr + "\nRuntime check fail: "#x);	\
+	}	
+
 CommandResult Commander::pushCommand(Command *command) const {
-	assert(command->getCommandedUnit());
+	RUNTIME_CHECK(command);
+	RUNTIME_CHECK(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
 	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
