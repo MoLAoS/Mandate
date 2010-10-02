@@ -60,6 +60,7 @@ public:
 		if(e) {
 			*ofs << "Exception: " << e->what() << endl;
 		}
+#ifndef WIN32
 		*ofs << "Address: " << address << endl;
 		if(backtrace) {
 			*ofs << "Backtrace:\n";
@@ -67,6 +68,7 @@ public:
 				*ofs << backtrace[i] << endl;
 			}
 		}
+#endif
 		*ofs << "\n=======================\n";
 
 		delete ofs;

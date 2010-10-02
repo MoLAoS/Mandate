@@ -19,6 +19,7 @@
 #include "conversion.h"
 
 #include "leak_dumper.h"
+#include "symbol_engine.h"
 
 using namespace Shared::Util;
 
@@ -37,11 +38,17 @@ LONG WINAPI PlatformExceptionHandler::handler(LPEXCEPTION_POINTERS pointers) {
 
 	string description = codeToStr(exceptionCode);
 
+	DebugSymbolEngine &symbolEngine = DebugSymbolEngine::instance();
+
 	if (exceptionCode == EXCEPTION_ACCESS_VIOLATION) {
 		description += " (";
 		description += exceptionInfo[0] == 0 ? "Reading" : "Writing";
-		description += " address 0x" + intToHex(static_cast<int>(exceptionInfo[1])) + ")";
+		description += " address: 0x" + intToHex(static_cast<int>(exceptionInfo[1])) + ")";
 	}
+	std::ostringstream ss;
+	symbolEngine.StackTrace(pointers->ContextRecord, ss);
+	description += "\n\nCall Stack:\n";
+	description += ss.str();
 
 	singleton->log(description.c_str(), pointers->ExceptionRecord->ExceptionAddress, NULL, 0, NULL);
 	singleton->notifyUser(false);
