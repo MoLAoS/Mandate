@@ -24,6 +24,8 @@
 #include "FSFactory.hpp"
 #include "util.h"
 
+#include <iterator>  // needed by VS2010 for std::back_inserter
+
 using Shared::Graphics::ParticleSystem;
 
 namespace Glest { namespace Net {

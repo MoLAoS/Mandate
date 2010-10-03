@@ -70,13 +70,29 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 		throw runtime_error(string("Couldn't init PhysFS with ") + argv0);
 	}
 	PHYSFS_permitSymbolicLinks(1);
-	
-	PHYSFS_setWriteDir(configDir);
-	if(!PHYSFS_mount(PHYSFS_getWriteDir(), NULL, 1)){
-		throw runtime_error(string("Couldn't mount configDir: ") + configDir);
+
+	if(PHYSFS_mount(configDir, NULL, 1)){
+		// mounting configDir succeeded
+		PHYSFS_setWriteDir(configDir);
+	}else{
+		//FIXME: only a workaround, need unicode support
+		const char *str=getenv("ALLUSERSPROFILE");
+		if(!str) str = getenv("PROGRAMDATA");  // variable renamed on Win Vista and Win 7, maybe PUBLIC better
+		if(str && !PHYSFS_mount(str, NULL, 1)){  // both variables not available on linux
+			// last fallback: working directory of the application
+			str = "./";
+			if(!PHYSFS_mount(str, NULL, 1)){
+				throw runtime_error(string("Couldn't mount configDir: ") + configDir);
+			}
+		}
+		cout << "using alternative configDir: " << str << endl << "because mounting '" << configDir << "' failed" << endl;
+		PHYSFS_setWriteDir(str);
 	}
 	if(!PHYSFS_mount(dataDir, NULL, 1)){
-		throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
+		// for all the windows people wanting to doubleclick the exe instead of the menu link
+		if(!PHYSFS_mount("../share/glestae/", NULL, 1)){
+			throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
+		}
 	}
 	// check for addons
 	char **list = PHYSFS_enumerateFiles("addons");

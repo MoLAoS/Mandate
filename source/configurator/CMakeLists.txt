@@ -7,4 +7,5 @@ add_executable(glest_configurator ${cfg_srcs})
 target_link_libraries(glest_configurator shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${wxWidgets_LIBRARIES})
 set_target_properties(glest_configurator PROPERTIES WIN32_EXECUTABLE "true")
 
-install(TARGETS glest_configurator DESTINATION bin)
+# not very useful atm
+#install(TARGETS glest_configurator DESTINATION bin)

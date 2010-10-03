@@ -117,7 +117,7 @@ int glestMain(int argc, char** argv) {
 
 	if (configDir.empty()) {
 #		ifdef WIN32
-			configDir = getenv("UserProfile");
+			configDir = getenv("USERPROFILE");
 			configDir += "/glestadv/";
 #		else
 			configDir = getenv("HOME");

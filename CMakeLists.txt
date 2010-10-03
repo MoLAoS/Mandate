@@ -174,6 +174,7 @@ if(WIN32)
 	set(CPACK_NSIS_MENU_LINKS
 		"share/glestae" "data folder"
 	)
+	set(CPACK_CREATE_DESKTOP_LINKS "glestadv")
 	# a bug in NSIS, last one needs to be \ and 2 times escaped to get there
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
 	
@@ -181,6 +182,7 @@ if(WIN32)
 		# only freetype and zlib are linked dynamically, install them next to the binary
 		install(FILES ${GAE_WINDEPS}/bin/freetype6.dll DESTINATION bin)
 		install(FILES ${GAE_WINDEPS}/bin/zlib1.dll DESTINATION bin)
+		install(FILES ${GAE_WINDEPS}/bin/libpng12-0.dll DESTINATION bin)
 	endif(DEFINED GAE_WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
@@ -189,8 +191,8 @@ else(WIN32)
 	#set(CPACK_DEBIAN_PACKAGE_DEPENDS "libvorbis0a libogg0 lua5.1 libsdl1.2debian")
 
 	set(CPACK_GENERATOR "TBZ2")
-	set(CPACK_STRIP_FILES "TRUE")
 endif(WIN32)
+set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/build;.*~;/docs/html/;/package")
