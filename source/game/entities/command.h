@@ -76,6 +76,8 @@ public:
 	bool isAutoRepairEnabled() const			{return flags.get(CommandProperties::AUTO_REPAIR_ENABLED);}
 	Vec2i getPos() const						{return pos;}
 	Vec2i getPos2() const						{return pos2;}
+	UnitId getUnitRef() const					{return unitRef;}
+	UnitId getUnitRef2() const					{return unitRef2;}
 	Unit* getUnit() const;
 	Unit* getUnit2() const;
 	const ProducibleType* getProdType() const	{return prodType;}

@@ -120,6 +120,7 @@ typedef vector<Unit*>		UnitVector;
 typedef vector<const Unit*> ConstUnitVector;
 typedef set<const Unit*>	UnitSet;
 typedef list<Unit*>			UnitList;
+typedef list<UnitId> UnitIdList;
 
 // ===============================
 // 	class Unit
@@ -141,7 +142,6 @@ class Unit : public EnhancementType {
 public:
 	typedef list<Command*> Commands;
 	//typedef list<UnitId> Pets;
-	typedef list<UnitId> UnitIdList;
 
 private:
 	// basic stats
@@ -153,18 +153,11 @@ private:
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
 	int kills;				/**< number of kills */
 
-	// misc stuff (that could probably live elsewhere?)
-	UnitList carriedUnits;
-	UnitList unitsToCarry;
-	UnitList unitsToUnload;
-	Unit*	 carrier;
-
-	/* ///@todo no pointers, fix save-games...
+	// housed unit bits
 	UnitIdList	m_carriedUnits;
 	UnitIdList	m_unitsToCarry;
 	UnitIdList	m_unitsToUnload;
 	UnitId		m_carrier;
-	*/
 
 	// engine info	
 	int lastAnimReset;			/**< the frame the current animation cycle was started */
@@ -322,15 +315,15 @@ public:
 	CardinalDir getModelFacing() const			{ return m_facing; }
 
 	//-- for carry units
-	const UnitList& getCarriedUnits() const {return carriedUnits;}
-	UnitList& getCarriedUnits()				{return carriedUnits;}
-	UnitList& getUnitsToCarry()				{return unitsToCarry;}
-	UnitList& getUnitsToUnload()			{return unitsToUnload;}
-	Unit* getCarrier() const				{return carrier;}
+	const UnitIdList& getCarriedUnits() const	{return m_carriedUnits;}
+	UnitIdList& getCarriedUnits()				{return m_carriedUnits;}
+	UnitIdList& getUnitsToCarry()				{return m_unitsToCarry;}
+	UnitIdList& getUnitsToUnload()				{return m_unitsToUnload;}
+	UnitId getCarrier() const					{return m_carrier;}
 
 	bool isVisible() const					{return visible;}
 	void setVisible(bool v)					{visible = v;}
-	void setCarried(Unit *host)				{carried = host; carrier = host;}
+	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -491,7 +484,7 @@ public:
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
 
-	int getCarriedCount() const { return carriedUnits.size(); }
+	int getCarriedCount() const { return m_carriedUnits.size(); }
 
 	bool add(Effect *e);
 	void remove(Effect *e);

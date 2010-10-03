@@ -75,7 +75,6 @@ Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *
 	}
 	if (unit && !isAuto() && commandedUnit && commandedUnit->getFaction()->isThisFaction()) {
 		unit->resetHighlight();
-		//pos = unit->getCellPos();
 	}
 }
 
@@ -103,13 +102,11 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 	flags.flags = node->getChildIntValue("flags");
 	pos = node->getChildVec2iValue("pos");
 	pos2 = node->getChildVec2iValue("pos2");
-
-	string prodTypeName = node->getChildStringValue("prodType");
-	if (prodTypeName == "none") {
+	int prodTypeId = node->getChildIntValue("prodType");
+	if (prodTypeId == -1) {
 		prodType = 0;
 	} else {
-		const ProducibleType *pt = g_world.getMasterTypeFactory().getType(prodTypeName);
-		prodType = pt;
+		prodType = g_world.getMasterTypeFactory().getType(prodTypeId);
 	}
 	if (node->getOptionalChild("facing") ) {
 		facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
@@ -132,7 +129,7 @@ void Command::save(XmlNode *node) const {
 	node->addChild("pos2", pos2);
 	node->addChild("unitRef", unitRef);
 	node->addChild("unitRef2", unitRef2);
-	node->addChild("prodType", prodType ? prodType->getName() : "none");
+	node->addChild("prodType", prodType ? prodType->getId() : -1);
 	node->addChild("facing", int(facing));
 }
 

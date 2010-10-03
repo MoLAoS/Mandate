@@ -143,6 +143,16 @@ public:
 };
 
 //
+// A run-time assert, that can be changed to assert() one day...
+// ... if we ever get to 1.0 maybe ;)
+//
+#define RUNTIME_CHECK(x)												\
+	if (!(x)) {															\
+		string fStr(__FUNCTION__);										\
+		throw runtime_error("In " + fStr + "\nRuntime check fail: "#x);	\
+	}	
+
+//
 // Memory checking stuff
 //
 #if _GAE_DEBUG_EDITION_ && !_GAE_LEAK_DUMP_
