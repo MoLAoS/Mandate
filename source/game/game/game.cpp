@@ -485,6 +485,13 @@ void GameState::doDefeatedMessage(Faction *f) {
 		msg = start + f->getName() + end;
 		n = msg.find("%s");
 	}
+	n = msg.find("%i");
+	while (n != string::npos) {
+		string start = msg.substr(0, n);
+		string end = msg.substr(n + 2);
+		msg = start + intToStr(f->getTeam()) + end;
+		n = msg.find("%i");
+	}
 
 	gui.getDialogConsole()->addDialog(player, Faction::factionColours[f->getColourIndex()], msg, false);
 }

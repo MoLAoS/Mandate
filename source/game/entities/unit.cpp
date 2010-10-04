@@ -1745,6 +1745,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
   * @return the height this unit 'stands' at
   */
 float Unit::computeHeight(const Vec2i &pos) const {
+	RUNTIME_CHECK(map->isInside(pos));
 	const Cell *const &cell = map->getCell(pos);
 	switch (type->getField()) {
 		case Field::LAND:

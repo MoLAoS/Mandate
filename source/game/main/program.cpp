@@ -55,7 +55,7 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 		fprintf(stderr, "%s\n", e->what());
 	} else {
 		msg = string("Glest Advanced Engine has crashed. Please help us improve GAE by emailing the file")
-			+ "gae-crash.txt to " + gaeMailString + ".";
+			+ " gae-crash.txt to " + gaeMailString + ".";
 	}
 	Vec2i size(520, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	msgBox = MessageDialog::showDialog(pos, size, "Crash!", msg, g_lang.get("Exit"), "");
@@ -111,10 +111,10 @@ Program::Program(CmdArgs &args)
 	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 	Window::create();
 
-	// log start
-	Logger::getInstance().clear();
-	Logger::getServerLog().clear();
-	Logger::getClientLog().clear();
+	// clear logs
+	g_logger.clear();
+	g_serverLog.clear();
+	g_clientLog.clear();
 	g_errorLog.clear();
 #	if LOG_WIDGET_EVENTS
 		g_widgetLog.clear();

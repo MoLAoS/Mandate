@@ -51,7 +51,7 @@ Logger::~Logger() {
 // ===================== PUBLIC ========================
 
 Logger& Logger::getInstance() {
-	static Logger logger("glestadv.log", "Game", TimeStampType::SECONDS);
+	static Logger logger("glestadv.log", "Program", TimeStampType::SECONDS);
 	return logger;
 }
 

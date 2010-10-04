@@ -911,12 +911,10 @@ void Renderer::renderObjects(){
 			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
 			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
 			glColor4fv(color.ptr());
-			// FIXME: I was tired when I edited this code and it could be as broken as our
-			// economy.
-			Vec4f color2 = color * ambFactor;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color2.ptr());
-			color2 = Vec4f(baseFogColor) * fowFactor;
-			glFogfv(GL_FOG_COLOR, color2.ptr());
+			Vec4f matColour = color * ambFactor;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, matColour.ptr());
+			Vec3f fogColour = baseFogColor * fowFactor;
+			glFogfv(GL_FOG_COLOR, fogColour.ptr());
 
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
