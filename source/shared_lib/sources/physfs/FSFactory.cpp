@@ -91,7 +91,10 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	if(!PHYSFS_mount(dataDir, NULL, 1)){
 		// for all the windows people wanting to doubleclick the exe instead of the menu link
 		if(!PHYSFS_mount("../share/glestae/", NULL, 1)){
-			throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
+			// or try working dir (if widget.cfg is there, we guess its right and continue.)
+			if (!PHYSFS_mount("./", NULL, 1) || !fileExists("data/core/widget.cfg")) {
+				throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
+			}
 		}
 	}
 	// check for addons
