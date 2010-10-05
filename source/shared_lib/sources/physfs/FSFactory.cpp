@@ -67,7 +67,7 @@ void FSFactory::shutdown() {
 bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
 #if USE_PHYSFS
 	if (!PHYSFS_init(argv0)) {
-		throw runtime_error(string("Couldn't init PhysFS with ") + argv0);
+		throw runtime_error(string("Couldn't init PhysFS with ")+argv0+"; "+PHYSFS_getLastError());
 	}
 	PHYSFS_permitSymbolicLinks(1);
 
@@ -82,7 +82,7 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 			// last fallback: working directory of the application
 			str = "./";
 			if(!PHYSFS_mount(str, NULL, 1)){
-				throw runtime_error(string("Couldn't mount configDir: ") + configDir);
+				throw runtime_error(string("Couldn't mount configDir: ")+configDir+"; "+PHYSFS_getLastError());
 			}
 		}
 		cout << "using alternative configDir: " << str << endl << "because mounting '" << configDir << "' failed" << endl;
@@ -93,7 +93,7 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 		if(!PHYSFS_mount("../share/glestae/", NULL, 1)){
 			// or try working dir (if widget.cfg is there, we guess its right and continue.)
 			if (!PHYSFS_mount("./", NULL, 1) || !fileExists("data/core/widget.cfg")) {
-				throw runtime_error(string("Couldn't mount dataDir: ") + dataDir);
+				throw runtime_error(string("Couldn't mount dataDir: ")+dataDir+"; "+PHYSFS_getLastError());
 			}
 		}
 	}
@@ -108,7 +108,7 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 			// get full real name
 			str = PHYSFS_getRealDir(str.c_str()) + str;
 			if(!PHYSFS_mount(str.c_str(), NULL, 0)){  // last 0 -> overwrites all other files
-				throw runtime_error("Couldn't mount addon: " + str);
+				throw runtime_error("Couldn't mount addon: "+str+"; "+PHYSFS_getLastError());
 			}
 		}
 	}

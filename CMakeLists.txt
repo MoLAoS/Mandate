@@ -176,36 +176,19 @@ if(WIN32)
 	set(CPACK_NSIS_MODIFY_PATH "ON")
 
 	set(CPACK_CREATE_DESKTOP_LINKS "glestadv")
+	# doesn't work because target is prefixed with $INSTDIR; now in extra_install_commands
+	#set(CPACK_NSIS_MENU_LINKS "$PROFILE/glestadv/addons" "Addons Folder")
 	# a bug in NSIS, last one needs to be \ and 2 times escaped to get there
-	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
-
-#
-# NSIS CPack generator is a pain... the following hand hacks of the generated script are needed,
-#
-# Before the install section
-# =======================
-#	Icon "D:\game_dev\gae-0.3.x\source\game\glestadv_inst.ico"
-#	UninstallIcon "D:\game_dev\gae-0.3.x\source\game\glestadv_uninst.ico"
-#
-# In the install section
-# =======================
-#	CreateDirectory "$PROFILE\glestadv\addons"
-#	CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Addons Folder.lnk" "$PROFILE\glestadv\addons"
-#
-#	StrCmp "$INSTALL_DESKTOP" "1" 0 +3
-#		CreateShortCut "$DESKTOP\GlestAdv.lnk" "$INSTDIR\bin\glestadv.exe"
-#		CreateShortCut "$DESKTOP\GlestAdv Addons.lnk" "$PROFILE\glestadv\addons"
-#
-# In the uninstall section:
-# Add to start-menu cleanup:
-# =======================
-#	Delete "$SMPROGRAMS\$MUI_TEMP\Addons FOlder.lnk"
-#
-# This StrCmp + Delete GlestAdv.lnk will already be here, change offset to +3, add addons shortcut
-# =======================
-#	StrCmp "$INSTALL_DESKTOP" "1" 0 +3
-#		Delete "$DESKTOP\GlestAdv.lnk"
-#		Delete "$DESKTOP\GlestAdv Addons.lnk"
+	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/source/game\\\\glestadv_inst.ico")
+	set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/source/game\\\\glestadv_uninst.ico")
+	
+	set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+		CreateDirectory \\\"$PROFILE\\\\glestadv\\\\addons\\\"
+		CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Addons Folder.lnk\\\" \\\"$PROFILE\\\\glestadv\\\\addons\\\"
+	")
+	set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+		Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Addons Folder.lnk\\\"
+	")
 
 	if(DEFINED GAE_WINDEPS)
 		# freetype, zlib & libpng are linked dynamically, install them next to the binary
