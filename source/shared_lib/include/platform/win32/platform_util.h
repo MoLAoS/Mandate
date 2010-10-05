@@ -34,8 +34,6 @@ namespace Shared { namespace Platform {
 //	class PlatformExceptionHandler
 // =====================================================
 
-LONG WINAPI UnhandledExceptionFilter2(struct _EXCEPTION_POINTERS *ExceptionInfo);
-
 class PlatformExceptionHandler {
 private:
 	static PlatformExceptionHandler *singleton;

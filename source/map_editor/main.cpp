@@ -385,6 +385,13 @@ void MainWindow::setFactionCount() {
 }
 
 void MainWindow::onClose(wxCloseEvent &event) {
+	if(this->fileModified){
+		wxMessageDialog message(this, _("There are unsaved modifications. Quit anyway?"), _("Really quit?"),
+			wxOK|wxCANCEL|wxCENTRE|wxICON_QUESTION);
+		if(message.ShowModal()==wxID_CANCEL){
+			return;
+		}
+	}
 	delete this;
 }
 
@@ -697,24 +704,29 @@ void MainWindow::onMenuMiscHelp(wxCommandEvent &event) {
 }
 
 void MainWindow::onShowMap(wxCommandEvent& event){
-	wxArrayString arrstr;
-	vector<string> results;
-	try{
-		findAll("tilesets/*", results);
-	}catch(...){
-		wxMessageBox(_("Error: couldn't find tilesets."), _("Error"), wxOK | wxICON_ERROR);
+	if(this->fileModified || this->currentFile.empty()){
+		wxMessageDialog message(this, _("You need to save first!"), _("Unsaved"), wxOK|wxCENTRE|wxICON_ERROR);
+		message.ShowModal();
 		return;
 	}
-	for(vector<string>::iterator it=results.begin(); it!=results.end(); ++it){
-		arrstr.Add(ToUnicode(*it));
+
+	wxArrayString output, arrstr;
+	vector<string> results;
+
+	wxExecute(ToUnicode("./glestadv -list-tilesets"), output);
+
+	for(wxArrayString::const_iterator it=output.begin(); it!=output.end(); ++it){
+		if(it->at(0)=='~'){  // only rows beginning with ~ are relevant
+			arrstr.Add(it->SubString(1, it->Length()-1));
+		}
 	}
+
 	wxSingleChoiceDialog dlg(this, _("select tileset"), _("tileset"), arrstr);
 	if(dlg.ShowModal()==wxID_OK){
-		wxString s = arrstr[dlg.GetSelection()];
+		wxString tileset = arrstr[dlg.GetSelection()];
 		
-		cout << "showmap: maps/" << cutLastExt(basename(currentFile)) << ".gbm\n";
-		wxExecute(ToUnicode("./glestadv -loadmap "+cutLastExt(basename(currentFile))+" ") + s, wxEXEC_SYNC);
-		cout << "end\n";
+		// leading / stands for absolute path, disables physfs for reading
+		wxExecute(ToUnicode("./glestadv -loadmap /"+currentFile+" ") + tileset, wxEXEC_SYNC);
 	}
 }
 

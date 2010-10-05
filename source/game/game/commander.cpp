@@ -210,7 +210,8 @@ CommandResult Commander::computeResult(const CommandResultContainer &results) co
 }
 
 CommandResult Commander::pushCommand(Command *command) const {
-	assert(command->getCommandedUnit());
+	RUNTIME_CHECK(command);
+	RUNTIME_CHECK(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
 	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
@@ -243,6 +244,8 @@ void Commander::giveCommand(Command *command) const {
 			default:
 				assert(false);
 		}
+	} else {
+		delete command;
 	}
 }
 

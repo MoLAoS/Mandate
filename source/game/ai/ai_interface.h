@@ -24,6 +24,7 @@ namespace Glest{ namespace Plan {
 
 class AiInterface {
 public:
+	virtual ~AiInterface() {}
 	virtual void update() = 0;
 };
 

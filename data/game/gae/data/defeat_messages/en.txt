@@ -1,6 +1,50 @@
 ; Defeat messages, English
 
-%s has bitten the dust.
-%s has been defeated.
-Another one bites the dust, %s has been eliminated.
+;
+; Should contain one message per line, the character sequence %s will be replaced
+; with the player's name. The sequence %i will be replaced with the player's team number
+;
 
+%s has bitten the dust.
+Another one bites the dust, %s has been eliminated.
+The bell tolls for %s.
+%s is no more.
+%s has decided to lose.
+%s fell down and couldn't get back up.
+%s wasn't using Duracell batteries.
+Who died again? I forget.
+%s is back on the menu, boys!
+%s took the wrong pill!
+%s wasn't taking it to the limit!
+%s was the train that never could.
+The Cylon's have found %s!
+The Borg have assimilated %s!
+%s took a nap and never woke up!
+%s forgot what he was doing.
+%s married with Death.
+%s divorced with Life.
+%s was being stupid.
+%s can't believe he died in this war.
+%s wanted to quit, but he died before then.
+%s had better go back to Age Of Empires.
+%s has just been diagnosed with death.
+%s is showing all the signs of having being defeated.
+%s didn't eat his vegetables.
+%s was at the bottom of the food chain.
+%s can't believe it's not butter.
+%s didn't see the light.
+%s took a voyage to six feet under.
+%s waves goodbye.
+%s thought he could fly... he was very disappointed.
+%s wanted to lose.
+%s has just started crying.
+%s died, sucks to be you.
+%s just won the lottery... of death.
+Knock Knock! Who's there? %s. Oh you, you just got owned!
+%s is wondering why his death message isn't funny!
+%s was looking for a way out, and he found it...
+%s was shown how its done!
+That wasn't funny, guys! People died!
+Surveys prove that 100% of people who act like %s get OWNED!
+%s has bit the bullet.
+%s should watch the replay to see where he went wrong;

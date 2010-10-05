@@ -17,6 +17,8 @@
 
 namespace Glest { namespace Sim {
 
+MEMORY_CHECK_IMPLEMENTATION(Stats)
+
 Stats::PlayerStats::PlayerStats() :
 		victory(false),
 		kills(0),

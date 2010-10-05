@@ -27,6 +27,8 @@
 #define g_renderer			(Renderer::getInstance())
 #define g_soundRenderer		(SoundRenderer::getInstance())
 #define g_logger			(Logger::getInstance())
+#define g_serverLog			(Logger::getServerLog())
+#define g_clientLog			(Logger::getClientLog())
 #define g_errorLog			(Logger::getErrorLog())
 #define g_widgetLog			(Logger::getWidgetLog())
 #define g_lang				(Lang::getInstance())
@@ -120,7 +122,7 @@ namespace GameConstants {
 	const int mapScale = 2;
 	const int clusterSize = 16;
 
-	const int saveGameVersion = 3;
+	const int saveGameVersion = 4;
 }
 
 namespace Gui {

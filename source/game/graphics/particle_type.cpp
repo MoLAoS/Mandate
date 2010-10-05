@@ -310,6 +310,7 @@ void UnitParticleSystemType::load(const XmlNode *particleSystemNode, const strin
 		if (maxParticles > 200) {
 			maxParticles = 200;
 		}
+		radius = particleSystemNode->getOptionalFloatValue("radius", 0.5f);
 
 		string mode = particleSystemNode->getOptionalRestrictedValue("mode", "normal");
 		if (mode == "black") {

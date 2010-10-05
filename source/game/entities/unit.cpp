@@ -103,6 +103,8 @@ void WaypointPath::condense() {
 // 	class Unit
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(Unit)
+
 // ============================ Constructor & destructor =============================
 
 /** Construct Unit object */
@@ -122,7 +124,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
         , soundStartFrame(-1)
         , progress2(0)
         , kills(0)
-		, carrier(0)
+		, m_carrier(-1)
         , highlight(0.f)
         , targetRef(-1)
         , targetField(Field::LAND)
@@ -166,6 +168,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 		: targetRef(node->getOptionalIntValue("targetRef", -1))
 		, effects(node->getChild("effects"))
 		, effectsCreated(node->getChild("effectsCreated"))
+		, visible(true)
         , carried(false) {
 	this->faction = faction;
 	this->map = map;
@@ -226,15 +229,36 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	totalUpgrade.reset();
 	computeTotalUpgrade();
 
+	hp = node->getChildIntValue("hp");
 	fire = NULL;
-	faction->add(this);
 
-	recalculateStats();
-	hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
+	n = node->getChild("units-carried");
+	for(int i = 0; i < n->getChildCount(); ++i) {
+		m_carriedUnits.push_back(n->getChildIntValue("unit", i));
+	}
+	n = node->getChild("units-to-carry");
+	for(int i = 0; i < n->getChildCount(); ++i) {
+		m_unitsToCarry.push_back(n->getChildIntValue("unit", i));
+	}
+
+	n = node->getChild("units-to-unload");
+	for(int i = 0; i < n->getChildCount(); ++i) {
+		m_unitsToUnload.push_back(n->getChildIntValue("unit", i));
+	}
+	m_carrier = node->getChildIntValue("unit-carrier");
+	if (m_carrier != -1) {
+		visible = false;
+		carried = true;
+	}
 
 	if (hp) {
-		map->putUnitCells(this, pos);
-		meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
+		faction->add(this);
+		recalculateStats();
+		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
+		if (visible) {
+			map->putUnitCells(this, pos);
+			meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
+		}
 	}
 	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
@@ -302,6 +326,19 @@ void Unit::save(XmlNode *node) const {
 	for(Commands::const_iterator i = commands.begin(); i != commands.end(); ++i) {
 		(*i)->save(n->addChild("command"));
 	}
+	n = node->addChild("units-carried");
+	foreach_const (UnitIdList, it, m_carriedUnits) {
+		n->addChild("unit", *it);
+	}
+	n = node->addChild("units-to-carry");
+	foreach_const (UnitIdList, it, m_unitsToCarry ) {
+		n->addChild("unit", *it);
+	}
+	n = node->addChild("units-to-unload");
+	foreach_const (UnitIdList, it, m_unitsToUnload) {
+		n->addChild("unit", *it);
+	}
+	node->addChild("unit-carrier", m_carrier);
 }
 
 
@@ -522,10 +559,11 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	//projectile
 	if (pstProj != NULL) {
-		Vec2i effectivePos = (isCarried() ? getCarrier()->getCenteredPos() : getCenteredPos());
+		Unit *carrier = isCarried() ? g_simInterface->getUnitFactory().getUnit(getCarrier()) : 0;
+		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 		Vec3f startPos;
-		if (isCarried()) {
-			startPos = getCarrier()->getCurrVectorFlat();
+		if (carrier) {
+			startPos = carrier->getCurrVectorFlat();
 			const LoadCommandType *lct = 
 				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
 			assert(lct->areProjectilesAllowed());
@@ -704,8 +742,8 @@ CommandResult Unit::giveCommand(Command *command) {
 			const UpgradeCommandType *uct = static_cast<const UpgradeCommandType *>(command->getType());
 			command->setProdType(uct->getProducedUpgrade());
 		} else if (command->getType()->getClass() == CommandClass::LOAD) {
-			if (std::find(unitsToCarry.begin(), unitsToCarry.end(), command->getUnit()) == unitsToCarry.end()) {
-				unitsToCarry.push_back(command->getUnit());
+			if (std::find(m_unitsToCarry.begin(), m_unitsToCarry.end(), command->getUnitRef()) == m_unitsToCarry.end()) {
+				m_unitsToCarry.push_back(command->getUnitRef());
 				COMMAND_LOG( __FUNCTION__ << "() adding unit to load list " << *command->getUnit() )
 				if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
 					COMMAND_LOG( __FUNCTION__ << "() deleting load command, already loading.")
@@ -715,9 +753,9 @@ CommandResult Unit::giveCommand(Command *command) {
 			}
 		} else if (command->getType()->getClass() == CommandClass::UNLOAD) {
 			if (command->getUnit()) {
-				if (std::find(unitsToUnload.begin(), unitsToUnload.end(), command->getUnit()) == unitsToUnload.end()) {
-					assert(std::find(carriedUnits.begin(), carriedUnits.end(), command->getUnit()) != carriedUnits.end());
-					unitsToUnload.push_back(command->getUnit());
+				if (std::find(m_unitsToUnload.begin(), m_unitsToUnload.end(), command->getUnitRef()) == m_unitsToUnload.end()) {
+					assert(std::find(m_carriedUnits.begin(), m_carriedUnits.end(), command->getUnitRef()) != m_carriedUnits.end());
+					m_unitsToUnload.push_back(command->getUnitRef());
 					COMMAND_LOG( __FUNCTION__ << "() adding unit to unload list " << *command->getUnit() )
 					if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
 						COMMAND_LOG( __FUNCTION__ << "() deleting unload command, already unloading.")
@@ -726,8 +764,8 @@ CommandResult Unit::giveCommand(Command *command) {
 					}
 				}
 			} else {
-				unitsToUnload.clear();
-				unitsToUnload = carriedUnits;
+				m_unitsToUnload.clear();
+				m_unitsToUnload = m_carriedUnits;
 			}
 		}
 		if (command) {
@@ -750,11 +788,11 @@ CommandResult Unit::giveCommand(Command *command) {
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
 	// pop front
-	COMMAND_LOG(__FUNCTION__ << "() " << *this << " cancelling current " << commands.front()->getType()->getName() << " command." );
+	COMMAND_LOG(__FUNCTION__ << "() " << *this << " popping current " << commands.front()->getType()->getName() << " command." );
 
 	delete commands.front();
 	commands.erase(commands.begin());
-	unitPath.clear();
+	clearPath();
 
 	Command *command = commands.empty() ? NULL : commands.front();
 
@@ -1032,8 +1070,14 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 		float heightFactor = clamp(1.f + heightDiff / 5.f, 0.2f, 5.f);
 		animSpeed *= heightFactor;
 
-		// calculate skill cycle length
+		// calculate anim cycle length
 		frameOffset = int(1.0000001f / animSpeed);
+
+		if (currSkill->hasSounds()) {
+			soundOffset = int(currSkill->getSoundStartTime() / animSpeed);
+			if (soundOffset < 1) ++soundOffset;
+			assert(soundOffset > 0);
+		}
 	}
 	const int &frame = g_world.getFrameCount();
 	assert(frameOffset > 0);
@@ -1096,8 +1140,9 @@ bool Unit::update() {
 
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
-		Vec2i cellPos = isCarried() ? carrier->getCenteredPos() : getCenteredPos();
-		Vec3f vec = isCarried() ? carrier->getCurrVector() : getCurrVector();
+		Unit *carrier = (m_carrier != -1 ? g_simInterface->getUnitFactory().getUnit(m_carrier) : 0);
+		Vec2i cellPos = carrier ? carrier->getCenteredPos() : getCenteredPos();
+		Vec3f vec = carrier ? carrier->getCurrVector() : getCurrVector();
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
 			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
@@ -1332,11 +1377,8 @@ bool Unit::repair(int amount, fixed multiplier) {
   */
 bool Unit::decHp(int i) {
 	assert(i >= 0);
-	if (hp == 0) {
-		return false;
-	}
 	// we shouldn't ever go negative
-	assert(hp > 0);
+	assert(hp > 0 || i == 0);
 	hp -= i;
 	if (hp_below_trigger && hp < hp_below_trigger) {
 		hp_below_trigger = 0;
@@ -1663,6 +1705,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->applyDiscount(ut, mct->getDiscount());
+		faction->applyStaticProduction(ut);
 
 		// reprocess commands
 		Commands newCommands;
@@ -1702,6 +1745,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
   * @return the height this unit 'stands' at
   */
 float Unit::computeHeight(const Vec2i &pos) const {
+	RUNTIME_CHECK(map->isInside(pos));
 	const Cell *const &cell = map->getCell(pos);
 	switch (type->getField()) {
 		case Field::LAND:
@@ -1748,7 +1792,7 @@ void Unit::clearCommands() {
 		delete commands.back();
 		commands.pop_back();
 	}
-}
+}												
 
 /** Check if a command can be executed
   * @param command the command to check
@@ -1912,11 +1956,12 @@ UnitFactory::~UnitFactory() {
 
 Unit* UnitFactory::newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) {
 	Unit *unit = new Unit(node, faction, map, tt, putInWorld);
+	if (unitMap.find(unit->getId()) != unitMap.end()) {
+		throw runtime_error("Error: duplicate Unit id.");
+	}
+	unitMap[unit->getId()] = unit;
 	if (unit->isAlive()) {
-		if (unitMap.find(unit->getId()) != unitMap.end()) {
-			throw runtime_error("Error: duplicate Unit id.");
-		}
-		unitMap[unit->getId()] = unit;
+		unit->Died.connect(this, &UnitFactory::onUnitDied);
 	} else {
 		deadList.push_back(unit);
 	}

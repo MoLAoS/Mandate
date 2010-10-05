@@ -153,6 +153,8 @@ public:
 	// get effects
 	const EffectTypes &getEffectTypes() const	{return effectTypes;}
 	bool hasEffects() const			{return effectTypes.size() > 0;}
+
+	bool hasSounds() const			{return !sounds.getSounds().empty();}
 };
 
 // ===============================

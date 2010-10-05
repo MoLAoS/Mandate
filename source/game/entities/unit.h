@@ -120,6 +120,7 @@ typedef vector<Unit*>		UnitVector;
 typedef vector<const Unit*> ConstUnitVector;
 typedef set<const Unit*>	UnitSet;
 typedef list<Unit*>			UnitList;
+typedef list<UnitId> UnitIdList;
 
 // ===============================
 // 	class Unit
@@ -140,7 +141,7 @@ class Unit : public EnhancementType {
 	friend class UnitFactory;
 public:
 	typedef list<Command*> Commands;
-	typedef list<UnitId> Pets;
+	//typedef list<UnitId> Pets;
 
 private:
 	// basic stats
@@ -152,13 +153,13 @@ private:
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
 	int kills;				/**< number of kills */
 
-	// misc stuff (that could probably live elsewhere?)
-	UnitList carriedUnits;
-	UnitList unitsToCarry;
-	UnitList unitsToUnload;
-	Unit*	 carrier;
+	// housed unit bits
+	UnitIdList	m_carriedUnits;
+	UnitIdList	m_unitsToCarry;
+	UnitIdList	m_unitsToUnload;
+	UnitId		m_carrier;
 
-	// engine info
+	// engine info	
 	int lastAnimReset;			/**< the frame the current animation cycle was started */
 	int nextAnimReset;			/**< the frame the next animation cycle will begin */
 	int lastCommandUpdate;		/**< the frame this unit last updated its command */
@@ -228,6 +229,8 @@ private:
 	bool attacked_trigger;
 
 public:
+	MEMORY_CHECK_DECLARATIONS(Unit)
+
 	// signals
 	typedef sigslot::signal<Unit*>	UnitSignal;
 
@@ -312,15 +315,15 @@ public:
 	CardinalDir getModelFacing() const			{ return m_facing; }
 
 	//-- for carry units
-	const UnitList& getCarriedUnits() const {return carriedUnits;}
-	UnitList& getCarriedUnits()				{return carriedUnits;}
-	UnitList& getUnitsToCarry()				{return unitsToCarry;}
-	UnitList& getUnitsToUnload()			{return unitsToUnload;}
-	Unit* getCarrier() const				{return carrier;}
+	const UnitIdList& getCarriedUnits() const	{return m_carriedUnits;}
+	UnitIdList& getCarriedUnits()				{return m_carriedUnits;}
+	UnitIdList& getUnitsToCarry()				{return m_unitsToCarry;}
+	UnitIdList& getUnitsToUnload()				{return m_unitsToUnload;}
+	UnitId getCarrier() const					{return m_carrier;}
 
 	bool isVisible() const					{return visible;}
 	void setVisible(bool v)					{visible = v;}
-	void setCarried(Unit *host)				{carried = host; carrier = host;}
+	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -481,7 +484,7 @@ public:
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
 
-	int getCarriedCount() const { return carriedUnits.size(); }
+	int getCarriedCount() const { return m_carriedUnits.size(); }
 
 	bool add(Effect *e);
 	void remove(Effect *e);
@@ -506,9 +509,11 @@ class UnitFactory : public sigslot::has_slots {
 	friend class Glest::Sim::World; // for saved games
 private:
 	int		idCounter;
-	UnitMap unitMap;
+	UnitMap unitMap;	// map of all current units (alive and recently dead)
 	//Units	unitList;
-	Units deadList;
+
+	MutUnitSet	carriedSet; // set of units not in the world (because they are housed in other units)
+	Units		deadList;	// list of dead units
 
 public:
 	UnitFactory();
@@ -516,9 +521,9 @@ public:
 	Unit* newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
 	Unit* newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master = NULL);
 	Unit* getUnit(int id);
-	void onUnitDied(Unit *unit);
-	void update();
-	void deleteUnit(Unit *unit);
+	void onUnitDied(Unit *unit);	// book a visit with the grim reaper
+	void update();					// send the grim reaper on his rounds
+	void deleteUnit(Unit *unit);	// should only be called to undo a creation
 };
 
 }}// end namespace

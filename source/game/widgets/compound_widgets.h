@@ -250,6 +250,8 @@ public:
 	static MessageDialog::Ptr showDialog(Vec2i pos, Vec2i size, const string &title,
 					const string &msg, const string &btn1Text, const string &btn2Text);
 
+	virtual ~MessageDialog();
+
 	void setMessageText(const string &text);
 	const string& getMessageText() const { return m_scrollText->getText(); }
 

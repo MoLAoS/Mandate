@@ -133,7 +133,18 @@ void Map::loadExplorationState(XmlNode *node) {
 }
 
 void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory) {
+	// supporting absolute paths with extension, e.g. showmap in map editor
+	//HACK
+	string path2 = path;
+	bool old_phys=FSFactory::getInstance()->usePhysFS;
+	if(path[0]=='/'){
+		FSFactory::getInstance()->usePhysFS = false;
+		path2 = cutLastExt(path.substr(1, path.length()-1));
+	}
+
 	FileOps *f = FSFactory::getInstance()->getFileOps();
+
+	FSFactory::getInstance()->usePhysFS = old_phys;
 
 	struct MapFileHeader {
 		int32 version;
@@ -154,13 +165,13 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		};
 	};
 
-	name = basename(path);
+	name = basename(path2);
 
 	try {
-		if (fileExists(path + ".mgm")) {
-			f->openRead((path + ".mgm").c_str());
+		if (fileExists(path2 + ".mgm")) {
+			f->openRead((path2 + ".mgm").c_str());
 		} else {
-			f->openRead((path + ".gbm").c_str());
+			f->openRead((path2 + ".gbm").c_str());
 		}
 
 		//read header

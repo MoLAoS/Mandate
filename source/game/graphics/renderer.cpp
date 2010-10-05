@@ -574,6 +574,7 @@ void Renderer::renderMouse3d(){
 				glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
 				glEnable(GL_BLEND);
 				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_ALPHA_TEST);
 				glDepthFunc(GL_LESS);
 				glEnable(GL_COLOR_MATERIAL);
 				glDepthMask(GL_FALSE);
@@ -910,12 +911,10 @@ void Renderer::renderObjects(){
 			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
 			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
 			glColor4fv(color.ptr());
-			// FIXME: I was tired when I edited this code and it could be as broken as our
-			// economy.
-			Vec4f color2 = color * ambFactor;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color2.ptr());
-			color2 = Vec4f(baseFogColor) * fowFactor;
-			glFogfv(GL_FOG_COLOR, color2.ptr());
+			Vec4f matColour = color * ambFactor;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, matColour.ptr());
+			Vec3f fogColour = baseFogColor * fowFactor;
+			glFogfv(GL_FOG_COLOR, fogColour.ptr());
 
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
@@ -953,6 +952,7 @@ void Renderer::renderWater(){
 
 	//water texture nit
 	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
 
 	glEnable(GL_BLEND);
 	if(textures3D){
@@ -1073,6 +1073,7 @@ void Renderer::renderUnits(){
 
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_COLOR_MATERIAL);
+	glAlphaFunc(GL_GREATER, 0.5f);
 
 	if(shadows==sShadowMapping){
 		glActiveTexture(shadowTexUnit);
@@ -1926,11 +1927,29 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 	assertGl();
 
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_TEXTURE_2D);
+	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glDisable(GL_LIGHTING);
 
-	modelRenderer->begin(false, false, false);
+	if (!renderingShadows) {
+		glDisable(GL_TEXTURE_2D);
+	} else {
+		glEnable(GL_TEXTURE_2D);
+		glAlphaFunc(GL_GREATER, 0.5f);
+
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+
+		//set color to the texture alpha
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+
+		//set alpha to the texture alpha
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+	}
+
+	modelRenderer->begin(false, renderingShadows, false);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 	set<const Unit*> unitsSeen;
@@ -2026,7 +2045,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 }
 
 //render objects for shadows
-void Renderer::renderObjectsFast(bool shadows) {
+void Renderer::renderObjectsFast(bool renderingShadows) {
 	const World *world= &g_world;
 	const Map *map= world->getMap();
 
@@ -2034,7 +2053,7 @@ void Renderer::renderObjectsFast(bool shadows) {
 
 	glPushAttrib(GL_ENABLE_BIT| GL_TEXTURE_BIT);
 	glDisable(GL_LIGHTING);
-	if (!shadows) {
+	if (!renderingShadows) {
 		glDisable(GL_TEXTURE_2D);
 	} else {
 		glAlphaFunc(GL_GREATER, 0.5f);
@@ -2052,7 +2071,7 @@ void Renderer::renderObjectsFast(bool shadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	modelRenderer->begin(false, shadows, false);
+	modelRenderer->begin(false, renderingShadows, false);
 	int thisTeamIndex = world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();
@@ -2065,7 +2084,7 @@ void Renderer::renderObjectsFast(bool shadows) {
 		Object *o = sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
 			Resource *r = o->getResource();
-			if (!r) {
+			if (!renderingShadows && !r) {
 				continue;
 			}
 			glPushName(0x101);	// resource

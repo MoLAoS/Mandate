@@ -11,114 +11,153 @@
 
 #include "pch.h"
 #include "leak_dumper.h"
+#include "FSFactory.hpp"
 
-#ifdef SL_LEAK_DUMP
+#if _GAE_LEAK_DUMP_
 
-AllocInfo::AllocInfo() :
-		line(-1),
-		file(""),
-		bytes(-1),
-		ptr(NULL),
-		free(true),
-		array(false) {
-}
-
-AllocInfo::AllocInfo(void* ptr, const char* file, int line, size_t bytes, bool array) :
-		line(line),
-		file(file),
-		bytes(bytes),
-		ptr(ptr),
-		free(false),
-		array(array) {
-}
+using namespace Shared::PhysFS;
 
 // =====================================================
 //	class AllocRegistry
 // =====================================================
 
-// ===================== PRIVATE =======================
+struct AllocInfo {
+	size_t line	: 30;
+	size_t inUse : 1;
+	size_t array : 1;	// 4
+	const char *file;	// 8
+	size_t bytes;		// 12
+	void *ptr;			// 16
+};
 
-AllocRegistry::AllocRegistry() {
-	allocCount= 0;
-	allocBytes= 0;
-	nonMonitoredCount= 0;
-	nonMonitoredBytes= 0;
-}
+const size_t allocTableSize = 32768; // number of AllocInfo in each table
+const size_t tableSize = sizeof(AllocInfo) * allocTableSize; // size of each table
+const size_t tableCount = 16; // number of tables
 
-// ===================== PUBLIC ========================
+AllocInfo* dataTables[tableCount]; // the info tables
+
+size_t	s_allocCount = 0;		// total allocation count
+size_t	s_allocBytes = 0;		// total bytes allocated
+size_t	s_currentAlloc = 0;		// managed bytes currently allocated
+size_t	s_unmanagedAlloc = 0;
+
+bool	s_running = false;	// logging allocations
+
+AllocRegistry *s_instance = 0;
 
 AllocRegistry &AllocRegistry::getInstance(){
-	static AllocRegistry allocRegistry;
-	return allocRegistry;
+	if (!s_instance) {
+		s_instance = (AllocRegistry*)malloc(sizeof(AllocRegistry));
+		s_instance->init();
+	}
+	return *s_instance;
 }
 
-AllocRegistry::~AllocRegistry(){
+AllocRegistry::AllocRegistry() {}
+
+void AllocRegistry::init() {
+	// begin hokey pokey...
+	// need FSFactory to init and register its shutdown before we do.
+	// this will call new which will end up back here, s_instance now points to something
+	// but this is ok, because s_running is false, so it wont blow anything up
+
+	// delete old log (not really needed, but ensures FSFactory is constructed first)
+	if (FSFactory::getInstance()->fileExists("leak_dump.log")) {
+		FSFactory::getInstance()->removeFile("leak_dump.log");
+	}
+	for (int i=0; i < tableCount; ++i) {
+		dataTables[i] = (AllocInfo*)malloc(tableSize);
+		memset(dataTables[i], 0, tableSize);
+	}
+	s_running = true;
+	// important: FSFactory::shutdown should be registered first, so as to be called last
+	// we need FSFactory still running in our shutdown
+	atexit(&AllocRegistry::shutdown);
+}
+
+void AllocRegistry::shutdown() {
+	delete s_instance;
+}
+
+AllocRegistry::~AllocRegistry() {
 	dump("leak_dump.log");
-}
-
-void AllocRegistry::allocate(AllocInfo info){
-	++allocCount;
-	allocBytes+= info.bytes;
-	unsigned hashCode= static_cast<unsigned>(reinterpret_cast<intptr_t>(info.ptr) % maxAllocs);
-
-	for(unsigned i=hashCode; i<maxAllocs; ++i){
-		if(allocs[i].free){
-			allocs[i]= info;
-			return;
-		}
-	}
-	for(unsigned i=0; i<hashCode; ++i){
-		if(allocs[i].free){
-			allocs[i]= info;
-			return;
-		}
-	}
-	++nonMonitoredCount;
-	nonMonitoredBytes+= info.bytes;
-}
-
-void AllocRegistry::deallocate(void* ptr, bool array){
-	unsigned hashCode= static_cast<unsigned>(reinterpret_cast<intptr_t>(info.ptr) % maxAllocs);
-
-	for(int i=hashCode; i<maxAllocs; ++i){
-		if(!allocs[i].free && allocs[i].ptr==ptr && allocs[i].array==array){
-			allocs[i].free= true;
-			return;
-		}
-	}
-	for(int i=0; i<hashCode; ++i){
-		if(!allocs[i].free && allocs[i].ptr==ptr && allocs[i].array==array){
-			allocs[i].free= true;
-			return;
-		}
+	s_running = false;
+	for (int i=0; i < tableCount; ++i) {
+		free(dataTables[i]);
 	}
 }
 
-void AllocRegistry::reset(){
-	for(int i=0; i<maxAllocs; ++i){
-		allocs[i]= AllocInfo();
+// just to make sure we do it the same...
+size_t hashPointer(void *ptr) {
+	return ((size_t(ptr) >> 4) % allocTableSize);
+}
+
+void AllocRegistry::allocate(void* ptr, const char* file, int line, size_t bytes, bool array) {
+	if (!ptr || !s_running) return;
+	size_t hash = hashPointer(ptr);
+	bool stored = false;
+	for (int i=0; i < tableCount; ++i) {
+		if (!dataTables[i][hash].inUse) {
+			dataTables[i][hash].inUse = 1;
+			dataTables[i][hash].ptr = ptr;
+			dataTables[i][hash].file = file;
+			dataTables[i][hash].line = line;
+			dataTables[i][hash].bytes = bytes;
+			dataTables[i][hash].array = array ? 1 : 0;
+			stored = true;
+			break;
+		}
+	}
+	++s_allocCount;
+	if (!stored) {
+		s_unmanagedAlloc += bytes;
+	} else {
+		s_currentAlloc += bytes;
+	}
+	s_allocBytes += bytes;
+}
+
+void AllocRegistry::deallocate(void* ptr, bool array) {
+	if (!ptr || !s_running) return;
+	size_t hash = hashPointer(ptr);
+	for (int i=0; i < tableCount; ++i) {
+		if (dataTables[i][hash].inUse && dataTables[i][hash].ptr == ptr) {
+			s_currentAlloc -= dataTables[i][hash].bytes;
+			memset(&dataTables[i][hash], 0, sizeof(AllocInfo));
+			return;
+		}
 	}
 }
 
-void AllocRegistry::dump(const char *path){
-	FILE *f= fopen(path, "wt");
+void AllocRegistry::dump(const char *path) {
+	s_running = false;
 	int leakCount=0;
 	size_t leakBytes=0;
 
-	fprintf(f, "Memory leak dump\n\n");
+	std::stringstream ss;
+	ss << "Memory leak dump\n\n";
 
-	for(int i=0; i<maxAllocs; ++i){
-		if(!allocs[i].free){
-			leakBytes+= allocs[i].bytes;
-			fprintf(f, "%d.\tfile: %s, line: %d, bytes: %d, array: %d\n", ++leakCount, allocs[i].file, allocs[i].line, allocs[i].bytes, allocs[i].array);
+	for (int i=0; i < tableCount; ++i) {
+		for (int j=0; j < allocTableSize; ++j) {
+			if (dataTables[i][j].inUse) {
+				AllocInfo &inf = dataTables[i][j];
+				leakBytes += inf.bytes;
+				ss << ++leakCount << ".  file: " << inf.file << ", line: " << inf.line
+					<< ", bytes: " << inf.bytes << ", array: " << (inf.array ? "true" : "false") << "\n";
+			}
 		}
 	}
 
-	fprintf(f, "\nTotal leaks: %d, %d bytes\n", leakCount, leakBytes);
-	fprintf(f, "Total allocations: %d, %d bytes\n", allocCount, allocBytes);
-	fprintf(f, "Not monitored allocations: %d, %d bytes\n", nonMonitoredCount, nonMonitoredBytes);
+	ss << "\nTotal leaks: " << leakCount << ", " << leakBytes << " bytes.\n";
+	ss << "Manged memory not freed: " << s_currentAlloc << " bytes.\n";
+	ss << "Unmanaged memory allocated: " << s_unmanagedAlloc << " bytes.\n";
+	ss << "Total allocations: " << s_allocCount << ", " << s_allocBytes << " bytes.\n";
 
-	fclose(f);
+	FileOps *f = FSFactory::getInstance()->getFileOps();
+	f->openWrite(path);
+	f->write(ss.str().c_str(), ss.str().size(), 1);
+	f->close();
+	delete f;
 }
 
 #endif // SL_LEAK_DUMP

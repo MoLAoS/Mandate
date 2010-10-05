@@ -548,6 +548,10 @@ MessageDialog::Ptr MessageDialog::showDialog(Vec2i pos, Vec2i size, const string
 	return msgBox;
 }
 
+MessageDialog::~MessageDialog(){
+	delete m_scrollText;
+}
+
 void MessageDialog::setMessageText(const string &text) {
 	setContent(m_scrollText);
 	m_scrollText->setText(text);

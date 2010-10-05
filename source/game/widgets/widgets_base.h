@@ -62,6 +62,8 @@ class Widget {
 public:
 	typedef Widget* Ptr;
 
+	MEMORY_CHECK_DECLARATIONS(Widget)
+
 private:
 	//int id;
 	Container* parent;

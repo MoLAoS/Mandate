@@ -31,6 +31,8 @@ using namespace Shared::Util;
 //  class Effect
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(Effect)
+
 // ============================ Constructor & destructor =============================
 
 Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strength,

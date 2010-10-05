@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <string>
 
 #include "texture.h"
@@ -26,6 +27,7 @@
 
 using std::vector;
 using std::map;
+using std::set;
 using std::string;
 
 using namespace Shared::Xml;
@@ -39,6 +41,7 @@ namespace Entities {
 	typedef map<int, Unit*> UnitMap;
 	typedef vector<Faction*> Factions;
 	typedef map<int, Faction*> FactionMap;
+	typedef set<Unit*> MutUnitSet;
 }
 
 namespace ProtoTypes {

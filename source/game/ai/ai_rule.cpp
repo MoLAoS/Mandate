@@ -28,8 +28,11 @@ using Shared::Math::Vec2i;
 
 namespace Glest { namespace Plan {
 
-#define LOG_AI_BUILD(x) /*GAME_LOG(x)*/
-#define LOG_AI_PRODUCE(x) GAME_LOG(x)
+// =====================================================
+//	class AiRule
+// =====================================================
+
+MEMORY_CHECK_IMPLEMENTATION(AiRule)
 
 // =====================================================
 //	class AiRuleWorkerHarvest
@@ -317,24 +320,21 @@ bool AiRuleBuildOneFarm::test() {
 	for(int i = 0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
 		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
 		// for all produce commands
-		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
-			if (ct->getClass() == CommandClass::PRODUCE) {
-				const ProduceCommandType *pt = static_cast<const ProduceCommandType*>(ct);
-				for (int k=0; k < pt->getProducedCount(); ++k) {
-					const UnitType *producedType = pt->getProducedUnit(k);
-					//for all resources
-					for (int n = 0; n < producedType->getCostCount(); ++n) {
-						const Resource *r = producedType->getCost(n);
-						// find a food producer in the farm produced units
-						if (r->getAmount() < 0 && r->getType()->getClass() == ResourceClass::CONSUMABLE 
-						&& ai->getCountOfType(ut) == 0) {
-							farm = ut;
-							return true;
-						}
+		for(int j = 0; j < ut->getCommandTypeCount<ProduceCommandType>(); ++j) {
+			const ProduceCommandType *pct = ut->getCommandType<ProduceCommandType>(j);
+			for (int k=0; k < pct->getProducedCount(); ++k) {
+				const UnitType *pt = pct->getProducedUnit(k);
+				//for all resources
+				for (int n = 0; n < pt->getCostCount(); ++n) {
+					const Resource *r = pt->getCost(n);
+					// can produce consumables and would be the first of its type?
+					if (r->getAmount() < 0 && r->getType()->getClass() == ResourceClass::CONSUMABLE 
+					&& ai->getCountOfType(ut) == 0) {
+						farm = ut;
+						return true;
 					}
-
 				}
+
 			}
 		}
 	}
@@ -449,9 +449,6 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	// negative for pt->resourceType and has reqsOk() for Producible)
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-		//if (!faction->reqsOk(ut)) {
-		//	continue;
-		//}
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct)) {
@@ -460,7 +457,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 			for (int k=0; k < ct->getProducedCount(); ++k) {
 				const ProducibleType *pt = ct->getProduced(k);
 				const Resource *res = pt->getCost(task->getResourceType());
-				if (res && res->getAmount() < 0) {
+				if (res && res->getAmount() < 0 && faction->reqsOk(pt)) {
 					prodMap[ut].push_back(std::make_pair(ct, pt));
 				}
 			}

@@ -29,6 +29,8 @@ namespace Glest { namespace Entities {
 // 	class Upgrade
 // =====================================================
 
+MEMORY_CHECK_IMPLEMENTATION(Upgrade)
+
 Upgrade::Upgrade(const XmlNode *node, const FactionType *ft) {
 	type = ft->getUpgradeType(node->getChildStringValue("type"));
 	state = enum_cast<UpgradeState>(node->getChildIntValue("state"));

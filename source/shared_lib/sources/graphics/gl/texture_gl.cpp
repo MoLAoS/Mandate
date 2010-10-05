@@ -210,7 +210,11 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 
 			if (error != 0) {
 				string msg = (char*)gluErrorString(error);
-				throw runtime_error("Error building texture 2D mipmaps: " + msg);
+				stringstream ss;
+				ss	<< "Error building texture 2D mipmaps: " << msg << endl 
+					<< "Format: " << format << ", components: " << pixmap.getComponents() << endl
+					<< "Width: " << pixmap.getW() << ", height: " << pixmap.getH() << endl;
+				throw runtime_error(ss.str());
 			}
 		} else {
 			//build single texture

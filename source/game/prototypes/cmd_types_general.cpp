@@ -73,7 +73,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	Command *autoCmd;
 	const UnitType *ut = unit->getType();
 	if (unit->isCarried()) {
-		Unit *carrier = unit->getCarrier();
+		Unit *carrier = g_simInterface->getUnitFactory().getUnit(unit->getCarrier());
 		const LoadCommandType *lct = 
 			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
 		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
@@ -756,7 +756,7 @@ void LoadCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
-	UnitList &unitsToCarry = unit->getUnitsToCarry();
+	UnitIdList &unitsToCarry = unit->getUnitsToCarry();
 
 	if (unitsToCarry.empty()) { // if no one to load, finished
 		unit->finishCommand();
@@ -764,27 +764,27 @@ void LoadCommandType::update(Unit *unit) const {
 		return;
 	}
 
-	const Unit *closest = 0; // else find closest
+	Unit *closest = 0; // else find closest
 	fixed dist = fixed::max_int();
-	foreach (UnitList, it, unitsToCarry) {
-		fixed d = fixedDist((*it)->getCenteredPos(), unit->getCenteredPos());
+	foreach (UnitIdList, it, unitsToCarry) {
+		Unit *target = g_simInterface->getUnitFactory().getUnit(*it);
+		fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
 		if (d < dist) {
-			closest = *it;
+			closest = target;
 			dist = d;
 		}
 	}
 	assert(closest);
 	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
-		Unit *target = const_cast<Unit*>(closest);
-		target->removeCommands();
-		target->setCurrSkill(SkillClass::STOP);
-		target->setVisible(false);
-		g_map.clearUnitCells(target, target->getPos());
-		target->setCarried(unit);
-		target->setPos(Vec2i(-1));
-		g_userInterface.getSelection()->unSelect(target);
-		unit->getCarriedUnits().push_back(target);
-		unitsToCarry.erase(std::find(unitsToCarry.begin(), unitsToCarry.end(), target));
+		closest->removeCommands();
+		closest->setCurrSkill(SkillClass::STOP);
+		closest->setVisible(false);
+		g_map.clearUnitCells(closest, closest->getPos());
+		closest->setCarried(unit);
+		closest->setPos(Vec2i(-1));
+		g_userInterface.getSelection()->unSelect(closest);
+		unit->getCarriedUnits().push_back(closest->getId());
+		unitsToCarry.erase(std::find(unitsToCarry.begin(), unitsToCarry.end(), closest->getId()));
 		unit->setCurrSkill(loadSkillType);
 		unit->clearPath();
 		return;
@@ -893,7 +893,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
 			unit->setCurrSkill(SkillClass::UNLOAD);
 		} else {
-			Unit *targetUnit = unit->getUnitsToUnload().front();
+			Unit *targetUnit = g_simInterface->getUnitFactory().getUnit(unit->getUnitsToUnload().front());
 			int maxRange = unloadSkillType->getMaxRange();
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
@@ -901,7 +901,7 @@ void UnloadCommandType::update(Unit *unit) const {
 				targetUnit->setVisible(true);
 				targetUnit->setCarried(0);
 				unit->getUnitsToUnload().pop_front();
-				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit));
+				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit->getId()));
 				// keep unloading, curr skill is ok
 			} else {
 				// must be crowded, stop unloading
@@ -930,9 +930,10 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixedVec2 fixedCentre;
 	fixed halfSize;
 	if (unit->isCarried()) {
-		effectivePos = unit->getCarrier()->getCenteredPos();
-		fixedCentre = unit->getCarrier()->getFixedCenteredPos();
-		halfSize = unit->getCarrier()->getType()->getHalfSize();
+		Unit *carrier = g_simInterface->getUnitFactory().getUnit(unit->getCarrier());
+		effectivePos = carrier->getCenteredPos();
+		fixedCentre = carrier->getFixedCenteredPos();
+		halfSize = carrier->getType()->getHalfSize();
 	} else {
 		effectivePos = unit->getCenteredPos();
 		fixedCentre = unit->getFixedCenteredPos();

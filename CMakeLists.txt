@@ -76,8 +76,11 @@ endif(GAE_USE_PHYSFS)
 # debug edition
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 
+# leak dumping
+option(GAE_LEAK_DUMP "Enable leak dumping, for detecting memory leaks.")
+
 # mad synchronisation checking (for network play)
-option(GAE_SYNC_TEST "Enable mass synchronisation checks for multiplayer.")
+option(GAE_SYNC_TEST "Enable mass synchronisation checks, for detecting multiplayer sync issues.")
 
 # pre-compiled headers (MSVC only atm)
 if (MSVC)
@@ -132,7 +135,7 @@ else(WIN32)
 endif(WIN32)
 
 if(NOT DEFINED GAE_VERSION)
-	set(GAE_VERSION "0.3.x" CACHE STRING "Version of Glest Advanced Engine")
+	set(GAE_VERSION "svn-trunk" CACHE STRING "Version of Glest Advanced Engine")
 endif()
 if(NOT DEFINED GAE_CONTACT)
 	set(GAE_CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")
@@ -171,26 +174,63 @@ if(WIN32)
 	set(CPACK_NSIS_COMPRESSOR "/SOLID lzma")
 	set(CPACK_NSIS_CONTACT "${CPACK_PACKAGE_CONTACT}")
 	set(CPACK_NSIS_MODIFY_PATH "ON")
-	set(CPACK_NSIS_MENU_LINKS
-		"share/glestae" "data folder"
-	)
+
+	set(CPACK_CREATE_DESKTOP_LINKS "glestadv")
 	# a bug in NSIS, last one needs to be \ and 2 times escaped to get there
 	set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/data/game\\\\glest.ico")
-	
+
+#
+# NSIS CPack generator is a pain... the following hand hacks of the generated script are needed,
+#
+# Before the install section
+# =======================
+#	Icon "D:\game_dev\gae-0.3.x\source\game\glestadv_inst.ico"
+#	UninstallIcon "D:\game_dev\gae-0.3.x\source\game\glestadv_uninst.ico"
+#
+# In the install section
+# =======================
+#	CreateDirectory "$PROFILE\glestadv\addons"
+#	CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Addons Folder.lnk" "$PROFILE\glestadv\addons"
+#
+#	StrCmp "$INSTALL_DESKTOP" "1" 0 +3
+#		CreateShortCut "$DESKTOP\GlestAdv.lnk" "$INSTDIR\bin\glestadv.exe"
+#		CreateShortCut "$DESKTOP\GlestAdv Addons.lnk" "$PROFILE\glestadv\addons"
+#
+# In the uninstall section:
+# Add to start-menu cleanup:
+# =======================
+#	Delete "$SMPROGRAMS\$MUI_TEMP\Addons FOlder.lnk"
+#
+# This StrCmp + Delete GlestAdv.lnk will already be here, change offset to +3, add addons shortcut
+# =======================
+#	StrCmp "$INSTALL_DESKTOP" "1" 0 +3
+#		Delete "$DESKTOP\GlestAdv.lnk"
+#		Delete "$DESKTOP\GlestAdv Addons.lnk"
+
 	if(DEFINED GAE_WINDEPS)
-		# only freetype and zlib are linked dynamically, install them next to the binary
-		install(FILES ${GAE_WINDEPS}/bin/freetype6.dll DESTINATION bin)
-		install(FILES ${GAE_WINDEPS}/bin/zlib1.dll DESTINATION bin)
+		# freetype, zlib & libpng are linked dynamically, install them next to the binary
+		# need dbghelp.dll to get nice crash reports
+		install(FILES 
+			${GAE_WINDEPS}/bin/freetype6.dll
+			${GAE_WINDEPS}/bin/zlib1.dll
+			${GAE_WINDEPS}/bin/libpng12-0.dll
+			${GAE_WINDEPS}/bin/dbghelp.dll
+			DESTINATION .
+		)
+		# install program db for debugging symbols
+		install (FILES ${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb DESTINATION bin)
 	endif(DEFINED GAE_WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm
 	#set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
-	#set(CPACK_DEBIAN_PACKAGE_DEPENDS "libvorbis0a libogg0 lua5.1 libsdl1.2debian")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "libpng12-0, libvorbis0a, libogg0, lua5.1, libsdl1.2debian")
+	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "James McCulloch <silnarm@gmail.com>")
+	set(CPACK_DEBIAN_PACKAGE_SECTION "games")
 
 	set(CPACK_GENERATOR "TBZ2")
-	set(CPACK_STRIP_FILES "TRUE")
 endif(WIN32)
+set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
 set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/build;.*~;/docs/html/;/package")

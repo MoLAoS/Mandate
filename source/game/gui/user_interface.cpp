@@ -293,10 +293,10 @@ void UserInterface::unloadRequest(int carryIndex) {
 	for (int ndx = 0; !unloadUnit && ndx < selection.getCount(); ++ndx) {
 		if (selection.getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
 			const Unit *unit = selection.getUnit(ndx);
-			UnitList carriedUnits = unit->getCarriedUnits();
-			foreach (UnitList, it, carriedUnits) {
+			UnitIdList carriedUnits = unit->getCarriedUnits();
+			foreach (UnitIdList, it, carriedUnits) {
 				if (carryIndex == i) {
-					unloadUnit = *it;
+					unloadUnit = g_simInterface->getUnitFactory().getUnit(*it);
 					transportUnit = const_cast<Unit*>(unit);
 					break;
 				}
@@ -963,12 +963,13 @@ void UserInterface::computeDisplay() {
 	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
 		if (selection.getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
 			const Unit *unit = selection.getUnit(ndx);
-			UnitList carriedUnits = unit->getCarriedUnits();
+			UnitIdList carriedUnits = unit->getCarriedUnits();
 			if (!carriedUnits.empty()) {
 				transported = true;
-				foreach (UnitList, it, carriedUnits) {
+				foreach (UnitIdList, it, carriedUnits) {
 					if (i < Display::carryCellCount) {
-						m_display->setCarryImage(i++, (*it)->getType()->getImage());
+						Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+						m_display->setCarryImage(i++, unit->getType()->getImage());
 					}
 				}
 			}

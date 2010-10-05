@@ -56,10 +56,6 @@ void UnitStats::reset() {
 	prodSpeed = 0;
 	repairSpeed = 0;
 	harvestSpeed = 0;
-
-//	for(int i = 0; i < damageMultiplierCount; ++i) {
-//		damageMultipliers[i] = 0.f;
-//	}
 }
 
 void UnitStats::setValues(const UnitStats &o) {
@@ -79,16 +75,12 @@ void UnitStats::setValues(const UnitStats &o) {
 	prodSpeed = o.prodSpeed;
 	repairSpeed = o.repairSpeed;
 	harvestSpeed = o.harvestSpeed;
-
-//	for(int i = 0; i < damageMultiplierCount; ++i) {
-//		damageMultipliers[i] = o.damageMultipliers[i];
-//	}
 }
 
 void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
 #	define ADD_ATTRIB(type, X)								\
 	{	type v = get##X() + (e.get##X() * strength).intp();	\
-		set##X(v < 1 ? 1 : v);								\
+		set##X(v < 0 ? 0 : v);								\
 	}
 	ADD_ATTRIB(int, MaxHp);
 	ADD_ATTRIB(int, HpRegeneration);

@@ -10,6 +10,7 @@
 // ==============================================================
 
 #include "pch.h"
+#include "leak_dumper.h"
 #include "main.h"
 
 #include <string>
@@ -59,6 +60,7 @@ public:
 		if(e) {
 			*ofs << "Exception: " << e->what() << endl;
 		}
+#ifndef WIN32
 		*ofs << "Address: " << address << endl;
 		if(backtrace) {
 			*ofs << "Backtrace:\n";
@@ -66,6 +68,7 @@ public:
 				*ofs << backtrace[i] << endl;
 			}
 		}
+#endif
 		*ofs << "\n=======================\n";
 
 		delete ofs;
@@ -104,28 +107,25 @@ int glestMain(int argc, char** argv) {
 	}
 #	endif
 
-	string configDir = DEFAULT_CONFIG_DIR;
-	string dataDir = DEFAULT_DATA_DIR;
 	CmdArgs args;
 	if (args.parse(argc, argv)) {
 		// quick exit
 		return 0;
 	}
-	if (!args.getConfigDir().empty()) {
-		configDir = args.getConfigDir();
-	}
-	if (!args.getDataDir().empty()) {
-		dataDir = args.getDataDir();
-	}
+	string configDir = args.getConfigDir();
+	string dataDir = args.getDataDir();
 
 	if (configDir.empty()) {
 #		ifdef WIN32
-			configDir = getenv("UserProfile");
+			configDir = getenv("USERPROFILE");
 			configDir += "/glestadv/";
 #		else
 			configDir = getenv("HOME");
 			configDir += "/.glestadv/";
 #		endif
+	}
+	if (dataDir.empty()) {
+		dataDir = ".";
 	}
 	//FIXME: debug
 	//cout << "config: " << configDir << "\ndata: " << dataDir << endl;
@@ -148,13 +148,13 @@ int glestMain(int argc, char** argv) {
 	if (g_config.getMiscCatchExceptions()) {
 		ExceptionHandler exceptionHandler;
 
-#if _GAE_DEBUG_EDITION_
+#	if _GAE_DEBUG_EDITION_
 		exceptionHandler.install();
 		Program program(args);
 		showCursor(false);
 		//main loop
 		program.loop();
-#else
+#	else
 		try {
 			exceptionHandler.install();
 			Program program(args);
@@ -176,7 +176,7 @@ int glestMain(int argc, char** argv) {
 			}
 			exceptionMessage(e);
 		}
-#endif
+#	endif
 	} else {
 		Program program(args);
 		showCursor(false);
@@ -185,6 +185,8 @@ int glestMain(int argc, char** argv) {
 
 	Profile::profileEnd();  // to write profiler data out
 	g_coreData.closeSounds(); // close audio stuff with ogg files
+
+	// FSFactory is deleted atexit(), see FSFactory::getInstance()
 
 	return 0;
 }

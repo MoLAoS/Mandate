@@ -10,6 +10,7 @@
 // ==============================================================
 
 #include "pch.h"
+#include "leak_dumper.h"
 #include "world.h"
 
 #include <algorithm>

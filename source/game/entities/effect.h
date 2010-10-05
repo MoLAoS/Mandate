@@ -87,6 +87,8 @@ public:
 	}
 
 	void save(XmlNode *node) const;
+
+	MEMORY_CHECK_DECLARATIONS(Effect)
 };
 
 // ===============================

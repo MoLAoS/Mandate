@@ -19,7 +19,6 @@
 
 #include "leak_dumper.h"
 
-
 namespace Glest { namespace Global {
 
 // =====================================================
@@ -103,6 +102,10 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
 
 	delete p;
+
+	if (!Shared::Util::fileExists(fileName)) {
+		save();
+	}
 }
 
 void Config::save(const char *path) {

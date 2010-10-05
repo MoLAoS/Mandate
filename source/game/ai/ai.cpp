@@ -30,6 +30,12 @@ using namespace Shared::Util;
 namespace Glest { namespace Plan {
 
 // =====================================================
+// 	class Task
+// =====================================================
+
+MEMORY_CHECK_IMPLEMENTATION(Task);
+
+// =====================================================
 // 	class ProduceTask
 // =====================================================
 
@@ -143,12 +149,62 @@ void Ai::init(GlestAiInterface *aiInterface, int32 randomSeed) {
 	aiRules[12] = new AiRuleRepair(this);
 	aiRules[13] = new AiRuleRepair(this);
 
+	// staticResourceUsed
 	for (int i=0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
 		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
 		for (int j=0; j < ut->getCostCount(); ++j) {
 			const Resource *r = ut->getCost(j);
 			if (r->getType()->getClass() == ResourceClass::STATIC && r->getAmount() > 0) {
 				staticResourceUsed.insert(r->getType());
+			}
+		}
+	}
+	updateUsableResources();
+}
+
+void Ai::updateUsableResources() {
+	const Faction *faction = aiInterface->getMyFaction();
+	usableResources.clear();
+
+	ResourceTypes typesNeeded;
+	for (int i=0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
+		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
+		if (!faction->reqsOk(ut)) {
+			continue;
+		}
+		int n = ut->getCommandTypeCount();
+		for (int i=0; i < n; ++i) {
+			const CommandType *ct = ut->getCommandType(i);
+			if (!faction->reqsOk(ct)) {
+				continue;
+			}
+			for (int j=0; j < ct->getProducedCount(); ++j) {
+				const ProducibleType *pt = ct->getProduced(j);
+				if (!faction->reqsOk(pt)) {
+					continue;
+				}
+				for (int k=0; k < pt->getCostCount(); ++k) {
+					const Resource *r = pt->getCost(k);
+					if (r->getType()->getClass() != ResourceClass::STATIC
+					&& r->getType()->getClass() != ResourceClass::CONSUMABLE && r->getAmount() > 0) {
+						typesNeeded.insert(r->getType());
+					}
+				}
+			}
+		}
+	}
+	foreach (UnitTypeCount, it, unitTypeCount) {
+		const UnitType *ut = it->first;
+		int n = ut->getCommandTypeCount<HarvestCommandType>();
+		for (int i=0; i < n; ++i) {
+			const HarvestCommandType *hct = ut->getCommandType<HarvestCommandType>(i);
+			int rn = hct->getHarvestedResourceCount();
+			for (int j=0; j < rn; ++j) {
+				const ResourceType *rt = hct->getHarvestedResource(j);
+				if (typesNeeded.find(rt) != typesNeeded.end()) {
+					usableResources.insert(rt);
+					typesNeeded.erase(rt);
+				}
 			}
 		}
 	}
@@ -205,16 +261,13 @@ float Ai::getRatioOfClass(UnitClass uc) {
 
 const ResourceType *Ai::getNeededResource() {
 	int amount = numeric_limits<int>::max();
-	const ResourceType *neededResource = NULL;
-	const TechTree *tt = aiInterface->getTechTree();
+	const ResourceType *neededResource = 0;
 
-	for (int i = 0; i < tt->getResourceTypeCount(); ++i) {
-		const ResourceType *rt = tt->getResourceType(i);
-		const Resource *r = aiInterface->getResource(rt);
-		if (rt->getClass() != ResourceClass::STATIC 
-		&& rt->getClass() != ResourceClass::CONSUMABLE && r->getAmount() < amount) {
+	foreach (ResourceTypes, it, usableResources) {
+		const Resource *r = aiInterface->getResource(*it);
+		if (r->getAmount() < amount) {
 			amount = r->getAmount();
-			neededResource = rt;
+			neededResource = *it;
 		}
 	}
 	return neededResource;
@@ -397,6 +450,7 @@ void Ai::updateStatistics() {
 			neededBuildings.push_back(uti->first);
 		}
 	}
+	updateUsableResources();
 }
 
 bool Ai::isRepairable(const Unit *u) const {
@@ -565,10 +619,8 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 void Ai::returnBase(int unitIndex){
     Vec2i pos;
     CommandResult r;
-    int fi;
 
-    fi= aiInterface->getFactionIndex();
-    pos= Vec2i(
+	pos= Vec2i(
 		random.randRange(-villageRadius, villageRadius), random.randRange(-villageRadius, villageRadius)) +
 		getRandomHomePosition();
     r= aiInterface->giveCommand(unitIndex, CommandClass::MOVE, pos);
