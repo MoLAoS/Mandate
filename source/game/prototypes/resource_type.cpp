@@ -81,7 +81,6 @@ bool ResourceType::load(const string &dir, int id) {
 				model->load(mPath, GameConstants::cellScale, 2);
 			} catch (runtime_error e) {
 				g_errorLog.addXmlError(path, e.what());
-				loadOk = false; // can continue, to catch other errors
 			}
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
