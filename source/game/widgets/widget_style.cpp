@@ -9,6 +9,7 @@
 #include "pch.h"
 
 #include "widget_style.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Widgets {
 

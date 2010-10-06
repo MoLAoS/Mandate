@@ -13,6 +13,8 @@
 #include "widget_window.h"
 #include "user_interface.h"
 
+#include "leak_dumper.h"
+
 namespace Glest { namespace Gui {
 
 using Global::CoreData;

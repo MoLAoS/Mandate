@@ -14,6 +14,7 @@
 #include "FileOps.hpp"
 
 #include <cstdio>
+#include "leak_dumper.h"
 
 namespace Shared { namespace PhysFS { 
 

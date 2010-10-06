@@ -15,6 +15,7 @@
 
 #include "node_map.h"
 #include "annotated_map.h" // iterator typedefs
+#include "leak_dumper.h"
 
 namespace Glest { namespace Search {
 

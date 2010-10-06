@@ -20,6 +20,7 @@
 
 #include "ifile_stream.hpp"
 #include "ifile_streambuf.hpp"
+#include "leak_dumper.h"
 
 namespace Shared { namespace PhysFS {
 

@@ -1,4 +1,6 @@
 /*
+This version of TinyXML has been modified. Please see tinyxml.cpp.
+
 www.sourceforge.net/projects/tinyxml
 Original code (2.0 and earlier )copyright (c) 2000-2006 Lee Thomason (www.grinninglizard.com)
 
@@ -24,6 +26,7 @@ distribution.
 #include "pch.h"
 
 #include "tinyxml.h"
+#include "leak_dumper.h"
 
 // The goal of the seperate error file is to make the first
 // step towards localization. tinyxml (currently) only supports

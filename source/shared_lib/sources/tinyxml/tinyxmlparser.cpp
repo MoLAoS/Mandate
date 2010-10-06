@@ -1,4 +1,6 @@
 /*
+This version of TinyXML has been modified. Please see tinyxml.cpp.
+
 www.sourceforge.net/projects/tinyxml
 Original code (2.0 and earlier )copyright (c) 2000-2002 Lee Thomason (www.grinninglizard.com)
 
@@ -27,6 +29,7 @@ distribution.
 #include <stddef.h>
 
 #include "tinyxml.h"
+#include "leak_dumper.h"
 
 //#define DEBUG_PARSER
 #if defined( DEBUG_PARSER )

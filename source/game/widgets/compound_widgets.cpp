@@ -13,6 +13,7 @@
 #include "core_data.h"
 #include "lang.h"
 #include "faction.h"
+#include "leak_dumper.h"
 
 #include <list>
 

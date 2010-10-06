@@ -188,7 +188,6 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_randomLocsCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
-	cout << "CheckBox pref size = " << m_randomLocsCheckbox->getPrefSize() << endl;
 
 	m_randomLocsLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
 	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);

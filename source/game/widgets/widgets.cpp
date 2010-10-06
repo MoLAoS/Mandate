@@ -20,6 +20,8 @@
 
 #include "widget_window.h"
 
+#include "leak_dumper.h"
+
 using Shared::Util::deleteValues;
 using namespace Shared::Graphics::Gl;
 using Glest::Graphics::Renderer;

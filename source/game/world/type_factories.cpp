@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "type_factories.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Sim {
 

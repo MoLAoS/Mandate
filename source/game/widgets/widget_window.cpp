@@ -20,6 +20,8 @@
 #include "core_data.h"
 #include "texture_gl.h"
 
+#include "leak_dumper.h"
+
 using Shared::Platform::WindowGl;
 using Shared::Graphics::Gl::Texture2DGl;
 using namespace Glest::Global;

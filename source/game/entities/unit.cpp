@@ -1176,7 +1176,7 @@ bool Unit::update() {
 	bool moved = currSkill->getClass() == SkillClass::MOVE;
 	bool rotated = false;
 	if (currSkill->getClass() != SkillClass::STOP) {
-		const int rotFactor = 2;
+		const float rotFactor = 2.f;
 		if (getProgress() < 1.f / rotFactor) {
 			if (type->getFirstStOfClass(SkillClass::MOVE)) {
 				rotated = true;

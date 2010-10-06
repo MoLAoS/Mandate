@@ -13,6 +13,8 @@
 #include "game.h"
 #include "program.h"
 
+#include "leak_dumper.h"
+
 namespace Glest { namespace Gui {
 
 using Global::CoreData;

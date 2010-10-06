@@ -23,6 +23,7 @@
 
 #include "ofile_stream.hpp"
 #include "ofile_streambuf.hpp"
+#include "leak_dumper.h"
 
 namespace Shared { namespace PhysFS {
 

@@ -16,6 +16,7 @@
 
 #include "projectConfig.h"
 #include "FSFactory.hpp"
+#include "leak_dumper.h"
 
 using Shared::PhysFS::FSFactory;
 

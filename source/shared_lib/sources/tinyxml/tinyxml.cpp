@@ -1,4 +1,7 @@
 /*
+
+This version of TinyXML has been modified. See below.
+
 www.sourceforge.net/projects/tinyxml
 Original code (2.0 and earlier )copyright (c) 2000-2006 Lee Thomason (www.grinninglizard.com)
 
@@ -20,7 +23,14 @@ must not be misrepresented as being the original software.
 
 3. This notice may not be removed or altered from any source
 distribution.
+
+This version for the Glest Advanced Engine has been modified as follows:
+ * Most operations on FILE pointers has been replaced by operations on Shared::PhysFS::FileOps pointers.
+ * a precompiled is included.
+ * a header to support memory leak detection is included.
+
 */
+
 #include "pch.h"
 
 #include <ctype.h>
@@ -34,6 +44,7 @@ distribution.
 #include <stdexcept>
 
 #include "tinyxml.h"
+#include "leak_dumper.h"
 
 
 bool TiXmlBase::condenseWhiteSpace = true;

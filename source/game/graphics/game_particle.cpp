@@ -15,6 +15,7 @@
 #include "particle_renderer.h"
 #include "logger.h"
 #include "world.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Entities {
 using Sim::Tile;

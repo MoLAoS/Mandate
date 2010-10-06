@@ -18,6 +18,8 @@
 #include "influence_map.h"
 #include "cartographer.h"
 
+#include "leak_dumper.h"
+
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;

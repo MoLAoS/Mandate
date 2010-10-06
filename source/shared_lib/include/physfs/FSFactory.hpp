@@ -24,6 +24,7 @@
 #include FT_FREETYPE_H
 
 #include "FileOps.hpp"
+#include "leak_dumper.h"
 
 namespace Shared { namespace PhysFS { 
 
