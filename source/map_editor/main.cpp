@@ -14,6 +14,7 @@
 #include "main.h"
 
 #include <ctime>
+#include <wx/dir.h>
 
 #include "conversion.h"
 #include "FSFactory.hpp"
@@ -386,9 +387,9 @@ void MainWindow::setFactionCount() {
 
 void MainWindow::onClose(wxCloseEvent &event) {
 	if(this->fileModified){
-		wxMessageDialog message(this, _("There are unsaved modifications. Quit anyway?"), _("Really quit?"),
-			wxOK|wxCANCEL|wxCENTRE|wxICON_QUESTION);
-		if(message.ShowModal()==wxID_CANCEL){
+		int answer = wxMessageBox(_("There are unsaved modifications. Quit anyway?"), _("Really quit?"),
+								wxYES_NO|wxICON_QUESTION, this);
+		if(answer==wxNO){
 			return;
 		}
 	}
@@ -705,15 +706,28 @@ void MainWindow::onMenuMiscHelp(wxCommandEvent &event) {
 
 void MainWindow::onShowMap(wxCommandEvent& event){
 	if(this->fileModified || this->currentFile.empty()){
-		wxMessageDialog message(this, _("You need to save first!"), _("Unsaved"), wxOK|wxCENTRE|wxICON_ERROR);
-		message.ShowModal();
+		wxMessageBox(_("You need to save first!"), _("Unsaved"), wxOK|wxICON_ERROR, this);
 		return;
 	}
 
-	wxArrayString output, arrstr;
-	vector<string> results;
+	// find glest
+	wxString glest;
+	wxPathList pathlist;
+	pathlist.AddEnvList(_("PATH"));
+	glest = pathlist.FindAbsoluteValidPath(_("glestadv"));
+	if(glest.empty()){
+		// not found in PATH -> search recursively in current directory
+		glest = wxDir::FindFirst(_("."), _("glestadv*"));
+		if(glest.empty()){
+			wxMessageBox(_("Couldn't find glestadv!"), _("Error"), wxOK|wxICON_ERROR, this);
+			return;
+		}
+	}
 
-	wxExecute(ToUnicode("./glestadv -list-tilesets"), output);
+	wxArrayString output, arrstr;
+	wxString command = glest + _(" -list-tilesets");
+	cout << command.char_str() << endl;
+	wxExecute(command, output);
 
 	for(wxArrayString::const_iterator it=output.begin(); it!=output.end(); ++it){
 		if(it->at(0)=='~'){  // only rows beginning with ~ are relevant
@@ -726,7 +740,9 @@ void MainWindow::onShowMap(wxCommandEvent& event){
 		wxString tileset = arrstr[dlg.GetSelection()];
 		
 		// leading / stands for absolute path, disables physfs for reading
-		wxExecute(ToUnicode("./glestadv -loadmap /"+currentFile+" ") + tileset, wxEXEC_SYNC);
+		command = glest + ToUnicode(" -loadmap /"+currentFile+" ") + tileset;
+		cout << command.char_str() << endl;
+		wxExecute(command, wxEXEC_SYNC);
 	}
 }
 
