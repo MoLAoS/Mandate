@@ -331,7 +331,12 @@ void FactionType::doChecksum(Checksum &checksum) const {
 	}
 }
 
-FactionType::~FactionType(){
+FactionType::~FactionType() {
+	while (music) {
+		StrSound *delMusic = music;
+		music = music->getNext();
+		delete delMusic;
+	}
 	delete music;
 	if (attackNotice) {
 		deleteValues(attackNotice->getSounds().begin(), attackNotice->getSounds().end());

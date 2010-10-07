@@ -18,18 +18,18 @@ namespace Shared { namespace Util {
 
 namespace Conversion {
 
-const string str_zero		= "0";
-const string str_false		= "false";
-const string str_one		= "1";
-const string str_true		= "true";
-const string str_bool		= "bool";
-const string str_int		= "int";
-const string str_uint		= "unsigned int";
-const string str_int64		= "int64";
-const string str_uint64		= "uint64";
-const string str_double		= "double";
-const string str_float		= "float";
-const string str_longdouble	= "long double";
+#define  str_zero		 "0"
+#define  str_false		 "false"
+#define  str_one		 "1"
+#define  str_true		 "true"
+#define  str_bool		 "bool"
+#define  str_int		 "int"
+#define  str_uint		 "unsigned int"
+#define  str_int64		 "int64"
+#define  str_uint64		 "uint64"
+#define  str_double		 "double"
+#define  str_float		 "float"
+#define  str_longdouble	 "long double"
 
 // overloaded functions to fill in strToX()'s call to strto_
 void strto_(const char *nptr, char **endptr, int base, long int &dest) {
@@ -151,7 +151,9 @@ long double strToLongDouble(const string &s) {
 }
 
 const string &toStr(bool b) {
-	return b ? str_true : str_false;
+	static string s_true = str_true;
+	static string s_false = str_false;
+	return  b ? s_true : s_false;
 }
 
 string toStr(int i) {

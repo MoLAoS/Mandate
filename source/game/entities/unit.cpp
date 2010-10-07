@@ -1884,9 +1884,10 @@ void Unit::applyCommand(const Command &command) {
 CommandResult Unit::undoCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
-	// return building cost if not already building it or dead
-	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
-		if (currSkill->getClass() != SkillClass::BUILD && currSkill->getClass() != SkillClass::DIE) {
+	// return building cost if we reserved resources and are not already building it or dead
+	if (ct->getClass() == CommandClass::BUILD) {
+		if (command.isReserveResources() && currSkill->getClass() != SkillClass::BUILD
+		&& currSkill->getClass() != SkillClass::DIE) {
 			faction->deApplyCosts(command.getProdType());
 		}
 	} else { //return cost
