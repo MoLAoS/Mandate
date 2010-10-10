@@ -216,6 +216,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
+	} else {
+		delete command;
 	}
 	return result;
 }
