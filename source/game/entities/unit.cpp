@@ -504,6 +504,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
 		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
 		ups->setPos(getCurrVector());
+		ups->setRotation(getRotation());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
 		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
@@ -1621,6 +1622,7 @@ bool Unit::add(Effect *e) {
 		foreach_const (UnitParticleSystemTypes, it, particleTypes) {
 			UnitParticleSystem *ups = (*it)->createUnitParticleSystem(visible);
 			ups->setPos(getCurrVector());
+			ups->setRotation(getRotation());
 			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 			effectParticleSystems.push_back(ups);
 			g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
