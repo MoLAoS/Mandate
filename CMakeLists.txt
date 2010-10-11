@@ -25,12 +25,6 @@ endif(NOT DEFINED GAE_CONFIG_DIR)
 if(NOT DEFINED GAE_DATA_DIR)
 	set(GAE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE PATH "root directory of data")
 endif(NOT DEFINED GAE_DATA_DIR)
-if(NOT DEFINED GAE_BIN)
-	set(GAE_BIN "bin" CACHE STRING "")
-endif(NOT DEFINED GAE_BIN)
-if(NOT DEFINED GAE_SHARE)
-	set(GAE_SHARE "share/glestae" CACHE STRING "")
-endif(NOT DEFINED GAE_SHARE)
 
 # help the windows people with their deps folder
 if(DEFINED GAE_WINDEPS AND WIN32)
@@ -170,9 +164,6 @@ else(wxWidgets_FOUND)
 endif(wxWidgets_FOUND)
 
 if(WIN32)
-	# install runtime libs from VC [Don't need this, we static link everything]
-	#include(InstallRequiredSystemLibraries)
-
 	set(CPACK_GENERATOR "NSIS")
 	set(CPACK_NSIS_DISPLAY_NAME "Glest Advanced Engine")
 	set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\www.glest.org")
@@ -198,16 +189,18 @@ if(WIN32)
 
 	if(DEFINED GAE_WINDEPS)
 		# freetype, zlib & libpng are linked dynamically, install them next to the binary
-		# need dbghelp.dll to get nice crash reports
 		install(FILES 
 			${GAE_WINDEPS}/bin/freetype6.dll
 			${GAE_WINDEPS}/bin/zlib1.dll
 			${GAE_WINDEPS}/bin/libpng12-0.dll
-			${GAE_WINDEPS}/bin/dbghelp.dll
-			DESTINATION ${GAE_BIN}
+			DESTINATION bin
 		)
-		# install program db for debugging symbols
-		install (FILES ${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb DESTINATION ${GAE_BIN})
+		# dbghelp.dll to get nice crash reports, install program db for debugging symbols
+		install(FILES
+			${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb
+			${GAE_WINDEPS}/bin/dbghelp.dll
+			DESTINATION bin OPTIONAL
+		)
 	endif(DEFINED GAE_WINDEPS)
 else(WIN32)
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
@@ -253,7 +246,7 @@ add_subdirectory(source)
 
 # data directory
 install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilesets data/game/gae
-		DESTINATION ${GAE_SHARE} OPTIONAL REGEX "/.svn" EXCLUDE)
+		DESTINATION share/glestae OPTIONAL REGEX "/.svn" EXCLUDE)
 
 if(NOT WIN32)
 	# add uninstall target; FIXME: does not delete created folders

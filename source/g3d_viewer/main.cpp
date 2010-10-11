@@ -23,6 +23,18 @@ using namespace Shared::Util;
 namespace Shared { namespace G3dViewer {
 
 // ===============================================
+//	class Global functions
+// ===============================================
+
+wxString ToUnicode(const char* str) {
+	return wxString(str, wxConvUTF8);
+}
+
+wxString ToUnicode(const string& str) {
+	return wxString(str.c_str(), wxConvUTF8);
+}
+
+// ===============================================
 // 	class MainWindow
 // ===============================================
 
@@ -30,7 +42,7 @@ const string MainWindow::versionString= "v1.3.4+";
 const string MainWindow::winHeader= "G3D viewer " + versionString + " - Built: " + __DATE__;
 
 MainWindow::MainWindow(const string &modelPath)
-		: wxFrame( NULL, -1, STRCONV(winHeader.c_str()),
+		: wxFrame( NULL, -1, ToUnicode(winHeader),
 			wxPoint(Renderer::windowX, Renderer::windowY), 
 			wxSize(Renderer::windowW, Renderer::windowH) ) {
 	renderer= Renderer::getInstance();
@@ -139,7 +151,7 @@ void MainWindow::init(){
 		Model *tmpModel= new ModelGl();
 		renderer->loadTheModel(tmpModel, modelPath);
 		model= tmpModel;
-		GetStatusBar()->SetStatusText(STRCONV(getModelInfo().c_str()), StatusItems::MODEL_INFO);
+		GetStatusBar()->SetStatusText(ToUnicode(getModelInfo()), StatusItems::MODEL_INFO);
 	}
 }
 
@@ -215,9 +227,9 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event){
 		fileName = wxFNCONV(fileDialog.GetPath());
 		renderer->loadTheModel(tmpModel, fileName);
 		model= tmpModel;
-		GetStatusBar()->SetStatusText(STRCONV(getModelInfo().c_str()), StatusItems::MODEL_INFO);
+		GetStatusBar()->SetStatusText(ToUnicode(getModelInfo()), StatusItems::MODEL_INFO);
 		for (int i=0; i < model->getMeshCount(); ++i) {
-			wxMenuItem *item = menuMesh->AppendCheckItem(miCount + i + 1, STRCONV(intToStr(i+1).c_str()));
+			wxMenuItem *item = menuMesh->AppendCheckItem(miCount + i + 1, ToUnicode(intToStr(i+1)));
 			Connect(miCount + i + 1, wxEVT_COMMAND_MENU_SELECTED, 
 				wxCommandEventHandler(MainWindow::onMenuMeshSelect), NULL, this);
 		}
@@ -248,13 +260,13 @@ void MainWindow::onMenuModeGrid(wxCommandEvent &event){
 void MainWindow::onMenuSpeedSlower(wxCommandEvent &event){
 	if (speed > 0) {
 		speed -= 25;
-		GetStatusBar()->SetStatusText(STRCONV("Anim speed: " + intToStr(speed)), StatusItems::ANIM_SPEED);
+		GetStatusBar()->SetStatusText(ToUnicode("Anim speed: " + intToStr(speed)), StatusItems::ANIM_SPEED);
 	}
 }
 
 void MainWindow::onMenuSpeedFaster(wxCommandEvent &event){
 	speed += 25;
-	GetStatusBar()->SetStatusText(STRCONV("Anim speed: " + intToStr(speed)), StatusItems::ANIM_SPEED);
+	GetStatusBar()->SetStatusText(ToUnicode("Anim speed: " + intToStr(speed)), StatusItems::ANIM_SPEED);
 }
 
 void MainWindow::onMenuColor(wxCommandEvent &evt){
@@ -384,7 +396,7 @@ int App::MainLoop(){
 		return wxApp::MainLoop();
 	}
 	catch(const exception &e){
-		wxMessageDialog(NULL, STRCONV(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
+		wxMessageDialog(NULL, ToUnicode(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 	}
 	return 0;
 }

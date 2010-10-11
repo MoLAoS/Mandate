@@ -327,7 +327,7 @@ void MainWindow::onToolPlayer(wxCommandEvent& event){
 	PopupMenu(menuBrushStartLocation);
 }
 
-void MainWindow::init(string fname) {
+void MainWindow::init(string fname, wxString glest) {
 	glCanvas->SetCurrent();
 	program = new Program(glCanvas->GetClientSize().x, glCanvas->GetClientSize().y);
 
@@ -337,6 +337,8 @@ void MainWindow::init(string fname) {
 		currentFile = fname;
 		fileName = cutLastExt(basename(fname));
 	}
+	this->glest = glest;
+	
 	SetTitle(ToUnicode(winHeader + "; " + currentFile));
 	setDirty(false);
 	setExtension();
@@ -711,16 +713,17 @@ void MainWindow::onShowMap(wxCommandEvent& event){
 	}
 
 	// find glest
-	wxString glest;
-	wxPathList pathlist;
-	pathlist.AddEnvList(_("PATH"));
-	glest = pathlist.FindAbsoluteValidPath(_("glestadv"));
 	if(glest.empty()){
-		// not found in PATH -> search recursively in current directory
-		glest = wxDir::FindFirst(_("."), _("glestadv*"));
+		wxPathList pathlist;
+		pathlist.AddEnvList(_("PATH"));
+		glest = pathlist.FindAbsoluteValidPath(_("glestadv"));
 		if(glest.empty()){
-			wxMessageBox(_("Couldn't find glestadv!"), _("Error"), wxOK|wxICON_ERROR, this);
-			return;
+			// not found in PATH -> search recursively in current directory
+			glest = wxDir::FindFirst(_("."), _("glestadv*"));
+			if(glest.empty()){
+				wxMessageBox(_("Couldn't find glestadv!"), _("Error"), wxOK|wxICON_ERROR, this);
+				return;
+			}
 		}
 	}
 
@@ -733,6 +736,10 @@ void MainWindow::onShowMap(wxCommandEvent& event){
 		if(it->at(0)=='~'){  // only rows beginning with ~ are relevant
 			arrstr.Add(it->SubString(1, it->Length()-1));
 		}
+	}
+	if(arrstr.empty()){
+		wxMessageBox(_("No tilesets found."), _("Error"), wxOK|wxICON_ERROR, this);
+		return;
 	}
 
 	wxSingleChoiceDialog dlg(this, _("select tileset"), _("tileset"), arrstr);
@@ -1090,14 +1097,20 @@ void SimpleDialog::show() {
 bool App::OnInit() {
 	FSFactory::getInstance()->usePhysFS = false;
 	
-	string fileparam;
-	if(argc==2){
-		fileparam = wxFNCONV(argv[1]);
+	string fileparam, arg;
+	wxString glest;
+	for(int i=1; i<argc; ++i){
+		arg = wxFNCONV(argv[i]);
+		if(arg=="-glest" && (i+1)<argc){
+			glest = argv[++i];
+		}else{
+			fileparam = arg;
+		}
 	}
 
 	mainWindow = new MainWindow();
 	mainWindow->Show();
-	mainWindow->init(fileparam);
+	mainWindow->init(fileparam, glest);
 	return true;
 }
 

@@ -35,7 +35,7 @@ void TeamColourDialog::CreateChildren() {
 		sprintf(buf, "Player %d Colour", (i+1));
 		wxPoint pos(10, 50 * i + 10);
 		wxSize size(160, 40);
-		btnColour[i] = new wxButton(this, idStart + i, STRCONV(buf), pos, size);
+		btnColour[i] = new wxButton(this, idStart + i, ToUnicode(buf), pos, size);
 		
 		pos.x += 165;
 		size.x = 40;

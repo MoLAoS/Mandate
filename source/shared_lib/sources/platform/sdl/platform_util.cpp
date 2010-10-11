@@ -331,4 +331,28 @@ bool ask(string message) {
 	return res != 0;
 }
 
+void getScreenMode(int &width, int &height){
+	const SDL_VideoInfo *vidinfo = SDL_GetVideoInfo();
+	width = vidinfo->current_w;
+	height = vidinfo->current_h;
+
+#if 0
+	SDL_Rect **modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
+	// Check if there are any modes available
+	if (modes == (SDL_Rect**)0) {
+		printf("No modes available!\n");
+		exit(-1);
+	}
+	// Check if our resolution is restricted
+	if (modes == (SDL_Rect**)-1) {
+		printf("All resolutions available.\n");
+	}else{
+		// Print valid modes
+		printf("Available Modes\n");
+		for (i=0; modes[i]; ++i)
+		printf("  %d x %d\n", modes[i]->w, modes[i]->h);
+	}
+#endif
+}
+
 }}//end namespace

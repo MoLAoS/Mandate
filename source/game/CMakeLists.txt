@@ -47,7 +47,7 @@ else(WIN32)
 	target_link_libraries(glestadv ${SDL_LIBRARY} ${OPENAL_LIBRARY})
 endif(WIN32)
 
-install(TARGETS glestadv DESTINATION ${GAE_BIN})
+install(TARGETS glestadv DESTINATION bin)
 if(UNIX AND NOT APPLE)
 	install(FILES glestadv.png DESTINATION share/pixmaps)
 	install(FILES glestadv.desktop DESTINATION share/applications)

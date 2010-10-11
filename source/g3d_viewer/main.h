@@ -15,12 +15,6 @@
 
 using std::string;
 
-#if (wxUSE_UNICODE == 1)
-#	define STRCONV(x) wxConvUTF8.cMB2WC(x)
-#else
-#	define STRCONV(x) x
-#endif
-
 namespace Shared { namespace G3dViewer {
 
 class GlCanvas;
@@ -30,6 +24,9 @@ WRAPPED_ENUM( StatusItems,
 	MODEL_INFO,
 	ANIM_SPEED
 )
+
+wxString ToUnicode(const char* str);
+wxString ToUnicode(const string& str);
 
 // ===============================
 // 	class MainWindow

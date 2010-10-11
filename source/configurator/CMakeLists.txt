@@ -8,4 +8,4 @@ target_link_libraries(glest_configurator shared_lib ${OPENGL_gl_LIBRARY} ${OPENG
 set_target_properties(glest_configurator PROPERTIES WIN32_EXECUTABLE "true")
 
 # not very useful atm
-#install(TARGETS glest_configurator DESTINATION ${GAE_BIN})
+#install(TARGETS glest_configurator DESTINATION bin)

@@ -170,11 +170,13 @@ private:
 	string fileName;
 	bool fileModified;
 
+	wxString glest;
+
 public:
 	MainWindow();
 	~MainWindow();
 
-	void init(string fname);
+	void init(string fname, wxString glest);
 
 	void onClose(wxCloseEvent &event);
 
