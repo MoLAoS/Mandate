@@ -19,10 +19,6 @@ using std::map;
 
 // _GAE_LEAK_DUMP_ controls if leak dumping is enabled or not
 
-#ifndef _GAE_LEAK_DUMP_
-#	define _GAE_LEAK_DUMP_ 0
-#endif
-
 #if _GAE_LEAK_DUMP_
 
 #include <cstdlib>

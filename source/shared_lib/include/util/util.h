@@ -319,14 +319,11 @@ void deleteMapValues(MapType map) {
 
 // misc
 template <typename T>
-inline void swap(T& a, T& b) { T temp = a; a = b; b = temp; }
-
-template <typename T>
 void jumble(vector<T> &list, Random &rand) {
 	for (int i=0; i < list.size(); ++i) {
 		int j = rand.randRange(0, list.size() - 1);
 		if (i == j) continue;
-		swap(list[i], list[j]);
+		std::swap(list[i], list[j]);
 	}
 }
 

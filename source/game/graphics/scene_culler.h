@@ -33,7 +33,7 @@ using std::list;
 using std::vector;
 using std::pair;
 using namespace Shared::Math;
-using Shared::Util::swap;
+using std::swap;
 
 struct GLMatrix {
     union {

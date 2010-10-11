@@ -51,6 +51,8 @@ public:
 	virtual void end()=0;
 	virtual void render(const Model *model)=0;
 	virtual void renderNormalsOnly(const Model *model)=0;
+	virtual void renderMesh(const Mesh *mesh)=0;
+	virtual void renderMeshNormalsOnly(const Mesh *mesh)=0;
 };
 
 }}//end namespace

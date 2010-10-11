@@ -76,6 +76,10 @@ public:
 		//assertions
 		assertGl();
 	}
+
+	virtual void renderMeshNormalsOnly(const Mesh *mesh) {
+		renderMeshNormals(mesh);
+	}
 	//virtual void end();
 	//virtual void render(const Model *model);
 	//virtual void renderNormalsOnly(const Model *model);
@@ -83,10 +87,8 @@ public:
 	void setDuplicateTexCoords(bool duplicateTexCoords)			{this->duplicateTexCoords= duplicateTexCoords;}
 	void setSecondaryTexCoordUnit(int secondaryTexCoordUnit)	{this->secondaryTexCoordUnit= secondaryTexCoordUnit;}
 
-private:
-	
-	void renderMesh(const Mesh *mesh);
 	void renderMeshNormals(const Mesh *mesh);
+	void renderMesh(const Mesh *mesh);
 };
 
 }}}//end namespace

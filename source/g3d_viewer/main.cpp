@@ -20,71 +20,7 @@ using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
 
-#if (wxUSE_UNICODE == 1)
-#	define STRCONV(x) wxConvUTF8.cMB2WC(x)
-#else
-#	define STRCONV(x) x
-#endif
-
 namespace Shared { namespace G3dViewer {
-
-TeamColourDialog::TeamColourDialog(Renderer *renderer) 
-		: editIndex(0), renderer(renderer), colourDialog(0) {
-	memset(btnColour, 0, sizeof(void*) * 4);
-	memset(bitmaps, 0, sizeof(void*) * 4);
-
-	for (int i=0; i < 4; ++i) {
-		colours[i] = wxColour();
-	}
-	colours[0].Set(renderer->colours[3*0+0], renderer->colours[3*0+1], renderer->colours[3*0+2], 0xFF);
-	colours[1].Set(renderer->colours[3*1+0], renderer->colours[3*1+1], renderer->colours[3*1+2], 0xFF);
-	colours[2].Set(renderer->colours[3*2+0], renderer->colours[3*2+1], renderer->colours[3*2+2], 0xFF);
-	colours[3].Set(renderer->colours[3*3+0], renderer->colours[3*3+1], renderer->colours[3*3+2], 0xFF);
-
-	Create(0, 0, wxT("Customise Team Colours"));
-	CreateChildren();
-}
-
-TeamColourDialog::~TeamColourDialog() {
-	delete colourDialog;
-}
-
-void TeamColourDialog::CreateChildren() {
-	SetSize(150, 150, 230, 340);
-
-	for (int i=0; i < 4; ++i) {
-		char buf[32];
-		sprintf(buf, "Player %d Colour", (i+1));
-		wxPoint pos(10, 80 * i + 10);
-		wxSize size(160, 40);
-		btnColour[i] = new wxButton(this, MainWindow::miCount + i, STRCONV(buf), pos, size);
-		
-		pos.x += 165;
-		size.x = 40;
-		size.y = 40;
-		bitmaps[i] = new wxStaticBitmap(this, -1, wxNullBitmap, pos, size);
-		bitmaps[i]->SetBackgroundColour(colours[i]);
-	}
-	colourDialog = new wxColourDialog();
-}
-
-void TeamColourDialog::onColourBtn(wxCommandEvent &event) {
-	editIndex = event.GetId() - MainWindow::miCount;
-	if (colourDialog->ShowModal() == wxID_OK) {
-		wxColour colour = colourDialog->GetColourData().GetColour();
-		colours[editIndex] = colour;
-		bitmaps[editIndex]->SetBackgroundColour(colours[editIndex]);
-		bitmaps[editIndex]->Refresh();
-		renderer->resetTeamTexture(editIndex, colour.Red(), colour.Green(), colour.Blue());
-	}
-}
-
-BEGIN_EVENT_TABLE(TeamColourDialog, wxDialog)
-	EVT_BUTTON(MainWindow::miCount + 0, TeamColourDialog::onColourBtn)
-	EVT_BUTTON(MainWindow::miCount + 1, TeamColourDialog::onColourBtn)
-	EVT_BUTTON(MainWindow::miCount + 2, TeamColourDialog::onColourBtn)
-	EVT_BUTTON(MainWindow::miCount + 3, TeamColourDialog::onColourBtn)
-END_EVENT_TABLE()
 
 // ===============================================
 // 	class MainWindow
@@ -102,7 +38,7 @@ MainWindow::MainWindow(const string &modelPath)
 	model = NULL;
 	playerColor = 0;
 
-	speed= 0.025f;
+	speed = 100;
 	
 	//gl canvas
 	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
@@ -135,10 +71,22 @@ MainWindow::MainWindow(const string &modelPath)
 	menuCustomColor->AppendCheckItem(miColorTwo, wxT("Faction 2"));
 	menuCustomColor->AppendCheckItem(miColorThree, wxT("Faction 3"));
 	menuCustomColor->AppendCheckItem(miColorFour, wxT("Faction 4"));
+	menuCustomColor->AppendCheckItem(miColorFive, wxT("Faction 5"));
+	menuCustomColor->AppendCheckItem(miColorSix, wxT("Faction 6"));
+	menuCustomColor->AppendCheckItem(miColorSeven, wxT("Faction 7"));
+	menuCustomColor->AppendCheckItem(miColorEight, wxT("Faction 8"));
 	menuCustomColor->AppendCheckItem(miColourAll, wxT("Show All"));
 	menuCustomColor->Append(miColourEdit, wxT("Edit Colours"));
 	menu->Append(menuCustomColor, wxT("&Custom Color"));
 
+	// mesh
+	menuMesh = new wxMenu();
+	menuMesh->AppendCheckItem(miCount, wxT("Show All"));
+	menu->Append(menuMesh, wxT("Mesh"));
+	Connect(miCount, wxEVT_COMMAND_MENU_SELECTED,
+		wxCommandEventHandler(MainWindow::onMenuMeshSelect), NULL, this);
+
+	menuMesh->Check(miCount, true);
 	menuMode->Check(miModeGrid, true);
 	menuCustomColor->Check(miColorOne, true);
 
@@ -155,12 +103,25 @@ MainWindow::MainWindow(const string &modelPath)
 	lastY= 0;
 	anim= 0.0f;
 
-	CreateStatusBar();
+	buildStatusBar();
 
 	colourDialog = new TeamColourDialog(renderer);
 
 	timer = new wxTimer(this);
-	timer->Start(40);
+	timer->Start(25);
+}
+
+void MainWindow::buildStatusBar() {
+	int status_widths[StatusItems::COUNT] = {
+		10, // empty
+		-3, // model info
+		-1  // anim speed
+	};
+	CreateStatusBar(StatusItems::COUNT);
+	GetStatusBar()->SetStatusWidths(StatusItems::COUNT, status_widths);
+
+	SetStatusText(wxT(""), StatusItems::MODEL_INFO);
+	SetStatusText(wxT("Anim speed: 100"), StatusItems::ANIM_SPEED);
 }
 
 MainWindow::~MainWindow(){
@@ -178,30 +139,29 @@ void MainWindow::init(){
 		Model *tmpModel= new ModelGl();
 		renderer->loadTheModel(tmpModel, modelPath);
 		model= tmpModel;
-		GetStatusBar()->SetStatusText(STRCONV(getModelInfo().c_str()));
+		GetStatusBar()->SetStatusText(STRCONV(getModelInfo().c_str()), StatusItems::MODEL_INFO);
 	}
 }
 
 void MainWindow::onPaint(wxPaintEvent &event) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	if (playerColor == -1) {
-		int w = GetClientSize().x / 2;
+		int w = GetClientSize().x / 4;
 		int h = GetClientSize().y / 2;
 		int x = 0, y = 0;
-		for (++playerColor; playerColor < 4; ++playerColor) {
-			renderer->reset(x, y, w, h, playerColor);
+		for (int i = 0; i < 8; ++i) {
+			renderer->reset(x, y, w, h, i);
 			renderer->transform(rotX, rotY, zoom);
 			renderer->renderGrid();
 			
 			renderer->renderTheModel(model, anim);
-			if (!x) {
-				x = w;
+			if (x != w * 3) {
+				x += w;
 			} else {
 				y = h;
 				x = 0;
 			}
 		}
-		playerColor = -1;
 	} else {
 		renderer->reset(0, 0, GetClientSize().x, GetClientSize().y, playerColor);
 		renderer->transform(rotX, rotY, zoom);
@@ -243,12 +203,26 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event){
 	wxFileDialog fileDialog(this);
 	fileDialog.SetWildcard(wxT("G3D files (*.g3d)|*.g3d"));
 	if(fileDialog.ShowModal()==wxID_OK){
+		if (model) {
+			// remove mesh menu items
+			for (int i=0; i < model->getMeshCount(); ++i) {
+				wxMenuItem *item = menuMesh->Remove(miCount + i + 1);
+				delete item;
+			}
+		}
 		delete model;
 		Model *tmpModel= new ModelGl();
 		fileName = wxFNCONV(fileDialog.GetPath());
 		renderer->loadTheModel(tmpModel, fileName);
 		model= tmpModel;
-		GetStatusBar()->SetStatusText(wxString(getModelInfo().c_str(), wxConvUTF8));
+		GetStatusBar()->SetStatusText(STRCONV(getModelInfo().c_str()), StatusItems::MODEL_INFO);
+		for (int i=0; i < model->getMeshCount(); ++i) {
+			wxMenuItem *item = menuMesh->AppendCheckItem(miCount + i + 1, STRCONV(intToStr(i+1).c_str()));
+			Connect(miCount + i + 1, wxEVT_COMMAND_MENU_SELECTED, 
+				wxCommandEventHandler(MainWindow::onMenuMeshSelect), NULL, this);
+		}
+		menuMesh->Check(miCount, true);
+		renderer->setMesh();
 	}
 }
 
@@ -272,65 +246,51 @@ void MainWindow::onMenuModeGrid(wxCommandEvent &event){
 }
 
 void MainWindow::onMenuSpeedSlower(wxCommandEvent &event){
-	speed/= 1.5f;
+	if (speed > 0) {
+		speed -= 25;
+		GetStatusBar()->SetStatusText(STRCONV("Anim speed: " + intToStr(speed)), StatusItems::ANIM_SPEED);
+	}
 }
 
 void MainWindow::onMenuSpeedFaster(wxCommandEvent &event){
-	speed*= 1.5f;
+	speed += 25;
+	GetStatusBar()->SetStatusText(STRCONV("Anim speed: " + intToStr(speed)), StatusItems::ANIM_SPEED);
 }
 
-void MainWindow::onMenuColorOne(wxCommandEvent &event){
-	playerColor = 0;
-	menuCustomColor->Check(miColorOne, true);
-	menuCustomColor->Check(miColorTwo, false);
-	menuCustomColor->Check(miColorThree, false);
-	menuCustomColor->Check(miColorFour, false);
-	menuCustomColor->Check(miColourAll, false);
-}
-
-void MainWindow::onMenuColorTwo(wxCommandEvent &event){
-	playerColor = 1;
-	menuCustomColor->Check(miColorOne, false);
-	menuCustomColor->Check(miColorTwo, true);
-	menuCustomColor->Check(miColorThree, false);
-	menuCustomColor->Check(miColorFour, false);
-	menuCustomColor->Check(miColourAll, false);
-}
-
-void MainWindow::onMenuColorThree(wxCommandEvent &event){
-	playerColor = 2;
-	menuCustomColor->Check(miColorOne, false);
-	menuCustomColor->Check(miColorTwo, false);
-	menuCustomColor->Check(miColorThree, true);
-	menuCustomColor->Check(miColorFour, false);
-	menuCustomColor->Check(miColourAll, false);
-}
-
-void MainWindow::onMenuColorFour(wxCommandEvent &event){
-	playerColor = 3;
-	menuCustomColor->Check(miColorOne, false);
-	menuCustomColor->Check(miColorTwo, false);
-	menuCustomColor->Check(miColorThree, false);
-	menuCustomColor->Check(miColorFour, true);
-	menuCustomColor->Check(miColourAll, false);
-}
-
-void MainWindow::onMenuColorAll(wxCommandEvent &event){
-	playerColor = -1;
-	menuCustomColor->Check(miColorOne, false);
-	menuCustomColor->Check(miColorTwo, false);
-	menuCustomColor->Check(miColorThree, false);
-	menuCustomColor->Check(miColorFour, false);
-	menuCustomColor->Check(miColourAll, true);
+void MainWindow::onMenuColor(wxCommandEvent &evt){
+	playerColor = evt.GetId() - miColorOne;
+	if (playerColor >= 8) {
+		playerColor = -1;
+	}
+	for (int i = miColorOne; i <= miColourAll; ++i) {
+		menuCustomColor->Check(i, false);
+	}
+	menuCustomColor->Check(evt.GetId(), true);
 }
 
 void MainWindow::onMenuColorEdit(wxCommandEvent &event){	
 	colourDialog->Show();
 }
 
+void MainWindow::onMenuMeshSelect(wxCommandEvent &evt) {
+	if (evt.GetId() == miCount) {
+		renderer->setMesh();
+	} else {
+		int n = evt.GetId() - miCount - 1;
+		renderer->setMesh(n);
+	}
+	if (model) {
+		for (int i=0; i <= model->getMeshCount(); ++i) {
+			menuMesh->Check(miCount + i, false);
+		}
+		menuMesh->Check(evt.GetId(), true);
+	}
+}
+
 void MainWindow::onTimer(wxTimerEvent &event){
-	wxPaintEvent paintEvent;	
-	anim = anim + speed;
+	wxPaintEvent paintEvent;
+	float inc = 0.00025f * speed;
+	anim += inc;
 	if (anim > 1.0f) {
 		anim -= 1.f;
 	}
@@ -346,6 +306,15 @@ string MainWindow::getModelInfo(){
 		str+= ", Triangles: "+intToStr(model->getTriangleCount());
 		str+= ", Version: "+intToStr(model->getFileVersion());
 	}
+	int maxFrames = 0;
+	for (int i=0; i < model->getMeshCount(); ++i) {
+		const Mesh *mesh = model->getMesh(i);
+		if (mesh->getFrameCount() > maxFrames) {
+			maxFrames = mesh->getFrameCount();
+		}
+	}
+	str += ", ";
+	str += intToStr(maxFrames) + " Frames.";
 
 	return str;
 }
@@ -363,11 +332,15 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU(miSpeedFaster, MainWindow::onMenuSpeedFaster)
 	EVT_MENU(miSpeedSlower, MainWindow::onMenuSpeedSlower)
 
-	EVT_MENU(miColorOne, MainWindow::onMenuColorOne)
-	EVT_MENU(miColorTwo, MainWindow::onMenuColorTwo)
-	EVT_MENU(miColorThree, MainWindow::onMenuColorThree)
-	EVT_MENU(miColorFour, MainWindow::onMenuColorFour)
-	EVT_MENU(miColourAll, MainWindow::onMenuColorAll)
+	EVT_MENU(miColorOne, MainWindow::onMenuColor)
+	EVT_MENU(miColorTwo, MainWindow::onMenuColor)
+	EVT_MENU(miColorThree, MainWindow::onMenuColor)
+	EVT_MENU(miColorFour, MainWindow::onMenuColor)
+	EVT_MENU(miColorFive, MainWindow::onMenuColor)
+	EVT_MENU(miColorSix, MainWindow::onMenuColor)
+	EVT_MENU(miColorSeven, MainWindow::onMenuColor)
+	EVT_MENU(miColorEight, MainWindow::onMenuColor)
+	EVT_MENU(miColourAll, MainWindow::onMenuColor)
 	EVT_MENU(miColourEdit, MainWindow::onMenuColorEdit)
 END_EVENT_TABLE()
 

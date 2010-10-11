@@ -79,25 +79,20 @@ Renderer::Renderer() {
 	normals= false;
 	wireframe= false;
 	grid= true;
+	mesh = -1;
 
-	memset(colours, 0, 4 * 3);
-	memset(customTextures, 0, 4 * sizeof(Texture2D*));
+	memset(customTextures, 0, 8 * sizeof(Texture2D*));
 
 	// default colours...
+	colours[0] = Vec3<uint8>( 255u,   0u,   0u);
+	colours[1] = Vec3<uint8>(   0u,   0u, 255u);
+	colours[2] = Vec3<uint8>(  31u, 127u,   0u);
+	colours[3] = Vec3<uint8>( 255u, 255u,   0u);
+	colours[4] = Vec3<uint8>( 191u,   0u, 191u);
+	colours[5] = Vec3<uint8>(   0u, 191u, 191u);
+	colours[6] = Vec3<uint8>(  72u, 255u,  72u);
+	colours[7] = Vec3<uint8>( 255u, 127u,   0u);
 
-	// player 1 : red
-	colours[3*0 + 0] = 0xFF;
-	
-	// player 2 : blue
-	colours[3*1 + 2] = 0xFF;
-
-	// player 3 : green
-	colours[3*2 + 1] = 0x5E;
-	colours[3*2 + 2] = 0x20;
-
-	// player 4 : yellow
-	colours[3*3 + 0] = 0xFF;
-	colours[3*3 + 1] = 0xFF;
 }
 
 Renderer::~Renderer(){
@@ -124,14 +119,12 @@ void Renderer::transform(float rotX, float rotY, float zoom){
 }
 
 void Renderer::resetTeamTexture(int i, uint8 red, uint8 green, uint8 blue) {
-	assert(i >= 0 && i < 4);
-	colours[3*i+0] = red;
-	colours[3*i+1] = green;
-	colours[3*i+2] = blue;
+	assert(i >= 0 && i < 8);
+	colours[i] = Vec3<uint8>(red, green, blue);
 	
 	customTextures[i] = textureManager->newTexture2D();
 	customTextures[i]->getPixmap()->init(1, 1, 3);
-	customTextures[i]->getPixmap()->setPixel(0, 0, &colours[3*i]);
+	customTextures[i]->getPixmap()->setPixel(0, 0, colours[i].ptr());
 	textureManager->init();
 }
 
@@ -145,10 +138,10 @@ void Renderer::init(){
 	modelRenderer= gf->newModelRenderer();
 	textureManager= gf->newTextureManager();
 
-	for (int i=0; i < 4; ++i) {
+	for (int i=0; i < 8; ++i) {
 		customTextures[i] = textureManager->newTexture2D();
 		customTextures[i]->getPixmap()->init(1, 1, 3);
-		customTextures[i]->getPixmap()->setPixel(0, 0, &colours[3*i]);
+		customTextures[i]->getPixmap()->setPixel(0, 0, colours[i].ptr());
 	}
 
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
@@ -234,15 +227,15 @@ void Renderer::renderGrid(){
 }
 
 void Renderer::toggleNormals(){
-	normals= normals? false: true;
+	normals = !normals;
 }
 
 void Renderer::toggleWireframe(){
-	wireframe= wireframe? false: true;
+	wireframe = !wireframe;
 }
 
 void Renderer::toggleGrid(){
-	grid= grid? false: true;
+	grid = !grid;
 }
 
 void Renderer::loadTheModel(Model *model, string file){
@@ -251,18 +244,28 @@ void Renderer::loadTheModel(Model *model, string file){
 	textureManager->init();
 }
 
-void Renderer::renderTheModel(Model *model, float f){
+void Renderer::renderTheModel(Model *model, float t){
 	if(model != NULL){
 		modelRenderer->begin(true, true, !wireframe, &meshCallbackTeamColor);	
-		model->updateInterpolationData(f, true);
-		modelRenderer->render(model);
+		model->updateInterpolationData(t, true);
+
+		if (mesh == -1) {
+			modelRenderer->render(model);
+		} else {
+			modelRenderer->renderMesh(model->getMesh(mesh));
+		}
 
 		if(normals){
 			glPushAttrib(GL_ENABLE_BIT);
 			glDisable(GL_LIGHTING);
 			glDisable(GL_TEXTURE_2D);
 			glColor3f(1.0f, 1.0f, 1.0f);	
-			modelRenderer->renderNormalsOnly(model);
+			if (mesh == -1) {
+				modelRenderer->renderNormalsOnly(model);
+			} else {
+				modelRenderer->renderMeshNormalsOnly(model->getMesh(mesh));
+			}
+			
 			glPopAttrib();
 		}
 

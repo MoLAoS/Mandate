@@ -100,7 +100,7 @@ void Console::addDialog(string speaker, Vec3f colour, string text, bool playSoun
 }
 
 void Console::update(){
-	timeElapsed += 1.f / Config::getInstance().getGsWorldUpdateFps();
+	timeElapsed += 1.f / WORLD_FPS;
 
 	if (!lines.empty()) {
 		if(lines.back().second < timeElapsed - timeout){

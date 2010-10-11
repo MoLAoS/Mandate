@@ -224,6 +224,11 @@ inline T degToRad(T deg){
 	return (deg*2*pi)/360;
 }
 
+template<>
+inline float degToRad(float deg) {
+	return (deg * 2.f * pi) / 360.f;
+}
+
 template<typename T>
 inline T radToDeg(T rad){
 	return (rad*360)/(2*pi);

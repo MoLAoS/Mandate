@@ -161,8 +161,10 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 
 	//texture
 	if(!(meshHeader.properties & mp3NoTexture) && textureManager!=NULL){
+		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texturePaths[mtDiffuse]= toLower(reinterpret_cast<char*>(meshHeader.texName));
-		string texPath= dir+"/"+texturePaths[mtDiffuse];
+		texPath = dir + "/" + texPath;
+		texPath = cleanPath(texPath);
 
 		textures[mtDiffuse]= static_cast<Texture2D*>(textureManager->getTexture(texPath));
 		if(textures[mtDiffuse]==NULL){
