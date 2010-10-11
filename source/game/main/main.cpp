@@ -33,6 +33,14 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Main {
 
+#ifdef WIN32
+#	define IF_WINDOZE(x) x
+#	define IF_GNU_OS(x)
+#else
+#	define IF_WINDOZE(x)
+#	define IF_GNU_OS(x) x
+#endif
+
 // =====================================================
 // 	class ExceptionHandler
 // =====================================================
@@ -60,15 +68,15 @@ public:
 		if(e) {
 			*ofs << "Exception: " << e->what() << endl;
 		}
-#ifndef WIN32
-		*ofs << "Address: " << address << endl;
-		if(backtrace) {
-			*ofs << "Backtrace:\n";
-			for(size_t i = 0 ; i < count; ++i) {
-				*ofs << backtrace[i] << endl;
+		IF_GNU_OS(
+			*ofs << "Address: " << address << endl;
+			if(backtrace) {
+				*ofs << "Backtrace:\n";
+				for(size_t i = 0 ; i < count; ++i) {
+					*ofs << backtrace[i] << endl;
+				}
 			}
-		}
-#endif
+		)
 		*ofs << "\n=======================\n";
 
 		delete ofs;
@@ -95,34 +103,43 @@ public:
 // =====================================================
 
 int glestMain(int argc, char** argv) {
-#	if !defined(NDEBUG) && defined(WIN32)
-	// Enable run-time checks
-	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+	IF_WINDOZE(
+		// Enable run-time checks (is macro, auto-magically skipped on release builds)
+		_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 
-	// check for SSE2
-	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)) {
-		std::exception e("Error: No SSE2 support detected. GAE requires Streaming SIMD Extensions 2");
-		exceptionMessage(e);
-		return 0;
-	}
-#	endif
+		// check for SSE2
+		if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE)) {
+			std::exception e("Error: No SSE2 support detected. GAE requires Streaming SIMD Extensions 2");
+			exceptionMessage(e);
+			return 0;
+		}
+	)
 
 	CmdArgs args;
 	if (args.parse(argc, argv)) {
 		// quick exit
 		return 0;
 	}
+
+	IF_WINDOZE (
+		if (args.redirStreams()) {
+			freopen("stdout.txt", "w", stdout);
+			freopen("stderr.txt", "w", stderr);
+		}
+	)
+
 	string configDir = args.getConfigDir();
 	string dataDir = args.getDataDir();
 
 	if (configDir.empty()) {
-#		ifdef WIN32
+		IF_WINDOZE(
 			configDir = getenv("USERPROFILE");
 			configDir += "/glestadv/";
-#		else
+		)
+		IF_GNU_OS(
 			configDir = getenv("HOME");
 			configDir += "/.glestadv/";
-#		endif
+		)
 	}
 	if (dataDir.empty()) {
 		dataDir = ".";
