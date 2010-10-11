@@ -2,6 +2,8 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2008-2009 Daniel Santos
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -550,6 +552,7 @@ private:
 	bool m_countCells;	// if true, a size 2 unit occupies 4 slots
 	bool m_countSize;	// if true, a height 2 occupies 2 slots
 						// if both true, a size 2 height 2 unit would occupy 8
+	// OR ... add a unit 'space' param...
 */
 public:
 	LoadCommandType() 

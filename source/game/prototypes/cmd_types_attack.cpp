@@ -2,6 +2,8 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2008-2009 Daniel Santos
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -85,7 +87,9 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 			loadOk = false;
 		}
 	}
-	if ( loadOk ) attackSkillTypes.init();
+	if (loadOk) {
+		attackSkillTypes.init();
+	}
 	return loadOk;
 }
 

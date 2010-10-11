@@ -180,7 +180,7 @@ protected:
 				flagName = nodeName;
 			}
 			E result = flagNames.match(flagName.c_str());
-			if ( result == E::INVALID ) {
+			if (result == E::INVALID) {
 				throw runtime_error(string() + "Invalid " + childNodeName + ": " + flagName + ": " + dir);
 			} else {
 				this->set(result, true);
