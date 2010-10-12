@@ -34,7 +34,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	if(Shared::Util::fileExists(fileName)) {
 		p->load(fileName, true);
 	}
-	
+
 	int width=1024, height=768;
 #ifndef WIN32
 	getScreenMode(width, height);
@@ -49,7 +49,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	cameraMinYaw = p->getFloat("CameraMinYaw", 20.f, 0.f, 360.f);
 	displayHeight = p->getInt("DisplayHeight", height);
 	displayRefreshFrequency = p->getInt("DisplayRefreshFrequency", 60);
-	displayWidth = p->getInt("DisplayWidth", height);
+	displayWidth = p->getInt("DisplayWidth", width);
 	displayWindowed = p->getBool("DisplayWindowed", false);
 	gsAutoRepairEnabled = p->getBool("GsAutoRepairEnabled", true);
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
