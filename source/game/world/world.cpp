@@ -52,17 +52,17 @@ World *World::singleton = 0;
 
 // ===================== PUBLIC ========================
 
-World::World(SimulationInterface *iSim) 
+World::World(SimulationInterface *m_simInterface) 
 		: scenario(NULL)
-		, iSim(iSim)
-		, game(*iSim->getGameState())
+		, m_simInterface(m_simInterface)
+		, game(*m_simInterface->getGameState())
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
 		, posIteratorFactory(65) {
 	Config &config = Config::getInstance();
 
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	fogOfWar = gs.getFogOfWar();
 	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
 	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
@@ -92,8 +92,8 @@ World::~World() {
 
 void World::save(XmlNode *node) const {
 	node->addChild("frameCount", frameCount);
-	node->addChild("nextUnitId", iSim->getUnitFactory().idCounter);
-	iSim->getStats()->save(node->addChild("stats"));
+	node->addChild("nextUnitId", m_simInterface->getUnitFactory().idCounter);
+	m_simInterface->getStats()->save(node->addChild("stats"));
 	timeFlow.save(node->addChild("timeFlow"));
 	XmlNode *factionsNode = node->addChild("factions");
 	foreach_const (Factions, i, factions) {
@@ -120,7 +120,7 @@ void World::init(const XmlNode *worldNode) {
 		loadSaved(worldNode);
 		g_userInterface.initMinimap(fogOfWar, true);
 		g_cartographer.loadMapState(worldNode->getChild("mapState"));
-	} else if (iSim->getGameSettings().getDefaultUnits()) {
+	} else if (m_simInterface->getGameSettings().getDefaultUnits()) {
 		g_userInterface.initMinimap(fogOfWar, false);
 		initUnits();
 		initExplorationState();
@@ -134,14 +134,14 @@ void World::init(const XmlNode *worldNode) {
 //load saved game
 void World::loadSaved(const XmlNode *worldNode) {
 	Logger::getInstance().add("Loading saved game", true);
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
 
 	frameCount = worldNode->getChildIntValue("frameCount");
-	iSim->getUnitFactory().idCounter = worldNode->getChildIntValue("nextUnitId");
+	m_simInterface->getUnitFactory().idCounter = worldNode->getChildIntValue("nextUnitId");
 
-	iSim->getStats()->load(worldNode->getChild("stats"));
+	m_simInterface->getStats()->load(worldNode->getChild("stats"));
 	timeFlow.load(worldNode->getChild("timeFlow"));
 
 	const XmlNode *factionsNode = worldNode->getChild("factions");
@@ -160,7 +160,7 @@ void World::loadSaved(const XmlNode *worldNode) {
 
 // preload tileset and techtree for progressbar
 void World::preload() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	tileset.count(gs.getTilesetPath());
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
@@ -173,14 +173,14 @@ void World::preload() {
 
 //load tileset
 bool World::loadTileset() {
-	tileset.load(iSim->getGameSettings().getTilesetPath(), &techTree);
+	tileset.load(m_simInterface->getGameSettings().getTilesetPath(), &techTree);
 	timeFlow.init(&tileset);
 	return true;
 }
 
 //load tech
 bool World::loadTech() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
 		if (gs.getFactionTypeName(i).size()) {
@@ -192,8 +192,8 @@ bool World::loadTech() {
 
 //load map
 bool World::loadMap() {
-	const string &path = iSim->getGameSettings().getMapPath();
-	map.load(path, &techTree, &tileset, iSim->getObjectFactory());
+	const string &path = m_simInterface->getGameSettings().getMapPath();
+	map.load(path, &techTree, &tileset, m_simInterface->getObjectFactory());
 	return true;
 }
 
@@ -254,34 +254,36 @@ void World::updateEarthquakes(float seconds) {
 }
 #endif // Disable Earthquakes
 
-void updateFaction(const Faction *f) {
-	const Units &units = f->getUnits();
-	for (int i = 0;  i < f->getUnitCount(); ++i) {
+void World::updateFaction(const Faction *f) {
+	const int n = f->getUnitCount();
+	for (int i=0; i < n; ++i) {
 		Unit *unit = f->getUnit(i);
-		
 		if (unit->update()) {
+			if (!unit->getCurrSkill()->getEffectTypes().empty()) {
+				// start effects for skill cycle just completed
+				applyEffects(unit, unit->getCurrSkill()->getEffectTypes(), unit, 0);
+			}
 
-			g_simInterface->doUpdateUnitCommand(unit);
+			m_simInterface->doUpdateUnitCommand(unit);
 
-			//move unit in cells
 			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+				// move unit in cells
+				moveUnitCells(unit);
 
-				g_world.moveUnitCells(unit);
-
-				//play water sound
-				if (g_map.getCell(unit->getPos())->getHeight() < g_map.getWaterLevel() 
+				// play water sound?
+				if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
 				&& unit->getCurrField() == Field::LAND
-				&& g_map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(g_world.getThisTeamIndex())
+				&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
 				&& g_renderer.getCuller().isInside(unit->getPos())) {
 					g_soundRenderer.playFx(g_coreData.getWaterSound());
 				}
 			}
 		}
-
-		//unit death
+		// unit death
 		if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
 			unit->kill();
 		}
+		// assert map cells
 		g_map.assertUnitCells(unit);
 	}
 }
@@ -292,7 +294,7 @@ void World::processFrame() {
 	//m_unitTypeFactory.assertTypes();
 
 	++frameCount;
-	iSim->startFrame(frameCount);
+	m_simInterface->startFrame(frameCount);
 	if (frameCount % 5 == 0) {
 		g_userInterface.getMinimap()->updateUnitTex();
 	}
@@ -315,7 +317,7 @@ void World::processFrame() {
 //	updateEarthquakes(1.f / 40.f);
 
 	//undertake the dead
-	iSim->getUnitFactory().update();
+	m_simInterface->getUnitFactory().update();
 
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
@@ -419,7 +421,7 @@ void World::damage(Unit *unit, int hp) {
 
 void World::doKill(Unit *killer, Unit *killed) {
 	ScriptManager::onUnitDied(killed);
-	iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
+	m_simInterface->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
 	if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
 		killer->incKills();
 	}
@@ -493,13 +495,13 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 //CLEAN: this is never called, and has a silly name considering what it appears to be for...
 void World::appyEffect(Unit *u, Effect *e) {
 	if (u->add(e)) {
-		Unit *attacker = iSim->getUnitFactory().getUnit(e->getSource());
+		Unit *attacker = m_simInterface->getUnitFactory().getUnit(e->getSource());
 		if (attacker) {
-			iSim->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
+			m_simInterface->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
 			attacker->incKills();
 		} else if (e->getRoot()) {
 			// if killed by a recourse effect, this was suicide
-			iSim->getStats()->kill(u->getFactionIndex(), u->getFactionIndex());
+			m_simInterface->getStats()->kill(u->getFactionIndex(), u->getFactionIndex());
 		}
 	}
 }
@@ -554,7 +556,7 @@ void World::tick() {
 }
 
 Unit* World::findUnitById(int id) const {
-	return iSim->getUnitFactory().getUnit(id);
+	return m_simInterface->getUnitFactory().getUnit(id);
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
@@ -651,7 +653,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	if (!map.isInside(pos)) {
 		return -4;
 	}
-	Unit *unit = iSim->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
+	Unit *unit = m_simInterface->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
 	if (placeUnit(pos, generationArea, unit, true)) {
 		unit->create(true);
 		unit->born();
@@ -661,7 +663,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		ScriptManager::onUnitCreated(unit);
 		return unit->getId();
 	} else {
-		iSim->getUnitFactory().deleteUnit(unit);
+		m_simInterface->getUnitFactory().deleteUnit(unit);
 		return -3;
 	}
 }
@@ -967,7 +969,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 
 //init basic cell state
 void World::initCells() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	Logger::getInstance().add("State cells", true);
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
@@ -1014,7 +1016,7 @@ void World::initFactions() {
 	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID, "Glestimals",
 		&techTree, -1, -1, -1, -1, false, false);
 	
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	if (!gs.getFactionCount()) {
 		thisTeamIndex = 0;
@@ -1040,9 +1042,9 @@ void World::initFactions() {
 				unitTypes[ft->getName()].insert(ft->getUnitType(j)->getName());
 			}
 		}
-		//  iSim->getStats()->setTeam(i, gs.getTeam(i));
-		//  iSim->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
-		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
+		//  m_simInterface->getStats()->setTeam(i, gs.getTeam(i));
+		//  m_simInterface->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
+		//  m_simInterface->getStats()->setControl(i, gs.getFactionControl(i));
 	}
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();	
 }
@@ -1060,7 +1062,7 @@ void World::initUnits() {
 			const UnitType *ut = ft->getStartingUnit(j);
 			int initNumber = ft->getStartingUnitAmount(j);
 			for (int l = 0; l < initNumber; l++) {
-				Unit *unit = iSim->getUnitFactory().newInstance(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
+				Unit *unit = m_simInterface->getUnitFactory().newInstance(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
 				int startLocationIndex = f->getStartLocationIndex();
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
@@ -1169,7 +1171,7 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
 //computes the fog of war texture, contained in the minimap
 void World::computeFow() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	
 	//todo : move to Minimap
 	//reset texture
