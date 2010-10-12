@@ -462,8 +462,6 @@ void Mesh::save(const string &dir, FileOps *f){
 //	class Model
 // ===============================================
 
-Texture2D* Model::defaultTexture = 0;
-
 // ==================== constructor & destructor ====================
 
 Model::Model(){
@@ -510,7 +508,7 @@ void Model::load(const string &path, int size, int height) {
 	} catch (runtime_error &e) {
 		meshCount = 1;
 		meshes = new Mesh[1];
-		meshes[0].buildCube(size, height, defaultTexture);
+		meshes[0].buildCube(size, height, Texture2D::defaultTexture);
 		meshes[0].buildInterpolationData();
 		throw e;
 	}

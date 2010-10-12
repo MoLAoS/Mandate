@@ -16,10 +16,13 @@
 
 #include "graphics_interface.h"
 #include "graphics_factory.h"
+#include "util.h"
 
 #include "leak_dumper.h"
 
 namespace Shared{ namespace Graphics{
+
+using Util::cleanPath;
 
 // =====================================================
 //	class TextureManager
@@ -35,17 +38,21 @@ TextureManager::~TextureManager(){
 }
 
 void TextureManager::init(){
-	for(int i=0; i<textures.size(); ++i){
-		textures[i]->init(textureFilter, maxAnisotropy);
+	for (int i=0; i < TextureType::COUNT; ++i) {
+		foreach (TextureContainer, it, textures[i]) {
+			(*it)->init(textureFilter, maxAnisotropy);
+		}
 	}
 }
 
 void TextureManager::end(){
-	for(int i=0; i<textures.size(); ++i){
-		textures[i]->end();
-		delete textures[i];
+	for (int i=0; i < TextureType::COUNT; ++i) {
+		foreach (TextureContainer, it, textures[i]) {
+			(*it)->end();
+			delete *it;
+		}
+		textures[i].clear();
 	}
-	textures.clear();
 }
 
 void TextureManager::setFilter(Texture::Filter textureFilter){
@@ -56,32 +63,41 @@ void TextureManager::setMaxAnisotropy(int maxAnisotropy){
 	this->maxAnisotropy= maxAnisotropy;
 }
 
-Texture *TextureManager::getTexture(const string &path){
-	for(int i=0; i<textures.size(); ++i){
-		if(textures[i]->getPath()==path){
-			return textures[i];
+Texture2D *TextureManager::getTexture(const string &path) {
+	string cleanedPath = cleanPath(path);
+	for (int i=0; i < textures[TextureType::TWO_D].size(); ++i) {
+		if (textures[TextureType::TWO_D][i]->getPath() == cleanedPath) {
+			return static_cast<Texture2D*>(textures[TextureType::TWO_D][i]);
 		}
 	}
-	return NULL;
+	Texture2D *tex = GraphicsInterface::getInstance().getFactory()->newTexture2D();
+	try {
+		tex->load(cleanedPath);
+	} catch (runtime_error &e) {
+		delete tex;
+		return Texture2D::defaultTexture;
+	}
+	textures[TextureType::TWO_D].push_back(tex);
+	return tex;
 }
 
 Texture1D *TextureManager::newTexture1D(){
 	Texture1D *texture1D= GraphicsInterface::getInstance().getFactory()->newTexture1D();
-	textures.push_back(texture1D);
+	textures[TextureType::ONE_D].push_back(texture1D);
 
 	return texture1D;
 }
 
 Texture2D *TextureManager::newTexture2D(){
 	Texture2D *texture2D= GraphicsInterface::getInstance().getFactory()->newTexture2D();
-	textures.push_back(texture2D);
+	textures[TextureType::TWO_D].push_back(texture2D);
 
 	return texture2D;
 }
 
 Texture3D *TextureManager::newTexture3D(){
 	Texture3D *texture3D= GraphicsInterface::getInstance().getFactory()->newTexture3D();
-	textures.push_back(texture3D);
+	textures[TextureType::THREE_D].push_back(texture3D);
 
 	return texture3D;
 }
@@ -89,7 +105,7 @@ Texture3D *TextureManager::newTexture3D(){
 
 TextureCube *TextureManager::newTextureCube(){
 	TextureCube *textureCube= GraphicsInterface::getInstance().getFactory()->newTextureCube();
-	textures.push_back(textureCube);
+	textures[TextureType::CUBE_MAP].push_back(textureCube);
 
 	return textureCube;
 }

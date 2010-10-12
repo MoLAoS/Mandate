@@ -147,9 +147,6 @@ private:
 	Mesh *meshes;
 
 public:
-	static Texture2D *defaultTexture;
-
-public:
 	// constructor & destructor
 	Model();
 	virtual ~Model();

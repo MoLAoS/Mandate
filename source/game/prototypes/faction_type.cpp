@@ -150,6 +150,24 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		logger.unitLoaded();
 	}
 
+	foreach_const (UnitTypes, uit, unitTypes) {
+		const UnitType *ut = *uit;
+		for (int i=0; i < ut->getCommandTypeCount<LoadCommandType>(); ++i) {
+			const LoadCommandType *lct = ut->getCommandType<LoadCommandType>(i);
+			foreach (UnitTypes, luit, unitTypes) {
+				UnitType *lut = *luit;
+				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CommandClass::MOVE)) {
+					loadableUnitTypes.insert(lut);
+				}
+			}
+		}
+
+	}
+	foreach (UnitTypeSet, it, loadableUnitTypes) {
+		(*it)->addBeLoadedCommand();
+	}
+
+
 	// b2) load upgrades
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();

@@ -606,8 +606,33 @@ public:
 	virtual Clicks getClicks() const { return (moveSkillType ? Clicks::TWO : Clicks::ONE); }
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::UNLOAD; }
+};
+
+// ===============================
+//  class UnloadCommandType
+// ===============================
+
+class BeLoadedCommandType : public CommandType {
 private:
-	
+	const MoveSkillType *moveSkillType;
+
+public:
+	BeLoadedCommandType()
+			: CommandType("be-loaded", Clicks::ONE), moveSkillType(0) {}
+
+	void setMoveSkill(const MoveSkillType *moveSkill) { moveSkillType = moveSkill; }
+	virtual bool load() {return true;}
+	virtual void doChecksum(Checksum &checksum) const {}
+	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void update(Unit *unit) const;
+	virtual string getReqDesc() const {return "";}
+
+	//get
+	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
+
+	virtual Clicks getClicks() const { return Clicks::ONE; }
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::BE_LOADED; }
 };
 
 // ===============================

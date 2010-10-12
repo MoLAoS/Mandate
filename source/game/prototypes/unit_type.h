@@ -128,6 +128,7 @@ public:
 	virtual ~UnitType();
 	void preLoad(const string &dir);
 	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal = false);
+	void addBeLoadedCommand();
 	virtual void doChecksum(Checksum &checksum) const;
 	const FactionType* getFactionType() const { return m_factionType; }
 
@@ -148,6 +149,10 @@ public:
 
 	int getSkillTypeCount() const						{return skillTypes.size();}
 	const SkillType *getSkillType(int i) const			{return skillTypes[i];}
+	const MoveSkillType *getFirstMoveSkill() const			{
+		return skillTypesByClass[SkillClass::MOVE].empty() ? 0 
+			: static_cast<const MoveSkillType *>(skillTypesByClass[SkillClass::MOVE].front());
+	}
 
 	int getCommandTypeCount() const						{return commandTypes.size();}
 	const CommandType *getCommandType(int i) const		{return commandTypes[i];}

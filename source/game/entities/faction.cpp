@@ -256,7 +256,8 @@ bool Faction::reqsOk(const CommandType *ct) const {
   */
 bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 
-	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
+	if (ct->getClass() == CommandClass::SET_MEETING_POINT
+	|| ct->getClass() == CommandClass::BE_LOADED) {
 		return true;
 	}
 	

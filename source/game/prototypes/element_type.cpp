@@ -41,16 +41,21 @@ void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
 // =====================================================
 
 bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
+	string imgPath;
 	try {
 		const XmlNode *imageNode = baseNode->getChild("image");
-		image = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-		image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
+		imgPath = dir + "/" + imageNode->getAttribute("path")->getRestrictedValue();
 		if (baseNode->getOptionalChild("name")) {
 			name = baseNode->getChild("name")->getStringValue();
 		}
-	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(dir, e.what());
 		return false;
+	}
+	try {
+		image = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
+	} catch (runtime_error &e) {
+		g_errorLog.addMediaError(dir, imgPath, e.what());
 	}
 	return true;
 }
@@ -184,14 +189,23 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 		loadOk = false;
 	}
 	// Cancel image
+	string imgPath;
 	try {
 		const XmlNode *imageCancelNode = baseNode->getChild("image-cancel");
-		cancelImage = g_renderer.newTexture2D(ResourceScope::GAME);
-		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
+		imgPath = dir + "/" + imageCancelNode->getRestrictedAttribute("path");
+
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
+	if (loadOk) {
+		try {
+			cancelImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
+		} catch (runtime_error &e) {
+			g_errorLog.addMediaError(dir, imgPath, e.what());
+		}
+	}
+
 	// Resource requirements
 	try {
 		const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);

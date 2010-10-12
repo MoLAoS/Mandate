@@ -63,6 +63,8 @@ public:
 	~Renderer();
 	static Renderer *getInstance();
 
+	TextureManager *getTextureManager() { return textureManager; }
+
 	void init();
 	void reset(int x, int y, int w, int h, int playerColor);
 	void transform(float rotX, float rotY, float zoom);

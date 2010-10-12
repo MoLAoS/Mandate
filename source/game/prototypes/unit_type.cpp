@@ -278,8 +278,8 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
 			meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();
 			if (meetingPoint) {
-				meetingPointImage= Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-				meetingPointImage->load(dir+"/"+meetingPointNode->getAttribute("image-path")->getRestrictedValue());
+				string imgPath = dir + "/" + meetingPointNode->getAttribute("image-path")->getRestrictedValue();
+				meetingPointImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
 			}
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(path, e.what());
@@ -425,6 +425,14 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		}
 	}
 	return loadOk;   
+}
+
+void UnitType::addBeLoadedCommand() {
+	CommandType *blct = g_world.getCommandTypeFactory().newInstance("be-loaded", this);
+	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(getFirstMoveSkill());
+	commandTypes.push_back(blct);
+	commandTypesByClass[CommandClass::BE_LOADED].push_back(blct);
+	g_world.getCommandTypeFactory().setChecksum(blct);
 }
 
 void UnitType::doChecksum(Checksum &checksum) const {

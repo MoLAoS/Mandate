@@ -14,13 +14,18 @@
 
 #include "gae_g3dviewer.xpm"
 
+// read default texture from default.h
+#include "MemFileOps.hpp"
+
+#include "default_tex.h"
+
+namespace Shared { namespace G3dViewer {
+
 using std::exception;
 using namespace Shared::Platform; 
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
-
-namespace Shared { namespace G3dViewer {
 
 // ===============================================
 //	class Global functions
@@ -147,6 +152,13 @@ MainWindow::~MainWindow(){
 void MainWindow::init(){
 	glCanvas->SetCurrent();
 	renderer->init();
+
+	Texture2D *defTex = renderer->getTextureManager()->newTexture2D();
+	FileOps *file = new Shared::PhysFS::MemFileOps();
+	((Shared::PhysFS::MemFileOps*)file)->openFromArray(deftex_data, deftex_length);
+	defTex->getPixmap()->loadTga(file);
+	Texture2D::defaultTexture = defTex;
+
 	if(!modelPath.empty()){
 		Model *tmpModel= new ModelGl();
 		renderer->loadTheModel(tmpModel, modelPath);

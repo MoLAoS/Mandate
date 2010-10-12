@@ -132,6 +132,8 @@ Program::Program(CmdArgs &args)
 	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
 	makeCurrentGl();
 
+	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
+
 	// load coreData, (needs renderer, but must load before renderer init) and init renderer
 	if (!g_coreData.load() || !g_renderer.init()) {
 		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");

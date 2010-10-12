@@ -78,6 +78,7 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<MorphCommandType>("morph");
 	registerClass<LoadCommandType>("load");
 	registerClass<UnloadCommandType>("unload");
+	registerClass<BeLoadedCommandType>("be-loaded");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
 	registerClass<GenericCommandType>("generic");

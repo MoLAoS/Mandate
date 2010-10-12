@@ -23,10 +23,6 @@
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
 
-// read default texture from default.h
-#include "MemFileOps.hpp"
-#include "default.h"
-
 #include "profiler.h"
 
 using std::max;
@@ -98,23 +94,35 @@ PixmapIoTga::~PixmapIoTga(){
 		delete file;
 	}
 }
+void PixmapIoTga::openRead(FileOps *f) {
+	file = f;
+
+	//read header
+	TargaFileHeader fileHeader;
+	file->read(&fileHeader, sizeof(TargaFileHeader), 1);
+
+	//check that we can load this tga file
+	if(fileHeader.idLength!=0){
+		throw runtime_error("id field is not 0");
+	}
+
+	if(fileHeader.dataTypeCode!=tgaUncompressedRgb && fileHeader.dataTypeCode!=tgaUncompressedBw){
+		throw runtime_error("only uncompressed BW and RGB targa images are supported");
+	}
+
+	//check bits per pixel
+	if(fileHeader.bitsPerPixel!=8 && fileHeader.bitsPerPixel!=24 && fileHeader.bitsPerPixel!=32){
+		throw runtime_error("only 8, 24 and 32 bit targa images are supported");
+	}
+
+	h= fileHeader.height;
+	w= fileHeader.width;
+	components= fileHeader.bitsPerPixel/8;
+}
 
 void PixmapIoTga::openRead(const string &path){
 	file = FSFactory::getInstance()->getFileOps();
-	try {
-		file->openRead(path.c_str());
-	} catch (runtime_error &e) {
-		// FIXME: path should really be in game but this is the common load function, maybe have a
-		// member for default/missing texture path that's set from game.
-		printf("%s\n", e.what());
-		// will then throw exception again if even this texture is missing
-		//file->openRead("data/core/misc_textures/default.tga");
-		
-		// HACK: read default texture from header default.h
-		delete file;
-		file = new Shared::PhysFS::MemFileOps();
-		((Shared::PhysFS::MemFileOps*)file)->openFromArray(deftex_data, deftex_length);
-	}
+	file->openRead(path.c_str());
 
 	//read header
 	TargaFileHeader fileHeader;
@@ -135,7 +143,7 @@ void PixmapIoTga::openRead(const string &path){
 	}
 
 	h= fileHeader.height;
-    w= fileHeader.width;
+	w= fileHeader.width;
 	components= fileHeader.bitsPerPixel/8;
 }
 
@@ -197,7 +205,7 @@ void PixmapIoTga::read(uint8 *pixels, int components) {
 }
 
 void PixmapIoTga::openWrite(const string &path, int w, int h, int components){
-    this->w= w;
+	this->w= w;
 	this->h= h;
 	this->components= components;
 
@@ -252,8 +260,8 @@ void PixmapIoBmp::openRead(const string &path){
 	file->openRead(path.c_str());
 
 	//read file header
-    BitmapFileHeader fileHeader;
-    file->read(&fileHeader, sizeof(BitmapFileHeader), 1);
+	BitmapFileHeader fileHeader;
+	file->read(&fileHeader, sizeof(BitmapFileHeader), 1);
 	if (fileHeader.type1!='B' || fileHeader.type2!='M') {
 		throw runtime_error(path +" is not a bitmap");
 	}
@@ -262,11 +270,11 @@ void PixmapIoBmp::openRead(const string &path){
 	BitmapInfoHeader infoHeader;
 	file->read(&infoHeader, sizeof(BitmapInfoHeader), 1);
 	if (infoHeader.bitCount != 24) {
-        throw runtime_error(path+" is not a 24 bit bitmap");
+		throw runtime_error(path+" is not a 24 bit bitmap");
 	}
 
-    h = infoHeader.height;
-    w = infoHeader.width;
+	h = infoHeader.height;
+	w = infoHeader.width;
 	components= 3;
 }
 
@@ -312,7 +320,7 @@ void PixmapIoBmp::read(uint8 *pixels, int components){
 }
 
 void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
-    this->w= w;
+	this->w= w;
 	this->h= h;
 	this->components= components;
 
@@ -320,12 +328,12 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 	file->openWrite(path.c_str());
 
 	BitmapFileHeader fileHeader;
-    fileHeader.type1='B';
+	fileHeader.type1='B';
 	fileHeader.type2='M';
 	fileHeader.offsetBits=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader);
 	fileHeader.size=sizeof(BitmapFileHeader)+sizeof(BitmapInfoHeader)+3*h*w;
 
-    file->write(&fileHeader, sizeof(BitmapFileHeader), 1);
+	file->write(&fileHeader, sizeof(BitmapFileHeader), 1);
 
 	//info header
 	BitmapInfoHeader infoHeader;
@@ -345,11 +353,11 @@ void PixmapIoBmp::openWrite(const string &path, int w, int h, int components){
 }
 
 void PixmapIoBmp::write(uint8 *pixels){
-    for (int i=0; i<h*w*components; i+=components){
-        file->write(&pixels[i+2], 1, 1);
+	for (int i=0; i<h*w*components; i+=components){
+		file->write(&pixels[i+2], 1, 1);
 		file->write(&pixels[i+1], 1, 1);
 		file->write(&pixels[i], 1, 1);
-    }
+	}
 }
 
 // =====================================================
@@ -396,7 +404,7 @@ void PixmapIoPng::openRead(const string &path) {
 	png_set_read_fn(png_ptr, file, user_read_data);
 	png_set_sig_bytes(png_ptr, 8);
 	png_read_info(png_ptr, info_ptr);
-	
+
 	w = png_get_image_width(png_ptr, info_ptr);
 	h = png_get_image_height(png_ptr, info_ptr);
 	int color_type = png_get_color_type(png_ptr, info_ptr);
@@ -404,8 +412,7 @@ void PixmapIoPng::openRead(const string &path) {
 
 	// We want RGB, 24 bit
 	if (color_type == PNG_COLOR_TYPE_PALETTE || (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-			|| png_get_valid(png_ptr,info_ptr,PNG_INFO_tRNS)) {
-
+	|| png_get_valid(png_ptr,info_ptr,PNG_INFO_tRNS)) {
 		png_set_expand(png_ptr);
 	}
 
@@ -500,9 +507,9 @@ void PixmapIoPng::read(uint8 *pixels, int components) {
 // ===================== PUBLIC ========================
 
 Pixmap1D::Pixmap1D() {
-    w= -1;
+	w= -1;
 	components= -1;
-    pixels= NULL;
+	pixels= NULL;
 }
 
 Pixmap1D::Pixmap1D(int components){
@@ -604,10 +611,10 @@ void Pixmap1D::loadTga(const string &path){
 // ===================== PUBLIC ========================
 
 Pixmap2D::Pixmap2D(){
-    h= -1;
-    w= -1;
+	h= -1;
+	w= -1;
 	components= -1;
-    pixels= NULL;
+	pixels= NULL;
 }
 
 Pixmap2D::Pixmap2D(int components){
@@ -665,6 +672,27 @@ void Pixmap2D::loadBmp(const string &path){
 
 	//data
 	pib.read(pixels, components);
+}
+
+void Pixmap2D::loadTga(FileOps *f) {
+	PixmapIoTga pit;
+	pit.openRead(f);
+	w = pit.getW();
+	h = pit.getH();
+
+	// header
+	int fileComponents = pit.getComponents();
+
+	// init
+	if (components == -1) {
+		components = fileComponents;
+	}
+	if (pixels == NULL) {
+		pixels = new uint8[w * h * components];
+	}
+
+	// read data
+	pit.read(pixels, components);
 }
 
 void Pixmap2D::loadTga(const string &path){
@@ -1030,7 +1058,7 @@ void PixmapCube::init(int w, int h, int components){
 	}
 }
 
-	//load & save
+//load & save
 void PixmapCube::loadFace(const string &path, int face){
 	faces[face].load(path);
 }

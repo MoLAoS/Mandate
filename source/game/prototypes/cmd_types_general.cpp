@@ -790,6 +790,17 @@ void LoadCommandType::update(Unit *unit) const {
 		unitsToCarry.erase(std::find(unitsToCarry.begin(), unitsToCarry.end(), closest->getId()));
 		unit->setCurrSkill(loadSkillType);
 		unit->clearPath();
+		if (unit->getCarriedCount() == m_loadCapacity && !unitsToCarry.empty()) {
+			foreach (UnitIdList, it, unitsToCarry) {
+				Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+				if (unit->getType()->getFirstCtOfClass(CommandClass::MOVE)) {
+					assert(unit->getCurrCommand());
+					assert(unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED);
+					unit->cancelCommand();
+				}
+			}
+			unitsToCarry.clear();
+		}
 		return;
 	}
 	if (!moveSkillType) {
@@ -914,6 +925,40 @@ void UnloadCommandType::update(Unit *unit) const {
 				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
 			}
 		}
+	}
+}
+
+// =====================================================
+// 	class BeLoadedCommandType
+// =====================================================
+
+void BeLoadedCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	
+	if (!command->getUnit() || command->getUnit()->isDead()) {
+		unit->finishCommand();
+		return;
+	}
+	Vec2i targetPos = command->getUnit()->getCenteredPos();
+	assert(moveSkillType);
+	switch (g_routePlanner.findPathToLocation(unit, targetPos)) {
+		case TravelState::MOVING:
+			unit->setCurrSkill(moveSkillType);
+			unit->face(unit->getNextPos());
+			break;
+		case TravelState::BLOCKED:
+			unit->setCurrSkill(SkillClass::STOP);
+			if (unit->getPath()->isBlocked()) {
+				unit->clearPath();
+				command->setPos(Command::invalidPos);
+			}
+			break;
+		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
+			unit->setCurrSkill(SkillClass::STOP);
+			command->setPos(Command::invalidPos);
+			break;
 	}
 }
 

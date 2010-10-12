@@ -187,6 +187,7 @@ public:
 
 	//engine interface
 	Model *newModel(ResourceScope rs);
+	Texture2D *getTexture2D(ResourceScope rs, const string &path);
 	Texture2D *newTexture2D(ResourceScope rs);
 	Texture3D *newTexture3D(ResourceScope rs);
 	//Font *newFont(ResourceScope rs);
