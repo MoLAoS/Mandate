@@ -23,6 +23,10 @@
 #include "leak_dumper.h"
 #include "FSFactory.hpp"
 
+// read default texture from default.h
+#include "MemFileOps.hpp"
+#include "default.h"
+
 #include "profiler.h"
 
 using std::max;
@@ -104,7 +108,12 @@ void PixmapIoTga::openRead(const string &path){
 		// member for default/missing texture path that's set from game.
 		printf("%s\n", e.what());
 		// will then throw exception again if even this texture is missing
-		file->openRead("data/core/misc_textures/default.tga");
+		//file->openRead("data/core/misc_textures/default.tga");
+		
+		// HACK: read default texture from header default.h
+		delete file;
+		file = new Shared::PhysFS::MemFileOps();
+		((Shared::PhysFS::MemFileOps*)file)->openFromArray(deftex_data, deftex_length);
 	}
 
 	//read header
