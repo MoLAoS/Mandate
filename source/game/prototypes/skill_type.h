@@ -96,7 +96,7 @@ protected:
 
 public:
 	//varios
-	SkillType(SkillClass skillClass, const char* typeName);
+	SkillType(const char* typeName);
 	virtual ~SkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
@@ -163,7 +163,7 @@ public:
 
 class StopSkillType: public SkillType {
 public:
-	StopSkillType() : SkillType(SkillClass::STOP, "Stop"){}
+	StopSkillType() : SkillType("Stop"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		Lang &lang= Lang::getInstance();
 		str+= lang.get("ReactionSpeed")+": "+ intToStr(speed)+"\n";
@@ -183,7 +183,7 @@ private:
 	float maxDeclination;
 
 public:
-	MoveSkillType() : SkillType(SkillClass::MOVE, "Move"){}
+	MoveSkillType() : SkillType("Move"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "WalkSpeed");
 		descEpCost(str, unit);
@@ -217,7 +217,7 @@ protected:
 	Zones zones;
 
 public:
-	TargetBasedSkillType(SkillClass skillClass, const char* typeName);
+	TargetBasedSkillType(const char* typeName);
 	virtual ~TargetBasedSkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
@@ -242,7 +242,7 @@ private:
 //	EarthquakeType *earthquakeType;
 
 public:
-	AttackSkillType() : TargetBasedSkillType(SkillClass::ATTACK, "Attack"), attackType(NULL)/*, earthquakeType(NULL)*/ {}
+	AttackSkillType() : TargetBasedSkillType("Attack"), attackType(NULL)/*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
@@ -267,7 +267,7 @@ public:
 
 class BuildSkillType: public SkillType{
 public:
-	BuildSkillType() : SkillType(SkillClass::BUILD, "Build") {}
+	BuildSkillType() : SkillType("Build") {}
 	void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "BuildSpeed");
 		descEpCost(str, unit);
@@ -283,7 +283,7 @@ public:
 
 class HarvestSkillType: public SkillType{
 public:
-	HarvestSkillType() : SkillType(SkillClass::HARVEST, "Harvest") {}
+	HarvestSkillType() : SkillType("Harvest") {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 
 	virtual SkillClass getClass() const { return typeClass(); }
@@ -353,7 +353,7 @@ public:
 
 class UpgradeSkillType: public SkillType{
 public:
-	UpgradeSkillType() : SkillType(SkillClass::UPGRADE, "Upgrade"){}
+	UpgradeSkillType() : SkillType("Upgrade"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "UpgradeSpeed");
 		descEpCost(str, unit);
@@ -370,7 +370,7 @@ public:
 
 class BeBuiltSkillType: public SkillType{
 public:
-	BeBuiltSkillType() : SkillType(SkillClass::BE_BUILT, "Be built"){}
+	BeBuiltSkillType() : SkillType("Be built"){}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 
 	virtual SkillClass getClass() const { return typeClass(); }
@@ -383,7 +383,7 @@ public:
 
 class MorphSkillType: public SkillType{
 public:
-	MorphSkillType() : SkillType(SkillClass::MORPH, "Morph"){}
+	MorphSkillType() : SkillType("Morph"){}
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "MorphSpeed");
 		descEpCost(str, unit);
@@ -402,7 +402,7 @@ private:
 	bool fade;
 
 public:
-	DieSkillType() : SkillType(SkillClass::DIE, "Die"){}
+	DieSkillType() : SkillType("Die"){}
 	bool getFade() const	{return fade;}
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
@@ -434,13 +434,27 @@ public:
 
 class UnloadSkillType: public SkillType{
 public:
-	UnloadSkillType() : SkillType(SkillClass::UNLOAD, "Unload"){}
+	UnloadSkillType() : SkillType("Unload"){}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::UNLOAD; }
 };
 
+// ===============================
+// 	class GenericSkillType
+// ===============================
+
+class GenericSkillType : public SkillType {
+public:
+	GenericSkillType() : SkillType("Generic") {}
+
+	virtual void getDesc(string &str, const Unit *unit) const {}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::GENERIC; }
+
+};
 // ===============================
 // 	class ModelFactory
 // ===============================

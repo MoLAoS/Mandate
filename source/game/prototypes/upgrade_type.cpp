@@ -93,7 +93,8 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 
 	//initialize values using new format if nodes are present
 	if (upgradeNode->getChild("static-modifiers", 0, false)
-	|| upgradeNode->getChild("multipliers", 0, false)) {
+	|| upgradeNode->getChild("multipliers", 0, false)
+	|| upgradeNode->getChild("point-boosts", 0, false)) {
 		if (!EnhancementType::load(upgradeNode, dir, techTree, factionType)) {
 			loadOk = false;
 		}

@@ -1511,6 +1511,7 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 	if (upgradeType->isAffected(type)) {
 		totalUpgrade.sum(upgradeType);
 		recalculateStats();
+		doRegen(upgradeType->getHpBoost(), upgradeType->getEpBoost());
 	}
 }
 

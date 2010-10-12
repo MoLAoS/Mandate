@@ -31,6 +31,7 @@ SkillTypeFactory::SkillTypeFactory()
 	registerClass<DieSkillType>("die");
 	registerClass<LoadSkillType>("load");
 	registerClass<UnloadSkillType>("unload");
+	registerClass<GenericSkillType>("generic");
 }
 
 SkillTypeFactory::~SkillTypeFactory() {
@@ -79,6 +80,7 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<UnloadCommandType>("unload");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
+	registerClass<GenericCommandType>("generic");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");
 }
 

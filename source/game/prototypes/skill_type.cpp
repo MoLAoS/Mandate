@@ -37,7 +37,7 @@ namespace Glest { namespace ProtoTypes {
 // 	class SkillType
 // =====================================================
 
-SkillType::SkillType(SkillClass skillClass, const char* typeName) 
+SkillType::SkillType(const char* typeName) 
 		: NameIdPair()
 		, effectTypes()
 		, epCost(0)
@@ -256,8 +256,8 @@ CycleInfo SkillType::calculateCycleTime() const {
 // 	class TargetBasedSkillType
 // =====================================================
 
-TargetBasedSkillType::TargetBasedSkillType(SkillClass skillClass, const char* typeName)
-		: SkillType(skillClass, typeName) {
+TargetBasedSkillType::TargetBasedSkillType(const char* typeName)
+		: SkillType(typeName) {
 	startTime = 0.0f;
 
     projectile= false;
@@ -417,7 +417,7 @@ void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt
 // 	class RepairSkillType
 // ===============================
 
-RepairSkillType::RepairSkillType() : SkillType(SkillClass::REPAIR, "Repair"), splashParticleSystemType(NULL) {
+RepairSkillType::RepairSkillType() : SkillType("Repair"), splashParticleSystemType(NULL) {
 	amount = 0;
 	multiplier = 1;
 	petOnly = false;
@@ -498,7 +498,7 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 // 	class ProduceSkillType
 // =====================================================
 
-ProduceSkillType::ProduceSkillType() : SkillType(SkillClass::PRODUCE, "Produce") {
+ProduceSkillType::ProduceSkillType() : SkillType("Produce") {
 	pet = false;
 	maxPets = 0;
 }
@@ -523,7 +523,7 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 // 	class LoadSkillType
 // =====================================================
 
-LoadSkillType::LoadSkillType() : SkillType(SkillClass::LOAD, "Load") {
+LoadSkillType::LoadSkillType() : SkillType("Load") {
 }
 
 void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {

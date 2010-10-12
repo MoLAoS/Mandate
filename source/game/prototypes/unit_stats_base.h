@@ -268,6 +268,9 @@ protected:
 	fixed repairSpeedMult;
 	fixed harvestSpeedMult;
 
+	int hpBoost;
+	int epBoost;
+
 public:
 	EnhancementType() {
 		reset();
@@ -275,8 +278,10 @@ public:
 
 	fixed getMaxHpMult() const			{return maxHpMult;}
 	fixed getHpRegenerationMult() const	{return hpRegenerationMult;}
+	int   getHpBoost() const			{return hpBoost;}
 	fixed getMaxEpMult() const			{return maxEpMult;}
 	fixed getEpRegenerationMult() const	{return epRegenerationMult;}
+	int   getEpBoost() const			{return epBoost;}
 	fixed getSightMult() const			{return sightMult;}
 	fixed getArmorMult() const			{return armorMult;}
 	fixed getAttackStrengthMult() const	{return attackStrengthMult;}

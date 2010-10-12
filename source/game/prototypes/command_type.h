@@ -643,6 +643,31 @@ public:
 };
 
 // ===============================
+//  class GenericCommandType
+// ===============================
+
+class GenericCommandType: public CommandType {
+private:
+	const GenericSkillType *genericSkillType;
+	bool	m_cycle;
+
+public:
+	GenericCommandType() : CommandType("Generic", Clicks::ONE), m_cycle(false) {}
+	virtual void doChecksum(Checksum &checksum) const {
+		CommandType::doChecksum(checksum);
+		checksum.add(genericSkillType->getName());
+	}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void getDesc(string &str, const Unit *unit) const	{genericSkillType->getDesc(str, unit);}
+	const GenericSkillType *getGenericSkillType() const			{return genericSkillType;}
+
+	virtual void update(Unit *unit) const;
+
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::GENERIC; }
+};
+
+// ===============================
 //  class SetMeetingPointCommandType
 // ===============================
 

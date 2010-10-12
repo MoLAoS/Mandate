@@ -917,6 +917,38 @@ void UnloadCommandType::update(Unit *unit) const {
 	}
 }
 
+// ===============================
+//  class GenericCommandType
+// ===============================
+
+bool GenericCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	// generic skill
+	try { 
+		const XmlNode *genSkillNode = n->getChild("generic-skill");
+		m_cycle = genSkillNode->getOptionalBoolValue("cycle");
+		string skillName = genSkillNode->getAttribute("value")->getRestrictedValue();
+		const SkillType *st = unitType->getSkillType(skillName, SkillClass::GENERIC);
+		genericSkillType = static_cast<const GenericSkillType*>(st);
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void GenericCommandType::update(Unit *unit) const {
+	if (unit->getCurrSkill() != genericSkillType) {
+		unit->setCurrSkill(genericSkillType);
+		return;
+	}
+	if (!m_cycle) {
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+	}
+}
+
 // Update helpers...
 
 /** Check for enemies unit can smite (or who can smite him)
