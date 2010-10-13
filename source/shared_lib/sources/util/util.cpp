@@ -41,6 +41,8 @@ namespace Shared{ namespace Util{
 
 using namespace PhysFS;
 
+MediaErrorLog mediaErrorLog;
+
 EnumNamesBase::EnumNamesBase(const char *valueList, size_t count, bool lazy, const char *enumName)
 		: valueList(valueList)
 		, names(NULL)

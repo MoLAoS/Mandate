@@ -23,6 +23,7 @@
 namespace Shared{ namespace Graphics{
 
 using Util::cleanPath;
+using Util::mediaErrorLog;
 
 // =====================================================
 //	class TextureManager
@@ -75,6 +76,7 @@ Texture2D *TextureManager::getTexture(const string &path) {
 		tex->load(cleanedPath);
 	} catch (runtime_error &e) {
 		delete tex;
+		mediaErrorLog.add(e.what(), path);
 		return Texture2D::defaultTexture;
 	}
 	textures[TextureType::TWO_D].push_back(tex);

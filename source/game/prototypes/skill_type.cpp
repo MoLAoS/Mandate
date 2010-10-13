@@ -543,21 +543,22 @@ ModelFactory::ModelFactory(){}
 Model* ModelFactory::newInstance(const string &path, int size, int height) {
 	assert(models.find(path) == models.end());
 	Model *model = g_renderer.newModel(ResourceScope::GAME);
-	try {
-		model->load(path, size, height);
-	} catch (runtime_error &e) {
-		g_errorLog.add(e.what());
+	model->load(path, size, height);
+	while (mediaErrorLog.hasError()) {
+		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
+		g_errorLog.addMediaError("", record.path, record.msg.c_str());
 	}
 	models[path] = model;
 	return model;
 }
 
 Model* ModelFactory::getModel(const string &path, int size, int height) {
-	ModelMap::iterator it = models.find(path);
+	string cleanedPath = cleanPath(path);
+	ModelMap::iterator it = models.find(cleanedPath);
 	if (it != models.end()) {
 		return it->second;
 	}
-	return newInstance(path, size, height);
+	return newInstance(cleanedPath, size, height);
 }
 
 // =====================================================

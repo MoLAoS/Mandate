@@ -125,10 +125,15 @@ void Logger::addXmlError(const string &path, const char *error) {
 
 void Logger::addMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
 	static char buffer[2048];
-	sprintf(buffer, "Error loading %s:\n\treferenced in %s\n\t%s", 
-		xmlPath.c_str(), mediaPath.c_str(), error);
+	if (xmlPath != "") {
+		sprintf(buffer, "Error loading %s:\n\treferenced in %s\n\t%s", 
+			mediaPath.c_str(), xmlPath.c_str(), error);
+	} else {
+		sprintf(buffer, "Error loading %s\n\t%s", mediaPath.c_str(), error);
+	}
 	add(buffer);
 }
+
 void Logger::addNetworkMsg(const string &msg) {
 	stringstream ss;
 	if (World::isConstructed()) {
