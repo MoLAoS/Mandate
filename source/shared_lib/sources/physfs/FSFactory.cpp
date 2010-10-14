@@ -104,7 +104,7 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 		string str("/addons/"); // needs leading '/' on windoze, doesn't harm linux
 		str += *i;
 		// check if useful
-		if(PHYSFS_isDirectory(str.c_str()) || ext(str)=="zip"){// || ext(str)=="7z"){
+		if(PHYSFS_isDirectory(str.c_str()) || ext(str)=="zip" || ext(str)=="7z"){
 			// get full real name
 			str = PHYSFS_getRealDir(str.c_str()) + str;
 			if(!PHYSFS_mount(str.c_str(), NULL, 0)){  // last 0 -> overwrites all other files
