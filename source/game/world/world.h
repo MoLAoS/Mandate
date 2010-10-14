@@ -202,7 +202,7 @@ public:
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *dest, fixed distance);
 	void appyEffect(Unit *unit, Effect *effect);
 
-	//scripting interface
+	// scripting interface
 	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
 	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
 	int giveTargetCommand( int unitId, const string &commandName, int targetId);

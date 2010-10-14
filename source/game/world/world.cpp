@@ -633,14 +633,10 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	return currUnit;
 }
 
-///@todo collect all distinct error conditions from the scripting interface, put them in an
-/// and enum with a table of string messages... then make error handling in ScriptManager less shit
-
-/** @return unit id, or -1 if factionindex invalid, or -2 if unitName invalid, or -3 if 
-  * a position could not be found for the new unit, -4 if pos invalid */
+/** @return unit id, or < 0 on error, see LuaCmdResult */
 int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos) {
 	if (factionIndex  < 0 && factionIndex >= factions.size()) {
-		return -1; // bad faction index
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 	Faction* faction= &factions[factionIndex];
 	const FactionType* ft= faction->getType();
@@ -648,10 +644,10 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	try{
 		ut = ft->getUnitType(unitName);
 	} catch (runtime_error e) {
-		return -2;
+		return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
 	}
 	if (!map.isInside(pos)) {
-		return -4;
+		return LuaCmdResult::INVALID_POSITION;
 	}
 	Unit *unit = m_simInterface->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
 	if (placeUnit(pos, generationArea, unit, true)) {
@@ -664,23 +660,23 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		return unit->getId();
 	} else {
 		m_simInterface->getUnitFactory().deleteUnit(unit);
-		return -3;
+		return LuaCmdResult::INSUFFICIENT_SPACE;
 	}
 }
 
 int World::giveResource(const string &resourceName, int factionIndex, int amount) {
 	if (factionIndex < 0 || factionIndex >= factions.size()) {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 	const ResourceType* rt= techTree.getResourceType(resourceName);
 	Faction* faction= &factions[factionIndex];
 	try {
 		rt = techTree.getResourceType(resourceName);
 	} catch (runtime_error e) {
-		return -2;
+		return LuaCmdResult::RESOURCE_NOT_FOUND;
 	}
 	faction->incResourceAmount(rt, amount);
-	return 0;
+	return LuaCmdResult::OK;
 }
 
 void World::unfogMap(const Vec4i &rect, int time) {
@@ -700,17 +696,13 @@ void World::unfogMap(const Vec4i &rect, int time) {
 	}
 }
 
-///@todo
-// these command issueing functions should just return the CommandResult, if they get that far.
-// return < 0  == arg error / unknown command / unit had no command of type / etc
-// return >= 0 == command given, value returned is CommandResult
-
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos) {
 	Unit* unit= findUnitById(unitId);
-	if (unit == NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
-	const CommandType *cmdType = NULL;
+	const CommandType *cmdType = 0;
 
 	if (commandName == "move") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::MOVE);
@@ -720,7 +712,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 		Resource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
 		if (!unit->getType()->getFirstCtOfClass(CommandClass::HARVEST)) {
-			return -2; // unit has no appropriate command
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 		if (!r) {
 			cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
@@ -741,99 +733,81 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	} else if (commandName == "guard") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
 	} else {
-		return -3; // unknown position command
+		return LuaCmdResult::INVALID_COMMAND_CLASS;
 
 	}
 	if (!cmdType) {
-		return -2; // unit has no appropriate command
+		return LuaCmdResult::NO_CAPABLE_COMMAND;
 	}
-	if (unit->giveCommand(new Command(cmdType, CommandFlags(), pos)) == CommandResult::SUCCESS) {
-		return 0; // Ok
-	}
-	return 1; // command fail
+	return unit->giveCommand(new Command(cmdType, CommandFlags(), pos));
 }
 
-/** @return 0 if ok, -1 if unitId or targetId invalid, -2 unit could not attack/repair target,
-  * -3 illegal cmd name */
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) {
 	Unit *unit = findUnitById(unitId);
 	Unit *target = findUnitById(targetId);
 	if (!unit || !target) {
-		return -1;
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
-	const CommandType *cmdType = NULL;
+	const CommandType *cmdType = 0;
 	if (cmdName == "attack") {
 		const AttackCommandType *act = unit->getType()->getAttackCommand(target->getCurrZone());
 		if (act) {
-			if (unit->giveCommand(new Command(act, CommandFlags(), target)) == CommandResult::SUCCESS) {
-				return 0; // ok
-			}
-			return 1; // command fail			
+			return unit->giveCommand(new Command(act, CommandFlags(), target));
+		} else {
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
-		return -2;
 	} else if (cmdName == "repair") {
 		const RepairCommandType *rct = unit->getType()->getRepairCommand(target->getType());
 		if (rct) {
-			if (unit->giveCommand(new Command(rct, CommandFlags(), target)) == CommandResult::SUCCESS) {
-				return 0; // ok
-			}
-			return 1; // command fail
-
+			return unit->giveCommand(new Command(rct, CommandFlags(), target));
+		} else {
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
-		return -2;
-
 	} else if (cmdName == "guard") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
 	} else if (cmdName == "patrol") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::PATROL);
 	} else {
-		return -3;
+		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
-	if (cmdType && unit->giveCommand(new Command(cmdType, CommandFlags(), target))) {
-		return 0; // ok
+	if (cmdType) {
+		return unit->giveCommand(new Command(cmdType, CommandFlags(), target));
 	}
-	return 1; // command fail
+	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
-/** return 0 if ok, -1 if bad unit id, -2 if unit has no stop command, -3 illegal cmd name,
-  * 1 if command given but failed */
+
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveStopCommand(int unitId, const string &cmdName) {
 	Unit *unit = findUnitById(unitId);
-	if (unit == NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	if (cmdName == "stop") {
 		const StopCommandType *sct = (StopCommandType*)unit->getType()->getFirstCtOfClass(CommandClass::STOP);
 		if (sct) {
-			if (unit->giveCommand(new Command(sct, CommandFlags())) == CommandResult::SUCCESS) {
-				return 0; // ok
-			}
-			return 1; // command fail
+			// return CommandResult
+			return unit->giveCommand(new Command(sct, CommandFlags()));
 		} else {
-			return -2;
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "attack-stopped") {
 		const AttackStoppedCommandType *asct = 
 			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::ATTACK_STOPPED);
 		if (asct) {
-			if (unit->giveCommand(new Command(asct, CommandFlags())) == CommandResult::SUCCESS) {
-				return 0;
-			}
-			return 1;
+			return unit->giveCommand(new Command(asct, CommandFlags()));
 		} else {
-			return -2;
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
-	} else {
-		return -3;
 	}
-	return 0;
+	return LuaCmdResult::INVALID_COMMAND_CLASS;
 }
 
-/** @return 0 if ok, 1 on command failure, -1 if unitId invalid, -2 if unit cannot produce other unit,
-  * -3 if unit's faction has no such unit producedName */
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveProductionCommand(int unitId, const string &producedName) {
 	Unit *unit= findUnitById(unitId);
-	if (unit == NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	const UnitType *ut = unit->getType();
 	// Search for a command that can produce the producible
@@ -844,28 +818,24 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 			if (pt->getName() == producedName) {
 				CommandResult res = unit->giveCommand(
 					new Command(ct, CommandFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
-				if (res == CommandResult::SUCCESS) {
-					return 0; //Ok
-				}
-				return 1; // fail
+				return res;
 			}
 		}
 	}
-	return -2;
+	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
 
-/** #return 0 if ok, -1 if unitId invalid, -2 if unit cannot produce upgrade,
-  * -3 if unit's faction has no such upgrade */
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 	Unit *unit= findUnitById(unitId);
-	if (unit==NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
-	const UpgradeType *upgrd = NULL;
+	const UpgradeType *upgrd = 0;
 	try {
 		upgrd = unit->getFaction()->getType()->getUpgradeType(upgradeName);
 	} catch (runtime_error e) {
-		return -3;
+		return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
 	}
 	const UnitType *ut= unit->getType();
 	//Search for a command that can produce the upgrade
@@ -874,33 +844,32 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 		if (ct->getClass()==CommandClass::UPGRADE) {
 			const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
 			if (uct->getProducedUpgrade() == upgrd) {
-				if (unit->giveCommand(new Command(uct, CommandFlags())) == CommandResult::SUCCESS) {
-					return 0;
-				}
-				return 1;
+				CommandResult cmdRes = unit->giveCommand(new Command(uct, CommandFlags()));
+				return cmdRes;
 			}
 		}
 	}
-	return -2;
+	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
 
+/** @ return < 0 on error (see LuaCmdResult) else query result*/
 int World::getResourceAmount(const string &resourceName, int factionIndex) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		const ResourceType* rt;
 		try {
 			rt = techTree.getResourceType(resourceName);
 		} catch (runtime_error e) {
-			return -2;
+			return LuaCmdResult::RESOURCE_NOT_FOUND;
 		}
 		return faction->getResource(rt)->getAmount();
 	} else {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 }
 
 Vec2i World::getStartLocation(int factionIndex) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		return map.getStartLocation(faction->getStartLocationIndex());
 	} else {
@@ -919,13 +888,13 @@ Vec2i World::getUnitPosition(int unitId) {
 int World::getUnitFactionIndex(int unitId) {
 	Unit* unit= findUnitById(unitId);
 	if (unit==NULL) {
-		return -1;
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	return unit->getFactionIndex();
 }
 
 int World::getUnitCount(int factionIndex) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		int count = 0;
 		
@@ -937,19 +906,19 @@ int World::getUnitCount(int factionIndex) {
 		}
 		return count;
 	} else {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 }
 
 /** @return number of units of type a faction has, -1 if faction index invalid, 
   * -2 if unitType not found */
 int World::getUnitCountOfType(int factionIndex, const string &typeName) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		int count= 0;
 		const string &ftName = faction->getType()->getName();
 		if (unitTypes[ftName].find(typeName) == unitTypes[ftName].end()) {
-			return -2;
+			return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
 		}
 		for(int i= 0; i< faction->getUnitCount(); ++i) {
 			const Unit* unit= faction->getUnit(i);
@@ -959,7 +928,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 		}
 		return count;
 	} else {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 }
 
