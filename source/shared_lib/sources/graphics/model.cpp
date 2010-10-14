@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cassert>
 #include <stdexcept>
+#include <memory>  // for auto_ptr
 
 #include "interpolation.h"
 #include "conversion.h"
