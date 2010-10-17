@@ -623,6 +623,8 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	unit->setCurrSkill(buildSkillType);
 	unit->setTarget(builtUnit, true, true);
 
+	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
+
 	const Tile *const &refTile = map->getTile(Map::toTileCoords(builtUnit->getCenteredPos())); 
 	if (builtUnitType->getField() == Field::LAND 
 	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->getSubmerged(refTile))) {

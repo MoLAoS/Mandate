@@ -153,7 +153,7 @@ ProducibleType::ProducibleType() :
 		costs(),
 		cancelImage(NULL),
 		productionTime(0),
-		advancesToSubfaction(0),
+		advancesToSubfaction(-1),
 		advancementIsImmediate(false) {
 }
 

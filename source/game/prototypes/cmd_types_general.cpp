@@ -332,6 +332,7 @@ void ProduceCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		//if not producing
 		unit->setCurrSkill(produceSkillType);
+		unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
@@ -342,6 +343,7 @@ void ProduceCommandType::update(Unit *unit) const {
 				unit->cancelCurrCommand();
 				g_simInterface->getUnitFactory().deleteUnit(unit);
 			} else {
+				unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
 				produced->create();
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
@@ -440,15 +442,18 @@ void GenerateCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
+	Faction *faction = unit->getFaction();
 	
 	if (unit->getCurrSkill() != m_produceSkillType) {
 		// if not producing
 		unit->setCurrSkill(m_produceSkillType);
+		faction->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
 		if (unit->getProgress2() > command->getProdType()->getProductionTime()) {
-			unit->getFaction()->addProduct(static_cast<const GeneratedType*>(command->getProdType()));
-			unit->getFaction()->applyStaticProduction(command->getProdType());
+			faction->addProduct(static_cast<const GeneratedType*>(command->getProdType()));
+			faction->checkAdvanceSubfaction(command->getProdType(), true);
+			faction->applyStaticProduction(command->getProdType());
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -518,18 +523,21 @@ const ProducibleType *UpgradeCommandType::getProduced() const {
 void UpgradeCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
+	Faction *faction = unit->getFaction();
 	assert(command->getType() == this);
 
 	if (unit->getCurrSkill() != upgradeSkillType) {
 		//if not producing
 		unit->setCurrSkill(upgradeSkillType);
+		faction->checkAdvanceSubfaction(producedUpgrade, false);
 	} else {
 		//if producing
 		unit->update2();
 		if (unit->getProgress2() >= producedUpgrade->getProductionTime()) {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
-			unit->getFaction()->finishUpgrade(producedUpgrade);
+			faction->finishUpgrade(producedUpgrade);
+			faction->checkAdvanceSubfaction(producedUpgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
 					g_gameState.getGameCamera()->getPos());
@@ -661,6 +669,7 @@ void MorphCommandType::update(Unit *unit) const {
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();
 				}
+				unit->getFaction()->checkAdvanceSubfaction(morphToUnit, true);
 				ScriptManager::onUnitCreated(unit);
 				if (mapUpdate) {
 					// obstacle added or removed, update annotated maps

@@ -628,9 +628,9 @@ void Faction::advanceSubfaction(int subfaction) {
 
 void Faction::checkAdvanceSubfaction(const ProducibleType *pt, bool finished) {
 	int advance = pt->getAdvancesToSubfaction();
-	if(advance && subfaction < advance) {
+	if (advance != -1 && subfaction != advance) {
 		bool immediate = pt->isAdvanceImmediately();
-		if((immediate && !finished) || (!immediate && finished)) {
+		if ((immediate && !finished) || (!immediate && finished)) {
 			advanceSubfaction(advance);
 		}
 	}

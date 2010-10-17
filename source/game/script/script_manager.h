@@ -92,7 +92,7 @@ struct LuaCmdResult {
 
 //REFACTOR: namespace ScriptManager [hide all the private stuff in the cpp]
 class ScriptManager {
-private:
+public:
 	//lua
 	static string code;
 	static LuaScript luaScript;
