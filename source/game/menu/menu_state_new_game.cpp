@@ -356,7 +356,7 @@ void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
 	}
 }
 
-void MenuStateNewGame::onCheckChanged(Button::Ptr cb) {
+void MenuStateNewGame::onCheckChanged(Button* cb) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	if (cb == m_fogOfWarCheckbox) {
 		gs.setFogOfWar(m_fogOfWarCheckbox->isChecked());
@@ -368,7 +368,7 @@ void MenuStateNewGame::onCheckChanged(Button::Ptr cb) {
 
 }
 
-void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
+void MenuStateNewGame::onChangeMap(ListBase*) {
 	assert(m_mapList->getSelectedIndex() >= 0 && m_mapList->getSelectedIndex() < m_mapFiles.size());
 	string mapBaseName = m_mapFiles[m_mapList->getSelectedIndex()];
 	string mapFile = "maps/" + mapBaseName;
@@ -384,19 +384,19 @@ void MenuStateNewGame::onChangeMap(ListBase::Ptr) {
 	gs.setMapPath(mapFile);
 }
 
-void MenuStateNewGame::onChangeTileset(ListBase::Ptr) {
+void MenuStateNewGame::onChangeTileset(ListBase*) {
 	g_config.setUiLastTileset(m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 	GameSettings &gs = g_simInterface->getGameSettings();
 	assert(m_tilesetList->getSelectedIndex() >= 0);
 	gs.setTilesetPath(string("tilesets/") + m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 }
 
-void MenuStateNewGame::onChangeTechtree(ListBase::Ptr) {
+void MenuStateNewGame::onChangeTechtree(ListBase*) {
 	reloadFactions(true);
 	g_config.setUiLastTechTree(m_techTreeFiles[m_techTreeList->getSelectedIndex()]);
 }
 
-void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
+void MenuStateNewGame::onButtonClick(Button* btn) {
 	if (btn == m_returnButton) {
 		m_targetTransition = Transition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
@@ -410,7 +410,7 @@ void MenuStateNewGame::onButtonClick(Button::Ptr btn) {
 	doFadeOut();
 }
 
-void MenuStateNewGame::onDismissDialog(BasicDialog::Ptr) {
+void MenuStateNewGame::onDismissDialog(BasicDialog*) {
 	program.removeFloatingWidget(m_messageDialog);
 	doFadeIn();
 }

@@ -515,7 +515,7 @@ void Display::mouseOut() {
 using Util::formatString;
 
 ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &types)
-		: Widget(static_cast<Container::Ptr>(WidgetWindow::getInstance()))
+		: Widget(static_cast<Container*>(WidgetWindow::getInstance()))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)

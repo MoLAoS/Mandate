@@ -25,7 +25,7 @@ using Global::Lang;
 //  class OptionContainer
 // =====================================================
 
-OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, const string &text)
+OptionContainer::OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &text)
 		: Container(parent, pos, size) {
 	CoreData &coreData = CoreData::getInstance();
 	m_abosulteLabelSize = false;
@@ -36,7 +36,7 @@ OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, c
 	m_widget = 0;
 }
 
-void OptionContainer::setWidget(Widget::Ptr widget) {
+void OptionContainer::setWidget(Widget* widget) {
 	m_widget = widget;
 	Vec2i size = getSize();
 	int w;
@@ -81,7 +81,7 @@ Vec2i OptionContainer::getMinSize() const {
 //  class ScrollText
 // =====================================================
 
-ScrollText::ScrollText(Container::Ptr parent)
+ScrollText::ScrollText(Container* parent)
 		: Panel(parent)
 		, MouseWidget(this)
 		, TextWidget(this) {
@@ -93,7 +93,7 @@ ScrollText::ScrollText(Container::Ptr parent)
 	m_scrollBar = new VerticalScrollBar(this);
 }
 
-ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
+ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
 		, MouseWidget(this)
 		, TextWidget(this) {
@@ -124,7 +124,7 @@ void ScrollText::init() {
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 }
 
-void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
+void ScrollText::onScroll(VerticalScrollBar* sb) {
 	int offset = sb->getRangeOffset();
 	setTextPos(Vec2i(5, m_textBase - offset));
 }
@@ -184,7 +184,7 @@ void ScrollText::render() {
 //  class TitleBar
 // =====================================================
 
-TitleBar::TitleBar(Container::Ptr parent)
+TitleBar::TitleBar(Container* parent)
 		: Container(parent)
 		, TextWidget(this)
 		, m_title("")
@@ -199,7 +199,7 @@ TitleBar::TitleBar(Container::Ptr parent)
 	setTextPos(Vec2i(5, 2));
 }
 
-TitleBar::TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
+TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
 		: Container(parent, pos, size)
 		//, MouseWidget(this)
 		, TextWidget(this)
@@ -324,7 +324,7 @@ void Frame::render() {
 //  class BasicDialog
 // =====================================================
 
-BasicDialog::BasicDialog(WidgetWindow::Ptr window)
+BasicDialog::BasicDialog(WidgetWindow* window)
 		: Frame(window), m_content(0)
 		, m_button1(0), m_button2(0), m_buttonCount(0) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
@@ -332,7 +332,7 @@ BasicDialog::BasicDialog(WidgetWindow::Ptr window)
 	m_titleBar = new TitleBar(this);
 }
 
-BasicDialog::BasicDialog(Container::Ptr parent, Vec2i pos, Vec2i sz)
+BasicDialog::BasicDialog(Container* parent, Vec2i pos, Vec2i sz)
 		: Frame(parent, pos, sz), m_content(0)
 		, m_button1(0) , m_button2(0), m_buttonCount(0) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
@@ -346,7 +346,7 @@ void BasicDialog::init(Vec2i pos, Vec2i size, const string &title,
 	setButtonText(btn1Text, btn2Text);
 }
 
-void BasicDialog::setContent(Widget::Ptr content) {
+void BasicDialog::setContent(Widget* content) {
 	m_content = content;
 	Vec2i p, s;
 	int a = m_titleBar->getHeight();
@@ -389,7 +389,7 @@ void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) 
 	}
 }
 
-void BasicDialog::onButtonClicked(Button::Ptr btn) {
+void BasicDialog::onButtonClicked(Button* btn) {
 	if (btn == m_button1) {
 		Button1Clicked(this);
 	} else {
@@ -406,14 +406,14 @@ void BasicDialog::render() {
 //  class MessageDialog
 // =====================================================
 
-MessageDialog::MessageDialog(WidgetWindow::Ptr window)
+MessageDialog::MessageDialog(WidgetWindow* window)
 		: BasicDialog(window) {
 	m_scrollText = new ScrollText(this);
 }
 
-MessageDialog::Ptr MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &title, 
+MessageDialog* MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &title, 
 								const string &msg,  const string &btn1Text, const string &btn2Text) {
-	MessageDialog::Ptr msgBox = new MessageDialog(&g_widgetWindow);
+	MessageDialog* msgBox = new MessageDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(msgBox, true);
 	msgBox->init(pos, size, title, btn1Text, btn2Text);
 	msgBox->setMessageText(msg);
@@ -456,7 +456,7 @@ bool InputBox::keyDown(Key key) {
 //  class InputDialog
 // =====================================================
 
-InputDialog::InputDialog(WidgetWindow::Ptr window)
+InputDialog::InputDialog(WidgetWindow* window)
 		: BasicDialog(window) {
 	m_panel = new Panel(this);
 	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
@@ -469,9 +469,9 @@ InputDialog::InputDialog(WidgetWindow::Ptr window)
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }
 
-InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title, const string &msg, 
+InputDialog* InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title, const string &msg, 
 							   const string &btn1Text, const string &btn2Text) {
-	InputDialog::Ptr dlg = new InputDialog(&g_widgetWindow);
+	InputDialog* dlg = new InputDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(dlg, true);
 	dlg->init(pos, size, title, btn1Text, btn2Text);
 	dlg->setContent(dlg->m_panel);
@@ -486,7 +486,7 @@ InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &ti
 	return dlg;
 }
 
-void InputDialog::onInputEntered(TextBox::Ptr) {
+void InputDialog::onInputEntered(TextBox*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

@@ -36,22 +36,22 @@ public:
 	static const int maxTextLength = Net::TextMessage::maxStringSize; ///@todo implement input restriction...
 
 private:
-	StaticText::Ptr	m_label;
-	CheckBox::Ptr	m_teamCheckBox;
-	InputBox::Ptr	m_inputBox;
-	Panel::Ptr		m_panel;
-	Panel::Ptr		m_subPanel;
+	StaticText*	m_label;
+	CheckBox*	m_teamCheckBox;
+	InputBox*	m_inputBox;
+	Panel*		m_panel;
+	Panel*		m_subPanel;
 
 	bool m_teamChat;
 
 private:
-	void onCheckChanged(Button::Ptr) { m_teamChat = m_teamCheckBox->isChecked(); }
-	void onInputEntered(TextBox::Ptr);
+	void onCheckChanged(Button*) { m_teamChat = m_teamCheckBox->isChecked(); }
+	void onInputEntered(TextBox*);
 	void onEscaped(InputBox *) { Escaped(this); }
 
 public:
-	ChatDialog(Container::Ptr parent, Vec2i pos, Vec2i size);
-//	static ChatDialog::Ptr showDialog(Vec2i pos, Vec2i size, bool teamOnly);
+	ChatDialog(Container* parent, Vec2i pos, Vec2i size);
+//	static ChatDialog* showDialog(Vec2i pos, Vec2i size, bool teamOnly);
 
 	string getInput() const		{ return m_inputBox->getText(); }
 	bool isTeamOnly() const		{ return m_teamCheckBox->isChecked(); }

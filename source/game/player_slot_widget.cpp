@@ -121,12 +121,12 @@ void ColourPicker::onSelect(Button *b) {
 //  class PlayerSlotPanel
 // =====================================================
 
-PlayerSlotPanel::PlayerSlotPanel(Container::Ptr parent, Vec2i pos, Vec2i size)
+PlayerSlotPanel::PlayerSlotPanel(Container* parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size), m_childCount(0) {
 	Panel::setAutoLayout(false);
 }
 
-void PlayerSlotPanel::addChild(Widget::Ptr child) {
+void PlayerSlotPanel::addChild(Widget* child) {
 	Panel::addChild(child);
 	assert(m_childCount >=0 && m_childCount < 5);
 	m_columns[m_childCount++] = child;
@@ -175,7 +175,7 @@ void PlayerSlotPanel::layoutChildren() {
 //  class PlayerSlotLabels
 // =====================================================
 
-PlayerSlotLabels::PlayerSlotLabels(Container::Ptr parent, Vec2i pos, Vec2i size)
+PlayerSlotLabels::PlayerSlotLabels(Container* parent, Vec2i pos, Vec2i size)
 		: PlayerSlotPanel(parent, pos, size) {
 	CoreData &coreData = CoreData::getInstance();
 	
@@ -201,7 +201,7 @@ PlayerSlotLabels::PlayerSlotLabels(Container::Ptr parent, Vec2i pos, Vec2i size)
 //  class PlayerSlotWidget
 // =====================================================
 
-PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
+PlayerSlotWidget::PlayerSlotWidget(Container* parent, Vec2i pos, Vec2i size)
 		: PlayerSlotPanel(parent, pos, size), m_freeSlot(false) {
 	CoreData &coreData = CoreData::getInstance();
 	m_label = new StaticText(this);

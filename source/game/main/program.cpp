@@ -63,7 +63,7 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 	this->e = e;
 }
 
-void Program::CrashProgramState::onExit(BasicDialog::Ptr) {
+void Program::CrashProgramState::onExit(BasicDialog*) {
 	done = true;
 }
 

@@ -66,7 +66,7 @@ private:
 	Font *m_font;
 
 public:
-	Console(Container::Ptr parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
+	Console(Container* parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
 	~Console();
 
 	virtual void update();

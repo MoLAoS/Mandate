@@ -44,7 +44,7 @@ using Main::Program;
 const float Minimap::exploredAlpha = 0.5f;
 const Vec2i Minimap::textureSize = Vec2i(128, 128);
 
-Minimap::Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size)
+Minimap::Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, m_fowPixmap0(0)

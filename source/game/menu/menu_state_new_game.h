@@ -59,44 +59,31 @@ private:
 	WRAPPED_ENUM( Transition, RETURN, PLAY );
 
 private:
-	Transition				m_targetTransition;
-	int						m_humanSlot;
-
-	Button::Ptr				m_returnButton,
-							m_playNow;
-
-	PlayerSlotWidget*		m_playerSlots[GameConstants::maxPlayers];
-
-	StaticText::Ptr			m_mapLabel,
-							m_mapInfoLabel;
-
-	DropList::Ptr			m_mapList;
-
-	StaticText::Ptr			m_techTreeLabel,
-							m_tilesetLabel;
-
-	DropList::Ptr			m_techTreeList,
-							m_tilesetList;
-
-	StaticText::Ptr			m_fogOfWarLabel;
-	CheckBox::Ptr			m_fogOfWarCheckbox;
-
-	StaticText::Ptr			m_randomLocsLabel;
-	CheckBox::Ptr			m_randomLocsCheckbox;
-
-	MessageDialog::Ptr		m_messageDialog;
-
-	vector<string> m_mapFiles;
-	vector<string> m_techTreeFiles;
-	vector<string> m_tilesetFiles;
-	vector<string> m_factionFiles;
-
-	MapInfo m_mapInfo;
-
-	AnnouncerThread m_announcer;
-
-	float m_origMusicVolume;
-	bool m_fadeMusicOut;
+	Transition			 m_targetTransition;
+	int					 m_humanSlot;
+	Button				*m_returnButton,
+						*m_playNow;
+	PlayerSlotWidget	*m_playerSlots[GameConstants::maxPlayers];
+	StaticText			*m_mapLabel,
+						*m_mapInfoLabel;
+	DropList			*m_mapList;
+	StaticText			*m_techTreeLabel,
+						*m_tilesetLabel;
+	DropList			*m_techTreeList,
+						*m_tilesetList;
+	StaticText			*m_fogOfWarLabel;
+	CheckBox			*m_fogOfWarCheckbox;
+	StaticText			*m_randomLocsLabel;
+	CheckBox			*m_randomLocsCheckbox;
+	MessageDialog		*m_messageDialog;
+	vector<string>		 m_mapFiles;
+	vector<string>		 m_techTreeFiles;
+	vector<string>		 m_tilesetFiles;
+	vector<string>		 m_factionFiles;
+	MapInfo				 m_mapInfo;
+	AnnouncerThread		 m_announcer;
+	float				 m_origMusicVolume;
+	bool				 m_fadeMusicOut;
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);

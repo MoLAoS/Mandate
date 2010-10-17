@@ -135,17 +135,17 @@ void MenuStateJoinGame::buildConnectPanel() {
 
 	int xGap = (size.x - 120 * 3) / 4;
 	int x = xGap, w = 120, y = yGap, h = 30;
-	Button::Ptr returnButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	Button* returnButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
 	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
 
 	x += w + xGap;
-	Button::Ptr connectButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	Button* connectButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	connectButton->setTextParams(g_lang.get("Connect"), Vec4f(1.f), font);
 	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
 
 	x += w + xGap;
-	Button::Ptr searchButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	Button* searchButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	searchButton->setTextParams(g_lang.get("Search"), Vec4f(1.f), font);
 	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
 
@@ -158,7 +158,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	w = 150;
 	x = size.x / 2 - w - 5;
 	y += 30 + yGap;
-	StaticText::Ptr serverLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	StaticText* serverLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	serverLabel->setTextParams(g_lang.get("Server") + " Ip: ", Vec4f(1.f), font);
 	
 	x = size.x / 2 + 5;
@@ -169,7 +169,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	w = 200;
 	x = size.x / 2 - w - 5;
 	y += 30 + yGap;
-	StaticText::Ptr historyLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	StaticText* historyLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
 	historyLabel->setTextParams(g_lang.get("RecentHosts"), Vec4f(1.f), font);
 	x = size.x / 2 + 5;
 	m_historyList = new DropList(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
@@ -185,12 +185,12 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_historyList->SelectionChanged.connect(this, &MenuStateJoinGame::onServerSelected);
 }
 
-void MenuStateJoinGame::onReturn(Button::Ptr) {
+void MenuStateJoinGame::onReturn(Button*) {
 	m_targetTansition = Transition::RETURN;
 	doFadeOut();
 }
 
-void MenuStateJoinGame::onConnect(Button::Ptr) {
+void MenuStateJoinGame::onConnect(Button*) {
 	g_config.setNetServerIp(m_serverTextBox->getText());
 	g_config.save();
 
@@ -210,7 +210,7 @@ void MenuStateJoinGame::onConnect(Button::Ptr) {
 	}
 }
 
-void MenuStateJoinGame::onCancelConnect(BasicDialog::Ptr) {
+void MenuStateJoinGame::onCancelConnect(BasicDialog*) {
 	MutexLock lock(m_connectMutex);
 	if (m_connectThread) {
 		m_connectThread->cancel();
@@ -246,7 +246,7 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 	m_connectThread = 0;
 }
 
-void MenuStateJoinGame::onDisconnect(BasicDialog::Ptr) {
+void MenuStateJoinGame::onDisconnect(BasicDialog*) {
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
 	g_simInterface->asClientInterface()->reset();
@@ -254,11 +254,11 @@ void MenuStateJoinGame::onDisconnect(BasicDialog::Ptr) {
 	m_connectLabel->setText("Not connected. Last connection terminated.");///@todo localise
 }
 
-void MenuStateJoinGame::onTextModified(TextBox::Ptr) {
+void MenuStateJoinGame::onTextModified(TextBox*) {
 	m_historyList->setSelected(-1);
 }
 
-void MenuStateJoinGame::onSearchForGame(Button::Ptr) {
+void MenuStateJoinGame::onSearchForGame(Button*) {
 	m_historyList->setSelected(-1);
 	m_serverTextBox->setText("");
 	m_connectPanel->setVisible(false);
@@ -275,7 +275,7 @@ void MenuStateJoinGame::onSearchForGame(Button::Ptr) {
 	}
 }
 
-void MenuStateJoinGame::onCancelSearch(BasicDialog::Ptr) {
+void MenuStateJoinGame::onCancelSearch(BasicDialog*) {
 	MutexLock lock(m_findServerMutex);
 	if (m_findServerThread) {
 		m_findServerThread->stop();
@@ -299,8 +299,8 @@ void MenuStateJoinGame::foundServer(Ip ip) {
 	onConnect(0);
 }
 
-void MenuStateJoinGame::onServerSelected(ListBase::Ptr list) {
-	DropList::Ptr historyList = static_cast<DropList::Ptr>(list);
+void MenuStateJoinGame::onServerSelected(ListBase* list) {
+	DropList* historyList = static_cast<DropList*>(list);
 	if (historyList->getSelectedIndex() != -1) {
 		string selected = historyList->getSelectedItem()->getText();
 		string ipString = servers.getString(selected);

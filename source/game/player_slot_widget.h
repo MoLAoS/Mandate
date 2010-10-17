@@ -97,33 +97,33 @@ public:
 
 class PlayerSlotPanel : public Panel {
 private:
-	Widget::Ptr m_columns[5];
+	Widget* m_columns[5];
 	int m_childCount;
 
 public:
-	PlayerSlotPanel(Container::Ptr parent, Vec2i pos, Vec2i size);
+	PlayerSlotPanel(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void addChild(Widget::Ptr child);
+	virtual void addChild(Widget* child);
 	virtual void layoutChildren();
 };
 
 class PlayerSlotLabels : public PlayerSlotPanel {
 public:
-	PlayerSlotLabels(Container::Ptr parent, Vec2i pos, Vec2i size);
+	PlayerSlotLabels(Container* parent, Vec2i pos, Vec2i size);
 };
 
 class PlayerSlotWidget : public PlayerSlotPanel, public sigslot::has_slots {
 private:
-	StaticText::Ptr		m_label;
-	DropList::Ptr		m_controlList;
-	DropList::Ptr		m_factionList;
-	DropList::Ptr		m_teamList;
+	StaticText*		m_label;
+	DropList*		m_controlList;
+	DropList*		m_factionList;
+	DropList*		m_teamList;
 	ColourPicker*		m_colourPicker;
 
 	bool	m_freeSlot; // closed but open-able
 
 public:
-	PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size);
+	PlayerSlotWidget(Container* parent, Vec2i pos, Vec2i size);
 
 	void setNameText(const string &name) { m_label->setText(name); }
 	

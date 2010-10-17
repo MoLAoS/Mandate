@@ -28,7 +28,7 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 	int btnGap = (room.y - 30 * 4) / 5;
 	Vec2i btnPos(10, btnGap);
 
-	Button::Ptr btn = new Button(this, btnPos, btnSize);
+	Button* btn = new Button(this, btnPos, btnSize);
 	btn->setTextParams("Exit Program", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
 	btn->Clicked.connect(this, &GameMenu::onExit);
 
@@ -48,29 +48,29 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 	btn->Clicked.connect(this, &GameMenu::onReturnToGame);
 }
 
-GameMenu::Ptr GameMenu::showDialog(Vec2i pos, Vec2i size) {
-	GameMenu::Ptr menu = new GameMenu(pos, size);
+GameMenu* GameMenu::showDialog(Vec2i pos, Vec2i size) {
+	GameMenu* menu = new GameMenu(pos, size);
 	g_widgetWindow.setFloatingWidget(menu, true);
 	return menu;
 }
 
-void GameMenu::onReturnToGame(Button::Ptr) {
+void GameMenu::onReturnToGame(Button*) {
 	g_gameState.destroyDialog();
 }
 
-void GameMenu::onQuit(Button::Ptr) {
+void GameMenu::onQuit(Button*) {
 	g_gameState.destroyDialog();
 
 	g_gameState.confirmQuitGame();
 }
 
-void GameMenu::onExit(Button::Ptr) {
+void GameMenu::onExit(Button*) {
 	g_gameState.destroyDialog();
 
 	g_gameState.confirmExitProgram();
 }
 
-void GameMenu::onDebugToggle(Button::Ptr) {
+void GameMenu::onDebugToggle(Button*) {
 	g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
 }
 

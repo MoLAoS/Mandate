@@ -38,7 +38,7 @@ namespace Glest { namespace Gui {
 // 	class Console
 // =====================================================
 
-Console::Console(Container::Ptr parent, int maxLines, int y_pos, bool fromTop)
+Console::Console(Container* parent, int maxLines, int y_pos, bool fromTop)
 		: Widget(parent, Vec2i(0), Vec2i(0))
 		, TextWidget(this)
 		, maxLines(maxLines)

@@ -35,7 +35,7 @@ using namespace Sim;
 using namespace Menu;
 
 
-GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
+GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 		: Container(parent, pos, size) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	Stats &stats = *g_simInterface->getStats();
@@ -55,7 +55,7 @@ GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	}
 	// 5% gap at end
 
-	StaticText::Ptr label;
+	StaticText* label;
 
 	string header = gs.getDescription() + " - " + (stats.getVictory(gs.getThisFactionIndex())
 													? g_lang.get("Victory") : g_lang.get("Defeat"));

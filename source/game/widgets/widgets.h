@@ -23,22 +23,19 @@ namespace Glest { namespace Widgets {
 // =====================================================
 
 class StaticImage : public Widget, public ImageWidget {
-public:
-	typedef StaticImage* Ptr;
-
 private:
 	Texture2D *texture;
 
 public:
-	StaticImage(Container::Ptr parent)
+	StaticImage(Container* parent)
 			: Widget(parent)
 			, ImageWidget(this) {}
 
-	StaticImage(Container::Ptr parent, Vec2i pos, Vec2i size) 
+	StaticImage(Container* parent, Vec2i pos, Vec2i size) 
 			: Widget(parent, pos, size)
 			, ImageWidget(this) {}
 
-	StaticImage(Container::Ptr parent, Vec2i pos, Vec2i size, Texture2D *tex)
+	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
 			: Widget(parent, pos, size)
 			, ImageWidget(this, tex) {}
 
@@ -54,22 +51,19 @@ public:
 // =====================================================
 
 class StaticText : public Widget, public TextWidget {
-public:
-	typedef StaticText* Ptr;
-
 private:
 	bool	m_shadow;
 	int		m_shadowOffset;
 	bool	m_doubleShadow;
 	
 public:
-	StaticText(Container::Ptr parent)
+	StaticText(Container* parent)
 			: Widget(parent) , TextWidget(this)
 			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
-	StaticText(Container::Ptr parent, Vec2i pos, Vec2i size)
+	StaticText(Container* parent, Vec2i pos, Vec2i size)
 			: Widget(parent, pos, size), TextWidget(this)
 			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
@@ -99,9 +93,6 @@ public:
 // =====================================================
 
 class Button : public Widget, public TextWidget, public ImageWidget, public MouseWidget {
-public:
-	typedef Button* Ptr;
-
 protected:
 	bool hover;
 	bool pressed;
@@ -109,8 +100,8 @@ protected:
 	bool m_defaultTexture;
 
 public:
-	Button(Container::Ptr parent);
-	Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTex = true, bool hoverHighlight = true);
+	Button(Container* parent);
+	Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTex = true, bool hoverHighlight = true);
 
 	virtual void setSize(const Vec2i &sz);
 
@@ -134,14 +125,12 @@ public:
 // =====================================================
 
 class CheckBox : public Button {
-public:
-	typedef CheckBox* Ptr;
 protected:
 	bool checked;
 
 public:
-	CheckBox(Container::Ptr parent);
-	CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size);
+	CheckBox(Container* parent);
+	CheckBox(Container* parent, Vec2i pos, Vec2i size);
 
 	virtual void setSize(const Vec2i &sz);
 	void setChecked(bool v) { checked = v; }
@@ -162,9 +151,6 @@ public:
 // =====================================================
 
 class TextBox : public Widget, public MouseWidget, public KeyboardWidget, public TextWidget {
-public:
-	typedef TextBox* Ptr;
-
 private:
 	bool hover;
 	bool focus;
@@ -173,8 +159,8 @@ private:
 	BorderStyle m_normBorderStyle, m_focusBorderStyle;
 
 public:
-	TextBox(Container::Ptr parent);
-	TextBox(Container::Ptr parent, Vec2i pos, Vec2i size);
+	TextBox(Container* parent);
+	TextBox(Container* parent, Vec2i pos, Vec2i size);
 
 	void setInputMask(const string &allowMask) { m_inputMask = allowMask; }
 
@@ -197,8 +183,8 @@ public:
 	virtual void render();
 	virtual string desc() { return string("[TextBox: ") + descPosDim() + "]"; }
 
-	sigslot::signal<Ptr> TextChanged;
-	sigslot::signal<Ptr> InputEntered;
+	sigslot::signal<TextBox*> TextChanged;
+	sigslot::signal<TextBox*> InputEntered;
 };
 
 // =====================================================
@@ -206,9 +192,6 @@ public:
 // =====================================================
 
 class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
-public:
-	typedef Slider* Ptr;
-
 private:
 	float	m_sliderValue;
 	bool	m_thumbHover,
@@ -229,7 +212,7 @@ private:
 	void recalc();
 
 public:
-	Slider(Container::Ptr parent, Vec2i pos, Vec2i size, const string &title);
+	Slider(Container* parent, Vec2i pos, Vec2i size, const string &title);
 
 	void setValue(float val) { m_sliderValue = val; recalc(); }
 	float getValue() const { return m_sliderValue; }
@@ -251,7 +234,7 @@ public:
 	virtual Vec2i getMinSize() const { return Vec2i(300,32); }
 	virtual string desc() { return string("[Slider: ") + descPosDim() + "]"; }
 
-	sigslot::signal<Ptr> ValueChanged;
+	sigslot::signal<Slider*> ValueChanged;
 };
 
 // =====================================================
@@ -259,9 +242,6 @@ public:
 // =====================================================
 
 class VerticalScrollBar : public Widget, public ImageWidget, public MouseWidget {
-public:
-	typedef VerticalScrollBar* Ptr;
-
 private:
 	WRAPPED_ENUM( Part, NONE, UP_BUTTON, DOWN_BUTTON, THUMB, UPPER_SHAFT, LOWER_SHAFT );
 
@@ -284,8 +264,8 @@ private:
 	Part partAt(const Vec2i &pos);
 
 public:
-	VerticalScrollBar(Container::Ptr parent);
-	VerticalScrollBar(Container::Ptr parent, Vec2i pos, Vec2i size);
+	VerticalScrollBar(Container* parent);
+	VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size);
 
 	void setRanges(int total, int avail, int line = 10) {
 		if (total < avail) {
@@ -332,9 +312,6 @@ public:
 
 class Panel : public Container {
 public:
-	typedef Panel* Ptr;
-
-public:
 	WRAPPED_ENUM( LayoutDirection, VERTICAL, HORIZONTAL );
 	WRAPPED_ENUM( LayoutOrigin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
 
@@ -352,14 +329,14 @@ public:
 	void setLayoutParams(bool autoLayout, LayoutDirection dir, LayoutOrigin origin = LayoutOrigin::CENTRE);
 	
 public:
-	Panel(Container::Ptr parent);
-	Panel(Container::Ptr parent, Vec2i pos, Vec2i size);
+	Panel(Container* parent);
+	Panel(Container* parent, Vec2i pos, Vec2i size);
 
 	void setAutoLayout(bool val) { autoLayout = val; }
 	void setPaddingParams(int panelPad, int widgetPad);
 
-	void addChild(Widget::Ptr child);
-	void remChild(Widget::Ptr child);
+	void addChild(Widget* child);
+	void remChild(Widget* child);
 
 	void setLayoutOrigin(LayoutOrigin lo) { layoutOrigin = lo; }
 	virtual void layoutChildren();
@@ -377,15 +354,12 @@ public:
 
 class PicturePanel : public Panel, public ImageWidget {
 public:
-	typedef PicturePanel* Ptr;
-
-public:
-	PicturePanel(Container::Ptr parent)
+	PicturePanel(Container* parent)
 			: Panel(parent)
 			, ImageWidget(this) {
 	}
 
-	PicturePanel(Container::Ptr parent, Vec2i pos, Vec2i size) 
+	PicturePanel(Container* parent, Vec2i pos, Vec2i size) 
 			: Panel(parent, pos, size)
 			, ImageWidget(this) {
 	}
@@ -408,9 +382,6 @@ class ListBoxItem;
 // =====================================================
 
 class ListBase : public Panel {
-public:
-	typedef ListBase* Ptr;
-
 protected:
 	ListBoxItem* selectedItem;
 	Font *itemFont;
@@ -420,8 +391,8 @@ protected:
 	ListBase(WidgetWindow* window);
 
 public:
-	ListBase(Container::Ptr parent);
-	ListBase(Container::Ptr parent, Vec2i pos, Vec2i size);
+	ListBase(Container* parent);
+	ListBase(Container* parent, Vec2i pos, Vec2i size);
 
 	virtual void addItems(const vector<string> &items) = 0;
 	virtual void addItem(const string &item) = 0;
@@ -445,9 +416,6 @@ public:
 
 class ListBox : public ListBase, public sigslot::has_slots {
 public:
-	typedef ListBox* Ptr;
-
-public:
 	//WRAPPED_ENUM( ScrollSetting, NEVER, AUTO, ALWAYS );
 private:
 	vector<int> yPositions; // 'original' (non-scrolled) y coords of children (sans scrollBar)
@@ -455,13 +423,13 @@ private:
 protected:
 	vector<ListBoxItem*> listBoxItems;
 
-	VerticalScrollBar::Ptr scrollBar;
+	VerticalScrollBar* scrollBar;
 	//ScrollSetting scrollSetting;
 	int scrollWidth;
 
 public:
-	ListBox(Container::Ptr parent);
-	ListBox(Container::Ptr parent, Vec2i pos, Vec2i size);
+	ListBox(Container* parent);
+	ListBox(Container* parent, Vec2i pos, Vec2i size);
 	ListBox(WidgetWindow* window);
 
 	virtual void addItems(const vector<string> &items);
@@ -486,7 +454,7 @@ public:
 
 	virtual string desc() { return string("[ListBox: ") + descPosDim() + "]"; }
 
-	void onScroll(VerticalScrollBar::Ptr);
+	void onScroll(VerticalScrollBar*);
 
 	// inherited signals:
 	//		ListBase::SelectionChanged
@@ -498,9 +466,6 @@ public:
 // =====================================================
 
 class ListBoxItem : public Widget, public TextWidget, public MouseWidget {
-public:
-	typedef ListBoxItem* Ptr;
-
 private:
 	bool selected;
 	bool hover;
@@ -509,9 +474,9 @@ private:
 protected:
 
 public:
-	ListBoxItem(ListBase::Ptr parent);
-	ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz);
-	ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
+	ListBoxItem(ListBase* parent);
+	ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz);
+	ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
 
 	void setSelected(bool s) { selected = s; }
 
@@ -539,20 +504,17 @@ public:
 // =====================================================
 
 class DropList : public ListBase, public sigslot::has_slots {
-public:
-	typedef DropList* Ptr;
-
 private:
-	ListBox::Ptr floatingList;
-	Button::Ptr button;
+	ListBox* floatingList;
+	Button* button;
 	int dropBoxHeight;
 
 	void expandList();
 	void layout();
 
 public:
-	DropList(Container::Ptr parent);
-	DropList(Container::Ptr parent, Vec2i pos, Vec2i size);
+	DropList(Container* parent);
+	DropList(Container* parent, Vec2i pos, Vec2i size);
 
 	virtual void setSize(const Vec2i &sz);
 	void setDropBoxHeight(int h) { dropBoxHeight = h; }
@@ -565,11 +527,11 @@ public:
 	void setSelected(const string &item);
 
 	// event handlers
-	void onBoxClicked(ListBoxItem::Ptr);
-	void onExpandList(Button::Ptr);
-	void onSelectionMade(ListBase::Ptr);
-	void onSameSelected(ListBase::Ptr);
-	void onListDisposed(Widget::Ptr);
+	void onBoxClicked(ListBoxItem*);
+	void onExpandList(Button*);
+	void onSelectionMade(ListBase*);
+	void onSameSelected(ListBase*);
+	void onListDisposed(Widget*);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;

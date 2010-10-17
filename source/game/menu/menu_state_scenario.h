@@ -36,28 +36,24 @@ private:
     );
 
 private:
-	Transition			m_targetTansition;
-
-	Button::Ptr			m_returnButton, 
-						m_playNowButton;
-
-	DropList::Ptr		m_categoryList,
-						m_scenarioList;
-
-	StaticText::Ptr		m_infoLabel;
-
-	MessageDialog::Ptr	m_messageDialog;
+	Transition		 m_targetTansition;
+	Button			*m_returnButton, 
+					*m_playNowButton;
+	DropList		*m_categoryList,
+					*m_scenarioList;
+	StaticText		*m_infoLabel;
+	MessageDialog	*m_messageDialog;
 
     vector<string> categories;
 	vector<string> scenarioFiles;
     ScenarioInfo scenarioInfo;
 
 
-	void onButtonClick(Button::Ptr);
-	void onCategoryChanged(ListBase::Ptr);
-	void onScenarioChanged(ListBase::Ptr);
+	void onButtonClick(Button*);
+	void onCategoryChanged(ListBase*);
+	void onScenarioChanged(ListBase*);
 
-	void onConfirmReturn(BasicDialog::Ptr);
+	void onConfirmReturn(BasicDialog*);
 
 	void updateConfig();
 

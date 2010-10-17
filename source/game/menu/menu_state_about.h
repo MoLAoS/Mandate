@@ -23,14 +23,14 @@ using namespace Widgets;
 
 class MenuStateAbout: public MenuState {
 private:
-	Button::Ptr m_returnButton;
+	Button* m_returnButton;
 
 public:
 	MenuStateAbout(Program &program, MainMenu *mainMenu);
 
 	MenuStates getIndex() const { return MenuStates::ABOUT; }
 
-	void onReturn(Button::Ptr);
+	void onReturn(Button*);
 
 	void update();
 };

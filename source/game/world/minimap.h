@@ -70,7 +70,7 @@ private:
 
 public:
 	void init(int x, int y, const World *world, bool resuming);
-	Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size);
+	Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size);
 	~Minimap();
 
 	const Texture2D *getFowTexture() const	{return m_fowTex;}

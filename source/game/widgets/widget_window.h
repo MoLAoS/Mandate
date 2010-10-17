@@ -26,23 +26,20 @@ namespace Glest { namespace Widgets {
 // =====================================================
 /** top level container */
 class WidgetWindow : public Container, public MouseWidget, public KeyboardWidget, public WindowGl {
-public:
-	typedef WidgetWindow* Ptr;
-
 private:
-	typedef std::stack<Widget::Ptr>	WidgetStack;
-	//typedef std::list<Layer::Ptr>	LayerList;
+	typedef std::stack<Widget*>	WidgetStack;
+	//typedef std::list<Layer*>	LayerList;
 	typedef std::set<string>		NameSet;
 
 protected:
 	static WidgetWindow *instance;
 
 private:
-	Widget::Ptr	floatingWidget;
-	KeyboardWidget::Ptr keyboardFocused;
-	KeyboardWidget::Ptr lastKeyDownWidget;
-	MouseWidget::Ptr mouseDownWidgets[MouseButton::COUNT];
-	MouseWidget::Ptr lastMouseDownWidget;
+	Widget*	floatingWidget;
+	KeyboardWidget* keyboardFocused;
+	KeyboardWidget* lastKeyDownWidget;
+	MouseWidget* mouseDownWidgets[MouseButton::COUNT];
+	MouseWidget* lastMouseDownWidget;
 	MouseButton lastMouseDownButton;
 
 	WidgetList	toClean;
@@ -56,10 +53,10 @@ private:
 	bool modalFloater;
 	const Texture2D *mouseIcon;
 
-	Widget::Ptr findCommonAncestor(Widget::Ptr widget1, Widget::Ptr widget2);
-	void unwindMouseOverStack(Widget::Ptr newTop);
+	Widget* findCommonAncestor(Widget* widget1, Widget* widget2);
+	void unwindMouseOverStack(Widget* newTop);
 	void unwindMouseOverStack();
-	void doMouseInto(Widget::Ptr widget);
+	void doMouseInto(Widget* widget);
 	void destroyFloater();
 	void renderMouseCursor();
 
@@ -74,14 +71,14 @@ public:
 	virtual void clear();
 	//void setFade(float v);
 
-	void registerUpdate(Widget::Ptr widget);
-	void unregisterUpdate(Widget::Ptr widget);
+	void registerUpdate(Widget* widget);
+	void unregisterUpdate(Widget* widget);
 
-	void setFloatingWidget(Widget::Ptr floater, bool modal = false);
-	void removeFloatingWidget(Widget::Ptr floater);
+	void setFloatingWidget(Widget* floater, bool modal = false);
+	void removeFloatingWidget(Widget* floater);
 
-	void aquireKeyboardFocus(KeyboardWidget::Ptr widget);
-	void releaseKeyboardFocus(KeyboardWidget::Ptr widget);
+	void aquireKeyboardFocus(KeyboardWidget* widget);
+	void releaseKeyboardFocus(KeyboardWidget* widget);
 
 	void setMouseCursorIcon(const Texture2D *tex = 0) { mouseIcon = tex; }
 
@@ -114,9 +111,9 @@ public: // MouseWidget & TextWidget virtual events
 		return textRendererFT;
 	}
 
-	//virtual Widget::Ptr getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
-	//virtual void addChild(Widget::Ptr child) { layers.front()->addChild(child); child->setParent(layers.front()); }
-	//virtual void remChild(Widget::Ptr child) { layers.front()->remChild(child); child->setParent(layers.front()); }
+	//virtual Widget* getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
+	//virtual void addChild(Widget* child) { layers.front()->addChild(child); child->setParent(layers.front()); }
+	//virtual void remChild(Widget* child) { layers.front()->remChild(child); child->setParent(layers.front()); }
 
 	virtual void render();
 

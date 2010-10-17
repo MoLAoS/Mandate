@@ -304,14 +304,14 @@ void GameState::displayError(std::exception &e) {
 	}
 	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	MessageDialog::Ptr dialog = MessageDialog::showDialog(pos, size, 
+	MessageDialog* dialog = MessageDialog::showDialog(pos, size, 
 		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
 	dialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
 	dialog->Escaped.connect(this, &GameState::onErrorDismissed);
 }
 
-void GameState::onErrorDismissed(BasicDialog::Ptr) {
+void GameState::onErrorDismissed(BasicDialog*) {
 	simInterface->resume();
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
@@ -372,13 +372,13 @@ void GameState::confirmExitProgram() {
 	m_modalDialog = dialog;
 }
 
-void GameState::onConfirmQuitGame(BasicDialog::Ptr) {
+void GameState::onConfirmQuitGame(BasicDialog*) {
 	exitGame = true;
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 }
 
-void GameState::onConfirmExitProgram(BasicDialog::Ptr) {
+void GameState::onConfirmExitProgram(BasicDialog*) {
 	exitProgram = true;
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
@@ -400,7 +400,7 @@ void GameState::doSaveBox() {
 	}
 	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	InputDialog::Ptr dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
+	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
 	m_modalDialog = dialog;
 	dialog->setInputMask(allowMask);
@@ -409,8 +409,8 @@ void GameState::doSaveBox() {
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
 }
 
-void GameState::onSaveSelected(BasicDialog::Ptr) {
-	InputDialog::Ptr in  = static_cast<InputDialog::Ptr>(m_modalDialog);
+void GameState::onSaveSelected(BasicDialog*) {
+	InputDialog* in  = static_cast<InputDialog*>(m_modalDialog);
 	saveGame(in->getInput());
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
@@ -426,7 +426,7 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	MessageDialog::Ptr dialog = MessageDialog::showDialog(pos, size, 
+	MessageDialog* dialog = MessageDialog::showDialog(pos, size, 
 		g_lang.getScenarioString(m_scriptMessages.front().header), 
 		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
@@ -449,7 +449,7 @@ void GameState::doChatDialog() {
 //	}
 //}
 
-void GameState::onChatEntered(BasicDialog::Ptr ptr) {
+void GameState::onChatEntered(BasicDialog* ptr) {
 	string txt = m_chatDialog->getInput();
 	bool isTeamOnly = m_chatDialog->isTeamOnly();
 	int team = (isTeamOnly ? g_world.getThisFaction()->getTeam() : -1);
@@ -462,11 +462,11 @@ void GameState::onChatEntered(BasicDialog::Ptr ptr) {
 	m_chatDialog->setVisible(false);
 }
 
-void GameState::onChatCancel(BasicDialog::Ptr) {
+void GameState::onChatCancel(BasicDialog*) {
 	m_chatDialog->setVisible(false);
 }
 
-void GameState::destroyDialog(BasicDialog::Ptr) {
+void GameState::destroyDialog(BasicDialog*) {
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 	if (!m_scriptMessages.empty()) {

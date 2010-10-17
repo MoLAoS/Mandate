@@ -1340,7 +1340,7 @@ void UserInterface::computeBuildPositions(const Vec2i &end) {
 	}
 }
 
-void UserInterface::onCloseLuaConsole(BasicDialog::Ptr) {
+void UserInterface::onCloseLuaConsole(BasicDialog*) {
 	m_luaConsole->setVisible(false);
 }
 

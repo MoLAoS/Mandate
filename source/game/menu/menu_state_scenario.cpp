@@ -51,7 +51,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	h = int(font->getMetrics()->getHeight()) + 6;
 	x = g_metrics.getScreenW() / 2 - (w * 2 + 50) / 2;
 	y = g_metrics.getScreenH() / 2 + (h * 2) / 2 + 100;
-	StaticText::Ptr l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w, h));
+	StaticText* l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w, h));
 	l_text->setTextParams(g_lang.get("Category"), Vec4f(1.f), font);
 //	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
 
@@ -116,14 +116,14 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_categoryList->setSelected(match);
 }
 
-void MenuStateScenario::onConfirmReturn(BasicDialog::Ptr) {
+void MenuStateScenario::onConfirmReturn(BasicDialog*) {
 	m_targetTansition = Transition::RETURN;
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	doFadeOut();
 }
 
-void MenuStateScenario::onButtonClick(Button::Ptr btn) {
+void MenuStateScenario::onButtonClick(Button* btn) {
 	if (btn == m_returnButton) {
 		m_targetTansition = Transition::RETURN;
 		g_soundRenderer.playFx(g_coreData.getClickSoundA());
@@ -164,12 +164,12 @@ void MenuStateScenario::setScenario(int i) {
 	m_scenarioList->setSelected(i);
 }
 
-void MenuStateScenario::onCategoryChanged(ListBase::Ptr) {
+void MenuStateScenario::onCategoryChanged(ListBase*) {
 	updateScenarioList(categories[m_categoryList->getSelectedIndex()]);
 	updateConfig();
 }
 
-void MenuStateScenario::onScenarioChanged(ListBase::Ptr) {
+void MenuStateScenario::onScenarioChanged(ListBase*) {
 	//update scenario info
 	Scenario::loadScenarioInfo(scenarioFiles[m_scenarioList->getSelectedIndex()],
 					categories[m_categoryList->getSelectedIndex()], &scenarioInfo);

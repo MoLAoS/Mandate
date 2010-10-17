@@ -14,24 +14,21 @@
 namespace Glest { namespace Widgets {
 
 class OptionContainer : public Container {
-public:
-	typedef OptionContainer* Ptr;
-
 private:
-	StaticText::Ptr m_label;
-	Widget::Ptr		m_widget;
+	StaticText* m_label;
+	Widget*		m_widget;
 
 	bool	m_abosulteLabelSize;
 	int		m_labelSize;
 
 public:
-	OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, const string &labelText);
+	OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &labelText);
 
 	void setLabelWidth(int value, bool absolute);
 
 	///@todo deprecate, over addChild, assume second child is contained widget
-	void setWidget(Widget::Ptr widget);
-	Widget::Ptr getWidget() { return m_widget; }
+	void setWidget(Widget* widget);
+	Widget* getWidget() { return m_widget; }
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -40,36 +37,30 @@ public:
 };
 
 class ScrollText : public Panel, public MouseWidget, public TextWidget, public sigslot::has_slots {
-public:
-	typedef ScrollText* Ptr;
-
 private:
-	VerticalScrollBar::Ptr m_scrollBar;
+	VerticalScrollBar* m_scrollBar;
 	int m_textBase;
 
 public:
-	ScrollText(Container::Ptr parent);
-	ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size);
+	ScrollText(Container* parent);
+	ScrollText(Container* parent, Vec2i pos, Vec2i size);
 
 	void recalc();
 	void init();
-	void onScroll(VerticalScrollBar::Ptr);
+	void onScroll(VerticalScrollBar*);
 	void setText(const string &txt, bool scrollToBottom = false);
 
 	void render();
 };
 
 class TitleBar : public Container, public TextWidget {
-public:
-	typedef TitleBar* Ptr;
-
 private:
 	string		m_title;
-	Button::Ptr m_closeButton;
+	Button* m_closeButton;
 
 public:
-	TitleBar(Container::Ptr parent);
-	TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, bool closeBtn);
+	TitleBar(Container* parent);
+	TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn);
 
 	void render();
 
@@ -80,18 +71,15 @@ public:
 };
 
 class Frame : public Container, public MouseWidget {
-public:
-	typedef Frame* Ptr;
-
 protected:
-	TitleBar::Ptr	m_titleBar;
+	TitleBar*	m_titleBar;
 	bool			m_pressed;
 	Vec2i			m_lastPos;
 
 protected:
 	Frame(WidgetWindow*);
-	Frame(Container::Ptr);
-	Frame(Container::Ptr, Vec2i pos, Vec2i sz);
+	Frame(Container*);
+	Frame(Container*, Vec2i pos, Vec2i sz);
 
 public:
 	void init(Vec2i pos, Vec2i size, const string &title);
@@ -107,32 +95,29 @@ public:
 };
 
 class BasicDialog : public Frame, public sigslot::has_slots {
-public:
-	typedef BasicDialog* Ptr;
-
 private:
-	//TitleBar::Ptr	m_titleBar;
-	Widget::Ptr		m_content;
-	Button::Ptr		m_button1,
-					m_button2;
+	//TitleBar*	m_titleBar;
+	Widget	*m_content;
+	Button	*m_button1,
+			*m_button2;
 
-	int				m_buttonCount;
+	int		 m_buttonCount;
 
 protected:
 	BasicDialog(WidgetWindow*);
-	BasicDialog(Container::Ptr, Vec2i pos, Vec2i sz);
-	void onButtonClicked(Button::Ptr);
+	BasicDialog(Container*, Vec2i pos, Vec2i sz);
+	void onButtonClicked(Button*);
 
 protected:
-	void setContent(Widget::Ptr content);
+	void setContent(Widget* content);
 	void init(Vec2i pos, Vec2i size, const string &title, const string &btn1, const string &btn2);
 
 public:
 	void setButtonText(const string &btn1Text, const string &btn2Text = "");
 
-	sigslot::signal<Ptr> Button1Clicked,
-						 Button2Clicked,
-						 Escaped;
+	sigslot::signal<BasicDialog*>	Button1Clicked,
+									Button2Clicked,
+									Escaped;
 
 	void render();
 	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
@@ -141,17 +126,14 @@ public:
 };
 
 class MessageDialog : public BasicDialog {
-public:
-	typedef MessageDialog* Ptr;
-
 private:
-	ScrollText::Ptr m_scrollText;
+	ScrollText* m_scrollText;
 
 private:
 	MessageDialog(WidgetWindow*);
 
 public:
-	static MessageDialog::Ptr showDialog(Vec2i pos, Vec2i size, const string &title,
+	static MessageDialog* showDialog(Vec2i pos, Vec2i size, const string &title,
 					const string &msg, const string &btn1Text, const string &btn2Text);
 
 	virtual ~MessageDialog();
@@ -168,8 +150,6 @@ public:
 
 class InputBox : public TextBox {
 public:
-	typedef InputBox* Ptr;
-public:
 	InputBox(Container *parent);
 	InputBox(Container *parent, Vec2i pos, Vec2i size);
 
@@ -182,22 +162,19 @@ public:
 // =====================================================
 
 class InputDialog : public BasicDialog {
-public:
-	typedef InputDialog* Ptr;
-
 private:
-	StaticText::Ptr	m_label;
+	StaticText*	m_label;
 	InputBox*	m_inputBox;
-	Panel::Ptr		m_panel;
+	Panel*		m_panel;
 
 private:
 	InputDialog(WidgetWindow*);
 
-	void onInputEntered(TextBox::Ptr);
+	void onInputEntered(TextBox*);
 	void onEscaped(InputBox*) { Escaped(this); }
 
 public:
-	static InputDialog::Ptr showDialog(Vec2i pos, Vec2i size, const string &title,
+	static InputDialog* showDialog(Vec2i pos, Vec2i size, const string &title,
 					const string &msg, const string &btn1Text, const string &btn2Text);
 
 	void setMessageText(const string &text);

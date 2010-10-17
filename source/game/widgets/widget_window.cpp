@@ -89,7 +89,7 @@ void WidgetWindow::render() {
 	renderMouseCursor();
 }
 
-void WidgetWindow::aquireKeyboardFocus(KeyboardWidget::Ptr widget) {
+void WidgetWindow::aquireKeyboardFocus(KeyboardWidget* widget) {
 	assert(widget);
 	if (keyboardFocused != widget) {
 		if (keyboardFocused != keyboardWidget) {
@@ -99,16 +99,16 @@ void WidgetWindow::aquireKeyboardFocus(KeyboardWidget::Ptr widget) {
 	}
 }
 
-void WidgetWindow::releaseKeyboardFocus(KeyboardWidget::Ptr widget) {
+void WidgetWindow::releaseKeyboardFocus(KeyboardWidget* widget) {
 	if (keyboardFocused == widget) {
 		keyboardFocused->lostKeyboardFocus();
 		keyboardFocused = keyboardWidget;
 	}
 }
 
-void WidgetWindow::unwindMouseOverStack(Widget::Ptr newTop) {
+void WidgetWindow::unwindMouseOverStack(Widget* newTop) {
 	while (mouseOverStack.top() != newTop) {
-		MouseWidget::Ptr mw = mouseOverStack.top()->asMouseWidget();
+		MouseWidget* mw = mouseOverStack.top()->asMouseWidget();
 		if (mw) {
 			mw->mouseOut();
 		}
@@ -120,10 +120,10 @@ void WidgetWindow::unwindMouseOverStack() {
 	unwindMouseOverStack(this);
 }
 
-Widget::Ptr WidgetWindow::findCommonAncestor(Widget::Ptr widget1, Widget::Ptr widget2) {
-	Widget::Ptr tmp1 = widget1;
+Widget* WidgetWindow::findCommonAncestor(Widget* widget1, Widget* widget2) {
+	Widget* tmp1 = widget1;
 	while (tmp1 != this) {
-		Widget::Ptr tmp2 = widget2;
+		Widget* tmp2 = widget2;
 		while (tmp1 != tmp2 && tmp2 != this) {
 			tmp2 = tmp2->getParent();
 		}
@@ -135,18 +135,18 @@ Widget::Ptr WidgetWindow::findCommonAncestor(Widget::Ptr widget1, Widget::Ptr wi
 	return this;
 }
 
-void WidgetWindow::doMouseInto(Widget::Ptr widget) {
+void WidgetWindow::doMouseInto(Widget* widget) {
 	if (widget != mouseOverStack.top()) {
-		Widget::Ptr ancestor = findCommonAncestor(widget, mouseOverStack.top());
+		Widget* ancestor = findCommonAncestor(widget, mouseOverStack.top());
 		unwindMouseOverStack(ancestor);
-		std::stack<Widget::Ptr> tmpStack;
+		std::stack<Widget*> tmpStack;
 		while (widget != ancestor) {
 			tmpStack.push(widget);
 			widget = widget->getParent();
 			assert(widget);
 		}
 		while (!tmpStack.empty()) {
-			MouseWidget::Ptr mw = tmpStack.top()->asMouseWidget();
+			MouseWidget* mw = tmpStack.top()->asMouseWidget();
 			if (mw) {
 				mw->mouseIn();
 			}
@@ -156,7 +156,7 @@ void WidgetWindow::doMouseInto(Widget::Ptr widget) {
 	}
 }
 
-void WidgetWindow::setFloatingWidget(Widget::Ptr floater, bool modal) {
+void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
 	delete floatingWidget;
 	floatingWidget = floater;
 	floatingWidget->setParent(this);
@@ -164,7 +164,7 @@ void WidgetWindow::setFloatingWidget(Widget::Ptr floater, bool modal) {
 	modalFloater = modal;
 }
 
-void WidgetWindow::removeFloatingWidget(Widget::Ptr floater) {
+void WidgetWindow::removeFloatingWidget(Widget* floater) {
 	if (floater != floatingWidget) {
 		throw runtime_error("WidgetWindow::removeFloatingWidget() passed bad argument.");
 	}
@@ -179,12 +179,12 @@ void WidgetWindow::removeFloatingWidget(Widget::Ptr floater) {
 	doMouseInto(getWidgetAt(mousePos));
 }
 
-void WidgetWindow::registerUpdate(Widget::Ptr widget) {
+void WidgetWindow::registerUpdate(Widget* widget) {
 	assert(std::find(updateList.begin(), updateList.end(), widget) == updateList.end());
 	updateList.push_back(widget);
 }
 
-void WidgetWindow::unregisterUpdate(Widget::Ptr widget) {
+void WidgetWindow::unregisterUpdate(Widget* widget) {
 	WidgetList::iterator it = std::find(updateList.begin(), updateList.end(), widget);
 	if (it == updateList.end()) {
 		assert(false);
@@ -241,7 +241,7 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	Widget::Ptr widget = 0;
+	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
@@ -255,7 +255,7 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 		widget = getWidgetAt(mousePos);
 	}
 	if (lastMouseDownWidget && lastMouseDownWidget != widget->asMouseWidget()) {
-		Widget::Ptr ancestor = findCommonAncestor(lastMouseDownWidget->me, widget);
+		Widget* ancestor = findCommonAncestor(lastMouseDownWidget->me, widget);
 		unwindMouseOverStack(ancestor);
 		doMouseInto(widget);
 	}
@@ -264,7 +264,7 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 		keyboardFocused = keyboardWidget;
 	}
 	while (widget) {
-		MouseWidget::Ptr mw = widget->asMouseWidget();
+		MouseWidget* mw = widget->asMouseWidget();
 		if (mw && mw->mouseDown(msBtn, mousePos)) {
 			if (lastMouseDownWidget) {
 				mouseDownWidgets[lastMouseDownButton] = 0;
@@ -282,7 +282,7 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	MouseWidget::Ptr downWidget = mouseDownWidgets[msBtn];
+	MouseWidget* downWidget = mouseDownWidgets[msBtn];
 	if (downWidget) {
 		downWidget->mouseUp(msBtn, mousePos);
 		mouseDownWidgets[msBtn] = 0;
@@ -303,7 +303,7 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 
-	Widget::Ptr widget = 0;
+	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
@@ -336,7 +336,7 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	Widget::Ptr widget = 0;
+	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
@@ -362,7 +362,7 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
-	Widget::Ptr widget = 0;
+	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);

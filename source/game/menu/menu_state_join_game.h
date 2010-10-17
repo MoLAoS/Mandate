@@ -80,13 +80,13 @@ private:
 	static const string serverFileName;
 
 private:
-	Panel::Ptr			m_connectPanel;
-	Panel::Ptr			m_gameSetupPanel;
-	MessageDialog::Ptr	m_messageBox;
+	Panel*			m_connectPanel;
+	Panel*			m_gameSetupPanel;
+	MessageDialog*	m_messageBox;
 
-	DropList::Ptr		m_historyList;
-	TextBox::Ptr		m_serverTextBox;
-	StaticText::Ptr		m_connectLabel;
+	DropList*		m_historyList;
+	TextBox*		m_serverTextBox;
+	StaticText*		m_connectLabel;
 
 	ConnectThread*		m_connectThread;
 	FindServerThread*	m_findServerThread;
@@ -99,16 +99,16 @@ private:
 	void buildConnectPanel();
 	void buildGameSetupPanel();
 
-	void onReturn(Button::Ptr);
-	void onConnect(Button::Ptr);
-	void onSearchForGame(Button::Ptr);
+	void onReturn(Button*);
+	void onConnect(Button*);
+	void onSearchForGame(Button*);
 
-	void onServerSelected(ListBase::Ptr);
-	void onTextModified(TextBox::Ptr);
+	void onServerSelected(ListBase*);
+	void onTextModified(TextBox*);
 
-	void onCancelConnect(BasicDialog::Ptr);
-	void onDisconnect(BasicDialog::Ptr);
-	void onCancelSearch(BasicDialog::Ptr);
+	void onCancelConnect(BasicDialog*);
+	void onDisconnect(BasicDialog*);
+	void onCancelSearch(BasicDialog*);
 
 	bool connected;
 	int playerIndex;
