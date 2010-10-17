@@ -267,6 +267,8 @@ public:
 
 	Vec2i getImagePos(int ndx) const { return imageInfo[ndx].offset; }
 	Vec2i getImageSize(int ndx) const { return imageInfo[ndx].size; }
+
+	bool hasImage() const { return !textures.empty(); }
 };
 
 // =====================================================

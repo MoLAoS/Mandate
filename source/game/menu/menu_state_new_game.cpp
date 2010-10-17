@@ -255,7 +255,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 //  === util ===
 
-int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
+int getSlotIndex(PlayerSlotWidget* psw, PlayerSlotWidget* *slots) {
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (psw == slots[i]) {
 			return i;
@@ -265,19 +265,19 @@ int getSlotIndex(PlayerSlotWidget::Ptr psw, PlayerSlotWidget::Ptr *slots) {
 	return -1;
 }
 
-int getLowestFreeColourIndex(PlayerSlotWidget::Ptr *slots) {
-	bool slotUsed[GameConstants::maxPlayers];
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
-		slotUsed[i] = false;
+int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
+	bool colourUsed[GameConstants::maxColours];
+	for (int i=0; i < GameConstants::maxColours; ++i) {
+		colourUsed[i] = false;
 	}
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i]->getSelectedColourIndex() != -1) {
 			ASSERT(slots[i]->getControlType() != ControlType::CLOSED, "Closed slot has colour set.");
-			slotUsed[slots[i]->getSelectedColourIndex()] = true;
+			colourUsed[slots[i]->getSelectedColourIndex()] = true;
 		}
 	}
-	for (int i=0; i < GameConstants::maxPlayers; ++i) {
-		if (!slotUsed[i]) {
+	for (int i=0; i < GameConstants::maxColours; ++i) {
+		if (!colourUsed[i]) {
 			return i;
 		}
 	}
@@ -287,7 +287,7 @@ int getLowestFreeColourIndex(PlayerSlotWidget::Ptr *slots) {
 
 //  === === ===
 
-void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
+void MenuStateNewGame::onChangeFaction(PlayerSlotWidget* psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
@@ -300,7 +300,7 @@ void MenuStateNewGame::onChangeFaction(PlayerSlotWidget::Ptr psw) {
 	}
 }
 
-void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
+void MenuStateNewGame::onChangeControl(PlayerSlotWidget* ps) {
 	static bool noRecurse = false;
 	if (noRecurse) {
 		return; // control was changed progmatically
@@ -330,14 +330,14 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget::Ptr ps) {
 	noRecurse = false;
 }
 
-void MenuStateNewGame::onChangeTeam(PlayerSlotWidget::Ptr psw) {
+void MenuStateNewGame::onChangeTeam(PlayerSlotWidget* psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	gs.setTeam(ndx, psw->getSelectedTeamIndex());
 }
 
-void MenuStateNewGame::onChangeColour(PlayerSlotWidget::Ptr psw) {
+void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
@@ -346,7 +346,7 @@ void MenuStateNewGame::onChangeColour(PlayerSlotWidget::Ptr psw) {
 	if (ci == -1) {
 		return;
 	}
-	assert(ci >= 0 && ci < GameConstants::maxPlayers);
+	assert(ci >= 0 && ci < GameConstants::maxColours);
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (ndx == i) continue;
 		if (m_playerSlots[i]->getSelectedColourIndex() == ci) {
@@ -549,6 +549,7 @@ bool MenuStateNewGame::loadGameSettings() {
 	m_fogOfWarCheckbox->setChecked(gs.getFogOfWar());
 
 	delete doc;
+	updateControlers();
 	return true;
 }
 
@@ -581,6 +582,11 @@ void MenuStateNewGame::updateControlers() {
 			m_playerSlots[i]->setSelectedFaction(-1);
 			m_playerSlots[i]->setSelectedTeam(-1);
 			m_playerSlots[i]->setSelectedColour(-1);
+			if (i < m_mapInfo.players) {
+				m_playerSlots[i]->setFree(true);
+			} else {
+				m_playerSlots[i]->setEnabled(false);
+			}
 		} else {
 			if (m_playerSlots[i]->getSelectedFactionIndex() == -1) {
 				m_playerSlots[i]->setSelectedFaction(i % m_factionFiles.size());
@@ -636,8 +642,9 @@ void MenuStateNewGame::updateControlers() {
 			assert(m_playerSlots[i]->getSelectedTeamIndex() >= 0 && m_playerSlots[i]->getSelectedTeamIndex() < GameConstants::maxPlayers);
 			gs.setTeam(i, m_playerSlots[i]->getSelectedTeamIndex());
 			gs.setStartLocationIndex(i, i);
-			assert(m_playerSlots[i]->getSelectedColourIndex() >= 0 && m_playerSlots[i]->getSelectedColourIndex() < GameConstants::maxPlayers);
+			assert(m_playerSlots[i]->getSelectedColourIndex() >= 0 && m_playerSlots[i]->getSelectedColourIndex() < GameConstants::maxColours);
 			gs.setColourIndex(i, m_playerSlots[i]->getSelectedColourIndex());
+			m_playerSlots[i]->setFree(false);
 		}
 		if (m_playerSlots[i]->getControlType() == ControlType::HUMAN) {
 			gs.setThisFactionIndex(i);

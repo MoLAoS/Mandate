@@ -105,10 +105,12 @@ public:
 protected:
 	bool hover;
 	bool pressed;
+	bool m_doHoverHighlight;
+	bool m_defaultTexture;
 
 public:
 	Button(Container::Ptr parent);
-	Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTex = true);
+	Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTex = true, bool hoverHighlight = true);
 
 	virtual void setSize(const Vec2i &sz);
 
@@ -414,7 +416,6 @@ protected:
 	Font *itemFont;
 	int selectedIndex;
 	vector<string> listItems;
-	vector<Vec3f> itemColours;
 
 	ListBase(WidgetWindow* window);
 
@@ -435,6 +436,7 @@ public:
 
 
 	sigslot::signal<ListBase*> SelectionChanged;
+	sigslot::signal<ListBase*> SameSelected;
 };
 
 // =====================================================
@@ -557,22 +559,22 @@ public:
 
 	void addItems(const vector<string> &items);
 	void addItem(const string &item);
-	void addItem(const Vec3f &Colour);
 	void clearItems();
 
 	void setSelected(int index);
 	void setSelected(const string &item);
 
-	void setSelectedColour(int index);
-
 	// event handlers
 	void onBoxClicked(ListBoxItem::Ptr);
 	void onExpandList(Button::Ptr);
 	void onSelectionMade(ListBase::Ptr);
+	void onSameSelected(ListBase::Ptr);
 	void onListDisposed(Widget::Ptr);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
+	//virtual void setEnabled(bool v) {
+	//}
 
 	virtual string desc() { return string("[DropList: ") + descPosDim() + "]"; }
 

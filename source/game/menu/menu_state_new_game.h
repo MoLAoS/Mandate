@@ -17,7 +17,7 @@
 #include "sim_interface.h"
 #include "thread.h"
 
-#include "compound_widgets.h"
+#include "player_slot_widget.h"
 
 namespace Glest { namespace Menu {
 using namespace Widgets;
@@ -65,7 +65,7 @@ private:
 	Button::Ptr				m_returnButton,
 							m_playNow;
 
-	PlayerSlotWidget::Ptr	m_playerSlots[GameConstants::maxPlayers];
+	PlayerSlotWidget*		m_playerSlots[GameConstants::maxPlayers];
 
 	StaticText::Ptr			m_mapLabel,
 							m_mapInfoLabel;
@@ -118,19 +118,19 @@ private:
 	bool hasUnconnectedSlots();
 	bool hasNetworkSlots();
 
-	void onChangeFaction(PlayerSlotWidget::Ptr);
-	void onChangeControl(PlayerSlotWidget::Ptr);
-	void onChangeTeam(PlayerSlotWidget::Ptr);
-	void onChangeColour(PlayerSlotWidget::Ptr);
+	void onChangeFaction(PlayerSlotWidget*);
+	void onChangeControl(PlayerSlotWidget*);
+	void onChangeTeam(PlayerSlotWidget*);
+	void onChangeColour(PlayerSlotWidget*);
 
-	void onChangeMap(ListBase::Ptr);
-	void onChangeTileset(ListBase::Ptr);
-	void onChangeTechtree(ListBase::Ptr);
+	void onChangeMap(ListBase*);
+	void onChangeTileset(ListBase*);
+	void onChangeTechtree(ListBase*);
 
-	void onCheckChanged(Button::Ptr);
+	void onCheckChanged(Button*);
 
-	void onButtonClick(Button::Ptr ptr);
-	void onDismissDialog(BasicDialog::Ptr);
+	void onButtonClick(Button*);
+	void onDismissDialog(BasicDialog*);
 };
 
 }}//end namespace

@@ -34,21 +34,57 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Entities {
 
+// faction colours, in RGBA format
+Colour factionColours[GameConstants::maxColours] = {
+
+	Colour(0xFFu, 0x00u, 0x00u, 0xFFu), // red
+	Colour(0x55u, 0xFFu, 0x25u, 0xFFu), // green
+	Colour(0x3Fu, 0x3Fu, 0xFFu, 0xFFu), // blue
+	Colour(0xFFu, 0xF5u, 0x35u, 0xFFu), // yellow
+
+	Colour(0x5Cu, 0xFFu, 0xFFu, 0xFFu), // cyan
+	Colour(0xF0u, 0x70u, 0x00u, 0xFFu), // orange
+	Colour(0xFFu, 0x21u, 0xB5u, 0xFFu), // pink
+	Colour(0xFFu, 0xFFu, 0xFFu, 0xFFu), // white
+
+	Colour(0x77u, 0x00u, 0x00u, 0xFFu), // maroon
+	Colour(0x00u, 0x67u, 0x00u, 0xFFu), // forest
+	Colour(0x00u, 0x00u, 0x64u, 0xFFu), // navy
+	Colour(0x75u, 0xFFu, 0x75u, 0xFFu), // mint
+
+	Colour(0x00u, 0x77u, 0x77u, 0xFFu), // teal
+	Colour(0x82u, 0x5Eu, 0x00u, 0xFFu), // brown
+	Colour(0x7Bu, 0x00u, 0xA1u, 0xFFu), // purple
+	Colour(0x93u, 0x93u, 0xFFu, 0xFFu)  // sky
+};
+
+Colour factionColoursOutline[GameConstants::maxColours] = {
+
+	Colour(0xA8u, 0x00u, 0x00u, 0xFFu), // red
+	Colour(0x36u, 0xA1u, 0x17u, 0xFFu), // green
+	Colour(0x2Au, 0x2Au, 0xAAu, 0xFFu), // blue
+	Colour(0x9Fu, 0x99u, 0x21u, 0xFFu), // yellow
+
+	Colour(0x3Cu, 0xA7u, 0xA7u, 0xFFu), // cyan
+	Colour(0xB7u, 0x5Bu, 0x00u, 0xFFu), // orange
+	Colour(0x9Eu, 0x14u, 0x70u, 0xFFu), // pink
+	Colour(0xAAu, 0xAAu, 0xAAu, 0xFFu), // white
+
+	Colour(0x96u, 0x1Eu, 0x1Eu, 0xFFu), // maroon
+	Colour(0x3Cu, 0x9Bu, 0x3Eu, 0xFFu), // forest
+	Colour(0x3Cu, 0x3Cu, 0x77u, 0xFFu), // navy
+	Colour(0x58u, 0xC1u, 0x58u, 0xFFu), // mint
+
+	Colour(0x63u, 0xA7u, 0xA7u, 0xFFu), // teal
+	Colour(0x86u, 0x6Du, 0x2Bu, 0xFFu), // brown
+	Colour(0x8Au, 0x3Eu, 0xA1u, 0xFFu), // purple
+	Colour(0x64u, 0x64u, 0xACu, 0xFFu), // sky
+};
+
 // =====================================================
 //  class Faction
 // =====================================================
 Faction::ResourceTypes Faction::neededResources;
-
-Vec3f Faction::factionColours[] = {
-	Vec3f(1.f, 0.f, 0.f),
-	Vec3f(0.f, 0.f, 1.f),
-	Vec3f(0.125f, 0.5, 0.f),
-	Vec3f(1.f, 1.f, 0.f),
-	Vec3f(0.75f, 0.f, 0.75f),
-	Vec3f(0.f, 0.75f, 0.75f),
-	Vec3f(0.3f, 1.f,  0.3f),
-	Vec3f(1.f, 0.5f, 0.f)
-};
 
 void Faction::init(const FactionType *factionType, ControlType control, string playerName, TechTree *techTree,
 					int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,
@@ -79,7 +115,7 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 		texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
 		Pixmap2D *pixmap = texture->getPixmap();
 		pixmap->init(1, 1, 3);
-		pixmap->setPixel(0, 0, factionColours[colourIndex]);
+		pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
 	} else {
 		texture = 0;
 	}
@@ -157,7 +193,7 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	texture = g_renderer.newTexture2D(ResourceScope::GAME);
 	Pixmap2D *pixmap = texture->getPixmap();
 	pixmap->init(1, 1, 3);
-	pixmap->setPixel(0, 0, factionColours[colourIndex]);
+	pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
 
 	assert(units.size() == unitMap.size());
 }

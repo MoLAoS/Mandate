@@ -95,7 +95,7 @@ GameStatsWidget::GameStatsWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
 		y -= y_gap;
 		if (gs.getFactionControl(i) != ControlType::CLOSED) {
 			string name = gs.getPlayerName(i) + " [" + gs.getFactionTypeName(i) + "] - ";
-			Vec4f colour = Vec4f(Faction::factionColours[gs.getColourIndex(i)], 1.f);
+			Vec4f colour = Vec4f(factionColours[gs.getColourIndex(i)]) / Vec4f(255.f);
 			name += g_lang.get(ControlTypeNames[gs.getFactionControl(i)]);
 			x = x_centres[0] - int(fm->getTextDiminsions(name).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);

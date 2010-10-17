@@ -96,7 +96,7 @@ E enum_cast(unsigned i) {
 
 namespace Shared { namespace Util {
 
-const string sharedLibVersionString= "v0.5";
+extern const string sharedLibVersionString;
 
 // =====================================================
 //	class EnumNames

@@ -404,4 +404,6 @@ bool fileExists(const string &path) {
 	}
 }
 
+const string sharedLibVersionString= "v0.5";
+
 }}//end namespace

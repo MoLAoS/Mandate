@@ -87,6 +87,10 @@ void Console::addLine(string line, bool playSound){
 	}
 }
 
+void Console::addDialog(string speaker, Colour colour, string text, bool playSound) {
+	addDialog(speaker, Vec3f(colour.r / 255.f, colour.g / 255.f, colour.b / 255.f), text, playSound);
+}
+
 void Console::addDialog(string speaker, Vec3f colour, string text, bool playSound) {
 	if (playSound) {
 		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());

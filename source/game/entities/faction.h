@@ -58,6 +58,14 @@ public:
 	// todo... other stuff. Store unit that produced this, other useful things...
 };
 
+
+// =====================================================
+// 	factionColours
+// =====================================================
+
+extern Colour factionColours[GameConstants::maxColours];
+extern Colour factionColoursOutline[GameConstants::maxColours];
+
 // =====================================================
 // 	class Faction
 //
@@ -67,8 +75,6 @@ public:
 class Faction : public NameIdPair {
 public:
 	typedef vector<const ResourceType *> ResourceTypes;
-
-	static Vec3f factionColours[GameConstants::maxPlayers];
 
 private:
     typedef vector<Resource> Resources;
@@ -130,7 +136,7 @@ public:
 	const Texture2D *getTexture() const					{return texture;}
 	int getStartLocationIndex() const					{return startLocationIndex;}
 	int getColourIndex() const							{return colourIndex;}
-	const Vec3f& getColour() const						{return factionColours[colourIndex];}
+	Colour getColour() const							{return factionColours[colourIndex];}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}

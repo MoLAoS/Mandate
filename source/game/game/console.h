@@ -77,6 +77,7 @@ public:
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");
 	void addLine(string line, bool playSound=false);
 	void addDialog(string speaker, Vec3f colour, string text, bool playSound=false);
+	void addDialog(string speaker, Colour colour, string text, bool playSound=false);
 
 };
 

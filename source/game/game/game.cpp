@@ -493,7 +493,7 @@ void GameState::doDefeatedMessage(Faction *f) {
 		n = msg.find("%i");
 	}
 
-	gui.getDialogConsole()->addDialog(player, Faction::factionColours[f->getColourIndex()], msg, false);
+	gui.getDialogConsole()->addDialog(player, factionColours[f->getColourIndex()], msg, false);
 }
 
 void GameState::updateCamera() {

@@ -96,7 +96,7 @@ void ServerInterface::update() {
 	// chat messages
 	while (hasChatMsg()) {
 		Console *c = g_userInterface.getDialogConsole();
-		c->addDialog(getChatSender() + ": ", Faction::factionColours[getChatColourIndex()],
+		c->addDialog(getChatSender() + ": ", factionColours[getChatColourIndex()],
 			getChatText(), true);
 		popChatMsg();
 	}

@@ -79,15 +79,20 @@ Button::Button(Container::Ptr parent)
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hover(false)
-		, pressed(false) {
+		, pressed(false)
+		, m_doHoverHighlight(true)
+		, m_defaultTexture(true) {
 }
 
-Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTexture)
+Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTexture, bool hoverHighlight)
 		: Widget(parent, pos, size)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
-		, hover(false), pressed(false) {
+		, hover(false)
+		, pressed(false)
+		, m_doHoverHighlight(hoverHighlight) 
+		, m_defaultTexture(defaultTexture) {
 	// background texture
 	if (defaultTexture) {
 		CoreData &coreData = CoreData::getInstance();
@@ -115,15 +120,17 @@ Vec2i Button::getMinSize() const {
 
 void Button::setSize(const Vec2i &sz) {
 	Widget::setSize(sz);
-	CoreData &coreData = CoreData::getInstance();
-	Vec2i size = getSize();
-	Texture2D *tex = size.x > 3 * size.y / 2 
-		? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
-	setImage(tex);
+	if (m_defaultTexture) {
+		CoreData &coreData = CoreData::getInstance();
+		Vec2i size = getSize();
+		Texture2D *tex = size.x > 3 * size.y / 2 
+			? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
+		setImage(tex);
+	}
 }
 
 bool Button::mouseDown(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
@@ -131,7 +138,7 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
 		if (pressed && hover) {
 			Clicked(this);
 		}
@@ -143,10 +150,15 @@ bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 
 void Button::render() {
 	// render background
-	ImageWidget::renderImage();
+	if (hasImage()) {
+		ImageWidget::renderImage();
+		renderBgAndBorders(false);
+	} else {
+		renderBgAndBorders();
+	}
 
 	// render hilight
-	if (hover && isEnabled()) {
+	if (m_doHoverHighlight && hover && isEnabled()) {
 		float anim = getRootWindow()->getAnim();
 		if (anim > 0.5f) {
 			anim = 1.f - anim;
@@ -1004,6 +1016,8 @@ void ListBox::onSelected(ListBoxItem::Ptr item) {
 				return;
 			}
 		}
+	} else {
+		SameSelected(this);
 	}
 }
 
@@ -1023,16 +1037,6 @@ void ListBox::addItem(const string &item) {
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);
-}
-
-void ListBox::addColours(const vector<Vec3f> &colours) {
-	Vec2i sz(getSize().x - getBordersHoriz(), int(itemFont->getMetrics()->getHeight()) + 4);
-	foreach_const (vector<Vec3f>, it, colours) {
-		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz, *it);
-		nItem->setTextParams("", Vec4f(1.f), itemFont, true);
-		listBoxItems.push_back(nItem);
-		nItem->Selected.connect(this, &ListBox::onSelected);
-	}
 }
 
 void ListBox::setSize(const Vec2i &sz) {
@@ -1193,10 +1197,6 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent)
 		, hover(false)
 		, pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
-	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
 }
 
@@ -1208,10 +1208,6 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz)
 		, hover(false)
 		, pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
-	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
 }
 
@@ -1223,10 +1219,6 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz, const Vec3f 
 		, hover(false)
 		, pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
-	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-
 	m_backgroundStyle.m_type = BackgroundType::COLOUR;
 	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(bgColour);
 }
@@ -1244,7 +1236,7 @@ Vec2i ListBoxItem::getPrefSize() const {
 void ListBoxItem::render() {
 	Widget::renderBgAndBorders();
 	TextWidget::renderTextShadowed();
-	if (selected) {
+	if (isEnabled() && selected) {
 		Widget::renderHighLight(Vec3f(1.f), 0.1f, 0.3f);
 	}
 	assertGl();
@@ -1268,7 +1260,7 @@ void ListBoxItem::mouseOut() {
 }
 
 bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
@@ -1276,8 +1268,8 @@ bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
-		if (hover && !selected) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
+		if (hover) {
 			Selected(this);
 			//static_cast<ListBase*>(parent)->setSelected(this);
 		}
@@ -1364,10 +1356,6 @@ void DropList::addItem(const string &item) {
 	listItems.push_back(item);
 }
 
-void DropList::addItem(const Vec3f &c) {
-	itemColours.push_back(c);
-}
-
 void DropList::clearItems() {
 	listItems.clear();
 	selectedItem->setText("");
@@ -1375,12 +1363,6 @@ void DropList::clearItems() {
 }
 
 void DropList::setSelected(int index) {
-	if (listItems.empty()) {
-		setSelectedColour(index);
-		selectedIndex = index;
-		SelectionChanged(this);
-		return;
-	}
 	if (index < 0 || index >= listItems.size()) {
 		if (selectedIndex == -1) {
 			return;
@@ -1395,16 +1377,6 @@ void DropList::setSelected(int index) {
 		selectedIndex = index;
 	}
 	SelectionChanged(this);
-}
-
-void DropList::setSelectedColour(int index) {
-	if (index < 0 || index >= GameConstants::maxPlayers) {
-		selectedIndex = -1;
-		selectedItem->setBackgroundColour(Vec3f(0.5f));
-		return;
-	}
-	selectedIndex = index;
-	selectedItem->setBackgroundColour(itemColours[index]);
 }
 
 void DropList::setSelected(const string &item) {
@@ -1426,23 +1398,20 @@ void DropList::expandList() {
 	floatingList->setPaddingParams(0, 0);
 	const Vec2i &size = getSize();
 	const Vec2i &screenPos = getScreenPos();
-	int num = listItems.empty() ? itemColours.size() : listItems.size();
+	int num = listItems.size();
 	int ph = floatingList->getPrefHeight(num);
 	int h = dropBoxHeight == 0 ? ph : ph > dropBoxHeight ? dropBoxHeight : ph;
 
 	Vec2i sz(size.x, h);
 	Vec2i pos(screenPos.x, screenPos.y - sz.y + size.y);
 	floatingList->setPos(pos);
-	if (listItems.empty()) {
-		floatingList->addColours(itemColours);
-	} else {
-		floatingList->addItems(listItems);
-	}
+	floatingList->addItems(listItems);
 	floatingList->setSize(sz);
 
 	floatingList->setSelected(selectedIndex);
 	floatingList->Destroyed.connect(this, &DropList::onListDisposed);
 	floatingList->SelectionChanged.connect(this, &DropList::onSelectionMade);
+	floatingList->SameSelected.connect(this, &DropList::onSameSelected);
 	setVisible(false);
 	ListExpanded(this);
 }
@@ -1462,6 +1431,13 @@ void DropList::onExpandList(Button::Ptr) {
 void DropList::onSelectionMade(ListBase::Ptr lb) {
 	assert(floatingList == lb);
 	setSelected(lb->getSelectedIndex());
+	floatingList->Destroyed.disconnect(this);
+	onListDisposed(lb);
+	getRootWindow()->removeFloatingWidget(lb);
+}
+
+void DropList::onSameSelected(ListBase::Ptr lb) {
+	assert(floatingList == lb);
 	floatingList->Destroyed.disconnect(this);
 	onListDisposed(lb);
 	getRootWindow()->removeFloatingWidget(lb);

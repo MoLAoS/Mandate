@@ -144,8 +144,8 @@ int glestMain(int argc, char** argv) {
 	if (dataDir.empty()) {
 		dataDir = ".";
 	}
-	//FIXME: debug
-	//cout << "config: " << configDir << "\ndata: " << dataDir << endl;
+
+	cout << "config-dir: " << configDir << "\ndata-dir: " << dataDir << endl << endl;
 
 	mkdir(configDir, true);
 	mkdir(configDir + "/addons/", true);
