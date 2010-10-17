@@ -360,8 +360,7 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 
 void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
-	mousePos.x = x;
-	mousePos.y = getH() - y;
+
 	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
