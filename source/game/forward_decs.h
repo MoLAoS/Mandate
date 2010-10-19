@@ -23,6 +23,7 @@ namespace Glest {
 		class NodeMap;
 		class Cartographer;
 		class RoutePlanner;
+		class Surveyor;
 	}
 
 	namespace ProtoTypes {
