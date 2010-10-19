@@ -17,6 +17,10 @@
 #include "config.h"
 #include "util.h"
 
+#ifndef WIN32
+#include "platform_util.h"
+#endif
+
 #include "leak_dumper.h"
 
 namespace Glest { namespace Global {
@@ -31,6 +35,11 @@ Config::Config(const char* fileName) : fileName(fileName) {
 		p->load(fileName, true);
 	}
 
+	int width=1024, height=768;
+#ifndef WIN32
+	getScreenMode(width, height);
+#endif
+
 	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);
 	cameraInvertYAxis = p->getBool("CameraInvertYAxis", true);
@@ -38,9 +47,9 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	cameraMaxYaw = p->getFloat("CameraMaxYaw", 77.50f, 0.f, 360.f);
 	cameraMinDistance = p->getFloat("CameraMinDistance", 8.f, 0.f, 20.f);
 	cameraMinYaw = p->getFloat("CameraMinYaw", 20.f, 0.f, 360.f);
-	displayHeight = p->getInt("DisplayHeight", 768);
+	displayHeight = p->getInt("DisplayHeight", height);
 	displayRefreshFrequency = p->getInt("DisplayRefreshFrequency", 60);
-	displayWidth = p->getInt("DisplayWidth", 1024);
+	displayWidth = p->getInt("DisplayWidth", width);
 	displayWindowed = p->getBool("DisplayWindowed", false);
 	gsAutoRepairEnabled = p->getBool("GsAutoRepairEnabled", true);
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);

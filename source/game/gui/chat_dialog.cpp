@@ -29,7 +29,7 @@ namespace Glest { namespace Gui {
 //  class ChatDialog
 // =====================================================
 
-ChatDialog::ChatDialog(Container::Ptr parent, Vec2i pos, Vec2i size)
+ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
 		: BasicDialog(parent, pos, size), m_teamChat(false) {
 	m_panel = new Panel(this);
 	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
@@ -86,7 +86,7 @@ void ChatDialog::setVisible(bool vis) {
 
 }
 
-void ChatDialog::onInputEntered(TextBox::Ptr) {
+void ChatDialog::onInputEntered(TextBox*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

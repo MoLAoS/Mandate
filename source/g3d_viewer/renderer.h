@@ -1,5 +1,5 @@
-#ifndef _SHADER_G3DVIEWER_RENDERER_H_
-#define _SHADER_G3DVIEWER_RENDERER_H_
+#ifndef _G3DVIEWER_RENDERER_H_
+#define _G3DVIEWER_RENDERER_H_
 
 #include "model_renderer.h"
 #include "texture_manager.h"
@@ -38,6 +38,7 @@ public:
 
 class Renderer{
 public:
+	// start window pos and size
 	static const int windowX= 100;
 	static const int windowY= 75;
 	static const int windowW= 800;
@@ -47,10 +48,12 @@ private:
 	bool wireframe;
 	bool normals;
 	bool grid;
+	int mesh;
 
 	ModelRenderer *modelRenderer;
 	TextureManager *textureManager;
-	Texture2D *customTextures[4];
+	Texture2D *customTextures[8];
+	Vec3<uint8> colours[8];
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
 	Renderer();
@@ -59,6 +62,8 @@ private:
 public:
 	~Renderer();
 	static Renderer *getInstance();
+
+	TextureManager *getTextureManager() { return textureManager; }
 
 	void init();
 	void reset(int x, int y, int w, int h, int playerColor);
@@ -69,15 +74,17 @@ public:
 	bool getNormals() const		{return normals;}
 	bool getWireframe() const	{return wireframe;}
 	bool getGrid() const		{return grid;}
+	int  getMesh() const		{return mesh;}
 
 	void toggleNormals();
 	void toggleWireframe();
 	void toggleGrid();
+	void setMesh(int index = -1) { mesh = index; }
+
+	Vec3<uint8> getTeamColour(int i) const	{ return colours[i]; }
 
 	void loadTheModel(Model *model, string file);
 	void renderTheModel(Model *model, float f);
-
-	uint8 colours[4*3];
 };
 
 }}//end namespace

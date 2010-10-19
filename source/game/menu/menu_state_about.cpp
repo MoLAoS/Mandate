@@ -49,7 +49,7 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	int fhBig = int(fmBig->getHeight() + 1.f);
 
 	Vec2i dims;
-	StaticText::Ptr label;
+	StaticText* label;
 	for (int i=0; i < 4; ++i) {
 		y -= fh;
 		label = new StaticText(&program);
@@ -138,7 +138,7 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	}
 }
 
-void MenuStateAbout::onReturn(Button::Ptr) {
+void MenuStateAbout::onReturn(Button*) {
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	g_soundRenderer.playFx(g_coreData.getClickSoundB());
 	doFadeOut();

@@ -13,6 +13,8 @@
 #include "widget_window.h"
 #include "user_interface.h"
 
+#include "leak_dumper.h"
+
 namespace Glest { namespace Gui {
 
 using Global::CoreData;
@@ -85,7 +87,7 @@ void LuaInputBox::recallCommand(bool reverse) {
 // class LuaConsole
 // =====================================================
 
-LuaConsole::LuaConsole(UserInterface *ui, Container::Ptr parent, Vec2i pos, Vec2i sz)
+LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz)
 		: BasicDialog(parent, pos, sz)
 		, m_ui(ui) {
 	init(pos, sz, "Lua-Console", "Close", "");
@@ -129,7 +131,7 @@ void LuaConsole::setVisible(bool vis) {
 	}
 }
 
-void LuaConsole::onLineEntered(TextBox::Ptr) {
+void LuaConsole::onLineEntered(TextBox*) {
 	addOutput(string("> ") + m_inputBox->getText());
 	Script::ScriptManager::doSomeLua(m_inputBox->getText());
 }

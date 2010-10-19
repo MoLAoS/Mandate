@@ -2,6 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2008-2009 Daniel Santos
+//                2009-2010 Nathan Turner
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -619,6 +622,8 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	builtUnit->create();
 	unit->setCurrSkill(buildSkillType);
 	unit->setTarget(builtUnit, true, true);
+
+	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
 
 	const Tile *const &refTile = map->getTile(Map::toTileCoords(builtUnit->getCenteredPos())); 
 	if (builtUnitType->getField() == Field::LAND 

@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cctype>
 #include <vector>
+#include <deque>
 #include <map>
 #include <algorithm>
 
@@ -95,7 +96,7 @@ E enum_cast(unsigned i) {
 
 namespace Shared { namespace Util {
 
-const string sharedLibVersionString= "v0.5";
+extern const string sharedLibVersionString;
 
 // =====================================================
 //	class EnumNames
@@ -227,6 +228,36 @@ public:
 #define foreach_enum(Enum, val) for(Enum val(0); val < Enum::COUNT; ++val)
 
 //
+// global error log for shared lib media loading functions
+//
+
+struct MediaErrorLog {
+public:
+	struct ErrorRecord {
+		string msg;
+		string path;
+	};
+
+private:
+	std::deque<ErrorRecord> errors;
+
+public:
+	MediaErrorLog() {}
+
+	void add(string msg, string path) {
+		errors.push_back(ErrorRecord());
+		errors.back().msg = msg;
+		errors.back().path = path;
+	}
+
+	bool hasError() const { return !errors.empty(); }
+	ErrorRecord popError() { ErrorRecord rec = errors.front(); errors.pop_front(); return rec; }
+};
+
+extern MediaErrorLog mediaErrorLog;
+
+
+//
 // Util finctions
 //
 
@@ -319,14 +350,11 @@ void deleteMapValues(MapType map) {
 
 // misc
 template <typename T>
-inline void swap(T& a, T& b) { T temp = a; a = b; b = temp; }
-
-template <typename T>
 void jumble(vector<T> &list, Random &rand) {
 	for (int i=0; i < list.size(); ++i) {
 		int j = rand.randRange(0, list.size() - 1);
 		if (i == j) continue;
-		swap(list[i], list[j]);
+		std::swap(list[i], list[j]);
 	}
 }
 

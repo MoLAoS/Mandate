@@ -44,6 +44,8 @@ void Texture1D::load(const string &path){
 //	class Texture2D
 // =====================================================
 
+Texture2D* Texture2D::defaultTexture = 0;
+
 void Texture2D::load(const string &path){
 	this->path= path;
 	pixmap.load(path);

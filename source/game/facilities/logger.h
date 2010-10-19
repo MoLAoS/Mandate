@@ -87,6 +87,7 @@ public:
 
 	void add(const string &str, bool renderScreen = false);
 	void addXmlError(const string &path, const char *error);
+	void addMediaError(const string &xmlPth, const string &mediaPath, const char *error);
 	void addNetworkMsg(const string &msg);
 
 	void renderLoadingScreen();

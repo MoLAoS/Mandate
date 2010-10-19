@@ -16,6 +16,7 @@
 
 #include "projectConfig.h"
 #include "FSFactory.hpp"
+#include "leak_dumper.h"
 
 using Shared::PhysFS::FSFactory;
 
@@ -31,6 +32,7 @@ CmdArgs::CmdArgs(){
 	this->configDir = DEFAULT_CONFIG_DIR;
 	this->dataDir = DEFAULT_DATA_DIR;
 	test = false;
+	m_redirStreams = true; // ignored on Linux
 }
 
 CmdArgs::~CmdArgs(){
@@ -86,6 +88,8 @@ bool CmdArgs::parse(int argc, char **argv){
 					exit(2);
 				}
 				return true;
+		} else if (arg == "-noredir") {
+			m_redirStreams = false;
 		} else {
 			cout << "unknown argument: " << arg << endl;
 			return true;

@@ -38,7 +38,7 @@ namespace Glest { namespace Gui {
 // 	class Console
 // =====================================================
 
-Console::Console(Container::Ptr parent, int maxLines, int y_pos, bool fromTop)
+Console::Console(Container* parent, int maxLines, int y_pos, bool fromTop)
 		: Widget(parent, Vec2i(0), Vec2i(0))
 		, TextWidget(this)
 		, maxLines(maxLines)
@@ -87,6 +87,10 @@ void Console::addLine(string line, bool playSound){
 	}
 }
 
+void Console::addDialog(string speaker, Colour colour, string text, bool playSound) {
+	addDialog(speaker, Vec3f(colour.r / 255.f, colour.g / 255.f, colour.b / 255.f), text, playSound);
+}
+
 void Console::addDialog(string speaker, Vec3f colour, string text, bool playSound) {
 	if (playSound) {
 		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
@@ -100,7 +104,7 @@ void Console::addDialog(string speaker, Vec3f colour, string text, bool playSoun
 }
 
 void Console::update(){
-	timeElapsed += 1.f / Config::getInstance().getGsWorldUpdateFps();
+	timeElapsed += 1.f / WORLD_FPS;
 
 	if (!lines.empty()) {
 		if(lines.back().second < timeElapsed - timeout){

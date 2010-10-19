@@ -66,7 +66,7 @@ private:
 	Font *m_font;
 
 public:
-	Console(Container::Ptr parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
+	Console(Container* parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
 	~Console();
 
 	virtual void update();
@@ -77,6 +77,7 @@ public:
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");
 	void addLine(string line, bool playSound=false);
 	void addDialog(string speaker, Vec3f colour, string text, bool playSound=false);
+	void addDialog(string speaker, Colour colour, string text, bool playSound=false);
 
 };
 

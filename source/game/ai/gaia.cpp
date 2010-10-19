@@ -13,6 +13,8 @@
 #include "unit_type.h"
 #include "util.h"
 
+#include "leak_dumper.h"
+
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
 #endif

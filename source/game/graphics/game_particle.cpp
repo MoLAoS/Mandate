@@ -2,6 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2008-2009 Daniel Santos
+//                2009-2010 Titus Tscharntke
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -15,6 +18,7 @@
 #include "particle_renderer.h"
 #include "logger.h"
 #include "world.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Entities {
 using Sim::Tile;

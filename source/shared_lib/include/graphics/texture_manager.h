@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "texture.h"
+#include "util.h"
 
 using std::vector;
 
@@ -30,7 +31,9 @@ protected:
 	typedef vector<Texture*> TextureContainer;
 	
 protected:
-	TextureContainer textures;
+	WRAPPED_ENUM( TextureType,  ONE_D, TWO_D, THREE_D, CUBE_MAP );
+
+	TextureContainer textures[TextureType::COUNT];
 	
 	Texture::Filter textureFilter;
 	int maxAnisotropy;
@@ -44,7 +47,7 @@ public:
 	void setFilter(Texture::Filter textureFilter);
 	void setMaxAnisotropy(int maxAnisotropy);
 
-	Texture *getTexture(const string &path);
+	Texture2D *getTexture(const string &path);
 	Texture1D *newTexture1D();
 	Texture2D *newTexture2D();
 	Texture3D *newTexture3D();

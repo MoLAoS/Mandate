@@ -17,8 +17,11 @@
 #include "config.h"
 #include "util.h"
 
-#include "leak_dumper.h"
+#ifndef WIN32
+#include "platform_util.h"
+#endif
 
+#include "leak_dumper.h"
 
 namespace Glest { namespace Global {
 
@@ -32,9 +35,18 @@ Config::Config(const char* fileName) : fileName(fileName) {
 		p->load(fileName, true);
 	}
 
+	int width=1024, height=768;
+#ifndef WIN32
+	getScreenMode(width, height);
+#endif
+
 CONFIG_INIT
 
 	delete p;
+
+	if (!Shared::Util::fileExists(fileName)) {
+		save();
+	}
 }
 
 void Config::save(const char *path) {

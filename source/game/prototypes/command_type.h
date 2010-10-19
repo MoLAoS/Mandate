@@ -2,6 +2,8 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2008-2009 Daniel Santos
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -550,6 +552,7 @@ private:
 	bool m_countCells;	// if true, a size 2 unit occupies 4 slots
 	bool m_countSize;	// if true, a height 2 occupies 2 slots
 						// if both true, a size 2 height 2 unit would occupy 8
+	// OR ... add a unit 'space' param...
 */
 public:
 	LoadCommandType() 
@@ -603,8 +606,33 @@ public:
 	virtual Clicks getClicks() const { return (moveSkillType ? Clicks::TWO : Clicks::ONE); }
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::UNLOAD; }
+};
+
+// ===============================
+//  class UnloadCommandType
+// ===============================
+
+class BeLoadedCommandType : public CommandType {
 private:
-	
+	const MoveSkillType *moveSkillType;
+
+public:
+	BeLoadedCommandType()
+			: CommandType("be-loaded", Clicks::ONE), moveSkillType(0) {}
+
+	void setMoveSkill(const MoveSkillType *moveSkill) { moveSkillType = moveSkill; }
+	virtual bool load() {return true;}
+	virtual void doChecksum(Checksum &checksum) const {}
+	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void update(Unit *unit) const;
+	virtual string getReqDesc() const {return "";}
+
+	//get
+	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
+
+	virtual Clicks getClicks() const { return Clicks::ONE; }
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::BE_LOADED; }
 };
 
 // ===============================
@@ -637,6 +665,31 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::PATROL; }
+};
+
+// ===============================
+//  class GenericCommandType
+// ===============================
+
+class GenericCommandType: public CommandType {
+private:
+	const GenericSkillType *genericSkillType;
+	bool	m_cycle;
+
+public:
+	GenericCommandType() : CommandType("Generic", Clicks::ONE), m_cycle(false) {}
+	virtual void doChecksum(Checksum &checksum) const {
+		CommandType::doChecksum(checksum);
+		checksum.add(genericSkillType->getName());
+	}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void getDesc(string &str, const Unit *unit) const	{genericSkillType->getDesc(str, unit);}
+	const GenericSkillType *getGenericSkillType() const			{return genericSkillType;}
+
+	virtual void update(Unit *unit) const;
+
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::GENERIC; }
 };
 
 // ===============================

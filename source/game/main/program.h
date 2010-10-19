@@ -90,7 +90,7 @@ class Program : public WidgetWindow {
 	friend class Glest::Sim::SimulationInterface;
 private:
 	class CrashProgramState : public ProgramState, public sigslot::has_slots {
-		MessageDialog::Ptr msgBox;
+		MessageDialog* msgBox;
 		const exception *e;
 		bool done;
 
@@ -98,7 +98,7 @@ private:
 		CrashProgramState(Program &program, const exception *e);
 		virtual int getUpdateFps() const {return 10;}
 
-		void onExit(BasicDialog::Ptr);
+		void onExit(BasicDialog*);
 		virtual void update();
 
 		virtual void renderBg();

@@ -17,7 +17,7 @@
 
 //#include "util.h"
 //#include "conversion.h"
-//#include "leak_dumper.h"
+#include "leak_dumper.h"
 #include <iostream>
 
 //using namespace Shared::Util;

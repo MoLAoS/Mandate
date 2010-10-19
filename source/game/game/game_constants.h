@@ -110,6 +110,7 @@ namespace GameConstants {
 	const int invalidId = -1;
 
 	const int maxPlayers = 8;
+	const int maxColours = 16;
 	const int serverPort = 61357;
 
 	//const int defaultUpdateInterval = 6;

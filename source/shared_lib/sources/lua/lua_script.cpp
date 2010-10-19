@@ -362,8 +362,6 @@ void LuaArguments::returnBool(bool value){
 	lua_pushboolean(luaState, value);
 }
 
-
-
 const char* LuaArguments::getType(int ndx) const {
 	if (lua_isnumber(luaState, ndx)) {
 		return "Number";

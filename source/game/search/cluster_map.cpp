@@ -21,6 +21,7 @@
 #include "route_planner.h"
 
 #include "line.h"
+#include "leak_dumper.h"
 
 using std::min;
 using Shared::Util::line;

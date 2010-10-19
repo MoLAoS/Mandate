@@ -14,6 +14,7 @@
 #include "main.h"
 
 #include <ctime>
+#include <wx/dir.h>
 
 #include "conversion.h"
 #include "FSFactory.hpp"
@@ -326,7 +327,7 @@ void MainWindow::onToolPlayer(wxCommandEvent& event){
 	PopupMenu(menuBrushStartLocation);
 }
 
-void MainWindow::init(string fname) {
+void MainWindow::init(string fname, wxString glest) {
 	glCanvas->SetCurrent();
 	program = new Program(glCanvas->GetClientSize().x, glCanvas->GetClientSize().y);
 
@@ -336,6 +337,8 @@ void MainWindow::init(string fname) {
 		currentFile = fname;
 		fileName = cutLastExt(basename(fname));
 	}
+	this->glest = glest;
+	
 	SetTitle(ToUnicode(winHeader + "; " + currentFile));
 	setDirty(false);
 	setExtension();
@@ -386,9 +389,9 @@ void MainWindow::setFactionCount() {
 
 void MainWindow::onClose(wxCloseEvent &event) {
 	if(this->fileModified){
-		wxMessageDialog message(this, _("There are unsaved modifications. Quit anyway?"), _("Really quit?"),
-			wxOK|wxCANCEL|wxCENTRE|wxICON_QUESTION);
-		if(message.ShowModal()==wxID_CANCEL){
+		int answer = wxMessageBox(_("There are unsaved modifications. Quit anyway?"), _("Really quit?"),
+								wxYES_NO|wxICON_QUESTION, this);
+		if(answer==wxNO){
 			return;
 		}
 	}
@@ -705,20 +708,38 @@ void MainWindow::onMenuMiscHelp(wxCommandEvent &event) {
 
 void MainWindow::onShowMap(wxCommandEvent& event){
 	if(this->fileModified || this->currentFile.empty()){
-		wxMessageDialog message(this, _("You need to save first!"), _("Unsaved"), wxOK|wxCENTRE|wxICON_ERROR);
-		message.ShowModal();
+		wxMessageBox(_("You need to save first!"), _("Unsaved"), wxOK|wxICON_ERROR, this);
 		return;
 	}
 
-	wxArrayString output, arrstr;
-	vector<string> results;
+	// find glest
+	if(glest.empty()){
+		wxPathList pathlist;
+		pathlist.AddEnvList(_("PATH"));
+		glest = pathlist.FindAbsoluteValidPath(_("glestadv"));
+		if(glest.empty()){
+			// not found in PATH -> search recursively in current directory
+			glest = wxDir::FindFirst(_("."), _("glestadv*"));
+			if(glest.empty()){
+				wxMessageBox(_("Couldn't find glestadv!"), _("Error"), wxOK|wxICON_ERROR, this);
+				return;
+			}
+		}
+	}
 
-	wxExecute(ToUnicode("./glestadv -list-tilesets"), output);
+	wxArrayString output, arrstr;
+	wxString command = glest + _(" -list-tilesets");
+	cout << command.char_str() << endl;
+	wxExecute(command, output);
 
 	for(wxArrayString::const_iterator it=output.begin(); it!=output.end(); ++it){
 		if(it->at(0)=='~'){  // only rows beginning with ~ are relevant
 			arrstr.Add(it->SubString(1, it->Length()-1));
 		}
+	}
+	if(arrstr.empty()){
+		wxMessageBox(_("No tilesets found."), _("Error"), wxOK|wxICON_ERROR, this);
+		return;
 	}
 
 	wxSingleChoiceDialog dlg(this, _("select tileset"), _("tileset"), arrstr);
@@ -726,7 +747,9 @@ void MainWindow::onShowMap(wxCommandEvent& event){
 		wxString tileset = arrstr[dlg.GetSelection()];
 		
 		// leading / stands for absolute path, disables physfs for reading
-		wxExecute(ToUnicode("./glestadv -loadmap /"+currentFile+" ") + tileset, wxEXEC_SYNC);
+		command = glest + ToUnicode(" -loadmap /"+currentFile+" ") + tileset;
+		cout << command.char_str() << endl;
+		wxExecute(command, wxEXEC_SYNC);
 	}
 }
 
@@ -1074,14 +1097,20 @@ void SimpleDialog::show() {
 bool App::OnInit() {
 	FSFactory::getInstance()->usePhysFS = false;
 	
-	string fileparam;
-	if(argc==2){
-		fileparam = wxFNCONV(argv[1]);
+	string fileparam, arg;
+	wxString glest;
+	for(int i=1; i<argc; ++i){
+		arg = wxFNCONV(argv[i]);
+		if(arg=="-glest" && (i+1)<argc){
+			glest = argv[++i];
+		}else{
+			fileparam = arg;
+		}
 	}
 
 	mainWindow = new MainWindow();
 	mainWindow->Show();
-	mainWindow->init(fileparam);
+	mainWindow->init(fileparam, glest);
 	return true;
 }
 

@@ -1,5 +1,5 @@
-#ifndef _SHADER_G3DVIEWER_MAIN_H_
-#define _SHADER_G3DVIEWER_MAIN_H_
+#ifndef _G3DVIEWER_MAIN_H_
+#define _G3DVIEWER_MAIN_H_
 
 #include <string>
 
@@ -11,6 +11,7 @@
 #include "renderer.h"
 #include "util.h"
 #include "window.h"
+#include "dialogs.h"
 
 using std::string;
 
@@ -18,30 +19,17 @@ namespace Shared { namespace G3dViewer {
 
 class GlCanvas;
 
-class TeamColourDialog : public wxDialog {
-	DECLARE_EVENT_TABLE()
+WRAPPED_ENUM( StatusItems,
+	NULL_ENTRY,
+	MODEL_INFO,
+	ANIM_SPEED
+)
 
-	int editIndex;
-	Renderer *renderer;
-
-	wxButton *btnColour[4];
-	wxColourDialog *colourDialog;
-
-	wxStaticBitmap *bitmaps[4];
-
-	void CreateChildren();
-
-public:
-	TeamColourDialog(Renderer *renderer);
-	~TeamColourDialog();
-
-	void onColourBtn(wxCommandEvent& event);
-
-	wxColour colours[4];
-};
+wxString ToUnicode(const char* str);
+wxString ToUnicode(const string& str);
 
 // ===============================
-// 	class MainWindow  
+// 	class MainWindow
 // ===============================
 
 class MainWindow: public wxFrame {
@@ -52,7 +40,7 @@ public:
 	static const string versionString;
 	static const string winHeader;
 
-	enum MenuId{
+	enum MenuId {
 		miFileLoad,
 		miModeWireframe,
 		miModeNormals,
@@ -63,6 +51,10 @@ public:
 		miColorTwo,
 		miColorThree,
 		miColorFour,
+		miColorFive,
+		miColorSix,
+		miColorSeven,
+		miColorEight,
 		miColourAll,
 		miColourEdit,
 
@@ -80,17 +72,21 @@ private:
 	wxMenu *menuMode;
 	wxMenu *menuSpeed;
 	wxMenu *menuCustomColor;
+	wxMenu *menuMesh;
 
 	TeamColourDialog *colourDialog;
 
 	Model *model;
+
 	string modelPath;
 
-	float speed;
+	int speed;
 	float anim;
 	float rotX, rotY, zoom;
 	int lastX, lastY;
 	int playerColor;
+
+	void buildStatusBar();
 
 public:
 	MainWindow(const string &modelPath);
@@ -109,12 +105,9 @@ public:
 	void onMenuModeGrid(wxCommandEvent &event);
 	void onMenuSpeedSlower(wxCommandEvent &event);
 	void onMenuSpeedFaster(wxCommandEvent &event);
-	void onMenuColorOne(wxCommandEvent &event);
-	void onMenuColorTwo(wxCommandEvent &event);
-	void onMenuColorThree(wxCommandEvent &event);
-	void onMenuColorFour(wxCommandEvent &event);
-	void onMenuColorAll(wxCommandEvent &event);
+	void onMenuColor(wxCommandEvent &event);
 	void onMenuColorEdit(wxCommandEvent &event);
+	void onMenuMeshSelect(wxCommandEvent &evt);
 	void onMouseMove(wxMouseEvent &event);
 	void onTimer(wxTimerEvent &event);
 

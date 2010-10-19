@@ -41,6 +41,8 @@ namespace Shared{ namespace Util{
 
 using namespace PhysFS;
 
+MediaErrorLog mediaErrorLog;
+
 EnumNamesBase::EnumNamesBase(const char *valueList, size_t count, bool lazy, const char *enumName)
 		: valueList(valueList)
 		, names(NULL)
@@ -401,5 +403,7 @@ bool fileExists(const string &path) {
 		return false;
 	}
 }
+
+const string sharedLibVersionString= "v0.5";
 
 }}//end namespace

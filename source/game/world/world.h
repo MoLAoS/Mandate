@@ -71,7 +71,7 @@ private:
 	Scenario *scenario; // < to SimulationInterface ?
 	GameState &game;
 
-	SimulationInterface *iSim;
+	SimulationInterface *m_simInterface;
 
 	// WaterEffects == Eye candy, not game data, send to UserInterface
 	WaterEffects waterEffects;
@@ -202,7 +202,7 @@ public:
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *dest, fixed distance);
 	void appyEffect(Unit *unit, Effect *effect);
 
-	//scripting interface
+	// scripting interface
 	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
 	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
 	int giveTargetCommand( int unitId, const string &commandName, int targetId);
@@ -241,6 +241,7 @@ private:
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
+	void updateFaction(const Faction *f);
 };
 
 // =====================================================

@@ -14,6 +14,7 @@
 
 #include "vec.h"
 #include "fixed.h"
+#include "leak_dumper.h"
 
 namespace Shared { namespace Math {
 

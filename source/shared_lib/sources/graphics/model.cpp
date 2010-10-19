@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cassert>
 #include <stdexcept>
+#include <memory>  // for auto_ptr
 
 #include "interpolation.h"
 #include "conversion.h"
@@ -161,15 +162,12 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 
 	//texture
 	if(!(meshHeader.properties & mp3NoTexture) && textureManager!=NULL){
+		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texturePaths[mtDiffuse]= toLower(reinterpret_cast<char*>(meshHeader.texName));
-		string texPath= dir+"/"+texturePaths[mtDiffuse];
+		texPath = dir + "/" + texPath;
+		texPath = cleanPath(texPath);
 
 		textures[mtDiffuse]= static_cast<Texture2D*>(textureManager->getTexture(texPath));
-		if(textures[mtDiffuse]==NULL){
-			assert(texPath != "");
-			textures[mtDiffuse]= textureManager->newTexture2D();
-			textures[mtDiffuse]->load(texPath);
-		}
 	}
 
 	//read data
@@ -244,14 +242,6 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			assert(mapFullPath != "");
 
 			textures[i] = static_cast<Texture2D*>(textureManager->getTexture(mapFullPath));
-			if (textures[i] == NULL) {
-				textures[i] = textureManager->newTexture2D();
-				if (meshTextureChannelCount[i] != -1) {
-					textures[i]->getPixmap()->init(meshTextureChannelCount[i]);
-				}
-				assert(mapFullPath != "");
-				textures[i]->load(mapFullPath);
-			}
 		}
 		flag *= 2;
 	}
@@ -460,8 +450,6 @@ void Mesh::save(const string &dir, FileOps *f){
 //	class Model
 // ===============================================
 
-Texture2D* Model::defaultTexture = 0;
-
 // ==================== constructor & destructor ====================
 
 Model::Model(){
@@ -508,9 +496,9 @@ void Model::load(const string &path, int size, int height) {
 	} catch (runtime_error &e) {
 		meshCount = 1;
 		meshes = new Mesh[1];
-		meshes[0].buildCube(size, height, defaultTexture);
+		meshes[0].buildCube(size, height, Texture2D::defaultTexture);
 		meshes[0].buildInterpolationData();
-		throw e;
+		mediaErrorLog.add(e.what(), path);
 	}
 }
 
@@ -525,48 +513,43 @@ void Model::save(const string &path){
 
 // load a model from a g3d file
 void Model::loadG3d(const string &path){
-    try {
-		FileOps *f = FSFactory::getInstance()->getFileOps();
-		f->openRead(path.c_str());
+	std::auto_ptr<FileOps> f(FSFactory::getInstance()->getFileOps());
+	f->openRead(path.c_str());
 
-		string dir = dirname(path);
+	string dir = dirname(path);
 
-		// file header
-		FileHeader fileHeader;
-		f->read(&fileHeader, sizeof(FileHeader), 1);
-		if (strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3) != 0) {
-			throw runtime_error("Not a valid S3D model");
+	// file header
+	FileHeader fileHeader;
+	f->read(&fileHeader, sizeof(FileHeader), 1);
+	if (strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3) != 0) {
+		throw runtime_error("Not a valid S3D model");
+	}
+	fileVersion = fileHeader.version;
+
+	if (fileHeader.version == 4) { // version 4
+		// model header
+		ModelHeader modelHeader;
+		f->read(&modelHeader, sizeof(ModelHeader), 1);
+		meshCount = modelHeader.meshCount;
+		if (modelHeader.type != mtMorphMesh) {
+			throw runtime_error("Invalid model type");
 		}
-		fileVersion = fileHeader.version;
 
-		if (fileHeader.version == 4) { // version 4
-			// model header
-			ModelHeader modelHeader;
-			f->read(&modelHeader, sizeof(ModelHeader), 1);
-			meshCount = modelHeader.meshCount;
-			if (modelHeader.type != mtMorphMesh) {
-				throw runtime_error("Invalid model type");
-			}
-
-			//load meshes
-			meshes = new Mesh[meshCount];
-			for(uint32 i=0; i < meshCount; ++i){
-				meshes[i].load(dir, f, textureManager);
-				meshes[i].buildInterpolationData();
-			}
-		} else if (fileHeader.version == 3) { // version 3
-			f->read(&meshCount, sizeof(meshCount), 1);
-			meshes= new Mesh[meshCount];
-			for(uint32 i=0; i < meshCount; ++i){
-				meshes[i].loadV3(dir, f, textureManager);
-				meshes[i].buildInterpolationData();
-			}
-		} else {
-			throw runtime_error("Invalid model version: "+ intToStr(fileHeader.version));
+		//load meshes
+		meshes = new Mesh[meshCount];
+		for(uint32 i=0; i < meshCount; ++i){
+			meshes[i].load(dir, f.get(), textureManager);
+			meshes[i].buildInterpolationData();
 		}
-		delete f;
-    } catch (exception &e) {
-		throw runtime_error("Exception caught loading 3d file: " + path + "\n" + e.what());
+	} else if (fileHeader.version == 3) { // version 3
+		f->read(&meshCount, sizeof(meshCount), 1);
+		meshes= new Mesh[meshCount];
+		for(uint32 i=0; i < meshCount; ++i){
+			meshes[i].loadV3(dir, f.get(), textureManager);
+			meshes[i].buildInterpolationData();
+		}
+	} else {
+		throw runtime_error("Invalid model version: "+ intToStr(fileHeader.version));
 	}
 }
 

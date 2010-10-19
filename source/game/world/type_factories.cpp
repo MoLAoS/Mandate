@@ -8,6 +8,7 @@
 
 #include "pch.h"
 #include "type_factories.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Sim {
 
@@ -30,6 +31,7 @@ SkillTypeFactory::SkillTypeFactory()
 	registerClass<DieSkillType>("die");
 	registerClass<LoadSkillType>("load");
 	registerClass<UnloadSkillType>("unload");
+	registerClass<GenericSkillType>("generic");
 }
 
 SkillTypeFactory::~SkillTypeFactory() {
@@ -76,8 +78,10 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<MorphCommandType>("morph");
 	registerClass<LoadCommandType>("load");
 	registerClass<UnloadCommandType>("unload");
+	registerClass<BeLoadedCommandType>("be-loaded");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
+	registerClass<GenericCommandType>("generic");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");
 }
 

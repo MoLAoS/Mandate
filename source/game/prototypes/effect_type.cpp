@@ -152,8 +152,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	try { // image (default NULL)
 		attr = en->getAttribute("image", false);
 		if(attr && !(attr->getRestrictedValue() == "")) {
-			image = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-			image->load(dir + "/" + attr->getRestrictedValue());
+			image = g_renderer.getTexture2D(ResourceScope::GAME, dir + "/" + attr->getRestrictedValue());
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());

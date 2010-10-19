@@ -19,6 +19,7 @@
 #include "cluster_map.h"
 
 #include "profiler.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Search {
 

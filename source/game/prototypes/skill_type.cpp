@@ -37,7 +37,7 @@ namespace Glest { namespace ProtoTypes {
 // 	class SkillType
 // =====================================================
 
-SkillType::SkillType(SkillClass skillClass, const char* typeName) 
+SkillType::SkillType(const char* typeName) 
 		: NameIdPair()
 		, effectTypes()
 		, epCost(0)
@@ -256,8 +256,8 @@ CycleInfo SkillType::calculateCycleTime() const {
 // 	class TargetBasedSkillType
 // =====================================================
 
-TargetBasedSkillType::TargetBasedSkillType(SkillClass skillClass, const char* typeName)
-		: SkillType(skillClass, typeName) {
+TargetBasedSkillType::TargetBasedSkillType(const char* typeName)
+		: SkillType(typeName) {
 	startTime = 0.0f;
 
     projectile= false;
@@ -417,7 +417,7 @@ void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt
 // 	class RepairSkillType
 // ===============================
 
-RepairSkillType::RepairSkillType() : SkillType(SkillClass::REPAIR, "Repair"), splashParticleSystemType(NULL) {
+RepairSkillType::RepairSkillType() : SkillType("Repair"), splashParticleSystemType(NULL) {
 	amount = 0;
 	multiplier = 1;
 	petOnly = false;
@@ -498,7 +498,7 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 // 	class ProduceSkillType
 // =====================================================
 
-ProduceSkillType::ProduceSkillType() : SkillType(SkillClass::PRODUCE, "Produce") {
+ProduceSkillType::ProduceSkillType() : SkillType("Produce") {
 	pet = false;
 	maxPets = 0;
 }
@@ -523,7 +523,7 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 // 	class LoadSkillType
 // =====================================================
 
-LoadSkillType::LoadSkillType() : SkillType(SkillClass::LOAD, "Load") {
+LoadSkillType::LoadSkillType() : SkillType("Load") {
 }
 
 void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
@@ -543,21 +543,22 @@ ModelFactory::ModelFactory(){}
 Model* ModelFactory::newInstance(const string &path, int size, int height) {
 	assert(models.find(path) == models.end());
 	Model *model = g_renderer.newModel(ResourceScope::GAME);
-	try {
-		model->load(path, size, height);
-	} catch (runtime_error &e) {
-		g_errorLog.add(e.what());
+	model->load(path, size, height);
+	while (mediaErrorLog.hasError()) {
+		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
+		g_errorLog.addMediaError("", record.path, record.msg.c_str());
 	}
 	models[path] = model;
 	return model;
 }
 
 Model* ModelFactory::getModel(const string &path, int size, int height) {
-	ModelMap::iterator it = models.find(path);
+	string cleanedPath = cleanPath(path);
+	ModelMap::iterator it = models.find(cleanedPath);
 	if (it != models.end()) {
 		return it->second;
 	}
-	return newInstance(path, size, height);
+	return newInstance(cleanedPath, size, height);
 }
 
 // =====================================================

@@ -46,6 +46,7 @@ class FactionType : public NameIdPair {
 private:
 	typedef pair<const UnitType*, int> PairPUnitTypeInt;
 	typedef vector<UnitType*> UnitTypes;
+	typedef set<UnitType*> UnitTypeSet;
 	typedef vector<UpgradeType*> UpgradeTypes;
 	typedef vector<PairPUnitTypeInt> StartingUnits;
 	typedef vector<Resource> Resources;
@@ -62,6 +63,7 @@ private:
 	SoundContainer *enemyNotice;
 	int attackNoticeDelay;
 	int enemyNoticeDelay;
+	UnitTypeSet loadableUnitTypes;
 
 public:
 	//init
@@ -74,6 +76,7 @@ public:
 	bool loadGlestimals(const string &dir, const TechTree *techTree);
 
 	void doChecksum(Checksum &checksum) const;
+	void setLoadableUnitType(UnitType *ut)  { loadableUnitTypes.insert(ut); }
 	~FactionType();
 
 	//get

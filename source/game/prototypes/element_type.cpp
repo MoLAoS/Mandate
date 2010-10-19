@@ -22,7 +22,7 @@
 #include "logger.h"
 #include "lang.h"
 #include "renderer.h"
-
+#include "util.h"
 #include "leak_dumper.h"
 
 using Glest::Util::Logger;
@@ -30,6 +30,8 @@ using namespace Shared::Util;
 using namespace Glest::Graphics;
 
 namespace Glest { namespace ProtoTypes {
+
+using Shared::Util::mediaErrorLog;
 
 void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
 	checksum.add(id);
@@ -41,16 +43,22 @@ void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
 // =====================================================
 
 bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
+	string xmlPath = dir + "/" + basename(dir) + ".xml";
+	string imgPath;
 	try {
 		const XmlNode *imageNode = baseNode->getChild("image");
-		image = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-		image->load(dir + "/" + imageNode->getAttribute("path")->getRestrictedValue());
+		imgPath = dir + "/" + imageNode->getAttribute("path")->getRestrictedValue();
+		image = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
 		if (baseNode->getOptionalChild("name")) {
 			name = baseNode->getChild("name")->getStringValue();
 		}
-	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(xmlPath, e.what());
 		return false;
+	}
+	while (mediaErrorLog.hasError()) {
+		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
+		g_errorLog.addMediaError(xmlPath, record.path, record.msg.c_str());
 	}
 	return true;
 }
@@ -145,7 +153,7 @@ ProducibleType::ProducibleType() :
 		costs(),
 		cancelImage(NULL),
 		productionTime(0),
-		advancesToSubfaction(0),
+		advancesToSubfaction(-1),
 		advancementIsImmediate(false) {
 }
 
@@ -172,6 +180,7 @@ string ProducibleType::getReqDesc() const {
 }
 
 bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
+	string xmlPath = dir + "/" + basename(dir) + ".xml";
 	bool loadOk = true;
 	if (!RequirableType::load(baseNode, dir, techTree, factionType)) {
 		loadOk = false;
@@ -180,18 +189,24 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 	// Production time
 	try { productionTime = baseNode->getChildIntValue("time"); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_errorLog.addXmlError(xmlPath, e.what());
 		loadOk = false;
 	}
 	// Cancel image
+	string imgPath;
 	try {
 		const XmlNode *imageCancelNode = baseNode->getChild("image-cancel");
-		cancelImage = g_renderer.newTexture2D(ResourceScope::GAME);
-		cancelImage->load(dir+"/"+imageCancelNode->getAttribute("path")->getRestrictedValue());
+		imgPath = dir + "/" + imageCancelNode->getRestrictedAttribute("path");
+		cancelImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_errorLog.addXmlError(xmlPath, e.what());
 		loadOk = false;
 	}
+	while (mediaErrorLog.hasError()) {
+		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
+		g_errorLog.addMediaError(xmlPath, record.path, record.msg.c_str());
+	}
+
 	// Resource requirements
 	try {
 		const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);

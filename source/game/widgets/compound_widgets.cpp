@@ -12,7 +12,7 @@
 #include "widget_window.h"
 #include "core_data.h"
 #include "lang.h"
-#include "faction.h"
+#include "leak_dumper.h"
 
 #include <list>
 
@@ -20,140 +20,12 @@ namespace Glest { namespace Widgets {
 using Shared::Util::intToStr;
 using Global::CoreData;
 using Global::Lang;
-using Sim::ControlTypeNames;
-
-// =====================================================
-//  class PlayerSlotPanel
-// =====================================================
-
-PlayerSlotPanel::PlayerSlotPanel(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: Panel(parent, pos, size), m_childCount(0) {
-	Panel::setAutoLayout(false);
-}
-
-void PlayerSlotPanel::addChild(Widget::Ptr child) {
-	Panel::addChild(child);
-	assert(m_childCount >=0 && m_childCount < 5);
-	m_columns[m_childCount++] = child;
-}
-
-void PlayerSlotPanel::layoutChildren() {
-	assert(m_childCount == 5);
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
-	Widget::setPadding(0);
-	assert(getWidth() > 200);
-	float size_x = float(getWidth() - 30);
-	float fwidths[] = {
-		size_x * 18.f / 100.f,
-		size_x * 33.f / 100.f,
-		size_x * 33.f / 100.f,
-		size_x * 8.f / 100.f,
-		size_x * 8.f / 100.f
-	};
-	int widths[5];
-	for (int i=0; i < 5; ++i) {
-		widths[i] = int(fwidths[i]);
-	}
-	Vec2i cpos(5, 2);
-
-	m_columns[0]->setPos(cpos);
-	m_columns[0]->setSize(Vec2i(widths[0], 30));
-
-	cpos.x += widths[0] + 5;
-	m_columns[1]->setPos(cpos);
-	m_columns[1]->setSize(Vec2i(widths[1], 30));
-
-	cpos.x += widths[1] + 5;
-	m_columns[2]->setPos(cpos);
-	m_columns[2]->setSize(Vec2i(widths[2], 30));
-	
-	cpos.x += widths[2] + 5;
-	m_columns[3]->setPos(cpos);
-	m_columns[3]->setSize(Vec2i(widths[3], 30));
-	
-	cpos.x += widths[3] + 5;
-	m_columns[4]->setPos(cpos);
-	m_columns[4]->setSize(Vec2i(widths[4], 30));
-}
-
-// =====================================================
-//  class PlayerSlotLabels
-// =====================================================
-
-PlayerSlotLabels::PlayerSlotLabels(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: PlayerSlotPanel(parent, pos, size) {
-	CoreData &coreData = CoreData::getInstance();
-	
-	StaticText *label = new StaticText(this);
-	label->setTextParams("Player", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label = new StaticText(this);
-	label->setTextParams("Control", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label = new StaticText(this);
-	label->setTextParams("Faction", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label = new StaticText(this);
-	label->setTextParams("Team", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label = new StaticText(this);
-	label->setTextParams("Colour", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	layoutChildren();
-}
-
-// =====================================================
-//  class PlayerSlotWidget
-// =====================================================
-
-PlayerSlotWidget::PlayerSlotWidget(Container::Ptr parent, Vec2i pos, Vec2i size)
-		: PlayerSlotPanel(parent, pos, size) {
-	CoreData &coreData = CoreData::getInstance();
-	m_label = new StaticText(this);
-	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-
-	m_controlList = new DropList(this);
-	foreach_enum (ControlType, ct) {
-		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
-	}
-
-	m_factionList = new DropList(this);
-	m_teamList = new DropList(this);
-	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
-		m_teamList->addItem(intToStr(i));
-	}
-	m_colourList = new Widgets::DropList(this);
-	for (int i=0; i < GameConstants::maxPlayers; ++ i) {
-		m_colourList->addItem(Entities::Faction::factionColours[i]);
-	}
-	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);
-	m_factionList->SelectionChanged.connect(this, &PlayerSlotWidget::onFactionChanged);
-	m_teamList->SelectionChanged.connect(this, &PlayerSlotWidget::onTeamChanged);
-	m_colourList->SelectionChanged.connect(this, &PlayerSlotWidget::onColourChanged);
-
-	layoutChildren();
-}
-
-void PlayerSlotWidget::disableSlot() {
-	setSelectedFaction(-1);
-	setSelectedTeam(-1);
-	setSelectedColour(-1);
-	m_factionList->setEnabled(false);
-	m_teamList->setEnabled(false);
-	m_colourList->setEnabled(false);
-}
-
-void PlayerSlotWidget::enableSlot() {
-	m_factionList->setEnabled(true);
-	m_teamList->setEnabled(true);
-	m_colourList->setEnabled(true);
-}
 
 // =====================================================
 //  class OptionContainer
 // =====================================================
 
-OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, const string &text)
+OptionContainer::OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &text)
 		: Container(parent, pos, size) {
 	CoreData &coreData = CoreData::getInstance();
 	m_abosulteLabelSize = false;
@@ -164,7 +36,7 @@ OptionContainer::OptionContainer(Container::Ptr parent, Vec2i pos, Vec2i size, c
 	m_widget = 0;
 }
 
-void OptionContainer::setWidget(Widget::Ptr widget) {
+void OptionContainer::setWidget(Widget* widget) {
 	m_widget = widget;
 	Vec2i size = getSize();
 	int w;
@@ -209,7 +81,7 @@ Vec2i OptionContainer::getMinSize() const {
 //  class ScrollText
 // =====================================================
 
-ScrollText::ScrollText(Container::Ptr parent)
+ScrollText::ScrollText(Container* parent)
 		: Panel(parent)
 		, MouseWidget(this)
 		, TextWidget(this) {
@@ -221,7 +93,7 @@ ScrollText::ScrollText(Container::Ptr parent)
 	m_scrollBar = new VerticalScrollBar(this);
 }
 
-ScrollText::ScrollText(Container::Ptr parent, Vec2i pos, Vec2i size)
+ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
 		, MouseWidget(this)
 		, TextWidget(this) {
@@ -252,7 +124,7 @@ void ScrollText::init() {
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 }
 
-void ScrollText::onScroll(VerticalScrollBar::Ptr sb) {
+void ScrollText::onScroll(VerticalScrollBar* sb) {
 	int offset = sb->getRangeOffset();
 	setTextPos(Vec2i(5, m_textBase - offset));
 }
@@ -312,7 +184,7 @@ void ScrollText::render() {
 //  class TitleBar
 // =====================================================
 
-TitleBar::TitleBar(Container::Ptr parent)
+TitleBar::TitleBar(Container* parent)
 		: Container(parent)
 		, TextWidget(this)
 		, m_title("")
@@ -327,7 +199,7 @@ TitleBar::TitleBar(Container::Ptr parent)
 	setTextPos(Vec2i(5, 2));
 }
 
-TitleBar::TitleBar(Container::Ptr parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
+TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
 		: Container(parent, pos, size)
 		//, MouseWidget(this)
 		, TextWidget(this)
@@ -452,7 +324,7 @@ void Frame::render() {
 //  class BasicDialog
 // =====================================================
 
-BasicDialog::BasicDialog(WidgetWindow::Ptr window)
+BasicDialog::BasicDialog(WidgetWindow* window)
 		: Frame(window), m_content(0)
 		, m_button1(0), m_button2(0), m_buttonCount(0) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
@@ -460,7 +332,7 @@ BasicDialog::BasicDialog(WidgetWindow::Ptr window)
 	m_titleBar = new TitleBar(this);
 }
 
-BasicDialog::BasicDialog(Container::Ptr parent, Vec2i pos, Vec2i sz)
+BasicDialog::BasicDialog(Container* parent, Vec2i pos, Vec2i sz)
 		: Frame(parent, pos, sz), m_content(0)
 		, m_button1(0) , m_button2(0), m_buttonCount(0) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
@@ -474,7 +346,7 @@ void BasicDialog::init(Vec2i pos, Vec2i size, const string &title,
 	setButtonText(btn1Text, btn2Text);
 }
 
-void BasicDialog::setContent(Widget::Ptr content) {
+void BasicDialog::setContent(Widget* content) {
 	m_content = content;
 	Vec2i p, s;
 	int a = m_titleBar->getHeight();
@@ -517,7 +389,7 @@ void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) 
 	}
 }
 
-void BasicDialog::onButtonClicked(Button::Ptr btn) {
+void BasicDialog::onButtonClicked(Button* btn) {
 	if (btn == m_button1) {
 		Button1Clicked(this);
 	} else {
@@ -534,14 +406,14 @@ void BasicDialog::render() {
 //  class MessageDialog
 // =====================================================
 
-MessageDialog::MessageDialog(WidgetWindow::Ptr window)
+MessageDialog::MessageDialog(WidgetWindow* window)
 		: BasicDialog(window) {
 	m_scrollText = new ScrollText(this);
 }
 
-MessageDialog::Ptr MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &title, 
+MessageDialog* MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &title, 
 								const string &msg,  const string &btn1Text, const string &btn2Text) {
-	MessageDialog::Ptr msgBox = new MessageDialog(&g_widgetWindow);
+	MessageDialog* msgBox = new MessageDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(msgBox, true);
 	msgBox->init(pos, size, title, btn1Text, btn2Text);
 	msgBox->setMessageText(msg);
@@ -584,7 +456,7 @@ bool InputBox::keyDown(Key key) {
 //  class InputDialog
 // =====================================================
 
-InputDialog::InputDialog(WidgetWindow::Ptr window)
+InputDialog::InputDialog(WidgetWindow* window)
 		: BasicDialog(window) {
 	m_panel = new Panel(this);
 	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
@@ -597,9 +469,9 @@ InputDialog::InputDialog(WidgetWindow::Ptr window)
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }
 
-InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title, const string &msg, 
+InputDialog* InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title, const string &msg, 
 							   const string &btn1Text, const string &btn2Text) {
-	InputDialog::Ptr dlg = new InputDialog(&g_widgetWindow);
+	InputDialog* dlg = new InputDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(dlg, true);
 	dlg->init(pos, size, title, btn1Text, btn2Text);
 	dlg->setContent(dlg->m_panel);
@@ -614,7 +486,7 @@ InputDialog::Ptr InputDialog::showDialog(Vec2i pos, Vec2i size, const string &ti
 	return dlg;
 }
 
-void InputDialog::onInputEntered(TextBox::Ptr) {
+void InputDialog::onInputEntered(TextBox*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

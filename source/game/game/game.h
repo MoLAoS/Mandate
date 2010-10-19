@@ -95,8 +95,8 @@ protected:
 
 	MessageQueue m_scriptMessages;
 
-	Frame::Ptr			m_modalDialog;
-	ChatDialog::Ptr		m_chatDialog;
+	Frame*			m_modalDialog;
+	ChatDialog*		m_chatDialog;
 
 	Vec2i lastMousePos;
 
@@ -173,7 +173,7 @@ public:
 	}
 
 	void addScriptMessage(const string &header, const string &msg);
-	//void onScriptMessageDismissed(BasicDialog::Ptr);
+	//void onScriptMessageDismissed(BasicDialog*);
 
 	virtual void quitGame();
 
@@ -182,10 +182,10 @@ public:
 	void confirmQuitGame();
 	void confirmExitProgram();
 
-	void onConfirmQuitGame(BasicDialog::Ptr);
-	void onConfirmExitProgram(BasicDialog::Ptr);
+	void onConfirmQuitGame(BasicDialog*);
+	void onConfirmExitProgram(BasicDialog*);
 
-	void destroyDialog(BasicDialog::Ptr ptr = 0);
+	void destroyDialog(BasicDialog* ptr = 0);
 
 	void doDefeatedMessage(Faction *f);
 
@@ -203,22 +203,22 @@ protected:
 	void saveGame(string name) const;
 
 	void doSaveBox();
-	void onSaveSelected(BasicDialog::Ptr);
+	void onSaveSelected(BasicDialog*);
 
 	void displayError(std::exception &e);
-	void onErrorDismissed(BasicDialog::Ptr);
+	void onErrorDismissed(BasicDialog*);
 
 	void doGameMenu();
 	void doExitMessage(const string &msg);
-	void onExitSelected(BasicDialog::Ptr);
+	void onExitSelected(BasicDialog*);
 
 	void doScriptMessage();
 
 	void doChatDialog();
 	//void updateChatDialog();
 
-	void onChatEntered(BasicDialog::Ptr);
-	void onChatCancel(BasicDialog::Ptr);
+	void onChatEntered(BasicDialog*);
+	void onChatCancel(BasicDialog*);
 };
 
 

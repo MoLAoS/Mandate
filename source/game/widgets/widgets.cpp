@@ -20,6 +20,8 @@
 
 #include "widget_window.h"
 
+#include "leak_dumper.h"
+
 using Shared::Util::deleteValues;
 using namespace Shared::Graphics::Gl;
 using Glest::Graphics::Renderer;
@@ -71,21 +73,26 @@ Vec2i StaticImage::getPrefSize() const {
 //  class Button
 // =====================================================
 
-Button::Button(Container::Ptr parent)
+Button::Button(Container* parent)
 		: Widget(parent)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hover(false)
-		, pressed(false) {
+		, pressed(false)
+		, m_doHoverHighlight(true)
+		, m_defaultTexture(true) {
 }
 
-Button::Button(Container::Ptr parent, Vec2i pos, Vec2i size, bool defaultTexture)
+Button::Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTexture, bool hoverHighlight)
 		: Widget(parent, pos, size)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
-		, hover(false), pressed(false) {
+		, hover(false)
+		, pressed(false)
+		, m_doHoverHighlight(hoverHighlight) 
+		, m_defaultTexture(defaultTexture) {
 	// background texture
 	if (defaultTexture) {
 		CoreData &coreData = CoreData::getInstance();
@@ -113,15 +120,17 @@ Vec2i Button::getMinSize() const {
 
 void Button::setSize(const Vec2i &sz) {
 	Widget::setSize(sz);
-	CoreData &coreData = CoreData::getInstance();
-	Vec2i size = getSize();
-	Texture2D *tex = size.x > 3 * size.y / 2 
-		? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
-	setImage(tex);
+	if (m_defaultTexture) {
+		CoreData &coreData = CoreData::getInstance();
+		Vec2i size = getSize();
+		Texture2D *tex = size.x > 3 * size.y / 2 
+			? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
+		setImage(tex);
+	}
 }
 
 bool Button::mouseDown(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
@@ -129,7 +138,7 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
 		if (pressed && hover) {
 			Clicked(this);
 		}
@@ -141,10 +150,15 @@ bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 
 void Button::render() {
 	// render background
-	ImageWidget::renderImage();
+	if (hasImage()) {
+		ImageWidget::renderImage();
+		renderBgAndBorders(false);
+	} else {
+		renderBgAndBorders();
+	}
 
 	// render hilight
-	if (hover && isEnabled()) {
+	if (m_doHoverHighlight && hover && isEnabled()) {
 		float anim = getRootWindow()->getAnim();
 		if (anim > 0.5f) {
 			anim = 1.f - anim;
@@ -164,7 +178,7 @@ void Button::render() {
 //  class CheckBox
 // =====================================================
 
-CheckBox::CheckBox(Container::Ptr parent)
+CheckBox::CheckBox(Container* parent)
 		: Button(parent), checked(false) {
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
@@ -173,7 +187,7 @@ CheckBox::CheckBox(Container::Ptr parent)
 	addText("Yes");
 }
 
-CheckBox::CheckBox(Container::Ptr parent, Vec2i pos, Vec2i size)
+CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)
 		: Button(parent, pos, size, false), checked(false) {
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
@@ -263,7 +277,7 @@ void CheckBox::render() {
 //  class TextBox
 // =====================================================
 
-TextBox::TextBox(Container::Ptr parent)
+TextBox::TextBox(Container* parent)
 		: Widget(parent)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
@@ -276,7 +290,7 @@ TextBox::TextBox(Container::Ptr parent)
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
 }
 
-TextBox::TextBox(Container::Ptr parent, Vec2i pos, Vec2i size)
+TextBox::TextBox(Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
@@ -383,7 +397,7 @@ Vec2i TextBox::getPrefSize() const {
 //  class Slider
 // =====================================================
 
-Slider::Slider(Container::Ptr parent, Vec2i pos, Vec2i size, const string &title)
+Slider::Slider(Container* parent, Vec2i pos, Vec2i size, const string &title)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, ImageWidget(this)
@@ -554,7 +568,7 @@ void Slider::render() {
 //  class VerticalScrollBar
 // =====================================================
 
-VerticalScrollBar::VerticalScrollBar(Container::Ptr parent)
+VerticalScrollBar::VerticalScrollBar(Container* parent)
 		: Widget(parent)
 		, ImageWidget(this)
 		, MouseWidget(this)
@@ -567,7 +581,7 @@ VerticalScrollBar::VerticalScrollBar(Container::Ptr parent)
 	init();
 }
 
-VerticalScrollBar::VerticalScrollBar(Container::Ptr parent, Vec2i pos, Vec2i size)
+VerticalScrollBar::VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, ImageWidget(this)
 		, MouseWidget(this)
@@ -760,7 +774,7 @@ void VerticalScrollBar::render() {
 //  class Panel
 // =====================================================
 
-Panel::Panel(Container::Ptr parent)
+Panel::Panel(Container* parent)
 		: Container(parent)
 		, autoLayout(true)
 		, layoutOrigin(LayoutOrigin::CENTRE) {
@@ -768,7 +782,7 @@ Panel::Panel(Container::Ptr parent)
 	m_borderStyle.setNone();
 }
 
-Panel::Panel(Container::Ptr parent, Vec2i pos, Vec2i sz)
+Panel::Panel(Container* parent, Vec2i pos, Vec2i sz)
 		: Container(parent, pos, sz)
 		, autoLayout(true)
 		, layoutOrigin(LayoutOrigin::CENTRE) {
@@ -776,7 +790,7 @@ Panel::Panel(Container::Ptr parent, Vec2i pos, Vec2i sz)
 	m_borderStyle.setNone();
 }
 
-Panel::Panel(WidgetWindow::Ptr window)
+Panel::Panel(WidgetWindow* window)
 		: Container(window) {
 }
 
@@ -878,7 +892,7 @@ Vec2i Panel::getPrefSize() const {
 	return Vec2i(-1);
 }
 
-void Panel::addChild(Widget::Ptr child) {
+void Panel::addChild(Widget* child) {
 	Container::addChild(child);
 	if (!autoLayout) {
 		return;
@@ -891,7 +905,7 @@ void Panel::addChild(Widget::Ptr child) {
 	layoutChildren();
 }
 
-void Panel::remChild(Widget::Ptr child) {
+void Panel::remChild(Widget* child) {
 	Container::remChild(child);
 }
 
@@ -930,7 +944,7 @@ Vec2i PicturePanel::getPrefSize() const {
 //  class ListBase
 // =====================================================
 
-ListBase::ListBase(Container::Ptr parent)
+ListBase::ListBase(Container* parent)
 		: Panel(parent)
 		, selectedItem(0)
 		, selectedIndex(-1)
@@ -940,7 +954,7 @@ ListBase::ListBase(Container::Ptr parent)
 	itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
-ListBase::ListBase(Container::Ptr parent, Vec2i pos, Vec2i size)
+ListBase::ListBase(Container* parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
 		, selectedItem(0)
 		, selectedIndex(-1)
@@ -961,7 +975,7 @@ ListBase::ListBase(WidgetWindow* window)
 //  class ListBox
 // =====================================================
 
-ListBox::ListBox(Container::Ptr parent)
+ListBox::ListBox(Container* parent)
 		: ListBase(parent)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
@@ -970,7 +984,7 @@ ListBox::ListBox(Container::Ptr parent)
 	setAutoLayout(false);
 }
 
-ListBox::ListBox(Container::Ptr parent, Vec2i pos, Vec2i size) 
+ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size) 
 		: ListBase(parent, pos, size)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
@@ -979,7 +993,7 @@ ListBox::ListBox(Container::Ptr parent, Vec2i pos, Vec2i size)
 	setAutoLayout(false);
 }
 
-ListBox::ListBox(WidgetWindow::Ptr window)
+ListBox::ListBox(WidgetWindow* window)
 		: ListBase(window)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
@@ -988,7 +1002,7 @@ ListBox::ListBox(WidgetWindow::Ptr window)
 	setAutoLayout(false);
 }
 
-void ListBox::onSelected(ListBoxItem::Ptr item) {
+void ListBox::onSelected(ListBoxItem* item) {
 	if (selectedItem != item) {
 		if (selectedItem) {
 			selectedItem->setSelected(false);
@@ -1002,6 +1016,8 @@ void ListBox::onSelected(ListBoxItem::Ptr item) {
 				return;
 			}
 		}
+	} else {
+		SameSelected(this);
 	}
 }
 
@@ -1021,16 +1037,6 @@ void ListBox::addItem(const string &item) {
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);
-}
-
-void ListBox::addColours(const vector<Vec3f> &colours) {
-	Vec2i sz(getSize().x - getBordersHoriz(), int(itemFont->getMetrics()->getHeight()) + 4);
-	foreach_const (vector<Vec3f>, it, colours) {
-		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz, *it);
-		nItem->setTextParams("", Vec4f(1.f), itemFont, true);
-		listBoxItems.push_back(nItem);
-		nItem->Selected.connect(this, &ListBox::onSelected);
-	}
 }
 
 void ListBox::setSize(const Vec2i &sz) {
@@ -1097,12 +1103,12 @@ void ListBox::layoutChildren() {
 		int y = topLeft.y - widgetYPos[ndx++];
 		(*it)->setPos(topLeft.x, y);
 		(*it)->setSize(room.x, (*it)->getHeight());
-		static_cast<ListBoxItem::Ptr>(*it)->centreText();
+		static_cast<ListBoxItem*>(*it)->centreText();
 		yPositions.push_back(y);
 	}
 }
 
-void ListBox::onScroll(VerticalScrollBar::Ptr) {
+void ListBox::onScroll(VerticalScrollBar*) {
 	int offset = scrollBar->getRangeOffset();
 	//cout << "Scroll offset = " << offset << endl;
 
@@ -1112,7 +1118,7 @@ void ListBox::onScroll(VerticalScrollBar::Ptr) {
 		if (*it == scrollBar) {
 			continue;
 		}
-		//Widget::Ptr widget = *it;
+		//Widget* widget = *it;
 		(*it)->setPos(x, yPositions[ndx++] - offset);
 	}
 }
@@ -1183,7 +1189,7 @@ void ListBox::setSelected(int index) {
 //  class ListBoxItem
 // =====================================================
 
-ListBoxItem::ListBoxItem(ListBase::Ptr parent)
+ListBoxItem::ListBoxItem(ListBase* parent)
 		: Widget(parent) 
 		, TextWidget(this)
 		, MouseWidget(this)
@@ -1191,14 +1197,10 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent)
 		, hover(false)
 		, pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
-	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
 }
 
-ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz)
+ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz)
 		: Widget(parent, pos, sz)
 		, TextWidget(this)
 		, MouseWidget(this)
@@ -1206,14 +1208,10 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz)
 		, hover(false)
 		, pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
-	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
 }
 
-ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour)
+ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour)
 		: Widget(parent, pos, sz)
 		, TextWidget(this)
 		, MouseWidget(this)
@@ -1221,10 +1219,6 @@ ListBoxItem::ListBoxItem(ListBase::Ptr parent, Vec2i pos, Vec2i sz, const Vec3f 
 		, hover(false)
 		, pressed(false) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_borderStyle.m_colourIndices[1] = WidgetColour::DARK_BORDER;
-	m_borderStyle.m_colourIndices[2] = WidgetColour::LIGHT_BORDER;
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-
 	m_backgroundStyle.m_type = BackgroundType::COLOUR;
 	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(bgColour);
 }
@@ -1242,7 +1236,7 @@ Vec2i ListBoxItem::getPrefSize() const {
 void ListBoxItem::render() {
 	Widget::renderBgAndBorders();
 	TextWidget::renderTextShadowed();
-	if (selected) {
+	if (isEnabled() && selected) {
 		Widget::renderHighLight(Vec3f(1.f), 0.1f, 0.3f);
 	}
 	assertGl();
@@ -1266,7 +1260,7 @@ void ListBoxItem::mouseOut() {
 }
 
 bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
 		pressed = true;
 		return true;
 	}
@@ -1274,8 +1268,8 @@ bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
-	if (btn == MouseButton::LEFT) {
-		if (hover && !selected) {
+	if (isEnabled() && btn == MouseButton::LEFT) {
+		if (hover) {
 			Selected(this);
 			//static_cast<ListBase*>(parent)->setSelected(this);
 		}
@@ -1292,7 +1286,7 @@ bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 //  class DropList
 // =====================================================
 
-DropList::DropList(Container::Ptr parent)
+DropList::DropList(Container* parent)
 		: ListBase(parent)
 		, floatingList(0)
 		, dropBoxHeight(0) {
@@ -1306,7 +1300,7 @@ DropList::DropList(Container::Ptr parent)
 	selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 }
 
-DropList::DropList(Container::Ptr parent, Vec2i pos, Vec2i size) 
+DropList::DropList(Container* parent, Vec2i pos, Vec2i size) 
 		: ListBase(parent, pos, size)
 		, floatingList(0)
 		, dropBoxHeight(0) {
@@ -1362,10 +1356,6 @@ void DropList::addItem(const string &item) {
 	listItems.push_back(item);
 }
 
-void DropList::addItem(const Vec3f &c) {
-	itemColours.push_back(c);
-}
-
 void DropList::clearItems() {
 	listItems.clear();
 	selectedItem->setText("");
@@ -1373,12 +1363,6 @@ void DropList::clearItems() {
 }
 
 void DropList::setSelected(int index) {
-	if (listItems.empty()) {
-		setSelectedColour(index);
-		selectedIndex = index;
-		SelectionChanged(this);
-		return;
-	}
 	if (index < 0 || index >= listItems.size()) {
 		if (selectedIndex == -1) {
 			return;
@@ -1393,16 +1377,6 @@ void DropList::setSelected(int index) {
 		selectedIndex = index;
 	}
 	SelectionChanged(this);
-}
-
-void DropList::setSelectedColour(int index) {
-	if (index < 0 || index >= GameConstants::maxPlayers) {
-		selectedIndex = -1;
-		selectedItem->setBackgroundColour(Vec3f(0.5f));
-		return;
-	}
-	selectedIndex = index;
-	selectedItem->setBackgroundColour(itemColours[index]);
 }
 
 void DropList::setSelected(const string &item) {
@@ -1424,40 +1398,37 @@ void DropList::expandList() {
 	floatingList->setPaddingParams(0, 0);
 	const Vec2i &size = getSize();
 	const Vec2i &screenPos = getScreenPos();
-	int num = listItems.empty() ? itemColours.size() : listItems.size();
+	int num = listItems.size();
 	int ph = floatingList->getPrefHeight(num);
 	int h = dropBoxHeight == 0 ? ph : ph > dropBoxHeight ? dropBoxHeight : ph;
 
 	Vec2i sz(size.x, h);
 	Vec2i pos(screenPos.x, screenPos.y - sz.y + size.y);
 	floatingList->setPos(pos);
-	if (listItems.empty()) {
-		floatingList->addColours(itemColours);
-	} else {
-		floatingList->addItems(listItems);
-	}
+	floatingList->addItems(listItems);
 	floatingList->setSize(sz);
 
 	floatingList->setSelected(selectedIndex);
 	floatingList->Destroyed.connect(this, &DropList::onListDisposed);
 	floatingList->SelectionChanged.connect(this, &DropList::onSelectionMade);
+	floatingList->SameSelected.connect(this, &DropList::onSameSelected);
 	setVisible(false);
 	ListExpanded(this);
 }
 
-void DropList::onBoxClicked(ListBoxItem::Ptr) {
+void DropList::onBoxClicked(ListBoxItem*) {
 	if (isEnabled()) {
 		expandList();
 	}
 }
 
-void DropList::onExpandList(Button::Ptr) {
+void DropList::onExpandList(Button*) {
 	if (isEnabled()) {
 		expandList();
 	}
 }
 
-void DropList::onSelectionMade(ListBase::Ptr lb) {
+void DropList::onSelectionMade(ListBase* lb) {
 	assert(floatingList == lb);
 	setSelected(lb->getSelectedIndex());
 	floatingList->Destroyed.disconnect(this);
@@ -1465,7 +1436,14 @@ void DropList::onSelectionMade(ListBase::Ptr lb) {
 	getRootWindow()->removeFloatingWidget(lb);
 }
 
-void DropList::onListDisposed(Widget::Ptr) {
+void DropList::onSameSelected(ListBase* lb) {
+	assert(floatingList == lb);
+	floatingList->Destroyed.disconnect(this);
+	onListDisposed(lb);
+	getRootWindow()->removeFloatingWidget(lb);
+}
+
+void DropList::onListDisposed(Widget*) {
 	setVisible(true);
 	floatingList = 0;
 	ListCollapsed(this);

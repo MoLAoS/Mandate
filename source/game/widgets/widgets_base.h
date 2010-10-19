@@ -60,8 +60,6 @@ class Widget {
 	friend class TextWidget;
 
 public:
-	typedef Widget* Ptr;
-
 	MEMORY_CHECK_DECLARATIONS(Widget)
 
 private:
@@ -123,7 +121,7 @@ public:
 
 	virtual Container* getParent() const { return parent; }
 	virtual WidgetWindow* getRootWindow() const { return rootWindow; }
-	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
+	virtual Widget* getWidgetAt(const Vec2i &pos);
 
 	virtual Vec2i getSize() const		{ return size;		 }
 	virtual int   getWidth() const		{ return size.x;	 }
@@ -174,20 +172,17 @@ public:
 	virtual string descPosDim();
 	virtual string desc() = 0;
 
-	sigslot::signal<Widget::Ptr> Destroyed;
+	sigslot::signal<Widget*> Destroyed;
 
 };
 
 class MouseWidget {
 	friend class WidgetWindow;
-public:
-	typedef MouseWidget* Ptr;
-
 private:
-	Widget::Ptr me;
+	Widget* me;
 
 public:
-	MouseWidget(Widget::Ptr widget);
+	MouseWidget(Widget* widget);
 	~MouseWidget() {}
 
 private:
@@ -203,14 +198,12 @@ private:
 
 class KeyboardWidget {
 	friend class WidgetWindow;
-public:
-	typedef KeyboardWidget* Ptr;
 
 private:
-	Widget::Ptr me;
+	Widget* me;
 
 public:
-	KeyboardWidget(Widget::Ptr widget);
+	KeyboardWidget(Widget* widget);
 	~KeyboardWidget() {}
 
 private:
@@ -239,7 +232,7 @@ class ImageWidget {
 private:
  	typedef vector<const Texture2D*> Textures;
 
-	Widget::Ptr me;
+	Widget* me;
 	Textures textures;
 	vector<ImageRenderInfo> imageInfo;
 	bool batchRender;
@@ -252,8 +245,8 @@ protected:
 	void endBatch();
 
 public:
-	ImageWidget(Widget::Ptr me);
-	ImageWidget(Widget::Ptr me, Texture2D *tex);
+	ImageWidget(Widget* me);
+	ImageWidget(Widget* me, Texture2D *tex);
 
 	int addImage(const Texture2D *tex);
 	void setImage(const Texture2D *tex, int ndx = 0);
@@ -267,6 +260,8 @@ public:
 
 	Vec2i getImagePos(int ndx) const { return imageInfo[ndx].offset; }
 	Vec2i getImageSize(int ndx) const { return imageInfo[ndx].size; }
+
+	bool hasImage() const { return !textures.empty(); }
 };
 
 // =====================================================
@@ -275,7 +270,7 @@ public:
 
 class TextWidget {
 private:
-	Widget::Ptr me;
+	Widget* me;
 	vector<string> texts;
 	Vec4f txtColour;
 	Vec4f txtShadowColour;
@@ -296,7 +291,7 @@ protected:
 	void endBatch();
 
 public:
-	TextWidget(Widget::Ptr me);
+	TextWidget(Widget* me);
 
 	// set
 	void setCentre(bool val)	{ centre = val; }
@@ -333,24 +328,23 @@ public:
 
 class Container : public Widget {
 public:
-	typedef Container* Ptr;
-	typedef vector<Widget::Ptr> WidgetList;
+	typedef vector<Widget*> WidgetList;
 
 protected:
 	WidgetList children;
 
 public:
-	Container(Container::Ptr parent);
-	Container(Container::Ptr parent, Vec2i pos, Vec2i size);
+	Container(Container* parent);
+	Container(Container* parent, Vec2i pos, Vec2i size);
 	Container(WidgetWindow* window);
 	virtual ~Container();
 
-	virtual Widget::Ptr getWidgetAt(const Vec2i &pos);
+	virtual Widget* getWidgetAt(const Vec2i &pos);
 
 	virtual void setPos(const Vec2i &p);
 
-	virtual void addChild(Widget::Ptr child);
-	virtual void remChild(Widget::Ptr child);
+	virtual void addChild(Widget* child);
+	virtual void remChild(Widget* child);
 	virtual void clear();
 	virtual void setEnabled(bool v);
 	virtual void setFade(float v);

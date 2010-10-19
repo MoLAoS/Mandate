@@ -504,6 +504,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
 		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
 		ups->setPos(getCurrVector());
+		ups->setRotation(getRotation());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
 		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
@@ -1176,7 +1177,7 @@ bool Unit::update() {
 	bool moved = currSkill->getClass() == SkillClass::MOVE;
 	bool rotated = false;
 	if (currSkill->getClass() != SkillClass::STOP) {
-		const int rotFactor = 2;
+		const float rotFactor = 2.f;
 		if (getProgress() < 1.f / rotFactor) {
 			if (type->getFirstStOfClass(SkillClass::MOVE)) {
 				rotated = true;
@@ -1510,6 +1511,7 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 	if (upgradeType->isAffected(type)) {
 		totalUpgrade.sum(upgradeType);
 		recalculateStats();
+		doRegen(upgradeType->getHpBoost(), upgradeType->getEpBoost());
 	}
 }
 
@@ -1621,6 +1623,7 @@ bool Unit::add(Effect *e) {
 		foreach_const (UnitParticleSystemTypes, it, particleTypes) {
 			UnitParticleSystem *ups = (*it)->createUnitParticleSystem(visible);
 			ups->setPos(getCurrVector());
+			ups->setRotation(getRotation());
 			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 			effectParticleSystems.push_back(ups);
 			g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
@@ -1884,9 +1887,10 @@ void Unit::applyCommand(const Command &command) {
 CommandResult Unit::undoCommand(const Command &command) {
 	const CommandType *ct = command.getType();
 
-	// return building cost if not already building it or dead
-	if (ct->getClass() == CommandClass::BUILD && command.isReserveResources()) {
-		if (currSkill->getClass() != SkillClass::BUILD && currSkill->getClass() != SkillClass::DIE) {
+	// return building cost if we reserved resources and are not already building it or dead
+	if (ct->getClass() == CommandClass::BUILD) {
+		if (command.isReserveResources() && currSkill->getClass() != SkillClass::BUILD
+		&& currSkill->getClass() != SkillClass::DIE) {
 			faction->deApplyCosts(command.getProdType());
 		}
 	} else { //return cost

@@ -16,6 +16,7 @@
 #include "node_pool.h"
 #include "world.h"
 #include "map.h"
+#include "leak_dumper.h"
 
 namespace Glest { namespace Search {
 

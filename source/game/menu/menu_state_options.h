@@ -30,20 +30,20 @@ private:
 private:
 	Transition m_transitionTarget;
 
-	Button::Ptr m_returnButton,
-				m_autoConfigButton,
-				m_openGlInfoButton;
+	Button		*m_returnButton,
+				*m_autoConfigButton,
+				*m_openGlInfoButton;
 
-	DropList::Ptr	m_langList,
-					m_shadowsList,
-					m_filterList,
-					m_lightsList;
+	DropList	*m_langList,
+				*m_shadowsList,
+				*m_filterList,
+				*m_lightsList;
 							
-	CheckBox::Ptr	m_3dTexCheckBox;
+	CheckBox	*m_3dTexCheckBox;
 	
-	Slider::Ptr		m_volFxSlider,
-					m_volAmbientSlider,
-					m_volMusicSlider;
+	Slider		*m_volFxSlider,
+				*m_volAmbientSlider,
+				*m_volMusicSlider;
 
 	map<string,string> langMap;
 
@@ -65,10 +65,10 @@ private:
 	void initListBoxes();
 	void setTexts();
 
-	void onButtonClick(Button::Ptr btn);
-	void on3dTexturesToggle(Button::Ptr cb);
-	void onSliderValueChanged(Slider::Ptr slider);
-	void onDropListSelectionChanged(ListBase::Ptr list);
+	void onButtonClick(Button* btn);
+	void on3dTexturesToggle(Button* cb);
+	void onSliderValueChanged(Slider* slider);
+	void onDropListSelectionChanged(ListBase* list);
 };
 
 }}//end namespace

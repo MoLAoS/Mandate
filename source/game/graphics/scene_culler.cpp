@@ -16,6 +16,8 @@
 #include "game_camera.h"
 #include "game.h"
 
+#include "leak_dumper.h"
+
 namespace Glest { namespace Graphics {
 
 #undef max

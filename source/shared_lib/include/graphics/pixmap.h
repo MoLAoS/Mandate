@@ -68,6 +68,7 @@ public:
 	virtual ~PixmapIoTga();
 
 	virtual void openRead(const string &path);
+	void openRead(FileOps *f);
 	virtual void read(uint8 *pixels);
 	virtual void read(uint8 *pixels, int components);
 
@@ -176,6 +177,7 @@ public:
 
 	//load & save
 	void load(const string &path);
+	void loadTga(FileOps *f);
 	void loadTga(const string &path);
 	void loadBmp(const string &path);
 	void loadPng(const string &path);

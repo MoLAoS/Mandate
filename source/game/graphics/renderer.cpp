@@ -376,6 +376,10 @@ Model *Renderer::newModel(ResourceScope rs){
 	return modelManager[rs]->newModel();
 }
 
+Texture2D *Renderer::getTexture2D(ResourceScope rs, const string &path) {
+	return textureManager[rs]->getTexture(path);
+}
+
 Texture2D *Renderer::newTexture2D(ResourceScope rs){
 	return textureManager[rs]->newTexture2D();
 }

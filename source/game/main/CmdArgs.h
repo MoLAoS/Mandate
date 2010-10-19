@@ -42,6 +42,8 @@ private:
 	bool test;
 	string testType;
 
+	bool m_redirStreams; // redirect stdout and stderr
+
 public:
 	CmdArgs();
 	~CmdArgs();
@@ -62,6 +64,7 @@ public:
 	string &getScenario()    { return scenario; }
 
 	bool isTest(const string &type) const { return (test && testType == type); }
+	bool redirStreams() const { return m_redirStreams; }
 };
 
 }} //namespaces

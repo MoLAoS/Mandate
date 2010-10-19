@@ -2,6 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2008-2009 Daniel Santos
+//                2009-2010 Nathan Turner
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -329,6 +332,7 @@ void ProduceCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		//if not producing
 		unit->setCurrSkill(produceSkillType);
+		unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
@@ -339,6 +343,7 @@ void ProduceCommandType::update(Unit *unit) const {
 				unit->cancelCurrCommand();
 				g_simInterface->getUnitFactory().deleteUnit(unit);
 			} else {
+				unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
 				produced->create();
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
@@ -437,15 +442,18 @@ void GenerateCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
+	Faction *faction = unit->getFaction();
 	
 	if (unit->getCurrSkill() != m_produceSkillType) {
 		// if not producing
 		unit->setCurrSkill(m_produceSkillType);
+		faction->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
 		if (unit->getProgress2() > command->getProdType()->getProductionTime()) {
-			unit->getFaction()->addProduct(static_cast<const GeneratedType*>(command->getProdType()));
-			unit->getFaction()->applyStaticProduction(command->getProdType());
+			faction->addProduct(static_cast<const GeneratedType*>(command->getProdType()));
+			faction->checkAdvanceSubfaction(command->getProdType(), true);
+			faction->applyStaticProduction(command->getProdType());
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -515,18 +523,21 @@ const ProducibleType *UpgradeCommandType::getProduced() const {
 void UpgradeCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
+	Faction *faction = unit->getFaction();
 	assert(command->getType() == this);
 
 	if (unit->getCurrSkill() != upgradeSkillType) {
 		//if not producing
 		unit->setCurrSkill(upgradeSkillType);
+		faction->checkAdvanceSubfaction(producedUpgrade, false);
 	} else {
 		//if producing
 		unit->update2();
 		if (unit->getProgress2() >= producedUpgrade->getProductionTime()) {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
-			unit->getFaction()->finishUpgrade(producedUpgrade);
+			faction->finishUpgrade(producedUpgrade);
+			faction->checkAdvanceSubfaction(producedUpgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
 					g_gameState.getGameCamera()->getPos());
@@ -658,6 +669,7 @@ void MorphCommandType::update(Unit *unit) const {
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();
 				}
+				unit->getFaction()->checkAdvanceSubfaction(morphToUnit, true);
 				ScriptManager::onUnitCreated(unit);
 				if (mapUpdate) {
 					// obstacle added or removed, update annotated maps
@@ -787,6 +799,17 @@ void LoadCommandType::update(Unit *unit) const {
 		unitsToCarry.erase(std::find(unitsToCarry.begin(), unitsToCarry.end(), closest->getId()));
 		unit->setCurrSkill(loadSkillType);
 		unit->clearPath();
+		if (unit->getCarriedCount() == m_loadCapacity && !unitsToCarry.empty()) {
+			foreach (UnitIdList, it, unitsToCarry) {
+				Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+				if (unit->getType()->getFirstCtOfClass(CommandClass::MOVE)) {
+					assert(unit->getCurrCommand());
+					assert(unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED);
+					unit->cancelCommand();
+				}
+			}
+			unitsToCarry.clear();
+		}
 		return;
 	}
 	if (!moveSkillType) {
@@ -911,6 +934,72 @@ void UnloadCommandType::update(Unit *unit) const {
 				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
 			}
 		}
+	}
+}
+
+// =====================================================
+// 	class BeLoadedCommandType
+// =====================================================
+
+void BeLoadedCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	
+	if (!command->getUnit() || command->getUnit()->isDead()) {
+		unit->finishCommand();
+		return;
+	}
+	Vec2i targetPos = command->getUnit()->getCenteredPos();
+	assert(moveSkillType);
+	switch (g_routePlanner.findPathToLocation(unit, targetPos)) {
+		case TravelState::MOVING:
+			unit->setCurrSkill(moveSkillType);
+			unit->face(unit->getNextPos());
+			break;
+		case TravelState::BLOCKED:
+			unit->setCurrSkill(SkillClass::STOP);
+			if (unit->getPath()->isBlocked()) {
+				unit->clearPath();
+				command->setPos(Command::invalidPos);
+			}
+			break;
+		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
+			unit->setCurrSkill(SkillClass::STOP);
+			command->setPos(Command::invalidPos);
+			break;
+	}
+}
+
+// ===============================
+//  class GenericCommandType
+// ===============================
+
+bool GenericCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	// generic skill
+	try { 
+		const XmlNode *genSkillNode = n->getChild("generic-skill");
+		m_cycle = genSkillNode->getOptionalBoolValue("cycle");
+		string skillName = genSkillNode->getAttribute("value")->getRestrictedValue();
+		const SkillType *st = unitType->getSkillType(skillName, SkillClass::GENERIC);
+		genericSkillType = static_cast<const GenericSkillType*>(st);
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void GenericCommandType::update(Unit *unit) const {
+	if (unit->getCurrSkill() != genericSkillType) {
+		unit->setCurrSkill(genericSkillType);
+		return;
+	}
+	if (!m_cycle) {
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
 	}
 }
 

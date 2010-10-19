@@ -25,13 +25,13 @@ private:
 private:
 	GameMenu(Vec2i pos, Vec2i size);
 
-	void onReturnToGame(Button::Ptr);
-	void onExit(Button::Ptr);
-	void onQuit(Button::Ptr);
-	void onDebugToggle(Button::Ptr);
+	void onReturnToGame(Button*);
+	void onExit(Button*);
+	void onQuit(Button*);
+	void onDebugToggle(Button*);
 
 public:
-	static GameMenu::Ptr showDialog(Vec2i pos, Vec2i size);
+	static GameMenu* showDialog(Vec2i pos, Vec2i size);
 
 	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
 	virtual Vec2i getMinSize() const { return Vec2i(-1); }

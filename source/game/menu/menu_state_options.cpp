@@ -69,7 +69,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	h = itemHeight;
 	int yInc = h + y_gap;
 	
-	OptionContainer::Ptr ocPtr;
+	OptionContainer* ocPtr;
 
 	// lights
 	ocPtr = new OptionContainer(&program,  Vec2i(x, y), Vec2i(w, h), lang.get("MaxLights"));
@@ -147,7 +147,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	m_volFxSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
 }
 
-void MenuStateOptions::onButtonClick(Button::Ptr btn) {
+void MenuStateOptions::onButtonClick(Button* btn) {
 	Config &config= Config::getInstance();
 	Lang &lang= Lang::getInstance();
 	CoreData &coreData= CoreData::getInstance();
@@ -171,14 +171,14 @@ void MenuStateOptions::onButtonClick(Button::Ptr btn) {
 	doFadeOut();
 }
 
-void MenuStateOptions::on3dTexturesToggle(Button::Ptr cb) {
+void MenuStateOptions::on3dTexturesToggle(Button* cb) {
 	Config &config= Config::getInstance();
 	config.setRenderTextures3D(m_3dTexCheckBox->isChecked());
 // 	saveConfig();
 }
 
 
-void MenuStateOptions::onDropListSelectionChanged(ListBase::Ptr list) {
+void MenuStateOptions::onDropListSelectionChanged(ListBase* list) {
 	Config &config= Config::getInstance();
 	Lang &lang= Lang::getInstance();
 	if (list == m_langList) {
@@ -225,7 +225,7 @@ void MenuStateOptions::update() {
 	}
 }
 
-void MenuStateOptions::onSliderValueChanged(Slider::Ptr slider) {
+void MenuStateOptions::onSliderValueChanged(Slider* slider) {
 	Config &config= Config::getInstance();
 	if (slider == m_volFxSlider) {
 		config.setSoundVolumeFx(int(slider->getValue() * 100));

@@ -39,7 +39,6 @@ ModelRendererGl::ModelRendererGl() :
 }
 
 void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback) {
-	//assertions
 	assert(!rendering);
 	assertGl();
 
@@ -58,9 +57,8 @@ void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool render
 
 	//init opengl
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBindTexture(GL_TEXTURE_2D, 0);
 	glFrontFace(GL_CCW);
-	glEnable(GL_NORMALIZE);
+//	glEnable(GL_NORMALIZE); // we don't scale or shear, don't need this
 	glEnable(GL_BLEND);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -91,13 +89,12 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glEnable(GL_CULL_FACE);
 	}
 
-	//set color
 	if (renderColors) {
 		Vec4f color(mesh->getDiffuseColor(), mesh->getOpacity());
 		glColor4fv(color.ptr());
 	}
 
-	//texture state
+	// texture state
 	const Texture2DGl *texture = static_cast<const Texture2DGl*>(mesh->getTexture(mtDiffuse));
 	if (texture != NULL && renderTextures) {
 		if (lastTexture != texture->getHandle()) {
@@ -118,12 +115,12 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 	uint32 vertexCount = mesh->getVertexCount();
 	uint32 indexCount = mesh->getIndexCount();
 
+	//assertions
+	assertGl();
+
 	if (!vertexCount) {
 		return;
 	}
-
-	//assertions
-	assertGl();
 
 	//vertices
 	glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());

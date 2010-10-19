@@ -62,8 +62,7 @@ private:
 			vertScrollUpTexture,
 			vertScrollDownTexture,
 			vertScrollUpHoverTex,
-			vertScrollDownHoverTex,
-			defaultTexture;
+			vertScrollDownHoverTex;
 	
 	Font *m_FTMenuFontNormal;
 	Font *m_FTMenuFontSmall;

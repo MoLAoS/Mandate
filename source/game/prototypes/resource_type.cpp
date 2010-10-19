@@ -57,8 +57,8 @@ bool ResourceType::load(const string &dir, int id) {
 	try { // image
 		const XmlNode *imageNode;
 		imageNode = resourceNode->getChild("image");
-		image = renderer.newTexture2D(ResourceScope::GAME);
-		image->load( dir + "/" + imageNode->getAttribute("path")->getRestrictedValue() );
+		string imgPath = dir + "/" + imageNode->getAttribute("path")->getRestrictedValue();
+		image = renderer.getTexture2D(ResourceScope::GAME, imgPath);
 	} catch (runtime_error &e) {
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false; // can continue, to catch other errors
@@ -81,7 +81,6 @@ bool ResourceType::load(const string &dir, int id) {
 				model->load(mPath, GameConstants::cellScale, 2);
 			} catch (runtime_error e) {
 				g_errorLog.addXmlError(path, e.what());
-				loadOk = false; // can continue, to catch other errors
 			}
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");

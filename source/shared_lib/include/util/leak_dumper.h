@@ -2,6 +2,7 @@
 //	This file is part of Glest Shared Library (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//	              2010      James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -17,10 +18,6 @@
 using std::map;
 
 // _GAE_LEAK_DUMP_ controls if leak dumping is enabled or not
-
-#ifndef _GAE_LEAK_DUMP_
-#	define _GAE_LEAK_DUMP_ 0
-#endif
 
 #if _GAE_LEAK_DUMP_
 

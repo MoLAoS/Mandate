@@ -70,29 +70,26 @@ private:
 private:
 	SavedGamePreviewLoader loaderThread;
 
-	Transition			m_targetTransition;
-
-	Button::Ptr			m_returnButton,
-						m_deleteButton,
-						m_playNowButton;
-
-	DropList::Ptr		m_savedGameList;
-
-	MessageDialog::Ptr	m_messageDialog;
+	Transition		 m_targetTransition;
+	Button			*m_returnButton,
+					*m_deleteButton,
+					*m_playNowButton;
+	DropList		*m_savedGameList;
+	MessageDialog	*m_messageDialog;
 
 private:
-	void onButtonClick(Button::Ptr);
-	void onSaveSelected(ListBase::Ptr);
+	void onButtonClick(Button*);
+	void onSaveSelected(ListBase*);
 
-	void onConfirmDelete(BasicDialog::Ptr);
-	void onCancelDelete(BasicDialog::Ptr);
+	void onConfirmDelete(BasicDialog*);
+	void onCancelDelete(BasicDialog*);
 
-	void onConfirmReturn(BasicDialog::Ptr);
+	void onConfirmReturn(BasicDialog*);
 
 private:
 	Mutex mutex;
 	// only modify with mutex locked ==>
-	ScrollText::Ptr	m_infoLabel;
+	ScrollText*	m_infoLabel;
 	string fileName;
 	const XmlNode *savedGame;
 	GameSettings *gs;

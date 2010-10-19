@@ -19,6 +19,7 @@
 
 #include <streambuf>
 #include <physfs.h>
+#include "leak_dumper.h"
 
 namespace Shared { namespace PhysFS {
 

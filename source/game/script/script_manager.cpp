@@ -2,7 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
-//				  2009-2010 James McCulloch
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -33,258 +33,6 @@ using namespace Glest::Sim;
 #endif
 
 namespace Glest { namespace Script {
-
-// =====================================================
-//	class ScriptTimer
-// =====================================================
-
-bool ScriptTimer::isReady() const {
-	if (real) {
-		return Chrono::getCurMillis() >= targetTime;
-	} else {
-		return g_world.getFrameCount() >= targetTime;
-	}
-}
-
-void ScriptTimer::reset() {
-	if (real) {
-		targetTime = Chrono::getCurMillis() + interval;
-	} else {
-		targetTime = g_world.getFrameCount() + interval;
-	}
-}
-
-// =====================================================
-//	class TriggerManager
-// =====================================================
-
-TriggerManager::~TriggerManager() {
-	for (Regions::iterator it = regions.begin(); it != regions.end(); ++it) {
-		delete it->second;
-	}
-}
-
-void TriggerManager::reset() {
-	deleteMapValues(regions.begin(), regions.end());
-	regions.clear();
-	events.clear();
-	unitPosTriggers.clear();
-	attackedTriggers.clear();
-	hpBelowTriggers.clear();
-	hpAboveTriggers.clear();
-	commandCallbacks.clear();
-}
-
-bool TriggerManager::registerRegion(const string &name, const Rect &rect) {
-	if (regions.find(name) != regions.end()) return false;
- 	Region *region = new Rect(rect);
- 	regions[name] = region;
- 	return true;
- }
-
-int TriggerManager::registerEvent(const string &name) {
-	if (events.find(name) != events.end()) return -1;
-	events.insert(name);
-	return 0;
-}
-
-int TriggerManager::addCommandCallback(int unitId, const string &eventName, int userData) {
-	Unit *unit = g_world.findUnitById(unitId);
-	if (!unit) return -1;
-	unit->setCommandCallback();
-	commandCallbacks[unitId].evnt = eventName;
-	commandCallbacks[unitId].user_dat = userData;
-	return 0;
-}
-
-int TriggerManager::addHPBelowTrigger(int unitId, int threshold, const string &eventName, int userData) {
-	Unit *unit = g_world.findUnitById(unitId);
-	if (!unit) return -1;
-	if (unit->getHp() < threshold) return -2;
-	unit->setHPBelowTrigger(threshold);
-	hpBelowTriggers[unit->getId()].evnt = eventName;
-	hpBelowTriggers[unit->getId()].user_dat = userData;
-	return 0;
-}
-
-int TriggerManager::addHPAboveTrigger(int unitId, int threshold, const string &eventName, int userData) {
-	Unit *unit = g_world.findUnitById(unitId);
-	if (!unit) return -1;
-	if (unit->getHp() > threshold) return -2;
-	unit->setHPAboveTrigger(threshold);
-	hpAboveTriggers[unit->getId()].evnt = eventName;
-	hpAboveTriggers[unit->getId()].user_dat = userData;
-	return 0;
-}
-
-int TriggerManager::addAttackedTrigger(int unitId, const string &eventName, int userData) {
-	Unit *unit = g_world.findUnitById(unitId);
-	if (!unit) return -1;
-	if (!unit->isAlive()) return -2;
-	attackedTriggers[unitId].evnt = eventName;
-	attackedTriggers[unitId].user_dat = userData;
-	unit->setAttackedTrigger(true);
-	return 0;
-}
-
-int TriggerManager::addDeathTrigger(int unitId, const string &eventName, int userData) {
-	Unit *unit = g_world.findUnitById(unitId);
-	if (!unit) return -1;
-	if (!unit->isAlive()) return -2;
-	deathTriggers[unitId].evnt = eventName;
-	deathTriggers[unitId].user_dat = userData;
-	return 0;
-}
-
-void TriggerManager::unitMoved(const Unit *unit) {
-	// check id
-	int id = unit->getId();
-	PosTriggerMap::iterator tmit = unitPosTriggers.find(id);
-
-	if (tmit != unitPosTriggers.end()) {
-		PosTriggers &triggers = tmit->second;
-	start:
-		PosTriggers::iterator it = triggers.begin();
- 		while (it != triggers.end()) {
-			if (it->region->isInside(unit->getPos())) {
-				// setting another trigger on this unit in response to this trigger will cause our
-				// iterators here to go bad... :(
-				string evnt = it->evnt;
-				int ud = it->user_dat;
-				it = triggers.erase(it);
-				ScriptManager::onTrigger(evnt, id, ud);
-				goto start;
- 			} else {
- 				++it;
- 			}
-		}
-	}
-	tmit = factionPosTriggers.find(unit->getFactionIndex());
-	if (tmit != factionPosTriggers.end()) {
-		PosTriggers &triggers = tmit->second;
-	start2:
-		PosTriggers::iterator it = triggers.begin();
- 		while (it != triggers.end()) {
-			if (it->region->isInside(unit->getPos())) {
-				string evnt = it->evnt;
-				int ud = it->user_dat;
-				it = triggers.erase(it);
-				ScriptManager::onTrigger(evnt, id, ud);
-				goto start2;
- 			} else {
- 				++it;
- 			}
-		}
-	}
-}
-
-void TriggerManager::unitDied(const Unit *unit) {
-	const int &id = unit->getId();
-	unitPosTriggers.erase(unit->getId());
-	commandCallbacks.erase(unit->getId());
-	attackedTriggers.erase(unit->getId());
-	hpBelowTriggers.erase(unit->getId());
-	hpAboveTriggers.erase(unit->getId());
-	TriggerMap::iterator it = deathTriggers.find(unit->getId());
-	if (it != deathTriggers.end()) {
-		ScriptManager::onTrigger(it->second.evnt, unit->getId(), it->second.user_dat);
-		deathTriggers.erase(it);
-	}
-}
-
-void TriggerManager::commandCallback(const Unit *unit) {
-	TriggerMap::iterator it = commandCallbacks.find(unit->getId());
-	if (it == commandCallbacks.end()) return;
-	string evnt = it->second.evnt;
-	int ud = it->second.user_dat;
-	commandCallbacks.erase(it);
-	ScriptManager::onTrigger(evnt, unit->getId(), ud);
-}
-
-void TriggerManager::onHPBelow(const Unit *unit) {
-	TriggerMap::iterator it = hpBelowTriggers.find(unit->getId());
-	if (it == hpBelowTriggers.end()) return;
-	string evnt = it->second.evnt;
-	int ud = it->second.user_dat;
-	hpBelowTriggers.erase(it);
-	ScriptManager::onTrigger(evnt, unit->getId(), ud);
-}
-
-void TriggerManager::onHPAbove(const Unit *unit) {
-	TriggerMap::iterator it = hpAboveTriggers.find(unit->getId());
-	if (it == hpAboveTriggers.end()) {
-		return;
-	}
-	string evnt = it->second.evnt;
-	int ud = it->second.user_dat;
-	hpAboveTriggers.erase(it);
-	ScriptManager::onTrigger(evnt, unit->getId(), ud);
-}
-
-void TriggerManager::onAttacked(const Unit *unit) {
-	TriggerMap::iterator it = attackedTriggers.find(unit->getId());
-	if (it == attackedTriggers.end()) {
-		return;
-	}
-	string evnt = it->second.evnt;
-	int ud = it->second.user_dat;
-	attackedTriggers.erase(it);
-	ScriptManager::onTrigger(evnt, unit->getId(), ud);
-}
-
-/** @return 0 if ok, -1 if bad unit id, -2 if event not found, -3 region not found,
-  * -4 unit already has a trigger for this region,event pair */
-int TriggerManager::addUnitPosTrigger	(int unitId, const string &region, const string &eventName, int userData) {
-	//g_logger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
-	Unit *unit = g_world.findUnitById(unitId);
-	if (!unit) return -1;
-	if (events.find(eventName) == events.end()) return -2;
-	Region *rgn = NULL;
-	if (regions.find(region) != regions.end()) rgn = regions[region];
-	if (!rgn) return -3;
-	if (unitPosTriggers.find(unitId) == unitPosTriggers.end()) {
-		unitPosTriggers.insert(pair<int,PosTriggers>(unitId,PosTriggers()));
- 	}
-	PosTriggers &triggers = unitPosTriggers.find(unitId)->second;
-	PosTriggers::iterator it = triggers.begin();
-	for (; it != triggers.end(); ++it) {
-		if (it->region == rgn && it->evnt == eventName) {
-			return -4;
-		}
- 	}
-	triggers.push_back(PosTrigger());
-	triggers.back().region = rgn;
-	triggers.back().evnt = eventName;
-	triggers.back().user_dat = userData;
-	return 0;
-}
-
-/** @return 0 if ok, -1 if bad index id, -2 if event not found, -3 region not found,
-  * -4 faction already has a trigger for this region,event pair */
-int TriggerManager::addFactionPosTrigger (int ndx, const string &region, const string &eventName, int userData) {
-	//g_logger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
-	if (ndx < 0 || ndx >= GameConstants::maxPlayers) return -1;
-	if (events.find(eventName) == events.end()) return -2;
-	Region *rgn = NULL;
-	if (regions.find(region) != regions.end()) rgn = regions[region];
-	if (!rgn) return -3;
-
-	if (factionPosTriggers.find(ndx) == factionPosTriggers.end()) {
-		factionPosTriggers.insert(pair<int,PosTriggers>(ndx,PosTriggers()));
- 	}
-	PosTriggers &triggers = factionPosTriggers.find(ndx)->second;
-	PosTriggers::iterator it = triggers.begin();
-	for (; it != triggers.end(); ++it) {
-		if (it->region == rgn && it->evnt == eventName) {
-			return -4;
-		}
- 	}
-	triggers.push_back(PosTrigger());
-	triggers.back().region = rgn;
-	triggers.back().evnt = eventName;
-	triggers.back().user_dat = userData;
-	return 0;
-}
 
 TriggerManager ScriptManager::triggerManager;
 
@@ -332,6 +80,9 @@ void ScriptManager::cleanUp() {
 	triggerManager.reset();
 }
 
+int getSubfaction(LuaHandle *luaHandle);
+int getSubfactionRestrictions(LuaHandle *luaHandle);
+
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
 
@@ -343,6 +94,9 @@ void ScriptManager::initGame() {
 	luaConsole = g_userInterface.getLuaConsole();
 
 	//register functions
+
+	LUA_FUNC(getSubfaction);
+	LUA_FUNC(getSubfactionRestrictions);
 
 	// Game control
 	LUA_FUNC(disableAi);
@@ -469,6 +223,48 @@ void ScriptManager::initGame() {
 	}
 }
 
+int getSubfaction(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	int ndx;
+	if (ScriptManager::extractArgs(args, "getSubfaction", "int", &ndx)) {
+		if (ndx >= 0 && ndx < g_world.getFactionCount()) {
+			const Faction *f = g_world.getFaction(ndx);
+			const FactionType *ft = f->getType();
+			string name = ft->getSubfaction(f->getSubfaction());
+			string res = "Faction " + intToStr(ndx) + " [" + ft->getName() + "] = '" + name + "'";
+			ScriptManager::luaConsole->addOutput(res);
+		} else {
+			ScriptManager::luaConsole->addOutput("Faction index out of range:" + intToStr(ndx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int getSubfactionRestrictions(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	string facName, reqName;
+	if (ScriptManager::extractArgs(args, "getSubfactionRestrictions", "str,str", &facName, &reqName)) {
+		try {
+			string res;
+			const FactionType *ft = g_world.getTechTree()->getFactionType(facName);
+			const UpgradeType *ut = ft->getUpgradeType(reqName);
+			if (ut->getSubfactionsReqs() == -1) {
+				res = "all";
+			} else {			
+				for (int i=0; i < ft->getSubfactionCount(); ++i) {
+					if (ut->isAvailableInSubfaction(i)) {
+						res += ft->getSubfaction(i) + " ";
+					}
+				}
+			}
+			ScriptManager::luaConsole->addOutput("Available in: " + res);
+		} catch (runtime_error &e) {
+			ScriptManager::luaConsole->addOutput(e.what());
+		}
+	}
+	return args.getReturnCount();
+}
+
 // ========================== events ===============================================
 
 void ScriptManager::onResourceHarvested() {
@@ -574,12 +370,15 @@ void ScriptManager::doSomeLua(const string &code) {
 
 void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 	string err = txt ? txt : luaScript.getLastError();
-	g_logger.getErrorLog().add(err);
-	luaConsole->addOutput(err);
+	g_errorLog.add(err);
 
-	if (!quietly) {
-		g_simInterface->pause();
-		g_gameState.addScriptMessage("Script Error", err);
+	if (World::isConstructed()) {
+		luaConsole->addOutput(err);
+
+		if (!quietly) {
+			g_simInterface->pause();
+			g_gameState.addScriptMessage("Script Error", err);
+		}
 	}
 }
 
@@ -769,20 +568,37 @@ int ScriptManager::setUnitTrigger(LuaHandle* luaHandle) {
 	return args.getReturnCount();
 }
 
+string triggerResultToString(SetTriggerRes res) {
+	switch (res) {
+		case SetTriggerRes::OK:
+			return "Ok.";
+		case SetTriggerRes::BAD_UNIT_ID:
+			return "Invalid unit id.";
+		case SetTriggerRes::BAD_FACTION_INDEX:
+			return "Invalid faction index.";
+		case SetTriggerRes::UNKNOWN_EVENT:
+			return "Unknown event.";
+		case SetTriggerRes::UNKNOWN_REGION:
+			return "Unknown region.";
+		case SetTriggerRes::INVALID_THRESHOLD:
+			return "Invalid threshold.";
+		case SetTriggerRes::DUPLICATE_TRIGGER:
+			return "Duplicate trigger.";
+		case SetTriggerRes::INVALID:
+		default:
+			return "Invalid.";
+	}
+}
+
 void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
-	bool did_something = false;
+	SetTriggerRes res;
 	if (cond == "attacked") {
-		triggerManager.addAttackedTrigger(id, evnt, ud);
-		did_something = true;
+		res = triggerManager.addAttackedTrigger(id, evnt, ud);
 	} else if (cond == "death") {
-		triggerManager.addDeathTrigger(id, evnt, ud);
-		did_something = true;
+		res = triggerManager.addDeathTrigger(id, evnt, ud);
 	} else if (cond == "enemy_sighted") { // nop
 	} else if (cond == "command_callback") {
-		if (triggerManager.addCommandCallback(id,evnt, ud) == -1) {
-			addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-		}
-		did_something = true;
+		res = triggerManager.addCommandCallback(id,evnt, ud);
 	} else { // 'complex' conditions
 		size_t ePos = cond.find('=');
 		if (ePos != string::npos) {
@@ -790,49 +606,23 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 			string val = cond.substr(ePos+1);
 			if (key == "hp_below") {
 				int threshold = atoi(val.c_str());
-				if (threshold < 1) {
-					addErrorMessage("setUnitTrigger(): invalid hp_below condition = '" + val + "'");
-				} else {
-					int res = triggerManager.addHPBelowTrigger(id, threshold, evnt, ud);
-					if (res == -1) {
-						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-					} else if (res == -2) {
-						addErrorMessage("setUnitTrigger(): hp_below=" + intToStr(threshold) + ", unit doesn't have that many hp");
-					}
+				if (threshold >= 1) {
+					res = triggerManager.addHPBelowTrigger(id, threshold, evnt, ud);
 				}
-				did_something = true;
 			} else if (key == "hp_above") {
 				int threshold = atoi(val.c_str());
-				if (threshold < 1) {
-					addErrorMessage("setUnitTrigger(): invalid hp_above condition = '" + val + "'");
-				} else {
-					int res = triggerManager.addHPAboveTrigger(id, threshold, evnt, ud);
-					if (res == -1) {
-						addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-					} else if (res == -2) {
-						addErrorMessage("setUnitTrigger(): hp_above=" + intToStr(threshold) + ", unit already has that many hp");
-					}
+				if (threshold >= 1) {
+					res = triggerManager.addHPAboveTrigger(id, threshold, evnt, ud);
 				}
-				did_something = true;
 			} else if (key == "region") {
-				int res = triggerManager.addUnitPosTrigger(id,val,evnt,ud);
-				if (res == -1) {
-					addErrorMessage("setUnitTrigger(): unit id invalid " + intToStr(id));
-				} else if (res == -2) {
-					addErrorMessage("setUnitTrigger(): unkown event  '" + evnt + "'");
-				} else if (res == -3) {
-					addErrorMessage("setUnitTrigger(): unkown region  '" + val + "'");
-				} else if (res == -4) {
-					addErrorMessage("setUnitTrigger(): unit " + intToStr(id)
-						+ " already has a trigger for this region,event pair "
-						+ "'" + val + ", " + evnt + "'");
-				}
-				did_something = true;
+				res = triggerManager.addUnitPosTrigger(id,val,evnt,ud);
 			}
 		}
 	}
-	if (!did_something) {
+	if (res == SetTriggerRes::INVALID) {
 		addErrorMessage("setUnitTrigger(): invalid condition = '" + cond + "'");
+	} else if (res != SetTriggerRes::OK) {
+		addErrorMessage("setUnitTrigger(): " + triggerResultToString(res));
 	}
 }
 
@@ -842,28 +632,19 @@ int ScriptManager::setFactionTrigger(LuaHandle* luaHandle) {
 	string cond, evnt;
 	if (extractArgs(args, "setFactionTrigger", "int,str,str,int", &ndx, &cond, &evnt, &ud)) {
 		size_t ePos = cond.find('=');
-		bool did_something = false;
+		//bool did_something = false;
+		SetTriggerRes res;
 		if (ePos != string::npos) {
 			string key = cond.substr(0, ePos);
 			string val = cond.substr(ePos+1);
 			if (key == "region") {
-				int res = triggerManager.addFactionPosTrigger(ndx,val,evnt, ud);
-				if (res == -1) {
-					addErrorMessage("setFactionTrigger(): invalid factio index" + intToStr(ndx));
-				} else if (res == -2) {
-					addErrorMessage("setFactionTrigger(): unkown event  '" + evnt + "'");
-				} else if (res == -3) {
-					addErrorMessage("setFactionTrigger(): unkown region  '" + val + "'");
-				} else if (res == -4) {
-					addErrorMessage("setFactionTrigger(): faction " + intToStr(ndx)
-						+ " already has a trigger for this region,event pair "
-						+ "'" + val + ", " + evnt + "'");
-				}
-				did_something = true;
+				res = triggerManager.addFactionPosTrigger(ndx,val,evnt, ud);
 			}
 		}
-		if (!did_something) {
+		if (res == SetTriggerRes::INVALID) {
 			addErrorMessage("setFactionTrigger(): invalid condition = '" + cond + "'");
+		} else if (res != SetTriggerRes::OK) {
+			addErrorMessage("setFactionTrigger(): " + triggerResultToString(res));
 		}
 	}
 	return args.getReturnCount();
@@ -1037,15 +818,8 @@ int ScriptManager::createUnit(LuaHandle* luaHandle) {
 	if (extractArgs(args, "createUnit", "str,int,v2i", &type, &fNdx, &pos)) {
 		int id = g_world.createUnit(type, fNdx, pos);
 		if (id < 0) {
-			stringstream ss;
-			switch (id) {
-				case -1: ss << "createUnit(): invalid faction index " << fNdx; break;
-				case -2: ss << "createUnit(): invalid unit type '" << type << "' for faction " << fNdx; break;
-				case -3: ss << "createUnit(): unit could not be placed near " << pos; break;
-				case -4: ss << "createUnit(): invalid positon " << pos; break;
-				default: throw runtime_error("In ScriptManager::createUnit(), World::createUnit() returned unkown error code");
-			}
-			addErrorMessage(ss.str());
+			LuaCmdResult res(id);
+			addErrorMessage("Error: createUnit()" + res.getString());
 		}
 		args.returnInt(id);
 	}
@@ -1058,10 +832,9 @@ int ScriptManager::giveResource(LuaHandle* luaHandle) {
 	int fNdx, amount;
 	if (extractArgs(args, "giveResource", "str,int,int", &resource, &fNdx, &amount)) {
 		int err = g_world.giveResource(resource, fNdx, amount);
-		if (err == -1) {
-			addErrorMessage("giveResource(): invalid faction index " + intToStr(fNdx));
-		} else if (err == -2) {
-			addErrorMessage("giveResource(): invalid resource '" + resource + "'");
+		if (err < 0) {
+			LuaCmdResult res(err);
+			addErrorMessage("Error: giveResource() " + res.getString());
 		}
 	}
 	return args.getReturnCount();
@@ -1074,17 +847,13 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle) {
 	Vec2i pos;
 	if (extractArgs(args, "givePositionCommand", "int,str,v2i", &id, &cmd, &pos)) {
 		int res = g_world.givePositionCommand(id, cmd, pos);
-		args.returnBool((res == 0 ? true : false));
 		if (res < 0) {
-			stringstream ss;
-			switch (res) {
-				case -1: ss << "givePositionCommand(): invalid unit id " << id; break;
-				case -2: ss << "givePositionCommand(): unit " << id << " has no '" << cmd << "' command"; break;
-				case -3: ss << "givePositionCommand(): invalid command '" << cmd; break;
-				default: throw runtime_error("In ScriptManager::givePositionCommand, World::givePositionCommand() returned unknown error code.");
-			}
-			addErrorMessage(ss.str());
+			LuaCmdResult lcres(res);
+			addErrorMessage("Error: givePositionCommand() " + lcres.getString());
 		}
+		args.returnBool((res == 0 ? true : false));
+	} else {
+		args.returnBool(false);
 	}
 	return args.getReturnCount();
 }
@@ -1097,15 +866,11 @@ int ScriptManager::giveTargetCommand (LuaHandle * luaHandle) {
 		int res = g_world.giveTargetCommand(id, cmd, id2);
 		args.returnBool((res == 0 ? true : false));
 		if (res < 0) {
-			stringstream ss;
-			switch (res) {
-				case -1: ss << "giveTargetCommand(): invalid unit id " << id; break;
-				case -2: ss << "giveTargetCommand(): unit " << id << " can not attack unit " << id2 << " no appropriate attack command found"; break;
-				case -3: ss << "giveTargetCommand(): invalid command '" << cmd; break;
-				default: throw runtime_error("In ScriptManager::giveTargetCommand, World::giveTargetCommand() returned unknown error code.");
-			}
-			addErrorMessage(ss.str());
+			LuaCmdResult lcres(res);
+			addErrorMessage("Error: giveTargetCommand() " + lcres.getString());
 		}
+	} else {
+		args.returnBool(false);
 	}
 	return args.getReturnCount();
 }
@@ -1118,15 +883,11 @@ int ScriptManager::giveStopCommand (LuaHandle * luaHandle) {
 		int res = g_world.giveStopCommand(id, cmd);
 		args.returnBool((res == 0 ? true : false));
 		if (res < 0) {
-			stringstream ss;
-			switch (res) {
-				case -1: ss << "giveStopCommand(): invalid unit id " << id; break;
-				case -2: ss << "giveStopCommand(): unit " << id << " has no '" << cmd << "' command"; break;
-				case -3: ss << "giveStopCommand(): invalid command '" << cmd; break;
-				default: throw runtime_error("In ScriptManager::giveStopCommand, World::giveStopCommand() returned unknown error code.");
-			}
-			addErrorMessage(ss.str());
+			LuaCmdResult lcres(res);
+			addErrorMessage("Error: giveStopCommand() " + lcres.getString());
 		}
+	} else {
+		args.returnBool(false);
 	}
 	return args.getReturnCount();
 }
@@ -1139,15 +900,11 @@ int ScriptManager::giveProductionCommand(LuaHandle* luaHandle) {
 		int res = g_world.giveProductionCommand(id, prod);
 		args.returnBool((res == 0 ? true : false));
 		if (res < 0) {
-			stringstream ss;
-			switch (res) {
-				case -1: ss << "giveProductionCommand(): invalid unit id " << id; break;
-				case -2: ss << "giveProductionCommand(): unit " << id << " can not produce unit '" << prod << "'"; break;
-				case -3: ss << "giveProductionCommand(): unit '" << prod << " not found."; break;
-				default: throw runtime_error("In ScriptManager::giveProductionCommand, World::giveProductionCommand() returned unknown error code.");
-			}
-			addErrorMessage(ss.str());
+			LuaCmdResult lcres(res);
+			addErrorMessage("Error: giveProductionCommand() " + lcres.getString());
 		}
+	} else {
+		args.returnBool(false);
 	}
 	return args.getReturnCount();
 }
@@ -1160,15 +917,11 @@ int ScriptManager::giveUpgradeCommand(LuaHandle* luaHandle) {
 		int res = g_world.giveUpgradeCommand(id, prod);
 		args.returnBool((res == 0 ? true : false));
 		if (res < 0) {
-			stringstream ss;
-			switch (res) {
-				case -1: ss << "giveUpgradeCommand(): invalid unit id " << id; break;
-				case -2: ss << "giveUpgradeCommand(): unit " << id << " can not produce upgrade '" << prod << "'"; break;
-				case -3: ss << "giveUpgradeCommand(): upgrade '" << prod << " not found."; break;
-				default: throw runtime_error("In ScriptManager::giveUpgradeCommand, World::giveUpgradeCommand() returned unknown error code.");
-			}
-			addErrorMessage(ss.str());
+			LuaCmdResult lcres(res);
+			addErrorMessage("Error: giveUpgradeCommand() " + lcres.getString());
 		}
+	} else {
+		args.returnBool(false);
 	}
 	return args.getReturnCount();
 }
@@ -1180,7 +933,7 @@ int ScriptManager::disableAi(LuaHandle* luaHandle) {
 		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
 			playerModifiers[fNdx].disableAi();
 		} else {
-			addErrorMessage("disableAi(): invalid faction index " + intToStr(fNdx));
+			addErrorMessage("Error: disableAi(): Invalid faction index " + intToStr(fNdx));
 		}
 	}
 	return args.getReturnCount();
@@ -1193,7 +946,7 @@ int ScriptManager::setPlayerAsWinner(LuaHandle* luaHandle) {
 		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
 			playerModifiers[fNdx].setAsWinner();
 		} else {
-			addErrorMessage("setPlayerAsWinner(): invalid faction index " + intToStr(fNdx));
+			addErrorMessage("Error: setPlayerAsWinner(): invalid faction index " + intToStr(fNdx));
 		}
 	}
 	return args.getReturnCount();
@@ -1228,7 +981,7 @@ int ScriptManager::factionTypeName(LuaHandle* luaHandle) {
 			string factionTypeName = g_gameSettings.getFactionTypeName(fNdx);
 			args.returnString(factionTypeName);
 		} else {
-			addErrorMessage("factionTypeName(): invalid faction index " + intToStr(fNdx));
+			addErrorMessage("Error: factionTypeName(): invalid faction index " + intToStr(fNdx));
 		}
 	}
 	return args.getReturnCount();
@@ -1246,7 +999,7 @@ int ScriptManager::startLocation(LuaHandle* luaHandle) {
 	if (extractArgs(args, "startLocation", "int", &fNdx)) {
 		Vec2i pos= g_world.getStartLocation(fNdx);
 		if (pos == Vec2i(-1)) {
-			addErrorMessage("startLocation(): invalid faction index " + intToStr(fNdx));
+			addErrorMessage("Error: startLocation(): invalid faction index " + intToStr(fNdx));
 		}
 		args.returnVec2i(pos);
 	}
@@ -1259,7 +1012,7 @@ int ScriptManager::unitPosition(LuaHandle* luaHandle) {
 	if (extractArgs(args, "unitPosition", "int", &id)) {
 		Vec2i pos= g_world.getUnitPosition(id);
 		if (pos == Vec2i(-1)) {
-			addErrorMessage("unitPosition(): Can not find unit=" + intToStr(id) + " to get position");
+			addErrorMessage("Error: unitPosition(): Can not find unit=" + intToStr(id) + " to get position");
 		}
 		args.returnVec2i(pos);
 	}
@@ -1271,8 +1024,9 @@ int ScriptManager::unitFaction(LuaHandle* luaHandle) {
 	int id;
 	if (extractArgs(args, "unitFaction", "int", &id)) {
 		int factionIndex = g_world.getUnitFactionIndex(id);
-		if (factionIndex == -1) {
-			addErrorMessage("unitFaction(): Can not find unit=" + intToStr(id) + " to get faction index");
+		if (id < 0) {
+			LuaCmdResult lcres(id);
+			addErrorMessage("Error: unitFaction(): " + lcres.getString());
 		}
 		args.returnInt(factionIndex);
 	}
@@ -1285,10 +1039,9 @@ int ScriptManager::resourceAmount(LuaHandle* luaHandle) {
 	int fNdx;
 	if (extractArgs(args, "resourceAmount", "str,int", &resource, &fNdx)) {
 		int amount = g_world.getResourceAmount(resource, fNdx);
-		if (amount == -1) {
-			addErrorMessage("resourceAmount(): invalid faction index " + intToStr(fNdx));
-		} else if (amount == -2) {
-			addErrorMessage("resourceAmount(): invalid resource '" + resource + "'");
+		if (amount < 0) {
+			LuaCmdResult lcres(amount);
+			addErrorMessage("Error: resourceAmount(): " + lcres.getString());
 		}
 		args.returnInt(amount);
 	}
@@ -1298,7 +1051,7 @@ int ScriptManager::resourceAmount(LuaHandle* luaHandle) {
 int ScriptManager::lastCreatedUnitName(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	if (latestCreated.id == -1) {
-		addErrorMessage("lastCreatedUnitName(): called before any units created.");
+		addErrorMessage("Error: lastCreatedUnitName(): called before any units created.");
 	}
 	args.returnString(latestCreated.name);
 	return args.getReturnCount();
@@ -1307,7 +1060,7 @@ int ScriptManager::lastCreatedUnitName(LuaHandle* luaHandle) {
 int ScriptManager::lastCreatedUnit(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	if (latestCreated.id == -1) {
-		addErrorMessage("lastCreatedUnit(): called before any units created.");
+		addErrorMessage("Error: lastCreatedUnit(): called before any units created.");
 	}
 	args.returnInt(latestCreated.id);
 	return args.getReturnCount();
@@ -1316,7 +1069,7 @@ int ScriptManager::lastCreatedUnit(LuaHandle* luaHandle) {
 int ScriptManager::lastDeadUnitName(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	if (latestCasualty.id == -1) {
-		addErrorMessage("lastDeadUnitName(): called before any units died.");
+		addErrorMessage("Error: lastDeadUnitName(): called before any units died.");
 	}
 	args.returnString(latestCasualty.name);
 	return args.getReturnCount();
@@ -1325,7 +1078,7 @@ int ScriptManager::lastDeadUnitName(LuaHandle* luaHandle) {
 int ScriptManager::lastDeadUnit(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	if (latestCasualty.id == -1) {
-		addErrorMessage("lastDeadUnit(): called before any units died.");
+		addErrorMessage("Error: lastDeadUnit(): called before any units died.");
 	}
 	args.returnInt(latestCasualty.id);
 	return args.getReturnCount();
@@ -1350,11 +1103,9 @@ int ScriptManager::unitCountOfType(LuaHandle* luaHandle) {
 	string type;
 	if (extractArgs(args, "unitCountOfType", "int,str", &fNdx, &type)) {
 		int amount = g_world.getUnitCountOfType(fNdx, type);
-		if (amount == -1) {
-			addErrorMessage("unitCountOfType(): invalid faction index " + intToStr(fNdx));
-		} else if (amount == -2) {
-			addErrorMessage("unitCountOfType(): invalid unit type '" + type + "' for faction "
-				+ intToStr(fNdx));
+		if (amount < 0) {
+			LuaCmdResult lcres(amount);
+			addErrorMessage("Error: unitCountOfType(): " + lcres.getString());
 		}
 		args.returnInt(amount);
 	}
@@ -1374,10 +1125,10 @@ int ScriptManager::giveUpgrade(LuaHandle* luaHandle) {
 				faction->startUpgrade(ut);
 				faction->finishUpgrade(ut);
 			} catch (runtime_error &e) {
-				addErrorMessage("giveUpgrade(): invalid upgrade '" + upgrade + "'");
+				addErrorMessage("Error: giveUpgrade(): invalid upgrade '" + upgrade + "'");
 			}
 		} else {
-			addErrorMessage("giveUpgrade(): invalid faction index " + intToStr(fNdx));
+			addErrorMessage("Error: giveUpgrade(): invalid faction index " + intToStr(fNdx));
 		}
 	}
 	return args.getReturnCount();

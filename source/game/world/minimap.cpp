@@ -44,7 +44,7 @@ using Main::Program;
 const float Minimap::exploredAlpha = 0.5f;
 const Vec2i Minimap::textureSize = Vec2i(128, 128);
 
-Minimap::Minimap(bool FoW, Container::Ptr parent, Vec2i pos, Vec2i size)
+Minimap::Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, m_fowPixmap0(0)
@@ -172,18 +172,6 @@ void Minimap::updateFowTex(float t){
 
 // ==================== PRIVATE ====================
 
-// faction colours, in RGBA format
-Colour factionColours[GameConstants::maxPlayers] = {
-	Colour(255, 0, 0, 255),
-	Colour(0, 0, 255, 255),
-	Colour(31, 127, 0, 255),
-	Colour(255, 255, 0, 255),
-	Colour(191, 0, 191, 255),
-	Colour(0, 191, 191, 255),
-	Colour(72, 255, 72, 255),
-	Colour(255, 127, 0, 255)
-};
-
 void buildVisLists(ConstUnitVector &srfList, ConstUnitVector &airList) {
 	UnitSet srfSet; // surface units seen already
 	UnitSet airSet; // air units seen already
@@ -260,6 +248,14 @@ void Minimap::updateUnitTex() {
 			ndx = m_unitsPMap->getInfluence(pos);
 			if (ndx >= 0) {
 				pm->setPixel(pos, factionColours[ndx]);
+			} else {
+				PerimeterIterator iter(pos - Vec2i(1), pos + Vec2i(1));
+				while (iter.more()) {
+					ndx = m_unitsPMap->getInfluence(iter.next());
+					if (ndx >= 0) {
+						pm->setPixel(pos, factionColoursOutline[ndx]);
+					}
+				}
 			}
 		}
 	} else if (m_currZoom > 1) {
@@ -274,6 +270,19 @@ void Minimap::updateUnitTex() {
 				while (iter2.more()) {
 					pm->setPixel(iter2.next(), factionColours[ndx]);
 				}
+			} else {
+				// scan surrounds
+				PerimeterIterator iter3(sPos * 2 - Vec2i(1), sPos * 2 + Vec2i(ppc));
+				while (iter3.more()) {
+					ndx = m_unitsPMap->getInfluence(iter3.next());
+					if (ndx >= 0) {
+						RectIterator iter2(sPos * 2, sPos * 2 + Vec2i(ppc - 1));
+						while (iter2.more()) {
+							pm->setPixel(iter2.next(), factionColoursOutline[ndx]);
+						}
+						break;
+					}
+				}
 			}
 		}
 	} else {
@@ -283,12 +292,27 @@ void Minimap::updateUnitTex() {
 		while (iter.more()) {
 			sPos = iter.next();
 			RectIterator iter2(sPos * cpp, sPos * cpp + Vec2i(cpp - 1));
+			bool outlineCheck = true;
 			while (iter2.more()) {
 				pos = iter2.next();
 				ndx = m_unitsPMap->getInfluence(pos);
 				if (ndx >= 0) {
+					outlineCheck = false;;
 					pm->setPixel(sPos, factionColours[ndx]);
 					break;
+				}
+			}
+			if (outlineCheck) {
+				for (int i=0; i < cpp; ++i) {
+					PerimeterIterator iter3(sPos * cpp - Vec2i(1 + i), sPos * cpp + Vec2i(cpp + i));
+					while (iter3.more()) {
+						pos = iter3.next();
+						ndx = m_unitsPMap->getInfluence(pos);
+						if (ndx >= 0) {
+							pm->setPixel(sPos, factionColoursOutline[ndx]);
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -298,8 +322,10 @@ void Minimap::updateUnitTex() {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_unitsTex)->getHandle());
 
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, m_unitsTex->getPixmap()->getW(), m_unitsTex->getPixmap()->getH(),
-		0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_unitsTex->getPixmap()->getW(), m_unitsTex->getPixmap()->getH(),
+		GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
+	//glTexImage2D(GL_TEXTURE_2D, 0, 4, m_unitsTex->getPixmap()->getW(), m_unitsTex->getPixmap()->getH(),
+	//	0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
 }
 
 void Minimap::computeTexture(const World *world){

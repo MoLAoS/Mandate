@@ -14,6 +14,7 @@
 #include "server_interface.h"
 
 #include "profiler.h"
+#include "leak_dumper.h"
 
 using namespace Glest::Net;
 

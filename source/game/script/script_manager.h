@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2005 Martiño Figueroa
+//                2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -12,192 +13,12 @@
 #ifndef _GLEST_GAME_SCRIPT_MANAGER_H_
 #define _GLEST_GAME_SCRIPT_MANAGER_H_
 
-#include <string>
-#include <queue>
-#include <set>
-#include <map>
-#include <limits>
+#include "trigger_manager.h"
 
-#include "lua_script.h"
-#include "vec.h"
-#include "timer.h"
+namespace Glest { namespace Script {
 
-#include "components.h"
-#include "logger.h"
-
-#include "game_constants.h"
-#include "forward_decs.h"
-
-using namespace Shared::Lua;
-using namespace Shared::Math;
-
-using Shared::Platform::Chrono;
-using std::queue;
-using std::set;
-using std::numeric_limits;
-
-using Glest::Entities::Unit;
-using Glest::Gui::Console;
-using Glest::Gui::GameState;
-using Glest::Sim::World;
-
-namespace Glest {
-namespace Gui {
-	class LuaConsole;
-}
-using Gui::LuaConsole;
-	
-namespace Script {
-
-// =====================================================
-//	class ScriptTimer
-// =====================================================
-
-class ScriptTimer {
-private:
-	string name;
-	bool real;
-	bool periodic;
-	int64 targetTime;
-	int64 interval;
-	bool active;
-
-public:
-	ScriptTimer(const string &name, bool real, int interval, bool periodic)
-		: name(name), real(real), periodic(periodic), interval(interval), active(true) {
-			reset();
-	}
-
-	const string &getName()	const	{return name;}
-	bool isPeriodic() const			{return periodic;}
-	bool isAlive() const			{return active;}
-	bool isReady() const;
-
-	void kill()						{active = false;}
-	void reset();
-};
-
-// =====================================================
-//	class Region, and Derivitives
-// =====================================================
-
-struct Region {
-	virtual bool isInside(const Vec2i &pos) const = 0;
-};
-
-struct Rect : public Region {
-	int x, y, w, h; // top-left coords + width and height
-
-	Rect() : x(0), y(0), w(0), h(0) { }
-	Rect(const int v) : x(v), y(v), w(v), h(v) { }
-	Rect(const Vec4i &v) : x(v.x), y(v.y), w(v.z), h(v.w) { }
-	Rect(const int x, const int y, const int w, const int h) : x(x), y(y), w(w), h(h) { }
-
-	virtual bool isInside(const Vec2i &pos) const {
-		return pos.x >= x && pos.y >= y && pos.x < x + w && pos.y < y + h;
-	}
-};
-
-struct Circle : public Region {
-	int x, y; // centre
-	float radius;
-
-	Circle() : x(-1), y(-1), radius(numeric_limits<float>::quiet_NaN()) { }
-	Circle(const Vec2i &pos, const float radius) : x(pos.x), y(pos.y), radius(radius) { }
-	Circle(const int x, const int y, const float r) : x(x), y(y), radius(r) { }
-
-	virtual bool isInside(const Vec2i &pos) const {
-		return pos.dist(Vec2i(x,y)) <= radius;
-	}
-};
-
-struct CompoundRegion : public Region {
-	vector<Region*> regions;
-
-	CompoundRegion() { }
-	CompoundRegion(Region *ptr) { regions.push_back(ptr); }
-
-	template<typename InIter>
-	void addRegions(InIter start, InIter end) {
-		copy(start,end,regions.end());
-	}
-
-	virtual bool isInside(const Vec2i &pos) const {
-		for ( vector<Region*>::const_iterator it = regions.begin(); it != regions.end(); ++it ) {
-			if ( (*it)->isInside(pos) ) {
-				return true;
-			}
-		}
-		return false;
-	}
-};
-
-struct PosTrigger {
-	Region *region;
-	string evnt;
-	int user_dat;
-	PosTrigger() : region(NULL), evnt(""), user_dat(0) {}
-};
-
-struct Trigger {
-	string evnt;
-	int user_dat;
-	Trigger() : evnt(""), user_dat(0) {}
-};
-
-// =====================================================
-//	class TriggerManager
-// =====================================================
-
-class TriggerManager {
-	typedef map<string,Region*>			Regions;
-	typedef set<string>					Events;
-	typedef vector<PosTrigger>			PosTriggers;
-	typedef map<int,PosTriggers>		PosTriggerMap;
-	typedef map<int,Trigger>			TriggerMap;
-
-	Events  events;
-	Regions regions;
-
-	PosTriggerMap	unitPosTriggers;
-	PosTriggerMap	factionPosTriggers;
-	TriggerMap		attackedTriggers;
-	TriggerMap		hpBelowTriggers;
-	TriggerMap		hpAboveTriggers;
-	TriggerMap		commandCallbacks;
-	TriggerMap		deathTriggers;
-
-public:
-	TriggerManager() {}
-	~TriggerManager();
-
-	void reset();
-	bool registerRegion(const string &name, const Rect &rect);
-	int  registerEvent(const string &name);
-
-	const Region* getRegion(string &name) {
-		Regions::iterator it = regions.find(name);
-		if ( it == regions.end() ) return NULL;
-		else return it->second;
-	}
-
-	int  addUnitPosTrigger(int unitId, const string &region, const string &eventName, int userData=0);
-	int  addFactionPosTrigger(int ndx, const string &region, const string &eventName, int userData);
-
-	int  addCommandCallback(int unitId, const string &eventName, int userData=0);
-	int  addHPBelowTrigger(int unitId, int threshold, const string &eventName, int userData=0);
-	int  addHPAboveTrigger(int unitId, int threshold, const string &eventName, int userData=0);
-	int  addAttackedTrigger(int unitId, const string &eventName, int userData=0);
-	int  addDeathTrigger(int unitId, const string &eventName, int userData=0);
-
-	// must be called any time a unit is 'put' in cells (created, moved,
-	void unitMoved(const Unit *unit);
-	void unitDied(const Unit *unit);
-	void commandCallback(const Unit *unit);
-	void onHPBelow(const Unit *unit);
-	void onHPAbove(const Unit *unit);
-	void onAttacked(const Unit *unit);
-};
+using Sim::CommandResult;
+using Sim::CommandResultNames;
 
 class PlayerModifiers {
 private:
@@ -214,13 +35,64 @@ public:
 	void setAsWinner()			{winner = true;}
 };
 
+struct LuaCmdResult {
+	enum Enum {
+		INSUFFICIENT_SPACE = -9,
+		RESOURCE_NOT_FOUND,
+		PRODUCIBLE_NOT_FOUND,
+		NO_COMMAND_FOR_TARGET,
+		NO_CAPABLE_COMMAND,
+		INVALID_FACTION_INDEX,
+		INVALID_POSITION,
+		INVALID_COMMAND_CLASS,
+		INVALID_UNIT_ID,
+		OK // == 0
+	};
+
+	Enum val;
+	LuaCmdResult() : val(OK) {}
+	LuaCmdResult(int i) : val(Enum(i)) {}
+
+	string getString(bool unitCommand = false) {
+		switch (val) {
+			case INSUFFICIENT_SPACE:
+				return "Insufficient space near position.";
+			case RESOURCE_NOT_FOUND:
+				return "Resource type not found.";
+			case PRODUCIBLE_NOT_FOUND:
+				return "Producible type not found.";
+			case NO_COMMAND_FOR_TARGET:
+				return "No command to use with that target.";
+			case NO_CAPABLE_COMMAND:
+				return "No command capable of doing that.";
+			case INVALID_FACTION_INDEX:
+				return "Invalid faction index.";
+			case INVALID_POSITION:
+				return "Invalid position.";
+			case INVALID_COMMAND_CLASS:
+				return "Invalid command class.";
+			case INVALID_UNIT_ID:
+				return "Invalid unit id";
+			case OK:
+				return "Ok.";
+			default:
+				if (unitCommand) {
+					CommandResult res(val);
+					return string("CommandResult == ") + CommandResultNames[res];
+				} else {
+					return "Result = " + intToStr(val);
+				}
+		}
+	}
+};
+
 // =====================================================
 //	class ScriptManager
 // =====================================================
 
 //REFACTOR: namespace ScriptManager [hide all the private stuff in the cpp]
 class ScriptManager {
-private:
+public:
 	//lua
 	static string code;
 	static LuaScript luaScript;
@@ -284,8 +156,11 @@ private:
 	typedef const char* c_str;
 
 	static string wrapString(const string &str, int wrapCount);
+	
+public:
 	static bool extractArgs(LuaArguments &args, c_str caller, c_str format, ...);
 
+private:
 	//
 	// LUA callbacks
 	//

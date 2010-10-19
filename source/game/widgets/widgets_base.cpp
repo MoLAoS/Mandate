@@ -17,6 +17,8 @@
 #include "core_data.h"
 #include "renderer.h"
 
+#include "leak_dumper.h"
+
 using Shared::Util::deleteValues;
 using namespace Shared::Graphics::Gl;
 using Glest::Graphics::Renderer;
@@ -24,12 +26,12 @@ using namespace Glest::Global;
 
 namespace Glest { namespace Widgets {
 
-MouseWidget::MouseWidget(Widget::Ptr widget) {
+MouseWidget::MouseWidget(Widget* widget) {
 	me = widget;
 	me->setMouseWidget(this);
 }
 
-KeyboardWidget::KeyboardWidget(Widget::Ptr widget) {
+KeyboardWidget::KeyboardWidget(Widget* widget) {
 	me = widget;
 	me->setKeyboardWidget(this);
 }
@@ -40,14 +42,14 @@ KeyboardWidget::KeyboardWidget(Widget::Ptr widget) {
 
 MEMORY_CHECK_IMPLEMENTATION(Widget)
 
-Widget::Widget(Container::Ptr parent)
+Widget::Widget(Container* parent)
 		: parent(parent) {
 	init(Vec2i(0), Vec2i(0));
 	rootWindow = parent->getRootWindow();
 	parent->addChild(this);
 }
 
-Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
+Widget::Widget(Container* parent, Vec2i pos, Vec2i size)
 		: parent(parent) {
 	init(pos, size);
 	screenPos = parent->getScreenPos() + pos;
@@ -55,7 +57,7 @@ Widget::Widget(Container::Ptr parent, Vec2i pos, Vec2i size)
 	parent->addChild(this);
 }
 
-Widget::Widget(WidgetWindow::Ptr window)
+Widget::Widget(WidgetWindow* window)
 		: parent(window)
 		, screenPos(0) {
 	init(Vec2i(0), Vec2i(0));
@@ -82,7 +84,7 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	textWidget = 0;
 }
 
-Widget::Ptr Widget::getWidgetAt(const Vec2i &pos) {
+Widget* Widget::getWidgetAt(const Vec2i &pos) {
 	assert(isInside(pos));
 	return this;
 }
@@ -379,12 +381,12 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 // class ImageWidget
 // =====================================================
 
-ImageWidget::ImageWidget(Widget::Ptr me) 
+ImageWidget::ImageWidget(Widget* me) 
 		: me(me) {
 	batchRender = false;
 }
 
-ImageWidget::ImageWidget(Widget::Ptr me, Texture2D *tex)
+ImageWidget::ImageWidget(Widget* me, Texture2D *tex)
 		: me(me) {
 	textures.push_back(tex);
 	imageInfo.push_back(ImageRenderInfo());
@@ -499,7 +501,7 @@ void ImageWidget::setImageX(const Texture2D *tex, int ndx, Vec2i offset, Vec2i s
 // class TextWidget
 // =====================================================
 
-TextWidget::TextWidget(Widget::Ptr me)
+TextWidget::TextWidget(Widget* me)
 		: me(me)
 		, txtColour(1.f)
 		, txtShadowColour(0.f)
@@ -658,15 +660,15 @@ void TextWidget::setTextPos(const Vec2i &pos, int ndx) {
 // class Container
 // =====================================================
 
-Container::Container(Container::Ptr parent) 
+Container::Container(Container* parent) 
 		: Widget(parent) {
 }
 
-Container::Container(Container::Ptr parent, Vec2i pos, Vec2i size) 
+Container::Container(Container* parent, Vec2i pos, Vec2i size) 
 		: Widget(parent, pos, size) {
 }
 
-Container::Container(WidgetWindow::Ptr window)
+Container::Container(WidgetWindow* window)
 		: Widget(window) {
 }
 
@@ -674,13 +676,13 @@ Container::~Container() {
 	clear();
 }
 
-void Container::addChild(Widget::Ptr child) {
+void Container::addChild(Widget* child) {
 	assert(std::find(children.begin(), children.end(), child) == children.end());
 	children.push_back(child);
 	child->setFade(getFade());
 }
 
-void Container::remChild(Widget::Ptr child) {
+void Container::remChild(Widget* child) {
 	WidgetList::iterator it = std::find(children.begin(), children.end(), child);
 	if (it != children.end()) {
 		children.erase(it);
@@ -713,9 +715,9 @@ void Container::setFade(float v) {
 	}
 }
 
-Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
+Widget* Container::getWidgetAt(const Vec2i &pos) {
 	foreach_rev (WidgetList, it, children) {
-		Widget::Ptr widget = *it;
+		Widget* widget = *it;
 		if (widget->isVisible() && widget->isInside(pos)) {
 			return widget->getWidgetAt(pos);
 		}
@@ -726,7 +728,7 @@ Widget::Ptr Container::getWidgetAt(const Vec2i &pos) {
 void Container::render() {
 	assertGl();
 	foreach (WidgetList, it, children) {
-		Widget::Ptr widget = *it;
+		Widget* widget = *it;
 		if (widget->isVisible()) {
 			widget->render();
 		}

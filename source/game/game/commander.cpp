@@ -90,23 +90,24 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 				}
 				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
 			} else if (targetUnit) { // 'target' based command
-				if((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
+				if ((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
 					// a carrier is selected ... and a unit was right clicked.
 					if (*i != targetUnit) {
 						// give *i a command to load targetUnit
 						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::LOAD);
 						result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 						if (result == CommandResult::SUCCESS) {
-							// if load is ok, give targetUnit a command to move to *i
-							pushCommand(new Command(targetUnit->getFirstAvailableCt(CommandClass::MOVE), CommandFlags(), *i, targetUnit));
+							// if load is ok, give targetUnit a command to be-loaded by *i
+							effectiveCt = targetUnit->getFirstAvailableCt(CommandClass::BE_LOADED);
+							pushCommand(new Command(effectiveCt, CommandFlags(), *i, targetUnit));
 						}
 					}
 				} else if (targetUnit->isOfClass(UnitClass::CARRIER)) {
 					// a carrier unit was right clicked
 					result = pushCommand(new Command(targetUnit->getFirstAvailableCt(CommandClass::LOAD), CommandFlags(), *i, targetUnit));
 					if (result == CommandResult::SUCCESS) {
-						// give *i a move command to targetUnit
-						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::MOVE);
+						// give *i a move be-loaded command with targetUnit
+						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::BE_LOADED);
 						pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 					}
 				} else {
@@ -216,6 +217,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
+	} else {
+		delete command;
 	}
 	return result;
 }

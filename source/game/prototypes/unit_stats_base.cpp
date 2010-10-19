@@ -229,6 +229,7 @@ void EnhancementType::reset() {
 	prodSpeedMult = 1;
 	repairSpeedMult = 1;
 	harvestSpeedMult = 1;
+	hpBoost = epBoost = 0;
 }
 
 void EnhancementType::save(XmlNode *node) const {
@@ -236,8 +237,10 @@ void EnhancementType::save(XmlNode *node) const {
 
 	m->addChild("max-ep", maxHpMult);
 	m->addChild("hp-regeneration", hpRegenerationMult);
+	m->addChild("hp-boost", hpBoost);
 	m->addChild("max-ep", maxEpMult);
 	m->addChild("ep-regeneration", epRegenerationMult);
+	m->addChild("ep-boost", epBoost);
 	m->addChild("sight", sightMult);
 	m->addChild("armor", armorMult);
 
@@ -346,6 +349,15 @@ void formatModifier(string &str, const char *pre, const char* label, int value, 
 	}
 }
 
+void addBoostsDesc(string &str, const char *pre, int hpBoost, int epBoost) {
+	if (hpBoost) {
+		str += pre + g_lang.get("HpBoost") + ": " + intToStr(hpBoost);
+	}
+	if (epBoost) {
+		str += pre + g_lang.get("EpBoost") + ": " + intToStr(epBoost);
+	}
+}
+
 void EnhancementType::getDesc(string &str, const char *pre) const {
 	formatModifier(str, pre, "Hp", maxHp, maxHpMult);
 	formatModifier(str, pre, "HpRegeneration", hpRegeneration, hpRegenerationMult);
@@ -362,6 +374,7 @@ void EnhancementType::getDesc(string &str, const char *pre) const {
 	formatModifier(str, pre, "ProductionSpeed", prodSpeed, prodSpeedMult);
 	formatModifier(str, pre, "RepairSpeed", repairSpeed, repairSpeedMult);
 	formatModifier(str, pre, "HarvestSpeed", harvestSpeed, harvestSpeedMult);
+	addBoostsDesc(str, pre, hpBoost, epBoost);
 }
 
 //Initialize value from <static-modifiers>
@@ -455,19 +468,30 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 				initStaticModifier(node->getChild(i), dir);
 			}
 		}
-	}
-	catch (runtime_error e) {
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//multipliers
 	try {
 		node = baseNode->getChild("multipliers", 0, false);
-		if(node)
-			for (int i = 0; i < node->getChildCount(); ++i)
+		if (node) {
+			for (int i = 0; i < node->getChildCount(); ++i) {
 				initMultiplier(node->getChild(i), dir);
+			}
+		}
+	} catch (runtime_error e) {
+		g_errorLog.addXmlError(dir, e.what());
+		loadOk = false;
 	}
-	catch (runtime_error e) {
+	// stat boost
+	try {
+		node = baseNode->getChild("point-boosts", 0, false);
+		if (node) {
+			hpBoost = node->getOptionalIntValue("hp-boost");
+			epBoost = node->getOptionalIntValue("ep-boost");
+		}
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
@@ -478,8 +502,10 @@ void EnhancementType::doChecksum(Checksum &checksum) const {
 	UnitStats::doChecksum(checksum);
 	checksum.add(maxHpMult);
 	checksum.add(hpRegenerationMult);
+	checksum.add(hpBoost);
 	checksum.add(maxEpMult);
 	checksum.add(epRegenerationMult);
+	checksum.add(epBoost);
 	checksum.add(sightMult);
 	checksum.add(armorMult);
 	checksum.add(attackStrengthMult);

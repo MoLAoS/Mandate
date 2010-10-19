@@ -52,17 +52,17 @@ World *World::singleton = 0;
 
 // ===================== PUBLIC ========================
 
-World::World(SimulationInterface *iSim) 
+World::World(SimulationInterface *m_simInterface) 
 		: scenario(NULL)
-		, iSim(iSim)
-		, game(*iSim->getGameState())
+		, m_simInterface(m_simInterface)
+		, game(*m_simInterface->getGameState())
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
 		, posIteratorFactory(65) {
 	Config &config = Config::getInstance();
 
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	fogOfWar = gs.getFogOfWar();
 	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
 	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
@@ -92,8 +92,8 @@ World::~World() {
 
 void World::save(XmlNode *node) const {
 	node->addChild("frameCount", frameCount);
-	node->addChild("nextUnitId", iSim->getUnitFactory().idCounter);
-	iSim->getStats()->save(node->addChild("stats"));
+	node->addChild("nextUnitId", m_simInterface->getUnitFactory().idCounter);
+	m_simInterface->getStats()->save(node->addChild("stats"));
 	timeFlow.save(node->addChild("timeFlow"));
 	XmlNode *factionsNode = node->addChild("factions");
 	foreach_const (Factions, i, factions) {
@@ -120,7 +120,7 @@ void World::init(const XmlNode *worldNode) {
 		loadSaved(worldNode);
 		g_userInterface.initMinimap(fogOfWar, true);
 		g_cartographer.loadMapState(worldNode->getChild("mapState"));
-	} else if (iSim->getGameSettings().getDefaultUnits()) {
+	} else if (m_simInterface->getGameSettings().getDefaultUnits()) {
 		g_userInterface.initMinimap(fogOfWar, false);
 		initUnits();
 		initExplorationState();
@@ -134,14 +134,14 @@ void World::init(const XmlNode *worldNode) {
 //load saved game
 void World::loadSaved(const XmlNode *worldNode) {
 	Logger::getInstance().add("Loading saved game", true);
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
 
 	frameCount = worldNode->getChildIntValue("frameCount");
-	iSim->getUnitFactory().idCounter = worldNode->getChildIntValue("nextUnitId");
+	m_simInterface->getUnitFactory().idCounter = worldNode->getChildIntValue("nextUnitId");
 
-	iSim->getStats()->load(worldNode->getChild("stats"));
+	m_simInterface->getStats()->load(worldNode->getChild("stats"));
 	timeFlow.load(worldNode->getChild("timeFlow"));
 
 	const XmlNode *factionsNode = worldNode->getChild("factions");
@@ -160,7 +160,7 @@ void World::loadSaved(const XmlNode *worldNode) {
 
 // preload tileset and techtree for progressbar
 void World::preload() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	tileset.count(gs.getTilesetPath());
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
@@ -173,14 +173,14 @@ void World::preload() {
 
 //load tileset
 bool World::loadTileset() {
-	tileset.load(iSim->getGameSettings().getTilesetPath(), &techTree);
+	tileset.load(m_simInterface->getGameSettings().getTilesetPath(), &techTree);
 	timeFlow.init(&tileset);
 	return true;
 }
 
 //load tech
 bool World::loadTech() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	set<string> names;
 	for (int i = 0; i < gs.getFactionCount(); ++i) {
 		if (gs.getFactionTypeName(i).size()) {
@@ -192,8 +192,8 @@ bool World::loadTech() {
 
 //load map
 bool World::loadMap() {
-	const string &path = iSim->getGameSettings().getMapPath();
-	map.load(path, &techTree, &tileset, iSim->getObjectFactory());
+	const string &path = m_simInterface->getGameSettings().getMapPath();
+	map.load(path, &techTree, &tileset, m_simInterface->getObjectFactory());
 	return true;
 }
 
@@ -254,34 +254,36 @@ void World::updateEarthquakes(float seconds) {
 }
 #endif // Disable Earthquakes
 
-void updateFaction(const Faction *f) {
-	const Units &units = f->getUnits();
-	for (int i = 0;  i < f->getUnitCount(); ++i) {
+void World::updateFaction(const Faction *f) {
+	const int n = f->getUnitCount();
+	for (int i=0; i < n; ++i) {
 		Unit *unit = f->getUnit(i);
-		
 		if (unit->update()) {
+			if (!unit->getCurrSkill()->getEffectTypes().empty()) {
+				// start effects for skill cycle just completed
+				applyEffects(unit, unit->getCurrSkill()->getEffectTypes(), unit, 0);
+			}
 
-			g_simInterface->doUpdateUnitCommand(unit);
+			m_simInterface->doUpdateUnitCommand(unit);
 
-			//move unit in cells
 			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+				// move unit in cells
+				moveUnitCells(unit);
 
-				g_world.moveUnitCells(unit);
-
-				//play water sound
-				if (g_map.getCell(unit->getPos())->getHeight() < g_map.getWaterLevel() 
+				// play water sound?
+				if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
 				&& unit->getCurrField() == Field::LAND
-				&& g_map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(g_world.getThisTeamIndex())
+				&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
 				&& g_renderer.getCuller().isInside(unit->getPos())) {
 					g_soundRenderer.playFx(g_coreData.getWaterSound());
 				}
 			}
 		}
-
-		//unit death
+		// unit death
 		if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
 			unit->kill();
 		}
+		// assert map cells
 		g_map.assertUnitCells(unit);
 	}
 }
@@ -292,7 +294,7 @@ void World::processFrame() {
 	//m_unitTypeFactory.assertTypes();
 
 	++frameCount;
-	iSim->startFrame(frameCount);
+	m_simInterface->startFrame(frameCount);
 	if (frameCount % 5 == 0) {
 		g_userInterface.getMinimap()->updateUnitTex();
 	}
@@ -315,7 +317,7 @@ void World::processFrame() {
 //	updateEarthquakes(1.f / 40.f);
 
 	//undertake the dead
-	iSim->getUnitFactory().update();
+	m_simInterface->getUnitFactory().update();
 
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
@@ -419,7 +421,7 @@ void World::damage(Unit *unit, int hp) {
 
 void World::doKill(Unit *killer, Unit *killed) {
 	ScriptManager::onUnitDied(killed);
-	iSim->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
+	m_simInterface->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
 	if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
 		killer->incKills();
 	}
@@ -493,13 +495,13 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 //CLEAN: this is never called, and has a silly name considering what it appears to be for...
 void World::appyEffect(Unit *u, Effect *e) {
 	if (u->add(e)) {
-		Unit *attacker = iSim->getUnitFactory().getUnit(e->getSource());
+		Unit *attacker = m_simInterface->getUnitFactory().getUnit(e->getSource());
 		if (attacker) {
-			iSim->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
+			m_simInterface->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
 			attacker->incKills();
 		} else if (e->getRoot()) {
 			// if killed by a recourse effect, this was suicide
-			iSim->getStats()->kill(u->getFactionIndex(), u->getFactionIndex());
+			m_simInterface->getStats()->kill(u->getFactionIndex(), u->getFactionIndex());
 		}
 	}
 }
@@ -554,7 +556,7 @@ void World::tick() {
 }
 
 Unit* World::findUnitById(int id) const {
-	return iSim->getUnitFactory().getUnit(id);
+	return m_simInterface->getUnitFactory().getUnit(id);
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
@@ -631,14 +633,10 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	return currUnit;
 }
 
-///@todo collect all distinct error conditions from the scripting interface, put them in an
-/// and enum with a table of string messages... then make error handling in ScriptManager less shit
-
-/** @return unit id, or -1 if factionindex invalid, or -2 if unitName invalid, or -3 if 
-  * a position could not be found for the new unit, -4 if pos invalid */
+/** @return unit id, or < 0 on error, see LuaCmdResult */
 int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos) {
 	if (factionIndex  < 0 && factionIndex >= factions.size()) {
-		return -1; // bad faction index
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 	Faction* faction= &factions[factionIndex];
 	const FactionType* ft= faction->getType();
@@ -646,12 +644,12 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	try{
 		ut = ft->getUnitType(unitName);
 	} catch (runtime_error e) {
-		return -2;
+		return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
 	}
 	if (!map.isInside(pos)) {
-		return -4;
+		return LuaCmdResult::INVALID_POSITION;
 	}
-	Unit *unit = iSim->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
+	Unit *unit = m_simInterface->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
 	if (placeUnit(pos, generationArea, unit, true)) {
 		unit->create(true);
 		unit->born();
@@ -661,24 +659,24 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		ScriptManager::onUnitCreated(unit);
 		return unit->getId();
 	} else {
-		iSim->getUnitFactory().deleteUnit(unit);
-		return -3;
+		m_simInterface->getUnitFactory().deleteUnit(unit);
+		return LuaCmdResult::INSUFFICIENT_SPACE;
 	}
 }
 
 int World::giveResource(const string &resourceName, int factionIndex, int amount) {
 	if (factionIndex < 0 || factionIndex >= factions.size()) {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 	const ResourceType* rt= techTree.getResourceType(resourceName);
 	Faction* faction= &factions[factionIndex];
 	try {
 		rt = techTree.getResourceType(resourceName);
 	} catch (runtime_error e) {
-		return -2;
+		return LuaCmdResult::RESOURCE_NOT_FOUND;
 	}
 	faction->incResourceAmount(rt, amount);
-	return 0;
+	return LuaCmdResult::OK;
 }
 
 void World::unfogMap(const Vec4i &rect, int time) {
@@ -698,17 +696,13 @@ void World::unfogMap(const Vec4i &rect, int time) {
 	}
 }
 
-///@todo
-// these command issueing functions should just return the CommandResult, if they get that far.
-// return < 0  == arg error / unknown command / unit had no command of type / etc
-// return >= 0 == command given, value returned is CommandResult
-
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos) {
 	Unit* unit= findUnitById(unitId);
-	if (unit == NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
-	const CommandType *cmdType = NULL;
+	const CommandType *cmdType = 0;
 
 	if (commandName == "move") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::MOVE);
@@ -718,7 +712,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 		Resource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
 		if (!unit->getType()->getFirstCtOfClass(CommandClass::HARVEST)) {
-			return -2; // unit has no appropriate command
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 		if (!r) {
 			cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
@@ -739,99 +733,81 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	} else if (commandName == "guard") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
 	} else {
-		return -3; // unknown position command
+		return LuaCmdResult::INVALID_COMMAND_CLASS;
 
 	}
 	if (!cmdType) {
-		return -2; // unit has no appropriate command
+		return LuaCmdResult::NO_CAPABLE_COMMAND;
 	}
-	if (unit->giveCommand(new Command(cmdType, CommandFlags(), pos)) == CommandResult::SUCCESS) {
-		return 0; // Ok
-	}
-	return 1; // command fail
+	return unit->giveCommand(new Command(cmdType, CommandFlags(), pos));
 }
 
-/** @return 0 if ok, -1 if unitId or targetId invalid, -2 unit could not attack/repair target,
-  * -3 illegal cmd name */
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) {
 	Unit *unit = findUnitById(unitId);
 	Unit *target = findUnitById(targetId);
 	if (!unit || !target) {
-		return -1;
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
-	const CommandType *cmdType = NULL;
+	const CommandType *cmdType = 0;
 	if (cmdName == "attack") {
 		const AttackCommandType *act = unit->getType()->getAttackCommand(target->getCurrZone());
 		if (act) {
-			if (unit->giveCommand(new Command(act, CommandFlags(), target)) == CommandResult::SUCCESS) {
-				return 0; // ok
-			}
-			return 1; // command fail			
+			return unit->giveCommand(new Command(act, CommandFlags(), target));
+		} else {
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
-		return -2;
 	} else if (cmdName == "repair") {
 		const RepairCommandType *rct = unit->getType()->getRepairCommand(target->getType());
 		if (rct) {
-			if (unit->giveCommand(new Command(rct, CommandFlags(), target)) == CommandResult::SUCCESS) {
-				return 0; // ok
-			}
-			return 1; // command fail
-
+			return unit->giveCommand(new Command(rct, CommandFlags(), target));
+		} else {
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
-		return -2;
-
 	} else if (cmdName == "guard") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
 	} else if (cmdName == "patrol") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::PATROL);
 	} else {
-		return -3;
+		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
-	if (cmdType && unit->giveCommand(new Command(cmdType, CommandFlags(), target))) {
-		return 0; // ok
+	if (cmdType) {
+		return unit->giveCommand(new Command(cmdType, CommandFlags(), target));
 	}
-	return 1; // command fail
+	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
-/** return 0 if ok, -1 if bad unit id, -2 if unit has no stop command, -3 illegal cmd name,
-  * 1 if command given but failed */
+
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveStopCommand(int unitId, const string &cmdName) {
 	Unit *unit = findUnitById(unitId);
-	if (unit == NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	if (cmdName == "stop") {
 		const StopCommandType *sct = (StopCommandType*)unit->getType()->getFirstCtOfClass(CommandClass::STOP);
 		if (sct) {
-			if (unit->giveCommand(new Command(sct, CommandFlags())) == CommandResult::SUCCESS) {
-				return 0; // ok
-			}
-			return 1; // command fail
+			// return CommandResult
+			return unit->giveCommand(new Command(sct, CommandFlags()));
 		} else {
-			return -2;
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "attack-stopped") {
 		const AttackStoppedCommandType *asct = 
 			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::ATTACK_STOPPED);
 		if (asct) {
-			if (unit->giveCommand(new Command(asct, CommandFlags())) == CommandResult::SUCCESS) {
-				return 0;
-			}
-			return 1;
+			return unit->giveCommand(new Command(asct, CommandFlags()));
 		} else {
-			return -2;
+			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
-	} else {
-		return -3;
 	}
-	return 0;
+	return LuaCmdResult::INVALID_COMMAND_CLASS;
 }
 
-/** @return 0 if ok, 1 on command failure, -1 if unitId invalid, -2 if unit cannot produce other unit,
-  * -3 if unit's faction has no such unit producedName */
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveProductionCommand(int unitId, const string &producedName) {
 	Unit *unit= findUnitById(unitId);
-	if (unit == NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	const UnitType *ut = unit->getType();
 	// Search for a command that can produce the producible
@@ -842,28 +818,24 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 			if (pt->getName() == producedName) {
 				CommandResult res = unit->giveCommand(
 					new Command(ct, CommandFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
-				if (res == CommandResult::SUCCESS) {
-					return 0; //Ok
-				}
-				return 1; // fail
+				return res;
 			}
 		}
 	}
-	return -2;
+	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
 
-/** #return 0 if ok, -1 if unitId invalid, -2 if unit cannot produce upgrade,
-  * -3 if unit's faction has no such upgrade */
+/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
 int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 	Unit *unit= findUnitById(unitId);
-	if (unit==NULL) {
-		return -1;
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
-	const UpgradeType *upgrd = NULL;
+	const UpgradeType *upgrd = 0;
 	try {
 		upgrd = unit->getFaction()->getType()->getUpgradeType(upgradeName);
 	} catch (runtime_error e) {
-		return -3;
+		return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
 	}
 	const UnitType *ut= unit->getType();
 	//Search for a command that can produce the upgrade
@@ -872,33 +844,32 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 		if (ct->getClass()==CommandClass::UPGRADE) {
 			const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
 			if (uct->getProducedUpgrade() == upgrd) {
-				if (unit->giveCommand(new Command(uct, CommandFlags())) == CommandResult::SUCCESS) {
-					return 0;
-				}
-				return 1;
+				CommandResult cmdRes = unit->giveCommand(new Command(uct, CommandFlags()));
+				return cmdRes;
 			}
 		}
 	}
-	return -2;
+	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
 
+/** @ return < 0 on error (see LuaCmdResult) else query result*/
 int World::getResourceAmount(const string &resourceName, int factionIndex) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		const ResourceType* rt;
 		try {
 			rt = techTree.getResourceType(resourceName);
 		} catch (runtime_error e) {
-			return -2;
+			return LuaCmdResult::RESOURCE_NOT_FOUND;
 		}
 		return faction->getResource(rt)->getAmount();
 	} else {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 }
 
 Vec2i World::getStartLocation(int factionIndex) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		return map.getStartLocation(faction->getStartLocationIndex());
 	} else {
@@ -917,13 +888,13 @@ Vec2i World::getUnitPosition(int unitId) {
 int World::getUnitFactionIndex(int unitId) {
 	Unit* unit= findUnitById(unitId);
 	if (unit==NULL) {
-		return -1;
+		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	return unit->getFactionIndex();
 }
 
 int World::getUnitCount(int factionIndex) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		int count = 0;
 		
@@ -935,19 +906,19 @@ int World::getUnitCount(int factionIndex) {
 		}
 		return count;
 	} else {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 }
 
 /** @return number of units of type a faction has, -1 if faction index invalid, 
   * -2 if unitType not found */
 int World::getUnitCountOfType(int factionIndex, const string &typeName) {
-	if (factionIndex<factions.size()) {
+	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		int count= 0;
 		const string &ftName = faction->getType()->getName();
 		if (unitTypes[ftName].find(typeName) == unitTypes[ftName].end()) {
-			return -2;
+			return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
 		}
 		for(int i= 0; i< faction->getUnitCount(); ++i) {
 			const Unit* unit= faction->getUnit(i);
@@ -957,7 +928,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 		}
 		return count;
 	} else {
-		return -1;
+		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 }
 
@@ -967,7 +938,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 
 //init basic cell state
 void World::initCells() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	Logger::getInstance().add("State cells", true);
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
@@ -1014,7 +985,7 @@ void World::initFactions() {
 	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID, "Glestimals",
 		&techTree, -1, -1, -1, -1, false, false);
 	
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	if (!gs.getFactionCount()) {
 		thisTeamIndex = 0;
@@ -1040,9 +1011,9 @@ void World::initFactions() {
 				unitTypes[ft->getName()].insert(ft->getUnitType(j)->getName());
 			}
 		}
-		//  iSim->getStats()->setTeam(i, gs.getTeam(i));
-		//  iSim->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
-		//  iSim->getStats()->setControl(i, gs.getFactionControl(i));
+		//  m_simInterface->getStats()->setTeam(i, gs.getTeam(i));
+		//  m_simInterface->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
+		//  m_simInterface->getStats()->setControl(i, gs.getFactionControl(i));
 	}
 	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();	
 }
@@ -1060,7 +1031,7 @@ void World::initUnits() {
 			const UnitType *ut = ft->getStartingUnit(j);
 			int initNumber = ft->getStartingUnitAmount(j);
 			for (int l = 0; l < initNumber; l++) {
-				Unit *unit = iSim->getUnitFactory().newInstance(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
+				Unit *unit = m_simInterface->getUnitFactory().newInstance(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
 				int startLocationIndex = f->getStartLocationIndex();
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
@@ -1169,7 +1140,7 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
 //computes the fog of war texture, contained in the minimap
 void World::computeFow() {
-	GameSettings &gs = iSim->getGameSettings();
+	GameSettings &gs = m_simInterface->getGameSettings();
 	
 	//todo : move to Minimap
 	//reset texture

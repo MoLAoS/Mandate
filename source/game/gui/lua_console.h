@@ -65,14 +65,14 @@ private:
 	UserInterface *m_ui;
 	Strings m_output;
 
-	Panel::Ptr		 m_panel;
-	LuaInputBox::Ptr m_inputBox;
-	ScrollText::Ptr  m_outputBox;
+	Panel*		 m_panel;
+	LuaInputBox* m_inputBox;
+	ScrollText*  m_outputBox;
 
-	void onLineEntered(TextBox::Ptr);
+	void onLineEntered(TextBox*);
 
 public:
-	LuaConsole(UserInterface *ui, Container::Ptr parent, Vec2i pos, Vec2i size);
+	LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i size);
 	~LuaConsole();
 
 	void addOutput(const string &v);

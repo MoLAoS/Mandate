@@ -103,6 +103,9 @@ protected:
 	Pixmap2D pixmap;
 
 public:
+	static Texture2D *defaultTexture;
+
+public:
 	void load(const string &path);
 
 	Pixmap2D *getPixmap()				{return &pixmap;}
