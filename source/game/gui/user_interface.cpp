@@ -242,6 +242,7 @@ static void calculateNearest(UnitVector &units, const Vec3f &pos) {
 		float minDist = numeric_limits<float>::infinity();
 		Unit *nearest = 0;
 		foreach_const (UnitVector, i, units) {
+			RUNTIME_CHECK(!(*i)->isCarried());
 			float dist = pos.dist((*i)->getCurrVector());
 			if (dist < minDist) {
 				minDist = dist;

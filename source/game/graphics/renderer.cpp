@@ -455,9 +455,9 @@ void Renderer::setupLighting(){
 		for(int i=0; i<world->getFactionCount() && lightCount<maxLights; ++i){
 			for(int j=0; j<world->getFaction(i)->getUnitCount() && lightCount<maxLights; ++j){
 				Unit *unit= world->getFaction(i)->getUnit(j);
-				if(world->toRenderUnit(unit) &&
-					unit->getCurrVector().dist(gameCamera->getPos())<maxLightDist &&
-					unit->getType()->getLight() && unit->isOperative()){
+				if (world->toRenderUnit(unit) && !unit->isCarried()
+				&& unit->getType()->getLight() && unit->isOperative()
+				&& unit->getCurrVector().dist(gameCamera->getPos()) < maxLightDist) {
 
 					Vec4f pos= Vec4f(unit->getCurrVector());
 					pos.y+=4.f;
@@ -1133,6 +1133,8 @@ void Renderer::renderUnits(){
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 
+			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();
 
@@ -1215,6 +1217,8 @@ void Renderer::renderSelectionEffects() {
 
 		const Unit *unit= selection->getUnit(i);
 
+		RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+
 		// translate
 		Vec3f currVec = unit->getCurrVectorFlat();
 		currVec.y += 0.3f;
@@ -1278,6 +1282,7 @@ void Renderer::renderSelectionEffects() {
 					if (c->getUnit()->isCarried()) {
 						doArrow = false;
 					} else {
+						RUNTIME_CHECK(c->getUnit()->getPos().x >= 0 && c->getUnit()->getPos().y >= 0);
 						arrowTarget= c->getUnit()->getCurrVectorFlat();
 					}
 				} else {
@@ -1289,6 +1294,7 @@ void Renderer::renderSelectionEffects() {
 					}
 				}
 				if (doArrow) {
+					RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 					renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
 				}
 			}
@@ -1317,6 +1323,7 @@ void Renderer::renderSelectionEffects() {
 					glColor4f(1.f, 0.f, 0.f, highlight);
 				}
 
+				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 				Vec3f v= unit->getCurrVectorFlat();
 				v.y+= 0.3f;
 				renderSelectionCircle(v, unit->getType()->getSize(), selectionCircleRadius);
@@ -1986,6 +1993,8 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 			//debuxar modelo
 			glPushMatrix();
+
+			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();

@@ -147,10 +147,11 @@ public:
 // A run-time assert, that can be changed to assert() one day...
 // ... if we ever get to 1.0 maybe ;)
 //
-#define RUNTIME_CHECK(x)												\
-	if (!(x)) {															\
-		string fStr(__FUNCTION__);										\
-		throw runtime_error("In " + fStr + "\nRuntime check fail: "#x);	\
+#define RUNTIME_CHECK(x)													\
+	if (!(x)) {																\
+		std::stringstream ss;												\
+		ss << __FUNCTION__ << " (" << __FILE__ << " : " << __LINE__ << ")";	\
+		throw runtime_error("In " + ss.str() + "\nRuntime check fail: "#x);	\
 	}	
 
 //

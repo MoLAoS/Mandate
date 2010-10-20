@@ -496,18 +496,20 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	progress2 = 0;
 	currSkill = newSkill;
 	StateChanged(this);
-	
-	Vec2i cPos = getCenteredPos();
-	Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
-	bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
-	
-	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
-		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
-		ups->setPos(getCurrVector());
-		ups->setRotation(getRotation());
-		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
-		skillParticleSystems.push_back(ups);
-		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
+
+	if (!isCarried()) {
+		Vec2i cPos = getCenteredPos();
+		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+		bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+		
+		for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
+			UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
+			ups->setPos(getCurrVector());
+			ups->setRotation(getRotation());
+			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
+			skillParticleSystems.push_back(ups);
+			g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
+		}
 	}
 }
 
@@ -564,6 +566,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 		Vec3f startPos;
 		if (carrier) {
+			RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
 			startPos = carrier->getCurrVectorFlat();
 			const LoadCommandType *lct = 
 				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
@@ -1192,21 +1195,22 @@ bool Unit::update() {
 		}
 	}
 
-	// update particle system location/orientation
-	if (fire && moved) {
-		fire->setPos(getCurrVector());
-	}
-	if (moved || rotated) {
-		foreach (UnitParticleSystems, it, skillParticleSystems) {
-			if (moved) (*it)->setPos(getCurrVector());
-			if (rotated) (*it)->setRotation(getRotation());
+	if (!carried) {
+		// update particle system location/orientation
+		if (fire && moved) {
+			fire->setPos(getCurrVector());
 		}
-		foreach (UnitParticleSystems, it, effectParticleSystems) {
-			if (moved) (*it)->setPos(getCurrVector());
-			if (rotated) (*it)->setRotation(getRotation());
+		if (moved || rotated) {
+			foreach (UnitParticleSystems, it, skillParticleSystems) {
+				if (moved) (*it)->setPos(getCurrVector());
+				if (rotated) (*it)->setRotation(getRotation());
+			}
+			foreach (UnitParticleSystems, it, effectParticleSystems) {
+				if (moved) (*it)->setPos(getCurrVector());
+				if (rotated) (*it)->setRotation(getRotation());
+			}
 		}
 	}
-
 	// check for cycle completion
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead
 	if (frame >= getNextCommandUpdate()) {
@@ -1387,7 +1391,8 @@ bool Unit::decHp(int i) {
 	}
 
 	// fire
-	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2 && fire == NULL) {
+	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2
+	&& fire == NULL && m_carrier == -1) {
 		FireParticleSystem *fps;
 		Vec2i cPos = getCenteredPos();
 		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
@@ -1606,10 +1611,14 @@ bool Unit::add(Effect *e) {
 	}
 
 	bool startParticles = true;
-	foreach (Effects, it, effects) {
-		if (e->getType() == (*it)->getType()) {
-			startParticles = false;
-			break;
+	if (isCarried()) {
+		startParticles = false;
+	} else {
+		foreach (Effects, it, effects) {
+			if (e->getType() == (*it)->getType()) {
+				startParticles = false;
+				break;
+			}
 		}
 	}
 	effects.add(e);
@@ -1748,7 +1757,6 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
   * @return the height this unit 'stands' at
   */
 float Unit::computeHeight(const Vec2i &pos) const {
-	RUNTIME_CHECK(map->isInside(pos));
 	const Cell *const &cell = map->getCell(pos);
 	switch (type->getField()) {
 		case Field::LAND:
@@ -1776,6 +1784,9 @@ void Unit::updateTarget(const Unit *target) {
 	}
 
 	if (target) {
+		if (target->isCarried()) {
+			target = g_simInterface->getUnitFactory().getUnit(target->getCarrier());
+		}
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)
 				: targetPos = target->getCenteredPos();

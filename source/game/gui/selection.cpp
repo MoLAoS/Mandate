@@ -184,6 +184,7 @@ void Selection::clear(){
 }
 
 Vec3f Selection::getRefPos() const{
+	RUNTIME_CHECK(!getFrontUnit()->isCarried());
 	return getFrontUnit()->getCurrVector();
 }
 

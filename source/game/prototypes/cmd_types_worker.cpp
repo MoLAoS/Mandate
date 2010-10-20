@@ -332,6 +332,7 @@ void RepairCommandType::update(Unit *unit) const {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::BUILD);
 						if (bct) {
+							RUNTIME_CHECK(!unit->isCarried());
 							g_soundRenderer.playFx(bct->getBuiltSound(), 
 								unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 						}
@@ -638,7 +639,8 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	
 	//play start sound
 	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-		SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
+		RUNTIME_CHECK(!unit->isCarried());
+		g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 	}
 }
 
@@ -658,10 +660,8 @@ void BuildCommandType::continueBuild(Unit *unit, const Command *command, const U
 		unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
 		ScriptManager::onUnitCreated(builtUnit);
 		if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-			SoundRenderer::getInstance().playFx(
-				this->getBuiltSound(),
-				unit->getCurrVector(),
-				g_gameState.getGameCamera()->getPos());
+			RUNTIME_CHECK(!unit->isCarried());
+			g_soundRenderer.playFx(getBuiltSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 		}
 	}
 }

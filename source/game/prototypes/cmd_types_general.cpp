@@ -355,6 +355,7 @@ void ProduceCommandType::update(Unit *unit) const {
 				}
 				unit->finishCommand();
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					RUNTIME_CHECK(!unit->isCarried());
 					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
 						g_gameState.getGameCamera()->getPos());
 				}
@@ -457,6 +458,7 @@ void GenerateCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				RUNTIME_CHECK(!unit->isCarried());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 						g_gameState.getGameCamera()->getPos());
 			}
@@ -539,6 +541,7 @@ void UpgradeCommandType::update(Unit *unit) const {
 			faction->finishUpgrade(producedUpgrade);
 			faction->checkAdvanceSubfaction(producedUpgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				RUNTIME_CHECK(!unit->isCarried());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
 					g_gameState.getGameCamera()->getPos());
 			}
@@ -676,6 +679,7 @@ void MorphCommandType::update(Unit *unit) const {
 					g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				}
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					RUNTIME_CHECK(!unit->isCarried());
 					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
 						g_gameState.getGameCamera()->getPos());
 				}

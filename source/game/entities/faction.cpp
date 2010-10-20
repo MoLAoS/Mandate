@@ -611,10 +611,11 @@ void Faction::attackNotice(const Unit *u) {
 
 		if (curTime >= lastAttackNotice + factionType->getAttackNoticeDelay()) {
 			lastAttackNotice = curTime;
+			RUNTIME_CHECK(!u->isCarried());
 			lastEventLoc = u->getCurrVector();
 			StaticSound *sound = factionType->getAttackNotice()->getRandSound();
 			if (sound) {
-				SoundRenderer::getInstance().playFx(sound);
+				g_soundRenderer.playFx(sound);
 			}
 		}
 	}
