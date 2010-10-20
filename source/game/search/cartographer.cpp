@@ -476,5 +476,278 @@ void Cartographer::maintainUnitVisibility(Unit *unit, bool add) {
 	*/
 }
 
+/** Custom Goal function for finding resources */
+class ResourceFinderGoal {
+private:
+	const ResourceType	*m_resourceType;
+	Map					*m_cellMap;
+	
+public:
+	/** Construct goal function object */
+	ResourceFinderGoal(const ResourceType	*resourceType, Map *cellMap)
+			: m_resourceType(resourceType), m_cellMap(cellMap) {}
+
+	/** The goal function */
+	bool operator()(const Vec2i &pos, const float costSoFar) const {
+		Tile *tile = m_cellMap->getTile(Map::toTileCoords(pos));
+		if (tile->getResource() && tile->getResource()->getType() == m_resourceType) {
+			return true;
+		}
+		return false; 
+	}
+};
+
+Surveyor::Surveyor(Faction *faction, Cartographer *cartographer) 
+		: m_faction(faction), m_cartographer(cartographer) {
+	m_w = m_cartographer->getMasterMap()->getWidth();
+	m_h = m_cartographer->getMasterMap()->getHeight();
+	Rectangle rect(0,0, m_w, m_h);
+	///@todo shrink map, start with a rect 100 * 100 around base pos
+	m_baseMap = new PatchMap<2>(rect, 3);
+	m_basePos = faction->getUnit(0)->getPos();
+	
+	buildBaseMap();
+	findResourceLocations();
+
+	stringstream info;
+	info << "Surveyor initialised for faction " << faction->getIndex() << ", base pos = " << m_basePos;
+	ScriptManager::addErrorMessage(info.str());
+
+}
+
+void Surveyor::findResourceLocations() {
+	SearchEngine<NodeMap> *engine = m_cartographer->getSearchEngine();
+	Map *cellMap = m_cartographer->getCellMap();
+
+	vector<const ResourceType*> resTypes;
+	
+	for (int i=0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
+		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
+		if (rt->getClass() == ResourceClass::TECHTREE || rt->getClass() == ResourceClass::TILESET) {
+			resTypes.push_back(rt);
+		}
+	}
+	foreach (vector<const ResourceType*>, it, resTypes) {
+		ResourceFinderGoal goal(*it, cellMap);
+		DistanceCost cost;
+		ZeroHeuristic h;
+		engine->setStart(m_basePos, 0.f);
+		AStarResult res = engine->aStar(goal, cost, h);
+
+		if (res == AStarResult::COMPLETE) {
+			m_resourceMap[*it] = engine->getGoalPos();
+		} else {
+			m_resourceMap[*it] = Vec2i(-1);
+		}		
+	}
+}
+
+void Surveyor::buildBaseMap() {
+	Map *map = m_cartographer->getCellMap();
+	RectIterator iter(Vec2i(0), Vec2i(m_w - 1, m_h - 1));
+	while (iter.more()) {
+		Vec2i pos = iter.next();
+		if (!map->isInside(pos)) {
+			continue;
+		}
+		Tile *tile = map->getTile(Map::toTileCoords(pos));
+		if (tile->isExplored(m_faction->getTeam())) {
+			if (tile->getObject() && !tile->getObject()->getWalkable()) {
+				m_baseMap->setInfluence(pos, 2);
+			} else {
+				Unit *occupier = map->getCell(pos)->getUnit(Zone::LAND);
+				if (occupier) {
+					m_baseMap->setInfluence(pos, 2);
+				} else {
+					unsigned res = 0;
+					for (int i=1; i <= 2; ++i) {
+						PerimeterIterator iter2(pos - Vec2i(i), pos + Vec2i(i));
+						while (iter2.more()) {
+							Vec2i pos2 = iter2.next();
+							if (!map->isInside(pos2)) {
+								continue;
+							}
+							Tile *tile2 = map->getTile(Map::toTileCoords(pos2));
+							if (tile2->getResource()) {
+								if (tile2->getResource()->getType()->getClass() == ResourceClass::TECHTREE) {
+									res = 1;
+									break;
+								}
+							}
+							Cell *cell2 = map->getCell(pos2);
+							if (cell2->getUnit(Zone::LAND)) {
+								Unit *unit = cell2->getUnit(Zone::LAND);
+								if (unit->getFaction() == m_faction && !unit->isMobile()) {
+									res = 1;
+									break;
+								}
+							}
+						}
+					}
+					m_baseMap->setInfluence(pos, res);
+				}
+			}
+		} else {
+			m_baseMap->setInfluence(pos, 3);
+		}
+	}
+}
+
+typedef std::pair<float,float> FloatPair;
+typedef TypeMap<FloatPair> DistancePairMap;
+
+/** Goal function for proximity (friendly/enemy) search */
+class ProximtyCalculatorGoal {
+private:
+	float				 m_range;	/**< max range to look */
+	DistancePairMap		*m_iMap;		/**< inluence map to write results into */
+	const PatchMap<2>	*m_nogoMap;
+	const vector<Vec2i>	&m_enemyLocs;
+
+public:
+	/** Construct goal function object */
+	ProximtyCalculatorGoal(float range, DistancePairMap *iMap, PatchMap<2> *ngMap, const vector<Vec2i> &enemyLocs)
+		: m_range(range), m_iMap(iMap), m_nogoMap(ngMap), m_enemyLocs(enemyLocs) {}
+
+	/** The goal function 
+	  * @param pos position to test
+	  * @param costSoFar the cost of the shortest path to pos
+	  * @return true when range is exceeded.
+	  */
+	bool operator()(const Vec2i &pos, const float costSoFar) const { 
+		const float inf = numeric_limits<float>::infinity();
+		if (costSoFar > m_range) {
+			return true;
+		}
+		if (m_nogoMap->getInfluence(pos)) {
+			m_iMap->setInfluence(pos, std::make_pair(inf,inf));
+			return false;
+		}
+
+		float baseProximity = costSoFar;
+		float enemyProximity = m_enemyLocs.empty() ? 0.f : numeric_limits<float>::infinity();
+		foreach_const (vector<Vec2i>, it, m_enemyLocs) {
+			float dist = pos.dist(*it);
+			if (dist < enemyProximity) {
+				enemyProximity = dist;
+			}
+		}
+		m_iMap->setInfluence(pos, std::make_pair(baseProximity, enemyProximity));
+		return false; 
+	}
+};
+
+Vec2i Surveyor::findLocationForBuilding(const UnitType *buildingType, LocationType locType) {
+	// refs
+	const float inf = numeric_limits<float>::infinity();
+	int size = buildingType->getSize();
+	SearchEngine<NodeMap> *engine = m_cartographer->getSearchEngine();
+	Map *cellMap = m_cartographer->getCellMap();
+
+	// result
+	Vec2i result(-1);
+
+	// create and fill-in influence map
+	Rectangle rect(0, 0, m_w, m_h);
+	DistancePairMap iMap(rect, std::make_pair(inf, inf));
+	iMap.clearMap(std::make_pair(inf, inf));
+	ProximtyCalculatorGoal goal(20.f, &iMap, m_baseMap, m_enemyLocs);
+	DistanceCost cost;
+	ZeroHeuristic h;
+	engine->setStart(m_basePos, 0.f);
+	engine->aStar(goal, cost, h);
+	
+	typedef pair<Vec2i, FloatPair> CandidatePosition;
+	vector<CandidatePosition> candidatePositions;
+
+	// extract candidate positions
+	RectIterator iter(Vec2i(0), Vec2i(m_w - 1, m_h - 1));
+	while (iter.more()) {
+		Vec2i pos = iter.next();
+		RectIterator iter2(pos, pos + Vec2i(size - 1));
+		bool tryPos = true;
+		float avgBaseDist = 0.f;
+		float avgEnemyDist = 0.f;
+		while (iter2.more()) {
+			Vec2i pos2 = iter2.next();
+			FloatPair dists = iMap.getInfluence(pos2);
+			if (dists.first == inf) {
+				tryPos = false;
+				break;
+			} else {
+				avgBaseDist += dists.first;
+				avgEnemyDist += dists.second;
+			}
+		}
+		if (tryPos) {
+			avgBaseDist /= (size * size);
+			avgEnemyDist /= (size * size);
+			if (cellMap->canOccupy(pos, buildingType->getField(), buildingType, CardinalDir::NORTH)) {
+				candidatePositions.push_back(std::make_pair(pos, std::make_pair(avgBaseDist, avgEnemyDist)));
+			}
+		}
+	}
+
+	// find one to suit LocationType
+	if (locType == LocationType::DEAD_WEIGHT || locType == LocationType::RESEARCH_BUILDING) {	
+		// find cosy spot near base centre, but not in the way of resources. 
+		// prefer locations away from known enemy locations
+		if (!candidatePositions.empty()) {
+			CandidatePosition *best = 0;
+			foreach (vector<CandidatePosition>, it, candidatePositions) {
+				if (!best || best->second.first > it->second.first) {
+					best = &*it;
+				}
+			}
+			result = best->first;
+		}
+	} else if (locType == LocationType::DEFENSIVE_SITE) {
+		// find location somewhat away from the base, toward enemy locations
+		if (!candidatePositions.empty()) {
+			CandidatePosition *best = 0;
+			foreach (vector<CandidatePosition>, it, candidatePositions) {
+				if (!best || best->second.second > it->second.second) {
+					best = &*it;
+				}
+			}
+			result = best->first;
+		}
+	} else if (locType == LocationType::RESOURCE_STORE) {
+
+		// find spot close to resources the building stores
+
+	} else if (locType == LocationType::WARRIOR_PRODUCER) {
+		// find location near the base, toward enemy locations
+		if (!candidatePositions.empty()) {
+			CandidatePosition *best = 0;
+			foreach (vector<CandidatePosition>, it, candidatePositions) {
+				if (!best 
+				|| (best->second.second - best->second.first) > (it->second.second - it->second.first)) {
+					best = &*it;
+				}
+			}
+			result = best->first;
+		}
+
+	}
+	return result;
+}
+
+Vec2i Surveyor::findLocationForExpansion() {
+	return Vec2i(-1);
+}
+
+Vec2i Surveyor::findResourceLocation(const ResourceType *rt) {
+	Vec2i res = m_resourceMap[rt];
+	if (res != Vec2i(-1)) {
+		Tile *tile = m_cartographer->getCellMap()->getTile(Map::toTileCoords(res));
+		if (tile->getResource() && tile->getResource()->getType() == rt) {
+			return res;
+		}
+	}
+	findResourceLocations();
+	return m_resourceMap[rt];
+}
 
 }}
+

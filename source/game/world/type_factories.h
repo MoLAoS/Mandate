@@ -25,8 +25,12 @@ using namespace ProtoTypes;
 template<typename ProtoType>
 class TypeFactory : private SingleTypeFactory<ProtoType> {
 private:
-	map<int, ProtoType*>	m_typeTable;
-	map<ProtoType*, int32>	m_checksumTable;
+	typedef map<int, ProtoType*>	TypeTable;
+	typedef map<ProtoType*, int32>	ChecksumTable;
+
+private:
+	TypeTable		m_typeTable;
+	ChecksumTable	m_checksumTable;
 
 public:
 	TypeFactory() { }
@@ -53,6 +57,15 @@ public:
 
 	ProtoType* getType(int id) {
 		return m_typeTable[id];
+	}
+
+	const ProtoType* findType(const string &name) const {
+		foreach_const (TypeTable, it, m_typeTable) {
+			if (it->second->getName() == name) {
+				return it->second;
+			}
+		}
+		return 0;
 	}
 
 	int32 getChecksum(ProtoType *t) {

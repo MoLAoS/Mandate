@@ -906,7 +906,7 @@ void HarvestCommandType::update(Unit *unit) const {
 			}
 			unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
 			g_simInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
-			ScriptManager::onResourceHarvested();
+			ScriptManager::onResourceHarvested(unit);
 
 			// if next to a store unload resources
 			unit->clearPath();

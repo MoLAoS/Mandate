@@ -306,6 +306,10 @@ public:
 	virtual int getProducedCount() const					{return buildings.size();}
 	virtual const ProducibleType *getProduced(int i) const;
 
+	bool canBuild(const UnitType *ut) const		{
+		return std::find(buildings.begin(), buildings.end(), ut) != buildings.end();
+	}
+
 	int getBuildingCount() const					{return buildings.size();}
 	const UnitType * getBuilding(int i) const		{return buildings[i];}
 

@@ -348,9 +348,9 @@ void ProduceCommandType::update(Unit *unit) const {
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
 				g_simInterface->getStats()->produce(unit->getFactionIndex());
-				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 
-				if (ct) {
+				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
+				if (!produced->anyCommand() && ct) { // if not given a command by script
 					produced->giveCommand(new Command(ct, CommandFlags(), unit->getMeetingPos()));
 				}
 				unit->finishCommand();

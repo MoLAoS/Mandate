@@ -95,8 +95,14 @@ void ScriptManager::initGame() {
 
 	//register functions
 
+	// debug info / testing
 	LUA_FUNC(getSubfaction);
 	LUA_FUNC(getSubfactionRestrictions);
+
+	// AI helpers
+	LUA_FUNC(initSurveyor);
+	LUA_FUNC(findLocationForBuilding);
+	LUA_FUNC(findResourceLocation);
 
 	// Game control
 	LUA_FUNC(disableAi);
@@ -128,6 +134,7 @@ void ScriptManager::initGame() {
 
 	// commands
 	LUA_FUNC(givePositionCommand);
+	LUA_FUNC(giveBuildCommand);
 	LUA_FUNC(giveProductionCommand);
 	LUA_FUNC(giveStopCommand);
 	LUA_FUNC(giveTargetCommand);
@@ -181,7 +188,7 @@ void ScriptManager::initGame() {
 	for(int i = 0; i < scenario->getScriptCount(); ++i) {
 		const Script* script= scenario->getScript(i);
 		bool ok;
-		if (script->getName().substr(0,9) == "unitEvent") {
+		if (script->getName().substr(0,9) == "unitEvent" || script->getName() == "resourceHarvested") {
 			ok = luaScript.loadCode("function " + script->getName() + "(unit_id, user_data)" + script->getCode() + "\nend\n", script->getName());
 		} else {
 			ok = luaScript.loadCode("function " + script->getName() + "()" + script->getCode() + "\nend\n", script->getName());
@@ -267,9 +274,9 @@ int getSubfactionRestrictions(LuaHandle *luaHandle) {
 
 // ========================== events ===============================================
 
-void ScriptManager::onResourceHarvested() {
+void ScriptManager::onResourceHarvested(const Unit *unit) {
 	if (definedEvents.find("resourceHarvested") != definedEvents.end()) {
-		if (!luaScript.luaCall("resourceHarvested")) {
+		if (!luaScript.luaCallback("resourceHarvested", unit->getId(), 0)) {
 			addErrorMessage();
 		}
 	}
@@ -479,7 +486,7 @@ int ScriptManager::consoleMsg(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string msg;
 	if (extractArgs(args, "consoleMsg", "str", &msg)) {
-		g_console.addLine(msg);
+		luaConsole->addOutput(msg);
 	}
 	return args.getReturnCount();
 }
@@ -815,14 +822,20 @@ int ScriptManager::createUnit(LuaHandle* luaHandle) {
 	string type;
 	int fNdx;
 	Vec2i pos;
-	if (extractArgs(args, "createUnit", "str,int,v2i", &type, &fNdx, &pos)) {
-		int id = g_world.createUnit(type, fNdx, pos);
-		if (id < 0) {
-			LuaCmdResult res(id);
-			addErrorMessage("Error: createUnit()" + res.getString());
+	bool precise;
+	if (!extractArgs(args, 0, "str,int,v2i,bln", &type, &fNdx, &pos, &precise)) {
+		precise = false;
+		if (!extractArgs(args, "createUnit", "str,int,v2i", &type, &fNdx, &pos)) {
+			args.returnInt(-1);
+			return args.getReturnCount();
 		}
-		args.returnInt(id);
 	}
+	int id = g_world.createUnit(type, fNdx, pos, precise);
+	if (id < 0) {
+		LuaCmdResult res(id);
+		addErrorMessage("Error: createUnit() " + res.getString());
+	}
+	args.returnInt(id);
 	return args.getReturnCount();
 }
 
@@ -847,18 +860,102 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle) {
 	Vec2i pos;
 	if (extractArgs(args, "givePositionCommand", "int,str,v2i", &id, &cmd, &pos)) {
 		int res = g_world.givePositionCommand(id, cmd, pos);
+		args.returnBool((res == 0 ? true : false));
 		if (res < 0) {
 			LuaCmdResult lcres(res);
 			addErrorMessage("Error: givePositionCommand() " + lcres.getString());
 		}
-		args.returnBool((res == 0 ? true : false));
 	} else {
 		args.returnBool(false);
 	}
 	return args.getReturnCount();
 }
 
-int ScriptManager::giveTargetCommand (LuaHandle * luaHandle) {
+int ScriptManager::giveBuildCommand(LuaHandle * luaHandle) {
+	LuaArguments args(luaHandle);
+	int id;
+	string cmd, buildType;
+	Vec2i pos;
+	if (extractArgs(args, "giveBuildCommand", "int,str,str,v2i", &id, &cmd, &buildType, &pos)) {
+		int res = g_world.giveBuildCommand(id, cmd, buildType, pos);
+		args.returnBool((res == 0 ? true : false));
+		if (res < 0) {
+			LuaCmdResult lcres(res);
+			addErrorMessage("Error: giveBuildCommand() " + lcres.getString());
+		}
+	} else {
+		args.returnBool(false);
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::initSurveyor(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int ndx;
+	if (extractArgs(args, "initSurveyor", "int", &ndx)) {
+		if (ndx < 0 || ndx >= g_gameSettings.getFactionCount()) {
+			addErrorMessage("Error: initSurveyor() faction index out of range: " + intToStr(ndx));
+		} else {
+			g_world.initSurveyor(g_world.getFaction(ndx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::findLocationForBuilding(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int ndx;
+	string buildingType, locationType;
+	Vec2i result(-1);
+	if (extractArgs(args, "findLocationForBuilding", "int,str,str", &ndx, &buildingType, &locationType)) {
+		LocationType locType = LocationTypeNames.match(locationType.c_str());
+		const UnitType *bType = 0;
+		if (ndx < 0 || ndx >= g_gameSettings.getFactionCount()) {
+			addErrorMessage("Error: findLocationForBuilding() faction index out of range: " + intToStr(ndx));
+		} else if (locType == LocationType::INVALID) {
+			addErrorMessage("Error: findLocationForBuilding() location type '" + locationType + "' unknown.");
+		} else if (!(bType = g_world.getMasterTypeFactory().getUnitTypeFactory().findType(buildingType))) {
+			addErrorMessage("Error: findLocationForBuilding() building type '" + buildingType + "' unknown.");
+		} else if (bType->getFactionType() != g_world.getFaction(ndx)->getType()) {
+			addErrorMessage("Error: findLocationForBuilding() building type '" + buildingType + "' wrong faction.");
+		} else {
+			Surveyor *surveyor = g_world.getSurveyor(g_world.getFaction(ndx));
+			result = surveyor->findLocationForBuilding(bType, locType);
+			if (result == Vec2i(-1)) {
+				addErrorMessage("Error: findLocationForBuilding() could not find location for building.");
+			}
+		}
+	}
+	args.returnVec2i(result);
+	return args.getReturnCount();
+}
+
+int ScriptManager::findResourceLocation(LuaHandle * luaHandle) {
+	LuaArguments args(luaHandle);
+	Vec2i result(-1);
+	int ndx;
+	string resource;
+	if (extractArgs(args, "findResourceLocation", "int,str", &ndx, &resource)) {
+		if (ndx < 0 || ndx >= g_gameSettings.getFactionCount()) {
+			addErrorMessage("Error: findResourceLocation() faction index out of range: " + intToStr(ndx));
+		} else {
+			try {
+				const ResourceType *rt = g_world.getTechTree()->getResourceType(resource);
+				if (rt->getClass() == ResourceClass::TECHTREE || rt->getClass() == ResourceClass::TILESET) {
+					result = g_world.getSurveyor(ndx)->findResourceLocation(rt);
+				} else {
+					addErrorMessage("Error: findResourceLocation() resource is static or consumable: " + resource);
+				}
+			} catch (runtime_error &e){
+				addErrorMessage("Error: findResourceLocation() resource type not found: " + resource);
+			}
+		}
+	}
+	args.returnVec2i(result);
+	return args.getReturnCount();
+}
+
+int ScriptManager::giveTargetCommand(LuaHandle * luaHandle) {
 	LuaArguments args(luaHandle);
 	int id, id2;
 	string cmd;
@@ -1247,9 +1344,15 @@ int ScriptManager::dofile(LuaHandle *luaHandle) {
 		int size = f->fileSize();
 		char *someLua = new char[size + 1];
 		f->read(someLua, size, 1);
+		f->close();
 		someLua[size] = '\0';
+		f->openWrite("debug.lua");
+		f->write(someLua, size, 1);
+		f->close();
 		delete f;
-		luaScript.luaDoLine(someLua);
+		if (!luaScript.luaDoLine(someLua)) {
+			addErrorMessage();
+		}
 		delete [] someLua;
 	}
 	return args.getReturnCount();

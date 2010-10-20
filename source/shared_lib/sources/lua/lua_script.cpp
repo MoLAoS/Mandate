@@ -160,7 +160,7 @@ bool LuaScript::luaCallback(const string& functionName, int id, int userData) {
 	lua_pushnumber(luaState, id);
 	lua_pushnumber(luaState, userData);
 	if (lua_pcall(luaState, 2, 0, 0)) {
-		lastError = luaL_checkstring(luaState, 1);
+		lastError = luaL_checkstring(luaState, -1);
 		return false; // error
 	}
 	return true;
@@ -170,7 +170,7 @@ bool LuaScript::luaCall(const string& functionName) {
 	lua_getglobal(luaState, functionName.c_str());
 	argumentCount= 0;
 	if (lua_pcall(luaState, argumentCount, 0, 0)) {
-		lastError = luaL_checkstring(luaState, 1);
+		lastError = luaL_checkstring(luaState, -1);
 		return false; // error
 	}
 	return true;
@@ -178,7 +178,7 @@ bool LuaScript::luaCall(const string& functionName) {
 
 bool LuaScript::luaDoLine(const string &str) {
 	if (luaL_dostring(luaState, str.c_str())) {
-		lastError = luaL_checkstring(luaState, 1);
+		lastError = luaL_checkstring(luaState, -1);
 		return false;
 	}
 	return true;

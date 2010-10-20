@@ -132,7 +132,7 @@ public:
 	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}
 
 	//events
-	static void onResourceHarvested();
+	static void onResourceHarvested(const Unit *unit);
 	static void onUnitCreated(const Unit* unit);
 	static void onUnitDied(const Unit* unit);
 
@@ -203,12 +203,18 @@ private:
 	static int destroyUnit(LuaHandle* luaHandle);
 
 	// commands
-	static int givePositionCommand(LuaHandle* luaHandle);	// Unit:givePosCommand()
-	static int giveTargetCommand(LuaHandle * luaHandle);	// Unit:giveTargetCommand()
-	static int giveStopCommand(LuaHandle * luaHandle);		// Unit:giveStopCommand()
-	static int giveProductionCommand(LuaHandle* luaHandle);	// Unit:givePorduceCommand()
-	static int giveUpgradeCommand(LuaHandle* luaHandle);	// Unit:giveUpgradeCommand()
-	//static int giveBuildCommand(LuaHanfle* luaHandle);	// Unit:giveBuildCommand()
+	static int givePositionCommand(LuaHandle* luaHandle);	// Unit:giveCommand()
+	static int giveBuildCommand(LuaHandle* luaHandle);		// Unit:giveCommand()
+	static int giveTargetCommand(LuaHandle * luaHandle);	// Unit:giveCommand()
+	static int giveStopCommand(LuaHandle * luaHandle);		// Unit:giveCommand()
+	static int giveProductionCommand(LuaHandle* luaHandle);	// Unit:giveCommand()
+	static int giveUpgradeCommand(LuaHandle* luaHandle);	// Unit:giveCommand()
+
+	// prototype AI helper functions... these DON'T belong here...
+	static int initSurveyor(LuaHandle* luaHandle);
+	static int findLocationForBuilding(LuaHandle* luaHandle);
+	static int findResourceLocation(LuaHandle* luaHandle);
+
 
 	// game flow
 	static int disableAi(LuaHandle* luaHandle);				// Faction:disableAi()

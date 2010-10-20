@@ -47,9 +47,9 @@ public:
 	/** @param pos cell coordinates @return number of units that can see this tile */
 	int  getVisCounter(const Vec2i &pos) const	{ return state[pos.y * cellMap->getTileH() + pos.x].visCounter; }
 	/** @param pos tile coordinates to increase visibilty on */
-	void incVisCounter(const Vec2i &pos) const	{ state[pos.y * cellMap->getTileH() + pos.x].visCounter ++;		}
+	void incVisCounter(const Vec2i &pos) const	{ ++state[pos.y * cellMap->getTileH() + pos.x].visCounter;		}
 	/** @param pos tile coordinates to decrease visibilty on */
-	void decVisCounter(const Vec2i &pos) const	{ state[pos.y * cellMap->getTileH() + pos.x].visCounter --;		}
+	void decVisCounter(const Vec2i &pos) const	{ --state[pos.y * cellMap->getTileH() + pos.x].visCounter;		}
 	/** @param pos tile coordinates @return true if explored. */
 	bool isExplored(const Vec2i &pos)	 const	{ return state[pos.y * cellMap->getTileH() + pos.x].explored;	}
 	/** @param pos coordinates of tile to set as explored */
@@ -105,15 +105,6 @@ struct BuildSiteMapKey {
 //
 class Cartographer : public sigslot::has_slots {
 private:
-	/** Master annotated map, always correct */
-	AnnotatedMap *masterMap;
-
-	/*/* Team annotateded maps, 'foggy' */
-	//map< int, AnnotatedMap* > teamMaps;
-
-	/** The ClusterMap (Hierarchical map abstraction) */
-	ClusterMap *clusterMap;
-
 	typedef const ResourceType* rt_ptr;
 	//typedef pair<Vec2i, Vec2i> PosPair;
 	//typedef vector<PosPair> AreaList;
@@ -125,6 +116,16 @@ private:
 
 	typedef list<pair<rt_ptr, Vec2i> >	ResourcePosList;
 	typedef map<rt_ptr, V2iList> ResourcePosMap;
+
+private:
+	/** Master annotated map, always correct */
+	AnnotatedMap *masterMap;
+
+	/*/* Team annotateded maps, 'foggy' */
+	//map< int, AnnotatedMap* > teamMaps;
+
+	/** The ClusterMap (Hierarchical map abstraction) */
+	ClusterMap *clusterMap;
 
 	// Resources
 	/** The locations of each and every resource on the map */
@@ -153,6 +154,7 @@ private:
 	Map *cellMap;
 	RoutePlanner *routePlanner;
 
+private:
 	void initResourceMap(ResourceMapKey key, PatchMap<1> *pMap);
 	void fixupResourceMaps(const ResourceType *rt, const Vec2i &pos);
 
@@ -269,12 +271,51 @@ public:
 	void adjustGlestimalMap(Field f, TypeMap<float> &iMap, const Vec2i &pos, float range);
 	void buildGlestimalMap(Field f, V2iList &positions);
 
+	Map*	getCellMap() { return cellMap; }
+
 	ClusterMap* getClusterMap() const { return clusterMap; }
 
-	AnnotatedMap* getMasterMap()				const	{ return masterMap;							  }
-	AnnotatedMap* getAnnotatedMap(int team )			{ return masterMap;/*teamMaps[team];*/					  }
+	AnnotatedMap* getMasterMap()				const	{ return masterMap;	 }
+	AnnotatedMap* getAnnotatedMap(int team )			{ return masterMap;/*teamMaps[team];*/ }
 	AnnotatedMap* getAnnotatedMap(const Faction *faction) 	{ return getAnnotatedMap(faction->getTeam()); }
-	AnnotatedMap* getAnnotatedMap(const Unit *unit)			{ return getAnnotatedMap(unit->getTeam());	  }
+	AnnotatedMap* getAnnotatedMap(const Unit *unit)			{ return getAnnotatedMap(unit->getTeam()); }
+};
+
+/** enumeration for build location type */
+STRINGY_ENUM( LocationType, 
+	DEAD_WEIGHT,		/**< For buildings with no further purpose (housing/energy source/etc) */
+	DEFENSIVE_SITE,		/**< A site for defensive towers */
+	RESOURCE_STORE,		/**< Location for a store */
+	WARRIOR_PRODUCER,	/**< Loaction for a warrior producing building */
+	RESEARCH_BUILDING	/**< Location for a research building */
+)
+
+/** AI Helper */
+class Surveyor {
+private:
+	typedef map<const ResourceType *, Vec2i> ResourceMap;
+
+private:
+	Faction			*m_faction;
+	Cartographer	*m_cartographer;
+
+	PatchMap<2>		*m_baseMap;
+	vector<Vec2i>	 m_enemyLocs;
+	ResourceMap		 m_resourceMap;
+
+	int m_w, m_h;
+	Vec2i m_basePos;
+
+private:
+	void findResourceLocations();
+	void buildBaseMap();
+
+public:
+	Surveyor(Faction *faction, Cartographer *cartographer);
+
+	Vec2i findLocationForBuilding(const UnitType *buildingType, LocationType locType);
+	Vec2i findLocationForExpansion();
+	Vec2i findResourceLocation(const ResourceType *rt);
 };
 
 }}
