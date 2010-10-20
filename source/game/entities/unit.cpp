@@ -1013,14 +1013,21 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		//attack enemies
 		if (!isAlly(targetUnit)) {
 			commandType = type->getAttackCommand(targetUnit->getCurrZone());
-		} else if (targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
-			//move to be loaded
-			commandType = type->getFirstCtOfClass(CommandClass::MOVE);
-		} else if (getType()->isOfClass(UnitClass::CARRIER)) {
-			//load
-			commandType = type->getFirstCtOfClass(CommandClass::LOAD);
-		} else {
-			//repair allies
+		} else if (targetUnit->getFactionIndex() == getFactionIndex()) {
+			const UnitType *tType = targetUnit->getType();
+			if (tType->isOfClass(UnitClass::CARRIER)
+			&& tType->getCommandType<LoadCommandType>(0)->canCarry(type)) {
+				//move to be loaded
+				commandType = type->getFirstCtOfClass(CommandClass::BE_LOADED);
+			} else if (getType()->isOfClass(UnitClass::CARRIER)
+			&& type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
+				//load
+				commandType = type->getFirstCtOfClass(CommandClass::LOAD);
+			} else {
+				// repair
+				commandType = getRepairCommandType(targetUnit);
+			}
+		} else { // repair allies
 			commandType = getRepairCommandType(targetUnit);
 		}
 	} else {
