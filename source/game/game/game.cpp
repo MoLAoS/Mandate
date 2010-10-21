@@ -457,8 +457,13 @@ void GameState::onChatEntered(BasicDialog* ptr) {
 	if (netInterface) {
 		netInterface->sendTextMessage(txt, team);
 	} else {
-		///@todo ? Local game...
+		int ndx = g_world.getThisFactionIndex();
+		const GameSettings &gs = simInterface->getGameSettings();
+		string player = gs.getPlayerName(ndx);
+		Colour colour = factionColours[gs.getColourIndex(ndx)];
+		gui.getDialogConsole()->addDialog(player + ": ", colour, txt);
 	}
+	m_chatDialog->clearText();
 	m_chatDialog->setVisible(false);
 }
 
