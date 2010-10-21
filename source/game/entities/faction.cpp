@@ -442,18 +442,16 @@ void Faction::deApplyStaticConsumption(const ProducibleType *p) {
 	}
 }
 
-//apply resource on interval (cosumable resouces)
-void Faction::applyCostsOnInterval() {
-
-	//increment consumables
+// apply resource on interval for a cosumable resouce
+void Faction::applyCostsOnInterval(const ResourceType *rt) {
+	assert(rt->getClass() == ResourceClass::CONSUMABLE);
+	// increment consumables
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
 		if (unit->isOperative()) {
-			for (int k = 0; k < unit->getType()->getCostCount(); ++k) {
-				const Resource *resource = unit->getType()->getCost(k);
-				if (resource->getType()->getClass() == ResourceClass::CONSUMABLE && resource->getAmount() < 0) {
-					incResourceAmount(resource->getType(), -resource->getAmount());
-				}
+			const Resource *resource = unit->getType()->getCost(rt);
+			if (resource && resource->getAmount() < 0) {
+				incResourceAmount(resource->getType(), -resource->getAmount());
 			}
 		}
 	}
@@ -462,23 +460,21 @@ void Faction::applyCostsOnInterval() {
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
 		if (unit->isOperative()) {
-			for (int k = 0; k < unit->getType()->getCostCount(); ++k) {
-				const Resource *resource = unit->getType()->getCost(k);
-				if (resource->getType()->getClass() == ResourceClass::CONSUMABLE && resource->getAmount() > 0) {
-					incResourceAmount(resource->getType(), -resource->getAmount());
+			const Resource *resource = unit->getType()->getCost(rt);
+			if (resource && resource->getAmount() > 0) {
+				incResourceAmount(resource->getType(), -resource->getAmount());
 
-					//decrease unit hp
-					//TODO: Implement rules for specifying what happens when you're consumable
-					//      demand exceeds supply & stores.
-					if (getResource(resource->getType())->getAmount() < 0) {
-						resetResourceAmount(resource->getType());
-						if(unit->decHp(unit->getType()->getMaxHp() / 3)) {
-							World::getCurrWorld()->doKill(unit, unit);
-						} else {
-							StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSound();
-							if (sound != NULL && thisFaction) {
-								SoundRenderer::getInstance().playFx(sound);
-							}
+				//decrease unit hp
+				//TODO: Implement rules for specifying what happens when you're consumable
+				//      demand exceeds supply & stores.
+				if (getResource(resource->getType())->getAmount() < 0) {
+					resetResourceAmount(resource->getType());
+					if(unit->decHp(unit->getType()->getMaxHp() / 3)) {
+						World::getCurrWorld()->doKill(unit, unit);
+					} else {
+						StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSound();
+						if (sound != NULL && thisFaction) {
+							SoundRenderer::getInstance().playFx(sound);
 						}
 					}
 				}
