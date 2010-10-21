@@ -913,7 +913,8 @@ void UserInterface::computeInfoString(int posDisplay) {
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
 				if (cc != CommandClass::NULL_COMMAND) {
-					m_display->setInfoText(g_lang.get("CommonCommand") + ": " + ut->getFirstCtOfClass(cc)->toString());
+					m_display->setInfoText(g_lang.get("CommonCommand") + ": "
+						+ g_lang.get(CommandClassNames[cc]));
 				}
 			}
 		}

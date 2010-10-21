@@ -31,13 +31,6 @@ namespace Glest { namespace Gui {
 
 class GameState;
 
-enum DisplayState {
-	dsEmpty,
-	dsUnitSkills,
-	dsUnitBuild,
-	dsEnemy
-};
-
 // =====================================================
 //	class Mouse3d
 // =====================================================
@@ -234,10 +227,11 @@ public:
 		return computePosDisplay(x, y) != invalidPos; //in display coords
 	}
 
-	// slots (for signals from minimap)
+	// slots for signals from minimap
 	void onLeftClickOrder(Vec2i cellPos);
 	void onRightClickOrder(Vec2i cellPos);
 
+	// slots for resource depletion and unit death
     void onResourceDepleted(Vec2i cellPos);
 	void onUnitDied(Unit *unit);
 
