@@ -156,6 +156,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
         , attacked_trigger(false) {
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
+
 	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
 
 	computeTotalUpgrade();
@@ -474,6 +475,21 @@ float Unit::getAnimProgress() const {
 			/	float(nextAnimReset - lastAnimReset);
 }
 
+void Unit::startSkillParticleSystems() {
+	Vec2i cPos = getCenteredPos();
+	Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
+	bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
+	
+	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
+		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
+		ups->setPos(getCurrVector());
+		ups->setRotation(getRotation());
+		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
+		skillParticleSystems.push_back(ups);
+		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
+	}
+}
+
 // ====================================== set ======================================
 
 void Unit::setCommandCallback() {
@@ -498,18 +514,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	StateChanged(this);
 
 	if (!isCarried()) {
-		Vec2i cPos = getCenteredPos();
-		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
-		bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
-		
-		for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
-			UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
-			ups->setPos(getCurrVector());
-			ups->setRotation(getRotation());
-			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
-			skillParticleSystems.push_back(ups);
-			g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
-		}
+		startSkillParticleSystems();
 	}
 }
 
@@ -923,6 +928,7 @@ void Unit::create(bool startingUnit) {
 	}
 	nextCommandUpdate = -1;
 	setCurrSkill(type->getStartSkill());
+	startSkillParticleSystems();
 }
 
 /** Give a unit life. Called when a unit becomes 'operative'
@@ -990,6 +996,16 @@ void Unit::kill() {
 	deadCount = Random(id).randRange(-256, 256); // random decay time
 }
 
+void Unit::undertake() {
+	faction->remove(this);
+	if (!skillParticleSystems.empty()) {
+		foreach (UnitParticleSystems, it, skillParticleSystems) {
+			(*it)->fade();
+		}
+		skillParticleSystems.clear();
+	}
+}
+
 void Unit::resetHighlight() {
 	highlight= 1.f;
 }
@@ -1053,12 +1069,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 /** called to update animation cycle on a dead unit */
 void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
-	if (!skillParticleSystems.empty()) {
-		foreach (UnitParticleSystems, it, skillParticleSystems) {
-			(*it)->fade();
-		}
-		skillParticleSystems.clear();
-	}
+
 	// when dead and have already played one complete anim cycle, set startFrame to last frame, endFrame 
 	// to this frame to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
 	const int &frame = g_world.getFrameCount();

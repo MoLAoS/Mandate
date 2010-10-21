@@ -250,6 +250,7 @@ private:
 	~Unit();
 
 	void checkEffectParticles();
+	void startSkillParticleSystems();
 
 public:
 	void save(XmlNode *node) const;
@@ -453,7 +454,7 @@ public:
 	void create(bool startingUnit = false);
 	void born();
 	void kill();
-	void undertake()									{faction->remove(this);}
+	void undertake();
 
 	//other
 	void resetHighlight();
