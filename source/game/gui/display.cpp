@@ -18,7 +18,7 @@
 #include "widget_window.h"
 #include "core_data.h"
 #include "user_interface.h"
-
+#include "world.h"
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -51,6 +51,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		, ImageWidget(this)
 		, TextWidget(this)
 		, m_ui(ui)
+		, m_logo(-1)
 		, m_draggingWidget(false)
 		, m_moveOffset(Vec2i(0))
 		, m_pressedCommandIndex(-1) 
@@ -110,6 +111,11 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		x += 32;
 	}
 
+	const Texture2D *logoTex = g_world.getThisFaction()->getLogoTex();
+	if (logoTex) {
+		m_logo = addImageX(logoTex, Vec2i(3,0), Vec2i(192,192));
+	}
+
 	downSelectedPos = invalidPos;
 	setProgressBar(-1);
 	clear();
@@ -117,16 +123,20 @@ Display::Display(UserInterface *ui, Vec2i pos)
 }
 
 void Display::setSize() {
-	const int width = 195;
+	const int width = 192 + 3;
 	const int bigHeight = 600;
-	const int smallHeight = 150;
+	const int smallHeight = 192 + 15;
 	Vec2i sz(width, bigHeight);
 	if (m_ui->getSelection()->isEmpty()) {
 		if (m_ui->getSelectedObject()) {
 			sz = Vec2i(width, smallHeight);
 		} else {
-			setVisible(false);
-			return;
+			if (g_world.getThisFaction()->getLogoTex()) {
+				sz = Vec2i(width, smallHeight);
+			} else {
+				setVisible(false);
+				return;
+			}
 		}
 	} else {
 		if (!m_ui->getSelection()->isComandable()) {
@@ -311,6 +321,11 @@ void Display::render() {
 		return;
 	}
 	renderBgAndBorders();
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
+		// faction logo
+		assert(m_logo != -1);
+		ImageWidget::renderImage(m_logo);
+	}
 	Vec4f light(1.f), dark(0.3f, 0.3f, 0.3f, 1.f);
 	ImageWidget::startBatch();
 	for (int i = 0; i < upCellCount; ++i) {

@@ -64,6 +64,7 @@ private:
 	int attackNoticeDelay;
 	int enemyNoticeDelay;
 	UnitTypeSet loadableUnitTypes;
+	Pixmap2D *m_logoPixmap;
 
 public:
 	//init
@@ -95,6 +96,8 @@ public:
 	const SoundContainer *getAttackNotice() const		{return attackNotice;}
 	const SoundContainer *getEnemyNotice() const		{return enemyNotice;}
 	int getAttackNoticeDelay() const					{return attackNoticeDelay;}
+	const Pixmap2D* getLogoPixmap() const				{return m_logoPixmap;}
+
 	int getEnemyNoticeDelay() const						{return enemyNoticeDelay;}
 
 	const UnitType *getUnitType(const string &name) const;

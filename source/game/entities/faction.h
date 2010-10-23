@@ -92,6 +92,7 @@ private:
 	ControlType control;
 
 	Texture2D *texture;
+	Texture2D *m_logoTex;
 	const FactionType *factionType;
 
 	int teamIndex;
@@ -134,6 +135,7 @@ public:
 	const Units &getUnits() const						{return units;}
 	const UpgradeManager *getUpgradeManager() const		{return &upgradeManager;}
 	const Texture2D *getTexture() const					{return texture;}
+	const Texture2D *getLogoTex() const					{return m_logoTex;}
 	int getStartLocationIndex() const					{return startLocationIndex;}
 	int getColourIndex() const							{return colourIndex;}
 	Colour getColour() const							{return factionColours[colourIndex];}

@@ -68,6 +68,7 @@ private:
 	int m_progress;
 	int currentColor;
 	int downSelectedPos;
+	int m_logo;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;

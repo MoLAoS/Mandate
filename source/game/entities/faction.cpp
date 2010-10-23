@@ -103,6 +103,9 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 	this->defeated = false;
 	lastEventLoc.x = -1.0f;  // -1 x indicates uninitialized, no last event
 
+	texture = 0;
+	m_logoTex = 0;
+
 	if (factionIndex != -1) {
 		resources.resize(techTree->getResourceTypeCount());
 		store.resize(techTree->getResourceTypeCount());
@@ -112,12 +115,30 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 			resources[i].init(rt, resourceAmount);
 			store[i].init(rt, 0);
 		}
-		texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
+		texture = g_renderer.newTexture2D(ResourceScope::GAME);
 		Pixmap2D *pixmap = texture->getPixmap();
 		pixmap->init(1, 1, 3);
 		pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
-	} else {
-		texture = 0;
+		if (factionType->getLogoPixmap()) {
+			const Pixmap2D *logo = factionType->getLogoPixmap();
+			m_logoTex = g_renderer.newTexture2D(ResourceScope::GAME);
+			Pixmap2D *pixmap = m_logoTex->getPixmap();
+			pixmap->init(256, 256, 4);
+			
+			Vec3f baseColour(
+				factionColours[colourIndex].r / 255.f,
+				factionColours[colourIndex].g / 255.f,
+				factionColours[colourIndex].b / 255.f);
+			
+			for (int y = 0; y < 256; ++y) {
+				for (int x = 0; x < 256; ++x) {
+					Vec4f pixel = logo->getPixel4f(x, y);
+					float lum = (pixel.r + pixel.g + pixel.b) / 3.f;
+					Vec4f val(baseColour.r * lum, baseColour.g * lum, baseColour.b * lum, pixel.a);
+					pixmap->setPixel(x, y, val);
+				}
+			}
+		}
 	}
 }
 
