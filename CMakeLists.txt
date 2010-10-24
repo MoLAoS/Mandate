@@ -202,7 +202,26 @@ if(WIN32)
 			DESTINATION bin OPTIONAL
 		)
 	endif(DEFINED GAE_WINDEPS)
-else(WIN32)
+
+elseif(APPLE)
+	set(CPACK_GENERATOR "Bundle")
+	set(CPACK_PACKAGE_FILE_NAME "GlestAE")
+	set(CPACK_BUNDLE_NAME "GlestAE")
+	set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/cmake/glestadv.icns")
+	set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/cmake/glestadv.icns")
+	set(CPACK_BUNDLE_STARTUP_COMMAND "${CMAKE_SOURCE_DIR}/cmake/macstartup.sh")
+	configure_file(${CMAKE_SOURCE_DIR}/cmake/info.plist.in ${CMAKE_BINARY_DIR}/info.plist)
+	set(CPACK_BUNDLE_PLIST "${CMAKE_BINARY_DIR}/info.plist")
+
+	# install dependencies
+	install(FILES
+		${LUA_LIBRARIES} ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${PNG_LIBRARY}
+		${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY}
+		${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${wxWidgets_LIBRARIES}
+		DESTINATION lib
+	)
+
+else()
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm
 	#set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
@@ -211,7 +230,7 @@ else(WIN32)
 	set(CPACK_DEBIAN_PACKAGE_SECTION "games")
 
 	set(CPACK_GENERATOR "TBZ2")
-endif(WIN32)
+endif()
 set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
