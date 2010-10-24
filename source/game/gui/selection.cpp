@@ -72,40 +72,40 @@ void Selection::decRef(Unit *u) {
 
 void Selection::select(Unit *unit){
 
-	//check size
-	if(selectedUnits.size()>=maxUnits){
+	// check size
+	if (selectedUnits.size() >= maxUnits) {
 		return;
 	}
 
-	//check if already selected
-	for(int i=0; i<selectedUnits.size(); ++i){
-		if(selectedUnits[i]==unit){
+	// check if already selected
+	for (int i=0; i < selectedUnits.size(); ++i) {
+		if (selectedUnits[i] == unit) {
 			return;
 		}
 	}
 
-	//check if dead
-	if(unit->isDead()){
+	// check if dead
+	if (unit->isDead()) {
 		return;
 	}
 
-	//check if multisel
-	if(!unit->getType()->getMultiSelect() && !isEmpty()){
+	// check if multisel
+	if (!unit->getType()->getMultiSelect() && !isEmpty()) {
 		return;
 	}
 
-	//check if enemy
-	if(unit->getFactionIndex()!=factionIndex && !isEmpty()){
+	// check if enemy
+	if (unit->getFactionIndex() != factionIndex && !isEmpty()) {
 		return;
 	}
 
-	//check existing enemy
-	if(selectedUnits.size()==1 && selectedUnits.front()->getFactionIndex()!=factionIndex){
+	// check existing enemy
+	if (selectedUnits.size() == 1 && selectedUnits.front()->getFactionIndex() != factionIndex) {
 		clear();
 	}
 
-	//check existing multisel
-	if(selectedUnits.size()==1 && !selectedUnits.front()->getType()->getMultiSelect()){
+	// check existing multisel
+	if (selectedUnits.size() == 1 && !selectedUnits.front()->getType()->getMultiSelect()) {
 		clear();
 	}
 
@@ -204,7 +204,8 @@ void Selection::assignGroup(int groupIndex){
 
 void Selection::recallGroup(int groupIndex){
 	clear();
-	for(int i=0; i<groups[groupIndex].size(); ++i){
+	for (int i=0; i < groups[groupIndex].size(); ++i) {
+		RUNTIME_CHECK(groups[groupIndex][i] != NULL && groups[groupIndex][i]->isAlive());
 		select(groups[groupIndex][i]);
 	}
 }

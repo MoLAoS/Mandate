@@ -450,7 +450,7 @@ void UserInterface::groupKey(int groupIndex){
 	if (input.isCtrlDown()) {
 		selection.assignGroup(groupIndex);
 	} else {
-		if(currentGroup == groupIndex){
+		if (currentGroup == groupIndex) {
 			centerCameraOnSelection();
 		}
 
