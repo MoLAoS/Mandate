@@ -445,12 +445,16 @@ void MenuStateNewGame::update() {
 				m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
 				m_transition = false;
 			} else {
-				g_simInterface->getGameSettings().compact();
+				GameSettings &gs = g_simInterface->getGameSettings();
+				gs.compact();
 				g_config.save();
 				XmlTree *doc = new XmlTree("game-settings");
-				g_simInterface->getGameSettings().save(doc->getRootNode());
+				gs.save(doc->getRootNode());
 				doc->save("last_gamesettings.gs");
 				delete doc;
+				if (gs.getRandomStartLocs()) {
+					randomiseStartLocs();
+				}
 				if (!hasNetworkSlots()) {
 					GameSettings gs = g_simInterface->getGameSettings();
 					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
@@ -686,5 +690,25 @@ void MenuStateNewGame::updateNetworkSlots() {
 		}
 	}
 }
+
+void MenuStateNewGame::randomiseStartLocs() {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	vector<int> freeStartLocs;
+	for (int i=0; i < m_mapInfo.players; ++i) {
+		freeStartLocs.push_back(i);
+	}
+	Random random(Chrono::getCurMillis());
+	for (int i=0; i < gs.getFactionCount(); ++i) {
+		int sli = random.randRange(0, freeStartLocs.size() - 1);
+		gs.setStartLocationIndex(i, freeStartLocs[sli]);
+		freeStartLocs.erase(std::find(freeStartLocs.begin(), freeStartLocs.end(), sli));
+	}
+}
+
+//void MenuStateNewGame::randomiseMap() {
+//}
+//
+//void MenuStateNewGame::randomiseTileset() {
+//}
 
 }}//end namespace
