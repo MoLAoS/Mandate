@@ -55,7 +55,8 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		, m_draggingWidget(false)
 		, m_moveOffset(Vec2i(0))
 		, m_pressedCommandIndex(-1) 
-		, m_pressedCarryIndex(-1) {
+		, m_pressedCarryIndex(-1)
+		, m_toolTip(0) {
 	setFancyBorder(m_borderStyle);
 
 	colors[0] = Vec3f(1.f, 1.f, 1.f);
@@ -120,6 +121,9 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	setProgressBar(-1);
 	clear();
 	setSize();
+
+	m_toolTip = new ToolTip(getParent());
+	m_toolTip->setVisible(false);
 }
 
 void Display::setSize() {
@@ -499,10 +503,19 @@ bool Display::mouseMove(Vec2i pos) {
 			if (ndx != invalidPos && getImage(upCellCount + ndx)) {
 				m_ui->computeInfoString(ndx);
 				m_pressedCommandIndex = ndx;
+
+				m_toolTip->setText(TextWidget::getText(2));
+				Vec2i ttPos = getScreenPos() + m_downImageOffset;
+				ttPos.y -= (32 * 4);
+				ttPos.y -= m_toolTip->getHeight();
+				m_toolTip->setPos(ttPos);
+				m_toolTip->setVisible(true);
+
 				return true;
 			} else {
 				m_pressedCommandIndex = ndx;
 				setInfoText("");
+				m_toolTip->setVisible(false);
 			}
 			m_pressedCommandIndex = ndx;
 		} else {
@@ -511,6 +524,7 @@ bool Display::mouseMove(Vec2i pos) {
 	} else {
 		if (m_pressedCommandIndex != -1) {
 			setInfoText("");
+			m_toolTip->setVisible(false);
 			m_pressedCommandIndex = -1;
 		}
 	}
@@ -521,6 +535,7 @@ bool Display::mouseMove(Vec2i pos) {
 void Display::mouseOut() {
 	m_pressedCommandIndex = -1;
 	setInfoText("");
+	m_toolTip->setVisible(false);
 }
 
 // =====================================================
