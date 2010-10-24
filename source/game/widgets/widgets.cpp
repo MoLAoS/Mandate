@@ -1461,7 +1461,7 @@ void ToolTip::init() {
 	m_borderStyle.setSizes(2);
 	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Vec3f(0.3f, 0.3f, 0.3f)));
 	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFont(), false);
-	TextWidget::setTextPos(Vec2i(2, 2));
+	TextWidget::setTextPos(Vec2i(4, 4));
 }
 
 ToolTip::ToolTip(Container* parent)
@@ -1477,7 +1477,7 @@ ToolTip::ToolTip(Container* parent, Vec2i pos, Vec2i size)
 void ToolTip::setText(const string &txt) {
 	TextWidget::setText(txt);
 	Vec2i dims = TextWidget::getTextDimensions(0);
-	dims += Vec2i(4);
+	dims += Vec2i(8);
 	setSize(dims);
 }
 

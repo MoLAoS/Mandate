@@ -46,7 +46,7 @@ void setFancyBorder(BorderStyle &style) {
 // =====================================================
 
 Display::Display(UserInterface *ui, Vec2i pos)
-		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 600))
+		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 500))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
@@ -99,7 +99,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	}
 
 	x = getBorderLeft();
-	y -= (40 + int(m_font->getMetrics()->getHeight()) * 8);
+	y -= (40/* + int(m_font->getMetrics()->getHeight()) * 8*/);
 	addText(""); // 'Transported' label
 	setTextPos(Vec2i(x, y + 5), 4);
 	m_carryImageOffset = Vec2i(x, y);
@@ -128,7 +128,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 
 void Display::setSize() {
 	const int width = 192 + 3;
-	const int bigHeight = 600;
+	const int bigHeight = 500;
 	const int smallHeight = 192 + 15;
 	Vec2i sz(width, bigHeight);
 	if (m_ui->getSelection()->isEmpty()) {
@@ -247,13 +247,13 @@ void Display::setInfoText(const string &infoText) {
 	string str = Util::formatString(infoText);
 	trimTrailingNewlines(str);
 
-	int lines = 1;
-	foreach_const (string, it, str) {
-		if (*it == '\n') ++lines;
-	}
-	int yPos = getHeight() - getBorderTop() - imageSize * cellHeightCount - 48
-		- (lines + 10) * int(m_font->getMetrics()->getHeight());
-	TextWidget::setTextPos(Vec2i(5, yPos), 2);
+	//int lines = 1;
+	//foreach_const (string, it, str) {
+	//	if (*it == '\n') ++lines;
+	//}
+	//int yPos = getHeight() - getBorderTop() - imageSize * cellHeightCount - 48
+	//	- (lines + 10) * int(m_font->getMetrics()->getHeight());
+	//TextWidget::setTextPos(Vec2i(5, yPos), 2);
 	TextWidget::setText(str, 2);
 }
 
@@ -358,9 +358,9 @@ void Display::render() {
 	if (!TextWidget::getText(1).empty()) {
 		renderTextShadowed(1);
 	}
-	if (!TextWidget::getText(2).empty()) {
-		renderTextShadowed(2);
-	}
+	//if (!TextWidget::getText(2).empty()) {
+	//	renderTextShadowed(2);
+	//}
 	if (!TextWidget::getText(4).empty()) {
 		renderTextShadowed(4);
 	}
@@ -506,7 +506,7 @@ bool Display::mouseMove(Vec2i pos) {
 
 				m_toolTip->setText(TextWidget::getText(2));
 				Vec2i ttPos = getScreenPos() + m_downImageOffset;
-				ttPos.y -= (32 * 4);
+				ttPos.y -= (32 * (1 + ndx / cellWidthCount));
 				ttPos.y -= m_toolTip->getHeight();
 				m_toolTip->setPos(ttPos);
 				m_toolTip->setVisible(true);

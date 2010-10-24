@@ -148,7 +148,7 @@ void UserInterface::init() {
 	selection.init(this, world->getThisFactionIndex());
 
 	int x = g_metrics.getScreenW() - 20 - 195;
-	int y = (g_metrics.getScreenH() - 600) / 2;
+	int y = (g_metrics.getScreenH() - 500) / 2;
 
 	m_display = new Display(this, Vec2i(x,y));
 

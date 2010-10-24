@@ -237,7 +237,7 @@ void Selection::onUnitDied(Unit *unit) {
 	}
 
 	//notify gui & stuff
-	if(needUpdate) {
+	if (needUpdate) {
 		update();
 		gui->onSelectionChanged();
 	}
