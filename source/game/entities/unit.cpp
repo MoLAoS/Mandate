@@ -975,6 +975,23 @@ void Unit::kill() {
 		map->clearUnitCells(this, pos);
 	}
 
+	if (!m_unitsToCarry.empty()) {
+		foreach (UnitIdList, it, m_unitsToCarry) {
+			Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+			unit->cancelCurrCommand();
+		}
+		m_unitsToCarry.clear();
+	}
+
+	if (!m_carriedUnits.empty()) {
+		foreach (UnitIdList, it, m_carriedUnits) {
+			Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_carriedUnits.clear();
+	}
+
 	if (fire) {
 		fire->fade();
 		fire = 0;
