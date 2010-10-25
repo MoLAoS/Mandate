@@ -267,6 +267,7 @@ void UserInterface::onResourceDepleted(Vec2i cellPos) {
 	assert(o);
 	if (o == selectedObject) {
 		selectedObject = 0;
+		m_display->setSize();
 	}
 }
 

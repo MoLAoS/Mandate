@@ -1244,7 +1244,7 @@ void Renderer::renderSelectionEffects() {
 		Resource *r = selectedObj->getResource();
 		if (r) {
 			const float offset = float(GameConstants::cellScale / 2);
-			const float ratio = r->getType()->getDefResPerPatch() / float(r->getAmount());
+			const float ratio = float(r->getAmount()) / r->getType()->getDefResPerPatch();
 			Vec3f currVec = selectedObj->getPos() + Vec3f(offset, 0.3f, offset);
 			glColor4f(ratio, ratio / 2.f, 0.f, 0.3f);
 			renderSelectionCircle(currVec, GameConstants::cellScale, selectionCircleRadius);
