@@ -48,9 +48,6 @@ private:
 	bool gsAutoReturnEnabled;
 	float gsDayTime;
 	int gsWorldUpdateFps;
-	int miscAiLog;
-	bool miscAiRedir;
-	bool miscAutoTest;
 	bool miscCatchExceptions;
 	bool miscDebugKeys;
 	bool miscDebugMode;
@@ -68,9 +65,6 @@ private:
 	string renderFilter;
 	bool renderFogOfWarSmoothing;
 	int renderFogOfWarSmoothingFrameSkip;
-	string renderFontConsole;
-	string renderFontDisplay;
-	string renderFontMenu;
 	float renderFov;
 	int renderFpsMax;
 	string renderGraphicsFactory;
@@ -90,17 +84,11 @@ private:
 	int soundVolumeMusic;
 	int uiConsoleMaxLines;
 	int uiConsoleTimeout;
-	bool uiEnableCommandMinimap;
 	bool uiFocusArrows;
-	string uiLastMap;
-	bool uiLastRandStartLocs;
 	string uiLastScenarioCatagory;
 	string uiLastScenario;
-	string uiLastTechTree;
-	string uiLastTileset;
 	string uiLocale;
 	bool uiPhotoMode;
-	bool uiRandomStartLocations;
 	float uiScrollSpeed;
 
 	Config(const char* fileName);
@@ -144,9 +132,6 @@ public:
 	bool getGsAutoReturnEnabled() const			{return gsAutoReturnEnabled;}
 	float getGsDayTime() const					{return gsDayTime;}
 	int getGsWorldUpdateFps() const				{return gsWorldUpdateFps;}
-	int getMiscAiLog() const					{return miscAiLog;}
-	bool getMiscAiRedir() const					{return miscAiRedir;}
-	bool getMiscAutoTest() const				{return miscAutoTest;}
 	bool getMiscCatchExceptions() const			{return miscCatchExceptions;}
 	bool getMiscDebugKeys() const				{return miscDebugKeys;}
 	bool getMiscDebugMode() const				{return miscDebugMode;}
@@ -164,9 +149,6 @@ public:
 	string getRenderFilter() const				{return renderFilter;}
 	bool getRenderFogOfWarSmoothing() const		{return renderFogOfWarSmoothing;}
 	int getRenderFogOfWarSmoothingFrameSkip() const{return renderFogOfWarSmoothingFrameSkip;}
-	string getRenderFontConsole() const			{return renderFontConsole;}
-	string getRenderFontDisplay() const			{return renderFontDisplay;}
-	string getRenderFontMenu() const			{return renderFontMenu;}
 	float getRenderFov() const					{return renderFov;}
 	int getRenderFpsMax() const					{return renderFpsMax;}
 	string getRenderGraphicsFactory() const		{return renderGraphicsFactory;}
@@ -186,17 +168,11 @@ public:
 	int getSoundVolumeMusic() const				{return soundVolumeMusic;}
 	int getUiConsoleMaxLines() const			{return uiConsoleMaxLines;}
 	int getUiConsoleTimeout() const				{return uiConsoleTimeout;}
-	bool getUiEnableCommandMinimap() const		{return uiEnableCommandMinimap;}
 	bool getUiFocusArrows() const				{return uiFocusArrows;}
-	string getUiLastMap() const					{return uiLastMap;}
-	bool getUiLastRandStartLocs() const			{return uiLastRandStartLocs;}
 	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLastScenario() const			{return uiLastScenario;}
-	string getUiLastTechTree() const			{return uiLastTechTree;}
-	string getUiLastTileset() const				{return uiLastTileset;}
 	string getUiLocale() const					{return uiLocale;}
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
-	bool getUiRandomStartLocations() const		{return uiRandomStartLocations;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
 	void setCameraFov(float val)				{cameraFov = val;}
@@ -214,9 +190,6 @@ public:
 	void setGsAutoReturnEnabled(bool val)		{gsAutoReturnEnabled = val;}
 	void setGsDayTime(float val)				{gsDayTime = val;}
 	void setGsWorldUpdateFps(int val)			{gsWorldUpdateFps = val;}
-	void setMiscAiLog(int val)					{miscAiLog = val;}
-	void setMiscAiRedir(bool val)				{miscAiRedir = val;}
-	void setMiscAutoTest(bool val)				{miscAutoTest = val;}
 	void setMiscCatchExceptions(bool val)		{miscCatchExceptions = val;}
 	void setMiscDebugKeys(bool val)				{miscDebugKeys = val;}
 	void setMiscDebugMode(bool val)				{miscDebugMode = val;}
@@ -234,9 +207,6 @@ public:
 	void setRenderFilter(string val)			{renderFilter = val;}
 	void setRenderFogOfWarSmoothing(bool val)	{renderFogOfWarSmoothing = val;}
 	void setRenderFogOfWarSmoothingFrameSkip(int val){renderFogOfWarSmoothingFrameSkip = val;}
-	void setRenderFontConsole(string val)		{renderFontConsole = val;}
-	void setRenderFontDisplay(string val)		{renderFontDisplay = val;}
-	void setRenderFontMenu(string val)			{renderFontMenu = val;}
 	void setRenderFov(float val)				{renderFov = val;}
 	void setRenderFpsMax(int val)				{renderFpsMax = val;}
 	void setRenderGraphicsFactory(string val)	{renderGraphicsFactory = val;}
@@ -256,17 +226,11 @@ public:
 	void setSoundVolumeMusic(int val)			{soundVolumeMusic = val;}
 	void setUiConsoleMaxLines(int val)			{uiConsoleMaxLines = val;}
 	void setUiConsoleTimeout(int val)			{uiConsoleTimeout = val;}
-	void setUiEnableCommandMinimap(bool val)	{uiEnableCommandMinimap = val;}
 	void setUiFocusArrows(bool val)				{uiFocusArrows = val;}
-	void setUiLastMap(string val)				{uiLastMap = val;}
-	void setUiLastRandStartLocs(bool val)		{uiLastRandStartLocs = val;}
 	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLastScenario(string val)			{uiLastScenario = val;}
-	void setUiLastTechTree(string val)			{uiLastTechTree = val;}
-	void setUiLastTileset(string val)			{uiLastTileset = val;}
 	void setUiLocale(string val)				{uiLocale = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
-	void setUiRandomStartLocations(bool val)	{uiRandomStartLocations = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
 };
 

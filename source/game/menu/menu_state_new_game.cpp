@@ -107,7 +107,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	foreach (vector<string>, it, results) {
 		mapFiles.insert(*it);
 	}
-	results.clear();	
+	results.clear();
 
 	try {
 		findAll("maps/*.mgm", results, true);
@@ -381,7 +381,6 @@ void MenuStateNewGame::onChangeMap(ListBase*) {
 	m_mapInfoLabel->setText(m_mapInfo.desc);
 
 	updateControlers();
-	g_config.setUiLastMap(mapBaseName);
 
 	GameSettings &gs = g_simInterface->getGameSettings();
 	gs.setDescription(formatString(mapBaseName));
@@ -389,7 +388,6 @@ void MenuStateNewGame::onChangeMap(ListBase*) {
 }
 
 void MenuStateNewGame::onChangeTileset(ListBase*) {
-	g_config.setUiLastTileset(m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 	GameSettings &gs = g_simInterface->getGameSettings();
 	assert(m_tilesetList->getSelectedIndex() >= 0);
 	gs.setTilesetPath(string("tilesets/") + m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
@@ -397,7 +395,6 @@ void MenuStateNewGame::onChangeTileset(ListBase*) {
 
 void MenuStateNewGame::onChangeTechtree(ListBase*) {
 	reloadFactions(true);
-	g_config.setUiLastTechTree(m_techTreeFiles[m_techTreeList->getSelectedIndex()]);
 }
 
 void MenuStateNewGame::onButtonClick(Button* btn) {

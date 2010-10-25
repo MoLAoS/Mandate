@@ -55,9 +55,6 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
 	gsDayTime = p->getFloat("GsDayTime", 1000.f);
 	gsWorldUpdateFps = p->getInt("GsWorldUpdateFps", 40);
-	miscAiLog = p->getInt("MiscAiLog", 0);
-	miscAiRedir = p->getBool("MiscAiRedir", false);
-	miscAutoTest = p->getBool("MiscAutoTest", false);
 	miscCatchExceptions = p->getBool("MiscCatchExceptions", true);
 	miscDebugKeys = p->getBool("MiscDebugKeys", false);
 	miscDebugMode = p->getBool("MiscDebugMode", false);
@@ -65,7 +62,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
 	netPlayerName = p->getString("NetPlayerName", "Player");
 	netServerIp = p->getString("NetServerIp", "192.168.1.1");
-	netServerPort = p->getInt("NetServerPort", 12345, 0, 65535);
+	netServerPort = p->getInt("NetServerPort", 12345, 1024, 65535);
 	renderCheckGlCaps = p->getBool("RenderCheckGlCaps", true);
 	renderColorBits = p->getInt("RenderColorBits", 32);
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
@@ -73,11 +70,8 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	renderDistanceMin = p->getFloat("RenderDistanceMin", 1.f, 0.0f, 65536.f);
 	renderFilterMaxAnisotropy = p->getInt("RenderFilterMaxAnisotropy", 1);
 	renderFilter = p->getString("RenderFilter", "Bilinear");
-	renderFogOfWarSmoothing = p->getBool("RenderFogOfWarSmoothing", 1);
+	renderFogOfWarSmoothing = p->getBool("RenderFogOfWarSmoothing", true);
 	renderFogOfWarSmoothingFrameSkip = p->getInt("RenderFogOfWarSmoothingFrameSkip", 3);
-	renderFontConsole = p->getString("RenderFontConsole", getDefaultFontStr());
-	renderFontDisplay = p->getString("RenderFontDisplay", getDefaultFontStr());
-	renderFontMenu = p->getString("RenderFontMenu", getDefaultFontStr());
 	renderFov = p->getFloat("RenderFov", 60.f, 0.01f, 360.f);
 	renderFpsMax = p->getInt("RenderFpsMax", 60, 0, 1000000);
 	renderGraphicsFactory = p->getString("RenderGraphicsFactory", "OpenGL");
@@ -88,7 +82,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	renderShadows = p->getString("RenderShadows", "Projected");
 	renderShadowTextureSize = p->getInt("RenderShadowTextureSize", 512);
 	renderStencilBits = p->getInt("RenderStencilBits", 0);
-	renderTextures3D = p->getBool("RenderTextures3D", 1);
+	renderTextures3D = p->getBool("RenderTextures3D", true);
 	soundFactory = p->getString("SoundFactory", isWindows()?"DirectSound8":"OpenAL");
 	soundStaticBuffers = p->getInt("SoundStaticBuffers", 16);
 	soundStreamingBuffers = p->getInt("SoundStreamingBuffers", 5);
@@ -97,17 +91,11 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	soundVolumeMusic = p->getInt("SoundVolumeMusic", 90);
 	uiConsoleMaxLines = p->getInt("UiConsoleMaxLines", 10);
 	uiConsoleTimeout = p->getInt("UiConsoleTimeout", 20);
-	uiEnableCommandMinimap = p->getBool("UiEnableCommandMinimap", true);
 	uiFocusArrows = p->getBool("UiFocusArrows", true);
-	uiLastMap = p->getString("UiLastMap", "four_rivers");
-	uiLastRandStartLocs = p->getBool("UiLastRandStartLocs", false);
 	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLastScenario = p->getString("UiLastScenario", "glest_classic/anarchy");
-	uiLastTechTree = p->getString("UiLastTechTree", "magitech");
-	uiLastTileset = p->getString("UiLastTileset", "forest");
 	uiLocale = p->getString("UiLocale", "en");
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
-	uiRandomStartLocations = p->getBool("UiRandomStartLocations", false);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
 
 	delete p;
@@ -135,9 +123,6 @@ void Config::save(const char *path) {
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
 	p->setFloat("GsDayTime", gsDayTime);
 	p->setInt("GsWorldUpdateFps", gsWorldUpdateFps);
-	p->setInt("MiscAiLog", miscAiLog);
-	p->setBool("MiscAiRedir", miscAiRedir);
-	p->setBool("MiscAutoTest", miscAutoTest);
 	p->setBool("MiscCatchExceptions", miscCatchExceptions);
 	p->setBool("MiscDebugKeys", miscDebugKeys);
 	p->setBool("MiscDebugMode", miscDebugMode);
@@ -155,9 +140,6 @@ void Config::save(const char *path) {
 	p->setString("RenderFilter", renderFilter);
 	p->setBool("RenderFogOfWarSmoothing", renderFogOfWarSmoothing);
 	p->setInt("RenderFogOfWarSmoothingFrameSkip", renderFogOfWarSmoothingFrameSkip);
-	p->setString("RenderFontConsole", renderFontConsole);
-	p->setString("RenderFontDisplay", renderFontDisplay);
-	p->setString("RenderFontMenu", renderFontMenu);
 	p->setFloat("RenderFov", renderFov);
 	p->setInt("RenderFpsMax", renderFpsMax);
 	p->setString("RenderGraphicsFactory", renderGraphicsFactory);
@@ -177,17 +159,11 @@ void Config::save(const char *path) {
 	p->setInt("SoundVolumeMusic", soundVolumeMusic);
 	p->setInt("UiConsoleMaxLines", uiConsoleMaxLines);
 	p->setInt("UiConsoleTimeout", uiConsoleTimeout);
-	p->setBool("UiEnableCommandMinimap", uiEnableCommandMinimap);
 	p->setBool("UiFocusArrows", uiFocusArrows);
-	p->setString("UiLastMap", uiLastMap);
-	p->setBool("UiLastRandStartLocs", uiLastRandStartLocs);
 	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLastScenario", uiLastScenario);
-	p->setString("UiLastTechTree", uiLastTechTree);
-	p->setString("UiLastTileset", uiLastTileset);
 	p->setString("UiLocale", uiLocale);
 	p->setBool("UiPhotoMode", uiPhotoMode);
-	p->setBool("UiRandomStartLocations", uiRandomStartLocations);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
 
 	p->save(path);

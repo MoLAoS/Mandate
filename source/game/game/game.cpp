@@ -134,7 +134,7 @@ void GameState::load() {
 	g_logger.setState(Lang::getInstance().get("Loading"));
 
 	if (scenarioName.empty()) {
-		g_logger.setSubtitle(formatString(mapName) + " - " + 
+		g_logger.setSubtitle(formatString(mapName) + " - " +
 			formatString(tilesetName) + " - " + formatString(techName));
 	} else {
 		g_logger.setSubtitle(formatString(scenarioName));
@@ -287,11 +287,6 @@ void GameState::update() {
 	if (g_simInterface->getQuit()) {
 		quitGame();
 	}
-
-	// update auto test
-	if (g_config.getMiscAutoTest()) {
-		AutoTest::getInstance().updateGame(this);
-	}
 }
 
 void GameState::displayError(std::exception &e) {
@@ -304,7 +299,7 @@ void GameState::displayError(std::exception &e) {
 	}
 	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	MessageDialog* dialog = MessageDialog::showDialog(pos, size, 
+	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
 		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
 	dialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
@@ -364,7 +359,7 @@ void GameState::confirmExitProgram() {
 		m_chatDialog->setVisible(false);
 	}
 	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"), 
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"),
 		g_lang.get("ExitProgram?"), g_lang.get("Ok"), g_lang.get("Cancel"));
 	dialog->Button1Clicked.connect(this, &GameState::onConfirmExitProgram);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
@@ -400,7 +395,7 @@ void GameState::doSaveBox() {
 	}
 	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
+	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"),
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
 	m_modalDialog = dialog;
 	dialog->setInputMask(allowMask);
@@ -426,8 +421,8 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	MessageDialog* dialog = MessageDialog::showDialog(pos, size, 
-		g_lang.getScenarioString(m_scriptMessages.front().header), 
+	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
+		g_lang.getScenarioString(m_scriptMessages.front().header),
 		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
 	dialog->Button1Clicked.connect(this, &GameState::destroyDialog);
@@ -482,7 +477,7 @@ void GameState::destroyDialog(BasicDialog*) {
 void GameState::doDefeatedMessage(Faction *f) {
 	string player = "[" + f->getName() + "] ";
 	string msg = g_lang.getDefeatedMessage();
-	
+
 	string::size_type n = msg.find("%s");
 	while (n != string::npos) {
 		string start = msg.substr(0, n);
@@ -543,41 +538,41 @@ void GameState::tick(){
 // ==================== events ====================
 
 void GameState::mouseDownLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	if (!noInput) {
 		gui.mouseDownLeft(x, y);
 	}
 }
 
 void GameState::mouseDownRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	if (!noInput) {
 		gui.mouseDownRight(x, y);
 	}
 }
 
 void GameState::mouseUpLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	if (!noInput) {
 		gui.mouseUpLeft(x, y);
 	}
 }
 void GameState::mouseUpRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
 }
 
 void GameState::mouseDoubleClickLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	if (!noInput) {
 		gui.mouseDoubleClickLeft(x, y);
 	}
 }
 
 void GameState::mouseMove(int x, int y, const MouseState &ms) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
 	mouseX = x;
 	mouseY = y;
 
@@ -1008,7 +1003,7 @@ void ShowMap::keyDown(const Key &key) {
 	//change camera mode
 	} else if (cmd == ucCameraCycleMode) {
 		gameCamera.switchState();
-		string stateString = gameCamera.getState() == GameCamera::sGame 
+		string stateString = gameCamera.getState() == GameCamera::sGame
 			? g_lang.get("GameCamera") : g_lang.get("FreeCamera");
 		gui.getRegularConsole()->addLine(g_lang.get("CameraModeSet") + " " + stateString);
 
