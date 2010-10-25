@@ -105,6 +105,11 @@ private:
 	bool hasUnconnectedSlots();
 	bool hasNetworkSlots();
 
+	void randomiseStartLocs();
+	void randomiseFactions();
+	//void randomiseMap();
+	//void randomiseTileset();
+
 	void onChangeFaction(PlayerSlotWidget*);
 	void onChangeControl(PlayerSlotWidget*);
 	void onChangeTeam(PlayerSlotWidget*);

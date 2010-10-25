@@ -148,7 +148,7 @@ void UserInterface::init() {
 	selection.init(this, world->getThisFactionIndex());
 
 	int x = g_metrics.getScreenW() - 20 - 195;
-	int y = (g_metrics.getScreenH() - 600) / 2;
+	int y = (g_metrics.getScreenH() - 500) / 2;
 
 	m_display = new Display(this, Vec2i(x,y));
 
@@ -242,6 +242,7 @@ static void calculateNearest(UnitVector &units, const Vec3f &pos) {
 		float minDist = numeric_limits<float>::infinity();
 		Unit *nearest = 0;
 		foreach_const (UnitVector, i, units) {
+			RUNTIME_CHECK(!(*i)->isCarried());
 			float dist = pos.dist((*i)->getCurrVector());
 			if (dist < minDist) {
 				minDist = dist;
@@ -266,6 +267,7 @@ void UserInterface::onResourceDepleted(Vec2i cellPos) {
 	assert(o);
 	if (o == selectedObject) {
 		selectedObject = 0;
+		m_display->setSize();
 	}
 }
 
@@ -449,7 +451,7 @@ void UserInterface::groupKey(int groupIndex){
 	if (input.isCtrlDown()) {
 		selection.assignGroup(groupIndex);
 	} else {
-		if(currentGroup == groupIndex){
+		if (currentGroup == groupIndex) {
 			centerCameraOnSelection();
 		}
 
@@ -912,7 +914,8 @@ void UserInterface::computeInfoString(int posDisplay) {
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
 				if (cc != CommandClass::NULL_COMMAND) {
-					m_display->setInfoText(g_lang.get("CommonCommand") + ": " + ut->getFirstCtOfClass(cc)->toString());
+					m_display->setInfoText(g_lang.get("CommonCommand") + ": "
+						+ g_lang.get(CommandClassNames[cc]));
 				}
 			}
 		}

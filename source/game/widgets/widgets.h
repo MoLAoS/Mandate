@@ -547,6 +547,17 @@ public:
 	//		Widget::Destoyed
 };
 
+class ToolTip : public StaticText {
+private:
+	void init();
+
+public:
+	ToolTip(Container* parent);
+	ToolTip(Container* parent, Vec2i pos, Vec2i size);
+
+	void setText(const string &txt);
+};
+
 }}
 
 #endif

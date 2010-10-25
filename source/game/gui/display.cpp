@@ -18,7 +18,7 @@
 #include "widget_window.h"
 #include "core_data.h"
 #include "user_interface.h"
-
+#include "world.h"
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -46,15 +46,17 @@ void setFancyBorder(BorderStyle &style) {
 // =====================================================
 
 Display::Display(UserInterface *ui, Vec2i pos)
-		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 600))
+		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 500))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
 		, m_ui(ui)
+		, m_logo(-1)
 		, m_draggingWidget(false)
 		, m_moveOffset(Vec2i(0))
 		, m_pressedCommandIndex(-1) 
-		, m_pressedCarryIndex(-1) {
+		, m_pressedCarryIndex(-1)
+		, m_toolTip(0) {
 	setFancyBorder(m_borderStyle);
 
 	colors[0] = Vec3f(1.f, 1.f, 1.f);
@@ -97,7 +99,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	}
 
 	x = getBorderLeft();
-	y -= (40 + int(m_font->getMetrics()->getHeight()) * 8);
+	y -= (40/* + int(m_font->getMetrics()->getHeight()) * 8*/);
 	addText(""); // 'Transported' label
 	setTextPos(Vec2i(x, y + 5), 4);
 	m_carryImageOffset = Vec2i(x, y);
@@ -110,23 +112,35 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		x += 32;
 	}
 
+	const Texture2D *logoTex = g_world.getThisFaction()->getLogoTex();
+	if (logoTex) {
+		m_logo = addImageX(logoTex, Vec2i(3,0), Vec2i(192,192));
+	}
+
 	downSelectedPos = invalidPos;
 	setProgressBar(-1);
 	clear();
 	setSize();
+
+	m_toolTip = new ToolTip(getParent());
+	m_toolTip->setVisible(false);
 }
 
 void Display::setSize() {
-	const int width = 195;
-	const int bigHeight = 600;
-	const int smallHeight = 150;
+	const int width = 192 + 3;
+	const int bigHeight = 500;
+	const int smallHeight = 192 + 15;
 	Vec2i sz(width, bigHeight);
 	if (m_ui->getSelection()->isEmpty()) {
 		if (m_ui->getSelectedObject()) {
 			sz = Vec2i(width, smallHeight);
 		} else {
-			setVisible(false);
-			return;
+			if (g_world.getThisFaction()->getLogoTex()) {
+				sz = Vec2i(width, smallHeight);
+			} else {
+				setVisible(false);
+				return;
+			}
 		}
 	} else {
 		if (!m_ui->getSelection()->isComandable()) {
@@ -233,13 +247,13 @@ void Display::setInfoText(const string &infoText) {
 	string str = Util::formatString(infoText);
 	trimTrailingNewlines(str);
 
-	int lines = 1;
-	foreach_const (string, it, str) {
-		if (*it == '\n') ++lines;
-	}
-	int yPos = getHeight() - getBorderTop() - imageSize * cellHeightCount - 48
-		- (lines + 10) * int(m_font->getMetrics()->getHeight());
-	TextWidget::setTextPos(Vec2i(5, yPos), 2);
+	//int lines = 1;
+	//foreach_const (string, it, str) {
+	//	if (*it == '\n') ++lines;
+	//}
+	//int yPos = getHeight() - getBorderTop() - imageSize * cellHeightCount - 48
+	//	- (lines + 10) * int(m_font->getMetrics()->getHeight());
+	//TextWidget::setTextPos(Vec2i(5, yPos), 2);
 	TextWidget::setText(str, 2);
 }
 
@@ -311,6 +325,11 @@ void Display::render() {
 		return;
 	}
 	renderBgAndBorders();
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
+		// faction logo
+		assert(m_logo != -1);
+		ImageWidget::renderImage(m_logo);
+	}
 	Vec4f light(1.f), dark(0.3f, 0.3f, 0.3f, 1.f);
 	ImageWidget::startBatch();
 	for (int i = 0; i < upCellCount; ++i) {
@@ -339,9 +358,9 @@ void Display::render() {
 	if (!TextWidget::getText(1).empty()) {
 		renderTextShadowed(1);
 	}
-	if (!TextWidget::getText(2).empty()) {
-		renderTextShadowed(2);
-	}
+	//if (!TextWidget::getText(2).empty()) {
+	//	renderTextShadowed(2);
+	//}
 	if (!TextWidget::getText(4).empty()) {
 		renderTextShadowed(4);
 	}
@@ -484,10 +503,19 @@ bool Display::mouseMove(Vec2i pos) {
 			if (ndx != invalidPos && getImage(upCellCount + ndx)) {
 				m_ui->computeInfoString(ndx);
 				m_pressedCommandIndex = ndx;
+
+				m_toolTip->setText(TextWidget::getText(2));
+				Vec2i ttPos = getScreenPos() + m_downImageOffset;
+				ttPos.y -= (32 * (1 + ndx / cellWidthCount));
+				ttPos.y -= m_toolTip->getHeight();
+				m_toolTip->setPos(ttPos);
+				m_toolTip->setVisible(true);
+
 				return true;
 			} else {
 				m_pressedCommandIndex = ndx;
 				setInfoText("");
+				m_toolTip->setVisible(false);
 			}
 			m_pressedCommandIndex = ndx;
 		} else {
@@ -496,6 +524,7 @@ bool Display::mouseMove(Vec2i pos) {
 	} else {
 		if (m_pressedCommandIndex != -1) {
 			setInfoText("");
+			m_toolTip->setVisible(false);
 			m_pressedCommandIndex = -1;
 		}
 	}
@@ -506,6 +535,7 @@ bool Display::mouseMove(Vec2i pos) {
 void Display::mouseOut() {
 	m_pressedCommandIndex = -1;
 	setInfoText("");
+	m_toolTip->setVisible(false);
 }
 
 // =====================================================

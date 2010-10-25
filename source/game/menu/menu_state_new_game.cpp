@@ -293,8 +293,12 @@ void MenuStateNewGame::onChangeFaction(PlayerSlotWidget* psw) {
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	if (psw->getSelectedFactionIndex() >= 0) {
 		int n = psw->getSelectedFactionIndex();
-		assert(n >= 0 && n < m_factionFiles.size());
-		gs.setFactionTypeName(ndx, m_factionFiles[n]);
+		assert(n >= 0 && n < m_factionFiles.size() + 1); // + 1 for 'Random'
+		if (n < m_factionFiles.size()) {
+			gs.setFactionTypeName(ndx, m_factionFiles[n]);
+		} else {
+			gs.setFactionTypeName(ndx, "Random");
+		}
 	} else {
 		gs.setFactionTypeName(ndx, "");
 	}
@@ -445,12 +449,17 @@ void MenuStateNewGame::update() {
 				m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
 				m_transition = false;
 			} else {
-				g_simInterface->getGameSettings().compact();
+				GameSettings &gs = g_simInterface->getGameSettings();
+				gs.compact();
 				g_config.save();
 				XmlTree *doc = new XmlTree("game-settings");
-				g_simInterface->getGameSettings().save(doc->getRootNode());
+				gs.save(doc->getRootNode());
 				doc->save("last_gamesettings.gs");
 				delete doc;
+				if (gs.getRandomStartLocs()) {
+					randomiseStartLocs();
+				}
+				randomiseFactions();
 				if (!hasNetworkSlots()) {
 					GameSettings gs = g_simInterface->getGameSettings();
 					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
@@ -528,10 +537,14 @@ bool MenuStateNewGame::loadGameSettings() {
 		}
 		int ndx = -1;
 		string fName = gs.getFactionTypeName(i);
-		foreach (vector<string>, it, m_factionFiles) {
-			++ndx;
-			if (*it == fName) {
-				break;
+		if (fName == "Random") {
+			ndx = m_factionFiles.size();
+		} else {
+			foreach (vector<string>, it, m_factionFiles) {
+				++ndx;
+				if (*it == fName) {
+					break;
+				}
 			}
 		}
 		m_playerSlots[slot]->setSelectedFaction(ndx);
@@ -598,7 +611,12 @@ void MenuStateNewGame::updateControlers() {
 				m_playerSlots[i]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
 			}
 			assert(m_playerSlots[i]->getSelectedFactionIndex() >= 0 && m_playerSlots[i]->getSelectedFactionIndex() < GameConstants::maxPlayers);
-			gs.setFactionTypeName(i, m_factionFiles[m_playerSlots[i]->getSelectedFactionIndex()]);
+			int factionIndex = m_playerSlots[i]->getSelectedFactionIndex();
+			if (factionIndex < m_factionFiles.size()) {
+				gs.setFactionTypeName(i, m_factionFiles[factionIndex]);
+			} else {
+				gs.setFactionTypeName(i, g_lang.get("Random"));
+			}
 			switch (m_playerSlots[i]->getControlType()) {
 				case ControlType::HUMAN:
 					gs.setPlayerName(i, g_config.getNetPlayerName());
@@ -686,5 +704,36 @@ void MenuStateNewGame::updateNetworkSlots() {
 		}
 	}
 }
+
+void MenuStateNewGame::randomiseStartLocs() {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	vector<int> freeStartLocs;
+	for (int i=0; i < m_mapInfo.players; ++i) {
+		freeStartLocs.push_back(i);
+	}
+	Random random(Chrono::getCurMillis());
+	for (int i=0; i < gs.getFactionCount(); ++i) {
+		int sli = freeStartLocs[random.randRange(0, freeStartLocs.size() - 1)];
+		gs.setStartLocationIndex(i, sli);
+		freeStartLocs.erase(std::find(freeStartLocs.begin(), freeStartLocs.end(), sli));
+	}
+}
+
+void MenuStateNewGame::randomiseFactions() {
+	GameSettings &gs = g_simInterface->getGameSettings();
+	Random random(Chrono::getCurMillis());
+	for (int i=0; i < gs.getFactionCount(); ++i) {
+		if (gs.getFactionTypeName(i) == "Random") {
+			int ndx = random.randRange(0, m_factionFiles.size() - 1);
+			gs.setFactionTypeName(i, m_factionFiles[ndx]);
+		}
+	}
+}
+
+//void MenuStateNewGame::randomiseMap() {
+//}
+//
+//void MenuStateNewGame::randomiseTileset() {
+//}
 
 }}//end namespace

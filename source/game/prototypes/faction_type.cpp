@@ -32,12 +32,13 @@ namespace Glest { namespace ProtoTypes {
 //          Class FactionType
 // ======================================================
 
-FactionType::FactionType(){
-	music= NULL;
-	attackNotice = NULL;
-	enemyNotice = NULL;
-	attackNoticeDelay = 0;
-	enemyNoticeDelay = 0;
+FactionType::FactionType()
+		: music(0)
+		, attackNotice(0)
+		, enemyNotice(0)
+		, attackNoticeDelay(0)
+		, enemyNoticeDelay(0)
+		, m_logoPixmap(0) {
 	subfactions.push_back(string("base"));
 }
 
@@ -255,6 +256,19 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	} catch (runtime_error e) { 
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
+	}
+
+	try {
+		const XmlNode *logoNode = factionNode->getOptionalChild("logo");
+		if (logoNode && logoNode->getBoolValue()) {
+			string logoPath = dir + "/" + logoNode->getRestrictedAttribute("path");			
+			m_logoPixmap = new Pixmap2D();
+			m_logoPixmap->load(logoPath);
+		}
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, e.what());
+		delete m_logoPixmap;
+		m_logoPixmap = 0;
 	}
 
 	// notification of being attacked off screen

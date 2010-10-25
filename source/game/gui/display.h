@@ -68,6 +68,7 @@ private:
 	int m_progress;
 	int currentColor;
 	int downSelectedPos;
+	int m_logo;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;
@@ -81,6 +82,8 @@ private:
 	Font *m_font;
 	int m_pressedCommandIndex;	// index of command button that received a mouse down event
 	int m_pressedCarryIndex;	// index of carry image that received a mouse down event
+
+	ToolTip	*m_toolTip;
 
 private:
 	void renderProgressBar();

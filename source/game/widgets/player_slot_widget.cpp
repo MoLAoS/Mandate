@@ -213,6 +213,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent, Vec2i pos, Vec2i size)
 	}
 
 	m_factionList = new DropList(this);
+	m_factionList->setDropBoxHeight(200);
 	m_teamList = new DropList(this);
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));

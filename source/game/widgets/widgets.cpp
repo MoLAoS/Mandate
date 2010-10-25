@@ -34,6 +34,9 @@ namespace Glest { namespace Widgets {
 // =====================================================
 
 void StaticText::render() {
+	if (!isVisible()) {
+		return;
+	}
 	Widget::renderBgAndBorders();
 	if (m_doubleShadow) {
 		TextWidget::renderTextDoubleShadowed(0, m_shadowOffset);
@@ -1447,6 +1450,35 @@ void DropList::onListDisposed(Widget*) {
 	setVisible(true);
 	floatingList = 0;
 	ListCollapsed(this);
+}
+
+// =====================================================
+//  class ToolTip
+// =====================================================
+
+void ToolTip::init() {
+	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 0.f)));
+	m_borderStyle.setSizes(2);
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Vec3f(0.3f, 0.3f, 0.3f)));
+	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFont(), false);
+	TextWidget::setTextPos(Vec2i(4, 4));
+}
+
+ToolTip::ToolTip(Container* parent)
+		: StaticText(parent) {
+	init();
+}
+
+ToolTip::ToolTip(Container* parent, Vec2i pos, Vec2i size)
+		: StaticText(parent, pos, size) {
+	init();
+}
+
+void ToolTip::setText(const string &txt) {
+	TextWidget::setText(txt);
+	Vec2i dims = TextWidget::getTextDimensions(0);
+	dims += Vec2i(8);
+	setSize(dims);
 }
 
 }}

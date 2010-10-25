@@ -325,7 +325,7 @@ void World::processFrame() {
 		if (rt->getClass() == ResourceClass::CONSUMABLE 
 		&& frameCount % (rt->getInterval() * WORLD_FPS) == 0) {
 			for (int i = 0; i < getFactionCount(); ++i) {
-				getFaction(i)->applyCostsOnInterval();
+				getFaction(i)->applyCostsOnInterval(rt);
 			}
 		}
 	}

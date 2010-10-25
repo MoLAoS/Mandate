@@ -858,7 +858,7 @@ int ScriptManager::givePositionCommand(LuaHandle* luaHandle) {
 	return args.getReturnCount();
 }
 
-int ScriptManager::giveTargetCommand (LuaHandle * luaHandle) {
+int ScriptManager::giveTargetCommand(LuaHandle * luaHandle) {
 	LuaArguments args(luaHandle);
 	int id, id2;
 	string cmd;
@@ -875,7 +875,7 @@ int ScriptManager::giveTargetCommand (LuaHandle * luaHandle) {
 	return args.getReturnCount();
 }
 
-int ScriptManager::giveStopCommand (LuaHandle * luaHandle) {
+int ScriptManager::giveStopCommand(LuaHandle * luaHandle) {
 	LuaArguments args(luaHandle);
 	int id;
 	string cmd;
@@ -1236,21 +1236,25 @@ IF_DEBUG_EDITION(
 		}
 		return args.getReturnCount();
 	}
-)
+) // DEBUG_EDITION
 
 int ScriptManager::dofile(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string path;
 	if (extractArgs(args, "dofile", "str", &path)) {
-		FileOps *f = g_fileFactory.getFileOps();
-		f->openRead(path.c_str());
-		int size = f->fileSize();
-		char *someLua = new char[size + 1];
-		f->read(someLua, size, 1);
-		someLua[size] = '\0';
-		delete f;
-		luaScript.luaDoLine(someLua);
-		delete [] someLua;
+		try {
+			FileOps *f = g_fileFactory.getFileOps();
+			f->openRead(path.c_str());
+			int size = f->fileSize();
+			char *someLua = new char[size + 1];
+			f->read(someLua, size, 1);
+			someLua[size] = '\0';
+			delete f;
+			luaScript.luaDoLine(someLua);
+			delete [] someLua;
+		} catch (runtime_error &e) {
+			addErrorMessage(e.what());
+		}
 	}
 	return args.getReturnCount();
 }
