@@ -225,7 +225,7 @@ else()
 	# for linux, default: tarball, to get deb-package run 'cpack -G DEB'
 	# TODO: try to add some general dependencies for deb and rpm
 	#set(CPACK_RPM_PACKAGE_REQUIRES "zlib >= 1.2, libogg >= 1.1, libvorbis >= 1.2, lua >= 5.1, SDL >= 1.2")
-	set(CPACK_DEBIAN_PACKAGE_DEPENDS "libpng12-0, libvorbis0a, libogg0, lua5.1, libsdl1.2debian")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "libpng12-0, libvorbis0a, libogg0, lua5.1, libsdl1.2debian, libphysfs1")
 	set(CPACK_DEBIAN_PACKAGE_MAINTAINER "James McCulloch <silnarm@gmail.com>")
 	set(CPACK_DEBIAN_PACKAGE_SECTION "games")
 
