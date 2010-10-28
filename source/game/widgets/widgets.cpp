@@ -1459,8 +1459,8 @@ void DropList::onListDisposed(Widget*) {
 void ToolTip::init() {
 	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 0.f)));
 	m_borderStyle.setSizes(2);
-	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Vec3f(0.3f, 0.3f, 0.3f)));
-	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFont(), false);
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 160u)));
+	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFontBig(), false);
 	TextWidget::setTextPos(Vec2i(4, 4));
 }
 

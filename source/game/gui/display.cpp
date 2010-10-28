@@ -247,6 +247,9 @@ void Display::setInfoText(const string &infoText) {
 	string str = Util::formatString(infoText);
 	trimTrailingNewlines(str);
 
+	const FontMetrics *fm = m_toolTip->getTextFont()->getMetrics();
+	fm->wrapText(str, 32 * cellWidthCount);
+
 	//int lines = 1;
 	//foreach_const (string, it, str) {
 	//	if (*it == '\n') ++lines;
@@ -506,8 +509,15 @@ bool Display::mouseMove(Vec2i pos) {
 
 				m_toolTip->setText(TextWidget::getText(2));
 				Vec2i ttPos = getScreenPos() + m_downImageOffset;
-				ttPos.y -= (32 * (1 + ndx / cellWidthCount));
-				ttPos.y -= m_toolTip->getHeight();
+				//ttPos.y -= (32 * (1 + ndx / cellWidthCount));
+
+				if (ttPos.x > g_metrics.getScreenW() / 2) {
+					ttPos.x -= (m_toolTip->getWidth() + 5);
+				} else {
+					ttPos.x += (getWidth() + 5);
+				}
+				
+				ttPos.y -= (m_toolTip->getHeight() + 5);
 				m_toolTip->setPos(ttPos);
 				m_toolTip->setVisible(true);
 

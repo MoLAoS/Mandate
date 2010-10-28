@@ -186,7 +186,7 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 			throw runtime_error("No files found: " + path);
 		}
 	} else {
-		slist<string> l;
+		list<string> l;
 		DirIterator di;
 		char *p = initDirIterator(path, di);
 
@@ -226,7 +226,7 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 
 		l.sort();
 		results.clear();
-		for(slist<string>::iterator li = l.begin(); li != l.end(); ++li) {
+		for(list<string>::iterator li = l.begin(); li != l.end(); ++li) {
 			results.push_back(*li);
 		}
 	}

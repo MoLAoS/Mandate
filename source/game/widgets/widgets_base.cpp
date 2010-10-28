@@ -546,7 +546,6 @@ void TextWidget::endBatch() {
 	m_batchRender = false;
 }
 
-
 void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
 	assertGl();
 	if (!m_batchRender) {

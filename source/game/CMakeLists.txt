@@ -32,6 +32,7 @@ foreach(folder ${folders})
 endforeach(folder)
 if(WIN32)
 	list(APPEND game_srcs "resources.rc")
+	source_group("." FILES "resources.rc")
 endif(WIN32)
 
 # ugly, but otherwise not the updated stuff

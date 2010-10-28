@@ -163,7 +163,7 @@ void GameState::init() {
 	gui.init();
 	gameCamera.init(g_map.getW(), g_map.getH());
 	Vec2i v(g_map.getW() / 2, g_map.getH() / 2);
-	if (g_world.getThisFaction()) {  //e.g. -loadmap has no players
+	if (g_world.getThisFaction()) {  // e.g. -loadmap has no players
 		v = g_map.getStartLocation(g_world.getThisFaction()->getStartLocationIndex());
 	}
 	gameCamera.setPos(Vec2f(float(v.x), float(v.y + 12)));
@@ -300,7 +300,7 @@ void GameState::displayError(std::exception &e) {
 	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
-		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
+		g_lang.get("Error"), "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
 	dialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
 	dialog->Escaped.connect(this, &GameState::onErrorDismissed);
@@ -406,9 +406,17 @@ void GameState::doSaveBox() {
 
 void GameState::onSaveSelected(BasicDialog*) {
 	InputDialog* in  = static_cast<InputDialog*>(m_modalDialog);
-	saveGame(in->getInput());
+	string name = in->getInput();
+	saveGame(name);
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
+	
+	string msg = g_lang.get("YourGameWasSaved");
+	string::size_type pos = msg.find("%s");
+	if (pos != string::npos) {
+		msg.replace(pos, 2, name + ".sav");
+	}
+	gui.getRegularConsole()->addLine(msg);
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {

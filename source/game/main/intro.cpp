@@ -59,14 +59,14 @@ Intro::Intro(Program &program)
 	if (!isTotalConversion) {
 		Font *font = coreData.getGAEFontBig();
 		lblAdvanced = new Widgets::StaticText(logoPanel);
-		lblAdvanced->setTextParams(lang.get("Advanced"), Vec4f(1.f), font);
+		lblAdvanced->setTextParams(lang.get("AdvEng1"), Vec4f(1.f), font);
 		Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
 		lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
 		lblAdvanced->setSize(sz);
 		lblAdvanced->centreText();
 
 		lblEngine = new Widgets::StaticText(logoPanel);
-		lblEngine->setTextParams(lang.get("Engine"), Vec4f(1.f), font);
+		lblEngine->setTextParams(lang.get("AdvEng2"), Vec4f(1.f), font);
 		lblEngine->setPos(Vec2i(285, 60));
 		lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
 		lblEngine->centreText();
@@ -82,7 +82,7 @@ Intro::Intro(Program &program)
 	} else {
 		lblEngine = new Widgets::StaticText(&program);
 		Vec2i pos, size;
-		lblEngine->setTextParams("Glest Advanced Engine " + gaeVersionString, 
+		lblEngine->setTextParams("Glest Advanced Engine " + gaeVersionString,
 			Vec4f(1.f), coreData.getGAEFontSmall());
 		size = lblEngine->getTextDimensions() + Vec2i(5,5);
 		pos = Vec2i(g_metrics.getScreenW() - size.x - 15, 10);
@@ -110,34 +110,28 @@ void Intro::update(){
 	if (timer <= fadeTime) {
 		float fade = timer / float(fadeTime);
 		program.setFade(fade);
-//		logoPanel->setFade(fade);
 	} else if (timer <= fadeTime * 2) {
 		// fade == 1.f, do nothing
 	} else if (timer <= fadeTime * 3) {
 		float fade = 1.f - (timer - fadeTime * 2) / float(fadeTime);
 		program.setFade(fade);
-//		logoPanel->setFade(fade);
 	} else if (timer == fadeTime * 3 + 1) {
 		CoreData &coreData= CoreData::getInstance();
 		const Metrics &metrics= Metrics::getInstance();
 		program.clear();
 		lblWebsite = new Widgets::StaticText(&program);
-//		lblWebsite->setBorderParams(Widgets::BorderStyle::SOLID, 2, Vec3f(1.f), 0.5f);
 		lblWebsite->setTextParams("www.glest.org", Vec4f(1.f), coreData.getGAEFontSmall());
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
 		lblWebsite->centreText();
 		program.setFade(0.f);
-		//lblWebsite->setFade(0.f);
 	} else if (timer <= fadeTime * 4) {
 		float fade = (timer - fadeTime * 3) / float(fadeTime);
 		program.setFade(fade);
-		//lblWebsite->setFade(fade);
 	} else if (timer <= fadeTime * 5) {
 	} else if (timer <= fadeTime * 6) {
 		float fade = 1.f - (timer - fadeTime * 5) / float(fadeTime);
 		program.setFade(fade);
-		//lblWebsite->setFade(fade);
 	} else {
 		program.clear();
 		program.setState(new MainMenu(program));

@@ -146,9 +146,9 @@ REGULAR_ENUM( Weather,
 					SNOWY
 			);
 
-} // namespace Game
+} // namespace Gui
 
 
-}//end namespace
+}// end namespace Glest
 
 #endif

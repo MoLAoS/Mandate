@@ -64,13 +64,13 @@ private:
 			vertScrollUpHoverTex,
 			vertScrollDownHoverTex;
 	
-	Font *m_FTMenuFontNormal;
-	Font *m_FTMenuFontSmall;
-	Font *m_FTMenuFontBig;
-	Font *m_FTMenuFontVeryBig;
+	Font	*m_FTMenuFontNormal;
+	Font	*m_FTMenuFontSmall;
+	Font	*m_FTMenuFontBig;
+	Font	*m_FTMenuFontVeryBig;
 
-	Font *advancedEngineFontSmall;
-	Font *advancedEngineFontBig;
+	Font	*advancedEngineFontSmall;
+	Font	*advancedEngineFontBig;
 
 	Font	*m_FTDisplay, 
 			*m_FTDisplayBig;

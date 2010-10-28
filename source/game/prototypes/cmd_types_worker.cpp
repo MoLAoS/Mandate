@@ -392,6 +392,11 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			const XmlNode *buildingNode= buildingsNode->getChild("building", i);
 			string name= buildingNode->getAttribute("name")->getRestrictedValue();
 			buildings.push_back(ft->getUnitType(name));
+			try {
+				m_tipKeys[name] = buildingNode->getRestrictedAttribute("tip");
+			} catch (runtime_error &e) {
+				m_tipKeys[name] = "";
+			}
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());

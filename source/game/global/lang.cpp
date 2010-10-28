@@ -30,14 +30,16 @@ namespace Glest { namespace Global {
 // =====================================================
 
 void Lang::setLocale(const string &locale) {
-	this->locale = locale;
-	strings.clear();
-	setlocale(LC_CTYPE, locale.c_str());
-	string path = "gae/data/lang/" + locale + ".lng";
-	strings.load(path);
-	defeatStrings.clear();
+	m_locale = locale;
+	
+	m_mainStrings.clear();
+	setlocale(LC_CTYPE, m_locale.c_str());
+	string path = "gae/data/lang/" + m_locale + ".lng";
+	m_mainStrings.load(path);
+
+	m_defeatStrings.clear();
 	FileOps *f = g_fileFactory.getFileOps();
-	path = "/gae/data/defeat_messages/" + locale + ".txt";
+	path = "/gae/data/defeat_messages/" + m_locale + ".txt";
 	try {
 		f->openRead(path.c_str());
 		int size = f->fileSize();
@@ -57,46 +59,61 @@ void Lang::setLocale(const string &locale) {
 				str = str.substr(0, str.size() - 1);
 			}
 			if (!str.empty()) {
-				defeatStrings.push_back(str);
+				m_defeatStrings.push_back(str);
 			}
 		}
 	} catch (runtime_error &e) {
-		defeatStrings.clear();
+		m_defeatStrings.clear();
 	}
 	delete f; ///@todo since f is allocated in FSFactory it should be deleted there too.
 }
 
-string Lang::getDefeatedMessage() const {
-	int seed = int(Chrono::getCurMicros());
-	Random random(seed);
-	if (defeatStrings.empty()) {
-		return string("%s has been defeated.");
-	} else {
-		int ndx = random.randRange(0, defeatStrings.size() - 1);
-		return defeatStrings[ndx];
+void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenarioName) {
+	string path = scenarioDir + "/" + scenarioName + "_" + m_locale + ".lng";
+	m_scenarioStrings.clear();
+	if (fileExists(path)) { // try to load the current m_locale first
+		m_scenarioStrings.load(path);
+	} else { // try english otherwise		
+		string path = scenarioDir + "/" + scenarioName + "/" + scenarioName + "_en.lng";
+		if (fileExists(path)) {
+			m_scenarioStrings.load(path);
+		}
 	}
 }
 
-void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenarioName) {
-	string path = scenarioDir + "/" + scenarioName + "_" + locale + ".lng";
-
-	scenarioStrings.clear();
-
-	//try to load the current locale first
-	if (fileExists(path)) {
-		scenarioStrings.load(path);
-	} else {
-		//try english otherwise
-		string path = scenarioDir + "/" + scenarioName + "/" + scenarioName + "_en.lng";
+void Lang::loadTechStrings(const string &tech) {
+	string path = "techs/" + tech + "/" + tech + "_" + m_locale + ".lng";
+	m_techStrings.clear();
+	if (fileExists(path)) { // try to load the current m_locale first
+		m_techStrings.load(path);
+	} else { // try english otherwise
+		path = "techs/" + tech + "/" + tech + "_en.lng";
 		if (fileExists(path)) {
-			scenarioStrings.load(path);
+			m_techStrings.load(path);
+		}
+	}
+}
+
+void Lang::loadFactionStrings(const string &tech, set<string> &factions) {
+	foreach_const (set<string>, it, factions) {
+		const string &faction = *it;
+		Properties &p = m_factionStringsMap[faction];
+		string prePath = "techs/" + tech + "/factions/" + faction + "/" + faction + "_";
+		string path = prePath + m_locale + ".lng";
+		if (fileExists(path)) {
+			p.load(path);
+		} else {
+			path = prePath + "en.lng";
+			if (fileExists(path)) {
+				p.load(path);
+			}
 		}
 	}
 }
 
 string Lang::get(const string &s) const {
 	try {
-		return strings.getString(s);
+		return m_mainStrings.getString(s);
 	} catch (exception &) {
 		return "???" + s + "???";
 	}
@@ -104,9 +121,36 @@ string Lang::get(const string &s) const {
 
 string Lang::getScenarioString(const string &s) {
 	try {
-		return scenarioStrings.getString(s);
+		return m_scenarioStrings.getString(s);
 	} catch (exception &) {
 		return "???" + s + "???";
+	}
+}
+
+string Lang::getDefeatedMessage() const {
+	int seed = int(Chrono::getCurMicros());
+	Random random(seed);
+	if (m_defeatStrings.empty()) {
+		return string("%s has been defeated.");
+	} else {
+		int ndx = random.randRange(0, m_defeatStrings.size() - 1);
+		return m_defeatStrings[ndx];
+	}
+}
+
+string Lang::getTechString(const string &s) {
+	try {
+		return m_techStrings.getString(s);
+	} catch (exception &) {
+		return s;
+	}
+}
+
+string Lang::getFactionString(const string &faction, const string &s) {
+	try {
+		return m_factionStringsMap[faction].getString(s);
+	} catch (exception &) {
+		return s;
 	}
 }
 

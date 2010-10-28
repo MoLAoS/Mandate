@@ -47,6 +47,7 @@ public:
 	void setFreeType(bool val)			{freeType = val;}
 
 	Vec2f getTextDiminsions(const string &str) const;
+	void wrapText(string &io_text, unsigned i_maxWidth) const;
 	bool isFreeType() const { return freeType; }
 	float getHeight() const;
 	float getMaxAscent() const { return maxAscent; }

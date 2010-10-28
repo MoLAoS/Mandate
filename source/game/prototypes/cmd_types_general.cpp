@@ -56,7 +56,13 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 }
 
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
-	name = n->getChildRestrictedValue("name");
+	const XmlNode *nameNode = n->getChild("name");
+	name = nameNode->getRestrictedValue();
+	try {
+		m_tipKey = nameNode->getRestrictedAttribute("tip");
+	} catch (runtime_error &e) {
+		m_tipKey = "";
+	}
 
 	bool ok = DisplayableType::load(n, dir);
 	return RequirableType::load(n, dir, tt, ft) && ok;
@@ -268,8 +274,14 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		try {
 			const XmlNode *un = n->getChild("produced-units");
 			for (int i=0; i < un->getChildCount(); ++i) {
-				string name = un->getChild("produced-unit", i)->getAttribute("name")->getRestrictedValue();
+				const XmlNode *prodNode = un->getChild("produced-unit", i);
+				string name = prodNode->getAttribute("name")->getRestrictedValue();
 				m_producedUnits.push_back(ft->getUnitType(name));
+				try {
+					m_tipKeys[name] = prodNode->getRestrictedAttribute("tip");
+				} catch (runtime_error &e) {
+					m_tipKeys[name] = "";
+				}
 			}
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(dir, e.what ());
@@ -576,8 +588,14 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		try {
 			const XmlNode *un = n->getChild("morph-units");
 			for (int i=0; i < un->getChildCount(); ++i) {
-				string name = un->getChild("morph-unit", i)->getAttribute("name")->getRestrictedValue();
+				const XmlNode *unitNode = un->getChild("morph-unit", i);
+				string name = unitNode->getAttribute("name")->getRestrictedValue();
 				m_morphUnits.push_back(ft->getUnitType(name));
+				try {
+					m_tipKeys[name] = unitNode->getRestrictedAttribute("tip");
+				} catch (runtime_error &e) {
+					m_tipKeys[name] = "";
+				}
 			}
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(dir, e.what ());

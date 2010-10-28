@@ -526,10 +526,10 @@ bool MenuStateNewGame::loadGameSettings() {
 				m_playerSlots[slot]->setNameText(g_config.getNetPlayerName());
 				break;
 			case ControlType::NETWORK:
-				m_playerSlots[slot]->setNameText("Network (Unconnected)");
+				m_playerSlots[slot]->setNameText(g_lang.get("Network") + ": " + g_lang.get("NotConnected"));
 				break;
 			default:
-				m_playerSlots[slot]->setNameText("AI Player");
+				m_playerSlots[slot]->setNameText(g_lang.get("AiPlayer"));
 				break;
 		}
 		int ndx = -1;
@@ -612,7 +612,7 @@ void MenuStateNewGame::updateControlers() {
 			if (factionIndex < m_factionFiles.size()) {
 				gs.setFactionTypeName(i, m_factionFiles[factionIndex]);
 			} else {
-				gs.setFactionTypeName(i, g_lang.get("Random"));
+				gs.setFactionTypeName(i, "Random");
 			}
 			switch (m_playerSlots[i]->getControlType()) {
 				case ControlType::HUMAN:
@@ -629,13 +629,13 @@ void MenuStateNewGame::updateControlers() {
 							gs.setPlayerName(i, slot->getName());
 							m_playerSlots[i]->setNameText(slot->getName());
 						} else {
-							m_playerSlots[i]->setNameText("Unconnected");
+							m_playerSlots[i]->setNameText(g_lang.get("NotConnected"));
 						}
 					}
 					break;
 				default:
 					gs.setPlayerName(i, "AI Player");
-					m_playerSlots[i]->setNameText("AI Player");
+					m_playerSlots[i]->setNameText(g_lang.get("AiPlayer"));
 			}
 			switch (m_playerSlots[i]->getControlType()) {
 				case ControlType::HUMAN:

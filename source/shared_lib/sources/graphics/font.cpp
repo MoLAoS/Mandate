@@ -11,7 +11,7 @@
 
 #include "pch.h"
 #include "font.h"
-
+#include "util.h"
 #include "leak_dumper.h"
 
 namespace Shared { namespace Graphics {
@@ -31,6 +31,47 @@ FontMetrics::FontMetrics() : freeType(false) {
 
 FontMetrics::~FontMetrics() {
 	delete [] widths;
+}
+
+void FontMetrics::wrapText(string &inout_text, unsigned in_maxWidth) const {
+	const unsigned spacesPerTab = 4;
+	std::stringstream result;
+	float currentLineWidth = 0.f;
+	float maxLineWidth = float(in_maxWidth);
+	string::size_type offset = 0;
+	string::size_type count = 0;
+	string::size_type lastEndWord = 0;
+
+	foreach (string, it, inout_text) {
+		++count;
+		const char &c = *it;
+		if (c == ' ') {
+			currentLineWidth += widths[c];
+			lastEndWord = offset + count;
+		} else if (c == '\t') {
+			currentLineWidth += widths[c] * spacesPerTab;
+			lastEndWord = offset + count;
+		} else if (c == '\n') {
+			currentLineWidth = 0;
+			result << inout_text.substr(offset, count);
+			offset += count;
+			count = 0;
+			lastEndWord = offset;
+		} else {
+			if (currentLineWidth + widths[c] > maxLineWidth) {
+				result << inout_text.substr(offset, lastEndWord - offset) << endl;
+				count -= (lastEndWord - offset);
+				offset = lastEndWord;
+				currentLineWidth = 0.f;
+				for (unsigned i=offset; i < offset + count; ++i) {
+					currentLineWidth += widths[inout_text[i]];
+				}
+			}			
+			currentLineWidth += widths[c];
+		}
+	}
+	result << inout_text.substr(offset, count);
+	inout_text = result.str();
 }
 
 Vec2f FontMetrics::getTextDiminsions(const string &str) const {

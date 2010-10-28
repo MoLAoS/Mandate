@@ -119,25 +119,51 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 		Pixmap2D *pixmap = texture->getPixmap();
 		pixmap->init(1, 1, 3);
 		pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
-		if (factionType->getLogoPixmap()) {
-			const Pixmap2D *logo = factionType->getLogoPixmap();
+		if (factionType->getLogoTeamColour() || factionType->getLogoRgba()) {
+			
 			m_logoTex = g_renderer.newTexture2D(ResourceScope::GAME);
 			Pixmap2D *pixmap = m_logoTex->getPixmap();
 			pixmap->init(256, 256, 4);
 			
-			Vec3f baseColour(
-				factionColours[colourIndex].r / 255.f,
-				factionColours[colourIndex].g / 255.f,
-				factionColours[colourIndex].b / 255.f);
-			
-			for (int y = 0; y < 256; ++y) {
-				for (int x = 0; x < 256; ++x) {
-					Vec4f pixel = logo->getPixel4f(x, y);
-					float lum = (pixel.r + pixel.g + pixel.b) / 3.f;
-					Vec4f val(baseColour.r * lum, baseColour.g * lum, baseColour.b * lum, pixel.a);
-					pixmap->setPixel(x, y, val);
+			const Pixmap2D *teamPixmap = factionType->getLogoTeamColour();
+			if (teamPixmap) { // team-colour
+				Vec3f baseColour(
+					factionColours[colourIndex].r / 255.f,
+					factionColours[colourIndex].g / 255.f,
+					factionColours[colourIndex].b / 255.f);
+				
+				for (int y = 0; y < 256; ++y) {
+					for (int x = 0; x < 256; ++x) {
+						Vec4f pixel = teamPixmap->getPixel4f(x, y);
+						float lum = (pixel.r + pixel.g + pixel.b) / 3.f;
+						Vec4f val(baseColour.r * lum, baseColour.g * lum, baseColour.b * lum, pixel.a);
+						pixmap->setPixel(x, y, val);
+					}
 				}
 			}
+			const Pixmap2D *rgbaPixmap = factionType->getLogoRgba();
+			if (rgbaPixmap) { 
+				if (!teamPixmap) { // just copy
+					for (int y = 0; y < 256; ++y) {
+						for (int x = 0; x < 256; ++x) {
+							pixmap->setPixel(x, y, rgbaPixmap->getPixel4f(x, y));
+						}
+					}
+				} else { // dodgy blend...
+					for (int y = 0; y < 256; ++y) {
+						for (int x = 0; x < 256; ++x) {
+							Vec4f current = pixmap->getPixel4f(x, y);
+							Vec4f incoming = rgbaPixmap->getPixel4f(x, y);
+
+							Vec4f result = (current * (1.f - incoming.a)) + (incoming * incoming.a);
+							result.a = std::max(current.a, incoming.a);
+
+							pixmap->setPixel(x, y, result);
+						}
+					}
+				}
+			}
+			
 		}
 	}
 }

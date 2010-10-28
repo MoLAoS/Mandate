@@ -864,52 +864,63 @@ void UserInterface::computeInfoString(int posDisplay) {
 		if (posDisplay == cancelPos) {
 			m_display->setInfoText(g_lang.get("Cancel"));
 		} else if (posDisplay == meetingPointPos) {
-			m_display->setInfoText(g_lang.get("MeetingPoint"));
+			m_display->setInfoText(g_lang.get("SetMeetingPoint"));
 		} else if (posDisplay == autoRepairPos) {
 			string str = g_lang.get("AutoRepair");
-
 			switch (selection.getAutoRepairState()) {
 				case arsOn:
 					str += " " + g_lang.get("On");
 					break;
-
 				case arsOff:
 					str += " " + g_lang.get("Off");
 					break;
-
 				case arsMixed:
 					str += " " + g_lang.get("Mixed");
 					break;
 			}
 			m_display->setInfoText(str);
-		} else {
-			// uniform selection
+		} else { // uniform selection
 			if (selection.isUniform()) {
 				const Unit *unit = selection.getFrontUnit();
 				const CommandType *ct = m_display->getCommandType(posDisplay);
 
 				if (ct != NULL) {
+					string factionName = unit->getFaction()->getType()->getName();
+					string commandName = g_lang.getFactionString(factionName, ct->getName());
+					if (commandName == ct->getName()) { // no custom command name
+						commandName = g_lang.get(ct->getName()); // assume command class is name
+						if (commandName.find("???") != string::npos) { // or just use name from xml
+							commandName = formatString(ct->getName());
+						}
+					}
+					string tip = g_lang.getFactionString(factionName, ct->getTipKey());
+					string res = commandName + "\n\n";
+					if (!tip.empty()) {
+						res += tip + "\n\n";
+					}
+
 					if (unit->getFaction()->reqsOk(ct)) {
-						m_display->setInfoText(ct->getDesc(unit));
+						res += ct->getDesc(unit);
+						m_display->setInfoText(res);
 					} else {
-						if(ct->getClass() == CommandClass::UPGRADE) {
+						if (ct->getClass() == CommandClass::UPGRADE) {
 							const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 
 							if (unit->getFaction()->getUpgradeManager()->isUpgrading(uct->getProducedUpgrade())) {
-								m_display->setInfoText(g_lang.get("Upgrading") + "\n" + ct->getDesc(unit));
+								m_display->setInfoText(g_lang.get("Upgrading")/* + "\n" + ct->getDesc(unit)*/);
 							} else if (unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
-								m_display->setInfoText(g_lang.get("AlreadyUpgraded") + "\n" + ct->getDesc(unit));
+								m_display->setInfoText(g_lang.get("AlreadyUpgraded")/* + "\n" + ct->getDesc(unit)*/);
 							} else {
-								m_display->setInfoText(ct->getReqDesc());
+								res += ct->getReqDesc();
+								m_display->setInfoText(res);
 							}
 						} else {
-							m_display->setInfoText(ct->getReqDesc());
+							res += ct->getReqDesc();
+							m_display->setInfoText(res);
 						}
 					}
-				}
-
-			// non uniform selection
-			} else {
+				}			
+			} else { // non uniform selection
 				const UnitType *ut = selection.getFrontUnit()->getType();
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
@@ -924,16 +935,20 @@ void UserInterface::computeInfoString(int posDisplay) {
 			m_display->setInfoText(g_lang.get("Return"));
 			return;
 		}
-		if (activeCommandType->getClass() == CommandClass::BUILD) {
-			const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
-			m_display->setInfoText(bct->getBuilding(m_display->getIndex(posDisplay))->getReqDesc());
-		} else if (activeCommandType->getClass() == CommandClass::MORPH) {
-			const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
-			m_display->setInfoText(mct->getMorphUnit(m_display->getIndex(posDisplay))->getReqDesc());
-		} else if (activeCommandType->getClass() == CommandClass::PRODUCE) {
-			const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(activeCommandType);
-			m_display->setInfoText(pct->getProducedUnit(m_display->getIndex(posDisplay))->getReqDesc());
+		const Unit *unit = selection.getFrontUnit();
+		const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
+		string factionName = unit->getFaction()->getType()->getName();
+		string commandName = g_lang.getFactionString(factionName, activeCommandType->getName());
+		if (commandName == activeCommandType->getName()) { // no custom command name
+			commandName = g_lang.get(activeCommandType->getName()); // assume command class is name
 		}
+		string tip = g_lang.getFactionString(factionName, activeCommandType->getTipKey(pt->getName()));
+		string res = commandName + " : " + g_lang.getFactionString(factionName, pt->getName()) + "\n\n";
+		if (!tip.empty()) {
+			res += tip + "\n\n";
+		}
+		res += pt->getReqDesc();
+		m_display->setInfoText(res);
 	}
 }
 
@@ -950,7 +965,7 @@ void UserInterface::computeDisplay() {
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
 		m_display->setTitle(unit->getFullName());
-		m_display->setText(unit->getDesc(friendly));
+		m_display->setText(unit->getDesc(true, friendly));
 		if (friendly) {
 			m_display->setProgressBar(unit->getProductionPercent());
 		}

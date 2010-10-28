@@ -22,6 +22,7 @@
 #include <cctype>
 #include <vector>
 #include <deque>
+#include <list>
 #include <map>
 #include <algorithm>
 
@@ -29,17 +30,8 @@
 #include "lang_features.h"
 #include "random.h"
 
-#if defined(WIN32) || defined(WIN64)
-	#include <list>
-	#define slist list
 
-	using std::slist;
-#else
-	#include <ext/slist>
-
-	using __gnu_cxx::slist;
-#endif
-
+using std::list;
 using std::string;
 using std::map;
 using std::vector;

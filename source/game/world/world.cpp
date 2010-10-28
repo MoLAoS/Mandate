@@ -169,6 +169,9 @@ void World::preload() {
 		}
 	}
 	techTree.preload(gs.getTechPath(), names);
+	string techName = basename(gs.getTechPath());
+	g_lang.loadTechStrings(techName);
+	g_lang.loadFactionStrings(techName, names);
 }
 
 //load tileset

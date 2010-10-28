@@ -226,8 +226,8 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 		connected = true;
 		Vec2i pos, size(300, 200);
 		pos = g_metrics.getScreenDims() / 2 - size / 2;
-		m_messageBox = MessageDialog::showDialog(pos, size, "Connected.",
-			"Connected, waiting for server\nto launch game.", g_lang.get("Disconnect"), "");
+		m_messageBox = MessageDialog::showDialog(pos, size, g_lang.get("Connected"),
+			g_lang.get("Connected") + "\n" + g_lang.get("WaitingHost"), g_lang.get("Disconnect"), "");
 		m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
 	} else if (result == ConnectResult::CANCELLED) {
 		m_connectPanel->setVisible(true);

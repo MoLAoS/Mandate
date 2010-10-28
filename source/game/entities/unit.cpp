@@ -1454,35 +1454,35 @@ bool Unit::decHp(int i) {
 	return false;
 }
 
-string Unit::getDesc(bool full) const {
+string Unit::getDesc(bool brief, bool full) const {
 	int armorBonus = getArmor() - type->getArmor();
 	int sightBonus = getSight() - type->getSight();
 
 	stringstream ss;
-	//pos
-	//str+="Pos: "+v2iToStr(pos)+"\n";
 
-	//hp
+	// hp
 	ss << g_lang.get("Hp") << ": " << hp << "/" << getMaxHp();
 	if (getHpRegeneration()) {
 		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
 	}
-
-	//ep
-	if (getMaxEp()) {
+	if (getMaxEp()) { // ep
 		ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
 		if (getEpRegeneration()) {
 			ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
 		}
 	}
 
-	if (!full) {
-		// Show only current command being executed and effects
+	if (!full || brief) {
+		// Show current command being executed
 		if (!commands.empty()) {
 			ss << endl << commands.front()->getType()->getName();
 		}
-		effects.streamDesc(ss);
-		//effects.getDesc(str);
+		if (full && commands.size() > 1) { // if friendly show number orders queued
+			ss << endl << g_lang.get("OrdersOnQueue") << ": " << commands.size();
+		}
+		if (!brief) { // if not brief show effects
+			effects.streamDesc(ss);
+		}
 		return ss.str();
 	}
 

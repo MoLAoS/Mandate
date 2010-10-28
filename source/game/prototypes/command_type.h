@@ -83,8 +83,11 @@ protected:
 	Clicks clicks;
 	bool queuable;
 	const UnitType *unitType;
+	string m_tipKey;
 
 	void setIdAndUnitType(int v, UnitType *ut) { id = v; unitType = ut; }
+
+	string emptyString;
 
 public:
 	CommandType(const char* name, Clicks clicks, bool queuable = false);
@@ -98,9 +101,12 @@ public:
 	const UnitType* getUnitType() const { return unitType; }
 
 	virtual string toString() const						{return Lang::getInstance().get(name);}
+	const string& getTipKey() const						{return m_tipKey;}
+	virtual string getTipKey(const string &name) const  {return emptyString;}
 
 	virtual int getProducedCount() const					{return 0;}
 	virtual const ProducibleType *getProduced(int i) const{return 0;}
+	
 
 	bool isQueuable() const								{return queuable;}
 
@@ -109,7 +115,7 @@ public:
 	virtual Clicks getClicks() const					{return clicks;}
 	string getDesc(const Unit *unit) const {
 		string str;
-		str = name + "\n";
+		//str = name + "\n";
 		getDesc(str, unit);
 		return str;
 	}
@@ -282,6 +288,7 @@ class BuildCommandType: public MoveBaseCommandType {
 private:
 	const BuildSkillType* buildSkillType;
 	vector<const UnitType*> buildings;
+	map<string, string>		m_tipKeys;
 	SoundContainer startSounds;
 	SoundContainer builtSounds;
 
@@ -308,6 +315,11 @@ public:
 
 	int getBuildingCount() const					{return buildings.size();}
 	const UnitType * getBuilding(int i) const		{return buildings[i];}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
 	StaticSound *getStartSound() const				{return startSounds.getRandSound();}
 	StaticSound *getBuiltSound() const				{return builtSounds.getRandSound();}
@@ -409,6 +421,7 @@ private:
 	const ProduceSkillType* produceSkillType;
 //	const UnitType *m_producedUnit;
 	vector<const UnitType*> m_producedUnits;
+	map<string, string>		m_tipKeys;
 	SoundContainer finishedSounds;
 
 public:
@@ -425,6 +438,11 @@ public:
 
 	const UnitType *getProducedUnit(int i) const		{return m_producedUnits[i];}
 	int getProducedUnitCount() const		{return m_producedUnits.size();}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
 	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
 
@@ -443,6 +461,7 @@ class GenerateCommandType: public CommandType {
 private:
 	const ProduceSkillType*			m_produceSkillType;
 	vector<const GeneratedType*>	m_producibles;
+	map<string, string>				m_tipKeys;
 	SoundContainer					m_finishedSounds;
 
 public:
@@ -459,6 +478,11 @@ public:
 
 	virtual int getProducedCount() const	{return m_producibles.size();}
 	virtual const ProducibleType *getProduced(int i) const	{return m_producibles[i];}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
 	virtual Clicks getClicks() const	{ return m_producibles.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
@@ -508,6 +532,7 @@ class MorphCommandType: public CommandType {
 private:
 	const MorphSkillType*	m_morphSkillType;
 	vector<const UnitType*> m_morphUnits;
+	map<string, string>		m_tipKeys;
 	int						m_discount;
 	SoundContainer			m_finishedSounds;
 
@@ -525,6 +550,11 @@ public:
 	
 	int getMorphUnitCount() const					{return m_morphUnits.size();}
 	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 

@@ -180,19 +180,19 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent, Vec2i pos, Vec2i size)
 	CoreData &coreData = CoreData::getInstance();
 	
 	StaticText *label = new StaticText(this);
-	label->setTextParams("Player", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label = new StaticText(this);
-	label->setTextParams("Control", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label = new StaticText(this);
-	label->setTextParams("Faction", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label = new StaticText(this);
-	label->setTextParams("Team", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label = new StaticText(this);
-	label->setTextParams("Colour", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	layoutChildren();
 }
