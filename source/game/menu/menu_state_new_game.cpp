@@ -511,8 +511,24 @@ bool MenuStateNewGame::loadGameSettings() {
 		return false;
 	}
 	GameSettings &gs = g_simInterface->getGameSettings();
-	m_techTreeList->setSelected(formatString(basename(gs.getTechPath())));
-	m_tilesetList->setSelected(formatString(basename(gs.getTilesetPath())));
+	bool techReset = false;
+	vector<string>::iterator it;
+	it = std::find(m_techTreeFiles.begin(), m_techTreeFiles.end(), basename(gs.getTechPath()));
+	if (it != m_techTreeFiles.end()) {
+		m_techTreeList->setSelected(formatString(basename(gs.getTechPath())));
+	} else {
+		m_techTreeList->setSelected(0);
+		string s = gs.getTechPath();
+		gs.setTechPath("techs/" + m_techTreeFiles[0]);
+		techReset = true;
+	}
+	it = std::find(m_tilesetFiles.begin(), m_tilesetFiles.end(), basename(gs.getTilesetPath()));
+	if (it != m_tilesetFiles.end()) {
+		m_tilesetList->setSelected(formatString(basename(gs.getTilesetPath())));
+	} else {
+		m_tilesetList->setSelected(0);
+		gs.setTilesetPath("tilesets/" + m_tilesetFiles[0]);
+	}
 	reloadFactions(false);
 	for (int i=0 ; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i]->setSelectedControl(ControlType::CLOSED);
@@ -537,10 +553,14 @@ bool MenuStateNewGame::loadGameSettings() {
 		if (fName == "Random") {
 			ndx = m_factionFiles.size();
 		} else {
-			foreach (vector<string>, it, m_factionFiles) {
-				++ndx;
-				if (*it == fName) {
-					break;
+			if (techReset) {
+				ndx = i % m_factionFiles.size();
+			} else {
+				foreach (vector<string>, it, m_factionFiles) {
+					++ndx;
+					if (*it == fName) {
+						break;
+					}
 				}
 			}
 		}
@@ -550,6 +570,13 @@ bool MenuStateNewGame::loadGameSettings() {
 		//m_playerSlots[i]->setStartLocation(gs.getStartLocationIndex(i));
 	}
 	string mapFile = basename(gs.getMapPath());
+	
+	string mapPath = gs.getMapPath();
+	if (!fileExists(mapPath + ".gbm") && !fileExists(mapPath + ".mgm")) {
+		mapFile = "maps/" + m_mapFiles[0];
+		gs.setMapPath(mapFile);
+
+	}
 //	m_mapList->SelectionChanged.disconnect(this);
 	m_mapList->setSelected(formatString(mapFile));
 //	m_mapList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeMap);
