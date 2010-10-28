@@ -105,7 +105,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_swordman" />
+      <name value="produce_swordman" tip="swordman_info" />
       <image path="../swordman/images/swordman.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -115,7 +115,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_archer" />
+      <name value="produce_archer" tip="archer_info" />
       <image path="../archer/images/archer.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -125,7 +125,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_guard" />
+      <name value="produce_guard" tip="guard_info" />
       <image path="../guard/images/guard.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -135,7 +135,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_horseman" />
+      <name value="produce_horseman" tip="horseman_info" />
       <image path="../horseman/images/horseman.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -145,7 +145,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="create_training_field"/>
+      <name value="create_training_field" tip="training_field_info"/>
       <image path="../../upgrades/training_field/images/training_field.bmp" />
       <unit-requirements />
       <upgrade-requirements />

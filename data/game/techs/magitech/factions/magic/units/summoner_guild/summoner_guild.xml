@@ -108,7 +108,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_summoner"/>
+      <name value="produce_summoner" tip="summoner_info"/>
       <image path="../summoner/images/summoner.bmp" />
       <unit-requirements/>
       <upgrade-requirements/>
@@ -118,7 +118,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="research_ancient_summoning" />
+      <name value="research_ancient_summoning" tip="ancient_summoning_info"/>
       <image path="../../upgrades/ancient_summoning/images/ancient_summoning.bmp" />
       <unit-requirements />
       <upgrade-requirements />

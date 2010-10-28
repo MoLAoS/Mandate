@@ -211,7 +211,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="promote_to_guard"/>
+      <name value="promote_to_guard" tip="guard_info"/>
       <image path="../guard/images/guard.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

@@ -93,7 +93,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="research_dragon_call"/>
+      <name value="research_dragon_call" tip="dragon_call_info"/>
       <image path="../../upgrades/dragon_call/images/dragon_call.bmp" />
       <unit-requirements/>
       <upgrade-requirements/>

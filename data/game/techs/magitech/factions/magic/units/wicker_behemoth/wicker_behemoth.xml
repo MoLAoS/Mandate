@@ -95,7 +95,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="promote_to_behemoth"/>
+      <name value="promote_to_behemoth" tip="behemoth_info"/>
       <image path="../behemoth/images/behemoth.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

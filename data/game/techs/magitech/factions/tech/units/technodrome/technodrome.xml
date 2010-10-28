@@ -110,7 +110,7 @@
   <commands>
     <command>
       <type value="produce"/>
-      <name value="produce_technician"/>
+      <name value="produce_technician" tip="technician_info"/>
       <image path="../technician/images/technician.bmp"/>
       <unit-requirements />
       <upgrade-requirements />
@@ -120,7 +120,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="research_advanced_architecture"/>
+      <name value="research_advanced_architecture" tip="advanced_architecture_info"/>
       <image path="../../upgrades/advanced_architecture/images/advanced_architecture.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -130,7 +130,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="research_robotics"/>
+      <name value="research_robotics" tip="robotics_info"/>
       <image path="../../upgrades/robotics/images/robotics.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

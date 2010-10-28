@@ -113,7 +113,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_pig" />
+      <name value="produce_pig" tip="pig_info" />
       <image path="../pig/images/pig.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -123,7 +123,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_cow" />
+      <name value="produce_cow" tip="cow_info" />
       <image path="../cow/images/cow.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -133,7 +133,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="research_stables"/>
+      <name value="research_stables" tip="stables_info" />
       <image path="../../upgrades/stables/images/stables.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
