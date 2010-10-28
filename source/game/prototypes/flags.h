@@ -48,12 +48,13 @@ public:
 		flags = 0;
 	}
 
+	/* BAD, overriding Flags(E flag)
 	Flags(T flags) {
 		assert(max <= sizeof(flags) * 8);
 		this->flags = flags;
-	}
+	}*/
 
-	Flags(E flag1, bool val1 = true) {
+	Flags(E flag1, bool val1 /*= true*/) {
 		assert(max <= sizeof(flags) * 8);
 		flags = 0;
 		set(flag1, val1);

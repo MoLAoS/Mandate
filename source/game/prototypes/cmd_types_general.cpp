@@ -146,7 +146,7 @@ Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
 	Unit *sighted = NULL;
 	if (attackerInSight(unit, &sighted)) {
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();
-		return new Command(this, CommandFlags(CommandProperties::AUTO), escapePos);
+		return new Command(this, CommandFlags(CommandProperties::AUTO, true), escapePos);
 	}
 	return 0;
 }

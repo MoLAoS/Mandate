@@ -76,7 +76,7 @@ Command *NetworkCommand::toCommand() const {
 	}
 
 	if (networkCommandType == NetworkCommandType::CANCEL_COMMAND) {
-		return new Command(CommandArchetype::CANCEL_COMMAND, 0, Vec2i(-1), unit);
+		return new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
 	}
 
 	// validate command type

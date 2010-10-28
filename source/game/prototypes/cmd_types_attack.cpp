@@ -206,8 +206,9 @@ Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO), sighted->getPos());
+	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
 	newCommand->setPos2(unit->getPos());
+	assert(newCommand->isAuto());
 	return newCommand;
 }
 
@@ -240,7 +241,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 	if (!unit->getFaction()->isAvailable(this) || !attackableInRange(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO), sighted->getPos());
+	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
 	return newCommand;
 }
 
