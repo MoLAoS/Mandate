@@ -14,6 +14,8 @@
 #include "util.h"
 #include "leak_dumper.h"
 
+#include <sstream>
+
 namespace Shared { namespace Graphics {
 
 // =====================================================
