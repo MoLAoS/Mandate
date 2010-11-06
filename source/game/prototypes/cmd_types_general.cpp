@@ -58,9 +58,10 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	const XmlNode *nameNode = n->getChild("name");
 	name = nameNode->getRestrictedValue();
-	try {
-		m_tipKey = nameNode->getRestrictedAttribute("tip");
-	} catch (runtime_error &e) {
+	XmlAttribute *tipAttrib = nameNode->getAttribute("tip", false);
+	if (tipAttrib) {
+		m_tipKey = tipAttrib->getRestrictedValue();
+	} else {
 		m_tipKey = "";
 	}
 

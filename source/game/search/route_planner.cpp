@@ -27,7 +27,7 @@
 #include "game.h"
 #include "unit.h"
 #include "unit_type.h"
-#include "world.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
@@ -591,6 +591,13 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
   * @return ARRIVED, MOVING, BLOCKED or IMPOSSIBLE
   */
 TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) {
+	if (!world->getMap()->isInside(finalPos)) {
+		stringstream ss;
+		ss << __FUNCTION__ << "() passed bad arg, pos = " << finalPos
+			<< "\nWhile processing " << CommandClassNames[g_simInterface->processingCommandClass()]
+			<< " command.";
+		g_errorLog.add(ss.str());
+	}
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 
@@ -633,6 +640,9 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	HAAStarResult res;
 	// Hierarchical Search
 	tSearchEngine->reset();
+
+	RUNTIME_CHECK(world->getMap()->isInside(target));
+
 	if (unit->getTeam() == -1 || g_map.getTile(Map::toTileCoords(target))->isExplored(unit->getTeam())) {
 		res = findWaypointPath(unit, target, wpPath);
 	} else {
@@ -917,39 +927,46 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
   * @todo reimplement with Dijkstra search
   */
 Vec2i RoutePlanner::computeNearestFreePos(const Unit *unit, const Vec2i &finalPos) {
+	Vec2i pos = finalPos;
+	RUNTIME_CHECK(world->getMap()->isInside(pos));
+
 	//unit data
-	Vec2i unitPos= unit->getPos();
+	Vec2i unitPos = unit->getPos();
+	//RUNTIME_CHECK(world->getMap()->isInside(unitPos));
 	int size= unit->getType()->getSize();
 	Field field = unit->getCurrField();
 	int teamIndex= unit->getTeam();
 
 	//if finalPos is free return it
-	if (world->getMap()->areAproxFreeCells(finalPos, size, field, teamIndex)) {
-		return finalPos;
+	if (world->getMap()->areAproxFreeCells(pos, size, field, teamIndex)) {
+		return pos;
 	}
 
 	//find nearest pos
 	Vec2i nearestPos = unitPos;
-	float nearestDist = unitPos.dist(finalPos);
+	float nearestDist = unitPos.dist(pos);
 	for (int i = -maxFreeSearchRadius; i <= maxFreeSearchRadius; ++i) {
 		for (int j = -maxFreeSearchRadius; j <= maxFreeSearchRadius; ++j) {
-			Vec2i currPos = finalPos + Vec2i(i, j);
+			Vec2i currPos = pos + Vec2i(i, j);
 			if (world->getMap()->areAproxFreeCells(currPos, size, field, teamIndex)) {
-				float dist = currPos.dist(finalPos);
+				float dist = currPos.dist(pos);
 
 				//if nearer from finalPos
 				if (dist < nearestDist) {
+					//RUNTIME_CHECK(world->getMap()->isInside(currPos));
 					nearestPos = currPos;
 					nearestDist = dist;
 				//if the distance is the same compare distance to unit
 				} else if (dist == nearestDist) {
 					if (currPos.dist(unitPos) < nearestPos.dist(unitPos)) {
+						//RUNTIME_CHECK(world->getMap()->isInside(currPos));
 						nearestPos = currPos;
 					}
 				}
 			}
 		}
 	}
+	//RUNTIME_CHECK(world->getMap()->isInside(nearestPos));
 	return nearestPos;
 }
 

@@ -57,7 +57,9 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 		msg = string("Glest Advanced Engine has crashed. Please help us improve GAE by emailing the file")
 			+ " gae-crash.txt to " + gaeMailString + ".";
 	}
-	Vec2i size(520, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i screenDims = g_metrics.getScreenDims();
+	Vec2i size(screenDims.x - 200, screenDims.y / 2);
+	Vec2i pos = screenDims / 2 - size / 2;
 	msgBox = MessageDialog::showDialog(pos, size, "Crash!", msg, g_lang.get("Exit"), "");
 	msgBox->Button1Clicked.connect(this, &Program::CrashProgramState::onExit);
 	this->e = e;

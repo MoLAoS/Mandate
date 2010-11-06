@@ -37,6 +37,29 @@ using Entities::Faction;
 
 class UserInterface;
 
+WRAPPED_ENUM( DisplaySection, SELECTION, COMMANDS, TRANSPORTED )
+
+struct DisplayButton {
+	DisplaySection	m_section;
+	int				m_index;
+
+	DisplayButton(DisplaySection s, int ndx) : m_section(s), m_index(ndx) {}
+
+	DisplayButton& operator=(const DisplayButton &that) {
+		this->m_section = that.m_section;
+		this->m_index = that.m_index;
+		return *this;
+	}
+
+	bool operator==(const DisplayButton &that) const {
+		return (this->m_section == that.m_section && this->m_index == that.m_index);
+	}
+
+	bool operator!=(const DisplayButton &that) const {
+		return (this->m_section != that.m_section || this->m_index != that.m_index);
+	}
+};
+
 // =====================================================
 // 	class Display
 //
@@ -80,8 +103,9 @@ private:
 			m_progressPos;		// x,y offset for progress bar
 	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
 	Font *m_font;
-	int m_pressedCommandIndex;	// index of command button that received a mouse down event
-	int m_pressedCarryIndex;	// index of carry image that received a mouse down event
+
+	DisplayButton	m_hoverBtn,		// section/index of button mouse is over
+					m_pressedBtn;	// section/index of button that received a mouse down event
 
 	ToolTip	*m_toolTip;
 
@@ -123,9 +147,8 @@ public:
 
 	//misc
 	void clear();
-
-	int computeIndex(Vec2i imgOffset, Vec2i pos);
-	int computeDownIndex(int x, int y) { return computeIndex(m_downImageOffset, Vec2i(x,y) - getPos()); }
+	void resetTipPos(Vec2i i_offset);
+	DisplayButton computeIndex(Vec2i pos, bool screenPos = false);
 
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 

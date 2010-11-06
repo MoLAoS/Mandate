@@ -1779,6 +1779,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 			}
 		}
 		commands = newCommands;
+		StateChanged(this);
 		return true;
 	} else {
 		return false;

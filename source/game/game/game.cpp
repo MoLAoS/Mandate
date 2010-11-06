@@ -298,7 +298,9 @@ void GameState::displayError(std::exception &e) {
 		m_modalDialog = 0;
 	}
 	gui.resetState();
-	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i screenDims = g_metrics.getScreenDims();
+	Vec2i size(screenDims.x - 200, screenDims.y / 2);
+	Vec2i pos = screenDims / 2 - size / 2;
 	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
 		g_lang.get("Error"), "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
 	m_modalDialog = dialog;

@@ -25,11 +25,14 @@ namespace Glest { namespace Gui {
 
 class UserInterface;
 
-enum AutoRepairState {
-	arsOn,
-	arsOff,
-	arsMixed
-};
+// AutoCmdState : describes an auto command category state of 
+// the selection (ie auto-repair, auto-attack & auto-flee
+WRAPPED_ENUM( AutoCmdState,
+	NONE,
+	ALL_ON,
+	ALL_OFF,
+	MIXED
+)
 
 // =====================================================
 // 	class Selection
@@ -54,7 +57,7 @@ private:
 	bool cancelable;
 	bool meetable;
 	bool canRepair;
-	AutoRepairState autoRepairState;
+	AutoCmdState autoRepairState;
 	int factionIndex;
 	UnitVector selectedUnits;
 	UnitVector groups[maxGroups];
@@ -103,7 +106,7 @@ public:
 	const Unit *getFrontUnit() const		{return selectedUnits.front();}
 	const UnitVector &getUnits() const	{return selectedUnits;}
 	Vec3f getRefPos() const;
-	AutoRepairState getAutoRepairState() const	{return autoRepairState;}
+	AutoCmdState getAutoRepairState() const	{return autoRepairState;}
 
 	void assignGroup(int groupIndex);
 	void recallGroup(int groupIndex);

@@ -140,14 +140,17 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 	return CommandResult::SUCCESS;
 }
 
-void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const{
-	/*
-	const UnitVector &units = selection.getUnits();
-	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
-		pushCommand(new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled),
-				Command::invalidPos, *i));
+void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const {
+	if (iSim->isNetworkInterface()) {
+		g_console.addLine(g_lang.get("NotAvailable"));
+	} else {
+		const UnitVector &units = selection.getUnits();
+		foreach_const (UnitVector, i, units) {
+			Command *c = new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled), 
+				Command::invalidPos, *i);
+			pushCommand(c);
+		}
 	}
-	*/
 }
 
 // ==================== PRIVATE ====================
@@ -225,8 +228,8 @@ void Commander::giveCommand(Command *command) const {
 	Unit* unit = command->getCommandedUnit();
 
 	//execute command, if unit is still alive and non-deleted
-	if(unit && unit->isAlive()) {
-		switch(command->getArchetype()) {
+	if (unit && unit->isAlive()) {
+		switch (command->getArchetype()) {
 			case CommandArchetype::GIVE_COMMAND:
 				assert(command->getType());
 				unit->giveCommand(command);
@@ -235,12 +238,10 @@ void Commander::giveCommand(Command *command) const {
 				unit->cancelCommand();
 				delete command;
 				break;
-			/*
 			case CommandArchetype::SET_AUTO_REPAIR:
 				unit->setAutoRepairEnabled(command->isAutoRepairEnabled());
 				delete command;
 				break;
-			*/
 			default:
 				assert(false);
 		}

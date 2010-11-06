@@ -39,6 +39,7 @@ void Selection::init(UserInterface *gui, int factionIndex) {
 	cancelable = false;
 	meetable = false;
 	canRepair = false;
+	autoRepairState = AutoCmdState::NONE;
 	this->factionIndex = factionIndex;
 	this->gui = gui;
 }
@@ -217,7 +218,7 @@ void Selection::onUnitDied(Unit *unit) {
 	// prevent resetting Gui if a unit in a selection group dies
 	bool needUpdate = false;
 
-	//remove from selection
+	// remove from selection
 	for (int i = 0; i < selectedUnits.size(); ++i) {
 		if (selectedUnits[i] == unit) {
 			selectedUnits.erase(selectedUnits.begin() + i);
@@ -226,7 +227,7 @@ void Selection::onUnitDied(Unit *unit) {
 		}
 	}
 
-	//remove from groups
+	// remove from groups
 	for (int i = 0; i < maxGroups; ++i) {
 		for (int j = 0; j < groups[i].size(); ++j) {
 			if (groups[i][j] == unit) {
@@ -236,7 +237,7 @@ void Selection::onUnitDied(Unit *unit) {
 		}
 	}
 
-	//notify gui & stuff
+	// notify gui & stuff
 	if (needUpdate) {
 		update();
 		gui->onSelectionChanged();
@@ -269,25 +270,42 @@ void Selection::update() {
 		meetable = false;
 		canRepair = false;
 	} else {
-		const UnitType *frontUT= selectedUnits.front()->getType();
+		const UnitType *frontUT = selectedUnits.front()->getType();
 		empty = false;
 		enemy = true;
 		uniform = true;
 		commandable = false;
 		cancelable = false;
 		canRepair = true;
-		autoRepairState = selectedUnits.front()->isAutoRepairEnabled() ? arsOn : arsOff;
-
+		if (frontUT->hasCommandClass(CommandClass::REPAIR)) {
+			if (selectedUnits.front()->isAutoRepairEnabled()) {
+				autoRepairState = AutoCmdState::ALL_ON;
+			} else {
+				autoRepairState = AutoCmdState::ALL_OFF;
+			}
+		} else {
+			autoRepairState = AutoCmdState::NONE;
+		}
 		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
-		for(UnitVector::iterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
+		foreach (UnitVector, i, selectedUnits) {
 			const UnitType *ut = (*i)->getType();
-			if(ut != frontUT){
+			if (ut != frontUT) {
 				uniform = false;
 			}
-			if(ut->hasCommandClass(CommandClass::REPAIR)) {
-				if(((*i)->isAutoRepairEnabled() ? arsOn : arsOff) != autoRepairState) {
-					autoRepairState = arsMixed;
+			if (ut->hasCommandClass(CommandClass::REPAIR)) {
+				if (((*i)->isAutoRepairEnabled())) {
+					if (autoRepairState == AutoCmdState::ALL_OFF) {
+						autoRepairState = AutoCmdState::MIXED;
+					} else if (autoRepairState == AutoCmdState::NONE) {
+						autoRepairState = AutoCmdState::ALL_ON;
+					} // else MIXED or ALL_ON already
+				} else {
+					if (autoRepairState == AutoCmdState::ALL_ON) {
+						autoRepairState = AutoCmdState::MIXED;
+					} else if (autoRepairState == AutoCmdState::NONE) {
+						autoRepairState = AutoCmdState::ALL_OFF;
+					} // else MIXED or ALL_OFF already
 				}
 			} else {
 				canRepair = false;

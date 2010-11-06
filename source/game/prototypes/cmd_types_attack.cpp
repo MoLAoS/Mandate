@@ -128,6 +128,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		return false;
 	}
 	if (unit->isCarried()) { // if housed, dont try to wander off!
+		unit->setCurrSkill(SkillClass::STOP);
 		return true;
 	}
 
@@ -147,16 +148,19 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 			if (Config::getInstance().getGsAutoReturnEnabled()) {
 				command->popPos();
 				pos = command->getPos();
+				RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 				unit->clearPath();
 			} else {
-				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+				return true;
 			}
 		} else { // no targets & not auto-command, use command target pos
 			pos = targetPos;
+			RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 		}
 	}
+	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 	switch (g_routePlanner.findPath(unit, pos)) { // head to target pos
-		
 		case TravelState::MOVING:
 			unit->setCurrSkill(act->getMoveSkillType());
 			unit->face(unit->getNextPos());

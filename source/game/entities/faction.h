@@ -141,7 +141,10 @@ public:
 	Colour getColour() const							{return factionColours[colourIndex];}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
+	
+	//TODO Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
+	
 	bool isThisFaction() const							{return thisFaction;}
 
 	// set
