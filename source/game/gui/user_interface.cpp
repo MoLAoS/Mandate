@@ -112,7 +112,8 @@ UserInterface::UserInterface(GameState &game)
 		, m_resourceBar(0)
 		, m_luaConsole(0)
 		, m_selectingSecond(false)
-		, m_selectedFacing(CardinalDir::NORTH) {
+		, m_selectedFacing(CardinalDir::NORTH)
+		, m_selectionDirty(false) {
 	posObjWorld= Vec2i(54, 14);
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
@@ -271,7 +272,24 @@ void UserInterface::onResourceDepleted(Vec2i cellPos) {
 	}
 }
 
+void UserInterface::update() {
+	//WIDGET_LOG( __FUNCTION__ << "()");
+	setComputeSelectionFlag();
+	mouse3d.update();
+	selection.clearDeadUnits();
+
+	if (m_selectionDirty) {
+		computeDisplay();
+		DisplayButton btn = m_display->getHoverButton();
+		if (btn.m_section == DisplaySection::COMMANDS) {
+			computeInfoString(btn.m_index);
+		}
+		m_selectionDirty = false;
+	}
+}
+
 void UserInterface::commandButtonPressed(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selectingPos && !selectingMeetingPoint) {
 		if (selection.isComandable()) {
 			if (m_selectingSecond) {
@@ -288,10 +306,12 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 	} else { // m_selectingSecond
 		// if they clicked on a button again, they must have changed their mind
 		resetState();
+		activePos = invalidPos;
 	}
 }
 
 void UserInterface::unloadRequest(int carryIndex) {
+	WIDGET_LOG( __FUNCTION__ << "( " << carryIndex << " )");
 	int i=0;
 	Unit *transportUnit = 0, *unloadUnit = 0;
 	for (int ndx = 0; !unloadUnit && ndx < selection.getCount(); ++ndx) {
@@ -318,7 +338,7 @@ void UserInterface::unloadRequest(int carryIndex) {
 // ==================== events ====================
 
 void UserInterface::mouseDownLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	const Metrics &metrics= Metrics::getInstance();
 
 	UnitVector units;
@@ -359,7 +379,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 }
 
 void UserInterface::mouseDownRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
 	const Metrics &metrics= Metrics::getInstance();
 	Vec2i worldPos;
 
@@ -383,7 +403,7 @@ void UserInterface::mouseDownRight(int x, int y) {
 }
 
 void UserInterface::mouseUpLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
 	if (!selectingPos && !selectingMeetingPoint && selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
 		if (selection.isComandable() && random.randRange(0, 1)) {
@@ -402,11 +422,11 @@ void UserInterface::mouseUpLeft(int x, int y) {
 }
 
 void UserInterface::mouseUpRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
 }
 
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
 	if (!selectingPos && !selectingMeetingPoint) {
 		UnitVector units;
 		Vec2i pos(x, y);
@@ -421,7 +441,7 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 }
 
 void UserInterface::mouseMove(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
 	//compute selection
 	if (selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
@@ -445,8 +465,6 @@ void UserInterface::mouseMove(int x, int y) {
 			computeBuildPositions(posObjWorld);
 		}
 	}
-
-	//m_display->setInfoText("");
 }
 
 void UserInterface::groupKey(int groupIndex){
@@ -464,6 +482,7 @@ void UserInterface::groupKey(int groupIndex){
 }
 
 void UserInterface::hotKey(UserCommand cmd) {
+	WIDGET_LOG( __FUNCTION__ << "( " << Keymap::getCommandName(cmd) << " )" );
 	int f = 0;
 	switch(cmd) {
 	// goto selection
@@ -765,6 +784,7 @@ void UserInterface::clickCommonCommand(CommandClass commandClass) {
 }
 
 void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (selection.isEmpty()) {
 		return;
 	}
@@ -826,7 +846,8 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 	}
 }
 
-void UserInterface::mouseDownSecondTier(int posDisplay){
+void UserInterface::mouseDownSecondTier(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	int factionIndex = world->getThisFactionIndex();
 
 	if (posDisplay == cancelPos) {
@@ -857,17 +878,17 @@ void UserInterface::mouseDownSecondTier(int posDisplay){
 }
 
 void UserInterface::computeInfoString(int posDisplay) {
-	m_display->setInfoText("");
-
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection.isComandable() || posDisplay == invalidPos) {
+		m_display->setToolTipText("");
 		return;
 	}
 
 	if (!m_selectingSecond) {
 		if (posDisplay == cancelPos) {
-			m_display->setInfoText(g_lang.get("Cancel"));
+			m_display->setToolTipText(g_lang.get("Cancel"));
 		} else if (posDisplay == meetingPointPos) {
-			m_display->setInfoText(g_lang.get("SetMeetingPoint"));
+			m_display->setToolTipText(g_lang.get("SetMeetingPoint"));
 		} else if (posDisplay == autoRepairPos) {
 			string str = g_lang.get("AutoRepair");
 			switch (selection.getAutoRepairState()) {
@@ -881,7 +902,7 @@ void UserInterface::computeInfoString(int posDisplay) {
 					str += " " + g_lang.get("Mixed");
 					break;
 			}
-			m_display->setInfoText(str);
+			m_display->setToolTipText(str);
 		} else { // uniform selection
 			if (selection.isUniform()) {
 				const Unit *unit = selection.getFrontUnit();
@@ -904,22 +925,22 @@ void UserInterface::computeInfoString(int posDisplay) {
 
 					if (unit->getFaction()->reqsOk(ct)) {
 						res += formatString(ct->getDesc(unit));
-						m_display->setInfoText(res);
+						m_display->setToolTipText(res);
 					} else {
 						if (ct->getClass() == CommandClass::UPGRADE) {
 							const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 
 							if (unit->getFaction()->getUpgradeManager()->isUpgrading(uct->getProducedUpgrade())) {
-								m_display->setInfoText(g_lang.get("Upgrading")/* + "\n" + ct->getDesc(unit)*/);
+								m_display->setToolTipText(g_lang.get("Upgrading")/* + "\n" + ct->getDesc(unit)*/);
 							} else if (unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
-								m_display->setInfoText(g_lang.get("AlreadyUpgraded")/* + "\n" + ct->getDesc(unit)*/);
+								m_display->setToolTipText(g_lang.get("AlreadyUpgraded")/* + "\n" + ct->getDesc(unit)*/);
 							} else {
 								res += formatString(ct->getReqDesc());
-								m_display->setInfoText(res);
+								m_display->setToolTipText(res);
 							}
 						} else {
 							res += formatString(ct->getReqDesc());
-							m_display->setInfoText(res);
+							m_display->setToolTipText(res);
 						}
 					}
 				}			
@@ -928,14 +949,14 @@ void UserInterface::computeInfoString(int posDisplay) {
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
 				if (cc != CommandClass::NULL_COMMAND) {
-					m_display->setInfoText(g_lang.get("CommonCommand") + ": "
+					m_display->setToolTipText(g_lang.get("CommonCommand") + ": "
 						+ g_lang.get(CommandClassNames[cc]));
 				}
 			}
 		}
 	} else { // m_selectingSecond
 		if (posDisplay == cancelPos) {
-			m_display->setInfoText(g_lang.get("Return"));
+			m_display->setToolTipText(g_lang.get("Return"));
 			return;
 		}
 		const Unit *unit = selection.getFrontUnit();
@@ -951,7 +972,7 @@ void UserInterface::computeInfoString(int posDisplay) {
 			res += tip + "\n\n";
 		}
 		res += pt->getReqDesc();
-		m_display->setInfoText(res);
+		m_display->setToolTipText(res);
 	}
 }
 
@@ -970,8 +991,8 @@ void UserInterface::computeDisplay() {
 		const Unit *unit = selection.getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
-		m_display->setTitle(unit->getFullName());
-		m_display->setText(unit->getDesc(true, friendly));
+		m_display->setPortraitTitle(unit->getFullName());
+		m_display->setPortraitText(unit->getDesc(true, friendly));
 		if (friendly) {
 			m_display->setProgressBar(unit->getProductionPercent());
 		}
@@ -1089,170 +1110,117 @@ void UserInterface::computeDisplay() {
 	if (selection.isEmpty() && selectedObject) {
 		Resource *r = selectedObject->getResource();
 		if (r) {
-			m_display->setTitle(r->getType()->getName());
-			m_display->setText(g_lang.get("amount") + ": " + intToStr(r->getAmount()));
+			m_display->setPortraitTitle(r->getType()->getName());
+			m_display->setPortraitText(g_lang.get("amount") + ": " + intToStr(r->getAmount()));
 			m_display->setUpImage(0, r->getType()->getImage());
 		} ///@todo else
 	}
 }
 
-int UserInterface::computePosDisplay(int x, int y) {
-	Vec2i pos(x, y);
-	DisplayButton btn = m_display->computeIndex(pos, true);
-	int posDisplay = (btn.m_section == DisplaySection::COMMANDS ? btn.m_index : invalidPos);
-
-	if (selection.isComandable()) {
-		if (posDisplay == cancelPos) {
-			// check cancel button
-			if (!selection.isCancelable() && !m_selectingSecond) {
-				posDisplay = invalidPos;
-			}
-		} else if (posDisplay == meetingPointPos) {
-			// check meeting point
-			if (!selection.isMeetable()) {
-				posDisplay = invalidPos;
-			}
-		} else if (posDisplay == autoRepairPos) {
-			if (!selection.isCanRepair()) {
-				posDisplay = invalidPos;
-			}
-		} else {
-			if (!m_selectingSecond) {
-				// standard selection
-				if (m_display->getCommandClass(posDisplay) == CommandClass::NULL_COMMAND && m_display->getCommandType(posDisplay) == NULL) {
-					posDisplay = invalidPos;
-				}
-			} else { // TODO: none of this is needed anymore Display::computeDownIndex() will cull these....
-				//assert(activeCommandType);
-				//if (activeCommandType->getClass() == CommandClass::BUILD) { // building selection
-				//	const BuildCommandType *bct = static_cast<const BuildCommandType*>(activeCommandType);
-				//	if (posDisplay >= bct->getBuildingCount()) {
-				//		posDisplay = invalidPos;
-				//	}
-				//} else if (activeCommandType->getClass() == CommandClass::MORPH) { // morph selection
-				//	const MorphCommandType *mct = static_cast<const MorphCommandType*>(activeCommandType);
-				//	if (posDisplay >= mct->getMorphUnitCount()) {
-				//		posDisplay = invalidPos;
-				//	}
-				//} else if (activeCommandType->getClass() == CommandClass::PRODUCE) { // prod. selection
-				//	const ProduceCommandType *pct = static_cast<const ProduceCommandType*>(activeCommandType);
-				//	if (posDisplay >= pct->getProducedUnitCount()) {
-				//		posDisplay = invalidPos;
-				//	}
-				//}
-			}
-		}
-	} else {
-		posDisplay = invalidPos;
-	}
-	return posDisplay;
-}
-
 void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult result) {
+	switch (result) {
+		case CommandResult::SUCCESS:
+			break;
+		case CommandResult::FAIL_BLOCKED:
+			m_console->addStdMessage("BuildingNoPlace");
+			break;
+		case CommandResult::FAIL_REQUIREMENTS:
+			switch (cc) {
+				case CommandClass::BUILD:
+					m_console->addStdMessage("BuildingNoReqs");
+					break;
+				case CommandClass::PRODUCE:
+					m_console->addStdMessage("UnitNoReqs");
+					break;
+				case CommandClass::UPGRADE:
+					m_console->addStdMessage("UpgradeNoReqs");
+					break;
+				default:
+					break;
+			}
+			break;
+		case CommandResult::FAIL_RESOURCES: {
+   				const Faction::ResourceTypes &needed = Faction::getNeededResources();
+				string a, b;
+				for (int i = 0; i < needed.size(); ++i) {
+					if (i != needed.size() - 1 || needed.size() == 1) {
+						if(i) {
+							a += ", ";
+						}
+						a += needed[i]->getName();
+					} else {
+						b = needed[i]->getName();
+					}
+				}
 
-	switch(result){
-	case CommandResult::SUCCESS:
-		break;
-	case CommandResult::FAIL_BLOCKED:
-		m_console->addStdMessage("BuildingNoPlace");
-		break;
-	case CommandResult::FAIL_REQUIREMENTS:
-		switch(cc){
-		case CommandClass::BUILD:
-			m_console->addStdMessage("BuildingNoReqs");
+				if (needed.size() == 1) {
+					switch(cc) {
+						case CommandClass::BUILD:
+							m_console->addStdMessage("BuildingNoRes1", a);
+							break;
+						case CommandClass::PRODUCE:
+							m_console->addStdMessage("UnitNoRes1", a);
+							break;
+						case CommandClass::UPGRADE:
+							m_console->addStdMessage("UpgradeNoRes1", a);
+							break;
+						case CommandClass::MORPH:
+							m_console->addStdMessage("MorphNoRes1", a);
+							break;
+						default:
+							m_console->addStdMessage("GenericNoRes1", a);
+							break;
+					}
+				} else {
+					switch (cc) {
+						case CommandClass::BUILD:
+							m_console->addStdMessage("BuildingNoRes2", a, b);
+							break;
+						case CommandClass::PRODUCE:
+							m_console->addStdMessage("UnitNoRes2", a, b);
+							break;
+						case CommandClass::UPGRADE:
+							m_console->addStdMessage("UpgradeNoRes2", a, b);
+							break;
+						case CommandClass::MORPH:
+							m_console->addStdMessage("MorphNoRes2", a, b);
+							break;
+						default:
+							m_console->addStdMessage("GenericNoRes2", a, b);
+							break;
+					}
+				}
+			}
+
 			break;
-		case CommandClass::PRODUCE:
-			m_console->addStdMessage("UnitNoReqs");
+
+		case CommandResult::FAIL_PET_LIMIT:
+			m_console->addStdMessage("PetLimitReached");
 			break;
-		case CommandClass::UPGRADE:
-			m_console->addStdMessage("UpgradeNoReqs");
+
+		case CommandResult::FAIL_LOAD_LIMIT:
+			m_console->addStdMessage("LoadLimitReached");
+			break;
+
+		case CommandResult::FAIL_INVALID_LOAD:
+			m_console->addStdMessage("CanNotLoadUnit");
+			break;
+
+		case CommandResult::FAIL_UNDEFINED:
+			m_console->addStdMessage("InvalidOrder");
+			break;
+
+		case CommandResult::SOME_FAILED:
+			m_console->addStdMessage("SomeOrdersFailed");
 			break;
 		default:
-			break;
-		}
-		break;
-	case CommandResult::FAIL_RESOURCES: {
-   			const Faction::ResourceTypes &needed = Faction::getNeededResources();
-			string a, b;
-			for(int i = 0; i < needed.size(); ++i) {
-				if(i != needed.size() - 1 || needed.size() == 1) {
-					if(i) {
-						a += ", ";
-					}
-					a += needed[i]->getName();
-				} else {
-					b = needed[i]->getName();
-				}
-			}
-
-			if(needed.size() == 1) {
-				switch(cc){
-				case CommandClass::BUILD:
-					m_console->addStdMessage("BuildingNoRes1", a);
-					break;
-				case CommandClass::PRODUCE:
-					m_console->addStdMessage("UnitNoRes1", a);
-					break;
-				case CommandClass::UPGRADE:
-					m_console->addStdMessage("UpgradeNoRes1", a);
-					break;
-				case CommandClass::MORPH:
-					m_console->addStdMessage("MorphNoRes1", a);
-					break;
-				default:
-					m_console->addStdMessage("GenericNoRes1", a);
-					break;
-				}
-			} else {
-				switch(cc){
-				case CommandClass::BUILD:
-					m_console->addStdMessage("BuildingNoRes2", a, b);
-					break;
-				case CommandClass::PRODUCE:
-					m_console->addStdMessage("UnitNoRes2", a, b);
-					break;
-				case CommandClass::UPGRADE:
-					m_console->addStdMessage("UpgradeNoRes2", a, b);
-					break;
-				case CommandClass::MORPH:
-					m_console->addStdMessage("MorphNoRes2", a, b);
-					break;
-				default:
-					m_console->addStdMessage("GenericNoRes2", a, b);
-					break;
-				}
-			}
-		}
-
-		break;
-
-	case CommandResult::FAIL_PET_LIMIT:
-		m_console->addStdMessage("PetLimitReached");
-		break;
-
-	case CommandResult::FAIL_LOAD_LIMIT:
-		m_console->addStdMessage("LoadLimitReached");
-		break;
-
-	case CommandResult::FAIL_INVALID_LOAD:
-		m_console->addStdMessage("CanNotLoadUnit");
-		break;
-
-	case CommandResult::FAIL_UNDEFINED:
-		m_console->addStdMessage("InvalidOrder");
-		break;
-
-	case CommandResult::SOME_FAILED:
-		m_console->addStdMessage("SomeOrdersFailed");
-		break;
-	default:
-		throw runtime_error("unhandled CommandResult");
+			throw runtime_error("unhandled CommandResult");
 	}
 }
 
 bool UserInterface::isSharedCommandClass(CommandClass commandClass){
-	for(int i = 0; i < selection.getCount(); ++i){
-		if(!selection.getUnit(i)->getFirstAvailableCt(commandClass)) {
+	for (int i = 0; i < selection.getCount(); ++i) {
+		if (!selection.getUnit(i)->getFirstAvailableCt(commandClass)) {
 			return false;
 		}
 	}

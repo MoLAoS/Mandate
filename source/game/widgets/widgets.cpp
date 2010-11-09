@@ -628,6 +628,16 @@ void VerticalScrollBar::recalc() {
 	thumbSize = int(availRatio * shaftHeight);
 }
 
+void VerticalScrollBar::setRanges(int total, int avail, int line) {
+	if (total < avail) {
+		total = avail;
+	}
+	totalRange = total;
+	availRange = avail;
+	lineSize = line;
+	recalc();
+}
+
 void VerticalScrollBar::setOffset(float percent) {
 	const int min = shaftOffset + thumbSize;
 	const int max = shaftOffset + shaftHeight;
@@ -673,26 +683,24 @@ bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
+void VerticalScrollBar::scrollLine(bool i_up) {
+	if (i_up) {
+		thumbOffset += lineSize;
+		thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		ThumbMoved(this);
+	} else {
+		thumbOffset -= lineSize;
+		thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+		ThumbMoved(this);
+	}
+}
+
 void VerticalScrollBar::update() {
 	++timeCounter;
 	if (timeCounter % 7 != 0) {
 		return;
 	}
-	if (pressedPart == Part::UP_BUTTON) {
-		if (hoverPart == Part::UP_BUTTON) {
-			thumbOffset += lineSize;
-			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
-			ThumbMoved(this);
-		}
-	} else if (pressedPart == Part::DOWN_BUTTON) {
-		if (hoverPart == Part::DOWN_BUTTON) {
-			thumbOffset -= lineSize;
-			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
-			ThumbMoved(this);
-		}
-	} else {
-		assert(false);
-	}
+	scrollLine(pressedPart == Part::UP_BUTTON);
 	moveOnMouseUp = false;
 }
 
@@ -980,6 +988,7 @@ ListBase::ListBase(WidgetWindow* window)
 
 ListBox::ListBox(Container* parent)
 		: ListBase(parent)
+		, MouseWidget(this)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -989,6 +998,7 @@ ListBox::ListBox(Container* parent)
 
 ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size) 
 		: ListBase(parent, pos, size)
+		, MouseWidget(this)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -998,6 +1008,7 @@ ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size)
 
 ListBox::ListBox(WidgetWindow* window)
 		: ListBase(window)
+		, MouseWidget(this)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -1124,6 +1135,11 @@ void ListBox::onScroll(VerticalScrollBar*) {
 		//Widget* widget = *it;
 		(*it)->setPos(x, yPositions[ndx++] - offset);
 	}
+}
+
+bool ListBox::mouseWheel(Vec2i pos, int z) {
+	scrollBar->scrollLine(z > 0);
+	return true;
 }
 
 int ListBox::getPrefHeight(int childCount) {

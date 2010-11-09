@@ -188,6 +188,7 @@ public:
 	void destroyDialog(BasicDialog* ptr = 0);
 
 	void doDefeatedMessage(Faction *f);
+	void doSaveBox();
 
 protected:
 	// render
@@ -201,8 +202,6 @@ protected:
 	
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
-
-	void doSaveBox();
 	void onSaveSelected(BasicDialog*);
 
 	void displayError(std::exception &e);

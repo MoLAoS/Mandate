@@ -81,14 +81,22 @@ void PathFinderTextureCallback::loadTextures() {
 
 Texture2DGl* PathFinderTextureCallback::operator()(const Vec2i &cell) {
 	int ndx = -1;
-	if (pathStart == cell) ndx = 9;
-	else if (pathDest == cell) ndx = 10;
-	else if (pathSet.find(cell) != pathSet.end()) ndx = 14; // on path
-	else if (closedSet.find(cell) != closedSet.end()) ndx = 16; // closed nodes
-	else if (openSet.find(cell) != openSet.end()) ndx = 15; // open nodes
-	else if (localAnnotations.find(cell) != localAnnotations.end()) // local annotation
-		ndx = 17 + localAnnotations.find(cell)->second;
-	else ndx = g_world.getCartographer()->getMasterMap()->getMetrics()[cell].get(debugField); // else use cell metric for debug field
+	if (pathStart == cell) {
+		ndx = 9;
+	} else if (pathDest == cell) {
+		ndx = 10;
+	} else if (pathSet.find(cell) != pathSet.end()) {
+		ndx = 14; // on path
+	} else if (closedSet.find(cell) != closedSet.end()) {
+		ndx = 16; // closed nodes
+	} else if (openSet.find(cell) != openSet.end()) {
+		ndx = 15; // open nodes
+	} else if (localAnnotations.find(cell) != localAnnotations.end()) {
+		ndx = 17 + localAnnotations.find(cell)->second; // local annotation
+	} else { // else use cell metric for debug field
+		const CellMetrics &metrics = g_cartographer.getMasterMap()->getMetrics()[cell];
+		ndx = metrics.get(debugField);
+	}
 	return (Texture2DGl*)PFDebugTextures[ndx];
 }
 

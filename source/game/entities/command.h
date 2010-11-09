@@ -113,6 +113,9 @@ inline ostream& operator<<(ostream &stream, const Command &command) {
 	stream << "[Command id:" << command.getId() << "|";
 	if (command.getArchetype() == CommandArchetype::CANCEL_COMMAND) {
 		stream << "Cancel command]";
+	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
+		stream << "set auto repair(" << 
+			(command.getFlags().get(CommandProperties::AUTO_REPAIR_ENABLED) ? "true" : "false") << ")]";
 	} else {
 		stream << command.getType()->getName() << "]";
 	}

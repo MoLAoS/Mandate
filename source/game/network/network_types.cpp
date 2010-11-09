@@ -141,7 +141,7 @@ Command *NetworkCommand::toCommand() const {
 		command= new Command(ct, cmdFlags, target, unit);
 	} else {
 		Vec2i pos(positionX, positionY);
-		RUNTIME_CHECK(g_world.getMap()->isInside(pos));
+		RUNTIME_CHECK(g_world.getMap()->isInside(pos) || pos == Vec2i(-1));
 		if (prodType) {
 			command= new Command(ct, cmdFlags, Vec2i(positionX, positionY), prodType, facing, unit);
 		} else {

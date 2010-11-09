@@ -325,7 +325,7 @@ void GameState::doGameMenu() {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
-	Vec2i size(240, 240), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size(240, 280), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	m_modalDialog = GameMenu::showDialog(pos, size);
 }
 
@@ -548,41 +548,41 @@ void GameState::tick(){
 // ==================== events ====================
 
 void GameState::mouseDownLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDownLeft(x, y);
 	}
 }
 
 void GameState::mouseDownRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDownRight(x, y);
 	}
 }
 
 void GameState::mouseUpLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseUpLeft(x, y);
 	}
 }
 void GameState::mouseUpRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
 }
 
 void GameState::mouseDoubleClickLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDoubleClickLeft(x, y);
 	}
 }
 
 void GameState::mouseMove(int x, int y, const MouseState &ms) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	mouseX = x;
 	mouseY = y;
 
@@ -627,14 +627,14 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 }
 
 void GameState::eventMouseWheel(int x, int y, int zDelta) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << zDelta << " )");
 	if (!noInput) {
 		gameCamera.zoom(zDelta / 30.f);
 	}
 }
 
 void GameState::keyDown(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	UserCommand cmd = keymap.getCommand(key);
 	bool speedChangesAllowed = !g_simInterface->isNetworkInterface();
 
@@ -739,7 +739,7 @@ void GameState::keyDown(const Key &key) {
 }
 
 void GameState::keyUp(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	if (key.isModifier()) {
 		gameCamera.setRotate(0.f);
 		gameCamera.setMoveX(0.f, false);
@@ -764,7 +764,7 @@ void GameState::keyUp(const Key &key) {
 }
 
 void GameState::keyPress(char c) {
-	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
+	WIDGET_LOG( __FUNCTION__ << "( '" << c << "' )");
 }
 
 void GameState::quitGame() {

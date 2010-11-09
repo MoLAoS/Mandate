@@ -164,9 +164,9 @@ Vec2i Commander::computeRefPos(const Selection &selection) const{
 	return Vec2i(total.x / selection.getCount(), total.y / selection.getCount());
 }
 
-Vec2i Commander::computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, const Vec2i &commandPos) const {
+Vec2i Commander::computeDestPos(const Vec2i &refPos, const Vec2i &unitPos, const Vec2i &cmdPos) const {
 	Vec2i pos;
-	Vec2i posDiff = unitPos - refUnitPos;
+	Vec2i posDiff = unitPos - refPos;
 
 	if (abs(posDiff.x) >= 3) {
 		posDiff.x = posDiff.x % 3;
@@ -176,7 +176,7 @@ Vec2i Commander::computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, c
 		posDiff.y = posDiff.y % 3;
 	}
 
-	pos = commandPos + posDiff;
+	pos = cmdPos + posDiff;
 	world->getMap()->clampPos(pos);
 	return pos;
 }
@@ -214,7 +214,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 	RUNTIME_CHECK(command);
 	RUNTIME_CHECK(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
-	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
+	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
+		<< ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
 	} else {

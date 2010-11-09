@@ -28,7 +28,9 @@ private:
 	void onReturnToGame(Button*);
 	void onExit(Button*);
 	void onQuit(Button*);
+	void onSaveGame(Button*);
 	void onDebugToggle(Button*);
+	void onTogglePhotoMode(Button*);
 
 public:
 	static GameMenu* showDialog(Vec2i pos, Vec2i size);

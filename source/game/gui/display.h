@@ -116,9 +116,9 @@ public:
 	Display(UserInterface *ui, Vec2i pos);
 
 	//get
-	string getTitle() const							{return TextWidget::getText(0);}
-	string getText() const							{return TextWidget::getText(1);}
-	string getInfoText() const						{return TextWidget::getText(2);}
+	string getPortraitTitle() const					{return TextWidget::getText(0);}
+	string getPortraitText() const					{return TextWidget::getText(1);}
+	/*string getInfoText() const						{return TextWidget::getText(2);}*/
 	string getTransportedLabel() const				{return TextWidget::getText(4);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
@@ -130,9 +130,11 @@ public:
 
 	//set
 	void setSize();
-	void setTitle(const string title);
-	void setText(const string &text);
-	void setInfoText(const string &infoText);
+	void setPortraitTitle(const string title);
+	void setPortraitText(const string &text);
+	//void setInfoText(const string &infoText);
+	void setToolTipText(const string &i_txt, const Vec2i &i_offset);
+	void setToolTipText(const string &i_txt) { setToolTipText(i_txt, m_downImageOffset); }
 	void setTransportedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		{setImage(image, i);}
@@ -148,7 +150,9 @@ public:
 	//misc
 	void clear();
 	void resetTipPos(Vec2i i_offset);
+	void resetTipPos() {resetTipPos(m_downImageOffset);}
 	DisplayButton computeIndex(Vec2i pos, bool screenPos = false);
+	DisplayButton getHoverButton() const { return m_hoverBtn; }
 
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 

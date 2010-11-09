@@ -34,7 +34,7 @@ class Unit;
  */
 class Effect {
 private:
-	/** Unit that caused this effect, or NULL if this is a recourse effect. */
+	/** Unit that caused this effect, or -1 if this is a recourse effect. */
 	UnitId source;
 
 	/**

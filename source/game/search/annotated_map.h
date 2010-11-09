@@ -56,7 +56,9 @@ struct CellMetrics {
 			case Field::ANY_WATER:	return field2;
 			case Field::DEEP_WATER:	return field3;
 			case Field::AMPHIBIOUS:	return field4;
-			default: throw runtime_error("Unknown Field passed to CellMetrics::get()");
+			default: assert(false); return 0;
+				//throw runtime_error("Unknown Field passed to CellMetrics::get()");
+				// don't want exception overhead in here...
 		}
 	}
 	
@@ -67,7 +69,9 @@ struct CellMetrics {
 			case Field::ANY_WATER:	field2 = val; return;
 			case Field::DEEP_WATER:	field3 = val; return;
 			case Field::AMPHIBIOUS:	field4 = val; return;
-			default: throw runtime_error("Unknown Field passed to CellMetrics::set()");
+			default: assert(false);
+				//throw runtime_error("Unknown Field passed to CellMetrics::set()");
+				// don't want exception overhead in here...
 		}
 	}
 	
@@ -100,12 +104,15 @@ private:
 // =====================================================
 // class MetricMap
 // =====================================================
-/** A wrapper class for the array of CellMetrics
-  */
+/** A wrapper class for the array of CellMetrics */
 class MetricMap {
 private:
 	CellMetrics *metrics;
 	int width,height;
+
+	MetricMap(const MetricMap &other) {
+		assert(false);
+	}
 
 public:
 	MetricMap() : metrics(NULL), width(0), height(0) { }
@@ -133,16 +140,15 @@ public:
   * that can be 'positioned' in this cell (with units in Glest always using the 
   * north-west most cell they occupy as their 'position').</p>
   */
-//TODO: pretty pictures for the doco...
 class AnnotatedMap {
-	friend class AbstractMap;
 	friend class ClusterMap;
+
 #	if _GAE_DEBUG_EDITION_
 		friend class PathFinderTextureCallback;
 		list<std::pair<Vec2i,uint32> >* getLocalAnnotations();
 #	endif
-	int width, height;
 
+	int width, height;
 	Map *cellMap;
 	
 public:
@@ -159,7 +165,7 @@ public:
 
 	void initMapMetrics();
 	
-	MetricMap getMetrics(){ return metrics; }
+	MetricMap& getMetrics(){ return metrics; }
 
 	void revealTile(const Vec2i &pos);
 

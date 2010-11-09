@@ -272,7 +272,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 /** delete stuff */
 Unit::~Unit() {
 	removeCommands();
-	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
+//	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
 }
 
 void Unit::save(XmlNode *node) const {
