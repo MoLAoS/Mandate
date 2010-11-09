@@ -212,6 +212,10 @@ CameraZoomReset=Reset Zoom
 FreeCamera=Free Camera
 GameCamera=Game camera
 
+; Display panel tips
+PotraitInfo=Click to select only this unit. Shift-click to select only units of this type. Control-click to remove this unit. Constrol+Shift-click to remove all units of this type.
+TransportInfo=Double click to immediately unload this unit.
+
 ; Game strings
 AlreadyUpgraded=Already Upgraded
 Amount=Amount
@@ -260,7 +264,7 @@ Range=Range
 ReactionSpeed=Reaction speed
 Regeneration=Regen
 RepairSpeed=Repair speed
-Reqs=Reqs
+Reqs=Requires
 Resources=Resources
 Result=Result
 Save=Save
@@ -283,6 +287,15 @@ Upgrading=Upgrading
 WalkSpeed=Walk speed
 YourGameWasSaved=Your game has been saved to %s
 Zones=Zones
+
+; Game Menu
+GameMenu=Game Menu
+ReturnToGame=Return to Game
+ToggleDebug=Toggle Debug Info
+TogglePhotoMode=Toggle Photo Mode
+SaveGame=Save Game
+QuitGame=Quit Game
+ExitProgram=Exit Program
 
 ; Command errors
 BuildingNoPlace=Building can't be placed there
