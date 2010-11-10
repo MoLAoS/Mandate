@@ -199,9 +199,7 @@ public:
 	//events
 	void update();
 
-	void tick(){
-		computeDisplay();
-	}
+	void tick();
 
 	void onSelectionUpdated(){
 		currentGroup = invalidGroupIndex;
@@ -268,7 +266,8 @@ private:
 public:
 	void resetState();
 	void computeDisplay();
-	void computeInfoString(int posDisplay);
+	void computePortraitInfo(int posDisplay);
+	void computeCommandInfo(int posDisplay);
 	void updateSelection(bool doubleClick, UnitVector &units);
 private:
 	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);

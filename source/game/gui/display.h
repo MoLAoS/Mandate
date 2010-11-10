@@ -71,22 +71,21 @@ public:
 	//static const int cellSideCount = 4;
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
-	static const int upCellCount = cellWidthCount * cellHeightCount;
-	static const int downCellCount = cellWidthCount * cellHeightCount;
-	static const int carryCellCount = cellWidthCount * cellHeightCount;
+
+	static const int selectionCellCount = cellWidthCount * cellHeightCount;
+	static const int commandCellCount = cellWidthCount * cellHeightCount;
+	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
+
 	static const int colorCount = 4;
 	static const int imageSize = 32;
 	static const int invalidPos = -1;
-	static const int downY = imageSize * 9;
-	static const int carryY = imageSize * 2;
-	static const int infoStringY = imageSize * 4;
 
 private:
 	UserInterface *m_ui;
-	bool downLighted[downCellCount];
-	int index[downCellCount];
-	const CommandType *commandTypes[downCellCount];
-	CommandClass commandClasses[downCellCount];
+	bool downLighted[commandCellCount];
+	int index[commandCellCount];
+	const CommandType *commandTypes[commandCellCount];
+	CommandClass commandClasses[commandCellCount];
 	Vec3f colors[colorCount];
 	int m_progress;
 	int currentColor;
@@ -118,7 +117,7 @@ public:
 	//get
 	string getPortraitTitle() const					{return TextWidget::getText(0);}
 	string getPortraitText() const					{return TextWidget::getText(1);}
-	/*string getInfoText() const						{return TextWidget::getText(2);}*/
+	string getOrderQueueText() const				{return TextWidget::getText(2);}
 	string getTransportedLabel() const				{return TextWidget::getText(4);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
@@ -132,14 +131,13 @@ public:
 	void setSize();
 	void setPortraitTitle(const string title);
 	void setPortraitText(const string &text);
-	//void setInfoText(const string &infoText);
-	void setToolTipText(const string &i_txt, const Vec2i &i_offset);
-	void setToolTipText(const string &i_txt) { setToolTipText(i_txt, m_downImageOffset); }
+	void setOrderQueueText(const string &text);
+	void setToolTipText(const string &i_txt, DisplaySection i_section = DisplaySection::COMMANDS);
 	void setTransportedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		{setImage(image, i);}
-	void setDownImage(int i, const Texture2D *image)	{setImage(image, upCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	{setImage(image, upCellCount + downCellCount + i);}
+	void setDownImage(int i, const Texture2D *image)	{setImage(image, selectionCellCount + i);}
+	void setCarryImage(int i, const Texture2D *image)	{setImage(image, selectionCellCount + commandCellCount + i);}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}

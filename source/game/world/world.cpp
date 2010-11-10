@@ -287,7 +287,7 @@ void World::updateFaction(const Faction *f) {
 			unit->kill();
 		}
 		// assert map cells
-		g_map.assertUnitCells(unit);
+		map.assertUnitCells(unit);
 	}
 }
 

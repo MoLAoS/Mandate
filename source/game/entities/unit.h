@@ -460,7 +460,11 @@ public:
 	//other
 	void resetHighlight();
 	const CommandType *computeCommandType(const Vec2i &pos, const Unit *targetUnit= NULL) const;
-	string getDesc(bool brief, bool friendly) const;
+
+	string getShortDesc() const;
+	int getQueuedOrderCount() const { return (commands.size() > 1 ? commands.size() - 1 : 0); }
+	string getLongDesc() const;
+	
 	bool computeEp();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);

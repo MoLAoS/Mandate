@@ -279,13 +279,21 @@ void UserInterface::update() {
 	selection.clearDeadUnits();
 
 	if (m_selectionDirty) {
-		computeDisplay();
-		DisplayButton btn = m_display->getHoverButton();
-		if (btn.m_section == DisplaySection::COMMANDS) {
-			computeInfoString(btn.m_index);
-		}
-		m_selectionDirty = false;
+		tick();
 	}
+}
+
+void UserInterface::tick() {
+	computeDisplay();
+	DisplayButton btn = m_display->getHoverButton();
+	if (btn.m_section == DisplaySection::COMMANDS) {
+		computeCommandInfo(btn.m_index);
+	} else if (btn.m_section == DisplaySection::SELECTION) {
+		if (selection.getCount() == 1) {
+			computePortraitInfo(btn.m_index);
+		}
+	}
+	m_selectionDirty = false;
 }
 
 void UserInterface::commandButtonPressed(int posDisplay) {
@@ -302,7 +310,7 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 		}
 		activePos = posDisplay;
 		computeDisplay();
-		computeInfoString(activePos);
+		computeCommandInfo(activePos);
 	} else { // m_selectingSecond
 		// if they clicked on a button again, they must have changed their mind
 		resetState();
@@ -773,7 +781,7 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 }
 
 void UserInterface::clickCommonCommand(CommandClass commandClass) {
-	for(int i=0; i < Display::downCellCount; ++i) {
+	for(int i=0; i < Display::commandCellCount; ++i) {
 		const CommandType* ct = m_display->getCommandType(i);
 		if (((ct && ct->getClass() == commandClass) || m_display->getCommandClass(i) == commandClass)
 		&& m_display->getDownLighted(i)) {
@@ -877,7 +885,19 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 	}
 }
 
-void UserInterface::computeInfoString(int posDisplay) {
+void UserInterface::computePortraitInfo(int posDisplay) {
+	if (selection.getCount() < posDisplay) {
+		m_display->setToolTipText("");
+	} else {
+		if (selection.getCount() == 1 && !selection.isEnemy()) {
+			m_display->setToolTipText(selection.getFrontUnit()->getLongDesc(), DisplaySection::SELECTION);
+		} else if (selection.isComandable()) {
+			m_display->setToolTipText(g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
+		}
+	}
+}
+
+void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection.isComandable() || posDisplay == invalidPos) {
 		m_display->setToolTipText("");
@@ -986,23 +1006,31 @@ void UserInterface::computeDisplay() {
 	// ================ PART 1 ================
 
 	int thisTeam = g_world.getThisTeamIndex();
+
 	// title, text and progress bar
 	if (selection.getCount() == 1) {
 		const Unit *unit = selection.getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
 		m_display->setPortraitTitle(unit->getFullName());
-		m_display->setPortraitText(unit->getDesc(true, friendly));
+		m_display->setPortraitText(unit->getShortDesc());
 		if (friendly) {
 			m_display->setProgressBar(unit->getProductionPercent());
+			int ordersQueued = unit->getQueuedOrderCount();
+			if (ordersQueued) {
+				m_display->setOrderQueueText(g_lang.get("OrdersOnQueue") + ": " + intToStr(ordersQueued));
+			} else {
+				m_display->setOrderQueueText("");
+			}
 		}
 	}
 
-	// portraits
+	// selection portraits
 	for (int i = 0; i < selection.getCount(); ++i) {
 		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
 
+	// transported portraits
 	bool transported = false;
 	int i=0;
 	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
@@ -1012,7 +1040,7 @@ void UserInterface::computeDisplay() {
 			if (!carriedUnits.empty()) {
 				transported = true;
 				foreach (UnitIdList, it, carriedUnits) {
-					if (i < Display::carryCellCount) {
+					if (i < Display::transportCellCount) {
 						Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
 						m_display->setCarryImage(i++, unit->getType()->getImage());
 					}

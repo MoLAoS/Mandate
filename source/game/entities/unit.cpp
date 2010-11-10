@@ -511,7 +511,6 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	}
 	progress2 = 0;
 	currSkill = newSkill;
-	StateChanged(this);
 
 	if (!isCarried()) {
 		startSkillParticleSystems();
@@ -784,9 +783,9 @@ CommandResult Unit::giveCommand(Command *command) {
 		delete command;
 		command = 0;
 	}
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+
+	StateChanged(this);
+
 	if (command) {
 		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << *command << ", Result=" << CommandResultNames[result] );
 	}
@@ -817,9 +816,7 @@ Command *Unit::popCommand() {
 	} else {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
 	}
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+	StateChanged(this);
 	return command;
 }
 /** pop current command (used when order is done)
@@ -839,9 +836,7 @@ CommandResult Unit::finishCommand() {
 	if(command && command->getType()->getClass() == CommandClass::PATROL) {
 		command->setPos2(pos);
 	}
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+
 	if (commands.empty()) {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
 	} else {
@@ -867,11 +862,11 @@ CommandResult Unit::cancelCommand() {
 	delete commands.back();
 	commands.pop_back();
 
+	StateChanged(this);
+
 	//clear routes
-	unitPath.clear();
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+	clearPath();
+	
 	if (commands.empty()) {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " current " << ct->getName() << " command cancelled.");
 	} else {
@@ -892,9 +887,7 @@ CommandResult Unit::cancelCurrCommand() {
 	undoCommand(*commands.front());
 
 	Command *command = popCommand();
-	if (!command || command->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+
 	if (!command) {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
 	} else {
@@ -1454,52 +1447,45 @@ bool Unit::decHp(int i) {
 	return false;
 }
 
-string Unit::getDesc(bool brief, bool full) const {
-	int armorBonus = getArmor() - type->getArmor();
-	int sightBonus = getSight() - type->getSight();
-
+string Unit::getShortDesc() const {
 	stringstream ss;
-
-	// hp
 	ss << g_lang.get("Hp") << ": " << hp << "/" << getMaxHp();
 	if (getHpRegeneration()) {
 		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
 	}
-	if (getMaxEp()) { // ep
+	if (getMaxEp()) {
 		ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
 		if (getEpRegeneration()) {
 			ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
 		}
 	}
-
-	if (!full || brief) {
-		// Show current command being executed
-		if (!commands.empty()) {
-			ss << endl << commands.front()->getType()->getName();
-		}
-		if (full && commands.size() > 1) { // if friendly show number orders queued
-			ss << endl << g_lang.get("OrdersOnQueue") << ": " << commands.size();
-		}
-		if (!brief) { // if not brief show effects
-			effects.streamDesc(ss);
-		}
-		return ss.str();
+	if (!commands.empty()) { // Show current command being executed
+		ss << endl << commands.front()->getType()->getName();
 	}
+	return ss.str();
+}
 
-	//armor
+string Unit::getLongDesc() const {
+	string shortDesc = getShortDesc();
+	stringstream ss;
+
+	int armorBonus = getArmor() - type->getArmor();
+	int sightBonus = getSight() - type->getSight();
+
+	// armor
 	ss << endl << g_lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
 		ss << (armorBonus > 0 ? "+" : "-") << armorBonus;
 	}
 	ss << " (" << type->getArmourType()->getName() << ")";
 
-	//sight
+	// sight
 	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? "+" : "-") << sightBonus;
 	}
 
-	//kills
+	// kills
 	const Level *nextLevel = getNextLevel();
 	if (kills > 0 || nextLevel) {
 		ss << endl << g_lang.get("Kills") << ": " << kills;
@@ -1508,12 +1494,12 @@ string Unit::getDesc(bool brief, bool full) const {
 		}
 	}
 
-	//load
+	// resource load
 	if (loadCount) {
 		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << loadType->getName();
 	}
 
-	//consumable production
+	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
 		const Resource *r = getType()->getCost(i);
 		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
@@ -1521,28 +1507,18 @@ string Unit::getDesc(bool brief, bool full) const {
 				<< ": " << abs(r->getAmount()) << " " << r->getType()->getName();
 		}
 	}
-
-	//command info
-	if (!commands.empty()) {
-		ss << endl << commands.front()->getType()->getName();
-		if (commands.size() > 1) {
-			ss << endl << g_lang.get("OrdersOnQueue") << ": " << commands.size();
-		}
-	} else {
-		//can store
-		if (type->getStoredResourceCount() > 0) {
-			for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-				const Resource *r = type->getStoredResource(i);
-				ss << endl << g_lang.get("Store") << ": ";
-				ss << r->getAmount() << " " << r->getType()->getName();
-			}
+	// can store
+	if (type->getStoredResourceCount() > 0) {
+		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
+			const Resource *r = type->getStoredResource(i);
+			ss << endl << g_lang.get("Store") << ": ";
+			ss << r->getAmount() << " " << r->getType()->getName();
 		}
 	}
-
-	//effects
+	// effects
 	effects.streamDesc(ss);
 
-	return ss.str();
+	return (shortDesc + ss.str());
 }
 
 /** Apply effects of an UpgradeType

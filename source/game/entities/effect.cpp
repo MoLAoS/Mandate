@@ -189,6 +189,7 @@ struct EffectSummary {
 void Effects::streamDesc(ostream &stream) const {
 	string str;
 	getDesc(str);
+	str = formatString(str);
 	stream << str;
 }
 

@@ -240,8 +240,8 @@ public:
 		AttackCommandTypeBase::doChecksum(checksum);
 	}
 	virtual void getDesc(string &str, const Unit *unit) const {
-		AttackCommandTypeBase::getDesc(str, unit);
 		MoveBaseCommandType::getDesc(str, unit);
+		AttackCommandTypeBase::getDesc(str, unit);
 	}
 
 	bool updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) const;

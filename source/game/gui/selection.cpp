@@ -208,7 +208,7 @@ void Selection::update() {
 	} else {
 		const UnitType *frontUT = selectedUnits.front()->getType();
 		empty = false;
-		enemy = true;
+		enemy = false;
 		uniform = true;
 		commandable = false;
 		cancelable = false;

@@ -362,7 +362,6 @@ void ProduceCommandType::update(Unit *unit) const {
 				ScriptManager::onUnitCreated(produced);
 				g_simInterface->getStats()->produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
-
 				if (ct) {
 					produced->giveCommand(new Command(ct, CommandFlags(), unit->getMeetingPos()));
 				}
