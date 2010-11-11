@@ -273,7 +273,7 @@ void EffectType::getDesc(string &str) const {
 
 	// effected units
 	if (isEffectsPetsOnly() || !isEffectsFoe() || !isEffectsAlly()) {
-		str += "\n   Effects: ";
+		str += "\n   Affects: ";
 		if (isEffectsPetsOnly()) {
 			str += "pets only";
 		} else if (isEffectsAlly()) {

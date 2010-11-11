@@ -45,7 +45,6 @@ int getGAEContributorCount();
 string getGAEContributorName(int i);
 
 string getCrashDumpFileName();
-string formatString(const string &str);
 
 }} // namespace Glest::Util
 

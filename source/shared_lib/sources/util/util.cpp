@@ -391,6 +391,28 @@ string replaceBy(const string &s, char c1, char c2){
 
 // ==================== misc ====================
 
+string formatString(const string &str) {
+	string outStr = str;
+
+	if (!outStr.empty()) {
+		outStr[0] = toupper(outStr[0]);
+	}
+
+	bool afterSeparator = false;
+	for (int i = 0; i < str.size(); ++i) {
+		if (outStr[i] == '_' || outStr[i] == '-') {
+			outStr[i] = ' ';
+		} else if (afterSeparator) {
+			outStr[i] = toupper(outStr[i]);
+			afterSeparator = false;
+		}
+		if (outStr[i] == '\n' || outStr[i] == '(' || outStr[i] == ' ') {
+			afterSeparator = true;
+		}
+	}
+	return outStr;
+}
+
 bool fileExists(const string &path) {
 	if (FSFactory::getInstance()->usePhysFS) {
 		return FSFactory::fileExists(path);

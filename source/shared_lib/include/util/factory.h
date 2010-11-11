@@ -16,6 +16,8 @@
 #include <string>
 #include <stdexcept>
 
+#include "util.h"
+
 using std::map;
 using std::string;
 using std::pair;
@@ -87,20 +89,37 @@ public:
 	}
 
 	template<typename R>
-	void registerClass(string classId){
+	void registerClass(string classId) {
+		classId = formatString(classId);
 		factories.insert(FactoryPair(classId, new SingleFactory<R>()));
 	}
 
-	T *newInstance(string classId){
+	//
+	///@todo This is broken, it relies on classes deriving from T _first_
+	// if any other base class comes first this breaks.
+	//
+	// To fix properly, we will need to use a new single factory type, avoiding any of
+	// that evil casting to/from 'void*'
+	//
+	// template <typename BaseClass, typename DerivedClass>
+	// class SingeleDerivedFactory {
+	//		...
+	//		BaseClass* newInstance() { return static_cast<BaseClass*>(new DerivedClass()); }
+	//		...
+	//
+
+	T* newInstance(string classId) {
+		classId = formatString(classId);
 		Factories::iterator it= factories.find(classId);
-		if(it == factories.end()){
+		if (it == factories.end()) {
 			throw UnknownType(classId);
 		}
 		return static_cast<T*>(it->second->newInstance());
 	}
 
-	bool isClassId(string classId){
-		return factories.find(classId)!=factories.end();
+	bool isClassId(string classId) {
+		classId = formatString(classId);
+		return (factories.find(classId) != factories.end());
 	}
 };
 

@@ -218,7 +218,7 @@ void Display::setPortraitTitle(const string title) {
 	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;
 	}
-	string str = Util::formatString(title);	
+	string str = formatString(title);	
 	TextWidget::setText(str, 0);
 }
 
@@ -227,7 +227,7 @@ void Display::setPortraitText(const string &text) {
 	if (TextWidget::getText(1).empty() && text.empty()) {
 		return;
 	}
-	string str = Util::formatString(text);
+	string str = formatString(text);
 
 	int lines = 1;
 	foreach_const (string, it, str) {
@@ -583,8 +583,6 @@ void Display::mouseOut() {
 // =====================================================
 // 	class ResourceBar
 // =====================================================
-
-using Util::formatString;
 
 ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &types)
 		: Widget(static_cast<Container*>(WidgetWindow::getInstance()))

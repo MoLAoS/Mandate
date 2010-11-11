@@ -639,7 +639,7 @@ public:
 };
 
 // ===============================
-//  class UnloadCommandType
+//  class BeLoadedCommandType
 // ===============================
 
 class BeLoadedCommandType : public CommandType {
@@ -648,7 +648,7 @@ private:
 
 public:
 	BeLoadedCommandType()
-			: CommandType("be-loaded", Clicks::ONE), moveSkillType(0) {}
+			: CommandType("BeLoaded", Clicks::ONE), moveSkillType(0) {}
 
 	void setMoveSkill(const MoveSkillType *moveSkill) { moveSkillType = moveSkill; }
 	virtual bool load() {return true;}
@@ -701,25 +701,29 @@ public:
 //  class GenericCommandType
 // ===============================
 
-class GenericCommandType: public CommandType {
+class CastSpellCommandType: public CommandType {
 private:
-	const GenericSkillType *genericSkillType;
-	bool	m_cycle;
+	const CastSpellSkillType *castSpellSkillType;
+	SpellAffect	m_affects;
+	SpellStart	m_start;
+	bool		m_cycle;
 
 public:
-	GenericCommandType() : CommandType("Generic", Clicks::ONE), m_cycle(false) {}
+	CastSpellCommandType() : CommandType("CastSpell", Clicks::ONE), m_cycle(false) {}
 	virtual void doChecksum(Checksum &checksum) const {
 		CommandType::doChecksum(checksum);
-		checksum.add(genericSkillType->getName());
+		checksum.add(castSpellSkillType->getName());
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const	{genericSkillType->getDesc(str, unit);}
-	const GenericSkillType *getGenericSkillType() const			{return genericSkillType;}
+	virtual void getDesc(string &str, const Unit *unit) const {
+		castSpellSkillType->getDesc(str, unit);
+	}
+	const CastSpellSkillType *getCastSpellSkillType() const			{return castSpellSkillType;}
 
 	virtual void update(Unit *unit) const;
 
 	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::GENERIC; }
+	static CommandClass typeClass() { return CommandClass::CAST_SPELL; }
 };
 
 // ===============================

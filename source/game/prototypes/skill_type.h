@@ -445,14 +445,16 @@ public:
 // 	class GenericSkillType
 // ===============================
 
-class GenericSkillType : public SkillType {
+class CastSpellSkillType : public SkillType {
 public:
-	GenericSkillType() : SkillType("Generic") {}
+	CastSpellSkillType() : SkillType("CastSpell") {}
 
-	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void getDesc(string &str, const Unit *unit) const {
+		descEffects(str, unit);
+	}
 
 	virtual SkillClass getClass() const { return typeClass(); }
-	static SkillClass typeClass() { return SkillClass::GENERIC; }
+	static SkillClass typeClass() { return SkillClass::CAST_SPELL; }
 
 };
 // ===============================

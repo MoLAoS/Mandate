@@ -262,8 +262,9 @@ void World::updateFaction(const Faction *f) {
 	for (int i=0; i < n; ++i) {
 		Unit *unit = f->getUnit(i);
 		if (unit->update()) {
-			if (!unit->getCurrSkill()->getEffectTypes().empty()) {
-				// start effects for skill cycle just completed
+			if (unit->getCurrSkill()->getClass() == SkillClass::CAST_SPELL
+			&& !unit->getCurrSkill()->getEffectTypes().empty()) {
+				// start spell effects for skill cycle just completed
 				applyEffects(unit, unit->getCurrSkill()->getEffectTypes(), unit, 0);
 			}
 

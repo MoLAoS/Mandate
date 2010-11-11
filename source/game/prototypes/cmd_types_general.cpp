@@ -997,16 +997,38 @@ void BeLoadedCommandType::update(Unit *unit) const {
 //  class GenericCommandType
 // ===============================
 
-bool GenericCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
-	// generic skill
+	// cast skill
 	try { 
-		const XmlNode *genSkillNode = n->getChild("generic-skill");
+		const XmlNode *genSkillNode = n->getChild("cast-spell-skill");
 		m_cycle = genSkillNode->getOptionalBoolValue("cycle");
 		string skillName = genSkillNode->getAttribute("value")->getRestrictedValue();
-		const SkillType *st = unitType->getSkillType(skillName, SkillClass::GENERIC);
-		genericSkillType = static_cast<const GenericSkillType*>(st);
+		const SkillType *st = unitType->getSkillType(skillName, SkillClass::CAST_SPELL);
+		castSpellSkillType = static_cast<const CastSpellSkillType*>(st);
+	
+		string str = n->getChild("affect")->getRestrictedValue();
+		m_affects = SpellAffectNames.match(str.c_str());
+		if (m_affects == SpellAffect::INVALID) {
+			throw runtime_error("Invalid cast-spell affect '" + str + "'");
+		}
+		if (m_affects != SpellAffect::SELF) {
+			throw runtime_error("In 0.3.2 cast-spell affect must be 'self'");
+		}
+		XmlAttribute *attrib = n->getChild("affect")->getAttribute("start");
+		if (attrib) {
+			str = attrib->getRestrictedValue();
+			m_start = SpellStartNames.match(str.c_str());
+			if (m_start == SpellStart::INVALID) {
+				throw runtime_error("Invlaid spell start '" + str + "'");
+			}
+			if (m_start != SpellStart::INSTANT) {
+				throw runtime_error("In 0.3.2 spell start must be 'instant'");
+			}
+		} else {
+			m_start = SpellStart::INSTANT;
+		}	
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
@@ -1014,9 +1036,9 @@ bool GenericCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	return loadOk;
 }
 
-void GenericCommandType::update(Unit *unit) const {
-	if (unit->getCurrSkill() != genericSkillType) {
-		unit->setCurrSkill(genericSkillType);
+void CastSpellCommandType::update(Unit *unit) const {
+	if (unit->getCurrSkill() != castSpellSkillType) {
+		unit->setCurrSkill(castSpellSkillType);
 		return;
 	}
 	if (!m_cycle) {
