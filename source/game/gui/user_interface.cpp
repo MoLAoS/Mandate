@@ -899,7 +899,8 @@ void UserInterface::computePortraitInfo(int posDisplay) {
 
 void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
-	if (!selection.isComandable() || posDisplay == invalidPos) {
+	if (!selection.isComandable() || posDisplay == invalidPos
+	|| (m_selectingSecond && posDisplay >= activeCommandType->getProducedCount())) {
 		m_display->setToolTipText("");
 		return;
 	}
@@ -979,6 +980,8 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 			m_display->setToolTipText(g_lang.get("Return"));
 			return;
 		}
+		RUNTIME_CHECK(activeCommandType != 0);
+		RUNTIME_CHECK(posDisplay >= 0 && posDisplay < activeCommandType->getProducedCount());
 		const Unit *unit = selection.getFrontUnit();
 		const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
 		string factionName = unit->getFaction()->getType()->getName();
