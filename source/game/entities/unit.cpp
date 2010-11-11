@@ -1111,6 +1111,18 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 			assert(soundOffset > 0);
 		}
 	}
+	// modify offsets for attack skills
+	if (currSkill->getClass() == SkillClass::ATTACK) {
+		fixed ratio = currSkill->getSpeed() / fixed(getSpeed());
+		frameOffset = (frameOffset * ratio).round();
+		if (soundOffset > 0) {
+			soundOffset = (soundOffset * ratio).round();
+		}
+		if (attackOffset > 0) {
+			attackOffset = (attackOffset * ratio).round();
+		}
+	}
+
 	const int &frame = g_world.getFrameCount();
 	assert(frameOffset > 0);
 	this->lastAnimReset = frame;
