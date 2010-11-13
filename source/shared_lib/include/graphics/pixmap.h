@@ -104,6 +104,7 @@ class PixmapIoPng: public PixmapIo {
 private:
 	FileOps *file;
 	png_structp png_ptr;
+	png_structp png_write_ptr;
 	png_infop info_ptr;
 
 public:
@@ -114,13 +115,13 @@ public:
 	virtual void read(uint8 *pixels);
 	virtual void read(uint8 *pixels, int components);
 
-	virtual void openWrite(const string &path, int w, int h, int components) {
+	virtual void openWrite(const string &path, int w, int h, int components);/* {
 		throw runtime_error("Can't write PNG.");
-	}
+	}*/
 
-	virtual void write(uint8 *pixels) {
+	virtual void write(uint8 *pixels);/* {
 		throw runtime_error("Can't write PNG.");
-	}
+	}*/
 };
 
 
@@ -185,6 +186,7 @@ public:
 	void save(const string &path);
 	void saveBmp(const string &path);
 	void saveTga(const string &path);
+	void savePng(const string &path);
 
 	//get
 	int getW() const			{return w;}

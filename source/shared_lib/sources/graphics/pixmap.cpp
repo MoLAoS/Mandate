@@ -372,6 +372,16 @@ static void user_read_data(png_structp read_ptr, png_bytep data, png_size_t leng
 	}
 }
 
+static void user_write_data(png_structp write_ptr, png_bytep data, png_size_t length) {
+	FileOps *f = ((FileOps*)png_get_io_ptr(write_ptr));
+	if (f->write((void*)data, length, 1) != 1) {
+		png_error(write_ptr,"Could not write to png-file");
+	}
+}
+
+static void png_flush(png_structp png_ptr) {
+}
+
 void PixmapIoPng::openRead(const string &path) {
 	file = FSFactory::getInstance()->getFileOps();
 	file->openRead(path.c_str());
@@ -497,6 +507,135 @@ void PixmapIoPng::read(uint8 *pixels, int components) {
 	}
 	delete[] row_pointers;
 	png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+}
+
+void PixmapIoPng::openWrite(const string &path, int w, int h, int components) {
+    //this->path = path;
+	this->w= w;
+	this->h= h;
+	this->components= components;
+
+	//file= fopen(path.c_str(),"wb");
+	file = FSFactory::getInstance()->getFileOps();
+	file->openWrite(path.c_str());
+	if (file == NULL) {
+		throw runtime_error("Can't open PNG file for writing: "+ path);
+	}
+}
+
+void PixmapIoPng::write(uint8 *pixels) {
+	// Thanks to MegaGlest for most of this implementation.
+
+	// Allocate write & info structures
+   png_structp png_write_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+   if(!png_write_ptr) {
+	 //fclose(file); ///@todo replace with physfs equivalent
+	 throw runtime_error("OpenGlDevice::saveImageAsPNG() - out of memory creating write structure");
+   }
+
+   png_infop info_ptr = png_create_info_struct(png_write_ptr);
+   if(!info_ptr) {
+	 png_destroy_write_struct(&png_write_ptr,
+							  (png_infopp)NULL);
+	 //fclose(file); ///@todo replace with physfs equivalent
+	 throw runtime_error("OpenGlDevice::saveImageAsPNG() - out of memery creating info structure");
+   }
+
+   // setjmp() must be called in every function that calls a PNG-writing
+   // libpng function, unless an alternate error handler was installed--
+   // but compatible error handlers must either use longjmp() themselves
+   // (as in this program) or exit immediately, so here we go:
+
+   if(setjmp(png_jmpbuf(png_write_ptr))) {
+	 png_destroy_write_struct(&png_write_ptr, &info_ptr);
+	 //fclose(file); ///@todo replace with physfs equivalent
+	 throw runtime_error("OpenGlDevice::saveImageAsPNG() - setjmp problem");
+   }
+
+   png_set_write_fn(png_write_ptr, file, user_write_data, png_flush);
+
+   // make sure outfile is (re)opened in BINARY mode
+   //png_init_io(png_ptr, file); // using custom write through PhysFS instead
+
+   // set the compression levels--in general, always want to leave filtering
+   // turned on (except for palette images) and allow all of the filters,
+   // which is the default; want 32K zlib window, unless entire image buffer
+   // is 16K or smaller (unknown here)--also the default; usually want max
+   // compression (NOT the default); and remaining compression flags should
+   // be left alone
+
+   //png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
+   png_set_compression_level(png_write_ptr, Z_DEFAULT_COMPRESSION);
+
+   //
+   // this is default for no filtering; Z_FILTERED is default otherwise:
+   // png_set_compression_strategy(png_ptr, Z_DEFAULT_STRATEGY);
+   //  these are all defaults:
+   //   png_set_compression_mem_level(png_ptr, 8);
+   //   png_set_compression_window_bits(png_ptr, 15);
+   //   png_set_compression_method(png_ptr, 8);
+
+
+   // Set some options: color_type, interlace_type
+   int color_type=0, interlace_type=0, numChannels=0;
+
+   //  color_type = PNG_COLOR_TYPE_GRAY;
+   //  color_type = PNG_COLOR_TYPE_GRAY_ALPHA;
+   color_type = PNG_COLOR_TYPE_RGB;
+   numChannels = 3;
+   // color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+
+   interlace_type =  PNG_INTERLACE_NONE;
+   // interlace_type = PNG_INTERLACE_ADAM7;
+
+   int bit_depth = 8;
+   png_set_IHDR(png_write_ptr, info_ptr, this->w, this->h, bit_depth,
+				color_type,
+				interlace_type,
+				PNG_COMPRESSION_TYPE_BASE,
+				PNG_FILTER_TYPE_BASE);
+
+   // Optional gamma chunk is strongly suggested if you have any guess
+   // as to the correct gamma of the image. (we don't have a guess)
+   //
+   // png_set_gAMA(png_write_ptr, info_ptr, image_gamma);
+
+   // write all chunks up to (but not including) first IDAT
+   png_write_info(png_write_ptr, info_ptr);
+
+   // set up the row pointers for the image so we can use png_write_image
+
+   png_bytep* row_pointers = new png_bytep[this->h];
+   if (row_pointers == 0) {
+	 png_destroy_write_struct(&png_write_ptr, &info_ptr);
+	 //fclose(file); ///@todo replace with physfs equivalent
+	 throw runtime_error("OpenGlDevice::failed to allocate memory for row pointers");
+   }
+
+   unsigned int row_stride = this->w * numChannels;
+   unsigned char *rowptr = (unsigned char*) pixels;
+   for (int row = this->h-1; row >=0 ; row--) {
+	 row_pointers[row] = rowptr;
+	 rowptr += row_stride;
+   }
+
+   // now we just write the whole image; libpng takes care of interlacing for us
+   png_write_image(png_write_ptr, row_pointers);
+
+   // since that's it, we also close out the end of the PNG file now--if we
+   // had any text or time info to write after the IDATs, second argument
+   // would be info_ptr, but we optimize slightly by sending NULL pointer: */
+
+   png_write_end(png_write_ptr, info_ptr);
+
+   //
+   // clean up after the write
+   //    free any memory allocated & close the file
+   //
+   png_destroy_write_struct(&png_write_ptr, &info_ptr);
+
+   delete [] row_pointers;
+	//fclose(file);
 }
 
 // =====================================================
@@ -743,6 +882,8 @@ void Pixmap2D::save(const string &path){
 		saveBmp(path);
 	} else if(extension == "tga") {
 		saveTga(path);
+	} else if(extension == "png") {
+		savePng(path);
 	} else {
 		throw runtime_error("Unknown pixmap extension: " + extension);
 	}
@@ -758,6 +899,12 @@ void Pixmap2D::saveTga(const string &path){
 	PixmapIoTga pst;
 	pst.openWrite(path, w, h, components);
 	pst.write(pixels);
+}
+
+void Pixmap2D::savePng(const string &path){
+	PixmapIoPng psp;
+	psp.openWrite(path, w, h, components);
+	psp.write(pixels);
 }
 
 void Pixmap2D::getPixel(int x, int y, uint8 *value) const{
