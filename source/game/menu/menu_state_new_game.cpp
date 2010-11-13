@@ -423,7 +423,7 @@ void MenuStateNewGame::update() {
 
 	bool configAnnounce = true; // TODO: put in config
 	if (configAnnounce) {
-		m_announcer.doAnnounce(hasUnconnectedSlots());
+		//m_announcer.doAnnounce(hasUnconnectedSlots());
 	}
 
 	static int counter = 0;
