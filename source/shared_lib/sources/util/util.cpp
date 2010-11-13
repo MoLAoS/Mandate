@@ -258,7 +258,7 @@ string cleanPath(const string &s) {
 
 	for(char *p =  strtok_r(buf, "\\/", &data); p; p = strtok_r(NULL, "\\/", &data)) {
 		// skip duplicate path delimiters
-		if(strlen(p) == 0) {
+		if(*p == '\0') {
 			continue;
 
 		// skip entries that just say "the current directory"
