@@ -79,6 +79,12 @@ public:
 	static Logger &getWidgetLog();
 	static Logger &getAiLog();
 
+	/** A timestamp with filename safe characters. (ie no \/:*?"<>| chars)
+	* @returns a string in the format:
+	* [Day of the month (01-31)][Abbreviated month name (eg Feb)][Hour in 24h format (00-23)]-[Minute (00-59)]
+	*/
+	static string fileTimestamp();
+
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
 	void setSubtitle(const string &v)	{subtitle = v;}

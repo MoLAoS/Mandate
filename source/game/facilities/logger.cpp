@@ -80,6 +80,25 @@ Logger& Logger::getAiLog() {
 	return logger;
 }
 
+string Logger::fileTimestamp() {
+#if defined(WIN32) | defined(WIN64)
+	time_t rawtime;
+	struct tm *timeinfo;
+	char formatted[30];
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	//Day of the month (01-31), Abbreviated month name (eg Feb), Year,
+	// Hour in 24h format (00-23), Minute (00-59), Seconds (00-59)
+	strftime(formatted, 30, "%d-%b-%Y_%H-%M-%S", timeinfo);
+
+	return string(formatted);
+#else
+	return string(); ///@todo unix implementation
+#endif
+}
+
 void Logger::setState(const string &state){
 	this->state= state;
 	logLines.clear();

@@ -458,7 +458,7 @@ void Program::crash(const exception *e) {
 	// if we've already crashed then we just try to exit
 	if(!crashed) {
 		try {
-			g_renderer.saveScreen("glestadv-crash.tga");
+			g_renderer.saveScreen("glestadv-crash_" + Logger::fileTimestamp() + ".png");
 		} catch(runtime_error &e) {
 			printf("Exception: %s\n", e.what());
 		}
