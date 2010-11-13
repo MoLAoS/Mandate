@@ -71,11 +71,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		, m_fadeMusicOut(false) {
 	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
-	const CoreData &coreData = CoreData::getInstance();
 	Lang &lang = Lang::getInstance();
-	Config &config = Config::getInstance();
-
-	Font *font = coreData.getFTMenuFontNormal();
+	Font *font = g_coreData.getFTMenuFontNormal();
 
 	// initialize network interface
 	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch

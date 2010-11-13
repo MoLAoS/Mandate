@@ -106,9 +106,6 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 		, m_messageBox(0) 
 		, m_connectThread(0)
 		, m_findServerThread(0) {
-	Lang &lang = Lang::getInstance();
-	Config &config = Config::getInstance();
-
 	if (fileExists(serverFileName)) {
 		servers.load(serverFileName);
 	} else {

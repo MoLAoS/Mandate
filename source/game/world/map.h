@@ -116,7 +116,7 @@ private:
 
 public:
 	Tile() : vertex(0.f), normal(0.f, 1.f, 0.f), originalVertex(0.f), 
-			tileType(-1), tileTexture(NULL), object(NULL) {}
+			tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) {}
 	~Tile() { if(object) delete object;}
 
 	//get

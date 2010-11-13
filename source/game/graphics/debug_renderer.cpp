@@ -434,11 +434,9 @@ void DebugRenderer::renderArrow(
 		const Vec3f &pos1, const Vec3f &_pos2, const Vec3f &color, float width) {
 	const int tesselation = 3;
 	const float arrowEndSize = 0.5f;
-
-	Vec3f dir = Vec3f(_pos2 - pos1);
-	float len = dir.length();
 	float alphaFactor = 0.3f;
 
+	Vec3f dir = Vec3f(_pos2 - pos1);
 	dir.normalize();
 	Vec3f pos2 = _pos2 - dir;
 	Vec3f normal = dir.cross(Vec3f(0, 1, 0));

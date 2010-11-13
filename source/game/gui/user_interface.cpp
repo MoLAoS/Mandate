@@ -347,7 +347,6 @@ void UserInterface::unloadRequest(int carryIndex) {
 
 void UserInterface::mouseDownLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
-	const Metrics &metrics= Metrics::getInstance();
 
 	UnitVector units;
 	Vec2i worldPos;
@@ -388,7 +387,6 @@ void UserInterface::mouseDownLeft(int x, int y) {
 
 void UserInterface::mouseDownRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
-	const Metrics &metrics= Metrics::getInstance();
 	Vec2i worldPos;
 
 	if (selectingPos || selectingMeetingPoint) {
@@ -491,7 +489,7 @@ void UserInterface::groupKey(int groupIndex){
 
 void UserInterface::hotKey(UserCommand cmd) {
 	WIDGET_LOG( __FUNCTION__ << "( " << Keymap::getCommandName(cmd) << " )" );
-	int f = 0;
+
 	switch(cmd) {
 	// goto selection
 	case ucCameraGotoSelection:
@@ -966,7 +964,6 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 					}
 				}			
 			} else { // non uniform selection
-				const UnitType *ut = selection.getFrontUnit()->getType();
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
 				if (cc != CommandClass::NULL_COMMAND) {

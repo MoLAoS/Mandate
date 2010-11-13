@@ -1080,7 +1080,7 @@ void ListBox::layoutChildren() {
 								m_borderStyle.m_sizes[Border::BOTTOM]));
 		scrollBar->setRanges(totalItemHeight, clientHeight, 2);
 		//cout << "setting scroll ranges total = " << totalItemHeight << ", actual = " << clientHeight << endl;
-		int scrollOffset = scrollBar->getRangeOffset();
+		//int scrollOffset = scrollBar->getRangeOffset();
 		//cout << "range offset = " << scrollOffset << endl;
 	} else {
 		if (scrollBar) {

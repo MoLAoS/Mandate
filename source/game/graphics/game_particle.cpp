@@ -201,7 +201,7 @@ void Projectile::update() {
 			float varPitch = cosf(varRotation) * varAngle;
 			float varYaw = sinf(varRotation) * varAngle;
 
-			float d = Vec2f(currentTargetVector.z, currentTargetVector.x).length();
+			//float d = Vec2f(currentTargetVector.z, currentTargetVector.x).length();
 			float yaw = atan2f(currentTargetVector.x, currentTargetVector.z) + varYaw;
 			float pitch = asinf(currentTargetVector.y) + varPitch;
 			float pc = cosf(pitch);

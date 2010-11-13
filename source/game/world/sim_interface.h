@@ -139,7 +139,7 @@ private:
 	int numEntries;
 
 public:
-	SkillCycleTable() : cycleTable(0) {
+	SkillCycleTable() : cycleTable(0), numEntries(0) {
 		header.messageType = MessageType::SKILL_CYCLE_TABLE;
 	}
 	SkillCycleTable(RawMessage raw);

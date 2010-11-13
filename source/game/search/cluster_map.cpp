@@ -506,7 +506,7 @@ void ClusterMap::update() {
 /** compute intra-cluster path lengths */
 void ClusterMap::evalCluster(const Vec2i &cluster) {
 	//_PROFILE_FUNCTION();
-	int linePathSuccess = 0, linePathFail = 0;
+	//int linePathSuccess = 0, linePathFail = 0;
 	SearchEngine<NodePool> *se = carto->getRoutePlanner()->getSearchEngine();
 	se->getNeighbourFunc().setSearchCluster(cluster);
 	Transitions transitions;

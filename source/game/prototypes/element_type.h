@@ -190,7 +190,7 @@ private:
 	const CommandType *m_commandType;
 
 public:
-	GeneratedType() {}
+	GeneratedType() : m_commandType(NULL) {}
 
 	const CommandType* getCommandType() const { return m_commandType; }
 	void setCommandType(const CommandType *ct) { m_commandType = ct; }

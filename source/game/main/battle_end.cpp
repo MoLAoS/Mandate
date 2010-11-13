@@ -160,7 +160,8 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 BattleEnd::BattleEnd(Program &program, bool quickExit)
 		: ProgramState(program)
 		, isQuickExit(quickExit) {
-	GameStatsWidget *widget =  new GameStatsWidget(&program, Vec2i(0), g_metrics.getScreenDims());
+	// note: creates the gui even though widget is not used
+	GameStatsWidget *widget = new GameStatsWidget(&program, Vec2i(0), g_metrics.getScreenDims());
 }
 
 BattleEnd::~BattleEnd() {

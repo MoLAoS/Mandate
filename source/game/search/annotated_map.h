@@ -155,8 +155,8 @@ public:
 	AnnotatedMap(World *world, ExplorationMap *eMap=NULL);
 	~AnnotatedMap();
 
-	int getWidth()	{ return width;		}
-	int getHeight()	{ return height;	}
+	int getWidth()	const {return width;}
+	int getHeight()	const {return height;}
 
 	/** Maximum clearance allowed by the game. Hence, also maximum moveable unit size supported. */
 	static const int maxClearanceValue = 7; // don't change me without also changing CellMetrics

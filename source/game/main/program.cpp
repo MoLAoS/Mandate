@@ -222,8 +222,6 @@ void Program::init() {
 void Program::loop() {
 	size_t sleepTime;
 
-	bool didSleep, timerFired;
-
 	while (handleEvent()) {
 		{
 			_PROFILE_SCOPE("Program::loop() : Determine sleep time");

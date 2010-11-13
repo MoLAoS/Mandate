@@ -20,6 +20,7 @@
 #include "xml_parser.h"
 #include "util.h"
 #include "game_constants.h"
+#include "logger.h"
 
 #include "leak_dumper.h"
 
@@ -29,6 +30,7 @@ using namespace Shared::Graphics;
 using namespace Glest::Graphics;
 
 namespace Glest { namespace Menu {
+using Util::Logger;
 
 // =====================================================
 // 	class MenuBackground
@@ -113,6 +115,7 @@ MenuBackground::MenuBackground(){
 		try {
 			characterModels[i]->load("data/core/menu/about_models/character"+intToStr(i)+".g3d", 2, 2);
 		} catch (runtime_error &e) {
+			g_errorLog.add(e.what());
 		}
 	}
 

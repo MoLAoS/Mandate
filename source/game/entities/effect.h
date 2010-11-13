@@ -67,9 +67,9 @@ public:
 
 	virtual ~Effect();
 
-	UnitId getSource()				{return source;}
+	UnitId getSource() const		{return source;}
 	Effect *getRoot()				{return root;}
-	const EffectType *getType()		{return type;}
+	const EffectType *getType() const {return type;}
 	fixed getStrength() const		{return strength;}
 	int getDuration() const			{return duration;}
 	bool isRecourse() const			{return recourse;}

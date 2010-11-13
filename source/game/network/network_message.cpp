@@ -578,7 +578,7 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	header.updateSize = this->updateSize;
 
 	size_t commandsSize = header.cmdCount * sizeof(NetworkCommand);
-	size_t headerSize = sizeof(KeyFrameMsgHeader);
+	//size_t headerSize = sizeof(KeyFrameMsgHeader);
 	msgHeader.messageSize = sizeof(KeyFrameMsgHeader) + updateSize + commandsSize;
 	IF_MAD_SYNC_CHECKS(
 		msgHeader.messageSize += checksumCount * sizeof(int32);

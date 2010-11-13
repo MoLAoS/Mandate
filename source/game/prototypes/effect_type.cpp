@@ -41,8 +41,6 @@ EffectType::EffectType() : lightColour(0.0f) {
 bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, const FactionType *ft) {
 	string tmp;
 	const XmlAttribute *attr;
-	const XmlNode *node;
-
 	bool loadOk = true;
 	
 	try { // name

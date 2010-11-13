@@ -24,20 +24,26 @@ namespace Glest { namespace Widgets {
 
 class StaticImage : public Widget, public ImageWidget {
 private:
-	Texture2D *texture;
+	//Texture2D *m_texture;
 
 public:
 	StaticImage(Container* parent)
 			: Widget(parent)
-			, ImageWidget(this) {}
+			, ImageWidget(this)
+			//, m_texture(0) 
+	{}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size) 
 			: Widget(parent, pos, size)
-			, ImageWidget(this) {}
+			, ImageWidget(this)
+			//, m_texture(0)
+	{}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
 			: Widget(parent, pos, size)
-			, ImageWidget(this, tex) {}
+			, ImageWidget(this, tex)
+			//, m_texture(0)
+	{}
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;

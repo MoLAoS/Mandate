@@ -197,7 +197,6 @@ void GameState::init() {
 
 	// sounds
 	Tileset *tileset = g_world.getTileset();
-	const TechTree *techTree = g_world.getTechTree();
 	AmbientSounds *ambientSounds = tileset->getAmbientSounds();
 
 	// rain

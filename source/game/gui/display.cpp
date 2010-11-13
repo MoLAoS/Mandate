@@ -530,7 +530,7 @@ void Display::resetTipPos(Vec2i i_offset) {
 	m_toolTip->setVisible(true);
 }
 
-ostream& operator<<(ostream &stream, const DisplayButton btn) {
+ostream& operator<<(ostream &stream, const DisplayButton &btn) {
 	return stream << "Section: " << btn.m_section << " index: " << btn.m_index;
 }
 

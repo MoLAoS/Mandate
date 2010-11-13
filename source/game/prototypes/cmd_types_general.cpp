@@ -133,9 +133,9 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 
 	//move
 	try { 
-		string skillName= n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
+		string skillName = n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
-		moveSkillType= static_cast<const MoveSkillType*>(st);
+		m_moveSkillType = static_cast<const MoveSkillType*>(st);
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
@@ -175,7 +175,7 @@ void MoveCommandType::update(Unit *unit) const {
 
 	switch (g_routePlanner.findPath(unit, pos)) {
 		case TravelState::MOVING:
-			unit->setCurrSkill(moveSkillType);
+			unit->setCurrSkill(m_moveSkillType);
 			unit->face(unit->getNextPos());
 			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
 			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
@@ -210,8 +210,8 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 
 	//stop
 	try {
-		string skillName= n->getChild("stop-skill")->getAttribute("value")->getRestrictedValue();
-		stopSkillType= static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
+		string skillName = n->getChild("stop-skill")->getAttribute("value")->getRestrictedValue();
+		m_stopSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what());
 		return false;
@@ -228,7 +228,6 @@ void StopCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
-	Unit *sighted = NULL;
 	Command *autoCmd;
 
 	// if we have another command then stop sitting on your ass
@@ -237,7 +236,7 @@ void StopCommandType::update(Unit *unit) const {
 		UNIT_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " cancelling stop" );
 		return;
 	}
-	unit->setCurrSkill(stopSkillType);
+	unit->setCurrSkill(m_stopSkillType);
 
 	// check auto commands
 	if (autoCmd = doAutoCommand(unit)) {
@@ -256,8 +255,8 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 	//produce
 	try { 
-		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
-		produceSkillType= static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
+		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
+		m_produceSkillType = static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
@@ -265,7 +264,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 	if (n->getOptionalChild("produced-unit")) {
 		try { 
-			string producedUnitName= n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
+			string producedUnitName = n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
 			m_producedUnits.push_back(ft->getUnitType(producedUnitName));
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(dir, e.what ());
@@ -293,13 +292,13 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	try {
 		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
 		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
-			finishedSounds.resize(finishSoundNode->getChildCount());
+			m_finishedSounds.resize(finishSoundNode->getChildCount());
 			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
 				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
 				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
 				StaticSound *sound = new StaticSound();
 				sound->load(dir + "/" + path);
-				finishedSounds[i] = sound;
+				m_finishedSounds[i] = sound;
 			}
 		}
 	} catch (runtime_error e) {
@@ -315,14 +314,14 @@ const ProducibleType* ProduceCommandType::getProduced(int i) const {
 
 void ProduceCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	checksum.add(produceSkillType->getName());
+	checksum.add(m_produceSkillType->getName());
 	foreach_const (vector<const UnitType*>, it, m_producedUnits) {
 		checksum.add((*it)->getName());
 	}
 }
 
 void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
-	produceSkillType->getDesc(str, unit);
+	m_produceSkillType->getDesc(str, unit);
 	if (m_producedUnits.size() == 1) {
 		str += "\n" + m_producedUnits[0]->getReqDesc();
 	}
@@ -344,7 +343,7 @@ void ProduceCommandType::update(Unit *unit) const {
 	
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		//if not producing
-		unit->setCurrSkill(produceSkillType);
+		unit->setCurrSkill(m_produceSkillType);
 		unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
@@ -487,15 +486,15 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 	//upgrade
 	try {
-		string skillName= n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
-		upgradeSkillType= static_cast<const UpgradeSkillType*>(unitType->getSkillType(skillName, SkillClass::UPGRADE));
+		string skillName = n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
+		m_upgradeSkillType = static_cast<const UpgradeSkillType*>(unitType->getSkillType(skillName, SkillClass::UPGRADE));
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	try {
-		string producedUpgradeName= n->getChild("produced-upgrade")->getAttribute("name")->getRestrictedValue();
-		producedUpgrade= ft->getUpgradeType(producedUpgradeName);
+		string producedUpgradeName = n->getChild("produced-upgrade")->getAttribute("name")->getRestrictedValue();
+		m_producedUpgrade = ft->getUpgradeType(producedUpgradeName);
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
@@ -504,13 +503,13 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	try {
 		const XmlNode *finishSoundNode = n->getOptionalChild("finished-sound");
 		if (finishSoundNode && finishSoundNode->getAttribute("enabled")->getBoolValue()) {
-			finishedSounds.resize(finishSoundNode->getChildCount());
+			m_finishedSounds.resize(finishSoundNode->getChildCount());
 			for (int i=0; i < finishSoundNode->getChildCount(); ++i) {
 				const XmlNode *soundFileNode = finishSoundNode->getChild("sound-file", i);
 				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
 				StaticSound *sound = new StaticSound();
 				sound->load(dir + "/" + path);
-				finishedSounds[i] = sound;
+				m_finishedSounds[i] = sound;
 			}
 		}
 	} catch (runtime_error e) {
@@ -522,8 +521,8 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
-	checksum.add(upgradeSkillType->getName());
-	checksum.add(producedUpgrade->getName());
+	checksum.add(m_upgradeSkillType->getName());
+	checksum.add(m_producedUpgrade->getName());
 }
 
 string UpgradeCommandType::getReqDesc() const {
@@ -531,7 +530,7 @@ string UpgradeCommandType::getReqDesc() const {
 }
 
 const ProducibleType *UpgradeCommandType::getProduced() const {
-	return producedUpgrade;
+	return m_producedUpgrade;
 }
 
 void UpgradeCommandType::update(Unit *unit) const {
@@ -540,18 +539,18 @@ void UpgradeCommandType::update(Unit *unit) const {
 	Faction *faction = unit->getFaction();
 	assert(command->getType() == this);
 
-	if (unit->getCurrSkill() != upgradeSkillType) {
+	if (unit->getCurrSkill() != m_upgradeSkillType) {
 		//if not producing
-		unit->setCurrSkill(upgradeSkillType);
-		faction->checkAdvanceSubfaction(producedUpgrade, false);
+		unit->setCurrSkill(m_upgradeSkillType);
+		faction->checkAdvanceSubfaction(m_producedUpgrade, false);
 	} else {
 		//if producing
 		unit->update2();
-		if (unit->getProgress2() >= producedUpgrade->getProductionTime()) {
+		if (unit->getProgress2() >= m_producedUpgrade->getProductionTime()) {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
-			faction->finishUpgrade(producedUpgrade);
-			faction->checkAdvanceSubfaction(producedUpgrade, true);
+			faction->finishUpgrade(m_producedUpgrade);
+			faction->checkAdvanceSubfaction(m_producedUpgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
@@ -776,12 +775,11 @@ void LoadCommandType::doChecksum(Checksum &checksum) const {
 	checksum.add(loadSkillType->getName());
 }
 
-void LoadCommandType::getDesc(string &str, const Unit *unit) const{
-	Lang &lang= Lang::getInstance();
+void LoadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + loadSkillType->getName();
 }
 
-string LoadCommandType::getReqDesc() const{
+string LoadCommandType::getReqDesc() const {
 	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
@@ -789,7 +787,6 @@ void LoadCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	const Map *map = g_world.getMap();
 	UnitIdList &unitsToCarry = unit->getUnitsToCarry();
 
 	if (unitsToCarry.empty()) { // if no one to load, finished
@@ -894,12 +891,11 @@ void UnloadCommandType::doChecksum(Checksum &checksum) const {
 	checksum.add(unloadSkillType->getName());
 }
 
-void UnloadCommandType::getDesc(string &str, const Unit *unit) const{
-	Lang &lang= Lang::getInstance();
+void UnloadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + unloadSkillType->getName();
 }
 
-string UnloadCommandType::getReqDesc() const{
+string UnloadCommandType::getReqDesc() const {
 	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
@@ -907,7 +903,6 @@ void UnloadCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	const Map *map = g_world.getMap();
 
 	if (unit->getUnitsToUnload().empty()) {
 		// no more units to deal with
@@ -1006,7 +1001,7 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 		m_cycle = genSkillNode->getOptionalBoolValue("cycle");
 		string skillName = genSkillNode->getAttribute("value")->getRestrictedValue();
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::CAST_SPELL);
-		castSpellSkillType = static_cast<const CastSpellSkillType*>(st);
+		m_castSpellSkillType = static_cast<const CastSpellSkillType*>(st);
 	
 		string str = n->getChild("affect")->getRestrictedValue();
 		m_affects = SpellAffectNames.match(str.c_str());
@@ -1037,8 +1032,8 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 }
 
 void CastSpellCommandType::update(Unit *unit) const {
-	if (unit->getCurrSkill() != castSpellSkillType) {
-		unit->setCurrSkill(castSpellSkillType);
+	if (unit->getCurrSkill() != m_castSpellSkillType) {
+		unit->setCurrSkill(m_castSpellSkillType);
 		return;
 	}
 	if (!m_cycle) {

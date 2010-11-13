@@ -368,7 +368,7 @@ HAAStarResult RoutePlanner::findWaypointPathUnExplored(Unit *unit, const Vec2i &
 	if (res == HAAStarResult::FAILURE) {
 		return HAAStarResult::FAILURE;
 	}
-	bool startTrap = res == HAAStarResult::START_TRAP;
+	//bool startTrap = res == HAAStarResult::START_TRAP;
 	UnexploredGoal goal(unit->getTeam());
 	UnexploredCost cost(unit->getCurrField(), unit->getSize(), unit->getTeam());
 	TransitionHeuristic heuristic(dest);
@@ -703,7 +703,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 
 TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Vec2i &target) {
 	UnitPath &path = *unit->getPath();
-	WaypointPath &wpPath = *unit->getWaypointPath();
+	//WaypointPath &wpPath = *unit->getWaypointPath();
 	const Vec2i &start = unit->getPos();
 	// setup search
 	MoveCost moveCost(unit->getCurrField(), unit->getSize(), world->getCartographer()->getMasterMap());

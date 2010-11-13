@@ -901,7 +901,7 @@ void Pixmap2D::splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixm
 			Vec4f pix= (leftUp->getPixel4f(i, j)*lu+
 				rightUp->getPixel4f(i, j)*ru+
 				leftDown->getPixel4f(i, j)*ld+
-				rightDown->getPixel4f(i, j)*rd)*(1.0f/total);
+				rightDown->getPixel4f(i, j)*rd)*(1.0f/total);			
 
 			setPixel(i, j, pix);
 		}

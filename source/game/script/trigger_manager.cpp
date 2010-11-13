@@ -168,14 +168,14 @@ void TriggerManager::unitMoved(const Unit *unit) {
 
 void TriggerManager::unitDied(const Unit *unit) {
 	const int &id = unit->getId();
-	unitPosTriggers.erase(unit->getId());
-	commandCallbacks.erase(unit->getId());
-	attackedTriggers.erase(unit->getId());
-	hpBelowTriggers.erase(unit->getId());
-	hpAboveTriggers.erase(unit->getId());
-	TriggerMap::iterator it = deathTriggers.find(unit->getId());
+	unitPosTriggers.erase(id);
+	commandCallbacks.erase(id);
+	attackedTriggers.erase(id);
+	hpBelowTriggers.erase(id);
+	hpAboveTriggers.erase(id);
+	TriggerMap::iterator it = deathTriggers.find(id);
 	if (it != deathTriggers.end()) {
-		ScriptManager::onTrigger(it->second.evnt, unit->getId(), it->second.user_dat);
+		ScriptManager::onTrigger(it->second.evnt, id, it->second.user_dat);
 		deathTriggers.erase(it);
 	}
 }

@@ -148,8 +148,6 @@ void SceneCuller::extractFrustum() {
 
 /** project frustum edges onto a plane at avg map height & clip result to map bounds */
 bool SceneCuller::getFrustumExtents() {
-	const GameCamera *cam = GameState::getInstance()->getGameCamera();
-
 	Vec2f centreView(0.f);
 
 	// collect line segments first, inserting additional interpolated ones as needed

@@ -54,7 +54,7 @@ public:
 	bool parse(int argc, char **argv);
 	
 	// getters
-	bool isServer()         { return server; }
+	bool isServer() const	 { return server; }
 	string &getClientIP()    { return clientIP; }
 	string &getConfigDir()   { return configDir; }
 	string &getDataDir()     { return dataDir; }

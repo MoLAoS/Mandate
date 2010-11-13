@@ -101,7 +101,7 @@ void TimeFlow::load(const XmlNode *node) {
 }
 
 
-bool TimeFlow::isAproxTime(float time){
+bool TimeFlow::isAproxTime(float time) const {
 	return (this->time>=time) && (this->time<time+timeInc);
 }
 

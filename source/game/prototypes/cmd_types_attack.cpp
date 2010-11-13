@@ -230,7 +230,7 @@ void AttackStoppedCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(ast);
 		unit->setTarget(enemy, true, true);
 	} else {
-		unit->setCurrSkill(stopSkillType);
+		unit->setCurrSkill(m_stopSkillType);
 	}
 }
 
@@ -316,7 +316,7 @@ bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	bool loadOk = AttackCommandType::load(n, dir, tt, ft);
 
 	//distance
-	try { maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
+	try { m_maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
@@ -326,7 +326,7 @@ bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 void GuardCommandType::doChecksum(Checksum &checksum) const {
 	AttackCommandType::doChecksum(checksum);
-	checksum.add<int>(maxDistance);
+	checksum.add<int>(m_maxDistance);
 }
 
 // update helper, move somewhere sensible

@@ -230,7 +230,7 @@ public:
 	}
 	void getTransitions(const Vec2i &cluster, Field f, Transitions &t);
 
-	bool isDirty()	{ return dirty; }
+	bool isDirty() const { return dirty; }
 	void update();
 
 	void setClusterDirty(const Vec2i &cluster)		{ dirty = true; dirtyClusters.insert(cluster);		}

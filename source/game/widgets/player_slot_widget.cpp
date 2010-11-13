@@ -53,7 +53,7 @@ void ColourPicker::init() {
 void ColourPicker::setSize(const Vec2i &sz) {
 	Panel::setSize(sz);
 	Vec2i space = sz - getBordersAll();
-	int h = space.y;
+	//int h = space.y;
 	
 	Vec2i itemPos(getBorderLeft(), getBorderBottom());
 	Vec2i itemSize(space.x - space.y, space.y);

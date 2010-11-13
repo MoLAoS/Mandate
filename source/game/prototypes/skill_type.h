@@ -242,7 +242,8 @@ private:
 //	EarthquakeType *earthquakeType;
 
 public:
-	AttackSkillType() : TargetBasedSkillType("Attack"), attackType(NULL)/*, earthquakeType(NULL)*/ {}
+	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0),
+		attackVar(0), attackType(0)/*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
@@ -402,7 +403,7 @@ private:
 	bool fade;
 
 public:
-	DieSkillType() : SkillType("Die"){}
+	DieSkillType() : SkillType("Die"), fade(0.0f) {}
 	bool getFade() const	{return fade;}
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);

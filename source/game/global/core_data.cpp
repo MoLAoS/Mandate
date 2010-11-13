@@ -69,8 +69,6 @@ Font* loadFreeTypeFont(string path, int size) {
 }
 
 bool CoreData::load() {
-	Config &config = Config::getInstance();
-	Renderer &renderer = Renderer::getInstance();
 	g_logger.add("Core data");
 
 	const string dir = "data/core";
