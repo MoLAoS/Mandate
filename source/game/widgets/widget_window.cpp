@@ -181,8 +181,11 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 }
 
 void WidgetWindow::registerUpdate(Widget* widget) {
-	assert(std::find(updateList.begin(), updateList.end(), widget) == updateList.end());
-	updateList.push_back(widget);
+	// only register for updating once, if the widget is already in the container do nothing
+	if (std::find(updateList.begin(), updateList.end(), widget) == updateList.end()) {
+		updateList.push_back(widget);
+	}
+	///@todo it might be better to use a set instead of a vector to achieve the desired behaviour
 }
 
 void WidgetWindow::unregisterUpdate(Widget* widget) {

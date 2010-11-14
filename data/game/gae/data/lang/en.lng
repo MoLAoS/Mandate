@@ -149,6 +149,7 @@ UnableToJoin=Unable to connect to server
 WaitingHost=Waiting for server to launch game
 ElapsedTime=Elapsed Time
 Delete=Delete
+Confirm=Confirm
 
 ; Scenario Menu
 Category=Category
