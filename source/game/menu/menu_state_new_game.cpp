@@ -590,7 +590,7 @@ bool MenuStateNewGame::loadGameSettings() {
 void MenuStateNewGame::updateControlers() {
 	GameSettings &gs = g_simInterface->getGameSettings();
 	assert(m_humanSlot >= 0);
-	assert(m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN);
+	//assert(m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN);
 	for (int i = 0; i < m_mapInfo.players; ++i) {
 		m_playerSlots[i]->setEnabled(true);
 	}
