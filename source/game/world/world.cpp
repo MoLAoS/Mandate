@@ -725,6 +725,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 				const HarvestCommandType *hct = unit->getType()->getCommandType<HarvestCommandType>(i);
 				if (hct->canHarvest(r->getType())) {
 					found = true;
+					cmdType = hct;
 					break;
 				}
 			}

@@ -212,6 +212,12 @@ void Program::init() {
 		Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 		Scenario::loadGameSettings(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 		setState(new QuickScenario(*this));
+	} else if (cmdArgs.isLoadLastGame()) {
+		Shared::Xml::XmlTree doc("game-settings");
+		doc.load("last_gamesettings.gs");
+		GameSettings &gs = simulationInterface->getGameSettings();
+		gs = GameSettings(doc.getRootNode());
+		setState(new GameState(*this));
 
 	// normal startup
 	} else {

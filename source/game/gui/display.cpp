@@ -338,16 +338,24 @@ void Display::render() {
 		return;
 	}
 
-	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject() && g_config.getUiPhotoMode()) {
-		return;
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
+		if (g_config.getUiPhotoMode()) {
+			return;
+		}
+		if (m_logo == -1) {
+			setSize();
+			RUNTIME_CHECK( !isVisible() );
+			return;
+		}
 	}
-
+	
 	renderBgAndBorders();
 	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
 		// faction logo
 		assert(m_logo != -1);
 		ImageWidget::renderImage(m_logo);
 	}
+
 	Vec4f light(1.f), dark(0.3f, 0.3f, 0.3f, 1.f);
 	ImageWidget::startBatch();
 	for (int i = 0; i < selectionCellCount; ++i) {

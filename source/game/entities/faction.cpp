@@ -233,6 +233,10 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	assert(units.empty() && unitMap.empty());
 	for (int i = 0; i < n->getChildCount(); ++i) {
 		g_simInterface->getUnitFactory().newInstance(n->getChild("unit", i), this, map, tt);
+		if (units[i]->isBuilt()) {
+			addStore(units[i]->getType());
+			applyStaticProduction(units[i]->getType());
+		}
 	}
 	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
@@ -492,6 +496,9 @@ void Faction::deApplyStaticConsumption(const ProducibleType *p) {
 // apply resource on interval for a cosumable resouce
 void Faction::applyCostsOnInterval(const ResourceType *rt) {
 	assert(rt->getClass() == ResourceClass::CONSUMABLE);
+	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
+		return;
+	}
 	// increment consumables
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
@@ -596,6 +603,15 @@ void Faction::remove(Unit *unit) {
 	units.erase(it);
 	unitMap.erase(unit->getId());
 	assert(units.size() == unitMap.size());
+}
+
+void Faction::addStore(const ResourceType *rt, int amount) {
+	for (int j = 0; j < store.size(); ++j) {
+		Resource *storedResource = &store[j];
+		if (storedResource->getType() == rt) {
+			storedResource->setAmount(storedResource->getAmount() + amount);
+		}
+	}
 }
 
 void Faction::addStore(const UnitType *unitType) {

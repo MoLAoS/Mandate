@@ -676,7 +676,8 @@ private:
 	int m_maxDistance;
 
 public:
-	GuardCommandType(const char* name = "Guard", Clicks clicks = Clicks::TWO) : AttackCommandType(name, clicks), m_maxDistance(0) {}
+	GuardCommandType(const char* name = "Guard", Clicks clicks = Clicks::TWO)
+			: AttackCommandType(name, clicks), m_maxDistance(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void update(Unit *unit) const;

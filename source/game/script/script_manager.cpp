@@ -74,14 +74,14 @@ void ScriptManager::cleanUp() {
 	timers.clear();
 	newTimerQueue.clear();
 	definedEvents.clear();
+	triggerManager.reset();
 	latestCreated.id = -1;
 	latestCasualty.id = -1;
-	gameOver= false;
-	triggerManager.reset();
 }
 
 int getSubfaction(LuaHandle *luaHandle);
 int getSubfactionRestrictions(LuaHandle *luaHandle);
+int getFrameCount(LuaHandle *luaHandle);
 
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
@@ -97,9 +97,9 @@ void ScriptManager::initGame() {
 
 	LUA_FUNC(getSubfaction);
 	LUA_FUNC(getSubfactionRestrictions);
+	LUA_FUNC(getFrameCount);
 
 	// Game control
-	LUA_FUNC(disableAi);
 	LUA_FUNC(setPlayerAsWinner);
 	LUA_FUNC(endGame);
 
@@ -143,6 +143,7 @@ void ScriptManager::initGame() {
 	LUA_FUNC(setUnitTrigger);
 	LUA_FUNC(setUnitTriggerX);
 	LUA_FUNC(setFactionTrigger);
+	LUA_FUNC(removeUnitPosTriggers);
 
 	// queries
 	LUA_FUNC(playerName);
@@ -169,9 +170,15 @@ void ScriptManager::initGame() {
 	DEBUG_FUNC(setFarClip);
 
 	LUA_FUNC(dofile);
-
+	
+	LUA_FUNC(disableAi);
+	LUA_FUNC(enableAi);
+	LUA_FUNC(disableConsume);
+	LUA_FUNC(enableConsume);
+	LUA_FUNC(increaseStore);
+	
 	IF_DEBUG_EDITION(
-		luaScript.luaDoLine("dofile('debug.lua')");
+		luaScript.luaDoLine("dofile('dev_edition.lua')");
 	)
 
 	if (!scenario) {
@@ -262,6 +269,12 @@ int getSubfactionRestrictions(LuaHandle *luaHandle) {
 			ScriptManager::luaConsole->addOutput(e.what());
 		}
 	}
+	return args.getReturnCount();
+}
+
+int getFrameCount(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	args.returnInt(g_world.getFrameCount());
 	return args.getReturnCount();
 }
 
@@ -626,6 +639,21 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 	}
 }
 
+int ScriptManager::removeUnitPosTriggers(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int id;
+	if (extractArgs(args, "removeUnitPosTriggers", "int", &id)) {
+		if (triggerManager.removeUnitPosTriggers(id)) {
+			args.returnBool(true);
+		} else {
+			args.returnBool(false);
+		}
+	} else {
+		args.returnBool(false);
+	}
+	return args.getReturnCount();
+}
+
 int ScriptManager::setFactionTrigger(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	int ndx, ud;
@@ -930,9 +958,67 @@ int ScriptManager::disableAi(LuaHandle* luaHandle) {
 	int fNdx;
 	if (extractArgs(args, "disableAi", "int", &fNdx)) {
 		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
-			playerModifiers[fNdx].disableAi();
+			playerModifiers[fNdx].enableAi(false);
 		} else {
 			addErrorMessage("Error: disableAi(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::enableAi(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	if (extractArgs(args, "enableAi", "int", &fNdx)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			playerModifiers[fNdx].enableAi(true);
+		} else {
+			addErrorMessage("Error: enableAi(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::disableConsume(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	if (extractArgs(args, "disableConsume", "int", &fNdx)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			playerModifiers[fNdx].enableConsume(false);
+		} else {
+			addErrorMessage("Error: disableConsume(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::enableConsume(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	if (extractArgs(args, "enableConsume", "int", &fNdx)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			playerModifiers[fNdx].enableConsume(true);
+		} else {
+			addErrorMessage("Error: enableConsume(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::increaseStore(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	string resource;
+	int fNdx, amount;
+	if (extractArgs(args, "increaseStore", "str,int,int", &resource, &fNdx, &amount)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			try {
+				const ResourceType *rt = g_world.getTechTree()->getResourceType(resource);
+				g_world.getFaction(fNdx)->addStore(rt, amount);
+			} catch (runtime_error &e) {
+				addErrorMessage("Error: increaseStore(): Invalid resource type" + resource);
+			}
+		} else {
+			addErrorMessage("Error: increaseStore(): Invalid faction index " + intToStr(fNdx));
 		}
 	}
 	return args.getReturnCount();

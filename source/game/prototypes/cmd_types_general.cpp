@@ -330,7 +330,7 @@ void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
 string ProduceCommandType::getReqDesc() const {
 	string res = RequirableType::getReqDesc();
 	if (m_producedUnits.size() == 1) {
-		res += "\n" + m_producedUnits[0]->getReqDesc();
+		res += m_producedUnits[0]->getReqDesc();
 	}
 	return res;
 }
@@ -445,7 +445,7 @@ void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
 string GenerateCommandType::getReqDesc() const {
 	string res = RequirableType::getReqDesc();
 	if (m_producibles.size() == 1) {
-		res += "\n" + m_producibles[0]->getReqDesc();
+		res += m_producibles[0]->getReqDesc();
 	}
 	return res;
 }
@@ -526,7 +526,7 @@ void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 }
 
 string UpgradeCommandType::getReqDesc() const {
-	return RequirableType::getReqDesc()+"\n"+getProducedUpgrade()->getReqDesc();
+	return RequirableType::getReqDesc() + getProducedUpgrade()->getReqDesc();
 }
 
 const ProducibleType *UpgradeCommandType::getProduced() const {
@@ -654,7 +654,7 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 string MorphCommandType::getReqDesc() const{
 	string res = RequirableType::getReqDesc();
 	if (m_morphUnits.size() == 1) {
-		res += "\n" + m_morphUnits[0]->getReqDesc();
+		res += m_morphUnits[0]->getReqDesc();
 	}
 	return res;
 }

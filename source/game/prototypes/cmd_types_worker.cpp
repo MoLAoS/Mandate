@@ -744,14 +744,12 @@ void HarvestCommandType::doChecksum(Checksum &checksum) const {
 void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
 
-	str+= lang.get("HarvestSpeed")+": "+ intToStr(m_harvestSkillType->getSpeed()/m_hitsPerUnit);
-	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getSpeed())/m_hitsPerUnit);
+	str+= lang.get("HarvestSpeed")+": "+ intToStr(m_harvestSkillType->getSpeed() / m_hitsPerUnit);
+	m_harvestSkillType->descEpCost(str, unit);
+	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getSpeed()) / m_hitsPerUnit);
 	str+= "\n";
-	str+= lang.get("MaxLoad")+": "+ intToStr(m_maxLoad)+"\n";
-	str+= lang.get("LoadedSpeed")+": "+ intToStr(m_moveLoadedSkillType->getSpeed())+"\n";
-	if(m_harvestSkillType->getEpCost()!=0){
-		str+= lang.get("EpCost")+": "+intToStr(m_harvestSkillType->getEpCost())+"\n";
-	}
+	str += lang.get("MaxLoad") + ": " + intToStr(m_maxLoad) + "\n";
+	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getSpeed()) + "\n";
 	str+=lang.get("Resources")+":\n";
 	for(int i=0; i<getHarvestedResourceCount(); ++i){
 		str+= getHarvestedResource(i)->getName()+"\n";
@@ -766,17 +764,11 @@ bool HarvestCommandType::canHarvest(const ResourceType *resourceType) const{
 // hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
 const MoveSkillType* getMoveLoadedSkill(Unit *u) {
 	const MoveSkillType *mst = 0;
-
-	//REFACTOR: this, and _lots_of_existing_similar_code_ is to be replaced
-	// once UnitType::commandTypesByclass is implemented, to look and be less shit.
-	for (int i=0; i < u->getType()->getCommandTypeCount(); ++i) {
-		if (u->getType()->getCommandType(i)->getClass() == CommandClass::HARVEST) {
-			const HarvestCommandType *t = 
-				static_cast<const HarvestCommandType*>(u->getType()->getCommandType(i));
-			if (t->canHarvest(u->getLoadType())) {
-				mst = t->getMoveLoadedSkillType();
-				break;
-			}
+	for (int i=0; i < u->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
+		const HarvestCommandType *t = u->getType()->getCommandType<HarvestCommandType>(i);
+		if (t->canHarvest(u->getLoadType())) {
+			mst = t->getMoveLoadedSkillType();
+			break;
 		}
 	}
 	return mst;
@@ -785,17 +777,11 @@ const MoveSkillType* getMoveLoadedSkill(Unit *u) {
 // hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
 const StopSkillType* getStopLoadedSkill(Unit *u) {
 	const StopSkillType *sst = 0;
-
-	//REFACTOR: this, and lots of existing similar code is to be replaced
-	// once UnitType::commandTypesByclass is implemented, to look and be less shit.
-	for (int i=0; i < u->getType()->getCommandTypeCount(); ++i) {
-		if (u->getType()->getCommandType(i)->getClass() == CommandClass::HARVEST) {
-			const HarvestCommandType *t = 
-				static_cast<const HarvestCommandType*>(u->getType()->getCommandType(i));
-			if (t->canHarvest(u->getLoadType())) {
-				sst = t->getStopLoadedSkillType();
-				break;
-			}
+	for (int i=0; i < u->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
+		const HarvestCommandType *t = u->getType()->getCommandType<HarvestCommandType>(i);
+		if (t->canHarvest(u->getLoadType())) {
+			sst = t->getStopLoadedSkillType();
+			break;
 		}
 	}
 	return sst;

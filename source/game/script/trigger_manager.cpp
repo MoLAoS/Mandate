@@ -216,6 +216,15 @@ SetTriggerRes TriggerManager::addUnitPosTrigger	(int unitId, const string &regio
 	return SetTriggerRes::OK;
 }
 
+bool TriggerManager::removeUnitPosTriggers(int unitId) {
+	PosTriggerMap::iterator it = unitPosTriggers.find(unitId);
+	if (it != unitPosTriggers.end()) {
+		unitPosTriggers.erase(it);
+		return true;
+	}
+	return false;
+}
+
 /** @return 0 if ok, -1 if bad index id, -2 if event not found, -3 region not found,
   * -4 faction already has a trigger for this region,event pair */
 SetTriggerRes TriggerManager::addFactionPosTrigger (int ndx, const string &region, const string &eventName, int userData) {

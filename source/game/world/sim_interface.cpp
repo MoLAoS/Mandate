@@ -225,7 +225,9 @@ int SimulationInterface::launchGame() {
 	}
 
 	startGame();
-	world->activateUnits();
+	if (!savedGame) {
+		world->activateUnits();
+	}
 	return getNetworkRole() == GameRole::LOCAL ? 2 : -1;
 	//
 }

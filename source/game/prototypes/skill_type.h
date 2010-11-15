@@ -109,7 +109,7 @@ public:
 
 	void descEpCost(string &str, const Unit *unit) const {
 		if(epCost){
-			str+= Lang::getInstance().get("EpCost") + ": " + intToStr(epCost) + "\n";
+			str += g_lang.get("EpCost") + ": " + intToStr(epCost) + "\n";
 		}
 	}
 
@@ -285,7 +285,9 @@ public:
 class HarvestSkillType: public SkillType{
 public:
 	HarvestSkillType() : SkillType("Harvest") {}
-	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void getDesc(string &str, const Unit *unit) const {
+		// command modifies displayed speed, all handled in HarvestCommandType
+	}
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::HARVEST; }
@@ -423,7 +425,10 @@ public:
 	LoadSkillType();
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void getDesc(string &str, const Unit *unit) const {
+		descSpeed(str, unit, "Speed");
+		descEpCost(str, unit);
+	}
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::LOAD; }
@@ -436,7 +441,10 @@ public:
 class UnloadSkillType: public SkillType{
 public:
 	UnloadSkillType() : SkillType("Unload"){}
-	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void getDesc(string &str, const Unit *unit) const {
+		descSpeed(str, unit, "Speed");
+		descEpCost(str, unit);
+	}
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::UNLOAD; }
@@ -451,6 +459,8 @@ public:
 	CastSpellSkillType() : SkillType("CastSpell") {}
 
 	virtual void getDesc(string &str, const Unit *unit) const {
+		descSpeed(str, unit, "Speed");
+		descEpCost(str, unit);
 		descEffects(str, unit);
 	}
 

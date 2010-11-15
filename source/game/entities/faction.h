@@ -187,6 +187,7 @@ public:
 
 	void add(Unit *unit);
 	void remove(Unit *unit);
+	void addStore(const ResourceType *rt, int amount);
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
