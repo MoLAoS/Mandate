@@ -581,6 +581,9 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 
 
 void Faction::setResourceBalance(const ResourceType *rt, int balance) {
+	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
+		return;
+	}
 	for (int i = 0; i < resources.size(); ++i) {
 		Resource *r = &resources[i];
 		if (r->getType() == rt) {
