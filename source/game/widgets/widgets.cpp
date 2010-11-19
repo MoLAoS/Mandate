@@ -598,6 +598,10 @@ VerticalScrollBar::VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size)
 	recalc();
 }
 
+VerticalScrollBar::~VerticalScrollBar() {
+	getRootWindow()->unregisterUpdate(this);
+}
+
 void VerticalScrollBar::init() {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SCROLL_BAR);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::SCROLL_BAR);

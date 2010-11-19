@@ -1012,7 +1012,12 @@ void UserInterface::computeDisplay() {
 		const Unit *unit = selection.getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
-		m_display->setPortraitTitle(unit->getFullName());
+		string name = unit->getFullName();
+		IF_DEBUG_EDITION(
+			name += ": " + intToStr(unit->getId());
+		)
+		m_display->setPortraitTitle(name);
+
 		m_display->setPortraitText(unit->getShortDesc());
 		if (friendly) {
 			m_display->setProgressBar(unit->getProductionPercent());

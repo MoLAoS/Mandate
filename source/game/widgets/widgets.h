@@ -272,6 +272,7 @@ private:
 public:
 	VerticalScrollBar(Container* parent);
 	VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size);
+	~VerticalScrollBar();
 
 	void setRanges(int total, int avail, int line = 60);
 	void setTotalRange(int max) { totalRange = max; }

@@ -190,11 +190,9 @@ void WidgetWindow::registerUpdate(Widget* widget) {
 
 void WidgetWindow::unregisterUpdate(Widget* widget) {
 	WidgetList::iterator it = std::find(updateList.begin(), updateList.end(), widget);
-	if (it == updateList.end()) {
-		assert(false);
-		return;
+	if (it != updateList.end()) {
+		updateList.erase(it);
 	}
-	updateList.erase(it);
 }
 
 void WidgetWindow::update() {
@@ -217,15 +215,6 @@ void WidgetWindow::update() {
 		(*it)->update();
 	}
 }
-
-//void WidgetWindow::setFade(float v) {
-//	Container::setFade(v);
-//	static float lastFade = 0.f;
-//	if (v > lastFade + 0.05f || v < lastFade - 0.05f) {
-//		DEBUG_HOOK();
-//	}
-//	lastFade = v;
-//}
 
 void WidgetWindow::destroyFloater() {
 	// destroy floater
