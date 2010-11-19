@@ -63,6 +63,7 @@ private:
 	float renderDistanceMin;
 	int renderFilterMaxAnisotropy;
 	string renderFilter;
+	float renderFontScaler;
 	bool renderFogOfWarSmoothing;
 	int renderFogOfWarSmoothingFrameSkip;
 	float renderFov;
@@ -147,6 +148,7 @@ public:
 	float getRenderDistanceMin() const			{return renderDistanceMin;}
 	int getRenderFilterMaxAnisotropy() const	{return renderFilterMaxAnisotropy;}
 	string getRenderFilter() const				{return renderFilter;}
+	float getRenderFontScaler() const			{return renderFontScaler;}
 	bool getRenderFogOfWarSmoothing() const		{return renderFogOfWarSmoothing;}
 	int getRenderFogOfWarSmoothingFrameSkip() const{return renderFogOfWarSmoothingFrameSkip;}
 	float getRenderFov() const					{return renderFov;}
@@ -205,6 +207,7 @@ public:
 	void setRenderDistanceMin(float val)		{renderDistanceMin = val;}
 	void setRenderFilterMaxAnisotropy(int val)	{renderFilterMaxAnisotropy = val;}
 	void setRenderFilter(string val)			{renderFilter = val;}
+	void setRenderFontScaler(float val)			{renderFontScaler = val;}
 	void setRenderFogOfWarSmoothing(bool val)	{renderFogOfWarSmoothing = val;}
 	void setRenderFogOfWarSmoothingFrameSkip(int val){renderFogOfWarSmoothingFrameSkip = val;}
 	void setRenderFov(float val)				{renderFov = val;}

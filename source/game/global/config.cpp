@@ -70,6 +70,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	renderDistanceMin = p->getFloat("RenderDistanceMin", 1.f, 0.0f, 65536.f);
 	renderFilterMaxAnisotropy = p->getInt("RenderFilterMaxAnisotropy", 1);
 	renderFilter = p->getString("RenderFilter", "Bilinear");
+	renderFontScaler = p->getFloat("RenderFontScaler", 1.f);
 	renderFogOfWarSmoothing = p->getBool("RenderFogOfWarSmoothing", true);
 	renderFogOfWarSmoothingFrameSkip = p->getInt("RenderFogOfWarSmoothingFrameSkip", 3);
 	renderFov = p->getFloat("RenderFov", 60.f, 0.01f, 360.f);
@@ -138,6 +139,7 @@ void Config::save(const char *path) {
 	p->setFloat("RenderDistanceMin", renderDistanceMin);
 	p->setInt("RenderFilterMaxAnisotropy", renderFilterMaxAnisotropy);
 	p->setString("RenderFilter", renderFilter);
+	p->setFloat("RenderFontScaler", renderFontScaler);
 	p->setBool("RenderFogOfWarSmoothing", renderFogOfWarSmoothing);
 	p->setInt("RenderFogOfWarSmoothingFrameSkip", renderFogOfWarSmoothingFrameSkip);
 	p->setFloat("RenderFov", renderFov);
