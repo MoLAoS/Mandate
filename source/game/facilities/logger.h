@@ -83,7 +83,7 @@ public:
 	void resetState(const string &s)	{state= s;}
 	void setSubtitle(const string &v)	{subtitle = v;}
 	void setLoading(bool v)				{loadingGame = v;}
-	void setProgressBar(bool v) { m_progressBar = v; }
+	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
 	void add(const string &str, bool renderScreen = false);
 	void addXmlError(const string &path, const char *error);
