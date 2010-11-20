@@ -47,7 +47,6 @@ const int ScriptManager::displayTextWrapCount= 64;
 
 string				ScriptManager::code;
 LuaScript			ScriptManager::luaScript;
-string				ScriptManager::displayText;
 bool				ScriptManager::gameOver;
 PlayerModifiers		ScriptManager::playerModifiers[GameConstants::maxPlayers];
 vector<ScriptTimer> ScriptManager::timers;
@@ -69,7 +68,7 @@ ScriptManager::UnitInfo		ScriptManager::latestCreated,
 #endif
 
 void ScriptManager::cleanUp() {
-	code = displayText = "";
+	code = "";
 	gameOver = false;
 	timers.clear();
 	newTimerQueue.clear();
@@ -355,25 +354,6 @@ void ScriptManager::update() {
 }
 
 // =============== util ===============
-
-string ScriptManager::wrapString(const string &str, int wrapCount) {
-
-	string returnString;
-
-	int letterCount= 0;
-	for(int i= 0; i<str.size(); ++i) {
-		if(letterCount>wrapCount && str[i]==' ') {
-			returnString+= '\n';
-			letterCount= 0;
-		}
-		else {
-			returnString+= str[i];
-		}
-		++letterCount;
-	}
-
-	return returnString;
-}
 
 void ScriptManager::doSomeLua(const string &code) {
 	if (!luaScript.luaDoLine(code)) {
@@ -695,14 +675,15 @@ int ScriptManager::setDisplayText(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	string txt;
 	if (extractArgs(args,"setDisplayText", "str", &txt)) {
-		displayText= wrapString(Lang::getInstance().getScenarioString(txt), displayTextWrapCount);
+		string msg = g_lang.getScenarioString(txt);
+		g_gameState.setScriptDisplay(msg);
 	}
 	return args.getReturnCount();
 }
 
 int ScriptManager::clearDisplayText(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
-	displayText= "";
+	g_gameState.setScriptDisplay("");
 	return args.getReturnCount();
 }
 

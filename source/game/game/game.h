@@ -93,7 +93,9 @@ protected:
 	bool netError, gotoMenu, exitGame, exitProgram;
 	float scrollSpeed;
 
-	MessageQueue m_scriptMessages;
+	Vec2i			m_scriptDisplayPos;
+	string			m_scriptDisplay;
+	MessageQueue	m_scriptMessages;
 
 	Frame*			m_modalDialog;
 	ChatDialog*		m_chatDialog;
@@ -173,6 +175,7 @@ public:
 	}
 
 	void addScriptMessage(const string &header, const string &msg);
+	void setScriptDisplay(const string &msg);
 	//void onScriptMessageDismissed(BasicDialog*);
 
 	virtual void quitGame();

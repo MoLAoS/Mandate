@@ -158,6 +158,8 @@ void GameState::init() {
 	m_chatDialog->Escaped.connect(this, &GameState::onChatCancel);
 	m_chatDialog->setVisible(false);
 
+	m_scriptDisplayPos = Vec2i(175, g_metrics.getScreenH() - 64);
+
 	// init world, and place camera
 	simInterface->initWorld();
 	gui.init();
@@ -424,6 +426,22 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 	m_scriptMessages.push_back(ScriptMessage(header, msg));
 	if (!m_modalDialog) {
 		doScriptMessage();
+	}
+}
+
+void GameState::setScriptDisplay(const string &msg) {
+	m_scriptDisplay = msg;
+	if (!msg.empty()) {
+		const FontMetrics *fm = g_coreData.getFTMenuFontNormal()->getMetrics();
+		int space = g_metrics.getScreenW() - 175 - 320;
+		fm->wrapText(m_scriptDisplay, space);
+		int lines = 1;
+		foreach (string, c, m_scriptDisplay) {
+			if (*c == '\n') {
+				++lines;
+			}
+		}
+		m_scriptDisplayPos.y = g_metrics.getScreenH() - 64 - fm->getHeight() * (lines - 1);
 	}
 }
 
@@ -823,10 +841,9 @@ void GameState::render2d(){
 	g_renderer.renderSelectionQuad();
 
 	//script display text
-	if (!ScriptManager::getDisplayText().empty() && !m_modalDialog) {
-		g_renderer.renderText(
-			ScriptManager::getDisplayText(), g_coreData.getFTMenuFontNormal(),
-			gui.getDisplay()->getColor(), 200, g_metrics.getScreenH() - 100, false);
+	if (!m_scriptDisplay.empty() && !m_modalDialog) {
+		g_renderer.renderText(m_scriptDisplay, g_coreData.getFTMenuFontNormal(),
+			gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
 	}
 
 	//debug info

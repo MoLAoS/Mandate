@@ -101,7 +101,6 @@ public:
 	static LuaScript luaScript;
 
 	//misc
-	static string displayText;
 	static LuaConsole *luaConsole;
 
 	//last created unit & last dead unit
@@ -130,7 +129,6 @@ public:
 
 	static void doSomeLua(const string &code);
 
-	static string getDisplayText() 										{return displayText;}
 	static bool getGameOver() 											{return gameOver;}
 	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}
 
@@ -158,8 +156,6 @@ public:
 private:
 	typedef const char* c_str;
 
-	static string wrapString(const string &str, int wrapCount);
-	
 public:
 	static bool extractArgs(LuaArguments &args, c_str caller, c_str format, ...);
 
