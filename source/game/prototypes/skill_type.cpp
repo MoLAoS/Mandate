@@ -375,6 +375,10 @@ void AttackSkillType::doChecksum(Checksum &checksum) const {
 void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
 
+	// skill-speed and ep-cost first
+	descSpeed(str, unit, "AttackSpeed");
+	descEpCost(str, unit);
+
 	//attack strength
 	str+= lang.get("AttackStrength")+": ";
 	str+= intToStr(attackStrength - attackVar);
@@ -385,8 +389,6 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n";
 
 	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
-
-	descSpeed(str, unit, "AttackSpeed");
 	descEffects(str, unit);
 }
 
@@ -481,9 +483,9 @@ void RepairSkillType::doChecksum(Checksum &checksum) const {
 
 void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
-//	descRange(str, unit, "MaxRange");
-
 	descSpeed(str, unit, "RepairSpeed");
+	descEpCost(str, unit);
+
 	if(amount) {
 		str+= "\n" + lang.get("HpRestored")+": "+ intToStr(amount);
 	}
@@ -491,7 +493,6 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 		str+= "\n" + lang.get("Range")+": "+ intToStr(maxRange);
 	}
 	str+= "\n";
-	descEpCost(str, unit);
 }
 
 // =====================================================

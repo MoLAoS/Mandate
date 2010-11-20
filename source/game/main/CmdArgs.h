@@ -39,6 +39,7 @@ private:
 	string category;
 	string scenario;
 
+	bool m_lastGame;
 	bool test;
 	string testType;
 
@@ -54,7 +55,7 @@ public:
 	bool parse(int argc, char **argv);
 	
 	// getters
-	bool isServer()         { return server; }
+	bool isServer() const	 { return server; }
 	string &getClientIP()    { return clientIP; }
 	string &getConfigDir()   { return configDir; }
 	string &getDataDir()     { return dataDir; }
@@ -65,6 +66,7 @@ public:
 
 	bool isTest(const string &type) const { return (test && testType == type); }
 	bool redirStreams() const { return m_redirStreams; }
+	bool isLoadLastGame() const { return m_lastGame; }
 };
 
 }} //namespaces

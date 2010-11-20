@@ -69,8 +69,6 @@ Font* loadFreeTypeFont(string path, int size) {
 }
 
 bool CoreData::load() {
-	Config &config = Config::getInstance();
-	Renderer &renderer = Renderer::getInstance();
 	g_logger.add("Core data");
 
 	const string dir = "data/core";
@@ -100,8 +98,8 @@ bool CoreData::load() {
 	}
 
 	// Display/Console font
-	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 10);
-	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", 12);
+	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
+	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(12));
 
 	// Misc fonts
 	advancedEngineFontSmall = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));
@@ -139,9 +137,9 @@ void CoreData::closeSounds(){
     menuMusic.close();
 }
 
-int CoreData::computeFontSize(int size){
-	int screenH = Config::getInstance().getDisplayHeight();
-	int rs= int(size * float(screenH) / 768.f);
+int CoreData::computeFontSize(int size) {
+	int screenH = g_config.getDisplayHeight();
+	int rs= int(g_config.getRenderFontScaler() * size * float(screenH) / 768.f);
 	if (rs < 12) {
 		rs = 12;
 	}

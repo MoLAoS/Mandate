@@ -42,10 +42,25 @@ NetworkCommand::NetworkCommand(Command *command) {
 	flags = 0;
 	if (!command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
 	if (command->isQueue()) flags |= CmdFlags::QUEUE;
+	if (command->isAutoRepairEnabled()) flags |= CmdFlags::AUTO_REPAIR;
+}
+
+/** Construct archetype SET_AUTO_REPAIR */
+NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, bool value) {
+	RUNTIME_CHECK(type == NetworkCommandType::SET_AUTO_REPAIR);
+	this->networkCommandType = type;
+	this->unitId = unit->getId();
+	this->commandTypeId = -1;
+	this->positionX= -1;
+	this->positionY= -1;
+	this->prodTypeId = -1;
+	this->targetId = -1;
+	this->flags = (value ? CmdFlags::AUTO_REPAIR : 0);
 }
 
 /** Construct archetype CANCEL_COMMAND */
 NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, const Vec2i &pos) {
+	RUNTIME_CHECK(type == NetworkCommandType::CANCEL_COMMAND);
 	this->networkCommandType = type;
 	this->unitId = unit->getId();
 	this->commandTypeId = -1;
@@ -76,7 +91,12 @@ Command *NetworkCommand::toCommand() const {
 	}
 
 	if (networkCommandType == NetworkCommandType::CANCEL_COMMAND) {
-		return new Command(CommandArchetype::CANCEL_COMMAND, 0, Vec2i(-1), unit);
+		return new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
+	}
+	if (networkCommandType == NetworkCommandType::SET_AUTO_REPAIR) {
+		bool auto_repair = flags & CmdFlags::AUTO_REPAIR;
+		return new Command(CommandArchetype::SET_AUTO_REPAIR,
+			CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, auto_repair), Command::invalidPos, unit);
 	}
 
 	// validate command type
@@ -114,16 +134,20 @@ Command *NetworkCommand::toCommand() const {
 	Command *command= NULL;
 	bool queue = flags & CmdFlags::QUEUE;
 	bool no_reserve_res = flags & CmdFlags::NO_RESERVE_RESOURCES;
-	CommandFlags flags(CommandProperties::QUEUE, queue, CommandProperties::DONT_RESERVE_RESOURCES, no_reserve_res);
-	
+	CommandFlags cmdFlags;
+	cmdFlags.set(CommandProperties::QUEUE, queue);
+	cmdFlags.set(CommandProperties::DONT_RESERVE_RESOURCES, no_reserve_res);
 	if (target) {
-		command= new Command(ct, flags, target, unit);
-	} else if (prodType) {
-		command= new Command(ct, flags, Vec2i(positionX, positionY), prodType, facing, unit);
+		command= new Command(ct, cmdFlags, target, unit);
 	} else {
-		command= new Command(ct, flags, Vec2i(positionX, positionY), unit);
+		Vec2i pos(positionX, positionY);
+		RUNTIME_CHECK(g_world.getMap()->isInside(pos) || pos == Vec2i(-1));
+		if (prodType) {
+			command= new Command(ct, cmdFlags, Vec2i(positionX, positionY), prodType, facing, unit);
+		} else {
+			command= new Command(ct, cmdFlags, Vec2i(positionX, positionY), unit);
 	}
-
+	}
 	return command;
 }
 

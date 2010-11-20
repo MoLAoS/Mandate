@@ -22,6 +22,7 @@
 #include <cctype>
 #include <vector>
 #include <deque>
+#include <list>
 #include <map>
 #include <algorithm>
 
@@ -29,17 +30,8 @@
 #include "lang_features.h"
 #include "random.h"
 
-#if defined(WIN32) || defined(WIN64)
-	#include <list>
-	#define slist list
 
-	using std::slist;
-#else
-	#include <ext/slist>
-
-	using __gnu_cxx::slist;
-#endif
-
+using std::list;
 using std::string;
 using std::map;
 using std::vector;
@@ -151,6 +143,7 @@ public:
 	if (!(x)) {																\
 		std::stringstream ss;												\
 		ss << __FUNCTION__ << " (" << __FILE__ << " : " << __LINE__ << ")";	\
+		g_errorLog.add("In " + ss.str() + "\nRuntime check fail: "#x);		\
 		throw runtime_error("In " + ss.str() + "\nRuntime check fail: "#x);	\
 	}	
 
@@ -262,9 +255,12 @@ extern MediaErrorLog mediaErrorLog;
 // Util finctions
 //
 
+// check existence of a file (@todo move into Shared::PhysFS ?)
+bool fileExists(const string &path);
+// find all files in a directory (@todo move into Shared::PhysFS ?)
 void findAll(const string &path, vector<string> &results, bool cutExtension = false);
 
-//string fcs
+// path string utils
 string cleanPath(const string &s);
 string dirname(const string &s);
 string basename(const string &s);
@@ -277,15 +273,19 @@ inline string lastFile(const string &s){
 string cutLastFile(const string &s);
 string cutLastExt(const string &s);
 string ext(const string &s);
+
+
+// misc string utils
+
+string formatString(const string &str);
+
 string replaceBy(const string &s, char c1, char c2);
 
-//#if defined(WIN32) || defined(WIN64)
 inline string intToHex(int addr) {
 	static char hexBuffer[32];
 	sprintf(hexBuffer, "%.8X", addr);
 	return string(hexBuffer);
 }
-//#endif
 
 inline string toLower(const string &str){
 	string s = str;
@@ -302,7 +302,7 @@ extern const char uu_base64[64];
 void uuencode(char *dest, size_t *destSize, const void *src, size_t n);
 void uudecode(void *dest, size_t *destSize, const char *src);
 
-// ==================== numeric fcs ====================
+// numeric util functions
 
 template <typename T> inline T clamp(const T &val, const T &min, const T &max) {
 	return	val < min	? min
@@ -318,8 +318,7 @@ inline int round(float f){
      return int(roundf(f));
 }
 
-//misc
-bool fileExists(const string &path);
+// delete stuff in std containers
 
 template<typename  FwdIt>
 void deleteValues(FwdIt beginIt, FwdIt endIt){
@@ -349,7 +348,7 @@ void deleteMapValues(MapType map) {
 	}
 }
 
-// misc
+// 'jumble' a std container (random accessible ones only)
 template <typename T>
 void jumble(vector<T> &list, Random &rand) {
 	for (int i=0; i < list.size(); ++i) {

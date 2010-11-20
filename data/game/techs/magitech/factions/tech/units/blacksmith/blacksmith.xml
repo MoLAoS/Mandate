@@ -101,7 +101,7 @@
   <commands>
     <command>
       <type value="upgrade"/>
-      <name value="upgrade_blade_weapons" />
+      <name value="upgrade_blade_weapons" tip="blade_weapons_info" />
       <image path="../../upgrades/blade_weapons/images/blade.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -111,7 +111,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="upgrade_piercing_weapons" />
+      <name value="upgrade_piercing_weapons" tip="piercing_weapons_info" />
       <image path="../../upgrades/piercing_weapons/images/piercing.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -121,7 +121,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="upgrade_shield" />
+      <name value="upgrade_shield" tip="shield_level_1_info" />
       <image path="../../upgrades/shield_level_1/images/shield1.bmp" />
       <unit-requirements />
       <upgrade-requirements />
@@ -131,7 +131,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="upgrade_shield" />
+      <name value="upgrade_shield" tip="shield_level_2_info" />
       <image path="../../upgrades/shield_level_2/images/shield2.bmp" />
       <unit-requirements />
       <upgrade-requirements />

@@ -210,6 +210,8 @@ public:
 	  * -3 if region not registered, -4 if unit allready has a trigger for this region/event pair */
 	SetTriggerRes addUnitPosTrigger(int unitId, const string &region, const string &eventName, int userData=0);
 
+	bool removeUnitPosTriggers(int unitId);
+
 	/** set a position trigger for all units of a faction
 	  * @param ndx index of the faction to put the trigger on
 	  * @param region the name of a registered region 

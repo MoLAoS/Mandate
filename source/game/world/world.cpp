@@ -169,6 +169,9 @@ void World::preload() {
 		}
 	}
 	techTree.preload(gs.getTechPath(), names);
+	string techName = basename(gs.getTechPath());
+	g_lang.loadTechStrings(techName);
+	g_lang.loadFactionStrings(techName, names);
 }
 
 //load tileset
@@ -259,8 +262,9 @@ void World::updateFaction(const Faction *f) {
 	for (int i=0; i < n; ++i) {
 		Unit *unit = f->getUnit(i);
 		if (unit->update()) {
-			if (!unit->getCurrSkill()->getEffectTypes().empty()) {
-				// start effects for skill cycle just completed
+			if (unit->getCurrSkill()->getClass() == SkillClass::CAST_SPELL
+			&& !unit->getCurrSkill()->getEffectTypes().empty()) {
+				// start spell effects for skill cycle just completed
 				applyEffects(unit, unit->getCurrSkill()->getEffectTypes(), unit, 0);
 			}
 
@@ -284,7 +288,7 @@ void World::updateFaction(const Faction *f) {
 			unit->kill();
 		}
 		// assert map cells
-		g_map.assertUnitCells(unit);
+		map.assertUnitCells(unit);
 	}
 }
 
@@ -721,6 +725,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 				const HarvestCommandType *hct = unit->getType()->getCommandType<HarvestCommandType>(i);
 				if (hct->canHarvest(r->getType())) {
 					found = true;
+					cmdType = hct;
 					break;
 				}
 			}

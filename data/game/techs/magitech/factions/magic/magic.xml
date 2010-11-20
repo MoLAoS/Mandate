@@ -25,4 +25,8 @@
     <unit name="summoner_guild" amount="0"/>
   </starting-units>
   <music value="true" path="music/music_magic.ogg"/>
+	<logo value="true">
+		<team-colour path="magic_logo_team.png" />
+		<rgba-colour path="magic_logo_rgba.png" />
+	</logo>
 </faction>

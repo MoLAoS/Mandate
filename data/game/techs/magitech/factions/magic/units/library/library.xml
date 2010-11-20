@@ -95,7 +95,7 @@
   <commands>
     <command>
       <type value="upgrade"/>
-      <name value="research_energy_compression"/>
+      <name value="research_energy_compression" tip="energy_compression_info"/>
       <image path="../../upgrades/energy_compression/images/energy_compression.bmp"/>
       <unit-requirements />
       <upgrade-requirements />
@@ -105,7 +105,7 @@
 
     <command>
       <type value="upgrade"/>
-      <name value="research_energy_sharpening"/>
+      <name value="research_energy_sharpening" tip="energy_sharpening_info"/>
       <image path="../../upgrades/energy_sharpening/images/energy_sharpening.bmp"/>
       <unit-requirements />
       <upgrade-requirements />
@@ -115,7 +115,7 @@
 
     <command>
       <type value="upgrade" />
-      <name value="research_hell_gate" />
+      <name value="research_hell_gate" tip="hell_gate_info"/>
       <image path="../../upgrades/hell_gate/images/hell_gate.bmp" />
       <unit-requirements />
       <upgrade-requirements />

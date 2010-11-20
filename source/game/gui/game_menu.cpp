@@ -21,30 +21,42 @@ using Global::CoreData;
 
 GameMenu::GameMenu(Vec2i pos, Vec2i size)
 		: Frame(&g_widgetWindow) {
-	init(pos, size, "Game Menu");
+	init(pos, size, g_lang.get("GameMenu"));
+
+	static const int numItems = 6;
 
 	Vec2i room = Vec2i(size.x - getBordersHoriz(), size.y - getBordersVert() - m_titleBar->getHeight());
 	Vec2i btnSize(room.x - 20, 30);
-	int btnGap = (room.y - 30 * 4) / 5;
+	int btnGap = (room.y - 30 * numItems) / (numItems + 1);
 	Vec2i btnPos(10, btnGap);
 
 	Button* btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams("Exit Program", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("ExitProgram"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
 	btn->Clicked.connect(this, &GameMenu::onExit);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams("Quit Game", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("QuitGame"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
 	btn->Clicked.connect(this, &GameMenu::onQuit);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams("Toggle Debug", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("SaveGame"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->Clicked.connect(this, &GameMenu::onSaveGame);
+
+	btnPos.y += btnGap + btnSize.y;
+	btn = new Button(this, btnPos, btnSize);
+	btn->setTextParams(g_lang.get("TogglePhotoMode"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->Clicked.connect(this, &GameMenu::onTogglePhotoMode);
+
+	btnPos.y += btnGap + btnSize.y;
+	btn = new Button(this, btnPos, btnSize);
+	btn->setTextParams(g_lang.get("ToggleDebug"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
 	btn->Clicked.connect(this, &GameMenu::onDebugToggle);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams("Return to Game", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("ReturnToGame"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
 	btn->Clicked.connect(this, &GameMenu::onReturnToGame);
 }
 
@@ -58,20 +70,27 @@ void GameMenu::onReturnToGame(Button*) {
 	g_gameState.destroyDialog();
 }
 
+void GameMenu::onDebugToggle(Button*) {
+	g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
+}
+
+void GameMenu::onTogglePhotoMode(Button*) {
+	g_config.setUiPhotoMode(!g_config.getUiPhotoMode());
+}
+
+void GameMenu::onSaveGame(Button*) {
+	g_gameState.destroyDialog();
+	g_gameState.doSaveBox();
+}
+
 void GameMenu::onQuit(Button*) {
 	g_gameState.destroyDialog();
-
 	g_gameState.confirmQuitGame();
 }
 
 void GameMenu::onExit(Button*) {
 	g_gameState.destroyDialog();
-
 	g_gameState.confirmExitProgram();
-}
-
-void GameMenu::onDebugToggle(Button*) {
-	g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
 }
 
 }}

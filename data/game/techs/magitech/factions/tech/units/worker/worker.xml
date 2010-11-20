@@ -240,10 +240,10 @@
       <move-skill value="move_skill"/>
       <build-skill value="build_skill"/>
       <buildings>
-        <building name="farm"/>
-        <building name="barracks"/>
-        <building name="blacksmith"/>
-        <building name="castle"/>
+        <building name="farm" tip="farm_info"/>
+        <building name="barracks" tip="barracks_info"/>
+        <building name="blacksmith" tip="blacksmith_info"/>
+        <building name="castle" tip="castle_info"/>
       </buildings>
       <start-sound enabled="false"/>
       <built-sound enabled="true">
@@ -262,8 +262,8 @@
       <move-skill value="move_skill"/>
       <build-skill value="build_skill"/>
       <buildings>
-        <building name="technodrome"/>
-        <building name="defense_tower"/>
+        <building name="technodrome" tip="technodrome_info" />
+        <building name="defense_tower" tip="defese_tower_info" />
       </buildings>
       <start-sound enabled="false"/>
       <built-sound enabled="true">

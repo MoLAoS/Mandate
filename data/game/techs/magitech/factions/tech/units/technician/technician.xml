@@ -298,7 +298,7 @@
       <move-skill value="move_skill"/>
       <build-skill value="build_skill"/>
       <buildings>
-        <building name="aerodrome"/>
+        <building name="aerodrome" tip="aerodrome_info"/>
       </buildings>
       <start-sound enabled="false"/>
       <built-sound enabled="true" start-time="0">
@@ -394,7 +394,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="build_catapult"/>
+      <name value="build_catapult" tip="catapult_info"/>
       <image path="../catapult/images/catapult.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -405,7 +405,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="build_battle_machine"/>
+      <name value="build_battle_machine" tip="battle_machine_info" />
       <image path="../battle_machine/images/battle_machine.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -417,7 +417,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="build_air_ballista"/>
+      <name value="build_air_ballista" tip="air_ballista_info"/>
       <image path="../air_ballista/images/air_ballista.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

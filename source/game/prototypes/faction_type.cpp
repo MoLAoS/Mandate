@@ -38,7 +38,8 @@ FactionType::FactionType()
 		, enemyNotice(0)
 		, attackNoticeDelay(0)
 		, enemyNoticeDelay(0)
-		, m_logoPixmap(0) {
+		, m_logoTeamColour(0)
+		, m_logoRgba(0) {
 	subfactions.push_back(string("base"));
 }
 
@@ -261,14 +262,28 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	try {
 		const XmlNode *logoNode = factionNode->getOptionalChild("logo");
 		if (logoNode && logoNode->getBoolValue()) {
-			string logoPath = dir + "/" + logoNode->getRestrictedAttribute("path");			
-			m_logoPixmap = new Pixmap2D();
-			m_logoPixmap->load(logoPath);
+			const XmlNode *n = logoNode->getOptionalChild("team-colour");
+			if (n) {
+				string logoPath = dir + "/" + n->getRestrictedAttribute("path");
+				m_logoTeamColour = new Pixmap2D();
+				m_logoTeamColour->load(logoPath);
+			} else {
+				m_logoTeamColour = 0;
+		}
+			n = logoNode->getOptionalChild("rgba-colour");
+			if (n) {
+				string logoPath = dir + "/" + n->getRestrictedAttribute("path");
+				m_logoRgba = new Pixmap2D();
+				m_logoRgba->load(logoPath);
+			} else {
+				m_logoRgba = 0;
+			}
 		}
 	} catch (runtime_error &e) {
 		g_errorLog.addXmlError(path, e.what());
-		delete m_logoPixmap;
-		m_logoPixmap = 0;
+		delete m_logoTeamColour;
+		delete m_logoRgba;
+		m_logoTeamColour = m_logoRgba = 0;
 	}
 
 	// notification of being attacked off screen
@@ -369,7 +384,6 @@ FactionType::~FactionType() {
 		music = music->getNext();
 		delete delMusic;
 	}
-	delete music;
 	if (attackNotice) {
 		deleteValues(attackNotice->getSounds().begin(), attackNotice->getSounds().end());
 		delete attackNotice;
@@ -378,6 +392,8 @@ FactionType::~FactionType() {
 		deleteValues(enemyNotice->getSounds().begin(), enemyNotice->getSounds().end());
 		delete enemyNotice;
 	}
+	delete m_logoTeamColour;
+	delete m_logoRgba;
 }
 
 // ==================== get ====================

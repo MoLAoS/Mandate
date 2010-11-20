@@ -149,6 +149,8 @@ private:
 	bool needSelectionUpdate;
 	int currentGroup;
 
+	bool	m_selectionDirty;	// selection state changed this frame, update it
+
 	static UserInterface* currentGui;
 
 public:
@@ -195,14 +197,9 @@ public:
 	void setComputeSelectionFlag()			{computeSelection= true;}
 
 	//events
-	void update(){
-		setComputeSelectionFlag();
-		mouse3d.update();
-	}
+	void update();
 
-	void tick(){
-		computeDisplay();
-	}
+	void tick();
 
 	void onSelectionUpdated(){
 		currentGroup = invalidGroupIndex;
@@ -223,9 +220,9 @@ public:
 	void hotKey(UserCommand cmd);
 	bool cancelPending();
 
-	bool mouseValid(int x, int y){
-		return computePosDisplay(x, y) != invalidPos; //in display coords
-	}
+	//bool mouseValid(int x, int y){
+	//	return computePosDisplay(x, y) != invalidPos; //in display coords
+	//}
 
 	// slots for signals from minimap
 	void onLeftClickOrder(Vec2i cellPos);
@@ -238,7 +235,8 @@ public:
 	//misc
 	void switchToNextDisplayColor() {m_display->switchColor();}
 	void onSelectionChanged() { resetState(); computeDisplay(); }
-	void onSelectionStateChanged() { computeDisplay(); }
+	void onSelectionStateChanged() { m_selectionDirty = true; }
+	void invalidateActivePos() { activePos = invalidPos; }
 
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;
@@ -260,7 +258,7 @@ private:
 	void onCloseLuaConsole(BasicDialog*);
 
 	//misc
-	int computePosDisplay(int x, int y);
+	//int computePosDisplay(int x, int y);
 	void mouseDownDisplayUnitSkills(int posDisplay);
 	void mouseDownSecondTier(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
@@ -268,7 +266,8 @@ private:
 public:
 	void resetState();
 	void computeDisplay();
-	void computeInfoString(int posDisplay);
+	void computePortraitInfo(int posDisplay);
+	void computeCommandInfo(int posDisplay);
 	void updateSelection(bool doubleClick, UnitVector &units);
 private:
 	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);

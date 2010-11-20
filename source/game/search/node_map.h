@@ -109,7 +109,7 @@ public:
 	/** index by Vec2i */
 	NodeMapCell& operator[] (const Vec2i &pos)		{ return array[pos.y * stride + pos.x]; }
 	/** index by PackedPos */
-	NodeMapCell& operator[] (const PackedPos pos)	{ return array[pos.y * stride + pos.x]; }
+	NodeMapCell& operator[] (const PackedPos &pos)	{ return array[pos.y * stride + pos.x]; }
 };
 
 /** A NodeStorage (template interface) compliant NodeMap. Keeps a store of nodes the size of 

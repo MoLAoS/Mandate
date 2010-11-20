@@ -34,6 +34,7 @@
 #include "entities_enums.h"
 
 #define LOG_COMMAND_ISSUE 1
+#define LOG_UNIT_LIFECYCLE 1
 
 #ifndef LOG_UNIT_LIFECYCLE
 #	define LOG_UNIT_LIFECYCLE 0
@@ -43,7 +44,7 @@
 #endif
 
 #if LOG_UNIT_LIFECYCLE
-#	define UNIT_LOG(x) STREAM_LOG(x)
+#	define UNIT_LOG(x) GAME_LOG(x)
 #else
 #	define UNIT_LOG(x)
 #endif
@@ -459,7 +460,11 @@ public:
 	//other
 	void resetHighlight();
 	const CommandType *computeCommandType(const Vec2i &pos, const Unit *targetUnit= NULL) const;
-	string getDesc(bool friendly) const;
+
+	string getShortDesc() const;
+	int getQueuedOrderCount() const { return (commands.size() > 1 ? commands.size() - 1 : 0); }
+	string getLongDesc() const;
+	
 	bool computeEp();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);

@@ -13,10 +13,12 @@
 #define _GLEST_GAME_LANG_H_
 
 #include "properties.h"
+#include <set>
 
 namespace Glest { namespace Global {
 
 using Shared::Util::Properties;
+using std::set;
 
 // =====================================================
 //  class Lang
@@ -26,16 +28,16 @@ using Shared::Util::Properties;
 
 class Lang {
 private:
-	string locale;		/**< Should have this format: language[_territory][.encoding][@script] */
-#if 0
-	string language;
-	string territory;
-	string encoding;
-	script script;
-#endif
-	Properties strings;
-	vector<string> defeatStrings;
-	Properties scenarioStrings;
+	typedef map<string, Properties> FactionStrings;
+
+private:
+	string			m_locale; /**< Should have this format: language[_territory][.encoding][@script] */
+
+	Properties		m_mainStrings;
+	vector<string>	m_defeatStrings;
+	Properties		m_techStrings;
+	FactionStrings	m_factionStringsMap;
+	Properties		m_scenarioStrings;
 
 private:
 	Lang() {}
@@ -45,18 +47,17 @@ public:
 		static Lang lang;
 		return lang;
 	}
-	const string &getLocale() const			{return locale;}
-#if 0
-	const string &getLanguage() const		{return language;}
-	const string &getTerritory() const		{return territory;}
-	const string &getEncoding() const		{return encoding;}
-	const string &getScript() const			{return script;}
-#endif
-
+	const string &getLocale() const			{return m_locale;}
 	void setLocale(const string &locale);
+
 	void loadScenarioStrings(const string &scenarioDir, const string &scenarioName);
-	string getScenarioString(const string &s);
+	void loadTechStrings(const string &tech);
+	void loadFactionStrings(const string &tech, set<string> &factions);
+
 	string get(const string &s) const;
+	string getTechString(const string &s);
+	string getFactionString(const string &faction, const string &s);
+	string getScenarioString(const string &s);
 	string getDefeatedMessage() const;
 };
 

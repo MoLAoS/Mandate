@@ -138,12 +138,13 @@ Widget* WidgetWindow::findCommonAncestor(Widget* widget1, Widget* widget2) {
 void WidgetWindow::doMouseInto(Widget* widget) {
 	if (widget != mouseOverStack.top()) {
 		Widget* ancestor = findCommonAncestor(widget, mouseOverStack.top());
+		RUNTIME_CHECK(ancestor != 0);
 		unwindMouseOverStack(ancestor);
 		std::stack<Widget*> tmpStack;
 		while (widget != ancestor) {
 			tmpStack.push(widget);
 			widget = widget->getParent();
-			assert(widget);
+			RUNTIME_CHECK(widget != 0);
 		}
 		while (!tmpStack.empty()) {
 			MouseWidget* mw = tmpStack.top()->asMouseWidget();
@@ -180,17 +181,18 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 }
 
 void WidgetWindow::registerUpdate(Widget* widget) {
-	assert(std::find(updateList.begin(), updateList.end(), widget) == updateList.end());
+	// only register for updating once, if the widget is already in the container do nothing
+	if (std::find(updateList.begin(), updateList.end(), widget) == updateList.end()) {
 	updateList.push_back(widget);
+	}
+	///@todo it might be better to use a set instead of a vector to achieve the desired behaviour
 }
 
 void WidgetWindow::unregisterUpdate(Widget* widget) {
 	WidgetList::iterator it = std::find(updateList.begin(), updateList.end(), widget);
-	if (it == updateList.end()) {
-		assert(false);
-		return;
-	}
+	if (it != updateList.end()) {
 	updateList.erase(it);
+	}
 }
 
 void WidgetWindow::update() {
@@ -214,15 +216,6 @@ void WidgetWindow::update() {
 	}
 }
 
-//void WidgetWindow::setFade(float v) {
-//	Container::setFade(v);
-//	static float lastFade = 0.f;
-//	if (v > lastFade + 0.05f || v < lastFade - 0.05f) {
-//		DEBUG_HOOK();
-//	}
-//	lastFade = v;
-//}
-
 void WidgetWindow::destroyFloater() {
 	// destroy floater
 	delete floatingWidget;
@@ -238,7 +231,7 @@ void WidgetWindow::destroyFloater() {
 }
 
 void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	Widget* widget = 0;
@@ -279,7 +272,7 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 }
 
 void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	MouseWidget* downWidget = mouseDownWidgets[msBtn];
@@ -298,7 +291,7 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 }
 
 void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	assert(!mouseOverStack.empty());
 	mousePos.x = x;
 	mousePos.y = getH() - y;
@@ -333,7 +326,7 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 }
 
 void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << MouseButtonNames[msBtn] << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
 	mousePos.x = x;
 	mousePos.y = getH() - y;
 	Widget* widget = 0;
@@ -350,8 +343,13 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 		widget = getWidgetAt(mousePos);
 	}
 	while (widget) {
-		if (widget->asMouseWidget()
-		&& widget->asMouseWidget()->mouseDoubleClick(msBtn, mousePos)) {
+		MouseWidget *mw = widget->asMouseWidget();
+		if (mw && mw->mouseDoubleClick(msBtn, mousePos)) {
+			if (lastMouseDownWidget) {
+				mouseDownWidgets[lastMouseDownButton] = 0;
+			}
+			mouseDownWidgets[msBtn] = lastMouseDownWidget = mw;
+			lastMouseDownButton = msBtn;
 			return;
 		}
 		widget = widget->getParent();
@@ -359,7 +357,7 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 }
 
 void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << zDelta << " )");
 
 	Widget* widget = 0;
 	if (floatingWidget) {
@@ -379,20 +377,20 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 }
 
 void WidgetWindow::eventKeyDown(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	lastKeyDownWidget = keyboardFocused;
 	keyboardFocused->keyDown(key);
 }
 
 void WidgetWindow::eventKeyUp(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	if (keyboardFocused == lastKeyDownWidget) {
 		keyboardFocused->keyUp(key);
 	}
 }
 
 void WidgetWindow::eventKeyPress(char c) {
-	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
+	WIDGET_LOG( __FUNCTION__ << "( '" << c << "' )");
 	if (keyboardFocused == lastKeyDownWidget) {
 		keyboardFocused->keyPress(c);
 	}

@@ -43,9 +43,9 @@ Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strengt
 	this->strength = strength;
 	this->duration = type->getDuration();
 	this->recourse = root != NULL;
-	if(type->getHpRegeneration() < 0 && type->getDamageType()) {
-		fixed fregen = type->getHpRegeneration() * tt->getDamageMultiplier(
-				type->getDamageType(), recipient->getType()->getArmourType()/*, recipient->getType()->getBodyType()*/);
+	if (type->getHpRegeneration() < 0 && type->getDamageType()) {
+		fixed fregen = type->getHpRegeneration() 
+			* tt->getDamageMultiplier(type->getDamageType(), recipient->getType()->getArmourType());
 		this->actualHpRegen = fregen.intp();
 	} else {
 		this->actualHpRegen = type->getHpRegeneration();
@@ -189,6 +189,7 @@ struct EffectSummary {
 void Effects::streamDesc(ostream &stream) const {
 	string str;
 	getDesc(str);
+	str = formatString(str);
 	stream << str;
 }
 

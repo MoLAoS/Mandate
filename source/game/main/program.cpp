@@ -57,7 +57,9 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 		msg = string("Glest Advanced Engine has crashed. Please help us improve GAE by emailing the file")
 			+ " gae-crash.txt to " + gaeMailString + ".";
 	}
-	Vec2i size(520, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i screenDims = g_metrics.getScreenDims();
+	Vec2i size(screenDims.x - 200, screenDims.y / 2);
+	Vec2i pos = screenDims / 2 - size / 2;
 	msgBox = MessageDialog::showDialog(pos, size, "Crash!", msg, g_lang.get("Exit"), "");
 	msgBox->Button1Clicked.connect(this, &Program::CrashProgramState::onExit);
 	this->e = e;
@@ -210,6 +212,12 @@ void Program::init() {
 		Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 		Scenario::loadGameSettings(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 		setState(new QuickScenario(*this));
+	} else if (cmdArgs.isLoadLastGame()) {
+		Shared::Xml::XmlTree doc("game-settings");
+		doc.load("last_gamesettings.gs");
+		GameSettings &gs = simulationInterface->getGameSettings();
+		gs = GameSettings(doc.getRootNode());
+		setState(new GameState(*this));
 
 	// normal startup
 	} else {
@@ -219,8 +227,6 @@ void Program::init() {
 
 void Program::loop() {
 	size_t sleepTime;
-
-	bool didSleep, timerFired;
 
 	while (handleEvent()) {
 		{
@@ -294,7 +300,7 @@ void Program::eventResize(SizeState sizeState) {
 }
 
 bool Program::mouseDown(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "(" << MouseButtonNames[btn] << ", " << pos << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -316,7 +322,7 @@ bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Program::mouseUp(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "(" << MouseButtonNames[btn] << ", " << pos << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -338,7 +344,7 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 }
 
 bool Program::mouseMove(Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "(" << pos << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -348,7 +354,7 @@ bool Program::mouseMove(Vec2i pos) {
 }
 
 bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "(" << MouseButtonNames[btn] << ", " << pos << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -370,7 +376,7 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 }
 
 bool Program::mouseWheel(Vec2i pos, int zDelta) {
-	WIDGET_LOG( __FUNCTION__ << "(" << pos << ", " << zDelta << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << pos << ", " << zDelta << " )");
 	const Metrics &metrics = Metrics::getInstance();
 	int vx = metrics.toVirtualX(pos.x);
 	int vy = metrics.toVirtualY(pos.y);
@@ -380,19 +386,19 @@ bool Program::mouseWheel(Vec2i pos, int zDelta) {
 }
 
 bool Program::keyDown(Key key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	programState->keyDown(key);
 	return true;
 }
 
 bool Program::keyUp(Key key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	programState->keyUp(key);
 	return true;
 }
 
 bool Program::keyPress(char c) {
-	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
+	WIDGET_LOG( __FUNCTION__ << "( '" << c << "' )");
 	programState->keyPress(c);
 	return true;
 }

@@ -43,7 +43,7 @@ Scenario::~Scenario(){
 void Scenario::load(const string &path){
 	try{
 		string name= dirname(basename(path));
-		g_logger.add("Scenario: "+Util::formatString(name), true);
+		g_logger.add("Scenario: " + formatString(name), true);
 
 		//parse xml
 		XmlTree xmlTree;

@@ -139,7 +139,7 @@ private:
 	int numEntries;
 
 public:
-	SkillCycleTable() : cycleTable(0) {
+	SkillCycleTable() : cycleTable(0), numEntries(0) {
 		header.messageType = MessageType::SKILL_CYCLE_TABLE;
 	}
 	SkillCycleTable(RawMessage raw);
@@ -186,6 +186,8 @@ protected:
 	bool quit;
 	GameSpeed speed, prevSpeed;
 
+	CommandClass m_processingCommand;
+
 	Commands requestedCommands;	//commands requested by the user
 	Commands pendingCommands;	//commands ready to be given
 
@@ -212,6 +214,10 @@ public:
 	const World *getWorld() const			{ return world; }
 	Stats* getStats()						{ return stats; }
 	bool getQuit() const					{ return quit; }
+	
+	CommandClass processingCommandClass() const {
+		return m_processingCommand;
+	}
 
 	// create/destroy World
 	void constructGameWorld(GameState *g);

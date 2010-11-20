@@ -516,7 +516,6 @@ void TextWidget::centreText(int ndx) {
 		return;
 	}
 	ASSERT_RANGE(ndx, texts.size());
-	const Metrics &metrics = Metrics::getInstance();
 	Vec2f txtDims = font->getMetrics()->getTextDiminsions(texts[ndx]);
 	Vec2i halfText = Vec2i(txtDims) / 2;
 	Vec2i centre = me->getSize() / 2;
@@ -545,7 +544,6 @@ void TextWidget::endBatch() {
 	glPopAttrib();
 	m_batchRender = false;
 }
-
 
 void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
 	assertGl();

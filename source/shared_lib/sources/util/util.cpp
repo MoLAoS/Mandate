@@ -186,7 +186,7 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 			throw runtime_error("No files found: " + path);
 		}
 	} else {
-		slist<string> l;
+		list<string> l;
 		DirIterator di;
 		char *p = initDirIterator(path, di);
 
@@ -226,7 +226,7 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 
 		l.sort();
 		results.clear();
-		for(slist<string>::iterator li = l.begin(); li != l.end(); ++li) {
+		for(list<string>::iterator li = l.begin(); li != l.end(); ++li) {
 			results.push_back(*li);
 		}
 	}
@@ -258,7 +258,7 @@ string cleanPath(const string &s) {
 
 	for(char *p =  strtok_r(buf, "\\/", &data); p; p = strtok_r(NULL, "\\/", &data)) {
 		// skip duplicate path delimiters
-		if(strlen(p) == 0) {
+		if(*p == '\0') {
 			continue;
 
 		// skip entries that just say "the current directory"
@@ -390,6 +390,28 @@ string replaceBy(const string &s, char c1, char c2){
 }
 
 // ==================== misc ====================
+
+string formatString(const string &str) {
+	string outStr = str;
+
+	if (!outStr.empty()) {
+		outStr[0] = toupper(outStr[0]);
+	}
+
+	bool afterSeparator = false;
+	for (int i = 0; i < str.size(); ++i) {
+		if (outStr[i] == '_' || outStr[i] == '-') {
+			outStr[i] = ' ';
+		} else if (afterSeparator) {
+			outStr[i] = toupper(outStr[i]);
+			afterSeparator = false;
+		}
+		if (outStr[i] == '\n' || outStr[i] == '(' || outStr[i] == ' ') {
+			afterSeparator = true;
+		}
+	}
+	return outStr;
+}
 
 bool fileExists(const string &path) {
 	if (FSFactory::getInstance()->usePhysFS) {

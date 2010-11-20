@@ -24,20 +24,26 @@ namespace Glest { namespace Widgets {
 
 class StaticImage : public Widget, public ImageWidget {
 private:
-	Texture2D *texture;
+	//Texture2D *m_texture;
 
 public:
 	StaticImage(Container* parent)
 			: Widget(parent)
-			, ImageWidget(this) {}
+			, ImageWidget(this)
+			//, m_texture(0) 
+	{}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size) 
 			: Widget(parent, pos, size)
-			, ImageWidget(this) {}
+			, ImageWidget(this)
+			//, m_texture(0)
+	{}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
 			: Widget(parent, pos, size)
-			, ImageWidget(this, tex) {}
+			, ImageWidget(this, tex)
+			//, m_texture(0)
+	{}
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -266,23 +272,17 @@ private:
 public:
 	VerticalScrollBar(Container* parent);
 	VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size);
+	~VerticalScrollBar();
 
-	void setRanges(int total, int avail, int line = 10) {
-		if (total < avail) {
-			total = avail;
-		}
-		totalRange = total;
-		availRange = avail;
-		lineSize = line;
-		recalc();
-	}
-
+	void setRanges(int total, int avail, int line = 60);
 	void setTotalRange(int max) { totalRange = max; }
 	void setActualRane(int avail) { availRange = avail; recalc(); }
 	void setLineSize(int line) { lineSize = line; }
 
 	int getRangeOffset() const { return int((thumbOffset - topOffset) / float(shaftHeight) * totalRange); }
 	void setOffset(float percent);
+
+	void scrollLine(bool i_up);
 
 //	int getTotalRange() const { return totalRange; }
 //	int getActualRange() const { return actualRange; }
@@ -414,7 +414,7 @@ public:
 // class ListBox
 // =====================================================
 
-class ListBox : public ListBase, public sigslot::has_slots {
+class ListBox : public ListBase, public MouseWidget, public sigslot::has_slots {
 public:
 	//WRAPPED_ENUM( ScrollSetting, NEVER, AUTO, ALWAYS );
 private:
@@ -446,6 +446,8 @@ public:
 
 	virtual void layoutChildren();
 //	void setScrollSetting(ScrollSetting setting);
+
+	bool mouseWheel(Vec2i pos, int z);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;

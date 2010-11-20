@@ -1252,15 +1252,18 @@ void Renderer::renderSelectionEffects() {
 	}
 
 	//target arrow
-	if(selection->getCount()==1){
-		const Unit *unit= selection->getUnit(0);
+	if (selection->getCount() == 1) {
+		const Unit *unit =  selection->getUnit(0);
+		Command *cmd = 0;
+		if (selection->getUnit(0)->anyCommand()) {
+			cmd = unit->getCurrCommand();
+		}
 
-		//comand arrow
-		if(focusArrows && unit->anyCommand()){
-			const CommandType *ct= unit->getCurrCommand()->getType();
-			if(ct->getClicks()!=Clicks::ONE){
-
-				//arrow color
+		// comand arrow
+		if (focusArrows && cmd && !cmd->isAuto()){
+			const CommandType *ct = cmd->getType();
+			if (ct->getClicks() != Clicks::ONE) {
+				// arrow color
 				Vec3f arrowColor;
 				switch(ct->getClass()){
 				case CommandClass::MOVE:
@@ -1273,24 +1276,23 @@ void Renderer::renderSelectionEffects() {
 				default:
 					arrowColor= Vec3f(1.f, 1.f, 0.f);
 				}
-
-				//arrow target
+				// arrow target
 				Vec3f arrowTarget;
-				Command *c= unit->getCurrCommand();
+				
 				bool doArrow = true;
-				if (c->getUnit() != NULL) {
-					if (c->getUnit()->isCarried()) {
+				if (cmd->getUnit() != NULL) {
+					if (cmd->getUnit()->isCarried()) {
 						doArrow = false;
 					} else {
-						RUNTIME_CHECK(c->getUnit()->getPos().x >= 0 && c->getUnit()->getPos().y >= 0);
-						arrowTarget= c->getUnit()->getCurrVectorFlat();
+						RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
+						arrowTarget= cmd->getUnit()->getCurrVectorFlat();
 					}
 				} else {
-					Vec2i pos= c->getPos();
+					Vec2i pos= cmd->getPos();
 					if (pos == Command::invalidPos) {
 						doArrow = false;
 					} else {
-						arrowTarget = Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
+						arrowTarget = Vec3f(float(pos.x), map->getCell(pos)->getHeight(), float(pos.y));
 					}
 				}
 				if (doArrow) {

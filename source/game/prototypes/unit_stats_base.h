@@ -135,7 +135,20 @@ protected:
 
 
 public:
-	UnitStats() /*: damageMultipliers(damageMultiplierCount)*/ { }
+	UnitStats() /*: damageMultipliers(damageMultiplierCount)*/
+		: maxHp(0)
+		, hpRegeneration(0)
+		, maxEp(0)
+		, epRegeneration(0)
+		, sight(0)
+		, armor(0)
+		, attackStrength(0)
+		, attackRange(0)
+		, moveSpeed(0)
+		, attackSpeed(0)
+		, prodSpeed(0)
+		, repairSpeed(0)
+		, harvestSpeed(0) {}
 	virtual ~UnitStats() {}
 
 	virtual void doChecksum(Checksum &checksum) const;

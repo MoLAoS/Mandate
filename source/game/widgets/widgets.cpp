@@ -598,6 +598,10 @@ VerticalScrollBar::VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size)
 	recalc();
 }
 
+VerticalScrollBar::~VerticalScrollBar() {
+	getRootWindow()->unregisterUpdate(this);
+}
+
 void VerticalScrollBar::init() {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SCROLL_BAR);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::SCROLL_BAR);
@@ -626,6 +630,16 @@ void VerticalScrollBar::recalc() {
 	topOffset = thumbOffset = size.y - imgSize.y;
 	float availRatio = availRange / float(totalRange);
 	thumbSize = int(availRatio * shaftHeight);
+}
+
+void VerticalScrollBar::setRanges(int total, int avail, int line) {
+	if (total < avail) {
+		total = avail;
+	}
+	totalRange = total;
+	availRange = avail;
+	lineSize = line;
+	recalc();
 }
 
 void VerticalScrollBar::setOffset(float percent) {
@@ -673,26 +687,24 @@ bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
+void VerticalScrollBar::scrollLine(bool i_up) {
+	if (i_up) {
+			thumbOffset += lineSize;
+			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+			ThumbMoved(this);
+	} else {
+			thumbOffset -= lineSize;
+			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
+			ThumbMoved(this);
+		}
+}
+
 void VerticalScrollBar::update() {
 	++timeCounter;
 	if (timeCounter % 7 != 0) {
 		return;
 	}
-	if (pressedPart == Part::UP_BUTTON) {
-		if (hoverPart == Part::UP_BUTTON) {
-			thumbOffset += lineSize;
-			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
-			ThumbMoved(this);
-		}
-	} else if (pressedPart == Part::DOWN_BUTTON) {
-		if (hoverPart == Part::DOWN_BUTTON) {
-			thumbOffset -= lineSize;
-			thumbOffset = clamp(thumbOffset, shaftOffset + thumbSize, shaftOffset + shaftHeight);
-			ThumbMoved(this);
-		}
-	} else {
-		assert(false);
-	}
+	scrollLine(pressedPart == Part::UP_BUTTON);
 	moveOnMouseUp = false;
 }
 
@@ -980,6 +992,7 @@ ListBase::ListBase(WidgetWindow* window)
 
 ListBox::ListBox(Container* parent)
 		: ListBase(parent)
+		, MouseWidget(this)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -989,6 +1002,7 @@ ListBox::ListBox(Container* parent)
 
 ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size) 
 		: ListBase(parent, pos, size)
+		, MouseWidget(this)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -998,6 +1012,7 @@ ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size)
 
 ListBox::ListBox(WidgetWindow* window)
 		: ListBase(window)
+		, MouseWidget(this)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
@@ -1069,7 +1084,7 @@ void ListBox::layoutChildren() {
 								m_borderStyle.m_sizes[Border::BOTTOM]));
 		scrollBar->setRanges(totalItemHeight, clientHeight, 2);
 		//cout << "setting scroll ranges total = " << totalItemHeight << ", actual = " << clientHeight << endl;
-		int scrollOffset = scrollBar->getRangeOffset();
+		//int scrollOffset = scrollBar->getRangeOffset();
 		//cout << "range offset = " << scrollOffset << endl;
 	} else {
 		if (scrollBar) {
@@ -1124,6 +1139,11 @@ void ListBox::onScroll(VerticalScrollBar*) {
 		//Widget* widget = *it;
 		(*it)->setPos(x, yPositions[ndx++] - offset);
 	}
+}
+
+bool ListBox::mouseWheel(Vec2i pos, int z) {
+	scrollBar->scrollLine(z > 0);
+	return true;
 }
 
 int ListBox::getPrefHeight(int childCount) {
@@ -1459,8 +1479,8 @@ void DropList::onListDisposed(Widget*) {
 void ToolTip::init() {
 	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 0.f)));
 	m_borderStyle.setSizes(2);
-	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Vec3f(0.3f, 0.3f, 0.3f)));
-	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFont(), false);
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 160u)));
+	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFontBig(), false);
 	TextWidget::setTextPos(Vec2i(4, 4));
 }
 

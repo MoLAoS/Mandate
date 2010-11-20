@@ -119,7 +119,7 @@
   <commands>
     <command>
       <type value="produce"/>
-      <name value="produce_ornithopter"/>
+      <name value="produce_ornithopter" tip="ornithopter_info"/>
       <image path="../ornithopter/images/ornithopter.bmp"/>
       <unit-requirements />
       <upgrade-requirements />
@@ -130,7 +130,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="produce_airship"/>
+      <name value="produce_airship" tip="airship_info"/>
       <image path="../airship/images/airship.bmp"/>
       <unit-requirements />
       <upgrade-requirements />

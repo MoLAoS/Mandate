@@ -231,7 +231,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="summon_daemon" />
+      <name value="summon_daemon" tip="daemon_info"/>
       <image path="images/summoner_daemon.bmp"/>
       <unit-requirements />
       <upgrade-requirements />
@@ -241,7 +241,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="summon_ghost_armor" />
+      <name value="summon_ghost_armor" tip="ghost_armor_info"/>
       <image path="images/summoner_armor.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -251,7 +251,7 @@
 
     <command>
       <type value="produce"/>
-      <name value="summon_dragon" />
+      <name value="summon_dragon" tip="dragon_info"/>
       <image path="images/summoner_dragon.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -261,7 +261,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="summon_drake"/>
+      <name value="summon_drake" tip="drake_rider_info"/>
       <image path="../drake_rider/images/drake_rider.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

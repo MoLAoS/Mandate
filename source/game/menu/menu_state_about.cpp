@@ -42,7 +42,7 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	m_returnButton->Clicked.connect(this, &MenuStateAbout::onReturn);
 
 	int topY = g_metrics.getScreenH();
-	int centreY = topY / 2;
+	//int centreY = topY / 2;
 	int y = topY - 50;
 	int x;
 	int fh = int(fm->getHeight() + 1.f);

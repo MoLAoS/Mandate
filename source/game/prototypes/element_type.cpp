@@ -69,11 +69,11 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 
 string RequirableType::getReqDesc() const{
 	stringstream ss;
-	ss << name;
+///	ss << name;
 	if (unitReqs.empty() && upgradeReqs.empty()) {
 		return ss.str();
 	}
-	ss << " " << Lang::getInstance().get("Reqs") << ":\n";
+	ss << Lang::getInstance().get("Reqs") << ":\n";
 	foreach_const (UnitReqs, it, unitReqs) {
 		ss << (*it)->getName() << endl;
 	}

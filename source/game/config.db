@@ -19,9 +19,6 @@ gsAutoRepairEnabled			bool	true
 gsAutoReturnEnabled			bool	false
 gsDayTime					float	1000.f
 gsWorldUpdateFps			int		40
-miscAiLog					int		0
-miscAiRedir					bool	false
-miscAutoTest				bool	false
 miscCatchExceptions			bool	true
 miscDebugKeys				bool	false
 miscDebugMode				bool	false
@@ -29,7 +26,7 @@ miscFirstTime				bool	true
 netConsistencyChecks		bool	false
 netPlayerName				string	"Player"
 netServerIp					string	"192.168.1.1"
-netServerPort				int		12345			0		65535
+netServerPort				int		12345			1024	65535
 renderCheckGlCaps			bool	true
 renderColorBits				int		32
 renderDepthBits				int		isWindows()?32:16
@@ -37,11 +34,8 @@ renderDistanceMax			float	64.f			1.f		65536.f
 renderDistanceMin			float	1.f				0.0f	65536.f
 renderFilter				string	"Bilinear"
 renderFilterMaxAnisotropy	int		1
-renderFogOfWarSmoothing		bool	1
+renderFogOfWarSmoothing		bool	true
 renderFogOfWarSmoothingFrameSkip int 3
-renderFontConsole			string	getDefaultFontStr()
-renderFontDisplay			string	getDefaultFontStr()
-renderFontMenu				string	getDefaultFontStr()
 renderFov					float	60.f			0.01f	360.f
 renderFpsMax				int		60				0		1000000
 renderGraphicsFactory		string	"OpenGL"
@@ -52,7 +46,7 @@ renderShadowFrameSkip		int		2
 renderShadowTextureSize		int		512
 renderShadows				string	"Projected"
 renderStencilBits			int		0
-renderTextures3D			bool	1
+renderTextures3D			bool	true
 soundFactory				string	isWindows()?"DirectSound8":"OpenAL"
 soundStaticBuffers			int		16
 soundStreamingBuffers		int		5
@@ -61,15 +55,9 @@ soundVolumeFx				int		80
 soundVolumeMusic			int		90
 uiConsoleMaxLines			int		10
 uiConsoleTimeout			int		20
-uiEnableCommandMinimap		bool	true
 uiFocusArrows				bool	true
-uiLastMap					string	"four_rivers"
-uiLastRandStartLocs			bool	false
 uiLastScenario				string	"glest_classic\/anarchy"
 uiLastScenarioCatagory		string	"glest_classic"
-uiLastTileset				string	"forest"
-uiLastTechTree				string	"magitech"
 uiLocale					string	"en"
 uiPhotoMode					bool	false
-uiRandomStartLocations		bool	false
 uiScrollSpeed				float	1.5f

@@ -14,9 +14,11 @@
 #include "upgrade_type.h"
 #include "command_type.h"
 #include "skill_type.h"
+#include "logger.h"
 
 namespace Glest { namespace Sim {
 using namespace ProtoTypes;
+using Util::Logger;
 
 // ===============================
 //  class TypeFactory

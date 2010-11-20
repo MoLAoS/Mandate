@@ -221,11 +221,12 @@ string trimStr(string str)
 {
 	string trimmedStr = str;
 
-	while (!trimmedStr.empty() && isspace(trimmedStr[0])) {
+	// isspace doesn't handle non English characters
+	while (!trimmedStr.empty() && /*isspace(trimmedStr[0])*/trimmedStr[0] == ' ') {
 		trimmedStr.erase(0, 1);
 	}
 
-	while (!trimmedStr.empty() && isspace(trimmedStr[trimmedStr.size() - 1])) {
+	while (!trimmedStr.empty() && /*isspace(trimmedStr[trimmedStr.size() - 1])*/trimmedStr[trimmedStr.size() - 1] == ' ') {
 		trimmedStr.erase(trimmedStr.size() - 1);
 	}
 

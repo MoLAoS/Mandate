@@ -41,8 +41,6 @@ EffectType::EffectType() : lightColour(0.0f) {
 bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, const FactionType *ft) {
 	string tmp;
 	const XmlAttribute *attr;
-	const XmlNode *node;
-
 	bool loadOk = true;
 	
 	try { // name
@@ -273,7 +271,7 @@ void EffectType::getDesc(string &str) const {
 
 	// effected units
 	if (isEffectsPetsOnly() || !isEffectsFoe() || !isEffectsAlly()) {
-		str += "\n\tEffects: ";
+		str += "\n   Affects: ";
 		if (isEffectsPetsOnly()) {
 			str += "pets only";
 		} else if (isEffectsAlly()) {
@@ -285,10 +283,10 @@ void EffectType::getDesc(string &str) const {
 	}
 
 	if (chance != 100) {
-		str += "\n\tChance: " + intToStr(chance.intp()) + "%\n\t";
+		str += "\n   Chance: " + intToStr(chance.intp()) + "%";
 	}
 
-	str += "\n\tDuration: ";
+	str += "\n   Duration: ";
 	if (isPermanent()) {
 		str += "permenant";
 	} else {
@@ -296,10 +294,10 @@ void EffectType::getDesc(string &str) const {
 	}
 
 	if (damageType) {
-		str += "\n\tDamage Type: " + damageType->getName();
+		str += "\n   Damage Type: " + damageType->getName();
 	}
 
-	EnhancementType::getDesc(str, "\n\t");
+	EnhancementType::getDesc(str, "\n   ");
 	str += "\n";
 }
 
