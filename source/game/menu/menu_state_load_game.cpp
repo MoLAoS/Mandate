@@ -97,7 +97,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 
 	Vec2i dim = g_metrics.getScreenDims();
 
-	m_infoLabel = new ScrollText(&program, Vec2i(dim.x / 2 - 200, dim.y / 2 ), Vec2i(400, 200));
+	m_infoLabel = new ScrollText(&program, Vec2i(dim.x / 2 - 300, dim.y / 2 ), Vec2i(600, 200));
 	m_infoLabel->init();
 	//m_infoLabel->setTextParams("", Vec4f(1.f), font);
 //	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
@@ -291,17 +291,16 @@ void MenuStateLoadGame::initGameInfo() {
 			sprintf(elapsedTime, "%02d:%02d", elapsedMinutes, elapsedSeconds);
 		}
 
-		string mapDescr = " (Max Players: " + intToStr(mapInfo.players)
-				+ ", Size: " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
-
+		string mapDescr = " (" + g_lang.get("MaxPlayers") + ": " + intToStr(mapInfo.players)
+				+ ", " + g_lang.get("Size") + ": " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
 
 		stringstream ss;
 		ss  << m_savedGameList->getSelectedItem()->getText() << ": " << gs->getDescription()
-			<< "\nTech-tree: " << formatString(basename(gs->getTechPath()))
-			<< "\nTileset: " << formatString(basename(gs->getTilesetPath()))
-			<< "\nMap: " << formatString(basename(gs->getMapPath())) << mapDescr
-			<< "\nElapsed Time: " << elapsedTime
-			<< "\n";
+			<< endl << g_lang.get("Techtree") << ": " << formatString(basename(gs->getTechPath()))
+			<< endl << g_lang.get("Tileset") << ": " << formatString(basename(gs->getTilesetPath()))
+			<< endl << g_lang.get("Map") << ": " << formatString(basename(gs->getMapPath())) << mapDescr
+			<< endl << g_lang.get("ElapsedTime") << ": " << elapsedTime
+			<< endl;
 
 		if (gs->getFactionCount() > GameConstants::maxPlayers || gs->getFactionCount() < 0) {
 			throw runtime_error("Invalid faction count (" + intToStr(gs->getFactionCount())

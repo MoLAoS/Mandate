@@ -148,8 +148,6 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 }
 
 void MenuStateOptions::onButtonClick(Button* btn) {
-	Config &config= Config::getInstance();
-	Lang &lang= Lang::getInstance();
 	CoreData &coreData= CoreData::getInstance();
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 
@@ -180,7 +178,7 @@ void MenuStateOptions::on3dTexturesToggle(Button* cb) {
 
 void MenuStateOptions::onDropListSelectionChanged(ListBase* list) {
 	Config &config= Config::getInstance();
-	Lang &lang= Lang::getInstance();
+
 	if (list == m_langList) {
 		map<string,string>::iterator it = langMap.find(list->getSelectedItem()->getText());
 		string lng;
@@ -249,7 +247,6 @@ void MenuStateOptions::saveConfig(){
 
 //TODO: could use some more cleanup - hailstone 1/DEC/2009
 void MenuStateOptions::setupListBoxLang() {
-	Lang &lang= Lang::getInstance();
 	Config &config= Config::getInstance();
 
 	const string langDir = "gae/data/lang/";

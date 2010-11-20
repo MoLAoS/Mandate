@@ -197,12 +197,12 @@ bool AiRuleAddTasks::test() {
 }
 
 void AiRuleAddTasks::execute() {
-	GlestAiInterface *aii = ai->getAiInterface();
-	Random *rand = ai->getRandom();
+	GlestAiInterface *aiInterface = ai->getAiInterface();
+
 	int buildingCount = ai->getCountOfClass(UnitClass::BUILDING);
 	int warriorCount = ai->getCountOfClass(UnitClass::WARRIOR);
 	int workerCount = ai->getCountOfClass(UnitClass::WORKER);
-	int upgradeCount = ai->getAiInterface()->getMyUpgradeCount();
+	int upgradeCount = aiInterface->getMyUpgradeCount();
 
 	float buildingRatio = ai->getRatioOfClass(UnitClass::BUILDING);
 	float warriorRatio = ai->getRatioOfClass(UnitClass::WARRIOR);
@@ -216,7 +216,7 @@ void AiRuleAddTasks::execute() {
 		ai->addPriorityTask(new ProduceTask(UnitClass::WORKER));
 	}
 	else{
-		if(ai->getAiInterface()->getControlType()==ControlType::CPU_MEGA)
+		if(aiInterface->getControlType()==ControlType::CPU_MEGA)
 		{
 			//workers
 			if(workerCount<5) ai->addTask(new ProduceTask(UnitClass::WORKER));
@@ -254,7 +254,7 @@ void AiRuleAddTasks::execute() {
 			if(upgradeCount==2 && workerCount>15) ai->addTask(new UpgradeTask());
 			if(ai->isStableBase()) ai->addTask(new UpgradeTask());
 		}
-		else if(ai->getAiInterface()->getControlType()==ControlType::CPU_EASY)
+		else if(aiInterface->getControlType()==ControlType::CPU_EASY)
 		{// Easy CPU
 			//workers
 			if(workerCount<buildingCount+2) ai->addTask(new ProduceTask(UnitClass::WORKER));
@@ -721,10 +721,6 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 void AiRuleBuild::buildGeneric(const BuildTask *bt){
 	LOG_AI_BUILD(__FUNCTION__);
 	//find buildings that can be built
-	GlestAiInterface *aiInterface= ai->getAiInterface();
-	Faction *faction = aiInterface->getMyFaction();
-	const Units &units = faction->getUnits();
-
 	UnitTypeList buildingTypes;
 	findBuildingTypes(buildingTypes, bt->getResourceType());
 

@@ -455,9 +455,9 @@ void Renderer::setupLighting(){
 		for(int i=0; i<world->getFactionCount() && lightCount<maxLights; ++i){
 			for(int j=0; j<world->getFaction(i)->getUnitCount() && lightCount<maxLights; ++j){
 				Unit *unit= world->getFaction(i)->getUnit(j);
-				if(world->toRenderUnit(unit) &&
-					unit->getCurrVector().dist(gameCamera->getPos())<maxLightDist &&
-					unit->getType()->getLight() && unit->isOperative()){
+				if (world->toRenderUnit(unit) && !unit->isCarried()
+				&& unit->getType()->getLight() && unit->isOperative()
+				&& unit->getCurrVector().dist(gameCamera->getPos()) < maxLightDist) {
 
 					Vec4f pos= Vec4f(unit->getCurrVector());
 					pos.y+=4.f;
@@ -1133,6 +1133,8 @@ void Renderer::renderUnits(){
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 
+			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();
 
@@ -1215,6 +1217,8 @@ void Renderer::renderSelectionEffects() {
 
 		const Unit *unit= selection->getUnit(i);
 
+		RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+
 		// translate
 		Vec3f currVec = unit->getCurrVectorFlat();
 		currVec.y += 0.3f;
@@ -1240,7 +1244,7 @@ void Renderer::renderSelectionEffects() {
 		Resource *r = selectedObj->getResource();
 		if (r) {
 			const float offset = float(GameConstants::cellScale / 2);
-			const float ratio = r->getType()->getDefResPerPatch() / float(r->getAmount());
+			const float ratio = float(r->getAmount()) / r->getType()->getDefResPerPatch();
 			Vec3f currVec = selectedObj->getPos() + Vec3f(offset, 0.3f, offset);
 			glColor4f(ratio, ratio / 2.f, 0.f, 0.3f);
 			renderSelectionCircle(currVec, GameConstants::cellScale, selectionCircleRadius);
@@ -1248,15 +1252,18 @@ void Renderer::renderSelectionEffects() {
 	}
 
 	//target arrow
-	if(selection->getCount()==1){
-		const Unit *unit= selection->getUnit(0);
+	if (selection->getCount() == 1) {
+		const Unit *unit =  selection->getUnit(0);
+		Command *cmd = 0;
+		if (selection->getUnit(0)->anyCommand()) {
+			cmd = unit->getCurrCommand();
+		}
 
-		//comand arrow
-		if(focusArrows && unit->anyCommand()){
-			const CommandType *ct= unit->getCurrCommand()->getType();
-			if(ct->getClicks()!=Clicks::ONE){
-
-				//arrow color
+		// comand arrow
+		if (focusArrows && cmd && !cmd->isAuto()){
+			const CommandType *ct = cmd->getType();
+			if (ct->getClicks() != Clicks::ONE) {
+				// arrow color
 				Vec3f arrowColor;
 				switch(ct->getClass()){
 				case CommandClass::MOVE:
@@ -1269,26 +1276,27 @@ void Renderer::renderSelectionEffects() {
 				default:
 					arrowColor= Vec3f(1.f, 1.f, 0.f);
 				}
-
-				//arrow target
+				// arrow target
 				Vec3f arrowTarget;
-				Command *c= unit->getCurrCommand();
+				
 				bool doArrow = true;
-				if (c->getUnit() != NULL) {
-					if (c->getUnit()->isCarried()) {
+				if (cmd->getUnit() != NULL) {
+					if (cmd->getUnit()->isCarried()) {
 						doArrow = false;
 					} else {
-						arrowTarget= c->getUnit()->getCurrVectorFlat();
+						RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
+						arrowTarget= cmd->getUnit()->getCurrVectorFlat();
 					}
 				} else {
-					Vec2i pos= c->getPos();
+					Vec2i pos= cmd->getPos();
 					if (pos == Command::invalidPos) {
 						doArrow = false;
 					} else {
-						arrowTarget = Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
+						arrowTarget = Vec3f(float(pos.x), map->getCell(pos)->getHeight(), float(pos.y));
 					}
 				}
 				if (doArrow) {
+					RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 					renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
 				}
 			}
@@ -1317,6 +1325,7 @@ void Renderer::renderSelectionEffects() {
 					glColor4f(1.f, 0.f, 0.f, highlight);
 				}
 
+				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 				Vec3f v= unit->getCurrVectorFlat();
 				v.y+= 0.3f;
 				renderSelectionCircle(v, unit->getType()->getSize(), selectionCircleRadius);
@@ -1855,7 +1864,7 @@ void Renderer::saveScreen(const string &path){
 	Pixmap2D pixmap(sm.getScreenW(), sm.getScreenH(), 3);
 
 	glReadPixels(0, 0, pixmap.getW(), pixmap.getH(), GL_RGB, GL_UNSIGNED_BYTE, pixmap.getPixels());
-	pixmap.saveTga(path);
+	pixmap.save(path);
 }
 
 // ==================== PRIVATE ====================
@@ -1986,6 +1995,8 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 			//debuxar modelo
 			glPushMatrix();
+
+			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
 			Vec3f currVec= unit->getCurrVectorFlat();

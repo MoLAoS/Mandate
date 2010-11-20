@@ -22,7 +22,7 @@ SkillTypeFactory::SkillTypeFactory()
 	registerClass<MoveSkillType>("move");
 	registerClass<AttackSkillType>("attack");
 	registerClass<BuildSkillType>("build");
-	registerClass<BeBuiltSkillType>("be_built");
+	registerClass<BeBuiltSkillType>("be-built");
 	registerClass<HarvestSkillType>("harvest");
 	registerClass<RepairSkillType>("repair");
 	registerClass<ProduceSkillType>("produce");
@@ -31,7 +31,7 @@ SkillTypeFactory::SkillTypeFactory()
 	registerClass<DieSkillType>("die");
 	registerClass<LoadSkillType>("load");
 	registerClass<UnloadSkillType>("unload");
-	registerClass<GenericSkillType>("generic");
+	registerClass<CastSpellSkillType>("cast-spell");
 }
 
 SkillTypeFactory::~SkillTypeFactory() {
@@ -68,7 +68,7 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<StopCommandType>("stop");
 	registerClass<MoveCommandType>("move");
 	registerClass<AttackCommandType>("attack");
-	registerClass<AttackStoppedCommandType>("attack_stopped");
+	registerClass<AttackStoppedCommandType>("attack-stopped");
 	registerClass<BuildCommandType>("build");
 	registerClass<HarvestCommandType>("harvest");
 	registerClass<RepairCommandType>("repair");
@@ -81,7 +81,7 @@ CommandTypeFactory::CommandTypeFactory()
 	registerClass<BeLoadedCommandType>("be-loaded");
 	registerClass<GuardCommandType>("guard");
 	registerClass<PatrolCommandType>("patrol");
-	registerClass<GenericCommandType>("generic");
+	registerClass<CastSpellCommandType>("cast-spell");
 	registerClass<SetMeetingPointCommandType>("set-meeting-point");
 }
 

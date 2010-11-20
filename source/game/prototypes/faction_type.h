@@ -64,6 +64,7 @@ private:
 	int attackNoticeDelay;
 	int enemyNoticeDelay;
 	UnitTypeSet loadableUnitTypes;
+	Pixmap2D *m_logoTeamColour, *m_logoRgba;
 
 public:
 	//init
@@ -95,6 +96,9 @@ public:
 	const SoundContainer *getAttackNotice() const		{return attackNotice;}
 	const SoundContainer *getEnemyNotice() const		{return enemyNotice;}
 	int getAttackNoticeDelay() const					{return attackNoticeDelay;}
+	const Pixmap2D* getLogoTeamColour() const			{return m_logoTeamColour;}
+	const Pixmap2D* getLogoRgba() const					{return m_logoRgba;}
+
 	int getEnemyNoticeDelay() const						{return enemyNoticeDelay;}
 
 	const UnitType *getUnitType(const string &name) const;

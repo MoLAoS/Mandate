@@ -128,6 +128,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		return false;
 	}
 	if (unit->isCarried()) { // if housed, dont try to wander off!
+		unit->setCurrSkill(SkillClass::STOP);
 		return true;
 	}
 
@@ -147,16 +148,19 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 			if (Config::getInstance().getGsAutoReturnEnabled()) {
 				command->popPos();
 				pos = command->getPos();
+				RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 				unit->clearPath();
 			} else {
-				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+				return true;
 			}
 		} else { // no targets & not auto-command, use command target pos
 			pos = targetPos;
+			RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 		}
 	}
+	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 	switch (g_routePlanner.findPath(unit, pos)) { // head to target pos
-		
 		case TravelState::MOVING:
 			unit->setCurrSkill(act->getMoveSkillType());
 			unit->face(unit->getNextPos());
@@ -206,8 +210,9 @@ Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO), sighted->getPos());
+	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
 	newCommand->setPos2(unit->getPos());
+	assert(newCommand->isAuto());
 	return newCommand;
 }
 
@@ -225,7 +230,7 @@ void AttackStoppedCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(ast);
 		unit->setTarget(enemy, true, true);
 	} else {
-		unit->setCurrSkill(stopSkillType);
+		unit->setCurrSkill(m_stopSkillType);
 	}
 }
 
@@ -240,7 +245,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 	if (!unit->getFaction()->isAvailable(this) || !attackableInRange(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO), sighted->getPos());
+	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
 	return newCommand;
 }
 
@@ -262,7 +267,7 @@ void PatrolCommandType::update(Unit *unit) const {
 			command->setUnit(NULL);
 			command->setPos(pos);
 		} else { // if target not dead calc nearest pos with patrol range 
-			pos = Map::getNearestPos(unit->getPos(), pos, 1, getMaxDistance());
+			pos = Map::getNearestPos(unit->getPos(), target->getPos(), 1, getMaxDistance());
 		}
 	} else { // no target unit, use command pos
 		pos = command->getPos();
@@ -273,6 +278,7 @@ void PatrolCommandType::update(Unit *unit) const {
 	}
 	// If destination reached or blocked, turn around on next update.
 	if (updateGeneric(unit, command, this, NULL, pos)) {
+		unit->clearPath();
 		command->swap();
 	}
 }
@@ -311,7 +317,7 @@ bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	bool loadOk = AttackCommandType::load(n, dir, tt, ft);
 
 	//distance
-	try { maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
+	try { m_maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
@@ -321,7 +327,7 @@ bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 void GuardCommandType::doChecksum(Checksum &checksum) const {
 	AttackCommandType::doChecksum(checksum);
-	checksum.add<int>(maxDistance);
+	checksum.add<int>(m_maxDistance);
 }
 
 // update helper, move somewhere sensible

@@ -47,7 +47,6 @@ const int ScriptManager::displayTextWrapCount= 64;
 
 string				ScriptManager::code;
 LuaScript			ScriptManager::luaScript;
-string				ScriptManager::displayText;
 bool				ScriptManager::gameOver;
 PlayerModifiers		ScriptManager::playerModifiers[GameConstants::maxPlayers];
 vector<ScriptTimer> ScriptManager::timers;
@@ -69,19 +68,22 @@ ScriptManager::UnitInfo		ScriptManager::latestCreated,
 #endif
 
 void ScriptManager::cleanUp() {
-	code = displayText = "";
+	code = "";
 	gameOver = false;
 	timers.clear();
 	newTimerQueue.clear();
 	definedEvents.clear();
+	triggerManager.reset();
 	latestCreated.id = -1;
 	latestCasualty.id = -1;
-	gameOver= false;
-	triggerManager.reset();
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		playerModifiers[i] = PlayerModifiers();
+	}
 }
 
 int getSubfaction(LuaHandle *luaHandle);
 int getSubfactionRestrictions(LuaHandle *luaHandle);
+int getFrameCount(LuaHandle *luaHandle);
 
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
@@ -98,6 +100,7 @@ void ScriptManager::initGame() {
 	// debug info / testing
 	LUA_FUNC(getSubfaction);
 	LUA_FUNC(getSubfactionRestrictions);
+	LUA_FUNC(getFrameCount);
 
 	// AI helpers
 	LUA_FUNC(initSurveyor);
@@ -105,7 +108,6 @@ void ScriptManager::initGame() {
 	LUA_FUNC(findResourceLocation);
 
 	// Game control
-	LUA_FUNC(disableAi);
 	LUA_FUNC(setPlayerAsWinner);
 	LUA_FUNC(endGame);
 
@@ -150,6 +152,7 @@ void ScriptManager::initGame() {
 	LUA_FUNC(setUnitTrigger);
 	LUA_FUNC(setUnitTriggerX);
 	LUA_FUNC(setFactionTrigger);
+	LUA_FUNC(removeUnitPosTriggers);
 
 	// queries
 	LUA_FUNC(playerName);
@@ -176,9 +179,15 @@ void ScriptManager::initGame() {
 	DEBUG_FUNC(setFarClip);
 
 	LUA_FUNC(dofile);
-
+	
+	LUA_FUNC(disableAi);
+	LUA_FUNC(enableAi);
+	LUA_FUNC(disableConsume);
+	LUA_FUNC(enableConsume);
+	LUA_FUNC(increaseStore);
+	
 	IF_DEBUG_EDITION(
-		luaScript.luaDoLine("dofile('debug.lua')");
+		luaScript.luaDoLine("dofile('dev_edition.lua')");
 	)
 
 	if (!scenario) {
@@ -272,6 +281,12 @@ int getSubfactionRestrictions(LuaHandle *luaHandle) {
 	return args.getReturnCount();
 }
 
+int getFrameCount(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	args.returnInt(g_world.getFrameCount());
+	return args.getReturnCount();
+}
+
 // ========================== events ===============================================
 
 void ScriptManager::onResourceHarvested(const Unit *unit) {
@@ -346,25 +361,6 @@ void ScriptManager::update() {
 }
 
 // =============== util ===============
-
-string ScriptManager::wrapString(const string &str, int wrapCount) {
-
-	string returnString;
-
-	int letterCount= 0;
-	for(int i= 0; i<str.size(); ++i) {
-		if(letterCount>wrapCount && str[i]==' ') {
-			returnString+= '\n';
-			letterCount= 0;
-		}
-		else {
-			returnString+= str[i];
-		}
-		++letterCount;
-	}
-
-	return returnString;
-}
 
 void ScriptManager::doSomeLua(const string &code) {
 	if (!luaScript.luaDoLine(code)) {
@@ -633,6 +629,21 @@ void ScriptManager::doUnitTrigger(int id, string &cond, string &evnt, int ud) {
 	}
 }
 
+int ScriptManager::removeUnitPosTriggers(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int id;
+	if (extractArgs(args, "removeUnitPosTriggers", "int", &id)) {
+		if (triggerManager.removeUnitPosTriggers(id)) {
+			args.returnBool(true);
+		} else {
+			args.returnBool(false);
+		}
+	} else {
+		args.returnBool(false);
+	}
+	return args.getReturnCount();
+}
+
 int ScriptManager::setFactionTrigger(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	int ndx, ud;
@@ -659,7 +670,6 @@ int ScriptManager::setFactionTrigger(LuaHandle* luaHandle) {
 
 int ScriptManager::showMessage(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
-	Lang &lang = Lang::getInstance();
 	string txt, hdr;
 	if ( extractArgs(args, "showMessage", "str,str", &txt, &hdr) ) {
 		//g_gameState.pause (); // this needs to be optional, default false
@@ -672,14 +682,15 @@ int ScriptManager::setDisplayText(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	string txt;
 	if (extractArgs(args,"setDisplayText", "str", &txt)) {
-		displayText= wrapString(Lang::getInstance().getScenarioString(txt), displayTextWrapCount);
+		string msg = g_lang.getScenarioString(txt);
+		g_gameState.setScriptDisplay(msg);
 	}
 	return args.getReturnCount();
 }
 
 int ScriptManager::clearDisplayText(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
-	displayText= "";
+	g_gameState.setScriptDisplay("");
 	return args.getReturnCount();
 }
 
@@ -972,7 +983,7 @@ int ScriptManager::giveTargetCommand(LuaHandle * luaHandle) {
 	return args.getReturnCount();
 }
 
-int ScriptManager::giveStopCommand (LuaHandle * luaHandle) {
+int ScriptManager::giveStopCommand(LuaHandle * luaHandle) {
 	LuaArguments args(luaHandle);
 	int id;
 	string cmd;
@@ -1028,9 +1039,67 @@ int ScriptManager::disableAi(LuaHandle* luaHandle) {
 	int fNdx;
 	if (extractArgs(args, "disableAi", "int", &fNdx)) {
 		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
-			playerModifiers[fNdx].disableAi();
+			playerModifiers[fNdx].enableAi(false);
 		} else {
 			addErrorMessage("Error: disableAi(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::enableAi(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	if (extractArgs(args, "enableAi", "int", &fNdx)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			playerModifiers[fNdx].enableAi(true);
+		} else {
+			addErrorMessage("Error: enableAi(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::disableConsume(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	if (extractArgs(args, "disableConsume", "int", &fNdx)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			playerModifiers[fNdx].enableConsume(false);
+		} else {
+			addErrorMessage("Error: disableConsume(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::enableConsume(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	int fNdx;
+	if (extractArgs(args, "enableConsume", "int", &fNdx)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			playerModifiers[fNdx].enableConsume(true);
+		} else {
+			addErrorMessage("Error: enableConsume(): Invalid faction index " + intToStr(fNdx));
+		}
+	}
+	return args.getReturnCount();
+}
+
+int ScriptManager::increaseStore(LuaHandle* luaHandle) {
+	LuaArguments args(luaHandle);
+	string resource;
+	int fNdx, amount;
+	if (extractArgs(args, "increaseStore", "str,int,int", &resource, &fNdx, &amount)) {
+		if (fNdx >= 0 && fNdx < g_gameSettings.getFactionCount()) {
+			try {
+				const ResourceType *rt = g_world.getTechTree()->getResourceType(resource);
+				g_world.getFaction(fNdx)->addStore(rt, amount);
+			} catch (runtime_error &e) {
+				addErrorMessage("Error: increaseStore(): Invalid resource type" + resource);
+			}
+		} else {
+			addErrorMessage("Error: increaseStore(): Invalid faction index " + intToStr(fNdx));
 		}
 	}
 	return args.getReturnCount();
@@ -1333,27 +1402,27 @@ IF_DEBUG_EDITION(
 		}
 		return args.getReturnCount();
 	}
-)
+) // DEBUG_EDITION
 
 int ScriptManager::dofile(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string path;
 	if (extractArgs(args, "dofile", "str", &path)) {
-		FileOps *f = g_fileFactory.getFileOps();
-		f->openRead(path.c_str());
-		int size = f->fileSize();
-		char *someLua = new char[size + 1];
-		f->read(someLua, size, 1);
-		f->close();
-		someLua[size] = '\0';
-		f->openWrite("debug.lua");
-		f->write(someLua, size, 1);
-		f->close();
-		delete f;
-		if (!luaScript.luaDoLine(someLua)) {
-			addErrorMessage();
+		try {
+			FileOps *f = g_fileFactory.getFileOps();
+			f->openRead(path.c_str());
+			int size = f->fileSize();
+			char *someLua = new char[size + 1];
+			f->read(someLua, size, 1);
+			someLua[size] = '\0';
+			delete f;
+				if (!luaScript.luaDoLine(someLua)) {
+					addErrorMessage();
+				}
+			delete [] someLua;
+		} catch (runtime_error &e) {
+			addErrorMessage(e.what());
 		}
-		delete [] someLua;
 	}
 	return args.getReturnCount();
 }

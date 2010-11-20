@@ -39,6 +39,7 @@ void Selection::init(UserInterface *gui, int factionIndex) {
 	cancelable = false;
 	meetable = false;
 	canRepair = false;
+	m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::NONE;
 	this->factionIndex = factionIndex;
 	this->gui = gui;
 }
@@ -47,106 +48,53 @@ Selection::~Selection(){
 	clear();
 }
 
-void Selection::incRef(Unit *u) {
-	UnitRefMap::iterator it = m_referenceMap.find(u);
-	if (it != m_referenceMap.end()) {
-		++it->second;
-	} else {
-		m_referenceMap[u] = 1;
-		u->StateChanged.connect(this, &Selection::onUnitStateChanged);
-		u->Died.connect(this, &Selection::onUnitDied);
-	}
-}
-
-void Selection::decRef(Unit *u) {
-	UnitRefMap::iterator it = m_referenceMap.find(u);
-	assert(it != m_referenceMap.end() && it->second > 0);
-	if (it->second == 1) {
-		m_referenceMap.erase(u);
-		u->StateChanged.disconnect(this);
-		u->Died.disconnect(this);
-	} else {
-		--it->second;
-	}
-}
-
 void Selection::select(Unit *unit){
-
-	//check size
-	if(selectedUnits.size()>=maxUnits){
+	// check selection size, if unit already selected or dead, multi-selection and enemy
+	if (selectedUnits.size() >= maxUnits
+	|| std::find(selectedUnits.begin(), selectedUnits.end(), unit) != selectedUnits.end()
+	|| unit->isDead()
+	|| (!unit->getType()->getMultiSelect() && !isEmpty())
+	|| (unit->getFactionIndex() != factionIndex && !isEmpty())) {
 		return;
 	}
-
-	//check if already selected
-	for(int i=0; i<selectedUnits.size(); ++i){
-		if(selectedUnits[i]==unit){
-			return;
-		}
-	}
-
-	//check if dead
-	if(unit->isDead()){
-		return;
-	}
-
-	//check if multisel
-	if(!unit->getType()->getMultiSelect() && !isEmpty()){
-		return;
-	}
-
-	//check if enemy
-	if(unit->getFactionIndex()!=factionIndex && !isEmpty()){
-		return;
-	}
-
-	//check existing enemy
-	if(selectedUnits.size()==1 && selectedUnits.front()->getFactionIndex()!=factionIndex){
+	// check existing enemy
+	if (selectedUnits.size() == 1 && selectedUnits.front()->getFactionIndex() != factionIndex) {
 		clear();
 	}
-
-	//check existing multisel
-	if(selectedUnits.size()==1 && !selectedUnits.front()->getType()->getMultiSelect()){
+	// check existing multisel
+	if (selectedUnits.size() == 1 && !selectedUnits.front()->getType()->getMultiSelect()) {
 		clear();
 	}
-
 	selectedUnits.push_back(unit);
-	incRef(unit);
+	unit->StateChanged.connect(this, &Selection::onUnitStateChanged);
 	update();
-//	gui->onSelectionChanged();
 }
-/*
-void Selection::select(const UnitVector &units){
-
-	//add units to gui
-	for(UnitIterator it= units.begin(); it!=units.end(); ++it){
-		select(*it);
-	}
-}
-*/
 
 /// remove units from current selction
-void Selection::unSelect(const UnitVector &units){
-	for(UnitIterator it= units.begin(); it!=units.end(); ++it){
-		for(int i=0; i<selectedUnits.size(); ++i){
-			if(selectedUnits[i]==*it){
-				unSelect(i);
+void Selection::unSelect(const UnitVector &units) {
+	foreach_const (UnitVector, it, units) {
+		foreach (UnitVector, it2, selectedUnits) {
+			if (*it == *it2) {
+				unSelect(it2);
+				break;
 			}
 		}
 	}
 }
 
 /// remove unit from current selction
-void Selection::unSelect(const Unit *unit){
-	for(int i = 0; i < selectedUnits.size(); ++i) {
-		if(selectedUnits[i] == unit) {
-			unSelect(i);
+void Selection::unSelect(const Unit *unit) {
+	foreach (UnitVector, it, selectedUnits) {
+		if (*it == unit) {
+			unSelect(it);
+			break;
 		}
 	}
 }
 
 void Selection::unSelectAllOfType(const UnitType *type) {
 	UnitVector units;
-	for (UnitIterator it = selectedUnits.begin(); it != selectedUnits.end(); ++it) {
+	foreach (UnitVector, it, selectedUnits) {
 		if ((*it)->getType() != type) {
 			units.push_back(*it);
 		}
@@ -157,7 +105,7 @@ void Selection::unSelectAllOfType(const UnitType *type) {
 
 void Selection::unSelectAllNotOfType(const UnitType *type) {
 	UnitVector units;
-	for (UnitIterator it = selectedUnits.begin(); it != selectedUnits.end(); ++it) {
+	foreach (UnitVector, it, selectedUnits) {
 		if ((*it)->getType() == type) {
 			units.push_back(*it);
 		}
@@ -166,85 +114,76 @@ void Selection::unSelectAllNotOfType(const UnitType *type) {
 	select(units);
 }
 
-void Selection::unSelect(int i){
-	//remove unit from list
-	decRef(selectedUnits[i]);
-	selectedUnits.erase(selectedUnits.begin()+i);
+void Selection::unSelect(UnitVector::iterator it) {
+	RUNTIME_CHECK(*it != 0 && this != 0);
+	// remove unit from list
+	(*it)->StateChanged.disconnect(this);
+	selectedUnits.erase(it);
 	update();
 	gui->onSelectionChanged();
 }
 
 void Selection::clear(){
-	//clear list
+	// clear list
 	foreach (UnitVector, it, selectedUnits) {
-		decRef(*it);
+		(*it)->StateChanged.disconnect(this);
 	}
 	selectedUnits.clear();
 	update();
 }
 
 Vec3f Selection::getRefPos() const{
+	RUNTIME_CHECK(!getFrontUnit()->isCarried());
 	return getFrontUnit()->getCurrVector();
 }
 
 void Selection::assignGroup(int groupIndex){
-	//clear group
-	foreach (UnitVector, it, groups[groupIndex]) {
-		decRef(*it);
-	}
+	// clear group
 	groups[groupIndex].clear();
 
-	//assign new group
-	for(int i=0; i<selectedUnits.size(); ++i){
-		groups[groupIndex].push_back(selectedUnits[i]);
-		incRef(selectedUnits[i]);
+	// assign new group
+	foreach (UnitVector, it, selectedUnits) {
+		groups[groupIndex].push_back(*it);
 	}
 }
 
 void Selection::recallGroup(int groupIndex){
 	clear();
-	for(int i=0; i<groups[groupIndex].size(); ++i){
-		select(groups[groupIndex][i]);
+	foreach (UnitVector, it, groups[groupIndex]) {
+		RUNTIME_CHECK(*it != NULL && (*it)->isAlive());
+		select(*it);
 	}
 }
 
-void Selection::onUnitDied(Unit *unit) {
-	
-	// mutex ... this wll be called in the Simulation thread
-	
-	// prevent resetting Gui if a unit in a selection group dies
-	bool needUpdate = false;
-
-	//remove from selection
-	for (int i = 0; i < selectedUnits.size(); ++i) {
-		if (selectedUnits[i] == unit) {
-			selectedUnits.erase(selectedUnits.begin() + i);
-			needUpdate = true;
-			break;
+void Selection::clearDeadUnits() {
+	UnitVector::iterator it = selectedUnits.begin();
+	bool updt = false;
+	while (it != selectedUnits.end()) {
+		if ((*it)->isDead()) {
+			it = selectedUnits.erase(it);
+			updt = true;
+		} else {
+			++it;
 		}
 	}
-
-	//remove from groups
-	for (int i = 0; i < maxGroups; ++i) {
-		for (int j = 0; j < groups[i].size(); ++j) {
-			if (groups[i][j] == unit) {
-				groups[i].erase(groups[i].begin() + j);
-				break;
-			}
-		}
-	}
-
-	//notify gui & stuff
-	if(needUpdate) {
+	if (updt) {
 		update();
 		gui->onSelectionChanged();
+	}
+
+	for (int i=0; i < maxGroups; ++i) {
+		it = groups[i].begin();
+		while (it != groups[i].end()) {
+			if ((*it)->isDead()) {
+				it = groups[i].erase(it);
+			} else {
+				++it;
+			}
+		}
 	}
 }
 
 void Selection::onUnitStateChanged(Unit *unit) {
-
-	// mutex ... this wll be called in the Simulation thread
-
 	update();
 	gui->onSelectionStateChanged();
 }
@@ -267,25 +206,42 @@ void Selection::update() {
 		meetable = false;
 		canRepair = false;
 	} else {
-		const UnitType *frontUT= selectedUnits.front()->getType();
+		const UnitType *frontUT = selectedUnits.front()->getType();
 		empty = false;
-		enemy = true;
+		enemy = false;
 		uniform = true;
 		commandable = false;
 		cancelable = false;
 		canRepair = true;
-		autoRepairState = selectedUnits.front()->isAutoRepairEnabled() ? arsOn : arsOff;
-
+		if (frontUT->hasCommandClass(CommandClass::REPAIR)) {
+			if (selectedUnits.front()->isAutoRepairEnabled()) {
+				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_ON;
+			} else {
+				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_OFF;
+			}
+		} else {
+			m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::NONE;
+		}
 		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
-		for(UnitVector::iterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
+		foreach (UnitVector, i, selectedUnits) {
 			const UnitType *ut = (*i)->getType();
-			if(ut != frontUT){
+			if (ut != frontUT) {
 				uniform = false;
 			}
-			if(ut->hasCommandClass(CommandClass::REPAIR)) {
-				if(((*i)->isAutoRepairEnabled() ? arsOn : arsOff) != autoRepairState) {
-					autoRepairState = arsMixed;
+			if (ut->hasCommandClass(CommandClass::REPAIR)) {
+				if (((*i)->isAutoRepairEnabled())) {
+					if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::ALL_OFF) {
+						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::MIXED;
+					} else if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::NONE) {
+						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_ON;
+					} // else MIXED or ALL_ON already
+				} else {
+					if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::ALL_ON) {
+						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::MIXED;
+					} else if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::NONE) {
+						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_OFF;
+					} // else MIXED or ALL_OFF already
 				}
 			} else {
 				canRepair = false;

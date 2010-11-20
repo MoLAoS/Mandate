@@ -134,7 +134,7 @@ void GameState::load() {
 	g_logger.setState(Lang::getInstance().get("Loading"));
 
 	if (scenarioName.empty()) {
-		g_logger.setSubtitle(formatString(mapName) + " - " + 
+		g_logger.setSubtitle(formatString(mapName) + " - " +
 			formatString(tilesetName) + " - " + formatString(techName));
 	} else {
 		g_logger.setSubtitle(formatString(scenarioName));
@@ -158,12 +158,14 @@ void GameState::init() {
 	m_chatDialog->Escaped.connect(this, &GameState::onChatCancel);
 	m_chatDialog->setVisible(false);
 
+	m_scriptDisplayPos = Vec2i(175, g_metrics.getScreenH() - 64);
+
 	// init world, and place camera
 	simInterface->initWorld();
 	gui.init();
 	gameCamera.init(g_map.getW(), g_map.getH());
 	Vec2i v(g_map.getW() / 2, g_map.getH() / 2);
-	if (g_world.getThisFaction()) {  //e.g. -loadmap has no players
+	if (g_world.getThisFaction()) {  // e.g. -loadmap has no players
 		v = g_map.getStartLocation(g_world.getThisFaction()->getStartLocationIndex());
 	}
 	gameCamera.setPos(Vec2f(float(v.x), float(v.y + 12)));
@@ -197,7 +199,6 @@ void GameState::init() {
 
 	// sounds
 	Tileset *tileset = g_world.getTileset();
-	const TechTree *techTree = g_world.getTechTree();
 	AmbientSounds *ambientSounds = tileset->getAmbientSounds();
 
 	// rain
@@ -287,11 +288,6 @@ void GameState::update() {
 	if (g_simInterface->getQuit()) {
 		quitGame();
 	}
-
-	// update auto test
-	if (g_config.getMiscAutoTest()) {
-		AutoTest::getInstance().updateGame(this);
-	}
 }
 
 void GameState::displayError(std::exception &e) {
@@ -303,9 +299,11 @@ void GameState::displayError(std::exception &e) {
 		m_modalDialog = 0;
 	}
 	gui.resetState();
-	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	MessageDialog* dialog = MessageDialog::showDialog(pos, size, 
-		"Error...", "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
+	Vec2i screenDims = g_metrics.getScreenDims();
+	Vec2i size(screenDims.x - 200, screenDims.y / 2);
+	Vec2i pos = screenDims / 2 - size / 2;
+	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
+		g_lang.get("Error"), "An error has occurred.\n" + errMsg, g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
 	dialog->Button1Clicked.connect(this, &GameState::onErrorDismissed);
 	dialog->Escaped.connect(this, &GameState::onErrorDismissed);
@@ -328,7 +326,7 @@ void GameState::doGameMenu() {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
-	Vec2i size(240, 240), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size(240, 280), pos = g_metrics.getScreenDims() / 2 - size / 2;
 	m_modalDialog = GameMenu::showDialog(pos, size);
 }
 
@@ -364,7 +362,7 @@ void GameState::confirmExitProgram() {
 		m_chatDialog->setVisible(false);
 	}
 	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"), 
+	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"),
 		g_lang.get("ExitProgram?"), g_lang.get("Ok"), g_lang.get("Cancel"));
 	dialog->Button1Clicked.connect(this, &GameState::onConfirmExitProgram);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
@@ -400,7 +398,7 @@ void GameState::doSaveBox() {
 	}
 	gui.resetState();
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"), 
+	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"),
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
 	m_modalDialog = dialog;
 	dialog->setInputMask(allowMask);
@@ -411,9 +409,17 @@ void GameState::doSaveBox() {
 
 void GameState::onSaveSelected(BasicDialog*) {
 	InputDialog* in  = static_cast<InputDialog*>(m_modalDialog);
-	saveGame(in->getInput());
+	string name = in->getInput();
+	saveGame(name);
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
+	
+	string msg = g_lang.get("YourGameWasSaved");
+	string::size_type pos = msg.find("%s");
+	if (pos != string::npos) {
+		msg.replace(pos, 2, name + ".sav");
+	}
+	gui.getRegularConsole()->addLine(msg);
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {
@@ -423,11 +429,27 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 	}
 }
 
+void GameState::setScriptDisplay(const string &msg) {
+	m_scriptDisplay = msg;
+	if (!msg.empty()) {
+		const FontMetrics *fm = g_coreData.getFTMenuFontNormal()->getMetrics();
+		int space = g_metrics.getScreenW() - 175 - 320;
+		fm->wrapText(m_scriptDisplay, space);
+		int lines = 1;
+		foreach (string, c, m_scriptDisplay) {
+			if (*c == '\n') {
+				++lines;
+			}
+		}
+		m_scriptDisplayPos.y = g_metrics.getScreenH() - 64 - fm->getHeight() * (lines - 1);
+	}
+}
+
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	MessageDialog* dialog = MessageDialog::showDialog(pos, size, 
-		g_lang.getScenarioString(m_scriptMessages.front().header), 
+	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
+		g_lang.getScenarioString(m_scriptMessages.front().header),
 		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");
 	m_modalDialog = dialog;
 	dialog->Button1Clicked.connect(this, &GameState::destroyDialog);
@@ -457,8 +479,13 @@ void GameState::onChatEntered(BasicDialog* ptr) {
 	if (netInterface) {
 		netInterface->sendTextMessage(txt, team);
 	} else {
-		///@todo ? Local game...
+		int ndx = g_world.getThisFactionIndex();
+		const GameSettings &gs = simInterface->getGameSettings();
+		string player = gs.getPlayerName(ndx);
+		Colour colour = factionColours[gs.getColourIndex(ndx)];
+		gui.getDialogConsole()->addDialog(player + ": ", colour, txt);
 	}
+	m_chatDialog->clearText();
 	m_chatDialog->setVisible(false);
 }
 
@@ -477,7 +504,7 @@ void GameState::destroyDialog(BasicDialog*) {
 void GameState::doDefeatedMessage(Faction *f) {
 	string player = "[" + f->getName() + "] ";
 	string msg = g_lang.getDefeatedMessage();
-	
+
 	string::size_type n = msg.find("%s");
 	while (n != string::npos) {
 		string start = msg.substr(0, n);
@@ -538,41 +565,41 @@ void GameState::tick(){
 // ==================== events ====================
 
 void GameState::mouseDownLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDownLeft(x, y);
 	}
 }
 
 void GameState::mouseDownRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDownRight(x, y);
 	}
 }
 
 void GameState::mouseUpLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseUpLeft(x, y);
 	}
 }
 void GameState::mouseUpRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
 }
 
 void GameState::mouseDoubleClickLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDoubleClickLeft(x, y);
 	}
 }
 
 void GameState::mouseMove(int x, int y, const MouseState &ms) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ")");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	mouseX = x;
 	mouseY = y;
 
@@ -617,14 +644,14 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 }
 
 void GameState::eventMouseWheel(int x, int y, int zDelta) {
-	WIDGET_LOG( __FUNCTION__ << "(" << x << ", " << y << ", " << zDelta << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << zDelta << " )");
 	if (!noInput) {
 		gameCamera.zoom(zDelta / 30.f);
 	}
 }
 
 void GameState::keyDown(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	UserCommand cmd = keymap.getCommand(key);
 	bool speedChangesAllowed = !g_simInterface->isNetworkInterface();
 
@@ -729,7 +756,7 @@ void GameState::keyDown(const Key &key) {
 }
 
 void GameState::keyUp(const Key &key) {
-	WIDGET_LOG( __FUNCTION__ << "(" << Key::getName(KeyCode(key)) << ")");
+	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	if (key.isModifier()) {
 		gameCamera.setRotate(0.f);
 		gameCamera.setMoveX(0.f, false);
@@ -754,7 +781,7 @@ void GameState::keyUp(const Key &key) {
 }
 
 void GameState::keyPress(char c) {
-	WIDGET_LOG( __FUNCTION__ << "(" << c << ")");
+	WIDGET_LOG( __FUNCTION__ << "( '" << c << "' )");
 }
 
 void GameState::quitGame() {
@@ -814,10 +841,9 @@ void GameState::render2d(){
 	g_renderer.renderSelectionQuad();
 
 	//script display text
-	if (!ScriptManager::getDisplayText().empty() && !m_modalDialog) {
-		g_renderer.renderText(
-			ScriptManager::getDisplayText(), g_coreData.getFTMenuFontNormal(),
-			gui.getDisplay()->getColor(), 200, g_metrics.getScreenH() - 100, false);
+	if (!m_scriptDisplay.empty() && !m_modalDialog) {
+		g_renderer.renderText(m_scriptDisplay, g_coreData.getFTMenuFontNormal(),
+			gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
 	}
 
 	//debug info
@@ -1003,7 +1029,7 @@ void ShowMap::keyDown(const Key &key) {
 	//change camera mode
 	} else if (cmd == ucCameraCycleMode) {
 		gameCamera.switchState();
-		string stateString = gameCamera.getState() == GameCamera::sGame 
+		string stateString = gameCamera.getState() == GameCamera::sGame
 			? g_lang.get("GameCamera") : g_lang.get("FreeCamera");
 		gui.getRegularConsole()->addLine(g_lang.get("CameraModeSet") + " " + stateString);
 

@@ -144,26 +144,4 @@ string getGAEContributorName(int i) {
 	}
 }
 
-string formatString(const string &str) {
-	string outStr = str;
-
-	if (!outStr.empty()) {
-		outStr[0] = toupper(outStr[0]);
-	}
-
-	bool afterSeparator = false;
-	for (int i = 0; i < str.size(); ++i) {
-		if (outStr[i] == '_') {
-			outStr[i] = ' ';
-		} else if (afterSeparator) {
-			outStr[i] = toupper(outStr[i]);
-			afterSeparator = false;
-		}
-		if (outStr[i] == '\n' || outStr[i] == '(' || outStr[i] == ' ') {
-			afterSeparator = true;
-		}
-	}
-	return outStr;
-}
-
 }}//end namespace

@@ -33,6 +33,7 @@ CmdArgs::CmdArgs(){
 	this->dataDir = DEFAULT_DATA_DIR;
 	test = false;
 	m_redirStreams = true; // ignored on Linux
+	m_lastGame = false;
 }
 
 CmdArgs::~CmdArgs(){
@@ -57,6 +58,8 @@ bool CmdArgs::parse(int argc, char **argv){
 		}else if(arg=="-scenario" && (i+2)<argc){
 			this->category = argv[++i];
 			this->scenario = argv[++i];
+		} else if (arg == "-lastgame") {
+			this->m_lastGame = true;
 		} else if (arg == "-test" && (i+1) < argc) {
 			test = true;
 			testType = argv[++i];

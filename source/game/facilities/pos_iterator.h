@@ -317,7 +317,7 @@ public:
 		return true;
 	}
 
-	const Vec2i &getPos() {
+	const Vec2i &getPos() const {
 		return pos;
 	}
 };

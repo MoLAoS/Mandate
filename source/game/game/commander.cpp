@@ -90,11 +90,9 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 				}
 				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
 			} else if (targetUnit) { // 'target' based command
-				if ((*i)->getType()->isOfClass(UnitClass::CARRIER)) {
-					// a carrier is selected ... and a unit was right clicked.
+				if (effectiveCt->getClass() == CommandClass::LOAD) {
 					if (*i != targetUnit) {
 						// give *i a command to load targetUnit
-						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::LOAD);
 						result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 						if (result == CommandResult::SUCCESS) {
 							// if load is ok, give targetUnit a command to be-loaded by *i
@@ -102,12 +100,11 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 							pushCommand(new Command(effectiveCt, CommandFlags(), *i, targetUnit));
 						}
 					}
-				} else if (targetUnit->isOfClass(UnitClass::CARRIER)) {
+				} else if (effectiveCt->getClass() == CommandClass::BE_LOADED) {
 					// a carrier unit was right clicked
 					result = pushCommand(new Command(targetUnit->getFirstAvailableCt(CommandClass::LOAD), CommandFlags(), *i, targetUnit));
 					if (result == CommandResult::SUCCESS) {
-						// give *i a move be-loaded command with targetUnit
-						effectiveCt = (*i)->getFirstAvailableCt(CommandClass::BE_LOADED);
+						// give *i a be-loaded command with targetUnit
 						pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
 					}
 				} else {
@@ -143,14 +140,17 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 	return CommandResult::SUCCESS;
 }
 
-void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const{
-	/*
+void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const {
+	if (iSim->isNetworkInterface()) {
+		g_console.addLine(g_lang.get("NotAvailable"));
+	} else {
 	const UnitVector &units = selection.getUnits();
-	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
-		pushCommand(new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled),
-				Command::invalidPos, *i));
+		foreach_const (UnitVector, i, units) {
+			Command *c = new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled), 
+				Command::invalidPos, *i);
+			pushCommand(c);
 	}
-	*/
+	}
 }
 
 // ==================== PRIVATE ====================
@@ -164,9 +164,9 @@ Vec2i Commander::computeRefPos(const Selection &selection) const{
 	return Vec2i(total.x / selection.getCount(), total.y / selection.getCount());
 }
 
-Vec2i Commander::computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, const Vec2i &commandPos) const {
+Vec2i Commander::computeDestPos(const Vec2i &refPos, const Vec2i &unitPos, const Vec2i &cmdPos) const {
 	Vec2i pos;
-	Vec2i posDiff = unitPos - refUnitPos;
+	Vec2i posDiff = unitPos - refPos;
 
 	if (abs(posDiff.x) >= 3) {
 		posDiff.x = posDiff.x % 3;
@@ -176,7 +176,7 @@ Vec2i Commander::computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, c
 		posDiff.y = posDiff.y % 3;
 	}
 
-	pos = commandPos + posDiff;
+	pos = cmdPos + posDiff;
 	world->getMap()->clampPos(pos);
 	return pos;
 }
@@ -214,7 +214,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 	RUNTIME_CHECK(command);
 	RUNTIME_CHECK(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
-	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command << ", Result=" << CommandResultNames[result] );
+	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
+		<< ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
 	} else {
@@ -228,8 +229,8 @@ void Commander::giveCommand(Command *command) const {
 	Unit* unit = command->getCommandedUnit();
 
 	//execute command, if unit is still alive and non-deleted
-	if(unit && unit->isAlive()) {
-		switch(command->getArchetype()) {
+	if (unit && unit->isAlive()) {
+		switch (command->getArchetype()) {
 			case CommandArchetype::GIVE_COMMAND:
 				assert(command->getType());
 				unit->giveCommand(command);
@@ -238,12 +239,10 @@ void Commander::giveCommand(Command *command) const {
 				unit->cancelCommand();
 				delete command;
 				break;
-			/*
 			case CommandArchetype::SET_AUTO_REPAIR:
 				unit->setAutoRepairEnabled(command->isAutoRepairEnabled());
 				delete command;
 				break;
-			*/
 			default:
 				assert(false);
 		}

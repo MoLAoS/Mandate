@@ -80,14 +80,16 @@ bool LuaScript::loadCode(const string &code, const string &name) {
 			fprintf(fp, "%s", code.c_str());
 			fclose(fp);
 		}*/
-		lastError = "Error loading lua code: " + errorToString(errorCode);
+		lastError = "Error loading lua code: " + errorToString(errorCode) + "\n"
+			+ luaL_checkstring(luaState, -1);
 		return false;
 	}
 
 	//run code
-	errorCode = lua_pcall(luaState, 0, 0, 0) != 0;
+	errorCode = lua_pcall(luaState, 0, 0, 0);
 	if (errorCode != 0) {
-		lastError = "Error initializing lua: " + errorToString(errorCode);
+		lastError = "Error initializing lua: " + errorToString(errorCode) + "\n"
+			+ luaL_checkstring(luaState, -1);
 		return false;
 	}
 	return true;

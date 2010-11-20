@@ -42,7 +42,7 @@ STRINGY_ENUM( SkillClass,
 	MORPH,
 	LOAD,
 	UNLOAD,
-	GENERIC,
+	CAST_SPELL,
 	DIE
 );
 
@@ -67,9 +67,19 @@ STRINGY_ENUM( CommandClass,
 	LOAD,
 	UNLOAD,
 	BE_LOADED,
-	GENERIC,
 	NULL_COMMAND
 );
+
+STRINGY_ENUM( SpellStart,
+	INSTANT,
+	PROJECTILE
+)
+
+STRINGY_ENUM( SpellAffect,
+	SELF,
+	TARGET,
+	AREA
+)
 
 /** Whether the effect is detrimental, neutral or benificial */
 STRINGY_ENUM( EffectBias,

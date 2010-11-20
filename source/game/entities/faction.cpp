@@ -103,6 +103,9 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 	this->defeated = false;
 	lastEventLoc.x = -1.0f;  // -1 x indicates uninitialized, no last event
 
+	texture = 0;
+	m_logoTex = 0;
+
 	if (factionIndex != -1) {
 		resources.resize(techTree->getResourceTypeCount());
 		store.resize(techTree->getResourceTypeCount());
@@ -112,12 +115,56 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 			resources[i].init(rt, resourceAmount);
 			store[i].init(rt, 0);
 		}
-		texture = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
+		texture = g_renderer.newTexture2D(ResourceScope::GAME);
 		Pixmap2D *pixmap = texture->getPixmap();
 		pixmap->init(1, 1, 3);
 		pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
-	} else {
-		texture = 0;
+		if (factionType->getLogoTeamColour() || factionType->getLogoRgba()) {
+			
+			m_logoTex = g_renderer.newTexture2D(ResourceScope::GAME);
+			Pixmap2D *pixmap = m_logoTex->getPixmap();
+			pixmap->init(256, 256, 4);
+			
+			const Pixmap2D *teamPixmap = factionType->getLogoTeamColour();
+			if (teamPixmap) { // team-colour
+			Vec3f baseColour(
+				factionColours[colourIndex].r / 255.f,
+				factionColours[colourIndex].g / 255.f,
+				factionColours[colourIndex].b / 255.f);
+			
+			for (int y = 0; y < 256; ++y) {
+				for (int x = 0; x < 256; ++x) {
+						Vec4f pixel = teamPixmap->getPixel4f(x, y);
+					float lum = (pixel.r + pixel.g + pixel.b) / 3.f;
+					Vec4f val(baseColour.r * lum, baseColour.g * lum, baseColour.b * lum, pixel.a);
+					pixmap->setPixel(x, y, val);
+	}
+			}
+		}
+			const Pixmap2D *rgbaPixmap = factionType->getLogoRgba();
+			if (rgbaPixmap) { 
+				if (!teamPixmap) { // just copy
+					for (int y = 0; y < 256; ++y) {
+						for (int x = 0; x < 256; ++x) {
+							pixmap->setPixel(x, y, rgbaPixmap->getPixel4f(x, y));
+	}
+					}
+				} else { // dodgy blend...
+					for (int y = 0; y < 256; ++y) {
+						for (int x = 0; x < 256; ++x) {
+							Vec4f current = pixmap->getPixel4f(x, y);
+							Vec4f incoming = rgbaPixmap->getPixel4f(x, y);
+
+							Vec4f result = (current * (1.f - incoming.a)) + (incoming * incoming.a);
+							result.a = std::max(current.a, incoming.a);
+
+							pixmap->setPixel(x, y, result);
+						}
+					}
+				}
+			}
+			
+		}
 	}
 }
 
@@ -186,6 +233,10 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	assert(units.empty() && unitMap.empty());
 	for (int i = 0; i < n->getChildCount(); ++i) {
 		g_simInterface->getUnitFactory().newInstance(n->getChild("unit", i), this, map, tt);
+		if (units[i]->isBuilt()) {
+			addStore(units[i]->getType());
+			applyStaticProduction(units[i]->getType());
+	}
 	}
 	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
@@ -442,29 +493,29 @@ void Faction::deApplyStaticConsumption(const ProducibleType *p) {
 	}
 }
 
-//apply resource on interval (cosumable resouces)
-void Faction::applyCostsOnInterval() {
-
-	//increment consumables
+// apply resource on interval for a cosumable resouce
+void Faction::applyCostsOnInterval(const ResourceType *rt) {
+	assert(rt->getClass() == ResourceClass::CONSUMABLE);
+	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
+		return;
+	}
+	// increment consumables
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
 		if (unit->isOperative()) {
-			for (int k = 0; k < unit->getType()->getCostCount(); ++k) {
-				const Resource *resource = unit->getType()->getCost(k);
-				if (resource->getType()->getClass() == ResourceClass::CONSUMABLE && resource->getAmount() < 0) {
+			const Resource *resource = unit->getType()->getCost(rt);
+			if (resource && resource->getAmount() < 0) {
 					incResourceAmount(resource->getType(), -resource->getAmount());
 				}
 			}
 		}
-	}
 
 	//decrement consumables
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
 		if (unit->isOperative()) {
-			for (int k = 0; k < unit->getType()->getCostCount(); ++k) {
-				const Resource *resource = unit->getType()->getCost(k);
-				if (resource->getType()->getClass() == ResourceClass::CONSUMABLE && resource->getAmount() > 0) {
+			const Resource *resource = unit->getType()->getCost(rt);
+			if (resource && resource->getAmount() > 0) {
 					incResourceAmount(resource->getType(), -resource->getAmount());
 
 					//decrease unit hp
@@ -484,7 +535,6 @@ void Faction::applyCostsOnInterval() {
 				}
 			}
 		}
-	}
 }
 
 bool Faction::checkCosts(const ProducibleType *pt) {
@@ -531,6 +581,9 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 
 
 void Faction::setResourceBalance(const ResourceType *rt, int balance) {
+	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
+		return;
+	}
 	for (int i = 0; i < resources.size(); ++i) {
 		Resource *r = &resources[i];
 		if (r->getType() == rt) {
@@ -553,6 +606,15 @@ void Faction::remove(Unit *unit) {
 	units.erase(it);
 	unitMap.erase(unit->getId());
 	assert(units.size() == unitMap.size());
+}
+
+void Faction::addStore(const ResourceType *rt, int amount) {
+	for (int j = 0; j < store.size(); ++j) {
+		Resource *storedResource = &store[j];
+		if (storedResource->getType() == rt) {
+			storedResource->setAmount(storedResource->getAmount() + amount);
+		}
+	}
 }
 
 void Faction::addStore(const UnitType *unitType) {
@@ -611,10 +673,11 @@ void Faction::attackNotice(const Unit *u) {
 
 		if (curTime >= lastAttackNotice + factionType->getAttackNoticeDelay()) {
 			lastAttackNotice = curTime;
+			RUNTIME_CHECK(!u->isCarried());
 			lastEventLoc = u->getCurrVector();
 			StaticSound *sound = factionType->getAttackNotice()->getRandSound();
 			if (sound) {
-				SoundRenderer::getInstance().playFx(sound);
+				g_soundRenderer.playFx(sound);
 			}
 		}
 	}

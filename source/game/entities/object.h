@@ -51,11 +51,11 @@ public:
 //	void setHeight(float height)		{pos.y= height;}
 	void setPos(const Vec3f &pos)		{this->pos = pos;}
 
-	int getId() const { return id; }
+	int getId() const 					{return id;}
 	const ObjectType *getType() const	{return objectType;}
 	Resource *getResource() const		{return resource;}
 	Vec3f getPos() const				{return pos;}
-	float getRotation()					{return rotation;}
+	float getRotation()	const			{return rotation;}
 	const Model *getModel() const;
 	bool getWalkable() const;
 

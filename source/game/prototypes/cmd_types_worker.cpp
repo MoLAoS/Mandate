@@ -272,7 +272,7 @@ void RepairCommandType::update(Unit *unit) const {
 				break;
 
 			case TravelState::MOVING:
-				unit->setCurrSkill(moveSkillType);
+				unit->setCurrSkill(m_moveSkillType);
 				unit->face(unit->getNextPos());
 				break;
 
@@ -332,6 +332,7 @@ void RepairCommandType::update(Unit *unit) const {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::BUILD);
 						if (bct) {
+							RUNTIME_CHECK(!unit->isCarried());
 							g_soundRenderer.playFx(bct->getBuiltSound(), 
 								unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 						}
@@ -369,8 +370,8 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 // =====================================================
 
 BuildCommandType::~BuildCommandType(){
-	deleteValues(builtSounds.getSounds().begin(), builtSounds.getSounds().end());
-	deleteValues(startSounds.getSounds().begin(), startSounds.getSounds().end());
+	deleteValues(m_builtSounds.getSounds().begin(), m_builtSounds.getSounds().end());
+	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
 bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
@@ -378,40 +379,45 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 	//build
 	try {
-		string skillName= n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
-		buildSkillType= static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
+		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
+		m_buildSkillType = static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//buildings built
 	try {
-		const XmlNode *buildingsNode= n->getChild("buildings");
+		const XmlNode *buildingsNode = n->getChild("buildings");
 		for(int i=0; i<buildingsNode->getChildCount(); ++i){
-			const XmlNode *buildingNode= buildingsNode->getChild("building", i);
-			string name= buildingNode->getAttribute("name")->getRestrictedValue();
-			buildings.push_back(ft->getUnitType(name));
+			const XmlNode *buildingNode = buildingsNode->getChild("building", i);
+			string name = buildingNode->getAttribute("name")->getRestrictedValue();
+			m_buildings.push_back(ft->getUnitType(name));
+			try {
+				m_tipKeys[name] = buildingNode->getRestrictedAttribute("tip");
+			} catch (runtime_error &e) {
+				m_tipKeys[name] = "";
+		}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
 	//start sound
 	try { 
-		const XmlNode *startSoundNode= n->getChild("start-sound");
+		const XmlNode *startSoundNode = n->getChild("start-sound");
 		if(startSoundNode->getAttribute("enabled")->getBoolValue()){
-			startSounds.resize(startSoundNode->getChildCount());
-			for(int i=0; i<startSoundNode->getChildCount(); ++i){
-				const XmlNode *soundFileNode= startSoundNode->getChild("sound-file", i);
-				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
-				StaticSound *sound= new StaticSound();
+			m_startSounds.resize(startSoundNode->getChildCount());
+			for(int i = 0; i < startSoundNode->getChildCount(); ++i){
+				const XmlNode *soundFileNode = startSoundNode->getChild("sound-file", i);
+				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
 				sound->load(dir + "/" + path);
-				startSounds[i]= sound;
+				m_startSounds[i] = sound;
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -419,17 +425,17 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	try {
 		const XmlNode *builtSoundNode= n->getChild("built-sound");
 		if(builtSoundNode->getAttribute("enabled")->getBoolValue()){
-			builtSounds.resize(builtSoundNode->getChildCount());
+			m_builtSounds.resize(builtSoundNode->getChildCount());
 			for(int i=0; i<builtSoundNode->getChildCount(); ++i){
 				const XmlNode *soundFileNode= builtSoundNode->getChild("sound-file", i);
 				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
 				StaticSound *sound= new StaticSound();
 				sound->load(dir + "/" + path);
-				builtSounds[i]= sound;
+				m_builtSounds[i]= sound;
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -437,14 +443,14 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 
 void BuildCommandType::doChecksum(Checksum &checksum) const {
 	MoveBaseCommandType::doChecksum(checksum);
-	checksum.add(buildSkillType->getName());
-	for (int i=0; i < buildings.size(); ++i) {
-		checksum.add(buildings[i]->getName());
+	checksum.add(m_buildSkillType->getName());
+	for (int i=0; i < m_buildings.size(); ++i) {
+		checksum.add(m_buildings[i]->getName());
 	}
 }
 
 const ProducibleType *BuildCommandType::getProduced(int i) const {
-	return buildings[i];
+	return m_buildings[i];
 }
 
 
@@ -620,7 +626,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	builtUnit = g_simInterface->getUnitFactory().newInstance(
 		command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
-	unit->setCurrSkill(buildSkillType);
+	unit->setCurrSkill(m_buildSkillType);
 	unit->setTarget(builtUnit, true, true);
 
 	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
@@ -638,7 +644,8 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	
 	//play start sound
 	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-		SoundRenderer::getInstance().playFx(this->getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
+		RUNTIME_CHECK(!unit->isCarried());
+		g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 	}
 }
 
@@ -658,10 +665,8 @@ void BuildCommandType::continueBuild(Unit *unit, const Command *command, const U
 		unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
 		ScriptManager::onUnitCreated(builtUnit);
 		if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-			SoundRenderer::getInstance().playFx(
-				this->getBuiltSound(),
-				unit->getCurrVector(),
-				g_gameState.getGameCamera()->getPos());
+			RUNTIME_CHECK(!unit->isCarried());
+			g_soundRenderer.playFx(getBuiltSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 		}
 	}
 }
@@ -677,48 +682,48 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	string skillName;
 	//harvest
 	try {
-		skillName= n->getChild("harvest-skill")->getAttribute("value")->getRestrictedValue();
-		harvestSkillType= static_cast<const HarvestSkillType*>(unitType->getSkillType(skillName, SkillClass::HARVEST));
+		skillName = n->getChild("harvest-skill")->getAttribute("value")->getRestrictedValue();
+		m_harvestSkillType = static_cast<const HarvestSkillType*>(unitType->getSkillType(skillName, SkillClass::HARVEST));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//stop loaded
 	try { 
-		skillName= n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
-		stopLoadedSkillType= static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
+		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
+		m_stopLoadedSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
 	//move loaded
 	try {
-		skillName= n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
-		moveLoadedSkillType= static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
+		skillName = n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
+		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//resources can harvest
 	try { 
-		const XmlNode *resourcesNode= n->getChild("harvested-resources");
-		for(int i=0; i<resourcesNode->getChildCount(); ++i){
-			const XmlNode *resourceNode= resourcesNode->getChild("resource", i);
-			harvestedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
+		const XmlNode *resourcesNode = n->getChild("harvested-resources");
+		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
+			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
+			m_harvestedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
-	try { maxLoad= n->getChild("max-load")->getAttribute("value")->getIntValue(); }
+	try { m_maxLoad = n->getChild("max-load")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
-	try { hitsPerUnit= n->getChild("hits-per-unit")->getAttribute("value")->getIntValue(); }
+	try { m_hitsPerUnit = n->getChild("hits-per-unit")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_errorLog.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -726,27 +731,25 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 void HarvestCommandType::doChecksum(Checksum &checksum) const {
 	MoveBaseCommandType::doChecksum(checksum);
-	checksum.add(moveLoadedSkillType->getName());
-	checksum.add(harvestSkillType->getName());
-	checksum.add(stopLoadedSkillType->getName());
-	for (int i=0; i < harvestedResources.size(); ++i) {
-		checksum.add(harvestedResources[i]->getName());
+	checksum.add(m_moveLoadedSkillType->getName());
+	checksum.add(m_harvestSkillType->getName());
+	checksum.add(m_stopLoadedSkillType->getName());
+	for (int i=0; i < m_harvestedResources.size(); ++i) {
+		checksum.add(m_harvestedResources[i]->getName());
 	}
-	checksum.add<int>(maxLoad);
-	checksum.add<int>(hitsPerUnit);
+	checksum.add<int>(m_maxLoad);
+	checksum.add<int>(m_hitsPerUnit);
 }
 
 void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
 
-	str+= lang.get("HarvestSpeed")+": "+ intToStr(harvestSkillType->getSpeed()/hitsPerUnit);
-	EnhancementType::describeModifier(str, (unit->getSpeed(harvestSkillType) - harvestSkillType->getSpeed())/hitsPerUnit);
+	str+= lang.get("HarvestSpeed")+": "+ intToStr(m_harvestSkillType->getSpeed() / m_hitsPerUnit);
+	m_harvestSkillType->descEpCost(str, unit);
+	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getSpeed()) / m_hitsPerUnit);
 	str+= "\n";
-	str+= lang.get("MaxLoad")+": "+ intToStr(maxLoad)+"\n";
-	str+= lang.get("LoadedSpeed")+": "+ intToStr(moveLoadedSkillType->getSpeed())+"\n";
-	if(harvestSkillType->getEpCost()!=0){
-		str+= lang.get("EpCost")+": "+intToStr(harvestSkillType->getEpCost())+"\n";
-	}
+	str += lang.get("MaxLoad") + ": " + intToStr(m_maxLoad) + "\n";
+	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getSpeed()) + "\n";
 	str+=lang.get("Resources")+":\n";
 	for(int i=0; i<getHarvestedResourceCount(); ++i){
 		str+= getHarvestedResource(i)->getName()+"\n";
@@ -754,45 +757,33 @@ void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 }
 
 bool HarvestCommandType::canHarvest(const ResourceType *resourceType) const{
-	return find(harvestedResources.begin(), harvestedResources.end(), resourceType) != harvestedResources.end();
+	return find(m_harvestedResources.begin(), m_harvestedResources.end(), resourceType) != m_harvestedResources.end();
 }
 
 
 // hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
 const MoveSkillType* getMoveLoadedSkill(Unit *u) {
 	const MoveSkillType *mst = 0;
-
-	//REFACTOR: this, and _lots_of_existing_similar_code_ is to be replaced
-	// once UnitType::commandTypesByclass is implemented, to look and be less shit.
-	for (int i=0; i < u->getType()->getCommandTypeCount(); ++i) {
-		if (u->getType()->getCommandType(i)->getClass() == CommandClass::HARVEST) {
-			const HarvestCommandType *t = 
-				static_cast<const HarvestCommandType*>(u->getType()->getCommandType(i));
+	for (int i=0; i < u->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
+		const HarvestCommandType *t = u->getType()->getCommandType<HarvestCommandType>(i);
 			if (t->canHarvest(u->getLoadType())) {
 				mst = t->getMoveLoadedSkillType();
 				break;
 			}
 		}
-	}
 	return mst;
 }
 
 // hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
 const StopSkillType* getStopLoadedSkill(Unit *u) {
 	const StopSkillType *sst = 0;
-
-	//REFACTOR: this, and lots of existing similar code is to be replaced
-	// once UnitType::commandTypesByclass is implemented, to look and be less shit.
-	for (int i=0; i < u->getType()->getCommandTypeCount(); ++i) {
-		if (u->getType()->getCommandType(i)->getClass() == CommandClass::HARVEST) {
-			const HarvestCommandType *t = 
-				static_cast<const HarvestCommandType*>(u->getType()->getCommandType(i));
+	for (int i=0; i < u->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
+		const HarvestCommandType *t = u->getType()->getCommandType<HarvestCommandType>(i);
 			if (t->canHarvest(u->getLoadType())) {
 				sst = t->getStopLoadedSkillType();
 				break;
 			}
 		}
-	}
 	return sst;
 }
 

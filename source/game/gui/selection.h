@@ -25,11 +25,20 @@ namespace Glest { namespace Gui {
 
 class UserInterface;
 
-enum AutoRepairState {
-	arsOn,
-	arsOff,
-	arsMixed
-};
+WRAPPED_ENUM( AutoCmdFlag,
+	REPAIR,
+	ATTACK,
+	FLEE
+)
+
+// AutoCmdState : describes an auto command category state of 
+// the selection (auto-repair, auto-attack & auto-flee)
+WRAPPED_ENUM( AutoCmdState,
+	NONE,
+	ALL_ON,
+	ALL_OFF,
+	MIXED
+)
 
 // =====================================================
 // 	class Selection
@@ -54,15 +63,11 @@ private:
 	bool cancelable;
 	bool meetable;
 	bool canRepair;
-	AutoRepairState autoRepairState;
+	AutoCmdState m_autoCmdStates[AutoCmdFlag::COUNT];
 	int factionIndex;
 	UnitVector selectedUnits;
 	UnitVector groups[maxGroups];
 	UserInterface *gui;
-	UnitRefMap m_referenceMap;
-
-	void incRef(Unit *u);
-	void decRef(Unit *u);
 
 public:
 	Selection();
@@ -90,20 +95,15 @@ public:
 	bool isMeetable() const				{return meetable;}
 	bool isCanRepair() const			{return canRepair;}
 	bool hasUnit(const Unit *unit) const {
-		for(UnitIterator i = selectedUnits.begin(); i != selectedUnits.end(); ++i) {
-			if(*i == unit) {
-				return true;
+		return (std::find(selectedUnits.begin(), selectedUnits.end(), unit) != selectedUnits.end());
 			}
-		}
-		return false;
-	}
 
 	int getCount() const					{return selectedUnits.size();}
 	const Unit *getUnit(int i) const		{return selectedUnits[i];}
 	const Unit *getFrontUnit() const		{return selectedUnits.front();}
 	const UnitVector &getUnits() const	{return selectedUnits;}
 	Vec3f getRefPos() const;
-	AutoRepairState getAutoRepairState() const	{return autoRepairState;}
+	AutoCmdState getAutoRepairState() const	{return m_autoCmdStates[AutoCmdFlag::REPAIR];}
 
 	void assignGroup(int groupIndex);
 	void recallGroup(int groupIndex);
@@ -114,11 +114,12 @@ public:
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;
 
-	void onUnitDied(Unit *unit);
 	void onUnitStateChanged(Unit *unit);
 
+	void clearDeadUnits();
+
 protected:
-	void unSelect(int unitIndex);
+	void unSelect(UnitVector::iterator it);
 };
 
 }}//end namespace

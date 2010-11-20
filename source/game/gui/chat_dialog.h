@@ -59,6 +59,8 @@ public:
 	void setTeamOnly(bool v)	{ m_teamCheckBox->setChecked(v); }
 	void toggleTeamOnly()		{ m_teamCheckBox->setChecked(!m_teamCheckBox->isChecked()); }
 
+	void clearText()			{ m_inputBox->setText(""); }
+
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual void setVisible(bool vis);
 	virtual string desc() { return string("[ChatDialog: ") + descPosDim() + "]"; }

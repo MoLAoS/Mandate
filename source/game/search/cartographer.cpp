@@ -415,7 +415,8 @@ void Cartographer::initTeamMaps() {
 	for ( ; it != explorationMaps.end(); ++it ) {
 		AnnotatedMap *aMap = getAnnotatedMap(it->first);
 		ExplorationMap *eMap = it->second;
-
+		
+		///@todo seems like there should be something here
 	}
 }
 

@@ -34,6 +34,11 @@
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
 #	define NOMINMAX
+// new stuff
+#define _CRTDBG_MAP_ALLOC
+#include <malloc.h>
+#include <stdlib.h>
+//----
 #	include <windows.h>
 #	include <crtdbg.h>
 #else
@@ -53,7 +58,7 @@
 #include "profiler.h"
 
 // POSIX base
-#include <stdlib.h>
+
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>

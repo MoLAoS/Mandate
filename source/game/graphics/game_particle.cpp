@@ -19,11 +19,14 @@
 #include "logger.h"
 #include "world.h"
 #include "leak_dumper.h"
+#include "program.h"
+#include "sim_interface.h"
 
 namespace Glest { namespace Entities {
 using Sim::Tile;
 using Graphics::Renderer;
 using Graphics::SceneCuller;
+using Main::Program;
 
 // ===========================================================================
 //  GameParticleSystem
@@ -175,6 +178,10 @@ void Projectile::link(Splash *particleSystem) {
 void Projectile::update() {
 	if (state == sPlay) {
 		if (target) {
+			if (target->isCarried()) { // if target got into another unit, switch target to carrier
+				target = g_simInterface->getUnitFactory().getUnit(target->getCarrier());
+				RUNTIME_CHECK(!target->isCarried());
+			}
 			endPos = target->getCurrVector();
 		}
 		lastPos = pos;
@@ -194,7 +201,7 @@ void Projectile::update() {
 			float varPitch = cosf(varRotation) * varAngle;
 			float varYaw = sinf(varRotation) * varAngle;
 
-			float d = Vec2f(currentTargetVector.z, currentTargetVector.x).length();
+			//float d = Vec2f(currentTargetVector.z, currentTargetVector.x).length();
 			float yaw = atan2f(currentTargetVector.x, currentTargetVector.z) + varYaw;
 			float pitch = asinf(currentTargetVector.y) + varPitch;
 			float pc = cosf(pitch);

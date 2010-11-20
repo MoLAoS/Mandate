@@ -217,7 +217,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="promote_to_archmage"/>
+      <name value="promote_to_archmage" tip="archmage_info"/>
       <image path="../archmage/images/archmage.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

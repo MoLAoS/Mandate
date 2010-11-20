@@ -123,6 +123,7 @@ private:
 	DECLARE_EVENT_TABLE()
 
 public:
+    GlCanvas(MainWindow *mainWindow);
 	GlCanvas(MainWindow *mainWindow, int *args);
 
 	void onMouseMove(wxMouseEvent &event);
@@ -133,7 +134,7 @@ private:
 };
 
 // ===============================
-// 	class App  
+// 	class App
 // ===============================
 
 class App: public wxApp{

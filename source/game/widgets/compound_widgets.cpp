@@ -131,7 +131,11 @@ void ScrollText::onScroll(VerticalScrollBar* sb) {
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
-	int width = getSize().x - getPadding() * 2 - 24;
+	int width = getSize().x - getPadding() * 2 - 28;
+
+	string text = txt;
+	fm->wrapText(text, width);
+	/*
 	std::list<string> words, lines;
 
 	string::size_type startPos = 0;
@@ -160,6 +164,8 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 		result += currLine + "\n";
 	} while (!words.empty());
 	TextWidget::setText(result);
+	*/
+	TextWidget::setText(text);
 	recalc();
 	
 	if (scrollToBottom) {

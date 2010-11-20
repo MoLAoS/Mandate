@@ -165,7 +165,7 @@ public:
 	int getFrameCount() const						{return frameCount;}
 	static World *getCurrWorld()					{return singleton;}
 	bool isAlive() const							{return alive;}
-	const PosCircularIteratorFactory &getPosIteratorFactory() {return posIteratorFactory;}
+	const PosCircularIteratorFactory &getPosIteratorFactory() const {return posIteratorFactory;}
 
 	//init & load
 	void init(const XmlNode *worldNode = NULL);

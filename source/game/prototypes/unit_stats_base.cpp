@@ -87,6 +87,7 @@ void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
 	ADD_ATTRIB(int, MaxEp);
 	ADD_ATTRIB(int, EpRegeneration);
 	ADD_ATTRIB(int, Sight);
+	if (sight < 1) sight = 1;
 	ADD_ATTRIB(int, Armor);
 
 	ADD_ATTRIB(int, AttackStrength);
@@ -105,7 +106,7 @@ void UnitStats::applyMultipliers(const EnhancementType &e) {
 	hpRegeneration = (hpRegeneration * e.getHpRegenerationMult()).intp();
 	maxEp = (maxEp * e.getMaxEpMult()).intp();
 	epRegeneration = (epRegeneration * e.getEpRegenerationMult()).intp();
-	sight = (sight * e.getSightMult()).intp();
+	sight = std::max((sight * e.getSightMult()).intp(), 1);
 	armor = (armor * e.getArmorMult()).intp();
 	attackStrength = (attackStrength * e.getAttackStrengthMult()).intp();
 	effectStrength = effectStrength * e.getEffectStrengthMult();

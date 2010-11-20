@@ -24,14 +24,17 @@ class PlayerModifiers {
 private:
 	bool winner;
 	bool aiEnabled;
+	bool consumeEnabled;
 
 public:
-	PlayerModifiers() : winner(false), aiEnabled(true) { }
+	PlayerModifiers() : winner(false), aiEnabled(true), consumeEnabled(true) { }
 
 	bool getWinner() const		{return winner;}
 	bool getAiEnabled() const	{return aiEnabled;}
+	bool getConsumeEnabled() const {return consumeEnabled;}
 
-	void disableAi()			{aiEnabled = false;}
+	void enableAi(bool v)		{aiEnabled = v;}
+	void enableConsume(bool v)	{consumeEnabled = v;}
 	void setAsWinner()			{winner = true;}
 };
 
@@ -98,7 +101,6 @@ public:
 	static LuaScript luaScript;
 
 	//misc
-	static string displayText;
 	static LuaConsole *luaConsole;
 
 	//last created unit & last dead unit
@@ -127,7 +129,6 @@ public:
 
 	static void doSomeLua(const string &code);
 
-	static string getDisplayText() 										{return displayText;}
 	static bool getGameOver() 											{return gameOver;}
 	static const PlayerModifiers *getPlayerModifiers(int factionIndex) 	{return &playerModifiers[factionIndex];}
 
@@ -155,8 +156,6 @@ public:
 private:
 	typedef const char* c_str;
 
-	static string wrapString(const string &str, int wrapCount);
-	
 public:
 	static bool extractArgs(LuaArguments &args, c_str caller, c_str format, ...);
 
@@ -177,6 +176,7 @@ private:
 	static int setUnitTriggerX(LuaHandle* luaHandle);	// Unit:setTrigger()
 	static int setFactionTrigger(LuaHandle* luaHandle);	// Faction:setTrigger()
 	//static int setTeamTrigger(LuaHandle* luaHandle);	//
+	static int removeUnitPosTriggers(LuaHandle* luaHandle);
 
 	// messages
 	static int showMessage(LuaHandle* luaHandle);		// Gui.showMessage()
@@ -217,9 +217,15 @@ private:
 
 
 	// game flow
-	static int disableAi(LuaHandle* luaHandle);				// Faction:disableAi()
 	static int setPlayerAsWinner(LuaHandle* luaHandle);		// Faction:setWinnerFlag()
 	static int endGame(LuaHandle* luaHandle);				// Game.end()
+
+	// AI
+	static int disableAi(LuaHandle* luaHandle);				// Faction:disableAi()
+	static int enableAi(LuaHandle* luaHandle);				// Faction:enableAi()
+	static int disableConsume(LuaHandle* luaHandle);
+	static int enableConsume(LuaHandle* luaHandle);
+	static int increaseStore(LuaHandle* luaHandle);
 
 	static int debugLog(LuaHandle* luaHandle);				// Game.debugLog()
 

@@ -37,6 +37,29 @@ using Entities::Faction;
 
 class UserInterface;
 
+WRAPPED_ENUM( DisplaySection, SELECTION, COMMANDS, TRANSPORTED )
+
+struct DisplayButton {
+	DisplaySection	m_section;
+	int				m_index;
+
+	DisplayButton(DisplaySection s, int ndx) : m_section(s), m_index(ndx) {}
+
+	DisplayButton& operator=(const DisplayButton &that) {
+		this->m_section = that.m_section;
+		this->m_index = that.m_index;
+		return *this;
+	}
+
+	bool operator==(const DisplayButton &that) const {
+		return (this->m_section == that.m_section && this->m_index == that.m_index);
+	}
+
+	bool operator!=(const DisplayButton &that) const {
+		return (this->m_section != that.m_section || this->m_index != that.m_index);
+	}
+};
+
 // =====================================================
 // 	class Display
 //
@@ -48,26 +71,26 @@ public:
 	//static const int cellSideCount = 4;
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
-	static const int upCellCount = cellWidthCount * cellHeightCount;
-	static const int downCellCount = cellWidthCount * cellHeightCount;
-	static const int carryCellCount = cellWidthCount * cellHeightCount;
+
+	static const int selectionCellCount = cellWidthCount * cellHeightCount;
+	static const int commandCellCount = cellWidthCount * cellHeightCount;
+	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
+
 	static const int colorCount = 4;
 	static const int imageSize = 32;
 	static const int invalidPos = -1;
-	static const int downY = imageSize * 9;
-	static const int carryY = imageSize * 2;
-	static const int infoStringY = imageSize * 4;
 
 private:
 	UserInterface *m_ui;
-	bool downLighted[downCellCount];
-	int index[downCellCount];
-	const CommandType *commandTypes[downCellCount];
-	CommandClass commandClasses[downCellCount];
+	bool downLighted[commandCellCount];
+	int index[commandCellCount];
+	const CommandType *commandTypes[commandCellCount];
+	CommandClass commandClasses[commandCellCount];
 	Vec3f colors[colorCount];
 	int m_progress;
 	int currentColor;
 	int downSelectedPos;
+	int m_logo;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;
@@ -79,8 +102,11 @@ private:
 			m_progressPos;		// x,y offset for progress bar
 	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
 	Font *m_font;
-	int m_pressedCommandIndex;	// index of command button that received a mouse down event
-	int m_pressedCarryIndex;	// index of carry image that received a mouse down event
+
+	DisplayButton	m_hoverBtn,		// section/index of button mouse is over
+					m_pressedBtn;	// section/index of button that received a mouse down event
+
+	ToolTip	*m_toolTip;
 
 private:
 	void renderProgressBar();
@@ -89,9 +115,9 @@ public:
 	Display(UserInterface *ui, Vec2i pos);
 
 	//get
-	string getTitle() const							{return TextWidget::getText(0);}
-	string getText() const							{return TextWidget::getText(1);}
-	string getInfoText() const						{return TextWidget::getText(2);}
+	string getPortraitTitle() const					{return TextWidget::getText(0);}
+	string getPortraitText() const					{return TextWidget::getText(1);}
+	string getOrderQueueText() const				{return TextWidget::getText(2);}
 	string getTransportedLabel() const				{return TextWidget::getText(4);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
@@ -103,14 +129,15 @@ public:
 
 	//set
 	void setSize();
-	void setTitle(const string title);
-	void setText(const string &text);
-	void setInfoText(const string &infoText);
+	void setPortraitTitle(const string title);
+	void setPortraitText(const string &text);
+	void setOrderQueueText(const string &text);
+	void setToolTipText(const string &i_txt, DisplaySection i_section = DisplaySection::COMMANDS);
 	void setTransportedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		{setImage(image, i);}
-	void setDownImage(int i, const Texture2D *image)	{setImage(image, upCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	{setImage(image, upCellCount + downCellCount + i);}
+	void setDownImage(int i, const Texture2D *image)	{setImage(image, selectionCellCount + i);}
+	void setCarryImage(int i, const Texture2D *image)	{setImage(image, selectionCellCount + commandCellCount + i);}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
 	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}
@@ -120,9 +147,10 @@ public:
 
 	//misc
 	void clear();
-
-	int computeIndex(Vec2i imgOffset, Vec2i pos);
-	int computeDownIndex(int x, int y) { return computeIndex(m_downImageOffset, Vec2i(x,y) - getPos()); }
+	void resetTipPos(Vec2i i_offset);
+	void resetTipPos() {resetTipPos(m_downImageOffset);}
+	DisplayButton computeIndex(Vec2i pos, bool screenPos = false);
+	DisplayButton getHoverButton() const { return m_hoverBtn; }
 
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 

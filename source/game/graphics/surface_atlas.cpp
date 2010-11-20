@@ -91,6 +91,7 @@ void SurfaceAtlas::addSurface(SurfaceInfo *si){
 		//copy texture to pixmap
 		if(si->getCenter()!=NULL){
 			t->getPixmap()->copy(si->getCenter());
+			//t->getPixmap()->splat(si->getCenter(), si->getCenter(), si->getCenter(), si->getCenter());
 		}
 		else{
 			t->getPixmap()->splat(si->getLeftUp(), si->getRightUp(), si->getLeftDown(), si->getRightDown());

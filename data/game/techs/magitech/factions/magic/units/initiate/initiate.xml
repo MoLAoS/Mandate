@@ -278,17 +278,16 @@
       <move-skill value="move_skill"/>
       <build-skill value="build_skill"/>
       <buildings>
-        <building name="energy_source"/>
-        <building name="summoner_guild"/>
-        <building name="library"/>
-        <building name="archmage_tower"/>
-        <building name="mage_tower"/>
+        <building name="energy_source" tip="energy_source_info" />
+        <building name="summoner_guild" tip="summoner_guild_info" />
+        <building name="library" tip="library_info" />
+        <building name="archmage_tower" tip="archmage_tower_info" />
+        <building name="mage_tower" tip="mage_tower_info" />
       </buildings>
       <start-sound enabled="true">
         <sound-file path="sounds/initiate_work_start1.wav"/>
         <sound-file path="sounds/initiate_work_start2.wav"/>
       </start-sound>
-
       <built-sound enabled="true">
         <sound-file path="sounds/initiate_work_end1.wav"/>
         <sound-file path="sounds/initiate_work_end2.wav"/>
@@ -305,15 +304,14 @@
       <move-skill value="move_skill"/>
       <build-skill value="build_skill"/>
       <buildings>
-        <building name="tower_of_souls"/>
-        <building name="golem"/>
-        <building name="wicker_behemoth"/>
+        <building name="tower_of_souls" tip="tower_of_sould_info" />
+        <building name="golem" tip="golem_info" />
+        <building name="wicker_behemoth" tip="wicker_behemoth_info" />
       </buildings>
       <start-sound enabled="true">
         <sound-file path="sounds/initiate_work_start1.wav"/>
         <sound-file path="sounds/initiate_work_start2.wav"/>
       </start-sound>
-
       <built-sound enabled="true">
         <sound-file path="sounds/initiate_work_end1.wav"/>
         <sound-file path="sounds/initiate_work_end2.wav"/>
@@ -359,7 +357,7 @@
 
     <command>
       <type value="morph"/>
-      <name value="promote_to_battlemage"/>
+      <name value="promote_to_battlemage" tip="battlemage_info" />
       <image path="../battlemage/images/battlemage.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

@@ -295,7 +295,6 @@ UnitParticleSystemType::UnitParticleSystemType() {
 }
 
 void UnitParticleSystemType::load(const XmlNode *particleSystemNode, const string &path) {
-	Renderer &renderer= Renderer::getInstance();
 	try {
 		ParticleSystemType::load(particleSystemNode, path);
 

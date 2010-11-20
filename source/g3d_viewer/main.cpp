@@ -22,7 +22,7 @@
 namespace Shared { namespace G3dViewer {
 
 using std::exception;
-using namespace Shared::Platform; 
+using namespace Shared::Platform;
 using namespace Shared::Graphics;
 using namespace Shared::Graphics::Gl;
 using namespace Shared::Util;
@@ -48,7 +48,7 @@ const string MainWindow::winHeader= "G3D viewer " + versionString + " - Built: "
 
 MainWindow::MainWindow(const string &modelPath)
 		: wxFrame( NULL, -1, ToUnicode(winHeader),
-			wxPoint(Renderer::windowX, Renderer::windowY), 
+			wxPoint(Renderer::windowX, Renderer::windowY),
 			wxSize(Renderer::windowW, Renderer::windowH) ) {
 	renderer= Renderer::getInstance();
 	this->modelPath = modelPath;
@@ -56,11 +56,11 @@ MainWindow::MainWindow(const string &modelPath)
 	playerColor = 0;
 
 	speed = 100;
-	
+
 	//gl canvas
-	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
-	glCanvas = new GlCanvas(this, args);
-	
+	//int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
+	glCanvas = new GlCanvas(this/*, args*/);
+
 	menu= new wxMenuBar();
 
 	//menu
@@ -177,7 +177,7 @@ void MainWindow::onPaint(wxPaintEvent &event) {
 			renderer->reset(x, y, w, h, i);
 			renderer->transform(rotX, rotY, zoom);
 			renderer->renderGrid();
-			
+
 			renderer->renderTheModel(model, anim);
 			if (x != w * 3) {
 				x += w;
@@ -190,7 +190,7 @@ void MainWindow::onPaint(wxPaintEvent &event) {
 		renderer->reset(0, 0, GetClientSize().x, GetClientSize().y, playerColor);
 		renderer->transform(rotX, rotY, zoom);
 		renderer->renderGrid();
-		
+
 		renderer->renderTheModel(model, anim);
 	}
 	glCanvas->SwapBuffers();
@@ -202,7 +202,7 @@ void MainWindow::onClose(wxCloseEvent &event){
 }
 
 void MainWindow::onMouseMove(wxMouseEvent &event){
-	
+
 	int x= event.GetX();
 	int y= event.GetY();
 	wxPaintEvent paintEvent;
@@ -211,7 +211,7 @@ void MainWindow::onMouseMove(wxMouseEvent &event){
 		rotX+= clamp(lastX-x, -10, 10);
 		rotY+= clamp(lastY-y, -10, 10);
 		onPaint(paintEvent);
-	} 
+	}
 	else if(event.RightIsDown()){
 		zoom*= 1.0f+(lastX-x+lastY-y)/100.0f;
 		zoom= clamp(zoom, 0.1f, 10.0f);
@@ -242,7 +242,7 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event){
 		GetStatusBar()->SetStatusText(ToUnicode(getModelInfo()), StatusItems::MODEL_INFO);
 		for (int i=0; i < model->getMeshCount(); ++i) {
 			wxMenuItem *item = menuMesh->AppendCheckItem(miCount + i + 1, ToUnicode(intToStr(i+1)));
-			Connect(miCount + i + 1, wxEVT_COMMAND_MENU_SELECTED, 
+			Connect(miCount + i + 1, wxEVT_COMMAND_MENU_SELECTED,
 				wxCommandEventHandler(MainWindow::onMenuMeshSelect), NULL, this);
 		}
 		menuMesh->Check(miCount, true);
@@ -292,7 +292,7 @@ void MainWindow::onMenuColor(wxCommandEvent &evt){
 	menuCustomColor->Check(evt.GetId(), true);
 }
 
-void MainWindow::onMenuColorEdit(wxCommandEvent &event){	
+void MainWindow::onMenuColorEdit(wxCommandEvent &event){
 	colourDialog->Show();
 }
 
@@ -319,7 +319,7 @@ void MainWindow::onTimer(wxTimerEvent &event){
 		anim -= 1.f;
 	}
 	onPaint(paintEvent);
-}	
+}
 
 string MainWindow::getModelInfo(){
 	string str;
@@ -377,6 +377,11 @@ GlCanvas::GlCanvas(MainWindow *	mainWindow, int *args)
 	this->mainWindow = mainWindow;
 }
 
+GlCanvas::GlCanvas(MainWindow *	mainWindow)
+		: wxGLCanvas(mainWindow, -1, wxDefaultPosition, wxDefaultSize, 0, wxT("GLCanvas")) {
+	this->mainWindow = mainWindow;
+}
+
 void GlCanvas::onMouseMove(wxMouseEvent &event){
 	mainWindow->onMouseMove(event);
 }
@@ -391,12 +396,12 @@ END_EVENT_TABLE()
 
 bool App::OnInit(){
 	FSFactory::getInstance()->usePhysFS = false;
-	
+
 	string modelPath;
 	if(argc==2){
 		modelPath= wxFNCONV(argv[1]);
 	}
-	
+
 	mainWindow= new MainWindow(modelPath);
 	mainWindow->Show();
 	mainWindow->init();

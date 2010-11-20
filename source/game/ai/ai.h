@@ -194,7 +194,7 @@ public:
 		return count < 0 ? 0 : count;
 	}
 	bool isRepairable(const Unit *u) const;
-	int getMinWarriors() {return minWarriors;}
+	int getMinWarriors() const {return minWarriors;}
 
 	//tasks
 	void addTask(const Task *task);

@@ -11,9 +11,11 @@
 
 #include "widgets.h"
 #include "game_constants.h"
+#include "lang.h"
 
 namespace Glest { namespace Widgets {
 using Sim::ControlType;
+using Global::Lang;
 
 class ColourButton : public Button {
 private:
@@ -130,6 +132,7 @@ public:
 	void setFactionItems(const vector<string> &items) {
 		m_factionList->clearItems();
 		m_factionList->addItems(items);
+		m_factionList->addItem(g_lang.get("Random"));
 	}
 
 	void setSelectedControl(ControlType ct) {

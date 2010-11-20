@@ -79,11 +79,17 @@ public:
 	static Logger &getWidgetLog();
 	static Logger &getAiLog();
 
+	/** A timestamp with filename safe characters. (ie no \/:*?"<>| chars)
+	* @returns a string in the format:
+	* [Day of the month (01-31)][Abbreviated month name (eg Feb)][Hour in 24h format (00-23)]-[Minute (00-59)]
+	*/
+	static string fileTimestamp();
+
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
 	void setSubtitle(const string &v)	{subtitle = v;}
 	void setLoading(bool v)				{loadingGame = v;}
-	void setProgressBar(bool v) { m_progressBar = v; }
+	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
 	void add(const string &str, bool renderScreen = false);
 	void addXmlError(const string &path, const char *error);
@@ -108,7 +114,7 @@ inline void logNetwork(const char *msg) {
 
 #if defined(LOG_STUFF) && LOG_STUFF
 #	define LOG(x) g_logger.add(x)
-#	define STREAM_LOG(x) {stringstream ss; ss << x; g_logger.add(ss.str()); }
+#	define STREAM_LOG(x) {stringstream _ss; _ss << x; g_logger.add(_ss.str()); }
 #	define GAME_LOG(x) STREAM_LOG( "Frame " << g_world.getFrameCount() << ": " << x )
 #else
 #	define LOG(x)

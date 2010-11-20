@@ -32,12 +32,14 @@ namespace Glest { namespace ProtoTypes {
 //          Class FactionType
 // ======================================================
 
-FactionType::FactionType(){
-	music= NULL;
-	attackNotice = NULL;
-	enemyNotice = NULL;
-	attackNoticeDelay = 0;
-	enemyNoticeDelay = 0;
+FactionType::FactionType()
+		: music(0)
+		, attackNotice(0)
+		, enemyNotice(0)
+		, attackNoticeDelay(0)
+		, enemyNoticeDelay(0)
+		, m_logoTeamColour(0)
+		, m_logoRgba(0) {
 	subfactions.push_back(string("base"));
 }
 
@@ -257,6 +259,33 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		loadOk = false;
 	}
 
+	try {
+		const XmlNode *logoNode = factionNode->getOptionalChild("logo");
+		if (logoNode && logoNode->getBoolValue()) {
+			const XmlNode *n = logoNode->getOptionalChild("team-colour");
+			if (n) {
+				string logoPath = dir + "/" + n->getRestrictedAttribute("path");
+				m_logoTeamColour = new Pixmap2D();
+				m_logoTeamColour->load(logoPath);
+			} else {
+				m_logoTeamColour = 0;
+		}
+			n = logoNode->getOptionalChild("rgba-colour");
+			if (n) {
+				string logoPath = dir + "/" + n->getRestrictedAttribute("path");
+				m_logoRgba = new Pixmap2D();
+				m_logoRgba->load(logoPath);
+			} else {
+				m_logoRgba = 0;
+			}
+		}
+	} catch (runtime_error &e) {
+		g_errorLog.addXmlError(path, e.what());
+		delete m_logoTeamColour;
+		delete m_logoRgba;
+		m_logoTeamColour = m_logoRgba = 0;
+	}
+
 	// notification of being attacked off screen
 	try {
 		const XmlNode *attackNoticeNode= factionNode->getChild("attack-notice", 0, false);
@@ -355,7 +384,6 @@ FactionType::~FactionType() {
 		music = music->getNext();
 		delete delMusic;
 	}
-	delete music;
 	if (attackNotice) {
 		deleteValues(attackNotice->getSounds().begin(), attackNotice->getSounds().end());
 		delete attackNotice;
@@ -364,6 +392,8 @@ FactionType::~FactionType() {
 		deleteValues(enemyNotice->getSounds().begin(), enemyNotice->getSounds().end());
 		delete enemyNotice;
 	}
+	delete m_logoTeamColour;
+	delete m_logoRgba;
 }
 
 // ==================== get ====================

@@ -93,6 +93,8 @@ protected:
 	bool netError, gotoMenu, exitGame, exitProgram;
 	float scrollSpeed;
 
+	Vec2i			m_scriptDisplayPos;
+	string			m_scriptDisplay;
 	MessageQueue m_scriptMessages;
 
 	Frame*			m_modalDialog;
@@ -173,6 +175,7 @@ public:
 	}
 
 	void addScriptMessage(const string &header, const string &msg);
+	void setScriptDisplay(const string &msg);
 	//void onScriptMessageDismissed(BasicDialog*);
 
 	virtual void quitGame();
@@ -188,6 +191,7 @@ public:
 	void destroyDialog(BasicDialog* ptr = 0);
 
 	void doDefeatedMessage(Faction *f);
+	void doSaveBox();
 
 protected:
 	// render
@@ -201,8 +205,6 @@ protected:
 	
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
-
-	void doSaveBox();
 	void onSaveSelected(BasicDialog*);
 
 	void displayError(std::exception &e);

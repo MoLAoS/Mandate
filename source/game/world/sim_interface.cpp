@@ -85,7 +85,8 @@ SimulationInterface::SimulationInterface(Program &program)
 		, m_gaia(0)
 		, commander(0)
 		, speed(GameSpeed::NORMAL)
-		, skillCycleTable(0) {
+		, skillCycleTable(0)
+		, m_processingCommand(CommandClass::NULL_COMMAND) {
 }
 
 SimulationInterface::~SimulationInterface() {
@@ -224,7 +225,9 @@ int SimulationInterface::launchGame() {
 	}
 
 	startGame();
+	if (!savedGame) {
 	world->activateUnits();
+	}
 	return getNetworkRole() == GameRole::LOCAL ? 2 : -1;
 	//
 }
@@ -393,6 +396,9 @@ void SimulationInterface::requestCommand(Command *command) {
 			requestedCommands.push_back(NetworkCommand(command));
 		} else if (command->getArchetype() == CommandArchetype::CANCEL_COMMAND) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::CANCEL_COMMAND, unit, Vec2i(-1)));
+		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
+			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_REPAIR, 
+				unit, command->getFlags().get(CommandProperties::AUTO_REPAIR_ENABLED)));
 		}
 	}
 	delete command;
@@ -413,7 +419,9 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 				unit->clearCommandCallback();
 			}
 		}
+		m_processingCommand = unit->getCurrCommand()->getType()->getClass();
 		unit->getCurrCommand()->getType()->update(unit);
+		m_processingCommand = CommandClass::NULL_COMMAND;
 	}
 	// if no commands, add stop (or guard for pets) command
 	if (!unit->anyCommand() && unit->isOperative()) {

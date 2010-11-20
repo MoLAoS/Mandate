@@ -606,7 +606,7 @@ bool Map::getNearestFreePos(Vec2i &result, const Unit *unit, const Vec2i &target
 	// if not, take the long approach.
 	// TODO: this code can be optimized by starting at the nearest position looking for a free cell
 	// and moving away from the starting point.
-	int sideSize = targetSize + size;
+	//int sideSize = targetSize + size;
 	fixed minDistance = fixed::max_int();
 
 	for(int sideSize = targetSize + size + minRange - 1; sideSize < targetSize + size + maxRange; ++sideSize) {
@@ -721,7 +721,7 @@ bool Map::getNearestAdjacentFreePos(Vec2i &result, const Unit *unit, const Vec2i
 
 void panic(Vec2i currPos, Unit *unit, Unit *other) {
 	const UnitType *ut = unit->getType();
-	int size = ut->getSize();
+	//int size = ut->getSize();
 	Zone zone = unit->getCurrZone();
 	Zone o_zone = other->getCurrZone();
 
@@ -1034,7 +1034,8 @@ void Map::assertUnitCells(const Unit * unit) {
 				assert(isInside(currPos));
 				if(!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
 					if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
-						assert(getCell(currPos)->getUnit(field) == unit);
+						Unit *testUnit = getCell(currPos)->getUnit(field);
+						assert(testUnit == unit);
 					} else {
 						assert(getCell(currPos)->getUnit(field) != unit);
 					}

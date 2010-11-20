@@ -83,8 +83,11 @@ protected:
 	Clicks clicks;
 	bool queuable;
 	const UnitType *unitType;
+	string m_tipKey;
 
 	void setIdAndUnitType(int v, UnitType *ut) { id = v; unitType = ut; }
+
+	string emptyString;
 
 public:
 	CommandType(const char* name, Clicks clicks, bool queuable = false);
@@ -98,9 +101,12 @@ public:
 	const UnitType* getUnitType() const { return unitType; }
 
 	virtual string toString() const						{return Lang::getInstance().get(name);}
+	const string& getTipKey() const						{return m_tipKey;}
+	virtual string getTipKey(const string &name) const  {return emptyString;}
 
 	virtual int getProducedCount() const					{return 0;}
 	virtual const ProducibleType *getProduced(int i) const{return 0;}
+	
 
 	bool isQueuable() const								{return queuable;}
 
@@ -109,7 +115,7 @@ public:
 	virtual Clicks getClicks() const					{return clicks;}
 	string getDesc(const Unit *unit) const {
 		string str;
-		str = name + "\n";
+		//str = name + "\n";
 		getDesc(str, unit);
 		return str;
 	}
@@ -139,17 +145,17 @@ public:
 
 class MoveBaseCommandType: public CommandType {
 protected:
-	const MoveSkillType *moveSkillType;
+	const MoveSkillType *m_moveSkillType;
 
 public:
-	MoveBaseCommandType(const char* name, Clicks clicks) : CommandType(name, clicks) {}
+	MoveBaseCommandType(const char* name, Clicks clicks) : CommandType(name, clicks), m_moveSkillType(0) {}
 	virtual void doChecksum(Checksum &checksum) const {
 		CommandType::doChecksum(checksum);
-		checksum.add(moveSkillType->getName());
+		checksum.add(m_moveSkillType->getName());
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const	{moveSkillType->getDesc(str, unit);}
-	const MoveSkillType *getMoveSkillType() const				{return moveSkillType;}
+	virtual void getDesc(string &str, const Unit *unit) const	{m_moveSkillType->getDesc(str, unit);}
+	const MoveSkillType *getMoveSkillType() const				{return m_moveSkillType;}
 
 public:
 	Command* doAutoFlee(Unit *unit) const;
@@ -161,17 +167,17 @@ public:
 
 class StopBaseCommandType: public CommandType {
 protected:
-	const StopSkillType *stopSkillType;
+	const StopSkillType *m_stopSkillType;
 
 public:
-	StopBaseCommandType(const char* name, Clicks clicks) : CommandType(name, clicks) {}
+	StopBaseCommandType(const char* name, Clicks clicks) : CommandType(name, clicks), m_stopSkillType(0) {}
 	virtual void doChecksum(Checksum &checksum) const {
 		CommandType::doChecksum(checksum);
-		checksum.add(stopSkillType->getName());
+		checksum.add(m_stopSkillType->getName());
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const	{stopSkillType->getDesc(str, unit);}
-	const StopSkillType *getStopSkillType() const				{return stopSkillType;}
+	virtual void getDesc(string &str, const Unit *unit) const	{m_stopSkillType->getDesc(str, unit);}
+	const StopSkillType *getStopSkillType() const				{return m_stopSkillType;}
 };
 
 // ===============================
@@ -234,8 +240,8 @@ public:
 		AttackCommandTypeBase::doChecksum(checksum);
 	}
 	virtual void getDesc(string &str, const Unit *unit) const {
-		AttackCommandTypeBase::getDesc(str, unit);
 		MoveBaseCommandType::getDesc(str, unit);
+		AttackCommandTypeBase::getDesc(str, unit);
 	}
 
 	bool updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) const;
@@ -280,18 +286,19 @@ public:
 
 class BuildCommandType: public MoveBaseCommandType {
 private:
-	const BuildSkillType* buildSkillType;
-	vector<const UnitType*> buildings;
-	SoundContainer startSounds;
-	SoundContainer builtSounds;
+	const BuildSkillType*	m_buildSkillType;
+	vector<const UnitType*> m_buildings;
+	map<string, string>		m_tipKeys;
+	SoundContainer			m_startSounds;
+	SoundContainer			m_builtSounds;
 
 public:
-	BuildCommandType() : MoveBaseCommandType("Build", Clicks::TWO) {}
+	BuildCommandType() : MoveBaseCommandType("Build", Clicks::TWO), m_buildSkillType(0) {}
 	~BuildCommandType();
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const {
-		buildSkillType->getDesc(str, unit);
+		m_buildSkillType->getDesc(str, unit);
 	}
 	virtual void update(Unit *unit) const;
 
@@ -301,20 +308,25 @@ public:
 	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir facing) const;
 
 	//get
-	const BuildSkillType *getBuildSkillType() const	{return buildSkillType;}
+	const BuildSkillType *getBuildSkillType() const	{return m_buildSkillType;}
 
-	virtual int getProducedCount() const					{return buildings.size();}
+	virtual int getProducedCount() const					{return m_buildings.size();}
 	virtual const ProducibleType *getProduced(int i) const;
 
 	bool canBuild(const UnitType *ut) const		{
-		return std::find(buildings.begin(), buildings.end(), ut) != buildings.end();
+		return std::find(m_buildings.begin(), m_buildings.end(), ut) != m_buildings.end();
 	}
 
-	int getBuildingCount() const					{return buildings.size();}
-	const UnitType * getBuilding(int i) const		{return buildings[i];}
+	int getBuildingCount() const					{return m_buildings.size();}
+	const UnitType * getBuilding(int i) const		{return m_buildings[i];}
 
-	StaticSound *getStartSound() const				{return startSounds.getRandSound();}
-	StaticSound *getBuiltSound() const				{return builtSounds.getRandSound();}
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
+
+	StaticSound *getStartSound() const				{return m_startSounds.getRandSound();}
+	StaticSound *getBuiltSound() const				{return m_builtSounds.getRandSound();}
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::BUILD; }
@@ -336,28 +348,30 @@ private:
 
 class HarvestCommandType: public MoveBaseCommandType {
 private:
-	const MoveSkillType *moveLoadedSkillType;
-	const HarvestSkillType *harvestSkillType;
-	const StopSkillType *stopLoadedSkillType;
-	vector<const ResourceType*> harvestedResources;
-	int maxLoad;
-	int hitsPerUnit;
+	const MoveSkillType*		m_moveLoadedSkillType;
+	const HarvestSkillType*		m_harvestSkillType;
+	const StopSkillType*		m_stopLoadedSkillType;
+	vector<const ResourceType*> m_harvestedResources;
+	int							m_maxLoad;
+	int							m_hitsPerUnit;
 
 public:
-	HarvestCommandType() : MoveBaseCommandType("Harvest", Clicks::TWO) {}
+	HarvestCommandType() : MoveBaseCommandType("Harvest", Clicks::TWO)
+		, m_moveLoadedSkillType(0), m_harvestSkillType(0), m_stopLoadedSkillType(0)
+		, m_maxLoad(0), m_hitsPerUnit(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 
 	//get
-	const MoveSkillType *getMoveLoadedSkillType() const		{return moveLoadedSkillType;}
-	const HarvestSkillType *getHarvestSkillType() const		{return harvestSkillType;}
-	const StopSkillType *getStopLoadedSkillType() const		{return stopLoadedSkillType;}
-	int getMaxLoad() const									{return maxLoad;}
-	int getHitsPerUnit() const								{return hitsPerUnit;}
-	int getHarvestedResourceCount() const					{return harvestedResources.size();}
-	const ResourceType* getHarvestedResource(int i) const	{return harvestedResources[i];}
+	const MoveSkillType *getMoveLoadedSkillType() const		{return m_moveLoadedSkillType;}
+	const HarvestSkillType *getHarvestSkillType() const		{return m_harvestSkillType;}
+	const StopSkillType *getStopLoadedSkillType() const		{return m_stopLoadedSkillType;}
+	int getMaxLoad() const									{return m_maxLoad;}
+	int getHitsPerUnit() const								{return m_hitsPerUnit;}
+	int getHarvestedResourceCount() const					{return m_harvestedResources.size();}
+	const ResourceType* getHarvestedResource(int i) const	{return m_harvestedResources[i];}
 	bool canHarvest(const ResourceType *resourceType) const;
 
 	virtual CommandClass getClass() const { return typeClass(); }
@@ -374,7 +388,7 @@ private:
 	vector<const UnitType*>  repairableUnits;
 
 public:
-	RepairCommandType() : MoveBaseCommandType("Repair", Clicks::TWO) {}
+	RepairCommandType() : MoveBaseCommandType("Repair", Clicks::TWO), repairSkillType(0) {}
 	~RepairCommandType() {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
@@ -410,13 +424,14 @@ public:
 
 class ProduceCommandType: public CommandType {
 private:
-	const ProduceSkillType* produceSkillType;
+	const ProduceSkillType* m_produceSkillType;
 //	const UnitType *m_producedUnit;
 	vector<const UnitType*> m_producedUnits;
-	SoundContainer finishedSounds;
+	map<string, string>		m_tipKeys;
+	SoundContainer			m_finishedSounds;
 
 public:
-	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true) {}
+	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true), m_produceSkillType(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -430,9 +445,14 @@ public:
 	const UnitType *getProducedUnit(int i) const		{return m_producedUnits[i];}
 	int getProducedUnitCount() const		{return m_producedUnits.size();}
 
-	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
-	const ProduceSkillType *getProduceSkillType() const	{return produceSkillType;}
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
+
+	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
 	virtual Clicks getClicks() const	{ return m_producedUnits.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
@@ -447,10 +467,11 @@ class GenerateCommandType: public CommandType {
 private:
 	const ProduceSkillType*			m_produceSkillType;
 	vector<const GeneratedType*>	m_producibles;
+	map<string, string>				m_tipKeys;
 	SoundContainer					m_finishedSounds;
 
 public:
-	GenerateCommandType() : CommandType("Generate", Clicks::ONE, true) {}
+	GenerateCommandType() : CommandType("Generate", Clicks::ONE, true), m_produceSkillType(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -464,6 +485,11 @@ public:
 	virtual int getProducedCount() const	{return m_producibles.size();}
 	virtual const ProducibleType *getProduced(int i) const	{return m_producibles[i];}
 
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
+
 	virtual Clicks getClicks() const	{ return m_producibles.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
 	virtual CommandClass getClass() const { return typeClass(); }
@@ -476,29 +502,29 @@ public:
 
 class UpgradeCommandType: public CommandType {
 private:
-	const UpgradeSkillType* upgradeSkillType;
-	const UpgradeType* producedUpgrade;
-	SoundContainer finishedSounds;
+	const UpgradeSkillType* m_upgradeSkillType;
+	const UpgradeType*		m_producedUpgrade;
+	SoundContainer			m_finishedSounds;
 
 public:
-	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true) {}
+	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0), m_producedUpgrade(0)  {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc() const;
 	virtual const ProducibleType *getProduced() const;
 	virtual void getDesc(string &str, const Unit *unit) const {
-		upgradeSkillType->getDesc(str, unit);
+		m_upgradeSkillType->getDesc(str, unit);
 		str += "\n" + getProducedUpgrade()->getDesc();
 	}
-	StaticSound *getFinishedSound() const	{return finishedSounds.getRandSound();}
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
 
 	//get
 	virtual int getProducedCount() const	{return 1;}
-	virtual const ProducibleType *getProduced(int i) const	{assert(!i); return producedUpgrade;}
+	virtual const ProducibleType *getProduced(int i) const	{assert(!i); return m_producedUpgrade;}
 
-	const UpgradeSkillType *getUpgradeSkillType() const	{return upgradeSkillType;}
-	const UpgradeType *getProducedUpgrade() const		{return producedUpgrade;}
+	const UpgradeSkillType *getUpgradeSkillType() const	{return m_upgradeSkillType;}
+	const UpgradeType *getProducedUpgrade() const		{return m_producedUpgrade;}
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::UPGRADE; }
@@ -512,11 +538,12 @@ class MorphCommandType: public CommandType {
 private:
 	const MorphSkillType*	m_morphSkillType;
 	vector<const UnitType*> m_morphUnits;
+	map<string, string>		m_tipKeys;
 	int						m_discount;
 	SoundContainer			m_finishedSounds;
 
 public:
-	MorphCommandType() : CommandType("Morph", Clicks::ONE) {}
+	MorphCommandType() : CommandType("Morph", Clicks::ONE), m_morphSkillType(0), m_discount(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -529,6 +556,11 @@ public:
 	
 	int getMorphUnitCount() const					{return m_morphUnits.size();}
 	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
@@ -561,7 +593,7 @@ private:
 public:
 	LoadCommandType() 
 			: CommandType("Load", Clicks::TWO)
-			, loadSkillType(0), moveSkillType(0), m_allowProjectiles(false) {
+			, loadSkillType(0), moveSkillType(0), m_loadCapacity(0), m_allowProjectiles(false) {
 		queuable = true;
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -613,7 +645,7 @@ public:
 };
 
 // ===============================
-//  class UnloadCommandType
+//  class BeLoadedCommandType
 // ===============================
 
 class BeLoadedCommandType : public CommandType {
@@ -622,7 +654,7 @@ private:
 
 public:
 	BeLoadedCommandType()
-			: CommandType("be-loaded", Clicks::ONE), moveSkillType(0) {}
+			: CommandType("BeLoaded", Clicks::ONE), moveSkillType(0) {}
 
 	void setMoveSkill(const MoveSkillType *moveSkill) { moveSkillType = moveSkill; }
 	virtual bool load() {return true;}
@@ -645,14 +677,15 @@ public:
 
 class GuardCommandType: public AttackCommandType {
 private:
-	int maxDistance;
+	int m_maxDistance;
 
 public:
-	GuardCommandType(const char* name = "Guard", Clicks clicks = Clicks::TWO) : AttackCommandType(name, clicks) {}
+	GuardCommandType(const char* name = "Guard", Clicks clicks = Clicks::TWO)
+			: AttackCommandType(name, clicks), m_maxDistance(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void update(Unit *unit) const;
-	int getMaxDistance() const {return maxDistance;}
+	int getMaxDistance() const {return m_maxDistance;}
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::GUARD; }
@@ -675,25 +708,29 @@ public:
 //  class GenericCommandType
 // ===============================
 
-class GenericCommandType: public CommandType {
+class CastSpellCommandType: public CommandType {
 private:
-	const GenericSkillType *genericSkillType;
+	const CastSpellSkillType*	m_castSpellSkillType;
+	SpellAffect					m_affects;
+	SpellStart					m_start;
 	bool	m_cycle;
 
 public:
-	GenericCommandType() : CommandType("Generic", Clicks::ONE), m_cycle(false) {}
+	CastSpellCommandType() : CommandType("CastSpell", Clicks::ONE), m_cycle(false), m_castSpellSkillType(NULL) {}
 	virtual void doChecksum(Checksum &checksum) const {
 		CommandType::doChecksum(checksum);
-		checksum.add(genericSkillType->getName());
+		checksum.add(m_castSpellSkillType->getName());
 	}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const	{genericSkillType->getDesc(str, unit);}
-	const GenericSkillType *getGenericSkillType() const			{return genericSkillType;}
+	virtual void getDesc(string &str, const Unit *unit) const {
+		m_castSpellSkillType->getDesc(str, unit);
+	}
+	const CastSpellSkillType *getCastSpellSkillType() const			{return m_castSpellSkillType;}
 
 	virtual void update(Unit *unit) const;
 
 	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::GENERIC; }
+	static CommandClass typeClass() { return CommandClass::CAST_SPELL; }
 };
 
 // ===============================

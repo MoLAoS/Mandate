@@ -18,7 +18,7 @@
 #include "widget_window.h"
 #include "core_data.h"
 #include "user_interface.h"
-
+#include "world.h"
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -46,15 +46,17 @@ void setFancyBorder(BorderStyle &style) {
 // =====================================================
 
 Display::Display(UserInterface *ui, Vec2i pos)
-		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 600))
+		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 500))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
 		, m_ui(ui)
+		, m_logo(-1)
 		, m_draggingWidget(false)
 		, m_moveOffset(Vec2i(0))
-		, m_pressedCommandIndex(-1) 
-		, m_pressedCarryIndex(-1) {
+		, m_hoverBtn(DisplaySection::INVALID, invalidPos)
+		, m_pressedBtn(DisplaySection::INVALID, invalidPos)
+		, m_toolTip(0) {
 	setFancyBorder(m_borderStyle);
 
 	colors[0] = Vec3f(1.f, 1.f, 1.f);
@@ -69,7 +71,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	int x = getBorderLeft();
 	int y = getHeight() - getBorderTop();
 	m_upImageOffset = Vec2i(x, y);
-	for (int i = 0; i < upCellCount; ++i) { // 'up' images (selection potraits)
+	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
 		if (i % cellWidthCount == 0) {
 			y -= 32;
 			x = getBorderLeft();
@@ -80,14 +82,14 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	setTextParams("", Vec4f(1.f), m_font, false); // unit title
 	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
 	addText(""); // unit text
-	addText(""); // command text
+	addText(""); // queued orders text (to display below progress bar if present)
 	addText(""); // progress bar
 	setTextPos(Vec2i(40, getHeight() - 40), 0);
 
 	x = getBorderLeft();
-	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 10;
+	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 6;
 	m_downImageOffset = Vec2i(x, y);
-	for (int i = 0; i < downCellCount; ++i) { // 'down' images (command buttons)
+	for (int i = 0; i < commandCellCount; ++i) { // command buttons
 		if (i % cellWidthCount == 0) {
 			y -= 32;
 			x = getBorderLeft();
@@ -97,36 +99,48 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	}
 
 	x = getBorderLeft();
-	y -= (40 + int(m_font->getMetrics()->getHeight()) * 8);
+	y -= (40/* + int(m_font->getMetrics()->getHeight()) * 8*/);
 	addText(""); // 'Transported' label
 	setTextPos(Vec2i(x, y + 5), 4);
 	m_carryImageOffset = Vec2i(x, y);
-	for (int i = 0; i < carryCellCount; ++i) { // 'carry' images ('loaded' unit portraits)
+	for (int i = 0; i < transportCellCount; ++i) { // loaded unit portraits
 		if (i % cellWidthCount == 0) {
 			y -= 32;
 			x = getBorderLeft();
 		}
 		addImageX(0, Vec2i(x,y), Vec2i(32,32));
 		x += 32;
+	}
+
+	const Texture2D *logoTex = g_world.getThisFaction()->getLogoTex();
+	if (logoTex) {
+		m_logo = addImageX(logoTex, Vec2i(3,0), Vec2i(192,192));
 	}
 
 	downSelectedPos = invalidPos;
 	setProgressBar(-1);
 	clear();
 	setSize();
+
+	m_toolTip = new ToolTip(getParent());
+	m_toolTip->setVisible(false);
 }
 
 void Display::setSize() {
-	const int width = 195;
-	const int bigHeight = 600;
-	const int smallHeight = 150;
+	const int width = 192 + 3;
+	const int bigHeight = 500;
+	const int smallHeight = 192 + 15;
 	Vec2i sz(width, bigHeight);
 	if (m_ui->getSelection()->isEmpty()) {
 		if (m_ui->getSelectedObject()) {
 			sz = Vec2i(width, smallHeight);
 		} else {
+			if (g_world.getThisFaction()->getLogoTex()) {
+				sz = Vec2i(width, smallHeight);
+			} else {
 			setVisible(false);
 			return;
+		}
 		}
 	} else {
 		if (!m_ui->getSelection()->isComandable()) {
@@ -175,7 +189,7 @@ void Display::setDownSelectedPos(int i) {
 	}
 	if (downSelectedPos != invalidPos) {
 		// shrink
-		int ndx = downSelectedPos + upCellCount;
+		int ndx = downSelectedPos + selectionCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos += Vec2i(3);
@@ -185,7 +199,7 @@ void Display::setDownSelectedPos(int i) {
 	downSelectedPos = i;
 	if (downSelectedPos != invalidPos) {
 		// enlarge
-		int ndx = downSelectedPos + upCellCount;
+		int ndx = downSelectedPos + selectionCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos -= Vec2i(3);
@@ -200,20 +214,20 @@ void trimTrailingNewlines(string &str) {
 	}
 }
 
-void Display::setTitle(const string title) {
+void Display::setPortraitTitle(const string title) {
 	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;
 	}
-	string str = Util::formatString(title);	
+	string str = formatString(title);	
 	TextWidget::setText(str, 0);
 }
 
-void Display::setText(const string &text) {
-	WIDGET_LOG( __FUNCTION__ << " : " << text );
+void Display::setPortraitText(const string &text) {
+	//WIDGET_LOG( __FUNCTION__ << "( \"" << text << "\" )" );
 	if (TextWidget::getText(1).empty() && text.empty()) {
 		return;
 	}
-	string str = Util::formatString(text);
+	string str = formatString(text);
 
 	int lines = 1;
 	foreach_const (string, it, str) {
@@ -225,22 +239,35 @@ void Display::setText(const string &text) {
 	m_progressPos = Vec2i(14, yPos - 20);
 }
 
-void Display::setInfoText(const string &infoText) {
-	WIDGET_LOG( __FUNCTION__ << " : " << infoText );
-	if (TextWidget::getText(2).empty() && infoText.empty()) {
+void Display::setOrderQueueText(const string &i_text) {
+	if (TextWidget::getText(2).empty() && i_text.empty()) {
 		return;
 	}
-	string str = Util::formatString(infoText);
-	trimTrailingNewlines(str);
-
-	int lines = 1;
-	foreach_const (string, it, str) {
-		if (*it == '\n') ++lines;
+	int y = TextWidget::getTextPos(1).y - int(m_font->getMetrics()->getHeight());
+	if (m_progress != -1) {
+		y = m_progressPos.y - int(m_font->getMetrics()->getHeight()) - 3;
 	}
-	int yPos = getHeight() - getBorderTop() - imageSize * cellHeightCount - 48
-		- (lines + 10) * int(m_font->getMetrics()->getHeight());
-	TextWidget::setTextPos(Vec2i(5, yPos), 2);
-	TextWidget::setText(str, 2);
+	TextWidget::setTextPos(Vec2i(5, y), 2);
+	TextWidget::setText(i_text, 2);
+}
+
+void Display::setToolTipText(const string &i_txt, DisplaySection i_section) {
+	//WIDGET_LOG( __FUNCTION__ << "( \"" << i_txt << "\" )");
+	string str = i_txt;
+	trimTrailingNewlines(str);
+	const FontMetrics *fm = m_toolTip->getTextFont()->getMetrics();
+	fm->wrapText(str, 32 * cellWidthCount);
+
+	m_toolTip->setText(str);
+	Vec2i a_offset;
+	if (i_section == DisplaySection::SELECTION) {
+		a_offset = m_upImageOffset;
+	} else if (i_section == DisplaySection::TRANSPORTED) {
+		a_offset = m_carryImageOffset;
+	} else {
+		a_offset = m_downImageOffset;
+	}
+	resetTipPos(a_offset);
 }
 
 void Display::setTransportedLabel(bool v) {
@@ -249,25 +276,25 @@ void Display::setTransportedLabel(bool v) {
 
 // misc
 void Display::clear() {
-	WIDGET_LOG( __FUNCTION__ );
-	for (int i=0; i < upCellCount; ++i) {
+	WIDGET_LOG( __FUNCTION__ << "()" );
+	for (int i=0; i < selectionCellCount; ++i) {
 		setImage(0, i);
 	}
 
-	for (int i=0; i < downCellCount; ++i) {
+	for (int i=0; i < commandCellCount; ++i) {
 		downLighted[i]= true;
 		commandTypes[i]= NULL;
 		commandClasses[i]= CommandClass::NULL_COMMAND;
-		setImage(0, upCellCount + i);
+		setImage(0, selectionCellCount + i);
 	}
 
-	for (int i=0; i < carryCellCount; ++i) {
-		setImage(0, upCellCount + downCellCount + i);
+	for (int i=0; i < transportCellCount; ++i) {
+		setImage(0, selectionCellCount + commandCellCount + i);
 	}
 
 	setDownSelectedPos(invalidPos);
-	setTitle("");
-	setText("");
+	setPortraitTitle("");
+	setPortraitText("");
 	setProgressBar(-1);
 }
 
@@ -310,26 +337,44 @@ void Display::render() {
 	if (!isVisible()) {
 		return;
 	}
+
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
+		if (g_config.getUiPhotoMode()) {
+			return;
+		}
+		if (m_logo == -1) {
+			setSize();
+			RUNTIME_CHECK( !isVisible() );
+			return;
+		}
+	}
+	
 	renderBgAndBorders();
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
+		// faction logo
+		assert(m_logo != -1);
+		ImageWidget::renderImage(m_logo);
+	}
+
 	Vec4f light(1.f), dark(0.3f, 0.3f, 0.3f, 1.f);
 	ImageWidget::startBatch();
-	for (int i = 0; i < upCellCount; ++i) {
+	for (int i = 0; i < selectionCellCount; ++i) {
 		if (getImage(i)) {
 			renderImage(i, light);
 		}
 	}
-	for (int i=0; i < downCellCount; ++i) {
-		if (getImage(i + upCellCount) && i != downSelectedPos) {
-			renderImage(i + upCellCount, downLighted[i] ? light : dark);
+	for (int i=0; i < commandCellCount; ++i) {
+		if (getImage(i + selectionCellCount) && i != downSelectedPos) {
+			renderImage(i + selectionCellCount, downLighted[i] ? light : dark);
 		}
 	}
 	if (downSelectedPos != invalidPos) {
-		assert(getImage(downSelectedPos + upCellCount));
-		renderImage(downSelectedPos + upCellCount, light);
+		assert(getImage(downSelectedPos + selectionCellCount));
+		renderImage(downSelectedPos + selectionCellCount, light);
 	}
-	for (int i=0; i < carryCellCount; ++i) {
-		if (getImage(i + upCellCount + downCellCount)) {
-			renderImage(i + upCellCount + downCellCount, light);
+	for (int i=0; i < transportCellCount; ++i) {
+		if (getImage(i + selectionCellCount + commandCellCount)) {
+			renderImage(i + selectionCellCount + commandCellCount, light);
 		}
 	}
 	ImageWidget::endBatch();
@@ -339,7 +384,7 @@ void Display::render() {
 	if (!TextWidget::getText(1).empty()) {
 		renderTextShadowed(1);
 	}
-	if (!TextWidget::getText(2).empty()) {
+	if (!TextWidget::getText(1).empty()) {
 		renderTextShadowed(2);
 	}
 	if (!TextWidget::getText(4).empty()) {
@@ -350,24 +395,34 @@ void Display::render() {
 	}
 }
 
-int Display::computeIndex(Vec2i imgOffset, Vec2i pos) {
-	pos.y = pos.y - (imgOffset.y - cellHeightCount * imageSize);
-
-	if (pos.y < 0 || pos.y >= imageSize * cellHeightCount) {
-		return invalidPos;
+DisplayButton Display::computeIndex(Vec2i i_pos, bool screenPos) {
+	if (screenPos) {
+		i_pos = i_pos - getScreenPos() - Vec2i(getBorderLeft(), getBorderBottom());
 	}
-
+	Vec2i pos = i_pos;
+	Vec2i offsets[3] = {
+		m_upImageOffset, m_downImageOffset, m_carryImageOffset
+	};
+	int counts[3] = { selectionCellCount, commandCellCount, transportCellCount };
+	for (int i=0; i < 3; ++i) {
+		pos.y = i_pos.y - (offsets[i].y - cellHeightCount * imageSize);
+		if (pos.y >= 0 && pos.y < imageSize * cellHeightCount) {
 	int cellX = pos.x / imageSize;
 	int cellY = (pos.y / imageSize) % cellHeightCount;
 	int index = (cellHeightCount - cellY - 1) * cellWidthCount + cellX;
-
-	if (index < 0 || index >= cellHeightCount * cellWidthCount) {
-		index = invalidPos;
+			if (index >= 0 && index < counts[i]) {
+				if (getImage(i * cellHeightCount * cellWidthCount + index)) {
+					return DisplayButton(DisplaySection(i), index);
 	}
-	return index;
+				return DisplayButton(DisplaySection::INVALID, invalidPos);
+			}
+		}
+	}
+	return DisplayButton(DisplaySection::INVALID, invalidPos);
 }
 
 bool Display::mouseDown(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
@@ -381,19 +436,17 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 		if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
 		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 			Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-			int ndx = computeIndex(m_downImageOffset, tPos);
-			if (ndx != -1 && getImage(upCellCount + ndx)) {
-				m_pressedCommandIndex = ndx;
+
+			m_hoverBtn = computeIndex(tPos);
+			if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
+				m_pressedBtn = m_hoverBtn;
 				return true;
-			}
-			ndx = computeIndex(m_carryImageOffset, tPos);
-			if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
+			} else if (m_hoverBtn.m_section == DisplaySection::TRANSPORTED) {
 				return true;
-			}
-			ndx = computeIndex(m_upImageOffset, tPos);
-			if (ndx != -1 && getImage(ndx)) {
-				const Unit *unit = m_ui->getSelection()->getUnit(ndx);
-				assert(unit);
+			} else if (m_hoverBtn.m_section == DisplaySection::SELECTION) {
+				RUNTIME_CHECK(m_ui->getSelection()->getCount() > m_hoverBtn.m_index);
+				const Unit *unit = m_ui->getSelection()->getUnit(m_hoverBtn.m_index);
+				RUNTIME_CHECK(unit != 0);
 				if (m_ui->getInput().isCtrlDown()) {
 					if (m_ui->getInput().isShiftDown()) {
 						// remove all of ndx's type from selection
@@ -410,16 +463,20 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 					m_ui->getSelection()->select(const_cast<Unit*>(unit));
 				}
 				m_ui->computeDisplay();
+				m_ui->computePortraitInfo(m_hoverBtn.m_index);
+				m_pressedBtn = m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 				return true;
+			} else {
+				m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 			}
 		}
-		m_pressedCommandIndex = -1;
 	}
 	// nothing 'tangible' clicked, let event through
 	return false;
 }
 
 bool Display::mouseUp(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
@@ -428,45 +485,65 @@ bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 		return true;
 	}
 	if (btn == MouseButton::LEFT) {
-		if (m_pressedCommandIndex != -1) {
+		if (m_pressedBtn.m_section != DisplaySection::INVALID) {
 			if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
 			&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 				Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-				int ndx = computeIndex(m_downImageOffset, tPos);
-				if (ndx != -1 && getImage(upCellCount + ndx)) {
-					if (m_pressedCommandIndex == ndx) {
-						m_ui->commandButtonPressed(ndx);
+				m_hoverBtn = computeIndex(tPos);
+				if (m_hoverBtn == m_pressedBtn) {
+					if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
+						m_ui->commandButtonPressed(m_hoverBtn.m_index);
 					}
+					m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 					return true;
 				}
-				ndx = computeIndex(m_carryImageOffset, tPos);
-				if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
-					return true;
 				}
+			m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 			}
-			m_pressedCommandIndex = -1;
 		}
-	}
 	return false;
 }
 
 bool Display::mouseDoubleClick(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
 	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
 	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-		int ndx = computeIndex(m_carryImageOffset, tPos);
-		if (ndx != -1 && getImage(upCellCount + downCellCount + ndx)) {
-			m_ui->unloadRequest(ndx);
+		m_hoverBtn = computeIndex(tPos);
+		if (m_hoverBtn.m_section == DisplaySection::TRANSPORTED) {
+			m_ui->unloadRequest(m_hoverBtn.m_index);
+			m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 			return true;
 		}
 	}
-	return mouseUp(btn, pos);
+	return mouseDown(btn, pos);
+}
+
+void Display::resetTipPos(Vec2i i_offset) {
+	if (m_toolTip->getText().empty()) {
+		m_toolTip->setVisible(false);
+		return;
+	}
+	Vec2i ttPos = getScreenPos() + i_offset;
+	if (ttPos.x > g_metrics.getScreenW() / 2) {
+		ttPos.x -= (m_toolTip->getWidth() + 5);
+	} else {
+		ttPos.x += (getWidth() + 5);
+	}				
+	ttPos.y -= (m_toolTip->getHeight() + 5);
+	m_toolTip->setPos(ttPos);
+	m_toolTip->setVisible(true);
+}
+
+ostream& operator<<(ostream &stream, const DisplayButton &btn) {
+	return stream << "Section: " << btn.m_section << " index: " << btn.m_index;
 }
 
 bool Display::mouseMove(Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
@@ -478,41 +555,42 @@ bool Display::mouseMove(Vec2i pos) {
 	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
 	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
 		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-		int ndx = computeIndex(m_downImageOffset, tPos);
-		if (ndx != m_pressedCommandIndex) {
-			WIDGET_LOG( __FUNCTION__ << " : mouse now over ndx " << ndx );
-			if (ndx != invalidPos && getImage(upCellCount + ndx)) {
-				m_ui->computeInfoString(ndx);
-				m_pressedCommandIndex = ndx;
-				return true;
+
+		DisplayButton currBtn = computeIndex(tPos);
+		
+		if (currBtn != m_hoverBtn) {
+			// change stuff
+			if (currBtn.m_section == DisplaySection::SELECTION) {
+				m_ui->computePortraitInfo(currBtn.m_index);
+			} else if (currBtn.m_section == DisplaySection::COMMANDS) {
+				m_ui->computeCommandInfo(currBtn.m_index);
+			} else if (currBtn.m_section == DisplaySection::TRANSPORTED) {
+				setToolTipText(g_lang.get("TransportInfo"), DisplaySection::TRANSPORTED);
 			} else {
-				m_pressedCommandIndex = ndx;
-				setInfoText("");
+				setToolTipText("");
 			}
-			m_pressedCommandIndex = ndx;
+			m_hoverBtn = currBtn;
+			return true;
 		} else {
-			WIDGET_LOG( __FUNCTION__ << " : mouse still over ndx " << ndx );
+			// don't do anything
 		}
 	} else {
-		if (m_pressedCommandIndex != -1) {
-			setInfoText("");
-			m_pressedCommandIndex = -1;
+		setToolTipText("");
 		}
-	}
-	// let event through
 	return false;
 }
 
 void Display::mouseOut() {
-	m_pressedCommandIndex = -1;
-	setInfoText("");
+	WIDGET_LOG( __FUNCTION__ << "()" );
+	m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
+	setToolTipText("");
+	m_ui->invalidateActivePos();
+	//m_toolTip->setVisible(false);
 }
 
 // =====================================================
 // 	class ResourceBar
 // =====================================================
-
-using Util::formatString;
 
 ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &types)
 		: Widget(static_cast<Container*>(WidgetWindow::getInstance()))

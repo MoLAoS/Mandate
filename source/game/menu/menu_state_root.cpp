@@ -69,7 +69,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	Font *font = g_coreData.getFTMenuFontNormal();
 	foreach_enum (RootMenuItem, i) {
 		Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
-		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 5.f)));				
+		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 5.f)));
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
@@ -89,7 +89,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		// Advanced Engine labels
 		font = g_coreData.getGAEFontBig();
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("Advanced"), Vec4f(1.f), font);
+		label->setTextParams(g_lang.get("AdvEng1"), Vec4f(1.f), font);
 		Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 		int tx = int(255.f / 512.f * logoWidth);
 		int ty = int(60.f / 256.f * logoHeight);
@@ -99,7 +99,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("Engine"), Vec4f(1.f), font);
+		label->setTextParams(g_lang.get("AdvEng2"), Vec4f(1.f), font);
 		tx = int(285.f / 512.f * logoWidth);
 		label->setPos(Vec2i(tx, ty));
 		label->setSize(label->getTextDimensions() + Vec2i(10,5));
@@ -112,7 +112,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label = new Widgets::StaticText(pp);
 		label->setTextParams(gaeVersionString, Vec4f(1.f), font);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		
+
 		sz = label->getTextDimensions() + Vec2i(10,5);
 		label->setPos(pos/*Vec2i(256 - sz.x / 2, 10)*/);
 		label->setSize(sz);
@@ -120,7 +120,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	} else {
 		label = new Widgets::StaticText(&program);
 		Vec2i pos, size;
-		label->setTextParams("Glest Advanced Engine " + gaeVersionString, 
+		label->setTextParams("Glest Advanced Engine " + gaeVersionString,
 			Vec4f(1.f), g_coreData.getGAEFontSmall());
 		size = label->getTextDimensions() + Vec2i(5,5);
 		pos = Vec2i(g_metrics.getScreenW() - size.x - 15, 10);
@@ -190,9 +190,6 @@ void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
 }
 
 void MenuStateRoot::update(){
-	if (Config::getInstance().getMiscAutoTest()) {
-		AutoTest::getInstance().updateRoot(program, mainMenu);
-	}
 	MenuState::update();
 	if (m_transition) {
 		program.clear();

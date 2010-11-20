@@ -92,6 +92,7 @@ private:
 	ControlType control;
 
 	Texture2D *texture;
+	Texture2D *m_logoTex;
 	const FactionType *factionType;
 
 	int teamIndex;
@@ -134,12 +135,16 @@ public:
 	const Units &getUnits() const						{return units;}
 	const UpgradeManager *getUpgradeManager() const		{return &upgradeManager;}
 	const Texture2D *getTexture() const					{return texture;}
+	const Texture2D *getLogoTex() const					{return m_logoTex;}
 	int getStartLocationIndex() const					{return startLocationIndex;}
 	int getColourIndex() const							{return colourIndex;}
 	Colour getColour() const							{return factionColours[colourIndex];}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
+	
+	//TODO Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
+	
 	bool isThisFaction() const							{return thisFaction;}
 
 	// set
@@ -158,7 +163,7 @@ public:
 	void deApplyCosts(const ProducibleType *p);
 	void deApplyStaticCosts(const ProducibleType *p);
 	void deApplyStaticConsumption(const ProducibleType *p);
-	void applyCostsOnInterval();
+	void applyCostsOnInterval(const ResourceType *rt);
 	bool checkCosts(const ProducibleType *pt);
 
 	// reqs
@@ -182,6 +187,7 @@ public:
 
 	void add(Unit *unit);
 	void remove(Unit *unit);
+	void addStore(const ResourceType *rt, int amount);
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}

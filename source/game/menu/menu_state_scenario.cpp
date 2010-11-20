@@ -81,11 +81,11 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_playNowButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
 
 	vector<string> results;
-	int match = 0;	
+	int match = 0;
 
 	//categories listBox
 	findAll("gae/scenarios/*.", results);
-	
+
 	// remove empty directories...
 	for (vector<string>::iterator cat = results.begin(); cat != results.end(); ) {
 		vector<string> scenarios;
@@ -136,9 +136,6 @@ void MenuStateScenario::onButtonClick(Button* btn) {
 }
 
 void MenuStateScenario::update() {
-	if (g_config.getMiscAutoTest()) {
-		AutoTest::getInstance().updateScenario(this);
-	}
 	MenuState::update();
 	if (m_transition) {
 		switch (m_targetTansition) {

@@ -156,6 +156,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
         , attacked_trigger(false) {
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
+
 	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
 
 	computeTotalUpgrade();
@@ -271,7 +272,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 /** delete stuff */
 Unit::~Unit() {
 	removeCommands();
-	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
+//	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
 }
 
 void Unit::save(XmlNode *node) const {
@@ -474,29 +475,7 @@ float Unit::getAnimProgress() const {
 			/	float(nextAnimReset - lastAnimReset);
 }
 
-// ====================================== set ======================================
-
-void Unit::setCommandCallback() {
-	commandCallback = commands.front()->getId();
-}
-
-/** sets the current skill */
-void Unit::setCurrSkill(const SkillType *newSkill) {
-	assert(newSkill);
-	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " skill set => " << SkillClassNames[currSkill->getClass()] );
-	if (newSkill->getClass() == SkillClass::STOP && currSkill->getClass() == SkillClass::STOP) {
-		return;
-	}
-	if (newSkill != currSkill) {
-		while(!skillParticleSystems.empty()){
-			skillParticleSystems.back()->fade();
-			skillParticleSystems.pop_back();
-		}
-	}
-	progress2 = 0;
-	currSkill = newSkill;
-	StateChanged(this);
-	
+void Unit::startSkillParticleSystems() {
 	Vec2i cPos = getCenteredPos();
 	Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
 	bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
@@ -508,6 +487,33 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
 		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
+	}
+}
+
+// ====================================== set ======================================
+
+void Unit::setCommandCallback() {
+	commandCallback = commands.front()->getId();
+}
+
+/** sets the current skill */
+void Unit::setCurrSkill(const SkillType *newSkill) {
+	assert(newSkill);
+	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " skill set => " << SkillClassNames[currSkill->getClass()] );
+	if (newSkill == currSkill) {
+		return;
+	}
+	if (newSkill != currSkill) {
+		while(!skillParticleSystems.empty()){
+			skillParticleSystems.back()->fade();
+			skillParticleSystems.pop_back();
+		}
+	}
+	progress2 = 0;
+	currSkill = newSkill;
+
+	if (!isCarried()) {
+		startSkillParticleSystems();
 	}
 }
 
@@ -564,6 +570,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 		Vec3f startPos;
 		if (carrier) {
+			RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
 			startPos = carrier->getCurrVectorFlat();
 			const LoadCommandType *lct = 
 				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
@@ -776,9 +783,9 @@ CommandResult Unit::giveCommand(Command *command) {
 		delete command;
 		command = 0;
 	}
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
+
 		StateChanged(this);
-	}
+
 	if (command) {
 		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << *command << ", Result=" << CommandResultNames[result] );
 	}
@@ -809,9 +816,7 @@ Command *Unit::popCommand() {
 	} else {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
 	}
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
-	}
 	return command;
 }
 /** pop current command (used when order is done)
@@ -831,9 +836,7 @@ CommandResult Unit::finishCommand() {
 	if(command && command->getType()->getClass() == CommandClass::PATROL) {
 		command->setPos2(pos);
 	}
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+
 	if (commands.empty()) {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
 	} else {
@@ -859,11 +862,11 @@ CommandResult Unit::cancelCommand() {
 	delete commands.back();
 	commands.pop_back();
 
-	//clear routes
-	unitPath.clear();
-	if (commands.empty() || commands.front()->getType()->getClass() == CommandClass::STOP) {
 		StateChanged(this);
-	}
+
+	//clear routes
+	clearPath();
+	
 	if (commands.empty()) {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " current " << ct->getName() << " command cancelled.");
 	} else {
@@ -884,9 +887,7 @@ CommandResult Unit::cancelCurrCommand() {
 	undoCommand(*commands.front());
 
 	Command *command = popCommand();
-	if (!command || command->getType()->getClass() == CommandClass::STOP) {
-		StateChanged(this);
-	}
+
 	if (!command) {
 		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
 	} else {
@@ -920,6 +921,7 @@ void Unit::create(bool startingUnit) {
 	}
 	nextCommandUpdate = -1;
 	setCurrSkill(type->getStartSkill());
+	startSkillParticleSystems();
 }
 
 /** Give a unit life. Called when a unit becomes 'operative'
@@ -966,6 +968,23 @@ void Unit::kill() {
 		map->clearUnitCells(this, pos);
 	}
 
+	if (!m_unitsToCarry.empty()) {
+		foreach (UnitIdList, it, m_unitsToCarry) {
+			Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+			unit->cancelCurrCommand();
+		}
+		m_unitsToCarry.clear();
+	}
+
+	if (!m_carriedUnits.empty()) {
+		foreach (UnitIdList, it, m_carriedUnits) {
+			Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_carriedUnits.clear();
+	}
+
 	if (fire) {
 		fire->fade();
 		fire = 0;
@@ -985,6 +1004,16 @@ void Unit::kill() {
 	clearCommands();
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	deadCount = Random(id).randRange(-256, 256); // random decay time
+}
+
+void Unit::undertake() {
+	faction->remove(this);
+	if (!skillParticleSystems.empty()) {
+		foreach (UnitParticleSystems, it, skillParticleSystems) {
+			(*it)->fade();
+		}
+		skillParticleSystems.clear();
+	}
 }
 
 void Unit::resetHighlight() {
@@ -1010,14 +1039,21 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		//attack enemies
 		if (!isAlly(targetUnit)) {
 			commandType = type->getAttackCommand(targetUnit->getCurrZone());
-		} else if (targetUnit->getType()->isOfClass(UnitClass::CARRIER)) {
+		} else if (targetUnit->getFactionIndex() == getFactionIndex()) {
+			const UnitType *tType = targetUnit->getType();
+			if (tType->isOfClass(UnitClass::CARRIER)
+			&& tType->getCommandType<LoadCommandType>(0)->canCarry(type)) {
 			//move to be loaded
-			commandType = type->getFirstCtOfClass(CommandClass::MOVE);
-		} else if (getType()->isOfClass(UnitClass::CARRIER)) {
+				commandType = type->getFirstCtOfClass(CommandClass::BE_LOADED);
+			} else if (getType()->isOfClass(UnitClass::CARRIER)
+			&& type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
 			//load
 			commandType = type->getFirstCtOfClass(CommandClass::LOAD);
 		} else {
-			//repair allies
+				// repair
+			commandType = getRepairCommandType(targetUnit);
+		}
+		} else { // repair allies
 			commandType = getRepairCommandType(targetUnit);
 		}
 	} else {
@@ -1043,12 +1079,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 /** called to update animation cycle on a dead unit */
 void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
-	if (!skillParticleSystems.empty()) {
-		foreach (UnitParticleSystems, it, skillParticleSystems) {
-			(*it)->fade();
-		}
-		skillParticleSystems.clear();
-	}
+
 	// when dead and have already played one complete anim cycle, set startFrame to last frame, endFrame 
 	// to this frame to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
 	const int &frame = g_world.getFrameCount();
@@ -1080,6 +1111,18 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 			assert(soundOffset > 0);
 		}
 	}
+	// modify offsets for attack skills
+	if (currSkill->getClass() == SkillClass::ATTACK) {
+		fixed ratio = currSkill->getSpeed() / fixed(getSpeed());
+		frameOffset = (frameOffset * ratio).round();
+		if (soundOffset > 0) {
+			soundOffset = (soundOffset * ratio).round();
+		}
+		if (attackOffset > 0) {
+			attackOffset = (attackOffset * ratio).round();
+		}
+	}
+
 	const int &frame = g_world.getFrameCount();
 	assert(frameOffset > 0);
 	this->lastAnimReset = frame;
@@ -1192,6 +1235,7 @@ bool Unit::update() {
 		}
 	}
 
+	if (!carried) {
 	// update particle system location/orientation
 	if (fire && moved) {
 		fire->setPos(getCurrVector());
@@ -1206,7 +1250,7 @@ bool Unit::update() {
 			if (rotated) (*it)->setRotation(getRotation());
 		}
 	}
-
+	}
 	// check for cycle completion
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead
 	if (frame >= getNextCommandUpdate()) {
@@ -1387,7 +1431,8 @@ bool Unit::decHp(int i) {
 	}
 
 	// fire
-	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2 && fire == NULL) {
+	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2
+	&& fire == NULL && m_carrier == -1) {
 		FireParticleSystem *fps;
 		Vec2i cPos = getCenteredPos();
 		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
@@ -1414,52 +1459,45 @@ bool Unit::decHp(int i) {
 	return false;
 }
 
-string Unit::getDesc(bool full) const {
-	int armorBonus = getArmor() - type->getArmor();
-	int sightBonus = getSight() - type->getSight();
-
+string Unit::getShortDesc() const {
 	stringstream ss;
-	//pos
-	//str+="Pos: "+v2iToStr(pos)+"\n";
-
-	//hp
 	ss << g_lang.get("Hp") << ": " << hp << "/" << getMaxHp();
 	if (getHpRegeneration()) {
 		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
 	}
-
-	//ep
 	if (getMaxEp()) {
 		ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
 		if (getEpRegeneration()) {
 			ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
 		}
 	}
-
-	if (!full) {
-		// Show only current command being executed and effects
-		if (!commands.empty()) {
+	if (!commands.empty()) { // Show current command being executed
 			ss << endl << commands.front()->getType()->getName();
 		}
-		effects.streamDesc(ss);
-		//effects.getDesc(str);
 		return ss.str();
-	}
+}
 
-	//armor
+string Unit::getLongDesc() const {
+	string shortDesc = getShortDesc();
+	stringstream ss;
+
+	int armorBonus = getArmor() - type->getArmor();
+	int sightBonus = getSight() - type->getSight();
+
+	// armor
 	ss << endl << g_lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
 		ss << (armorBonus > 0 ? "+" : "-") << armorBonus;
 	}
 	ss << " (" << type->getArmourType()->getName() << ")";
 
-	//sight
+	// sight
 	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? "+" : "-") << sightBonus;
 	}
 
-	//kills
+	// kills
 	const Level *nextLevel = getNextLevel();
 	if (kills > 0 || nextLevel) {
 		ss << endl << g_lang.get("Kills") << ": " << kills;
@@ -1468,12 +1506,12 @@ string Unit::getDesc(bool full) const {
 		}
 	}
 
-	//load
+	// resource load
 	if (loadCount) {
 		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << loadType->getName();
 	}
 
-	//consumable production
+	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
 		const Resource *r = getType()->getCost(i);
 		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
@@ -1481,15 +1519,7 @@ string Unit::getDesc(bool full) const {
 				<< ": " << abs(r->getAmount()) << " " << r->getType()->getName();
 		}
 	}
-
-	//command info
-	if (!commands.empty()) {
-		ss << endl << commands.front()->getType()->getName();
-		if (commands.size() > 1) {
-			ss << endl << g_lang.get("OrdersOnQueue") << ": " << commands.size();
-		}
-	} else {
-		//can store
+	// can store
 		if (type->getStoredResourceCount() > 0) {
 			for (int i = 0; i < type->getStoredResourceCount(); ++i) {
 				const Resource *r = type->getStoredResource(i);
@@ -1497,12 +1527,10 @@ string Unit::getDesc(bool full) const {
 				ss << r->getAmount() << " " << r->getType()->getName();
 			}
 		}
-	}
-
-	//effects
+	// effects
 	effects.streamDesc(ss);
 
-	return ss.str();
+	return (shortDesc + ss.str());
 }
 
 /** Apply effects of an UpgradeType
@@ -1606,11 +1634,15 @@ bool Unit::add(Effect *e) {
 	}
 
 	bool startParticles = true;
+	if (isCarried()) {
+		startParticles = false;
+	} else {
 	foreach (Effects, it, effects) {
 		if (e->getType() == (*it)->getType()) {
 			startParticles = false;
 			break;
 		}
+	}
 	}
 	effects.add(e);
 
@@ -1735,6 +1767,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 			}
 		}
 		commands = newCommands;
+		StateChanged(this);
 		return true;
 	} else {
 		return false;
@@ -1748,7 +1781,6 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
   * @return the height this unit 'stands' at
   */
 float Unit::computeHeight(const Vec2i &pos) const {
-	RUNTIME_CHECK(map->isInside(pos));
 	const Cell *const &cell = map->getCell(pos);
 	switch (type->getField()) {
 		case Field::LAND:
@@ -1776,6 +1808,9 @@ void Unit::updateTarget(const Unit *target) {
 	}
 
 	if (target) {
+		if (target->isCarried()) {
+			target = g_simInterface->getUnitFactory().getUnit(target->getCarrier());
+		}
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)
 				: targetPos = target->getCenteredPos();
