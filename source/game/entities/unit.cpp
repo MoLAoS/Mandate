@@ -500,7 +500,7 @@ void Unit::setCommandCallback() {
 void Unit::setCurrSkill(const SkillType *newSkill) {
 	assert(newSkill);
 	//COMMAND_LOG(g_world.getFrameCount() << "::Unit:" << id << " skill set => " << SkillClassNames[currSkill->getClass()] );
-	if (newSkill->getClass() == SkillClass::STOP && currSkill->getClass() == SkillClass::STOP) {
+	if (newSkill == currSkill) {
 		return;
 	}
 	if (newSkill != currSkill) {
