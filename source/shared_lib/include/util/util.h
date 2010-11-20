@@ -143,6 +143,7 @@ public:
 	if (!(x)) {																\
 		std::stringstream ss;												\
 		ss << __FUNCTION__ << " (" << __FILE__ << " : " << __LINE__ << ")";	\
+		g_errorLog.add("In " + ss.str() + "\nRuntime check fail: "#x);		\
 		throw runtime_error("In " + ss.str() + "\nRuntime check fail: "#x);	\
 	}	
 
