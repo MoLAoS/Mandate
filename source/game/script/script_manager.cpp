@@ -77,6 +77,9 @@ void ScriptManager::cleanUp() {
 	triggerManager.reset();
 	latestCreated.id = -1;
 	latestCasualty.id = -1;
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		playerModifiers[i] = PlayerModifiers();
+	}
 }
 
 int getSubfaction(LuaHandle *luaHandle);
