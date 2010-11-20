@@ -267,7 +267,7 @@ void PatrolCommandType::update(Unit *unit) const {
 			command->setUnit(NULL);
 			command->setPos(pos);
 		} else { // if target not dead calc nearest pos with patrol range 
-			pos = Map::getNearestPos(unit->getPos(), pos, 1, getMaxDistance());
+			pos = Map::getNearestPos(unit->getPos(), target->getPos(), 1, getMaxDistance());
 		}
 	} else { // no target unit, use command pos
 		pos = command->getPos();
@@ -278,6 +278,7 @@ void PatrolCommandType::update(Unit *unit) const {
 	}
 	// If destination reached or blocked, turn around on next update.
 	if (updateGeneric(unit, command, this, NULL, pos)) {
+		unit->clearPath();
 		command->swap();
 	}
 }
