@@ -27,4 +27,8 @@
 		<unit name="technodrome" amount="0"/>
 	</starting-units>	
 	<music value="true" path="music/music_tech.ogg"/>
+	<logo value="true">
+		<team-colour path="tech_logo_team.png" />
+		<rgba-colour path="tech_logo_rgba.png" />
+	</logo>
 </faction>
