@@ -115,23 +115,34 @@ void GameCamera::setDest(const Vec2i &pos, int height, float hAngle, float vAngl
 
 void GameCamera::setCameraMotion(const Vec2i &posit, const Vec2i &angle,
 		int linearFrameCount, int angularFrameCount,
-		int linearFrameDelay, int angularFrameDelay){
+		int linearFrameDelay, int angularFrameDelay) {
 	switchState(sScenario);
 	destPos.x = float(posit.x);
 	destPos.y = pos.y;
 	destPos.z = float(posit.y);
 	// To be consistent with setDest(..) swap x and y in the rotation.
 	destAng.x = float(angle.y);
-	destAng.y = float(angle.x);
+	
+	float y = float(angle.x);
+	while (y >= 360.f) y -= 360.f;
+	while (y < 0.f) y += 360.f;
+	destAng.y = y;
+
 	totalLinearFrames = linearFrameCount;
 	totalAngularFrames = angularFrameCount;
 	linearDelay = linearFrameDelay;
 	angularDelay = angularFrameDelay;
 	linearVelocity = Vec3f(destPos - pos) / float(linearFrameCount);
 	angularVelocity.x = float(destAng.x - vAng) / angularFrameCount;
-	angularVelocity.y = float(destAng.y - hAng) / angularFrameCount;
+	y -= hAng;
+	if (y < 0.f) {
+		y += 360.f;
+	}
+	if (y > 180.f) {
+		y = -(360.f - y);
+	}
+	angularVelocity.y = y / angularFrameCount;
 }
-
 void GameCamera::update() {
 	Vec3f move = moveMouse + moveKey;
 
