@@ -54,3 +54,8 @@ function magic_cheat(fNdx)
 	createUnit('energy_source', fNdx, startLocation(fNdx));
 	for i=1, 10 do createUnit('initiate', fNdx, startLocation(fNdx)); end
 end
+
+function mages(num, ndx)
+	for i=1, num do createUnit("battlemage", ndx, startLocation(ndx)) end
+end
+
