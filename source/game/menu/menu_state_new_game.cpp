@@ -93,7 +93,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_playNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
 	m_playNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
-	gap = (metrics.getScreenW() - 600) / 4;
+	const int listWidth = 250;
+	gap = (metrics.getScreenW() - listWidth * 3) / 4;
 
 	// map listBox
 	set<string> mapFiles;
@@ -122,7 +123,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_mapFiles.push_back(*it);
 		results.push_back(formatString(*it));
 	}
-	x = gap, w = 200, y = 170, h = 30;
+	x = gap, w = listWidth, y = 170, h = 30;
 	m_mapList = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
 	m_mapList->addItems(results);
 	m_mapList->setDropBoxHeight(140);
@@ -161,6 +162,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetLabel = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
 	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
 	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
 	//tech Tree listBox
 	findAll("techs/*.", results);
 	if (results.size() == 0) {
