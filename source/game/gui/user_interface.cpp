@@ -991,7 +991,7 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		if (!tip.empty()) {
 			res += tip + "\n\n";
 		}
-		res += pt->getReqDesc();
+		res += formatString(pt->getReqDesc());
 		m_display->setToolTipText(res);
 	}
 }
