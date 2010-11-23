@@ -58,8 +58,8 @@ MainWindow::MainWindow(const string &modelPath)
 	speed = 100;
 
 	//gl canvas
-	//int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
-	glCanvas = new GlCanvas(this/*, args*/);
+	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0};
+	glCanvas = new GlCanvas(this, args);
 
 	menu= new wxMenuBar();
 
