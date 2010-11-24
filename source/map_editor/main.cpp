@@ -66,7 +66,7 @@ MainWindow::MainWindow()
 	this->panel = new wxPanel(this, wxID_ANY);
 
 	//gl canvas
-	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER };
+	int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, 0 };
 	glCanvas = new GlCanvas(this, this->panel, args);
 
 	buildMenuBar();
