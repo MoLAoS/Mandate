@@ -69,7 +69,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		, m_humanSlot(0)
 		, m_origMusicVolume(1.f)
 		, m_fadeMusicOut(false) {
-	_PROFILE_FUNCTION();
+//	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	Lang &lang = Lang::getInstance();
 	Font *font = g_coreData.getFTMenuFontNormal();

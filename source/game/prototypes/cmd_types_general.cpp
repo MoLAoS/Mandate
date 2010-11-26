@@ -233,7 +233,6 @@ void StopCommandType::update(Unit *unit) const {
 	// if we have another command then stop sitting on your ass
 	if (unit->getCommands().size() > 1) {
 		unit->finishCommand();
-		UNIT_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " cancelling stop" );
 		return;
 	}
 	unit->setCurrSkill(m_stopSkillType);

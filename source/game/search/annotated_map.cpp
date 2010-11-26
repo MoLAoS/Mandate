@@ -69,7 +69,7 @@ AnnotatedMap::~AnnotatedMap() {
 
 /** Initialise clearance data for a master map. */
 void AnnotatedMap::initMapMetrics() {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	Util::ReverseRectIterator iter(Vec2i(0,0), Vec2i(width - 1, height - 1));
 	while (iter.more()) {
 		computeClearances(iter.next());

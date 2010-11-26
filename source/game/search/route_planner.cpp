@@ -35,18 +35,8 @@
 #	include "debug_renderer.h"
 #endif
 
-#ifndef PATHFINDER_DEBUG_MESSAGES
-#	define PATHFINDER_DEBUG_MESSAGES 0 
-#endif
-
-#if PATHFINDER_DEBUG_MESSAGES
-#	define CONSOLE_LOG(x) {g_console.addLine(x); g_logger.add(x);}
-#else
-#	define CONSOLE_LOG(x) {}
-#endif
-
-#define _PROFILE_PATHFINDER()
-//#define _PROFILE_PATHFINDER() _PROFILE_FUNCTION()
+//#define _PROFILE_PATHFINDER()
+#define _PROFILE_PATHFINDER() _PROFILE_FUNCTION()
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;
@@ -111,7 +101,7 @@ RoutePlanner::RoutePlanner(World *world)
 		, nodeStore(NULL)
 		, tSearchEngine(NULL)
 		, tNodeStore(NULL) {
-	g_logger.add( "Initialising SearchEngine", true );
+	//g_logger.add( "Initialising SearchEngine", true );
 
 	const int &w = world->getMap()->getW();
 	const int &h = world->getMap()->getH();
@@ -276,6 +266,8 @@ HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &des
 }
 
 HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, WaypointPath &waypoints) {
+	TIME_FUNCTION();
+	_PROFILE_PATHFINDER();
 	TransitionGoal goal;
 	HAAStarResult setupResult = setupHierarchicalSearch(unit, dest, goal);
 	nsgSearchEngine->getNeighbourFunc().setSearchSpace(SearchSpace::CELLMAP);
@@ -335,7 +327,7 @@ public:
 	}
 };
 
-/** cost function for searching cluster map with a unexploted target */
+/** cost function for searching cluster map with an unexplored target */
 class UnexploredCost {
 	Field field;
 	int size;
@@ -362,6 +354,8 @@ public:
 };
 
 HAAStarResult RoutePlanner::findWaypointPathUnExplored(Unit *unit, const Vec2i &dest, WaypointPath &waypoints) {
+	TIME_FUNCTION();
+	_PROFILE_PATHFINDER();
 	// set-up open list
 	HAAStarResult res = setupHierarchicalOpenList(unit, dest);
 	nsgSearchEngine->getNeighbourFunc().setSearchSpace(SearchSpace::CELLMAP);
@@ -390,6 +384,7 @@ HAAStarResult RoutePlanner::findWaypointPathUnExplored(Unit *unit, const Vec2i &
   * @return true if successful, in which case waypoint will have been popped.
   * false on failure, in which case waypoint will not be popped. */
 bool RoutePlanner::refinePath(Unit *unit) {
+	_PROFILE_PATHFINDER();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	UnitPath &path = *unit->getPath();
 	assert(!wpPath.empty());
@@ -426,6 +421,7 @@ bool RoutePlanner::refinePath(Unit *unit) {
 #undef max
 
 void RoutePlanner::smoothPath(Unit *unit) {
+	_PROFILE_PATHFINDER();
 	if (unit->getPath()->size() < 3) {
 		return;
 	}
@@ -499,6 +495,8 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	float step = unit->getPos().dist(path.front());
 	if (step > 1.5f || step < 0.9f) {
+		PF_LOG( "Invalid route cache." );
+		PF_PATH_LOG( unit );
 		return TravelState::BLOCKED; // invalid
 	}
 	if (attemptMove(unit)) {
@@ -508,26 +506,41 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 			while (!wpPath.empty() && path.size() < 24) {
 				// refine path to at least 24 steps (or end of path)
 				if (!refinePath(unit)) {
-					CONSOLE_LOG( "refinePath() failed. [route cache]" )
 					wpPath.clear();
+					PF_LOG( "refinePath() failed. [route cache], clearing waypoint-path" );
+					//PF_PATH_LOG( unit );
 					break;
 				}
 			}
+			PF_LOG( "doRouteCache() path refined." );
 			smoothPath(unit);
 			IF_DEBUG_EDITION( collectPath(unit); )
 		}
+		PF_LOG( "moving from " << unit->getPos() << " to " << unit->getNextPos() );
+		PF_PATH_LOG( unit );
 		return TravelState::MOVING;
+	}
+	path.incBlockCount();
+	if (!path.isBlocked()) {
+		PF_LOG( "doRouteCache() BLOCKED" );
+		return TravelState::BLOCKED;
 	}
 	// path blocked, quickSearch to next waypoint...
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), wpPath.empty() ? path.back() : wpPath.front()); )
 	if (repairPath(unit) && attemptMove(unit)) {
+		PF_UNIT_LOG( unit, "doRouteCache() Blocked path repaired, moving from " << unit->getPos() << " to " << unit->getNextPos() );
+		PF_PATH_LOG( unit );
 		IF_DEBUG_EDITION( collectPath(unit); )
+		path.resetBlockCount();
 		return TravelState::MOVING;
 	}
+	PF_LOG( "doRouteCache() BLOCKED, block count exceeded, clearing paths" );
+	unit->clearPath();
 	return TravelState::BLOCKED;
 }
 
 TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
+	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
 	UnitPath &path = *unit->getPath();
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
@@ -545,15 +558,20 @@ TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
 			path.pop();
 			if (attemptMove(unit)) {
 				IF_DEBUG_EDITION( collectPath(unit); )
+				PF_LOG( "doQuickPathSearch() ok. moving from " << unit->getPos() << " to " << unit->getNextPos() );
+				PF_PATH_LOG( unit );
 				return TravelState::MOVING;
 			}
 		}
-		path.clear();
+		PF_LOG( "doQuickPathSearch() search success, but path invalid. clearing path." );
+		unit->clearPath();
 	}
+	PF_LOG( "doQuickPathSearch() failed." );
 	return TravelState::BLOCKED;
 }
 
 TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
+	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	UnitPath &path = *unit->getPath();
 	PosGoal goal(targetPos);
@@ -575,12 +593,15 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
 		if (path.size() > 1) {
 			path.pop();
 			if (attemptMove(unit)) {
+				PF_LOG( "findAerialPath() Ok." );
+				PF_PATH_LOG( unit );
 				return TravelState::MOVING;
 			}
 		} else {
-			path.clear();
+			unit->clearPath();
 		}
 	}
+	PF_LOG( "findAerialPath() failed, incrementing blockcount." );
 	path.incBlockCount();
 	return TravelState::BLOCKED;
 }
@@ -591,6 +612,8 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
   * @return ARRIVED, MOVING, BLOCKED or IMPOSSIBLE
   */
 TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) {
+	PF_UNIT_LOG( unit, "findPathToLocation() current pos = " << unit->getPos() << " target pos = " << finalPos );
+	PF_LOG( "Command class = " << CommandClassNames[g_simInterface->processingCommandClass()] );
 	if (!world->getMap()->isInside(finalPos)) {
 		stringstream ss;
 		ss << __FUNCTION__ << "() passed bad arg, pos = " << finalPos
@@ -602,8 +625,10 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	WaypointPath &wpPath = *unit->getWaypointPath();
 
 	// if arrived (where we wanted to go)
-	if(finalPos == unit->getPos()) {
+	if (finalPos == unit->getPos()) {
 		unit->setCurrSkill(SkillClass::STOP);
+		PF_LOG( "ARRIVED, at pos." );
+		PF_PATH_LOG( unit );
 		return TravelState::ARRIVED;
 	}
 	// route cache
@@ -611,6 +636,11 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 		if (doRouteCache(unit) == TravelState::MOVING) {
 			return TravelState::MOVING;
 		}
+		if (!path.isBlocked()) {
+			return TravelState::BLOCKED;
+		}
+	} else {
+		PF_LOG( "path is empty." );
 	}
 	// route cache miss or blocked
 	const Vec2i &target = computeNearestFreePos(unit, finalPos);
@@ -618,10 +648,11 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	// if arrived (as close as we can get to it)
 	if (target == unit->getPos()) {
 		unit->setCurrSkill(SkillClass::STOP);
+		PF_LOG( "ARRIVED, as close as possible." );
+		PF_PATH_LOG( unit );
 		return TravelState::ARRIVED;
 	}
-	path.clear();
-	wpPath.clear();
+	//unit->clearPath();
 
 	if (unit->getCurrField() == Field::AIR) {
 		return findAerialPath(unit, target);
@@ -635,6 +666,8 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 			return TravelState::MOVING;
 		}
 	}
+	PF_LOG( "Performing hierarchical search." );
+
 	// Hierarchical Search
 	tSearchEngine->reset();
 	HAAStarResult res;
@@ -650,12 +683,15 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	}
 	if (res == HAAStarResult::FAILURE) {
 		if (unit->getFaction()->isThisFaction()) {
-			g_console.addLine("Can not reach destination."); ///@todo localise
+			g_console.addLine(g_lang.get("DestinationUnreachable."));
 		}
+		PF_LOG( "Route not possible." );
 		return TravelState::IMPOSSIBLE;
 	} else if (res == HAAStarResult::START_TRAP) {
+		PF_UNIT_LOG( unit, "START_TRAP." );
 		if (wpPath.size() < 2) {
-			CONSOLE_LOG( "START_TRAP" );
+			PF_LOG( "Only one waypoint, blocked." );
+			PF_PATH_LOG( unit );
 			return TravelState::BLOCKED;
 		}
 	}
@@ -663,22 +699,24 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	IF_DEBUG_EDITION( collectWaypointPath(unit); )
 	//CONSOLE_LOG( "WaypointPath size : " + intToStr(wpPath.size()) )
 
-	if (wpPath.size() > 1) {
-		wpPath.pop();
-	}
-	assert(!wpPath.empty());
+	// this can flood the start cluster on the initial refinement too easily
+	//if (wpPath.size() > 1) {
+	//	wpPath.pop();
+	//}
+	RUNTIME_CHECK(!wpPath.empty());
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	// refine path, to at least 20 steps (or end of path)
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	aMap->annotateLocal(unit);
 	wpPath.condense();
+	//
+	///@todo to compensate for not popping the first waypoint, extend path to at
+	// least 1.5 * clusterSize, so smoothPath() should take care of any dodgey bits.
+	//
 	while (!wpPath.empty() && path.size() < 20) {
 		if (!refinePath(unit)) {
-			if (res == HAAStarResult::START_TRAP) {
-				CONSOLE_LOG( "refinePath failed. [START_TRAP]" )
-			} else {
-				CONSOLE_LOG( "refinePath failed. [fresh path]" )
-			}
+			PF_LOG( "refinePath failed." );
+			PF_PATH_LOG( unit );
 			aMap->clearLocalAnnotations(unit);
 			path.incBlockCount();
 			//CONSOLE_LOG( "   blockCount = " + intToStr(path.getBlockCount()) )
@@ -689,19 +727,24 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	aMap->clearLocalAnnotations(unit);
 	IF_DEBUG_EDITION( collectPath(unit); )
 	if (path.empty()) {
-		CONSOLE_LOG( "post hierarchical search failure, path empty." );
+		PF_LOG( "post hierarchical search failure, path empty." );
+		PF_PATH_LOG( unit );
 		return TravelState::BLOCKED;
 	}
 	if (attemptMove(unit)) {
+		PF_LOG( "moving from " << unit->getPos() << " to " << unit->getNextPos() );
+		PF_PATH_LOG( unit );
 		return TravelState::MOVING;
 	}
-	CONSOLE_LOG( "Hierarchical refined path blocked ? valid ?!?" )
+	PF_LOG( "post hierarchical search failure, path invalid?" );
+	PF_PATH_LOG( unit );
 	unit->setCurrSkill(SkillClass::STOP);
 	path.incBlockCount();
 	return TravelState::BLOCKED;
 }
 
 TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Vec2i &target) {
+	_PROFILE_PATHFINDER();
 	UnitPath &path = *unit->getPath();
 	//WaypointPath &wpPath = *unit->getWaypointPath();
 	const Vec2i &start = unit->getPos();
@@ -727,20 +770,28 @@ TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Ve
 		if (!path.empty()) path.pop();
 		IF_DEBUG_EDITION( collectPath(unit); )
 		if (attemptMove(unit)) {
+			PF_LOG( "customGoalSearch() ok. moving from " << unit->getPos() << " to " << unit->getNextPos() );
+			PF_PATH_LOG( unit );
 			return TravelState::MOVING;
 		}
-		path.clear();
+		PF_LOG( "customGoalSearch() search success, but path invalid." );
+		unit->clearPath();
 	}
+	PF_LOG( "customGoalSearch() search failed." );
 	return TravelState::BLOCKED;
 }
 
 TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2i &target) {
+	PF_UNIT_LOG( unit, "findPathToGoal() current pos = " << unit->getPos() << " target pos = " << target );
+	PF_LOG( "Command class = " << CommandClassNames[g_simInterface->processingCommandClass()] );
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 
 	// if at goal
 	if (goal(unit->getPos(), 0.f)) {
 		unit->setCurrSkill(SkillClass::STOP);
+		PF_LOG( "ARRIVED, at goal." );
+		PF_PATH_LOG( unit );
 		return TravelState::ARRIVED;
 	}
 	// route chache
@@ -748,8 +799,12 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 		if (doRouteCache(unit) == TravelState::MOVING) {
 			return TravelState::MOVING;
 		}
-		path.clear();
-		wpPath.clear();
+		path.incBlockCount();
+		if (!path.isBlocked()) {
+			PF_LOG( "BLOCKED" );
+			return TravelState::BLOCKED;
+		}
+		unit->clearPath();
 	}
 	// try customGoalSearch if close to target
 	if (unit->getPos().dist(target) < 50.f) {
@@ -759,25 +814,29 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 			return TravelState::BLOCKED;
 		}
 	}
+	PF_LOG( "Performing hierarchical search." );
+
 	// Hierarchical Search
 	tSearchEngine->reset();
 	if (g_map.getTile(Map::toTileCoords(target))->isExplored(unit->getTeam())) {
 		if (!findWaypointPath(unit, target, wpPath)) {
-			if (unit->getFaction()->isThisFaction()) {
-				CONSOLE_LOG( "Destination unreachable? [Custom Goal Search]" )
-			}
+			//if (unit->getFaction()->isThisFaction()) {
+			//	CONSOLE_LOG( "Destination unreachable? [Custom Goal Search]" )
+			//}
+			PF_LOG( "Route not possible (normal search)." );
 			return TravelState::IMPOSSIBLE;
 		}
 	} else {
 		if (!findWaypointPathUnExplored(unit, target, wpPath)) {
-			if (unit->getFaction()->isThisFaction()) {
-				CONSOLE_LOG( "Destination unreachable? [Custom Goal Search]" )
-			}
+			//if (unit->getFaction()->isThisFaction()) {
+			//	CONSOLE_LOG( "Destination unreachable? [Custom Goal Search]" )
+			//}
+			PF_LOG( "Route not possible (un-explored goal)." );
 			return TravelState::IMPOSSIBLE;
 		}
 	}
 	IF_DEBUG_EDITION( collectWaypointPath(unit); )
-	assert(wpPath.size() > 1);
+	RUNTIME_CHECK(wpPath.size() > 1);
 	wpPath.pop();
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	// cull destination and waypoints close to it, when we get to the last remaining 
@@ -790,7 +849,8 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 	aMap->annotateLocal(unit);
 	while (!wpPath.empty() && path.size() < 20) {
 		if (!refinePath(unit)) {
-			CONSOLE_LOG( "refinePath failed! [Custom Goal Search]" )
+			PF_LOG( "BLOCKED, refinePath failed!!" );
+			PF_PATH_LOG( unit );
 			aMap->clearLocalAnnotations(unit);
 			return TravelState::BLOCKED;
 		}
@@ -799,10 +859,13 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 	aMap->clearLocalAnnotations(unit);
 	IF_DEBUG_EDITION( collectPath(unit); )
 	if (attemptMove(unit)) {
+		PF_LOG( "moving from " << unit->getPos() << " to " << unit->getNextPos() );
+		PF_PATH_LOG( unit );
 		return TravelState::MOVING;
 	}
-	CONSOLE_LOG( "Hierarchical refined path blocked ? valid ?!? [Custom Goal Search]" )
 	unit->setCurrSkill(SkillClass::STOP);
+	PF_LOG( "post hierarchical search failure, path invalid?" );
+	PF_PATH_LOG( unit );
 	return TravelState::BLOCKED;
 }
 
@@ -819,7 +882,7 @@ bool RoutePlanner::repairPath(Unit *unit) {
 	} else {
 		dest = path.back();
 	}
-	path.clear();
+	unit->clearPath();
 
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
 	aMap->annotateLocal(unit);
@@ -836,7 +899,7 @@ bool RoutePlanner::repairPath(Unit *unit) {
 				wpPath.pop();
 			}
 		} else {
-			path.clear();
+			unit->clearPath();
 		}
 	}
 	aMap->clearLocalAnnotations(unit);
@@ -861,8 +924,7 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 		unit->setCurrSkill(SkillClass::STOP);
 		return TravelState::ARRIVED;
 	}
-	path.clear();
-	wpPath.clear();
+	unit->clearPath();
 
 	// Low Level Search with NodeMap (this is for testing purposes only, not node limited)
 

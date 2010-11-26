@@ -105,7 +105,7 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
@@ -293,7 +293,7 @@ void World::updateFaction(const Faction *f) {
 }
 
 void World::processFrame() {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION);
 
 	//m_unitTypeFactory.assertTypes();
 
@@ -355,7 +355,7 @@ void World::hit(Unit *attacker) {
 }
 
 void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	typedef std::map<Unit*, fixed> DistMap;
 	//hit attack positions
 	if (ast->getSplash() && ast->getSplashRadius()) {

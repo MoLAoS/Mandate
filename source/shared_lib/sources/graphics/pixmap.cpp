@@ -283,7 +283,7 @@ void PixmapIoBmp::read(uint8 *pixels){
 }
 
 void PixmapIoBmp::read(uint8 *pixels, int components){
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	//const int alignOffset = (w * this->components) % 4;
 	const int rowPad = 0;//alignOffset ? 4 - alignOffset : 0;
 	const int rowSize = w * this->components + rowPad;

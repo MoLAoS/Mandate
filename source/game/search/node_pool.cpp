@@ -24,15 +24,14 @@ namespace Glest { namespace Search {
 // 	class NodePool
 // =====================================================
 
+const int NodePool::size = 1024 + 256;
+
 NodePool::NodePool(int w, int h)
 		: counter(0)
 		, leastH(NULL)
 		, numNodes(0)
 		, tmpMaxNodes(size)
 		, markerArray(w, h) {
-#	if _USE_STL_HEAP_
-		openHeap.reserve(size / 2);
-#	endif
 	stock = new AStarNode[size];
 }
 
@@ -93,12 +92,7 @@ void NodePool::addOpenNode(AStarNode *node) {
 	assert(!isOpen(node->pos()));
 	markerArray.setOpen(node->pos());
 	markerArray.set(node->pos(), node);
-#	if _USE_STL_HEAP_
-		openHeap.push_back(node);
-		push_heap(openHeap.begin(), openHeap.end(), AStarComp());
-#	else
-		openHeap.insert(node);
-#	endif
+	openHeap.insert(node);
 }
 
 /** conditionally update a node on the open list. Tests if a path through a new nieghbour
@@ -115,16 +109,7 @@ void NodePool::updateOpen(const Vec2i &pos, const Vec2i &prev, const float cost)
 		posNode->posOff.ox = prev.x - pos.x;
 		posNode->posOff.oy = prev.y - pos.y;
 		posNode->distToHere = prevNode->distToHere + cost;
-#		if _USE_STL_HEAP_
-#			if 1	// find and push heap
-				vector<AStarNode*>::iterator it = find(openHeap.begin(), openHeap.end(), posNode);
-				push_heap(openHeap.begin(), it + 1, AStarComp());
-#			else	// just remake entire heap
-				make_heap(openHeap.begin(), openHeap.end(), AStarComp());
-#			endif
-#		else
-			openHeap.promote(posNode);
-#		endif
+		openHeap.promote(posNode);
 	}
 }
 

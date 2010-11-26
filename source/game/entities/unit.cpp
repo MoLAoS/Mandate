@@ -157,7 +157,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
 
-	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " constructed at pos" << pos );
+	ULC_UNIT_LOG( this, " constructed at pos" << pos );
 
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
@@ -195,7 +195,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	progress2 = node->getChildIntValue("progress2");
 	targetField = (Field)node->getChildIntValue("targetField");
 
-	pos = node->getChildVec2iValue("pos"); //map->putUnitCells() will set this, so we reload it later
+	pos = node->getChildVec2iValue("pos");
 	lastPos = node->getChildVec2iValue("lastPos");
 	nextPos = node->getChildVec2iValue("nextPos");
 	targetPos = node->getChildVec2iValue("targetPos");
@@ -260,6 +260,9 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 			map->putUnitCells(this, pos);
 			meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
 		}
+		ULC_UNIT_LOG( this, " constructed at pos" << pos );
+	} else {
+		ULC_UNIT_LOG( this, " constructed dead." );
 	}
 	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
@@ -272,7 +275,9 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 /** delete stuff */
 Unit::~Unit() {
 	removeCommands();
-//	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id << " deleted." );
+	if (!Program::getInstance()->isTerminating() && World::isConstructed()) {
+		ULC_UNIT_LOG( this, " deleted." );
+	}
 }
 
 void Unit::save(XmlNode *node) const {
@@ -650,6 +655,18 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 #endif
 }
 
+void Unit::clearPath() {
+	CommandClass cc = g_simInterface->processingCommandClass();
+	if (cc != CommandClass::NULL_COMMAND && cc != CommandClass::INVALID) {
+		PF_UNIT_LOG( this, "path cleared." );
+		PF_LOG( "Command class = " << CommandClassNames[cc] );
+	} else {
+		CMD_LOG( "path cleared." );
+	}
+	unitPath.clear();
+	waypointPath.clear();
+}
+
 // =============================== Render related ==================================
 /*
 Vec3f Unit::getCurrVectorFlat() const {
@@ -708,7 +725,7 @@ unsigned int Unit::getCommandCount() const{
   */
 CommandResult Unit::giveCommand(Command *command) {
 	const CommandType *ct = command->getType();
-
+	CMD_UNIT_LOG( this, "giveCommand() " << *command );
 	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		if(command->isQueue() && !commands.empty()) {
 			commands.push_back(command);
@@ -716,22 +733,30 @@ CommandResult Unit::giveCommand(Command *command) {
 			meetingPos = command->getPos();
 			delete command;
 		}
-		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << *command << ", Result=" << CommandResultNames[CommandResult::SUCCESS] );
+		CMD_LOG( "Result = SUCCESS" );
 		return CommandResult::SUCCESS;
 	}
 
 	if (ct->isQueuable() || command->isQueue()) { // user wants this queued...
 		// cancel current command if it is not queuable or marked to be queued
 		if(!commands.empty() && !commands.front()->getType()->isQueuable() && !command->isQueue()) {
-			COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << " incoming command wants queue, but current is not queable. Cancel current command" );
-			cancelCommand();
-			unitPath.clear();
+			CMD_LOG( "incoming command wants queue, but current is not queable. Cancel current command" );
+			cancelCurrCommand();
+			clearPath();
 		}
 	} else {
 		// empty command queue
-		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << " incoming command is not marked to queue, Clear command queue" );
+		CMD_LOG( "incoming command is not marked to queue, Clear command queue" );
+
+		// HACK... The AI likes to re-issue the same commands, which stresses the pathfinder 
+		// on big maps. If current and incoming are both attack and have same pos, then do
+		// not clear path... (route cache will still be good).
+		if (! (!commands.empty() && command->getType()->getClass() == CommandClass::ATTACK
+		&& commands.front()->getType()->getClass() == CommandClass::ATTACK
+		&& command->getPos() == commands.front()->getPos()) ) {
+			clearPath();
+		}
 		clearCommands();
-		unitPath.clear();
 
 		// for patrol commands, remember where we started from
 		if(ct->getClass() == CommandClass::PATROL) {
@@ -741,8 +766,6 @@ CommandResult Unit::giveCommand(Command *command) {
 
 	// check command
 	CommandResult result = checkCommand(*command);
-	//COMMAND_LOG( "NO_RESERVE_RESOURCES flag is " << (command->isReserveResources() ? "not " : "" ) << "set,"
-	//	<< " command result = " << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		applyCommand(*command);
 
@@ -752,9 +775,9 @@ CommandResult Unit::giveCommand(Command *command) {
 		} else if (command->getType()->getClass() == CommandClass::LOAD) {
 			if (std::find(m_unitsToCarry.begin(), m_unitsToCarry.end(), command->getUnitRef()) == m_unitsToCarry.end()) {
 				m_unitsToCarry.push_back(command->getUnitRef());
-				COMMAND_LOG( __FUNCTION__ << "() adding unit to load list " << *command->getUnit() )
+				CMD_LOG( "adding unit to load list " << *command->getUnit() )
 				if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
-					COMMAND_LOG( __FUNCTION__ << "() deleting load command, already loading.")
+					CMD_LOG( "deleting load command, already loading.")
 					delete command;
 					command = 0;
 				}
@@ -764,9 +787,9 @@ CommandResult Unit::giveCommand(Command *command) {
 				if (std::find(m_unitsToUnload.begin(), m_unitsToUnload.end(), command->getUnitRef()) == m_unitsToUnload.end()) {
 					assert(std::find(m_carriedUnits.begin(), m_carriedUnits.end(), command->getUnitRef()) != m_carriedUnits.end());
 					m_unitsToUnload.push_back(command->getUnitRef());
-					COMMAND_LOG( __FUNCTION__ << "() adding unit to unload list " << *command->getUnit() )
+					CMD_LOG( "adding unit to unload list " << *command->getUnit() )
 					if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
-						COMMAND_LOG( __FUNCTION__ << "() deleting unload command, already unloading.")
+						CMD_LOG( "deleting unload command, already unloading.")
 						delete command;
 						command = 0;
 					}
@@ -787,7 +810,7 @@ CommandResult Unit::giveCommand(Command *command) {
 	StateChanged(this);
 
 	if (command) {
-		COMMAND_LOG( __FUNCTION__ << "(): " << *this << ", " << *command << ", Result=" << CommandResultNames[result] );
+		CMD_UNIT_LOG( this, "giveCommand() Result = " << CommandResultNames[result] );
 	}
 	return result;
 }
@@ -796,7 +819,7 @@ CommandResult Unit::giveCommand(Command *command) {
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
 	// pop front
-	COMMAND_LOG(__FUNCTION__ << "() " << *this << " popping current " << commands.front()->getType()->getName() << " command." );
+	CMD_LOG( "popping current " << commands.front()->getType()->getName() << " command." );
 
 	delete commands.front();
 	commands.erase(commands.begin());
@@ -812,9 +835,9 @@ Command *Unit::popCommand() {
 		command = commands.empty() ? NULL : commands.front();
 	}
 	if (command) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " new current is " << command->getType()->getName() << " command." );
+		CMD_LOG( "new current is " << command->getType()->getName() << " command." );
 	} else {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
+		CMD_LOG( "now has no commands." );
 	}
 	StateChanged(this);
 	return command;
@@ -825,10 +848,10 @@ Command *Unit::popCommand() {
 CommandResult Unit::finishCommand() {
 	//is empty?
 	if(commands.empty()) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " no command to finish!" );
+		CMD_UNIT_LOG( this, "finishCommand() no command to finish!" );
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	COMMAND_LOG(__FUNCTION__ << "() " << *this << ", " << commands.front()->getType()->getName() << " command finished." );
+	CMD_UNIT_LOG( this, commands.front()->getType()->getName() << " command finished." );
 
 	Command *command = popCommand();
 
@@ -838,9 +861,9 @@ CommandResult Unit::finishCommand() {
 	}
 
 	if (commands.empty()) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
+		CMD_LOG( "now has no commands." );
 	} else {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << ", " << commands.front()->getType()->getName() << " command next on queue." );
+		CMD_LOG( commands.front()->getType()->getName() << " command next on queue." );
 	}
 
 	return CommandResult::SUCCESS;
@@ -850,7 +873,7 @@ CommandResult Unit::finishCommand() {
 CommandResult Unit::cancelCommand() {
 	// is empty?
 	if(commands.empty()){
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " No commands to cancel!");
+		CMD_UNIT_LOG( this, "cancelCommand() No commands to cancel!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
 
@@ -868,9 +891,9 @@ CommandResult Unit::cancelCommand() {
 	clearPath();
 	
 	if (commands.empty()) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " current " << ct->getName() << " command cancelled.");
+		CMD_UNIT_LOG( this, "current " << ct->getName() << " command cancelled.");
 	} else {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " a queued " << ct->getName() << " command cancelled.");
+		CMD_UNIT_LOG( this, "a queued " << ct->getName() << " command cancelled.");
 	}
 	return CommandResult::SUCCESS;
 }
@@ -879,7 +902,7 @@ CommandResult Unit::cancelCommand() {
 CommandResult Unit::cancelCurrCommand() {
 	//is empty?
 	if(commands.empty()) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " No commands to cancel!");
+		CMD_UNIT_LOG( this, "cancelCurrCommand() No commands to cancel!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
 
@@ -889,16 +912,16 @@ CommandResult Unit::cancelCurrCommand() {
 	Command *command = popCommand();
 
 	if (!command) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " now has no commands." );
+		CMD_UNIT_LOG( this, "now has no commands." );
 	} else {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << ", " << command->getType()->getName() << " command next on queue." );
+		CMD_UNIT_LOG( this, command->getType()->getName() << " command next on queue." );
 	}
 	return CommandResult::SUCCESS;
 }
 
 void Unit::removeCommands() {
 	if (!g_program.isTerminating() && World::isConstructed()) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *this << " clearing all commands." );
+		CMD_UNIT_LOG( this, "clearing all commands." );
 	}
 	while (!commands.empty()) {
 		delete commands.back();
@@ -912,7 +935,7 @@ void Unit::removeCommands() {
   * @param startingUnit true if this is a starting unit.
   */
 void Unit::create(bool startingUnit) {
-	UNIT_LOG( g_world.getFrameCount() << "::Unit:" << id << " created." );
+	ULC_UNIT_LOG( this, "created." );
 	faction->add(this);
 	lastPos = Vec2i(-1);
 	map->putUnitCells(this, pos);
@@ -927,7 +950,7 @@ void Unit::create(bool startingUnit) {
 /** Give a unit life. Called when a unit becomes 'operative'
   */
 void Unit::born(){
-	UNIT_LOG(g_world.getFrameCount() << "::Unit:" << id + " born." );
+	ULC_UNIT_LOG( this, "born." );
 	faction->addStore(type);
 	faction->applyStaticProduction(type);
 	setCurrSkill(SkillClass::STOP);
@@ -960,7 +983,7 @@ void checkTargets(const Unit *dead) {
  */
 void Unit::kill() {
 	assert(hp <= 0);
-	UNIT_LOG(g_world.getFrameCount() << *this << " killed." );
+	ULC_UNIT_LOG( this, "killed." );
 	hp = 0;
 	g_world.getCartographer()->removeUnitVisibility(this);
 
@@ -1179,7 +1202,7 @@ void Unit::updateMoveSkillCycle() {
 
 /** @return true when the current skill has completed a cycle */
 bool Unit::update() {
-	_PROFILE_FUNCTION();
+//	_PROFILE_FUNCTION();
 	const int &frame = g_world.getFrameCount();
 
 	// start skill sound ?

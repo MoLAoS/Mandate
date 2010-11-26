@@ -124,6 +124,7 @@ Program::Program(CmdArgs &args)
 #	if AI_LOGGING
 		Logger::getAiLog().clear();
 #	endif
+	Logger::getWorldLog().clear();
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());

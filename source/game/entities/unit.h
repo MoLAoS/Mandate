@@ -33,28 +33,6 @@
 #include "simulation_enums.h"
 #include "entities_enums.h"
 
-#define LOG_COMMAND_ISSUE 1
-#define LOG_UNIT_LIFECYCLE 1
-
-#ifndef LOG_UNIT_LIFECYCLE
-#	define LOG_UNIT_LIFECYCLE 0
-#endif
-#ifndef LOG_COMMAND_ISSUE
-#	define LOG_COMMAND_ISSUE 0
-#endif
-
-#if LOG_UNIT_LIFECYCLE
-#	define UNIT_LOG(x) GAME_LOG(x)
-#else
-#	define UNIT_LOG(x)
-#endif
-
-#if LOG_COMMAND_ISSUE
-#	define COMMAND_LOG(x) GAME_LOG(x)
-#else
-#	define COMMAND_LOG(x)
-#endif
-
 using namespace Shared::Math;
 using namespace Shared::Graphics;
 
@@ -64,7 +42,8 @@ using Shared::Util::SingleTypeFactory;
 namespace Glest { namespace Entities {
 using namespace ProtoTypes;
 using Sim::Map;
-//using Search::CardinalDir;
+
+class Unit;
 
 class Vec2iList : public list<Vec2i> {
 public:
@@ -81,22 +60,25 @@ ostream& operator<<(ostream &stream,  Vec2iList &vec);
   * @extends std::list<Shared::Math::Vec2i>
   */
 class UnitPath : public Vec2iList {
+	friend class Unit;
 private:
 	static const int maxBlockCount = 10; /**< number of frames to wait on a blocked path */
 
 private:
 	int blockCount;		/**< number of frames this path has been blocked */
 
+	void clear()			{list<Vec2i>::clear(); blockCount = 0;} /**< clear the path		*/
+
 public:
 	UnitPath() : blockCount(0) {} /**< Construct path object */
-	bool isBlocked()	{return blockCount >= maxBlockCount;} /**< is this path blocked	   */
-	bool empty()		{return list<Vec2i>::empty();}	/**< is path empty				  */
-	int  size()			{return list<Vec2i>::size();}	/**< size of path				 */
-	void clear()		{list<Vec2i>::clear(); blockCount = 0;} /**< clear the path		*/
-	void incBlockCount(){blockCount++;}		   /**< increment block counter			   */
-	void push(Vec2i &pos){push_front(pos);}	  /**< push onto front of path			  */
-	Vec2i peek()		{return front();}	 /**< peek at the next position			 */	
-	void pop()			{erase(begin());}	/**< pop the next position off the path */
+	bool isBlocked()		{return blockCount >= maxBlockCount;} /**< is this path blocked	   */
+	bool empty()			{return list<Vec2i>::empty();}	/**< is path empty				  */
+	int  size()				{return list<Vec2i>::size();}	/**< size of path				 */
+	void resetBlockCount()	{blockCount = 0; }
+	void incBlockCount()	{blockCount++;}		   /**< increment block counter			   */
+	void push(Vec2i &pos)	{push_front(pos);}	  /**< push onto front of path			  */
+	Vec2i peek()			{return front();}	 /**< peek at the next position			 */	
+	void pop()				{erase(begin());}	/**< pop the next position off the path */
 
 	int getBlockCount() const { return blockCount; }
 
@@ -469,7 +451,7 @@ public:
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
 	int update2()										{return ++progress2;}
-	void clearPath() { unitPath.clear(); waypointPath.clear(); }
+	void clearPath();
 
 	// update skill & animation cycles
 	void updateSkillCycle(int offset);

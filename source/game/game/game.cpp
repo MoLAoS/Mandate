@@ -441,7 +441,7 @@ void GameState::setScriptDisplay(const string &msg) {
 				++lines;
 			}
 		}
-		m_scriptDisplayPos.y = g_metrics.getScreenH() - 64 - fm->getHeight() * (lines - 1);
+		m_scriptDisplayPos.y = g_metrics.getScreenH() - 64 - int(fm->getHeight() * (lines - 1));
 	}
 }
 
