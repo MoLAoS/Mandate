@@ -49,6 +49,8 @@ namespace ProtoTypes {
 // 	class SkillType
 //
 ///	A basic action that an unit can perform
+///@todo revise, these seem to hold data/properties for 
+/// actions rather than the actions themselves.
 // =====================================================
 
 class SkillType : public NameIdPair {

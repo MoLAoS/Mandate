@@ -270,7 +270,8 @@ void World::updateFaction(const Faction *f) {
 
 			m_simInterface->doUpdateUnitCommand(unit);
 
-			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE 
+				&& unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
 				// move unit in cells
 				moveUnitCells(unit);
 

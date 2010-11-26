@@ -207,6 +207,19 @@ public:
 };
 
 // ===============================
+//  class TeleportCommandType
+// ===============================
+
+class TeleportCommandType: public MoveBaseCommandType {
+public:
+	TeleportCommandType() : MoveBaseCommandType("Teleport", Clicks::TWO) {}
+	virtual void update(Unit *unit) const;
+
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::TELEPORT; }
+};
+
+// ===============================
 //  class AttackCommandTypeBase
 // ===============================
 

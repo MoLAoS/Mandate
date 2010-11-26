@@ -200,6 +200,54 @@ void MoveCommandType::update(Unit *unit) const {
 	}
 }
 
+// =====================================================
+// 	class TeleportCommandType
+// =====================================================
+
+void TeleportCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+
+	Vec2i pos;
+	if (command->getUnit()) {
+		pos = command->getUnit()->getCenteredPos();
+		if (!command->getUnit()->isAlive()) {
+			command->setPos(pos);
+			command->setUnit(NULL);
+		}
+	} else {
+		pos = command->getPos();
+	}
+
+	// some back bending to get the unit to face the direction of travel
+	if (unit->getPos() == pos) {
+		// finish command
+		unit->setCurrSkill(SkillClass::STOP);
+		unit->finishCommand();
+		return;
+	} else if (g_map.isFreeCell(pos, unit->getType()->getField())) {
+		// move to cell
+		unit->face(pos);
+		unit->setCurrSkill(m_moveSkillType);
+		g_map.clearUnitCells(unit, unit->getPos());
+		g_map.putUnitCells(unit, pos);
+		unit->setPos(pos);
+	} else {
+		g_console.addLine("Cell is not free");
+
+		// finish command
+		unit->setCurrSkill(SkillClass::STOP);
+		unit->finishCommand();
+	}
+
+	// if we're doing an auto command, let's make sure we still want to do it
+	Command *autoCmd;
+	if (command->isAuto() && (autoCmd = doAutoCommand(unit))) {
+		unit->giveCommand(autoCmd);
+	}
+}
+
 
 // =====================================================
 // 	class StopBaseCommandType
