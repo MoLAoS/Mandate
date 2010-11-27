@@ -63,9 +63,8 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 		}
 	}
 
-	//texture
+	// texture
 	const XmlNode *textureNode = particleSystemNode->getChild("texture");
-    //texture enabled
 	if (textureNode->getAttribute("value")->getBoolValue()) {
 		Texture2D *texture = renderer.newTexture2D(ResourceScope::GAME);
 		if (textureNode->getAttribute("luminance")->getBoolValue()) {
@@ -80,10 +79,9 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 		texture = NULL;
 	}
 
-	//model
+	// model
 	const XmlNode *modelNode = particleSystemNode->getOptionalChild("model");
-    //model enabled
-	if (modelNode && modelNode->getAttribute("value")->getBoolValue()) {
+    if (modelNode && modelNode->getAttribute("value")->getBoolValue()) {
 		string path = modelNode->getAttribute("path")->getRestrictedValue();
 		model = renderer.newModel(ResourceScope::GAME);
 		try {
@@ -95,20 +93,20 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 		model = NULL;
 	}
 
-	//primitive type
+	// primitive type
 	string pts = particleSystemNode->getChildRestrictedValue("primitive");
 	primitiveType = PrimitiveTypeNames.match(pts.c_str());
 	if (primitiveType == PrimitiveType::INVALID) {
 		throw runtime_error("'" + pts + "' is not a valid Primtive Type");
 	}
 
-	//offset
+	// offset
 	offset = particleSystemNode->getChildVec3fValue("offset");
 
-	//color
+	// color
 	color = particleSystemNode->getChildColor4Value("color");
 
-	//color2
+	// color2
 	const XmlNode *color2Node = particleSystemNode->getChild("color2", 0, false);
 	if(color2Node) {
 		color2 = color2Node->getColor4Value();
@@ -116,10 +114,10 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 		color2 = color;
 	}
 
-	//color no energy
+	// color no energy
 	colorNoEnergy = particleSystemNode->getChildColor4Value("color-no-energy");
 
-	//color2 no energy
+	// color2 no energy
 	const XmlNode *color2NoEnergyNode = particleSystemNode->getChild("color2-no-energy", 0, false);
 	if(color2NoEnergyNode) {
 		color2NoEnergy = color2NoEnergyNode->getColor4Value();
@@ -127,28 +125,31 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 		color2NoEnergy = colorNoEnergy;
 	}
 
-	//size
+	teamColorEnergy = particleSystemNode->getOptionalBoolValue("teamcolorEnergy");
+	teamColorNoEnergy  = particleSystemNode->getOptionalBoolValue("teamcolorNoEnergy");
+
+	// size
 	size = particleSystemNode->getChildFloatValue("size");
 
-	//sizeNoEnergy
+	// sizeNoEnergy
 	sizeNoEnergy = particleSystemNode->getChildFloatValue("size-no-energy");
 
-	//speed
+	// speed
 	speed = particleSystemNode->getChildFloatValue("speed") / WORLD_FPS;
 
-	//gravity
+	// gravity
 	gravity= particleSystemNode->getChildFloatValue("gravity") / WORLD_FPS;
 
-	//emission rate
+	// emission rate
 	emissionRate = particleSystemNode->getChildIntValue("emission-rate");
 
-	//energy
+	// energy
 	energy = particleSystemNode->getChildIntValue("energy-max");
 
-	//energy
+	// energy
 	energyVar = particleSystemNode->getChildIntValue("energy-var");
 
-	//draw count
+	// draw count
 	drawCount = particleSystemNode->getOptionalIntValue("draw-count", 1);
 
 	//inner size
@@ -248,9 +249,8 @@ ParticleSystem *ProjectileType::create(bool vis) {
 //	class SplashType
 // ===========================================================
 
-void SplashType::load(const string &dir, const string &path){
-
-	try{
+void SplashType::load(const string &dir, const string &path) {
+	try {
 		XmlTree xmlTree;
 		xmlTree.load(path);
 		const XmlNode *particleSystemNode= xmlTree.getRootNode();
@@ -269,8 +269,8 @@ void SplashType::load(const string &dir, const string &path){
 		const XmlNode *horizontalSpreadNode= particleSystemNode->getChild("horizontal-spread");
 		horizontalSpreadA= horizontalSpreadNode->getAttribute("a")->getFloatValue(0.0f, 1.0f);
 		horizontalSpreadB= horizontalSpreadNode->getAttribute("b")->getFloatValue(-1.0f, 1.0f);
-	}
-	catch(const std::exception &e){
+
+	} catch(const std::exception &e) {
 		throw runtime_error("Error loading ParticleSystem: "+ path + "\n" +e.what());
 	}
 }

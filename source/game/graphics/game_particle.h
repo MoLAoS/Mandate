@@ -209,11 +209,6 @@ private:
 	Vec3f oldPos;
 
 	Vec3f direction;
-	Vec3f teamColour;
-
-	//REFACTOR: see note in definition of setTeamColour()
-	bool teamColorEnergy;
-	bool teamColorNoEnergy;
 
 	// belong in proto-type ??
 	int maxParticleEnergy;
@@ -245,7 +240,6 @@ public:
 	void setRelative(bool relative)						{this->relative = relative;}
 	void setRelativeDirection(bool relativeDirection)	{this->relativeDirection = relativeDirection;}
 	void setFixed(bool fixed)							{this->fixed = fixed;}
-	void setTeamColour(Vec3f teamColour);
 	
 	const UnitParticleSystemType* getType() const {return type;}
 };

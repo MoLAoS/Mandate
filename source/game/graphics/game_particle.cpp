@@ -445,20 +445,6 @@ void UnitParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	}
 }
 
-void UnitParticleSystem::setTeamColour(Vec3f teamColour) {
-	this->teamColour = teamColour;
-	Vec3f tmpCol;
-
-	//REFACTOR: teamColorEnergy & teamColorNoEnergy are in the proto-type
-	// why are they also here in the instance ???
-	if (teamColorEnergy) {
-		color = Vec4f(teamColour.x, teamColour.y, teamColour.z, color.w);
-	}
-	if (teamColorNoEnergy) {
-		colorNoEnergy = Vec4f(teamColour.x, teamColour.y, teamColour.z, colorNoEnergy.w);
-	}
-}
-
 void UnitParticleSystem::initParticle(Particle *p, int particleIndex) {
 	ParticleSystem::initParticle(p, particleIndex);
 

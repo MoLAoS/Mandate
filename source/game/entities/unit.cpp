@@ -491,6 +491,9 @@ void Unit::startSkillParticleSystems() {
 		ups->setRotation(getRotation());
 		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
+		Colour c = faction->getColour();
+		Vec3f colour = Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
+		ups->setTeamColour(colour);
 		g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
 	}
 }
@@ -569,6 +572,9 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 	SplashType *pstSplash = ast->getSplashParticleType();
 	Vec3f endPos = this->getTargetVec();
 
+	Colour c = faction->getColour();
+	Vec3f colour = Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
+
 	//projectile
 	if (pstProj != NULL) {
 		Unit *carrier = isCarried() ? g_simInterface->getUnitFactory().getUnit(getCarrier()) : 0;
@@ -627,6 +633,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		} else {
 			psProj->setDamager(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
 		}
+		psProj->setTeamColour(colour);
 		renderer.manageParticleSystem(psProj, ResourceScope::GAME);
 	} else {
 		g_world.hit(this);
@@ -636,6 +643,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 	if (pstSplash != NULL) {
 		psSplash = pstSplash->createSplashParticleSystem(visible);
 		psSplash->setPos(endPos);
+		psSplash->setTeamColour(colour);
 		renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
 		if (pstProj != NULL) {
 			psProj->link(psSplash);
@@ -1681,6 +1689,9 @@ bool Unit::add(Effect *e) {
 			ups->setRotation(getRotation());
 			//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 			effectParticleSystems.push_back(ups);
+			Colour c = faction->getColour();
+			Vec3f colour = Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
+			ups->setTeamColour(colour);
 			g_renderer.manageParticleSystem(ups, ResourceScope::GAME);
 		}
 	}
