@@ -81,15 +81,15 @@ private:
 	vector<string>		 m_tilesetFiles;
 	vector<string>		 m_factionFiles;
 	MapInfo				 m_mapInfo;
-	//AnnouncerThread		 m_announcer; ///@todo this causes lag on changing menu
+	AnnouncerThread		 m_announcer;
 	float				 m_origMusicVolume;
 	bool				 m_fadeMusicOut;
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
 	~MenuStateNewGame() {
-		//m_announcer.stop();
-		//m_announcer.join();
+		m_announcer.stop();
+		m_announcer.join();
 	}
 
 	void update();

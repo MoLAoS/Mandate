@@ -46,16 +46,19 @@ using namespace Shared::Util;
 // =====================================================
 
 void AnnouncerThread::execute() {
+	static int counter = 1;
 	while (m_running) {
 		if (m_freeSlots) {
-			try {
-				m_socket.sendAnnounce(4950); //TODO: change with game constant port
-			} catch (SocketException) {
-				// do nothing
-				printf("SocketException while announcing game on LAN.\n");
+			if (counter % 10 == 0) {
+				try {
+					m_socket.sendAnnounce(4950); //TODO: change with game constant port
+				} catch (SocketException) {
+					// do nothing
+					printf("SocketException while announcing game on LAN.\n");
+				}
 			}
 		}
-		sleep(1000);
+		sleep(100);
 	}
 }
 
@@ -425,7 +428,7 @@ void MenuStateNewGame::update() {
 
 	bool configAnnounce = true; // TODO: put in config
 	if (configAnnounce) {
-		//m_announcer.doAnnounce(hasUnconnectedSlots());
+		m_announcer.doAnnounce(hasUnconnectedSlots());
 	}
 
 	static int counter = 0;
