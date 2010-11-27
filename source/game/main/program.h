@@ -125,12 +125,11 @@ private:
 	bool visible;
 	Keymap keymap;
 
-	void init();
-
 public:
 	Program(CmdArgs &args);
 	~Program();
 	static Program *getInstance()	{return singleton;}
+	bool init();
 	const CmdArgs& getCmdArgs()	const { return cmdArgs; }
 
 	bool isTerminating() const		{ return terminating;	}

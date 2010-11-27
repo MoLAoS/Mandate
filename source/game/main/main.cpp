@@ -168,6 +168,10 @@ int glestMain(int argc, char** argv) {
 #	if _GAE_DEBUG_EDITION_
 		exceptionHandler.install();
 		Program program(args);
+		if(!program.init()){
+			program.exit();
+			return 0;
+		}
 		showCursor(false);
 		//main loop
 		program.loop();
@@ -175,6 +179,10 @@ int glestMain(int argc, char** argv) {
 		try {
 			exceptionHandler.install();
 			Program program(args);
+			if(!program.init()){
+				program.exit();
+				return 0;
+			}
 			showCursor(false);
 
 			try {
@@ -196,6 +204,10 @@ int glestMain(int argc, char** argv) {
 #	endif
 	} else {
 		Program program(args);
+		if(!program.init()){
+			program.exit();
+			return 0;
+		}
 		showCursor(false);
 		program.loop();
 	}
