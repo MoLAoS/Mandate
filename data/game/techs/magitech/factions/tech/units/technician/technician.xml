@@ -378,7 +378,7 @@
       <attack-skills>
         <attack-skill value="molotov_skill"/>
       </attack-skills>
-      <max-distance value="10"/>
+      <max-distance value="6"/>
     </command>
     
     <command>
@@ -389,7 +389,7 @@
       <upgrade-requirements/>
       <move-skill value="move_skill"/>
       <attack-skill value="molotov_skill"/>
-      <max-distance value="5"/>
+      <max-distance value="3"/>
     </command>
 
     <command>
@@ -413,7 +413,6 @@
       <morph-unit name= "battle_machine"/>
       <discount value="40"/>
     </command>
-
 
     <command>
       <type value="morph"/>

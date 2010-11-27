@@ -233,7 +233,7 @@
         <attack-skill value="attack_skill"/>
         <attack-skill value="attack_arrow_skill"/>
       </attack-skills>
-      <max-distance value="10"/>
+      <max-distance value="7"/>
     </command>
 
     <command>
@@ -247,7 +247,7 @@
         <attack-skill value="attack_skill"/>
         <attack-skill value="attack_arrow_skill"/>
       </attack-skills>
-      <max-distance value="5"/>
+      <max-distance value="4"/>
     </command>
 
     <command>
