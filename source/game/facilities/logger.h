@@ -16,6 +16,7 @@
 #include <deque>
 #include <time.h>
 #include <iomanip>
+#include <sstream>
 
 #include "FSFactory.hpp"
 #include "timer.h"
