@@ -535,6 +535,8 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 			}
 		}
 	}
+	// limit to store
+	capResource(rt);
 }
 
 bool Faction::checkCosts(const ProducibleType *pt) {
@@ -570,7 +572,9 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 		Resource *r = &resources[i];
 		if (r->getType() == rt) {
 			r->setAmount(r->getAmount() + amount);
-			if (r->getType()->getClass() != ResourceClass::STATIC && r->getAmount() > getStoreAmount(rt)) {
+			if (r->getType()->getClass() != ResourceClass::STATIC 
+			&& r->getType()->getClass() != ResourceClass::CONSUMABLE
+			&& r->getAmount() > getStoreAmount(rt)) {
 				r->setAmount(getStoreAmount(rt));
 			}
 			return;
@@ -578,7 +582,6 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 	}
 	assert(false);
 }
-
 
 void Faction::setResourceBalance(const ResourceType *rt, int balance) {
 	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
@@ -640,6 +643,20 @@ void Faction::removeStore(const UnitType *unitType) {
 		}
 	}
 	limitResourcesToStore();
+}
+
+void Faction::capResource(const ResourceType *rt) {
+	RUNTIME_CHECK(rt->getClass() == ResourceClass::CONSUMABLE);
+	for (int i = 0; i < resources.size(); ++i) {
+		Resource *r = &resources[i];
+		if (r->getType() == rt) {
+			if (r->getAmount() > getStoreAmount(rt)) {
+				r->setAmount(getStoreAmount(rt));
+			}
+			return;
+		}
+	}
+	assert(false);
 }
 
 void Faction::limitResourcesToStore() {
