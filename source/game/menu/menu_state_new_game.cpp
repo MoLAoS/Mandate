@@ -328,6 +328,7 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget* ps) {
 			}
 			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
 			m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
+			noRecurse = false;
 			return;
 		}
 	}
