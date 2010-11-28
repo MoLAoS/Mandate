@@ -490,6 +490,8 @@ void RoutePlanner::smoothPath(Unit *unit) {
 	}
 }
 
+const int minPathRefinement = int(GameConstants::clusterSize * 1.5f);
+
 TravelState RoutePlanner::doRouteCache(Unit *unit) {
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
@@ -503,8 +505,8 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 		if (!wpPath.empty() && path.size() < 12) {
 			// if there are less than 12 steps left on this path, and there are more waypoints
 			IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), wpPath.back()); )
-			while (!wpPath.empty() && path.size() < 24) {
-				// refine path to at least 24 steps (or end of path)
+			while (!wpPath.empty() && path.size() < minPathRefinement) {
+				// refine path to at least minPathRefinement steps (or end of path)
 				if (!refinePath(unit)) {
 					wpPath.clear();
 					PF_LOG( "refinePath() failed. [route cache], clearing waypoint-path" );
@@ -699,21 +701,13 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	IF_DEBUG_EDITION( collectWaypointPath(unit); )
 	//CONSOLE_LOG( "WaypointPath size : " + intToStr(wpPath.size()) )
 
-	// this can flood the start cluster on the initial refinement too easily
-	//if (wpPath.size() > 1) {
-	//	wpPath.pop();
-	//}
 	RUNTIME_CHECK(!wpPath.empty());
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
 	// refine path, to at least 20 steps (or end of path)
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	aMap->annotateLocal(unit);
 	wpPath.condense();
-	//
-	///@todo to compensate for not popping the first waypoint, extend path to at
-	// least 1.5 * clusterSize, so smoothPath() should take care of any dodgey bits.
-	//
-	while (!wpPath.empty() && path.size() < 20) {
+	while (!wpPath.empty() && path.size() < minPathRefinement) {
 		if (!refinePath(unit)) {
 			PF_LOG( "refinePath failed." );
 			PF_PATH_LOG( unit );
@@ -844,10 +838,10 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 	while (wpPath.size() > 1 && wpPath.back().dist(target) < 32.f) {
 		wpPath.pop_back();
 	}
-	// refine path, to at least 20 steps (or end of path)
+	// refine path, to at least 1.5 * clusterSize steps (or end of path)
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	aMap->annotateLocal(unit);
-	while (!wpPath.empty() && path.size() < 20) {
+	while (!wpPath.empty() && path.size() < minPathRefinement) {
 		if (!refinePath(unit)) {
 			PF_LOG( "BLOCKED, refinePath failed!!" );
 			PF_PATH_LOG( unit );
