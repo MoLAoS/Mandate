@@ -46,16 +46,19 @@ using namespace Shared::Util;
 // =====================================================
 
 void AnnouncerThread::execute() {
+	static int counter = 1;
 	while (m_running) {
 		if (m_freeSlots) {
-			try {
-				m_socket.sendAnnounce(4950); //TODO: change with game constant port
-			} catch (SocketException) {
-				// do nothing
-				printf("SocketException while announcing game on LAN.\n");
+			if (counter % 10 == 0) {
+				try {
+					m_socket.sendAnnounce(4950); //TODO: change with game constant port
+				} catch (SocketException) {
+					// do nothing
+					printf("SocketException while announcing game on LAN.\n");
+				}
 			}
 		}
-		sleep(1000);
+		sleep(100);
 	}
 }
 
@@ -69,7 +72,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		, m_humanSlot(0)
 		, m_origMusicVolume(1.f)
 		, m_fadeMusicOut(false) {
-	_PROFILE_FUNCTION();
+//	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	Lang &lang = Lang::getInstance();
 	Font *font = g_coreData.getFTMenuFontNormal();
@@ -93,7 +96,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_playNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
 	m_playNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
-	gap = (metrics.getScreenW() - 600) / 4;
+	const int listWidth = 250;
+	gap = (metrics.getScreenW() - listWidth * 3) / 4;
 
 	// map listBox
 	set<string> mapFiles;
@@ -122,7 +126,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_mapFiles.push_back(*it);
 		results.push_back(formatString(*it));
 	}
-	x = gap, w = 200, y = 170, h = 30;
+	x = gap, w = listWidth, y = 170, h = 30;
 	m_mapList = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
 	m_mapList->addItems(results);
 	m_mapList->setDropBoxHeight(140);
@@ -161,6 +165,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetLabel = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
 	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
 	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
 	//tech Tree listBox
 	findAll("techs/*.", results);
 	if (results.size() == 0) {
@@ -323,6 +328,7 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget* ps) {
 			}
 			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
 			m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
+			noRecurse = false;
 			return;
 		}
 	}
@@ -423,7 +429,7 @@ void MenuStateNewGame::update() {
 
 	bool configAnnounce = true; // TODO: put in config
 	if (configAnnounce) {
-		//m_announcer.doAnnounce(hasUnconnectedSlots());
+		m_announcer.doAnnounce(hasUnconnectedSlots());
 	}
 
 	static int counter = 0;

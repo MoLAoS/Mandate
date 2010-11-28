@@ -35,16 +35,16 @@ FontMetrics::~FontMetrics() {
 	delete [] widths;
 }
 
-void FontMetrics::wrapText(string &inout_text, unsigned in_maxWidth) const {
+void FontMetrics::wrapText(string &io_text, unsigned i_maxWidth) const {
 	const unsigned spacesPerTab = 4;
 	std::stringstream result;
 	float currentLineWidth = 0.f;
-	float maxLineWidth = float(in_maxWidth);
+	const float maxLineWidth = float(i_maxWidth);
 	string::size_type offset = 0;
 	string::size_type count = 0;
 	string::size_type lastEndWord = 0;
 
-	foreach (string, it, inout_text) {
+	foreach (string, it, io_text) {
 		++count;
 		const char &c = *it;
 		if (c == ' ') {
@@ -55,25 +55,25 @@ void FontMetrics::wrapText(string &inout_text, unsigned in_maxWidth) const {
 			lastEndWord = offset + count;
 		} else if (c == '\n') {
 			currentLineWidth = 0;
-			result << inout_text.substr(offset, count);
+			result << io_text.substr(offset, count);
 			offset += count;
 			count = 0;
 			lastEndWord = offset;
 		} else {
 			if (currentLineWidth + widths[c] > maxLineWidth) {
-				result << inout_text.substr(offset, lastEndWord - offset) << endl;
+				result << io_text.substr(offset, lastEndWord - offset) << endl;
 				count -= (lastEndWord - offset);
 				offset = lastEndWord;
 				currentLineWidth = 0.f;
 				for (unsigned i=offset; i < offset + count; ++i) {
-					currentLineWidth += widths[inout_text[i]];
+					currentLineWidth += widths[io_text[i]];
 				}
 			}			
 			currentLineWidth += widths[c];
 		}
 	}
-	result << inout_text.substr(offset, count);
-	inout_text = result.str();
+	result << io_text.substr(offset, count);
+	io_text = result.str();
 }
 
 Vec2f FontMetrics::getTextDiminsions(const string &str) const {

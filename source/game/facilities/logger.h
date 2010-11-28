@@ -16,6 +16,7 @@
 #include <deque>
 #include <time.h>
 #include <iomanip>
+#include <sstream>
 
 #include "FSFactory.hpp"
 #include "timer.h"
@@ -77,6 +78,7 @@ public:
 	static Logger &getClientLog();
 	static Logger &getErrorLog();
 	static Logger &getWidgetLog();
+	static Logger &getWorldLog();
 	static Logger &getAiLog();
 
 	/** A timestamp with filename safe characters. (ie no \/:*?"<>| chars)
@@ -139,6 +141,97 @@ inline void logNetwork(const char *msg) {
 #	define LOG_NETWORK(x)
 #	define NETWORK_LOG(x)
 #endif
+
+#define _LOG(x) {										\
+	stringstream _ss;									\
+	_ss << "\t" << x;									\
+	Logger::getWorldLog().add(_ss.str());			\
+}
+
+#define _UNIT_LOG(u, x) {								\
+	stringstream _ss;									\
+	_ss << "Frame "	<< g_world.getFrameCount() <<		\
+		", Unit " << u->getId() << ": " << x;			\
+	Logger::getWorldLog().add(_ss.str());			\
+}
+
+#define _PATH_LOG(u) {									\
+	stringstream _ss;									\
+	_ss << "\tLow-Level Path: " << *u->getPath();		\
+	Logger::getWorldLog().add(_ss.str());			\
+	if (!u->getWaypointPath()->empty()) {				\
+		stringstream _ss; _ss << "\tWaypoint Path: "	\
+			<< *u->getWaypointPath();					\
+		Logger::getWorldLog().add(_ss.str());		\
+	}													\
+}
+
+// master switch, 'world' logging
+#define WORLD_LOGGING 0
+
+// Log pathfinding results
+#define LOG_PATHFINDER 1
+
+#if WORLD_LOGGING && LOG_PATHFINDER
+#	define PF_LOG(x) _LOG(x)
+#	define PF_UNIT_LOG(u, x) _UNIT_LOG(u, x)
+#	define PF_PATH_LOG(u) _PATH_LOG(u)
+#else
+#	define PF_LOG(x)
+#	define PF_UNIT_LOG(u, x)
+#	define PF_PATH_LOG(u)
+#endif
+
+// log command issue / cancel / etc
+#define LOG_COMMAND_ISSUE 0
+
+#if WORLD_LOGGING && LOG_COMMAND_ISSUE
+#	define CMD_LOG(x) _LOG(x)
+#	define CMD_UNIT_LOG(u, x) _UNIT_LOG(u, x)
+#else
+#	define CMD_LOG(x)
+#	define CMD_UNIT_LOG(u, x)
+#endif
+
+// log unit life-cycle (created, born, died, deleted)
+#define LOG_UNIT_LIFECYCLE 0
+
+#if WORLD_LOGGING && LOG_UNIT_LIFECYCLE
+#	define ULC_LOG(x) _LOG(x)
+#	define ULC_UNIT_LOG(u, x) _UNIT_LOG(u, x)
+#else
+#	define ULC_LOG(x)
+#	define ULC_UNIT_LOG(u, x)
+#endif
+
+
+struct FunctionTimer {
+	const char *m_name;
+	int64 m_start;
+
+	FunctionTimer(const char *name) : m_name(name) {
+		m_start = Chrono::getCurMicros();
+	}
+
+	~FunctionTimer() {
+		int64 time = Chrono::getCurMicros() - m_start;
+		std::stringstream ss;
+		ss << m_name << " ";
+		if (time > 1000) {
+			int64 millis = time / 1000;
+			ss << millis << " ms, " << (time % 1000) << " us.";
+		} else {
+			ss << time << " us.";
+		}
+		g_logger.add(ss.str());
+	}
+};
+
+#define SCOPE_TIMER(name) \
+	FunctionTimer _function_timer(name)
+
+#define TIME_FUNCTION() /*SCOPE_TIMER(__FUNCTION__)*/
+
 
 }} // namespace Glest::Util
 

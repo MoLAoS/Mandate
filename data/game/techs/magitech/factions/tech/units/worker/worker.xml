@@ -263,7 +263,7 @@
       <build-skill value="build_skill"/>
       <buildings>
         <building name="technodrome" tip="technodrome_info" />
-        <building name="defense_tower" tip="defese_tower_info" />
+        <building name="defense_tower" tip="defense_tower_info" />
       </buildings>
       <start-sound enabled="false"/>
       <built-sound enabled="true">

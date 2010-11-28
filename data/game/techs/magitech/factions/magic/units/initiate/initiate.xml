@@ -304,7 +304,7 @@
       <move-skill value="move_skill"/>
       <build-skill value="build_skill"/>
       <buildings>
-        <building name="tower_of_souls" tip="tower_of_sould_info" />
+        <building name="tower_of_souls" tip="tower_of_souls_info" />
         <building name="golem" tip="golem_info" />
         <building name="wicker_behemoth" tip="wicker_behemoth_info" />
       </buildings>

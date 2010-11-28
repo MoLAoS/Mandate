@@ -75,6 +75,11 @@ Logger& Logger::getWidgetLog() {
 	return logger;
 }
 
+Logger& Logger::getWorldLog() {
+	static Logger logger("glestadv-world.log", "World", TimeStampType::NONE);
+	return logger;
+}
+
 Logger& Logger::getAiLog() {
 	static Logger logger("glestadv-ai.log", "AI", TimeStampType::NONE);
 	return logger;
@@ -110,7 +115,11 @@ void Logger::unitLoaded() {
 	m_progress = int(pcnt);
 }
 
-string newLine = "\n";
+#ifdef WIN32
+	string newLine = "\r\n";
+#else
+	string newLine = "\n";
+#endif
 
 void Logger::add(const string &str,  bool renderScreen){
 	if (timeStampType == TimeStampType::SECONDS) {

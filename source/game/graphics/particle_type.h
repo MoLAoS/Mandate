@@ -103,9 +103,6 @@ protected:
 	bool relativeDirection; // ?
 	bool fixed;
 
-	bool teamColorEnergy;
-	bool teamColorNoEnergy;
-
 	int maxParticles;
 
 public:

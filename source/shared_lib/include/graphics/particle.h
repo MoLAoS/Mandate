@@ -145,6 +145,9 @@ protected:
 	Vec4f colorNoEnergy;
 	Vec4f color2NoEnergy;
 
+	bool teamColorEnergy;
+	bool teamColorNoEnergy;
+
 	float size;
 	float sizeNoEnergy;
 	float speed;
@@ -288,6 +291,7 @@ public:
 		this->windSpeed.y = vSpeed;
 		this->windSpeed.z = cosf(degToRad(hAngle)) * hSpeed;
 	}
+	void setTeamColour(Vec3f teamColour);
 
 	//misc
 	void fade();

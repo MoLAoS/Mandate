@@ -50,9 +50,9 @@ CommandResult Commander::tryUnloadCommand(Unit *unit, CommandFlags flags, const 
 CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *ct, CommandClass cc, const Vec2i &pos, Unit *targetUnit,
 		const ProducibleType* prodType, CardinalDir facing) const {
-	COMMAND_LOG(__FUNCTION__ << "() " << selection.getUnits().size() << " units selected.");
+	//COMMAND_LOG(__FUNCTION__ << "() " << selection.getUnits().size() << " units selected.");
 	if (selection.isEmpty()) {
-		COMMAND_LOG(__FUNCTION__ << "() No units selected!");
+		//COMMAND_LOG(__FUNCTION__ << "() No units selected!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
 	assert(!(prodType && targetUnit));
@@ -68,24 +68,24 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 		const CommandType *effectiveCt;
 		if (ct) {
 			effectiveCt = ct;
-			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying command " << ct->getName() );
+			//COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying command " << ct->getName() );
 		} else if (cc != CommandClass::NULL_COMMAND) {
 			effectiveCt = (*i)->getFirstAvailableCt(cc);
-			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying first command of class " << CommandClassNames[cc] );
+			//COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying first command of class " << CommandClassNames[cc] );
 		} else {
 			effectiveCt = (*i)->computeCommandType(pos, targetUnit);
-			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying default, with pos " << pos << " and target " << (targetUnit ? targetUnit->getId() : -1));
-			if (effectiveCt) {
-				COMMAND_LOG(__FUNCTION__ << "() " << **i << " computed command = " << effectiveCt->getName());
-			} else {
-				COMMAND_LOG(__FUNCTION__ << "() " << **i << " no defualt command could be computed.");
-			}
+			//COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying default, with pos " << pos << " and target " << (targetUnit ? targetUnit->getId() : -1));
+			//if (effectiveCt) {
+			//	COMMAND_LOG(__FUNCTION__ << "() " << **i << " computed command = " << effectiveCt->getName());
+			//} else {
+			//	COMMAND_LOG(__FUNCTION__ << "() " << **i << " no defualt command could be computed.");
+			//}
 		}
 		if(effectiveCt) {
 			if (prodType) { // production command
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
-					COMMAND_LOG(__FUNCTION__ << "() build command, setting DONT_RESERVE_RESOURCES flag = "
-						<< (i != units.begin() ? "true." : "false."));
+					//COMMAND_LOG(__FUNCTION__ << "() build command, setting DONT_RESERVE_RESOURCES flag = "
+					//	<< (i != units.begin() ? "true." : "false."));
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
 				}
 				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
@@ -133,7 +133,7 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 	const UnitVector &units = selection->getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *i << " trying cancel command.");
+		//COMMAND_LOG(__FUNCTION__ << "() " << *i << " trying cancel command.");
 		pushCommand(new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Command::invalidPos, *i));
 	}
 
@@ -214,8 +214,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 	RUNTIME_CHECK(command);
 	RUNTIME_CHECK(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
-	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
-		<< ", Result=" << CommandResultNames[result] );
+	//COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
+	//	<< ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
 	} else {
@@ -225,7 +225,7 @@ CommandResult Commander::pushCommand(Command *command) const {
 }
 
 void Commander::giveCommand(Command *command) const {
-	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command );
+	//COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command );
 	Unit* unit = command->getCommandedUnit();
 
 	//execute command, if unit is still alive and non-deleted

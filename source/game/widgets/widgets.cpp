@@ -1142,7 +1142,9 @@ void ListBox::onScroll(VerticalScrollBar*) {
 }
 
 bool ListBox::mouseWheel(Vec2i pos, int z) {
-	scrollBar->scrollLine(z > 0);
+	if (scrollBar) {
+		scrollBar->scrollLine(z > 0);
+	}
 	return true;
 }
 
@@ -1311,6 +1313,7 @@ bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 
 DropList::DropList(Container* parent)
 		: ListBase(parent)
+		, MouseWidget(this)
 		, floatingList(0)
 		, dropBoxHeight(0) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
@@ -1325,6 +1328,7 @@ DropList::DropList(Container* parent)
 
 DropList::DropList(Container* parent, Vec2i pos, Vec2i size) 
 		: ListBase(parent, pos, size)
+		, MouseWidget(this)
 		, floatingList(0)
 		, dropBoxHeight(0) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
@@ -1367,6 +1371,22 @@ void DropList::layout() {
 	Vec2i liSz(size.x - btn_sz - getBordersHoriz() - getPadding() * 2, btn_sz);
 	selectedItem->setPos(liPos);
 	selectedItem->setSize(liSz);
+}
+
+bool DropList::mouseWheel(Vec2i pos, int z) {
+	if (selectedIndex == -1) {
+		return true;
+	}
+	if (z > 0) {
+		if (selectedIndex != 0) {
+			setSelected(selectedIndex - 1);
+		}
+	} else {
+		if (selectedIndex != listItems.size() - 1) {
+			setSelected(selectedIndex + 1);
+		}
+	}
+	return true;
 }
 
 void DropList::addItems(const vector<string> &items) {

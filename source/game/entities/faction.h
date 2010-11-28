@@ -198,6 +198,7 @@ public:
 	// resources
 	void incResourceAmount(const ResourceType *rt, int amount);
 	void setResourceBalance(const ResourceType *rt, int balance);
+	void capResource(const ResourceType *rt);
 
 	// Generated 'products' (non unit producibles)
 	void addProduct(const GeneratedType *gt) { products.push_back(Product(gt)); }

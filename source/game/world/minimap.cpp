@@ -364,7 +364,7 @@ void Minimap::setExploredState(const World *world) {
 	const Map &map = *world->getMap();
 	for (int y=0; y < map.getTileH(); ++y) {
 		for (int x=0; x < map.getTileW(); ++x) {
-			if (map.getTile(x,y)->isExplored(world->getThisFactionIndex())) {
+			if (!m_shroudOfDarkness || map.getTile(x,y)->isExplored(world->getThisFactionIndex())) {
 				m_fowPixmap0->setPixel(x, y, exploredAlpha);
 				m_fowPixmap1->setPixel(x, y, exploredAlpha);
 			}

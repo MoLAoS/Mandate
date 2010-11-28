@@ -228,7 +228,7 @@
         <attack-skill value="molotov_skill"/>
         <attack-skill value="arrow_skill"/>
       </attack-skills>
-      <max-distance value="10"/>
+      <max-distance value="6"/>
     </command>
 
     <command>
@@ -242,7 +242,7 @@
         <attack-skill value="molotov_skill"/>
         <attack-skill value="arrow_skill"/>
       </attack-skills>
-      <max-distance value="5"/>
+      <max-distance value="3"/>
     </command>
 
     <command>

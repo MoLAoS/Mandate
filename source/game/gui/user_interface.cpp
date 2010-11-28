@@ -984,14 +984,21 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		string factionName = unit->getFaction()->getType()->getName();
 		string commandName = g_lang.getFactionString(factionName, activeCommandType->getName());
 		if (commandName == activeCommandType->getName()) { // no custom command name
-			commandName = g_lang.get(activeCommandType->getName()); // assume command class is name
+			CommandClass cc = activeCommandType->getClass(); // assume command class is name
+			commandName = g_lang.get(CommandClassNames[cc]);
 		}
 		string tip = g_lang.getFactionString(factionName, activeCommandType->getTipKey(pt->getName()));
-		string res = commandName + " : " + g_lang.getFactionString(factionName, pt->getName()) + "\n\n";
+		
+		string prodName = pt->getName();
+		string prodName2 = g_lang.getFactionString(factionName, pt->getName());
+		if (prodName == prodName2) {
+			prodName = formatString(prodName);
+		}
+		string res = commandName + " : " + prodName + "\n\n";
 		if (!tip.empty()) {
 			res += tip + "\n\n";
 	}
-		res += pt->getReqDesc();
+		res += formatString(pt->getReqDesc());
 		m_display->setToolTipText(res);
 	}
 }

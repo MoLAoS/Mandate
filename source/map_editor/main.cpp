@@ -81,11 +81,6 @@ MainWindow::MainWindow()
 	panel->SetSizer(boxsizer);
 	panel->Layout();
 
-#ifndef WIN32
-	timer = new wxTimer(this);
-	timer->Start(100);
-#endif
-
 	glCanvas->SetFocus();
 }
 
@@ -95,6 +90,7 @@ void MainWindow::buildMenuBar() {
 
 	//file
 	menuFile = new wxMenu();
+	menuFile->Append(wxID_NEW);
 	menuFile->Append(wxID_OPEN);
 	menuFile->AppendSeparator();
 	menuFile->Append(wxID_SAVE);
@@ -124,7 +120,7 @@ void MainWindow::buildMenuBar() {
 	menuMisc->Append(miMiscResetZoomAndPos, wxT("&Reset zoom and pos"));
 	menuMisc->Append(miMiscAbout, wxT("&About"));
 	menuMisc->Append(miMiscHelp, wxT("&Help"));
-	menuMisc->Append(miShowMap, wxT("&Show Map\tCTRL+M"));
+	menuMisc->Append(miMiscShowMap, wxT("&Show Map\tCTRL+M"));
 	menuBar->Append(menuMisc, wxT("&Misc"));
 
 	//brush
@@ -404,8 +400,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::setDirty(bool val) {
-	wxPaintEvent ev;
-	onPaint(ev);
+	//Refresh();
 	if (fileModified && val) {
 		return;
 	}
@@ -434,10 +429,14 @@ void MainWindow::setExtension() {
 	}
 }
 
-void MainWindow::onTimer(wxTimerEvent &event) {
-	wxPaintEvent paintEvent;
-	onPaint(paintEvent);
-}
+// WxGLCanvas::Refresh() is not working on windows, possibly because
+// its in a wxPanel... http://wiki.wxwidgets.org/WxGLCanvas
+// though none of the work-arounds worked for me.
+#ifdef WIN32
+#	define REFRESH() wxPaintEvent ev;glCanvas->onPaint(ev);
+#else
+#	define REFRESH() glCanvas->Refresh();
+#endif
 
 void MainWindow::onMouseDown(wxMouseEvent &event, int x, int y) {
 	if (event.LeftIsDown()) {
@@ -447,8 +446,7 @@ void MainWindow::onMouseDown(wxMouseEvent &event, int x, int y) {
 		if (!isDirty()) {
 			setDirty(true);
 		}
-		wxPaintEvent ev;
-		onPaint(ev);
+		REFRESH();
 	}
 	event.Skip();
 }
@@ -485,19 +483,31 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 	lastY = y;
 
 	if (repaint) {
-		wxPaintEvent ev;
-		onPaint(ev);
+		REFRESH();
 	}
 	event.Skip();
 }
 
-void MainWindow::onPaint(wxPaintEvent &event) {
-	program->renderMap(glCanvas->GetClientSize().x, glCanvas->GetClientSize().y);
-	glCanvas->SwapBuffers();
-	event.Skip();
+void MainWindow::onMenuFileNew(wxCommandEvent &event){
+	if(this->fileModified){
+		int answer = wxMessageBox(_("There are unsaved modifications. Discard changes?"), _("Discard changes?"),
+								wxYES_NO|wxICON_QUESTION, this);
+		if(answer==wxNO){
+			return;
+		}
+	}
+	delete program;
+	this->init("", this->glest);
 }
 
 void MainWindow::onMenuFileLoad(wxCommandEvent &event) {
+	if(this->fileModified){
+		int answer = wxMessageBox(_("There are unsaved modifications. Discard changes?"), _("Discard changes?"),
+								wxYES_NO|wxICON_QUESTION, this);
+		if(answer==wxNO){
+			return;
+		}
+	}
 	wxFileDialog fileDialog(this);
 	fileDialog.SetWildcard(wxT("Glest Map (*.gbm)|*.gbm|Mega Map (*.mgm)|*.mgm"));
 	if (fileDialog.ShowModal() == wxID_OK) {
@@ -544,6 +554,7 @@ void MainWindow::onMenuEditUndo(wxCommandEvent &event) {
 	std::cout << "Undo Pressed" << std::endl;
 	if (program->undo()) {
 		setDirty();
+		REFRESH();
 	}
 }
 
@@ -551,6 +562,7 @@ void MainWindow::onMenuEditRedo(wxCommandEvent &event) {
 	std::cout << "Redo Pressed" << std::endl;
 	if (program->redo()) {
 		setDirty();
+		REFRESH();
 	}
 }
 
@@ -706,7 +718,7 @@ void MainWindow::onMenuMiscHelp(wxCommandEvent &event) {
 		wxT("Help")).ShowModal();
 }
 
-void MainWindow::onShowMap(wxCommandEvent& event){
+void MainWindow::onMenuMiscShowMap(wxCommandEvent& event){
 	if(this->fileModified || this->currentFile.empty()){
 		wxMessageBox(_("You need to save first!"), _("Unsaved"), wxOK|wxICON_ERROR, this);
 		return;
@@ -971,8 +983,6 @@ void MainWindow::onKeyDown(wxKeyEvent &e) {
 
 BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 
-	EVT_TIMER(-1, MainWindow::onTimer)
-
 	EVT_CLOSE(MainWindow::onClose)
 
 	// these are 'handled' by GlCanvas and funneled to these handlers
@@ -980,6 +990,7 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	//EVT_MOTION(MainWindow::onMouseMove)
 	//EVT_KEY_DOWN(MainWindow::onKeyDown)
 
+	EVT_MENU(wxID_NEW, MainWindow::onMenuFileNew)
 	EVT_MENU(wxID_OPEN, MainWindow::onMenuFileLoad)
 	EVT_MENU(wxID_SAVE, MainWindow::onMenuFileSave)
 	EVT_MENU(wxID_SAVEAS, MainWindow::onMenuFileSaveAs)
@@ -1001,7 +1012,7 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU(miMiscResetZoomAndPos, MainWindow::onMenuMiscResetZoomAndPos)
 	EVT_MENU(miMiscAbout, MainWindow::onMenuMiscAbout)
 	EVT_MENU(miMiscHelp, MainWindow::onMenuMiscHelp)
-	EVT_MENU(miShowMap, MainWindow::onShowMap)
+	EVT_MENU(miMiscShowMap, MainWindow::onMenuMiscShowMap)
 
 	EVT_MENU_RANGE(miBrushHeight + 1, miBrushHeight + heightCount, MainWindow::onMenuBrushHeight)
 	EVT_MENU_RANGE(miBrushGradient + 1, miBrushGradient + heightCount, MainWindow::onMenuBrushGradient)
@@ -1010,8 +1021,6 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU_RANGE(miBrushResource + 1, miBrushResource + resourceCount, MainWindow::onMenuBrushResource)
 	EVT_MENU_RANGE(miBrushStartLocation + 1, miBrushStartLocation + startLocationCount, MainWindow::onMenuBrushStartLocation)
 	EVT_MENU_RANGE(miRadius, miRadius + radiusCount, MainWindow::onMenuRadius)
-	
-	EVT_PAINT(MainWindow::onPaint)
 	
 	EVT_TOOL(toolPlayer, MainWindow::onToolPlayer)
 END_EVENT_TABLE()
@@ -1043,11 +1052,21 @@ void GlCanvas::onKeyDown(wxKeyEvent &event) {
 	mainWindow->onKeyDown(event);
 }
 
+void GlCanvas::onPaint(wxPaintEvent &event) {
+	if(mainWindow->program){
+		mainWindow->program->renderMap(this->GetClientSize().x, this->GetClientSize().y);
+		this->SwapBuffers();
+	}
+	event.Skip();
+}
+
 BEGIN_EVENT_TABLE(GlCanvas, wxGLCanvas)
 	EVT_KEY_DOWN(GlCanvas::onKeyDown)
 
 	EVT_LEFT_DOWN(GlCanvas::onMouseDown)
 	EVT_MOTION(GlCanvas::onMouseMove)
+	
+	EVT_PAINT(GlCanvas::onPaint)
 END_EVENT_TABLE()
 
 // ===============================================
@@ -1110,6 +1129,7 @@ bool App::OnInit() {
 
 	mainWindow = new MainWindow();
 	mainWindow->Show();
+	// needs to be after Show() otherwise assertGl() in Renderer::init will fail
 	mainWindow->init(fileparam, glest);
 	return true;
 }

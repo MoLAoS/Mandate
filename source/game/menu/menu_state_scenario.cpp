@@ -111,7 +111,10 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 		}
 	}
 	categories = results;
-	m_categoryList->addItems(categories);
+	for (int i=0; i < results.size(); ++i) {
+		results[i] = formatString(results[i]);
+	}
+	m_categoryList->addItems(results);
 	m_categoryList->SelectionChanged.connect(this, &MenuStateScenario::onCategoryChanged);
 	m_categoryList->setSelected(match);
 }

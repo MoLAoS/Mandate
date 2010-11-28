@@ -112,7 +112,8 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		x += 32;
 	}
 
-	const Texture2D *logoTex = g_world.getThisFaction()->getLogoTex();
+	// -loadmap doesn't have any faction
+	const Texture2D *logoTex = (g_world.getThisFaction())?g_world.getThisFaction()->getLogoTex(): 0;
 	if (logoTex) {
 		m_logo = addImageX(logoTex, Vec2i(3,0), Vec2i(192,192));
 	}
@@ -135,7 +136,8 @@ void Display::setSize() {
 		if (m_ui->getSelectedObject()) {
 			sz = Vec2i(width, smallHeight);
 		} else {
-			if (g_world.getThisFaction()->getLogoTex()) {
+			// -loadmap doesn't have any faction
+			if (g_world.getThisFaction() && g_world.getThisFaction()->getLogoTex()) {
 				sz = Vec2i(width, smallHeight);
 			} else {
 				setVisible(false);

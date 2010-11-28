@@ -505,7 +505,7 @@ public:
 // class DropList
 // =====================================================
 
-class DropList : public ListBase, public sigslot::has_slots {
+class DropList : public ListBase, public MouseWidget, public sigslot::has_slots {
 private:
 	ListBox* floatingList;
 	Button* button;
@@ -527,6 +527,8 @@ public:
 
 	void setSelected(int index);
 	void setSelected(const string &item);
+
+	bool mouseWheel(Vec2i pos, int z);
 
 	// event handlers
 	void onBoxClicked(ListBoxItem*);
