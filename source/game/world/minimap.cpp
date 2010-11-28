@@ -44,7 +44,7 @@ using Main::Program;
 const float Minimap::exploredAlpha = 0.5f;
 const Vec2i Minimap::textureSize = Vec2i(128, 128);
 
-Minimap::Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size)
+Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, m_fowPixmap0(0)
@@ -60,7 +60,7 @@ Minimap::Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size)
 		, m_maxZoom(1)
 		, m_minZoom(1)
 		, m_fogOfWar(FoW)
-		, m_shroudOfDarkness(FoW)
+		, m_shroudOfDarkness(SoD)
 		, m_draggingCamera(false)
 		, m_draggingWidget(false)
 		, m_leftClickOrder(false)
@@ -91,7 +91,18 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	m_fowPixmap0 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
 	m_fowPixmap1 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
 	m_fowPixmap0->setPixels(&f);
-	m_fowPixmap1->setPixels(&f);
+	if (!m_shroudOfDarkness) {
+		f = 0.f;
+		m_fowPixmap1->setPixels(&f);
+		f = 0.5f;
+		for (int y=1; y < scaledH - 1; ++y) {
+			for (int x=1; x < scaledW - 1; ++x) {
+				m_fowPixmap1->setPixel(x, y, &f);
+			}
+		}
+	} else {
+		m_fowPixmap1->setPixels(&f);
+	}
 
 	if (resumingGame) {
 		setExploredState(world);
@@ -135,36 +146,50 @@ Minimap::~Minimap(){
 
 void Minimap::resetFowTex() {
 	Pixmap2D *tmpPixmap= m_fowPixmap0;
-	m_fowPixmap0= m_fowPixmap1;
-	m_fowPixmap1= tmpPixmap;
+	m_fowPixmap0 = m_fowPixmap1;
+	m_fowPixmap1 = tmpPixmap;
+	const int width = m_fowTex->getPixmap()->getW();
+	const int height = m_fowTex->getPixmap()->getH();
+	for (int i=0; i < width; ++i) {
+		for (int j=0; j < height; ++j) {
+			if (!m_fogOfWar && m_shroudOfDarkness) {
+				float p0 = m_fowPixmap0->getPixelf(i, j);
+				float p1 = m_fowPixmap1->getPixelf(i, j);
+				if (p0 > p1) {
+					m_fowPixmap1->setPixel(i, j, p0);
+				} else {
+					m_fowPixmap1->setPixel(i, j, p1);
+				}
 
-	for(int i=0; i<m_fowTex->getPixmap()->getW(); ++i){
-		for(int j=0; j<m_fowTex->getPixmap()->getH(); ++j){
-			if(m_fogOfWar){
-				float p0= m_fowPixmap0->getPixelf(i, j);
-				float p1= m_fowPixmap1->getPixelf(i, j);
+			} else if (m_fogOfWar || m_shroudOfDarkness) {
+				float p0 = m_fowPixmap0->getPixelf(i, j);
+				float p1 = m_fowPixmap1->getPixelf(i, j);
 
-				if(p1>exploredAlpha){
+				if (p1 > exploredAlpha) { // if old value is greater than 0.5, reset to 0.5
 					m_fowPixmap1->setPixel(i, j, exploredAlpha);
 				}
-				if(p0>p1){
+				if (p0 > p1) { // if new value is greater than old, copy new
 					m_fowPixmap1->setPixel(i, j, p0);
 				}
-			}
-			else{
-				m_fowPixmap1->setPixel(i, j, 1.f);
+			} else {
+				if (i == 0 || j == 0 || i == width - 1 || j == height - 1) {
+					m_fowPixmap1->setPixel(i, j, 0.f);
+				} else {
+					m_fowPixmap1->setPixel(i, j, 1.f);
+				}
 			}
 		}
 	}
 }
 
-void Minimap::updateFowTex(float t){
-	for(int i=0; i<m_fowPixmap0->getW(); ++i){
-		for(int j=0; j<m_fowPixmap0->getH(); ++j){
-			float p1= m_fowPixmap1->getPixelf(i, j);
-			if(p1!=m_fowTex->getPixmap()->getPixelf(i, j)){
-				float p0= m_fowPixmap0->getPixelf(i, j);
-				m_fowTex->getPixmap()->setPixel(i, j, p0+(t*(p1-p0)));
+void Minimap::updateFowTex(float t) {
+	for (int i=0; i < m_fowPixmap0->getW(); ++i) {
+		for (int j=0; j < m_fowPixmap0->getH(); ++j) {
+			float p1 = m_fowPixmap1->getPixelf(i, j);
+			if (p1 != m_fowTex->getPixmap()->getPixelf(i, j)) {
+				// interpolate p0 -> p1
+				float p0 = m_fowPixmap0->getPixelf(i, j);
+				m_fowTex->getPixmap()->setPixel(i, j, p0 + (t * (p1 - p0)));
 			}
 		}
 	}

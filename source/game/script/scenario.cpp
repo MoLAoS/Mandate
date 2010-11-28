@@ -194,6 +194,7 @@ void Scenario::loadGameSettings(string scenario, string category, const Scenario
 		}
 	}
 	gs->setFogOfWar(scenarioInfo->fogOfWar);
+	gs->setShroudOfDarkness(scenarioInfo->shroudOfDarkness);
 	gs->setFactionCount(factionCount);
 }
 

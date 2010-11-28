@@ -181,7 +181,7 @@ void UserInterface::init() {
 	}
 }
 
-void UserInterface::initMinimap(bool fow, bool resuming) {
+void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	const int &mapW = g_map.getW();
 	const int &mapH = g_map.getH();
 
@@ -200,7 +200,7 @@ void UserInterface::initMinimap(bool fow, bool resuming) {
 
 	int mx = 10;
 	int my = g_metrics.getScreenH() - size.y - 30;
-	m_minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(mx, my), size);
+	m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my), size);
 	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);

@@ -162,7 +162,7 @@ public:
 	}
 
 	void init();
-	void initMinimap(bool fow, bool resuming);
+	void initMinimap(bool fow, bool sod, bool resuming);
 
 	//get
 	Minimap *getMinimap()							{return m_minimap;}

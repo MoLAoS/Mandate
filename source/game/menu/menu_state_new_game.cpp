@@ -185,7 +185,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
 	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
 	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	gap = (metrics.getScreenW() - 400) / 3, x = gap, y += 70, h = 30;
+
+	gap = (metrics.getScreenW() - 600) / 4, x = gap, y += 70, h = 30;
 	int cbw = 75, stw = 200;
 
 	m_randomLocsCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
@@ -196,13 +197,22 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	x = gap * 2 + stw;
-	m_fogOfWarCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
-	m_fogOfWarCheckbox->setChecked(true);
-	m_fogOfWarCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
+	m_SODCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
+	m_SODCheckbox->setChecked(true);
+	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	m_fogOfWarLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
-	m_fogOfWarLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
-	m_fogOfWarLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	m_SODLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
+	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
+	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	x = gap * 3 + stw * 2;
+	m_FOWCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
+	m_FOWCheckbox->setChecked(true);
+	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
+
+	m_FOWLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
+	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
+	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	int psw_width = std::min(std::max(700, g_metrics.getScreenW() - 200), 900);
 	y += 75, h = 35, x = (metrics.getScreenW() - psw_width) / 2, w = psw_width;
@@ -365,8 +375,10 @@ void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
 
 void MenuStateNewGame::onCheckChanged(Button* cb) {
 	GameSettings &gs = g_simInterface->getGameSettings();
-	if (cb == m_fogOfWarCheckbox) {
-		gs.setFogOfWar(m_fogOfWarCheckbox->isChecked());
+	if (cb == m_FOWCheckbox) {
+		gs.setFogOfWar(m_FOWCheckbox->isChecked());
+	} else if (cb == m_SODCheckbox) {
+		gs.setShroudOfDarkness(m_SODCheckbox->isChecked());
 	} else if (cb == m_randomLocsCheckbox) {
 		gs.setRandomStartLocs(m_randomLocsCheckbox->isChecked());
 	} else {
@@ -586,7 +598,8 @@ bool MenuStateNewGame::loadGameSettings() {
 	m_mapInfo.load(gs.getMapPath());
 	m_mapInfoLabel->setText(m_mapInfo.desc);
 	m_randomLocsCheckbox->setChecked(gs.getRandomStartLocs());
-	m_fogOfWarCheckbox->setChecked(gs.getFogOfWar());
+	m_FOWCheckbox->setChecked(gs.getFogOfWar());
+	m_SODCheckbox->setChecked(gs.getShroudOfDarkness());
 
 	delete doc;
 	updateControlers();

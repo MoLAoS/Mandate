@@ -63,10 +63,12 @@ World::World(SimulationInterface *m_simInterface)
 	Config &config = Config::getInstance();
 
 	GameSettings &gs = m_simInterface->getGameSettings();
+	
 	fogOfWar = gs.getFogOfWar();
+	shroudOfDarkness = gs.getShroudOfDarkness();
+
 	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
 	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
-	shroudOfDarkness = gs.getFogOfWar();
 
 	unfogActive = false;
 	frameCount = 0;
@@ -118,14 +120,14 @@ void World::init(const XmlNode *worldNode) {
 	if (worldNode) {
 		initExplorationState();
 		loadSaved(worldNode);
-		g_userInterface.initMinimap(fogOfWar, true);
+		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, true);
 		g_cartographer.loadMapState(worldNode->getChild("mapState"));
 	} else if (m_simInterface->getGameSettings().getDefaultUnits()) {
-		g_userInterface.initMinimap(fogOfWar, false);
+		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, false);
 		initUnits();
 		initExplorationState();
 	} else {
-		g_userInterface.initMinimap(fogOfWar, false);
+		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, false);
 	}
 	computeFow();
 	alive = true;
@@ -1079,20 +1081,26 @@ void World::initMap() {
 }
 
 void World::initExplorationState() {
-	if (!fogOfWar) {
-		for (int i = 0; i < map.getTileW(); ++i) {
-			for (int j = 0; j < map.getTileH(); ++j) {
-				map.getTile(i, j)->setVisible(thisTeamIndex, true);
-				map.getTile(i, j)->setExplored(thisTeamIndex, true);
-			}
-		}
-	} else if (!shroudOfDarkness) {
-		for (int i = 0; i < map.getTileW(); ++i) {
-			for (int j = 0; j < map.getTileH(); ++j) {
-				map.getTile(i, j)->setExplored(thisTeamIndex, true);
-			}
+	for (int i = 0; i < map.getTileW(); ++i) {
+		for (int j = 0; j < map.getTileH(); ++j) {
+			map.getTile(i, j)->setVisible(thisTeamIndex, !fogOfWar);
+			map.getTile(i, j)->setExplored(thisTeamIndex, !shroudOfDarkness);
 		}
 	}
+	//if (!fogOfWar) {
+	//	for (int i = 0; i < map.getTileW(); ++i) {
+	//		for (int j = 0; j < map.getTileH(); ++j) {
+	//			map.getTile(i, j)->setVisible(thisTeamIndex, true);
+	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
+	//		}
+	//	}
+	//} else if (!shroudOfDarkness) {
+	//	for (int i = 0; i < map.getTileW(); ++i) {
+	//		for (int j = 0; j < map.getTileH(); ++j) {
+	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
+	//		}
+	//	}
+	//}
 }
 
 
@@ -1132,12 +1140,12 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 				float dist = currRelPos.length();
 				Tile *sc = map.getTile(currPos);
 
-				//explore
-				if (dist < sweepRange) {
+				// explore
+				if (shroudOfDarkness && dist < sweepRange) {
 					sc->setExplored(teamIndex, true);
 				}
 
-				//visible
+				// visible
 				if (dist < surfSightRange) {
 					sc->setVisible(teamIndex, true);
 				}
@@ -1155,18 +1163,19 @@ void World::computeFow() {
 	Minimap *minimap = g_userInterface.getMinimap();
 	minimap->resetFowTex();
 
-	//reset visibility in cells
-	for (int k = 0; k < GameConstants::maxPlayers; ++k) {
-		if (fogOfWar || k != thisTeamIndex) {
-			for (int i = 0; i < map.getTileW(); ++i) {
-				for (int j = 0; j < map.getTileH(); ++j) {
-					map.getTile(i, j)->setVisible(k, !gs.getFogOfWar());
-				}
+	// reset visibility in cells		
+	for (int i = 0; i < map.getTileW(); ++i) {
+		for (int j = 0; j < map.getTileH(); ++j) {
+			Tile *tile = map.getTile(i, j);
+			for (int k = 0; k < GameConstants::maxPlayers; ++k) {
+				bool val =			// if no fog and no shroud, or no fog and shroud with this 
+					(!fogOfWar		// tile seen previously, then set visible
+					&& (!shroudOfDarkness || (shroudOfDarkness && tile->isExplored(k))));
+				tile->setVisible(k, val);
 			}
 		}
 	}
-
-	//compute cells
+	// explore cells
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
@@ -1177,13 +1186,11 @@ void World::computeFow() {
 			}
 		}
 	}
-
-	//fire
+	// turn fires on/off (redundant ? all particle-system now subjected to visibilty checks)
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
-	
-			//fire
+			// fire
 			ParticleSystem *fire = unit->getFire();
 			if (fire) {
 				fire->setActive(map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(thisTeamIndex));
@@ -1191,10 +1198,13 @@ void World::computeFow() {
 		}
 	}
 	
-	//compute texture
+	// compute texture
 	if (unfogActive) { // scripted map reveal
 		doUnfog();
-	}	
+	}
+	Rectangle rect(0,0, map.getTileW(), map.getTileH());
+	TypeMap<> tmpMap(rect, numeric_limits<float>::infinity());
+	tmpMap.clearMap(numeric_limits<float>::infinity());
 	for (int i = 0; i < getFactionCount(); ++i) {
 		Faction *faction = getFaction(i);
 		if (faction->getTeam() != thisTeamIndex) {
@@ -1211,26 +1221,51 @@ void World::computeFow() {
 				PosCircularIteratorSimple pci(map.getBounds(), unit->getPos(), sightRange + indirectSightRange);
 				while (pci.getNext(pos, distance)) {
 					Vec2i surfPos = Map::toTileCoords(pos);
-
-					//compute max alpha
-					float maxAlpha;
-					if (surfPos.x > 1 && surfPos.y > 1 && surfPos.x < map.getTileW() - 2 && surfPos.y < map.getTileH() - 2) {
-						maxAlpha = 1.f;
-					} else if (surfPos.x > 0 && surfPos.y > 0 && surfPos.x < map.getTileW() - 1 && surfPos.y < map.getTileH() - 1) {
-						maxAlpha = 0.3f;
-					} else {
-						maxAlpha = 0.0f;
+					float curr = tmpMap.getInfluence(surfPos);
+					if (curr == 1.f) {
+						continue; // already max
 					}
 
-					//compute alpha
+					// compute max alpha
+					float maxAlpha;
+					if (surfPos.x > 1 && surfPos.y > 1 && surfPos.x < map.getTileW() - 2 && surfPos.y < map.getTileH() - 2) {
+						// strictly inside map
+						maxAlpha = 1.f;
+					} else {
+						// map boundary
+						maxAlpha = 0.f;
+						if (tmpMap.getInfluence(surfPos) == 0.3f) {
+							continue; // already max
+						}
+					}
+
+					// compute alpha
 					float alpha;
+
 					if (distance > sightRange) {
 						alpha = clamp(1.f - (distance - sightRange) / (indirectSightRange), 0.f, maxAlpha);
 					} else {
 						alpha = maxAlpha;
 					}
-					minimap->incFowTextureAlphaSurface(surfPos, alpha);
+					if (alpha != 0.f && (curr == numeric_limits<float>::infinity() || alpha > curr)) {
+						tmpMap.setInfluence(surfPos, alpha);
+					}
+					//minimap->incFowTextureAlphaSurface(surfPos, alpha);
 				}
+			}
+		}
+	}
+	RectIterator iter(Vec2i(0,0), Vec2i(rect.w - 1, rect.h - 1));
+	while (iter.more()) {
+		Vec2i tPos = iter.next();
+		float val = tmpMap.getInfluence(tPos);
+		if (val != numeric_limits<float>::infinity()) {
+			minimap->incFowTextureAlphaSurface(tPos, val);
+		} else if (!shroudOfDarkness) {
+			if (tPos.x == 0 || tPos.y == 0 || tPos.x == map.getTileW() - 1 || tPos.y == map.getTileH() - 1) {
+				minimap->incFowTextureAlphaSurface(tPos, 0.f);
+			} else {
+				minimap->incFowTextureAlphaSurface(tPos, 0.5f);
 			}
 		}
 	}

@@ -71,8 +71,10 @@ private:
 						*m_tilesetLabel;
 	DropList			*m_techTreeList,
 						*m_tilesetList;
-	StaticText			*m_fogOfWarLabel;
-	CheckBox			*m_fogOfWarCheckbox;
+	StaticText			*m_FOWLabel;
+	CheckBox			*m_FOWCheckbox;
+	StaticText			*m_SODLabel;
+	CheckBox			*m_SODCheckbox;
 	StaticText			*m_randomLocsLabel;
 	CheckBox			*m_randomLocsCheckbox;
 	MessageDialog		*m_messageDialog;
