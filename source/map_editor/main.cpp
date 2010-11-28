@@ -429,6 +429,15 @@ void MainWindow::setExtension() {
 	}
 }
 
+// WxGLCanvas::Refresh() is not working on windows, possibly because
+// its in a wxPanel... http://wiki.wxwidgets.org/WxGLCanvas
+// though none of the work-arounds worked for me.
+#ifdef WIN32
+#	define REFRESH() wxPaintEvent ev;glCanvas->onPaint(ev);
+#else
+#	define REFRESH() glCanvas->Refresh();
+#endif
+
 void MainWindow::onMouseDown(wxMouseEvent &event, int x, int y) {
 	if (event.LeftIsDown()) {
 		program->setUndoPoint(enabledGroup);
@@ -437,7 +446,7 @@ void MainWindow::onMouseDown(wxMouseEvent &event, int x, int y) {
 		if (!isDirty()) {
 			setDirty(true);
 		}
-		glCanvas->Refresh();
+		REFRESH();
 	}
 	event.Skip();
 }
@@ -474,7 +483,7 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 	lastY = y;
 
 	if (repaint) {
-		glCanvas->Refresh();
+		REFRESH();
 	}
 	event.Skip();
 }
@@ -545,6 +554,7 @@ void MainWindow::onMenuEditUndo(wxCommandEvent &event) {
 	std::cout << "Undo Pressed" << std::endl;
 	if (program->undo()) {
 		setDirty();
+		REFRESH();
 	}
 }
 
@@ -552,6 +562,7 @@ void MainWindow::onMenuEditRedo(wxCommandEvent &event) {
 	std::cout << "Redo Pressed" << std::endl;
 	if (program->redo()) {
 		setDirty();
+		REFRESH();
 	}
 }
 
