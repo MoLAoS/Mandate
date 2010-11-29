@@ -84,8 +84,11 @@ private:
     int size;
     int height;
 
-	bool light;			// ??? UnitStats?
-    Vec3f lightColour;	// ??? UnitStats?
+	bool light;
+    Vec3f lightColour;
+
+	CloakClass	m_cloakClass;
+	int			m_cloakCost;
 
 	//sounds
 	SoundContainer selectionSounds;
@@ -141,6 +144,8 @@ public:
 	int getHeight() const					{return height;}
 	Field getField() const					{return field;}
 	Zone getZone() const					{return zone;}
+	CloakClass getCloakClass() const		{return m_cloakClass;}
+	int getCloakCost() const				{return m_cloakCost;}
 
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}
@@ -225,6 +230,7 @@ public:
 	bool isOfClass(UnitClass uc) const;
 
 private:
+	void setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes);
     void sortSkillTypes();
     void sortCommandTypes();
 };

@@ -181,6 +181,7 @@ private:
 	bool autoRepairEnabled;			/**< is auto repair enabled */
 	bool carried;					/**< is the unit being carried */
 	bool visible;
+	bool		m_cloaked;
 
 	// this should go someone else
 	float highlight;				/**< alpha for selection circle effects */
@@ -297,6 +298,7 @@ public:
 	bool isMobile ()							{ return type->isMobile(); }
 	void setModelFacing(CardinalDir value);
 	CardinalDir getModelFacing() const			{ return m_facing; }
+	bool isCloaked() const					{return m_cloaked;}
 
 	//-- for carry units
 	const UnitIdList& getCarriedUnits() const	{return m_carriedUnits;}

@@ -161,6 +161,12 @@ STRINGY_ENUM( AttackSkillPreference,
 	WHEN_DAMAGED
 );
 
+STRINGY_ENUM( CloakClass,
+	PERMANENT,
+	ENERGY,
+	EFFECT
+);
+
 }}
 
 #endif

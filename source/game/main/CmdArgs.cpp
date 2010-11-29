@@ -79,7 +79,7 @@ bool CmdArgs::parse(int argc, char **argv){
 					if (configDir.empty()) configDir=".";  // fake configDir, won't get used anyway
 					if (dataDir.empty()) dataDir = ".";
 					FSFactory *fsfac = FSFactory::getInstance();
-					fsfac->initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+					fsfac->initPhysFS(argv[0], configDir, dataDir);
 					fsfac->usePhysFS = true;
 					vector<string> results = FSFactory::findAll("tilesets/*", false);
 					for(vector<string>::iterator it=results.begin(); it!=results.end(); ++it){

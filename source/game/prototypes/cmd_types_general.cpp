@@ -1117,7 +1117,8 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixed distance;
 	bool needDistance = false;
 
-	if (*rangedPtr && ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone()))) {
+	if (*rangedPtr && ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone())
+	|| (*rangedPtr)->isCloaked())) {
 		*rangedPtr = NULL;
 	}
 	if (*rangedPtr) {
@@ -1134,7 +1135,8 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 				if (!asts || asts->getZone(z)) { // looking for target in z?
 					// does cell contain a bad guy?
 					Unit *possibleEnemy = map->getCell(pos)->getUnit(z);
-					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)) {
+					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)
+					&& !possibleEnemy->isCloaked()) {
 						// If bad guy has an attack command we can short circut this loop now
 						if (possibleEnemy->getType()->hasCommandClass(CommandClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;

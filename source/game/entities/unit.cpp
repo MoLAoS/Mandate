@@ -110,8 +110,7 @@ MEMORY_CHECK_IMPLEMENTATION(Unit)
 /** Construct Unit object */
 Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
 		   CardinalDir facing, Unit* master)
-        : visible(true)
-        , id(id)
+        : id(id)
         , hp(1)
         , ep(0)
         , loadCount(0)
@@ -147,6 +146,8 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
         , toBeUndertaken(false)
         , autoRepairEnabled(true)
         , carried(false)
+		, visible(true)
+		, m_cloaked(false)
         , faction(faction)
         , fire(0)
         , map(map)
@@ -161,6 +162,10 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
+
+	if (type->getCloakClass() == CloakClass::PERMANENT) {
+		m_cloaked = true;
+	}
 
 	setModelFacing(m_facing);
 }

@@ -200,21 +200,22 @@ void Minimap::updateFowTex(float t) {
 void buildVisLists(ConstUnitVector &srfList, ConstUnitVector &airList) {
 	UnitSet srfSet; // surface units seen already
 	UnitSet airSet; // air units seen already
+	const Faction *thisFaction = g_world.getThisFaction();
 	RectIterator iter(Vec2i(0), Vec2i(g_map.getW() - 1, g_map.getH() - 1));
 	while (iter.more()) {
 		Vec2i pos = iter.next();
 		Tile *tile = g_map.getTile(Map::toTileCoords(pos));
-		if (tile->isVisible(g_world.getThisFaction()->getTeam())) {
+		if (tile->isVisible(thisFaction->getTeam())) {
 			Cell *cell = g_map.getCell(pos);
 			Unit *u = cell->getUnit(Zone::AIR);
-			if (u && u->getTeam() != -1 && !u->isCarried()) {
+			if (u && thisFaction->canSee(u)) {
 				if (airSet.find(u) == airSet.end()) {
 					airSet.insert(u);
 					airList.push_back(u);
 				}
 			} else {
 				u = cell->getUnit(Zone::LAND);
-				if (u && u->getTeam() != -1 && !u->isCarried()) {
+				if (u && thisFaction->canSee(u)) {
 					if (srfSet.find(u) == srfSet.end()) {
 						srfSet.insert(u);
 						srfList.push_back(u);

@@ -178,6 +178,8 @@ public:
 	// diplomacy
 	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
 
+	bool canSee(const Unit *unit) const;
+
 	// other
 	Unit *findUnit(int id) {
 		assert(units.size() == unitMap.size());

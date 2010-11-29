@@ -424,6 +424,7 @@ void Renderer::setupLighting(){
 
 	int lightCount= 0;
 	const World *world = &g_world;
+	const Faction *thisFaction = world->getThisFaction();
 	const GameCamera *gameCamera = game->getGameCamera();
 	const TimeFlow *timeFlow = world->getTimeFlow();
 	float time = timeFlow->getTime();
@@ -455,7 +456,7 @@ void Renderer::setupLighting(){
 		for(int i=0; i<world->getFactionCount() && lightCount<maxLights; ++i){
 			for(int j=0; j<world->getFaction(i)->getUnitCount() && lightCount<maxLights; ++j){
 				Unit *unit= world->getFaction(i)->getUnit(j);
-				if (world->toRenderUnit(unit) && !unit->isCarried()
+				if (thisFaction->canSee(unit) && !unit->isCarried()
 				&& unit->getType()->getLight() && unit->isOperative()
 				&& unit->getCurrVector().dist(gameCamera->getPos()) < maxLightDist) {
 
@@ -1070,6 +1071,7 @@ void Renderer::renderUnits(){
 	const UnitType *ut;
 	int framesUntilDead;
 	const World *world= &g_world;
+	const Faction *thisFaction = world->getThisFaction();
 	const Map *map = world->getMap();
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
@@ -1077,8 +1079,7 @@ void Renderer::renderUnits(){
 
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_COLOR_MATERIAL);
-	glAlphaFunc(GL_GREATER, 0.5f);
-
+	
 	if(shadows==sShadowMapping){
 		glActiveTexture(shadowTexUnit);
 		glEnable(GL_TEXTURE_2D);
@@ -1099,14 +1100,14 @@ void Renderer::renderUnits(){
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
 			//@todo take unit size into account
-			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
+			if (thisFaction->canSee(unit) && culler.isInside(unit->getPos())) {
 				toRender[i + 1].push_back(unit);
 			}
 		}
 	}
 	for (int i=0; i < world->getGlestimals()->getUnitCount(); ++i) {
 			unit = world->getGlestimals()->getUnit(i);
-			if (world->toRenderUnit(unit) && culler.isInside(unit->getPos())) {
+			if (thisFaction->canSee(unit) && culler.isInside(unit->getPos())) {
 				toRender[0].push_back(unit);
 			}
 	}
@@ -1123,7 +1124,7 @@ void Renderer::renderUnits(){
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
 			
-			if (!unit->isVisible()) {
+			if (!unit->isVisible() || (unit->isCloaked() && !thisFaction->isAlly(unit->getFaction()))) {
 				continue;
 			}
 
@@ -1154,7 +1155,7 @@ void Renderer::renderUnits(){
 			float alpha= 1.0f;
 			const SkillType *st= unit->getCurrSkill();
 			bool fade = false;
-			if(st->getClass() == SkillClass::DIE) {
+			if (st->getClass() == SkillClass::DIE) {
 				const DieSkillType *dst = (const DieSkillType*)st;
 				if(dst->getFade()) {
 					alpha= 1.0f - unit->getAnimProgress();
@@ -1163,6 +1164,9 @@ void Renderer::renderUnits(){
 					alpha= (float)framesUntilDead / 300.f;
 					fade = true;
 				}
+			} else if (unit->isCloaked()) { // is ally, by consequence of earlier test
+				alpha = 0.3f;
+				fade = true;
 			}
 
 			if(fade) {
@@ -1173,8 +1177,10 @@ void Renderer::renderUnits(){
 				fadeDiffuseColor.w = alpha;
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
+				glAlphaFunc(GL_GREATER, 0.f);
 			} else {
 				glEnable(GL_COLOR_MATERIAL);
+				glAlphaFunc(GL_GREATER, 0.5f);
 			}
 
 			//render
@@ -1936,6 +1942,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 	int framesUntilDead;
 	bool changeColor = false;
 	const World *world= &g_world;
+	const Faction *thisFaction = world->getThisFaction();
 	const Map *map = world->getMap();
 
 	assertGl();
@@ -1971,7 +1978,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		if (!map->isInside(pos)) continue;
 		for (Zone z(0); z < Zone::COUNT; ++z) {
 			const Unit *unit = map->getCell(pos)->getUnit(z);
-			if (unit && world->toRenderUnit(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
+			if (unit && thisFaction->canSee(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
 				unitsSeen.insert(unit);
 				toRender[unit->getFactionIndex() + 1].push_back(unit);
 			}
@@ -1986,7 +1993,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
 
-			if (!unit->isVisible()) {
+			if (!unit->isVisible() || (unit->isCloaked() && !thisFaction->isAlly(unit->getFaction()))) {
 				continue;
 			}
 

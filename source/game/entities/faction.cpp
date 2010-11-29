@@ -563,7 +563,27 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 
 // ================== diplomacy ==================
 
-
+bool Faction::canSee(const Unit *unit) const {
+	Map &map = g_map;
+	if (!unit->isVisible()) {
+		return false;
+	}
+	if (isAlly(unit->getFaction())) {
+		return true;
+	}
+	if (unit->isCloaked()) {
+		return false;
+	}
+	Vec2i tPos = Map::toTileCoords(unit->getCenteredPos());
+	if (map.getTile(tPos)->isVisible(teamIndex)) {
+		return true;
+	}
+	if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
+	&& map.getTile(Map::toTileCoords(unit->getTargetPos())->isVisible(teamIndex)) {
+		return true;
+	}
+	return false;
+}
 
 // ================== misc ==================
 

@@ -78,6 +78,7 @@ protected:
 	const char* typeName;
 	int minRange; // Refactor? Push down? Used for anything other than attack?
 	int maxRange; // ditto?
+	bool m_deCloak; // does this skill cause de-cloak
 
 	float startTime;
 
@@ -129,12 +130,16 @@ public:
 	int getMaxRange() const				{return maxRange;}
 	int getMinRange() const				{return minRange;}
 	float getStartTime() const			{return startTime;}
+	bool causesDeCloak() const			{return m_deCloak;}
 
 	unsigned getEyeCandySystemCount() const { return eyeCandySystems.size(); }
 	const UnitParticleSystemType* getEyeCandySystem(unsigned i) const {
 		assert(i < eyeCandySystems.size());
 		return eyeCandySystems[i];
 	}
+
+	// set
+	void setDeCloak(bool v)	{m_deCloak = v;}
 
 	//other
 	virtual string toString() const		{return Lang::getInstance().get(typeName);}

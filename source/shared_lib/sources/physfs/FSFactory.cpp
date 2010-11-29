@@ -64,16 +64,19 @@ void FSFactory::shutdown() {
 	delete instance;
 }
 
-bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char *dataDir){
+bool FSFactory::initPhysFS(const char *argv0, const string &configDir, string &dataDir){
 #if USE_PHYSFS
 	if (!PHYSFS_init(argv0)) {
 		throw runtime_error(string("Couldn't init PhysFS with ")+argv0+"; "+PHYSFS_getLastError());
 	}
+#ifdef WIN32
+	PHYSFS_permitSymbolicLinks(0);
+#else
 	PHYSFS_permitSymbolicLinks(1);
-
-	if(PHYSFS_mount(configDir, NULL, 1)){
+#endif
+	if(PHYSFS_mount(configDir.c_str(), NULL, 1)){
 		// mounting configDir succeeded
-		PHYSFS_setWriteDir(configDir);
+		PHYSFS_setWriteDir(configDir.c_str());
 	}else{
 		//FIXME: only a workaround, need unicode support
 		const char *str=getenv("ALLUSERSPROFILE");
@@ -105,11 +108,16 @@ bool FSFactory::initPhysFS(const char *argv0, const char *configDir, const char 
 	}
 	PHYSFS_freeList(list);
 
-	if(!PHYSFS_mount(dataDir, NULL, 1)){
+	if(!PHYSFS_mount(dataDir.c_str(), NULL, 1)){
 		// for all the windows people wanting to doubleclick the exe instead of the menu link
-		if(!PHYSFS_mount("../share/glestae/", NULL, 1)){
+		if(PHYSFS_mount("../share/glestae/", NULL, 1)) {
+			// reset dataDir
+			dataDir = "../share/glestae/";
+		} else {
 			// or try working dir (if widget.cfg is there, we guess its right and continue.)
-			if (!PHYSFS_mount("./", NULL, 1) || !fileExists("data/core/widget.cfg")) {
+			if (PHYSFS_mount("./", NULL, 1) || !fileExists("data/core/widget.cfg")) {
+				dataDir = "./";
+			} else {
 				throw runtime_error(string("Couldn't mount dataDir: ")+dataDir+"; "+PHYSFS_getLastError());
 			}
 		}

@@ -91,11 +91,12 @@ UnitType::UnitType()
 		, armourType(0)
 		, size(0), height(0)
 		, light(false), lightColour(0.f)
+		, m_cloakClass(CloakClass::INVALID)
+		, m_cloakCost(0)
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
-		, m_cellMap(0)
-		, m_colourMap(0)
+		, m_cellMap(0), m_colourMap(0)
 		, m_hasProjectileAttack(false)
 		, m_factionType(0) {
 	reset();
@@ -250,10 +251,48 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
+	vector<string> deCloakOnSkills;
+	vector<SkillClass> deCloakOnSkillClasses;
+
 	if (!glestimal) {
 		// properties
 		try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
 		catch (runtime_error e) {
+			g_errorLog.addXmlError(path, e.what());
+			loadOk = false;
+		}
+
+		// cloak
+		try {
+			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
+			if (cloakNode) {
+				string ct = cloakNode->getRestrictedAttribute("type");
+				m_cloakClass = CloakClassNames.match(ct.c_str());
+				switch (m_cloakClass) {
+					case CloakClass::INVALID:
+						throw runtime_error("Invalid CloakClass: " + ct);
+					case CloakClass::EFFECT:
+						throw runtime_error("CloakClass::EFFECT not supported yet :(");
+					case CloakClass::ENERGY:
+						m_cloakCost = cloakNode->getIntAttribute("cost");
+						for (int i=0; i < cloakNode->getChildCount(); ++i) {
+							const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
+							if (deCloakNode->getAttribute("skill-name")) {
+								deCloakOnSkills.push_back(deCloakNode->getRestrictedAttribute("skill-name"));
+							} else {
+								string str = deCloakNode->getRestrictedAttribute("skill-class");
+								SkillClass sc = SkillClassNames.match(str.c_str());
+								if (sc == SkillClass::INVALID) {
+									throw runtime_error("Invlaid SkillClass: " + str);
+								}
+								deCloakOnSkillClasses.push_back(sc);
+							}
+						}
+					default:
+						break;
+				}
+			}
+		} catch (runtime_error e) {
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
@@ -341,6 +380,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 
 	sortSkillTypes();
+	setDeCloakSkills(deCloakOnSkills, deCloakOnSkillClasses);
 
 	//commands
 	try {
@@ -618,6 +658,27 @@ void UnitType::sortSkillTypes() {
 		if ((*it)->getProjectile()) {
 			m_hasProjectileAttack = true;
 			break;
+		}
+	}
+}
+
+void UnitType::setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes) {
+	foreach_const (vector<string>, it, names) {
+		bool found = false;
+		foreach (SkillTypes, sit, skillTypes) {
+			if (*it == (*sit)->getName()) {
+				found = true;
+				(*sit)->setDeCloak(true);
+				break;
+			}
+		}
+		if (!found) {
+			throw runtime_error("de-cloak is set for skill '" + name + "', which was not found.");
+		}
+	}
+	foreach_const (vector<SkillClass>, it, classes) {
+		foreach (SkillTypes, sit, skillTypesByClass[*it]) {
+			(*sit)->setDeCloak(true);
 		}
 	}
 }
