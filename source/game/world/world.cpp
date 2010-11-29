@@ -600,7 +600,11 @@ bool World::placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spacia
 void World::moveUnitCells(Unit *unit) {
 	Vec2i newPos = unit->getNextPos();
 	bool changingTiles = false;
-	if (Map::toTileCoords(newPos) != Map::toTileCoords(unit->getPos())) {
+	Vec2i centrePos = unit->getCenteredPos();
+	Vec2i dir = unit->getNextPos() - unit->getPos();
+	Vec2i newCentrePos = centrePos + dir;
+
+	if (Map::toTileCoords(centrePos) != Map::toTileCoords(newCentrePos)) {
 		changingTiles = true;
 		// remove unit's visibility
 		cartographer->removeUnitVisibility(unit);
@@ -611,6 +615,9 @@ void World::moveUnitCells(Unit *unit) {
 	if (changingTiles) {
 		// re-apply unit's visibility
 		cartographer->applyUnitVisibility(unit);
+		if (unit->getType()->isDetector()) {
+			cartographer->detectorMoved(unit, centrePos);
+		}
 	}
 
 	//water splash

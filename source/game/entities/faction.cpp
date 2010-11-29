@@ -571,10 +571,10 @@ bool Faction::canSee(const Unit *unit) const {
 	if (isAlly(unit->getFaction())) {
 		return true;
 	}
-	if (unit->isCloaked()) {
+	Vec2i tPos = Map::toTileCoords(unit->getCenteredPos());
+	if (unit->isCloaked() && !g_cartographer.canDetect(teamIndex, tPos)) {
 		return false;
 	}
-	Vec2i tPos = Map::toTileCoords(unit->getCenteredPos());
 	if (map.getTile(tPos)->isVisible(teamIndex)) {
 		return true;
 	}

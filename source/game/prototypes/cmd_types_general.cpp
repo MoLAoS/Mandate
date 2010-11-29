@@ -1117,9 +1117,16 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixed distance;
 	bool needDistance = false;
 
-	if (*rangedPtr && ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone())
-	|| (*rangedPtr)->isCloaked())) {
-		*rangedPtr = NULL;
+	if (*rangedPtr) {
+		if ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone())) {
+			*rangedPtr = 0;
+		}
+		if (*rangedPtr && (*rangedPtr)->isCloaked()) {
+			Vec2i tpos = Map::toTileCoords((*rangedPtr)->getCenteredPos());
+			if (!g_cartographer.canDetect(unit->getTeam(), tpos)) {
+				*rangedPtr = 0;
+			}
+		}
 	}
 	if (*rangedPtr) {
 		needDistance = true;
@@ -1135,8 +1142,13 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 				if (!asts || asts->getZone(z)) { // looking for target in z?
 					// does cell contain a bad guy?
 					Unit *possibleEnemy = map->getCell(pos)->getUnit(z);
-					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)
-					&& !possibleEnemy->isCloaked()) {
+					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)) {
+						if (possibleEnemy->isCloaked()) {
+							Vec2i tpos = Map::toTileCoords(possibleEnemy->getCenteredPos());
+							if (!g_cartographer.canDetect(unit->getTeam(), tpos)) {
+								continue;
+							}
+						}
 						// If bad guy has an attack command we can short circut this loop now
 						if (possibleEnemy->getType()->hasCommandClass(CommandClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;

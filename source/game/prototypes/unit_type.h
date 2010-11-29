@@ -90,6 +90,8 @@ private:
 	CloakClass	m_cloakClass;
 	int			m_cloakCost;
 
+	bool		m_detector;
+
 	//sounds
 	SoundContainer selectionSounds;
 	SoundContainer commandSounds;
@@ -146,6 +148,7 @@ public:
 	Zone getZone() const					{return zone;}
 	CloakClass getCloakClass() const		{return m_cloakClass;}
 	int getCloakCost() const				{return m_cloakCost;}
+	bool isDetector() const					{return m_detector;}
 
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}

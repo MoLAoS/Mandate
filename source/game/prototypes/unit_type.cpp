@@ -92,7 +92,7 @@ UnitType::UnitType()
 		, size(0), height(0)
 		, light(false), lightColour(0.f)
 		, m_cloakClass(CloakClass::INVALID)
-		, m_cloakCost(0)
+		, m_cloakCost(0), m_detector(false)
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
@@ -262,8 +262,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 
-		// cloak
-		try {
+		try { // cloak
 			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
 			if (cloakNode) {
 				string ct = cloakNode->getRestrictedAttribute("type");
@@ -296,8 +295,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		// Resources stored
-		try {
+
+		m_detector = parametersNode->getOptionalBoolValue("detector");
+
+		try { // Resources stored
 			const XmlNode *resourcesStoredNode= parametersNode->getChild("resources-stored", 0, false);
 			if (resourcesStoredNode) {
 				storedResources.resize(resourcesStoredNode->getChildCount());
@@ -312,8 +313,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		// meeting point
-		try {
+		try { // meeting point
 			const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
 			meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();
 			if (meetingPoint) {
@@ -324,8 +324,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//selection sounds
-		try {
+		try { // selection sounds
 			const XmlNode *selectionSoundNode= parametersNode->getChild("selection-sounds");
 			if(selectionSoundNode->getAttribute("enabled")->getBoolValue()){
 				selectionSounds.resize(selectionSoundNode->getChildCount());
@@ -341,8 +340,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//command sounds
-		try {
+		try { // command sounds
 			const XmlNode *commandSoundNode= parametersNode->getChild("command-sounds");
 			if(commandSoundNode->getAttribute("enabled")->getBoolValue()){
 				commandSounds.resize(commandSoundNode->getChildCount());
@@ -360,8 +358,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		}
 	} // !glestimal
 
-	//skills
-	try {
+	try { // skills
 		const XmlNode *skillsNode= unitNode->getChild("skills");
 		//skillTypes.resize(skillsNode->getChildCount());
 		for (int i=0; i < skillsNode->getChildCount(); ++i) {
@@ -382,8 +379,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	sortSkillTypes();
 	setDeCloakSkills(deCloakOnSkills, deCloakOnSkillClasses);
 
-	//commands
-	try {
+	try { // commands
 		const XmlNode *commandsNode = unitNode->getChild("commands");
 		for (int i = 0; i < commandsNode->getChildCount(); ++i) {
 			const XmlNode *commandNode = commandsNode->getChild(i);

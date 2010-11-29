@@ -505,6 +505,8 @@ private:
 	MutUnitSet	carriedSet; // set of units not in the world (because they are housed in other units)
 	Units		deadList;	// list of dead units
 
+	void assertDead();
+
 public:
 	UnitFactory();
 	~UnitFactory();

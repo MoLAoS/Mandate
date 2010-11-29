@@ -974,6 +974,9 @@ void Unit::born(){
 	g_world.getCartographer()->applyUnitVisibility(this);
 	g_simInterface->doUnitBorn(this);
 	StateChanged(this);
+	if (type->isDetector()) {
+		g_world.getCartographer()->detectorCreated(this);
+	}
 }
 
 void checkTargets(const Unit *dead) {
@@ -1040,6 +1043,9 @@ void Unit::kill() {
 	clearCommands();
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	deadCount = Random(id).randRange(-256, 256); // random decay time
+	if (type->isDetector()) {
+		g_world.getCartographer()->detectorDied(this);
+	}
 }
 
 void Unit::undertake() {
@@ -2050,8 +2056,6 @@ Unit* UnitFactory::newInstance(const Vec2i &pos, const UnitType *type, Faction *
 	Unit *unit = new Unit(idCounter, pos, type, faction, map, face, master);
 	unitMap[idCounter] = unit;
 	unit->Died.connect(this, &UnitFactory::onUnitDied);
-	
-	// todo: more connect-o-rama
 
 	++idCounter;
 	return unit;
@@ -2069,6 +2073,17 @@ void UnitFactory::onUnitDied(Unit *unit) {
 	deadList.push_back(unit);
 }
 
+void UnitFactory::assertDead() {
+	foreach (UnitMap, it, unitMap) {
+		if (!it->second->isAlive()) {
+			Units::iterator uit = std::find(deadList.begin(), deadList.end(), it->second);
+			if (uit == deadList.end()) {
+				assert(false && "Dead unit did not fire Died event!");
+			}
+		}
+	}
+}
+
 void UnitFactory::update() {
 	Units::iterator it = deadList.begin();
 	while (it != deadList.end()) {
@@ -2081,6 +2096,11 @@ void UnitFactory::update() {
 			return;
 		}
 	}
+	//DEBUG
+	//static int count = 0;
+	//if (++count % 5 == 0) {
+	//	assertDead();
+	//}
 }
 
 void UnitFactory::deleteUnit(Unit *unit) {
