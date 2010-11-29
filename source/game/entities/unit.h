@@ -481,6 +481,9 @@ public:
 	void effectExpired(Effect *effect);
 	bool doRegen(int hpRegeneration, int epRegeneration);
 
+	void cloak();
+	void deCloak();
+
 private:
 	float computeHeight(const Vec2i &pos) const;
 	void updateTarget(const Unit *target = NULL);

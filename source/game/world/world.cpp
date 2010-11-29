@@ -272,14 +272,26 @@ void World::updateFaction(const Faction *f) {
 
 			m_simInterface->doUpdateUnitCommand(unit);
 
+			if (unit->getType()->getCloakClass() != CloakClass::INVALID) {
+				if (unit->isCloaked()) {
+					if (unit->getCurrSkill()->causesDeCloak()) {
+						unit->deCloak();
+					}
+				} else {
+					if (unit->getType()->getCloakClass() == CloakClass::PERMANENT
+					&& !unit->getCurrSkill()->causesDeCloak()) {
+						unit->cloak();
+					}
+				}
+			}
+
 			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE 
 				&& unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
 				// move unit in cells
 				moveUnitCells(unit);
 
 				// play water sound?
-				if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
-				&& unit->getCurrField() == Field::LAND
+				if (map.getCell(unit->getPos())->isSubmerged() && unit->getCurrField() == Field::LAND
 				&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
 				&& g_renderer.getCuller().isInside(unit->getPos())) {
 					g_soundRenderer.playFx(g_coreData.getWaterSound());

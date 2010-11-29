@@ -274,10 +274,12 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 						throw runtime_error("CloakClass::EFFECT not supported yet :(");
 					case CloakClass::ENERGY:
 						m_cloakCost = cloakNode->getIntAttribute("cost");
+					default:
 						for (int i=0; i < cloakNode->getChildCount(); ++i) {
 							const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
-							if (deCloakNode->getAttribute("skill-name")) {
-								deCloakOnSkills.push_back(deCloakNode->getRestrictedAttribute("skill-name"));
+							string str = deCloakNode->getOptionalRestrictedValue("skill-name");
+							if (!str.empty()) {
+								deCloakOnSkills.push_back(str);
 							} else {
 								string str = deCloakNode->getRestrictedAttribute("skill-class");
 								SkillClass sc = SkillClassNames.match(str.c_str());
@@ -287,7 +289,6 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 								deCloakOnSkillClasses.push_back(sc);
 							}
 						}
-					default:
 						break;
 				}
 			}

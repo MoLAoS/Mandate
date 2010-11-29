@@ -1062,6 +1062,16 @@ void Unit::resetHighlight() {
 	highlight= 1.f;
 }
 
+void Unit::cloak() {
+	RUNTIME_CHECK(type->getCloakClass() != CloakClass::INVALID);
+	m_cloaked = true;
+}
+
+void Unit::deCloak() {
+	m_cloaked = false;
+}
+
+
 // =================== Referencers ===================
 
 
