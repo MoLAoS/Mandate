@@ -579,7 +579,7 @@ bool Faction::canSee(const Unit *unit) const {
 		return true;
 	}
 	if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
-	&& map.getTile(Map::toTileCoords(unit->getTargetPos())->isVisible(teamIndex)) {
+	&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(teamIndex)) {
 		return true;
 	}
 	return false;
