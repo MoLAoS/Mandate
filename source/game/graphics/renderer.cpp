@@ -1077,7 +1077,6 @@ void Renderer::renderUnits(){
 
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_COLOR_MATERIAL);
-	glAlphaFunc(GL_GREATER, 0.5f);
 
 	if(shadows==sShadowMapping){
 		glActiveTexture(shadowTexUnit);
@@ -1173,8 +1172,10 @@ void Renderer::renderUnits(){
 				fadeDiffuseColor.w = alpha;
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
+				glAlphaFunc(GL_GREATER, 0.f);
 			} else {
 				glEnable(GL_COLOR_MATERIAL);
+				glAlphaFunc(GL_GREATER, 0.5f);
 			}
 
 			//render
