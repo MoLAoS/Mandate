@@ -879,7 +879,7 @@ void HarvestCommandType::update(Unit *unit) const {
 					unit->face(unit->getNextPos());
 					return;
 				case TravelState::BLOCKED:
-					unit->setCurrSkill(getStopLoadedSkill(unit));
+					unit->setCurrSkill(SkillClass::STOP);
 					return;
 				case TravelState::IMPOSSIBLE:
 					unit->setCurrSkill(SkillClass::STOP);
