@@ -69,8 +69,6 @@ find_package(Freetype REQUIRED)
 find_package(PNG REQUIRED)
 find_package(GLEW REQUIRED)
 
-include_directories(${GLEW_INCLUDE_DIR})
-
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
 if(GAE_USE_PHYSFS)
@@ -114,16 +112,13 @@ else (MSVC)
 endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR}
-		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
+		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library
 	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${GAE_WINDEPS} PATH_SUFFIXES include)
 	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
 	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
-	# needs to be compiled as C (done automatically because *.c and project() has C), extra file for shared_lib
-	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${GAE_WINDEPS}/src)
-	include_directories(${DSOUND_INCLUDE_DIR})
 	# FIXME: VC project needs to be build with static vorbis/ogg libs
 	find_library(VORBISFILE_STATIC_LIBRARY NAMES vorbisfile_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
 	find_library(VORBIS_STATIC_LIBRARY NAMES vorbis_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
