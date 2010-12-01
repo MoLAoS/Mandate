@@ -79,11 +79,11 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		addImageX(0, Vec2i(x,y), Vec2i(32,32));
 		x += 32;
 	}
-	setTextParams("", Vec4f(1.f), m_font, false); // unit title
+	setTextParams("", Vec4f(1.f), m_font, false); // (0) unit title
 	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
-	addText(""); // unit text
-	addText(""); // queued orders text (to display below progress bar if present)
-	addText(""); // progress bar
+	addText(""); // (1) unit text
+	addText(""); // (2) queued orders text (to display below progress bar if present)
+	addText(""); // (3) progress bar
 	setTextPos(Vec2i(40, getHeight() - 40), 0);
 
 	x = getBorderLeft();
@@ -100,7 +100,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 
 	x = getBorderLeft();
 	y -= (40/* + int(m_font->getMetrics()->getHeight()) * 8*/);
-	addText(""); // 'Transported' label
+	addText(""); // (4) 'Transported' label
 	setTextPos(Vec2i(x, y + 5), 4);
 	m_carryImageOffset = Vec2i(x, y);
 	for (int i = 0; i < transportCellCount; ++i) { // loaded unit portraits
@@ -113,12 +113,12 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	}
 
 	// -loadmap doesn't have any faction
-	const Texture2D *logoTex = (g_world.getThisFaction())?g_world.getThisFaction()->getLogoTex(): 0;
+	const Texture2D *logoTex = (g_world.getThisFaction()) ? g_world.getThisFaction()->getLogoTex() : 0;
 	if (logoTex) {
 		m_logo = addImageX(logoTex, Vec2i(3,0), Vec2i(192,192));
 	}
 
-	downSelectedPos = invalidPos;
+	m_selectedCommandIndex = invalidPos;
 	setProgressBar(-1);
 	clear();
 	setSize();
@@ -186,22 +186,22 @@ void Display::setProgressBar(int i) {
 }
 
 void Display::setDownSelectedPos(int i) {
-	if (downSelectedPos == i) {
+	if (m_selectedCommandIndex == i) {
 		return;
 	}
-	if (downSelectedPos != invalidPos) {
+	if (m_selectedCommandIndex != invalidPos) {
 		// shrink
-		int ndx = downSelectedPos + selectionCellCount;
+		int ndx = m_selectedCommandIndex + selectionCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos += Vec2i(3);
 		size -= Vec2i(6);
 		setImageX(0, ndx, pos, size);
 	}
-	downSelectedPos = i;
-	if (downSelectedPos != invalidPos) {
+	m_selectedCommandIndex = i;
+	if (m_selectedCommandIndex != invalidPos) {
 		// enlarge
-		int ndx = downSelectedPos + selectionCellCount;
+		int ndx = m_selectedCommandIndex + selectionCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos -= Vec2i(3);
@@ -366,13 +366,13 @@ void Display::render() {
 		}
 	}
 	for (int i=0; i < commandCellCount; ++i) {
-		if (getImage(i + selectionCellCount) && i != downSelectedPos) {
+		if (getImage(i + selectionCellCount) && i != m_selectedCommandIndex) {
 			renderImage(i + selectionCellCount, downLighted[i] ? light : dark);
 		}
 	}
-	if (downSelectedPos != invalidPos) {
-		assert(getImage(downSelectedPos + selectionCellCount));
-		renderImage(downSelectedPos + selectionCellCount, light);
+	if (m_selectedCommandIndex != invalidPos) {
+		assert(getImage(m_selectedCommandIndex + selectionCellCount));
+		renderImage(m_selectedCommandIndex + selectionCellCount, light);
 	}
 	for (int i=0; i < transportCellCount; ++i) {
 		if (getImage(i + selectionCellCount + commandCellCount)) {
@@ -386,7 +386,7 @@ void Display::render() {
 	if (!TextWidget::getText(1).empty()) {
 		renderTextShadowed(1);
 	}
-	if (!TextWidget::getText(1).empty()) {
+	if (!TextWidget::getText(2).empty()) {
 		renderTextShadowed(2);
 	}
 	if (!TextWidget::getText(4).empty()) {

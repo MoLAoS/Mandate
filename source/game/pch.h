@@ -117,6 +117,7 @@
 #include <zlib.h>
 
 // opengl
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #if !defined(WIN32)
@@ -129,7 +130,7 @@
 #include <vorbis/vorbisfile.h>
 
 #if defined(WIN32)
-	#include <glprocs.h>
+//	#include <glprocs.h>
 	#include <winsock.h>
 	#include <dsound.h>
 #endif

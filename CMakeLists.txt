@@ -51,6 +51,7 @@ if(DEFINED GAE_WINDEPS AND WIN32)
 		set(wxWidgets_ROOT_DIR ${GAE_WINDEPS}/wx)
 	endif(DEFINED WXWIN)
 	set(ENV{FREETYPE_DIR} ${GAE_WINDEPS})
+	set(ENV{GLEW_DIR} ${GAE_WINDEPS}/glew-1.5.7)
 else(DEFINED GAE_WINDEPS AND WIN32)
 	if (WIN32)
 		set (GAE_WINDEPS "" CACHE PATH "Windows dependencies folder")
@@ -66,6 +67,9 @@ find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 find_package(Freetype REQUIRED)
 find_package(PNG REQUIRED)
+find_package(GLEW REQUIRED)
+
+include_directories(${GLEW_INCLUDE_DIR})
 
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)

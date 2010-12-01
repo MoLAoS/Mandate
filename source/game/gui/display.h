@@ -72,6 +72,7 @@ public:
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
 
+
 	static const int selectionCellCount = cellWidthCount * cellHeightCount;
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
 	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
@@ -89,7 +90,7 @@ private:
 	Vec3f colors[colorCount];
 	int m_progress;
 	int currentColor;
-	int downSelectedPos;
+	int m_selectedCommandIndex;//downSelectedPos;
 	int m_logo;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
@@ -125,7 +126,7 @@ public:
 	CommandClass getCommandClass(int i)				{return commandClasses[i];}
 	Vec3f getColor() const							{return colors[currentColor];}
 	int getProgressBar() const						{return m_progress;}
-	int getDownSelectedPos() const					{return downSelectedPos;}
+	int getSelectedCommandIndex() const				{return m_selectedCommandIndex;}
 
 	//set
 	void setSize();

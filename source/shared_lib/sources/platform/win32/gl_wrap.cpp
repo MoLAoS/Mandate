@@ -58,8 +58,12 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
 	if(glch==NULL){
 		throw runtime_error("Error initing OpenGL device context");
 	}
-
 	makeCurrent();
+
+	GLint glewErr = glewInit();
+	if (glewErr != GLEW_OK) {
+		throw runtime_error(string("Error initialising Glew: ") + (char*)glewGetErrorString(glewErr));
+	}
 }
 
 }}//end namespace
