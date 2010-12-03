@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "renderer.h"
 
+#include "shader.h"
+
 #include "texture_gl.h"
 #include "main_menu.h"
 #include "config.h"
@@ -42,6 +44,8 @@ namespace Glest { namespace Graphics {
 // =====================================================
 // 	class MeshCallbackTeamColor
 // =====================================================
+
+ShaderProgram *shaderProgram = 0;
 
 class MeshCallbackTeamColor: public MeshCallback{
 private:
@@ -78,6 +82,7 @@ void MeshCallbackTeamColor::execute(const Mesh *mesh){
 
 		//texture 1
 		glActiveTexture(GL_TEXTURE1);
+		shaderProgram->setUniform("myTexture2", 1);
 		glMultiTexCoord2f(GL_TEXTURE1, 0.f, 0.f);
 		glEnable(GL_TEXTURE_2D);
 
@@ -221,8 +226,16 @@ bool Renderer::init(){
 		g_errorLog.add(string("Error loading core data.\n") + e.what());
 		return false;
 	}
+
+	if (isGlVersionSupported(2, 0, 0)) { ///@todo move somewhere else and replace with config.getUseShaders()
+		shaderProgram = new DefaultShaderProgram();
+		shaderProgram->load("gae/shaders/diffuse_bump.vert", "gae/shaders/diffuse_bump.frag");
+	} else {
+		shaderProgram = new FixedFunctionProgram();
+	}
 	init2dList();
 	init2dNonVirtList();
+
 	return true;
 }
 
@@ -1067,6 +1080,8 @@ void Renderer::renderWater(){
 }
 
 void Renderer::renderUnits(){
+	shaderProgram->begin();
+
 	const Unit *unit;
 	const UnitType *ut;
 	int framesUntilDead;
@@ -1089,6 +1104,10 @@ void Renderer::renderUnits(){
 		static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(true);
 		enableProjectiveTexturing();
 	}
+	// set the uniform for the normal map
+	glActiveTexture(GL_TEXTURE2); ///@todo replace with an enum
+	shaderProgram->setUniform("myTexture3", 2);
+
 	glActiveTexture(baseTexUnit);
 
 	modelRenderer->begin(true, true, true, &meshCallbackTeamColor);
@@ -1201,6 +1220,8 @@ void Renderer::renderUnits(){
 
 	//assert
 	assertGl();
+
+	shaderProgram->end();
 }
 
 void Renderer::renderSelectionEffects() {

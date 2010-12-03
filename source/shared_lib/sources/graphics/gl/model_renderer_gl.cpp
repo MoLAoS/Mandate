@@ -106,6 +106,22 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		lastTexture = 0;
 	}
+	// texture normals
+	const Texture2DGl *textureNormal = static_cast<const Texture2DGl*>(mesh->getTexture(mtNormal));
+	if (textureNormal != NULL && renderTextures) {
+		//if (lastTexture != texture->getHandle()) {
+			assert(glIsTexture(textureNormal->getHandle()));
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
+			glActiveTexture(GL_TEXTURE0);
+			//lastTexture = texture->getHandle();
+		//}
+	} else {
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glActiveTexture(GL_TEXTURE0);
+		//lastTexture = 0;
+	}
 
 	if (meshCallback != NULL) {
 		meshCallback->execute(mesh);

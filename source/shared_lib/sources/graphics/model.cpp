@@ -163,11 +163,17 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	//texture
 	if(!(meshHeader.properties & mp3NoTexture) && textureManager!=NULL){
 		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
-		texturePaths[mtDiffuse]= toLower(reinterpret_cast<char*>(meshHeader.texName));
+		texturePaths[mtDiffuse] = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texPath = dir + "/" + texPath;
 		texPath = cleanPath(texPath);
 
-		textures[mtDiffuse]= static_cast<Texture2D*>(textureManager->getTexture(texPath));
+		textures[mtDiffuse] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
+
+		// insert _normal before . in filename
+		texPath.insert(texPath.length()-4, "_normal"); 
+		if (fileExists(texPath))
+			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
+		///@todo will need to change default tex to use flat normals
 	}
 
 	//read data
