@@ -6,7 +6,9 @@
 //  GPL V2, see source/licence.txt
 // ==============================================================
 
-in vec3 normal, lightDir, eyeVec;
+#version 110
+
+varying vec3 normal, lightDir, eyeVec;
 
 uniform sampler2D myTexture;
 uniform sampler2D myTexture2;
@@ -28,7 +30,7 @@ void main()
 	float bump = max(dot(lightDir, n), 0.0);
 	
 	// interpolate the base and team colour according to the base alpha
-	vec3 baseColour = (1 - texDiffuseBase.a) * texDiffuseTeam.rgb + texDiffuseBase.a * texDiffuseBase.rgb;
+	vec3 baseColour = (1.0 - texDiffuseBase.a) * texDiffuseTeam.rgb + texDiffuseBase.a * texDiffuseBase.rgb;
 	
 	// light components
 	vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * ((bump * 0.8 + diffuseIntensity * 0.2) );

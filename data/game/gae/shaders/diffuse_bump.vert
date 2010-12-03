@@ -6,8 +6,10 @@
 //  GPL V2, see source/licence.txt
 // ==============================================================
 
-in vec3 tangent;
-out vec3 normal, lightDir, eyeVec;
+#version 110
+
+attribute vec3 tangent;
+varying vec3 normal, lightDir, eyeVec;
 
 // TODO replace with the precalculated version
 vec3 getTangent()

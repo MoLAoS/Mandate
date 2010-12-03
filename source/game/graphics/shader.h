@@ -13,6 +13,8 @@
 #ifndef _SHARED_GRAPHICS_SHADER_H_
 #define _SHARED_GRAPHICS_SHADER_H_
 
+#include "gl_wrap.h"
+
 /*#include "vec.h"
 #include "matrix.h"
 #include "texture.h"
@@ -77,11 +79,14 @@ class FragmentShader: virtual public Shader{
 class ShaderSource {
 private:
 	std::string pathInfo;
-	std::string code;
+	char *code;
 
 public:
+	ShaderSource(){ code = NULL; }
+	~ShaderSource(){ if(code) delete[] code; }
+	
 	const std::string &getPathInfo() const	{return pathInfo;}
-	const std::string &getCode() const		{return code;}
+	const char *getCode() const		{return code;}
 
 	void load(const std::string &path);
 };
@@ -112,6 +117,13 @@ class DefaultShaderProgram : public ShaderProgram {
 private:
 	GLuint m_v,m_f,m_p;
 	ShaderSource m_vertexShader, m_fragmentShader;
+
+	static void show_info_log(
+		GLuint object,
+		PFNGLGETSHADERIVPROC glGet__iv,
+		PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
+
+
 public:
 	DefaultShaderProgram();
 	~DefaultShaderProgram();

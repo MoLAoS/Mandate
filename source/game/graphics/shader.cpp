@@ -12,12 +12,15 @@
 #include "pch.h"
 #include "shader.h"
 
+#include "FSFactory.hpp"
+
 #include <stdexcept>
 #include <fstream>
 
 //#include "leak_dumper.h"
 
 using namespace std;
+using namespace Shared::PhysFS;
 
 namespace Shared{ namespace Graphics{
 
@@ -28,20 +31,14 @@ namespace Shared{ namespace Graphics{
 void ShaderSource::load(const string &path){
 	pathInfo+= path + " ";
 
-	//open file
-	ifstream ifs(path.c_str());
-	if(ifs.fail()){
-		throw runtime_error("Can't open shader file: " + path);
-	}
-
-	//read source
-	while(true){
-		fstream::int_type c= ifs.get();
-		if(ifs.eof() || ifs.fail() || ifs.bad()){
-			break;
-		}
-		code+= c;
-	}
+	// load the whole file into memory
+	FileOps *f = FSFactory::getInstance()->getFileOps();
+	f->openRead(path.c_str());
+	int length = f->fileSize();
+	this->code = new char[length+1];
+	f->read(this->code, length, 1);
+	delete f;
+	this->code[length] = '\0'; // null terminator
 }
 
 DefaultShaderProgram::DefaultShaderProgram() {
@@ -57,6 +54,21 @@ DefaultShaderProgram::~DefaultShaderProgram() {
 	glDeleteProgram(m_p);
 }
 
+void DefaultShaderProgram::show_info_log(
+    GLuint object,
+    PFNGLGETSHADERIVPROC glGet__iv,
+    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
+{
+	GLint log_length;
+	char *log;
+
+	glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
+	log = new char[log_length];
+	glGet__InfoLog(object, log_length, NULL, log);
+	cerr << log << endl;
+	delete[] log;
+}
+
 void DefaultShaderProgram::load(const string &vertex, const string &fragment) {
 	m_v = glCreateShader(GL_VERTEX_SHADER);
 	m_f = glCreateShader(GL_FRAGMENT_SHADER);
@@ -65,19 +77,43 @@ void DefaultShaderProgram::load(const string &vertex, const string &fragment) {
 	m_fragmentShader.load(fragment);
 
 	const char *vs = NULL,*fs = NULL;
-	vs = m_vertexShader.getCode().c_str();
-	fs = m_fragmentShader.getCode().c_str();
+	vs = m_vertexShader.getCode();
+	fs = m_fragmentShader.getCode();
 	
 	glShaderSource(m_v, 1, &vs,NULL);
 	glShaderSource(m_f, 1, &fs,NULL);
 
 	glCompileShader(m_v);
+	GLint ok;
+	glGetShaderiv(m_v, GL_COMPILE_STATUS, &ok);
+	if (!ok) {
+		cerr <<  "Failed to compile " << vertex << ":" << endl;
+		show_info_log(m_v, glGetShaderiv, glGetShaderInfoLog);
+		glDeleteShader(m_v);
+		throw runtime_error("Failed to compile vertex shader\n");
+	}
+
 	glCompileShader(m_f);
+	glGetShaderiv(m_f, GL_COMPILE_STATUS, &ok);
+	if (!ok) {
+		cerr <<  "Failed to compile " << fragment << ":" << endl;
+		show_info_log(m_f, glGetShaderiv, glGetShaderInfoLog);
+		glDeleteShader(m_f);
+		throw runtime_error("Failed to compile fragment shader\n");
+	}
 
 	glAttachShader(m_p,m_f);
 	glAttachShader(m_p,m_v);
 
 	glLinkProgram(m_p);
+	glGetProgramiv(m_p, GL_LINK_STATUS, &ok);
+	if (!ok) {
+		cerr << "Failed to link shader program:" << endl;
+		show_info_log(m_p, glGetProgramiv, glGetProgramInfoLog);
+		glDeleteProgram(m_p);
+		return;
+	}
+
 }
 
 void DefaultShaderProgram::begin() {
