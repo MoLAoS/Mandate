@@ -1503,7 +1503,17 @@ string Unit::getShortDesc() const {
 		}
 	}
 	if (!commands.empty()) { // Show current command being executed
-		ss << endl << commands.front()->getType()->getName();
+		string factionName = type->getName();
+		string commandName = commands.front()->getType()->getName();
+		string nameString = g_lang.getFactionString(factionName, commandName);
+		if (nameString == commandName) {
+			nameString = formatString(commandName);
+			string classString = formatString(CommandClassNames[commands.front()->getType()->getClass()]);
+			if (nameString == classString) {
+				nameString = g_lang.get(classString);
+			}
+		}
+		ss << endl << nameString;
 	}
 	return ss.str();
 }
@@ -1539,23 +1549,38 @@ string Unit::getLongDesc() const {
 
 	// resource load
 	if (loadCount) {
-		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << loadType->getName();
+		string loadName = loadType->getName();
+		string resName = g_lang.getTechString(loadName);
+		if (resName == loadName) {
+			resName = formatString(loadName);
+		}
+		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << resName;
 	}
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
 		const Resource *r = getType()->getCost(i);
 		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
+			string storedName = r->getType()->getName();
+			string resName = g_lang.getTechString(storedName);
+			if (resName == storedName) {
+				resName = formatString(storedName);
+			}
 			ss << endl << (r->getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
-				<< ": " << abs(r->getAmount()) << " " << r->getType()->getName();
+				<< ": " << abs(r->getAmount()) << " " << resName;
 		}
 	}
 	// can store
 	if (type->getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
 			const Resource *r = type->getStoredResource(i);
+			string storedName = r->getType()->getName();
+			string resName = g_lang.getTechString(storedName);
+			if (resName == storedName) {
+				resName = formatString(storedName);
+			}
 			ss << endl << g_lang.get("Store") << ": ";
-			ss << r->getAmount() << " " << r->getType()->getName();
+			ss << r->getAmount() << " " << resName;
 		}
 	}
 	// effects
@@ -1664,21 +1689,25 @@ bool Unit::add(Effect *e) {
 		}
 	}
 
+	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
+
 	bool startParticles = true;
-	if (isCarried()) {
-		startParticles = false;
-	} else {
-		foreach (Effects, it, effects) {
-			if (e->getType() == (*it)->getType()) {
-				startParticles = false;
-				break;
+	if (effects.add(e)) {
+		if (isCarried()) {
+			startParticles = false;
+		} else {
+			foreach (Effects, it, effects) {
+				if (e->getType() == (*it)->getType()) {
+					startParticles = false;
+					break;
+				}
 			}
 		}
+	} else {
+		startParticles = false; // extended or rejected, already showing correct systems
 	}
-	effects.add(e);
 
-	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
-	if (!particleTypes.empty() && startParticles) {
+	if (startParticles && !particleTypes.empty()) {
 		Vec2i cPos = getCenteredPos();
 		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
 		bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);

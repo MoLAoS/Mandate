@@ -77,28 +77,36 @@ void UnitStats::setValues(const UnitStats &o) {
 	harvestSpeed = o.harvestSpeed;
 }
 
-void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
-#	define ADD_ATTRIB(type, X)								\
-	{	type v = get##X() + (e.get##X() * strength).intp();	\
-		set##X(v < 0 ? 0 : v);								\
+inline void addInt(int &io_int, const int add, const int min = numeric_limits<int>::min()) {
+	io_int = io_int + add;
+	if (io_int < min) {
+		io_int = min;
 	}
-	ADD_ATTRIB(int, MaxHp);
-	ADD_ATTRIB(int, HpRegeneration);
-	ADD_ATTRIB(int, MaxEp);
-	ADD_ATTRIB(int, EpRegeneration);
-	ADD_ATTRIB(int, Sight);
-	if (sight < 1) sight = 1;
-	ADD_ATTRIB(int, Armor);
+}
 
-	ADD_ATTRIB(int, AttackStrength);
-	ADD_ATTRIB(fixed, EffectStrength);
-	ADD_ATTRIB(fixed, AttackPctStolen);
-	ADD_ATTRIB(int, AttackRange);
-	ADD_ATTRIB(int, MoveSpeed);
-	ADD_ATTRIB(int, AttackSpeed);
-	ADD_ATTRIB(int, ProdSpeed);
-	ADD_ATTRIB(int, RepairSpeed);
-	ADD_ATTRIB(int, HarvestSpeed);
+inline void addFxd(fixed &io_fxd, const fixed add, const fixed min = 0) {
+	io_fxd = io_fxd + add;
+	if (io_fxd < min) {
+		io_fxd = min;
+	}
+}
+
+void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
+	addInt(maxHp, (e.getMaxHp() * strength).intp(), 1);
+	addInt(hpRegeneration, (e.getHpRegeneration() * strength).intp());
+	addInt(maxEp, (e.getMaxEp() * strength).intp(), 0);
+	addInt(epRegeneration, (e.getEpRegeneration() * strength).intp());
+	addInt(sight, (e.getSight() * strength).intp(), 1);
+	addInt(armor, (e.getArmor() * strength).intp(), 0);
+	addInt(attackStrength, (e.getAttackStrength() * strength).intp(), 1);
+	addFxd(effectStrength, e.getEffectStrength() * strength);
+	addFxd(attackPctStolen, e.getAttackPctStolen() * strength);
+	addInt(attackRange, (e.getAttackRange() * strength).intp(), 1);
+	addInt(moveSpeed, (e.getMoveSpeed() * strength).intp(), 1);
+	addInt(attackSpeed, (e.getAttackSpeed() * strength).intp(), 1);
+	addInt(prodSpeed, (e.getProdSpeed() * strength).intp(), 1);
+	addInt(repairSpeed, (e.getRepairSpeed() * strength).intp(), 1);
+	addInt(harvestSpeed, (e.getHarvestSpeed() * strength).intp(), 1);
 }
 
 void UnitStats::applyMultipliers(const EnhancementType &e) {
@@ -275,9 +283,8 @@ void EnhancementType::addMultipliers(const EnhancementType &e, fixed strength){
 }
 
 void EnhancementType::clampMultipliers() {
-	fixed low, toLow;
+	fixed low;
 	low.raw() = (1 << 6); // lowest 'fixed' fraction that is 'safe' to multiply
-	toLow.raw() = (1 << 5);
 	if (maxHpMult <= 0) {
 		maxHpMult = low;
 	}
@@ -329,11 +336,7 @@ void formatModifier(string &str, const char *pre, const char* label, int value, 
 	Lang &lang = Lang::getInstance();
 
 	if (value) {
-		str += pre + lang.get(label) + ": ";
-		if (value > 0) {
-			str += "+";
-		}
-		str += intToStr(value);
+		str += pre + lang.get(label) + ": " + intToStr(value);
 	}
 
 	if (multiplier != 1) {

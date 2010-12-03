@@ -138,8 +138,10 @@ public:
 	/** Clears the dirty flag. */
 	void clearDirty()		{dirty = false;}
 
-	/** Add an effect, applying stacking rules based upon current effects. */
-	void add(Effect *e);
+	/** Add an effect, applying stacking rules based upon current effects.
+	  * @return true if effect was added, false if it was deleted (after extending
+	  * an existing effect of same type, or being rejected). */
+	bool add(Effect *e);
 
 	/** Removes an effect. The effect is expected to be deleted elsewhere. */
 	void remove(Effect *e);
