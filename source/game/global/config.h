@@ -77,6 +77,7 @@ private:
 	int renderShadowTextureSize;
 	int renderStencilBits;
 	bool renderTextures3D;
+	bool renderUseShaders;
 	string soundFactory;
 	int soundStaticBuffers;
 	int soundStreamingBuffers;
@@ -162,6 +163,7 @@ public:
 	int getRenderShadowTextureSize() const		{return renderShadowTextureSize;}
 	int getRenderStencilBits() const			{return renderStencilBits;}
 	bool getRenderTextures3D() const			{return renderTextures3D;}
+	bool getRenderUseShaders() const			{return renderUseShaders;}
 	string getSoundFactory() const				{return soundFactory;}
 	int getSoundStaticBuffers() const			{return soundStaticBuffers;}
 	int getSoundStreamingBuffers() const		{return soundStreamingBuffers;}
@@ -221,6 +223,7 @@ public:
 	void setRenderShadowTextureSize(int val)	{renderShadowTextureSize = val;}
 	void setRenderStencilBits(int val)			{renderStencilBits = val;}
 	void setRenderTextures3D(bool val)			{renderTextures3D = val;}
+	void setRenderUseShaders(bool val)			{renderUseShaders = val;}
 	void setSoundFactory(string val)			{soundFactory = val;}
 	void setSoundStaticBuffers(int val)			{soundStaticBuffers = val;}
 	void setSoundStreamingBuffers(int val)		{soundStreamingBuffers = val;}

@@ -228,7 +228,8 @@ bool Renderer::init(){
 		return false;
 	}
 
-	if (isGlVersionSupported(2, 0, 0)) { ///@todo move somewhere else and replace with config.getUseShaders()
+	///@todo move somewhere else and replace with config.getUseShaders()
+	if (isGlVersionSupported(2, 0, 0) && g_config.getRenderUseShaders()) {
 		try {
 			shaderProgram = new DefaultShaderProgram();
 			shaderProgram->load("gae/shaders/diffuse_bump.vert", "gae/shaders/diffuse_bump.frag");
