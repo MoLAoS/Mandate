@@ -154,7 +154,6 @@ DebugRenderer::DebugRenderer() {
 	// defaults, listed for ease of maintenance. [Note: these can be set from Lua now, use debugSet()]
 	showVisibleQuad = 
 	captureVisibleQuad = 
-	regionHilights = 
 	teamSight = 
 	resourceMapOverlay = 
 	storeMapOverlay =
@@ -163,10 +162,13 @@ DebugRenderer::DebugRenderer() {
 	gridTextures = 
 	buildSiteMaps =
 	influenceMap =
-					false;
-
 	AAStarTextures =
 	HAAStarOverlay =
+
+					false;
+
+	regionHilights = 
+
 					true;
 }
 
