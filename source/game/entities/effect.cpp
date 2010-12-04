@@ -55,7 +55,7 @@ Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strengt
 Effect::Effect(const XmlNode *node) {
 	source = node->getOptionalIntValue("source", -1);
 	const TechTree *tt = World::getCurrWorld()->getTechTree();
-	root = NULL;	//FIXME: add effect reference class
+	root = NULL;
 	type = tt->getEffectType(node->getChildStringValue("type"));
 	strength = node->getChildFixedValue("strength");
 	duration = node->getChildIntValue("duration");
@@ -108,12 +108,12 @@ Effects::~Effects() {
 
 // ============================ misc =============================
 
-void Effects::add(Effect *e){
+bool Effects::add(Effect *e){
 	EffectStacking es = e->getType()->getStacking();
 	if (es == EffectStacking::STACK) {
 		push_back(e);
 		dirty = true;
-		return;
+		return true;
 	}
 
 	for (iterator i = begin(); i != end(); i++) {
@@ -126,18 +126,18 @@ void Effects::add(Effect *e){
 					}
 					delete e;
 					dirty = true;
-					return;
+					return false;
 
 				case EffectStacking::OVERWRITE:
 					delete *i;
 					erase(i);
 					push_back(e);
 					dirty = true;
-					return;
+					return true;
 
 				case EffectStacking::REJECT:
 					delete e;
-					return;
+					return false;
 
 				case EffectStacking::STACK:; // tell compiler to shut up
 				case EffectStacking::COUNT:;
@@ -147,6 +147,7 @@ void Effects::add(Effect *e){
 	// previous effect wasn't found, add it as new
 	push_back(e);
 	dirty = true;
+	return true;
 }
 
 void Effects::remove(Effect *e) {

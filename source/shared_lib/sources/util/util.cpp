@@ -400,8 +400,14 @@ string formatString(const string &str) {
 
 	bool afterSeparator = false;
 	for (int i = 0; i < str.size(); ++i) {
-		if (outStr[i] == '_' || outStr[i] == '-') {
+		if (outStr[i] == '_') {
 			outStr[i] = ' ';
+		} else if (outStr[i] == '-') {
+			if (outStr.length() > i + 1) {
+				if (isalpha(outStr[i + 1])) {
+					outStr[i] = ' ';
+				}
+			}
 		} else if (afterSeparator) {
 			outStr[i] = toupper(outStr[i]);
 			afterSeparator = false;

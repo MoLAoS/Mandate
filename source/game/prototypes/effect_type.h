@@ -58,7 +58,6 @@ class EffectType: public EnhancementType, public DisplayableType {
 private:
 	EffectBias bias;
 	EffectStacking stacking;
-	unsigned int effectflags;
 
 	int duration;
 	fixed chance;
@@ -95,7 +94,6 @@ public:
 	bool isEndsWhenSourceDies() const		{return getFlag(EffectTypeFlag::ENDS_WITH_SOURCE);}
 	bool idRecourseEndsWithRoot() const		{return getFlag(EffectTypeFlag::RECOURSE_ENDS_WITH_ROOT);}
 	bool isPermanent() const				{return getFlag(EffectTypeFlag::PERMANENT);}
-	bool isAllowNegativeSpeed() const		{return getFlag(EffectTypeFlag::ALLOW_NEGATIVE_SPEED);}
 	bool isTickImmediately() const			{return getFlag(EffectTypeFlag::TICK_IMMEDIATELY);}
 
 	int getDuration() const								{return duration;}

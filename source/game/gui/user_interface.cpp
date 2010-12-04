@@ -991,8 +991,10 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		
 		string prodName = pt->getName();
 		string prodName2 = g_lang.getFactionString(factionName, pt->getName());
-		if (prodName == prodName2) {
+		if (prodName.compare(prodName2) == 0) {
 			prodName = formatString(prodName);
+		} else {
+			prodName = prodName2;
 		}
 		string res = commandName + " : " + prodName + "\n\n";
 		if (!tip.empty()) {

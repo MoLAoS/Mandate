@@ -1058,7 +1058,7 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 		if (m_affects != SpellAffect::SELF) {
 			throw runtime_error("In 0.3.2 cast-spell affect must be 'self'");
 		}
-		XmlAttribute *attrib = n->getChild("affect")->getAttribute("start");
+		XmlAttribute *attrib = n->getChild("affect")->getAttribute("start", false);
 		if (attrib) {
 			str = attrib->getRestrictedValue();
 			m_start = SpellStartNames.match(str.c_str());

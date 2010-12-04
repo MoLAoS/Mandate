@@ -240,7 +240,6 @@ void EffectType::doChecksum(Checksum &checksum) const {
 
 	checksum.add(bias);
 	checksum.add(stacking);
-	checksum.add(effectflags);
 
 	checksum.add(duration);
 	checksum.add(chance);

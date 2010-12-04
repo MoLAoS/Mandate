@@ -4,7 +4,7 @@
 archmage=Archmage
 archmage_info=The ultimate mage combatant. Slow and weak but capable of extremely powerful splash attacks, against both ground and air units.
 archmage_tower=Archmange Tower
-archmage_tower=Required to train Archmages, upgrades Dragon Call.
+archmage_tower_info=Required to train Archmages, upgrades Dragon Call.
 battlemage=Battlemage
 battlemage_info=Versatile magic warrior. Has a powerful ranged attack, good speed and decent armor. Weak against melee units. Can be upgraded to Archmage.
 behemoth=Behemoth
@@ -16,7 +16,7 @@ dragon_info=Powerful and versatile air unit. Fast and capable of attacking both 
 drake_rider=Drake Rider
 drake_rider_info=Fast and more resistant than the Summoner, this unit is ideal for scouting or quick attacks.
 energy_source=Energy Source
-energy_source=Increases the unit cap by providing energy.
+energy_source_info=Increases the unit cap by providing energy.
 ghost_armor=Ghost Armour
 ghost_armor_info=Medium melee unit. Slow, but resistant and capable of a good attack.
 golem=Golem

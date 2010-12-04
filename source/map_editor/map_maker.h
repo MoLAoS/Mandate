@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of the Glest Advanced Engine
 //
-//	Copyright (C) 2010 -
+//	Copyright (C) 2010	Eric Wilson
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published

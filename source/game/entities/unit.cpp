@@ -110,26 +110,26 @@ MEMORY_CHECK_IMPLEMENTATION(Unit)
 /** Construct Unit object */
 Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
 		   CardinalDir facing, Unit* master)
-        : id(id)
-        , hp(1)
-        , ep(0)
-        , loadCount(0)
-        , deadCount(0)
-        , lastAnimReset(0)
-        , nextAnimReset(-1)
-        , lastCommandUpdate(0)
-        , nextCommandUpdate(-1)
-        , attackStartFrame(-1)
-        , soundStartFrame(-1)
-        , progress2(0)
-        , kills(0)
+		: id(id)
+		, hp(1)
+		, ep(0)
+		, loadCount(0)
+		, deadCount(0)
+		, lastAnimReset(0)
+		, nextAnimReset(-1)
+		, lastCommandUpdate(0)
+		, nextCommandUpdate(-1)
+		, attackStartFrame(-1)
+		, soundStartFrame(-1)
+		, progress2(0)
+		, kills(0)
 		, m_carrier(-1)
-        , highlight(0.f)
-        , targetRef(-1)
-        , targetField(Field::LAND)
-        , faceTarget(true)
-        , useNearestOccupiedCell(true)
-        , level(0)
+		, highlight(0.f)
+		, targetRef(-1)
+		, targetField(Field::LAND)
+		, faceTarget(true)
+		, useNearestOccupiedCell(true)
+		, level(0)
 		, pos(pos)
 		, lastPos(pos)
 		, nextPos(pos)
@@ -137,24 +137,24 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, targetVec(0.0f)
 		, meetingPos(0)
 		, lastRotation(0.f)
-        , targetRotation(0.f)
-        , rotation(0.f)
+		, targetRotation(0.f)
+		, rotation(0.f)
 		, m_facing(facing)
-        , type(type)
-        , loadType(0)
-        , currSkill(0)
-        , toBeUndertaken(false)
-        , autoRepairEnabled(true)
-        , carried(false)
+		, type(type)
+		, loadType(0)
+		, currSkill(0)
+		, toBeUndertaken(false)
+		, autoRepairEnabled(true)
+		, carried(false)
 		, visible(true)
 		, m_cloaked(false)
-        , faction(faction)
-        , fire(0)
-        , map(map)
-        , commandCallback(0)
-        , hp_below_trigger(0)
-        , hp_above_trigger(0)
-        , attacked_trigger(false) {
+		, faction(faction)
+		, fire(0)
+		, map(map)
+		, commandCallback(0)
+		, hp_below_trigger(0)
+		, hp_above_trigger(0)
+		, attacked_trigger(false) {
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
 
@@ -1524,9 +1524,19 @@ string Unit::getShortDesc() const {
 		}
 	}
 	if (!commands.empty()) { // Show current command being executed
-			ss << endl << commands.front()->getType()->getName();
+		string factionName = type->getName();
+		string commandName = commands.front()->getType()->getName();
+		string nameString = g_lang.getFactionString(factionName, commandName);
+		if (nameString == commandName) {
+			nameString = formatString(commandName);
+			string classString = formatString(CommandClassNames[commands.front()->getType()->getClass()]);
+			if (nameString == classString) {
+				nameString = g_lang.get(classString);
+			}
 		}
-		return ss.str();
+		ss << endl << nameString;
+	}
+	return ss.str();
 }
 
 string Unit::getLongDesc() const {
@@ -1560,25 +1570,40 @@ string Unit::getLongDesc() const {
 
 	// resource load
 	if (loadCount) {
-		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << loadType->getName();
+		string loadName = loadType->getName();
+		string resName = g_lang.getTechString(loadName);
+		if (resName == loadName) {
+			resName = formatString(loadName);
+		}
+		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << resName;
 	}
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
 		const Resource *r = getType()->getCost(i);
 		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
+			string storedName = r->getType()->getName();
+			string resName = g_lang.getTechString(storedName);
+			if (resName == storedName) {
+				resName = formatString(storedName);
+			}
 			ss << endl << (r->getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
-				<< ": " << abs(r->getAmount()) << " " << r->getType()->getName();
+				<< ": " << abs(r->getAmount()) << " " << resName;
 		}
 	}
 	// can store
-		if (type->getStoredResourceCount() > 0) {
-			for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-				const Resource *r = type->getStoredResource(i);
-				ss << endl << g_lang.get("Store") << ": ";
-				ss << r->getAmount() << " " << r->getType()->getName();
+	if (type->getStoredResourceCount() > 0) {
+		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
+			const Resource *r = type->getStoredResource(i);
+			string storedName = r->getType()->getName();
+			string resName = g_lang.getTechString(storedName);
+			if (resName == storedName) {
+				resName = formatString(storedName);
 			}
+			ss << endl << g_lang.get("Store") << ": ";
+			ss << r->getAmount() << " " << resName;
 		}
+	}
 	// effects
 	effects.streamDesc(ss);
 
@@ -1685,21 +1710,25 @@ bool Unit::add(Effect *e) {
 		}
 	}
 
+	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
+
 	bool startParticles = true;
-	if (isCarried()) {
-		startParticles = false;
-	} else {
-		foreach (Effects, it, effects) {
-			if (e->getType() == (*it)->getType()) {
-				startParticles = false;
-				break;
+	if (effects.add(e)) {
+		if (isCarried()) {
+			startParticles = false;
+		} else {
+			foreach (Effects, it, effects) {
+				if (e->getType() == (*it)->getType()) {
+					startParticles = false;
+					break;
+				}
 			}
 		}
+	} else {
+		startParticles = false; // extended or rejected, already showing correct systems
 	}
-	effects.add(e);
 
-	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();
-	if (!particleTypes.empty() && startParticles) {
+	if (startParticles && !particleTypes.empty()) {
 		Vec2i cPos = getCenteredPos();
 		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
 		bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);

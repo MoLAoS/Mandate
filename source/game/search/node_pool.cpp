@@ -24,7 +24,7 @@ namespace Glest { namespace Search {
 // 	class NodePool
 // =====================================================
 
-const int NodePool::size = 1024 + 256;
+const int NodePool::size = GameConstants::clusterSize * GameConstants::clusterSize * 2;
 
 NodePool::NodePool(int w, int h)
 		: counter(0)

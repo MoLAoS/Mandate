@@ -1102,7 +1102,7 @@ void Renderer::renderUnits(){
 
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_COLOR_MATERIAL);
-	
+
 	if(shadows==sShadowMapping){
 		glActiveTexture(shadowTexUnit);
 		glEnable(GL_TEXTURE_2D);
