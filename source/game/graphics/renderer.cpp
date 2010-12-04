@@ -229,8 +229,14 @@ bool Renderer::init(){
 	}
 
 	if (isGlVersionSupported(2, 0, 0)) { ///@todo move somewhere else and replace with config.getUseShaders()
-		shaderProgram = new DefaultShaderProgram();
-		shaderProgram->load("gae/shaders/diffuse_bump.vert", "gae/shaders/diffuse_bump.frag");
+		try {
+			shaderProgram = new DefaultShaderProgram();
+			shaderProgram->load("gae/shaders/diffuse_bump.vert", "gae/shaders/diffuse_bump.frag");
+		} catch (runtime_error &e) {
+			g_errorLog.add("Error: shader source load/compile failed:" + string(e.what()));
+			delete shaderProgram;
+			shaderProgram = new FixedFunctionProgram();
+		}
 	} else {
 		shaderProgram = new FixedFunctionProgram();
 	}
