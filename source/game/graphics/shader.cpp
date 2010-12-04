@@ -33,12 +33,19 @@ void ShaderSource::load(const string &path){
 
 	// load the whole file into memory
 	FileOps *f = FSFactory::getInstance()->getFileOps();
-	f->openRead(path.c_str());
-	int length = f->fileSize();
-	this->code = new char[length+1];
-	f->read(this->code, length, 1);
+	try {
+		f->openRead(path.c_str());
+		int length = f->fileSize();
+		this->code = new char[length+1];
+		f->read(this->code, length, 1);
+		this->code[length] = '\0'; // null terminator
+	} catch (exception &e) {
+		cerr << e.what() << endl;
+		this->code = new char[1];
+		this->code[0] = '\0';
+	}
+	
 	delete f;
-	this->code[length] = '\0'; // null terminator
 }
 
 DefaultShaderProgram::DefaultShaderProgram() {

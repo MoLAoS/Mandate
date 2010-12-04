@@ -184,6 +184,7 @@ Renderer::~Renderer(){
 //	delete textRenderer;
 	delete textRendererFT;
 	delete particleRenderer;
+	delete shaderProgram;
 
 	//resources
 	for(int i=0; i<ResourceScope::COUNT; ++i){
