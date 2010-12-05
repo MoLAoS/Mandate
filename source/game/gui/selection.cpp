@@ -199,6 +199,7 @@ void Selection::update() {
 		m_canRepair = false;
 		m_canAttack = false;
 		m_canMove = false;
+		m_canCloak = false;
 	} else if (m_selectedUnits.front()->getFactionIndex() != m_factionIndex) {
 		m_empty = false;
 		m_enemy = true;
@@ -209,6 +210,7 @@ void Selection::update() {
 		m_canRepair = false;
 		m_canAttack = false;
 		m_canMove = false;
+		m_canCloak = false;
 	} else {
 		const UnitType *frontUT = m_selectedUnits.front()->getType();
 		m_empty = false;
@@ -219,6 +221,7 @@ void Selection::update() {
 		m_canAttack = true;
 		m_canMove = true;
 		m_canRepair = true;
+		m_canCloak = false;
 		if (frontUT->hasCommandClass(CommandClass::REPAIR)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::REPAIR)) {
 				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_ON;
@@ -303,6 +306,10 @@ void Selection::update() {
 			m_cancelable = m_cancelable || ((*i)->anyCommand()
 					&& (*i)->getCurrCommand()->getType()->getClass() != CommandClass::STOP);
 			m_commandable = m_commandable || (*i)->isOperative();
+
+			if ((*i)->getType()->getCloakClass() == CloakClass::ENERGY) {
+				m_canCloak = true;
+			}
 		}
 		if (m_canRepair && m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::NONE) {
 			m_canRepair = false;
@@ -314,11 +321,21 @@ void Selection::update() {
 		m_gui->onSelectionUpdated();
 	}
 }
+
 const Texture2D* Selection::getCommandImage(CommandClass cc) const {
 	foreach_const (UnitVector, it, m_selectedUnits) {
 		const CommandType *ct = (*it)->getType()->getFirstCtOfClass(cc);
 		if (ct) {
 			return ct->getImage();
+		}
+	}
+	return 0;
+}
+
+const Texture2D* Selection::getCloakImage() const {
+	foreach_const (UnitVector, it, m_selectedUnits) {
+		if ((*it)->getType()->getCloakImage()) {
+			return (*it)->getType()->getCloakImage();
 		}
 	}
 	return 0;

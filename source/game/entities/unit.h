@@ -476,6 +476,7 @@ public:
 	bool computeEp();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
+	bool decEp(int i);
 	int update2()										{return ++progress2;}
 	void clearPath();
 

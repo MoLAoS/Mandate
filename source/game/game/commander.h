@@ -55,8 +55,8 @@ public:
 		const ProducibleType* prodType = NULL, CardinalDir facing = CardinalDir::NORTH) const;
 
 	CommandResult tryCancelCommand(const Selection *selection) const;
-	
 	void trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const;
+	void trySetCloak(const Selection &selection, bool enabled) const;
 
 	void giveCommand(Command *command) const;
 

@@ -1077,12 +1077,26 @@ void Unit::resetHighlight() {
 
 void Unit::cloak() {
 	RUNTIME_CHECK(type->getCloakClass() != CloakClass::INVALID);
+	if (m_cloaked) {
+		return;
+	}
+	if (type->getCloakClass() == CloakClass::ENERGY) { // apply ep cost on start
+		int cost = type->getCloakCost();
+		if (!decEp(cost)) {
+			return;
+		}
+	}
 	m_cloaked = true;
 	if (!m_cloaking) {
+		// set flags so we know which way to fade the alpha later
 		if (m_deCloaking) {
 			m_deCloaking = false;
 		}
 		m_cloaking = true;
+		// sound ?
+		if (type->getCloakSound() && g_renderer.getCuller().isInside(getCenteredPos())) {
+			g_soundRenderer.playFx(type->getCloakSound());
+		}
 	}
 }
 
@@ -1093,6 +1107,9 @@ void Unit::deCloak() {
 			m_cloaking = false;
 		}
 		m_deCloaking = true;
+		if (type->getDeCloakSound() && g_renderer.getCuller().isInside(getCenteredPos())) {
+			g_soundRenderer.playFx(type->getDeCloakSound());
+		}
 	}
 }
 
@@ -1439,6 +1456,14 @@ Unit* Unit::tick() {
 				killer = this;
 			}
 		}
+
+		// apply cloak cost
+		if (m_cloaked && type->getCloakClass() == CloakClass::ENERGY) {
+			int cost = type->getCloakCost();
+			if (!decEp(cost)) {
+				deCloak();
+			}
+		}
 	}
 
 	effects.tick();
@@ -1456,17 +1481,17 @@ Unit* Unit::tick() {
 bool Unit::computeEp() {
 
 	// if not enough ep
-	if (currSkill->getEpCost() > 0 && ep - currSkill->getEpCost() < 0) {
-		return true;
+	int cost = currSkill->getEpCost();
+	if (cost == 0) {
+		return false;
 	}
-
-	// decrease ep
-	ep -= currSkill->getEpCost();
-	if (ep > getMaxEp()) {
-		ep = getMaxEp();
+	if (decEp(cost)) {
+		if (ep > getMaxEp()) {
+			ep = getMaxEp();
+		}
+		return false;
 	}
-
-	return false;
+	return true;
 }
 
 /** Repair this unit
@@ -1506,6 +1531,17 @@ bool Unit::repair(int amount, fixed multiplier) {
 		fire = NULL;
 	}
 	return false;
+}
+
+/** Decrements EP by the specified amount
+  * @return true if there was sufficient ep, false otherwise */
+bool Unit::decEp(int i) {
+	if (ep >= i) {
+		ep -= i;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 /** Decrements HP by the specified amount
@@ -1597,6 +1633,9 @@ string Unit::getLongDesc() const {
 	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? "+" : "-") << sightBonus;
+	}
+	if (type->isDetector()) {
+		ss << " (" << g_lang.get("Detector") << ")";
 	}
 
 	// kills

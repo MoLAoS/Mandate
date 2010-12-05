@@ -89,6 +89,9 @@ private:
 
 	CloakClass	m_cloakClass;
 	int			m_cloakCost;
+	StaticSound *m_cloakSound;
+	StaticSound *m_deCloakSound;
+	Texture2D	*m_cloakImage;
 
 	bool		m_detector;
 
@@ -149,6 +152,9 @@ public:
 	CloakClass getCloakClass() const		{return m_cloakClass;}
 	int getCloakCost() const				{return m_cloakCost;}
 	bool isDetector() const					{return m_detector;}
+	StaticSound* getCloakSound() const		{return m_cloakSound; }
+	StaticSound* getDeCloakSound() const		{return m_deCloakSound; }
+	const Texture2D* getCloakImage() const			{return m_cloakImage; }
 
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}

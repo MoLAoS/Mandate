@@ -142,7 +142,7 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 
 void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const {
 	CommandArchetype archetype;
-	CommandFlags cmdFlags = CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, enabled);
+	CommandFlags cmdFlags = CommandFlags(CommandProperties::MISC_ENABLE, enabled);
 	switch (flag) {
 		case AutoCmdFlag::REPAIR:
 			archetype = CommandArchetype::SET_AUTO_REPAIR;
@@ -161,6 +161,16 @@ void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag
 			foreach_const (UnitVector, i, units) {
 				Command *c = new Command(archetype, cmdFlags, Command::invalidPos, *i);
 				pushCommand(c);
+		}
+	}
+}
+
+void Commander::trySetCloak(const Selection &selection, bool enabled) const {
+	CommandFlags flags(CommandProperties::MISC_ENABLE, enabled);
+	foreach_const (UnitVector, it, selection.getUnits()) {
+		if ((*it)->getType()->getCloakClass() == CloakClass::ENERGY) {
+			Command *c = new Command(CommandArchetype::SET_CLOAK, flags, Command::invalidPos, *it);
+			pushCommand(c);
 		}
 	}
 }
@@ -252,17 +262,26 @@ void Commander::giveCommand(Command *command) const {
 				delete command;
 				break;
 			case CommandArchetype::SET_AUTO_REPAIR:
-				unit->setAutoCmdEnable(AutoCmdFlag::REPAIR, command->isAutoCmdEnabled());
+				unit->setAutoCmdEnable(AutoCmdFlag::REPAIR, command->isMiscEnabled());
 				delete command;
 				break;
 			case CommandArchetype::SET_AUTO_ATTACK:
-				unit->setAutoCmdEnable(AutoCmdFlag::ATTACK, command->isAutoCmdEnabled());
+				unit->setAutoCmdEnable(AutoCmdFlag::ATTACK, command->isMiscEnabled());
 				delete command;
 				break;
 			case CommandArchetype::SET_AUTO_FLEE:
-				unit->setAutoCmdEnable(AutoCmdFlag::FLEE, command->isAutoCmdEnabled());
+				unit->setAutoCmdEnable(AutoCmdFlag::FLEE, command->isMiscEnabled());
 				delete command;
 				break;
+			case CommandArchetype::SET_CLOAK: {
+				bool cloak = command->isMiscEnabled();
+				if (cloak && !unit->isCloaked()) {
+					unit->cloak();
+				} else if (!cloak && unit->isCloaked()) {
+					unit->deCloak();
+				}
+				break;
+			}
 			default:
 				assert(false);
 		}

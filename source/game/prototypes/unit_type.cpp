@@ -92,7 +92,9 @@ UnitType::UnitType()
 		, size(0), height(0)
 		, light(false), lightColour(0.f)
 		, m_cloakClass(CloakClass::INVALID)
-		, m_cloakCost(0), m_detector(false)
+		, m_cloakCost(0)
+		, m_cloakSound(0), m_deCloakSound(0)
+		, m_detector(false)
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
@@ -267,26 +269,42 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (cloakNode) {
 				string ct = cloakNode->getRestrictedAttribute("type");
 				m_cloakClass = CloakClassNames.match(ct.c_str());
+				if (m_cloakClass == CloakClass::INVALID) {
+					throw runtime_error("Invalid CloakClass: " + ct);
+				}
 				switch (m_cloakClass) {
-					case CloakClass::INVALID:
-						throw runtime_error("Invalid CloakClass: " + ct);
 					case CloakClass::EFFECT:
 						throw runtime_error("CloakClass::EFFECT not supported yet :(");
 					case CloakClass::ENERGY:
 						m_cloakCost = cloakNode->getIntAttribute("cost");
 					default:
 						for (int i=0; i < cloakNode->getChildCount(); ++i) {
-							const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
-							string str = deCloakNode->getOptionalRestrictedValue("skill-name");
-							if (!str.empty()) {
-								deCloakOnSkills.push_back(str);
-							} else {
-								string str = deCloakNode->getRestrictedAttribute("skill-class");
-								SkillClass sc = SkillClassNames.match(str.c_str());
-								if (sc == SkillClass::INVALID) {
-									throw runtime_error("Invlaid SkillClass: " + str);
+							const XmlNode *childNode = cloakNode->getChild(i);
+							if (childNode->getName() == "de-cloak") {
+								const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
+								string str = deCloakNode->getOptionalRestrictedValue("skill-name");
+								if (!str.empty()) {
+									deCloakOnSkills.push_back(str);
+								} else {
+									string str = deCloakNode->getRestrictedAttribute("skill-class");
+									SkillClass sc = SkillClassNames.match(str.c_str());
+									if (sc == SkillClass::INVALID) {
+										throw runtime_error("Invlaid SkillClass: " + str);
+									}
+									deCloakOnSkillClasses.push_back(sc);
 								}
-								deCloakOnSkillClasses.push_back(sc);
+							} else if (childNode->getName() == "image") {
+								m_cloakImage = g_renderer.newTexture2D(ResourceScope::GAME);
+								string path = dir + "/" + childNode->getRestrictedAttribute("path");
+								m_cloakImage->getPixmap()->load(path);
+							} else if (childNode->getName() == "cloak-sound") {
+								m_cloakSound = new StaticSound();
+								string path = dir + "/" + childNode->getRestrictedAttribute("path");
+								m_cloakSound->load(path);
+							} else if (childNode->getName() == "de-cloak-sound") {
+								m_deCloakSound = new StaticSound();
+								string path = dir + "/" + childNode->getRestrictedAttribute("path");
+								m_deCloakSound->load(path);
 							}
 						}
 						break;

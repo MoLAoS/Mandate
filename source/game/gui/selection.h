@@ -50,6 +50,7 @@ private:
 	bool			m_canRepair;
 	bool			m_canAttack;
 	bool			m_canMove;
+	bool			m_canCloak;
 	AutoCmdState	m_autoCmdStates[AutoCmdFlag::COUNT];
 	int				m_factionIndex;
 	UnitVector		m_selectedUnits;
@@ -83,11 +84,21 @@ public:
 	bool canRepair() const				{return m_canRepair;}
 	bool canAttack() const				{return m_canAttack;}
 	bool canMove() const				{return m_canMove;}
+	bool canCloak() const				{return m_canCloak;}
+	bool anyCloaked() const {
+		foreach_const (UnitVector, it, m_selectedUnits) {
+			if ((*it)->isCloaked()) {
+				return true;
+			}
+		}
+		return false;
+	}
 	bool hasUnit(const Unit *unit) const {
 		return (std::find(m_selectedUnits.begin(), m_selectedUnits.end(), unit) != m_selectedUnits.end());
 	}
 
 	const Texture2D* getCommandImage(CommandClass cc) const;
+	const Texture2D* getCloakImage() const;
 
 	int getCount() const					{return m_selectedUnits.size();}
 	const Unit *getUnit(int i) const		{return m_selectedUnits[i];}

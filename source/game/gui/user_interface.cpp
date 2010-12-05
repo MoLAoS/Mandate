@@ -814,6 +814,9 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::FLEE);
 		bool action = (state != AutoCmdState::ALL_ON);
 		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::FLEE, action);
+	} else if (posDisplay == cloakTogglePos) {
+		bool action = !selection.anyCloaked();
+		commander->trySetCloak(selection, action);
 	} else if (posDisplay == meetingPointPos) {
 		activePos= posDisplay;
 		selectingMeetingPoint= true;
@@ -1101,8 +1104,9 @@ void UserInterface::computeDisplay() {
 				}
 			}
 
-			//if (selection.isCloakable()) { // cloak toggle
-			//}
+			if (selection.canCloak()) { // cloak toggle
+				m_display->setDownImage(cloakTogglePos, selection.getCloakImage());
+			}
 
 			if (selection.isMeetable()) { // meeting point
 				m_display->setDownImage(meetingPointPos, ut->getMeetingPointImage());

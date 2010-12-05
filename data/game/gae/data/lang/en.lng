@@ -233,6 +233,7 @@ Command=Command
 CommonCommand=Common command
 Consume=Consume
 Discount=Discount
+Detector=Detector
 Effects=Effects
 Ep=EP
 EpCost=EP cost

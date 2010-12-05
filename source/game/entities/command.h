@@ -73,7 +73,7 @@ public:
 	bool isQueue() const						{return flags.get(CommandProperties::QUEUE);}
 	bool isAuto() const							{return flags.get(CommandProperties::AUTO);}
 	bool isReserveResources() const				{return !flags.get(CommandProperties::DONT_RESERVE_RESOURCES);}
-	bool isAutoCmdEnabled() const				{return flags.get(CommandProperties::AUTO_COMMAND_ENABLED);}
+	bool isMiscEnabled() const					{return flags.get(CommandProperties::MISC_ENABLE);}
 	Vec2i getPos() const						{return pos;}
 	Vec2i getPos2() const						{return pos2;}
 	UnitId getUnitRef() const					{return unitRef;}
@@ -94,7 +94,7 @@ public:
 	void setQueue(bool queue)							{flags.set(CommandProperties::QUEUE, queue);}
 	void setAuto(bool _auto)							{flags.set(CommandProperties::AUTO, _auto);}
 	void setReserveResources(bool reserveResources)		{flags.set(CommandProperties::DONT_RESERVE_RESOURCES, !reserveResources);}
-	void setAutoCommandEnabled(bool enabled)				{flags.set(CommandProperties::AUTO_COMMAND_ENABLED, enabled);}
+	void setAutoCommandEnabled(bool enabled)				{flags.set(CommandProperties::MISC_ENABLE, enabled);}
 	void setPos(const Vec2i &pos)						{this->pos = pos;}
 	void setPos2(const Vec2i &pos2)						{this->pos2 = pos2;}
 
@@ -115,13 +115,13 @@ inline ostream& operator<<(ostream &stream, const Command &command) {
 		stream << "Cancel command]";
 	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
 		stream << "set auto repair(" << 
-			(command.getFlags().get(CommandProperties::AUTO_COMMAND_ENABLED) ? "true" : "false") << ")]";
+			(command.getFlags().get(CommandProperties::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_ATTACK) {
 		stream << "set auto attack(" << 
-			(command.getFlags().get(CommandProperties::AUTO_COMMAND_ENABLED) ? "true" : "false") << ")]";
+			(command.getFlags().get(CommandProperties::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_FLEE) {
 		stream << "set auto flee(" << 
-			(command.getFlags().get(CommandProperties::AUTO_COMMAND_ENABLED) ? "true" : "false") << ")]";
+			(command.getFlags().get(CommandProperties::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else {
 		stream << command.getType()->getName() << "]";
 	}

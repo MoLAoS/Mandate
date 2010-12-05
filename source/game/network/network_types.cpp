@@ -42,7 +42,7 @@ NetworkCommand::NetworkCommand(Command *command) {
 	flags = 0;
 	if (!command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
 	if (command->isQueue()) flags |= CmdFlags::QUEUE;
-	if (command->isAutoCmdEnabled()) flags |= CmdFlags::AUTO_COMMAND_ENABLE;
+	if (command->isMiscEnabled()) flags |= CmdFlags::MISC_ENABLE;
 }
 
 /** Construct archetype SET_AUTO_ [REPAIR|ATTACK|FLEE] */
@@ -54,7 +54,7 @@ NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, bool v
 	this->positionY= -1;
 	this->prodTypeId = -1;
 	this->targetId = -1;
-	this->flags = (value ? CmdFlags::AUTO_COMMAND_ENABLE : 0);
+	this->flags = (value ? CmdFlags::MISC_ENABLE : 0);
 }
 
 /** Construct archetype CANCEL_COMMAND */
@@ -94,17 +94,21 @@ Command *NetworkCommand::toCommand() const {
 		return new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
 	}
 	if (networkCommandType == NetworkCommandType::SET_AUTO_REPAIR) {
-		bool auto_cmd_enable = flags & CmdFlags::AUTO_COMMAND_ENABLE;
+		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
 		return new Command(CommandArchetype::SET_AUTO_REPAIR,
-			CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, auto_cmd_enable), Command::invalidPos, unit);
+			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_AUTO_ATTACK) {
-		bool auto_cmd_enable = flags & CmdFlags::AUTO_COMMAND_ENABLE;
+		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
 		return new Command(CommandArchetype::SET_AUTO_ATTACK,
-			CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, auto_cmd_enable), Command::invalidPos, unit);
+			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_AUTO_FLEE) {
-		bool auto_cmd_enable = flags & CmdFlags::AUTO_COMMAND_ENABLE;
+		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
 		return new Command(CommandArchetype::SET_AUTO_FLEE,
-			CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, auto_cmd_enable), Command::invalidPos, unit);
+			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
+	} else if (networkCommandType == NetworkCommandType::SET_CLOAK) {
+		bool enable = flags & CmdFlags::MISC_ENABLE;
+		return new Command(CommandArchetype::SET_CLOAK,
+			CommandFlags(CommandProperties::MISC_ENABLE, enable), Command::invalidPos, unit);
 	}
 
 	// else CommandArchetype == GIVE_COMMAND
