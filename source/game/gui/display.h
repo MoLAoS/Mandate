@@ -149,6 +149,7 @@ public:
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}
 	void setIndex(int i, int value)						{index[i] = value;}
 	void setProgressBar(int i);
+	void setLoadInfo(const string &txt);
 	void setDownSelectedPos(int i);
 
 	//misc

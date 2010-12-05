@@ -280,6 +280,20 @@ void Display::setOrderQueueText(const string &i_text) {
 	TextWidget::setText(i_text, 2);
 }
 
+void Display::setLoadInfo(const string &str) {
+	if (TextWidget::getText(3).empty() && str.empty()) {
+		return;
+	}
+	int y;
+	if (!TextWidget::getText(2).empty()) {
+		y = TextWidget::getTextPos(2).y - int(m_font->getMetrics()->getHeight());
+	} else {
+		y = TextWidget::getTextPos(1).y - int(m_font->getMetrics()->getHeight());
+	}
+	TextWidget::setTextPos(Vec2i(5, y), 3);
+	TextWidget::setText(str, 3);
+}
+
 void Display::setToolTipText(const string &i_txt, DisplaySection i_section) {
 	//WIDGET_LOG( __FUNCTION__ << "( \"" << i_txt << "\" )");
 	string str = i_txt;
@@ -477,6 +491,8 @@ void Display::render() {
 	}
 	if (m_progress >= 0) {
 		renderProgressBar();
+	} else if (!TextWidget::getText(3).empty()) {
+		renderTextShadowed(3);
 	}
 }
 

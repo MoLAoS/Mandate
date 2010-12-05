@@ -903,6 +903,7 @@ void HarvestCommandType::update(Unit *unit) const {
 			unit->clearPath();
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->setLoadCount(0);
+			unit->StateChanged(unit);
 		} else { // no store found, give up
 			unit->finishCommand();
 		}

@@ -1039,7 +1039,20 @@ void UserInterface::computeDisplay() {
 
 		m_display->setPortraitText(unit->getShortDesc());
 		if (friendly) {
-			m_display->setProgressBar(unit->getProductionPercent());
+			if (unit->getProductionPercent() == -1) {
+				if (unit->getLoadCount()) {
+					string resName = g_lang.getTechString(unit->getLoadType()->getName());
+					if (resName == unit->getLoadType()->getName()) {
+						resName = formatString(resName);
+					}
+					m_display->setLoadInfo(g_lang.get("Load") + ": " + intToStr(unit->getLoadCount()) 
+						+  " " + resName);
+				} else {
+					m_display->setLoadInfo("");
+				}
+			} else {
+				m_display->setProgressBar(unit->getProductionPercent());
+			}
 			int ordersQueued = unit->getQueuedOrderCount();
 			if (ordersQueued) {
 				m_display->setOrderQueueText(g_lang.get("OrdersOnQueue") + ": " + intToStr(ordersQueued));
