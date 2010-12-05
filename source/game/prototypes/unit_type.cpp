@@ -272,42 +272,37 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				if (m_cloakClass == CloakClass::INVALID) {
 					throw runtime_error("Invalid CloakClass: " + ct);
 				}
-				switch (m_cloakClass) {
-					case CloakClass::EFFECT:
-						throw runtime_error("CloakClass::EFFECT not supported yet :(");
-					case CloakClass::ENERGY:
-						m_cloakCost = cloakNode->getIntAttribute("cost");
-					default:
-						for (int i=0; i < cloakNode->getChildCount(); ++i) {
-							const XmlNode *childNode = cloakNode->getChild(i);
-							if (childNode->getName() == "de-cloak") {
-								const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
-								string str = deCloakNode->getOptionalRestrictedValue("skill-name");
-								if (!str.empty()) {
-									deCloakOnSkills.push_back(str);
-								} else {
-									string str = deCloakNode->getRestrictedAttribute("skill-class");
-									SkillClass sc = SkillClassNames.match(str.c_str());
-									if (sc == SkillClass::INVALID) {
-										throw runtime_error("Invlaid SkillClass: " + str);
-									}
-									deCloakOnSkillClasses.push_back(sc);
-								}
-							} else if (childNode->getName() == "image") {
-								m_cloakImage = g_renderer.newTexture2D(ResourceScope::GAME);
-								string path = dir + "/" + childNode->getRestrictedAttribute("path");
-								m_cloakImage->getPixmap()->load(path);
-							} else if (childNode->getName() == "cloak-sound") {
-								m_cloakSound = new StaticSound();
-								string path = dir + "/" + childNode->getRestrictedAttribute("path");
-								m_cloakSound->load(path);
-							} else if (childNode->getName() == "de-cloak-sound") {
-								m_deCloakSound = new StaticSound();
-								string path = dir + "/" + childNode->getRestrictedAttribute("path");
-								m_deCloakSound->load(path);
+				if (m_cloakClass == CloakClass::ENERGY) {
+					m_cloakCost = cloakNode->getIntAttribute("cost");
+				}
+				for (int i=0; i < cloakNode->getChildCount(); ++i) {
+					const XmlNode *childNode = cloakNode->getChild(i);
+					if (childNode->getName() == "de-cloak") {
+						const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
+						string str = deCloakNode->getOptionalRestrictedValue("skill-name");
+						if (!str.empty()) {
+							deCloakOnSkills.push_back(str);
+						} else {
+							string str = deCloakNode->getRestrictedAttribute("skill-class");
+							SkillClass sc = SkillClassNames.match(str.c_str());
+							if (sc == SkillClass::INVALID) {
+								throw runtime_error("Invlaid SkillClass: " + str);
 							}
+							deCloakOnSkillClasses.push_back(sc);
 						}
-						break;
+					} else if (childNode->getName() == "image") {
+						m_cloakImage = g_renderer.newTexture2D(ResourceScope::GAME);
+						string path = dir + "/" + childNode->getRestrictedAttribute("path");
+						m_cloakImage->getPixmap()->load(path);
+					} else if (childNode->getName() == "cloak-sound") {
+						m_cloakSound = new StaticSound();
+						string path = dir + "/" + childNode->getRestrictedAttribute("path");
+						m_cloakSound->load(path);
+					} else if (childNode->getName() == "de-cloak-sound") {
+						m_deCloakSound = new StaticSound();
+						string path = dir + "/" + childNode->getRestrictedAttribute("path");
+						m_deCloakSound->load(path);
+					}
 				}
 			}
 		} catch (runtime_error e) {
@@ -432,6 +427,21 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			throw runtime_error("Every unit must have at least one die skill: "+ path);
 		}
 	} catch (runtime_error e) {
+		g_errorLog.addXmlError(path, e.what());
+		loadOk = false;
+	}
+
+
+	try { 
+		const XmlNode *tagsNode = parametersNode->getChild("tags", 0, false);
+		if (tagsNode) {
+			for (int i = 0; i < tagsNode->getChildCount(); ++i) {
+				const XmlNode *tagNode = tagsNode->getChild("tag", i);
+				string tag = tagNode->getRestrictedValue();
+				m_tags.insert(tag);
+			}
+		}
+	} catch (runtime_error &e) {
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}

@@ -95,6 +95,8 @@ private:
 
 	bool		m_detector;
 
+	set<string> m_tags;
+
 	//sounds
 	SoundContainer selectionSounds;
 	SoundContainer commandSounds;
@@ -153,8 +155,9 @@ public:
 	int getCloakCost() const				{return m_cloakCost;}
 	bool isDetector() const					{return m_detector;}
 	StaticSound* getCloakSound() const		{return m_cloakSound; }
-	StaticSound* getDeCloakSound() const		{return m_deCloakSound; }
-	const Texture2D* getCloakImage() const			{return m_cloakImage; }
+	StaticSound* getDeCloakSound() const	{return m_deCloakSound; }
+	const Texture2D* getCloakImage() const	{return m_cloakImage; }
+	bool hasTag(const string &tag) const	{return m_tags.find(tag) != m_tags.end();}
 
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}

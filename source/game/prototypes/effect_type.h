@@ -68,6 +68,7 @@ private:
 	bool loopSound;
 	EffectTypes recourse;
 	EffectTypeFlags flags;
+	string affectTag;
 	const AttackType *damageType;
 	bool display;
 	UnitParticleSystemTypes particleSystems;
@@ -83,6 +84,7 @@ public:
 	const EffectTypeFlags &getFlags() const	{return flags;}
 	bool getFlag(EffectTypeFlag flag) const	{return flags.get(flag);}
 	const AttackType *getDamageType() const	{return damageType;}
+	const string& getAffectTag() const		{return affectTag;}
 
 	bool isEffectsAlly() const				{return getFlag(EffectTypeFlag::ALLY);}
 	bool isEffectsFoe() const				{return getFlag(EffectTypeFlag::FOE);}
@@ -95,6 +97,7 @@ public:
 	bool idRecourseEndsWithRoot() const		{return getFlag(EffectTypeFlag::RECOURSE_ENDS_WITH_ROOT);}
 	bool isPermanent() const				{return getFlag(EffectTypeFlag::PERMANENT);}
 	bool isTickImmediately() const			{return getFlag(EffectTypeFlag::TICK_IMMEDIATELY);}
+	bool isCauseCloak() const				{return getFlag(EffectTypeFlag::CAUSES_CLOAK);}
 
 	int getDuration() const								{return duration;}
 	fixed getChance() const								{return chance;}

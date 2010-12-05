@@ -157,6 +157,13 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
+	const XmlNode *affectNode = en->getChild("affect", 0, false);
+	if (affectNode) {
+		affectTag = affectNode->getRestrictedValue();
+	} else {
+		affectTag = "";
+	}
+
 	// flags
 	const XmlNode *flagsNode = en->getChild("flags", 0, false);
 	if (flagsNode) {
@@ -182,7 +189,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
-	
+
 	try { // particle systems
 		const XmlNode *particlesNode = en->getOptionalChild("particle-systems");
 		if (particlesNode) {

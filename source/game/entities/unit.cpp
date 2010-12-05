@@ -1418,6 +1418,17 @@ bool Unit::doRegen(int hpRegeneration, int epRegeneration) {
 	return false;
 }
 
+void Unit::checkEffectCloak() {
+	if (m_cloaked) {
+		foreach (Effects, ei, effects) {
+			if ((*ei)->getType()->isCauseCloak() && (*ei)->getType()->isEffectsAlly()) {
+				return;
+			}
+		}
+		deCloak();
+	}
+}
+
 /**
  * Update the unit by one tick.
  * @returns if the unit died during this call, the killer is returned, NULL otherwise.
@@ -1470,6 +1481,9 @@ Unit* Unit::tick() {
 	if (effects.isDirty()) {
 		recalculateStats();
 		checkEffectParticles();
+		if (type->getCloakClass() == CloakClass::EFFECT) {
+			checkEffectCloak();
+		}
 	}
 
 	return killer;
@@ -1776,6 +1790,12 @@ bool Unit::add(Effect *e) {
 		delete e;
 		return false;
 	}
+	if (!e->getType()->getAffectTag().empty()) {
+		if (!type->hasTag(e->getType()->getAffectTag())) {
+			delete e;
+			return false;
+		}
+	}
 
 	if (e->getType()->isTickImmediately()) {
 		if (doRegen(e->getType()->getHpRegeneration(), e->getType()->getEpRegeneration())) {
@@ -1787,6 +1807,10 @@ bool Unit::add(Effect *e) {
 			delete e;
 			return false;
 		}
+	}
+	if (type->getCloakClass() == CloakClass::EFFECT
+	&& e->getType()->isCauseCloak() && e->getType()->isEffectsAlly()) {
+		cloak();
 	}
 
 	const UnitParticleSystemTypes &particleTypes = e->getType()->getParticleTypes();

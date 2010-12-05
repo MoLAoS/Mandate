@@ -256,6 +256,7 @@ private:
 	~Unit();
 
 	void checkEffectParticles();
+	void checkEffectCloak();
 	void startSkillParticleSystems();
 
 public:
