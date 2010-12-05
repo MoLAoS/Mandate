@@ -905,6 +905,18 @@ void UserInterface::computePortraitInfo(int posDisplay) {
 	}
 }
 
+inline string describeAutoCommandState(AutoCmdState state) {
+	switch (state) {
+		case AutoCmdState::ALL_ON:
+			return g_lang.get("On");
+		case AutoCmdState::ALL_OFF:
+			return g_lang.get("Off");
+		case AutoCmdState::MIXED:
+			return g_lang.get("Mixed");
+	}
+	return "";
+}
+
 void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection.isComandable() || posDisplay == invalidPos
@@ -919,19 +931,19 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		} else if (posDisplay == meetingPointPos) {
 			m_display->setToolTipText(g_lang.get("SetMeetingPoint"));
 		} else if (posDisplay == autoRepairPos) {
-			string str = g_lang.get("AutoRepair");
-			switch (selection.getAutoRepairState()) {
-				case AutoCmdState::ALL_ON:
-					str += " " + g_lang.get("On");
-					break;
-				case AutoCmdState::ALL_OFF:
-					str += " " + g_lang.get("Off");
-					break;
-				case AutoCmdState::MIXED:
-					str += " " + g_lang.get("Mixed");
-					break;
-			}
+			string str = g_lang.get("AutoRepair") + " ";
+			str += describeAutoCommandState(selection.getAutoRepairState());
 			m_display->setToolTipText(str);
+		} else if (posDisplay == autoAttackPos) {
+			string str = g_lang.get("AutoAttack") + " ";
+			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::ATTACK));
+			m_display->setToolTipText(str);
+		} else if (posDisplay == autoFleePos) {
+			string str = g_lang.get("AutoFlee") + " ";
+			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::FLEE));
+			m_display->setToolTipText(str);
+		} else if (posDisplay == cloakTogglePos) {
+			m_display->setToolTipText(g_lang.get("ToggleCloak"));
 		} else { // uniform selection
 			if (selection.isUniform()) {
 				const Unit *unit = selection.getFrontUnit();
