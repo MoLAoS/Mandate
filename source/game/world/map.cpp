@@ -376,7 +376,7 @@ bool Map::isFreeCell(const Vec2i &pos, Field field) const {
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {
 	if (isInside(pos)) {
 		Cell *c = getCell(pos);
-		if (c->getUnit(unit->getCurrField()) == unit && fieldsCompatible(c, field)) {
+		if (c->getUnit(field) == unit && fieldsCompatible(c, field)) {
 			return true;
 		} else {
 			return isFreeCell(pos, field);
