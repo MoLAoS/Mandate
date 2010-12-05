@@ -204,6 +204,9 @@ bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree
 }
 
 Command *AttackCommandType::doAutoAttack(Unit *unit) const {
+	if (!unit->isAutoCmdEnabled(AutoCmdFlag::ATTACK)) {
+		return 0;
+	}
 	// look for someone to smite
 	Unit *sighted = NULL;
 	if (!unit->getFaction()->isAvailable(this)

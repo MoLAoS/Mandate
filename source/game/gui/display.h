@@ -21,6 +21,7 @@
 #include "metrics.h"
 #include "widgets.h"
 #include "forward_decs.h"
+#include "selection.h"
 
 using std::string;
 
@@ -92,6 +93,9 @@ private:
 	int currentColor;
 	int m_selectedCommandIndex;//downSelectedPos;
 	int m_logo;
+	int m_autoRepairOn, m_autoRepairOff, m_autoRepairMixed;
+	int m_autoAttackOn, m_autoAttackOff, m_autoAttackMixed;
+	int m_autoFleeOn, m_autoFleeOff, m_autoFleeMixed;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;
@@ -111,6 +115,7 @@ private:
 
 private:
 	void renderProgressBar();
+	int getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s);
 
 public:
 	Display(UserInterface *ui, Vec2i pos);

@@ -45,6 +45,21 @@ using Sim::Map;
 
 class Unit;
 
+WRAPPED_ENUM( AutoCmdFlag,
+	REPAIR,
+	ATTACK,
+	FLEE
+)
+
+// AutoCmdState : describes an auto command category state of 
+// the selection (auto-repair, auto-attack & auto-flee)
+WRAPPED_ENUM( AutoCmdState,
+	NONE,
+	ALL_ON,
+	ALL_OFF,
+	MIXED
+)
+
 class Vec2iList : public list<Vec2i> {
 public:
 	void read(const XmlNode *node);
@@ -178,10 +193,14 @@ private:
 
 	// some flags
 	bool toBeUndertaken;			/**< awaiting a date with the grim reaper */
-	bool autoRepairEnabled;			/**< is auto repair enabled */
+
+	bool m_autoCmdEnable[AutoCmdFlag::COUNT];
+	//bool autoRepairEnabled;			/**< is auto repair enabled */
+
 	bool carried;					/**< is the unit being carried */
 	bool visible;
-	bool		m_cloaked;
+
+	bool	m_cloaked;
 
 	// this should go someone else
 	float highlight;				/**< alpha for selection circle effects */
@@ -364,7 +383,6 @@ public:
 	Vec2i getLastPos() const			{return lastPos;}
 	Vec2i getCenteredPos() const		{return Vec2i(type->getHalfSize().intp()) + getPos();}
 	fixedVec2 getFixedCenteredPos() const	{ return fixedVec2(pos.x + type->getHalfSize(), pos.y + type->getHalfSize()); }
-//{ return fixedVec2(getPos().x + type->getHalfSize(), getPos().y + type->getHalfSize()); }
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
 	//is
@@ -379,7 +397,7 @@ public:
 	bool isPutrefacting() const			{return deadCount;}
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
 	bool isInteresting(InterestingUnitType iut) const;
-	bool isAutoRepairEnabled() const	{return autoRepairEnabled;}
+	bool isAutoCmdEnabled(AutoCmdFlag f) const	{return m_autoCmdEnable[f];}
 
 	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
 
@@ -395,10 +413,11 @@ public:
 	void setTarget(const Unit *unit, bool faceTarget = true, bool useNearestOccupiedCell = true);
 	void setTargetVec(const Vec3f &targetVec)			{this->targetVec = targetVec;}
 	void setMeetingPos(const Vec2i &meetingPos)			{this->meetingPos = meetingPos;}
-	void setAutoRepairEnabled(bool autoRepairEnabled) {
-		this->autoRepairEnabled = autoRepairEnabled;
-		StateChanged(this);
-	}
+	//void setAutoRepairEnabled(bool autoRepairEnabled) {
+	//	this->autoRepairEnabled = autoRepairEnabled;
+	//	StateChanged(this);
+	//}
+	void setAutoCmdEnable(AutoCmdFlag f, bool v);
 
 	//render related
 	const Model *getCurrentModel() const				{return currSkill->getAnimation();}

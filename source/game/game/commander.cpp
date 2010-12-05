@@ -140,16 +140,28 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 	return CommandResult::SUCCESS;
 }
 
-void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const {
+void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const {
+	CommandArchetype archetype;
+	CommandFlags cmdFlags = CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, enabled);
+	switch (flag) {
+		case AutoCmdFlag::REPAIR:
+			archetype = CommandArchetype::SET_AUTO_REPAIR;
+			break;
+		case AutoCmdFlag::ATTACK:
+			archetype = CommandArchetype::SET_AUTO_ATTACK;
+			break;
+		case AutoCmdFlag::FLEE:
+			archetype = CommandArchetype::SET_AUTO_FLEE;
+			break;
+	}
 	if (iSim->isNetworkInterface()) {
 		g_console.addLine(g_lang.get("NotAvailable"));
 	} else {
-	const UnitVector &units = selection.getUnits();
-		foreach_const (UnitVector, i, units) {
-			Command *c = new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled), 
-				Command::invalidPos, *i);
-			pushCommand(c);
-	}
+		const UnitVector &units = selection.getUnits();
+			foreach_const (UnitVector, i, units) {
+				Command *c = new Command(archetype, cmdFlags, Command::invalidPos, *i);
+				pushCommand(c);
+		}
 	}
 }
 
@@ -240,7 +252,15 @@ void Commander::giveCommand(Command *command) const {
 				delete command;
 				break;
 			case CommandArchetype::SET_AUTO_REPAIR:
-				unit->setAutoRepairEnabled(command->isAutoRepairEnabled());
+				unit->setAutoCmdEnable(AutoCmdFlag::REPAIR, command->isAutoCmdEnabled());
+				delete command;
+				break;
+			case CommandArchetype::SET_AUTO_ATTACK:
+				unit->setAutoCmdEnable(AutoCmdFlag::ATTACK, command->isAutoCmdEnabled());
+				delete command;
+				break;
+			case CommandArchetype::SET_AUTO_FLEE:
+				unit->setAutoCmdEnable(AutoCmdFlag::FLEE, command->isAutoCmdEnabled());
 				delete command;
 				break;
 			default:

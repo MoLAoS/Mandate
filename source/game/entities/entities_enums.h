@@ -25,7 +25,7 @@ REGULAR_ENUM( CommandProperties,
 	QUEUE,
 	AUTO,
 	DONT_RESERVE_RESOURCES,
-	AUTO_REPAIR_ENABLED
+	AUTO_COMMAND_ENABLED
 );
 
 /** Command Archetypes */

@@ -803,10 +803,17 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 			// not our click
 		}
 	} else if (posDisplay == autoRepairPos) {
-		AutoCmdState state = selection.getAutoRepairState();
+		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::REPAIR);
 		bool action = (state != AutoCmdState::ALL_ON);
-		commander->trySetAutoRepairEnabled(selection,
-				CommandFlags(CommandProperties::QUEUE, input.isShiftDown()), action);
+		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::REPAIR, action);
+	} else if (posDisplay == autoAttackPos) {
+		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
+		bool action = (state != AutoCmdState::ALL_ON);
+		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::ATTACK, action);
+	} else if (posDisplay == autoFleePos) {
+		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::FLEE);
+		bool action = (state != AutoCmdState::ALL_ON);
+		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::FLEE, action);
 	} else if (posDisplay == meetingPointPos) {
 		activePos= posDisplay;
 		selectingMeetingPoint= true;
@@ -1012,7 +1019,7 @@ void UserInterface::computeDisplay() {
 	// init
 	m_display->clear();
 
-	// ================ PART 1 ================
+	// === Selection Panel ===
 
 	int thisTeam = g_world.getThisTeamIndex();
 
@@ -1035,8 +1042,8 @@ void UserInterface::computeDisplay() {
 				m_display->setOrderQueueText(g_lang.get("OrdersOnQueue") + ": " + intToStr(ordersQueued));
 			} else {
 				m_display->setOrderQueueText("");
+			}
 		}
-	}
 	}
 
 	// selection portraits
@@ -1044,7 +1051,8 @@ void UserInterface::computeDisplay() {
 		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
 
-	// transported portraits
+	// === Housed Units Panel ===
+
 	bool transported = false;
 	int i=0;
 	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
@@ -1064,7 +1072,7 @@ void UserInterface::computeDisplay() {
 	}
 	m_display->setTransportedLabel(transported);
 
-	// ================ PART 2 ================
+	// === Command Panel ===
 
 	if (selectingPos || selectingMeetingPoint) {
 		m_display->setDownSelectedPos(activePos);
@@ -1074,33 +1082,35 @@ void UserInterface::computeDisplay() {
 		if (!m_selectingSecond) {
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
-			if (selection.isCancelable()) { // cancel button
-				m_display->setDownImage(cancelPos, ut->getCancelImage());
-				m_display->setDownLighted(cancelPos, true);
+
+			if (selection.canRepair()) { // auto-repair toggle
+				m_display->setDownImage(autoRepairPos, selection.getCommandImage(CommandClass::REPAIR));
 			}
+
+			if (selection.canAttack()) {
+				m_display->setDownImage(autoAttackPos, selection.getCommandImage(CommandClass::ATTACK));
+				AutoCmdState attackState = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
+				if (attackState == AutoCmdState::NONE || attackState == AutoCmdState::ALL_OFF) {
+					if (selection.canMove()) {
+						m_display->setDownImage(autoFleePos, selection.getCommandImage(CommandClass::MOVE));
+					}
+				}
+			} else {
+				if (selection.canMove()) {
+					m_display->setDownImage(autoFleePos, selection.getCommandImage(CommandClass::MOVE));
+				}
+			}
+
+			//if (selection.isCloakable()) { // cloak toggle
+			//}
+
 			if (selection.isMeetable()) { // meeting point
 				m_display->setDownImage(meetingPointPos, ut->getMeetingPointImage());
 				m_display->setDownLighted(meetingPointPos, true);
 			}
-			if (selection.isCanRepair()) {
-				if (selection.getAutoRepairState() == AutoCmdState::ALL_ON) {
-					const CommandType *rct = ut->getFirstCtOfClass(CommandClass::REPAIR);
-					if (!rct) {
-						RUNTIME_CHECK(selection.getCount() > 1);
-						for (int i=1; i < selection.getCount(); ++i) {
-							ut = selection.getUnit(i)->getType();
-							rct = ut->getFirstCtOfClass(CommandClass::REPAIR);
-							if (rct) {
-								break;
-							}
-						}
-					}
-					RUNTIME_CHECK(rct != 0);
-					m_display->setDownImage(autoRepairPos, rct->getImage());
-				} else {
-					m_display->setDownImage(autoRepairPos, ut->getCancelImage());
-				}
-				m_display->setDownLighted(autoRepairPos, true);
+			if (selection.isCancelable()) { // cancel button
+				m_display->setDownImage(cancelPos, ut->getCancelImage());
+				m_display->setDownLighted(cancelPos, true);
 			}
 
 			if (selection.isUniform()) { // uniform selection

@@ -344,7 +344,7 @@ void RepairCommandType::update(Unit *unit) const {
 }
 
 Command *RepairCommandType::doAutoRepair(Unit *unit) const {
-	if (!unit->isAutoRepairEnabled() || !unit->getFaction()->isAvailable(this)) {
+	if (!unit->isAutoCmdEnabled(AutoCmdFlag::REPAIR) || !unit->getFaction()->isAvailable(this)) {
 		return 0;
 	}
 	// look for someone to repair

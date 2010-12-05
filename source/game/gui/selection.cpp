@@ -29,19 +29,19 @@ namespace Glest { namespace Gui {
 // =====================================================
 
 Selection::Selection()	{
-	gui = NULL;
+	m_gui = NULL;
 }
 
-void Selection::init(UserInterface *gui, int factionIndex) {
-	empty = true;
-	uniform = false;
-	commandable = false;
-	cancelable = false;
-	meetable = false;
-	canRepair = false;
+void Selection::init(UserInterface *m_gui, int m_factionIndex) {
+	m_empty = true;
+	m_uniform = false;
+	m_commandable = false;
+	m_cancelable = false;
+	m_meetable = false;
+	m_canRepair = false;
 	m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::NONE;
-	this->factionIndex = factionIndex;
-	this->gui = gui;
+	this->m_factionIndex = m_factionIndex;
+	this->m_gui = m_gui;
 }
 
 Selection::~Selection(){
@@ -49,23 +49,23 @@ Selection::~Selection(){
 }
 
 void Selection::select(Unit *unit){
-	// check selection size, if unit already selected or dead, multi-selection and enemy
-	if (selectedUnits.size() >= maxUnits
-	|| std::find(selectedUnits.begin(), selectedUnits.end(), unit) != selectedUnits.end()
+	// check selection size, if unit already selected or dead, multi-selection and m_enemy
+	if (m_selectedUnits.size() >= maxUnits
+	|| std::find(m_selectedUnits.begin(), m_selectedUnits.end(), unit) != m_selectedUnits.end()
 	|| unit->isDead()
 	|| (!unit->getType()->getMultiSelect() && !isEmpty())
-	|| (unit->getFactionIndex() != factionIndex && !isEmpty())) {
+	|| (unit->getFactionIndex() != m_factionIndex && !isEmpty())) {
 		return;
 	}
-	// check existing enemy
-	if (selectedUnits.size() == 1 && selectedUnits.front()->getFactionIndex() != factionIndex) {
+	// check existing m_enemy
+	if (m_selectedUnits.size() == 1 && m_selectedUnits.front()->getFactionIndex() != m_factionIndex) {
 		clear();
 	}
 	// check existing multisel
-	if (selectedUnits.size() == 1 && !selectedUnits.front()->getType()->getMultiSelect()) {
+	if (m_selectedUnits.size() == 1 && !m_selectedUnits.front()->getType()->getMultiSelect()) {
 		clear();
 	}
-	selectedUnits.push_back(unit);
+	m_selectedUnits.push_back(unit);
 	unit->StateChanged.connect(this, &Selection::onUnitStateChanged);
 	update();
 }
@@ -73,7 +73,7 @@ void Selection::select(Unit *unit){
 /// remove units from current selction
 void Selection::unSelect(const UnitVector &units) {
 	foreach_const (UnitVector, it, units) {
-		foreach (UnitVector, it2, selectedUnits) {
+		foreach (UnitVector, it2, m_selectedUnits) {
 			if (*it == *it2) {
 				unSelect(it2);
 				break;
@@ -84,7 +84,7 @@ void Selection::unSelect(const UnitVector &units) {
 
 /// remove unit from current selction
 void Selection::unSelect(const Unit *unit) {
-	foreach (UnitVector, it, selectedUnits) {
+	foreach (UnitVector, it, m_selectedUnits) {
 		if (*it == unit) {
 			unSelect(it);
 			break;
@@ -94,7 +94,7 @@ void Selection::unSelect(const Unit *unit) {
 
 void Selection::unSelectAllOfType(const UnitType *type) {
 	UnitVector units;
-	foreach (UnitVector, it, selectedUnits) {
+	foreach (UnitVector, it, m_selectedUnits) {
 		if ((*it)->getType() != type) {
 			units.push_back(*it);
 		}
@@ -105,7 +105,7 @@ void Selection::unSelectAllOfType(const UnitType *type) {
 
 void Selection::unSelectAllNotOfType(const UnitType *type) {
 	UnitVector units;
-	foreach (UnitVector, it, selectedUnits) {
+	foreach (UnitVector, it, m_selectedUnits) {
 		if ((*it)->getType() == type) {
 			units.push_back(*it);
 		}
@@ -118,17 +118,17 @@ void Selection::unSelect(UnitVector::iterator it) {
 	RUNTIME_CHECK(*it != 0 && this != 0);
 	// remove unit from list
 	(*it)->StateChanged.disconnect(this);
-	selectedUnits.erase(it);
+	m_selectedUnits.erase(it);
 	update();
-	gui->onSelectionChanged();
+	m_gui->onSelectionChanged();
 }
 
 void Selection::clear(){
 	// clear list
-	foreach (UnitVector, it, selectedUnits) {
+	foreach (UnitVector, it, m_selectedUnits) {
 		(*it)->StateChanged.disconnect(this);
 	}
-	selectedUnits.clear();
+	m_selectedUnits.clear();
 	update();
 }
 
@@ -139,28 +139,28 @@ Vec3f Selection::getRefPos() const{
 
 void Selection::assignGroup(int groupIndex){
 	// clear group
-	groups[groupIndex].clear();
+	m_groups[groupIndex].clear();
 
 	// assign new group
-	foreach (UnitVector, it, selectedUnits) {
-		groups[groupIndex].push_back(*it);
+	foreach (UnitVector, it, m_selectedUnits) {
+		m_groups[groupIndex].push_back(*it);
 	}
 }
 
 void Selection::recallGroup(int groupIndex){
 	clear();
-	foreach (UnitVector, it, groups[groupIndex]) {
+	foreach (UnitVector, it, m_groups[groupIndex]) {
 		RUNTIME_CHECK(*it != NULL && (*it)->isAlive());
 		select(*it);
 	}
 }
 
 void Selection::clearDeadUnits() {
-	UnitVector::iterator it = selectedUnits.begin();
+	UnitVector::iterator it = m_selectedUnits.begin();
 	bool updt = false;
-	while (it != selectedUnits.end()) {
+	while (it != m_selectedUnits.end()) {
 		if ((*it)->isDead()) {
-			it = selectedUnits.erase(it);
+			it = m_selectedUnits.erase(it);
 			updt = true;
 		} else {
 			++it;
@@ -168,14 +168,14 @@ void Selection::clearDeadUnits() {
 	}
 	if (updt) {
 		update();
-		gui->onSelectionChanged();
+		m_gui->onSelectionChanged();
 	}
 
 	for (int i=0; i < maxGroups; ++i) {
-		it = groups[i].begin();
-		while (it != groups[i].end()) {
+		it = m_groups[i].begin();
+		while (it != m_groups[i].end()) {
 			if ((*it)->isDead()) {
-				it = groups[i].erase(it);
+				it = m_groups[i].erase(it);
 			} else {
 				++it;
 			}
@@ -185,36 +185,42 @@ void Selection::clearDeadUnits() {
 
 void Selection::onUnitStateChanged(Unit *unit) {
 	update();
-	gui->onSelectionStateChanged();
+	m_gui->onSelectionStateChanged();
 }
 
 void Selection::update() {
-	if (selectedUnits.empty()) {
-		empty = true;
-		enemy = false;
-		uniform = false;
-		commandable = false;
-		cancelable = false;
-		meetable = false;
-		canRepair = false;
-	} else if (selectedUnits.front()->getFactionIndex() != factionIndex) {
-		empty = false;
-		enemy = true;
-		uniform = true;
-		commandable = false;
-		cancelable = false;
-		meetable = false;
-		canRepair = false;
+	if (m_selectedUnits.empty()) {
+		m_empty = true;
+		m_enemy = false;
+		m_uniform = false;
+		m_commandable = false;
+		m_cancelable = false;
+		m_meetable = false;
+		m_canRepair = false;
+		m_canAttack = false;
+		m_canMove = false;
+	} else if (m_selectedUnits.front()->getFactionIndex() != m_factionIndex) {
+		m_empty = false;
+		m_enemy = true;
+		m_uniform = true;
+		m_commandable = false;
+		m_cancelable = false;
+		m_meetable = false;
+		m_canRepair = false;
+		m_canAttack = false;
+		m_canMove = false;
 	} else {
-		const UnitType *frontUT = selectedUnits.front()->getType();
-		empty = false;
-		enemy = false;
-		uniform = true;
-		commandable = false;
-		cancelable = false;
-		canRepair = true;
+		const UnitType *frontUT = m_selectedUnits.front()->getType();
+		m_empty = false;
+		m_enemy = false;
+		m_uniform = true;
+		m_commandable = false;
+		m_cancelable = false;
+		m_canAttack = true;
+		m_canMove = true;
+		m_canRepair = true;
 		if (frontUT->hasCommandClass(CommandClass::REPAIR)) {
-			if (selectedUnits.front()->isAutoRepairEnabled()) {
+			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::REPAIR)) {
 				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_ON;
 			} else {
 				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_OFF;
@@ -224,13 +230,33 @@ void Selection::update() {
 		}
 		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
-		foreach (UnitVector, i, selectedUnits) {
+		if (frontUT->hasCommandClass(CommandClass::ATTACK)) {
+			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::ATTACK)) {
+				m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::ALL_ON;
+			} else {
+				m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::ALL_OFF;
+			}
+		} else {
+			m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::NONE;
+		}
+
+		if (frontUT->hasCommandClass(CommandClass::MOVE)) {
+			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::FLEE)) {
+				m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::ALL_ON;
+			} else {
+				m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::ALL_OFF;
+			}
+		} else {
+			m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::NONE;
+		}
+
+		foreach (UnitVector, i, m_selectedUnits) {
 			const UnitType *ut = (*i)->getType();
 			if (ut != frontUT) {
-				uniform = false;
+				m_uniform = false;
 			}
 			if (ut->hasCommandClass(CommandClass::REPAIR)) {
-				if (((*i)->isAutoRepairEnabled())) {
+				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::REPAIR))) {
 					if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::MIXED;
 					} else if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::NONE) {
@@ -243,26 +269,66 @@ void Selection::update() {
 						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_OFF;
 					} // else MIXED or ALL_OFF already
 				}
-			} else {
-				canRepair = false;
 			}
-			cancelable = cancelable || ((*i)->anyCommand()
+			if (ut->hasCommandClass(CommandClass::ATTACK)) {
+				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::ATTACK))) {
+					if (m_autoCmdStates[AutoCmdFlag::ATTACK] == AutoCmdState::ALL_OFF) {
+						m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::MIXED;
+					} else if (m_autoCmdStates[AutoCmdFlag::ATTACK] == AutoCmdState::NONE) {
+						m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::ALL_ON;
+					} // else MIXED or ALL_ON already
+				} else {
+					if (m_autoCmdStates[AutoCmdFlag::ATTACK] == AutoCmdState::ALL_ON) {
+						m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::MIXED;
+					} else if (m_autoCmdStates[AutoCmdFlag::ATTACK] == AutoCmdState::NONE) {
+						m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::ALL_OFF;
+					} // else MIXED or ALL_OFF already
+				}
+			}
+			if (ut->hasCommandClass(CommandClass::MOVE)) {
+				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::FLEE))) {
+					if (m_autoCmdStates[AutoCmdFlag::FLEE] == AutoCmdState::ALL_OFF) {
+						m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::MIXED;
+					} else if (m_autoCmdStates[AutoCmdFlag::FLEE] == AutoCmdState::NONE) {
+						m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::ALL_ON;
+					} // else MIXED or ALL_ON already
+				} else {
+					if (m_autoCmdStates[AutoCmdFlag::FLEE] == AutoCmdState::ALL_ON) {
+						m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::MIXED;
+					} else if (m_autoCmdStates[AutoCmdFlag::FLEE] == AutoCmdState::NONE) {
+						m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::ALL_OFF;
+					} // else MIXED or ALL_OFF already
+				}
+			}
+			m_cancelable = m_cancelable || ((*i)->anyCommand()
 					&& (*i)->getCurrCommand()->getType()->getClass() != CommandClass::STOP);
-			commandable = commandable || (*i)->isOperative();
+			m_commandable = m_commandable || (*i)->isOperative();
 		}
-		meetable = uniform && commandable && frontUT->hasMeetingPoint();
+		if (m_canRepair && m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::NONE) {
+			m_canRepair = false;
+		}
+		m_meetable = m_uniform && m_commandable && frontUT->hasMeetingPoint();
 	}
 	//in case Game::init() isn't called, eg crash at loading data
-	if (gui && UserInterface::getCurrentGui()) {
-		gui->onSelectionUpdated();
+	if (m_gui && UserInterface::getCurrentGui()) {
+		m_gui->onSelectionUpdated();
 	}
+}
+const Texture2D* Selection::getCommandImage(CommandClass cc) const {
+	foreach_const (UnitVector, it, m_selectedUnits) {
+		const CommandType *ct = (*it)->getType()->getFirstCtOfClass(cc);
+		if (ct) {
+			return ct->getImage();
+		}
+	}
+	return 0;
 }
 
 void Selection::removeCarried() {
-	UnitVector::iterator i = selectedUnits.begin();
-	while (i != selectedUnits.end()) {
+	UnitVector::iterator i = m_selectedUnits.begin();
+	while (i != m_selectedUnits.end()) {
 		if ((*i)->isCarried()) {
-			i = selectedUnits.erase(i);
+			i = m_selectedUnits.erase(i);
 		} else {
 			++i;
 		}
@@ -277,11 +343,11 @@ void Selection::load(const XmlNode *node) {
 		if(index < 0 || index > maxGroups) {
 			throw runtime_error("invalid group index");
 		}
-		groups[index].clear();
+		m_groups[index].clear();
 		for(int j = 0; j < groupNode->getChildCount(); ++j) {
 			Unit *unit = g_simInterface->getUnitFactory().getUnit(groupNode->getChildIntValue("unit", j));
 			if(unit) {
-				groups[index].push_back(unit);
+				m_groups[index].push_back(unit);
 			}
 		}
 	}
@@ -289,12 +355,12 @@ void Selection::load(const XmlNode *node) {
 
 void Selection::save(XmlNode *node) const {
 	for(int i = 0; i < maxGroups; ++i) {
-		if(groups[i].empty()) {
+		if(m_groups[i].empty()) {
 			continue;
 		}
 		XmlNode *groupNode = node->addChild("group");
 		groupNode->addAttribute("index", i);
-		for(UnitVector::const_iterator j = groups[i].begin(); j != groups[i].end(); ++j) {
+		for(UnitVector::const_iterator j = m_groups[i].begin(); j != m_groups[i].end(); ++j) {
 			groupNode->addChild("unit", (*j)->getId());
 		}
 	}

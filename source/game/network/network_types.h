@@ -199,13 +199,15 @@ WRAPPED_ENUM( NetworkCommandType,
 	GIVE_COMMAND,
 	CANCEL_COMMAND,
 	SET_AUTO_REPAIR,
+	SET_AUTO_ATTACK,
+	SET_AUTO_FLEE,
 	SET_MEETING_POINT
 );
 
 #pragma pack(push, 4)
 	class NetworkCommand {
 	private:
-		struct CmdFlags { enum { QUEUE = 1, NO_RESERVE_RESOURCES = 2, AUTO_REPAIR = 4 }; };
+		struct CmdFlags { enum { QUEUE = 1, NO_RESERVE_RESOURCES = 2, AUTO_COMMAND_ENABLE = 4 }; };
 		uint32 networkCommandType	:  8;
 		int32 unitId				: 24;
 		int32 commandTypeId			: 16;

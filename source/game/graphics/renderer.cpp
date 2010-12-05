@@ -1126,8 +1126,7 @@ void Renderer::renderUnits(){
 	for (int i=0; i < world->getFactionCount(); ++i) { 
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
-			//@todo take unit size into account
-			if (thisFaction->canSee(unit) && culler.isInside(unit->getPos())) {
+			if (thisFaction->canSee(unit) && culler.isInside(unit->getCenteredPos())) {
 				toRender[i + 1].push_back(unit);
 			}
 		}

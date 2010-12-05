@@ -25,25 +25,10 @@ namespace Glest { namespace Gui {
 
 class UserInterface;
 
-WRAPPED_ENUM( AutoCmdFlag,
-	REPAIR,
-	ATTACK,
-	FLEE
-)
-
-// AutoCmdState : describes an auto command category state of 
-// the selection (auto-repair, auto-attack & auto-flee)
-WRAPPED_ENUM( AutoCmdState,
-	NONE,
-	ALL_ON,
-	ALL_OFF,
-	MIXED
-)
-
 // =====================================================
 // 	class Selection
 //
-///	List of selected units and groups
+///	List of selected units and m_groups
 // =====================================================
 
 class Selection: public sigslot::has_slots {
@@ -56,27 +41,29 @@ public:
 	static const int maxUnits = 24;
 
 private:
-	bool empty;
-	bool enemy;
-	bool uniform;
-	bool commandable;
-	bool cancelable;
-	bool meetable;
-	bool canRepair;
-	AutoCmdState m_autoCmdStates[AutoCmdFlag::COUNT];
-	int factionIndex;
-	UnitVector selectedUnits;
-	UnitVector groups[maxGroups];
-	UserInterface *gui;
+	bool			m_empty;
+	bool			m_enemy;
+	bool			m_uniform;
+	bool			m_commandable;
+	bool			m_cancelable;
+	bool			m_meetable;
+	bool			m_canRepair;
+	bool			m_canAttack;
+	bool			m_canMove;
+	AutoCmdState	m_autoCmdStates[AutoCmdFlag::COUNT];
+	int				m_factionIndex;
+	UnitVector		m_selectedUnits;
+	UnitVector		m_groups[maxGroups];
+	UserInterface*	m_gui;
 
 public:
 	Selection();
 	virtual ~Selection();
-	void init(UserInterface *gui, int factionIndex);
+	void init(UserInterface *m_gui, int m_factionIndex);
 
 	void select(Unit *unit);
 	void select(const UnitVector &units) {
-		//add units to gui
+		//add units to m_gui
 		for(UnitIterator it= units.begin(); it!=units.end(); ++it) {
 			select(*it);
 		}
@@ -87,22 +74,27 @@ public:
 	void unSelectAllNotOfType(const UnitType *type);
 	void clear();
 
-	bool isEmpty() const				{return empty;}
-	bool isUniform() const				{return uniform;}
-	bool isEnemy() const				{return enemy;}
-	bool isComandable() const			{return commandable;}
-	bool isCancelable() const			{return cancelable;}
-	bool isMeetable() const				{return meetable;}
-	bool isCanRepair() const			{return canRepair;}
+	bool isEmpty() const				{return m_empty;}
+	bool isUniform() const				{return m_uniform;}
+	bool isEnemy() const				{return m_enemy;}
+	bool isComandable() const			{return m_commandable;}
+	bool isCancelable() const			{return m_cancelable;}
+	bool isMeetable() const				{return m_meetable;}
+	bool canRepair() const				{return m_canRepair;}
+	bool canAttack() const				{return m_canAttack;}
+	bool canMove() const				{return m_canMove;}
 	bool hasUnit(const Unit *unit) const {
-		return (std::find(selectedUnits.begin(), selectedUnits.end(), unit) != selectedUnits.end());
-			}
+		return (std::find(m_selectedUnits.begin(), m_selectedUnits.end(), unit) != m_selectedUnits.end());
+	}
 
-	int getCount() const					{return selectedUnits.size();}
-	const Unit *getUnit(int i) const		{return selectedUnits[i];}
-	const Unit *getFrontUnit() const		{return selectedUnits.front();}
-	const UnitVector &getUnits() const	{return selectedUnits;}
+	const Texture2D* getCommandImage(CommandClass cc) const;
+
+	int getCount() const					{return m_selectedUnits.size();}
+	const Unit *getUnit(int i) const		{return m_selectedUnits[i];}
+	const Unit *getFrontUnit() const		{return m_selectedUnits.front();}
+	const UnitVector &getUnits() const	{return m_selectedUnits;}
 	Vec3f getRefPos() const;
+	AutoCmdState getAutoCmdState(AutoCmdFlag f) const	{return m_autoCmdStates[f];}
 	AutoCmdState getAutoRepairState() const	{return m_autoCmdStates[AutoCmdFlag::REPAIR];}
 
 	void assignGroup(int groupIndex);

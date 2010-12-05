@@ -144,6 +144,9 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 }
 
 Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
+	if (!unit->isAutoCmdEnabled(AutoCmdFlag::FLEE)) {
+		return 0;
+	}
 	Unit *sighted = NULL;
 	if (attackerInSight(unit, &sighted)) {
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();

@@ -56,7 +56,7 @@ public:
 
 	CommandResult tryCancelCommand(const Selection *selection) const;
 	
-	void trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const;
+	void trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const;
 
 	void giveCommand(Command *command) const;
 

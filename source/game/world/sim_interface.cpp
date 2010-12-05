@@ -398,7 +398,13 @@ void SimulationInterface::requestCommand(Command *command) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::CANCEL_COMMAND, unit, Vec2i(-1)));
 		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_REPAIR, 
-				unit, command->getFlags().get(CommandProperties::AUTO_REPAIR_ENABLED)));
+				unit, command->getFlags().get(CommandProperties::AUTO_COMMAND_ENABLED)));
+		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_ATTACK) {
+			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_ATTACK, 
+				unit, command->getFlags().get(CommandProperties::AUTO_COMMAND_ENABLED)));
+		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_FLEE) {
+			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_FLEE, 
+				unit, command->getFlags().get(CommandProperties::AUTO_COMMAND_ENABLED)));
 		}
 	}
 	delete command;

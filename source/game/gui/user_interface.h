@@ -91,9 +91,14 @@ public:
 	static const int cellHeightCount = Display::cellHeightCount;
 	static const int maxSelBuff = 128 * 5;
 	static const int upgradeDisplayIndex = cellWidthCount * 2;
-	static const int cancelPos = cellWidthCount * cellHeightCount - 1;
+	
+	static const int autoRepairPos = cellWidthCount * cellHeightCount - 6;
+	static const int autoAttackPos = cellWidthCount * cellHeightCount - 5;
+	static const int autoFleePos = cellWidthCount * cellHeightCount - 4;
+	static const int cloakTogglePos = cellWidthCount * cellHeightCount - 3;
 	static const int meetingPointPos = cellWidthCount * cellHeightCount - 2;
-	static const int autoRepairPos = cellWidthCount * cellHeightCount - cellWidthCount;
+	static const int cancelPos = cellWidthCount * cellHeightCount - 1;
+
 	static const int imageCount = cellWidthCount * cellHeightCount;
 	static const int invalidPos = -1;
 	static const int doubleClickSelectionRadius = 20;

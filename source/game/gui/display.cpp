@@ -66,6 +66,8 @@ Display::Display(UserInterface *ui, Vec2i pos)
 
 	currentColor = 0;
 
+	int iconSize = 32;
+
 	m_font = g_coreData.getFTDisplayFont();
 
 	int x = getBorderLeft();
@@ -73,44 +75,69 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	m_upImageOffset = Vec2i(x, y);
 	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
 		if (i % cellWidthCount == 0) {
-			y -= 32;
+			y -= iconSize;
 			x = getBorderLeft();
 		}
-		addImageX(0, Vec2i(x,y), Vec2i(32,32));
-		x += 32;
+		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
+		x += iconSize;
 	}
 	setTextParams("", Vec4f(1.f), m_font, false); // (0) unit title
 	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
 	addText(""); // (1) unit text
 	addText(""); // (2) queued orders text (to display below progress bar if present)
 	addText(""); // (3) progress bar
-	setTextPos(Vec2i(40, getHeight() - 40), 0);
+	setTextPos(Vec2i(40, getHeight() - (iconSize + iconSize / 4)), 0);
 
+	Vec2i arPos, aaPos, afPos;
 	x = getBorderLeft();
-	y = getHeight() - getBorderTop() - 40 - int(m_font->getMetrics()->getHeight()) * 6;
+	y = getHeight() - getBorderTop() - (iconSize + iconSize / 4) - int(m_font->getMetrics()->getHeight()) * 6;
 	m_downImageOffset = Vec2i(x, y);
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons
 		if (i % cellWidthCount == 0) {
-			y -= 32;
+			y -= iconSize;
 			x = getBorderLeft();
 		}
-		addImageX(0, Vec2i(x,y), Vec2i(32,32));
-		x += 32;
+		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
+		if (i == UserInterface::autoRepairPos) {
+			arPos = Vec2i(x, y);
+		} else if (i == UserInterface::autoAttackPos) {
+			aaPos = Vec2i(x, y);
+		} else if (i == UserInterface::autoFleePos) {
+			afPos = Vec2i(x, y);
+		}
+		x += iconSize;
 	}
 
 	x = getBorderLeft();
-	y -= (40/* + int(m_font->getMetrics()->getHeight()) * 8*/);
+	y -= (iconSize + iconSize / 4 /* + int(m_font->getMetrics()->getHeight()) * 8*/);
 	addText(""); // (4) 'Transported' label
 	setTextPos(Vec2i(x, y + 5), 4);
 	m_carryImageOffset = Vec2i(x, y);
 	for (int i = 0; i < transportCellCount; ++i) { // loaded unit portraits
 		if (i % cellWidthCount == 0) {
-			y -= 32;
+			y -= iconSize;
 			x = getBorderLeft();
 		}
-		addImageX(0, Vec2i(x,y), Vec2i(32,32));
-		x += 32;
+		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
+		x += iconSize;
 	}
+
+	const Texture2D* overlayImages[3] = {
+		g_coreData.getGreenTickOverlay(),
+		g_coreData.getRedCrossOverlay(),
+		g_coreData.getQuestionOverlay()
+	};
+	m_autoRepairOn = addImageX(overlayImages[0], arPos, Vec2i(iconSize));
+	m_autoRepairOff = addImageX(overlayImages[1], arPos, Vec2i(iconSize));
+	m_autoRepairMixed = addImageX(overlayImages[2], arPos, Vec2i(iconSize));
+
+	m_autoAttackOn = addImageX(overlayImages[0], aaPos, Vec2i(iconSize));
+	m_autoAttackOff = addImageX(overlayImages[1], aaPos, Vec2i(iconSize));
+	m_autoAttackMixed = addImageX(overlayImages[2], aaPos, Vec2i(iconSize));
+
+	m_autoFleeOn =  addImageX(overlayImages[0], afPos, Vec2i(iconSize));
+	m_autoFleeOff = addImageX(overlayImages[1], afPos, Vec2i(iconSize));
+	m_autoFleeMixed = addImageX(overlayImages[2], afPos, Vec2i(iconSize));
 
 	// -loadmap doesn't have any faction
 	const Texture2D *logoTex = (g_world.getThisFaction()) ? g_world.getThisFaction()->getLogoTex() : 0;
@@ -335,6 +362,49 @@ void Display::renderProgressBar() {
 	renderText(3);
 }
 
+int Display::getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s) {
+	if (s == AutoCmdState::INVALID || s == AutoCmdState::NONE) {
+		return -1;
+	}
+	switch (f) {
+		case AutoCmdFlag::REPAIR:
+			if (s == AutoCmdState::ALL_ON) {
+				return m_autoRepairOn;
+			} else if (s == AutoCmdState::ALL_OFF) {
+				return m_autoRepairOff;
+			} else if (s == AutoCmdState::MIXED) {
+				return m_autoRepairMixed;
+			} else {
+				assert(false);
+				return -1;
+			}
+		case AutoCmdFlag::ATTACK:
+			if (s == AutoCmdState::ALL_ON) {
+				return m_autoAttackOn;
+			} else if (s == AutoCmdState::ALL_OFF) {
+				return m_autoAttackOff;
+			} else if (s == AutoCmdState::MIXED) {
+				return m_autoAttackMixed;
+			} else {
+				assert(false);
+				return -1;
+			}
+
+		case AutoCmdFlag::FLEE:
+			if (s == AutoCmdState::ALL_ON) {
+				return m_autoFleeOn;
+			} else if (s == AutoCmdState::ALL_OFF) {
+				return m_autoFleeOff;
+			} else if (s == AutoCmdState::MIXED) {
+				return m_autoFleeMixed;
+			} else {
+				assert(false);
+				return -1;
+			}
+	}
+	return -1;
+}
+
 void Display::render() {
 	if (!isVisible()) {
 		return;
@@ -352,9 +422,8 @@ void Display::render() {
 	}
 	
 	renderBgAndBorders();
-	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject()) {
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject() && m_logo != -1) {
 		// faction logo
-		assert(m_logo != -1);
 		ImageWidget::renderImage(m_logo);
 	}
 
@@ -368,6 +437,20 @@ void Display::render() {
 	for (int i=0; i < commandCellCount; ++i) {
 		if (getImage(i + selectionCellCount) && i != m_selectedCommandIndex) {
 			renderImage(i + selectionCellCount, downLighted[i] ? light : dark);
+			int ndx = -1;
+			if (i == UserInterface::autoRepairPos) {
+				AutoCmdState state = m_ui->getSelection()->getAutoCmdState(AutoCmdFlag::REPAIR);
+				ndx = getImageOverlayIndex(AutoCmdFlag::REPAIR, state);
+			} else if (i == UserInterface::autoAttackPos) {
+				AutoCmdState state = m_ui->getSelection()->getAutoCmdState(AutoCmdFlag::ATTACK);
+				ndx = getImageOverlayIndex(AutoCmdFlag::ATTACK, state);
+			} else if (i == UserInterface::autoFleePos) {
+				AutoCmdState state = m_ui->getSelection()->getAutoCmdState(AutoCmdFlag::FLEE);
+				ndx = getImageOverlayIndex(AutoCmdFlag::FLEE, state);
+			}
+			if (ndx != -1) {
+				renderImage(ndx);
+			}
 		}
 	}
 	if (m_selectedCommandIndex != invalidPos) {

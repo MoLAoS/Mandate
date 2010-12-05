@@ -92,6 +92,9 @@ bool CoreData::load() {
 		buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
 		buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
 		textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
+		greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
+		orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
+		redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
 	} catch (runtime_error &e) {
 		g_errorLog.add(string("Error loading core data.\n") + e.what());
 		return false;

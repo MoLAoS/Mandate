@@ -144,7 +144,6 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, loadType(0)
 		, currSkill(0)
 		, toBeUndertaken(false)
-		, autoRepairEnabled(true)
 		, carried(false)
 		, visible(true)
 		, m_cloaked(false)
@@ -157,6 +156,9 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, attacked_trigger(false) {
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
+	foreach_enum (AutoCmdFlag, f) {
+		m_autoCmdEnable[f] = true;
+	}
 
 	ULC_UNIT_LOG( this, " constructed at pos" << pos );
 
@@ -218,7 +220,9 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 
 	highlight = node->getChildFloatValue("highlight");
 	toBeUndertaken = node->getChildBoolValue("toBeUndertaken");
-	autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
+
+	//TODO AutoCmd enable
+	//autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
 
 	if (type->hasMeetingPoint()) {
 		meetingPos = node->getChildVec2iValue("meeting-point");
@@ -318,8 +322,9 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("currSkill", currSkill ? currSkill->getName() : "null_value");
 
 	node->addChild("toBeUndertaken", toBeUndertaken);
-//	node->addChild("alive", alive);
-	node->addChild("autoRepairEnabled", autoRepairEnabled);
+
+	//TODO AutoCmd enable
+//	node->addChild("autoRepairEnabled", autoRepairEnabled);
 
 	if (type->hasMeetingPoint()) {
 		node->addChild("meeting-point", meetingPos);
@@ -730,6 +735,11 @@ const CommandType *Unit::getFirstAvailableCt(CommandClass commandClass) const {
  */
 unsigned int Unit::getCommandCount() const{
 	return commands.size();
+}
+
+void Unit::setAutoCmdEnable(AutoCmdFlag f, bool v) {
+	m_autoCmdEnable[f] = v;
+	StateChanged(this);
 }
 
 /** give one command, queue or clear command queue and push back (depending on flags)

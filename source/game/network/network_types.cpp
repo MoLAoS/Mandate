@@ -42,12 +42,11 @@ NetworkCommand::NetworkCommand(Command *command) {
 	flags = 0;
 	if (!command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
 	if (command->isQueue()) flags |= CmdFlags::QUEUE;
-	if (command->isAutoRepairEnabled()) flags |= CmdFlags::AUTO_REPAIR;
+	if (command->isAutoCmdEnabled()) flags |= CmdFlags::AUTO_COMMAND_ENABLE;
 }
 
-/** Construct archetype SET_AUTO_REPAIR */
+/** Construct archetype SET_AUTO_ [REPAIR|ATTACK|FLEE] */
 NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, bool value) {
-	RUNTIME_CHECK(type == NetworkCommandType::SET_AUTO_REPAIR);
 	this->networkCommandType = type;
 	this->unitId = unit->getId();
 	this->commandTypeId = -1;
@@ -55,7 +54,7 @@ NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, bool v
 	this->positionY= -1;
 	this->prodTypeId = -1;
 	this->targetId = -1;
-	this->flags = (value ? CmdFlags::AUTO_REPAIR : 0);
+	this->flags = (value ? CmdFlags::AUTO_COMMAND_ENABLE : 0);
 }
 
 /** Construct archetype CANCEL_COMMAND */
@@ -90,15 +89,25 @@ Command *NetworkCommand::toCommand() const {
 		throw runtime_error("Can not find unit with id: " + intToStr(unitId) + ". Game out of synch.");
 	}
 
+	// handle CommandArchetype != GIVE_COMMAND
 	if (networkCommandType == NetworkCommandType::CANCEL_COMMAND) {
 		return new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
 	}
 	if (networkCommandType == NetworkCommandType::SET_AUTO_REPAIR) {
-		bool auto_repair = flags & CmdFlags::AUTO_REPAIR;
+		bool auto_cmd_enable = flags & CmdFlags::AUTO_COMMAND_ENABLE;
 		return new Command(CommandArchetype::SET_AUTO_REPAIR,
-			CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, auto_repair), Command::invalidPos, unit);
+			CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, auto_cmd_enable), Command::invalidPos, unit);
+	} else if (networkCommandType == NetworkCommandType::SET_AUTO_ATTACK) {
+		bool auto_cmd_enable = flags & CmdFlags::AUTO_COMMAND_ENABLE;
+		return new Command(CommandArchetype::SET_AUTO_ATTACK,
+			CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, auto_cmd_enable), Command::invalidPos, unit);
+	} else if (networkCommandType == NetworkCommandType::SET_AUTO_FLEE) {
+		bool auto_cmd_enable = flags & CmdFlags::AUTO_COMMAND_ENABLE;
+		return new Command(CommandArchetype::SET_AUTO_FLEE,
+			CommandFlags(CommandProperties::AUTO_COMMAND_ENABLED, auto_cmd_enable), Command::invalidPos, unit);
 	}
 
+	// else CommandArchetype == GIVE_COMMAND
 	// validate command type
 	const CommandType* ct = g_world.getCommandTypeFactory().getType(commandTypeId);
 	if (!ct) {
