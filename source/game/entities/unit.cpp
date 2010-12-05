@@ -147,6 +147,9 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, carried(false)
 		, visible(true)
 		, m_cloaked(false)
+		, m_cloaking(false)
+		, m_deCloaking(false)
+		, m_cloakAlpha(1.f)
 		, faction(faction)
 		, fire(0)
 		, map(map)
@@ -166,7 +169,7 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	hp = type->getMaxHp() / 20;
 
 	if (type->getCloakClass() == CloakClass::PERMANENT) {
-		m_cloaked = true;
+		cloak();
 	}
 
 	setModelFacing(m_facing);
@@ -1075,10 +1078,22 @@ void Unit::resetHighlight() {
 void Unit::cloak() {
 	RUNTIME_CHECK(type->getCloakClass() != CloakClass::INVALID);
 	m_cloaked = true;
+	if (!m_cloaking) {
+		if (m_deCloaking) {
+			m_deCloaking = false;
+		}
+		m_cloaking = true;
+	}
 }
 
 void Unit::deCloak() {
 	m_cloaked = false;
+	if (!m_deCloaking) {
+		if (m_cloaking) {
+			m_cloaking = false;
+		}
+		m_deCloaking = true;
+	}
 }
 
 
@@ -1273,6 +1288,21 @@ bool Unit::update() {
 	// fade highlight
 	if (highlight > 0.f) {
 		highlight -= 1.f / (GameConstants::highlightTime * WORLD_FPS);
+	}
+
+	// update cloak alpha
+	if (m_cloaking) {
+		m_cloakAlpha -= 0.05f;
+		if (m_cloakAlpha <= 0.3) {
+			assert(m_cloaked);
+			m_cloaking = false;
+		}
+	} else if (m_deCloaking) {
+		m_cloakAlpha += 0.05f;
+		if (m_cloakAlpha >= 1.f) {
+			assert(!m_cloaked);
+			m_deCloaking = false;
+		}
 	}
 
 	// update target

@@ -202,6 +202,9 @@ private:
 
 	bool	m_cloaked;
 
+	bool	m_cloaking, m_deCloaking;
+	float	m_cloakAlpha;
+
 	// this should go someone else
 	float highlight;				/**< alpha for selection circle effects */
 
@@ -317,7 +320,6 @@ public:
 	bool isMobile ()							{ return type->isMobile(); }
 	void setModelFacing(CardinalDir value);
 	CardinalDir getModelFacing() const			{ return m_facing; }
-	bool isCloaked() const					{return m_cloaked;}
 
 	//-- for carry units
 	const UnitIdList& getCarriedUnits() const	{return m_carriedUnits;}
@@ -385,6 +387,8 @@ public:
 	fixedVec2 getFixedCenteredPos() const	{ return fixedVec2(pos.x + type->getHalfSize(), pos.y + type->getHalfSize()); }
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
+	float getCloakAlpha() const			{return m_cloakAlpha;}
+
 	//is
 	bool isCarried() const				{return carried;}
 	bool isHighlighted() const			{return highlight > 0.f;}
@@ -398,7 +402,8 @@ public:
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
 	bool isInteresting(InterestingUnitType iut) const;
 	bool isAutoCmdEnabled(AutoCmdFlag f) const	{return m_autoCmdEnable[f];}
-
+	bool isCloaked() const					{return m_cloaked;}
+	bool renderCloaked() const			{return m_cloaked || m_cloaking || m_deCloaking;}
 	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
 
 	//set

@@ -1190,8 +1190,8 @@ void Renderer::renderUnits(){
 					alpha= (float)framesUntilDead / 300.f;
 					fade = true;
 				}
-			} else if (unit->isCloaked()) { // is ally, by consequence of earlier test
-				alpha = 0.3f;
+			} else if (unit->renderCloaked()) { // is ally, by consequence of earlier test
+				alpha = unit->getCloakAlpha();
 				fade = true;
 			}
 
