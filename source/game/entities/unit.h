@@ -198,7 +198,7 @@ private:
 	//bool autoRepairEnabled;			/**< is auto repair enabled */
 
 	bool carried;					/**< is the unit being carried */
-	bool visible;
+	//bool visible;
 
 	bool	m_cloaked;
 
@@ -329,8 +329,7 @@ public:
 	UnitIdList& getUnitsToUnload()				{return m_unitsToUnload;}
 	UnitId getCarrier() const					{return m_carrier;}
 
-	bool isVisible() const					{return visible;}
-	void setVisible(bool v)					{visible = v;}
+	//bool isVisible() const					{return carried;}
 	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}
 	//----
 

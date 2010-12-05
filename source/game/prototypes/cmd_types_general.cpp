@@ -859,7 +859,6 @@ void LoadCommandType::update(Unit *unit) const {
 	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
 		closest->removeCommands();
 		closest->setCurrSkill(SkillClass::STOP);
-		closest->setVisible(false);
 		g_map.clearUnitCells(closest, closest->getPos());
 		closest->setCarried(unit);
 		closest->setPos(Vec2i(-1));
@@ -988,7 +987,6 @@ void UnloadCommandType::update(Unit *unit) const {
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
-				targetUnit->setVisible(true);
 				targetUnit->setCarried(0);
 				unit->getUnitsToUnload().pop_front();
 				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit->getId()));

@@ -565,7 +565,7 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 
 bool Faction::canSee(const Unit *unit) const {
 	Map &map = g_map;
-	if (!unit->isVisible()) {
+	if (unit->isCarried()) {
 		return false;
 	}
 	if (isAlly(unit->getFaction())) {

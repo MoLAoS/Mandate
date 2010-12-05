@@ -145,7 +145,6 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, currSkill(0)
 		, toBeUndertaken(false)
 		, carried(false)
-		, visible(true)
 		, m_cloaked(false)
 		, m_cloaking(false)
 		, m_deCloaking(false)
@@ -179,7 +178,6 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 		: targetRef(node->getOptionalIntValue("targetRef", -1))
 		, effects(node->getChild("effects"))
 		, effectsCreated(node->getChild("effectsCreated"))
-		, visible(true)
         , carried(false) {
 	this->faction = faction;
 	this->map = map;
@@ -260,7 +258,6 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	}
 	m_carrier = node->getChildIntValue("unit-carrier");
 	if (m_carrier != -1) {
-		visible = false;
 		carried = true;
 	}
 
@@ -268,7 +265,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 		faction->add(this);
 		recalculateStats();
 		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
-		if (visible) {
+		if (!carried) {
 			map->putUnitCells(this, pos);
 			meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
 		}
@@ -654,6 +651,9 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	//splash
 	if (pstSplash != NULL) {
+		const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));		
+		bool visible = tile->isVisible(g_world.getThisTeamIndex())
+					&& g_renderer.getCuller().isInside(getTargetPos());
 		psSplash = pstSplash->createSplashParticleSystem(visible);
 		psSplash->setPos(endPos);
 		psSplash->setTeamColour(colour);
@@ -1094,7 +1094,8 @@ void Unit::cloak() {
 		}
 		m_cloaking = true;
 		// sound ?
-		if (type->getCloakSound() && g_renderer.getCuller().isInside(getCenteredPos())) {
+		if (type->getCloakSound() && g_world.getFrameCount() > 0 
+		&& g_renderer.getCuller().isInside(getCenteredPos())) {
 			g_soundRenderer.playFx(type->getCloakSound());
 		}
 	}

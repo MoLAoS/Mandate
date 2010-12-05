@@ -1149,8 +1149,7 @@ void Renderer::renderUnits(){
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
-			
-			if (!unit->isVisible() || (unit->isCloaked() && !thisFaction->isAlly(unit->getFaction()))) {
+			if (unit->isCarried()) {
 				continue;
 			}
 
@@ -1190,7 +1189,7 @@ void Renderer::renderUnits(){
 					alpha= (float)framesUntilDead / 300.f;
 					fade = true;
 				}
-			} else if (unit->renderCloaked()) { // is ally, by consequence of earlier test
+			} else if (unit->renderCloaked()) {
 				alpha = unit->getCloakAlpha();
 				fade = true;
 			}
@@ -1350,7 +1349,7 @@ void Renderer::renderSelectionEffects() {
 		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
 			const Unit *unit= world->getFaction(i)->getUnit(j);
 
-			if (unit->isHighlighted() && unit->isVisible()) {
+			if (unit->isHighlighted() && !unit->isCarried()) {
 				float highlight= unit->getHightlight();
 				if(g_world.getThisFactionIndex()==unit->getFactionIndex()){
 					glColor4f(0.f, 1.f, 0.f, highlight);
@@ -2020,8 +2019,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
-
-			if (!unit->isVisible() || (unit->isCloaked() && !thisFaction->isAlly(unit->getFaction()))) {
+			if (unit->isCarried() || (unit->isCloaked() && renderingShadows)) {
 				continue;
 			}
 
