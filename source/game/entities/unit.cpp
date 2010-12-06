@@ -1921,6 +1921,7 @@ void Unit::incKills() {
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
 bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 	Field newField = ut->getField();
+	CloakClass oldCloakClass = type->getCloakClass();
 	if (map->areFreeCellsOrHasUnit(pos, ut->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
@@ -1929,6 +1930,13 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 		map->putUnitCells(this, pos);
 		faction->applyDiscount(ut, mct->getDiscount());
 		faction->applyStaticProduction(ut);
+
+		if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
+			deCloak();
+		}
+		if (ut->getCloakClass() == CloakClass::PERMANENT) {
+			cloak();
+		}
 
 		// reprocess commands
 		Commands newCommands;

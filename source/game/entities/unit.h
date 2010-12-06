@@ -434,7 +434,7 @@ public:
 	Vec3f getCurrVectorFlat() const {
 		Vec2i pos = getPos();
 		Vec3f v(float(pos.x),  computeHeight(pos), float(pos.y));
-			if (currSkill->getClass() == SkillClass::MOVE) {
+		if (currSkill->getClass() == SkillClass::MOVE) {
 			v = Vec3f(float(lastPos.x), computeHeight(lastPos), float(lastPos.y)).lerp(getProgress(), v);
 		}
 		const float &halfSize = type->getHalfSize().toFloat();
