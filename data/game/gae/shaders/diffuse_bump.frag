@@ -37,5 +37,5 @@ void main()
 	vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
 	
 	// final colour
-	gl_FragColor = vec4((diffuse.xyz + ambient.xyz) * baseColour, gl_FrontMaterial.diffuse.w + gl_FrontMaterial.ambient.w);
+	gl_FragColor = vec4((diffuse.rgb + ambient.rgb) * baseColour, diffuse.a + ambient.a);
 }
