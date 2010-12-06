@@ -1154,7 +1154,6 @@ void Renderer::renderUnits(){
 			}
 
 			ut = unit->getType();
-			int framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
 
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
@@ -1165,6 +1164,7 @@ void Renderer::renderUnits(){
 			Vec3f currVec= unit->getCurrVectorFlat();
 
 			// let dead units start sinking before they go away
+			framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
 			if(framesUntilDead <= 200 && !ut->isOfClass(UnitClass::BUILDING)) {
 				float baseline = logf(20.125f) / 5.f;
 				float adjust = logf((float)framesUntilDead / 10.f + 0.125f) / 5.f;
@@ -1198,8 +1198,8 @@ void Renderer::renderUnits(){
 				glDisable(GL_COLOR_MATERIAL);
 				Vec4f fadeAmbientColor(defAmbientColor);
 				Vec4f fadeDiffuseColor(defDiffuseColor);
-				fadeAmbientColor.w = alpha;
-				fadeDiffuseColor.w = alpha;
+				fadeAmbientColor.a = alpha;
+				fadeDiffuseColor.a = alpha;
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
 				glAlphaFunc(GL_GREATER, 0.f);
@@ -1215,6 +1215,11 @@ void Renderer::renderUnits(){
 			triangleCount+= model->getTriangleCount();
 			pointCount+= model->getVertexCount();
 
+			// restore
+			if (fade) {
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defDiffuseColor.ptr());
+			}
 			glPopMatrix();
 		}
 	}
