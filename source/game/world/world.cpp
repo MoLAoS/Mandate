@@ -285,17 +285,9 @@ void World::updateFaction(const Faction *f) {
 				}
 			}
 
-			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE 
-				&& unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
 				// move unit in cells
 				moveUnitCells(unit);
-
-				// play water sound?
-				if (map.getCell(unit->getPos())->isSubmerged() && unit->getCurrField() == Field::LAND
-				&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
-				&& g_renderer.getCuller().isInside(unit->getPos())) {
-					g_soundRenderer.playFx(g_coreData.getWaterSound());
-				}
 			}
 		}
 		// unit death
@@ -621,7 +613,9 @@ void World::moveUnitCells(Unit *unit) {
 		// remove unit's visibility
 		cartographer->removeUnitVisibility(unit);
 	}
-	assert(routePlanner->isLegalMove(unit, newPos));
+	if (unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+		RUNTIME_CHECK(routePlanner->isLegalMove(unit, newPos));
+	}
 	map.clearUnitCells(unit, unit->getPos());
 	map.putUnitCells(unit, newPos);
 	if (changingTiles) {
@@ -632,16 +626,21 @@ void World::moveUnitCells(Unit *unit) {
 		}
 	}
 
-	//water splash
-	if (tileset.getWaterEffects() && unit->getCurrField() == Field::LAND) {
-		if (map.getCell(unit->getLastPos())->isSubmerged()) {
+	if (unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+		// water splash
+		if (tileset.getWaterEffects() && unit->getCurrField() == Field::LAND
+		&& getThisFaction()->canSee(unit) && map.getCell(unit->getLastPos())->isSubmerged()
+		&& g_renderer.getCuller().isInside(newCentrePos)) {
 			for (int i = 0; i < 3; ++i) {
 				waterEffects.addWaterSplash(
 					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f), 
 						  unit->getLastPos().y + random.randRange(-0.4f, 0.4f))
 				);
 			}
+			g_soundRenderer.playFx(g_coreData.getWaterSound());
 		}
+	} else {
+		unit->setPos(unit->getPos()); // teleport, double setPos() to avoid regular movement between cells
 	}
 }
 

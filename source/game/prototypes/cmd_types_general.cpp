@@ -212,15 +212,13 @@ void TeleportCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 
-	Vec2i pos;
+	Vec2i pos = command->getPos();
 	if (command->getUnit()) {
 		pos = command->getUnit()->getCenteredPos();
 		if (!command->getUnit()->isAlive()) {
 			command->setPos(pos);
 			command->setUnit(NULL);
 		}
-	} else {
-		pos = command->getPos();
 	}
 
 	// some back bending to get the unit to face the direction of travel
@@ -229,25 +227,19 @@ void TeleportCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
 		return;
-	} else if (g_map.isFreeCell(pos, unit->getType()->getField())) {
-		// move to cell
+	} else if (g_map.areFreeCellsOrHasUnit(pos, unit->getSize(), unit->getType()->getField(), unit)) {
+		// set-up for the move, the actual moving will be done in World::updateFaction(),
+		// after SimInterface::doUpdateUnitCommand() checks EP
 		unit->face(pos);
 		unit->setCurrSkill(m_moveSkillType);
-		g_map.clearUnitCells(unit, unit->getPos());
-		g_map.putUnitCells(unit, pos);
-		unit->setPos(pos);
+		unit->setNextPos(pos);
 	} else {
-		g_console.addLine("Cell is not free");
-
+		if (unit->getFaction()->isThisFaction()) {
+			g_console.addLine(g_lang.get("InvalidPosition"));
+		}
 		// finish command
 		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
-	}
-
-	// if we're doing an auto command, let's make sure we still want to do it
-	Command *autoCmd;
-	if (command->isAuto() && (autoCmd = doAutoCommand(unit))) {
-		unit->giveCommand(autoCmd);
 	}
 }
 

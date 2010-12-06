@@ -253,6 +253,7 @@ HealthStolen=Health Stolen
 Hp=HP
 HpRegeneration=HP Regeneration
 HpRestored=HP Restored
+InsufficientEnergy=Insufficient Energy
 Killed=Killed
 Kills=Kills
 LoadedSpeed=Loaded speed

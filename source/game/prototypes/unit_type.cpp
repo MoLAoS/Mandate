@@ -110,6 +110,8 @@ UnitType::~UnitType(){
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete m_cellMap;
 	delete m_colourMap;
+	delete m_cloakSound;
+	delete m_deCloakSound;
 }
 
 void UnitType::preLoad(const string &dir){

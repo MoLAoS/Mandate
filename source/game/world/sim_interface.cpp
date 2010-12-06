@@ -444,6 +444,9 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 	if (unit->computeEp()) {
 		if (unit->getCurrCommand()) {
 			unit->cancelCurrCommand();
+			if (unit->getFaction()->isThisFaction()) {
+				g_console.addLine(g_lang.get("InsufficientEnergy"));
+			}
 		}
 		unit->setCurrSkill(SkillClass::STOP);
 	}
