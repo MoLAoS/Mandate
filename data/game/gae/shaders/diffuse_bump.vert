@@ -33,7 +33,6 @@ vec3 getTangent()
 void main()
 {	
 	gl_TexCoord[0] = gl_MultiTexCoord0;
-	gl_TexCoord[1] = gl_MultiTexCoord1;
 
 	lightDir = normalize(vec3(gl_LightSource[0].position));
 	normal = normalize(gl_NormalMatrix * gl_Normal);
