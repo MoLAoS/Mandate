@@ -33,7 +33,7 @@ void main()
 	vec3 baseColour = mix(teamColour, texDiffuseBase.rgb, texDiffuseBase.a);
 	
 	// light components
-	vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * diffuseIntensity;//(bump * 0.8 + diffuseIntensity * 0.2);
+	vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * (bump * 0.8 + diffuseIntensity * 0.2);
 	vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
 	
 	// final colour
