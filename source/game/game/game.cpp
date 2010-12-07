@@ -664,7 +664,9 @@ void GameState::keyDown(const Key &key) {
 		}
 		gui.getRegularConsole()->addLine(str.str());
 	}
-	if (cmd == ucChatAudienceAll) {
+	if (cmd == ucCycleShaders) {
+		g_renderer.cycleShaders();
+	} else if (cmd == ucChatAudienceAll) {
 		m_chatDialog->setTeamOnly(false);
 	} else if (cmd == ucChatAudienceTeam) {
 		m_chatDialog->setTeamOnly(true);

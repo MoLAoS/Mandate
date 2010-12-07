@@ -101,6 +101,7 @@ public:
 
 	virtual unsigned int getId() = 0;
 	virtual void setUniform(const std::string &name, GLuint value) = 0;
+	virtual void setUniform(const std::string &name, const Vec3f &value) = 0;
 };
 
 class FixedFunctionProgram : public ShaderProgram {
@@ -111,6 +112,7 @@ public:
 
 	unsigned int getId() { return 0; }
 	virtual void setUniform(const std::string &name, GLuint value) {}
+	virtual void setUniform(const std::string &name, const Vec3f &value) {}
 };
 
 class DefaultShaderProgram : public ShaderProgram {
@@ -133,6 +135,7 @@ public:
 
 	unsigned int getId() { return m_p; }
 	virtual void setUniform(const std::string &name, GLuint value);
+	virtual void setUniform(const std::string &name, const Vec3f &value);
 };
 
 }}//end namespace

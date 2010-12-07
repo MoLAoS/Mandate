@@ -136,4 +136,9 @@ void DefaultShaderProgram::setUniform(const std::string &name, GLuint value) {
 	glUniform1i(texture_location, value);
 }
 
+void DefaultShaderProgram::setUniform(const std::string &name, const Vec3f &value) {
+	int uniform_loc = glGetUniformLocation(m_p, name.c_str());
+	glUniform3fv(uniform_loc, 1, value.ptr());
+}
+
 }}//end namespace

@@ -81,6 +81,11 @@ Colour factionColoursOutline[GameConstants::maxColours] = {
 	Colour(0x64u, 0x64u, 0xACu, 0xFFu), // sky
 };
 
+Vec3f getFactionColour(int ndx) {
+	Colour &c = factionColours[ndx];
+	return Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
+}
+
 // =====================================================
 //  class Faction
 // =====================================================

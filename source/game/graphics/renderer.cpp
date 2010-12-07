@@ -45,8 +45,6 @@ namespace Glest { namespace Graphics {
 // 	class MeshCallbackTeamColor
 // =====================================================
 
-ShaderProgram *shaderProgram = 0;
-
 class MeshCallbackTeamColor: public MeshCallback{
 private:
 	const Texture *teamTexture;
@@ -82,7 +80,6 @@ void MeshCallbackTeamColor::execute(const Mesh *mesh){
 
 		//texture 1
 		glActiveTexture(GL_TEXTURE1);
-		shaderProgram->setUniform("myTexture2", 1);
 		glMultiTexCoord2f(GL_TEXTURE1, 0.f, 0.f);
 		glEnable(GL_TEXTURE_2D);
 
@@ -181,10 +178,8 @@ Renderer::Renderer() {
 
 Renderer::~Renderer(){
 	delete modelRenderer;
-//	delete textRenderer;
 	delete textRendererFT;
 	delete particleRenderer;
-	delete shaderProgram;
 
 	//resources
 	for(int i=0; i<ResourceScope::COUNT; ++i){
@@ -204,21 +199,18 @@ Renderer &Renderer::getInstance(){
 // ==================== init ====================
 
 bool Renderer::init(){
-
+	// config
 	Config &config= Config::getInstance();
-
 	loadConfig();
-
 	if(config.getRenderCheckGlCaps()){
 		checkGlCaps();
 	}
-
 	if(config.getMiscFirstTime()){
 		config.setMiscFirstTime(false);
 		autoConfig();
 		config.save();
 	}
-
+	// init resource managers
 	try {
 		modelManager[ResourceScope::GLOBAL]->init();
 		textureManager[ResourceScope::GLOBAL]->init();
@@ -228,23 +220,36 @@ bool Renderer::init(){
 		return false;
 	}
 
-	///@todo move somewhere else and replace with config.getUseShaders()
-	if (isGlVersionSupported(2, 0, 0) && g_config.getRenderUseShaders()) {
-		try {
-			shaderProgram = new DefaultShaderProgram();
-			shaderProgram->load("gae/shaders/diffuse_bump.vert", "gae/shaders/diffuse_bump.frag");
-		} catch (runtime_error &e) {
-			g_errorLog.add("Error: shader source load/compile failed:" + string(e.what()));
-			delete shaderProgram;
-			shaderProgram = new FixedFunctionProgram();
+	// load shader code (todo ?: do this in initGame(), so a shader-set can be selected in menu)
+	if (g_config.getRenderUseShaders()) {
+		// some hacky stuff so we can test easier, get a list of shader 'sets' to load
+		string names = g_config.getRenderUnitShaders();
+		char *tmp = new char[names.size() + 1];
+		strcpy(tmp, names.c_str());
+		vector<string> programNames;
+		char *tok = strtok(tmp, ",");
+		while (tok) {
+			programNames.push_back(string(tok));
+			tok = strtok(0, ",");
 		}
-	} else {
-		shaderProgram = new FixedFunctionProgram();
+		try {
+			static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
+		} catch (runtime_error &e) {
+			g_errorLog.add("Error: shader source load/compile failed: " + string(e.what()));
+		}
 	}
 	init2dList();
 	init2dNonVirtList();
 
 	return true;
+}
+
+void Renderer::cycleShaders() {
+	if (g_config.getRenderUseShaders()) {
+		ModelRendererGl *mr = static_cast<ModelRendererGl*>(modelRenderer);
+		mr->cycleShaderSet();
+		g_console.addLine("Shader changed: " + mr->getShaderName());
+	}
 }
 
 void Renderer::initGame(GameState *game){
@@ -280,8 +285,7 @@ void Renderer::initGame(GameState *game){
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32,
 				shadowTextureSize, shadowTextureSize,
 				0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-		}
-		else{
+		} else {
 
 			//projected
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8,
@@ -1088,8 +1092,6 @@ void Renderer::renderWater(){
 }
 
 void Renderer::renderUnits(){
-	shaderProgram->begin();
-
 	const Unit *unit;
 	const UnitType *ut;
 	int framesUntilDead;
@@ -1112,9 +1114,6 @@ void Renderer::renderUnits(){
 		static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(true);
 		enableProjectiveTexturing();
 	}
-	// set the uniform for the normal map
-	glActiveTexture(GL_TEXTURE2); ///@todo replace with an enum
-	shaderProgram->setUniform("myTexture3", 2);
 
 	glActiveTexture(baseTexUnit);
 
@@ -1142,8 +1141,12 @@ void Renderer::renderUnits(){
 
 		if (i) {
 			meshCallbackTeamColor.setTeamTexture(world->getFaction(i - 1)->getTexture());
+			int ndx = g_simInterface->getGameSettings().getColourIndex(i - 1);
+			modelRenderer->setTeamColour(getFactionColour(ndx));
 		} else {
 			meshCallbackTeamColor.setTeamTexture(0);
+			Vec3f black(0.f);
+			modelRenderer->setTeamColour(black);
 		}
 
 		vector<const Unit *>::iterator it = toRender[i].begin();
@@ -1194,7 +1197,7 @@ void Renderer::renderUnits(){
 				fade = true;
 			}
 
-			if(fade) {
+			if (fade) {
 				glDisable(GL_COLOR_MATERIAL);
 				Vec4f fadeAmbientColor(defAmbientColor);
 				Vec4f fadeDiffuseColor(defDiffuseColor);
@@ -1231,8 +1234,6 @@ void Renderer::renderUnits(){
 
 	//assert
 	assertGl();
-
-	shaderProgram->end();
 }
 
 void Renderer::renderSelectionEffects() {

@@ -41,11 +41,15 @@ protected:
 	bool renderTextures;
 	bool renderColors;
 	MeshCallback *meshCallback;
+	Vec3f	teamColour;
 
 public:
-	ModelRenderer() : meshCallback(NULL) {}
+	ModelRenderer() : teamColour(0.f), meshCallback(NULL) {}
 
 	virtual ~ModelRenderer(){};
+
+	void setTeamColour(const Vec3f &colour) { teamColour = colour; }
+	const Vec3f& getTeamColour() const {return teamColour; }
 
 	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback= NULL)=0;
 	virtual void end()=0;

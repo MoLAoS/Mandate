@@ -86,6 +86,7 @@ enum UserCommand {
 	ucPatrol,
 	ucRotate,
 	ucLuaConsole,
+	ucCycleShaders,
 
 	ucCount
 };

@@ -104,7 +104,7 @@ public:
 	};
 
 private:
-	//config
+	// config
 	int maxLights;
     bool photoMode;
 	int shadowTextureSize;
@@ -114,45 +114,45 @@ private:
 	bool textures3D;
 	Shadows shadows;
 
-	//game
+	// game
 	const GameState *game;
 
-	//misc
+	// misc
 	int triangleCount;
 	int pointCount;
 	Vec4f nearestLightPos;
 
-	//renderers
+	// renderers
 	ModelRenderer *modelRenderer;
-	//TextRenderer *textRenderer;
 	TextRenderer *textRendererFT;
 	ParticleRenderer *particleRenderer;
 
-	//texture managers
+	// texture managers
 	ModelManager *modelManager[ResourceScope::COUNT];
 	TextureManager *textureManager[ResourceScope::COUNT];
 	FontManager *fontManager[ResourceScope::COUNT];
 	ParticleManager *particleManager[ResourceScope::COUNT];
 
-	//state lists
+	// display list handles
 	GLuint list3d;
 	GLuint list2d;
 	GLuint list2dNonVirt;
 	GLuint list3dMenu;
 
-	//shadows
+	// shadows
 	GLuint shadowMapHandle;
 	Matrix4f shadowMapMatrix;
 	int shadowMapFrame;
 
-	//water
+	// water
 	float waterAnim;
 	
-	//perspective values
+	// perspective values
 	float perspFov;
 	float perspNearPlane;
 	float perspFarPlane;
 
+	// helper object, determines visible scene
 	SceneCuller culler;
 
 private:
@@ -184,6 +184,8 @@ public:
 
 	//misc
 	void reloadResources();
+
+	void cycleShaders();
 
 	//engine interface
 	Model *newModel(ResourceScope rs);

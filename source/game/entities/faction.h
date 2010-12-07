@@ -66,6 +66,8 @@ public:
 extern Colour factionColours[GameConstants::maxColours];
 extern Colour factionColoursOutline[GameConstants::maxColours];
 
+Vec3f getFactionColour(int ndx);
+
 // =====================================================
 // 	class Faction
 //
