@@ -1646,21 +1646,16 @@ void Unit::recalculateStats() {
 
 	effects.clearDirty();
 
+	// correct negatives
+	sanitiseUnitStats();
+
+	// adjust hp (if maxHp was modified)
 	if (getMaxHp() > oldMaxHp) {
 		hp += getMaxHp() - oldMaxHp;
 	} else if (hp > getMaxHp()) {
 		hp = getMaxHp();
 	}
-	// correct nagatives
-	if (sight < 0) {
-		sight = 0;
-	}
-	if (maxEp < 0) {
-		maxEp = 0;
-	}
-	if (maxHp < 0) {
-		maxHp = 0;
-	}
+	
 	// If this guy is dead, make sure they stay dead
 	if (oldHp < 1) {
 		hp = 0;
