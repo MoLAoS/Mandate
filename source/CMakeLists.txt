@@ -2,6 +2,7 @@
 
 add_subdirectory(shared_lib)
 add_subdirectory(game)
+add_subdirectory(blendnorm)
 if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 

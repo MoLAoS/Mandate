@@ -219,6 +219,10 @@ inline int nextPowerOf2(int n){
 	return i;
 }
 
+inline bool isPowerOfTwo(int n) {
+	return (n && (n & -n) == n);
+}
+
 template<typename T>
 inline T degToRad(T deg){
 	return (deg*2*pi)/360;
