@@ -232,6 +232,7 @@ bool Renderer::init(){
 			programNames.push_back(string(tok));
 			tok = strtok(0, ",");
 		}
+		delete [] tmp;
 		try {
 			static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
 		} catch (runtime_error &e) {
