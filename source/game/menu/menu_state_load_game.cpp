@@ -74,7 +74,6 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, loaderThread(*this) {
-	Shared::Platform::mkdir("savegames", true);
 	savedGame = NULL;
 	gs = NULL;
 
