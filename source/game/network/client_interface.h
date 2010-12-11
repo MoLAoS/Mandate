@@ -53,6 +53,9 @@ public:
 	/** Called instead of update() while in MenuStateJoinGame */
 	virtual void updateLobby();
 
+	// unit-skill updates
+	virtual void updateSkillCycle(Unit *unit);
+
 protected:
 	// SimulationInterface and NetworkInterface virtuals
 	// See documentation in sim_interface.h & net_interface.h
@@ -68,8 +71,7 @@ protected:
 	virtual void update();
 	virtual void updateKeyframe(int frameCount);
 
-	// unit-skill/projectile updates, SimulationInterface virtuals
-	virtual void updateSkillCycle(Unit *unit);
+	// projectile updates, SimulationInterface virtuals
 	virtual void updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end);
 
 	// move skill needs special handling, NetworkInterface virtual

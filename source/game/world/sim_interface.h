@@ -147,8 +147,8 @@ public:
 
 	void create(const TechTree *techTree);
 
-	const CycleInfo& lookUp(int skillId) { return cycleTable[skillId]; }
-	const CycleInfo& lookUp(const Unit *unit) { return cycleTable[unit->getCurrSkill()->getId()]; }
+	const CycleInfo& lookUp(int skillId) const { return cycleTable[skillId]; }
+	const CycleInfo& lookUp(const Unit *unit) const { return cycleTable[unit->getCurrSkill()->getId()]; }
 
 	int size() const { return numEntries; }
 
@@ -237,6 +237,9 @@ public:
 	GameSpeed resetSpeed();
 	GameSpeed getSpeed() const { return speed; }
 
+	/** Called after a command has been updated, determines skill cycle length */
+	virtual void updateSkillCycle(Unit*);
+
 	// game over checks
 	GameStatus checkWinner();
 	GameStatus checkWinnerStandard();
@@ -310,9 +313,6 @@ protected:
 
 	/** Called when a quit request is received */
 	virtual void quitGame(QuitSource) { }
-
-	/** Called after a command has been updated, determines skill cycle length */
-	virtual void updateSkillCycle(Unit*);
 
 	/** Calculates and sets 'arrival time' for a new projectile */
 	virtual void updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end) {

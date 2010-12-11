@@ -179,7 +179,7 @@ public:
 
 	// diplomacy
 	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
-
+	bool hasBuilding() const;
 	bool canSee(const Unit *unit) const;
 
 	// other

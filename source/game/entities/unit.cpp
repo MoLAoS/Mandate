@@ -275,6 +275,8 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	}
 	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
+		// was previously in World::initUnits but seems to work fine here
+		g_cartographer.updateMapMetrics(getPos(), getSize());
 	}
 	if(node->getChildBoolValue("fire")) {
 		decHp(0); // trigger logic to start fire system
@@ -431,6 +433,24 @@ string Unit::getFullName() const{
 	return str;
 }
 
+float Unit::getDeadAlpha() const {
+	float alpha = 1.0f;
+	int framesUntilDead = GameConstants::maxDeadCount - getDeadCount();
+
+	const SkillType *st = getCurrSkill();
+	if (st->getClass() == SkillClass::DIE) {
+		const DieSkillType *dst = (const DieSkillType*)st;
+		if(dst->getFade()) {
+			alpha = 1.0f - getAnimProgress();
+		} else if (framesUntilDead <= 300) {
+			alpha = (float)framesUntilDead / 300.f;
+		}
+	} else if (renderCloaked()) {
+		alpha = getCloakAlpha();
+	}
+	return alpha;
+}
+
 // ====================================== is ======================================
 
 /** query unit interestingness
@@ -461,6 +481,20 @@ bool Unit::isInteresting(InterestingUnitType iut) const{
 	default:
 		return false;
 	}
+}
+
+bool Unit::isTargetUnitVisible(int teamIndex) const {
+	return (getCurrSkill()->getClass() == SkillClass::ATTACK
+		&& g_map.getTile(Map::toTileCoords(getTargetPos()))->isVisible(teamIndex));
+}
+
+bool Unit::isActive() const {
+	return (getCurrSkill()->getClass() != SkillClass::DIE && !isCarried());
+}
+
+bool Unit::isBuilding() const {
+	return (getType()->hasSkillClass(SkillClass::BE_BUILT)
+		&& isAlive() && !getType()->getProperty(Property::WALL));
 }
 
 /** find a repair command type that can repair a unit with
@@ -1171,6 +1205,96 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 	return commandType;
 }
 
+/** wrapper for SimulationInterface */
+void Unit::updateSkillCycle(const SkillCycleTable *skillCycleTable) {
+	if (getCurrSkill()->getClass() == SkillClass::MOVE) {
+		if (getPos() == getNextPos()) {
+			throw runtime_error("Move Skill set, but pos == nextPos");
+		}
+		updateMoveSkillCycle();
+	} else {
+		updateSkillCycle(skillCycleTable->lookUp(this).getSkillFrames());
+	}
+}
+
+/** wrapper for SimulationInterface */
+void Unit::doUpdateAnimOnDeath(const SkillCycleTable *skillCycleTable) {
+	assert(getCurrSkill()->getClass() == SkillClass::DIE);
+	const CycleInfo &inf = skillCycleTable->lookUp(this);
+	updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
+}
+
+/** wrapper for SimulationInterface */
+void Unit::doUpdateAnim(const SkillCycleTable *skillCycleTable) {
+	if (getCurrSkill()->getClass() == SkillClass::DIE) {
+		updateAnimDead();
+	} else {
+		const CycleInfo &inf = skillCycleTable->lookUp(this);
+		updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
+	}
+}
+
+/** wrapper for SimulationInterface */
+void Unit::doUnitBorn(const SkillCycleTable *skillCycleTable) {
+	const CycleInfo &inf = skillCycleTable->lookUp(this);
+	updateSkillCycle(inf.getSkillFrames());
+	updateAnimCycle(inf.getAnimFrames());
+}
+
+/** wrapper for sim interface 
+  * @returns the command that has been processed
+  */
+CommandClass Unit::doUpdateCommand() {
+	const SkillType *old_st = getCurrSkill();
+	CommandClass processingCommand;
+
+	// if unit has command process it
+	if (anyCommand()) {
+		// check if a command being 'watched' has finished
+		if (getCommandCallback() != getCurrCommand()->getId()) {
+			int last = getCommandCallback();
+			ScriptManager::commandCallback(this);
+			// if the callback set a new callback we don't want to clear it
+			// only clear if the callback id's are the same
+			if (last == getCommandCallback()) {
+				clearCommandCallback();
+			}
+		}
+		processingCommand = getCurrCommand()->getType()->getClass();
+		///@todo might have issue with this and processing command from simInterface but doesn't seem to be used
+		/// in commandType->update so the above assignment does nothing???
+		/// used in Unit::clearPath, RoutePlanner::findPathToLocation, RoutePlanner::findPathToGoal
+		///  - hailstone 11Dec2010
+		getCurrCommand()->getType()->update(this);
+		processingCommand = CommandClass::NULL_COMMAND;
+	}
+	// if no commands, add stop (or guard for pets) command
+	if (!anyCommand() && isOperative()) {
+		const UnitType *ut = getType();
+		setCurrSkill(SkillClass::STOP);
+		if (ut->hasCommandClass(CommandClass::STOP)) {
+			giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
+		}
+	}
+	//if unit is out of EP, it stops
+	if (computeEp()) {
+		if (getCurrCommand()) {
+			cancelCurrCommand();
+			if (getFaction()->isThisFaction()) {
+				g_console.addLine(g_lang.get("InsufficientEnergy"));
+			}
+		}
+		setCurrSkill(SkillClass::STOP);
+	}
+	g_simInterface->updateSkillCycle(this);
+
+	if (getCurrSkill() != old_st) {	// if starting new skill
+		resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
+	}
+
+	return processingCommand;
+}
+
 /** called to update animation cycle on a dead unit */
 void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
@@ -1272,8 +1396,61 @@ void Unit::updateMoveSkillCycle() {
 	nextCommandUpdate = g_world.getFrameCount() + frameOffset; 
 }
 
+/** wrapper for World::updateUnits */
+void Unit::doUpdate() {
+	if (update()) {
+		if (getCurrSkill()->getClass() == SkillClass::CAST_SPELL
+		&& !getCurrSkill()->getEffectTypes().empty()) {
+			// start spell effects for skill cycle just completed
+			g_world.applyEffects(this, getCurrSkill()->getEffectTypes(), this, 0);
+		}
+
+		g_simInterface->doUpdateUnitCommand(this);
+
+		if (getType()->getCloakClass() != CloakClass::INVALID) {
+			if (isCloaked()) {
+				if (getCurrSkill()->causesDeCloak()) {
+					deCloak();
+				}
+			} else {
+				if (getType()->getCloakClass() == CloakClass::PERMANENT
+				&& !getCurrSkill()->causesDeCloak()) {
+					cloak();
+				}
+			}
+		}
+
+		if (getCurrSkill()->getClass() == SkillClass::MOVE) {
+			// move unit in cells
+			g_world.moveUnitCells(this);
+		}
+	}
+	// unit death
+	if (isDead() && getCurrSkill()->getClass() != SkillClass::DIE) {
+		kill();
+	}
+}
+
+/** wrapper for World, from the point of view of the killer unit*/
+void Unit::doKill(Unit *killed) {
+	ScriptManager::onUnitDied(killed);
+	g_simInterface->getStats()->kill(getFactionIndex(), killed->getFactionIndex());
+	if (isAlive() && getTeam() != killed->getTeam()) {
+		incKills();
+	}
+
+	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
+		killed->kill();
+	}
+
+	if (!killed->isMobile()) {
+		// obstacle removed
+		g_cartographer.updateMapMetrics(killed->getPos(), killed->getSize());
+	}
+}
+
 /** @return true when the current skill has completed a cycle */
-bool Unit::update() {
+bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 //	_PROFILE_FUNCTION();
 	const int &frame = g_world.getFrameCount();
 

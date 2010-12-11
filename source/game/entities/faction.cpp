@@ -568,6 +568,16 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 
 // ================== diplomacy ==================
 
+bool Faction::hasBuilding() const {
+	for (int i = 0; i < getUnitCount(); ++i) {
+		Unit *unit = getUnit(i);
+		if (unit->isBuilding()) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool Faction::canSee(const Unit *unit) const {
 	Map &map = g_map;
 	if (unit->isCarried()) {
@@ -583,8 +593,7 @@ bool Faction::canSee(const Unit *unit) const {
 	if (map.getTile(tPos)->isVisible(teamIndex)) {
 		return true;
 	}
-	if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
-	&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(teamIndex)) {
+	if (unit->isTargetUnitVisible(teamIndex)) {
 		return true;
 	}
 	return false;

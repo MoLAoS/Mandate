@@ -1181,22 +1181,8 @@ void Renderer::renderUnits(){
 			glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
 
 			//dead alpha
-			float alpha= 1.0f;
-			const SkillType *st= unit->getCurrSkill();
-			bool fade = false;
-			if (st->getClass() == SkillClass::DIE) {
-				const DieSkillType *dst = (const DieSkillType*)st;
-				if(dst->getFade()) {
-					alpha= 1.0f - unit->getAnimProgress();
-					fade = true;
-				} else if (framesUntilDead <= 300) {
-					alpha= (float)framesUntilDead / 300.f;
-					fade = true;
-				}
-			} else if (unit->renderCloaked()) {
-				alpha = unit->getCloakAlpha();
-				fade = true;
-			}
+			float alpha = unit->getDeadAlpha();
+			bool fade = alpha < 1.0;
 
 			if (fade) {
 				glDisable(GL_COLOR_MATERIAL);
@@ -2049,23 +2035,13 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			// faded shadows
 			if(renderingShadows) {
 				ut = unit->getType();
-				int framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
 				float color = 1.0f - shadowAlpha;
-				float fade = false;
-
+				
 				//dead alpha
-				const SkillType *st = unit->getCurrSkill();
-				if(st->getClass() == SkillClass::DIE) {
-					const DieSkillType *dst = (const DieSkillType*)st;
-					if(dst->getFade()) {
-						color *= 1.0f - unit->getAnimProgress();
-						fade = true;
-					} else if (framesUntilDead <= 300) {
-						color *= (float)framesUntilDead / 300.f;
-						fade = true;
-					}
-					changeColor = changeColor || fade;
-				}
+				float alpha = unit->getDeadAlpha();
+				float fade = alpha < 1.0;
+				color *= alpha;
+				changeColor = changeColor || fade;
 
 				if(shadows == sShadowMapping) {
 					if(changeColor) {

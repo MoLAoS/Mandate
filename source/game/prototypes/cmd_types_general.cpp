@@ -228,7 +228,7 @@ void TeleportCommandType::update(Unit *unit) const {
 		unit->finishCommand();
 		return;
 	} else if (g_map.areFreeCellsOrHasUnit(pos, unit->getSize(), unit->getType()->getField(), unit)) {
-		// set-up for the move, the actual moving will be done in World::updateFaction(),
+		// set-up for the move, the actual moving will be done in World::updateUnits(),
 		// after SimInterface::doUpdateUnitCommand() checks EP
 		unit->face(pos);
 		unit->setCurrSkill(m_moveSkillType);

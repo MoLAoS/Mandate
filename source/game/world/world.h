@@ -234,7 +234,7 @@ private:
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
-	void updateFaction(const Faction *f);
+	void updateUnits(const Faction *f);
 };
 
 // =====================================================

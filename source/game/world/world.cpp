@@ -246,7 +246,7 @@ void World::updateEarthquakes(float seconds) {
 					doKill(attacker, dri->first);
 					continue;
 				}
-
+				///@todo move this to unit if it's ever used
 				const FallDownSkillType *fdst = (const FallDownSkillType *)
 						dri->first->getType()->getFirstStOfClass(SkillClass::FALL_DOWN);
 				if (fdst && dri->first->getCurrSkill() != fdst
@@ -259,41 +259,11 @@ void World::updateEarthquakes(float seconds) {
 }
 #endif // Disable Earthquakes
 
-void World::updateFaction(const Faction *f) {
+void World::updateUnits(const Faction *f) {
 	const int n = f->getUnitCount();
 	for (int i=0; i < n; ++i) {
 		Unit *unit = f->getUnit(i);
-		if (unit->update()) {
-			if (unit->getCurrSkill()->getClass() == SkillClass::CAST_SPELL
-			&& !unit->getCurrSkill()->getEffectTypes().empty()) {
-				// start spell effects for skill cycle just completed
-				applyEffects(unit, unit->getCurrSkill()->getEffectTypes(), unit, 0);
-			}
-
-			m_simInterface->doUpdateUnitCommand(unit);
-
-			if (unit->getType()->getCloakClass() != CloakClass::INVALID) {
-				if (unit->isCloaked()) {
-					if (unit->getCurrSkill()->causesDeCloak()) {
-						unit->deCloak();
-					}
-				} else {
-					if (unit->getType()->getCloakClass() == CloakClass::PERMANENT
-					&& !unit->getCurrSkill()->causesDeCloak()) {
-						unit->cloak();
-					}
-				}
-			}
-
-			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
-				// move unit in cells
-				moveUnitCells(unit);
-			}
-		}
-		// unit death
-		if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
-			unit->kill();
-		}
+		unit->doUpdate();
 		// assert map cells
 		map.assertUnitCells(unit);
 	}
@@ -321,9 +291,9 @@ void World::processFrame() {
 
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
-		updateFaction(&*f);
+		updateUnits(&*f);
 	}
-	updateFaction(&glestimals);
+	updateUnits(&glestimals);
 
 //	updateEarthquakes(1.f / 40.f);
 
@@ -431,19 +401,7 @@ void World::damage(Unit *unit, int hp) {
 }
 
 void World::doKill(Unit *killer, Unit *killed) {
-	ScriptManager::onUnitDied(killed);
-	m_simInterface->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
-	if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
-		killer->incKills();
-	}
-
-	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
-		killed->kill();
-	}
-	if (!killed->isMobile()) {
-		// obstacle removed
-		cartographer->updateMapMetrics(killed->getPos(), killed->getSize());
-	}
+	killer->doKill(killed);
 }
 
 // Apply effects to a specific location, with or without splash
@@ -1071,10 +1029,6 @@ void World::initUnits() {
 					throw runtime_error("Unit cant be placed, this error is caused because there "
 						"is no enough place to put the units near its start location, make a "
 						"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
-				}
-				if (unit->getType()->hasSkillClass(SkillClass::BE_BUILT)) {
-					map.flatternTerrain(unit);
-					cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
 				}
 			}
 		}

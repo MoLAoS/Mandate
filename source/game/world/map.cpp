@@ -1033,7 +1033,7 @@ void Map::assertUnitCells(const Unit * unit) {
 				Vec2i currPos = unit->getPos() + Vec2i(x, y);
 				assert(isInside(currPos));
 				if(!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
-					if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
+					if(unit->isActive()) {
 						Unit *testUnit = getCell(currPos)->getUnit(field);
 						assert(testUnit == unit);
 					} else {

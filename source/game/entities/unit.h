@@ -39,6 +39,10 @@ using namespace Shared::Graphics;
 using Shared::Platform::Chrono;
 using Shared::Util::SingleTypeFactory;
 
+namespace Glest { namespace Sim {
+	class SkillCycleTable;
+}}
+
 namespace Glest { namespace Entities {
 using namespace ProtoTypes;
 using Sim::Map;
@@ -388,6 +392,7 @@ public:
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
 	float getCloakAlpha() const			{return m_cloakAlpha;}
+	float getDeadAlpha() const;
 
 	//is
 	bool isCarried() const				{return carried;}
@@ -405,6 +410,9 @@ public:
 	bool isCloaked() const					{return m_cloaked;}
 	bool renderCloaked() const			{return m_cloaked || m_cloaking || m_deCloaking;}
 	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
+	bool isTargetUnitVisible(int teamIndex) const;
+	bool isActive() const;
+	bool isBuilding() const;
 
 	//set
 	void setCurrSkill(const SkillType *currSkill);
@@ -479,6 +487,17 @@ public:
 	bool decEp(int i);
 	int update2()										{return ++progress2;}
 	void clearPath();
+
+	// SimulationInterface wrappers
+	void updateSkillCycle(const SkillCycleTable *skillCycleTable);
+	void doUpdateAnimOnDeath(const SkillCycleTable *skillCycleTable);
+	void doUpdateAnim(const SkillCycleTable *skillCycleTable);
+	void doUnitBorn(const SkillCycleTable *skillCycleTable);
+	CommandClass doUpdateCommand();
+
+	// World wrappers
+	void doUpdate();
+	void doKill(Unit *killed);
 
 	// update skill & animation cycles
 	void updateSkillCycle(int offset);
