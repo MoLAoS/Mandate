@@ -75,6 +75,10 @@ public:
 		accumTime += stopTime - startTime;
 	}
 
+	void reset() {
+		startTime = stopTime = accumTime = 0;
+	}
+
 	const int64 &getStartTime() const	{return startTime;}
 	const int64 &getStopTime() const	{return stopTime;}
 	const int64 &getAccumTime() const	{return accumTime;}

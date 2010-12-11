@@ -232,27 +232,29 @@ int SimulationInterface::launchGame() {
 	//
 }
 
-void SimulationInterface::updateWorld() {
-	if (speed != GameSpeed::PAUSED) {
-		// Ai-Interfaces
-		for (int i = 0; i < world->getFactionCount(); ++i) {
-			if (world->getFaction(i)->getCpuControl()
-			&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
-				aiInterfaces[i]->update();
-			}
-		}
-		//m_gaia->update();
-
-		// World
-		world->processFrame();
-		frameProccessed();
-
-		// give pending commands
-		foreach (Commands, it, pendingCommands) {
-			commander->giveCommand(it->toCommand());
-		}
-		pendingCommands.clear();
+bool SimulationInterface::updateWorld() {
+	if (speed == GameSpeed::PAUSED) {
+		return false;
 	}
+	// Ai-Interfaces
+	for (int i = 0; i < world->getFactionCount(); ++i) {
+		if (world->getFaction(i)->getCpuControl()
+		&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
+			aiInterfaces[i]->update();
+		}
+	}
+	//m_gaia->update();
+
+	// World
+	world->processFrame();
+	frameProccessed();
+
+	// give pending commands
+	foreach (Commands, it, pendingCommands) {
+		commander->giveCommand(it->toCommand());
+	}
+	pendingCommands.clear();
+	return true;
 }
 
 GameStatus SimulationInterface::checkWinner(){

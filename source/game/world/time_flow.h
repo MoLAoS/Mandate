@@ -27,8 +27,9 @@ namespace Glest { namespace Sim {
 
 class TimeFlow {
 public:
-	static const float dusk;
 	static const float dawn;
+	static const float midday;
+	static const float dusk;
 
 private:
 	bool firstTime;
@@ -41,9 +42,11 @@ public:
 	void init(Tileset *tileset);
 
 	float getTime() const				{return time;}
-	bool isDay() const					{return time>dawn && time<dusk;}
+	bool isDay() const					{return time > dawn && time < dusk;}
 	bool isNight() const				{return !isDay();}
-	bool isTotalNight() const			{return time<dawn+1.f || time>dusk-1.f;}
+	bool isTotalNight() const			{return time < dawn - 1.f || time > dusk + 1.f;}
+	
+	string describeTime() const;
 
 	void update();
 	void save(XmlNode *node) const;

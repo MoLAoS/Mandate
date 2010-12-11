@@ -28,6 +28,7 @@
 #include "keymap.h"
 #include "battle_end.h"
 #include "compound_widgets.h"
+#include "debug_stats.h"
 
 // weather system not yet ready
 //#include "../physics/weather.h"
@@ -35,19 +36,11 @@
 using std::vector;
 using std::ifstream;
 
-namespace Glest { 
-namespace Sim {
-	class SimulationInterface;
-}
-namespace Graphics {
-	class GraphicMessageBox;
-	class GraphicTextEntryBox;
-}
+namespace Glest { namespace Gui {
+
 using namespace Graphics;
 using namespace Main;
-
-namespace Gui {
-
+using namespace Debug;
 using Widgets::MessageDialog;
 
 struct ScriptMessage {
@@ -64,10 +57,6 @@ struct ScriptMessage {
 
 class GameState: public ProgramState, public sigslot::has_slots {
 private:
-	//REMOVE? GameState does not own or know anything about AIs
-	typedef vector<Plan::Ai*> Ais;
-	typedef vector<Plan::AiInterface*> AiInterfaces;
-
 	typedef deque<ScriptMessage> MessageQueue;
 
 protected:
@@ -93,6 +82,8 @@ protected:
 	bool netError, gotoMenu, exitGame, exitProgram;
 	float scrollSpeed;
 
+	DebugStats		m_debugStats;
+
 	Vec2i			m_scriptDisplayPos;
 	string			m_scriptDisplay;
 	MessageQueue m_scriptMessages;
@@ -104,11 +95,6 @@ protected:
 
 	//misc ptr
 	ParticleSystem *weatherParticleSystem;
-
-	//UnitVector lastPickUnits;
-	//const Object *lastPickObject;
-	//vector<string> rawPick;
-	//vector<string> unitPickHits;
 
 public:
 	GameState(Program &program);
@@ -124,23 +110,9 @@ public:
 	GameCamera *getGameCamera()				{return &gameCamera;}
 	const UserInterface *getGui() const		{return &gui;}
 	UserInterface *getGui()					{return &gui;}
+	Vec2i getMousePos() const				{return Vec2i(mouseX, mouseY);}
 	
 	// ProgramState implementation
-
-	//void resetRawPick() { rawPick.clear(); }
-	//void addRawPick(const string &str) {
-	//	rawPick.push_back(str);
-	//}
-
-	//void resetUnitPickHits() { unitPickHits.clear(); }
-	//void addUnitPickHit(const string &str) {
-	//	unitPickHits.push_back(str);
-	//}
-
-	//void lastPick(UnitVector &units, const Object *obj) {
-	//	lastPickUnits = units;
-	//	lastPickObject = obj;
-	//}
 
 	// init
 	virtual void load();
@@ -217,7 +189,6 @@ protected:
 	void doScriptMessage();
 
 	void doChatDialog();
-	//void updateChatDialog();
 
 	void onChatEntered(BasicDialog*);
 	void onChatCancel(BasicDialog*);

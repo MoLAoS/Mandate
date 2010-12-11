@@ -227,7 +227,7 @@ public:
 	void loadWorld();
 	void initWorld();
 	int launchGame();
-	void updateWorld();
+	bool updateWorld();
 
 	// game speed
 	GameSpeed pause();

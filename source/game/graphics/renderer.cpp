@@ -28,6 +28,7 @@
 #include "faction.h"
 #include "factory_repository.h"
 #include "sim_interface.h"
+#include "debug_stats.h"
 
 #include "leak_dumper.h"
 
@@ -307,6 +308,7 @@ void Renderer::initGame(GameState *game){
 	fontManager[ResourceScope::GAME]->init();
 
 	init3dList();
+	init3dListGLSL();
 }
 
 void Renderer::initMenu(MainMenu *mm){
@@ -322,7 +324,11 @@ void Renderer::reset3d(){
 	assertGl();
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
 	loadProjectionMatrix();
-	glCallList(list3d);
+	if (static_cast<ModelRendererGl*>(modelRenderer)->isUsingShaders()) {
+		glCallList(list3dGLSL);
+	} else {
+		glCallList(list3d);
+	}
 	pointCount= 0;
 	triangleCount= 0;
 	assertGl();
@@ -370,6 +376,7 @@ void Renderer::endGame(){
 	}
 
 	glDeleteLists(list3d, 1);
+	glDeleteLists(list3dGLSL, 1);
 }
 
 void Renderer::endMenu(){
@@ -787,6 +794,7 @@ void Renderer::renderText(const string &text, const Font *font, const Vec3f &col
 // ==================== complex rendering ====================
 
 void Renderer::renderSurface() {
+	SECTION_TIMER(RENDER_SURFACE);
 	IF_DEBUG_EDITION(
 		if (Debug::getDebugRenderer().willRenderSurface()) {
 			Debug::getDebugRenderer().renderSurface(culler);
@@ -894,7 +902,9 @@ void Renderer::renderSurface() {
 	)
 }
 
-void Renderer::renderObjects(){
+void Renderer::renderObjects() {
+	SECTION_TIMER(RENDER_OBJECTS);
+	SECTION_TIMER(RENDER_MODELS);
 	const World *world= &g_world;
 	const Map *map= world->getMap();
 
@@ -969,6 +979,7 @@ void Renderer::renderObjects(){
 }
 
 void Renderer::renderWater(){
+	SECTION_TIMER(RENDER_WATER);
 
 	bool closed= false;
 	const World *world = &g_world;
@@ -1093,6 +1104,8 @@ void Renderer::renderWater(){
 }
 
 void Renderer::renderUnits(){
+	SECTION_TIMER(RENDER_UNITS);
+	SECTION_TIMER(RENDER_MODELS);
 	const Unit *unit;
 	const UnitType *ut;
 	int framesUntilDead;
@@ -1570,6 +1583,7 @@ struct PickHit {
 };
 
 void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
+	SECTION_TIMER(RENDER_SELECT);
 	//declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
 	const Metrics &metrics= Metrics::getInstance();
@@ -1655,6 +1669,7 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 // ==================== shadows ====================
 
 void Renderer::renderShadowsToTexture() {
+	SECTION_TIMER(RENDER_SHADOWS);
 	if (shadows == sProjected || shadows == sShadowMapping) {
 		shadowMapFrame = (shadowMapFrame + 1) % (shadowFrameSkip + 1);
 		if (shadowMapFrame == 0) {
@@ -2267,6 +2282,72 @@ void Renderer::init3dList(){
 	//assert
 	assertGl();
 
+}
+
+void Renderer::init3dListGLSL(){
+
+	const Metrics &metrics= Metrics::getInstance();
+
+	assertGl();
+
+	list3dGLSL = glGenLists(1);
+	glNewList(list3dGLSL, GL_COMPILE_AND_EXECUTE);
+	//need to execute, because if not gluPerspective takes no effect and gluLoadMatrix is wrong
+
+		//misc
+		glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
+		glClearColor(fowColor.x, fowColor.y, fowColor.z, fowColor.w);
+		glFrontFace(GL_CW);
+		glEnable(GL_CULL_FACE);
+
+		//texture state
+		glActiveTexture(baseTexUnit);
+		glEnable(GL_TEXTURE_2D);
+
+		//material state
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defSpecularColor.ptr());
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defDiffuseColor.ptr());
+		glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+		glColor4fv(defColor.ptr());
+
+		//alpha test state
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.f);
+
+		//depth test state
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
+		glDepthFunc(GL_LESS);
+
+		//lighting state
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+
+		//matrix mode
+		glMatrixMode(GL_MODELVIEW);
+
+		//stencil test
+		glDisable(GL_STENCIL_TEST);
+
+		//fog
+		const Tileset *tileset= g_world.getTileset();
+		if(tileset->getFog()){
+			glEnable(GL_FOG);
+			if(tileset->getFogMode()==fmExp){
+				glFogi(GL_FOG_MODE, GL_EXP);
+			}
+			else{
+				glFogi(GL_FOG_MODE, GL_EXP2);
+			}
+			glFogf(GL_FOG_DENSITY, tileset->getFogDensity());
+			glFogfv(GL_FOG_COLOR, tileset->getFogColor().ptr());
+		}
+
+	glEndList();
+
+	//assert
+	assertGl();
 }
 
 void Renderer::init2dList(){

@@ -55,6 +55,10 @@ private:
 	ShaderProgram	*m_lastShaderProgram;
 	ShaderProgram	*m_fixedFunctionProgram;
 
+	static const int diffuseTextureUnit = GL_TEXTURE0;
+	static const int normalTextureUnit = GL_TEXTURE2;
+	static const int specularTextureUnt = GL_TEXTURE1;
+
 public:
 	ModelRendererGl();
 	~ModelRendererGl();
@@ -63,6 +67,7 @@ public:
 
 	void cycleShaderSet();
 	const string& getShaderName();
+	bool isUsingShaders() const { return m_shaderIndex != -1; }
 
 	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback);
 

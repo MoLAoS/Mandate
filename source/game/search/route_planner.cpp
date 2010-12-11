@@ -28,6 +28,7 @@
 #include "unit.h"
 #include "unit_type.h"
 #include "sim_interface.h"
+#include "debug_stats.h"
 
 #include "leak_dumper.h"
 
@@ -266,6 +267,7 @@ HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &des
 }
 
 HAAStarResult RoutePlanner::findWaypointPath(Unit *unit, const Vec2i &dest, WaypointPath &waypoints) {
+	SECTION_TIMER(PATHFINDER_HIERARCHICAL);
 	TIME_FUNCTION();
 	_PROFILE_PATHFINDER();
 	TransitionGoal goal;
@@ -354,6 +356,7 @@ public:
 };
 
 HAAStarResult RoutePlanner::findWaypointPathUnExplored(Unit *unit, const Vec2i &dest, WaypointPath &waypoints) {
+	SECTION_TIMER(PATHFINDER_HIERARCHICAL);
 	TIME_FUNCTION();
 	_PROFILE_PATHFINDER();
 	// set-up open list
@@ -384,6 +387,7 @@ HAAStarResult RoutePlanner::findWaypointPathUnExplored(Unit *unit, const Vec2i &
   * @return true if successful, in which case waypoint will have been popped.
   * false on failure, in which case waypoint will not be popped. */
 bool RoutePlanner::refinePath(Unit *unit) {
+	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	_PROFILE_PATHFINDER();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	UnitPath &path = *unit->getPath();
@@ -421,6 +425,7 @@ bool RoutePlanner::refinePath(Unit *unit) {
 #undef max
 
 void RoutePlanner::smoothPath(Unit *unit) {
+	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	_PROFILE_PATHFINDER();
 	if (unit->getPath()->size() < 3) {
 		return;
@@ -542,6 +547,7 @@ TravelState RoutePlanner::doRouteCache(Unit *unit) {
 }
 
 TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
+	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
 	UnitPath &path = *unit->getPath();
@@ -573,6 +579,7 @@ TravelState RoutePlanner::doQuickPathSearch(Unit *unit, const Vec2i &target) {
 }
 
 TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
+	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	_PROFILE_PATHFINDER();
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
 	UnitPath &path = *unit->getPath();
@@ -614,6 +621,7 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
   * @return ARRIVED, MOVING, BLOCKED or IMPOSSIBLE
   */
 TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) {
+	SECTION_TIMER(PATHFINDER_TOTAL);
 	PF_UNIT_LOG( unit, "findPathToLocation() current pos = " << unit->getPos() << " target pos = " << finalPos );
 	PF_LOG( "Command class = " << CommandClassNames[g_simInterface->processingCommandClass()] );
 	if (!world->getMap()->isInside(finalPos)) {
@@ -738,6 +746,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 }
 
 TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Vec2i &target) {
+	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	_PROFILE_PATHFINDER();
 	UnitPath &path = *unit->getPath();
 	//WaypointPath &wpPath = *unit->getWaypointPath();
@@ -776,6 +785,7 @@ TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Ve
 }
 
 TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2i &target) {
+	SECTION_TIMER(PATHFINDER_TOTAL);
 	PF_UNIT_LOG( unit, "findPathToGoal() current pos = " << unit->getPos() << " target pos = " << target );
 	PF_LOG( "Command class = " << CommandClassNames[g_simInterface->processingCommandClass()] );
 	UnitPath &path = *unit->getPath();
@@ -867,6 +877,7 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
   * @param unit unit whose path is blocked 
   * @return true if repair succeeded */
 bool RoutePlanner::repairPath(Unit *unit) {
+	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 	

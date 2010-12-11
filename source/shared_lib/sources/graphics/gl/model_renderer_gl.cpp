@@ -161,21 +161,21 @@ void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool render
 
 
 void ModelRendererGl::end() {
-	//assertions
+	// assertions
 	assert(rendering);
 	assertGl();
 
-	//set render state
+	// set render state
 	rendering = false;
 
+	// restore stuff
 	if (m_lastShaderProgram) {
 		m_lastShaderProgram->end();
 	}
-	//pop
 	glPopAttrib();
 	glPopClientAttrib();
 
-	//assertions
+	// assertions
 	assertGl();
 }
 
@@ -198,7 +198,8 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glColor4fv(color.ptr());
 	}
 
-	// texture state
+	// diffuse texture
+	glActiveTexture(diffuseTextureUnit);
 	const Texture2DGl *texture = static_cast<const Texture2DGl*>(mesh->getTexture(mtDiffuse));
 	if (texture != NULL && renderTextures) {
 		if (lastTexture != texture->getHandle()) {
@@ -210,22 +211,16 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		lastTexture = 0;
 	}
-	// texture normals
+	// bump map
 	const Texture2DGl *textureNormal = static_cast<const Texture2DGl*>(mesh->getTexture(mtNormal));
+	glActiveTexture(normalTextureUnit);
 	if (textureNormal != NULL && renderTextures) {
-		//if (lastTexture != texture->getHandle()) {
-			assert(glIsTexture(textureNormal->getHandle()));
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
-			glActiveTexture(GL_TEXTURE0);
-			//lastTexture = texture->getHandle();
-		//}
+		assert(glIsTexture(textureNormal->getHandle()));
+		glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
 	} else {
-		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glActiveTexture(GL_TEXTURE0);
-		//lastTexture = 0;
 	}
+	glActiveTexture(diffuseTextureUnit);
 
 	//misc vars
 	uint32 vertexCount = mesh->getVertexCount();
@@ -257,6 +252,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		shaderProgram->begin();
 		m_lastShaderProgram = shaderProgram;
 	}
+	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
 	shaderProgram->setUniform("teamColour", getTeamColour());
 
 	//vertices

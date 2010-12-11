@@ -138,6 +138,7 @@ private:
 	GLuint list2d;
 	GLuint list2dNonVirt;
 	GLuint list3dMenu;
+	GLuint list3dGLSL;
 
 	// shadows
 	GLuint shadowMapHandle;
@@ -278,6 +279,7 @@ private:
 
 	//gl init
 	void init3dList();
+	void init3dListGLSL();
     void init2dList();
 	void init2dNonVirtList();
 	void init3dListMenu(MainMenu *mm);

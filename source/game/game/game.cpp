@@ -88,13 +88,7 @@ GameState::GameState(Program &program)
 		, exitProgram(false)
 		, scrollSpeed(config.getUiScrollSpeed())
 		, m_modalDialog(0)
-		//, m_exitMsgBox(0)
-		//, m_scriptMsgBox(0)
-		//, m_saveBox(0)
-		//, m_chatBox(0)
 		, lastMousePos(0)
-		//, lastPickObject(0)
-		//, lastPickUnits()
 		, weatherParticleSystem(0) {
 	assert(!singleton);
 	singleton = this;
@@ -109,7 +103,6 @@ GameState::~GameState() {
 	weatherParticleSystem = 0;
 	g_soundRenderer.stopAllSounds();
 
-//	gui.end(); //selection must be cleared before deleting units
 	singleton = 0;
 	g_logger.setLoading(true);
 
@@ -228,6 +221,8 @@ void GameState::init() {
 	g_logger.setLoading(false);
 	program.resetTimers(40);
 	program.setFade(1.f);
+	m_debugStats.init();
+	Debug::g_debugStats = &m_debugStats;
 }
 
 // ==================== update ====================
@@ -261,19 +256,19 @@ void GameState::update() {
 
 	try {
 		// update simulation
-		simInterface->updateWorld();
-		++worldFps;
+		if (simInterface->updateWorld()) {
+			++worldFps;
 
-		// Gui
-		gui.update();
-
-		if (simInterface->getSpeed() != GameSpeed::PAUSED) {
 			// Particle systems
 			if (weatherParticleSystem) {
 				weatherParticleSystem->setPos(gameCamera.getPos());
 			}
 			g_renderer.updateParticleManager(ResourceScope::GAME);
 		}
+
+		// Gui
+		gui.update();
+
 	} catch (Net::NetworkError &e) {
 		LOG_NETWORK(e.what());
 		displayError(e);
@@ -531,18 +526,20 @@ void GameState::updateCamera() {
 
 //render
 void GameState::renderBg(){
+	SECTION_TIMER(RENDER_3D);
 	renderFps++;
 	render3d();
 }
 
 void GameState::renderFg(){
+	SECTION_TIMER(RENDER_2D);
 	render2d();
 	Renderer::getInstance().swapBuffers();
 }
 
 // ==================== tick ====================
 
-void GameState::tick(){
+void GameState::tick() {
 	lastWorldFps = worldFps;
 	lastUpdateFps= updateFps;
 	lastRenderFps= renderFps;
@@ -551,6 +548,8 @@ void GameState::tick(){
 	renderFps= 0;
 
 	if (netError) return;
+
+	m_debugStats.tick(lastRenderFps, lastWorldFps);
 
 	//Win/lose check
 	GameStatus status = simInterface->checkWinner();
@@ -848,77 +847,11 @@ void GameState::render2d(){
 			gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
 	}
 
-	//debug info
+	// debug info
 	if (g_config.getMiscDebugMode()) {
+
 		stringstream str;
-
-//		// Picking code debug
-//		str << "Last Pick:\n";
-//		if (lastPickUnits.empty()) {
-//			str << "   No Units.\n";
-//			if (lastPickObject) {
-//				str << "   Object: " << lastPickObject->getResource()->getType()->getName() << ".\n";
-//			} else {
-//				str << "   No Object.\n";
-//			}
-//		} else {
-//			foreach (UnitVector, it, lastPickUnits) {
-//				str << "   Unit: " << (*it)->getId() << " [" << (*it)->getType()->getName() << "].\n";
-//			}
-//		}
-//
-//		str << "Raw Pick:\n";
-//		if (rawPick.empty()) {
-//			str << "   Nothing.\n";
-//		} else {
-//			foreach (vector<string>, it, rawPick) {
-//				str << "   " << *it << endl;
-//			}
-//		}
-//
-//		str << "Processed Hits:\n";
-//		if (unitPickHits.empty()) {
-//			str << "   Nothing.\n";
-//		} else {
-//			foreach (vector<string>, it, unitPickHits) {
-//				str << "   " << *it << endl;
-//			}
-//		}
-//
-///*
-		str	<< "MouseXY: " << mouseX << "," << mouseY << endl
-			<< "PosObjWord: " << gui.getPosObjWorld().x << "," << gui.getPosObjWorld().y << endl
-			<< "Render FPS: " << lastRenderFps << endl
-			<< "Update FPS: " << lastUpdateFps << endl
-			<< "World FPS: " << lastWorldFps << endl;
-
-#		if ! _GAE_DEBUG_EDITION_
-			str << "GameCamera pos: " << gameCamera.getPos().x
-				<< "," << gameCamera.getPos().y
-				<< "," << gameCamera.getPos().z << endl
-				<< "Time: " << simInterface->getWorld()->getTimeFlow()->getTime() << endl
-				<< "Triangle count: " << g_renderer.getTriangleCount() << endl
-				<< "Vertex count: " << g_renderer.getPointCount() << endl
-				<< "Frame count: " << simInterface->getWorld()->getFrameCount() << endl
-				<< "Camera VAng : " << gameCamera.getVAng() << endl;
-#		endif // _GAE_DEBUG_EDITION
-
-		// resources
-		for (int i=0; i<simInterface->getWorld()->getFactionCount(); ++i){
-			str << "Player " << i << " res: ";
-			for (int j=0; j < g_world.getTechTree()->getResourceTypeCount(); ++j) {
-				str << g_world.getFaction(i)->getResource(j)->getAmount() << " ";
-			}
-			str << endl;
-		}
-		str << "ClusterMap Nodes = " << Search::Transition::NumTransitions(Field::LAND) << endl
-			<< "ClusterMap Edges = " << Search::Edge::NumEdges(Field::LAND) << endl
-			<< "GameRole::" << GameRoleNames[g_simInterface->getNetworkRole()] << endl;
-
-		str << "Particle usage counts:\n";
-		foreach_enum (ParticleUse, use) {
-			str << "   " << ParticleUseNames[use] << " : " << ParticleSystem::getParticleUse(use) << endl;
-		}
+		m_debugStats.report(str);
 
 #		if _GAE_DEBUG_EDITION_ && !_GAE_LEAK_DUMP_
 #			define REPORT_MEMORY_USE(X)									\
@@ -949,9 +882,7 @@ void GameState::render2d(){
 
 #		endif // _GAE_DEBUG_EDITION_
 
-//*/
-		g_renderer.renderText(
-			str.str(), g_coreData.getFTDisplayFont(),
+		g_renderer.renderText(str.str(), g_coreData.getFTDisplayFont(),
 			gui.getDisplay()->getColor(), 10, 120, false);
 	}
 }
