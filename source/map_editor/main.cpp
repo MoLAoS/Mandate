@@ -759,7 +759,7 @@ void MainWindow::onMenuMiscShowMap(wxCommandEvent& event){
 		wxString tileset = arrstr[dlg.GetSelection()];
 		
 		// leading / stands for absolute path, disables physfs for reading
-		command = glest + ToUnicode(" -loadmap /\""+currentFile+"\" ") + tileset;
+		command = glest + ToUnicode(" -loadmap \"/"+currentFile+"\" ") + tileset;
 		cout << command.char_str() << endl;
 		wxExecute(command, wxEXEC_SYNC);
 	}
