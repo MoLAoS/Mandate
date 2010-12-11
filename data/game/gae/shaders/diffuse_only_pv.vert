@@ -1,14 +1,15 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	Nathan Turner
+//	Copyright (C) 2010	Nathan Turner & James McCulloch
 //
 //  GPL V2, see source/licence.txt
 // ==============================================================
 
 #version 110
 
-varying float diffuseIntensity, colourAlpha;
+varying float diffuseIntensity, meshAlpha;
+varying float fogFactor;
 
 void main()
 {	
@@ -19,9 +20,17 @@ void main()
 	
 	// diffuse shading
 	diffuseIntensity = max(dot(lightDir, normal), 0.0);
-
-	// pass-on alpha component of glColor
-	colourAlpha = gl_Color.a;
+	
+	// fog
+	vec3 posFromCamera = vec3(gl_ModelViewMatrix * gl_Vertex);
+	float dist = length(posFromCamera); // distance from camera
+	float fog = gl_Fog.density;
+	const float log_2 = 1.442695;
+	fogFactor = exp2(-fog * fog * dist * dist * log_2);
+	fogFactor = clamp(fogFactor, 0.0, 1.0);	
+	
+	// pass-on mesh alpha
+	meshAlpha = gl_Color.a;
 	
 	// determine pixel position
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;

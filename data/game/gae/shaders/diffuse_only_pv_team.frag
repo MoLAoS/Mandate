@@ -1,14 +1,14 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	Nathan Turner
+//	Copyright (C) 2010	Nathan Turner & James McCulloch
 //
 //  GPL V2, see source/licence.txt
 // ==============================================================
 
 #version 110
 
-varying float diffuseIntensity, colourAlpha;
+varying float diffuseIntensity, meshAlpha, fogFactor;
 
 uniform vec3 teamColour;
 uniform sampler2D baseTexture;
@@ -26,8 +26,9 @@ void main()
 	vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
 
 	// alpha
-	float alpha = min(diffuse.a + ambient.a, colourAlpha);
+	float alpha = min(diffuse.a + ambient.a, meshAlpha);
 	
 	// final colour
-	gl_FragColor = vec4((0.5 * diffuse.rgb + 1.5 * ambient.rgb) * baseColour, alpha);
+	vec4 finalColour = vec4((ambient.rgb + diffuse.rgb) * baseColour, alpha);
+	gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 }
