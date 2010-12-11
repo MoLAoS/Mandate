@@ -209,6 +209,8 @@ void Display::setProgressBar(int i) {
 		TextWidget::setText(intToStr(i) + "%", 3);
 		Vec2i sz = getTextDimensions(3);
 		m_progPrecentPos = 50 - sz.x / 2;
+	} else {
+		TextWidget::setText("", 3);
 	}
 }
 

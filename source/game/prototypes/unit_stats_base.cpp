@@ -77,36 +77,22 @@ void UnitStats::setValues(const UnitStats &o) {
 	harvestSpeed = o.harvestSpeed;
 }
 
-inline void addInt(int &io_int, const int add, const int min = numeric_limits<int>::min()) {
-	io_int = io_int + add;
-	if (io_int < min) {
-		io_int = min;
-	}
-}
-
-inline void addFxd(fixed &io_fxd, const fixed add, const fixed min = 0) {
-	io_fxd = io_fxd + add;
-	if (io_fxd < min) {
-		io_fxd = min;
-	}
-}
-
 void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
-	addInt(maxHp, (e.getMaxHp() * strength).intp(), 1);
-	addInt(hpRegeneration, (e.getHpRegeneration() * strength).intp());
-	addInt(maxEp, (e.getMaxEp() * strength).intp(), 0);
-	addInt(epRegeneration, (e.getEpRegeneration() * strength).intp());
-	addInt(sight, (e.getSight() * strength).intp(), 1);
-	addInt(armor, (e.getArmor() * strength).intp(), 0);
-	addInt(attackStrength, (e.getAttackStrength() * strength).intp(), 1);
-	addFxd(effectStrength, e.getEffectStrength() * strength);
-	addFxd(attackPctStolen, e.getAttackPctStolen() * strength);
-	addInt(attackRange, (e.getAttackRange() * strength).intp(), 1);
-	addInt(moveSpeed, (e.getMoveSpeed() * strength).intp(), 1);
-	addInt(attackSpeed, (e.getAttackSpeed() * strength).intp(), 1);
-	addInt(prodSpeed, (e.getProdSpeed() * strength).intp(), 1);
-	addInt(repairSpeed, (e.getRepairSpeed() * strength).intp(), 1);
-	addInt(harvestSpeed, (e.getHarvestSpeed() * strength).intp(), 1);
+	maxHp += (e.getMaxHp() * strength).intp();
+	hpRegeneration += (e.getHpRegeneration() * strength).intp();
+	maxEp += (e.getMaxEp() * strength).intp();
+	epRegeneration += (e.getEpRegeneration() * strength).intp();
+	sight += (e.getSight() * strength).intp();
+	armor += (e.getArmor() * strength).intp();
+	attackStrength += (e.getAttackStrength() * strength).intp();
+	effectStrength += e.getEffectStrength() * strength;
+	attackPctStolen += e.getAttackPctStolen() * strength;
+	attackRange += (e.getAttackRange() * strength).intp();
+	moveSpeed += (e.getMoveSpeed() * strength).intp();
+	attackSpeed += (e.getAttackSpeed() * strength).intp();
+	prodSpeed += (e.getProdSpeed() * strength).intp();
+	repairSpeed += (e.getRepairSpeed() * strength).intp();
+	harvestSpeed += (e.getHarvestSpeed() * strength).intp();
 }
 
 void UnitStats::applyMultipliers(const EnhancementType &e) {
@@ -125,6 +111,22 @@ void UnitStats::applyMultipliers(const EnhancementType &e) {
 	prodSpeed = (prodSpeed * e.getProdSpeedMult()).intp();
 	repairSpeed = (repairSpeed * e.getRepairSpeedMult()).intp();
 	harvestSpeed = (harvestSpeed * e.getHarvestSpeedMult()).intp();
+}
+
+void UnitStats::sanitiseUnitStats() {
+	if (maxHp < 0) maxHp = 0;
+	if (maxEp < 0) maxEp = 0;
+	if (sight < 0) sight = 0;
+	if (armor < 0) armor = 0;
+	if (attackStrength < 0) attackStrength = 0;
+	if (effectStrength < 0) effectStrength = 0;
+	if (attackPctStolen < 0) attackPctStolen = 0;
+	if (attackRange < 0) attackRange = 0;
+	if (moveSpeed < 0) moveSpeed = 0;
+	if (attackSpeed < 0) attackSpeed = 0;
+	if (prodSpeed < 0) prodSpeed = 0;
+	if (repairSpeed < 0) repairSpeed = 0;
+	if (harvestSpeed < 0) harvestSpeed = 0;
 }
 
 // legacy load for Unit class
