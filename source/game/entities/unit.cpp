@@ -1528,14 +1528,14 @@ string Unit::getLongDesc() const {
 	// armor
 	ss << endl << g_lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
-		ss << (armorBonus > 0 ? "+" : "-") << armorBonus;
+		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
 	}
 	ss << " (" << type->getArmourType()->getName() << ")";
 
 	// sight
 	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
-		ss << (sightBonus > 0 ? "+" : "-") << sightBonus;
+		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
 
 	// kills
