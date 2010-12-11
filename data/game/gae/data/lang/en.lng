@@ -298,6 +298,15 @@ WalkSpeed=Walk speed
 YourGameWasSaved=Your game has been saved to %s
 Zones=Zones
 
+; Time of Day
+MidNight=Mid-night
+Dawn=Dawn
+Morning=Morning
+MidDay=Mid-day
+Afternoon=Afternoon
+Dusk=Dusk
+Night=Night
+
 ; Game Menu
 GameMenu=Game Menu
 ReturnToGame=Return to Game
