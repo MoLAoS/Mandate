@@ -111,7 +111,6 @@ void World::init(const XmlNode *worldNode) {
 	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
 	initMap();
-	initSplattedTextures();
 
 	// must be done after initMap()
 	routePlanner = new RoutePlanner(this);
@@ -938,28 +937,6 @@ void World::initCells() {
 				sc->setExplored(k, !gs.getFogOfWar());
 				sc->setVisible(k, !gs.getFogOfWar());
 			}
-		}
-	}
-}
-
-//init surface textures
-void World::initSplattedTextures() {
-	for (int i = 0; i < map.getTileW() - 1; ++i) {
-		for (int j = 0; j < map.getTileH() - 1; ++j) {
-			Vec2f coord;
-			const Texture2D *texture;
-			Tile *sc00 = map.getTile(i, j);
-			Tile *sc10 = map.getTile(i + 1, j);
-			Tile *sc01 = map.getTile(i, j + 1);
-			Tile *sc11 = map.getTile(i + 1, j + 1);
-			tileset.addSurfTex(
-				sc00->getTileType(),
-				sc10->getTileType(),
-				sc01->getTileType(),
-				sc11->getTileType(),
-				coord, texture);
-			sc00->setTileTexCoord(coord);
-			sc00->setTileTexture(texture);
 		}
 	}
 }

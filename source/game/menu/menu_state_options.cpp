@@ -110,11 +110,11 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	ocPtr->setWidget(m_shadowsList);
 
 	m_shadowsList->setSize(Vec2i(350, m_shadowsList->getHeight()));
-	for(int i= 0; i<Renderer::sCount; ++i){
-		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(i))));
+	for(int i= 0; i < ShadowMode::COUNT; ++i){
+		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(ShadowMode(i))));
 	}
 	string str= config.getRenderShadows();
-	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, Renderer::sCount - 1));
+	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, ShadowMode::COUNT - 1));
 	m_shadowsList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 
 	// Language
@@ -195,7 +195,7 @@ void MenuStateOptions::onDropListSelectionChanged(ListBase* list) {
 // 		saveConfig();
 	} else if (list == m_shadowsList) {
 		int index = m_shadowsList->getSelectedIndex();
-		config.setRenderShadows(Renderer::shadowsToStr(static_cast<Renderer::Shadows>(index)));
+		config.setRenderShadows(Renderer::shadowsToStr(ShadowMode(index)));
 // 		saveConfig();
 	} else if (list == m_lightsList) {
 		config.setRenderLightsMax(list->getSelectedIndex() + 1);

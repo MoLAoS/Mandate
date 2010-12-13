@@ -27,7 +27,7 @@ using namespace Shared::Graphics;
 namespace Glest { namespace Graphics {
 
 // =====================================================
-//	class PixmapInfo
+//	class SurfaceInfo
 // =====================================================
 
 SurfaceInfo::SurfaceInfo(const Pixmap2D *lu, const Pixmap2D *ru, const Pixmap2D *ld, const Pixmap2D *rd){
@@ -36,6 +36,7 @@ SurfaceInfo::SurfaceInfo(const Pixmap2D *lu, const Pixmap2D *ru, const Pixmap2D 
 	this->rightDown= rd;
 	this->rightUp= ru;
 	center= NULL;
+	this->coord = Vec2f(0.f);
 }
 
 SurfaceInfo::SurfaceInfo(const Pixmap2D *center){
@@ -44,6 +45,7 @@ SurfaceInfo::SurfaceInfo(const Pixmap2D *center){
 	this->rightDown= NULL;
 	this->rightUp= NULL;
 	this->center= center;
+	this->coord = Vec2f(0.f);
 }
 
 bool SurfaceInfo::operator==(const SurfaceInfo &si) const{

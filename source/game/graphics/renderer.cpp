@@ -257,15 +257,18 @@ void Renderer::cycleShaders() {
 void Renderer::initGame(GameState *game){
 	this->game= game;
 
-	//check gl caps
+	// check gl caps
 	checkGlOptionalCaps();
 
-	//vars
+	// vars
 	shadowMapFrame= 0;
 	waterAnim= 0;
 
-	//shadows
-	if(shadows==sProjected || shadows==sShadowMapping){
+	m_terrainRenderer = new TerrainRendererGlest();
+	m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
+
+	// shadows
+	if (m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED) {
 		static_cast<ModelRendererGl*>(modelRenderer)->setSecondaryTexCoordUnit(2);
 
 		glGenTextures(1, &shadowMapHandle);
@@ -276,9 +279,8 @@ void Renderer::initGame(GameState *game){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		if(shadows==sShadowMapping){
-
-			//shadow mapping
+		if (m_shadowMode == ShadowMode::MAPPED) {
+			// shadow mapping
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
@@ -288,21 +290,19 @@ void Renderer::initGame(GameState *game){
 				shadowTextureSize, shadowTextureSize,
 				0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 		} else {
-
-			//projected
+			// projected
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8,
 				shadowTextureSize, shadowTextureSize,
 				0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 		}
-
-		shadowMapFrame= -1;
+		shadowMapFrame = -1;
 	}
 
 	IF_DEBUG_EDITION(
 		Debug::getDebugRenderer().init(); 
 	)
 
-	//texture init
+	// texture init
 	modelManager[ResourceScope::GAME]->init();
 	textureManager[ResourceScope::GAME]->init();
 	fontManager[ResourceScope::GAME]->init();
@@ -362,8 +362,10 @@ void Renderer::end(){
 	glDeleteLists(list2d, 1);
 }
 
-void Renderer::endGame(){
+void Renderer::endGame() {
 	game= NULL;
+	delete m_terrainRenderer;
+	m_terrainRenderer = 0;
 
 	//delete resources
 	modelManager[ResourceScope::GAME]->end();
@@ -371,7 +373,7 @@ void Renderer::endGame(){
 	fontManager[ResourceScope::GAME]->end();
 	particleManager[ResourceScope::GAME]->end();
 
-	if(shadows==sProjected || shadows==sShadowMapping){
+	if (m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED) {
 		glDeleteTextures(1, &shadowMapHandle);
 	}
 
@@ -793,115 +795,6 @@ void Renderer::renderText(const string &text, const Font *font, const Vec3f &col
 
 // ==================== complex rendering ====================
 
-void Renderer::renderSurface() {
-	SECTION_TIMER(RENDER_SURFACE);
-	IF_DEBUG_EDITION(
-		if (Debug::getDebugRenderer().willRenderSurface()) {
-			Debug::getDebugRenderer().renderSurface(culler);
-		} else {
-	)
-
-	int lastTex=-1;
-
-	int currTex;
-	const Map *map= g_world.getMap();
-	const Rect2i mapBounds(0, 0, map->getTileW()-1, map->getTileH()-1);
-	float coordStep= g_world.getTileset()->getSurfaceAtlas()->getCoordStep();
-
-	assertGl();
-
-	const Texture2D *fowTex= g_userInterface.getMinimap()->getFowTexture();
-
-	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
-
-	glEnable(GL_BLEND);
-	glEnable(GL_COLOR_MATERIAL);
-	glDisable(GL_ALPHA_TEST);
-
-	//fog of war tex unit
-	glActiveTexture(fowTexUnit);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
-	glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0,
-		fowTex->getPixmap()->getW(), fowTex->getPixmap()->getH(),
-		GL_ALPHA, GL_UNSIGNED_BYTE, fowTex->getPixmap()->getPixels());
-
-	//shadow texture
-	if(shadows==sProjected || shadows==sShadowMapping){
-		glActiveTexture(shadowTexUnit);
-		glEnable(GL_TEXTURE_2D);
-
-		glBindTexture(GL_TEXTURE_2D, shadowMapHandle);
-
-		static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(true);
-		enableProjectiveTexturing();
-	}
-
-	glActiveTexture(baseTexUnit);
-
-	SceneCuller::iterator it = culler.tile_begin();
-	for ( ; it != culler.tile_end(); ++it) {
-		const Vec2i pos = *it;
-		if(mapBounds.isInside(pos)){
-
-			Tile *tc00= map->getTile(pos.x, pos.y);
-			Tile *tc10= map->getTile(pos.x+1, pos.y);
-			Tile *tc01= map->getTile(pos.x, pos.y+1);
-			Tile *tc11= map->getTile(pos.x+1, pos.y+1);
-
-			triangleCount+= 2;
-			pointCount+= 4;
-
-			//set texture
-			currTex= static_cast<const Texture2DGl*>(tc00->getTileTexture())->getHandle();
-			if(currTex!=lastTex){
-				lastTex=currTex;
-				glBindTexture(GL_TEXTURE_2D, lastTex);
-			}
-
-			Vec2f surfCoord= tc00->getSurfTexCoord();
-
-			glBegin(GL_TRIANGLE_STRIP);
-
-			//draw quad using immediate mode
-			glMultiTexCoord2fv(fowTexUnit, tc01->getFowTexCoord().ptr());
-			glMultiTexCoord2f(baseTexUnit, surfCoord.x, surfCoord.y+coordStep);
-			glNormal3fv(tc01->getNormal().ptr());
-			glVertex3fv(tc01->getVertex().ptr());
-
-			glMultiTexCoord2fv(fowTexUnit, tc00->getFowTexCoord().ptr());
-			glMultiTexCoord2f(baseTexUnit, surfCoord.x, surfCoord.y);
-			glNormal3fv(tc00->getNormal().ptr());
-			glVertex3fv(tc00->getVertex().ptr());
-
-			glMultiTexCoord2fv(fowTexUnit, tc11->getFowTexCoord().ptr());
-			glMultiTexCoord2f(baseTexUnit, surfCoord.x+coordStep, surfCoord.y+coordStep);
-			glNormal3fv(tc11->getNormal().ptr());
-			glVertex3fv(tc11->getVertex().ptr());
-
-			glMultiTexCoord2fv(fowTexUnit, tc10->getFowTexCoord().ptr());
-			glMultiTexCoord2f(baseTexUnit, surfCoord.x+coordStep, surfCoord.y);
-			glNormal3fv(tc10->getNormal().ptr());
-			glVertex3fv(tc10->getVertex().ptr());
-
-			glEnd();
-		}
-	}
-
-	//Restore
-	static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(false);
-	glPopAttrib();
-
-	//assert
-	glGetError();	//remove when first mtex problem solved
-	assertGl();
-
-	IF_DEBUG_EDITION(
-		} // end else, if not renderering textures instead of terrain
-		Debug::getDebugRenderer().renderEffects(culler);
-	)
-}
-
 void Renderer::renderObjects() {
 	SECTION_TIMER(RENDER_OBJECTS);
 	SECTION_TIMER(RENDER_MODELS);
@@ -914,7 +807,7 @@ void Renderer::renderObjects() {
 
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 
-	if(shadows==sShadowMapping){
+	if(m_shadowMode == ShadowMode::MAPPED){
 		glActiveTexture(shadowTexUnit);
 		glEnable(GL_TEXTURE_2D);
 
@@ -1119,7 +1012,7 @@ void Renderer::renderUnits(){
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_COLOR_MATERIAL);
 
-	if(shadows==sShadowMapping){
+	if(m_shadowMode == ShadowMode::MAPPED){
 		glActiveTexture(shadowTexUnit);
 		glEnable(GL_TEXTURE_2D);
 
@@ -1670,12 +1563,12 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 
 void Renderer::renderShadowsToTexture() {
 	SECTION_TIMER(RENDER_SHADOWS);
-	if (shadows == sProjected || shadows == sShadowMapping) {
+	if (m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED) {
 		shadowMapFrame = (shadowMapFrame + 1) % (shadowFrameSkip + 1);
 		if (shadowMapFrame == 0) {
 			assertGl();
 			glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT | GL_POLYGON_BIT);
-			if (shadows == sShadowMapping) {
+			if (m_shadowMode == ShadowMode::MAPPED) {
 				glClear(GL_DEPTH_BUFFER_BIT);
 			} else {
 				float color = 1.0f - shadowAlpha;
@@ -1726,7 +1619,7 @@ void Renderer::renderShadowsToTexture() {
 				glRotatef(-90, -1, 0, 0);
 				glTranslatef(-nearestLightPos.x, -nearestLightPos.y - 2, -nearestLightPos.z);
 			}
-			if (shadows == sShadowMapping) {
+			if (m_shadowMode == ShadowMode::MAPPED) {
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset(1.0f, 0.001f);
 			}
@@ -1844,23 +1737,23 @@ void Renderer::autoConfig(){
 	bool nvidiaCard= toLower(getGlVendor()).find("nvidia")!=string::npos;
 	bool atiCard= toLower(getGlVendor()).find("ati")!=string::npos;
 	bool shadowExtensions = isGlExtensionSupported("GL_ARB_shadow") && isGlExtensionSupported("GL_ARB_shadow_ambient");
-	//3D textures
+	// 3D textures
 	config.setRenderTextures3D(isGlExtensionSupported("GL_EXT_texture3D"));
-	//shadows
+	// shadows
 	string shadows;
-	if ( getGlMaxTextureUnits() >= 3 ) {
-		if(nvidiaCard && shadowExtensions){
-			shadows= shadowsToStr(sShadowMapping);
+	if (getGlMaxTextureUnits() >= 3) {
+		if (nvidiaCard && shadowExtensions) {
+			shadows = shadowsToStr(ShadowMode::MAPPED);
 		} else {
-			shadows= shadowsToStr(sProjected);
+			shadows = shadowsToStr(ShadowMode::PROJECTED);
 		}
 	} else {
-		shadows=shadowsToStr(sDisabled);
+		shadows = shadowsToStr(ShadowMode::DISABLED);
 	}
 	config.setRenderShadows(shadows);
-	//lights
+	// lights
 	config.setRenderLightsMax(atiCard? 1: 4);
-	//filter
+	// filter
 	config.setRenderFilter("Bilinear");
 }
 
@@ -1882,8 +1775,8 @@ void Renderer::loadConfig(){
 	textures3D= config.getRenderTextures3D();
 
 	//load shadows
-	shadows= strToShadows(config.getRenderShadows());
-	if(shadows==sProjected || shadows==sShadowMapping){
+	m_shadowMode = strToShadows(config.getRenderShadows());
+	if(m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED){
 		shadowTextureSize= config.getRenderShadowTextureSize();
 		shadowFrameSkip= config.getRenderShadowFrameSkip();
 		shadowAlpha= config.getRenderShadowAlpha();
@@ -2058,7 +1951,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 				color *= alpha;
 				changeColor = changeColor || fade;
 
-				if(shadows == sShadowMapping) {
+				if(m_shadowMode == ShadowMode::MAPPED) {
 					if(changeColor) {
 						//fprintf(stderr, "color = %f\n", color);
 						glColor3f(color, color, color);
@@ -2181,14 +2074,14 @@ void Renderer::checkGlCaps(){
 void Renderer::checkGlOptionalCaps(){
 
 	//shadows
-	if(shadows==sProjected || shadows==sShadowMapping){
+	if(m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED){
 		if(getGlMaxTextureUnits()<3){
 			throw runtime_error("Your system doesn't support 3 texture units, required for shadows");
 		}
 	}
 
 	//shadow mapping
-	if(shadows==sShadowMapping){
+	if(m_shadowMode == ShadowMode::MAPPED){
 		checkExtension("GL_ARB_shadow", "Shadow Mapping");
 		checkExtension("GL_ARB_shadow_ambient", "Shadow Mapping");
 	}
@@ -2691,22 +2584,22 @@ void Renderer::renderQuad(int x, int y, int w, int h, const Texture2D *texture){
 	glEnd();
 }
 
-Renderer::Shadows Renderer::strToShadows(const string &s){
+ShadowMode Renderer::strToShadows(const string &s){
 	if ( s == "Projected" ) {
-		return sProjected;
+		return ShadowMode::PROJECTED;
 	} else if ( s == "ShadowMapping" ) {
-		return sShadowMapping;
+		return ShadowMode::MAPPED;
 	}
-	return sDisabled;
+	return ShadowMode::DISABLED;
 }
 
-string Renderer::shadowsToStr(Shadows shadows){
-	switch ( shadows ) {
-		case sDisabled:
+string Renderer::shadowsToStr(ShadowMode mode){
+	switch (mode) {
+		case ShadowMode::DISABLED:
 			return "Disabled";
-		case sProjected:
+		case ShadowMode::PROJECTED:
 			return "Projected";
-		case sShadowMapping:
+		case ShadowMode::MAPPED:
 			return "ShadowMapping";
 		default:
 			assert(false);

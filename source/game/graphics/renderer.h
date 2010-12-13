@@ -31,6 +31,7 @@
 #include "selection.h"
 #include "components.h"
 #include "scene_culler.h"
+#include "terrain_renderer.h"
 
 using namespace Shared::Math;
 using namespace Shared::Graphics;
@@ -43,11 +44,9 @@ namespace Glest {
 
 namespace Graphics {
 
-WRAPPED_ENUM ( ResourceScope,
-	GLOBAL,
-	MENU,
-	GAME
-)
+WRAPPED_ENUM( ResourceScope, GLOBAL, MENU, GAME );
+
+WRAPPED_ENUM( ShadowMode, DISABLED, PROJECTED, MAPPED );
 
 // ===========================================================
 // 	class Renderer
@@ -92,16 +91,6 @@ public:
 
 	//light
 	static const float maxLightDist;
-	
-public:
-	//WRAPPED_ENUM(Shadows, Disabled, Projected, Mapped);
-	enum Shadows{
-		sDisabled,
-		sProjected,
-		sShadowMapping,
-
-		sCount
-	};
 
 private:
 	// config
@@ -112,7 +101,7 @@ private:
 	float shadowAlpha;
 	bool focusArrows;
 	bool textures3D;
-	Shadows shadows;
+	ShadowMode m_shadowMode;
 
 	// game
 	const GameState *game;
@@ -156,6 +145,8 @@ private:
 	// helper object, determines visible scene
 	SceneCuller culler;
 
+	TerrainRenderer *m_terrainRenderer;
+
 private:
 	Renderer();
 	~Renderer();
@@ -179,6 +170,12 @@ public:
 	//get
 	int getTriangleCount() const	{return triangleCount;}
 	int getPointCount() const		{return pointCount;}
+	ShadowMode getShadowMode() const {m_shadowMode;}
+	GLuint getShadowMapHandle() const { return shadowMapHandle;}
+
+	// inc tri/point counters
+	void incTriangleCount(int n=1) { triangleCount += n;}
+	void incPointCount(int n=1) { pointCount += n;}
 
 	const SceneCuller& getCuller() const { return culler; }
 	void setFarClip(float clip) { perspFarPlane = clip; }
@@ -226,7 +223,7 @@ public:
 	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
     //complex rendering
-    void renderSurface();
+	void renderSurface()	{m_terrainRenderer->render(culler);}
 	void renderObjects();
 	void renderWater();
     void renderUnits();
@@ -255,9 +252,12 @@ public:
 	void loadConfig();
 	void saveScreen(const string &path);
 
+	void loadProjectionMatrix();
+	void enableProjectiveTexturing();
+
 	//static
-	static Shadows strToShadows(const string &s);
-	static string shadowsToStr(Shadows shadows);
+	static ShadowMode strToShadows(const string &s);
+	static string shadowsToStr(ShadowMode shadows);
 
 private:
 	//private misc
@@ -283,10 +283,6 @@ private:
     void init2dList();
 	void init2dNonVirtList();
 	void init3dListMenu(MainMenu *mm);
-
-	//misc
-	void loadProjectionMatrix();
-	void enableProjectiveTexturing();
 
 	//private aux drawing
 	void renderSelectionCircle(Vec3f v, int size, float radius);
