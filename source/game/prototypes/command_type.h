@@ -106,7 +106,21 @@ public:
 
 	virtual int getProducedCount() const					{return 0;}
 	virtual const ProducibleType *getProduced(int i) const{return 0;}
-	
+
+	// candidates for lua callbacks
+	/** Apply costs for a command. */
+	virtual void apply(Faction *faction, const Command &command) const;
+	/** De-Apply costs for a command */
+	virtual void undo(Unit *unit, const Command &command) const;
+	/** Check if a command can be executed */
+	virtual CommandResult check(const Unit *unit, const Command &command) const { return CommandResult::SUCCESS; }
+	/** Update the command by one tick. */
+	virtual void tick(const Unit *unit, Command &command) const {}
+	/** Final actions to finish */
+	virtual void finish(Unit *unit, Command &command) const {}
+	/** Beginning actions before executing */
+	virtual void start(Unit *unit, Command *command) const {}
+	//init();
 
 	bool isQueuable() const								{return queuable;}
 
@@ -134,6 +148,8 @@ protected:
 
 	static bool attackableInSight(const Unit *unit, Unit **rangedPtr, 
 								const AttackSkillTypes *asts, const AttackSkillType **past);
+
+	void replaceDeadReferences(Command &command) const;
 
 public:
 	Command* doAutoCommand(Unit *unit) const;
@@ -201,6 +217,7 @@ class MoveCommandType: public MoveBaseCommandType {
 public:
 	MoveCommandType() : MoveBaseCommandType("Move", Clicks::TWO) {}
 	virtual void update(Unit *unit) const;
+	virtual void tick(const Unit *unit, Command &command) const;
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MOVE; }
@@ -319,6 +336,8 @@ public:
 	/** @param builtUnitType the unitType to build
 	  * @param pos the position to put the unit */
 	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir facing) const;
+	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual void undo(Unit *unit, const Command &command) const;
 
 	//get
 	const BuildSkillType *getBuildSkillType() const	{return m_buildSkillType;}
@@ -403,6 +422,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
+	virtual void tick(const Unit *unit, Command &command) const;
 
 	//get
 	const RepairSkillType *getRepairSkillType() const	{return repairSkillType;}
@@ -527,6 +547,7 @@ public:
 	}
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
+	virtual void start(Unit *unit, Command &command) const;
 
 	//get
 	virtual int getProducedCount() const	{return 1;}
@@ -537,6 +558,10 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::UPGRADE; }
+
+	virtual void apply(Faction *faction, const Command &command) const;
+	virtual void undo(Unit *unit, const Command &command) const;
+	virtual CommandResult check(const Unit *unit, const Command &command) const;
 };
 
 // ===============================
@@ -610,6 +635,8 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
+	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual void start(Unit *unit, Command *command) const;
 
 	//get
 	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
@@ -643,6 +670,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc() const;
+	virtual void start(Unit *unit, Command *command) const;
 
 	//get
 	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
@@ -694,6 +722,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void update(Unit *unit) const;
+	virtual void tick(const Unit *unit, Command &command) const;
 	int getMaxDistance() const {return m_maxDistance;}
 
 	virtual CommandClass getClass() const { return typeClass(); }
@@ -708,6 +737,8 @@ class PatrolCommandType: public GuardCommandType {
 public:
 	PatrolCommandType() : GuardCommandType("Patrol", Clicks::TWO) {}
 	virtual void update(Unit *unit) const;
+	virtual void tick(const Unit *unit, Command &command) const;
+	virtual void finish(Unit *unit, Command &command) const;
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::PATROL; }
@@ -756,6 +787,7 @@ public:
 	}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::SET_MEETING_POINT; }
+	virtual CommandResult check(const Unit *unit, const Command &command) const;
 };
 
 // update helper, move somewhere sensible

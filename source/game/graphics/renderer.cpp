@@ -1197,6 +1197,8 @@ void Renderer::renderSelectionEffects() {
 			if (ct->getClicks() != Clicks::ONE) {
 				// arrow color
 				Vec3f arrowColor;
+				///@todo CommandRefactoring - hailstone 12Dec2010
+				//ct->getArrowColor();
 				switch(ct->getClass()){
 				case CommandClass::MOVE:
 					arrowColor= Vec3f(0.f, 1.f, 0.f);

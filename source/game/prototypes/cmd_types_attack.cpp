@@ -286,6 +286,15 @@ void PatrolCommandType::update(Unit *unit) const {
 	}
 }
 
+void PatrolCommandType::tick(const Unit *unit, Command &command) const {
+	replaceDeadReferences(command);
+}
+
+void PatrolCommandType::finish(Unit *unit, Command &command) const {
+	// remember where we started from
+	command.setPos2(unit->getPos());
+}
+
 // =====================================================
 // 	class GuardCommandType
 // =====================================================
@@ -314,6 +323,10 @@ void GuardCommandType::update(Unit *unit) const {
 		unit->clearPath();
 		unit->setCurrSkill(SkillClass::STOP);  // just hang-ten
 	}
+}
+
+void GuardCommandType::tick(const Unit *unit, Command &command) const {
+	replaceDeadReferences(command);
 }
 
 bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){

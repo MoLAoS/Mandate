@@ -343,6 +343,10 @@ void RepairCommandType::update(Unit *unit) const {
 	}
 }
 
+void RepairCommandType::tick(const Unit *unit, Command &command) const {
+	replaceDeadReferences(command);
+}
+
 Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 	if (!unit->isAutoCmdEnabled(AutoCmdFlag::REPAIR) || !unit->getFaction()->isAvailable(this)) {
 		return 0;
@@ -519,6 +523,24 @@ bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos
 
 	return blocked;
 }
+
+CommandResult BuildCommandType::check(const Unit *unit, const Command &command) const {
+	const UnitType *builtUnit = static_cast<const UnitType*>(command.getProdType());
+	if (isBlocked(builtUnit, command.getPos(), command.getFacing())) {
+		return CommandResult::FAIL_BLOCKED;
+	}
+	return CommandResult::SUCCESS;
+}
+
+void BuildCommandType::undo(Unit *unit, const Command &command) const {
+	// return building cost if we reserved resources and are not already building it or dead
+	if (command.isReserveResources() 
+			&& unit->getCurrSkill()->getClass() != SkillClass::BUILD
+			&& unit->getCurrSkill()->getClass() != SkillClass::DIE) {
+		unit->getFaction()->deApplyCosts(command.getProdType());
+	}
+}
+
 
 // --- Private ---
 
@@ -744,12 +766,12 @@ void HarvestCommandType::doChecksum(Checksum &checksum) const {
 void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
 
-	str+= lang.get("HarvestSpeed")+": "+ intToStr(m_harvestSkillType->getSpeed() / m_hitsPerUnit);
+	str+= lang.get("HarvestSpeed")+": "+ intToStr(m_harvestSkillType->getBaseSpeed() / m_hitsPerUnit);
 	m_harvestSkillType->descEpCost(str, unit);
-	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getSpeed()) / m_hitsPerUnit);
+	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getBaseSpeed()) / m_hitsPerUnit);
 	str+= "\n";
 	str += lang.get("MaxLoad") + ": " + intToStr(m_maxLoad) + "\n";
-	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getSpeed()) + "\n";
+	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
 	str+=lang.get("Resources")+":\n";
 	for(int i=0; i<getHarvestedResourceCount(); ++i){
 		str+= getHarvestedResource(i)->getName()+"\n";

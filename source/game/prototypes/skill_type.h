@@ -122,7 +122,8 @@ public:
 	virtual SkillClass getClass() const	= 0;
 	const string &getName() const		{return name;}
 	int getEpCost() const				{return epCost;}
-	int getSpeed() const				{return speed;}
+	int getBaseSpeed() const			{return speed;}
+	virtual fixed getSpeed(const Unit *unit) const	{return speed;}
 	int getAnimSpeed() const			{return animSpeed;}
 	const Model *getAnimation() const	{return animations.front();}
 	StaticSound *getSound() const		{return sounds.getRandSound();}
@@ -196,6 +197,7 @@ public:
 		descEpCost(str, unit);
 	}
 	//virtual void doChecksum(Checksum &checksum) const;
+	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MOVE; }
 };
@@ -258,6 +260,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 
 	//get
+	virtual fixed getSpeed(const Unit *unit) const;
 	int getAttackStrength() const				{return attackStrength;}
 	int getAttackVar() const					{return attackVar;}
 	//fixed getAttackPctStolen() const			{return attackPctStolen;}
@@ -281,6 +284,7 @@ public:
 		descEpCost(str, unit);
 	}
 
+	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BUILD; }
 };
@@ -295,7 +299,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		// command modifies displayed speed, all handled in HarvestCommandType
 	}
-
+	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::HARVEST; }
 };
@@ -321,6 +325,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 
+	virtual fixed getSpeed(const Unit *unit) const;
 	int getAmount() const		{return amount;}
 	fixed getMultiplier() const	{return multiplier;}
 	SplashType *getSplashParticleSystemType() const	{return splashParticleSystemType;}
@@ -349,9 +354,11 @@ public:
 		descSpeed(str, unit, "ProductionSpeed");
 		descEpCost(str, unit);
 	}
+	virtual fixed getSpeed(const Unit *unit) const;
 
 	bool isPet() const		{return pet;}
 	int getMaxPets() const	{return maxPets;}
+
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::PRODUCE; }
@@ -368,6 +375,7 @@ public:
 		descSpeed(str, unit, "UpgradeSpeed");
 		descEpCost(str, unit);
 	}
+	virtual fixed getSpeed(const Unit *unit) const;
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::UPGRADE; }
@@ -398,6 +406,7 @@ public:
 		descSpeed(str, unit, "MorphSpeed");
 		descEpCost(str, unit);
 	}
+	virtual fixed getSpeed(const Unit *unit) const;
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MORPH; }

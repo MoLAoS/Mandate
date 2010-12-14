@@ -203,7 +203,7 @@ public:
 	fixed getHalfHeight() const							{return halfHeight;}
 	bool isMobile () const {
 		const SkillType *st = getFirstStOfClass(SkillClass::MOVE);
-		return st && st->getSpeed() > 0 ? true: false;
+		return st && st->getBaseSpeed() > 0 ? true: false;
 	}
 
 	//cellmap

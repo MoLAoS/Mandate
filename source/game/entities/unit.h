@@ -314,7 +314,7 @@ public:
 	UnitPath *getPath()							{return &unitPath;}
 	WaypointPath *getWaypointPath()				{return &waypointPath;}
 	const WaypointPath *getWaypointPath() const {return &waypointPath;}
-	int getBaseSpeed(const SkillType *st) const {return st->getSpeed();}
+	int getBaseSpeed(const SkillType *st) const {return st->getBaseSpeed();}
 	int getSpeed(const SkillType *st) const;
 	int getBaseSpeed() const					{return getBaseSpeed(currSkill);}
 	int getSpeed() const						{return getSpeed(currSkill);}
@@ -335,6 +335,8 @@ public:
 
 	//bool isVisible() const					{return carried;}
 	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}
+	void loadUnitInit(Command *command);
+	void unloadUnitInit(Command *command);
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...

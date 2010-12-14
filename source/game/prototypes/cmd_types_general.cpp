@@ -124,6 +124,39 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	return 0;
 }
 
+void CommandType::apply(Faction *faction, const Command &command) const {
+	const ProducibleType *produced = command.getProdType();
+	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
+		faction->applyCosts(produced);
+	}
+}
+
+void CommandType::undo(Unit *unit, const Command &command) const {
+	//return cost
+	const ProducibleType *produced = command.getProdType();
+	if (produced) {
+		unit->getFaction()->deApplyCosts(produced);
+	}
+}
+
+/** 
+ * replace references to dead units with their dying position prior to their
+ * deletion for some commands 
+ * @param command the command to modify
+ */
+void CommandType::replaceDeadReferences(Command &command) const {
+	const Unit* unit1 = command.getUnit();
+	if (unit1 && unit1->isDead()) {
+		command.setUnit(NULL);
+		command.setPos(unit1->getPos());
+	}
+	const Unit* unit2 = command.getUnit2();
+	if (unit2 && unit2->isDead()) {
+		command.setUnit2(NULL);
+		command.setPos2(unit2->getPos());
+	}
+}
+
 // =====================================================
 // 	class MoveBaseCommandType
 // =====================================================
@@ -201,6 +234,10 @@ void MoveCommandType::update(Unit *unit) const {
 	if (command->isAuto() && (autoCmd = doAutoCommand(unit))) {
 		unit->giveCommand(autoCmd);
 	}
+}
+
+void MoveCommandType::tick(const Unit *unit, Command &command) const {
+	replaceDeadReferences(command);
 }
 
 // =====================================================
@@ -602,6 +639,29 @@ void UpgradeCommandType::update(Unit *unit) const {
 	}
 }
 
+void UpgradeCommandType::start(Unit *unit, Command &command) const {
+	command.setProdType(getProducedUpgrade());
+}
+
+void UpgradeCommandType::apply(Faction *faction, const Command &command) const {
+	CommandType::apply(faction, command);
+
+	faction->startUpgrade(getProducedUpgrade());
+}
+
+void UpgradeCommandType::undo(Unit *unit, const Command &command) const {
+	CommandType::undo(unit, command);
+	// upgrade command cancel from list
+	unit->getFaction()->cancelUpgrade(getProducedUpgrade());
+}
+
+CommandResult UpgradeCommandType::check(const Unit *unit, const Command &command) const {
+	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(getProducedUpgrade())) {
+		return CommandResult::FAIL_UNDEFINED;
+	}
+	return CommandResult::SUCCESS;
+}
+
 // =====================================================
 // 	class MorphCommandType
 // =====================================================
@@ -896,6 +956,22 @@ void LoadCommandType::update(Unit *unit) const {
 	}
 }
 
+void LoadCommandType::start(Unit *unit, Command *command) const {
+	unit->loadUnitInit(command);
+}
+
+CommandResult LoadCommandType::check(const Unit *unit, const Command &command) const {
+	if (getLoadCapacity() > unit->getCarriedCount()) {
+		if (canCarry(command.getUnit()->getType())
+		&& command.getUnit()->getFactionIndex() == unit->getFactionIndex()) {
+			return CommandResult::SUCCESS;
+		}
+		return CommandResult::FAIL_INVALID_LOAD;
+	} else {
+		return CommandResult::FAIL_LOAD_LIMIT;
+	}
+}
+
 // =====================================================
 // 	class UnloadCommandType
 // =====================================================
@@ -994,6 +1070,10 @@ void UnloadCommandType::update(Unit *unit) const {
 	}
 }
 
+void UnloadCommandType::start(Unit *unit, Command *command) const {
+	unit->unloadUnitInit(command);
+}
+
 // =====================================================
 // 	class BeLoadedCommandType
 // =====================================================
@@ -1080,6 +1160,14 @@ void CastSpellCommandType::update(Unit *unit) const {
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
 	}
+}
+
+// ===============================
+//  class SetMeetingPointCommandType
+// ===============================
+
+CommandResult SetMeetingPointCommandType::check(const Unit *unit, const Command &command) const {
+	return unit->getType()->hasMeetingPoint() ? CommandResult::SUCCESS : CommandResult::FAIL_UNDEFINED;
 }
 
 // Update helpers...

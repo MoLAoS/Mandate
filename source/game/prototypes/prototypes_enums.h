@@ -14,6 +14,10 @@ using Shared::Util::EnumNames;
 
 namespace Glest { namespace ProtoTypes {
 
+//NOTE: try not to use these in a switch or if/elseif situation if 
+//	it represents a class since polymorphism (ie virtual methods)
+//	makes it easier to create new ones.
+
 /** resource classes
   * <ul><li><b>TECH</b> resource is defined in tech tree.</li>
   *		<li><b>TILESET</b> resource is defined in tileset.</li>

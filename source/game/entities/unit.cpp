@@ -404,11 +404,18 @@ int Unit::getProductionPercent() const {
 				return clamp(progress2 * 100 / produced->getProductionTime(), 0, 100);
 			}
 		}
+		///@todo CommandRefactoring - hailstone 12Dec2010
+		/*
+		ProducerBaseCommandType *ct = commands.front()->getType();
+		if (ct->isProducer()) {
+			ct->getProductionPercent(progress2);
+		}
+		*/
 	}
 	return -1;
 }
 
-/** query next availale level @return next level, or NULL */
+/** query next available level @return next level, or NULL */
 const Level *Unit::getNextLevel() const{
 	if(level==NULL && type->getLevelCount()>0){
 		return type->getLevel(0);
@@ -784,6 +791,7 @@ void Unit::setAutoCmdEnable(AutoCmdFlag f, bool v) {
   * @return a CommandResult describing success or failure
   */
 CommandResult Unit::giveCommand(Command *command) {
+	assert(command);
 	const CommandType *ct = command->getType();
 	CMD_UNIT_LOG( this, "giveCommand() " << *command );
 	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
@@ -828,36 +836,17 @@ CommandResult Unit::giveCommand(Command *command) {
 	CommandResult result = checkCommand(*command);
 	if (result == CommandResult::SUCCESS) {
 		applyCommand(*command);
+		
+		// start the command type
+		ct->start(this, command);
 
 		if (command->getType()->getClass() == CommandClass::UPGRADE) {
 			const UpgradeCommandType *uct = static_cast<const UpgradeCommandType *>(command->getType());
 			command->setProdType(uct->getProducedUpgrade());
 		} else if (command->getType()->getClass() == CommandClass::LOAD) {
-			if (std::find(m_unitsToCarry.begin(), m_unitsToCarry.end(), command->getUnitRef()) == m_unitsToCarry.end()) {
-				m_unitsToCarry.push_back(command->getUnitRef());
-				CMD_LOG( "adding unit to load list " << *command->getUnit() )
-				if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
-					CMD_LOG( "deleting load command, already loading.")
-					delete command;
-					command = 0;
-				}
-			}
+			
 		} else if (command->getType()->getClass() == CommandClass::UNLOAD) {
-			if (command->getUnit()) {
-				if (std::find(m_unitsToUnload.begin(), m_unitsToUnload.end(), command->getUnitRef()) == m_unitsToUnload.end()) {
-					assert(std::find(m_carriedUnits.begin(), m_carriedUnits.end(), command->getUnitRef()) != m_carriedUnits.end());
-					m_unitsToUnload.push_back(command->getUnitRef());
-					CMD_LOG( "adding unit to unload list " << *command->getUnit() )
-					if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
-						CMD_LOG( "deleting unload command, already unloading.")
-						delete command;
-						command = 0;
-					}
-				}
-			} else {
-				m_unitsToUnload.clear();
-				m_unitsToUnload = m_carriedUnits;
-			}
+			
 		}
 		if (command) {
 			commands.push_back(command);
@@ -873,6 +862,36 @@ CommandResult Unit::giveCommand(Command *command) {
 		CMD_UNIT_LOG( this, "giveCommand() Result = " << CommandResultNames[result] );
 	}
 	return result;
+}
+
+void Unit::loadUnitInit(Command *command) {
+	if (std::find(m_unitsToCarry.begin(), m_unitsToCarry.end(), command->getUnitRef()) == m_unitsToCarry.end()) {
+		m_unitsToCarry.push_back(command->getUnitRef());
+		CMD_LOG( "adding unit to load list " << *command->getUnit() )
+		if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
+			CMD_LOG( "deleting load command, already loading.")
+			delete command;
+			command = 0;
+		}
+	}
+}
+
+void Unit::unloadUnitInit(Command *command) {
+	if (command->getUnit()) {
+		if (std::find(m_unitsToUnload.begin(), m_unitsToUnload.end(), command->getUnitRef()) == m_unitsToUnload.end()) {
+			assert(std::find(m_carriedUnits.begin(), m_carriedUnits.end(), command->getUnitRef()) != m_carriedUnits.end());
+			m_unitsToUnload.push_back(command->getUnitRef());
+			CMD_LOG( "adding unit to unload list " << *command->getUnit() )
+			if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
+				CMD_LOG( "deleting unload command, already unloading.")
+				delete command;
+				command = 0;
+			}
+		}
+	} else {
+		m_unitsToUnload.clear();
+		m_unitsToUnload = m_carriedUnits;
+	}
 }
 
 /** removes current command (and any queued Set meeting point commands)
@@ -915,9 +934,8 @@ CommandResult Unit::finishCommand() {
 
 	Command *command = popCommand();
 
-	//for patrol command, remember where we started from
-	if(command && command->getType()->getClass() == CommandClass::PATROL) {
-		command->setPos2(pos);
+	if (command) {
+		command->getType()->finish(this, *command);
 	}
 
 	if (commands.empty()) {
@@ -1332,7 +1350,7 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 	}
 	// modify offsets for attack skills
 	if (currSkill->getClass() == SkillClass::ATTACK) {
-		fixed ratio = currSkill->getSpeed() / fixed(getSpeed());
+		fixed ratio = currSkill->getBaseSpeed() / fixed(getSpeed());
 		frameOffset = (frameOffset * ratio).round();
 		if (soundOffset > 0) {
 			soundOffset = (soundOffset * ratio).round();
@@ -1613,30 +1631,10 @@ void Unit::checkEffectCloak() {
  */
 Unit* Unit::tick() {
 	Unit *killer = NULL;
-
-	//replace references to dead units with their dying position prior to their
-	//deletion for some commands
+	
+	// tick command types
 	for (Commands::iterator i = commands.begin(); i != commands.end(); i++) {
-		switch ((*i)->getType()->getClass()) {
-			case CommandClass::MOVE:
-			case CommandClass::REPAIR:
-			case CommandClass::GUARD:
-			case CommandClass::PATROL: {
-					const Unit* unit1 = (*i)->getUnit();
-					if (unit1 && unit1->isDead()) {
-						(*i)->setUnit(NULL);
-						(*i)->setPos(unit1->getPos());
-					}
-					const Unit* unit2 = (*i)->getUnit2();
-					if (unit2 && unit2->isDead()) {
-						(*i)->setUnit2(NULL);
-						(*i)->setPos2(unit2->getPos());
-					}
-				}
-				break;
-			default:
-				break;
-		}
+		(*i)->getType()->tick(this, (**i));
 	}
 	if (isAlive()) {
 		if (doRegen(getHpRegeneration(), getEpRegeneration())) {
@@ -2211,10 +2209,6 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		return CommandResult::SUCCESS;
 	}
 
-	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
-		return type->hasMeetingPoint() ? CommandResult::SUCCESS : CommandResult::FAIL_UNDEFINED;
-	}
-
 	//if not operative or has not command type => fail
 	if (!isOperative() || command.getUnit() == this || !getType()->hasCommandType(ct)) {
 		return CommandResult::FAIL_UNDEFINED;
@@ -2237,50 +2231,14 @@ CommandResult Unit::checkCommand(const Command &command) const {
 		}
 	}
 
-	if (ct->getClass() == CommandClass::LOAD) { // check load command
-		if (static_cast<const LoadCommandType*>(ct)->getLoadCapacity() > getCarriedCount()) {
-			if (static_cast<const LoadCommandType*>(ct)->canCarry(command.getUnit()->getType())
-			&& command.getUnit()->getFactionIndex() == getFactionIndex()) {
-				return CommandResult::SUCCESS;
-			}
-			return CommandResult::FAIL_INVALID_LOAD;
-		} else {
-			return CommandResult::FAIL_LOAD_LIMIT;
-		}
-	}
-
-	if (ct->getClass() == CommandClass::BUILD) { // build command specific
-		const UnitType *builtUnit = static_cast<const UnitType*>(command.getProdType());
-		const BuildCommandType *bct = static_cast<const BuildCommandType*>(ct);
-		if (bct->isBlocked(builtUnit, command.getPos(), command.getFacing())) {
-			return CommandResult::FAIL_BLOCKED;
-		}
-	} else if (ct->getClass() == CommandClass::UPGRADE) { // upgrade command specific
-		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-		if (faction->getUpgradeManager()->isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
-			return CommandResult::FAIL_UNDEFINED;
-		}
-	}
-
-	return CommandResult::SUCCESS;
+	return ct->check(this, command);
 }
 
 /** Apply costs for a command.
   * @param command the command to apply costs for
   */
 void Unit::applyCommand(const Command &command) {
-	const CommandType *ct = command.getType();
-
-	// apply costs for produced
-	const ProducibleType *produced = command.getProdType();
-	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
-		faction->applyCosts(produced);
-	}
-
-	if (ct->getClass() == CommandClass::UPGRADE) {
-		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-		faction->startUpgrade(uct->getProducedUpgrade());
-	}
+	command.getType()->apply(faction, command);
 }
 
 /** De-Apply costs for a command
@@ -2288,26 +2246,7 @@ void Unit::applyCommand(const Command &command) {
   * @return CommandResult::SUCCESS
   */
 CommandResult Unit::undoCommand(const Command &command) {
-	const CommandType *ct = command.getType();
-
-	// return building cost if we reserved resources and are not already building it or dead
-	if (ct->getClass() == CommandClass::BUILD) {
-		if (command.isReserveResources() && currSkill->getClass() != SkillClass::BUILD
-		&& currSkill->getClass() != SkillClass::DIE) {
-			faction->deApplyCosts(command.getProdType());
-		}
-	} else { //return cost
-		const ProducibleType *produced = command.getProdType();
-		if (produced) {
-			faction->deApplyCosts(produced);
-		}
-	}
-	// upgrade command cancel from list
-	if (ct->getClass() == CommandClass::UPGRADE) {
-		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-		faction->cancelUpgrade(uct->getProducedUpgrade());
-	}
-
+	command.getType()->undo(this, command);
 	return CommandResult::SUCCESS;
 }
 
@@ -2316,34 +2255,7 @@ CommandResult Unit::undoCommand(const Command &command) {
   * @return the speed value this unit would execute st at
   */
 int Unit::getSpeed(const SkillType *st) const {
-	fixed speed = st->getSpeed();
-	switch (st->getClass()) {
-		case SkillClass::MOVE:
-			speed = speed * moveSpeedMult + moveSpeed;
-			break;
-
-		case SkillClass::ATTACK:
-			speed =  speed * attackSpeedMult + attackSpeed;
-			break;
-
-		case SkillClass::PRODUCE:
-		case SkillClass::UPGRADE:
-		case SkillClass::MORPH:
-			speed =  speed * prodSpeedMult + prodSpeed;
-			break;
-
-		case SkillClass::BUILD:
-		case SkillClass::REPAIR:
-			speed =  speed * repairSpeedMult + repairSpeed;
-			break;
-
-		case SkillClass::HARVEST:
-			speed =  speed * harvestSpeedMult + harvestSpeed;
-			break;
-
-		default:
-			break;
-	}
+	fixed speed = st->getSpeed(this);
 	return (speed > 1 ? speed.intp() : 1);
 }
 
