@@ -76,7 +76,7 @@ public:
 	SurfaceAtlas();
 
 	void addSurface(SurfaceInfo *si);
-	float getCoordStep() const;
+	float getCoordStep() const { return 1.f; }
 
 private:
 	void checkDimensions(const Pixmap2D *p);

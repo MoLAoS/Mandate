@@ -170,7 +170,7 @@ public:
 	//get
 	int getTriangleCount() const	{return triangleCount;}
 	int getPointCount() const		{return pointCount;}
-	ShadowMode getShadowMode() const {m_shadowMode;}
+	ShadowMode getShadowMode() const {return m_shadowMode;}
 	GLuint getShadowMapHandle() const { return shadowMapHandle;}
 
 	// inc tri/point counters
@@ -195,6 +195,8 @@ public:
 	
 	//TextRenderer *getTextRenderer() const	{return textRenderer;}
 	TextRenderer *getFreeTypeRenderer() const	{return textRendererFT;}
+
+	TerrainRenderer* getTerrainRenderer() { return m_terrainRenderer; }
 
 	void manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs);
 	void updateParticleManager(ResourceScope rs);

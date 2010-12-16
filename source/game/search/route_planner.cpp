@@ -72,7 +72,7 @@ namespace Glest { namespace Search {
 		g_debugRenderer.clearWaypoints();
 		WaypointPath::const_iterator it = path.begin();
 		for ( ; it != path.end(); ++it) {
-			Vec3f vert = g_world.getMap()->getTile(Map::toTileCoords(*it))->getVertex();
+			Vec3f vert = g_world.getMap()->getVertexData()->get(Map::toTileCoords(*it)).vert();
 			vert.x += it->x % GameConstants::cellScale + 0.5f;
 			vert.z += it->y % GameConstants::cellScale + 0.5f;
 			vert.y += 0.15f;

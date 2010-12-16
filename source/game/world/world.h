@@ -223,7 +223,6 @@ private:
 	void initSplattedTextures();
 	void initFactions();
 	void initUnits();
-	void initMap();
 	void initExplorationState();
 
 	//misc

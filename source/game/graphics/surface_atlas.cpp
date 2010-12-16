@@ -105,10 +105,6 @@ void SurfaceAtlas::addSurface(SurfaceInfo *si){
 	}
 }
 
-float SurfaceAtlas::getCoordStep() const{
-	return 1.f;
-}
-
 void SurfaceAtlas::checkDimensions(const Pixmap2D *p){
 	if(surfaceSize==-1){
 		surfaceSize= p->getW();

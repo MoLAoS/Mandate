@@ -325,7 +325,7 @@ void Unit::save(XmlNode *node) const {
 
 	node->addChild("toBeUndertaken", toBeUndertaken);
 
-	//TODO AutoCmd enable
+	///@todo AutoCmd enable
 //	node->addChild("autoRepairEnabled", autoRepairEnabled);
 
 	if (type->hasMeetingPoint()) {
@@ -1451,12 +1451,18 @@ void Unit::doUpdate() {
 
 /** wrapper for World, from the point of view of the killer unit*/
 void Unit::doKill(Unit *killed) {
+	///@todo ?? 
+	//if (killed->getCurrSkill()->getClass() == SkillClass::DIE) {
+	//	return;
+	//}
+
 	ScriptManager::onUnitDied(killed);
 	g_simInterface->getStats()->kill(getFactionIndex(), killed->getFactionIndex());
 	if (isAlive() && getTeam() != killed->getTeam()) {
 		incKills();
 	}
 
+	///@todo after stats inc ?? 
 	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
 		killed->kill();
 	}

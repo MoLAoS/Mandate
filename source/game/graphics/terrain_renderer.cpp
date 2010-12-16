@@ -34,13 +34,38 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Graphics {
 
+// ===========================================================
+// 	class TerrainRenderer
+// ===========================================================
+
+TerrainRenderer::~TerrainRenderer() {
+	delete m_mapData;
+}
+
+void TerrainRenderer::initMapData(const Vec2i &size, MapVertexData *data) {
+	m_size = size;
+	m_mapData = data;
+
+	// compute texture coords (for FoW tex unit)
+	float xStep = 1.f / (m_size.w - 1.f);
+	float yStep = 1.f / (m_size.h - 1.f);
+	for (int i=0; i < m_size.w; ++i) {
+		for (int j=0; j < m_size.h; ++j) {
+			m_mapData->get(i, j).texCoord() = Vec2f(i * xStep, j * yStep);
+		}
+	}
+}
+
+// ===========================================================
+// 	class TerrainRendererGlest
+// ===========================================================
+
 TerrainRendererGlest::TerrainRendererGlest()
 		: m_map(0), m_tileset(0), m_surfaceAtlas(0) {
 }
 
-void TerrainRendererGlest::end() {
+TerrainRendererGlest::~TerrainRendererGlest() {
 	delete m_surfaceAtlas;
-	m_surfaceAtlas = 0;
 }
 
 bool TerrainRendererGlest::checkCaps() {
@@ -68,8 +93,10 @@ const Texture2D* TerrainRendererGlest::addSurfTex(int tl, int tr, int bl, int br
 
 void TerrainRendererGlest::init(Map *map, Tileset *tileset) {
 	m_map = map;
-	m_tileset = tileset;
+	Vec2i size(map->getTileW(), map->getTileH());
+	TerrainRenderer::initMapData(size, map->getVertexData());
 
+	m_tileset = tileset;
 	m_surfaceAtlas = new SurfaceAtlas();
 
 	for (int i = 0; i < m_map->getTileW() - 1; ++i) {
@@ -83,7 +110,6 @@ void TerrainRendererGlest::init(Map *map, Tileset *tileset) {
 
 			const Texture2D *tex;
 			tex = addSurfTex(sctl->getTileType(), sctr->getTileType(), scbl->getTileType(), scbr->getTileType());
-			sctl->setTileTexCoord(Vec2f(0.f));
 			sctl->setTileTexture(tex);
 		}
 	}
@@ -102,6 +128,8 @@ void TerrainRendererGlest::render(SceneCuller &culler) {
 
 	int currTex;
 	const Rect2i mapBounds(0, 0, m_map->getTileW() - 1, m_map->getTileH() - 1);
+
+	Vec2f surfCoord(0.f);
 	float coordStep = m_surfaceAtlas->getCoordStep();
 
 	assertGl();
@@ -127,11 +155,7 @@ void TerrainRendererGlest::render(SceneCuller &culler) {
 	if (shadows == ShadowMode::PROJECTED || shadows == ShadowMode::MAPPED) {
 		glActiveTexture(Renderer::shadowTexUnit);
 		glEnable(GL_TEXTURE_2D);
-
 		glBindTexture(GL_TEXTURE_2D, renderer.getShadowMapHandle());
-
-		///@todo ? need this ?? ?
-		//static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(true); ?? surface rendering?
 		renderer.enableProjectiveTexturing();
 	}
 
@@ -141,61 +165,57 @@ void TerrainRendererGlest::render(SceneCuller &culler) {
 	for ( ; it != culler.tile_end(); ++it) {
 		const Vec2i pos = *it;
 		if (mapBounds.isInside(pos)) {
-
-			Tile *tc00= m_map->getTile(pos.x, pos.y);
-			Tile *tc10= m_map->getTile(pos.x+1, pos.y);
-			Tile *tc01= m_map->getTile(pos.x, pos.y+1);
-			Tile *tc11= m_map->getTile(pos.x+1, pos.y+1);
+			Tile *tile = m_map->getTile(pos);
+			TileVertex &vert00 = m_mapData->get(pos.x + 0, pos.y + 0);
+			TileVertex &vert10 = m_mapData->get(pos.x + 1, pos.y + 0);
+			TileVertex &vert01 = m_mapData->get(pos.x + 0, pos.y + 1);
+			TileVertex &vert11 = m_mapData->get(pos.x + 1, pos.y + 1);
 
 			renderer.incTriangleCount(2);
 			renderer.incPointCount(4);
 
 			// set texture
-			currTex= static_cast<const Texture2DGl*>(tc00->getTileTexture())->getHandle();
+			currTex= static_cast<const Texture2DGl*>(tile->getTileTexture())->getHandle();
 			if (currTex != lastTex) {
 				lastTex = currTex;
 				glBindTexture(GL_TEXTURE_2D, lastTex);
 			}
 
-			Vec2f surfCoord = tc00->getSurfTexCoord();
-
 			glBegin(GL_TRIANGLE_STRIP);
 
 			// draw quad using immediate mode
-			glMultiTexCoord2fv(Renderer::fowTexUnit, tc01->getFowTexCoord().ptr());
-			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x, surfCoord.y+coordStep);
-			glNormal3fv(tc01->getNormal().ptr());
-			glVertex3fv(tc01->getVertex().ptr());
+			glMultiTexCoord2fv(Renderer::fowTexUnit, vert01.texCoord().ptr());
+			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x, surfCoord.y + coordStep);
+			glNormal3fv(vert01.norm().ptr());
+			glVertex3fv(vert01.vert().ptr());
 
-			glMultiTexCoord2fv(Renderer::fowTexUnit, tc00->getFowTexCoord().ptr());
+			glMultiTexCoord2fv(Renderer::fowTexUnit, vert00.texCoord().ptr());
 			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x, surfCoord.y);
-			glNormal3fv(tc00->getNormal().ptr());
-			glVertex3fv(tc00->getVertex().ptr());
+			glNormal3fv(vert00.norm().ptr());
+			glVertex3fv(vert00.vert().ptr());
 
-			glMultiTexCoord2fv(Renderer::fowTexUnit, tc11->getFowTexCoord().ptr());
-			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x+coordStep, surfCoord.y+coordStep);
-			glNormal3fv(tc11->getNormal().ptr());
-			glVertex3fv(tc11->getVertex().ptr());
+			glMultiTexCoord2fv(Renderer::fowTexUnit, vert11.texCoord().ptr());
+			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x + coordStep, surfCoord.y + coordStep);
+			glNormal3fv(vert11.norm().ptr());
+			glVertex3fv(vert11.vert().ptr());
 
-			glMultiTexCoord2fv(Renderer::fowTexUnit, tc10->getFowTexCoord().ptr());
-			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x+coordStep, surfCoord.y);
-			glNormal3fv(tc10->getNormal().ptr());
-			glVertex3fv(tc10->getVertex().ptr());
+			glMultiTexCoord2fv(Renderer::fowTexUnit, vert10.texCoord().ptr());
+			glMultiTexCoord2f(Renderer::baseTexUnit, surfCoord.x + coordStep, surfCoord.y);
+			glNormal3fv(vert10.norm().ptr());
+			glVertex3fv(vert10.vert().ptr());
 
 			glEnd();
 		}
 	}
 
 	//Restore
-	//static_cast<ModelRendererGl*>(modelRenderer)->setDuplicateTexCoords(false);
 	glPopAttrib();
 
 	//assert
-	glGetError();	//remove when first mtex problem solved
 	assertGl();
 
 	IF_DEBUG_EDITION(
-		} // end else, if not renderering textures instead of terrain
+		} // end else, if not renderering debug textures instead of regular terrain
 		Debug::getDebugRenderer().renderEffects(culler);
 	)
 }

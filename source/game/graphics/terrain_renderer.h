@@ -22,12 +22,12 @@
 // game
 #include "scene_culler.h"
 #include "surface_atlas.h"
+#include "map.h"
 
 using namespace Shared::Math;
 using namespace Shared::Graphics;
 
 namespace Glest { namespace Sim {
-	class Map;
 	class Tileset;
 }}
 
@@ -41,19 +41,25 @@ using namespace Sim;
 ///	Abstract base class for terrain renderering sub-systems
 // ===========================================================
 class TerrainRenderer {
+protected:
+	MapVertexData *m_mapData;
+	Vec2i          m_size;
+
+protected:
+	void initMapData(const Vec2i &size, MapVertexData *data);
+
 private:
 	TerrainRenderer(const TerrainRenderer&) {} // no copy
 
 public:
-	TerrainRenderer() {}
+	TerrainRenderer() : m_mapData(0), m_size(0) {}
 
-	virtual ~TerrainRenderer() {}
+	virtual void init(Map *map, Tileset *tileset) = 0;
+
+	virtual ~TerrainRenderer();
 
 	virtual bool checkCaps() = 0; /**< Check GL caps, can this renderer be used? */
-
-	virtual void init(Map *map, Tileset *tileset) = 0;	/**< initialise */
 	virtual void render(SceneCuller &culler) = 0; /**< render visible terrain */
-	virtual void end() = 0; /**< clean-up */
 };
 
 // ===========================================================
@@ -73,14 +79,13 @@ private:
 
 public:
 	TerrainRendererGlest();
-	~TerrainRendererGlest() { }
+	~TerrainRendererGlest();
 
 	virtual bool checkCaps() override; /**< Check GL caps, can this renderer be used? */
 
-	virtual void init(Map *map, Tileset *tileset) override;	/**< initialise */
-	virtual void render(SceneCuller &culler) override; /**< render visible terrain */
-	virtual void end() override; /**< clean-up */
+	virtual void init(Map *map, Tileset *tileset) override;
 
+	virtual void render(SceneCuller &culler) override; /**< render visible terrain */
 };
 
 

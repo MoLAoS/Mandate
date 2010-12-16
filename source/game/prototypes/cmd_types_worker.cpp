@@ -653,9 +653,9 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 
 	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
 
-	const Tile *const &refTile = map->getTile(Map::toTileCoords(builtUnit->getCenteredPos())); 
+	Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
 	if (builtUnitType->getField() == Field::LAND 
-	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->getSubmerged(refTile))) {
+	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
 		map->prepareTerrain(builtUnit);
 	}
 	command->setUnit(builtUnit);

@@ -89,9 +89,8 @@ void TimeFlow::update(){
 }
 
 string TimeFlow::describeTime() const {
-	float whole = int(time);
-	float frac = time - whole;//modf(time, &whole);
-	int hours = int(whole);
+	int hours = int(time);
+	float frac = time - float(hours);//modf(time, &whole);
 	int min = int(frac * 60.f);
 	string res = intToStr(hours) + ":";
 	if (min < 10) {

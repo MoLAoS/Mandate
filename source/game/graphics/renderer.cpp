@@ -836,11 +836,6 @@ void Renderer::renderObjects() {
 			const Model *objModel= sc->getObject()->getModel();
 			Vec3f v= o->getPos();
 
-			// QUICK-FIX: Objects/Resources drawn out of place...				
-			// Why do we need this ??? are the tileset objects / techtree resources defined out of position ??
-			v.x += GameConstants::cellScale / 2; // == 1
-			v.z += GameConstants::cellScale / 2;
-
 			//ambient and diffuse color is taken from cell color
 			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
 			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
@@ -875,23 +870,23 @@ void Renderer::renderWater(){
 	SECTION_TIMER(RENDER_WATER);
 
 	bool closed= false;
-	const World *world = &g_world;
-	const Map *map= world->getMap();
+	World &world = g_world;
+	Map *map = world.getMap();
 
-	float waterAnim= world->getWaterEffects()->getAmin();
+	float waterAnim = world.getWaterEffects()->getAmin();
 
 	//assert
 	assertGl();
 
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_CURRENT_BIT);
 
-	//water texture nit
+	// water texture unit
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 
 	glEnable(GL_BLEND);
 	if(textures3D){
-		Texture3D *waterTex= world->getTileset()->getWaterTex();
+		Texture3D *waterTex = world.getTileset()->getWaterTex();
 		glEnable(GL_TEXTURE_3D);
 		glBindTexture(GL_TEXTURE_3D, static_cast<Texture3DGl*>(waterTex)->getHandle());
 	}
@@ -904,7 +899,7 @@ void Renderer::renderWater(){
 	assertGl();
 
 	//fog of War texture Unit
-	const Texture2D *fowTex= g_userInterface.getMinimap()->getFowTexture();
+	const Texture2D *fowTex = g_userInterface.getMinimap()->getFowTexture();
 	glActiveTexture(fowTexUnit);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
@@ -916,19 +911,22 @@ void Renderer::renderWater(){
 	//Rect2i scaledRect= boundingRect/Map::cellScale;
 	Rect2i scaledRect = culler.getBoundingRectTile();
 	scaledRect.clamp(0, 0, map->getTileW()-1, map->getTileH()-1);
+	MapVertexData &mapData = *map->getVertexData();
 
-	float waterLevel= world->getMap()->getWaterLevel();
-	for(int j=scaledRect.p[0].y; j<scaledRect.p[1].y; ++j) {
+	int thisTeamIndex = world.getThisTeamIndex();
+	glNormal3f(0.f, 1.f, 0.f);
+
+	float waterLevel = map->getWaterLevel();
+	for(int j = scaledRect.p[0].y; j < scaledRect.p[1].y; ++j) {
 		glBegin(GL_TRIANGLE_STRIP);
 
-		for(int i=scaledRect.p[0].x; i<=scaledRect.p[1].x; ++i){
-
+		for(int i = scaledRect.p[0].x; i <= scaledRect.p[1].x; ++i) {
+			Vec2i tilePos0(i, j);
+			Vec2i tilePos1(i, j + 1);
 			Tile *tc0= map->getTile(i, j);
 			Tile *tc1= map->getTile(i, j+1);
 
-			int thisTeamIndex= world->getThisTeamIndex();
 			if(tc0->getNearSubmerged() && (tc0->isExplored(thisTeamIndex) || tc1->isExplored(thisTeamIndex))){
-				glNormal3f(0.f, 1.f, 0.f);
 				closed= false;
 
 				triangleCount+= 2;
@@ -937,8 +935,8 @@ void Renderer::renderWater(){
 				//vertex 1
 				glMaterialfv(
 					GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-					computeWaterColor(waterLevel, tc1->getHeight()).ptr());
-				glMultiTexCoord2fv(GL_TEXTURE1, tc1->getFowTexCoord().ptr());
+					computeWaterColor(waterLevel, map->getTileHeight(tilePos1)).ptr());
+				glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos1).texCoord().ptr());
 				glTexCoord3f( (float)i, 1.f, waterAnim );
 				glVertex3f(
 					float(i) * GameConstants::mapScale,
@@ -948,8 +946,8 @@ void Renderer::renderWater(){
 				//vertex 2
 				glMaterialfv(
 					GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-					computeWaterColor(waterLevel, tc0->getHeight()).ptr());
-				glMultiTexCoord2fv(GL_TEXTURE1, tc0->getFowTexCoord().ptr());
+					computeWaterColor(waterLevel, map->getTileHeight(tilePos0)).ptr());
+				glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos0).texCoord().ptr());
 				glTexCoord3f( (float)i, 0.f, waterAnim );
 				glVertex3f(
 					float(i) * GameConstants::mapScale,
@@ -962,8 +960,8 @@ void Renderer::renderWater(){
 					//vertex 1
 					glMaterialfv(
 						GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-						computeWaterColor(waterLevel, tc1->getHeight()).ptr());
-					glMultiTexCoord2fv(GL_TEXTURE1, tc1->getFowTexCoord().ptr());
+						computeWaterColor(waterLevel, map->getTileHeight(tilePos1)).ptr());
+					glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos1).texCoord().ptr());
 					glTexCoord3f( (float)i, 1.f, waterAnim );
 					glVertex3f(
 						float(i) * GameConstants::mapScale,
@@ -973,8 +971,8 @@ void Renderer::renderWater(){
 					//vertex 2
 					glMaterialfv(
 						GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-						computeWaterColor(waterLevel, tc0->getHeight()).ptr());
-					glMultiTexCoord2fv(GL_TEXTURE1, tc0->getFowTexCoord().ptr());
+						computeWaterColor(waterLevel, map->getTileHeight(tilePos0)).ptr());
+					glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos0).texCoord().ptr());
 					glTexCoord3f( (float)i, 0.f, waterAnim );
 					glVertex3f(
 						float(i) * GameConstants::mapScale,
@@ -2033,8 +2031,6 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 
 			const Model *objModel = sc->getObject()->getModel();
 			Vec3f v = o->getPos();
-			v.x += GameConstants::cellScale / 2;
-			v.z += GameConstants::cellScale / 2;
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);

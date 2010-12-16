@@ -110,7 +110,7 @@ void World::init(const XmlNode *worldNode) {
 	//_PROFILE_FUNCTION();
 	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
-	initMap();
+	map.init();
 
 	// must be done after initMap()
 	routePlanner = new RoutePlanner(this);
@@ -927,15 +927,10 @@ void World::initCells() {
 	Logger::getInstance().add("State cells", true);
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
-
-			Tile *sc= map.getTile(i, j);
-
-			sc->setFowTexCoord(
-				Vec2f(i / (nextPowerOf2(map.getTileW()) - 1.f),j / (nextPowerOf2(map.getTileH()) - 1.f)));
-
-			for (int k = 0; k < GameConstants::maxPlayers; k++) {
-				sc->setExplored(k, !gs.getFogOfWar());
-				sc->setVisible(k, !gs.getFogOfWar());
+			Tile *tile = map.getTile(i, j);
+			for (int k = 0; k < GameConstants::maxPlayers; ++k) {
+				tile->setExplored(k, !gs.getFogOfWar());
+				tile->setVisible(k, !gs.getFogOfWar());
 			}
 		}
 	}
@@ -999,19 +994,28 @@ void World::initUnits() {
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
 					unit->create(true);
-					// sends updates, must be done after all other init
-					//unit->born();
-
+					//unit->born(); ... sends updates, must be done after all other init
 				} else {
-					throw runtime_error("Unit cant be placed, this error is caused because there "
-						"is no enough place to put the units near its start location, make a "
-						"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
+					throw runtime_error("Unit can't be placed! This error is caused because there "
+						"is not enough space to put the units near its start location, make a "
+						"better map: " + unit->getType()->getName() + " Faction: " + intToStr(i));
 				}
 			}
 		}
 	}
 	map.computeNormals();
 	map.computeInterpolatedHeights();
+
+	foreach (Factions, fIt, factions) {
+		foreach_const (Units, uIt, fIt->getUnits()) {
+			const Unit* const &unit = *uIt;
+			const UnitType *ut = unit->getType();
+			if (ut->hasSkillClass(SkillClass::BE_BUILT) && !ut->hasSkillClass(SkillClass::MOVE)) {
+				map.flatternTerrain(unit);
+				cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+			}
+		}
+	}
 }
 
 void World::activateUnits() {
@@ -1023,10 +1027,6 @@ void World::activateUnits() {
 //	foreach_const (Units, uIt, glestimals.getUnits()) {
 //		(*uIt)->born();
 //	}
-}
-
-void World::initMap() {
-	map.init();
 }
 
 void World::initExplorationState() {

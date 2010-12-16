@@ -361,25 +361,23 @@ void Minimap::computeTexture(const World *world){
 
 	m_terrainTex->getPixmap()->setPixels(Vec4f(1.f, 1.f, 1.f, 0.1f).ptr());
 
-	for(int j=0; j<m_terrainTex->getPixmap()->getH(); ++j){
-		for(int i=0; i<m_terrainTex->getPixmap()->getW(); ++i){
-			Tile *sc= map->getTile(i, j);
+	for (int j=0; j < m_terrainTex->getPixmap()->getH(); ++j) {
+		for (int i=0; i < m_terrainTex->getPixmap()->getW(); ++i) {
+			Tile *tile = map->getTile(i, j);
 
-			if(sc->getObject()==NULL || sc->getObject()->getType()==NULL){
-				const Pixmap2D *p= world->getTileset()->getSurfPixmap(sc->getTileType(), 0);
-				color= p->getPixel3f(p->getW()/2, p->getH()/2);
-				color= color * static_cast<float>(sc->getVertex().y/6.f);
+			if (!tile->getObject() || !tile->getObject()->getType()) {
+				const Pixmap2D *p = world->getTileset()->getSurfPixmap(tile->getTileType(), 0);
+				color = p->getPixel3f(p->getW() / 2, p->getH() / 2);
+				color = color * (map->getTileHeight(i, j) / 6.f);
 
-				if(sc->getVertex().y<= world->getMap()->getWaterLevel()){
-					color+= Vec3f(0.5f, 0.5f, 1.0f);
+				if (map->getTileHeight(i, j) <= world->getMap()->getWaterLevel()) {
+					color += Vec3f(0.5f, 0.5f, 1.0f);
 				}
-
-				if(color.x>1.f) color.x=1.f;
-				if(color.y>1.f) color.y=1.f;
-				if(color.z>1.f) color.z=1.f;
-			}
-			else{
-				color= sc->getObject()->getType()->getColor();
+				if (color.x > 1.f) color.x = 1.f;
+				if (color.y > 1.f) color.y = 1.f;
+				if (color.z > 1.f) color.z = 1.f;
+			} else {
+				color = tile->getObject()->getType()->getColor();
 			}
 			m_terrainTex->getPixmap()->setPixel(i, j, color);
 		}
