@@ -203,6 +203,7 @@ bool Program::init() {
 		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
 		gs.setTechPath(string("techs/magitech"));
 		gs.setFogOfWar(false);
+		gs.setShroudOfDarkness(false);
 		gs.setFactionCount(0);
 
 		try{

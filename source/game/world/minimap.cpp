@@ -108,6 +108,8 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 		setExploredState(world);
 	}
 
+	f = 0.f;
+
 	// fow texture
 	m_fowTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_fowTex->setMipmap(false);

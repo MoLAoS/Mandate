@@ -70,24 +70,44 @@ public:
 // ===========================================================
 
 class TerrainRendererGlest : public TerrainRenderer {
-private:
+protected:
 	Map				*m_map;
 	Tileset			*m_tileset;
 	SurfaceAtlas	*m_surfaceAtlas;
 
 	const Texture2D* addSurfTex(int tl, int tr, int bl, int br);
+	void splatTextures();
 
 public:
 	TerrainRendererGlest();
 	~TerrainRendererGlest();
 
 	virtual bool checkCaps() override; /**< Check GL caps, can this renderer be used? */
-
 	virtual void init(Map *map, Tileset *tileset) override;
-
 	virtual void render(SceneCuller &culler) override; /**< render visible terrain */
 };
 
+// ===========================================================
+// 	class TerrainRenderer2
+//
+///	experimental
+// ===========================================================
+
+class TerrainRenderer2 : public TerrainRendererGlest {
+protected:
+	GLuint			m_vertexBuffer;
+	vector<uint32>	m_indexArray;
+
+	void updateVertexData(Rect2i &area = Rect2i(-1, -1, -1, -1));
+
+public:
+	TerrainRenderer2();
+	~TerrainRenderer2();
+
+	virtual bool checkCaps() override;
+	virtual void init(Map *map, Tileset *tileset) override;
+	virtual void render(SceneCuller &culler) override;
+};
 
 }} // end namespace Glest::Graphics
 

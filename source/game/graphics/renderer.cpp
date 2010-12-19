@@ -29,6 +29,7 @@
 #include "factory_repository.h"
 #include "sim_interface.h"
 #include "debug_stats.h"
+#include "program.h"
 
 #include "leak_dumper.h"
 
@@ -264,7 +265,12 @@ void Renderer::initGame(GameState *game){
 	shadowMapFrame= 0;
 	waterAnim= 0;
 
-	m_terrainRenderer = new TerrainRendererGlest();
+	// terrain renderer
+	if (g_program.getCmdArgs().isTest("tr2")) {
+		m_terrainRenderer = new TerrainRenderer2();
+	} else {
+		m_terrainRenderer = new TerrainRendererGlest();
+	}
 	m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
 
 	// shadows
@@ -936,7 +942,7 @@ void Renderer::renderWater(){
 				glMaterialfv(
 					GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 					computeWaterColor(waterLevel, map->getTileHeight(tilePos1)).ptr());
-				glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos1).texCoord().ptr());
+				glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos1).fowTexCoord().ptr());
 				glTexCoord3f( (float)i, 1.f, waterAnim );
 				glVertex3f(
 					float(i) * GameConstants::mapScale,
@@ -947,7 +953,7 @@ void Renderer::renderWater(){
 				glMaterialfv(
 					GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 					computeWaterColor(waterLevel, map->getTileHeight(tilePos0)).ptr());
-				glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos0).texCoord().ptr());
+				glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos0).fowTexCoord().ptr());
 				glTexCoord3f( (float)i, 0.f, waterAnim );
 				glVertex3f(
 					float(i) * GameConstants::mapScale,
@@ -961,7 +967,7 @@ void Renderer::renderWater(){
 					glMaterialfv(
 						GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 						computeWaterColor(waterLevel, map->getTileHeight(tilePos1)).ptr());
-					glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos1).texCoord().ptr());
+					glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos1).fowTexCoord().ptr());
 					glTexCoord3f( (float)i, 1.f, waterAnim );
 					glVertex3f(
 						float(i) * GameConstants::mapScale,
@@ -972,7 +978,7 @@ void Renderer::renderWater(){
 					glMaterialfv(
 						GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
 						computeWaterColor(waterLevel, map->getTileHeight(tilePos0)).ptr());
-					glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos0).texCoord().ptr());
+					glMultiTexCoord2fv(GL_TEXTURE1, mapData.get(tilePos0).fowTexCoord().ptr());
 					glTexCoord3f( (float)i, 0.f, waterAnim );
 					glVertex3f(
 						float(i) * GameConstants::mapScale,

@@ -72,10 +72,10 @@ Map::Map()
 Map::~Map() {
 	Logger::getInstance().add("~Cells", !Program::getInstance()->isTerminating());
 
-	if(cells)			{delete[] cells;}
-	if(tiles)			{delete[] tiles;}
-	if(startLocations)	{delete[] startLocations;}
-//	if (surfaceHeights)	{delete[] surfaceHeights;}
+	delete [] cells;
+	delete [] tiles;
+	delete [] startLocations;
+	delete m_vertexData;
 }
 
 char encodeExplorationState(Tile *tile) {
@@ -289,6 +289,7 @@ void Map::init() {
 	Logger::getInstance().add("Heightmap computations", true);
 	m_vertexData = new MapVertexData(m_tileSize);
 	smoothSurface();
+	computeNormals();
 	computeInterpolatedHeights();
 	computeNearSubmerged();
 	computeTileColors();
@@ -845,8 +846,14 @@ void Map::flatternTerrain(const Unit *unit) {
 }
 
 //compute normals
-void Map::computeNormals(){  
-	//compute center normals
+void Map::computeNormals() {
+	// set perimeter normals
+	PerimeterIterator pIter(Vec2i(0), m_tileSize - Vec2i(1));
+	while (pIter.more()) {
+		Vec2i pos = pIter.next();
+		m_vertexData->get(pos).norm() = Vec3f(0.f, 1.f, 0.f);
+	}
+	// compute center normals
 	for (int i=1; i < m_tileSize.w - 1; ++i) {
 		for (int j=1; j < m_tileSize.h - 1; ++j) {
 			m_vertexData->get(i, j).norm() = m_vertexData->get(i, j).vert().normal(
@@ -961,24 +968,25 @@ void Map::smoothSurface() {
 	Util::RectIterator rectIter(Vec2i(1), m_tileSize - Vec2i(2));
 	while (rectIter.more()) {
 		Vec2i pos = rectIter.next();
-		float hieght = 0.f;
+		float height = 0.f;
 		perimIter = Util::PerimeterIterator(pos - Vec2i(1), pos + Vec2i(1));
 		while (perimIter.more()) {
 			Vec2i pos2 = perimIter.next();
-			hieght += m_heightMap[pos2.y * m_tileSize.w + pos2.x];
+			height += m_heightMap[pos2.y * m_tileSize.w + pos2.x];
 		}
-		hieght /= 9.f;
-		setTileHeight(pos, hieght);
+		height /= 9.f;
+		setTileHeight(pos, height);
 
 		Tile *tile = getTile(pos);
 		Object *obj = tile->getObject();
 		if (obj) {
 			Vec3f pos = obj->getPos();
-			pos.y = hieght;
+			pos.y = height;
 			obj->setPos(pos);
 		}
 	}
 	delete [] m_heightMap;
+	m_heightMap = 0;
 }
 
 void Map::computeNearSubmerged() {

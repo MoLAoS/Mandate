@@ -909,11 +909,11 @@ void GameState::saveGame(string name) const {
 }
 
 void ShowMap::render2d(){
-	//init
-	g_renderer.reset2d();
+	////init
+	//g_renderer.reset2d();
 
-	//2d mouse
-	g_renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos() ? 1.f : 0.f);
+	////2d mouse
+	//g_renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos() ? 1.f : 0.f);
 }
 
 void ShowMap::keyDown(const Key &key) {

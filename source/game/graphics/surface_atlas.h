@@ -31,7 +31,7 @@ namespace Glest { namespace Graphics {
 //	class SurfaceInfo
 // =====================================================
 
-class SurfaceInfo{
+class SurfaceInfo {
 private:
 	const Pixmap2D *center;
 	const Pixmap2D *leftUp;
@@ -65,21 +65,43 @@ public:
 // =====================================================
 
 class SurfaceAtlas{
-private:
+protected:
 	typedef vector<SurfaceInfo> SurfaceInfos;
 
-private:
+protected:
 	SurfaceInfos surfaceInfos;
 	int surfaceSize;
+	float m_coordStep;
 
 public:
 	SurfaceAtlas();
 
 	void addSurface(SurfaceInfo *si);
-	float getCoordStep() const { return 1.f; }
+	float getCoordStep() const { return m_coordStep; }
 
 private:
 	void checkDimensions(const Pixmap2D *p);
+};
+
+class SurfaceAtlas2 : public SurfaceAtlas {
+private:
+	const Texture2D *m_texture;
+	int		m_width, m_height;
+
+public:
+	SurfaceAtlas2() : m_texture(0), m_width(0), m_height(0) { }
+
+	void buildTexture();
+	Vec2f getTexCoords(const Texture2D *tex) {
+		foreach (SurfaceInfos, it, surfaceInfos) {
+			if (it->getTexture() == tex) {
+				return it->getCoord();
+			}
+		}
+		throw runtime_error("Texture not in atlas!");
+	}
+
+	const Texture2D* getMasterTexture() const { return m_texture; }
 };
 
 }}//end namespace

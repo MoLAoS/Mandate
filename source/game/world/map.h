@@ -172,7 +172,7 @@ public:
 	void deleteResource()					{ delete object; object= NULL;				}
 	//void resetVertex()						{ vertex = originalVertex;					}
 	//void alterVertex(const Vec3f &offset)	{ vertex += offset;							}
-	void updateObjectVertex();/*				{
+	/*void updateObjectVertex();				{
 		if (object) {
 			float xzOffset = GameConstants::cellScale / 2.f;
 			object->setPos(vertex + Vec3f(xzOffset, 0.f, xzOffset));
@@ -183,14 +183,27 @@ public:
 /** Tile Vertex structure */
 struct TileVertex {
 private:
-	Vec3f m_position;
-	Vec3f m_normal;
-	Vec2f m_fowTexCoord;
+	Vec3f m_position;		// 12
+	Vec3f m_normal;			// 12
+	Vec2f m_tileTLTexCoord;	//  8
+	Vec2f m_fowTexCoord;	//  8 => 40 != good
+
+	//Vec2f m_tileTRTexCoord;	//  8
+	//Vec2f m_tileBRTexCoord;	//  8
+	//Vec2f m_tileBLTexCoord;	//  8 => 64 == good.
 
 public:
+	TileVertex() : m_tileTLTexCoord(0.f) {}
+
+	TileVertex& operator=(const TileVertex &that) {
+		memcpy(this, &that, sizeof(TileVertex));
+		return *this;
+	}
+
 	Vec3f& vert() { return m_position; }
 	Vec3f& norm() { return m_normal; }
-	Vec2f& texCoord() { return m_fowTexCoord; }
+	Vec2f& tileTexCoord() { return m_tileTLTexCoord; }
+	Vec2f& fowTexCoord() { return m_fowTexCoord; }
 };
 
 /** vertex data for the map, in video card friendly format */
@@ -218,6 +231,8 @@ public:
 	TileVertex& get(int x, int y) {
 		return m_data[y * m_size.w + x];
 	}
+
+	TileVertex* data() {return m_data;}
 };
 
 // =====================================================
@@ -311,10 +326,7 @@ public:
 	bool isInside(int x, int y) const		{return x >= 0 && y >= 0 && x < m_cellSize.w && y < m_cellSize.h;}
 	bool isInside(const Vec2i &pos) const	{return isInside(pos.x, pos.y);}
 	bool isInsideTile(int sx, int sy) const	{return sx >= 0 && sy >= 0 && sx < m_tileSize.w && sy < m_tileSize.h;}
-	
-	bool isInsideTile(const Vec2i &sPos) const	{
-		return isInsideTile(sPos.x, sPos.y);
-	}
+	bool isInsideTile(const Vec2i &sPos) const	{ return isInsideTile(sPos.x, sPos.y); }
 
 	bool isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec2i &resourcePos) const;
 
