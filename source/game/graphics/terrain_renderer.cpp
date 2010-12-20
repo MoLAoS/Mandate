@@ -240,7 +240,7 @@ bool TerrainRenderer2::checkCaps() {
 	return isGlVersionSupported(1, 5, 0);
 }
 
-void TerrainRenderer2::updateVertexData(Rect2i &area) {
+void TerrainRenderer2::updateVertexData(Rect2i area) {
 	if (area.p[0] == Vec2i(-1)) {
 		area = Rect2i(Vec2i(0), Vec2i(m_size.w - 2, m_size.h - 2));
 	}

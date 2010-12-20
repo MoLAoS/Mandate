@@ -100,7 +100,7 @@ protected:
 	GLuint			m_vertexBuffer;
 	vector<uint32>	m_indexArray;
 
-	void updateVertexData(Rect2i &area = Rect2i(-1, -1, -1, -1));
+	void updateVertexData(Rect2i area = Rect2i(-1, -1, -1, -1));
 
 public:
 	TerrainRenderer2();
