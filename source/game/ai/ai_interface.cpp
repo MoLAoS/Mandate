@@ -120,8 +120,7 @@ void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
 			continue;
 		}
 		foreach_const (Units, it, f->getUnits()) {
-			Tile *tile= map->getTile(Map::toTileCoords((*it)->getPos()));
-			if ((*it)->isAlive() && tile->isVisible(faction->getTeam())) {
+			if ((*it)->isAlive() && faction->canSee(*it)) {
 				list.push_back(*it);
 			}
 		}

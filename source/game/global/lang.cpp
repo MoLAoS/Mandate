@@ -82,12 +82,12 @@ void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenario
 }
 
 void Lang::loadTechStrings(const string &tech) {
-	string path = "techs/" + tech + "/" + tech + "_" + m_locale + ".lng";
+	string path = "techs/" + tech + "/lang/" + tech + "_" + m_locale + ".lng";
 	m_techStrings.clear();
 	if (fileExists(path)) { // try to load the current m_locale first
 		m_techStrings.load(path);
 	} else { // try english otherwise
-		path = "techs/" + tech + "/" + tech + "_en.lng";
+		path = "techs/" + tech + "/lang/" + tech + "_en.lng";
 		if (fileExists(path)) {
 			m_techStrings.load(path);
 		}
@@ -98,7 +98,7 @@ void Lang::loadFactionStrings(const string &tech, set<string> &factions) {
 	foreach_const (set<string>, it, factions) {
 		const string &faction = *it;
 		Properties &p = m_factionStringsMap[faction];
-		string prePath = "techs/" + tech + "/factions/" + faction + "/" + faction + "_";
+		string prePath = "techs/" + tech + "/factions/" + faction + "/lang/" + faction + "_";
 		string path = prePath + m_locale + ".lng";
 	if (fileExists(path)) {
 			p.load(path);

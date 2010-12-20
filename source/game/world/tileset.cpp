@@ -234,50 +234,29 @@ void Tileset::doChecksum(Checksum &checksum) const {
 }
 
 Tileset::~Tileset(){
-	Logger::getInstance().add("~Tileset", !Program::getInstance()->isTerminating());
+	g_logger.add("~Tileset", !g_program.isTerminating());
+}
+
+const Pixmap2D *Tileset::getSurfPixmap(int type) const {
+	int64 seed = Chrono::getCurTicks();
+	Random rndm(seed);
+	float r = rndm.randRange(0.f, 1.f);
+	int var = 0;
+	float max = 0.f;
+	
+	for (int i=0; i < surfProbs[type].size(); ++i) {
+		max += surfProbs[type][i];
+		if (r <= max) {
+			var = i;
+			break;
+		}
+	}
+	return getSurfPixmap(type, var);
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type, int var) const{
 	int vars= surfPixmaps[type].size();
 	return &surfPixmaps[type][var % vars];
-}
-
-void Tileset::addSurfTex(int leftUp, int rightUp, int leftDown, int rightDown, Vec2f &coord, const Texture2D *&texture){
-
-	//center textures
-	if(leftUp==rightUp && leftUp==leftDown && leftUp==rightDown){
-
-		//texture variation according to probability
-		float r= random.randRange(0.f, 1.f);
-		int var= 0;
-		float max= 0.f;
-		for(int i=0; i<surfProbs[leftUp].size(); ++i){
-			max+= surfProbs[leftUp][i];
-			if(r<=max){
-				var= i;
-				break;
-			}
-		}
-		SurfaceInfo si(getSurfPixmap(leftUp, var));
-		surfaceAtlas.addSurface(&si);
-		coord= si.getCoord();
-		texture= si.getTexture();
-	}
-
-	//spatted textures
-	else{
-		int var= random.randRange(0, transitionVars);
-
-		SurfaceInfo si(
-			getSurfPixmap(leftUp, var),
-			getSurfPixmap(rightUp, var),
-			getSurfPixmap(leftDown, var),
-			getSurfPixmap(rightDown, var));
-		surfaceAtlas.addSurface(&si);
-		coord= si.getCoord();
-		texture= si.getTexture();
-	}
-
 }
 
 }}// end namespace

@@ -32,11 +32,6 @@ foreach(folder ${folders})
 	source_group("${folder}" FILES ${srcs})
 endforeach(folder)
 
-if(WIN32)
-	# add glprocs.c needed on windows
-	list(APPEND glestshared_srcs ${GLPROCS_FILE})
-endif(WIN32)
-
 if (MSVC)
 	# pre-compiled headers...
 	set(pch "${CMAKE_CURRENT_SOURCE_DIR}/include/pch.h" "${CMAKE_CURRENT_SOURCE_DIR}/sources/pch.cpp")
@@ -53,16 +48,28 @@ add_library(shared_lib STATIC ${glestshared_srcs})
 
 #message("FREETYPE_LIBRARY == " + ${FREETYPE_LIBRARY})
 #message("FREETYPE_LIBRARIES == " + ${FREETYPE_LIBRARIES})
-target_link_libraries(shared_lib ${LUA_LIBRARIES} ${ZLIB_LIBRARIES} ${FREETYPE_LIBRARIES} ${PNG_LIBRARY})
+target_link_libraries(shared_lib
+	${LUA_LIBRARIES}
+	${ZLIB_LIBRARIES}
+	${FREETYPE_LIBRARIES}
+	${PNG_LIBRARY}
+	${GLEW_LIBRARY})
+
 if (GAE_USE_PHYSFS)
 	target_link_libraries(shared_lib ${PHYSFS_LIBRARY})
 endif (GAE_USE_PHYSFS)
 
 if(WIN32)
 	# FIXME: VC project needs static vorbis/ogg libs
-	target_link_libraries(shared_lib ${VORBISFILE_STATIC_LIBRARY} ${VORBIS_STATIC_LIBRARY} ${OGG_STATIC_LIBRARY})
+	target_link_libraries(shared_lib 
+		${VORBISFILE_STATIC_LIBRARY}
+		${VORBIS_STATIC_LIBRARY}
+		${OGG_STATIC_LIBRARY})
 else(WIN32)
-	target_link_libraries(shared_lib ${SDL_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY})
+	target_link_libraries(shared_lib
+		${SDL_LIBRARY}
+		${OPENAL_LIBRARY}
+		${VORBISFILE_LIBRARY})
 endif(WIN32)
 
 if (MSVC)

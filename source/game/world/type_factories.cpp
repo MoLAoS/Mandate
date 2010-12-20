@@ -67,6 +67,7 @@ CommandTypeFactory::CommandTypeFactory()
 		: m_idCounter(0) {
 	registerClass<StopCommandType>("stop");
 	registerClass<MoveCommandType>("move");
+	registerClass<TeleportCommandType>("teleport");
 	registerClass<AttackCommandType>("attack");
 	registerClass<AttackStoppedCommandType>("attack-stopped");
 	registerClass<BuildCommandType>("build");

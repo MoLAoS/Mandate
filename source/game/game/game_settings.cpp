@@ -31,6 +31,7 @@ GameSettings::GameSettings(const XmlNode *node) {
 	thisFactionIndex = node->getChildIntValue("thisFactionIndex");
 	factionCount = node->getChildIntValue("factionCount");
 	fogOfWar = node->getChildBoolValue("fogOfWar");
+	shroudOfDarkness = node->getChildBoolValue("shroudOfDarkness");
 	randomStartLocs = node->getChildBoolValue("randomStartLocs");
 
 	defaultUnits = node->getChildBoolValue("defaultUnits");
@@ -83,6 +84,7 @@ void GameSettings::clear() {
 	defaultResources = true;
 	defaultVictoryConditions = true;
 	fogOfWar = true;
+	shroudOfDarkness = true;
 	randomStartLocs = false;
 }
 
@@ -135,6 +137,7 @@ void GameSettings::save(XmlNode *node) const {
 	node->addChild("thisFactionIndex", thisFactionIndex);
 	node->addChild("factionCount", factionCount);
 	node->addChild("fogOfWar", fogOfWar);
+	node->addChild("shroudOfDarkness", shroudOfDarkness);
 	node->addChild("randomStartLocs", randomStartLocs);
 	node->addChild("defaultUnits", defaultUnits);
 	node->addChild("defaultResources", defaultResources);

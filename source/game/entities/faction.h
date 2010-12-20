@@ -66,6 +66,8 @@ public:
 extern Colour factionColours[GameConstants::maxColours];
 extern Colour factionColoursOutline[GameConstants::maxColours];
 
+Vec3f getFactionColour(int ndx);
+
 // =====================================================
 // 	class Faction
 //
@@ -177,6 +179,8 @@ public:
 
 	// diplomacy
 	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
+	bool hasBuilding() const;
+	bool canSee(const Unit *unit) const;
 
 	// other
 	Unit *findUnit(int id) {
@@ -198,6 +202,7 @@ public:
 	// resources
 	void incResourceAmount(const ResourceType *rt, int amount);
 	void setResourceBalance(const ResourceType *rt, int balance);
+	void capResource(const ResourceType *rt);
 
 	// Generated 'products' (non unit producibles)
 	void addProduct(const GeneratedType *gt) { products.push_back(Product(gt)); }

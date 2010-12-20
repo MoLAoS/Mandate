@@ -51,6 +51,7 @@ if(DEFINED GAE_WINDEPS AND WIN32)
 		set(wxWidgets_ROOT_DIR ${GAE_WINDEPS}/wx)
 	endif(DEFINED WXWIN)
 	set(ENV{FREETYPE_DIR} ${GAE_WINDEPS})
+	set(ENV{GLEW_DIR} ${GAE_WINDEPS}/glew-1.5.7)
 else(DEFINED GAE_WINDEPS AND WIN32)
 	if (WIN32)
 		set (GAE_WINDEPS "" CACHE PATH "Windows dependencies folder")
@@ -66,6 +67,7 @@ find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 find_package(Freetype REQUIRED)
 find_package(PNG REQUIRED)
+find_package(GLEW REQUIRED)
 
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
@@ -110,16 +112,13 @@ else (MSVC)
 endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR}
-		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
+		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library
 	find_path(DSOUND_INCLUDE_DIR dsound.h HINTS ${GAE_WINDEPS} PATH_SUFFIXES include)
 	find_library(DSOUND_LIBRARY NAMES dsound HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
 	find_library(DXGUID_LIBRARY NAMES dxguid HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
-	# needs to be compiled as C (done automatically because *.c and project() has C), extra file for shared_lib
-	find_file(GLPROCS_FILE NAMES glprocs.c HINTS ${GAE_WINDEPS}/src)
-	include_directories(${DSOUND_INCLUDE_DIR})
 	# FIXME: VC project needs to be build with static vorbis/ogg libs
 	find_library(VORBISFILE_STATIC_LIBRARY NAMES vorbisfile_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
 	find_library(VORBIS_STATIC_LIBRARY NAMES vorbis_static HINTS ${GAE_WINDEPS} PATH_SUFFIXES lib)
@@ -234,7 +233,7 @@ endif()
 set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/build;.*~;/docs/html/;/package")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev;.supp;.patch;/build;.*~;/docs/html/;/package")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)

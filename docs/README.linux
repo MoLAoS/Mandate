@@ -1,7 +1,38 @@
+Dependencies
+------------
+
+- CMake 2.6 or later
+- SDL 1.2.5 or later
+- OpenAL
+- Vorbis
+- Lua 5.1
+- PhysicsFS (physfs) 2.0 or later
+- zlib
+- Freetype
+- libpng
+- wxWidgets 2.8 or later, optional, needed for map editor and model viewer
+- CppUnit, optional, needed for testsuite
+- LibXml2, optional, needed for Blender export script
+
+Compile & Install
+-----------------
+
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr ..
+$ make
+# make install
+
+This will build and install the game glestadv, the map editor gae_mapeditor
+and model viewer gae_g3dviewer.
+
+Have fun playing!
+
+
+more recent instructions:
+
 For compile instructions see:
 http://sourceforge.net/apps/trac/glestae/wiki/CompileGuideLinux
-
-If you want to install the game, just run 'make install'. Specify the install directory by setting CMAKE_INSTALL_PREFIX in cmake.
 
 Some more information about packaging:
 http://sourceforge.net/apps/trac/glestae/wiki/Packaging

@@ -124,6 +124,7 @@ Program::Program(CmdArgs &args)
 #	if AI_LOGGING
 		Logger::getAiLog().clear();
 #	endif
+	Logger::getWorldLog().clear();
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
@@ -157,8 +158,6 @@ Program::Program(CmdArgs &args)
 	if (cmdArgs.isTest("interpolation")) {
 		Shared::Graphics::test_interpolate();
 	}
-
-	init();
 }
 
 Program::~Program() {
@@ -174,7 +173,7 @@ Program::~Program() {
 	singleton = 0;
 }
 
-void Program::init() {
+bool Program::init() {
 	// startup and immediately host a game
 	if(cmdArgs.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this);
@@ -204,14 +203,26 @@ void Program::init() {
 		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
 		gs.setTechPath(string("techs/magitech"));
 		gs.setFogOfWar(false);
+		gs.setShroudOfDarkness(false);
 		gs.setFactionCount(0);
 
-		setState(new ShowMap(*this));
+		try{
+			setState(new ShowMap(*this));
+		}catch(runtime_error &e){
+			// e.g. map path wrong
+			cout << "caught exception:" << endl << e.what() << endl;
+			return false;
+		}
 	} else if(!cmdArgs.getScenario().empty()) {
 		ScenarioInfo scenarioInfo;
-		Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
-		Scenario::loadGameSettings(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
-		setState(new QuickScenario(*this));
+		try{
+			Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
+			Scenario::loadGameSettings(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
+			setState(new QuickScenario(*this));
+		}catch(runtime_error &e){
+			cout << "exception caught:" << endl << e.what() << endl;
+			return false;
+		}
 	} else if (cmdArgs.isLoadLastGame()) {
 		Shared::Xml::XmlTree doc("game-settings");
 		doc.load("last_gamesettings.gs");
@@ -223,6 +234,7 @@ void Program::init() {
 	} else {
 		setState(new Intro(*this));
 	}
+	return true;
 }
 
 void Program::loop() {

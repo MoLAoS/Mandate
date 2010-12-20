@@ -55,6 +55,8 @@ public:
 
 	virtual GameRole getNetworkRole() const { return GameRole::SERVER; }
 	bool syncReady() const { return m_dataSync; }
+	
+	virtual void updateSkillCycle(Unit *unit);
 
 #	if MAD_SYNC_CHECKING
 		void dumpFrame(int frame);
@@ -79,8 +81,6 @@ protected:
 		virtual void checkProjectileUpdate(Unit *unit, int, int32);
 		virtual void checkAnimUpdate(Unit *unit, int32);
 #	endif
-
-	virtual void updateSkillCycle(Unit *unit);
 
 	//virtual void updateMove(Unit *unit);
 	virtual void updateProjectilePath(Unit *u, Projectile *pps, const Vec3f &start, const Vec3f &end);

@@ -15,8 +15,27 @@
 #include "model_renderer.h"
 #include "model.h"
 #include "opengl.h"
+#include "shader.h"
 
 namespace Shared{ namespace Graphics{ namespace Gl{
+
+class ShaderSet {
+private:
+	const string	 m_name;
+	ShaderProgram	*m_teamColour;
+	ShaderProgram	*m_alphaColour;
+
+public:
+	ShaderSet(const string &name);
+	~ShaderSet();
+	bool load();
+
+	const string&	getName() {return m_name;}
+	ShaderProgram	*getTeamProgram() {return m_teamColour;}
+	ShaderProgram	*getAlphaProgram() {return m_alphaColour;}
+};
+
+typedef vector<ShaderSet*> ShaderSets;
 
 // =====================================================
 //	class ModelRendererGl
@@ -26,28 +45,33 @@ class ModelRendererGl: public ModelRenderer {
 private:
 	bool rendering;
 	bool duplicateTexCoords;
+	bool shaderOverride;
 	int secondaryTexCoordUnit;
 	GLuint lastTexture;
 
+	ShaderSets	m_shaders;
+	int			m_shaderIndex; // index in m_shaders of ShaderSet we a currently using, or -1
+	
+	ShaderProgram	*m_lastShaderProgram;
+	ShaderProgram	*m_fixedFunctionProgram;
+
+	static const int diffuseTextureUnit = GL_TEXTURE0;
+	static const int normalTextureUnit = GL_TEXTURE2;
+	static const int specularTextureUnt = GL_TEXTURE1;
+
 public:
 	ModelRendererGl();
+	~ModelRendererGl();
+
+	void loadShaders(const vector<string> &programNames);
+
+	void cycleShaderSet();
+	const string& getShaderName();
+	bool isUsingShaders() const { return m_shaderIndex != -1; }
+
 	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback);
 
-	virtual void end() {
-		//assertions
-		assert(rendering);
-		assertGl();
-	
-		//set render state
-		rendering = false;
-	
-		//pop
-		glPopAttrib();
-		glPopClientAttrib();
-	
-		//assertions
-		assertGl();
-	}
+	virtual void end();
 	
 	virtual void render(const Model *model) {
 		//assertions

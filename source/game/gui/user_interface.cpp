@@ -181,7 +181,7 @@ void UserInterface::init() {
 	}
 }
 
-void UserInterface::initMinimap(bool fow, bool resuming) {
+void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	const int &mapW = g_map.getW();
 	const int &mapH = g_map.getH();
 
@@ -200,7 +200,7 @@ void UserInterface::initMinimap(bool fow, bool resuming) {
 
 	int mx = 10;
 	int my = g_metrics.getScreenH() - size.y - 30;
-	m_minimap = new Minimap(fow, WidgetWindow::getInstance(), Vec2i(mx, my), size);
+	m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my), size);
 	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
@@ -803,10 +803,20 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 			// not our click
 		}
 	} else if (posDisplay == autoRepairPos) {
-		AutoCmdState state = selection.getAutoRepairState();
+		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::REPAIR);
 		bool action = (state != AutoCmdState::ALL_ON);
-		commander->trySetAutoRepairEnabled(selection,
-				CommandFlags(CommandProperties::QUEUE, input.isShiftDown()), action);
+		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::REPAIR, action);
+	} else if (posDisplay == autoAttackPos) {
+		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
+		bool action = (state != AutoCmdState::ALL_ON);
+		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::ATTACK, action);
+	} else if (posDisplay == autoFleePos) {
+		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::FLEE);
+		bool action = (state != AutoCmdState::ALL_ON);
+		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::FLEE, action);
+	} else if (posDisplay == cloakTogglePos) {
+		bool action = !selection.anyCloaked();
+		commander->trySetCloak(selection, action);
 	} else if (posDisplay == meetingPointPos) {
 		activePos= posDisplay;
 		selectingMeetingPoint= true;
@@ -895,6 +905,18 @@ void UserInterface::computePortraitInfo(int posDisplay) {
 	}
 }
 
+inline string describeAutoCommandState(AutoCmdState state) {
+	switch (state) {
+		case AutoCmdState::ALL_ON:
+			return g_lang.get("On");
+		case AutoCmdState::ALL_OFF:
+			return g_lang.get("Off");
+		case AutoCmdState::MIXED:
+			return g_lang.get("Mixed");
+	}
+	return "";
+}
+
 void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection.isComandable() || posDisplay == invalidPos
@@ -909,19 +931,19 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		} else if (posDisplay == meetingPointPos) {
 			m_display->setToolTipText(g_lang.get("SetMeetingPoint"));
 		} else if (posDisplay == autoRepairPos) {
-			string str = g_lang.get("AutoRepair");
-			switch (selection.getAutoRepairState()) {
-				case AutoCmdState::ALL_ON:
-					str += " " + g_lang.get("On");
-					break;
-				case AutoCmdState::ALL_OFF:
-					str += " " + g_lang.get("Off");
-					break;
-				case AutoCmdState::MIXED:
-					str += " " + g_lang.get("Mixed");
-					break;
-			}
+			string str = g_lang.get("AutoRepair") + " ";
+			str += describeAutoCommandState(selection.getAutoRepairState());
 			m_display->setToolTipText(str);
+		} else if (posDisplay == autoAttackPos) {
+			string str = g_lang.get("AutoAttack") + " ";
+			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::ATTACK));
+			m_display->setToolTipText(str);
+		} else if (posDisplay == autoFleePos) {
+			string str = g_lang.get("AutoFlee") + " ";
+			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::FLEE));
+			m_display->setToolTipText(str);
+		} else if (posDisplay == cloakTogglePos) {
+			m_display->setToolTipText(g_lang.get("ToggleCloak"));
 		} else { // uniform selection
 			if (selection.isUniform()) {
 				const Unit *unit = selection.getFrontUnit();
@@ -984,14 +1006,23 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		string factionName = unit->getFaction()->getType()->getName();
 		string commandName = g_lang.getFactionString(factionName, activeCommandType->getName());
 		if (commandName == activeCommandType->getName()) { // no custom command name
-			commandName = g_lang.get(activeCommandType->getName()); // assume command class is name
+			CommandClass cc = activeCommandType->getClass(); // assume command class is name
+			commandName = g_lang.get(CommandClassNames[cc]);
 		}
 		string tip = g_lang.getFactionString(factionName, activeCommandType->getTipKey(pt->getName()));
-		string res = commandName + " : " + g_lang.getFactionString(factionName, pt->getName()) + "\n\n";
+		
+		string prodName = pt->getName();
+		string prodName2 = g_lang.getFactionString(factionName, pt->getName());
+		if (prodName.compare(prodName2) == 0) {
+			prodName = formatString(prodName);
+		} else {
+			prodName = prodName2;
+		}
+		string res = commandName + " : " + prodName + "\n\n";
 		if (!tip.empty()) {
 			res += tip + "\n\n";
 	}
-		res += pt->getReqDesc();
+		res += formatString(pt->getReqDesc());
 		m_display->setToolTipText(res);
 	}
 }
@@ -1003,7 +1034,7 @@ void UserInterface::computeDisplay() {
 	// init
 	m_display->clear();
 
-	// ================ PART 1 ================
+	// === Selection Panel ===
 
 	int thisTeam = g_world.getThisTeamIndex();
 
@@ -1020,14 +1051,27 @@ void UserInterface::computeDisplay() {
 
 		m_display->setPortraitText(unit->getShortDesc());
 		if (friendly) {
-			m_display->setProgressBar(unit->getProductionPercent());
+			if (unit->getProductionPercent() == -1) {
+				if (unit->getLoadCount()) {
+					string resName = g_lang.getTechString(unit->getLoadType()->getName());
+					if (resName == unit->getLoadType()->getName()) {
+						resName = formatString(resName);
+					}
+					m_display->setLoadInfo(g_lang.get("Load") + ": " + intToStr(unit->getLoadCount()) 
+						+  " " + resName);
+				} else {
+					m_display->setLoadInfo("");
+				}
+			} else {
+				m_display->setProgressBar(unit->getProductionPercent());
+			}
 			int ordersQueued = unit->getQueuedOrderCount();
 			if (ordersQueued) {
 				m_display->setOrderQueueText(g_lang.get("OrdersOnQueue") + ": " + intToStr(ordersQueued));
 			} else {
 				m_display->setOrderQueueText("");
+			}
 		}
-	}
 	}
 
 	// selection portraits
@@ -1035,7 +1079,8 @@ void UserInterface::computeDisplay() {
 		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
 
-	// transported portraits
+	// === Housed Units Panel ===
+
 	bool transported = false;
 	int i=0;
 	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
@@ -1055,7 +1100,7 @@ void UserInterface::computeDisplay() {
 	}
 	m_display->setTransportedLabel(transported);
 
-	// ================ PART 2 ================
+	// === Command Panel ===
 
 	if (selectingPos || selectingMeetingPoint) {
 		m_display->setDownSelectedPos(activePos);
@@ -1065,33 +1110,36 @@ void UserInterface::computeDisplay() {
 		if (!m_selectingSecond) {
 			const Unit *u = selection.getFrontUnit();
 			const UnitType *ut = u->getType();
-			if (selection.isCancelable()) { // cancel button
-				m_display->setDownImage(cancelPos, ut->getCancelImage());
-				m_display->setDownLighted(cancelPos, true);
+
+			if (selection.canRepair()) { // auto-repair toggle
+				m_display->setDownImage(autoRepairPos, selection.getCommandImage(CommandClass::REPAIR));
 			}
+
+			if (selection.canAttack()) {
+				m_display->setDownImage(autoAttackPos, selection.getCommandImage(CommandClass::ATTACK));
+				AutoCmdState attackState = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
+				if (attackState == AutoCmdState::NONE || attackState == AutoCmdState::ALL_OFF) {
+					if (selection.canMove()) {
+						m_display->setDownImage(autoFleePos, selection.getCommandImage(CommandClass::MOVE));
+					}
+				}
+			} else {
+				if (selection.canMove()) {
+					m_display->setDownImage(autoFleePos, selection.getCommandImage(CommandClass::MOVE));
+				}
+			}
+
+			if (selection.canCloak()) { // cloak toggle
+				m_display->setDownImage(cloakTogglePos, selection.getCloakImage());
+			}
+
 			if (selection.isMeetable()) { // meeting point
 				m_display->setDownImage(meetingPointPos, ut->getMeetingPointImage());
 				m_display->setDownLighted(meetingPointPos, true);
 			}
-			if (selection.isCanRepair()) {
-				if (selection.getAutoRepairState() == AutoCmdState::ALL_ON) {
-					const CommandType *rct = ut->getFirstCtOfClass(CommandClass::REPAIR);
-					if (!rct) {
-						RUNTIME_CHECK(selection.getCount() > 1);
-						for (int i=1; i < selection.getCount(); ++i) {
-							ut = selection.getUnit(i)->getType();
-							rct = ut->getFirstCtOfClass(CommandClass::REPAIR);
-							if (rct) {
-								break;
-							}
-						}
-					}
-					RUNTIME_CHECK(rct != 0);
-					m_display->setDownImage(autoRepairPos, rct->getImage());
-				} else {
-					m_display->setDownImage(autoRepairPos, ut->getCancelImage());
-				}
-				m_display->setDownLighted(autoRepairPos, true);
+			if (selection.isCancelable()) { // cancel button
+				m_display->setDownImage(cancelPos, ut->getCancelImage());
+				m_display->setDownLighted(cancelPos, true);
 			}
 
 			if (selection.isUniform()) { // uniform selection

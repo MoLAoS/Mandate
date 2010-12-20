@@ -71,8 +71,10 @@ private:
 						*m_tilesetLabel;
 	DropList			*m_techTreeList,
 						*m_tilesetList;
-	StaticText			*m_fogOfWarLabel;
-	CheckBox			*m_fogOfWarCheckbox;
+	StaticText			*m_FOWLabel;
+	CheckBox			*m_FOWCheckbox;
+	StaticText			*m_SODLabel;
+	CheckBox			*m_SODCheckbox;
 	StaticText			*m_randomLocsLabel;
 	CheckBox			*m_randomLocsCheckbox;
 	MessageDialog		*m_messageDialog;
@@ -81,15 +83,15 @@ private:
 	vector<string>		 m_tilesetFiles;
 	vector<string>		 m_factionFiles;
 	MapInfo				 m_mapInfo;
-	//AnnouncerThread		 m_announcer; ///@todo this causes lag on changing menu
+	AnnouncerThread		 m_announcer;
 	float				 m_origMusicVolume;
 	bool				 m_fadeMusicOut;
 
 public:
 	MenuStateNewGame(Program &program, MainMenu *mainMenu, bool openNetworkSlots = false);
 	~MenuStateNewGame() {
-		//m_announcer.stop();
-		//m_announcer.join();
+		m_announcer.stop();
+		m_announcer.join();
 	}
 
 	void update();

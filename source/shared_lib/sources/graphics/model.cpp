@@ -163,11 +163,17 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	//texture
 	if(!(meshHeader.properties & mp3NoTexture) && textureManager!=NULL){
 		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
-		texturePaths[mtDiffuse]= toLower(reinterpret_cast<char*>(meshHeader.texName));
+		texturePaths[mtDiffuse] = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texPath = dir + "/" + texPath;
 		texPath = cleanPath(texPath);
 
-		textures[mtDiffuse]= static_cast<Texture2D*>(textureManager->getTexture(texPath));
+		textures[mtDiffuse] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
+
+		// insert _normal before . in filename
+		texPath.insert(texPath.length()-4, "_normal"); 
+		if (fileExists(texPath))
+			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
+		///@todo will need to change default tex to use flat normals
 	}
 
 	//read data
@@ -414,6 +420,44 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	this->specularPower = 0.5f;
 	this->opacity = 1.f;
 	this->twoSided = false;
+}
+
+void Mesh::computeTangents() {
+	delete [] tangents;
+	tangents= new Vec3f[vertexCount];
+	for(unsigned int i=0; i<vertexCount; ++i){
+		tangents[i]= Vec3f(0.f);
+	}
+
+	for(unsigned int i=0; i<indexCount; i+=3){
+		for(int j=0; j<3; ++j){
+			uint32 i0= indices[i+j];
+			uint32 i1= indices[i+(j+1)%3];
+			uint32 i2= indices[i+(j+2)%3];
+
+			Vec3f p0= vertices[i0];
+			Vec3f p1= vertices[i1];
+			Vec3f p2= vertices[i2];
+
+			float u0= texCoords[i0].x;
+			float u1= texCoords[i1].x;
+			float u2= texCoords[i2].x;
+
+			float v0= texCoords[i0].y;
+			float v1= texCoords[i1].y;
+			float v2= texCoords[i2].y;
+
+			tangents[i0]+=
+				((p2-p0)*(v1-v0)-(p1-p0)*(v2-v0))/
+				((u2-u0)*(v1-v0)-(u1-u0)*(v2-v0));
+		}
+	}
+
+	for(unsigned int i=0; i<vertexCount; ++i){
+		/*Vec3f binormal= normals[i].cross(tangents[i]);
+		tangents[i]+= binormal.cross(normals[i]);*/
+		tangents[i].normalize();
+	}
 }
 
 void Mesh::save(const string &dir, FileOps *f){

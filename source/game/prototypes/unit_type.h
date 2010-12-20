@@ -84,8 +84,18 @@ private:
     int size;
     int height;
 
-	bool light;			// ??? UnitStats?
-    Vec3f lightColour;	// ??? UnitStats?
+	bool light;
+    Vec3f lightColour;
+
+	CloakClass	m_cloakClass;
+	int			m_cloakCost;
+	StaticSound *m_cloakSound;
+	StaticSound *m_deCloakSound;
+	Texture2D	*m_cloakImage;
+
+	bool		m_detector;
+
+	set<string> m_tags;
 
 	//sounds
 	SoundContainer selectionSounds;
@@ -141,6 +151,13 @@ public:
 	int getHeight() const					{return height;}
 	Field getField() const					{return field;}
 	Zone getZone() const					{return zone;}
+	CloakClass getCloakClass() const		{return m_cloakClass;}
+	int getCloakCost() const				{return m_cloakCost;}
+	bool isDetector() const					{return m_detector;}
+	StaticSound* getCloakSound() const		{return m_cloakSound; }
+	StaticSound* getDeCloakSound() const	{return m_deCloakSound; }
+	const Texture2D* getCloakImage() const	{return m_cloakImage; }
+	bool hasTag(const string &tag) const	{return m_tags.find(tag) != m_tags.end();}
 
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}
@@ -186,7 +203,7 @@ public:
 	fixed getHalfHeight() const							{return halfHeight;}
 	bool isMobile () const {
 		const SkillType *st = getFirstStOfClass(SkillClass::MOVE);
-		return st && st->getSpeed() > 0 ? true: false;
+		return st && st->getBaseSpeed() > 0 ? true: false;
 	}
 
 	//cellmap
@@ -225,6 +242,7 @@ public:
 	bool isOfClass(UnitClass uc) const;
 
 private:
+	void setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes);
     void sortSkillTypes();
     void sortCommandTypes();
 };

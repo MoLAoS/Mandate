@@ -50,9 +50,9 @@ CommandResult Commander::tryUnloadCommand(Unit *unit, CommandFlags flags, const 
 CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags flags,
 		const CommandType *ct, CommandClass cc, const Vec2i &pos, Unit *targetUnit,
 		const ProducibleType* prodType, CardinalDir facing) const {
-	COMMAND_LOG(__FUNCTION__ << "() " << selection.getUnits().size() << " units selected.");
+	//COMMAND_LOG(__FUNCTION__ << "() " << selection.getUnits().size() << " units selected.");
 	if (selection.isEmpty()) {
-		COMMAND_LOG(__FUNCTION__ << "() No units selected!");
+		//COMMAND_LOG(__FUNCTION__ << "() No units selected!");
 		return CommandResult::FAIL_UNDEFINED;
 	}
 	assert(!(prodType && targetUnit));
@@ -68,24 +68,24 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 		const CommandType *effectiveCt;
 		if (ct) {
 			effectiveCt = ct;
-			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying command " << ct->getName() );
+			//COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying command " << ct->getName() );
 		} else if (cc != CommandClass::NULL_COMMAND) {
 			effectiveCt = (*i)->getFirstAvailableCt(cc);
-			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying first command of class " << CommandClassNames[cc] );
+			//COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying first command of class " << CommandClassNames[cc] );
 		} else {
 			effectiveCt = (*i)->computeCommandType(pos, targetUnit);
-			COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying default, with pos " << pos << " and target " << (targetUnit ? targetUnit->getId() : -1));
-			if (effectiveCt) {
-				COMMAND_LOG(__FUNCTION__ << "() " << **i << " computed command = " << effectiveCt->getName());
-			} else {
-				COMMAND_LOG(__FUNCTION__ << "() " << **i << " no defualt command could be computed.");
-			}
+			//COMMAND_LOG(__FUNCTION__ << "() " << **i << " trying default, with pos " << pos << " and target " << (targetUnit ? targetUnit->getId() : -1));
+			//if (effectiveCt) {
+			//	COMMAND_LOG(__FUNCTION__ << "() " << **i << " computed command = " << effectiveCt->getName());
+			//} else {
+			//	COMMAND_LOG(__FUNCTION__ << "() " << **i << " no defualt command could be computed.");
+			//}
 		}
 		if(effectiveCt) {
 			if (prodType) { // production command
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
-					COMMAND_LOG(__FUNCTION__ << "() build command, setting DONT_RESERVE_RESOURCES flag = "
-						<< (i != units.begin() ? "true." : "false."));
+					//COMMAND_LOG(__FUNCTION__ << "() build command, setting DONT_RESERVE_RESOURCES flag = "
+					//	<< (i != units.begin() ? "true." : "false."));
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
 				}
 				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
@@ -133,23 +133,45 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 	const UnitVector &units = selection->getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
-		COMMAND_LOG(__FUNCTION__ << "() " << *i << " trying cancel command.");
+		//COMMAND_LOG(__FUNCTION__ << "() " << *i << " trying cancel command.");
 		pushCommand(new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Command::invalidPos, *i));
 	}
 
 	return CommandResult::SUCCESS;
 }
 
-void Commander::trySetAutoRepairEnabled(const Selection &selection, CommandFlags flags, bool enabled) const {
+void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const {
+	CommandArchetype archetype;
+	CommandFlags cmdFlags = CommandFlags(CommandProperties::MISC_ENABLE, enabled);
+	switch (flag) {
+		case AutoCmdFlag::REPAIR:
+			archetype = CommandArchetype::SET_AUTO_REPAIR;
+			break;
+		case AutoCmdFlag::ATTACK:
+			archetype = CommandArchetype::SET_AUTO_ATTACK;
+			break;
+		case AutoCmdFlag::FLEE:
+			archetype = CommandArchetype::SET_AUTO_FLEE;
+			break;
+	}
 	if (iSim->isNetworkInterface()) {
 		g_console.addLine(g_lang.get("NotAvailable"));
 	} else {
-	const UnitVector &units = selection.getUnits();
-		foreach_const (UnitVector, i, units) {
-			Command *c = new Command(CommandArchetype::SET_AUTO_REPAIR, CommandFlags(CommandProperties::AUTO_REPAIR_ENABLED, enabled), 
-				Command::invalidPos, *i);
-			pushCommand(c);
+		const UnitVector &units = selection.getUnits();
+			foreach_const (UnitVector, i, units) {
+				Command *c = new Command(archetype, cmdFlags, Command::invalidPos, *i);
+				pushCommand(c);
+		}
 	}
+}
+
+void Commander::trySetCloak(const Selection &selection, bool enabled) const {
+	CommandFlags flags(CommandProperties::MISC_ENABLE, enabled);
+	foreach_const (UnitVector, it, selection.getUnits()) {
+		if ((*it)->getType()->getCloakClass() == CloakClass::ENERGY) {
+			Command *c = new Command(CommandArchetype::SET_CLOAK, flags, Command::invalidPos, *it);
+			pushCommand(c);
+		}
 	}
 }
 
@@ -214,8 +236,8 @@ CommandResult Commander::pushCommand(Command *command) const {
 	RUNTIME_CHECK(command);
 	RUNTIME_CHECK(command->getCommandedUnit());
 	CommandResult result = command->getCommandedUnit()->checkCommand(*command);
-	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
-		<< ", Result=" << CommandResultNames[result] );
+	//COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
+	//	<< ", Result=" << CommandResultNames[result] );
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
 	} else {
@@ -225,7 +247,7 @@ CommandResult Commander::pushCommand(Command *command) const {
 }
 
 void Commander::giveCommand(Command *command) const {
-	COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command );
+	//COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command );
 	Unit* unit = command->getCommandedUnit();
 
 	//execute command, if unit is still alive and non-deleted
@@ -240,9 +262,26 @@ void Commander::giveCommand(Command *command) const {
 				delete command;
 				break;
 			case CommandArchetype::SET_AUTO_REPAIR:
-				unit->setAutoRepairEnabled(command->isAutoRepairEnabled());
+				unit->setAutoCmdEnable(AutoCmdFlag::REPAIR, command->isMiscEnabled());
 				delete command;
 				break;
+			case CommandArchetype::SET_AUTO_ATTACK:
+				unit->setAutoCmdEnable(AutoCmdFlag::ATTACK, command->isMiscEnabled());
+				delete command;
+				break;
+			case CommandArchetype::SET_AUTO_FLEE:
+				unit->setAutoCmdEnable(AutoCmdFlag::FLEE, command->isMiscEnabled());
+				delete command;
+				break;
+			case CommandArchetype::SET_CLOAK: {
+				bool cloak = command->isMiscEnabled();
+				if (cloak && !unit->isCloaked()) {
+					unit->cloak();
+				} else if (!cloak && unit->isCloaked()) {
+					unit->deCloak();
+				}
+				break;
+			}
 			default:
 				assert(false);
 		}

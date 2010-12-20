@@ -266,9 +266,9 @@ public:
 private:
 	/***/
 	template<typename TextureCallback>
-	void renderCellTextures(SceneCuller &culler, TextureCallback callback) {
-		const Rect2i mapBounds(0, 0, g_map.getTileW()-1, g_map.getTileH()-1);
-		float coordStep= g_world.getTileset()->getSurfaceAtlas()->getCoordStep();
+	void renderCellTextures(SceneCuller &culler, TextureCallback &callback) {
+		const Rect2i mapBounds(0, 0, g_map.getTileW() - 1, g_map.getTileH() - 1);
+		MapVertexData &mapData = *g_map.getVertexData();
 		assertGl();
 
 		glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
@@ -283,31 +283,34 @@ private:
 			int cx, cy;
 			cx = pos.x * 2;
 			cy = pos.y * 2;
-			if(mapBounds.isInside(pos)){
-				Tile *tc00 = g_map.getTile(pos.x, pos.y), *tc10 = g_map.getTile(pos.x+1, pos.y),
-					 *tc01 = g_map.getTile(pos.x, pos.y+1), *tc11 = g_map.getTile(pos.x+1, pos.y+1);
-				Vec3f tl = tc00->getVertex (), tr = tc10->getVertex (),
-					  bl = tc01->getVertex (), br = tc11->getVertex ();
-				Vec3f tc = tl + (tr - tl) / 2,  ml = tl + (bl - tl) / 2,
-					  mr = tr + (br - tr) / 2, mc = ml + (mr - ml) / 2, bc = bl + (br - bl) / 2;
+			if (mapBounds.isInside(pos)) {
+				Vec3f	tl = mapData.get(pos.x + 0, pos.y + 0).vert(),
+						tr = mapData.get(pos.x + 1, pos.y + 0).vert(),
+						bl = mapData.get(pos.x + 0, pos.y + 1).vert(),
+						br = mapData.get(pos.x + 1, pos.y + 1).vert();
+				Vec3f	tc = tl + (tr - tl) / 2,
+						ml = tl + (bl - tl) / 2,
+						mr = tr + (br - tr) / 2,
+						mc = ml + (mr - ml) / 2,
+						bc = bl + (br - bl) / 2;
+				Vec3f	norm = mapData.get(pos).norm();
 				Vec2i cPos(cx, cy);
 				const Texture2DGl *tex = callback(cPos);
-				renderCellTextured(tex, tc00->getNormal(), tl, tc, mc, ml);
+				renderCellTextured(tex, norm, tl, tc, mc, ml);
 				cPos = Vec2i(cx + 1, cy);
 				tex = callback(cPos);
-				renderCellTextured(tex, tc00->getNormal(), tc, tr, mr, mc);
+				renderCellTextured(tex, norm, tc, tr, mr, mc);
 				cPos = Vec2i(cx, cy + 1 );
 				tex = callback(cPos);
-				renderCellTextured(tex, tc00->getNormal(), ml, mc, bc, bl);
+				renderCellTextured(tex, norm, ml, mc, bc, bl);
 				cPos = Vec2i(cx + 1, cy + 1);
 				tex = callback(cPos);
-				renderCellTextured(tex, tc00->getNormal(), mc, mr, br, bc);
+				renderCellTextured(tex, norm, mc, mr, br, bc);
 			}
 		}
 		//Restore
 		glPopAttrib();
 		//assert
-		glGetError();	//remove when first mtex problem solved
 		assertGl();
 
 	} // renderCellTextures ()
@@ -315,9 +318,9 @@ private:
 	
 	/***/
 	template< typename ColourCallback >
-	void renderCellOverlay(SceneCuller &culler, ColourCallback callback) {
+	void renderCellOverlay(SceneCuller &culler, ColourCallback &callback) {
 		const Rect2i mapBounds( 0, 0, g_map.getTileW() - 1, g_map.getTileH() - 1 );
-		float coordStep = g_world.getTileset()->getSurfaceAtlas()->getCoordStep();
+		MapVertexData &mapData = *g_map.getVertexData();
 		Vec4f colour;
 		assertGl();
 		glPushAttrib( GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT );
@@ -334,25 +337,31 @@ private:
 			cx = pos.x * 2;
 			cy = pos.y * 2;
 			if ( mapBounds.isInside( pos ) ) {
-				Tile *tc00= g_map.getTile(pos.x, pos.y),	*tc10= g_map.getTile(pos.x+1, pos.y),
-					 *tc01= g_map.getTile(pos.x, pos.y+1),	*tc11= g_map.getTile(pos.x+1, pos.y+1);
-				Vec3f tl = tc00->getVertex(),	tr = tc10->getVertex(),
-					  bl = tc01->getVertex(),	br = tc11->getVertex(); 
+				Vec3f	tl = mapData.get(pos.x + 0, pos.y + 0).vert(),
+						tr = mapData.get(pos.x + 1, pos.y + 0).vert(),
+						bl = mapData.get(pos.x + 0, pos.y + 1).vert(),
+						br = mapData.get(pos.x + 1, pos.y + 1).vert();
+				
 				tl.y += 0.1f; tr.y += 0.1f; bl.y += 0.1f; br.y += 0.1f;
-				Vec3f tc = tl + (tr - tl) / 2,	ml = tl + (bl - tl) / 2,	mr = tr + (br - tr) / 2,
-					  mc = ml + (mr - ml) / 2,	bc = bl + (br - bl) / 2;
+
+				Vec3f	tc = tl + (tr - tl) / 2,
+						ml = tl + (bl - tl) / 2,
+						mr = tr + (br - tr) / 2,
+						mc = ml + (mr - ml) / 2,
+						bc = bl + (br - bl) / 2;
+				Vec3f	norm = mapData.get(pos).norm();
 
 				if (callback(Vec2i(cx,cy), colour)) {
-					renderCellOverlay(colour, tc00->getNormal(), tl, tc, mc, ml);
+					renderCellOverlay(colour, norm, tl, tc, mc, ml);
 				}
 				if (callback(Vec2i(cx+1, cy), colour)) {
-					renderCellOverlay(colour, tc00->getNormal(), tc, tr, mr, mc);
+					renderCellOverlay(colour, norm, tc, tr, mr, mc);
 				}
 				if (callback(Vec2i(cx, cy + 1), colour)) {
-					renderCellOverlay(colour, tc00->getNormal(), ml, mc, bc, bl);
+					renderCellOverlay(colour, norm, ml, mc, bc, bl);
 				}
 				if (callback(Vec2i(cx + 1, cy + 1), colour)) {
-					renderCellOverlay(colour, tc00->getNormal(), mc, mr, br, bc);
+					renderCellOverlay(colour, norm, mc, mr, br, bc);
 				}
 			}
 		}

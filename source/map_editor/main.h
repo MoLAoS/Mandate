@@ -92,6 +92,7 @@ private:
 
 private:
 	enum MenuId {
+		miFileNew,
 		miFileLoad,
 		miFileSave,
 		miFileSaveAs,
@@ -113,7 +114,7 @@ private:
 		miMiscResetZoomAndPos,
 		miMiscAbout,
 		miMiscHelp,
-		miShowMap,
+		miMiscShowMap,
 
 		toolPlayer,
 
@@ -127,9 +128,12 @@ private:
 		miRadius = miBrushStartLocation + startLocationCount + 1
 	};
 
+public:
+	Program *program;
+	
 private:
 	GlCanvas *glCanvas;
-	Program *program;
+/*	Program *program;*/
 	int lastX, lastY;
 
 	wxPanel *panel;
@@ -183,9 +187,9 @@ public:
 	void onMouseDown(wxMouseEvent &event, int x, int y);
 	void onMouseMove(wxMouseEvent &event, int x, int y);
 
-	void onPaint(wxPaintEvent &event);
 	void onKeyDown(wxKeyEvent &e);
 
+	void onMenuFileNew(wxCommandEvent &event);
 	void onMenuFileLoad(wxCommandEvent &event);
 	void onMenuFileSave(wxCommandEvent &event);
 	void onMenuFileSaveAs(wxCommandEvent &event);
@@ -207,7 +211,7 @@ public:
 	void onMenuMiscResetZoomAndPos(wxCommandEvent &event);
 	void onMenuMiscAbout(wxCommandEvent &event);
 	void onMenuMiscHelp(wxCommandEvent &event);
-	void onShowMap(wxCommandEvent &event);
+	void onMenuMiscShowMap(wxCommandEvent &event);
 
 	void onMenuBrushHeight(wxCommandEvent &event);
 	void onMenuBrushGradient(wxCommandEvent &event);
@@ -218,8 +222,6 @@ public:
 	void onMenuRadius(wxCommandEvent &event);
 	
 	void onToolPlayer(wxCommandEvent &event);
-
-	void onTimer(wxTimerEvent &event);
 
 	void change(int x, int y);
 
@@ -255,6 +257,7 @@ public:
 	void onMouseDown(wxMouseEvent &event);
 	void onMouseMove(wxMouseEvent &event);
 	void onKeyDown(wxKeyEvent &event);
+	void onPaint(wxPaintEvent &event);
 
 private:
 	MainWindow *mainWindow;

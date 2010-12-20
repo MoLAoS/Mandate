@@ -189,13 +189,6 @@ public:
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
 	void doKill(Unit *killer, Unit *killed);
 	
-	bool toRenderUnit(const Unit *unit) const {
-		return unit->isVisible() && 
-			(map.getTile(Map::toTileCoords(unit->getCenteredPos()))->isVisible(thisTeamIndex)
-			|| (unit->getCurrSkill()->getClass() == SkillClass::ATTACK
-			&& map.getTile(Map::toTileCoords(unit->getTargetPos()))->isVisible(thisTeamIndex)));
-	}
-
 	// attack
 	void hit(Unit *attacker);
 	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked = NULL);
@@ -236,7 +229,6 @@ private:
 	void initSplattedTextures();
 	void initFactions();
 	void initUnits();
-	void initMap();
 	void initExplorationState();
 
 	//misc
@@ -247,7 +239,7 @@ private:
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);
 	void loadSaved(const XmlNode *worldNode);
 	void moveAndEvict(Unit *unit, vector<Unit*> &evicted, Vec2i *oldPos);
-	void updateFaction(const Faction *f);
+	void updateUnits(const Faction *f);
 };
 
 // =====================================================

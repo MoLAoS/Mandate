@@ -152,11 +152,8 @@ bool TeamSightOverlay::operator()(const Vec2i &cell, Vec4f &colour) {
 
 DebugRenderer::DebugRenderer() {
 	// defaults, listed for ease of maintenance. [Note: these can be set from Lua now, use debugSet()]
-	AAStarTextures = 
-	HAAStarOverlay = 
 	showVisibleQuad = 
 	captureVisibleQuad = 
-	regionHilights = 
 	teamSight = 
 	resourceMapOverlay = 
 	storeMapOverlay =
@@ -165,9 +162,14 @@ DebugRenderer::DebugRenderer() {
 	gridTextures = 
 	buildSiteMaps =
 	influenceMap =
+	AAStarTextures =
+	HAAStarOverlay =
+
 					false;
 
-//					true;
+	regionHilights = 
+
+					true;
 }
 
 const ResourceType* findResourceMapRes(const string &res) {

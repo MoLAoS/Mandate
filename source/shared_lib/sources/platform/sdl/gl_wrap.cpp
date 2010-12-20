@@ -63,6 +63,11 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits) {
 			<< depthBits << " depth-buffer). SDL Error is: " << SDL_GetError();
 		throw std::runtime_error(msg.str());
 	}
+
+	GLint glewErr = glewInit();
+	if (glewErr != GLEW_OK) {
+		throw runtime_error(string("Error initialising Glew: ") + (char*)glewGetErrorString(glewErr));
+	}
 }
 
 }}//end namespace

@@ -44,7 +44,7 @@ using Main::Program;
 const float Minimap::exploredAlpha = 0.5f;
 const Vec2i Minimap::textureSize = Vec2i(128, 128);
 
-Minimap::Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size)
+Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, m_fowPixmap0(0)
@@ -60,7 +60,7 @@ Minimap::Minimap(bool FoW, Container* parent, Vec2i pos, Vec2i size)
 		, m_maxZoom(1)
 		, m_minZoom(1)
 		, m_fogOfWar(FoW)
-		, m_shroudOfDarkness(FoW)
+		, m_shroudOfDarkness(SoD)
 		, m_draggingCamera(false)
 		, m_draggingWidget(false)
 		, m_leftClickOrder(false)
@@ -91,11 +91,24 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	m_fowPixmap0 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
 	m_fowPixmap1 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
 	m_fowPixmap0->setPixels(&f);
-	m_fowPixmap1->setPixels(&f);
+	if (!m_shroudOfDarkness) {
+		f = 0.f;
+		m_fowPixmap1->setPixels(&f);
+		f = 0.5f;
+		for (int y=1; y < scaledH - 1; ++y) {
+			for (int x=1; x < scaledW - 1; ++x) {
+				m_fowPixmap1->setPixel(x, y, &f);
+			}
+		}
+	} else {
+		m_fowPixmap1->setPixels(&f);
+	}
 
 	if (resumingGame) {
 		setExploredState(world);
 	}
+
+	f = 0.f;
 
 	// fow texture
 	m_fowTex = g_renderer.newTexture2D(ResourceScope::GAME);
@@ -135,36 +148,50 @@ Minimap::~Minimap(){
 
 void Minimap::resetFowTex() {
 	Pixmap2D *tmpPixmap= m_fowPixmap0;
-	m_fowPixmap0= m_fowPixmap1;
-	m_fowPixmap1= tmpPixmap;
+	m_fowPixmap0 = m_fowPixmap1;
+	m_fowPixmap1 = tmpPixmap;
+	const int width = m_fowTex->getPixmap()->getW();
+	const int height = m_fowTex->getPixmap()->getH();
+	for (int i=0; i < width; ++i) {
+		for (int j=0; j < height; ++j) {
+			if (!m_fogOfWar && m_shroudOfDarkness) {
+				float p0 = m_fowPixmap0->getPixelf(i, j);
+				float p1 = m_fowPixmap1->getPixelf(i, j);
+				if (p0 > p1) {
+					m_fowPixmap1->setPixel(i, j, p0);
+				} else {
+					m_fowPixmap1->setPixel(i, j, p1);
+				}
 
-	for(int i=0; i<m_fowTex->getPixmap()->getW(); ++i){
-		for(int j=0; j<m_fowTex->getPixmap()->getH(); ++j){
-			if(m_fogOfWar){
-				float p0= m_fowPixmap0->getPixelf(i, j);
-				float p1= m_fowPixmap1->getPixelf(i, j);
+			} else if (m_fogOfWar || m_shroudOfDarkness) {
+				float p0 = m_fowPixmap0->getPixelf(i, j);
+				float p1 = m_fowPixmap1->getPixelf(i, j);
 
-				if(p1>exploredAlpha){
+				if (p1 > exploredAlpha) { // if old value is greater than 0.5, reset to 0.5
 					m_fowPixmap1->setPixel(i, j, exploredAlpha);
 				}
-				if(p0>p1){
+				if (p0 > p1) { // if new value is greater than old, copy new
 					m_fowPixmap1->setPixel(i, j, p0);
 				}
-			}
-			else{
-				m_fowPixmap1->setPixel(i, j, 1.f);
+			} else {
+				if (i == 0 || j == 0 || i == width - 1 || j == height - 1) {
+					m_fowPixmap1->setPixel(i, j, 0.f);
+				} else {
+					m_fowPixmap1->setPixel(i, j, 1.f);
+				}
 			}
 		}
 	}
 }
 
-void Minimap::updateFowTex(float t){
-	for(int i=0; i<m_fowPixmap0->getW(); ++i){
-		for(int j=0; j<m_fowPixmap0->getH(); ++j){
-			float p1= m_fowPixmap1->getPixelf(i, j);
-			if(p1!=m_fowTex->getPixmap()->getPixelf(i, j)){
-				float p0= m_fowPixmap0->getPixelf(i, j);
-				m_fowTex->getPixmap()->setPixel(i, j, p0+(t*(p1-p0)));
+void Minimap::updateFowTex(float t) {
+	for (int i=0; i < m_fowPixmap0->getW(); ++i) {
+		for (int j=0; j < m_fowPixmap0->getH(); ++j) {
+			float p1 = m_fowPixmap1->getPixelf(i, j);
+			if (p1 != m_fowTex->getPixmap()->getPixelf(i, j)) {
+				// interpolate p0 -> p1
+				float p0 = m_fowPixmap0->getPixelf(i, j);
+				m_fowTex->getPixmap()->setPixel(i, j, p0 + (t * (p1 - p0)));
 			}
 		}
 	}
@@ -175,21 +202,22 @@ void Minimap::updateFowTex(float t){
 void buildVisLists(ConstUnitVector &srfList, ConstUnitVector &airList) {
 	UnitSet srfSet; // surface units seen already
 	UnitSet airSet; // air units seen already
+	const Faction *thisFaction = g_world.getThisFaction();
 	RectIterator iter(Vec2i(0), Vec2i(g_map.getW() - 1, g_map.getH() - 1));
 	while (iter.more()) {
 		Vec2i pos = iter.next();
 		Tile *tile = g_map.getTile(Map::toTileCoords(pos));
-		if (tile->isVisible(g_world.getThisFaction()->getTeam())) {
+		if (tile->isVisible(thisFaction->getTeam())) {
 			Cell *cell = g_map.getCell(pos);
 			Unit *u = cell->getUnit(Zone::AIR);
-			if (u && u->getTeam() != -1 && !u->isCarried()) {
+			if (u && thisFaction->canSee(u)) {
 				if (airSet.find(u) == airSet.end()) {
 					airSet.insert(u);
 					airList.push_back(u);
 				}
 			} else {
 				u = cell->getUnit(Zone::LAND);
-				if (u && u->getTeam() != -1 && !u->isCarried()) {
+				if (u && thisFaction->canSee(u)) {
 					if (srfSet.find(u) == srfSet.end()) {
 						srfSet.insert(u);
 						srfList.push_back(u);
@@ -335,25 +363,23 @@ void Minimap::computeTexture(const World *world){
 
 	m_terrainTex->getPixmap()->setPixels(Vec4f(1.f, 1.f, 1.f, 0.1f).ptr());
 
-	for(int j=0; j<m_terrainTex->getPixmap()->getH(); ++j){
-		for(int i=0; i<m_terrainTex->getPixmap()->getW(); ++i){
-			Tile *sc= map->getTile(i, j);
+	for (int j=0; j < m_terrainTex->getPixmap()->getH(); ++j) {
+		for (int i=0; i < m_terrainTex->getPixmap()->getW(); ++i) {
+			Tile *tile = map->getTile(i, j);
 
-			if(sc->getObject()==NULL || sc->getObject()->getType()==NULL){
-				const Pixmap2D *p= world->getTileset()->getSurfPixmap(sc->getTileType(), 0);
-				color= p->getPixel3f(p->getW()/2, p->getH()/2);
-				color= color * static_cast<float>(sc->getVertex().y/6.f);
+			if (!tile->getObject() || !tile->getObject()->getType()) {
+				const Pixmap2D *p = world->getTileset()->getSurfPixmap(tile->getTileType(), 0);
+				color = p->getPixel3f(p->getW() / 2, p->getH() / 2);
+				color = color * (map->getTileHeight(i, j) / 6.f);
 
-				if(sc->getVertex().y<= world->getMap()->getWaterLevel()){
-					color+= Vec3f(0.5f, 0.5f, 1.0f);
+				if (map->getTileHeight(i, j) <= world->getMap()->getWaterLevel()) {
+					color += Vec3f(0.5f, 0.5f, 1.0f);
 				}
-
-				if(color.x>1.f) color.x=1.f;
-				if(color.y>1.f) color.y=1.f;
-				if(color.z>1.f) color.z=1.f;
-			}
-			else{
-				color= sc->getObject()->getType()->getColor();
+				if (color.x > 1.f) color.x = 1.f;
+				if (color.y > 1.f) color.y = 1.f;
+				if (color.z > 1.f) color.z = 1.f;
+			} else {
+				color = tile->getObject()->getType()->getColor();
 			}
 			m_terrainTex->getPixmap()->setPixel(i, j, color);
 		}
@@ -364,7 +390,7 @@ void Minimap::setExploredState(const World *world) {
 	const Map &map = *world->getMap();
 	for (int y=0; y < map.getTileH(); ++y) {
 		for (int x=0; x < map.getTileW(); ++x) {
-			if (map.getTile(x,y)->isExplored(world->getThisFactionIndex())) {
+			if (!m_shroudOfDarkness || map.getTile(x,y)->isExplored(world->getThisFactionIndex())) {
 				m_fowPixmap0->setPixel(x, y, exploredAlpha);
 				m_fowPixmap1->setPixel(x, y, exploredAlpha);
 			}

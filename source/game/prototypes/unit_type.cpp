@@ -91,11 +91,14 @@ UnitType::UnitType()
 		, armourType(0)
 		, size(0), height(0)
 		, light(false), lightColour(0.f)
+		, m_cloakClass(CloakClass::INVALID)
+		, m_cloakCost(0)
+		, m_cloakSound(0), m_deCloakSound(0)
+		, m_detector(false)
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
-		, m_cellMap(0)
-		, m_colourMap(0)
+		, m_cellMap(0), m_colourMap(0)
 		, m_hasProjectileAttack(false)
 		, m_factionType(0) {
 	reset();
@@ -107,6 +110,8 @@ UnitType::~UnitType(){
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete m_cellMap;
 	delete m_colourMap;
+	delete m_cloakSound;
+	delete m_deCloakSound;
 }
 
 void UnitType::preLoad(const string &dir){
@@ -250,6 +255,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
+	vector<string> deCloakOnSkills;
+	vector<SkillClass> deCloakOnSkillClasses;
+
 	if (!glestimal) {
 		// properties
 		try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
@@ -257,8 +265,56 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		// Resources stored
-		try {
+
+		try { // cloak
+			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
+			if (cloakNode) {
+				string ct = cloakNode->getRestrictedAttribute("type");
+				m_cloakClass = CloakClassNames.match(ct.c_str());
+				if (m_cloakClass == CloakClass::INVALID) {
+					throw runtime_error("Invalid CloakClass: " + ct);
+				}
+				if (m_cloakClass == CloakClass::ENERGY) {
+					m_cloakCost = cloakNode->getIntAttribute("cost");
+				}
+				for (int i=0; i < cloakNode->getChildCount(); ++i) {
+					const XmlNode *childNode = cloakNode->getChild(i);
+					if (childNode->getName() == "de-cloak") {
+						const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
+						string str = deCloakNode->getOptionalRestrictedValue("skill-name");
+						if (!str.empty()) {
+							deCloakOnSkills.push_back(str);
+						} else {
+							string str = deCloakNode->getRestrictedAttribute("skill-class");
+							SkillClass sc = SkillClassNames.match(str.c_str());
+							if (sc == SkillClass::INVALID) {
+								throw runtime_error("Invlaid SkillClass: " + str);
+							}
+							deCloakOnSkillClasses.push_back(sc);
+						}
+					} else if (childNode->getName() == "image") {
+						m_cloakImage = g_renderer.newTexture2D(ResourceScope::GAME);
+						string path = dir + "/" + childNode->getRestrictedAttribute("path");
+						m_cloakImage->getPixmap()->load(path);
+					} else if (childNode->getName() == "cloak-sound") {
+						m_cloakSound = new StaticSound();
+						string path = dir + "/" + childNode->getRestrictedAttribute("path");
+						m_cloakSound->load(path);
+					} else if (childNode->getName() == "de-cloak-sound") {
+						m_deCloakSound = new StaticSound();
+						string path = dir + "/" + childNode->getRestrictedAttribute("path");
+						m_deCloakSound->load(path);
+					}
+				}
+			}
+		} catch (runtime_error e) {
+			g_errorLog.addXmlError(path, e.what());
+			loadOk = false;
+		}
+
+		m_detector = parametersNode->getOptionalBoolValue("detector");
+
+		try { // Resources stored
 			const XmlNode *resourcesStoredNode= parametersNode->getChild("resources-stored", 0, false);
 			if (resourcesStoredNode) {
 				storedResources.resize(resourcesStoredNode->getChildCount());
@@ -273,8 +329,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		// meeting point
-		try {
+		try { // meeting point
 			const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
 			meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();
 			if (meetingPoint) {
@@ -285,8 +340,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//selection sounds
-		try {
+		try { // selection sounds
 			const XmlNode *selectionSoundNode= parametersNode->getChild("selection-sounds");
 			if(selectionSoundNode->getAttribute("enabled")->getBoolValue()){
 				selectionSounds.resize(selectionSoundNode->getChildCount());
@@ -302,8 +356,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
-		//command sounds
-		try {
+		try { // command sounds
 			const XmlNode *commandSoundNode= parametersNode->getChild("command-sounds");
 			if(commandSoundNode->getAttribute("enabled")->getBoolValue()){
 				commandSounds.resize(commandSoundNode->getChildCount());
@@ -321,8 +374,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		}
 	} // !glestimal
 
-	//skills
-	try {
+	try { // skills
 		const XmlNode *skillsNode= unitNode->getChild("skills");
 		//skillTypes.resize(skillsNode->getChildCount());
 		for (int i=0; i < skillsNode->getChildCount(); ++i) {
@@ -341,9 +393,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 
 	sortSkillTypes();
+	setDeCloakSkills(deCloakOnSkills, deCloakOnSkillClasses);
 
-	//commands
-	try {
+	try { // commands
 		const XmlNode *commandsNode = unitNode->getChild("commands");
 		for (int i = 0; i < commandsNode->getChildCount(); ++i) {
 			const XmlNode *commandNode = commandsNode->getChild(i);
@@ -377,6 +429,21 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			throw runtime_error("Every unit must have at least one die skill: "+ path);
 		}
 	} catch (runtime_error e) {
+		g_errorLog.addXmlError(path, e.what());
+		loadOk = false;
+	}
+
+
+	try { 
+		const XmlNode *tagsNode = parametersNode->getChild("tags", 0, false);
+		if (tagsNode) {
+			for (int i = 0; i < tagsNode->getChildCount(); ++i) {
+				const XmlNode *tagNode = tagsNode->getChild("tag", i);
+				string tag = tagNode->getRestrictedValue();
+				m_tags.insert(tag);
+			}
+		}
+	} catch (runtime_error &e) {
 		g_errorLog.addXmlError(path, e.what());
 		loadOk = false;
 	}
@@ -618,6 +685,27 @@ void UnitType::sortSkillTypes() {
 		if ((*it)->getProjectile()) {
 			m_hasProjectileAttack = true;
 			break;
+		}
+	}
+}
+
+void UnitType::setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes) {
+	foreach_const (vector<string>, it, names) {
+		bool found = false;
+		foreach (SkillTypes, sit, skillTypes) {
+			if (*it == (*sit)->getName()) {
+				found = true;
+				(*sit)->setDeCloak(true);
+				break;
+			}
+		}
+		if (!found) {
+			throw runtime_error("de-cloak is set for skill '" + name + "', which was not found.");
+		}
+	}
+	foreach_const (vector<SkillClass>, it, classes) {
+		foreach (SkillTypes, sit, skillTypesByClass[*it]) {
+			(*sit)->setDeCloak(true);
 		}
 	}
 }

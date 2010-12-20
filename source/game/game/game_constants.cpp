@@ -27,6 +27,7 @@
 #include "widget_style.h"
 #include "particle.h"
 #include "cartographer.h"
+#include "debug_stats.h"
 
 namespace Glest {
 

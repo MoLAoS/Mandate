@@ -189,7 +189,7 @@
       <upgrade-requirements/>
       <move-skill value="move_skill"/>
       <attack-skill value="attack_skill"/>
-      <max-distance value="5"/>
+      <max-distance value="4"/>
     </command>
 
     <command>

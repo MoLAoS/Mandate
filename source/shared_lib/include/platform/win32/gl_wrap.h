@@ -14,9 +14,10 @@
 
 #include <windows.h>
 
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include <glprocs.h>
+//#include <glprocs.h>
 
 #include <string>
 #include <cassert>

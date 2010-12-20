@@ -33,38 +33,36 @@
 #include "simulation_enums.h"
 #include "entities_enums.h"
 
-#define LOG_COMMAND_ISSUE 1
-#define LOG_UNIT_LIFECYCLE 1
-
-#ifndef LOG_UNIT_LIFECYCLE
-#	define LOG_UNIT_LIFECYCLE 0
-#endif
-#ifndef LOG_COMMAND_ISSUE
-#	define LOG_COMMAND_ISSUE 0
-#endif
-
-#if LOG_UNIT_LIFECYCLE
-#	define UNIT_LOG(x) GAME_LOG(x)
-#else
-#	define UNIT_LOG(x)
-#endif
-
-#if LOG_COMMAND_ISSUE
-#	define COMMAND_LOG(x) GAME_LOG(x)
-#else
-#	define COMMAND_LOG(x)
-#endif
-
 using namespace Shared::Math;
 using namespace Shared::Graphics;
 
 using Shared::Platform::Chrono;
 using Shared::Util::SingleTypeFactory;
 
+namespace Glest { namespace Sim {
+	class SkillCycleTable;
+}}
+
 namespace Glest { namespace Entities {
 using namespace ProtoTypes;
 using Sim::Map;
-//using Search::CardinalDir;
+
+class Unit;
+
+WRAPPED_ENUM( AutoCmdFlag,
+	REPAIR,
+	ATTACK,
+	FLEE
+)
+
+// AutoCmdState : describes an auto command category state of 
+// the selection (auto-repair, auto-attack & auto-flee)
+WRAPPED_ENUM( AutoCmdState,
+	NONE,
+	ALL_ON,
+	ALL_OFF,
+	MIXED
+)
 
 class Vec2iList : public list<Vec2i> {
 public:
@@ -81,22 +79,25 @@ ostream& operator<<(ostream &stream,  Vec2iList &vec);
   * @extends std::list<Shared::Math::Vec2i>
   */
 class UnitPath : public Vec2iList {
+	friend class Unit;
 private:
 	static const int maxBlockCount = 10; /**< number of frames to wait on a blocked path */
 
 private:
 	int blockCount;		/**< number of frames this path has been blocked */
 
+	void clear()			{list<Vec2i>::clear(); blockCount = 0;} /**< clear the path		*/
+
 public:
 	UnitPath() : blockCount(0) {} /**< Construct path object */
-	bool isBlocked()	{return blockCount >= maxBlockCount;} /**< is this path blocked	   */
-	bool empty()		{return list<Vec2i>::empty();}	/**< is path empty				  */
-	int  size()			{return list<Vec2i>::size();}	/**< size of path				 */
-	void clear()		{list<Vec2i>::clear(); blockCount = 0;} /**< clear the path		*/
-	void incBlockCount(){blockCount++;}		   /**< increment block counter			   */
-	void push(Vec2i &pos){push_front(pos);}	  /**< push onto front of path			  */
-	Vec2i peek()		{return front();}	 /**< peek at the next position			 */	
-	void pop()			{erase(begin());}	/**< pop the next position off the path */
+	bool isBlocked()		{return blockCount >= maxBlockCount;} /**< is this path blocked	   */
+	bool empty()			{return list<Vec2i>::empty();}	/**< is path empty				  */
+	int  size()				{return list<Vec2i>::size();}	/**< size of path				 */
+	void resetBlockCount()	{blockCount = 0; }
+	void incBlockCount()	{blockCount++;}		   /**< increment block counter			   */
+	void push(Vec2i &pos)	{push_front(pos);}	  /**< push onto front of path			  */
+	Vec2i peek()			{return front();}	 /**< peek at the next position			 */	
+	void pop()				{erase(begin());}	/**< pop the next position off the path */
 
 	int getBlockCount() const { return blockCount; }
 
@@ -196,9 +197,17 @@ private:
 
 	// some flags
 	bool toBeUndertaken;			/**< awaiting a date with the grim reaper */
-	bool autoRepairEnabled;			/**< is auto repair enabled */
+
+	bool m_autoCmdEnable[AutoCmdFlag::COUNT];
+	//bool autoRepairEnabled;			/**< is auto repair enabled */
+
 	bool carried;					/**< is the unit being carried */
-	bool visible;
+	//bool visible;
+
+	bool	m_cloaked;
+
+	bool	m_cloaking, m_deCloaking;
+	float	m_cloakAlpha;
 
 	// this should go someone else
 	float highlight;				/**< alpha for selection circle effects */
@@ -251,6 +260,7 @@ private:
 	~Unit();
 
 	void checkEffectParticles();
+	void checkEffectCloak();
 	void startSkillParticleSystems();
 
 public:
@@ -304,7 +314,7 @@ public:
 	UnitPath *getPath()							{return &unitPath;}
 	WaypointPath *getWaypointPath()				{return &waypointPath;}
 	const WaypointPath *getWaypointPath() const {return &waypointPath;}
-	int getBaseSpeed(const SkillType *st) const {return st->getSpeed();}
+	int getBaseSpeed(const SkillType *st) const {return st->getBaseSpeed();}
 	int getSpeed(const SkillType *st) const;
 	int getBaseSpeed() const					{return getBaseSpeed(currSkill);}
 	int getSpeed() const						{return getSpeed(currSkill);}
@@ -323,9 +333,10 @@ public:
 	UnitIdList& getUnitsToUnload()				{return m_unitsToUnload;}
 	UnitId getCarrier() const					{return m_carrier;}
 
-	bool isVisible() const					{return visible;}
-	void setVisible(bool v)					{visible = v;}
+	//bool isVisible() const					{return carried;}
 	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}
+	void loadUnitInit(Command *command);
+	void unloadUnitInit(Command *command);
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -380,8 +391,10 @@ public:
 	Vec2i getLastPos() const			{return lastPos;}
 	Vec2i getCenteredPos() const		{return Vec2i(type->getHalfSize().intp()) + getPos();}
 	fixedVec2 getFixedCenteredPos() const	{ return fixedVec2(pos.x + type->getHalfSize(), pos.y + type->getHalfSize()); }
-//{ return fixedVec2(getPos().x + type->getHalfSize(), getPos().y + type->getHalfSize()); }
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
+
+	float getCloakAlpha() const			{return m_cloakAlpha;}
+	float getDeadAlpha() const;
 
 	//is
 	bool isCarried() const				{return carried;}
@@ -395,9 +408,13 @@ public:
 	bool isPutrefacting() const			{return deadCount;}
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
 	bool isInteresting(InterestingUnitType iut) const;
-	bool isAutoRepairEnabled() const	{return autoRepairEnabled;}
-
+	bool isAutoCmdEnabled(AutoCmdFlag f) const	{return m_autoCmdEnable[f];}
+	bool isCloaked() const					{return m_cloaked;}
+	bool renderCloaked() const			{return m_cloaked || m_cloaking || m_deCloaking;}
 	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
+	bool isTargetUnitVisible(int teamIndex) const;
+	bool isActive() const;
+	bool isBuilding() const;
 
 	//set
 	void setCurrSkill(const SkillType *currSkill);
@@ -411,10 +428,11 @@ public:
 	void setTarget(const Unit *unit, bool faceTarget = true, bool useNearestOccupiedCell = true);
 	void setTargetVec(const Vec3f &targetVec)			{this->targetVec = targetVec;}
 	void setMeetingPos(const Vec2i &meetingPos)			{this->meetingPos = meetingPos;}
-	void setAutoRepairEnabled(bool autoRepairEnabled) {
-		this->autoRepairEnabled = autoRepairEnabled;
-		StateChanged(this);
-	}
+	//void setAutoRepairEnabled(bool autoRepairEnabled) {
+	//	this->autoRepairEnabled = autoRepairEnabled;
+	//	StateChanged(this);
+	//}
+	void setAutoCmdEnable(AutoCmdFlag f, bool v);
 
 	//render related
 	const Model *getCurrentModel() const				{return currSkill->getAnimation();}
@@ -426,7 +444,7 @@ public:
 	Vec3f getCurrVectorFlat() const {
 		Vec2i pos = getPos();
 		Vec3f v(float(pos.x),  computeHeight(pos), float(pos.y));
-			if (currSkill->getClass() == SkillClass::MOVE) {
+		if (currSkill->getClass() == SkillClass::MOVE) {
 			v = Vec3f(float(lastPos.x), computeHeight(lastPos), float(lastPos.y)).lerp(getProgress(), v);
 		}
 		const float &halfSize = type->getHalfSize().toFloat();
@@ -468,8 +486,20 @@ public:
 	bool computeEp();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
+	bool decEp(int i);
 	int update2()										{return ++progress2;}
-	void clearPath() { unitPath.clear(); waypointPath.clear(); }
+	void clearPath();
+
+	// SimulationInterface wrappers
+	void updateSkillCycle(const SkillCycleTable *skillCycleTable);
+	void doUpdateAnimOnDeath(const SkillCycleTable *skillCycleTable);
+	void doUpdateAnim(const SkillCycleTable *skillCycleTable);
+	void doUnitBorn(const SkillCycleTable *skillCycleTable);
+	void doUpdateCommand();
+
+	// World wrappers
+	void doUpdate();
+	void doKill(Unit *killed);
 
 	// update skill & animation cycles
 	void updateSkillCycle(int offset);
@@ -497,6 +527,9 @@ public:
 	void effectExpired(Effect *effect);
 	bool doRegen(int hpRegeneration, int epRegeneration);
 
+	void cloak();
+	void deCloak();
+
 private:
 	float computeHeight(const Vec2i &pos) const;
 	void updateTarget(const Unit *target = NULL);
@@ -520,6 +553,8 @@ private:
 
 	MutUnitSet	carriedSet; // set of units not in the world (because they are housed in other units)
 	Units		deadList;	// list of dead units
+
+	void assertDead();
 
 public:
 	UnitFactory();

@@ -44,6 +44,7 @@ SkillType::SkillType(const char* typeName)
 		, animSpeed(0)
 		, minRange(0)
 		, maxRange(0)
+		, m_deCloak(false)
 		, startTime(0.f)
 		, projectile(false)
 		, splash(false)
@@ -226,7 +227,7 @@ CycleInfo SkillType::calculateCycleTime() const {
 	if (skillClass == SkillClass::MOVE) {
 		return CycleInfo(-1, -1);
 	}
-	float progressSpeed = getSpeed() * speedModifier;
+	float progressSpeed = getBaseSpeed() * speedModifier;
 
 	int skillFrames = int(1.0000001f / progressSpeed);
 	int animFrames = 1;
@@ -250,6 +251,14 @@ CycleInfo SkillType::calculateCycleTime() const {
 	}
 	assert(skillFrames > 0 && animFrames > 0);
 	return CycleInfo(skillFrames, animFrames, soundOffset, attackOffset);
+}
+
+// =====================================================
+// 	class MoveSkillType
+// =====================================================
+
+fixed MoveSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getMoveSpeedMult() + unit->getMoveSpeed();
 }
 
 // =====================================================
@@ -392,13 +401,25 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	descEffects(str, unit);
 }
 
+fixed AttackSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getAttackSpeedMult() + unit->getAttackSpeed();
+}
+
 // ===============================
 // 	class BuildSkillType
 // ===============================
 
+fixed BuildSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+}
+
 // ===============================
 // 	class HarvestSkillType
 // ===============================
+
+fixed HarvestSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getHarvestSpeedMult() + unit->getHarvestSpeed();	
+}
 
 // ===============================
 // 	class DieSkillType
@@ -495,6 +516,10 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n";
 }
 
+fixed RepairSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+}
+
 // =====================================================
 // 	class ProduceSkillType
 // =====================================================
@@ -518,6 +543,26 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 	SkillType::doChecksum(checksum);
 	checksum.add<bool>(pet);
 	checksum.add<int>(maxPets);
+}
+
+fixed ProduceSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getProdSpeedMult() + unit->getProdSpeed();
+}
+
+// =====================================================
+// 	class UpgradeSkillType
+// =====================================================
+
+fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getProdSpeedMult() + unit->getProdSpeed();
+}
+
+// =====================================================
+// 	class MorphSkillType
+// =====================================================
+
+fixed MorphSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getProdSpeedMult() + unit->getProdSpeed();
 }
 
 // =====================================================

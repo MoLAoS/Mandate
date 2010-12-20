@@ -14,6 +14,10 @@ using Shared::Util::EnumNames;
 
 namespace Glest { namespace ProtoTypes {
 
+//NOTE: try not to use these in a switch or if/elseif situation if 
+//	it represents a class since polymorphism (ie virtual methods)
+//	makes it easier to create new ones.
+
 /** resource classes
   * <ul><li><b>TECH</b> resource is defined in tech tree.</li>
   *		<li><b>TILESET</b> resource is defined in tileset.</li>
@@ -51,6 +55,7 @@ STRINGY_ENUM( SkillClass,
 STRINGY_ENUM( CommandClass,
 	STOP,
 	MOVE,
+	TELEPORT,
 	ATTACK,
 	ATTACK_STOPPED,
 	BUILD,
@@ -111,8 +116,7 @@ STRINGY_ENUM( EffectStacking,
   *		<li><b>ENDS_WITH_SOURCE</b> ends when the unit causing the effect dies.</li>
   *		<li><b>RECOURSE_ENDS_WITH_ROOT</b> ends when root effect ends (recourse effects only).</li>
   *		<li><b>PERMANENT</b> the effect has an infinite duration.</li>
-  *		<li><b>ALLOW_NEGATIVE_SPEED</b> .</li>
-  *		<li><b>TICK_IMMEDIATELY</b> .</li></ul>
+  *		<li><b>TICK_IMMEDIATELY</b> effect is applied immediately and then deleted.</li></ul>
   * AI hints:
   *	<ul><li><b>AI_DAMAGED</b> use on damaged units (benificials only).</li>
   *		<li><b>AI_RANGED</b> use on ranged attack units.</li>
@@ -136,8 +140,8 @@ STRINGY_ENUM( EffectTypeFlag,
 	ENDS_WITH_SOURCE,
 	RECOURSE_ENDS_WITH_ROOT,
 	PERMANENT,
-	ALLOW_NEGATIVE_SPEED,
 	TICK_IMMEDIATELY,
+	CAUSES_CLOAK,
 	AI_DAMAGED,
 	AI_RANGED,
 	AI_MELEE,
@@ -158,6 +162,12 @@ STRINGY_ENUM( AttackSkillPreference,
 	ON_LARGE,
 	ON_BUILDING,
 	WHEN_DAMAGED
+);
+
+STRINGY_ENUM( CloakClass,
+	PERMANENT,
+	ENERGY,
+	EFFECT
 );
 
 }}

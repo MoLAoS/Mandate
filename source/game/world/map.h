@@ -85,20 +85,12 @@ public:
 // =====================================================
 // 	class Tile
 //
-//	A heightmap cell, each Tile is composed by more than one Cell
+//	A heightmap tile, each Tile is composed by more than one Cell
 // =====================================================
 
 class Tile {
 private:
-	//geometry
-	Vec3f vertex;
-	Vec3f normal;
-	Vec3f color;
-	Vec3f originalVertex;
-
-	//tex coords
-	Vec2f fowTexCoord;		//tex coords for TEXTURE1 when multitexturing and fogOfWar
-	Vec2f surfTexCoord;		//tex coords for TEXTURE0
+	Vec3f color; // leave here, only needed by minimap
 
 	//surface
 	int tileType;
@@ -115,21 +107,15 @@ private:
 	bool nearSubmerged;
 
 public:
-	Tile() : vertex(0.f), normal(0.f, 1.f, 0.f), originalVertex(0.f), 
-			tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) {}
-	~Tile() { if(object) delete object;}
+	Tile() : tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) { }
+	~Tile() { delete object; }
 
 	//get
-	const Vec3f &getVertex() const				{return vertex;		}
-	float getHeight() const						{return vertex.y;	}
 	const Vec3f &getColor() const				{return color;		}
-	const Vec3f &getNormal() const				{return normal;		}
 	int getTileType() const						{return tileType;	}
 	const Texture2D *getTileTexture() const		{return tileTexture;}
 	Object *getObject() const					{return object;		}
 	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
-	const Vec2f &getFowTexCoord() const			{return fowTexCoord;	}
-	const Vec2f &getSurfTexCoord() const		{return surfTexCoord;	}
 	bool getNearSubmerged() const				{return nearSubmerged;	}
 
 	bool isVisible(int teamIndex) const			{
@@ -142,15 +128,10 @@ public:
 	}
 
 	//set
-	void setVertex(const Vec3f &vertex)				{originalVertex = this->vertex = vertex;}
-	void setHeight(float height)					{originalVertex.y = vertex.y = height; }
-	void setNormal(const Vec3f &normal)				{this->normal= normal;				  }
 	void setColor(const Vec3f &color)				{this->color= color;				 }
 	void setTileType(int tileType)					{this->tileType= tileType;			}
 	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;			   }
 	void setObject(Object *object)					{this->object= object;			   }
-	void setFowTexCoord(const Vec2f &ftc)			{this->fowTexCoord= ftc;			}
-	void setTileTexCoord(const Vec2f &stc)			{this->surfTexCoord= stc;			 }
 	
 	void setExplored(int teamIndex, bool explored)	{
 		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
@@ -167,9 +148,61 @@ public:
 	//misc
 	bool isFree() const						{ return !object || object->getWalkable();	}
 	void deleteResource()					{ delete object; object= NULL;				}
-	void resetVertex()						{ vertex = originalVertex;					}
-	void alterVertex(const Vec3f &offset)	{ vertex += offset;							}
-	void updateObjectVertex()				{ if (object) object->setPos(vertex);		}
+};
+
+/** Tile Vertex structure */
+struct TileVertex {
+private:
+	Vec3f m_position;		// 12
+	Vec3f m_normal;			// 12
+	Vec2f m_tileTLTexCoord;	//  8
+	Vec2f m_fowTexCoord;	//  8 => 40 != good
+
+	//Vec2f m_tileTRTexCoord;	//  8
+	//Vec2f m_tileBRTexCoord;	//  8
+	//Vec2f m_tileBLTexCoord;	//  8 => 64 == good.
+
+public:
+	TileVertex() : m_tileTLTexCoord(0.f) {}
+
+	TileVertex& operator=(const TileVertex &that) {
+		memcpy(this, &that, sizeof(TileVertex));
+		return *this;
+	}
+
+	Vec3f& vert() { return m_position; }
+	Vec3f& norm() { return m_normal; }
+	Vec2f& tileTexCoord() { return m_tileTLTexCoord; }
+	Vec2f& fowTexCoord() { return m_fowTexCoord; }
+};
+
+/** vertex data for the map, in video card friendly format */
+class MapVertexData {
+private:
+	TileVertex *m_data;
+	Vec2i       m_size;
+
+public:
+	MapVertexData(Vec2i size) : m_data(0), m_size(size) {
+		m_data = new TileVertex[m_size.w * m_size.h];
+		float scale = float(GameConstants::cellScale);
+		for (int y = 0; y < m_size.h; ++y) {
+			for (int x = 0; x < m_size.w; ++x) {
+				m_data[y * m_size.w + x].vert() = Vec3f(x * scale, 0.f, y * scale);
+			}
+		}
+	}
+	~MapVertexData() { delete m_data; }
+
+	TileVertex& get(Vec2i pos) {
+		return m_data[pos.y * m_size.w + pos.x];
+	}
+
+	TileVertex& get(int x, int y) {
+		return m_data[y * m_size.w + x];
+	}
+
+	TileVertex* data() {return m_data;}
 };
 
 // =====================================================
@@ -188,15 +221,15 @@ private:
 	float waterLevel;
 	float heightFactor;
 	float avgHeight;
-	int w;
-	int h;
-	int tileW;
-	int tileH;
+	Vec2i m_cellSize;
+	Vec2i m_tileSize;
 	int maxPlayers;
 	Cell *cells;
 	Tile *tiles;
 	Vec2i *startLocations;
-	//float *surfaceHeights;
+
+	float *m_heightMap;
+	MapVertexData *m_vertexData;
 
 //	Earthquakes earthquakes;
 
@@ -219,44 +252,52 @@ public:
 	string getName() const { return name; }
 	Cell *getCell(int x, int y) const {
 		assert(this->isInside(x,y) && "co-ordinates out of range");
-		return &cells[y * w + x];
+		return &cells[y * m_cellSize.w + x];
 	}
 	Cell *getCell(const Vec2i &pos) const { return getCell(pos.x, pos.y); }
 
 	Tile *getTile(int sx, int sy) const {
 		assert(this->isInsideTile(sx,sy) && "co-ordinates out of range");
-		return &tiles[sy*tileW+sx];
+		return &tiles[sy * m_tileSize.w + sx];
 	}
 	Tile *getTile(const Vec2i &sPos) const { return getTile(sPos.x, sPos.y); }
 
-	int getW() const							{ return w;				}
-	int getH() const							{ return h;				 }
-	int getTileW() const						{ return tileW;			  }
-	int getTileH() const						{ return tileH;			   }
+	int getW() const							{ return m_cellSize.w;  }
+	int getH() const							{ return m_cellSize.h;   }
+	int getTileW() const						{ return m_tileSize.w;    }
+	int getTileH() const						{ return m_tileSize.h;	   }
 	int getMaxPlayers() const					{ return maxPlayers;		}
 	float getHeightFactor() const				{ return heightFactor;		 }
 	float getAvgHeight() const					{ return avgHeight;			  }
 	float getWaterLevel() const					{ return waterLevel;		   }
-	Rect2i getBounds() const					{ return Rect2i(0,0, w,h);	    }
+	Rect2i getBounds() const					{ return Rect2i(Vec2i(0), m_cellSize); }
 	Vec2i getStartLocation(int locNdx) const	{
 		assert(locNdx >= 0 && locNdx < GameConstants::maxPlayers && "invalid faction index");
 		return startLocations[locNdx]; 
 	}
 
-	// these should be in their respective cell classes...
-	bool getSubmerged(const Tile *sc) const		{return sc->getHeight() < waterLevel;}
-	//bool getSubmerged(const Cell *c) const				{return c->getHeight()<waterLevel;}
-	bool getDeepSubmerged(const Tile *sc) const	{return sc->getHeight() < waterLevel-(1.5f/heightFactor);}
-	//bool getDeepSubmerged(const Cell *c) const			{return c->getHeight()<waterLevel-(1.5f/heightFactor);}
-	//float getSurfaceHeight(const Vec2i &pos) const;
+	bool isTileSubmerged(const Vec2i &tilePos) const {
+		return m_vertexData->get(tilePos).vert().y < waterLevel;
+	}
 
-//	const Earthquakes &getEarthquakes() const			{return earthquakes;}
+	bool isTileDeepSubmerged(const Vec2i &tilePos) const {
+		return m_vertexData->get(tilePos).vert().y < waterLevel - (1.5f / heightFactor);
+	}
+
+	float getTileHeight(const Vec2i &pos) const { return m_vertexData->get(pos).vert().y; }
+	float getTileHeight(int x, int y) const		{ return m_vertexData->get(x,y).vert().y; }
+
+	void setTileHeight(const Vec2i &pos, float h) { m_vertexData->get(pos).vert().y = h; }
+
+	MapVertexData* getVertexData() { return m_vertexData; }
+	//const Earthquakes &getEarthquakes() const			{return earthquakes;}
 
 	//is
-	bool isInside(int x, int y) const					{return x >= 0 && y >= 0 && x < w && y < h;}
-	bool isInside(const Vec2i &pos) const				{return isInside(pos.x, pos.y);}
-	bool isInsideTile(int sx, int sy) const			{return sx >= 0 && sy >= 0 && sx < tileW && sy < tileH;}
-	bool isInsideTile(const Vec2i &sPos) const		{return isInsideTile(sPos.x, sPos.y);}
+	bool isInside(int x, int y) const		{return x >= 0 && y >= 0 && x < m_cellSize.w && y < m_cellSize.h;}
+	bool isInside(const Vec2i &pos) const	{return isInside(pos.x, pos.y);}
+	bool isInsideTile(int sx, int sy) const	{return sx >= 0 && sy >= 0 && sx < m_tileSize.w && sy < m_tileSize.h;}
+	bool isInsideTile(const Vec2i &sPos) const	{ return isInsideTile(sPos.x, sPos.y); }
+
 	bool isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec2i &resourcePos) const;
 
 	//free cells
@@ -331,14 +372,16 @@ public:
 
 	//static
 	static Vec2i toTileCoords(Vec2i cellPos)	{return cellPos / GameConstants::cellScale;}
+	static Vec2i toTileCoords(int x, int y)		{return toTileCoords(Vec2i(x, y));}
 	static Vec2i toUnitCoords(Vec2i tilePos)	{return tilePos * GameConstants::cellScale;}
+	static Vec2i toUnitCoords(int x, int y)		{return toUnitCoords(Vec2i(x, y)); }
 	static string getMapPath(const string &mapName)	{return "maps/"+mapName+".gbm";}
 
 private:
 	//compute
 	void smoothSurface();
 	void computeNearSubmerged();
-	void computeCellColors();
+	void computeTileColors();
 	void setCellTypes();
 	void calcAvgAltitude();
 

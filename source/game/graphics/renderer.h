@@ -31,6 +31,7 @@
 #include "selection.h"
 #include "components.h"
 #include "scene_culler.h"
+#include "terrain_renderer.h"
 
 using namespace Shared::Math;
 using namespace Shared::Graphics;
@@ -43,11 +44,9 @@ namespace Glest {
 
 namespace Graphics {
 
-WRAPPED_ENUM ( ResourceScope,
-	GLOBAL,
-	MENU,
-	GAME
-)
+WRAPPED_ENUM( ResourceScope, GLOBAL, MENU, GAME );
+
+WRAPPED_ENUM( ShadowMode, DISABLED, PROJECTED, MAPPED );
 
 // ===========================================================
 // 	class Renderer
@@ -92,19 +91,9 @@ public:
 
 	//light
 	static const float maxLightDist;
-	
-public:
-	//WRAPPED_ENUM(Shadows, Disabled, Projected, Mapped);
-	enum Shadows{
-		sDisabled,
-		sProjected,
-		sShadowMapping,
-
-		sCount
-	};
 
 private:
-	//config
+	// config
 	int maxLights;
     bool photoMode;
 	int shadowTextureSize;
@@ -112,48 +101,51 @@ private:
 	float shadowAlpha;
 	bool focusArrows;
 	bool textures3D;
-	Shadows shadows;
+	ShadowMode m_shadowMode;
 
-	//game
+	// game
 	const GameState *game;
 
-	//misc
+	// misc
 	int triangleCount;
 	int pointCount;
 	Vec4f nearestLightPos;
 
-	//renderers
+	// renderers
 	ModelRenderer *modelRenderer;
-	//TextRenderer *textRenderer;
 	TextRenderer *textRendererFT;
 	ParticleRenderer *particleRenderer;
 
-	//texture managers
+	// texture managers
 	ModelManager *modelManager[ResourceScope::COUNT];
 	TextureManager *textureManager[ResourceScope::COUNT];
 	FontManager *fontManager[ResourceScope::COUNT];
 	ParticleManager *particleManager[ResourceScope::COUNT];
 
-	//state lists
+	// display list handles
 	GLuint list3d;
 	GLuint list2d;
 	GLuint list2dNonVirt;
 	GLuint list3dMenu;
+	GLuint list3dGLSL;
 
-	//shadows
+	// shadows
 	GLuint shadowMapHandle;
 	Matrix4f shadowMapMatrix;
 	int shadowMapFrame;
 
-	//water
+	// water
 	float waterAnim;
 	
-	//perspective values
+	// perspective values
 	float perspFov;
 	float perspNearPlane;
 	float perspFarPlane;
 
+	// helper object, determines visible scene
 	SceneCuller culler;
+
+	TerrainRenderer *m_terrainRenderer;
 
 private:
 	Renderer();
@@ -178,12 +170,20 @@ public:
 	//get
 	int getTriangleCount() const	{return triangleCount;}
 	int getPointCount() const		{return pointCount;}
+	ShadowMode getShadowMode() const {return m_shadowMode;}
+	GLuint getShadowMapHandle() const { return shadowMapHandle;}
+
+	// inc tri/point counters
+	void incTriangleCount(int n=1) { triangleCount += n;}
+	void incPointCount(int n=1) { pointCount += n;}
 
 	const SceneCuller& getCuller() const { return culler; }
 	void setFarClip(float clip) { perspFarPlane = clip; }
 
 	//misc
 	void reloadResources();
+
+	void cycleShaders();
 
 	//engine interface
 	Model *newModel(ResourceScope rs);
@@ -195,6 +195,8 @@ public:
 	
 	//TextRenderer *getTextRenderer() const	{return textRenderer;}
 	TextRenderer *getFreeTypeRenderer() const	{return textRendererFT;}
+
+	TerrainRenderer* getTerrainRenderer() { return m_terrainRenderer; }
 
 	void manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs);
 	void updateParticleManager(ResourceScope rs);
@@ -223,7 +225,7 @@ public:
 	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
     //complex rendering
-    void renderSurface();
+	void renderSurface()	{m_terrainRenderer->render(culler);}
 	void renderObjects();
 	void renderWater();
     void renderUnits();
@@ -252,9 +254,12 @@ public:
 	void loadConfig();
 	void saveScreen(const string &path);
 
+	void loadProjectionMatrix();
+	void enableProjectiveTexturing();
+
 	//static
-	static Shadows strToShadows(const string &s);
-	static string shadowsToStr(Shadows shadows);
+	static ShadowMode strToShadows(const string &s);
+	static string shadowsToStr(ShadowMode shadows);
 
 private:
 	//private misc
@@ -276,13 +281,10 @@ private:
 
 	//gl init
 	void init3dList();
+	void init3dListGLSL();
     void init2dList();
 	void init2dNonVirtList();
 	void init3dListMenu(MainMenu *mm);
-
-	//misc
-	void loadProjectionMatrix();
-	void enableProjectiveTexturing();
 
 	//private aux drawing
 	void renderSelectionCircle(Vec3f v, int size, float radius);

@@ -213,6 +213,9 @@ public:
 	 * e.stat * strength.
 	 */
 	void addStatic(const EnhancementType &e, fixed strength = 1);
+
+	/** re-adjust values for unit entities, enforcing minimum sensible values */
+	void sanitiseUnitStats();
 };
 
 #ifdef SILNARM_IS_WORKING_HERE

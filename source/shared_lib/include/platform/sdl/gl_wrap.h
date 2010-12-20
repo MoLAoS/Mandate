@@ -12,9 +12,10 @@
 #ifndef _SHARED_PLATFORM_GLWRAP_H_
 #define _SHARED_PLATFORM_GLWRAP_H_
 
+#include <GL/glew.h>
 #include <SDL.h>
-#define GL_GLEXT_PROTOTYPES
-#include <SDL_opengl.h>
+//#define GL_GLEXT_PROTOTYPES
+//#include <SDL_opengl.h>
 
 #include <string>
 #include <cassert>

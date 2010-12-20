@@ -33,6 +33,7 @@ template<typename T> class Vec2 {
 public:
 	union {
 		struct { T x, y; };
+		struct { T w, h; };
 		T raw[2];
 	};
 

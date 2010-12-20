@@ -54,52 +54,56 @@ MEMORY_CHECK_IMPLEMENTATION(Particle)
 //	class ParticleSystemBase
 // =====================================================
 
-ParticleSystemBase::ParticleSystemBase() :
-		random(0),
-		srcBlendFactor(BlendFactor::SRC_ALPHA),
-		destBlendFactor(BlendFactor::ONE),
-		blendEquationMode(BlendMode::FUNC_ADD),
-		primitiveType(PrimitiveType::QUAD),
-		offset(0.f),
-		color(1.f),
-		color2(1.f),
-		colorNoEnergy(0.f),
-		color2NoEnergy(0.f),
-		size(1.f),
-		sizeNoEnergy(1.f),
-		speed(1.f),
-		gravity(0.f),
-		emissionRate(15),
-		energy(250),
-		energyVar(50),
-		radius(0.f),
-		drawCount(1),
-		texture(NULL),
-		model(NULL) {
+ParticleSystemBase::ParticleSystemBase()
+		: random(0)
+		, srcBlendFactor(BlendFactor::SRC_ALPHA)
+		, destBlendFactor(BlendFactor::ONE)
+		, blendEquationMode(BlendMode::FUNC_ADD)
+		, primitiveType(PrimitiveType::QUAD)
+		, offset(0.f)
+		, color(1.f)
+		, color2(1.f)
+		, colorNoEnergy(0.f)
+		, color2NoEnergy(0.f)
+		, teamColorEnergy(false)
+		, teamColorNoEnergy(false)
+		, size(1.f)
+		, sizeNoEnergy(1.f)
+		, speed(1.f)
+		, gravity(0.f)
+		, emissionRate(15)
+		, energy(250)
+		, energyVar(50)
+		, radius(0.f)
+		, drawCount(1)
+		, texture(NULL)
+		, model(NULL) {
 }
 
-ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType) :
-		random(0),
-		srcBlendFactor(protoType.srcBlendFactor),
-		destBlendFactor(protoType.destBlendFactor),
-		blendEquationMode(protoType.blendEquationMode),
-		primitiveType(protoType.primitiveType),
-		offset(protoType.offset),
-		color(protoType.color),
-		color2(protoType.color2),
-		colorNoEnergy(protoType.colorNoEnergy),
-		color2NoEnergy(protoType.color2NoEnergy),
-		size(protoType.size),
-		sizeNoEnergy(protoType.sizeNoEnergy),
-		speed(protoType.speed),
-		gravity(protoType.gravity),
-		emissionRate(protoType.emissionRate),
-		energy(protoType.energy),
-		energyVar(protoType.energyVar),
-		radius(protoType.radius),
-		drawCount(protoType.drawCount),
-		texture(protoType.texture),
-		model(protoType.model) {
+ParticleSystemBase::ParticleSystemBase(const ParticleSystemBase &protoType)
+		: random(0)
+		, srcBlendFactor(protoType.srcBlendFactor)
+		, destBlendFactor(protoType.destBlendFactor)
+		, blendEquationMode(protoType.blendEquationMode)
+		, primitiveType(protoType.primitiveType)
+		, offset(protoType.offset)
+		, color(protoType.color)
+		, color2(protoType.color2)
+		, colorNoEnergy(protoType.colorNoEnergy)
+		, color2NoEnergy(protoType.color2NoEnergy)
+		, teamColorEnergy(protoType.teamColorEnergy)
+		, teamColorNoEnergy(protoType.teamColorNoEnergy)
+		, size(protoType.size)
+		, sizeNoEnergy(protoType.sizeNoEnergy)
+		, speed(protoType.speed)
+		, gravity(protoType.gravity)
+		, emissionRate(protoType.emissionRate)
+		, energy(protoType.energy)
+		, energyVar(protoType.energyVar)
+		, radius(protoType.radius)
+		, drawCount(protoType.drawCount)
+		, texture(protoType.texture)
+		, model(protoType.model) {
 }
 
 // =====================================================
@@ -199,6 +203,14 @@ void ParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	}
 }
 
+void ParticleSystem::setTeamColour(Vec3f teamColour) {
+	if (teamColorEnergy) {
+		color = Vec4f(teamColour, color.a);
+	}
+	if (teamColorNoEnergy) {
+		colorNoEnergy = Vec4f(teamColour, colorNoEnergy.a);
+	}
+}
 
 // =============== MISC =========================
 

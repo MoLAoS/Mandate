@@ -63,10 +63,12 @@ World::World(SimulationInterface *m_simInterface)
 	Config &config = Config::getInstance();
 
 	GameSettings &gs = m_simInterface->getGameSettings();
+	
 	fogOfWar = gs.getFogOfWar();
+	shroudOfDarkness = gs.getShroudOfDarkness();
+
 	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
 	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
-	shroudOfDarkness = gs.getFogOfWar();
 
 	unfogActive = false;
 	frameCount = 0;
@@ -105,11 +107,10 @@ void World::save(XmlNode *node) const {
 // ========================== init ===============================================
 
 void World::init(const XmlNode *worldNode) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	initFactions();
 	initCells(); //must be done after knowing faction number and dimensions
-	initMap();
-	initSplattedTextures();
+	map.init();
 
 	// must be done after initMap()
 	routePlanner = new RoutePlanner(this);
@@ -118,14 +119,14 @@ void World::init(const XmlNode *worldNode) {
 	if (worldNode) {
 		initExplorationState();
 		loadSaved(worldNode);
-		g_userInterface.initMinimap(fogOfWar, true);
+		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, true);
 		g_cartographer.loadMapState(worldNode->getChild("mapState"));
 	} else if (m_simInterface->getGameSettings().getDefaultUnits()) {
-		g_userInterface.initMinimap(fogOfWar, false);
+		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, false);
 		initUnits();
 		initExplorationState();
 	} else {
-		g_userInterface.initMinimap(fogOfWar, false);
+		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, false);
 	}
 	computeFow();
 	alive = true;
@@ -248,7 +249,7 @@ void World::updateEarthquakes(float seconds) {
 					doKill(attacker, dri->first);
 					continue;
 				}
-
+				///@todo move this to unit if it's ever used
 				const FallDownSkillType *fdst = (const FallDownSkillType *)
 						dri->first->getType()->getFirstStOfClass(SkillClass::FALL_DOWN);
 				if (fdst && dri->first->getCurrSkill() != fdst
@@ -261,43 +262,18 @@ void World::updateEarthquakes(float seconds) {
 }
 #endif // Disable Earthquakes
 
-void World::updateFaction(const Faction *f) {
+void World::updateUnits(const Faction *f) {
 	const int n = f->getUnitCount();
 	for (int i=0; i < n; ++i) {
 		Unit *unit = f->getUnit(i);
-		if (unit->update()) {
-			if (unit->getCurrSkill()->getClass() == SkillClass::CAST_SPELL
-			&& !unit->getCurrSkill()->getEffectTypes().empty()) {
-				// start spell effects for skill cycle just completed
-				applyEffects(unit, unit->getCurrSkill()->getEffectTypes(), unit, 0);
-			}
-
-			m_simInterface->doUpdateUnitCommand(unit);
-
-			if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
-				// move unit in cells
-				moveUnitCells(unit);
-
-				// play water sound?
-				if (map.getCell(unit->getPos())->getHeight() < map.getWaterLevel() 
-				&& unit->getCurrField() == Field::LAND
-				&& map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(getThisTeamIndex())
-				&& g_renderer.getCuller().isInside(unit->getPos())) {
-					g_soundRenderer.playFx(g_coreData.getWaterSound());
-				}
-			}
-		}
-		// unit death
-		if (unit->isDead() && unit->getCurrSkill()->getClass() != SkillClass::DIE) {
-			unit->kill();
-		}
+		unit->doUpdate();
 		// assert map cells
 		map.assertUnitCells(unit);
 	}
 }
 
 void World::processFrame() {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION);
 
 	//m_unitTypeFactory.assertTypes();
 
@@ -318,9 +294,9 @@ void World::processFrame() {
 
 	//update units
 	for (Factions::const_iterator f = factions.begin(); f != factions.end(); ++f) {
-		updateFaction(&*f);
+		updateUnits(&*f);
 	}
-	updateFaction(&glestimals);
+	updateUnits(&glestimals);
 
 //	updateEarthquakes(1.f / 40.f);
 
@@ -359,7 +335,7 @@ void World::hit(Unit *attacker) {
 }
 
 void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked) {
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 	typedef std::map<Unit*, fixed> DistMap;
 	//hit attack positions
 	if (ast->getSplash() && ast->getSplashRadius()) {
@@ -428,19 +404,7 @@ void World::damage(Unit *unit, int hp) {
 }
 
 void World::doKill(Unit *killer, Unit *killed) {
-	ScriptManager::onUnitDied(killed);
-	m_simInterface->getStats()->kill(killer->getFactionIndex(), killed->getFactionIndex());
-	if (killer->isAlive() && killer->getTeam() != killed->getTeam()) {
-		killer->incKills();
-	}
-
-	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
-		killed->kill();
-	}
-	if (!killed->isMobile()) {
-		// obstacle removed
-		cartographer->updateMapMetrics(killed->getPos(), killed->getSize());
-	}
+	killer->doKill(killed);
 }
 
 // Apply effects to a specific location, with or without splash
@@ -535,6 +499,8 @@ void World::tick() {
 		}
 	}
 
+	///@todo foreach(Factions, f, factions) { (*f)->computeResourceBalances(); }
+
 	//compute resources balance
 	for (int k = 0; k < getFactionCount(); ++k) {
 		Faction *faction = getFaction(k);
@@ -599,29 +565,43 @@ bool World::placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spacia
 void World::moveUnitCells(Unit *unit) {
 	Vec2i newPos = unit->getNextPos();
 	bool changingTiles = false;
-	if (Map::toTileCoords(newPos) != Map::toTileCoords(unit->getPos())) {
+	Vec2i centrePos = unit->getCenteredPos();
+	Vec2i dir = unit->getNextPos() - unit->getPos();
+	Vec2i newCentrePos = centrePos + dir;
+
+	if (Map::toTileCoords(centrePos) != Map::toTileCoords(newCentrePos)) {
 		changingTiles = true;
 		// remove unit's visibility
 		cartographer->removeUnitVisibility(unit);
 	}
-	assert(routePlanner->isLegalMove(unit, newPos));
+	if (unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+		RUNTIME_CHECK(routePlanner->isLegalMove(unit, newPos));
+	}
 	map.clearUnitCells(unit, unit->getPos());
 	map.putUnitCells(unit, newPos);
 	if (changingTiles) {
 		// re-apply unit's visibility
 		cartographer->applyUnitVisibility(unit);
+		if (unit->getType()->isDetector()) {
+			cartographer->detectorMoved(unit, centrePos);
+		}
 	}
 
-	//water splash
-	if (tileset.getWaterEffects() && unit->getCurrField() == Field::LAND) {
-		if (map.getCell(unit->getLastPos())->isSubmerged()) {
+	if (unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+		// water splash
+		if (tileset.getWaterEffects() && unit->getCurrField() == Field::LAND
+		&& getThisFaction()->canSee(unit) && map.getCell(unit->getLastPos())->isSubmerged()
+		&& g_renderer.getCuller().isInside(newCentrePos)) {
 			for (int i = 0; i < 3; ++i) {
 				waterEffects.addWaterSplash(
 					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f), 
 						  unit->getLastPos().y + random.randRange(-0.4f, 0.4f))
 				);
 			}
+			g_soundRenderer.playFx(g_coreData.getWaterSound());
 		}
+	} else {
+		unit->setPos(unit->getPos()); // teleport, double setPos() to avoid regular movement between cells
 	}
 }
 
@@ -980,38 +960,11 @@ void World::initCells() {
 	Logger::getInstance().add("State cells", true);
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
-
-			Tile *sc= map.getTile(i, j);
-
-			sc->setFowTexCoord(
-				Vec2f(i / (nextPowerOf2(map.getTileW()) - 1.f),j / (nextPowerOf2(map.getTileH()) - 1.f)));
-
-			for (int k = 0; k < GameConstants::maxPlayers; k++) {
-				sc->setExplored(k, !gs.getFogOfWar());
-				sc->setVisible(k, !gs.getFogOfWar());
+			Tile *tile = map.getTile(i, j);
+			for (int k = 0; k < GameConstants::maxPlayers; ++k) {
+				tile->setExplored(k, !gs.getFogOfWar());
+				tile->setVisible(k, !gs.getFogOfWar());
 			}
-		}
-	}
-}
-
-//init surface textures
-void World::initSplattedTextures() {
-	for (int i = 0; i < map.getTileW() - 1; ++i) {
-		for (int j = 0; j < map.getTileH() - 1; ++j) {
-			Vec2f coord;
-			const Texture2D *texture;
-			Tile *sc00 = map.getTile(i, j);
-			Tile *sc10 = map.getTile(i + 1, j);
-			Tile *sc01 = map.getTile(i, j + 1);
-			Tile *sc11 = map.getTile(i + 1, j + 1);
-			tileset.addSurfTex(
-				sc00->getTileType(),
-				sc10->getTileType(),
-				sc01->getTileType(),
-				sc11->getTileType(),
-				coord, texture);
-			sc00->setTileTexCoord(coord);
-			sc00->setTileTexture(texture);
 		}
 	}
 }
@@ -1074,23 +1027,28 @@ void World::initUnits() {
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
 					unit->create(true);
-					// sends updates, must be done after all other init
-					//unit->born();
-
+					//unit->born(); ... sends updates, must be done after all other init
 				} else {
-					throw runtime_error("Unit cant be placed, this error is caused because there "
-						"is no enough place to put the units near its start location, make a "
-						"better map: " + unit->getType()->getName() + " Faction: "+intToStr(i));
-				}
-				if (unit->getType()->hasSkillClass(SkillClass::BE_BUILT)) {
-					map.flatternTerrain(unit);
-					cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+					throw runtime_error("Unit can't be placed! This error is caused because there "
+						"is not enough space to put the units near its start location, make a "
+						"better map: " + unit->getType()->getName() + " Faction: " + intToStr(i));
 				}
 			}
 		}
 	}
 	map.computeNormals();
 	map.computeInterpolatedHeights();
+
+	foreach (Factions, fIt, factions) {
+		foreach_const (Units, uIt, fIt->getUnits()) {
+			const Unit* const &unit = *uIt;
+			const UnitType *ut = unit->getType();
+			if (ut->hasSkillClass(SkillClass::BE_BUILT) && !ut->hasSkillClass(SkillClass::MOVE)) {
+				map.flatternTerrain(unit);
+				cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+			}
+		}
+	}
 }
 
 void World::activateUnits() {
@@ -1104,25 +1062,27 @@ void World::activateUnits() {
 //	}
 }
 
-void World::initMap() {
-	map.init();
-}
-
 void World::initExplorationState() {
-	if (!fogOfWar) {
-		for (int i = 0; i < map.getTileW(); ++i) {
-			for (int j = 0; j < map.getTileH(); ++j) {
-				map.getTile(i, j)->setVisible(thisTeamIndex, true);
-				map.getTile(i, j)->setExplored(thisTeamIndex, true);
-			}
-		}
-	} else if (!shroudOfDarkness) {
-		for (int i = 0; i < map.getTileW(); ++i) {
-			for (int j = 0; j < map.getTileH(); ++j) {
-				map.getTile(i, j)->setExplored(thisTeamIndex, true);
-			}
+	for (int i = 0; i < map.getTileW(); ++i) {
+		for (int j = 0; j < map.getTileH(); ++j) {
+			map.getTile(i, j)->setVisible(thisTeamIndex, !fogOfWar);
+			map.getTile(i, j)->setExplored(thisTeamIndex, !shroudOfDarkness);
 		}
 	}
+	//if (!fogOfWar) {
+	//	for (int i = 0; i < map.getTileW(); ++i) {
+	//		for (int j = 0; j < map.getTileH(); ++j) {
+	//			map.getTile(i, j)->setVisible(thisTeamIndex, true);
+	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
+	//		}
+	//	}
+	//} else if (!shroudOfDarkness) {
+	//	for (int i = 0; i < map.getTileW(); ++i) {
+	//		for (int j = 0; j < map.getTileH(); ++j) {
+	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
+	//		}
+	//	}
+	//}
 }
 
 
@@ -1162,12 +1122,12 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 				float dist = currRelPos.length();
 				Tile *sc = map.getTile(currPos);
 
-				//explore
-				if (dist < sweepRange) {
+				// explore
+				if (shroudOfDarkness && dist < sweepRange) {
 					sc->setExplored(teamIndex, true);
 				}
 
-				//visible
+				// visible
 				if (dist < surfSightRange) {
 					sc->setVisible(teamIndex, true);
 				}
@@ -1180,23 +1140,24 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 void World::computeFow() {
 	GameSettings &gs = m_simInterface->getGameSettings();
 	
-	//todo : move to Minimap
+	///@todo move to Minimap
 	//reset texture
 	Minimap *minimap = g_userInterface.getMinimap();
 	minimap->resetFowTex();
 
-	//reset visibility in cells
-	for (int k = 0; k < GameConstants::maxPlayers; ++k) {
-		if (fogOfWar || k != thisTeamIndex) {
-			for (int i = 0; i < map.getTileW(); ++i) {
-				for (int j = 0; j < map.getTileH(); ++j) {
-					map.getTile(i, j)->setVisible(k, !gs.getFogOfWar());
-				}
+	// reset visibility in cells		
+	for (int i = 0; i < map.getTileW(); ++i) {
+		for (int j = 0; j < map.getTileH(); ++j) {
+			Tile *tile = map.getTile(i, j);
+			for (int k = 0; k < GameConstants::maxPlayers; ++k) {
+				bool val =			// if no fog and no shroud, or no fog and shroud with this 
+					(!fogOfWar		// tile seen previously, then set visible
+					&& (!shroudOfDarkness || (shroudOfDarkness && tile->isExplored(k))));
+				tile->setVisible(k, val);
 			}
 		}
 	}
-
-	//compute cells
+	// explore cells
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
@@ -1207,13 +1168,11 @@ void World::computeFow() {
 			}
 		}
 	}
-
-	//fire
+	// turn fires on/off (redundant ? all particle-system now subjected to visibilty checks)
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
-	
-			//fire
+			// fire
 			ParticleSystem *fire = unit->getFire();
 			if (fire) {
 				fire->setActive(map.getTile(Map::toTileCoords(unit->getPos()))->isVisible(thisTeamIndex));
@@ -1221,10 +1180,13 @@ void World::computeFow() {
 		}
 	}
 	
-	//compute texture
+	// compute texture
 	if (unfogActive) { // scripted map reveal
 		doUnfog();
-	}	
+	}
+	Rectangle rect(0,0, map.getTileW(), map.getTileH());
+	TypeMap<> tmpMap(rect, numeric_limits<float>::infinity());
+	tmpMap.clearMap(numeric_limits<float>::infinity());
 	for (int i = 0; i < getFactionCount(); ++i) {
 		Faction *faction = getFaction(i);
 		if (faction->getTeam() != thisTeamIndex) {
@@ -1241,26 +1203,51 @@ void World::computeFow() {
 				PosCircularIteratorSimple pci(map.getBounds(), unit->getPos(), sightRange + indirectSightRange);
 				while (pci.getNext(pos, distance)) {
 					Vec2i surfPos = Map::toTileCoords(pos);
-
-					//compute max alpha
-					float maxAlpha;
-					if (surfPos.x > 1 && surfPos.y > 1 && surfPos.x < map.getTileW() - 2 && surfPos.y < map.getTileH() - 2) {
-						maxAlpha = 1.f;
-					} else if (surfPos.x > 0 && surfPos.y > 0 && surfPos.x < map.getTileW() - 1 && surfPos.y < map.getTileH() - 1) {
-						maxAlpha = 0.3f;
-					} else {
-						maxAlpha = 0.0f;
+					float curr = tmpMap.getInfluence(surfPos);
+					if (curr == 1.f) {
+						continue; // already max
 					}
 
-					//compute alpha
+					// compute max alpha
+					float maxAlpha;
+					if (surfPos.x > 1 && surfPos.y > 1 && surfPos.x < map.getTileW() - 2 && surfPos.y < map.getTileH() - 2) {
+						// strictly inside map
+						maxAlpha = 1.f;
+					} else {
+						// map boundary
+						maxAlpha = 0.f;
+						if (tmpMap.getInfluence(surfPos) == 0.3f) {
+							continue; // already max
+						}
+					}
+
+					// compute alpha
 					float alpha;
+
 					if (distance > sightRange) {
 						alpha = clamp(1.f - (distance - sightRange) / (indirectSightRange), 0.f, maxAlpha);
 					} else {
 						alpha = maxAlpha;
 					}
-					minimap->incFowTextureAlphaSurface(surfPos, alpha);
+					if (alpha != 0.f && (curr == numeric_limits<float>::infinity() || alpha > curr)) {
+						tmpMap.setInfluence(surfPos, alpha);
+					}
+					//minimap->incFowTextureAlphaSurface(surfPos, alpha);
 				}
+			}
+		}
+	}
+	RectIterator iter(Vec2i(0,0), Vec2i(rect.w - 1, rect.h - 1));
+	while (iter.more()) {
+		Vec2i tPos = iter.next();
+		float val = tmpMap.getInfluence(tPos);
+		if (val != numeric_limits<float>::infinity()) {
+			minimap->incFowTextureAlphaSurface(tPos, val);
+		} else if (!shroudOfDarkness) {
+			if (tPos.x == 0 || tPos.y == 0 || tPos.x == map.getTileW() - 1 || tPos.y == map.getTileH() - 1) {
+				minimap->incFowTextureAlphaSurface(tPos, 0.f);
+			} else {
+				minimap->incFowTextureAlphaSurface(tPos, 0.5f);
 			}
 		}
 	}

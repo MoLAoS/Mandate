@@ -232,27 +232,29 @@ int SimulationInterface::launchGame() {
 	//
 }
 
-void SimulationInterface::updateWorld() {
-	if (speed != GameSpeed::PAUSED) {
-		// Ai-Interfaces
-		for (int i = 0; i < world->getFactionCount(); ++i) {
-			if (world->getFaction(i)->getCpuControl()
-			&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
-				aiInterfaces[i]->update();
-			}
-		}
-		//m_gaia->update();
-
-		// World
-		world->processFrame();
-		frameProccessed();
-
-		// give pending commands
-		foreach (Commands, it, pendingCommands) {
-			commander->giveCommand(it->toCommand());
-		}
-		pendingCommands.clear();
+bool SimulationInterface::updateWorld() {
+	if (speed == GameSpeed::PAUSED) {
+		return false;
 	}
+	// Ai-Interfaces
+	for (int i = 0; i < world->getFactionCount(); ++i) {
+		if (world->getFaction(i)->getCpuControl()
+		&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
+			aiInterfaces[i]->update();
+		}
+	}
+	//m_gaia->update();
+
+	// World
+	world->processFrame();
+	frameProccessed();
+
+	// give pending commands
+	foreach (Commands, it, pendingCommands) {
+		commander->giveCommand(it->toCommand());
+	}
+	pendingCommands.clear();
+	return true;
 }
 
 GameStatus SimulationInterface::checkWinner(){
@@ -326,13 +328,10 @@ GameStatus SimulationInterface::checkWinnerScripted() {
 
 bool SimulationInterface::hasBuilding(const Faction *faction){
 	if (!faction->isDefeated()) {
-		for (int i=0; i < faction->getUnitCount(); ++i) {
-			Unit *unit = faction->getUnit(i);
-			if (unit->getType()->hasSkillClass(SkillClass::BE_BUILT)
-			&& unit->isAlive() && !unit->getType()->getProperty(Property::WALL)) {
-				return true;
-			}
+		if (faction->hasBuilding()) {
+			return true;
 		}
+		///@todo maybe refactor this so it's in faction - hailstone 11Dec2010
 		const_cast<Faction*>(faction)->setDefeated();
 		game->doDefeatedMessage(const_cast<Faction*>(faction));
 	}
@@ -398,51 +397,23 @@ void SimulationInterface::requestCommand(Command *command) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::CANCEL_COMMAND, unit, Vec2i(-1)));
 		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_REPAIR, 
-				unit, command->getFlags().get(CommandProperties::AUTO_REPAIR_ENABLED)));
+				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
+		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_ATTACK) {
+			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_ATTACK, 
+				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
+		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_FLEE) {
+			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_FLEE, 
+				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
+		} else if (command->getArchetype() == CommandArchetype::SET_CLOAK) {
+			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_CLOAK, 
+				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
 		}
 	}
 	delete command;
 }
 
 void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
-	const SkillType *old_st = unit->getCurrSkill();
-
-	// if unit has command process it
-	if (unit->anyCommand()) {
-		// check if a command being 'watched' has finished
-		if (unit->getCommandCallback() != unit->getCurrCommand()->getId()) {
-			int last = unit->getCommandCallback();
-			ScriptManager::commandCallback(unit);
-			// if the callback set a new callback we don't want to clear it
-			// only clear if the callback id's are the same
-			if (last == unit->getCommandCallback()) {
-				unit->clearCommandCallback();
-			}
-		}
-		m_processingCommand = unit->getCurrCommand()->getType()->getClass();
-		unit->getCurrCommand()->getType()->update(unit);
-		m_processingCommand = CommandClass::NULL_COMMAND;
-	}
-	// if no commands, add stop (or guard for pets) command
-	if (!unit->anyCommand() && unit->isOperative()) {
-		const UnitType *ut = unit->getType();
-		unit->setCurrSkill(SkillClass::STOP);
-		if (ut->hasCommandClass(CommandClass::STOP)) {
-			unit->giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
-		}
-	}
-	//if unit is out of EP, it stops
-	if (unit->computeEp()) {
-		if (unit->getCurrCommand()) {
-			unit->cancelCurrCommand();
-		}
-		unit->setCurrSkill(SkillClass::STOP);
-	}
-	updateSkillCycle(unit);
-
-	if (unit->getCurrSkill() != old_st) {	// if starting new skill
-		unit->resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
-	}
+	unit->doUpdateCommand();
 	IF_MAD_SYNC_CHECKS(
 		UnitStateRecord usr(unit);
 		worldLog->addUnitRecord(usr);
@@ -451,14 +422,7 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 }
 
 void SimulationInterface::updateSkillCycle(Unit *unit) {
-	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
-		if (unit->getPos() == unit->getNextPos()) {
-			throw runtime_error("Move Skill set, but pos == nextPos");
-		}
-		unit->updateMoveSkillCycle();
-	} else {
-		unit->updateSkillCycle(skillCycleTable->lookUp(unit).getSkillFrames());
-	}
+	unit->updateSkillCycle(skillCycleTable);
 }
 
 void SimulationInterface::startFrame(int frame) {
@@ -469,27 +433,18 @@ void SimulationInterface::startFrame(int frame) {
 }
 
 void SimulationInterface::doUpdateAnimOnDeath(Unit *unit) {
-	assert(unit->getCurrSkill()->getClass() == SkillClass::DIE);
-	const CycleInfo &inf = skillCycleTable->lookUp(unit);
-	unit->updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
+	unit->doUpdateAnimOnDeath(skillCycleTable);
 }
 
 void SimulationInterface::doUpdateAnim(Unit *unit) {
-	if (unit->getCurrSkill()->getClass() == SkillClass::DIE) {
-		unit->updateAnimDead();
-	} else {
-		const CycleInfo &inf = skillCycleTable->lookUp(unit);
-		unit->updateAnimCycle(inf.getAnimFrames(), inf.getSoundOffset(), inf.getAttackOffset());
-	}
+	unit->doUpdateAnim(skillCycleTable);
 	IF_MAD_SYNC_CHECKS(
 		postAnimUpdate(unit);
 	)
 }
 
 void SimulationInterface::doUnitBorn(Unit *unit) {
-	const CycleInfo &inf = skillCycleTable->lookUp(unit);
-	unit->updateSkillCycle(inf.getSkillFrames());
-	unit->updateAnimCycle(inf.getAnimFrames());
+	unit->doUnitBorn(skillCycleTable);
 	IF_MAD_SYNC_CHECKS(
 		postUnitBorn(unit);
 	)

@@ -21,6 +21,7 @@
 #include "metrics.h"
 #include "widgets.h"
 #include "forward_decs.h"
+#include "selection.h"
 
 using std::string;
 
@@ -72,6 +73,7 @@ public:
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
 
+
 	static const int selectionCellCount = cellWidthCount * cellHeightCount;
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
 	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
@@ -89,8 +91,11 @@ private:
 	Vec3f colors[colorCount];
 	int m_progress;
 	int currentColor;
-	int downSelectedPos;
+	int m_selectedCommandIndex;//downSelectedPos;
 	int m_logo;
+	int m_autoRepairOn, m_autoRepairOff, m_autoRepairMixed;
+	int m_autoAttackOn, m_autoAttackOff, m_autoAttackMixed;
+	int m_autoFleeOn, m_autoFleeOff, m_autoFleeMixed;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;
@@ -110,6 +115,7 @@ private:
 
 private:
 	void renderProgressBar();
+	int getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s);
 
 public:
 	Display(UserInterface *ui, Vec2i pos);
@@ -125,7 +131,7 @@ public:
 	CommandClass getCommandClass(int i)				{return commandClasses[i];}
 	Vec3f getColor() const							{return colors[currentColor];}
 	int getProgressBar() const						{return m_progress;}
-	int getDownSelectedPos() const					{return downSelectedPos;}
+	int getSelectedCommandIndex() const				{return m_selectedCommandIndex;}
 
 	//set
 	void setSize();
@@ -143,6 +149,7 @@ public:
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}
 	void setIndex(int i, int value)						{index[i] = value;}
 	void setProgressBar(int i);
+	void setLoadInfo(const string &txt);
 	void setDownSelectedPos(int i);
 
 	//misc

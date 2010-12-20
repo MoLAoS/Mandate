@@ -43,7 +43,7 @@ namespace Glest { namespace Search {
 Cartographer::Cartographer(World *world)
 		: world(world), cellMap(0), routePlanner(0) {
 	g_logger.add("Cartographer", true);
-	_PROFILE_FUNCTION();
+	//_PROFILE_FUNCTION();
 
 	cellMap = world->getMap();
 	int w = cellMap->getW(), h = cellMap->getH();
@@ -70,6 +70,9 @@ Cartographer::Cartographer(World *world)
 			// AnnotatedMap needs to be 'bound' to explored status
 			explorationMaps[team] = new ExplorationMap(cellMap);
 			//teamMaps[team] = new AnnotatedMap(world, explorationMaps[team]);
+			Rectangle rect(0,0, cellMap->getTileW(), cellMap->getTileH());
+			m_detectorMaps[team] = new TypeMap<int>(rect, 0);
+			m_detectorMaps[team]->zeroMap();
 		}
 	}
 
@@ -142,6 +145,8 @@ Cartographer::~Cartographer() {
 	storeMaps.clear();
 	deleteMapValues(siteMaps.begin(), siteMaps.end());
 	siteMaps.clear();
+
+	deleteMapValues(m_detectorMaps);
 }
 
 void Cartographer::initResourceMap(ResourceMapKey key, PatchMap<1> *pMap) {
@@ -311,6 +316,52 @@ IF_DEBUG_EDITION(
 		}
 	}
 )
+
+void incrementMap(TypeMap<int> *iMap, Vec2i pos, int radius) {
+	for (int y = pos.y - radius; y <= pos.y + radius; ++y) {
+		for (int x = pos.x - radius; x <= pos.x + radius; ++x) {
+			Vec2i tpos(x, y);
+			if (tpos.dist(pos) <= radius) {
+				iMap->setInfluence(tpos, iMap->getInfluence(tpos) + 1);
+			}
+		}
+	}
+}
+
+void deccrementMap(TypeMap<int> *iMap, Vec2i pos, int radius) {
+	for (int y = pos.y - radius; y <= pos.y + radius; ++y) {
+		for (int x = pos.x - radius; x <= pos.x + radius; ++x) {
+			Vec2i tpos(x, y);
+			if (tpos.dist(pos) <= radius) {
+				iMap->setInfluence(tpos, iMap->getInfluence(tpos) - 1);
+			}
+		}
+	}
+}
+
+void Cartographer::detectorCreated(Unit *unit) {
+	TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()];
+	Vec2i tpos = Map::toTileCoords(unit->getCenteredPos());
+	int radius = unit->getSight() / 2 + 1;
+	incrementMap(iMap, tpos, radius);
+}
+
+void Cartographer::detectorMoved(Unit *unit, Vec2i oldPos) {
+	TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()];
+	Vec2i tpos = Map::toTileCoords(oldPos);
+	int radius = unit->getSight() / 2 + 1;
+	deccrementMap(iMap, tpos, radius);
+
+	tpos = Map::toTileCoords(unit->getCenteredPos());
+	incrementMap(iMap, tpos, radius);
+}
+
+void Cartographer::detectorDied(Unit *unit) {
+	TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()];
+	Vec2i tpos = Map::toTileCoords(unit->getCenteredPos());
+	int radius = unit->getSight() / 2 + 1;
+	deccrementMap(iMap, tpos, radius);
+}
 
 void Cartographer::tick() {
 	if (clusterMap->isDirty()) {

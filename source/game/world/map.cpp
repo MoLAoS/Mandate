@@ -56,17 +56,15 @@ Map::Map()
 		, waterLevel(0.f)
 		, heightFactor(0.f)
 		, avgHeight(0.f)
-		, w(0)
-		, h(0)
-		, tileW(0)
-		, tileH(0)
+		, m_cellSize(0)
+		, m_tileSize(0)
 		, maxPlayers(0)
 		, cells(NULL)
 		, tiles(NULL)
 		, startLocations(NULL)
-		//, surfaceHeights(NULL)
-		//, earthquakes() 
-		{
+		, m_heightMap(0)
+		, m_vertexData(0)
+		/*, earthquakes()*/ {
 	// If this is expanded, maintain Tile::read() and write()
 	assert(Tileset::objCount < 256);
 }
@@ -74,10 +72,10 @@ Map::Map()
 Map::~Map() {
 	Logger::getInstance().add("~Cells", !Program::getInstance()->isTerminating());
 
-	if(cells)			{delete[] cells;}
-	if(tiles)			{delete[] tiles;}
-	if(startLocations)	{delete[] startLocations;}
-//	if (surfaceHeights)	{delete[] surfaceHeights;}
+	delete [] cells;
+	delete [] tiles;
+	delete [] startLocations;
+	delete m_vertexData;
 }
 
 char encodeExplorationState(Tile *tile) {
@@ -108,11 +106,11 @@ void decodeExplorationState(Tile *tile, char state) {
 
 void Map::saveExplorationState(XmlNode *node) const {
 	XmlNode *metrics = node->addChild("metrics");
-	metrics->addAttribute("width", tileW);
-	metrics->addAttribute("height", tileH);
-	for (int y=0; y < tileH; ++y) {
+	metrics->addAttribute("width", m_tileSize.w);
+	metrics->addAttribute("height", m_tileSize.h);
+	for (int y=0; y < m_tileSize.h; ++y) {
 		stringstream ss;
-		for (int x=0; x < tileW; ++x) {
+		for (int x=0; x < m_tileSize.w; ++x) {
 			ss << encodeExplorationState(getTile(x, y));
 		}
 		node->addChild(string("row") + intToStr(y))->addAttribute("value", ss.str());
@@ -120,11 +118,11 @@ void Map::saveExplorationState(XmlNode *node) const {
 }
 
 void Map::loadExplorationState(XmlNode *node) {
-	assert(node->getChild("metrics")->getIntAttribute("width") == tileW);
-	assert(node->getChild("metrics")->getIntAttribute("height") == tileH);
-	for (int y=0; y < tileH; ++y) {
+	assert(node->getChild("metrics")->getIntAttribute("width") == m_tileSize.w);
+	assert(node->getChild("metrics")->getIntAttribute("height") == m_tileSize.h);
+	for (int y=0; y < m_tileSize.h; ++y) {
 		stringstream ss(node->getChild(string("row") + intToStr(y))->getStringAttribute("value"));
-		for (int x=0; x < tileW; ++x) {
+		for (int x=0; x < m_tileSize.w; ++x) {
 			char state;
 			ss >> state;
 			decodeExplorationState(getTile(x, y), state);
@@ -181,11 +179,11 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		// etc.
 		f->read(&header, sizeof(MapFileHeader), 1);
 
-		if (nextPowerOf2(header.width) != header.width) {
+		if (!isPowerOfTwo(header.width)) {
 			throw runtime_error("Map width is not a power of 2");
 		}
 
-		if (nextPowerOf2(header.height) != header.height) {
+		if (!isPowerOfTwo(header.height)) {
 			throw runtime_error("Map height is not a power of 2");
 		}
 
@@ -193,10 +191,10 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		waterLevel = static_cast<float>((header.waterLevel - 0.01f) / heightFactor);
 		title = header.title;
 		maxPlayers = header.maxPlayers;
-		tileW = header.width;
-		tileH = header.height;
-		w = tileW * GameConstants::cellScale;
-		h = tileH * GameConstants::cellScale;
+		m_tileSize.w = header.width;
+		m_tileSize.h = header.height;
+		m_cellSize.w = m_tileSize.w * GameConstants::cellScale;
+		m_cellSize.h = m_tileSize.h * GameConstants::cellScale;
 
 
 		//start locations
@@ -209,23 +207,23 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		}
 
 		// Tiles & Cells
-		cells = new Cell[w * h];
-		tiles = new Tile[tileW * tileH];
+		cells = new Cell[m_cellSize.w * m_cellSize.h];
+		tiles = new Tile[m_tileSize.w * m_tileSize.h];
 
-		const int &scale = GameConstants::mapScale;
+		m_heightMap = new float[m_tileSize.w * m_tileSize.h];
+
 		//read heightmap
-		for (int y = 0; y < tileH; ++y) {
-			for (int x = 0; x < tileW; ++x) {
+		for (int y = 0; y < m_tileSize.h; ++y) {
+			for (int x = 0; x < m_tileSize.w; ++x) {
 				float32 alt;
 				f->read(&alt, sizeof(float32), 1);
-				Tile *sc = getTile(x, y);
-				sc->setVertex(Vec3f(float(x * scale), alt / heightFactor, float(y * scale)));
+				m_heightMap[y * m_tileSize.w + x] = alt / heightFactor;
 			}
 		}
 
 		//read surfaces
-		for (int y = 0; y < tileH; ++y) {
-			for (int x = 0; x < tileW; ++x) {
+		for (int y = 0; y < m_tileSize.h; ++y) {
+			for (int x = 0; x < m_tileSize.w; ++x) {
 				int8 surf;
 				f->read(&surf, sizeof(int8), 1);
 				getTile(x, y)->setTileType(surf - 1);
@@ -233,16 +231,18 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 		}
 
 		//read objects and resources
-		for (int y = 0; y < tileH; ++y) {
-			for (int x = 0; x < tileW; ++x) {
+		for (int y = 0; y < m_tileSize.h; ++y) {
+			for (int x = 0; x < m_tileSize.w; ++x) {
 				int8 objNumber;
 				f->read(&objNumber, sizeof(int8), 1);
-				Tile *sc = getTile(Vec2i(x, y));
-				if (objNumber == 0 || x == tileW - 1 || y == tileH - 1) {
-					sc->setObject(NULL);
+				Tile *tile = getTile(Vec2i(x, y));
+				Vec3f vert(x * cellScale + cellScale / 2.f, 0.f, y * cellScale + cellScale / 2.f);
+
+				if (objNumber == 0 || x == m_tileSize.w - 1 || y == m_tileSize.h - 1) {
+					tile->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
-					Object *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), sc->getVertex());
-					sc->setObject(o);
+					Object *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), vert);
+					tile->setObject(o);
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
 						if (rt->getClass() == ResourceClass::TILESET && rt->getTilesetObject() == objNumber) {
@@ -251,9 +251,9 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
-					Object *o = objFactory.newInstance(NULL, sc->getVertex());
+					Object *o = objFactory.newInstance(NULL, vert);
 					o->setResource(rt, Vec2i(x, y) * cellScale);
-					sc->setObject(o);
+					tile->setObject(o);
 				}
 			}
 		}
@@ -271,12 +271,12 @@ void Map::doChecksum(Checksum &checksum) {
 //	checksum.add<float>(waterLevel);
 //	checksum.add<float>(heightFactor);
 //	checksum.add<float>(avgHeight);
-	checksum.add<int>(w);
-	checksum.add<int>(h);
-	checksum.add<int>(tileW);
-	checksum.add<int>(tileH);
+	checksum.add<int>(m_cellSize.w);
+	checksum.add<int>(m_cellSize.h);
+	checksum.add<int>(m_tileSize.w);
+	checksum.add<int>(m_tileSize.h);
 	checksum.add<int>(maxPlayers);
-//	for (int i=0; i < tileW * tileH; ++i) {
+//	for (int i=0; i < m_tileSize.w * m_tileSize.h; ++i) {
 //		checksum.add<Vec3f>(tiles[i].getVertex());
 //	}
 	for (int i=0; i < maxPlayers; ++i) {
@@ -286,43 +286,34 @@ void Map::doChecksum(Checksum &checksum) {
 
 void Map::init() {
 	Logger::getInstance().add("Heightmap computations", true);
+	m_vertexData = new MapVertexData(m_tileSize);
 	smoothSurface();
 	computeNormals();
 	computeInterpolatedHeights();
 	computeNearSubmerged();
-	computeCellColors();
+	computeTileColors();
 	setCellTypes();
 	calcAvgAltitude();
 }
 
-void Map::setCellTypes () {
-	for ( int y = 0; y < getH(); ++y ) {
-		for ( int x = 0; x < getW(); ++x ) {
-			Cell *cell = getCell ( x, y );
-			if ( cell->getHeight () < waterLevel - ( 1.5f / heightFactor ) )
+void Map::setCellTypes() {
+	for (int y = 0; y < getH(); ++y) {
+		for (int x = 0; x < getW(); ++x) {
+			Cell *cell = getCell(x, y);
+			if (cell->getHeight() < waterLevel - (1.5f / heightFactor)) {
 				cell->setType ( SurfaceType::DEEP_WATER );
-			else if ( cell->getHeight () < waterLevel )
-				cell->setType ( SurfaceType::FORDABLE );
+			} else if (cell->getHeight () < waterLevel) {
+				cell->setType(SurfaceType::FORDABLE);
+			}
 		}
 	}
 }
-/*
-void Map::setCellType ( Vec2i pos )
-{
-   Cell *cell = getCell ( pos );
-   if ( cell->getHeight () < waterLevel - ( 1.5f / heightFactor ) )
-      cell->setType ( SurfaceType::DEEP_WATER );
-   else if ( cell->getHeight () < waterLevel )
-      cell->setType ( SurfaceType::FORDABLE );
-   else
-      cell->setType ( SurfaceType::LAND );
-}
-*/
+
 void Map::calcAvgAltitude() {
-	double sum = 0.0;
+	float sum = 0.0;
 	for (int y=0; y < getTileH(); ++y) {
 		for (int x=0; x < getTileW(); ++x) {
-			sum += getTile(x,y)->getHeight();
+			sum += getTileHeight(x, y);
 		}
 	}
 	avgHeight = (float)(sum / (getTileH() * getTileW()));
@@ -376,7 +367,7 @@ bool Map::isFreeCell(const Vec2i &pos, Field field) const {
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {
 	if (isInside(pos)) {
 		Cell *c = getCell(pos);
-		if (c->getUnit(unit->getCurrField()) == unit && fieldsCompatible(c, field)) {
+		if (c->getUnit(field) == unit && fieldsCompatible(c, field)) {
 			return true;
 		} else {
 			return isFreeCell(pos, field);
@@ -799,13 +790,12 @@ bool Map::isNextTo(const Vec2i &pos, const Unit *unit) const{
 }
 
 void Map::clampPos(Vec2i &pos) const{
-	pos.x = clamp(pos.x, 0, w-1);
-	pos.y = clamp(pos.y, 0, h-1);
+	pos.x = clamp(pos.x, 0, m_cellSize.w - 1);
+	pos.y = clamp(pos.y, 0, m_cellSize.h - 1);
 }
 
 void Map::prepareTerrain(const Unit *unit) {
 	flatternTerrain(unit);
-	computeNormals();
 	computeInterpolatedHeights();
 }
 
@@ -830,60 +820,62 @@ void Map::update(float slice) {
 
 // ==================== compute ====================
 
-void Map::flatternTerrain(const Unit *unit){
-	float refHeight = getTile(toTileCoords(unit->getCenteredPos()))->getHeight();
+void Map::flatternTerrain(const Unit *unit) {
+	float refHeight = getTileHeight(toTileCoords(unit->getCenteredPos()));
 	Vec2i tile_tl = toTileCoords(unit->getPos());
 	Vec2i tile_br = toTileCoords(unit->getPos() + Vec2i(unit->getSize()));
 	Util::RectIterator iter(tile_tl, tile_br);
 	while (iter.more()) {
 		Vec2i tile_pos = iter.next();
-		Tile *tile = getTile(tile_pos);
-		if (isInsideTile(tile_pos) && !tile->getObject()) {
-			tile->setHeight(refHeight);
+		if (isInsideTile(tile_pos) && !getTile(tile_pos)->getObject()) {
+			setTileHeight(tile_pos, refHeight);
 		}
 	}
+	computeNormals();
 }
 
 //compute normals
-void Map::computeNormals(){  
-	//compute center normals
-	for(int i=1; i<tileW-1; ++i){
-		for(int j=1; j<tileH-1; ++j){
-			getTile(i, j)->setNormal(
-				getTile(i, j)->getVertex().normal(getTile(i, j-1)->getVertex(), 
-					getTile(i+1, j)->getVertex(), 
-					getTile(i, j+1)->getVertex(), 
-					getTile(i-1, j)->getVertex()));
+void Map::computeNormals() {
+	// set perimeter normals
+	PerimeterIterator pIter(Vec2i(0), m_tileSize - Vec2i(1));
+	while (pIter.more()) {
+		Vec2i pos = pIter.next();
+		m_vertexData->get(pos).norm() = Vec3f(0.f, 1.f, 0.f);
+	}
+	// compute center normals
+	for (int i=1; i < m_tileSize.w - 1; ++i) {
+		for (int j=1; j < m_tileSize.h - 1; ++j) {
+			m_vertexData->get(i, j).norm() = m_vertexData->get(i, j).vert().normal(
+					m_vertexData->get(i + 0, j - 1).vert(),
+					m_vertexData->get(i + 1, j + 0).vert(),
+					m_vertexData->get(i + 0, j + 1).vert(),
+					m_vertexData->get(i - 1, j + 0).vert());
 		}
 	}
 }
 
 void Map::computeInterpolatedHeights() {
-	for ( int i = 0; i < w; ++i ) {
-		for ( int j = 0; j < h; ++j ) {
-			getCell(i, j)->setHeight(getTile(toTileCoords(Vec2i(i, j)))->getHeight());
+	for ( int i = 0; i < m_cellSize.w; ++i ) {
+		for ( int j = 0; j < m_cellSize.h; ++j ) {
+			getCell(i, j)->setHeight(getTileHeight(toTileCoords(i, j)));
 		}
 	}
-	for ( int i = 1; i < tileW - 1; ++i ) {
-		for ( int j = 1; j < tileH - 1; ++j ) {
+	for ( int i = 1; i < m_tileSize.w - 1; ++i ) {
+		for ( int j = 1; j < m_tileSize.h - 1; ++j ) {
 			for ( int k = 0; k < GameConstants::cellScale; ++k ) {
 				for ( int l = 0; l < GameConstants::cellScale; ++l) {
 					if ( k == 0 && l == 0 ) {
-						getCell(i * GameConstants::cellScale, j * GameConstants::cellScale)->setHeight(getTile(i, j)->getHeight());
+						getCell(toUnitCoords(i, j))->setHeight(getTileHeight(i, j));
 					} else if ( k != 0 && l == 0 ) {
-						getCell(i * GameConstants::cellScale + k, j * GameConstants::cellScale)->setHeight((
-							getTile(    i, j)->getHeight() + 
-							getTile(i + 1, j)->getHeight() ) / 2.f);
+						getCell(toUnitCoords(i + k, j))->setHeight(
+							(getTileHeight(i, j) + getTileHeight(i + 1, j)) / 2.f);
 					} else if ( l != 0 && k == 0 ) {
-						getCell(i * GameConstants::cellScale, j * GameConstants::cellScale + l)->setHeight((
-							getTile(i,     j)->getHeight() + 
-							getTile(i, j + 1)->getHeight() ) / 2.f);
+						getCell(toUnitCoords(i, j + l))->setHeight(
+							(getTileHeight(i, j) + getTileHeight(i, j + 1)) / 2.f);
 					} else {
-						getCell(i * GameConstants::cellScale + k, j * GameConstants::cellScale + l)->setHeight((
-							getTile(    i,     j)->getHeight() +
-							getTile(    i, j + 1)->getHeight() +
-							getTile(i + 1,     j)->getHeight() +
-							getTile(i + 1, j + 1)->getHeight() ) / 4.f);
+						getCell(toUnitCoords(i + k, j + l))->setHeight(
+							(getTileHeight(i, j) + getTileHeight(i + 1, j) + 
+							getTileHeight(i, j + 1) + getTileHeight(i + 1, j + 1)) / 4.f);
 					}
 				}
 			}
@@ -957,41 +949,43 @@ void Map::computeInterpolatedHeights(Rect2i range){
 #endif
 
 void Map::smoothSurface() {
-	float *oldHeights = new float[tileW * tileH];
-
-	for(int i = 0; i < tileW*tileH; ++i) {
-		oldHeights[i] = tiles[i].getHeight();
+	Util::PerimeterIterator perimIter(Vec2i(0), m_tileSize - Vec2i(1));
+	while (perimIter.more()) {
+		Vec2i pos = perimIter.next();
+		setTileHeight(pos, m_heightMap[pos.y * m_tileSize.w + pos.x]);
 	}
+	Util::RectIterator rectIter(Vec2i(1), m_tileSize - Vec2i(2));
+	while (rectIter.more()) {
+		Vec2i pos = rectIter.next();
+		float height = 0.f;
+		perimIter = Util::PerimeterIterator(pos - Vec2i(1), pos + Vec2i(1));
+		while (perimIter.more()) {
+			Vec2i pos2 = perimIter.next();
+			height += m_heightMap[pos2.y * m_tileSize.w + pos2.x];
+		}
+		height /= 9.f;
+		setTileHeight(pos, height);
 
-	for(int i = 1; i < tileW - 1; ++i) {
-		for(int j = 1; j < tileH - 1; ++j) {
-
-			float height = 0.f;
-
-			for(int k = -1; k <= 1; ++k) {
-				for(int l = -1; l <= 1; ++l) {
-					height += oldHeights[(j + k) * tileW + (i + l)];
-				}
-			}
-
-			height /= 9.f;
-			Tile *sc = getTile(i, j);
-			sc->setHeight(height);
-			sc->updateObjectVertex();
+		Tile *tile = getTile(pos);
+		Object *obj = tile->getObject();
+		if (obj) {
+			Vec3f pos = obj->getPos();
+			pos.y = height;
+			obj->setPos(pos);
 		}
 	}
-
-	delete [] oldHeights;
+	delete [] m_heightMap;
+	m_heightMap = 0;
 }
 
-void Map::computeNearSubmerged(){
-	for(int x = 0; x < tileW; ++x){
-		for(int y = 0; y < tileH; ++y) {
+void Map::computeNearSubmerged() {
+	for (int x = 0; x < m_tileSize.w; ++x) {
+		for (int y = 0; y < m_tileSize.h; ++y) {
 			bool anySubmerged = false;
-			for(int xoff = -1; xoff <= 2 && !anySubmerged; ++xoff) {
-				for(int yoff = -1; yoff <= 2 && !anySubmerged; ++yoff) {
+			for (int xoff = -1; xoff <= 2 && !anySubmerged; ++xoff) {
+				for (int yoff = -1; yoff <= 2 && !anySubmerged; ++yoff) {
 					Vec2i pos(x + xoff, y + yoff);
-					if(isInsideTile(pos) && getSubmerged(getTile(pos))) {
+					if (isInsideTile(pos) && isTileSubmerged(pos)) {
 						anySubmerged = true;
 					}
 				}
@@ -1001,16 +995,15 @@ void Map::computeNearSubmerged(){
 	}
 }
 
-void Map::computeCellColors(){
-	for(int i=0; i<tileW; ++i){
-		for(int j=0; j<tileH; ++j){
-			Tile *sc= getTile(i, j);
-			if(getDeepSubmerged(sc)){
-				float factor= clamp(waterLevel-sc->getHeight()*1.5f, 1.f, 1.5f);
-				sc->setColor(Vec3f(1.0f, 1.0f, 1.0f)/factor);
-			}
-			else{
-				sc->setColor(Vec3f(1.0f, 1.0f, 1.0f));
+void Map::computeTileColors() {
+	for (int i=0; i < m_tileSize.w; ++i) {
+		for (int j=0; j < m_tileSize.h; ++j) {
+			Tile *tile = getTile(i, j);
+			if (isTileDeepSubmerged(Vec2i(i, j))) {
+				float factor = clamp(waterLevel - getTileHeight(i, j) * 1.5f, 1.f, 1.5f);
+				tile->setColor(Vec3f(1.0f, 1.0f, 1.0f) / factor);
+			} else {
+				tile->setColor(Vec3f(1.0f, 1.0f, 1.0f));
 			}
 		}
 	}
@@ -1033,7 +1026,7 @@ void Map::assertUnitCells(const Unit * unit) {
 				Vec2i currPos = unit->getPos() + Vec2i(x, y);
 				assert(isInside(currPos));
 				if(!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
-					if(unit->getCurrSkill()->getClass() != SkillClass::DIE && !unit->isCarried()) {
+					if(unit->isActive()) {
 						Unit *testUnit = getCell(currPos)->getUnit(field);
 						assert(testUnit == unit);
 					} else {

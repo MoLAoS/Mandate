@@ -24,18 +24,101 @@ using namespace Shared::Platform;
 
 namespace Shared { namespace Graphics { namespace Gl {
 
+ShaderSet::ShaderSet(const string &programName)
+		: m_name(programName)
+		, m_teamColour(0)
+		, m_alphaColour(0) {
+}
+
+ShaderSet::~ShaderSet() {
+	delete m_teamColour;
+	delete m_alphaColour;
+}
+
+bool ShaderSet::load() {
+	try {
+		string vs = "gae/shaders/" + m_name + ".vert";
+		string fs = "gae/shaders/" + m_name + "_team.frag";
+		m_teamColour = new DefaultShaderProgram();
+		m_teamColour->load(vs, fs);
+
+		fs = "gae/shaders/" + m_name + "_alpha.frag";
+		m_alphaColour = new DefaultShaderProgram();
+		m_alphaColour->load(vs, fs);
+
+		m_teamColour->begin();
+		m_teamColour->setUniform("baseTexture", 0);
+		m_teamColour->setUniform("teamTexture", 1);
+		m_teamColour->setUniform("normalMap", 2);
+		m_teamColour->end();
+		m_alphaColour->begin();
+		m_alphaColour->setUniform("baseTexture", 0);
+		m_alphaColour->setUniform("normalMap", 2);
+		m_alphaColour->end();
+	} catch (runtime_error &e) {
+		delete m_teamColour;
+		delete m_alphaColour;
+		m_teamColour = m_alphaColour = 0;
+		return false;
+	}
+	return true;
+}
+
 // =====================================================
 //	class ModelRendererGl
 // =====================================================
 
 // ===================== PUBLIC ========================
 
-ModelRendererGl::ModelRendererGl() :
-		ModelRenderer(),
-		rendering(false),
-		duplicateTexCoords(false),
-		secondaryTexCoordUnit(1),
-		lastTexture() {
+ModelRendererGl::ModelRendererGl()
+		: ModelRenderer()
+		, rendering(false)
+		, duplicateTexCoords(false)
+		, shaderOverride(false)
+		, secondaryTexCoordUnit(1)
+		, lastTexture()
+		, m_shaderIndex(-1)
+		, m_lastShaderProgram(0) {
+	m_fixedFunctionProgram = new FixedFunctionProgram();
+}
+
+ModelRendererGl::~ModelRendererGl() {
+	foreach_const (ShaderSets, it, m_shaders) {
+		delete *it;
+	}
+	delete m_fixedFunctionProgram;
+}
+
+void ModelRendererGl::loadShaders(const vector<string> &programNames) {
+	if (isGlVersionSupported(2, 0, 0)) {
+		foreach_const (vector<string>, it, programNames) {
+			ShaderSet *shaderSet = new ShaderSet(*it);
+			if (shaderSet->load()) {
+				m_shaders.push_back(shaderSet);
+			} else {
+				delete shaderSet;
+			}
+		}
+	}
+	if (!m_shaders.empty()) {
+		m_shaderIndex = 0; // use first in list
+	}
+}
+
+void ModelRendererGl::cycleShaderSet() {
+	++m_shaderIndex;
+	if (m_shaderIndex >= m_shaders.size()) {
+		m_shaderIndex = -1;
+	}
+}
+
+const string fixedPipeString = "Fixed function pipeline.";
+
+const string& ModelRendererGl::getShaderName() {
+	if (m_shaderIndex == -1) {
+		return fixedPipeString;
+	}
+	return m_shaders[m_shaderIndex]->getName();
 }
 
 void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback) {
@@ -48,6 +131,7 @@ void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool render
 	this->meshCallback = meshCallback;
 
 	rendering = true;
+	m_lastShaderProgram = 0;
 	lastTexture = 0;
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -56,10 +140,10 @@ void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool render
 	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
 	//init opengl
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glFrontFace(GL_CCW);
 //	glEnable(GL_NORMALIZE); // we don't scale or shear, don't need this
-	glEnable(GL_BLEND);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -69,9 +153,29 @@ void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool render
 
 	if (renderTextures) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
+	}	
 
 	//assertions
+	assertGl();
+}
+
+
+void ModelRendererGl::end() {
+	// assertions
+	assert(rendering);
+	assertGl();
+
+	// set render state
+	rendering = false;
+
+	// restore stuff
+	if (m_lastShaderProgram) {
+		m_lastShaderProgram->end();
+	}
+	glPopAttrib();
+	glPopClientAttrib();
+
+	// assertions
 	assertGl();
 }
 
@@ -94,7 +198,8 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glColor4fv(color.ptr());
 	}
 
-	// texture state
+	// diffuse texture
+	glActiveTexture(diffuseTextureUnit);
 	const Texture2DGl *texture = static_cast<const Texture2DGl*>(mesh->getTexture(mtDiffuse));
 	if (texture != NULL && renderTextures) {
 		if (lastTexture != texture->getHandle()) {
@@ -106,10 +211,16 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		lastTexture = 0;
 	}
-
-	if (meshCallback != NULL) {
-		meshCallback->execute(mesh);
+	// bump map
+	const Texture2DGl *textureNormal = static_cast<const Texture2DGl*>(mesh->getTexture(mtNormal));
+	glActiveTexture(normalTextureUnit);
+	if (textureNormal != NULL && renderTextures) {
+		assert(glIsTexture(textureNormal->getHandle()));
+		glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
+	} else {
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+	glActiveTexture(diffuseTextureUnit);
 
 	//misc vars
 	uint32 vertexCount = mesh->getVertexCount();
@@ -121,6 +232,28 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 	if (!vertexCount) {
 		return;
 	}
+
+	ShaderProgram *shaderProgram;
+	if (m_shaderIndex == -1 || !meshCallback) {
+		// (!meshCallback) == hacky way to not use shaders for tileset objects and in menu... for now
+		shaderProgram = m_fixedFunctionProgram;
+		if (meshCallback) {
+			meshCallback->execute(mesh);
+		}
+	} else if (mesh->getCustomTexture()) {
+		shaderProgram = m_shaders[m_shaderIndex]->getTeamProgram();
+	} else {
+		shaderProgram = m_shaders[m_shaderIndex]->getAlphaProgram();
+	}
+	if (shaderProgram != m_lastShaderProgram) {
+		if (m_lastShaderProgram) {
+			m_lastShaderProgram->end();
+		}
+		shaderProgram->begin();
+		m_lastShaderProgram = shaderProgram;
+	}
+	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
+	shaderProgram->setUniform("teamColour", getTeamColour());
 
 	//vertices
 	glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());

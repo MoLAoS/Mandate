@@ -62,7 +62,10 @@ private:
 			vertScrollUpTexture,
 			vertScrollDownTexture,
 			vertScrollUpHoverTex,
-			vertScrollDownHoverTex;
+			vertScrollDownHoverTex,
+			greenTickOverlay,
+			orangeQuestionOverlay,
+			redCrossOverlay;
 	
 	Font *m_FTMenuFontNormal;
 	Font *m_FTMenuFontSmall;
@@ -99,6 +102,9 @@ public:
 	TexPtr getVertScrollDownHoverTex() const{return vertScrollDownHoverTex;}
 	TexPtr getCheckBoxTickTexture() const	{return checkBoxTickTexture;}
 	TexPtr getCheckBoxCrossTexture() const	{return checkBoxCrossTexture;}
+	TexPtr getGreenTickOverlay() const		{return greenTickOverlay;}
+	TexPtr getQuestionOverlay() const		{return orangeQuestionOverlay;}
+	TexPtr getRedCrossOverlay() const		{return redCrossOverlay;}
 
 	StrSound *getIntroMusic() 				{return &introMusic;}
 	StrSound *getMenuMusic() 				{return &menuMusic;}

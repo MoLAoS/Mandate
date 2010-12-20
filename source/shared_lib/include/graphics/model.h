@@ -78,6 +78,8 @@ private:
 
 	InterpolationData *interpolationData;
 
+	void computeTangents();
+
 public:
 	// init & end
 	Mesh();

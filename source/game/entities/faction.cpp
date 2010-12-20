@@ -81,6 +81,11 @@ Colour factionColoursOutline[GameConstants::maxColours] = {
 	Colour(0x64u, 0x64u, 0xACu, 0xFFu), // sky
 };
 
+Vec3f getFactionColour(int ndx) {
+	Colour &c = factionColours[ndx];
+	return Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
+}
+
 // =====================================================
 //  class Faction
 // =====================================================
@@ -535,6 +540,8 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 				}
 			}
 		}
+	// limit to store
+	capResource(rt);
 }
 
 bool Faction::checkCosts(const ProducibleType *pt) {
@@ -561,7 +568,36 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 
 // ================== diplomacy ==================
 
+bool Faction::hasBuilding() const {
+	for (int i = 0; i < getUnitCount(); ++i) {
+		Unit *unit = getUnit(i);
+		if (unit->isBuilding()) {
+			return true;
+		}
+	}
+	return false;
+}
 
+bool Faction::canSee(const Unit *unit) const {
+	Map &map = g_map;
+	if (unit->isCarried()) {
+		return false;
+	}
+	if (isAlly(unit->getFaction())) {
+		return true;
+	}
+	Vec2i tPos = Map::toTileCoords(unit->getCenteredPos());
+	if (unit->isCloaked() && !g_cartographer.canDetect(teamIndex, tPos)) {
+		return false;
+	}
+	if (map.getTile(tPos)->isVisible(teamIndex)) {
+		return true;
+	}
+	if (unit->isTargetUnitVisible(teamIndex)) {
+		return true;
+	}
+	return false;
+}
 
 // ================== misc ==================
 
@@ -570,7 +606,9 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 		Resource *r = &resources[i];
 		if (r->getType() == rt) {
 			r->setAmount(r->getAmount() + amount);
-			if (r->getType()->getClass() != ResourceClass::STATIC && r->getAmount() > getStoreAmount(rt)) {
+			if (r->getType()->getClass() != ResourceClass::STATIC 
+			&& r->getType()->getClass() != ResourceClass::CONSUMABLE
+			&& r->getAmount() > getStoreAmount(rt)) {
 				r->setAmount(getStoreAmount(rt));
 			}
 			return;
@@ -578,7 +616,6 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 	}
 	assert(false);
 }
-
 
 void Faction::setResourceBalance(const ResourceType *rt, int balance) {
 	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
@@ -640,6 +677,20 @@ void Faction::removeStore(const UnitType *unitType) {
 		}
 	}
 	limitResourcesToStore();
+}
+
+void Faction::capResource(const ResourceType *rt) {
+	RUNTIME_CHECK(rt->getClass() == ResourceClass::CONSUMABLE);
+	for (int i = 0; i < resources.size(); ++i) {
+		Resource *r = &resources[i];
+		if (r->getType() == rt) {
+			if (r->getAmount() > getStoreAmount(rt)) {
+				r->setAmount(getStoreAmount(rt));
+			}
+			return;
+		}
+	}
+	assert(false);
 }
 
 void Faction::limitResourcesToStore() {

@@ -101,7 +101,6 @@ public:
 	static const int waterTexCount= 1;
 	static const int surfCount= 5;
 	static const int objCount= 10;
-	static const int transitionVars= 2; //number or different transition textures
 
 public:
 	typedef vector<float> SurfProbs;
@@ -109,8 +108,8 @@ public:
 
 private:
 	string name;
-	SurfaceAtlas surfaceAtlas;
-    ObjectType objectTypes[objCount];
+
+	ObjectType objectTypes[objCount];
 
 	SurfProbs surfProbs[surfCount];
 	SurfPixmaps surfPixmaps[surfCount];
@@ -139,7 +138,6 @@ public:
 
 	//get
 	string getName() const							{return name;}
-	const SurfaceAtlas *getSurfaceAtlas() const		{return &surfaceAtlas;}
 	ObjectType *getObjectType(int i)				{return &objectTypes[i];}
 	float getSurfProb(int surf, int var) const		{return surfProbs[surf][var];}
 	Texture3D *getWaterTex() const					{return waterTex;}
@@ -154,8 +152,8 @@ public:
 	FactionType& getGlestimalFactionType()			{return glestimalFactionType;}
 
 	//surface textures
+	const Pixmap2D *getSurfPixmap(int type) const;
 	const Pixmap2D *getSurfPixmap(int type, int var) const;
-	void addSurfTex(int leftUp, int rightUp, int leftDown, int rightDown, Vec2f &coord, const Texture2D *&texture);
 
 	//sounds
 	AmbientSounds *getAmbientSounds() {return &ambientSounds;}

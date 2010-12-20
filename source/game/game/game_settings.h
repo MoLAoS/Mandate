@@ -52,6 +52,7 @@ private:
 	bool defaultVictoryConditions;
 
 	bool fogOfWar;
+	bool shroudOfDarkness;
 	bool randomStartLocs;
 
 public:
@@ -84,6 +85,7 @@ public:
 	bool getDefaultResources() const				{return defaultResources;}
 	bool getDefaultVictoryConditions() const		{return defaultVictoryConditions;}
 	bool getFogOfWar() const						{return fogOfWar;}
+	bool getShroudOfDarkness() const				{return shroudOfDarkness;}
 	bool getRandomStartLocs() const					{return randomStartLocs;}
 
 	//set
@@ -107,6 +109,7 @@ public:
 	void setDefaultResources(bool v) 				{defaultResources = v;}
 	void setDefaultVictoryConditions(bool v) 		{defaultVictoryConditions = v;}
 	void setFogOfWar(bool v)						{fogOfWar = v;}
+	void setShroudOfDarkness(bool v)				{shroudOfDarkness = v;}
 	void setRandomStartLocs(bool v)					{randomStartLocs = v;}
 
 	//misc

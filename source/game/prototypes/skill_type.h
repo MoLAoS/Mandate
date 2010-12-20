@@ -49,6 +49,8 @@ namespace ProtoTypes {
 // 	class SkillType
 //
 ///	A basic action that an unit can perform
+///@todo revise, these seem to hold data/properties for 
+/// actions rather than the actions themselves.
 // =====================================================
 
 class SkillType : public NameIdPair {
@@ -76,6 +78,7 @@ protected:
 	const char* typeName;
 	int minRange; // Refactor? Push down? Used for anything other than attack?
 	int maxRange; // ditto?
+	bool m_deCloak; // does this skill cause de-cloak
 
 	float startTime;
 
@@ -119,7 +122,8 @@ public:
 	virtual SkillClass getClass() const	= 0;
 	const string &getName() const		{return name;}
 	int getEpCost() const				{return epCost;}
-	int getSpeed() const				{return speed;}
+	int getBaseSpeed() const			{return speed;}
+	virtual fixed getSpeed(const Unit *unit) const	{return speed;}
 	int getAnimSpeed() const			{return animSpeed;}
 	const Model *getAnimation() const	{return animations.front();}
 	StaticSound *getSound() const		{return sounds.getRandSound();}
@@ -127,12 +131,16 @@ public:
 	int getMaxRange() const				{return maxRange;}
 	int getMinRange() const				{return minRange;}
 	float getStartTime() const			{return startTime;}
+	bool causesDeCloak() const			{return m_deCloak;}
 
 	unsigned getEyeCandySystemCount() const { return eyeCandySystems.size(); }
 	const UnitParticleSystemType* getEyeCandySystem(unsigned i) const {
 		assert(i < eyeCandySystems.size());
 		return eyeCandySystems[i];
 	}
+
+	// set
+	void setDeCloak(bool v)	{m_deCloak = v;}
 
 	//other
 	virtual string toString() const		{return Lang::getInstance().get(typeName);}
@@ -189,6 +197,7 @@ public:
 		descEpCost(str, unit);
 	}
 	//virtual void doChecksum(Checksum &checksum) const;
+	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MOVE; }
 };
@@ -251,6 +260,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 
 	//get
+	virtual fixed getSpeed(const Unit *unit) const;
 	int getAttackStrength() const				{return attackStrength;}
 	int getAttackVar() const					{return attackVar;}
 	//fixed getAttackPctStolen() const			{return attackPctStolen;}
@@ -274,6 +284,7 @@ public:
 		descEpCost(str, unit);
 	}
 
+	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BUILD; }
 };
@@ -288,7 +299,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		// command modifies displayed speed, all handled in HarvestCommandType
 	}
-
+	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::HARVEST; }
 };
@@ -314,6 +325,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 
+	virtual fixed getSpeed(const Unit *unit) const;
 	int getAmount() const		{return amount;}
 	fixed getMultiplier() const	{return multiplier;}
 	SplashType *getSplashParticleSystemType() const	{return splashParticleSystemType;}
@@ -342,9 +354,11 @@ public:
 		descSpeed(str, unit, "ProductionSpeed");
 		descEpCost(str, unit);
 	}
+	virtual fixed getSpeed(const Unit *unit) const;
 
 	bool isPet() const		{return pet;}
 	int getMaxPets() const	{return maxPets;}
+
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::PRODUCE; }
@@ -361,6 +375,7 @@ public:
 		descSpeed(str, unit, "UpgradeSpeed");
 		descEpCost(str, unit);
 	}
+	virtual fixed getSpeed(const Unit *unit) const;
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::UPGRADE; }
@@ -391,6 +406,7 @@ public:
 		descSpeed(str, unit, "MorphSpeed");
 		descEpCost(str, unit);
 	}
+	virtual fixed getSpeed(const Unit *unit) const;
 
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MORPH; }

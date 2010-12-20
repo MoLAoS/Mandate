@@ -145,8 +145,6 @@ int glestMain(int argc, char** argv) {
 		dataDir = ".";
 	}
 
-	cout << "config-dir: " << configDir << "\ndata-dir: " << dataDir << endl << endl;
-
 	mkdir(configDir, true);
 	mkdir(configDir + "/addons/", true);
 	mkdir(configDir + "/screens/", true);
@@ -154,7 +152,7 @@ int glestMain(int argc, char** argv) {
 
 #	if USE_PHYSFS
 		try {
-			g_fileFactory.initPhysFS(argv[0], configDir.c_str(), dataDir.c_str());
+			g_fileFactory.initPhysFS(argv[0], configDir, dataDir);
 			g_fileFactory.usePhysFS = true;
 		} catch (runtime_error &e) {
 			exceptionMessage(e);
@@ -162,12 +160,18 @@ int glestMain(int argc, char** argv) {
 		}
 #	endif
 
+	cout << "config-dir: " << configDir << "\ndata-dir: " << dataDir << endl << endl;
+
 	if (g_config.getMiscCatchExceptions()) {
 		ExceptionHandler exceptionHandler;
 
 #	if _GAE_DEBUG_EDITION_
 		exceptionHandler.install();
 		Program program(args);
+		if(!program.init()){
+			program.exit();
+			return 0;
+		}
 		showCursor(false);
 		//main loop
 		program.loop();
@@ -175,6 +179,10 @@ int glestMain(int argc, char** argv) {
 		try {
 			exceptionHandler.install();
 			Program program(args);
+			if(!program.init()){
+				program.exit();
+				return 0;
+			}
 			showCursor(false);
 
 			try {
@@ -196,6 +204,10 @@ int glestMain(int argc, char** argv) {
 #	endif
 	} else {
 		Program program(args);
+		if(!program.init()){
+			program.exit();
+			return 0;
+		}
 		showCursor(false);
 		program.loop();
 	}

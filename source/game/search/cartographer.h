@@ -146,6 +146,9 @@ private:
 	/** Exploration maps for each team */
 	map< int, ExplorationMap* > explorationMaps;
 
+	map< int, TypeMap<int>* > m_detectorMaps;
+
+
 	// A* stuff
 	NodeMap *nodeMap;
 	SearchEngine<NodeMap,GridNeighbours> *nmSearchEngine;
@@ -182,10 +185,10 @@ private:
 	void onResourceDepleted(Vec2i pos);
 	void onStoreDestroyed(Unit *unit);
 
-	void onUnitBorn(Unit *unit);
-	void onUnitMoved(Unit *unit);
-	void onUnitMorphed(Unit *unit, const UnitType *type);
-	void onUnitDied(Unit *unit);
+	//void onUnitBorn(Unit *unit);
+	//void onUnitMoved(Unit *unit);
+	//void onUnitMorphed(Unit *unit, const UnitType *type);
+	//void onUnitDied(Unit *unit);
 
 	void maintainUnitVisibility(Unit *unit, bool add);
 
@@ -273,12 +276,20 @@ public:
 
 	Map*	getCellMap() { return cellMap; }
 
+	void detectorCreated(Unit *unit);
+	void detectorMoved(Unit *unit, Vec2i oldPos);
+	void detectorDied(Unit *unit);
+
 	ClusterMap* getClusterMap() const { return clusterMap; }
 
 	AnnotatedMap* getMasterMap()				const	{ return masterMap;	 }
 	AnnotatedMap* getAnnotatedMap(int team )			{ return masterMap;/*teamMaps[team];*/ }
 	AnnotatedMap* getAnnotatedMap(const Faction *faction) 	{ return getAnnotatedMap(faction->getTeam()); }
 	AnnotatedMap* getAnnotatedMap(const Unit *unit)			{ return getAnnotatedMap(unit->getTeam()); }
+
+	bool canDetect(int team, Vec2i pos) {
+		return m_detectorMaps[team]->getInfluence(pos);
+	}
 };
 
 /** enumeration for build location type */

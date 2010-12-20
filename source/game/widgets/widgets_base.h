@@ -27,7 +27,7 @@ using namespace Shared::Math;
 using namespace Shared::Graphics;
 using Glest::Util::Logger;
 
-#define LOG_WIDGET_EVENTS 1
+#define LOG_WIDGET_EVENTS 0
 
 #if LOG_WIDGET_EVENTS
 #	define WIDGET_LOG(x) {stringstream ss; ss << x; g_widgetLog.add(ss.str()); }
@@ -183,7 +183,7 @@ private:
 
 public:
 	MouseWidget(Widget* widget);
-	~MouseWidget() {}
+	virtual ~MouseWidget() {}
 
 private:
 	virtual bool mouseDown(MouseButton btn, Vec2i pos)			{ return false; }
@@ -204,7 +204,7 @@ private:
 
 public:
 	KeyboardWidget(Widget* widget);
-	~KeyboardWidget() {}
+	virtual ~KeyboardWidget() {}
 
 private:
 	virtual bool keyDown(Key key)	{ return false; }
@@ -247,6 +247,7 @@ protected:
 public:
 	ImageWidget(Widget* me);
 	ImageWidget(Widget* me, Texture2D *tex);
+	virtual ~ImageWidget() {}
 
 	int addImage(const Texture2D *tex);
 	void setImage(const Texture2D *tex, int ndx = 0);
@@ -292,6 +293,7 @@ protected:
 
 public:
 	TextWidget(Widget* me);
+	virtual ~TextWidget() {}
 
 	// set
 	void setCentre(bool val)	{ centre = val; }

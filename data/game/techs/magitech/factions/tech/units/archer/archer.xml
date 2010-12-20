@@ -180,10 +180,12 @@
       <name value="patrol"/>
       <image path="../archer/images/tech_patrol.bmp"/>
       <unit-requirements/>
-      <upgrade-requirements/>
+      <upgrade-requirements>
+        <upgrade name="training_field"/>
+      </upgrade-requirements>
       <move-skill value="move_skill"/>
       <attack-skill value="attack_skill"/>
-      <max-distance value="10"/>
+      <max-distance value="6"/>
     </command>
 
     <command>
@@ -191,10 +193,12 @@
       <name value="guard"/>
       <image path="../archer/images/tech_guard.bmp"/>
       <unit-requirements/>
-      <upgrade-requirements/>
+       <upgrade-requirements>
+        <upgrade name="training_field"/>
+      </upgrade-requirements>
       <move-skill value="move_skill"/>
       <attack-skill value="attack_skill"/>
-      <max-distance value="5"/>
+      <max-distance value="3"/>
     </command>
 
     <command>

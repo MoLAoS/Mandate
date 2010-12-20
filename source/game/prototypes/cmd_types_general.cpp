@@ -124,6 +124,39 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	return 0;
 }
 
+void CommandType::apply(Faction *faction, const Command &command) const {
+	const ProducibleType *produced = command.getProdType();
+	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
+		faction->applyCosts(produced);
+	}
+}
+
+void CommandType::undo(Unit *unit, const Command &command) const {
+	//return cost
+	const ProducibleType *produced = command.getProdType();
+	if (produced) {
+		unit->getFaction()->deApplyCosts(produced);
+	}
+}
+
+/** 
+ * replace references to dead units with their dying position prior to their
+ * deletion for some commands 
+ * @param command the command to modify
+ */
+void CommandType::replaceDeadReferences(Command &command) const {
+	const Unit* unit1 = command.getUnit();
+	if (unit1 && unit1->isDead()) {
+		command.setUnit(NULL);
+		command.setPos(unit1->getPos());
+	}
+	const Unit* unit2 = command.getUnit2();
+	if (unit2 && unit2->isDead()) {
+		command.setUnit2(NULL);
+		command.setPos2(unit2->getPos());
+	}
+}
+
 // =====================================================
 // 	class MoveBaseCommandType
 // =====================================================
@@ -144,6 +177,9 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 }
 
 Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
+	if (!unit->isAutoCmdEnabled(AutoCmdFlag::FLEE)) {
+		return 0;
+	}
 	Unit *sighted = NULL;
 	if (attackerInSight(unit, &sighted)) {
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();
@@ -200,6 +236,50 @@ void MoveCommandType::update(Unit *unit) const {
 	}
 }
 
+void MoveCommandType::tick(const Unit *unit, Command &command) const {
+	replaceDeadReferences(command);
+}
+
+// =====================================================
+// 	class TeleportCommandType
+// =====================================================
+
+void TeleportCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+
+	Vec2i pos = command->getPos();
+	if (command->getUnit()) {
+		pos = command->getUnit()->getCenteredPos();
+		if (!command->getUnit()->isAlive()) {
+			command->setPos(pos);
+			command->setUnit(NULL);
+		}
+	}
+
+	// some back bending to get the unit to face the direction of travel
+	if (unit->getPos() == pos) {
+		// finish command
+		unit->setCurrSkill(SkillClass::STOP);
+		unit->finishCommand();
+		return;
+	} else if (g_map.areFreeCellsOrHasUnit(pos, unit->getSize(), unit->getType()->getField(), unit)) {
+		// set-up for the move, the actual moving will be done in World::updateUnits(),
+		// after SimInterface::doUpdateUnitCommand() checks EP
+		unit->face(pos);
+		unit->setCurrSkill(m_moveSkillType);
+		unit->setNextPos(pos);
+	} else {
+		if (unit->getFaction()->isThisFaction()) {
+			g_console.addLine(g_lang.get("InvalidPosition"));
+		}
+		// finish command
+		unit->setCurrSkill(SkillClass::STOP);
+		unit->finishCommand();
+	}
+}
+
 
 // =====================================================
 // 	class StopBaseCommandType
@@ -233,7 +313,6 @@ void StopCommandType::update(Unit *unit) const {
 	// if we have another command then stop sitting on your ass
 	if (unit->getCommands().size() > 1) {
 		unit->finishCommand();
-		UNIT_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " cancelling stop" );
 		return;
 	}
 	unit->setCurrSkill(m_stopSkillType);
@@ -561,6 +640,29 @@ void UpgradeCommandType::update(Unit *unit) const {
 	}
 }
 
+void UpgradeCommandType::start(Unit *unit, Command &command) const {
+	command.setProdType(getProducedUpgrade());
+}
+
+void UpgradeCommandType::apply(Faction *faction, const Command &command) const {
+	CommandType::apply(faction, command);
+
+	faction->startUpgrade(getProducedUpgrade());
+}
+
+void UpgradeCommandType::undo(Unit *unit, const Command &command) const {
+	CommandType::undo(unit, command);
+	// upgrade command cancel from list
+	unit->getFaction()->cancelUpgrade(getProducedUpgrade());
+}
+
+CommandResult UpgradeCommandType::check(const Unit *unit, const Command &command) const {
+	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(getProducedUpgrade())) {
+		return CommandResult::FAIL_UNDEFINED;
+	}
+	return CommandResult::SUCCESS;
+}
+
 // =====================================================
 // 	class MorphCommandType
 // =====================================================
@@ -810,7 +912,6 @@ void LoadCommandType::update(Unit *unit) const {
 	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
 		closest->removeCommands();
 		closest->setCurrSkill(SkillClass::STOP);
-		closest->setVisible(false);
 		g_map.clearUnitCells(closest, closest->getPos());
 		closest->setCarried(unit);
 		closest->setPos(Vec2i(-1));
@@ -853,6 +954,22 @@ void LoadCommandType::update(Unit *unit) const {
 		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
 			unit->setCurrSkill(SkillClass::STOP);
 			break;
+	}
+}
+
+void LoadCommandType::start(Unit *unit, Command *command) const {
+	unit->loadUnitInit(command);
+}
+
+CommandResult LoadCommandType::check(const Unit *unit, const Command &command) const {
+	if (getLoadCapacity() > unit->getCarriedCount()) {
+		if (canCarry(command.getUnit()->getType())
+		&& command.getUnit()->getFactionIndex() == unit->getFactionIndex()) {
+			return CommandResult::SUCCESS;
+		}
+		return CommandResult::FAIL_INVALID_LOAD;
+	} else {
+		return CommandResult::FAIL_LOAD_LIMIT;
 	}
 }
 
@@ -939,7 +1056,6 @@ void UnloadCommandType::update(Unit *unit) const {
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
-				targetUnit->setVisible(true);
 				targetUnit->setCarried(0);
 				unit->getUnitsToUnload().pop_front();
 				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit->getId()));
@@ -953,6 +1069,10 @@ void UnloadCommandType::update(Unit *unit) const {
 			}
 		}
 	}
+}
+
+void UnloadCommandType::start(Unit *unit, Command *command) const {
+	unit->unloadUnitInit(command);
 }
 
 // =====================================================
@@ -1012,7 +1132,7 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 		if (m_affects != SpellAffect::SELF) {
 			throw runtime_error("In 0.3.2 cast-spell affect must be 'self'");
 		}
-		XmlAttribute *attrib = n->getChild("affect")->getAttribute("start");
+		XmlAttribute *attrib = n->getChild("affect")->getAttribute("start", false);
 		if (attrib) {
 			str = attrib->getRestrictedValue();
 			m_start = SpellStartNames.match(str.c_str());
@@ -1043,6 +1163,14 @@ void CastSpellCommandType::update(Unit *unit) const {
 	}
 }
 
+// ===============================
+//  class SetMeetingPointCommandType
+// ===============================
+
+CommandResult SetMeetingPointCommandType::check(const Unit *unit, const Command &command) const {
+	return unit->getType()->hasMeetingPoint() ? CommandResult::SUCCESS : CommandResult::FAIL_UNDEFINED;
+}
+
 // Update helpers...
 
 /** Check for enemies unit can smite (or who can smite him)
@@ -1071,8 +1199,22 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixed distance;
 	bool needDistance = false;
 
-	if (*rangedPtr && ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone()))) {
-		*rangedPtr = NULL;
+	if (*rangedPtr) {
+		if ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone())) {
+			*rangedPtr = 0;
+		}
+		if (*rangedPtr && (*rangedPtr)->isCloaked()) {
+			Vec2i tpos = Map::toTileCoords((*rangedPtr)->getCenteredPos());
+			if (!g_cartographer.canDetect(unit->getTeam(), tpos)) {
+				*rangedPtr = 0;
+			}
+		}
+	}
+	if (range == 0) { // blind unit
+		if (*rangedPtr) {
+			*rangedPtr = NULL;
+		}
+		return false;
 	}
 	if (*rangedPtr) {
 		needDistance = true;
@@ -1089,6 +1231,12 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 					// does cell contain a bad guy?
 					Unit *possibleEnemy = map->getCell(pos)->getUnit(z);
 					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)) {
+						if (possibleEnemy->isCloaked()) {
+							Vec2i tpos = Map::toTileCoords(possibleEnemy->getCenteredPos());
+							if (!g_cartographer.canDetect(unit->getTeam(), tpos)) {
+								continue;
+							}
+						}
 						// If bad guy has an attack command we can short circut this loop now
 						if (possibleEnemy->getType()->hasCommandClass(CommandClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;

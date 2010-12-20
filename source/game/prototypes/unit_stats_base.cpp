@@ -78,27 +78,21 @@ void UnitStats::setValues(const UnitStats &o) {
 }
 
 void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
-#	define ADD_ATTRIB(type, X)								\
-	{	type v = get##X() + (e.get##X() * strength).intp();	\
-		set##X(v < 0 ? 0 : v);								\
-	}
-	ADD_ATTRIB(int, MaxHp);
-	ADD_ATTRIB(int, HpRegeneration);
-	ADD_ATTRIB(int, MaxEp);
-	ADD_ATTRIB(int, EpRegeneration);
-	ADD_ATTRIB(int, Sight);
-	if (sight < 1) sight = 1;
-	ADD_ATTRIB(int, Armor);
-
-	ADD_ATTRIB(int, AttackStrength);
-	ADD_ATTRIB(fixed, EffectStrength);
-	ADD_ATTRIB(fixed, AttackPctStolen);
-	ADD_ATTRIB(int, AttackRange);
-	ADD_ATTRIB(int, MoveSpeed);
-	ADD_ATTRIB(int, AttackSpeed);
-	ADD_ATTRIB(int, ProdSpeed);
-	ADD_ATTRIB(int, RepairSpeed);
-	ADD_ATTRIB(int, HarvestSpeed);
+	maxHp += (e.getMaxHp() * strength).intp();
+	hpRegeneration += (e.getHpRegeneration() * strength).intp();
+	maxEp += (e.getMaxEp() * strength).intp();
+	epRegeneration += (e.getEpRegeneration() * strength).intp();
+	sight += (e.getSight() * strength).intp();
+	armor += (e.getArmor() * strength).intp();
+	attackStrength += (e.getAttackStrength() * strength).intp();
+	effectStrength += e.getEffectStrength() * strength;
+	attackPctStolen += e.getAttackPctStolen() * strength;
+	attackRange += (e.getAttackRange() * strength).intp();
+	moveSpeed += (e.getMoveSpeed() * strength).intp();
+	attackSpeed += (e.getAttackSpeed() * strength).intp();
+	prodSpeed += (e.getProdSpeed() * strength).intp();
+	repairSpeed += (e.getRepairSpeed() * strength).intp();
+	harvestSpeed += (e.getHarvestSpeed() * strength).intp();
 }
 
 void UnitStats::applyMultipliers(const EnhancementType &e) {
@@ -117,6 +111,22 @@ void UnitStats::applyMultipliers(const EnhancementType &e) {
 	prodSpeed = (prodSpeed * e.getProdSpeedMult()).intp();
 	repairSpeed = (repairSpeed * e.getRepairSpeedMult()).intp();
 	harvestSpeed = (harvestSpeed * e.getHarvestSpeedMult()).intp();
+}
+
+void UnitStats::sanitiseUnitStats() {
+	if (maxHp < 0) maxHp = 0;
+	if (maxEp < 0) maxEp = 0;
+	if (sight < 0) sight = 0;
+	if (armor < 0) armor = 0;
+	if (attackStrength < 0) attackStrength = 0;
+	if (effectStrength < 0) effectStrength = 0;
+	if (attackPctStolen < 0) attackPctStolen = 0;
+	if (attackRange < 0) attackRange = 0;
+	if (moveSpeed < 0) moveSpeed = 0;
+	if (attackSpeed < 0) attackSpeed = 0;
+	if (prodSpeed < 0) prodSpeed = 0;
+	if (repairSpeed < 0) repairSpeed = 0;
+	if (harvestSpeed < 0) harvestSpeed = 0;
 }
 
 // legacy load for Unit class
@@ -275,9 +285,8 @@ void EnhancementType::addMultipliers(const EnhancementType &e, fixed strength){
 }
 
 void EnhancementType::clampMultipliers() {
-	fixed low, toLow;
+	fixed low;
 	low.raw() = (1 << 6); // lowest 'fixed' fraction that is 'safe' to multiply
-	toLow.raw() = (1 << 5);
 	if (maxHpMult <= 0) {
 		maxHpMult = low;
 	}
@@ -329,11 +338,7 @@ void formatModifier(string &str, const char *pre, const char* label, int value, 
 	Lang &lang = Lang::getInstance();
 
 	if (value) {
-		str += pre + lang.get(label) + ": ";
-		if (value > 0) {
-			str += "+";
-		}
-		str += intToStr(value);
+		str += pre + lang.get(label) + ": " + intToStr(value);
 	}
 
 	if (multiplier != 1) {
