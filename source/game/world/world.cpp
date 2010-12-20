@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -63,6 +64,8 @@ World::World(SimulationInterface *m_simInterface)
 	Config &config = Config::getInstance();
 
 	GameSettings &gs = m_simInterface->getGameSettings();
+	string techName = formatString(basename(gs.getTechPath()));
+	g_program.setTechTitle(techName);
 	
 	fogOfWar = gs.getFogOfWar();
 	shroudOfDarkness = gs.getShroudOfDarkness();

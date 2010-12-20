@@ -110,6 +110,7 @@ MainMenu::MainMenu(Program &program)
 	fps = lastFps = 0;
 
 	setState(new MenuStateRoot(program, this));
+	g_program.setTechTitle("");
 }
 
 MainMenu::~MainMenu() {
