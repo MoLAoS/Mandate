@@ -341,6 +341,7 @@ void Display::clear() {
 	setPortraitTitle("");
 	setPortraitText("");
 	setProgressBar(-1);
+	setOrderQueueText("");
 }
 
 const Vec3f progressBarBg = Vec3f(0.3f);
