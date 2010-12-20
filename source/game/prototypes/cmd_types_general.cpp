@@ -1209,6 +1209,12 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 			}
 		}
 	}
+	if (range == 0) { // blind unit
+		if (*rangedPtr) {
+			*rangedPtr = NULL;
+		}
+		return false;
+	}
 	if (*rangedPtr) {
 		needDistance = true;
 	} else {

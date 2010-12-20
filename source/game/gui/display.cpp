@@ -635,7 +635,10 @@ void Display::resetTipPos(Vec2i i_offset) {
 		ttPos.x -= (m_toolTip->getWidth() + 5);
 	} else {
 		ttPos.x += (getWidth() + 5);
-	}				
+	}
+	if (ttPos.y < m_toolTip->getHeight()) {
+		ttPos.y += (m_toolTip->getHeight() - ttPos.y + 10);
+	}
 	ttPos.y -= (m_toolTip->getHeight() + 5);
 	m_toolTip->setPos(ttPos);
 	m_toolTip->setVisible(true);

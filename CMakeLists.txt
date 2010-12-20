@@ -233,7 +233,7 @@ endif()
 set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev4;.patch;/build;.*~;/docs/html/;/package")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev;.supp;.patch;/build;.*~;/docs/html/;/package")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)
