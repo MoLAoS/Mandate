@@ -236,8 +236,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 				int8 objNumber;
 				f->read(&objNumber, sizeof(int8), 1);
 				Tile *tile = getTile(Vec2i(x, y));
-				float scale = float(GameConstants::cellScale);
-				Vec3f vert(x * scale, 0.f, y * scale);
+				Vec3f vert(x * cellScale + cellScale / 2.f, 0.f, y * cellScale + cellScale / 2.f);
 
 				if (objNumber == 0 || x == m_tileSize.w - 1 || y == m_tileSize.h - 1) {
 					tile->setObject(NULL);
@@ -297,29 +296,19 @@ void Map::init() {
 	calcAvgAltitude();
 }
 
-void Map::setCellTypes () {
-	for ( int y = 0; y < getH(); ++y ) {
-		for ( int x = 0; x < getW(); ++x ) {
-			Cell *cell = getCell ( x, y );
-			if ( cell->getHeight () < waterLevel - ( 1.5f / heightFactor ) )
+void Map::setCellTypes() {
+	for (int y = 0; y < getH(); ++y) {
+		for (int x = 0; x < getW(); ++x) {
+			Cell *cell = getCell(x, y);
+			if (cell->getHeight() < waterLevel - (1.5f / heightFactor)) {
 				cell->setType ( SurfaceType::DEEP_WATER );
-			else if ( cell->getHeight () < waterLevel )
-				cell->setType ( SurfaceType::FORDABLE );
+			} else if (cell->getHeight () < waterLevel) {
+				cell->setType(SurfaceType::FORDABLE);
+			}
 		}
 	}
 }
-/*
-void Map::setCellType ( Vec2i pos )
-{
-   Cell *cell = getCell ( pos );
-   if ( cell->getHeight () < waterLevel - ( 1.5f / heightFactor ) )
-      cell->setType ( SurfaceType::DEEP_WATER );
-   else if ( cell->getHeight () < waterLevel )
-      cell->setType ( SurfaceType::FORDABLE );
-   else
-      cell->setType ( SurfaceType::LAND );
-}
-*/
+
 void Map::calcAvgAltitude() {
 	float sum = 0.0;
 	for (int y=0; y < getTileH(); ++y) {

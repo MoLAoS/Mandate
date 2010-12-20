@@ -1262,9 +1262,8 @@ void Unit::doUnitBorn(const SkillCycleTable *skillCycleTable) {
 /** wrapper for sim interface 
   * @returns the command that has been processed
   */
-CommandClass Unit::doUpdateCommand() {
+void Unit::doUpdateCommand() {
 	const SkillType *old_st = getCurrSkill();
-	CommandClass processingCommand;
 
 	// if unit has command process it
 	if (anyCommand()) {
@@ -1278,13 +1277,9 @@ CommandClass Unit::doUpdateCommand() {
 				clearCommandCallback();
 			}
 		}
-		processingCommand = getCurrCommand()->getType()->getClass();
-		///@todo might have issue with this and processing command from simInterface but doesn't seem to be used
-		/// in commandType->update so the above assignment does nothing???
-		/// used in Unit::clearPath, RoutePlanner::findPathToLocation, RoutePlanner::findPathToGoal
-		///  - hailstone 11Dec2010
+		g_simInterface->setProcessingCommandClass(getCurrCommand()->getType()->getClass());
 		getCurrCommand()->getType()->update(this);
-		processingCommand = CommandClass::NULL_COMMAND;
+		g_simInterface->setProcessingCommandClass();
 	}
 	// if no commands, add stop (or guard for pets) command
 	if (!anyCommand() && isOperative()) {
@@ -1309,8 +1304,6 @@ CommandClass Unit::doUpdateCommand() {
 	if (getCurrSkill() != old_st) {	// if starting new skill
 		resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
 	}
-
-	return processingCommand;
 }
 
 /** called to update animation cycle on a dead unit */

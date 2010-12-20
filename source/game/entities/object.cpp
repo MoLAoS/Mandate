@@ -37,8 +37,9 @@ Object::Object(int id, ObjectType *objType, const Vec3f &p)
 		: id(id)
 		, objectType(objType)
 		, resource(0) {
-	Random random(int(p.x * p.z));
-	pos = p + Vec3f(random.randRange(-0.6f, 0.6f), 0.0f, random.randRange(-0.6f, 0.6f));
+	Random random(id);
+	const float max_offset = 0.2f;
+	pos = p + Vec3f(random.randRange(-max_offset, max_offset), 0.0f, random.randRange(-max_offset, max_offset));
 	rotation = random.randRange(0.f, 360.f);
 	if (objectType != NULL) {
 		variation = random.randRange(0, objectType->getModelCount() - 1);

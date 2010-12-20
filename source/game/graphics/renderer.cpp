@@ -1179,15 +1179,15 @@ void Renderer::renderSelectionEffects() {
 	if (selectedObj) {
 		Resource *r = selectedObj->getResource();
 		if (r) {
-			const float offset = float(GameConstants::cellScale / 2);
 			const float ratio = float(r->getAmount()) / r->getType()->getDefResPerPatch();
-			Vec3f currVec = selectedObj->getPos() + Vec3f(offset, 0.3f, offset);
+			Vec3f currVec = selectedObj->getPos();
+			currVec.y += 0.3f;
 			glColor4f(ratio, ratio / 2.f, 0.f, 0.3f);
 			renderSelectionCircle(currVec, GameConstants::cellScale, selectionCircleRadius);
 		}		
 	}
 
-	//target arrow
+	// target arrow
 	if (selection->getCount() == 1) {
 		const Unit *unit =  selection->getUnit(0);
 		Command *cmd = 0;

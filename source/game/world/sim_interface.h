@@ -215,6 +215,9 @@ public:
 	Stats* getStats()						{ return stats; }
 	bool getQuit() const					{ return quit; }
 	
+	void setProcessingCommandClass(CommandClass cc = CommandClass::NULL_COMMAND) {
+		m_processingCommand = cc;
+	}
 	CommandClass processingCommandClass() const {
 		return m_processingCommand;
 	}

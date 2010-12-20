@@ -90,18 +90,7 @@ public:
 
 class Tile {
 private:
-	///@todo put all 'general' coords in TerrainRenderer ?
-	// geometry
-	//Vec3f vertex;
-	//Vec3f normal;
 	Vec3f color; // leave here, only needed by minimap
-	//Vec3f originalVertex;
-
-	// tex coords
-	//Vec2f fowTexCoord;		//tex coords for TEXTURE1 when multitexturing and fogOfWar
-
-	///@todo specific to TerrainRendererGlest, also always == (0.f, 0.f)
-	Vec2f surfTexCoord;		//tex coords for TEXTURE0
 
 	//surface
 	int tileType;
@@ -118,21 +107,15 @@ private:
 	bool nearSubmerged;
 
 public:
-	Tile() : /*vertex(0.f), normal(0.f, 1.f, 0.f), originalVertex(0.f), */
-			tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) {}
-	~Tile() { if(object) delete object;}
+	Tile() : tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) { }
+	~Tile() { delete object; }
 
 	//get
-	//const Vec3f &getVertex() const				{return vertex;		}
-	//float getHeight() const						{return vertex.y;	}
 	const Vec3f &getColor() const				{return color;		}
-	//const Vec3f &getNormal() const				{return normal;		}
 	int getTileType() const						{return tileType;	}
 	const Texture2D *getTileTexture() const		{return tileTexture;}
 	Object *getObject() const					{return object;		}
 	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
-	//const Vec2f &getFowTexCoord() const			{return fowTexCoord;	}
-	//const Vec2f &getSurfTexCoord() const		{return surfTexCoord;	}
 	bool getNearSubmerged() const				{return nearSubmerged;	}
 
 	bool isVisible(int teamIndex) const			{
@@ -145,15 +128,10 @@ public:
 	}
 
 	//set
-	//void setVertex(const Vec3f &vertex)				{/*originalVertex = */this->vertex = vertex;}
-	//void setHeight(float height)					{/*originalVertex.y = */vertex.y = height; }
-	//void setNormal(const Vec3f &normal)				{this->normal= normal;				  }
 	void setColor(const Vec3f &color)				{this->color= color;				 }
 	void setTileType(int tileType)					{this->tileType= tileType;			}
 	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;			   }
 	void setObject(Object *object)					{this->object= object;			   }
-	//void setFowTexCoord(const Vec2f &ftc)			{this->fowTexCoord= ftc;			}
-	//void setTileTexCoord(const Vec2f &stc)			{this->surfTexCoord= stc;			 }
 	
 	void setExplored(int teamIndex, bool explored)	{
 		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
@@ -170,14 +148,6 @@ public:
 	//misc
 	bool isFree() const						{ return !object || object->getWalkable();	}
 	void deleteResource()					{ delete object; object= NULL;				}
-	//void resetVertex()						{ vertex = originalVertex;					}
-	//void alterVertex(const Vec3f &offset)	{ vertex += offset;							}
-	/*void updateObjectVertex();				{
-		if (object) {
-			float xzOffset = GameConstants::cellScale / 2.f;
-			object->setPos(vertex + Vec3f(xzOffset, 0.f, xzOffset));
-		}
-	}*/
 };
 
 /** Tile Vertex structure */

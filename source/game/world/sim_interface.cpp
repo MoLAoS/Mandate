@@ -413,7 +413,7 @@ void SimulationInterface::requestCommand(Command *command) {
 }
 
 void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
-	m_processingCommand = unit->doUpdateCommand();
+	unit->doUpdateCommand();
 	IF_MAD_SYNC_CHECKS(
 		UnitStateRecord usr(unit);
 		worldLog->addUnitRecord(usr);

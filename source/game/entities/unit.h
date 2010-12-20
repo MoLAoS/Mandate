@@ -495,7 +495,7 @@ public:
 	void doUpdateAnimOnDeath(const SkillCycleTable *skillCycleTable);
 	void doUpdateAnim(const SkillCycleTable *skillCycleTable);
 	void doUnitBorn(const SkillCycleTable *skillCycleTable);
-	CommandClass doUpdateCommand();
+	void doUpdateCommand();
 
 	// World wrappers
 	void doUpdate();
