@@ -132,8 +132,8 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		return true;
 	}
 
-	// TODO: We've already searched out to attack-range and found nothing, rather than
-	// starting again to check visible-range, we should just keep using the same search
+	///@todo We've already searched out to attack-range and found nothing, rather than
+	/// starting again to check visible-range, we should just keep using the same search
 
 	// couldn't attack anyone, look for someone to smite nearby, compute target pos
 	Vec2i pos;

@@ -30,7 +30,7 @@ class Unit;
 /**
  * An effect, usually temporary, that modifies the stats,
  * regeneration/degeneration or other attributes of a unit.
- * TODO: Implement lighting, particles & sound
+ * @todo: Implement lighting & sound
  */
 class Effect {
 private:

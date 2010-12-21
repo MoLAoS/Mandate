@@ -51,7 +51,7 @@ void AnnouncerThread::execute() {
 		if (m_freeSlots) {
 			if (counter % 10 == 0) {
 				try {
-					m_socket.sendAnnounce(4950); //TODO: change with game constant port
+					m_socket.sendAnnounce(4950); ///@todo change with game constant port
 				} catch (SocketException) {
 					// do nothing
 					printf("SocketException while announcing game on LAN.\n");
@@ -439,7 +439,7 @@ void MenuStateNewGame::update() {
 		g_coreData.getMenuMusic()->setVolume(vol);
 	}
 
-	bool configAnnounce = true; // TODO: put in config
+	bool configAnnounce = true; ///@todo put in config
 	if (configAnnounce) {
 		m_announcer.doAnnounce(hasUnconnectedSlots());
 	}

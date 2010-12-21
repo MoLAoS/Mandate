@@ -2,9 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Jaagup Repän <jrepan@gmail.com>,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
-//				  2009 James McCulloch <silnarm@gmail.com>
+//				  2008      Jaagup Repän <jrepan@gmail.com>,
+//				  2008      Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2010 James McCulloch <silnarm@gmail.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -595,8 +595,8 @@ bool Map::getNearestFreePos(Vec2i &result, const Unit *unit, const Vec2i &target
 	}
 
 	// if not, take the long approach.
-	// TODO: this code can be optimized by starting at the nearest position looking for a free cell
-	// and moving away from the starting point.
+	///@todo this code can be optimized by starting at the nearest position looking for a free cell
+	/// and moving away from the starting point.
 	//int sideSize = targetSize + size;
 	fixed minDistance = fixed::max_int();
 

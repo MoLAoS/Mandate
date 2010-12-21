@@ -1032,7 +1032,7 @@ void Renderer::renderUnits(){
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 
-	// TODO: Just use cells to determine the alive ones, then check all dead ones
+	///@todo Just use cells to determine the alive ones, then check all dead ones
 	for (int i=0; i < world->getFactionCount(); ++i) { 
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);

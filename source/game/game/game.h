@@ -195,7 +195,7 @@ protected:
 };
 
 
-//TODO: better integrate with GameState, much duplicated code
+///@todo: better integrate with GameState, much duplicated code
 class QuickScenario : public GameState {
 public:
 	QuickScenario(Program &program) : GameState(program) {}

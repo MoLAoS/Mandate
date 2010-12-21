@@ -612,8 +612,8 @@ bool BuildCommandType::attemptMoveUnits(const vector<Unit *> &occupants) const {
 	// they all have a move command, so we'll wait
 	return true;
 
-	/// @TODO: Check for idle units and tell them to get the fuck out of the way.
-	/// @TODO: Possibly add a unit notification to let player know builder is waiting
+	///@todo Check for idle units and tell them to get the fuck out of the way.
+	///@todo Possibly add a unit notification to let player know builder is waiting
 }
 
 void BuildCommandType::blockedBuild(Unit *unit) const {

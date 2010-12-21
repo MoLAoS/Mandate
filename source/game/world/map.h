@@ -2,9 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008 Jaagup Repän <jrepan@gmail.com>,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
-//				  2009 James McCulloch <silnarm at gmail>
+//				  2008      Jaagup Repän <jrepan@gmail.com>,
+//				  2008      Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published

@@ -524,7 +524,7 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 				incResourceAmount(resource->getType(), -resource->getAmount());
 
 				//decrease unit hp
-				//TODO: Implement rules for specifying what happens when you're consumable
+				///@todo: Implement rules for specifying what happens when you're consumable
 				//      demand exceeds supply & stores.
 				if (getResource(resource->getType())->getAmount() < 0) {
 					resetResourceAmount(resource->getType());
