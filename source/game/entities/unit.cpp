@@ -31,6 +31,7 @@
 #include "sound_renderer.h"
 #include "sim_interface.h"
 #include "user_interface.h"
+#include "route_planner.h"
 
 #include "leak_dumper.h"
 
@@ -440,7 +441,7 @@ string Unit::getFullName() const{
 	return str;
 }
 
-float Unit::getDeadAlpha() const {
+float Unit::getRenderAlpha() const {
 	float alpha = 1.0f;
 	int framesUntilDead = GameConstants::maxDeadCount - getDeadCount();
 
@@ -840,14 +841,6 @@ CommandResult Unit::giveCommand(Command *command) {
 		// start the command type
 		ct->start(this, command);
 
-		if (command->getType()->getClass() == CommandClass::UPGRADE) {
-			const UpgradeCommandType *uct = static_cast<const UpgradeCommandType *>(command->getType());
-			command->setProdType(uct->getProducedUpgrade());
-		} else if (command->getType()->getClass() == CommandClass::LOAD) {
-			
-		} else if (command->getType()->getClass() == CommandClass::UNLOAD) {
-			
-		}
 		if (command) {
 			commands.push_back(command);
 		}
@@ -1163,6 +1156,44 @@ void Unit::deCloak() {
 		if (type->getDeCloakSound() && g_renderer.getCuller().isInside(getCenteredPos())) {
 			g_soundRenderer.playFx(type->getDeCloakSound());
 		}
+	}
+}
+
+/** Move a unit to a position on the map using the RoutePlanner
+  * @param pos destination position
+  * @param moveSkill the MoveSkillType to apply for the move
+  * @return true when completed (maxed out BLOCKED, IMPOSSIBLE or ARRIVED)
+  */
+bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
+	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
+	assert(moveSkill);
+
+	switch (g_routePlanner.findPath(this, pos)) { // head to target pos
+		case TravelState::MOVING:
+			setCurrSkill(moveSkill);
+			face(getNextPos());
+			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
+			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
+			return false;
+
+		case TravelState::BLOCKED:
+			setCurrSkill(SkillClass::STOP);
+			if (getPath()->isBlocked()) { //&& !command->getUnit()) {?? from MoveCommandType and LoadCommandType
+				clearPath();
+				return true;
+			}
+			return false;
+
+		case TravelState::IMPOSSIBLE:
+			setCurrSkill(SkillClass::STOP);
+			cancelCurrCommand(); // from AttackCommandType, is this right, maybe dependant flag?? - hailstone 21Dec2010
+ 			return true;
+
+		case TravelState::ARRIVED:
+			return true;
+
+		default:
+			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
 	}
 }
 

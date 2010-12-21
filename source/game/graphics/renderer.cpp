@@ -1091,7 +1091,7 @@ void Renderer::renderUnits(){
 			glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
 
 			//dead alpha
-			float alpha = unit->getDeadAlpha();
+			float alpha = unit->getRenderAlpha();
 			bool fade = alpha < 1.0;
 
 			if (fade) {
@@ -1952,7 +1952,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 				float color = 1.0f - shadowAlpha;
 				
 				//dead alpha
-				float alpha = unit->getDeadAlpha();
+				float alpha = unit->getRenderAlpha();
 				float fade = alpha < 1.0;
 				color *= alpha;
 				changeColor = changeColor || fade;

@@ -209,24 +209,8 @@ void MoveCommandType::update(Unit *unit) const {
 		pos = command->getPos();
 	}
 
-	switch (g_routePlanner.findPath(unit, pos)) {
-		case TravelState::MOVING:
-			unit->setCurrSkill(m_moveSkillType);
-			unit->face(unit->getNextPos());
-			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
-			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
-			break;
-		case TravelState::BLOCKED:
-			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked() && !command->getUnit()) {
-				unit->clearPath();
-				unit->finishCommand();
-				return;
-			}
-			break;	
-		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-			unit->finishCommand();
-			return;
+	if (unit->travel(pos, m_moveSkillType)) {
+		unit->finishCommand();
 	}
 
 	// if we're doing an auto command, let's make sure we still want to do it
@@ -937,22 +921,16 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(SkillClass::STOP);
 		return;
 	}
+
 	Vec2i pos = closest->getCenteredPos(); // else move toward closest
-	switch (g_routePlanner.findPath(unit, pos)) {
-		case TravelState::MOVING:
-			unit->setCurrSkill(moveSkillType);
-			unit->face(unit->getNextPos());
-			break;
-		case TravelState::BLOCKED:
+	if (unit->travel(pos, moveSkillType)) {
+		//unit->finishCommand(); was in blocked which might be better to use since it should be within 
+		// load distance by the time it gets to arrived state anyway? - hailstone 21Dec2010
+		if (unit->getPath()->isBlocked() && !command->getUnit()) {
+			unit->finishCommand();
+		} else {
 			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked() && !command->getUnit()) {
-				unit->clearPath();
-				unit->finishCommand();
-			}
-			break;
-		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-			unit->setCurrSkill(SkillClass::STOP);
-			break;
+		}
 	}
 }
 
@@ -1028,23 +1006,8 @@ void UnloadCommandType::update(Unit *unit) const {
 		return;
 	}
 	if (command->getPos() != Command::invalidPos) {
-		assert(moveSkillType);
-		switch (g_routePlanner.findPathToLocation(unit, command->getPos())) {
-			case TravelState::MOVING:
-				unit->setCurrSkill(moveSkillType);
-				unit->face(unit->getNextPos());
-				break;
-			case TravelState::BLOCKED:
-				unit->setCurrSkill(SkillClass::STOP);
-				if (unit->getPath()->isBlocked()) {
-					unit->clearPath();
-					command->setPos(Command::invalidPos);
-				}
-				break;
-			default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-				unit->setCurrSkill(SkillClass::STOP);
-				command->setPos(Command::invalidPos);
-				break;
+		if (unit->travel(command->getPos(), moveSkillType)) {
+			command->setPos(Command::invalidPos);
 		}
 	} else {
 		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
@@ -1088,23 +1051,8 @@ void BeLoadedCommandType::update(Unit *unit) const {
 		return;
 	}
 	Vec2i targetPos = command->getUnit()->getCenteredPos();
-	assert(moveSkillType);
-	switch (g_routePlanner.findPathToLocation(unit, targetPos)) {
-		case TravelState::MOVING:
-			unit->setCurrSkill(moveSkillType);
-			unit->face(unit->getNextPos());
-			break;
-		case TravelState::BLOCKED:
-			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked()) {
-				unit->clearPath();
-				command->setPos(Command::invalidPos);
-			}
-			break;
-		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-			unit->setCurrSkill(SkillClass::STOP);
-			command->setPos(Command::invalidPos);
-			break;
+	if (unit->travel(targetPos, moveSkillType)) {
+		command->setPos(Command::invalidPos);
 	}
 }
 

@@ -159,32 +159,8 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 			RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 		}
 	}
-	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
-	switch (g_routePlanner.findPath(unit, pos)) { // head to target pos
-		case TravelState::MOVING:
-			unit->setCurrSkill(act->getMoveSkillType());
-			unit->face(unit->getNextPos());
-			return false;
 
-		case TravelState::BLOCKED:
-			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked()) {
-				unit->clearPath();
-				return true;
-			}
-			return false;
-
-		case TravelState::IMPOSSIBLE:
-			unit->setCurrSkill(SkillClass::STOP);
-			unit->cancelCurrCommand();
- 			return true;
-
-		case TravelState::ARRIVED:
-			return true;
-
-		default:
-			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
-	}
+	return unit->travel(pos, act->getMoveSkillType());
 }
 
 void AttackCommandType::update(Unit *unit) const {

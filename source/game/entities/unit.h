@@ -394,7 +394,7 @@ public:
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
 	float getCloakAlpha() const			{return m_cloakAlpha;}
-	float getDeadAlpha() const;
+	float getRenderAlpha() const;
 
 	//is
 	bool isCarried() const				{return carried;}
@@ -529,6 +529,7 @@ public:
 
 	void cloak();
 	void deCloak();
+	bool travel(const Vec2i &pos, const MoveSkillType *moveSkill);
 
 private:
 	float computeHeight(const Vec2i &pos) const;
