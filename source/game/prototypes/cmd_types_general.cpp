@@ -124,6 +124,36 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	return 0;
 }
 
+/** 
+ * Determines command arrow details and if it should be drawn
+ * @param out_arrowTarget output for arrowTarget
+ * @param out_arrowColor output for arrowColor
+ * @return whether to render arrow
+ */
+bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Vec3f &out_arrowColor) const {
+	if (getClicks() != Clicks::ONE) {
+		// arrow color
+		out_arrowColor = getArrowColor();
+
+		// arrow target
+		if (cmd->getUnit() != NULL) {
+			if (!cmd->getUnit()->isCarried()) {
+				RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
+				out_arrowTarget = cmd->getUnit()->getCurrVectorFlat();
+				return true;
+			}
+		} else {
+			Vec2i pos = cmd->getPos();
+			if (pos != Command::invalidPos) {
+				out_arrowTarget = Vec3f(float(pos.x), g_map.getCell(pos)->getHeight(), float(pos.y));
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void CommandType::apply(Faction *faction, const Command &command) const {
 	const ProducibleType *produced = command.getProdType();
 	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {

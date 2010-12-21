@@ -1004,11 +1004,8 @@ void Renderer::renderUnits(){
 	SECTION_TIMER(RENDER_UNITS);
 	SECTION_TIMER(RENDER_MODELS);
 	const Unit *unit;
-	const UnitType *ut;
-	int framesUntilDead;
 	const World *world= &g_world;
 	const Faction *thisFaction = world->getThisFaction();
-	const Map *map = world->getMap();
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
 	assertGl();
@@ -1067,23 +1064,13 @@ void Renderer::renderUnits(){
 				continue;
 			}
 
-			ut = unit->getType();
-
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 
 			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
-			Vec3f currVec= unit->getCurrVectorFlat();
-
-			// let dead units start sinking before they go away
-			framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
-			if(framesUntilDead <= 200 && !ut->isOfClass(UnitClass::BUILDING)) {
-				float baseline = logf(20.125f) / 5.f;
-				float adjust = logf((float)framesUntilDead / 10.f + 0.125f) / 5.f;
-				currVec.y += adjust - baseline;
-			}
+			Vec3f currVec = unit->getCurrVectorSink();
 			glTranslatef(currVec.x, currVec.y, currVec.z);
 
 			//rotate
@@ -1196,47 +1183,11 @@ void Renderer::renderSelectionEffects() {
 		}
 
 		// comand arrow
-		if (focusArrows && cmd && !cmd->isAuto()){
-			const CommandType *ct = cmd->getType();
-			if (ct->getClicks() != Clicks::ONE) {
-				// arrow color
-				Vec3f arrowColor;
-				///@todo CommandRefactoring - hailstone 12Dec2010
-				//ct->getArrowColor();
-				switch(ct->getClass()){
-				case CommandClass::MOVE:
-					arrowColor= Vec3f(0.f, 1.f, 0.f);
-					break;
-				case CommandClass::ATTACK:
-				case CommandClass::ATTACK_STOPPED:
-					arrowColor= Vec3f(1.f, 0.f, 0.f);
-					break;
-				default:
-					arrowColor= Vec3f(1.f, 1.f, 0.f);
-				}
-				// arrow target
-				Vec3f arrowTarget;
-				
-				bool doArrow = true;
-				if (cmd->getUnit() != NULL) {
-					if (cmd->getUnit()->isCarried()) {
-						doArrow = false;
-					} else {
-						RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
-						arrowTarget= cmd->getUnit()->getCurrVectorFlat();
-					}
-				} else {
-					Vec2i pos= cmd->getPos();
-					if (pos == Command::invalidPos) {
-						doArrow = false;
-					} else {
-						arrowTarget = Vec3f(float(pos.x), map->getCell(pos)->getHeight(), float(pos.y));
-					}
-				}
-				if (doArrow) {
-					RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
-					renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
-				}
+		if (focusArrows && cmd && !cmd->isAuto()) {
+			Vec3f arrowTarget, arrowColor;
+			if (cmd->getType()->getArrowDetails(cmd, arrowTarget, arrowColor)) {
+				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+				renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
 			}
 		}
 
@@ -1872,8 +1823,6 @@ Vec4f Renderer::computeWaterColor(float waterLevel, float cellHeight){
 //render units for shadows or selection purposes
 void Renderer::renderUnitsFast(bool renderingShadows) {
 	const Unit *unit;
-	const UnitType *ut;
-	int framesUntilDead;
 	bool changeColor = false;
 	const World *world= &g_world;
 	const Faction *thisFaction = world->getThisFaction();
@@ -1939,7 +1888,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
-			Vec3f currVec= unit->getCurrVectorFlat();
+			Vec3f currVec = unit->getCurrVectorFlat();
 
 			glTranslatef(currVec.x, currVec.y, currVec.z);
 
@@ -1948,7 +1897,6 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 			// faded shadows
 			if(renderingShadows) {
-				ut = unit->getType();
 				float color = 1.0f - shadowAlpha;
 				
 				//dead alpha
@@ -1976,7 +1924,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			}
 
 			//render
-			const Model *model= unit->getCurrentModel();
+			const Model *model = unit->getCurrentModel();
 			model->updateInterpolationVertices(unit->getAnimProgress(), unit->isAlive());
 			modelRenderer->render(model);
 

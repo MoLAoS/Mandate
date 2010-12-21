@@ -125,6 +125,8 @@ public:
 	bool isQueuable() const								{return queuable;}
 
 	//get
+	bool getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Vec3f &out_arrowColor) const;
+	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 1.f, 0.f);}
 	virtual CommandClass getClass() const = 0;
 	virtual Clicks getClicks() const					{return clicks;}
 	string getDesc(const Unit *unit) const {
@@ -219,6 +221,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 
+	virtual Vec3f getArrowColor() const {return Vec3f(0.f, 1.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MOVE; }
 };
@@ -278,6 +281,7 @@ public:
 
 	virtual void update(Unit *unit) const;
 
+	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::ATTACK; }
 
@@ -302,6 +306,7 @@ public:
 	}
 	virtual void update(Unit *unit) const;
 
+	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::ATTACK_STOPPED; }
 

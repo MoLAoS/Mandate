@@ -453,6 +453,20 @@ public:
 		return v;
 	}
 
+	Vec3f getCurrVectorSink() const {
+		Vec3f currVec = getCurrVectorFlat();
+
+		// let dead units start sinking before they go away
+		int framesUntilDead = GameConstants::maxDeadCount - getDeadCount();
+		if(framesUntilDead <= 200 && !type->isOfClass(UnitClass::BUILDING)) {
+			float baseline = logf(20.125f) / 5.f;
+			float adjust = logf((float)framesUntilDead / 10.f + 0.125f) / 5.f;
+			currVec.y += adjust - baseline;
+		}
+
+		return currVec;
+	}
+
 	//command related
 	const CommandType *getFirstAvailableCt(CommandClass commandClass) const;
 	bool anyCommand() const								{return !commands.empty();}
