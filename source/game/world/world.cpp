@@ -81,7 +81,7 @@ World::World(SimulationInterface *m_simInterface)
 }
 
 World::~World() {
-	Logger::getInstance().add("~World", !Program::getInstance()->isTerminating());
+	Logger::getInstance().add("~World", !g_program.isTerminating());
 	alive = false;
 
 	delete scenario;
@@ -1014,7 +1014,7 @@ void World::initUnits() {
 			const Unit* const &unit = *uIt;
 			const UnitType *ut = unit->getType();
 			if (ut->hasSkillClass(SkillClass::BE_BUILT) && !ut->hasSkillClass(SkillClass::MOVE)) {
-				map.flatternTerrain(unit);
+				map.prepareTerrain(unit);
 				cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
 			}
 		}
@@ -1039,20 +1039,6 @@ void World::initExplorationState() {
 			map.getTile(i, j)->setExplored(thisTeamIndex, !shroudOfDarkness);
 		}
 	}
-	//if (!fogOfWar) {
-	//	for (int i = 0; i < map.getTileW(); ++i) {
-	//		for (int j = 0; j < map.getTileH(); ++j) {
-	//			map.getTile(i, j)->setVisible(thisTeamIndex, true);
-	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
-	//		}
-	//	}
-	//} else if (!shroudOfDarkness) {
-	//	for (int i = 0; i < map.getTileW(); ++i) {
-	//		for (int j = 0; j < map.getTileH(); ++j) {
-	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
-	//		}
-	//	}
-	//}
 }
 
 
