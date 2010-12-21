@@ -222,7 +222,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	highlight = node->getChildFloatValue("highlight");
 	toBeUndertaken = node->getChildBoolValue("toBeUndertaken");
 
-	//TODO AutoCmd enable
+	///@todo AutoCmd enable
 	//autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
 
 	if (type->hasMeetingPoint()) {
@@ -1471,6 +1471,15 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 //	_PROFILE_FUNCTION();
 	const int &frame = g_world.getFrameCount();
 
+	// start attack systems ?
+	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
+		const AttackSkillType *attackSkill = static_cast<const AttackSkillType*>(currSkill);
+		int range = getMaxRange(attackSkill)+ type->getHalfSize().intp();
+		if (getCenteredPos().dist(getTargetPos()) <= range) { // double check range
+			startAttackSystems(attackSkill);
+		}
+	}
+
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
 		Unit *carrier = (m_carrier != -1 ? g_simInterface->getUnitFactory().getUnit(m_carrier) : 0);
@@ -1479,11 +1488,6 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
 			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
-	}
-
-	// start attack systems ?
-	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
-		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
 	}
 
 	// update anim cycle ?
