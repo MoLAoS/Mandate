@@ -278,9 +278,7 @@ void World::processFrame() {
 
 	++frameCount;
 	m_simInterface->startFrame(frameCount);
-	if (frameCount % 5 == 0) {
-		g_userInterface.getMinimap()->updateUnitTex();
-	}
+	g_userInterface.getMinimap()->update(frameCount);
 
 	// check ScriptTimers
 	ScriptManager::update();

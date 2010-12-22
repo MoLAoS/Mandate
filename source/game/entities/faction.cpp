@@ -732,6 +732,7 @@ void Faction::attackNotice(const Unit *u) {
 			}
 		}
 	}
+	g_userInterface.getMinimap()->addAttackNotice(u->getCenteredPos());
 }
 
 void Faction::advanceSubfaction(int subfaction) {

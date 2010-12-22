@@ -37,6 +37,69 @@ using Shared::Platform::uint8;
 namespace Glest { namespace Sim {
 using Main::Program;
 
+void AttackNoticeCircle::init(Vec2i pos) {
+	m_pos = pos;
+	m_alpha = 0.f;
+	m_ttl = 3;
+	m_up = true;
+}
+
+bool AttackNoticeCircle::update() {
+	const float stepSize = 0.025f;
+	if (m_up) {
+		m_alpha += stepSize;
+		if (m_alpha >= 1.f) {
+			m_up = false;
+		}
+	} else {
+		m_alpha -= stepSize;
+		if (m_alpha <= 0.f) {
+			--m_ttl;
+			m_up = true;
+		}
+	}
+	return !m_ttl;
+}
+
+Vec2i operator*(const Vec2i &lhs, const fixed &rhs) {
+	return Vec2i((lhs.x * rhs).intp(), (lhs.y * rhs).intp());
+}
+
+void AttackNoticeCircle::render(Vec2i mmPos, int mmHeight, fixed ratio) {
+	const int sz = 16;
+	Vec2i tPos = m_pos * ratio;
+	Vec2i pos = mmPos;
+	pos.y += mmHeight - tPos.y;
+	pos.x += tPos.x;
+
+	Vec2i verts[4];
+	Vec2f texCoord[4];
+
+	verts[0] = Vec2i(pos.x - 8, pos.y - 8);
+	texCoord[0] = Vec2f(0.f);
+
+	verts[1] = Vec2i(pos.x - 8, pos.y + 8);
+	texCoord[1] = Vec2f(0.f, 1.f);
+
+	verts[2] = Vec2i(pos.x + 8, pos.y + 8);
+	texCoord[2] = Vec2f(1.f, 1.f);
+
+	verts[3] = Vec2i(pos.x + 8, pos.y - 8);
+	texCoord[3] = Vec2f(1.f, 0.f);
+
+	glColor4f(1.f, 1.f, 1.f, m_alpha);
+	glBegin(GL_QUADS);
+		glTexCoord2fv(texCoord[0].ptr());
+		glVertex2iv(verts[0].ptr());
+		glTexCoord2fv(texCoord[1].ptr());
+		glVertex2iv(verts[1].ptr());
+		glTexCoord2fv(texCoord[2].ptr());
+		glVertex2iv(verts[2].ptr());
+		glTexCoord2fv(texCoord[3].ptr());
+		glVertex2iv(verts[3].ptr());
+	glEnd();
+}
+
 // =====================================================
 // 	class Minimap
 // =====================================================
@@ -53,6 +116,7 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 		, m_fowTex(0)
 		, m_unitsTex(0)
 		, m_unitsPMap(0)
+		, m_attackNoticeTex(0)
 		, m_w(0)
 		, m_h(0)
 		, m_ratio(1)
@@ -76,7 +140,7 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 	m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
 }
 
-void Minimap::init(int w, int h, const World *world, bool resumingGame){
+void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	int scaledW = w / GameConstants::cellScale;
 	int scaledH = h / GameConstants::cellScale;
 	m_w = w;
@@ -136,12 +200,41 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame){
 	m_unitsPMap->clearMap(-1);
 	
 	computeTexture(world);
+
+	m_attackNoticeTex = g_renderer.newTexture2D(ResourceScope::GAME);
+	m_attackNoticeTex->getPixmap()->load("data/core/misc_textures/attack_notice.png");
 }
+
 
 Minimap::~Minimap(){
 	delete m_fowPixmap0;
 	delete m_fowPixmap1;
 	delete m_unitsPMap;
+}
+
+void Minimap::update(int frameCount) {
+	if (frameCount % 5 == 0) {
+		updateUnitTex();
+	}
+	AttackNotices::iterator it = m_attackNotices.begin();
+	while (it != m_attackNotices.end()) {
+		if (it->update()) {
+			it = m_attackNotices.erase(it);
+		} else {
+			++it;
+		}
+	}
+}
+
+void Minimap::addAttackNotice(Vec2i pos) {
+	foreach (AttackNotices, it, m_attackNotices) {
+		if (it->m_pos.dist(pos) < 12.f) {
+			return;
+		}
+	}
+	m_attackNotices.push_back(AttackNoticeCircle());
+	m_attackNotices.back().init(pos);
+
 }
 
 // ==================== set ====================
@@ -472,6 +565,12 @@ void Minimap::render() {
 		glTexCoord2f(1.0f, 0.0f);
 		glVertex2i(pos.x + size.x, pos.y + size.y);
 	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_attackNoticeTex)->getHandle());
+	foreach (AttackNotices, it, m_attackNotices) {
+		it->render(pos, size.h, m_ratio);
+	}
+
 	glDisable(GL_TEXTURE_2D);
 
 	//draw camera
