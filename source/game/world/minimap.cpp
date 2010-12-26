@@ -255,7 +255,6 @@ void Minimap::resetFowTex() {
 				} else {
 					m_fowPixmap1->setPixel(i, j, p1);
 				}
-
 			} else if (m_fogOfWar || m_shroudOfDarkness) {
 				float p0 = m_fowPixmap0->getPixelf(i, j);
 				float p1 = m_fowPixmap1->getPixelf(i, j);

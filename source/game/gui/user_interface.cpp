@@ -965,7 +965,7 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 					}
 
 					if (unit->getFaction()->reqsOk(ct)) {
-						res += formatString(ct->getDesc(unit));
+						res += ct->getDesc(unit);
 						m_display->setToolTipText(res);
 					} else {
 						if (ct->getClass() == CommandClass::UPGRADE) {

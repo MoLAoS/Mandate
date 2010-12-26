@@ -398,7 +398,7 @@ string formatString(const string &str) {
 		outStr[0] = toupper(outStr[0]);
 	}
 
-	bool afterSeparator = false;
+	bool afterSeparator = true;
 	for (int i = 0; i < str.size(); ++i) {
 		if (outStr[i] == '_') {
 			outStr[i] = ' ';
@@ -411,6 +411,8 @@ string formatString(const string &str) {
 		} else if (afterSeparator) {
 			outStr[i] = toupper(outStr[i]);
 			afterSeparator = false;
+		} else {
+			outStr[i] = tolower(outStr[i]);
 		}
 		if (outStr[i] == '\n' || outStr[i] == '(' || outStr[i] == ' ') {
 			afterSeparator = true;

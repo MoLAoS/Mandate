@@ -147,8 +147,12 @@ string Lang::getTechString(const string &s) {
 }
 
 string Lang::getFactionString(const string &faction, const string &s) {
+	FactionStrings::iterator it = m_factionStringsMap.find(faction);
+	if (it == m_factionStringsMap.end()) {
+		throw runtime_error("Invalid faction name: " + faction);
+	}
 	try {
-		return m_factionStringsMap[faction].getString(s);
+		return it->second.getString(s);
 	} catch (exception &) {
 		return s;
 	}

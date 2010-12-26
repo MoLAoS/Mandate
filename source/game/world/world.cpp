@@ -446,7 +446,7 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 
 		// lots of tests, roughly in order of speed of evaluation.
 		if ((source->isAlly(target) ? e->isEffectsAlly() : e->isEffectsFoe())
-		&&	(target->isOfClass(UnitClass::BUILDING) ? e->isEffectsBuildings() : e->isEffectsNormalUnits())
+		//&&	(target->isOfClass(UnitClass::BUILDING) ? e->isEffectsBuildings() : e->isEffectsNormalUnits())
 		&&	(e->getChance() != 100 ? random.randPercent() < e->getChance() : true)) {
 
 			fixed strength = e->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;

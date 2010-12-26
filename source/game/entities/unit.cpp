@@ -1824,7 +1824,7 @@ string Unit::getShortDesc() const {
 		}
 	}
 	if (!commands.empty()) { // Show current command being executed
-		string factionName = type->getName();
+		string factionName = faction->getType()->getName();
 		string commandName = commands.front()->getType()->getName();
 		string nameString = g_lang.getFactionString(factionName, commandName);
 		if (nameString == commandName) {
@@ -1991,10 +1991,10 @@ void Unit::recalculateStats() {
  * @returns true if this effect had an immediate regen/degen that killed the unit.
  */
 bool Unit::add(Effect *e) {
-	if (!isAlive() && !e->getType()->isEffectsNonLiving()) {
-		delete e;
-		return false;
-	}
+	//if (!isAlive() && !e->getType()->isEffectsNonLiving()) {
+	//	delete e;
+	//	return false;
+	//}
 	if (!e->getType()->getAffectTag().empty()) {
 		if (!type->hasTag(e->getType()->getAffectTag())) {
 			delete e;

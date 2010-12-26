@@ -72,6 +72,7 @@ private:
 	const AttackType *damageType;
 	bool display;
 	UnitParticleSystemTypes particleSystems;
+	const FactionType *factionType;
 
 public:
 	EffectType();
@@ -79,6 +80,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 
+	const FactionType* getFactionType() const {return factionType;}
 	EffectBias getBias() const				{return bias;}
 	EffectStacking getStacking() const		{return stacking;}
 	const EffectTypeFlags &getFlags() const	{return flags;}
@@ -88,10 +90,10 @@ public:
 
 	bool isEffectsAlly() const				{return getFlag(EffectTypeFlag::ALLY);}
 	bool isEffectsFoe() const				{return getFlag(EffectTypeFlag::FOE);}
-	bool isEffectsNormalUnits() const		{return !getFlag(EffectTypeFlag::NO_NORMAL_UNITS);}
-	bool isEffectsBuildings() const			{return getFlag(EffectTypeFlag::BUILDINGS);}
+	//bool isEffectsNormalUnits() const		{return !getFlag(EffectTypeFlag::NO_NORMAL_UNITS);}
+	//bool isEffectsBuildings() const			{return getFlag(EffectTypeFlag::BUILDINGS);}
 	bool isEffectsPetsOnly() const			{return getFlag(EffectTypeFlag::PETS_ONLY);}
-	bool isEffectsNonLiving() const			{return getFlag(EffectTypeFlag::NON_LIVING);}
+	//bool isEffectsNonLiving() const			{return getFlag(EffectTypeFlag::NON_LIVING);}
 	bool isScaleSplashStrength() const		{return getFlag(EffectTypeFlag::SCALE_SPLASH_STRENGTH);}
 	bool isEndsWhenSourceDies() const		{return getFlag(EffectTypeFlag::ENDS_WITH_SOURCE);}
 	bool idRecourseEndsWithRoot() const		{return getFlag(EffectTypeFlag::RECOURSE_ENDS_WITH_ROOT);}

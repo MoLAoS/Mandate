@@ -222,14 +222,15 @@ void Effects::getDesc(string &str) const {
 		} else {
 			str += "\n" + lang.get("Effects") + ": ";
 		}
-		str += (*uei).first->getName() + " (" + intToStr((*uei).second.maxDuration) + ")";
+		string rawName = (*uei).first->getName();
+		string name = lang.getFactionString(uei->first->getFactionType()->getName(), rawName);
+		str += name + " (" + intToStr((*uei).second.maxDuration) + ")";
 		if((*uei).second.count > 1) {
 			str += " x" + intToStr((*uei).second.count);
 		}
 		printedFirst = true;
 	}
 }
-
 
 // ====================================== get ======================================
 
