@@ -218,6 +218,7 @@ PotraitInfo=Click to select only this unit. Shift-click to select only units of 
 TransportInfo=Double click to immediately unload this unit.
 
 ; Game strings
+Affects=Affects
 AlreadyUpgraded=Already Upgraded
 Amount=Amount
 Armor=Armour
@@ -279,8 +280,6 @@ Save=Save
 SaveGame=Save Game
 Score=Score
 SelectSaveGame=Enter file name
-SelfOnly=self only
-PetOnly=pet only
 Send=Send
 Sight=Sight
 Size=Size
@@ -297,6 +296,17 @@ Upgrading=Upgrading
 WalkSpeed=Walk speed
 YourGameWasSaved=Your game has been saved to %s
 Zones=Zones
+
+; Effect stuff
+Effect=Effect
+AllyOnly=allies only
+SelfOnly=self only
+PetsOnly=pets only
+FoeOnly=foes only
+Chance=Chance
+Duration=Duration
+Permenant=permenant
+DamageType=Damage type
 
 ; Time of Day
 MidNight=Mid-night
