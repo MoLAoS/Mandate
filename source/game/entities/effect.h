@@ -14,7 +14,6 @@
 
 #include "effect_type.h"
 #include "vec.h"
-#include "unit_reference.h"
 #include "socket.h"
 
 namespace Glest { namespace Entities {
@@ -38,15 +37,16 @@ private:
 	  * of, NULL otherwise. */
 	Effect *root;
 
-	/** The effect type. */
+	/** This effect's proto-type. */
 	const EffectType *type;
 
 	/** A modifier that adjusts how powerful this effect, based upon the type,
-	  * should be. Each values of this effect will be multiplied by strength
+	  * should be. Each value of this effect will be multiplied by strength
 	  * before being applied to the Unit or any other modifiers. */
 	fixed strength;
 
-	/** The effect's duration in game ticks */
+	/** The effect's duration in game ticks (1 game tick == 40 world frames) */
+	///@todo this is inaccurate, convert to frames
 	int duration;
 
 	bool recourse;

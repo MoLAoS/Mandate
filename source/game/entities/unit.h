@@ -21,7 +21,6 @@
 #include "effect.h"
 #include "unit_type.h"
 #include "stats.h"
-#include "unit_reference.h"
 #include "math_util.h"
 #include "timer.h"
 #include "logger.h"

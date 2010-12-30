@@ -195,11 +195,11 @@ if(WIN32)
 			DESTINATION bin
 		)
 		# dbghelp.dll to get nice crash reports, install program db for debugging symbols
-		install(FILES
-			${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb
-			${GAE_WINDEPS}/bin/dbghelp.dll
-			DESTINATION bin OPTIONAL
-		)
+		#install(FILES
+		#	${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb
+		#	${GAE_WINDEPS}/bin/dbghelp.dll
+		#	DESTINATION bin OPTIONAL
+		#)
 	endif(DEFINED GAE_WINDEPS)
 
 elseif(APPLE)
@@ -233,7 +233,7 @@ endif()
 set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev;.supp;.patch;/build;.*~;/docs/html/;/package")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev;.supp;.patch;.db;/build;.*~;/docs/html/;/package")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)
