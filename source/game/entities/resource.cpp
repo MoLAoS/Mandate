@@ -15,65 +15,87 @@
 #include "conversion.h"
 #include "resource_type.h"
 #include "tech_tree.h"
+#include "logger.h"
 
 #include "leak_dumper.h"
 
-using namespace Shared::Graphics;
-using namespace Shared::Util;
-
 namespace Glest { namespace Entities {
 
+using namespace Shared::Graphics;
+using namespace Shared::Util;
+using Glest::Util::Logger;
+
 // =====================================================
-// 	class Resource
+// 	class ResourceAmount
 // =====================================================
 
-void Resource::init(const XmlNode *node, const TechTree *tt) {
-	type = tt->getResourceType(node->getChildStringValue("type"));
-	amount = node->getChildIntValue("amount");
-	pos = node->getChildVec2iValue("pos");
-	balance = node->getChildIntValue("balance");
+void ResourceAmount::init(const XmlNode *node, const TechTree *tt) {
+	m_type = tt->getResourceType(node->getChildStringValue("type"));
+	m_amount = node->getChildIntValue("amount");
 }
 
-void Resource::save(XmlNode *node) const {
-	node->addChild("type", type->getName());
-	node->addChild("amount", amount);
-	node->addChild("pos", pos);
-	node->addChild("balance", balance);
+void ResourceAmount::save(XmlNode *node) const {
+	node->addChild("type", m_type->getName());
+	node->addChild("amount", m_amount);
 }
 
-void Resource::init(const ResourceType *rt, int amount){
-    this->type= rt;
-    this->amount= amount;
-	pos= Vec2i(0);
-	balance= 0;
+void ResourceAmount::init(const ResourceType *rt, int amount) {
+    m_type = rt;
+    m_amount = amount;
 }
 
-void Resource::init(const ResourceType *rt, const Vec2i &pos){
-	this->type=rt;
-	amount=rt->getDefResPerPatch();
-	this->pos= pos;
-}
-
-string Resource::getDescription() const{
-     string str;
-
-     str+= type->getName();
-     str+="\n";
-     str+= intToStr(amount);
-     str+="/";
-     str+= intToStr(type->getDefResPerPatch());
-
-     return str;
-}
-
-bool Resource::decAmount(int i){
-    if (!i) return !amount;
-	amount -= i;
-	//AmountChanged(amount);
-	if (amount)	return false;
-	Depleted(pos);
+bool ResourceAmount::decAmount(int i) {
+	if (!i) { // just test
+		return !m_amount;
+	}
+	RUNTIME_CHECK(m_amount >= i);
+	m_amount -= i;
+	if (m_amount) {
+		return false;
+	}
 	return true;
 }
 
+// =====================================================
+// 	class MapResource
+// =====================================================
 
-}}//end namespace
+void MapResource::init(const XmlNode *n, const TechTree *tt) {
+	ResourceAmount::init(n, tt);
+	m_pos = n->getChildVec2iValue("pos");
+}
+
+void MapResource::init(const ResourceType *rt, const Vec2i &pos) {
+	ResourceAmount::init(rt, rt->getDefResPerPatch());
+	m_pos = pos;
+}
+
+void MapResource::save(XmlNode *n) const {
+	ResourceAmount::save(n);
+	n->addChild("pos", m_pos);
+}
+
+// =====================================================
+// 	class StoredResource
+// =====================================================
+
+void StoredResource::init(const XmlNode *n, const TechTree *tt) {
+	ResourceAmount::init(n, tt);
+	m_balance = n->getChildIntValue("balance");
+	m_storage = n->getChildIntValue("storage");
+}
+
+void StoredResource::init(const ResourceType *rt, int v) {
+	ResourceAmount::init(rt, v);
+	m_balance = 0;
+	m_storage = 0;
+}
+
+void StoredResource::save(XmlNode *n) const {
+	ResourceAmount::save(n);
+	n->addChild("balance", m_balance);
+	n->addChild("storage", m_storage);
+}
+
+
+}} // end namespace

@@ -148,7 +148,7 @@ public:
 
 class ProducibleType : public RequirableType {
 private:
-	typedef vector<Resource> Costs;
+	typedef vector<ResourceAmount> Costs;
 
 protected:
 	Costs costs;
@@ -163,8 +163,8 @@ public:
 
     //get
 	int getCostCount() const						{return costs.size();}
-	const Resource *getCost(int i) const			{return &costs[i];}
-	const Resource *getCost(const ResourceType *rt) const {
+	const ResourceAmount *getCost(int i) const			{return &costs[i];}
+	const ResourceAmount *getCost(const ResourceType *rt) const {
 		for(int i = 0; i < costs.size(); ++i){
 			if(costs[i].getType() == rt){
 				return &costs[i];

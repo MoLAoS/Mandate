@@ -97,7 +97,7 @@ private:
     const Texture2D *tileTexture;
 
 	//object & resource
-	Object *object;
+	MapObject *object;
 
 	//visibility
 	bool visible[GameConstants::maxPlayers];
@@ -114,8 +114,8 @@ public:
 	const Vec3f &getColor() const				{return color;		}
 	int getTileType() const						{return tileType;	}
 	const Texture2D *getTileTexture() const		{return tileTexture;}
-	Object *getObject() const					{return object;		}
-	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
+	MapObject *getObject() const					{return object;		}
+	MapResource *getResource() const				{return object==NULL? NULL: object->getResource();}
 	bool getNearSubmerged() const				{return nearSubmerged;	}
 
 	bool isVisible(int teamIndex) const			{
@@ -131,7 +131,7 @@ public:
 	void setColor(const Vec3f &color)				{this->color= color;				 }
 	void setTileType(int tileType)					{this->tileType= tileType;			}
 	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;			   }
-	void setObject(Object *object)					{this->object= object;			   }
+	void setObject(MapObject *object)					{this->object= object;			   }
 	
 	void setExplored(int teamIndex, bool explored)	{
 		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");

@@ -24,36 +24,36 @@ using Glest::ProtoTypes::ResourceType;
 
 namespace Glest { namespace Entities {
 
-class Resource;
+class MapResource;
 class ObjectFactory;
 
 // =====================================================
-// 	class Object
+// 	class MapObject
 //
 ///	A map object: tree, stone...
 // =====================================================
 
-class Object {
+class MapObject {
 	friend class ObjectFactory;
 private:
 	int id;
 	ObjectType *objectType;
-	Resource *resource;
+	MapResource *resource;
 	Vec3f pos;
 	float rotation;
 	int variation;
 
-	Object(int id, ObjectType *objectType, const Vec3f &pos);
+	MapObject(int id, ObjectType *objectType, const Vec3f &pos);
 
 public:
-	~Object();
+	~MapObject();
 
 //	void setHeight(float height)		{pos.y= height;}
 	void setPos(const Vec3f &pos)		{this->pos = pos;}
 
 	int getId() const 					{return id;}
 	const ObjectType *getType() const	{return objectType;}
-	Resource *getResource() const		{return resource;}
+	MapResource *getResource() const		{return resource;}
 	Vec3f getPos() const				{return pos;}
 	float getRotation()	const			{return rotation;}
 	const Model *getModel() const;
@@ -65,19 +65,19 @@ public:
 class ObjectFactory {
 private:
 	int idCounter;
-	std::map<int, Object*> objects;
+	std::map<int, MapObject*> objects;
 
 public:
 	ObjectFactory() : idCounter(0) {}
 
-	Object* newInstance(ObjectType *objectType, const Vec3f &pos) {
-		Object *obj = new Object(idCounter, objectType, pos);
+	MapObject* newInstance(ObjectType *objectType, const Vec3f &pos) {
+		MapObject *obj = new MapObject(idCounter, objectType, pos);
 		objects[idCounter] = obj;
 		++idCounter;
 		return obj;
 	}
 
-	Object* getObject(int id) {
+	MapObject* getObject(int id) {
 		assert(id >= 0 && id < idCounter);
 		return objects[id];
 	}

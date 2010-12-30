@@ -798,7 +798,7 @@ void ResourceBar::update() {
 	for (int i=0; i < m_resourceTypes.size(); ++i) {
 		stringstream ss;
 		const ResourceType* &rt = m_resourceTypes[i];
-		const Resource *res = m_faction->getResource(rt); // amount & balance
+		const StoredResource *res = m_faction->getResource(rt); // amount & balance
 		ss << m_headerStrings[i] << res->getAmount();
 		if (rt->getClass() == ResourceClass::CONSUMABLE) {
 			ss << "/" << m_faction->getStoreAmount(rt) << " (" << res->getBalance() << ")";

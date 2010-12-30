@@ -54,14 +54,14 @@ void Gaia::init() {
 			int ui = m_rand.randRange(0, typesByField[f].size());
 			const UnitType *ut = typesByField[f][ui];
 			Vec2i pos = m_spawnPoints[f][i];
-			Unit *glestimal = g_simInterface->getUnitFactory().newInstance(
+			Unit *glestimal = g_simInterface.getUnitFactory().newInstance(
 				pos, ut, m_faction, &g_map, CardinalDir::NORTH);
 
 			if (g_world.placeUnit(pos, 5, glestimal)) {
 				glestimal->create();
 				m_updateTable[glestimal->getId()] = m_rand.randRange(minUpdateDelay, maxUpdateDelay);
 			} else {
-				g_simInterface->getUnitFactory().deleteUnit(glestimal);
+				g_simInterface.getUnitFactory().deleteUnit(glestimal);
 				cout << "\nCould not place starting glestimal :(\n";
 			}
 		}

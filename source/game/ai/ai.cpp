@@ -153,7 +153,7 @@ void Ai::init(GlestAiInterface *aiInterface, int32 randomSeed) {
 	for (int i=0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
 		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
 		for (int j=0; j < ut->getCostCount(); ++j) {
-			const Resource *r = ut->getCost(j);
+			const ResourceAmount *r = ut->getCost(j);
 			if (r->getType()->getClass() == ResourceClass::STATIC && r->getAmount() > 0) {
 				staticResourceUsed.insert(r->getType());
 			}
@@ -184,7 +184,7 @@ void Ai::updateUsableResources() {
 					continue;
 				}
 				for (int k=0; k < pt->getCostCount(); ++k) {
-					const Resource *r = pt->getCost(k);
+					const ResourceAmount *r = pt->getCost(k);
 					if (r->getType()->getClass() != ResourceClass::STATIC
 					&& r->getType()->getClass() != ResourceClass::CONSUMABLE && r->getAmount() > 0) {
 						typesNeeded.insert(r->getType());
@@ -264,7 +264,7 @@ const ResourceType *Ai::getNeededResource() {
 	const ResourceType *neededResource = 0;
 
 	foreach (ResourceTypes, it, usableResources) {
-		const Resource *r = aiInterface->getResource(*it);
+		const ResourceAmount *r = aiInterface->getResource(*it);
 		if (r->getAmount() < amount) {
 			amount = r->getAmount();
 			neededResource = *it;

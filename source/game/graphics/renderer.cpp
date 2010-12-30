@@ -836,7 +836,7 @@ void Renderer::renderObjects() {
 		const Vec2i &pos = *it;
 		if (!map->isInsideTile(pos)) continue;
 		Tile *sc= map->getTile(pos);
-		Object *o= sc->getObject();
+		MapObject *o= sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
 
 			const Model *objModel= sc->getObject()->getModel();
@@ -1049,7 +1049,7 @@ void Renderer::renderUnits(){
 
 		if (i) {
 			meshCallbackTeamColor.setTeamTexture(world->getFaction(i - 1)->getTexture());
-			int ndx = g_simInterface->getGameSettings().getColourIndex(i - 1);
+			int ndx = g_simInterface.getGameSettings().getColourIndex(i - 1);
 			modelRenderer->setTeamColour(getFactionColour(ndx));
 		} else {
 			meshCallbackTeamColor.setTeamTexture(0);
@@ -1124,7 +1124,7 @@ void Renderer::renderSelectionEffects() {
 	const World *world= &g_world;
 	const Map *map= world->getMap();
 	const Selection *selection = game->getGui()->getSelection();
-	const Object *selectedObj =  game->getGui()->getSelectedObject();
+	const MapObject *selectedObj =  game->getGui()->getSelectedObject();
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_LIGHTING);
@@ -1164,7 +1164,7 @@ void Renderer::renderSelectionEffects() {
 	}
 
 	if (selectedObj) {
-		Resource *r = selectedObj->getResource();
+		MapResource *r = selectedObj->getResource();
 		if (r) {
 			const float ratio = float(r->getAmount()) / r->getType()->getDefResPerPatch();
 			Vec3f currVec = selectedObj->getPos();
@@ -1432,7 +1432,7 @@ struct PickHit {
 	}
 };
 
-void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
+void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const Vec2i &posDown, const Vec2i &posUp){
 	SECTION_TIMER(RENDER_SELECT);
 	//declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
@@ -1497,17 +1497,17 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 		if (!objectHits.empty()) { 
 			foreach_const (set<PickHit>, it, objectHits) {
 				if (it->name1 == 0x101) { // closest resource hit
-					obj = g_simInterface->getObjectFactory().getObject(it->name2);
+					obj = g_simInterface.getObjectFactory().getObject(it->name2);
 					break;
 				}
 			}
 			if (!obj) { // no resources, get closest object
-				obj = g_simInterface->getObjectFactory().getObject(objectHits.begin()->name2);
+				obj = g_simInterface.getObjectFactory().getObject(objectHits.begin()->name2);
 			}
 		}
 	} else {
 		foreach_const (set<PickHit>, it, unitHits) {
-			Unit *unit = g_simInterface->getUnitFactory().getUnit(it->name2);
+			Unit *unit = g_simInterface.getUnitFactory().getUnit(it->name2);
 			//string str = intToStr(unit->getId()) + " : " + unit->getType()->getName();
 			//g_gameState.addUnitPickHit(str);
 			units.push_back(unit);
@@ -1974,9 +1974,9 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 			continue;
 		}
 		Tile *sc = map->getTile(pos);
-		Object *o = sc->getObject();
+		MapObject *o = sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
-			Resource *r = o->getResource();
+			MapResource *r = o->getResource();
 			if (!renderingShadows && !r) {
 				continue;
 			}

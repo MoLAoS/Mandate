@@ -30,10 +30,10 @@ namespace Glest { namespace Entities {
 
 
 // =====================================================
-// 	class Object
+// 	class MapObject
 // =====================================================
 
-Object::Object(int id, ObjectType *objType, const Vec3f &p)
+MapObject::MapObject(int id, ObjectType *objType, const Vec3f &p)
 		: id(id)
 		, objectType(objType)
 		, resource(0) {
@@ -46,21 +46,21 @@ Object::Object(int id, ObjectType *objType, const Vec3f &p)
 	}
 }
 
-Object::~Object(){
+MapObject::~MapObject(){
 	delete resource;
 }
 
-const Model *Object::getModel() const{
+const Model *MapObject::getModel() const{
 	return objectType==NULL? resource->getType()->getModel(): objectType->getModel(variation);
 }
 
-bool Object::getWalkable() const{
+bool MapObject::getWalkable() const{
 	return objectType==NULL? false: objectType->getWalkable();
 }
 
-void Object::setResource(const ResourceType *resourceType, const Vec2i &pos){
+void MapObject::setResource(const ResourceType *resourceType, const Vec2i &pos){
     assert(!resource);
-	resource= new Resource();
+	resource= new MapResource();
 	resource->init(resourceType, pos);
 	resource->Depleted.connect(&g_userInterface, &Gui::UserInterface::onResourceDepleted);
 }

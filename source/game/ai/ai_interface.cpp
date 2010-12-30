@@ -38,7 +38,7 @@ GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 	LOG_AI( __FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
 		<< faction->getType()->getName() << " Random seed: " << randomSeed );
 	this->faction = faction;
-	this->world= g_simInterface->getWorld();
+	this->world= g_simInterface.getWorld();
 
 	timer= 0;
 
@@ -127,7 +127,7 @@ void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
 	}
 }
 
-const Resource *GlestAiInterface::getResource(const ResourceType *rt){
+const StoredResource *GlestAiInterface::getResource(const ResourceType *rt){
 	return faction->getResource(rt);
 }
 
@@ -161,7 +161,7 @@ bool GlestAiInterface::getNearestSightedResource(const ResourceType *rt, const V
 
 			//if explored cell
 			if(map->getTile(surfPos)->isExplored(faction->getTeam())){
-				Resource *r= map->getTile(surfPos)->getResource();
+				MapResource *r= map->getTile(surfPos)->getResource();
 
 				//if resource cell
 				if(r!=NULL && r->getType()==rt){

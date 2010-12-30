@@ -49,7 +49,7 @@ private:
 	typedef set<UnitType*> UnitTypeSet;
 	typedef vector<UpgradeType*> UpgradeTypes;
 	typedef vector<PairPUnitTypeInt> StartingUnits;
-	typedef vector<Resource> Resources;
+	typedef vector<StoredResource> Resources;
 	typedef vector<string> Subfactions;
 
 private:

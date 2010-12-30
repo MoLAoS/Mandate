@@ -179,7 +179,7 @@ void Projectile::update() {
 	if (state == sPlay) {
 		if (target) {
 			if (target->isCarried()) { // if target got into another unit, switch target to carrier
-				target = g_simInterface->getUnitFactory().getUnit(target->getCarrier());
+				target = g_simInterface.getUnitFactory().getUnit(target->getCarrier());
 				RUNTIME_CHECK(!target->isCarried());
 			}
 			endPos = target->getCurrVector();

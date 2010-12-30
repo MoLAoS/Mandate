@@ -67,7 +67,7 @@ class UnitType : public ProducibleType, public UnitStats {
 private:
 	typedef vector<SkillType*> SkillTypes;
 	typedef vector<CommandType*> CommandTypes;
-	typedef vector<Resource> StoredResources;
+	typedef vector<ResourceAmount> StoredResources;
 	typedef vector<Level> Levels;
 	typedef vector<ParticleSystemType*> particleSystemTypes;
 //	typedef vector<PetRule*> PetRules;
@@ -214,7 +214,7 @@ public:
 
 	// resources
 	int getStoredResourceCount() const					{return storedResources.size();}
-	const Resource *getStoredResource(int i) const		{return &storedResources[i];}
+	const ResourceAmount *getStoredResource(int i) const		{return &storedResources[i];}
 	int getStore(const ResourceType *rt) const;
 
 	// meeting point

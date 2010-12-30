@@ -645,7 +645,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 
 	BUILD_LOG( "in position, starting construction." );
-	builtUnit = g_simInterface->getUnitFactory().newInstance(
+	builtUnit = g_simInterface.getUnitFactory().newInstance(
 		command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
 	unit->setCurrSkill(m_buildSkillType);
@@ -814,7 +814,7 @@ const int maxResSearchRadius= 10;
 /// looks for a resource of a type that hct can harvest, searching from command target pos
 /// @return pointer to Resource if found (unit's command pos will have been re-set).
 /// NULL if no resource was found within UnitUpdater::maxResSearchRadius.
-Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
+MapResource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
 	Map *map = g_world.getMap();
 
@@ -822,7 +822,7 @@ Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 			g_world.getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
 
 	while (pci.getNext(pos)) {
-		Resource *r = map->getTile(Map::toTileCoords(pos))->getResource();
+		MapResource *r = map->getTile(Map::toTileCoords(pos))->getResource();
 		if (r && hct->canHarvest(r->getType())) {
 			unit->getCurrCommand()->setPos(pos);
 			return r;
@@ -839,7 +839,7 @@ void HarvestCommandType::update(Unit *unit) const {
 	Map *map = g_world.getMap();
 
 	Tile *tile = map->getTile(Map::toTileCoords(unit->getCurrCommand()->getPos()));
-	Resource *res = tile->getResource();
+	MapResource *res = tile->getResource();
 
 	if (!res) { // reset command pos, but not Unit::targetPos
 		HARVEST_LOG( "No resource at command target." );
@@ -914,11 +914,11 @@ void HarvestCommandType::update(Unit *unit) const {
 			int resourceAmount = unit->getLoadCount();
 			// Just do this for all players ???
 			if (unit->getFaction()->getCpuControl()) {
-				const float &mult = g_simInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+				const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
 				resourceAmount = int(resourceAmount * mult);
 			}
 			unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
-			g_simInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
+			g_simInterface.getStats()->harvest(unit->getFactionIndex(), resourceAmount);
 			ScriptManager::onResourceHarvested();
 
 			// if next to a store unload resources

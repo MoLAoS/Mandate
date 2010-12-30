@@ -157,7 +157,7 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 }
 
 void Scenario::loadGameSettings(string scenario, string category, const ScenarioInfo *scenarioInfo) {
-	GameSettings *gs = &g_simInterface->getGameSettings();
+	GameSettings *gs = &g_simInterface.getGameSettings();
 	gs->clear();
 
 	string scenarioPath = "gae/scenarios/" + category + "/" + scenario;

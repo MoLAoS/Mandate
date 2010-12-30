@@ -144,7 +144,7 @@ private:
 	Mouse3d mouse3d;
 	Selection selection;
 	SelectionQuad selectionQuad;
-	const Object *selectedObject;
+	const MapObject *selectedObject;
 
 	// states
 	bool m_selectingSecond; // two tier command selection
@@ -187,7 +187,7 @@ public:
 	const Selection *getSelection()	const			{return &selection;}
 	Selection *getSelection()						{return &selection;}
 	const SelectionQuad *getSelectionQuad() const	{return &selectionQuad;}
-	const Object* getSelectedObject() const			{ return selectedObject; }
+	const MapObject* getSelectedObject() const			{ return selectedObject; }
 
 	bool isValidPosObjWorld() const			{return validPosObjWorld;}
 	bool isSelecting() const				{return selectionQuad.isEnabled();}

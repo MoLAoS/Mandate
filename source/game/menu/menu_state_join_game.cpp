@@ -46,7 +46,7 @@ ConnectThread::ConnectThread(MenuStateJoinGame &menu, Ip serverIp)
 }
 
 void ConnectThread::execute() {
-	ClientInterface* clientInterface = g_simInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface.asClientInterface();
 	
 	try {
 		clientInterface->connect(m_server, GameConstants::serverPort);
@@ -69,7 +69,7 @@ void ConnectThread::execute() {
 void ConnectThread::cancel() {
 	MutexLock lock(m_mutex);
 	if (m_connecting) {
-		g_simInterface->asClientInterface()->reset();
+		g_simInterface.asClientInterface()->reset();
 		m_result = ConnectResult::CANCELLED;
 	}
 }
@@ -246,7 +246,7 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 void MenuStateJoinGame::onDisconnect(BasicDialog*) {
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
-	g_simInterface->asClientInterface()->reset();
+	g_simInterface.asClientInterface()->reset();
 	m_connectPanel->setVisible(true);
 	m_connectLabel->setText("Not connected. Last connection terminated.");///@todo localise
 }
@@ -312,7 +312,7 @@ void MenuStateJoinGame::update() {
 		return;
 	}
 
-	ClientInterface* clientInterface = g_simInterface->asClientInterface();
+	ClientInterface* clientInterface = g_simInterface.asClientInterface();
 
 	if (connected && !clientInterface->isConnected()) {
 		connected = false;

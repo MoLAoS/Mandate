@@ -59,7 +59,7 @@ namespace Glest { namespace Gui {
 
 GameState *GameState::singleton = NULL;
 
-const GameSettings &GameState::getGameSettings()	{return g_simInterface->getGameSettings();}
+const GameSettings &GameState::getGameSettings()	{return g_simInterface.getGameSettings();}
 
 GameState::GameState(Program &program)
 		//main data
@@ -116,7 +116,7 @@ GameState::~GameState() {
 // ==================== init and load ====================
 
 void GameState::load() {
-	GameSettings &gameSettings = g_simInterface->getGameSettings();
+	GameSettings &gameSettings = g_simInterface.getGameSettings();
 	const string &mapName = gameSettings.getMapPath();
 	const string &tilesetName = gameSettings.getTilesetPath();
 	const string &techName = gameSettings.getTechPath();
@@ -239,7 +239,7 @@ void GameState::update() {
 		return;
 	}
 	if (exitGame) {
-		g_simInterface->doQuitGame(QuitSource::LOCAL);
+		g_simInterface.doQuitGame(QuitSource::LOCAL);
 	}
 	if (exitProgram) {
 		g_program.exit();
@@ -280,7 +280,7 @@ void GameState::update() {
 	}
 
 	// check for quiting status
-	if (g_simInterface->getQuit()) {
+	if (g_simInterface.getQuit()) {
 		quitGame();
 	}
 }
@@ -652,7 +652,7 @@ void GameState::eventMouseWheel(int x, int y, int zDelta) {
 void GameState::keyDown(const Key &key) {
 	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
 	UserCommand cmd = keymap.getCommand(key);
-	bool speedChangesAllowed = !g_simInterface->isNetworkInterface();
+	bool speedChangesAllowed = !g_simInterface.isNetworkInterface();
 
 	if (g_config.getMiscDebugKeys()) {
 		stringstream str;
@@ -903,7 +903,7 @@ void GameState::saveGame(string name) const {
 	XmlNode root("saved-game");
 	root.addAttribute("version", GameConstants::saveGameVersion);
 	gui.save(root.addChild("gui"));
-	g_simInterface->getGameSettings().save(root.addChild("settings"));
+	g_simInterface.getGameSettings().save(root.addChild("settings"));
 	simInterface->getWorld()->save(root.addChild("world"));
 	XmlIo::getInstance().save("savegames/" + name + ".sav", &root);
 }

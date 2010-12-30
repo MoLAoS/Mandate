@@ -629,7 +629,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	//projectile
 	if (pstProj != NULL) {
-		Unit *carrier = isCarried() ? g_simInterface->getUnitFactory().getUnit(getCarrier()) : 0;
+		Unit *carrier = isCarried() ? g_simInterface.getUnitFactory().getUnit(getCarrier()) : 0;
 		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 		Vec3f startPos;
 		if (carrier) {
@@ -676,10 +676,10 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 				break;
 		}
 
-		g_simInterface->doUpdateProjectile(this, psProj, startPos, endPos);
+		g_simInterface.doUpdateProjectile(this, psProj, startPos, endPos);
 
 		if(pstProj->isTracking() && targetRef != -1) {
-			Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
+			Unit *target = g_simInterface.getUnitFactory().getUnit(targetRef);
 			psProj->setTarget(target);
 			psProj->setDamager(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
 		} else {
@@ -719,7 +719,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 }
 
 void Unit::clearPath() {
-	CommandClass cc = g_simInterface->processingCommandClass();
+	CommandClass cc = g_simInterface.processingCommandClass();
 	if (cc != CommandClass::NULL_COMMAND && cc != CommandClass::INVALID) {
 		PF_UNIT_LOG( this, "path cleared." );
 		PF_LOG( "Command class = " << CommandClassNames[cc] );
@@ -1030,7 +1030,7 @@ void Unit::born(){
 	hp= type->getMaxHp();
 	faction->checkAdvanceSubfaction(type, true);
 	g_world.getCartographer()->applyUnitVisibility(this);
-	g_simInterface->doUnitBorn(this);
+	g_simInterface.doUnitBorn(this);
 	StateChanged(this);
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorCreated(this);
@@ -1067,7 +1067,7 @@ void Unit::kill() {
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
-			Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+			Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
 			unit->cancelCurrCommand();
 		}
 		m_unitsToCarry.clear();
@@ -1075,7 +1075,7 @@ void Unit::kill() {
 
 	if (!m_carriedUnits.empty()) {
 		foreach (UnitIdList, it, m_carriedUnits) {
-			Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+			Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
 			int hp = unit->getHp();
 			unit->decHp(hp);
 		}
@@ -1095,7 +1095,7 @@ void Unit::kill() {
 	}
 
 	setCurrSkill(SkillClass::DIE);
-	g_simInterface->doUpdateAnimOnDeath(this);
+	g_simInterface.doUpdateAnimOnDeath(this);
 
 	Died(this);
 	clearCommands();
@@ -1236,7 +1236,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		}
 	} else {
 		//check harvest command
-		Resource *resource = sc->getResource();
+		MapResource *resource = sc->getResource();
 		if (resource != NULL) {
 			commandType = type->getHarvestCommand(resource->getType());
 		}
@@ -1308,9 +1308,9 @@ void Unit::doUpdateCommand() {
 				clearCommandCallback();
 			}
 		}
-		g_simInterface->setProcessingCommandClass(getCurrCommand()->getType()->getClass());
+		g_simInterface.setProcessingCommandClass(getCurrCommand()->getType()->getClass());
 		getCurrCommand()->getType()->update(this);
-		g_simInterface->setProcessingCommandClass();
+		g_simInterface.setProcessingCommandClass();
 	}
 	// if no commands, add stop (or guard for pets) command
 	if (!anyCommand() && isOperative()) {
@@ -1330,7 +1330,7 @@ void Unit::doUpdateCommand() {
 		}
 		setCurrSkill(SkillClass::STOP);
 	}
-	g_simInterface->updateSkillCycle(this);
+	g_simInterface.updateSkillCycle(this);
 
 	if (getCurrSkill() != old_st) {	// if starting new skill
 		resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
@@ -1405,7 +1405,7 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
   * @param frameOffset the number of frames the next skill cycle will take */
 void Unit::updateSkillCycle(int frameOffset) {
 	// assert server doesn't use this for move...
-	assert(currSkill->getClass() != SkillClass::MOVE || g_simInterface->asClientInterface());
+	assert(currSkill->getClass() != SkillClass::MOVE || g_simInterface.asClientInterface());
 
 	// modify offset for upgrades/effects/etc
 	if (currSkill->getClass() != SkillClass::MOVE) {
@@ -1419,7 +1419,7 @@ void Unit::updateSkillCycle(int frameOffset) {
 
 /** called by the server only, updates a skill cycle for the move skill */
 void Unit::updateMoveSkillCycle() {
-	assert(!g_simInterface->asClientInterface());
+	assert(!g_simInterface.asClientInterface());
 	assert(currSkill->getClass() == SkillClass::MOVE);
 	static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
 
@@ -1447,7 +1447,7 @@ void Unit::doUpdate() {
 			g_world.applyEffects(this, getCurrSkill()->getEffectTypes(), this, 0);
 		}
 
-		g_simInterface->doUpdateUnitCommand(this);
+		g_simInterface.doUpdateUnitCommand(this);
 
 		if (getType()->getCloakClass() != CloakClass::INVALID) {
 			if (isCloaked()) {
@@ -1481,7 +1481,7 @@ void Unit::doKill(Unit *killed) {
 	//}
 
 	ScriptManager::onUnitDied(killed);
-	g_simInterface->getStats()->kill(getFactionIndex(), killed->getFactionIndex());
+	g_simInterface.getStats()->kill(getFactionIndex(), killed->getFactionIndex());
 	if (isAlive() && getTeam() != killed->getTeam()) {
 		incKills();
 	}
@@ -1513,7 +1513,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
-		Unit *carrier = (m_carrier != -1 ? g_simInterface->getUnitFactory().getUnit(m_carrier) : 0);
+		Unit *carrier = (m_carrier != -1 ? g_simInterface.getUnitFactory().getUnit(m_carrier) : 0);
 		Vec2i cellPos = carrier ? carrier->getCenteredPos() : getCenteredPos();
 		Vec3f vec = carrier ? carrier->getCurrVector() : getCurrVector();
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
@@ -1524,7 +1524,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	// update anim cycle ?
 	if (frame >= getNextAnimReset()) {
 		// new anim cycle (or reset)
-		g_simInterface->doUpdateAnim(this);
+		g_simInterface.doUpdateAnim(this);
 	}
 
 	// update emanations every 8 frames
@@ -1883,7 +1883,7 @@ string Unit::getLongDesc() const {
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
-		const Resource *r = getType()->getCost(i);
+		const ResourceAmount *r = getType()->getCost(i);
 		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
 			string storedName = r->getType()->getName();
 			string resName = g_lang.getTechString(storedName);
@@ -1897,7 +1897,7 @@ string Unit::getLongDesc() const {
 	// can store
 	if (type->getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-			const Resource *r = type->getStoredResource(i);
+			const ResourceAmount *r = type->getStoredResource(i);
 			string storedName = r->getType()->getName();
 			string resName = g_lang.getTechString(storedName);
 			if (resName == storedName) {
@@ -2204,12 +2204,12 @@ float Unit::computeHeight(const Vec2i &pos) const {
   * @param target the unit we are tracking */
 void Unit::updateTarget(const Unit *target) {
 	if (!target) {
-		target = g_simInterface->getUnitFactory().getUnit(targetRef);
+		target = g_simInterface.getUnitFactory().getUnit(targetRef);
 	}
 
 	if (target) {
 		if (target->isCarried()) {
-			target = g_simInterface->getUnitFactory().getUnit(target->getCarrier());
+			target = g_simInterface.getUnitFactory().getUnit(target->getCarrier());
 		}
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)

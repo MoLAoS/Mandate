@@ -37,8 +37,8 @@ using namespace Menu;
 
 GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 		: Container(parent, pos, size) {
-	GameSettings &gs = g_simInterface->getGameSettings();
-	Stats &stats = *g_simInterface->getStats();
+	GameSettings &gs = g_simInterface.getGameSettings();
+	Stats &stats = *g_simInterface.getStats();
 	int y_lines = 3 + /*GameConstants::maxPlayers*/ 12 + 2; // headers, player row and 2 for spacing
 	int y_gap = g_metrics.getScreenH() / y_lines;
 	int y = g_metrics.getScreenH() - y_gap;

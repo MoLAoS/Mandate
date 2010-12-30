@@ -80,7 +80,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	// initialize network interface
 	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
 	program.getSimulationInterface()->changeRole(GameRole::SERVER);
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 
 	vector<string> results;
 
@@ -300,7 +300,7 @@ int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
 //  === === ===
 
 void MenuStateNewGame::onChangeFaction(PlayerSlotWidget* psw) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	if (psw->getSelectedFactionIndex() >= 0) {
@@ -348,14 +348,14 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget* ps) {
 }
 
 void MenuStateNewGame::onChangeTeam(PlayerSlotWidget* psw) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	gs.setTeam(ndx, psw->getSelectedTeamIndex());
 }
 
 void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	int ci = psw->getSelectedColourIndex();
@@ -374,7 +374,7 @@ void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
 }
 
 void MenuStateNewGame::onCheckChanged(Button* cb) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	if (cb == m_FOWCheckbox) {
 		gs.setFogOfWar(m_FOWCheckbox->isChecked());
 	} else if (cb == m_SODCheckbox) {
@@ -397,13 +397,13 @@ void MenuStateNewGame::onChangeMap(ListBase*) {
 
 	updateControlers();
 
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	gs.setDescription(formatString(mapBaseName));
 	gs.setMapPath(mapFile);
 }
 
 void MenuStateNewGame::onChangeTileset(ListBase*) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	assert(m_tilesetList->getSelectedIndex() >= 0);
 	gs.setTilesetPath(string("tilesets/") + m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 }
@@ -461,7 +461,7 @@ void MenuStateNewGame::update() {
 				m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
 				m_transition = false;
 			} else {
-				GameSettings &gs = g_simInterface->getGameSettings();
+				GameSettings &gs = g_simInterface.getGameSettings();
 				gs.compact();
 				g_config.save();
 				XmlTree *doc = new XmlTree("game-settings");
@@ -473,13 +473,13 @@ void MenuStateNewGame::update() {
 				}
 				randomiseFactions();
 				if (!hasNetworkSlots()) {
-					GameSettings gs = g_simInterface->getGameSettings();
+					GameSettings gs = g_simInterface.getGameSettings();
 					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
-					g_simInterface->getGameSettings() = gs;
+					g_simInterface.getGameSettings() = gs;
 					program.clear();
 					program.setState(new GameState(program));
 				} else {
-					g_simInterface->asServerInterface()->doLaunchBroadcast();
+					g_simInterface.asServerInterface()->doLaunchBroadcast();
 					program.clear();
 					program.setState(new GameState(program));
 				}
@@ -491,7 +491,7 @@ void MenuStateNewGame::update() {
 // ============ PRIVATE ===========================
 
 void MenuStateNewGame::reloadFactions(bool setStagger) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	vector<string> results;
 	assert(m_techTreeList->getSelectedIndex() >= 0);
 	findAll("techs/" + m_techTreeFiles[m_techTreeList->getSelectedIndex()] + "/factions/*.", results);
@@ -520,12 +520,12 @@ bool MenuStateNewGame::loadGameSettings() {
 	try {
 		doc->load("last_gamesettings.gs");
 		GameSettings gs(doc->getRootNode());
-		g_simInterface->getGameSettings() = gs;
+		g_simInterface.getGameSettings() = gs;
 	} catch (const runtime_error &e) {
 		delete doc;
 		return false;
 	}
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	bool techReset = false;
 	vector<string>::iterator it;
 	it = std::find(m_techTreeFiles.begin(), m_techTreeFiles.end(), basename(gs.getTechPath()));
@@ -607,7 +607,7 @@ bool MenuStateNewGame::loadGameSettings() {
 }
 
 void MenuStateNewGame::updateControlers() {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	assert(m_humanSlot >= 0);
 	//assert(m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN);
 	for (int i = 0; i < m_mapInfo.players; ++i) {
@@ -663,10 +663,10 @@ void MenuStateNewGame::updateControlers() {
 					m_playerSlots[i]->setNameText(g_config.getNetPlayerName());
 					break;
 				case ControlType::NETWORK: {
-						ConnectionSlot *slot = g_simInterface->asServerInterface()->getSlot(i);
+						ConnectionSlot *slot = g_simInterface.asServerInterface()->getSlot(i);
 						if (!slot) {
-							g_simInterface->asServerInterface()->addSlot(i);
-							slot = g_simInterface->asServerInterface()->getSlot(i);
+							g_simInterface.asServerInterface()->addSlot(i);
+							slot = g_simInterface.asServerInterface()->getSlot(i);
 						}
 						if (slot->isConnected()) {
 							gs.setPlayerName(i, slot->getName());
@@ -711,7 +711,7 @@ void MenuStateNewGame::updateControlers() {
 }
 
 bool MenuStateNewGame::hasUnconnectedSlots() {
-	ServerInterface* serverInterface = g_simInterface->asServerInterface();
+	ServerInterface* serverInterface = g_simInterface.asServerInterface();
 	for (int i = 0; i < m_mapInfo.players; ++i) {
 		if (m_playerSlots[i]->getControlType() == ControlType::NETWORK) {
 			if (!serverInterface->getSlot(i)->isConnected()) {
@@ -732,7 +732,7 @@ bool MenuStateNewGame::hasNetworkSlots() {
 }
 
 void MenuStateNewGame::updateNetworkSlots() {
-	ServerInterface* serverInterface = g_simInterface->asServerInterface();
+	ServerInterface* serverInterface = g_simInterface.asServerInterface();
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		if (serverInterface->getSlot(i) == NULL
 		&& m_playerSlots[i]->getControlType() == ControlType::NETWORK) {
@@ -746,7 +746,7 @@ void MenuStateNewGame::updateNetworkSlots() {
 }
 
 void MenuStateNewGame::randomiseStartLocs() {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	vector<int> freeStartLocs;
 	for (int i=0; i < m_mapInfo.players; ++i) {
 		freeStartLocs.push_back(i);
@@ -760,7 +760,7 @@ void MenuStateNewGame::randomiseStartLocs() {
 }
 
 void MenuStateNewGame::randomiseFactions() {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	Random random(Chrono::getCurMillis());
 	for (int i=0; i < gs.getFactionCount(); ++i) {
 		if (gs.getFactionTypeName(i) == "Random") {

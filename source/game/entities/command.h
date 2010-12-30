@@ -29,6 +29,20 @@ namespace Glest { namespace Entities {
 
 typedef Flags<CommandProperties, CommandProperties::COUNT, uint8> CommandFlags;
 
+class TargetList {
+private:
+	ConstUnitVector m_units;
+
+public:
+	TargetList(const ConstUnitVector &units) : m_units(units) { }
+
+	const Unit* getClosest(const Unit *source);
+	const Unit* getClosest(const Unit *source, const string &tag);
+	const Unit* getClosest(const Unit *source, const set<string> &tags);
+};
+
+typedef vector<TargetList> TargetLists;
+
 // =====================================================
 // 	class Command
 //
@@ -37,7 +51,6 @@ typedef Flags<CommandProperties, CommandProperties::COUNT, uint8> CommandFlags;
 
 class Command {
 public:
-
 	static const Vec2i invalidPos;
 	static int lastId;
 

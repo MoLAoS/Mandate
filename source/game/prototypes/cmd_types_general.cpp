@@ -83,7 +83,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	Command *autoCmd;
 	const UnitType *ut = unit->getType();
 	if (unit->isCarried()) {
-		Unit *carrier = g_simInterface->getUnitFactory().getUnit(unit->getCarrier());
+		Unit *carrier = g_simInterface.getUnitFactory().getUnit(unit->getCarrier());
 		const LoadCommandType *lct = 
 			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
 		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
@@ -442,17 +442,17 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
-			Unit *produced = g_simInterface->getUnitFactory().newInstance(
+			Unit *produced = g_simInterface.getUnitFactory().newInstance(
 				Vec2i(0), prodType, unit->getFaction(), g_world.getMap(), CardinalDir::NORTH);
 			if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 				unit->cancelCurrCommand();
-				g_simInterface->getUnitFactory().deleteUnit(unit);
+				g_simInterface.getUnitFactory().deleteUnit(unit);
 			} else {
 				unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
 				produced->create();
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
-				g_simInterface->getStats()->produce(unit->getFactionIndex());
+				g_simInterface.getStats()->produce(unit->getFactionIndex());
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 				if (ct) {
 					produced->giveCommand(new Command(ct, CommandFlags(), unit->getMeetingPos()));
@@ -914,7 +914,7 @@ void LoadCommandType::update(Unit *unit) const {
 	Unit *closest = 0; // else find closest
 	fixed dist = fixed::max_int();
 	foreach (UnitIdList, it, unitsToCarry) {
-		Unit *target = g_simInterface->getUnitFactory().getUnit(*it);
+		Unit *target = g_simInterface.getUnitFactory().getUnit(*it);
 		fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
 		if (d < dist) {
 			closest = target;
@@ -935,7 +935,7 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->clearPath();
 		if (unit->getCarriedCount() == m_loadCapacity && !unitsToCarry.empty()) {
 			foreach (UnitIdList, it, unitsToCarry) {
-				Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+				Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
 				if (unit->getType()->getFirstCtOfClass(CommandClass::MOVE)) {
 					assert(unit->getCurrCommand());
 					assert(unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED);
@@ -1043,7 +1043,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
 			unit->setCurrSkill(SkillClass::UNLOAD);
 		} else {
-			Unit *targetUnit = g_simInterface->getUnitFactory().getUnit(unit->getUnitsToUnload().front());
+			Unit *targetUnit = g_simInterface.getUnitFactory().getUnit(unit->getUnitsToUnload().front());
 			int maxRange = unloadSkillType->getMaxRange();
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
@@ -1164,7 +1164,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixedVec2 fixedCentre;
 	fixed halfSize;
 	if (unit->isCarried()) {
-		Unit *carrier = g_simInterface->getUnitFactory().getUnit(unit->getCarrier());
+		Unit *carrier = g_simInterface.getUnitFactory().getUnit(unit->getCarrier());
 		effectivePos = carrier->getCenteredPos();
 		fixedCentre = carrier->getFixedCenteredPos();
 		halfSize = carrier->getType()->getHalfSize();

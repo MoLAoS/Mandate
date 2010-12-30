@@ -236,8 +236,8 @@ bool MenuStateLoadGame::loadGameList() {
 void MenuStateLoadGame::loadGame() {
 	XmlNode *root;
 	root = XmlIo::getInstance().load(getFileName());
-	g_simInterface->getGameSettings() = *gs;
-	g_simInterface->getSavedGame() = root;
+	g_simInterface.getGameSettings() = *gs;
+	g_simInterface.getSavedGame() = root;
 	program.clear();
 	program.setState(new GameState(program));
 }

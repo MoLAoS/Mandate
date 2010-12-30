@@ -241,7 +241,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 				if (objNumber == 0 || x == m_tileSize.w - 1 || y == m_tileSize.h - 1) {
 					tile->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
-					Object *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), vert);
+					MapObject *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), vert);
 					tile->setObject(o);
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
@@ -251,7 +251,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
-					Object *o = objFactory.newInstance(NULL, vert);
+					MapObject *o = objFactory.newInstance(NULL, vert);
 					o->setResource(rt, Vec2i(x, y) * cellScale);
 					tile->setObject(o);
 				}
@@ -333,7 +333,7 @@ bool Map::isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec
 	while (iter.more()) {
 		Vec2i cur = iter.next();
 		if (isInside(cur)) {
-			Resource *r = getTile(toTileCoords(cur))->getResource();
+			MapResource *r = getTile(toTileCoords(cur))->getResource();
 			if (r && r->getType() == rt) {
 				resourcePos = cur;
 				return true;
@@ -967,7 +967,7 @@ void Map::smoothSurface() {
 		setTileHeight(pos, height);
 
 		Tile *tile = getTile(pos);
-		Object *obj = tile->getObject();
+		MapObject *obj = tile->getObject();
 		if (obj) {
 			Vec3f pos = obj->getPos();
 			pos.y = height;

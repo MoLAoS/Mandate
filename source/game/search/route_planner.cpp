@@ -623,11 +623,11 @@ TravelState RoutePlanner::findAerialPath(Unit *unit, const Vec2i &targetPos) {
 TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) {
 	SECTION_TIMER(PATHFINDER_TOTAL);
 	PF_UNIT_LOG( unit, "findPathToLocation() current pos = " << unit->getPos() << " target pos = " << finalPos );
-	PF_LOG( "Command class = " << CommandClassNames[g_simInterface->processingCommandClass()] );
+	PF_LOG( "Command class = " << CommandClassNames[g_simInterface.processingCommandClass()] );
 	if (!world->getMap()->isInside(finalPos)) {
 		stringstream ss;
 		ss << __FUNCTION__ << "() passed bad arg, pos = " << finalPos
-			<< "\nWhile processing " << CommandClassNames[g_simInterface->processingCommandClass()]
+			<< "\nWhile processing " << CommandClassNames[g_simInterface.processingCommandClass()]
 			<< " command.";
 		g_errorLog.add(ss.str());
 	}
@@ -787,7 +787,7 @@ TravelState RoutePlanner::customGoalSearch(PMap1Goal &goal, Unit *unit, const Ve
 TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2i &target) {
 	SECTION_TIMER(PATHFINDER_TOTAL);
 	PF_UNIT_LOG( unit, "findPathToGoal() current pos = " << unit->getPos() << " target pos = " << target );
-	PF_LOG( "Command class = " << CommandClassNames[g_simInterface->processingCommandClass()] );
+	PF_LOG( "Command class = " << CommandClassNames[g_simInterface.processingCommandClass()] );
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
 

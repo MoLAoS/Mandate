@@ -321,7 +321,7 @@ void buildVisLists(ConstUnitVector &srfList, ConstUnitVector &airList) {
 }
 
 void processList(ConstUnitVector &units, TypeMap<int8>* overlayMap) {
-	GameSettings &gs = g_simInterface->getGameSettings();
+	GameSettings &gs = g_simInterface.getGameSettings();
 	foreach_const (ConstUnitVector, it, units) {
 		const Vec2i pos = (*it)->getPos();
 		const UnitType *ut = (*it)->getType();

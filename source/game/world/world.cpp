@@ -514,7 +514,7 @@ void World::tick() {
 					//if unit operative and has this cost
 					const Unit *u =  faction->getUnit(j);
 					if (u->isOperative()) {
-						const Resource *r = u->getType()->getCost(rt);
+						const ResourceAmount *r = u->getType()->getCost(rt);
 						if (r != NULL) {
 							balance -= u->getType()->getCost(rt)->getAmount();
 						}
@@ -694,7 +694,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	} else if (commandName == "attack") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::ATTACK);
 	} else if (commandName == "harvest") {
-		Resource *r = map.getTile(Map::toTileCoords(pos))->getResource();
+		MapResource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
 		if (!unit->getType()->getFirstCtOfClass(CommandClass::HARVEST)) {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
@@ -1222,10 +1222,10 @@ ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, con
 }
 
 void ParticleDamager::execute(ParticleSystem *particleSystem) {
-	Unit *attacker = g_simInterface->getUnitFactory().getUnit(attackerRef);
+	Unit *attacker = g_simInterface.getUnitFactory().getUnit(attackerRef);
 
 	if (attacker) {
-		Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
+		Unit *target = g_simInterface.getUnitFactory().getUnit(targetRef);
 		if (target) {
 			targetPos = target->getCenteredPos();
 			// manually feed the attacked unit here to avoid problems with cell maps and such

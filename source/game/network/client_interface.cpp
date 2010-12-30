@@ -103,7 +103,7 @@ void ClientInterface::doLaunchMessage() {
 		throw InvalidMessage(MessageType::LAUNCH, msg.type);
 	}
 	LaunchMessage launchMsg(msg);
-	GameSettings &gameSettings = g_simInterface->getGameSettings();
+	GameSettings &gameSettings = g_simInterface.getGameSettings();
 	gameSettings.clear();
 	launchMsg.buildGameSettings(&gameSettings);
 	// replace server player by network

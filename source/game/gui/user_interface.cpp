@@ -140,7 +140,7 @@ UserInterface::~UserInterface() {
 }
 
 void UserInterface::init() {
-	this->commander= g_simInterface->getCommander();
+	this->commander= g_simInterface.getCommander();
 	this->gameCamera= game.getGameCamera();
 	m_console = new Console(&g_widgetWindow);
 	m_dialogConsole = new Console(&g_widgetWindow, 10, 200, true);
@@ -264,7 +264,7 @@ void UserInterface::onRightClickOrder(Vec2i cellPos) {
 }
 
 void UserInterface::onResourceDepleted(Vec2i cellPos) {
-	Object *obj = g_map.getTile(Map::toTileCoords(cellPos))->getObject();
+	MapObject *obj = g_map.getTile(Map::toTileCoords(cellPos))->getObject();
 	RUNTIME_CHECK(obj != 0);
 	if (obj == selectedObject) {
 		selectedObject = 0;
@@ -328,7 +328,7 @@ void UserInterface::unloadRequest(int carryIndex) {
 			UnitIdList carriedUnits = unit->getCarriedUnits();
 			foreach (UnitIdList, it, carriedUnits) {
 				if (carryIndex == i) {
-					unloadUnit = g_simInterface->getUnitFactory().getUnit(*it);
+					unloadUnit = g_simInterface.getUnitFactory().getUnit(*it);
 					transportUnit = const_cast<Unit*>(unit);
 					break;
 				}
@@ -437,7 +437,7 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 		UnitVector units;
 		Vec2i pos(x, y);
 
-		const Object *obj;
+		const MapObject *obj;
 		g_renderer.computeSelected(units, obj, pos, pos);
 		//g_gameState.lastPick(units, obj);
 		calculateNearest(units, gameCamera->getPos());
@@ -590,7 +590,7 @@ void UserInterface::hotKey(UserCommand cmd) {
 		break;
 
 	case ucLuaConsole:
-		if (g_simInterface->asNetworkInterface()) {
+		if (g_simInterface.asNetworkInterface()) {
 			g_console.addLine(g_lang.get("NotAvailable"));
 		} else {
 			m_luaConsole->setVisible(!m_luaConsole->isVisible());
@@ -1091,7 +1091,7 @@ void UserInterface::computeDisplay() {
 				transported = true;
 				foreach (UnitIdList, it, carriedUnits) {
 					if (i < Display::transportCellCount) {
-						Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+						Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
 						m_display->setCarryImage(i++, unit->getType()->getImage());
 					}
 				}
@@ -1189,7 +1189,7 @@ void UserInterface::computeDisplay() {
 	} // end if (selection.isComandable())
 
 	if (selection.isEmpty() && selectedObject) {
-		Resource *r = selectedObject->getResource();
+		MapResource *r = selectedObject->getResource();
 		if (r) {
 			m_display->setPortraitTitle(r->getType()->getName());
 			m_display->setPortraitText(g_lang.get("amount") + ": " + intToStr(r->getAmount()));
@@ -1357,7 +1357,7 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj) {
 	units.clear();
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
-	const Object *junk;
+	const MapObject *junk;
 	g_renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
 	//g_gameState.lastPick(units, selectedObject);
 

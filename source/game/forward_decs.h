@@ -93,8 +93,10 @@ namespace Glest {
 	}
 
 	namespace Entities {
-		class Object;
-		class Resource;
+		class MapObject;
+		class ResourceAmount;
+		class MapResource;
+		class StoredResource;
 		class Command;
 		class Effect;
 		class EffectState;

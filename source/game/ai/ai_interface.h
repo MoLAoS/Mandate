@@ -75,7 +75,7 @@ public:
 	int getFactionCount();
 	int getMyUnitCount() const;
 	int getMyUpgradeCount() const;
-	const Resource *getResource(const ResourceType *rt);
+	const StoredResource *getResource(const ResourceType *rt);
 	const Unit *getMyUnit(int unitIndex);
 	void getUnitsSeen(ConstUnitVector &list);
 	const FactionType *getMyFactionType();
