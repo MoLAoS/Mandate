@@ -75,10 +75,22 @@ STRINGY_ENUM( CommandClass,
 	NULL_COMMAND
 );
 
+WRAPPED_ENUM ( ProducibleClass,
+	NONE,
+	GENERATED,
+	UPGRADE,
+	UNIT
+);
+
+WRAPPED_ENUM( EffectClass,
+	EFFECT,
+	EMANATION
+);
+
 STRINGY_ENUM( SpellStart,
 	INSTANT,
 	PROJECTILE
-)
+);
 
 STRINGY_ENUM( SpellAffect,
 	SELF,

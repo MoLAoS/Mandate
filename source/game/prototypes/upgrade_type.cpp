@@ -40,12 +40,17 @@ namespace Glest { namespace ProtoTypes {
 
 // ==================== misc ====================
 
+UpgradeType::UpgradeType()
+		: m_factionType(0) {
+	assert(effects.empty());
+}
+
 bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	string path;
 	m_factionType = factionType;
 
 	Logger::getInstance().add("Upgrade type: "+ dir, true);
-	path = dir + "/" + name + ".xml";
+	path = dir + "/" + m_name + ".xml";
 	bool loadOk = true;
 
 	XmlTree xmlTree;

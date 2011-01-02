@@ -16,6 +16,7 @@
 
 #include "particle.h"
 #include "timer.h"
+#include "forward_decs.h"
 
 using Shared::Util::Random;
 using Shared::Platform::Chrono;
@@ -111,8 +112,11 @@ public:
 // =====================================================
 
 class Projectile : public AttackParticleSystem {
+	friend class Sim::StaticFactory<Projectile>;
 	friend class Splash;
+
 private:
+	int m_id;
 	Splash *nextParticleSystem;
 
 	Vec3f lastPos;
@@ -141,11 +145,26 @@ private:
 	Sim::ParticleDamager *damager;
 
 public:
-	Projectile(bool visible, const ParticleSystemBase &model, int particleCount= 1000);
+	struct CreateParams {
+		bool visible;
+		const ParticleSystemBase &model;
+		int particleCount;
+
+		CreateParams(bool visible, const ParticleSystemBase &model, int particleCount)
+			: visible(visible), model(model), particleCount(particleCount) {}
+	};
+
+private:
+	Projectile(CreateParams params);
 	virtual ~Projectile();
 
+	void setId(int i) { m_id = i; }
+
+public:
 	void link(Splash *particleSystem);
 	void setDamager(Sim::ParticleDamager *damager);
+
+	int getId() const { return m_id; }
 
 	virtual void update() override;
 	virtual void initParticle(Particle *p, int particleIndex) override;

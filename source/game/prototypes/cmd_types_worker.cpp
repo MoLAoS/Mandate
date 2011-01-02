@@ -362,7 +362,7 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 		Vec2i pos = Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange());
 		REPAIR_LOG( "\tMap::getNearestPos(): " << pos );
 
-		newCommand = new Command(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
+		newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
 		newCommand->setPos2(unit->getPos());
 		return newCommand;
 	}
@@ -645,8 +645,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 
 	BUILD_LOG( "in position, starting construction." );
-	builtUnit = g_simInterface.getUnitFactory().newInstance(
-		command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
+	builtUnit = g_world.newUnit(command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
 	unit->setCurrSkill(m_buildSkillType);
 	unit->setTarget(builtUnit, true, true);

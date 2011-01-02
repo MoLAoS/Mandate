@@ -29,76 +29,77 @@ namespace Glest { namespace Entities {
 MEMORY_CHECK_IMPLEMENTATION(Command)
 
 const Vec2i Command::invalidPos = Vec2i(-1);
-int Command::lastId = -1;
 
-Command::Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
-		: archetype(archetype)
+Command::Command(CreateParamsArch params)//CommandArchetype archetype, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
+		: m_id(-1)
+		, archetype(params.archetype)
 		, type(NULL)
-		, flags(flags)
-		, pos(pos)
+		, flags(params.flags)
+		, pos(params.pos)
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
 		, prodType(NULL)
-		, commandedUnit(commandedUnit) {
-	id = ++lastId;
+		, commandedUnit(params.commandedUnit) {
 }
 
-Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
-		: archetype(CommandArchetype::GIVE_COMMAND)
-		, type(type)
-		, flags(flags)
-		, pos(pos)
+Command::Command(CreateParamsPos params)//const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
+		: m_id(-1)
+		, archetype(CommandArchetype::GIVE_COMMAND)
+		, type(params.type)
+		, flags(params.flags)
+		, pos(params.pos)
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
 		, prodType(0)
-		, commandedUnit(commandedUnit) {
-	id = ++lastId;
+		, commandedUnit(params.commandedUnit) {
 }
 
-Command::Command(const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit)
-		: archetype(CommandArchetype::GIVE_COMMAND)
-		, type(type)
-		, flags(flags)
+Command::Command(CreateParamsUnit params)//const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit)
+		: m_id(-1)
+		, archetype(CommandArchetype::GIVE_COMMAND)
+		, type(params.type)
+		, flags(params.flags)
 		, pos(-1)
 		, pos2(-1)
 		, prodType(0)
-		, commandedUnit(commandedUnit) {
-	id = ++lastId;
-
-	unitRef = unit ? unit->getId() : -1;
+		, commandedUnit(params.commandedUnit) {
+	unitRef = params.unit ? params.unit->getId() : -1;
 	unitRef2 = -1;
 	
-	if (unit) {
-		pos = unit->getCenteredPos();
+	if (params.unit) {
+		pos = params.unit->getCenteredPos();
 	}
-	if (unit && !isAuto() && commandedUnit && commandedUnit->getFaction()->isThisFaction()) {
-		unit->resetHighlight();
+	if (params.unit && !isAuto() && commandedUnit && commandedUnit->getFaction()->isThisFaction()) {
+		params.unit->resetHighlight();
 	}
 }
 
 
-Command::Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, 
-				 const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit)
-		: archetype(CommandArchetype::GIVE_COMMAND)
-		, type(type)
-		, flags(flags)
-		, pos(pos)
+Command::Command(CreateParamsProd params)//const CommandType *type, CommandFlags flags, const Vec2i &pos, 
+				 //const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit)
+		: m_id(-1)
+		, archetype(CommandArchetype::GIVE_COMMAND)
+		, type(params.type)
+		, flags(params.flags)
+		, pos(params.pos)
 		, pos2(-1)
 		, unitRef(-1)
 		, unitRef2(-1)
-		, prodType(prodType)
-		, facing(facing)
-		, commandedUnit(commandedUnit) {
-	id = ++lastId;
+		, prodType(params.prodType)
+		, facing(params.facing)
+		, commandedUnit(params.commandedUnit) {
 }
 
-Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft) {
+Command::Command(CreateParamsLoad params) {// const XmlNode *node, const UnitType *ut, const FactionType *ft) {
+	const XmlNode *node = params.node;
+
+	m_id = node->getChildIntValue("id");
 	unitRef = node->getOptionalIntValue("unitRef", -1);
 	unitRef2 = node->getOptionalIntValue("unitRef2", -1);
 	archetype = CommandArchetype(node->getChildIntValue("archetype"));
-	type = ut->getCommandType(node->getChildStringValue("type"));
+	type = params.ut->getCommandType(node->getChildStringValue("type"));
 	flags.flags = node->getChildIntValue("flags");
 	pos = node->getChildVec2iValue("pos");
 	pos2 = node->getChildVec2iValue("pos2");
@@ -106,7 +107,7 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 	if (prodTypeId == -1) {
 		prodType = 0;
 	} else {
-		prodType = g_world.getMasterTypeFactory().getType(prodTypeId);
+		prodType = g_simInterface.getProdType(prodTypeId);
 	}
 	if (node->getOptionalChild("facing") ) {
 		facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));
@@ -114,14 +115,15 @@ Command::Command(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 }
 
 Unit* Command::getUnit() const {
-	return g_simInterface.getUnitFactory().getUnit(unitRef);
+	return g_world.getUnit(unitRef);
 }
 
 Unit* Command::getUnit2() const {
-	return g_simInterface.getUnitFactory().getUnit(unitRef2);
+	return g_world.getUnit(unitRef2);
 }
 
 void Command::save(XmlNode *node) const {
+	node->addChild("id", m_id);
 	node->addChild("archetype", archetype);
 	node->addChild("type", type->getName());
 	node->addChild("flags", (int)flags.flags);

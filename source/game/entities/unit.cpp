@@ -109,9 +109,8 @@ MEMORY_CHECK_IMPLEMENTATION(Unit)
 // ============================ Constructor & destructor =============================
 
 /** Construct Unit object */
-Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
-		   CardinalDir facing, Unit* master)
-		: id(id)
+Unit::Unit(CreateParams params)
+		: id(-1)
 		, hp(1)
 		, ep(0)
 		, loadCount(0)
@@ -131,17 +130,17 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, faceTarget(true)
 		, useNearestOccupiedCell(true)
 		, level(0)
-		, pos(pos)
-		, lastPos(pos)
-		, nextPos(pos)
+		, pos(params.pos)
+		, lastPos(params.pos)
+		, nextPos(params.pos)
 		, targetPos(0)
 		, targetVec(0.0f)
 		, meetingPos(0)
 		, lastRotation(0.f)
 		, targetRotation(0.f)
 		, rotation(0.f)
-		, m_facing(facing)
-		, type(type)
+		, m_facing(params.face)
+		, type(params.type)
 		, loadType(0)
 		, currSkill(0)
 		, toBeUndertaken(false)
@@ -150,9 +149,9 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 		, m_cloaking(false)
 		, m_deCloaking(false)
 		, m_cloakAlpha(1.f)
-		, faction(faction)
 		, fire(0)
-		, map(map)
+		, faction(params.faction)
+		, map(params.map)
 		, commandCallback(0)
 		, hp_below_trigger(0)
 		, hp_above_trigger(0)
@@ -175,13 +174,14 @@ Unit::Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map
 	setModelFacing(m_facing);
 }
 
-Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
-		: targetRef(node->getOptionalIntValue("targetRef", -1))
-		, effects(node->getChild("effects"))
-		, effectsCreated(node->getChild("effectsCreated"))
+Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
+		: targetRef(params.node->getOptionalIntValue("targetRef", -1))
+		, effects(params.node->getChild("effects"))
+		, effectsCreated(params.node->getChild("effectsCreated"))
         , carried(false) {
-	this->faction = faction;
-	this->map = map;
+	const XmlNode *node = params.node;
+	this->faction = params.faction;
+	this->map = params.map;
 
 	id = node->getChildIntValue("id");
 
@@ -194,7 +194,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 	type = faction->getType()->getUnitType(node->getChildStringValue("type"));
 
 	s = node->getChildStringValue("loadType");
-	loadType = s == "null_value" ? NULL : tt->getResourceType(s);
+	loadType = s == "null_value" ? NULL : g_world.getTechTree()->getResourceType(s);
 
 	lastRotation = node->getChildFloatValue("lastRotation");
 	targetRotation = node->getChildFloatValue("targetRotation");
@@ -232,7 +232,7 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 
 	XmlNode *n = node->getChild("commands");
 	for(int i = 0; i < n->getChildCount(); ++i) {
-		commands.push_back(new Command(n->getChild("command", i), type, faction->getType()));
+		commands.push_back(g_world.newCommand(n->getChild("command", i), type, faction->getType()));
 	}
 
 	unitPath.read(node->getChild("unitPath"));
@@ -286,8 +286,8 @@ Unit::Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, 
 
 /** delete stuff */
 Unit::~Unit() {
-	removeCommands();
-	if (!Program::getInstance()->isTerminating() && World::isConstructed()) {
+//	removeCommands();
+	if (!g_program.isTerminating() && World::isConstructed()) {
 		ULC_UNIT_LOG( this, " deleted." );
 	}
 }
@@ -629,7 +629,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 
 	//projectile
 	if (pstProj != NULL) {
-		Unit *carrier = isCarried() ? g_simInterface.getUnitFactory().getUnit(getCarrier()) : 0;
+		Unit *carrier = isCarried() ? g_world.getUnit(getCarrier()) : 0;
 		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 		Vec3f startPos;
 		if (carrier) {
@@ -679,7 +679,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		g_simInterface.doUpdateProjectile(this, psProj, startPos, endPos);
 
 		if(pstProj->isTracking() && targetRef != -1) {
-			Unit *target = g_simInterface.getUnitFactory().getUnit(targetRef);
+			Unit *target = g_world.getUnit(targetRef);
 			psProj->setTarget(target);
 			psProj->setDamager(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
 		} else {
@@ -800,7 +800,7 @@ CommandResult Unit::giveCommand(Command *command) {
 			commands.push_back(command);
 		} else {
 			meetingPos = command->getPos();
-			delete command;
+			g_world.deleteCommand(command);
 		}
 		CMD_LOG( "Result = SUCCESS" );
 		return CommandResult::SUCCESS;
@@ -845,11 +845,11 @@ CommandResult Unit::giveCommand(Command *command) {
 			commands.push_back(command);
 		}
 	} else {
-		delete command;
+		g_world.deleteCommand(command);
 		command = 0;
 	}
 
-		StateChanged(this);
+	StateChanged(this);
 
 	if (command) {
 		CMD_UNIT_LOG( this, "giveCommand() Result = " << CommandResultNames[result] );
@@ -863,7 +863,7 @@ void Unit::loadUnitInit(Command *command) {
 		CMD_LOG( "adding unit to load list " << *command->getUnit() )
 		if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
 			CMD_LOG( "deleting load command, already loading.")
-			delete command;
+			g_world.deleteCommand(command);
 			command = 0;
 		}
 	}
@@ -877,7 +877,7 @@ void Unit::unloadUnitInit(Command *command) {
 			CMD_LOG( "adding unit to unload list " << *command->getUnit() )
 			if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
 				CMD_LOG( "deleting unload command, already unloading.")
-				delete command;
+				g_world.deleteCommand(command);
 				command = 0;
 			}
 		}
@@ -893,7 +893,7 @@ Command *Unit::popCommand() {
 	// pop front
 	CMD_LOG( "popping current " << commands.front()->getType()->getName() << " command." );
 
-	delete commands.front();
+	g_world.deleteCommand(commands.front());
 	commands.erase(commands.begin());
 	clearPath();
 
@@ -902,7 +902,7 @@ Command *Unit::popCommand() {
 	// we don't let hacky set meeting point commands actually get anywhere
 	while(command && command->getType()->getClass() == CommandClass::SET_MEETING_POINT) {
 		setMeetingPos(command->getPos());
-		delete command;
+		g_world.deleteCommand(command);
 		commands.erase(commands.begin());
 		command = commands.empty() ? NULL : commands.front();
 	}
@@ -911,7 +911,7 @@ Command *Unit::popCommand() {
 	} else {
 		CMD_LOG( "now has no commands." );
 	}
-		StateChanged(this);
+	StateChanged(this);
 	return command;
 }
 /** pop current command (used when order is done)
@@ -953,10 +953,10 @@ CommandResult Unit::cancelCommand() {
 	undoCommand(*commands.back());
 
 	//delete ans pop command
-	delete commands.back();
+	g_world.deleteCommand(commands.back());
 	commands.pop_back();
 
-		StateChanged(this);
+	StateChanged(this);
 
 	//clear routes
 	clearPath();
@@ -995,7 +995,7 @@ void Unit::removeCommands() {
 		CMD_UNIT_LOG( this, "clearing all commands." );
 	}
 	while (!commands.empty()) {
-		delete commands.back();
+		g_world.deleteCommand(commands.back());
 		commands.pop_back();
 	}
 }
@@ -1067,7 +1067,7 @@ void Unit::kill() {
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
-			Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
+			Unit *unit = g_world.getUnit(*it);
 			unit->cancelCurrCommand();
 		}
 		m_unitsToCarry.clear();
@@ -1075,7 +1075,7 @@ void Unit::kill() {
 
 	if (!m_carriedUnits.empty()) {
 		foreach (UnitIdList, it, m_carriedUnits) {
-			Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
+			Unit *unit = g_world.getUnit(*it);
 			int hp = unit->getHp();
 			unit->decHp(hp);
 		}
@@ -1317,7 +1317,7 @@ void Unit::doUpdateCommand() {
 		const UnitType *ut = getType();
 		setCurrSkill(SkillClass::STOP);
 		if (ut->hasCommandClass(CommandClass::STOP)) {
-			giveCommand(new Command(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
+			giveCommand(g_world.newCommand(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
 		}
 	}
 	//if unit is out of EP, it stops
@@ -1513,7 +1513,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
-		Unit *carrier = (m_carrier != -1 ? g_simInterface.getUnitFactory().getUnit(m_carrier) : 0);
+		Unit *carrier = (m_carrier != -1 ? g_world.getUnit(m_carrier) : 0);
 		Vec2i cellPos = carrier ? carrier->getCenteredPos() : getCenteredPos();
 		Vec3f vec = carrier ? carrier->getCurrVector() : getCurrVector();
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
@@ -1992,24 +1992,24 @@ void Unit::recalculateStats() {
  */
 bool Unit::add(Effect *e) {
 	//if (!isAlive() && !e->getType()->isEffectsNonLiving()) {
-	//	delete e;
+	//	g_world.getEffectFactory().deleteInstance(e);
 	//	return false;
 	//}
 	if (!e->getType()->getAffectTag().empty()) {
 		if (!type->hasTag(e->getType()->getAffectTag())) {
-			delete e;
+			g_world.getEffectFactory().deleteInstance(e);
 			return false;
 		}
 	}
 
 	if (e->getType()->isTickImmediately()) {
 		if (doRegen(e->getType()->getHpRegeneration(), e->getType()->getEpRegeneration())) {
-			delete e;
+			g_world.getEffectFactory().deleteInstance(e);
 			return true;
 		}
 		if (e->tick()) {
 			// single tick, immediate effect
-			delete e;
+			g_world.getEffectFactory().deleteInstance(e);
 			return false;
 		}
 	}
@@ -2204,12 +2204,12 @@ float Unit::computeHeight(const Vec2i &pos) const {
   * @param target the unit we are tracking */
 void Unit::updateTarget(const Unit *target) {
 	if (!target) {
-		target = g_simInterface.getUnitFactory().getUnit(targetRef);
+		target = g_world.getUnit(targetRef);
 	}
 
 	if (target) {
 		if (target->isCarried()) {
-			target = g_simInterface.getUnitFactory().getUnit(target->getCarrier());
+			target = g_world.getUnit(target->getCarrier());
 		}
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)
@@ -2227,7 +2227,7 @@ void Unit::updateTarget(const Unit *target) {
 void Unit::clearCommands() {
 	while (!commands.empty()) {
 		undoCommand(*commands.back());
-		delete commands.back();
+		g_world.deleteCommand(commands.back());
 		commands.pop_back();
 	}
 }												
@@ -2297,92 +2297,47 @@ int Unit::getSpeed(const SkillType *st) const {
 //  class UnitFactory
 // =====================================================
 
-UnitFactory::UnitFactory()
-		: idCounter(0) {
-}
-
-UnitFactory::~UnitFactory() {
-	foreach (UnitMap, it, unitMap) {
-		delete it->second;
-	}
-}
-
-Unit* UnitFactory::newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) {
-	Unit *unit = new Unit(node, faction, map, tt, putInWorld);
-	if (unitMap.find(unit->getId()) != unitMap.end()) {
-		throw runtime_error("Error: duplicate Unit id.");
-	}
-	unitMap[unit->getId()] = unit;
+Unit* UnitFactory::newUnit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) {
+	Unit::LoadParams params(node, faction, map, tt, putInWorld);
+	Unit *unit = StaticFactory<Unit>::newInstance(params);
 	if (unit->isAlive()) {
 		unit->Died.connect(this, &UnitFactory::onUnitDied);
 	} else {
-		deadList.push_back(unit);
+		m_deadList.push_back(unit);
 	}
 	return unit;
 }
 
-Unit* UnitFactory::newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face,  Unit* master) {
-	Unit *unit = new Unit(idCounter, pos, type, faction, map, face, master);
-	unitMap[idCounter] = unit;
+Unit* UnitFactory::newUnit(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master) {
+	Unit::CreateParams params(pos, type, faction, map, face, master);
+	Unit *unit = StaticFactory<Unit>::newInstance(params);
 	unit->Died.connect(this, &UnitFactory::onUnitDied);
-
-	++idCounter;
 	return unit;
-}
-
-Unit* UnitFactory::getUnit(int id) {
-	UnitMap::iterator it = unitMap.find(id);
-	if (it != unitMap.end()) {
-		return it->second;
-	}
-	return 0;
 }
 
 void UnitFactory::onUnitDied(Unit *unit) {
-	deadList.push_back(unit);
-}
-
-void UnitFactory::assertDead() {
-	foreach (UnitMap, it, unitMap) {
-		if (!it->second->isAlive()) {
-			Units::iterator uit = std::find(deadList.begin(), deadList.end(), it->second);
-			if (uit == deadList.end()) {
-				assert(false && "Dead unit did not fire Died event!");
-			}
-		}
-	}
+	m_deadList.push_back(unit);
 }
 
 void UnitFactory::update() {
-	Units::iterator it = deadList.begin();
-	while (it != deadList.end()) {
+	Units::iterator it = m_deadList.begin();
+	while (it != m_deadList.end()) {
 		if ((*it)->getToBeUndertaken()) {
 			(*it)->undertake();
-			unitMap.erase(unitMap.find((*it)->getId()));
-			delete *it;
-			it = deadList.erase(it);
+			deleteInstance((*it)->getId());
+			it = m_deadList.erase(it);
 		} else {
 			return;
 		}
 	}
-	//DEBUG
-	//static int count = 0;
-	//if (++count % 5 == 0) {
-	//	assertDead();
-	//}
 }
 
 void UnitFactory::deleteUnit(Unit *unit) {
-	UnitMap::iterator it = unitMap.find(unit->getId());
-	if (it == unitMap.end()) {
-		throw runtime_error("Error: Unit not in unitMap");
+	Units::iterator it = std::find(m_deadList.begin(), m_deadList.end(), unit);
+	if (it != m_deadList.end()) {
+		m_deadList.erase(it);
 	}
-	unitMap.erase(it);
-	Units::iterator uit = std::find(deadList.begin(), deadList.end(), unit);
-	if (uit != deadList.end()) {
-		deadList.erase(uit);
-	}
-	delete unit;
+	deleteInstance(unit->getId());
 }
 
 }}//end namespace

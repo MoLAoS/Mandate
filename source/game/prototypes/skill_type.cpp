@@ -65,7 +65,7 @@ SkillType::~SkillType(){
 void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
 	m_unitType = ut;
 	const FactionType *ft = ut->getFactionType();
-	name = sn->getChildStringValue("name");
+	m_name = sn->getChildStringValue("name");
 	epCost = sn->getOptionalIntValue("ep-cost");
 	speed = sn->getChildIntValue("speed");
 	minRange = sn->getOptionalIntValue("min-range", 1);
@@ -185,7 +185,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 
 void SkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<SkillClass>(getClass());
-	checksum.add(name);
+	checksum.add(m_name);
 	checksum.add(epCost);
 	checksum.add(speed);
 	checksum.add(animSpeed);

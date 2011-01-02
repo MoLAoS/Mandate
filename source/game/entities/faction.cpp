@@ -96,9 +96,9 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 					bool thisFaction, bool giveResources) {
 	this->control = control;
 	this->factionType = factionType;
-	this->name = playerName;
+	this->m_name = playerName;
 	this->startLocationIndex = startLocationIndex;
-	this->id = factionIndex;
+	this->m_id = factionIndex;
 	this->teamIndex = teamIndex;
 	this->colourIndex = colourIndex;
 	this->thisFaction = thisFaction;
@@ -174,8 +174,8 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 void Faction::save(XmlNode *node) const {
 	XmlNode *n;
 
-	node->addChild("id", id);
-	node->addChild("name", name);
+	node->addChild("id", m_id);
+	node->addChild("name", m_name);
 	node->addChild("teamIndex", teamIndex);
 	node->addChild("startLocationIndex", startLocationIndex);
 	node->addChild("colourIndex", colourIndex);
@@ -207,8 +207,8 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	this->lastAttackNotice = 0;
 	this->lastEnemyNotice = 0;
 
-	id = node->getChildIntValue("id");
-	name = node->getChildStringValue("name");
+	m_id = node->getChildIntValue("id");
+	m_name = node->getChildStringValue("name");
 	teamIndex = node->getChildIntValue("teamIndex");
 	startLocationIndex = node->getChildIntValue("startLocationIndex");
 	thisFaction = node->getChildBoolValue("thisFaction");
@@ -217,7 +217,7 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	time_t lastEnemyNotice = 0;
 //	lastEventLoc = node->getChildVec3fValue("lastEventLoc");
 
-	upgradeManager.load(node->getChild("upgrades"), factionType);
+	upgradeManager.load(node->getChild("upgrades"), this);
 
 	n = node->getChild("resources");
 	resources.resize(n->getChildCount());
@@ -232,11 +232,11 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	units.reserve(n->getChildCount());
 	assert(units.empty() && unitMap.empty());
 	for (int i = 0; i < n->getChildCount(); ++i) {
-		g_simInterface.getUnitFactory().newInstance(n->getChild("unit", i), this, map, tt);
+		g_world.newUnit(n->getChild("unit", i), this, map, tt);
 		if (units[i]->isBuilt()) {
 			addStore(units[i]->getType());
 			applyStaticProduction(units[i]->getType());
-	}
+		}
 	}
 	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
@@ -274,7 +274,7 @@ int Faction::getStoreAmount(const ResourceType *rt) const {
 // ==================== upgrade manager ====================
 
 void Faction::startUpgrade(const UpgradeType *ut) {
-	upgradeManager.startUpgrade(ut, id);
+	upgradeManager.startUpgrade(ut, m_id);
 }
 
 void Faction::cancelUpgrade(const UpgradeType *ut) {
@@ -496,7 +496,7 @@ void Faction::deApplyStaticConsumption(const ProducibleType *p) {
 // apply resource on interval for a cosumable resouce
 void Faction::applyCostsOnInterval(const ResourceType *rt) {
 	assert(rt->getClass() == ResourceClass::CONSUMABLE);
-	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
+	if (!ScriptManager::getPlayerModifiers(m_id)->getConsumeEnabled()) {
 		return;
 	}
 	// increment consumables
@@ -613,7 +613,7 @@ void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 }
 
 void Faction::setResourceBalance(const ResourceType *rt, int balance) {
-	if (!ScriptManager::getPlayerModifiers(this->id)->getConsumeEnabled()) {
+	if (!ScriptManager::getPlayerModifiers(m_id)->getConsumeEnabled()) {
 		return;
 	}
 	for (int i = 0; i < resources.size(); ++i) {

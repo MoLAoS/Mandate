@@ -122,7 +122,7 @@ public:
 	int getStoreAmount(const ResourceType *rt) const;
 
 	const FactionType *getType() const					{return factionType;}
-	int getIndex() const								{return id;}
+	int getIndex() const								{return m_id;}
 	int getTeam() const									{return teamIndex;}
 	bool isDefeated() const								{return defeated;}
 	bool getCpuControl() const							{return control >= ControlType::CPU_EASY;}

@@ -133,6 +133,9 @@ private:
 	const FactionType *m_factionType;
 
 public:
+	static ProducibleClass typeClass() { return ProducibleClass::UNIT; }
+
+public:
 	//creation and loading
 	UnitType();
 	virtual ~UnitType();
@@ -141,6 +144,8 @@ public:
 	void addBeLoadedCommand();
 	virtual void doChecksum(Checksum &checksum) const;
 	const FactionType* getFactionType() const { return m_factionType; }
+
+	ProducibleClass getClass() const override { return typeClass(); }
 
 	//get
 	bool getMultiSelect() const				{return multiSelect;}

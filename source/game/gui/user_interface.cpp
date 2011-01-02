@@ -328,7 +328,7 @@ void UserInterface::unloadRequest(int carryIndex) {
 			UnitIdList carriedUnits = unit->getCarriedUnits();
 			foreach (UnitIdList, it, carriedUnits) {
 				if (carryIndex == i) {
-					unloadUnit = g_simInterface.getUnitFactory().getUnit(*it);
+					unloadUnit = g_world.getUnit(*it);
 					transportUnit = const_cast<Unit*>(unit);
 					break;
 				}
@@ -1091,7 +1091,7 @@ void UserInterface::computeDisplay() {
 				transported = true;
 				foreach (UnitIdList, it, carriedUnits) {
 					if (i < Display::transportCellCount) {
-						Unit *unit = g_simInterface.getUnitFactory().getUnit(*it);
+						Unit *unit = g_world.getUnit(*it);
 						m_display->setCarryImage(i++, unit->getType()->getImage());
 					}
 				}

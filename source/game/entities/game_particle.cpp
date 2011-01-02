@@ -144,8 +144,9 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 //  Projectile
 // ===========================================================================
 
-Projectile::Projectile(bool visible, const ParticleSystemBase &protoType, int particleCount)
-		: AttackParticleSystem(ParticleUse::PROJECTILE, visible, protoType, particleCount)
+Projectile::Projectile(CreateParams params)
+		: AttackParticleSystem(ParticleUse::PROJECTILE, params.visible, params.model, params.particleCount)
+		, m_id(-1)
 		, nextParticleSystem(0)
 		, target(0)
 		, trajectory(TrajectoryType::LINEAR)
@@ -179,7 +180,7 @@ void Projectile::update() {
 	if (state == sPlay) {
 		if (target) {
 			if (target->isCarried()) { // if target got into another unit, switch target to carrier
-				target = g_simInterface.getUnitFactory().getUnit(target->getCarrier());
+				target = g_world.getUnit(target->getCarrier());
 				RUNTIME_CHECK(!target->isCarried());
 			}
 			endPos = target->getCurrVector();

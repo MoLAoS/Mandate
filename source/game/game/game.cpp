@@ -110,6 +110,7 @@ GameState::~GameState() {
 	program.setMaxUpdateBacklog(2);
 
 	// delete the World
+	gui.getSelection()->clear(); // disconnect 
 	simInterface->destroyGameWorld();
 }
 

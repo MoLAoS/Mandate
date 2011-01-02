@@ -24,6 +24,7 @@
 #include "resource.h"
 #include "renderer.h"
 #include "world.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
@@ -32,15 +33,16 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 
 namespace Glest { namespace ProtoTypes {
-
+	
 // ===============================
 // 	class Level
 // ===============================
 
 bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	bool loadOk = true;
-	try { name = levelNode->getAttribute("name")->getRestrictedValue(); }
-	catch (runtime_error e) {
+	try { 
+		m_name = levelNode->getAttribute("name")->getRestrictedValue();
+	} catch (runtime_error e) {
 		g_errorLog.addXmlError ( dir, e.what() );
 		loadOk = false;
 	}
@@ -115,7 +117,7 @@ UnitType::~UnitType(){
 }
 
 void UnitType::preLoad(const string &dir){
-	name= basename(dir);
+	m_name = basename(dir);
 }
 
 bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal) {
@@ -123,7 +125,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	bool loadOk = true;
 
 	m_factionType = factionType;
-	string path = dir + "/" + name + ".xml";
+	string path = dir + "/" + m_name + ".xml";
 
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
@@ -281,7 +283,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					const XmlNode *childNode = cloakNode->getChild(i);
 					if (childNode->getName() == "de-cloak") {
 						const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
-						string str = deCloakNode->getOptionalRestrictedValue("skill-name");
+						string str = deCloakNode->getOptionalRestrictedValue("skill-m_name");
 						if (!str.empty()) {
 							deCloakOnSkills.push_back(str);
 						} else {
@@ -382,10 +384,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (sn->getName() != "skill") continue;
 			const XmlNode *typeNode = sn->getChild("type");
 			string classId = typeNode->getAttribute("value")->getRestrictedValue();
-			SkillType *skillType = g_world.getSkillTypeFactory().newInstance(classId);
+			SkillType *skillType = g_simInterface.newSkillType(SkillClassNames.match(classId.c_str()));
 			skillType->load(sn, dir, techTree, this);
 			skillTypes.push_back(skillType);
-			g_world.getSkillTypeFactory().setChecksum(skillType);
+			g_simInterface.setChecksum(skillType);
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(path, e.what());
@@ -401,10 +403,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			const XmlNode *commandNode = commandsNode->getChild(i);
 			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = g_world.getCommandTypeFactory().newInstance(classId, this);
+			CommandType *commandType = g_simInterface.newCommandType(CommandClassNames.match(classId.c_str()), this);
 			commandType->load(commandNode, dir, techTree, factionType);
 			commandTypes.push_back(commandType);
-			g_world.getCommandTypeFactory().setChecksum(commandType);
+			g_simInterface.setChecksum(commandType);
 		}
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(path, e.what());
@@ -414,9 +416,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if (meetingPoint) {
-		CommandType *smpct = g_world.getCommandTypeFactory().newInstance("set-meeting-point", this);
+		CommandType *smpct = g_simInterface.newCommandType(CommandClass::SET_MEETING_POINT, this);
 		commandTypes.push_back(smpct);
-		g_world.getCommandTypeFactory().setChecksum(smpct);
+		g_simInterface.setChecksum(smpct);
 	}
 
 	sortCommandTypes();
@@ -457,7 +459,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				for (int i = 0; i < emanationsNode->getChildCount(); ++i) {
 					try {
 						const XmlNode *emanationNode = emanationsNode->getChild("emanation", i);
-						Emanation *emanation = new Emanation();
+						EmanationType *emanation = g_simInterface.newEmanationType();
 						emanation->load(emanationNode, dir, techTree, factionType);
 						emanations[i] = emanation;
 					} catch (runtime_error e) {
@@ -495,11 +497,11 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 }
 
 void UnitType::addBeLoadedCommand() {
-	CommandType *blct = g_world.getCommandTypeFactory().newInstance("be-loaded", this);
+	CommandType *blct = g_simInterface.newCommandType(CommandClass::BE_LOADED, this);
 	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(getFirstMoveSkill());
 	commandTypes.push_back(blct);
 	commandTypesByClass[CommandClass::BE_LOADED].push_back(blct);
-	g_world.getCommandTypeFactory().setChecksum(blct);
+	g_simInterface.setChecksum(blct);
 }
 
 void UnitType::doChecksum(Checksum &checksum) const {
@@ -533,9 +535,9 @@ void UnitType::doChecksum(Checksum &checksum) const {
 
 // ==================== get ====================
 
-const CommandType *UnitType::getCommandType(const string &name) const {
+const CommandType *UnitType::getCommandType(const string &m_name) const {
 	for (CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {
-		if ((*i)->getName() == name) {
+		if ((*i)->getName() == m_name) {
 			return (*i);
 		}
 	}
@@ -700,7 +702,7 @@ void UnitType::setDeCloakSkills(const vector<string> &names, const vector<SkillC
 			}
 		}
 		if (!found) {
-			throw runtime_error("de-cloak is set for skill '" + name + "', which was not found.");
+			throw runtime_error("de-cloak is set for skill '" + m_name + "', which was not found.");
 		}
 	}
 	foreach_const (vector<SkillClass>, it, classes) {

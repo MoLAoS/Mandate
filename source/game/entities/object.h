@@ -15,17 +15,17 @@
 #include "vec.h"
 #include "forward_decs.h"
 
+namespace Glest { namespace Entities {
+
+class MapResource;
+
 using Shared::Graphics::Model;
 using Shared::Math::Vec2i;
 using Shared::Math::Vec3f;
 
-using Glest::ProtoTypes::ObjectType;
-using Glest::ProtoTypes::ResourceType;
-
-namespace Glest { namespace Entities {
-
-class MapResource;
-class ObjectFactory;
+using ProtoTypes::MapObjectType;
+using ProtoTypes::ResourceType;
+using Sim::StaticFactory;
 
 // =====================================================
 // 	class MapObject
@@ -34,53 +34,42 @@ class ObjectFactory;
 // =====================================================
 
 class MapObject {
-	friend class ObjectFactory;
+	friend class StaticFactory<MapObject>;
+
 private:
 	int id;
-	ObjectType *objectType;
+	MapObjectType *objectType;
 	MapResource *resource;
 	Vec3f pos;
 	float rotation;
 	int variation;
 
-	MapObject(int id, ObjectType *objectType, const Vec3f &pos);
 
 public:
+	struct CreateParams {
+		MapObjectType *objectType;
+		const Vec3f pos;
+		CreateParams(MapObjectType *objectType, const Vec3f &pos) : objectType(objectType), pos(pos) {}
+	};
+
+private:
+	MapObject(CreateParams params);
 	~MapObject();
 
-//	void setHeight(float height)		{pos.y= height;}
+	void setId(int v) { id = v; }
+
+public:
 	void setPos(const Vec3f &pos)		{this->pos = pos;}
 
 	int getId() const 					{return id;}
-	const ObjectType *getType() const	{return objectType;}
-	MapResource *getResource() const		{return resource;}
+	const MapObjectType *getType() const{return objectType;}
+	MapResource *getResource() const	{return resource;}
 	Vec3f getPos() const				{return pos;}
 	float getRotation()	const			{return rotation;}
 	const Model *getModel() const;
 	bool getWalkable() const;
 
 	void setResource(const ResourceType *resourceType, const Vec2i &pos);
-};
-
-class ObjectFactory {
-private:
-	int idCounter;
-	std::map<int, MapObject*> objects;
-
-public:
-	ObjectFactory() : idCounter(0) {}
-
-	MapObject* newInstance(ObjectType *objectType, const Vec3f &pos) {
-		MapObject *obj = new MapObject(idCounter, objectType, pos);
-		objects[idCounter] = obj;
-		++idCounter;
-		return obj;
-	}
-
-	MapObject* getObject(int id) {
-		assert(id >= 0 && id < idCounter);
-		return objects[id];
-	}
 };
 
 }}//end namespace

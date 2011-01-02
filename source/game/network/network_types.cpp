@@ -14,10 +14,14 @@
 #include "command.h"
 #include "world.h"
 #include "unit.h"
+#include "program.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
 namespace Glest { namespace Net {
+
+using Main::Program;
 
 // =====================================================
 //	class NetworkCommand
@@ -91,29 +95,29 @@ Command *NetworkCommand::toCommand() const {
 
 	// handle CommandArchetype != GIVE_COMMAND
 	if (networkCommandType == NetworkCommandType::CANCEL_COMMAND) {
-		return new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
+		return g_world.newCommand(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
 	}
 	if (networkCommandType == NetworkCommandType::SET_AUTO_REPAIR) {
 		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
-		return new Command(CommandArchetype::SET_AUTO_REPAIR,
+		return g_world.newCommand(CommandArchetype::SET_AUTO_REPAIR,
 			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_AUTO_ATTACK) {
 		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
-		return new Command(CommandArchetype::SET_AUTO_ATTACK,
+		return g_world.newCommand(CommandArchetype::SET_AUTO_ATTACK,
 			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_AUTO_FLEE) {
 		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
-		return new Command(CommandArchetype::SET_AUTO_FLEE,
+		return g_world.newCommand(CommandArchetype::SET_AUTO_FLEE,
 			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_CLOAK) {
 		bool enable = flags & CmdFlags::MISC_ENABLE;
-		return new Command(CommandArchetype::SET_CLOAK,
+		return g_world.newCommand(CommandArchetype::SET_CLOAK,
 			CommandFlags(CommandProperties::MISC_ENABLE, enable), Command::invalidPos, unit);
 	}
 
 	// else CommandArchetype == GIVE_COMMAND
 	// validate command type
-	const CommandType* ct = g_world.getCommandTypeFactory().getType(commandTypeId);
+	const CommandType* ct = g_simInterface.getCommandType(commandTypeId);
 	if (!ct) {
 		throw runtime_error("Can not find command type with id: " + intToStr(commandTypeId) + " in unit: " + unit->getType()->getName() + ". Game out of synch.");
 	}
@@ -131,13 +135,12 @@ Command *NetworkCommand::toCommand() const {
 
 	const ProducibleType* prodType = 0;
 	if (prodTypeId != -1) {
-		MasterTypeFactory &typeFactory = world.getMasterTypeFactory();
-		prodType = typeFactory.getType(prodTypeId);
+		prodType = g_simInterface.getProdType(prodTypeId);
 
 		// sanity check... 
-		assert((typeFactory.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
-			|| (typeFactory.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
-			|| (typeFactory.isUnitType(prodType)
+		assert((g_simInterface.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
+			|| (g_simInterface.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
+			|| (g_simInterface.isUnitType(prodType)
 				&& (ct->getClass() == CommandClass::PRODUCE
 					|| ct->getClass() == CommandClass::MORPH
 					|| ct->getClass() == CommandClass::BUILD)));
@@ -151,14 +154,14 @@ Command *NetworkCommand::toCommand() const {
 	cmdFlags.set(CommandProperties::QUEUE, queue);
 	cmdFlags.set(CommandProperties::DONT_RESERVE_RESOURCES, no_reserve_res);
 	if (target) {
-		command= new Command(ct, cmdFlags, target, unit);
+		command = g_world.newCommand(ct, cmdFlags, target, unit);
 	} else {
 		Vec2i pos(positionX, positionY);
 		RUNTIME_CHECK(g_world.getMap()->isInside(pos) || pos == Vec2i(-1));
 		if (prodType) {
-			command= new Command(ct, cmdFlags, Vec2i(positionX, positionY), prodType, facing, unit);
+			command = g_world.newCommand(ct, cmdFlags, Vec2i(positionX, positionY), prodType, facing, unit);
 		} else {
-			command= new Command(ct, cmdFlags, Vec2i(positionX, positionY), unit);
+			command = g_world.newCommand(ct, cmdFlags, Vec2i(positionX, positionY), unit);
 	}
 	}
 	return command;

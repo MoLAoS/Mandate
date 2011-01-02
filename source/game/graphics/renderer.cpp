@@ -1497,17 +1497,17 @@ void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const V
 		if (!objectHits.empty()) { 
 			foreach_const (set<PickHit>, it, objectHits) {
 				if (it->name1 == 0x101) { // closest resource hit
-					obj = g_simInterface.getObjectFactory().getObject(it->name2);
+					obj = g_world.getMapObj(it->name2);
 					break;
 				}
 			}
 			if (!obj) { // no resources, get closest object
-				obj = g_simInterface.getObjectFactory().getObject(objectHits.begin()->name2);
+				obj = g_world.getMapObj(objectHits.begin()->name2);
 			}
 		}
 	} else {
 		foreach_const (set<PickHit>, it, unitHits) {
-			Unit *unit = g_simInterface.getUnitFactory().getUnit(it->name2);
+			Unit *unit = g_world.getUnit(it->name2);
 			//string str = intToStr(unit->getId()) + " : " + unit->getType()->getName();
 			//g_gameState.addUnitPickHit(str);
 			units.push_back(unit);

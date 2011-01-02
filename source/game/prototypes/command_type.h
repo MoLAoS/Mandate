@@ -78,14 +78,17 @@ using Search::CardinalDir;
 // =====================================================
 
 class CommandType : public RequirableType {
-	friend class Glest::Sim::CommandTypeFactory;
+	friend class Glest::Sim::DynamicFactory<CommandClass, CommandType>;
+	friend class Glest::Sim::MasterTypeFactory;
+
 protected:
 	Clicks clicks;
 	bool queuable;
 	const UnitType *unitType;
 	string m_tipKey;
 
-	void setIdAndUnitType(int v, UnitType *ut) { id = v; unitType = ut; }
+	void setId(int v) { m_id = v; }
+	void setUnitType(const UnitType *ut) { unitType = ut; }
 
 	string emptyString;
 
@@ -100,7 +103,7 @@ public:
 
 	const UnitType* getUnitType() const { return unitType; }
 
-	virtual string toString() const						{return Lang::getInstance().get(name);}
+	virtual string toString() const						{return g_lang.get(m_name);}
 	const string& getTipKey() const						{return m_tipKey;}
 	virtual string getTipKey(const string &name) const  {return emptyString;}
 

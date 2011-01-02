@@ -1207,7 +1207,7 @@ int ScriptManager::damageUnit(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	int unitId, hp;
 	if (extractArgs(args, "damageUnit", "int,int", &unitId, &hp)) {
-		Unit *unit = g_simInterface.getUnitFactory().getUnit(unitId);
+		Unit *unit = g_world.getUnit(unitId);
 		if (unit) {
 			if (hp > 0) {
 				g_world.damage(unit, hp);
@@ -1233,7 +1233,7 @@ int ScriptManager::destroyUnit(LuaHandle* luaHandle) {
 		good = true;
 	}
 	if (good) {
-		Unit *unit = g_simInterface.getUnitFactory().getUnit(unitId);
+		Unit *unit = g_world.getUnit(unitId);
 		if (unit) {
 			if (!unit->isAlive()) {
 				addErrorMessage("destroyUnit(): unit with id " + intToStr(unitId) + " is already dead.");
@@ -1242,7 +1242,7 @@ int ScriptManager::destroyUnit(LuaHandle* luaHandle) {
 			} else {
 				g_world.damage(unit, unit->getHp());
 				unit->undertake();
-				g_simInterface.getUnitFactory().deleteUnit(unit);
+				g_world.getUnitFactory().deleteUnit(unit);
 			}
 		} else {
 			addErrorMessage("destroyUnit(): invalid unit id " + intToStr(unitId));

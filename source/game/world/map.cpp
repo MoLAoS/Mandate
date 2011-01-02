@@ -45,6 +45,11 @@ using Main::Program;
 using Search::Cartographer;
 using Gui::Selection;
 
+void Tile::deleteResource() {
+	g_world.getMapObjectFactory().deleteInstance(object);
+	object = 0;
+}
+
 // =====================================================
 // 	class Map
 // =====================================================
@@ -130,7 +135,7 @@ void Map::loadExplorationState(XmlNode *node) {
 	}
 }
 
-void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory) {
+void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 	// supporting absolute paths with extension, e.g. showmap in map editor
 	//HACK
 	string path2 = path;
@@ -241,7 +246,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 				if (objNumber == 0 || x == m_tileSize.w - 1 || y == m_tileSize.h - 1) {
 					tile->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
-					MapObject *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), vert);
+					MapObject *o = g_world.newMapObject(tileset->getObjectType(objNumber - 1), vert);
 					tile->setObject(o);
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
@@ -251,9 +256,9 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
-					MapObject *o = objFactory.newInstance(NULL, vert);
-					o->setResource(rt, Vec2i(x, y) * cellScale);
+					MapObject *o = g_world.newMapObject(NULL, vert);
 					tile->setObject(o);
+					o->setResource(rt, Vec2i(x, y) * cellScale);
 				}
 			}
 		}

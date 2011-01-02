@@ -75,6 +75,9 @@ private:
 	const FactionType *factionType;
 
 public:
+	static EffectClass typeClass() { return EffectClass::EFFECT; }
+
+public:
 	EffectType();
 	virtual ~EffectType() { delete sound; }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -115,18 +118,21 @@ public:
 	void getDesc(string &str) const;
 };
 
-class Emanation : public EffectType {
+class EmanationType : public EffectType {
 private:
 	int radius;
 
 public:
-	virtual ~Emanation() {}
+	static EffectClass typeClass() { return EffectClass::EMANATION; }
+
+public:
+	virtual ~EmanationType() {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	int getRadius() const	{return radius;}
 };
 
-typedef vector<Emanation*> Emanations;
+typedef vector<EmanationType*> Emanations;
 
 }}//end namespace
 

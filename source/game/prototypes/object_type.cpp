@@ -23,16 +23,16 @@ using namespace Glest::Graphics;
 namespace Glest { namespace ProtoTypes {
 
 // =====================================================
-// 	class ObjectType
+// 	class MapObjectType
 // =====================================================
 
-void ObjectType::init(int modelCount, int objectClass, bool walkable){
+void MapObjectType::init(int modelCount, int objectClass, bool walkable){
 	models.reserve(modelCount);
 	this->objectClass= objectClass;
 	this->walkable= walkable;
 }
 
-void ObjectType::loadModel(const string &path){
+void MapObjectType::loadModel(const string &path){
 	Model *model = g_world.getModelFactory().getModel(path, GameConstants::cellScale, 2);
 	color = Vec3f(0.f);
 	if (model->getMeshCount() > 0 && model->getMesh(0)->getTexture(0) != NULL) {

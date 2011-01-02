@@ -34,12 +34,12 @@ namespace Glest { namespace ProtoTypes {
 bool ResourceType::load(const string &dir, int id) {
 	string path, str;
 	Renderer &renderer = Renderer::getInstance();
-	this->id = id;
+	m_id = id;
 
 	bool loadOk = true;
 	Logger::getInstance().add("Resource type: " + dir, true);
-	name = basename(dir);
-	path = dir + "/" + name + ".xml";
+	m_name = basename(dir);
+	path = dir + "/" + m_name + ".xml";
 
 	XmlTree xmlTree;
 	const XmlNode *resourceNode;

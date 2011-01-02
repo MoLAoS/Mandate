@@ -43,7 +43,7 @@ SkillCycleTable::~SkillCycleTable(){
 }
 
 void SkillCycleTable::create(const TechTree *techTree) {
-	numEntries = g_world.getSkillTypeFactory().getTypeCount();
+	numEntries = g_simInterface.getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	if (!numEntries) {
 		cycleTable = NULL; // -loadmap
@@ -54,7 +54,7 @@ void SkillCycleTable::create(const TechTree *techTree) {
 
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {
-		cycleTable[i] = g_world.getSkillTypeFactory().getType(i)->calculateCycleTime();
+		cycleTable[i] = g_simInterface.getSkillType(i)->calculateCycleTime();
 	}
 }
 
@@ -409,7 +409,7 @@ void SimulationInterface::requestCommand(Command *command) {
 				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
 		}
 	}
-	delete command;
+	g_world.deleteCommand(command);
 }
 
 void SimulationInterface::doUpdateUnitCommand(Unit *unit) {

@@ -107,8 +107,8 @@ private:
 	bool nearSubmerged;
 
 public:
-	Tile() : tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) { }
-	~Tile() { delete object; }
+	Tile() : tileType(-1), tileTexture(0), object(0), nearSubmerged(false) { }
+	~Tile() { }
 
 	//get
 	const Vec3f &getColor() const				{return color;		}
@@ -147,7 +147,7 @@ public:
 
 	//misc
 	bool isFree() const						{ return !object || object->getWalkable();	}
-	void deleteResource()					{ delete object; object= NULL;				}
+	void deleteResource();//					{ delete object; object= NULL;				}
 };
 
 /** Tile Vertex structure */
@@ -242,7 +242,7 @@ public:
 	~Map();
 
 	void init();
-	void load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory);
+	void load(const string &path, TechTree *techTree, Tileset *tileset);
 	void doChecksum(Checksum &checksum);
 
 	void saveExplorationState(XmlNode *node) const;

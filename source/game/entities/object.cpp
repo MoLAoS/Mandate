@@ -28,18 +28,17 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Entities {
 
-
 // =====================================================
 // 	class MapObject
 // =====================================================
 
-MapObject::MapObject(int id, ObjectType *objType, const Vec3f &p)
-		: id(id)
-		, objectType(objType)
+MapObject::MapObject(CreateParams params)//MapObjectType *objType, const Vec3f &p)
+		: id(-1)
+		, objectType(params.objectType)
 		, resource(0) {
 	Random random(id);
 	const float max_offset = 0.2f;
-	pos = p + Vec3f(random.randRange(-max_offset, max_offset), 0.0f, random.randRange(-max_offset, max_offset));
+	pos = params.pos + Vec3f(random.randRange(-max_offset, max_offset), 0.0f, random.randRange(-max_offset, max_offset));
 	rotation = random.randRange(0.f, 360.f);
 	if (objectType != NULL) {
 		variation = random.randRange(0, objectType->getModelCount() - 1);

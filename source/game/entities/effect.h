@@ -29,16 +29,20 @@ class Unit;
   * regeneration/degeneration or other attributes of a unit.
   * @todo: Implement lighting & sound */
 class Effect {
+	friend class StaticFactory<Effect>;
+
 private:
+	int	m_id;
+
+	/** This effect's proto-type. */
+	const EffectType *type;
+
 	/** Unit that caused this effect, or -1 if this is a recourse effect. */
 	UnitId source;
 
 	/** If this is a recourse effect, the primary effect that this is a recourse
 	  * of, NULL otherwise. */
 	Effect *root;
-
-	/** This effect's proto-type. */
-	const EffectType *type;
 
 	/** A modifier that adjusts how powerful this effect, based upon the type,
 	  * should be. Each value of this effect will be multiplied by strength
@@ -54,12 +58,28 @@ private:
 	int actualHpRegen;
 
 public:
-	Effect(const EffectType* type, Unit *source, Effect *root, fixed strength,
-			const Unit *recipient, const TechTree *tt);
+	struct CreateParams {
+		const EffectType* type;
+		Unit *source;
+		Effect *root;
+		fixed strength;
+		const Unit *recipient;
+		const TechTree *tt;
+
+		CreateParams(const EffectType* type, Unit *source, Effect *root, fixed strength,
+						const Unit *recipient, const TechTree *tt) 
+			: type(type), source(source), root(root), strength(strength), recipient(recipient), tt(tt) { }
+	};
+
+private:
+	Effect(CreateParams params);
 	Effect(const XmlNode *node);
 
 	virtual ~Effect();
+	void setId(int v) { m_id = v; }
 
+public:
+	int getId() const				{return m_id;}
 	UnitId getSource() const		{return source;}
 	Effect *getRoot()				{return root;}
 	const EffectType *getType() const {return type;}
@@ -81,6 +101,8 @@ public:
 
 	MEMORY_CHECK_DECLARATIONS(Effect)
 };
+
+typedef StaticFactory<Effect> EffectFactory;
 
 // ===============================
 // 	class Effects

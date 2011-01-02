@@ -21,7 +21,7 @@
 #include "xml_parser.h"
 #include "checksum.h"
 #include "factory.h"
-
+#include "prototypes_enums.h"
 #include "resource.h"
 #include "forward_decs.h"
 
@@ -55,29 +55,29 @@ using namespace Entities;
 // =====================================================
 
 class NameIdPair {
-	friend class Sim::SkillTypeFactory;
-	friend class Sim::CommandTypeFactory;
-	friend class Sim::TypeFactory<GeneratedType>;
-	friend class Sim::TypeFactory<UpgradeType>;
-	friend class Sim::TypeFactory<UnitType>;
+	friend class Sim::DynamicFactory<ProducibleClass, ProducibleType>;
+	friend class Sim::DynamicFactory<SkillClass, SkillType>;
+	friend class Sim::DynamicFactory<CommandClass, CommandType>;
+	friend class Sim::DynamicFactory<EffectClass, EffectType>;
 
 protected:
-	int id;				//id
-	string name;		//name
+	int    m_id;   // id
+	string m_name; // name
 
 protected:
-	void setId(int v) { id = v; }
+	void setId(int v) { m_id = v; }
+	void setName(const string &name) { m_name = name; }
 
 public:
 	static const int invalidId = -1;
 
 public:
-	NameIdPair() : id(invalidId) {}
-	NameIdPair(int id, const char *name) : id(id), name(name) {}
+	NameIdPair() : m_id(invalidId) {}
+	NameIdPair(int id, const char *name) : m_id(id), m_name(name) {}
 	virtual ~NameIdPair() {}
 
-	int getId() const					{return id;}
-	string getName() const				{return name;}
+	int getId() const					{return m_id;}
+	string getName() const				{return m_name;}
 
 	virtual void doChecksum(Checksum &checksum) const;
 };
@@ -183,6 +183,8 @@ public:
 
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc() const;
+
+	virtual ProducibleClass getClass() const = 0;
 };
 
 class GeneratedType : public ProducibleType {
@@ -190,10 +192,15 @@ private:
 	const CommandType *m_commandType;
 
 public:
+	static ProducibleClass typeClass() { return ProducibleClass::GENERATED; }
+
+public:
 	GeneratedType() : m_commandType(NULL) {}
 
 	const CommandType* getCommandType() const { return m_commandType; }
 	void setCommandType(const CommandType *ct) { m_commandType = ct; }
+
+	ProducibleClass getClass() const override { return typeClass(); }
 };
 
 }}//end namespace

@@ -129,7 +129,7 @@ void ClientInterface::doDataSync() {
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
 	NETWORK_LOG( __FUNCTION__ << " waiting for server to send Skill Cycle Table." );
-	int skillCount = g_world.getSkillTypeFactory().getTypeCount();
+	int skillCount = m_skillTypeFactory.getTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();

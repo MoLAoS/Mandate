@@ -31,19 +31,120 @@
 #include "game_constants.h"
 #include "pos_iterator.h"
 #include "type_factories.h"
+#include "command.h"
+#include "upgrade.h"
 
 #include "forward_decs.h"
 
+namespace Glest { namespace Sim {
+
+// Shared
 using Shared::Math::Quad2i;
 using Shared::Math::Rect2i;
 using Shared::Util::Random;
-using Glest::Util::PosCircularIteratorFactory;
-using namespace Glest::Entities;
-using namespace Glest::Script;
-using namespace Glest::Gui;
-using namespace Glest::Search;
 
-namespace Glest { namespace Sim {
+// Glest
+using Util::PosCircularIteratorFactory;
+using namespace Entities;
+using namespace Script;
+using namespace Gui;
+using namespace Search;
+
+// ===============================
+// 	class MasterEntityFactory
+// ===============================
+
+typedef StaticFactory<Upgrade>     UpgradeFactory;
+typedef StaticFactory<Command>     CommandFactory;
+typedef StaticFactory<Effect>      EffectFactory;
+typedef StaticFactory<Projectile>  ProjectileFactory;
+typedef StaticFactory<MapObject>   MapObjectFactory;
+
+class MasterEntityFactory {
+protected:
+	UnitFactory        m_unitFactory;
+	UpgradeFactory     m_upgradeFactory;
+	CommandFactory     m_commandFactory;
+	EffectFactory      m_effectFactory;
+	ProjectileFactory  m_projectileFactory;
+	MapObjectFactory   m_mapObjectFactory;
+
+public:
+	MasterEntityFactory();
+
+	Effect* newEffect(const EffectType *type, Unit *source, Effect *root, fixed strength,
+			const Unit *recipient, const TechTree *tt) {
+		Effect::CreateParams params(type, source, root, strength, recipient, tt);
+		return m_effectFactory.newInstance(params);
+	}
+
+	Effect* newEffect(const XmlNode *node) { return m_effectFactory.newInstance(node); }
+
+	Unit*	newUnit(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map,
+			CardinalDir face = CardinalDir::NORTH, Unit* master = NULL) {
+		return m_unitFactory.newUnit(pos, type, faction, map, face, master);
+	}
+
+	Unit*	newUnit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true) {
+		return m_unitFactory.newUnit(node, faction, map, tt, putInWorld);
+	}
+
+	Upgrade* newUpgrade(const UpgradeType *type, int factionNdx) {
+		Upgrade::CreateParams params(type, factionNdx);
+		return m_upgradeFactory.newInstance(params);
+	}
+
+	Upgrade* newUpgrade(const XmlNode *node, Faction *f) {
+		Upgrade::LoadParams params(node, f);
+		return m_upgradeFactory.newInstance(params);
+	}
+
+	Projectile* newProjectile(bool visible, const ParticleSystemBase &model, int particleCount= 1000) {
+		Projectile::CreateParams params(visible, model, particleCount);
+		return m_projectileFactory.newInstance(params);
+	}
+
+	Command* newCommand(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) {
+		Command::CreateParamsArch params(archetype, flags, pos, commandedUnit);
+		return m_commandFactory.newInstance(params);
+	}
+	Command* newCommand(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) {
+		Command::CreateParamsPos params(type, flags, pos, commandedUnit);
+		return m_commandFactory.newInstance(params);
+	}
+	Command* newCommand(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL) {
+		Command::CreateParamsUnit params(type, flags, unit, commandedUnit);
+		return m_commandFactory.newInstance(params);
+	}
+	Command* newCommand(const CommandType *type, CommandFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) {
+		Command::CreateParamsProd params(type, flags, pos, prodType, facing, commandedUnit);
+		return m_commandFactory.newInstance(params);
+	}
+	Command* newCommand(const XmlNode *node, const UnitType *ut, const FactionType *ft) {
+		Command::CreateParamsLoad params(node, ut, ft);
+		return m_commandFactory.newInstance(params);
+	}
+
+	MapObject* newMapObject(MapObjectType *objType, const Vec3f &p) {
+		MapObject::CreateParams params(objType, p);
+		return m_mapObjectFactory.newInstance(params);
+	}
+
+	Unit*	getUnit(int id) { return m_unitFactory.getInstance(id); }
+	MapObject* getMapObj(int id) { return m_mapObjectFactory.getInstance(id); }
+
+	void	deleteUnit(Unit *unit) { m_unitFactory.deleteUnit(unit); }
+	void	deleteCommand(int id) { m_commandFactory.deleteInstance(id); }
+	void	deleteCommand(const Command *c);
+	void	deleteEffect(const Effect *e) { m_effectFactory.deleteInstance(e); }
+
+	UnitFactory        getUnitFactory() { return m_unitFactory; }
+	UpgradeFactory     getUpgradeFactory() { return m_upgradeFactory; }
+	CommandFactory     getCommandFactory() { return m_commandFactory; }
+	EffectFactory      getEffectFactory() { return m_effectFactory; }
+	ProjectileFactory  getProjectileFactory() { return m_projectileFactory; }
+	MapObjectFactory   getMapObjectFactory() { return m_mapObjectFactory; }
+};
 
 // =====================================================
 // 	class World
@@ -51,7 +152,7 @@ namespace Glest { namespace Sim {
 ///	The game world: Map + Tileset + TechTree
 // =====================================================
 
-class World {
+class World : public MasterEntityFactory {
 private:
 	typedef vector<Faction> Factions;
 	typedef std::map< string,set<string> > UnitTypes;
@@ -111,14 +212,6 @@ private:
 
 	PosCircularIteratorFactory posIteratorFactory;
 
-	//TODO: Move to SimulationInterface, and take UnitFactory & ObjectFactory from it
-	MasterTypeFactory	m_masterTypeFactory;
-
-//	TypeFactory<UpgradeType>	m_upgradeTypeFactory;
-//	TypeFactory<UnitType>  		m_unitTypeFactory;
-//	TypeFactory<ProducibleType>	m_producibleTypeFactory;
-	SkillTypeFactory		 m_skillTypeFactory;
-	CommandTypeFactory		 m_commandTypeFactory;
 	ModelFactory			 m_modelFactory;
 
 public:
@@ -129,15 +222,6 @@ public:
 	
 	static World& getInstance() { return *singleton; }
 	static bool isConstructed() { return singleton != 0; }
-
-	//get
-	MasterTypeFactory& getMasterTypeFactory()			{return m_masterTypeFactory; }
-	TypeFactory<UnitType>& getUnitTypeFactory()			{return m_masterTypeFactory.getUnitTypeFactory();}
-	TypeFactory<UpgradeType>& getUpgradeTypeFactory()	{return m_masterTypeFactory.getUpgradeTypeFactory();}
-	TypeFactory<GeneratedType>& getGenTypeFactory()		{return m_masterTypeFactory.getGeneratedTypeFactory();}
-
-	SkillTypeFactory& getSkillTypeFactory()				{return m_skillTypeFactory;}
-	CommandTypeFactory& getCommandTypeFactory()			{return m_commandTypeFactory;}
 
 	ModelFactory& getModelFactory()						{return m_modelFactory;}
 
@@ -179,7 +263,7 @@ public:
 
 	//misc
 	void moveUnitCells(Unit *unit);
-	Unit* findUnitById(int id) const;
+	Unit* findUnitById(int id) { return getUnit(id); }
 	const UnitType* findUnitTypeById(const FactionType* factionType, int id);
 	bool placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated= false);
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
@@ -255,7 +339,6 @@ public:
 	ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera);
 	void execute(ParticleSystem *particleSystem);
 };
-
 
 }}//end namespace
 

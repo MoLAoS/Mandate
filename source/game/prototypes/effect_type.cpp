@@ -46,14 +46,14 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	bool loadOk = true;
 	
 	try { // name
-		name = en->getAttribute("name")->getRestrictedValue(); 
+		m_name = en->getAttribute("name")->getRestrictedValue(); 
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
 	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
-	id = const_cast<TechTree*>(tt)->addEffectType(this);
+	m_id = const_cast<TechTree*>(tt)->addEffectType(this);
 
 	try { // bias
 		tmp = en->getAttribute("bias")->getRestrictedValue();
@@ -309,12 +309,11 @@ void EffectType::getDesc(string &str) const {
 	str += "\n";
 }
 
-// This is a prototype, shoud be called EmanationType...
 // =====================================================
-//  class Emanation
+//  class EmanationType
 // =====================================================
 
-bool Emanation::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+bool EmanationType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	EffectType::load(n, dir, tt, ft);
 
 	//radius
@@ -326,7 +325,7 @@ bool Emanation::load(const XmlNode *n, const string &dir, const TechTree *tt, co
 	return true;
 }
 
-void Emanation::doChecksum(Checksum &checksum) const {
+void EmanationType::doChecksum(Checksum &checksum) const {
 	EffectType::doChecksum(checksum);
 	checksum.add(radius);
 }
