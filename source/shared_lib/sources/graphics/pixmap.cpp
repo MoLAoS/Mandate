@@ -765,6 +765,9 @@ Pixmap2D::Pixmap2D(int w, int h, int components){
 }
 
 void Pixmap2D::init(int components){
+	if (!pixels) {
+		delete[] pixels; // in case init is called twice
+	}
 	this->w= -1;
 	this->h= -1;
 	this->components= components;
@@ -772,6 +775,9 @@ void Pixmap2D::init(int components){
 }
 
 void Pixmap2D::init(int w, int h, int components){
+	if (!pixels) {
+		delete[] pixels; // in case init is called twice
+	}
 	this->w= w;
 	this->h= h;
 	this->components= components;
@@ -1078,6 +1084,36 @@ void Pixmap2D::copy(const Pixmap2D *sourcePixmap){
 		throw runtime_error("Pixmap2D::copy() dimensions must agree");
 	}
 	memcpy(pixels, sourcePixmap->getPixels(), w*h*sourcePixmap->getComponents());
+}
+
+/** Copy a piece of the source pixmap to become this pixmap
+  * @param x x position of top left corner
+  * @param y y position of top left corner
+  * @param width width of a square
+  * @param height height of a square
+  * @param source the source pixmap
+  */
+void Pixmap2D::copy(int x, int y, int width, int height, const Pixmap2D *source) {
+	assert(source != this);
+	// check piece is inside source pixmap
+	if(source->getW() < (x + width) || source->getH() < (y + height) || x < 0 || y < 0) {
+		throw runtime_error("Pixmap2D::getPiece(), bad dimensions");
+	}
+
+	// resize this pixmap to fit the dimensions of the piece
+	init(width, height, source->getComponents());
+
+	///@note there might be potential for optimisation in the iteration order - hailstone 30Dec2010
+	// copy pixels
+	uint8 *pixel = new uint8[source->getComponents()];
+	for (int j = 0; j < h; ++j) {
+		for (int i = 0; i < w; ++i) {
+			source->getPixel(i+x, j+y, pixel);
+			setPixel(i, j, pixel);
+		}
+	}
+
+	delete [] pixel;
 }
 
 void Pixmap2D::subCopy(int x, int y, const Pixmap2D *sourcePixmap){
