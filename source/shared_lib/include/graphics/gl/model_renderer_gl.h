@@ -58,6 +58,7 @@ private:
 	static const int diffuseTextureUnit = GL_TEXTURE0;
 	static const int normalTextureUnit = GL_TEXTURE2;
 	static const int specularTextureUnt = GL_TEXTURE1;
+	static const int customTextureUnit = GL_TEXTURE3;
 
 public:
 	ModelRendererGl();
@@ -69,50 +70,18 @@ public:
 	const string& getShaderName();
 	bool isUsingShaders() const { return m_shaderIndex != -1; }
 
-	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback);
-
-	virtual void end();
+	void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback) override;
+	void end() override;
 	
-	virtual void render(const Model *model) {
-		//assertions
-		assert(rendering);
-		assertGl();
-	
-		//render every mesh
-		for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-			renderMesh(model->getMesh(i));
-		}
-	
-		//assertions
-		assertGl();
-	}
-	
-	virtual void renderNormalsOnly(const Model *model) {
-		//assertions
-		assert(rendering);
-		assertGl();
-	
-		//render every mesh
-		for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-			renderMeshNormals(model->getMesh(i));
-		}
-	
-		//assertions
-		assertGl();
-	}
-
-	virtual void renderMeshNormalsOnly(const Mesh *mesh) {
-		renderMeshNormals(mesh);
-	}
-	//virtual void end();
-	//virtual void render(const Model *model);
-	//virtual void renderNormalsOnly(const Model *model);
+	void render(const Model *model, Vec3f *anim = 0, ShaderProgram *customProgram = 0) override;
+	void renderNormalsOnly(const Model *model) override;
+	void renderMeshNormalsOnly(const Mesh *mesh) override;
 
 	void setDuplicateTexCoords(bool duplicateTexCoords)			{this->duplicateTexCoords= duplicateTexCoords;}
 	void setSecondaryTexCoordUnit(int secondaryTexCoordUnit)	{this->secondaryTexCoordUnit= secondaryTexCoordUnit;}
 
 	void renderMeshNormals(const Mesh *mesh);
-	void renderMesh(const Mesh *mesh);
+	void renderMesh(const Mesh *mesh, Vec3f *anim = 0, ShaderProgram *customProgram = 0) override;
 };
 
 }}}//end namespace
