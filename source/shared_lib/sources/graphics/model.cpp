@@ -169,11 +169,20 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 
 		textures[mtDiffuse] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
 
+		string checkPath = texPath;
 		// insert _normal before . in filename
-		texPath.insert(texPath.length()-4, "_normal"); 
-		if (fileExists(texPath))
-			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
+		checkPath.insert(checkPath.length()-4, "_normal"); 
+		if (fileExists(checkPath)) {
+			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+		}
 		///@todo will need to change default tex to use flat normals
+
+		// custom texture? 
+		checkPath = texPath;
+		checkPath.insert(checkPath.length()-4, "_custom1"); 
+		if (fileExists(checkPath)) {
+			textures[mtCustom1] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+		}
 	}
 
 	//read data
@@ -250,6 +259,24 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			textures[i] = static_cast<Texture2D*>(textureManager->getTexture(mapFullPath));
 		}
 		flag *= 2;
+	}
+	///@todo de-duplicate
+	///@todo actaully... remove, make the g3d viewer an editor &| write a new export script
+	if (textures[mtDiffuse]) {
+		string checkPath = textures[mtDiffuse]->getPath();
+		// insert _normal before . in filename
+		checkPath.insert(checkPath.length()-4, "_normal"); 
+		if (fileExists(checkPath)) {
+			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+		}
+		///@todo will need to change default tex to use flat normals
+
+		// custom texture? 
+		checkPath = textures[mtDiffuse]->getPath();
+		checkPath.insert(checkPath.length()-4, "_custom1"); 
+		if (fileExists(checkPath)) {
+			textures[mtCustom1] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+		}
 	}
 
 	// Assume packed vectors.
