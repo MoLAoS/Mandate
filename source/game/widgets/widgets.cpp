@@ -98,7 +98,7 @@ void Imageset::addImages(const Texture2D *source, int width, int height) {
 			Texture2D *tex = g_renderer.newTexture2D(Graphics::ResourceScope::GLOBAL);
 			tex->getPixmap()->copy(i, j, width, height, sourcePixmap); //may throw, should this be handled here? - hailstone 30Dec2010
 			tex->setMipmap(false);
-			tex->init(Texture::Filter::fBilinear);
+			tex->init(Texture::fBilinear);
 			addImage(tex);
 		}
 	}
