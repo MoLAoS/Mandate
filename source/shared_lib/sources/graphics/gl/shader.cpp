@@ -61,6 +61,8 @@ DefaultShaderProgram::~DefaultShaderProgram() {
 	glDeleteProgram(m_p);
 }
 
+static string lastShaderError;
+
 void DefaultShaderProgram::show_info_log(
     GLuint object,
     PFNGLGETSHADERIVPROC glGet__iv,
@@ -73,7 +75,15 @@ void DefaultShaderProgram::show_info_log(
 	log = new char[log_length];
 	glGet__InfoLog(object, log_length, NULL, log);
 	cerr << log << endl;
+	lastShaderError = log;
 	delete[] log;
+}
+
+string DefaultShaderProgram::getError(const string path, bool vert) {
+	show_info_log(m_v, glGetShaderiv, glGetShaderInfoLog);
+	string res = string("Compile error in ") + (vert ? "vertex" : "fragment");
+	res +=  " shader: " + path + "\n" + lastShaderError;
+	return res;
 }
 
 void DefaultShaderProgram::load(const string &vertex, const string &fragment) {
@@ -94,19 +104,17 @@ void DefaultShaderProgram::load(const string &vertex, const string &fragment) {
 	GLint ok;
 	glGetShaderiv(m_v, GL_COMPILE_STATUS, &ok);
 	if (!ok) {
-		cerr <<  "Failed to compile " << vertex << ":" << endl;
-		show_info_log(m_v, glGetShaderiv, glGetShaderInfoLog);
+		string msg = getError(vertex, true);
 		glDeleteShader(m_v);
-		throw runtime_error("Failed to compile vertex shader\n");
+		throw runtime_error(msg);
 	}
 
 	glCompileShader(m_f);
 	glGetShaderiv(m_f, GL_COMPILE_STATUS, &ok);
 	if (!ok) {
-		cerr <<  "Failed to compile " << fragment << ":" << endl;
-		show_info_log(m_f, glGetShaderiv, glGetShaderInfoLog);
+		string msg = getError(fragment, false);
 		glDeleteShader(m_f);
-		throw runtime_error("Failed to compile fragment shader\n");
+		throw runtime_error(msg);
 	}
 
 	glAttachShader(m_p,m_f);

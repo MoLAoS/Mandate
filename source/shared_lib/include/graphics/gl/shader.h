@@ -125,6 +125,7 @@ private:
 		PFNGLGETSHADERIVPROC glGet__iv,
 		PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
+	string getError(const string path, bool vert);
 
 public:
 	DefaultShaderProgram();
