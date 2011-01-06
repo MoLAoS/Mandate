@@ -30,12 +30,12 @@ template<typename StaticType> class StaticFactory {
 	friend class World; // needs to get and set id counters for save games
 
 private:
-	typedef map<int, StaticType*>  ObjTable;
-	typedef vector<StaticType*>    ObjList;
+	typedef std::map<int, StaticType*>  ObjectTable;
+	typedef std::vector<StaticType*>    ObjectList;
 
 private:
-	ObjTable  m_objTable;
-	ObjList   m_allObjs;
+	ObjectTable  m_objTable;
+	ObjectList   m_allObjs;
 	int       m_idCounter;
 
 private:
@@ -62,7 +62,7 @@ public:
 	}
 
 	void deleteInstance(int id) {
-		ObjTable::const_iterator it = m_objTable.find(id);
+		typename ObjectTable::iterator it = m_objTable.find(id);
 		RUNTIME_CHECK(it != m_objTable.end());
 		m_allObjs.erase(std::find(m_allObjs.begin(), m_allObjs.end(), it->second));
 		delete it->second;
@@ -77,7 +77,7 @@ public:
 	StaticFactory() : m_idCounter(0) { }
 
 	virtual ~StaticFactory() {
-		foreach_const (vector<StaticType*>, it, m_allObjs) {
+		for (typename ObjectList::iterator it = m_allObjs.begin(); it != m_allObjs.end(); ++it) {
 			delete *it;
 		}
 	}
@@ -85,7 +85,7 @@ public:
 	unsigned getInstanceCount() const { return m_allObjs.size(); }
 
 	StaticType* getInstance(int id) {
-		ObjTable::iterator it = m_objTable.find(id);
+		typename ObjectTable::iterator it = m_objTable.find(id);
 		if (it != m_objTable.end()) {
 			return it->second;
 		} else {
@@ -93,8 +93,8 @@ public:
 		}
 	}
 
-	typename ObjList::const_iterator begin() const { return m_allObjs.begin(); }
-	typename ObjList::const_iterator end() const { return m_allObjs.end();}
+	typename ObjectList::const_iterator begin() const { return m_allObjs.begin(); }
+	typename ObjectList::const_iterator end() const { return m_allObjs.end();}
 };
 
 // ===============================
@@ -132,7 +132,7 @@ public:
 	}
 
 	BaseType* newInstance(Enum typeClass) {
-		Factories::iterator it = m_factories.find(typeClass);
+		typename Factories::iterator it = m_factories.find(typeClass);
 		if (it == m_factories.end()) {
 			throw UnknownType("Invalid type class: " + intToStr(typeClass));
 		}
