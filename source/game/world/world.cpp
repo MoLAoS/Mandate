@@ -45,7 +45,13 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Sim {
 
-MasterEntityFactory::MasterEntityFactory() {
+MasterEntityFactory::MasterEntityFactory()
+		: m_unitFactory()
+		, m_upgradeFactory(true)
+		, m_commandFactory(true)
+		, m_effectFactory(true)
+		, m_projectileFactory(false)
+		, m_mapObjectFactory(true) {
 	g_logger.add("MasterEntityFactory");
 }
 

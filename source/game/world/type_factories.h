@@ -36,7 +36,8 @@ private:
 private:
 	ObjectTable  m_objTable;
 	ObjectList   m_allObjs;
-	int       m_idCounter;
+	int          m_idCounter;
+	const bool   m_destoryObjects;
 
 private:
 	void registerInstance(StaticType *obj) {
@@ -74,11 +75,13 @@ public:
 	}
 
 public:
-	StaticFactory() : m_idCounter(0) { }
+	StaticFactory(bool deleteObjs = true) : m_idCounter(0), m_destoryObjects(deleteObjs) { }
 
 	virtual ~StaticFactory() {
-		for (typename ObjectList::iterator it = m_allObjs.begin(); it != m_allObjs.end(); ++it) {
-			delete *it;
+		if (m_destoryObjects) {
+			for (typename ObjectList::iterator it = m_allObjs.begin(); it != m_allObjs.end(); ++it) {
+				delete *it;
+			}
 		}
 	}
 
