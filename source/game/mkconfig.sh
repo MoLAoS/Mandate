@@ -1,4 +1,5 @@
 #!/bin/bash
+# Written by Daniel Santos (2009) for Glest Advanced Engine
 # Script to regenerate global/config.h and global/confg.cpp from config.db
 # This may not be the cleanest solution in the world, but it's better than
 # hasseling with making 5 changes everytime you add, remove or edit a config
