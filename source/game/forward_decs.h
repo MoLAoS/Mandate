@@ -87,8 +87,9 @@ namespace Glest {
 		class Tileset;
 		class AmbientSounds;
 		class TimeFlow;
-		template<typename Type> class StaticFactory;
-		template<typename Enum, typename BaseType> class DynamicFactory;
+		template<typename Type> class EntityFactory;
+		template<typename Type> class SingleTypeFactory;
+		template<typename Enum, typename BaseType> class DynamicTypeFactory;
 		class MasterTypeFactory;
 	}
 

@@ -27,7 +27,14 @@ using Shared::Util::Checksum;
 using Shared::Util::MultiFactory;
 using Shared::Graphics::ShaderProgram;
 
+//
+// 
+//
+
 class CloakType : public RequirableType {
+	
+	friend class Sim::SingleTypeFactory<CloakType>;
+
 private:
 	const UnitType   *m_unitType;
 	CloakClass        m_class;
@@ -38,8 +45,10 @@ private:
 	Texture2D        *m_image;
 	ShaderProgram	 *m_shader;
 
-public:
+private:
 	CloakType(const UnitType *ut);
+
+public:
 	virtual ~CloakType();
 
 	void load(const string &dir, const XmlNode *xmlNode, const TechTree *tt,
@@ -53,7 +62,7 @@ public:
 	const Texture2D* getImage() const      { return m_image; }
 	ShaderProgram* getShader() const       { return m_shader; }
 
-	void doChecksum(Checksum &cs);
+	void doChecksum(Checksum &cs) const;
 };
 
 class DetectorType : public RequirableType {

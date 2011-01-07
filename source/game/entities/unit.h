@@ -137,7 +137,7 @@ typedef list<UnitId> UnitIdList;
  * TotalUpgrade class provided this functionality.
  */
 class Unit : public EnhancementType {
-	friend class StaticFactory<Unit>;
+	friend class EntityFactory<Unit>;
 
 public:
 	typedef list<Command*> Commands;
@@ -584,7 +584,7 @@ inline ostream& operator<<(ostream &stream, const Unit &unit) {
 }
 
 
-class UnitFactory : public StaticFactory<Unit>, public sigslot::has_slots {
+class UnitFactory : public EntityFactory<Unit>, public sigslot::has_slots {
 	friend class Glest::Sim::World; // for saved games
 
 private:
@@ -598,8 +598,8 @@ public:
 	Unit* newUnit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
 	Unit* newUnit(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master = NULL);
 
-	Unit* getUnit(int id) { return StaticFactory<Unit>::getInstance(id); }
-	Unit* getObject(int id) { return StaticFactory<Unit>::getInstance(id); }
+	Unit* getUnit(int id) { return EntityFactory<Unit>::getInstance(id); }
+	Unit* getObject(int id) { return EntityFactory<Unit>::getInstance(id); }
 
 	void onUnitDied(Unit *unit);	// book a visit with the grim reaper
 	void update();					// send the grim reaper on his rounds

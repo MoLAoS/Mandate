@@ -54,11 +54,11 @@ using namespace Search;
 // 	class MasterEntityFactory
 // ===============================
 
-typedef StaticFactory<Upgrade>     UpgradeFactory;
-typedef StaticFactory<Command>     CommandFactory;
-typedef StaticFactory<Effect>      EffectFactory;
-typedef StaticFactory<Projectile>  ProjectileFactory;
-typedef StaticFactory<MapObject>   MapObjectFactory;
+typedef EntityFactory<Upgrade>     UpgradeFactory;
+typedef EntityFactory<Command>     CommandFactory;
+typedef EntityFactory<Effect>      EffectFactory;
+typedef EntityFactory<Projectile>  ProjectileFactory;
+typedef EntityFactory<MapObject>   MapObjectFactory;
 
 class MasterEntityFactory {
 protected:

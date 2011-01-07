@@ -81,7 +81,7 @@ void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree
 	}
 }
 
-void CloakType::doChecksum(Checksum &cs) {
+void CloakType::doChecksum(Checksum &cs) const {
 	cs.add(m_unitType->getId());
 	cs.add(m_class);
 	cs.add(m_tags);

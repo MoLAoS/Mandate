@@ -50,7 +50,7 @@ typedef vector<TargetList> TargetLists;
 // =====================================================
 
 class Command {
-	friend class StaticFactory<Command>;
+	friend class EntityFactory<Command>;
 
 public:
 	static const Vec2i invalidPos;

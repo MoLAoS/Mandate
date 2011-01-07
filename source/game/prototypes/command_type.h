@@ -78,7 +78,7 @@ using Search::CardinalDir;
 // =====================================================
 
 class CommandType : public RequirableType {
-	friend class Glest::Sim::DynamicFactory<CommandClass, CommandType>;
+	friend class Glest::Sim::DynamicTypeFactory<CommandClass, CommandType>;
 	friend class Glest::Sim::MasterTypeFactory;
 
 protected:

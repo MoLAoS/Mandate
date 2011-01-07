@@ -55,10 +55,10 @@ using namespace Entities;
 // =====================================================
 
 class NameIdPair {
-	friend class Sim::DynamicFactory<ProducibleClass, ProducibleType>;
-	friend class Sim::DynamicFactory<SkillClass, SkillType>;
-	friend class Sim::DynamicFactory<CommandClass, CommandType>;
-	friend class Sim::DynamicFactory<EffectClass, EffectType>;
+	friend class Sim::DynamicTypeFactory<ProducibleClass, ProducibleType>;
+	friend class Sim::DynamicTypeFactory<SkillClass, SkillType>;
+	friend class Sim::DynamicTypeFactory<CommandClass, CommandType>;
+	friend class Sim::DynamicTypeFactory<EffectClass, EffectType>;
 
 protected:
 	int    m_id;   // id

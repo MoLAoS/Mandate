@@ -43,8 +43,6 @@ class WidgetWindow;
 
 using std::string;
 
-#define ASSERT_RANGE(var, size)	assert(var >= 0 && var < size)
-
 class MouseWidget;
 class KeyboardWidget;
 class TextWidget;

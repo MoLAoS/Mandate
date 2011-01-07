@@ -25,7 +25,7 @@ using Shared::Math::Vec3f;
 
 using ProtoTypes::MapObjectType;
 using ProtoTypes::ResourceType;
-using Sim::StaticFactory;
+using Sim::EntityFactory;
 
 // =====================================================
 // 	class MapObject
@@ -34,7 +34,7 @@ using Sim::StaticFactory;
 // =====================================================
 
 class MapObject {
-	friend class StaticFactory<MapObject>;
+	friend class EntityFactory<MapObject>;
 
 private:
 	int id;

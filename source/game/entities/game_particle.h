@@ -112,7 +112,7 @@ public:
 // =====================================================
 
 class Projectile : public AttackParticleSystem {
-	friend class Sim::StaticFactory<Projectile>;
+	friend class Sim::EntityFactory<Projectile>;
 	friend class Splash;
 
 private:

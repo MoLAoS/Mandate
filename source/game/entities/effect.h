@@ -29,7 +29,7 @@ class Unit;
   * regeneration/degeneration or other attributes of a unit.
   * @todo: Implement lighting & sound */
 class Effect {
-	friend class StaticFactory<Effect>;
+	friend class EntityFactory<Effect>;
 
 private:
 	int	m_id;
@@ -102,7 +102,7 @@ public:
 	MEMORY_CHECK_DECLARATIONS(Effect)
 };
 
-typedef StaticFactory<Effect> EffectFactory;
+typedef EntityFactory<Effect> EffectFactory;
 
 // ===============================
 // 	class Effects

@@ -320,7 +320,7 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 				<< st->getUnitType()->getName() << ", checksum: " << m_data[n - 1] );
 		}
 		for (int i=0; i < m_prodTypeCount; ++i) {
-			const ProducibleType *pt = g_simInterface.getProducibleType(i);
+			const ProducibleType *pt = g_simInterface.getProdType(i);
 			m_data[++n] = g_simInterface.getChecksum(pt);
 			if (g_simInterface.isUnitType(pt)) {
 				const UnitType *ut = static_cast<const UnitType*>(pt);

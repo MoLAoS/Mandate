@@ -54,7 +54,7 @@ namespace ProtoTypes {
 // =====================================================
 
 class SkillType : public NameIdPair {
-	friend class DynamicFactory<SkillClass, SkillType>;
+	friend class DynamicTypeFactory<SkillClass, SkillType>;
 
 public:
 	typedef vector<Model *> Animations;

@@ -25,6 +25,10 @@ using std::runtime_error;
 
 namespace Shared{ namespace Util{
 
+
+// ! WARNING ! see comment below (in MultiFactory)
+// ===============================================
+
 // =====================================================
 //	class SingleFactoryBase
 // =====================================================
@@ -32,7 +36,7 @@ namespace Shared{ namespace Util{
 class SingleFactoryBase{
 public:
 	virtual ~SingleFactoryBase(){}
-	virtual void *newInstance()= 0;
+	virtual void *newInstance()= 0; // EVIL
 };
 
 // =====================================================
@@ -42,7 +46,7 @@ public:
 template<typename T>
 class SingleFactory: public SingleFactoryBase{
 public:
-	virtual void *newInstance()	{return new T();}
+	virtual void *newInstance()	{return new T();} // EVIL
 };
 
 template <typename T>
@@ -50,7 +54,7 @@ class SingleTypeFactory {
 	SingleFactory<T> singleFactory;
 public:
 	T* newInstance() {
-		return static_cast<T*>(singleFactory.newInstance());
+		return static_cast<T*>(singleFactory.newInstance()); // EVIL
 	}
 };
 
@@ -114,7 +118,7 @@ public:
 		if (it == factories.end()) {
 			throw UnknownType(classId);
 		}
-		return static_cast<T*>(it->second->newInstance());
+		return static_cast<T*>(it->second->newInstance()); // EVIL
 	}
 
 	bool isClassId(string classId) {

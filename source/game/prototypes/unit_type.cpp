@@ -267,7 +267,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		try { // cloak
 			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
 			if (cloakNode) {
-				m_cloakType = new CloakType(this);
+				m_cloakType = g_simInterface.newCloakType(this);
 				m_cloakType->load(dir, cloakNode, techTree, deCloakOnSkills, deCloakOnSkillClasses);
 			}
 		} catch (runtime_error e) {

@@ -25,7 +25,7 @@ namespace Glest { namespace Entities {
 
 using namespace Glest::ProtoTypes;
 using Shared::Xml::XmlNode;
-using Sim::StaticFactory;
+using Sim::EntityFactory;
 
 // =====================================================
 // 	class Upgrade
@@ -34,7 +34,7 @@ using Sim::StaticFactory;
 // =====================================================
 
 class Upgrade {
-	friend class StaticFactory<Upgrade>;
+	friend class EntityFactory<Upgrade>;
 
 private:
 	int m_id;

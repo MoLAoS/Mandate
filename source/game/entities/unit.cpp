@@ -2299,7 +2299,7 @@ int Unit::getSpeed(const SkillType *st) const {
 
 Unit* UnitFactory::newUnit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld) {
 	Unit::LoadParams params(node, faction, map, tt, putInWorld);
-	Unit *unit = StaticFactory<Unit>::newInstance(params);
+	Unit *unit = EntityFactory<Unit>::newInstance(params);
 	if (unit->isAlive()) {
 		unit->Died.connect(this, &UnitFactory::onUnitDied);
 	} else {
@@ -2310,7 +2310,7 @@ Unit* UnitFactory::newUnit(const XmlNode *node, Faction *faction, Map *map, cons
 
 Unit* UnitFactory::newUnit(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master) {
 	Unit::CreateParams params(pos, type, faction, map, face, master);
-	Unit *unit = StaticFactory<Unit>::newInstance(params);
+	Unit *unit = EntityFactory<Unit>::newInstance(params);
 	unit->Died.connect(this, &UnitFactory::onUnitDied);
 	return unit;
 }

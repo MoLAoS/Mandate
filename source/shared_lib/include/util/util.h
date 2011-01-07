@@ -41,6 +41,8 @@ namespace Shared { namespace Xml {
 	class XmlNode;
 }}
 
+#define ASSERT_RANGE(var, size)	assert(var >= 0 && var < size)
+
 #define WRAPPED_ENUM(Name,...)							\
 	struct Name {										\
 		enum Enum { INVALID = -1, __VA_ARGS__, COUNT };	\
