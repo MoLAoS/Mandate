@@ -52,6 +52,8 @@ public:
 	StaticSound* getDeCloakSound() const   { return m_deCloakSound; }
 	const Texture2D* getImage() const      { return m_image; }
 	ShaderProgram* getShader() const       { return m_shader; }
+
+	void doChecksum(Checksum &cs);
 };
 
 class DetectorType : public RequirableType {
