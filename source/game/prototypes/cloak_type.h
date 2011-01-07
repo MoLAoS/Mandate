@@ -54,6 +54,7 @@ public:
 	void load(const string &dir, const XmlNode *xmlNode, const TechTree *tt,
 		vector<string> &out_decloakSkillNames, vector<SkillClass> &out_decloakSkillClasses);
 
+	const UnitType* getUnitType() const    { return m_unitType; }
 	CloakClass getClass() const            { return m_class; }
 	bool isTagType(int tag) const          { assert(tag); return (1 << tag) & m_tags; }
 	int getEnergyCost() const              { return m_cost; }

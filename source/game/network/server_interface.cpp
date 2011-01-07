@@ -177,6 +177,11 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 			<< " ProducibleType checksums, I have " << m_dataSync->getProdTypeCount() )
 		ok = false;
 	}
+	if (m_dataSync->getCloakTypeCount() != msg.getCloakTypeCount()) {
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getProdTypeCount() 
+			<< " CloakType checksums, I have " << m_dataSync->getProdTypeCount() )
+		ok = false;
+	}
 
 	if (!ok) {
 		throw DataSyncError(NetSource::SERVER);
@@ -185,6 +190,7 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 	int cmdOffset = 4;
 	int skllOffset = cmdOffset + m_commandTypeFactory.getTypeCount();
 	int prodOffset = skllOffset + m_skillTypeFactory.getTypeCount();
+	int cloakOffset = prodOffset + m_prodTypeFactory.getTypeCount();
 
 	const int n = m_dataSync->getChecksumCount();
 	for (int i=0; i < n; ++i) {
@@ -213,7 +219,7 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 					<< skillType->getUnitType()->getName() << "' of FactionType '"
 					<< skillType->getUnitType()->getFactionType()->getName() << "'";
 				)
-			} else {
+			} else if (i < cloakOffset) {
 				ProducibleType *pt = m_prodTypeFactory.getType(i - prodOffset);
 				if (isUnitType(pt)) {
 					UnitType *ut = static_cast<UnitType*>(pt);
@@ -231,6 +237,13 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 				} else {
 					throw runtime_error(string("Unknown producible class for type: ") + pt->getName());
 				}
+			} else {
+				CloakType *ct = m_cloakTypeFactory.getType(i - cloakOffset);
+				NETWORK_LOG(
+					"DataSync Fail: CloakType '" << ct->getName() << "' of UnitType '"
+					<< ct->getUnitType()->getName() << "' of FactionType '"
+					<< ct->getUnitType()->getFactionType()->getName() << "'";
+				)
 			}
 		}
 	}

@@ -267,15 +267,16 @@ void LaunchMessage::send(NetworkConnection* connection) const {
 
 DataSyncMessage::DataSyncMessage(RawMessage raw)
 		: m_data(0), fromRaw(true) {
-	if (raw.size % sizeof(int32) != 0) {
+	if (raw.size < 4 * sizeof(int32) && raw.size % sizeof(int32) != 0) {
 		throw GarbledMessage(MessageType::DATA_SYNC, NetSource::SERVER);
 	}
-	m_cmdTypeCount	 = reinterpret_cast<int32*>(raw.data)[0];
-	m_skillTypeCount = reinterpret_cast<int32*>(raw.data)[1];
-	m_prodTypeCount  = reinterpret_cast<int32*>(raw.data)[2];
+	m_cmdTypeCount	  = reinterpret_cast<int32*>(raw.data)[0];
+	m_skillTypeCount  = reinterpret_cast<int32*>(raw.data)[1];
+	m_prodTypeCount   = reinterpret_cast<int32*>(raw.data)[2];
+	m_cloakTypeCount = reinterpret_cast<int32*>(raw.data)[3];
 
 	if (getChecksumCount()) {
-		m_data = reinterpret_cast<int32*>(raw.data) + 3;
+		m_data = reinterpret_cast<int32*>(raw.data) + 4;
 	}
 }
 
@@ -294,11 +295,14 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 	m_cmdTypeCount	 = g_simInterface.getCommandTypeCount();
 	m_skillTypeCount = g_simInterface.getSkillTypeCount();
 	m_prodTypeCount = g_simInterface.getProdTypeCount();
+	m_cloakTypeCount = g_simInterface.getCloakTypeCount();
 
 	NETWORK_LOG( "DataSync" );
 	NETWORK_LOG( "========" );
 	NETWORK_LOG( "CommandType count = " << m_cmdTypeCount
-		<< ", SkillType count = " << m_skillTypeCount << ", ProdType count = " << m_prodTypeCount );
+		<< ", SkillType count = " << m_skillTypeCount 
+		<< ", ProdType count = " << m_prodTypeCount 
+		<< ", CloakType count = " << m_cloakTypeCount );
 
 	m_data = new int32[getChecksumCount()];
 	int n = -1;
@@ -339,13 +343,19 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 				throw runtime_error(string("Unknown producible class for type: ") + pt->getName());
 			}
 		}
+		for (int i=0; i < m_cloakTypeCount; ++i) {
+			const CloakType *ct = g_simInterface.getCloakType(i);
+			m_data[n++] = g_simInterface.getChecksum(ct);
+			NETWORK_LOG( "CloakType " << i << ": " << ct->getName() << " of UnitType: "
+				<< ct->getUnitType()->getName() << ", checksum: " << m_data[n - 1] );
+		}
 	}
 	NETWORK_LOG( "========" );
 }
 
 DataSyncMessage::~DataSyncMessage() {
 	if (fromRaw) {
-		delete [] (m_data - 3); // hacky...
+		delete [] (m_data - 4); // hacky...
 	} else {
 		delete [] m_data;
 	}
@@ -354,10 +364,10 @@ DataSyncMessage::~DataSyncMessage() {
 void DataSyncMessage::send(NetworkConnection* connection) const {
 	MsgHeader header;
 	header.messageType = MessageType::DATA_SYNC;
-	header.messageSize = sizeof(int32) * (getChecksumCount() + 3);
+	header.messageSize = sizeof(int32) * (getChecksumCount() + 4);
 	Message::send(connection, &header, sizeof(MsgHeader));
-	Message::send(connection, &m_cmdTypeCount, sizeof(int32) * 3);
-	Message::send(connection, m_data, header.messageSize - sizeof(int32) * 3);
+	Message::send(connection, &m_cmdTypeCount, sizeof(int32) * 4);
+	Message::send(connection, m_data, header.messageSize - sizeof(int32) * 4);
 	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(header.messageType)]
 		<< ", messageSize: " << header.messageSize
 	);
