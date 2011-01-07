@@ -167,7 +167,7 @@ Unit::Unit(CreateParams params)
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
 
-	if (type->getCloakClass() == CloakClass::PERMANENT) {
+	if (type->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
 		cloak();
 	}
 
@@ -1456,7 +1456,7 @@ void Unit::doUpdate() {
 				}
 			} else {
 				if (getType()->getCloakClass() == CloakClass::PERMANENT
-				&& !getCurrSkill()->causesDeCloak()) {
+				&& !getCurrSkill()->causesDeCloak() && faction->reqsOk(type->getCloakType())) {
 					cloak();
 				}
 			}
@@ -2013,8 +2013,8 @@ bool Unit::add(Effect *e) {
 			return false;
 		}
 	}
-	if (type->getCloakClass() == CloakClass::EFFECT
-	&& e->getType()->isCauseCloak() && e->getType()->isEffectsAlly()) {
+	if (type->getCloakClass() == CloakClass::EFFECT && e->getType()->isCauseCloak() 
+	&& e->getType()->isEffectsAlly() && faction->reqsOk(type->getCloakType())) {
 		cloak();
 	}
 
@@ -2138,7 +2138,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 		if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
 			deCloak();
 		}
-		if (ut->getCloakClass() == CloakClass::PERMANENT) {
+		if (ut->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
 			cloak();
 		}
 

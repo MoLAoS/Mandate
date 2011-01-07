@@ -1131,6 +1131,11 @@ void UserInterface::computeDisplay() {
 
 			if (selection.canCloak()) { // cloak toggle
 				m_display->setDownImage(cloakTogglePos, selection.getCloakImage());
+				if (selection.cloakAvailable()) {
+					m_display->setDownLighted(cloakTogglePos, true);
+				} else {
+					m_display->setDownLighted(cloakTogglePos, false);
+				}
 			}
 
 			if (selection.isMeetable()) { // meeting point

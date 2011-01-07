@@ -93,6 +93,18 @@ public:
 		}
 		return false;
 	}
+	
+	bool cloakAvailable() const {
+		foreach_const (UnitVector, it, m_selectedUnits) {
+			if ((*it)->getType()->getCloakType()) {
+				if ((*it)->getFaction()->reqsOk((*it)->getType()->getCloakType())) {	
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	bool hasUnit(const Unit *unit) const {
 		return (std::find(m_selectedUnits.begin(), m_selectedUnits.end(), unit) != m_selectedUnits.end());
 	}

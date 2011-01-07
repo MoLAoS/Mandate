@@ -276,7 +276,9 @@ void Commander::giveCommand(Command *command) const {
 			case CommandArchetype::SET_CLOAK: {
 				bool cloak = command->isMiscEnabled();
 				if (cloak && !unit->isCloaked()) {
-					unit->cloak();
+					if (unit->getFaction()->reqsOk(unit->getType()->getCloakType())) {
+						unit->cloak();
+					}
 				} else if (!cloak && unit->isCloaked()) {
 					unit->deCloak();
 				}
