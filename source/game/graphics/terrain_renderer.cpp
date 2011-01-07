@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2010      James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -239,7 +240,7 @@ bool TerrainRenderer2::checkCaps() {
 	return isGlVersionSupported(1, 5, 0);
 }
 
-void TerrainRenderer2::updateVertexData(Rect2i &area) {
+void TerrainRenderer2::updateVertexData(Rect2i area) {
 	if (area.p[0] == Vec2i(-1)) {
 		area = Rect2i(Vec2i(0), Vec2i(m_size.w - 2, m_size.h - 2));
 	}

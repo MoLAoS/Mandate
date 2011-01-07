@@ -836,7 +836,7 @@ void Renderer::renderObjects() {
 		const Vec2i &pos = *it;
 		if (!map->isInsideTile(pos)) continue;
 		Tile *sc= map->getTile(pos);
-		Object *o= sc->getObject();
+		MapObject *o= sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
 
 			const Model *objModel= sc->getObject()->getModel();
@@ -1004,11 +1004,8 @@ void Renderer::renderUnits(){
 	SECTION_TIMER(RENDER_UNITS);
 	SECTION_TIMER(RENDER_MODELS);
 	const Unit *unit;
-	const UnitType *ut;
-	int framesUntilDead;
 	const World *world= &g_world;
 	const Faction *thisFaction = world->getThisFaction();
-	const Map *map = world->getMap();
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
 	assertGl();
@@ -1032,7 +1029,7 @@ void Renderer::renderUnits(){
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 
-	// TODO: Just use cells to determine the alive ones, then check all dead ones
+	///@todo Just use cells to determine the alive ones, then check all dead ones
 	for (int i=0; i < world->getFactionCount(); ++i) { 
 		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
 			unit = world->getFaction(i)->getUnit(j);
@@ -1052,7 +1049,7 @@ void Renderer::renderUnits(){
 
 		if (i) {
 			meshCallbackTeamColor.setTeamTexture(world->getFaction(i - 1)->getTexture());
-			int ndx = g_simInterface->getGameSettings().getColourIndex(i - 1);
+			int ndx = g_simInterface.getGameSettings().getColourIndex(i - 1);
 			modelRenderer->setTeamColour(getFactionColour(ndx));
 		} else {
 			meshCallbackTeamColor.setTeamTexture(0);
@@ -1067,23 +1064,13 @@ void Renderer::renderUnits(){
 				continue;
 			}
 
-			ut = unit->getType();
-
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 
 			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
-			Vec3f currVec= unit->getCurrVectorFlat();
-
-			// let dead units start sinking before they go away
-			framesUntilDead = GameConstants::maxDeadCount - unit->getDeadCount();
-			if(framesUntilDead <= 200 && !ut->isOfClass(UnitClass::BUILDING)) {
-				float baseline = logf(20.125f) / 5.f;
-				float adjust = logf((float)framesUntilDead / 10.f + 0.125f) / 5.f;
-				currVec.y += adjust - baseline;
-			}
+			Vec3f currVec = unit->getCurrVectorSink();
 			glTranslatef(currVec.x, currVec.y, currVec.z);
 
 			//rotate
@@ -1091,7 +1078,7 @@ void Renderer::renderUnits(){
 			glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
 
 			//dead alpha
-			float alpha = unit->getDeadAlpha();
+			float alpha = unit->getRenderAlpha();
 			bool fade = alpha < 1.0;
 
 			if (fade) {
@@ -1111,9 +1098,24 @@ void Renderer::renderUnits(){
 			//render
 			const Model *model= unit->getCurrentModel();
 			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
-			modelRenderer->render(model);
-			triangleCount+= model->getTriangleCount();
-			pointCount+= model->getVertexCount();
+
+			if (fade && unit->isCloaked() && unit->getType()->getCloakType()->getShader()) {
+
+				///@todo remove all this, expose frame and unitId as uniforms, shader should
+				/// then be able to generate whatever timing info it needs internally
+				const int frame = g_world.getFrameCount();
+				float a = float(frame % 150);
+				Vec3f anim;
+				anim.r = a >= 75.f ? (a - 75.f) / 75.f : a / 75.f;
+				anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
+				anim.b = a / 150.f;
+
+				modelRenderer->render(model, &anim, unit->getType()->getCloakType()->getShader());
+			} else {
+				modelRenderer->render(model);
+			}
+			triangleCount += model->getTriangleCount();
+			pointCount += model->getVertexCount();
 
 			// restore
 			if (fade) {
@@ -1137,7 +1139,7 @@ void Renderer::renderSelectionEffects() {
 	const World *world= &g_world;
 	const Map *map= world->getMap();
 	const Selection *selection = game->getGui()->getSelection();
-	const Object *selectedObj =  game->getGui()->getSelectedObject();
+	const MapObject *selectedObj =  game->getGui()->getSelectedObject();
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_LIGHTING);
@@ -1177,7 +1179,7 @@ void Renderer::renderSelectionEffects() {
 	}
 
 	if (selectedObj) {
-		Resource *r = selectedObj->getResource();
+		MapResource *r = selectedObj->getResource();
 		if (r) {
 			const float ratio = float(r->getAmount()) / r->getType()->getDefResPerPatch();
 			Vec3f currVec = selectedObj->getPos();
@@ -1196,47 +1198,11 @@ void Renderer::renderSelectionEffects() {
 		}
 
 		// comand arrow
-		if (focusArrows && cmd && !cmd->isAuto()){
-			const CommandType *ct = cmd->getType();
-			if (ct->getClicks() != Clicks::ONE) {
-				// arrow color
-				Vec3f arrowColor;
-				///@todo CommandRefactoring - hailstone 12Dec2010
-				//ct->getArrowColor();
-				switch(ct->getClass()){
-				case CommandClass::MOVE:
-					arrowColor= Vec3f(0.f, 1.f, 0.f);
-					break;
-				case CommandClass::ATTACK:
-				case CommandClass::ATTACK_STOPPED:
-					arrowColor= Vec3f(1.f, 0.f, 0.f);
-					break;
-				default:
-					arrowColor= Vec3f(1.f, 1.f, 0.f);
-				}
-				// arrow target
-				Vec3f arrowTarget;
-				
-				bool doArrow = true;
-				if (cmd->getUnit() != NULL) {
-					if (cmd->getUnit()->isCarried()) {
-						doArrow = false;
-					} else {
-						RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
-						arrowTarget= cmd->getUnit()->getCurrVectorFlat();
-					}
-				} else {
-					Vec2i pos= cmd->getPos();
-					if (pos == Command::invalidPos) {
-						doArrow = false;
-					} else {
-						arrowTarget = Vec3f(float(pos.x), map->getCell(pos)->getHeight(), float(pos.y));
-					}
-				}
-				if (doArrow) {
-					RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
-					renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
-				}
+		if (focusArrows && cmd && !cmd->isAuto()) {
+			Vec3f arrowTarget, arrowColor;
+			if (cmd->getType()->getArrowDetails(cmd, arrowTarget, arrowColor)) {
+				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+				renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
 			}
 		}
 
@@ -1481,7 +1447,7 @@ struct PickHit {
 	}
 };
 
-void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp){
+void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const Vec2i &posDown, const Vec2i &posUp){
 	SECTION_TIMER(RENDER_SELECT);
 	//declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
@@ -1546,17 +1512,17 @@ void Renderer::computeSelected(UnitVector &units, const Object *&obj, const Vec2
 		if (!objectHits.empty()) { 
 			foreach_const (set<PickHit>, it, objectHits) {
 				if (it->name1 == 0x101) { // closest resource hit
-					obj = g_simInterface->getObjectFactory().getObject(it->name2);
+					obj = g_world.getMapObj(it->name2);
 					break;
 				}
 			}
 			if (!obj) { // no resources, get closest object
-				obj = g_simInterface->getObjectFactory().getObject(objectHits.begin()->name2);
+				obj = g_world.getMapObj(objectHits.begin()->name2);
 			}
 		}
 	} else {
 		foreach_const (set<PickHit>, it, unitHits) {
-			Unit *unit = g_simInterface->getUnitFactory().getUnit(it->name2);
+			Unit *unit = g_world.getUnit(it->name2);
 			//string str = intToStr(unit->getId()) + " : " + unit->getType()->getName();
 			//g_gameState.addUnitPickHit(str);
 			units.push_back(unit);
@@ -1872,8 +1838,6 @@ Vec4f Renderer::computeWaterColor(float waterLevel, float cellHeight){
 //render units for shadows or selection purposes
 void Renderer::renderUnitsFast(bool renderingShadows) {
 	const Unit *unit;
-	const UnitType *ut;
-	int framesUntilDead;
 	bool changeColor = false;
 	const World *world= &g_world;
 	const Faction *thisFaction = world->getThisFaction();
@@ -1939,7 +1903,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
-			Vec3f currVec= unit->getCurrVectorFlat();
+			Vec3f currVec = unit->getCurrVectorFlat();
 
 			glTranslatef(currVec.x, currVec.y, currVec.z);
 
@@ -1948,11 +1912,10 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 			// faded shadows
 			if(renderingShadows) {
-				ut = unit->getType();
 				float color = 1.0f - shadowAlpha;
 				
 				//dead alpha
-				float alpha = unit->getDeadAlpha();
+				float alpha = unit->getRenderAlpha();
 				float fade = alpha < 1.0;
 				color *= alpha;
 				changeColor = changeColor || fade;
@@ -1976,7 +1939,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 			}
 
 			//render
-			const Model *model= unit->getCurrentModel();
+			const Model *model = unit->getCurrentModel();
 			model->updateInterpolationVertices(unit->getAnimProgress(), unit->isAlive());
 			modelRenderer->render(model);
 
@@ -2026,9 +1989,9 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 			continue;
 		}
 		Tile *sc = map->getTile(pos);
-		Object *o = sc->getObject();
+		MapObject *o = sc->getObject();
 		if(o && sc->isExplored(thisTeamIndex)) {
-			Resource *r = o->getResource();
+			MapResource *r = o->getResource();
 			if (!renderingShadows && !r) {
 				continue;
 			}

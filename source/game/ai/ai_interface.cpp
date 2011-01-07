@@ -38,7 +38,7 @@ GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 	LOG_AI( __FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
 		<< faction->getType()->getName() << " Random seed: " << randomSeed );
 	this->faction = faction;
-	this->world= g_simInterface->getWorld();
+	this->world= g_simInterface.getWorld();
 
 	timer= 0;
 
@@ -56,32 +56,32 @@ void GlestAiInterface::update(){
 // ==================== interaction ====================
 
 CommandResult GlestAiInterface::giveCommand(int unitIndex, CommandClass commandClass, const Vec2i &pos){
-	Command *c= new Command (faction->getUnit(unitIndex)->getType()->getFirstCtOfClass(commandClass), CommandFlags(), pos);
+	Command *c = g_world.newCommand(faction->getUnit(unitIndex)->getType()->getFirstCtOfClass(commandClass), CommandFlags(), pos);
 	return faction->getUnit(unitIndex)->giveCommand(c);
 }
 
 CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos){
-	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), pos));
+	return faction->getUnit(unitIndex)->giveCommand(g_world.newCommand(commandType, CommandFlags(), pos));
 }
 
 CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos,
 											const ProducibleType* prodType) {
 	return faction->getUnit(unitIndex)->giveCommand(
-		new Command(commandType, CommandFlags(), pos, prodType,CardinalDir::NORTH));
+		g_world.newCommand(commandType, CommandFlags(), pos, prodType,CardinalDir::NORTH));
 }
 
 CommandResult GlestAiInterface::giveCommand(int unitIndex, const CommandType *commandType, Unit *u){
-	return faction->getUnit(unitIndex)->giveCommand(new Command(commandType, CommandFlags(), u));
+	return faction->getUnit(unitIndex)->giveCommand(g_world.newCommand(commandType, CommandFlags(), u));
 }
 
 CommandResult GlestAiInterface::giveCommand(const Unit *unit, const CommandType *commandType) {
-	return const_cast<Unit*>(unit)->giveCommand(new Command(commandType, CommandFlags()));
+	return const_cast<Unit*>(unit)->giveCommand(g_world.newCommand(commandType, CommandFlags()));
 }
 
 CommandResult GlestAiInterface::giveCommand(const Unit *unit, const CommandType *commandType, const Vec2i &pos,
 											const ProducibleType* prodType) {
 	return const_cast<Unit*>(unit)->giveCommand(
-		new Command(commandType, CommandFlags(), pos, prodType, CardinalDir::NORTH));
+		g_world.newCommand(commandType, CommandFlags(), pos, prodType, CardinalDir::NORTH));
 }
 
 // ==================== get data ====================
@@ -127,7 +127,7 @@ void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
 	}
 }
 
-const Resource *GlestAiInterface::getResource(const ResourceType *rt){
+const StoredResource *GlestAiInterface::getResource(const ResourceType *rt){
 	return faction->getResource(rt);
 }
 
@@ -161,7 +161,7 @@ bool GlestAiInterface::getNearestSightedResource(const ResourceType *rt, const V
 
 			//if explored cell
 			if(map->getTile(surfPos)->isExplored(faction->getTeam())){
-				Resource *r= map->getTile(surfPos)->getResource();
+				MapResource *r= map->getTile(surfPos)->getResource();
 
 				//if resource cell
 				if(r!=NULL && r->getType()==rt){

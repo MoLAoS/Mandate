@@ -245,7 +245,7 @@ void MenuStateOptions::saveConfig(){
 	SoundRenderer::getInstance().loadConfig();
 }
 
-//TODO: could use some more cleanup - hailstone 1/DEC/2009
+///@todo could use some more cleanup - hailstone 1/DEC/2009
 void MenuStateOptions::setupListBoxLang() {
 	Config &config= Config::getInstance();
 

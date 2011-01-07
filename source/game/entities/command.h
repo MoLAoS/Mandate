@@ -29,6 +29,20 @@ namespace Glest { namespace Entities {
 
 typedef Flags<CommandProperties, CommandProperties::COUNT, uint8> CommandFlags;
 
+class TargetList {
+private:
+	ConstUnitVector m_units;
+
+public:
+	TargetList(const ConstUnitVector &units) : m_units(units) { }
+
+	const Unit* getClosest(const Unit *source);
+	const Unit* getClosest(const Unit *source, const string &tag);
+	const Unit* getClosest(const Unit *source, const set<string> &tags);
+};
+
+typedef vector<TargetList> TargetLists;
+
 // =====================================================
 // 	class Command
 //
@@ -36,34 +50,90 @@ typedef Flags<CommandProperties, CommandProperties::COUNT, uint8> CommandFlags;
 // =====================================================
 
 class Command {
-public:
+	friend class EntityFactory<Command>;
 
+public:
 	static const Vec2i invalidPos;
 	static int lastId;
 
 private:
+	int m_id;
 	CommandArchetype archetype;
 	const CommandType *type;
 	CommandFlags flags;
 	Vec2i pos;
-	Vec2i pos2;					//for patrol command, the position traveling away from.
-	UnitId unitRef;		//target unit, used to move and attack optinally
-	UnitId unitRef2;		//for patrol command, the unit traveling away from.
-	const ProducibleType *prodType;	//used for build, multi-tier morph and generate
+	Vec2i pos2;			// for patrol command, the position traveling away from.
+	UnitId unitRef;		// target unit, used to move and attack optinally
+	UnitId unitRef2;	// for patrol command, the unit traveling away from.
+	const ProducibleType *prodType;	// used for build, produce, upgrade, morph and generate
 	CardinalDir facing;
 	Unit *commandedUnit;
-	int id;						//give each command a unique id so it is distinguishable
 
 public:
+
+	struct CreateParamsArch {
+		CommandArchetype archetype;
+		CommandFlags flags;
+		const Vec2i pos;
+		Unit *commandedUnit;
+
+		CreateParamsArch(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL)
+			: archetype(archetype), flags(flags), pos(pos), commandedUnit(commandedUnit) { }
+	};
+	
+	struct CreateParamsPos { // create params for order with target position
+		const CommandType *type;
+		CommandFlags flags;
+		Vec2i pos;
+		Unit *commandedUnit;
+
+		CreateParamsPos(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) 
+			: type(type), flags(flags), pos(pos), commandedUnit(commandedUnit) { }
+	};
+
+	struct CreateParamsUnit { // create params for order with target unit
+		const CommandType *type;
+		CommandFlags flags;
+		Unit *unit;
+		Unit *commandedUnit;
+
+		CreateParamsUnit(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL) 
+			: type(type), flags(flags), unit(unit), commandedUnit(commandedUnit) { }
+	};
+
+	struct CreateParamsProd { // create params for order with producible
+		const CommandType *type;
+		CommandFlags flags;
+		Vec2i pos;
+		const ProducibleType *prodType;
+		CardinalDir facing;
+		Unit *commandedUnit;
+
+		CreateParamsProd(const CommandType *type, CommandFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) 
+			: type(type), flags(flags), pos(pos), prodType(prodType), facing(facing), commandedUnit(commandedUnit) { }
+	};
+
+	struct CreateParamsLoad { // create params to de-serialise
+		const XmlNode *node;
+		const UnitType *ut;
+		const FactionType *ft;
+
+		CreateParamsLoad(const XmlNode *node, const UnitType *ut, const FactionType *ft) 
+			: node(node), ut(ut), ft(ft) { }
+	};
+
+private:
 	//constructor
-	Command(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
-	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL);
-	Command(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL);
-	Command(const CommandType *type, CommandFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL);
-	Command(const XmlNode *node, const UnitType *ut, const FactionType *ft);
+	Command(CreateParamsArch params);
+	Command(CreateParamsPos params);
+	Command(CreateParamsUnit params);
+	Command(CreateParamsProd params);
+	Command(CreateParamsLoad params);
 
-	// allow default ctor
+	~Command() {}
+	void setId(int v) { m_id = v; }
 
+public:
 	MEMORY_CHECK_DECLARATIONS(Command)
 
 	//get
@@ -83,7 +153,7 @@ public:
 	const ProducibleType* getProdType() const	{return prodType;}
 	CardinalDir getFacing() const				{return facing;}
 	Unit *getCommandedUnit() const				{return commandedUnit;}
-	int getId() const							{return id;}
+	int getId() const							{return m_id;}
 
 	bool hasPos() const							{return pos.x != -1;}
 	bool hasPos2() const						{return pos2.x != -1;}

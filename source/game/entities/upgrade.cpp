@@ -18,6 +18,7 @@
 #include "util.h"
 #include "upgrade_type.h"
 #include "faction_type.h"
+#include "world.h"
 
 #include "leak_dumper.h"
 
@@ -31,19 +32,22 @@ namespace Glest { namespace Entities {
 
 MEMORY_CHECK_IMPLEMENTATION(Upgrade)
 
-Upgrade::Upgrade(const XmlNode *node, const FactionType *ft) {
-	type = ft->getUpgradeType(node->getChildStringValue("type"));
-	state = enum_cast<UpgradeState>(node->getChildIntValue("state"));
-	factionIndex = node->getChildIntValue("factionIndex");
+Upgrade::Upgrade(LoadParams params) { //const XmlNode *node, const FactionType *ft) {
+	m_id = params.node->getChildIntValue("id");
+	type = params.faction->getType()->getUpgradeType(params.node->getChildStringValue("type"));
+	state = enum_cast<UpgradeState>(params.node->getChildIntValue("state"));
+	factionIndex = params.node->getChildIntValue("factionIndex");
 }
 
-Upgrade::Upgrade(const UpgradeType *type, int factionIndex){
+Upgrade::Upgrade(CreateParams params) { //const UpgradeType *type, int factionIndex) {
+	m_id = -1;
 	state = UpgradeState::UPGRADING;
-	this->factionIndex = factionIndex;
-	this->type = type;
+	this->factionIndex = params.factionIndex;
+	this->type = params.upgradeType;
 }
 
 void Upgrade::save(XmlNode *node) const {
+	node->addChild("id", m_id);
 	node->addChild("type", type->getName());
 	node->addChild("state", state);
 	node->addChild("factionIndex", factionIndex);
@@ -79,7 +83,7 @@ UpgradeManager::~UpgradeManager(){
 }
 
 void UpgradeManager::startUpgrade(const UpgradeType *upgradeType, int factionIndex){
-	upgrades.push_back(new Upgrade(upgradeType, factionIndex));
+	upgrades.push_back(g_world.newUpgrade(upgradeType, factionIndex));
 }
 
 void UpgradeManager::cancelUpgrade(const UpgradeType *upgradeType){
@@ -156,10 +160,10 @@ void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementType *tota
 	}
 }
 
-void UpgradeManager::load(const XmlNode *node, const FactionType *ft) {
+void UpgradeManager::load(const XmlNode *node, Faction *faction) {
 	upgrades.resize(node->getChildCount());
 	for(int i = 0; i < node->getChildCount(); ++i) {
-		upgrades[i] = new Upgrade(node->getChild("upgrade", i), ft);
+		upgrades[i] = g_world.newUpgrade(node->getChild("upgrade", i), faction);
 	}
 }
 

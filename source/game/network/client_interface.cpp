@@ -103,7 +103,7 @@ void ClientInterface::doLaunchMessage() {
 		throw InvalidMessage(MessageType::LAUNCH, msg.type);
 	}
 	LaunchMessage launchMsg(msg);
-	GameSettings &gameSettings = g_simInterface->getGameSettings();
+	GameSettings &gameSettings = g_simInterface.getGameSettings();
 	gameSettings.clear();
 	launchMsg.buildGameSettings(&gameSettings);
 	// replace server player by network
@@ -129,7 +129,7 @@ void ClientInterface::doDataSync() {
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
 	NETWORK_LOG( __FUNCTION__ << " waiting for server to send Skill Cycle Table." );
-	int skillCount = g_world.getSkillTypeFactory().getTypeCount();
+	int skillCount = m_skillTypeFactory.getTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();

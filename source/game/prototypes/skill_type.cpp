@@ -65,7 +65,7 @@ SkillType::~SkillType(){
 void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
 	m_unitType = ut;
 	const FactionType *ft = ut->getFactionType();
-	name = sn->getChildStringValue("name");
+	m_name = sn->getChildStringValue("name");
 	epCost = sn->getOptionalIntValue("ep-cost");
 	speed = sn->getChildIntValue("speed");
 	minRange = sn->getOptionalIntValue("min-range", 1);
@@ -185,7 +185,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 
 void SkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<SkillClass>(getClass());
-	checksum.add(name);
+	checksum.add(m_name);
 	checksum.add(epCost);
 	checksum.add(speed);
 	checksum.add(animSpeed);
@@ -200,7 +200,7 @@ void SkillType::doChecksum(Checksum &checksum) const {
 
 void SkillType::descEffects(string &str, const Unit *unit) const {
 	for(EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
-		str += "Effect: ";
+		str += g_lang.get("Effect") + ": ";
 		(*i)->getDesc(str);
 	}
 }
@@ -665,13 +665,13 @@ const AttackSkillType *AttackSkillTypes::getPreferredAttack(
 		ast = NULL;
 	}
 
-	if(hasPreference(AttackSkillPreference::ON_BUILDING) && unit->getType()->isOfClass(UnitClass::BUILDING)) {
-		ast = getSkillForPref(AttackSkillPreference::ON_BUILDING, rangeToTarget);
-	}
+	//if(hasPreference(AttackSkillPreference::ON_BUILDING) && unit->getType()->isOfClass(UnitClass::BUILDING)) {
+	//	ast = getSkillForPref(AttackSkillPreference::ON_BUILDING, rangeToTarget);
+	//}
 
-	if(!ast && hasPreference(AttackSkillPreference::ON_LARGE) && unit->getType()->getSize() > 1) {
-		ast = getSkillForPref(AttackSkillPreference::ON_LARGE, rangeToTarget);
-	}
+	//if(!ast && hasPreference(AttackSkillPreference::ON_LARGE) && unit->getType()->getSize() > 1) {
+	//	ast = getSkillForPref(AttackSkillPreference::ON_LARGE, rangeToTarget);
+	//}
 
 	//still haven't found an attack skill then use the 1st that's in range
 	if(!ast) {

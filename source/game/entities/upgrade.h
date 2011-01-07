@@ -21,9 +21,11 @@ using Shared::Xml::XmlNode;
 #include "game_constants.h"
 #include "forward_decs.h"
 
-using namespace Glest::ProtoTypes;
-
 namespace Glest { namespace Entities {
+
+using namespace Glest::ProtoTypes;
+using Shared::Xml::XmlNode;
+using Sim::EntityFactory;
 
 // =====================================================
 // 	class Upgrade
@@ -32,7 +34,10 @@ namespace Glest { namespace Entities {
 // =====================================================
 
 class Upgrade {
+	friend class EntityFactory<Upgrade>;
+
 private:
+	int m_id;
 	UpgradeState state;
 	int factionIndex;
 	const UpgradeType *type;
@@ -40,10 +45,26 @@ private:
 	friend class UpgradeManager;
 
 public:
-	Upgrade(const XmlNode *node, const FactionType *ft);
-	Upgrade(const UpgradeType *upgradeType, int factionIndex);
+	struct CreateParams {
+		const UpgradeType *upgradeType;
+		int factionIndex;
+		CreateParams(const UpgradeType *type, int fNdx) : upgradeType(type), factionIndex(fNdx) {}
+	};
+	struct LoadParams {
+		const XmlNode *node;
+		Faction *faction;
+		LoadParams(const XmlNode *n, Faction *f) : node(n), faction(f) {}
+	};
 
+public:
+	Upgrade(LoadParams params);
+	Upgrade(CreateParams params);
+
+	void setId(int v) { m_id = v; }
+
+public:
 	//get
+	int getId() const { return m_id; }
 	const UpgradeType * getType() const;
 	UpgradeState getState() const;
 
@@ -84,7 +105,7 @@ public:
 	bool isUpgradingOrUpgraded(const UpgradeType *upgradeType) const;
 	void computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const;
 
-	void load(const XmlNode *node, const FactionType *ft);
+	void load(const XmlNode *node, Faction *f);
 	void save(XmlNode *node) const;
 };
 

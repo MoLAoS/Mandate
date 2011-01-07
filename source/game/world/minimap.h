@@ -2,7 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2010 James McCulloch
+//				  2010      James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -33,6 +33,19 @@ enum ExplorationState{
 	esVisible
 };
 
+struct AttackNoticeCircle {
+	Vec2i	m_pos;
+	float	m_alpha;
+	int		m_ttl;
+	bool	m_up;
+
+	AttackNoticeCircle() {}
+	void init(Vec2i pos);
+
+	bool update();
+	void render(Vec2i mmPos, int mmHeight, fixed ratio);
+};
+
 // =====================================================
 // 	class Minimap
 //
@@ -41,12 +54,18 @@ enum ExplorationState{
 
 class Minimap : public Widget, public MouseWidget {
 private:
+	typedef vector<AttackNoticeCircle> AttackNotices;
+
+private:
 	Pixmap2D*		m_fowPixmap0;
 	Pixmap2D*		m_fowPixmap1;
 	Texture2D*		m_terrainTex;	// base map texture
 	Texture2D*		m_fowTex;		// Fog Of War texture
 	Texture2D*		m_unitsTex;		// Units 'overlay' texture
 	TypeMap<int8>*	m_unitsPMap;	// overlay construction helper (at cell resolution)
+
+	Texture2D*		m_attackNoticeTex;
+	AttackNotices	m_attackNotices;
 
 	int		m_w, m_h;
 	fixed	m_ratio,	/**< aspect ratio of map */
@@ -76,6 +95,10 @@ public:
 	const Texture2D *getFowTexture() const	{return m_fowTex;}
 	const Texture2D *getTexture() const		{return m_terrainTex;}
 
+	void addAttackNotice(Vec2i pos);
+
+	void update(int frameCount);
+
 	void resetFowTex();
 	void updateFowTex(float t);
 	void updateUnitTex();
@@ -83,7 +106,6 @@ public:
 	// heavy use function
 	void incFowTextureAlphaSurface(const Vec2i &sPos, float alpha) {
 		assert(sPos.x < m_fowPixmap1->getW() && sPos.y < m_fowPixmap1->getH());
-	
 		if(m_fowPixmap1->getPixelf(sPos.x, sPos.y) < alpha) {
 			m_fowPixmap1->setPixel(sPos.x, sPos.y, alpha);
 		}

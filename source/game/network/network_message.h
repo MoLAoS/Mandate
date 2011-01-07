@@ -190,8 +190,7 @@ private:
 	int32 m_cmdTypeCount;
 	int32 m_skillTypeCount;
 	int32 m_prodTypeCount;
-	//int32 m_unitTypeCount;
-	//int32 m_upgrdTypeCount;
+	int32 m_cloakTypeCount;
 	int32 *m_data;
 	bool fromRaw;
 
@@ -205,8 +204,10 @@ public:
 	int32 getCmdTypeCount()	  const { return m_cmdTypeCount;   }
 	int32 getSkillTypeCount() const { return m_skillTypeCount; }
 	int32 getProdTypeCount() const { return m_prodTypeCount; }
+	int32 getCloakTypeCount() const { return m_cloakTypeCount; }
+
 	int32 getChecksumCount()  const {
-		return m_cmdTypeCount + m_skillTypeCount + m_prodTypeCount + 4;
+		return m_cmdTypeCount + m_skillTypeCount + m_prodTypeCount + m_cloakTypeCount + 4;
 	}
 
 	virtual bool receive(NetworkConnection* connection);

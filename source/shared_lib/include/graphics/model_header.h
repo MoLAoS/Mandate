@@ -48,8 +48,8 @@ enum MeshTexture{
 	mtDiffuse,
 	mtSpecular,
 	mtNormal,
-	mtReflection,
-	mtColorMask,
+	mtCustom1,
+	mtCustom2,
 
 	meshTextureCount
 };

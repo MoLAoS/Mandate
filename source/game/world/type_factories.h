@@ -9,188 +9,319 @@
 #ifndef _GLEST_SIM_TYPE_FACTORY_
 #define _GLEST_SIM_TYPE_FACTORY_
 
+#include "util.h"
 #include "factory.h"
 #include "unit_type.h"
 #include "upgrade_type.h"
 #include "command_type.h"
 #include "skill_type.h"
+
 #include "logger.h"
 
 namespace Glest { namespace Sim {
 using namespace ProtoTypes;
 using Util::Logger;
 
-// ===============================
-//  class TypeFactory
-// ===============================
+// ===================================================================
+//  class EntityFactory, a factory class for transient instance types
+// ===================================================================
 
-template<typename ProtoType>
-class TypeFactory : private SingleTypeFactory<ProtoType> {
-private:
-	typedef map<int, ProtoType*>	TypeTable;
-	typedef map<ProtoType*, int32>	ChecksumTable;
+template<typename Entity> class EntityFactory {
+
+	friend class World; // needs to get and set id counters for save games
 
 private:
-	TypeTable		m_typeTable;
-	ChecksumTable	m_checksumTable;
+	typedef std::map<int, Entity*>  ObjectTable;
+	typedef std::vector<Entity*>    ObjectList;
+
+private:
+	ObjectTable  m_objTable;
+	ObjectList   m_allObjs;
+	int          m_idCounter;
+	const bool   m_destoryObjects;
+
+private:
+	void registerInstance(Entity *obj) {
+		if (obj->getId() == -1) {
+			obj->setId(m_idCounter++);
+		} else {
+			RUNTIME_CHECK(m_objTable.find(obj->getId()) == m_objTable.end());
+		}
+		m_allObjs.push_back(obj);
+		m_objTable[obj->getId()] = obj;
+	}
+
+protected:
+	void setIdCounter(int idCount) { m_idCounter = idCount; }
+	int  getIdCounter() const      { return m_idCounter;    }
 
 public:
-	TypeFactory() { }
-
-	~TypeFactory() {
-		deleteMapValues(m_typeTable.begin(), m_typeTable.end());
-		m_typeTable.clear();
-		m_checksumTable.clear();
+	template <typename Arg1>
+	Entity* newInstance(Arg1 a1) {
+		Entity *newbie = new Entity(a1);
+		registerInstance(newbie);
+		return newbie;
 	}
 
-	ProtoType* newInstance(int id) {
-		ProtoType *t = SingleTypeFactory<ProtoType>::newInstance();
-		t->setId(id);
-		m_typeTable[id] = t;
-		return t;
+	void deleteInstance(int id) {
+		typename ObjectTable::iterator it = m_objTable.find(id);
+		RUNTIME_CHECK(it != m_objTable.end());
+		m_allObjs.erase(std::find(m_allObjs.begin(), m_allObjs.end(), it->second));
+		delete it->second;
+		m_objTable.erase(it);
 	}
 
-	void setChecksum(ProtoType *t) {
-		assert(m_checksumTable.find(t) == m_checksumTable.end());
+	void deleteInstance(const Entity *ptr) {
+		deleteInstance(ptr->getId());
+	}
+
+public:
+	EntityFactory(bool deleteObjs = true) : m_idCounter(0), m_destoryObjects(deleteObjs) { }
+
+	virtual ~EntityFactory() {
+		if (m_destoryObjects) {
+			for (typename ObjectList::iterator it = m_allObjs.begin(); it != m_allObjs.end(); ++it) {
+				delete *it;
+			}
+		}
+	}
+
+	unsigned getInstanceCount() const { return m_allObjs.size(); }
+
+	Entity* getInstance(int id) {
+		typename ObjectTable::iterator it = m_objTable.find(id);
+		if (it != m_objTable.end()) {
+			return it->second;
+		} else {
+			return 0;
+		}
+	}
+
+	typename ObjectList::const_iterator begin() const { return m_allObjs.begin(); }
+	typename ObjectList::const_iterator end() const { return m_allObjs.end();}
+};
+
+
+// ===============================
+//  class SingleTypeFactory
+// ===============================
+/** Single Type Factory, for load once (non-transient) ProtoType classes */
+
+template<typename Type> class SingleTypeFactory {
+private:
+	typedef vector<Type*>             ObjectList;
+	typedef map<const Type*, int32>   ChecksumMap;
+
+private:
+	ObjectList   m_types;
+	ChecksumMap  m_checksumTable;
+
+public:
+	SingleTypeFactory() { }
+
+	virtual ~SingleTypeFactory() {
+		deleteValues(m_types);
+	}
+
+	Type* newInstance() {
+		Type *newbie = new Type();
+		m_types.push_back(newbie);
+		newbie->setId(m_types.size() - 1);
+		return newbie;
+	}
+
+	template <typename Arg1>
+	Type* newInstance(Arg1 a1) {
+		Type *newbie = new Type(a1);
+		m_types.push_back(newbie);
+		newbie->setId(m_types.size() - 1);
+		return newbie;
+	}
+
+	Type* getType(int id)	{ ASSERT_RANGE(id, m_types.size()); return m_types[id]; }
+	int getTypeCount() const	{ return m_types.size(); }
+
+	int32 getChecksum(const Type *t) {
+		return m_checksumTable[t];
+	}
+	void setChecksum(const Type *t) {
 		Checksum checksum;
 		t->doChecksum(checksum);
 		m_checksumTable[t] = checksum.getSum();
 	}
 
-	ProtoType* getType(int id) {
-		return m_typeTable[id];
+};
+
+// ===============================
+//  class DynamicTypeFactory
+// ===============================
+/** Dynamic Type Factory, for load once (non-transient) ProtoType classes,
+  * Enum describes the derived class set, all of which must derive from (or be) 
+  * BaseType, derived types must implement a static function 'Enum typeClass()' */
+template<typename Enum, typename BaseType> class DynamicTypeFactory {
+private:
+	typedef map<Enum, SingleFactoryBase*>		Factories;
+	typedef pair<Enum, SingleFactoryBase*>		FactoryPair;
+	typedef vector<BaseType*>					ObjectList;
+	typedef map<const BaseType*, int32>			ChecksumMap;
+
+private:
+	Factories		m_factories;
+	ObjectList		m_allObjs;
+	ObjectList		m_objsByType[Enum::COUNT];
+	ChecksumMap		m_checksumTable;
+	int				m_idCounter;
+
+public:
+	DynamicTypeFactory() : m_idCounter(0) { }
+
+	virtual ~DynamicTypeFactory() {
+		deleteValues(m_allObjs);
+		deleteMapValues(m_factories);
 	}
 
-	const ProtoType* findType(const string &name) const {
-		foreach_const (TypeTable, it, m_typeTable) {
-			if (it->second->getName() == name) {
-				return it->second;
-			}
+	template<typename DerivedType>
+	void registerClass() {
+		Enum typeClass = DerivedType::typeClass();
+		assert(m_factories.find(typeClass) == m_factories.end());
+		m_factories.insert(FactoryPair(typeClass, new SingleFactory<DerivedType>()));
+	}
+
+	BaseType* newInstance(Enum typeClass) {
+		typename Factories::iterator it = m_factories.find(typeClass);
+		if (it == m_factories.end()) {
+			throw UnknownType("Invalid type class: " + intToStr(typeClass));
+		}
+		BaseType *newbie = static_cast<BaseType*>(it->second->newInstance());
+		m_objsByType[typeClass].push_back(newbie);
+		m_allObjs.push_back(newbie);
+		newbie->setId(m_idCounter++);
+		return newbie;
+	}
+
+	BaseType* newInstance(Enum typeClass, const string &name) {
+		BaseType *newbie = newInstance(typeClass);
+		newbie->setName(name);
+		return newbie;
+	}
+
+	BaseType* getType(int id)	{ return m_allObjs[id]; }
+	BaseType* getObject(int id) { return getType(id); }
+	int getTypeCount() const	{ return m_allObjs.size(); }
+
+	template <typename DerivedType>
+	int getTypeCount()		{ return m_objsByType[DerivedType::typeClass()].size(); }
+
+	template <typename DerivedType>
+	DerivedType* getTypeById(int id) {
+		BaseType *btp = m_allObjs[id];
+		if (btp->getClass() == DerivedType::typeClass()) {
+			return static_cast<DerivedType*>(btp);
 		}
 		return 0;
 	}
 
-	int32 getChecksum(ProtoType *t) {
-		assert(m_checksumTable.find(t) != m_checksumTable.end());
+	template <typename DerivedType>
+	DerivedType* getTypeByIndex(int ndx) {
+		Enum e = DerivedType::typeClass();
+		if (e != Enum::INVALID) {
+			return static_cast<DerivedType*>(m_objsByType[e][ndx]);
+		}
+		return 0;
+	}
+
+	int32 getChecksum(const BaseType *t) {
 		return m_checksumTable[t];
 	}
+	void setChecksum(const BaseType *t) {
+		Checksum checksum;
+		t->doChecksum(checksum);
+		m_checksumTable[t] = checksum.getSum();
+	}
+
 };
-
-// ===============================
-//  class CommandTypeFactory
-// ===============================
-
-class CommandTypeFactory: private MultiFactory<CommandType> {
-private:
-	vector<CommandType *> m_types;
-	map<CommandType*, int32> m_checksumTable;
-	int m_idCounter;
-
-public:
-	CommandTypeFactory();
-	~CommandTypeFactory();
-
-	CommandType* newInstance(string classId, UnitType *owner);
-	CommandType* getType(int id) { return m_types[id]; }
-	int getTypeCount() const	{ return m_types.size(); }
-	int32 getChecksum(CommandType *ct);
-	void setChecksum(CommandType *ct);
-};
-
-// ===============================
-// 	class SkillTypeFactory
-// ===============================
-
-class SkillTypeFactory: public MultiFactory<SkillType> {
-private:
-	vector<SkillType*> m_types;
-	map<SkillType *, int32> m_checksumTable;
-	int m_idCounter;
-
-public:
-	SkillTypeFactory();
-	~SkillTypeFactory();
-
-	SkillType* newInstance(string classId);
-	SkillType* getType(int id)	{ return m_types[id]; }
-	int getTypeCount() const	{ return m_types.size(); }
-	int32 getChecksum(SkillType *st);
-	void setChecksum(SkillType *st);
-};
-
-WRAPPED_ENUM ( ProducibleClass, NONE, GENERATED, UPGRADE, UNIT );
 
 // ===============================
 // 	class MasterTypeFactory
 // ===============================
 
-class MasterTypeFactory {
-private:
-	int							m_idCounter;
-	vector<ProducibleType*>		m_types;
-	map<int, ProducibleClass>	m_classMap;
+typedef DynamicTypeFactory<SkillClass, SkillType>            SkillTypeFactory;
+typedef DynamicTypeFactory<CommandClass, CommandType>        CommandTypeFactory;
+typedef DynamicTypeFactory<ProducibleClass, ProducibleType>  ProducibleTypeFactory;
+typedef DynamicTypeFactory<EffectClass, EffectType>	         EffectTypeFactory;
+typedef SingleTypeFactory<CloakType>                         CloakTypeFactory;
 
-	TypeFactory<GeneratedType>  m_generatedTypeFactory;
-	TypeFactory<UpgradeType>	m_upgradeTypeFactory;
-	TypeFactory<UnitType>		m_unitTypeFactory;
+class MasterTypeFactory {
+protected:
+	ProducibleTypeFactory  m_prodTypeFactory;
+	SkillTypeFactory       m_skillTypeFactory;
+	CommandTypeFactory     m_commandTypeFactory;
+	EffectTypeFactory      m_effectTypeFactory;
+	CloakTypeFactory       m_cloakTypeFactory;
 
 public:
-	MasterTypeFactory() : m_idCounter(0) {}
+	MasterTypeFactory();
 
-	ProducibleType* getType(int id) {
-		RUNTIME_CHECK(id >= 0 && id < m_types.size());
-		return m_types[id];
-	}
+	// get checksums
+	int32 getChecksum(const ProducibleType *pt) { return m_prodTypeFactory.getChecksum(pt); }
+	int32 getChecksum(const CommandType *ct) { return m_commandTypeFactory.getChecksum(ct); }
+	int32 getChecksum(const SkillType *st) { return m_skillTypeFactory.getChecksum(st); }
+	int32 getChecksum(const EffectType *et) { return m_effectTypeFactory.getChecksum(et); }
+	int32 getChecksum(const CloakType *ct) { return m_cloakTypeFactory.getChecksum(ct); }
 
-	//ProducibleType* getType(string type) {
-	//	for (int i=0; i < m_types.size(); ++i) {
-	//		if (m_types[i]->getName() == type) {
-	//			return m_types[i];
-	//		}
-	//	}
-	//	throw runtime_error("Error, could not find producible type: " + type);
-	//}
+	// is
+	bool isGeneratedType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::GENERATED;}
+	bool isUpgradeType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UPGRADE;}
+	bool isUnitType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UNIT;}
 
-	int getTypeCount() const { return m_types.size(); }
-
-	int32 getChecksum(ProducibleType *pt) {
-		switch (m_classMap[pt->getId()]) {
-			case ProducibleClass::GENERATED:
-				return m_generatedTypeFactory.getChecksum(static_cast<GeneratedType*>(pt));
-			case ProducibleClass::UPGRADE:
-				return m_upgradeTypeFactory.getChecksum(static_cast<UpgradeType*>(pt));
-			case ProducibleClass::UNIT:
-				return m_unitTypeFactory.getChecksum(static_cast<UnitType*>(pt));
-			default:
-				throw runtime_error("Unknown producible type");
-		}
-	}
-
-	bool isGeneratedType(const ProducibleType *pt) { return m_classMap[pt->getId()] == ProducibleClass::GENERATED;}
-	bool isUpgradeType(const ProducibleType *pt) { return m_classMap[pt->getId()] == ProducibleClass::UPGRADE;}
-	bool isUnitType(const ProducibleType *pt) { return m_classMap[pt->getId()] == ProducibleClass::UNIT;}
-
+public:	// create objects
 	GeneratedType* newGeneratedType() {
-		m_types.push_back(m_generatedTypeFactory.newInstance(m_idCounter++));
-		m_classMap[m_types.size() - 1] = ProducibleClass::GENERATED;
-		return static_cast<GeneratedType*>(m_types.back());
+		ProducibleType *pt = m_prodTypeFactory.newInstance(ProducibleClass::GENERATED);
+		return static_cast<GeneratedType*>(pt);
 	}
-
 	UpgradeType* newUpgradeType() {
-		m_types.push_back(m_upgradeTypeFactory.newInstance(m_idCounter++));
-		m_classMap[m_types.size() - 1] = ProducibleClass::UPGRADE;
-		return static_cast<UpgradeType*>(m_types.back());
-	}
-
+		ProducibleType *pt = m_prodTypeFactory.newInstance(ProducibleClass::UPGRADE);
+		return static_cast<UpgradeType*>(pt);
+ 	}
 	UnitType*	newUnitType() {
-		m_types.push_back(m_unitTypeFactory.newInstance(m_idCounter++));
-		m_classMap[m_types.size() - 1] = ProducibleClass::UNIT;
-		return static_cast<UnitType*>(m_types.back());
+		ProducibleType *pt = m_prodTypeFactory.newInstance(ProducibleClass::UNIT);
+		return static_cast<UnitType*>(pt);
+ 	}
+	SkillType*		newSkillType(SkillClass sc)		{ return m_skillTypeFactory.newInstance(sc); }
+	CommandType*	newCommandType(CommandClass cc, const UnitType *ut)	{
+		CommandType *ct = m_commandTypeFactory.newInstance(cc);
+		ct->setUnitType(ut);
+		return ct;
 	}
 
-	TypeFactory<GeneratedType>  &getGeneratedTypeFactory() { return m_generatedTypeFactory; }
-	TypeFactory<UpgradeType>	&getUpgradeTypeFactory() { return m_upgradeTypeFactory; }
-	TypeFactory<UnitType>		&getUnitTypeFactory() { return m_unitTypeFactory; }
+	EffectType*		newEffectType()		{ return m_effectTypeFactory.newInstance(EffectClass::EFFECT); }
+	EmanationType*	newEmanationType()	{ 
+		return static_cast<EmanationType*>(m_effectTypeFactory.newInstance(EffectClass::EMANATION));
+ 	}
+
+	CloakType* newCloakType(const UnitType *ut) { 
+		CloakType *ct = m_cloakTypeFactory.newInstance(ut);
+		return ct;
+	}
+
+	// checksums
+	void setChecksum(const SkillType *st) { m_skillTypeFactory.setChecksum(st); }
+	void setChecksum(const CommandType *ct) { m_commandTypeFactory.setChecksum(ct); }
+	void setChecksum(const ProducibleType *pt) { m_prodTypeFactory.setChecksum(pt); }
+	void setChecksum(const EffectType *et) { m_effectTypeFactory.setChecksum(et); }
+	void setChecksum(const CloakType *ct) { m_cloakTypeFactory.setChecksum(ct); }
+
+	// get
+	//ProducibleType* getProducibleType(int id) { return m_prodTypeFactory.getType(id); }
+	const ProducibleType* getProdType(int id) { return m_prodTypeFactory.getType(id); }
+	int getProdTypeCount() const { return m_prodTypeFactory.getTypeCount(); }
+	const UnitType* getUnitType(int id) { return m_prodTypeFactory.getTypeById<UnitType>(id); }
+	const SkillType* getSkillType(int id) { return m_skillTypeFactory.getType(id); }
+	int getSkillTypeCount() const { return m_skillTypeFactory.getTypeCount(); }
+	const CommandType* getCommandType(int id) { return m_commandTypeFactory.getType(id); }
+	int getCommandTypeCount() const { return m_commandTypeFactory.getTypeCount(); }
+	const CloakType* getCloakType(int i) { return m_cloakTypeFactory.getType(i); }
+	int getCloakTypeCount() const { return m_cloakTypeFactory.getTypeCount(); }
 };
 
 }}

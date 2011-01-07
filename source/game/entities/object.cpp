@@ -28,39 +28,38 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Entities {
 
-
 // =====================================================
-// 	class Object
+// 	class MapObject
 // =====================================================
 
-Object::Object(int id, ObjectType *objType, const Vec3f &p)
-		: id(id)
-		, objectType(objType)
+MapObject::MapObject(CreateParams params)//MapObjectType *objType, const Vec3f &p)
+		: id(-1)
+		, objectType(params.objectType)
 		, resource(0) {
 	Random random(id);
 	const float max_offset = 0.2f;
-	pos = p + Vec3f(random.randRange(-max_offset, max_offset), 0.0f, random.randRange(-max_offset, max_offset));
+	pos = params.pos + Vec3f(random.randRange(-max_offset, max_offset), 0.0f, random.randRange(-max_offset, max_offset));
 	rotation = random.randRange(0.f, 360.f);
 	if (objectType != NULL) {
 		variation = random.randRange(0, objectType->getModelCount() - 1);
 	}
 }
 
-Object::~Object(){
+MapObject::~MapObject(){
 	delete resource;
 }
 
-const Model *Object::getModel() const{
+const Model *MapObject::getModel() const{
 	return objectType==NULL? resource->getType()->getModel(): objectType->getModel(variation);
 }
 
-bool Object::getWalkable() const{
+bool MapObject::getWalkable() const{
 	return objectType==NULL? false: objectType->getWalkable();
 }
 
-void Object::setResource(const ResourceType *resourceType, const Vec2i &pos){
+void MapObject::setResource(const ResourceType *resourceType, const Vec2i &pos){
     assert(!resource);
-	resource= new Resource();
+	resource= new MapResource();
 	resource->init(resourceType, pos);
 	resource->Depleted.connect(&g_userInterface, &Gui::UserInterface::onResourceDepleted);
 }

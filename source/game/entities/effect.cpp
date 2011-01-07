@@ -35,17 +35,17 @@ MEMORY_CHECK_IMPLEMENTATION(Effect)
 
 // ============================ Constructor & destructor =============================
 
-Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strength,
-		const Unit *recipient, const TechTree *tt) {
-	this->type = type;
-	this->source = source->getId();
-	this->root = root;
-	this->strength = strength;
+Effect::Effect(CreateParams params) {//const EffectType* type, Unit *source, Effect *root, fixed strength,
+		//const Unit *recipient, const TechTree *tt) {
+	this->type = params.type;
+	this->source = params.source->getId();
+	this->root = params.root;
+	this->strength = params.strength;
 	this->duration = type->getDuration();
-	this->recourse = root != NULL;
+	this->recourse = params.root != NULL;
 	if (type->getHpRegeneration() < 0 && type->getDamageType()) {
 		fixed fregen = type->getHpRegeneration() 
-			* tt->getDamageMultiplier(type->getDamageType(), recipient->getType()->getArmourType());
+			* params.tt->getDamageMultiplier(type->getDamageType(), params.recipient->getType()->getArmourType());
 		this->actualHpRegen = fregen.intp();
 	} else {
 		this->actualHpRegen = type->getHpRegeneration();
@@ -53,6 +53,7 @@ Effect::Effect(const EffectType* type, Unit *source, Effect *root, fixed strengt
 }
 
 Effect::Effect(const XmlNode *node) {
+	m_id = node->getChildIntValue("id");
 	source = node->getOptionalIntValue("source", -1);
 	const TechTree *tt = World::getCurrWorld()->getTechTree();
 	root = NULL;
@@ -64,12 +65,13 @@ Effect::Effect(const XmlNode *node) {
 }
 
 Effect::~Effect() {
-	if (Unit *unit = g_simInterface->getUnitFactory().getUnit(source)) {
+	if (Unit *unit = g_world.getUnit(source)) {
 		unit->effectExpired(this);
 	}
 }
 
 void Effect::save(XmlNode *node) const {
+	node->addChild("id", m_id);
 	node->addChild("source", source);
 	//FIXME: how should I save the root?
 	node->addChild("type", type->getName());
@@ -93,7 +95,7 @@ Effects::Effects() {
 Effects::Effects(const XmlNode *node) {
 	clear();
 	for(int i = 0; i < node->getChildCount(); ++i) {
-		push_back(new Effect(node->getChild("effect", i)));
+		push_back(g_world.newEffect(node->getChild("effect", i)));
 	}
 	dirty = true;
 }
@@ -102,7 +104,7 @@ Effects::~Effects() {
 	for (iterator i = begin(); i != end(); i++) {
 		(*i)->clearSource();
 		(*i)->clearRoot();
-		delete *i;
+		g_world.deleteEffect(*i);
 	}
 }
 
@@ -124,19 +126,19 @@ bool Effects::add(Effect *e){
 					if((*i)->getStrength() < e->getStrength()) {
 						(*i)->setStrength(e->getStrength());
 					}
-					delete e;
+					g_world.deleteEffect(e);
 					dirty = true;
 					return false;
 
 				case EffectStacking::OVERWRITE:
-					delete *i;
+					g_world.deleteEffect(*i);
 					erase(i);
 					push_back(e);
 					dirty = true;
 					return true;
 
 				case EffectStacking::REJECT:
-					delete e;
+					g_world.deleteEffect(e);
 					return false;
 
 				case EffectStacking::STACK:; // tell compiler to shut up
@@ -173,7 +175,7 @@ void Effects::tick() {
 		Effect *e = *i;
 
 		if(e->tick()) {
-			delete e;
+			g_world.deleteEffect(e);
 			i = erase(i);
 			dirty = true;
 		} else {
@@ -222,7 +224,9 @@ void Effects::getDesc(string &str) const {
 		} else {
 			str += "\n" + lang.get("Effects") + ": ";
 		}
-		str += (*uei).first->getName() + " (" + intToStr((*uei).second.maxDuration) + ")";
+		string rawName = (*uei).first->getName();
+		string name = lang.getFactionString(uei->first->getFactionType()->getName(), rawName);
+		str += name + " (" + intToStr((*uei).second.maxDuration) + ")";
 		if((*uei).second.count > 1) {
 			str += " x" + intToStr((*uei).second.count);
 		}
@@ -230,13 +234,12 @@ void Effects::getDesc(string &str) const {
 	}
 }
 
-
 // ====================================== get ======================================
 
 //who killed Kenny?
 Unit *Effects::getKiller() const {
 	for (const_iterator i = begin(); i != end(); i++) {
-		Unit *source = g_simInterface->getUnitFactory().getUnit((*i)->getSource());
+		Unit *source = g_world.getUnit((*i)->getSource());
 		//If more than two other units hit this unit with a DOT and it died,
 		//credit goes to the one 1st in the list.
 

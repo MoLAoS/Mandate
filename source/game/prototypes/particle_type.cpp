@@ -19,8 +19,8 @@
 #include "config.h"
 #include "game_constants.h"
 #include "logger.h"
+#include "world.h"
 #include "leak_dumper.h"
-
 
 using namespace Shared::Xml;
 using namespace Shared::Graphics;
@@ -235,7 +235,7 @@ void ProjectileType::load(const string &dir, const string &path){
 }
 
 ParticleSystem *ProjectileType::create(bool vis) {
-	Projectile *ps = new Projectile(vis, *this);
+	Projectile *ps = g_world.newProjectile(vis, *this);
 
 	ps->setTrajectory(trajectory);
 	ps->setTrajectorySpeed(trajectorySpeed);

@@ -27,47 +27,77 @@ using namespace Glest::ProtoTypes;
 namespace Glest { namespace Entities {
 
 // =====================================================
-// 	class Resource
+// 	class ResourceAmount
 //
 /// Amount of a given ResourceType
 // =====================================================
 
-class Resource {
+class ResourceAmount {
+protected:
+	const ResourceType *m_type;
+	int		m_amount;
+
+public:
+	void init(const XmlNode *n, const TechTree *tt);
+	void init(const ResourceType *rt, const int amount);
+
+	void setAmount(int v) { m_amount = v; }
+	int  getAmount() const { return m_amount; }
+	const ResourceType *getType() const { return m_type; }
+
+	virtual bool decAmount(int v);
+	void save(XmlNode *node) const;
+};
+
+// =====================================================
+// 	class MapResource
+// =====================================================
+
+class MapResource : public ResourceAmount {
+	Vec2i	m_pos;
+
+public:
+	sigslot::signal<Vec2i>	Depleted;
+
+	void init(const XmlNode *n, const TechTree *tt);
+	void init(const ResourceType *rt, const Vec2i &pos);
+
+	Vec2i getPos() const { return m_pos; }
+
+	void save(XmlNode *n) const;
+
+	bool decAmount(int v) override {
+		if (ResourceAmount::decAmount(v)) {
+			Depleted(m_pos);
+			return true;
+		}
+		return false;
+	}
+};
+
+// =====================================================
+// 	class StoredResource
+//
+/// amount, balance & storage capacity of a given ResourceType 
+/// stored by a faction
+// =====================================================
+
+class StoredResource : public ResourceAmount {
 private:
-    int amount;
-    const ResourceType *type;
-	Vec2i pos;
-	int balance;
+	int m_balance;
+	int m_storage;
 
 public:
 	void init(const XmlNode *node, const TechTree *tt);
     void init(const ResourceType *rt, int amount);
-    void init(const ResourceType *rt, const Vec2i &pos);
 
-	int getAmount() const					{return amount;}
-	const ResourceType * getType() const	{return type;}
-	Vec2i getPos() const					{return pos;}
-	int getBalance() const					{return balance;}
-	string getDescription() const;
+	int getBalance() const { return m_balance; }
+	void setBalance(int balance) { m_balance = balance; }
 
-	void setAmount(int amount) {
-		if (this->amount == amount) return;
-		this->amount = amount;
-		//AmountChanged(amount);
-	}
-	void setBalance(int balance) {
-		if (this->balance == balance) return;
-		this->balance = balance;
-        //BalanceChanged(balance);
-	}
+	int getStorage() const { return m_storage; }
+	void setStorage(int storage) { m_storage = storage; }
 
-    bool decAmount(int i);
 	void save(XmlNode *node) const;
-
-	sigslot::signal<Vec2i>		Depleted;
-	//sigslot::signal<int>		AmountChanged;
-	//sigslot::signal<int>		BalanceChanged;
-
 };
 
 }}// end namespace

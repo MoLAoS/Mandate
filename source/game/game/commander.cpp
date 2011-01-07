@@ -43,7 +43,7 @@ CommandResult Commander::tryUnloadCommand(Unit *unit, CommandFlags flags, const 
 		assert(false);
 		return CommandResult::FAIL_UNDEFINED;
 	}
-	return pushCommand(new Command(ct, CommandFlags(), targetUnit, unit));
+	return pushCommand(g_world.newCommand(ct, CommandFlags(), targetUnit, unit));
 }
 
 
@@ -88,27 +88,27 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 					//	<< (i != units.begin() ? "true." : "false."));
 					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
 				}
-				result = pushCommand(new Command(effectiveCt, flags, pos, prodType, facing, *i));
+				result = pushCommand(g_world.newCommand(effectiveCt, flags, pos, prodType, facing, *i));
 			} else if (targetUnit) { // 'target' based command
 				if (effectiveCt->getClass() == CommandClass::LOAD) {
 					if (*i != targetUnit) {
 						// give *i a command to load targetUnit
-						result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
+						result = pushCommand(g_world.newCommand(effectiveCt, flags, targetUnit, *i));
 						if (result == CommandResult::SUCCESS) {
 							// if load is ok, give targetUnit a command to be-loaded by *i
 							effectiveCt = targetUnit->getFirstAvailableCt(CommandClass::BE_LOADED);
-							pushCommand(new Command(effectiveCt, CommandFlags(), *i, targetUnit));
+							pushCommand(g_world.newCommand(effectiveCt, CommandFlags(), *i, targetUnit));
 						}
 					}
 				} else if (effectiveCt->getClass() == CommandClass::BE_LOADED) {
 					// a carrier unit was right clicked
-					result = pushCommand(new Command(targetUnit->getFirstAvailableCt(CommandClass::LOAD), CommandFlags(), *i, targetUnit));
+					result = pushCommand(g_world.newCommand(targetUnit->getFirstAvailableCt(CommandClass::LOAD), CommandFlags(), *i, targetUnit));
 					if (result == CommandResult::SUCCESS) {
 						// give *i a be-loaded command with targetUnit
-						pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
+						pushCommand(g_world.newCommand(effectiveCt, flags, targetUnit, *i));
 					}
 				} else {
-					result = pushCommand(new Command(effectiveCt, flags, targetUnit, *i));
+					result = pushCommand(g_world.newCommand(effectiveCt, flags, targetUnit, *i));
 				}
 			} else if (effectiveCt->getClass() == CommandClass::LOAD) {
 				// the player has tried to load nothing, it shouldn't get here if it has 
@@ -117,9 +117,9 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 			} else if(pos != Command::invalidPos) { // 'position' based command
 				//every unit is ordered to a different pos
 				Vec2i currPos = computeDestPos(refPos, (*i)->getPos(), pos);
-				result = pushCommand(new Command(effectiveCt, flags, currPos, *i));
+				result = pushCommand(g_world.newCommand(effectiveCt, flags, currPos, *i));
 			} else {
-				result = pushCommand(new Command(effectiveCt, flags, Command::invalidPos, *i));
+				result = pushCommand(g_world.newCommand(effectiveCt, flags, Command::invalidPos, *i));
 			}
 			results.push_back(result);
 		} else {
@@ -134,7 +134,7 @@ CommandResult Commander::tryCancelCommand(const Selection *selection) const{
 	const UnitVector &units = selection->getUnits();
 	for(Selection::UnitIterator i = units.begin(); i != units.end(); ++i) {
 		//COMMAND_LOG(__FUNCTION__ << "() " << *i << " trying cancel command.");
-		pushCommand(new Command(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Command::invalidPos, *i));
+		pushCommand(g_world.newCommand(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Command::invalidPos, *i));
 	}
 
 	return CommandResult::SUCCESS;
@@ -159,7 +159,7 @@ void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag
 	} else {
 		const UnitVector &units = selection.getUnits();
 			foreach_const (UnitVector, i, units) {
-				Command *c = new Command(archetype, cmdFlags, Command::invalidPos, *i);
+				Command *c = g_world.newCommand(archetype, cmdFlags, Command::invalidPos, *i);
 				pushCommand(c);
 		}
 	}
@@ -169,7 +169,7 @@ void Commander::trySetCloak(const Selection &selection, bool enabled) const {
 	CommandFlags flags(CommandProperties::MISC_ENABLE, enabled);
 	foreach_const (UnitVector, it, selection.getUnits()) {
 		if ((*it)->getType()->getCloakClass() == CloakClass::ENERGY) {
-			Command *c = new Command(CommandArchetype::SET_CLOAK, flags, Command::invalidPos, *it);
+			Command *c = g_world.newCommand(CommandArchetype::SET_CLOAK, flags, Command::invalidPos, *it);
 			pushCommand(c);
 		}
 	}
@@ -241,7 +241,7 @@ CommandResult Commander::pushCommand(Command *command) const {
 	if (result == CommandResult::SUCCESS) {
 		iSim->requestCommand(command);
 	} else {
-		delete command;
+		g_world.deleteCommand(command);
 	}
 	return result;
 }
@@ -259,19 +259,19 @@ void Commander::giveCommand(Command *command) const {
 				break;
 			case CommandArchetype::CANCEL_COMMAND:
 				unit->cancelCommand();
-				delete command;
+				g_world.deleteCommand(command);
 				break;
 			case CommandArchetype::SET_AUTO_REPAIR:
 				unit->setAutoCmdEnable(AutoCmdFlag::REPAIR, command->isMiscEnabled());
-				delete command;
+				g_world.deleteCommand(command);
 				break;
 			case CommandArchetype::SET_AUTO_ATTACK:
 				unit->setAutoCmdEnable(AutoCmdFlag::ATTACK, command->isMiscEnabled());
-				delete command;
+				g_world.deleteCommand(command);
 				break;
 			case CommandArchetype::SET_AUTO_FLEE:
 				unit->setAutoCmdEnable(AutoCmdFlag::FLEE, command->isMiscEnabled());
-				delete command;
+				g_world.deleteCommand(command);
 				break;
 			case CommandArchetype::SET_CLOAK: {
 				bool cloak = command->isMiscEnabled();
@@ -286,7 +286,7 @@ void Commander::giveCommand(Command *command) const {
 				assert(false);
 		}
 	} else {
-		delete command;
+		g_world.deleteCommand(command);
 	}
 }
 

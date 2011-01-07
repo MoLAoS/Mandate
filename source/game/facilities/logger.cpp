@@ -218,7 +218,7 @@ void Logger::renderLoadingScreen(){
 }
 
 void logNetwork(const string &msg) {
-	GameRole role = g_simInterface->getNetworkRole();
+	GameRole role = g_simInterface.getNetworkRole();
 	if (role == GameRole::CLIENT) {
 		Logger::getClientLog().addNetworkMsg(msg);
 	} else {

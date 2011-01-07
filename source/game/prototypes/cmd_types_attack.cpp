@@ -132,8 +132,8 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		return true;
 	}
 
-	// TODO: We've already searched out to attack-range and found nothing, rather than
-	// starting again to check visible-range, we should just keep using the same search
+	///@todo We've already searched out to attack-range and found nothing, rather than
+	/// starting again to check visible-range, we should just keep using the same search
 
 	// couldn't attack anyone, look for someone to smite nearby, compute target pos
 	Vec2i pos;
@@ -159,32 +159,8 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 			RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 		}
 	}
-	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
-	switch (g_routePlanner.findPath(unit, pos)) { // head to target pos
-		case TravelState::MOVING:
-			unit->setCurrSkill(act->getMoveSkillType());
-			unit->face(unit->getNextPos());
-			return false;
 
-		case TravelState::BLOCKED:
-			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked()) {
-				unit->clearPath();
-				return true;
-			}
-			return false;
-
-		case TravelState::IMPOSSIBLE:
-			unit->setCurrSkill(SkillClass::STOP);
-			unit->cancelCurrCommand();
- 			return true;
-
-		case TravelState::ARRIVED:
-			return true;
-
-		default:
-			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
-	}
+	return unit->travel(pos, act->getMoveSkillType());
 }
 
 void AttackCommandType::update(Unit *unit) const {
@@ -213,7 +189,7 @@ Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
+	Command *newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
 	newCommand->setPos2(unit->getPos());
 	assert(newCommand->isAuto());
 	return newCommand;
@@ -248,7 +224,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 	if (!unit->getFaction()->isAvailable(this) || !attackableInRange(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = new Command(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
+	Command *newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
 	return newCommand;
 }
 

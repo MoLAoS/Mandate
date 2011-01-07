@@ -2,9 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Jaagup Repän <jrepan@gmail.com>,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
-//				  2009 James McCulloch <silnarm@gmail.com>
+//				  2008      Jaagup Repän <jrepan@gmail.com>,
+//				  2008      Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2010 James McCulloch <silnarm@gmail.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -44,6 +44,11 @@ namespace Glest { namespace Sim {
 using Main::Program;
 using Search::Cartographer;
 using Gui::Selection;
+
+void Tile::deleteResource() {
+	g_world.getMapObjectFactory().deleteInstance(object);
+	object = 0;
+}
 
 // =====================================================
 // 	class Map
@@ -130,7 +135,7 @@ void Map::loadExplorationState(XmlNode *node) {
 	}
 }
 
-void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory) {
+void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 	// supporting absolute paths with extension, e.g. showmap in map editor
 	//HACK
 	string path2 = path;
@@ -241,7 +246,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 				if (objNumber == 0 || x == m_tileSize.w - 1 || y == m_tileSize.h - 1) {
 					tile->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
-					Object *o = objFactory.newInstance(tileset->getObjectType(objNumber - 1), vert);
+					MapObject *o = g_world.newMapObject(tileset->getObjectType(objNumber - 1), vert);
 					tile->setObject(o);
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
@@ -251,9 +256,9 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset, ObjectF
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
-					Object *o = objFactory.newInstance(NULL, vert);
-					o->setResource(rt, Vec2i(x, y) * cellScale);
+					MapObject *o = g_world.newMapObject(NULL, vert);
 					tile->setObject(o);
+					o->setResource(rt, Vec2i(x, y) * cellScale);
 				}
 			}
 		}
@@ -333,7 +338,7 @@ bool Map::isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec
 	while (iter.more()) {
 		Vec2i cur = iter.next();
 		if (isInside(cur)) {
-			Resource *r = getTile(toTileCoords(cur))->getResource();
+			MapResource *r = getTile(toTileCoords(cur))->getResource();
 			if (r && r->getType() == rt) {
 				resourcePos = cur;
 				return true;
@@ -595,8 +600,8 @@ bool Map::getNearestFreePos(Vec2i &result, const Unit *unit, const Vec2i &target
 	}
 
 	// if not, take the long approach.
-	// TODO: this code can be optimized by starting at the nearest position looking for a free cell
-	// and moving away from the starting point.
+	///@todo this code can be optimized by starting at the nearest position looking for a free cell
+	/// and moving away from the starting point.
 	//int sideSize = targetSize + size;
 	fixed minDistance = fixed::max_int();
 
@@ -967,7 +972,7 @@ void Map::smoothSurface() {
 		setTileHeight(pos, height);
 
 		Tile *tile = getTile(pos);
-		Object *obj = tile->getObject();
+		MapObject *obj = tile->getObject();
 		if (obj) {
 			Vec3f pos = obj->getPos();
 			pos.y = height;

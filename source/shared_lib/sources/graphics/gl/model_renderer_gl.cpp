@@ -179,9 +179,45 @@ void ModelRendererGl::end() {
 	assertGl();
 }
 
+void ModelRendererGl::render(const Model *model, Vec3f *anim, ShaderProgram *customProgram) {
+	//assertions
+	assert(rendering);
+	assertGl();
+
+	//render every mesh
+	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+		renderMesh(model->getMesh(i), anim, customProgram);
+	}
+
+	//assertions
+	assertGl();
+}
+
+void ModelRendererGl::renderNormalsOnly(const Model *model) {
+	//assertions
+	assert(rendering);
+	assertGl();
+
+	//render every mesh
+	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+		renderMeshNormals(model->getMesh(i));
+	}
+
+	//assertions
+	assertGl();
+}
+
+void ModelRendererGl::renderMeshNormalsOnly(const Mesh *mesh) {
+	renderMeshNormals(mesh);
+}
 // ===================== PRIVATE =======================
 
-void ModelRendererGl::renderMesh(const Mesh *mesh) {
+float remap(float in, const float oldMin, const float oldMax, const float newMin, const float newMax) {
+	float t = (in - oldMin) / (oldMax - oldMin);
+	return newMin + t * (newMax - newMin);
+}
+
+void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *customProgram) {
 
 	//assertions
 	assertGl();
@@ -198,9 +234,11 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glColor4fv(color.ptr());
 	}
 
+	const Texture2DGl *texture = 0, *textureNormal = 0, *textureCustom = 0;
+
 	// diffuse texture
 	glActiveTexture(diffuseTextureUnit);
-	const Texture2DGl *texture = static_cast<const Texture2DGl*>(mesh->getTexture(mtDiffuse));
+	texture = static_cast<const Texture2DGl*>(mesh->getTexture(mtDiffuse));
 	if (texture != NULL && renderTextures) {
 		if (lastTexture != texture->getHandle()) {
 			assert(glIsTexture(texture->getHandle()));
@@ -211,14 +249,27 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		glBindTexture(GL_TEXTURE_2D, 0);
 		lastTexture = 0;
 	}
+	
 	// bump map
-	const Texture2DGl *textureNormal = static_cast<const Texture2DGl*>(mesh->getTexture(mtNormal));
+	textureNormal = static_cast<const Texture2DGl*>(mesh->getTexture(mtNormal));
 	glActiveTexture(normalTextureUnit);
 	if (textureNormal != NULL && renderTextures) {
 		assert(glIsTexture(textureNormal->getHandle()));
 		glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
 	} else {
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	// custom map
+	if (customProgram && renderTextures) {
+		textureCustom = static_cast<const Texture2DGl*>(mesh->getTexture(mtCustom1));
+		glActiveTexture(customTextureUnit);
+		if (textureCustom) {
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, textureCustom->getHandle());
+		} else {
+			glDisable(GL_TEXTURE_2D);
+		}
 	}
 	glActiveTexture(diffuseTextureUnit);
 
@@ -240,10 +291,14 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 		if (meshCallback) {
 			meshCallback->execute(mesh);
 		}
-	} else if (mesh->getCustomTexture()) {
-		shaderProgram = m_shaders[m_shaderIndex]->getTeamProgram();
 	} else {
-		shaderProgram = m_shaders[m_shaderIndex]->getAlphaProgram();
+		if (customProgram) {
+			shaderProgram = customProgram;
+		} else  if (mesh->getCustomTexture()) {
+			shaderProgram = m_shaders[m_shaderIndex]->getTeamProgram();
+		} else {
+			shaderProgram = m_shaders[m_shaderIndex]->getAlphaProgram();
+		}
 	}
 	if (shaderProgram != m_lastShaderProgram) {
 		if (m_lastShaderProgram) {
@@ -254,6 +309,14 @@ void ModelRendererGl::renderMesh(const Mesh *mesh) {
 	}
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
 	shaderProgram->setUniform("teamColour", getTeamColour());
+	if (customProgram && anim) {
+		shaderProgram->setUniform("baseTexture", 0);
+		shaderProgram->setUniform("customTex", 3);
+		float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);
+		float anim_g = remap(anim->g, 0.f, 1.f, 0.15f, 1.f);
+		float anim_b = remap(anim->b, 0.f, 1.f, 0.15f, 1.f);
+		shaderProgram->setUniform("time", Vec3f(anim_r, anim_g, anim_b));///@todo
+	}
 
 	//vertices
 	glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());

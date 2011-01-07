@@ -267,15 +267,16 @@ void LaunchMessage::send(NetworkConnection* connection) const {
 
 DataSyncMessage::DataSyncMessage(RawMessage raw)
 		: m_data(0), fromRaw(true) {
-	if (raw.size % sizeof(int32) != 0) {
+	if (raw.size < 4 * sizeof(int32) && raw.size % sizeof(int32) != 0) {
 		throw GarbledMessage(MessageType::DATA_SYNC, NetSource::SERVER);
 	}
-	m_cmdTypeCount	 = reinterpret_cast<int32*>(raw.data)[0];
-	m_skillTypeCount = reinterpret_cast<int32*>(raw.data)[1];
-	m_prodTypeCount  = reinterpret_cast<int32*>(raw.data)[2];
+	m_cmdTypeCount	  = reinterpret_cast<int32*>(raw.data)[0];
+	m_skillTypeCount  = reinterpret_cast<int32*>(raw.data)[1];
+	m_prodTypeCount   = reinterpret_cast<int32*>(raw.data)[2];
+	m_cloakTypeCount = reinterpret_cast<int32*>(raw.data)[3];
 
 	if (getChecksumCount()) {
-		m_data = reinterpret_cast<int32*>(raw.data) + 3;
+		m_data = reinterpret_cast<int32*>(raw.data) + 4;
 	}
 }
 
@@ -291,52 +292,50 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 	tt->doChecksumResources(checksums[3]);
 	NETWORK_LOG( "TechTree: " << tt->getName() << ", Resource Types checksum: " << intToHex(checksums[3].getSum()));
 
-	CommandTypeFactory	&cmdTFactory  = world.getCommandTypeFactory();
-	SkillTypeFactory	&sklTFactory  = world.getSkillTypeFactory();
-	MasterTypeFactory	&prodTFactory = world.getMasterTypeFactory();
-
-	m_cmdTypeCount	 = cmdTFactory.getTypeCount();
-	m_skillTypeCount = sklTFactory.getTypeCount();
-	m_prodTypeCount = prodTFactory.getTypeCount();
+	m_cmdTypeCount	 = g_simInterface.getCommandTypeCount();
+	m_skillTypeCount = g_simInterface.getSkillTypeCount();
+	m_prodTypeCount = g_simInterface.getProdTypeCount();
+	m_cloakTypeCount = g_simInterface.getCloakTypeCount();
 
 	NETWORK_LOG( "DataSync" );
 	NETWORK_LOG( "========" );
 	NETWORK_LOG( "CommandType count = " << m_cmdTypeCount
-		<< ", SkillType count = " << m_skillTypeCount << ", ProdType count = " << m_prodTypeCount );
+		<< ", SkillType count = " << m_skillTypeCount 
+		<< ", ProdType count = " << m_prodTypeCount 
+		<< ", CloakType count = " << m_cloakTypeCount );
 
 	m_data = new int32[getChecksumCount()];
 	int n = -1;
 	for (int i=0; i < 4; ++i) {
 		m_data[++n] = checksums[i].getSum();
-
 	}
 
 	if (getChecksumCount() - 4 > 0) {
-		for (int i=0; i < cmdTFactory.getTypeCount(); ++i) {
-			CommandType *ct = cmdTFactory.getType(i);
-			m_data[++n] = cmdTFactory.getChecksum(ct);
+		for (int i=0; i < m_cmdTypeCount	; ++i) {
+			const CommandType *ct = g_simInterface.getCommandType(i);
+			m_data[++n] = g_simInterface.getChecksum(ct);
 			NETWORK_LOG( "CommandType " << i << ": " << ct->getName() << " of UnitType: " 
 				<< ct->getUnitType()->getName() << ", checksum: " << m_data[n - 1]);
 		}
-		for (int i=0; i < sklTFactory.getTypeCount(); ++i) {
-			SkillType *st = sklTFactory.getType(i);
-			m_data[++n] = sklTFactory.getChecksum(st);
+		for (int i=0; i < m_skillTypeCount; ++i) {
+			const SkillType *st = g_simInterface.getSkillType(i);
+			m_data[++n] = g_simInterface.getChecksum(st);
 			NETWORK_LOG( "SkillType " << i << ": " << st->getName() << " of UnitType: " 
 				<< st->getUnitType()->getName() << ", checksum: " << m_data[n - 1] );
 		}
-		for (int i=0; i < prodTFactory.getTypeCount(); ++i) {
-			ProducibleType *pt = prodTFactory.getType(i);
-			m_data[++n] = prodTFactory.getChecksum(pt);
-			if (prodTFactory.isUnitType(pt)) {
-				UnitType *ut = static_cast<UnitType*>(pt);
+		for (int i=0; i < m_prodTypeCount; ++i) {
+			const ProducibleType *pt = g_simInterface.getProdType(i);
+			m_data[++n] = g_simInterface.getChecksum(pt);
+			if (g_simInterface.isUnitType(pt)) {
+				const UnitType *ut = static_cast<const UnitType*>(pt);
 				NETWORK_LOG( "UnitType " << i << ": " << ut->getName() << " of FactionType: " 
 					<< ut->getFactionType()->getName() << ", checksum: " << m_data[n - 1] );
-			} else if (prodTFactory.isUpgradeType(pt)) {
-				UpgradeType *ut = static_cast<UpgradeType*>(pt);
+			} else if (g_simInterface.isUpgradeType(pt)) {
+				const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
 				NETWORK_LOG( "UpgradeType " << i << ": " << ut->getName() << " of FactionType: " 
 					<< ut->getFactionType()->getName() << ", checksum: " << m_data[n - 1] );
-			} else if (prodTFactory.isGeneratedType(pt)) {
-				GeneratedType *gt = static_cast<GeneratedType*>(pt);
+			} else if (g_simInterface.isGeneratedType(pt)) {
+				const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
 				NETWORK_LOG( "GeneratedType " << i << ": " << gt->getName() << " of CommandType: " 
 					<< gt->getCommandType()->getName() << " of UnitType: " 
 					<< gt->getCommandType()->getUnitType()->getName() << ", checksum: " << m_data[n - 1]);
@@ -344,13 +343,19 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 				throw runtime_error(string("Unknown producible class for type: ") + pt->getName());
 			}
 		}
+		for (int i=0; i < m_cloakTypeCount; ++i) {
+			const CloakType *ct = g_simInterface.getCloakType(i);
+			m_data[n++] = g_simInterface.getChecksum(ct);
+			NETWORK_LOG( "CloakType " << i << ": " << ct->getName() << " of UnitType: "
+				<< ct->getUnitType()->getName() << ", checksum: " << m_data[n - 1] );
+		}
 	}
 	NETWORK_LOG( "========" );
 }
 
 DataSyncMessage::~DataSyncMessage() {
 	if (fromRaw) {
-		delete [] (m_data - 3); // hacky...
+		delete [] (m_data - 4); // hacky...
 	} else {
 		delete [] m_data;
 	}
@@ -359,10 +364,10 @@ DataSyncMessage::~DataSyncMessage() {
 void DataSyncMessage::send(NetworkConnection* connection) const {
 	MsgHeader header;
 	header.messageType = MessageType::DATA_SYNC;
-	header.messageSize = sizeof(int32) * (getChecksumCount() + 3);
+	header.messageSize = sizeof(int32) * (getChecksumCount() + 4);
 	Message::send(connection, &header, sizeof(MsgHeader));
-	Message::send(connection, &m_cmdTypeCount, sizeof(int32) * 3);
-	Message::send(connection, m_data, header.messageSize - sizeof(int32) * 3);
+	Message::send(connection, &m_cmdTypeCount, sizeof(int32) * 4);
+	Message::send(connection, m_data, header.messageSize - sizeof(int32) * 4);
 	NETWORK_LOG( __FUNCTION__ << "(): message sent, type: " << MessageTypeNames[MessageType(header.messageType)]
 		<< ", messageSize: " << header.messageSize
 	);

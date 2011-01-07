@@ -40,7 +40,7 @@ using namespace Glest::Gui;
 using namespace Glest::Menu;
 
 namespace Glest {
-	namespace Entities { class Object; }
+	namespace Entities { class MapObject; }
 
 namespace Graphics {
 
@@ -235,7 +235,7 @@ public:
 
 	//computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);
-	void computeSelected(UnitVector &units, const Object *&obj, const Vec2i &posDown, const Vec2i &posUp);
+	void computeSelected(UnitVector &units, const MapObject *&obj, const Vec2i &posDown, const Vec2i &posUp);
 
     //gl wrap
 	string getGlInfo();

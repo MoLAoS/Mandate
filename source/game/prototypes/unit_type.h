@@ -12,15 +12,12 @@
 #ifndef _GLEST_GAME_UNITTYPE_H_
 #define _GLEST_GAME_UNITTYPE_H_
 
-#include "element_type.h"
+#include "cloak_type.h"
 #include "command_type.h"
 #include "damage_multiplier.h"
 #include "sound_container.h"
 #include "checksum.h"
-#include "unit_stats_base.h"
 #include "particle_type.h"
-#include "prototypes_enums.h"
-#include "influence_map.h"
 #include <set>
 using std::set;
 
@@ -67,7 +64,7 @@ class UnitType : public ProducibleType, public UnitStats {
 private:
 	typedef vector<SkillType*> SkillTypes;
 	typedef vector<CommandType*> CommandTypes;
-	typedef vector<Resource> StoredResources;
+	typedef vector<ResourceAmount> StoredResources;
 	typedef vector<Level> Levels;
 	typedef vector<ParticleSystemType*> particleSystemTypes;
 //	typedef vector<PetRule*> PetRules;
@@ -87,13 +84,8 @@ private:
 	bool light;
     Vec3f lightColour;
 
-	CloakClass	m_cloakClass;
-	int			m_cloakCost;
-	StaticSound *m_cloakSound;
-	StaticSound *m_deCloakSound;
-	Texture2D	*m_cloakImage;
-
-	bool		m_detector;
+	CloakType	  *m_cloakType;
+	DetectorType  *m_detectorType;
 
 	set<string> m_tags;
 
@@ -133,6 +125,9 @@ private:
 	const FactionType *m_factionType;
 
 public:
+	static ProducibleClass typeClass() { return ProducibleClass::UNIT; }
+
+public:
 	//creation and loading
 	UnitType();
 	virtual ~UnitType();
@@ -141,6 +136,18 @@ public:
 	void addBeLoadedCommand();
 	virtual void doChecksum(Checksum &checksum) const;
 	const FactionType* getFactionType() const { return m_factionType; }
+
+	ProducibleClass getClass() const override { return typeClass(); }
+
+	CloakClass getCloakClass() const {
+		return m_cloakType ? m_cloakType->getClass() : CloakClass::INVALID;
+	}
+	const Texture2D* getCloakImage() const {
+		return m_cloakType ? m_cloakType->getImage() : 0;
+	}
+	const CloakType* getCloakType() const	{return m_cloakType;}
+	//const DetectorType* getDetectorType() const {return m_detectorType;}
+	bool isDetector() const					{return m_detectorType? true : false;}
 
 	//get
 	bool getMultiSelect() const				{return multiSelect;}
@@ -151,12 +158,6 @@ public:
 	int getHeight() const					{return height;}
 	Field getField() const					{return field;}
 	Zone getZone() const					{return zone;}
-	CloakClass getCloakClass() const		{return m_cloakClass;}
-	int getCloakCost() const				{return m_cloakCost;}
-	bool isDetector() const					{return m_detector;}
-	StaticSound* getCloakSound() const		{return m_cloakSound; }
-	StaticSound* getDeCloakSound() const	{return m_deCloakSound; }
-	const Texture2D* getCloakImage() const	{return m_cloakImage; }
 	bool hasTag(const string &tag) const	{return m_tags.find(tag) != m_tags.end();}
 
 	const UnitProperties &getProperties() const	{return properties;}
@@ -214,7 +215,7 @@ public:
 
 	// resources
 	int getStoredResourceCount() const					{return storedResources.size();}
-	const Resource *getStoredResource(int i) const		{return &storedResources[i];}
+	const ResourceAmount *getStoredResource(int i) const		{return &storedResources[i];}
 	int getStore(const ResourceType *rt) const;
 
 	// meeting point

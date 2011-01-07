@@ -38,15 +38,20 @@ namespace Glest { namespace ProtoTypes {
  * producable (i.e., researchable) upgrade to all of one or more unit
  * classes.
  */
-class UpgradeType: public EnhancementType, public ProducibleType {
+class UpgradeType: public ProducibleType, public EnhancementType {
 private:
 	vector<const UnitType*> effects;
 	const FactionType *m_factionType;
 
 public:
-	UpgradeType() : m_factionType(0) {}
-	void preLoad(const string &dir)			{name=basename(dir);}
+	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
+
+public:
+	UpgradeType();
+	void preLoad(const string &dir)			{m_name=basename(dir);}
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
+
+	ProducibleClass getClass() const override { return typeClass(); }
 
 	const FactionType* getFactionType() const { return m_factionType; }
 	//get all

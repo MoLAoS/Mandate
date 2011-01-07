@@ -35,7 +35,7 @@
 #define g_metrics			(Metrics::getInstance())
 #define g_coreData			(CoreData::getInstance())
 #define g_fileFactory		(*FSFactory::getInstance())
-#define g_simInterface		(Program::getInstance()->getSimulationInterface())
+#define g_simInterface		(*Program::getInstance()->getSimulationInterface())
 
 #if _GAE_DEBUG_EDITION_
 #	define g_debugRenderer	(Glest::Debug::getDebugRenderer())

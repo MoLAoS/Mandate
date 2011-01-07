@@ -41,11 +41,11 @@ namespace Glest {
 		class UnitProperties;
 		class EnhancementType;
 		class EffectType;
+		class EmanationType;
 		class EffectTypeFlags;
 		struct EffectTypeFlag;
 		struct EffectBias;
 		struct EffectStacking;
-		class Emanation;
 		class UnitType;
 		class SkillType;
 		class StopSkillType;
@@ -66,7 +66,7 @@ namespace Glest {
 		class ProjectileType;
 		class SplashType;
 		class ResourceType;
-		class ObjectType;
+		class MapObjectType;
 		class TechTree;
 		class FactionType;
 		class Level;
@@ -87,14 +87,17 @@ namespace Glest {
 		class Tileset;
 		class AmbientSounds;
 		class TimeFlow;
-		class CommandTypeFactory;
-		class SkillTypeFactory;
-		template<typename Type> class TypeFactory;
+		template<typename Type> class EntityFactory;
+		template<typename Type> class SingleTypeFactory;
+		template<typename Enum, typename BaseType> class DynamicTypeFactory;
+		class MasterTypeFactory;
 	}
 
 	namespace Entities {
-		class Object;
-		class Resource;
+		class MapObject;
+		class ResourceAmount;
+		class MapResource;
+		class StoredResource;
 		class Command;
 		class Effect;
 		class EffectState;

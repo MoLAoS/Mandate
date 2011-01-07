@@ -54,7 +54,7 @@ namespace ProtoTypes {
 // =====================================================
 
 class SkillType : public NameIdPair {
-	friend class SkillTypeFactory;
+	friend class DynamicTypeFactory<SkillClass, SkillType>;
 
 public:
 	typedef vector<Model *> Animations;
@@ -120,7 +120,7 @@ public:
 
 	//get
 	virtual SkillClass getClass() const	= 0;
-	const string &getName() const		{return name;}
+	const string &getName() const		{return m_name;}
 	int getEpCost() const				{return epCost;}
 	int getBaseSpeed() const			{return speed;}
 	virtual fixed getSpeed(const Unit *unit) const	{return speed;}

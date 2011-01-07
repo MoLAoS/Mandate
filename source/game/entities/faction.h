@@ -79,14 +79,12 @@ public:
 	typedef vector<const ResourceType *> ResourceTypes;
 
 private:
-    typedef vector<Resource> Resources;
-    typedef vector<Resource> Store;
-	typedef vector<Product>  Products;
+    typedef vector<StoredResource>	Resources;
+	typedef vector<Product>			Products;
 
 	UpgradeManager upgradeManager;
 
     Resources resources;
-    Store store;
 	Units units;
 	UnitMap unitMap;
 	Products products;
@@ -119,12 +117,12 @@ public:
 	void load(const XmlNode *node, World *world, const FactionType *ft, ControlType control, TechTree *tt);
 
 	//get
-	const Resource *getResource(const ResourceType *rt) const;
-	const Resource *getResource(int i) const			{assert(i < resources.size()); return &resources[i];}
+	const StoredResource *getResource(const ResourceType *rt) const;
+	const StoredResource *getResource(int i) const			{assert(i < resources.size()); return &resources[i];}
 	int getStoreAmount(const ResourceType *rt) const;
 
 	const FactionType *getType() const					{return factionType;}
-	int getIndex() const								{return id;}
+	int getIndex() const								{return m_id;}
 	int getTeam() const									{return teamIndex;}
 	bool isDefeated() const								{return defeated;}
 	bool getCpuControl() const							{return control >= ControlType::CPU_EASY;}
@@ -144,7 +142,7 @@ public:
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	
-	//TODO Remove this!
+	///@todo Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
 	
 	bool isThisFaction() const							{return thisFaction;}

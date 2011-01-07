@@ -157,7 +157,7 @@ public:
 	virtual void send(Socket* socket) const { throw runtime_error(string("you should implement ") + __FUNCTION__); }
 };
 
-class SimulationInterface {
+class SimulationInterface : public MasterTypeFactory {
 public:
 	typedef vector<Plan::AiInterface*> AiInterfaces;
 	typedef vector<NetworkCommand> Commands;
@@ -176,10 +176,6 @@ protected:
 	AiInterfaces	aiInterfaces;
 	Plan::Gaia*		m_gaia;
 	Commander*		commander;
-
-	// World objects...
-	UnitFactory		unitFactory;
-	ObjectFactory	objectFactory;
 
 	bool paused;
 	bool gameOver;
@@ -202,8 +198,6 @@ public:
 	SimulationInterface(const SimulationInterface &si);
 	virtual ~SimulationInterface();
 
-	UnitFactory& getUnitFactory()			{ return unitFactory; }
-	ObjectFactory& getObjectFactory()		{ return objectFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }
 	XmlNode*& getSavedGame()				{ return savedGame; }
 	Commander *getCommander()				{ return commander; }

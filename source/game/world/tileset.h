@@ -109,7 +109,7 @@ public:
 private:
 	string name;
 
-	ObjectType objectTypes[objCount];
+	MapObjectType objectTypes[objCount];
 
 	SurfProbs surfProbs[surfCount];
 	SurfPixmaps surfPixmaps[surfCount];
@@ -138,7 +138,7 @@ public:
 
 	//get
 	string getName() const							{return name;}
-	ObjectType *getObjectType(int i)				{return &objectTypes[i];}
+	MapObjectType *getObjectType(int i)				{return &objectTypes[i];}
 	float getSurfProb(int surf, int var) const		{return surfProbs[surf][var];}
 	Texture3D *getWaterTex() const					{return waterTex;}
 	bool getWaterEffects() const					{return waterEffects;}

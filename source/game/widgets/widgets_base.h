@@ -43,8 +43,6 @@ class WidgetWindow;
 
 using std::string;
 
-#define ASSERT_RANGE(var, size)	assert(var >= 0 && var < size)
-
 class MouseWidget;
 class KeyboardWidget;
 class TextWidget;
@@ -261,8 +259,10 @@ public:
 
 	Vec2i getImagePos(int ndx) const { return imageInfo[ndx].offset; }
 	Vec2i getImageSize(int ndx) const { return imageInfo[ndx].size; }
+	size_t getNumImages() const { return textures.size(); }
 
 	bool hasImage() const { return !textures.empty(); }
+	bool hasImage(int ndx) const { return ndx < textures.size(); }
 };
 
 // =====================================================

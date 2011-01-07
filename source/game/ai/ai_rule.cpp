@@ -326,7 +326,7 @@ bool AiRuleBuildOneFarm::test() {
 				const UnitType *pt = pct->getProducedUnit(k);
 				//for all resources
 				for (int n = 0; n < pt->getCostCount(); ++n) {
-					const Resource *r = pt->getCost(n);
+					const ResourceAmount *r = pt->getCost(n);
 					// can produce consumables and would be the first of its type?
 					if (r->getAmount() < 0 && r->getType()->getClass() == ResourceClass::CONSUMABLE 
 					&& ai->getCountOfType(ut) == 0) {
@@ -361,7 +361,7 @@ bool AiRuleProduceResourceProducer::test() {
 	// consumables first
 	for (int i = 0; i < aiInterface->getTechTree()->getResourceTypeCount(); ++i) {
         rt = aiInterface->getTechTree()->getResourceType(i);
-		const Resource *r = aiInterface->getResource(rt);
+		const StoredResource *r = aiInterface->getResource(rt);
 		if (rt->getClass() == ResourceClass::CONSUMABLE && r->getBalance() < 0) {
 			interval = longInterval;
 			return true;
@@ -375,7 +375,7 @@ bool AiRuleProduceResourceProducer::test() {
 	// statics second
 	for (int i = 0; i < aiInterface->getTechTree()->getResourceTypeCount(); ++i) {
         rt = aiInterface->getTechTree()->getResourceType(i);
-		const Resource *r = aiInterface->getResource(rt);
+		const StoredResource *r = aiInterface->getResource(rt);
 		if (rt->getClass() == ResourceClass::STATIC && ai->isStaticResourceUsed(rt)
 		&& r->getAmount() < minStaticResources) {
 			interval = longInterval;
@@ -456,7 +456,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 			}
 			for (int k=0; k < ct->getProducedCount(); ++k) {
 				const ProducibleType *pt = ct->getProduced(k);
-				const Resource *res = pt->getCost(task->getResourceType());
+				const ResourceAmount *res = pt->getCost(task->getResourceType());
 				if (res && res->getAmount() < 0 && faction->reqsOk(pt)) {
 					prodMap[ut].push_back(std::make_pair(ct, pt));
 				}
@@ -705,7 +705,7 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 					const UnitType *buildingType = bct->getBuilding(k);
 					if (aiInterface->reqsOk(bct) && aiInterface->reqsOk(buildingType)) {
 						//if any building, or produces resource
-						const Resource *cost= buildingType->getCost(rt);
+						const ResourceAmount *cost= buildingType->getCost(rt);
 						if (!rt || (cost && cost->getAmount() < 0)) {
 							//LOG_AI_BUILD(__FUNCTION__ << " candidate building " 
 							//	<< buildingType->getName());

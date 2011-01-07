@@ -34,8 +34,8 @@ namespace Glest { namespace ProtoTypes {
 using Shared::Util::mediaErrorLog;
 
 void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
-	checksum.add(id);
-	checksum.add(name);
+	checksum.add(m_id);
+	checksum.add(m_name);
 }
 
 // =====================================================
@@ -50,7 +50,7 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 		imgPath = dir + "/" + imageNode->getAttribute("path")->getRestrictedValue();
 		image = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
 		if (baseNode->getOptionalChild("name")) {
-			name = baseNode->getChild("name")->getStringValue();
+			m_name = baseNode->getChild("name")->getStringValue();
 		}
 	} catch (runtime_error &e) {
 		g_errorLog.addXmlError(xmlPath, e.what());
@@ -162,7 +162,7 @@ ProducibleType::~ProducibleType() {
 
 string ProducibleType::getReqDesc() const {
 	stringstream ss;
-	ss << name;
+	ss << m_name;
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}

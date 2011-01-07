@@ -19,6 +19,8 @@
 #include "resource.h"
 #include "platform_util.h"
 #include "world.h"
+#include "program.h"
+#include "sim_interface.h"
 
 #include "leak_dumper.h"
 
@@ -27,6 +29,8 @@ using namespace Shared::Util;
 using namespace Shared::Xml;
 
 namespace Glest { namespace ProtoTypes {
+
+using Main::Program;
 
 // ======================================================
 //          Class FactionType
@@ -44,7 +48,7 @@ FactionType::FactionType()
 }
 
 bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
-	name = basename(dir);
+	m_name = basename(dir);
 
 	// a1) preload units
 	string unitsPath = dir + "/units/*.";
@@ -58,7 +62,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/units/" + unitFilenames[i];
-		UnitType *ut = g_world.getMasterTypeFactory().newUnitType();
+		UnitType *ut = g_simInterface.newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -73,7 +77,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
-		UpgradeType *ut = g_world.getMasterTypeFactory().newUpgradeType();
+		UpgradeType *ut = g_simInterface.newUpgradeType();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
 	}
@@ -81,7 +85,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 }
 
 bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree) {
-	name = basename(dir);
+	m_name = basename(dir);
 
 	// a1) preload units
 	string unitsPath = dir + "/glestimals/*.";
@@ -95,7 +99,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/glestimals/" + unitFilenames[i];
-		UnitType *ut = g_world.getMasterTypeFactory().newUnitType();
+		UnitType *ut = g_simInterface.newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -106,13 +110,13 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
 	logger.add("Faction type: "+ dir, true);
-	id = ndx;
-	name = basename(dir);
+	m_id = ndx;
+	m_name = basename(dir);
 
 	bool loadOk = true;
 
 	//open xml file
-	string path = dir+"/"+name+".xml";
+	string path = dir+"/"+m_name+".xml";
 	XmlTree xmlTree;
 	try { 
 		xmlTree.load(path); 
@@ -145,10 +149,11 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	// b1) load units
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/units/" + unitTypes[i]->getName();
-		if (!unitTypes[i]->load(str, techTree, this)) {
+		if (unitTypes[i]->load(str, techTree, this)) {
+			g_simInterface.setChecksum(unitTypes[i]);
+		} else {
 			loadOk = false;
 		}
-		g_world.getUnitTypeFactory().setChecksum(unitTypes[i]);
 		logger.unitLoaded();
 	}
 
@@ -173,10 +178,11 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	// b2) load upgrades
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();
-		if (!upgradeTypes[i]->load(str, techTree, this)) {
+		if (upgradeTypes[i]->load(str, techTree, this)) {
+			g_simInterface.setChecksum(upgradeTypes[i]);
+		} else {
 			loadOk = false;
 		}
-		g_world.getUpgradeTypeFactory().setChecksum(upgradeTypes[i]);
 	}
 
 	//read starting resources
@@ -337,8 +343,8 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
 	logger.add("Glestimal Faction: " + dir, true);
-	id = -1;
-	name = basename(dir);
+	m_id = -1;
+	m_name = basename(dir);
 	bool loadOk = true;
 
 	// load glestimals
@@ -347,7 +353,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 		if (unitTypes[i]->load(str, techTree, this, true)) {
 			Checksum checksum;
 			unitTypes[i]->doChecksum(checksum);
-			g_world.getUnitTypeFactory().setChecksum(unitTypes[i]);
+			g_simInterface.setChecksum(unitTypes[i]);
 		} else {
 			loadOk = false;
 		}
@@ -358,7 +364,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 }
 
 void FactionType::doChecksum(Checksum &checksum) const {
-	checksum.add(name);
+	checksum.add(m_name);
 	foreach_const (UnitTypes, it, unitTypes) {
 		(*it)->doChecksum(checksum);
 	}
@@ -398,31 +404,31 @@ FactionType::~FactionType() {
 
 // ==================== get ====================
 
-int FactionType::getSubfactionIndex(const string &name) const {
+int FactionType::getSubfactionIndex(const string &m_name) const {
     for (int i = 0; i < subfactions.size();i++) {
-		if (subfactions[i] == name) {
+		if (subfactions[i] == m_name) {
             return i;
 		}
     }
-	throw runtime_error("Subfaction not found: " + name);
+	throw runtime_error("Subfaction not found: " + m_name);
 }
 
-const UnitType *FactionType::getUnitType(const string &name) const{
+const UnitType *FactionType::getUnitType(const string &m_name) const{
     for (int i = 0; i < unitTypes.size(); ++i) {
-		if (unitTypes[i]->getName() == name) {
+		if (unitTypes[i]->getName() == m_name) {
             return unitTypes[i];
 		}
     }
-	throw runtime_error("Unit not found: " + name);
+	throw runtime_error("Unit not found: " + m_name);
 }
 
-const UpgradeType *FactionType::getUpgradeType(const string &name) const{
+const UpgradeType *FactionType::getUpgradeType(const string &m_name) const{
     for (int i = 0; i < upgradeTypes.size(); ++i) {
-		if (upgradeTypes[i]->getName() == name) {
+		if (upgradeTypes[i]->getName() == m_name) {
             return upgradeTypes[i];
 		}
     }
-	throw runtime_error("Upgrade not found: " + name);
+	throw runtime_error("Upgrade not found: " + m_name);
 }
 
 int FactionType::getStartingResourceAmount(const ResourceType *resourceType) const{

@@ -21,33 +21,33 @@
 #include "effect.h"
 #include "unit_type.h"
 #include "stats.h"
-#include "unit_reference.h"
 #include "math_util.h"
 #include "timer.h"
 #include "logger.h"
 #include "factory.h"
-
+#include "type_factories.h"
 #include "game_particle.h"
 
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
 #include "entities_enums.h"
 
-using namespace Shared::Math;
-using namespace Shared::Graphics;
-
-using Shared::Platform::Chrono;
-using Shared::Util::SingleTypeFactory;
-
 namespace Glest { namespace Sim {
 	class SkillCycleTable;
 }}
 
 namespace Glest { namespace Entities {
+
+using namespace Shared::Math;
+using namespace Shared::Graphics;
+using Shared::Platform::Chrono;
+using Shared::Util::SingleTypeFactory;
+
 using namespace ProtoTypes;
 using Sim::Map;
 
 class Unit;
+class UnitFactory;
 
 WRAPPED_ENUM( AutoCmdFlag,
 	REPAIR,
@@ -115,9 +115,6 @@ public:
 	void condense();
 };
 
-class UnitFactory;
-class Unit;
-
 typedef vector<Unit*>		UnitVector;
 typedef vector<const Unit*> ConstUnitVector;
 typedef set<const Unit*>	UnitSet;
@@ -140,7 +137,8 @@ typedef list<UnitId> UnitIdList;
  * TotalUpgrade class provided this functionality.
  */
 class Unit : public EnhancementType {
-	friend class UnitFactory;
+	friend class EntityFactory<Unit>;
+
 public:
 	typedef list<Command*> Commands;
 	//typedef list<UnitId> Pets;
@@ -253,11 +251,38 @@ public:
 	UnitSignal		StateChanged; /**< command changed / availability changed, etc (for gui) */
 	UnitSignal		Died;	/**<  */
 
+public:
+	struct CreateParams {
+		Vec2i pos;
+		const UnitType *type;
+		Faction *faction;
+		Map *map;
+		CardinalDir face;
+		Unit* master;
+
+		CreateParams(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
+				CardinalDir face = CardinalDir::NORTH, Unit* master = NULL)
+			: pos(pos), type(type), faction(faction), map(map), face(face), master(master) { }
+	};
+
+	struct LoadParams {
+		const XmlNode *node;
+		Faction *faction;
+		Map *map;
+		const TechTree *tt;
+		bool putInWorld;
+
+		LoadParams(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true)
+			: node(node), faction(faction), map(map), tt(tt), putInWorld(putInWorld) {}
+	};
+
 private:
-	Unit(int id, const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
-		CardinalDir face = CardinalDir::NORTH, Unit* master = NULL);
-	Unit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
-	~Unit();
+	Unit(CreateParams params);
+	Unit(LoadParams params);
+
+	virtual ~Unit();
+
+	void setId(int v) { id = v; }
 
 	void checkEffectParticles();
 	void checkEffectCloak();
@@ -394,7 +419,7 @@ public:
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
 	float getCloakAlpha() const			{return m_cloakAlpha;}
-	float getDeadAlpha() const;
+	float getRenderAlpha() const;
 
 	//is
 	bool isCarried() const				{return carried;}
@@ -451,6 +476,20 @@ public:
 		v.x += halfSize;
 		v.z += halfSize;
 		return v;
+	}
+
+	Vec3f getCurrVectorSink() const {
+		Vec3f currVec = getCurrVectorFlat();
+
+		// let dead units start sinking before they go away
+		int framesUntilDead = GameConstants::maxDeadCount - getDeadCount();
+		if(framesUntilDead <= 200 && !type->isOfClass(UnitClass::BUILDING)) {
+			float baseline = logf(20.125f) / 5.f;
+			float adjust = logf((float)framesUntilDead / 10.f + 0.125f) / 5.f;
+			currVec.y += adjust - baseline;
+		}
+
+		return currVec;
 	}
 
 	//command related
@@ -529,6 +568,7 @@ public:
 
 	void cloak();
 	void deCloak();
+	bool travel(const Vec2i &pos, const MoveSkillType *moveSkill);
 
 private:
 	float computeHeight(const Vec2i &pos) const;
@@ -544,24 +584,23 @@ inline ostream& operator<<(ostream &stream, const Unit &unit) {
 }
 
 
-class UnitFactory : public sigslot::has_slots {
+class UnitFactory : public EntityFactory<Unit>, public sigslot::has_slots {
 	friend class Glest::Sim::World; // for saved games
+
 private:
-	int		idCounter;
-	UnitMap unitMap;	// map of all current units (alive and recently dead)
-	//Units	unitList;
-
-	MutUnitSet	carriedSet; // set of units not in the world (because they are housed in other units)
-	Units		deadList;	// list of dead units
-
-	void assertDead();
+	MutUnitSet	m_carriedSet; // set of units not in the world (because they are housed in other units)
+	Units		m_deadList;	// list of dead units
 
 public:
-	UnitFactory();
-	~UnitFactory();
-	Unit* newInstance(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
-	Unit* newInstance(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master = NULL);
-	Unit* getUnit(int id);
+	UnitFactory() { }
+	~UnitFactory() { }
+
+	Unit* newUnit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true);
+	Unit* newUnit(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, CardinalDir face, Unit* master = NULL);
+
+	Unit* getUnit(int id) { return EntityFactory<Unit>::getInstance(id); }
+	Unit* getObject(int id) { return EntityFactory<Unit>::getInstance(id); }
+
 	void onUnitDied(Unit *unit);	// book a visit with the grim reaper
 	void update();					// send the grim reaper on his rounds
 	void deleteUnit(Unit *unit);	// should only be called to undo a creation

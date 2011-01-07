@@ -362,7 +362,7 @@ void Selection::load(const XmlNode *node) {
 		}
 		m_groups[index].clear();
 		for(int j = 0; j < groupNode->getChildCount(); ++j) {
-			Unit *unit = g_simInterface->getUnitFactory().getUnit(groupNode->getChildIntValue("unit", j));
+			Unit *unit = g_world.getUnit(groupNode->getChildIntValue("unit", j));
 			if(unit) {
 				m_groups[index].push_back(unit);
 			}

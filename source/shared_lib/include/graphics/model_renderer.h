@@ -14,6 +14,7 @@
 #define _SHARED_GRAPHICS_MODELRENDERER_H_
 
 #include "model.h"
+#include "shader.h"
 
 namespace Shared{ namespace Graphics{
 
@@ -51,12 +52,12 @@ public:
 	void setTeamColour(const Vec3f &colour) { teamColour = colour; }
 	const Vec3f& getTeamColour() const {return teamColour; }
 
-	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback= NULL)=0;
-	virtual void end()=0;
-	virtual void render(const Model *model)=0;
-	virtual void renderNormalsOnly(const Model *model)=0;
-	virtual void renderMesh(const Mesh *mesh)=0;
-	virtual void renderMeshNormalsOnly(const Mesh *mesh)=0;
+	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback= NULL) = 0;
+	virtual void end() = 0;
+	virtual void render(const Model *model, Vec3f *anim = 0, ShaderProgram *customProgram = 0) = 0;
+	virtual void renderNormalsOnly(const Model *model) = 0;
+	virtual void renderMesh(const Mesh *mesh, Vec3f *anim = 0, ShaderProgram *customProgram = 0) = 0;
+	virtual void renderMeshNormalsOnly(const Mesh *mesh) = 0;
 };
 
 }}//end namespace

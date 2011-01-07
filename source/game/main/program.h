@@ -172,6 +172,13 @@ public:
 	void setMaxUpdateBacklog(int maxBacklog)	{updateTimer.setMaxBacklog(maxBacklog);}
 	void resetTimers(int updateFps);
 	void setUpdateFps(int updateFps);
+	void setTechTitle(const string &title) {
+		if (title.empty()) {
+			Window::setText("Glest Advanced Engine");
+		} else {
+			Window::setText(title + " - Glest Advanced Engine");
+		}
+	}
 
 private:
 	void setDisplaySettings();

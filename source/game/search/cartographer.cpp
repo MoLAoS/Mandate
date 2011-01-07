@@ -109,7 +109,7 @@ Cartographer::Cartographer(World *world)
 	// find and catalog all resources...
 	for (int x=0; x < cellMap->getTileW() - 1; ++x) {
 		for (int y=0; y < cellMap->getTileH() - 1; ++y) {
-			const Resource * const r = cellMap->getTile(x,y)->getResource();
+			const MapResource * const r = cellMap->getTile(x,y)->getResource();
 			if (r) {
 				resourceLocations[r->getType()].push_back(Vec2i(x,y));
 			}
@@ -155,7 +155,7 @@ void Cartographer::initResourceMap(ResourceMapKey key, PatchMap<1> *pMap) {
 	const Map &map = *world->getMap();
 	pMap->zeroMap();
 	foreach (vector<Vec2i>, it, resourceLocations[key.resourceType]) {
-		Resource *r = world->getMap()->getTile(*it)->getResource();
+		MapResource *r = world->getMap()->getTile(*it)->getResource();
 		assert(r);
 		r->Depleted.connect(this, &Cartographer::onResourceDepleted);
 
@@ -220,7 +220,7 @@ void Cartographer::saveResourceState(XmlNode *mapNode) {
 		stringstream ss;
 		foreach_const (vector<Vec2i>, it, typeLocations->second) {
 			ss << *it << ":";
-			Resource *r = cellMap->getTile(*it)->getResource();
+			MapResource *r = cellMap->getTile(*it)->getResource();
 			if (r) {
 				ss << r->getAmount();
 			} else {

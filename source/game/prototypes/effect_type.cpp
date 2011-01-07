@@ -36,22 +36,24 @@ EffectType::EffectType() : lightColour(0.0f) {
 	soundStartTime = 0.0f;
 	loopSound = false;
 	damageType = NULL;
+	factionType = 0;
 }
 
 bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, const FactionType *ft) {
+	factionType = ft;
 	string tmp;
 	const XmlAttribute *attr;
 	bool loadOk = true;
 	
 	try { // name
-		name = en->getAttribute("name")->getRestrictedValue(); 
+		m_name = en->getAttribute("name")->getRestrictedValue(); 
 	} catch (runtime_error e) {
 		g_errorLog.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
 	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
-	id = const_cast<TechTree*>(tt)->addEffectType(this);
+	m_id = const_cast<TechTree*>(tt)->addEffectType(this);
 
 	try { // bias
 		tmp = en->getAttribute("bias")->getRestrictedValue();
@@ -273,46 +275,45 @@ void EffectType::getDesc(string &str) const {
 		return;
 	}
 
-	str += getName();
+	str += g_lang.getFactionString(getFactionType()->getName(), getName());
 
 	// effected units
 	if (isEffectsPetsOnly() || !isEffectsFoe() || !isEffectsAlly()) {
-		str += "\n   Affects: ";
+		str += "\n   " + g_lang.get("Affects") + ": ";
 		if (isEffectsPetsOnly()) {
-			str += "pets only";
+			str += g_lang.get("PetsOnly");
 		} else if (isEffectsAlly()) {
-			str += "ally only";
+			str += g_lang.get("AllyOnly");
 		} else {
 			assert(isEffectsFoe());
-			str += "foe only";
+			str += g_lang.get("FoeOnly");
 		}
 	}
 
 	if (chance != 100) {
-		str += "\n   Chance: " + intToStr(chance.intp()) + "%";
+		str += "\n   " + g_lang.get("Chance") + ": " + intToStr(chance.intp()) + "%";
 	}
 
-	str += "\n   Duration: ";
+	str += "\n   " + g_lang.get("Duration") + ": ";
 	if (isPermanent()) {
-		str += "permenant";
+		str += g_lang.get("Permenant");
 	} else {
 		str += intToStr(duration);
 	}
 
 	if (damageType) {
-		str += "\n   Damage Type: " + damageType->getName();
+		str += "\n   " + g_lang.get("DamageType") + ": " + g_lang.getTechString(damageType->getName());
 	}
 
 	EnhancementType::getDesc(str, "\n   ");
 	str += "\n";
 }
 
-// This is a prototype, shoud be called EmanationType...
 // =====================================================
-//  class Emanation
+//  class EmanationType
 // =====================================================
 
-bool Emanation::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+bool EmanationType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	EffectType::load(n, dir, tt, ft);
 
 	//radius
@@ -324,7 +325,7 @@ bool Emanation::load(const XmlNode *n, const string &dir, const TechTree *tt, co
 	return true;
 }
 
-void Emanation::doChecksum(Checksum &checksum) const {
+void EmanationType::doChecksum(Checksum &checksum) const {
 	EffectType::doChecksum(checksum);
 	checksum.add(radius);
 }

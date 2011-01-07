@@ -27,8 +27,8 @@ namespace Glest { namespace ProtoTypes {
 
 class AttackType : public NameIdPair {
 public:
-	void setName(const string &name)	{this->name = name;}
-	void setId(int id)					{this->id = id;}
+	void setName(const string &name)	{m_name = name;}
+	void setId(int id)					{m_id = id;}
 };
 
 // ===============================
@@ -37,8 +37,8 @@ public:
 
 class ArmourType : public NameIdPair {
 public:
-	void setName(const string &name)	{this->name = name;}
-	void setId(int id)					{this->id = id;}
+	void setName(const string &name)	{m_name = name;}
+	void setId(int id)					{m_id = id;}
 };
 
 // =====================================================

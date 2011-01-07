@@ -235,6 +235,7 @@ public:
 	void splat(const Pixmap2D *leftUp, const Pixmap2D *rightUp, const Pixmap2D *leftDown, const Pixmap2D *rightDown);
 	void lerp(float t, const Pixmap2D *pixmap1, const Pixmap2D *pixmap2);
 	void copy(const Pixmap2D *sourcePixmap);
+	void copy(int x, int y, int width, int height, const Pixmap2D *source);
 	void subCopy(int x, int y, const Pixmap2D *sourcePixmap);
 
 private:

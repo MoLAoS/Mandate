@@ -78,14 +78,17 @@ using Search::CardinalDir;
 // =====================================================
 
 class CommandType : public RequirableType {
-	friend class Glest::Sim::CommandTypeFactory;
+	friend class Glest::Sim::DynamicTypeFactory<CommandClass, CommandType>;
+	friend class Glest::Sim::MasterTypeFactory;
+
 protected:
 	Clicks clicks;
 	bool queuable;
 	const UnitType *unitType;
 	string m_tipKey;
 
-	void setIdAndUnitType(int v, UnitType *ut) { id = v; unitType = ut; }
+	void setId(int v) { m_id = v; }
+	void setUnitType(const UnitType *ut) { unitType = ut; }
 
 	string emptyString;
 
@@ -100,7 +103,7 @@ public:
 
 	const UnitType* getUnitType() const { return unitType; }
 
-	virtual string toString() const						{return Lang::getInstance().get(name);}
+	virtual string toString() const						{return g_lang.get(m_name);}
 	const string& getTipKey() const						{return m_tipKey;}
 	virtual string getTipKey(const string &name) const  {return emptyString;}
 
@@ -125,6 +128,8 @@ public:
 	bool isQueuable() const								{return queuable;}
 
 	//get
+	bool getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Vec3f &out_arrowColor) const;
+	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 1.f, 0.f);}
 	virtual CommandClass getClass() const = 0;
 	virtual Clicks getClicks() const					{return clicks;}
 	string getDesc(const Unit *unit) const {
@@ -219,6 +224,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 
+	virtual Vec3f getArrowColor() const {return Vec3f(0.f, 1.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MOVE; }
 };
@@ -278,6 +284,7 @@ public:
 
 	virtual void update(Unit *unit) const;
 
+	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::ATTACK; }
 
@@ -302,6 +309,7 @@ public:
 	}
 	virtual void update(Unit *unit) const;
 
+	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::ATTACK_STOPPED; }
 

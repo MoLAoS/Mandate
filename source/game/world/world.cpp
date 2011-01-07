@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//				  2009-2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -31,6 +32,7 @@
 #include "earthquake_type.h"
 #include "renderer.h"
 #include "sim_interface.h"
+#include "command.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -43,6 +45,20 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Sim {
 
+MasterEntityFactory::MasterEntityFactory()
+		: m_unitFactory()
+		, m_upgradeFactory(true)
+		, m_commandFactory(true)
+		, m_effectFactory(true)
+		, m_projectileFactory(false)
+		, m_mapObjectFactory(true) {
+	g_logger.add("MasterEntityFactory");
+}
+
+void MasterEntityFactory::deleteCommand(const Glest::Entities::Command *c) {
+	deleteCommand(c->getId());
+}
+
 // =====================================================
 // 	class World
 // =====================================================
@@ -52,23 +68,23 @@ World *World::singleton = 0;
 
 // ===================== PUBLIC ========================
 
-World::World(SimulationInterface *m_simInterface) 
+World::World(SimulationInterface *simInterface) 
 		: scenario(NULL)
-		, m_simInterface(m_simInterface)
-		, game(*m_simInterface->getGameState())
+		, m_simInterface(simInterface)
+		, game(*simInterface->getGameState())
 		, cartographer(NULL)
 		, routePlanner(NULL)
 		, thisFactionIndex(-1)
 		, posIteratorFactory(65) {
-	Config &config = Config::getInstance();
-
 	GameSettings &gs = m_simInterface->getGameSettings();
+	string techName = formatString(basename(gs.getTechPath()));
+	g_program.setTechTitle(techName);
 	
 	fogOfWar = gs.getFogOfWar();
 	shroudOfDarkness = gs.getShroudOfDarkness();
 
-	fogOfWarSmoothing = config.getRenderFogOfWarSmoothing();
-	fogOfWarSmoothingFrameSkip = config.getRenderFogOfWarSmoothingFrameSkip();
+	fogOfWarSmoothing = g_config.getRenderFogOfWarSmoothing();
+	fogOfWarSmoothingFrameSkip = g_config.getRenderFogOfWarSmoothingFrameSkip();
 
 	unfogActive = false;
 	frameCount = 0;
@@ -78,7 +94,7 @@ World::World(SimulationInterface *m_simInterface)
 }
 
 World::~World() {
-	Logger::getInstance().add("~World", !Program::getInstance()->isTerminating());
+	g_logger.add("~World", !g_program.isTerminating());
 	alive = false;
 
 	delete scenario;
@@ -86,15 +102,11 @@ World::~World() {
 	delete routePlanner;
 
 	singleton = 0;
-
-//	m_unitTypeFactory.assertTypes();
-//	m_commandTypeFactory.assertTypes();
-//	m_skillTypeFactory.assertTypes();
 }
 
 void World::save(XmlNode *node) const {
 	node->addChild("frameCount", frameCount);
-	node->addChild("nextUnitId", m_simInterface->getUnitFactory().idCounter);
+	node->addChild("nextUnitId", m_unitFactory.getIdCounter());
 	m_simInterface->getStats()->save(node->addChild("stats"));
 	timeFlow.save(node->addChild("timeFlow"));
 	XmlNode *factionsNode = node->addChild("factions");
@@ -140,7 +152,7 @@ void World::loadSaved(const XmlNode *worldNode) {
 	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
 
 	frameCount = worldNode->getChildIntValue("frameCount");
-	m_simInterface->getUnitFactory().idCounter = worldNode->getChildIntValue("nextUnitId");
+	m_unitFactory.setIdCounter(worldNode->getChildIntValue("nextUnitId"));
 
 	m_simInterface->getStats()->load(worldNode->getChild("stats"));
 	timeFlow.load(worldNode->getChild("timeFlow"));
@@ -197,7 +209,7 @@ bool World::loadTech() {
 //load map
 bool World::loadMap() {
 	const string &path = m_simInterface->getGameSettings().getMapPath();
-	map.load(path, &techTree, &tileset, m_simInterface->getObjectFactory());
+	map.load(path, &techTree, &tileset);
 	return true;
 }
 
@@ -279,9 +291,7 @@ void World::processFrame() {
 
 	++frameCount;
 	m_simInterface->startFrame(frameCount);
-	if (frameCount % 5 == 0) {
-		g_userInterface.getMinimap()->updateUnitTex();
-	}
+	g_userInterface.getMinimap()->update(frameCount);
 
 	// check ScriptTimers
 	ScriptManager::update();
@@ -301,7 +311,7 @@ void World::processFrame() {
 //	updateEarthquakes(1.f / 40.f);
 
 	//undertake the dead
-	m_simInterface->getUnitFactory().update();
+	m_unitFactory.update();
 
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
@@ -449,16 +459,16 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 
 		// lots of tests, roughly in order of speed of evaluation.
 		if ((source->isAlly(target) ? e->isEffectsAlly() : e->isEffectsFoe())
-		&&	(target->isOfClass(UnitClass::BUILDING) ? e->isEffectsBuildings() : e->isEffectsNormalUnits())
+		//&&	(target->isOfClass(UnitClass::BUILDING) ? e->isEffectsBuildings() : e->isEffectsNormalUnits())
 		&&	(e->getChance() != 100 ? random.randPercent() < e->getChance() : true)) {
 
 			fixed strength = e->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
-			Effect *primaryEffect = new Effect(e, source, NULL, strength, target, &techTree);
+			Effect *primaryEffect = newEffect(e, source, NULL, strength, target, &techTree);
 
 			target->add(primaryEffect);
 
 			foreach_const (EffectTypes, it, e->getRecourse()) {
-				source->add(new Effect((*it), NULL, primaryEffect, strength, source, &techTree));
+				source->add(newEffect((*it), NULL, primaryEffect, strength, source, &techTree));
 			}
 		}
 	}
@@ -467,7 +477,7 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 //CLEAN: this is never called, and has a silly name considering what it appears to be for...
 void World::appyEffect(Unit *u, Effect *e) {
 	if (u->add(e)) {
-		Unit *attacker = m_simInterface->getUnitFactory().getUnit(e->getSource());
+		Unit *attacker = getUnit(e->getSource());
 		if (attacker) {
 			m_simInterface->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
 			attacker->incKills();
@@ -517,7 +527,7 @@ void World::tick() {
 					//if unit operative and has this cost
 					const Unit *u =  faction->getUnit(j);
 					if (u->isOperative()) {
-						const Resource *r = u->getType()->getCost(rt);
+						const ResourceAmount *r = u->getType()->getCost(rt);
 						if (r != NULL) {
 							balance -= u->getType()->getCost(rt)->getAmount();
 						}
@@ -529,12 +539,8 @@ void World::tick() {
 	}
 }
 
-Unit* World::findUnitById(int id) const {
-	return m_simInterface->getUnitFactory().getUnit(id);
-}
-
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	return getUnitTypeFactory().getType(id);
+	return g_simInterface.getUnitType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded
@@ -637,7 +643,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	if (!map.isInside(pos)) {
 		return LuaCmdResult::INVALID_POSITION;
 	}
-	Unit *unit = m_simInterface->getUnitFactory().newInstance(pos, ut, faction, &map, CardinalDir::NORTH);
+	Unit *unit = newUnit(pos, ut, faction, &map, CardinalDir::NORTH);
 	if ((precise && map.canOccupy(pos, ut->getField(),  ut, CardinalDir::NORTH))
 	|| (!precise && placeUnit(pos, generationArea, unit, true))) {
 		unit->create(true);
@@ -648,7 +654,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		ScriptManager::onUnitCreated(unit);
 		return unit->getId();
 	} else {
-		m_simInterface->getUnitFactory().deleteUnit(unit);
+		m_unitFactory.deleteUnit(unit);
 		return LuaCmdResult::INSUFFICIENT_SPACE;
 	}
 }
@@ -698,7 +704,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	} else if (commandName == "attack") {
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::ATTACK);
 	} else if (commandName == "harvest") {
-		Resource *r = map.getTile(Map::toTileCoords(pos))->getResource();
+		MapResource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
 		if (!unit->getType()->getFirstCtOfClass(CommandClass::HARVEST)) {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
@@ -728,7 +734,7 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	if (!cmdType) {
 		return LuaCmdResult::NO_CAPABLE_COMMAND;
 	}
-	return unit->giveCommand(new Command(cmdType, CommandFlags(), pos));
+	return unit->giveCommand(newCommand(cmdType, CommandFlags(), pos));
 }
 
 int World::giveBuildCommand(int unitId, const string &commandName, const string &buildType, const Vec2i &pos) {
@@ -749,7 +755,7 @@ int World::giveBuildCommand(int unitId, const string &commandName, const string 
 		for (int i=0; i < ut->getCommandTypeCount<BuildCommandType>(); ++i) {
 			const BuildCommandType *bct = ut->getCommandType<BuildCommandType>(i);
 			if (bct->canBuild(but)) {
-				return unit->giveCommand(new Command(bct, CommandFlags(), pos, but, CardinalDir::NORTH));
+				return unit->giveCommand(newCommand(bct, CommandFlags(), pos, but, CardinalDir::NORTH));
 			}
 		}
 		return LuaCmdResult::NO_CAPABLE_COMMAND;
@@ -771,14 +777,14 @@ int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) 
 	if (cmdName == "attack") {
 		const AttackCommandType *act = unit->getType()->getAttackCommand(target->getCurrZone());
 		if (act) {
-			return unit->giveCommand(new Command(act, CommandFlags(), target));
+			return unit->giveCommand(newCommand(act, CommandFlags(), target));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "repair") {
 		const RepairCommandType *rct = unit->getType()->getRepairCommand(target->getType());
 		if (rct) {
-			return unit->giveCommand(new Command(rct, CommandFlags(), target));
+			return unit->giveCommand(newCommand(rct, CommandFlags(), target));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
@@ -790,7 +796,7 @@ int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) 
 		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
 	if (cmdType) {
-		return unit->giveCommand(new Command(cmdType, CommandFlags(), target));
+		return unit->giveCommand(newCommand(cmdType, CommandFlags(), target));
 	}
 	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
@@ -805,7 +811,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 		const StopCommandType *sct = (StopCommandType*)unit->getType()->getFirstCtOfClass(CommandClass::STOP);
 		if (sct) {
 			// return CommandResult
-			return unit->giveCommand(new Command(sct, CommandFlags()));
+			return unit->giveCommand(newCommand(sct, CommandFlags()));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
@@ -813,7 +819,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 		const AttackStoppedCommandType *asct = 
 			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::ATTACK_STOPPED);
 		if (asct) {
-			return unit->giveCommand(new Command(asct, CommandFlags()));
+			return unit->giveCommand(newCommand(asct, CommandFlags()));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
@@ -835,7 +841,7 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 			const ProducibleType *pt = ct->getProduced(j);
 			if (pt->getName() == producedName) {
 				CommandResult res = unit->giveCommand(
-					new Command(ct, CommandFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
+					newCommand(ct, CommandFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
 				return res;
 			}
 		}
@@ -862,7 +868,7 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 		if (ct->getClass()==CommandClass::UPGRADE) {
 			const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
 			if (uct->getProducedUpgrade() == upgrd) {
-				CommandResult cmdRes = unit->giveCommand(new Command(uct, CommandFlags()));
+				CommandResult cmdRes = unit->giveCommand(newCommand(uct, CommandFlags()));
 				return cmdRes;
 			}
 		}
@@ -1022,7 +1028,7 @@ void World::initUnits() {
 			const UnitType *ut = ft->getStartingUnit(j);
 			int initNumber = ft->getStartingUnitAmount(j);
 			for (int l = 0; l < initNumber; l++) {
-				Unit *unit = m_simInterface->getUnitFactory().newInstance(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
+				Unit *unit = newUnit(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
 				int startLocationIndex = f->getStartLocationIndex();
 
 				if (placeUnit(map.getStartLocation(startLocationIndex), generationArea, unit, true)) {
@@ -1044,7 +1050,7 @@ void World::initUnits() {
 			const Unit* const &unit = *uIt;
 			const UnitType *ut = unit->getType();
 			if (ut->hasSkillClass(SkillClass::BE_BUILT) && !ut->hasSkillClass(SkillClass::MOVE)) {
-				map.flatternTerrain(unit);
+				map.prepareTerrain(unit);
 				cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
 			}
 		}
@@ -1069,20 +1075,6 @@ void World::initExplorationState() {
 			map.getTile(i, j)->setExplored(thisTeamIndex, !shroudOfDarkness);
 		}
 	}
-	//if (!fogOfWar) {
-	//	for (int i = 0; i < map.getTileW(); ++i) {
-	//		for (int j = 0; j < map.getTileH(); ++j) {
-	//			map.getTile(i, j)->setVisible(thisTeamIndex, true);
-	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
-	//		}
-	//	}
-	//} else if (!shroudOfDarkness) {
-	//	for (int i = 0; i < map.getTileW(); ++i) {
-	//		for (int j = 0; j < map.getTileH(); ++j) {
-	//			map.getTile(i, j)->setExplored(thisTeamIndex, true);
-	//		}
-	//	}
-	//}
 }
 
 
@@ -1268,10 +1260,10 @@ ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, con
 }
 
 void ParticleDamager::execute(ParticleSystem *particleSystem) {
-	Unit *attacker = g_simInterface->getUnitFactory().getUnit(attackerRef);
+	Unit *attacker = world->getUnit(attackerRef);
 
 	if (attacker) {
-		Unit *target = g_simInterface->getUnitFactory().getUnit(targetRef);
+		Unit *target = world->getUnit(targetRef);
 		if (target) {
 			targetPos = target->getCenteredPos();
 			// manually feed the attacked unit here to avoid problems with cell maps and such

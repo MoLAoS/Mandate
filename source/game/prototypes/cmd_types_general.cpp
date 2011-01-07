@@ -57,7 +57,7 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	const XmlNode *nameNode = n->getChild("name");
-	name = nameNode->getRestrictedValue();
+	m_name = nameNode->getRestrictedValue();
 	XmlAttribute *tipAttrib = nameNode->getAttribute("tip", false);
 	if (tipAttrib) {
 		m_tipKey = tipAttrib->getRestrictedValue();
@@ -83,7 +83,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	Command *autoCmd;
 	const UnitType *ut = unit->getType();
 	if (unit->isCarried()) {
-		Unit *carrier = g_simInterface->getUnitFactory().getUnit(unit->getCarrier());
+		Unit *carrier = g_world.getUnit(unit->getCarrier());
 		const LoadCommandType *lct = 
 			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
 		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
@@ -122,6 +122,36 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return autoCmd;
 	}
 	return 0;
+}
+
+/** 
+ * Determines command arrow details and if it should be drawn
+ * @param out_arrowTarget output for arrowTarget
+ * @param out_arrowColor output for arrowColor
+ * @return whether to render arrow
+ */
+bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Vec3f &out_arrowColor) const {
+	if (getClicks() != Clicks::ONE) {
+		// arrow color
+		out_arrowColor = getArrowColor();
+
+		// arrow target
+		if (cmd->getUnit() != NULL) {
+			if (!cmd->getUnit()->isCarried()) {
+				RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
+				out_arrowTarget = cmd->getUnit()->getCurrVectorFlat();
+				return true;
+			}
+		} else {
+			Vec2i pos = cmd->getPos();
+			if (pos != Command::invalidPos) {
+				out_arrowTarget = Vec3f(float(pos.x), g_map.getCell(pos)->getHeight(), float(pos.y));
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void CommandType::apply(Faction *faction, const Command &command) const {
@@ -183,7 +213,7 @@ Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
 	Unit *sighted = NULL;
 	if (attackerInSight(unit, &sighted)) {
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();
-		return new Command(this, CommandFlags(CommandProperties::AUTO, true), escapePos);
+		return g_world.newCommand(this, CommandFlags(CommandProperties::AUTO, true), escapePos);
 	}
 	return 0;
 }
@@ -209,24 +239,8 @@ void MoveCommandType::update(Unit *unit) const {
 		pos = command->getPos();
 	}
 
-	switch (g_routePlanner.findPath(unit, pos)) {
-		case TravelState::MOVING:
-			unit->setCurrSkill(m_moveSkillType);
-			unit->face(unit->getNextPos());
-			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
-			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
-			break;
-		case TravelState::BLOCKED:
-			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked() && !command->getUnit()) {
-				unit->clearPath();
-				unit->finishCommand();
-				return;
-			}
-			break;	
-		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-			unit->finishCommand();
-			return;
+	if (unit->travel(pos, m_moveSkillType)) {
+		unit->finishCommand();
 	}
 
 	// if we're doing an auto command, let's make sure we still want to do it
@@ -428,21 +442,21 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
-			Unit *produced = g_simInterface->getUnitFactory().newInstance(
-				Vec2i(0), prodType, unit->getFaction(), g_world.getMap(), CardinalDir::NORTH);
+			Unit *produced = g_world.newUnit(Vec2i(0), prodType, unit->getFaction(),
+				g_world.getMap(), CardinalDir::NORTH);
 			if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 				unit->cancelCurrCommand();
-				g_simInterface->getUnitFactory().deleteUnit(unit);
+				g_world.getUnitFactory().deleteUnit(unit);
 			} else {
 				unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
 				produced->create();
 				produced->born();
 				ScriptManager::onUnitCreated(produced);
-				g_simInterface->getStats()->produce(unit->getFactionIndex());
+				g_simInterface.getStats()->produce(unit->getFactionIndex());
 
 				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 				if (!produced->anyCommand() && ct) { // if not given a command by script
-					produced->giveCommand(new Command(ct, CommandFlags(), unit->getMeetingPos()));
+					produced->giveCommand(g_world.newCommand(ct, CommandFlags(), unit->getMeetingPos()));
 				}
 				unit->finishCommand();
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -480,7 +494,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		g_errorLog.addXmlError(dir, e.what ());
 		return false;
 	}
-	GeneratedType *gt = g_world.getMasterTypeFactory().newGeneratedType();
+	GeneratedType *gt = g_simInterface.newGeneratedType();
 	if (!gt->load(producibleNode, dir, tt, ft)) {
 		loadOk = false;
 	}
@@ -901,7 +915,7 @@ void LoadCommandType::update(Unit *unit) const {
 	Unit *closest = 0; // else find closest
 	fixed dist = fixed::max_int();
 	foreach (UnitIdList, it, unitsToCarry) {
-		Unit *target = g_simInterface->getUnitFactory().getUnit(*it);
+		Unit *target = g_world.getUnit(*it);
 		fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
 		if (d < dist) {
 			closest = target;
@@ -922,7 +936,7 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->clearPath();
 		if (unit->getCarriedCount() == m_loadCapacity && !unitsToCarry.empty()) {
 			foreach (UnitIdList, it, unitsToCarry) {
-				Unit *unit = g_simInterface->getUnitFactory().getUnit(*it);
+				Unit *unit = g_world.getUnit(*it);
 				if (unit->getType()->getFirstCtOfClass(CommandClass::MOVE)) {
 					assert(unit->getCurrCommand());
 					assert(unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED);
@@ -938,22 +952,16 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(SkillClass::STOP);
 		return;
 	}
+
 	Vec2i pos = closest->getCenteredPos(); // else move toward closest
-	switch (g_routePlanner.findPath(unit, pos)) {
-		case TravelState::MOVING:
-			unit->setCurrSkill(moveSkillType);
-			unit->face(unit->getNextPos());
-			break;
-		case TravelState::BLOCKED:
+	if (unit->travel(pos, moveSkillType)) {
+		//unit->finishCommand(); was in blocked which might be better to use since it should be within 
+		// load distance by the time it gets to arrived state anyway? - hailstone 21Dec2010
+		if (unit->getPath()->isBlocked() && !command->getUnit()) {
+			unit->finishCommand();
+		} else {
 			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked() && !command->getUnit()) {
-				unit->clearPath();
-				unit->finishCommand();
-			}
-			break;
-		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-			unit->setCurrSkill(SkillClass::STOP);
-			break;
+		}
 	}
 }
 
@@ -1029,29 +1037,14 @@ void UnloadCommandType::update(Unit *unit) const {
 		return;
 	}
 	if (command->getPos() != Command::invalidPos) {
-		assert(moveSkillType);
-		switch (g_routePlanner.findPathToLocation(unit, command->getPos())) {
-			case TravelState::MOVING:
-				unit->setCurrSkill(moveSkillType);
-				unit->face(unit->getNextPos());
-				break;
-			case TravelState::BLOCKED:
-				unit->setCurrSkill(SkillClass::STOP);
-				if (unit->getPath()->isBlocked()) {
-					unit->clearPath();
-					command->setPos(Command::invalidPos);
-				}
-				break;
-			default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-				unit->setCurrSkill(SkillClass::STOP);
-				command->setPos(Command::invalidPos);
-				break;
+		if (unit->travel(command->getPos(), moveSkillType)) {
+			command->setPos(Command::invalidPos);
 		}
 	} else {
 		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
 			unit->setCurrSkill(SkillClass::UNLOAD);
 		} else {
-			Unit *targetUnit = g_simInterface->getUnitFactory().getUnit(unit->getUnitsToUnload().front());
+			Unit *targetUnit = g_world.getUnit(unit->getUnitsToUnload().front());
 			int maxRange = unloadSkillType->getMaxRange();
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
@@ -1089,23 +1082,8 @@ void BeLoadedCommandType::update(Unit *unit) const {
 		return;
 	}
 	Vec2i targetPos = command->getUnit()->getCenteredPos();
-	assert(moveSkillType);
-	switch (g_routePlanner.findPathToLocation(unit, targetPos)) {
-		case TravelState::MOVING:
-			unit->setCurrSkill(moveSkillType);
-			unit->face(unit->getNextPos());
-			break;
-		case TravelState::BLOCKED:
-			unit->setCurrSkill(SkillClass::STOP);
-			if (unit->getPath()->isBlocked()) {
-				unit->clearPath();
-				command->setPos(Command::invalidPos);
-			}
-			break;
-		default: // TravelState::ARRIVED or TravelState::IMPOSSIBLE
-			unit->setCurrSkill(SkillClass::STOP);
-			command->setPos(Command::invalidPos);
-			break;
+	if (unit->travel(targetPos, moveSkillType)) {
+		command->setPos(Command::invalidPos);
 	}
 }
 
@@ -1187,7 +1165,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixedVec2 fixedCentre;
 	fixed halfSize;
 	if (unit->isCarried()) {
-		Unit *carrier = g_simInterface->getUnitFactory().getUnit(unit->getCarrier());
+		Unit *carrier = g_world.getUnit(unit->getCarrier());
 		effectivePos = carrier->getCenteredPos();
 		fixedCentre = carrier->getFixedCenteredPos();
 		halfSize = carrier->getType()->getHalfSize();

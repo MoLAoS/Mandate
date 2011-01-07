@@ -362,7 +362,7 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 		Vec2i pos = Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange());
 		REPAIR_LOG( "\tMap::getNearestPos(): " << pos );
 
-		newCommand = new Command(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
+		newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
 		newCommand->setPos2(unit->getPos());
 		return newCommand;
 	}
@@ -612,8 +612,8 @@ bool BuildCommandType::attemptMoveUnits(const vector<Unit *> &occupants) const {
 	// they all have a move command, so we'll wait
 	return true;
 
-	/// @TODO: Check for idle units and tell them to get the fuck out of the way.
-	/// @TODO: Possibly add a unit notification to let player know builder is waiting
+	///@todo Check for idle units and tell them to get the fuck out of the way.
+	///@todo Possibly add a unit notification to let player know builder is waiting
 }
 
 void BuildCommandType::blockedBuild(Unit *unit) const {
@@ -645,8 +645,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 
 	BUILD_LOG( "in position, starting construction." );
-	builtUnit = g_simInterface->getUnitFactory().newInstance(
-		command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
+	builtUnit = g_world.newUnit(command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
 	unit->setCurrSkill(m_buildSkillType);
 	unit->setTarget(builtUnit, true, true);
@@ -814,7 +813,7 @@ const int maxResSearchRadius= 10;
 /// looks for a resource of a type that hct can harvest, searching from command target pos
 /// @return pointer to Resource if found (unit's command pos will have been re-set).
 /// NULL if no resource was found within UnitUpdater::maxResSearchRadius.
-Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
+MapResource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
 	Map *map = g_world.getMap();
 
@@ -822,7 +821,7 @@ Resource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 			g_world.getPosIteratorFactory().getInsideOutIterator(1, maxResSearchRadius));
 
 	while (pci.getNext(pos)) {
-		Resource *r = map->getTile(Map::toTileCoords(pos))->getResource();
+		MapResource *r = map->getTile(Map::toTileCoords(pos))->getResource();
 		if (r && hct->canHarvest(r->getType())) {
 			unit->getCurrCommand()->setPos(pos);
 			return r;
@@ -839,7 +838,7 @@ void HarvestCommandType::update(Unit *unit) const {
 	Map *map = g_world.getMap();
 
 	Tile *tile = map->getTile(Map::toTileCoords(unit->getCurrCommand()->getPos()));
-	Resource *res = tile->getResource();
+	MapResource *res = tile->getResource();
 
 	if (!res) { // reset command pos, but not Unit::targetPos
 		HARVEST_LOG( "No resource at command target." );
@@ -914,11 +913,11 @@ void HarvestCommandType::update(Unit *unit) const {
 			int resourceAmount = unit->getLoadCount();
 			// Just do this for all players ???
 			if (unit->getFaction()->getCpuControl()) {
-				const float &mult = g_simInterface->getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+				const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
 				resourceAmount = int(resourceAmount * mult);
 			}
 			unit->getFaction()->incResourceAmount(unit->getLoadType(), resourceAmount);
-			g_simInterface->getStats()->harvest(unit->getFactionIndex(), resourceAmount);
+			g_simInterface.getStats()->harvest(unit->getFactionIndex(), resourceAmount);
 			ScriptManager::onResourceHarvested(unit);
 
 			// if next to a store unload resources

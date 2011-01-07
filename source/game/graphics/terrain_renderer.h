@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2010      James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -9,8 +10,8 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-#ifndef _GLEST_GRAPHICS_TARRAIN_RENDERER_H_
-#define _GLEST_GRAPHICS_TARRAIN_RENDERER_H_
+#ifndef _GLEST_GRAPHICS_TERRAIN_RENDERER_H_
+#define _GLEST_GRAPHICS_TERRAIN_RENDERER_H_
 
 // shared_lib
 #include "vec.h"
@@ -18,6 +19,7 @@
 #include "pixmap.h"
 #include "matrix.h"
 #include "texture.h"
+#include "gl_wrap.h"
 
 // game
 #include "scene_culler.h"
@@ -98,7 +100,7 @@ protected:
 	GLuint			m_vertexBuffer;
 	vector<uint32>	m_indexArray;
 
-	void updateVertexData(Rect2i &area = Rect2i(-1, -1, -1, -1));
+	void updateVertexData(Rect2i area = Rect2i(-1, -1, -1, -1));
 
 public:
 	TerrainRenderer2();
@@ -111,4 +113,4 @@ public:
 
 }} // end namespace Glest::Graphics
 
-#endif // ndef _GLEST_GRAPHICS_TARRAIN_RENDERER_H_
+#endif // ndef _GLEST_GRAPHICS_TERRAIN_RENDERER_H_

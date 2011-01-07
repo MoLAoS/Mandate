@@ -379,7 +379,7 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 		luaConsole->addOutput(err);
 
 		if (!quietly) {
-			g_simInterface->pause();
+			g_simInterface.pause();
 			g_gameState.addScriptMessage("Script Error", err);
 		}
 	}
@@ -920,15 +920,16 @@ int ScriptManager::findLocationForBuilding(LuaHandle* luaHandle) {
 	Vec2i result(-1);
 	if (extractArgs(args, "findLocationForBuilding", "int,str,str", &ndx, &buildingType, &locationType)) {
 		LocationType locType = LocationTypeNames.match(locationType.c_str());
+		const Faction *faction = 0;
 		const UnitType *bType = 0;
 		if (ndx < 0 || ndx >= g_gameSettings.getFactionCount()) {
 			addErrorMessage("Error: findLocationForBuilding() faction index out of range: " + intToStr(ndx));
-		} else if (locType == LocationType::INVALID) {
+		}
+		faction = g_world.getFaction(ndx);
+		if (locType == LocationType::INVALID) {
 			addErrorMessage("Error: findLocationForBuilding() location type '" + locationType + "' unknown.");
-		} else if (!(bType = g_world.getMasterTypeFactory().getUnitTypeFactory().findType(buildingType))) {
+		} else if (!(bType = faction->getType()->getUnitType(buildingType))) {
 			addErrorMessage("Error: findLocationForBuilding() building type '" + buildingType + "' unknown.");
-		} else if (bType->getFactionType() != g_world.getFaction(ndx)->getType()) {
-			addErrorMessage("Error: findLocationForBuilding() building type '" + buildingType + "' wrong faction.");
 		} else {
 			Surveyor *surveyor = g_world.getSurveyor(g_world.getFaction(ndx));
 			result = surveyor->findLocationForBuilding(bType, locType);
@@ -1304,7 +1305,7 @@ int ScriptManager::damageUnit(LuaHandle* luaHandle) {
 	LuaArguments args(luaHandle);
 	int unitId, hp;
 	if (extractArgs(args, "damageUnit", "int,int", &unitId, &hp)) {
-		Unit *unit = g_simInterface->getUnitFactory().getUnit(unitId);
+		Unit *unit = g_world.getUnit(unitId);
 		if (unit) {
 			if (hp > 0) {
 				g_world.damage(unit, hp);
@@ -1330,7 +1331,7 @@ int ScriptManager::destroyUnit(LuaHandle* luaHandle) {
 		good = true;
 	}
 	if (good) {
-		Unit *unit = g_simInterface->getUnitFactory().getUnit(unitId);
+		Unit *unit = g_world.getUnit(unitId);
 		if (unit) {
 			if (!unit->isAlive()) {
 				addErrorMessage("destroyUnit(): unit with id " + intToStr(unitId) + " is already dead.");
@@ -1339,7 +1340,7 @@ int ScriptManager::destroyUnit(LuaHandle* luaHandle) {
 			} else {
 				g_world.damage(unit, unit->getHp());
 				unit->undertake();
-				g_simInterface->getUnitFactory().deleteUnit(unit);
+				g_world.getUnitFactory().deleteUnit(unit);
 			}
 		} else {
 			addErrorMessage("destroyUnit(): invalid unit id " + intToStr(unitId));

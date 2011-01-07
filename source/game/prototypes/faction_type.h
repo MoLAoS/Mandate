@@ -49,7 +49,7 @@ private:
 	typedef set<UnitType*> UnitTypeSet;
 	typedef vector<UpgradeType*> UpgradeTypes;
 	typedef vector<PairPUnitTypeInt> StartingUnits;
-	typedef vector<Resource> Resources;
+	typedef vector<StoredResource> Resources;
 	typedef vector<string> Subfactions;
 
 private:
@@ -81,7 +81,7 @@ public:
 	~FactionType();
 
 	//get
-	string getName() const								{return name;}
+	string getName() const								{return m_name;}
 	int getUnitTypeCount() const						{return unitTypes.size();}
 	int getUpgradeTypeCount() const						{return upgradeTypes.size();}
 	int getSubfactionCount() const						{return subfactions.size();}

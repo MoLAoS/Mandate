@@ -53,6 +53,81 @@ public:
 };
 
 // =====================================================
+//	class Imageset
+//
+/// Images are extracted from a single source image
+// =====================================================
+
+class Imageset : public StaticImage {
+private:
+	int m_active;
+	int m_defaultImage;
+public:
+	Imageset(Container* parent) 
+			: StaticImage(parent)
+			, m_active(0)
+			, m_defaultImage(0)
+	{}
+
+	/// Constructor for uniform image sizes, see addImages
+	Imageset(Container* parent, const Texture2D *source, int width, int height)
+			: StaticImage(parent)
+			, m_active(0)
+			, m_defaultImage(0) {
+		addImages(source, width, height);
+	}
+
+	// non-uniform squares
+	/*Imageset(Texture2D, squarespec) {
+		use the squarespec to extract the images
+	}*/
+	void addImages(const Texture2D *source, int width, int height);
+	virtual void render() { renderImage(m_active); }
+
+	void setDefaultImage(int ndx = 0);
+	void setActive(int ndx = 0);
+};
+
+// =====================================================
+//	class Animset
+/// 2D animation control for imagesets
+// =====================================================
+
+class Animset : public Widget {
+private:
+	Imageset *m_imageset;
+	int m_currentFrame;
+	int m_fps;
+	float m_timeElapsed;
+	int m_start, m_end;
+	bool m_loop;
+public:
+	Animset(Container* parent, Imageset *imageset, int fps) 
+			: Widget(parent)
+			, m_imageset(imageset)
+			, m_currentFrame(0)
+			, m_fps(fps)
+			, m_timeElapsed(0.0)
+			, m_start(0)
+			, m_loop(true) {
+		m_end = m_imageset->getNumImages()-1;
+	}
+
+	/// rendering is handled by Imageset
+	virtual void render() {}
+	virtual void update();
+	virtual string desc() { return string("[Animset: ") + "]"; }
+
+	void setRange(int start, int end) { m_start = start; m_end = end; }
+	const Texture2D *getCurrent() { return m_imageset->getImage(m_currentFrame); }
+	void setFps(int v) { m_fps = v; }
+	void play() { setEnabled(true); }
+	void stop() { setEnabled(false); }
+	void reset() { m_currentFrame = m_start; }
+	void loop(bool v) { m_loop = v; }
+};
+
+// =====================================================
 // class StaticText
 // =====================================================
 

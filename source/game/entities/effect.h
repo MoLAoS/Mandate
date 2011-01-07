@@ -14,46 +14,43 @@
 
 #include "effect_type.h"
 #include "vec.h"
-#include "unit_reference.h"
 #include "socket.h"
 
 namespace Glest { namespace Entities {
 
 class EffectState;
 class Unit;
-//class UnitReference;
 
 // ===============================
 // 	class Effect
 // ===============================
 
-/**
- * An effect, usually temporary, that modifies the stats,
- * regeneration/degeneration or other attributes of a unit.
- * TODO: Implement lighting, particles & sound
- */
+/** An effect, usually temporary, that modifies the stats,
+  * regeneration/degeneration or other attributes of a unit.
+  * @todo: Implement lighting & sound */
 class Effect {
+	friend class EntityFactory<Effect>;
+
 private:
+	int	m_id;
+
+	/** This effect's proto-type. */
+	const EffectType *type;
+
 	/** Unit that caused this effect, or -1 if this is a recourse effect. */
 	UnitId source;
 
-	/**
-	 * If this is a recourse effect, the primary effect that this is a recourse
-	 * of, NULL otherwise.
-	 */
+	/** If this is a recourse effect, the primary effect that this is a recourse
+	  * of, NULL otherwise. */
 	Effect *root;
 
-	/** The effect type. */
-	const EffectType *type;
-
-	/**
-	 * A modifier that adjusts how powerful this effect, based upon the type,
-	 * should be. Each values of this effect will be multiplied by strength
-	 * before being applied to the Unit or any other modifiers.
-	 */
+	/** A modifier that adjusts how powerful this effect, based upon the type,
+	  * should be. Each value of this effect will be multiplied by strength
+	  * before being applied to the Unit or any other modifiers. */
 	fixed strength;
 
-	/** The effect's duration in game ticks */
+	/** The effect's duration in game ticks (1 game tick == 40 world frames) */
+	///@todo this is inaccurate, convert to frames
 	int duration;
 
 	bool recourse;
@@ -61,12 +58,28 @@ private:
 	int actualHpRegen;
 
 public:
-	Effect(const EffectType* type, Unit *source, Effect *root, fixed strength,
-			const Unit *recipient, const TechTree *tt);
+	struct CreateParams {
+		const EffectType* type;
+		Unit *source;
+		Effect *root;
+		fixed strength;
+		const Unit *recipient;
+		const TechTree *tt;
+
+		CreateParams(const EffectType* type, Unit *source, Effect *root, fixed strength,
+						const Unit *recipient, const TechTree *tt) 
+			: type(type), source(source), root(root), strength(strength), recipient(recipient), tt(tt) { }
+	};
+
+private:
+	Effect(CreateParams params);
 	Effect(const XmlNode *node);
 
 	virtual ~Effect();
+	void setId(int v) { m_id = v; }
 
+public:
+	int getId() const				{return m_id;}
 	UnitId getSource() const		{return source;}
 	Effect *getRoot()				{return root;}
 	const EffectType *getType() const {return type;}
@@ -82,39 +95,36 @@ public:
 
 	/** Causes the effect to age one tick and returns true when the effect has
 	  * expired (and should be removed from the Unit). */
-	bool tick() {
-		return type->isPermanent() ? false : --duration <= 0;
-	}
+	bool tick() { return type->isPermanent() ? false : --duration <= 0; }
 
 	void save(XmlNode *node) const;
 
 	MEMORY_CHECK_DECLARATIONS(Effect)
 };
 
+typedef EntityFactory<Effect> EffectFactory;
+
 // ===============================
 // 	class Effects
 //
 // ===============================
 
-/**
- * All effects currently effecting a unit. The Effects class serves as both
- * container for the effects as well as delegate to operations related to
- * the effects on the unit it belongs to, so it is more than a simple
- * collection. Effects manages the following functions:
- * <ul>
- * <li>Determine how a new effect should be handled based upon stacking
- * rules</li>
- * <li>Manage the lifecycle of all events, appropriately removing them when
- * they expire. When an Effect is deleted, it will automatically inform the
- * Unit who created it that the effect is expiring, unless that Unit has
- * previously died and informed us of that.</li>
- * <li>Manages notifications from the units that caused effects when those
- * units die (so we don't try to talk to a deleted unit object when it
- * expires).</li>
- * <li>Provides a mechanism for the Unit owning these effects to know who
- * killed them, when they die during a tick (i.e., from an effect).</li>
- */
-
+/** All effects currently effecting a unit. The Effects class serves as both
+  * container for the effects as well as delegate to operations related to
+  * the effects on the unit it belongs to, so it is more than a simple
+  * collection. Effects manages the following functions:
+  * <ul>
+  * <li>Determine how a new effect should be handled based upon stacking
+  * rules</li>
+  * <li>Manage the lifecycle of all events, appropriately removing them when
+  * they expire. When an Effect is deleted, it will automatically inform the
+  * Unit who created it that the effect is expiring, unless that Unit has
+  * previously died and informed us of that.</li>
+  * <li>Manages notifications from the units that caused effects when those
+  * units die (so we don't try to talk to a deleted unit object when it
+  * expires).</li>
+  * <li>Provides a mechanism for the Unit owning these effects to know who
+  * killed them, when they die during a tick (i.e., from an effect).</li>  */
 class Effects : public list<Effect*> {
 private:
 	bool dirty;
@@ -123,16 +133,12 @@ public:
 	Effects();
 	Effects(const XmlNode *node);
 
-	/**
-	 * Destructor. Clears all pointers to other objects (source and root
-	 * variables) of each effect in this collection and then deletes them.
-	 */
+	/** Destructor. Clears all pointers to other objects (source and root
+	  * variables) of each effect in this collection and then deletes them. */
 	virtual ~Effects();
 
-	/**
-	 * Returns true if the effects contained have changed in a way that will
-	 * effect stat calculations.
-	 */
+	/** Returns true if the effects contained have changed in a way that will
+	  * effect stat calculations. */
 	bool isDirty() const	{return dirty;}
 
 	/** Clears the dirty flag. */
@@ -146,38 +152,29 @@ public:
 	/** Removes an effect. The effect is expected to be deleted elsewhere. */
 	void remove(Effect *e);
 
-	/**
-	 * Finds the effect, if it still exists, and clears it's root reference,
-	 * thus notifying us that a root-cause effect has expired and we shouldn't
-	 * attempt to access that object after this call returns.
-	 */
+	/** Finds the effect, if it still exists, and clears it's root reference,
+	  * thus notifying us that a root-cause effect has expired and we shouldn't
+	  * attempt to access that object after this call returns. */
 	void clearRootRef(Effect *e);
 
-	/**
-	 * Causes all of the effects to age one game tick. If any effects in the
-	 * collection expire during this tick, they are removed from the internal
-	 * collection and deleted. The Effect destructor takes care of notifying the
-	 * unit that caused the effect so that they can have any related recourse
-	 * effects expire (if appropriate).
-	 */
-	//REFACTOR is-a GameEntityCollection, tick() should be update()
+	/** Causes all of the effects to age one game tick. If any effects in the
+	  * collection expire during this tick, they are removed from the internal
+	  * collection and deleted. The Effect destructor takes care of notifying the
+	  * unit that caused the effect so that they can have any related recourse
+	  * effects expire (if appropriate). */
 	void tick();
 
-	/**
-	 * Returns the unit, who caused the effect that killed the unit who owns
-	 * this collection.
-	 */
+	/** Returns the unit, who caused the effect that killed the unit who owns
+	  * this collection. */
 	Unit *getKiller() const;
 
-	/**
-	 * Appends a string description/summary of all of the effects in this
-	 * collection and returns the supplied string object.
-	 */
+	/** Appends a string description/summary of all of the effects in this
+	  * collection and returns the supplied string object. */
 	void getDesc(string &str) const;
 	void streamDesc(ostream &stream) const;
 	void save(XmlNode *node) const;
 };
 
-}}//end namespace
+}} // end namespace Glest::Entities
 
 #endif

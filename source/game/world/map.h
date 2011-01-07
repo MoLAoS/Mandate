@@ -2,9 +2,9 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008 Jaagup Repän <jrepan@gmail.com>,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
-//				  2009 James McCulloch <silnarm at gmail>
+//				  2008      Jaagup Repän <jrepan@gmail.com>,
+//				  2008      Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -97,7 +97,7 @@ private:
     const Texture2D *tileTexture;
 
 	//object & resource
-	Object *object;
+	MapObject *object;
 
 	//visibility
 	bool visible[GameConstants::maxPlayers];
@@ -107,15 +107,15 @@ private:
 	bool nearSubmerged;
 
 public:
-	Tile() : tileType(-1), tileTexture(NULL), object(NULL), nearSubmerged(false) { }
-	~Tile() { delete object; }
+	Tile() : tileType(-1), tileTexture(0), object(0), nearSubmerged(false) { }
+	~Tile() { }
 
 	//get
 	const Vec3f &getColor() const				{return color;		}
 	int getTileType() const						{return tileType;	}
 	const Texture2D *getTileTexture() const		{return tileTexture;}
-	Object *getObject() const					{return object;		}
-	Resource *getResource() const				{return object==NULL? NULL: object->getResource();}
+	MapObject *getObject() const					{return object;		}
+	MapResource *getResource() const				{return object==NULL? NULL: object->getResource();}
 	bool getNearSubmerged() const				{return nearSubmerged;	}
 
 	bool isVisible(int teamIndex) const			{
@@ -131,7 +131,7 @@ public:
 	void setColor(const Vec3f &color)				{this->color= color;				 }
 	void setTileType(int tileType)					{this->tileType= tileType;			}
 	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;			   }
-	void setObject(Object *object)					{this->object= object;			   }
+	void setObject(MapObject *object)					{this->object= object;			   }
 	
 	void setExplored(int teamIndex, bool explored)	{
 		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
@@ -147,7 +147,7 @@ public:
 
 	//misc
 	bool isFree() const						{ return !object || object->getWalkable();	}
-	void deleteResource()					{ delete object; object= NULL;				}
+	void deleteResource();//					{ delete object; object= NULL;				}
 };
 
 /** Tile Vertex structure */
@@ -242,7 +242,7 @@ public:
 	~Map();
 
 	void init();
-	void load(const string &path, TechTree *techTree, Tileset *tileset, ObjectFactory &objFactory);
+	void load(const string &path, TechTree *techTree, Tileset *tileset);
 	void doChecksum(Checksum &checksum);
 
 	void saveExplorationState(XmlNode *node) const;

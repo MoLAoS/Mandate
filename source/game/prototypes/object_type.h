@@ -29,7 +29,7 @@ using Shared::Math::Vec3f;
 ///	Each of the possible objects of the map: trees, stones ...
 // =====================================================
 
-class ObjectType {
+class MapObjectType {
 private:
 	typedef vector<Model*> Models;
 
