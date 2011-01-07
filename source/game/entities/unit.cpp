@@ -1126,7 +1126,7 @@ void Unit::cloak() {
 		return;
 	}
 	if (type->getCloakClass() == CloakClass::ENERGY) { // apply ep cost on start
-		int cost = type->getCloakCost();
+		int cost = type->getCloakType()->getEnergyCost();
 		if (!decEp(cost)) {
 			return;
 		}
@@ -1139,9 +1139,9 @@ void Unit::cloak() {
 		}
 		m_cloaking = true;
 		// sound ?
-		if (type->getCloakSound() && g_world.getFrameCount() > 0 
+		if (type->getCloakType()->getCloakSound() && g_world.getFrameCount() > 0 
 		&& g_renderer.getCuller().isInside(getCenteredPos())) {
-			g_soundRenderer.playFx(type->getCloakSound());
+			g_soundRenderer.playFx(type->getCloakType()->getCloakSound());
 		}
 	}
 }
@@ -1153,8 +1153,8 @@ void Unit::deCloak() {
 			m_cloaking = false;
 		}
 		m_deCloaking = true;
-		if (type->getDeCloakSound() && g_renderer.getCuller().isInside(getCenteredPos())) {
-			g_soundRenderer.playFx(type->getDeCloakSound());
+		if (type->getCloakType()->getDeCloakSound() && g_renderer.getCuller().isInside(getCenteredPos())) {
+			g_soundRenderer.playFx(type->getCloakType()->getDeCloakSound());
 		}
 	}
 }
@@ -1680,7 +1680,7 @@ Unit* Unit::tick() {
 
 		// apply cloak cost
 		if (m_cloaked && type->getCloakClass() == CloakClass::ENERGY) {
-			int cost = type->getCloakCost();
+			int cost = type->getCloakType()->getEnergyCost();
 			if (!decEp(cost)) {
 				deCloak();
 			}

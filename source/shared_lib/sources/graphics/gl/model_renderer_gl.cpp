@@ -186,7 +186,7 @@ void ModelRendererGl::render(const Model *model, Vec3f *anim, ShaderProgram *cus
 
 	//render every mesh
 	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-		renderMesh(model->getMesh(i));
+		renderMesh(model->getMesh(i), anim, customProgram);
 	}
 
 	//assertions

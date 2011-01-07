@@ -93,10 +93,8 @@ UnitType::UnitType()
 		, armourType(0)
 		, size(0), height(0)
 		, light(false), lightColour(0.f)
-		, m_cloakClass(CloakClass::INVALID)
-		, m_cloakCost(0)
-		, m_cloakSound(0), m_deCloakSound(0)
-		, m_detector(false)
+		, m_cloakType(0)
+		, m_detectorType(0)
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
@@ -112,8 +110,6 @@ UnitType::~UnitType(){
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete m_cellMap;
 	delete m_colourMap;
-	delete m_cloakSound;
-	delete m_deCloakSound;
 }
 
 void UnitType::preLoad(const string &dir){
@@ -271,50 +267,15 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		try { // cloak
 			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
 			if (cloakNode) {
-				string ct = cloakNode->getRestrictedAttribute("type");
-				m_cloakClass = CloakClassNames.match(ct.c_str());
-				if (m_cloakClass == CloakClass::INVALID) {
-					throw runtime_error("Invalid CloakClass: " + ct);
-				}
-				if (m_cloakClass == CloakClass::ENERGY) {
-					m_cloakCost = cloakNode->getIntAttribute("cost");
-				}
-				for (int i=0; i < cloakNode->getChildCount(); ++i) {
-					const XmlNode *childNode = cloakNode->getChild(i);
-					if (childNode->getName() == "de-cloak") {
-						const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
-						string str = deCloakNode->getOptionalRestrictedValue("skill-m_name");
-						if (!str.empty()) {
-							deCloakOnSkills.push_back(str);
-						} else {
-							string str = deCloakNode->getRestrictedAttribute("skill-class");
-							SkillClass sc = SkillClassNames.match(str.c_str());
-							if (sc == SkillClass::INVALID) {
-								throw runtime_error("Invlaid SkillClass: " + str);
-							}
-							deCloakOnSkillClasses.push_back(sc);
-						}
-					} else if (childNode->getName() == "image") {
-						m_cloakImage = g_renderer.newTexture2D(ResourceScope::GAME);
-						string path = dir + "/" + childNode->getRestrictedAttribute("path");
-						m_cloakImage->getPixmap()->load(path);
-					} else if (childNode->getName() == "cloak-sound") {
-						m_cloakSound = new StaticSound();
-						string path = dir + "/" + childNode->getRestrictedAttribute("path");
-						m_cloakSound->load(path);
-					} else if (childNode->getName() == "de-cloak-sound") {
-						m_deCloakSound = new StaticSound();
-						string path = dir + "/" + childNode->getRestrictedAttribute("path");
-						m_deCloakSound->load(path);
-					}
-				}
+				m_cloakType = new CloakType(this);
+				m_cloakType->load(dir, cloakNode, techTree, deCloakOnSkills, deCloakOnSkillClasses);
 			}
 		} catch (runtime_error e) {
 			g_errorLog.addXmlError(path, e.what());
 			loadOk = false;
 		}
 
-		m_detector = parametersNode->getOptionalBoolValue("detector");
+//		m_detector = parametersNode->getOptionalBoolValue("detector");
 
 		try { // Resources stored
 			const XmlNode *resourcesStoredNode= parametersNode->getChild("resources-stored", 0, false);

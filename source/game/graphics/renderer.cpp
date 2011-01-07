@@ -1098,9 +1098,24 @@ void Renderer::renderUnits(){
 			//render
 			const Model *model= unit->getCurrentModel();
 			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
-			modelRenderer->render(model);
-			triangleCount+= model->getTriangleCount();
-			pointCount+= model->getVertexCount();
+
+			if (fade && unit->isCloaked() && unit->getType()->getCloakType()->getShader()) {
+
+				///@todo remove all this, expose frame and unitId as uniforms, shader should
+				/// then be able to generate whatever timing info it needs internally
+				const int frame = g_world.getFrameCount();
+				float a = float(frame % 150);
+				Vec3f anim;
+				anim.r = a >= 75.f ? (a - 75.f) / 75.f : a / 75.f;
+				anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
+				anim.b = a / 150.f;
+
+				modelRenderer->render(model, &anim, unit->getType()->getCloakType()->getShader());
+			} else {
+				modelRenderer->render(model);
+			}
+			triangleCount += model->getTriangleCount();
+			pointCount += model->getVertexCount();
 
 			// restore
 			if (fade) {
