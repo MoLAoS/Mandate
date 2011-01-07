@@ -47,7 +47,7 @@ namespace Glest { namespace Sim {
 
 MasterEntityFactory::MasterEntityFactory()
 		: m_unitFactory()
-		, m_upgradeFactory(true)
+		, m_upgradeFactory(false)
 		, m_commandFactory(true)
 		, m_effectFactory(true)
 		, m_projectileFactory(false)
