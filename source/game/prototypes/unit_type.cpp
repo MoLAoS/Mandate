@@ -43,7 +43,7 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 	try { 
 		m_name = levelNode->getAttribute("name")->getRestrictedValue();
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_logger.addXmlError ( dir, e.what() );
 		loadOk = false;
 	}
 
@@ -59,7 +59,7 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 		}
 	}
 	catch (runtime_error e) {
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_logger.addXmlError ( dir, e.what() );
 		loadOk = false;
 	}
 
@@ -117,7 +117,7 @@ void UnitType::preLoad(const string &dir){
 }
 
 bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal) {
-	g_logger.add("Unit type: " + dir, true);
+	g_logger.addProgramMsg("Unit type: " + dir, true);
 	bool loadOk = true;
 
 	m_factionType = factionType;
@@ -126,19 +126,19 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		return false; // bail
 	}
 	const XmlNode *unitNode;
 	try { unitNode = xmlTree.getRootNode(); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		return false;
 	}
 	const XmlNode *parametersNode;
 	try { parametersNode = unitNode->getChild("parameters"); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		return false; // bail out
 	}
 	if (!UnitStats::load(parametersNode, dir, techTree, factionType))
@@ -149,19 +149,19 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		armourType = techTree->getArmourType(armorTypeName);
 	}
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// size
 	try { size = parametersNode->getChildIntValue("size"); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// height
 	try { height = parametersNode->getChildIntValue("height"); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	halfSize = size / fixed(2);
@@ -175,13 +175,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		// multi-build
 		try { multiBuild = parametersNode->getOptionalBoolValue("multi-build"); }
 		catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 		// multi selection
 		try { multiSelect= parametersNode->getChildBoolValue("multi-selection"); }
 		catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 		// light & lightColour
@@ -191,7 +191,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (light)
 				lightColour = lightNode->getColor3Value();
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what());
+			g_logger.addXmlError(dir, e.what());
 			loadOk = false;
 		}
 		// cellmap
@@ -210,13 +210,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 							m_cellMap->setInfluence(Vec2i(j, i), row[j] == '0' ? 0 : 1);
 						}
 					} catch (runtime_error e) {
-						g_errorLog.addXmlError(path, e.what());
+						g_logger.addXmlError(path, e.what());
 						loadOk = false;
 					}
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 		// Levels
@@ -230,7 +230,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 	} // !glestimal
@@ -250,7 +250,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		else throw runtime_error("unit prototypes must specify a field");
 		zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 	vector<string> deCloakOnSkills;
@@ -260,7 +260,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		// properties
 		try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
 		catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 
@@ -271,7 +271,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				m_cloakType->load(dir, cloakNode, techTree, deCloakOnSkills, deCloakOnSkillClasses);
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 
@@ -289,7 +289,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 		try { // meeting point
@@ -300,7 +300,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				meetingPointImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 		try { // selection sounds
@@ -316,7 +316,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 		try { // command sounds
@@ -332,7 +332,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 	} // !glestimal
@@ -351,7 +351,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_simInterface.setChecksum(skillType);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		return false; // if skills are screwy, stop
 	}
 
@@ -370,7 +370,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_simInterface.setChecksum(commandType);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 	if (!loadOk) return false; // unsafe to keep going...
@@ -392,7 +392,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			throw runtime_error("Every unit must have at least one die skill: "+ path);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -407,7 +407,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			}
 		}
 	} catch (runtime_error &e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -424,13 +424,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 						emanation->load(emanationNode, dir, techTree, factionType);
 						emanations[i] = emanation;
 					} catch (runtime_error e) {
-						g_errorLog.addXmlError(path, e.what());
+						g_logger.addXmlError(path, e.what());
 						loadOk = false;
 					}
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(path, e.what());
+			g_logger.addXmlError(path, e.what());
 			loadOk = false;
 		}
 	}

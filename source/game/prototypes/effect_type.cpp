@@ -48,7 +48,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	try { // name
 		m_name = en->getAttribute("name")->getRestrictedValue(); 
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -66,7 +66,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -77,7 +77,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			throw runtime_error("Not a valid value for stacking: " + tmp + ": " + dir);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -103,7 +103,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			flags.set(EffectTypeFlag::FOE, true);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -115,14 +115,14 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			chance = 100;
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
 	try { // duration
 		duration = en->getAttribute("duration")->getIntValue();
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -133,7 +133,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		}
 	}
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -145,7 +145,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			display = true;
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -155,7 +155,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			image = g_renderer.getTexture2D(ResourceScope::GAME, dir + "/" + attr->getRestrictedValue());
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -188,7 +188,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			light = false;
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -204,7 +204,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -218,7 +218,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			sound->load(dir + "/" + path);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -234,7 +234,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	if(hpRegeneration >= 0 && damageType) {
@@ -319,7 +319,7 @@ bool EmanationType::load(const XmlNode *n, const string &dir, const TechTree *tt
 	//radius
 	try { radius = n->getAttribute("radius")->getIntValue(); }
 	catch (runtime_error e) {
-		g_errorLog.add ( dir, e.what () );
+		g_logger.addErrorMsg ( dir, e.what () );
 		return false;
 	}
 	return true;

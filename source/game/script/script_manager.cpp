@@ -366,7 +366,7 @@ void ScriptManager::doSomeLua(const string &code) {
 
 void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
 	string err = txt ? txt : luaScript.getLastError();
-	g_errorLog.add(err);
+	g_logger.addErrorMsg(err);
 
 	if (World::isConstructed()) {
 		luaConsole->addOutput(err);
@@ -456,7 +456,7 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 }
 
 int ScriptManager::panicFunc(LuaHandle *luaHandle) {
-	g_errorLog.add("Fatal Error: Lua panic.");
+	g_logger.addErrorMsg("Fatal Error: Lua panic.");
 	return 0;
 }
 
@@ -466,7 +466,7 @@ int ScriptManager::debugLog(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	string msg;
 	if (extractArgs(args, "debugLog", "str", &msg)) {
-		g_errorLog.add(msg);
+		g_logger.addErrorMsg(msg);
 	}
 	return args.getReturnCount();
 }

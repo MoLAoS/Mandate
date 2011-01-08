@@ -592,7 +592,7 @@ Model* ModelFactory::newInstance(const string &path, int size, int height) {
 	model->load(path, size, height);
 	while (mediaErrorLog.hasError()) {
 		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
-		g_errorLog.addMediaError("", record.path, record.msg.c_str());
+		g_logger.addMediaError("", record.path, record.msg.c_str());
 	}
 	models[path] = model;
 	return model;

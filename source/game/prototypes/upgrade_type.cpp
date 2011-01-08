@@ -49,7 +49,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 	string path;
 	m_factionType = factionType;
 
-	Logger::getInstance().add("Upgrade type: "+ dir, true);
+	g_logger.addProgramMsg("Upgrade type: "+ dir, true);
 	path = dir + "/" + m_name + ".xml";
 	bool loadOk = true;
 
@@ -60,7 +60,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		upgradeNode= xmlTree.getRootNode();
 	}
 	catch (runtime_error e) { 
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_logger.addXmlError ( dir, e.what() );
 		return false;
 	}
 
@@ -81,7 +81,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		}
 	}
 	catch (runtime_error e) { 
-		g_errorLog.addXmlError ( dir, e.what() );
+		g_logger.addXmlError ( dir, e.what() );
 		return false;
 	}
 

@@ -192,7 +192,7 @@ void TriggerManager::checkTrigger(TriggerMap &triggerMap, const Unit *unit) {
 /** @return 0 if ok, -1 if bad unit id, -2 if event not found, -3 region not found,
   * -4 unit already has a trigger for this region,event pair */
 SetTriggerRes TriggerManager::addUnitPosTrigger	(int unitId, const string &region, const string &eventName, int userData) {
-	//g_logger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
+	//g_logger.addProgramMsg("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
 	Unit *unit = g_world.findUnitById(unitId);
 	if (!unit) return SetTriggerRes::BAD_UNIT_ID;
 	if (events.find(eventName) == events.end()) return SetTriggerRes::UNKNOWN_EVENT;
@@ -228,7 +228,7 @@ bool TriggerManager::removeUnitPosTriggers(int unitId) {
 /** @return 0 if ok, -1 if bad index id, -2 if event not found, -3 region not found,
   * -4 faction already has a trigger for this region,event pair */
 SetTriggerRes TriggerManager::addFactionPosTrigger (int ndx, const string &region, const string &eventName, int userData) {
-	//g_logger.add("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
+	//g_logger.addProgramMsg("adding unit="+intToStr(unitId)+ ", event=" + eventName + " trigger");
 	if (ndx < 0 || ndx >= GameConstants::maxPlayers) return SetTriggerRes::BAD_FACTION_INDEX;
 	if (events.find(eventName) == events.end()) return SetTriggerRes::UNKNOWN_EVENT;
 	Region *rgn = NULL;

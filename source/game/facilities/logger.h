@@ -23,6 +23,7 @@
 
 using std::deque;
 using std::string;
+using std::stringstream;
 
 namespace Glest {
 
@@ -35,26 +36,50 @@ namespace Util {
 
 using namespace Shared::PhysFS;
 
+WRAPPED_ENUM( TimeStampType,
+	NONE,
+	SECONDS,
+	MILLIS
+);
+
 // =====================================================
-// class Logger
+// class LogFile
 //
-/// Interface to write log files
+/// Interface to a single log file
 // =====================================================
 
-WRAPPED_ENUM( TimeStampType, NONE, SECONDS, MILLIS );
+class LogFile { // log file wrapper
+protected:
+	string         m_fileName;
+	FileOps       *m_fileOps;
+	TimeStampType  m_timeStampType;
 
-class Logger {
-private:
-	static const int logLineCount;
+public:
+	LogFile(const string &filename, const string &type, TimeStampType timeType);
+	virtual ~LogFile();
 
+	virtual void add(const string &str);
+
+	void addXmlError(const string &path, const char *error);
+	void addMediaError(const string &xmlPath, const string &mediaPath, const char *error);
+	void addNetworkMsg(const string &msg);
+};
+
+// =====================================================
+// class ProgramLog
+//
+/// Interface to the main log file, includes support for rendering
+/// lines to screen and a progress bar.
+// =====================================================
+
+class ProgramLog : public LogFile {
 private:
 	typedef deque<string> Strings;
 
 private:
-	string fileName;
-	string header;
-	FileOps *fileOps;
+	static const int logLineCount;
 
+private:
 	string state;
 	Strings logLines;
 	string subtitle;
@@ -62,30 +87,13 @@ private:
 	bool loadingGame;
 	static char errorBuf[];
 	int totalUnits, unitsLoaded;
-
-	TimeStampType timeStampType;
-
 	bool m_progressBar;
 	int m_progress;
 
-private:
-	Logger(const char *fileName, const string &type, TimeStampType timeType = TimeStampType::NONE);
-	~Logger();
-
 public:
-	static Logger &getInstance();
-	static Logger &getServerLog();
-	static Logger &getClientLog();
-	static Logger &getErrorLog();
-	static Logger &getWidgetLog();
-	static Logger &getWorldLog();
-	static Logger &getAiLog();
+	ProgramLog();
 
-	/** A timestamp with filename safe characters. (ie no \/:*?"<>| chars)
-	* @returns a string in the format:
-	* [Day of the month (01-31)][Abbreviated month name (eg Feb)][Hour in 24h format (00-23)]-[Minute (00-59)]
-	*/
-	static string fileTimestamp();
+	void add(const string &str,  bool renderScreen);
 
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
@@ -93,30 +101,94 @@ public:
 	void setLoading(bool v)				{loadingGame = v;}
 	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
-	void add(const string &str, bool renderScreen = false);
-	void addXmlError(const string &path, const char *error);
-	void addMediaError(const string &xmlPth, const string &mediaPath, const char *error);
-	void addNetworkMsg(const string &msg);
-
 	void renderLoadingScreen();
-	void clear();
 
 	void setUnitCount(int count) { totalUnits = count; unitsLoaded = 0; }
 	void addUnitCount(int val) { totalUnits += val; }
 	void unitLoaded();
 };
 
-void logNetwork(const string &msg);
+// =====================================================
+// class Logger
+//
+/// Interface to write log files
+// =====================================================
 
-inline void logNetwork(const char *msg) { 
-	logNetwork(string(msg)); 
-}
+class Logger {
+private:
+	ProgramLog	*m_programLog;  // Always enabled
+	LogFile     *m_errorLog;    // Always enabled
+	LogFile     *m_aiLog;       // Always enabled
+	LogFile     *m_widgetLog;   // Pre-processor controlled
+	LogFile     *m_worldLog;    // Pre-processor controlled
+	LogFile     *m_networkLog;  // Always enabled
+
+private:
+	Logger();
+	~Logger();
+
+	static Logger *instance;
+
+	static void deleteInstance() {
+		delete instance;
+		instance = 0;
+	}
+
+public:
+	static Logger& getInstance() {
+		if (!instance) {
+			instance = new Logger();
+			atexit(&Logger::deleteInstance);
+		}
+		return *instance;
+	}
+
+	ProgramLog& getProgramLog() { return *m_programLog; }
+
+	/** A timestamp with filename safe characters. (ie no \/:*?"<>| chars)
+	* @returns a string in the format:
+	* [Day of the month (01-31)][Abbreviated month name (eg Feb)][Hour in 24h format (00-23)]-[Minute (00-59)]
+	*/
+	static string fileTimestamp();
+
+	void addProgramMsg(const string &str, bool renderScreen = false) {
+		m_programLog->add(str, renderScreen);
+	}
+
+	// funnel to Error log
+	void addXmlError(const string &path, const char *error) {
+		m_errorLog->addXmlError(path, error);
+	}
+	void addMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
+		m_errorLog->addMediaError(xmlPath, mediaPath, error);
+	}
+	void addErrorMsg(const string &dir, const string &msg) {
+		m_errorLog->add(dir + ": " + msg);
+	}
+	
+	void addErrorMsg(const string &msg) {
+		m_errorLog->add(msg);
+	}
+	
+	// funnel to Network log
+	void addNetworkMsg(const string &msg) {
+		m_networkLog->addNetworkMsg(msg);
+	}
+
+	void addWorldLogMsg(const string &msg) {
+		m_worldLog->add(msg);
+	}
+
+	void addAiLogMsg(const string &msg) {
+		m_aiLog->add(msg);
+	}
+};
 
 #define LOG_STUFF 0
 
 #if defined(LOG_STUFF) && LOG_STUFF
-#	define LOG(x) g_logger.add(x)
-#	define STREAM_LOG(x) {stringstream _ss; _ss << x; g_logger.add(_ss.str()); }
+#	define LOG(x) g_logger.addProgramMsg(x)
+#	define STREAM_LOG(x) {stringstream _ss; _ss << x; g_logger.addProgramMsg(_ss.str()); }
 #	define GAME_LOG(x) STREAM_LOG( "Frame " << g_world.getFrameCount() << ": " << x )
 #else
 #	define LOG(x)
@@ -124,10 +196,14 @@ inline void logNetwork(const char *msg) {
 #	define GAME_LOG(x)
 #endif
 
-#define AI_LOGGING 0
+#define AI_LOGGING 1
 
 #if AI_LOGGING
-#	define LOG_AI(x) {stringstream _ss; _ss << g_world.getFrameCount() << " : " << x; Logger::getAiLog().add(_ss.str()); }
+#	define LOG_AI(factionIndex, msg) {                       \
+		stringstream _ss;                                    \
+		_ss << "Frame: " << g_world.getFrameCount()          \
+			<< ", faction: " << factionIndex << ": " << msg; \
+		g_logger.addAiLogMsg(_ss.str()); }
 #else
 #	define LOG_AI(x)
 #endif
@@ -135,8 +211,8 @@ inline void logNetwork(const char *msg) {
 #define LOG_NETWORKING 1
 
 #if LOG_NETWORKING
-#	define LOG_NETWORK(x) logNetwork(x)
-#	define NETWORK_LOG(x) {stringstream _ss; _ss << x; logNetwork(_ss.str()); }
+#	define LOG_NETWORK(x) g_logger.addNetworkMsg(x)
+#	define NETWORK_LOG(x) {stringstream _ss; _ss << x; g_logger.addNetworkMsg(_ss.str()); }
 #else
 #	define LOG_NETWORK(x)
 #	define NETWORK_LOG(x)
@@ -145,24 +221,24 @@ inline void logNetwork(const char *msg) {
 #define _LOG(x) {										\
 	stringstream _ss;									\
 	_ss << "\t" << x;									\
-	Logger::getWorldLog().add(_ss.str());			\
+	g_logger.addWorldLogMsg(_ss.str());					\
 }
 
 #define _UNIT_LOG(u, x) {								\
 	stringstream _ss;									\
 	_ss << "Frame "	<< g_world.getFrameCount() <<		\
 		", Unit " << u->getId() << ": " << x;			\
-	Logger::getWorldLog().add(_ss.str());			\
+	g_logger.addWorldLogMsg(_ss.str());					\
 }
 
 #define _PATH_LOG(u) {									\
 	stringstream _ss;									\
 	_ss << "\tLow-Level Path: " << *u->getPath();		\
-	Logger::getWorldLog().add(_ss.str());			\
+	g_logger.addWorldLogMsg(_ss.str());					\
 	if (!u->getWaypointPath()->empty()) {				\
 		stringstream _ss; _ss << "\tWaypoint Path: "	\
 			<< *u->getWaypointPath();					\
-		Logger::getWorldLog().add(_ss.str());		\
+		g_logger.addWorldLogMsg(_ss.str());				\
 	}													\
 }
 
@@ -170,7 +246,7 @@ inline void logNetwork(const char *msg) {
 #define WORLD_LOGGING 0
 
 // Log pathfinding results
-#define LOG_PATHFINDER 1
+#define LOG_PATHFINDER 0
 
 #if WORLD_LOGGING && LOG_PATHFINDER
 #	define PF_LOG(x) _LOG(x)
@@ -223,7 +299,7 @@ struct FunctionTimer {
 		} else {
 			ss << time << " us.";
 		}
-		g_logger.add(ss.str());
+		g_logger.addProgramMsg(ss.str());
 	}
 };
 

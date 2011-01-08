@@ -35,7 +35,7 @@ using namespace Shared::Graphics;
 namespace Glest { namespace Plan {
 
 GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
-	LOG_AI( __FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
+	LOG_AI( faction->getIndex(), __FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
 		<< faction->getType()->getName() << " Random seed: " << randomSeed );
 	this->faction = faction;
 	this->world= g_simInterface.getWorld();

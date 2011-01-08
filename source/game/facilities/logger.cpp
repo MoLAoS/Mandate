@@ -28,110 +28,88 @@ using namespace Glest::Net;
 
 namespace Glest { namespace Util {
 
-// =====================================================
-//	class Logger
-// =====================================================
-
-const int Logger::logLineCount= 15;
-
-Logger::Logger(const char *fileName, const string &type, TimeStampType timeType)
-		: fileName(fileName)
-		, fileOps(0)
-		, loadingGame(true)
-		, timeStampType(timeType)
-		, m_progressBar(false)
-		, m_progress(0) {
-	header = "Glest Advanced Engine: " + type + " log file.\n\n";
-}
-
-Logger::~Logger() {
-	delete fileOps;
-}
-
-// ===================== PUBLIC ========================
-
-Logger& Logger::getInstance() {
-	static Logger logger("glestadv.log", "Program", TimeStampType::SECONDS);
-	return logger;
-}
-
-Logger& Logger::getServerLog() {
-	static Logger logger("glestadv-server.log", "Server", TimeStampType::NONE);
-	return logger;
-}
-
-Logger& Logger::getClientLog() {
-	static Logger logger("glestadv-client.log", "Client", TimeStampType::NONE);
-	return logger;
-}
-
-Logger& Logger::getErrorLog() {
-	static Logger logger("glestadv-error.log", "Error", TimeStampType::NONE);
-	return logger;
-}
-
-Logger& Logger::getWidgetLog() {
-	static Logger logger("glestadv-widget.log", "Widget", TimeStampType::MILLIS);
-	return logger;
-}
-
-Logger& Logger::getWorldLog() {
-	static Logger logger("glestadv-world.log", "World", TimeStampType::NONE);
-	return logger;
-}
-
-Logger& Logger::getAiLog() {
-	static Logger logger("glestadv-ai.log", "AI", TimeStampType::NONE);
-	return logger;
-}
-
-string Logger::fileTimestamp() {
-#if defined(WIN32) | defined(WIN64)
-	time_t rawtime;
-	struct tm *timeinfo;
-	char formatted[30];
-
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-
-	//Day of the month (01-31), Abbreviated month name (eg Feb), Year,
-	// Hour in 24h format (00-23), Minute (00-59), Seconds (00-59)
-	strftime(formatted, 30, "%d-%b-%Y_%H-%M-%S", timeinfo);
-
-	return string(formatted);
-#else
-	return string(); ///@todo unix implementation
-#endif
-}
-
-void Logger::setState(const string &state){
-	this->state= state;
-	logLines.clear();
-}
-
-void Logger::unitLoaded() {
-	++unitsLoaded;
-	float pcnt = ((float)unitsLoaded) / ((float)totalUnits) * 100.f;
-	m_progress = int(pcnt);
-}
-
 #ifdef WIN32
 	string newLine = "\r\n";
 #else
 	string newLine = "\n";
 #endif
 
-void Logger::add(const string &str,  bool renderScreen){
-	if (timeStampType == TimeStampType::SECONDS) {
+// =====================================================
+//  class LogFile
+// =====================================================
+
+LogFile::LogFile(const string &fileName, const string &type, TimeStampType timeType)
+		: m_fileName(fileName)
+		, m_fileOps(0)
+		, m_timeStampType(timeType) {
+	m_fileOps = g_fileFactory.getFileOps();
+	m_fileOps->openWrite(m_fileName.c_str());
+	string header = "Glest Advanced Engine: " + type + " log file.\n\n";
+	m_fileOps->write(header.c_str(), sizeof(char), header.size());
+}
+
+
+LogFile::~LogFile() {
+	delete m_fileOps;
+}
+
+void LogFile::add(const string &str){
+	if (m_timeStampType == TimeStampType::SECONDS) {
 		string myTime = intToStr(int(clock() / 1000)) + ": ";
-		fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
-	} else if (timeStampType == TimeStampType::MILLIS) {
+		m_fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
+	} else if (m_timeStampType == TimeStampType::MILLIS) {
 		string myTime = intToStr(int(clock())) + ": ";
-		fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
+		m_fileOps->write(myTime.c_str(), sizeof(char), myTime.size());
 	}
-	fileOps->write(str.c_str(), sizeof(char), str.size());
-	fileOps->write(newLine.c_str(), sizeof(char), newLine.size());
-	
+	m_fileOps->write(str.c_str(), sizeof(char), str.size());
+	m_fileOps->write(newLine.c_str(), sizeof(char), newLine.size());
+}
+
+
+void LogFile::addXmlError(const string &path, const char *error) {
+	static char buffer[2048];
+	sprintf(buffer, "XML Error in %s:\n\t%s", path.c_str(), error);
+	add(buffer);
+}
+
+void LogFile::addMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
+	static char buffer[2048];
+	if (xmlPath != "") {
+		sprintf(buffer, "Error loading %s:\n\treferenced in %s\n\t%s", 
+			mediaPath.c_str(), xmlPath.c_str(), error);
+	} else {
+		sprintf(buffer, "Error loading %s\n\t%s", mediaPath.c_str(), error);
+	}
+	add(buffer);
+}
+
+void LogFile::addNetworkMsg(const string &msg) {
+	stringstream ss;
+	if (World::isConstructed()) {
+		ss << "Frame: " << g_world.getFrameCount(); 
+	} else {
+		ss << "Frame: 0";
+	}
+	ss << " :: " << msg;
+	add(ss.str());
+}
+
+// =====================================================
+//	class ProgramLog
+// =====================================================
+
+const int ProgramLog::logLineCount= 15;
+
+ProgramLog::ProgramLog()
+		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
+		, loadingGame(true)
+		, m_progressBar(false)
+		, m_progress(0) {
+}
+
+
+void ProgramLog::add(const string &str,  bool renderScreen) {
+	LogFile::add(str);
 	if (loadingGame && renderScreen) {
 		logLines.push_back(str);
 		if(logLines.size() > logLineCount) {
@@ -145,44 +123,18 @@ void Logger::add(const string &str,  bool renderScreen){
 	}
 }
 
-void Logger::addXmlError(const string &path, const char *error) {
-	static char buffer[2048];
-	sprintf(buffer, "XML Error in %s:\n\t%s", path.c_str(), error);
-	add(buffer);
+void ProgramLog::setState(const string &state){
+	this->state= state;
+	logLines.clear();
 }
 
-void Logger::addMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
-	static char buffer[2048];
-	if (xmlPath != "") {
-		sprintf(buffer, "Error loading %s:\n\treferenced in %s\n\t%s", 
-			mediaPath.c_str(), xmlPath.c_str(), error);
-	} else {
-		sprintf(buffer, "Error loading %s\n\t%s", mediaPath.c_str(), error);
-	}
-	add(buffer);
+void ProgramLog::unitLoaded() {
+	++unitsLoaded;
+	float pcnt = ((float)unitsLoaded) / ((float)totalUnits) * 100.f;
+	m_progress = int(pcnt);
 }
 
-void Logger::addNetworkMsg(const string &msg) {
-	stringstream ss;
-	if (World::isConstructed()) {
-		ss << "Frame: " << g_world.getFrameCount(); 
-	} else {
-		ss << "Frame: 0";
-	}
-	ss << " :: " << msg;
-	add(ss.str());
-}
-
-void Logger::clear() {
-	delete fileOps;
-	fileOps = g_fileFactory.getFileOps();
-	fileOps->openWrite(fileName.c_str());
-	fileOps->write(header.c_str(), sizeof(char), header.size());
-}
-
-// ==================== PRIVATE ====================
-
-void Logger::renderLoadingScreen(){
+void ProgramLog::renderLoadingScreen(){
 	g_renderer.reset2d(true);
 	g_renderer.clearBuffers();
 
@@ -217,13 +169,53 @@ void Logger::renderLoadingScreen(){
 	g_renderer.swapBuffers();
 }
 
-void logNetwork(const string &msg) {
-	GameRole role = g_simInterface.getNetworkRole();
-	if (role == GameRole::CLIENT) {
-		Logger::getClientLog().addNetworkMsg(msg);
-	} else {
-		Logger::getServerLog().addNetworkMsg(msg);
-	}
+// =====================================================
+//	class Logger
+// =====================================================
+
+Logger* Logger::instance = 0;
+
+Logger::Logger()
+		: m_programLog(0)
+		, m_errorLog(0)
+		, m_aiLog(0)
+		, m_widgetLog(0)
+		, m_worldLog(0)
+		, m_networkLog(0) {
+	m_programLog = new ProgramLog();
+	m_errorLog = new LogFile("glestadv-error.log", "Error", TimeStampType::NONE);
+	m_aiLog  = new LogFile("glestadv-ai.log", "AI", TimeStampType::NONE);
+	m_widgetLog  = new LogFile("glestadv-widget.log", "Widget", TimeStampType::MILLIS);
+	m_worldLog  = new LogFile("glestadv-world.log", "World", TimeStampType::NONE);
+	m_networkLog  = new LogFile("glestadv-network.log", "Network", TimeStampType::MILLIS);
+}
+
+Logger::~Logger() {
+	delete m_programLog;
+	delete m_errorLog;
+	delete m_aiLog;
+	delete m_widgetLog;
+	delete m_worldLog;
+	delete m_networkLog;
+}
+
+string Logger::fileTimestamp() {
+#if defined(WIN32) | defined(WIN64)
+	time_t rawtime;
+	struct tm *timeinfo;
+	char formatted[30];
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	//Day of the month (01-31), Abbreviated month name (eg Feb), Year,
+	// Hour in 24h format (00-23), Minute (00-59), Seconds (00-59)
+	strftime(formatted, 30, "%d-%b-%Y_%H-%M-%S", timeinfo);
+
+	return string(formatted);
+#else
+	return string(); ///@todo unix implementation
+#endif
 }
 
 }} // namespace Glest::Util

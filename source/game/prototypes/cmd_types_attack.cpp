@@ -52,7 +52,7 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 			ast = static_cast<const AttackSkillType*>(unitType->getSkillType(skillName, SkillClass::ATTACK));
 			attackSkillTypes.push_back(ast, AttackSkillPreferences());
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what ());
+			g_logger.addXmlError(dir, e.what ());
 			loadOk = false;
 		}
 	} else { //multiple attack skills
@@ -78,12 +78,12 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 					attackSkillTypes.push_back(ast, prefs);
 				}
 				catch (runtime_error e) {
-					g_errorLog.addXmlError(dir, e.what ());
+					g_logger.addXmlError(dir, e.what ());
 					loadOk = false;
 				}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what ());
+			g_logger.addXmlError(dir, e.what ());
 			loadOk = false;
 		}
 	}
@@ -311,7 +311,7 @@ bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	//distance
 	try { m_maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;

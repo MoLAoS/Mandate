@@ -115,7 +115,7 @@ MenuBackground::MenuBackground(){
 		try {
 			characterModels[i]->load("data/core/menu/about_models/character"+intToStr(i)+".g3d", 2, 2);
 		} catch (runtime_error &e) {
-			g_errorLog.add(e.what());
+			g_logger.addErrorMsg(e.what());
 		}
 	}
 

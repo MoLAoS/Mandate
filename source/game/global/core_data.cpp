@@ -69,7 +69,7 @@ Font* loadFreeTypeFont(string path, int size) {
 }
 
 bool CoreData::load() {
-	g_logger.add("Core data");
+	g_logger.addProgramMsg("Core data");
 
 	const string dir = "data/core";
 
@@ -97,7 +97,7 @@ bool CoreData::load() {
 		redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
 		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
 	} catch (runtime_error &e) {
-		g_errorLog.add(string("Error loading core data.\n") + e.what());
+		g_logger.addErrorMsg(string("Error loading core data.\n") + e.what());
 		return false;
 	}
 
@@ -130,7 +130,7 @@ bool CoreData::load() {
 			waterSounds[i]->load(dir + "/water_sounds/water" + intToStr(i) + ".wav");
 		}
 	} catch (runtime_error &e) {
-		g_errorLog.add(string("Error loading core data.\n") + e.what());
+		g_logger.addErrorMsg(string("Error loading core data.\n") + e.what());
 		return false;		
 	}
 	return true;

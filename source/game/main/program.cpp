@@ -113,18 +113,18 @@ Program::Program(CmdArgs &args)
 	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 	Window::create();
 
-	// clear logs
-	g_logger.clear();
-	g_serverLog.clear();
-	g_clientLog.clear();
-	g_errorLog.clear();
-#	if LOG_WIDGET_EVENTS
-		g_widgetLog.clear();
-#	endif
-#	if AI_LOGGING
-		Logger::getAiLog().clear();
-#	endif
-	Logger::getWorldLog().clear();
+//	// clear logs
+//	g_logger.clear();
+//	g_serverLog.clear();
+//	g_clientLog.clear();
+//	g_errorLog.clear();
+//#	if LOG_WIDGET_EVENTS
+//		g_widgetLog.clear();
+//#	endif
+//#	if AI_LOGGING
+//		Logger::getAiLog().clear();
+//#	endif
+//	Logger::getWorldLog().clear();
 
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());

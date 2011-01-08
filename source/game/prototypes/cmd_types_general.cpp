@@ -200,7 +200,7 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
 		m_moveSkillType = static_cast<const MoveSkillType*>(st);
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -307,7 +307,7 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		string skillName = n->getChild("stop-skill")->getAttribute("value")->getRestrictedValue();
 		m_stopSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		return false;
 	}
 	return loadOk;
@@ -351,7 +351,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
 		m_produceSkillType = static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -360,7 +360,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			string producedUnitName = n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
 			m_producedUnits.push_back(ft->getUnitType(producedUnitName));
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what ());
+			g_logger.addXmlError(dir, e.what ());
 			loadOk = false;
 		}
 	} else {
@@ -377,7 +377,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what ());
+			g_logger.addXmlError(dir, e.what ());
 			loadOk = false;
 		}
 	}
@@ -395,7 +395,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -481,7 +481,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
 		m_produceSkillType= static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -490,7 +490,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	try {
 		producibleNode = n->getChild("produced");
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		return false;
 	}
 	GeneratedType *gt = g_simInterface.newGeneratedType();
@@ -514,7 +514,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -582,14 +582,14 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		string skillName = n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
 		m_upgradeSkillType = static_cast<const UpgradeSkillType*>(unitType->getSkillType(skillName, SkillClass::UPGRADE));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	try {
 		string producedUpgradeName = n->getChild("produced-upgrade")->getAttribute("name")->getRestrictedValue();
 		m_producedUpgrade = ft->getUpgradeType(producedUpgradeName);
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	// finished sound
@@ -606,7 +606,7 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -687,7 +687,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		string skillName = n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
 		m_morphSkillType = static_cast<const MorphSkillType*>(unitType->getSkillType(skillName, SkillClass::MORPH));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	// morph unit(s)
@@ -696,7 +696,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			string morphUnitName = n->getChild("morph-unit")->getAttribute("name")->getRestrictedValue();
 			m_morphUnits.push_back(ft->getUnitType(morphUnitName));
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what ());
+			g_logger.addXmlError(dir, e.what ());
 			loadOk = false;
 		}
 	} else {
@@ -713,14 +713,14 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 			}
 		} catch (runtime_error e) {
-			g_errorLog.addXmlError(dir, e.what ());
+			g_logger.addXmlError(dir, e.what ());
 			loadOk = false;
 		}
 	}
 	// discount
 	try { m_discount= n->getChild("discount")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	// finished sound
@@ -737,7 +737,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what ());
+		g_logger.addXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -843,7 +843,7 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -852,7 +852,7 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
 		loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	try {
@@ -863,13 +863,13 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 			m_canLoadList.push_back(ut);
 		}
 	} catch (const runtime_error &e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	try {
 		m_loadCapacity = n->getChild("load-capacity")->getIntValue();
 	} catch (const runtime_error &e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	const XmlNode *projNode = n->getOptionalChild("allow-projectiles");
@@ -879,7 +879,7 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 			m_projectileOffsets.x = projNode->getChild("horizontal-offset")->getFloatValue();
 			m_projectileOffsets.y = projNode->getChild("vertical-offset")->getFloatValue();
 		} catch (runtime_error &e) {
-			g_errorLog.addXmlError(dir, e.what());
+			g_logger.addXmlError(dir, e.what());
 			loadOk = false;
 		}
 	}
@@ -996,7 +996,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// unload skill
@@ -1004,7 +1004,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
 		unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	
@@ -1123,7 +1123,7 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 			m_start = SpellStart::INSTANT;
 		}	
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(dir, e.what());
+		g_logger.addXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;

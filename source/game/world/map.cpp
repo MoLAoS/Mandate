@@ -75,7 +75,7 @@ Map::Map()
 }
 
 Map::~Map() {
-	Logger::getInstance().add("~Cells", !Program::getInstance()->isTerminating());
+	g_logger.addProgramMsg("~Cells", !Program::getInstance()->isTerminating());
 
 	delete [] cells;
 	delete [] tiles;
@@ -290,7 +290,7 @@ void Map::doChecksum(Checksum &checksum) {
 }
 
 void Map::init() {
-	Logger::getInstance().add("Heightmap computations", true);
+	g_logger.addProgramMsg("Heightmap computations", true);
 	m_vertexData = new MapVertexData(m_tileSize);
 	smoothSurface();
 	computeNormals();
@@ -726,7 +726,7 @@ void panic(Vec2i currPos, Unit *unit, Unit *other) {
 		<< currPos << "{" << ZoneNames[zone] << "}" << " cell is already occupied by a " 
 		<< other->getType()->getName() << " [id:" << other->getId() << "] {"
 		<< ZoneNames[o_zone] << "}";
-	g_errorLog.add(ss.str());
+	g_logger.addErrorMsg(ss.str());
 	throw runtime_error ( "Ooops... see glestadv-error.log" );
 }
 

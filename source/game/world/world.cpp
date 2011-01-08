@@ -52,7 +52,7 @@ MasterEntityFactory::MasterEntityFactory()
 		, m_effectFactory(true)
 		, m_projectileFactory(false)
 		, m_mapObjectFactory(true) {
-	g_logger.add("MasterEntityFactory");
+	g_logger.addProgramMsg("MasterEntityFactory");
 }
 
 void MasterEntityFactory::deleteCommand(const Glest::Entities::Command *c) {
@@ -94,7 +94,7 @@ World::World(SimulationInterface *simInterface)
 }
 
 World::~World() {
-	g_logger.add("~World", !g_program.isTerminating());
+	g_logger.addProgramMsg("~World", !g_program.isTerminating());
 	alive = false;
 
 	delete scenario;
@@ -146,7 +146,7 @@ void World::init(const XmlNode *worldNode) {
 
 //load saved game
 void World::loadSaved(const XmlNode *worldNode) {
-	Logger::getInstance().add("Loading saved game", true);
+	g_logger.addProgramMsg("Loading saved game", true);
 	GameSettings &gs = m_simInterface->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	this->thisTeamIndex = gs.getTeam(thisFactionIndex);
@@ -930,7 +930,7 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 //init basic cell state
 void World::initCells() {
 	GameSettings &gs = m_simInterface->getGameSettings();
-	Logger::getInstance().add("State cells", true);
+	g_logger.addProgramMsg("State cells", true);
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
 			Tile *tile = map.getTile(i, j);
@@ -944,7 +944,7 @@ void World::initCells() {
 
 //creates each faction looking at each faction name contained in GameSettings
 void World::initFactions() {
-	Logger::getInstance().add("Faction types", true);
+	g_logger.addProgramMsg("Faction types", true);
 	
 	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID, "Glestimals",
 		&techTree, -1, -1, -1, -1, false, false);
@@ -985,7 +985,7 @@ void World::initFactions() {
 //place units randomly aroud start location
 void World::initUnits() {
 
-	Logger::getInstance().add("Generate elements", true);
+	g_logger.addProgramMsg("Generate elements", true);
 
 	//put starting units
 	for (int i = 0; i < getFactionCount(); ++i) {

@@ -95,7 +95,7 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 
 void Tileset::count(const string &dir){
 	Logger &logger = Logger::getInstance();
-	logger.setUnitCount(objCount);
+	logger.getProgramLog().setUnitCount(objCount);
 }
 
 void Tileset::load(const string &dir, TechTree *tt){
@@ -104,7 +104,7 @@ void Tileset::load(const string &dir, TechTree *tt){
 	string path = dir + "/" + name +".xml";
 
 	try{
-		Logger::getInstance().add("Tileset: "+dir, true);
+		g_logger.addProgramMsg("Tileset: "+dir, true);
 		Renderer &renderer= Renderer::getInstance();
 
 		//parse xml
@@ -140,8 +140,8 @@ void Tileset::load(const string &dir, TechTree *tt){
 				const XmlAttribute *pathAttribute= modelNode->getAttribute("path");
 				objectTypes[i].loadModel(dir +"/"+ pathAttribute->getRestrictedValue());
 			}
-			logger.unitLoaded();
-			logger.renderLoadingScreen();
+			logger.getProgramLog().unitLoaded();
+			logger.getProgramLog().renderLoadingScreen();
 		}
 
 		//ambient sounds
@@ -234,7 +234,7 @@ void Tileset::doChecksum(Checksum &checksum) const {
 }
 
 Tileset::~Tileset(){
-	g_logger.add("~Tileset", !g_program.isTerminating());
+	g_logger.addProgramMsg("~Tileset", !g_program.isTerminating());
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type) const {

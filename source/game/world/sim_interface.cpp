@@ -197,7 +197,7 @@ void SimulationInterface::initWorld() {
 			} //else if (ctrl == ControlType::PROTO_AI) {
 				//aiInterfaces[i] = new AdvancedAiInterface(*game, i, faction->getTeam(), seeds[seedCount++]);
 			//}
-			g_logger.add("Creating AI for faction " + intToStr(i), true);
+			g_logger.addProgramMsg("Creating AI for faction " + intToStr(i), true);
 		} else {
 			aiInterfaces[i] = 0;
 		}
@@ -216,7 +216,7 @@ void SimulationInterface::initWorld() {
 int SimulationInterface::launchGame() {
 	NETWORK_LOG( __FUNCTION__ );
 	// ready ?
-	g_logger.add("Waiting for players...", true);
+	g_logger.addProgramMsg("Waiting for players...", true);
 	try {
 		waitUntilReady();
 	} catch (NetworkError &e) {

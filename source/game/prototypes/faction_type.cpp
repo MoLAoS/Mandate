@@ -57,7 +57,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	try { 
 		findAll(unitsPath, unitFilenames); 
 	} catch (runtime_error e) {
-		g_errorLog.add(e.what());
+		g_logger.addErrorMsg(e.what());
 		loadOk = false;
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
@@ -72,7 +72,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	try { 
 		findAll(upgradesPath, upgradeFilenames); 
 	} catch (runtime_error e) {
-		g_errorLog.add(e.what());
+		g_logger.addErrorMsg(e.what());
 		loadOk = false;
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
@@ -94,7 +94,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	try { 
 		findAll(unitsPath, unitFilenames); 
 	} catch (runtime_error e) {
-		g_errorLog.add(e.what());
+		g_logger.addErrorMsg(e.what());
 		loadOk = false;
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
@@ -109,7 +109,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 //load a faction, given a directory
 bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
-	logger.add("Faction type: "+ dir, true);
+	logger.addProgramMsg("Faction type: "+ dir, true);
 	m_id = ndx;
 	m_name = basename(dir);
 
@@ -121,14 +121,14 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	try { 
 		xmlTree.load(path); 
 	} catch (runtime_error e) { 
-		g_errorLog.addXmlError(path, "File missing or wrongly named.");
+		g_logger.addXmlError(path, "File missing or wrongly named.");
 		return false; // bail
 	}
 	const XmlNode *factionNode;
 	try { 
 		factionNode = xmlTree.getRootNode(); 
 	} catch (runtime_error e) { 
-		g_errorLog.addXmlError(path, "File appears to lack contents.");
+		g_logger.addXmlError(path, "File appears to lack contents.");
 		return false; // bail
 	}
 	//read subfaction list
@@ -154,7 +154,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		} else {
 			loadOk = false;
 		}
-		logger.unitLoaded();
+		logger.getProgramLog().unitLoaded();
 	}
 
 	foreach_const (UnitTypes, uit, unitTypes) {
@@ -196,12 +196,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				int amount = resourceNode->getAttribute("amount")->getIntValue();
 				startingResources[i].init(techTree->getResourceType(name), amount);
 			} catch (runtime_error e) {
-				g_errorLog.addXmlError(path, e.what());
+				g_logger.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -215,12 +215,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				int amount = unitNode->getAttribute("amount")->getIntValue();
 				startingUnits.push_back(PairPUnitTypeInt(getUnitType(name), amount));
 			} catch (runtime_error e) {
-				g_errorLog.addXmlError(path, e.what());
+				g_logger.addXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -261,7 +261,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			}
 		}
 	} catch (runtime_error e) { 
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -286,7 +286,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			}
 		}
 	} catch (runtime_error &e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		delete m_logoTeamColour;
 		delete m_logoRgba;
 		m_logoTeamColour = m_logoRgba = 0;
@@ -306,12 +306,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				(*attackNotice)[i] = sound;
 			}
 			if (attackNotice->getSounds().size() == 0) {
-				g_errorLog.addXmlError(path, "An enabled attack-notice must contain at least one sound-file.");
+				g_logger.addXmlError(path, "An enabled attack-notice must contain at least one sound-file.");
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error &e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -329,12 +329,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				(*enemyNotice)[i]= sound;
 			}
 			if (enemyNotice->getSounds().size() == 0) {
-				g_errorLog.addXmlError(path, "An enabled enemy-notice must contain at least one sound-file.");
+				g_logger.addXmlError(path, "An enabled enemy-notice must contain at least one sound-file.");
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error &e) {
-		g_errorLog.addXmlError(path, e.what());
+		g_logger.addXmlError(path, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -342,7 +342,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
-	logger.add("Glestimal Faction: " + dir, true);
+	logger.addProgramMsg("Glestimal Faction: " + dir, true);
 	m_id = -1;
 	m_name = basename(dir);
 	bool loadOk = true;

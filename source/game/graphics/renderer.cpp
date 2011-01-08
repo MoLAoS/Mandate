@@ -218,7 +218,7 @@ bool Renderer::init(){
 		textureManager[ResourceScope::GLOBAL]->init();
 		fontManager[ResourceScope::GLOBAL]->init();
 	} catch (runtime_error &e) {
-		g_errorLog.add(string("Error loading core data.\n") + e.what());
+		g_logger.addErrorMsg(string("Error loading core data.\n") + e.what());
 		return false;
 	}
 
@@ -238,7 +238,7 @@ bool Renderer::init(){
 		try {
 			static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
 		} catch (runtime_error &e) {
-			g_errorLog.add("Error: shader source load/compile failed: " + string(e.what()));
+			g_logger.addErrorMsg("Error: shader source load/compile failed: " + string(e.what()));
 		}
 	}
 	init2dList();
