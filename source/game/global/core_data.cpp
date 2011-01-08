@@ -95,6 +95,7 @@ bool CoreData::load() {
 		greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
 		orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
 		redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
+		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
 	} catch (runtime_error &e) {
 		g_errorLog.add(string("Error loading core data.\n") + e.what());
 		return false;

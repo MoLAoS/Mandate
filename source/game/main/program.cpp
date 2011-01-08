@@ -430,6 +430,7 @@ void Program::setState(ProgramState *programState) {
 	this->programState = programState;
 	programState->load();
 	programState->init();
+	initMouse();
 	resetTimers(programState->getUpdateFps());
 }
 

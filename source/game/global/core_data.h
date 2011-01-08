@@ -65,7 +65,8 @@ private:
 			vertScrollDownHoverTex,
 			greenTickOverlay,
 			orangeQuestionOverlay,
-			redCrossOverlay;
+			redCrossOverlay,
+			mouseTexture;
 	
 	Font *m_FTMenuFontNormal;
 	Font *m_FTMenuFontSmall;
@@ -105,6 +106,7 @@ public:
 	TexPtr getGreenTickOverlay() const		{return greenTickOverlay;}
 	TexPtr getQuestionOverlay() const		{return orangeQuestionOverlay;}
 	TexPtr getRedCrossOverlay() const		{return redCrossOverlay;}
+	TexPtr getMouseTexture() const			{return mouseTexture;}
 
 	StrSound *getIntroMusic() 				{return &introMusic;}
 	StrSound *getMenuMusic() 				{return &menuMusic;}

@@ -195,6 +195,7 @@ void MainMenu::setState(MenuState *state) {
 	} else {
 		setCameraOnSetState = true;
 	}
+	g_program.initMouse();
 }
 
 void MainMenu::setCameraTarget(MenuStates state) {

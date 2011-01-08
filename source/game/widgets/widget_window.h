@@ -21,6 +21,9 @@ using Shared::Platform::WindowGl;
 
 namespace Glest { namespace Widgets {
 
+class Imageset;
+class Animset;
+
 // =====================================================
 // class WidgetWindow
 // =====================================================
@@ -52,6 +55,8 @@ private:
 	Vec2i mousePos;
 	bool modalFloater;
 	const Texture2D *mouseIcon;
+	Imageset *mouseMain;
+	Animset *mouseAnimations;
 
 	Widget* findCommonAncestor(Widget* widget1, Widget* widget2);
 	void unwindMouseOverStack(Widget* newTop);
@@ -81,6 +86,7 @@ public:
 	void releaseKeyboardFocus(KeyboardWidget* widget);
 
 	void setMouseCursorIcon(const Texture2D *tex = 0) { mouseIcon = tex; }
+	void initMouse();
 
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);

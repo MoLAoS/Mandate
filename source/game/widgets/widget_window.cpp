@@ -14,6 +14,7 @@
 
 #include "widgets_base.h"
 #include "widget_window.h"
+#include "widgets.h"
 
 #include "metrics.h"
 #include "renderer.h"
@@ -41,7 +42,8 @@ WidgetWindow::WidgetWindow()
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, floatingWidget(0)
-		, anim(0.f), slowAnim(0.f), mouseIcon(0) {
+		, anim(0.f), slowAnim(0.f), mouseIcon(0)
+		, mouseMain(0), mouseAnimations(0) {
 	size.x = Metrics::getInstance().getScreenW();
 	size.y = Metrics::getInstance().getScreenH();
 	
@@ -214,6 +216,10 @@ void WidgetWindow::update() {
 	foreach (WidgetList, it, updateList) {
 		(*it)->update();
 	}
+
+	if (mouseAnimations) {
+		mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011
+	}
 }
 
 void WidgetWindow::destroyFloater() {
@@ -295,6 +301,10 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	assert(!mouseOverStack.empty());
 	mousePos.x = x;
 	mousePos.y = getH() - y;
+
+	if (mouseMain) {
+		mouseMain->setPos(mousePos + Vec2i(0, -32));
+	}
 
 	Widget* widget = 0;
 	if (floatingWidget) {
@@ -396,6 +406,14 @@ void WidgetWindow::eventKeyPress(char c) {
 	}
 }
 
+void WidgetWindow::initMouse() {
+	remChild(mouseMain);
+	mouseMain = new Imageset(this, g_coreData.getMouseTexture(), 32, 32);
+	mouseMain->setSize(32,32);
+	mouseMain->setPos(mousePos + Vec2i(0, -32));
+	//mouseAnimations = new Animset(this, mouseMain, 30);
+}
+
 void WidgetWindow::renderMouseCursor() {
 	float color1, color2;
 	Vec2i points[4];
@@ -405,6 +423,7 @@ void WidgetWindow::renderMouseCursor() {
 
 	int numPoints;
 	if (mouseIcon) {
+		mouseMain->setActive(1);
 		numPoints = 4;
 		points[3] = points[2];
 		points[2] = mousePos + Vec2i(10, -10);
@@ -419,24 +438,31 @@ void WidgetWindow::renderMouseCursor() {
 	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
 		glEnable(GL_BLEND);
 
-		//inside
-		glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
-		glBegin(GL_TRIANGLE_FAN);
-		for (int i=0; i < numPoints; ++i) {
-			glVertex2iv(points[i].ptr());
-		}
-		glEnd();
-
-		//border
-		glLineWidth(2);
-		glBegin(GL_LINE_LOOP);
-			glColor4f(1.f, 0.2f, 0, color1);
-			glVertex2iv(points[0].ptr());
-			glColor4f(1.f, 0.4f, 0, color2);
-			for (int i=1; i < numPoints; ++i) {
+		// hardcoded if texture doesn't exist
+		if (mouseMain == NULL) {
+			//inside
+			glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
+			glBegin(GL_TRIANGLE_FAN);
+			for (int i=0; i < numPoints; ++i) {
 				glVertex2iv(points[i].ptr());
 			}
-		glEnd();
+			glEnd();
+
+			//border
+			glLineWidth(2);
+			glBegin(GL_LINE_LOOP);
+				glColor4f(1.f, 0.2f, 0, color1);
+				glVertex2iv(points[0].ptr());
+				glColor4f(1.f, 0.4f, 0, color2);
+				for (int i=1; i < numPoints; ++i) {
+					glVertex2iv(points[i].ptr());
+				}
+			glEnd();
+		} else {
+			// this is rendering it twice but is neccessary since the widget
+			// render order isn't guaranteed
+			mouseMain->render();
+ 		}
 
 		if (mouseIcon) {
 			int x1 = points[2].x + 1;
