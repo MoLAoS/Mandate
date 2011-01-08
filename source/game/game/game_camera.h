@@ -103,6 +103,8 @@ public:
 
 	void init(int limitX, int limitY);
 
+	bool isMoving() {return moveMouse != Vec3f(0.f);}
+
 	//get
 	float getHAng() const		{return hAng;};
 	float getVAng() const		{return vAng;}

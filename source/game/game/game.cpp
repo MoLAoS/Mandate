@@ -586,6 +586,7 @@ void GameState::mouseUpLeft(int x, int y) {
 }
 void GameState::mouseUpRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
+	g_program.setMouseAppearance(MouseAppearance::DEFAULT);
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
@@ -616,6 +617,10 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 				gameCamera.transitionVH(-(y - lastMousePos.y) * ymult, (lastMousePos.x - x) * xmult);
 			}
 		}
+	} else if (ms.get(MouseButton::RIGHT)) {
+		g_program.setMouseAppearance(MouseAppearance::CAMERA_MOVE);
+		gameCamera.setMoveZ((y - lastMousePos.y) * scrollSpeed, true);
+		gameCamera.setMoveX((x - lastMousePos.x) * scrollSpeed, true);
 	} else {
 		if (!noInput) {
 			//main window

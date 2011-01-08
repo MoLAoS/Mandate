@@ -24,6 +24,8 @@ namespace Glest { namespace Widgets {
 class Imageset;
 class Animset;
 
+WRAPPED_ENUM(MouseAppearance, DEFAULT, ICON, CAMERA_MOVE)
+
 // =====================================================
 // class WidgetWindow
 // =====================================================
@@ -85,7 +87,13 @@ public:
 	void aquireKeyboardFocus(KeyboardWidget* widget);
 	void releaseKeyboardFocus(KeyboardWidget* widget);
 
-	void setMouseCursorIcon(const Texture2D *tex = 0) { mouseIcon = tex; }
+	void setMouseCursorIcon(const Texture2D *tex = 0) { 
+		mouseIcon = tex; 
+		if (!tex) { 
+			setMouseAppearance();
+		}
+	}
+	void setMouseAppearance(MouseAppearance v = MouseAppearance::DEFAULT);
 	void initMouse();
 
 protected: // Shared::Platform::Window virtual events

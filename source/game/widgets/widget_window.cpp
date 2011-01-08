@@ -159,6 +159,10 @@ void WidgetWindow::doMouseInto(Widget* widget) {
 	}
 }
 
+void WidgetWindow::setMouseAppearance(MouseAppearance v) {
+	mouseMain->setActive(v);
+}
+
 void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
 	delete floatingWidget;
 	floatingWidget = floater;

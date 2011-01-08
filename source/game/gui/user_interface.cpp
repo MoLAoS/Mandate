@@ -387,25 +387,6 @@ void UserInterface::mouseDownLeft(int x, int y) {
 
 void UserInterface::mouseDownRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
-	Vec2i worldPos;
-
-	if (selectingPos || selectingMeetingPoint) {
-		resetState();
-		computeDisplay();
-		return;
-	}
-
-	if (selection.isComandable()) {
-		UnitVector units;
-		if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
-			Unit *targetUnit = units.size() ? units.front() : NULL;
-			giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
-		} else {
-			m_console->addStdMessage("InvalidPosition");
-		}
-	}
-
-	computeDisplay();
 }
 
 void UserInterface::mouseUpLeft(int x, int y) {
@@ -428,7 +409,29 @@ void UserInterface::mouseUpLeft(int x, int y) {
 }
 
 void UserInterface::mouseUpRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
+
+	if (!g_camera.isMoving()) {
+		Vec2i worldPos;
+
+		if (selectingPos || selectingMeetingPoint) {
+			resetState();
+			computeDisplay();
+			return;
+		}
+
+		if (selection.isComandable()) {
+			UnitVector units;
+			if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
+				Unit *targetUnit = units.size() ? units.front() : NULL;
+				giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
+			} else {
+				m_console->addStdMessage("InvalidPosition");
+			}
+		}
+	}
+
+	computeDisplay();
 }
 
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
