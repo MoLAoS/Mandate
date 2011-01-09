@@ -10,9 +10,6 @@ using Shared::Graphics::ModelRenderer;
 using Shared::Graphics::TextureManager;
 using Shared::Graphics::Model;
 using Shared::Graphics::Texture2D;
-
-#include "model_renderer.h"
-
 using Shared::Graphics::MeshCallback;
 using Shared::Graphics::Mesh;
 using Shared::Graphics::Texture;
