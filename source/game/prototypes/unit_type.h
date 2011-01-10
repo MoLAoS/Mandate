@@ -140,7 +140,7 @@ public:
 	ProducibleClass getClass() const override { return typeClass(); }
 
 	CloakClass getCloakClass() const {
-		return m_cloakType ? m_cloakType->getClass() : CloakClass::INVALID;
+		return m_cloakType ? m_cloakType->getClass() : CloakClass(CloakClass::INVALID);
 	}
 	const Texture2D* getCloakImage() const {
 		return m_cloakType ? m_cloakType->getImage() : 0;

@@ -3,12 +3,14 @@
 
 #include <string>
 
+// needs to be before glcanvas.h because of gl_wrap.h -> glew.h before any opengl header
+#include "renderer.h"
+
 #include <wx/wx.h>
 #include <wx/timer.h>
 #include <wx/glcanvas.h>
 #include <wx/colordlg.h>
 
-#include "renderer.h"
 #include "util.h"
 #include "window.h"
 #include "dialogs.h"
