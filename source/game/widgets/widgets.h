@@ -66,8 +66,8 @@ public:
 	Imageset(Container* parent) 
 			: StaticImage(parent)
 			, m_active(0)
-			, m_defaultImage(0)
-	{}
+			, m_defaultImage(0) {
+	}
 
 	/// Constructor for uniform image sizes, see addImages
 	Imageset(Container* parent, const Texture2D *source, int width, int height)
