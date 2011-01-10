@@ -36,6 +36,7 @@ MasterTypeFactory::MasterTypeFactory() {
 	// Register Command Types
 	m_commandTypeFactory.registerClass<StopCommandType>();
 	m_commandTypeFactory.registerClass<MoveCommandType>();
+	m_commandTypeFactory.registerClass<TeleportCommandType>();
 	m_commandTypeFactory.registerClass<AttackCommandType>();
 	m_commandTypeFactory.registerClass<AttackStoppedCommandType>();
 	m_commandTypeFactory.registerClass<BuildCommandType>();
