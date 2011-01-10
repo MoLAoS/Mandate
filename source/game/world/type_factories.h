@@ -32,7 +32,7 @@ template<typename Entity> class EntityFactory {
 
 private:
 	typedef std::map<int, Entity*>  ObjectTable;
-	typedef std::vector<Entity*>    ObjectList;
+	typedef std::list<Entity*>      ObjectList;
 
 private:
 	ObjectTable  m_objTable;

@@ -138,12 +138,12 @@ public:
 	void	deleteCommand(const Command *c);
 	void	deleteEffect(const Effect *e) { m_effectFactory.deleteInstance(e); }
 
-	UnitFactory        getUnitFactory() { return m_unitFactory; }
-	UpgradeFactory     getUpgradeFactory() { return m_upgradeFactory; }
-	CommandFactory     getCommandFactory() { return m_commandFactory; }
-	EffectFactory      getEffectFactory() { return m_effectFactory; }
-	ProjectileFactory  getProjectileFactory() { return m_projectileFactory; }
-	MapObjectFactory   getMapObjectFactory() { return m_mapObjectFactory; }
+	UnitFactory&        getUnitFactory() { return m_unitFactory; }
+	UpgradeFactory&     getUpgradeFactory() { return m_upgradeFactory; }
+	CommandFactory&     getCommandFactory() { return m_commandFactory; }
+	EffectFactory&      getEffectFactory() { return m_effectFactory; }
+	ProjectileFactory&  getProjectileFactory() { return m_projectileFactory; }
+	MapObjectFactory&   getMapObjectFactory() { return m_mapObjectFactory; }
 };
 
 // =====================================================
