@@ -49,6 +49,7 @@ namespace Glest { namespace Main {
 Program::CrashProgramState::CrashProgramState(Program &program, const exception *e)
 		: ProgramState(program)
 		, done(false) {
+	program.setFade(1.f);
 	program.initMouse();
 	string msg;
 	if(e) {
