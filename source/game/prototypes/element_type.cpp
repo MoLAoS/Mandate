@@ -53,12 +53,12 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 			m_name = baseNode->getChild("name")->getStringValue();
 		}
 	} catch (runtime_error &e) {
-		g_logger.addXmlError(xmlPath, e.what());
+		g_logger.logXmlError(xmlPath, e.what());
 		return false;
 	}
 	while (mediaErrorLog.hasError()) {
 		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
-		g_logger.addMediaError(xmlPath, record.path, record.msg.c_str());
+		g_logger.logMediaError(xmlPath, record.path, record.msg.c_str());
 	}
 	return true;
 }
@@ -96,7 +96,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -110,7 +110,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
 
@@ -125,7 +125,7 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			subfactionsReqs = -1; //all subfactions
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -189,7 +189,7 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 	// Production time
 	try { productionTime = baseNode->getChildIntValue("time"); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(xmlPath, e.what());
+		g_logger.logXmlError(xmlPath, e.what());
 		loadOk = false;
 	}
 	// Cancel image
@@ -199,12 +199,12 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 		imgPath = dir + "/" + imageCancelNode->getRestrictedAttribute("path");
 		cancelImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
 	} catch (runtime_error e) {
-		g_logger.addXmlError(xmlPath, e.what());
+		g_logger.logXmlError(xmlPath, e.what());
 		loadOk = false;
 	}
 	while (mediaErrorLog.hasError()) {
 		MediaErrorLog::ErrorRecord record = mediaErrorLog.popError();
-		g_logger.addMediaError(xmlPath, record.path, record.msg.c_str());
+		g_logger.logMediaError(xmlPath, record.path, record.msg.c_str());
 	}
 
 	// Resource requirements
@@ -219,13 +219,13 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
 					costs[i].init(techTree->getResourceType(name), amount);
 				} catch (runtime_error e) {
-					g_logger.addXmlError(dir, e.what());
+					g_logger.logXmlError(dir, e.what());
 					loadOk = false;
 				}
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -238,7 +238,7 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 			advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;

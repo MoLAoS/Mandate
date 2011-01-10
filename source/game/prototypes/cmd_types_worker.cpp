@@ -145,7 +145,7 @@ bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree
 		string skillName= n->getChild("repair-skill")->getAttribute("value")->getRestrictedValue();
 		repairSkillType= static_cast<const RepairSkillType*>(unitType->getSkillType(skillName, SkillClass::REPAIR));
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	//repaired units
@@ -156,7 +156,7 @@ bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree
 			repairableUnits.push_back(ft->getUnitType(unitNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
 	return loadOk;
@@ -386,7 +386,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
 		m_buildSkillType = static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//buildings built
@@ -403,7 +403,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -421,7 +421,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -439,7 +439,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -706,7 +706,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		skillName = n->getChild("harvest-skill")->getAttribute("value")->getRestrictedValue();
 		m_harvestSkillType = static_cast<const HarvestSkillType*>(unitType->getSkillType(skillName, SkillClass::HARVEST));
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//stop loaded
@@ -714,7 +714,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
 		m_stopLoadedSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -723,7 +723,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		skillName = n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
 		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//resources can harvest
@@ -734,17 +734,17 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			m_harvestedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	try { m_maxLoad = n->getChild("max-load")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	try { m_hitsPerUnit = n->getChild("hits-per-unit")->getAttribute("value")->getIntValue(); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;

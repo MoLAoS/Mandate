@@ -102,7 +102,7 @@ RoutePlanner::RoutePlanner(World *world)
 		, nodeStore(NULL)
 		, tSearchEngine(NULL)
 		, tNodeStore(NULL) {
-	//g_logger.addProgramMsg( "Initialising SearchEngine", true );
+	//g_logger.logProgramEvent( "Initialising SearchEngine", true );
 
 	const int &w = world->getMap()->getW();
 	const int &h = world->getMap()->getH();
@@ -629,7 +629,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 		ss << __FUNCTION__ << "() passed bad arg, pos = " << finalPos
 			<< "\nWhile processing " << CommandClassNames[g_simInterface.processingCommandClass()]
 			<< " command.";
-		g_logger.addErrorMsg(ss.str());
+		g_logger.logError(ss.str());
 	}
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();

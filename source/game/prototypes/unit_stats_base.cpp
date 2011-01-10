@@ -135,19 +135,19 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir, const TechTree 
 	//maxHp
 	try { maxHp = baseNode->getChildIntValue("max-hp"); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//hpRegeneration
 	try { hpRegeneration = baseNode->getChild("max-hp")->getIntAttribute("regeneration"); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//maxEp
 	try { maxEp = baseNode->getChildIntValue("max-ep"); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	try {
@@ -161,19 +161,19 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir, const TechTree 
 		}
 	}
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//sight
 	try { sight = baseNode->getChildIntValue("sight"); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//armor
 	try { armor = baseNode->getChildIntValue("armor"); }
 	catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -475,7 +475,7 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	//multipliers
@@ -487,7 +487,7 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// stat boost
@@ -498,7 +498,7 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 			epBoost = node->getOptionalIntValue("ep-boost");
 		}
 	} catch (runtime_error e) {
-		g_logger.addXmlError(dir, e.what());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;

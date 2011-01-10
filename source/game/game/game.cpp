@@ -97,7 +97,7 @@ GameState::GameState(Program &program)
 
 GameState::~GameState() {
 	g_logger.getProgramLog().setState(g_lang.get("Deleting"));
-	g_logger.addProgramMsg("~GameState", !program.isTerminating());
+	g_logger.logProgramEvent("~GameState", !program.isTerminating());
 
 	g_renderer.endGame();
 	weatherParticleSystem = 0;
@@ -171,13 +171,13 @@ void GameState::init() {
 
 	// weather particle systems
 	if (g_world.getTileset()->getWeather() == Weather::RAINY) {
-		g_logger.addProgramMsg("Creating rain particle system", true);
+		g_logger.logProgramEvent("Creating rain particle system", true);
 		weatherParticleSystem= new RainParticleSystem();
 		weatherParticleSystem->setSpeed(12.f / WORLD_FPS);
 		weatherParticleSystem->setPos(gameCamera.getPos());
 		g_renderer.manageParticleSystem(weatherParticleSystem, ResourceScope::GAME);
 	} else if (g_world.getTileset()->getWeather() == Weather::SNOWY) {
-		g_logger.addProgramMsg("Creating snow particle system", true);
+		g_logger.logProgramEvent("Creating snow particle system", true);
 		weatherParticleSystem= new SnowParticleSystem(1200);
 		weatherParticleSystem->setSpeed(1.5f / WORLD_FPS);
 		weatherParticleSystem->setPos(gameCamera.getPos());
@@ -186,7 +186,7 @@ void GameState::init() {
 	}
 
 	// init renderer state
-	g_logger.addProgramMsg("Initializing renderer", true);
+	g_logger.logProgramEvent("Initializing renderer", true);
 	g_renderer.initGame(this);
 
 	//IF_DEBUG_EDITION( simInterface->getGaia()->showSpawnPoints(); );
@@ -197,12 +197,12 @@ void GameState::init() {
 
 	// rain
 	if (tileset->getWeather() == Weather::RAINY && ambientSounds->isEnabledRain()) {
-		g_logger.addProgramMsg("Starting ambient stream", true);
+		g_logger.logProgramEvent("Starting ambient stream", true);
 		g_soundRenderer.playAmbient(ambientSounds->getRain());
 	}
 	// snow
 	if (tileset->getWeather() == Weather::SNOWY && ambientSounds->isEnabledSnow()) {
-		g_logger.addProgramMsg("Starting ambient stream", true);
+		g_logger.logProgramEvent("Starting ambient stream", true);
 		g_soundRenderer.playAmbient(ambientSounds->getSnow());
 	}
 
@@ -210,7 +210,7 @@ void GameState::init() {
 	int maxUpdtBacklog = simInterface->launchGame();
 	program.setMaxUpdateBacklog(maxUpdtBacklog);
 
-	g_logger.addProgramMsg("Starting music stream", true);
+	g_logger.logProgramEvent("Starting music stream", true);
 	if (g_world.getThisFaction()) {
 		StrSound *gameMusic = g_world.getThisFaction()->getType()->getMusic();
 		if (gameMusic) {
@@ -218,7 +218,7 @@ void GameState::init() {
 		}
 	}
 	delete simInterface->getSavedGame();
-	g_logger.addProgramMsg("Launching game");
+	g_logger.logProgramEvent("Launching game");
 	g_logger.getProgramLog().setLoading(false);
 	program.resetTimers(40);
 	program.setFade(1.f);

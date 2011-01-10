@@ -87,7 +87,7 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 		try {
 			model->load(dir + "/" + path, 1, 1);
 		} catch (runtime_error &e) {
-			g_logger.addErrorMsg(e.what());
+			g_logger.logError(e.what());
 		}
 	} else {
 		model = NULL;

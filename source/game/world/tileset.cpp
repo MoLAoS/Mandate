@@ -104,7 +104,7 @@ void Tileset::load(const string &dir, TechTree *tt){
 	string path = dir + "/" + name +".xml";
 
 	try{
-		g_logger.addProgramMsg("Tileset: "+dir, true);
+		g_logger.logProgramEvent("Tileset: "+dir, true);
 		Renderer &renderer= Renderer::getInstance();
 
 		//parse xml
@@ -234,7 +234,7 @@ void Tileset::doChecksum(Checksum &checksum) const {
 }
 
 Tileset::~Tileset(){
-	g_logger.addProgramMsg("~Tileset", !g_program.isTerminating());
+	g_logger.logProgramEvent("~Tileset", !g_program.isTerminating());
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type) const {

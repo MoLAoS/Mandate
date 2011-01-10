@@ -50,13 +50,13 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		xmlTree.load(path);
 	}
 	catch (runtime_error &e) {
-		g_logger.addXmlError ( path, "File missing or wrongly named." );
+		g_logger.logXmlError ( path, "File missing or wrongly named." );
 		return false;
 	}
 	const XmlNode *techTreeNode;
 	try { techTreeNode= xmlTree.getRootNode(); }
 	catch (runtime_error &e) {
-		g_logger.addXmlError ( path, "File appears to lack contents." );
+		g_logger.logXmlError ( path, "File appears to lack contents." );
 		return false;
 	}
 
@@ -75,13 +75,13 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 				attackTypeMap[name] = &attackTypes[i];
 			}
 			catch (runtime_error &e) { 
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false; 
 			}
 		}
 	}
 	catch (runtime_error &e) {
-		g_logger.addXmlError(path, e.what());
+		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -99,13 +99,13 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 				armorTypeMap[name] = &armorTypes[i];
 			}
 			catch (runtime_error &e) { 
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false; 
 			}
 		}  
 	}
 	catch (runtime_error &e) {
-		g_logger.addXmlError(path, e.what());
+		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -125,12 +125,12 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 								
 				damageMultiplierTable.setDamageMultiplier(attackType, armourType, fixedMult);
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false;
 			}
 		}
 	} catch (runtime_error &e) {
-		g_logger.addXmlError(path, e.what());
+		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
 
@@ -161,7 +161,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	bool loadOk=true;
 	
 	Logger &logger = Logger::getInstance();
-	logger.addProgramMsg("TechTree: "+ dir, true);
+	logger.logProgramEvent("TechTree: "+ dir, true);
 	
 	//load resources
 	vector<string> filenames;
@@ -175,7 +175,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 		throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
 	}
 	if(resourceTypes.size() > 256) {
-		g_logger.addXmlError(str, "Glest Advanced Engine currently only supports 256 resource types.");
+		g_logger.logXmlError(str, "Glest Advanced Engine currently only supports 256 resource types.");
 		loadOk = false;
 	} else {
 		for(i=0; i<filenames.size(); ++i){
@@ -198,7 +198,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 }
 
 TechTree::~TechTree(){
-	g_logger.addProgramMsg("~TechTree", !Program::getInstance()->isTerminating());
+	g_logger.logProgramEvent("~TechTree", !Program::getInstance()->isTerminating());
 }
 
 void TechTree::doChecksumResources(Checksum &checksum) const {

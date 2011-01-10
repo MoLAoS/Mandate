@@ -42,7 +42,7 @@ namespace Glest { namespace Search {
   */
 Cartographer::Cartographer(World *world)
 		: world(world), cellMap(0), routePlanner(0) {
-	g_logger.addProgramMsg("Cartographer", true);
+	g_logger.logProgramEvent("Cartographer", true);
 	//_PROFILE_FUNCTION();
 
 	cellMap = world->getMap();

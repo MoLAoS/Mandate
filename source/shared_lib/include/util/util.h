@@ -2,8 +2,8 @@
 //	This file is part of Glest Shared Library (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa,
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
-//				  2009 James McCulloch <silnarm at gmail>
+//				  2008-2010 Daniel Santos <daniel.santos@pobox.com>
+//				  2009-2011 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -145,7 +145,7 @@ public:
 	if (!(x)) {																\
 		std::stringstream ss;												\
 		ss << __FUNCTION__ << " (" << __FILE__ << " : " << __LINE__ << ")";	\
-		g_logger.addProgramMsg("In " + ss.str() + "\nRuntime check fail: "#x);		\
+		g_logger.logProgramEvent("In " + ss.str() + "\nRuntime check fail: "#x);		\
 		throw runtime_error("In " + ss.str() + "\nRuntime check fail: "#x);	\
 	}	
 

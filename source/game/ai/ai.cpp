@@ -221,7 +221,10 @@ void Ai::update() {
 	for (AiRules::iterator it = aiRules.begin(); it != aiRules.end(); ++it) {
 		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * WORLD_FPS / 1000)) == 0) {
 			if ((*it)->test()) {
-				LOG_AI( aiInterface->getFactionIndex(), "Executing rule: " << (*it)->getName() );
+				LOG_AI(
+					aiInterface->getFactionIndex(), AiComponent::INVALID, 2,
+					"Executing rule: " << (*it)->getName()
+				);
 				(*it)->execute();
 			}
 		}
@@ -281,7 +284,7 @@ bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
 		field = (*it)->getCurrField();
 		if (pos.dist(aiInterface->getHomeLocation()) < radius) {
 			baseSeen = true;
-			LOG_AI( aiInterface->getFactionIndex(), "Being attacked at pos " << pos);
+			LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Being attacked at pos " << pos);
 			return true;
 		}
 	}
@@ -295,10 +298,10 @@ bool Ai::isStaticResourceUsed(const ResourceType *rt) const {
 
 bool Ai::isStableBase() {
 	if (getCountOfClass(UnitClass::WARRIOR) > minWarriors) {
-		LOG_AI( aiInterface->getFactionIndex(), "Base is stable" );
+		LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Base is stable." );
 		return true;
 	} else {
-		LOG_AI( aiInterface->getFactionIndex(), "Base is not stable" );
+		LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Base is not stable" );
 		return false;
 	}
 }
@@ -466,7 +469,7 @@ bool Ai::isRepairable(const Unit *u) const {
 
 void Ai::addTask(const Task *task){
 	tasks.push_back(task);
-	LOG_AI( aiInterface->getFactionIndex(), "Task added: " + task->toString() );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::INVALID, 2, "Task added: " + task->toString() );
 }
 
 void Ai::addPriorityTask(const Task *task){
@@ -474,7 +477,7 @@ void Ai::addPriorityTask(const Task *task){
 	tasks.clear();
 
 	tasks.push_back(task);
-	LOG_AI( aiInterface->getFactionIndex(), "Priority Task added: " + task->toString() );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::INVALID, 2, "Priority Task added: " + task->toString() );
 }
 
 bool Ai::anyTask(){
@@ -491,7 +494,7 @@ const Task *Ai::getTask() const{
 }
 
 void Ai::removeTask(const Task *task){
-	LOG_AI( aiInterface->getFactionIndex(), "Task removed: " + task->toString() );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::INVALID, 2, "Task removed: " + task->toString() );
 	tasks.remove(task);
 	delete task;
 }
@@ -541,7 +544,7 @@ void Ai::sendScoutPatrol(){
 	if(aiInterface->getFactionIndex()!=startLoc){
 		if(findAbleUnit(&unit, CommandClass::ATTACK, false)){
 			aiInterface->giveCommand(unit, CommandClass::ATTACK, pos);
-			LOG_AI( aiInterface->getFactionIndex(), "Scout patrol sent to: " << pos );
+			LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Scout patrol sent to: " << pos );
 		}
 	}
 }
@@ -613,7 +616,7 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 	else if(minWarriors<maxMinWarriors){
 		minWarriors+= 3;
 	}
-	LOG_AI( aiInterface->getFactionIndex(), "Massive attack to pos: " << pos );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Massive attack to pos: " << pos );
 }
 
 void Ai::returnBase(int unitIndex){
@@ -625,7 +628,10 @@ void Ai::returnBase(int unitIndex){
 		getRandomHomePosition();
     r= aiInterface->giveCommand(unitIndex, CommandClass::MOVE, pos);
 
-	LOG_AI( aiInterface->getFactionIndex(), "Order return to base pos:" << pos << " result: " << CommandResultNames[r] );
+	LOG_AI( 
+		aiInterface->getFactionIndex(), AiComponent::MILITARY, 2, 
+		"Order return to base pos:" << pos << " result: " << CommandResultNames[r]
+	);
 }
 
 void Ai::harvest(int unitIndex){

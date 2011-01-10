@@ -2,6 +2,7 @@
 // This file is part of Glest (www.glest.org)
 //
 // Copyright (C) 2001-2008 Martiño Figueroa
+//               2009-2011 James McCulloch
 //
 // You can redistribute this code and/or modify it under
 // the terms of the GNU General Public License as published
@@ -24,6 +25,24 @@
 using std::deque;
 using std::string;
 using std::stringstream;
+
+#define LOG_WIDGET_EVENTS 0
+#if LOG_WIDGET_EVENTS
+#	define WIDGET_LOG(x) {stringstream ss; ss << x; g_logger.logWidgetEvent(ss.str()); }
+#else
+#	define WIDGET_LOG(x)
+#endif
+
+#define AI_LOGGING 1
+#if AI_LOGGING
+#	define LOG_AI(factionIndex, component, level, message) {    \
+		stringstream _ss;										\
+		_ss << "Frame: " << g_world.getFrameCount()				\
+			<< ", faction: " << factionIndex << ": " << message;\
+		g_logger.logAiEvent(factionIndex, component, level, _ss.str()); }
+#else
+#	define LOG_AI(factionIndex, component, level, message)
+#endif
 
 namespace Glest {
 
@@ -60,8 +79,10 @@ public:
 
 	virtual void add(const string &str);
 
-	void addXmlError(const string &path, const char *error);
-	void addMediaError(const string &xmlPath, const string &mediaPath, const char *error);
+	///@todo class ErrorLogFile
+	void logXmlError(const string &path, const char *error);
+	void logMediaError(const string &xmlPath, const string &mediaPath, const char *error);
+	///@todo class NetLogFile
 	void addNetworkMsg(const string &msg);
 };
 
@@ -69,7 +90,7 @@ public:
 // class ProgramLog
 //
 /// Interface to the main log file, includes support for rendering
-/// lines to screen and a progress bar.
+/// to screen (15 line history) and a progress bar.
 // =====================================================
 
 class ProgramLog : public LogFile {
@@ -108,6 +129,58 @@ public:
 	void unitLoaded();
 };
 
+STRINGY_ENUM( AiComponent,
+	ECONOMY,
+	MILITARY,
+	RESEARCH
+);
+
+struct AiLogFlags {
+	bool  m_enabled;
+	int   m_level;
+	bool  m_components[AiComponent::COUNT];
+};
+
+class AiLogFile : public LogFile {
+private:
+	AiLogFlags  m_flags[GameConstants::maxPlayers];
+
+public:
+	AiLogFile();
+
+	void add(int faction, AiComponent component, int level, const string &msg);
+
+	bool isEnabled(int faction) const {
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		return m_flags[faction].m_enabled; 
+	}
+	bool getLevel(int faction) const {
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		return m_flags[faction].m_level;
+	}
+
+	void setEnabled(int faction, bool val) {
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		m_flags[faction].m_enabled = val; 
+	}
+	void setLevel(int faction, int level) { 
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		m_flags[faction].m_level = level;
+	}
+
+	bool isEnabled(int faction, AiComponent component) const {
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		ASSERT_RANGE(component, AiComponent::COUNT);
+		return m_flags[faction].m_enabled && m_flags[faction].m_components[component]; 
+	}
+
+	void setEnabled(int faction, AiComponent component, bool val) {
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		ASSERT_RANGE(component, AiComponent::COUNT);
+		m_flags[faction].m_components[component] = val;
+	}
+};
+
 // =====================================================
 // class Logger
 //
@@ -118,10 +191,11 @@ class Logger {
 private:
 	ProgramLog	*m_programLog;  // Always enabled
 	LogFile     *m_errorLog;    // Always enabled
-	LogFile     *m_aiLog;       // Always enabled
+	AiLogFile   *m_aiLog;       // Always enabled
+	LogFile     *m_networkLog;  // Always enabled
+
 	LogFile     *m_widgetLog;   // Pre-processor controlled
 	LogFile     *m_worldLog;    // Pre-processor controlled
-	LogFile     *m_networkLog;  // Always enabled
 
 private:
 	Logger();
@@ -151,44 +225,52 @@ public:
 	*/
 	static string fileTimestamp();
 
-	void addProgramMsg(const string &str, bool renderScreen = false) {
+	void logProgramEvent(const string &str, bool renderScreen = false) {
 		m_programLog->add(str, renderScreen);
 	}
 
 	// funnel to Error log
-	void addXmlError(const string &path, const char *error) {
-		m_errorLog->addXmlError(path, error);
+	void logXmlError(const string &path, const char *error) {
+		m_errorLog->logXmlError(path, error);
 	}
-	void addMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
-		m_errorLog->addMediaError(xmlPath, mediaPath, error);
+	void logMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
+		m_errorLog->logMediaError(xmlPath, mediaPath, error);
 	}
-	void addErrorMsg(const string &dir, const string &msg) {
+	void logError(const string &dir, const string &msg) {
 		m_errorLog->add(dir + ": " + msg);
-	}
-	
-	void addErrorMsg(const string &msg) {
+	}	
+	void logError(const string &msg) {
 		m_errorLog->add(msg);
 	}
 	
 	// funnel to Network log
-	void addNetworkMsg(const string &msg) {
+	void logNetworkEvent(const string &msg) {
 		m_networkLog->addNetworkMsg(msg);
 	}
 
-	void addWorldLogMsg(const string &msg) {
-		m_worldLog->add(msg);
+	void logAiEvent(int faction, AiComponent component, int level, const string &msg) {
+		m_aiLog->add(faction, component, level, msg);
 	}
 
-	void addAiLogMsg(const string &msg) {
-		m_aiLog->add(msg);
-	}
+#	if LOG_WORLD_EVENTS
+		void logWorldEvent(const string &msg) {
+			m_worldLog->add(msg);
+		}
+#	endif
+
+#	if LOG_WIDGET_EVENTS
+		void logWidgetEvent(const string &msg) {
+			m_widgetLog->add(msg);
+		}
+#	endif
+
 };
 
 #define LOG_STUFF 0
 
 #if defined(LOG_STUFF) && LOG_STUFF
-#	define LOG(x) g_logger.addProgramMsg(x)
-#	define STREAM_LOG(x) {stringstream _ss; _ss << x; g_logger.addProgramMsg(_ss.str()); }
+#	define LOG(x) g_logger.logProgramEvent(x)
+#	define STREAM_LOG(x) {stringstream _ss; _ss << x; g_logger.logProgramEvent(_ss.str()); }
 #	define GAME_LOG(x) STREAM_LOG( "Frame " << g_world.getFrameCount() << ": " << x )
 #else
 #	define LOG(x)
@@ -196,23 +278,10 @@ public:
 #	define GAME_LOG(x)
 #endif
 
-#define AI_LOGGING 1
-
-#if AI_LOGGING
-#	define LOG_AI(factionIndex, msg) {                       \
-		stringstream _ss;                                    \
-		_ss << "Frame: " << g_world.getFrameCount()          \
-			<< ", faction: " << factionIndex << ": " << msg; \
-		g_logger.addAiLogMsg(_ss.str()); }
-#else
-#	define LOG_AI(x)
-#endif
-
 #define LOG_NETWORKING 1
-
 #if LOG_NETWORKING
-#	define LOG_NETWORK(x) g_logger.addNetworkMsg(x)
-#	define NETWORK_LOG(x) {stringstream _ss; _ss << x; g_logger.addNetworkMsg(_ss.str()); }
+#	define LOG_NETWORK(x) g_logger.logNetworkEvent(x)
+#	define NETWORK_LOG(x) {stringstream _ss; _ss << x; g_logger.logNetworkEvent(_ss.str()); }
 #else
 #	define LOG_NETWORK(x)
 #	define NETWORK_LOG(x)
@@ -221,7 +290,7 @@ public:
 #define _LOG(x) {										\
 	stringstream _ss;									\
 	_ss << "\t" << x;									\
-	g_logger.addWorldLogMsg(_ss.str());					\
+	g_logger.logWorldEvent(_ss.str());					\
 }
 
 #define _UNIT_LOG(u, x) {								\
@@ -243,12 +312,12 @@ public:
 }
 
 // master switch, 'world' logging
-#define WORLD_LOGGING 0
+#define LOG_WORLD_EVENTS 0
 
 // Log pathfinding results
 #define LOG_PATHFINDER 0
 
-#if WORLD_LOGGING && LOG_PATHFINDER
+#if LOG_WORLD_EVENTS && LOG_PATHFINDER
 #	define PF_LOG(x) _LOG(x)
 #	define PF_UNIT_LOG(u, x) _UNIT_LOG(u, x)
 #	define PF_PATH_LOG(u) _PATH_LOG(u)
@@ -261,7 +330,7 @@ public:
 // log command issue / cancel / etc
 #define LOG_COMMAND_ISSUE 0
 
-#if WORLD_LOGGING && LOG_COMMAND_ISSUE
+#if LOG_WORLD_EVENTS && LOG_COMMAND_ISSUE
 #	define CMD_LOG(x) _LOG(x)
 #	define CMD_UNIT_LOG(u, x) _UNIT_LOG(u, x)
 #else
@@ -272,7 +341,7 @@ public:
 // log unit life-cycle (created, born, died, deleted)
 #define LOG_UNIT_LIFECYCLE 0
 
-#if WORLD_LOGGING && LOG_UNIT_LIFECYCLE
+#if LOG_WORLD_EVENTS && LOG_UNIT_LIFECYCLE
 #	define ULC_LOG(x) _LOG(x)
 #	define ULC_UNIT_LOG(u, x) _UNIT_LOG(u, x)
 #else
@@ -299,7 +368,7 @@ struct FunctionTimer {
 		} else {
 			ss << time << " us.";
 		}
-		g_logger.addProgramMsg(ss.str());
+		g_logger.logProgramEvent(ss.str());
 	}
 };
 

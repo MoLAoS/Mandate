@@ -37,7 +37,7 @@ bool ResourceType::load(const string &dir, int id) {
 	m_id = id;
 
 	bool loadOk = true;
-	g_logger.addProgramMsg("Resource type: " + dir, true);
+	g_logger.logProgramEvent("Resource type: " + dir, true);
 	m_name = basename(dir);
 	path = dir + "/" + m_name + ".xml";
 
@@ -47,11 +47,11 @@ bool ResourceType::load(const string &dir, int id) {
 		xmlTree.load(path); 
 		resourceNode = xmlTree.getRootNode();
 		if (!resourceNode) {
-			g_logger.addXmlError(path, "XML file appears to lack contents.");
+			g_logger.logXmlError(path, "XML file appears to lack contents.");
 			return false; // bail
 		}
 	} catch (runtime_error &e) {
-		g_logger.addXmlError(path, "Missing or wrong name of XML file.");
+		g_logger.logXmlError(path, "Missing or wrong name of XML file.");
 		return false; // bail
 	}
 	try { // image
@@ -60,7 +60,7 @@ bool ResourceType::load(const string &dir, int id) {
 		string imgPath = dir + "/" + imageNode->getAttribute("path")->getRestrictedValue();
 		image = renderer.getTexture2D(ResourceScope::GAME, imgPath);
 	} catch (runtime_error &e) {
-		g_logger.addXmlError(path, e.what());
+		g_logger.logXmlError(path, e.what());
 		loadOk = false; // can continue, to catch other errors
 	}
 	const XmlNode *typeNode;
@@ -68,7 +68,7 @@ bool ResourceType::load(const string &dir, int id) {
 		typeNode = resourceNode->getChild("type");
 		resourceClass = strToRc(typeNode->getAttribute("value")->getRestrictedValue());
 	} catch (runtime_error &e) {
-		g_logger.addXmlError(path, e.what());
+		g_logger.logXmlError(path, e.what());
 		return false; // bail, can't continue without type
 	}
 
@@ -80,20 +80,20 @@ bool ResourceType::load(const string &dir, int id) {
 				model = renderer.newModel(ResourceScope::GAME);
 				model->load(mPath, GameConstants::cellScale, 2);
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 			}
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
 				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false; // can continue, to catch other errors
 			}
 			try { // resource number
 				const XmlNode *resourceNumberNode = typeNode->getChild("resource-number");
 				resourceNumber = resourceNumberNode->getAttribute("value")->getIntValue();
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;
@@ -102,14 +102,14 @@ bool ResourceType::load(const string &dir, int id) {
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
 				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false; // can continue, to catch other errors
 			}
 			try { // object number
 				const XmlNode *tilesetObjectNode = typeNode->getChild("tileset-object");
 				tilesetObject = tilesetObjectNode->getAttribute("value")->getIntValue();
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;
@@ -118,7 +118,7 @@ bool ResourceType::load(const string &dir, int id) {
 				const XmlNode *intervalNode = typeNode->getChild("interval");
 				interval = intervalNode->getAttribute("value")->getIntValue();
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;
@@ -131,7 +131,7 @@ bool ResourceType::load(const string &dir, int id) {
 					recoupCost = true;
 				}
 			} catch (runtime_error e) {
-				g_logger.addXmlError(path, e.what());
+				g_logger.logXmlError(path, e.what());
 				loadOk = false;
 			}
 			break;

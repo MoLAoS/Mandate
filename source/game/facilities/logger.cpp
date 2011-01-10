@@ -66,13 +66,13 @@ void LogFile::add(const string &str){
 }
 
 
-void LogFile::addXmlError(const string &path, const char *error) {
+void LogFile::logXmlError(const string &path, const char *error) {
 	static char buffer[2048];
 	sprintf(buffer, "XML Error in %s:\n\t%s", path.c_str(), error);
 	add(buffer);
 }
 
-void LogFile::addMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
+void LogFile::logMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
 	static char buffer[2048];
 	if (xmlPath != "") {
 		sprintf(buffer, "Error loading %s:\n\treferenced in %s\n\t%s", 
@@ -170,6 +170,32 @@ void ProgramLog::renderLoadingScreen(){
 }
 
 // =====================================================
+//	class AiLogFile
+// =====================================================
+
+AiLogFile::AiLogFile()
+		: LogFile("glestadv-ai.log", "AI", TimeStampType::NONE) {
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		m_flags[i].m_level = 2;
+		m_flags[i].m_enabled = true;
+		for (int j=0; j < AiComponent::COUNT; ++j) {
+			m_flags[i].m_components[j] = true;
+		}
+	}
+}
+
+void AiLogFile::add(int f, AiComponent c, int level, const string &msg) {
+	ASSERT_RANGE(f, GameConstants::maxPlayers);
+	if (m_flags[f].m_enabled && level <= m_flags[f].m_level
+	&& (c == AiComponent::INVALID || m_flags[f].m_components[c])) {
+		stringstream ss;
+		ss << "AI: " << f << " [" << AiComponentNames[c] << "] Frame: " 
+			<< g_world.getFrameCount() << ", " << ": " << msg;
+		LogFile::add(ss.str());
+	}
+}
+
+// =====================================================
 //	class Logger
 // =====================================================
 
@@ -179,15 +205,24 @@ Logger::Logger()
 		: m_programLog(0)
 		, m_errorLog(0)
 		, m_aiLog(0)
+		, m_networkLog(0)
 		, m_widgetLog(0)
-		, m_worldLog(0)
-		, m_networkLog(0) {
+		, m_worldLog(0) {
+	
+	// always enabled
 	m_programLog = new ProgramLog();
 	m_errorLog = new LogFile("glestadv-error.log", "Error", TimeStampType::NONE);
-	m_aiLog  = new LogFile("glestadv-ai.log", "AI", TimeStampType::NONE);
-	m_widgetLog  = new LogFile("glestadv-widget.log", "Widget", TimeStampType::MILLIS);
-	m_worldLog  = new LogFile("glestadv-world.log", "World", TimeStampType::NONE);
+	m_aiLog  = new AiLogFile();
 	m_networkLog  = new LogFile("glestadv-network.log", "Network", TimeStampType::MILLIS);
+
+	// enabled by preprocessor symbol
+#	if LOG_WIDGET_EVENTS
+		m_widgetLog  = new LogFile("glestadv-widget.log", "Widget", TimeStampType::MILLIS);
+#	endif
+
+#	if LOG_WORLD_EVENTS
+		m_worldLog  = new LogFile("glestadv-world.log", "World", TimeStampType::NONE);
+#	endif
 }
 
 Logger::~Logger() {
