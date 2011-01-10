@@ -24,25 +24,11 @@ namespace Glest { namespace Global {
 // 	class Metrics
 // =====================================================
 
-Metrics::Metrics(){
-	Config &config= Config::getInstance();
-
-	virtualW= 1000;
-	virtualH= 750;
-
-	screenW= config.getDisplayWidth();
-	screenH= config.getDisplayHeight();
-
-	minimapX= 10;
-	minimapY= 750-128-30+16;
-	minimapW= 128;
-	minimapH= 128;
-
-	displayX= 800;
-	displayY= 250;
-	displayW= 128;
-	displayH= 480;
+Metrics::Metrics() {
+	Config &config = Config::getInstance();
+	screenW = config.getDisplayWidth();
+	screenH = config.getDisplayHeight();
 }
 
+}} // end namespace
 
-}}// end namespace

@@ -626,17 +626,17 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			//main window
 			if (y < 10) {
 				gameCamera.setMoveZ(-scrollSpeed, true);
-			} else if (y > g_metrics.getVirtualH() - 10) {
+			} else if (y > g_metrics.getScreenH() - 10) {
 				gameCamera.setMoveZ(scrollSpeed, true);
-			} else { //if(y < 20 || y > metrics.getVirtualH()-20){
+			} else {
 				gameCamera.setMoveZ(0, true);
 			}
 
 			if (x < 10) {
 				gameCamera.setMoveX(-scrollSpeed, true);
-			} else if (x > g_metrics.getVirtualW() - 10) {
+			} else if (x > g_metrics.getScreenW() - 10) {
 				gameCamera.setMoveX(scrollSpeed, true);
-			} else { //if(x < 20 || x > metrics.getVirtualW()-20){
+			} else {
 				gameCamera.setMoveX(0, true);
 			}
 		}

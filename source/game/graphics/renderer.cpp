@@ -744,21 +744,12 @@ void Renderer::renderSelectionQuad(){
 }
 
 Vec2i computeCenteredPos(const string &text, const Font *font, int x, int y){
-	Vec2i textPos;
-
 	const Metrics &metrics= Metrics::getInstance();
 	Vec2f textDiminsions = font->getMetrics()->getTextDiminsions(text);
-
-	textPos= Vec2i(
-		x - metrics.toVirtualX(static_cast<int>(textDiminsions.x / 2.f)),
-		y - metrics.toVirtualY(static_cast<int>(textDiminsions.y / 2.f)));
-
-	return textPos;
+	return Vec2i(int(x - textDiminsions.x / 2.f), int(y - textDiminsions.y / 2.f));
 }
 
 void Renderer::renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered){
-//	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-//	glEnable(GL_BLEND);
 	glColor4fv(Vec4f(1.f, 1.f, 1.f, alpha).ptr());
 
 	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
@@ -767,13 +758,9 @@ void Renderer::renderText(const string &text, const Font *font, float alpha, int
 	tr->begin(font);
 	tr->render(text, pos.x, pos.y);
 	tr->end();
-
-//	glPopAttrib();
 }
 
 void Renderer::renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered){
-//	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-//	glEnable(GL_BLEND);
 	glColor3fv(color.ptr());
 
 	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
@@ -783,7 +770,6 @@ void Renderer::renderText(const string &text, const Font *font, const Vec3f &col
 	tr->render(text, pos.x, pos.y);
 	tr->end();
 	
-//	glPopAttrib();
 }
 //
 //void Renderer::renderTextShadow(const string &text, const Font *font, int x, int y, bool centered, Vec3f colour) {
@@ -1409,8 +1395,8 @@ bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
 	GLdouble worldX;
 	GLdouble worldY;
 	GLdouble worldZ;
-	GLint screenX= (screenPos.x * metrics.getScreenW() / metrics.getVirtualW());
-	GLint screenY= (screenPos.y * metrics.getScreenH() / metrics.getVirtualH());
+	GLint screenX= screenPos.x;
+	GLint screenY= screenPos.y;
 
 	//get the depth in the cursor pixel
 	glReadPixels(screenX, screenY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
@@ -1465,7 +1451,7 @@ void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const V
 	glSelectBuffer(UserInterface::maxSelBuff, selectBuffer);
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	GLint view[]= {0, 0, metrics.getVirtualW(), metrics.getVirtualH()};
+	GLint view[]= {0, 0, metrics.getScreenW(), metrics.getScreenH()};
 	glRenderMode(GL_SELECT);
 	glLoadIdentity();
 	gluPickMatrix(x, y, w, h, view);
@@ -2222,7 +2208,7 @@ void Renderer::init2dList(){
 		glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(0, metrics.getVirtualW(), 0, metrics.getVirtualH(), 0, 1);
+		glOrtho(0, metrics.getScreenW(), 0, metrics.getScreenH(), 0, 1);
 
 		//modelview
 		glMatrixMode(GL_MODELVIEW);

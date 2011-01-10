@@ -313,19 +313,15 @@ void Program::eventResize(SizeState sizeState) {
 
 bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
-	const Metrics &metrics = Metrics::getInstance();
-	int vx = metrics.toVirtualX(pos.x);
-	int vy = metrics.toVirtualY(pos.y);
-
 	switch (btn) {
 		case MouseButton::LEFT:
-			programState->mouseDownLeft(vx, vy);
+			programState->mouseDownLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseDownRight(vx, vy);
+			programState->mouseDownRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseDownCenter(vx, vy);
+			programState->mouseDownCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -335,19 +331,15 @@ bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
-	const Metrics &metrics = Metrics::getInstance();
-	int vx = metrics.toVirtualX(pos.x);
-	int vy = metrics.toVirtualY(pos.y);
-
 	switch (btn) {
 		case MouseButton::LEFT:
-			programState->mouseUpLeft(vx, vy);
+			programState->mouseUpLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseUpRight(vx, vy);
+			programState->mouseUpRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseUpCenter(vx, vy);
+			programState->mouseUpCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -357,29 +349,21 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
-	const Metrics &metrics = Metrics::getInstance();
-	int vx = metrics.toVirtualX(pos.x);
-	int vy = metrics.toVirtualY(pos.y);
-
-	programState->mouseMove(vx, vy, input.getMouseState());
+	programState->mouseMove(pos.x, pos.y, input.getMouseState());
 	return true;
 }
 
 bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
-	const Metrics &metrics = Metrics::getInstance();
-	int vx = metrics.toVirtualX(pos.x);
-	int vy = metrics.toVirtualY(pos.y);
-
 	switch (btn){
 		case MouseButton::LEFT:
-			programState->mouseDoubleClickLeft(vx, vy);
+			programState->mouseDoubleClickLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseDoubleClickRight(vx, vy);
+			programState->mouseDoubleClickRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseDoubleClickCenter(vx, vy);
+			programState->mouseDoubleClickCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -389,11 +373,7 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseWheel(Vec2i pos, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << ", " << zDelta << " )");
-	const Metrics &metrics = Metrics::getInstance();
-	int vx = metrics.toVirtualX(pos.x);
-	int vy = metrics.toVirtualY(pos.y);
-
-	programState->eventMouseWheel(vx, vy, zDelta);
+	programState->eventMouseWheel(pos.x, pos.y, zDelta);
 	return true;
 }
 
