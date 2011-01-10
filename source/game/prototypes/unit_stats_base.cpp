@@ -152,13 +152,8 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir, const TechTree 
 	}
 	try {
 		//epRegeneration
-		if (maxEp) {
-			epRegeneration = baseNode->getChild("max-ep")->getIntAttribute("regeneration");
-		} 
-		else {
-			XmlAttribute *epRegenAttr = baseNode->getChild("max-ep")->getAttribute("regeneration", false);
-			epRegeneration = epRegenAttr ? epRegenAttr->getIntValue() : 0;
-		}
+		XmlAttribute *epRegenAttr = baseNode->getChild("max-ep")->getAttribute("regeneration", false);
+		epRegeneration = epRegenAttr ? epRegenAttr->getIntValue() : 0;
 	}
 	catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
