@@ -30,6 +30,7 @@ using Shared::Util::Random;
 namespace Glest { namespace Gui {
 
 class GameState;
+class ResourceBar;
 
 // =====================================================
 //	class Mouse3d

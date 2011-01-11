@@ -22,6 +22,7 @@
 #include "unit.h"
 #include "metrics.h"
 #include "display.h"
+#include "resource_bar.h"
 #include "platform_util.h"
 #include "sound_renderer.h"
 #include "util.h"
@@ -282,7 +283,7 @@ void UserInterface::update() {
 		tick();
 	}
 }
-
+///@todo wrap in Display
 void UserInterface::tick() {
 	computeDisplay();
 	DisplayButton btn = m_display->getHoverButton();
@@ -295,7 +296,7 @@ void UserInterface::tick() {
 	}
 	m_selectionDirty = false;
 }
-
+///@todo move to Display
 void UserInterface::commandButtonPressed(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selectingPos && !selectingMeetingPoint) {
@@ -780,7 +781,7 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 		}
 	}
 }
-
+///@todo move to Display
 void UserInterface::clickCommonCommand(CommandClass commandClass) {
 	for(int i=0; i < Display::commandCellCount; ++i) {
 		const CommandType* ct = m_display->getCommandType(i);
@@ -791,7 +792,7 @@ void UserInterface::clickCommonCommand(CommandClass commandClass) {
 		}
 	}
 }
-
+///@todo move to Display
 void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (selection.isEmpty()) {
@@ -864,7 +865,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 		}
 	}
 }
-
+///@todo move to Display
 void UserInterface::mouseDownSecondTier(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	int factionIndex = world->getThisFactionIndex();
@@ -895,7 +896,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 		}
 	}
 }
-
+///@todo move to Display
 void UserInterface::computePortraitInfo(int posDisplay) {
 	if (selection.getCount() < posDisplay) {
 		m_display->setToolTipText("");
@@ -919,7 +920,7 @@ inline string describeAutoCommandState(AutoCmdState state) {
 	}
 	return "";
 }
-
+///@todo move to Display
 void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection.isComandable() || posDisplay == invalidPos
@@ -1029,7 +1030,7 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		m_display->setToolTipText(res);
 	}
 }
-
+///@todo move to Display
 void UserInterface::computeDisplay() {
 	if (selectedObject && !selection.isEmpty()) {
 		selectedObject = 0;
@@ -1205,7 +1206,7 @@ void UserInterface::computeDisplay() {
 		} ///@todo else
 	}
 }
-
+///@todo move parts to CommandType classes
 void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult result) {
 	switch (result) {
 	case CommandResult::SUCCESS:
@@ -1306,7 +1307,7 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 		throw runtime_error("unhandled CommandResult");
 	}
 }
-
+///@todo move to UnitContainer
 bool UserInterface::isSharedCommandClass(CommandClass commandClass){
 	for (int i = 0; i < selection.getCount(); ++i) {
 		if (!selection.getUnit(i)->getFirstAvailableCt(commandClass)) {
