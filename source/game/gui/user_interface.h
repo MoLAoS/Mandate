@@ -278,6 +278,9 @@ public:
 private:
 	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);
 	void computeBuildPositions(const Vec2i &end);
+	void computeSelectionPanel();
+	void computeHousedUnitsPanel();
+	void computeCommandPanel();
 };
 
 }} //end namespace

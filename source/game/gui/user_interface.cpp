@@ -1030,16 +1030,8 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		m_display->setToolTipText(res);
 	}
 }
-///@todo move to Display
-void UserInterface::computeDisplay() {
-	if (selectedObject && !selection.isEmpty()) {
-		selectedObject = 0;
-	}
-	// init
-	m_display->clear();
 
-	// === Selection Panel ===
-
+void UserInterface::computeSelectionPanel() {
 	int thisTeam = g_world.getThisTeamIndex();
 
 	// title, text and progress bar
@@ -1082,9 +1074,9 @@ void UserInterface::computeDisplay() {
 	for (int i = 0; i < selection.getCount(); ++i) {
 		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
 	}
+}
 
-	// === Housed Units Panel ===
-
+void UserInterface::computeHousedUnitsPanel() {
 	bool transported = false;
 	int i=0;
 	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
@@ -1103,9 +1095,9 @@ void UserInterface::computeDisplay() {
 		}
 	}
 	m_display->setTransportedLabel(transported);
+}
 
-	// === Command Panel ===
-
+void UserInterface::computeCommandPanel() {
 	if (selectingPos || selectingMeetingPoint) {
 		m_display->setDownSelectedPos(activePos);
 	}
@@ -1169,7 +1161,7 @@ void UserInterface::computeDisplay() {
 			} else { // non uniform selection
 				int lastCommand = 0;
 				foreach_enum (CommandClass, cc) {
-					if (isSharedCommandClass(cc) && cc != CommandClass::BUILD) {
+					if (selection.isSharedCommandClass(cc) && cc != CommandClass::BUILD) {
 						m_display->setDownLighted(lastCommand, true);
 						m_display->setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
 						m_display->setCommandClass(lastCommand, cc);
@@ -1191,11 +1183,29 @@ void UserInterface::computeDisplay() {
 						++j;
 					}
 				}
-			if (activePos >= activeCommandType->getProducedCount()) {
-				activePos = invalidPos;
-					}
+				if (activePos >= activeCommandType->getProducedCount()) {
+					activePos = invalidPos;
 				}
+			}
 	} // end if (selection.isComandable())
+}
+
+void UserInterface::computeDisplay() {
+	if (selectedObject && !selection.isEmpty()) {
+		selectedObject = 0;
+	}
+
+	// init
+	m_display->clear();
+
+	// === Selection Panel ===
+	computeSelectionPanel();
+
+	// === Housed Units Panel ===
+	computeHousedUnitsPanel();
+	
+	// === Command Panel ===
+	computeCommandPanel();	
 
 	if (selection.isEmpty() && selectedObject) {
 		MapResource *r = selectedObject->getResource();
@@ -1306,15 +1316,6 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 	default:
 		throw runtime_error("unhandled CommandResult");
 	}
-}
-///@todo move to UnitContainer
-bool UserInterface::isSharedCommandClass(CommandClass commandClass){
-	for (int i = 0; i < selection.getCount(); ++i) {
-		if (!selection.getUnit(i)->getFirstAvailableCt(commandClass)) {
-			return false;
-		}
-	}
-	return true;
 }
 
 void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
