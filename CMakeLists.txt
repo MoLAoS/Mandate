@@ -71,20 +71,23 @@ find_package(GLEW REQUIRED)
 
 # PhysFS
 option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
+
 if(GAE_USE_PHYSFS)
 	find_package(PhysFS REQUIRED)
+else(GAE_USE_PHYSFS)
+	message("Warning: compiling without PhysFS is no longer supported.")
 endif(GAE_USE_PHYSFS)
 
-# debug edition
+# Option: debug edition
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 
-# leak dumping
+# Option: leak dumping
 option(GAE_LEAK_DUMP "Enable leak dumping, for detecting memory leaks.")
 
-# mad synchronisation checking (for network play)
+# Option: mad synchronisation checking (for network play)
 option(GAE_SYNC_TEST "Enable mass synchronisation checks, for detecting multiplayer sync issues.")
 
-# pre-compiled headers (MSVC only atm)
+# Option: pre-compiled headers (MSVC only atm)
 if (MSVC)
 	option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers." ON)
 endif (MSVC)
@@ -102,7 +105,7 @@ if (MSVC)
 	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2")
 	set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od /Gy /RTC1 /Zi /DDEBUG")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 -g /Zi /DNDEBUG") 
-	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG")
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG /Zi")
 else (MSVC)
 	# Use defaults ? 
 	#set(CMAKE_CXX_FLAGS "-Wall -fno-rtti")
@@ -195,11 +198,12 @@ if(WIN32)
 			DESTINATION bin
 		)
 		# dbghelp.dll to get nice crash reports, install program db for debugging symbols
-		#install(FILES
-		#	${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb
-		#	${GAE_WINDEPS}/bin/dbghelp.dll
-		#	DESTINATION bin OPTIONAL
-		#)
+		install(FILES
+			${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb
+			${CMAKE_BUILD_DIR}/source/game/release/glestadv.map
+			${GAE_WINDEPS}/bin/dbghelp.dll
+			DESTINATION bin
+		)
 	endif(DEFINED GAE_WINDEPS)
 
 elseif(APPLE)
