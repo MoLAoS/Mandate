@@ -166,7 +166,6 @@ void WidgetWindow::setMouseAppearance(MouseAppearance v) {
 void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
 	delete floatingWidget;
 	floatingWidget = floater;
-	floatingWidget->setParent(this);
 	unwindMouseOverStack(this);
 	modalFloater = modal;
 }
@@ -189,9 +188,11 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 void WidgetWindow::registerUpdate(Widget* widget) {
 	// only register for updating once, if the widget is already in the container do nothing
 	if (std::find(updateList.begin(), updateList.end(), widget) == updateList.end()) {
-	updateList.push_back(widget);
+		updateList.push_back(widget);
 	}
-	///@todo it might be better to use a set instead of a vector to achieve the desired behaviour
+	// /@ todo it might be better to use a set instead of a vector to achieve the desired behaviour
+	// JM: set<> == fast look-up, not fast iterate,  better to iterate fast and do this as you have, 
+	// registerUpdate() should not be called often
 }
 
 void WidgetWindow::unregisterUpdate(Widget* widget) {
