@@ -29,7 +29,8 @@ WRAPPED_ENUM(MouseAppearance, DEFAULT, ICON, CAMERA_MOVE)
 // =====================================================
 // class WidgetWindow
 // =====================================================
-/** top level container */
+/** top level widget container, derives from Shared::Platform::WindowGl & Glest::Widgets::Container,
+  * and is base class to Glest::Main::Program */
 class WidgetWindow : public Container, public MouseWidget, public KeyboardWidget, public WindowGl {
 private:
 	typedef std::stack<Widget*>	WidgetStack;

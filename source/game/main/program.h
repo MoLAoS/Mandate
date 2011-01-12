@@ -99,10 +99,10 @@ private:
 		virtual int getUpdateFps() const {return 10;}
 
 		void onExit(BasicDialog*);
-		virtual void update();
+		virtual void update() override;
 
-		virtual void renderBg();
-		virtual void renderFg();
+		virtual void renderBg() override;
+		virtual void renderFg() override;
 	};
 
 	static const int maxUpdateTimes = 5 * 6;
@@ -140,18 +140,18 @@ public:
 	void setSimInterface(SimulationInterface *si);
 
 	// InputWidget virtuals
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
-	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
-	virtual bool mouseWheel(Vec2i pos, int zDelta);
-	virtual bool keyDown(Key key);
-	virtual bool keyUp(Key key);
-	virtual bool keyPress(char c);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseWheel(Vec2i pos, int zDelta) override;
+	virtual bool keyDown(Key key) override;
+	virtual bool keyUp(Key key) override;
+	virtual bool keyPress(char c) override;
 
 	// Window virtuals
-	virtual void eventActivate(bool active) {}
-	virtual void eventResize(SizeState sizeState);
+	virtual void eventActivate(bool active) override {}
+	virtual void eventResize(SizeState sizeState) override;
 	/*
 	// Unused events of Window
 	virtual void eventCreate(){}

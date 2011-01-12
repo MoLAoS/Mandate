@@ -243,8 +243,7 @@ void WidgetWindow::destroyFloater() {
 
 void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
-	mousePos.x = x;
-	mousePos.y = getH() - y;
+	mousePos = Vec2i(x, y);
 	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
@@ -284,8 +283,7 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 
 void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
-	mousePos.x = x;
-	mousePos.y = getH() - y;
+	mousePos = Vec2i(x, y);
 	MouseWidget* downWidget = mouseDownWidgets[msBtn];
 	if (downWidget) {
 		downWidget->mouseUp(msBtn, mousePos);
@@ -304,8 +302,7 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	assert(!mouseOverStack.empty());
-	mousePos.x = x;
-	mousePos.y = getH() - y;
+	mousePos = Vec2i(x, y);
 
 	if (mouseMain) {
 		mouseMain->setPos(mousePos + Vec2i(0, -32));
@@ -342,8 +339,7 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 
 void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
-	mousePos.x = x;
-	mousePos.y = getH() - y;
+	mousePos = Vec2i(x, y);
 	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
@@ -373,6 +369,7 @@ void WidgetWindow::eventMouseDoubleClick(int x, int y, MouseButton msBtn) {
 
 void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << zDelta << " )");
+	mousePos = Vec2i(x, y);
 
 	Widget* widget = 0;
 	if (floatingWidget) {

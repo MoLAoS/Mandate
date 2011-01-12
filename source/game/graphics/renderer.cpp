@@ -2237,18 +2237,20 @@ void Renderer::init2dList(){
 }
 
 void Renderer::init2dNonVirtList(){
-
-	const Metrics &metrics= Metrics::getInstance();
+	float width = float(g_config.getDisplayWidth());
+	float height = float(g_config.getDisplayHeight());
 
 	//this list sets the state for the 2d rendering without 'virtual' co-ordinates
 	list2dNonVirt = glGenLists(1);
 	glNewList(list2dNonVirt, GL_COMPILE);
 
 		//projection
-		glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
+		glViewport(0.f, 0.f, width, height);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(0, metrics.getScreenW(), 0, metrics.getScreenH(), 0, 1);
+		glOrtho(0.f, width, 0.f, height, 0.f, 1.f);
+		glScalef(1, -1, 1);
+		glTranslatef(0.f, -height, 0.f);
 
 		//modelview
 		glMatrixMode(GL_MODELVIEW);
