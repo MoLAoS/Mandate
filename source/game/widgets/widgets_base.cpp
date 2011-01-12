@@ -429,15 +429,15 @@ void ImageWidget::renderImage(int ndx, const Vec4f &colour) {
 	y1 = pos.y;
 	if (imageInfo[ndx].hasOffset) {
 		x1 += imageInfo[ndx].offset.x;
-		y1 += imageInfo[ndx].offset.y;
+		y1 -= imageInfo[ndx].offset.y;
 	}
 	if (imageInfo[ndx].hasCustomSize) {
 		x2 = x1 + imageInfo[ndx].size.x;
-		y2 = y1 + imageInfo[ndx].size.y;
+		y2 = y1 - imageInfo[ndx].size.y;
 	} else {
 		Vec2i sz = me->getSize();
 		x2 = x1 + sz.x;
-		y2 = y1 + sz.y;
+		y2 = y1 - sz.y;
 	}
 	glColor4fv(colour.ptr());
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(textures[ndx])->getHandle());

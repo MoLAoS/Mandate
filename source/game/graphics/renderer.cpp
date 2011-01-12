@@ -2237,15 +2237,15 @@ void Renderer::init2dList(){
 }
 
 void Renderer::init2dNonVirtList(){
-	float width = float(g_config.getDisplayWidth());
-	float height = float(g_config.getDisplayHeight());
+	int width = g_config.getDisplayWidth();
+	int height = g_config.getDisplayHeight();
 
 	//this list sets the state for the 2d rendering without 'virtual' co-ordinates
 	list2dNonVirt = glGenLists(1);
 	glNewList(list2dNonVirt, GL_COMPILE);
 
 		//projection
-		glViewport(0.f, 0.f, width, height);
+		glViewport(0, 0, width, height);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(0.f, width, 0.f, height, 0.f, 1.f);
