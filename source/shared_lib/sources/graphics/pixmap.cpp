@@ -639,6 +639,158 @@ void PixmapIoPng::write(uint8 *pixels) {
 }
 
 // =====================================================
+//	class PixmapIoJpg
+// =====================================================
+
+// *** Methods used for JPG-Decompression (jpeglib) ***
+
+static void init_source(j_decompress_ptr cinfo) {
+	// already initialized
+}
+
+static boolean fill_input_buffer(j_decompress_ptr cinfo) {
+	// already initialized
+	return true;
+}
+
+static void skip_input_data(j_decompress_ptr cinfo, long num_bytes) {
+	if (num_bytes > 0) {
+		jpeg_source_mgr* This = cinfo->src;
+		This->bytes_in_buffer-= num_bytes;
+		This->next_input_byte+= num_bytes;
+	}
+}
+
+static void term_source(j_decompress_ptr cinfo) {
+}
+
+// ***
+
+void PixmapIoJpg::openRead(const string &path) {
+	file = FSFactory::getInstance()->getFileOps();
+	file->openRead(path.c_str());
+
+	size_t length = file->fileSize();
+	buffer = new uint8[length];
+	file->read(buffer, length, 1);
+
+	//Check buffer (weak jpeg check)
+	// Proper header check found from: http://www.fastgraph.com/help/jpeg_header_format.html
+	if (buffer[0] != 0xFF || buffer[1] != 0xD8) {
+	    std::cout << "0 = [" << std::hex << (int)buffer[0] << "] 1 = [" << std::hex << (int)buffer[1] << "]" << std::endl;
+		delete[] buffer;
+		throw runtime_error("JPG header check failed");
+	}
+
+	cinfo.err = jpeg_std_error(&jerr); //Standard error handler
+	jpeg_create_decompress(&cinfo); //Create decompressing structure
+	
+	jmp_buf error_buffer; //Used for saving/restoring context
+
+	if (setjmp(error_buffer)) { //Longjump was called --> an exception was thrown
+		delete[] buffer;
+		jpeg_destroy_decompress(&cinfo);
+		throw runtime_error("JPG failed setjump");
+	}
+
+	// Set up data pointer
+	source.bytes_in_buffer = length;
+	source.next_input_byte = (JOCTET*)buffer;
+	source.init_source = init_source;
+	source.fill_input_buffer = fill_input_buffer;
+	source.resync_to_restart = jpeg_resync_to_restart;
+	source.skip_input_data = skip_input_data;
+	source.term_source = term_source;
+
+	cinfo.src = &source;
+
+	/* reading the image header which contains image information */
+	if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK) {
+		delete[] buffer;
+		jpeg_destroy_decompress(&cinfo);
+		throw runtime_error("JPG failed reading header");
+	}
+
+	components = cinfo.num_components;
+	w = cinfo.image_width;
+	h = cinfo.image_height;
+}
+
+void PixmapIoJpg::read(uint8 *pixels) {
+	read(pixels, 3);
+}
+
+void PixmapIoJpg::read(uint8 *pixels, int components) { 
+	//TODO: Irrlicht has some special CMYK-handling - maybe needed too?
+
+	/* Start decompression jpeg here */
+	jpeg_start_decompress(&cinfo);
+	
+	/* now actually read the jpeg into the raw buffer */
+	JSAMPROW row_pointer[1];
+	row_pointer[0] = new unsigned char[cinfo.output_width * this->components];
+	size_t location = 0; //Current pixel
+	
+	/* read one scan line at a time */
+	/* Again you need to invert the lines unfortunately*/
+	while (cinfo.output_scanline < h) {
+		jpeg_read_scanlines(&cinfo, row_pointer, 1);
+		location = (cinfo.output_height - cinfo.output_scanline) * cinfo.output_width * components;
+
+		if (components == this->components) {
+			memcpy(pixels + location, row_pointer[0], cinfo.output_width * components);
+		} else {
+			int r,g,b,a,l;
+			for (int xPic = 0, xFile = 0; xFile < cinfo.output_width * components; xPic += components, xFile += this->components) {
+				switch(this->components) {
+					case 1:
+						r = g = b = l = row_pointer[0][xFile];
+						a = 255;
+						break;
+					case 3:
+						r = row_pointer[0][xFile];
+						g = row_pointer[0][xFile+1];
+						b = row_pointer[0][xFile+2];
+						l = (r+g+b+2)/3;
+						a = 255;
+						break;
+					case 4:
+						r = row_pointer[0][xFile];
+						g = row_pointer[0][xFile+1];
+						b = row_pointer[0][xFile+2];
+						l = (r+g+b+2)/3;
+						a = row_pointer[0][xFile+3];
+						break;
+					default:
+						throw runtime_error("JPG file has invalid number of colour channels");
+				}
+				switch (components) {
+					case 1:
+						pixels[location+xPic] = l;
+						break;
+					case 4:
+						pixels[location+xPic+3] = a; //Next case
+					case 3:
+						pixels[location+xPic] = r;
+						pixels[location+xPic+1] = g;
+						pixels[location+xPic+2] = b;
+						break;
+					default:
+						throw runtime_error("PixmapIoJpg request for invalid number of colour channels");
+				}
+			}
+		}
+	}
+
+	/* wrap up decompression, destroy objects, free pointers and close open files */
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+	
+	delete[] row_pointer[0];
+	delete[] buffer;
+}
+
+// =====================================================
 //	class Pixmap1D
 // =====================================================
 
@@ -796,6 +948,8 @@ void Pixmap2D::load(const string &path){
 		loadTga(path);
 	} else if (extension == "png") {
 		loadPng(path);
+	} else if (extension == "jpg") {
+		loadJpg(path);
 	} else {
 		throw runtime_error("Unknown pixmap extension: "+extension);
 	}
@@ -880,6 +1034,26 @@ void Pixmap2D::loadPng(const string &path) {
 
 	// read data
 	pip.read(pixels, components);
+}
+
+void Pixmap2D::loadJpg(const string &path) {
+	PixmapIoJpg pij;
+	pij.openRead(path);
+	w = pij.getW();
+	h = pij.getH();
+
+	int fileComponents = pij.getComponents();
+
+	//init
+	if (components == -1) {
+		components = fileComponents;
+	}
+	if (pixels == NULL) {
+		pixels = new uint8[w * h * components];
+	}
+
+	// read data
+	pij.read(pixels, components);
 }
 
 void Pixmap2D::save(const string &path){

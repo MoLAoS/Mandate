@@ -53,6 +53,7 @@ target_link_libraries(shared_lib
 	${ZLIB_LIBRARIES}
 	${FREETYPE_LIBRARIES}
 	${PNG_LIBRARY}
+	${JPEG_LIBRARY}
 	${GLEW_LIBRARY})
 
 if (GAE_USE_PHYSFS)
