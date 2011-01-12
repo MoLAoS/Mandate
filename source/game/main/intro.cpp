@@ -61,19 +61,19 @@ Intro::Intro(Program &program)
 		lblAdvanced = new Widgets::StaticText(logoPanel);
 		lblAdvanced->setTextParams(lang.get("AdvEng1"), Vec4f(1.f), font);
 		Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
-		lblAdvanced->setPos(Vec2i(255 - sz.x, 60));
+		lblAdvanced->setPos(Vec2i(255 - sz.x, 256 - 60));
 		lblAdvanced->setSize(sz);
 		lblAdvanced->centreText();
 
 		lblEngine = new Widgets::StaticText(logoPanel);
 		lblEngine->setTextParams(lang.get("AdvEng2"), Vec4f(1.f), font);
-		lblEngine->setPos(Vec2i(285, 60));
+		lblEngine->setPos(Vec2i(285, 256 - 60));
 		lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
 		lblEngine->centreText();
 
 		// Version label
 		font = coreData.getGAEFontSmall();
-		pos = Vec2i(285 + lblEngine->getSize().x, 62);
+		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 62);
 		lblVersion = new Widgets::StaticText(logoPanel);
 		lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);
 		lblVersion->setPos(pos);
@@ -85,12 +85,12 @@ Intro::Intro(Program &program)
 		lblEngine->setTextParams("Glest Advanced Engine " + gaeVersionString,
 			Vec4f(1.f), coreData.getGAEFontSmall());
 		size = lblEngine->getTextDimensions() + Vec2i(5,5);
-		pos = Vec2i(g_metrics.getScreenW() - size.x - 15, 10);
+		pos = Vec2i(g_metrics.getScreenW() - size.w - 15, 10 + size.h);
 		lblEngine->setPos(pos);
 		lblEngine->setSize(size);
 
 		size = Vec2i(256, 128);
-		pos = Vec2i(screenSize.x / 2 - size.x / 2, screenSize.y / 3 - size.y / 2);
+		pos = Vec2i(screenSize.w / 2 - size.w / 2, screenSize.h / 3 - size.h / 2);
 		splashImage = new Widgets::StaticImage(&program, pos, size);
 		splashImage->setImage(coreData.getGaeSplashTexture());
 	}

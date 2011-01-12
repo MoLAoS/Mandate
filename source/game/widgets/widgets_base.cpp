@@ -426,18 +426,18 @@ void ImageWidget::renderImage(int ndx, const Vec4f &colour) {
 	int x1, x2, y1, y2;
 	Vec2i pos = me->getScreenPos();
 	x1 = pos.x;
-	y1 = pos.y;
+	y2 = pos.y;
 	if (imageInfo[ndx].hasOffset) {
 		x1 += imageInfo[ndx].offset.x;
-		y1 -= imageInfo[ndx].offset.y;
+		y2 += imageInfo[ndx].offset.y;
 	}
 	if (imageInfo[ndx].hasCustomSize) {
 		x2 = x1 + imageInfo[ndx].size.x;
-		y2 = y1 - imageInfo[ndx].size.y;
+		y1 = y2 + imageInfo[ndx].size.y;
 	} else {
 		Vec2i sz = me->getSize();
 		x2 = x1 + sz.x;
-		y2 = y1 - sz.y;
+		y1 = y2 + sz.y;
 	}
 	glColor4fv(colour.ptr());
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(textures[ndx])->getHandle());
