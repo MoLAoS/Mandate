@@ -1318,6 +1318,18 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 	}
 }
 
+void UserInterface::selectAllUnitsOfType(UnitVector &out_units, const Unit *refUnit, int radius) {
+	int factionIndex = refUnit->getFactionIndex();
+
+	for (int i = 0; i < world->getFaction(factionIndex)->getUnitCount(); ++i) {
+		Unit *unit = world->getFaction(factionIndex)->getUnit(i);
+		if (unit->getPos().dist(refUnit->getPos()) < radius &&
+				unit->getType() == refUnit->getType()) {
+			out_units.push_back(unit);
+		}
+	}
+}
+
 void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 	m_selectingSecond = false;
 	activeCommandType = 0;
@@ -1327,16 +1339,7 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 
 	// select all units of the same type if double click
 	if (doubleClick && units.size()) {
-		const Unit *refUnit = units.front();
-		int factionIndex = refUnit->getFactionIndex();
-
-		for (int i = 0; i < world->getFaction(factionIndex)->getUnitCount(); ++i) {
-			Unit *unit = world->getFaction(factionIndex)->getUnit(i);
-			if (unit->getPos().dist(refUnit->getPos()) < doubleClickSelectionRadius &&
-					unit->getType() == refUnit->getType()) {
-				units.push_back(unit);
-			}
-		}
+		selectAllUnitsOfType(units, units.front(), doubleClickSelectionRadius);
 	}
 
 	bool shiftDown = input.isShiftDown();

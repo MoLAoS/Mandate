@@ -281,6 +281,7 @@ private:
 	void computeSelectionPanel();
 	void computeHousedUnitsPanel();
 	void computeCommandPanel();
+	void selectAllUnitsOfType(UnitVector &out_units, const Unit *refUnit, int radius);
 };
 
 }} //end namespace
