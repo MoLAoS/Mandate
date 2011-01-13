@@ -249,7 +249,14 @@ CycleInfo SkillType::calculateCycleTime() const {
 			assert(soundOffset > 0);
 		}
 	}
-	assert(skillFrames > 0 && animFrames > 0);
+	if (skillFrames < 1) {
+		stringstream ss;
+		ss << "Error: UnitType '" << m_unitType->getName() << "', SkillType '" << getName()
+			<< ", skill speed is too fast, cycle calculation clamped to one frame.";
+		g_logger.logError(ss.str());
+		skillFrames = 1;
+	}
+	assert(animFrames > 0);
 	return CycleInfo(skillFrames, animFrames, soundOffset, attackOffset);
 }
 
