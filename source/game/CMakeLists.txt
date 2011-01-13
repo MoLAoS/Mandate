@@ -55,8 +55,8 @@ if(UNIX AND NOT APPLE)
 endif(UNIX AND NOT APPLE)
 
 if (WIN32)
-	# set linker flags for Release to use link time code gen.
-	set_target_properties(glestadv PROPERTIES LINK_FLAGS_RELEASE "/LTCG")
+	# set linker flags for Release to use link time code gen, and set up some debug output for stack-traces.
+	set_target_properties(glestadv PROPERTIES LINK_FLAGS_RELEASE "/LTCG /DEBUG /MAP")
 
 	if (GAE_USE_PRECOMPILED_HDR)
 		# set-up precompiled headers (for windows)

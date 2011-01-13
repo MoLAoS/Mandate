@@ -30,6 +30,7 @@ using Shared::Util::Random;
 namespace Glest { namespace Gui {
 
 class GameState;
+class ResourceBar;
 
 // =====================================================
 //	class Mouse3d
@@ -277,6 +278,10 @@ public:
 private:
 	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);
 	void computeBuildPositions(const Vec2i &end);
+	void computeSelectionPanel();
+	void computeHousedUnitsPanel();
+	void computeCommandPanel();
+	void selectAllUnitsOfType(UnitVector &out_units, const Unit *refUnit, int radius);
 };
 
 }} //end namespace

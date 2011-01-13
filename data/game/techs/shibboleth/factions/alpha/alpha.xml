@@ -1,0 +1,28 @@
+<?xml version="1.0" standalone="no"?>
+
+<faction>
+	<starting-resources>
+		<resource name="gold" amount="500"/>
+		<resource name="wood" amount="500"/>	
+		<resource name="stone" amount="500"/>	
+		<resource name="food" amount="50"/>	
+	</starting-resources>
+	<starting-units>
+		<unit name="castle" amount="1"/>
+		<unit name="worker" amount="3"/>
+		<unit name="swordman" amount="2"/>
+		<unit name="archer" amount="1"/>
+		<unit name="pig" amount="1"/>
+		<!-- Defaults to 0 -->
+	</starting-units>	
+	<music value="true" path="../../../magitech/factions/tech/music/music_tech.ogg"/>
+	<logo value="true">
+		<team-colour path="tech_logo_team.png" />
+		<rgba-colour path="tech_logo_rgba.png" />
+	</logo>
+	<attack-notice enabled="true" min-delay="35">
+		<sound-file path="../../../magitech/factions/tech/bugle_charge.wav" />
+		<sound-file path="../../../magitech/factions/tech/bugle_alarm.wav" />
+		<sound-file path="../../../magitech/factions/tech/bugle_call_to_arms.wav" />
+	</attack-notice>
+</faction>
