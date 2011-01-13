@@ -84,6 +84,16 @@ private:
 	void checkDimensions(const Pixmap2D *p);
 };
 
+// =====================================================
+// 	class SurfaceAtlas2, hacky extension of SurfaceAtlas
+//
+/// Composites surface textures into a single texture
+/// and adjusts texture co-ordinates accordingly.
+// =====================================================
+
+///@todo: possibly best to not to derive from SurfaceAtlas, or refactor more
+/// so the SurfaceAtlas doesn't create gl textures for each splatted tile.
+
 class SurfaceAtlas2 : public SurfaceAtlas {
 private:
 	const Texture2D *m_texture;

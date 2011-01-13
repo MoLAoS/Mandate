@@ -828,7 +828,7 @@ void Renderer::renderObjects() {
 			const Model *objModel= sc->getObject()->getModel();
 			Vec3f v= o->getPos();
 
-			//ambient and diffuse color is taken from cell color
+			// ambient and diffuse color is taken from cell colour on FoW tex (ie, shades of grey)
 			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
 			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
 			glColor4fv(color.ptr());

@@ -71,6 +71,9 @@ Mesh::Mesh() {
 	indices = NULL;
 	interpolationData = NULL;
 
+	m_vertexBuffer = 0;
+	m_indexBuffer = 0;
+
 	for (int i = 0; i < meshTextureCount; ++i) {
 		textures[i] = NULL;
 	}
@@ -98,7 +101,7 @@ Mesh::~Mesh() {
 	delete interpolationData;
 }
 
-void Mesh::init() {
+void Mesh::initMemory() {
 	if (!vertexCount) {
 		assert(!indexCount);
 		frameCount = 0;
@@ -106,7 +109,10 @@ void Mesh::init() {
 	}
 	assert(vertexCount > 0);
 	assert(indexCount > 0);
-	if (use_simd_interpolation) {
+	if (/*frameCount == 1 || */!use_simd_interpolation) {
+		vertices = new Vec3f[frameCount * vertexCount];
+		normals = new Vec3f[frameCount * vertexCount];
+	} else {
 		vertArrays = new Vec3f*[frameCount];
 		normArrays = new Vec3f*[frameCount];
 		for (int i=0; i < frameCount; ++i) {
@@ -115,12 +121,75 @@ void Mesh::init() {
 		for (int i=0; i < frameCount; ++i) {
 			normArrays[i] = allocate_aligned_vec3_array(vertexCount);
 		}
-	} else {
-		vertices = new Vec3f[frameCount * vertexCount];
-		normals = new Vec3f[frameCount * vertexCount];
 	}
 	texCoords = new Vec2f[vertexCount];
 	indices = new uint32[indexCount];
+	//if (frameCount == 1) {
+	//	glGenBuffers(1, &m_vertexBuffer);
+	//	glGenBuffers(1, &m_indexBuffer);
+	//}
+}
+
+struct ModelVertex {
+	Vec3f   m_position;
+	Vec3f   m_normal;
+	Vec2f   m_texCoord;
+};
+
+void Mesh::fillBuffers() {
+	if (!m_vertexBuffer) {
+		assert(!m_indexBuffer);
+		return;
+	}
+	assert(m_indexBuffer && vertices && normals && !vertArrays && !normArrays);
+
+	ModelVertex *vertData = new ModelVertex[vertexCount];
+	for (int i=0; i < vertexCount; ++i) {
+		vertData[i].m_position = vertices[i];
+		vertData[i].m_normal = normals[i];
+		vertData[i].m_texCoord = texCoords[i];
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+	int buffSize = sizeof(ModelVertex) * vertexCount;
+	glBufferData(GL_ARRAY_BUFFER, buffSize, (void*)vertData, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	delete [] vertData;
+
+	///@todo probably wont ever actually need 32 bit uints for this, 16 should be sufficient
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indexCount, (void*)indices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	delete [] vertices;
+	vertices = 0;
+	delete [] normals;
+	normals = 0;
+	delete [] texCoords;
+	texCoords = 0;
+	delete [] indices;
+	indices = 0;
+}
+
+void Mesh::loadAdditionalTextures(const string &diffusePath, TextureManager *textureManager) {
+	string checkPath;
+	// normal map ?
+	if (!textures[mtNormal]) { // if someone hasn't updated the Blender export script...
+		checkPath = diffusePath; // insert _normal before . in filename
+		checkPath.insert(checkPath.length()-4, "_normal"); 
+		if (fileExists(checkPath)) {
+			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+		}
+		///@todo will need to change default tex to use flat normals 
+		/// JM: negative, no normal map => no bump mapping shader (why 'pay' for something we wont get?).
+	}
+	// custom texture? 
+	if (!textures[mtCustom1]) {		
+		checkPath = diffusePath;
+		checkPath.insert(checkPath.length()-4, "_custom1"); 
+		if (fileExists(checkPath)) {
+			textures[mtCustom1] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+		}
+	}
 }
 
 // ========================== shadows & interpolation =========================
@@ -139,54 +208,38 @@ void Mesh::updateInterpolationVertices(float t, bool cycle) const {
 
 // ==================== load ====================
 
-void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager){
+void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager) {
 	//read header
 	MeshHeaderV3 meshHeader;
 	f->read(&meshHeader, sizeof(MeshHeaderV3), 1);
-
-
-	if(meshHeader.normalFrameCount!=meshHeader.vertexFrameCount){
+	if (meshHeader.normalFrameCount!=meshHeader.vertexFrameCount) {
 		throw runtime_error("Old model: vertex frame count different from normal frame count");
 	}
 
 	//init
-	frameCount= meshHeader.vertexFrameCount;
-	vertexCount= meshHeader.pointCount;
-	indexCount= meshHeader.indexCount;
+	frameCount = meshHeader.vertexFrameCount;
+	vertexCount = meshHeader.pointCount;
+	indexCount = meshHeader.indexCount;
 
-	init();
+	initMemory();
 
 	//misc
-	twoSided= (meshHeader.properties & mp3TwoSided) != 0;
-	customColor= (meshHeader.properties & mp3CustomColor) != 0;
+	twoSided = (meshHeader.properties & mp3TwoSided) != 0;
+	customColor = (meshHeader.properties & mp3CustomColor) != 0;
 
 	//texture
-	if(!(meshHeader.properties & mp3NoTexture) && textureManager!=NULL){
+	if (!(meshHeader.properties & mp3NoTexture) && textureManager != NULL) {
 		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texturePaths[mtDiffuse] = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texPath = dir + "/" + texPath;
 		texPath = cleanPath(texPath);
 
 		textures[mtDiffuse] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
-
-		string checkPath = texPath;
-		// insert _normal before . in filename
-		checkPath.insert(checkPath.length()-4, "_normal"); 
-		if (fileExists(checkPath)) {
-			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
-		}
-		///@todo will need to change default tex to use flat normals
-
-		// custom texture? 
-		checkPath = texPath;
-		checkPath.insert(checkPath.length()-4, "_custom1"); 
-		if (fileExists(checkPath)) {
-			textures[mtCustom1] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
-		}
+		loadAdditionalTextures(texPath, textureManager);
 	}
 
 	//read data
-	if (use_simd_interpolation) {
+	if (use_simd_interpolation && vertArrays) {
 		assert(sizeof(Vec3f) == 12);
 		int frameRead = sizeof(Vec3f) * vertexCount;
 		int nFloats = vertexCount * 3;
@@ -220,8 +273,11 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	f->read(&opacity, sizeof(float32), 1);
 	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
+
+	fillBuffers();
 }
 
+// G3D V4
 void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	// read header
 	MeshHeader meshHeader;
@@ -234,7 +290,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	vertexCount = meshHeader.vertexCount;
 	indexCount = meshHeader.indexCount;
 
-	init();
+	initMemory();
 
 	// properties
 	customColor = (meshHeader.properties & mpfCustomColor) != 0;
@@ -260,28 +316,12 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		}
 		flag *= 2;
 	}
-	///@todo de-duplicate
-	///@todo actaully... remove, make the g3d viewer an editor &| write a new export script
 	if (textures[mtDiffuse]) {
-		string checkPath = textures[mtDiffuse]->getPath();
-		// insert _normal before . in filename
-		checkPath.insert(checkPath.length()-4, "_normal"); 
-		if (fileExists(checkPath)) {
-			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
-		}
-		///@todo will need to change default tex to use flat normals
-
-		// custom texture? 
-		checkPath = textures[mtDiffuse]->getPath();
-		checkPath.insert(checkPath.length()-4, "_custom1"); 
-		if (fileExists(checkPath)) {
-			textures[mtCustom1] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
-		}
+		loadAdditionalTextures(textures[mtDiffuse]->getPath(), textureManager);
 	}
 
-	// Assume packed vectors.
-	//read data
-	if (use_simd_interpolation) {
+	// read data. (Assume packed vectors)
+	if (use_simd_interpolation && vertArrays) {
 		assert(sizeof(Vec3f) == 12);
 		int frameRead = sizeof(Vec3f) * vertexCount;
 		int nFloats = vertexCount * 3;
@@ -328,6 +368,8 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			throw runtime_error("error reading mesh, insufficient vertex index data.");
 		}
 	}
+
+	fillBuffers();
 }
 
 void Mesh::buildCube(int size, int height, Texture2D *tex) {
@@ -589,39 +631,57 @@ void Model::loadG3d(const string &path){
 
 	string dir = dirname(path);
 
+	cout << "loading G3D from " << path << endl;
+
 	// file header
 	FileHeader fileHeader;
 	f->read(&fileHeader, sizeof(FileHeader), 1);
 	if (strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3) != 0) {
-		throw runtime_error("Not a valid S3D model");
+		cout << "Error: Bad magic cookie. Not a valid G3D model.\n";
+		throw runtime_error("Bad magic. Not a valid G3D model");
 	}
 	fileVersion = fileHeader.version;
 
 	if (fileHeader.version == 4) { // version 4
+		cout << "\tVersion: 4\n";
 		// model header
 		ModelHeader modelHeader;
 		f->read(&modelHeader, sizeof(ModelHeader), 1);
 		meshCount = modelHeader.meshCount;
 		if (modelHeader.type != mtMorphMesh) {
+			cout << "\tError: invalid mesh type.\n";
 			throw runtime_error("Invalid model type");
 		}
+		cout << "\tMesh count: " << meshCount << endl;
 
 		//load meshes
 		meshes = new Mesh[meshCount];
 		for(uint32 i=0; i < meshCount; ++i){
 			meshes[i].load(dir, f.get(), textureManager);
 			meshes[i].buildInterpolationData();
+
+			cout << "\tLoaded mesh " << i << endl;
+			cout << "\t\tVertex count: " << meshes[i].getVertexCount() << endl;
+			cout << "\t\tFrame count: " << meshes[i].getFrameCount() << endl;
 		}
 	} else if (fileHeader.version == 3) { // version 3
+		cout << "\tVersion: 3\n";
 		f->read(&meshCount, sizeof(meshCount), 1);
+		cout << "\tMesh count: " << meshCount << endl;
 		meshes= new Mesh[meshCount];
 		for(uint32 i=0; i < meshCount; ++i){
 			meshes[i].loadV3(dir, f.get(), textureManager);
 			meshes[i].buildInterpolationData();
+
+			cout << "\tLoaded mesh " << i << endl;
+			cout << "\t\tVertex count: " << meshes[i].getVertexCount() << endl;
+			cout << "\t\tFrame count: " << meshes[i].getFrameCount() << endl;
 		}
 	} else {
+		cout << "\tError: Invalid version: " << fileHeader.version << "\n";
 		throw runtime_error("Invalid model version: "+ intToStr(fileHeader.version));
 	}
+	
 }
 
 //save a model to a g3d file

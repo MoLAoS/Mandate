@@ -15,6 +15,7 @@
 #include <string>
 #include <map>
 
+#include "gl_wrap.h"
 #include "types.h"
 #include "pixmap.h"
 #include "texture_manager.h"
@@ -62,6 +63,9 @@ private:
 	Vec3f *vertices;	// if not using SIMD interpolation
 	Vec3f *normals;
 
+	GLuint	m_vertexBuffer; // vertex buffer handle if static mesh (single frame)
+	GLuint  m_indexBuffer;  // index buffer handle if static mesh (single frame)
+
 	Vec2f *texCoords;
 	Vec3f *tangents;
 	uint32 *indices;
@@ -78,13 +82,16 @@ private:
 
 	InterpolationData *interpolationData;
 
+private:
+	void initMemory();
+	void fillBuffers();
+	void loadAdditionalTextures(const string &dtPath, TextureManager *textureManager);
 	void computeTangents();
 
 public:
 	// init & end
 	Mesh();
 	~Mesh();
-	void init();
 
 	// maps
 	const Texture2D *getTexture(int i) const	{return textures[i];}

@@ -297,7 +297,7 @@ void TerrainRenderer2::init(Map *map, Tileset *tileset) {
 
 	int buffSize = sizeof(TileVertex) * (m_size.w - 1) * (m_size.h - 1) * 4;
 	glBufferData(GL_ARRAY_BUFFER, buffSize, 0, GL_STATIC_DRAW);
-	glBindBufferARB(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	updateVertexData();
 }
@@ -315,11 +315,11 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	int tileCount = 0;
 	SceneCuller::iterator it = culler.tile_begin();
 	for ( ; it != culler.tile_end(); ++it) {
-		Vec2i pos = *it;
+		const Vec2i pos = *it;
 		if (!mapBounds.isInside(pos)) {
 			continue;
 		}
-		int ndx = 4 * pos.y * (m_size.w - 1) + 4 * pos.x;
+		const int ndx = 4 * pos.y * (m_size.w - 1) + 4 * pos.x;
 		m_indexArray.push_back(ndx + 0);
 		m_indexArray.push_back(ndx + 1);
 		m_indexArray.push_back(ndx + 2);
@@ -333,7 +333,7 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	glEnable(GL_COLOR_MATERIAL);
 	glDisable(GL_ALPHA_TEST);
 
-	int stride = sizeof(TileVertex);
+	const int stride = sizeof(TileVertex);
 
 	// bind vbo, enable arrays & set vert and normal offsets
 	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
@@ -348,6 +348,8 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	const Texture2D *fowTex = g_userInterface.getMinimap()->getFowTexture();
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
+	// update gl texture...
+	///@todo don't do this here, update after 'unitTex' is updated (every fifth call to Minimap::update())
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, fowTex->getPixmap()->getW(), fowTex->getPixmap()->getH(),
 		GL_ALPHA, GL_UNSIGNED_BYTE, fowTex->getPixmap()->getPixels());
 	glTexCoordPointer(2, GL_FLOAT, stride, (void*)(8 * sizeof(float)));
