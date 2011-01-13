@@ -52,7 +52,8 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 		: RequirableType(-1, name, NULL)
 		, clicks(clicks)
 		, queuable(queuable)
-		, unitType(NULL) {
+		, unitType(NULL)
+		, energyCost(0) {
 }
 
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
@@ -63,6 +64,10 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 		m_tipKey = tipAttrib->getRestrictedValue();
 	} else {
 		m_tipKey = "";
+	}
+	const XmlNode *energyNode = n->getOptionalChild("ep-cost");
+	if (energyNode) {
+		energyCost = energyNode->getIntValue();
 	}
 
 	bool ok = DisplayableType::load(n, dir);
@@ -157,7 +162,12 @@ bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Ve
 void CommandType::apply(Faction *faction, const Command &command) const {
 	const ProducibleType *produced = command.getProdType();
 	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
-		faction->applyCosts(produced);
+		if (command.getType()->getClass() == CommandClass::MORPH) {
+			int discount = static_cast<const MorphCommandType*>(command.getType())->getDiscount();
+			faction->applyCosts(produced, discount);
+		} else {
+			faction->applyCosts(produced);
+		}
 	}
 }
 
@@ -680,6 +690,12 @@ CommandResult UpgradeCommandType::check(const Unit *unit, const Command &command
 // 	class MorphCommandType
 // =====================================================
 
+MorphCommandType::MorphCommandType()
+		: CommandType("Morph", Clicks::ONE)
+		, m_morphSkillType(0)
+		, m_discount(0), m_refund(0) {
+}
+
 bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 	// morph skill
@@ -687,7 +703,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		string skillName = n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
 		m_morphSkillType = static_cast<const MorphSkillType*>(unitType->getSkillType(skillName, SkillClass::MORPH));
 	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// morph unit(s)
@@ -718,9 +734,27 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		}
 	}
 	// discount
-	try { m_discount= n->getChild("discount")->getAttribute("value")->getIntValue(); }
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what ());
+	try { 
+		const XmlNode *cmNode = n->getOptionalChild("cost-modifier");
+		if (cmNode) {
+			const XmlAttribute *a = cmNode->getAttribute("discount", false);
+			if (a) {
+				m_discount = a->getIntValue();
+			} 
+			a = cmNode->getAttribute("refund", false);
+			if (a) {
+				m_refund = a->getIntValue();
+			}
+		} else {
+			const XmlNode *dn = n->getOptionalChild("discount");
+			if (dn) {
+				m_refund = dn->getAttribute("value")->getIntValue();
+				g_logger.logError(dir, "Warning: node 'discount' of morph command is deprecated,"
+					" use 'cost-modifier' instead");
+			}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// finished sound
@@ -737,7 +771,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			}
 		}
 	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what ());
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	return loadOk;
@@ -761,6 +795,9 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 	m_morphSkillType->getDesc(str, unit);
 	if (m_discount != 0) { // discount
 		str += lang.get("Discount") + ": " + intToStr(m_discount) + "%\n";
+	}
+	if (m_refund != 0) {
+		str += lang.get("Refund") + ": " + intToStr(m_refund) + "%\n";
 	}
 	if (m_morphUnits.size() == 1) {
 		str += "\n" + m_morphUnits[0]->getReqDesc();

@@ -835,7 +835,8 @@ CommandResult Unit::giveCommand(Command *command) {
 
 	// check command
 	CommandResult result = checkCommand(*command);
-	if (result == CommandResult::SUCCESS) {
+	bool energyRes = checkEnergy(command->getType());
+	if (result == CommandResult::SUCCESS && energyRes) {
 		applyCommand(*command);
 		
 		// start the command type
@@ -845,6 +846,9 @@ CommandResult Unit::giveCommand(Command *command) {
 			commands.push_back(command);
 		}
 	} else {
+		if (!energyRes && getFaction()->isThisFaction()) {
+			g_console.addLine(g_lang.get("InsufficientEnergy"));
+		}
 		g_world.deleteCommand(command);
 		command = 0;
 	}
@@ -2132,7 +2136,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 		type = ut;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
-		faction->applyDiscount(ut, mct->getDiscount());
+		faction->giveRefund(ut, mct->getRefund());
 		faction->applyStaticProduction(ut);
 
 		if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
@@ -2273,6 +2277,9 @@ CommandResult Unit::checkCommand(const Command &command) const {
   */
 void Unit::applyCommand(const Command &command) {
 	command.getType()->apply(faction, command);
+	if (command.getType()->getEnergyCost()) {
+		ep -= command.getType()->getEnergyCost();
+	}
 }
 
 /** De-Apply costs for a command

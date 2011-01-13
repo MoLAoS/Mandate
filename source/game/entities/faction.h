@@ -157,7 +157,10 @@ public:
 
 	// cost application
 	bool applyCosts(const ProducibleType *p);
-	void applyDiscount(const ProducibleType *p, int discount);
+	bool applyCosts(const ProducibleType *p, int discount);
+
+	void giveRefund(const ProducibleType *p, int refund);
+
 	void applyStaticCosts(const ProducibleType *p);
 	void applyStaticProduction(const ProducibleType *p);
 	void deApplyCosts(const ProducibleType *p);
@@ -165,6 +168,7 @@ public:
 	void deApplyStaticConsumption(const ProducibleType *p);
 	void applyCostsOnInterval(const ResourceType *rt);
 	bool checkCosts(const ProducibleType *pt);
+	bool checkCosts(const ProducibleType *pt, int discount);
 
 	// reqs
 	bool reqsOk(const RequirableType *rt) const;
