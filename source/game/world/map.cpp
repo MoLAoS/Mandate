@@ -963,7 +963,7 @@ void Map::smoothSurface() {
 	Util::RectIterator rectIter(Vec2i(1), m_tileSize - Vec2i(2));
 	while (rectIter.more()) {
 		Vec2i pos = rectIter.next();
-		float height = 0.f;
+		float height = m_heightMap[pos.y * m_tileSize.w + pos.x];
 		perimIter = Util::PerimeterIterator(pos - Vec2i(1), pos + Vec2i(1));
 		while (perimIter.more()) {
 			Vec2i pos2 = perimIter.next();
