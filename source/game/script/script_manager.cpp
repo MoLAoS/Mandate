@@ -15,6 +15,7 @@
 #include <stdarg.h>
 
 #include "script_manager.h"
+#include "conversion.h"
 
 #include "world.h"
 #include "lang.h"
@@ -33,6 +34,8 @@ using namespace Glest::Sim;
 #endif
 
 namespace Glest { namespace Script {
+
+using namespace Shared::Util::Conversion;
 
 TriggerManager ScriptManager::triggerManager;
 
@@ -85,6 +88,11 @@ int getSubfaction(LuaHandle *luaHandle);
 int getSubfactionRestrictions(LuaHandle *luaHandle);
 int getFrameCount(LuaHandle *luaHandle);
 
+int getCellType(LuaHandle *luaHandle);
+int getCellHeight(LuaHandle *luaHandle);
+int getTileHeight(LuaHandle *luaHandle);
+int getWaterLevel(LuaHandle *luaHandle);
+
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
 
@@ -100,6 +108,11 @@ void ScriptManager::initGame() {
 	LUA_FUNC(getSubfaction);
 	LUA_FUNC(getSubfactionRestrictions);
 	LUA_FUNC(getFrameCount);
+
+	LUA_FUNC(getCellHeight);
+	LUA_FUNC(getCellType);
+	LUA_FUNC(getTileHeight);
+	LUA_FUNC(getWaterLevel);
 
 	// Game control
 	LUA_FUNC(setPlayerAsWinner);
@@ -277,6 +290,55 @@ int getSubfactionRestrictions(LuaHandle *luaHandle) {
 int getFrameCount(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);
 	args.returnInt(g_world.getFrameCount());
+	return args.getReturnCount();
+}
+
+int getCellType(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	Vec2i pos;
+	if (ScriptManager::extractArgs(args, "getCellType", "v2i", &pos)) {
+		if (g_map.isInside(pos)) {
+			SurfaceType surfType = g_map.getCell(pos)->getType();
+			args.returnString(formatString(SurfaceTypeNames[surfType]));
+		} else {
+			ScriptManager::addErrorMessage("Error: getCellType(pos), pos is not on map.");
+		}
+	}
+	return args.getReturnCount();
+}
+
+int getCellHeight(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	Vec2i pos;
+	if (ScriptManager::extractArgs(args, "getCellHeight", "v2i", &pos)) {
+		if (g_map.isInside(pos)) {
+			float res = g_map.getCell(pos)->getHeight();
+			args.returnString(toStr(res));
+		} else {
+			ScriptManager::addErrorMessage("Error: getCellHeight(pos), pos is not on map.");
+		}
+	}
+	return args.getReturnCount();
+}
+
+int getTileHeight(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	Vec2i pos;
+	if (ScriptManager::extractArgs(args, "getTileHeight", "v2i", &pos)) {
+		if (g_map.isInsideTile(pos)) {
+			float res = g_map.getTileHeight(pos);
+			args.returnString(toStr(res));
+		} else {
+			ScriptManager::addErrorMessage("Error: getTileHeight(pos), pos is not on map.");
+		}
+	}
+	return args.getReturnCount();
+}
+
+int getWaterLevel(LuaHandle *luaHandle) {
+	LuaArguments args(luaHandle);
+	float res = g_map.getWaterLevel();
+	args.returnString(toStr(res));
 	return args.getReturnCount();
 }
 
