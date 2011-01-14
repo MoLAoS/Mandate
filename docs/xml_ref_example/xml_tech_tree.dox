@@ -1,0 +1,98 @@
+/**
+@page xml_tech_tree Tech Tree
+@author Titus, Martiño, Hailstone
+
+Tech Trees specify the details that relate to all the factions that it contains.
+The filename must be the same as the folder it is contained in. 
+(eg "tech" folder -\> tech.xml). Each tech is stored in the techs folder.
+
+@section xml_tech_tree_contents XML Element List:
+@ref xml_tech_tree_description <br>
+@ref xml_tech_tree_attack-type <br>
+@ref xml_tech_tree_armor-type <br>
+@ref xml_tech_tree_damage-multiplier <br>
+
+@code
+<?xml version="1.0" standalone="no"?>
+
+<tech-tree>
+    <description value="experimental tech tree"/>
+    <attack-types>          <!--naming types of attacks -->
+        <attack-type name="sword"/>
+        <attack-type name="arrow"/>
+        <attack-type name="magic"/>	
+    </attack-types>
+    <armor-types>           <!--naming types of armor -->
+        <armor-type name="leather"/>
+        <armor-type name="plate"/>
+        <armor-type name="stone"/>
+        <armor-type name="wood"/>
+        <armor-type name="organic"/>
+    </armor-types>
+    <damage-multipliers>    <!--attack vs armor multipliers -->
+        <damage-multiplier attack="arrow" armor="plate" value="0.5"/>
+        <damage-multiplier attack="arrow" armor="leather" value="1.3"/>
+        <damage-multiplier attack="arrow" armor="stone" value="0.3"/>
+        <damage-multiplier attack="magic" armor="plate" value="0.8"/>
+        <damage-multiplier attack="magic" armor="stone" value="0.5"/>
+        <damage-multiplier attack="sword" armor="stone" value="0.5"/>	
+    </damage-multipliers>
+</tech-tree>
+@endcode
+
+<br>
+@section xml_tech_tree_description \<description\> Element
+- Purpose:
+    - The \<description\> element specifies a description for the tech tree
+	  which is used in various situations [revise]
+
+- Required Attributes:
+    - @c value: The value
+
+- Optional Attributes:
+
+- Usage:
+    - The \<description\> element must appear under \<tech-tree\>.
+
+<br>
+@section xml_tech_tree_attack-type \<attack-type\> Element
+- Purpose:
+    - The \<attack-type\> element is used to define an attack type.
+
+- Required Attributes:
+    - @c name: Required attribute that specifies a unique attack type name.
+
+- Optional Attributes:
+
+- Usage:
+    - The \<attack-type\> element must appear under \<attack-types\>.
+
+<br>
+@section xml_tech_tree_armor-type \<armor-type\> Element
+- Purpose:
+    - The \<armor-type\> element specified an armor type.
+
+- Required Attributes:
+    - @c name: Required attribute that specifies a unique armor type name.
+
+- Optional Attributes:
+
+- Usage:
+    - The \<armor-type\> element must appear under \<armor-types\>.
+
+<br>
+@section xml_tech_tree_damage-multiplier \<damage-multiplier\> Element
+- Purpose:
+    - The \<damage-multiplier\> element uses the armor-types and attack-types
+	  to formulate a damage multiplier.
+
+- Required Attributes:
+    - @c attack: the attack type.
+    - @c armor: the armor type.
+    - @c value: the multiplier.
+
+- Optional Attributes:
+
+- Usage:
+    - The \<damage-multiplier\> element must appear under \<tech-tree\>.
+*/

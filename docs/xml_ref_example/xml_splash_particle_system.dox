@@ -1,0 +1,75 @@
+/**
+@page xml_splash_particle_system Splash Particle System
+@author Daniel Santos
+
+Splash particle systems are most commonly used to create special effects from a
+ unit being attacked.
+
+@section xml_splash_particle_system_contents XML Element List:
+todo
+
+@code
+<?xml version="1.0" standalone="yes"?>
+<splash-particle-system>
+
+<!-- GAE Only  -->
+
+    <blend-mode src="mode" dest="mode"/>  <!-- (Optional) Available in 0.2.13. Sets the blend mode for the particle
+                                               system.  For details, see the OpenGL reference for the glBlendFunc()
+                                               function.  Legal values are:
+                                                   zero
+                                                   one
+                                                   src_color
+                                                   one_minus_src_color
+                                                   dst_color
+                                                   one_minus_dst_color
+                                                   src_alpha
+                                                   one_minus_src_alpha
+                                                   dst_alpha
+                                                   one_minus_dst_alpha
+                                                   constant_color
+                                                   one_minus_constant_color
+                                                   constant_alpha
+                                                   one_minus_constant_alpha
+                                                   src_alpha_saturate.
+                                               Note that dest may not be set to src_alpha_saturate.  If not specified,
+                                               the default is the same as classic Glest behavior, equivalent to
+
+                                                   <blend-mode src="src_alpha" dest="one"/>
+
+                                               However, to enable particles to contain dark colors (and not have the
+                                               brightness used as an alpha value), you should use
+
+                                                   <blend-mode src="src_alpha" dest="one_minus_src_alpha"/>
+
+                                           -->
+
+<!-- /GAE Only  -->
+                                     <!-- An optional texture used for each particle (what does luminance do exactly?) -->
+    <texture value="true|false" path=".../texture_name.bmp" luminance="true"/>
+                                     <!-- An optional model can be used. -->
+    <model value="true|false" path=".../model_name.g3d"/>
+    <primitive value="quad|line"/>   <!-- This shows the shape of the particle.  Line is like a line, quad is like a
+                                          circle. -->
+    <offset x="0" y="0" z="0"/>      <!-- This can offset the entire splash from directly in front of the end of the
+                                          projection where it would normally end. -->
+                                     <!-- Colors at epicentre (specifically of a particle when it's first created) -->
+    <color red="0.0" green="0.0" blue="1.0" alpha="0.5" />
+                                     <!-- Colors at edge (specifically, the color the particle will become when it runs
+                                          out of energy) -->
+    <color-no-energy red="1.0" green="1.0" blue="1.0" alpha="0.0" />
+    <size value="1" />               <!-- Particle start size (center) -->
+    <size-no-energy value="2" />     <!-- Ending particle size -->
+    <speed value="5" />              <!-- The Maximum Radius of the explosion -->
+    <gravity value="0"/>             <!-- Gravity effects -->
+    <emission-rate value="20" />     <!-- How many particles are emitted -->
+    <energy-max value="30" />        <!-- Energy -->
+    <energy-var value="10" />        <!-- Variation -->
+    <emission-rate-fade value="1"/>  <!-- Particles last longer with a lower number / disappear quicker with a higher
+                                          number -->
+    <vertical-spread a="0" b="0"/>   <!-- Direction splash goes after hitting -->
+    <horizontal-spread a="1" b="0"/> <!-- Direction splash goes after hitting -->
+</splash-particle-system>
+@endcode
+
+*/
