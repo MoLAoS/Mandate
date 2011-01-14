@@ -68,7 +68,7 @@ DebugStats::DebugStats() {
 	m_debugSections[DebugSection::PERFORMANCE] = true;
 	m_debugSections[DebugSection::RENDERER] = true;
 	m_debugSections[DebugSection::CAMERA] = false;
-	m_debugSections[DebugSection::GUI] = false;
+	m_debugSections[DebugSection::GUI] = true;
 	m_debugSections[DebugSection::WORLD] = true;
 	m_debugSections[DebugSection::RESOURCES] = false;
 	m_debugSections[DebugSection::CLUSTER_MAP] = false;
@@ -145,7 +145,7 @@ void DebugStats::report(ostream &stream) {
 	if (m_debugSections[DebugSection::GUI]) {
 		stream << "\nGUI stats:\n"
 			<< "   Mouse Pos (screen coords): " << g_gameState.getMousePos() << endl
-			<< "   Last Click Pos (world coords): " << g_userInterface.getPosObjWorld() << endl;
+			<< "   Last Click Pos (cell coords): " << g_userInterface.getPosObjWorld() << endl;
 	}
 	if (m_debugSections[DebugSection::WORLD]) {
 		stream << "\nWorld stats:\n"
