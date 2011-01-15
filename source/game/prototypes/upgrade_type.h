@@ -38,10 +38,18 @@ namespace Glest { namespace ProtoTypes {
  * producable (i.e., researchable) upgrade to all of one or more unit
  * classes.
  */
-class UpgradeType: public ProducibleType, public EnhancementType {
+class UpgradeType: public ProducibleType/*, public EnhancementType*/  {
 private:
-	vector<const UnitType*> effects;
+	typedef vector<EnhancementType> Enhancements;
+	typedef map<const UnitType*, const EnhancementType*> EnhancementMap;
+	typedef vector< vector<string> > AffectedUnits; // just names, used only in getDesc()
+
+private:
+	//vector<const UnitType*> effects;
+	Enhancements       m_enhancements;
+	EnhancementMap     m_enhancementMap;
 	const FactionType *m_factionType;
+	AffectedUnits      m_unitsAffected;
 
 public:
 	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
@@ -54,11 +62,20 @@ public:
 	ProducibleClass getClass() const override { return typeClass(); }
 
 	const FactionType* getFactionType() const { return m_factionType; }
-	//get all
-	int getEffectCount() const				{return effects.size();}
-	const UnitType * getEffect(int i) const	{return effects[i];}
+
+	// get all
+	const EnhancementType* getEnhancement(const UnitType *ut) const {
+		EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
+		if (it != m_enhancementMap.end()) {
+			return it->second;
+		}
+		return 0;
+	}
+	//int getEffectCount() const				{return effects.size();}
+	//const UnitType * getEffect(int i) const	{return effects[i];}
+
 	bool isAffected(const UnitType *unitType) const {
-		return find(effects.begin(), effects.end(), unitType) != effects.end();
+		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
 	}
 
 	virtual void doChecksum(Checksum &checksum) const;

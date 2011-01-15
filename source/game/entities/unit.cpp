@@ -1920,10 +1920,11 @@ string Unit::getLongDesc() const {
 /** Apply effects of an UpgradeType
   * @param upgradeType the type describing the Upgrade to apply*/
 void Unit::applyUpgrade(const UpgradeType *upgradeType) {
-	if (upgradeType->isAffected(type)) {
-		totalUpgrade.sum(upgradeType);
+	const EnhancementType *et = upgradeType->getEnhancement(type);
+	if (et) {
+		totalUpgrade.sum(et);
 		recalculateStats();
-		doRegen(upgradeType->getHpBoost(), upgradeType->getEpBoost());
+		doRegen(et->getHpBoost(), et->getEpBoost());
 	}
 }
 
