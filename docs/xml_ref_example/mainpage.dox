@@ -1,0 +1,38 @@
+/**
+@mainpage Glest Advanced Engine: Developer Documentation
+https://sourceforge.net/apps/trac/glestae/wiki
+<br>
+Copyright (c) 2010 The GAE Development Team
+
+@section main_sec_1 Documentation Sections
+The developer documentation consists of the following sections:
+- General Information
+    - @ref licensing
+    - @ref authors
+    - see trac for changelog
+
+- Code related topics
+    - see the trac wiki
+
+- Modding XML Reference
+	- @ref xml_tech_tree
+    - @ref xml_resource
+    - @ref xml_faction
+    - @ref xml_upgrade
+    - @ref xml_unit
+    - @ref xml_projectile_particle_system
+	- @ref xml_splash_particle_system
+    - @ref xml_tileset
+    - @ref xml_main_menu
+	
+- Scripted Scenarios
+	- @ref lua_notes
+	- @ref lua_commands
+	- @ref lua_queries
+	- @ref lua_events
+	
+
+(Perhaps additional information for full conversion mods)
+
+The layout was inspired by CEGUI documentation. (Overview is direct copy, should probably be changed)
+*/

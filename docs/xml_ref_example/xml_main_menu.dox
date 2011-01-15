@@ -1,0 +1,26 @@
+/**
+@page xml_main_menu Main Menu
+@author Vixis
+
+The main menu.
+
+@section xml_main_menu_contents XML Element List:
+todo
+
+@code
+<?xml version="1.0"?>
+
+<menu>
+    <water value="true" height="3"/> <!-- Enable water; height of water (more height=flood) -->
+    <rain value="true"/> <!-- Enable rain -->
+    <fog value="true" density="0.035"/> <!-- Enable fog; fog density (more=harder to see through it) -->
+    <camera> <!-- Camera position & rotation for each menu button -->
+        <start-position x="5" y="10" z="40"/> <!-- for start button -->
+        <root-position x="-9" y="11" z="10"/> <!-- for main menu -->
+        ...
+        <settings-rotation x="0" y="0" z="0"/> 
+    </camera>
+</menu>
+@endcode
+
+*/

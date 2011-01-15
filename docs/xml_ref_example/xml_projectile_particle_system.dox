@@ -1,0 +1,62 @@
+/**
+@page xml_projectile_particle_system Projectile Partile System
+@author Daniel Santos
+
+The Projection Particle XML defines the visual effects as well as part of the
+ mechanics used to for ranged attacks between units. 
+
+@section xml_projectile_particle_system_contents XML Element List:
+todo
+
+@code
+<?xml version="1.0" standalone="yes"?>
+<projectile-particle-system>
+                                     <!-- A bitmap file used to map the alpha of the particles. -->
+    <texture value="true" luminance="true|false" path=".../texture_name.bmp"/>
+                                     <!-- Model used as the projectile. -->
+    <model value="true|false" path=".../model_name.g3d"/>
+    <primitive value="line|quad"/>
+    <offset x="0" y="0.2" z="1"/>    <!-- Offset the origin of the attack; +X is to the right of the attacker, +y is
+                                          above the attacker, +z is to the front of the attacker. Make no difference
+                                          to the endpoint -->
+                                     <!-- Starting color/transparency, ranges from 0-1  -->
+    <color red="1.0" green="0.5" blue="0.0" alpha="0.5" />
+                                     <!-- Ending Color, same range -->
+    <color-no-energy red="0.0" green="0.0" blue="0.0" alpha="0.2" />
+    <size value="6" />               <!-- size of texture when particle is created -->
+    <size-no-energy value="4" />     <!-- size of texture when particle has emitted all energy -->
+    <speed value="0" />              <!-- The speed (distance moved really) of the particle over their lifetime -->
+    <gravity value="0"/>             <!-- How much particles are effected by gravity -->
+    <emission-rate value="1" />      <!-- The amount of particles emitted -->
+    <energy-max value="20" />        <!-- Maximum Energy -->
+    <energy-var value="0" />         <!-- Variation -->
+
+        <!-- The following trajectory type definitions are mutually exclusive -->
+
+    <trajectory type="linear">
+        <speed value="14"/>          <!-- Speed of the projectile - negative values and 0 have interesting, but not
+                                          terribly useful effects.  Bug Notice: currently, in both Glest 3.1.2 and GAE
+                                          0.2.8a, very high values for speeds may cause the engine to fail to detect a
+                                          collision, resulting in an attack that both appears visually wrong and will
+                                          not always (or ever) harm their intended targets. -->
+    </trajectory>
+
+        <!-- or -->
+
+    <trajectory type="parabolic">
+        <speed value="16"/>          <!-- Speed of the projectile -->
+        <scale value="2.5"/>         <!-- Height of the parabolic arc -->
+    </trajectory>
+
+        <!-- or -->
+
+    <trajectory type="spiral">
+        <speed value="4.0"/>
+        <scale value="1"/>           <!-- Width of the spiral -->
+        <frequency value="0.5"/>     <!-- How often the spiral, uh, spirals -->
+    </trajectory>
+
+</projectile-particle-system>
+@endcode
+
+*/
