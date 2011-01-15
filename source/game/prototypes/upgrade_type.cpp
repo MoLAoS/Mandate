@@ -80,10 +80,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 				loadOk = false;
 			}
 			try { // Units affected by this upgrade
-				const XmlNode *affectsNode = enhanceNode->getChild("affects", 0, false);
-				if (!affectsNode) {
-					affectsNode = enhanceNode->getChild("affects", 0);
-				}
+				const XmlNode *affectsNode = enhanceNode->getChild("affects", 0);
 				for (int j=0; j < affectsNode->getChildCount(); ++j) {
 					const XmlNode *affectNode = affectsNode->getChild(j);
 					if (affectNode->getName() == "unit") {

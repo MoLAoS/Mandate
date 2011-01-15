@@ -1213,6 +1213,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	fixed distance;
 	bool needDistance = false;
 
+	// if called with a target unit, check that is still alive/visible
 	if (*rangedPtr) {
 		if ((*rangedPtr)->isDead() || !asts->getZone((*rangedPtr)->getCurrZone())) {
 			*rangedPtr = 0;
