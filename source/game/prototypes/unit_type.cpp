@@ -127,6 +127,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	try { xmlTree.load(path); }
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
+		g_logger.logError("Fatal Error: could not load " + path);
 		return false; // bail
 	}
 	const XmlNode *unitNode;

@@ -59,7 +59,8 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		upgradeNode= xmlTree.getRootNode();
 	}
 	catch (runtime_error e) { 
-		g_logger.logXmlError ( dir, e.what() );
+		g_logger.logXmlError(dir, e.what());
+		g_logger.logError("Fatal Error: could not load " + path);
 		return false;
 	}
 
