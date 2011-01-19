@@ -57,6 +57,7 @@ private:
 	Vec2i mousePos;
 	bool modalFloater;
 	const Texture2D *mouseIcon;
+
 	Imageset *mouseMain;
 	Animset *mouseAnimations;
 
@@ -76,7 +77,6 @@ public:
 	void update();
 	float getAnim() const { return anim; }
 	virtual void clear();
-	//void setFade(float v);
 
 	void registerUpdate(Widget* widget);
 	void unregisterUpdate(Widget* widget);
@@ -124,10 +124,6 @@ public: // MouseWidget & TextWidget virtual events
 	TextRenderer* getTextRenderer() {
 		return textRendererFT;
 	}
-
-	//virtual Widget* getWidgetAt(const Vec2i &pos);// { return layers.front()->getWidgetAt(pos); }
-	//virtual void addChild(Widget* child) { layers.front()->addChild(child); child->setParent(layers.front()); }
-	//virtual void remChild(Widget* child) { layers.front()->remChild(child); child->setParent(layers.front()); }
 
 	virtual void render();
 

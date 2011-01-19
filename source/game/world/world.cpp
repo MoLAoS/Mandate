@@ -283,8 +283,6 @@ void World::updateUnits(const Faction *f) {
 void World::processFrame() {
 	//_PROFILE_FUNCTION);
 
-	//m_unitTypeFactory.assertTypes();
-
 	++frameCount;
 	m_simInterface->startFrame(frameCount);
 	g_userInterface.getMinimap()->update(frameCount);
@@ -304,7 +302,7 @@ void World::processFrame() {
 	}
 	updateUnits(&glestimals);
 
-//	updateEarthquakes(1.f / 40.f);
+	//updateEarthquakes(1.f / 40.f);
 
 	//undertake the dead
 	m_unitFactory.update();
@@ -332,8 +330,6 @@ void World::processFrame() {
 		computeFow();
 		tick();
 	}
-	
-	//m_unitTypeFactory.assertTypes();
 }
 
 void World::hit(Unit *attacker) {
