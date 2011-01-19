@@ -227,6 +227,15 @@ Logger::Logger()
 }
 
 Logger::~Logger() {
+	// collect lang look-up errors
+	vector<string> &errors = Lang::getLookUpErrors();
+	if (!errors.empty()) {
+		m_errorLog->add("\nLang look-up errors:");
+	}
+	foreach_const (vector<string>, it, errors) {
+		m_errorLog->add(*it);
+	}
+	// close everything
 	delete m_programLog;
 	delete m_errorLog;
 	delete m_aiLog;

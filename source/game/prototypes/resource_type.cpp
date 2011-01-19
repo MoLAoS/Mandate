@@ -52,6 +52,7 @@ bool ResourceType::load(const string &dir, int id) {
 		}
 	} catch (runtime_error &e) {
 		g_logger.logXmlError(path, "Missing or wrong name of XML file.");
+		g_logger.logError("Fatal Error: could not load " + path);
 		return false; // bail
 	}
 	try { // image

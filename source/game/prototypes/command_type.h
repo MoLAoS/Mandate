@@ -86,6 +86,7 @@ protected:
 	bool queuable;
 	const UnitType *unitType;
 	string m_tipKey;
+	int energyCost;
 
 	void setId(int v) { m_id = v; }
 	void setUnitType(const UnitType *ut) { unitType = ut; }
@@ -128,6 +129,7 @@ public:
 	bool isQueuable() const								{return queuable;}
 
 	//get
+	int getEnergyCost() const		{ return energyCost; }
 	bool getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Vec3f &out_arrowColor) const;
 	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 1.f, 0.f);}
 	virtual CommandClass getClass() const = 0;
@@ -136,6 +138,9 @@ public:
 		string str;
 		//str = name + "\n";
 		getDesc(str, unit);
+		if (energyCost) {
+			str += "\n" + g_lang.get("EnergyCost") + ": " + intToStr(energyCost);
+		}
 		return str;
 	}
 
@@ -582,10 +587,11 @@ private:
 	vector<const UnitType*> m_morphUnits;
 	map<string, string>		m_tipKeys;
 	int						m_discount;
+	int						m_refund;
 	SoundContainer			m_finishedSounds;
 
 public:
-	MorphCommandType() : CommandType("Morph", Clicks::ONE), m_morphSkillType(0), m_discount(0) {}
+	MorphCommandType();
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -609,6 +615,7 @@ public:
 	const MorphSkillType *getMorphSkillType() const	{return m_morphSkillType;}
 	Clicks getClicks() const						{return m_morphUnits.size() == 1 ? Clicks::ONE : Clicks::TWO;}
 	int getDiscount() const							{return m_discount;}
+	int getRefund() const                           {return m_refund;}
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MORPH; }

@@ -1,0 +1,162 @@
+/**
+@page xml_resource Resource
+@author Pug, Martiño, Daniel Santos, Hailstone
+
+Game resources are specified under the resources directory of the tech tree. 
+Each resource will have it's own subdirectory and a resource specification file
+ with the same name as the resource, but ending in .xml.
+
+@section xml_resource_contents XML Element List:
+@ref xml_resource_image <br>
+@ref xml_resource_type <br>
+@ref xml_resource_interval <br>
+@ref xml_resource_model <br>
+@ref xml_resource_default-amount <br>
+@ref xml_resource_resource-number <br>
+@ref xml_resource_tileset-object <br>
+
+Note that there are 4 types of resources and that only one of the below can be 
+specified for a single resource.
+
+@code
+<?xml version="1.0" standalone="no"?>
+
+<resource>
+    <image path="images/image.bmp"/>    <!-- This icon will be displayed on the hud to show how
+                                             many resources are available -->
+
+    <type value="static"/>              <!-- Static Resources are "Checked in" when created and
+                                             "Checked out" when used. -->
+            <-- or -->
+
+    <type value="consumable">           <!-- Consumable resources are created and used whenever the
+                                             timer indicates an interval has passed. -->
+        <interval value="30"/>
+    </type>
+
+            <-- or -->
+
+    <type value="tech">                 <!-- Tech Resources are maps to a Custom Map Object and can
+                                             be harvested -->
+        <model path="models/gold.g3d"/> <!-- Path to the .g3d model used to display the resouce as
+                                             it's being carried by a harvester unit in game. -->
+        <default-amount value="1500"/>  <!-- How much can be harvested before the object is removed
+                                             from the Map -->
+        <resource-number value="1"/>    <!-- Maps the resource to the custom Resource used by the
+                                             Map Editor -->
+    </type>
+
+            <-- or -->
+
+    <type value="tileset">              <!-- Tileset Resources are mapped to a default Map object,
+                                             and can be harvested -->
+        <default-amount value="300"/> 
+        <tileset-object value="1"/>     <!-- Maps the resource to the tileset object used by the
+                                             Map Editor -->
+    </type>
+</resource>
+@endcode
+
+<br>
+@section xml_resource_image \<image\> Element
+- Purpose:
+    - This icon will be displayed on the hud to show how many resources are available.
+
+- Required Attributes:
+    - @c path(string): The path to the image.
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<resource\>.
+	- Only used with static resource type.
+	
+<br>
+@section xml_resource_type \<type\> Element
+- Purpose:
+    - The \<type\> element specifies the type of resource. Different child elements
+	  will be used depending on the type.
+
+- Required Attributes:
+    - @c value(string): The name of the type. The possible types are:
+        - @c "static"
+        - @c "consumable"
+        - @c "tech"
+        - @c "tileset"
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<resource\>.
+
+<br>
+@section xml_resource_interval \<interval\> Element
+- Purpose:
+    - Specifies a period of time.
+
+- Required Attributes:
+    - @c value(int): The interval. (in seconds?)
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<type\>.
+	- Used with type "consumable".
+	
+<br>
+@section xml_resource_model \<model\> Element
+- Purpose:
+    - Path to the .g3d model used to display the resouce as it's being carried
+	  by a harvester unit in game.
+
+- Required Attributes:
+    - @c path(string): The path to the model.
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<type\>.
+	- Used with type "tech".
+
+<br>
+@section xml_resource_default-amount \<default-amount\> Element
+- Purpose:
+    - How much can be harvested before the object is removed from the Map.
+
+- Required Attributes:
+    - @c value: The value
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<type\>.
+	- Used with type "tech" and "tileset".
+
+<br>
+@section xml_resource_resource-number \<resource-number\> Element
+- Purpose:
+    - Maps the resource to the custom Resource used by the Map Editor.
+
+- Required Attributes:
+    - @c value: The value
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<type\>.
+	- Used with type "tech".
+
+<br>
+@section xml_resource_tileset-object \<tileset-object\> Element
+- Purpose:
+    - Maps the resource to the tileset object used by the Map Editor.
+
+- Required Attributes:
+    - @c value: The value.
+
+- Optional Attributes:
+
+- Usage:
+    - Element must appear under \<type\>.
+	- Used with type "tileset".
+*/

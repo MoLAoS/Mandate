@@ -556,6 +556,7 @@ public:
 	void incKills();
 	bool morph(const MorphCommandType *mct, const UnitType *ut = 0);
 	CommandResult checkCommand(const Command &command) const;
+	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
 

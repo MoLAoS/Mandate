@@ -152,11 +152,12 @@ bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const{
 
 void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const{
 	totalUpgrade->reset();
-	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
-		if((*it)->getFactionIndex()==unit->getFactionIndex()
-			&& (*it)->getType()->isAffected(unit->getType())
-			&& (*it)->getState()==UpgradeState::UPGRADED)
-			totalUpgrade->sum((*it)->getType());
+	foreach_const (Upgrades, it, upgrades) {
+		if ((*it)->getFactionIndex() == unit->getFactionIndex()
+		&& (*it)->getType()->isAffected(unit->getType())
+		&& (*it)->getState() == UpgradeState::UPGRADED) {
+			totalUpgrade->sum((*it)->getType()->getEnhancement(unit->getType()));
+		}
 	}
 }
 

@@ -13,7 +13,7 @@
 		<unit name="swordman" amount="2"/>
 		<unit name="archer" amount="1"/>
 		<unit name="pig" amount="1"/>
-		<!-- Defaults to 0 -->
+		<!-- Un-listed units default to 0 -->
 	</starting-units>	
 	<music value="true" path="../../../magitech/factions/tech/music/music_tech.ogg"/>
 	<logo value="true">
