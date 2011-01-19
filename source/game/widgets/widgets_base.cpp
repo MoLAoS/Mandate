@@ -517,9 +517,10 @@ void TextWidget::centreText(int ndx) {
 	}
 	ASSERT_RANGE(ndx, texts.size());
 	Vec2f txtDims = font->getMetrics()->getTextDiminsions(texts[ndx]);
-	Vec2i halfText = Vec2i(txtDims) / 2;
-	Vec2i centre = me->getSize() / 2;
-	txtPositions[ndx] = centre - halfText;
+	int halfTextW = txtDims.w / 2;
+	int scratch = (me->getHeight() - int(txtDims.h)) / 2;
+	int y = scratch > 0 ? scratch : 0;
+	txtPositions[ndx] = Vec2i(me->getWidth() / 2 - halfTextW, y);
 }
 
 void TextWidget::widgetReSized() {
@@ -557,7 +558,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 		m_textRenderer->begin(font);
 	} 
 	glColor4fv(colour.ptr());
-	m_textRenderer->render(txt, x, y);
+	m_textRenderer->render(txt, x, y + font->getMetrics()->getHeight());
 	if (!m_batchRender) {
 		m_textRenderer->end();
 		glPopAttrib();
@@ -568,6 +569,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, texts.size());
 	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
+	//pos.y += font->getMetrics()->getMaxAscent();
 	txtColour.a = me->getFade();
 	renderText(texts[ndx], pos.x, pos.y, txtColour);
 }
@@ -575,6 +577,7 @@ void TextWidget::renderText(int ndx) {
 void TextWidget::renderTextShadowed(int ndx, int offset) {
 	ASSERT_RANGE(ndx, texts.size());
 	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
+	//pos.y += font->getMetrics()->getMaxAscent();
 	Vec2i sPos = pos + Vec2i(offset, -offset);
 	txtShadowColour.a = txtColour.a = me->getFade();
 	renderText(texts[ndx], sPos.x, sPos.y, txtShadowColour);
@@ -584,6 +587,7 @@ void TextWidget::renderTextShadowed(int ndx, int offset) {
 void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
 	ASSERT_RANGE(ndx, texts.size());
 	Vec2i pos = me->getScreenPos() + txtPositions[ndx];
+	//pos.y += font->getMetrics()->getHeight();
 	Vec2i sPos1 = pos + Vec2i(offset, -offset);
 	Vec2i sPos2 = sPos1 + Vec2i(offset, -offset);
 	txtShadowColour2.a = txtShadowColour.a = txtColour.a = me->getFade();

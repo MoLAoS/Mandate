@@ -39,7 +39,7 @@ void TextRendererFT::render(const string &text, int x, int y, bool centered) {
 	assertGl();
 	assert(rendering);
 	const unsigned char *utext= reinterpret_cast<const unsigned char*>(text.c_str());
-	Freetype::print(font->fontData, float(x), y + font->getMetrics()->getMaxDescent(), utext);
+	Freetype::print(font->fontData, float(x), y, utext);
 	assertGl();
 }
 

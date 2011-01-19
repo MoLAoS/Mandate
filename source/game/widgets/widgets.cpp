@@ -916,14 +916,14 @@ void Panel::layoutVertical() {
 	Vec2i size = getSize();
 	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
 	foreach (WidgetList, it, children) {
-		wh += (*it)->getHeight();
+		wh +=  + widgetPadding;
 		widgetYPos.push_back(wh);
-		wh += widgetPadding;
+		wh += (*it)->getHeight();
 	}
 	wh -= widgetPadding;
 	
-	Vec2i topLeft(m_borderStyle.m_sizes[Border::LEFT] + getPadding(),
-				size.y - m_borderStyle.m_sizes[Border::TOP] - getPadding());
+	Vec2i topLeft(m_borderStyle.m_sizes[Border::LEFT] + getPadding(), 
+		getPos().y + m_borderStyle.m_sizes[Border::TOP] + getPadding());
 	
 	int offset;
 	switch (layoutOrigin) {
@@ -931,12 +931,11 @@ void Panel::layoutVertical() {
 		case LayoutOrigin::CENTRE: offset = (size.y - wh) / 2; break;
 		case LayoutOrigin::FROM_BOTTOM: offset = size.y - wh - m_borderStyle.m_sizes[Border::TOP]; break;
 	}
-	int offset_y = size.y - offset;
 	int ndx = 0;
 	foreach (WidgetList, it, children) {
 		int ww = (*it)->getWidth();
 		int x = topLeft.x + (room.x - ww) / 2;
-		int y = offset_y - widgetYPos[ndx++];
+		int y = offset + widgetYPos[ndx++];
 		(*it)->setPos(x, y);
 	}
 }
@@ -999,13 +998,13 @@ void Panel::remChild(Widget* child) {
 void Panel::render() {
 	Widget::renderBgAndBorders();
 	Vec2i offset(m_borderStyle.m_sizes[Border::LEFT] + getPadding(),
-				m_borderStyle.m_sizes[Border::BOTTOM] + getPadding());
+				m_borderStyle.m_sizes[Border::TOP] + getPadding());
 	Vec2i pos = getScreenPos() + offset;
 	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
 	assertGl();
 	glPushAttrib(GL_SCISSOR_BIT);
 		glEnable(GL_SCISSOR_TEST);
-		glScissor(pos.x, pos.y, size.x, size.y);
+		glScissor(pos.x, pos.y, size.w, size.h);
 		Container::render();
 		glDisable(GL_SCISSOR_TEST);
 	glPopAttrib();
