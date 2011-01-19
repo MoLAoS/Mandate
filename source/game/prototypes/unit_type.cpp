@@ -105,7 +105,6 @@ UnitType::UnitType()
 }
 
 UnitType::~UnitType(){
-	deleteValues(emanations.begin(), emanations.end()); ///@todo EffectTypeFactory
 	deleteValues(selectionSounds.getSounds().begin(), selectionSounds.getSounds().end());
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete m_cellMap;
