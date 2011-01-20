@@ -105,7 +105,6 @@ UnitType::UnitType()
 }
 
 UnitType::~UnitType(){
-	deleteValues(emanations.begin(), emanations.end()); ///@todo EffectTypeFactory
 	deleteValues(selectionSounds.getSounds().begin(), selectionSounds.getSounds().end());
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete m_cellMap;
@@ -127,6 +126,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	try { xmlTree.load(path); }
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
+		g_logger.logError("Fatal Error: could not load " + path);
 		return false; // bail
 	}
 	const XmlNode *unitNode;
@@ -365,7 +365,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
 			CommandType *commandType = g_simInterface.newCommandType(CommandClassNames.match(classId.c_str()), this);
-			commandType->load(commandNode, dir, techTree, factionType);
+			loadOk = commandType->load(commandNode, dir, techTree, factionType) && loadOk;
 			commandTypes.push_back(commandType);
 			g_simInterface.setChecksum(commandType);
 		}

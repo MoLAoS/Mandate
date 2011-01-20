@@ -835,7 +835,8 @@ CommandResult Unit::giveCommand(Command *command) {
 
 	// check command
 	CommandResult result = checkCommand(*command);
-	if (result == CommandResult::SUCCESS) {
+	bool energyRes = checkEnergy(command->getType());
+	if (result == CommandResult::SUCCESS && energyRes) {
 		applyCommand(*command);
 		
 		// start the command type
@@ -845,6 +846,9 @@ CommandResult Unit::giveCommand(Command *command) {
 			commands.push_back(command);
 		}
 	} else {
+		if (!energyRes && getFaction()->isThisFaction()) {
+			g_console.addLine(g_lang.get("InsufficientEnergy"));
+		}
 		g_world.deleteCommand(command);
 		command = 0;
 	}
@@ -1502,15 +1506,6 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 //	_PROFILE_FUNCTION();
 	const int &frame = g_world.getFrameCount();
 
-	// start attack systems ?
-	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
-		const AttackSkillType *attackSkill = static_cast<const AttackSkillType*>(currSkill);
-		int range = getMaxRange(attackSkill)+ type->getHalfSize().intp();
-		if (getCenteredPos().dist(getTargetPos()) <= range) { // double check range
-			startAttackSystems(attackSkill);
-		}
-	}
-
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
 		Unit *carrier = (m_carrier != -1 ? g_world.getUnit(m_carrier) : 0);
@@ -1519,6 +1514,11 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
 			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
+	}
+
+	// start attack systems ?
+	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
+		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
 	}
 
 	// update anim cycle ?
@@ -1916,10 +1916,11 @@ string Unit::getLongDesc() const {
 /** Apply effects of an UpgradeType
   * @param upgradeType the type describing the Upgrade to apply*/
 void Unit::applyUpgrade(const UpgradeType *upgradeType) {
-	if (upgradeType->isAffected(type)) {
-		totalUpgrade.sum(upgradeType);
+	const EnhancementType *et = upgradeType->getEnhancement(type);
+	if (et) {
+		totalUpgrade.sum(et);
 		recalculateStats();
-		doRegen(upgradeType->getHpBoost(), upgradeType->getEpBoost());
+		doRegen(et->getHpBoost(), et->getEpBoost());
 	}
 }
 
@@ -2132,7 +2133,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 		type = ut;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
-		faction->applyDiscount(ut, mct->getDiscount());
+		faction->giveRefund(ut, mct->getRefund());
 		faction->applyStaticProduction(ut);
 
 		if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
@@ -2273,6 +2274,9 @@ CommandResult Unit::checkCommand(const Command &command) const {
   */
 void Unit::applyCommand(const Command &command) {
 	command.getType()->apply(faction, command);
+	if (command.getType()->getEnergyCost()) {
+		ep -= command.getType()->getEnergyCost();
+	}
 }
 
 /** De-Apply costs for a command

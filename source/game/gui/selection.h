@@ -75,6 +75,7 @@ public:
 	void unSelectAllNotOfType(const UnitType *type);
 	void clear();
 
+	bool isSharedCommandClass(CommandClass commandClass);
 	bool isEmpty() const				{return m_empty;}
 	bool isUniform() const				{return m_uniform;}
 	bool isEnemy() const				{return m_enemy;}

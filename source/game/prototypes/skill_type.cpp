@@ -650,23 +650,23 @@ const AttackSkillType *AttackSkillTypes::getPreferredAttack(
 		const Unit *unit, const Unit *target, int rangeToTarget) const {
 	const AttackSkillType *ast = NULL;
 
-	if(types.size() == 1) {
+	if (types.size() == 1) {
 		ast = types[0];
 		return unit->getMaxRange(ast) >= rangeToTarget ? ast : NULL;
 	}
 
-	//a skill for use when damaged gets 1st priority.
-	if(hasPreference(AttackSkillPreference::WHEN_DAMAGED) && unit->isDamaged()) {
+	// a skill for use when damaged gets 1st priority.
+	if (hasPreference(AttackSkillPreference::WHEN_DAMAGED) && unit->isDamaged()) {
 		return getSkillForPref(AttackSkillPreference::WHEN_DAMAGED, rangeToTarget);
 	}
 
 	//If a skill in this collection is specified as use whenever possible and
 	//the target resides in a field that skill can attack, we will only use that
 	//skill if in range and return NULL otherwise.
-	if(hasPreference(AttackSkillPreference::WHENEVER_POSSIBLE)) {
+	if (hasPreference(AttackSkillPreference::WHENEVER_POSSIBLE)) {
 		ast = getSkillForPref(AttackSkillPreference::WHENEVER_POSSIBLE, 0);
 		assert(ast);
-		if(ast->getZone(target->getCurrZone())) {
+		if (ast->getZone(target->getCurrZone())) {
 			return unit->getMaxRange(ast) >= rangeToTarget ? ast : NULL;
 		}
 		ast = NULL;

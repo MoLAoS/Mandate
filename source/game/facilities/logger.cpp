@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2009-2011 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -226,6 +227,15 @@ Logger::Logger()
 }
 
 Logger::~Logger() {
+	// collect lang look-up errors
+	vector<string> &errors = Lang::getLookUpErrors();
+	if (!errors.empty()) {
+		m_errorLog->add("\nLang look-up errors:");
+	}
+	foreach_const (vector<string>, it, errors) {
+		m_errorLog->add(*it);
+	}
+	// close everything
 	delete m_programLog;
 	delete m_errorLog;
 	delete m_aiLog;

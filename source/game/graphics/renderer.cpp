@@ -288,9 +288,8 @@ void Renderer::initGame(GameState *game){
 		if (m_shadowMode == ShadowMode::MAPPED) {
 			// shadow mapping
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 1.0f-shadowAlpha);
 
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32,
 				shadowTextureSize, shadowTextureSize,
@@ -1694,7 +1693,7 @@ void Renderer::autoConfig(){
 	Config &config= Config::getInstance();
 	bool nvidiaCard= toLower(getGlVendor()).find("nvidia")!=string::npos;
 	bool atiCard= toLower(getGlVendor()).find("ati")!=string::npos;
-	bool shadowExtensions = isGlExtensionSupported("GL_ARB_shadow") && isGlExtensionSupported("GL_ARB_shadow_ambient");
+	bool shadowExtensions = isGlExtensionSupported("GL_ARB_shadow");
 	// 3D textures
 	config.setRenderTextures3D(isGlExtensionSupported("GL_EXT_texture3D"));
 	// shadows
@@ -2036,7 +2035,6 @@ void Renderer::checkGlOptionalCaps(){
 	//shadow mapping
 	if(m_shadowMode == ShadowMode::MAPPED){
 		checkExtension("GL_ARB_shadow", "Shadow Mapping");
-		checkExtension("GL_ARB_shadow_ambient", "Shadow Mapping");
 	}
 }
 

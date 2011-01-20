@@ -390,7 +390,7 @@ bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const
 
 // ================== cost application ==================
 
-//apply costs except static production (start building/production)
+/// apply costs except static production (start building/production)
 bool Faction::applyCosts(const ProducibleType *p) {
 
 	if (!checkCosts(p)) {
@@ -410,14 +410,37 @@ bool Faction::applyCosts(const ProducibleType *p) {
 	return true;
 }
 
-//apply discount (when a morph ends)
-void Faction::applyDiscount(const ProducibleType *p, int discount) {
+/// apply costs (with a discount) except static production (start building/production)
+bool Faction::applyCosts(const ProducibleType *pt, int discount) {
+	if (!checkCosts(pt, discount)) {
+		return false;
+	}
+
+	fixed ratio = fixed(100) - (discount / fixed(100));
+
+	//for each unit cost spend it
+	//pass 2, decrease resources, except negative static costs (ie: farms)
+	for (int i = 0; i < pt->getCostCount(); ++i) {
+		const ResourceType *rt = pt->getCost(i)->getType();
+		int cost = (pt->getCost(i)->getAmount() * ratio).intp();
+
+		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
+			incResourceAmount(rt, -(cost));
+		}
+
+	}
+	return true;
+
+}
+
+/// give refund (when a morph ends)
+void Faction::giveRefund(const ProducibleType *p, int refund) {
 	//increase resources
 	for (int i = 0; i < p->getCostCount(); ++i) {
 		const ResourceType *rt = p->getCost(i)->getType();
 		int cost = p->getCost(i)->getAmount();
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
-			incResourceAmount(rt, cost*discount / 100);
+			incResourceAmount(rt, cost * refund / 100);
 		}
 	}
 }
@@ -547,6 +570,29 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 	for (int i = 0; i < pt->getCostCount(); ++i) {
 		const ResourceType *rt = pt->getCost(i)->getType();
 		int cost = pt->getCost(i)->getAmount();
+
+		if (cost > 0) {
+			int available = getResource(rt)->getAmount();
+
+			if (cost > available) {
+				ok = false;
+				neededResources.push_back(rt);
+			}
+		}
+	}
+
+	return ok;
+}
+
+bool Faction::checkCosts(const ProducibleType *pt, int discount) {
+	bool ok = true;
+	neededResources.clear();
+	fixed ratio = fixed(100) - (discount / fixed(100));
+
+	//for each unit cost check if enough resources
+	for (int i = 0; i < pt->getCostCount(); ++i) {
+		const ResourceType *rt = pt->getCost(i)->getType();
+		int cost = (pt->getCost(i)->getAmount() * ratio).intp();
 
 		if (cost > 0) {
 			int available = getResource(rt)->getAmount();

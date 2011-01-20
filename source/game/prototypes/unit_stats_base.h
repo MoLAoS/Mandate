@@ -32,6 +32,8 @@ using namespace Glest::Sim;
 
 namespace Glest { namespace ProtoTypes {
 
+class UpgradeType;
+
 /** Fields of travel, and indirectly zone of occupance */
 class Fields : public XmlBasedFlags<Field, Field::COUNT> {
 private:
@@ -92,6 +94,9 @@ public:
  * Base stats for a unit type, upgrade, effect or other enhancement.
  */
 class UnitStats {
+
+	friend class UpgradeType; // hack, needed to support old style Upgrades in a new style world :(
+
 protected:
 	int maxHp;
 	int hpRegeneration;

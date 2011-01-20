@@ -1,0 +1,56 @@
+/**
+@page xml_tileset Tileset
+@author Vixis
+
+The tileset specification.
+
+@section xml_tileset_contents XML Element List:
+todo
+
+@code
+<?xml version="1.0"?>
+<tileset>
+	<surfaces>
+		<surface> <!-- Path to surface textures; prob=% chance of this texture to appear (0.2=20%; sum of all textures in one surface tag must be 1) -->
+			<texture path="textures/surface3a.bmp" prob="0.5"/>
+			<texture path="textures/surface3b.bmp" prob="0.5"/>
+		</surface>
+	</surfaces>
+
+	<objects> <!-- Different objects. There are 10 object groups:
+					- trees
+					- trees(cannot be harvested)
+					- stone
+					- walkable terrain(like grass)
+					- walkable (like riverside)
+					up to 10 can be anything, depending on the tileset.(by default unwalkable) -->
+		<object walkable="false"> <!-- Can unit walk throught this object -->
+			<model path="models/tree1.g3d"/> <!-- Path to object model -->
+			...
+		</object>
+	</objects>
+
+	<ambient-sounds> <!-- Sound options; Are specials sounds enabled; path to sound; will it play always or not. -->
+		<day-sound enabled="true" path="sounds/day.ogg" play-always="false"/>
+		<night-sound enabled="true" path="sounds/night.ogg" play-always="false"/>
+		<rain-sound enabled="true" path="sounds/rain.ogg"/>
+		<snow-sound enabled="false"/>
+		<day-start-sound enabled="true" path="sounds/chicken.wav"/>
+		<night-start-sound enabled="true" path="sounds/wolf.wav"/>
+	</ambient-sounds>
+
+	<parameters>
+		<water effects="true"> <!-- Enable water effect as in game conig (???) -->
+			<texture path="textures/water_001.tga"/> Path to texture
+			...
+		</water>
+		<fog enabled="true" mode="2" density="0.03" color-red="0.6" color-green="1" color-blue="0.4"/> <!-- Enable fog (as in main menu); fog density (more=harder to see through it); colours of fog (range 0-1); mode= (???) -->
+		<sun-light red="1" green="1" blue="1"/> <!-- Brightness of day-time colours (more=birhter) -->
+		<moon-light red="0.6" green="0.6" blue="0.9"/> <!-- Brightness of night-time colours, if set to 1 then night will be as light as day (permanent time of day) -->
+		<day-night value="0.7"/> <!-- Day/Night ratio (70% of time will be day, 30% night) (???) -->
+		<weather sun="0.6" rain="0.4" snow="0"/> <!-- Weather ratio (60% of time will be sun, 40% rain, 0% snow) -->
+    </parameters>
+</tileset>
+@endcode
+
+*/

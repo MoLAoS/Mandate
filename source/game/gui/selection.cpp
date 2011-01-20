@@ -132,6 +132,15 @@ void Selection::clear(){
 	update();
 }
 
+bool Selection::isSharedCommandClass(CommandClass commandClass){
+	for (int i = 0; i < getCount(); ++i) {
+		if (!getUnit(i)->getFirstAvailableCt(commandClass)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 Vec3f Selection::getRefPos() const{
 	RUNTIME_CHECK(!getFrontUnit()->isCarried());
 	return getFrontUnit()->getCurrVector();

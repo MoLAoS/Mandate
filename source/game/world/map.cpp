@@ -860,27 +860,28 @@ void Map::computeNormals() {
 }
 
 void Map::computeInterpolatedHeights() {
-	for ( int i = 0; i < m_cellSize.w; ++i ) {
-		for ( int j = 0; j < m_cellSize.h; ++j ) {
+	for (int i = 0; i < m_cellSize.w; ++i) {
+		for (int j = 0; j < m_cellSize.h; ++j) {
 			getCell(i, j)->setHeight(getTileHeight(toTileCoords(i, j)));
 		}
 	}
-	for ( int i = 1; i < m_tileSize.w - 1; ++i ) {
-		for ( int j = 1; j < m_tileSize.h - 1; ++j ) {
-			for ( int k = 0; k < GameConstants::cellScale; ++k ) {
-				for ( int l = 0; l < GameConstants::cellScale; ++l) {
-					if ( k == 0 && l == 0 ) {
-						getCell(toUnitCoords(i, j))->setHeight(getTileHeight(i, j));
-					} else if ( k != 0 && l == 0 ) {
-						getCell(toUnitCoords(i + k, j))->setHeight(
+	for (int i = 1; i < m_tileSize.w - 1; ++i) {
+		for (int j = 1; j < m_tileSize.h - 1; ++j) {
+			Vec2i tl = toUnitCoords(i, j);
+			for (int k = 0; k < GameConstants::cellScale; ++k) {
+				for (int l = 0; l < GameConstants::cellScale; ++l) {
+					if (k == 0 && l == 0) {
+						getCell(tl)->setHeight(getTileHeight(i, j));
+					} else if (k != 0 && l == 0) {
+						getCell(tl + Vec2i(k, 0))->setHeight(
 							(getTileHeight(i, j) + getTileHeight(i + 1, j)) / 2.f);
-					} else if ( l != 0 && k == 0 ) {
-						getCell(toUnitCoords(i, j + l))->setHeight(
+					} else if (l != 0 && k == 0) {
+						getCell(tl + Vec2i(0, l))->setHeight(
 							(getTileHeight(i, j) + getTileHeight(i, j + 1)) / 2.f);
 					} else {
-						getCell(toUnitCoords(i + k, j + l))->setHeight(
+						getCell(tl + Vec2i(k, l))->setHeight(
 							(getTileHeight(i, j) + getTileHeight(i + 1, j) + 
-							getTileHeight(i, j + 1) + getTileHeight(i + 1, j + 1)) / 4.f);
+							 getTileHeight(i, j + 1) + getTileHeight(i + 1, j + 1)) / 4.f);
 					}
 				}
 			}
@@ -962,7 +963,7 @@ void Map::smoothSurface() {
 	Util::RectIterator rectIter(Vec2i(1), m_tileSize - Vec2i(2));
 	while (rectIter.more()) {
 		Vec2i pos = rectIter.next();
-		float height = 0.f;
+		float height = m_heightMap[pos.y * m_tileSize.w + pos.x];
 		perimIter = Util::PerimeterIterator(pos - Vec2i(1), pos + Vec2i(1));
 		while (perimIter.more()) {
 			Vec2i pos2 = perimIter.next();

@@ -328,6 +328,7 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	}
 
 	// set up gl state
+	assertGl();
 	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_FOG_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_BLEND);
 	glEnable(GL_COLOR_MATERIAL);
@@ -363,6 +364,7 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 		glBindTexture(GL_TEXTURE_2D, renderer.getShadowMapHandle());
 		renderer.enableProjectiveTexturing();
 	}
+	assertGl();
 
 	// base texture
 	glActiveTexture(Renderer::baseTexUnit);
@@ -372,6 +374,8 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	glBindTexture(GL_TEXTURE_2D, texHandle);
 	glTexCoordPointer(2, GL_FLOAT, stride, (void*)(6 * sizeof(float)));
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	assertGl();
+	assert(tileCount * 4 == m_indexArray.size());
 
 	// zap
 	glDrawElements(GL_QUADS, tileCount * 4, GL_UNSIGNED_INT, &m_indexArray[0]);
