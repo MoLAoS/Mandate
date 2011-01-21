@@ -77,7 +77,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		m_unitsAffected.resize(enhancementsNode->getChildCount());
 		for (int i=0; i < m_enhancements.size(); ++i) {
 			const XmlNode *enhanceNode = enhancementsNode->getChild("enhancement", i);
-			if (!m_enhancements[0].load(enhanceNode->getChild("effects"), dir, techTree, factionType)) {
+			if (!m_enhancements[0].m_enhancement.load(enhanceNode->getChild("effects"), dir, techTree, factionType)) {
 				loadOk = false;
 			}
 			try { // Units affected by this upgrade
@@ -114,20 +114,21 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 
 		// values
 		// maintain backward compatibility using legacy format
-		m_enhancements[0].setMaxHp(upgradeNode->getOptionalIntValue("max-hp"));
-		m_enhancements[0].setMaxEp(upgradeNode->getOptionalIntValue("max-ep"));
-		m_enhancements[0].setSight(upgradeNode->getOptionalIntValue("sight"));
-		m_enhancements[0].setAttackStrength(upgradeNode->getOptionalIntValue("attack-strength"));
-		m_enhancements[0].setAttackRange(upgradeNode->getOptionalIntValue("attack-range"));
-		m_enhancements[0].setArmor(upgradeNode->getOptionalIntValue("armor"));
-		m_enhancements[0].setMoveSpeed(upgradeNode->getOptionalIntValue("move-speed"));
-		m_enhancements[0].setProdSpeed(upgradeNode->getOptionalIntValue("production-speed"));
+		EnhancementType &e = m_enhancements[0].m_enhancement;
+		e.setMaxHp(upgradeNode->getOptionalIntValue("max-hp"));
+		e.setMaxEp(upgradeNode->getOptionalIntValue("max-ep"));
+		e.setSight(upgradeNode->getOptionalIntValue("sight"));
+		e.setAttackStrength(upgradeNode->getOptionalIntValue("attack-strength"));
+		e.setAttackRange(upgradeNode->getOptionalIntValue("attack-range"));
+		e.setArmor(upgradeNode->getOptionalIntValue("armor"));
+		e.setMoveSpeed(upgradeNode->getOptionalIntValue("move-speed"));
+		e.setProdSpeed(upgradeNode->getOptionalIntValue("production-speed"));
 
 		//initialize values using new format if nodes are present
 		if (upgradeNode->getChild("static-modifiers", 0, false)
 		|| upgradeNode->getChild("multipliers", 0, false)
 		|| upgradeNode->getChild("point-boosts", 0, false)) {
-			if (!m_enhancements[0].load(upgradeNode, dir, techTree, factionType)) {
+			if (!e.load(upgradeNode, dir, techTree, factionType)) {
 				loadOk = false;
 			}
 		}
@@ -153,8 +154,9 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 void UpgradeType::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
 	foreach_const (Enhancements, it, m_enhancements) {
-		it->doChecksum(checksum);
+		it->m_enhancement.doChecksum(checksum);
 	}
+	///@todo resource mods
 	foreach_const (EnhancementMap, it, m_enhancementMap) {
 		checksum.add(it->first->getId());
 	}
@@ -170,7 +172,7 @@ string UpgradeType::getDesc() const {
 			for (int j=0; j < m_unitsAffected[i].size(); ++j) {
 				str += "\n" + m_unitsAffected[i][j];
 			}
-			m_enhancements[i].getDesc(str, "\n");
+			m_enhancements[i].m_enhancement.getDesc(str, "\n");
 		}
 	}
 	return str;

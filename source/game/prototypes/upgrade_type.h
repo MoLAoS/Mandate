@@ -52,6 +52,9 @@ struct UpgradeEffect {
 	EnhancementType  m_enhancement;
 	ResModifierMap   m_costModifiers;
 	ResModifierMap   m_storeModifiers;
+
+	const EnhancementType* getEnhancement() const { return &m_enhancement; }
+
 };
 
 // ===============================
@@ -62,8 +65,8 @@ struct UpgradeEffect {
   * producable (i.e., researchable) upgrade for one or more unit types. */
 class UpgradeType : public ProducibleType {
 private:
-	typedef vector<EnhancementType> Enhancements;
-	typedef map<const UnitType*, const EnhancementType*> EnhancementMap;
+	typedef vector<UpgradeEffect> Enhancements;
+	typedef map<const UnitType*, const UpgradeEffect*> EnhancementMap;
 	typedef vector< vector<string> > AffectedUnits; // just names, used only in getDesc()
 
 private:
@@ -88,7 +91,7 @@ public:
 	const EnhancementType* getEnhancement(const UnitType *ut) const {
 		EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
 		if (it != m_enhancementMap.end()) {
-			return it->second;
+			return it->second->getEnhancement();
 		}
 		return 0;
 	}
