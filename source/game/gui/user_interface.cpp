@@ -167,7 +167,8 @@ void UserInterface::init() {
 			// if any UnitType needs the resource
 			for (int j=0; j < ft->getUnitTypeCount(); ++j) {
 				const UnitType *ut = ft->getUnitType(j);
-				if (ut->getCost(rt)) {
+				ResourceAmount r = ut->getCost(rt, fac);
+				if (r.getType()) {
 					displayResources.insert(rt);
 					break;
 				}

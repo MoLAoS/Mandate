@@ -79,6 +79,7 @@ public:
 	const Unit *getMyUnit(int unitIndex);
 	void getUnitsSeen(ConstUnitVector &list);
 	const FactionType *getMyFactionType();
+	Faction* getFaction() { return faction; }
 	Faction* getMyFaction() { return faction; }
 	const TechTree *getTechTree();
 	bool getNearestSightedResource(const ResourceType *rt, const Vec2i &pos, Vec2i &resultPos);

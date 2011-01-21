@@ -1883,15 +1883,15 @@ string Unit::getLongDesc() const {
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
-		const ResourceAmount *r = getType()->getCost(i);
-		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
-			string storedName = r->getType()->getName();
+		const ResourceAmount r = getType()->getCost(i, getFaction());
+		if (r.getType()->getClass() == ResourceClass::CONSUMABLE) {
+			string storedName = r.getType()->getName();
 			string resName = g_lang.getTechString(storedName);
 			if (resName == storedName) {
 				resName = formatString(storedName);
 			}
-			ss << endl << (r->getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
-				<< ": " << abs(r->getAmount()) << " " << resName;
+			ss << endl << (r.getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
+				<< ": " << abs(r.getAmount()) << " " << resName;
 		}
 	}
 	// can store

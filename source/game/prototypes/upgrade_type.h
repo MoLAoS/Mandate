@@ -29,21 +29,6 @@ using Glest::Entities::Unit;
 
 namespace Glest { namespace ProtoTypes {
 
-/** modifier pair (static addition and multiplier)
-  * @todo move to unit_stats.h, use for all stat 'buffs' ? */
-struct Modifier {
-	int    m_addition;
-	fixed  m_multiplier;
-
-	int   getAddition()   const { return m_addition;   }
-	fixed getMultiplier() const { return m_multiplier; }
-
-	Modifier() : m_addition(0), m_multiplier(1) {}
-	Modifier(int add, fixed mult) : m_addition(add), m_multiplier(mult) {}
-	Modifier(const Modifier &that) : m_addition(that.m_addition), m_multiplier(that.m_multiplier) {}
-};
-//typedef pair<int, fixed> Modifier;
-
 /** resource amount modifier */
 typedef map<const ResourceType*, Modifier> ResModifierMap;
 
@@ -83,11 +68,9 @@ public:
 	void preLoad(const string &dir)			{ m_name = basename(dir); }
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-	ProducibleClass getClass() const override { return typeClass(); }
-
-	const FactionType* getFactionType() const { return m_factionType; }
-
-	// get all
+	// get
+	ProducibleClass getClass() const override                       { return typeClass(); }
+	const FactionType* getFactionType() const                       { return m_factionType; }
 	const EnhancementType* getEnhancement(const UnitType *ut) const {
 		EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
 		if (it != m_enhancementMap.end()) {
@@ -95,14 +78,22 @@ public:
 		}
 		return 0;
 	}
+	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const {
+		EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
+		if (uit != m_enhancementMap.end()) {
+			ResModifierMap::const_iterator rit = uit->second->m_costModifiers.find(rt);
+			if (rit != uit->second->m_costModifiers.end()) {
+				return rit->second;
+			}
+		}
+		return Modifier(0, 1);
+	}
 
 	bool isAffected(const UnitType *unitType) const {
 		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
 	}
 
 	virtual void doChecksum(Checksum &checksum) const;
-
-	//other methods
 	string getDesc() const;
 };
 

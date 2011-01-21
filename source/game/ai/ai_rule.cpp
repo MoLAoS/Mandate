@@ -330,9 +330,9 @@ bool AiRuleBuildOneFarm::test() {
 				const UnitType *pt = pct->getProducedUnit(k);
 				//for all resources
 				for (int n = 0; n < pt->getCostCount(); ++n) {
-					const ResourceAmount *r = pt->getCost(n);
+					ResourceAmount r = pt->getCost(n, ai->getAiInterface()->getFaction());
 					// can produce consumables and would be the first of its type?
-					if (r->getAmount() < 0 && r->getType()->getClass() == ResourceClass::CONSUMABLE 
+					if (r.getAmount() < 0 && r.getType()->getClass() == ResourceClass::CONSUMABLE 
 					&& ai->getCountOfType(ut) == 0) {
 						farm = ut;
 						return true;
@@ -460,8 +460,8 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 			}
 			for (int k=0; k < ct->getProducedCount(); ++k) {
 				const ProducibleType *pt = ct->getProduced(k);
-				const ResourceAmount *res = pt->getCost(task->getResourceType());
-				if (res && res->getAmount() < 0 && faction->reqsOk(pt)) {
+				const ResourceAmount res = pt->getCost(task->getResourceType(), ai->getAiInterface()->getFaction());
+				if (res.getType() && res.getAmount() < 0 && faction->reqsOk(pt)) {
 					prodMap[ut].push_back(std::make_pair(ct, pt));
 				}
 			}
@@ -709,8 +709,8 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 					const UnitType *buildingType = bct->getBuilding(k);
 					if (aiInterface->reqsOk(bct) && aiInterface->reqsOk(buildingType)) {
 						//if any building, or produces resource
-						const ResourceAmount *cost= buildingType->getCost(rt);
-						if (!rt || (cost && cost->getAmount() < 0)) {
+						ResourceAmount cost = buildingType->getCost(rt, ai->getAiInterface()->getFaction());
+						if (!rt || (cost.getType() && cost.getAmount() < 0)) {
 							//LOG_AI_BUILD(__FUNCTION__ << " candidate building " 
 							//	<< buildingType->getName());
 							utList.push_back(buildingType);
@@ -862,8 +862,8 @@ bool AiRuleBuild::isDefensive(const UnitType *building){
 }
 
 bool AiRuleBuild::isResourceProducer(const UnitType *building){
-	for(int i= 0; i<building->getCostCount(); i++){
-		if(building->getCost(i)->getAmount()<0){
+	for (int i= 0; i < building->getCostCount(); i++) {
+		if (building->getCost(i, ai->getAiInterface()->getFaction()).getAmount() < 0) {
 			return true;
 		}
 	}

@@ -76,7 +76,9 @@ Vec3f getFactionColour(int ndx);
 
 class Faction : public NameIdPair {
 public:
-	typedef vector<const ResourceType *> ResourceTypes;
+	typedef vector<const ResourceType *>               ResourceTypes;
+	typedef map<const ResourceType*, Modifier>         CostModifiers;
+	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
 
 private:
     typedef vector<StoredResource>	Resources;
@@ -94,6 +96,7 @@ private:
 	Texture2D *texture;
 	Texture2D *m_logoTex;
 	const FactionType *factionType;
+	UnitCostModifiers m_costModifiers;
 
 	int teamIndex;
 	int startLocationIndex;
@@ -141,6 +144,7 @@ public:
 	Colour getColour() const							{return factionColours[colourIndex];}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
+	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;
 	
 	///@todo Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}

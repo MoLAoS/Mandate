@@ -118,39 +118,46 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 			int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
 			resources[i].init(rt, resourceAmount);
 		}
+		for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+			const ProducibleType *pt = factionType->getUnitType(i);
+			for (int j=0; j < techTree->getResourceTypeCount(); ++j) {
+				const ResourceType *rt = techTree->getResourceType(j);
+				m_costModifiers[pt][rt] = Modifier(0, 1);
+			}
+		}
 		texture = g_renderer.newTexture2D(ResourceScope::GAME);
 		Pixmap2D *pixmap = texture->getPixmap();
 		pixmap->init(1, 1, 3);
 		pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
 		if (factionType->getLogoTeamColour() || factionType->getLogoRgba()) {
-			
+
 			m_logoTex = g_renderer.newTexture2D(ResourceScope::GAME);
 			Pixmap2D *pixmap = m_logoTex->getPixmap();
 			pixmap->init(256, 256, 4);
-			
+
 			const Pixmap2D *teamPixmap = factionType->getLogoTeamColour();
 			if (teamPixmap) { // team-colour
-			Vec3f baseColour(
-				factionColours[colourIndex].r / 255.f,
-				factionColours[colourIndex].g / 255.f,
-				factionColours[colourIndex].b / 255.f);
-			
-			for (int y = 0; y < 256; ++y) {
-				for (int x = 0; x < 256; ++x) {
+				Vec3f baseColour(
+					factionColours[colourIndex].r / 255.f,
+					factionColours[colourIndex].g / 255.f,
+					factionColours[colourIndex].b / 255.f);
+
+				for (int y = 0; y < 256; ++y) {
+					for (int x = 0; x < 256; ++x) {
 						Vec4f pixel = teamPixmap->getPixel4f(x, y);
-					float lum = (pixel.r + pixel.g + pixel.b) / 3.f;
-					Vec4f val(baseColour.r * lum, baseColour.g * lum, baseColour.b * lum, pixel.a);
-					pixmap->setPixel(x, y, val);
+						float lum = (pixel.r + pixel.g + pixel.b) / 3.f;
+						Vec4f val(baseColour.r * lum, baseColour.g * lum, baseColour.b * lum, pixel.a);
+						pixmap->setPixel(x, y, val);
+					}
 				}
 			}
-		}
 			const Pixmap2D *rgbaPixmap = factionType->getLogoRgba();
 			if (rgbaPixmap) { 
 				if (!teamPixmap) { // just copy
 					for (int y = 0; y < 256; ++y) {
 						for (int x = 0; x < 256; ++x) {
 							pixmap->setPixel(x, y, rgbaPixmap->getPixel4f(x, y));
-	}
+						}
 					}
 				} else { // dodgy blend...
 					for (int y = 0; y < 256; ++y) {
@@ -166,7 +173,7 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 					}
 				}
 			}
-			
+
 		}
 	}
 }
@@ -287,6 +294,29 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 	for (int i = 0; i < getUnitCount(); ++i) {
 		getUnit(i)->applyUpgrade(ut);
 	}
+
+	// update unit cost modifiers
+	const TechTree *tt = g_world.getTechTree();
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+		const UnitType *unitType = factionType->getUnitType(i);
+		for (int j=0; j < tt->getResourceTypeCount(); ++j) {
+			const ResourceType *resType = tt->getResourceType(j);
+			Modifier mod = ut->getCostModifier(unitType, resType);
+			m_costModifiers[unitType][resType].m_addition += mod.m_addition;
+			m_costModifiers[unitType][resType].m_multiplier += mod.m_multiplier;
+		}
+	}
+}
+
+Modifier Faction::getCostModifier(const ProducibleType *pt, const ResourceType *rt) const {
+	UnitCostModifiers::const_iterator it = m_costModifiers.find(pt);
+	if (it != m_costModifiers.end()) {
+		CostModifiers::const_iterator rit = it->second.find(rt);
+		if (rit != it->second.end()) {
+			return rit->second;
+		}
+	}
+	return Modifier(0, 1);
 }
 
 // ==================== reqs ====================
@@ -400,8 +430,9 @@ bool Faction::applyCosts(const ProducibleType *p) {
 	//for each unit cost spend it
 	//pass 2, decrease resources, except negative static costs (ie: farms)
 	for (int i = 0; i < p->getCostCount(); ++i) {
-		const ResourceType *rt = p->getCost(i)->getType();
-		int cost = p->getCost(i)->getAmount();
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();
+		int cost = ra.getAmount();
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
 			incResourceAmount(rt, -(cost));
 		}
@@ -421,8 +452,10 @@ bool Faction::applyCosts(const ProducibleType *pt, int discount) {
 	//for each unit cost spend it
 	//pass 2, decrease resources, except negative static costs (ie: farms)
 	for (int i = 0; i < pt->getCostCount(); ++i) {
-		const ResourceType *rt = pt->getCost(i)->getType();
-		int cost = (pt->getCost(i)->getAmount() * ratio).intp();
+		ResourceAmount ra = pt->getCost(i, this);
+		const ResourceType *rt = ra.getType();
+		int cost = ra.getAmount();
+		cost = (cost * ratio).intp();
 
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
 			incResourceAmount(rt, -(cost));
@@ -437,8 +470,9 @@ bool Faction::applyCosts(const ProducibleType *pt, int discount) {
 void Faction::giveRefund(const ProducibleType *p, int refund) {
 	//increase resources
 	for (int i = 0; i < p->getCostCount(); ++i) {
-		const ResourceType *rt = p->getCost(i)->getType();
-		int cost = p->getCost(i)->getAmount();
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();
+		int cost = ra.getAmount();
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
 			incResourceAmount(rt, cost * refund / 100);
 		}
@@ -450,9 +484,10 @@ void Faction::applyStaticCosts(const ProducibleType *p) {
 
 	//decrease static resources
 	for (int i = 0; i < p->getCostCount(); ++i) {
-		const ResourceType *rt = p->getCost(i)->getType();
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();
 		if (rt->getClass() == ResourceClass::STATIC) {
-			int cost = p->getCost(i)->getAmount();
+			int cost = ra.getAmount();
 			if (cost > 0) {
 				incResourceAmount(rt, -cost);
 			}
@@ -465,9 +500,10 @@ void Faction::applyStaticProduction(const ProducibleType *p) {
 
 	//decrease static resources
 	for (int i = 0; i < p->getCostCount(); ++i) {
-		const ResourceType *rt = p->getCost(i)->getType();
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();		
 		if (rt->getClass() == ResourceClass::STATIC) {
-			int cost = p->getCost(i)->getAmount();
+			int cost = ra.getAmount();
 			if (cost < 0) {
 				incResourceAmount(rt, -cost);
 			}
@@ -480,12 +516,12 @@ void Faction::deApplyCosts(const ProducibleType *p) {
 
 	//increase resources
 	for (int i = 0; i < p->getCostCount(); ++i) {
-		const ResourceType *rt = p->getCost(i)->getType();
-		int cost = p->getCost(i)->getAmount();
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();		
+		int cost = ra.getAmount();
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
 			incResourceAmount(rt, cost);
 		}
-
 	}
 }
 
@@ -494,9 +530,10 @@ void Faction::deApplyStaticCosts(const ProducibleType *p) {
 
 	//decrease resources
 	for (int i = 0; i < p->getCostCount(); ++i) {
-		const ResourceType *rt = p->getCost(i)->getType();
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();		
 		if (rt->getClass() == ResourceClass::STATIC && rt->getRecoupCost()) {
-			int cost = p->getCost(i)->getAmount();
+			int cost = ra.getAmount();
 			incResourceAmount(rt, cost);
 		}
 	}
@@ -505,11 +542,12 @@ void Faction::deApplyStaticCosts(const ProducibleType *p) {
 //deapply static costs, but not negative costs, for when building gets killed
 void Faction::deApplyStaticConsumption(const ProducibleType *p) {
 	//decrease resources
-	for(int i=0; i<p->getCostCount(); ++i){
-		const ResourceType *rt= p->getCost(i)->getType();
-		if(rt->getClass()==ResourceClass::STATIC){
-			int cost= p->getCost(i)->getAmount();
-			if(cost>0){
+	for (int i=0; i < p->getCostCount(); ++i) {
+		ResourceAmount ra = p->getCost(i, this);
+		const ResourceType *rt = ra.getType();		
+		if (rt->getClass() == ResourceClass::STATIC) {
+			int cost = ra.getAmount();
+			if (cost > 0) {
 				incResourceAmount(rt, cost);
 			}
 		}
@@ -526,9 +564,9 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
 		if (unit->isOperative()) {
-			const ResourceAmount *resource = unit->getType()->getCost(rt);
-			if (resource && resource->getAmount() < 0) {
-				incResourceAmount(resource->getType(), -resource->getAmount());
+			const ResourceAmount resource = unit->getType()->getCost(rt, this);
+			if (resource.getType() && resource.getAmount() < 0) {
+				incResourceAmount(resource.getType(), -resource.getAmount());
 			}
 		}
 	}
@@ -537,16 +575,16 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 	for (int j = 0; j < getUnitCount(); ++j) {
 		Unit *unit = getUnit(j);
 		if (unit->isOperative()) {
-			const ResourceAmount *resource = unit->getType()->getCost(rt);
-			if (resource && resource->getAmount() > 0) {
-				incResourceAmount(resource->getType(), -resource->getAmount());
+			const ResourceAmount resource = unit->getType()->getCost(rt, this);
+			if (resource.getType() && resource.getAmount() > 0) {
+				incResourceAmount(resource.getType(), -resource.getAmount());
 
 				//decrease unit hp
 				///@todo: Implement rules for specifying what happens when you're consumable
 				//      demand exceeds supply & stores.
-				if (getResource(resource->getType())->getAmount() < 0) {
-					resetResourceAmount(resource->getType());
-					if(unit->decHp(unit->getType()->getMaxHp() / 3)) {
+				if (getResource(resource.getType())->getAmount() < 0) {
+					resetResourceAmount(resource.getType());
+					if (unit->decHp(unit->getType()->getMaxHp() / 3)) {
 						World::getCurrWorld()->doKill(unit, unit);
 					} else {
 						StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSound();
@@ -568,8 +606,9 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 
 	//for each unit cost check if enough resources
 	for (int i = 0; i < pt->getCostCount(); ++i) {
-		const ResourceType *rt = pt->getCost(i)->getType();
-		int cost = pt->getCost(i)->getAmount();
+		ResourceAmount ra = pt->getCost(i, this);
+		const ResourceType *rt = ra.getType();		
+		int cost = ra.getAmount();
 
 		if (cost > 0) {
 			int available = getResource(rt)->getAmount();
@@ -591,8 +630,9 @@ bool Faction::checkCosts(const ProducibleType *pt, int discount) {
 
 	//for each unit cost check if enough resources
 	for (int i = 0; i < pt->getCostCount(); ++i) {
-		const ResourceType *rt = pt->getCost(i)->getType();
-		int cost = (pt->getCost(i)->getAmount() * ratio).intp();
+		ResourceAmount ra = pt->getCost(i, this);
+		const ResourceType *rt = ra.getType();		
+		int cost = (ra.getAmount() * ratio).intp();
 
 		if (cost > 0) {
 			int available = getResource(rt)->getAmount();

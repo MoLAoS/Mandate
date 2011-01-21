@@ -152,6 +152,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		}
 	} else { // Old skool.
 		m_enhancements.resize(1);
+		m_unitsAffected.resize(1);
 
 		// values
 		// maintain backward compatibility using legacy format
@@ -181,6 +182,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 					string name = unitNode->getAttribute("name")->getRestrictedValue();
 					const UnitType *ut = factionType->getUnitType(name);
 					m_enhancementMap[ut] = &m_enhancements[0];
+					m_unitsAffected[0].push_back(name);
 				}
 			}
 		} catch (runtime_error e) { 

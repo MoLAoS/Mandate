@@ -48,6 +48,21 @@ namespace ProtoTypes {
 
 using namespace Entities;
 
+/** modifier pair (static addition and multiplier) */
+struct Modifier {
+	int    m_addition;
+	fixed  m_multiplier;
+
+	int   getAddition()   const { return m_addition;   }
+	fixed getMultiplier() const { return m_multiplier; }
+
+	Modifier() : m_addition(0), m_multiplier(1) {}
+	Modifier(int add, fixed mult) : m_addition(add), m_multiplier(mult) {}
+	Modifier(const Modifier &that) : m_addition(that.m_addition), m_multiplier(that.m_multiplier) {}
+};
+//typedef pair<int, fixed> Modifier;
+
+
 // =====================================================
 // 	class NameIdPair
 //
@@ -163,15 +178,18 @@ public:
 
     //get
 	int getCostCount() const						{return costs.size();}
-	const ResourceAmount *getCost(int i) const			{return &costs[i];}
-	const ResourceAmount *getCost(const ResourceType *rt) const {
-		for(int i = 0; i < costs.size(); ++i){
-			if(costs[i].getType() == rt){
-				return &costs[i];
-			}
-		}
-		return NULL;
-	}
+	//const ResourceAmount *getCost(int i) const			{return &costs[i];}
+	//const ResourceAmount *getCost(const ResourceType *rt) const {
+	//	for(int i = 0; i < costs.size(); ++i){
+	//		if(costs[i].getType() == rt){
+	//			return &costs[i];
+	//		}
+	//	}
+	//	return NULL;
+	//}
+	ResourceAmount getCost(int i, const Faction *f) const;
+	ResourceAmount getCost(const ResourceType *rt, const Faction *f) const;
+
 	int getProductionTime() const					{return productionTime;}
 	const Texture2D *getCancelImage() const			{return cancelImage;}
 	int getAdvancesToSubfaction() const				{return advancesToSubfaction;}

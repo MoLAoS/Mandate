@@ -24,6 +24,7 @@
 #include "renderer.h"
 #include "util.h"
 #include "leak_dumper.h"
+#include "faction.h"
 
 using Glest::Util::Logger;
 using namespace Shared::Util;
@@ -159,6 +160,23 @@ ProducibleType::ProducibleType() :
 
 ProducibleType::~ProducibleType() {
 }
+
+ResourceAmount ProducibleType::getCost(int i, const Faction *f) const {
+	Modifier mod = f->getCostModifier(this, costs[i].getType());
+	ResourceAmount res(costs[i]);
+	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return res;
+}
+
+ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f) const {
+	for (int i = 0; i < costs.size(); ++i) {
+		if (costs[i].getType() == rt) {
+			return getCost(i, f);
+		}
+	}
+	return ResourceAmount();
+}
+
 
 string ProducibleType::getReqDesc() const {
 	stringstream ss;

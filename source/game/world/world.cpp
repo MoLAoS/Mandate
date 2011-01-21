@@ -519,9 +519,9 @@ void World::tick() {
 					//if unit operative and has this cost
 					const Unit *u =  faction->getUnit(j);
 					if (u->isOperative()) {
-						const ResourceAmount *r = u->getType()->getCost(rt);
-						if (r != NULL) {
-							balance -= u->getType()->getCost(rt)->getAmount();
+						ResourceAmount r = u->getType()->getCost(rt, faction);
+						if (r.getType()) {
+							balance -= r.getAmount();
 						}
 					}
 				}
