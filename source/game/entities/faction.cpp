@@ -309,7 +309,7 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 			m_costModifiers[unitType][resType].m_multiplier += (1 - mod.getMultiplier());
 			mod = ut->getStoreModifier(unitType, resType);
 			m_storeModifiers[unitType][resType].m_addition += mod.getAddition();
-			m_storeModifiers[unitType][resType].m_multiplier += mod.getMultiplier();
+			m_storeModifiers[unitType][resType].m_multiplier += (1 - mod.getMultiplier());
 		}
 	}
 
