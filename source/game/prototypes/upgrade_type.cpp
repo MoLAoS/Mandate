@@ -205,9 +205,9 @@ void UpgradeType::doChecksum(Checksum &checksum) const {
 	}
 }
 
-string UpgradeType::getDesc() const {
+string UpgradeType::getDesc(const Faction *f) const {
 	Lang &lang = Lang::getInstance();
-	string str = getReqDesc();
+	string str = getReqDesc(f);
 
 	if (!m_enhancements.empty()) {
 		for (int i=0; i < m_enhancements.size(); ++i) {

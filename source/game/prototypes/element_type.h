@@ -151,7 +151,7 @@ public:
 	bool isAvailableInSubfaction(int subfaction) const	{return (bool)(1 << subfaction & subfactionsReqs);}
 
     //other
-    virtual string getReqDesc() const;
+    virtual string getReqDesc(const Faction *f) const;
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 };
 
@@ -200,7 +200,7 @@ public:
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 
 	virtual ProducibleClass getClass() const = 0;
 };

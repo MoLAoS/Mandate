@@ -94,7 +94,7 @@ public:
 	}
 
 	virtual void doChecksum(Checksum &checksum) const;
-	string getDesc() const;
+	string getDesc(const Faction *f) const;
 };
 
 }} // namespace Glest::ProtoTypes

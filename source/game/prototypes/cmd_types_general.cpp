@@ -426,14 +426,14 @@ void ProduceCommandType::doChecksum(Checksum &checksum) const {
 void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
 	m_produceSkillType->getDesc(str, unit);
 	if (m_producedUnits.size() == 1) {
-		str += "\n" + m_producedUnits[0]->getReqDesc();
+		str += "\n" + m_producedUnits[0]->getReqDesc(unit->getFaction());
 	}
 }
 
-string ProduceCommandType::getReqDesc() const {
-	string res = RequirableType::getReqDesc();
+string ProduceCommandType::getReqDesc(const Faction *f) const {
+	string res = RequirableType::getReqDesc(f);
 	if (m_producedUnits.size() == 1) {
-		res += m_producedUnits[0]->getReqDesc();
+		res += m_producedUnits[0]->getReqDesc(f);
 	}
 	return res;
 }
@@ -541,14 +541,14 @@ void GenerateCommandType::doChecksum(Checksum &checksum) const {
 void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
 	m_produceSkillType->getDesc(str, unit);
 	if (m_producibles.size() == 1) {
-		str += "\n" + m_producibles[0]->getReqDesc();
+		str += "\n" + m_producibles[0]->getReqDesc(unit->getFaction());
 	}
 }
 
-string GenerateCommandType::getReqDesc() const {
-	string res = RequirableType::getReqDesc();
+string GenerateCommandType::getReqDesc(const Faction *f) const {
+	string res = RequirableType::getReqDesc(f);
 	if (m_producibles.size() == 1) {
-		res += m_producibles[0]->getReqDesc();
+		res += m_producibles[0]->getReqDesc(f);
 	}
 	return res;
 }
@@ -622,14 +622,19 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	return loadOk;
 }
 
+void UpgradeCommandType::getDesc(string &str, const Unit *unit) const {
+	m_upgradeSkillType->getDesc(str, unit);
+	str += "\n" + getProducedUpgrade()->getDesc(unit->getFaction());
+}
+
 void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(m_upgradeSkillType->getName());
 	checksum.add(m_producedUpgrade->getName());
 }
 
-string UpgradeCommandType::getReqDesc() const {
-	return RequirableType::getReqDesc() + getProducedUpgrade()->getReqDesc();
+string UpgradeCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f) + getProducedUpgrade()->getReqDesc(f);
 }
 
 const ProducibleType *UpgradeCommandType::getProduced() const {
@@ -800,14 +805,14 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 		str += lang.get("Refund") + ": " + intToStr(m_refund) + "%\n";
 	}
 	if (m_morphUnits.size() == 1) {
-		str += "\n" + m_morphUnits[0]->getReqDesc();
+		str += "\n" + m_morphUnits[0]->getReqDesc(unit->getFaction());
 	}
 }
 
-string MorphCommandType::getReqDesc() const{
-	string res = RequirableType::getReqDesc();
+string MorphCommandType::getReqDesc(const Faction *f) const{
+	string res = RequirableType::getReqDesc(f);
 	if (m_morphUnits.size() == 1) {
-		res += m_morphUnits[0]->getReqDesc();
+		res += m_morphUnits[0]->getReqDesc(f);
 	}
 	return res;
 }
@@ -932,8 +937,8 @@ void LoadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + loadSkillType->getName();
 }
 
-string LoadCommandType::getReqDesc() const {
-	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
+string LoadCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
 void LoadCommandType::update(Unit *unit) const {
@@ -1057,8 +1062,8 @@ void UnloadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + unloadSkillType->getName();
 }
 
-string UnloadCommandType::getReqDesc() const {
-	return RequirableType::getReqDesc() /*+ "\n" + getProduced()->getReqDesc()*/;
+string UnloadCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
 void UnloadCommandType::update(Unit *unit) const {

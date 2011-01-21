@@ -478,7 +478,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	
 	// get
 	virtual int getProducedCount() const	{return m_producedUnits.size();}
@@ -518,7 +518,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
 	//get
@@ -552,12 +552,9 @@ public:
 	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0), m_producedUpgrade(0)  {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	virtual const ProducibleType *getProduced() const;
-	virtual void getDesc(string &str, const Unit *unit) const {
-		m_upgradeSkillType->getDesc(str, unit);
-		str += "\n" + getProducedUpgrade()->getDesc();
-	}
+	virtual void getDesc(string &str, const Unit *unit) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
 	virtual void start(Unit *unit, Command &command) const;
@@ -596,7 +593,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	
 	// get
 	virtual int getProducedCount() const	{return m_morphUnits.size();}
@@ -649,7 +646,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	virtual CommandResult check(const Unit *unit, const Command &command) const;
 	virtual void start(Unit *unit, Command *command) const;
 
@@ -684,7 +681,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	virtual void start(Unit *unit, Command *command) const;
 
 	//get
@@ -713,7 +710,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const {return "";}
+	virtual string getReqDesc(const Faction *f) const {return "";}
 
 	//get
 	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}

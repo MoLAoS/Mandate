@@ -68,7 +68,7 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 // 	class RequirableType
 // =====================================================
 
-string RequirableType::getReqDesc() const{
+string RequirableType::getReqDesc(const Faction *) const{
 	stringstream ss;
 ///	ss << name;
 	if (unitReqs.empty() && upgradeReqs.empty()) {
@@ -178,15 +178,16 @@ ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f)
 }
 
 
-string ProducibleType::getReqDesc() const {
+string ProducibleType::getReqDesc(const Faction *f) const {
 	stringstream ss;
 	ss << m_name;
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}
 	ss << " " << Lang::getInstance().get("Reqs") << ":\n";
-	foreach_const (Costs, it, costs) {
-		ss << it->getType()->getName() << ": " << it->getAmount() << endl;
+	for (int i=0; i < getCostCount(); ++i) {
+		ResourceAmount r = getCost(i, f);
+		ss << r.getType()->getName() << ": " << r.getAmount() << endl;
 	}
 	foreach_const (UnitReqs, it, unitReqs) {
 		ss << (*it)->getName() << endl;

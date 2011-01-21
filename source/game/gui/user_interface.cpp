@@ -981,11 +981,11 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 							} else if (unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
 								m_display->setToolTipText(g_lang.get("AlreadyUpgraded")/* + "\n" + ct->getDesc(unit)*/);
 							} else {
-								res += formatString(ct->getReqDesc());
+								res += formatString(ct->getReqDesc(unit->getFaction()));
 								m_display->setToolTipText(res);
 							}
 						} else {
-							res += formatString(ct->getReqDesc());
+							res += formatString(ct->getReqDesc(unit->getFaction()));
 							m_display->setToolTipText(res);
 						}
 					}
@@ -1026,8 +1026,8 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		string res = commandName + " : " + prodName + "\n\n";
 		if (!tip.empty()) {
 			res += tip + "\n\n";
-	}
-		res += formatString(pt->getReqDesc());
+		}
+		res += formatString(pt->getReqDesc(unit->getFaction()));
 		m_display->setToolTipText(res);
 	}
 }
