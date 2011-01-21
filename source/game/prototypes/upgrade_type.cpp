@@ -221,4 +221,33 @@ string UpgradeType::getDesc(const Faction *f) const {
 	return str;
 }
 
+const EnhancementType* UpgradeType::getEnhancement(const UnitType *ut) const {
+	EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
+	if (it != m_enhancementMap.end()) {
+		return it->second->getEnhancement();
+	}
+	return 0;
+}
+Modifier UpgradeType::getCostModifier(const UnitType *ut, const ResourceType *rt) const {
+	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
+	if (uit != m_enhancementMap.end()) {
+		ResModifierMap::const_iterator rit = uit->second->m_costModifiers.find(rt);
+		if (rit != uit->second->m_costModifiers.end()) {
+			return rit->second;
+		}
+	}
+	return Modifier(0, 1);
+}
+Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *rt) const {
+	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
+	if (uit != m_enhancementMap.end()) {
+		ResModifierMap::const_iterator rit = uit->second->m_storeModifiers.find(rt);
+		if (rit != uit->second->m_storeModifiers.end()) {
+			return rit->second;
+		}
+	}
+	return Modifier(0, 1);
+}
+
+
 }}//end namespace

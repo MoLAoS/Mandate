@@ -34,6 +34,8 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Entities {
 
+using ProtoTypes::UnitType;
+
 // faction colours, in RGBA format
 Colour factionColours[GameConstants::maxColours] = {
 
@@ -119,10 +121,11 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 			resources[i].init(rt, resourceAmount);
 		}
 		for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
-			const ProducibleType *pt = factionType->getUnitType(i);
+			const UnitType *ut = factionType->getUnitType(i);
 			for (int j=0; j < techTree->getResourceTypeCount(); ++j) {
 				const ResourceType *rt = techTree->getResourceType(j);
-				m_costModifiers[pt][rt] = Modifier(0, 1);
+				m_costModifiers[ut][rt] = Modifier(0, 1);
+				m_storeModifiers[ut][rt] = Modifier(0, 1);
 			}
 		}
 		texture = g_renderer.newTexture2D(ResourceScope::GAME);
@@ -295,22 +298,39 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 		getUnit(i)->applyUpgrade(ut);
 	}
 
-	// update unit cost modifiers
+	// update unit cost & store modifiers
 	const TechTree *tt = g_world.getTechTree();
 	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
 		const UnitType *unitType = factionType->getUnitType(i);
 		for (int j=0; j < tt->getResourceTypeCount(); ++j) {
 			const ResourceType *resType = tt->getResourceType(j);
 			Modifier mod = ut->getCostModifier(unitType, resType);
-			m_costModifiers[unitType][resType].m_addition += mod.m_addition;
-			m_costModifiers[unitType][resType].m_multiplier += (1 - mod.m_multiplier);
+			m_costModifiers[unitType][resType].m_addition += mod.getAddition();
+			m_costModifiers[unitType][resType].m_multiplier += (1 - mod.getMultiplier());
+			mod = ut->getStoreModifier(unitType, resType);
+			m_storeModifiers[unitType][resType].m_addition += mod.getAddition();
+			m_storeModifiers[unitType][resType].m_multiplier += mod.getMultiplier();
 		}
 	}
+
+	// update store caps
+	reEvaluateStore();
 }
 
 Modifier Faction::getCostModifier(const ProducibleType *pt, const ResourceType *rt) const {
 	UnitCostModifiers::const_iterator it = m_costModifiers.find(pt);
 	if (it != m_costModifiers.end()) {
+		CostModifiers::const_iterator rit = it->second.find(rt);
+		if (rit != it->second.end()) {
+			return rit->second;
+		}
+	}
+	return Modifier(0, 1);
+}
+
+Modifier Faction::getStoreModifier(const UnitType *ut, const ResourceType *rt) const {
+	StoreModifiers::const_iterator it = m_storeModifiers.find(ut);
+	if (it != m_storeModifiers.end()) {
 		CostModifiers::const_iterator rit = it->second.find(rt);
 		if (rit != it->second.end()) {
 			return rit->second;
@@ -726,37 +746,51 @@ void Faction::remove(Unit *unit) {
 	assert(units.size() == unitMap.size());
 }
 
+void Faction::reEvaluateStore() {
+	typedef map<const ResourceType*, int> StorageMap;
+	StorageMap storeMap;
+	const TechTree *tt = g_world.getTechTree();
+	for (int i=0; i < tt->getResourceTypeCount(); ++i) {
+		const ResourceType *rt = tt->getResourceType(i);
+		if (rt->getClass() != ResourceClass::STATIC) {
+			storeMap[rt] = 0;
+		}
+	}
+	foreach_const (Units, it, units) {
+		const UnitType *ut = (*it)->getType();
+		for (int j=0; j < ut->getStoredResourceCount(); ++j) {
+			ResourceAmount res = ut->getStoredResource(j, this);
+			storeMap[res.getType()] += res.getAmount();
+		}
+	}
+	for (int j = 0; j < resources.size(); ++j) {
+		if (resources[j].getType()->getClass() != ResourceClass::STATIC) {
+			resources[j].setStorage(storeMap[resources[j].getType()]);
+		}
+	}
+}
+
 void Faction::addStore(const ResourceType *rt, int amount) {
 	for (int j = 0; j < resources.size(); ++j) {
-		StoredResource *storedResource = &resources[j];
-		if (storedResource->getType() == rt) {
-			storedResource->setAmount(storedResource->getAmount() + amount);
+		if (resources[j].getType() == rt) {
+			resources[j].setStorage(resources[j].getStorage() + amount);
 		}
 	}
 }
 
 void Faction::addStore(const UnitType *unitType) {
 	for (int i = 0; i < unitType->getStoredResourceCount(); ++i) {
-		const ResourceAmount *r = unitType->getStoredResource(i);
+		ResourceAmount r = unitType->getStoredResource(i, this);
 		for (int j = 0; j < resources.size(); ++j) {
-			StoredResource *storedResource = &resources[j];
-			if (storedResource->getType() == r->getType()) {
-				storedResource->setStorage(storedResource->getStorage() + r->getAmount());
+			if (resources[j].getType() == r.getType()) {
+				resources[j].setStorage(resources[j].getStorage() + r.getAmount());
 			}
 		}
 	}
 }
 
 void Faction::removeStore(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getStoredResourceCount(); ++i) {
-		const ResourceAmount *r = unitType->getStoredResource(i);
-		for (int j = 0; j < resources.size(); ++j) {
-			StoredResource *storedResource = &resources[j];
-			if (storedResource->getType() == r->getType()) {
-				storedResource->setAmount(storedResource->getAmount() - r->getAmount());
-			}
-		}
-	}
+	reEvaluateStore();
 	limitResourcesToStore();
 }
 

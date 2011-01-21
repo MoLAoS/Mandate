@@ -535,13 +535,21 @@ const RepairCommandType *UnitType::getRepairCommand(const UnitType *repaired) co
 	return 0;
 }
 
-int UnitType::getStore(const ResourceType *rt) const {
+int UnitType::getStore(const ResourceType *rt, const Faction *f) const {
 	foreach_const (StoredResources, it, storedResources) {
 		if (it->getType() == rt) {
-			return it->getAmount();
+			Modifier mod = f->getStoreModifier(this, rt);
+			return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
 		}
 	}
 	return 0;
+}
+
+ResourceAmount UnitType::getStoredResource(int i, const Faction *f) const {
+	ResourceAmount res(storedResources[i]);
+	Modifier mod = f->getStoreModifier(this, res.getType());
+	res.setAmount( (res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition() );
+	return res;
 }
 
 // only used for matching while loading commands

@@ -71,23 +71,9 @@ public:
 	// get
 	ProducibleClass getClass() const override                       { return typeClass(); }
 	const FactionType* getFactionType() const                       { return m_factionType; }
-	const EnhancementType* getEnhancement(const UnitType *ut) const {
-		EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
-		if (it != m_enhancementMap.end()) {
-			return it->second->getEnhancement();
-		}
-		return 0;
-	}
-	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const {
-		EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-		if (uit != m_enhancementMap.end()) {
-			ResModifierMap::const_iterator rit = uit->second->m_costModifiers.find(rt);
-			if (rit != uit->second->m_costModifiers.end()) {
-				return rit->second;
-			}
-		}
-		return Modifier(0, 1);
-	}
+	const EnhancementType* getEnhancement(const UnitType *ut) const;
+	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
+	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
 
 	bool isAffected(const UnitType *unitType) const {
 		return m_enhancementMap.find(unitType) != m_enhancementMap.end();

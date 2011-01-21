@@ -216,8 +216,8 @@ public:
 
 	// resources
 	int getStoredResourceCount() const					{return storedResources.size();}
-	const ResourceAmount *getStoredResource(int i) const		{return &storedResources[i];}
-	int getStore(const ResourceType *rt) const;
+	ResourceAmount getStoredResource(int i, const Faction *f) const;
+	int getStore(const ResourceType *rt, const Faction *f) const;
 
 	// meeting point
 	bool hasMeetingPoint() const						{return meetingPoint;}

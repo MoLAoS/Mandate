@@ -1897,14 +1897,14 @@ string Unit::getLongDesc() const {
 	// can store
 	if (type->getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-			const ResourceAmount *r = type->getStoredResource(i);
-			string storedName = r->getType()->getName();
+			ResourceAmount r = type->getStoredResource(i, getFaction());
+			string storedName = r.getType()->getName();
 			string resName = g_lang.getTechString(storedName);
 			if (resName == storedName) {
 				resName = formatString(storedName);
 			}
 			ss << endl << g_lang.get("Store") << ": ";
-			ss << r->getAmount() << " " << resName;
+			ss << r.getAmount() << " " << resName;
 		}
 	}
 	// effects

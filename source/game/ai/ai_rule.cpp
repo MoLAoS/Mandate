@@ -1018,13 +1018,13 @@ bool AiRuleExpand::test(){
 				int minDistance= INT_MAX;
 				storeType= NULL;
 
-				//If there is no close store
-				for(int j=0; j<aiInterface->getMyUnitCount(); ++j){
-					const Unit *u= aiInterface->getMyUnit(j);
-					const UnitType *ut= aiInterface->getMyUnit(j)->getType();
+				// If there is no close store
+				for (int j=0; j < aiInterface->getMyUnitCount(); ++j) {
+					const Unit *u = aiInterface->getMyUnit(j);
+					const UnitType *ut = aiInterface->getMyUnit(j)->getType();
 
 					// If this building is a store
-					if(ut->getStore(rt)>0){
+					if (ut->getStore(rt, ai->getAiInterface()->getFaction()) > 0) {
 						storeType = ut;
 						int distance= static_cast<int> (u->getPos().dist(expandPos));
 

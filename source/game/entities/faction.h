@@ -79,6 +79,7 @@ public:
 	typedef vector<const ResourceType *>               ResourceTypes;
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
+	typedef map<const UnitType*, CostModifiers>        StoreModifiers;
 
 private:
     typedef vector<StoredResource>	Resources;
@@ -97,6 +98,7 @@ private:
 	Texture2D *m_logoTex;
 	const FactionType *factionType;
 	UnitCostModifiers m_costModifiers;
+	StoreModifiers    m_storeModifiers;
 
 	int teamIndex;
 	int startLocationIndex;
@@ -145,6 +147,7 @@ public:
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;
+	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
 	
 	///@todo Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
@@ -197,11 +200,15 @@ public:
 
 	void add(Unit *unit);
 	void remove(Unit *unit);
+
 	void addStore(const ResourceType *rt, int amount);
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
+	void reEvaluateStore();
+
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
 	void attackNotice(const Unit *u);
+
 	void advanceSubfaction(int subfaction);
 	void checkAdvanceSubfaction(const ProducibleType *pt, bool finished);
 
