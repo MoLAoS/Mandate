@@ -80,7 +80,7 @@ public:
 
 public:
 	UpgradeType();
-	void preLoad(const string &dir)			{m_name=basename(dir);}
+	void preLoad(const string &dir)			{ m_name = basename(dir); }
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
 
 	ProducibleClass getClass() const override { return typeClass(); }

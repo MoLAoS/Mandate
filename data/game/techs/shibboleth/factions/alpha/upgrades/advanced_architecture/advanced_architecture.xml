@@ -20,9 +20,9 @@
 			</affects>
 			<effects>
 				<store-modifier>
-					<resource type="gold"  amount="300"/>
-					<resource type="stone" amount="400"/>
-					<resource type="wood"  amount="500"/>
+					<resource type="gold"  addition="300"/>
+					<resource type="stone" addition="400"/>
+					<resource type="wood"  addition="500"/>
 				</store-modifier>
 			</effects>
 		</enhancement>
@@ -33,7 +33,7 @@
 			</affects>
 			<effects>
 				<cost-modifier>
-					<resource type="wood"  amount="-50"/>
+					<resource type="wood"  addition="-50"/>
 				</cost-modifier>
 			</effects>
 		</enhancement>

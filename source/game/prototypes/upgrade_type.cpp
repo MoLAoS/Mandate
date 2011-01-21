@@ -44,6 +44,28 @@ UpgradeType::UpgradeType()
 		: m_factionType(0) {
 }
 
+void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree) {
+	for (int i=0; i < node->getChildCount(); ++i) {
+		const XmlNode *resNode = node->getChild(i);
+		if (resNode->getName() == "resource") {
+			string resName = resNode->getAttribute("name")->getRestrictedValue();
+			int addition = 0;
+			if (const XmlAttribute *addAttrib = resNode->getAttribute("addition", false)) {
+				addition = addAttrib->getIntValue();
+			}
+			fixed mult = 1;
+			if (const XmlAttribute *multAttrib = resNode->getAttribute("multiplier", false)) {
+				mult = multAttrib->getFixedValue();
+			}
+			const ResourceType *rt = techTree->getResourceType(resName);
+			if (map.find(rt) != map.end()) {
+				throw runtime_error("duplicate resource node '" + resName + "'");
+			}
+			map[rt] = Modifier(addition, mult);
+		}
+	}
+}
+
 bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	string path;
 	m_factionType = factionType;
@@ -76,10 +98,29 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		m_enhancements.resize(enhancementsNode->getChildCount());
 		m_unitsAffected.resize(enhancementsNode->getChildCount());
 		for (int i=0; i < m_enhancements.size(); ++i) {
-			const XmlNode *enhanceNode = enhancementsNode->getChild("enhancement", i);
-			if (!m_enhancements[0].m_enhancement.load(enhanceNode->getChild("effects"), dir, techTree, factionType)) {
+			const XmlNode *enhanceNode, *enhancementNode;
+			try {
+				enhanceNode = enhancementsNode->getChild("enhancement", i);
+				enhancementNode = enhanceNode->getChild("effects");
+			} catch (runtime_error &e) {
+				g_logger.logXmlError(dir, e.what());
+				loadOk = false;
+				continue;
+			}
+			if (!m_enhancements[i].m_enhancement.load(enhancementNode, dir, techTree, factionType)) {
 				loadOk = false;
 			}
+			try { // resource cost and storage modifiers
+				if (const XmlNode *costModsNode = enhancementNode->getOptionalChild("cost-modifiers")) {
+					loadResourceModifier(costModsNode, m_enhancements[i].m_costModifiers, techTree);
+				}
+				if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
+					loadResourceModifier(storeModsNode, m_enhancements[i].m_storeModifiers, techTree);
+				}
+			} catch (runtime_error e) { 
+				g_logger.logXmlError(dir, e.what());
+				loadOk = false;
+			} 
 			try { // Units affected by this upgrade
 				const XmlNode *affectsNode = enhanceNode->getChild("affects", 0);
 				for (int j=0; j < affectsNode->getChildCount(); ++j) {
