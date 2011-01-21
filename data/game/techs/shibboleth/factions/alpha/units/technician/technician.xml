@@ -304,7 +304,7 @@
       <upgrade-requirements/>
       <morph-skill value="build_catapult"/>
       <morph-unit name= "catapult"/>
-      <discount value="40"/>
+      <discount value="0"/>
     </command>
 
   </commands>

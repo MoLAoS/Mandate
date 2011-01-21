@@ -19,11 +19,11 @@
 				<unit name="castle"/>
 			</affects>
 			<effects>
-				<store-modifier>
-					<resource type="gold"  addition="300"/>
-					<resource type="stone" addition="400"/>
-					<resource type="wood"  addition="500"/>
-				</store-modifier>
+				<store-modifiers>
+					<resource name="gold"  addition="300"/>
+					<resource name="stone" addition="400"/>
+					<resource name="wood"  addition="500"/>
+				</store-modifiers>
 			</effects>
 		</enhancement>
 		
@@ -32,9 +32,9 @@
 				<unit name="catapult"/>
 			</affects>
 			<effects>
-				<cost-modifier>
-					<resource type="wood"  addition="-50"/>
-				</cost-modifier>
+				<cost-modifiers>
+					<resource name="wood"  addition="-50"/>
+				</cost-modifiers>
 			</effects>
 		</enhancement>
 		

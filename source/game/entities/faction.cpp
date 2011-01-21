@@ -303,7 +303,7 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 			const ResourceType *resType = tt->getResourceType(j);
 			Modifier mod = ut->getCostModifier(unitType, resType);
 			m_costModifiers[unitType][resType].m_addition += mod.m_addition;
-			m_costModifiers[unitType][resType].m_multiplier += mod.m_multiplier;
+			m_costModifiers[unitType][resType].m_multiplier += (1 - mod.m_multiplier);
 		}
 	}
 }
