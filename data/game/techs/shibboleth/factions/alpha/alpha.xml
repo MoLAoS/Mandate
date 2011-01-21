@@ -25,4 +25,7 @@
 		<sound-file path="../../../magitech/factions/tech/bugle_alarm.wav" />
 		<sound-file path="../../../magitech/factions/tech/bugle_call_to_arms.wav" />
 	</attack-notice>
+	<loading-screen>
+		<background-image path="loading_screen.png" />
+	</loading-screen>
 </faction>

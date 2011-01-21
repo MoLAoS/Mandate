@@ -21,6 +21,7 @@
 
 #include "FSFactory.hpp"
 #include "timer.h"
+#include "texture.h"
 
 using std::deque;
 using std::string;
@@ -110,6 +111,7 @@ private:
 	int totalUnits, unitsLoaded;
 	bool m_progressBar;
 	int m_progress;
+	Shared::Graphics::Texture2D *m_backgroundTexture;
 
 public:
 	ProgramLog();
@@ -122,6 +124,7 @@ public:
 	void setLoading(bool v)				{loadingGame = v;}
 	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
+	void setupLoadingScreen(const string &factionDir);
 	void renderLoadingScreen();
 
 	void setUnitCount(int count) { totalUnits = count; unitsLoaded = 0; }

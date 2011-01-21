@@ -10,6 +10,9 @@
     <armor-type value="leather"/>
     <sight value="15"/>
     <time value="60"/>
+	<cloak type="permanent">
+	  <de-cloak skill-class="attack" />
+	</cloak>
     <multi-selection value="true"/>
     <cellmap value="false"/>
     <levels>
