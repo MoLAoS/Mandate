@@ -62,12 +62,13 @@ public:
 
 class UnitType : public ProducibleType, public UnitStats {
 private:
-	typedef vector<SkillType*> SkillTypes;
-	typedef vector<CommandType*> CommandTypes;
-	typedef vector<ResourceAmount> StoredResources;
-	typedef vector<Level> Levels;
-	typedef vector<ParticleSystemType*> particleSystemTypes;
-//	typedef vector<PetRule*> PetRules;
+	typedef vector<SkillType*>          SkillTypes;
+	typedef vector<CommandType*>        CommandTypes;
+	typedef vector<ResourceAmount>      StoredResources;
+	typedef vector<Level>               Levels;
+	typedef vector<ParticleSystemType*> ParticleSystemTypes;
+
+	//typedef vector<PetRule*> PetRules;
 	//typedef map<int, const CommandType*> CommandTypeMap;
 
 private:

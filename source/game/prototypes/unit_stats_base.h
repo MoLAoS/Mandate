@@ -36,14 +36,10 @@ class UpgradeType;
 
 /** Fields of travel, and indirectly zone of occupance */
 class Fields : public XmlBasedFlags<Field, Field::COUNT> {
-private:
-	//static const char *names[Field::COUNT];
-
 public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
 		XmlBasedFlags<Field, Field::COUNT>::load(node, dir, tt, ft, "field", FieldNames);
 	}
-	//static const char* getName ( Field f ) { return names[f]; }
 };
 
 ///@todo remove the need for this hacky crap
@@ -59,21 +55,15 @@ inline Field dominantField(const Fields &fields) {
 
 /** Zones of attack (air, surface, etc.) */
 class Zones : public XmlBasedFlags<Zone, Zone::COUNT> {
-private:
-	//static const char *names[Zone::COUNT];
-
 public:
 	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
 		XmlBasedFlags<Zone, Zone::COUNT>::load(node, dir, tt, ft, "field", ZoneNames);
 	}
 };
 
-
 // ==============================================================
 // 	enum Property & class UnitProperties
 // ==============================================================
-
-
 
 /** Properties that can be applied to a unit. */
 class UnitProperties : public XmlBasedFlags<Property, Property::COUNT>{
@@ -90,9 +80,7 @@ public:
 // 	class UnitStats
 // ===============================
 
-/**
- * Base stats for a unit type, upgrade, effect or other enhancement.
- */
+/** Base stats for a unit type, upgrade, effect or other enhancement. */
 class UnitStats {
 
 	friend class UpgradeType; // hack, needed to support old style Upgrades in a new style world :(
@@ -102,26 +90,21 @@ protected:
 	int hpRegeneration;
     int maxEp;
 	int epRegeneration;
-
     int sight;
 	int armor;
 
-	// these are skill stats
-	int attackStrength;		// ??? UnitStats?
-	fixed effectStrength;	// ??? UnitStats?
-	fixed attackPctStolen;	// ??? UnitStats?
-	int attackRange;		// ??? UnitStats?
-	int moveSpeed;			// ??? UnitStats?
-	int attackSpeed;		// ??? UnitStats?
-	int prodSpeed;			// ??? UnitStats?
-	int repairSpeed;		// ??? UnitStats?
-	int harvestSpeed;		// ??? UnitStats?
+	// skill mods
+	int attackStrength;
+	fixed effectStrength;
+	fixed attackPctStolen;
+	int attackRange;
+	int moveSpeed;
+	int attackSpeed;
+	int prodSpeed;
+	int repairSpeed;
+	int harvestSpeed;
 
-	/** Resistance / Damage Multipliers ( => Enhancement ) */
-	//static size_t damageMultiplierCount;
-	//vector<float> damageMultipliers;
-
-	void setMaxHp(int v)					{maxHp = v;}
+	void setMaxHp(int v)				{maxHp = v;}
 	void setHpRegeneration(int v) 		{hpRegeneration = v;}
 	void setMaxEp(int v) 				{maxEp = v;}
 	void setEpRegeneration(int v) 		{epRegeneration = v;}
@@ -140,20 +123,7 @@ protected:
 
 
 public:
-	UnitStats() /*: damageMultipliers(damageMultiplierCount)*/
-		: maxHp(0)
-		, hpRegeneration(0)
-		, maxEp(0)
-		, epRegeneration(0)
-		, sight(0)
-		, armor(0)
-		, attackStrength(0)
-		, attackRange(0)
-		, moveSpeed(0)
-		, attackSpeed(0)
-		, prodSpeed(0)
-		, repairSpeed(0)
-		, harvestSpeed(0) {}
+	UnitStats()          { memset(this, 0, sizeof(*this)); }
 	virtual ~UnitStats() {}
 
 	virtual void doChecksum(Checksum &checksum) const;
@@ -177,27 +147,17 @@ public:
 	int getRepairSpeed() const				{return repairSpeed;}
 	int getHarvestSpeed() const				{return harvestSpeed;}
 
-//	static size_t getDamageMultiplierCount()	{return damageMultiplierCount;}
-//	float getDamageMultiplier(size_t i) const	{assert(i < damageMultiplierCount); return damageMultipliers[i];}
-
-	// ==================== set ====================
-
-	// this is called from TechTree::load()
-//	static void setDamageMultiplierCount(size_t count)	{damageMultiplierCount = count;}
-
 	// ==================== misc ====================
 
 	/** Resets the values of all fields to zero or other base value. */
 	virtual void reset();
 
-	/**
-	 * Initialize the object from an XmlNode object. It is important to note
-	 * that all xxxSpeed and attackRange variables are not initialized by this
-	 * function. This is essentially the portions of the load method of the
-	 * legacy UnitType class that appeared under the <properties> node and that
-	 * is exactly what XmlNode object the UnitType load() method supplies to
-	 * this method.
-	 */
+	/** Initialize the object from an XmlNode object. It is important to note
+	  * that all xxxSpeed and attackRange variables are not initialized by this
+	  * function. This is essentially the portions of the load method of the
+	  * legacy UnitType class that appeared under the <properties> node and that
+	  * is exactly what XmlNode object the UnitType load() method supplies to
+	  * this method. */
 	bool load(const XmlNode *parametersNode, const string &dir, const TechTree *tt, const FactionType *ft);
 
 	virtual void save(XmlNode *node) const;
@@ -205,70 +165,28 @@ public:
 	/** Equivilant to an assignment operator; initializes values based on supplied object. */
 	void setValues(const UnitStats &us);
 
-	/**
-	 * Apply all the multipliers in the supplied EnhancementType to the
-	 * applicable static value (i.e., addition/subtraction values) in this
-	 * object.
-	 */
+	/** Apply all the multipliers in the supplied EnhancementType to the
+	  * applicable static value (i.e., addition/subtraction values) in this
+	  * object. */
 	void applyMultipliers(const EnhancementType &e);
 
-	/**
-	 * Add all static values (i.e., addition/subtraction values) in to this
-	 * object, using the supplied multiplier strength before adding. I.e., stat =
-	 * e.stat * strength.
-	 */
+	/** Add all static values (i.e., addition/subtraction values) in to this
+	  * object, using the supplied multiplier strength before adding. I.e., stat =
+	  * e.stat * strength. */
 	void addStatic(const EnhancementType &e, fixed strength = 1);
 
 	/** re-adjust values for unit entities, enforcing minimum sensible values */
 	void sanitiseUnitStats();
 };
 
-#ifdef SILNARM_IS_WORKING_HERE
-// ===============================================
-// 	enum UnitStat, UnitAttribute & SkillAttribute
-// ===============================================
-
-WRAPPED_ENUM( UnitStat, HP, EP )
-
-WRAPPED_ENUM( UnitAttribute, MAX_HP, REGEN_HP, MAX_EP, REGEN_EP, SIGHT, ARMOUR )
-
-WRAPPED_ENUM( SkillAttribute, SPEED, /*ANIM_SPEED,*/ EP_COST, STRENGTH, VARIANCE, RANGE, SPLASH_RADIUS )
-
-// =========================================
-// 	class AttributeModifier & SkillModifier
-// =========================================
-
-class AttributeModifier {
-	UnitAttribute attrib;
-	fixed addition;
-	fixed multiplier;
-
-public:
-	AttributeModifier(UnitAttribute attr, fixed add, fixed mult = 1)
-			: attrib(attr), addition(add), multiplier(mult) { }
-};
-
-class SkillModifier {
-	//SkillClass sc;
-	SkillAttribute attrib;
-	fixed addition;
-	fixed multiplier;
-
-public:
-	SkillSpeedModifier(SkillAttribute attr, fixed add, fixed mult = 1)
-			: attrib(attr), addition(add), multiplier(mult) { }
-};
-#endif // def SILNARM_IS_WORKING_HERE
-
 // ===============================
 // 	class EnhancementType
 // ===============================
 
 /** An extension of UnitStats, which contains values suitable for an
- * addition/subtraction alteration to a Unit's stats, that also has a multiplier
- * for each of those stats.  This is the base class for both UpgradeType and
- * EffectType.
- */
+  * addition/subtraction alteration to a Unit's stats, that also has a multiplier
+  * for each of those stats.  This is the base class for both UpgradeType and
+  * EffectType. */
 class EnhancementType : public UnitStats {
 protected:
 	fixed maxHpMult;
@@ -375,6 +293,8 @@ private:
 	/** Initialize value from <multipliers> node */
 	void initMultiplier(const XmlNode *node, const string &dir);
 };
+
+
 
 }}//end namespace
 

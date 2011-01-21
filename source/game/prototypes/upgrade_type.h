@@ -29,23 +29,44 @@ using Glest::Entities::Unit;
 
 namespace Glest { namespace ProtoTypes {
 
+/** modifier pair (static addition and multiplier)
+  * @todo move to unit_stats.h, use for all stat 'buffs' ? */
+struct Modifier {
+	int    m_addition;
+	fixed  m_multiplier;
+
+	int   getAddition()   const { return m_addition;   }
+	fixed getMultiplier() const { return m_multiplier; }
+
+	Modifier() : m_addition(0), m_multiplier(1) {}
+	Modifier(int add, fixed mult) : m_addition(add), m_multiplier(mult) {}
+	Modifier(const Modifier &that) : m_addition(that.m_addition), m_multiplier(that.m_multiplier) {}
+};
+//typedef pair<int, fixed> Modifier;
+
+/** resource amount modifier */
+typedef map<const ResourceType*, Modifier> ResModifierMap;
+
+/** A unit type enhancement, an EnhancementType + resource cost modifiers + resource storage modifiers */
+struct UpgradeEffect {
+	EnhancementType  m_enhancement;
+	ResModifierMap   m_costModifiers;
+	ResModifierMap   m_storeModifiers;
+};
+
 // ===============================
 // 	class UpgradeType
 // ===============================
 
-/**
- * A specialization of EnhancementType that represents a permanent,
- * producable (i.e., researchable) upgrade to all of one or more unit
- * classes.
- */
-class UpgradeType: public ProducibleType/*, public EnhancementType*/  {
+/** A collection of EnhancementTypes and resource mods that represents a permanent,
+  * producable (i.e., researchable) upgrade for one or more unit types. */
+class UpgradeType : public ProducibleType {
 private:
 	typedef vector<EnhancementType> Enhancements;
 	typedef map<const UnitType*, const EnhancementType*> EnhancementMap;
 	typedef vector< vector<string> > AffectedUnits; // just names, used only in getDesc()
 
 private:
-	//vector<const UnitType*> effects;
 	Enhancements       m_enhancements;
 	EnhancementMap     m_enhancementMap;
 	const FactionType *m_factionType;
@@ -71,8 +92,6 @@ public:
 		}
 		return 0;
 	}
-	//int getEffectCount() const				{return effects.size();}
-	//const UnitType * getEffect(int i) const	{return effects[i];}
 
 	bool isAffected(const UnitType *unitType) const {
 		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
@@ -84,6 +103,6 @@ public:
 	string getDesc() const;
 };
 
-}}//end namespace
+}} // namespace Glest::ProtoTypes
 
 #endif

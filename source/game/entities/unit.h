@@ -127,15 +127,10 @@ typedef list<UnitId> UnitIdList;
 ///	A game unit or building
 // ===============================
 
-/**
- * Represents a single game unit or building. The Unit class inherits from
- * EnhancementType as a mechanism to maintain a cache of it's current
- * stat values. These values are only recalculated when an effect is added
- * or removed, an upgrade is applied or the unit levels up. This way, all
- * requests from other parts of the code for the value of a stat can be
- * procured without having to perform lengthy computations. Previously, the
- * TotalUpgrade class provided this functionality.
- */
+/** Represents a single game unit or building. The Unit class inherits from
+  * EnhancementType as a mechanism to maintain a cache of it's current
+  * stat values. These values are only recalculated when an effect is added
+  * or removed, an upgrade is applied or the unit levels up. */
 class Unit : public EnhancementType {
 	friend class EntityFactory<Unit>;
 
