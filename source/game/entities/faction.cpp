@@ -447,7 +447,7 @@ bool Faction::applyCosts(const ProducibleType *pt, int discount) {
 		return false;
 	}
 
-	fixed ratio = fixed(100) - (discount / fixed(100));
+	fixed ratio = (fixed(100) - (discount / fixed(100))) / 100;
 
 	//for each unit cost spend it
 	//pass 2, decrease resources, except negative static costs (ie: farms)
@@ -626,7 +626,7 @@ bool Faction::checkCosts(const ProducibleType *pt) {
 bool Faction::checkCosts(const ProducibleType *pt, int discount) {
 	bool ok = true;
 	neededResources.clear();
-	fixed ratio = fixed(100) - (discount / fixed(100));
+	fixed ratio = (fixed(100) - (discount / fixed(100))) / 100;
 
 	//for each unit cost check if enough resources
 	for (int i = 0; i < pt->getCostCount(); ++i) {
