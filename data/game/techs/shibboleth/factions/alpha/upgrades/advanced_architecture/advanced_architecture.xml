@@ -10,13 +10,34 @@
     <resource name="wood" amount="100"/>
     <resource name="gold" amount="200"/>
   </resource-requirements>
-  <effects/>
-  <max-hp value="0"/>
-  <max-ep value="0"/>
-  <sight value="0"/>
-  <attack-strenght value="0"/>
-  <attack-range value="0"/>
-  <armor value="0"/>
-  <move-speed value="0"/>
-  <production-speed value="0"/>
+
+
+	<enhancements>
+		
+		<enhancement> <!-- Increase resource storage capacity of Castle -->
+			<affects>
+				<unit name="castle"/>
+			</affects>
+			<effects>
+				<store-modifier>
+					<resource type="gold"  amount="300"/>
+					<resource type="stone" amount="400"/>
+					<resource type="wood"  amount="500"/>
+				</store-modifier>
+			</effects>
+		</enhancement>
+		
+		<enhancement> <!-- Make Catapult construction cost 50 less wood -->
+			<affects>
+				<unit name="catapult"/>
+			</affects>
+			<effects>
+				<cost-modifier>
+					<resource type="wood"  amount="-50"/>
+				</cost-modifier>
+			</effects>
+		</enhancement>
+		
+	</enhancements>
+
 </upgrade>
