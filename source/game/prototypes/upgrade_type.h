@@ -60,6 +60,11 @@ private:
 	const FactionType *m_factionType;
 	AffectedUnits      m_unitsAffected;
 
+private:
+	bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool loadOldStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
+
 public:
 	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
 
