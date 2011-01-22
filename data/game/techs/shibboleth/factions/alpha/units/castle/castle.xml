@@ -1,165 +1,164 @@
 <?xml version="1.0" standalone="no" ?>
 <unit>
-  <!-- *** parameters *** -->
-  <parameters>
-    <size value="5" />
-    <height value="2" />
-    <max-hp value="9000" regeneration="0"/>
-    <max-ep value="0" />
-    <armor value="0" />
-    <armor-type value="stone"/>
-    <sight value="15" />
-    <time value="300" />
-    <multi-selection value="false" />
-    <cellmap value="true">
-      <row value="11011"/>
-      <row value="00011"/>
-      <row value="11000"/>
-      <row value="11011"/>
-      <row value="01010"/>
-    </cellmap>
-    <levels/>
-    <fields>
-      <field value="land" />
-    </fields>
-    <properties>
-      <property value="burnable"/>
-    </properties>
-    <light enabled="true" red="0.8" green="0.8" blue="0.5"/>
-    <unit-requirements/>
-    <upgrade-requirements />
-    <resource-requirements>
-      <resource name="gold" amount="100" />
-      <resource name="stone" amount="300" />
-      <resource name="wood" amount="150" />
-    </resource-requirements>
-    <resources-stored>
-      <resource name= "gold" amount="2000"/>
-      <resource name= "wood" amount="1200"/>
-      <resource name= "stone" amount="1500"/>
-      <resource name= "food" amount="150"/>
-    </resources-stored>
-    <image path="images/castle.bmp" />
-    <image-cancel path="../archer/images/tech_cancel.bmp"/>
-    <meeting-point value="true" image-path="../barracks/images/meeting_point.bmp"/>
-    <selection-sounds enabled="true">
-      <sound path="../barracks/sounds/tech_click.wav" />
-    </selection-sounds>
-    <command-sounds enabled="true">
-      <sound path="../barracks/sounds/tech_click.wav" />
-    </command-sounds>
-  </parameters>
+	<!-- *** parameters *** -->
+	<parameters>
+		<size value="5" />
+		<height value="2" />
+		<max-hp value="9000" regeneration="0"/>
+		<max-ep value="0" />
+		<armor value="0" />
+		<armor-type value="stone"/>
+		<sight value="15" />
+		<time value="300" />
+		<multi-selection value="false" />
+		<cellmap value="true">
+			<row value="11011"/>
+			<row value="00011"/>
+			<row value="11000"/>
+			<row value="11011"/>
+			<row value="01010"/>
+		</cellmap>
+		<levels/>
+		<fields>
+			<field value="land" />
+		</fields>
+		<properties>
+			<property value="burnable"/>
+		</properties>
+		<light enabled="true" red="0.8" green="0.8" blue="0.5"/>
+		<unit-requirements/>
+		<upgrade-requirements />
+		<resource-requirements>
+			<resource name="gold" amount="100" />
+			<resource name="stone" amount="300" />
+			<resource name="wood" amount="150" />
+		</resource-requirements>
+		<resources-stored>
+			<resource name= "gold" amount="2000"/>
+			<resource name= "wood" amount="1200"/>
+			<resource name= "stone" amount="1500"/>
+			<resource name= "food" amount="150"/>
+		</resources-stored>
+		<image path="images/castle.bmp" />
+		<image-cancel path="../archer/images/tech_cancel.bmp"/>
+		<meeting-point value="true" image-path="../barracks/images/meeting_point.bmp"/>
+		<selection-sounds enabled="true">
+			<sound path="../barracks/sounds/tech_click.wav" />
+		</selection-sounds>
+		<command-sounds enabled="true">
+			<sound path="../barracks/sounds/tech_click.wav" />
+		</command-sounds>
+	</parameters>
 
-  <!-- *** skills *** -->
-  <skills>
+	<!-- *** skills *** -->
+	<skills>
 
-    <skill>
-      <type value="stop" />
-      <name value="stop_skill"/>
-      <ep-cost value="0" />
-      <speed value="300" />
-      <anim-speed value="100" />
-      <animation path="../../../../../magitech/factions/tech/units/castle/models/castle.g3d" />
-      <sound enabled="false" />
-    </skill>
+		<skill>
+			<type value="stop" />
+			<name value="stop_skill"/>
+			<ep-cost value="0" />
+			<speed value="300" />
+			<anim-speed value="100" />
+			<animation path="../../../../../magitech/factions/tech/units/castle/models/castle.g3d" />
+			<sound enabled="false" />
+		</skill>
 
-    <skill>
-      <type value="be_built" />
-      <name value="be_built_skill"/>
-      <ep-cost value="0" />
-      <speed value="300" />
-      <anim-speed value="300" />
-      <animation path="construction_models/castle_construction.g3d" />
-      <sound enabled="false" />
-    </skill>
+		<skill>
+			<type value="be_built" />
+			<name value="be_built_skill"/>
+			<ep-cost value="0" />
+			<speed value="300" />
+			<anim-speed value="300" />
+			<animation path="construction_models/castle_construction.g3d" />
+			<sound enabled="false" />
+		</skill>
 
-    <skill>
-      <type value="produce" />
-      <name value="produce_skill"/>
-      <ep-cost value="0" />
-      <speed value="300" />
-      <anim-speed value="300" />
-      <animation path="../../../../../magitech/factions/tech/units/castle/models/castle.g3d" />
-      <sound enabled="false" />
-    </skill>
-	
-	<skill>
-      <type value="attack"/>
-      <name value="attack_skill"/>
-      <ep-cost value="0"/>
-      <speed value="80"/>
-      <anim-speed value="90"/>
-      <animation path="../../../../../magitech/factions/tech/units/castle/models/castle.g3d"/>
-      <sound enabled="true" start-time="0">
-        <sound-file path="sounds/defense_tower_attack1.wav"/>
-        <sound-file path="sounds/defense_tower_attack2.wav"/>
-      </sound>
-      <attack-strenght value="120"/>
-      <attack-var value="50"/>
-      <attack-range value="12"/>
-      <attack-type value="piercing"/>
-      <attack-start-time value="0.3"/>
-      <attack-fields>
-        <field value="land"/>
-        <field value="air"/>
-      </attack-fields>
-      <projectile value="true">
-        <particle value="true" path="particle_proj.xml"/>
-        <sound enabled="true">
-          <sound-file path="../archer/sounds/arrow_hit1.wav"/>
-          <sound-file path="../archer/sounds/arrow_hit2.wav"/>
-        </sound>
-      </projectile>
-      <splash value="false"/>
-    </skill>
+		<skill>
+			<type value="produce" />
+			<name value="produce_skill"/>
+			<ep-cost value="0" />
+			<speed value="300" />
+			<anim-speed value="300" />
+			<animation path="../../../../../magitech/factions/tech/units/castle/models/castle.g3d" />
+			<sound enabled="false" />
+		</skill>
 
-    <skill>
-      <type value="die" />
-      <name value="die_skill"/>
-      <ep-cost value="0" />
-      <speed value="300" />
-      <anim-speed value="300" />
-      <animation path="destruction_models/castle_destruction.g3d" />
-      <sound enabled="true" start-time="0">
-        <sound-file path="../barracks/sounds/tech_building_fall2.wav"/>
-      </sound>
-      <fade value="false"/>
-    </skill>
+		<skill>
+			<type value="attack"/>
+			<name value="attack_skill"/>
+			<ep-cost value="0"/>
+			<speed value="80"/>
+			<anim-speed value="90"/>
+			<animation path="../../../../../magitech/factions/tech/units/castle/models/castle.g3d"/>
+			<sound enabled="true" start-time="0">
+				<sound-file path="sounds/defense_tower_attack1.wav"/>
+				<sound-file path="sounds/defense_tower_attack2.wav"/>
+			</sound>
+			<attack-strenght value="120"/>
+			<attack-var value="50"/>
+			<attack-range value="12"/>
+			<attack-type value="piercing"/>
+			<attack-start-time value="0.3"/>
+			<attack-fields>
+				<field value="land"/>
+				<field value="air"/>
+			</attack-fields>
+			<projectile value="true">
+				<particle value="true" path="particle_proj.xml"/>
+				<sound enabled="true">
+					<sound-file path="../archer/sounds/arrow_hit1.wav"/>
+					<sound-file path="../archer/sounds/arrow_hit2.wav"/>
+				</sound>
+			</projectile>
+			<splash value="false"/>
+		</skill>
 
-  </skills>
+		<skill>
+			<type value="die" />
+			<name value="die_skill"/>
+			<ep-cost value="0" />
+			<speed value="300" />
+			<anim-speed value="300" />
+			<animation path="destruction_models/castle_destruction.g3d" />
+			<sound enabled="true" start-time="0">
+				<sound-file path="../barracks/sounds/tech_building_fall2.wav"/>
+			</sound>
+			<fade value="false"/>
+		</skill>
 
-  <!-- *** commands *** -->
-  <commands>
+	</skills>
 
-    <command>
-      <type value="produce"/>
-      <name value="produce_worker" tip="worker_info"/>
-      <image path="../worker/images/worker.bmp" />
-      <unit-requirements />
-      <upgrade-requirements />
-      <produce-skill value="produce_skill"/>
-      <produced-unit name="worker"/>
-    </command>
-	
-	<command>
-      <type value="stop"/>
-      <name value="attack_off"/>
-      <image path="images/defense_tower_attack_off.bmp"/>
-      <unit-requirements/>
-      <upgrade-requirements/>
-      <stop-skill value="stop_skill"/>
-    </command>
+	<!-- *** commands *** -->
+	<commands>
 
-    <command>
-      <type value="attack_stopped"/>
-      <name value="attack_on"/>
-      <image path="images/defense_tower_attack_on.bmp"/>
-      <unit-requirements/>
-      <upgrade-requirements/>
-      <attack-skill value="attack_skill"/>
-      <stop-skill value="stop_skill"/>
+		<command>
+			<type value="produce"/>
+			<name value="produce_workers" tip="produce_workers_info"/>
+			<image path="../worker/images/worker.bmp" />
+			<unit-requirements />
+			<upgrade-requirements />
+			<produce-skill value="produce_skill"/>
+			<produced-unit name="worker" number="2" />
+		</command>
 
-    </command>
+		<command>
+			<type value="stop"/>
+			<name value="attack_off"/>
+			<image path="images/defense_tower_attack_off.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<stop-skill value="stop_skill"/>
+		</command>
 
-  </commands>
+		<command>
+			<type value="attack_stopped"/>
+			<name value="attack_on"/>
+			<image path="images/defense_tower_attack_on.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<attack-skill value="attack_skill"/>
+			<stop-skill value="stop_skill"/>
+		</command>
+
+	</commands>
 </unit>
