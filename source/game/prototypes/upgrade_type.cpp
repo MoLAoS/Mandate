@@ -250,7 +250,8 @@ string UpgradeType::getDesc(const Faction *f) const {
 		for (int i=0; i < m_enhancements.size(); ++i) {
 			str += "\n" + lang.get("Affects") + ":";
 			for (int j=0; j < m_unitsAffected[i].size(); ++j) {
-				str += "\n" + m_unitsAffected[i][j];
+				str += (j == 0 ? " " : j == (m_unitsAffected[i].size() - 1) ? " & " : ", ");
+				str += lang.getFactionString(f->getType()->getName(), m_unitsAffected[i][j]);
 			}
 			m_enhancements[i].m_enhancement.getDesc(str, "\n");
 			if (!m_enhancements[i].m_costModifiers.empty()) {
@@ -264,6 +265,9 @@ string UpgradeType::getDesc(const Faction *f) const {
 				foreach_const (ResModifierMap, it, m_enhancements[i].m_storeModifiers) {
 					descResourceModifier(*it, str);
 				}
+			}
+			if (i != m_enhancements.size() - 1) {
+				str += "\n";
 			}
 		}
 	}

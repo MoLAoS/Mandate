@@ -177,10 +177,9 @@ ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f)
 	return ResourceAmount();
 }
 
-
 string ProducibleType::getReqDesc(const Faction *f) const {
 	stringstream ss;
-	ss << m_name;
+	ss << g_lang.getFactionString(f->getType()->getName(), m_name);
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}
