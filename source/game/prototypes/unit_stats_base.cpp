@@ -333,7 +333,11 @@ void formatModifier(string &str, const char *pre, const char* label, int value, 
 	Lang &lang = Lang::getInstance();
 
 	if (value) {
-		str += pre + lang.get(label) + ": " + intToStr(value);
+		str += pre + lang.get(label) + ": ";
+		if (value > 0) {
+			str += "+";
+		}
+		str += intToStr(value);
 	}
 
 	if (multiplier != 1) {
