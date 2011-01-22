@@ -26,7 +26,7 @@
 		
 		<enhancement> <!-- Give all 'warriors' (all units tagged as 'warrior') a small attack boost -->
 			<affects>
-				<tag name="warriors"/>
+				<tag name="warrior"/>
 			</affects>
 			<effects>
 				<static-modifiers>
