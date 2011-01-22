@@ -287,7 +287,7 @@ void ClientInterface::updateKeyframe(int frameCount) {
 
 void ClientInterface::updateSkillCycle(Unit *unit) {
 //	NETWORK_LOG( __FUNCTION__ );
-	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+	if (unit->isMoving()) {
 		updateMove(unit);
 	} else {
 		unit->updateSkillCycle(skillCycleTable->lookUp(unit).getSkillFrames());

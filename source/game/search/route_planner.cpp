@@ -636,7 +636,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 
 	// if arrived (where we wanted to go)
 	if (finalPos == unit->getPos()) {
-		unit->setCurrSkill(SkillClass::STOP);
+		unit->stop();
 		PF_LOG( "ARRIVED, at pos." );
 		PF_PATH_LOG( unit );
 		return TravelState::ARRIVED;
@@ -657,7 +657,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 
 	// if arrived (as close as we can get to it)
 	if (target == unit->getPos()) {
-		unit->setCurrSkill(SkillClass::STOP);
+		unit->stop();
 		PF_LOG( "ARRIVED, as close as possible." );
 		PF_PATH_LOG( unit );
 		return TravelState::ARRIVED;
@@ -740,7 +740,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	}
 	PF_LOG( "post hierarchical search failure, path invalid?" );
 	PF_PATH_LOG( unit );
-	unit->setCurrSkill(SkillClass::STOP);
+	unit->stop();
 	path.incBlockCount();
 	return TravelState::BLOCKED;
 }
@@ -793,7 +793,7 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 
 	// if at goal
 	if (goal(unit->getPos(), 0.f)) {
-		unit->setCurrSkill(SkillClass::STOP);
+		unit->stop();
 		PF_LOG( "ARRIVED, at goal." );
 		PF_PATH_LOG( unit );
 		return TravelState::ARRIVED;
@@ -867,7 +867,7 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 		PF_PATH_LOG( unit );
 		return TravelState::MOVING;
 	}
-	unit->setCurrSkill(SkillClass::STOP);
+	unit->stop();
 	PF_LOG( "post hierarchical search failure, path invalid?" );
 	PF_PATH_LOG( unit );
 	return TravelState::BLOCKED;
@@ -926,7 +926,7 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 	const Vec2i &target = computeNearestFreePos(unit, dest);
 	// if arrived (as close as we can get to it)
 	if (target == unit->getPos()) {
-		unit->setCurrSkill(SkillClass::STOP);
+		unit->stop();
 		return TravelState::ARRIVED;
 	}
 	unit->clearPath();
@@ -970,11 +970,11 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 			throw runtime_error("Something that shouldn't have happened, did happen :(");
 	}
 	if (path.empty()) {
-		unit->setCurrSkill(SkillClass::STOP);
+		unit->stop();
 		return TravelState::ARRIVED;
 	}
 	if (attemptMove(unit)) return TravelState::MOVING; // should always succeed (if local annotations were applied)
-	unit->setCurrSkill(SkillClass::STOP);
+	unit->stop();
 	path.incBlockCount();
 	return TravelState::BLOCKED;
 }
