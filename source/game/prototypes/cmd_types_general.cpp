@@ -369,6 +369,11 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		try { 
 			string producedUnitName = n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
 			m_producedUnits.push_back(ft->getUnitType(producedUnitName));
+			if (const XmlAttribute *attrib = n->getChild("produced-unit")->getAttribute("number", false)) {
+				m_producedNumbers.push_back(attrib->getIntValue());
+			} else {
+				m_producedNumbers.push_back(1);
+			}
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what ());
 			loadOk = false;
@@ -384,7 +389,12 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 					m_tipKeys[name] = prodNode->getRestrictedAttribute("tip");
 				} catch (runtime_error &e) {
 					m_tipKeys[name] = "";
-			}
+				}
+				if (const XmlAttribute *attrib = prodNode->getAttribute("number", false)) {
+					m_producedNumbers.push_back(attrib->getIntValue());
+				} else {
+					m_producedNumbers.push_back(1);
+				}
 			}
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what ());
@@ -438,6 +448,15 @@ string ProduceCommandType::getReqDesc(const Faction *f) const {
 	return res;
 }
 
+int ProduceCommandType::getProducedNumber(const UnitType *ut) const {
+	for (int i=0; i < m_producedUnits.size(); ++i) {
+		if (m_producedUnits[i] == ut) {
+			return m_producedNumbers[i];
+		}
+	}
+	throw runtime_error("UnitType not in produce command.");
+}
+
 /// 0: start, 1: produce, 2: finsh (ok), 3: cancel (could not place new unit)
 void ProduceCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
@@ -452,29 +471,31 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
-			Unit *produced = g_world.newUnit(Vec2i(0), prodType, unit->getFaction(),
-				g_world.getMap(), CardinalDir::NORTH);
-			if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
-				unit->cancelCurrCommand();
-				g_world.getUnitFactory().deleteUnit(unit);
-			} else {
-				unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
-				produced->create();
-				produced->born();
-				ScriptManager::onUnitCreated(produced);
-				g_simInterface.getStats()->produce(unit->getFactionIndex());
-				const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
-				if (ct) {
-					produced->giveCommand(g_world.newCommand(ct, CommandFlags(), unit->getMeetingPos()));
+			for (int i=0; i < getProducedNumber(prodType); ++i) {
+				Unit *produced = g_world.newUnit(Vec2i(0), prodType, unit->getFaction(),
+													g_world.getMap(), CardinalDir::NORTH);
+				if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
+					unit->cancelCurrCommand();
+					g_world.getUnitFactory().deleteUnit(unit);
+				} else {
+					unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
+					produced->create();
+					produced->born();
+					ScriptManager::onUnitCreated(produced);
+					g_simInterface.getStats()->produce(unit->getFactionIndex());
+					const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
+					if (ct) {
+						produced->giveCommand(g_world.newCommand(ct, CommandFlags(), unit->getMeetingPos()));
+					}
+					unit->finishCommand();
+					if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+						RUNTIME_CHECK(!unit->isCarried());
+						g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+							g_gameState.getGameCamera()->getPos());
+					}
 				}
-				unit->finishCommand();
-				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-					RUNTIME_CHECK(!unit->isCarried());
-					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
-						g_gameState.getGameCamera()->getPos());
-				}
+				unit->setCurrSkill(SkillClass::STOP);
 			}
-			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
 }

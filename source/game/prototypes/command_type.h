@@ -469,6 +469,7 @@ private:
 	const ProduceSkillType* m_produceSkillType;
 //	const UnitType *m_producedUnit;
 	vector<const UnitType*> m_producedUnits;
+	vector<int>             m_producedNumbers;
 	map<string, string>		m_tipKeys;
 	SoundContainer			m_finishedSounds;
 
@@ -480,6 +481,8 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 	
+	int getProducedNumber(const UnitType*) const;
+
 	// get
 	virtual int getProducedCount() const	{return m_producedUnits.size();}
 	virtual const ProducibleType* getProduced(int i) const;
