@@ -281,6 +281,7 @@ const EnhancementType* UpgradeType::getEnhancement(const UnitType *ut) const {
 	}
 	return 0;
 }
+
 Modifier UpgradeType::getCostModifier(const UnitType *ut, const ResourceType *rt) const {
 	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
 	if (uit != m_enhancementMap.end()) {
@@ -291,6 +292,7 @@ Modifier UpgradeType::getCostModifier(const UnitType *ut, const ResourceType *rt
 	}
 	return Modifier(0, 1);
 }
+
 Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *rt) const {
 	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
 	if (uit != m_enhancementMap.end()) {
@@ -301,6 +303,5 @@ Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *r
 	}
 	return Modifier(0, 1);
 }
-
 
 }}//end namespace

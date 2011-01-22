@@ -178,15 +178,23 @@ ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f)
 }
 
 string ProducibleType::getReqDesc(const Faction *f) const {
+	Lang &lang = g_lang;
 	stringstream ss;
-	ss << g_lang.getFactionString(f->getType()->getName(), m_name);
+	ss << lang.getFactionString(f->getType()->getName(), m_name);
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}
-	ss << " " << Lang::getInstance().get("Reqs") << ":\n";
+	ss << " " << lang.get("Reqs") << ":\n";
 	for (int i=0; i < getCostCount(); ++i) {
 		ResourceAmount r = getCost(i, f);
-		ss << r.getType()->getName() << ": " << r.getAmount() << endl;
+		string resName = lang.getFactionString(f->getType()->getName(), r.getType()->getName());
+		if (resName == r.getType()->getName()) {
+			resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
+			}
+		}
+		ss << resName << ": " << r.getAmount() << endl;
 	}
 	foreach_const (UnitReqs, it, unitReqs) {
 		ss << (*it)->getName() << endl;

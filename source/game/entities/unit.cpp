@@ -1840,6 +1840,7 @@ string Unit::getShortDesc() const {
 }
 
 string Unit::getLongDesc() const {
+	Lang &lang = g_lang;
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
@@ -1847,50 +1848,56 @@ string Unit::getLongDesc() const {
 	int sightBonus = getSight() - type->getSight();
 
 	// armor
-	ss << endl << g_lang.get("Armor") << ": " << type->getArmor();
+	ss << endl << lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
 		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
 	}
-	ss << " (" << type->getArmourType()->getName() << ")";
+	string armourName = lang.getTechString(type->getArmourType()->getName());
+	if (armourName == type->getArmourType()->getName()) {
+		armourName = formatString(armourName);
+	}
+	ss << " (" << armourName << ")";
 
 	// sight
-	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
+	ss << endl << lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
 	if (type->isDetector()) {
-		ss << " (" << g_lang.get("Detector") << ")";
+		ss << " (" << lang.get("Detector") << ")";
 	}
 
 	// kills
 	const Level *nextLevel = getNextLevel();
 	if (kills > 0 || nextLevel) {
-		ss << endl << g_lang.get("Kills") << ": " << kills;
+		ss << endl << lang.get("Kills") << ": " << kills;
 		if (nextLevel) {
-			ss << " (" << nextLevel->getName() << ": " << nextLevel->getKills() << ")";
+			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
+			if (levelName == nextLevel->getName()) {
+				levelName = formatString(levelName);
+			}
+			ss << " (" << levelName << ": " << nextLevel->getKills() << ")";
 		}
 	}
 
 	// resource load
 	if (loadCount) {
-		string loadName = loadType->getName();
-		string resName = g_lang.getTechString(loadName);
-		if (resName == loadName) {
-			resName = formatString(loadName);
+		string resName = lang.getTechString(loadType->getName());
+		if (resName == loadType->getName()) {
+			resName = formatString(resName);
 		}
-		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << resName;
+		ss << endl << lang.get("Load") << ": " << loadCount << "  " << resName;
 	}
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
 		const ResourceAmount r = getType()->getCost(i, getFaction());
 		if (r.getType()->getClass() == ResourceClass::CONSUMABLE) {
-			string storedName = r.getType()->getName();
-			string resName = g_lang.getTechString(storedName);
-			if (resName == storedName) {
-				resName = formatString(storedName);
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
 			}
-			ss << endl << (r.getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
+			ss << endl << (r.getAmount() < 0 ? lang.get("Produce") : lang.get("Consume"))
 				<< ": " << abs(r.getAmount()) << " " << resName;
 		}
 	}
@@ -1898,12 +1905,11 @@ string Unit::getLongDesc() const {
 	if (type->getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
 			ResourceAmount r = type->getStoredResource(i, getFaction());
-			string storedName = r.getType()->getName();
-			string resName = g_lang.getTechString(storedName);
-			if (resName == storedName) {
-				resName = formatString(storedName);
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
 			}
-			ss << endl << g_lang.get("Store") << ": ";
+			ss << endl << lang.get("Store") << ": ";
 			ss << r.getAmount() << " " << resName;
 		}
 	}
