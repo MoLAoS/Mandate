@@ -217,6 +217,31 @@ void UpgradeType::doChecksum(Checksum &checksum) const {
 	}
 }
 
+void descResourceModifier(pair<const ResourceType*, Modifier> i_mod, string &io_res) {
+	string resName = g_lang.getTechString(i_mod.first->getName());
+	if (resName == i_mod.first->getName()) {
+		resName = formatString(resName);
+	}
+	io_res += "\n" + resName + " ";
+	const int add = i_mod.second.getAddition();
+	if (add) {
+		if (add > 0) {
+			io_res += "+";
+		}
+		io_res += Conversion::toStr(add);
+	}
+	const fixed mult = i_mod.second.getMultiplier();
+	if (mult != 1) {
+		if (add) {
+			io_res += ", ";
+		}
+		if (mult > 1) {
+			io_res += "+";
+		}
+		io_res += intToStr(((mult - 1) * 100).intp()) + "%";
+	}
+}
+
 string UpgradeType::getDesc(const Faction *f) const {
 	Lang &lang = Lang::getInstance();
 	string str = getReqDesc(f);
@@ -228,6 +253,18 @@ string UpgradeType::getDesc(const Faction *f) const {
 				str += "\n" + m_unitsAffected[i][j];
 			}
 			m_enhancements[i].m_enhancement.getDesc(str, "\n");
+			if (!m_enhancements[i].m_costModifiers.empty()) {
+				str += "\n" + lang.get("CostModifiers") + ":";
+				foreach_const (ResModifierMap, it, m_enhancements[i].m_costModifiers) {
+					descResourceModifier(*it, str);
+				}
+			}
+			if (!m_enhancements[i].m_storeModifiers.empty()) {
+				str += "\n" + lang.get("StoreModifiers") + ":";
+				foreach_const (ResModifierMap, it, m_enhancements[i].m_storeModifiers) {
+					descResourceModifier(*it, str);
+				}
+			}
 		}
 	}
 	return str;
