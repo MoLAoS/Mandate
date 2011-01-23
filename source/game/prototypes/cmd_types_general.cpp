@@ -249,7 +249,7 @@ void MoveCommandType::update(Unit *unit) const {
 		pos = command->getPos();
 	}
 
-	if (unit->travel(pos, m_moveSkillType)) {
+	if (unit->travel(pos, m_moveSkillType) == TravelState::ARRIVED) {
 		unit->finishCommand();
 	}
 
@@ -717,23 +717,27 @@ CommandResult UpgradeCommandType::check(const Unit *unit, const Command &command
 // =====================================================
 
 MorphCommandType::MorphCommandType()
-		: CommandType("Morph", Clicks::ONE)
+		: CommandType("Morph", Clicks::ONE, true)
+		, m_morphSkillType(0)
+		, m_discount(0), m_refund(0) {
+}
+
+MorphCommandType::MorphCommandType(const char* name)
+		: CommandType(name, Clicks::ONE, true)
 		, m_morphSkillType(0)
 		, m_discount(0), m_refund(0) {
 }
 
 bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
 	bool loadOk = CommandType::load(n, dir, tt, ft);
-	// morph skill
-	try {
+	try { // morph skill
 		string skillName = n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
 		m_morphSkillType = static_cast<const MorphSkillType*>(unitType->getSkillType(skillName, SkillClass::MORPH));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	// morph unit(s)
-	if (n->getOptionalChild("morph-unit")) {
+	if (n->getOptionalChild("morph-unit")) { // morph unit(s)
 		try {
 			string morphUnitName = n->getChild("morph-unit")->getAttribute("name")->getRestrictedValue();
 			m_morphUnits.push_back(ft->getUnitType(morphUnitName));
@@ -759,8 +763,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			loadOk = false;
 		}
 	}
-	// discount
-	try { 
+	try { // discount/refund
 		const XmlNode *cmNode = n->getOptionalChild("cost-modifier");
 		if (cmNode) {
 			const XmlAttribute *a = cmNode->getAttribute("discount", false);
@@ -814,6 +817,7 @@ void MorphCommandType::doChecksum(Checksum &checksum) const {
 		checksum.add((*it)->getName());
 	}
 	checksum.add(m_discount);
+	checksum.add(m_refund);
 }
 
 void MorphCommandType::getDesc(string &str, const Unit *unit) const {
@@ -843,7 +847,6 @@ void MorphCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	const Map *map = g_world.getMap();
-
 	const UnitType *morphToUnit = static_cast<const UnitType*>(command->getProdType());
 
 	if (unit->getCurrSkill() != m_morphSkillType) {
@@ -886,6 +889,88 @@ void MorphCommandType::update(Unit *unit) const {
 				}
 			}
 			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
+}
+
+// ===============================
+//  class TransformCommandType
+// ===============================
+
+TransformCommandType::TransformCommandType()
+		: MorphCommandType("Transform")
+		, m_moveSkillType(0)
+		, m_position(-1) {
+}
+
+bool TransformCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool loadOk = MorphCommandType::load(n, dir, tt, ft);
+	try {
+		const XmlNode *skillNode = n->getChild("move-skill");
+		string skillName = skillNode->getAttribute("value")->getRestrictedValue();
+		m_moveSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
+		m_position = n->getChildVec2iValue("position");
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void TransformCommandType::doChecksum(Checksum &checksum) const {
+	MorphCommandType::doChecksum(checksum);
+	checksum.add(m_moveSkillType->getName()); // name or id ?
+	checksum.add(m_position);
+}
+
+void TransformCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	const Map *map = g_world.getMap();
+	const UnitType *morphToUnit = static_cast<const UnitType*>(command->getProdType());
+	RUNTIME_CHECK(m_moveSkillType != 0);
+
+	if (unit->getCurrSkill() == m_morphSkillType) { // if completed one morph skill cycle
+		// check space
+		Field mf = morphToUnit->getField();
+		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphToUnit->getSize(), mf, unit)) {
+			int biggerSize = std::max(unit->getSize(), morphToUnit->getSize());
+			// transform() will morph and then add the new build-self command
+			if (unit->transform(this, morphToUnit)) { // do it!
+				if (g_userInterface.isSelected(unit)) {
+					g_userInterface.onSelectionChanged();
+				}
+				unit->getFaction()->checkAdvanceSubfaction(morphToUnit, true);
+				// obstacle added, update annotated maps
+				g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
+				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					RUNTIME_CHECK(!unit->isCarried());
+					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+						g_gameState.getGameCamera()->getPos());
+				}
+			} else {
+				unit->cancelCurrCommand();
+				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+					g_console.addStdMessage("InvalidPosition");
+				}
+				unit->setCurrSkill(SkillClass::STOP);
+			}
+		} else {
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				g_console.addStdMessage("InvalidPosition");
+			}
+			unit->cancelCurrCommand();
+		}
+
+	} else {
+		if (unit->travel(command->getPos(), m_moveSkillType) == TravelState::ARRIVED) {
+			if (unit->getPos() != command->getPos()) {
+				// blocked ?
+				unit->setCurrSkill(SkillClass::STOP);
+			} else {
+				unit->setCurrSkill(m_morphSkillType); // set morph for one cycle
+			}
 		}
 	}
 }
@@ -1016,7 +1101,7 @@ void LoadCommandType::update(Unit *unit) const {
 	}
 
 	Vec2i pos = closest->getCenteredPos(); // else move toward closest
-	if (unit->travel(pos, moveSkillType)) {
+	if (unit->travel(pos, moveSkillType) == TravelState::ARRIVED) {
 		//unit->finishCommand(); was in blocked which might be better to use since it should be within 
 		// load distance by the time it gets to arrived state anyway? - hailstone 21Dec2010
 		if (unit->getPath()->isBlocked() && !command->getUnit()) {
@@ -1099,7 +1184,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		return;
 	}
 	if (command->getPos() != Command::invalidPos) {
-		if (unit->travel(command->getPos(), moveSkillType)) {
+		if (unit->travel(command->getPos(), moveSkillType) == TravelState::ARRIVED) {
 			command->setPos(Command::invalidPos);
 		}
 	} else {
@@ -1144,7 +1229,7 @@ void BeLoadedCommandType::update(Unit *unit) const {
 		return;
 	}
 	Vec2i targetPos = command->getUnit()->getCenteredPos();
-	if (unit->travel(targetPos, moveSkillType)) {
+	if (unit->travel(targetPos, moveSkillType) == TravelState::ARRIVED) {
 		command->setPos(Command::invalidPos);
 	}
 }
@@ -1200,6 +1285,37 @@ void CastSpellCommandType::update(Unit *unit) const {
 	if (!m_cycle) {
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
+	}
+}
+
+// ===============================
+//  class BuildSelfCommandType
+// ===============================
+
+
+bool BuildSelfCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool ok = CommandType::load(n, dir, tt, ft);
+	try {
+		string bsSkillName = n->getChildRestrictedValue("build-self-skill");
+		const SkillType *st = unitType->getSkillType(bsSkillName, SkillClass::BUILD_SELF);
+		m_buildSelfSkill = static_cast<const BuildSelfSkillType*>(st);
+	} catch (runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
+		return false;
+	}
+	return ok;
+}
+
+void BuildSelfCommandType::update(Unit *unit) const {
+	if (unit->getCurrSkill() == m_buildSelfSkill) {
+		// add hp
+		if (unit->repair()) {
+			ScriptManager::onUnitCreated(unit);
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+		}
+	} else {
+		unit->setCurrSkill(m_buildSelfSkill);
 	}
 }
 

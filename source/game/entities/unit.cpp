@@ -1168,7 +1168,7 @@ void Unit::deCloak() {
   * @param moveSkill the MoveSkillType to apply for the move
   * @return true when completed (maxed out BLOCKED, IMPOSSIBLE or ARRIVED)
   */
-bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
+TravelState Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 	assert(moveSkill);
 
@@ -1178,23 +1178,23 @@ bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 			face(getNextPos());
 			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
 			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
-			return false;
+			return TravelState::MOVING;
 
 		case TravelState::BLOCKED:
 			setCurrSkill(SkillClass::STOP);
 			if (getPath()->isBlocked()) { //&& !command->getUnit()) {?? from MoveCommandType and LoadCommandType
 				clearPath();
-				return true;
+				return TravelState::BLOCKED;
 			}
-			return false;
+			return TravelState::BLOCKED;
 
 		case TravelState::IMPOSSIBLE:
 			setCurrSkill(SkillClass::STOP);
 			cancelCurrCommand(); // from AttackCommandType, is this right, maybe dependant flag?? - hailstone 21Dec2010
- 			return true;
+ 			return TravelState::IMPOSSIBLE;
 
 		case TravelState::ARRIVED:
-			return true;
+			return TravelState::ARRIVED;
 
 		default:
 			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
@@ -2130,7 +2130,7 @@ void Unit::incKills() {
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
-bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
+bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, bool reprocessCommands) {
 	Field newField = ut->getField();
 	CloakClass oldCloakClass = type->getCloakClass();
 	if (map->areFreeCellsOrHasUnit(pos, ut->getSize(), newField, this)) {
@@ -2149,36 +2149,52 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 			cloak();
 		}
 
-		// reprocess commands
-		Commands newCommands;
-		Commands::const_iterator i;
+		if (reprocessCommands) {
+			// reprocess commands
+			Commands newCommands;
+			Commands::const_iterator i;
 
-		// add current command, which should be the morph command
-		assert(commands.size() > 0 && commands.front()->getType()->getClass() == CommandClass::MORPH);
-		newCommands.push_back(commands.front());
-		i = commands.begin();
-		++i;
+			// add current command, which should be the morph command
+			assert(commands.size() > 0 
+				&& (commands.front()->getType()->getClass() == CommandClass::MORPH
+				|| commands.front()->getType()->getClass() == CommandClass::TRANSFORM));
+			newCommands.push_back(commands.front());
+			i = commands.begin();
+			++i;
 
-		// add (any) remaining if possible
-		for (; i != commands.end(); ++i) {
-			// first see if the new unit type has a command by the same name
-			const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
-			// if not, lets see if we can find any command of the same class
-			if (!newCmdType) {
-				newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+			// add (any) remaining if possible
+			for (; i != commands.end(); ++i) {
+				// first see if the new unit type has a command by the same name
+				const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
+				// if not, lets see if we can find any command of the same class
+				if (!newCmdType) {
+					newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+				}
+				// if still not found, we drop the comand, otherwise, we add it to the new list
+				if (newCmdType) {
+					(*i)->setType(newCmdType);
+					newCommands.push_back(*i);
+				}
 			}
-			// if still not found, we drop the comand, otherwise, we add it to the new list
-			if (newCmdType) {
-				(*i)->setType(newCmdType);
-				newCommands.push_back(*i);
-			}
+			commands = newCommands;
 		}
-		commands = newCommands;
 		StateChanged(this);
 		return true;
 	} else {
 		return false;
 	}
+}
+
+bool Unit::transform(const TransformCommandType *tct, const UnitType *ut) {
+	if (morph(tct, ut, false)) {
+		commands.clear();
+		hp = 1;
+		RUNTIME_CHECK(type->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
+		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CommandClass::BUILD_SELF), CommandFlags()));
+		setCurrSkill(SkillClass::BUILD_SELF);
+		return true;
+	}
+	return false;
 }
 
 // ==================== PRIVATE ====================

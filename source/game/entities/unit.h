@@ -423,7 +423,9 @@ public:
 	bool isAlive() const				{return hp;}
 	bool isDamaged() const				{return hp < getMaxHp();}
 	bool isOperative() const			{return isAlive() && isBuilt();}
-	bool isBeingBuilt() const			{return currSkill->getClass() == SkillClass::BE_BUILT;}
+	bool isBeingBuilt() const			{
+		return currSkill->getClass() == SkillClass::BE_BUILT || currSkill->getClass() == SkillClass::BUILD_SELF;
+	}
 	bool isBuilt() const				{return !isBeingBuilt();}
 	bool isPutrefacting() const			{return deadCount;}
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
@@ -549,7 +551,8 @@ public:
 	void applyUpgrade(const UpgradeType *upgradeType);
 	void computeTotalUpgrade();
 	void incKills();
-	bool morph(const MorphCommandType *mct, const UnitType *ut = 0);
+	bool morph(const MorphCommandType *mct, const UnitType *ut = 0, bool reprocessCommands = true);
+	bool transform(const TransformCommandType *tct, const UnitType *ut = 0);
 	CommandResult checkCommand(const Command &command) const;
 	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);
@@ -564,7 +567,7 @@ public:
 
 	void cloak();
 	void deCloak();
-	bool travel(const Vec2i &pos, const MoveSkillType *moveSkill);
+	TravelState travel(const Vec2i &pos, const MoveSkillType *moveSkill);
 
 private:
 	float computeHeight(const Vec2i &pos) const;

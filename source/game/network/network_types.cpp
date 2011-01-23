@@ -141,9 +141,8 @@ Command *NetworkCommand::toCommand() const {
 		assert((g_simInterface.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
 			|| (g_simInterface.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
 			|| (g_simInterface.isUnitType(prodType)
-				&& (ct->getClass() == CommandClass::PRODUCE
-					|| ct->getClass() == CommandClass::MORPH
-					|| ct->getClass() == CommandClass::BUILD)));
+				&& (ct->getClass() == CommandClass::PRODUCE || ct->getClass() == CommandClass::MORPH
+					|| ct->getClass() == CommandClass::BUILD || ct->getClass() == CommandClass::TRANSFORM)));
 	}
 
 	// create command

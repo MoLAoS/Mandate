@@ -396,7 +396,6 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 
-
 	try { 
 		const XmlNode *tagsNode = parametersNode->getChild("tags", 0, false);
 		if (tagsNode) {

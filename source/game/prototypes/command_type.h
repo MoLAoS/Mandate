@@ -581,14 +581,21 @@ public:
 //  class MorphCommandType
 // ===============================
 
-class MorphCommandType: public CommandType {
-private:
+class MorphCommandType : public CommandType {
+protected:
 	const MorphSkillType*	m_morphSkillType;
 	vector<const UnitType*> m_morphUnits;
 	map<string, string>		m_tipKeys;
 	int						m_discount;
 	int						m_refund;
 	SoundContainer			m_finishedSounds;
+
+protected:
+	MorphCommandType(const char* name);
+
+private:
+	void updateNormal(Unit *unit) const;
+	//void updatePlaced(Unit *unit) const;
 
 public:
 	MorphCommandType();
@@ -601,7 +608,7 @@ public:
 	// get
 	virtual int getProducedCount() const	{return m_morphUnits.size();}
 	virtual const ProducibleType* getProduced(int i) const;
-	
+
 	int getMorphUnitCount() const					{return m_morphUnits.size();}
 	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
 
@@ -619,6 +626,29 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MORPH; }
+};
+
+// ===============================
+//  class TransformCommandType
+// ===============================
+
+class TransformCommandType : public MorphCommandType {
+protected:
+	const MoveSkillType*	m_moveSkillType;
+	Vec2i                   m_position; // cell offset from 'buildPos' to go to before morphing
+
+public:
+	TransformCommandType();
+
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+
+	virtual void update(Unit *unit) const;
+
+	const MoveSkillType *getMoveSkillType() const {return m_moveSkillType;}
+	virtual CommandClass getClass() const         { return typeClass(); }
+
+	static CommandClass typeClass()               { return CommandClass::TRANSFORM; }
 };
 
 // ===============================
@@ -786,6 +816,23 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::CAST_SPELL; }
+};
+
+// ===============================
+//  class BuildSelfCommandType
+// ===============================
+
+class BuildSelfCommandType : public CommandType {
+private:
+	const BuildSelfSkillType *m_buildSelfSkill;
+
+public:
+	BuildSelfCommandType() : CommandType("build-self", Clicks::TWO), m_buildSelfSkill(0) {}
+	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void update(Unit *unit) const;
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::BUILD_SELF; }
 };
 
 // ===============================
