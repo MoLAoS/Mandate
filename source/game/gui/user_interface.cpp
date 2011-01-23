@@ -211,8 +211,9 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 // ==================== get ====================
 
 const UnitType *UserInterface::getBuilding() const {
-	assert(activeCommandType);
-	assert(m_selectingSecond && activeCommandType->getClass() == CommandClass::BUILD);
+	RUNTIME_CHECK(activeCommandType);
+	RUNTIME_CHECK(activeCommandType->getClass() == CommandClass::BUILD
+		|| activeCommandType->getClass() == CommandClass::TRANSFORM);
 	return choosenBuildingType;
 }
 
@@ -220,7 +221,8 @@ const UnitType *UserInterface::getBuilding() const {
 
 bool UserInterface::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType
-		&& activeCommandType->getClass() == CommandClass::BUILD;
+		&& (activeCommandType->getClass() == CommandClass::BUILD 
+		|| activeCommandType->getClass() == CommandClass::TRANSFORM);
 }
 
 // ==================== reset state ====================
@@ -678,17 +680,23 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	// give orders to the units of this faction
 	if (!m_selectingSecond) {
 		if (selection.isUniform()) {
-			result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit);
+			if (choosenBuildingType) {
+				result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit, choosenBuildingType);
+			} else {
+				result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit);
+			}
 		} else {
 			result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		if (activeCommandClass == CommandClass::BUILD) {
+		if (activeCommandClass == CommandClass::BUILD
+		|| activeCommandClass == CommandClass::MORPH) {
 			// selecting building
 			assert(isPlacingBuilding());
 
 			// if this is a drag & drop then start dragging and wait for mouse up
-			if (choosenBuildingType->isMultiBuild() && !dragging) {
+			if (activeCommandClass == CommandClass::BUILD
+			&& choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
 				dragStartPos = posObjWorld;
 				return;
@@ -849,11 +857,20 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				assert(selection.isUniform());
 				m_selectedFacing = CardinalDir::NORTH;
 				m_selectingSecond = true;
-			} else if (ct->getClicks() == Clicks::ONE) {
+			} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
+			&& activeCommandType->getProducedCount() == 1) {
+				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
+				assert(choosenBuildingType != NULL);
+				selectingPos = true;
+				g_program.setMouseCursorIcon(activeCommandType->getImage());
+				m_minimap->setLeftClickOrder(true);
+				activePos = posDisplay;
+			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
+			|| (!activeCommandType && ct->getClicks() == Clicks::ONE)) {
 				invalidatePosObjWorld();
 				giveOneClickOrders();
 			} else {
-				if (ct->getClass() == CommandClass::MORPH || ct->getClass() == CommandClass::PRODUCE) {
+				if (activeCommandClass == CommandClass::PRODUCE) {
 					assert(selection.isUniform());
 					m_selectingSecond = true;
 				} else {
