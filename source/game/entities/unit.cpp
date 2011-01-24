@@ -2130,13 +2130,14 @@ void Unit::incKills() {
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
-bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, bool reprocessCommands) {
+bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, bool reprocessCommands) {
 	Field newField = ut->getField();
 	CloakClass oldCloakClass = type->getCloakClass();
-	if (map->areFreeCellsOrHasUnit(pos, ut->getSize(), newField, this)) {
+	if (map->areFreeCellsOrHasUnit(pos + offset, ut->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = ut;
+		pos += offset;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->giveRefund(ut, mct->getRefund());
@@ -2185,10 +2186,11 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, bool reprocess
 	}
 }
 
-bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, CardinalDir facing) {
-	RUNTIME_CHECK(type->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
-	if (morph(tct, ut, false)) {
-		m_facing = facing;
+bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing) {
+	RUNTIME_CHECK(ut->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
+	Vec2i offset = pos - this->pos;
+	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
+	if (morph(tct, ut, offset, false)) {
 		rotation = facing * 90.f;
 		hp = 1;
 		commands.clear();

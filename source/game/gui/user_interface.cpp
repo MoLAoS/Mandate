@@ -593,7 +593,9 @@ void UserInterface::hotKey(UserCommand cmd) {
 		break;
 
 	case ucRotate:
-		m_selectedFacing = enum_cast<CardinalDir>((m_selectedFacing + 1) % CardinalDir::COUNT);
+		if (isPlacingBuilding()) {
+			m_selectedFacing = CardinalDir((m_selectedFacing + 1) % CardinalDir::COUNT);
+		}
 		break;
 
 	case ucLuaConsole:
@@ -681,9 +683,11 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	if (!m_selectingSecond) {
 		if (selection.isUniform()) {
 			if (choosenBuildingType) {
-				result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit, choosenBuildingType);
+				result = commander->tryGiveCommand(selection, flags, activeCommandType,
+					CommandClass::NULL_COMMAND, targetPos, targetUnit, choosenBuildingType, m_selectedFacing);
 			} else {
-				result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit);
+				result = commander->tryGiveCommand(selection, flags, activeCommandType,
+					CommandClass::NULL_COMMAND, targetPos, targetUnit);
 			}
 		} else {
 			result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass, targetPos, targetUnit);

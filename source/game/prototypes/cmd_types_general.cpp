@@ -927,17 +927,21 @@ void TransformCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	const Map *map = g_world.getMap();
+	Map *map = g_world.getMap();
 	const UnitType *morphToUnit = static_cast<const UnitType*>(command->getProdType());
 	RUNTIME_CHECK(m_moveSkillType != 0);
+
+	Vec2i offset = rotateCellOffset(m_position, morphToUnit->getSize(), command->getFacing());
+	Vec2i targetPos = command->getPos() + offset; // pos we need to get to
 
 	if (unit->getCurrSkill() == m_morphSkillType) { // if completed one morph skill cycle
 		// check space
 		Field mf = morphToUnit->getField();
-		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphToUnit->getSize(), mf, unit)) {
+		if (map->areFreeCellsOrHasUnit(command->getPos(), morphToUnit->getSize(), mf, unit)) {
 			int biggerSize = std::max(unit->getSize(), morphToUnit->getSize());
 			// transform() will morph and then add the new build-self command
-			if (unit->transform(this, morphToUnit, command->getFacing())) { // do it!
+			if (unit->transform(this, morphToUnit, command->getPos(), command->getFacing())) { // do it!
+				map->prepareTerrain(unit);
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();
 				}
