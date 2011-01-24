@@ -613,27 +613,31 @@ bool UnitType::isOfClass(UnitClass uc) const{
 	return false;
 }
 
-bool UnitType::getCellMapCell(Vec2i pos, CardinalDir facing) const {
-	assert(m_cellMap);
-	Vec2i tPos;
+Vec2i rotateCellOffset(const Vec2i &offset, const int unitSize, const CardinalDir facing) {
+	Vec2i result;
 	switch (facing) {
 		case CardinalDir::NORTH:
-			tPos = pos;
+			result = offset;
 			break;
 		case CardinalDir::EAST:
-			tPos.y = pos.x;
-			tPos.x = size - pos.y - 1;
+			result.y = offset.x;
+			result.x = unitSize - offset.y - 1;
 			break;
 		case CardinalDir::SOUTH:
-			tPos.x = size - pos.x - 1;
-			tPos.y = size - pos.y - 1;
+			result.x = unitSize - offset.x - 1;
+			result.y = unitSize - offset.y - 1;
 			break;
 		case CardinalDir::WEST:
-			tPos.x = pos.y;
-			tPos.y = size - pos.x - 1;
+			result.x = offset.y;
+			result.y = unitSize - offset.x - 1;
 			break;
 	}
-	return m_cellMap->getInfluence(tPos);
+	return result;
+}
+
+bool UnitType::getCellMapCell(Vec2i pos, CardinalDir facing) const {
+	RUNTIME_CHECK(m_cellMap != 0);
+	return m_cellMap->getInfluence(rotateCellOffset(pos, size, facing));
 }
 
 // ==================== PRIVATE ====================

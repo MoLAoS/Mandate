@@ -2185,11 +2185,13 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, bool reprocess
 	}
 }
 
-bool Unit::transform(const TransformCommandType *tct, const UnitType *ut) {
+bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, CardinalDir facing) {
+	RUNTIME_CHECK(type->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
 	if (morph(tct, ut, false)) {
-		commands.clear();
+		m_facing = facing;
+		rotation = facing * 90.f;
 		hp = 1;
-		RUNTIME_CHECK(type->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
+		commands.clear();
 		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CommandClass::BUILD_SELF), CommandFlags()));
 		setCurrSkill(SkillClass::BUILD_SELF);
 		return true;

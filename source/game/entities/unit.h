@@ -551,8 +551,8 @@ public:
 	void applyUpgrade(const UpgradeType *upgradeType);
 	void computeTotalUpgrade();
 	void incKills();
-	bool morph(const MorphCommandType *mct, const UnitType *ut = 0, bool reprocessCommands = true);
-	bool transform(const TransformCommandType *tct, const UnitType *ut = 0);
+	bool morph(const MorphCommandType *mct, const UnitType *ut, bool reprocessCommands = true);
+	bool transform(const TransformCommandType *tct, const UnitType *ut, CardinalDir facing);
 	CommandResult checkCommand(const Command &command) const;
 	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);

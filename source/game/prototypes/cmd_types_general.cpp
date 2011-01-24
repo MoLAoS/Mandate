@@ -937,7 +937,7 @@ void TransformCommandType::update(Unit *unit) const {
 		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphToUnit->getSize(), mf, unit)) {
 			int biggerSize = std::max(unit->getSize(), morphToUnit->getSize());
 			// transform() will morph and then add the new build-self command
-			if (unit->transform(this, morphToUnit)) { // do it!
+			if (unit->transform(this, morphToUnit, command->getFacing())) { // do it!
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();
 				}
@@ -964,8 +964,10 @@ void TransformCommandType::update(Unit *unit) const {
 		}
 
 	} else {
-		if (unit->travel(command->getPos(), m_moveSkillType) == TravelState::ARRIVED) {
-			if (unit->getPos() != command->getPos()) {
+		Vec2i offset = rotateCellOffset(m_position, morphToUnit->getSize(), command->getFacing());
+		Vec2i targetPos = command->getPos() + offset;
+		if (unit->travel(targetPos, m_moveSkillType) == TravelState::ARRIVED) {
+			if (unit->getPos() != targetPos) {
 				// blocked ?
 				unit->setCurrSkill(SkillClass::STOP);
 			} else {

@@ -54,6 +54,9 @@ public:
 	int getKills() const			{return kills;}
 };
 
+Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const CardinalDir facing);
+
+
 // ===============================
 // 	class UnitType
 //
