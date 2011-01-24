@@ -179,6 +179,19 @@
 		</skill>
 
 		<skill>
+			<type value="morph"/>
+			<name value="morph_skill"/>
+			<ep-cost value="0"/>
+			<speed value="20"/>
+			<anim-speed value="100"/>
+			<animation path="models/worker_building.g3d"/>
+			<sound enabled="true" start-time="0.5">
+				<sound-file path="sounds/worker_build1.wav"/>
+				<sound-file path="sounds/worker_build2.wav"/>
+			</sound>
+		</skill>
+		
+		<skill>
 			<type value="die"/>
 			<name value="die_skill"/>
 			<ep-cost value="0"/>
@@ -302,6 +315,22 @@
 				<unit name="barracks"/>
 				<unit name="castle"/>
 			</repaired-units>
+		</command>
+		
+		<command>
+			<type value="transform"/>
+			<name value="become_farm" tip="farm_info"/>
+			<image path="../../../../../magitech/factions/tech/units/farm/images/farm.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<morph-skill value="morph_skill"/>
+			<move-skill value="move_skill"/>
+			<position x="0" y="0"/> <!-- position 'offset' from 'target' pos to go to -->
+			<rotation value="0" /> <!-- rotation to assume (in degrees, 0 == 'north') when in place -->
+			<morph-units>
+				<morph-unit name="farm"/>
+				<morph-unit name="defense_tower"/>
+			</morph-units>
 		</command>
 
 	</commands>
