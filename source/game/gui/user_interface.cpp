@@ -236,6 +236,7 @@ void UserInterface::resetState() {
 	activeCommandType = 0;
 	dragging = false;
 	needSelectionUpdate = false;
+	choosenBuildingType = 0;
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
