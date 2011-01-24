@@ -123,9 +123,22 @@ void GameState::load() {
 	const string &techName = gameSettings.getTechPath();
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
-
 	const string &thisFactionName = gameSettings.getFactionTypeName(gameSettings.getThisFactionIndex());
-	g_logger.getProgramLog().setupLoadingScreen(techName + "/factions/" + thisFactionName);
+
+	// determine loading screen settings:
+	// 1. check sceneraio if applicable
+	// 2. check faction
+	// 3. check tech
+	// 4. use defaults
+	ProgramLog &log = g_logger.getProgramLog();
+
+	if (!scenarioName.empty() 
+		&& log.setupLoadingScreen(scenarioPath)) {
+	} else if (log.setupLoadingScreen(techName + "/factions/" + thisFactionName)) {
+	} else if (log.setupLoadingScreen(techName)) {
+	} else {
+		log.useLoadingScreenDefaults();
+	}
 
 	g_logger.getProgramLog().setProgressBar(true);
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));

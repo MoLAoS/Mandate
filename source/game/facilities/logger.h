@@ -124,7 +124,8 @@ public:
 	void setLoading(bool v)				{loadingGame = v;}
 	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
-	void setupLoadingScreen(const string &factionDir);
+	void useLoadingScreenDefaults();
+	bool setupLoadingScreen(const string &xmlpath);
 	void renderLoadingScreen();
 
 	void setUnitCount(int count) { totalUnits = count; unitsLoaded = 0; }
