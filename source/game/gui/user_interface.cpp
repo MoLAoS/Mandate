@@ -874,7 +874,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				invalidatePosObjWorld();
 				giveOneClickOrders();
 			} else {
-				if (activeCommandClass == CommandClass::PRODUCE) {
+				if (activeCommandType && activeCommandType->getProducedCount() > 1) {
 					assert(selection.isUniform());
 					m_selectingSecond = true;
 				} else {
@@ -900,7 +900,8 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 		RUNTIME_CHECK(ndx >= 0 && ndx < activeCommandType->getProducedCount());
 		const ProducibleType *pt = activeCommandType->getProduced(ndx);
 
-		if (activeCommandType->getClass() == CommandClass::BUILD) {
+		if (activeCommandType->getClass() == CommandClass::BUILD
+		|| activeCommandType->getClass() == CommandClass::TRANSFORM) {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				choosenBuildingType = static_cast<const UnitType*>(pt);
 				assert(choosenBuildingType != NULL);
