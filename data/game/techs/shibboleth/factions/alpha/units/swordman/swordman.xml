@@ -4,7 +4,7 @@
 		<size value="1"/>
 		<height value="2"/>
 		<max-hp value="700" regeneration="0"/>
-		<max-ep value="0"/>
+		<max-ep value="100" regeneration="0"/>
 		<armor value="20"/>
 		<armor-type value="leather"/>
 		<sight value="10"/>
@@ -75,6 +75,25 @@
 			<anim-speed value="125"/>
 			<animation path="models/swordman_charging.g3d"/>
 			<sound enabled="false"/>
+		</skill>
+
+		<skill>
+			<type value="cast-spell" />
+			<name value="eat_spinach_skill" />
+			<ep-cost value="20" />
+			<speed value="20" />
+			<anim-speed value="200" />
+			<animation path="models/swordman_standing.g3d" />
+			<sound enabled="false" />
+			<effects>
+				<effect name="popeye_strength" bias="beneficial" stacking="overwrite" duration="30">
+					<multipliers>
+						<armor value="0.5"/>
+						<attack-strength value="2.0" />
+						<attack-speed value="1.5" />
+					</multipliers>
+				</effect>
+			</effects>
 		</skill>
 
 		<skill>
@@ -194,6 +213,18 @@
 			<morph-skill value="morph_skill"/>
 			<morph-unit name= "archer"/>
 			<discount value="60"/>
+		</command>
+
+		<!-- The positioning on the display for this is 'hookey-pookey' (aka magic) -->
+		<!-- that needs attending to... maybe the mod should explicitly position commands? -->
+		<command>
+			<type value="cast-spell"/>
+			<name value="eat_spinach"/>
+			<image path="../../upgrades/spinach/spinach.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<affect value="self" />
+			<cast-spell-skill value="eat_spinach_skill"/>
 		</command>
 
 	</commands>

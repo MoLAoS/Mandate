@@ -84,6 +84,16 @@
 		</skill>
 
 		<skill>
+			<type value="upgrade" />
+			<name value="upgrade_skill"/>
+			<ep-cost value="0" />
+			<speed value="300" />
+			<anim-speed value="300" />
+			<animation path="models/castle.g3d" />
+			<sound enabled="false" />
+		</skill>
+
+		<skill>
 			<type value="attack"/>
 			<name value="attack_skill"/>
 			<ep-cost value="0"/>
@@ -139,6 +149,16 @@
 			<upgrade-requirements />
 			<produce-skill value="produce_skill"/>
 			<produced-unit name="worker" number="2" />
+		</command>
+
+		<command>
+			<type value="upgrade"/>
+			<name value="research_spinach" />
+			<image path="../../upgrades/spinach/spinach.bmp" />
+			<unit-requirements />
+			<upgrade-requirements />
+			<upgrade-skill value="upgrade_skill"/>
+			<produced-upgrade name="spinach"/>
 		</command>
 
 		<command>
