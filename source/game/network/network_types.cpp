@@ -167,7 +167,7 @@ Command *NetworkCommand::toCommand() const {
 }
 
 MoveSkillUpdate::MoveSkillUpdate(const Unit *unit) {
-	assert(unit->getCurrSkill()->getClass() == SkillClass::MOVE);
+	assert(unit->isMoving());
 	Vec2i offset = unit->getNextPos() - unit->getPos();
 	if (offset.length() < 1.f || offset.length() > 1.5f) {
 		LOG_NETWORK( "ERROR: MoveSKillUpdate being constructed on illegal move." );

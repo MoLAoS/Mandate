@@ -124,9 +124,7 @@ void AiRuleRepair::execute() {
 		for(int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 			const Unit *u = aiInterface->getMyUnit(i);
 			const RepairCommandType *rct;
-			if ((u->getCurrSkill()->getClass() == SkillClass::STOP 
-			||   u->getCurrSkill()->getClass() == SkillClass::MOVE)
-			&& (rct = u->getRepairCommandType(damagedUnit))) {
+			if ((u->isIdle() || u->isMoving()) && (rct = u->getRepairCommandType(damagedUnit))) {
 				fixed dist = fpos.dist(u->getFixedCenteredPos()) + size + u->getType()->getHalfSize();
 				if (minDist > dist) {
 					nearestRct = rct;

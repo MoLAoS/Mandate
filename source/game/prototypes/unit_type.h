@@ -154,6 +154,7 @@ public:
 	bool isDetector() const					{return m_detectorType? true : false;}
 
 	//get
+	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getAnimation();}
 	bool getMultiSelect() const				{return multiSelect;}
 	const ArmourType *getArmourType() const	{return armourType;}
 	bool getLight() const					{return light;}

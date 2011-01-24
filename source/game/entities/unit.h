@@ -417,6 +417,8 @@ public:
 	float getRenderAlpha() const;
 
 	//is
+	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}
+	bool isMoving() const				{return currSkill->getClass() == SkillClass::MOVE;}
 	bool isCarried() const				{return carried;}
 	bool isHighlighted() const			{return highlight > 0.f;}
 	bool isDead() const					{return !hp;}
@@ -525,6 +527,8 @@ public:
 	bool decEp(int i);
 	int update2()										{return ++progress2;}
 	void clearPath();
+	/// make idle
+	void stop()	{setCurrSkill(SkillClass::STOP);}
 
 	// SimulationInterface wrappers
 	void updateSkillCycle(const SkillCycleTable *skillCycleTable);

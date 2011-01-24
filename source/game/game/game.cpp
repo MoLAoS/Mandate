@@ -593,6 +593,11 @@ void GameState::mouseUpRight(int x, int y) {
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
+	if (gameCamera.isMoving()) {
+		// stop moving if button is released
+		gameCamera.setMoveZ(0, true);
+		gameCamera.setMoveX(0, true);
+	}
 }
 
 void GameState::mouseDoubleClickLeft(int x, int y) {

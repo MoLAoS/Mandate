@@ -284,7 +284,7 @@ void ServerInterface::checkAnimUpdate(Unit*, int32 cs) {
 
 void ServerInterface::updateSkillCycle(Unit *unit) {
 	SimulationInterface::updateSkillCycle(unit);
-	if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
+	if (unit->isMoving()) {
 //		NETWORK_LOG( __FUNCTION__ << " Adding move update" );
 		MoveSkillUpdate updt(unit);
 		keyFrame.addUpdate(updt);
