@@ -835,7 +835,8 @@ CommandResult Unit::giveCommand(Command *command) {
 
 	// check command
 	CommandResult result = checkCommand(*command);
-	if (result == CommandResult::SUCCESS) {
+	bool energyRes = checkEnergy(command->getType());
+	if (result == CommandResult::SUCCESS && energyRes) {
 		applyCommand(*command);
 		
 		// start the command type
@@ -845,6 +846,9 @@ CommandResult Unit::giveCommand(Command *command) {
 			commands.push_back(command);
 		}
 	} else {
+		if (!energyRes && getFaction()->isThisFaction()) {
+			g_console.addLine(g_lang.get("InsufficientEnergy"));
+		}
 		g_world.deleteCommand(command);
 		command = 0;
 	}
@@ -1164,7 +1168,7 @@ void Unit::deCloak() {
   * @param moveSkill the MoveSkillType to apply for the move
   * @return true when completed (maxed out BLOCKED, IMPOSSIBLE or ARRIVED)
   */
-bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
+TravelState Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 	assert(moveSkill);
 
@@ -1174,23 +1178,23 @@ bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 			face(getNextPos());
 			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
 			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
-			return false;
+			return TravelState::MOVING;
 
 		case TravelState::BLOCKED:
 			setCurrSkill(SkillClass::STOP);
 			if (getPath()->isBlocked()) { //&& !command->getUnit()) {?? from MoveCommandType and LoadCommandType
 				clearPath();
-				return true;
+				return TravelState::BLOCKED;
 			}
-			return false;
+			return TravelState::BLOCKED;
 
 		case TravelState::IMPOSSIBLE:
 			setCurrSkill(SkillClass::STOP);
 			cancelCurrCommand(); // from AttackCommandType, is this right, maybe dependant flag?? - hailstone 21Dec2010
- 			return true;
+ 			return TravelState::IMPOSSIBLE;
 
 		case TravelState::ARRIVED:
-			return true;
+			return TravelState::ARRIVED;
 
 		default:
 			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
@@ -1502,15 +1506,6 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 //	_PROFILE_FUNCTION();
 	const int &frame = g_world.getFrameCount();
 
-	// start attack systems ?
-	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
-		const AttackSkillType *attackSkill = static_cast<const AttackSkillType*>(currSkill);
-		int range = getMaxRange(attackSkill)+ type->getHalfSize().intp();
-		if (getCenteredPos().dist(getTargetPos()) <= range) { // double check range
-			startAttackSystems(attackSkill);
-		}
-	}
-
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
 		Unit *carrier = (m_carrier != -1 ? g_world.getUnit(m_carrier) : 0);
@@ -1519,6 +1514,11 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
 			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
+	}
+
+	// start attack systems ?
+	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
+		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
 	}
 
 	// update anim cycle ?
@@ -1561,7 +1561,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	if (currSkill->getClass() != SkillClass::STOP) {
 		const float rotFactor = 2.f;
 		if (getProgress() < 1.f / rotFactor) {
-			if (type->getFirstStOfClass(SkillClass::MOVE)) {
+			if (type->getFirstStOfClass(SkillClass::MOVE) || type->getFirstStOfClass(SkillClass::MORPH)) {
 				rotated = true;
 				if (abs(lastRotation - targetRotation) < 180) {
 					rotation = lastRotation + (targetRotation - lastRotation) * getProgress() * rotFactor;
@@ -1840,6 +1840,7 @@ string Unit::getShortDesc() const {
 }
 
 string Unit::getLongDesc() const {
+	Lang &lang = g_lang;
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
@@ -1847,64 +1848,69 @@ string Unit::getLongDesc() const {
 	int sightBonus = getSight() - type->getSight();
 
 	// armor
-	ss << endl << g_lang.get("Armor") << ": " << type->getArmor();
+	ss << endl << lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
 		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
 	}
-	ss << " (" << type->getArmourType()->getName() << ")";
+	string armourName = lang.getTechString(type->getArmourType()->getName());
+	if (armourName == type->getArmourType()->getName()) {
+		armourName = formatString(armourName);
+	}
+	ss << " (" << armourName << ")";
 
 	// sight
-	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
+	ss << endl << lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
 	if (type->isDetector()) {
-		ss << " (" << g_lang.get("Detector") << ")";
+		ss << " (" << lang.get("Detector") << ")";
 	}
 
 	// kills
 	const Level *nextLevel = getNextLevel();
 	if (kills > 0 || nextLevel) {
-		ss << endl << g_lang.get("Kills") << ": " << kills;
+		ss << endl << lang.get("Kills") << ": " << kills;
 		if (nextLevel) {
-			ss << " (" << nextLevel->getName() << ": " << nextLevel->getKills() << ")";
+			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
+			if (levelName == nextLevel->getName()) {
+				levelName = formatString(levelName);
+			}
+			ss << " (" << levelName << ": " << nextLevel->getKills() << ")";
 		}
 	}
 
 	// resource load
 	if (loadCount) {
-		string loadName = loadType->getName();
-		string resName = g_lang.getTechString(loadName);
-		if (resName == loadName) {
-			resName = formatString(loadName);
+		string resName = lang.getTechString(loadType->getName());
+		if (resName == loadType->getName()) {
+			resName = formatString(resName);
 		}
-		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << resName;
+		ss << endl << lang.get("Load") << ": " << loadCount << "  " << resName;
 	}
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
-		const ResourceAmount *r = getType()->getCost(i);
-		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
-			string storedName = r->getType()->getName();
-			string resName = g_lang.getTechString(storedName);
-			if (resName == storedName) {
-				resName = formatString(storedName);
+		const ResourceAmount r = getType()->getCost(i, getFaction());
+		if (r.getType()->getClass() == ResourceClass::CONSUMABLE) {
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
 			}
-			ss << endl << (r->getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
-				<< ": " << abs(r->getAmount()) << " " << resName;
+			ss << endl << (r.getAmount() < 0 ? lang.get("Produce") : lang.get("Consume"))
+				<< ": " << abs(r.getAmount()) << " " << resName;
 		}
 	}
 	// can store
 	if (type->getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-			const ResourceAmount *r = type->getStoredResource(i);
-			string storedName = r->getType()->getName();
-			string resName = g_lang.getTechString(storedName);
-			if (resName == storedName) {
-				resName = formatString(storedName);
+			ResourceAmount r = type->getStoredResource(i, getFaction());
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
 			}
-			ss << endl << g_lang.get("Store") << ": ";
-			ss << r->getAmount() << " " << resName;
+			ss << endl << lang.get("Store") << ": ";
+			ss << r.getAmount() << " " << resName;
 		}
 	}
 	// effects
@@ -1916,10 +1922,11 @@ string Unit::getLongDesc() const {
 /** Apply effects of an UpgradeType
   * @param upgradeType the type describing the Upgrade to apply*/
 void Unit::applyUpgrade(const UpgradeType *upgradeType) {
-	if (upgradeType->isAffected(type)) {
-		totalUpgrade.sum(upgradeType);
+	const EnhancementType *et = upgradeType->getEnhancement(type);
+	if (et) {
+		totalUpgrade.sum(et);
 		recalculateStats();
-		doRegen(upgradeType->getHpBoost(), upgradeType->getEpBoost());
+		doRegen(et->getHpBoost(), et->getEpBoost());
 	}
 }
 
@@ -2123,16 +2130,17 @@ void Unit::incKills() {
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
-bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
+bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, bool reprocessCommands) {
 	Field newField = ut->getField();
 	CloakClass oldCloakClass = type->getCloakClass();
-	if (map->areFreeCellsOrHasUnit(pos, ut->getSize(), newField, this)) {
+	if (map->areFreeCellsOrHasUnit(pos + offset, ut->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = ut;
+		pos += offset;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
-		faction->applyDiscount(ut, mct->getDiscount());
+		faction->giveRefund(ut, mct->getRefund());
 		faction->applyStaticProduction(ut);
 
 		if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
@@ -2142,36 +2150,55 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 			cloak();
 		}
 
-		// reprocess commands
-		Commands newCommands;
-		Commands::const_iterator i;
+		if (reprocessCommands) {
+			// reprocess commands
+			Commands newCommands;
+			Commands::const_iterator i;
 
-		// add current command, which should be the morph command
-		assert(commands.size() > 0 && commands.front()->getType()->getClass() == CommandClass::MORPH);
-		newCommands.push_back(commands.front());
-		i = commands.begin();
-		++i;
+			// add current command, which should be the morph command
+			assert(commands.size() > 0 
+				&& (commands.front()->getType()->getClass() == CommandClass::MORPH
+				|| commands.front()->getType()->getClass() == CommandClass::TRANSFORM));
+			newCommands.push_back(commands.front());
+			i = commands.begin();
+			++i;
 
-		// add (any) remaining if possible
-		for (; i != commands.end(); ++i) {
-			// first see if the new unit type has a command by the same name
-			const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
-			// if not, lets see if we can find any command of the same class
-			if (!newCmdType) {
-				newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+			// add (any) remaining if possible
+			for (; i != commands.end(); ++i) {
+				// first see if the new unit type has a command by the same name
+				const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
+				// if not, lets see if we can find any command of the same class
+				if (!newCmdType) {
+					newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+				}
+				// if still not found, we drop the comand, otherwise, we add it to the new list
+				if (newCmdType) {
+					(*i)->setType(newCmdType);
+					newCommands.push_back(*i);
+				}
 			}
-			// if still not found, we drop the comand, otherwise, we add it to the new list
-			if (newCmdType) {
-				(*i)->setType(newCmdType);
-				newCommands.push_back(*i);
-			}
+			commands = newCommands;
 		}
-		commands = newCommands;
 		StateChanged(this);
 		return true;
 	} else {
 		return false;
 	}
+}
+
+bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing) {
+	RUNTIME_CHECK(ut->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
+	Vec2i offset = pos - this->pos;
+	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
+	if (morph(tct, ut, offset, false)) {
+		rotation = facing * 90.f;
+		hp = 1;
+		commands.clear();
+		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CommandClass::BUILD_SELF), CommandFlags()));
+		setCurrSkill(SkillClass::BUILD_SELF);
+		return true;
+	}
+	return false;
 }
 
 // ==================== PRIVATE ====================
@@ -2273,6 +2300,9 @@ CommandResult Unit::checkCommand(const Command &command) const {
   */
 void Unit::applyCommand(const Command &command) {
 	command.getType()->apply(faction, command);
+	if (command.getType()->getEnergyCost()) {
+		ep -= command.getType()->getEnergyCost();
+	}
 }
 
 /** De-Apply costs for a command

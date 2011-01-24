@@ -1,0 +1,25 @@
+<?xml version="1.0" standalone="no"?>
+
+<upgrade>
+	<image path="spinach.bmp"/>
+	<image-cancel path="../advanced_architecture/images/tech_upgrade_cancel.bmp"/>
+	<time value="20"/>
+	<unit-requirements/>
+	<upgrade-requirements/>
+	<resource-requirements>
+		<resource name="gold" amount="150"/>
+		<resource name="wood" amount="100"/>
+	</resource-requirements>
+	<enhancements>
+		<enhancement>
+			<affects>
+				<unit name="swordman"/>
+			</affects>
+			<effects>
+				<point-boosts>
+					<ep-boost value="100" />
+				</point-boosts>
+			</effects>
+		</enhancement>
+	</enhancements>
+</upgrade>

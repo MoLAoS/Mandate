@@ -1,0 +1,60 @@
+/**
+@page xml_faction Faction
+@author Daniel Santos
+
+The faction.xml (replace "faction" with the actual name of the faction) is the
+ base definition for each faction in a tech tree mod and defines the starting
+ units, starting resources and music. In GAE, this is also where you specify
+ the <attack-notice> the sound that will be played when one of your units is
+ attacked off screen, to let the player know, as well as any subfaction definitions.
+
+@section xml_faction_contents XML Element List:
+todo
+
+@code
+<?xml version="1.0" standalone="no"?>
+
+<faction>
+    <starting-resources>
+        <-- The name and amount of all starting resources for the faction. May
+            appear one or more times. -->
+        <resource name="resource_name" amount="#"/>
+     </starting-resources>
+
+    <starting-units>
+        <-- The name and amount of all starting units for the faction.-->
+        <unit name="unit_name" amount="#"/>
+    </starting-units>
+
+    <-- Whether any music is to be played and the path to the file -->
+    <music value="true" path="../../common/music_tech.ogg"/>
+
+<-- GAE Only -->
+
+    <!-- Sounds to play to notify player of an off-screen attack.  min-delay
+         specifies the miniumum time interval in seconds that should elapse before
+         the notification is played again.  A sound file from the collection
+         specified will be selected at random. -->
+    <attack-notice enabled="true" min-delay="30">
+        <sound-file path="sounds/attacked1.wav"/>
+        <sound-file path="sounds/attacked2.wav"/>
+    </attack-notice>
+
+    <!-- Sounds to play to notify player that an enemy has been sighted
+         off-screen (non-functioning as of v0.2.8) -->
+    <enemy-sighted-notice enabled="false" min-delay="30"/>
+        <sound-file path="sounds/enemy_sighted1.wav"/>
+    </enemy-sighted-notice>
+
+    <!-- Define any subfactions here (see Subfactions). -->
+    <subfactions>
+        <subfaction name="subfaction_a"/>
+        <subfaction name="subfaction_b"/>
+    </subfactions>
+
+<-- /GAE Only -->
+
+</faction>
+@endcode
+
+*/

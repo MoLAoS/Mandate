@@ -74,7 +74,7 @@ STRINGY_ENUM( Field,
   *		<li><b>FORDABLE</b> shallow (fordable) water</li>
   *		<li><b>DEEP_WATER</b> deep (non-fordable) water</li></ul>
   */
-REGULAR_ENUM( SurfaceType,
+STRINGY_ENUM( SurfaceType,
 	LAND, 
 	FORDABLE, 
 	DEEP_WATER

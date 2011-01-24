@@ -76,7 +76,10 @@ Vec3f getFactionColour(int ndx);
 
 class Faction : public NameIdPair {
 public:
-	typedef vector<const ResourceType *> ResourceTypes;
+	typedef vector<const ResourceType *>               ResourceTypes;
+	typedef map<const ResourceType*, Modifier>         CostModifiers;
+	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
+	typedef map<const UnitType*, CostModifiers>        StoreModifiers;
 
 private:
     typedef vector<StoredResource>	Resources;
@@ -94,6 +97,8 @@ private:
 	Texture2D *texture;
 	Texture2D *m_logoTex;
 	const FactionType *factionType;
+	UnitCostModifiers m_costModifiers;
+	StoreModifiers    m_storeModifiers;
 
 	int teamIndex;
 	int startLocationIndex;
@@ -141,6 +146,8 @@ public:
 	Colour getColour() const							{return factionColours[colourIndex];}
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
+	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;
+	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
 	
 	///@todo Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
@@ -157,7 +164,10 @@ public:
 
 	// cost application
 	bool applyCosts(const ProducibleType *p);
-	void applyDiscount(const ProducibleType *p, int discount);
+	bool applyCosts(const ProducibleType *p, int discount);
+
+	void giveRefund(const ProducibleType *p, int refund);
+
 	void applyStaticCosts(const ProducibleType *p);
 	void applyStaticProduction(const ProducibleType *p);
 	void deApplyCosts(const ProducibleType *p);
@@ -165,6 +175,7 @@ public:
 	void deApplyStaticConsumption(const ProducibleType *p);
 	void applyCostsOnInterval(const ResourceType *rt);
 	bool checkCosts(const ProducibleType *pt);
+	bool checkCosts(const ProducibleType *pt, int discount);
 
 	// reqs
 	bool reqsOk(const RequirableType *rt) const;
@@ -189,11 +200,15 @@ public:
 
 	void add(Unit *unit);
 	void remove(Unit *unit);
+
 	void addStore(const ResourceType *rt, int amount);
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
+	void reEvaluateStore();
+
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
 	void attackNotice(const Unit *u);
+
 	void advanceSubfaction(int subfaction);
 	void checkAdvanceSubfaction(const ProducibleType *pt, bool finished);
 

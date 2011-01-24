@@ -54,6 +54,9 @@ public:
 	int getKills() const			{return kills;}
 };
 
+Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const CardinalDir facing);
+
+
 // ===============================
 // 	class UnitType
 //
@@ -62,12 +65,13 @@ public:
 
 class UnitType : public ProducibleType, public UnitStats {
 private:
-	typedef vector<SkillType*> SkillTypes;
-	typedef vector<CommandType*> CommandTypes;
-	typedef vector<ResourceAmount> StoredResources;
-	typedef vector<Level> Levels;
-	typedef vector<ParticleSystemType*> particleSystemTypes;
-//	typedef vector<PetRule*> PetRules;
+	typedef vector<SkillType*>          SkillTypes;
+	typedef vector<CommandType*>        CommandTypes;
+	typedef vector<ResourceAmount>      StoredResources;
+	typedef vector<Level>               Levels;
+	typedef vector<ParticleSystemType*> ParticleSystemTypes;
+
+	//typedef vector<PetRule*> PetRules;
 	//typedef map<int, const CommandType*> CommandTypeMap;
 
 private:
@@ -150,6 +154,7 @@ public:
 	bool isDetector() const					{return m_detectorType? true : false;}
 
 	//get
+	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getAnimation();}
 	bool getMultiSelect() const				{return multiSelect;}
 	const ArmourType *getArmourType() const	{return armourType;}
 	bool getLight() const					{return light;}
@@ -215,8 +220,8 @@ public:
 
 	// resources
 	int getStoredResourceCount() const					{return storedResources.size();}
-	const ResourceAmount *getStoredResource(int i) const		{return &storedResources[i];}
-	int getStore(const ResourceType *rt) const;
+	ResourceAmount getStoredResource(int i, const Faction *f) const;
+	int getStore(const ResourceType *rt, const Faction *f) const;
 
 	// meeting point
 	bool hasMeetingPoint() const						{return meetingPoint;}

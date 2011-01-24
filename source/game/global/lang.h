@@ -31,13 +31,18 @@ private:
 	typedef map<string, Properties> FactionStrings;
 
 private:
-	string			m_locale; /**< Should have this format: language[_territory][.encoding][@script] */
+	string              m_locale; /**< Should have this format: language[_territory][.encoding][@script] */
 
-	Properties		m_mainStrings;
-	vector<string>	m_defeatStrings;
-	Properties		m_techStrings;
-	FactionStrings	m_factionStringsMap;
-	Properties		m_scenarioStrings;
+	Properties          m_mainStrings;
+	vector<string>      m_defeatStrings;
+	Properties          m_techStrings;
+	FactionStrings      m_factionStringsMap;
+	Properties          m_scenarioStrings;
+
+	string              m_mainFile;
+	string              m_scenarioFile;
+	string              m_techFile;
+	map<string, string> m_factionFiles;
 
 private:
 	Lang() {}
@@ -59,6 +64,8 @@ public:
 	string getFactionString(const string &faction, const string &s);
 	string getScenarioString(const string &s);
 	string getDefeatedMessage() const;
+
+	static vector<string>& getLookUpErrors();
 };
 
 }}//end namespace

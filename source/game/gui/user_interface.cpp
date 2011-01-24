@@ -167,7 +167,8 @@ void UserInterface::init() {
 			// if any UnitType needs the resource
 			for (int j=0; j < ft->getUnitTypeCount(); ++j) {
 				const UnitType *ut = ft->getUnitType(j);
-				if (ut->getCost(rt)) {
+				ResourceAmount r = ut->getCost(rt, fac);
+				if (r.getType()) {
 					displayResources.insert(rt);
 					break;
 				}
@@ -210,8 +211,9 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 // ==================== get ====================
 
 const UnitType *UserInterface::getBuilding() const {
-	assert(activeCommandType);
-	assert(m_selectingSecond && activeCommandType->getClass() == CommandClass::BUILD);
+	RUNTIME_CHECK(activeCommandType);
+	RUNTIME_CHECK(activeCommandType->getClass() == CommandClass::BUILD
+		|| activeCommandType->getClass() == CommandClass::TRANSFORM);
 	return choosenBuildingType;
 }
 
@@ -219,7 +221,8 @@ const UnitType *UserInterface::getBuilding() const {
 
 bool UserInterface::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType
-		&& activeCommandType->getClass() == CommandClass::BUILD;
+		&& (activeCommandType->getClass() == CommandClass::BUILD 
+		|| activeCommandType->getClass() == CommandClass::TRANSFORM);
 }
 
 // ==================== reset state ====================
@@ -233,6 +236,7 @@ void UserInterface::resetState() {
 	activeCommandType = 0;
 	dragging = false;
 	needSelectionUpdate = false;
+	choosenBuildingType = 0;
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
@@ -590,7 +594,9 @@ void UserInterface::hotKey(UserCommand cmd) {
 		break;
 
 	case ucRotate:
-		m_selectedFacing = enum_cast<CardinalDir>((m_selectedFacing + 1) % CardinalDir::COUNT);
+		if (isPlacingBuilding()) {
+			m_selectedFacing = CardinalDir((m_selectedFacing + 1) % CardinalDir::COUNT);
+		}
 		break;
 
 	case ucLuaConsole:
@@ -677,17 +683,25 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	// give orders to the units of this faction
 	if (!m_selectingSecond) {
 		if (selection.isUniform()) {
-			result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, targetPos, targetUnit);
+			if (choosenBuildingType) {
+				result = commander->tryGiveCommand(selection, flags, activeCommandType,
+					CommandClass::NULL_COMMAND, targetPos, targetUnit, choosenBuildingType, m_selectedFacing);
+			} else {
+				result = commander->tryGiveCommand(selection, flags, activeCommandType,
+					CommandClass::NULL_COMMAND, targetPos, targetUnit);
+			}
 		} else {
 			result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		if (activeCommandClass == CommandClass::BUILD) {
+		if (activeCommandClass == CommandClass::BUILD
+		|| activeCommandClass == CommandClass::TRANSFORM) {
 			// selecting building
 			assert(isPlacingBuilding());
 
 			// if this is a drag & drop then start dragging and wait for mouse up
-			if (choosenBuildingType->isMultiBuild() && !dragging) {
+			if (activeCommandClass == CommandClass::BUILD
+			&& choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
 				dragStartPos = posObjWorld;
 				return;
@@ -848,11 +862,20 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				assert(selection.isUniform());
 				m_selectedFacing = CardinalDir::NORTH;
 				m_selectingSecond = true;
-			} else if (ct->getClicks() == Clicks::ONE) {
+			} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
+			&& activeCommandType->getProducedCount() == 1) {
+				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
+				assert(choosenBuildingType != NULL);
+				selectingPos = true;
+				g_program.setMouseCursorIcon(activeCommandType->getImage());
+				m_minimap->setLeftClickOrder(true);
+				activePos = posDisplay;
+			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
+			|| (!activeCommandType && ct->getClicks() == Clicks::ONE)) {
 				invalidatePosObjWorld();
 				giveOneClickOrders();
 			} else {
-				if (ct->getClass() == CommandClass::MORPH || ct->getClass() == CommandClass::PRODUCE) {
+				if (activeCommandType && activeCommandType->getProducedCount() > 1) {
 					assert(selection.isUniform());
 					m_selectingSecond = true;
 				} else {
@@ -878,7 +901,8 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 		RUNTIME_CHECK(ndx >= 0 && ndx < activeCommandType->getProducedCount());
 		const ProducibleType *pt = activeCommandType->getProduced(ndx);
 
-		if (activeCommandType->getClass() == CommandClass::BUILD) {
+		if (activeCommandType->getClass() == CommandClass::BUILD
+		|| activeCommandType->getClass() == CommandClass::TRANSFORM) {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				choosenBuildingType = static_cast<const UnitType*>(pt);
 				assert(choosenBuildingType != NULL);
@@ -980,11 +1004,11 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 							} else if (unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
 								m_display->setToolTipText(g_lang.get("AlreadyUpgraded")/* + "\n" + ct->getDesc(unit)*/);
 							} else {
-								res += formatString(ct->getReqDesc());
+								res += formatString(ct->getReqDesc(unit->getFaction()));
 								m_display->setToolTipText(res);
 							}
 						} else {
-							res += formatString(ct->getReqDesc());
+							res += formatString(ct->getReqDesc(unit->getFaction()));
 							m_display->setToolTipText(res);
 						}
 					}
@@ -1025,8 +1049,8 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		string res = commandName + " : " + prodName + "\n\n";
 		if (!tip.empty()) {
 			res += tip + "\n\n";
-	}
-		res += formatString(pt->getReqDesc());
+		}
+		res += formatString(pt->getReqDesc(unit->getFaction()));
 		m_display->setToolTipText(res);
 	}
 }

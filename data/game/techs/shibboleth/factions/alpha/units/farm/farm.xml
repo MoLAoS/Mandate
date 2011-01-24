@@ -53,7 +53,7 @@
   <skills>
 
     <skill>
-      <type value="be_built" />
+      <type value="be-built" />
       <name value="be_built_skill"/>
       <ep-cost value="0" />
       <speed value="120"/>
@@ -63,6 +63,17 @@
       <sound enabled="false" />
     </skill>
 
+    <skill>
+      <type value="build-self" />
+      <name value="build_self_skill"/>
+      <ep-cost value="0" />
+      <speed value="120"/>
+      <speed value="120"/>
+      <anim-speed value="50" />
+      <animation path="models/farm_construction.g3d" />
+      <sound enabled="false" />
+    </skill>
+	  
     <skill>
       <type value="stop" />
       <name value="stop_skill"/>
@@ -130,6 +141,17 @@
       <upgrade-skill value="upgrade_skill"/>
       <produced-upgrade name="stables"/>
     </command>
+
+	  <command>
+		  <type value="build-self" />
+		  <name value="build_self" />
+		  <display value="false"/>
+		  <!-- Display == false commands must come after all non-false command -->
+		  <image path="images/none.bmp"/>
+		  <unit-requirements/>
+		  <upgrade-requirements/>
+		  <build-self-skill value="build_self_skill"/>
+	  </command>
 
   </commands>
 </unit>

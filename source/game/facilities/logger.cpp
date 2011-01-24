@@ -105,7 +105,8 @@ ProgramLog::ProgramLog()
 		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
 		, loadingGame(true)
 		, m_progressBar(false)
-		, m_progress(0) {
+		, m_progress(0)
+		, m_backgroundTexture(0) {
 }
 
 
@@ -135,6 +136,54 @@ void ProgramLog::unitLoaded() {
 	m_progress = int(pcnt);
 }
 
+void ProgramLog::setupLoadingScreen(const string &factionDir) {
+	string factionName = basename(factionDir);
+
+	//open xml file
+	string path = factionDir + "/" + factionName + ".xml";
+	XmlTree xmlTree;
+	try { 
+		xmlTree.load(path); 
+	} catch (runtime_error e) { 
+		g_logger.logXmlError(path, "File missing or wrongly named.");
+		return; // bail
+	}
+	const XmlNode *factionNode;
+	try { 
+		factionNode = xmlTree.getRootNode(); 
+	} catch (runtime_error e) { 
+		g_logger.logXmlError(path, "File appears to lack contents.");
+		return; // bail
+	}
+
+	const XmlNode *loadingScreenNode = factionNode->getChild("loading-screen", 0, false);
+
+	if (loadingScreenNode) {
+		// could randomly choose from multiple or choose 
+		// based on resolution - hailstone 21Jan2011
+
+		// background texture
+		const XmlNode *backgroundImageNode = loadingScreenNode->getChild("background-image", 0, false);
+
+		if (backgroundImageNode) {
+			// load background image from faction.xml
+			m_backgroundTexture = g_renderer.newTexture2D(ResourceScope::GLOBAL);
+			m_backgroundTexture->setMipmap(false);
+			m_backgroundTexture->getPixmap()->load(factionDir + "/" + 
+				backgroundImageNode->getAttribute("path")->getValue());
+			m_backgroundTexture->init(Texture::fBilinear);
+		}
+
+		// tips
+
+	}
+	
+	if (!m_backgroundTexture) {
+		// set to default from coreData
+		m_backgroundTexture = g_coreData.getBackgroundTexture();
+	}
+}
+
 void ProgramLog::renderLoadingScreen(){
 	g_renderer.reset2d(true);
 	g_renderer.clearBuffers();
@@ -142,7 +191,9 @@ void ProgramLog::renderLoadingScreen(){
 	Font *normFont = g_coreData.getFTMenuFontSmall();
 	Font *bigFont = g_coreData.getFTMenuFontNormal();
 
-	g_renderer.renderBackground(g_coreData.getBackgroundTexture());
+	if (m_backgroundTexture) {
+		g_renderer.renderBackground(m_backgroundTexture);
+	}
 	
 	Vec2i headerPos(g_metrics.getScreenW() / 4, 75 * g_metrics.getScreenH() / 100);
 	g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);
@@ -227,6 +278,15 @@ Logger::Logger()
 }
 
 Logger::~Logger() {
+	// collect lang look-up errors
+	vector<string> &errors = Lang::getLookUpErrors();
+	if (!errors.empty()) {
+		m_errorLog->add("\nLang look-up errors:");
+	}
+	foreach_const (vector<string>, it, errors) {
+		m_errorLog->add(*it);
+	}
+	// close everything
 	delete m_programLog;
 	delete m_errorLog;
 	delete m_aiLog;

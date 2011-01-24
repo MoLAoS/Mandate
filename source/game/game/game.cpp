@@ -124,6 +124,9 @@ void GameState::load() {
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
 
+	const string &thisFactionName = gameSettings.getFactionTypeName(gameSettings.getThisFactionIndex());
+	g_logger.getProgramLog().setupLoadingScreen(techName + "/factions/" + thisFactionName);
+
 	g_logger.getProgramLog().setProgressBar(true);
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));
 
@@ -589,6 +592,11 @@ void GameState::mouseUpRight(int x, int y) {
 	g_program.setMouseAppearance(MouseAppearance::DEFAULT);
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
+	}
+	if (gameCamera.isMoving()) {
+		// stop moving if button is released
+		gameCamera.setMoveZ(0, true);
+		gameCamera.setMoveX(0, true);
 	}
 }
 

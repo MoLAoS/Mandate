@@ -35,8 +35,8 @@ MEMORY_CHECK_IMPLEMENTATION(Effect)
 
 // ============================ Constructor & destructor =============================
 
-Effect::Effect(CreateParams params) {//const EffectType* type, Unit *source, Effect *root, fixed strength,
-		//const Unit *recipient, const TechTree *tt) {
+Effect::Effect(CreateParams params) 
+		: m_id(-1) {
 	this->type = params.type;
 	this->source = params.source->getId();
 	this->root = params.root;
@@ -65,8 +65,10 @@ Effect::Effect(const XmlNode *node) {
 }
 
 Effect::~Effect() {
-	if (Unit *unit = g_world.getUnit(source)) {
-		unit->effectExpired(this);
+	if (World::isConstructed()) {
+		if (Unit *unit = g_world.getUnit(source)) {
+			unit->effectExpired(this);
+		}
 	}
 }
 
@@ -101,10 +103,12 @@ Effects::Effects(const XmlNode *node) {
 }
 
 Effects::~Effects() {
-	for (iterator i = begin(); i != end(); i++) {
-		(*i)->clearSource();
-		(*i)->clearRoot();
-		g_world.deleteEffect(*i);
+	if (World::isConstructed()) {
+		for (iterator i = begin(); i != end(); i++) {
+			(*i)->clearSource();
+			(*i)->clearRoot();
+			g_world.deleteEffect(*i);
+		}
 	}
 }
 

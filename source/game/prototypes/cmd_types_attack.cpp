@@ -160,7 +160,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		}
 	}
 
-	return unit->travel(pos, act->getMoveSkillType());
+	return unit->travel(pos, act->getMoveSkillType()) == TravelState::ARRIVED;
 }
 
 void AttackCommandType::update(Unit *unit) const {

@@ -137,7 +137,7 @@ else(WIN32)
 endif(WIN32)
 
 if(NOT DEFINED GAE_VERSION)
-	set(GAE_VERSION "svn-trunk" CACHE STRING "Version of Glest Advanced Engine")
+	set(GAE_VERSION "git-master" CACHE STRING "Version of Glest Advanced Engine")
 endif()
 if(NOT DEFINED GAE_CONTACT)
 	set(GAE_CONTACT "glestae-devel@lists.sourceforge.net" CACHE STRING "Contact Mail Address")

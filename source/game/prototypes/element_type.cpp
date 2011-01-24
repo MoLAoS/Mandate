@@ -24,6 +24,7 @@
 #include "renderer.h"
 #include "util.h"
 #include "leak_dumper.h"
+#include "faction.h"
 
 using Glest::Util::Logger;
 using namespace Shared::Util;
@@ -67,7 +68,7 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 // 	class RequirableType
 // =====================================================
 
-string RequirableType::getReqDesc() const{
+string RequirableType::getReqDesc(const Faction *) const{
 	stringstream ss;
 ///	ss << name;
 	if (unitReqs.empty() && upgradeReqs.empty()) {
@@ -160,15 +161,40 @@ ProducibleType::ProducibleType() :
 ProducibleType::~ProducibleType() {
 }
 
-string ProducibleType::getReqDesc() const {
+ResourceAmount ProducibleType::getCost(int i, const Faction *f) const {
+	Modifier mod = f->getCostModifier(this, costs[i].getType());
+	ResourceAmount res(costs[i]);
+	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return res;
+}
+
+ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f) const {
+	for (int i = 0; i < costs.size(); ++i) {
+		if (costs[i].getType() == rt) {
+			return getCost(i, f);
+		}
+	}
+	return ResourceAmount();
+}
+
+string ProducibleType::getReqDesc(const Faction *f) const {
+	Lang &lang = g_lang;
 	stringstream ss;
-	ss << m_name;
+	ss << lang.getFactionString(f->getType()->getName(), m_name);
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}
-	ss << " " << Lang::getInstance().get("Reqs") << ":\n";
-	foreach_const (Costs, it, costs) {
-		ss << it->getType()->getName() << ": " << it->getAmount() << endl;
+	ss << " " << lang.get("Reqs") << ":\n";
+	for (int i=0; i < getCostCount(); ++i) {
+		ResourceAmount r = getCost(i, f);
+		string resName = lang.getFactionString(f->getType()->getName(), r.getType()->getName());
+		if (resName == r.getType()->getName()) {
+			resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
+			}
+		}
+		ss << resName << ": " << r.getAmount() << endl;
 	}
 	foreach_const (UnitReqs, it, unitReqs) {
 		ss << (*it)->getName() << endl;

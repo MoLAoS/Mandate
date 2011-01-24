@@ -639,7 +639,7 @@ void Renderer::renderMouse3d(){
 				modelRenderer->begin(true, true, false);
 				glColor4fv(color.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color.ptr());
-				const Model *buildingModel= building->getFirstStOfClass(SkillClass::STOP)->getAnimation();
+				const Model *buildingModel = building->getIdleAnimation();
 				buildingModel->updateInterpolationData(0.f, false);
 				modelRenderer->render(buildingModel);
 				glDisable(GL_COLOR_MATERIAL);

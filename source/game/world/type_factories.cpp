@@ -32,6 +32,7 @@ MasterTypeFactory::MasterTypeFactory() {
 	m_skillTypeFactory.registerClass<LoadSkillType>();
 	m_skillTypeFactory.registerClass<UnloadSkillType>();
 	m_skillTypeFactory.registerClass<CastSpellSkillType>();
+	m_skillTypeFactory.registerClass<BuildSelfSkillType>();
 
 	// Register Command Types
 	m_commandTypeFactory.registerClass<StopCommandType>();
@@ -46,12 +47,14 @@ MasterTypeFactory::MasterTypeFactory() {
 	m_commandTypeFactory.registerClass<GenerateCommandType>();
 	m_commandTypeFactory.registerClass<UpgradeCommandType>();
 	m_commandTypeFactory.registerClass<MorphCommandType>();
+	m_commandTypeFactory.registerClass<TransformCommandType>();
 	m_commandTypeFactory.registerClass<LoadCommandType>();
 	m_commandTypeFactory.registerClass<UnloadCommandType>();
 	m_commandTypeFactory.registerClass<BeLoadedCommandType>();
 	m_commandTypeFactory.registerClass<GuardCommandType>();
 	m_commandTypeFactory.registerClass<PatrolCommandType>();
 	m_commandTypeFactory.registerClass<CastSpellCommandType>();
+	m_commandTypeFactory.registerClass<BuildSelfCommandType>();
 	m_commandTypeFactory.registerClass<SetMeetingPointCommandType>();
 
 	// Register Producible Types
