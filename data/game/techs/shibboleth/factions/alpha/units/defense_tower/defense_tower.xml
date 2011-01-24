@@ -22,7 +22,7 @@
 		<light enabled="false"/>
 		<unit-requirements />
 		<upgrade-requirements>
-			<upgrade name="advanced_architecture"/>
+			<!--upgrade name="advanced_architecture"/-->
 		</upgrade-requirements>
 		<resource-requirements>
 			<resource name="gold" amount="250"/>
@@ -52,7 +52,7 @@
 			<sound enabled="false"/>
 		</skill>
 
-		<skill>
+		<!--<skill>
 			<type value="be_built"/>
 			<name value="be_built_skill"/>
 			<ep-cost value="0"/>
@@ -60,6 +60,16 @@
 			<anim-speed value="300"/>
 			<animation path="../../../../../magitech/factions/tech/units/defense_tower/models/defense_tower_construction.g3d"/>
 			<sound enabled="false"/>
+		</skill>-->
+		
+		<skill>
+			<type value="build_self"/>
+			<name value="build_self_skill" />
+			<ep-cost value="0"/>
+			<speed value="300"/>
+			<anim-speed value="300"/>
+			<animation path="../../../../../magitech/factions/tech/units/defense_tower/models/defense_tower_construction.g3d"/>
+			<sound enabled="false"/>			
 		</skill>
 
 		<skill>
@@ -128,7 +138,7 @@
 	</skills>
 
 	<commands>
-
+		
 		<command>
 			<type value="stop"/>
 			<name value="attack_off"/>
@@ -172,6 +182,16 @@
 			<unit-requirements/>
 			<upgrade-requirements/>
 			<unload-skill value="unload_skill"/>
+		</command>
+		
+		<command>
+			<type value="build-self"/>
+			<name value="build_self" tip="under_construction"/>
+			<display value="false"/> <!-- Display == false commands must come after all non-false command -->
+			<image path="images/none.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<build-self-skill value="build_self_skill"/>
 		</command>
 
 	</commands>
