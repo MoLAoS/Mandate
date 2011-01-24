@@ -549,6 +549,7 @@ public:
 
 	bool update();
 	void updateEmanations();
+	void face(float rot)		{ targetRotation = rot; }
 	void face(const Vec2i &nextPos);
 
 	Unit *tick();

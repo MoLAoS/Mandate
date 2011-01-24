@@ -1561,7 +1561,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	if (currSkill->getClass() != SkillClass::STOP) {
 		const float rotFactor = 2.f;
 		if (getProgress() < 1.f / rotFactor) {
-			if (type->getFirstStOfClass(SkillClass::MOVE)) {
+			if (type->getFirstStOfClass(SkillClass::MOVE) || type->getFirstStOfClass(SkillClass::MORPH)) {
 				rotated = true;
 				if (abs(lastRotation - targetRotation) < 180) {
 					rotation = lastRotation + (targetRotation - lastRotation) * getProgress() * rotFactor;

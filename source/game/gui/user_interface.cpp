@@ -694,7 +694,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 		}
 	} else {
 		if (activeCommandClass == CommandClass::BUILD
-		|| activeCommandClass == CommandClass::MORPH) {
+		|| activeCommandClass == CommandClass::TRANSFORM) {
 			// selecting building
 			assert(isPlacingBuilding());
 

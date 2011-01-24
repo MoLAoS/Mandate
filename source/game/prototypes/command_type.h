@@ -636,6 +636,7 @@ class TransformCommandType : public MorphCommandType {
 protected:
 	const MoveSkillType*	m_moveSkillType;
 	Vec2i                   m_position; // cell offset from 'buildPos' to go to before morphing
+	float                   m_rotation;
 
 public:
 	TransformCommandType();

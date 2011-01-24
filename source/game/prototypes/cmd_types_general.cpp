@@ -900,7 +900,8 @@ void MorphCommandType::update(Unit *unit) const {
 TransformCommandType::TransformCommandType()
 		: MorphCommandType("Transform")
 		, m_moveSkillType(0)
-		, m_position(-1) {
+		, m_position(-1)
+		, m_rotation(0.f) {
 }
 
 bool TransformCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
@@ -910,6 +911,7 @@ bool TransformCommandType::load(const XmlNode *n, const string &dir, const TechT
 		string skillName = skillNode->getAttribute("value")->getRestrictedValue();
 		m_moveSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
 		m_position = n->getChildVec2iValue("position");
+		m_rotation = n->getOptionalFloatValue("rotation");
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -976,6 +978,9 @@ void TransformCommandType::update(Unit *unit) const {
 				unit->setCurrSkill(SkillClass::STOP);
 			} else {
 				unit->setCurrSkill(m_morphSkillType); // set morph for one cycle
+				float rot = m_rotation + command->getFacing() * 90.f;
+				while (rot > 360.f) rot -= 360.f;
+				unit->face(rot);
 			}
 		}
 	}
