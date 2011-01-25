@@ -61,19 +61,21 @@ Intro::Intro(Program &program)
 		lblAdvanced = new Widgets::StaticText(logoPanel);
 		lblAdvanced->setTextParams(lang.get("AdvEng1"), Vec4f(1.f), font);
 		Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
-		lblAdvanced->setPos(Vec2i(255 - sz.x, 256 - 60));
+		lblAdvanced->setPos(Vec2i(255 - sz.w, 256 - 60 - sz.h));
 		lblAdvanced->setSize(sz);
 		lblAdvanced->centreText();
 
 		lblEngine = new Widgets::StaticText(logoPanel);
 		lblEngine->setTextParams(lang.get("AdvEng2"), Vec4f(1.f), font);
-		lblEngine->setPos(Vec2i(285, 256 - 60));
+		lblEngine->setPos(Vec2i(285, 256 - 60 - sz.h));
 		lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
 		lblEngine->centreText();
 
 		// Version label
+		int bigHeight = font->getMetrics()->getHeight();
 		font = coreData.getGAEFontSmall();
-		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 62);
+		int szDiff = bigHeight - font->getMetrics()->getHeight();
+		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 60 - sz.h + szDiff - 2);
 		lblVersion = new Widgets::StaticText(logoPanel);
 		lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);
 		lblVersion->setPos(pos);

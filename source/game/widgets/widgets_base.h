@@ -308,11 +308,21 @@ public:
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col) { m_defaultColour = col;	 }
-	void setTextShadowColour(const Vec4f &col) { m_shadowColour = col;	 }
-	void setTextShadowColour2(const Vec4f &col) { m_shadowColour2 = col;	 }
+	void setTextShadowColour(const Vec4f &col) {
+		m_shadowColour = col;
+		if (m_texts.size() == 1) {
+			m_texts[0].m_shadowColour = col;
+		}
+	}
+	void setTextShadowColour2(const Vec4f &col) {
+		m_shadowColour2 = col;
+		if (m_texts.size() == 1) {
+			m_texts[0].m_shadowColour2 = col;
+		}
+	}
 	void setTextShadowColours(const Vec4f &col1, const Vec4f &col2) {
-		m_shadowColour = col1;
-		m_shadowColour2 = col2;
+		setTextShadowColour(col1);
+		setTextShadowColour2(col2);
 	}
 	void setTextCentre(bool v)	{ centre = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);

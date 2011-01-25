@@ -573,7 +573,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
-	pos.y -= m_texts[ndx].m_font->getMetrics()->getMaxDescent();
+	pos.y -= int(m_texts[ndx].m_font->getMetrics()->getMaxDescent());
 	Vec4f colour = m_texts[ndx].m_colour;
 	colour.a *= me->getFade();
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour, m_texts[ndx].m_font);
@@ -582,8 +582,8 @@ void TextWidget::renderText(int ndx) {
 void TextWidget::renderTextShadowed(int ndx, int offset) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
-	pos.y -= m_texts[ndx].m_font->getMetrics()->getMaxDescent();
-	Vec2i sPos = pos + Vec2i(offset, -offset);
+	pos.y -= int(m_texts[ndx].m_font->getMetrics()->getMaxDescent());
+	Vec2i sPos = pos + Vec2i(offset, offset);
 	Vec4f colour = m_texts[ndx].m_colour;
 	Vec4f shadowColour = m_texts[ndx].m_shadowColour;
 	colour.a *= me->getFade();
@@ -595,9 +595,9 @@ void TextWidget::renderTextShadowed(int ndx, int offset) {
 void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
-	pos.y -= m_texts[ndx].m_font->getMetrics()->getMaxDescent();
-	Vec2i sPos1 = pos + Vec2i(offset, -offset);
-	Vec2i sPos2 = sPos1 + Vec2i(offset, -offset);
+	pos.y -= int(m_texts[ndx].m_font->getMetrics()->getMaxDescent());
+	Vec2i sPos1 = pos + Vec2i(offset, offset);
+	Vec2i sPos2 = sPos1 + Vec2i(offset, offset);
 	Vec4f colour = m_texts[ndx].m_colour;
 	Vec4f shadowColour = m_texts[ndx].m_shadowColour;
 	Vec4f shadowColour2 = m_texts[ndx].m_shadowColour2;

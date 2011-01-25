@@ -100,7 +100,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 		int tx = int(255.f / 512.f * logoWidth);
 		int ty = int(60.f / 256.f * logoHeight);
-		label->setPos(Vec2i(tx - sz.x, logoHeight - ty));
+		label->setPos(Vec2i(tx - sz.w, logoHeight - ty - sz.h));
 		label->setSize(sz);
 		label->centreText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
@@ -108,14 +108,17 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label = new Widgets::StaticText(pp);
 		label->setTextParams(g_lang.get("AdvEng2"), Vec4f(1.f), font);
 		tx = int(285.f / 512.f * logoWidth);
-		label->setPos(Vec2i(tx, logoHeight - ty));
+		label->setPos(Vec2i(tx, logoHeight - ty - sz.h));
 		label->setSize(label->getTextDimensions() + Vec2i(10,5));
 		label->centreText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-		pos = Vec2i(tx + label->getSize().x, logoHeight - (ty + 3));
 		// Version label
+		int bigHeight = int(font->getMetrics()->getHeight());
 		font = g_coreData.getGAEFontSmall();
+		int szDiff = bigHeight - int(font->getMetrics()->getHeight());
+		pos = Vec2i(tx + label->getSize().x, logoHeight - ty - sz.h + szDiff - 2);
+
 		label = new Widgets::StaticText(pp);
 		label->setTextParams(gaeVersionString, Vec4f(1.f), font);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
@@ -161,30 +164,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 				g_coreData.getGaeSplashTexture());
 		}
 	}
-
-	font = g_coreData.getFTMenuFontNormal();
-
-	Button *b = new Button(&program, Vec2i(50,50), Vec2i(300,50));
-	b->setTextParams("Test Button", Vec4f(1.f), font);
-
-	string someLines;
-	for (int i=1; i <= 127; ++i) {
-		if (i < 0x20) continue;
-		someLines.push_back(i);
-		if (i == 0x40 || i == 0x5A || i == 0x60 || i == 0x7A) {
-			someLines.push_back('\n');
-		}
-	}
-	Vec2f dims = font->getMetrics()->getTextDiminsions(someLines);
-	BackgroundStyle backStyle;
-	backStyle.setColour(g_widgetConfig.getColourIndex(Colour(0x4Cu, 0x4Cu, 0x4Cu, 0xFFu)));
-
-	StaticText *st = new StaticText(&program, Vec2i(50, 150), Vec2i(dims.w + 20, dims.h + 20));
-	st->setBackgroundStyle(backStyle);
-	st->setBorderStyle(borderStyle);
-	st->setTextParams(someLines, Vec4f(0.15f, 1.f, 0.75f, 1.f), font, false);	
-	st->setTextPos(Vec2i(10, 10));
-
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }
