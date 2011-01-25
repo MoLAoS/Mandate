@@ -184,8 +184,12 @@ void ProgramLog::setupLoadingScreen(const string &factionDir) {
 	}
 }
 
+void ProgramLog::setLoading(bool v) { 
+	loadingGame = v;
+}
+
 void ProgramLog::renderLoadingScreen(){
-	g_renderer.reset2d(true);
+	g_renderer.reset2d();
 	g_renderer.clearBuffers();
 
 	Font *normFont = g_coreData.getFTMenuFontSmall();
@@ -196,17 +200,17 @@ void ProgramLog::renderLoadingScreen(){
 	}
 	
 	Vec2i headerPos(g_metrics.getScreenW() / 4, 75 * g_metrics.getScreenH() / 100);
-	g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);
+	//g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);
 
 	if (loadingGame) {
 		int offset = 0;
-		int step = int(normFont->getMetrics()->getHeight()) + 4;
-		for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
-			float alpha = offset == 0 ? 1.0f : 0.8f - 0.8f * static_cast<float>(offset) / logLines.size();
-			g_renderer.renderText(*it, normFont, alpha, g_metrics.getScreenW() / 4,
-				70 * g_metrics.getScreenH() / 100 - offset * step, false);
-			++offset;
-		}
+		//int step = int(normFont->getMetrics()->getHeight()) + 4;
+		//for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
+		//	float alpha = offset == 0 ? 1.0f : 0.8f - 0.8f * static_cast<float>(offset) / logLines.size();
+		//	g_renderer.renderText(*it, normFont, alpha, g_metrics.getScreenW() / 4,
+		//		70 * g_metrics.getScreenH() / 100 - offset * step, false);
+		//	++offset;
+		//}
 		if (m_progressBar) {
 			Vec2i progBarPos = headerPos;
 			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).x) + 20;
@@ -215,8 +219,8 @@ void ProgramLog::renderLoadingScreen(){
 			g_renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
 		}
 	} else {
-		g_renderer.renderText(current, normFont, 1.0f, g_metrics.getScreenW() / 4,
-			62 * g_metrics.getScreenH() / 100, false);
+		//g_renderer.renderText(current, normFont, 1.0f, g_metrics.getScreenW() / 4,
+		//	62 * g_metrics.getScreenH() / 100, false);
 	}
 	g_renderer.swapBuffers();
 }

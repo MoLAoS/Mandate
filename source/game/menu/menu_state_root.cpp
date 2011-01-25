@@ -62,7 +62,13 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	// Buttons Panel
 	Vec2i pos(g_metrics.getScreenW() / 2 - 125, btnPnlYPos);
-	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, btnPnlHeight));
+	Vec2i size(250, btnPnlHeight);
+	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, size);
+	
+	stringstream ss;
+	ss << "Created button panel at:" << pos << " size:" << size;
+	g_logger.logProgramEvent(ss.str());
+
 	pnl->setPaddingParams(10, widgetPad);
 	BorderStyle borderStyle;
 	borderStyle.m_type = BorderType::SOLID;
@@ -133,7 +139,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setTextParams("Glest Advanced Engine " + gaeVersionString,
 			Vec4f(1.f), g_coreData.getGAEFontSmall());
 		size = label->getTextDimensions() + Vec2i(5,5);
-		pos = Vec2i(g_metrics.getScreenW() - size.x - 15, 10);
+		pos = Vec2i(g_metrics.getScreenW() - size.w - 15, g_config.getDisplayHeight() - size.h - 10);
 		label->setPos(pos);
 		label->setSize(size);
 	}

@@ -240,7 +240,7 @@ void UserInterface::resetState() {
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
-	g_program.setMouseCursorIcon();
+	g_program.getMouseCursor().setAppearance(MouseAppearance::DEFAULT);
 }
 
 static void calculateNearest(UnitVector &units, const Vec3f &pos) {
@@ -867,7 +867,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
-				g_program.setMouseCursorIcon(activeCommandType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::ICON, activeCommandType->getImage());
 				m_minimap->setLeftClickOrder(true);
 				activePos = posDisplay;
 			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
@@ -880,7 +880,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 					m_selectingSecond = true;
 				} else {
 					selectingPos = true;
-					g_program.setMouseCursorIcon(ct->getImage());
+					g_program.getMouseCursor().setAppearance(MouseAppearance::ICON, ct->getImage());
 					m_minimap->setLeftClickOrder(true);
 					activePos = posDisplay;
 				}
@@ -908,7 +908,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
 				activePos = posDisplay;
-				g_program.setMouseCursorIcon(choosenBuildingType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::ICON, choosenBuildingType->getImage());
 			}
 		} else {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {

@@ -95,12 +95,16 @@ bool CoreData::load() {
 		greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
 		orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
 		redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
-		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
 	} catch (runtime_error &e) {
 		g_logger.logError(string("Error loading core data.\n") + e.what());
 		return false;
 	}
-
+	try {
+		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
+	} catch (runtime_error &e) {
+		g_logger.logError("mouse.png images not found.\n");
+		mouseTexture = 0;
+	}
 	// Display/Console font
 	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
 	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(12));

@@ -39,6 +39,8 @@ class MouseWidget;
 class KeyboardWidget;
 class TextWidget;
 
+WRAPPED_ENUM(MouseAppearance, DEFAULT, ICON, CAMERA_MOVE)
+
 // =====================================================
 // class Widget
 // =====================================================
@@ -340,6 +342,20 @@ public:
 	Vec2i getTextDimensions(int ndx) const;
 	bool hasText() const { return !m_texts.empty(); }
 	int  numSnippets() const { return m_texts.size(); }
+};
+
+// =====================================================
+// class MouseCursor
+// =====================================================
+
+class MouseCursor : public Widget {
+protected:
+	void renderTex(const Texture2D *tex);
+
+public:
+	MouseCursor(WidgetWindow *window) : Widget(window) {}
+
+	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) = 0;
 };
 
 // =====================================================

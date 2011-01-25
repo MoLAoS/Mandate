@@ -72,9 +72,9 @@ Intro::Intro(Program &program)
 		lblEngine->centreText();
 
 		// Version label
-		int bigHeight = font->getMetrics()->getHeight();
+		int bigHeight = int(font->getMetrics()->getHeight());
 		font = coreData.getGAEFontSmall();
-		int szDiff = bigHeight - font->getMetrics()->getHeight();
+		int szDiff = bigHeight - int(font->getMetrics()->getHeight());
 		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 60 - sz.h + szDiff - 2);
 		lblVersion = new Widgets::StaticText(logoPanel);
 		lblVersion->setTextParams(gaeVersionString, Vec4f(1.f), font);

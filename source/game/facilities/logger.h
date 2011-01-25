@@ -27,7 +27,7 @@ using std::deque;
 using std::string;
 using std::stringstream;
 
-#define LOG_WIDGET_EVENTS 0
+#define LOG_WIDGET_EVENTS 1
 #if LOG_WIDGET_EVENTS
 #	define WIDGET_LOG(x) {stringstream ss; ss << x; g_logger.logWidgetEvent(ss.str()); }
 #else
@@ -121,7 +121,7 @@ public:
 	void setState(const string &state);
 	void resetState(const string &s)	{state= s;}
 	void setSubtitle(const string &v)	{subtitle = v;}
-	void setLoading(bool v)				{loadingGame = v;}
+	void setLoading(bool v);
 	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
 	void setupLoadingScreen(const string &factionDir);

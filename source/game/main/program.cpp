@@ -50,7 +50,7 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 		: ProgramState(program)
 		, done(false) {
 	program.setFade(1.f);
-	program.initMouse();
+//	program.initMouse();
 	string msg;
 	if(e) {
 		msg = string("Exception: ") + e->what();
@@ -268,7 +268,7 @@ void Program::loop() {
 			if (visible) {
 				_PROFILE_SCOPE("Program::loop() : Render");
 				programState->renderBg();
-				g_renderer.reset2d(true);
+				g_renderer.reset2d();
 				WidgetWindow::render();
 				programState->renderFg();
 			}
@@ -412,7 +412,7 @@ void Program::setState(ProgramState *programState) {
 	this->programState = programState;
 	programState->load();
 	programState->init();
-	initMouse();
+//	initMouse();
 	resetTimers(programState->getUpdateFps());
 }
 

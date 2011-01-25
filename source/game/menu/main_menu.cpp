@@ -142,11 +142,12 @@ void MainMenu::renderFg() {
 	state->render();
 	//renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
 
-	if (g_config.getMiscDebugMode()) {
-		Font *font = g_coreData.getFTMenuFontNormal();
-		string s = "FPS: " + intToStr(lastFps);
-		g_renderer.renderText(s, font, Vec3f(1.f), 10, 60, false);
-	}
+	///@todo put this on a StaticText
+	//if (g_config.getMiscDebugMode()) {
+	//	Font *font = g_coreData.getFTMenuFontNormal();
+	//	string s = "FPS: " + intToStr(lastFps);
+	//	g_renderer.renderText(s, font, Vec3f(1.f), 10, 60, false);
+	//}
 	g_renderer.swapBuffers();
 }
 
@@ -195,7 +196,7 @@ void MainMenu::setState(MenuState *state) {
 	} else {
 		setCameraOnSetState = true;
 	}
-	g_program.initMouse();
+//	g_program.initMouse();
 }
 
 void MainMenu::setCameraTarget(MenuStates state) {

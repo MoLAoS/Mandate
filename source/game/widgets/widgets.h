@@ -175,8 +175,8 @@ public:
 
 class Button : public Widget, public TextWidget, public ImageWidget, public MouseWidget {
 protected:
-	bool hover;
-	bool pressed;
+	bool m_hover;
+	bool m_pressed;
 	bool m_doHoverHighlight;
 	bool m_defaultTexture;
 
@@ -184,19 +184,16 @@ public:
 	Button(Container* parent);
 	Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTex = true, bool hoverHighlight = true);
 
-	virtual void setSize(const Vec2i &sz);
+	virtual void setSize(const Vec2i &sz) override;
 
-	virtual void mouseIn() { hover = true; }
-	virtual void mouseOut() { hover = false; }
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
-
-	virtual void render();
-	virtual string desc() { return string("[Button: ") + descPosDim() + "]"; }
+	virtual void render() override;
+	virtual string desc() override { return string("[Button: ") + descPosDim() + "]"; }
 
 	sigslot::signal<Button*> Clicked;
 };
@@ -207,24 +204,24 @@ public:
 
 class CheckBox : public Button {
 protected:
-	bool checked;
+	bool m_checked;
 
 public:
 	CheckBox(Container* parent);
 	CheckBox(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void setSize(const Vec2i &sz);
-	void setChecked(bool v) { checked = v; }
-	bool isChecked() const { return checked; }
+	virtual void setSize(const Vec2i &sz) override;
+	void setChecked(bool v) { m_checked = v; }
+	bool isChecked() const { return m_checked; }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual void render();
-	virtual string desc() { return string("[CheckBox: ") + descPosDim() + "]"; }
+	virtual void render() override;
+	virtual string desc() override { return string("[CheckBox: ") + descPosDim() + "]"; }
 };
 
 // =====================================================

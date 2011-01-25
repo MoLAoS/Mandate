@@ -153,8 +153,8 @@ Button::Button(Container* parent)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
-		, hover(false)
-		, pressed(false)
+		, m_hover(false)
+		, m_pressed(false)
 		, m_doHoverHighlight(true)
 		, m_defaultTexture(true) {
 }
@@ -164,8 +164,8 @@ Button::Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTexture, bo
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
-		, hover(false)
-		, pressed(false)
+		, m_hover(false)
+		, m_pressed(false)
 		, m_doHoverHighlight(hoverHighlight) 
 		, m_defaultTexture(defaultTexture) {
 	// background texture
@@ -205,19 +205,21 @@ void Button::setSize(const Vec2i &sz) {
 }
 
 bool Button::mouseDown(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
-		pressed = true;
+		m_pressed = true;
 		return true;
 	}
 	return true;
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
-		if (pressed && hover) {
+		if (m_pressed && m_hover) {
 			Clicked(this);
 		}
-		pressed = false;
+		m_pressed = false;
 		return true;
 	}
 	return false;
@@ -233,7 +235,7 @@ void Button::render() {
 	}
 
 	// render hilight
-	if (m_doHoverHighlight && hover && isEnabled()) {
+	if (m_doHoverHighlight && m_hover && isEnabled()) {
 		float anim = getRootWindow()->getAnim();
 		if (anim > 0.5f) {
 			anim = 1.f - anim;
@@ -254,7 +256,7 @@ void Button::render() {
 // =====================================================
 
 CheckBox::CheckBox(Container* parent)
-		: Button(parent), checked(false) {
+		: Button(parent), m_checked(false) {
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
@@ -263,7 +265,7 @@ CheckBox::CheckBox(Container* parent)
 }
 
 CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)
-		: Button(parent, pos, size, false), checked(false) {
+		: Button(parent, pos, size, false), m_checked(false) {
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
@@ -309,7 +311,7 @@ Vec2i CheckBox::getPrefSize() const {
 
 bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
-		pressed = true;
+		m_pressed = true;
 		return true;
 	}
 	return false;
@@ -317,11 +319,11 @@ bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
-		if (pressed && hover) {
-			checked = !checked;
+		if (m_pressed && m_hover) {
+			m_checked = !m_checked;
 			Clicked(this);
 		}
-		pressed = false;
+		m_pressed = false;
 		return true;
 	}
 	return false;
@@ -329,10 +331,10 @@ bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
 
 void CheckBox::render() {
 	// render background
-	ImageWidget::renderImage(checked ? 1 : 0);
+	ImageWidget::renderImage(m_checked ? 1 : 0);
 
 	// render hilight
-	if (hover) {
+	if (m_hover) {
 		float anim = getRootWindow()->getAnim();
 		if (anim > 0.5f) {
 			anim = 1.f - anim;
@@ -345,7 +347,7 @@ void CheckBox::render() {
 	}
 
 	// render label
-	TextWidget::renderText(checked ? 1 : 0);
+	TextWidget::renderText(m_checked ? 1 : 0);
 }
 
 // =====================================================
@@ -997,17 +999,17 @@ void Panel::remChild(Widget* child) {
 
 void Panel::render() {
 	Widget::renderBgAndBorders();
-	Vec2i offset(m_borderStyle.m_sizes[Border::LEFT] + getPadding(),
-				m_borderStyle.m_sizes[Border::TOP] + getPadding());
-	Vec2i pos = getScreenPos() + offset;
-	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
+//	Vec2i offset(m_borderStyle.m_sizes[Border::LEFT] + getPadding(),
+//				m_borderStyle.m_sizes[Border::TOP] + getPadding());
+//	Vec2i pos = getScreenPos() + offset;
+//	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
 	assertGl();
-	glPushAttrib(GL_SCISSOR_BIT);
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(pos.x, pos.y, size.w, size.h);
+//	glPushAttrib(GL_SCISSOR_BIT);
+//		glEnable(GL_SCISSOR_TEST);
+//		glScissor(pos.x, pos.y, size.w, size.h);
 		Container::render();
-		glDisable(GL_SCISSOR_TEST);
-	glPopAttrib();
+//		glDisable(GL_SCISSOR_TEST);
+//	glPopAttrib();
 	assertGl();
 }
 

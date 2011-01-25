@@ -21,10 +21,27 @@ using Shared::Platform::WindowGl;
 
 namespace Glest { namespace Widgets {
 
-class Imageset;
-class Animset;
+// =====================================================
+// class CodeMouseCursor
+// =====================================================
 
-WRAPPED_ENUM(MouseAppearance, DEFAULT, ICON, CAMERA_MOVE)
+class CodeMouseCursor : public MouseCursor {
+private:
+	MouseAppearance  m_app;
+	const Texture2D *m_tex;
+
+public:
+	CodeMouseCursor(WidgetWindow *window) : MouseCursor(window)
+		,m_app(MouseAppearance::DEFAULT), m_tex(0) {}
+
+	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) override;
+
+	virtual Vec2i getPrefSize() const override { return Vec2i(32); }
+	virtual Vec2i getMinSize() const override { return Vec2i(32); }
+
+	virtual void render() override;
+	virtual string desc() override { return string("[MouseCursor: ") + descPosDim() + "]"; }
+};
 
 // =====================================================
 // class WidgetWindow
@@ -57,10 +74,11 @@ private:
 	float anim, slowAnim;
 	Vec2i mousePos;
 	bool modalFloater;
-	const Texture2D *mouseIcon;
+	//const Texture2D *mouseIcon;
 
-	Imageset *mouseMain;
-	Animset *mouseAnimations;
+	MouseCursor *m_mouseCursor;
+	//Imageset *mouseMain;
+	//Animset *mouseAnimations;
 
 	Widget* findCommonAncestor(Widget* widget1, Widget* widget2);
 	void unwindMouseOverStack(Widget* newTop);
@@ -77,6 +95,7 @@ public:
 
 	void update();
 	float getAnim() const { return anim; }
+	float getSlowAnim() const { return slowAnim; }
 	virtual void clear();
 
 	void registerUpdate(Widget* widget);
@@ -88,14 +107,15 @@ public:
 	void aquireKeyboardFocus(KeyboardWidget* widget);
 	void releaseKeyboardFocus(KeyboardWidget* widget);
 
-	void setMouseCursorIcon(const Texture2D *tex = 0) { 
-		mouseIcon = tex; 
-		if (!tex) { 
-			setMouseAppearance();
-		}
-	}
-	void setMouseAppearance(MouseAppearance v = MouseAppearance::DEFAULT);
-	void initMouse();
+	MouseCursor& getMouseCursor() { return *m_mouseCursor; }
+	//void setMouseCursorIcon(const Texture2D *tex = 0) { 
+	//	mouseIcon = tex; 
+	//	if (!tex) { 
+	//		setMouseAppearance();
+	//	}
+	//}
+	//void setMouseAppearance(MouseAppearance v = MouseAppearance::DEFAULT);
+	//void initMouse();
 
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);

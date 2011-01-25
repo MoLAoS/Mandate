@@ -672,6 +672,31 @@ void TextWidget::setTextPos(const Vec2i &pos, int ndx) {
 }
 
 // =====================================================
+// class MouseCursor
+// =====================================================
+
+void MouseCursor::renderTex(const Texture2D *tex) {
+	Vec2i pos = getScreenPos() + Vec2i(10, 10);
+	int x1 = pos.x + 1;
+	int y1 = pos.y + 1;
+	int x2 = x1 + 32;
+	int y2 = y1 + 32;
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
+	glColor4f(1.f, 1.f, 1.f, 0.5f);
+	glBegin(GL_TRIANGLE_STRIP);
+		glTexCoord2i(0, 1);
+		glVertex2i(x1, y2);
+		glTexCoord2i(0, 0);
+		glVertex2i(x1, y1);
+		glTexCoord2i(1, 1);
+		glVertex2i(x2, y2);
+		glTexCoord2i(1, 0);
+		glVertex2i(x2, y1);
+	glEnd();
+}
+
+// =====================================================
 // class Container
 // =====================================================
 

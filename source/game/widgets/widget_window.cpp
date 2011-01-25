@@ -32,6 +32,70 @@ namespace Glest { namespace Widgets {
 using Global::CoreData;
 
 // =====================================================
+// class CodeMouseCursor
+// =====================================================
+
+void CodeMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
+	if (ma == MouseAppearance::ICON) {
+		RUNTIME_CHECK(tex != 0);
+		m_tex = tex;
+		m_app = MouseAppearance::ICON;
+	} else {
+		m_tex = 0;
+		m_app = MouseAppearance::DEFAULT;
+	}
+}
+
+void CodeMouseCursor::render() {
+	float color1, color2;
+	Vec2i points[4];
+	points[0] = getScreenPos();
+	points[1] = points[0] + Vec2i(20, 10);
+	points[2] = points[0] + Vec2i(10, 20);
+
+	int numPoints;
+	if (m_tex) {
+		numPoints = 4;
+		points[3] = points[2];
+		points[2] = points[0] + Vec2i(10, 10);
+	} else {
+		numPoints = 3;
+	}
+
+	int mAnim = int(getRootWindow()->getSlowAnim() * 200) - 100;
+	color2 = float(abs(mAnim)) / 100.f / 2.f + 0.4f;
+	color1 = float(abs(mAnim)) / 100.f / 2.f + 0.8f;
+
+	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
+	glEnable(GL_BLEND);
+
+	// inside
+	glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
+	glBegin(GL_TRIANGLE_FAN);
+	for (int i=0; i < numPoints; ++i) {
+		glVertex2iv(points[i].ptr());
+	}
+	glEnd();
+
+	// border
+	glLineWidth(2);
+	glBegin(GL_LINE_LOOP);
+		glColor4f(1.f, 0.2f, 0, color1);
+		glVertex2iv(points[0].ptr());
+		glColor4f(1.f, 0.4f, 0, color2);
+		for (int i=1; i < numPoints; ++i) {
+			glVertex2iv(points[i].ptr());
+		}
+	glEnd();
+
+	// command icon ?
+	if (m_tex) {
+		MouseCursor::renderTex(m_tex);
+	}
+	glPopAttrib();
+}
+
+// =====================================================
 // class WidgetWindow
 // =====================================================
 
@@ -42,8 +106,8 @@ WidgetWindow::WidgetWindow()
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, floatingWidget(0)
-		, anim(0.f), slowAnim(0.f), mouseIcon(0)
-		, mouseMain(0), mouseAnimations(0) {
+		, anim(0.f), slowAnim(0.f)/*, mouseIcon(0)
+		, mouseMain(0), mouseAnimations(0) */{
 	size.x = Metrics::getInstance().getScreenW();
 	size.y = Metrics::getInstance().getScreenH();
 	
@@ -55,6 +119,13 @@ WidgetWindow::WidgetWindow()
 	lastMouseDownWidget = 0;
 	lastKeyDownWidget = 0;
 	keyboardFocused = keyboardWidget;
+
+	///@todo ImageSetMouseCursor ... & config option?
+	if (true) {
+		m_mouseCursor = new CodeMouseCursor(this);
+	} else {
+		//m_mouseCursor = new ImageSetMouseCursor(this);
+	}
 
 	textRendererFT = g_renderer.getFreeTypeRenderer();
 }
@@ -158,10 +229,10 @@ void WidgetWindow::doMouseInto(Widget* widget) {
 		}
 	}
 }
-
-void WidgetWindow::setMouseAppearance(MouseAppearance v) {
-	mouseMain->setActive(v);
-}
+//
+//void WidgetWindow::setMouseAppearance(MouseAppearance v) {
+//	mouseMain->setActive(v);
+//}
 
 void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
 	delete floatingWidget;
@@ -222,9 +293,9 @@ void WidgetWindow::update() {
 		(*it)->update();
 	}
 
-	if (mouseAnimations) {
-		mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011
-	}
+	//if (mouseAnimations) {
+	//	mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011
+	//}
 }
 
 void WidgetWindow::destroyFloater() {
@@ -303,10 +374,7 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	assert(!mouseOverStack.empty());
 	mousePos = Vec2i(x, y);
-
-	if (mouseMain) {
-		mouseMain->setPos(mousePos + Vec2i(0, -32));
-	}
+	m_mouseCursor->setPos(mousePos);
 
 	Widget* widget = 0;
 	if (floatingWidget) {
@@ -408,84 +476,16 @@ void WidgetWindow::eventKeyPress(char c) {
 	}
 }
 
-void WidgetWindow::initMouse() {
-	remChild(mouseMain);
-	mouseMain = new Imageset(this, g_coreData.getMouseTexture(), 32, 32);
-	mouseMain->setSize(32,32);
-	mouseMain->setPos(mousePos + Vec2i(0, -32));
-	//mouseAnimations = new Animset(this, mouseMain, 30);
-}
+//void WidgetWindow::initMouse() {
+//	remChild(mouseMain);
+//	mouseMain = new Imageset(this, g_coreData.getMouseTexture(), 32, 32);
+//	mouseMain->setSize(32,32);
+//	mouseMain->setPos(mousePos);
+//	//mouseAnimations = new Animset(this, mouseMain, 30);
+//}
 
 void WidgetWindow::renderMouseCursor() {
-	float color1, color2;
-	Vec2i points[4];
-	points[0] = mousePos;
-	points[1] = mousePos + Vec2i(20, -10);
-	points[2] = mousePos + Vec2i(10, -20);
-
-	int numPoints;
-	if (mouseIcon) {
-		mouseMain->setActive(1);
-		numPoints = 4;
-		points[3] = points[2];
-		points[2] = mousePos + Vec2i(10, -10);
-	} else {
-		numPoints = 3;
-	}
-
-	int mAnim = int(slowAnim * 200) - 100;
-	color2 = float(abs(mAnim)) / 100.f / 2.f + 0.4f;
-	color1 = float(abs(mAnim)) / 100.f / 2.f + 0.8f;
-
-	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
-		glEnable(GL_BLEND);
-
-		// hardcoded if texture doesn't exist
-		if (mouseMain == NULL) {
-			//inside
-			glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
-			glBegin(GL_TRIANGLE_FAN);
-			for (int i=0; i < numPoints; ++i) {
-				glVertex2iv(points[i].ptr());
-			}
-			glEnd();
-
-			//border
-			glLineWidth(2);
-			glBegin(GL_LINE_LOOP);
-				glColor4f(1.f, 0.2f, 0, color1);
-				glVertex2iv(points[0].ptr());
-				glColor4f(1.f, 0.4f, 0, color2);
-				for (int i=1; i < numPoints; ++i) {
-					glVertex2iv(points[i].ptr());
-				}
-			glEnd();
-		} else {
-			// this is rendering it twice but is neccessary since the widget
-			// render order isn't guaranteed
-			mouseMain->render();
- 		}
-
-		if (mouseIcon) {
-			int x1 = points[2].x + 1;
-			int y2 = points[2].y - 1;
-			int x2 = x1 + 32;
-			int y1 = y2 - 32;
-			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(mouseIcon)->getHandle());
-			glColor4f(1.f, 1.f, 1.f, 0.5f);
-			glBegin(GL_TRIANGLE_STRIP);
-				glTexCoord2i(0, 1);
-				glVertex2i(x1, y2);
-				glTexCoord2i(0, 0);
-				glVertex2i(x1, y1);
-				glTexCoord2i(1, 1);
-				glVertex2i(x2, y2);
-				glTexCoord2i(1, 0);
-				glVertex2i(x2, y1);
-			glEnd();
-		}
-	glPopAttrib();
+	m_mouseCursor->render();
 }
 
 }}

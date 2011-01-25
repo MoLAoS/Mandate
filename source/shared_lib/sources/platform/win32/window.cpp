@@ -267,6 +267,12 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			GetWindowRect(eventWindow->getHandle(), &windowRect);
 			mousePos.x = LOWORD(lParam) - windowRect.left;
 			mousePos.y = HIWORD(lParam) - windowRect.top;
+			if (eventWindow->windowStyle == wsWindowedFixed) {
+				int titleBarHeight = GetSystemMetrics(SM_CYCAPTION);
+				int borderWidth = GetSystemMetrics(SM_CXFIXEDFRAME);
+				mousePos.x -= borderWidth;
+				mousePos.y -= titleBarHeight;
+			}
 			ClientToScreen(eventWindow->getHandle(), &mousePos);
 
 			eventWindow->input.setLastMouseEvent(Chrono::getCurMillis());
@@ -486,6 +492,7 @@ void Window::createWindow(LPVOID creationData) {
 
 	assert(handle != NULL);
 
+	setPos(300,0);
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
 }

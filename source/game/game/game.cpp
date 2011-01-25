@@ -589,7 +589,7 @@ void GameState::mouseUpLeft(int x, int y) {
 }
 void GameState::mouseUpRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
-	g_program.setMouseAppearance(MouseAppearance::DEFAULT);
+	g_program.getMouseCursor().setAppearance(MouseAppearance::DEFAULT);
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
@@ -626,7 +626,7 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			}
 		}
 	} else if (ms.get(MouseButton::RIGHT)) {
-		g_program.setMouseAppearance(MouseAppearance::CAMERA_MOVE);
+		g_program.getMouseCursor().setAppearance(MouseAppearance::CAMERA_MOVE);
 		gameCamera.setMoveZ((y - lastMousePos.y) * scrollSpeed, true);
 		gameCamera.setMoveX((x - lastMousePos.x) * scrollSpeed, true);
 	} else {
@@ -857,8 +857,9 @@ void GameState::render2d(){
 
 	//script display text
 	if (!m_scriptDisplay.empty() && !m_modalDialog) {
-		g_renderer.renderText(m_scriptDisplay, g_coreData.getFTMenuFontNormal(),
-			gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
+		///@todo put on widget
+		//g_renderer.renderText(m_scriptDisplay, g_coreData.getFTMenuFontNormal(),
+		//	gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
 	}
 
 	// debug info
@@ -896,8 +897,9 @@ void GameState::render2d(){
 
 #		endif // _GAE_DEBUG_EDITION_
 
-		g_renderer.renderText(str.str(), g_coreData.getFTDisplayFont(),
-			gui.getDisplay()->getColor(), 10, 120, false);
+		///@todo put on widget
+		//g_renderer.renderText(str.str(), g_coreData.getFTDisplayFont(),
+		//	gui.getDisplay()->getColor(), 10, 120, false);
 	}
 }
 
