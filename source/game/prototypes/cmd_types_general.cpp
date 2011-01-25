@@ -655,7 +655,8 @@ void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 }
 
 string UpgradeCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f) + getProducedUpgrade()->getReqDesc(f);
+	return RequirableType::getReqDesc(f)
+		+ "\n" + getProducedUpgrade()->getReqDesc(f);
 }
 
 const ProducibleType *UpgradeCommandType::getProduced() const {
@@ -1055,7 +1056,7 @@ void LoadCommandType::getDesc(string &str, const Unit *unit) const {
 }
 
 string LoadCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
+	return RequirableType::getReqDesc(f);
 }
 
 void LoadCommandType::update(Unit *unit) const {
@@ -1246,7 +1247,7 @@ void BeLoadedCommandType::update(Unit *unit) const {
 }
 
 // ===============================
-//  class GenericCommandType
+//  class CastSpellCommandType
 // ===============================
 
 bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {

@@ -216,9 +216,9 @@ void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) 
 }
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
-	str+= Lang::getInstance().get(speedType) + ": " + intToStr(speed);
-	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
-	str+="\n";
+	//str+= Lang::getInstance().get(speedType) + ": " + intToStr(speed);
+	//EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
+	//str+="\n";
 }
 
 CycleInfo SkillType::calculateCycleTime() const {
