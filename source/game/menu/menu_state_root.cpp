@@ -66,24 +66,11 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pnl->setPaddingParams(10, widgetPad);
 	BorderStyle borderStyle;
 	borderStyle.m_type = BorderType::SOLID;
-	borderStyle.setSolid(g_widgetConfig.getColourIndex(Colour(255u, 0u, 0u, 255u)));
+	borderStyle.setSolid(g_widgetConfig.getColourIndex(Colour(0xFFu, 0u, 0u, 0xFFu)));
 	borderStyle.setSizes(1);
 	pnl->setBorderStyle(borderStyle);
 
 	Font *font = g_coreData.getFTMenuFontNormal();
-
-	Button *b = new Button(&program, Vec2i(50,50), Vec2i(300,50));
-	b->setTextParams("Test Button", Vec4f(1.f), font);
-
-	BackgroundStyle backStyle;
-	backStyle.setColour(g_widgetConfig.getColourIndex(Colour(0.3f, 0.3f, 0.3f, 1.f)));
-
-	StaticText *st = new StaticText(&program, Vec2i(50, 150), Vec2i(300, 300));
-	st->setBackgroundStyle(backStyle);
-	st->setBorderStyle(borderStyle);
-	st->setTextParams("Boo!!", Vec4f(1.f, 0.5f, 0.5f, 1.f), font, false);
-	st->setTextPos(Vec2i(0));
-
 	int btnHeight = btnPnlHeight / (RootMenuItem::COUNT + 2);
 
 	// Buttons
@@ -174,6 +161,30 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 				g_coreData.getGaeSplashTexture());
 		}
 	}
+
+	font = g_coreData.getFTMenuFontNormal();
+
+	Button *b = new Button(&program, Vec2i(50,50), Vec2i(300,50));
+	b->setTextParams("Test Button", Vec4f(1.f), font);
+
+	string someLines;
+	for (int i=1; i <= 127; ++i) {
+		if (i < 0x20) continue;
+		someLines.push_back(i);
+		if (i == 0x40 || i == 0x5A || i == 0x60 || i == 0x7A) {
+			someLines.push_back('\n');
+		}
+	}
+	Vec2f dims = font->getMetrics()->getTextDiminsions(someLines);
+	BackgroundStyle backStyle;
+	backStyle.setColour(g_widgetConfig.getColourIndex(Colour(0x4Cu, 0x4Cu, 0x4Cu, 0xFFu)));
+
+	StaticText *st = new StaticText(&program, Vec2i(50, 150), Vec2i(dims.w + 20, dims.h + 20));
+	st->setBackgroundStyle(backStyle);
+	st->setBorderStyle(borderStyle);
+	st->setTextParams(someLines, Vec4f(0.15f, 1.f, 0.75f, 1.f), font, false);	
+	st->setTextPos(Vec2i(10, 10));
+
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }

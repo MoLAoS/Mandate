@@ -257,6 +257,22 @@ public:
 	bool hasImage(int ndx) const { return ndx < textures.size(); }
 };
 
+typedef const Font* FontPtr;
+
+struct TextRenderInfo {
+	string  m_text;
+	Vec2i   m_pos;
+	Vec4f   m_colour;
+	Vec4f   m_shadowColour;
+	Vec4f   m_shadowColour2;
+	FontPtr m_font;
+
+	TextRenderInfo(const string &txt, FontPtr font, const Vec4f &colour, const Vec2i &pos)
+			: m_text(txt), m_pos(pos), m_colour(colour), m_font(font) {
+		m_shadowColour = m_shadowColour2 = m_colour;
+	}
+};
+
 // =====================================================
 // class TextWidget
 // =====================================================
@@ -264,12 +280,11 @@ public:
 class TextWidget {
 private:
 	Widget* me;
-	vector<string> texts;
-	Vec4f txtColour;
-	Vec4f txtShadowColour;
-	Vec4f txtShadowColour2;
-	vector<Vec2i> txtPositions;
-	const Font *font;
+	vector<TextRenderInfo> m_texts;
+	Vec4f m_defaultColour;
+	Vec4f m_shadowColour;
+	Vec4f m_shadowColour2;
+	const Font *m_defaultFont;
 	bool centre;
 	bool m_batchRender;
 	TextRenderer *m_textRenderer;
@@ -292,12 +307,12 @@ public:
 	void setTextParams(const string&, const Vec4f, const Font*, bool cntr=true);
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
-	void setTextColour(const Vec4f &col) { txtColour = col;	 }
-	void setTextShadowColour(const Vec4f &col) { txtShadowColour = col;	 }
-	void setTextShadowColour2(const Vec4f &col) { txtShadowColour = col;	 }
+	void setTextColour(const Vec4f &col) { m_defaultColour = col;	 }
+	void setTextShadowColour(const Vec4f &col) { m_shadowColour = col;	 }
+	void setTextShadowColour2(const Vec4f &col) { m_shadowColour2 = col;	 }
 	void setTextShadowColours(const Vec4f &col1, const Vec4f &col2) {
-		txtShadowColour = col1;
-		txtShadowColour2 = col2;
+		m_shadowColour = col1;
+		m_shadowColour2 = col2;
 	}
 	void setTextCentre(bool v)	{ centre = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
@@ -307,13 +322,14 @@ public:
 	void widgetReSized();
 
 	// get
-	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, texts.size()); return texts[ndx];	}
-	const Vec4f& getTextColour() const	 { return txtColour; }
-	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, txtPositions.size()); return txtPositions[ndx]; }
-	const Font* getTextFont() const { return font; }
+	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_text; }
+	const Vec4f& getTextColour() const	 { return m_defaultColour; }
+	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_pos; }
+	const Font* getTextFont() const { return m_defaultFont; }
 	Vec2i getTextDimensions() const;
 	Vec2i getTextDimensions(int ndx) const;
-	bool hasText() const { return !texts.empty(); }
+	bool hasText() const { return !m_texts.empty(); }
+	int  numSnippets() const { return m_texts.size(); }
 };
 
 // =====================================================

@@ -2250,7 +2250,7 @@ void Renderer::init2dNonVirtList(){
 		glLoadIdentity();
 		glOrtho(0.f, width, 0.f, height, 0.f, 1.f);
 		glScalef(1, -1, 1);
-		glTranslatef(0.f, -height, 0.f);
+		glTranslatef(0.f, -float(height), 0.f);
 
 		//modelview
 		glMatrixMode(GL_MODELVIEW);

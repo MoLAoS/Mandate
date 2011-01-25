@@ -116,6 +116,7 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 	if (FSFactory::openFace(library, fname, 0, &face)) {
 		throw std::runtime_error("FT_New_Face failed (there is probably a problem with your font file)");
 	}
+	//FT_Set_Pixel_Sizes(face, 0, h);
 	FT_Set_Char_Size(face, h << 6, h << 6, 96, 96);
 	list_base = glGenLists(256);
 	glGenTextures(256, textures);
@@ -161,10 +162,6 @@ typedef const unsigned char * uchar_ptr;
 void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 	GLuint font = ft_font.list_base;
 	float h = ft_font.h;// / .63f;
-
-	if (lines.size() > 1) {
-		pos.y += int(ft_font.h * (lines.size() - 1));
-	}
 
 	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 	glMatrixMode(GL_MODELVIEW);
@@ -226,7 +223,6 @@ namespace Gl {
 
 void FreeTypeFont::init() {
 	fontData.init(getType().c_str(), getSize(), metrics);
-
 }
 
 void FreeTypeFont::end() {
