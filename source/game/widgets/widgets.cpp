@@ -999,17 +999,18 @@ void Panel::remChild(Widget* child) {
 
 void Panel::render() {
 	Widget::renderBgAndBorders();
-//	Vec2i offset(m_borderStyle.m_sizes[Border::LEFT] + getPadding(),
-//				m_borderStyle.m_sizes[Border::TOP] + getPadding());
-//	Vec2i pos = getScreenPos() + offset;
-//	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
+	//Vec2i offset(m_borderStyle.m_sizes[Border::LEFT] + getPadding(),
+	//			m_borderStyle.m_sizes[Border::TOP] + getPadding());
+	//Vec2i pos = getScreenPos() /*+ offset */;
+	//pos.y = g_config.getDisplayHeight() - pos.y;
+	//Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
 	assertGl();
-//	glPushAttrib(GL_SCISSOR_BIT);
-//		glEnable(GL_SCISSOR_TEST);
-//		glScissor(pos.x, pos.y, size.w, size.h);
+	//glPushAttrib(GL_SCISSOR_BIT);
+	//	glEnable(GL_SCISSOR_TEST);
+	//	glScissor(pos.x, pos.y, size.w, size.h);
 		Container::render();
-//		glDisable(GL_SCISSOR_TEST);
-//	glPopAttrib();
+	//	glDisable(GL_SCISSOR_TEST);
+	//glPopAttrib();
 	assertGl();
 }
 

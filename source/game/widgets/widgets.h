@@ -186,6 +186,9 @@ public:
 
 	virtual void setSize(const Vec2i &sz) override;
 
+	virtual void mouseIn() override { m_hover = true; }
+	virtual void mouseOut() override { m_hover = false; }
+
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 

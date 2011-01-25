@@ -77,7 +77,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pnl->setBorderStyle(borderStyle);
 
 	Font *font = g_coreData.getFTMenuFontNormal();
-	int btnHeight = btnPnlHeight / (RootMenuItem::COUNT + 2);
+	int btnHeight = (btnPnlHeight - RootMenuItem::COUNT * 10) / (RootMenuItem::COUNT + 2);
 
 	// Buttons
 	foreach_enum (RootMenuItem, i) {
