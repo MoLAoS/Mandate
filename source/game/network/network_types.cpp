@@ -38,7 +38,8 @@ NetworkCommand::NetworkCommand(Command *command) {
 	positionY = command->getPos().y;
 	prodTypeId = command->getProdType() ? command->getProdType()->getId() : -1;
 
-	if (command->getType()->getClass() == CommandClass::BUILD) {
+	if (command->getType()->getClass() == CommandClass::BUILD
+	|| command->getType()->getClass() == CommandClass::TRANSFORM) {
 		targetId = command->getFacing();
 	} else {
 		targetId = command->getUnit() ? command->getUnit()->getId() : -1;
@@ -125,12 +126,12 @@ Command *NetworkCommand::toCommand() const {
 	// get target, the target might be dead due to lag, cope with it
 	Unit* target = NULL;
 	CardinalDir facing = CardinalDir::NORTH;
-	if (ct->getClass() != CommandClass::BUILD) {
+	if (ct->getClass() == CommandClass::BUILD || ct->getClass() == CommandClass::TRANSFORM) {
+		facing = enum_cast<CardinalDir>(targetId);
+	} else {
 		if (targetId != GameConstants::invalidId) {
 			target = world.findUnitById(targetId);
 		}
-	} else {
-		facing = enum_cast<CardinalDir>(targetId);
 	}
 
 	const ProducibleType* prodType = 0;
@@ -141,9 +142,8 @@ Command *NetworkCommand::toCommand() const {
 		assert((g_simInterface.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
 			|| (g_simInterface.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
 			|| (g_simInterface.isUnitType(prodType)
-				&& (ct->getClass() == CommandClass::PRODUCE
-					|| ct->getClass() == CommandClass::MORPH
-					|| ct->getClass() == CommandClass::BUILD)));
+				&& (ct->getClass() == CommandClass::PRODUCE || ct->getClass() == CommandClass::MORPH
+					|| ct->getClass() == CommandClass::BUILD || ct->getClass() == CommandClass::TRANSFORM)));
 	}
 
 	// create command
@@ -168,7 +168,7 @@ Command *NetworkCommand::toCommand() const {
 }
 
 MoveSkillUpdate::MoveSkillUpdate(const Unit *unit) {
-	assert(unit->getCurrSkill()->getClass() == SkillClass::MOVE);
+	assert(unit->isMoving());
 	Vec2i offset = unit->getNextPos() - unit->getPos();
 	if (offset.length() < 1.f || offset.length() > 1.5f) {
 		LOG_NETWORK( "ERROR: MoveSKillUpdate being constructed on illegal move." );

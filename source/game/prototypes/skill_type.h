@@ -467,7 +467,7 @@ public:
 };
 
 // ===============================
-// 	class GenericSkillType
+// 	class CastSpellSkillType
 // ===============================
 
 class CastSpellSkillType : public SkillType {
@@ -484,6 +484,27 @@ public:
 	static SkillClass typeClass() { return SkillClass::CAST_SPELL; }
 
 };
+
+// ===============================
+// 	class BuildSelfSkillType
+// ===============================
+
+class BuildSelfSkillType : public SkillType {
+public:
+	BuildSelfSkillType() : SkillType("BuildSelf") {}
+
+	virtual void getDesc(string &str, const Unit *unit) const {
+		descSpeed(str, unit, "Speed");
+		descEpCost(str, unit);
+		descEffects(str, unit);
+	}
+
+	virtual SkillClass getClass() const { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::BUILD_SELF; }
+
+};
+
+
 // ===============================
 // 	class ModelFactory
 // ===============================

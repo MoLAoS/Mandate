@@ -127,15 +127,10 @@ typedef list<UnitId> UnitIdList;
 ///	A game unit or building
 // ===============================
 
-/**
- * Represents a single game unit or building. The Unit class inherits from
- * EnhancementType as a mechanism to maintain a cache of it's current
- * stat values. These values are only recalculated when an effect is added
- * or removed, an upgrade is applied or the unit levels up. This way, all
- * requests from other parts of the code for the value of a stat can be
- * procured without having to perform lengthy computations. Previously, the
- * TotalUpgrade class provided this functionality.
- */
+/** Represents a single game unit or building. The Unit class inherits from
+  * EnhancementType as a mechanism to maintain a cache of it's current
+  * stat values. These values are only recalculated when an effect is added
+  * or removed, an upgrade is applied or the unit levels up. */
 class Unit : public EnhancementType {
 	friend class EntityFactory<Unit>;
 
@@ -422,13 +417,17 @@ public:
 	float getRenderAlpha() const;
 
 	//is
+	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}
+	bool isMoving() const				{return currSkill->getClass() == SkillClass::MOVE;}
 	bool isCarried() const				{return carried;}
 	bool isHighlighted() const			{return highlight > 0.f;}
 	bool isDead() const					{return !hp;}
 	bool isAlive() const				{return hp;}
 	bool isDamaged() const				{return hp < getMaxHp();}
 	bool isOperative() const			{return isAlive() && isBuilt();}
-	bool isBeingBuilt() const			{return currSkill->getClass() == SkillClass::BE_BUILT;}
+	bool isBeingBuilt() const			{
+		return currSkill->getClass() == SkillClass::BE_BUILT || currSkill->getClass() == SkillClass::BUILD_SELF;
+	}
 	bool isBuilt() const				{return !isBeingBuilt();}
 	bool isPutrefacting() const			{return deadCount;}
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
@@ -510,7 +509,7 @@ public:
 
 	//lifecycle
 	void create(bool startingUnit = false);
-	void born();
+	void born(bool reborn = false);
 	void kill();
 	void undertake();
 
@@ -528,6 +527,8 @@ public:
 	bool decEp(int i);
 	int update2()										{return ++progress2;}
 	void clearPath();
+	/// make idle
+	void stop()	{setCurrSkill(SkillClass::STOP);}
 
 	// SimulationInterface wrappers
 	void updateSkillCycle(const SkillCycleTable *skillCycleTable);
@@ -548,13 +549,15 @@ public:
 
 	bool update();
 	void updateEmanations();
+	void face(float rot)		{ targetRotation = rot; }
 	void face(const Vec2i &nextPos);
 
 	Unit *tick();
 	void applyUpgrade(const UpgradeType *upgradeType);
 	void computeTotalUpgrade();
 	void incKills();
-	bool morph(const MorphCommandType *mct, const UnitType *ut = 0);
+	bool morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset = Vec2i(0), bool reprocessCommands = true);
+	bool transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing);
 	CommandResult checkCommand(const Command &command) const;
 	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);
@@ -569,7 +572,7 @@ public:
 
 	void cloak();
 	void deCloak();
-	bool travel(const Vec2i &pos, const MoveSkillType *moveSkill);
+	TravelState travel(const Vec2i &pos, const MoveSkillType *moveSkill);
 
 private:
 	float computeHeight(const Vec2i &pos) const;

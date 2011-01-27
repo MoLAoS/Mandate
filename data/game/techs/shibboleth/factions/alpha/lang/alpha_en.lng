@@ -40,7 +40,9 @@ technician_info=Can build war machines and the Aerodrome. Capable of harvesting 
 technodrome=Technodrome
 technodrome_info=Produces Technicians.
 worker=Worker
-worker_info=Can harvest any resources and build or repair most structures. Very weak. Can not attack.
+;worker_info=Can harvest any resources and build or repair most structures. Very weak. Can not attack.
+produce_workers=Produce 2 Workers
+produce_workers_info=Workers can harvest any resources and build or repair most structures. Very weak. Can not attack.
 merlin=Merlin
 merlin_info=The most powerful of the mages.
 

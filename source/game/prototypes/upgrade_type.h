@@ -29,61 +29,65 @@ using Glest::Entities::Unit;
 
 namespace Glest { namespace ProtoTypes {
 
+/** resource amount modifier */
+typedef map<const ResourceType*, Modifier> ResModifierMap;
+
+/** A unit type enhancement, an EnhancementType + resource cost modifiers + resource storage modifiers */
+struct UpgradeEffect {
+	EnhancementType  m_enhancement;
+	ResModifierMap   m_costModifiers;
+	ResModifierMap   m_storeModifiers;
+
+	const EnhancementType* getEnhancement() const { return &m_enhancement; }
+
+};
+
 // ===============================
 // 	class UpgradeType
 // ===============================
 
-/**
- * A specialization of EnhancementType that represents a permanent,
- * producable (i.e., researchable) upgrade to all of one or more unit
- * classes.
- */
-class UpgradeType: public ProducibleType/*, public EnhancementType*/  {
+/** A collection of EnhancementTypes and resource mods that represents a permanent,
+  * producable (i.e., researchable) upgrade for one or more unit types. */
+class UpgradeType : public ProducibleType {
 private:
-	typedef vector<EnhancementType> Enhancements;
-	typedef map<const UnitType*, const EnhancementType*> EnhancementMap;
+	typedef vector<UpgradeEffect> Enhancements;
+	typedef map<const UnitType*, const UpgradeEffect*> EnhancementMap;
 	typedef vector< vector<string> > AffectedUnits; // just names, used only in getDesc()
 
 private:
-	//vector<const UnitType*> effects;
 	Enhancements       m_enhancements;
 	EnhancementMap     m_enhancementMap;
 	const FactionType *m_factionType;
 	AffectedUnits      m_unitsAffected;
+
+private:
+	bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool loadOldStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
 
 public:
 	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
 
 public:
 	UpgradeType();
-	void preLoad(const string &dir)			{m_name=basename(dir);}
+	void preLoad(const string &dir)			{ m_name = basename(dir); }
 	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-	ProducibleClass getClass() const override { return typeClass(); }
-
-	const FactionType* getFactionType() const { return m_factionType; }
-
-	// get all
-	const EnhancementType* getEnhancement(const UnitType *ut) const {
-		EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
-		if (it != m_enhancementMap.end()) {
-			return it->second;
-		}
-		return 0;
-	}
-	//int getEffectCount() const				{return effects.size();}
-	//const UnitType * getEffect(int i) const	{return effects[i];}
+	// get
+	ProducibleClass getClass() const override                       { return typeClass(); }
+	const FactionType* getFactionType() const                       { return m_factionType; }
+	const EnhancementType* getEnhancement(const UnitType *ut) const;
+	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
+	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
 
 	bool isAffected(const UnitType *unitType) const {
 		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
 	}
 
 	virtual void doChecksum(Checksum &checksum) const;
-
-	//other methods
-	string getDesc() const;
+	string getDesc(const Faction *f) const;
 };
 
-}}//end namespace
+}} // namespace Glest::ProtoTypes
 
 #endif

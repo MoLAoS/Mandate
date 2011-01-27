@@ -469,6 +469,7 @@ private:
 	const ProduceSkillType* m_produceSkillType;
 //	const UnitType *m_producedUnit;
 	vector<const UnitType*> m_producedUnits;
+	vector<int>             m_producedNumbers;
 	map<string, string>		m_tipKeys;
 	SoundContainer			m_finishedSounds;
 
@@ -478,8 +479,10 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	
+	int getProducedNumber(const UnitType*) const;
+
 	// get
 	virtual int getProducedCount() const	{return m_producedUnits.size();}
 	virtual const ProducibleType* getProduced(int i) const;
@@ -518,7 +521,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
 	//get
@@ -552,12 +555,9 @@ public:
 	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0), m_producedUpgrade(0)  {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	virtual const ProducibleType *getProduced() const;
-	virtual void getDesc(string &str, const Unit *unit) const {
-		m_upgradeSkillType->getDesc(str, unit);
-		str += "\n" + getProducedUpgrade()->getDesc();
-	}
+	virtual void getDesc(string &str, const Unit *unit) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
 	virtual void start(Unit *unit, Command &command) const;
@@ -581,8 +581,8 @@ public:
 //  class MorphCommandType
 // ===============================
 
-class MorphCommandType: public CommandType {
-private:
+class MorphCommandType : public CommandType {
+protected:
 	const MorphSkillType*	m_morphSkillType;
 	vector<const UnitType*> m_morphUnits;
 	map<string, string>		m_tipKeys;
@@ -590,18 +590,25 @@ private:
 	int						m_refund;
 	SoundContainer			m_finishedSounds;
 
+protected:
+	MorphCommandType(const char* name);
+
+private:
+	void updateNormal(Unit *unit) const;
+	//void updatePlaced(Unit *unit) const;
+
 public:
 	MorphCommandType();
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	
 	// get
 	virtual int getProducedCount() const	{return m_morphUnits.size();}
 	virtual const ProducibleType* getProduced(int i) const;
-	
+
 	int getMorphUnitCount() const					{return m_morphUnits.size();}
 	const UnitType *getMorphUnit(int i) const		{return m_morphUnits[i];}
 
@@ -619,6 +626,30 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MORPH; }
+};
+
+// ===============================
+//  class TransformCommandType
+// ===============================
+
+class TransformCommandType : public MorphCommandType {
+protected:
+	const MoveSkillType*	m_moveSkillType;
+	Vec2i                   m_position; // cell offset from 'buildPos' to go to before morphing
+	float                   m_rotation;
+
+public:
+	TransformCommandType();
+
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+
+	virtual void update(Unit *unit) const;
+
+	const MoveSkillType *getMoveSkillType() const {return m_moveSkillType;}
+	virtual CommandClass getClass() const         { return typeClass(); }
+
+	static CommandClass typeClass()               { return CommandClass::TRANSFORM; }
 };
 
 // ===============================
@@ -649,7 +680,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	virtual CommandResult check(const Unit *unit, const Command &command) const;
 	virtual void start(Unit *unit, Command *command) const;
 
@@ -684,7 +715,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const;
+	virtual string getReqDesc(const Faction *f) const;
 	virtual void start(Unit *unit, Command *command) const;
 
 	//get
@@ -713,7 +744,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc() const {return "";}
+	virtual string getReqDesc(const Faction *f) const {return "";}
 
 	//get
 	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
@@ -786,6 +817,23 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::CAST_SPELL; }
+};
+
+// ===============================
+//  class BuildSelfCommandType
+// ===============================
+
+class BuildSelfCommandType : public CommandType {
+private:
+	const BuildSelfSkillType *m_buildSelfSkill;
+
+public:
+	BuildSelfCommandType() : CommandType("build-self", Clicks::TWO), m_buildSelfSkill(0) {}
+	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void update(Unit *unit) const;
+	virtual CommandClass getClass() const { return typeClass(); }
+	static CommandClass typeClass() { return CommandClass::BUILD_SELF; }
 };
 
 // ===============================

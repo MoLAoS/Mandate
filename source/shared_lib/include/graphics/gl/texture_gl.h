@@ -47,6 +47,11 @@ class Texture2DGl: public Texture2D, public TextureGl{
 public:
 	virtual void init(Filter filter, int maxAnisotropy= 1);
 	virtual void end();
+	GLuint getHandle() const {
+		// ensure call init before use
+		assert(inited);
+		return handle;
+	}
 };
 
 // =====================================================

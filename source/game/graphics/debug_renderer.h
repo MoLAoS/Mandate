@@ -68,22 +68,12 @@ public:
    }
 };
 
-WRAPPED_ENUM( HighlightColour,
-	BLUE,
-	GREEN
-);
-
 class CellHighlightOverlay {
 public:
-	typedef map<Vec2i, HighlightColour> CellColours;
+	typedef map<Vec2i, Vec4f> CellColours;
 	CellColours cells;
 
-	Vec4f highlightColours[HighlightColour::COUNT];
-
-	CellHighlightOverlay() {
-		highlightColours[HighlightColour::BLUE] = Vec4f(0.f, 0.f, 1.f, 0.6f);
-		highlightColours[HighlightColour::GREEN] = Vec4f(0.f, 1.f, 0.f, 0.6f);
-	}
+	CellHighlightOverlay() {}
 
 	void reset() {
 		cells.clear();
@@ -94,7 +84,7 @@ public:
 	bool operator()(const Vec2i &cell, Vec4f &colour) {
 		CellColours::iterator it = cells.find(cell);
 		if (it != cells.end()) {
-			colour = highlightColours[it->second];
+			colour = it->second;
 			return true;
 		}
 		return false;
@@ -246,7 +236,7 @@ public:
 			buildSiteMaps,		// show building site goal maps
 			influenceMap;		// visualise an inluence map, [TypeMap<float> only]
 
-	void addCellHighlight(const Vec2i &pos, HighlightColour c = HighlightColour::BLUE) {
+	void addCellHighlight(const Vec2i &pos, Vec4f c = Vec4f(0.f, 0.f, 1.f, 0.3f)) {
 		rhCallback.cells[pos] = c;
 	}
 

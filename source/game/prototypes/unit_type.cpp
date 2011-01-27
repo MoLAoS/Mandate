@@ -396,7 +396,6 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 
-
 	try { 
 		const XmlNode *tagsNode = parametersNode->getChild("tags", 0, false);
 		if (tagsNode) {
@@ -535,13 +534,21 @@ const RepairCommandType *UnitType::getRepairCommand(const UnitType *repaired) co
 	return 0;
 }
 
-int UnitType::getStore(const ResourceType *rt) const {
+int UnitType::getStore(const ResourceType *rt, const Faction *f) const {
 	foreach_const (StoredResources, it, storedResources) {
 		if (it->getType() == rt) {
-			return it->getAmount();
+			Modifier mod = f->getStoreModifier(this, rt);
+			return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
 		}
 	}
 	return 0;
+}
+
+ResourceAmount UnitType::getStoredResource(int i, const Faction *f) const {
+	ResourceAmount res(storedResources[i]);
+	Modifier mod = f->getStoreModifier(this, res.getType());
+	res.setAmount( (res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition() );
+	return res;
 }
 
 // only used for matching while loading commands
@@ -606,27 +613,31 @@ bool UnitType::isOfClass(UnitClass uc) const{
 	return false;
 }
 
-bool UnitType::getCellMapCell(Vec2i pos, CardinalDir facing) const {
-	assert(m_cellMap);
-	Vec2i tPos;
+Vec2i rotateCellOffset(const Vec2i &offset, const int unitSize, const CardinalDir facing) {
+	Vec2i result;
 	switch (facing) {
 		case CardinalDir::NORTH:
-			tPos = pos;
+			result = offset;
 			break;
 		case CardinalDir::EAST:
-			tPos.y = pos.x;
-			tPos.x = size - pos.y - 1;
+			result.y = offset.x;
+			result.x = unitSize - offset.y - 1;
 			break;
 		case CardinalDir::SOUTH:
-			tPos.x = size - pos.x - 1;
-			tPos.y = size - pos.y - 1;
+			result.x = unitSize - offset.x - 1;
+			result.y = unitSize - offset.y - 1;
 			break;
 		case CardinalDir::WEST:
-			tPos.x = pos.y;
-			tPos.y = size - pos.x - 1;
+			result.x = offset.y;
+			result.y = unitSize - offset.x - 1;
 			break;
 	}
-	return m_cellMap->getInfluence(tPos);
+	return result;
+}
+
+bool UnitType::getCellMapCell(Vec2i pos, CardinalDir facing) const {
+	RUNTIME_CHECK(m_cellMap != 0);
+	return m_cellMap->getInfluence(rotateCellOffset(pos, size, facing));
 }
 
 // ==================== PRIVATE ====================

@@ -38,6 +38,9 @@ protected:
 	int		m_amount;
 
 public:
+	ResourceAmount() : m_type(0), m_amount(0) {}
+	ResourceAmount(const ResourceAmount &that) : m_type(that.m_type), m_amount(that.m_amount) {}
+
 	void init(const XmlNode *n, const TechTree *tt);
 	void init(const ResourceType *rt, const int amount);
 

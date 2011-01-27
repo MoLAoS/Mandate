@@ -123,6 +123,29 @@ void GameState::load() {
 	const string &techName = gameSettings.getTechPath();
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
+	const string &thisFactionName = gameSettings.getFactionTypeName(gameSettings.getThisFactionIndex());
+
+	// determine loading screen settings:
+	// 1. check sceneraio if applicable
+	// 2. check faction
+	// 3. check tech
+	// 4. use defaults
+	ProgramLog &log = g_logger.getProgramLog();
+
+	if (!scenarioName.empty() 
+		&& log.setupLoadingScreen(scenarioPath)) {
+	} else if (log.setupLoadingScreen(techName + "/factions/" + thisFactionName)) {
+	} else if (log.setupLoadingScreen(techName)) {
+	} else {
+		log.useLoadingScreenDefaults();
+	}
+
+	// check for custom mouse (faction then tech)
+	if (g_widgetWindow.loadMouse(techName + "/factions/" + thisFactionName)) {
+	} else if (g_widgetWindow.loadMouse(techName)) {
+	} else {
+		// already using default
+	}
 
 	g_logger.getProgramLog().setProgressBar(true);
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));
@@ -589,6 +612,11 @@ void GameState::mouseUpRight(int x, int y) {
 	g_program.setMouseAppearance(MouseAppearance::DEFAULT);
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
+	}
+	if (gameCamera.isMoving()) {
+		// stop moving if button is released
+		gameCamera.setMoveZ(0, true);
+		gameCamera.setMoveX(0, true);
 	}
 }
 

@@ -223,8 +223,24 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	highlight = node->getChildFloatValue("highlight");
 	toBeUndertaken = node->getChildBoolValue("toBeUndertaken");
 
-	///@todo AutoCmd enable
-	//autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
+	m_cloaked = node->getChildBoolValue("cloaked");
+	m_cloaking = node->getChildBoolValue("cloaking");
+	m_deCloaking = node->getChildBoolValue("de-cloaking");
+	m_cloakAlpha = node->getChildFloatValue("cloak-alpha");
+
+	if (m_cloaked && !type->getCloakType()) {
+		throw runtime_error("Unit marked as cloak has no cloak type!");
+	}
+	if (m_cloaking && !m_cloaked) {
+		throw runtime_error("Unit marked as cloaking is not cloaked!");
+	}
+	if (m_cloaking && m_deCloaking) {
+		throw runtime_error("Unit marked as cloaking and de-cloaking!");
+	}
+
+	m_autoCmdEnable[AutoCmdFlag::REPAIR] = node->getChildBoolValue("auto-repair");
+	m_autoCmdEnable[AutoCmdFlag::ATTACK] = node->getChildBoolValue("auto-attack");
+	m_autoCmdEnable[AutoCmdFlag::FLEE] = node->getChildBoolValue("auto-flee");
 
 	if (type->hasMeetingPoint()) {
 		meetingPos = node->getChildVec2iValue("meeting-point");
@@ -262,8 +278,8 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 		carried = true;
 	}
 
+	faction->add(this);
 	if (hp) {
-		faction->add(this);
 		recalculateStats();
 		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 		if (!carried) {
@@ -274,7 +290,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	} else {
 		ULC_UNIT_LOG( this, " constructed dead." );
 	}
-	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
+	if (type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
 		// was previously in World::initUnits but seems to work fine here
 		g_cartographer.updateMapMetrics(getPos(), getSize());
@@ -325,9 +341,14 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("currSkill", currSkill ? currSkill->getName() : "null_value");
 
 	node->addChild("toBeUndertaken", toBeUndertaken);
+	node->addChild("cloaked", m_cloaked);
+	node->addChild("cloaking", m_cloaking);
+	node->addChild("de-cloaking", m_deCloaking);
+	node->addChild("cloak-alpha", m_cloakAlpha);
 
-	///@todo AutoCmd enable
-//	node->addChild("autoRepairEnabled", autoRepairEnabled);
+	node->addChild("auto-repair", m_autoCmdEnable[AutoCmdFlag::REPAIR]);
+	node->addChild("auto-attack", m_autoCmdEnable[AutoCmdFlag::ATTACK]);
+	node->addChild("auto-flee", m_autoCmdEnable[AutoCmdFlag::FLEE]);
 
 	if (type->hasMeetingPoint()) {
 		node->addChild("meeting-point", meetingPos);
@@ -1024,17 +1045,23 @@ void Unit::create(bool startingUnit) {
 
 /** Give a unit life. Called when a unit becomes 'operative'
   */
-void Unit::born(){
+void Unit::born(bool reborn) {
+	if (reborn && (!isAlive() || !isBuilt())) {
+		return;
+	}
 	ULC_UNIT_LOG( this, "born." );
-	faction->addStore(type);
 	faction->applyStaticProduction(type);
-	setCurrSkill(SkillClass::STOP);
 	computeTotalUpgrade();
 	recalculateStats();
-	hp= type->getMaxHp();
-	faction->checkAdvanceSubfaction(type, true);
-	g_world.getCartographer()->applyUnitVisibility(this);
-	g_simInterface.doUnitBorn(this);
+
+	if (!reborn) {
+		faction->addStore(type);
+		setCurrSkill(SkillClass::STOP);
+		hp = type->getMaxHp();
+		faction->checkAdvanceSubfaction(type, true);
+		g_world.getCartographer()->applyUnitVisibility(this);
+		g_simInterface.doUnitBorn(this);
+	}
 	StateChanged(this);
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorCreated(this);
@@ -1063,11 +1090,6 @@ void Unit::kill() {
 	assert(hp <= 0);
 	ULC_UNIT_LOG( this, "killed." );
 	hp = 0;
-	g_world.getCartographer()->removeUnitVisibility(this);
-
-	if (!isCarried()) { // if not in transport, clear cells
-		map->clearUnitCells(this, pos);
-	}
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
@@ -1091,6 +1113,7 @@ void Unit::kill() {
 		fire = 0;
 	}
 
+	//REFACTOR Use signal, send this code to Faction::onUnitDied();
 	if (isBeingBuilt()) { // no longer needs static resources
 		faction->deApplyStaticConsumption(type);
 	} else {
@@ -1098,13 +1121,19 @@ void Unit::kill() {
 		faction->removeStore(type);
 	}
 
-	setCurrSkill(SkillClass::DIE);
-	g_simInterface.doUpdateAnimOnDeath(this);
-
 	Died(this);
+
 	clearCommands();
-	checkTargets(this); // hack... 'tracking' particle systems might reference this
+	setCurrSkill(SkillClass::DIE);
 	deadCount = Random(id).randRange(-256, 256); // random decay time
+
+	//REFACTOR use signal, send this to World/Cartographer/SimInterface
+	g_world.getCartographer()->removeUnitVisibility(this);
+	if (!isCarried()) { // if not in transport, clear cells
+		map->clearUnitCells(this, pos);
+	}
+	g_simInterface.doUpdateAnimOnDeath(this);
+	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorDied(this);
 	}
@@ -1168,7 +1197,7 @@ void Unit::deCloak() {
   * @param moveSkill the MoveSkillType to apply for the move
   * @return true when completed (maxed out BLOCKED, IMPOSSIBLE or ARRIVED)
   */
-bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
+TravelState Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 	assert(moveSkill);
 
@@ -1178,23 +1207,23 @@ bool Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 			face(getNextPos());
 			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
 			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
-			return false;
+			return TravelState::MOVING;
 
 		case TravelState::BLOCKED:
 			setCurrSkill(SkillClass::STOP);
 			if (getPath()->isBlocked()) { //&& !command->getUnit()) {?? from MoveCommandType and LoadCommandType
 				clearPath();
-				return true;
+				return TravelState::BLOCKED;
 			}
-			return false;
+			return TravelState::BLOCKED;
 
 		case TravelState::IMPOSSIBLE:
 			setCurrSkill(SkillClass::STOP);
 			cancelCurrCommand(); // from AttackCommandType, is this right, maybe dependant flag?? - hailstone 21Dec2010
- 			return true;
+ 			return TravelState::IMPOSSIBLE;
 
 		case TravelState::ARRIVED:
-			return true;
+			return TravelState::ARRIVED;
 
 		default:
 			throw runtime_error("Unknown TravelState returned by RoutePlanner::findPath().");
@@ -1561,7 +1590,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	if (currSkill->getClass() != SkillClass::STOP) {
 		const float rotFactor = 2.f;
 		if (getProgress() < 1.f / rotFactor) {
-			if (type->getFirstStOfClass(SkillClass::MOVE)) {
+			if (type->getFirstStOfClass(SkillClass::MOVE) || type->getFirstStOfClass(SkillClass::MORPH)) {
 				rotated = true;
 				if (abs(lastRotation - targetRotation) < 180) {
 					rotation = lastRotation + (targetRotation - lastRotation) * getProgress() * rotFactor;
@@ -1840,6 +1869,7 @@ string Unit::getShortDesc() const {
 }
 
 string Unit::getLongDesc() const {
+	Lang &lang = g_lang;
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
@@ -1847,64 +1877,69 @@ string Unit::getLongDesc() const {
 	int sightBonus = getSight() - type->getSight();
 
 	// armor
-	ss << endl << g_lang.get("Armor") << ": " << type->getArmor();
+	ss << endl << lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
 		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
 	}
-	ss << " (" << type->getArmourType()->getName() << ")";
+	string armourName = lang.getTechString(type->getArmourType()->getName());
+	if (armourName == type->getArmourType()->getName()) {
+		armourName = formatString(armourName);
+	}
+	ss << " (" << armourName << ")";
 
 	// sight
-	ss << endl << g_lang.get("Sight") << ": " << type->getSight();
+	ss << endl << lang.get("Sight") << ": " << type->getSight();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
 	if (type->isDetector()) {
-		ss << " (" << g_lang.get("Detector") << ")";
+		ss << " (" << lang.get("Detector") << ")";
 	}
 
 	// kills
 	const Level *nextLevel = getNextLevel();
 	if (kills > 0 || nextLevel) {
-		ss << endl << g_lang.get("Kills") << ": " << kills;
+		ss << endl << lang.get("Kills") << ": " << kills;
 		if (nextLevel) {
-			ss << " (" << nextLevel->getName() << ": " << nextLevel->getKills() << ")";
+			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
+			if (levelName == nextLevel->getName()) {
+				levelName = formatString(levelName);
+			}
+			ss << " (" << levelName << ": " << nextLevel->getKills() << ")";
 		}
 	}
 
 	// resource load
 	if (loadCount) {
-		string loadName = loadType->getName();
-		string resName = g_lang.getTechString(loadName);
-		if (resName == loadName) {
-			resName = formatString(loadName);
+		string resName = lang.getTechString(loadType->getName());
+		if (resName == loadType->getName()) {
+			resName = formatString(resName);
 		}
-		ss << endl << g_lang.get("Load") << ": " << loadCount << "  " << resName;
+		ss << endl << lang.get("Load") << ": " << loadCount << "  " << resName;
 	}
 
 	// consumable production
 	for (int i = 0; i < type->getCostCount(); ++i) {
-		const ResourceAmount *r = getType()->getCost(i);
-		if (r->getType()->getClass() == ResourceClass::CONSUMABLE) {
-			string storedName = r->getType()->getName();
-			string resName = g_lang.getTechString(storedName);
-			if (resName == storedName) {
-				resName = formatString(storedName);
+		const ResourceAmount r = getType()->getCost(i, getFaction());
+		if (r.getType()->getClass() == ResourceClass::CONSUMABLE) {
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
 			}
-			ss << endl << (r->getAmount() < 0 ? g_lang.get("Produce") : g_lang.get("Consume"))
-				<< ": " << abs(r->getAmount()) << " " << resName;
+			ss << endl << (r.getAmount() < 0 ? lang.get("Produce") : lang.get("Consume"))
+				<< ": " << abs(r.getAmount()) << " " << resName;
 		}
 	}
 	// can store
 	if (type->getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-			const ResourceAmount *r = type->getStoredResource(i);
-			string storedName = r->getType()->getName();
-			string resName = g_lang.getTechString(storedName);
-			if (resName == storedName) {
-				resName = formatString(storedName);
+			ResourceAmount r = type->getStoredResource(i, getFaction());
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
 			}
-			ss << endl << g_lang.get("Store") << ": ";
-			ss << r->getAmount() << " " << resName;
+			ss << endl << lang.get("Store") << ": ";
+			ss << r.getAmount() << " " << resName;
 		}
 	}
 	// effects
@@ -2124,13 +2159,14 @@ void Unit::incKills() {
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
-bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
+bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, bool reprocessCommands) {
 	Field newField = ut->getField();
 	CloakClass oldCloakClass = type->getCloakClass();
-	if (map->areFreeCellsOrHasUnit(pos, ut->getSize(), newField, this)) {
+	if (map->areFreeCellsOrHasUnit(pos + offset, ut->getSize(), newField, this)) {
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = ut;
+		pos += offset;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->giveRefund(ut, mct->getRefund());
@@ -2143,36 +2179,55 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut) {
 			cloak();
 		}
 
-		// reprocess commands
-		Commands newCommands;
-		Commands::const_iterator i;
+		if (reprocessCommands) {
+			// reprocess commands
+			Commands newCommands;
+			Commands::const_iterator i;
 
-		// add current command, which should be the morph command
-		assert(commands.size() > 0 && commands.front()->getType()->getClass() == CommandClass::MORPH);
-		newCommands.push_back(commands.front());
-		i = commands.begin();
-		++i;
+			// add current command, which should be the morph command
+			assert(commands.size() > 0 
+				&& (commands.front()->getType()->getClass() == CommandClass::MORPH
+				|| commands.front()->getType()->getClass() == CommandClass::TRANSFORM));
+			newCommands.push_back(commands.front());
+			i = commands.begin();
+			++i;
 
-		// add (any) remaining if possible
-		for (; i != commands.end(); ++i) {
-			// first see if the new unit type has a command by the same name
-			const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
-			// if not, lets see if we can find any command of the same class
-			if (!newCmdType) {
-				newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+			// add (any) remaining if possible
+			for (; i != commands.end(); ++i) {
+				// first see if the new unit type has a command by the same name
+				const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
+				// if not, lets see if we can find any command of the same class
+				if (!newCmdType) {
+					newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+				}
+				// if still not found, we drop the comand, otherwise, we add it to the new list
+				if (newCmdType) {
+					(*i)->setType(newCmdType);
+					newCommands.push_back(*i);
+				}
 			}
-			// if still not found, we drop the comand, otherwise, we add it to the new list
-			if (newCmdType) {
-				(*i)->setType(newCmdType);
-				newCommands.push_back(*i);
-			}
+			commands = newCommands;
 		}
-		commands = newCommands;
 		StateChanged(this);
 		return true;
 	} else {
 		return false;
 	}
+}
+
+bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing) {
+	RUNTIME_CHECK(ut->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
+	Vec2i offset = pos - this->pos;
+	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
+	if (morph(tct, ut, offset, false)) {
+		rotation = facing * 90.f;
+		hp = 1;
+		commands.clear();
+		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CommandClass::BUILD_SELF), CommandFlags()));
+		setCurrSkill(SkillClass::BUILD_SELF);
+		return true;
+	}
+	return false;
 }
 
 // ==================== PRIVATE ====================

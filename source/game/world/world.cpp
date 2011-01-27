@@ -519,9 +519,9 @@ void World::tick() {
 					//if unit operative and has this cost
 					const Unit *u =  faction->getUnit(j);
 					if (u->isOperative()) {
-						const ResourceAmount *r = u->getType()->getCost(rt);
-						if (r != NULL) {
-							balance -= u->getType()->getCost(rt)->getAmount();
+						ResourceAmount r = u->getType()->getCost(rt, faction);
+						if (r.getType()) {
+							balance -= r.getAmount();
 						}
 					}
 				}
@@ -608,10 +608,11 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	float currDist = numeric_limits<float>::infinity();
 	Unit *currUnit = NULL;
 
-	for (int i = 0; i < getFaction(factionIndex)->getUnitCount(); ++i) {
-		Unit *u = getFaction(factionIndex)->getUnit(i);
+	const Faction *f = getFaction(factionIndex);
+	for (int i = 0; i < f->getUnitCount(); ++i) {
+		Unit *u = f->getUnit(i);
 		float tmpDist = u->getPos().dist(pos);
-		if (tmpDist < currDist && u->getType()->getStore(rt) > 0 && u->isOperative()) {
+		if (tmpDist < currDist && u->getType()->getStore(rt, f) > 0 && u->isOperative()) {
 			currDist = tmpDist;
 			currUnit = u;
 		}
@@ -1020,10 +1021,10 @@ void World::initUnits() {
 	}
 }
 
-void World::activateUnits() {
+void World::activateUnits(bool resumingGame) {
 	foreach (Factions, fIt, factions) {
 		foreach_const (Units, uIt, fIt->getUnits()) {
-			(*uIt)->born();
+			(*uIt)->born(resumingGame);
 		}
 	}
 //	foreach_const (Units, uIt, glestimals.getUnits()) {

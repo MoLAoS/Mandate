@@ -206,6 +206,8 @@ void DebugRenderer::init() {
 }
 
 void DebugRenderer::sceneEstablished(SceneCuller &culler) {
+	Vec4f blue(0.f, 0.f, 1.f, 0.5f);
+	Vec4f green(0.f, 1.f, 0.f, 0.5f);
 	if (captureFrustum) {
 		captureFrustum = false;
 		for (int i=0; i  < 8; ++i) {
@@ -214,20 +216,20 @@ void DebugRenderer::sceneEstablished(SceneCuller &culler) {
 
 		for (int i=0; i < culler.boundingPoints.size(); ++i) {
 			Vec2i pos(int(culler.boundingPoints[i].x), int(culler.boundingPoints[i].y));
-			addCellHighlight(pos, HighlightColour::BLUE);
+			addCellHighlight(pos, blue);
 		}
 
 		vector<Vec2f>::iterator it = culler.visiblePoly.begin();
 		for ( ; it != culler.visiblePoly.end(); ++it) {
 			Vec2i pos(int(it->x), int(it->y));
-			addCellHighlight(pos, HighlightColour::GREEN);
+			addCellHighlight(pos, green);
 		}
 		for ( int i=0; i < culler.cellExtrema.spans.size(); ++i) {
 			int y = culler.cellExtrema.min_y + i;
 			int x1 = culler.cellExtrema.spans[i].first;
 			int x2 = culler.cellExtrema.spans[i].second;
-			addCellHighlight(Vec2i(x1,y), HighlightColour::GREEN);
-			addCellHighlight(Vec2i(x2,y), HighlightColour::GREEN);
+			addCellHighlight(Vec2i(x1,y), green);
+			addCellHighlight(Vec2i(x2,y), green);
 		}
 		showFrustum = true;
 	}

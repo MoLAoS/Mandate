@@ -105,7 +105,8 @@ ProgramLog::ProgramLog()
 		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
 		, loadingGame(true)
 		, m_progressBar(false)
-		, m_progress(0) {
+		, m_progress(0)
+		, m_backgroundTexture(0) {
 }
 
 
@@ -135,6 +136,58 @@ void ProgramLog::unitLoaded() {
 	m_progress = int(pcnt);
 }
 
+void ProgramLog::useLoadingScreenDefaults() {
+	m_backgroundTexture = g_coreData.getBackgroundTexture();
+}
+
+/** Load the loading screen settings from xml
+  * @return true if loaded successfully
+  */
+bool ProgramLog::setupLoadingScreen(const string &dir) {
+	string path = dir + "/" + basename(dir) + ".xml";
+
+	//open xml file
+	XmlTree xmlTree;
+	try { 
+		xmlTree.load(path); 
+	} catch (runtime_error e) { 
+		g_logger.logXmlError(path, "File missing or wrongly named.");
+		return false; // bail
+	}
+	const XmlNode *rootNode;
+	try { 
+		rootNode = xmlTree.getRootNode(); 
+	} catch (runtime_error e) { 
+		g_logger.logXmlError(path, "File appears to lack contents.");
+		return false; // bail
+	}
+
+	const XmlNode *loadingScreenNode = rootNode->getChild("loading-screen", 0, false);
+
+	if (loadingScreenNode) {
+		// could randomly choose from multiple or choose 
+		// based on resolution - hailstone 21Jan2011
+
+		// background texture
+		const XmlNode *backgroundImageNode = loadingScreenNode->getChild("background-image", 0, true);
+
+		if (backgroundImageNode) {
+			// load background image from faction.xml
+			m_backgroundTexture = g_renderer.newTexture2D(ResourceScope::GLOBAL);
+			m_backgroundTexture->setMipmap(false);
+			m_backgroundTexture->getPixmap()->load(dir + "/" + 
+				backgroundImageNode->getAttribute("path")->getValue());
+			m_backgroundTexture->init(Texture::fBilinear);
+		}
+
+		// tips
+
+		return true; // successfully using settings
+	}
+
+	return false;
+}
+
 void ProgramLog::renderLoadingScreen(){
 	g_renderer.reset2d(true);
 	g_renderer.clearBuffers();
@@ -142,7 +195,9 @@ void ProgramLog::renderLoadingScreen(){
 	Font *normFont = g_coreData.getFTMenuFontSmall();
 	Font *bigFont = g_coreData.getFTMenuFontNormal();
 
-	g_renderer.renderBackground(g_coreData.getBackgroundTexture());
+	if (m_backgroundTexture) {
+		g_renderer.renderBackground(m_backgroundTexture);
+	}
 	
 	Vec2i headerPos(g_metrics.getScreenW() / 4, 75 * g_metrics.getScreenH() / 100);
 	g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);

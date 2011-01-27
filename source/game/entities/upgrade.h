@@ -35,14 +35,13 @@ using Sim::EntityFactory;
 
 class Upgrade {
 	friend class EntityFactory<Upgrade>;
+	friend class UpgradeManager;
 
 private:
 	int m_id;
 	UpgradeState state;
 	int factionIndex;
 	const UpgradeType *type;
-
-	friend class UpgradeManager;
 
 public:
 	struct CreateParams {

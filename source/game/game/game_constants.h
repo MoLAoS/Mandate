@@ -119,7 +119,7 @@ namespace GameConstants {
 	const int mapScale = 2;
 	const int clusterSize = 16;
 
-	const int saveGameVersion = 4;
+	const int saveGameVersion = 5;
 }
 
 namespace Gui {
