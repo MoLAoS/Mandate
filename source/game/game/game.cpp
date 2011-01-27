@@ -140,6 +140,13 @@ void GameState::load() {
 		log.useLoadingScreenDefaults();
 	}
 
+	// check for custom mouse (faction then tech)
+	if (g_widgetWindow.loadMouse(techName + "/factions/" + thisFactionName)) {
+	} else if (g_widgetWindow.loadMouse(techName)) {
+	} else {
+		// already using default
+	}
+
 	g_logger.getProgramLog().setProgressBar(true);
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));
 
