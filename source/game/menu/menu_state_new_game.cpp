@@ -494,16 +494,20 @@ void MenuStateNewGame::reloadFactions(bool setStagger) {
 	GameSettings &gs = g_simInterface.getGameSettings();
 	vector<string> results;
 	assert(m_techTreeList->getSelectedIndex() >= 0);
-	findAll("techs/" + m_techTreeFiles[m_techTreeList->getSelectedIndex()] + "/factions/*.", results);
+	const string techName = m_techTreeFiles[m_techTreeList->getSelectedIndex()];
+	gs.setTechPath(string("techs/") + techName);
+	g_lang.loadTechStrings(techName);
+	findAll("techs/" + techName + "/factions/*.", results);
 	if (results.empty()) {
 		throw runtime_error("There are no factions for this tech tree");
 	}
-	gs.setTechPath(string("techs/") + m_techTreeFiles[m_techTreeList->getSelectedIndex()]);
-
 	m_factionFiles.clear();
 	m_factionFiles = results;
 	for (int i = 0; i < results.size(); ++i) {
-		results[i] = formatString(results[i]);
+		results[i] = g_lang.getTechString(results[i]);
+		if (results[i] == m_factionFiles[i]) {
+			results[i] = formatString(results[i]);
+		}
 	}
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i]->setFactionItems(results);
@@ -530,7 +534,7 @@ bool MenuStateNewGame::loadGameSettings() {
 	vector<string>::iterator it;
 	it = std::find(m_techTreeFiles.begin(), m_techTreeFiles.end(), basename(gs.getTechPath()));
 	if (it != m_techTreeFiles.end()) {
-	m_techTreeList->setSelected(formatString(basename(gs.getTechPath())));
+		m_techTreeList->setSelected(formatString(basename(gs.getTechPath())));
 	} else {
 		m_techTreeList->setSelected(0);
 		string s = gs.getTechPath();
@@ -539,7 +543,7 @@ bool MenuStateNewGame::loadGameSettings() {
 	}
 	it = std::find(m_tilesetFiles.begin(), m_tilesetFiles.end(), basename(gs.getTilesetPath()));
 	if (it != m_tilesetFiles.end()) {
-	m_tilesetList->setSelected(formatString(basename(gs.getTilesetPath())));
+		m_tilesetList->setSelected(formatString(basename(gs.getTilesetPath())));
 	} else {
 		m_tilesetList->setSelected(0);
 		gs.setTilesetPath("tilesets/" + m_tilesetFiles[0]);
@@ -571,13 +575,13 @@ bool MenuStateNewGame::loadGameSettings() {
 			if (techReset) {
 				ndx = i % m_factionFiles.size();
 			} else {
-			foreach (vector<string>, it, m_factionFiles) {
-				++ndx;
-				if (*it == fName) {
-					break;
+				foreach (vector<string>, it, m_factionFiles) {
+					++ndx;
+					if (*it == fName) {
+						break;
+					}
 				}
 			}
-		}
 		}
 		m_playerSlots[slot]->setSelectedFaction(ndx);
 		m_playerSlots[slot]->setSelectedTeam(gs.getTeam(i));
