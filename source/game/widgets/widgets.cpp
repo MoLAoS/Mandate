@@ -206,7 +206,7 @@ void Button::setSize(const Vec2i &sz) {
 
 bool Button::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
-	if (isEnabled() && m_pressed) {
+	if (isEnabled()) {
 		if (m_hover && !isInside(pos)) {
 			mouseOut();
 		}
@@ -221,9 +221,8 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		m_pressed = true;
-		return true;
 	}
-	return false;
+	return true;
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
@@ -233,9 +232,8 @@ bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 			Clicked(this);
 		}
 		m_pressed = false;
-		return true;
 	}
-	return false;
+	return true;
 }
 
 void Button::render() {

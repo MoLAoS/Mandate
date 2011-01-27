@@ -31,6 +31,15 @@ using Glest::Graphics::Renderer;
 namespace Glest { namespace Widgets {
 using Global::CoreData;
 
+// WidgetWindow event logging...
+#define ENABLE_WIDGET_LOGGING 0
+// widget logging still needs to be turned on (in widgets_base.h), this just disables 
+// the logging macros in this file.
+#if !ENABLE_WIDGET_LOGGING
+#	undef WIDGET_LOG
+#	define WIDGET_LOG(x)
+#endif
+
 // =====================================================
 // class CodeMouseCursor
 // =====================================================
