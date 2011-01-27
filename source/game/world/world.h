@@ -256,7 +256,7 @@ public:
 	bool loadTech();
 	bool loadMap();
 	bool loadScenario(const string &path);
-	void activateUnits();
+	void activateUnits(bool resumingGame);
 
 	// update
 	void processFrame();

@@ -278,8 +278,8 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 		carried = true;
 	}
 
+	faction->add(this);
 	if (hp) {
-		faction->add(this);
 		recalculateStats();
 		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 		if (!carried) {
@@ -290,7 +290,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	} else {
 		ULC_UNIT_LOG( this, " constructed dead." );
 	}
-	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
+	if (type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
 		// was previously in World::initUnits but seems to work fine here
 		g_cartographer.updateMapMetrics(getPos(), getSize());
@@ -1045,17 +1045,23 @@ void Unit::create(bool startingUnit) {
 
 /** Give a unit life. Called when a unit becomes 'operative'
   */
-void Unit::born(){
+void Unit::born(bool reborn) {
+	if (reborn && (!isAlive() || !isBuilt())) {
+		return;
+	}
 	ULC_UNIT_LOG( this, "born." );
-	faction->addStore(type);
 	faction->applyStaticProduction(type);
-	setCurrSkill(SkillClass::STOP);
 	computeTotalUpgrade();
 	recalculateStats();
-	hp= type->getMaxHp();
-	faction->checkAdvanceSubfaction(type, true);
-	g_world.getCartographer()->applyUnitVisibility(this);
-	g_simInterface.doUnitBorn(this);
+
+	if (!reborn) {
+		faction->addStore(type);
+		setCurrSkill(SkillClass::STOP);
+		hp = type->getMaxHp();
+		faction->checkAdvanceSubfaction(type, true);
+		g_world.getCartographer()->applyUnitVisibility(this);
+		g_simInterface.doUnitBorn(this);
+	}
 	StateChanged(this);
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorCreated(this);
@@ -1084,11 +1090,6 @@ void Unit::kill() {
 	assert(hp <= 0);
 	ULC_UNIT_LOG( this, "killed." );
 	hp = 0;
-	g_world.getCartographer()->removeUnitVisibility(this);
-
-	if (!isCarried()) { // if not in transport, clear cells
-		map->clearUnitCells(this, pos);
-	}
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
@@ -1112,6 +1113,7 @@ void Unit::kill() {
 		fire = 0;
 	}
 
+	//REFACTOR Use signal, send this code to Faction::onUnitDied();
 	if (isBeingBuilt()) { // no longer needs static resources
 		faction->deApplyStaticConsumption(type);
 	} else {
@@ -1119,13 +1121,19 @@ void Unit::kill() {
 		faction->removeStore(type);
 	}
 
-	setCurrSkill(SkillClass::DIE);
-	g_simInterface.doUpdateAnimOnDeath(this);
-
 	Died(this);
+
 	clearCommands();
-	checkTargets(this); // hack... 'tracking' particle systems might reference this
+	setCurrSkill(SkillClass::DIE);
 	deadCount = Random(id).randRange(-256, 256); // random decay time
+
+	//REFACTOR use signal, send this to World/Cartographer/SimInterface
+	g_world.getCartographer()->removeUnitVisibility(this);
+	if (!isCarried()) { // if not in transport, clear cells
+		map->clearUnitCells(this, pos);
+	}
+	g_simInterface.doUpdateAnimOnDeath(this);
+	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorDied(this);
 	}

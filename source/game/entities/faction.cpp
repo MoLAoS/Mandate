@@ -243,12 +243,8 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	assert(units.empty() && unitMap.empty());
 	for (int i = 0; i < n->getChildCount(); ++i) {
 		g_world.newUnit(n->getChild("unit", i), this, map, tt);
-		if (units[i]->isBuilt()) {
-			addStore(units[i]->getType());
-			applyStaticProduction(units[i]->getType());
-		}
 	}
-	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
+	subfaction = node->getChildIntValue("subfaction"); // reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
 
 	texture = g_renderer.newTexture2D(ResourceScope::GAME);

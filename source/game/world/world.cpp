@@ -1021,10 +1021,10 @@ void World::initUnits() {
 	}
 }
 
-void World::activateUnits() {
+void World::activateUnits(bool resumingGame) {
 	foreach (Factions, fIt, factions) {
 		foreach_const (Units, uIt, fIt->getUnits()) {
-			(*uIt)->born();
+			(*uIt)->born(resumingGame);
 		}
 	}
 //	foreach_const (Units, uIt, glestimals.getUnits()) {
