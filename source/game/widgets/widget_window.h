@@ -58,6 +58,7 @@ private:
 	bool modalFloater;
 	const Texture2D *mouseIcon;
 
+	Texture2D *m_mouseTexture;
 	Imageset *mouseMain;
 	Animset *mouseAnimations;
 
@@ -94,6 +95,7 @@ public:
 		}
 	}
 	void setMouseAppearance(MouseAppearance v = MouseAppearance::DEFAULT);
+	bool loadMouse(const string &dir);
 	void initMouse();
 
 protected: // Shared::Platform::Window virtual events

@@ -136,52 +136,56 @@ void ProgramLog::unitLoaded() {
 	m_progress = int(pcnt);
 }
 
-void ProgramLog::setupLoadingScreen(const string &factionDir) {
-	string factionName = basename(factionDir);
+void ProgramLog::useLoadingScreenDefaults() {
+	m_backgroundTexture = g_coreData.getBackgroundTexture();
+}
+
+/** Load the loading screen settings from xml
+  * @return true if loaded successfully
+  */
+bool ProgramLog::setupLoadingScreen(const string &dir) {
+	string path = dir + "/" + basename(dir) + ".xml";
 
 	//open xml file
-	string path = factionDir + "/" + factionName + ".xml";
 	XmlTree xmlTree;
 	try { 
 		xmlTree.load(path); 
 	} catch (runtime_error e) { 
 		g_logger.logXmlError(path, "File missing or wrongly named.");
-		return; // bail
+		return false; // bail
 	}
-	const XmlNode *factionNode;
+	const XmlNode *rootNode;
 	try { 
-		factionNode = xmlTree.getRootNode(); 
+		rootNode = xmlTree.getRootNode(); 
 	} catch (runtime_error e) { 
 		g_logger.logXmlError(path, "File appears to lack contents.");
-		return; // bail
+		return false; // bail
 	}
 
-	const XmlNode *loadingScreenNode = factionNode->getChild("loading-screen", 0, false);
+	const XmlNode *loadingScreenNode = rootNode->getChild("loading-screen", 0, false);
 
 	if (loadingScreenNode) {
 		// could randomly choose from multiple or choose 
 		// based on resolution - hailstone 21Jan2011
 
 		// background texture
-		const XmlNode *backgroundImageNode = loadingScreenNode->getChild("background-image", 0, false);
+		const XmlNode *backgroundImageNode = loadingScreenNode->getChild("background-image", 0, true);
 
 		if (backgroundImageNode) {
 			// load background image from faction.xml
 			m_backgroundTexture = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 			m_backgroundTexture->setMipmap(false);
-			m_backgroundTexture->getPixmap()->load(factionDir + "/" + 
+			m_backgroundTexture->getPixmap()->load(dir + "/" + 
 				backgroundImageNode->getAttribute("path")->getValue());
 			m_backgroundTexture->init(Texture::fBilinear);
 		}
 
 		// tips
 
+		return true; // successfully using settings
 	}
-	
-	if (!m_backgroundTexture) {
-		// set to default from coreData
-		m_backgroundTexture = g_coreData.getBackgroundTexture();
-	}
+
+	return false;
 }
 
 void ProgramLog::renderLoadingScreen(){

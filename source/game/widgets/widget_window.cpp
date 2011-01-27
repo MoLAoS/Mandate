@@ -25,6 +25,7 @@
 
 using Shared::Platform::WindowGl;
 using Shared::Graphics::Gl::Texture2DGl;
+using Glest::Graphics::ResourceScope;
 using namespace Glest::Global;
 using Glest::Graphics::Renderer;
 
@@ -43,7 +44,7 @@ WidgetWindow::WidgetWindow()
 		, KeyboardWidget(this)
 		, floatingWidget(0)
 		, anim(0.f), slowAnim(0.f), mouseIcon(0)
-		, mouseMain(0), mouseAnimations(0) {
+		, mouseMain(0), mouseAnimations(0), m_mouseTexture(0) {
 	size.x = Metrics::getInstance().getScreenW();
 	size.y = Metrics::getInstance().getScreenH();
 	
@@ -411,11 +412,45 @@ void WidgetWindow::eventKeyPress(char c) {
 	}
 }
 
+/** Load the mouse texture from dir
+  * @return true on success
+  */
+bool WidgetWindow::loadMouse(const string &dir) {
+	string path;
+	string name = "mouse";
+
+	// check each file type (there must be a better way?)
+	if (fileExists(dir + "/" + name + ".png")) {
+		path = dir + "/" + name + ".png";
+	} else if (fileExists(dir + "/" + name + ".jpg")) {
+		path = dir + "/" + name + ".jpg";
+	} else if (fileExists(dir + "/" + name + ".bmp")) {
+		path = dir + "/" + name + ".bmp";
+	} else if (fileExists(dir + "/" + name + ".tga")) {
+		path = dir + "/" + name + ".tga";
+	} else {
+		return false;
+	}
+	
+	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
+	tex->setMipmap(false);
+	tex->load(path);
+	tex->init();
+	
+	m_mouseTexture = tex;
+
+	return true;
+}
+
 void WidgetWindow::initMouse() {
 	remChild(mouseMain);
-	mouseMain = new Imageset(this, g_coreData.getMouseTexture(), 32, 32);
+	if (!m_mouseTexture) {
+		m_mouseTexture = g_coreData.getMouseTexture();
+	}
+	mouseMain = new Imageset(this, m_mouseTexture, 32, 32);
 	mouseMain->setSize(32,32);
 	mouseMain->setPos(mousePos + Vec2i(0, -32));
+	m_mouseTexture = 0; // custom mouse is only applied once
 	//mouseAnimations = new Animset(this, mouseMain, 30);
 }
 
