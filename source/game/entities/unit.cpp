@@ -223,8 +223,24 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	highlight = node->getChildFloatValue("highlight");
 	toBeUndertaken = node->getChildBoolValue("toBeUndertaken");
 
-	///@todo AutoCmd enable
-	//autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
+	m_cloaked = node->getChildBoolValue("cloaked");
+	m_cloaking = node->getChildBoolValue("cloaking");
+	m_deCloaking = node->getChildBoolValue("de-cloaking");
+	m_cloakAlpha = node->getChildFloatValue("cloak-alpha");
+
+	if (m_cloaked && !type->getCloakType()) {
+		throw runtime_error("Unit marked as cloak has no cloak type!");
+	}
+	if (m_cloaking && !m_cloaked) {
+		throw runtime_error("Unit marked as cloaking is not cloaked!");
+	}
+	if (m_cloaking && m_deCloaking) {
+		throw runtime_error("Unit marked as cloaking and de-cloaking!");
+	}
+
+	m_autoCmdEnable[AutoCmdFlag::REPAIR] = node->getChildBoolValue("auto-repair");
+	m_autoCmdEnable[AutoCmdFlag::ATTACK] = node->getChildBoolValue("auto-attack");
+	m_autoCmdEnable[AutoCmdFlag::FLEE] = node->getChildBoolValue("auto-flee");
 
 	if (type->hasMeetingPoint()) {
 		meetingPos = node->getChildVec2iValue("meeting-point");
@@ -325,9 +341,14 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("currSkill", currSkill ? currSkill->getName() : "null_value");
 
 	node->addChild("toBeUndertaken", toBeUndertaken);
+	node->addChild("cloaked", m_cloaked);
+	node->addChild("cloaking", m_cloaking);
+	node->addChild("de-cloaking", m_deCloaking);
+	node->addChild("cloak-alpha", m_cloakAlpha);
 
-	///@todo AutoCmd enable
-//	node->addChild("autoRepairEnabled", autoRepairEnabled);
+	node->addChild("auto-repair", m_autoCmdEnable[AutoCmdFlag::REPAIR]);
+	node->addChild("auto-attack", m_autoCmdEnable[AutoCmdFlag::ATTACK]);
+	node->addChild("auto-flee", m_autoCmdEnable[AutoCmdFlag::FLEE]);
 
 	if (type->hasMeetingPoint()) {
 		node->addChild("meeting-point", meetingPos);
