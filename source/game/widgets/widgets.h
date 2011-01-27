@@ -181,6 +181,7 @@ public:
 	virtual void mouseIn() override { m_hover = true; }
 	virtual void mouseOut() override { m_hover = false; }
 
+	virtual bool mouseMove(Vec2i pos) override;
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
