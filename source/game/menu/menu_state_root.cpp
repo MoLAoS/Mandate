@@ -86,7 +86,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
-	pnl->setLayoutParams(true, Panel::LayoutDirection::VERTICAL, Panel::LayoutOrigin::FROM_TOP);
+	pnl->setLayoutParams(true, Orientation::VERTICAL, Origin::FROM_TOP);
 	pnl->layoutChildren();
 
 	// Glest Logo PicturePanel
@@ -190,6 +190,7 @@ void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
 		case RootMenuItem::OPTIONS:  targetState = MenuStates::OPTIONS;		break;
 		case RootMenuItem::LOADGAME: targetState = MenuStates::LOAD_GAME;	break;
 		case RootMenuItem::ABOUT:	 targetState = MenuStates::ABOUT;		break;
+		case RootMenuItem::TEST:     targetState = MenuStates::TEST;        break;
 		default: break;
 	}
 	if (targetState != MenuStates::INVALID) {
@@ -217,6 +218,7 @@ void MenuStateRoot::update(){
 			case RootMenuItem::OPTIONS: newState = new MenuStateOptions(program, mainMenu); break;
 			case RootMenuItem::LOADGAME: newState = new MenuStateLoadGame(program, mainMenu); break;
 			case RootMenuItem::ABOUT: newState = new MenuStateAbout(program, mainMenu); break;
+			case RootMenuItem::TEST: newState = new MenuStateTest(program, mainMenu); break;
 			default: break;
 		}
 		if (newState) {
@@ -225,6 +227,58 @@ void MenuStateRoot::update(){
 			program.exit();
 		}
 	}
+}
+
+// =====================================================
+//  class MenuStateTest
+// =====================================================
+
+MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu) {
+	Font *font = g_coreData.getFTMenuFontNormal();
+	// create
+	int gap = (g_metrics.getScreenW() - 450) / 4;
+	int x = gap, w = 150, y = g_config.getDisplayHeight() - 80, h = 30;
+	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateTest::onButtonClick);
+
+	Anchors anchors;
+	anchors.set(Anchor::COUNT, 5);
+
+	const int numButtons = 5;
+
+	Vec2i size = Vec2i(std::min(g_config.getDisplayWidth() / 3, 300),
+	                   std::min(g_config.getDisplayHeight() / 2, 400));
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
+	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL, Origin::FROM_TOP);
+	ws->setPos(pos);
+	ws->setSize(size);
+	ws->setDefaultAnchors(anchors);
+	
+	// some buttons
+	for (int i=0; i < numButtons; ++i) {
+		Vec2i pos(0, 0);
+		Vec2i size(150, 40);
+		Button *btn = new Button(ws, pos, size);
+		btn->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
+	}
+}
+
+void MenuStateTest::update() {
+	MenuState::update();
+	if (m_transition) {
+		program.clear();
+		mainMenu->setState(new MenuStateRoot(program, mainMenu));
+	}
+}
+
+void MenuStateTest::onButtonClick(Button* btn) {
+	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+
+	soundRenderer.playFx(g_coreData.getClickSoundA());
+	mainMenu->setCameraTarget(MenuStates::ROOT);
+	doFadeOut();
 }
 
 }}//end namespace

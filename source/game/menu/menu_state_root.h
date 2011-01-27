@@ -28,6 +28,7 @@ STRINGY_ENUM( RootMenuItem,
 	LOADGAME,
 	OPTIONS,
 	ABOUT,
+	TEST,
 	EXIT
 );
 
@@ -51,6 +52,26 @@ public:
 
 	MenuStates getIndex() const { return MenuStates::ROOT; }
 };
+
+class MenuStateTest : public MenuState {
+private:
+	Widgets::Button *m_returnButton;
+
+private:
+	MenuStateTest(const MenuStateRoot &);
+	const MenuStateTest &operator =(const MenuStateTest &);
+
+public:
+	MenuStateTest(Program &program, MainMenu *mainMenu);
+
+	void update();
+
+	// Event handler
+	void onButtonClick(Widgets::Button*);
+
+	MenuStates getIndex() const { return MenuStates::TEST; }
+};
+
 
 }}//end namespace
 

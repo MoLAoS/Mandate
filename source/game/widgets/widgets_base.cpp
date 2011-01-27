@@ -42,19 +42,23 @@ KeyboardWidget::KeyboardWidget(Widget* widget) {
 
 MEMORY_CHECK_IMPLEMENTATION(Widget)
 
-Widget::Widget(Container* parent)
+Widget::Widget(Container* parent, bool addToParent)
 		: parent(parent) {
 	init(Vec2i(0), Vec2i(0));
 	rootWindow = parent->getRootWindow();
-	parent->addChild(this);
+	if (addToParent) {
+		parent->addChild(this);
+	}
 }
 
-Widget::Widget(Container* parent, Vec2i pos, Vec2i size)
+Widget::Widget(Container* parent, Vec2i pos, Vec2i size, bool addToParent)
 		: parent(parent) {
 	init(pos, size);
 	screenPos = parent->getScreenPos() + pos;
 	rootWindow = parent->getRootWindow();
-	parent->addChild(this);
+	if (addToParent) {
+		parent->addChild(this);
+	}
 }
 
 Widget::Widget(WidgetWindow* window)
@@ -375,6 +379,50 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 	Vec2i inset(m_borderStyle.m_sizes[Border::RIGHT], m_borderStyle.m_sizes[Border::TOP]);
 	Vec2i sz = Vec2i(size) - offset - inset;
 	renderHighLight(colour, centreAlpha, borderAlpha, offset, sz);
+}
+
+// =====================================================
+//  class CellWidget
+// =====================================================
+
+CellWidget::CellWidget(Container *parent)
+		: Widget(parent, false), m_cellPos(0), m_cellSize(0) {
+	parent->addChild(this);
+}
+
+CellWidget::CellWidget(Container *parent, Vec2i pos, Vec2i size)
+		: Widget(parent, pos, size, false), m_cellPos(0), m_cellSize(0) {
+	parent->addChild(this);
+}
+
+CellWidget::CellWidget(WidgetWindow *window)
+		: Widget(window), m_cellPos(0), m_cellSize(0) {
+}
+
+void CellWidget::anchorWidget() {
+	if (m_cellSize == Vec2i(0)) {
+		return;
+	}
+	Vec2i pos = getPos();
+	Vec2i size = getSize();
+	if (m_anchors.has(Anchor::LEFT)) { // anchor left
+		pos.x += m_anchors.get(Anchor::LEFT); 
+		if (m_anchors.has(Anchor::RIGHT)) { // stretch horizontally
+			size.w = m_cellSize.w - m_anchors.get(Anchor::LEFT) - m_anchors.get(Anchor::RIGHT);
+		}
+	} else if (m_anchors.has(Anchor::RIGHT)) { // anchor right
+		pos.x += m_cellSize.w - m_anchors.get(Anchor::RIGHT) - size.w;
+	}
+	if (m_anchors.has(Anchor::TOP)) { // anchor top
+		pos.y += m_anchors.get(Anchor::TOP);
+		if (m_anchors.has(Anchor::BOTTOM)) { // stretch vertically
+			size.h = size.h - m_anchors.get(Anchor::TOP) - m_anchors.get(Anchor::BOTTOM);
+		}
+	} else if (m_anchors.has(Anchor::BOTTOM)) { // anchor bottom
+		pos.y += m_cellSize.h - m_anchors.get(Anchor::BOTTOM) - size.h;
+	}
+	setPos(pos);
+	setSize(size);
 }
 
 // =====================================================
@@ -701,15 +749,15 @@ void MouseCursor::renderTex(const Texture2D *tex) {
 // =====================================================
 
 Container::Container(Container* parent) 
-		: Widget(parent) {
+		: CellWidget(parent) {
 }
 
 Container::Container(Container* parent, Vec2i pos, Vec2i size) 
-		: Widget(parent, pos, size) {
+		: CellWidget(parent, pos, size) {
 }
 
 Container::Container(WidgetWindow* window)
-		: Widget(window) {
+		: CellWidget(window) {
 }
 
 Container::~Container() {
@@ -727,6 +775,11 @@ void Container::remChild(Widget* child) {
 	if (it != children.end()) {
 		children.erase(it);
 	}
+}
+
+void Container::delChild(Widget* child) {
+	RUNTIME_CHECK(std::find(children.begin(), children.end(), child) != children.end());
+	delete child;
 }
 
 void Container::clear() {

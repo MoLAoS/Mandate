@@ -110,7 +110,7 @@ LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz
 	m_outputBox = new ScrollText(m_panel, Vec2i(0), obSize);
 	m_outputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTDisplayFont(), false);
 
-	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
+	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 5);
 	m_panel->layoutChildren();
 

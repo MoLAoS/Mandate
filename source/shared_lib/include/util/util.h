@@ -143,11 +143,23 @@ public:
 //
 #define RUNTIME_CHECK(x)													\
 	if (!(x)) {																\
-		std::stringstream ss;												\
-		ss << __FUNCTION__ << " (" << __FILE__ << " : " << __LINE__ << ")";	\
-		g_logger.logProgramEvent("In " + ss.str() + "\nRuntime check fail: "#x);		\
-		throw runtime_error("In " + ss.str() + "\nRuntime check fail: "#x);	\
+		std::stringstream ss;                                               \
+		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+			<< __LINE__ << "]\nRuntime check fail: "#x;                     \
+		g_logger.logError(ss.str());                                        \
+		throw runtime_error(ss.str());	                                    \
 	}	
+
+// and another one, with a custom error message
+#define RUNTIME_CHECK_MSG(x, msg)                                               \
+	if (!(x)) {                                                             \
+		std::stringstream ss;                                               \
+		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+			<< __LINE__ << "]\nRuntime check fail: "#x << "\n" << msg;      \
+		g_logger.logError(ss.str());                                        \
+		throw runtime_error(ss.str());	                                    \
+	}	
+
 
 //
 // Memory checking stuff

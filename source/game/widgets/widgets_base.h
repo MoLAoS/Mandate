@@ -99,12 +99,18 @@ private:
 	void init(const Vec2i &pos, const Vec2i &size);
 
 protected:
-	Widget(WidgetWindow* window);
-	Widget(Container* parent);
-	Widget(Container* parent, Vec2i pos, Vec2i size);
+	Widget(WidgetWindow* window); // for floating widgets and mouse cursors only!
+	Widget(Container* parent, bool addToParent = true);
+	Widget(Container* parent, Vec2i pos, Vec2i size, bool addToParent = true);
 
 public:
 	virtual ~Widget();
+
+	// layout helpers .. Remove... bound for CellWidget...
+	virtual Vec2i getPrefSize() const {return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
+	virtual Vec2i getMinSize() const {return Vec2i(-1); } // should not return (-1,-1)
+	virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
+
 
 	// de-virtualise ??
 	// get/is
@@ -122,11 +128,6 @@ public:
 //	virtual int	  getBorderSize() const	{ return borderSize; }
 	virtual int	  getPadding() const	{ return padding;	 }
 
-	// layout helpers
-	virtual Vec2i getPrefSize() const {return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
-	virtual Vec2i getMinSize() const  {return Vec2i(-1); } // should not return (-1,-1)
-	virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
-
 	virtual bool isVisible() const		{ return visible; }
 	virtual bool isInside(const Vec2i &pos) const {
 		return pos.southEastOf(screenPos) && pos.northWestOf(screenPos + size);
@@ -142,6 +143,7 @@ public:
 	void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
 	virtual void setVisible(bool vis) { visible = vis; }
 	virtual void setFade(float v) { fade = v; }
+	
 	virtual void setParent(Container* p) { parent = p; }
 
 	void setBorderStyle(const BorderStyle &style);
@@ -155,8 +157,6 @@ public:
 
 	void renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
 	void renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size);
-
-	//void renderBorders(BorderType type, const Vec2i &offset, const Vec2i &size, int borderSize, bool bg = true);
 	void renderBgAndBorders(bool bg = true);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
 	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
@@ -164,9 +164,111 @@ public:
 	virtual string descPosDim();
 	virtual string desc() = 0;
 
+	virtual bool isCellWidget() const { return false; } /**< is this a CellWidget? */
+
 	sigslot::signal<Widget*> Destroyed;
 
 };
+
+// =====================================================
+//  enums Orientation, Origin & Anchors
+// =====================================================
+
+WRAPPED_ENUM( Orientation, VERTICAL, HORIZONTAL );
+WRAPPED_ENUM( Origin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
+WRAPPED_ENUM( Anchor, LEFT, TOP, RIGHT, BOTTOM );
+
+// =====================================================
+//  struct Anchors
+// =====================================================
+
+struct Anchors {
+	union {
+		struct {
+			int left, top, right, bottom;
+		};
+		int raw[4];
+	};
+
+	Anchors() : left(0), top(0), right(-1), bottom(-1) {} // default == top-left
+	
+	void set(Anchor a, int val) {
+		assert(a != Anchor::INVALID);
+		if (a == Anchor::COUNT) {
+			left = top = right = bottom = val;
+		} else {
+			raw[a] = val;
+		}
+	}
+	bool has(Anchor a) const { return raw[a] != -1; }
+	int get(Anchor a) const { return raw[a]; }
+};
+
+// =====================================================
+//  struct SizeHint
+// =====================================================
+
+struct SizeHint {
+private:
+	int m_percentage;
+	int m_absolute;
+
+public:
+	SizeHint(int percentage = -1, int absolute = -1) 
+			: m_percentage(percentage), m_absolute(absolute) {}
+
+	SizeHint(const SizeHint &rhs)
+			: m_percentage(rhs.m_percentage), m_absolute(rhs.m_absolute) {}
+
+	bool isPercentage() const   { return m_absolute == -1; }
+	int  getPercentage() const  { return m_percentage; }
+	int  getAbsolute() const    { return m_absolute; }
+};
+
+// =====================================================
+//  class CellWidget
+// =====================================================
+
+class CellWidget : public Widget {
+private:
+	Anchors    m_anchors;
+	SizeHint   m_sizeHint;
+	Vec2i      m_cellPos;
+	Vec2i      m_cellSize;
+
+private:
+	void anchorWidget();
+
+protected:
+	CellWidget(WidgetWindow *window);
+
+public:
+	CellWidget(Container *parent);
+	CellWidget(Container *parent, Vec2i pos, Vec2i size);
+
+	//// layout helpers
+	//virtual Vec2i getPrefSize() const = 0;//{return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
+	//virtual Vec2i getMinSize() const = 0;// {return Vec2i(-1); } // should not return (-1,-1)
+	//virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
+
+	void setAnchors(Anchors a) { m_anchors = a; }
+	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
+
+	void setCellRect(const Vec2i &pos, const Vec2i &size) {
+		m_cellPos = pos;
+		m_cellSize = size;
+		anchorWidget();
+	}
+
+	SizeHint getSizeHint() const { return m_sizeHint; }
+	Anchors  getAnchors() const  { return m_anchors;  }
+
+	virtual bool isCellWidget() const override { return true; }
+};
+
+// =====================================================
+//  class MouseWidget
+// =====================================================
 
 class MouseWidget {
 	friend class WidgetWindow;
@@ -362,12 +464,15 @@ public:
 // class Container
 // =====================================================
 
-class Container : public Widget {
+class Container : public CellWidget {
 public:
 	typedef vector<Widget*> WidgetList;
 
 protected:
 	WidgetList children;
+
+	virtual void delChild(Widget* child);
+	virtual void clear();
 
 public:
 	Container(Container* parent);
@@ -377,11 +482,10 @@ public:
 
 	virtual Widget* getWidgetAt(const Vec2i &pos);
 
-	virtual void setPos(const Vec2i &p);
-
 	virtual void addChild(Widget* child);
 	virtual void remChild(Widget* child);
-	virtual void clear();
+
+	virtual void setPos(const Vec2i &p);
 	virtual void setEnabled(bool v);
 	virtual void setFade(float v);
 	virtual void render();

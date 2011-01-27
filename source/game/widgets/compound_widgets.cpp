@@ -465,7 +465,7 @@ bool InputBox::keyDown(Key key) {
 InputDialog::InputDialog(WidgetWindow* window)
 		: BasicDialog(window) {
 	m_panel = new Panel(this);
-	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
+	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 10);
 	m_label = new StaticText(m_panel);
 	m_label->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());

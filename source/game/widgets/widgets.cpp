@@ -149,7 +149,7 @@ void Animset::update() {
 // =====================================================
 
 Button::Button(Container* parent)
-		: Widget(parent)
+		: CellWidget(parent)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
@@ -160,7 +160,7 @@ Button::Button(Container* parent)
 }
 
 Button::Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTexture, bool hoverHighlight)
-		: Widget(parent, pos, size)
+		: CellWidget(parent, pos, size)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
@@ -355,7 +355,7 @@ void CheckBox::render() {
 // =====================================================
 
 TextBox::TextBox(Container* parent)
-		: Widget(parent)
+		: CellWidget(parent)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, TextWidget(this)
@@ -368,7 +368,7 @@ TextBox::TextBox(Container* parent)
 }
 
 TextBox::TextBox(Container* parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size)
+		: CellWidget(parent, pos, size)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, TextWidget(this)
@@ -475,7 +475,7 @@ Vec2i TextBox::getPrefSize() const {
 // =====================================================
 
 Slider::Slider(Container* parent, Vec2i pos, Vec2i size, const string &title)
-		: Widget(parent, pos, size)
+		: CellWidget(parent, pos, size)
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
@@ -646,7 +646,7 @@ void Slider::render() {
 // =====================================================
 
 VerticalScrollBar::VerticalScrollBar(Container* parent)
-		: Widget(parent)
+		: CellWidget(parent)
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
@@ -659,7 +659,7 @@ VerticalScrollBar::VerticalScrollBar(Container* parent)
 }
 
 VerticalScrollBar::VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size)
+		: CellWidget(parent, pos, size)
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
@@ -860,13 +860,156 @@ void VerticalScrollBar::render() {
 }
 
 // =====================================================
+// class WidgetStrip
+// =====================================================
+
+WidgetStrip::WidgetStrip(Container *parent, Orientation ld, Origin lo)
+		: Container(parent)
+		, m_dirty(false) {
+	m_direction = ld;
+	m_origin = lo;
+	m_defaultAnchors = Anchors(); // top & left
+	m_defualtSizeHint = SizeHint(); // default percentage
+}
+
+void WidgetStrip::setPos(const Vec2i &pos) {
+	Container::setPos(pos);
+	setDirty();
+}
+
+void WidgetStrip::setSize(const Vec2i &sz) {
+	Container::setSize(sz);
+	setDirty();
+}
+
+void WidgetStrip::render() {
+	if (m_dirty) {
+		layoutCells();
+	}
+	Container::render();
+}
+
+void WidgetStrip::addChild(CellWidget* child) {
+	Container::addChild(child);
+	child->setAnchors(m_defaultAnchors);
+	child->setSizeHint(m_defualtSizeHint);
+	setDirty();
+}
+
+void WidgetStrip::addChild(Widget* child) {
+	bool ok = child->isCellWidget();
+	//RUNTIME_CHECK_MSG(child->isCellWidget(), "Non CellWidget added to WidgetStrip.");
+	addChild(static_cast<CellWidget*>(child));
+}
+
+typedef vector<SizeHint>    HintList;
+typedef pair<int, int>      CellDim;
+typedef vector<CellDim>     CellDimList;
+
+int calculateCellDims(HintList &hints, const int space, CellDimList &out_res) {
+	RUNTIME_CHECK_MSG(space > 0, "calculateCellDims(): called with no space.");
+	RUNTIME_CHECK_MSG(out_res.empty(), "calculateCellDims(): output vector not empty!");
+	if (hints.empty()) {
+		return 0; // done ;)
+	}
+	const int count = hints.size();
+
+	// Pass 1
+	// count number of percentage hints and number of them that are 'default', and determine 
+	// space for percentage hinted cells (ie, subtract space taken by absolute hints)
+	int numPcnt = 0;
+	int numDefPcnt = 0;
+	int pcntTally = 0;
+	int pcntSpace = space;
+	foreach_const (HintList, it, hints) {
+		if (it->isPercentage()) {
+			if (it->getPercentage() >= 0) {
+				pcntTally += it->getPercentage();
+			} else {
+				++numDefPcnt;
+			}
+			++numPcnt;
+		} else {
+			pcntSpace -= it->getAbsolute();
+		}
+	}
+
+	float percent = pcntSpace / 100.f;  // pixels per percent
+	int defPcnt;
+	if (100 - pcntTally > 0) { // default percentage hints get this much...
+		defPcnt = (100 - pcntTally) / numDefPcnt;
+	} else {
+		defPcnt = 0;
+	}
+
+
+	// Pass 2
+	int offset = 0, size;
+	// Allocate space for cells
+	foreach_const (HintList, it, hints) {
+		if (it->isPercentage()) {
+			if (it->getPercentage() >= 0) {
+				size = int(it->getPercentage() * percent);
+			} else {
+				size = int(defPcnt * percent);
+			}
+		} else {
+			size = it->getAbsolute();
+		}
+		out_res.push_back(std::make_pair(offset, size));
+		offset += size;
+	}
+	return space - offset;
+}
+
+void WidgetStrip::layoutCells() {
+	// collect hints
+	HintList     hintList;
+	foreach (WidgetList, it, children) {
+		hintList.push_back(static_cast<CellWidget*>(*it)->getSizeHint());
+	}
+	// determine space available
+	int space;
+	if (m_direction == Orientation::VERTICAL) {
+		space = getHeight() - getBordersVert() - 2 * getPadding();
+	} else if (m_direction == Orientation::HORIZONTAL) {
+		space = getWidth() - getBordersHoriz() - 2 * getPadding();
+	} else {
+		throw runtime_error("WidgetStrip has invalid direction.");
+	}
+	if (space < 1) {
+		return;
+	}
+	// split space according to hints
+	CellDimList  resultList;
+	int offset = calculateCellDims(hintList, space, resultList) / 2;
+	if (m_direction == Orientation::VERTICAL) {
+		// determine cell width and x-pos
+		int x_pos = getPadding() + getBorderLeft();
+		int width = getWidth() - getPadding() * 2 - getBordersHoriz();
+		for (int i=0; i < children.size(); ++i) {
+			Vec2i pos(Vec2i(x_pos, offset + resultList[i].first));
+			Vec2i size(Vec2i(width, resultList[i].second));
+			children[i]->setPos(pos);
+			children[i]->setSize(size);
+			static_cast<CellWidget*>(children[i])->setCellRect(pos, size);
+		}
+	} else if (m_direction == Orientation::HORIZONTAL) {
+		
+		RUNTIME_CHECK_MSG(false, "Orientation::HORIZONTAL? Write more code first...");
+
+	}
+	m_dirty = false;
+}
+
+// =====================================================
 //  class Panel
 // =====================================================
 
 Panel::Panel(Container* parent)
 		: Container(parent)
 		, autoLayout(true)
-		, layoutOrigin(LayoutOrigin::CENTRE) {
+		, layoutOrigin(Origin::CENTRE) {
 	setPaddingParams(10, 5);
 	m_borderStyle.setNone();
 }
@@ -874,7 +1017,7 @@ Panel::Panel(Container* parent)
 Panel::Panel(Container* parent, Vec2i pos, Vec2i sz)
 		: Container(parent, pos, sz)
 		, autoLayout(true)
-		, layoutOrigin(LayoutOrigin::CENTRE) {
+		, layoutOrigin(Origin::CENTRE) {
 	setPaddingParams(10, 5);
 	m_borderStyle.setNone();
 }
@@ -888,13 +1031,13 @@ void Panel::setPaddingParams(int panelPad, int widgetPad) {
 	widgetPadding = widgetPad;
 }
 
-void Panel::setLayoutParams(bool autoLayout, LayoutDirection dir, LayoutOrigin origin) {
+void Panel::setLayoutParams(bool autoLayout, Orientation dir, Origin origin) {
 	assert(
-		origin == LayoutOrigin::CENTRE
-		|| ((origin == LayoutOrigin::FROM_BOTTOM || origin == LayoutOrigin::FROM_TOP)
-			&& dir == LayoutDirection::VERTICAL)
-		|| ((origin == LayoutOrigin::FROM_LEFT || origin == LayoutOrigin::FROM_RIGHT)
-			&& dir == LayoutDirection::HORIZONTAL)
+		origin == Origin::CENTRE
+		|| ((origin == Origin::FROM_BOTTOM || origin == Origin::FROM_TOP)
+			&& dir == Orientation::VERTICAL)
+		|| ((origin == Origin::FROM_LEFT || origin == Origin::FROM_RIGHT)
+			&& dir == Orientation::HORIZONTAL)
 	);
 	this->layoutDirection = dir;
 	this->layoutOrigin = origin;		
@@ -905,9 +1048,9 @@ void Panel::layoutChildren() {
 	if (!autoLayout || children.empty()) {
 		return;
 	}
-	if (layoutDirection == LayoutDirection::VERTICAL) {
+	if (layoutDirection == Orientation::VERTICAL) {
 		layoutVertical();
-	} else if (layoutDirection == LayoutDirection::HORIZONTAL) {
+	} else if (layoutDirection == Orientation::HORIZONTAL) {
 		layoutHorizontal();
 	}
 }
@@ -929,9 +1072,9 @@ void Panel::layoutVertical() {
 	
 	int offset;
 	switch (layoutOrigin) {
-		case LayoutOrigin::FROM_TOP: offset = m_borderStyle.m_sizes[Border::TOP]; break;
-		case LayoutOrigin::CENTRE: offset = (size.y - wh) / 2; break;
-		case LayoutOrigin::FROM_BOTTOM: offset = size.y - wh - m_borderStyle.m_sizes[Border::TOP]; break;
+		case Origin::FROM_TOP: offset = m_borderStyle.m_sizes[Border::TOP]; break;
+		case Origin::CENTRE: offset = (size.y - wh) / 2; break;
+		case Origin::FROM_BOTTOM: offset = size.y - wh - m_borderStyle.m_sizes[Border::TOP]; break;
 	}
 	int ndx = 0;
 	foreach (WidgetList, it, children) {
@@ -958,9 +1101,9 @@ void Panel::layoutHorizontal() {
 	
 	int offset;
 	switch (layoutOrigin) {
-		case LayoutOrigin::FROM_LEFT: offset = getBorderLeft(); break;
-		case LayoutOrigin::CENTRE: offset = (size.x - ww) / 2; break;
-		case LayoutOrigin::FROM_RIGHT: offset = size.x - ww - getBorderRight(); break;
+		case Origin::FROM_LEFT: offset = getBorderLeft(); break;
+		case Origin::CENTRE: offset = (size.x - ww) / 2; break;
+		case Origin::FROM_RIGHT: offset = size.x - ww - getBorderRight(); break;
 	}
 	int ndx = 0;
 	foreach (WidgetList, it, children) {
@@ -993,22 +1136,23 @@ void Panel::addChild(Widget* child) {
 	layoutChildren();
 }
 
-void Panel::remChild(Widget* child) {
-	Container::remChild(child);
-}
-
 void Panel::render() {
+	assertGl();
 	Widget::renderBgAndBorders();
 	Vec2i pos = getScreenPos();
 	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
 		  + m_borderStyle.m_sizes[Border::BOTTOM] + getPadding();
 	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
-	assertGl();
 	glPushAttrib(GL_SCISSOR_BIT);
-		glEnable(GL_SCISSOR_TEST);
+		assertGl();
+		/*if (glIsEnabled(GL_SCISSOR_TEST)) { ///@todo ? take intersection ?
+			Vec4i box;
+			glGetIntegerv(GL_SCISSOR_BOX, box.ptr());
+		} else */{
+			glEnable(GL_SCISSOR_TEST);
+		}
 		glScissor(pos.x, pos.y, size.w, size.h);
 		Container::render();
-		glDisable(GL_SCISSOR_TEST);
 	glPopAttrib();
 	assertGl();
 }

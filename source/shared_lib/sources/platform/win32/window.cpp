@@ -492,7 +492,10 @@ void Window::createWindow(LPVOID creationData) {
 
 	assert(handle != NULL);
 
-	setPos(300,0);
+	Vec2i screenDims(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+	Vec2i size(w, h);
+	Vec2i pos = (screenDims - size) / 2;
+	setPos(pos.x, pos.y);
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
 }

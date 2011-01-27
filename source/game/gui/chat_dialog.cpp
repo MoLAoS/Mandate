@@ -32,11 +32,11 @@ namespace Glest { namespace Gui {
 ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
 		: BasicDialog(parent, pos, size), m_teamChat(false) {
 	m_panel = new Panel(this);
-	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
+	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 10);
 
 	m_subPanel = new Panel(m_panel);
-	m_subPanel->setLayoutParams(true, Panel::LayoutDirection::HORIZONTAL);
+	m_subPanel->setLayoutParams(true, Orientation::HORIZONTAL);
 	m_subPanel->setPaddingParams(0, 10);
 	m_label = new StaticText(m_subPanel);
 	m_label->setTextParams(g_lang.get("TeamOnly") + ": ", Vec4f(1.f), g_coreData.getFTMenuFontNormal());

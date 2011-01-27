@@ -46,7 +46,8 @@ WRAPPED_ENUM( MenuStates,
 	LOAD_GAME,
 	OPTIONS,
 	ABOUT,
-	GFX_INFO
+	GFX_INFO,
+	TEST
 );
 
 // =====================================================

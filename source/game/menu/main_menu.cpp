@@ -91,7 +91,8 @@ const string MainMenu::stateNames[] = {
 	"loadgame",
 	"config",
 	"about",
-	"info"
+	"info",
+	"test"
 };
 
 // ===================== PUBLIC ========================

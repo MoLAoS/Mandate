@@ -22,28 +22,19 @@ namespace Glest { namespace Widgets {
 // class StaticImage
 // =====================================================
 
-class StaticImage : public Widget, public ImageWidget {
-private:
-	//Texture2D *m_texture;
-
+class StaticImage : public CellWidget, public ImageWidget {
 public:
 	StaticImage(Container* parent)
-			: Widget(parent)
-			, ImageWidget(this)
-			//, m_texture(0) 
-	{}
+			: CellWidget(parent)
+			, ImageWidget(this) {}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size) 
-			: Widget(parent, pos, size)
-			, ImageWidget(this)
-			//, m_texture(0)
-	{}
+			: CellWidget(parent, pos, size)
+			, ImageWidget(this) {}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
-			: Widget(parent, pos, size)
-			, ImageWidget(this, tex)
-			//, m_texture(0)
-	{}
+			: CellWidget(parent, pos, size)
+			, ImageWidget(this, tex) {}
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -101,6 +92,7 @@ private:
 	float m_timeElapsed;
 	int m_start, m_end;
 	bool m_loop;
+
 public:
 	Animset(Container* parent, Imageset *imageset, int fps) 
 			: Widget(parent)
@@ -131,7 +123,7 @@ public:
 // class StaticText
 // =====================================================
 
-class StaticText : public Widget, public TextWidget {
+class StaticText : public CellWidget, public TextWidget {
 private:
 	bool	m_shadow;
 	int		m_shadowOffset;
@@ -139,13 +131,13 @@ private:
 	
 public:
 	StaticText(Container* parent)
-			: Widget(parent) , TextWidget(this)
+			: CellWidget(parent) , TextWidget(this)
 			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
 	StaticText(Container* parent, Vec2i pos, Vec2i size)
-			: Widget(parent, pos, size), TextWidget(this)
+			: CellWidget(parent, pos, size), TextWidget(this)
 			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
@@ -173,7 +165,7 @@ public:
 // class Button
 // =====================================================
 
-class Button : public Widget, public TextWidget, public ImageWidget, public MouseWidget {
+class Button : public CellWidget, public TextWidget, public ImageWidget, public MouseWidget {
 protected:
 	bool m_hover;
 	bool m_pressed;
@@ -231,7 +223,7 @@ public:
 // class TextBox
 // =====================================================
 
-class TextBox : public Widget, public MouseWidget, public KeyboardWidget, public TextWidget {
+class TextBox : public CellWidget, public MouseWidget, public KeyboardWidget, public TextWidget {
 private:
 	bool hover;
 	bool focus;
@@ -272,7 +264,7 @@ public:
 //  class Slider
 // =====================================================
 
-class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+class Slider : public CellWidget, public MouseWidget, public ImageWidget, public TextWidget {
 private:
 	float	m_sliderValue;
 	bool	m_thumbHover,
@@ -322,7 +314,7 @@ public:
 //  class VerticalScrollBar
 // =====================================================
 
-class VerticalScrollBar : public Widget, public ImageWidget, public MouseWidget {
+class VerticalScrollBar : public CellWidget, public ImageWidget, public MouseWidget {
 private:
 	WRAPPED_ENUM( Part, NONE, UP_BUTTON, DOWN_BUTTON, THUMB, UPPER_SHAFT, LOWER_SHAFT );
 
@@ -382,26 +374,56 @@ public:
 };
 
 // =====================================================
+// class WidgetStrip
+// =====================================================
+
+class WidgetStrip : public Container {
+private:
+	Orientation	 m_direction;
+	Origin	 m_origin;
+	int              m_childSlotCount;
+	SizeHint		 m_defualtSizeHint;
+	Anchors          m_defaultAnchors;
+	bool             m_dirty;
+
+private:
+	void setDirty() { m_dirty = true; }	
+
+public:
+	WidgetStrip(Container *parent, Orientation ld, Origin lo);
+	WidgetStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, Origin lo);
+
+	void layoutCells();
+
+	void setDefaultSizeHint(SizeHint sizeHint) { m_defualtSizeHint = sizeHint; }
+	void setDefaultAnchors(Anchors anchors) { m_defaultAnchors = anchors; }
+
+	virtual void addChild(CellWidget* child);
+	virtual void addChild(Widget* child) override;
+
+	virtual void render() override;
+	virtual void setPos(const Vec2i &pos) override;
+	virtual void setSize(const Vec2i &sz) override;
+	virtual string desc() override { return string("[WidgetStrip: ") + descPosDim() + "]"; }
+};
+
+// =====================================================
 // class Panel
 // =====================================================
 
 class Panel : public Container {
-public:
-	WRAPPED_ENUM( LayoutDirection, VERTICAL, HORIZONTAL );
-	WRAPPED_ENUM( LayoutOrigin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
-
 protected:
 	int		widgetPadding;	// padding between child widgets
 	bool	autoLayout;
-	LayoutDirection	layoutDirection;
-	LayoutOrigin	layoutOrigin;
+	Orientation	layoutDirection;
+	Origin	layoutOrigin;
 
 	Panel(WidgetWindow* window);
 	void layoutVertical();
 	void layoutHorizontal();
 
 public:
-	void setLayoutParams(bool autoLayout, LayoutDirection dir, LayoutOrigin origin = LayoutOrigin::CENTRE);
+	void setLayoutParams(bool autoLayout, Orientation dir, Origin origin = Origin::CENTRE);
 	
 public:
 	Panel(Container* parent);
@@ -410,10 +432,12 @@ public:
 	void setAutoLayout(bool val) { autoLayout = val; }
 	void setPaddingParams(int panelPad, int widgetPad);
 
-	void addChild(Widget* child);
-	void remChild(Widget* child);
+	virtual void addChild(Widget* child) override;
+	virtual void remChild(Widget* child) override { Container::remChild(child); }
+	virtual void delChild(Widget* child) override { Container::delChild(child); }
+	virtual void clear() override { Container::clear(); }
 
-	void setLayoutOrigin(LayoutOrigin lo) { layoutOrigin = lo; }
+	void setLayoutOrigin(Origin lo) { layoutOrigin = lo; }
 	virtual void layoutChildren();
 
 	virtual Vec2i getPrefSize() const;

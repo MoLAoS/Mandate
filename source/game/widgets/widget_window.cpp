@@ -128,7 +128,7 @@ WidgetWindow::WidgetWindow()
 	}
 
 	textRendererFT = g_renderer.getFreeTypeRenderer();
-}
+} 
 
 WidgetWindow::~WidgetWindow() {
 	clear();
