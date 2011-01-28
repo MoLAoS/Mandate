@@ -319,38 +319,73 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *c
 	}
 
 	//vertices
-	glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());
-
-	//normals
-	if (renderNormals) {
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, 0, mesh->getInterpolationData()->getNormals());
-	} else {
-		glDisableClientState(GL_NORMAL_ARRAY);
-	}
-
-	//tex coords
-	if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
-		if (duplicateTexCoords) {
-			glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, 0, mesh->getTexCoords());
+	if (mesh->getVertexBuffer()) {
+#		define OFFSET(x) ((void*)(x * sizeof(float)))
+		const int stride = 32;
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->getVertexBuffer());
+		glVertexPointer(3, GL_FLOAT, stride, OFFSET(0));
+		//normals
+		if (renderNormals) {
+			glEnableClientState(GL_NORMAL_ARRAY);
+			glNormalPointer(GL_FLOAT, stride, OFFSET(3));
+		} else {
+			glDisableClientState(GL_NORMAL_ARRAY);
 		}
+		//tex coords
+		if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
+			if (duplicateTexCoords) {
+				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glTexCoordPointer(2, GL_FLOAT, stride, OFFSET(6));
+			}
 
-		glActiveTexture(GL_TEXTURE0);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, 0, mesh->getTexCoords());
-	} else {
-		if (duplicateTexCoords) {
-			glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
+			glActiveTexture(GL_TEXTURE0);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, stride, OFFSET(6));
+		} else {
+			if (duplicateTexCoords) {
+				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
+			glActiveTexture(GL_TEXTURE0);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-		glActiveTexture(GL_TEXTURE0);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBuffer());
 
-	//draw model
-	glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, mesh->getIndices());
+		//draw model
+		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, OFFSET(0));
+#		undef OFFSET
+	} else {
+		glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());
+		//normals
+		if (renderNormals) {
+			glEnableClientState(GL_NORMAL_ARRAY);
+			glNormalPointer(GL_FLOAT, 0, mesh->getInterpolationData()->getNormals());
+		} else {
+			glDisableClientState(GL_NORMAL_ARRAY);
+		}
+		//tex coords
+		if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
+			if (duplicateTexCoords) {
+				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glTexCoordPointer(2, GL_FLOAT, 0, mesh->getTexCoords());
+			}
+
+			glActiveTexture(GL_TEXTURE0);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, 0, mesh->getTexCoords());
+		} else {
+			if (duplicateTexCoords) {
+				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
+			glActiveTexture(GL_TEXTURE0);
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+		//draw model
+		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, mesh->getIndices());
+	}
 
 	//assertions
 	assertGl();

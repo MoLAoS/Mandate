@@ -104,15 +104,22 @@ public:
 	uint32 getTriangleCount() const;
 
 	// data
+	// simd interpolated mesh
 	const Vec3f *getVertArray(int n) const	{return vertArrays[n]; }
 	const Vec3f *getNormArray(int n) const	{return normArrays[n]; }
 
+	// x87 interpolated mesh
 	const Vec3f *getVertices() const 		{return vertices;}
 	const Vec3f *getNormals() const 		{return normals;}
 
+	// simd or x87 versions
 	const Vec2f *getTexCoords() const		{return texCoords;}
 	const Vec3f *getTangents() const		{return tangents;}
 	const uint32 *getIndices() const 		{return indices;}
+	
+	// VBO handles, for static meshes only atm
+	GLuint getVertexBuffer() const       { return m_vertexBuffer; }
+	GLuint getIndexBuffer() const        { return m_indexBuffer; }
 
 	// material
 	const Vec3f &getDiffuseColor() const	{return diffuseColor;}
