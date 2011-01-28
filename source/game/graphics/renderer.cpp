@@ -267,11 +267,18 @@ void Renderer::initGame(GameState *game){
 
 	// terrain renderer
 	if (g_program.getCmdArgs().isTest("tr2")) {
-		m_terrainRenderer = new TerrainRenderer2();
+		try {
+			m_terrainRenderer = new TerrainRenderer2();
+			m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
+		} catch (runtime_error &e) {
+			g_logger.logError(string(e.what()) + "\nTerrainRenderer2 disabled.");
+			m_terrainRenderer = new TerrainRendererGlest();
+			m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
+		}
 	} else {
 		m_terrainRenderer = new TerrainRendererGlest();
+		m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
 	}
-	m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
 
 	// shadows
 	if (m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED) {

@@ -27,6 +27,8 @@ using namespace Shared::Graphics;
 
 namespace Glest { namespace Graphics {
 
+using Shared::Graphics::Gl::getGlMaxTextureSize;
+
 // =====================================================
 //	class SurfaceInfo
 // =====================================================
@@ -117,8 +119,15 @@ void SurfaceAtlas::checkDimensions(const Pixmap2D *p) {
 void SurfaceAtlas2::buildTexture() {
 	int numTex = surfaceInfos.size();
 	int sideLength = int(sqrtf(float(numTex))) + 1;
+
 	///@todo fix, no need to be square, this is wasting lots of tex mem
 	m_width = m_height = nextPowerOf2(sideLength * surfaceSize);
+
+	int maxTex = getGlMaxTextureSize();
+	if (m_width > maxTex) {
+		throw runtime_error("Terrain texture dimensions exceed max texture size.");
+	}
+
 	sideLength = m_width / surfaceSize;
 	RUNTIME_CHECK(m_width % surfaceSize == 0);
 	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GAME);

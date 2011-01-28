@@ -290,7 +290,12 @@ void TerrainRenderer2::init(Map *map, Tileset *tileset) {
 	m_tileset = tileset;
 	m_surfaceAtlas = new SurfaceAtlas2();
 	splatTextures();
-	static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->buildTexture();
+	try {
+		static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->buildTexture();
+	} catch (...) {
+		delete m_surfaceAtlas;
+		throw;
+	}
 
 	glGenBuffers(1, &m_vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
