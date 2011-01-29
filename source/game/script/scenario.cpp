@@ -92,15 +92,19 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 	g_lang.loadTechStrings(scenarioInfo->techTreeName);
 
 	const XmlNode *playersNode = scenarioNode->getChild("players");
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		const XmlNode *playerNode;
-		try{
-			playerNode = playersNode->getChild("player", i);
-		}catch(runtime_error err){
-			// old scenario -> has only 4 players
-			scenarioInfo->factionControls[i] = strToControllerType("closed");
-			continue;
+	// determine number of player nodes to parse
+	int numPlayerNodes = playersNode->getChildCount();
+	if (numPlayerNodes > GameConstants::maxPlayers) {
+		numPlayerNodes = GameConstants::maxPlayers;
+	} else {
+		// fill in missing players for old scenarios which only have 4 players
+		for (int i = numPlayerNodes; i < GameConstants::maxPlayers; ++i) {
+			scenarioInfo->factionControls[i] = ControlType::CLOSED;
 		}
+	}
+	for (int i = 0; i < numPlayerNodes; ++i) {
+		const XmlNode *playerNode;
+		playerNode = playersNode->getChild("player", i);
 		ControlType factionControl = strToControllerType(playerNode->getAttribute("control")->getValue());
 		string factionTypeName;
 

@@ -101,18 +101,13 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	// map listBox
 	set<string> mapFiles;
-	// FIXME: change findAll to return empty result when nothing found
-	try {
-		findAll("maps/*.gbm", results, true);
-	} catch (runtime_error err) { }
+	findAll("maps/*.gbm", results, true, false);
 	foreach (vector<string>, it, results) {
 		mapFiles.insert(*it);
 	}
 	results.clear();
 
-	try {
-		findAll("maps/*.mgm", results, true);
-	} catch (runtime_error err) { }
+	findAll("maps/*.mgm", results, true, false);
 	foreach (vector<string>, it, results) {
 		mapFiles.insert(*it);
 	}

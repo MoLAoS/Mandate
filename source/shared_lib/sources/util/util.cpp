@@ -177,13 +177,17 @@ fixed Random::randPercent() {
 }
 
 //finds all filenames like path and stores them in results
-void findAll(const string &path, vector<string> &results, bool cutExtension){
+void findAll(const string &path, vector<string> &out_results, bool cutExtension, bool doThrow){
 	if (FSFactory::getInstance()->usePhysFS) {
-		results.clear();
+		out_results.clear();
 		vector<string> strings = FSFactory::findAll(path, cutExtension);
-		results.insert(results.begin(), strings.begin(), strings.end());
-		if (results.empty()) {
-			throw runtime_error("No files found: " + path);
+		out_results.insert(out_results.begin(), strings.begin(), strings.end());
+		if (out_results.empty()) {
+			if (doThrow) {
+				throw runtime_error("No files found: " + path);
+			} else {
+				return;
+			}
 		}
 	} else {
 		list<string> l;
@@ -191,7 +195,11 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 		char *p = initDirIterator(path, di);
 
 		if(!p) {
-			throw runtime_error("No files found: " + path);
+			if (doThrow) {
+				throw runtime_error("No files found: " + path);
+			} else {
+				return;
+			}
 		}
 
 		do {
@@ -225,9 +233,9 @@ void findAll(const string &path, vector<string> &results, bool cutExtension){
 		freeDirIterator(di);
 
 		l.sort();
-		results.clear();
+		out_results.clear();
 		for(list<string>::iterator li = l.begin(); li != l.end(); ++li) {
-			results.push_back(*li);
+			out_results.push_back(*li);
 		}
 	}
 }
