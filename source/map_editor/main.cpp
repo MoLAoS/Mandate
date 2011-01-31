@@ -58,7 +58,8 @@ MainWindow::MainWindow()
 		, resource(0)
 		, startLocation(1)
 		, enabledGroup(ctHeight)
-		, fileModified(false) {
+		, fileModified(false)
+		, program(0) {
 	fileName = "New (unsaved) map";
 
 	SetIcon(wxIcon(gae_mapeditor_xpm));
@@ -177,40 +178,40 @@ void MainWindow::buildMenuBar() {
 	menuBrushResource->AppendCheckItem(miBrushResource+6, wxT("&5 - custom"));
 	menuBrush->Append(miBrushResource, wxT("&Resource"), menuBrushResource);
 
-	bmStartPos[0] = new wxBitmap(brush_players_red);
-	bmStartPos[1] = new wxBitmap(brush_players_blue);
-	bmStartPos[2] = new wxBitmap(brush_players_green);
-	bmStartPos[3] = new wxBitmap(brush_players_yellow);
-	bmStartPos[4] = new wxBitmap(brush_players_white);
-	bmStartPos[5] = new wxBitmap(brush_players_cyan);
-	bmStartPos[6] = new wxBitmap(brush_players_orange);
-	bmStartPos[7] = new wxBitmap(brush_players_pink);
+	bmStartPos[0] = wxBitmap(brush_players_red);
+	bmStartPos[1] = wxBitmap(brush_players_blue);
+	bmStartPos[2] = wxBitmap(brush_players_green);
+	bmStartPos[3] = wxBitmap(brush_players_yellow);
+	bmStartPos[4] = wxBitmap(brush_players_white);
+	bmStartPos[5] = wxBitmap(brush_players_cyan);
+	bmStartPos[6] = wxBitmap(brush_players_orange);
+	bmStartPos[7] = wxBitmap(brush_players_pink);
 
 	//players
 	menuBrushStartLocation = new wxMenu();
 	miStartPos[0] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 1, wxT("&1 - Player 1"));
-	miStartPos[0]->SetBitmap(*bmStartPos[0]);
+	miStartPos[0]->SetBitmap(bmStartPos[0]);
 	menuBrushStartLocation->Append(miStartPos[0]);
 	miStartPos[1] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 2, wxT("&2 - Player 2"));
-	miStartPos[1]->SetBitmap(*bmStartPos[1]);
+	miStartPos[1]->SetBitmap(bmStartPos[1]);
 	menuBrushStartLocation->Append(miStartPos[1]);
 	miStartPos[2] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 3, wxT("&3 - Player 3"));
-	miStartPos[2]->SetBitmap(*bmStartPos[2]);
+	miStartPos[2]->SetBitmap(bmStartPos[2]);
 	menuBrushStartLocation->Append(miStartPos[2]);
 	miStartPos[3] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 4, wxT("&4 - Player 4"));
-	miStartPos[3]->SetBitmap(*bmStartPos[3]);
+	miStartPos[3]->SetBitmap(bmStartPos[3]);
 	menuBrushStartLocation->Append(miStartPos[3]);
 	miStartPos[4] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 5, wxT("&5 - Player 5"));
-	miStartPos[4]->SetBitmap(*bmStartPos[4]);
+	miStartPos[4]->SetBitmap(bmStartPos[4]);
 	menuBrushStartLocation->Append(miStartPos[4]);
 	miStartPos[5] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 6, wxT("&6 - Player 6"));
-	miStartPos[5]->SetBitmap(*bmStartPos[5]);
+	miStartPos[5]->SetBitmap(bmStartPos[5]);
 	menuBrushStartLocation->Append(miStartPos[5]);
 	miStartPos[6] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 7, wxT("&7 - Player 7"));
-	miStartPos[6]->SetBitmap(*bmStartPos[6]);
+	miStartPos[6]->SetBitmap(bmStartPos[6]);
 	menuBrushStartLocation->Append(miStartPos[6]);
 	miStartPos[7] = new wxMenuItem(menuBrushStartLocation, miBrushStartLocation + 8, wxT("&8 - Player 8"));
-	miStartPos[7]->SetBitmap(*bmStartPos[7]);
+	miStartPos[7]->SetBitmap(bmStartPos[7]);
 	menuBrushStartLocation->Append(miStartPos[7]);
 	menuBrush->Append(miBrushStartLocation, wxT("&Player"), menuBrushStartLocation);
 	menuBar->Append(menuBrush, wxT("&Brush"));
@@ -241,9 +242,9 @@ void MainWindow::buildToolBars() {
 	toolbar->AddSeparator();
 	toolbar->AddTool(miBrushResource + 2, _("resource1"), wxBitmap(brush_resource_1_gold), _("gold  (unwalkable)"));
 	toolbar->AddTool(miBrushResource + 3, _("resource2"), wxBitmap(brush_resource_2_stone), _("stone (unwalkable)"));
-	toolbar->AddTool(miBrushResource + 4, _("resource3"), wxBitmap(brush_resource_3), _("custom"));
-	toolbar->AddTool(miBrushResource + 5, _("resource4"), wxBitmap(brush_resource_4), _("custom"));
-	toolbar->AddTool(miBrushResource + 6, _("resource5"), wxBitmap(brush_resource_5), _("custom"));
+	toolbar->AddTool(miBrushResource + 4, _("resource3"), wxBitmap(brush_resource_3), _("custom3"));
+	toolbar->AddTool(miBrushResource + 5, _("resource4"), wxBitmap(brush_resource_4), _("custom4"));
+	toolbar->AddTool(miBrushResource + 6, _("resource5"), wxBitmap(brush_resource_5), _("custom5"));
 	toolbar->AddSeparator();
 	toolbar->AddTool(miBrushObject + 1, _("brush_none"), wxBitmap(brush_none), _("None (erase)"));
 	toolbar->AddTool(miBrushObject + 2, _("brush_tree"), wxBitmap(brush_object_tree), _("Tree (unwalkable/harvestable)"));
@@ -257,7 +258,7 @@ void MainWindow::buildToolBars() {
 	toolbar->AddTool(miBrushObject +10, _("brush_c4_bigrock"), wxBitmap(brush_object_c4_bigrock), _("Big Rock (Mountain) (unwalkable)"));
 	toolbar->AddTool(miBrushObject +11, _("brush_c5_blocking"), wxBitmap(brush_object_c5_blocking), _("Invisible Blocking Object (unwalkable)"));
 	toolbar->AddSeparator();
-	toolbar->AddTool(toolPlayer, _("brush_player"), wxBitmap(brush_players_player));
+	toolbar->AddTool(toolPlayer, _("brush_player"), wxBitmap(brush_players_player),  _("Player start position"));
 	toolbar->Realize();
 
 	toolbar2 = new wxToolBar(this->panel, wxID_ANY);
@@ -285,15 +286,15 @@ void MainWindow::buildToolBars() {
 	toolbar2->AddTool(miBrushHeight +10, _("brush_height_p4"), wxBitmap(brush_height_p4));
 	toolbar2->AddTool(miBrushHeight +11, _("brush_height_p5"), wxBitmap(brush_height_p5));
 	toolbar2->AddSeparator();
-	toolbar2->AddTool(miRadius + 1, _("radius1"), wxBitmap(radius_1));
-	toolbar2->AddTool(miRadius + 2, _("radius2"), wxBitmap(radius_2));
-	toolbar2->AddTool(miRadius + 3, _("radius3"), wxBitmap(radius_3));
-	toolbar2->AddTool(miRadius + 4, _("radius4"), wxBitmap(radius_4));
-	toolbar2->AddTool(miRadius + 5, _("radius5"), wxBitmap(radius_5));
-	toolbar2->AddTool(miRadius + 6, _("radius6"), wxBitmap(radius_6));
-	toolbar2->AddTool(miRadius + 7, _("radius7"), wxBitmap(radius_7));
-	toolbar2->AddTool(miRadius + 8, _("radius8"), wxBitmap(radius_8));
-	toolbar2->AddTool(miRadius + 9, _("radius9"), wxBitmap(radius_9));
+	toolbar2->AddTool(miRadius + 1, _("radius1"), wxBitmap(radius_1), _("1 (1x1)"));
+	toolbar2->AddTool(miRadius + 2, _("radius2"), wxBitmap(radius_2), _("2 (3x3)"));
+	toolbar2->AddTool(miRadius + 3, _("radius3"), wxBitmap(radius_3), _("3 (5x5)"));
+	toolbar2->AddTool(miRadius + 4, _("radius4"), wxBitmap(radius_4), _("4 (7x7)"));
+	toolbar2->AddTool(miRadius + 5, _("radius5"), wxBitmap(radius_5), _("5 (9x9)"));
+	toolbar2->AddTool(miRadius + 6, _("radius6"), wxBitmap(radius_6), _("6 (11x11)"));
+	toolbar2->AddTool(miRadius + 7, _("radius7"), wxBitmap(radius_7), _("7 (13x13)"));
+	toolbar2->AddTool(miRadius + 8, _("radius8"), wxBitmap(radius_8), _("8 (15x15)"));
+	toolbar2->AddTool(miRadius + 9, _("radius9"), wxBitmap(radius_9), _("9 (17x17)"));
 	toolbar2->Realize();
 }
 
@@ -377,26 +378,43 @@ void MainWindow::setFactionCount() {
 		}
 	} else if (curr_n < map_n) {
 		for (size_t i = curr_n; i < map_n; ++i) {
-			miStartPos[i]->SetBitmap(*bmStartPos[i]); // hack for apparent wx bug @todo investigate
+			miStartPos[i]->SetBitmap(bmStartPos[i]); // hack for apparent wx bug @todo investigate
 			menuBrushStartLocation->Append(miStartPos[i]);
 		}
 	}
 }
 
-void MainWindow::onClose(wxCloseEvent &event) {
-	if(this->fileModified){
-		int answer = wxMessageBox(_("There are unsaved modifications. Quit anyway?"), _("Really quit?"),
-								wxYES_NO|wxICON_QUESTION, this);
-		if(answer==wxNO){
-			return;
-		}
+/** @return true to continue */
+bool MainWindow::checkChanges() {
+	if (this->fileModified) {
+		int answer = wxMessageBox(_("There are unsaved modifications. Continue anyway?"), _("Discard changes?"),
+			wxYES_NO|wxICON_QUESTION, this);
+		return (answer == wxYES);
 	}
-	delete this;
+	return true;
+}
+
+void MainWindow::onClose(wxCloseEvent &event) {
+	if (checkChanges()) {
+		delete this;
+	}
 }
 
 MainWindow::~MainWindow() {
 	delete program;
+	program = NULL;
+	
 	delete glCanvas;
+	glCanvas = NULL;
+
+	// Menu items are removed from menuBrushStartLocation if players
+	// are less than 8, therefore the pointers are no longer owned.
+	// To fix manually delete removed items.
+	size_t curr_n = menuBrushStartLocation->GetMenuItemCount();
+	for (size_t i = curr_n; i < startLocationCount; ++i) {
+		delete miStartPos[i];
+		miStartPos[i] = NULL;
+	}
 }
 
 void MainWindow::setDirty(bool val) {
@@ -489,36 +507,26 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 }
 
 void MainWindow::onMenuFileNew(wxCommandEvent &event){
-	if(this->fileModified){
-		int answer = wxMessageBox(_("There are unsaved modifications. Discard changes?"), _("Discard changes?"),
-								wxYES_NO|wxICON_QUESTION, this);
-		if(answer==wxNO){
-			return;
-		}
+	if (checkChanges()) {
+		delete program;
+		this->init("", this->glest);
 	}
-	delete program;
-	this->init("", this->glest);
 }
 
 void MainWindow::onMenuFileLoad(wxCommandEvent &event) {
-	if(this->fileModified){
-		int answer = wxMessageBox(_("There are unsaved modifications. Discard changes?"), _("Discard changes?"),
-								wxYES_NO|wxICON_QUESTION, this);
-		if(answer==wxNO){
-			return;
+	if (checkChanges()) {
+		wxFileDialog fileDialog(this);
+		fileDialog.SetWildcard(wxT("Glest Map (*.gbm)|*.gbm|Mega Map (*.mgm)|*.mgm"));
+		if (fileDialog.ShowModal() == wxID_OK) {
+			currentFile = fileDialog.GetPath().ToAscii();
+			program->loadMap(currentFile);
+			fileName = cutLastExt(basename(currentFile));
+			setExtension();
+			SetTitle(ToUnicode(winHeader + "; " + currentFile));
+			centreMap();
+			setDirty(false);
+			setFactionCount();
 		}
-	}
-	wxFileDialog fileDialog(this);
-	fileDialog.SetWildcard(wxT("Glest Map (*.gbm)|*.gbm|Mega Map (*.mgm)|*.mgm"));
-	if (fileDialog.ShowModal() == wxID_OK) {
-		currentFile = fileDialog.GetPath().ToAscii();
-		program->loadMap(currentFile);
-		fileName = cutLastExt(basename(currentFile));
-		setExtension();
-		SetTitle(ToUnicode(winHeader + "; " + currentFile));
-		centreMap();
-		setDirty(false);
-		setFactionCount();
 	}
 }
 
@@ -574,7 +582,7 @@ void MainWindow::onMenuEditReset(wxCommandEvent &event) {
 	simpleDialog.addValue("Width", "64");
 	simpleDialog.addValue("Height", "64");
 	simpleDialog.show();
-
+	
 	try {
 		program->reset(
 			Conversion::strToInt(simpleDialog.getValue("Width")),
@@ -824,7 +832,7 @@ void MainWindow::onMenuBrushResource(wxCommandEvent &e) {
 
 void MainWindow::onMenuBrushStartLocation(wxCommandEvent &e) {
 	uncheckBrush();
-	menuBrushStartLocation->Check(e.GetId(), true);
+	//menuBrushStartLocation->Check(e.GetId(), true);
 	startLocation = e.GetId() - miBrushStartLocation;
 	enabledGroup = ctLocation;
 	currentBrush = btStartLocation;
@@ -878,9 +886,12 @@ void MainWindow::uncheckBrush() {
 	for (int i = 0; i < resourceCount; ++i) {
 		menuBrushResource->Check(miBrushResource + i + 1, false);
 	}
+	///@bug menuBrushStartLocation doesn't have checkable items - hailstone 31Jan2011
+	/*
 	for (int i = 0; i < startLocationCount; ++i) {
 		menuBrushStartLocation->Check(miBrushStartLocation + i + 1, false);
 	}
+	*/
 }
 
 void MainWindow::uncheckRadius() {

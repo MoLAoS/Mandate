@@ -64,7 +64,7 @@ const char *object_descs[] = {
 };
 
 const char *resource_descs[] = {
-	"None (Erase)", "Gold", "Stone", "Custom", "Custom", "Custom"
+	"None (Erase)", "Gold", "Stone", "Custom 4", "Custom 5", "Custom 6"
 };
 
 
@@ -154,7 +154,7 @@ private:
 	wxMenu *menuBrushResource;
 	wxMenu *menuBrushStartLocation;
 	wxMenuItem *miStartPos[startLocationCount];
-	wxBitmap *bmStartPos[startLocationCount];
+	wxBitmap bmStartPos[startLocationCount];
 	wxMenu *menuRadius;
 
 	string currentFile;
@@ -182,6 +182,7 @@ public:
 
 	void init(string fname, wxString glest);
 
+	bool checkChanges();
 	void onClose(wxCloseEvent &event);
 
 	void onMouseDown(wxMouseEvent &event, int x, int y);
