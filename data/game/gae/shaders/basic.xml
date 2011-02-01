@@ -1,0 +1,96 @@
+<!--
+  -- This file is a part of The Glest Advanced Engine.
+  -- Copyright (C) 2010	Nathan Turner & James McCulloch
+  -- GPL V2, see source/licence.txt
+  -->
+
+<unit-shader-set name="basic">
+
+	<description>
+		<![CDATA[
+			A basic shader set using per-vertex lighting and diffuse texture only.
+		]]>
+	</description>
+	
+	<glsl-version value="110" />
+	
+	<variables>
+		<![CDATA[
+			varying float diffuseIntensity, meshAlpha, fogFactor;
+			uniform vec3 teamColour;
+			uniform sampler2D baseTexture;			
+		]]>
+	</variables>
+
+	<vertex-shader>
+		<![CDATA[
+			void main() {
+				// pass-on tex-coord & mesh alpha
+				gl_TexCoord[0] = gl_MultiTexCoord0;
+				meshAlpha = gl_Color.a;
+
+				// direction of main light source
+				vec3 lightDir = normalize(vec3(gl_LightSource[0].position));
+				vec3 normal = normalize(gl_NormalMatrix * gl_Normal);
+				
+				// diffuse shading
+				diffuseIntensity = max(dot(lightDir, normal), 0.0);
+				
+				// fog
+				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+				const float log_2 = 1.442695;
+				fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
+				fogFactor = clamp(fogFactor, 0.0, 1.0);	
+				
+				// determine pixel position
+				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+			}
+		]]>
+	</vertex-shader>
+
+	<team-fragment-shader>
+		<![CDATA[
+			void main()
+			{
+				// sample texture
+				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
+				
+				// interpolate the base and team colour according to the base alpha
+				vec3 baseColour = mix(teamColour, texDiffuseBase.rgb, texDiffuseBase.a);
+
+				// light components
+				vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * diffuseIntensity;
+				vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
+
+				// alpha
+				float alpha = min(diffuse.a + ambient.a, meshAlpha);
+				
+				// final colour
+				vec4 finalColour = vec4((ambient.rgb + diffuse.rgb) * baseColour, alpha);
+				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
+			}
+		]]>
+	</team-fragment-shader>
+
+	<rgba-fragment-shader>
+		<![CDATA[
+			void main()
+			{
+				// sample textures
+				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
+				
+				// light components
+				vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * diffuseIntensity;
+				vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
+				
+				// alpha
+				float alpha = min(diffuse.a + ambient.a, texDiffuseBase.a);
+				
+				// final colour
+				vec4 finalColour = vec4((ambient.rgb + diffuse.rgb) * texDiffuseBase.rgb, alpha);
+				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
+			}
+		]]>
+		</rgba-fragment-shader>
+		
+</unit-shader-set>

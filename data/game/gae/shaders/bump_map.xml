@@ -1,0 +1,116 @@
+<!--
+  -- This file is a part of The Glest Advanced Engine.
+  -- Copyright (C) 2010	Nathan Turner & James McCulloch
+  -- GPL V2, see source/licence.txt
+  -->
+
+<unit-shader-set name="bump_map">
+
+	<description>
+		<![CDATA[
+			A bump-mapping shader set, using per-pixel lighting & normal maps (where present).
+		]]>
+	</description>
+	
+	<glsl-version value="110" />
+	
+	<variables>
+		<![CDATA[
+			varying vec3 normal, lightDir;//, eyeVec;
+			uniform vec3 teamColour;
+			uniform sampler2D baseTexture;
+			uniform sampler2D normalMap;
+		]]>
+	</variables>
+
+	<vertex-shader>
+		<![CDATA[
+			attribute vec3 tangent;
+			
+			void main() {	
+				gl_TexCoord[0] = gl_MultiTexCoord0;
+
+				//lightDir = normalize(vec3(gl_LightSource[0].position));
+
+				// build TBN matrix
+				//normal = normalize(gl_NormalMatrix * gl_Normal);
+				//tangent = normalize(gl_normalMatrix * in_tangent;
+				//mat3 tbnMatrix = mat3(tangent, cross(normal, tangent), normal);
+				
+				// determine pixel position
+				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+				
+				// build TBN vectors
+				// for normal mapping : from http://www.ozone3d.net/tutorials/bump_mapping_p4.php
+				vec3 n = normalize(gl_NormalMatrix * gl_Normal);
+				vec3 t = normalize(gl_NormalMatrix * tangent);
+				vec3 b = cross(n, t);
+				
+				// transform light to tangent space
+				vec3 vertex = vec3(gl_ModelViewMatrix * gl_Vertex);
+				vec3 tmpVec = normalize(gl_LightSource[0].position.xyz - vertex);
+				lightDir = vec3(dot(tmpVec, t), dot(tmpVec, b), dot(tmpVec, n));
+				
+				// transform eye pos to tangent space (will need for spec mapping)
+				//tmpVec = -vertex;
+				//eyeVec.x = dot(tmpVec, t);
+				//eyeVec.y = dot(tmpVec, b);
+				//eyeVec.z = dot(tmpVec, n);
+			}
+		]]>
+	</vertex-shader>
+
+	<team-fragment-shader>
+		<![CDATA[
+			void main() {
+				// sample textures
+				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
+				vec3 texNormalMap = texture2D(normalMap, vec2(gl_TexCoord[0].st)).xyz;
+				
+				// diffuse shading
+				vec3 n_shade = normalize(normal);
+				float diffuseIntensity = max(dot(lightDir, n_shade), 0.0);
+				
+				// calculate intensity from texture normal
+				vec3 n = normalize(texNormalMap * 2.0 - 1.0);
+				float bump = max(dot(lightDir, n), 0.0);
+				
+				// interpolate the base and team colour according to the base alpha
+				vec3 baseColour = mix(teamColour, texDiffuseBase.rgb, texDiffuseBase.a);
+				
+				// light components
+				vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * (bump * 0.8 + diffuseIntensity * 0.2);
+				vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
+				
+				// final colour
+				gl_FragColor = vec4((diffuse.rgb + ambient.rgb) * baseColour, diffuse.a + ambient.a);
+			}
+		]]>
+	</team-fragment-shader>
+
+	<rgba-fragment-shader>
+		<![CDATA[
+			void main() {
+				// sample textures
+				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
+				vec3 texNormalMap = texture2D(normalMap, vec2(gl_TexCoord[0].st)).xyz;
+				
+				// diffuse shading
+				vec3 n_shade = normalize(normal);
+				float diffuseIntensity = max(dot(lightDir, n_shade), 0.0);
+				
+				// calculate intensity from texture normal
+				vec3 n = normalize(texNormalMap * 2.0 - 1.0);
+				float bump = max(dot(lightDir, n), 0.0);
+				
+				// light components
+				vec4 diffuse = gl_LightSource[0].diffuse * gl_FrontMaterial.diffuse * (bump * 0.8 + diffuseIntensity * 0.2);
+				vec4 ambient = gl_LightSource[0].ambient * gl_FrontMaterial.ambient;
+				
+				// final colour
+				gl_FragColor = vec4((diffuse.rgb + ambient.rgb) * texDiffuseBase.rgb, (diffuse.a + ambient.a) * texDiffuseBase.a);
+			}
+		]]>
+		</rgba-fragment-shader>
+		
+</unit-shader-set>
