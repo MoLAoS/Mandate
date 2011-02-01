@@ -219,25 +219,25 @@ void Mesh::updateInterpolationVertices(float t, bool cycle) const {
 // ==================== load ====================
 
 void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager) {
-	//read header
+	// read header
 	MeshHeaderV3 meshHeader;
 	f->read(&meshHeader, sizeof(MeshHeaderV3), 1);
 	if (meshHeader.normalFrameCount!=meshHeader.vertexFrameCount) {
 		throw runtime_error("Old model: vertex frame count different from normal frame count");
 	}
 
-	//init
+	// init
 	frameCount = meshHeader.vertexFrameCount;
 	vertexCount = meshHeader.pointCount;
 	indexCount = meshHeader.indexCount;
 
 	initMemory();
 
-	//misc
+	// misc
 	twoSided = (meshHeader.properties & mp3TwoSided) != 0;
 	customColor = (meshHeader.properties & mp3CustomColor) != 0;
 
-	//texture
+	// texture
 	if (!(meshHeader.properties & mp3NoTexture) && textureManager != NULL) {
 		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
 		texturePaths[mtDiffuse] = toLower(reinterpret_cast<char*>(meshHeader.texName));
@@ -248,7 +248,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 		loadAdditionalTextures(texPath, textureManager);
 	}
 
-	//read data
+	// read data
 	if (use_simd_interpolation && vertArrays) {
 		assert(sizeof(Vec3f) == 12);
 		int frameRead = sizeof(Vec3f) * vertexCount;
@@ -284,6 +284,9 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
 
+	if (textures[mtNormal]) {
+		computeTangents();
+	}
 	fillBuffers();
 }
 
@@ -378,7 +381,9 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			throw runtime_error("error reading mesh, insufficient vertex index data.");
 		}
 	}
-
+	if (textures[mtNormal]) {
+		computeTangents();
+	}
 	fillBuffers();
 }
 
@@ -508,15 +513,17 @@ void Mesh::computeTangents() {
 		tangents[i]= Vec3f(0.f);
 	}
 
+	Vec3f *verts = vertices ? vertices : vertArrays[0];
+
 	for(unsigned int i=0; i<indexCount; i+=3){
 		for(int j=0; j<3; ++j){
 			uint32 i0= indices[i+j];
 			uint32 i1= indices[i+(j+1)%3];
 			uint32 i2= indices[i+(j+2)%3];
 
-			Vec3f p0= vertices[i0];
-			Vec3f p1= vertices[i1];
-			Vec3f p2= vertices[i2];
+			Vec3f p0 = verts[i0];
+			Vec3f p1 = verts[i1];
+			Vec3f p2 = verts[i2];
 
 			float u0= texCoords[i0].x;
 			float u1= texCoords[i1].x;
