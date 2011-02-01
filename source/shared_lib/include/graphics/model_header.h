@@ -54,7 +54,7 @@ enum MeshTexture{
 	meshTextureCount
 };
 
-const int meshTextureChannelCount[]= {-1, 1, 3, 1, 1};
+const int meshTextureChannelCount[]= {-1, 1, 3, -1, -1};
 
 const uint32 meshNameSize= 64;
 const uint32 mapPathSize= 64;

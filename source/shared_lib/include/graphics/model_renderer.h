@@ -54,9 +54,9 @@ public:
 
 	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback= NULL) = 0;
 	virtual void end() = 0;
-	virtual void render(const Model *model, Vec3f *anim = 0, ShaderProgram *customProgram = 0) = 0;
+	virtual void render(const Model *model, Vec3f *anim = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;
-	virtual void renderMesh(const Mesh *mesh, Vec3f *anim = 0, ShaderProgram *customProgram = 0) = 0;
+	virtual void renderMesh(const Mesh *mesh, Vec3f *anim = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderMeshNormalsOnly(const Mesh *mesh) = 0;
 };
 

@@ -19,24 +19,6 @@
 
 namespace Shared{ namespace Graphics{ namespace Gl{
 
-class ShaderSet {
-private:
-	const string	 m_name;
-	ShaderProgram	*m_teamColour;
-	ShaderProgram	*m_alphaColour;
-
-public:
-	ShaderSet(const string &name);
-	~ShaderSet();
-	bool load();
-
-	const string&	getName() {return m_name;}
-	ShaderProgram	*getTeamProgram() {return m_teamColour;}
-	ShaderProgram	*getAlphaProgram() {return m_alphaColour;}
-};
-
-typedef vector<ShaderSet*> ShaderSets;
-
 // =====================================================
 //	class ModelRendererGl
 // =====================================================
@@ -49,8 +31,8 @@ private:
 	int secondaryTexCoordUnit;
 	GLuint lastTexture;
 
-	ShaderSets	m_shaders;
-	int			m_shaderIndex; // index in m_shaders of ShaderSet we a currently using, or -1
+	UnitShaderSets   m_shaders;
+	int	             m_shaderIndex; // index in m_shaders of UnitShaderSet we a currently using, or -1
 	
 	ShaderProgram	*m_lastShaderProgram;
 	ShaderProgram	*m_fixedFunctionProgram;
@@ -65,6 +47,8 @@ public:
 	~ModelRendererGl();
 
 	void loadShaders(const vector<string> &programNames);
+	UnitShaderSet* loadShaderSet(const string &xmlPath);
+	void deleteShaders(UnitShaderSet *ss);
 
 	void cycleShaderSet();
 	const string& getShaderName();
@@ -73,7 +57,7 @@ public:
 	void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback) override;
 	void end() override;
 	
-	void render(const Model *model, Vec3f *anim = 0, ShaderProgram *customProgram = 0) override;
+	void render(const Model *model, Vec3f *anim = 0, UnitShaderSet *customShaders = 0) override;
 	void renderNormalsOnly(const Model *model) override;
 	void renderMeshNormalsOnly(const Mesh *mesh) override;
 
@@ -81,7 +65,7 @@ public:
 	void setSecondaryTexCoordUnit(int secondaryTexCoordUnit)	{this->secondaryTexCoordUnit= secondaryTexCoordUnit;}
 
 	void renderMeshNormals(const Mesh *mesh);
-	void renderMesh(const Mesh *mesh, Vec3f *anim = 0, ShaderProgram *customProgram = 0) override;
+	void renderMesh(const Mesh *mesh, Vec3f *anim = 0, UnitShaderSet *customShaders = 0) override;
 };
 
 }}}//end namespace

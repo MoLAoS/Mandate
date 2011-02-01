@@ -19,50 +19,9 @@
 
 #include "leak_dumper.h"
 
-
 using namespace Shared::Platform;
 
 namespace Shared { namespace Graphics { namespace Gl {
-
-ShaderSet::ShaderSet(const string &programName)
-		: m_name(programName)
-		, m_teamColour(0)
-		, m_alphaColour(0) {
-}
-
-ShaderSet::~ShaderSet() {
-	delete m_teamColour;
-	delete m_alphaColour;
-}
-
-bool ShaderSet::load() {
-	try {
-		string vs = "gae/shaders/" + m_name + ".vert";
-		string fs = "gae/shaders/" + m_name + "_team.frag";
-		m_teamColour = new DefaultShaderProgram();
-		m_teamColour->load(vs, fs);
-
-		fs = "gae/shaders/" + m_name + "_alpha.frag";
-		m_alphaColour = new DefaultShaderProgram();
-		m_alphaColour->load(vs, fs);
-
-		m_teamColour->begin();
-		m_teamColour->setUniform("baseTexture", 0);
-		m_teamColour->setUniform("teamTexture", 1);
-		m_teamColour->setUniform("normalMap", 2);
-		m_teamColour->end();
-		m_alphaColour->begin();
-		m_alphaColour->setUniform("baseTexture", 0);
-		m_alphaColour->setUniform("normalMap", 2);
-		m_alphaColour->end();
-	} catch (runtime_error &e) {
-		delete m_teamColour;
-		delete m_alphaColour;
-		m_teamColour = m_alphaColour = 0;
-		return false;
-	}
-	return true;
-}
 
 // =====================================================
 //	class ModelRendererGl
@@ -79,23 +38,26 @@ ModelRendererGl::ModelRendererGl()
 		, lastTexture()
 		, m_shaderIndex(-1)
 		, m_lastShaderProgram(0) {
-	m_fixedFunctionProgram = new FixedFunctionProgram();
+	m_fixedFunctionProgram = new FixedPipeline();
 }
 
 ModelRendererGl::~ModelRendererGl() {
-	foreach_const (ShaderSets, it, m_shaders) {
+	foreach_const (UnitShaderSets, it, m_shaders) {
 		delete *it;
 	}
 	delete m_fixedFunctionProgram;
 }
 
-void ModelRendererGl::loadShaders(const vector<string> &programNames) {
+void ModelRendererGl::loadShaders(const vector<string> &setNames) {
 	if (isGlVersionSupported(2, 0, 0)) {
-		foreach_const (vector<string>, it, programNames) {
-			ShaderSet *shaderSet = new ShaderSet(*it);
-			if (shaderSet->load()) {
+		foreach_const (vector<string>, it, setNames) {
+			string path = "gae/shaders/" + *it + ".xml";
+			UnitShaderSet *shaderSet = 0;
+			try {
+				shaderSet = new UnitShaderSet(path);
 				m_shaders.push_back(shaderSet);
-			} else {
+			} catch (runtime_error &e) {
+				mediaErrorLog.add(e.what(), path);
 				delete shaderSet;
 			}
 		}
@@ -179,14 +141,14 @@ void ModelRendererGl::end() {
 	assertGl();
 }
 
-void ModelRendererGl::render(const Model *model, Vec3f *anim, ShaderProgram *customProgram) {
+void ModelRendererGl::render(const Model *model, Vec3f *anim, UnitShaderSet *customShaders) {
 	//assertions
 	assert(rendering);
 	assertGl();
 
 	//render every mesh
 	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-		renderMesh(model->getMesh(i), anim, customProgram);
+		renderMesh(model->getMesh(i), anim, customShaders);
 	}
 
 	//assertions
@@ -217,7 +179,7 @@ float remap(float in, const float oldMin, const float oldMax, const float newMin
 	return newMin + t * (newMax - newMin);
 }
 
-void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *customProgram) {
+void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *customShaders) {
 
 	//assertions
 	assertGl();
@@ -261,7 +223,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *c
 	}
 
 	// custom map
-	if (customProgram && renderTextures) {
+	if (customShaders && renderTextures) {
 		textureCustom = static_cast<const Texture2DGl*>(mesh->getTexture(mtCustom1));
 		glActiveTexture(customTextureUnit);
 		if (textureCustom) {
@@ -292,12 +254,16 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *c
 			meshCallback->execute(mesh);
 		}
 	} else {
-		if (customProgram) {
-			shaderProgram = customProgram;
-		} else  if (mesh->getCustomTexture()) {
+		if (customShaders) {
+			if (mesh->getCustomTexture()) {
+				shaderProgram = customShaders->getTeamProgram();
+			} else {
+				shaderProgram = customShaders->getRgbaProgram();
+			}
+		} else if (mesh->getCustomTexture()) {
 			shaderProgram = m_shaders[m_shaderIndex]->getTeamProgram();
 		} else {
-			shaderProgram = m_shaders[m_shaderIndex]->getAlphaProgram();
+			shaderProgram = m_shaders[m_shaderIndex]->getRgbaProgram();
 		}
 	}
 	if (shaderProgram != m_lastShaderProgram) {
@@ -309,29 +275,29 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *c
 	}
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
 	shaderProgram->setUniform("teamColour", getTeamColour());
-	if (customProgram && anim) {
-		shaderProgram->setUniform("baseTexture", 0);
-		shaderProgram->setUniform("customTex", 3);
+	if (customShaders && anim) {
+		//shaderProgram->setUniform("baseTexture", 0);
+		//shaderProgram->setUniform("customTex", 4);
 		float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);
 		float anim_g = remap(anim->g, 0.f, 1.f, 0.15f, 1.f);
 		float anim_b = remap(anim->b, 0.f, 1.f, 0.15f, 1.f);
 		shaderProgram->setUniform("time", Vec3f(anim_r, anim_g, anim_b));///@todo
 	}
 
-	//vertices
+	// vertices
 	if (mesh->getVertexBuffer()) {
 #		define OFFSET(x) ((void*)(x * sizeof(float)))
 		const int stride = 32;
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->getVertexBuffer());
 		glVertexPointer(3, GL_FLOAT, stride, OFFSET(0));
-		//normals
+		// normals
 		if (renderNormals) {
 			glEnableClientState(GL_NORMAL_ARRAY);
 			glNormalPointer(GL_FLOAT, stride, OFFSET(3));
 		} else {
 			glDisableClientState(GL_NORMAL_ARRAY);
 		}
-		//tex coords
+		// tex coords
 		if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
 			if (duplicateTexCoords) {
 				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
@@ -351,20 +317,27 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *c
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBuffer());
+		if (renderTextures && textureNormal) {
+			int loc = shaderProgram->getAttribLoc("tangent");
+			if (loc != -1) {
+				glEnableVertexAttribArray(loc);
+				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
+			}
+		}
 
-		//draw model
+		// draw model
 		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, OFFSET(0));
 #		undef OFFSET
 	} else {
 		glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());
-		//normals
+		// normals
 		if (renderNormals) {
 			glEnableClientState(GL_NORMAL_ARRAY);
 			glNormalPointer(GL_FLOAT, 0, mesh->getInterpolationData()->getNormals());
 		} else {
 			glDisableClientState(GL_NORMAL_ARRAY);
 		}
-		//tex coords
+		// tex coords
 		if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
 			if (duplicateTexCoords) {
 				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
@@ -383,11 +356,16 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, ShaderProgram *c
 			glActiveTexture(GL_TEXTURE0);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-		//draw model
+		if (renderTextures && textureNormal) {
+			int loc = shaderProgram->getAttribLoc("tangent");
+			if (loc != -1) {
+				glEnableVertexAttribArray(loc);
+				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
+			}
+		}
+		// draw model
 		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, mesh->getIndices());
 	}
-
-	//assertions
 	assertGl();
 }
 

@@ -351,7 +351,7 @@ bool Map::isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec
 // ==================== free cells ====================
 bool Map::fieldsCompatible(Cell *cell, Field mf) const {
 	if (mf == Field::AIR || mf == Field::AMPHIBIOUS
-	|| (mf == Field::LAND && ! cell->isDeepSubmerged()) 
+	|| (mf == Field::LAND && !cell->isDeepSubmerged()) 
 	|| (mf == Field::ANY_WATER && cell->isSubmerged())
 	|| (mf == Field::DEEP_WATER && cell->isDeepSubmerged())) {
 		return true;

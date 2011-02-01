@@ -117,38 +117,32 @@ void MeshCallbackTeamColor::execute(const Mesh *mesh){
 
 // ===================== PUBLIC ========================
 
-const int Renderer::maxProgressBar= 100;
-const Vec4f Renderer::progressBarBack1= Vec4f(0.7f, 0.7f, 0.7f, 0.7f);
-const Vec4f Renderer::progressBarBack2= Vec4f(0.7f, 0.7f, 0.7f, 1.f);
-const Vec4f Renderer::progressBarFront1= Vec4f(0.f, 0.5f, 0.f, 1.f);
-const Vec4f Renderer::progressBarFront2= Vec4f(0.f, 0.1f, 0.f, 1.f);
+const int   Renderer::maxProgressBar    = 100;
+const Vec4f Renderer::progressBarBack1  = Vec4f(0.7f, 0.7f, 0.7f, 0.7f);
+const Vec4f Renderer::progressBarBack2  = Vec4f(0.7f, 0.7f, 0.7f, 1.f);
+const Vec4f Renderer::progressBarFront1 = Vec4f(0.f, 0.5f, 0.f, 1.f);
+const Vec4f Renderer::progressBarFront2 = Vec4f(0.f, 0.1f, 0.f, 1.f);
 
-const float Renderer::sunDist= 10e6;
-const float Renderer::moonDist= 10e6;
-const float Renderer::lightAmbFactor= 0.4f;
+const int   Renderer::maxMouse2dAnim        = 100;
 
-const int Renderer::maxMouse2dAnim= 100;
+const float Renderer::selectionCircleRadius = 0.7f;
+const float Renderer::magicCircleRadius     = 1.f;
 
-const GLenum Renderer::baseTexUnit= GL_TEXTURE0;
-const GLenum Renderer::fowTexUnit= GL_TEXTURE1;
-const GLenum Renderer::shadowTexUnit= GL_TEXTURE2;
+const float Renderer::sunDist           = 10e6;
+const float Renderer::moonDist          = 10e6;
+const float Renderer::lightAmbFactor    = 0.4f;
+const float Renderer::maxLightDist      = 50.f;
 
-const float Renderer::selectionCircleRadius= 0.7f;
-const float Renderer::magicCircleRadius= 1.f;
+const GLenum Renderer::baseTexUnit      = GL_TEXTURE0;
+const GLenum Renderer::fowTexUnit       = GL_TEXTURE1;
+const GLenum Renderer::shadowTexUnit    = GL_TEXTURE2;
 
-//perspective values
-//const float Renderer::perspFov= 60.f;
-//const float Renderer::perspNearPlane= 1.f;
-//const float Renderer::perspFarPlane= 50.f;
-
-const float Renderer::ambFactor= 0.7f;
-const Vec4f Renderer::fowColor= Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
-const Vec4f Renderer::defSpecularColor= Vec4f(0.8f, 0.8f, 0.8f, 1.f);
-const Vec4f Renderer::defDiffuseColor= Vec4f(1.f, 1.f, 1.f, 1.f);
-const Vec4f Renderer::defAmbientColor= Vec4f(1.f * ambFactor, 1.f * ambFactor, 1.f * ambFactor, 1.f);
-const Vec4f Renderer::defColor= Vec4f(1.f, 1.f, 1.f, 1.f);
-
-const float Renderer::maxLightDist= 50.f;
+const float Renderer::ambFactor         = 0.7f;
+const Vec4f Renderer::fowColor          = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
+const Vec4f Renderer::defSpecularColor  = Vec4f(0.8f, 0.8f, 0.8f, 1.f);
+const Vec4f Renderer::defDiffuseColor   = Vec4f(1.f, 1.f, 1.f, 1.f);
+const Vec4f Renderer::defAmbientColor   = Vec4f(1.f * ambFactor, 1.f * ambFactor, 1.f * ambFactor, 1.f);
+const Vec4f Renderer::defColor          = Vec4f(1.f, 1.f, 1.f, 1.f);
 
 // ==================== constructor and destructor ====================
 
@@ -239,6 +233,10 @@ bool Renderer::init(){
 			static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
 		} catch (runtime_error &e) {
 			g_logger.logError("Error: shader source load/compile failed: " + string(e.what()));
+		}
+		while (mediaErrorLog.hasError()) {
+			MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
+			g_logger.logError(rec.path, rec.msg);
 		}
 	}
 	init2dList();
@@ -1088,21 +1086,30 @@ void Renderer::renderUnits(){
 			}
 
 			//render
-			const Model *model= unit->getCurrentModel();
+			const Model *model = unit->getCurrentModel();
 			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
 
-			if (fade && unit->isCloaked() && unit->getType()->getCloakType()->getShader()) {
+			if (fade && unit->isCloaked()) {
+				UnitShaderSet *uss = 0;
+				if (unit->getFaction()->isAlly(thisFaction)) {
+					uss = unit->getType()->getCloakType()->getAllyShaders();
+				} else {
+					uss = unit->getType()->getCloakType()->getEnemyShaders();
+				}
+				if (uss) {
+					///@todo remove all this, expose frame and unitId as uniforms, shader should
+					/// then be able to generate whatever timing info it needs internally
+					const int frame = g_world.getFrameCount();
+					float a = float(frame % 150);
+					Vec3f anim;
+					anim.r = a >= 75.f ? (a - 75.f) / 75.f : a / 75.f;
+					anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
+					anim.b = a / 150.f;
 
-				///@todo remove all this, expose frame and unitId as uniforms, shader should
-				/// then be able to generate whatever timing info it needs internally
-				const int frame = g_world.getFrameCount();
-				float a = float(frame % 150);
-				Vec3f anim;
-				anim.r = a >= 75.f ? (a - 75.f) / 75.f : a / 75.f;
-				anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
-				anim.b = a / 150.f;
-
-				modelRenderer->render(model, &anim, unit->getType()->getCloakType()->getShader());
+					modelRenderer->render(model, &anim, uss);
+				} else {
+					modelRenderer->render(model);
+				}
 			} else {
 				modelRenderer->render(model);
 			}
@@ -2182,18 +2189,18 @@ void Renderer::init3dListGLSL(){
 		glDisable(GL_STENCIL_TEST);
 
 		//fog
-		const Tileset *tileset= g_world.getTileset();
-		if(tileset->getFog()){
-			glEnable(GL_FOG);
-			if(tileset->getFogMode()==fmExp){
-				glFogi(GL_FOG_MODE, GL_EXP);
-			}
-			else{
-				glFogi(GL_FOG_MODE, GL_EXP2);
-			}
-			glFogf(GL_FOG_DENSITY, tileset->getFogDensity());
-			glFogfv(GL_FOG_COLOR, tileset->getFogColor().ptr());
-		}
+		//const Tileset *tileset= g_world.getTileset();
+		//if(tileset->getFog()){
+		//	glEnable(GL_FOG);
+		//	if(tileset->getFogMode()==fmExp){
+		//		glFogi(GL_FOG_MODE, GL_EXP);
+		//	}
+		//	else{
+		//		glFogi(GL_FOG_MODE, GL_EXP2);
+		//	}
+		//	glFogf(GL_FOG_DENSITY, tileset->getFogDensity());
+		//	glFogfv(GL_FOG_COLOR, tileset->getFogColor().ptr());
+		//}
 
 	glEndList();
 

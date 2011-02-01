@@ -15,6 +15,10 @@ namespace Glest { namespace ProtoTypes {
 
 using namespace Graphics;
 
+// =====================================================
+//  class CloakType
+// =====================================================
+
 CloakType::CloakType(const UnitType *ut)
 		: m_unitType(ut)
 		, m_class(CloakClass::INVALID)
@@ -22,14 +26,16 @@ CloakType::CloakType(const UnitType *ut)
 		, m_cost(0)
 		, m_cloakSound(0)
 		, m_deCloakSound(0)
-		, m_image(0)
-		, m_shader(0) {
+		/*, m_image(0)*/
+		, m_allyShaders(0)
+		, m_enemyShaders(0) {
 }
 
 CloakType::~CloakType() {
 	delete m_cloakSound;
 	delete m_deCloakSound;
-	delete m_shader;
+	delete m_allyShaders;
+	delete m_enemyShaders;
 }
 
 void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree *tt,
@@ -59,10 +65,10 @@ void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree
 				}
 				out_decloakSkillClasses.push_back(sc);
 			}
-		} else if (childNode->getName() == "image") {
-			m_image = g_renderer.newTexture2D(ResourceScope::GAME);
-			string path = dir + "/" + childNode->getRestrictedAttribute("path");
-			m_image->getPixmap()->load(path);
+		//} else if (childNode->getName() == "image") {
+		//	m_image = g_renderer.newTexture2D(ResourceScope::GAME);
+		//	string path = dir + "/" + childNode->getRestrictedAttribute("path");
+		//	m_image->getPixmap()->load(path);
 		} else if (childNode->getName() == "cloak-sound") {
 			m_cloakSound = new StaticSound();
 			string path = dir + "/" + childNode->getRestrictedAttribute("path");
@@ -71,13 +77,26 @@ void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree
 			m_deCloakSound = new StaticSound();
 			string path = dir + "/" + childNode->getRestrictedAttribute("path");
 			m_deCloakSound->load(path);
-		} else if (childNode->getName() == "visible-shader") {
-			string vert = childNode->getChild("vertex-shader")->getAttribute("path")->getRestrictedValue();
-			string frag = childNode->getChild("fragment-shader")->getAttribute("path")->getRestrictedValue();
-			vert = cleanPath(dir + "/" + vert);
-			frag = cleanPath(dir + "/" + frag);
-			m_shader = new DefaultShaderProgram();
-			m_shader->load(vert, frag);
+		} else if (childNode->getName() == "ally-shader") {
+			if (childNode->getBoolValue()) {
+				string path = dir + "/" + childNode->getAttribute("path")->getRestrictedValue();
+				try {
+					m_allyShaders = new UnitShaderSet(cleanPath(path));
+				} catch (runtime_error &e) {
+					delete m_allyShaders;
+					m_allyShaders = 0;
+				}
+			}
+		} else if (childNode->getName() == "enemy-shader") {
+			if (childNode->getBoolValue()) {
+				string path = dir + "/" + childNode->getAttribute("path")->getRestrictedValue();
+				try {
+					m_enemyShaders = new UnitShaderSet(cleanPath(path));
+				} catch (runtime_error &e) {
+					delete m_allyShaders;
+					m_enemyShaders = 0;
+				}
+			}
 		}
 	}
 }
