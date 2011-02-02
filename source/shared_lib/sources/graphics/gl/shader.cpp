@@ -93,7 +93,7 @@ string GlslProgram::getCompileError(const string path, bool vert) {
 }
 
 string GlslProgram::getLinkError(const string name) {
-	show_info_log(m_p, glGetShaderiv, glGetShaderInfoLog);
+	show_info_log(m_p, glGetProgramiv, glGetProgramInfoLog);
 	string res = string("Link error with shader: ") + name + "\n" + lastShaderError;
 	return res;
 }

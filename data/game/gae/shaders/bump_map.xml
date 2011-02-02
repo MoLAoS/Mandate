@@ -33,7 +33,7 @@
 				//lightDir = normalize(vec3(gl_LightSource[0].position));
 
 				// build TBN matrix
-				//normal = normalize(gl_NormalMatrix * gl_Normal);
+				normal = normalize(gl_NormalMatrix * gl_Normal);
 				//tangent = normalize(gl_normalMatrix * in_tangent;
 				//mat3 tbnMatrix = mat3(tangent, cross(normal, tangent), normal);
 				
@@ -42,7 +42,7 @@
 				
 				// build TBN vectors
 				// for normal mapping : from http://www.ozone3d.net/tutorials/bump_mapping_p4.php
-				vec3 n = normalize(gl_NormalMatrix * gl_Normal);
+				vec3 n = normal;//normalize(gl_NormalMatrix * gl_Normal);
 				vec3 t = normalize(gl_NormalMatrix * tangent);
 				vec3 b = cross(n, t);
 				
