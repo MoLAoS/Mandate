@@ -268,6 +268,17 @@ void MoveCommandType::tick(const Unit *unit, Command &command) const {
 // 	class TeleportCommandType
 // =====================================================
 
+CommandResult TeleportCommandType::check(const Unit *unit, const Command &command) const {
+	if (m_moveSkillType->getVisibleOnly()) {
+		if (g_map.getTileFromCellPos(command.getPos())->isVisible(unit->getTeam())) {
+			return CommandResult::SUCCESS;
+		} else {
+			return CommandResult::FAIL_UNDEFINED;
+		}
+	}
+	return CommandResult::SUCCESS;
+}
+
 void TeleportCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();

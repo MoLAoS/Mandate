@@ -245,6 +245,7 @@ public:
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::TELEPORT; }
+	virtual CommandResult check(const Unit *unit, const Command &command) const;
 };
 
 // ===============================

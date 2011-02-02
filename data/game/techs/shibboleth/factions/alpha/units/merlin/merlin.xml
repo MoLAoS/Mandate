@@ -73,6 +73,7 @@
       <ep-cost value="100"/>
       <speed value="250"/>
       <anim-speed value="100"/>
+	  <visible-only value="true"/>
       <animation path="models/archmage_walking.g3d"/>
       <sound enabled="false"/>
     </skill>
