@@ -172,6 +172,7 @@ void ModelRendererGl::renderNormalsOnly(const Model *model) {
 void ModelRendererGl::renderMeshNormalsOnly(const Mesh *mesh) {
 	renderMeshNormals(mesh);
 }
+
 // ===================== PRIVATE =======================
 
 float remap(float in, const float oldMin, const float oldMax, const float newMin, const float newMax) {

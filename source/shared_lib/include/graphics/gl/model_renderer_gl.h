@@ -39,8 +39,8 @@ private:
 
 	static const int diffuseTextureUnit = GL_TEXTURE0;
 	static const int normalTextureUnit = GL_TEXTURE2;
-	static const int specularTextureUnt = GL_TEXTURE1;
-	static const int customTextureUnit = GL_TEXTURE3;
+	static const int specularTextureUnt = GL_TEXTURE3;
+	static const int customTextureUnit = GL_TEXTURE4;
 
 public:
 	ModelRendererGl();

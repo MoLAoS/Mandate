@@ -32,7 +32,7 @@ namespace Shared{ namespace Graphics{
 
 using namespace Util;
 
-#define USE_VBOS_FOR_STATIC_MESHES 1
+#define USE_VBOS_FOR_STATIC_MESHES 0
 
 bool use_simd_interpolation;
 
@@ -58,36 +58,20 @@ void free_aligned_vec3_array(Vec3f *ptr) {
 // ==================== constructor & destructor ====================
 
 Mesh::Mesh() {
-	frameCount = 0;
-	vertexCount = 0;
-	indexCount = 0;
-
-	vertArrays = 0;
-	normArrays = 0;
-
-	vertices = NULL;
-	normals = NULL;
-
-	texCoords = NULL;
-	tangents = NULL;
-	indices = NULL;
-	interpolationData = NULL;
-
-	m_vertexBuffer = 0;
-	m_indexBuffer = 0;
-
-	for (int i = 0; i < meshTextureCount; ++i) {
-		textures[i] = NULL;
-	}
-
-	twoSided = false;
-	customColor = false;
+	memset(this, 0, sizeof(*this));
 }
 
 Mesh::~Mesh() {
+#	if USE_VBOS_FOR_STATIC_MESHES
 	if (frameCount == 1) {
+		assert(m_vertexBuffer && m_indexBuffer);
+		assert(!vertArrays && !normArrays && !vertices && !normals);
+		glDeleteBuffers(1, &m_vertexBuffer);
+		glDeleteBuffers(1, &m_indexBuffer);
+		delete [] tangents;
 		return;
 	}
+#	endif
 	if (use_simd_interpolation) {
 		for (int i=0; i < frameCount; ++i) {
 			free_aligned_vec3_array(vertArrays[i]);
@@ -222,7 +206,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	// read header
 	MeshHeaderV3 meshHeader;
 	f->read(&meshHeader, sizeof(MeshHeaderV3), 1);
-	if (meshHeader.normalFrameCount!=meshHeader.vertexFrameCount) {
+	if (meshHeader.normalFrameCount != meshHeader.vertexFrameCount) {
 		throw runtime_error("Old model: vertex frame count different from normal frame count");
 	}
 
@@ -244,7 +228,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 		texPath = dir + "/" + texPath;
 		texPath = cleanPath(texPath);
 
-		textures[mtDiffuse] = static_cast<Texture2D*>(textureManager->getTexture(texPath));
+		textures[mtDiffuse] = textureManager->getTexture(texPath);
 		loadAdditionalTextures(texPath, textureManager);
 	}
 
