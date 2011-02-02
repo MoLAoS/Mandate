@@ -185,6 +185,8 @@ UnitShaderSet::UnitShaderSet(const string &xmlPath)
 	string teamFragShader = node->getChild("team-fragment-shader")->getText();
 	string rgbaFragShader = node->getChild("rgba-fragment-shader")->getText();
 
+	delete node;
+
 	string vss = progHeader + vertexShader;
 	string team_fss = progHeader + teamFragShader;
 	string rgba_fss = progHeader + rgbaFragShader;

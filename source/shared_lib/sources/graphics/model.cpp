@@ -32,7 +32,7 @@ namespace Shared{ namespace Graphics{
 
 using namespace Util;
 
-#define USE_VBOS_FOR_STATIC_MESHES 0
+#define USE_VBOS_FOR_STATIC_MESHES 1
 
 bool use_simd_interpolation;
 
@@ -69,6 +69,7 @@ Mesh::~Mesh() {
 		glDeleteBuffers(1, &m_vertexBuffer);
 		glDeleteBuffers(1, &m_indexBuffer);
 		delete [] tangents;
+		delete interpolationData;
 		return;
 	}
 #	endif
