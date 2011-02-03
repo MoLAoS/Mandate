@@ -1093,7 +1093,7 @@ void LoadCommandType::update(Unit *unit) const {
 		}
 	}
 	assert(closest);
-	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
+	if (dist < loadSkillType->getMaxRange() + unit->getSize()) { // if in load range, load 'em
 		closest->removeCommands();
 		closest->setCurrSkill(SkillClass::STOP);
 		g_map.clearUnitCells(closest, closest->getPos());
@@ -1206,7 +1206,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(SkillClass::STOP);
 		return;
 	}
-	if (command->getPos() != Command::invalidPos) {
+	if (command->getPos() != Command::invalidPos && moveSkillType) {
 		if (unit->travel(command->getPos(), moveSkillType) == TravelState::ARRIVED) {
 			command->setPos(Command::invalidPos);
 		}
@@ -1215,7 +1215,7 @@ void UnloadCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::UNLOAD);
 		} else {
 			Unit *targetUnit = g_world.getUnit(unit->getUnitsToUnload().front());
-			int maxRange = unloadSkillType->getMaxRange();
+			int maxRange = unloadSkillType->getMaxRange() + unit->getSize();
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
@@ -1229,6 +1229,7 @@ void UnloadCommandType::update(Unit *unit) const {
 				unit->setCurrSkill(SkillClass::STOP);
 				// cancel?
 				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
+				// should check it has moveskill first - hailstone 3Feb2011
 			}
 		}
 	}
