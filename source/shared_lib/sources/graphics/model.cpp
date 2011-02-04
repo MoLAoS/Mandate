@@ -63,8 +63,7 @@ Mesh::Mesh() {
 
 Mesh::~Mesh() {
 #	if USE_VBOS_FOR_STATIC_MESHES
-	if (frameCount == 1) {
-		assert(m_vertexBuffer && m_indexBuffer);
+	if (frameCount == 1 && m_vertexBuffer) {
 		assert(!vertArrays && !normArrays && !vertices && !normals);
 		glDeleteBuffers(1, &m_vertexBuffer);
 		glDeleteBuffers(1, &m_indexBuffer);
