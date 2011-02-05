@@ -32,9 +32,8 @@ namespace Shared{ namespace Graphics{
 
 using namespace Util;
 
-#define USE_VBOS_FOR_STATIC_MESHES 1
-
 bool use_simd_interpolation;
+bool use_vbos;
 
 Vec3f* allocate_aligned_vec3_array(unsigned n) {
 	int numFloat = n * 3;
@@ -62,8 +61,7 @@ Mesh::Mesh() {
 }
 
 Mesh::~Mesh() {
-#	if USE_VBOS_FOR_STATIC_MESHES
-	if (frameCount == 1 && m_vertexBuffer) {
+	if (use_vbos && frameCount == 1 && m_vertexBuffer) {
 		assert(!vertArrays && !normArrays && !vertices && !normals);
 		glDeleteBuffers(1, &m_vertexBuffer);
 		glDeleteBuffers(1, &m_indexBuffer);
@@ -71,7 +69,7 @@ Mesh::~Mesh() {
 		delete interpolationData;
 		return;
 	}
-#	endif
+
 	if (use_simd_interpolation) {
 		for (int i=0; i < frameCount; ++i) {
 			free_aligned_vec3_array(vertArrays[i]);
@@ -99,15 +97,11 @@ void Mesh::initMemory() {
 	assert(vertexCount > 0);
 	assert(indexCount > 0);
 
-#	if USE_VBOS_FOR_STATIC_MESHES
-	if (frameCount == 1) {
+	if (use_vbos && frameCount == 1) {
 		glGenBuffers(1, &m_vertexBuffer);
 		glGenBuffers(1, &m_indexBuffer);
 	}
-	if (frameCount == 1 || !use_simd_interpolation) {
-#	else
-	if (!use_simd_interpolation) {
-#	endif
+	if ((use_vbos && frameCount == 1) || !use_simd_interpolation) {
 		vertices = new Vec3f[frameCount * vertexCount];
 		normals = new Vec3f[frameCount * vertexCount];
 	} else {

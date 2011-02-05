@@ -45,10 +45,10 @@ LogFile::LogFile(const string &fileName, const string &type, TimeStampType timeT
 		, m_timeStampType(timeType) {
 	m_fileOps = g_fileFactory.getFileOps();
 	m_fileOps->openWrite(m_fileName.c_str());
-	string header = "Glest Advanced Engine: " + type + " log file.\n\n";
+	string header = "Glest Advanced Engine: " + type + " log file. "
+		+ Logger::fileTimestamp() + "\n\n";
 	m_fileOps->write(header.c_str(), sizeof(char), header.size());
 }
-
 
 LogFile::~LogFile() {
 	delete m_fileOps;
@@ -66,22 +66,20 @@ void LogFile::add(const string &str){
 	m_fileOps->write(newLine.c_str(), sizeof(char), newLine.size());
 }
 
-
 void LogFile::logXmlError(const string &path, const char *error) {
-	static char buffer[2048];
-	sprintf(buffer, "XML Error in %s:\n\t%s", path.c_str(), error);
-	add(buffer);
+	stringstream ss;
+	ss << "XML Error in " << path << ":\n\t" << error;
+	add(ss.str());
 }
 
 void LogFile::logMediaError(const string &xmlPath, const string &mediaPath, const char *error) {
-	static char buffer[2048];
+	stringstream ss;
 	if (xmlPath != "") {
-		sprintf(buffer, "Error loading %s:\n\treferenced in %s\n\t%s", 
-			mediaPath.c_str(), xmlPath.c_str(), error);
+		ss << "Error loading " << mediaPath << ":\n\treferenced in " << xmlPath << "\n\t" << error;
 	} else {
-		sprintf(buffer, "Error loading %s\n\t%s", mediaPath.c_str(), error);
+		ss << "Error loading " << mediaPath << ":\n\t" << error;
 	}
-	add(buffer);
+	add(ss.str());
 }
 
 void LogFile::addNetworkMsg(const string &msg) {
@@ -180,11 +178,10 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 			m_backgroundTexture->init(Texture::fBilinear);
 		}
 
-		// tips
+		// faction tips
 
 		return true; // successfully using settings
 	}
-
 	return false;
 }
 
@@ -300,7 +297,6 @@ Logger::~Logger() {
 }
 
 string Logger::fileTimestamp() {
-#if defined(WIN32) | defined(WIN64)
 	time_t rawtime;
 	struct tm *timeinfo;
 	char formatted[30];
@@ -313,9 +309,6 @@ string Logger::fileTimestamp() {
 	strftime(formatted, 30, "%d-%b-%Y_%H-%M-%S", timeinfo);
 
 	return string(formatted);
-#else
-	return string(); ///@todo unix implementation
-#endif
 }
 
 }} // namespace Glest::Util

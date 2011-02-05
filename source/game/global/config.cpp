@@ -85,6 +85,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	renderStencilBits = p->getInt("RenderStencilBits", 0);
 	renderTextures3D = p->getBool("RenderTextures3D", true);
 	renderUseShaders = p->getBool("RenderUseShaders", true);
+	renderUseVBOs = p->getBool("RenderUseVBOs", true);
 	renderUnitShaders = p->getString("RenderUnitShaders", "diffuse_bump");
 	soundFactory = p->getString("SoundFactory", isWindows()?"DirectSound8":"OpenAL");
 	soundStaticBuffers = p->getInt("SoundStaticBuffers", 16);
@@ -156,6 +157,7 @@ void Config::save(const char *path) {
 	p->setInt("RenderStencilBits", renderStencilBits);
 	p->setBool("RenderTextures3D", renderTextures3D);
 	p->setBool("RenderUseShaders", renderUseShaders);
+	p->setBool("RenderUseVBOs", renderUseVBOs);
 	p->setString("RenderUnitShaders", renderUnitShaders);
 	p->setString("SoundFactory", soundFactory);
 	p->setInt("SoundStaticBuffers", soundStaticBuffers);

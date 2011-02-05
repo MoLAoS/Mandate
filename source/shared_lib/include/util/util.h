@@ -304,6 +304,15 @@ extern const char uu_base64[64];
 void uuencode(char *dest, size_t *destSize, const void *src, size_t n);
 void uudecode(void *dest, size_t *destSize, const char *src);
 
+inline void trimString(string &str) {
+	while (!str.empty() && *(str.end() - 1) == ' ') {
+		str.erase(str.end() - 1);
+	}
+	while (!str.empty() && *(str.begin()) == ' ') {
+		str.erase(str.begin());
+	}
+}
+
 // numeric util functions
 
 template <typename T> inline T clamp(const T &val, const T &min, const T &max) {

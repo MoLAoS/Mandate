@@ -708,7 +708,6 @@ void GameState::keyDown(const Key &key) {
 	} else if (cmd == ucEnterChatMode) {
 		doChatDialog();
 	} else if (cmd == ucSaveScreenshot) {
-		Shared::Platform::mkdir("screens", true);
 		int i;
 		const int MAX_SCREENSHOTS = 100;
 
@@ -780,7 +779,6 @@ void GameState::keyDown(const Key &key) {
 		doGameMenu();
 	} else if (cmd == ucMenuSave) { // save
 		if (!m_modalDialog) {
-			Shared::Platform::mkdir("savegames", true);
 			doSaveBox();
 		}
 	} else if (key.getCode() >= KeyCode::ZERO && key.getCode() < KeyCode::ZERO + Selection::maxGroups) { // group
@@ -954,7 +952,6 @@ void ShowMap::keyDown(const Key &key) {
 	UserCommand cmd = keymap.getCommand(key);
 
 	if (cmd == ucSaveScreenshot) {
-		Shared::Platform::mkdir("screens", true);
 		int i;
 		const int MAX_SCREENSHOTS = 100;
 

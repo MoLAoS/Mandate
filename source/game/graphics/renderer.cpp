@@ -225,7 +225,9 @@ bool Renderer::init(){
 		vector<string> programNames;
 		char *tok = strtok(tmp, ",");
 		while (tok) {
-			programNames.push_back(string(tok));
+			string name = tok;
+			trimString(name);
+			programNames.push_back(name);
 			tok = strtok(0, ",");
 		}
 		delete [] tmp;

@@ -115,23 +115,12 @@ Program::Program(CmdArgs &args)
 	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 	Window::create();
 
-//	// clear logs
-//	g_logger.clear();
-//	g_serverLog.clear();
-//	g_clientLog.clear();
-//	g_errorLog.clear();
-//#	if LOG_WIDGET_EVENTS
-//		g_widgetLog.clear();
-//#	endif
-//#	if AI_LOGGING
-//		Logger::getAiLog().clear();
-//#	endif
-//	Logger::getWorldLog().clear();
-
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
 
+	// some flags for model rendering
 	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
+	Shared::Graphics::use_vbos = g_config.getRenderUseVBOs();
 	
 	// render
 	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
@@ -144,7 +133,7 @@ Program::Program(CmdArgs &args)
 		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
 	}	
 
-	//sound
+	// sound
 	g_soundRenderer.init(this);
 
 	if (!fileExists("keymap.ini")) {

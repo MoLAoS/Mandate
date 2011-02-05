@@ -33,8 +33,8 @@ class ShadowVolumeData;
 class InterpolationData;
 class TextureManager;
 
-//temp
 extern bool use_simd_interpolation;
+extern bool use_vbos;
 
 Vec3f* allocate_aligned_vec3_array(unsigned n);
 void free_aligned_vec3_array(Vec3f *ptr);

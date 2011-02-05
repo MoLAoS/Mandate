@@ -78,6 +78,7 @@ private:
 	int renderStencilBits;
 	bool renderTextures3D;
 	bool renderUseShaders;
+	bool renderUseVBOs;
 	string renderUnitShaders;
 	string soundFactory;
 	int soundStaticBuffers;
@@ -102,14 +103,6 @@ private:
 #else
 		return false;
 #endif
-	}
-
-	const char *getDefaultFontStr() const {
-		if(isWindows()) {
-			return "Verdana";
-		} else {
-			return "-*-*-*-*-*-12-*-*-*-*-*-*-*";
-		}
 	}
 
 public:
@@ -165,6 +158,7 @@ public:
 	int getRenderStencilBits() const			{return renderStencilBits;}
 	bool getRenderTextures3D() const			{return renderTextures3D;}
 	bool getRenderUseShaders() const			{return renderUseShaders;}
+	bool getRenderUseVBOs() const               {return renderUseVBOs;}
 	string getRenderUnitShaders() const			{return renderUnitShaders;}
 	string getSoundFactory() const				{return soundFactory;}
 	int getSoundStaticBuffers() const			{return soundStaticBuffers;}
@@ -226,6 +220,7 @@ public:
 	void setRenderStencilBits(int val)			{renderStencilBits = val;}
 	void setRenderTextures3D(bool val)			{renderTextures3D = val;}
 	void setRenderUseShaders(bool val)			{renderUseShaders = val;}
+	void setRenderUseVBOs(bool val)             {renderUseVBOs = val;}
 	void setRenderUnitShaders(string val)		{renderUnitShaders = val;}
 	void setSoundFactory(string val)			{soundFactory = val;}
 	void setSoundStaticBuffers(int val)			{soundStaticBuffers = val;}
