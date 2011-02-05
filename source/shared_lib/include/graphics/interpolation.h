@@ -35,12 +35,30 @@ public:
 	~InterpolationData();
 
 	const Vec3f *getVertices() const {
-		return vertices != 0 ? vertices 
-			: (use_simd_interpolation ? mesh->getVertArray(0) : mesh->getVertices());
+		if (vertices) {
+			return vertices;
+		}
+		if (meshLerpMethod == LerpMethod::x87) {
+			return mesh->getVertices();
+		} else if (meshLerpMethod == LerpMethod::SIMD) {
+			return mesh->getVertArray(0);
+		} else {
+			assert(false); // programmer error.
+			return 0;
+		}
 	}
 	const Vec3f *getNormals() const {
-		return normals != 0 ? normals 
-			: (use_simd_interpolation ? mesh->getNormArray(0) : mesh->getNormals());
+		if (normals) {
+			return normals;
+		}
+		if (meshLerpMethod == LerpMethod::x87) {
+			return mesh->getNormals();
+		} else if (meshLerpMethod == LerpMethod::SIMD) {
+			return mesh->getNormArray(0);
+		} else {
+			assert(false); // programmer error.
+			return 0;
+		}
 	}
 	
 	void update(float t, bool cycle);

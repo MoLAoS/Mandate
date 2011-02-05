@@ -121,7 +121,7 @@ InterpolationData::InterpolationData(const Mesh *mesh) {
 	this->mesh = mesh;
 
 	if(mesh->getFrameCount() > 1) {
-		if (use_simd_interpolation) {
+		if (meshLerpMethod == LerpMethod::SIMD) {
 			vertices = allocate_aligned_vec3_array(mesh->getVertexCount());
 			normals = allocate_aligned_vec3_array(mesh->getVertexCount());
 		} else {
@@ -132,7 +132,7 @@ InterpolationData::InterpolationData(const Mesh *mesh) {
 }
 
 InterpolationData::~InterpolationData() {
-	if (use_simd_interpolation) {
+	if (meshLerpMethod == LerpMethod::SIMD) {
 		if (vertices) {
 			free_aligned_vec3_array(vertices);
 			free_aligned_vec3_array(normals);
@@ -174,7 +174,7 @@ void InterpolationData::updateVertices(float t, bool cycle) {
 		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices
-		if (use_simd_interpolation) {
+		if (meshLerpMethod == LerpMethod::SIMD) {
 			const Vec3f *srcA = mesh->getVertArray(prevFrame);
 			const Vec3f *srcB = mesh->getVertArray(nextFrame);
 			interpolate(vertices, srcA, srcB, localT, vertexCount);
@@ -208,7 +208,7 @@ void InterpolationData::updateNormals(float t, bool cycle) {
 		assert(localT >= 0.f && localT <= 1.f);
 
 		//interpolate vertices
-		if (use_simd_interpolation) {
+		if (meshLerpMethod == LerpMethod::SIMD) {
 			const Vec3f *srcA = mesh->getNormArray(prevFrame);
 			const Vec3f *srcB = mesh->getNormArray(nextFrame);
 			interpolate(normals, srcA, srcB, localT, vertexCount);

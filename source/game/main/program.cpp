@@ -118,9 +118,19 @@ Program::Program(CmdArgs &args)
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
 
-	// some flags for model rendering
-	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
-	Shared::Graphics::use_vbos = g_config.getRenderUseVBOs();
+	// some flags for model interpolation/rendering
+	string lerpMethodName = g_config.getRenderInterpolationMethod();
+	if (lerpMethodName == "x87") {
+		Shared::Graphics::meshLerpMethod = LerpMethod::x87;
+	} else if (lerpMethodName == "SIMD") {
+		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
+	//} else if (lerpMethodName == "GLSL") {
+	//	Shared::Graphics::meshLerpMethod = LerpMethod::GLSL;
+	} else {
+		// error ?
+		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
+	}
+	Shared::Graphics::use_vbos = true;
 	
 	// render
 	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());

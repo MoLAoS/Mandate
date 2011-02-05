@@ -32,7 +32,7 @@ namespace Shared{ namespace Graphics{
 
 using namespace Util;
 
-bool use_simd_interpolation;
+LerpMethod meshLerpMethod;
 bool use_vbos;
 
 Vec3f* allocate_aligned_vec3_array(unsigned n) {
@@ -70,7 +70,7 @@ Mesh::~Mesh() {
 		return;
 	}
 
-	if (use_simd_interpolation) {
+	if (meshLerpMethod == LerpMethod::SIMD) {
 		for (int i=0; i < frameCount; ++i) {
 			free_aligned_vec3_array(vertArrays[i]);
 			free_aligned_vec3_array(normArrays[i]);
@@ -101,7 +101,7 @@ void Mesh::initMemory() {
 		glGenBuffers(1, &m_vertexBuffer);
 		glGenBuffers(1, &m_indexBuffer);
 	}
-	if ((use_vbos && frameCount == 1) || !use_simd_interpolation) {
+	if ((use_vbos && frameCount == 1) || meshLerpMethod == LerpMethod::x87) {
 		vertices = new Vec3f[frameCount * vertexCount];
 		normals = new Vec3f[frameCount * vertexCount];
 	} else {
@@ -227,7 +227,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	}
 
 	// read data
-	if (use_simd_interpolation && vertArrays) {
+	if (meshLerpMethod == LerpMethod::SIMD && vertArrays) {
 		assert(sizeof(Vec3f) == 12);
 		int frameRead = sizeof(Vec3f) * vertexCount;
 		int nFloats = vertexCount * 3;
@@ -312,7 +312,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	}
 
 	// read data. (Assume packed vectors)
-	if (use_simd_interpolation && vertArrays) {
+	if (meshLerpMethod == LerpMethod::SIMD && vertArrays) {
 		assert(sizeof(Vec3f) == 12);
 		int frameRead = sizeof(Vec3f) * vertexCount;
 		int nFloats = vertexCount * 3;

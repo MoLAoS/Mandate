@@ -33,7 +33,10 @@ class ShadowVolumeData;
 class InterpolationData;
 class TextureManager;
 
-extern bool use_simd_interpolation;
+WRAPPED_ENUM( LerpMethod, x87, SIMD, GLSL );
+
+extern LerpMethod meshLerpMethod;
+
 extern bool use_vbos;
 
 Vec3f* allocate_aligned_vec3_array(unsigned n);
@@ -60,8 +63,10 @@ private:
 	Vec3f **vertArrays; // if using SIMD interpolation
 	Vec3f **normArrays;
 
-	Vec3f *vertices;	// if not using SIMD interpolation
+	Vec3f *vertices;	// if using x87 interpolation
 	Vec3f *normals;
+
+	GLuint *m_vertBuffers;  // if using GLSL interpolation
 
 	GLuint	m_vertexBuffer; // vertex buffer handle if static mesh (single frame)
 	GLuint  m_indexBuffer;  // index buffer handle if static mesh (single frame)
@@ -120,6 +125,11 @@ public:
 	// VBO handles, for static meshes only atm
 	GLuint getVertexBuffer() const       { return m_vertexBuffer; }
 	GLuint getIndexBuffer() const        { return m_indexBuffer; }
+
+	GLuint getVertBuffer(unsigned i) const {
+		assert(m_vertBuffers && i < frameCount);
+		return m_vertBuffers[i];
+	}
 
 	// material
 	const Vec3f &getDiffuseColor() const	{return diffuseColor;}

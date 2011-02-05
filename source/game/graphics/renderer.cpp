@@ -151,7 +151,7 @@ Renderer::Renderer() {
 	FactoryRepository &fr= FactoryRepository::getInstance();
 	Config &config= Config::getInstance();
 
-	gi.setFactory(fr.getGraphicsFactory(config.getRenderGraphicsFactory()));
+	gi.setFactory(fr.getGraphicsFactory("OpenGL"));
 	GraphicsFactory *graphicsFactory= GraphicsInterface::getInstance().getFactory();
 
 	modelRenderer= graphicsFactory->newModelRenderer();

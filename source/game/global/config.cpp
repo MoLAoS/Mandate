@@ -29,7 +29,7 @@ namespace Glest { namespace Global {
 // 	class Config
 // =====================================================
 
-Config::Config(const char* fileName) : fileName(fileName) {
+Config::Config(const char* fileName) {
 	Properties *p = new Properties();
 	if(Shared::Util::fileExists(fileName)) {
 		p->load(fileName, true);
@@ -68,25 +68,23 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
 	renderDistanceMax = p->getFloat("RenderDistanceMax", 64.f, 1.f, 65536.f);
 	renderDistanceMin = p->getFloat("RenderDistanceMin", 1.f, 0.0f, 65536.f);
-	renderFilterMaxAnisotropy = p->getInt("RenderFilterMaxAnisotropy", 1);
 	renderFilter = p->getString("RenderFilter", "Bilinear");
-	renderFontScaler = p->getFloat("RenderFontScaler", 1.f);
+	renderFilterMaxAnisotropy = p->getInt("RenderFilterMaxAnisotropy", 1);
 	renderFogOfWarSmoothing = p->getBool("RenderFogOfWarSmoothing", true);
 	renderFogOfWarSmoothingFrameSkip = p->getInt("RenderFogOfWarSmoothingFrameSkip", 3);
+	renderFontScaler = p->getFloat("RenderFontScaler", 1.f);
 	renderFov = p->getFloat("RenderFov", 60.f, 0.01f, 360.f);
 	renderFpsMax = p->getInt("RenderFpsMax", 60, 0, 1000000);
-	renderGraphicsFactory = p->getString("RenderGraphicsFactory", "OpenGL");
-	renderInterpolateWithSIMD = p->getBool("RenderInterpolateWithSIMD", true);
+	renderInterpolationMethod = p->getString("RenderInterpolationMethod", "SIMD");
 	renderLightsMax = p->getInt("RenderLightsMax", 1, 0, 8);
 	renderShadowAlpha = p->getFloat("RenderShadowAlpha", 0.2f, 0.f, 1.f);
 	renderShadowFrameSkip = p->getInt("RenderShadowFrameSkip", 2);
-	renderShadows = p->getString("RenderShadows", "Projected");
 	renderShadowTextureSize = p->getInt("RenderShadowTextureSize", 512);
+	renderShadows = p->getString("RenderShadows", "Projected");
 	renderStencilBits = p->getInt("RenderStencilBits", 0);
 	renderTextures3D = p->getBool("RenderTextures3D", true);
+	renderUnitShaders = p->getString("RenderUnitShaders", "basic,, bump_map");
 	renderUseShaders = p->getBool("RenderUseShaders", true);
-	renderUseVBOs = p->getBool("RenderUseVBOs", true);
-	renderUnitShaders = p->getString("RenderUnitShaders", "diffuse_bump");
 	soundFactory = p->getString("SoundFactory", isWindows()?"DirectSound8":"OpenAL");
 	soundStaticBuffers = p->getInt("SoundStaticBuffers", 16);
 	soundStreamingBuffers = p->getInt("SoundStreamingBuffers", 5);
@@ -96,8 +94,8 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	uiConsoleMaxLines = p->getInt("UiConsoleMaxLines", 10);
 	uiConsoleTimeout = p->getInt("UiConsoleTimeout", 20);
 	uiFocusArrows = p->getBool("UiFocusArrows", true);
-	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLastScenario = p->getString("UiLastScenario", "glest_classic/anarchy");
+	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLocale = p->getString("UiLocale", "en");
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
@@ -140,25 +138,23 @@ void Config::save(const char *path) {
 	p->setInt("RenderDepthBits", renderDepthBits);
 	p->setFloat("RenderDistanceMax", renderDistanceMax);
 	p->setFloat("RenderDistanceMin", renderDistanceMin);
-	p->setInt("RenderFilterMaxAnisotropy", renderFilterMaxAnisotropy);
 	p->setString("RenderFilter", renderFilter);
-	p->setFloat("RenderFontScaler", renderFontScaler);
+	p->setInt("RenderFilterMaxAnisotropy", renderFilterMaxAnisotropy);
 	p->setBool("RenderFogOfWarSmoothing", renderFogOfWarSmoothing);
 	p->setInt("RenderFogOfWarSmoothingFrameSkip", renderFogOfWarSmoothingFrameSkip);
+	p->setFloat("RenderFontScaler", renderFontScaler);
 	p->setFloat("RenderFov", renderFov);
 	p->setInt("RenderFpsMax", renderFpsMax);
-	p->setString("RenderGraphicsFactory", renderGraphicsFactory);
-	p->setBool("RenderInterpolateWithSIMD", renderInterpolateWithSIMD);
+	p->setString("RenderInterpolationMethod", renderInterpolationMethod);
 	p->setInt("RenderLightsMax", renderLightsMax);
 	p->setFloat("RenderShadowAlpha", renderShadowAlpha);
 	p->setInt("RenderShadowFrameSkip", renderShadowFrameSkip);
-	p->setString("RenderShadows", renderShadows);
 	p->setInt("RenderShadowTextureSize", renderShadowTextureSize);
+	p->setString("RenderShadows", renderShadows);
 	p->setInt("RenderStencilBits", renderStencilBits);
 	p->setBool("RenderTextures3D", renderTextures3D);
-	p->setBool("RenderUseShaders", renderUseShaders);
-	p->setBool("RenderUseVBOs", renderUseVBOs);
 	p->setString("RenderUnitShaders", renderUnitShaders);
+	p->setBool("RenderUseShaders", renderUseShaders);
 	p->setString("SoundFactory", soundFactory);
 	p->setInt("SoundStaticBuffers", soundStaticBuffers);
 	p->setInt("SoundStreamingBuffers", soundStreamingBuffers);
@@ -168,8 +164,8 @@ void Config::save(const char *path) {
 	p->setInt("UiConsoleMaxLines", uiConsoleMaxLines);
 	p->setInt("UiConsoleTimeout", uiConsoleTimeout);
 	p->setBool("UiFocusArrows", uiFocusArrows);
-	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLastScenario", uiLastScenario);
+	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLocale", uiLocale);
 	p->setBool("UiPhotoMode", uiPhotoMode);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);

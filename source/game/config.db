@@ -32,14 +32,14 @@ renderColorBits				int		32
 renderDepthBits				int		isWindows()?32:16
 renderDistanceMax			float	64.f			1.f		65536.f
 renderDistanceMin			float	1.f				0.0f	65536.f
+renderFontScaler			float	1.f
 renderFilter				string	"Bilinear"
 renderFilterMaxAnisotropy	int		1
 renderFogOfWarSmoothing		bool	true
 renderFogOfWarSmoothingFrameSkip int 3
 renderFov					float	60.f			0.01f	360.f
 renderFpsMax				int		60				0		1000000
-renderGraphicsFactory		string	"OpenGL"
-renderInterpolateWithSIMD	bool	true
+renderInterpolationMethod	string	"SIMD"
 renderLightsMax				int		1				0		8
 renderShadowAlpha			float	0.2f			0.f		1.f
 renderShadowFrameSkip		int		2
@@ -47,6 +47,8 @@ renderShadowTextureSize		int		512
 renderShadows				string	"Projected"
 renderStencilBits			int		0
 renderTextures3D			bool	true
+renderUnitShaders			string	"basic, bump_map"
+renderUseShaders			bool	true
 soundFactory				string	isWindows()?"DirectSound8":"OpenAL"
 soundStaticBuffers			int		16
 soundStreamingBuffers		int		5

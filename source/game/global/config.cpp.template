@@ -29,7 +29,7 @@ namespace Glest { namespace Global {
 // 	class Config
 // =====================================================
 
-Config::Config(const char* fileName) : fileName(fileName) {
+Config::Config(const char* fileName) {
 	Properties *p = new Properties();
 	if(Shared::Util::fileExists(fileName)) {
 		p->load(fileName, true);

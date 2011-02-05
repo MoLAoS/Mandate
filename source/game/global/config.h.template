@@ -30,8 +30,6 @@ using Shared::Util::Properties;
 
 class Config {
 private:
-// 	Properties *properties;
-	string fileName;
 
 CONFIG_VARIABLES
 
@@ -43,14 +41,6 @@ CONFIG_VARIABLES
 #else
 		return false;
 #endif
-	}
-
-	const char *getDefaultFontStr() const {
-		if(isWindows()) {
-			return "Verdana";
-		} else {
-			return "-*-*-*-*-*-12-*-*-*-*-*-*-*";
-		}
 	}
 
 public:
