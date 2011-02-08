@@ -59,6 +59,8 @@ private:
 	int renderDepthBits;
 	float renderDistanceMax;
 	float renderDistanceMin;
+	bool renderEnableBumpMapping;
+	bool renderEnableSpecMapping;
 	string renderFilter;
 	int renderFilterMaxAnisotropy;
 	bool renderFogOfWarSmoothing;
@@ -137,6 +139,8 @@ public:
 	int getRenderDepthBits() const				{return renderDepthBits;}
 	float getRenderDistanceMax() const			{return renderDistanceMax;}
 	float getRenderDistanceMin() const			{return renderDistanceMin;}
+	bool getRenderEnableBumpMapping() const		{return renderEnableBumpMapping;}
+	bool getRenderEnableSpecMapping() const		{return renderEnableSpecMapping;}
 	string getRenderFilter() const				{return renderFilter;}
 	int getRenderFilterMaxAnisotropy() const	{return renderFilterMaxAnisotropy;}
 	bool getRenderFogOfWarSmoothing() const		{return renderFogOfWarSmoothing;}
@@ -197,6 +201,8 @@ public:
 	void setRenderDepthBits(int val)			{renderDepthBits = val;}
 	void setRenderDistanceMax(float val)		{renderDistanceMax = val;}
 	void setRenderDistanceMin(float val)		{renderDistanceMin = val;}
+	void setRenderEnableBumpMapping(bool val)	{renderEnableBumpMapping = val;}
+	void setRenderEnableSpecMapping(bool val)	{renderEnableSpecMapping = val;}
 	void setRenderFilter(string val)			{renderFilter = val;}
 	void setRenderFilterMaxAnisotropy(int val)	{renderFilterMaxAnisotropy = val;}
 	void setRenderFogOfWarSmoothing(bool val)	{renderFogOfWarSmoothing = val;}

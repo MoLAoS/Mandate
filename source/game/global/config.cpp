@@ -68,6 +68,8 @@ Config::Config(const char* fileName) {
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
 	renderDistanceMax = p->getFloat("RenderDistanceMax", 64.f, 1.f, 65536.f);
 	renderDistanceMin = p->getFloat("RenderDistanceMin", 1.f, 0.0f, 65536.f);
+	renderEnableBumpMapping = p->getBool("RenderEnableBumpMapping", true);
+	renderEnableSpecMapping = p->getBool("RenderEnableSpecMapping", true);
 	renderFilter = p->getString("RenderFilter", "Bilinear");
 	renderFilterMaxAnisotropy = p->getInt("RenderFilterMaxAnisotropy", 1);
 	renderFogOfWarSmoothing = p->getBool("RenderFogOfWarSmoothing", true);
@@ -138,6 +140,8 @@ void Config::save(const char *path) {
 	p->setInt("RenderDepthBits", renderDepthBits);
 	p->setFloat("RenderDistanceMax", renderDistanceMax);
 	p->setFloat("RenderDistanceMin", renderDistanceMin);
+	p->setBool("RenderEnableBumpMapping", renderEnableBumpMapping);
+	p->setBool("RenderEnableSpecMapping", renderEnableSpecMapping);
 	p->setString("RenderFilter", renderFilter);
 	p->setInt("RenderFilterMaxAnisotropy", renderFilterMaxAnisotropy);
 	p->setBool("RenderFogOfWarSmoothing", renderFogOfWarSmoothing);

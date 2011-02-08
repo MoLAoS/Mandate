@@ -2,6 +2,7 @@
 //	This file is part of Glest Shared Library (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//	              2009-2011 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -66,7 +67,7 @@ private:
 	Vec3f *vertices;	// if using x87 interpolation
 	Vec3f *normals;
 
-	GLuint *m_vertBuffers;  // if using GLSL interpolation
+	GLuint *m_vertBuffers;  // if using GLSL interpolation (VBO handles for each frame)
 
 	GLuint	m_vertexBuffer; // vertex buffer handle if static mesh (single frame)
 	GLuint  m_indexBuffer;  // index buffer handle if static mesh (single frame)

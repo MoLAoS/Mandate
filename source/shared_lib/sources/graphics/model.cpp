@@ -2,6 +2,7 @@
 //	This file is part of Glest Shared Library (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//	              2009-2011 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -56,38 +57,37 @@ void free_aligned_vec3_array(Vec3f *ptr) {
 
 // ==================== constructor & destructor ====================
 
+/** init, set all members to 0 */
 Mesh::Mesh() {
 	memset(this, 0, sizeof(*this));
 }
 
+/** delete VBOs and any remaining data in system RAM */
 Mesh::~Mesh() {
-	if (use_vbos && frameCount == 1 && m_vertexBuffer) {
-		assert(!vertArrays && !normArrays && !vertices && !normals);
+	if (m_vertexBuffer) {
 		glDeleteBuffers(1, &m_vertexBuffer);
-		glDeleteBuffers(1, &m_indexBuffer);
-		delete [] tangents;
-		delete interpolationData;
-		return;
 	}
-
-	if (meshLerpMethod == LerpMethod::SIMD) {
+	if (m_indexBuffer) {
+		glDeleteBuffers(1, &m_indexBuffer);
+	}
+	if (vertArrays) {
+		assert(normArrays);
 		for (int i=0; i < frameCount; ++i) {
 			free_aligned_vec3_array(vertArrays[i]);
 			free_aligned_vec3_array(normArrays[i]);
 		}
 		delete [] vertArrays;
 		delete [] normArrays;
-	} else {
-		delete [] vertices;
-		delete [] normals;
 	}
+	delete [] vertices;
+	delete [] normals;
 	delete [] texCoords;
 	delete [] tangents;
 	delete [] indices;
-
 	delete interpolationData;
 }
 
+/** Allocate memory to read in mesh data, and generate VBO handles */
 void Mesh::initMemory() {
 	if (!vertexCount) {
 		assert(!indexCount);
@@ -118,12 +118,35 @@ void Mesh::initMemory() {
 	indices = new uint32[indexCount];
 }
 
+/** vert structure for "regular" meshes */
 struct ModelVertex {
 	Vec3f   m_position;
 	Vec3f   m_normal;
 	Vec2f   m_texCoord;
 };
 
+/** vert structure for meshes with bump mapping */
+struct ModelVertex_bump {
+	Vec3f   m_position;
+	Vec3f   m_normal;
+	Vec3f   m_tangent;
+	Vec2f   m_texCoord;
+};
+
+/** vert structure for 'next frame' info (when lerping on GPU) */
+struct ExtraVertex {
+	Vec3f   m_position;
+	Vec3f   m_normal;
+};
+
+/** vert structure for 'next frame' info with bump mapping */
+struct ExtraVertex_bump {
+	Vec3f   m_position;
+	Vec3f   m_normal;
+	Vec3f   m_tangent;
+};
+
+/** Fill vertex and index VBOs and delete system RAM copies */
 void Mesh::fillBuffers() {
 	if (!m_vertexBuffer) {
 		assert(!m_indexBuffer);
@@ -158,24 +181,38 @@ void Mesh::fillBuffers() {
 	indices = 0;
 }
 
+/** somewhat hacky way to load textures into the specular, normal and 2 custom slots */
 void Mesh::loadAdditionalTextures(const string &diffusePath, TextureManager *textureManager) {
 	string checkPath;
-	// normal map ?
-	if (!textures[mtNormal]) { // if someone hasn't updated the Blender export script...
-		checkPath = diffusePath; // insert _normal before . in filename
-		checkPath.insert(checkPath.length()-4, "_normal"); 
+	// spec map
+	if (!textures[mtSpecular]) {
+		checkPath = diffusePath; // insert _specular before . in filename
+		checkPath.insert(checkPath.length() - 4, "_specular");
 		if (fileExists(checkPath)) {
-			textures[mtNormal] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+			textures[mtSpecular] = textureManager->getTexture(checkPath);
 		}
-		///@todo will need to change default tex to use flat normals 
-		/// JM: negative, no normal map => no bump mapping shader (why 'pay' for something we wont get?).
 	}
-	// custom texture? 
-	if (!textures[mtCustom1]) {		
-		checkPath = diffusePath;
-		checkPath.insert(checkPath.length()-4, "_custom1"); 
+	// bump map
+	if (!textures[mtNormal]) {
+		checkPath = diffusePath; // insert _normal before . in filename
+		checkPath.insert(checkPath.length() - 4, "_normal");
 		if (fileExists(checkPath)) {
-			textures[mtCustom1] = static_cast<Texture2D*>(textureManager->getTexture(checkPath));
+			textures[mtNormal] = textureManager->getTexture(checkPath);
+		}
+	}
+	// custom textures
+	if (!textures[mtCustom1]) {
+		checkPath = diffusePath;
+		checkPath.insert(checkPath.length() - 4, "_custom1");
+		if (fileExists(checkPath)) {
+			textures[mtCustom1] = textureManager->getTexture(checkPath);
+		}
+	}
+	if (!textures[mtCustom2]) {
+		checkPath = diffusePath;
+		checkPath.insert(checkPath.length() - 4, "_custom2");
+		if (fileExists(checkPath)) {
+			textures[mtCustom2] = textureManager->getTexture(checkPath);
 		}
 	}
 }

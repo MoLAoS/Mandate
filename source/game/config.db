@@ -32,6 +32,8 @@ renderColorBits				int		32
 renderDepthBits				int		isWindows()?32:16
 renderDistanceMax			float	64.f			1.f		65536.f
 renderDistanceMin			float	1.f				0.0f	65536.f
+renderEnableBumpMapping		bool	true
+renderEnableSpecMapping		bool	true
 renderFontScaler			float	1.f
 renderFilter				string	"Bilinear"
 renderFilterMaxAnisotropy	int		1
