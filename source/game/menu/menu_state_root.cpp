@@ -106,12 +106,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	pnl->setSizeHint(SizeHint(50));
 	pnl->setAnchors(anchors);
 
-	BorderStyle borderStyle;
-	borderStyle.m_type = BorderType::SOLID;
-	borderStyle.setSolid(g_widgetConfig.getColourIndex(Colour(0xFFu, 0u, 0u, 0xFFu)));
-	borderStyle.setSizes(1);
-	pnl->setBorderStyle(borderStyle);
-
 	// Buttons
 	foreach_enum (RootMenuItem, i) {
 		//Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
@@ -258,7 +252,7 @@ MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 	bs.setSizes(1);
 
 	Vec2i size = Vec2i(std::min(g_config.getDisplayWidth() / 3, 300),
-	                   std::min(g_config.getDisplayHeight() / 2, 400));
+	                   std::min(g_config.getDisplayHeight() / 2, 300));
 	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	ws = new WidgetStrip(&program, Orientation::VERTICAL);
 	ws->setBorderStyle(bs);
@@ -270,7 +264,20 @@ MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 	for (int i=0; i < RootMenuItem::COUNT; ++i) {
 		Vec2i pos(0, 0);
 		Vec2i size(150, 40);
-		Button *btn = new Button(ws, pos, size);
+		Button *btn = new Button(ws, pos, size, false);
+		BorderStyle borderStyle;
+		borderStyle.setSizes(3);
+		//bf5e5e
+		int li = g_widgetConfig.getColourIndex(Colour(0xBFu, 0x5Eu, 0x5Eu, 0xAF));
+		int di = g_widgetConfig.getColourIndex(Colour(0x6Fu, 0x00u, 0x00u, 0xAF));
+		borderStyle.setRaise(li, di);
+		btn->setBorderStyle(borderStyle);
+
+		BackgroundStyle backStyle;
+		int bi = g_widgetConfig.getColourIndex(Colour(0x9Fu, 0x00u, 0x00u, 0xAF));
+		backStyle.setColour(bi);
+		btn->setBackgroundStyle(backStyle);
+
 		btn->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 	}
 }

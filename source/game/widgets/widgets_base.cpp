@@ -133,15 +133,15 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 	enum { OBL, OTL, OTR, OBR, IBL, ITL, ITR, IBR };
 	Vec2i verts[8];
-	verts[OBL] = screenPos + offset;
-	verts[OTL] = verts[OBL] + Vec2i(0, size.y);
-	verts[OTR] = verts[OBL] + size;
-	verts[OBR] = verts[OBL] + Vec2i(size.x, 0);
+	verts[OTL] = screenPos + offset;
+	verts[OBL] = verts[OTL] + Vec2i(0, size.y);
+	verts[OBR] = verts[OTL] + size;
+	verts[OTR] = verts[OTL] + Vec2i(size.x, 0);
 
-	verts[IBL] = verts[OBL] + Vec2i(style.m_sizes[Border::LEFT], style.m_sizes[Border::BOTTOM]);
-	verts[ITL] = verts[OTL] + Vec2i(style.m_sizes[Border::LEFT], -style.m_sizes[Border::TOP]);
-	verts[ITR] = verts[OTR] + Vec2i(-style.m_sizes[Border::RIGHT], -style.m_sizes[Border::TOP]);
-	verts[IBR] = verts[OBR] + Vec2i(-style.m_sizes[Border::RIGHT], style.m_sizes[Border::BOTTOM]);
+	verts[IBL] = verts[OBL] + Vec2i(style.m_sizes[Border::LEFT], -style.m_sizes[Border::BOTTOM]);
+	verts[ITL] = verts[OTL] + Vec2i(style.m_sizes[Border::LEFT], style.m_sizes[Border::TOP]);
+	verts[ITR] = verts[OTR] + Vec2i(-style.m_sizes[Border::RIGHT], style.m_sizes[Border::TOP]);
+	verts[IBR] = verts[OBR] + Vec2i(-style.m_sizes[Border::RIGHT], -style.m_sizes[Border::BOTTOM]);
 
 	assertGl();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
@@ -414,7 +414,7 @@ void CellWidget::anchorWidget() {
 		setPos(m_cellPos + offset);
 		return;
 	}
-	Vec2i pos = m_cellPos + getPos();
+	Vec2i pos = m_cellPos;
 	Vec2i size = getSize();
 
 	int absolute[Edge::COUNT];
