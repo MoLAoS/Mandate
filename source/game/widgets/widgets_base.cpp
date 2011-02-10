@@ -386,29 +386,35 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 // =====================================================
 
 CellWidget::CellWidget(Container *parent)
-		: Widget(parent, false), m_cellPos(0), m_cellSize(0), m_centre(false) {
+		: Widget(parent, false), m_cellPos(0), m_cellSize(0), m_cellCentre(false) {
 	parent->addChild(this);
 }
 
 CellWidget::CellWidget(Container *parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size, false), m_cellPos(0), m_cellSize(0), m_centre(false) {
+		: Widget(parent, pos, size, false), m_cellPos(0), m_cellSize(0), m_cellCentre(false) {
 	parent->addChild(this);
 }
 
 CellWidget::CellWidget(WidgetWindow *window)
-		: Widget(window), m_cellPos(0), m_cellSize(0), m_centre(false) {
+		: Widget(window), m_cellPos(0), m_cellSize(0), m_cellCentre(false) {
+}
+
+void CellWidget::setCellRect(const Vec2i &pos, const Vec2i &size) {
+	m_cellPos = pos;
+	m_cellSize = size;
+	anchorWidget();
 }
 
 void CellWidget::anchorWidget() {
 	if (m_cellSize == Vec2i(0)) {
 		return;
 	}
-	if (m_centre) {
+	if (m_cellCentre) {
 		Vec2i offset = (getCellSize() - getSize()) / 2;
-		setPos(offset);
+		setPos(m_cellPos + offset);
 		return;
 	}
-	Vec2i pos = getPos();
+	Vec2i pos = m_cellPos + getPos();
 	Vec2i size = getSize();
 
 	int absolute[Edge::COUNT];
@@ -438,10 +444,10 @@ void CellWidget::anchorWidget() {
 	}
 	if (absolute[Edge::TOP] != -1) { // anchor top
 		pos.y += absolute[Edge::TOP];
-		if (absolute[Edge::BOTTOM]) { // stretch vertically
-			size.h = size.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
+		if (absolute[Edge::BOTTOM] != -1) { // stretch vertically
+			size.h = m_cellSize.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
 		}
-	} else if (absolute[Edge::BOTTOM]) { // anchor bottom
+	} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
 		pos.y += m_cellSize.h - absolute[Edge::BOTTOM] - size.h;
 	}
 	setPos(pos);

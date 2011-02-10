@@ -251,7 +251,7 @@ class CellWidget : public Widget {
 private:
 	Anchors    m_anchors;
 	SizeHint   m_sizeHint;
-	bool       m_centre;
+	bool       m_cellCentre;
 	Vec2i      m_cellPos;
 	Vec2i      m_cellSize;
 
@@ -272,13 +272,9 @@ public:
 
 	void setAnchors(Anchors a)    { m_anchors = a;   }
 	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
-	void setCentre(bool v)        { m_centre = v;    }
+	void setCentreInCell(bool v)        { m_cellCentre = v;    }
 
-	void setCellRect(const Vec2i &pos, const Vec2i &size) {
-		m_cellPos = pos;
-		m_cellSize = size;
-		anchorWidget();
-	}
+	virtual void setCellRect(const Vec2i &pos, const Vec2i &size);
 
 	SizeHint getSizeHint() const { return m_sizeHint; }
 	Anchors  getAnchors() const  { return m_anchors;  }

@@ -401,6 +401,7 @@ public:
 
 	virtual void addChild(CellWidget* child);
 	virtual void addChild(Widget* child) override;
+	virtual void setCellRect(const Vec2i &pos, const Vec2i &size) override;
 
 	virtual void render() override;
 	virtual void setPos(const Vec2i &pos) override;

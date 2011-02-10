@@ -892,6 +892,11 @@ void WidgetStrip::setSize(const Vec2i &sz) {
 	setDirty();
 }
 
+void WidgetStrip::setCellRect(const Vec2i &pos, const Vec2i &size) {
+	CellWidget::setCellRect(pos, size);
+	layoutCells();
+}
+
 void WidgetStrip::render() {
 	renderBgAndBorders(false);
 	if (m_dirty) {
@@ -947,7 +952,7 @@ int calculateCellDims(HintList &hints, const int space, CellDimList &out_res) {
 
 	float percent = pcntSpace / 100.f;  // pixels per percent
 	int defPcnt;
-	if (100 - pcntTally > 0) { // default percentage hints get this much...
+	if (100 - pcntTally > 0 && numDefPcnt) { // default percentage hints get this much...
 		defPcnt = (100 - pcntTally) / numDefPcnt;
 	} else {
 		defPcnt = 0;
@@ -991,6 +996,7 @@ void WidgetStrip::layoutCells() {
 	if (space < 1) {
 		return;
 	}
+
 	// split space according to hints
 	CellDimList  resultList;
 	int offset = calculateCellDims(hintList, space, resultList) / 2;
@@ -1013,8 +1019,8 @@ void WidgetStrip::layoutCells() {
 			pos = Vec2i(offset + resultList[i].first, ppos);
 			size = Vec2i(resultList[i].second, psize);
 		}
-		children[i]->setPos(pos);
-		children[i]->setSize(size);
+		//children[i]->setPos(pos);
+		//children[i]->setSize(size);
 		static_cast<CellWidget*>(children[i])->setCellRect(pos, size);
 	}
 	m_dirty = false;
