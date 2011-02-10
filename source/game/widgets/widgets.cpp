@@ -994,21 +994,28 @@ void WidgetStrip::layoutCells() {
 	// split space according to hints
 	CellDimList  resultList;
 	int offset = calculateCellDims(hintList, space, resultList) / 2;
-	if (m_direction == Orientation::VERTICAL) {
-		// determine cell width and x-pos
-		int x_pos = getPadding() + getBorderLeft();
-		int width = getWidth() - getPadding() * 2 - getBordersHoriz();
-		for (int i=0; i < children.size(); ++i) {
-			Vec2i pos(Vec2i(x_pos, offset + resultList[i].first));
-			Vec2i size(Vec2i(width, resultList[i].second));
-			children[i]->setPos(pos);
-			children[i]->setSize(size);
-			static_cast<CellWidget*>(children[i])->setCellRect(pos, size);
-		}
-	} else if (m_direction == Orientation::HORIZONTAL) {
-		
-		RUNTIME_CHECK_MSG(false, "Orientation::HORIZONTAL? Write more code first...");
 
+	// determine cell width and x-pos OR height and y-pos
+	int ppos, psize;
+	if (m_direction == Orientation::VERTICAL) {
+		ppos = getPadding() + getBorderLeft();
+		psize = getWidth() - getPadding() * 2 - getBordersHoriz();
+	} else {
+		ppos = getPadding() + getBorderTop();
+		psize = getHeight() - getPadding() * 2 - getBordersVert();
+	}
+	Vec2i pos, size;
+	for (int i=0; i < children.size(); ++i) {
+		if (m_direction == Orientation::VERTICAL) {
+			pos = Vec2i(ppos, offset + resultList[i].first);
+			size = Vec2i(psize, resultList[i].second);
+		} else {
+			pos = Vec2i(offset + resultList[i].first, ppos);
+			size = Vec2i(resultList[i].second, psize);
+		}
+		children[i]->setPos(pos);
+		children[i]->setSize(size);
+		static_cast<CellWidget*>(children[i])->setCellRect(pos, size);
 	}
 	m_dirty = false;
 }
