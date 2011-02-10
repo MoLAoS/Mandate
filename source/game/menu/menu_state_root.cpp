@@ -233,6 +233,8 @@ void MenuStateRoot::update(){
 //  class MenuStateTest
 // =====================================================
 
+WidgetStrip *ws;
+
 MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu) {
 	Font *font = g_coreData.getFTMenuFontNormal();
@@ -244,20 +246,26 @@ MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 	m_returnButton->Clicked.connect(this, &MenuStateTest::onButtonClick);
 
 	Anchors anchors;
-	anchors.set(Anchor::COUNT, 5);
+	anchors.set(Edge::LEFT, 10, true);
+	anchors.set(Edge::RIGHT, 10, true);
+	anchors.set(Edge::TOP, 15, true);
+	anchors.set(Edge::BOTTOM, 15, true);
 
-	const int numButtons = 5;
+	BorderStyle bs;
+	bs.setSolid(g_widgetConfig.getColourIndex(Colour(255u, 0u, 0u, 255u)));
+	bs.setSizes(1);
 
 	Vec2i size = Vec2i(std::min(g_config.getDisplayWidth() / 3, 300),
 	                   std::min(g_config.getDisplayHeight() / 2, 400));
 	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
-	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL, Origin::FROM_TOP);
+	ws = new WidgetStrip(&program, Orientation::VERTICAL);
+	ws->setBorderStyle(bs);
 	ws->setPos(pos);
 	ws->setSize(size);
 	ws->setDefaultAnchors(anchors);
 	
 	// some buttons
-	for (int i=0; i < numButtons; ++i) {
+	for (int i=0; i < RootMenuItem::COUNT; ++i) {
 		Vec2i pos(0, 0);
 		Vec2i size(150, 40);
 		Button *btn = new Button(ws, pos, size);
@@ -266,10 +274,20 @@ MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 }
 
 void MenuStateTest::update() {
+	static int counter = 0;
+	++counter;
 	MenuState::update();
 	if (m_transition) {
 		program.clear();
 		mainMenu->setState(new MenuStateRoot(program, mainMenu));
+	} else {
+		const int var = 300;
+		int womble = counter % var;
+		if (womble > var / 2) {
+			womble = var - womble;
+		}
+		int frog = std::min(g_config.getDisplayHeight() / 2, 300);
+		ws->setSize(Vec2i(ws->getWidth(), womble + frog));
 	}
 }
 

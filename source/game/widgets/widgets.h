@@ -381,7 +381,7 @@ public:
 class WidgetStrip : public Container {
 private:
 	Orientation	 m_direction;
-	Origin	 m_origin;
+//	Origin	 m_origin;
 	int              m_childSlotCount;
 	SizeHint		 m_defualtSizeHint;
 	Anchors          m_defaultAnchors;
@@ -391,8 +391,8 @@ private:
 	void setDirty() { m_dirty = true; }	
 
 public:
-	WidgetStrip(Container *parent, Orientation ld, Origin lo);
-	WidgetStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, Origin lo);
+	WidgetStrip(Container *parent, Orientation ld);
+	WidgetStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld);
 
 	void layoutCells();
 

@@ -386,40 +386,63 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha)
 // =====================================================
 
 CellWidget::CellWidget(Container *parent)
-		: Widget(parent, false), m_cellPos(0), m_cellSize(0) {
+		: Widget(parent, false), m_cellPos(0), m_cellSize(0), m_centre(false) {
 	parent->addChild(this);
 }
 
 CellWidget::CellWidget(Container *parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size, false), m_cellPos(0), m_cellSize(0) {
+		: Widget(parent, pos, size, false), m_cellPos(0), m_cellSize(0), m_centre(false) {
 	parent->addChild(this);
 }
 
 CellWidget::CellWidget(WidgetWindow *window)
-		: Widget(window), m_cellPos(0), m_cellSize(0) {
+		: Widget(window), m_cellPos(0), m_cellSize(0), m_centre(false) {
 }
 
 void CellWidget::anchorWidget() {
 	if (m_cellSize == Vec2i(0)) {
 		return;
 	}
+	if (m_centre) {
+		Vec2i offset = (getCellSize() - getSize()) / 2;
+		setPos(offset);
+		return;
+	}
 	Vec2i pos = getPos();
 	Vec2i size = getSize();
-	if (m_anchors.has(Anchor::LEFT)) { // anchor left
-		pos.x += m_anchors.get(Anchor::LEFT); 
-		if (m_anchors.has(Anchor::RIGHT)) { // stretch horizontally
-			size.w = m_cellSize.w - m_anchors.get(Anchor::LEFT) - m_anchors.get(Anchor::RIGHT);
+
+	int absolute[Edge::COUNT];
+	foreach_enum (Edge, e) {
+		if (m_anchors.raw[e].isBar()) {
+			absolute[e] = m_anchors.raw[e].getValue();
+		} else if (m_anchors.raw[e].isSpring()) {
+			int avail;
+			if (e == Edge::LEFT || e == Edge::RIGHT) {
+				avail = m_cellSize.w;
+			} else {
+				avail = m_cellSize.h;
+			}
+			absolute[e] = int(float(avail) * (m_anchors.raw[e].getValue() / 100.f));
+		} else {
+			absolute[e] = -1;
 		}
-	} else if (m_anchors.has(Anchor::RIGHT)) { // anchor right
-		pos.x += m_cellSize.w - m_anchors.get(Anchor::RIGHT) - size.w;
 	}
-	if (m_anchors.has(Anchor::TOP)) { // anchor top
-		pos.y += m_anchors.get(Anchor::TOP);
-		if (m_anchors.has(Anchor::BOTTOM)) { // stretch vertically
-			size.h = size.h - m_anchors.get(Anchor::TOP) - m_anchors.get(Anchor::BOTTOM);
+
+	if (absolute[Edge::LEFT] != -1) { // anchor left
+		pos.x += absolute[Edge::LEFT];
+		if (absolute[Edge::RIGHT] != -1) { // stretch horizontally
+			size.w = m_cellSize.w - absolute[Edge::LEFT] - absolute[Edge::RIGHT];
 		}
-	} else if (m_anchors.has(Anchor::BOTTOM)) { // anchor bottom
-		pos.y += m_cellSize.h - m_anchors.get(Anchor::BOTTOM) - size.h;
+	} else if (absolute[Edge::RIGHT] != -1) { // anchor right
+		pos.x += m_cellSize.w - absolute[Edge::RIGHT] - size.w;
+	}
+	if (absolute[Edge::TOP] != -1) { // anchor top
+		pos.y += absolute[Edge::TOP];
+		if (absolute[Edge::BOTTOM]) { // stretch vertically
+			size.h = size.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
+		}
+	} else if (absolute[Edge::BOTTOM]) { // anchor bottom
+		pos.y += m_cellSize.h - absolute[Edge::BOTTOM] - size.h;
 	}
 	setPos(pos);
 	setSize(size);

@@ -171,12 +171,29 @@ public:
 };
 
 // =====================================================
-//  enums Orientation, Origin & Anchors
+//  enums Orientation, Origin, Edge & AnchorType
 // =====================================================
 
 WRAPPED_ENUM( Orientation, VERTICAL, HORIZONTAL );
 WRAPPED_ENUM( Origin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
-WRAPPED_ENUM( Anchor, LEFT, TOP, RIGHT, BOTTOM );
+
+WRAPPED_ENUM( Edge, LEFT, TOP, RIGHT, BOTTOM );
+
+WRAPPED_ENUM( AnchorType, NONE, BAR, SPRING );
+
+class Anchor {
+	uint32	m_type  :  2;
+	uint32	m_value : 30;
+
+public:
+	AnchorType getType() const { return AnchorType(m_type); }
+	bool isBar() const { return m_type == AnchorType::BAR; }
+	bool isSpring() const { return m_type == AnchorType::SPRING; }
+	void setType(AnchorType t) { m_type = t; }
+
+	int getValue() const { return m_value; }
+	void setValue(int v) { m_value = v; }
+};
 
 // =====================================================
 //  struct Anchors
@@ -185,23 +202,24 @@ WRAPPED_ENUM( Anchor, LEFT, TOP, RIGHT, BOTTOM );
 struct Anchors {
 	union {
 		struct {
-			int left, top, right, bottom;
+			Anchor left, top, right, bottom;
 		};
-		int raw[4];
+		Anchor raw[4];
 	};
 
-	Anchors() : left(0), top(0), right(-1), bottom(-1) {} // default == top-left
+	Anchors() { memset(this, 0, sizeof(this)); }
 	
-	void set(Anchor a, int val) {
-		assert(a != Anchor::INVALID);
-		if (a == Anchor::COUNT) {
-			left = top = right = bottom = val;
+	void set(Edge e, int val, bool spring) {
+		assert(e != Edge::INVALID);
+		Anchor a;
+		a.setType(spring ? AnchorType::SPRING : AnchorType::BAR);
+		a.setValue(val);
+		if (e == Edge::COUNT) {
+			left = top = right = bottom = a;
 		} else {
-			raw[a] = val;
+			raw[e] = a;
 		}
 	}
-	bool has(Anchor a) const { return raw[a] != -1; }
-	int get(Anchor a) const { return raw[a]; }
 };
 
 // =====================================================
@@ -233,6 +251,7 @@ class CellWidget : public Widget {
 private:
 	Anchors    m_anchors;
 	SizeHint   m_sizeHint;
+	bool       m_centre;
 	Vec2i      m_cellPos;
 	Vec2i      m_cellSize;
 
@@ -251,8 +270,9 @@ public:
 	//virtual Vec2i getMinSize() const = 0;// {return Vec2i(-1); } // should not return (-1,-1)
 	//virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
 
-	void setAnchors(Anchors a) { m_anchors = a; }
+	void setAnchors(Anchors a)    { m_anchors = a;   }
 	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
+	void setCentre(bool v)        { m_centre = v;    }
 
 	void setCellRect(const Vec2i &pos, const Vec2i &size) {
 		m_cellPos = pos;
@@ -262,6 +282,8 @@ public:
 
 	SizeHint getSizeHint() const { return m_sizeHint; }
 	Anchors  getAnchors() const  { return m_anchors;  }
+	Vec2i    getCellPos() const { return m_cellPos; }
+	Vec2i    getCellSize() const { return m_cellSize; }
 
 	virtual bool isCellWidget() const override { return true; }
 };

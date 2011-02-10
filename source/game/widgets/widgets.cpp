@@ -874,12 +874,11 @@ void VerticalScrollBar::render() {
 // class WidgetStrip
 // =====================================================
 
-WidgetStrip::WidgetStrip(Container *parent, Orientation ld, Origin lo)
+WidgetStrip::WidgetStrip(Container *parent, Orientation ld)
 		: Container(parent)
 		, m_dirty(false) {
 	m_direction = ld;
-	m_origin = lo;
-	m_defaultAnchors = Anchors(); // top & left
+	m_defaultAnchors = Anchors();
 	m_defualtSizeHint = SizeHint(); // default percentage
 }
 
@@ -894,6 +893,7 @@ void WidgetStrip::setSize(const Vec2i &sz) {
 }
 
 void WidgetStrip::render() {
+	renderBgAndBorders(false);
 	if (m_dirty) {
 		layoutCells();
 	}
