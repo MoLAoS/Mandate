@@ -29,6 +29,16 @@ using Shared::Graphics::Font;
 using Shared::Sound::StrSound;
 using Shared::Sound::StaticSound;
 
+WRAPPED_ENUM( FontSize, SMALL, NORMAL, BIG, HUGE );
+
+struct FontSet {
+	Font *m_fonts[FontSize::COUNT];
+
+	FontSet() {memset(this, 0, sizeof(*this));}
+	Font* operator[](FontSize size) const {return m_fonts[size];}
+	void load(const string &path, int size);
+};
+
 // =====================================================
 // 	class CoreData  
 //
@@ -68,16 +78,9 @@ private:
 			redCrossOverlay,
 			mouseTexture;
 	
-	Font *m_FTMenuFontNormal;
-	Font *m_FTMenuFontSmall;
-	Font *m_FTMenuFontBig;
-	Font *m_FTMenuFontVeryBig;
-
-	Font *advancedEngineFontSmall;
-	Font *advancedEngineFontBig;
-
-	Font	*m_FTDisplay, 
-			*m_FTDisplayBig;
+	FontSet m_menuFont;
+	FontSet m_gameFont;
+	FontSet m_fancyFont;
 	
 public:
 	static CoreData &getInstance();
@@ -115,16 +118,16 @@ public:
     StaticSound *getClickSoundC()			{return &clickSoundC;}
 	StaticSound *getWaterSound()			{return waterSounds.getRandSound();}
 
-	Font *getGAEFontBig() const			{ return advancedEngineFontBig;	 }
-	Font *getGAEFontSmall() const		{ return advancedEngineFontSmall;}
+	Font *getGAEFontBig() const	        { return m_fancyFont[FontSize::BIG];    }
+	Font *getGAEFontSmall() const       { return m_fancyFont[FontSize::NORMAL]; }
 
-	Font* getFTMenuFontNormal() const	{ return m_FTMenuFontNormal;	}
-	Font* getFTMenuFontSmall() const	{ return m_FTMenuFontSmall;		}
-	Font* getFTMenuFontBig() const		{ return m_FTMenuFontBig;		}
-	Font* getFTMenuFontVeryBig() const	{ return m_FTMenuFontVeryBig;	}
+	Font* getFTMenuFontNormal() const   { return m_menuFont[FontSize::NORMAL];  }
+	Font* getFTMenuFontSmall() const    { return m_menuFont[FontSize::SMALL];   }
+	Font* getFTMenuFontBig() const      { return m_menuFont[FontSize::BIG];     }
+	Font* getFTMenuFontVeryBig() const  { return m_menuFont[FontSize::HUGE];    }
 
-	Font* getFTDisplayFont() const		{ return m_FTDisplay;	}
-	Font* getFTDisplayFontBig() const	{ return m_FTDisplayBig;	}
+	Font* getFTDisplayFont() const      { return m_gameFont[FontSize::NORMAL];  }
+	Font* getFTDisplayFontBig() const   { return m_gameFont[FontSize::BIG];     }
 
 private:
 	CoreData(){};

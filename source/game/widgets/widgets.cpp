@@ -271,8 +271,8 @@ CheckBox::CheckBox(Container* parent)
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams("No", Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
-	addText("Yes");
+	setTextParams(g_lang.get("No"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
+	addText(g_lang.get("Yes"));
 }
 
 CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)
@@ -280,8 +280,8 @@ CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams("No", Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
-	addText("Yes");
+	setTextParams(g_lang.get("No"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
+	addText(g_lang.get("Yes"));
 	int y = int((size.y - getTextFont()->getMetrics()->getHeight()) / 2);
 	setTextPos(Vec2i(40, y), 0);
 	setTextPos(Vec2i(40, y), 1);

@@ -61,11 +61,16 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 	return tex;
 }
 
-Font* loadFreeTypeFont(string path, int size) {
-	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-	font->setType(path);
-	font->setSize(size);
-	return font;
+const float relativeSizes[] = { 0.8f, 1.0f, 1.3f, 1.6f };
+
+void FontSet::load(const string &path, int size) {
+	int *sizes = new int[FontSize::COUNT];
+	foreach_enum (FontSize, fs) {
+		sizes[fs] = int(size * relativeSizes[fs]);
+		m_fonts[fs] = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
+		m_fonts[fs]->setType(path);
+		m_fonts[fs]->setSize(sizes[fs]);
+	}
 }
 
 bool CoreData::load() {
@@ -105,21 +110,12 @@ bool CoreData::load() {
 		g_logger.logError("mouse.png images not found.\n");
 		mouseTexture = 0;
 	}
-	// Display/Console font
-	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
-	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(12));
+	// fonts
+	m_menuFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
+	m_gameFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
+	m_fancyFont.load(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(28));
 
-	// Misc fonts
-	advancedEngineFontSmall = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));
-	advancedEngineFontBig = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(36));
-	
-	// Menu fonts...
-	m_FTMenuFontNormal = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
-	m_FTMenuFontSmall = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(14));
-	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(22));
-	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(26));
-
-	//sounds
+	// sounds
 	try {
 		clickSoundA.load(dir + "/menu/sound/click_a.wav");
 		clickSoundB.load(dir + "/menu/sound/click_b.wav");
@@ -147,13 +143,11 @@ void CoreData::closeSounds(){
 
 int CoreData::computeFontSize(int size) {
 	int screenH = g_config.getDisplayHeight();
-	int rs= int(g_config.getRenderFontScaler() * size * float(screenH) / 768.f);
+	int rs = int(g_config.getRenderFontScaler() * size * float(screenH) / 768.f);
 	if (rs < 12) {
 		rs = 12;
 	}
 	return rs;
 }
 
-// ================== PRIVATE ========================
-
-}}//end namespace
+}} // end namespace
