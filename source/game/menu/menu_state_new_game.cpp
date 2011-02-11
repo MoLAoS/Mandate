@@ -85,68 +85,117 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	vector<string> results;
 
 	// create
-	int gap = (metrics.getScreenW() - 300) / 3;
-	int x = gap, w = 150, y = 50, h = 30;
-	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);
-	m_returnButton->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
+	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL);
+	Vec2i pad(15, 30);
+	ws->setPos(pad);
+	ws->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	x += w + gap;
-	m_playNow = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_playNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
-	m_playNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
+	Anchors a;
+	a.set(Edge::COUNT, 0, false);
 
-	const int listWidth = 250;
-	gap = (metrics.getScreenW() - listWidth * 3) / 4;
+	WidgetStrip *slotPanel = new WidgetStrip(ws, Orientation::VERTICAL);
+	slotPanel->setSizeHint(SizeHint(50));
+	slotPanel->setAnchors(a);
+
+	PlayerSlotLabels *labels = new PlayerSlotLabels(slotPanel);
+	labels->setAnchors(a);
+
+	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
+		m_playerSlots[i] = new PlayerSlotWidget(slotPanel);
+		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i+1));
+		m_playerSlots[i]->setSelectedColour(i);
+		m_playerSlots[i]->setAnchors(a);
+	}
+
+	WidgetStrip *pnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
+	pnl->setAnchors(a);
+
+	WidgetStrip *combo = new WidgetStrip(pnl, Orientation::VERTICAL);
+	combo->setAnchors(a);
+
+	m_randomLocsLabel = new StaticText(combo);
+	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
+	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	m_randomLocsLabel->setAnchors(a);
+
+	m_randomLocsCheckbox = new CheckBox(combo);
+	m_randomLocsCheckbox->setAnchors(a);
+	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
+
+	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
+	combo->setAnchors(a);
+
+	m_SODLabel = new StaticText(combo);
+	m_SODLabel->setAnchors(a);
+	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
+	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	m_SODCheckbox = new CheckBox(combo);
+	m_SODCheckbox->setAnchors(a);
+	m_SODCheckbox->setChecked(true);
+	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
+
+	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
+	combo->setAnchors(a);
+
+	m_FOWLabel = new StaticText(combo);
+	m_FOWLabel->setAnchors(a);
+	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
+	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	m_FOWCheckbox = new CheckBox(combo);
+	m_FOWCheckbox->setAnchors(a);
+	m_FOWCheckbox->setChecked(true);
+	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
+
+	pnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
+	pnl->setAnchors(a);
+
+	Anchors a2;
+	a2.set(Edge::TOP,    5, false);
+	a2.set(Edge::BOTTOM, 5, false);
+	a2.set(Edge::LEFT,  20, true);
+	a2.set(Edge::RIGHT, 20, true);
 
 	// map listBox
-	set<string> mapFiles;
-	// FIXME: change findAll to return empty result when nothing found
-	try {
-		findAll("maps/*.gbm", results, true);
-	} catch (runtime_error err) { }
-	foreach (vector<string>, it, results) {
-		mapFiles.insert(*it);
-	}
-	results.clear();
+	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
+	combo->setAnchors(a2);
 
-	try {
-		findAll("maps/*.mgm", results, true);
-	} catch (runtime_error err) { }
-	foreach (vector<string>, it, results) {
-		mapFiles.insert(*it);
-	}
-	results.clear();
-
-	if (mapFiles.empty()) {
+	if (!getMapList()) {
 		throw runtime_error("There are no maps");
 	}
-	m_mapFiles.clear();
-	foreach (set<string>, it, mapFiles) {
-		m_mapFiles.push_back(*it);
+	results.clear();
+	foreach (vector<string>, it, m_mapFiles) {
 		results.push_back(formatString(*it));
 	}
-	x = gap, w = listWidth, y = 170, h = 30;
-	m_mapList = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
+	m_mapLabel = new StaticText(combo);
+	m_mapLabel->setAnchors(a);
+	m_mapLabel->setSizeHint(SizeHint(25));
+	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
+	m_mapLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	m_mapList = new DropList(combo);
+	m_mapList->setAnchors(a);
+	m_mapList->setSizeHint(SizeHint(25));
 	m_mapList->addItems(results);
 	m_mapList->setDropBoxHeight(140);
 	m_mapList->setSelected(0);
 	m_mapList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeMap);
 
-	m_mapLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
-	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
-	m_mapLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
 	gs.setDescription(results[0]);
 	gs.setMapPath(string("maps/") + m_mapFiles[0]);
-
 	m_mapInfo.load("maps/" + m_mapFiles[0]);
 
-	m_mapInfoLabel = new StaticText(&program, Vec2i(x, y - (h*2 + 10)), Vec2i(w, h * 2));
+	m_mapInfoLabel = new StaticText(combo);
+	m_mapInfoLabel->setAnchors(a);
+	m_mapInfoLabel->setSizeHint(SizeHint(50));
 	m_mapInfoLabel->setTextParams(m_mapInfo.desc, Vec4f(1.f), font);
 	m_mapInfoLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-	//tileset listBox
+	// tileset listBox
+	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
+	combo->setAnchors(a2);
+
 	findAll("tilesets/*.", results);
 	if (results.size() == 0) {
 		throw runtime_error("There are no tile sets");
@@ -155,18 +204,24 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	for (int i = 0; i < results.size(); ++i) {
 		results[i] = formatString(results[i]);
 	}
-	x = gap * 2 + w;
-	m_tilesetList = new DropList(&program, Vec2i(x, y), Vec2i(w, 30));
+	m_tilesetLabel = new StaticText(combo);
+	m_tilesetLabel->setAnchors(a);
+	m_tilesetLabel->setSizeHint(SizeHint(25));
+	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
+	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	m_tilesetList = new DropList(combo);
+	m_tilesetList->setAnchors(a);
+	m_tilesetList->setSizeHint(SizeHint(25));
 	m_tilesetList->addItems(results);
 	m_tilesetList->setDropBoxHeight(140);
 	m_tilesetList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
 	m_tilesetList->setSelected(0);
 
-	m_tilesetLabel = new StaticText(&program, Vec2i(x, y + h + 5), Vec2i(w, h));
-	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
-	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
 	//tech Tree listBox
+	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
+	combo->setAnchors(a2);
+
 	findAll("techs/*.", results);
 	if (results.size() == 0) {
 		throw runtime_error("There are no tech trees");
@@ -175,60 +230,33 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	for (int i = 0; i < results.size(); ++i) {
 		results[i] = formatString(results[i]);
 	}
-	x = gap * 3 + w * 2;
-	m_techTreeList = new DropList(&program, Vec2i(x, y), Vec2i(w, h));
+	m_techTreeLabel = new StaticText(combo);
+	m_techTreeLabel->setAnchors(a);
+	m_techTreeLabel->setSizeHint(SizeHint(25));
+	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
+	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	m_techTreeList = new DropList(combo);
+	m_techTreeList->setAnchors(a);
+	m_techTreeList->setSizeHint(SizeHint(25));
 	m_techTreeList->addItems(results);
 	m_techTreeList->setDropBoxHeight(140);
 	m_techTreeList->setSelected(0);
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
-	m_techTreeLabel = new StaticText(&program, Vec2i(x,  y + h + 5), Vec2i(w, h));
-	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
-	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	pnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
+	pnl->setAnchors(a);
 
-	gap = (metrics.getScreenW() - 600) / 4, x = gap, y += 70, h = 30;
-	int cbw = 75, stw = 200;
+	int w = 256, h = 32;
+	m_returnButton = new Button(pnl, Vec2i(0), Vec2i(w, h));
+	m_returnButton->setCentreInCell(true);
+	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
-	m_randomLocsCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
-	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
-
-	m_randomLocsLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw,h));
-	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
-	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-	x = gap * 2 + stw;
-	m_SODCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
-	m_SODCheckbox->setChecked(true);
-	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
-
-	m_SODLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
-	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
-	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-	x = gap * 3 + stw * 2;
-	m_FOWCheckbox = new CheckBox(&program, Vec2i(x+65,y), Vec2i(cbw,h));
-	m_FOWCheckbox->setChecked(true);
-	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
-
-	m_FOWLabel = new StaticText(&program, Vec2i(x, y + 35), Vec2i(stw, h));
-	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
-	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-	int psw_width = std::min(std::max(700, g_metrics.getScreenW() - 200), 900);
-	y += 75, h = 35, x = (metrics.getScreenW() - psw_width) / 2, w = psw_width;
-
-	int sty = metrics.getScreenH() - 70;
-	PlayerSlotLabels *labels = new PlayerSlotLabels(&program, Vec2i(x, sty), Vec2i(w, h));
-
-	int vSpace = (sty - y);
-	int vgap = (vSpace - (GameConstants::maxPlayers * 35)) / (GameConstants::maxPlayers + 1);
-
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		y = sty - (vgap * (i + 1)) - (h * (i + 1));
-		m_playerSlots[i] = new PlayerSlotWidget(&program, Vec2i(x, y), Vec2i(w, h));
-		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i+1));
-		m_playerSlots[i]->setSelectedColour(i);
-	}
+	m_playNow = new Button(pnl, Vec2i(0), Vec2i(w, h));
+	m_playNow->setCentreInCell(true);
+	m_playNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
 	reloadFactions(true);
 
@@ -266,6 +294,37 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 }
 
 //  === util ===
+
+bool MenuStateNewGame::getMapList() {
+	vector<string> results;
+	set<string> mapFiles;
+	// FIXME: change findAll to return empty result when nothing found
+	try {
+		findAll("maps/*.gbm", results, true);
+	} catch (runtime_error err) { 
+	}
+	foreach (vector<string>, it, results) {
+		mapFiles.insert(*it);
+	}
+	results.clear();
+
+	try {
+		findAll("maps/*.mgm", results, true);
+	} catch (runtime_error err) { }
+	foreach (vector<string>, it, results) {
+		mapFiles.insert(*it);
+	}
+	results.clear();
+
+	if (mapFiles.empty()) {
+		return false;
+	}
+	m_mapFiles.clear();
+	foreach (set<string>, it, mapFiles) {
+		m_mapFiles.push_back(*it);
+	}
+	return true;
+}
 
 int getSlotIndex(PlayerSlotWidget* psw, PlayerSlotWidget* *slots) {
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {

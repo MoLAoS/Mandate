@@ -267,7 +267,6 @@ MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 		Button *btn = new Button(ws, pos, size, false);
 		BorderStyle borderStyle;
 		borderStyle.setSizes(3);
-		//bf5e5e
 		int li = g_widgetConfig.getColourIndex(Colour(0xBFu, 0x5Eu, 0x5Eu, 0xAF));
 		int di = g_widgetConfig.getColourIndex(Colour(0x6Fu, 0x00u, 0x00u, 0xAF));
 		borderStyle.setRaise(li, di);

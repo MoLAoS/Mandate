@@ -391,7 +391,10 @@ struct TextRenderInfo {
 
 	TextRenderInfo(const string &txt, FontPtr font, const Vec4f &colour, const Vec2i &pos)
 			: m_text(txt), m_pos(pos), m_colour(colour), m_font(font) {
-		m_shadowColour = m_shadowColour2 = m_colour;
+		Vec4f black(0.f, 0.f, 0.f, 1.f);
+		m_shadowColour = (m_colour + black * 2.f) / 3.f;
+		m_shadowColour2 = black;
+
 	}
 };
 
@@ -403,12 +406,9 @@ class TextWidget {
 private:
 	Widget* me;
 	vector<TextRenderInfo> m_texts;
-	Vec4f m_defaultColour;
-	Vec4f m_shadowColour;
-	Vec4f m_shadowColour2;
-	const Font *m_defaultFont;
 	bool centre;
 	bool m_batchRender;
+	const Font *m_defaultFont;
 	TextRenderer *m_textRenderer;
 
 protected:
@@ -429,22 +429,21 @@ public:
 	void setTextParams(const string&, const Vec4f, const Font*, bool cntr=true);
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
-	void setTextColour(const Vec4f &col) { m_defaultColour = col;	 }
-	void setTextShadowColour(const Vec4f &col) {
-		m_shadowColour = col;
-		if (m_texts.size() == 1) {
-			m_texts[0].m_shadowColour = col;
-		}
+	void setTextColour(const Vec4f &col, int ndx = 0) {
+		ASSERT_RANGE(ndx, m_texts.size());
+		m_texts[ndx].m_colour = col;
 	}
-	void setTextShadowColour2(const Vec4f &col) {
-		m_shadowColour2 = col;
-		if (m_texts.size() == 1) {
-			m_texts[0].m_shadowColour2 = col;
-		}
+	void setTextShadowColour(const Vec4f &col, int ndx = 0) {
+		ASSERT_RANGE(ndx, m_texts.size());
+		m_texts[ndx].m_shadowColour = col;
 	}
-	void setTextShadowColours(const Vec4f &col1, const Vec4f &col2) {
-		setTextShadowColour(col1);
-		setTextShadowColour2(col2);
+	void setTextShadowColour2(const Vec4f &col, int ndx = 0) {
+		ASSERT_RANGE(ndx, m_texts.size());
+		m_texts[ndx].m_shadowColour2 = col;
+	}
+	void setTextShadowColours(const Vec4f &col1, const Vec4f &col2, int ndx = 0) {
+		setTextShadowColour(col1, ndx);
+		setTextShadowColour2(col2, ndx);
 	}
 	void setTextCentre(bool v)	{ centre = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
@@ -455,7 +454,6 @@ public:
 
 	// get
 	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_text; }
-	const Vec4f& getTextColour() const	 { return m_defaultColour; }
 	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_pos; }
 	const Font* getTextFont() const { return m_defaultFont; }
 	Vec2i getTextDimensions() const;

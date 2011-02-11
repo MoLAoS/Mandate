@@ -58,6 +58,18 @@ Vec2i StaticText::getPrefSize() const {
 	return getMinSize();
 }
 
+void StaticText::setShadow(const Vec4f &colour, int offset) {
+	m_shadow = true;
+	TextWidget::setTextShadowColour(colour);
+	m_shadowOffset = offset;
+}
+
+void StaticText::setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset) {
+	m_doubleShadow = true;
+	TextWidget::setTextShadowColours(colour1, colour2);
+	m_shadowOffset = offset;
+}
+
 // =====================================================
 //  class StaticImage
 // =====================================================
@@ -882,6 +894,14 @@ WidgetStrip::WidgetStrip(Container *parent, Orientation ld)
 	m_defualtSizeHint = SizeHint(); // default percentage
 }
 
+WidgetStrip::WidgetStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld) 
+		: Container(parent, pos, size)
+		, m_dirty(false) {
+	m_direction = ld;
+	m_defaultAnchors = Anchors();
+	m_defualtSizeHint = SizeHint(); // default percentage
+}
+
 void WidgetStrip::setPos(const Vec2i &pos) {
 	Container::setPos(pos);
 	setDirty();
@@ -1285,6 +1305,7 @@ void ListBox::addItems(const vector<string> &items) {
 	foreach_const (vector<string>, it, items) {
 		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz, Vec3f(0.25f));
 		nItem->setTextParams(*it, Vec4f(1.f), itemFont, true);
+		nItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		listBoxItems.push_back(nItem);
 		nItem->Selected.connect(this, &ListBox::onSelected);
 	}
@@ -1294,6 +1315,7 @@ void ListBox::addItem(const string &item) {
 	Vec2i sz(getSize().x - getBordersHoriz(), int(itemFont->getMetrics()->getHeight()) + 4);
 	ListBoxItem *nItem = new ListBoxItem(this, Vec2i(getBorderLeft(), getBorderBottom()), sz, Vec3f(0.25f));
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
+	nItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);
 }
@@ -1456,8 +1478,7 @@ void ListBox::setSelected(int index) {
 // =====================================================
 
 ListBoxItem::ListBoxItem(ListBase* parent)
-		: Widget(parent) 
-		, TextWidget(this)
+		: StaticText(parent) 
 		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
@@ -1467,8 +1488,7 @@ ListBoxItem::ListBoxItem(ListBase* parent)
 }
 
 ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz)
-		: Widget(parent, pos, sz)
-		, TextWidget(this)
+		: StaticText(parent, pos, sz)
 		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
@@ -1478,8 +1498,7 @@ ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz)
 }
 
 ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour)
-		: Widget(parent, pos, sz)
-		, TextWidget(this)
+		: StaticText(parent, pos, sz)
 		, MouseWidget(this)
 		, selected(false)
 		, hover(false)
@@ -1500,8 +1519,7 @@ Vec2i ListBoxItem::getPrefSize() const {
 }
 
 void ListBoxItem::render() {
-	Widget::renderBgAndBorders();
-	TextWidget::renderTextShadowed();
+	StaticText::render();
 	if (isEnabled() && selected) {
 		Widget::renderHighLight(Vec3f(1.f), 0.1f, 0.3f);
 	}
@@ -1564,6 +1582,7 @@ DropList::DropList(Container* parent)
 	button->Clicked.connect(this, &DropList::onExpandList);
 	selectedItem = new ListBoxItem(this);
 	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
+	selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 }
 
@@ -1579,6 +1598,7 @@ DropList::DropList(Container* parent, Vec2i pos, Vec2i size)
 	button->Clicked.connect(this, &DropList::onExpandList);
 	selectedItem = new ListBoxItem(this);
 	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
+	selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 	layout();
 }
@@ -1687,7 +1707,7 @@ void DropList::expandList() {
 	int h = dropBoxHeight == 0 ? ph : ph > dropBoxHeight ? dropBoxHeight : ph;
 
 	Vec2i sz(size.x, h);
-	Vec2i pos(screenPos.x, screenPos.y - sz.y + size.y);
+	Vec2i pos(screenPos.x, screenPos.y);
 	floatingList->setPos(pos);
 	floatingList->addItems(listItems);
 	floatingList->setSize(sz);

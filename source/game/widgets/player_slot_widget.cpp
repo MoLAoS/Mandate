@@ -116,115 +116,96 @@ void ColourPicker::onSelect(Button *b) {
 	ColourChanged(this);
 }
 
-
-// =====================================================
-//  class PlayerSlotPanel
-// =====================================================
-
-PlayerSlotPanel::PlayerSlotPanel(Container* parent, Vec2i pos, Vec2i size)
-		: Panel(parent, pos, size), m_childCount(0) {
-	Panel::setAutoLayout(false);
-}
-
-void PlayerSlotPanel::addChild(Widget* child) {
-	Panel::addChild(child);
-	assert(m_childCount >=0 && m_childCount < 5);
-	m_columns[m_childCount++] = child;
-}
-
-void PlayerSlotPanel::layoutChildren() {
-	assert(m_childCount == 5);
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
-	Widget::setPadding(0);
-	assert(getWidth() > 200);
-	float size_x = float(getWidth() - 30);
-	float fwidths[] = {
-		size_x * 18.f / 100.f,
-		size_x * 33.f / 100.f,
-		size_x * 33.f / 100.f,
-		size_x * 8.f / 100.f,
-		size_x * 8.f / 100.f
-	};
-	int widths[5];
-	for (int i=0; i < 5; ++i) {
-		widths[i] = int(fwidths[i]);
-	}
-	Vec2i cpos(5, 2);
-
-	m_columns[0]->setPos(cpos);
-	m_columns[0]->setSize(Vec2i(widths[0], 30));
-
-	cpos.x += widths[0] + 5;
-	m_columns[1]->setPos(cpos);
-	m_columns[1]->setSize(Vec2i(widths[1], 30));
-
-	cpos.x += widths[1] + 5;
-	m_columns[2]->setPos(cpos);
-	m_columns[2]->setSize(Vec2i(widths[2], 30));
-	
-	cpos.x += widths[2] + 5;
-	m_columns[3]->setPos(cpos);
-	m_columns[3]->setSize(Vec2i(widths[3], 30));
-	
-	cpos.x += widths[3] + 5;
-	m_columns[4]->setPos(cpos);
-	m_columns[4]->setSize(Vec2i(widths[4], 30));
-}
-
 // =====================================================
 //  class PlayerSlotLabels
 // =====================================================
 
-PlayerSlotLabels::PlayerSlotLabels(Container* parent, Vec2i pos, Vec2i size)
-		: PlayerSlotPanel(parent, pos, size) {
+PlayerSlotLabels::PlayerSlotLabels(Container* parent)
+		: WidgetStrip(parent, Orientation::HORIZONTAL) {
 	CoreData &coreData = CoreData::getInstance();
+	Anchors anchors;
+	anchors.set(Edge::LEFT, 5, false);
+	anchors.set(Edge::RIGHT, 5, false);
+	anchors.set(Edge::TOP, 3, false);
+	anchors.set(Edge::BOTTOM, 3, false);
 	
 	StaticText *label = new StaticText(this);
 	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setSizeHint(SizeHint(18));
+	label->setAnchors(anchors);
+
 	label = new StaticText(this);
 	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setSizeHint(SizeHint(33));
+	label->setAnchors(anchors);
+
 	label = new StaticText(this);
 	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setSizeHint(SizeHint(33));
+	label->setAnchors(anchors);
+
 	label = new StaticText(this);
 	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setSizeHint(SizeHint(8));
+	label->setAnchors(anchors);
+
 	label = new StaticText(this);
 	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	layoutChildren();
+	label->setSizeHint(SizeHint(8));
+	label->setAnchors(anchors);
 }
 
 // =====================================================
 //  class PlayerSlotWidget
 // =====================================================
 
-PlayerSlotWidget::PlayerSlotWidget(Container* parent, Vec2i pos, Vec2i size)
-		: PlayerSlotPanel(parent, pos, size), m_freeSlot(false) {
+PlayerSlotWidget::PlayerSlotWidget(Container* parent)
+		: WidgetStrip(parent, Orientation::HORIZONTAL), m_freeSlot(false) {
 	CoreData &coreData = CoreData::getInstance();
+	Anchors anchors;
+	anchors.set(Edge::LEFT, 5, false);
+	anchors.set(Edge::RIGHT, 5, false);
+	anchors.set(Edge::TOP, 3, false);
+	anchors.set(Edge::BOTTOM, 3, false);
+
 	m_label = new StaticText(this);
 	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	m_label->setSizeHint(SizeHint(18));
+	m_label->setAnchors(anchors);
 
 	m_controlList = new DropList(this);
+	m_controlList->setSizeHint(SizeHint(33));
+	m_controlList->setAnchors(anchors);
+
 	foreach_enum (ControlType, ct) {
 		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
 	}
 
 	m_factionList = new DropList(this);
 	m_factionList->setDropBoxHeight(200);
+	m_factionList->setSizeHint(SizeHint(33));
+	m_factionList->setAnchors(anchors);
+	
 	m_teamList = new DropList(this);
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
 	}
+	m_teamList->setSizeHint(SizeHint(8));
+	m_teamList->setAnchors(anchors);
+
 	m_colourPicker = new Widgets::ColourPicker(this);
+	m_colourPicker->setSizeHint(SizeHint(8));
+	m_colourPicker->setAnchors(anchors);
+
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);
 	m_factionList->SelectionChanged.connect(this, &PlayerSlotWidget::onFactionChanged);
 	m_teamList->SelectionChanged.connect(this, &PlayerSlotWidget::onTeamChanged);
 	m_colourPicker->ColourChanged.connect(this, &PlayerSlotWidget::onColourChanged);
-
-	layoutChildren();
 }
 
 void PlayerSlotWidget::disableSlot() {

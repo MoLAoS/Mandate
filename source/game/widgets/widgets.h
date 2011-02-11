@@ -146,16 +146,8 @@ public:
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
-	void setShadow(const Vec4f &colour, int offset=2) {
-		m_shadow = true;
-		TextWidget::setTextShadowColour(colour);
-		m_shadowOffset = offset;
-	}
-	void setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset=2) {
-		m_doubleShadow = true;
-		TextWidget::setTextShadowColours(colour1, colour2);
-		m_shadowOffset = offset;
-	}
+	void setShadow(const Vec4f &colour, int offset=2);
+	void setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset=2);
 
 	virtual void render();
 	virtual string desc() { return string("[StaticText: ") + descPosDim() + "]"; }
@@ -568,7 +560,7 @@ public:
 // class ListBoxItem
 // =====================================================
 
-class ListBoxItem : public Widget, public TextWidget, public MouseWidget {
+class ListBoxItem : public StaticText, public MouseWidget {
 private:
 	bool selected;
 	bool hover;
@@ -582,7 +574,6 @@ public:
 	ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
 
 	void setSelected(bool s) { selected = s; }
-
 	void setBackgroundColour(const Vec3f &colour);
 
 	virtual void mouseIn();

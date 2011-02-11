@@ -580,12 +580,9 @@ void ImageWidget::setImageX(const Texture2D *tex, int ndx, Vec2i offset, Vec2i s
 
 TextWidget::TextWidget(Widget* me)
 		: me(me)
-		, m_defaultFont(0)
-		, m_defaultColour(1.f)
-		, m_shadowColour(0.f, 0.f, 0.f, 1.f)
-		, m_shadowColour2(1.f)
 		, centre(true)
 		, m_batchRender(false)
+		, m_defaultFont(0)
 		, m_textRenderer(0) {
 	me->textWidget = this;
 	m_defaultFont = g_coreData.getFTMenuFontNormal();
@@ -715,7 +712,6 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 		m_texts[0] = TextRenderInfo(txt, font, colour, Vec2i(0));
 	}
 	m_defaultFont = font;
-	m_defaultColour = colour;
 	centre = cntr;
 	if (centre) {
 		centreText();
@@ -723,16 +719,16 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 }
 
 int TextWidget::addText(const string &txt) {
-	m_texts.push_back(TextRenderInfo(txt, m_defaultFont, m_defaultColour, Vec2i(0)));
+	m_texts.push_back(TextRenderInfo(txt, m_defaultFont, Vec4f(1.f), Vec2i(0)));
 	return m_texts.size() - 1;
 }
 
 void TextWidget::setText(const string &txt, int ndx) {
 	if (m_texts.empty() && !ndx) {
-		m_texts.push_back(TextRenderInfo(txt, m_defaultFont, m_defaultColour, Vec2i(0)));
+		m_texts.push_back(TextRenderInfo(txt, m_defaultFont, Vec4f(1.f), Vec2i(0)));
 	} else {
 		ASSERT_RANGE(ndx, m_texts.size());
-		m_texts[ndx] = TextRenderInfo(txt, m_defaultFont, m_defaultColour, Vec2i(0));
+		m_texts[ndx].m_text = txt;
 	}
 	if (centre && ndx == 0) {
 		centreText();

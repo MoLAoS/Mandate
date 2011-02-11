@@ -97,35 +97,23 @@ public:
 	sigslot::signal<ColourPicker*> ColourChanged;
 };
 
-class PlayerSlotPanel : public Panel {
-private:
-	Widget* m_columns[5];
-	int m_childCount;
-
+class PlayerSlotLabels : public WidgetStrip {
 public:
-	PlayerSlotPanel(Container* parent, Vec2i pos, Vec2i size);
-
-	virtual void addChild(Widget* child);
-	virtual void layoutChildren();
+	PlayerSlotLabels(Container* parent);
 };
 
-class PlayerSlotLabels : public PlayerSlotPanel {
-public:
-	PlayerSlotLabels(Container* parent, Vec2i pos, Vec2i size);
-};
-
-class PlayerSlotWidget : public PlayerSlotPanel, public sigslot::has_slots {
+class PlayerSlotWidget : public WidgetStrip, public sigslot::has_slots {
 private:
 	StaticText*		m_label;
 	DropList*		m_controlList;
 	DropList*		m_factionList;
 	DropList*		m_teamList;
-	ColourPicker*		m_colourPicker;
+	ColourPicker*	m_colourPicker;
 
 	bool	m_freeSlot; // closed but open-able
 
 public:
-	PlayerSlotWidget(Container* parent, Vec2i pos, Vec2i size);
+	PlayerSlotWidget(Container* parent);
 
 	void setNameText(const string &name) { m_label->setText(name); }
 	

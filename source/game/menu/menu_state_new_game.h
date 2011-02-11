@@ -99,6 +99,7 @@ public:
 	MenuStates getIndex() const { return MenuStates::NEW_GAME; }
 
 private:
+	bool getMapList();
 	bool loadGameSettings();
 	void reloadFactions(bool setStagger);
 	void updateControlers();
