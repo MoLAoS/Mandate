@@ -621,7 +621,7 @@ public:
 	void setSelected(int index);
 	void setSelected(const string &item);
 
-	bool mouseWheel(Vec2i pos, int z);
+	bool mouseWheel(Vec2i pos, int z) override;
 
 	// event handlers
 	void onBoxClicked(ListBoxItem*);

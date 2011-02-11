@@ -278,7 +278,7 @@ void WidgetWindow::registerUpdate(Widget* widget) {
 void WidgetWindow::unregisterUpdate(Widget* widget) {
 	WidgetList::iterator it = std::find(updateList.begin(), updateList.end(), widget);
 	if (it != updateList.end()) {
-	updateList.erase(it);
+		updateList.erase(it);
 	}
 }
 
@@ -337,6 +337,8 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 	} else {
 		widget = getWidgetAt(mousePos);
 	}
+	//cout << "eventMouseDown @" << mousePos << " on " << widget->desc() << endl;
+
 	if (lastMouseDownWidget && lastMouseDownWidget != widget->asMouseWidget()) {
 		Widget* ancestor = findCommonAncestor(lastMouseDownWidget->me, widget);
 		unwindMouseOverStack(ancestor);
@@ -456,6 +458,7 @@ void WidgetWindow::eventMouseWheel(int x, int y, int zDelta) {
 	} else {
 		widget = getWidgetAt(mousePos);
 	}
+	//cout << "eventMouseWheel @" << mousePos << " on " << widget->desc() << endl;
 	while (widget) {
 		if (widget->asMouseWidget()
 		&& widget->asMouseWidget()->mouseWheel(mousePos, zDelta)) {

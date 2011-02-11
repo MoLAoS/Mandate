@@ -230,6 +230,9 @@ void Window::destroy() {
 
 // ===================== PRIVATE =======================
 
+// debug hook
+void nop() {}
+
 LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	Window *eventWindow;
@@ -264,6 +267,10 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			RECT windowRect;
 			POINT mousePos;
 
+			if (msg != WM_MOUSEMOVE) {
+				nop();
+			}
+
 			GetWindowRect(eventWindow->getHandle(), &windowRect);
 			mousePos.x = LOWORD(lParam) - windowRect.left;
 			mousePos.y = HIWORD(lParam) - windowRect.top;
@@ -273,7 +280,9 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				mousePos.x -= borderWidth;
 				mousePos.y -= titleBarHeight;
 			}
-			ClientToScreen(eventWindow->getHandle(), &mousePos);
+			if (msg != WM_MOUSEWHEEL) { // don't ask me... I just work here
+				ClientToScreen(eventWindow->getHandle(), &mousePos);
+			}
 
 			eventWindow->input.setLastMouseEvent(Chrono::getCurMillis());
 			eventWindow->input.setMousePos(Vec2i(mousePos.x, mousePos.y));

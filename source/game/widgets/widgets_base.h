@@ -130,7 +130,9 @@ public:
 
 	virtual bool isVisible() const		{ return visible; }
 	virtual bool isInside(const Vec2i &pos) const {
-		return pos.southEastOf(screenPos) && pos.northWestOf(screenPos + size);
+		const Vec2i &p1 = screenPos;
+		const Vec2i  p2(screenPos + size);
+		return pos.x >= p1.x && pos.y >= p1.y && pos.x < p2.x && pos.y < p2.y;
 	}
 
 	virtual bool isEnabled() const	{ return m_enabled;	}
