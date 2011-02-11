@@ -339,7 +339,7 @@ public:
 	void setActualRane(int avail) { availRange = avail; recalc(); }
 	void setLineSize(int line) { lineSize = line; }
 
-	int getRangeOffset() const { return int((thumbOffset - topOffset) / float(shaftHeight) * totalRange); }
+	int getRangeOffset() const { return int(thumbOffset / float(shaftHeight) * totalRange); }
 	void setOffset(float percent);
 
 	void scrollLine(bool i_up);
@@ -362,7 +362,6 @@ public:
 	virtual void render();
 	virtual string desc() { return string("[VerticalScrollBar: ") + descPosDim() + "]"; }
 
-	// not firing yet
 	sigslot::signal<VerticalScrollBar*> ThumbMoved;
 };
 
