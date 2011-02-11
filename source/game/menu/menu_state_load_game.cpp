@@ -66,7 +66,6 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 	}
 }
 
-
 // =====================================================
 // 	class MenuStateLoadGame
 // =====================================================
@@ -78,34 +77,53 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	gs = NULL;
 
 	Font *font = g_coreData.getFTMenuFontNormal();
-	int gap = (g_metrics.getScreenW() - 450) / 4;
-	int x = gap, w = 150, y = 150, h = 30;
-	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+
+	Anchors a;
+	a.set(Edge::COUNT, 0, false);
+
+	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL);
+	ws->setAnchors(a);
+	Vec2i pad(45, 45);
+	ws->setPos(pad);
+	ws->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
+	
+	// savegames list
+	m_savedGameList = new DropList(ws, Vec2i(0), Vec2i(300, 34));
+	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
+	m_savedGameList->setCentreInCell(true);
+	m_savedGameList->setSizeHint(SizeHint(-1, 50));
+
+	// savegame info box
+	m_infoLabel = new ScrollText(ws, Vec2i(0), Vec2i(600, 200));
+	m_infoLabel->init();
+	m_infoLabel->setCentreInCell(true);
+	m_infoLabel->setSizeHint(SizeHint(-1, 250));
+	//m_infoLabel->setTextParams("", Vec4f(1.f), font);
+	//m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
+
+	WidgetStrip *btnPnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
+	btnPnl->setAnchors(a);
+	btnPnl->setSizeHint(SizeHint(25));
+
+	// buttons
+	m_returnButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
 	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
 	m_returnButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+	m_returnButton->setCentreInCell(true);
 
-	x += w + gap;
-	m_deleteButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_deleteButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
 	m_deleteButton->setTextParams(g_lang.get("Delete"), Vec4f(1.f), font);
 	m_deleteButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+	m_deleteButton->setCentreInCell(true);
 
-	x += w + gap;
-	m_playNowButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_playNowButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
 	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
 	m_playNowButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+	m_playNowButton->setCentreInCell(true);
 
 	Vec2i dim = g_metrics.getScreenDims();
 
-	m_infoLabel = new ScrollText(&program, Vec2i(dim.x / 2 - 300, dim.y / 2 ), Vec2i(600, 200));
-	m_infoLabel->init();
-	//m_infoLabel->setTextParams("", Vec4f(1.f), font);
-//	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
-
-	m_savedGameList = new DropList(&program, Vec2i(dim.x / 2 - 150, dim.y / 2 - 100), Vec2i(300, 30));
-	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
-
-	// savegames listBoxGames
-	if(!loadGameList()) {
+	if (!loadGameList()) {
 		Vec2i sz(330, 256);
 		program.clear();
 		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz,

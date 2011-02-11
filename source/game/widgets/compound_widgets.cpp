@@ -13,13 +13,16 @@
 #include "core_data.h"
 #include "lang.h"
 #include "leak_dumper.h"
+#include "config.h"
+#include "renderer.h"
 
 #include <list>
 
 namespace Glest { namespace Widgets {
 using Shared::Util::intToStr;
-using Global::CoreData;
-using Global::Lang;
+using namespace Global;
+using namespace Shared::Graphics::Gl;
+
 
 // =====================================================
 //  class OptionContainer
@@ -110,7 +113,7 @@ ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 void ScrollText::recalc() {
 	int th = getTextDimensions().y;
 	int ch = getHeight() - getBordersVert() - getPadding() * 2;
-	m_textBase = -(th - ch) + 2;
+	m_textBase = 2;//-(th - ch) + 2;
 	m_scrollBar->setRanges(th, ch);
 	setTextPos(Vec2i(5, m_textBase));
 }
@@ -135,36 +138,7 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 
 	string text = txt;
 	fm->wrapText(text, width);
-	/*
-	std::list<string> words, lines;
-
-	string::size_type startPos = 0;
-	string::size_type spacePos = txt.find_first_of(' ');
-	while (spacePos != string::npos) {
-		words.push_back(txt.substr(startPos, spacePos - startPos));
-		startPos = spacePos + 1;
-		spacePos = txt.find_first_of(' ', startPos);
-	}
-	words.push_back(txt.substr(startPos));
-
-	string result;
-	string currLine;
-	do {
-		currLine = words.front();
-		words.pop_front();
-		while (!words.empty()) {
-			string testLine = currLine + ' ' + words.front();
-			if (fm->getTextDiminsions(testLine).x < width) {
-				currLine = testLine;
-				words.pop_front();
-			} else {
-				break;
-			}
-		}
-		result += currLine + "\n";
-	} while (!words.empty());
-	TextWidget::setText(result);
-	*/
+	
 	TextWidget::setText(text);
 	recalc();
 	
@@ -174,16 +148,20 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 }
 
 void ScrollText::render() {
-	Widget::renderBgAndBorders(false);
-	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderBottom());
-	Vec2i size = getSize() - getBordersAll();
+	Widget::renderBgAndBorders();
+	Vec2i pos = getScreenPos();
+	pos.x += getBorderLeft() + getPadding();
+	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
+		  + m_borderStyle.m_sizes[Border::BOTTOM] + getPadding();
+	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
 	glPushAttrib(GL_SCISSOR_BIT);
+		assertGl();
 		glEnable(GL_SCISSOR_TEST);
-		glScissor(pos.x, pos.y, size.x, size.y);
+		glScissor(pos.x, pos.y, size.w, size.h);
 		Container::render();
 		TextWidget::renderText();
-		glDisable(GL_SCISSOR_TEST);
 	glPopAttrib();
+	assertGl();
 }
 
 // =====================================================
