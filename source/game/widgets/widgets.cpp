@@ -39,12 +39,14 @@ void StaticText::render() {
 		return;
 	}
 	Widget::renderBgAndBorders();
-	if (m_doubleShadow) {
-		TextWidget::renderTextDoubleShadowed(0, m_shadowOffset);
-	} else if (m_shadow) {
-		TextWidget::renderTextShadowed(0, m_shadowOffset);
-	} else {
-		TextWidget::renderText();
+	if (TextWidget::getText(0) != "") {
+		if (m_doubleShadow) {
+			TextWidget::renderTextDoubleShadowed(0, m_shadowOffset);
+		} else if (m_shadow) {
+			TextWidget::renderTextShadowed(0, m_shadowOffset);
+		} else {
+			TextWidget::renderText();
+		}
 	}
 }
 
@@ -285,6 +287,7 @@ CheckBox::CheckBox(Container* parent)
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
 	setTextParams(g_lang.get("No"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	addText(g_lang.get("Yes"));
+	setSize(getPrefSize());
 }
 
 CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)

@@ -69,13 +69,14 @@ void ColourPicker::setSize(const Vec2i &sz) {
 void ColourPicker::onExpand(Button*) {
 	Vec2i size(4 * 32 + 4, 4 * 32 + 4);
 	Vec2i pos(getScreenPos());
-	pos.y -= 4 * 32 + 4;
+	pos += getSize() / 2;
+	pos -= size / 2;
 
-	m_dropDownPanel = new FloatingPanel(WidgetWindow::getInstance());
+	m_dropDownPanel = new FloatingPanel(getRootWindow());
 	m_dropDownPanel->setPos(pos);
 	m_dropDownPanel->setSize(size);
 
-	int y = 3 * 32 + 2;
+	int y = 2;
 	int x = 2;
 	for (int i=0; i < 4; ++i) {
 		for (int j=0; j < 4; ++j) {
@@ -85,9 +86,9 @@ void ColourPicker::onExpand(Button*) {
 			x += 32;
 		}
 		x = 2;
-		y -= 32;
+		y += 32;
 	}
-	WidgetWindow::getInstance()->setFloatingWidget(m_dropDownPanel);
+	getRootWindow()->setFloatingWidget(m_dropDownPanel);
 }
 
 void ColourPicker::setColour(int index) {

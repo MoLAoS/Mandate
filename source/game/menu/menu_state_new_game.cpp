@@ -86,16 +86,22 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	// create
 	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL);
-	Vec2i pad(15, 30);
+	Vec2i pad(25, 45);
 	ws->setPos(pad);
 	ws->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
 	Anchors a;
 	a.set(Edge::COUNT, 0, false);
 
+	Anchors a2;
+	a2.set(Edge::TOP,    0, false);
+	a2.set(Edge::BOTTOM, 0, false);
+	a2.set(Edge::LEFT,   5, true);
+	a2.set(Edge::RIGHT,  5, true);
+
 	WidgetStrip *slotPanel = new WidgetStrip(ws, Orientation::VERTICAL);
 	slotPanel->setSizeHint(SizeHint(50));
-	slotPanel->setAnchors(a);
+	slotPanel->setAnchors(a2);
 
 	PlayerSlotLabels *labels = new PlayerSlotLabels(slotPanel);
 	labels->setAnchors(a);
@@ -109,6 +115,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	WidgetStrip *pnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
 	pnl->setAnchors(a);
+	pnl->setSizeHint(SizeHint(15));
 
 	WidgetStrip *combo = new WidgetStrip(pnl, Orientation::VERTICAL);
 	combo->setAnchors(a);
@@ -116,22 +123,22 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_randomLocsLabel = new StaticText(combo);
 	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
 	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_randomLocsLabel->setAnchors(a);
+	m_randomLocsLabel->setCentreInCell(true);
 
 	m_randomLocsCheckbox = new CheckBox(combo);
-	m_randomLocsCheckbox->setAnchors(a);
+	m_randomLocsCheckbox->setCentreInCell(true);
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
 	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
 	combo->setAnchors(a);
 
 	m_SODLabel = new StaticText(combo);
-	m_SODLabel->setAnchors(a);
 	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
 	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	m_SODLabel->setCentreInCell(true);
 
 	m_SODCheckbox = new CheckBox(combo);
-	m_SODCheckbox->setAnchors(a);
+	m_SODCheckbox->setCentreInCell(true);
 	m_SODCheckbox->setChecked(true);
 	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
@@ -139,23 +146,23 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	combo->setAnchors(a);
 
 	m_FOWLabel = new StaticText(combo);
-	m_FOWLabel->setAnchors(a);
 	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
 	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	m_FOWLabel->setCentreInCell(true);
 
 	m_FOWCheckbox = new CheckBox(combo);
-	m_FOWCheckbox->setAnchors(a);
+	m_FOWCheckbox->setCentreInCell(true);
 	m_FOWCheckbox->setChecked(true);
 	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
 	pnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
 	pnl->setAnchors(a);
+	pnl->setSizeHint(SizeHint(20));
 
-	Anchors a2;
 	a2.set(Edge::TOP,    5, false);
 	a2.set(Edge::BOTTOM, 5, false);
-	a2.set(Edge::LEFT,  20, true);
-	a2.set(Edge::RIGHT, 20, true);
+	a2.set(Edge::LEFT,  10, true);
+	a2.set(Edge::RIGHT, 10, true);
 
 	// map listBox
 	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
@@ -218,6 +225,10 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
 	m_tilesetList->setSelected(0);
 
+	StaticText *spacer = new StaticText(combo);
+	spacer->setTextParams("", Vec4f(1.f), 0);
+	spacer->setSizeHint(SizeHint(50));
+
 	//tech Tree listBox
 	combo = new WidgetStrip(pnl, Orientation::VERTICAL);
 	combo->setAnchors(a2);
@@ -244,8 +255,14 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeList->setSelected(0);
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
+	spacer = new StaticText(combo);
+	spacer->setTextParams("", Vec4f(1.f), 0);
+	spacer->setSizeHint(SizeHint(50));
+
+
 	pnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
 	pnl->setAnchors(a);
+	pnl->setSizeHint(SizeHint(10));
 
 	int w = 256, h = 32;
 	m_returnButton = new Button(pnl, Vec2i(0), Vec2i(w, h));
