@@ -339,7 +339,9 @@ public:
 	void setActualRane(int avail) { availRange = avail; recalc(); }
 	void setLineSize(int line) { lineSize = line; }
 
-	int getRangeOffset() const { return int(thumbOffset / float(shaftHeight) * totalRange); }
+	int getRangeOffset() const {
+		return clamp(int(thumbOffset / float(shaftHeight - 2) * totalRange), 0, totalRange - availRange);
+	}
 	void setOffset(float percent);
 
 	void scrollLine(bool i_up);

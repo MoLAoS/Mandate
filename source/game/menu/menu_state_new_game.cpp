@@ -86,7 +86,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	// create
 	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL);
-	Vec2i pad(25, 45);
+	Vec2i pad(15, 45);
 	ws->setPos(pad);
 	ws->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 

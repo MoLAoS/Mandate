@@ -729,10 +729,10 @@ void VerticalScrollBar::recalc() {
 	setImageX(0, 3, downPos, imgSize);
 	shaftOffset = imgSize.y;
 	shaftHeight = size.y - imgSize.y * 2;
-	topOffset = imgSize.y;
+	topOffset = imgSize.y + 1;
 	thumbOffset = 0;
 	float availRatio = availRange / float(totalRange);
-	thumbSize = int(availRatio * shaftHeight);
+	thumbSize = int(availRatio * (shaftHeight - 2));
 }
 
 void VerticalScrollBar::setRanges(int total, int avail, int line) {
@@ -746,10 +746,10 @@ void VerticalScrollBar::setRanges(int total, int avail, int line) {
 }
 
 void VerticalScrollBar::setOffset(float percent) {
-	const int min = shaftOffset;
-	const int max = shaftOffset + shaftHeight - thumbSize;
+	const int min = 0;
+	const int max = (shaftHeight - 2) - thumbSize;
 
-	thumbOffset = clamp(int(max - percent * (max - min) / 100.f), min, max);
+	thumbOffset = clamp(int(max - percent * max / 100.f), min, max);
 	ThumbMoved(this);
 }
 
@@ -757,7 +757,7 @@ bool VerticalScrollBar::mouseDown(MouseButton btn, Vec2i pos) {
 	Vec2i localPos = pos - getScreenPos();
 	pressedPart = hoverPart;
 	if (pressedPart == Part::UPPER_SHAFT || pressedPart == Part::LOWER_SHAFT) {
-		thumbOffset = clamp(localPos.y - shaftOffset - thumbSize / 2, 0, shaftHeight - thumbSize);
+		thumbOffset = clamp(localPos.y - topOffset - thumbSize / 2, 0, (shaftHeight - 2) - thumbSize);
 		ThumbMoved(this);
 		pressedPart = hoverPart = Part::THUMB;
 	} else if (pressedPart == Part::UP_BUTTON || pressedPart == Part::DOWN_BUTTON) {
@@ -788,7 +788,7 @@ bool VerticalScrollBar::mouseUp(MouseButton btn, Vec2i pos) {
 
 void VerticalScrollBar::scrollLine(bool i_up) {
 	thumbOffset += i_up ? -lineSize : lineSize;
-	thumbOffset = clamp(thumbOffset, 0, shaftHeight - thumbSize);
+	thumbOffset = clamp(thumbOffset, 0, (shaftHeight - 2) - thumbSize);
 	ThumbMoved(this);
 }
 
@@ -834,7 +834,7 @@ bool VerticalScrollBar::mouseMove(Vec2i pos) {
 				hoverPart = Part::UP_BUTTON;
 			}
 		} else if (pressedPart == Part::THUMB) {
-			thumbOffset = clamp(localPos.y - shaftOffset - thumbSize / 2, 0, shaftHeight - thumbSize);
+			thumbOffset = clamp(localPos.y - topOffset - thumbSize / 2, 0, (shaftHeight - 2) - thumbSize);
 			ThumbMoved(this);
 		} else {
 			// don't care for shaft clicked here
@@ -871,7 +871,7 @@ void VerticalScrollBar::render() {
 	renderBackground(m_backgroundStyle, shaftPos, shaftSize);
 
 	// thumb
-	Vec2i thumbPos(1, shaftOffset + thumbOffset);
+	Vec2i thumbPos(1, topOffset + thumbOffset);
 	Vec2i thumbSizev(shaftOffset - 2, thumbSize);
 	renderBorders(m_thumbStyle, thumbPos, thumbSizev);
 	if (hoverPart == Part::THUMB) {
@@ -1390,7 +1390,7 @@ void ListBox::layoutChildren() {
 
 void ListBox::onScroll(VerticalScrollBar*) {
 	int offset = scrollBar->getRangeOffset();
-	cout << "Scroll offset = " << offset << endl;
+	//cout << "Scroll offset = " << offset << endl;
 
 	int ndx = 0;
 	const int x = m_borderStyle.m_sizes[Border::LEFT] + getPadding();
