@@ -19,9 +19,9 @@
 
 using Shared::Platform::WindowGl;
 
-namespace Glest { namespace Widgets {
-
-class Imageset;
+namespace Glest { 
+	namespace Graphics { class Imageset; }
+	namespace Widgets {
 class Animset;
 
 WRAPPED_ENUM(MouseAppearance, DEFAULT, ICON, CAMERA_MOVE)
@@ -59,7 +59,7 @@ private:
 	const Texture2D *mouseIcon;
 
 	Texture2D *m_mouseTexture;
-	Imageset *mouseMain;
+	Glest::Graphics::Imageset *mouseMain;
 	Animset *mouseAnimations;
 
 	Widget* findCommonAncestor(Widget* widget1, Widget* widget2);
