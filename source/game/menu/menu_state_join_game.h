@@ -69,7 +69,6 @@ public:
 	}
 };
 
-
 // ===============================
 // 	class MenuStateJoinGame
 // ===============================
@@ -80,7 +79,7 @@ private:
 	static const string serverFileName;
 
 private:
-	Panel*			m_connectPanel;
+	WidgetStrip*	m_connectPanel;
 	Panel*			m_gameSetupPanel;
 	MessageDialog*	m_messageBox;
 

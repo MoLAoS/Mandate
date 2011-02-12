@@ -123,53 +123,69 @@ void MenuStateJoinGame::buildConnectPanel() {
 	Vec2i pos, size(500, 300);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 
-	m_connectPanel = new Panel(&program, pos, size);
-	m_connectPanel->setAutoLayout(false);
+	m_connectPanel = new WidgetStrip(&program, Orientation::VERTICAL);
+	//m_connectPanel = new Panel(&program, pos, size);
+	//m_connectPanel->setAutoLayout(false);
 
 	Font *font = g_coreData.getFTMenuFontNormal();
+	Anchors a;
+	a.set(Edge::COUNT, 0, false);
+	m_connectPanel->setAnchors(a);
+	Vec2i pad(45, 45);
+	m_connectPanel->setPos(pad);
+	m_connectPanel->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	int yGap = (size.y - 30 * 4) / 5;
+	WidgetStrip *pnl = new WidgetStrip(m_connectPanel, Orientation::HORIZONTAL);
+	pnl->setSizeHint(SizeHint(-1, 50));
+	a.set(Edge::LEFT, 25, true);
+	a.set(Edge::RIGHT, 25, true);
+	pnl->setAnchors(a);
 
-	int xGap = (size.x - 120 * 3) / 4;
-	int x = xGap, w = 120, y = yGap, h = 30;
-	Button* returnButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
-	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
+	StaticText* historyLabel = new StaticText(pnl, Vec2i(0), Vec2i(200, 34));
+	historyLabel->setTextParams(g_lang.get("RecentHosts"), Vec4f(1.f), font);
+	historyLabel->setCentreInCell(true);
+	m_historyList = new DropList(pnl, Vec2i(0), Vec2i(300, 34));
+	m_historyList->setCentreInCell(true);
 
-	x += w + xGap;
-	Button* connectButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	connectButton->setTextParams(g_lang.get("Connect"), Vec4f(1.f), font);
-	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
+	pnl = new WidgetStrip(m_connectPanel, Orientation::HORIZONTAL);
+	pnl->setSizeHint(SizeHint(-1, 50));
+	pnl->setAnchors(a);
 
-	x += w + xGap;
-	Button* searchButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	searchButton->setTextParams(g_lang.get("Search"), Vec4f(1.f), font);
-	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
-
-	y += 30 + yGap;
-	w = (size.x - 20) / 2;
-	x = size.x / 2 - w / 2;
-	m_connectLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	m_connectLabel->setTextParams(g_lang.get("NotConnected"), Vec4f(1.f), font);
-
-	w = 150;
-	x = size.x / 2 - w - 5;
-	y += 30 + yGap;
-	StaticText* serverLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	StaticText* serverLabel = new StaticText(pnl, Vec2i(0), Vec2i(200, 34));
 	serverLabel->setTextParams(g_lang.get("Server") + " Ip: ", Vec4f(1.f), font);
+	serverLabel->setCentreInCell(true);
 	
-	x = size.x / 2 + 5;
-	m_serverTextBox = new TextBox(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	m_serverTextBox = new TextBox(pnl, Vec2i(0), Vec2i(300, 34));
 	m_serverTextBox->setTextParams("", Vec4f(1.f), font, true);
 	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
+	m_serverTextBox->setCentreInCell(true);
 
-	w = 200;
-	x = size.x / 2 - w - 5;
-	y += 30 + yGap;
-	StaticText* historyLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	historyLabel->setTextParams(g_lang.get("RecentHosts"), Vec4f(1.f), font);
-	x = size.x / 2 + 5;
-	m_historyList = new DropList(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	m_connectLabel = new StaticText(m_connectPanel, Vec2i(0), Vec2i(500, 34));
+	m_connectLabel->setTextParams(g_lang.get("NotConnected"), Vec4f(1.f), font);
+	m_connectLabel->setCentreInCell(true);
+	m_connectLabel->setSizeHint(SizeHint(-1, 50));
+
+	a.set(Edge::LEFT, 0, false);
+	a.set(Edge::RIGHT, 0, false);
+	pnl = new WidgetStrip(m_connectPanel, Orientation::HORIZONTAL);
+	pnl->setAnchors(a);
+	pnl->setSizeHint(SizeHint(25));
+
+	// buttons
+	Button* returnButton = new Button(pnl, Vec2i(0), Vec2i(256, 32));
+	returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
+	returnButton->setCentreInCell(true);
+
+	Button* connectButton = new Button(pnl, Vec2i(0), Vec2i(256, 32));
+	connectButton->setTextParams(g_lang.get("Connect"), Vec4f(1.f), font);
+	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
+	connectButton->setCentreInCell(true);
+
+	Button* searchButton = new Button(pnl, Vec2i(0), Vec2i(256, 32));
+	searchButton->setTextParams(g_lang.get("Search"), Vec4f(1.f), font);
+	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
+	searchButton->setCentreInCell(true);
 
 	const Properties::PropertyMap &pm = servers.getPropertyMap();
 	if (pm.empty()) {
