@@ -212,6 +212,7 @@ public:
 
 	virtual void render() = 0;
 
+	void renderBordersFromTexture(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
 	void renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
 	void renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size);
 	void renderBgAndBorders(bool bg = true);

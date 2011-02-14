@@ -24,17 +24,9 @@ namespace Glest { namespace Widgets {
 
 class StaticImage : public Widget, public ImageWidget {
 public:
-	StaticImage(Container* parent)
-			: Widget(parent)
-			, ImageWidget(this) {}
-
-	StaticImage(Container* parent, Vec2i pos, Vec2i size) 
-			: Widget(parent, pos, size)
-			, ImageWidget(this) {}
-
-	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
-			: Widget(parent, pos, size)
-			, ImageWidget(this, tex) {}
+	StaticImage(Container* parent);
+	StaticImage(Container* parent, Vec2i pos, Vec2i size);
+	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex);
 
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
@@ -130,17 +122,8 @@ private:
 	bool	m_doubleShadow;
 	
 public:
-	StaticText(Container* parent)
-			: Widget(parent) , TextWidget(this)
-			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
-		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	}
-
-	StaticText(Container* parent, Vec2i pos, Vec2i size)
-			: Widget(parent, pos, size), TextWidget(this)
-			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
-		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	}
+	StaticText(Container* parent);
+	StaticText(Container* parent, Vec2i pos, Vec2i size);
 
 public:
 	virtual Vec2i getPrefSize() const;
@@ -157,16 +140,15 @@ public:
 // class Button
 // =====================================================
 
-class Button : public Widget, public TextWidget, public ImageWidget, public MouseWidget {
+class Button : public Widget, public TextWidget, public MouseWidget {
 protected:
 	bool m_hover;
 	bool m_pressed;
 	bool m_doHoverHighlight;
-	bool m_defaultTexture;
 
 public:
 	Button(Container* parent);
-	Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTex = true, bool hoverHighlight = true);
+	Button(Container* parent, Vec2i pos, Vec2i size, bool hoverHighlight = true);
 
 	virtual void setSize(const Vec2i &sz) override;
 
@@ -190,7 +172,7 @@ public:
 // class CheckBox
 // =====================================================
 
-class CheckBox : public Button {
+class CheckBox : public Button, public ImageWidget {
 protected:
 	bool m_checked;
 

@@ -537,7 +537,7 @@ void DebugRenderer::renderIntraClusterEdges(const Vec2i &cluster, CardinalDir di
 		float h = map->getCell(t->nwPos)->getHeight();
 		Vec3f t1Pos(t->nwPos.x + 0.5f, h + 0.1f, t->nwPos.y + 0.5f);
 		for (Edges::const_iterator ei = t->edges.begin(); ei != t->edges.end(); ++ei) {
-			Edge * const &e = *ei;
+			Search::Edge * const &e = *ei;
 			//if (e->cost(1) != numeric_limits<float>::infinity()) {
 				const Transition* t2 = e->transition();
 				h = map->getCell(t2->nwPos)->getHeight();

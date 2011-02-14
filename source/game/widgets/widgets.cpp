@@ -34,6 +34,20 @@ namespace Glest { namespace Widgets {
 //  class StaticText
 // =====================================================
 
+StaticText::StaticText(Container* parent)
+		: Widget(parent) , TextWidget(this)
+		, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+}
+
+StaticText::StaticText(Container* parent, Vec2i pos, Vec2i size)
+		: Widget(parent, pos, size), TextWidget(this)
+		, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+}
+
 void StaticText::render() {
 	if (!isVisible()) {
 		return;
@@ -75,6 +89,27 @@ void StaticText::setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int
 // =====================================================
 //  class StaticImage
 // =====================================================
+
+StaticImage::StaticImage(Container* parent)
+		: Widget(parent)
+		, ImageWidget(this) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+}
+
+StaticImage::StaticImage(Container* parent, Vec2i pos, Vec2i size) 
+		: Widget(parent, pos, size)
+		, ImageWidget(this) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+}
+
+StaticImage::StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
+		: Widget(parent, pos, size)
+		, ImageWidget(this, tex) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+}
 
 Vec2i StaticImage::getMinSize() const {
 	const Pixmap2D *pixmap = getImage()->getPixmap();
@@ -165,57 +200,45 @@ void Animset::update() {
 Button::Button(Container* parent)
 		: Widget(parent)
 		, TextWidget(this)
-		, ImageWidget(this)
 		, MouseWidget(this)
 		, m_hover(false)
 		, m_pressed(false)
-		, m_doHoverHighlight(true)
-		, m_defaultTexture(true) {
+		, m_doHoverHighlight(true) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::BUTTON);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::BUTTON);
 }
 
-Button::Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTexture, bool hoverHighlight)
+Button::Button(Container* parent, Vec2i pos, Vec2i size, bool hoverHighlight)
 		: Widget(parent, pos, size)
 		, TextWidget(this)
-		, ImageWidget(this)
 		, MouseWidget(this)
 		, m_hover(false)
 		, m_pressed(false)
-		, m_doHoverHighlight(hoverHighlight) 
-		, m_defaultTexture(defaultTexture) {
-	// background texture
-	if (defaultTexture) {
-		CoreData &coreData = CoreData::getInstance();
-		Texture2D *tex = size.x > 3 * size.y / 2 
-			? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
-		setImage(tex);
-	}
+		, m_doHoverHighlight(hoverHighlight) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::BUTTON);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::BUTTON);
 }
 
 Vec2i Button::getPrefSize() const {
-	const Pixmap2D *pixmap = ImageWidget::getImage()->getPixmap();
-	Vec2i imgSize(pixmap->getW(), pixmap->getH());
+	Vec2i imgSize(0);
+	if (m_borderStyle.m_type == BorderType::TEXTURE) {
+		const Texture2D *tex = g_widgetConfig.getTexture(m_borderStyle.m_imageNdx);
+		imgSize = Vec2i(tex->getPixmap()->getW(), tex->getPixmap()->getH());
+	}
 	Vec2i txtSize(getMinSize());
-	Vec2i res(
-		imgSize.x > txtSize.x ? imgSize.x : txtSize.x,
-		imgSize.y > txtSize.y ? imgSize.y : txtSize.y);
+	Vec2i res(std::max(imgSize.x, txtSize.x), std::max(imgSize.y, txtSize.y));
 	return res;
 }
 
 Vec2i Button::getMinSize() const {
-	Vec2i txt = TextWidget::getTextDimensions();
-	Vec2i xtra = getBordersAll() + Vec2i(getPadding());
-	return txt + xtra;
+	Vec2i res = TextWidget::getTextDimensions() + getBordersAll() + Vec2i(getPadding());
+	res.x = std::min(res.x, 16);
+	res.y = std::min(res.y, 16);
+	return res;
 }
 
 void Button::setSize(const Vec2i &sz) {
 	Widget::setSize(sz);
-	if (m_defaultTexture) {
-		CoreData &coreData = CoreData::getInstance();
-		Vec2i size = getSize();
-		Texture2D *tex = size.x > 3 * size.y / 2 
-			? coreData.getButtonBigTexture() : coreData.getButtonSmallTexture();
-		setImage(tex);
-	}
 }
 
 bool Button::mouseMove(Vec2i pos) {
@@ -251,13 +274,8 @@ bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 }
 
 void Button::render() {
-	// render background
-	if (hasImage()) {
-		ImageWidget::renderImage();
-		renderBgAndBorders(false);
-	} else {
-		renderBgAndBorders();
-	}
+	// render background & borders
+	renderBgAndBorders();
 
 	// render hilight
 	if (m_doHoverHighlight && m_hover && isEnabled()) {
@@ -281,7 +299,10 @@ void Button::render() {
 // =====================================================
 
 CheckBox::CheckBox(Container* parent)
-		: Button(parent), m_checked(false) {
+		: Button(parent), m_checked(false)
+		, ImageWidget(this) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::CHECK_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::CHECK_BOX);
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
@@ -291,7 +312,10 @@ CheckBox::CheckBox(Container* parent)
 }
 
 CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)
-		: Button(parent, pos, size, false), m_checked(false) {
+		: Button(parent, pos, size, false), m_checked(false)
+		, ImageWidget(this) {
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::CHECK_BOX);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::CHECK_BOX);
 	CoreData &coreData = CoreData::getInstance();
 	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
 	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
@@ -511,6 +535,7 @@ Slider::Slider(Container* parent, Vec2i pos, Vec2i size, const string &title)
 		, m_shaftHover(false)
 		, m_title(title) {
 	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SLIDER);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::SLIDER);
 
 	const CoreData &coreData = CoreData::getInstance();
 	Font *font = coreData.getFTMenuFontNormal();
@@ -703,9 +728,7 @@ VerticalScrollBar::~VerticalScrollBar() {
 }
 
 void VerticalScrollBar::init() {
-	m_borderStyle.setSizes(0);
-	m_borderStyle.setNone();
-	//m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SCROLL_BAR);
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SCROLL_BAR);
 	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::SCROLL_BAR);
 	setPadding(0);
 	addImage(g_coreData.getVertScrollUpTexture());
@@ -1750,9 +1773,8 @@ void DropList::onListDisposed(Widget*) {
 // =====================================================
 
 void ToolTip::init() {
-	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 0.f)));
-	m_borderStyle.setSizes(2);
-	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 160u)));
+	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TOOL_TIP);
+	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TOOL_TIP);
 	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFontBig(), false);
 	TextWidget::setTextPos(Vec2i(4, 4));
 }

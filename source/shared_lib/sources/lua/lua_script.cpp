@@ -133,6 +133,14 @@ void LuaScript::popAll() {
 	lua_pop(luaState, -1);
 }
 
+Vec2i LuaScript::getVec2iField(const char *key) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	Vec2i res = args.getVec2i(-1);
+	lua_pop(luaState, 1);
+	return res;
+}
+
 Vec4i LuaScript::getVec4iField(const char *key) {
 	lua_getfield(luaState, -1, key);
 	LuaArguments args(luaState);

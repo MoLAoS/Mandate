@@ -186,11 +186,107 @@ void Widget::setBackgroundStyle(const BackgroundStyle &style) {
 	m_backgroundStyle = style;
 }
 
+Vec2f invertTexCoord(Vec2f in) {
+	Vec2f res(in);
+	res.y = 1.f - in.y;
+	return res;
+}
+
+void buildArrayQuad(Vec2f pos, Vec2f sz, Vec2f uv, Vec2f step, Vec2f *posBase, Vec2f *uvBase) {
+	posBase[0] = Vec2f(pos.x, pos.y);
+	uvBase[0] = invertTexCoord(Vec2f(uv.u, uv.v));
+	posBase[1] = Vec2f(pos.x + sz.w, pos.y);
+	uvBase[1] = invertTexCoord(Vec2f(uv.u + step.u, uv.v));
+	posBase[2] = Vec2f(pos.x + sz.w, pos.y + sz.h);
+	uvBase[2] = invertTexCoord(Vec2f(uv.u + step.u, uv.v + step.v));
+	posBase[3] = Vec2f(pos.x, pos.y + sz.h);
+	uvBase[3] = invertTexCoord(Vec2f(uv.u, uv.v + step.v));
+}
+
+void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
+	const int &borderSize = style.m_sizes[0];
+	const int &cornerSize = style.m_cornerSize;
+	const int &imgNdx = style.m_imageNdx;
+
+	if (style.m_cornerSize * 2 > size.w || style.m_cornerSize * 2 > size.h) {
+		assert(false);
+		return;
+	}
+
+	const Texture2DGl *tex = static_cast<const Texture2DGl*>(g_widgetConfig.getTexture(imgNdx));
+	assert(glIsTexture(tex->getHandle()));
+	const Vec2f uvStepBorder(borderSize / float(tex->getPixmap()->getW()),
+		borderSize / float(tex->getPixmap()->getH()));
+	const Vec2f uvStepCorner(cornerSize / float(tex->getPixmap()->getW()),
+		cornerSize / float(tex->getPixmap()->getH()));
+
+	// 8 quads
+	Vec2f verts[32];
+	Vec2f uvCoords[32];
+
+	Vec2f pos = Vec2f(getScreenPos() + offset);
+	Vec2f sz = Vec2f(size);
+
+	// 4 corners,
+	Vec2f cnrSize;
+	cnrSize.x = cnrSize.y = float(cornerSize);
+	buildArrayQuad(pos, cnrSize, Vec2f(0.f), uvStepCorner, &verts[0], &uvCoords[0]);
+	buildArrayQuad(pos + Vec2f(sz.w - float(cornerSize), 0.f),
+		cnrSize, Vec2f(1.f - uvStepCorner.u, 0.f), uvStepCorner, &verts[4], &uvCoords[4]);
+	buildArrayQuad(pos + Vec2f(sz.w - float(cornerSize), sz.h - float(cornerSize)),
+		cnrSize, Vec2f(1.f) - uvStepCorner, uvStepCorner, &verts[8], &uvCoords[8]);
+	buildArrayQuad(pos + Vec2f(0.f, sz.h - float(cornerSize)),
+		cnrSize, Vec2f(0.f, 1.f - uvStepCorner.v), uvStepCorner, &verts[12], &uvCoords[12]);
+
+	// and 4 sides,
+	// top & bottom
+	Vec2f tbSize(sz.w - float(cornerSize) * 2.f, float(borderSize));
+	Vec2f tUvOffset(uvStepCorner.u, 0.f);
+	Vec2f bUvOffset(uvStepCorner.u, 1.f - uvStepBorder.v);
+	Vec2f tbUvStep(1.f - uvStepCorner.u * 2, uvStepBorder.v);
+	buildArrayQuad(pos + Vec2f(float(cornerSize), 0.f), tbSize, tUvOffset, tbUvStep, &verts[16], &uvCoords[16]);
+	buildArrayQuad(pos + Vec2f(float(cornerSize), sz.h - float(borderSize)), tbSize, bUvOffset, tbUvStep, &verts[20], &uvCoords[20]);
+
+	Vec2f lrSize(float(borderSize), sz.h - float(cornerSize) * 2);
+	Vec2f lUvOffset(0.f, uvStepCorner.v);
+	Vec2f rUvOffset(1.f - uvStepBorder.u, uvStepCorner.v);
+	Vec2f lrUvStep(uvStepBorder.u, 1.f - 2.f * uvStepCorner.v);
+	buildArrayQuad(pos + Vec2f(0.f, float(cornerSize)), lrSize, lUvOffset, lrUvStep, &verts[24], &uvCoords[24]);
+	buildArrayQuad(pos + Vec2f(sz.w - float(borderSize), float(cornerSize)), lrSize, rUvOffset, lrUvStep, &verts[28], &uvCoords[28]);
+
+	vector<GLushort> indices;
+	for (unsigned short i=0; i < 32; ++i) {
+		indices.push_back(i);
+	}
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, tex->getHandle());
+	assertGl();
+
+	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glVertexPointer(2, GL_FLOAT, 0, &verts[0]);
+	glTexCoordPointer(2, GL_FLOAT, 0, &uvCoords[0]);
+	assertGl();
+
+	glDrawElements(GL_QUADS, 32, GL_UNSIGNED_SHORT, &indices[0]);
+	assertGl();
+
+	glPopAttrib();
+	glPopClientAttrib();
+	assertGl();
+}
 
 void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
 	assert(style.m_type != BorderType::NONE);
 	assert(size.x >= style.m_sizes[Border::LEFT] + style.m_sizes[Border::RIGHT]);
 	assert(size.y >= style.m_sizes[Border::TOP] + style.m_sizes[Border::BOTTOM]);
+
+	if (style.m_type == BorderType::TEXTURE) {
+		renderBordersFromTexture(style, offset, size);
+	}
 
 	enum { OBL, OTL, OTR, OBR, IBL, ITL, ITR, IBR };
 	Vec2i verts[8];
@@ -332,9 +428,9 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 
 	Vec2i verts[4];
 	verts[0] = m_screenPos + offset;
-	verts[1] = verts[0] + Vec2i(0, size.y);
+	verts[1] = verts[0] + Vec2i(size.x, 0);
 	verts[2] = verts[0] + size;
-	verts[3] = verts[0] + Vec2i(size.x, 0);
+	verts[3] = verts[0] + Vec2i(0, size.y);
 
 	assertGl();
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
@@ -382,13 +478,13 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 			glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
 			glBegin(GL_TRIANGLE_FAN);
 			glColor4f(1.f, 1.f, 1.f, getFade());
-				glTexCoord2i(0, 0);
-				glVertex2iv(verts[0].ptr());
 				glTexCoord2i(0, 1);
+				glVertex2iv(verts[0].ptr());
+				glTexCoord2i(1, 1);
 				glVertex2iv(verts[1].ptr());
 				glTexCoord2i(1, 0);
 				glVertex2iv(verts[2].ptr());
-				glTexCoord2i(1, 1);
+				glTexCoord2i(0, 0);
 				glVertex2iv(verts[3].ptr());
 			glEnd();
 

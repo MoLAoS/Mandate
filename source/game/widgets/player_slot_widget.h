@@ -23,7 +23,7 @@ private:
 
 public:
 	ColourButton(Container *parent)
-			: Button(parent, Vec2i(0), Vec2i(32), false, false)
+			: Button(parent, Vec2i(0), Vec2i(32))
 			, m_colourBase(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND))
 			, m_colourOutline(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND)) {
 		m_borderStyle.setSizes(4);
@@ -32,7 +32,7 @@ public:
 	}
 
 	ColourButton(Container *parent, Vec2i pos, Vec2i size)
-			: Button(parent, pos, size, false, false)
+			: Button(parent, pos, size)
 			, m_colourBase(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND))
 			, m_colourOutline(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND)) {
 		m_borderStyle.setSizes(4);

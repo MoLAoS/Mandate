@@ -50,6 +50,13 @@ void BorderStyle::setSolid(int colourIndex) {
 	m_colourIndices[0] = colourIndex;
 }
 
+void BorderStyle::setImage(int imageNdx, int borderSize, int cornerSize) {
+	m_type = BorderType::TEXTURE;
+	m_imageNdx = imageNdx;
+	setSizes(borderSize);
+	m_cornerSize = cornerSize;
+}
+
 PaddingStyle::PaddingStyle() {
 	memset(this, 0, sizeof(*this));
 }

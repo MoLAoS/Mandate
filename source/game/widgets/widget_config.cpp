@@ -11,11 +11,13 @@
 #include "widget_config.h"
 #include "core_data.h"
 #include "script_manager.h"
+#include "renderer.h"
 
 namespace Glest { namespace Widgets {
 using namespace Shared::PhysFS;
 using Script::ScriptManager;
 using Global::CoreData;
+using namespace Graphics;
 
 WidgetConfig& WidgetConfig::getInstance() {
 	static WidgetConfig config;
@@ -37,40 +39,86 @@ void WidgetConfig::addGlestTexture(const string &name, TexPtr tex) {
 	m_namedTextures[name] = m_textures.size() - 1;
 }
 
+int WidgetConfig::loadTexture(const string &path) {
+	int n = getTextureIndex(path);
+	if (n != -1) {
+		return n;
+	}
+	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
+	try {
+		tex->load(path);
+		tex->init();
+		addGlestTexture(path, tex);
+		return m_textures.size() - 1;
+	} catch (const runtime_error &e) {
+		return -1;
+	}
+}
+
 void WidgetConfig::loadBorderStyle(WidgetType widgetType, const char *table, BorderStyle &style) {
 	if (luaScript.getTable(table)) {
-		string type = luaScript.getStringField("Type");
+		string errorPreamble("While loading border style for widget type '" 
+			+ string(WidgetTypeNames[widgetType]) + "'\n\t");
+		string type;
+		try {
+			type = luaScript.getStringField("Type");
+		} catch (LuaError &e) {
+			string msg = errorPreamble + "border type is not present!";
+			g_logger.logError(msg);
+		}
 		BorderType bt = BorderTypeNames.match(type.c_str());
 		if (bt == BorderType::INVALID) {
-			///@todo warn / report error
+			string msg = errorPreamble + "border type is not valid '" + type + "'";
+			g_logger.logError(msg);
 			bt = BorderType::NONE;
 		}
 		style.m_type = bt;
 		if (bt != BorderType::NONE) {
-			try {
-				Vec4i sizes = luaScript.getVec4iField("Sizes");
-				style.setSizes(sizes);
-			} catch (LuaError &e) {
-				///@todo warning ?					
-			}
-			int numColours = 0;
-			if (bt == BorderType::SOLID) {
-				numColours = 1;
-			} else if (bt == BorderType::RAISE || bt == BorderType::EMBED) {
-				numColours = 2;
-			} else if (bt ==  BorderType::CUSTOM_CORNERS || bt == BorderType::CUSTOM_SIDES) {
-				numColours = 4;
-			}
-			if (numColours) {
-				try { ///@todo error stuff
-					StringSet strings = luaScript.getStringSet("Colours");
-					for (int i=0; i < numColours; ++i) {
-						if (!strings[i].empty()) {
-							style.m_colourIndices[i] = getColourIndex(strings[i]);
+			if (bt != BorderType::TEXTURE) {
+				try {
+					Vec4i sizes = luaScript.getVec4iField("Sizes");
+					style.setSizes(sizes);
+				} catch (LuaError &e) {
+					string msg = errorPreamble + e.what();
+					g_logger.logError(msg);
+				}
+				int numColours = 0;
+				if (bt == BorderType::SOLID) {
+					numColours = 1;
+				} else if (bt == BorderType::RAISE || bt == BorderType::EMBED) {
+					numColours = 2;
+				} else if (bt ==  BorderType::CUSTOM_CORNERS || bt == BorderType::CUSTOM_SIDES) {
+					numColours = 4;
+				}
+				if (numColours) {
+					try { ///@todo error stuff
+						StringSet strings = luaScript.getStringSet("Colours");
+						for (int i=0; i < numColours; ++i) {
+							if (!strings[i].empty()) {
+								style.m_colourIndices[i] = getColourIndex(strings[i]);
+							}
 						}
+					} catch (LuaError &e) {
+						string msg = errorPreamble + e.what();
+						g_logger.logError(msg);
+					}
+				}
+			} else { // bt == BorderType::TEXTURE
+				try {
+					string tex = luaScript.getStringField("Texture");
+					Vec2i sizes = luaScript.getVec2iField("Sizes");
+					int ndx = loadTexture(tex);
+					if (ndx != -1) {
+						style.setImage(ndx, sizes.x, sizes.y);
+					} else {
+						style.setNone();
+						string msg = errorPreamble + "texture at '" + tex + "' could not be loaded.";
+						g_logger.logError(msg);						
 					}
 				} catch (LuaError &e) {
-					///@todo report
+					style.setNone();
+					string msg = errorPreamble + e.what();
+					g_logger.logError(msg);
 				}
 			}
 		}
@@ -101,7 +149,7 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType) {
 		if (bt == BackgroundType::TEXTURE) {
 			try {
 				string tex = luaScript.getStringField("Texture");
-				m_backgroundStyles[widgetType].m_imageIndex = getTextureIndex(tex);
+				m_backgroundStyles[widgetType].m_imageIndex = loadTexture(tex);
 			} catch (LuaError &e) {
 
 			}
@@ -160,6 +208,7 @@ WidgetConfig::WidgetConfig() {
 		//m_borderStyles[WidgetType::STATIC_WIDGET].setSizes(1);
 	}
 	if (!loadStyles("Button", WidgetType::BUTTON)) {
+		///@todo make sensible, no default image anymore...
 		m_borderStyles[WidgetType::BUTTON].setNone();
 		m_backgroundStyles[WidgetType::BUTTON].setNone();
 		//m_backgroundStyles[WidgetType::BUTTON].setTexture(WidgetTexture::BUTTON_BIG);
@@ -222,14 +271,19 @@ WidgetConfig::WidgetConfig() {
 		m_borderStyles[WidgetType::MESSAGE_BOX].setSizes(2);
 		m_backgroundStyles[WidgetType::MESSAGE_BOX].setColour(WidgetColour::DARK_BACKGROUND);
 	}
+	if (!loadStyles("ToolTip", WidgetType::TOOL_TIP)) {
+		m_borderStyles[WidgetType::MESSAGE_BOX].setSolid(WidgetColour::BLACK);
+		m_borderStyles[WidgetType::MESSAGE_BOX].setSizes(2);
+		m_backgroundStyles[WidgetType::MESSAGE_BOX].setColour(WidgetColour::DARK_BACKGROUND);
+	}
 	luaScript.close();
 }
 
-uint32 WidgetConfig::getColourIndex(const Vec3f &c) {
+int WidgetConfig::getColourIndex(const Vec3f &c) {
 	return getColourIndex(Colour(uint8(c.r * 255), uint8(c.g * 255), uint8(c.b * 255), 255u));
 }
 
-uint32 WidgetConfig::getColourIndex(const Colour &c) {
+int WidgetConfig::getColourIndex(const Colour &c) {
 	const int &n = m_colours.size();
 	for (int i = 0; i < n; ++i) {
 		if (m_colours[i] == c) {
@@ -240,7 +294,7 @@ uint32 WidgetConfig::getColourIndex(const Colour &c) {
 	return n;
 }
 
-uint32 WidgetConfig::getFontIndex(const Font *f) {
+int WidgetConfig::getFontIndex(const Font *f) {
 	const int &n = m_fonts.size();
 	for (int i = 0; i < n; ++i) {
 		if (m_fonts[i] == f) {
@@ -251,7 +305,7 @@ uint32 WidgetConfig::getFontIndex(const Font *f) {
 	return n;
 }
 
-uint32 WidgetConfig::getTextureIndex(const Texture2D *t) {
+int WidgetConfig::getTextureIndex(const Texture2D *t) {
 	const int &n = m_textures.size();
 	for (int i = 0; i < n; ++i) {
 		if (m_textures[i] == t) {
@@ -262,28 +316,28 @@ uint32 WidgetConfig::getTextureIndex(const Texture2D *t) {
 	return n;
 }
 
-uint32 WidgetConfig::getColourIndex(const string &name) const {
+int WidgetConfig::getColourIndex(const string &name) const {
 	IndexByNameMap::const_iterator it = m_namedColours.find(name);
 	if (it != m_namedColours.end()) {
 		return it->second;
 	}
-	return 0;
+	return -1;
 }
 
-uint32 WidgetConfig::getTextureIndex(const string &name) const {
+int WidgetConfig::getTextureIndex(const string &name) const {
 	IndexByNameMap::const_iterator it = m_namedTextures.find(name);
 	if (it != m_namedTextures.end()) {
 		return it->second;
 	}
-	return 0;
+	return -1;
 }
 
-uint32 WidgetConfig::getFontIndex(const string &name) const {
+int WidgetConfig::getFontIndex(const string &name) const {
 	IndexByNameMap::const_iterator it = m_namedFonts.find(name);
 	if (it != m_namedFonts.end()) {
 		return it->second;
 	}
-	return 0;
+	return -1;
 }
 
 }}

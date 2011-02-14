@@ -30,22 +30,22 @@ using namespace Shared::Lua;
 
 namespace Glest { namespace Widgets {
 
-WRAPPED_ENUM( WidgetFont,
+STRINGY_ENUM( WidgetFont,
 	MENU_NORMAL, MENU_SMALL, MENU_BIG, MENU_VERY_BIG, CONSOLE
 );
 
-WRAPPED_ENUM( WidgetColour,
+STRINGY_ENUM( WidgetColour,
 	WHITE, BLACK, LIGHT_BORDER, DARK_BORDER, BACKGROUND, DARK_BACKGROUND
 );
 
-WRAPPED_ENUM( WidgetTexture,
+STRINGY_ENUM( WidgetTexture,
 	BUTTON_SMALL, BUTTON_BIG, TEXT_ENTRY, CHECKBOX_CHECKED, CHECKBOX_UNCHECKED, 
 	VERTICAL_SCROLL_UP, VERTICAL_SCROLL_DOWN
 );
 
-WRAPPED_ENUM( WidgetType,
+STRINGY_ENUM( WidgetType,
 	STATIC_WIDGET, BUTTON, CHECK_BOX, TEXT_BOX, LIST_ITEM, LIST_BOX, DROP_LIST, 
-	SCROLL_BAR, SLIDER, TITLE_BAR, MESSAGE_BOX
+	SCROLL_BAR, SLIDER, TITLE_BAR, MESSAGE_BOX, TOOL_TIP
 );
 
 class WidgetConfig {
@@ -82,6 +82,8 @@ private:
 	void addGlestTexture(const string &name, TexPtr tex);
 
 	// load helpers
+	int loadTexture(const string &path);
+
 	bool loadStyles(const char *tableName, WidgetType wType);
 	void loadBorderStyle(WidgetType widgetType, const char *table, BorderStyle &style);
 	void loadBackgroundStyle(WidgetType widgetType);
@@ -91,15 +93,15 @@ public:
 
 public:
 	// get index of a Colour/Font/Texture, adding to collection if needed
-	uint32 getColourIndex(const Vec3f &c);
-	uint32 getColourIndex(const Colour &c);
-	uint32 getFontIndex(const Font *f);
-	uint32 getTextureIndex(const Texture2D *t);
+	int getColourIndex(const Vec3f &c);
+	int getColourIndex(const Colour &c);
+	int getFontIndex(const Font *f);
+	int getTextureIndex(const Texture2D *t);
 
 	// get index of a named 'Glest' Colour/Font/Texture
-	uint32 getColourIndex(const string &name) const;
-	uint32 getFontIndex(const string &name) const;
-	uint32 getTextureIndex(const string &name) const;
+	int getColourIndex(const string &name) const;
+	int getFontIndex(const string &name) const;
+	int getTextureIndex(const string &name) const;
 
 	// get Colour/Font/Texture by index
 	const Colour&		getColour(uint32 ndx) const		{ return m_colours[ndx]; }

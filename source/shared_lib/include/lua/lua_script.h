@@ -77,6 +77,7 @@ public:
 	bool getTable(const char *tableName);
 	void popTable();
 	void popAll();
+	Vec2i getVec2iField(const char *key);
 	Vec4i getVec4iField(const char *key);
 	string getStringField(const char *key);
 	StringSet getStringSet(const char *key);

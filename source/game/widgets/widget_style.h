@@ -22,12 +22,14 @@ namespace Glest { namespace Widgets {
 WRAPPED_ENUM( Border, TOP, RIGHT, BOTTOM, LEFT );
 WRAPPED_ENUM( Corner, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT );
 
-STRINGY_ENUM( BorderType, NONE, RAISE, EMBED, SOLID, CUSTOM_SIDES, CUSTOM_CORNERS );
+STRINGY_ENUM( BorderType, NONE, RAISE, EMBED, SOLID, CUSTOM_SIDES, CUSTOM_CORNERS, TEXTURE );
 
 struct BorderStyle {
 	BorderType	m_type;
 	int			m_colourIndices[Corner::COUNT];
 	int			m_sizes[Border::COUNT];
+	int         m_imageNdx;   // for type == TEXTURE
+	int         m_cornerSize; // for type == TEXTURE
 
 	BorderStyle();
 	BorderStyle(const BorderStyle &style);
@@ -36,11 +38,11 @@ struct BorderStyle {
 	void setSizes(int all) { setSizes(all, all, all, all); }
 	void setSizes(Vec4i v) { setSizes(v.x, v.y, v.z, v.w); }
 
-
 	void setNone();
 	void setRaise(int lightColourIndex, int darkColourIndex);
 	void setEmbed(int lightColourIndex, int darkColourIndex);
 	void setSolid(int colourIndex);
+	void setImage(int imageIndex, int borderSize, int cornerSize);
 
 	Vec2i getBorderDims() const {
 		return Vec2i(m_sizes[Border::LEFT] + m_sizes[Border::RIGHT],

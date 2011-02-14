@@ -203,7 +203,6 @@ TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool 
 		int btn_sz = size.y - 4;
 		Vec2i pos(size.x - btn_sz - 2, 2);
 		m_closeButton = new Button(this, pos, Vec2i(btn_sz));
-		m_closeButton->setImage(CoreData::getInstance().getCheckBoxCrossTexture());
 	}
 }
 

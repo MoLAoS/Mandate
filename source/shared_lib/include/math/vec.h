@@ -34,6 +34,7 @@ public:
 	union {
 		struct { T x, y; };
 		struct { T w, h; };
+		struct { T u, v; };
 		T raw[2];
 	};
 
