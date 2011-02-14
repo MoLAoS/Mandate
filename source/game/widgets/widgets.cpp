@@ -163,7 +163,7 @@ void Animset::update() {
 // =====================================================
 
 Button::Button(Container* parent)
-		: CellWidget(parent)
+		: Widget(parent)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
@@ -174,7 +174,7 @@ Button::Button(Container* parent)
 }
 
 Button::Button(Container* parent, Vec2i pos, Vec2i size, bool defaultTexture, bool hoverHighlight)
-		: CellWidget(parent, pos, size)
+		: Widget(parent, pos, size)
 		, TextWidget(this)
 		, ImageWidget(this)
 		, MouseWidget(this)
@@ -381,7 +381,7 @@ void CheckBox::render() {
 // =====================================================
 
 TextBox::TextBox(Container* parent)
-		: CellWidget(parent)
+		: Widget(parent)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, TextWidget(this)
@@ -394,7 +394,7 @@ TextBox::TextBox(Container* parent)
 }
 
 TextBox::TextBox(Container* parent, Vec2i pos, Vec2i size)
-		: CellWidget(parent, pos, size)
+		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, TextWidget(this)
@@ -501,7 +501,7 @@ Vec2i TextBox::getPrefSize() const {
 // =====================================================
 
 Slider::Slider(Container* parent, Vec2i pos, Vec2i size, const string &title)
-		: CellWidget(parent, pos, size)
+		: Widget(parent, pos, size)
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
@@ -515,8 +515,8 @@ Slider::Slider(Container* parent, Vec2i pos, Vec2i size, const string &title)
 	const CoreData &coreData = CoreData::getInstance();
 	Font *font = coreData.getFTMenuFontNormal();
 	addImage(coreData.getButtonSmallTexture());
-	setTextParams(m_title, Vec4f(1.f), font, false);
-	addText("0 %");
+	setTextParams(m_title, Vec4f(1.f), font, false); // ndx 0
+	addText("0 %"); // ndx 1
 	
 	string maxVal = "100 %";
 	Vec2f dims = getTextFont()->getMetrics()->getTextDiminsions(maxVal);
@@ -672,7 +672,7 @@ void Slider::render() {
 // =====================================================
 
 VerticalScrollBar::VerticalScrollBar(Container* parent)
-		: CellWidget(parent)
+		: Widget(parent)
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
@@ -685,7 +685,7 @@ VerticalScrollBar::VerticalScrollBar(Container* parent)
 }
 
 VerticalScrollBar::VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size)
-		: CellWidget(parent, pos, size)
+		: Widget(parent, pos, size)
 		, ImageWidget(this)
 		, MouseWidget(this)
 		, hoverPart(0), pressedPart(0)
@@ -880,41 +880,42 @@ void VerticalScrollBar::render() {
 }
 
 // =====================================================
-// class WidgetStrip
+// class CellStrip
 // =====================================================
 
-WidgetStrip::WidgetStrip(Container *parent, Orientation ld)
+CellStrip::CellStrip(Container *parent, Orientation ld, int cells)
 		: Container(parent)
+		, m_direction(ld)
 		, m_dirty(false) {
-	m_direction = ld;
-	m_defaultAnchors = Anchors();
-	m_defualtSizeHint = SizeHint(); // default percentage
+	for (int i=0; i < cells; ++i) {
+		m_cells.push_back(new WidgetCell(this));
+	}
 }
 
-WidgetStrip::WidgetStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld) 
+CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, int cells) 
 		: Container(parent, pos, size)
+		, m_direction(ld)
 		, m_dirty(false) {
-	m_direction = ld;
-	m_defaultAnchors = Anchors();
-	m_defualtSizeHint = SizeHint(); // default percentage
+	for (int i=0; i < cells; ++i) {
+		m_cells.push_back(new WidgetCell(this));
+	}
 }
 
-void WidgetStrip::setPos(const Vec2i &pos) {
+void CellStrip::addChild(Widget *child) {
+	Container::addChild(child);
+}
+
+void CellStrip::setPos(const Vec2i &pos) {
 	Container::setPos(pos);
 	setDirty();
 }
 
-void WidgetStrip::setSize(const Vec2i &sz) {
+void CellStrip::setSize(const Vec2i &sz) {
 	Container::setSize(sz);
 	setDirty();
 }
 
-void WidgetStrip::setCellRect(const Vec2i &pos, const Vec2i &size) {
-	CellWidget::setCellRect(pos, size);
-	layoutCells();
-}
-
-void WidgetStrip::render() {
+void CellStrip::render() {
 	renderBgAndBorders(false);
 	if (m_dirty) {
 		layoutCells();
@@ -922,23 +923,16 @@ void WidgetStrip::render() {
 	Container::render();
 }
 
-void WidgetStrip::addChild(CellWidget* child) {
-	Container::addChild(child);
-	child->setAnchors(m_defaultAnchors);
-	child->setSizeHint(m_defualtSizeHint);
-	setDirty();
-}
-
-void WidgetStrip::addChild(Widget* child) {
-	bool ok = child->isCellWidget();
-	//RUNTIME_CHECK_MSG(child->isCellWidget(), "Non CellWidget added to WidgetStrip.");
-	addChild(static_cast<CellWidget*>(child));
-}
-
 typedef vector<SizeHint>    HintList;
 typedef pair<int, int>      CellDim;
 typedef vector<CellDim>     CellDimList;
 
+/** splits up an amount of space (single dimension) according to a set of hints
+  * @param hints the list of hints, one for each cell
+  * @param space the amount of space to split up
+  * @param out_res result vector, each entry is an offset and size pair
+  * @return the amount of space that is "left over" (not allocated to a cell)
+  */
 int calculateCellDims(HintList &hints, const int space, CellDimList &out_res) {
 	RUNTIME_CHECK_MSG(space > 0, "calculateCellDims(): called with no space.");
 	RUNTIME_CHECK_MSG(out_res.empty(), "calculateCellDims(): output vector not empty!");
@@ -975,10 +969,9 @@ int calculateCellDims(HintList &hints, const int space, CellDimList &out_res) {
 		defPcnt = 0;
 	}
 
-
 	// Pass 2
+	// convert percentages and write cell sizes to output vector
 	int offset = 0, size;
-	// Allocate space for cells
 	foreach_const (HintList, it, hints) {
 		if (it->isPercentage()) {
 			if (it->getPercentage() >= 0) {
@@ -995,11 +988,11 @@ int calculateCellDims(HintList &hints, const int space, CellDimList &out_res) {
 	return space - offset;
 }
 
-void WidgetStrip::layoutCells() {
+void CellStrip::layoutCells() {
 	// collect hints
 	HintList     hintList;
-	foreach (WidgetList, it, children) {
-		hintList.push_back(static_cast<CellWidget*>(*it)->getSizeHint());
+	foreach (vector<WidgetCell*>, it, m_cells) {
+		hintList.push_back(static_cast<WidgetCell*>(*it)->getSizeHint());
 	}
 	// determine space available
 	int space;
@@ -1027,8 +1020,9 @@ void WidgetStrip::layoutCells() {
 		ppos = getPadding() + getBorderTop();
 		psize = getHeight() - getPadding() * 2 - getBordersVert();
 	}
+	// combine results and set cell pos and size
 	Vec2i pos, size;
-	for (int i=0; i < children.size(); ++i) {
+	for (int i=0; i < m_cells.size(); ++i) {
 		if (m_direction == Orientation::VERTICAL) {
 			pos = Vec2i(ppos, offset + resultList[i].first);
 			size = Vec2i(psize, resultList[i].second);
@@ -1036,9 +1030,8 @@ void WidgetStrip::layoutCells() {
 			pos = Vec2i(offset + resultList[i].first, ppos);
 			size = Vec2i(resultList[i].second, psize);
 		}
-		//children[i]->setPos(pos);
-		//children[i]->setSize(size);
-		static_cast<CellWidget*>(children[i])->setCellRect(pos, size);
+		m_cells[i]->setPos(pos);
+		m_cells[i]->setSize(size);
 	}
 	m_dirty = false;
 }
@@ -1086,7 +1079,7 @@ void Panel::setLayoutParams(bool autoLayout, Orientation dir, Origin origin) {
 }
 
 void Panel::layoutChildren() {
-	if (!autoLayout || children.empty()) {
+	if (!autoLayout || m_children.empty()) {
 		return;
 	}
 	if (layoutDirection == Orientation::VERTICAL) {
@@ -1101,7 +1094,7 @@ void Panel::layoutVertical() {
 	int wh = 0;
 	Vec2i size = getSize();
 	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		wh +=  + widgetPadding;
 		widgetYPos.push_back(wh);
 		wh += (*it)->getHeight();
@@ -1118,7 +1111,7 @@ void Panel::layoutVertical() {
 		case Origin::FROM_BOTTOM: offset = size.y - wh - m_borderStyle.m_sizes[Border::TOP]; break;
 	}
 	int ndx = 0;
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		int ww = (*it)->getWidth();
 		int x = topLeft.x + (room.x - ww) / 2;
 		int y = offset + widgetYPos[ndx++];
@@ -1131,7 +1124,7 @@ void Panel::layoutHorizontal() {
 	int ww = 0;
 	Vec2i size = getSize();
 	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		widgetXPos.push_back(ww);
 		ww += (*it)->getWidth();
 		ww += widgetPadding;
@@ -1147,7 +1140,7 @@ void Panel::layoutHorizontal() {
 		case Origin::FROM_RIGHT: offset = size.x - ww - getBorderRight(); break;
 	}
 	int ndx = 0;
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		int wh = (*it)->getHeight();
 		int x = offset + widgetXPos[ndx++];
 		int y = (room.y - wh) / 2;
@@ -1327,7 +1320,7 @@ void ListBox::setSize(const Vec2i &sz) {
 }
 
 void ListBox::layoutChildren() {
-	if (children.empty()) {
+	if (m_children.empty()) {
 		return;
 	}
 	const int padHoriz = m_borderStyle.getHorizBorderDim() + getPadding() * 2;
@@ -1363,7 +1356,7 @@ void ListBox::layoutChildren() {
 	if (scrollBar) {
 		room.x -= scrollBar->getWidth();
 	}
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		if (*it == scrollBar) {
 			continue;
 		}
@@ -1376,7 +1369,7 @@ void ListBox::layoutChildren() {
 
 	int ndx = 0;
 	yPositions.clear();
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		if (*it == scrollBar) {
 			continue;
 		}
@@ -1394,7 +1387,7 @@ void ListBox::onScroll(VerticalScrollBar*) {
 
 	int ndx = 0;
 	const int x = m_borderStyle.m_sizes[Border::LEFT] + getPadding();
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		if (*it == scrollBar) {
 			continue;
 		}
@@ -1414,7 +1407,7 @@ int ListBox::getPrefHeight(int childCount) {
 	int res = m_borderStyle.getVertBorderDim() + getPadding() * 2;
 	int iSize = int(g_widgetConfig.getFont(WidgetFont::MENU_NORMAL)->getMetrics()->getHeight()) + 4;
 	if (childCount == -1) {
-		childCount = children.size();//listBoxItems.size();
+		childCount = m_children.size();//listBoxItems.size();
 	}
 	res += iSize * childCount;
 	if (childCount) {
@@ -1423,10 +1416,10 @@ int ListBox::getPrefHeight(int childCount) {
 	return res;
 }
 
-///@todo handle no children
+///@todo handle no m_children
 Vec2i ListBox::getMinSize() const {
 	Vec2i res(0);
-	foreach_const (WidgetList, it, children) {
+	foreach_const (WidgetList, it, m_children) {
 		Vec2i ips = (*it)->getPrefSize();
 		if (ips.x > res.x) res.x = ips.x;
 		if (ips.y > res.y) res.y = ips.y;
@@ -1438,7 +1431,7 @@ Vec2i ListBox::getMinSize() const {
 
 Vec2i ListBox::getPrefSize() const {
 	Vec2i res(0);
-	foreach_const (WidgetList, it, children) {
+	foreach_const (WidgetList, it, m_children) {
 		Vec2i ips = (*it)->getPrefSize();
 		if (ips.x > res.x) res.x = ips.x;
 		res.y += ips.y;

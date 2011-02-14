@@ -97,12 +97,12 @@ public:
 	sigslot::signal<ColourPicker*> ColourChanged;
 };
 
-class PlayerSlotLabels : public WidgetStrip {
+class PlayerSlotLabels : public CellStrip {
 public:
 	PlayerSlotLabels(Container* parent);
 };
 
-class PlayerSlotWidget : public WidgetStrip, public sigslot::has_slots {
+class PlayerSlotWidget : public CellStrip, public sigslot::has_slots {
 private:
 	StaticText*		m_label;
 	DropList*		m_controlList;

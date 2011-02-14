@@ -39,10 +39,66 @@ class MouseWidget;
 class KeyboardWidget;
 class TextWidget;
 
-WRAPPED_ENUM(MouseAppearance, DEFAULT, ICON, CAMERA_MOVE)
+// =====================================================
+//  enums Edge & AnchorType
+// =====================================================
+
+WRAPPED_ENUM( Edge, LEFT, TOP, RIGHT, BOTTOM );
+WRAPPED_ENUM( AnchorType, NONE, RIGID, SPRINGY );
 
 // =====================================================
-// class Widget
+//  class Anchor
+// =====================================================
+
+class Anchor {
+	uint32	m_type  :  2;
+	uint32	m_value : 30;
+
+public:
+	Anchor(AnchorType type, int val) : m_type(type), m_value(val) {}
+
+	AnchorType getType() const { return AnchorType(m_type); }
+	bool isRigid() const { return m_type == AnchorType::RIGID; }
+	bool isSpringy() const { return m_type == AnchorType::SPRINGY; }
+	void setType(AnchorType t) { m_type = t; }
+
+	int getValue() const { return m_value; }
+	void setValue(int v) { m_value = v; }
+};
+
+// =====================================================
+//  class Anchors
+// =====================================================
+
+class Anchors {
+private:
+	Anchor left, top, right, bottom;
+	bool centreVertical, centreHorizontal;
+
+public:
+	Anchors();
+	Anchors(Anchor all);
+	Anchors(Anchor leftRight, Anchor topBottom);
+	Anchors(Anchor left, Anchor top, Anchor right, Anchor bottom);
+	
+	Anchor get(Edge e) const;
+	Anchor operator[](Edge e) const { return get(e); }
+	bool isCentreVertical() const { return centreVertical; }
+	bool isCentreHorizontal() const { return centreHorizontal; }
+
+	void set(Edge e, Anchor a);
+	void set(Edge e, int val, bool spring) {
+		set(e, Anchor(spring ? AnchorType::SPRINGY : AnchorType::RIGID, val));
+	}
+	void clear(Edge e) {
+		set(e, Anchor(AnchorType::NONE, 0));
+	}
+	void setCentre(bool vert, bool horiz);
+	void setCentre(bool v) { setCentre(v, v); }
+};
+
+// =====================================================
+//  class Widget
 // =====================================================
 
 class Widget {
@@ -56,24 +112,25 @@ public:
 
 private:
 	//int id;
-	Container* parent;
-	WidgetWindow* rootWindow;
-	Vec2i	pos,
-			screenPos,
-			size;
-	bool	visible;
+	Container    *m_parent;
+	WidgetWindow *m_rootWindow;
+
+	Vec2i	m_pos,
+			m_screenPos,
+			m_size;
+	bool	m_visible;
 
 	bool	m_enabled;
-	float	fade;
+	float	m_fade;
 
 	int padding;
-
-	MouseWidget *mouseWidget;
-	KeyboardWidget *keyboardWidget;
-	TextWidget *textWidget;
+	MouseWidget    *m_mouseWidget;
+	KeyboardWidget *m_keyboardWidget;
+	TextWidget     *m_textWidget;
 
 protected:
-	BorderStyle		m_borderStyle;
+	Anchors         m_anchors;
+	BorderStyle     m_borderStyle;
 	BackgroundStyle m_backgroundStyle;
 
 	int	getBorderLeft() const	{ return m_borderStyle.m_sizes[Border::LEFT]; }
@@ -87,14 +144,14 @@ protected:
 		return m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM];
 	}
 	Vec2i getBordersAll() const	{ return Vec2i(getBordersHoriz(), getBordersVert()); }
-
+	
 private:
-	void setMouseWidget(MouseWidget *mw) { mouseWidget = mw; }
-	void setKeyboardWidget(KeyboardWidget *kw) { keyboardWidget = kw; }
+	void setMouseWidget(MouseWidget *mw) { m_mouseWidget = mw; }
+	void setKeyboardWidget(KeyboardWidget *kw) { m_keyboardWidget = kw; }
 
 	// as
-	MouseWidget * asMouseWidget() const			{ return mouseWidget; }
-	KeyboardWidget * asKeyboardWidget() const		{ return keyboardWidget; }
+	MouseWidget * asMouseWidget() const			{ return m_mouseWidget; }
+	KeyboardWidget * asKeyboardWidget() const		{ return m_keyboardWidget; }
 
 	void init(const Vec2i &pos, const Vec2i &size);
 
@@ -108,34 +165,32 @@ public:
 
 	// layout helpers .. Remove... bound for CellWidget...
 	virtual Vec2i getPrefSize() const {return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
-	virtual Vec2i getMinSize() const {return Vec2i(-1); } // should not return (-1,-1)
+	virtual Vec2i getMinSize() const {return Vec2i(-1); }  // should not return (-1,-1)
 	virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
 
+	// get / is
+	Vec2i getScreenPos() const { return m_screenPos; }
+	Vec2i getPos() const { return m_pos; }
 
-	// de-virtualise ??
-	// get/is
-	virtual Vec2i getScreenPos() const { return screenPos; }
-	virtual Vec2i getPos() const { return pos; }
-
-	virtual Container* getParent() const { return parent; }
-	virtual WidgetWindow* getRootWindow() const { return rootWindow; }
+	Container* getParent() const { return m_parent; }
+	WidgetWindow* getRootWindow() const { return m_rootWindow; }
 	virtual Widget* getWidgetAt(const Vec2i &pos);
 
-	virtual Vec2i getSize() const		{ return size;		 }
-	virtual int   getWidth() const		{ return size.x;	 }
-	virtual int   getHeight() const		{ return size.y;	 }
-	virtual float getFade() const		{ return fade;		 }
-//	virtual int	  getBorderSize() const	{ return borderSize; }
+	Vec2i getSize() const    { return m_size;    }
+	int   getWidth() const   { return m_size.x;  }
+	int   getHeight() const  { return m_size.y;  }
+	float getFade() const    { return m_fade;    }
+	bool isVisible() const   { return m_visible; }
+	Anchors  getAnchors() const  { return m_anchors;  }
 	virtual int	  getPadding() const	{ return padding;	 }
 
-	virtual bool isVisible() const		{ return visible; }
-	virtual bool isInside(const Vec2i &pos) const {
-		const Vec2i &p1 = screenPos;
-		const Vec2i  p2(screenPos + size);
+	bool isInside(const Vec2i &pos) const {
+		const Vec2i &p1 = m_screenPos;
+		const Vec2i  p2(m_screenPos + m_size);
 		return pos.x >= p1.x && pos.y >= p1.y && pos.x < p2.x && pos.y < p2.y;
 	}
 
-	virtual bool isEnabled() const	{ return m_enabled;	}
+	bool isEnabled() const	{ return m_enabled;	}
 
 	// set
 	virtual void setEnabled(bool v) { m_enabled = v;	}
@@ -143,16 +198,16 @@ public:
 	virtual void setPos(const Vec2i &p);
 	void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
 	void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
-	virtual void setVisible(bool vis) { visible = vis; }
-	virtual void setFade(float v) { fade = v; }
+	virtual void setVisible(bool vis) { m_visible = vis; }
+	virtual void setFade(float v) { m_fade = v; }
+	void setAnchors(Anchors a)    { m_anchors = a;   }
 	
-	virtual void setParent(Container* p) { parent = p; }
+	virtual void setParent(Container* p) { m_parent = p; }
 
 	void setBorderStyle(const BorderStyle &style);
 	void setBackgroundStyle(const BackgroundStyle &style);
 
 	void setPadding(int pad) { padding = pad; }
-
 	virtual void update() {} // must 'register' with WidgetWindow to receive
 
 	virtual void render() = 0;
@@ -166,124 +221,8 @@ public:
 	virtual string descPosDim();
 	virtual string desc() = 0;
 
-	virtual bool isCellWidget() const { return false; } /**< is this a CellWidget? */
-
 	sigslot::signal<Widget*> Destroyed;
 
-};
-
-// =====================================================
-//  enums Orientation, Origin, Edge & AnchorType
-// =====================================================
-
-WRAPPED_ENUM( Orientation, VERTICAL, HORIZONTAL );
-WRAPPED_ENUM( Origin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
-
-WRAPPED_ENUM( Edge, LEFT, TOP, RIGHT, BOTTOM );
-
-WRAPPED_ENUM( AnchorType, NONE, BAR, SPRING );
-
-class Anchor {
-	uint32	m_type  :  2;
-	uint32	m_value : 30;
-
-public:
-	AnchorType getType() const { return AnchorType(m_type); }
-	bool isBar() const { return m_type == AnchorType::BAR; }
-	bool isSpring() const { return m_type == AnchorType::SPRING; }
-	void setType(AnchorType t) { m_type = t; }
-
-	int getValue() const { return m_value; }
-	void setValue(int v) { m_value = v; }
-};
-
-// =====================================================
-//  struct Anchors
-// =====================================================
-
-struct Anchors {
-	union {
-		struct {
-			Anchor left, top, right, bottom;
-		};
-		Anchor raw[4];
-	};
-
-	Anchors() { memset(this, 0, sizeof(this)); }
-	
-	void set(Edge e, int val, bool spring) {
-		assert(e != Edge::INVALID);
-		Anchor a;
-		a.setType(spring ? AnchorType::SPRING : AnchorType::BAR);
-		a.setValue(val);
-		if (e == Edge::COUNT) {
-			left = top = right = bottom = a;
-		} else {
-			raw[e] = a;
-		}
-	}
-};
-
-// =====================================================
-//  struct SizeHint
-// =====================================================
-
-struct SizeHint {
-private:
-	int m_percentage;
-	int m_absolute;
-
-public:
-	SizeHint(int percentage = -1, int absolute = -1) 
-			: m_percentage(percentage), m_absolute(absolute) {}
-
-	SizeHint(const SizeHint &rhs)
-			: m_percentage(rhs.m_percentage), m_absolute(rhs.m_absolute) {}
-
-	bool isPercentage() const   { return m_absolute == -1; }
-	int  getPercentage() const  { return m_percentage; }
-	int  getAbsolute() const    { return m_absolute; }
-};
-
-// =====================================================
-//  class CellWidget
-// =====================================================
-
-class CellWidget : public Widget {
-private:
-	Anchors    m_anchors;
-	SizeHint   m_sizeHint;
-	bool       m_cellCentre;
-	Vec2i      m_cellPos;
-	Vec2i      m_cellSize;
-
-private:
-	void anchorWidget();
-
-protected:
-	CellWidget(WidgetWindow *window);
-
-public:
-	CellWidget(Container *parent);
-	CellWidget(Container *parent, Vec2i pos, Vec2i size);
-
-	//// layout helpers
-	//virtual Vec2i getPrefSize() const = 0;//{return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
-	//virtual Vec2i getMinSize() const = 0;// {return Vec2i(-1); } // should not return (-1,-1)
-	//virtual Vec2i getMaxSize() const  {return Vec2i(-1); } // return (-1,-1) to indicate 'no maximum size'
-
-	void setAnchors(Anchors a)    { m_anchors = a;   }
-	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
-	void setCentreInCell(bool v)        { m_cellCentre = v;    }
-
-	virtual void setCellRect(const Vec2i &pos, const Vec2i &size);
-
-	SizeHint getSizeHint() const { return m_sizeHint; }
-	Anchors  getAnchors() const  { return m_anchors;  }
-	Vec2i    getCellPos() const { return m_cellPos; }
-	Vec2i    getCellSize() const { return m_cellSize; }
-
-	virtual bool isCellWidget() const override { return true; }
 };
 
 // =====================================================
@@ -310,6 +249,10 @@ private:
 	virtual void mouseOut() {}
 };
 
+// =====================================================
+//  class KeyboardWidget
+// =====================================================
+
 class KeyboardWidget {
 	friend class WidgetWindow;
 
@@ -328,6 +271,10 @@ private:
 	virtual void lostKeyboardFocus() {}
 };
 
+// =====================================================
+//  struct ImageRenderInfo
+// =====================================================
+
 struct ImageRenderInfo {
 	bool hasOffset, hasCustomSize;
 	Vec2i offset, size;
@@ -339,7 +286,7 @@ struct ImageRenderInfo {
 };
 
 // =====================================================
-// class ImageWidget
+//  class ImageWidget
 // =====================================================
 
 class ImageWidget {
@@ -381,6 +328,10 @@ public:
 	bool hasImage(int ndx) const { return ndx < textures.size(); }
 };
 
+// =====================================================
+//  struct TextRenderInfo
+// =====================================================
+
 typedef const Font* FontPtr;
 
 struct TextRenderInfo {
@@ -401,7 +352,7 @@ struct TextRenderInfo {
 };
 
 // =====================================================
-// class TextWidget
+//  class TextWidget
 // =====================================================
 
 class TextWidget {
@@ -465,7 +416,26 @@ public:
 };
 
 // =====================================================
-// class MouseCursor
+//  enum MouseAppearance
+// =====================================================
+
+WRAPPED_ENUM( MouseAppearance, 
+	DEFAULT,
+	CMD_ICON,
+	MOVE_FREE/*,
+	MOVE_UP,
+	MOVE_RIGHT_UP,
+	MOVE_RIGHT,
+	MOVE_RIGHT_DOWN,
+	MOVE_DOWN,
+	MOVE_LEFT_DOWN,
+	MOVE_LEFT,
+	MOVE_LEFT_UP,
+	ROTATE*/
+)
+
+// =====================================================
+//  class MouseCursor
 // =====================================================
 
 class MouseCursor : public Widget {
@@ -479,15 +449,15 @@ public:
 };
 
 // =====================================================
-// class Container
+//  class Container
 // =====================================================
 
-class Container : public CellWidget {
+class Container : public Widget {
 public:
 	typedef vector<Widget*> WidgetList;
 
 protected:
-	WidgetList children;
+	WidgetList  m_children;
 
 	virtual void delChild(Widget* child);
 	virtual void clear();
@@ -507,6 +477,65 @@ public:
 	virtual void setEnabled(bool v);
 	virtual void setFade(float v);
 	virtual void render();
+};
+
+// =====================================================
+//  enums Orientation & Origin
+// =====================================================
+
+WRAPPED_ENUM( Orientation, VERTICAL, HORIZONTAL );
+WRAPPED_ENUM( Origin, FROM_TOP, FROM_BOTTOM, CENTRE, FROM_LEFT, FROM_RIGHT );
+
+// =====================================================
+//  class SizeHint
+// =====================================================
+
+class SizeHint {
+private:
+	int m_percentage;
+	int m_absolute;
+
+public:
+	SizeHint(int percentage = -1, int absolute = -1) 
+			: m_percentage(percentage), m_absolute(absolute) {}
+
+	SizeHint(const SizeHint &rhs)
+			: m_percentage(rhs.m_percentage), m_absolute(rhs.m_absolute) {}
+
+	bool isPercentage() const   { return m_absolute == -1; }
+	int  getPercentage() const  { return m_percentage; }
+	int  getAbsolute() const    { return m_absolute; }
+};
+
+// =====================================================
+// class WidgetCell
+// =====================================================
+
+class WidgetCell : public Container {
+private:
+	SizeHint   m_sizeHint;       // => WidgetCell
+
+protected:
+	void anchorWidgets();
+
+public:
+	WidgetCell(Container *parent);
+	WidgetCell(Container *parent, Vec2i pos, Vec2i size);
+
+	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
+
+	virtual void setSize(const Vec2i &sz) {
+		Widget::setSize(sz);
+		anchorWidgets();
+	}
+	virtual void setPos(const Vec2i &p) {
+		Widget::setPos(p); // skip Container, we reset children ourselves...
+		anchorWidgets();
+	}
+
+	SizeHint getSizeHint() const { return m_sizeHint; }
+
+	virtual string desc() override { return string("[WidgetCell: ") + descPosDim() + "]"; }
 };
 
 }}

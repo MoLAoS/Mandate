@@ -626,9 +626,11 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			}
 		}
 	} else if (ms.get(MouseButton::RIGHT)) {
-		g_program.getMouseCursor().setAppearance(MouseAppearance::CAMERA_MOVE);
-		gameCamera.setMoveZ((y - lastMousePos.y) * scrollSpeed, true);
-		gameCamera.setMoveX((x - lastMousePos.x) * scrollSpeed, true);
+		if (!noInput) {
+			g_program.getMouseCursor().setAppearance(MouseAppearance::MOVE_FREE);
+			gameCamera.setMoveZ((y - lastMousePos.y) * scrollSpeed, true);
+			gameCamera.setMoveX((x - lastMousePos.x) * scrollSpeed, true);
+		}
 	} else {
 		if (!noInput) {
 			//main window

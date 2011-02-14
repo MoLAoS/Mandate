@@ -22,18 +22,18 @@ namespace Glest { namespace Widgets {
 // class StaticImage
 // =====================================================
 
-class StaticImage : public CellWidget, public ImageWidget {
+class StaticImage : public Widget, public ImageWidget {
 public:
 	StaticImage(Container* parent)
-			: CellWidget(parent)
+			: Widget(parent)
 			, ImageWidget(this) {}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size) 
-			: CellWidget(parent, pos, size)
+			: Widget(parent, pos, size)
 			, ImageWidget(this) {}
 
 	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
-			: CellWidget(parent, pos, size)
+			: Widget(parent, pos, size)
 			, ImageWidget(this, tex) {}
 
 	virtual Vec2i getPrefSize() const;
@@ -123,7 +123,7 @@ public:
 // class StaticText
 // =====================================================
 
-class StaticText : public CellWidget, public TextWidget {
+class StaticText : public Widget, public TextWidget {
 private:
 	bool	m_shadow;
 	int		m_shadowOffset;
@@ -131,13 +131,13 @@ private:
 	
 public:
 	StaticText(Container* parent)
-			: CellWidget(parent) , TextWidget(this)
+			: Widget(parent) , TextWidget(this)
 			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
 
 	StaticText(Container* parent, Vec2i pos, Vec2i size)
-			: CellWidget(parent, pos, size), TextWidget(this)
+			: Widget(parent, pos, size), TextWidget(this)
 			, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
 		m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
 	}
@@ -157,7 +157,7 @@ public:
 // class Button
 // =====================================================
 
-class Button : public CellWidget, public TextWidget, public ImageWidget, public MouseWidget {
+class Button : public Widget, public TextWidget, public ImageWidget, public MouseWidget {
 protected:
 	bool m_hover;
 	bool m_pressed;
@@ -216,7 +216,7 @@ public:
 // class TextBox
 // =====================================================
 
-class TextBox : public CellWidget, public MouseWidget, public KeyboardWidget, public TextWidget {
+class TextBox : public Widget, public MouseWidget, public KeyboardWidget, public TextWidget {
 private:
 	bool hover;
 	bool focus;
@@ -257,7 +257,7 @@ public:
 //  class Slider
 // =====================================================
 
-class Slider : public CellWidget, public MouseWidget, public ImageWidget, public TextWidget {
+class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 private:
 	float	m_sliderValue;
 	bool	m_thumbHover,
@@ -307,7 +307,7 @@ public:
 //  class VerticalScrollBar
 // =====================================================
 
-class VerticalScrollBar : public CellWidget, public ImageWidget, public MouseWidget {
+class VerticalScrollBar : public Widget, public ImageWidget, public MouseWidget {
 private:
 	WRAPPED_ENUM( Part, NONE, UP_BUTTON, DOWN_BUTTON, THUMB, UPPER_SHAFT, LOWER_SHAFT );
 
@@ -368,38 +368,47 @@ public:
 };
 
 // =====================================================
-// class WidgetStrip
+// class CellStrip
 // =====================================================
 
-class WidgetStrip : public Container {
-private:
-	Orientation	 m_direction;
-//	Origin	 m_origin;
-	int              m_childSlotCount;
-	SizeHint		 m_defualtSizeHint;
-	Anchors          m_defaultAnchors;
-	bool             m_dirty;
+class CellStrip : public Container {
+protected:
+	Orientation         m_direction;
+	vector<WidgetCell*> m_cells;
+	SizeHint            m_defualtSizeHint;
+	Anchors             m_defaultAnchors;
+	bool                m_dirty;
 
-private:
+protected:
 	void setDirty() { m_dirty = true; }	
+	virtual void addChild(Widget* child) override;
 
 public:
-	WidgetStrip(Container *parent, Orientation ld);
-	WidgetStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld);
+	CellStrip(Container *parent, Orientation ld, int cells);
+	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, int cells);
+	
+	void setSizeHint(int i, SizeHint hint) {
+		ASSERT_RANGE(i, m_cells.size());
+		m_cells[i]->setSizeHint(hint);
+	}
+
+	void setPercentageHints(int *hints) {
+		for (int i=0; i < m_cells.size(); ++i) {
+			m_cells[i]->setSizeHint(SizeHint(hints[i]));
+		}
+	}
 
 	void layoutCells();
 
-	void setDefaultSizeHint(SizeHint sizeHint) { m_defualtSizeHint = sizeHint; }
-	void setDefaultAnchors(Anchors anchors) { m_defaultAnchors = anchors; }
-
-	virtual void addChild(CellWidget* child);
-	virtual void addChild(Widget* child) override;
-	virtual void setCellRect(const Vec2i &pos, const Vec2i &size) override;
+	WidgetCell* getCell(int i) const {
+		ASSERT_RANGE(i, m_cells.size());
+		return m_cells[i];
+	}
 
 	virtual void render() override;
 	virtual void setPos(const Vec2i &pos) override;
 	virtual void setSize(const Vec2i &sz) override;
-	virtual string desc() override { return string("[WidgetStrip: ") + descPosDim() + "]"; }
+	virtual string desc() override { return string("[CellStrip: ") + descPosDim() + "]"; }
 };
 
 // =====================================================

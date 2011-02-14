@@ -867,7 +867,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
-				g_program.getMouseCursor().setAppearance(MouseAppearance::ICON, activeCommandType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, activeCommandType->getImage());
 				m_minimap->setLeftClickOrder(true);
 				activePos = posDisplay;
 			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
@@ -880,7 +880,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 					m_selectingSecond = true;
 				} else {
 					selectingPos = true;
-					g_program.getMouseCursor().setAppearance(MouseAppearance::ICON, ct->getImage());
+					g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, ct->getImage());
 					m_minimap->setLeftClickOrder(true);
 					activePos = posDisplay;
 				}
@@ -908,7 +908,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
 				activePos = posDisplay;
-				g_program.getMouseCursor().setAppearance(MouseAppearance::ICON, choosenBuildingType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, choosenBuildingType->getImage());
 			}
 		} else {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {

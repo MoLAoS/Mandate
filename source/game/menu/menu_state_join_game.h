@@ -79,22 +79,23 @@ private:
 	static const string serverFileName;
 
 private:
-	WidgetStrip*	m_connectPanel;
-	Panel*			m_gameSetupPanel;
-	MessageDialog*	m_messageBox;
+	CellStrip        *m_connectPanel;
+	Panel            *m_gameSetupPanel;
+	MessageDialog    *m_messageBox;
 
-	DropList*		m_historyList;
-	TextBox*		m_serverTextBox;
-	StaticText*		m_connectLabel;
+	DropList         *m_historyList;
+	TextBox          *m_serverTextBox;
+	StaticText       *m_connectLabel;
 
-	ConnectThread*		m_connectThread;
-	FindServerThread*	m_findServerThread;
+	ConnectThread    *m_connectThread;
+	FindServerThread *m_findServerThread;
 
-	Transition			m_targetTansition;
+	Transition        m_targetTansition;
 
-	Mutex				m_connectMutex;
-	Mutex				m_findServerMutex;
+	Mutex             m_connectMutex;
+	Mutex             m_findServerMutex;
 
+private:
 	void buildConnectPanel();
 	void buildGameSetupPanel();
 

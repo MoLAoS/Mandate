@@ -45,10 +45,10 @@ using Global::CoreData;
 // =====================================================
 
 void CodeMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
-	if (ma == MouseAppearance::ICON) {
+	if (ma == MouseAppearance::CMD_ICON) {
 		RUNTIME_CHECK(tex != 0);
 		m_tex = tex;
-		m_app = MouseAppearance::ICON;
+		m_app = MouseAppearance::CMD_ICON;
 	} else {
 		m_tex = 0;
 		m_app = MouseAppearance::DEFAULT;
@@ -117,8 +117,8 @@ WidgetWindow::WidgetWindow()
 		, floatingWidget(0)
 		, anim(0.f), slowAnim(0.f)/*, mouseIcon(0)
 		, mouseMain(0), mouseAnimations(0) */{
-	size.x = Metrics::getInstance().getScreenW();
-	size.y = Metrics::getInstance().getScreenH();
+	m_size.x = Metrics::getInstance().getScreenW();
+	m_size.y = Metrics::getInstance().getScreenH();
 	
 	mouseOverStack.push(this);
 
@@ -127,7 +127,7 @@ WidgetWindow::WidgetWindow()
 	}
 	lastMouseDownWidget = 0;
 	lastKeyDownWidget = 0;
-	keyboardFocused = keyboardWidget;
+	keyboardFocused = m_keyboardWidget;
 
 	///@todo ImageSetMouseCursor ... & config option?
 	if (true) {
@@ -148,7 +148,7 @@ void WidgetWindow::clear() {
 	while (mouseOverStack.top() != this) {
 		mouseOverStack.pop();
 	}
-	keyboardFocused = keyboardWidget;
+	keyboardFocused = m_keyboardWidget;
 	lastKeyDownWidget = 0;
 	foreach_enum (MouseButton, btn) {
 		mouseDownWidgets[btn] = 0;
@@ -174,7 +174,7 @@ void WidgetWindow::render() {
 void WidgetWindow::aquireKeyboardFocus(KeyboardWidget* widget) {
 	assert(widget);
 	if (keyboardFocused != widget) {
-		if (keyboardFocused != keyboardWidget) {
+		if (keyboardFocused != m_keyboardWidget) {
 			keyboardFocused->lostKeyboardFocus();
 		}
 		keyboardFocused = widget;
@@ -184,7 +184,7 @@ void WidgetWindow::aquireKeyboardFocus(KeyboardWidget* widget) {
 void WidgetWindow::releaseKeyboardFocus(KeyboardWidget* widget) {
 	if (keyboardFocused == widget) {
 		keyboardFocused->lostKeyboardFocus();
-		keyboardFocused = keyboardWidget;
+		keyboardFocused = m_keyboardWidget;
 	}
 }
 
@@ -254,7 +254,7 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 	if (floater != floatingWidget) {
 		throw runtime_error("WidgetWindow::removeFloatingWidget() passed bad argument.");
 	}
-	keyboardFocused = keyboardWidget;
+	keyboardFocused = m_keyboardWidget;
 	lastKeyDownWidget = 0;
 
 	toClean.push_back(floatingWidget);
@@ -344,9 +344,9 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 		unwindMouseOverStack(ancestor);
 		doMouseInto(widget);
 	}
-	if (keyboardFocused != keyboardWidget && keyboardFocused != widget->asKeyboardWidget()) {
+	if (keyboardFocused != m_keyboardWidget && keyboardFocused != widget->asKeyboardWidget()) {
 		keyboardFocused->lostKeyboardFocus();
-		keyboardFocused = keyboardWidget;
+		keyboardFocused = m_keyboardWidget;
 	}
 	while (widget) {
 		MouseWidget* mw = widget->asMouseWidget();

@@ -78,48 +78,47 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 
 	Font *font = g_coreData.getFTMenuFontNormal();
 
-	Anchors a;
-	a.set(Edge::COUNT, 0, false);
-
-	WidgetStrip *ws = new WidgetStrip(&program, Orientation::VERTICAL);
-	ws->setAnchors(a);
-	Vec2i pad(45, 45);
-	ws->setPos(pad);
-	ws->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true);
 	
+	CellStrip *strip = new CellStrip(&program, Orientation::VERTICAL, 3);
+	strip->getCell(0)->setSizeHint(SizeHint(-1, 50));  // 50 px cell for game drop-list
+	strip->getCell(1)->setSizeHint(SizeHint(-1, 250)); // 250 px for info box
+	strip->getCell(2)->setSizeHint(SizeHint(25)); // 25 % of the rest for the button panel
+	strip->setAnchors(fillAnchors);
+	Vec2i pad(45, 45);
+	strip->setPos(pad);
+	strip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
+
 	// savegames list
-	m_savedGameList = new DropList(ws, Vec2i(0), Vec2i(300, 34));
+	m_savedGameList = new DropList(strip->getCell(0), Vec2i(0), Vec2i(300, 34));
 	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
-	m_savedGameList->setCentreInCell(true);
-	m_savedGameList->setSizeHint(SizeHint(-1, 50));
+	m_savedGameList->setAnchors(centreAnchors);
 
 	// savegame info box
-	m_infoLabel = new ScrollText(ws, Vec2i(0), Vec2i(600, 200));
+	m_infoLabel = new ScrollText(strip->getCell(1), Vec2i(0), Vec2i(600, 200));
 	m_infoLabel->init();
-	m_infoLabel->setCentreInCell(true);
-	m_infoLabel->setSizeHint(SizeHint(-1, 250));
-	//m_infoLabel->setTextParams("", Vec4f(1.f), font);
-	//m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
+	m_infoLabel->setAnchors(centreAnchors);
 
-	WidgetStrip *btnPnl = new WidgetStrip(ws, Orientation::HORIZONTAL);
-	btnPnl->setAnchors(a);
-	btnPnl->setSizeHint(SizeHint(25));
+	CellStrip *btnPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, 3);
+	btnPnl->setAnchors(fillAnchors);
 
 	// buttons
-	m_returnButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
+	m_returnButton = new Button(btnPnl->getCell(0), Vec2i(0), Vec2i(256, 32));
 	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
 	m_returnButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
-	m_returnButton->setCentreInCell(true);
+	m_returnButton->setAnchors(centreAnchors);
 
-	m_deleteButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
+	m_deleteButton = new Button(btnPnl->getCell(1), Vec2i(0), Vec2i(256, 32));
 	m_deleteButton->setTextParams(g_lang.get("Delete"), Vec4f(1.f), font);
 	m_deleteButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
-	m_deleteButton->setCentreInCell(true);
+	m_deleteButton->setAnchors(centreAnchors);
 
-	m_playNowButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
+	m_playNowButton = new Button(btnPnl->getCell(2), Vec2i(0), Vec2i(256, 32));
 	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
 	m_playNowButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
-	m_playNowButton->setCentreInCell(true);
+	m_playNowButton->setAnchors(centreAnchors);
 
 	Vec2i dim = g_metrics.getScreenDims();
 

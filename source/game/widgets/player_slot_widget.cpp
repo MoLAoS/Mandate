@@ -122,7 +122,7 @@ void ColourPicker::onSelect(Button *b) {
 // =====================================================
 
 PlayerSlotLabels::PlayerSlotLabels(Container* parent)
-		: WidgetStrip(parent, Orientation::HORIZONTAL) {
+		: CellStrip(parent, Orientation::HORIZONTAL, 5) {
 	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors;
 	anchors.set(Edge::LEFT, 5, false);
@@ -130,34 +130,34 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 	anchors.set(Edge::TOP, 3, false);
 	anchors.set(Edge::BOTTOM, 3, false);
 	
-	StaticText *label = new StaticText(this);
+	StaticText *label = new StaticText(m_cells[0]);
 	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label->setSizeHint(SizeHint(18));
+	m_cells[0]->setSizeHint(SizeHint(18));
 	label->setAnchors(anchors);
 
-	label = new StaticText(this);
+	label = new StaticText(m_cells[1]);
 	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label->setSizeHint(SizeHint(33));
+	m_cells[1]->setSizeHint(SizeHint(33));
 	label->setAnchors(anchors);
 
-	label = new StaticText(this);
+	label = new StaticText(m_cells[2]);
 	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label->setSizeHint(SizeHint(33));
+	m_cells[2]->setSizeHint(SizeHint(33));
 	label->setAnchors(anchors);
 
-	label = new StaticText(this);
+	label = new StaticText(m_cells[3]);
 	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label->setSizeHint(SizeHint(8));
+	m_cells[3]->setSizeHint(SizeHint(8));
 	label->setAnchors(anchors);
 
-	label = new StaticText(this);
+	label = new StaticText(m_cells[4]);
 	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	label->setSizeHint(SizeHint(8));
+	m_cells[4]->setSizeHint(SizeHint(8));
 	label->setAnchors(anchors);
 }
 
@@ -166,7 +166,7 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 // =====================================================
 
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
-		: WidgetStrip(parent, Orientation::HORIZONTAL), m_freeSlot(false) {
+		: CellStrip(parent, Orientation::HORIZONTAL, 5), m_freeSlot(false) {
 	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors;
 	anchors.set(Edge::LEFT, 5, false);
@@ -174,33 +174,33 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 	anchors.set(Edge::TOP, 3, false);
 	anchors.set(Edge::BOTTOM, 3, false);
 
-	m_label = new StaticText(this);
+	m_label = new StaticText(m_cells[0]);
 	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	m_label->setSizeHint(SizeHint(18));
+	m_cells[0]->setSizeHint(SizeHint(18));
 	m_label->setAnchors(anchors);
 
-	m_controlList = new DropList(this);
-	m_controlList->setSizeHint(SizeHint(33));
+	m_controlList = new DropList(m_cells[1]);
+	m_cells[1]->setSizeHint(SizeHint(33));
 	m_controlList->setAnchors(anchors);
 
 	foreach_enum (ControlType, ct) {
 		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
 	}
 
-	m_factionList = new DropList(this);
+	m_factionList = new DropList(m_cells[2]);
 	m_factionList->setDropBoxHeight(200);
-	m_factionList->setSizeHint(SizeHint(33));
+	m_cells[2]->setSizeHint(SizeHint(33));
 	m_factionList->setAnchors(anchors);
 	
-	m_teamList = new DropList(this);
+	m_teamList = new DropList(m_cells[3]);
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
 	}
-	m_teamList->setSizeHint(SizeHint(8));
+	m_cells[3]->setSizeHint(SizeHint(8));
 	m_teamList->setAnchors(anchors);
 
-	m_colourPicker = new Widgets::ColourPicker(this);
-	m_colourPicker->setSizeHint(SizeHint(8));
+	m_colourPicker = new Widgets::ColourPicker(m_cells[4]);
+	m_cells[4]->setSizeHint(SizeHint(8));
 	m_colourPicker->setAnchors(anchors);
 
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);

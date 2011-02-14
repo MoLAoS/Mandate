@@ -26,14 +26,75 @@ using namespace Glest::Global;
 
 namespace Glest { namespace Widgets {
 
-MouseWidget::MouseWidget(Widget* widget) {
-	me = widget;
-	me->setMouseWidget(this);
+
+// =====================================================
+//  struct Anchors
+// =====================================================
+
+Anchors::Anchors()
+		: left(AnchorType::NONE, 0), top(AnchorType::NONE, 0)
+		, right(AnchorType::NONE, 0), bottom(AnchorType::NONE, 0)
+		, centreVertical(false), centreHorizontal(false) {
 }
 
-KeyboardWidget::KeyboardWidget(Widget* widget) {
-	me = widget;
-	me->setKeyboardWidget(this);
+Anchors::Anchors(Anchor all)
+		: left(all), top(all), right(all), bottom(all)
+		, centreVertical(false), centreHorizontal(false) {
+}
+
+Anchors::Anchors(Anchor leftRight, Anchor topBottom)
+		: left(leftRight), top(topBottom), right(leftRight), bottom(topBottom)
+		, centreVertical(false), centreHorizontal(false) {
+}
+
+Anchors::Anchors(Anchor left, Anchor top, Anchor right, Anchor bottom)
+		: left(left), top(top), right(right), bottom(bottom)
+		, centreVertical(false), centreHorizontal(false) {
+}
+
+Anchor Anchors::get(Edge e) const {
+	if (e == Edge::LEFT) {
+		return left;
+	} else if (e == Edge::TOP) {
+		return top;
+	} else if (e == Edge::RIGHT) {
+		return right;
+	} else if (e == Edge::BOTTOM) {
+		return bottom;
+	} else {
+		assert(false);
+		throw runtime_error("invalid edge enum passed to Anchors::get()");
+	}
+}
+
+void Anchors::set(Edge e, Anchor a) {
+	if (e == Edge::LEFT) {
+		left = a;
+	} else if (e == Edge::TOP) {
+		top = a;
+	} else if (e == Edge::RIGHT) {
+		right = a;
+	} else if (e == Edge::BOTTOM) {
+		bottom = a;
+	} else { // e == Edge::COUNT
+		left = top = right = bottom = a;
+	}
+	if (a.getType() != AnchorType::NONE) {
+		centreVertical = centreHorizontal = false;
+	}
+}
+
+void Anchors::setCentre(bool vert, bool horiz) {
+	centreVertical = vert;
+	if (vert) {
+		clear(Edge::TOP);
+		clear(Edge::BOTTOM);
+	}
+	centreHorizontal = horiz;
+	if (horiz) {
+		clear(Edge::LEFT);
+		clear(Edge::RIGHT);
+	}
 }
 
 // =====================================================
@@ -43,49 +104,49 @@ KeyboardWidget::KeyboardWidget(Widget* widget) {
 MEMORY_CHECK_IMPLEMENTATION(Widget)
 
 Widget::Widget(Container* parent, bool addToParent)
-		: parent(parent) {
+		: m_parent(parent) {
 	init(Vec2i(0), Vec2i(0));
-	rootWindow = parent->getRootWindow();
+	m_rootWindow = m_parent->getRootWindow();
 	if (addToParent) {
-		parent->addChild(this);
+		m_parent->addChild(this);
 	}
 }
 
 Widget::Widget(Container* parent, Vec2i pos, Vec2i size, bool addToParent)
-		: parent(parent) {
+		: m_parent(parent) {
 	init(pos, size);
-	screenPos = parent->getScreenPos() + pos;
-	rootWindow = parent->getRootWindow();
+	m_screenPos = m_parent->getScreenPos() + pos;
+	m_rootWindow = m_parent->getRootWindow();
 	if (addToParent) {
-		parent->addChild(this);
+		m_parent->addChild(this);
 	}
 }
 
 Widget::Widget(WidgetWindow* window)
-		: parent(window)
-		, screenPos(0) {
+		: m_parent(window)
+		, m_screenPos(0) {
 	init(Vec2i(0), Vec2i(0));
-	rootWindow = window;
+	m_rootWindow = window;
 }
 
 Widget::~Widget() {
 	Destroyed(this);
-	if (rootWindow != this) {
-		parent->remChild(this);
+	if (m_rootWindow != this) {
+		m_parent->remChild(this);
 	}
 }
 
 void Widget::init(const Vec2i &pos, const Vec2i &size) {
-	this->pos = pos;
-	this->size = size;
-	visible = true;
+	m_pos = pos;
+	m_size = size;
+	m_visible = true;
 	m_enabled = true;
-	fade = 1.f;
-
+	m_fade = 1.f;
 	padding = 0;
-	mouseWidget = 0;
-	keyboardWidget = 0;
-	textWidget = 0;
+
+	m_mouseWidget = 0;
+	m_keyboardWidget = 0;
+	m_textWidget = 0;
 }
 
 Widget* Widget::getWidgetAt(const Vec2i &pos) {
@@ -95,20 +156,20 @@ Widget* Widget::getWidgetAt(const Vec2i &pos) {
 
 string Widget::descPosDim() {
 	std::stringstream ss;
-	ss << "Pos: " << screenPos << ", Size: " << size;
+	ss << "Pos: " << m_screenPos << ", Size: " << m_size;
 	return ss.str();
 }
 
 void Widget::setSize(const Vec2i &sz) {
-	size = sz;
-	if (textWidget) {
-		textWidget->widgetReSized();
+	m_size = sz;
+	if (m_textWidget) {
+		m_textWidget->widgetReSized();
 	}
 }
 
 void Widget::setPos(const Vec2i &p) {
-	pos = p;
-	screenPos = parent->getScreenPos() + pos;
+	m_pos = p;
+	m_screenPos = m_parent->getScreenPos() + m_pos;
 }
 
 inline Colour calcColour(const Colour &c, float fade) {
@@ -133,7 +194,7 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 	enum { OBL, OTL, OTR, OBR, IBL, ITL, ITR, IBR };
 	Vec2i verts[8];
-	verts[OTL] = screenPos + offset;
+	verts[OTL] = m_screenPos + offset;
 	verts[OBL] = verts[OTL] + Vec2i(0, size.y);
 	verts[OBR] = verts[OTL] + size;
 	verts[OTR] = verts[OTL] + Vec2i(size.x, 0);
@@ -270,7 +331,7 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 	assert(style.m_type != BackgroundType::NONE);
 
 	Vec2i verts[4];
-	verts[0] = screenPos + offset;
+	verts[0] = m_screenPos + offset;
 	verts[1] = verts[0] + Vec2i(0, size.y);
 	verts[2] = verts[0] + size;
 	verts[3] = verts[0] + Vec2i(size.x, 0);
@@ -339,18 +400,18 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 
 void Widget::renderBgAndBorders(bool bg) {
 	if (m_backgroundStyle.m_type) {
-		renderBackground(m_backgroundStyle, Vec2i(0), size);
+		renderBackground(m_backgroundStyle, Vec2i(0), m_size);
 	}
 	if (m_borderStyle.m_type) {
-		renderBorders(m_borderStyle, Vec2i(0), size);
+		renderBorders(m_borderStyle, Vec2i(0), m_size);
 	}
 }
 
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size) {
-	const Vec4f borderColour = Vec4f(colour, borderAlpha * fade);
-	const Vec4f centreColour = Vec4f(colour, centreAlpha * fade);
-	float x1 = float(screenPos.x + offset.x);
-	float y1 = float(screenPos.y + offset.y);
+	const Vec4f borderColour = Vec4f(colour, borderAlpha * m_fade);
+	const Vec4f centreColour = Vec4f(colour, centreAlpha * m_fade);
+	float x1 = float(m_screenPos.x + offset.x);
+	float y1 = float(m_screenPos.y + offset.y);
 	float x2 = x1 + float(size.x);
 	float y2 = y1 + float(size.y);
 	
@@ -377,81 +438,22 @@ void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha,
 void Widget::renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha) {
 	Vec2i offset(m_borderStyle.m_sizes[Border::LEFT], m_borderStyle.m_sizes[Border::BOTTOM]);
 	Vec2i inset(m_borderStyle.m_sizes[Border::RIGHT], m_borderStyle.m_sizes[Border::TOP]);
-	Vec2i sz = Vec2i(size) - offset - inset;
+	Vec2i sz = Vec2i(m_size) - offset - inset;
 	renderHighLight(colour, centreAlpha, borderAlpha, offset, sz);
 }
 
 // =====================================================
-//  class CellWidget
+// class MouseWidget
 // =====================================================
 
-CellWidget::CellWidget(Container *parent)
-		: Widget(parent, false), m_cellPos(0), m_cellSize(0), m_cellCentre(false) {
-	parent->addChild(this);
+MouseWidget::MouseWidget(Widget* widget) {
+	me = widget;
+	me->setMouseWidget(this);
 }
 
-CellWidget::CellWidget(Container *parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size, false), m_cellPos(0), m_cellSize(0), m_cellCentre(false) {
-	parent->addChild(this);
-}
-
-CellWidget::CellWidget(WidgetWindow *window)
-		: Widget(window), m_cellPos(0), m_cellSize(0), m_cellCentre(false) {
-}
-
-void CellWidget::setCellRect(const Vec2i &pos, const Vec2i &size) {
-	m_cellPos = pos;
-	m_cellSize = size;
-	anchorWidget();
-}
-
-void CellWidget::anchorWidget() {
-	if (m_cellSize == Vec2i(0)) {
-		return;
-	}
-	if (m_cellCentre) {
-		Vec2i offset = (getCellSize() - getSize()) / 2;
-		setPos(m_cellPos + offset);
-		return;
-	}
-	Vec2i pos = m_cellPos;
-	Vec2i size = getSize();
-
-	int absolute[Edge::COUNT];
-	foreach_enum (Edge, e) {
-		if (m_anchors.raw[e].isBar()) {
-			absolute[e] = m_anchors.raw[e].getValue();
-		} else if (m_anchors.raw[e].isSpring()) {
-			int avail;
-			if (e == Edge::LEFT || e == Edge::RIGHT) {
-				avail = m_cellSize.w;
-			} else {
-				avail = m_cellSize.h;
-			}
-			absolute[e] = int(float(avail) * (m_anchors.raw[e].getValue() / 100.f));
-		} else {
-			absolute[e] = -1;
-		}
-	}
-
-	if (absolute[Edge::LEFT] != -1) { // anchor left
-		pos.x += absolute[Edge::LEFT];
-		if (absolute[Edge::RIGHT] != -1) { // stretch horizontally
-			size.w = m_cellSize.w - absolute[Edge::LEFT] - absolute[Edge::RIGHT];
-		}
-	} else if (absolute[Edge::RIGHT] != -1) { // anchor right
-		pos.x += m_cellSize.w - absolute[Edge::RIGHT] - size.w;
-	}
-	if (absolute[Edge::TOP] != -1) { // anchor top
-		pos.y += absolute[Edge::TOP];
-		if (absolute[Edge::BOTTOM] != -1) { // stretch vertically
-			size.h = m_cellSize.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
-		}
-	} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
-		pos.y += m_cellSize.h - absolute[Edge::BOTTOM] - size.h;
-	}
-	setPos(pos);
-	setSize(size);
+KeyboardWidget::KeyboardWidget(Widget* widget) {
+	me = widget;
+	me->setKeyboardWidget(this);
 }
 
 // =====================================================
@@ -584,7 +586,7 @@ TextWidget::TextWidget(Widget* me)
 		, m_batchRender(false)
 		, m_defaultFont(0)
 		, m_textRenderer(0) {
-	me->textWidget = this;
+	me->m_textWidget = this;
 	m_defaultFont = g_coreData.getFTMenuFontNormal();
 }
 
@@ -774,15 +776,15 @@ void MouseCursor::renderTex(const Texture2D *tex) {
 // =====================================================
 
 Container::Container(Container* parent) 
-		: CellWidget(parent) {
+		: Widget(parent) {
 }
 
 Container::Container(Container* parent, Vec2i pos, Vec2i size) 
-		: CellWidget(parent, pos, size) {
+		: Widget(parent, pos, size) {
 }
 
 Container::Container(WidgetWindow* window)
-		: CellWidget(window) {
+		: Widget(window) {
 }
 
 Container::~Container() {
@@ -790,51 +792,51 @@ Container::~Container() {
 }
 
 void Container::addChild(Widget* child) {
-	assert(std::find(children.begin(), children.end(), child) == children.end());
-	children.push_back(child);
+	assert(std::find(m_children.begin(), m_children.end(), child) == m_children.end());
+	m_children.push_back(child);
 	child->setFade(getFade());
 }
 
 void Container::remChild(Widget* child) {
-	WidgetList::iterator it = std::find(children.begin(), children.end(), child);
-	if (it != children.end()) {
-		children.erase(it);
+	WidgetList::iterator it = std::find(m_children.begin(), m_children.end(), child);
+	if (it != m_children.end()) {
+		m_children.erase(it);
 	}
 }
 
 void Container::delChild(Widget* child) {
-	RUNTIME_CHECK(std::find(children.begin(), children.end(), child) != children.end());
+	RUNTIME_CHECK(std::find(m_children.begin(), m_children.end(), child) != m_children.end());
 	delete child;
 }
 
 void Container::clear() {
-	deleteValues(children);
-	children.clear();
+	deleteValues(m_children);
+	m_children.clear();
 }
 
 void Container::setPos(const Vec2i &p) {
 	Widget::setPos(p);
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		(*it)->setPos((*it)->getPos());
 	}
 }
 
 void Container::setEnabled(bool v) {
 	Widget::setEnabled(v);
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		(*it)->setEnabled(v);
 	}
 }
 
 void Container::setFade(float v) {
 	Widget::setFade(v);
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		(*it)->setFade(v);
 	}
 }
 
 Widget* Container::getWidgetAt(const Vec2i &pos) {
-	foreach_rev (WidgetList, it, children) {
+	foreach_rev (WidgetList, it, m_children) {
 		Widget* widget = *it;
 		if (widget->isVisible() && widget->isInside(pos)) {
 			return widget->getWidgetAt(pos);
@@ -845,13 +847,83 @@ Widget* Container::getWidgetAt(const Vec2i &pos) {
 
 void Container::render() {
 	assertGl();
-	foreach (WidgetList, it, children) {
+	foreach (WidgetList, it, m_children) {
 		Widget* widget = *it;
 		if (widget->isVisible()) {
 			widget->render();
 		}
 	}
 	assertGl();
+}
+
+
+// =====================================================
+// class WidgetCell
+// =====================================================
+
+WidgetCell::WidgetCell(Container *parent, Vec2i pos, Vec2i size)
+		: Container(parent, pos, size) {
+}
+
+WidgetCell::WidgetCell(Container *parent) : Container(parent) {
+}
+
+void WidgetCell::anchorWidgets() {
+	if (getSize() == Vec2i(0)) {
+		return;
+	}
+	foreach (WidgetList, it, m_children) {
+		Widget &child = **it;
+		Anchors anchors = child.getAnchors();
+		if (anchors.isCentreHorizontal() && anchors.isCentreVertical()) {
+			Vec2i offset = (getSize() - child.getSize()) / 2;
+			child.setPos(offset);
+			continue;
+		}
+		///@todo FIX ... for only centred one way
+
+		Vec2i pos = getPos();
+		Vec2i cellSize = getSize();
+		Vec2i size = child.getSize();
+
+		// 1. convert percentages to absolute values
+		int absolute[Edge::COUNT];
+		foreach_enum (Edge, e) {
+			if (anchors[e].isRigid()) {
+				absolute[e] = anchors[e].getValue();
+			} else if (anchors[e].isSpringy()) {
+				int avail;
+				if (e == Edge::LEFT || e == Edge::RIGHT) {
+					avail = cellSize.w;
+				} else {
+					avail = cellSize.h;
+				}
+				absolute[e] = int(float(avail) * (anchors[e].getValue() / 100.f));
+			} else {
+				absolute[e] = -1;
+			}
+		}
+
+		// 2. apply absolute anchors
+		if (absolute[Edge::LEFT] != -1) { // anchor left
+			pos.x = absolute[Edge::LEFT];
+			if (absolute[Edge::RIGHT] != -1) { // stretch horizontally
+				size.w = cellSize.w - absolute[Edge::LEFT] - absolute[Edge::RIGHT];
+			}
+		} else if (absolute[Edge::RIGHT] != -1) { // anchor right
+			pos.x = cellSize.w - absolute[Edge::RIGHT] - size.w;
+		}
+		if (absolute[Edge::TOP] != -1) { // anchor top
+			pos.y = absolute[Edge::TOP];
+			if (absolute[Edge::BOTTOM] != -1) { // stretch vertically
+				size.h = cellSize.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
+			}
+		} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
+			pos.y = cellSize.h - absolute[Edge::BOTTOM] - size.h;
+		}
+		child.setPos(pos);
+		child.setSize(size);
+	}
 }
 
 }}
