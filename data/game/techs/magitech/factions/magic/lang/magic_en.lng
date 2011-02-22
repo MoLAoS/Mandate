@@ -3,7 +3,7 @@
 ;
 archmage=Archmage
 archmage_info=The ultimate mage combatant. Slow and weak but capable of extremely powerful splash attacks, against both ground and air units.
-archmage_tower=Archmage Tower
+archmage_tower=Archmange Tower
 archmage_tower_info=Required to train Archmages, upgrades Dragon Call.
 battlemage=Battlemage
 battlemage_info=Versatile magic warrior. Has a powerful ranged attack, good speed and decent armor. Weak against melee units. Can be upgraded to Archmage.
@@ -40,7 +40,7 @@ wicker_behemoth_info=Intermediate required to produce Behemoths
 ; Upgrade names and tips
 ;
 ancient_summoning=Ancient Summoning
-ancient_summoning_info=Increases Summoner energy capacity and allows her to invoke Ghost Armours.
+ancient_summoning_info=Increases Summoner energy capacity and allows her to invoke Ghost Armors.
 dragon_call=Dragon Call
 dragon_call_info=Required for the Summoner to invoke Dragons.
 energy_compression=Energy Compression
@@ -59,7 +59,7 @@ hold_position=Hold Position
 research_dragon_call=Research Dragon Call
 fire_bolt=Fire Bolt
 promote_to_archmage=Promote To Archmage
-breath=Breathe Fire
+breath=Breath Fire
 fire_breath=Fire Breath
 flare=Flare
 ritual=Ritual
