@@ -134,15 +134,17 @@ Program::Program(CmdArgs &args)
 	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
 	
 	// render
+	g_logger.logProgramEvent("Initialising OpenGL");
 	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
 	makeCurrentGl();
 
+	g_logger.logProgramEvent("Loading default texture.");
 	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
 
 	// load coreData, (needs renderer, but must load before renderer init) and init renderer
 	if (!g_coreData.load() || !g_renderer.init()) {
 		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
-	}	
+	}
 
 	//sound
 	g_soundRenderer.init(this);
@@ -160,6 +162,7 @@ Program::Program(CmdArgs &args)
 	if (cmdArgs.isTest("interpolation")) {
 		Shared::Graphics::test_interpolate();
 	}
+	g_logger.logProgramEvent("Program object successfully constructed.");
 }
 
 Program::~Program() {
@@ -441,10 +444,20 @@ void Program::setDisplaySettings() {
 		int screenWidth= g_config.getDisplayWidth();
 		int screenHeight= g_config.getDisplayHeight();
 
-		if (!(changeVideoMode(screenWidth, screenHeight, colorBits, freq)
-		|| changeVideoMode(screenWidth, screenHeight, colorBits, 0))) {
-			throw runtime_error( "Error setting video mode: " +
-				intToStr(screenWidth) + "x" + intToStr(screenHeight) + "x" + intToStr(colorBits));
+		string modeString = intToStr(screenWidth) + "x" + intToStr(screenHeight) 
+			+ " : " + intToStr(colorBits) + "bpp";
+
+		g_logger.logProgramEvent("Setting video mode: " + modeString + " @" + intToStr(freq) + " Hz");
+		if (!changeVideoMode(screenWidth, screenHeight, colorBits, freq)) {
+			g_logger.logProgramEvent("Error setting video mode: " + modeString + " @" + intToStr(freq) + " Hz");
+			g_logger.logProgramEvent("Attempting to set video mode " + modeString + " @ default freq.");
+			if (!changeVideoMode(screenWidth, screenHeight, colorBits, 0)) {
+				string msg = "Error setting video mode: " + modeString;
+				g_logger.logProgramEvent(msg);
+				g_logger.logError(msg);
+				cout << msg << endl;
+				throw runtime_error(msg);
+			}
 		}
 	}
 }

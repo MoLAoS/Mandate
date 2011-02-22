@@ -69,11 +69,12 @@ Font* loadFreeTypeFont(string path, int size) {
 }
 
 bool CoreData::load() {
-	g_logger.logProgramEvent("Core data");
+	g_logger.logProgramEvent("Loading core data");
 
 	const string dir = "data/core";
 
 	// textures
+	g_logger.logProgramEvent("\tTextures");
 	try {
 		backgroundTexture = loadTexture(dir + "/menu/textures/back.tga");
 		fireTexture = loadAlphaTexture(dir + "/misc_textures/fire_particle.tga");
@@ -101,6 +102,8 @@ bool CoreData::load() {
 		return false;
 	}
 
+	g_logger.logProgramEvent("\tFonts");
+
 	// Display/Console font
 	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
 	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(12));
@@ -114,6 +117,8 @@ bool CoreData::load() {
 	m_FTMenuFontSmall = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(14));
 	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(22));
 	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(26));
+
+	g_logger.logProgramEvent("\tSounds");
 
 	//sounds
 	try {
@@ -133,6 +138,7 @@ bool CoreData::load() {
 		g_logger.logError(string("Error loading core data.\n") + e.what());
 		return false;		
 	}
+	g_logger.logProgramEvent("\tCore data successfully loaded.");
 	return true;
 }
 
