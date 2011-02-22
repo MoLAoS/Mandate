@@ -20,6 +20,7 @@
 #include "renderer.h"
 #include "core_data.h"
 #include "texture_gl.h"
+#include "imageset.h"
 
 #include "leak_dumper.h"
 
@@ -28,6 +29,7 @@ using Shared::Graphics::Gl::Texture2DGl;
 using Glest::Graphics::ResourceScope;
 using namespace Glest::Global;
 using Glest::Graphics::Renderer;
+using Glest::Graphics::Imageset;
 
 namespace Glest { namespace Widgets {
 using Global::CoreData;
@@ -81,6 +83,8 @@ void WidgetWindow::clear() {
 		floatingWidget = 0;
 	}
 	Container::clear();
+	delete mouseMain;
+	mouseMain = 0;
 }
 
 void WidgetWindow::render() {
@@ -161,7 +165,9 @@ void WidgetWindow::doMouseInto(Widget* widget) {
 }
 
 void WidgetWindow::setMouseAppearance(MouseAppearance v) {
-	mouseMain->setActive(v);
+	if (mouseMain) {
+		mouseMain->setActive(v);
+	}
 }
 
 void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
@@ -222,9 +228,8 @@ void WidgetWindow::update() {
 	foreach (WidgetList, it, updateList) {
 		(*it)->update();
 	}
-
-	if (mouseAnimations) {
-		mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011
+	if (mouseMain) {
+		mouseMain->setFade(getFade());
 	}
 }
 
@@ -443,11 +448,11 @@ bool WidgetWindow::loadMouse(const string &dir) {
 }
 
 void WidgetWindow::initMouse() {
-	remChild(mouseMain);
 	if (!m_mouseTexture) {
 		m_mouseTexture = g_coreData.getMouseTexture();
 	}
-	mouseMain = new Imageset(this, m_mouseTexture, 32, 32);
+	delete mouseMain;
+	mouseMain = new Imageset(m_mouseTexture, 32, 32);
 	mouseMain->setSize(32,32);
 	mouseMain->setPos(mousePos + Vec2i(0, -32));
 	m_mouseTexture = 0; // custom mouse is only applied once
