@@ -213,7 +213,7 @@ void WidgetConfig::loadFont(const string &name, const string &path, int size) {
 	m_fonts.push_back(FontSet());
 	m_fonts.back().load(path, computeFontSize(size));
 	m_namedFonts[name] = m_fonts.size() - 1;
-	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << " @ size: " << size );
+	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size: " << size );
 }
 
 int WidgetConfig::loadTexture(const string &name, const string &path) {
@@ -226,12 +226,12 @@ int WidgetConfig::loadTexture(const string &name, const string &path) {
 		tex->load(path);
 		tex->init();
 		addGlestTexture(name, tex);
-		WIDGET_LOG( "loaded texture named '" << name << "' from path '" << path << " @ ndx " 
+		WIDGET_LOG( "loaded texture named '" << name << "' from path '" << path << "' @ ndx " 
 			<< (m_textures.size() - 1));
 		return m_textures.size() - 1;
 	} catch (const runtime_error &e) {
-		g_logger.logError("While running widget.cfg,\n\t Error loading " + path);
-		WIDGET_LOG( "Error loading texture named '" << name << "' from path '" << path);
+		g_logger.logError("While running widget.cfg,\n\t Error loading '" + path + "'");
+		WIDGET_LOG( "Error loading texture named '" << name << "' from path '" << path << "'");
 		return -1;
 	}
 }
@@ -271,9 +271,9 @@ int WidgetConfig::computeFontSize(int size) {
 
 void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, BorderStyle *src) {
 	if (luaScript.getTable("Borders")) {
-		WIDGET_LOG("Loading BorderStyle.");
-		string errorPreamble("While loading border style for widget type '" 
-			+ string(WidgetTypeNames[widgetType]) + "'\n\t");
+		WIDGET_LOG("\tLoading BorderStyle.");
+		string errorPreamble("\t\tWhile loading border style for widget type '" 
+			+ string(WidgetTypeNames[widgetType]) + "'\n\t\t\t");
 		string type;
 		try {
 			type = luaScript.getStringField("Type");
@@ -290,14 +290,14 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 			g_logger.logError(msg);
 			bt = BorderType::NONE;
 		} else {
-			WIDGET_LOG("\tType: " << BorderTypeNames[bt]);
+			WIDGET_LOG("\t\tType: " << BorderTypeNames[bt]);
 		}
 		style.m_type = bt;
 		if (bt != BorderType::NONE) {
 			if (bt != BorderType::TEXTURE) {
 				try {
 					Vec4i sizes = luaScript.getVec4iField("Sizes");
-					WIDGET_LOG("\tSizes: left-top-right-bottom: " << sizes.x << "-" << sizes.y
+					WIDGET_LOG("\t\tSizes: left-top-right-bottom: " << sizes.x << "-" << sizes.y
 						<< "-" << sizes.z << "-" << sizes.w);
 					style.setSizes(sizes);
 				} catch (LuaError &e) {
@@ -335,7 +335,7 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 								g_logger.logError(msg);
 							}
 						}
-						WIDGET_LOG("\tColours: " << logBits);
+						WIDGET_LOG("\t\tColours: " << logBits);
 					} catch (LuaError &e) {
 						string msg = errorPreamble + " loading 'Colours' : " + e.what();
 						WIDGET_LOG(msg);
@@ -350,7 +350,7 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 					tex = luaScript.getStringField("Texture");
 					ndx = getTextureIndex(tex);
 					if (ndx != -1) {
-						WIDGET_LOG("\tTexture: '" << tex << "' @ ndx " << ndx);
+						WIDGET_LOG("\t\tTexture: '" << tex << "' @ ndx " << ndx);
 					} else {
 						WIDGET_LOG(errorPreamble << " texture named '" << tex << "' not found.");
 						g_logger.logError(errorPreamble + " texture named '" + tex + "' not found.");
@@ -362,7 +362,7 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 				}
 				try {
 					sizes = luaScript.getVec2iField("Sizes");
-					WIDGET_LOG("\tSizes: side-corner: " << sizes.x << "-" << sizes.y);
+					WIDGET_LOG("\t\tSizes: side-corner: " << sizes.x << "-" << sizes.y);
 				} catch (LuaError &e) {
 					style.setNone();
 					WIDGET_LOG(errorPreamble << " loading 'Sizes' : " << e.what());
@@ -390,9 +390,9 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 
 void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &style, BackgroundStyle *src) {
 	if (luaScript.getTable("Background")) {
-		WIDGET_LOG("Loading BackgroundStyle.");
-		string errorPreamble("While loading background style for widget type '" 
-			+ string(WidgetTypeNames[widgetType]) + "'\n\t");
+		WIDGET_LOG("\tLoading BackgroundStyle.");
+		string errorPreamble("\t\tWhile loading background style for widget type '" 
+			+ string(WidgetTypeNames[widgetType]) + "'\n\t\t\t");
 		string bType;
 		BackgroundType bt(BackgroundType::INVALID);
 		try {
@@ -403,12 +403,12 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 				g_logger.logError(errorPreamble + " type is not valid!");
 				bt = BackgroundType::NONE;
 			} else {
-				WIDGET_LOG("\tType: " << BackgroundTypeNames[bt]);
+				WIDGET_LOG("\t\tType: " << BackgroundTypeNames[bt]);
 				style.m_type = bt;
 			}
 		} catch (LuaError &e) {
 			if (src) {
-				WIDGET_LOG("\tType not present, using Default");
+				WIDGET_LOG("\t\tType not present, using Default");
 				style.m_type = src->m_type;
 			} else {
 				WIDGET_LOG(errorPreamble << " error reading 'Type' : " << e.what());
@@ -428,19 +428,19 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 							WIDGET_LOG( "" );
 							style.m_colourIndices[i] = getColourIndex(strings[i]);
 						} else {
-							WIDGET_LOG( "Colour named '" << strings[i] << "' was not found." );
+							WIDGET_LOG( "\t\tError: Colour named '" << strings[i] << "' was not found." );
 						}
 					} else if ((bt == BackgroundType::COLOUR && !i) || bt == BackgroundType::CUSTOM_COLOURS) {
-						WIDGET_LOG( "Insufficient colours." );
+						WIDGET_LOG( "\t\tError: Insufficient colours." );
 					}
-					WIDGET_LOG( "Colours: " << logBits);
+					WIDGET_LOG( "\t\tColours: " << logBits);
 				}
 			} catch (LuaError &e) {
 				if (!src) {
 					WIDGET_LOG(errorPreamble << " loading 'Colours' : " << e.what());
 					g_logger.logError(errorPreamble + " loading 'Colours' : " + e.what());
 				} else {
-					WIDGET_LOG( "\tColours not present, using Default" );
+					WIDGET_LOG( "\t\tColours not present, using Default" );
 					for (int i=0; i < 4; ++i) {
 						style.m_colourIndices[i] = src->m_colourIndices[i];
 					}
@@ -453,9 +453,9 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 				int ndx = getTextureIndex(tex);
 				if (ndx != -1) {
 					style.m_imageIndex = ndx;
-					WIDGET_LOG( "\tTexture: '" << tex << "' @ ndx " << ndx );
+					WIDGET_LOG( "\t\tTexture: '" << tex << "' @ ndx " << ndx );
 				} else {
-					WIDGET_LOG( "Texture '" << tex << "' not found.");
+					WIDGET_LOG( "\t\tError: Texture '" << tex << "' not found.");
 					g_logger.logError(errorPreamble + " texture '" + tex + "' is not known.");
 				}
 			} catch (LuaError &e) {
@@ -463,7 +463,7 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 					WIDGET_LOG(errorPreamble << " loading 'Texture' : " << e.what());
 					g_logger.logError(errorPreamble + " loading 'Texture' : " + e.what());
 				} else {
-					WIDGET_LOG( "\tTexture not present, using Default" );
+					WIDGET_LOG( "\t\tTexture not present, using Default" );
 					style.m_imageIndex = src->m_imageIndex;
 				}
 			}
@@ -482,16 +482,16 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 
 void WidgetConfig::loadHighLightStyle(WidgetType widgetType, HighLightStyle &style, HighLightStyle *src) {
 	if (luaScript.getTable("HighLight")) {
-		WIDGET_LOG("Loading HighLightStyle.");
+		WIDGET_LOG("\tLoading HighLightStyle.");
 		string tmp;
 		try {
 			tmp = luaScript.getStringField("Type");
 		} catch (LuaError &e) {
 			if (src) {
-				WIDGET_LOG( "\tType not specified, using Default." );
+				WIDGET_LOG( "\t\tType not specified, using Default." );
 				style = *src;
 			} else {
-				WIDGET_LOG( "\tType not specified, setting Default (none)." );
+				WIDGET_LOG( "\t\tType not specified, setting Default (none)." );
 				style = HighLightStyle();
 			}
 			tmp = "none";
@@ -499,14 +499,14 @@ void WidgetConfig::loadHighLightStyle(WidgetType widgetType, HighLightStyle &sty
 		HighLightType t = HighLightTypeNames.match(tmp.c_str());
 		if (t == HighLightType::INVALID) {
 			if (src) {
-				WIDGET_LOG( "Error: Type '" << tmp << "' is not valid, using Default." );
+				WIDGET_LOG( "\t\tError: Type '" << tmp << "' is not valid, using Default." );
 				style.m_type = src->m_type;
 			} else {
-				WIDGET_LOG( "Error: Type '" << tmp << "' is not valid, setting Default (none)." );
+				WIDGET_LOG( "\t\tError: Type '" << tmp << "' is not valid, setting Default (none)." );
 				style = HighLightStyle();
 			}
 		} else {
-			WIDGET_LOG( "\tType: " << HighLightTypeNames[t] );
+			WIDGET_LOG( "\t\tType: " << HighLightTypeNames[t] );
 			style.m_type = t;
 		}
 		if (style.m_type != HighLightType::NONE) {
@@ -514,23 +514,23 @@ void WidgetConfig::loadHighLightStyle(WidgetType widgetType, HighLightStyle &sty
 				string name = luaScript.getStringField("Colour");
 				int ndx = getColourIndex(name);
 				if (ndx != -1) {
-					WIDGET_LOG( "\tHighlight Colour: '" << name << "' @ ndx " << ndx );
+					WIDGET_LOG( "\t\tHighlight Colour: '" << name << "' @ ndx " << ndx );
 					style.m_colourIndex = ndx;
 				} else {
-					WIDGET_LOG("Error loading HighLightStyle, colour named '" << name << "' not found");
+					WIDGET_LOG("\t\tError loading HighLightStyle, colour named '" << name << "' not found");
 				}
 			} catch (LuaError &e) {
-				WIDGET_LOG("\tNo Colour specified, using white.");
+				WIDGET_LOG("\t\tNo Colour specified, using white.");
 				style.m_colourIndex = getColourIndex(Colour(255u, 255u, 255u, 255u));
 			}
 		}
 		luaScript.popTable();
 	} else {
 		if (src) {
-			WIDGET_LOG("No HighLight table found, using Default");
+			WIDGET_LOG("\tNo HighLight table found, using Default");
 			style = *src;
 		} else {
-			WIDGET_LOG("No HighLight table found, setting Default (none)");
+			WIDGET_LOG("\tNo HighLight table found, setting Default (none)");
 			style = HighLightStyle();
 		}
 	}
@@ -538,45 +538,45 @@ void WidgetConfig::loadHighLightStyle(WidgetType widgetType, HighLightStyle &sty
 
 void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextStyle *src) {
 	if (luaScript.getTable("Text")) {
-		WIDGET_LOG( "Loading TextStyle.");
+		WIDGET_LOG( "\tLoading TextStyle.");
 		string name, size, colour, shadowColour;
 		if (luaScript.getStringField("Name", name)) {
 			style.m_fontIndex = getFontIndex(name);
 			if (style.m_fontIndex == -1) {
-				WIDGET_LOG( "\tFont: '" << name << "' @ ndx " << style.m_fontIndex );
+				WIDGET_LOG( "\t\tFont: '" << name << "' @ ndx " << style.m_fontIndex );
 			}
 		} else {
 			if (src) {
-				WIDGET_LOG( "\tFont not specified, using Default." );
+				WIDGET_LOG( "\t\tFont not specified, using Default." );
 				style.m_fontIndex = src->m_fontIndex;
 			} else {
-				WIDGET_LOG( "Error: font named '" << name << "' not found" );
+				WIDGET_LOG( "\t\tError: font named '" << name << "' not found" );
 				style.m_fontIndex = -1;
 			}
 		}
 		if (luaScript.getStringField("Size", size)) {
 			style.m_size = FontSizeNames.match(size.c_str());
 			if (style.m_size == FontSize::INVALID) {
-				WIDGET_LOG( "Error: font size '" << size << "' invalid. Setting to NORMAL." );
+				WIDGET_LOG( "\t\tError: font size '" << size << "' invalid. Setting to NORMAL." );
 				style.m_size = FontSize::NORMAL;
 			} else {
-				WIDGET_LOG( "\tSize: " << FontSizeNames[style.m_size] );
+				WIDGET_LOG( "\t\tSize: " << FontSizeNames[style.m_size] );
 			}
 		} else {
 			if (src) {
-				WIDGET_LOG( "Size not specified, using Default." );
+				WIDGET_LOG( "\t\tSize not specified, using Default." );
 				style.m_size = src->m_size;
 			} else {
-				WIDGET_LOG( "Size not specified, setting Default to NORMAL." );
+				WIDGET_LOG( "\t\tSize not specified, setting Default to NORMAL." );
 				style.m_size = FontSize::NORMAL;
 			}
 		}
 		if (luaScript.getStringField("Colour", colour)) {
 			style.m_colourIndex = getColourIndex(colour);
 			if (style.m_colourIndex != -1) {
-				WIDGET_LOG( "\tColour: '" << colour << "' @ ndx " << style.m_colourIndex );
+				WIDGET_LOG( "\t\tColour: '" << colour << "' @ ndx " << style.m_colourIndex );
 			} else {
-				WIDGET_LOG( "Error: Colour '" << colour << "' not found");
+				WIDGET_LOG( "\t\tError: Colour '" << colour << "' not found");
 			}
 		} else {
 			if (src) {
@@ -585,31 +585,31 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 		}
 		bool shadow;
 		if (luaScript.getBoolField("Shadow", shadow)) {
-			WIDGET_LOG( "\tShadow: " << (shadow ? "true" : "false") );
+			WIDGET_LOG( "\t\tShadow: " << (shadow ? "true" : "false") );
 			style.m_shadow = shadow;
 		} else {
 			if (src) {
 				style.m_shadow = src->m_shadow;
-				WIDGET_LOG( "\tShadow not specified, using Default." );
+				WIDGET_LOG( "\t\tShadow not specified, using Default." );
 			} else {
 				style.m_shadow = false;
-				WIDGET_LOG( "\tShadow not specified, setting Default to false." );
+				WIDGET_LOG( "\t\tShadow not specified, setting Default to false." );
 			}
 		}
 		if (style.m_shadow) {
 			if (luaScript.getStringField("ShadowColour", shadowColour)) {
 				style.m_shadowColourIndex = getColourIndex(shadowColour);
 				if (style.m_shadowColourIndex != -1) {
-					WIDGET_LOG( "\tShadowColour: '" << shadowColour << " @ ndx " << style.m_shadowColourIndex );
+					WIDGET_LOG( "\t\tShadowColour: '" << shadowColour << " @ ndx " << style.m_shadowColourIndex );
 				} else {
-					WIDGET_LOG( "Error: ShadowColour: '" << shadowColour << " not found." );
+					WIDGET_LOG( "\t\tError: ShadowColour: '" << shadowColour << " not found." );
 				}
 			} else {
 				if (src) {
-					WIDGET_LOG( "\tShadowColour not specified using Default." );
+					WIDGET_LOG( "\t\tShadowColour not specified using Default." );
 					style.m_shadowColourIndex = src->m_shadowColourIndex;
 				} else {
-					WIDGET_LOG( "Error: ShadowColour not specified." );
+					WIDGET_LOG( "\t\tError: ShadowColour not specified." );
 					style.m_shadowColourIndex = -1;
 				}
 			}
@@ -630,9 +630,11 @@ string getErrMsg(const string &type) {
 	return "Error loading widget.cfg : styles for " + type + " could not be loaded.";
 }
 
-bool WidgetConfig::loadStyles(const char *tableName, WidgetType type) {
+bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob) {
+	WIDGET_LOG( "====================================================" );
 	WIDGET_LOG( "Loading styles for widget type '" << tableName << "'" );
-	if (luaScript.getGlobal(tableName)) {
+	WIDGET_LOG( "====================================================" );
+	if ((glob && luaScript.getGlobal(tableName)) || (!glob && luaScript.getTable(tableName))) {
 		if (luaScript.getTable("Default")) { // load default style (must be present)
 			loadBorderStyle(type, m_styles[type][WidgetState::NORMAL].borderStyle());
 			loadBackgroundStyle(type, m_styles[type][WidgetState::NORMAL].backgroundStyle());
@@ -641,14 +643,23 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type) {
 			assert(luaScript.checkType(LuaType::TABLE));
 			try {
 				string name = luaScript.getStringField("Overlay");
-				m_styles[type][WidgetState::NORMAL].overlay() = getTextureIndex(name);
+				WIDGET_LOG( "\tLoading Overlay" );
+				int ndx = getTextureIndex(name);
+				if (ndx != -1) {
+					m_styles[type][WidgetState::NORMAL].overlay() = ndx;
+					WIDGET_LOG("\t\tOverlay texture: '" << name << "' @ ndx " << ndx);
+				} else {
+					WIDGET_LOG("\t\tError: the texture named '" << name << "' was not found.");
+					g_logger.logError("Error: the texture named '" + name + "' was not found.");
+				}
 			} catch (LuaError &e) {
+				WIDGET_LOG("\tOverlay not specified (field nil), using Default");
 				m_styles[type][WidgetState::NORMAL].overlay() = -1;
 			}
 			assert(luaScript.checkType(LuaType::TABLE));
 			luaScript.popTable();
 		} else {
-			WIDGET_LOG( "Error loading styles for widget type '" << tableName << "' no Default style." );
+			WIDGET_LOG( "\tError loading styles for widget type '" << tableName << "' no Default style." );
 		}
 
 		// anything missing from States get the default styles
@@ -658,11 +669,11 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type) {
 		TextStyle *normTextStyle = &m_styles[type][WidgetState::NORMAL].textStyle();
 		int  normOverlay = m_styles[type][WidgetState::NORMAL].overlay();
 
-		if (luaScript.getTable("State")) { // load States if present
+		if (luaScript.getTable("States")) { // load States if present
 			for (WidgetState state(1); state < WidgetState::COUNT; ++state) {
 				string name = formatString(WidgetStateNames[state]);
 				if (luaScript.getTable(name.c_str())) { // load state style, with 'fallbacks'
-					WIDGET_LOG( "table found for widget type '" << tableName << "' in state '"
+					WIDGET_LOG( "\ttable found for widget type '" << tableName << "' in state '"
 						<< name << "'." );
 					loadBorderStyle(type, m_styles[type][state].borderStyle(), normBorderStyle);
 					loadBackgroundStyle(type, m_styles[type][state].backgroundStyle(), normBackgroundStyle);
@@ -670,13 +681,22 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type) {
 					loadTextStyle(type, m_styles[type][state].textStyle(), normTextStyle);
 					try {
 						string name = luaScript.getStringField("Overlay");
-						m_styles[type][state].overlay() = getTextureIndex(name);
+						WIDGET_LOG( "\tLoading Overlay" );
+						int ndx = getTextureIndex(name);
+						if (ndx != -1) {
+							m_styles[type][state].overlay() = ndx;
+							WIDGET_LOG("\t\tOverlay texture: '" << name << "' @ ndx " << ndx);
+						} else {
+							WIDGET_LOG("\t\tError: the texture named '" << name << "' was not found.");
+							g_logger.logError("Error: the texture named '" + name + "' was not found.");
+						}
 					} catch (LuaError &e) {
+						WIDGET_LOG("\tOverlay not specified, using Default");
 						m_styles[type][state].overlay() = normOverlay;
 					}
 					luaScript.popTable();
 				} else { // no style for this state, just copy default
-					WIDGET_LOG( "no table found for widget type '" << tableName << "' in state '"
+					WIDGET_LOG( "\tno table found for widget type '" << tableName << "' in state '"
 						<< name << "'. Using 'Default'" );
 					m_styles[type][state].borderStyle() = *normBorderStyle;
 					m_styles[type][state].backgroundStyle() = *normBackgroundStyle;
@@ -687,7 +707,7 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type) {
 			}
 			luaScript.popTable();
 		} else { // no States specified, just copy default to all others
-			WIDGET_LOG( "no table 'State' table found for widget type '" << tableName << "'"
+			WIDGET_LOG( "\tno table 'States' table found for widget type '" << tableName << "'"
 				<< "'. Using 'Default' for all states." );
 			for (WidgetState state(1); state < WidgetState::COUNT; ++state) {
 				m_styles[type][state].borderStyle() = *normBorderStyle;
@@ -750,8 +770,12 @@ void WidgetConfig::load() {
 
 	loadStyles("StaticWidget", WidgetType::STATIC_WIDGET);
 	loadStyles("Button", WidgetType::BUTTON);
-	loadStyles("CheckBox.UnChecked", WidgetType::CHECK_BOX);
-	loadStyles("CheckBox.Checked", WidgetType::CHECK_BOX_CHK);
+	if (luaScript.getGlobal("CheckBox")) {
+		loadStyles("UnChecked", WidgetType::CHECK_BOX, false);
+	}
+	if (luaScript.getGlobal("CheckBox")) {
+		loadStyles("Checked", WidgetType::CHECK_BOX_CHK, false);
+	}
 	loadStyles("TextBox", WidgetType::TEXT_BOX);
 	loadStyles("ListItem", WidgetType::LIST_ITEM);
 	loadStyles("ListBox", WidgetType::LIST_BOX);

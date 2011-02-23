@@ -6,8 +6,8 @@
 //  GPL V3, see source/licence.txt
 // ==============================================================
 
-#ifndef _GLEST_WIDGET_CONFIG_INCLUDED_
-#define _GLEST_WIDGET_CONFIG_INCLUDED_
+#ifndef _GLEST_WIDGETS_WIDGET_CONFIG_INCLUDED_
+#define _GLEST_WIDGETS_WIDGET_CONFIG_INCLUDED_
 
 #include <vector>
 #include <map>
@@ -95,7 +95,7 @@ private:
 	WidgetConfig();
 
 	// load helpers
-	bool loadStyles(const char *tableName, WidgetType wType);
+	bool loadStyles(const char *tableName, WidgetType wType, bool glob = true);
 
 	void loadBorderStyle(WidgetType widgetType, BorderStyle &style, BorderStyle *src = 0);
 	void loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &style, BackgroundStyle *src = 0);
