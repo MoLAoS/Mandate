@@ -120,15 +120,18 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 }
 
 void MenuStateJoinGame::buildConnectPanel() {
+	const int defWidgetHeight = g_widgetConfig.getDefaultElementHeight();
+	const int defCellHeight = defWidgetHeight * 3 / 2;
+
 	Vec2i pos, size(500, 300);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 
 	m_connectPanel = new CellStrip(&program, Orientation::VERTICAL, 4);
-	m_connectPanel->getCell(0)->setSizeHint(SizeHint(-1, 50)); // 50 px for recent hosts lbl & list
-	m_connectPanel->getCell(1)->setSizeHint(SizeHint(-1, 50)); // 50 px for server lbl & txtBox
-	m_connectPanel->getCell(2)->setSizeHint(SizeHint(-1, 50)); // 50 px for connected label
+	m_connectPanel->getCell(0)->setSizeHint(SizeHint(-1, defCellHeight)); // def px for recent hosts lbl & list
+	m_connectPanel->getCell(1)->setSizeHint(SizeHint(-1, defCellHeight)); // def px for server lbl & txtBox
+	m_connectPanel->getCell(2)->setSizeHint(SizeHint(-1, defCellHeight)); // def px for connected label
 	m_connectPanel->getCell(3)->setSizeHint(SizeHint(25));     // 25 % of the rest for button panel
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	Anchors a(Anchor(AnchorType::RIGID, 0)); // fill
 	m_connectPanel->setAnchors(a);
 	Vec2i pad(45, 45);
@@ -152,16 +155,16 @@ void MenuStateJoinGame::buildConnectPanel() {
 	pnl = new CellStrip(m_connectPanel->getCell(1), Orientation::HORIZONTAL, 2);
 	pnl->setAnchors(a);
 
-	StaticText* serverLabel = new StaticText(pnl->getCell(0), Vec2i(0), Vec2i(200, 34));
+	StaticText* serverLabel = new StaticText(pnl->getCell(0), Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
 	serverLabel->setTextParams(g_lang.get("Server") + " Ip: ", Vec4f(1.f), font);
 	serverLabel->setAnchors(a2);
 	
-	m_serverTextBox = new TextBox(pnl->getCell(1), Vec2i(0), Vec2i(300, 34));
+	m_serverTextBox = new TextBox(pnl->getCell(1), Vec2i(0), Vec2i(10 * defWidgetHeight, defWidgetHeight));
 	m_serverTextBox->setTextParams("", Vec4f(1.f), font, true);
 	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
 	m_serverTextBox->setAnchors(a2);
 
-	m_connectLabel = new StaticText(m_connectPanel->getCell(2), Vec2i(0), Vec2i(500, 34));
+	m_connectLabel = new StaticText(m_connectPanel->getCell(2), Vec2i(0), Vec2i(16 * defWidgetHeight, defWidgetHeight));
 	m_connectLabel->setTextParams(g_lang.get("NotConnected"), Vec4f(1.f), font);
 	m_connectLabel->setAnchors(a2);
 
@@ -171,17 +174,17 @@ void MenuStateJoinGame::buildConnectPanel() {
 	pnl->setAnchors(a);
 
 	// buttons
-	Button* returnButton = new Button(pnl->getCell(0), Vec2i(0), Vec2i(256, 32));
+	Button* returnButton = new Button(pnl->getCell(0), Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
 	returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
 	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
 	returnButton->setAnchors(a2);
 
-	Button* connectButton = new Button(pnl->getCell(1), Vec2i(0), Vec2i(256, 32));
+	Button* connectButton = new Button(pnl->getCell(1), Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
 	connectButton->setTextParams(g_lang.get("Connect"), Vec4f(1.f), font);
 	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
 	connectButton->setAnchors(a2);
 
-	Button* searchButton = new Button(pnl->getCell(2), Vec2i(0), Vec2i(256, 32));
+	Button* searchButton = new Button(pnl->getCell(2), Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
 	searchButton->setTextParams(g_lang.get("Search"), Vec4f(1.f), font);
 	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
 	searchButton->setAnchors(a2);

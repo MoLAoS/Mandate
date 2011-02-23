@@ -263,7 +263,7 @@ MenuState::MenuState(Program &program, MainMenu *mainMenu)
 		, m_fadeOut(false)
 		, m_transition(false) {
 	program.setFade(m_fade);
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	Vec2i pos(10, 50);
 	pos.y -= int(font->getMetrics()->getHeight());
 	m_debugText = new StaticText(&program, pos, Vec2i(0));
@@ -277,5 +277,76 @@ void MenuState::setDebugString(const string &s) {
 	m_debugText->setText(s);
 	m_debugText->setSize(m_debugText->getPrefSize());
 }
+
+// =====================================================
+//  class MenuStateTest
+// =====================================================
+
+CellStrip *ws;
+
+MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
+		: MenuState(program, mainMenu) {
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	// create
+	int gap = (g_metrics.getScreenW() - 450) / 4;
+	int x = gap, w = 150, y = g_config.getDisplayHeight() - 80, h = 30;
+	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
+	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->Clicked.connect(this, &MenuStateTest::onButtonClick);
+
+	Anchors anchors;
+	anchors.set(Edge::LEFT, 10, true);
+	anchors.set(Edge::RIGHT, 10, true);
+	anchors.set(Edge::TOP, 15, true);
+	anchors.set(Edge::BOTTOM, 15, true);
+
+	BorderStyle bs;
+	bs.setSolid(g_widgetConfig.getColourIndex(Colour(255u, 0u, 0u, 255u)));
+	bs.setSizes(1);
+
+	Vec2i size = Vec2i(std::min(g_config.getDisplayWidth() / 3, 300),
+	                   std::min(g_config.getDisplayHeight() / 2, 300));
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
+	ws = new CellStrip(&program, Orientation::VERTICAL, RootMenuItem::COUNT);
+	ws->setBorderStyle(bs);
+	ws->setPos(pos);
+	ws->setSize(size);
+
+	// some buttons
+	for (int i=0; i < RootMenuItem::COUNT; ++i) {
+		ws->getCell(i)->setAnchors(anchors);
+		Button *btn = new Button(ws->getCell(i), Vec2i(0), Vec2i(150, 40), false);
+		BorderStyle borderStyle;
+		borderStyle.setSizes(3);
+		int li = g_widgetConfig.getColourIndex(Colour(0xBFu, 0x5Eu, 0x5Eu, 0xAF));
+		int di = g_widgetConfig.getColourIndex(Colour(0x6Fu, 0x00u, 0x00u, 0xAF));
+		borderStyle.setRaise(li, di);
+		btn->setBorderStyle(borderStyle);
+
+		BackgroundStyle backStyle;
+		int bi = g_widgetConfig.getColourIndex(Colour(0x9Fu, 0x00u, 0x00u, 0xAF));
+		backStyle.setColour(bi);
+		btn->setBackgroundStyle(backStyle);
+
+		btn->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
+	}
+}
+
+void MenuStateTest::update() {
+	MenuState::update();
+	if (m_transition) {
+		program.clear();
+		mainMenu->setState(new MenuStateRoot(program, mainMenu));
+	}
+}
+
+void MenuStateTest::onButtonClick(Button* btn) {
+	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+
+	soundRenderer.playFx(g_coreData.getClickSoundA());
+	mainMenu->setCameraTarget(MenuStates::ROOT);
+	doFadeOut();
+}
+
 
 }}//end namespace

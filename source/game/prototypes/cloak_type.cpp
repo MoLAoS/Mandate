@@ -59,10 +59,10 @@ void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree
 				}
 				out_decloakSkillClasses.push_back(sc);
 			}
-		} else if (childNode->getName() == "image") {
-			m_image = g_renderer.newTexture2D(ResourceScope::GAME);
-			string path = dir + "/" + childNode->getRestrictedAttribute("path");
-			m_image->getPixmap()->load(path);
+		//} else if (childNode->getName() == "image") {
+		//	m_image = g_renderer.newTexture2D(ResourceScope::GAME);
+		//	string path = dir + "/" + childNode->getRestrictedAttribute("path");
+		//	m_image->getPixmap()->load(path);
 		} else if (childNode->getName() == "cloak-sound") {
 			m_cloakSound = new StaticSound();
 			string path = dir + "/" + childNode->getRestrictedAttribute("path");

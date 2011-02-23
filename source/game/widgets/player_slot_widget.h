@@ -22,50 +22,21 @@ private:
 	Colour	m_colourBase, m_colourOutline;
 
 public:
-	ColourButton(Container *parent)
-			: Button(parent, Vec2i(0), Vec2i(32))
-			, m_colourBase(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND))
-			, m_colourOutline(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND)) {
-		m_borderStyle.setSizes(4);
-		m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
-		m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
-	}
-
-	ColourButton(Container *parent, Vec2i pos, Vec2i size)
-			: Button(parent, pos, size)
-			, m_colourBase(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND))
-			, m_colourOutline(g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND)) {
-		m_borderStyle.setSizes(4);
-		m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
-		m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
-	}
-
-	void clearColour() {
-		m_colourBase =  m_colourOutline = g_widgetConfig.getColour(WidgetColour::DARK_BACKGROUND);
-		m_backgroundStyle.setColour(WidgetColour::DARK_BACKGROUND);
-		m_borderStyle.setSolid(WidgetColour::DARK_BACKGROUND);
-	}
-
-	void setColour(Colour base, Colour outline) {
-		m_colourBase = base;
-		m_colourOutline = outline;
-		m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
-		m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
-	}
-
+	ColourButton(Container *parent);
+	ColourButton(Container *parent, Vec2i pos, Vec2i size);
+	void clearColour();
+	void setColour(Colour base, Colour outline);
 	Colour getColour() const { return m_colourBase; }
-
 	void render() {
 		Button::render();
 	}
-
 };
 
 class FloatingPanel : public Panel {
 public:
 	FloatingPanel(WidgetWindow *window) : Panel(window) {
-		m_borderStyle.setSizes(2);
-		m_borderStyle.setEmbed(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
+		setStyle(g_widgetConfig.getWidgetStyle(WidgetType::LIST_BOX));
+		m_backgroundStyle.setNone();
 	}
 };
 

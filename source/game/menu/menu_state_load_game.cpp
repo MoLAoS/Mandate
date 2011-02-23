@@ -76,7 +76,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	savedGame = NULL;
 	gs = NULL;
 
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 	Anchors centreAnchors;

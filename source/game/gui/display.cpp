@@ -68,7 +68,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 
 	int iconSize = 32;
 
-	m_font = g_coreData.getFTDisplayFont();
+	m_font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
 
 	int x = getBorderLeft();
 	int y = getHeight() - getBorderTop();
@@ -123,9 +123,9 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	}
 
 	const Texture2D* overlayImages[3] = {
-		g_coreData.getGreenTickOverlay(),
-		g_coreData.getRedCrossOverlay(),
-		g_coreData.getQuestionOverlay()
+		g_widgetConfig.getTickTexture(),
+		g_widgetConfig.getCrossTexture(),
+		g_widgetConfig.getQuestionTexture()
 	};
 	m_autoRepairOn = addImageX(overlayImages[0], arPos, Vec2i(iconSize));
 	m_autoRepairOff = addImageX(overlayImages[1], arPos, Vec2i(iconSize));
@@ -439,7 +439,7 @@ void Display::render() {
 		}
 	}
 	
-	renderBgAndBorders();
+	renderBackground();
 	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject() && m_logo != -1) {
 		// faction logo
 		ImageWidget::renderImage(m_logo);

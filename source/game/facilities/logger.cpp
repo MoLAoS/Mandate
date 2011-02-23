@@ -192,8 +192,8 @@ void ProgramLog::renderLoadingScreen(){
 	g_renderer.reset2d();
 	g_renderer.clearBuffers();
 
-	Font *normFont = g_coreData.getFTMenuFontSmall();
-	Font *bigFont = g_coreData.getFTMenuFontNormal();
+	Font *normFont = g_widgetConfig.getMenuFont()[FontSize::SMALL];
+	Font *bigFont = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	if (m_backgroundTexture) {
 		g_renderer.renderBackground(m_backgroundTexture);

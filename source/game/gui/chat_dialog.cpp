@@ -31,6 +31,7 @@ namespace Glest { namespace Gui {
 
 ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
 		: BasicDialog(parent, pos, size), m_teamChat(false) {
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	m_panel = new Panel(this);
 	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 10);
@@ -39,7 +40,7 @@ ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
 	m_subPanel->setLayoutParams(true, Orientation::HORIZONTAL);
 	m_subPanel->setPaddingParams(0, 10);
 	m_label = new StaticText(m_subPanel);
-	m_label->setTextParams(g_lang.get("TeamOnly") + ": ", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_label->setTextParams(g_lang.get("TeamOnly") + ": ", Vec4f(1.f), font);
 	m_label->setSize(m_label->getPrefSize());
 	m_teamCheckBox = new CheckBox(m_subPanel);
 	m_teamCheckBox->setSize(m_teamCheckBox->getPrefSize());
@@ -51,7 +52,7 @@ ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
 	m_subPanel->layoutChildren();
 
 	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_inputBox->setTextParams("", Vec4f(1.f), font);
 	m_inputBox->InputEntered.connect(this, &ChatDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &ChatDialog::onEscaped);
 

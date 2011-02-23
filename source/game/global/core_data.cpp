@@ -61,18 +61,6 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 	return tex;
 }
 
-const float relativeSizes[] = { 0.8f, 1.0f, 1.3f, 1.6f };
-
-void FontSet::load(const string &path, int size) {
-	int *sizes = new int[FontSize::COUNT];
-	foreach_enum (FontSize, fs) {
-		sizes[fs] = int(size * relativeSizes[fs]);
-		m_fonts[fs] = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-		m_fonts[fs]->setType(path);
-		m_fonts[fs]->setSize(sizes[fs]);
-	}
-}
-
 bool CoreData::load() {
 	g_logger.logProgramEvent("Core data");
 
@@ -87,33 +75,33 @@ bool CoreData::load() {
 		logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
 		gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
 		gaeSplashTexture = loadTexture(dir + "/menu/textures/gaesplash.tga");
-		checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
-		checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
-		vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
-		vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
-		vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
-		vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
 		waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
-		buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
-		buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
-		textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
-		greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
-		orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
-		redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
+		//checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
+		//checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
+		//vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
+		//vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
+		//vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
+		//vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
+		//buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
+		//buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
+		//textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
+		//greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
+		//orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
+		//redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
 	} catch (runtime_error &e) {
 		g_logger.logError(string("Error loading core data.\n") + e.what());
 		return false;
 	}
-	try {
-		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
-	} catch (runtime_error &e) {
-		g_logger.logError("mouse.png images not found.\n");
-		mouseTexture = 0;
-	}
+	//try {
+	//	mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
+	//} catch (runtime_error &e) {
+	//	g_logger.logError("mouse.png images not found.\n");
+	//	mouseTexture = 0;
+	//}
 	// fonts
-	m_menuFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
-	m_gameFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
-	m_fancyFont.load(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(28));
+	//m_menuFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
+	//m_gameFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
+	//m_fancyFont.load(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(28));
 
 	// sounds
 	try {
@@ -139,15 +127,6 @@ bool CoreData::load() {
 void CoreData::closeSounds(){
 	introMusic.close();
     menuMusic.close();
-}
-
-int CoreData::computeFontSize(int size) {
-	int screenH = g_config.getDisplayHeight();
-	int rs = int(g_config.getRenderFontScaler() * size * float(screenH) / 768.f);
-	if (rs < 12) {
-		rs = 12;
-	}
-	return rs;
 }
 
 }} // end namespace

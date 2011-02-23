@@ -31,8 +31,10 @@ private:
 	const Texture2D *m_tex;
 
 public:
-	CodeMouseCursor(WidgetWindow *window) : MouseCursor(window)
-		,m_app(MouseAppearance::DEFAULT), m_tex(0) {}
+	CodeMouseCursor(WidgetWindow *window)
+		: MouseCursor(window)
+		, m_app(MouseAppearance::DEFAULT), m_tex(0) {}
+	virtual ~CodeMouseCursor();
 
 	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) override;
 
@@ -58,6 +60,7 @@ protected:
 	static WidgetWindow *instance;
 
 private:
+	WidgetConfig *m_config;
 	Widget*	floatingWidget;
 	KeyboardWidget* keyboardFocused;
 	KeyboardWidget* lastKeyDownWidget;
@@ -80,6 +83,10 @@ private:
 	//Imageset *mouseMain;
 	//Animset *mouseAnimations;
 
+private:
+	void setDisplaySettings();
+	void restoreDisplaySettings();
+
 	Widget* findCommonAncestor(Widget* widget1, Widget* widget2);
 	void unwindMouseOverStack(Widget* newTop);
 	void unwindMouseOverStack();
@@ -92,6 +99,7 @@ public:
 	virtual ~WidgetWindow();
 
 	static WidgetWindow* getInstance() { return instance; }
+	WidgetConfig* getConfig() { return m_config; }
 
 	void update();
 	float getAnim() const { return anim; }

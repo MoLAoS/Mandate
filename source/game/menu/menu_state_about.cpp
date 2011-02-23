@@ -31,8 +31,8 @@ using namespace Util;
 MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu) {
 	int centreX = g_metrics.getScreenW() / 2;
-	Font *font = g_coreData.getFTMenuFontSmall();
-	Font *fontBig = g_coreData.getFTMenuFontBig();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::SMALL];
+	Font *fontBig = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	const FontMetrics *fm = font->getMetrics();
 	const FontMetrics *fmBig = fontBig->getMetrics();
 	Vec2i btnSize(150, 30);

@@ -25,6 +25,40 @@ using Global::CoreData;
 using Global::Lang;
 using Sim::ControlTypeNames;
 
+Colour dark = Colour(0x3Fu, 0x3Fu, 0x3Fu, 0x9Fu);
+
+ColourButton::ColourButton(Container *parent)
+		: Button(parent, Vec2i(0), Vec2i(32))
+		, m_colourBase(dark)
+		, m_colourOutline(dark) {
+	m_borderStyle.setSizes(4);
+	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+}
+
+ColourButton::ColourButton(Container *parent, Vec2i pos, Vec2i size)
+		: Button(parent, pos, size)
+		, m_colourBase(dark)
+		, m_colourOutline(dark) {
+	m_borderStyle.setSizes(4);
+	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+}
+
+void ColourButton::clearColour() {
+	m_colourBase =  m_colourOutline = dark;
+	int ndx = g_widgetConfig.getColourIndex(dark);
+	m_backgroundStyle.setColour(ndx);
+	m_borderStyle.setSolid(ndx);
+}
+
+void ColourButton::setColour(Colour base, Colour outline) {
+	m_colourBase = base;
+	m_colourOutline = outline;
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
+}
+
 ColourPicker::ColourPicker(Container *parent)
 		: Panel(parent)
 		, m_dropDownPanel(0)
@@ -124,40 +158,34 @@ void ColourPicker::onSelect(Button *b) {
 PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, 5) {
 	CoreData &coreData = CoreData::getInstance();
-	Anchors anchors;
-	anchors.set(Edge::LEFT, 5, false);
-	anchors.set(Edge::RIGHT, 5, false);
-	anchors.set(Edge::TOP, 3, false);
-	anchors.set(Edge::BOTTOM, 3, false);
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	int hints[] = { 18, 33, 33, 8, 8 };
+	setPercentageHints(hints);
 	
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	StaticText *label = new StaticText(m_cells[0]);
-	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), font, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_cells[0]->setSizeHint(SizeHint(18));
 	label->setAnchors(anchors);
 
 	label = new StaticText(m_cells[1]);
-	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), font, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_cells[1]->setSizeHint(SizeHint(33));
 	label->setAnchors(anchors);
 
 	label = new StaticText(m_cells[2]);
-	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), font, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_cells[2]->setSizeHint(SizeHint(33));
 	label->setAnchors(anchors);
 
 	label = new StaticText(m_cells[3]);
-	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
+	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), font, false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_cells[3]->setSizeHint(SizeHint(8));
 	label->setAnchors(anchors);
 
 	label = new StaticText(m_cells[4]);
-	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
+	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), font, false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_cells[4]->setSizeHint(SizeHint(8));
 	label->setAnchors(anchors);
 }
 
@@ -168,19 +196,16 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, 5), m_freeSlot(false) {
 	CoreData &coreData = CoreData::getInstance();
-	Anchors anchors;
-	anchors.set(Edge::LEFT, 5, false);
-	anchors.set(Edge::RIGHT, 5, false);
-	anchors.set(Edge::TOP, 3, false);
-	anchors.set(Edge::BOTTOM, 3, false);
+	Anchors anchors(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
+	int hints[] = { 18, 33, 33, 8, 8 };
+	setPercentageHints(hints);
 
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	m_label = new StaticText(m_cells[0]);
-	m_label->setTextParams("Player #", Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
-	m_cells[0]->setSizeHint(SizeHint(18));
+	m_label->setTextParams("Player #", Vec4f(1.f), font, true);
 	m_label->setAnchors(anchors);
 
 	m_controlList = new DropList(m_cells[1]);
-	m_cells[1]->setSizeHint(SizeHint(33));
 	m_controlList->setAnchors(anchors);
 
 	foreach_enum (ControlType, ct) {
@@ -189,18 +214,15 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 
 	m_factionList = new DropList(m_cells[2]);
 	m_factionList->setDropBoxHeight(200);
-	m_cells[2]->setSizeHint(SizeHint(33));
 	m_factionList->setAnchors(anchors);
 	
 	m_teamList = new DropList(m_cells[3]);
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
 	}
-	m_cells[3]->setSizeHint(SizeHint(8));
 	m_teamList->setAnchors(anchors);
 
 	m_colourPicker = new Widgets::ColourPicker(m_cells[4]);
-	m_cells[4]->setSizeHint(SizeHint(8));
 	m_colourPicker->setAnchors(anchors);
 
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);

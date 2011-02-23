@@ -37,22 +37,20 @@ namespace Glest { namespace Widgets {
 StaticText::StaticText(Container* parent)
 		: Widget(parent) , TextWidget(this)
 		, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
 StaticText::StaticText(Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size), TextWidget(this)
 		, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
 void StaticText::render() {
 	if (!isVisible()) {
 		return;
 	}
-	Widget::renderBgAndBorders();
+	Widget::renderBackground();
 	if (TextWidget::getText(0) != "") {
 		if (m_doubleShadow) {
 			TextWidget::renderTextDoubleShadowed(0, m_shadowOffset);
@@ -62,6 +60,7 @@ void StaticText::render() {
 			TextWidget::renderText();
 		}
 	}
+	Widget::renderForeground();
 }
 
 Vec2i StaticText::getMinSize() const {
@@ -93,22 +92,19 @@ void StaticText::setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int
 StaticImage::StaticImage(Container* parent)
 		: Widget(parent)
 		, ImageWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
 StaticImage::StaticImage(Container* parent, Vec2i pos, Vec2i size) 
 		: Widget(parent, pos, size)
 		, ImageWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
 StaticImage::StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex)
 		: Widget(parent, pos, size)
 		, ImageWidget(this, tex) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::STATIC_WIDGET);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::STATIC_WIDGET);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
 Vec2i StaticImage::getMinSize() const {
@@ -120,6 +116,15 @@ Vec2i StaticImage::getMinSize() const {
 
 Vec2i StaticImage::getPrefSize() const {
 	return getMinSize();
+}
+
+void StaticImage::render() {
+	if (!isVisible()) {
+		return;
+	}
+	Widget::renderBackground();
+	ImageWidget::renderImage();
+	Widget::renderForeground();
 }
 
 // =====================================================
@@ -201,28 +206,22 @@ Button::Button(Container* parent)
 		: Widget(parent)
 		, TextWidget(this)
 		, MouseWidget(this)
-		, m_hover(false)
-		, m_pressed(false)
 		, m_doHoverHighlight(true) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::BUTTON);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::BUTTON);
+	setWidgetStyle(WidgetType::BUTTON);
 }
 
 Button::Button(Container* parent, Vec2i pos, Vec2i size, bool hoverHighlight)
 		: Widget(parent, pos, size)
 		, TextWidget(this)
 		, MouseWidget(this)
-		, m_hover(false)
-		, m_pressed(false)
 		, m_doHoverHighlight(hoverHighlight) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::BUTTON);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::BUTTON);
+	setWidgetStyle(WidgetType::BUTTON);
 }
 
 Vec2i Button::getPrefSize() const {
 	Vec2i imgSize(0);
 	if (m_borderStyle.m_type == BorderType::TEXTURE) {
-		const Texture2D *tex = g_widgetConfig.getTexture(m_borderStyle.m_imageNdx);
+		const Texture2D *tex = m_rootWindow->getConfig()->getTexture(m_borderStyle.m_imageNdx);
 		imgSize = Vec2i(tex->getPixmap()->getW(), tex->getPixmap()->getH());
 	}
 	Vec2i txtSize(getMinSize());
@@ -244,10 +243,10 @@ void Button::setSize(const Vec2i &sz) {
 bool Button::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
 	if (isEnabled()) {
-		if (m_hover && !isInside(pos)) {
+		if (isHovered() && !isInside(pos)) {
 			mouseOut();
 		}
-		if (!m_hover && isInside(pos)) {
+		if (!isHovered() && isInside(pos)) {
 			mouseIn();
 		}
 	}
@@ -257,7 +256,7 @@ bool Button::mouseMove(Vec2i pos) {
 bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
-		m_pressed = true;
+		setFocus(true);
 	}
 	return true;
 }
@@ -265,33 +264,20 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
-		if (m_pressed && m_hover) {
+		if (isFocused() && isHovered()) {
 			Clicked(this);
 		}
-		m_pressed = false;
+		setFocus(false);
 	}
 	return true;
 }
 
 void Button::render() {
-	// render background & borders
-	renderBgAndBorders();
-
-	// render hilight
-	if (m_doHoverHighlight && m_hover && isEnabled()) {
-		float anim = getRootWindow()->getAnim();
-		if (anim > 0.5f) {
-			anim = 1.f - anim;
-		}
-		float borderAlpha = 0.1f + anim * 0.5f;
-		float centreAlpha = 0.3f + anim;
-		Widget::renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha);
-	}
-
-	// render label
-	if (hasText()) {
+	Widget::renderBackground();
+	if (TextWidget::hasText()) {
 		TextWidget::renderText();
 	}
+	Widget::renderForeground();
 }
 
 // =====================================================
@@ -301,37 +287,22 @@ void Button::render() {
 CheckBox::CheckBox(Container* parent)
 		: Button(parent), m_checked(false)
 		, ImageWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::CHECK_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::CHECK_BOX);
-	CoreData &coreData = CoreData::getInstance();
-	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
-	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams(g_lang.get("No"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
-	addText(g_lang.get("Yes"));
+	setWidgetStyle(WidgetType::CHECK_BOX);
 	setSize(getPrefSize());
 }
 
 CheckBox::CheckBox(Container* parent, Vec2i pos, Vec2i size)
 		: Button(parent, pos, size, false), m_checked(false)
 		, ImageWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::CHECK_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::CHECK_BOX);
-	CoreData &coreData = CoreData::getInstance();
-	addImageX(coreData.getCheckBoxCrossTexture(), Vec2i(0), Vec2i(32));
-	addImageX(coreData.getCheckBoxTickTexture(), Vec2i(0), Vec2i(32));
-	setTextParams(g_lang.get("No"), Vec4f(1.f), coreData.getFTMenuFontNormal(), false);
-	addText(g_lang.get("Yes"));
-	int y = int((size.y - getTextFont()->getMetrics()->getHeight()) / 2);
-	setTextPos(Vec2i(40, y), 0);
-	setTextPos(Vec2i(40, y), 1);
+	setWidgetStyle(WidgetType::CHECK_BOX);
 }
 
 void CheckBox::setSize(const Vec2i &sz) {
 	// bypass Button::setSize()
 	Widget::setSize(sz);
-	int y = int((sz.y - getTextFont()->getMetrics()->getHeight()) / 2);
-	setTextPos(Vec2i(40, y), 0);
-	setTextPos(Vec2i(40, y), 1);
+	//int y = int((sz.y - getTextFont()->getMetrics()->getHeight()) / 2);
+	//setTextPos(Vec2i(40, y), 0);
+	//setTextPos(Vec2i(40, y), 1);
 }
 
 Vec2i CheckBox::getMinSize() const {
@@ -361,7 +332,7 @@ Vec2i CheckBox::getPrefSize() const {
 
 bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
-		m_pressed = true;
+		setFocus(true);
 		return true;
 	}
 	return false;
@@ -369,35 +340,14 @@ bool CheckBox::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool CheckBox::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
-		if (m_pressed && m_hover) {
+		if (isFocused() && isHovered()) {
 			m_checked = !m_checked;
 			Clicked(this);
 		}
-		m_pressed = false;
+		setFocus(false);
 		return true;
 	}
 	return false;
-}
-
-void CheckBox::render() {
-	// render background
-	ImageWidget::renderImage(m_checked ? 1 : 0);
-
-	// render hilight
-	if (m_hover) {
-		float anim = getRootWindow()->getAnim();
-		if (anim > 0.5f) {
-			anim = 1.f - anim;
-		}
-		float borderAlpha = 0.1f + anim * 0.5f;
-		float centreAlpha = 0.3f + anim;
-		Vec2i offset(m_borderStyle.m_sizes[Border::LEFT], m_borderStyle.m_sizes[Border::BOTTOM]);
-		offset += Vec2i(getPadding());
-		Widget::renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, offset, Vec2i(32));
-	}
-
-	// render label
-	TextWidget::renderText(m_checked ? 1 : 0);
 }
 
 // =====================================================
@@ -409,12 +359,8 @@ TextBox::TextBox(Container* parent)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, TextWidget(this)
-		, hover(false)
-		, focus(false)
 		, changed(false) {
-	m_normBorderStyle = m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
-	m_focusBorderStyle = g_widgetConfig.getFocusBorderStyle(WidgetType::TEXT_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
+	setWidgetStyle(WidgetType::TEXT_BOX);
 }
 
 TextBox::TextBox(Container* parent, Vec2i pos, Vec2i size)
@@ -422,19 +368,14 @@ TextBox::TextBox(Container* parent, Vec2i pos, Vec2i size)
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, TextWidget(this)
-		, hover(false)
-		, focus(false)
 		, changed(false) {
-	m_normBorderStyle = m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
-	m_focusBorderStyle = g_widgetConfig.getFocusBorderStyle(WidgetType::TEXT_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
+	setWidgetStyle(WidgetType::TEXT_BOX);
 }
 
 void TextBox::gainFocus() {
 	if (isEnabled()) {
-		focus = true;
+		setFocus(true);
 		getRootWindow()->aquireKeyboardFocus(this);
-		m_borderStyle = m_focusBorderStyle;
 	}
 }
 
@@ -501,13 +442,13 @@ bool TextBox::keyPress(char c) {
 }
 
 void TextBox::lostKeyboardFocus() {
-	focus = false;
-	m_borderStyle = m_normBorderStyle;
+	setFocus(false);
 }
 
 void TextBox::render() {
-	Widget::renderBgAndBorders();
+	Widget::renderBackground();
 	TextWidget::renderText();
+	Widget::renderForeground();
 }
 
 Vec2i TextBox::getMinSize() const {
@@ -534,20 +475,16 @@ Slider::Slider(Container* parent, Vec2i pos, Vec2i size, const string &title)
 		, m_thumbPressed(false)
 		, m_shaftHover(false)
 		, m_title(title) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SLIDER);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::SLIDER);
+	setWidgetStyle(WidgetType::SLIDER);
 
-	const CoreData &coreData = CoreData::getInstance();
-	Font *font = coreData.getFTMenuFontNormal();
-	addImage(coreData.getButtonSmallTexture());
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	Font *font = cfg.getMenuFont()[FontSize::NORMAL];
 	setTextParams(m_title, Vec4f(1.f), font, false); // ndx 0
 	addText("0 %"); // ndx 1
 	
 	string maxVal = "100 %";
 	Vec2f dims = getTextFont()->getMetrics()->getTextDiminsions(maxVal);
 	m_valSize = int(dims.x + 5.f);
-	m_shaftStyle.setRaise(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
-	m_shaftStyle.setSizes(2);
 
 	recalc();
 }
@@ -666,7 +603,7 @@ bool Slider::mouseUp(MouseButton btn, Vec2i pos) {
 }
 
 void Slider::render() {
-	Widget::renderBgAndBorders();
+	Widget::renderBackground();
 	TextWidget::renderText(0); // label
 	TextWidget::renderText(1); // value %
 
@@ -688,8 +625,10 @@ void Slider::render() {
 		float borderAlpha = 0.1f + anim * 0.5f;
 		float centreAlpha = 0.3f + anim;
 		//int offset = getBorderSize() + getPadding();
-		Widget::renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, m_thumbPos, m_thumbSize);
+		int ndx = m_rootWindow->getConfig()->getColourIndex(Vec3f(1.f));
+		Widget::renderHighLight(ndx, centreAlpha, borderAlpha, m_thumbPos, m_thumbSize);
 	}
+	Widget::renderForeground();
 }
 
 // =====================================================
@@ -728,17 +667,17 @@ VerticalScrollBar::~VerticalScrollBar() {
 }
 
 void VerticalScrollBar::init() {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::SCROLL_BAR);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::SCROLL_BAR);
+	m_borderStyle = m_rootWindow->getConfig()->getBorderStyle(WidgetType::SCROLL_BAR);
+	m_backgroundStyle = m_rootWindow->getConfig()->getBackgroundStyle(WidgetType::SCROLL_BAR);
 	setPadding(0);
-	addImage(g_coreData.getVertScrollUpTexture());
-	addImage(g_coreData.getVertScrollUpHoverTex());
-	addImage(g_coreData.getVertScrollDownTexture());
-	addImage(g_coreData.getVertScrollDownHoverTex());
-	m_shaftStyle.setEmbed(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
-	m_shaftStyle.setSizes(1);
-	m_thumbStyle.setRaise(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
-	m_thumbStyle.setSizes(1);
+	//addImage(g_coreData.getVertScrollUpTexture());
+	//addImage(g_coreData.getVertScrollUpHoverTex());
+	//addImage(g_coreData.getVertScrollDownTexture());
+	//addImage(g_coreData.getVertScrollDownHoverTex());
+	//m_shaftStyle.setEmbed(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
+	//m_shaftStyle.setSizes(1);
+	//m_thumbStyle.setRaise(WidgetColour::LIGHT_BORDER, WidgetColour::DARK_BORDER);
+	//m_thumbStyle.setSizes(1);
 }
 
 void VerticalScrollBar::recalc() {
@@ -746,10 +685,10 @@ void VerticalScrollBar::recalc() {
 	Vec2i imgSize = Vec2i(size.x);
 	Vec2i upPos(0, 0);
 	Vec2i downPos(0, size.y - imgSize.y);
-	setImageX(0, 0, upPos, imgSize);
-	setImageX(0, 1, upPos, imgSize);
-	setImageX(0, 2, downPos, imgSize);
-	setImageX(0, 3, downPos, imgSize);
+	//setImageX(0, 0, upPos, imgSize);
+	//setImageX(0, 1, upPos, imgSize);
+	//setImageX(0, 2, downPos, imgSize);
+	//setImageX(0, 3, downPos, imgSize);
 	shaftOffset = imgSize.y;
 	shaftHeight = size.y - imgSize.y * 2;
 	topOffset = imgSize.y + 1;
@@ -870,6 +809,7 @@ Vec2i VerticalScrollBar::getPrefSize() const {return Vec2i(-1);}
 Vec2i VerticalScrollBar::getMinSize() const {return Vec2i(-1);}
 
 void VerticalScrollBar::render() {
+	Widget::renderBackground();
 	// buttons
 	renderImage((pressedPart == Part::UP_BUTTON) ? 1 : 0);	// up arrow
 	renderImage((pressedPart == Part::DOWN_BUTTON) ? 3 : 2); // down arrow
@@ -884,7 +824,8 @@ void VerticalScrollBar::render() {
 
 		Vec2i pos(0, hoverPart == Part::UP_BUTTON ? 0 : shaftOffset + shaftHeight);
 		Vec2i size(getSize().x);
-		renderHighLight(Vec3f(1.f), centreAlpha, borderAlpha, pos, size);
+		int ndx = m_rootWindow->getConfig()->getColourIndex(Vec3f(1.f));
+		renderHighLight(ndx, centreAlpha, borderAlpha, pos, size);
 	}
 
 	// shaft
@@ -898,8 +839,10 @@ void VerticalScrollBar::render() {
 	Vec2i thumbSizev(shaftOffset - 2, thumbSize);
 	renderBorders(m_thumbStyle, thumbPos, thumbSizev);
 	if (hoverPart == Part::THUMB) {
-		renderHighLight(Vec3f(1.f), 0.2f, 0.5f, thumbPos, thumbSizev);
+		int ndx = m_rootWindow->getConfig()->getColourIndex(Vec3f(1.f));
+		renderHighLight(ndx, 0.2f, 0.5f, thumbPos, thumbSizev);
 	}
+	Widget::renderForeground();
 }
 
 // =====================================================
@@ -939,7 +882,7 @@ void CellStrip::setSize(const Vec2i &sz) {
 }
 
 void CellStrip::render() {
-	renderBgAndBorders(false);
+	renderBackground();
 	if (m_dirty) {
 		layoutCells();
 	}
@@ -1195,7 +1138,7 @@ void Panel::addChild(Widget* child) {
 
 void Panel::render() {
 	assertGl();
-	Widget::renderBgAndBorders();
+	Widget::renderBackground();
 	Vec2i pos = getScreenPos();
 	pos.x += getBorderLeft() + getPadding();
 	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
@@ -1238,27 +1181,27 @@ ListBase::ListBase(Container* parent)
 		: Panel(parent)
 		, selectedItem(0)
 		, selectedIndex(-1)
-		, itemFont(0) {
+		/*, itemFont(0) */{
 	setPaddingParams(2, 0);
 	setAutoLayout(false);
-	itemFont = CoreData::getInstance().getFTMenuFontNormal();
+	//itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
 ListBase::ListBase(Container* parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
 		, selectedItem(0)
 		, selectedIndex(-1)
-		, itemFont(0) {
+		/*, itemFont(0) */{
 	setPaddingParams(2, 0);
 	setAutoLayout(false);
-	itemFont = CoreData::getInstance().getFTMenuFontNormal();
+	//itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
 ListBase::ListBase(WidgetWindow* window) 
 		: Panel(window)
 		, selectedItem(0)
 		, selectedIndex(-1) {
-	itemFont = CoreData::getInstance().getFTMenuFontNormal();
+	//itemFont = CoreData::getInstance().getFTMenuFontNormal();
 }
 
 // =====================================================
@@ -1271,7 +1214,7 @@ ListBox::ListBox(Container* parent)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_BOX);
+	setWidgetStyle(WidgetType::LIST_BOX);
 	setPadding(0);
 	setAutoLayout(false);
 }
@@ -1282,7 +1225,7 @@ ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_BOX);
+	setWidgetStyle(WidgetType::LIST_BOX);
 	setPadding(0);
 	setAutoLayout(false);
 }
@@ -1293,7 +1236,7 @@ ListBox::ListBox(WidgetWindow* window)
 		, scrollBar(0)
 //		, scrollSetting(ScrollSetting::AUTO)
 		, scrollWidth(24) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_BOX);
+	setWidgetStyle(WidgetType::LIST_BOX);
 	setPadding(0);
 	setAutoLayout(false);
 }
@@ -1318,6 +1261,9 @@ void ListBox::onSelected(ListBoxItem* item) {
 }
 
 void ListBox::addItems(const vector<string> &items) {
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	const TextStyle &textStyle = cfg.getWidgetStyle(WidgetType::LIST_ITEM).textStyle();
+	Font *itemFont = cfg.getFontSet(textStyle.m_fontIndex)[FontSize::NORMAL];
 	Vec2i sz(getSize().x - 4, int(itemFont->getMetrics()->getHeight()) + 4);
 	foreach_const (vector<string>, it, items) {
 		ListBoxItem *nItem = new ListBoxItem(this, Vec2i(0), sz, Vec3f(0.25f));
@@ -1329,6 +1275,9 @@ void ListBox::addItems(const vector<string> &items) {
 }
 
 void ListBox::addItem(const string &item) {
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	const TextStyle &textStyle = cfg.getWidgetStyle(WidgetType::LIST_ITEM).textStyle();
+	Font *itemFont = cfg.getFontSet(textStyle.m_fontIndex)[FontSize::NORMAL];
 	Vec2i sz(getSize().x - getBordersHoriz(), int(itemFont->getMetrics()->getHeight()) + 4);
 	ListBoxItem *nItem = new ListBoxItem(this, Vec2i(getBorderLeft(), getBorderBottom()), sz, Vec3f(0.25f));
 	nItem->setTextParams(item, Vec4f(1.f), itemFont, true);
@@ -1427,8 +1376,12 @@ bool ListBox::mouseWheel(Vec2i pos, int z) {
 }
 
 int ListBox::getPrefHeight(int childCount) {
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	const TextStyle &textStyle = cfg.getWidgetStyle(WidgetType::LIST_ITEM).textStyle();
+	Font *itemFont = cfg.getFontSet(textStyle.m_fontIndex)[FontSize::NORMAL];
+
 	int res = m_borderStyle.getVertBorderDim() + getPadding() * 2;
-	int iSize = int(g_widgetConfig.getFont(WidgetFont::MENU_NORMAL)->getMetrics()->getHeight()) + 4;
+	int iSize = int(itemFont->getMetrics()->getHeight()) + 4;
 	if (childCount == -1) {
 		childCount = m_children.size();//listBoxItems.size();
 	}
@@ -1496,31 +1449,24 @@ ListBoxItem::ListBoxItem(ListBase* parent)
 		: StaticText(parent) 
 		, MouseWidget(this)
 		, selected(false)
-		, hover(false)
 		, pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
+	setWidgetStyle(WidgetType::LIST_ITEM);
 }
 
 ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz)
 		: StaticText(parent, pos, sz)
 		, MouseWidget(this)
 		, selected(false)
-		, hover(false)
 		, pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::LIST_ITEM);
+	setWidgetStyle(WidgetType::LIST_ITEM);
 }
 
 ListBoxItem::ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour)
 		: StaticText(parent, pos, sz)
 		, MouseWidget(this)
 		, selected(false)
-		, hover(false)
 		, pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::LIST_ITEM);
-	m_backgroundStyle.m_type = BackgroundType::COLOUR;
-	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(bgColour);
+	setWidgetStyle(WidgetType::LIST_ITEM);
 }
 
 Vec2i ListBoxItem::getMinSize() const {
@@ -1533,33 +1479,28 @@ Vec2i ListBoxItem::getPrefSize() const {
 	return getMinSize();
 }
 
-void ListBoxItem::render() {
-	StaticText::render();
-	if (isEnabled() && selected) {
-		Widget::renderHighLight(Vec3f(1.f), 0.1f, 0.3f);
-	}
-	assertGl();
-}
-
 void ListBoxItem::setBackgroundColour(const Vec3f &colour) {
 	m_backgroundStyle.m_type = BackgroundType::COLOUR;
-	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(colour);
+	m_backgroundStyle.m_colourIndices[0] = m_rootWindow->getConfig()->getColourIndex(colour);
 }
 
 void ListBoxItem::mouseIn() {
 	if (isEnabled()) {
-		m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[2];
-		hover = true;
+		setHover(true);
+		if (pressed) {
+			setFocus(true);
+		}
 	}
 }
 
 void ListBoxItem::mouseOut() {
-	m_borderStyle.m_colourIndices[0] = m_borderStyle.m_colourIndices[1];
-	hover = false;
+	setHover(false);
+	setFocus(false);
 }
 
 bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 	if (isEnabled() && btn == MouseButton::LEFT) {
+		setFocus(true);
 		pressed = true;
 		return true;
 	}
@@ -1568,14 +1509,11 @@ bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 	if (isEnabled() && btn == MouseButton::LEFT) {
-		if (hover) {
-			Selected(this);
-			//static_cast<ListBase*>(parent)->setSelected(this);
-		}
-		if (hover && pressed) {
+		if (isHovered() && pressed) {
 			Clicked(this);
 		}
 		pressed = false;
+		setFocus(false);
 		return true;
 	}
 	return false;
@@ -1590,11 +1528,16 @@ DropList::DropList(Container* parent)
 		, MouseWidget(this)
 		, floatingList(0)
 		, dropBoxHeight(0) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
+	setWidgetStyle(WidgetType::DROP_LIST);
 	setAutoLayout(false);
 	setPadding(0);
 	button = new Button(this);
 	button->Clicked.connect(this, &DropList::onExpandList);
+	
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	const TextStyle &textStyle = cfg.getWidgetStyle(WidgetType::LIST_ITEM).textStyle();
+	Font *itemFont = cfg.getFontSet(textStyle.m_fontIndex)[FontSize::NORMAL];
+
 	selectedItem = new ListBoxItem(this);
 	selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
 	selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
@@ -1606,9 +1549,14 @@ DropList::DropList(Container* parent, Vec2i pos, Vec2i size)
 		, MouseWidget(this)
 		, floatingList(0)
 		, dropBoxHeight(0) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::DROP_LIST);
+	setWidgetStyle(WidgetType::DROP_LIST);
 	setAutoLayout(false);
 	setPadding(0);
+
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	const TextStyle &textStyle = cfg.getWidgetStyle(WidgetType::LIST_ITEM).textStyle();
+	Font *itemFont = cfg.getFontSet(textStyle.m_fontIndex)[FontSize::NORMAL];
+
 	button = new Button(this);
 	button->Clicked.connect(this, &DropList::onExpandList);
 	selectedItem = new ListBoxItem(this);
@@ -1773,9 +1721,10 @@ void DropList::onListDisposed(Widget*) {
 // =====================================================
 
 void ToolTip::init() {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TOOL_TIP);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TOOL_TIP);
-	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), g_coreData.getFTDisplayFontBig(), false);
+	setWidgetStyle(WidgetType::TOOL_TIP);
+	WidgetConfig &cfg = *m_rootWindow->getConfig();
+	Font *font = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::BIG];
+	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), font, false);
 	TextWidget::setTextPos(Vec2i(4, 4));
 }
 

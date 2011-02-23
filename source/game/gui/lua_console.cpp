@@ -98,9 +98,10 @@ LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz
 
 	Vec2i ibSize;
 	ibSize.x = size.x - 10;
-	ibSize.y = int(g_coreData.getFTDisplayFont()->getMetrics()->getHeight() + 6);
+	Font *font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
+	ibSize.y = int(font->getMetrics()->getHeight() + 6);
 	m_inputBox = new LuaInputBox(this, m_panel, Vec2i(0), ibSize);
-	m_inputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTDisplayFont(), false);
+	m_inputBox->setTextParams("", Vec4f(1.f), font, false);
 	m_inputBox->setTextPos(Vec2i(3, 3));
 	m_inputBox->InputEntered.connect(this, &LuaConsole::onLineEntered);
 
@@ -108,7 +109,7 @@ LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz
 	obSize.x = ibSize.x;
 	obSize.y = size.y - ibSize.y - 25;
 	m_outputBox = new ScrollText(m_panel, Vec2i(0), obSize);
-	m_outputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTDisplayFont(), false);
+	m_outputBox->setTextParams("", Vec4f(1.f), font, false);
 
 	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 5);

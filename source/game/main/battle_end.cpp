@@ -62,10 +62,10 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 	pos = Vec2i(100, y);
 	size = Vec2i(0);
 	label = new StaticText(this, pos, size);
-	label->setTextParams(header, Vec4f(1.f), g_coreData.getFTMenuFontBig(), false);
+	label->setTextParams(header, Vec4f(1.f), g_widgetConfig.getTitleFont()[FontSize::NORMAL], false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	
-	Font *font = g_coreData.getFTDisplayFontBig();
+	Font *font = g_widgetConfig.getTitleFont()[FontSize::NORMAL];
 	const FontMetrics *fm = font->getMetrics();
 
 	y -= y_gap;

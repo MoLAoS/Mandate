@@ -43,7 +43,7 @@ namespace Glest { namespace Menu {
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	CellStrip *strip = new CellStrip(&program, Orientation::VERTICAL, 4);
 	strip->setPos(Vec2i(0,0));
 	strip->setSize(Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight()));
@@ -66,7 +66,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	if (!mainMenu->isTotalConversion()) {
 		// Advanced Engine labels
-		font = g_coreData.getGAEFontBig();
+		font = g_widgetConfig.getTitleFont()[FontSize::NORMAL];
 		Widgets::StaticText *label = new Widgets::StaticText(pp);
 		label->setTextParams(g_lang.get("AdvEng1"), Vec4f(1.f), font);
 		Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
@@ -87,7 +87,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 		// Version label
 		int bigHeight = int(font->getMetrics()->getHeight());
-		font = g_coreData.getGAEFontSmall();
+		font = g_widgetConfig.getTitleFont()[FontSize::SMALL];
 		int szDiff = bigHeight - int(font->getMetrics()->getHeight());
 		Vec2i pos = Vec2i(tx + label->getSize().x, logoHeight - ty - sz.h + szDiff - 2);
 
@@ -101,7 +101,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->centreText();
 	}
 
-	font = g_coreData.getFTMenuFontNormal();
+	font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	// Buttons Panel
 	anchors.set(Edge::COUNT, 0, false); // anchor all (fill cell)
@@ -111,8 +111,9 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	// Buttons
 	anchors.setCentre(true); // anchor centre
 	foreach_enum (RootMenuItem, i) {
+		int height = g_widgetConfig.getDefaultElementHeight();
 		m_buttons[i] = new Widgets::Button(pnl->getCell(i));
-		m_buttons[i]->setSize(Vec2i(256, 32));
+		m_buttons[i]->setSize(Vec2i(8 * height, height));
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		m_buttons[i]->setAnchors(anchors);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
@@ -168,7 +169,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setAnchors(anchors);
 
 		label->setTextParams("Glest : " + g_lang.get("AdvEng1") + " " + g_lang.get("AdvEng2") + gaeVersionString,
-			Vec4f(1.f), g_coreData.getGAEFontSmall());
+			Vec4f(1.f), g_widgetConfig.getTitleFont()[FontSize::SMALL]);
 		Vec2i size = label->getTextDimensions() + Vec2i(5,5);
 		label->setSize(size);
 	}
@@ -230,86 +231,6 @@ void MenuStateRoot::update(){
 			program.exit();
 		}
 	}
-}
-
-// =====================================================
-//  class MenuStateTest
-// =====================================================
-
-CellStrip *ws;
-
-MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
-		: MenuState(program, mainMenu) {
-	Font *font = g_coreData.getFTMenuFontNormal();
-	// create
-	int gap = (g_metrics.getScreenW() - 450) / 4;
-	int x = gap, w = 150, y = g_config.getDisplayHeight() - 80, h = 30;
-	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
-	m_returnButton->Clicked.connect(this, &MenuStateTest::onButtonClick);
-
-	Anchors anchors;
-	anchors.set(Edge::LEFT, 10, true);
-	anchors.set(Edge::RIGHT, 10, true);
-	anchors.set(Edge::TOP, 15, true);
-	anchors.set(Edge::BOTTOM, 15, true);
-
-	BorderStyle bs;
-	bs.setSolid(g_widgetConfig.getColourIndex(Colour(255u, 0u, 0u, 255u)));
-	bs.setSizes(1);
-
-	Vec2i size = Vec2i(std::min(g_config.getDisplayWidth() / 3, 300),
-	                   std::min(g_config.getDisplayHeight() / 2, 300));
-	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
-	ws = new CellStrip(&program, Orientation::VERTICAL, RootMenuItem::COUNT);
-	ws->setBorderStyle(bs);
-	ws->setPos(pos);
-	ws->setSize(size);
-
-	// some buttons
-	for (int i=0; i < RootMenuItem::COUNT; ++i) {
-		ws->getCell(i)->setAnchors(anchors);
-		Button *btn = new Button(ws->getCell(i), Vec2i(0), Vec2i(150, 40), false);
-		BorderStyle borderStyle;
-		borderStyle.setSizes(3);
-		int li = g_widgetConfig.getColourIndex(Colour(0xBFu, 0x5Eu, 0x5Eu, 0xAF));
-		int di = g_widgetConfig.getColourIndex(Colour(0x6Fu, 0x00u, 0x00u, 0xAF));
-		borderStyle.setRaise(li, di);
-		btn->setBorderStyle(borderStyle);
-
-		BackgroundStyle backStyle;
-		int bi = g_widgetConfig.getColourIndex(Colour(0x9Fu, 0x00u, 0x00u, 0xAF));
-		backStyle.setColour(bi);
-		btn->setBackgroundStyle(backStyle);
-
-		btn->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
-	}
-}
-
-void MenuStateTest::update() {
-	static int counter = 0;
-	++counter;
-	MenuState::update();
-	if (m_transition) {
-		program.clear();
-		mainMenu->setState(new MenuStateRoot(program, mainMenu));
-	} else {
-		const int var = 300;
-		int womble = counter % var;
-		if (womble > var / 2) {
-			womble = var - womble;
-		}
-		int frog = std::min(g_config.getDisplayHeight() / 2, 300);
-		ws->setSize(Vec2i(ws->getWidth(), womble + frog));
-	}
-}
-
-void MenuStateTest::onButtonClick(Button* btn) {
-	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
-
-	soundRenderer.playFx(g_coreData.getClickSoundA());
-	mainMenu->setCameraTarget(MenuStates::ROOT);
-	doFadeOut();
 }
 
 }}//end namespace

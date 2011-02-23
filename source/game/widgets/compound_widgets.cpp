@@ -30,12 +30,11 @@ using namespace Shared::Graphics::Gl;
 
 OptionContainer::OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &text)
 		: Container(parent, pos, size) {
-	CoreData &coreData = CoreData::getInstance();
 	m_abosulteLabelSize = false;
 	m_labelSize = 30;
 	int w = int(size.x * float(30) / 100.f);
 	m_label = new StaticText(this, Vec2i(0), Vec2i(w, size.y));
-	m_label->setTextParams(text, Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	m_label->setTextParams(text, Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex), true);
 	m_widget = 0;
 }
 
@@ -88,11 +87,10 @@ ScrollText::ScrollText(Container* parent)
 		: Panel(parent)
 		, MouseWidget(this)
 		, TextWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
-//	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
 	setAutoLayout(false);
 	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontSmall(), false);
+	setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex, FontSize::SMALL), false);
 	m_scrollBar = new VerticalScrollBar(this);
 }
 
@@ -100,11 +98,10 @@ ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 		: Panel(parent, pos, size)
 		, MouseWidget(this)
 		, TextWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
-//	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
 	setAutoLayout(false);
 	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
+	setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex, FontSize::SMALL), false);
 	Vec2i sbp(size.x - 26, 2);
 	Vec2i sbs(24, size.y - 4);
 	m_scrollBar = new VerticalScrollBar(this, sbp, sbs);
@@ -148,7 +145,7 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 }
 
 void ScrollText::render() {
-	Widget::renderBgAndBorders();
+	Widget::renderBackground();
 	Vec2i pos = getScreenPos();
 	pos.x += getBorderLeft() + getPadding();
 	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
@@ -173,13 +170,8 @@ TitleBar::TitleBar(Container* parent)
 		, TextWidget(this)
 		, m_title("")
 		, m_closeButton(0) {
-	//m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
-	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
-	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
-	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
-	m_backgroundStyle.m_colourIndices[3] = g_widgetConfig.getColourIndex(Colour(91u, 91u, 91u, 255u));
-	m_backgroundStyle.m_type = BackgroundType::CUSTOM_COLOURS;
-	setTextParams(m_title, Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TITLE_BAR));
+	setTextParams(m_title, Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex), false);
 	setTextPos(Vec2i(5, 2));
 }
 
@@ -189,25 +181,19 @@ TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool 
 		, TextWidget(this)
 		, m_title(title)
 		, m_closeButton(0) {
-	///@todo specify in widget.cfg
-	//m_backgroundStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
-	//m_borderStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TITLE_BAR);
-	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
-	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
-	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
-	m_backgroundStyle.m_colourIndices[3] = g_widgetConfig.getColourIndex(Colour(91u, 91u, 91u, 255u));
-	m_backgroundStyle.m_type = BackgroundType::CUSTOM_COLOURS;
-	setTextParams(title, Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TITLE_BAR));
+	setTextParams(m_title, Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex), false);
 	setTextPos(Vec2i(5, 2));
 	if (closeBtn) {
 		int btn_sz = size.y - 4;
 		Vec2i pos(size.x - btn_sz - 2, 2);
 		m_closeButton = new Button(this, pos, Vec2i(btn_sz));
+//		m_closeButton->setWidgetStyle(WidgetType::TITLE_BAR_CLOSE);
 	}
 }
 
 void TitleBar::render() {
-	Widget::renderBgAndBorders();
+	Widget::renderBackground();
 	TextWidget::renderText();
 	Container::render();
 }
@@ -223,8 +209,7 @@ Frame::Frame(WidgetWindow *ww)
 		: Container(ww)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 	m_titleBar = new TitleBar(this);
 }
 
@@ -232,8 +217,7 @@ Frame::Frame(Container *parent)
 		: Container(parent)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 	m_titleBar = new TitleBar(this);
 }
 
@@ -241,8 +225,7 @@ Frame::Frame(Container *parent, Vec2i pos, Vec2i sz)
 		: Container(parent, pos, sz)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 	m_titleBar = new TitleBar(this);
 }
 
@@ -255,7 +238,7 @@ void Frame::init(Vec2i pos, Vec2i size, const string &title) {
 void Frame::setSize(Vec2i size) {
 	Container::setSize(size);
 	Vec2i p, s;
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getFont(m_textStyle.m_fontIndex);
 	const FontMetrics *fm = font->getMetrics();
 
 	int a = int(fm->getHeight() + 1.f) + 4;
@@ -299,7 +282,7 @@ bool Frame::mouseUp(MouseButton btn, Vec2i pos) {
 }
 
 void Frame::render() {
-	renderBgAndBorders();
+	renderBackground();
 	Container::render();
 }
 
@@ -310,16 +293,14 @@ void Frame::render() {
 BasicDialog::BasicDialog(WidgetWindow* window)
 		: Frame(window), m_content(0)
 		, m_button1(0), m_button2(0), m_buttonCount(0) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 	m_titleBar = new TitleBar(this);
 }
 
 BasicDialog::BasicDialog(Container* parent, Vec2i pos, Vec2i sz)
 		: Frame(parent, pos, sz), m_content(0)
 		, m_button1(0) , m_button2(0), m_buttonCount(0) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 	m_titleBar = new TitleBar(this);
 }
 
@@ -340,7 +321,8 @@ void BasicDialog::setContent(Widget* content) {
 }
 
 void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
-	Font *font = g_coreData.getFTMenuFontNormal();
+	int ndx = m_rootWindow->getConfig()->getWidgetStyle(WidgetType::BUTTON).textStyle().m_fontIndex;
+	Font *font = g_widgetConfig.getFont(ndx);
 	delete m_button1;
 	m_button1 = 0;
 	delete m_button2;
@@ -381,7 +363,7 @@ void BasicDialog::onButtonClicked(Button* btn) {
 }
 
 void BasicDialog::render() {
-	renderBgAndBorders();
+	renderBackground();
 	Container::render();
 }
 
@@ -445,9 +427,9 @@ InputDialog::InputDialog(WidgetWindow* window)
 	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 10);
 	m_label = new StaticText(m_panel);
-	m_label->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_label->setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex));
 	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_inputBox->setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex));
 	m_inputBox->InputEntered.connect(this, &InputDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }

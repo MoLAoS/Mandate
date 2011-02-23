@@ -507,7 +507,7 @@ void Window::createWindow(LPVOID creationData) {
 	Vec2i desktopPos(rect.left, rect.top);
 	Vec2i desktopSize(rect.right - rect.left, rect.bottom - rect.top);
 	Vec2i pos = (desktopSize - size) / 2 + desktopPos;
-	setPos(max(pos.x, desktopPos.x), pos.y);
+	setPos(max(pos.x, desktopPos.x), max(0, pos.y));
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
 }

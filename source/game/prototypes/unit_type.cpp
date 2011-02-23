@@ -141,8 +141,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_logger.logXmlError(path, e.what());
 		return false; // bail out
 	}
-	if (!UnitStats::load(parametersNode, dir, techTree, factionType))
+	if (!UnitStats::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
+	}
 	// armor type string
 	try {
 		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");

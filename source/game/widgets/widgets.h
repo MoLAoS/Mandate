@@ -31,7 +31,8 @@ public:
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
-	virtual void render() { renderImage(); }
+	virtual void setStyle() { setWidgetStyle(WidgetType::STATIC_WIDGET); }
+	virtual void render();
 	virtual string desc() { return string("[StaticImage: ") + descPosDim() + "]"; }
 };
 
@@ -132,6 +133,7 @@ public:
 	void setShadow(const Vec4f &colour, int offset=2);
 	void setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset=2);
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::STATIC_WIDGET); }
 	virtual void render();
 	virtual string desc() { return string("[StaticText: ") + descPosDim() + "]"; }
 };
@@ -142,8 +144,6 @@ public:
 
 class Button : public Widget, public TextWidget, public MouseWidget {
 protected:
-	bool m_hover;
-	bool m_pressed;
 	bool m_doHoverHighlight;
 
 public:
@@ -152,8 +152,8 @@ public:
 
 	virtual void setSize(const Vec2i &sz) override;
 
-	virtual void mouseIn() override { m_hover = true; }
-	virtual void mouseOut() override { m_hover = false; }
+	virtual void mouseIn() override { setHover(true); }
+	virtual void mouseOut() override { setHover(false); }
 
 	virtual bool mouseMove(Vec2i pos) override;
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
@@ -162,6 +162,7 @@ public:
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::BUTTON); }
 	virtual void render() override;
 	virtual string desc() override { return string("[Button: ") + descPosDim() + "]"; }
 
@@ -190,7 +191,8 @@ public:
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
 
-	virtual void render() override;
+	virtual void setStyle() { setWidgetStyle(m_checked ? WidgetType::CHECK_BOX_CHK : WidgetType::CHECK_BOX); }
+	//virtual void render() override;
 	virtual string desc() override { return string("[CheckBox: ") + descPosDim() + "]"; }
 };
 
@@ -200,8 +202,6 @@ public:
 
 class TextBox : public Widget, public MouseWidget, public KeyboardWidget, public TextWidget {
 private:
-	bool hover;
-	bool focus;
 	bool changed;
 	string m_inputMask;
 	BorderStyle m_normBorderStyle, m_focusBorderStyle;
@@ -214,8 +214,8 @@ public:
 
 	void gainFocus();
 
-	virtual void mouseIn()	{ hover = true;	 }
-	virtual void mouseOut() { hover = false;	}
+	virtual void mouseIn()  { setHover(true);  }
+	virtual void mouseOut() { setHover(false); }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);
@@ -228,6 +228,7 @@ public:
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::TEXT_BOX); }
 	virtual void render();
 	virtual string desc() { return string("[TextBox: ") + descPosDim() + "]"; }
 
@@ -270,6 +271,7 @@ public:
 		recalc();
 	}
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::SLIDER); }
 	virtual void mouseOut();
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
@@ -343,6 +345,7 @@ public:
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::SCROLL_BAR); }
 	virtual void render();
 	virtual string desc() { return string("[VerticalScrollBar: ") + descPosDim() + "]"; }
 
@@ -469,7 +472,7 @@ class ListBoxItem;
 class ListBase : public Panel {
 protected:
 	ListBoxItem* selectedItem;
-	Font *itemFont;
+	//Font *itemFont;
 	int selectedIndex;
 	vector<string> listItems;
 
@@ -529,6 +532,7 @@ public:
 	virtual void setSize(const Vec2i &sz);
 	void setScrollBarWidth(int width);
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::LIST_BOX); }
 	virtual void layoutChildren();
 //	void setScrollSetting(ScrollSetting setting);
 
@@ -555,7 +559,6 @@ public:
 class ListBoxItem : public StaticText, public MouseWidget {
 private:
 	bool selected;
-	bool hover;
 	bool pressed;
 
 protected:
@@ -573,10 +576,11 @@ public:
 	virtual bool mouseDown(MouseButton btn, Vec2i pos);
 	virtual bool mouseUp(MouseButton btn, Vec2i pos);
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::LIST_ITEM); }
 	virtual Vec2i getPrefSize() const;
 	virtual Vec2i getMinSize() const;
 
-	virtual void render();
+	//virtual void render();
 	virtual string desc() { return string("[ListBoxItem: ") + descPosDim() + "]"; }
 
 	sigslot::signal<ListBoxItem*> Selected;
@@ -605,6 +609,7 @@ public:
 	virtual void setSize(const Vec2i &sz);
 	void setDropBoxHeight(int h) { dropBoxHeight = h; }
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::DROP_LIST); }
 	void addItems(const vector<string> &items);
 	void addItem(const string &item);
 	void clearItems();
@@ -643,6 +648,7 @@ public:
 	ToolTip(Container* parent);
 	ToolTip(Container* parent, Vec2i pos, Vec2i size);
 
+	virtual void setStyle() { setWidgetStyle(WidgetType::TOOL_TIP); }
 	void setText(const string &txt);
 };
 

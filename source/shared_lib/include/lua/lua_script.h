@@ -77,6 +77,14 @@ public:
 	bool getTable(const char *tableName);
 	void popTable();
 	void popAll();
+
+	bool getBoolField(const char *key, bool &out_res);
+	bool getVec2iField(const char *key, Vec2i &out_res);
+	bool getVec4iField(const char *key, Vec4i &out_res);
+	bool getStringField(const char *key, string &out_res);
+	bool getStringSet(const char *key, StringSet &out_res);
+
+	bool getBoolField(const char *key);
 	Vec2i getVec2iField(const char *key);
 	Vec4i getVec4iField(const char *key);
 	string getStringField(const char *key);
@@ -91,6 +99,7 @@ public:
 	string& getLastError() { return lastError; }
 
 	void registerFunction(LuaFunction luaFunction, const string &functionName);
+	bool checkType(LuaType type, int ndx = -1) const;
 
 private:
 	string errorToString(int errorCode);
@@ -127,11 +136,10 @@ public:
 	void returnBool(bool val);
 
 	const char* getType(int ndx) const;
-
-private:
 	// check type of item on top of stack
 	bool checkType(LuaType type, int ndx = -1) const;
 
+private:
 	// check for the presence of a table with the given size on the stack at index ndx
 	void checkTable(int ndx, size_t size) const;
 	size_t checkTable(int ndx, size_t minSize, size_t maxSize) const;

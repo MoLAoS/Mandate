@@ -37,7 +37,7 @@ using namespace Shared::Xml;
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_targetTansition(Transition::INVALID) {
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	// create
 	int gap = (g_metrics.getScreenW() - 300) / 3;

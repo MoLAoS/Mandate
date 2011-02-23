@@ -55,7 +55,7 @@ Console::Console(Container* parent, int maxLines, int y_pos, bool fromTop)
 	if (fromTop) {
 		yPos = Metrics::getInstance().getScreenH() - y_pos;
 	}
-	m_font = g_coreData.getFTDisplayFont();
+	m_font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
 
 	g_widgetWindow.registerUpdate(this);
 }

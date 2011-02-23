@@ -20,16 +20,16 @@
 #include "renderer.h"
 #include "core_data.h"
 #include "texture_gl.h"
+#include "platform_util.h"
 
 #include "leak_dumper.h"
 
-using Shared::Platform::WindowGl;
 using Shared::Graphics::Gl::Texture2DGl;
-using namespace Glest::Global;
-using Glest::Graphics::Renderer;
+using namespace Shared::Platform;
 
 namespace Glest { namespace Widgets {
-using Global::CoreData;
+using namespace Global;
+using namespace Graphics;
 
 // WidgetWindow event logging...
 #define ENABLE_WIDGET_LOGGING 0
@@ -43,6 +43,10 @@ using Global::CoreData;
 // =====================================================
 // class CodeMouseCursor
 // =====================================================
+
+CodeMouseCursor::~CodeMouseCursor() {
+	DEBUG_HOOK();
+}
 
 void CodeMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
 	if (ma == MouseAppearance::CMD_ICON) {
@@ -76,6 +80,7 @@ void CodeMouseCursor::render() {
 	color1 = float(abs(mAnim)) / 100.f / 2.f + 0.8f;
 
 	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
+	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 
 	// inside
@@ -119,7 +124,32 @@ WidgetWindow::WidgetWindow()
 		, mouseMain(0), mouseAnimations(0) */{
 	m_size.x = Metrics::getInstance().getScreenW();
 	m_size.y = Metrics::getInstance().getScreenH();
+
+	// Window
+	Window::setText("Glest Advanced Engine");
+	Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
+	Window::setPos(0, 0);
+	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
+	Window::create();
+
+	// set video mode
+	setDisplaySettings();
+
+	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
 	
+	// render
+	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
+	makeCurrentGl();
+
+	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
+
+	// load coreData & widgetConfig, (needs renderer, but must load before renderer init) and init renderer
+	g_widgetConfig.load();
+	if (!g_coreData.load() || !g_renderer.init()) {
+		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
+	}
+	m_config = &g_widgetConfig;
+
 	mouseOverStack.push(this);
 
 	foreach_enum (MouseButton, btn) {
@@ -140,7 +170,33 @@ WidgetWindow::WidgetWindow()
 } 
 
 WidgetWindow::~WidgetWindow() {
+	// delete children
 	clear();
+
+	//restore video mode
+	restoreDisplaySettings();
+
+}
+
+void WidgetWindow::setDisplaySettings() {
+	if (!g_config.getDisplayWindowed()) {
+		int freq= g_config.getDisplayRefreshFrequency();
+		int colorBits= g_config.getRenderColorBits();
+		int screenWidth= g_config.getDisplayWidth();
+		int screenHeight= g_config.getDisplayHeight();
+
+		if (!(changeVideoMode(screenWidth, screenHeight, colorBits, freq)
+		|| changeVideoMode(screenWidth, screenHeight, colorBits, 0))) {
+			throw runtime_error( "Error setting video mode: " +
+				intToStr(screenWidth) + "x" + intToStr(screenHeight) + "x" + intToStr(colorBits));
+		}
+	}
+}
+
+void WidgetWindow::restoreDisplaySettings(){
+	if(!g_config.getDisplayWindowed()){
+		restoreVideoMode();
+	}
 }
 
 void WidgetWindow::clear() {

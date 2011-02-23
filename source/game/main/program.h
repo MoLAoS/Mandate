@@ -179,10 +179,6 @@ public:
 			Window::setText(title + " - Glest Advanced Engine");
 		}
 	}
-
-private:
-	void setDisplaySettings();
-	void restoreDisplaySettings();
 };
 
 }} //end namespace

@@ -114,44 +114,8 @@ Program::Program(CmdArgs &args)
 		, terminating(false)
 		, visible(true)
 		, keymap(getInput(), "keymap.ini") {
-	// set video mode
-	setDisplaySettings();
-
-	// Window
-	Window::setText("Glest Advanced Engine");
-	Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
-	Window::setPos(0, 0);
-	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-	Window::create();
-
-//	// clear logs
-//	g_logger.clear();
-//	g_serverLog.clear();
-//	g_clientLog.clear();
-//	g_errorLog.clear();
-//#	if LOG_WIDGET_EVENTS
-//		g_widgetLog.clear();
-//#	endif
-//#	if AI_LOGGING
-//		Logger::getAiLog().clear();
-//#	endif
-//	Logger::getWorldLog().clear();
-
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
-
-	Shared::Graphics::use_simd_interpolation = g_config.getRenderInterpolateWithSIMD();
-	
-	// render
-	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
-	makeCurrentGl();
-
-	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
-
-	// load coreData, (needs renderer, but must load before renderer init) and init renderer
-	if (!g_coreData.load() || !g_renderer.init()) {
-		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
-	}	
 
 	//sound
 	g_soundRenderer.init(this);
@@ -179,8 +143,6 @@ Program::~Program() {
 	}
 	delete simulationInterface;
 
-	//restore video mode
-	restoreDisplaySettings();
 	singleton = 0;
 }
 
@@ -442,27 +404,6 @@ void Program::setUpdateFps(int updateFps) {
 }
 
 // ==================== PRIVATE ====================
-
-void Program::setDisplaySettings() {
-	if (!g_config.getDisplayWindowed()) {
-		int freq= g_config.getDisplayRefreshFrequency();
-		int colorBits= g_config.getRenderColorBits();
-		int screenWidth= g_config.getDisplayWidth();
-		int screenHeight= g_config.getDisplayHeight();
-
-		if (!(changeVideoMode(screenWidth, screenHeight, colorBits, freq)
-		|| changeVideoMode(screenWidth, screenHeight, colorBits, 0))) {
-			throw runtime_error( "Error setting video mode: " +
-				intToStr(screenWidth) + "x" + intToStr(screenHeight) + "x" + intToStr(colorBits));
-		}
-	}
-}
-
-void Program::restoreDisplaySettings(){
-	if(!g_config.getDisplayWindowed()){
-		restoreVideoMode();
-	}
-}
 
 void Program::crash(const exception *e) {
 	// if we've already crashed then we just try to exit

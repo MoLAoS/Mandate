@@ -75,7 +75,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 //	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	Lang &lang = Lang::getInstance();
-	Font *font = g_coreData.getFTMenuFontNormal();
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	// initialize network interface
 	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
@@ -83,71 +83,83 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	GameSettings &gs = g_simInterface.getGameSettings();
 
 	vector<string> results;
+	const int defWidgetHeight = g_widgetConfig.getDefaultElementHeight();
+	const int defCellHeight = defWidgetHeight * 3 / 2;
 
 	// create
 	CellStrip *topStrip = new CellStrip(&program, Orientation::VERTICAL, 4);
 	Vec2i pad(15, 45);
 	topStrip->setPos(pad);
 	topStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
-	int hints[] = { 50, 15, 20, 10 };
-	topStrip->setPercentageHints(hints);
+	//int hints[] = { 50, 15, 20, 10 };
+	//topStrip->setPercentageHints(hints);
+	topStrip->getCell(0)->setSizeHint(SizeHint()); // all remaining space
+	topStrip->getCell(1)->setSizeHint(SizeHint(-1, 1 * defCellHeight));
+	topStrip->getCell(2)->setSizeHint(SizeHint(-1, 3 * defCellHeight));
+	topStrip->getCell(3)->setSizeHint(SizeHint(10));
 
 	Anchors a(Anchor(AnchorType::RIGID, 0));
-	Anchors a2(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0), 
-		Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
+	Anchors a2(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
+	Anchors a3;
+	a3.setCentre(true);
 	
 	// slot widget container
 	CellStrip *strip = new CellStrip(topStrip->getCell(0), Orientation::VERTICAL, GameConstants::maxPlayers + 1);
 	strip->setAnchors(a2);
 
 	PlayerSlotLabels *labels = new PlayerSlotLabels(strip->getCell(0));
-	labels->setAnchors(a);
+	labels->setAnchors(a3);
+	labels->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight));
 
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		m_playerSlots[i] = new PlayerSlotWidget(strip->getCell(i + 1));
 		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i + 1));
 		m_playerSlots[i]->setSelectedColour(i);
-		m_playerSlots[i]->setAnchors(a);
+		m_playerSlots[i]->setAnchors(a3);
+		m_playerSlots[i]->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight));
 	}
 
 	strip = new CellStrip(topStrip->getCell(1), Orientation::HORIZONTAL, 3);
 	strip->setAnchors(a);
 
-	CellStrip *combo = new CellStrip(strip->getCell(0), Orientation::VERTICAL, 2);
+	CellStrip *combo = new CellStrip(strip->getCell(0), Orientation::HORIZONTAL, 2);
 	combo->setAnchors(a);
-
-	Anchors a3;
-	a3.setCentre(true);
+	combo->getCell(0)->setSizeHint(SizeHint());
+	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
 
 	m_randomLocsLabel = new StaticText(combo->getCell(0));
 	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
 	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_randomLocsLabel->setAnchors(a3);
+	m_randomLocsLabel->setAnchors(a);
 
 	m_randomLocsCheckbox = new CheckBox(combo->getCell(1));
 	m_randomLocsCheckbox->setAnchors(a3);
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip->getCell(1), Orientation::VERTICAL, 2);
+	combo = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL, 2);
 	combo->setAnchors(a);
+	combo->getCell(0)->setSizeHint(SizeHint());
+	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
 
 	m_SODLabel = new StaticText(combo->getCell(0));
 	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
 	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_SODLabel->setAnchors(a3);
+	m_SODLabel->setAnchors(a);
 
 	m_SODCheckbox = new CheckBox(combo->getCell(1));
 	m_SODCheckbox->setAnchors(a3);
 	m_SODCheckbox->setChecked(true);
 	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip->getCell(2), Orientation::VERTICAL, 2);
+	combo = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, 2);
 	combo->setAnchors(a);
+	combo->getCell(0)->setSizeHint(SizeHint());
+	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
 
 	m_FOWLabel = new StaticText(combo->getCell(0));
 	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
 	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_FOWLabel->setAnchors(a3);
+	m_FOWLabel->setAnchors(a);
 
 	m_FOWCheckbox = new CheckBox(combo->getCell(1));
 	m_FOWCheckbox->setAnchors(a3);
@@ -178,7 +190,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_mapLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	m_mapList = new DropList(combo->getCell(1));
-	m_mapList->setAnchors(a);
+	m_mapList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
+	m_mapList->setAnchors(a3);
 	m_mapList->addItems(results);
 	m_mapList->setDropBoxHeight(140);
 	m_mapList->setSelected(0);
@@ -212,7 +225,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	m_tilesetList = new DropList(combo->getCell(1));
-	m_tilesetList->setAnchors(a);
+	m_tilesetList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
+	m_tilesetList->setAnchors(a3);
 	m_tilesetList->addItems(results);
 	m_tilesetList->setDropBoxHeight(140);
 	m_tilesetList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTileset);
@@ -237,7 +251,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	m_techTreeList = new DropList(combo->getCell(1));
-	m_techTreeList->setAnchors(a);
+	m_techTreeList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
+	m_techTreeList->setAnchors(a3);
 	m_techTreeList->addItems(results);
 	m_techTreeList->setDropBoxHeight(140);
 	m_techTreeList->setSelected(0);
@@ -246,7 +261,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	strip = new CellStrip(topStrip->getCell(3), Orientation::HORIZONTAL, 2);
 	strip->setAnchors(a);
 
-	int w = 256, h = 32;
+	int w = 8 * defWidgetHeight, h = defWidgetHeight;
 	m_returnButton = new Button(strip->getCell(0), Vec2i(0), Vec2i(w, h));
 	m_returnButton->setAnchors(a3);
 	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);

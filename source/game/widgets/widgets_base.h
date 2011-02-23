@@ -21,7 +21,7 @@
 #include "sigslot.h"
 #include "logger.h"
 
-#include "widget_style.h"
+#include "widget_config.h"
 
 using namespace Shared::Math;
 using namespace Shared::Graphics;
@@ -101,7 +101,7 @@ public:
 //  class Widget
 // =====================================================
 
-class Widget {
+class Widget : public WidgetStyle {
 	friend class WidgetWindow;
 	friend class MouseWidget;
 	friend class KeyboardWidget;
@@ -112,27 +112,44 @@ public:
 
 private:
 	//int id;
-	Container    *m_parent;
-	WidgetWindow *m_rootWindow;
+	// position and size
+	Vec2i m_pos,       // relative to parent
+	      m_screenPos, // cache [m_parent->getScreenPos() + m_pos]
+	      m_size;
 
-	Vec2i	m_pos,
-			m_screenPos,
-			m_size;
-	bool	m_visible;
+	// state flags
+	bool  m_hover;
+	bool  m_focus;
+	bool  m_enabled;
 
-	bool	m_enabled;
-	float	m_fade;
+	// visibility
+	bool  m_visible;
+	float m_fade;
 
 	int padding;
+
+	// attachments
 	MouseWidget    *m_mouseWidget;
 	KeyboardWidget *m_keyboardWidget;
 	TextWidget     *m_textWidget;
 
 protected:
-	Anchors         m_anchors;
-	BorderStyle     m_borderStyle;
-	BackgroundStyle m_backgroundStyle;
+	// ancestors (parent and 'adam')
+	Container    *m_parent;
+	WidgetWindow *m_rootWindow;
 
+	// 'cell' anchors
+	Anchors      m_anchors;
+	// styles inherited
+
+protected: // flag setters
+	void setHover(bool v);
+	void setFocus(bool v);
+
+	virtual void setStyle() {}
+	void setWidgetStyle(WidgetType type);
+
+protected: // get border sizes
 	int	getBorderLeft() const	{ return m_borderStyle.m_sizes[Border::LEFT]; }
 	int	getBorderRight() const	{ return m_borderStyle.m_sizes[Border::RIGHT]; }
 	int	getBorderTop() const	{ return m_borderStyle.m_sizes[Border::TOP]; }
@@ -190,19 +207,26 @@ public:
 		return pos.x >= p1.x && pos.y >= p1.y && pos.x < p2.x && pos.y < p2.y;
 	}
 
-	bool isEnabled() const	{ return m_enabled;	}
+	bool isEnabled() const { return m_enabled;	}
+	bool isHovered() const { return m_enabled && m_hover; }
+	bool isFocused() const { return m_enabled && m_focus; }
 
 	// set
-	virtual void setEnabled(bool v) { m_enabled = v;	}
-	virtual void setSize(const Vec2i &sz);
+	virtual void setEnabled(bool v) { m_enabled = v; }
 	virtual void setPos(const Vec2i &p);
-	void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
-	void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
+	virtual void setSize(const Vec2i &sz);
+
 	virtual void setVisible(bool vis) { m_visible = vis; }
 	virtual void setFade(float v) { m_fade = v; }
+
+	void setSize(const int x, const int y) { setSize(Vec2i(x,y)); }
+	void setPos(const int x, const int y) { setPos(Vec2i(x,y)); }
 	void setAnchors(Anchors a)    { m_anchors = a;   }
+	void setStyle(const WidgetStyle &style) {
+		*static_cast<WidgetStyle*>(this) = style;
+	}
 	
-	virtual void setParent(Container* p) { m_parent = p; }
+	//virtual void setParent(Container* p) { m_parent = p; }
 
 	void setBorderStyle(const BorderStyle &style);
 	void setBackgroundStyle(const BackgroundStyle &style);
@@ -210,14 +234,22 @@ public:
 	void setPadding(int pad) { padding = pad; }
 	virtual void update() {} // must 'register' with WidgetWindow to receive
 
-	virtual void render() = 0;
+	virtual void render();
 
 	void renderBordersFromTexture(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
 	void renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
 	void renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size);
-	void renderBgAndBorders(bool bg = true);
-	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
-	void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
+	void renderOverlay(int ndx, Vec2i offset, Vec2i size);
+
+	void renderBackground();
+	void renderForeground();
+
+//	void renderBgAndBorders(bool bg = true);
+	void renderHighLight(int colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
+	void renderHighLight(int colour, float centreAlpha, float borderAlpha);
+
+	//void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
+	//void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
 
 	virtual string descPosDim();
 	virtual string desc() = 0;
@@ -358,11 +390,14 @@ struct TextRenderInfo {
 
 class TextWidget {
 private:
-	Widget* me;
-	vector<TextRenderInfo> m_texts;
-	bool centre;
-	bool m_batchRender;
-	const Font *m_defaultFont;
+	typedef vector<TextRenderInfo> Texts;
+
+private:
+	Widget*       me;
+	Texts         m_texts;
+	bool          m_centreText;
+	bool          m_batchRender;
+	FontPtr       m_defaultFont;
 	TextRenderer *m_textRenderer;
 
 protected:
@@ -379,7 +414,7 @@ public:
 	virtual ~TextWidget() {}
 
 	// set
-	void setCentre(bool val)	{ centre = val; }
+	void setCentre(bool val)	{ m_centreText = val; }
 	void setTextParams(const string&, const Vec4f, const Font*, bool cntr=true);
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
@@ -399,7 +434,7 @@ public:
 		setTextShadowColour(col1, ndx);
 		setTextShadowColour2(col2, ndx);
 	}
-	void setTextCentre(bool v)	{ centre = v; }
+	void setTextCentre(bool v)	{ m_centreText = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
 	void setTextFont(const Font *f);
 
@@ -445,6 +480,7 @@ protected:
 
 public:
 	MouseCursor(WidgetWindow *window) : Widget(window) {}
+	virtual ~MouseCursor() {}
 
 	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) = 0;
 };

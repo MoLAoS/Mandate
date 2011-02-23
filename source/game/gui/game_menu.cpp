@@ -30,33 +30,35 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 	int btnGap = (room.y - 30 * numItems) / (numItems + 1);
 	Vec2i btnPos(10, btnGap);
 
+	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+
 	Button* btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("ExitProgram"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("ExitProgram"), Vec4f(1.f), font);
 	btn->Clicked.connect(this, &GameMenu::onExit);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("QuitGame"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("QuitGame"), Vec4f(1.f), font);
 	btn->Clicked.connect(this, &GameMenu::onQuit);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("SaveGame"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("SaveGame"), Vec4f(1.f), font);
 	btn->Clicked.connect(this, &GameMenu::onSaveGame);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("TogglePhotoMode"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("TogglePhotoMode"), Vec4f(1.f), font);
 	btn->Clicked.connect(this, &GameMenu::onTogglePhotoMode);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("ToggleDebug"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("ToggleDebug"), Vec4f(1.f), font);
 	btn->Clicked.connect(this, &GameMenu::onDebugToggle);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("ReturnToGame"), Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	btn->setTextParams(g_lang.get("ReturnToGame"), Vec4f(1.f), font);
 	btn->Clicked.connect(this, &GameMenu::onReturnToGame);
 }
 

@@ -46,10 +46,11 @@ ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &
 		, m_moveOffset(0)
 		, m_draggingWidget(false) {
 	setFancyBorder(m_borderStyle);
+	m_backgroundStyle.setNone();
 
 	g_widgetWindow.registerUpdate(this);
 
-	Font *font = g_coreData.getFTDisplayFont();
+	Font *font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
 	const FontMetrics *fm = font->getMetrics();
 	setTextFont(font);
 	setTextColour(Vec4f(1.f));
@@ -124,7 +125,7 @@ void ResourceBar::render() {
 	if (g_config.getUiPhotoMode()) {
 		return;
 	}
-	renderBgAndBorders(false);
+	renderBackground();
 	for (int i=0; i < m_resourceTypes.size(); ++i) {
 		renderImage(i);
 		renderTextShadowed(i);

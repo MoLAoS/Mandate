@@ -495,7 +495,7 @@ void Minimap::render() {
 		return;
 	}
 
-	Widget::renderBgAndBorders(false);
+	Widget::renderBackground();
 	const GameCamera *gameCamera = g_gameState.getGameCamera();
 	const Pixmap2D *pixmap = m_terrainTex->getPixmap();
 

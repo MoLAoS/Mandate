@@ -29,16 +29,6 @@ using Shared::Graphics::Font;
 using Shared::Sound::StrSound;
 using Shared::Sound::StaticSound;
 
-WRAPPED_ENUM( FontSize, SMALL, NORMAL, BIG, HUGE );
-
-struct FontSet {
-	Font *m_fonts[FontSize::COUNT];
-
-	FontSet() {memset(this, 0, sizeof(*this));}
-	Font* operator[](FontSize size) const {return m_fonts[size];}
-	void load(const string &path, int size);
-};
-
 // =====================================================
 // 	class CoreData  
 //
@@ -63,25 +53,22 @@ private:
 			fireTexture,
 			snowTexture,
 			waterSplashTexture,
-			customTexture,
-			buttonSmallTexture,
-			buttonBigTexture,
-			textEntryTexture,
-			checkBoxTickTexture,
-			checkBoxCrossTexture,
-			vertScrollUpTexture,
-			vertScrollDownTexture,
-			vertScrollUpHoverTex,
-			vertScrollDownHoverTex,
-			greenTickOverlay,
-			orangeQuestionOverlay,
-			redCrossOverlay,
-			mouseTexture;
-	
-	FontSet m_menuFont;
-	FontSet m_gameFont;
-	FontSet m_fancyFont;
-	
+			customTexture;
+	//,
+	//		buttonSmallTexture,
+	//		buttonBigTexture,
+	//		textEntryTexture,
+	//		checkBoxTickTexture,
+	//		checkBoxCrossTexture,
+	//		vertScrollUpTexture,
+	//		vertScrollDownTexture,
+	//		vertScrollUpHoverTex,
+	//		vertScrollDownHoverTex,
+	//		greenTickOverlay,
+	//		orangeQuestionOverlay,
+	//		redCrossOverlay,
+	//		mouseTexture;
+		
 public:
 	static CoreData &getInstance();
 	~CoreData();
@@ -97,19 +84,19 @@ public:
 	TexPtr getGaeSplashTexture() const		{return gaeSplashTexture;}
 	TexPtr getWaterSplashTexture() const	{return waterSplashTexture;}
 	TexPtr getCustomTexture() const			{return customTexture;}
-	TexPtr getButtonSmallTexture() const	{return buttonSmallTexture;}
-	TexPtr getButtonBigTexture() const		{return buttonBigTexture;}
-	TexPtr getTextEntryTexture() const		{return textEntryTexture;}
-	TexPtr getVertScrollUpTexture() const	{return vertScrollUpTexture;}
-	TexPtr getVertScrollDownTexture() const {return vertScrollDownTexture;}
-	TexPtr getVertScrollUpHoverTex() const	{return vertScrollUpHoverTex;}
-	TexPtr getVertScrollDownHoverTex() const{return vertScrollDownHoverTex;}
-	TexPtr getCheckBoxTickTexture() const	{return checkBoxTickTexture;}
-	TexPtr getCheckBoxCrossTexture() const	{return checkBoxCrossTexture;}
-	TexPtr getGreenTickOverlay() const		{return greenTickOverlay;}
-	TexPtr getQuestionOverlay() const		{return orangeQuestionOverlay;}
-	TexPtr getRedCrossOverlay() const		{return redCrossOverlay;}
-	TexPtr getMouseTexture() const			{return mouseTexture;}
+	//TexPtr getButtonSmallTexture() const	{return buttonSmallTexture;}
+	//TexPtr getButtonBigTexture() const		{return buttonBigTexture;}
+	//TexPtr getTextEntryTexture() const		{return textEntryTexture;}
+	//TexPtr getVertScrollUpTexture() const	{return vertScrollUpTexture;}
+	//TexPtr getVertScrollDownTexture() const {return vertScrollDownTexture;}
+	//TexPtr getVertScrollUpHoverTex() const	{return vertScrollUpHoverTex;}
+	//TexPtr getVertScrollDownHoverTex() const{return vertScrollDownHoverTex;}
+	//TexPtr getCheckBoxTickTexture() const	{return checkBoxTickTexture;}
+	//TexPtr getCheckBoxCrossTexture() const	{return checkBoxCrossTexture;}
+	//TexPtr getGreenTickOverlay() const		{return greenTickOverlay;}
+	//TexPtr getQuestionOverlay() const		{return orangeQuestionOverlay;}
+	//TexPtr getRedCrossOverlay() const		{return redCrossOverlay;}
+	//TexPtr getMouseTexture() const			{return mouseTexture;}
 
 	StrSound *getIntroMusic() 				{return &introMusic;}
 	StrSound *getMenuMusic() 				{return &menuMusic;}
@@ -118,21 +105,20 @@ public:
     StaticSound *getClickSoundC()			{return &clickSoundC;}
 	StaticSound *getWaterSound()			{return waterSounds.getRandSound();}
 
-	Font *getGAEFontBig() const	        { return m_fancyFont[FontSize::BIG];    }
-	Font *getGAEFontSmall() const       { return m_fancyFont[FontSize::NORMAL]; }
+	//Font *getGAEFontBig() const	        { return m_fancyFont[FontSize::BIG];    }
+	//Font *getGAEFontSmall() const       { return m_fancyFont[FontSize::NORMAL]; }
 
-	Font* getFTMenuFontNormal() const   { return m_menuFont[FontSize::NORMAL];  }
-	Font* getFTMenuFontSmall() const    { return m_menuFont[FontSize::SMALL];   }
-	Font* getFTMenuFontBig() const      { return m_menuFont[FontSize::BIG];     }
-	Font* getFTMenuFontVeryBig() const  { return m_menuFont[FontSize::HUGE];    }
+	//Font* getFTMenuFontNormal() const   { return m_menuFont[FontSize::NORMAL];  }
+	//Font* getFTMenuFontSmall() const    { return m_menuFont[FontSize::SMALL];   }
+	//Font* getFTMenuFontBig() const      { return m_menuFont[FontSize::BIG];     }
+	//Font* getFTMenuFontVeryBig() const  { return m_menuFont[FontSize::HUGE];    }
 
-	Font* getFTDisplayFont() const      { return m_gameFont[FontSize::NORMAL];  }
-	Font* getFTDisplayFontBig() const   { return m_gameFont[FontSize::BIG];     }
+	//Font* getFTDisplayFont() const      { return m_gameFont[FontSize::NORMAL];  }
+	//Font* getFTDisplayFontBig() const   { return m_gameFont[FontSize::BIG];     }
 
 private:
 	CoreData(){};
 
-	int computeFontSize(int size);
 };
 
 }} //end namespace
