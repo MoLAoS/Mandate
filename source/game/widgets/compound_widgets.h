@@ -9,7 +9,7 @@
 #ifndef _GLEST_COMPOUND_WIDGETS_INCLUDED_
 #define _GLEST_COMPOUND_WIDGETS_INCLUDED_
 
-#include "widgets.h"
+#include "complex_widgets.h"
 
 namespace Glest { namespace Widgets {
 
@@ -38,7 +38,7 @@ public:
 
 class ScrollText : public Panel, public MouseWidget, public TextWidget, public sigslot::has_slots {
 private:
-	VerticalScrollBar* m_scrollBar;
+	ScrollBar* m_scrollBar;
 	int m_textBase;
 
 public:
@@ -47,7 +47,7 @@ public:
 
 	void recalc();
 	void init();
-	void onScroll(VerticalScrollBar*);
+	void onScroll(int offset);
 	void setText(const string &txt, bool scrollToBottom = false);
 
 	void render();

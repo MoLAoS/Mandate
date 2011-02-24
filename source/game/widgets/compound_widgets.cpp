@@ -91,7 +91,7 @@ ScrollText::ScrollText(Container* parent)
 	setAutoLayout(false);
 	setPaddingParams(2, 0);
 	setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex, FontSize::SMALL), false);
-	m_scrollBar = new VerticalScrollBar(this);
+	m_scrollBar = new ScrollBar(this, true, 10);
 }
 
 ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
@@ -104,7 +104,7 @@ ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 	setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex, FontSize::SMALL), false);
 	Vec2i sbp(size.x - 26, 2);
 	Vec2i sbs(24, size.y - 4);
-	m_scrollBar = new VerticalScrollBar(this, sbp, sbs);
+	m_scrollBar = new ScrollBar(this, sbp, sbs, true, 10);
 }
 
 void ScrollText::recalc() {
@@ -124,8 +124,7 @@ void ScrollText::init() {
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 }
 
-void ScrollText::onScroll(VerticalScrollBar* sb) {
-	int offset = sb->getRangeOffset();
+void ScrollText::onScroll(int offset) {
 	setTextPos(Vec2i(5, m_textBase - offset));
 }
 
@@ -140,7 +139,7 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	recalc();
 	
 	if (scrollToBottom) {
-		m_scrollBar->setOffset(100.f);
+		m_scrollBar->setOffsetPercent(100);
 	}
 }
 

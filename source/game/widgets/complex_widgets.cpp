@@ -72,6 +72,7 @@ ListBox::ListBox(Container* parent, Vec2i pos, Vec2i size)
 	setWidgetStyle(WidgetType::LIST_BOX);
 	setPadding(0);
 	setAutoLayout(false);
+	setSize(size); // trigger layout
 }
 
 ListBox::ListBox(WidgetWindow* window)
@@ -116,6 +117,7 @@ void ListBox::addItems(const vector<string> &items) {
 		listBoxItems.push_back(nItem);
 		nItem->Selected.connect(this, &ListBox::onSelected);
 	}
+	layoutChildren();
 }
 
 void ListBox::addItem(const string &item) {
@@ -128,6 +130,7 @@ void ListBox::addItem(const string &item) {
 	nItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	listBoxItems.push_back(nItem);
 	nItem->Selected.connect(this, &ListBox::onSelected);
+	layoutChildren();
 }
 
 void ListBox::setSize(const Vec2i &sz) {
@@ -149,16 +152,13 @@ void ListBox::layoutChildren() {
 
 	if (totalItemHeight > clientHeight) {
 		if (!scrollBar) {
-			scrollBar = new VerticalScrollBar(this);
+			scrollBar = new ScrollBar(this, true, 10);
 			scrollBar->ThumbMoved.connect(this, &ListBox::onScroll);
 		}
-		scrollBar->setSize(Vec2i(24, clientHeight));
 		scrollBar->setPos(Vec2i(size.x - 24 - m_borderStyle.m_sizes[Border::RIGHT], 
 								m_borderStyle.m_sizes[Border::BOTTOM]));
-		scrollBar->setRanges(totalItemHeight, clientHeight, 2);
-		//cout << "setting scroll ranges total = " << totalItemHeight << ", actual = " << clientHeight << endl;
-		//int scrollOffset = scrollBar->getRangeOffset();
-		//cout << "range offset = " << scrollOffset << endl;
+		scrollBar->setSize(Vec2i(24, clientHeight));
+		scrollBar->setRanges(totalItemHeight, clientHeight);
 	} else {
 		if (scrollBar) {
 			delete scrollBar;
@@ -197,17 +197,10 @@ void ListBox::layoutChildren() {
 	}
 }
 
-void ListBox::onScroll(VerticalScrollBar*) {
-	int offset = scrollBar->getRangeOffset();
-	//cout << "Scroll offset = " << offset << endl;
-
+void ListBox::onScroll(int offset) {
 	int ndx = 0;
 	const int x = m_borderStyle.m_sizes[Border::LEFT] + getPadding();
-	foreach (WidgetList, it, m_children) {
-		if (*it == scrollBar) {
-			continue;
-		}
-		//Widget* widget = *it;
+	foreach (vector<ListBoxItem*>, it, listBoxItems) {
 		(*it)->setPos(x, yPositions[ndx++] - offset);
 	}
 }

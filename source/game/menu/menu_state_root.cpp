@@ -174,6 +174,18 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setSize(size);
 	}
 
+	ScrollBar *scrollBar = new ScrollBar(&program, Vec2i(10,100), Vec2i(34, 250), true, 10);
+	ScrollBar *scrollBar2 = new ScrollBar(&program, Vec2i(50,100), Vec2i(250, 34), false, 10);
+
+	ListBox *listBox = new ListBox(&program, Vec2i(50,150), Vec2i(250, 150));
+	listBox->addItem("Apple");
+	listBox->addItem("Pear");
+	listBox->addItem("Peach");
+	listBox->addItem("Banana");
+	listBox->addItem("Apricot");
+	listBox->addItem("Plum");
+	listBox->addItem("Kiwi");
+
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }

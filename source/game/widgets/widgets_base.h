@@ -43,6 +43,7 @@ class TextWidget;
 //  enums Edge & AnchorType
 // =====================================================
 
+WRAPPED_ENUM( Direction, LEFT, UP, RIGHT, DOWN );
 WRAPPED_ENUM( Edge, LEFT, TOP, RIGHT, BOTTOM );
 WRAPPED_ENUM( AnchorType, NONE, RIGID, SPRINGY );
 

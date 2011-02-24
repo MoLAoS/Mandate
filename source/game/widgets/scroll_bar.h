@@ -11,74 +11,139 @@
 
 #include <stack>
 
-#include "widgets_base.h"
+#include "widgets.h"
 #include "widget_config.h"
 
 namespace Glest { namespace Widgets {
 
+class ScrollBarShaft;
+class ScrollBar;
+
 // =====================================================
-//  class VerticalScrollBar
+//  class ScrollBarButton
 // =====================================================
 
-class VerticalScrollBar : public Widget, public ImageWidget, public MouseWidget {
+class ScrollBarButton : public Button {
 private:
-	WRAPPED_ENUM( Part, NONE, UP_BUTTON, DOWN_BUTTON, THUMB, UPPER_SHAFT, LOWER_SHAFT );
-
-private:
-	Part hoverPart, pressedPart;
-	// special case conditions? thumb fills shaft and thumb is so small we need to render it bigger.
-	//bool fullThumb, smallThumb;
-	int shaftOffset, shaftHeight;
-	int thumbOffset, thumbSize;
-	int totalRange, availRange, lineSize;
-	int timeCounter;
-	bool moveOnMouseUp;
-	int topOffset;
-
-	BorderStyle m_shaftStyle;
-	BorderStyle m_thumbStyle;
-
-	void init();
-	void recalc();
-	Part partAt(const Vec2i &pos);
+	WidgetType m_type;
+	bool       m_down;
+	int        m_counter;
+	bool       m_fireOnUp;
 
 public:
-	VerticalScrollBar(Container* parent);
-	VerticalScrollBar(Container* parent, Vec2i pos, Vec2i size);
-	~VerticalScrollBar();
+	ScrollBarButton(Container *parent, Direction dir);
+	ScrollBarButton(Container *parent, Vec2i pos, Vec2i size, Direction dir);
 
-	void setRanges(int total, int avail, int line = 60);
-	void setTotalRange(int max) { totalRange = max; }
-	void setActualRane(int avail) { availRange = avail; recalc(); }
-	void setLineSize(int line) { lineSize = line; }
+	virtual void setStyle() override { setWidgetStyle(m_type); }
+	virtual string desc() override { return string("[ScrollButton: ") + descPosDim() + "]"; }
 
-	int getRangeOffset() const {
-		return clamp(int(thumbOffset / float(shaftHeight - 2) * totalRange), 0, totalRange - availRange);
-	}
-	void setOffset(float percent);
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	void scrollLine(bool i_up);
+	virtual void update() override;
 
-//	int getTotalRange() const { return totalRange; }
-//	int getActualRange() const { return actualRange; }
+	sigslot::signal<ScrollBarButton*> Fire;
+};
 
-	virtual void setSize(const Vec2i &sz) { Widget::setSize(sz); recalc(); }
+// =====================================================
+//  class ScrollBarThumb
+// =====================================================
 
-	virtual void update();
-	virtual void mouseOut() { hoverPart = Part::NONE; }
+class ScrollBarThumb : public Button {
+private:
+	WidgetType m_type;
+	Vec2i      m_downPos; // 'mouse down' pos
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
+public:
+	ScrollBarThumb(ScrollBarShaft *parent, bool vert);
+	ScrollBarThumb(ScrollBarShaft *parent, Vec2i pos, Vec2i size, bool vert);
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual void setStyle() override { setWidgetStyle(m_type); }
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::SCROLL_BAR); }
-	virtual void render();
-	virtual string desc() { return string("[VerticalScrollBar: ") + descPosDim() + "]"; }
+	virtual void setPos(const Vec2i &pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	sigslot::signal<VerticalScrollBar*> ThumbMoved;
+	sigslot::signal<int> Moved;
+	virtual string desc() override { return string("[ScrollThumb: ") + descPosDim() + "]"; }
+};
+
+// =====================================================
+//  class ScrollBarShaft
+// =====================================================
+
+class ScrollBarShaft : public Container, public sigslot::has_slots {
+private:
+	ScrollBarThumb *m_thumb;
+	int             m_totalRange;
+	int             m_availRange;
+	float           m_availRatio;
+	int             m_maxOffset;
+	int             m_thumbSize;
+	WidgetType      m_type;
+
+private:
+	void init(bool vert);
+	void recalc();
+
+public:
+	ScrollBarShaft(Container *parent, bool vert);
+	ScrollBarShaft(Container *parent, Vec2i pos, Vec2i size, bool vert);
+
+	virtual void setStyle() override { setWidgetStyle(m_type); }
+	virtual void setSize(const Vec2i &sz) override;
+
+	void setRanges(int total, int avail);
+	void setTotalRange(int max) { m_totalRange = max; }
+	void setActualRange(int avail) { m_availRange = avail; recalc(); }
+
+	int getThumbOffset() const;
+	void setOffsetPercent(int v);
+
+	bool isVertical() const { return m_type == WidgetType::SCROLLBAR_VERT_SHAFT; }
+
+	void onThumbMoved(int diff);
+	virtual string desc() override { return string("[ScrollShaft: ") + descPosDim() + "]"; }
+
+	sigslot::signal<int>  ThumbMoved;
+};
+
+// =====================================================
+//  class ScrollBar
+// =====================================================
+
+class ScrollBar : public CellStrip, public sigslot::has_slots {
+private:
+	ScrollBarButton *m_btnOne;
+	ScrollBarButton *m_btnTwo;
+	ScrollBarShaft  *m_shaft;
+	bool             m_vertical;
+	int              m_lineSize;
+
+private:
+	void init();
+
+	void onScrollBtnFired(ScrollBarButton*);
+	void onThumbMoved(int diff) { ThumbMoved(diff); }
+
+public:
+	ScrollBar(Container *parent, bool vert, int lineSize);
+	ScrollBar(Container *parent, Vec2i pos, Vec2i sz, bool vert, int lineSize);
+
+	void setLineSize(int sz) { m_lineSize = sz; }
+	void setRanges(int total, int avail) { m_shaft->setRanges(total, avail); }
+
+	void scrollLine(bool increase);
+	void setOffsetPercent(int v) { m_shaft->setOffsetPercent(v); }
+	int getThumbOffset() const { return m_shaft->getThumbOffset(); }
+
+	virtual void setStyle() override { setWidgetStyle(WidgetType::SCROLL_BAR); }
+	virtual void setSize(const Vec2i &sz) override;
+	virtual string desc() override { return string("[ScrollBar: ") + descPosDim() + "]"; }
+
+	sigslot::signal<int>  ThumbMoved;
 };
 
 }}

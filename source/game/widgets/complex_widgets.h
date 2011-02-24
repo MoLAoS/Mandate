@@ -45,7 +45,6 @@ public:
 
 	unsigned getItemCount() const { return listItems.size(); }
 
-
 	sigslot::signal<ListBase*> SelectionChanged;
 	sigslot::signal<ListBase*> SameSelected;
 };
@@ -62,9 +61,8 @@ private:
 
 protected:
 	vector<ListBoxItem*> listBoxItems;
+	ScrollBar* scrollBar;
 
-	VerticalScrollBar* scrollBar;
-	//ScrollSetting scrollSetting;
 	int scrollWidth;
 
 public:
@@ -97,7 +95,7 @@ public:
 
 	virtual string desc() { return string("[ListBox: ") + descPosDim() + "]"; }
 
-	void onScroll(VerticalScrollBar*);
+	void onScroll(int);
 
 	// inherited signals:
 	//		ListBase::SelectionChanged

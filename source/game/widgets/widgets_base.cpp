@@ -216,7 +216,6 @@ void Widget::setBackgroundStyle(const BackgroundStyle &style) {
 }
 
 void Widget::renderOverlay(int ndx, Vec2i pos, Vec2i size) {
-	glEnable(GL_TEXTURE_2D);
 	const Texture2D *tex = m_rootWindow->getConfig()->getTexture(ndx);
 	if (!tex) {
 		assert(false);
@@ -229,6 +228,7 @@ void Widget::renderOverlay(int ndx, Vec2i pos, Vec2i size) {
 	verts[3] = verts[0] + Vec2i(0, size.y);
 
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
 	glBegin(GL_TRIANGLE_FAN);
 	glColor4f(1.f, 1.f, 1.f, getFade());
@@ -1029,6 +1029,7 @@ Widget* Container::getWidgetAt(const Vec2i &pos) {
 
 void Container::render() {
 	assertGl();
+	Widget::render();
 	foreach (WidgetList, it, m_children) {
 		Widget* widget = *it;
 		if (widget->isVisible()) {

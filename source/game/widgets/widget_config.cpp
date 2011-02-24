@@ -425,7 +425,6 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 						int ndx = getColourIndex(strings[i]);
 						if (ndx != -1) {
 							logBits += "'" + strings[i] + "'(ndx: " + intToStr(ndx) + ") ";
-							WIDGET_LOG( "" );
 							style.m_colourIndices[i] = getColourIndex(strings[i]);
 						} else {
 							WIDGET_LOG( "\t\tError: Colour named '" << strings[i] << "' was not found." );
@@ -433,8 +432,8 @@ void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &s
 					} else if ((bt == BackgroundType::COLOUR && !i) || bt == BackgroundType::CUSTOM_COLOURS) {
 						WIDGET_LOG( "\t\tError: Insufficient colours." );
 					}
-					WIDGET_LOG( "\t\tColours: " << logBits);
 				}
+				WIDGET_LOG( "\t\tColours: " << logBits);
 			} catch (LuaError &e) {
 				if (!src) {
 					WIDGET_LOG(errorPreamble << " loading 'Colours' : " << e.what());
@@ -785,14 +784,14 @@ void WidgetConfig::load() {
 	loadStyles("TitleBar", WidgetType::TITLE_BAR);
 	loadStyles("MessageBox", WidgetType::MESSAGE_BOX);
 	loadStyles("ToolTip", WidgetType::TOOL_TIP);
-	loadStyles("ScrollBarButtonUp", WidgetType::SROLLBAR_BTN_UP);
-	loadStyles("ScrollBarButtonDown", WidgetType::SROLLBAR_BTN_DOWN);
-	loadStyles("ScrollBarButtonLeft", WidgetType::SROLLBAR_BTN_LEFT);
-	loadStyles("ScrollBarButtonRight", WidgetType::SROLLBAR_BTN_RIGHT);
-	loadStyles("ScrollBarVerticalShaft", WidgetType::SROLLBAR_VERT_SHAFT);
-	loadStyles("ScrollBarVerticalThumb", WidgetType::SROLLBAR_VERT_THUMB);
-	loadStyles("ScrollBarHorizontalShaft",WidgetType::SROLLBAR_HORIZ_SHAFT);
-	loadStyles("ScrollBarHorizontalThumb", WidgetType::SROLLBAR_HORIZ_THUMB);
+	loadStyles("ScrollBarButtonUp", WidgetType::SCROLLBAR_BTN_UP);
+	loadStyles("ScrollBarButtonDown", WidgetType::SCROLLBAR_BTN_DOWN);
+	loadStyles("ScrollBarButtonLeft", WidgetType::SCROLLBAR_BTN_LEFT);
+	loadStyles("ScrollBarButtonRight", WidgetType::SCROLLBAR_BTN_RIGHT);
+	loadStyles("ScrollBarVerticalShaft", WidgetType::SCROLLBAR_VERT_SHAFT);
+	loadStyles("ScrollBarVerticalThumb", WidgetType::SCROLLBAR_VERT_THUMB);
+	loadStyles("ScrollBarHorizontalShaft",WidgetType::SCROLLBAR_HORIZ_SHAFT);
+	loadStyles("ScrollBarHorizontalThumb", WidgetType::SCROLLBAR_HORIZ_THUMB);
 	loadStyles("SliderVerticalThumb", WidgetType::SLIDER_VERT_THUMB);
 	loadStyles("SliderVerticalShaft", WidgetType::SLIDER_VERT_SHAFT);
 	loadStyles("SliderHorizontalThumb", WidgetType::SLIDER_HORIZ_THUMB);
