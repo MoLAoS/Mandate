@@ -149,7 +149,6 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	m_pos = pos;
 	m_size = size;
 	m_fade = 1.f;
-	padding = 0;
 
 	m_mouseWidget = 0;
 	m_keyboardWidget = 0;

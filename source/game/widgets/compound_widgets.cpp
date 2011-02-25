@@ -109,7 +109,7 @@ ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 
 void ScrollText::recalc() {
 	int th = getTextDimensions().y;
-	int ch = getHeight() - getBordersVert() - getPadding() * 2;
+	int ch = getHeight() - getBordersVert();
 	m_textBase = 2;//-(th - ch) + 2;
 	m_scrollBar->setRanges(th, ch);
 	setTextPos(Vec2i(5, m_textBase));
@@ -130,7 +130,7 @@ void ScrollText::onScroll(int offset) {
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
-	int width = getSize().x - getPadding() * 2 - 28;
+	int width = getSize().x - 28;
 
 	string text = txt;
 	fm->wrapText(text, width);
@@ -146,10 +146,10 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 void ScrollText::render() {
 	Widget::renderBackground();
 	Vec2i pos = getScreenPos();
-	pos.x += getBorderLeft() + getPadding();
+	pos.x += getBorderLeft();
 	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
-		  + m_borderStyle.m_sizes[Border::BOTTOM] + getPadding();
-	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
+		  + m_borderStyle.m_sizes[Border::BOTTOM];
+	Vec2i size = getSize() - m_borderStyle.getBorderDims();
 	glPushAttrib(GL_SCISSOR_BIT);
 		assertGl();
 		glEnable(GL_SCISSOR_TEST);

@@ -291,20 +291,24 @@ public:
 
 class CellStrip : public Container {
 protected:
-	Orientation         m_direction;
+	Orientation         m_orientation;
+	Origin              m_origin; // layout from
 	vector<WidgetCell*> m_cells;
 	SizeHint            m_defualtSizeHint;
 	Anchors             m_defaultAnchors;
 	bool                m_dirty;
 
+public:
+	CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells);
+	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells);
+
 protected:
+	CellStrip(WidgetWindow *window, Orientation ortn, Origin orgn, int cells);
+
 	void setDirty() { m_dirty = true; }	
 	virtual void addChild(Widget* child) override;
 
 public:
-	CellStrip(Container *parent, Orientation ld, int cells);
-	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, int cells);
-	
 	void setSizeHint(int i, SizeHint hint) {
 		ASSERT_RANGE(i, m_cells.size());
 		m_cells[i]->setSizeHint(hint);
@@ -316,12 +320,17 @@ public:
 		}
 	}
 
-	void layoutCells();
+	virtual void layoutCells();
 
 	WidgetCell* getCell(int i) const {
 		ASSERT_RANGE(i, m_cells.size());
 		return m_cells[i];
 	}
+
+	void clearCells();
+	void deleteCells();
+	void addCells(int n);
+	int  getCellCount() const { return m_cells.size(); }
 
 	virtual void render() override;
 	virtual void setPos(const Vec2i &pos) override;

@@ -2433,13 +2433,13 @@ void Renderer::renderTile(const Vec2i &pos){
 void Renderer::renderQuad(int x, int y, int w, int h, const Texture2D *texture){
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(texture)->getHandle());
 	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2i(0, 1);
-		glVertex2i(x, y+h);
 		glTexCoord2i(0, 0);
+		glVertex2i(x, y+h);
+		glTexCoord2i(0, 1);
 		glVertex2i(x, y);
-		glTexCoord2i(1, 1);
-		glVertex2i(x+w, y+h);
 		glTexCoord2i(1, 0);
+		glVertex2i(x+w, y+h);
+		glTexCoord2i(1, 1);
 		glVertex2i(x+w, y);
 	glEnd();
 }

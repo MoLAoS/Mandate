@@ -127,8 +127,6 @@ private:
 	bool  m_visible;
 	float m_fade;
 
-	int padding;
-
 	// attachments
 	MouseWidget    *m_mouseWidget;
 	KeyboardWidget *m_keyboardWidget;
@@ -200,7 +198,6 @@ public:
 	float getFade() const    { return m_fade;    }
 	bool isVisible() const   { return m_visible; }
 	Anchors  getAnchors() const  { return m_anchors;  }
-	virtual int	  getPadding() const	{ return padding;	 }
 
 	bool isInside(const Vec2i &pos) const {
 		const Vec2i &p1 = m_screenPos;
@@ -232,7 +229,6 @@ public:
 	void setBorderStyle(const BorderStyle &style);
 	void setBackgroundStyle(const BackgroundStyle &style);
 
-	void setPadding(int pad) { padding = pad; }
 	virtual void update() {} // must 'register' with WidgetWindow to receive
 
 	virtual void render();
@@ -570,6 +566,8 @@ public:
 		Widget::setPos(p); // skip Container, we reset children ourselves...
 		anchorWidgets();
 	}
+
+	void clear() { Container::clear(); }
 
 	SizeHint getSizeHint() const { return m_sizeHint; }
 

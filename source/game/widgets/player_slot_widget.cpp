@@ -76,7 +76,6 @@ ColourPicker::ColourPicker(Container *parent, Vec2i pos, Vec2i size)
 
 void ColourPicker::init() {
 	setAutoLayout(false);
-	setPadding(0);
 	m_borderStyle.setNone();
 	m_showingItem = new ColourButton(this);
 	m_button = new Button(this);
@@ -156,7 +155,7 @@ void ColourPicker::onSelect(Button *b) {
 // =====================================================
 
 PlayerSlotLabels::PlayerSlotLabels(Container* parent)
-		: CellStrip(parent, Orientation::HORIZONTAL, 5) {
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5) {
 	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };
@@ -194,7 +193,8 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 // =====================================================
 
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
-		: CellStrip(parent, Orientation::HORIZONTAL, 5), m_freeSlot(false) {
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5)
+		, m_freeSlot(false) {
 	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };

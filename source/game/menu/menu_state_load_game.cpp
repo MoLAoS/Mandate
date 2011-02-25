@@ -82,7 +82,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	Anchors centreAnchors;
 	centreAnchors.setCentre(true);
 	
-	CellStrip *strip = new CellStrip(&program, Orientation::VERTICAL, 3);
+	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 3);
 	strip->getCell(0)->setSizeHint(SizeHint(-1, 50));  // 50 px cell for game drop-list
 	strip->getCell(1)->setSizeHint(SizeHint(-1, 250)); // 250 px for info box
 	strip->getCell(2)->setSizeHint(SizeHint(25)); // 25 % of the rest for the button panel
@@ -101,7 +101,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	m_infoLabel->init();
 	m_infoLabel->setAnchors(centreAnchors);
 
-	CellStrip *btnPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, 3);
+	CellStrip *btnPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	btnPnl->setAnchors(fillAnchors);
 
 	// buttons

@@ -87,7 +87,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	const int defCellHeight = defWidgetHeight * 3 / 2;
 
 	// create
-	CellStrip *topStrip = new CellStrip(&program, Orientation::VERTICAL, 4);
+	CellStrip *topStrip = 
+		new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::FROM_TOP, 4);
 	Vec2i pad(15, 45);
 	topStrip->setPos(pad);
 	topStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
@@ -104,7 +105,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	a3.setCentre(true);
 	
 	// slot widget container
-	CellStrip *strip = new CellStrip(topStrip->getCell(0), Orientation::VERTICAL, GameConstants::maxPlayers + 1);
+	CellStrip *strip = 
+		new CellStrip(topStrip->getCell(0), Orientation::VERTICAL, Origin::CENTRE, GameConstants::maxPlayers + 1);
 	strip->setAnchors(a2);
 
 	PlayerSlotLabels *labels = new PlayerSlotLabels(strip->getCell(0));
@@ -119,10 +121,10 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_playerSlots[i]->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight));
 	}
 
-	strip = new CellStrip(topStrip->getCell(1), Orientation::HORIZONTAL, 3);
+	strip = new CellStrip(topStrip->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	strip->setAnchors(a);
 
-	CellStrip *combo = new CellStrip(strip->getCell(0), Orientation::HORIZONTAL, 2);
+	CellStrip *combo = new CellStrip(strip->getCell(0), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	combo->setAnchors(a);
 	combo->getCell(0)->setSizeHint(SizeHint());
 	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
@@ -136,7 +138,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_randomLocsCheckbox->setAnchors(a3);
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL, 2);
+	combo = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	combo->setAnchors(a);
 	combo->getCell(0)->setSizeHint(SizeHint());
 	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
@@ -151,7 +153,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_SODCheckbox->setChecked(true);
 	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, 2);
+	combo = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	combo->setAnchors(a);
 	combo->getCell(0)->setSizeHint(SizeHint());
 	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
@@ -167,11 +169,11 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
 	// Map / Tileset / Tech-Tree
-	strip = new CellStrip(topStrip->getCell(2), Orientation::HORIZONTAL, 3);
+	strip = new CellStrip(topStrip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	strip->setAnchors(a);
 
 	// map listBox & info
-	combo = new CellStrip(strip->getCell(0), Orientation::VERTICAL, 3);
+	combo = new CellStrip(strip->getCell(0), Orientation::VERTICAL, Origin::CENTRE, 3);
 	a2 = Anchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5));
 	combo->setAnchors(a2);
 	int mttHints[] = { 25, 25, 50}; // 25 % for label and drop list, 50 % for info
@@ -207,7 +209,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_mapInfoLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	// tileset listBox
-	combo = new CellStrip(strip->getCell(1), Orientation::VERTICAL, 3);
+	combo = new CellStrip(strip->getCell(1), Orientation::VERTICAL, Origin::CENTRE, 3);
 	combo->setPercentageHints(mttHints);
 	combo->setAnchors(a2);
 
@@ -233,7 +235,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetList->setSelected(0);
 
 	//tech Tree listBox
-	combo = new CellStrip(strip->getCell(2), Orientation::VERTICAL, 3);
+	combo = new CellStrip(strip->getCell(2), Orientation::VERTICAL, Origin::CENTRE, 3);
 	combo->setPercentageHints(mttHints);
 	combo->setAnchors(a2);
 
@@ -258,7 +260,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeList->setSelected(0);
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
-	strip = new CellStrip(topStrip->getCell(3), Orientation::HORIZONTAL, 2);
+	strip = new CellStrip(topStrip->getCell(3), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	strip->setAnchors(a);
 
 	int w = 8 * defWidgetHeight, h = defWidgetHeight;

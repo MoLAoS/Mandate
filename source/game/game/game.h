@@ -117,7 +117,6 @@ public:
 	// init
 	virtual void load();
 	virtual void init();
-	virtual int getUpdateFps() const {return 40;}
 	virtual void update();
 	virtual void updateCamera();
 	virtual void renderBg();

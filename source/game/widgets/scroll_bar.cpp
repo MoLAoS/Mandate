@@ -294,13 +294,15 @@ void ScrollBarShaft::setOffsetPercent(int v) {
 // =====================================================
 
 ScrollBar::ScrollBar(Container *parent, bool vert, int lineSize)
-		: CellStrip(parent, vert ? Orientation::VERTICAL : Orientation::HORIZONTAL, 3)
+		: CellStrip(parent, vert ? Orientation::VERTICAL : Orientation::HORIZONTAL,
+                            vert ? Origin::FROM_TOP : Origin::FROM_LEFT, 3)
 		, m_vertical(vert), m_lineSize(lineSize) {
 	init();
 }
 
 ScrollBar::ScrollBar(Container *parent, Vec2i pos, Vec2i sz, bool vert, int lineSize)
-		: CellStrip(parent, pos, sz, vert ? Orientation::VERTICAL : Orientation::HORIZONTAL, 3)
+		: CellStrip(parent, pos, sz, vert ? Orientation::VERTICAL : Orientation::HORIZONTAL,
+                                     vert ? Origin::FROM_TOP : Origin::FROM_LEFT, 3)
 		, m_vertical(vert), m_lineSize(lineSize) {
 	init();
 	setSize(sz); // trigger layout logic

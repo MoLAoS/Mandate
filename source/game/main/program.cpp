@@ -29,6 +29,7 @@
 #include "menu_state_join_game.h"
 #include "sim_interface.h"
 #include "network_interface.h"
+#include "test_pane.h"
 
 #include "leak_dumper.h"
 
@@ -202,6 +203,9 @@ bool Program::init() {
 		GameSettings &gs = simulationInterface->getGameSettings();
 		gs = GameSettings(doc.getRootNode());
 		setState(new GameState(*this));
+
+	} else if (cmdArgs.isTest("gui")) {
+		setState(new TestPane(*this));
 
 	// normal startup
 	} else {
@@ -383,8 +387,7 @@ void Program::setState(ProgramState *programState) {
 	this->programState = programState;
 	programState->load();
 	programState->init();
-//	initMouse();
-	resetTimers(programState->getUpdateFps());
+	resetTimers();
 }
 
 void Program::exit() {
@@ -392,9 +395,9 @@ void Program::exit() {
 	terminating = true;
 }
 
-void Program::resetTimers(int updateFps) {
+void Program::resetTimers() {
 	tickTimer.reset();
-	updateTimer.setFps(updateFps);
+	updateTimer.setFps(WORLD_FPS);
 	updateTimer.reset();
 	updateCameraTimer.reset();
 }

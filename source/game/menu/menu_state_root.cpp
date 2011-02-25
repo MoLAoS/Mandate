@@ -44,7 +44,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
 	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	CellStrip *strip = new CellStrip(&program, Orientation::VERTICAL, 4);
+	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
 	strip->setPos(Vec2i(0,0));
 	strip->setSize(Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight()));
 	int hints[] = {
@@ -56,7 +56,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	int logoHeight = std::min(int(0.3f * g_metrics.getScreenH()), 256);
 	int logoWidth = logoHeight * 2;
 	PicturePanel *pp = new PicturePanel(strip->getCell(0), Vec2i(0), Vec2i(logoWidth, logoHeight));
-	pp->setPadding(0);
 	pp->setImage(g_coreData.getLogoTexture());
 	pp->setAutoLayout(false);
 
@@ -105,7 +104,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	// Buttons Panel
 	anchors.set(Edge::COUNT, 0, false); // anchor all (fill cell)
-	CellStrip *pnl = new CellStrip(strip->getCell(1), Orientation::VERTICAL, RootMenuItem::COUNT);
+	CellStrip *pnl = new CellStrip(strip->getCell(1), Orientation::VERTICAL, Origin::CENTRE, RootMenuItem::COUNT);
 	pnl->setAnchors(anchors);
 
 	// Buttons
@@ -127,7 +126,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 			n = 2;
 		}
 		anchors.set(Edge::COUNT, 0, false); // fill cell
-		logoPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, n);
+		logoPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, n);
 		logoPnl->setAnchors(anchors);
 	}
 	// anchor centre
@@ -158,7 +157,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	// adv eng label if total conversion
 	if (mainMenu->isTotalConversion()) {
-		CellStrip *pnl = new CellStrip(strip->getCell(3), Orientation::HORIZONTAL, 1);
+		CellStrip *pnl = new CellStrip(strip->getCell(3), Orientation::HORIZONTAL, Origin::CENTRE, 1);
 		anchors.set(Edge::COUNT, 0, false); // fill
 		pnl->setAnchors(anchors);
 		StaticText *label = new Widgets::StaticText(pnl->getCell(0));
@@ -173,18 +172,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		Vec2i size = label->getTextDimensions() + Vec2i(5,5);
 		label->setSize(size);
 	}
-
-	ScrollBar *scrollBar = new ScrollBar(&program, Vec2i(10,100), Vec2i(34, 250), true, 10);
-	ScrollBar *scrollBar2 = new ScrollBar(&program, Vec2i(50,100), Vec2i(250, 34), false, 10);
-
-	ListBox *listBox = new ListBox(&program, Vec2i(50,150), Vec2i(250, 150));
-	listBox->addItem("Apple");
-	listBox->addItem("Pear");
-	listBox->addItem("Peach");
-	listBox->addItem("Banana");
-	listBox->addItem("Apricot");
-	listBox->addItem("Plum");
-	listBox->addItem("Kiwi");
 
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);

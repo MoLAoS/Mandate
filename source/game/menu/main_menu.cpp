@@ -307,7 +307,7 @@ MenuStateTest::MenuStateTest(Program &program, MainMenu *mainMenu)
 	Vec2i size = Vec2i(std::min(g_config.getDisplayWidth() / 3, 300),
 	                   std::min(g_config.getDisplayHeight() / 2, 300));
 	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
-	ws = new CellStrip(&program, Orientation::VERTICAL, RootMenuItem::COUNT);
+	ws = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, RootMenuItem::COUNT);
 	ws->setBorderStyle(bs);
 	ws->setPos(pos);
 	ws->setSize(size);

@@ -223,7 +223,7 @@ void GameState::init() {
 	delete simInterface->getSavedGame();
 	g_logger.logProgramEvent("Launching game");
 	g_logger.getProgramLog().setLoading(false);
-	program.resetTimers(40);
+	program.resetTimers();
 	program.setFade(1.f);
 	m_debugStats.init();
 	Debug::g_debugStats = &m_debugStats;

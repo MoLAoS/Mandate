@@ -62,8 +62,6 @@ public:
 	virtual void load(){}
 	virtual void end(){}
 
-	virtual int getUpdateFps() const = 0 ;//{ return GameConstants::defaultUpdateInterval; }
-
 	virtual void mouseDownLeft(int x, int y){}
 	virtual void mouseDownRight(int x, int y){}
 	virtual void mouseDownCenter(int x, int y){}
@@ -170,7 +168,7 @@ public:
 	void loop();
 	void exit();
 	void setMaxUpdateBacklog(int maxBacklog)	{updateTimer.setMaxBacklog(maxBacklog);}
-	void resetTimers(int updateFps);
+	void resetTimers();
 	void setUpdateFps(int updateFps);
 	void setTechTitle(const string &title) {
 		if (title.empty()) {

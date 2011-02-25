@@ -36,7 +36,6 @@ private:
 public:
 	BattleEnd(Program &program, bool quickExit=false);
 	~BattleEnd();
-	virtual int getUpdateFps() const {return 10;}
 	virtual void update();
 	virtual void renderBg();
 	virtual void renderFg();

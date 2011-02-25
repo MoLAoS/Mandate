@@ -65,7 +65,7 @@ void StaticText::render() {
 
 Vec2i StaticText::getMinSize() const {
 	Vec2i txtDim = getTextDimensions();
-	Vec2i xtra = getBordersAll() + Vec2i(getPadding());
+	Vec2i xtra = getBordersAll();
 	return txtDim + xtra;
 }
 
@@ -110,7 +110,7 @@ StaticImage::StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *te
 Vec2i StaticImage::getMinSize() const {
 	const Pixmap2D *pixmap = getImage()->getPixmap();
 	Vec2i imgDim = Vec2i(pixmap->getW(), pixmap->getH());
-	Vec2i xtra = getBordersAll() + Vec2i(getPadding());
+	Vec2i xtra = getBordersAll();
 	return imgDim + xtra;
 }
 
@@ -230,7 +230,7 @@ Vec2i Button::getPrefSize() const {
 }
 
 Vec2i Button::getMinSize() const {
-	Vec2i res = TextWidget::getTextDimensions() + getBordersAll() + Vec2i(getPadding());
+	Vec2i res = TextWidget::getTextDimensions() + getBordersAll();
 	res.x = std::min(res.x, 16);
 	res.y = std::min(res.y, 16);
 	return res;
@@ -311,7 +311,6 @@ Vec2i CheckBox::getMinSize() const {
 		m_borderStyle.m_sizes[Border::LEFT] + m_borderStyle.m_sizes[Border::RIGHT],
 		m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM]
 	);
-	xtra += Vec2i(getPadding());
 	Vec2i res = txtDim + xtra + Vec2i(txtDim.y + 2, 0);
 	return res;
 }
@@ -326,7 +325,6 @@ Vec2i CheckBox::getPrefSize() const {
 		m_borderStyle.m_sizes[Border::LEFT] + m_borderStyle.m_sizes[Border::RIGHT],
 		m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM]
 	);
-	xtra += Vec2i(getPadding());
 	return dim + xtra;
 }
 
@@ -624,7 +622,7 @@ void Slider::render() {
 		}
 		float borderAlpha = 0.1f + anim * 0.5f;
 		float centreAlpha = 0.3f + anim;
-		//int offset = getBorderSize() + getPadding();
+		//int offset = getBorderSize();
 		int ndx = m_rootWindow->getConfig()->getColourIndex(Vec3f(1.f));
 		Widget::renderHighLight(ndx, centreAlpha, borderAlpha, m_thumbPos, m_thumbSize);
 	}
@@ -635,18 +633,30 @@ void Slider::render() {
 // class CellStrip
 // =====================================================
 
-CellStrip::CellStrip(Container *parent, Orientation ld, int cells)
-		: Container(parent)
-		, m_direction(ld)
+CellStrip::CellStrip(WidgetWindow *window, Orientation ortn, Origin orgn, int cells)
+		: Container(window)
+		, m_orientation(ortn)
+		, m_origin(orgn)
 		, m_dirty(false) {
 	for (int i=0; i < cells; ++i) {
 		m_cells.push_back(new WidgetCell(this));
 	}
 }
 
-CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, int cells) 
+CellStrip::CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells)
+		: Container(parent)
+		, m_orientation(ortn)
+		, m_origin(orgn)
+		, m_dirty(false) {
+	for (int i=0; i < cells; ++i) {
+		m_cells.push_back(new WidgetCell(this));
+	}
+}
+
+CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells) 
 		: Container(parent, pos, size)
-		, m_direction(ld)
+		, m_orientation(ortn)
+		, m_origin(orgn)
 		, m_dirty(false) {
 	for (int i=0; i < cells; ++i) {
 		m_cells.push_back(new WidgetCell(this));
@@ -655,6 +665,25 @@ CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ld, i
 
 void CellStrip::addChild(Widget *child) {
 	Container::addChild(child);
+}
+
+void CellStrip::clearCells() {
+	foreach (vector<WidgetCell*>, it, m_cells) {
+		(*it)->clear();
+	}
+}
+
+void CellStrip::deleteCells() {
+	foreach (vector<WidgetCell*>, it, m_cells) {
+		delete *it;
+	}
+	m_cells.clear();
+}
+
+void CellStrip::addCells(int n) {
+	for (int i=0; i < n; ++i) {
+		m_cells.push_back(new WidgetCell(this));
+	}
 }
 
 void CellStrip::setPos(const Vec2i &pos) {
@@ -672,7 +701,43 @@ void CellStrip::render() {
 	if (m_dirty) {
 		layoutCells();
 	}
-	Container::render();
+	//Container::render();
+	Widget::render();
+
+	// clip children
+	Vec2i pos = getScreenPos();
+	pos.x += getBorderLeft();
+	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
+		  + m_borderStyle.m_sizes[Border::BOTTOM];
+	Vec2i size = getSize() - m_borderStyle.getBorderDims();
+	glPushAttrib(GL_SCISSOR_BIT);
+	assertGl();
+	/*if (glIsEnabled(GL_SCISSOR_TEST)) { ///@todo ? take intersection ?
+		Vec4i box;
+		glGetIntegerv(GL_SCISSOR_BOX, box.ptr());
+	} else */{
+		glEnable(GL_SCISSOR_TEST);
+	}
+	glScissor(pos.x, pos.y, size.w, size.h);
+
+	if (m_orientation == Orientation::VERTICAL) {
+		foreach (WidgetList, it, m_children) {
+			Widget* widget = *it;
+			if (widget->isVisible() && widget->getPos().y < getSize().h
+			&& widget->getPos().y + widget->getSize().h >= 0 ) {
+				widget->render();
+			}
+		}
+	} else {
+		foreach (WidgetList, it, m_children) {
+			Widget* widget = *it;
+			if (widget->isVisible() && widget->getPos().x < getSize().w
+			&& widget->getPos().x + widget->getSize().w >= 0 ) {
+				widget->render();
+			}
+		}
+	}
+	glPopAttrib();
 }
 
 typedef vector<SizeHint>    HintList;
@@ -748,10 +813,10 @@ void CellStrip::layoutCells() {
 	}
 	// determine space available
 	int space;
-	if (m_direction == Orientation::VERTICAL) {
-		space = getHeight() - getBordersVert() - 2 * getPadding();
-	} else if (m_direction == Orientation::HORIZONTAL) {
-		space = getWidth() - getBordersHoriz() - 2 * getPadding();
+	if (m_orientation == Orientation::VERTICAL) {
+		space = getHeight() - getBordersVert();
+	} else if (m_orientation == Orientation::HORIZONTAL) {
+		space = getWidth() - getBordersHoriz();
 	} else {
 		throw runtime_error("WidgetStrip has invalid direction.");
 	}
@@ -761,21 +826,29 @@ void CellStrip::layoutCells() {
 
 	// split space according to hints
 	CellDimList  resultList;
-	int offset = calculateCellDims(hintList, space, resultList) / 2;
+	int offset;
+	int spare = calculateCellDims(hintList, space, resultList);
+	if (m_origin == Origin::FROM_TOP || m_origin == Origin::FROM_LEFT) {
+		offset = 0;
+	} else if (m_origin == Origin::CENTRE) {
+		offset = spare / 2;
+	} else {
+		offset = space - spare;
+	}
 
 	// determine cell width and x-pos OR height and y-pos
 	int ppos, psize;
-	if (m_direction == Orientation::VERTICAL) {
-		ppos = getPadding() + getBorderLeft();
-		psize = getWidth() - getPadding() * 2 - getBordersHoriz();
+	if (m_orientation == Orientation::VERTICAL) {
+		ppos = getBorderLeft();
+		psize = getWidth() - getBordersHoriz();
 	} else {
-		ppos = getPadding() + getBorderTop();
-		psize = getHeight() - getPadding() * 2 - getBordersVert();
+		ppos = getBorderTop();
+		psize = getHeight() - getBordersVert();
 	}
 	// combine results and set cell pos and size
 	Vec2i pos, size;
 	for (int i=0; i < m_cells.size(); ++i) {
-		if (m_direction == Orientation::VERTICAL) {
+		if (m_orientation == Orientation::VERTICAL) {
 			pos = Vec2i(ppos, offset + resultList[i].first);
 			size = Vec2i(psize, resultList[i].second);
 		} else {
@@ -813,7 +886,7 @@ Panel::Panel(WidgetWindow* window)
 }
 
 void Panel::setPaddingParams(int panelPad, int widgetPad) {
-	setPadding(panelPad);
+	//setPadding(panelPad);
 	widgetPadding = widgetPad;
 }
 
@@ -845,7 +918,7 @@ void Panel::layoutVertical() {
 	vector<int> widgetYPos;
 	int wh = 0;
 	Vec2i size = getSize();
-	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
+	Vec2i room = size - m_borderStyle.getBorderDims();
 	foreach (WidgetList, it, m_children) {
 		wh +=  + widgetPadding;
 		widgetYPos.push_back(wh);
@@ -853,8 +926,8 @@ void Panel::layoutVertical() {
 	}
 	wh -= widgetPadding;
 	
-	Vec2i topLeft(m_borderStyle.m_sizes[Border::LEFT] + getPadding(), 
-		getPos().y + m_borderStyle.m_sizes[Border::TOP] + getPadding());
+	Vec2i topLeft(m_borderStyle.m_sizes[Border::LEFT], 
+		getPos().y + m_borderStyle.m_sizes[Border::TOP]);
 	
 	int offset;
 	switch (layoutOrigin) {
@@ -875,7 +948,7 @@ void Panel::layoutHorizontal() {
 	vector<int> widgetXPos;
 	int ww = 0;
 	Vec2i size = getSize();
-	Vec2i room = size - m_borderStyle.getBorderDims() - Vec2i(getPadding()) * 2;
+	Vec2i room = size - m_borderStyle.getBorderDims();
 	foreach (WidgetList, it, m_children) {
 		widgetXPos.push_back(ww);
 		ww += (*it)->getWidth();
@@ -883,7 +956,7 @@ void Panel::layoutHorizontal() {
 	}
 	ww -= widgetPadding;
 	
-	Vec2i topLeft(getBorderLeft() + getPadding(), size.y - getBorderTop() - getPadding());
+	Vec2i topLeft(getBorderLeft(), size.y - getBorderTop());
 	
 	int offset;
 	switch (layoutOrigin) {
@@ -915,7 +988,7 @@ void Panel::addChild(Widget* child) {
 		return;
 	}
 	Vec2i sz = child->getSize();
-	int space_x = getWidth() - m_borderStyle.getHorizBorderDim() - getPadding() * 2;
+	int space_x = getWidth() - m_borderStyle.getHorizBorderDim() * 2;
 	if (sz.x > space_x) {
 		child->setSize(space_x, sz.y);
 	}
@@ -926,10 +999,10 @@ void Panel::render() {
 	assertGl();
 	Widget::renderBackground();
 	Vec2i pos = getScreenPos();
-	pos.x += getBorderLeft() + getPadding();
+	pos.x += getBorderLeft();
 	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
-		  + m_borderStyle.m_sizes[Border::BOTTOM] + getPadding();
-	Vec2i size = getSize() - m_borderStyle.getBorderDims() - Vec2i(getPadding() * 2);
+		  + m_borderStyle.m_sizes[Border::BOTTOM];
+	Vec2i size = getSize() - m_borderStyle.getBorderDims();
 	glPushAttrib(GL_SCISSOR_BIT);
 		assertGl();
 		/*if (glIsEnabled(GL_SCISSOR_TEST)) { ///@todo ? take intersection ?
@@ -951,7 +1024,7 @@ void Panel::render() {
 Vec2i PicturePanel::getMinSize() const {
 	const Pixmap2D *pixmap = getImage()->getPixmap();
 	Vec2i imgDim = Vec2i(pixmap->getW(), pixmap->getH());
-	Vec2i xtra = m_borderStyle.getBorderDims() + Vec2i(getPadding() * 2);
+	Vec2i xtra = m_borderStyle.getBorderDims();
 	return imgDim + xtra;
 }
 

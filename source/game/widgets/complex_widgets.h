@@ -21,18 +21,17 @@ class ListBoxItem;
 // class ListBase
 // =====================================================
 
-class ListBase : public Panel {
+class ListBase : public CellStrip {
 protected:
-	ListBoxItem* selectedItem;
-	//Font *itemFont;
-	int selectedIndex;
-	vector<string> listItems;
+	ListBoxItem*    m_selectedItem;
+	int             m_selectedIndex;
+	vector<string>  m_listItems;
 
-	ListBase(WidgetWindow* window);
+	ListBase(WidgetWindow* window, Orientation ld, Origin orgn, int cells);
 
 public:
-	ListBase(Container* parent);
-	ListBase(Container* parent, Vec2i pos, Vec2i size);
+	ListBase(Container* parent, Orientation ld, Origin orgn, int cells);
+	ListBase(Container* parent, Vec2i pos, Vec2i size, Orientation ld, Origin orgn, int cells);
 
 	virtual void addItems(const vector<string> &items) = 0;
 	virtual void addItem(const string &item) = 0;
@@ -40,10 +39,10 @@ public:
 
 	virtual void setSelected(int index) = 0;
 
-	int getSelectedIndex() { return selectedIndex; }
-	ListBoxItem* getSelectedItem() { return selectedItem; }
+	int getSelectedIndex() { return m_selectedIndex; }
+	ListBoxItem* getSelectedItem() { return m_selectedItem; }
 
-	unsigned getItemCount() const { return listItems.size(); }
+	unsigned getItemCount() const { return m_listItems.size(); }
 
 	sigslot::signal<ListBase*> SelectionChanged;
 	sigslot::signal<ListBase*> SameSelected;
@@ -54,37 +53,34 @@ public:
 // =====================================================
 
 class ListBox : public ListBase, public MouseWidget, public sigslot::has_slots {
-public:
-	//WRAPPED_ENUM( ScrollSetting, NEVER, AUTO, ALWAYS );
 private:
-	vector<int> yPositions; // 'original' (non-scrolled) y coords of children (sans scrollBar)
+	vector<int> m_yPositions; // 'original' (non-scrolled) y coords of children (sans scrollBar)
 
 protected:
-	vector<ListBoxItem*> listBoxItems;
-	ScrollBar* scrollBar;
+	vector<ListBoxItem*> m_listBoxItems;
+	CellStrip           *m_listStrip;
+	ScrollBar           *m_scrollBar;
 
-	int scrollWidth;
+private:
+	void init();
 
 public:
 	ListBox(Container* parent);
 	ListBox(Container* parent, Vec2i pos, Vec2i size);
-	ListBox(WidgetWindow* window);
+	//ListBox(WidgetWindow* window);
 
 	virtual void addItems(const vector<string> &items);
 	virtual void addItem(const string &item);
 	void addColours(const vector<Vec3f> &colours);
-//	virtual void clearItems();
 
 	virtual void setSelected(int index);
-	//virtual void setSelected(ListBoxItem *item);
 	void onSelected(ListBoxItem* item);
 	
 	virtual void setSize(const Vec2i &sz);
 	void setScrollBarWidth(int width);
 
 	virtual void setStyle() { setWidgetStyle(WidgetType::LIST_BOX); }
-	virtual void layoutChildren();
-//	void setScrollSetting(ScrollSetting setting);
+	virtual void layoutCells();
 
 	bool mouseWheel(Vec2i pos, int z);
 
@@ -114,9 +110,9 @@ private:
 protected:
 
 public:
-	ListBoxItem(ListBase* parent);
-	ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz);
-	ListBoxItem(ListBase* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
+	ListBoxItem(Container* parent);
+	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz);
+	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
 
 	void setSelected(bool s) { selected = s; }
 	void setBackgroundColour(const Vec3f &colour);

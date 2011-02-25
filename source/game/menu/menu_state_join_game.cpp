@@ -126,7 +126,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	Vec2i pos, size(500, 300);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 
-	m_connectPanel = new CellStrip(&program, Orientation::VERTICAL, 4);
+	m_connectPanel = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
 	m_connectPanel->getCell(0)->setSizeHint(SizeHint(-1, defCellHeight)); // def px for recent hosts lbl & list
 	m_connectPanel->getCell(1)->setSizeHint(SizeHint(-1, defCellHeight)); // def px for server lbl & txtBox
 	m_connectPanel->getCell(2)->setSizeHint(SizeHint(-1, defCellHeight)); // def px for connected label
@@ -138,7 +138,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_connectPanel->setPos(pad);
 	m_connectPanel->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	CellStrip *pnl = new CellStrip(m_connectPanel->getCell(0), Orientation::HORIZONTAL, 2);
+	CellStrip *pnl = new CellStrip(m_connectPanel->getCell(0), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	// fill vertical, set 25 % in from left / right edges
 	a = Anchors(Anchor(AnchorType::SPRINGY, 25), Anchor(AnchorType::RIGID, 0));
 	pnl->setAnchors(a);
@@ -152,7 +152,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_historyList = new DropList(pnl->getCell(1), Vec2i(0), Vec2i(300, 34));
 	m_historyList->setAnchors(a2);
 
-	pnl = new CellStrip(m_connectPanel->getCell(1), Orientation::HORIZONTAL, 2);
+	pnl = new CellStrip(m_connectPanel->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	pnl->setAnchors(a);
 
 	StaticText* serverLabel = new StaticText(pnl->getCell(0), Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
@@ -170,7 +170,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 
 	a.set(Edge::LEFT, 0, false);
 	a.set(Edge::RIGHT, 0, false);
-	pnl = new CellStrip(m_connectPanel->getCell(3), Orientation::HORIZONTAL, 3);
+	pnl = new CellStrip(m_connectPanel->getCell(3), Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	pnl->setAnchors(a);
 
 	// buttons
