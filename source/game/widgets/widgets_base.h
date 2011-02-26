@@ -148,7 +148,7 @@ protected: // flag setters
 	virtual void setStyle() {}
 	void setWidgetStyle(WidgetType type);
 
-protected: // get border sizes
+public: // get border sizes
 	int	getBorderLeft() const	{ return m_borderStyle.m_sizes[Border::LEFT]; }
 	int	getBorderRight() const	{ return m_borderStyle.m_sizes[Border::RIGHT]; }
 	int	getBorderTop() const	{ return m_borderStyle.m_sizes[Border::TOP]; }

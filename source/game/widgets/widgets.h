@@ -298,13 +298,17 @@ protected:
 	Anchors             m_defaultAnchors;
 	bool                m_dirty;
 
-public:
-	CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells);
-	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells);
-
 protected:
 	CellStrip(WidgetWindow *window, Orientation ortn, Origin orgn, int cells);
 
+public:
+	CellStrip(Container *parent, Orientation ortn);
+	CellStrip(Container *parent, Orientation ortn, int cells);
+	CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells);
+	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn);
+	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells);
+
+protected:
 	void setDirty() { m_dirty = true; }	
 	virtual void addChild(Widget* child) override;
 

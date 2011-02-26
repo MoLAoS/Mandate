@@ -114,8 +114,6 @@ LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz
 	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 5);
 	m_panel->layoutChildren();
-
-	m_outputBox->init();
 }
 
 LuaConsole::~LuaConsole() {

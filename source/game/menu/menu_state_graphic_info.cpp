@@ -61,13 +61,11 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	h = metrics.getScreenH() - 300;
 	ScrollText* l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
 	l_stext->setTextParams(glExt, Vec4f(1.f), smallFont, false);
-	l_stext->init();
 
 	// platform extensions
 	x += gap + w;
 	l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
 	l_stext->setTextParams(glExt2, Vec4f(1.f), smallFont, false);
-	l_stext->init();
 
 	// return button
 	x = (metrics.getScreenW() - 150) / 2;

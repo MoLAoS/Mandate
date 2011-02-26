@@ -98,7 +98,6 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 
 	// savegame info box
 	m_infoLabel = new ScrollText(strip->getCell(1), Vec2i(0), Vec2i(600, 200));
-	m_infoLabel->init();
 	m_infoLabel->setAnchors(centreAnchors);
 
 	CellStrip *btnPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, 3);
@@ -336,8 +335,6 @@ void MenuStateLoadGame::initGameInfo() {
 				<< " Team: " << gs->getTeam(i);
 		}
 		m_infoLabel->setText(ss.str());
-		m_infoLabel->init();
-
 	} catch (exception &e) {
 		m_infoLabel->setText(string("Bad game file.\n") + e.what());
 		if(gs) {

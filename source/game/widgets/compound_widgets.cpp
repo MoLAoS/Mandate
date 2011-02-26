@@ -84,58 +84,65 @@ Vec2i OptionContainer::getMinSize() const {
 // =====================================================
 
 ScrollText::ScrollText(Container* parent)
-		: Panel(parent)
-		, MouseWidget(this)
+		: CellStrip(parent, Orientation::HORIZONTAL, 1)
 		, TextWidget(this) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
-	setAutoLayout(false);
-	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex, FontSize::SMALL), false);
-	m_scrollBar = new ScrollBar(this, true, 10);
+	init();
 }
 
 ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
-		: Panel(parent, pos, size)
-		, MouseWidget(this)
+		: CellStrip(parent, pos, size, Orientation::HORIZONTAL, Origin::CENTRE, 1)
 		, TextWidget(this) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
-	setAutoLayout(false);
-	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex, FontSize::SMALL), false);
-	Vec2i sbp(size.x - 26, 2);
-	Vec2i sbs(24, size.y - 4);
-	m_scrollBar = new ScrollBar(this, sbp, sbs, true, 10);
-}
-
-void ScrollText::recalc() {
-	int th = getTextDimensions().y;
-	int ch = getHeight() - getBordersVert();
-	m_textBase = 2;//-(th - ch) + 2;
-	m_scrollBar->setRanges(th, ch);
-	setTextPos(Vec2i(5, m_textBase));
+	init();
+	recalc();
 }
 
 void ScrollText::init() {
-	recalc();
-	Vec2i sbp(getWidth() - 24 - getBorderRight(), getBorderBottom());
-	Vec2i sbs(24, getHeight() - getBordersVert());
-	m_scrollBar->setPos(sbp);
-	m_scrollBar->setSize(sbs);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
+
+	int itemSize = m_rootWindow->getConfig()->getDefaultElementHeight();
+
+	// Anchors for scroll-bar, stick to the top, right & bottom sides.
+	// Not anchored to left border, so we must set size (width will be respected, height wont)
+	Anchors anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::RIGID, 0), // left, top
+		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));           // right, bottom
+	
+	m_scrollBar = new ScrollBar(getCell(0), true, 10);
+	m_scrollBar->setAnchors(anchors);
+	m_scrollBar->setSize(Vec2i(itemSize));
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
+
+	// Anchors for text widget, stick to left, top & bottom, and 'itemSize' in from right
+	anchors = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::RIGID, itemSize), Anchor(AnchorType::RIGID, 0));
+
+	m_staticText = new StaticText(getCell(0));
+	m_staticText->setAnchors(anchors);
+}
+
+void ScrollText::recalc() {
+	int th = m_staticText->getTextDimensions().y;
+	int ch = m_staticText->getHeight() - m_staticText->getBordersVert();
+	m_scrollBar->setRanges(th, ch);
 }
 
 void ScrollText::onScroll(int offset) {
-	setTextPos(Vec2i(5, m_textBase - offset));
+	int ox = m_staticText->getPos().x;
+	m_staticText->setPos(Vec2i(ox, - offset));
+}
+
+void ScrollText::setSize(const Vec2i &sz) {
+	CellStrip::setSize(sz);
+	layoutCells();
+	recalc();
 }
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
-	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
-	int width = getSize().x - 28;
-
+	const FontMetrics *fm = m_staticText->getTextFont()->getMetrics();
+	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
 	string text = txt;
 	fm->wrapText(text, width);
 	
-	TextWidget::setText(text);
+	m_staticText->setText(text);
 	recalc();
 	
 	if (scrollToBottom) {
@@ -144,19 +151,7 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 }
 
 void ScrollText::render() {
-	Widget::renderBackground();
-	Vec2i pos = getScreenPos();
-	pos.x += getBorderLeft();
-	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
-		  + m_borderStyle.m_sizes[Border::BOTTOM];
-	Vec2i size = getSize() - m_borderStyle.getBorderDims();
-	glPushAttrib(GL_SCISSOR_BIT);
-		assertGl();
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(pos.x, pos.y, size.w, size.h);
-		Container::render();
-		TextWidget::renderText();
-	glPopAttrib();
+	CellStrip::render();
 	assertGl();
 }
 
@@ -391,7 +386,7 @@ MessageDialog::~MessageDialog(){
 void MessageDialog::setMessageText(const string &text) {
 	setContent(m_scrollText);
 	m_scrollText->setText(text);
-	m_scrollText->init();
+	//m_scrollText->init();
 }
 
 // =====================================================

@@ -36,21 +36,24 @@ public:
 	virtual string desc() { return string("[OptionBox: ") + descPosDim() + "]"; }
 };
 
-class ScrollText : public Panel, public MouseWidget, public TextWidget, public sigslot::has_slots {
+class ScrollText : public CellStrip, public TextWidget, public sigslot::has_slots {
 private:
-	ScrollBar* m_scrollBar;
-	int m_textBase;
+	ScrollBar  *m_scrollBar;
+	StaticText *m_staticText;
+
+private:
+	void init();
 
 public:
 	ScrollText(Container* parent);
 	ScrollText(Container* parent, Vec2i pos, Vec2i size);
 
 	void recalc();
-	void init();
 	void onScroll(int offset);
 	void setText(const string &txt, bool scrollToBottom = false);
 
-	void render();
+	virtual void setSize(const Vec2i &sz) override;
+	virtual void render() override;
 };
 
 class TitleBar : public Container, public TextWidget {

@@ -177,12 +177,14 @@ bool ScrollBarThumb::mouseUp(MouseButton btn, Vec2i pos) {
 // =====================================================
 
 ScrollBarShaft::ScrollBarShaft(Container *parent, bool vert)
-		: Container(parent) {
+		: Container(parent)
+		, MouseWidget(this) {
 	init(vert);
 }
 
 ScrollBarShaft::ScrollBarShaft(Container *parent, Vec2i pos, Vec2i sz, bool vert)
-		: Container(parent, pos, sz) {
+		: Container(parent, pos, sz)
+		, MouseWidget(this) {
 	init(vert);
 	recalc();
 }
@@ -205,7 +207,7 @@ void ScrollBarShaft::recalc() {
 		return;
 	}
 	Vec2i size = getSize() - getBordersAll();
-	m_availRatio = m_availRange / float(m_totalRange);
+	m_availRatio = clamp(m_availRange / float(m_totalRange), 0.05f, 1.f);
 	if (isVertical()) {
 		m_thumbSize = int(m_availRatio * size.h);
 		m_maxOffset = size.h - m_thumbSize;
@@ -217,6 +219,7 @@ void ScrollBarShaft::recalc() {
 		m_thumb->setPos(Vec2i(getBorderLeft(), getBorderTop()));
 		m_thumb->setSize(Vec2i(m_thumbSize, size.h));
 	}
+	m_pageSize = m_thumbSize;
 }
 
 void ScrollBarShaft::setSize(const Vec2i &sz) {
@@ -224,9 +227,30 @@ void ScrollBarShaft::setSize(const Vec2i &sz) {
 	recalc();
 }
 
+bool ScrollBarShaft::mouseDown(MouseButton btn, Vec2i pos) {
+	if (btn == MouseButton::LEFT) {
+		pos -= getScreenPos();
+		if (isVertical()) {
+			if (pos.y < m_thumb->getPos().y) {
+				onThumbMoved(m_pageSize);
+			} else if (pos.y > m_thumb->getPos().y + m_thumb->getSize().h) {
+				onThumbMoved(-m_pageSize);
+			}
+		} else {
+			if (pos.x < m_thumb->getPos().x) {
+				onThumbMoved(m_pageSize);
+			} else if (pos.x > m_thumb->getPos().x + m_thumb->getSize().w) {
+				onThumbMoved(-m_pageSize);
+			}
+		}
+	}
+	return true;
+}
+
 void ScrollBarShaft::setRanges(int total, int avail) {
-	setTotalRange(total);
-	setActualRange(avail);
+	m_totalRange = total;
+	m_availRange = avail;
+	recalc();
 }
 
 void ScrollBarShaft::onThumbMoved(int diff) {
@@ -245,7 +269,7 @@ void ScrollBarShaft::onThumbMoved(int diff) {
 		domSize = size.w;
 		thumbOffset = m_thumb->getPos().x - diff;
 		borderOffset = getBorderLeft();
-		thumbOffset = clamp(thumbOffset,0, m_maxOffset);
+		thumbOffset = clamp(thumbOffset, 0, m_maxOffset);
 		thumbPos = Vec2i(thumbOffset + borderOffset, getBorderTop());
 		thumbSize = Vec2i(m_thumbSize, size.h);
 	}

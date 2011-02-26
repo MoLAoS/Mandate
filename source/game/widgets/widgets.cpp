@@ -643,6 +643,23 @@ CellStrip::CellStrip(WidgetWindow *window, Orientation ortn, Origin orgn, int ce
 	}
 }
 
+CellStrip::CellStrip(Container *parent, Orientation ortn)
+		: Container(parent)
+		, m_orientation(ortn)
+		, m_origin(Origin::CENTRE)
+		, m_dirty(false) {
+}
+
+CellStrip::CellStrip(Container *parent, Orientation ortn, int cells)
+		: Container(parent)
+		, m_orientation(ortn)
+		, m_origin(Origin::CENTRE)
+		, m_dirty(false) {
+	for (int i=0; i < cells; ++i) {
+		m_cells.push_back(new WidgetCell(this));
+	}
+}
+
 CellStrip::CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells)
 		: Container(parent)
 		, m_orientation(ortn)
@@ -651,6 +668,13 @@ CellStrip::CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells
 	for (int i=0; i < cells; ++i) {
 		m_cells.push_back(new WidgetCell(this));
 	}
+}
+
+CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn) 
+		: Container(parent, pos, size)
+		, m_orientation(ortn)
+		, m_origin(Origin::CENTRE)
+		, m_dirty(false) {
 }
 
 CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells) 
@@ -693,6 +717,7 @@ void CellStrip::setPos(const Vec2i &pos) {
 
 void CellStrip::setSize(const Vec2i &sz) {
 	Container::setSize(sz);
+//	layoutCells();
 	setDirty();
 }
 
@@ -728,7 +753,8 @@ void CellStrip::render() {
 				widget->render();
 			}
 		}
-	} else {
+	} else { // Orientation::HORIZONTAL
+		assert(m_orientation == Orientation::HORIZONTAL);
 		foreach (WidgetList, it, m_children) {
 			Widget* widget = *it;
 			if (widget->isVisible() && widget->getPos().x < getSize().w
@@ -849,10 +875,10 @@ void CellStrip::layoutCells() {
 	Vec2i pos, size;
 	for (int i=0; i < m_cells.size(); ++i) {
 		if (m_orientation == Orientation::VERTICAL) {
-			pos = Vec2i(ppos, offset + resultList[i].first);
+			pos = Vec2i(ppos, getBorderTop() + offset + resultList[i].first);
 			size = Vec2i(psize, resultList[i].second);
 		} else {
-			pos = Vec2i(offset + resultList[i].first, ppos);
+			pos = Vec2i(getBorderLeft() + offset + resultList[i].first, ppos);
 			size = Vec2i(resultList[i].second, psize);
 		}
 		m_cells[i]->setPos(pos);
