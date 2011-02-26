@@ -177,6 +177,11 @@ void Widget::setFocus(bool v) {
 	setStyle();
 }
 
+void Widget::setEnabled(bool v) {
+	m_enabled = v;
+	setStyle();
+}
+
 Widget* Widget::getWidgetAt(const Vec2i &pos) {
 	assert(isInside(pos));
 	return this;

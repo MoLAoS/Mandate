@@ -117,6 +117,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		m_buttons[i]->setAnchors(anchors);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
+	m_buttons[RootMenuItem::TEST]->setEnabled(false);
 
 	int gplHeight = int(0.1f * g_metrics.getScreenH());
 	CellStrip *logoPnl = 0;

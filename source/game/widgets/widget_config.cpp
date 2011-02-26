@@ -275,15 +275,23 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 		string errorPreamble("\t\tWhile loading border style for widget type '" 
 			+ string(WidgetTypeNames[widgetType]) + "'\n\t\t\t");
 		string type;
+		BorderType bt = BorderType::INVALID;
 		try {
 			type = luaScript.getStringField("Type");
 		} catch (LuaError &e) {
-			string msg = errorPreamble + " error reading 'Type' : " + e.what();
-			WIDGET_LOG(msg);
-			g_logger.logError(msg);
-			return;
+			if (!src) {
+				string msg = errorPreamble + " error reading 'Type' : " + e.what();
+				WIDGET_LOG(msg);
+				g_logger.logError(msg);
+				return;
+			} else {
+				bt = src->m_type;
+				WIDGET_LOG("\t\tType not specified, copying from default");
+			}
 		}
-		BorderType bt = BorderTypeNames.match(type.c_str());
+		if (bt == BorderType::INVALID) {
+			bt = BorderTypeNames.match(type.c_str());
+		}
 		if (bt == BorderType::INVALID) {
 			string msg = errorPreamble + " border type is invalid '" + type + "'";
 			WIDGET_LOG(msg);
@@ -301,9 +309,16 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 						<< "-" << sizes.z << "-" << sizes.w);
 					style.setSizes(sizes);
 				} catch (LuaError &e) {
-					string msg = errorPreamble + " loading 'Sizes' : " + e.what();
-					WIDGET_LOG(msg);
-					g_logger.logError(msg);
+					if (!src) {
+						string msg = errorPreamble + " loading 'Sizes' : " + e.what();
+						WIDGET_LOG(msg);
+						g_logger.logError(msg);
+					} else {
+						for (int i=0; i < Border::COUNT; ++i) {
+							style.m_sizes[i] = src->m_sizes[i];
+						}
+						WIDGET_LOG("\t\tSizes not specified, copying from default");
+					}
 				}
 				int numColours = 0;
 				if (bt == BorderType::SOLID) {
@@ -337,9 +352,16 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 						}
 						WIDGET_LOG("\t\tColours: " << logBits);
 					} catch (LuaError &e) {
-						string msg = errorPreamble + " loading 'Colours' : " + e.what();
-						WIDGET_LOG(msg);
-						g_logger.logError(msg);
+						if (!src) {
+							string msg = errorPreamble + " loading 'Colours' : " + e.what();
+							WIDGET_LOG(msg);
+							g_logger.logError(msg);
+						} else {
+							for (int i=0; i < 4; ++i) {
+								style.m_colourIndices[i] = src->m_colourIndices[i];
+							}
+							WIDGET_LOG("No Colours supplied, using indices from default");
+						}
 					}
 				}
 			} else { // bt == BorderType::TEXTURE

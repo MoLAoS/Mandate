@@ -210,7 +210,7 @@ public:
 	bool isFocused() const { return m_enabled && m_focus; }
 
 	// set
-	virtual void setEnabled(bool v) { m_enabled = v; }
+	virtual void setEnabled(bool v);
 	virtual void setPos(const Vec2i &p);
 	virtual void setSize(const Vec2i &sz);
 
