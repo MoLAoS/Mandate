@@ -144,6 +144,7 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	m_hover = false;
 	m_focus = false;
 	m_visible = true;
+	m_selected = false;
 	m_enabled = true;
 
 	m_pos = pos;
@@ -158,11 +159,13 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 void Widget::setWidgetStyle(WidgetType type) {
 	if (!m_enabled) { // disabled ?
 		setStyle(g_widgetConfig.getWidgetStyle(type, WidgetState::DISABLED));
-	} else if (m_focus) { // else priority to focus flag
+	} else if (m_selected) { // else priority to selected flag
+		setStyle(g_widgetConfig.getWidgetStyle(type, WidgetState::SELECTED));
+	} else if (m_focus) { // followed by focus flag
 		setStyle(g_widgetConfig.getWidgetStyle(type, WidgetState::FOCUS));
-	} else if (m_hover) {
+	} else if (m_hover) { // then hover
 		setStyle(g_widgetConfig.getWidgetStyle(type, WidgetState::HOVER));
-	} else {
+	} else { // or normal
 		setStyle(g_widgetConfig.getWidgetStyle(type, WidgetState::NORMAL));
 	}
 }
@@ -179,6 +182,11 @@ void Widget::setFocus(bool v) {
 
 void Widget::setEnabled(bool v) {
 	m_enabled = v;
+	setStyle();
+}
+
+void Widget::setSelected(bool v) {
+	m_selected = v;
 	setStyle();
 }
 

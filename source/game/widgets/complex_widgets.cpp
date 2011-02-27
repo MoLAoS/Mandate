@@ -109,7 +109,7 @@ void ListBox::addItems(const vector<string> &items) {
 	m_listStrip->addCells(items.size());
 	Anchors anchors;
 	anchors.set(Edge::COUNT, 0, false);
-	int itemHeight = m_rootWindow->getConfig()->getDefaultElementHeight() + getBordersVert();
+	int itemHeight = m_rootWindow->getConfig()->getDefaultItemHeight() + getBordersVert();
 
 	foreach_const (vector<string>, it, items) {
 		WidgetCell *cell = m_listStrip->getCell(ndx++);
@@ -118,7 +118,7 @@ void ListBox::addItems(const vector<string> &items) {
 		nItem->setAnchors(anchors);
 		nItem->setText(*it);
 		m_listBoxItems.push_back(nItem);
-		nItem->Selected.connect(this, &ListBox::onSelected);
+		nItem->Clicked.connect(this, &ListBox::onSelected);
 	}
 	layoutCells();
 }
@@ -128,13 +128,13 @@ void ListBox::addItem(const string &item) {
 	m_listStrip->addCells(1);	
 	Anchors anchors;
 	anchors.set(Edge::COUNT, 0, false);
-	int itemHeight = m_rootWindow->getConfig()->getDefaultElementHeight() + getBordersVert();
+	int itemHeight = m_rootWindow->getConfig()->getDefaultItemHeight() + getBordersVert();
 	ListBoxItem *nItem = new ListBoxItem(m_listStrip->getCell(ndx), Vec2i(0), Vec2i(0), Vec3f(0.25f));
 	m_listStrip->getCell(ndx)->setSizeHint(SizeHint(-1, itemHeight));
 	nItem->setAnchors(anchors);
 	nItem->setText(item);
 	m_listBoxItems.push_back(nItem);
-	nItem->Selected.connect(this, &ListBox::onSelected);
+	nItem->Clicked.connect(this, &ListBox::onSelected);
 	layoutCells();
 }
 
@@ -147,7 +147,7 @@ void ListBox::layoutCells() {
 	// set hints
 	int totalItemHeight = getPrefHeight();
 	int clientHeight = getSize().y - getBordersVert();
-	SizeHint hint(-1, m_rootWindow->getConfig()->getDefaultElementHeight());
+	SizeHint hint(-1, m_rootWindow->getConfig()->getDefaultItemHeight());
 	if (totalItemHeight > clientHeight) {
 		getCell(1)->setSizeHint(hint);
 		m_scrollBar->setVisible(true);
@@ -177,6 +177,12 @@ void ListBox::layoutCells() {
 	}
 }
 
+void ListBox::clearItems() {
+	m_listItems.clear();
+	deleteCells();
+	m_selectedIndex = -1;
+}
+
 void ListBox::onScroll(int offset) {
 	int ndx = 0;
 	const int x = 0;//m_borderStyle.m_sizes[Border::LEFT];
@@ -194,7 +200,7 @@ bool ListBox::mouseWheel(Vec2i pos, int z) {
 
 int ListBox::getPrefHeight(int childCount) {
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
-	int itemSize = cfg.getDefaultElementHeight();
+	int itemSize = cfg.getDefaultItemHeight();
 	if (childCount == -1) {
 		childCount = m_listBoxItems.size();
 	}
@@ -250,6 +256,15 @@ void ListBox::setSelected(int index) {
 	SelectionChanged(this);
 }
 
+void ListBox::setSelected(const string &item) {
+	for (int i=0; i < m_listItems.size(); ++i) {
+		if (m_listItems[i] == item) {
+			setSelected(i);
+			return;
+		}
+	}
+}
+
 // =====================================================
 //  class ListBoxItem
 // =====================================================
@@ -257,24 +272,21 @@ void ListBox::setSelected(int index) {
 ListBoxItem::ListBoxItem(Container* parent)
 		: StaticText(parent) 
 		, MouseWidget(this)
-		, selected(false)
-		, pressed(false) {
+		, m_pressed(false) {
 	setWidgetStyle(WidgetType::LIST_ITEM);
 }
 
 ListBoxItem::ListBoxItem(Container* parent, Vec2i pos, Vec2i sz)
 		: StaticText(parent, pos, sz)
 		, MouseWidget(this)
-		, selected(false)
-		, pressed(false) {
+		, m_pressed(false) {
 	setWidgetStyle(WidgetType::LIST_ITEM);
 }
 
 ListBoxItem::ListBoxItem(Container* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour)
 		: StaticText(parent, pos, sz)
 		, MouseWidget(this)
-		, selected(false)
-		, pressed(false) {
+		, m_pressed(false) {
 	setWidgetStyle(WidgetType::LIST_ITEM);
 }
 
@@ -293,10 +305,14 @@ void ListBoxItem::setBackgroundColour(const Vec3f &colour) {
 	m_backgroundStyle.m_colourIndices[0] = m_rootWindow->getConfig()->getColourIndex(colour);
 }
 
+void ListBoxItem::setSelected(bool s) {
+	Widget::setSelected(s);
+}
+
 void ListBoxItem::mouseIn() {
 	if (isEnabled()) {
 		setHover(true);
-		if (pressed) {
+		if (m_pressed) {
 			setFocus(true);
 		}
 	}
@@ -310,7 +326,7 @@ void ListBoxItem::mouseOut() {
 bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		setFocus(true);
-		pressed = true;
+		m_pressed = true;
 		return true;
 	}
 	return false;
@@ -318,10 +334,10 @@ bool ListBoxItem::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool ListBoxItem::mouseUp(MouseButton btn, Vec2i pos) {
 	if (isEnabled() && btn == MouseButton::LEFT) {
-		if (isHovered() && pressed) {
+		if (isHovered() && m_pressed) {
 			Clicked(this);
 		}
-		pressed = false;
+		m_pressed = false;
 		setFocus(false);
 		return true;
 	}
@@ -439,6 +455,7 @@ void DropList::setSelected(int index) {
 			return;
 		}
 		m_selectedItem->setText("");
+		m_selectedItem->setSelected(false);
 		m_selectedIndex = -1;
 	} else {
 		if (m_selectedIndex == index) {
@@ -446,6 +463,7 @@ void DropList::setSelected(int index) {
 		}
 		m_selectedItem->setText(m_listItems[index]);
 		m_selectedIndex = index;
+		m_selectedItem->setSelected(true);
 	}
 	SelectionChanged(this);
 }

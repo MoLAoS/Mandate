@@ -99,7 +99,7 @@ ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 void ScrollText::init() {
 	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
 
-	int itemSize = m_rootWindow->getConfig()->getDefaultElementHeight();
+	int itemSize = m_rootWindow->getConfig()->getDefaultItemHeight();
 
 	// Anchors for scroll-bar, stick to the top, right & bottom sides.
 	// Not anchored to left border, so we must set size (width will be respected, height wont)

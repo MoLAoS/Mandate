@@ -314,6 +314,7 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 	lastKeyDownWidget = 0;
 
 	toClean.push_back(floatingWidget);
+	floatingWidget->setVisible(false);
 	floatingWidget = 0;
 	while (mouseOverStack.top() != this) {
 		mouseOverStack.pop();

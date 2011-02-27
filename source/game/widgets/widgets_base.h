@@ -121,6 +121,7 @@ private:
 	// state flags
 	bool  m_hover;
 	bool  m_focus;
+	bool  m_selected;
 	bool  m_enabled;
 
 	// visibility
@@ -200,17 +201,23 @@ public:
 	Anchors  getAnchors() const  { return m_anchors;  }
 
 	bool isInside(const Vec2i &pos) const {
-		const Vec2i &p1 = m_screenPos;
-		const Vec2i  p2(m_screenPos + m_size);
-		return pos.x >= p1.x && pos.y >= p1.y && pos.x < p2.x && pos.y < p2.y;
+		if (m_visible) {
+			const Vec2i &p1 = m_screenPos;
+			const Vec2i  p2(m_screenPos + m_size);
+			return pos.x >= p1.x && pos.y >= p1.y && pos.x < p2.x && pos.y < p2.y;
+		}
+		return false;
 	}
 
-	bool isEnabled() const { return m_enabled;	}
-	bool isHovered() const { return m_enabled && m_hover; }
-	bool isFocused() const { return m_enabled && m_focus; }
+	bool isEnabled() const  { return m_enabled;	}
+	bool isHovered() const  { return m_enabled && m_hover; }
+	bool isFocused() const  { return m_enabled && m_focus; }
+	bool isSelected() const { return m_enabled && m_selected; }
 
 	// set
 	virtual void setEnabled(bool v);
+	virtual void setSelected(bool v);
+
 	virtual void setPos(const Vec2i &p);
 	virtual void setSize(const Vec2i &sz);
 

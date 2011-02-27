@@ -110,7 +110,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	// Buttons
 	anchors.setCentre(true); // anchor centre
 	foreach_enum (RootMenuItem, i) {
-		int height = g_widgetConfig.getDefaultElementHeight();
+		int height = g_widgetConfig.getDefaultItemHeight();
 		m_buttons[i] = new Widgets::Button(pnl->getCell(i));
 		m_buttons[i]->setSize(Vec2i(8 * height, height));
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);

@@ -35,9 +35,10 @@ public:
 
 	virtual void addItems(const vector<string> &items) = 0;
 	virtual void addItem(const string &item) = 0;
-//	virtual void clearItems() = 0;
+	virtual void clearItems() = 0;
 
 	virtual void setSelected(int index) = 0;
+	virtual void setSelected(const string &item) = 0;
 
 	int getSelectedIndex() { return m_selectedIndex; }
 	ListBoxItem* getSelectedItem() { return m_selectedItem; }
@@ -69,27 +70,29 @@ public:
 	ListBox(Container* parent, Vec2i pos, Vec2i size);
 	//ListBox(WidgetWindow* window);
 
-	virtual void addItems(const vector<string> &items);
-	virtual void addItem(const string &item);
+	virtual void addItems(const vector<string> &items) override;
+	virtual void addItem(const string &item) override;
 	void addColours(const vector<Vec3f> &colours);
+	void clearItems() override;
 
-	virtual void setSelected(int index);
+	virtual void setSelected(int index) override;
+	virtual void setSelected(const string &name) override;
 	void onSelected(ListBoxItem* item);
 	
-	virtual void setSize(const Vec2i &sz);
+	virtual void setSize(const Vec2i &sz) override;
 	void setScrollBarWidth(int width);
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::LIST_BOX); }
-	virtual void layoutCells();
+	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_BOX); }
+	virtual void layoutCells() override;
 
-	bool mouseWheel(Vec2i pos, int z);
+	bool mouseWheel(Vec2i pos, int z) override;
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
 	int getPrefHeight(int childCount = -1);
 
-	virtual string desc() { return string("[ListBox: ") + descPosDim() + "]"; }
+	virtual string desc() override { return string("[ListBox: ") + descPosDim() + "]"; }
 
 	void onScroll(int);
 
@@ -104,8 +107,8 @@ public:
 
 class ListBoxItem : public StaticText, public MouseWidget {
 private:
-	bool selected;
-	bool pressed;
+	bool m_selected;
+	bool m_pressed;
 
 protected:
 
@@ -114,20 +117,20 @@ public:
 	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz);
 	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
 
-	void setSelected(bool s) { selected = s; }
+	void setSelected(bool s);
 	void setBackgroundColour(const Vec3f &colour);
 
-	virtual void mouseIn();
-	virtual void mouseOut();
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual void mouseIn() override;
+	virtual void mouseOut() override;
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::LIST_ITEM); }
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_ITEM); }
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
 	//virtual void render();
-	virtual string desc() { return string("[ListBoxItem: ") + descPosDim() + "]"; }
+	virtual string desc() override { return string("[ListBoxItem: ") + descPosDim() + "]"; }
 
 	sigslot::signal<ListBoxItem*> Selected;
 	sigslot::signal<ListBoxItem*> Clicked;
@@ -152,16 +155,16 @@ public:
 	DropList(Container* parent);
 	DropList(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void setSize(const Vec2i &sz);
+	virtual void setSize(const Vec2i &sz) override;
 	void setDropBoxHeight(int h) { dropBoxHeight = h; }
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::DROP_LIST); }
-	void addItems(const vector<string> &items);
-	void addItem(const string &item);
-	void clearItems();
+	virtual void setStyle() override { setWidgetStyle(WidgetType::DROP_LIST); }
+	void addItems(const vector<string> &items) override;
+	void addItem(const string &item) override;
+	void clearItems() override;
 
-	void setSelected(int index);
-	void setSelected(const string &item);
+	void setSelected(int index) override;
+	void setSelected(const string &item) override;
 
 	bool mouseWheel(Vec2i pos, int z) override;
 
@@ -172,12 +175,12 @@ public:
 	void onSameSelected(ListBase*);
 	void onListDisposed(Widget*);
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 	//virtual void setEnabled(bool v) {
 	//}
 
-	virtual string desc() { return string("[DropList: ") + descPosDim() + "]"; }
+	virtual string desc() override { return string("[DropList: ") + descPosDim() + "]"; }
 
 	sigslot::signal<DropList*> ListExpanded;
 	sigslot::signal<DropList*> ListCollapsed;

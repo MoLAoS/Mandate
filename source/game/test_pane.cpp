@@ -79,7 +79,7 @@ void ScrollPane::init() {
 	WidgetCell *vertBarCell = littleStrip->getCell(0);
 	WidgetCell *spacerCell = littleStrip->getCell(1);
 
-	int barSize = m_rootWindow->getConfig()->getDefaultElementHeight();
+	int barSize = m_rootWindow->getConfig()->getDefaultItemHeight();
 
 	getCell(0)->setSizeHint(SizeHint(100));
 	getCell(1)->setSizeHint(SizeHint(-1, barSize));
@@ -102,8 +102,10 @@ void ScrollPane::init() {
 TestPane::TestPane(Program &program)
 		: ProgramState(program) {
 	Container *window = static_cast<Container*>(&program);
+	WidgetConfig &cfg = g_widgetConfig;
+
 	Anchors anchors;
-	anchors.set(Edge::COUNT, 15, false); // fill
+	anchors.set(Edge::COUNT, 15, false); // fill with 15 px padding
 
 	CellStrip *strip = new CellStrip(window, Orientation::VERTICAL, Origin::FROM_TOP, 3);
 	strip->setPos(Vec2i(0));
@@ -113,42 +115,60 @@ TestPane::TestPane(Program &program)
 	//btn->setAnchors(anchors);
 	//btn->setColour(Colour(0xFFu, 0x00u, 0x00u, 0xFFu), Colour(0xFFu, 0xFFu, 0xFFu, 0xFFu));
 
-	CellStrip *middleStrip = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	std::vector<string> fruit;
+	fruit.push_back("Apple");
+	fruit.push_back("Pear");
+	fruit.push_back("Peach");
+	fruit.push_back("Banana");
+	fruit.push_back("Apricot");
+	fruit.push_back("Orange");
+	fruit.push_back("Grape");
+	fruit.push_back("Plum");
+	fruit.push_back("Kiwi");
+	fruit.push_back("Pine Apple");
+	fruit.push_back("Water Melon");
+	fruit.push_back("Berry");
+	fruit.push_back("Pomegranate");
+	fruit.push_back("Date");
+	fruit.push_back("Lime");
+
+	CellStrip *topStrip = new CellStrip(strip->getCell(0), Orientation::HORIZONTAL);
+	topStrip->setAnchors(anchors);
+	topStrip->addCells(3);
+
+	CellStrip *middleStrip = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL);
 	middleStrip->setAnchors(anchors);
-	// or ??
-	//CellStrip *middleStrip = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL);
-	//middleStrip->addCells(3);
+	middleStrip->addCells(3);
+
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true);
+
+	Vec2i sz(200, cfg.getDefaultItemHeight());
+	sz += cfg.getBorderStyle(WidgetType::DROP_LIST).getBorderDims();
+
+	DropList *dropList = new DropList(topStrip->getCell(0), Vec2i(0), sz);
+	dropList->addItems(fruit);
+	dropList->setAnchors(centreAnchors);
+	dropList->setDropBoxHeight(200);
 
 	ScrollPane *scrollPane = new ScrollPane(middleStrip->getCell(0));
 	scrollPane->setAnchors(anchors);
 
 	ListBox *listBox = new ListBox(middleStrip->getCell(1), Vec2i(50,150), Vec2i(250, 150));
 	listBox->setAnchors(anchors);
-	listBox->addItem("Apple");
-	listBox->addItem("Pear");
-	listBox->addItem("Peach");
-	listBox->addItem("Banana");
-	listBox->addItem("Apricot");
-	listBox->addItem("Orange");
-	listBox->addItem("Grape");
-	listBox->addItem("Plum");
-	listBox->addItem("Kiwi");
-	listBox->addItem("Pine Apple");
-	listBox->addItem("Water Melon");
-	listBox->addItem("Berry");
-	listBox->addItem("Pomegranate");
-	listBox->addItem("Date");
-	listBox->addItem("Lime");
+	listBox->addItems(fruit);
 
 	ScrollText *scrollText = new ScrollText(middleStrip->getCell(2));
 	scrollText->setAnchors(anchors);
 
 	strip->layoutCells();
+	topStrip->layoutCells();
 	middleStrip->layoutCells();
 
 	string txt = "La de da.\n\nTest text, testing text, this is some text to test the ScrollText widget.\n";
 	txt += "   and this is some more! ...\nmore\nmore\nmore\nmore\nThis is a last bit.";
 	scrollText->setText(txt);
+
 }
 
 TestPane::~TestPane() {

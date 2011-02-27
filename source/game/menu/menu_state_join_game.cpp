@@ -120,7 +120,7 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 }
 
 void MenuStateJoinGame::buildConnectPanel() {
-	const int defWidgetHeight = g_widgetConfig.getDefaultElementHeight();
+	const int defWidgetHeight = g_widgetConfig.getDefaultItemHeight();
 	const int defCellHeight = defWidgetHeight * 3 / 2;
 
 	Vec2i pos, size(500, 300);

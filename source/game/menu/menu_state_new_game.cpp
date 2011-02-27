@@ -83,7 +83,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	GameSettings &gs = g_simInterface.getGameSettings();
 
 	vector<string> results;
-	const int defWidgetHeight = g_widgetConfig.getDefaultElementHeight();
+	const int defWidgetHeight = g_widgetConfig.getDefaultItemHeight();
 	const int defCellHeight = defWidgetHeight * 3 / 2;
 
 	// create

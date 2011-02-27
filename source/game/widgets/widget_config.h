@@ -29,7 +29,7 @@ using namespace Shared::Lua;
 namespace Glest { namespace Widgets {
 
 STRINGY_ENUM( WidgetState,
-	NORMAL, HOVER, FOCUS, DISABLED
+	NORMAL, HOVER, FOCUS, DISABLED, SELECTED
 );
 
 STRINGY_ENUM( WidgetType,
@@ -127,7 +127,7 @@ public:
 	//int getFontIndex(const Font *f);
 	int getTextureIndex(const Texture2D *t);
 
-	int getDefaultElementHeight() const {
+	int getDefaultItemHeight() const {
 		return int(m_fonts[m_defaultFonts[FontUsage::MENU]][FontSize::NORMAL]->getMetrics()->getHeight() * 1.1f);
 	}
 
