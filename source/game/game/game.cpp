@@ -743,6 +743,10 @@ void GameState::keyDown(const Key &key) {
 		gameCamera.setRotate(-1);
 	} else if (cmd == ucCameraRotateRight ) { // rotate camera right
 		gameCamera.setRotate(1);
+	} else if (cmd == ucCameraZoomIn) { // camera zoom in
+		gameCamera.zoom(15.f);
+	} else if (cmd == ucCameraZoomOut) { // camera zoom out
+		gameCamera.zoom(-15.f);
 	} else if (cmd == ucCameraPitchUp) { // camera pitch up
 		gameCamera.setMoveY(1);
 	} else if ( cmd == ucCameraPitchDown) { // camera pitch down
