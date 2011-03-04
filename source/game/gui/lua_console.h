@@ -49,7 +49,7 @@ public:
 	LuaInputBox(LuaConsole *console, Container *parent, Vec2i pos, Vec2i size);
 
 	virtual bool keyDown(Key key);
-
+	virtual string descType() const override { return "LuaInputBox"; }
 };
 
 // =====================================================
@@ -77,8 +77,9 @@ public:
 
 	void addOutput(const string &v);
 
-	virtual void setVisible(bool vis);	
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
+	virtual void setVisible(bool vis) override;	
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual string descType() const override { return "LuaConsole"; }
 };
 
 }}

@@ -109,18 +109,14 @@ bool LuaScript::isDefined(const string &name) {
 std::stack<string> tableStack;
 
 bool LuaScript::getGlobal(const char *name) {
-	cout << "getGlobal: " << name << endl;
 	assert(tableStack.empty());
 	lua_getglobal(luaState, name);
 	if (lua_istable(luaState, -1)) {
+		//cout << "getGlobal: " << name << endl;
 		tableStack.push(name);
 		return true;
 	} else {
-		if (lua_isnil(luaState, -1)) {
-			cout << "\tnil\n";
-		} else {
-			cout << "\tnon-nil\n";
-		}
+		//cout << "getGlobal: '" << name << "' not found." << endl;
 		lua_pop(luaState, -1);
 		return false;
 	}	
@@ -129,16 +125,11 @@ bool LuaScript::getGlobal(const char *name) {
 bool LuaScript::getTable(const char *name) {
 	lua_getfield(luaState, -1, name);
 	if (lua_istable(luaState, -1)) {
-		cout << "getTable: " << name << endl;
+		//cout << "getTable: " << name << endl;
 		tableStack.push(name);
 		return true;
 	} else {
-		cout << "getTable: '" << name << "' not found." << endl;
-		if (lua_isnil(luaState, -1)) {
-			cout << "\tnil.\n";
-		} else {
-			cout << "\tnon-nil\n";
-		}
+		//cout << "getTable: '" << name << "' not found." << endl;
 		lua_pop(luaState, 1);
 		return false;
 	}	
@@ -148,9 +139,9 @@ void LuaScript::popTable() {
 	if (tableStack.empty()) {
 		assert(false);
 	}
-	string s = tableStack.top();
+	//string s = tableStack.top();
 	tableStack.pop();
-	cout << "Popping '" << s << "'" << endl;
+	//cout << "Popping '" << s << "'" << endl;
 	assert(lua_istable(luaState, -1));
 	lua_pop(luaState, 1);
 }

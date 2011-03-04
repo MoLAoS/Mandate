@@ -241,7 +241,7 @@ void Button::setSize(const Vec2i &sz) {
 }
 
 bool Button::mouseMove(Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
+	WIDGET_LOG( descLong() << " : Button::mouseMove( " << pos << " )");
 	if (isEnabled()) {
 		if (isHovered() && !isInside(pos)) {
 			mouseOut();
@@ -254,7 +254,7 @@ bool Button::mouseMove(Vec2i pos) {
 }
 
 bool Button::mouseDown(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
+	WIDGET_LOG( descLong() << " : Button::mouseDown( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		setFocus(true);
 	}
@@ -262,7 +262,7 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
+	WIDGET_LOG( descLong() << " : Button::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		if (isFocused() && isHovered()) {
 			Clicked(this);
@@ -687,6 +687,14 @@ CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn,
 	}
 }
 
+void CellStrip::setCustumCell(int ndx, WidgetCell *cell) {
+	ASSERT_RANGE(ndx, m_cells.size());
+	WidgetCell *old = m_cells[ndx];
+	m_cells[ndx] = cell;
+	m_children[ndx] = cell;
+	delete old;
+}
+
 void CellStrip::addChild(Widget *child) {
 	Container::addChild(child);
 }
@@ -717,13 +725,14 @@ void CellStrip::setPos(const Vec2i &pos) {
 
 void CellStrip::setSize(const Vec2i &sz) {
 	Container::setSize(sz);
-//	layoutCells();
+	//layoutCells();
 	setDirty();
 }
 
 void CellStrip::render() {
 	renderBackground();
 	if (m_dirty) {
+		WIDGET_LOG( descShort() << " : CellStrip::render() : dirty, laying out cells." );
 		layoutCells();
 	}
 	//Container::render();
@@ -732,18 +741,9 @@ void CellStrip::render() {
 	// clip children
 	Vec2i pos = getScreenPos();
 	pos.x += getBorderLeft();
-	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
-		  + m_borderStyle.m_sizes[Border::BOTTOM];
+	pos.y += getBorderTop();
 	Vec2i size = getSize() - m_borderStyle.getBorderDims();
-	glPushAttrib(GL_SCISSOR_BIT);
-	assertGl();
-	/*if (glIsEnabled(GL_SCISSOR_TEST)) { ///@todo ? take intersection ?
-		Vec4i box;
-		glGetIntegerv(GL_SCISSOR_BOX, box.ptr());
-	} else */{
-		glEnable(GL_SCISSOR_TEST);
-	}
-	glScissor(pos.x, pos.y, size.w, size.h);
+	m_rootWindow->pushClipRect(pos, size);
 
 	if (m_orientation == Orientation::VERTICAL) {
 		foreach (WidgetList, it, m_children) {
@@ -763,7 +763,7 @@ void CellStrip::render() {
 			}
 		}
 	}
-	glPopAttrib();
+	m_rootWindow->popClipRect();
 }
 
 typedef vector<SizeHint>    HintList;
@@ -832,6 +832,8 @@ int calculateCellDims(HintList &hints, const int space, CellDimList &out_res) {
 }
 
 void CellStrip::layoutCells() {
+	WIDGET_LOG( descLong() << " : CellStrip::layoutCells()" );
+	m_dirty = false;
 	// collect hints
 	HintList     hintList;
 	foreach (vector<WidgetCell*>, it, m_cells) {
@@ -881,10 +883,11 @@ void CellStrip::layoutCells() {
 			pos = Vec2i(getBorderLeft() + offset + resultList[i].first, ppos);
 			size = Vec2i(resultList[i].second, psize);
 		}
+		WIDGET_LOG( descShort() << " : CellStrip::layoutCells(): setting cell " << i 
+			<< " [" << m_cells[i]->descId() << "] pos: " << pos << ", size = " << size );
 		m_cells[i]->setPos(pos);
 		m_cells[i]->setSize(size);
 	}
-	m_dirty = false;
 }
 
 // =====================================================
@@ -1026,21 +1029,11 @@ void Panel::render() {
 	Widget::renderBackground();
 	Vec2i pos = getScreenPos();
 	pos.x += getBorderLeft();
-	pos.y = g_config.getDisplayHeight() - (pos.y + getHeight())
-		  + m_borderStyle.m_sizes[Border::BOTTOM];
+	pos.y += getBorderTop();
 	Vec2i size = getSize() - m_borderStyle.getBorderDims();
-	glPushAttrib(GL_SCISSOR_BIT);
-		assertGl();
-		/*if (glIsEnabled(GL_SCISSOR_TEST)) { ///@todo ? take intersection ?
-			Vec4i box;
-			glGetIntegerv(GL_SCISSOR_BOX, box.ptr());
-		} else */{
-			glEnable(GL_SCISSOR_TEST);
-		}
-		glScissor(pos.x, pos.y, size.w, size.h);
-		Container::render();
-	glPopAttrib();
-	assertGl();
+	m_rootWindow->pushClipRect(pos, size);
+	Container::render();
+	m_rootWindow->popClipRect();
 }
 
 // =====================================================

@@ -823,6 +823,11 @@ void WidgetConfig::load() {
 	loadStyles("TitleBarRollDownButton", WidgetType::TITLE_BAR_ROLL_DOWN);
 	loadStyles("TitleBarExpandButton", WidgetType::TITLE_BAR_EXPAND);
 	loadStyles("TitleBarShrinkButton", WidgetType::TITLE_BAR_SHRINK);
+	loadStyles("ColourButton", WidgetType::COLOUR_BUTTON);
+
+	WIDGET_LOG( "====================================================" );
+	WIDGET_LOG( "==       Finished Loading widget styles           ==" );
+	WIDGET_LOG( "====================================================" );
 
 	luaScript.close();
 }

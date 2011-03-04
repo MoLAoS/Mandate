@@ -69,9 +69,9 @@ public:
 	Console(Container* parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
 	~Console();
 
-	virtual void update();
-	virtual void render();
-	virtual string desc() { return string("[Console: ") + descPosDim() + "]"; }
+	virtual void update() override;
+	virtual void render() override;
+	virtual string descType() const override { return "Console"; }
 
 	void addStdMessage(const string &s);
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");

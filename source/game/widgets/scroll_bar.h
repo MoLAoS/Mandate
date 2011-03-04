@@ -35,7 +35,7 @@ public:
 	ScrollBarButton(Container *parent, Vec2i pos, Vec2i size, Direction dir);
 
 	virtual void setStyle() override { setWidgetStyle(m_type); }
-	virtual string desc() override { return string("[ScrollButton: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "ScrollButton"; }
 
 	virtual bool mouseMove(Vec2i pos) override;
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
@@ -67,7 +67,7 @@ public:
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
 	sigslot::signal<int> Moved;
-	virtual string desc() override { return string("[ScrollThumb: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "ScrollThumb"; }
 };
 
 // =====================================================
@@ -123,7 +123,7 @@ public:
 	bool isVertical() const { return m_type == WidgetType::SCROLLBAR_VERT_SHAFT; }
 
 	void onThumbMoved(int diff);
-	virtual string desc() override { return string("[ScrollShaft: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "ScrollShaft"; }
 
 	sigslot::signal<int>  ThumbMoved;
 };
@@ -159,9 +159,11 @@ public:
 	void setOffsetPercent(int v) { m_shaft->setOffsetPercent(v); }
 	int getThumbOffset() const { return m_shaft->getThumbOffset(); }
 
+	virtual void layoutCells() override;
+
 	virtual void setStyle() override { setWidgetStyle(WidgetType::SCROLL_BAR); }
 	virtual void setSize(const Vec2i &sz) override;
-	virtual string desc() override { return string("[ScrollBar: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "ScrollBar"; }
 
 	sigslot::signal<int>  ThumbMoved;
 };

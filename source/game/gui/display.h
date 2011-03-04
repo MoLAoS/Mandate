@@ -161,14 +161,14 @@ public:
 
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 
-	virtual void render();
-	virtual string desc() { return string("[DisplayPanel: ") + descPosDim() + "]"; }
+	virtual void render() override;
+	virtual string descType() const override { return "DisplayPanel"; }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
-	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
-	virtual void mouseOut();
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos) override;
+	virtual void mouseOut() override;
 };
 
 }}//end namespace

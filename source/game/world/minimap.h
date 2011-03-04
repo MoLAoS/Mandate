@@ -116,7 +116,7 @@ public:
 	virtual bool mouseMove(Vec2i pos);
 
 	virtual void render();
-	virtual string desc() { return string("[MiniMap: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "MiniMap"; }
 
 	sigslot::signal<Vec2i> LeftClickOrder;
 	sigslot::signal<Vec2i> RightClickOrder;

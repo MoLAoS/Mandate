@@ -98,6 +98,8 @@ public:
 	void setCentre(bool v) { setCentre(v, v); }
 };
 
+ostream& operator<<(const ostream &lhs, const Anchors &rhs);
+
 // =====================================================
 //  class Widget
 // =====================================================
@@ -111,8 +113,10 @@ class Widget : public WidgetStyle {
 public:
 	MEMORY_CHECK_DECLARATIONS(Widget)
 
+protected:
+	int m_id;
+
 private:
-	//int id;
 	// position and size
 	Vec2i m_pos,       // relative to parent
 	      m_screenPos, // cache [m_parent->getScreenPos() + m_pos]
@@ -134,7 +138,7 @@ private:
 	TextWidget     *m_textWidget;
 
 protected:
-	// ancestors (parent and 'adam')
+	// ancestors (parent and 'adam' [&| 'Eve'])
 	Container    *m_parent;
 	WidgetWindow *m_rootWindow;
 
@@ -174,11 +178,13 @@ private:
 
 protected:
 	Widget(WidgetWindow* window); // for floating widgets and mouse cursors only!
-	Widget(Container* parent, bool addToParent = true);
-	Widget(Container* parent, Vec2i pos, Vec2i size, bool addToParent = true);
+	Widget(Container* parent);
+	Widget(Container* parent, Vec2i pos, Vec2i size);
 
 public:
 	virtual ~Widget();
+
+	int getId() const { return m_id; }
 
 	// layout helpers .. Remove... bound for CellWidget...
 	virtual Vec2i getPrefSize() const {return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
@@ -255,8 +261,18 @@ public:
 	//void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size);
 	//void renderHighLight(Vec3f colour, float centreAlpha, float borderAlpha);
 
-	virtual string descPosDim();
-	virtual string desc() = 0;
+	// desccribe
+
+	// sub-classes should describe themselves (pref in CamelCase) with a short string
+	virtual string descType() const = 0;
+
+	// describe id only, without calling descType() [safe for use in constructors/destructors]
+	string descId();
+
+	// These two methods call descType (pure virtual), and are NOT SAFE in constructors or destructors
+	// NOR are they safe in methods called indirectly from destructors, like Container::clear()
+	string descLong();  // describe type, id, pos, and size.
+	string descShort(); // describe type & id
 
 	sigslot::signal<Widget*> Destroyed;
 
@@ -563,22 +579,21 @@ public:
 	WidgetCell(Container *parent);
 	WidgetCell(Container *parent, Vec2i pos, Vec2i size);
 
+	SizeHint getSizeHint() const { return m_sizeHint; }
+
 	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
 
-	virtual void setSize(const Vec2i &sz) {
+	virtual void setSize(const Vec2i &sz) override {
 		Widget::setSize(sz);
 		anchorWidgets();
 	}
-	virtual void setPos(const Vec2i &p) {
+	virtual void setPos(const Vec2i &p) override {
 		Widget::setPos(p); // skip Container, we reset children ourselves...
 		anchorWidgets();
 	}
 
-	void clear() { Container::clear(); }
-
-	SizeHint getSizeHint() const { return m_sizeHint; }
-
-	virtual string desc() override { return string("[WidgetCell: ") + descPosDim() + "]"; }
+	virtual void clear() override { Container::clear(); }
+	virtual string descType() const override { return "WidgetCell"; }
 };
 
 }}

@@ -61,9 +61,9 @@ public:
 
 	void clearText()			{ m_inputBox->setText(""); }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual void setVisible(bool vis);
-	virtual string desc() { return string("[ChatDialog: ") + descPosDim() + "]"; }
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual void setVisible(bool vis) override;
+	virtual string descType() const override { return "ChatDialog"; }
 };
 
 }}//end namespace

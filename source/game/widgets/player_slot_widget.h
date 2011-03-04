@@ -30,6 +30,8 @@ public:
 	void render() {
 		Button::render();
 	}
+	virtual void setStyle() override;
+	virtual string descType() const override { return "ColourButton"; }
 };
 
 class FloatingPanel : public Panel {
@@ -38,6 +40,8 @@ public:
 		setStyle(g_widgetConfig.getWidgetStyle(WidgetType::LIST_BOX));
 		m_backgroundStyle.setNone();
 	}
+
+	virtual string descType() const override { return "FloatingPanel"; }
 };
 
 class ColourPicker : public Panel, public sigslot::has_slots {
@@ -66,6 +70,8 @@ public:
 	int getColourIndex()	{ return m_selectedIndex; }
 
 	sigslot::signal<ColourPicker*> ColourChanged;
+
+	virtual string descType() const override { return "ColourPicker"; }
 };
 
 class PlayerSlotLabels : public CellStrip {
@@ -151,6 +157,8 @@ private: // re-route signals from DropLists
 	void onFactionChanged(ListBase*) { FactionChanged(this); }
 	void onTeamChanged(ListBase*)	 { TeamChanged(this);	 }
 	void onColourChanged(ColourPicker*)	 { ColourChanged(this);	 }
+
+	virtual string descType() const override { return "PlayerSlotWidget"; }
 };
 
 }} // namespace Glest::Widgets

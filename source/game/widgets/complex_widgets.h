@@ -80,7 +80,6 @@ public:
 	void onSelected(ListBoxItem* item);
 	
 	virtual void setSize(const Vec2i &sz) override;
-	void setScrollBarWidth(int width);
 
 	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_BOX); }
 	virtual void layoutCells() override;
@@ -92,7 +91,7 @@ public:
 
 	int getPrefHeight(int childCount = -1);
 
-	virtual string desc() override { return string("[ListBox: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "ListBox"; }
 
 	void onScroll(int);
 
@@ -130,9 +129,9 @@ public:
 	virtual Vec2i getMinSize() const override;
 
 	//virtual void render();
-	virtual string desc() override { return string("[ListBoxItem: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "ListBoxItem"; }
 
-	sigslot::signal<ListBoxItem*> Selected;
+	//sigslot::signal<ListBoxItem*> Selected;
 	sigslot::signal<ListBoxItem*> Clicked;
 	// inherited signals:
 	//		Widget::Destoyed
@@ -149,13 +148,14 @@ private:
 	int dropBoxHeight;
 
 	void expandList();
-	void layout();
+	//void layout();
+	void init();
 
 public:
 	DropList(Container* parent);
 	DropList(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void setSize(const Vec2i &sz) override;
+	//virtual void setSize(const Vec2i &sz) override;
 	void setDropBoxHeight(int h) { dropBoxHeight = h; }
 
 	virtual void setStyle() override { setWidgetStyle(WidgetType::DROP_LIST); }
@@ -180,7 +180,7 @@ public:
 	//virtual void setEnabled(bool v) {
 	//}
 
-	virtual string desc() override { return string("[DropList: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "DropList"; }
 
 	sigslot::signal<DropList*> ListExpanded;
 	sigslot::signal<DropList*> ListCollapsed;

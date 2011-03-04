@@ -26,7 +26,6 @@ using namespace Glest::Global;
 
 namespace Glest { namespace Widgets {
 
-
 // =====================================================
 //  struct Anchors
 // =====================================================
@@ -97,43 +96,62 @@ void Anchors::setCentre(bool vert, bool horiz) {
 	}
 }
 
+ostream& operator<<(ostream &stream, const Anchor &anchor) {
+	if (anchor.getType() == AnchorType::NONE) {
+		stream << "None";
+	} else if (anchor.getType() == AnchorType::RIGID) {
+		stream << "Rigid " << anchor.getValue() << "px";
+	} else if (anchor.getType() == AnchorType::SPRINGY) {
+		stream << "Springy " << anchor.getValue() << "%";
+	}
+	return stream;
+}
+
+ostream& operator<<(ostream &stream, const Anchors &anchors) {
+	stream << "(Left: " << anchors[Edge::LEFT] << ", Top: " << anchors[Edge::TOP]
+		<< ", Right: " << anchors[Edge::RIGHT] << ", Bottom: " << anchors[Edge::BOTTOM] << ")";
+	return stream;
+}
+
 // =====================================================
 // class Widget
 // =====================================================
 
+int  Widget_idCounter = 0;
+
 MEMORY_CHECK_IMPLEMENTATION(Widget)
 
-Widget::Widget(Container* parent, bool addToParent)
+Widget::Widget(Container* parent)
 		: m_parent(parent) {
+	m_id = Widget_idCounter++;
+	WIDGET_LOG( descId() << " : Widget::Widget( parent:" << m_parent->getId() << " )" );
 	init(Vec2i(0), Vec2i(0));
 	m_rootWindow = m_parent->getRootWindow();
-	if (addToParent) {
-		m_parent->addChild(this);
-	} else {
-		DEBUG_HOOK();
-	}
+	m_parent->addChild(this);
 }
 
-Widget::Widget(Container* parent, Vec2i pos, Vec2i size, bool addToParent)
+Widget::Widget(Container* parent, Vec2i pos, Vec2i size)
 		: m_parent(parent) {
+	m_id = Widget_idCounter++;
+	WIDGET_LOG( descId() << " : Widget::Widget( parent:" << m_parent->getId() << ", "
+		<< pos << ", " << size << " )" );
 	init(pos, size);
 	m_screenPos = m_parent->getScreenPos() + pos;
 	m_rootWindow = m_parent->getRootWindow();
-	if (addToParent) {
-		m_parent->addChild(this);
-	} else {
-		DEBUG_HOOK();
-	}
+	m_parent->addChild(this);
 }
 
 Widget::Widget(WidgetWindow* window)
 		: m_parent(window)
 		, m_screenPos(0) {
+	m_id = Widget_idCounter++;
+	WIDGET_LOG( descId() << " : Widget::Widget( window:" << m_parent->getId() << " )" );
 	init(Vec2i(0), Vec2i(0));
 	m_rootWindow = window;
 }
 
 Widget::~Widget() {
+	WIDGET_LOG( descId() << " : Widget::~Widget()" );
 	Destroyed(this);
 	if (m_rootWindow != this) {
 		m_parent->remChild(this);
@@ -149,6 +167,13 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 
 	m_pos = pos;
 	m_size = size;
+	if (m_rootWindow != this) {
+		m_screenPos = m_parent->getScreenPos() + m_pos;
+	} else {
+		assert(m_pos == Vec2i(0));
+		m_screenPos = Vec2i(0);
+	}
+
 	m_fade = 1.f;
 
 	m_mouseWidget = 0;
@@ -195,22 +220,38 @@ Widget* Widget::getWidgetAt(const Vec2i &pos) {
 	return this;
 }
 
-string Widget::descPosDim() {
+string Widget::descId() {
 	std::stringstream ss;
-	ss << "Pos: " << m_screenPos << ", Size: " << m_size;
+	ss << "[Widget Id: " << m_id << "]";
+	return ss.str();
+}
+
+string Widget::descShort() {
+	std::stringstream ss;
+	ss << "[" << descType() <<  " Id: " << m_id << "]";
+	return ss.str();
+}
+
+string Widget::descLong() {
+	std::stringstream ss;
+	ss << "[" << descType() <<  " Id: " << m_id << ", Pos: " << m_screenPos << ", Size: " << m_size << "]";
 	return ss.str();
 }
 
 void Widget::setSize(const Vec2i &sz) {
+	WIDGET_LOG( descShort() << " : Widget::setSize( " << sz << " )" );
 	m_size = sz;
 	if (m_textWidget) {
 		m_textWidget->widgetReSized();
 	}
+	//WIDGET_LOG( descLong() );
 }
 
 void Widget::setPos(const Vec2i &p) {
 	m_pos = p;
 	m_screenPos = m_parent->getScreenPos() + m_pos;
+	WIDGET_LOG( descShort() << " : Widget::setPos( " << p << " ) => ScreenPos now: " << m_screenPos );
+	//WIDGET_LOG( descLong() );
 }
 
 inline Colour calcColour(const Colour &c, float fade) {
@@ -986,26 +1027,33 @@ Container::~Container() {
 }
 
 void Container::addChild(Widget* child) {
+	//WIDGET_LOG( descShort() << " : Container::addChild( child:" << child->getId() << " )" );
 	assert(std::find(m_children.begin(), m_children.end(), child) == m_children.end());
 	m_children.push_back(child);
 	child->setFade(getFade());
 }
 
 void Container::remChild(Widget* child) {
+	//WIDGET_LOG( descId() <<  " : Container::remChild( child:" << child->getId() << " )" );
 	WidgetList::iterator it = std::find(m_children.begin(), m_children.end(), child);
 	if (it != m_children.end()) {
 		m_children.erase(it);
-	}
+		//WIDGET_LOG( "[Widget Id: " << m_id << " : child:" << child->getId() << " removed." );
+	}/* else {
+		WIDGET_LOG( descShort() << " : child:" << child->getId() << " not found!" );
+	}*/
 }
 
 void Container::delChild(Widget* child) {
 	RUNTIME_CHECK(std::find(m_children.begin(), m_children.end(), child) != m_children.end());
+	//WIDGET_LOG( descId() << " : Container::delChild( child:" << child->getId() << " )" );
 	delete child;
 }
 
 void Container::clear() {
+	WIDGET_LOG( descId() << " : Container::clear()" );
 	deleteValues(m_children);
-	m_children.clear();
+	assert(m_children.empty());
 }
 
 void Container::setPos(const Vec2i &p) {
@@ -1065,21 +1113,25 @@ WidgetCell::WidgetCell(Container *parent) : Container(parent) {
 
 void WidgetCell::anchorWidgets() {
 	if (getSize() == Vec2i(0)) {
+		//WIDGET_LOG( descLong() << " : WidgetCell::anchorWidgets() ... aborting (Size == 0,0)" );
 		return;
 	}
+	WIDGET_LOG( descLong() << " : WidgetCell::anchorWidgets()" );
 	foreach (WidgetList, it, m_children) {
-		Widget &child = **it;
-		Anchors anchors = child.getAnchors();
+		Widget *child = *it;
+		Anchors anchors = child->getAnchors();
+		WIDGET_LOG( descShort() << " : anchoring child " << child->descShort()
+			<< " with anchors: " << anchors );
 		if (anchors.isCentreHorizontal() && anchors.isCentreVertical()) {
-			Vec2i offset = (getSize() - child.getSize()) / 2;
-			child.setPos(offset);
+			Vec2i offset = (getSize() - child->getSize()) / 2;
+			child->setPos(offset);
 			continue;
 		}
 		///@todo FIX ... for only centred one way
 
 		Vec2i pos = getPos();
 		Vec2i cellSize = getSize();
-		Vec2i size = child.getSize();
+		Vec2i size = child->getSize();
 
 		// 1. convert percentages to absolute values
 		int absolute[Edge::COUNT];
@@ -1116,8 +1168,10 @@ void WidgetCell::anchorWidgets() {
 		} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
 			pos.y = cellSize.h - absolute[Edge::BOTTOM] - size.h;
 		}
-		child.setPos(pos);
-		child.setSize(size);
+		WIDGET_LOG( descShort() << " : setting child " << child->descShort()
+			<< " to pos: " << pos << " & size: " << size);
+		child->setPos(pos);
+		child->setSize(size);
 	}
 }
 

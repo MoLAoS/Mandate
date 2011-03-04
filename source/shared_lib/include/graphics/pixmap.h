@@ -191,6 +191,7 @@ public:
 	//get
 	int getW() const			{return w;}
 	int getH() const			{return h;}
+	Vec2i getSize() const       {return Vec2i(w, h);}
 	int getComponents() const	{return components;}
 	uint8 *getPixels() const	{return pixels;}
 

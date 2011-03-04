@@ -98,7 +98,7 @@ public:
 		res.p[0].y = std::max(p[0].y, that.p[0].y);
 		res.p[1].x = std::min(p[1].x, that.p[1].x);
 		res.p[1].y = std::min(p[1].y, that.p[1].y);
-		if (res.p[1].x <= res.p[o].x || res.p[1].y <= res.p[o].y) {
+		if (res.p[1].x <= res.p[0].x || res.p[1].y <= res.p[0].y) {
 			res.p[0] = res.p[1]; // give consistent behaviour if no intersection
 		}
 		return res;

@@ -35,9 +35,9 @@ private:
 public:
 	static GameMenu* showDialog(Vec2i pos, Vec2i size);
 
-	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
-	virtual Vec2i getMinSize() const { return Vec2i(-1); }
-	virtual string desc() { return string("[GameMenu: ") + descPosDim() + "]"; }
+	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
+	virtual Vec2i getMinSize() const override { return Vec2i(-1); }
+	virtual string descType() const override { return "GameMenu"; }
 };
 
 }}

@@ -21,13 +21,15 @@
 #include "core_data.h"
 #include "texture_gl.h"
 #include "platform_util.h"
+#include "opengl.h"
 
 #include "leak_dumper.h"
 
-using Shared::Graphics::Gl::Texture2DGl;
+using namespace Shared::Graphics::Gl;
 using namespace Shared::Platform;
 
 namespace Glest { namespace Widgets {
+
 using namespace Global;
 using namespace Graphics;
 
@@ -120,8 +122,10 @@ WidgetWindow::WidgetWindow()
 		, MouseWidget(this)
 		, KeyboardWidget(this)
 		, floatingWidget(0)
-		, anim(0.f), slowAnim(0.f)/*, mouseIcon(0)
-		, mouseMain(0), mouseAnimations(0) */{
+		, anim(0.f), slowAnim(0.f)
+		/*, mouseIcon(0)
+		, mouseMain(0)
+		, mouseAnimations(0) */{
 	m_size.x = Metrics::getInstance().getScreenW();
 	m_size.y = Metrics::getInstance().getScreenH();
 
@@ -256,6 +260,44 @@ void WidgetWindow::unwindMouseOverStack(Widget* newTop) {
 
 void WidgetWindow::unwindMouseOverStack() {
 	unwindMouseOverStack(this);
+}
+
+void WidgetWindow::setScissor(const Rect2i &rect) {
+	assert(glIsEnabled(GL_SCISSOR_TEST));
+	Vec2i pos(rect.p[0].x, g_config.getDisplayHeight() - rect.p[1].y);
+	Vec2i size(rect.p[1].x - rect.p[0].x, rect.p[1].y - rect.p[0].y);
+	glScissor(pos.x, pos.y, size.w, size.h);
+}
+
+void WidgetWindow::pushClipRect(const Vec2i &pos, const Vec2i &size) {
+	assertGl();
+	Rect2i incoming = Rect2i(pos, pos + size);
+	if (m_clipStack.empty()) {
+		assert(!glIsEnabled(GL_SCISSOR_TEST));
+		glEnable(GL_SCISSOR_TEST);
+		setScissor(incoming);
+		m_clipStack.push(incoming);
+	} else {
+		Rect2i existing = m_clipStack.top();
+		Rect2i intersection = existing.interection(incoming);
+		setScissor(intersection);
+		m_clipStack.push(intersection);
+	}
+	assertGl();
+}
+
+void WidgetWindow::popClipRect() {
+	assertGl();
+	RUNTIME_CHECK(!m_clipStack.empty());
+	m_clipStack.pop();
+	if (m_clipStack.empty()) {
+		assert(glIsEnabled(GL_SCISSOR_TEST));
+		glDisable(GL_SCISSOR_TEST);
+	} else {
+		setScissor(m_clipStack.top());
+	}
+
+	assertGl();
 }
 
 Widget* WidgetWindow::findCommonAncestor(Widget* widget1, Widget* widget2) {

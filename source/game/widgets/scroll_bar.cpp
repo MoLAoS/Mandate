@@ -53,7 +53,7 @@ ScrollBarButton::ScrollBarButton(Container *parent, Vec2i pos, Vec2i size, Direc
 }
 
 bool ScrollBarButton::mouseMove(Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
+	WIDGET_LOG( descLong() << " : ScrollBarButton::mouseMove( " << pos << " )");
 	Button::mouseMove(pos);
 	if (m_down) {
 		if (!isHovered()) {
@@ -71,7 +71,7 @@ bool ScrollBarButton::mouseMove(Vec2i pos) {
 }
 
 bool ScrollBarButton::mouseDown(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
+	WIDGET_LOG( descLong() << " : ScrollBarButton::mouseDown( " << MouseButtonNames[btn] << ", " << pos << " )");
 	Button::mouseDown(btn, pos);
 	if (isFocused() && !m_down) {
 		m_rootWindow->registerUpdate(this);
@@ -83,7 +83,7 @@ bool ScrollBarButton::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool ScrollBarButton::mouseUp(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
+	WIDGET_LOG( descLong() << " : ScrollBarButton::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		if (isFocused() && isHovered() && m_fireOnUp) {
 			Fire(this);
@@ -347,11 +347,15 @@ void ScrollBar::init() {
 
 void ScrollBar::setSize(const Vec2i &sz) {
 	CellStrip::setSize(sz);
-	Vec2i size = sz - getBordersAll();
+}
+
+void ScrollBar::layoutCells() {
+	Vec2i size = getSize() - getBordersAll();
 	int btnSize = m_vertical ? size.w : size.h;
 	getCell(0)->setSizeHint(SizeHint(-1, btnSize));
 	getCell(1)->setSizeHint(SizeHint(100));
 	getCell(2)->setSizeHint(SizeHint(-1, btnSize));
+	CellStrip::layoutCells();
 }
 
 void ScrollBar::onScrollBtnFired(ScrollBarButton *btn) {

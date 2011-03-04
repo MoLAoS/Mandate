@@ -353,18 +353,7 @@ DropList::DropList(Container* parent)
 		, MouseWidget(this)
 		, floatingList(0)
 		, dropBoxHeight(0) {
-	setWidgetStyle(WidgetType::DROP_LIST);
-	
-	button = new Button(getCell(0));
-	button->Clicked.connect(this, &DropList::onExpandList);
-	
-	WidgetConfig &cfg = *m_rootWindow->getConfig();
-	Font *itemFont = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::NORMAL];
-
-	m_selectedItem = new ListBoxItem(this);
-	m_selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
-	m_selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
+	init();
 }
 
 DropList::DropList(Container* parent, Vec2i pos, Vec2i size) 
@@ -372,18 +361,28 @@ DropList::DropList(Container* parent, Vec2i pos, Vec2i size)
 		, MouseWidget(this)
 		, floatingList(0)
 		, dropBoxHeight(0) {
-	setWidgetStyle(WidgetType::DROP_LIST);
+	init();
+}
 
+void DropList::init() {
+	setWidgetStyle(WidgetType::DROP_LIST);
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
 	Font *itemFont = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::NORMAL];
 
-	button = new Button(this);
-	button->Clicked.connect(this, &DropList::onExpandList);
-	m_selectedItem = new ListBoxItem(this);
+	Anchors anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));
+
+	m_selectedItem = new ListBoxItem(getCell(0));
+	m_selectedItem->setAnchors(anchors);
 	m_selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
 	m_selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
-	layout();
+
+	getCell(1)->setSizeHint(SizeHint(-1, cfg.getDefaultItemHeight()));
+
+	button = new Button(getCell(1));
+	button->setAnchors(anchors);
+	button->Clicked.connect(this, &DropList::onExpandList);
 }
 
 Vec2i DropList::getPrefSize() const {
@@ -399,23 +398,23 @@ Vec2i DropList::getMinSize() const {
 	res += getBordersAll();
 	return  res;
 }
+//
+//void DropList::setSize(const Vec2i &size) {
+//	Widget::setSize(size);
+//	layout();
+//}
 
-void DropList::setSize(const Vec2i &size) {
-	Widget::setSize(size);
-	layout();
-}
-
-void DropList::layout() {
-//	const int borderSize = getBorderSize();
-	Vec2i size = getSize();
-	int btn_sz = size.y - getBordersVert();
-	button->setSize(Vec2i(btn_sz));
-	button->setPos(Vec2i(size.x - btn_sz - getBorderRight(), getBorderBottom()));
-	Vec2i liPos(getBorderLeft(), getBorderBottom());
-	Vec2i liSz(size.x - btn_sz - getBordersHoriz(), btn_sz);
-	m_selectedItem->setPos(liPos);
-	m_selectedItem->setSize(liSz);
-}
+//void DropList::layout() {
+////	const int borderSize = getBorderSize();
+//	Vec2i size = getSize();
+//	int btn_sz = size.y - getBordersVert();
+//	button->setSize(Vec2i(btn_sz));
+//	button->setPos(Vec2i(size.x - btn_sz - getBorderRight(), getBorderBottom()));
+//	Vec2i liPos(getBorderLeft(), getBorderBottom());
+//	Vec2i liSz(size.x - btn_sz - getBordersHoriz(), btn_sz);
+//	m_selectedItem->setPos(liPos);
+//	m_selectedItem->setSize(liSz);
+//}
 
 bool DropList::mouseWheel(Vec2i pos, int z) {
 	if (m_selectedIndex == -1) {

@@ -120,7 +120,7 @@ void ScrollText::init() {
 }
 
 void ScrollText::recalc() {
-	int th = m_staticText->getTextDimensions().y;
+	int th = m_staticText->getTextDimensions().h;
 	int ch = m_staticText->getHeight() - m_staticText->getBordersVert();
 	m_scrollBar->setRanges(th, ch);
 }
@@ -131,14 +131,22 @@ void ScrollText::onScroll(int offset) {
 }
 
 void ScrollText::setSize(const Vec2i &sz) {
+	const FontMetrics *fm = m_staticText->getTextFont()->getMetrics();
 	CellStrip::setSize(sz);
-	layoutCells();
+	layoutCells(); // force
+	if (!m_origString.empty()) {
+		string text = m_origString;
+		int width = m_staticText->getSize().w - m_staticText->getBordersHoriz();
+		fm->wrapText(text, width);	
+		m_staticText->setText(text);
+	}
 	recalc();
 }
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	const FontMetrics *fm = m_staticText->getTextFont()->getMetrics();
 	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
+	m_origString = txt;
 	string text = txt;
 	fm->wrapText(text, width);
 	
@@ -229,7 +237,7 @@ void Frame::init(Vec2i pos, Vec2i size, const string &title) {
 	setTitleText(title);
 }
 
-void Frame::setSize(Vec2i size) {
+void Frame::setSize(const Vec2i &size) {
 	Container::setSize(size);
 	Vec2i p, s;
 	Font *font = g_widgetConfig.getFont(m_textStyle.m_fontIndex);

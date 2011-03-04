@@ -26,12 +26,12 @@ public:
 	StaticImage(Container* parent, Vec2i pos, Vec2i size);
 	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex);
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::STATIC_WIDGET); }
-	virtual void render();
-	virtual string desc() { return string("[StaticImage: ") + descPosDim() + "]"; }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::STATIC_WIDGET); }
+	virtual void render() override;
+	virtual string descType() const override { return "StaticImage"; }
 };
 
 // =====================================================
@@ -44,6 +44,7 @@ class Imageset : public StaticImage {
 private:
 	int m_active;
 	int m_defaultImage;
+
 public:
 	Imageset(Container* parent) 
 			: StaticImage(parent)
@@ -64,10 +65,11 @@ public:
 		use the squarespec to extract the images
 	}*/
 	void addImages(const Texture2D *source, int width, int height);
-	virtual void render() { renderImage(m_active); }
+	virtual void render() override { renderImage(m_active); }
 
 	void setDefaultImage(int ndx = 0);
 	void setActive(int ndx = 0);
+	virtual string descType() const override { return "ImageSet"; }
 };
 
 // =====================================================
@@ -97,9 +99,9 @@ public:
 	}
 
 	/// rendering is handled by Imageset
-	virtual void render() {}
-	virtual void update();
-	virtual string desc() { return string("[Animset: ") + "]"; }
+	virtual void render() override {}
+	virtual void update() override;
+	virtual string descType() const override { return "Animset"; }
 
 	void setRange(int start, int end) { m_start = start; m_end = end; }
 	const Texture2D *getCurrent() { return m_imageset->getImage(m_currentFrame); }
@@ -125,15 +127,15 @@ public:
 	StaticText(Container* parent, Vec2i pos, Vec2i size);
 
 public:
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
 	void setShadow(const Vec4f &colour, int offset=2);
 	void setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset=2);
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::STATIC_WIDGET); }
-	virtual void render();
-	virtual string desc() { return string("[StaticText: ") + descPosDim() + "]"; }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::STATIC_WIDGET); }
+	virtual void render() override;
+	virtual string descType() const override { return "StaticText"; }
 };
 
 // =====================================================
@@ -162,7 +164,7 @@ public:
 
 	virtual void setStyle() { setWidgetStyle(WidgetType::BUTTON); }
 	virtual void render() override;
-	virtual string desc() override { return string("[Button: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "Button"; }
 
 	sigslot::signal<Button*> Clicked;
 };
@@ -189,9 +191,9 @@ public:
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
 
-	virtual void setStyle() { setWidgetStyle(m_checked ? WidgetType::CHECK_BOX_CHK : WidgetType::CHECK_BOX); }
+	virtual void setStyle() override { setWidgetStyle(m_checked ? WidgetType::CHECK_BOX_CHK : WidgetType::CHECK_BOX); }
 	//virtual void render() override;
-	virtual string desc() override { return string("[CheckBox: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "CheckBox"; }
 };
 
 // =====================================================
@@ -212,23 +214,23 @@ public:
 
 	void gainFocus();
 
-	virtual void mouseIn()  { setHover(true);  }
-	virtual void mouseOut() { setHover(false); }
+	virtual void mouseIn() override { setHover(true);  }
+	virtual void mouseOut() override { setHover(false); }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	virtual bool keyDown(Key key);
-	virtual bool keyUp(Key key);
-	virtual bool keyPress(char c);
-	virtual void lostKeyboardFocus();
+	virtual bool keyDown(Key key) override;
+	virtual bool keyUp(Key key) override;
+	virtual bool keyPress(char c) override;
+	virtual void lostKeyboardFocus() override;
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::TEXT_BOX); }
-	virtual void render();
-	virtual string desc() { return string("[TextBox: ") + descPosDim() + "]"; }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TEXT_BOX); }
+	virtual void render() override;
+	virtual string descType() const override { return "TextBox"; }
 
 	sigslot::signal<TextBox*> TextChanged;
 	sigslot::signal<TextBox*> InputEntered;
@@ -264,23 +266,23 @@ public:
 	void setValue(float val) { m_sliderValue = val; recalc(); }
 	float getValue() const { return m_sliderValue; }
 
-	void setSize(const Vec2i &size) {
+	virtual void setSize(const Vec2i &size) override {
 		Widget::setSize(size);
 		recalc();
 	}
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::SLIDER); }
-	virtual void mouseOut();
+	virtual void setStyle() override { setWidgetStyle(WidgetType::SLIDER); }
+	virtual void mouseOut() override;
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
 
-	void render();
+	virtual void render() override;
 
-	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
-	virtual Vec2i getMinSize() const { return Vec2i(300,32); }
-	virtual string desc() { return string("[Slider: ") + descPosDim() + "]"; }
+	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
+	virtual Vec2i getMinSize() const override { return Vec2i(300,32); }
+	virtual string descType() const override { return "Slider"; }
 
 	sigslot::signal<Slider*> ValueChanged;
 };
@@ -312,6 +314,8 @@ protected:
 	void setDirty() { m_dirty = true; }	
 	virtual void addChild(Widget* child) override;
 
+	void setCustumCell(int ndx, WidgetCell *cell);
+
 public:
 	void setSizeHint(int i, SizeHint hint) {
 		ASSERT_RANGE(i, m_cells.size());
@@ -339,7 +343,7 @@ public:
 	virtual void render() override;
 	virtual void setPos(const Vec2i &pos) override;
 	virtual void setSize(const Vec2i &sz) override;
-	virtual string desc() override { return string("[CellStrip: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "CellStrip"; }
 };
 
 // =====================================================
@@ -375,11 +379,11 @@ public:
 	void setLayoutOrigin(Origin lo) { layoutOrigin = lo; }
 	virtual void layoutChildren();
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual void render();
-	virtual string desc() { return string("[Panel: ") + descPosDim() + "]"; }
+	virtual void render() override;
+	virtual string descType() const override { return "Panel"; }
 };
 
 // =====================================================
@@ -398,15 +402,15 @@ public:
 			, ImageWidget(this) {
 	}
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual void render() {
+	virtual void render() override {
 		renderImage();
 		Container::render();
 	}
 
-	virtual string desc() { return string("[PicturePanel: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "PicturePanel"; }
 };
 
 // =====================================================
@@ -421,8 +425,10 @@ public:
 	ToolTip(Container* parent);
 	ToolTip(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void setStyle() { setWidgetStyle(WidgetType::TOOL_TIP); }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOL_TIP); }
 	void setText(const string &txt);
+
+	virtual string descType() const override { return "Tooltip"; }
 };
 
 }}

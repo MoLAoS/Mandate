@@ -42,7 +42,7 @@ public:
 	virtual Vec2i getMinSize() const override { return Vec2i(32); }
 
 	virtual void render() override;
-	virtual string desc() override { return string("[MouseCursor: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "MouseCursor"; }
 };
 
 // =====================================================
@@ -55,6 +55,7 @@ private:
 	typedef std::stack<Widget*>	WidgetStack;
 	//typedef std::list<Layer*>	LayerList;
 	typedef std::set<string>		NameSet;
+	typedef std::stack<Rect2i>      ClipStack;
 
 protected:
 	static WidgetWindow *instance;
@@ -67,6 +68,7 @@ private:
 	MouseWidget* mouseDownWidgets[MouseButton::COUNT];
 	MouseWidget* lastMouseDownWidget;
 	MouseButton lastMouseDownButton;
+	ClipStack   m_clipStack;
 
 	WidgetList	toClean;
 	WidgetList	updateList;
@@ -93,6 +95,7 @@ private:
 	void doMouseInto(Widget* widget);
 	void destroyFloater();
 	void renderMouseCursor();
+	void setScissor(const Rect2i &rect);
 
 public:
 	WidgetWindow();
@@ -104,7 +107,10 @@ public:
 	void update();
 	float getAnim() const { return anim; }
 	float getSlowAnim() const { return slowAnim; }
-	virtual void clear();
+	virtual void clear() override;
+
+	void pushClipRect(const Vec2i &pos, const Vec2i &size);
+	void popClipRect();
 
 	void registerUpdate(Widget* widget);
 	void unregisterUpdate(Widget* widget);
@@ -126,14 +132,14 @@ public:
 	//void initMouse();
 
 protected: // Shared::Platform::Window virtual events
-	virtual void eventMouseDown(int x, int y, MouseButton mouseButton);
-	virtual void eventMouseUp(int x, int y, MouseButton mouseButton);
-	virtual void eventMouseMove(int x, int y, const MouseState &mouseState);
-	virtual void eventMouseDoubleClick(int x, int y, MouseButton mouseButton);
-	virtual void eventMouseWheel(int x, int y, int zDelta);
-	virtual void eventKeyDown(const Key &key);
-	virtual void eventKeyUp(const Key &key);
-	virtual void eventKeyPress(char c);
+	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) override;
+	virtual void eventMouseUp(int x, int y, MouseButton mouseButton) override;
+	virtual void eventMouseMove(int x, int y, const MouseState &mouseState) override;
+	virtual void eventMouseDoubleClick(int x, int y, MouseButton mouseButton) override;
+	virtual void eventMouseWheel(int x, int y, int zDelta) override;
+	virtual void eventKeyDown(const Key &key) override;
+	virtual void eventKeyUp(const Key &key) override;
+	virtual void eventKeyPress(char c) override;
 
 public: // MouseWidget & TextWidget virtual events
 	/*
@@ -146,17 +152,17 @@ public: // MouseWidget & TextWidget virtual events
 	virtual bool keyUp(Key key)									{ return false; }
 	virtual bool keyPress(char c)								{ return false; }
 	*/
-	virtual Vec2i getPrefSize() const	{ return Vec2i(-1);			}
-	virtual Vec2i getMinSize() const	{ return Vec2i(800, 600);	}
-	virtual Vec2i getMaxSize() const	{ return Vec2i(-1);			}
+	virtual Vec2i getPrefSize() const override { return Vec2i(-1);			}
+	virtual Vec2i getMinSize() const override { return Vec2i(800, 600);	}
+	virtual Vec2i getMaxSize() const override { return Vec2i(-1);			}
 
 	TextRenderer* getTextRenderer() {
 		return textRendererFT;
 	}
 
-	virtual void render();
+	virtual void render() override;
 
-	virtual string desc() { return string("[Window: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "Window"; }
 };
 
 #define g_widgetWindow (*WidgetWindow::getInstance())

@@ -21,7 +21,7 @@ class GameStatsWidget : public Container {
 public:
 	GameStatsWidget(Container* parent, Vec2i p, Vec2i s);
 	
-	virtual string desc() { return string("[GameStatsWidget: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "GameStatsWidget"; }
 };
 
 // =====================================================

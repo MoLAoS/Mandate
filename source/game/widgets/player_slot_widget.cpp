@@ -31,30 +31,32 @@ ColourButton::ColourButton(Container *parent)
 		: Button(parent, Vec2i(0), Vec2i(32))
 		, m_colourBase(dark)
 		, m_colourOutline(dark) {
-	m_borderStyle.setSizes(4);
-	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
-	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+	setWidgetStyle(WidgetType::COLOUR_BUTTON);
 }
 
 ColourButton::ColourButton(Container *parent, Vec2i pos, Vec2i size)
 		: Button(parent, pos, size)
 		, m_colourBase(dark)
 		, m_colourOutline(dark) {
-	m_borderStyle.setSizes(4);
-	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
-	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+	setWidgetStyle(WidgetType::COLOUR_BUTTON);
 }
 
 void ColourButton::clearColour() {
-	m_colourBase =  m_colourOutline = dark;
-	int ndx = g_widgetConfig.getColourIndex(dark);
-	m_backgroundStyle.setColour(ndx);
-	m_borderStyle.setSolid(ndx);
+	m_colourBase = m_colourOutline = dark;
+	setWidgetStyle(WidgetType::COLOUR_BUTTON);
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
 }
 
 void ColourButton::setColour(Colour base, Colour outline) {
 	m_colourBase = base;
 	m_colourOutline = outline;
+	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
+	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
+}
+
+void ColourButton::setStyle() {
+	setWidgetStyle(WidgetType::COLOUR_BUTTON);
 	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
 	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
 }
