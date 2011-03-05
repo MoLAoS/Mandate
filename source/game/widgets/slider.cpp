@@ -33,7 +33,6 @@ SliderThumb::SliderThumb(Container *parent, bool vert)
 }
 
 void SliderThumb::setPos(const Vec2i &pos) {
-	cout << __FUNCTION__ << " Pos: " << pos << endl;
 	if (isFocused()) {
 		if (m_type == WidgetType::SLIDER_VERT_THUMB) {
 			int diff = getPos().y - pos.y;
@@ -47,7 +46,6 @@ void SliderThumb::setPos(const Vec2i &pos) {
 }
 
 void SliderThumb::setSize(const Vec2i &sz) {
-	cout << __FUNCTION__ << " Size: " << sz << endl;
 	Widget::setSize(sz);
 }
 
@@ -88,7 +86,8 @@ bool SliderThumb::mouseUp(MouseButton btn, Vec2i pos) {
 SliderShaft::SliderShaft(Container *parent, bool vert)
 		: Container(parent)
 		, MouseWidget(this)
-		, m_range(-1), m_value(-1) {
+		, m_range(-1), m_value(-1)
+		, m_dragging(false) {
 	if (vert) {
 		m_type = WidgetType::SLIDER_VERT_SHAFT;
 	} else {
@@ -118,8 +117,7 @@ void SliderShaft::recalc() {
 			thumbSz = Vec2i(thumbSize, getHeight() - getBordersVert());
 		}
 		m_thumb->setPos(thumbPos);
-		m_thumb->setSize(thumbSz);
-		
+		m_thumb->setSize(thumbSz);		
 	}
 }
 
@@ -149,12 +147,10 @@ void SliderShaft::onThumbDragged(int diff) {
 }
 
 void SliderShaft::setPos(const Vec2i &pos) {
-	cout << __FUNCTION__ << " Pos: " << pos << endl;
 	Container::setPos(pos);
 }
 
 void SliderShaft::setSize(const Vec2i &sz) {
-	cout << __FUNCTION__ << " Size: " << sz << endl;
 	Widget::setSize(sz);
 	recalc();
 }
@@ -170,10 +166,43 @@ void SliderShaft::setValue(int value) {
 }
 
 bool SliderShaft::mouseDown(MouseButton btn, Vec2i pos) {
+	Vec2i p = pos - getScreenPos();
+	if (btn == MouseButton::LEFT) {
+		if (p.x >= getBorderLeft() && p.x < getWidth() - getBorderRight()
+		&& p.y >= getBorderTop() && p.y < getHeight() - getBorderBottom()) {
+			Vec2i thumbPos = m_thumb->getScreenPos();
+			int diff;
+			if (m_type == WidgetType::SLIDER_VERT_SHAFT) {
+				diff = pos.y - (thumbPos.y + thumbSize / 2);
+			} else {
+				diff = pos.x - (thumbPos.x + thumbSize / 2);
+			}
+			onThumbDragged(-diff);
+			m_dragPos = pos;
+			m_dragging = true;
+		}
+	}
 	return true;
 }
 
 bool SliderShaft::mouseMove(Vec2i pos) {
+	if (m_dragging) {
+		int diff;
+		if (m_type == WidgetType::SLIDER_VERT_SHAFT) {
+			diff = pos.y - m_dragPos.y;
+		} else {
+			diff = pos.x - m_dragPos.x;
+		}
+		onThumbDragged(-diff);
+		m_dragPos = pos;
+	}
+	return true;
+}
+
+bool SliderShaft::mouseUp(MouseButton btn, Vec2i pos) {
+	if (m_dragging) {
+		m_dragging = false;
+	}
 	return true;
 }
 
@@ -192,12 +221,10 @@ Slider2::Slider2(Container *parent, bool vert)
 }
 
 void Slider2::setPos(const Vec2i &pos) {
-	cout << __FUNCTION__ << " Pos: " << pos << endl;
 	WidgetCell::setPos(pos);
 }
 
 void Slider2::setSize(const Vec2i &sz) {
-	cout << __FUNCTION__ << " Size: " << sz << endl;
 	WidgetCell::setSize(sz);
 }
 

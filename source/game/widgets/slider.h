@@ -49,6 +49,8 @@ private:
 	SliderThumb *m_thumb;
 	int          m_range;
 	int          m_value;
+	Vec2i        m_dragPos;
+	bool         m_dragging;
 
 private:
 	static const int thumbSize = 16; // pixels (change? make dynamic?) [maybe defItemHeight / 3 ?]
@@ -66,6 +68,7 @@ public:
 
 	virtual bool mouseMove(Vec2i pos) override;
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
 	void setRange(int range);
 	void setValue(int value);

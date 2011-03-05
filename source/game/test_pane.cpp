@@ -198,6 +198,9 @@ TestPane::TestPane(Program &program)
 
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 
+	Anchors btnAnchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5),
+		Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5));
+
 	CellStrip *strip = new CellStrip(window, Orientation::VERTICAL, Origin::FROM_TOP, 4);
 	strip->setPos(Vec2i(0));
 	strip->setSize(g_metrics.getScreenDims());
@@ -253,7 +256,7 @@ TestPane::TestPane(Program &program)
 	checkBox->setChecked(true);
 
 	Slider2 *slider = new Slider2(middleStrip2->getCell(0), false);
-	slider->setAnchors(fillAnchors);
+	slider->setAnchors(btnAnchors);
 	slider->setRange(100);
 	slider->setValue(50);
 
@@ -275,6 +278,17 @@ TestPane::TestPane(Program &program)
 	string txt = "La de da.\n\nTest text, testing text, this is some text to test the ScrollText widget.\n";
 	txt += "   and this is some more! ...\nmore\nmore\nmore\nmore\nThis is a last bit.";
 	scrollText->setText(txt);
+
+	CellStrip *buttonStrip = new CellStrip(middleStrip2->getCell(2), Orientation::HORIZONTAL, 2);
+	buttonStrip->setAnchors(fillAnchors);
+
+	Button *btn = new Button(buttonStrip->getCell(0));
+	btn->setAnchors(btnAnchors);
+	btn->setText("Button 1");
+
+	btn = new Button(buttonStrip->getCell(1));
+	btn->setAnchors(btnAnchors);
+	btn->setText("Button 2");
 }
 
 TestPane::~TestPane() {
