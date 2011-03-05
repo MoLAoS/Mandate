@@ -182,7 +182,7 @@ public:
 	CheckBox(Container* parent, Vec2i pos, Vec2i size);
 
 	virtual void setSize(const Vec2i &sz) override;
-	void setChecked(bool v) { m_checked = v; }
+	void setChecked(bool v) { m_checked = v; setStyle(); }
 	bool isChecked() const { return m_checked; }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
@@ -239,53 +239,53 @@ public:
 // =====================================================
 //  class Slider
 // =====================================================
-
-class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
-private:
-	float	m_sliderValue;
-	bool	m_thumbHover,
-			m_thumbPressed,
-			m_shaftHover;
-	int		m_shaftOffset, 
-			m_shaftSize,
-			m_thumbCentre,
-			m_valSize;
-	Vec2i	m_thumbPos,
-			m_thumbSize;
-	Vec2i	m_titlePos,
-			m_valuePos;
-	string	m_title;
-
-	BorderStyle m_shaftStyle;
-
-	void recalc();
-
-public:
-	Slider(Container* parent, Vec2i pos, Vec2i size, const string &title);
-
-	void setValue(float val) { m_sliderValue = val; recalc(); }
-	float getValue() const { return m_sliderValue; }
-
-	virtual void setSize(const Vec2i &size) override {
-		Widget::setSize(size);
-		recalc();
-	}
-
-	virtual void setStyle() override { setWidgetStyle(WidgetType::SLIDER); }
-	virtual void mouseOut() override;
-
-	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
-	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
-	virtual bool mouseMove(Vec2i pos) override;
-
-	virtual void render() override;
-
-	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
-	virtual Vec2i getMinSize() const override { return Vec2i(300,32); }
-	virtual string descType() const override { return "Slider"; }
-
-	sigslot::signal<Slider*> ValueChanged;
-};
+//
+//class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+//private:
+//	float	m_sliderValue;
+//	bool	m_thumbHover,
+//			m_thumbPressed,
+//			m_shaftHover;
+//	int		m_shaftOffset, 
+//			m_shaftSize,
+//			m_thumbCentre,
+//			m_valSize;
+//	Vec2i	m_thumbPos,
+//			m_thumbSize;
+//	Vec2i	m_titlePos,
+//			m_valuePos;
+//	string	m_title;
+//
+//	BorderStyle m_shaftStyle;
+//
+//	void recalc();
+//
+//public:
+//	Slider(Container* parent, Vec2i pos, Vec2i size, const string &title);
+//
+//	void setValue(float val) { m_sliderValue = val; recalc(); }
+//	float getValue() const { return m_sliderValue; }
+//
+//	virtual void setSize(const Vec2i &size) override {
+//		Widget::setSize(size);
+//		recalc();
+//	}
+//
+//	virtual void setStyle() override { setWidgetStyle(WidgetType::SLIDER); }
+//	virtual void mouseOut() override;
+//
+//	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+//	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+//	virtual bool mouseMove(Vec2i pos) override;
+//
+//	virtual void render() override;
+//
+//	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
+//	virtual Vec2i getMinSize() const override { return Vec2i(300,32); }
+//	virtual string descType() const override { return "Slider"; }
+//
+//	sigslot::signal<Slider*> ValueChanged;
+//};
 
 // =====================================================
 // class CellStrip

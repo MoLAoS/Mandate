@@ -20,6 +20,7 @@
 #include "sound_renderer.h"
 #include "metrics.h"
 #include "test_pane.h"
+#include "slider.h"
 
 #include "leak_dumper.h"
 
@@ -197,7 +198,7 @@ TestPane::TestPane(Program &program)
 
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 
-	CellStrip *strip = new CellStrip(window, Orientation::VERTICAL, Origin::FROM_TOP, 3);
+	CellStrip *strip = new CellStrip(window, Orientation::VERTICAL, Origin::FROM_TOP, 4);
 	strip->setPos(Vec2i(0));
 	strip->setSize(g_metrics.getScreenDims());
 	
@@ -223,6 +224,7 @@ TestPane::TestPane(Program &program)
 	fruit.push_back("Lime");
 
 	strip->getCell(0)->setSizeHint(SizeHint(10, -1));
+	strip->getCell(2)->setSizeHint(SizeHint(10, -1));
 
 	CellStrip *topStrip = new CellStrip(strip->getCell(0), Orientation::HORIZONTAL);
 	topStrip->setAnchors(padAnchors);
@@ -233,6 +235,11 @@ TestPane::TestPane(Program &program)
 	middleStrip->setAnchors(padAnchors);
 	middleStrip->addCells(3);
 
+	CellStrip *middleStrip2 = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL);
+	middleStrip2->setAnchors(padAnchors);
+	middleStrip2->addCells(3);
+	middleStrip2->getCell(1)->setSizeHint(SizeHint(-1, 40));
+
 	//Vec2i sz(200, cfg.getDefaultItemHeight());
 	//sz += cfg.getBorderStyle(WidgetType::DROP_LIST).getBorderDims();
 
@@ -240,6 +247,15 @@ TestPane::TestPane(Program &program)
 	dropList->addItems(fruit);
 	dropList->setAnchors(fillAnchors);
 	dropList->setDropBoxHeight(200);
+
+	CheckBox *checkBox = new CheckBox(middleStrip2->getCell(1));
+	checkBox->setAnchors(fillAnchors);
+	checkBox->setChecked(true);
+
+	Slider2 *slider = new Slider2(middleStrip2->getCell(0), false);
+	slider->setAnchors(fillAnchors);
+	slider->setRange(100);
+	slider->setValue(50);
 
 	Texture2D *tex = g_coreData.getGaeSplashTexture();
 
@@ -259,11 +275,6 @@ TestPane::TestPane(Program &program)
 	string txt = "La de da.\n\nTest text, testing text, this is some text to test the ScrollText widget.\n";
 	txt += "   and this is some more! ...\nmore\nmore\nmore\nmore\nThis is a last bit.";
 	scrollText->setText(txt);
-
-	// force layout before setting text (so the ScrollText can wrap it properly)
-	///@todo ScrollText should probably remember the 'original' string, and re-wrap on resize...
-	//strip->layoutCells();
-	//middleStrip->layoutCells();
 }
 
 TestPane::~TestPane() {

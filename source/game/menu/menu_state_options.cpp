@@ -129,22 +129,22 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 
 	y += yInc * 2;
 
-	m_volMusicSlider = new Slider(&program, Vec2i(x, y), Vec2i(w, h), lang.get("MusicVolume"));
-	float val = clamp(float(config.getSoundVolumeMusic()) / 100.f, 0.f, 1.f);
-	m_volMusicSlider->setValue(val);
-	m_volMusicSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
+	//m_volMusicSlider = new Slider2(&program, Vec2i(x, y), Vec2i(w, h), lang.get("MusicVolume"));
+	//float val = clamp(float(config.getSoundVolumeMusic()) / 100.f, 0.f, 1.f);
+	//m_volMusicSlider->setValue(val);
+	//m_volMusicSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
 
-	y += yInc;
-	m_volAmbientSlider = new Slider(&program, Vec2i(x, y), Vec2i(w, h), lang.get("AmbientVolume"));
-	val = clamp(float(config.getSoundVolumeAmbient()) / 100.f, 0.f, 1.f);
-	m_volAmbientSlider->setValue(val);
-	m_volAmbientSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
+	//y += yInc;
+	//m_volAmbientSlider = new Slider2(&program, Vec2i(x, y), Vec2i(w, h), lang.get("AmbientVolume"));
+	//val = clamp(float(config.getSoundVolumeAmbient()) / 100.f, 0.f, 1.f);
+	//m_volAmbientSlider->setValue(val);
+	//m_volAmbientSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
 
-	y += yInc;
-	m_volFxSlider = new Slider(&program, Vec2i(x, y), Vec2i(w, h), lang.get("FxVolume"));
-	val = clamp(float(config.getSoundVolumeFx()) / 100.f, 0.f, 1.f);
-	m_volFxSlider->setValue(val);
-	m_volFxSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
+	//y += yInc;
+	//m_volFxSlider = new Slider2(&program, Vec2i(x, y), Vec2i(w, h), lang.get("FxVolume"));
+	//val = clamp(float(config.getSoundVolumeFx()) / 100.f, 0.f, 1.f);
+	//m_volFxSlider->setValue(val);
+	//m_volFxSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
 }
 
 void MenuStateOptions::onButtonClick(Button* btn) {
@@ -223,15 +223,14 @@ void MenuStateOptions::update() {
 	}
 }
 
-void MenuStateOptions::onSliderValueChanged(Slider* slider) {
-	Config &config= Config::getInstance();
+void MenuStateOptions::onSliderValueChanged(Slider2* slider) {
 	if (slider == m_volFxSlider) {
-		config.setSoundVolumeFx(int(slider->getValue() * 100));
+		g_config.setSoundVolumeFx(slider->getValue());
 	} else if (slider == m_volAmbientSlider) {
-		config.setSoundVolumeAmbient(int(slider->getValue() * 100));
+		g_config.setSoundVolumeAmbient(int(slider->getValue() * 100));
 	} else if (slider == m_volMusicSlider) {
-		config.setSoundVolumeMusic(int(slider->getValue() * 100));
-		CoreData::getInstance().getMenuMusic()->setVolume(slider->getValue());
+		g_config.setSoundVolumeMusic(slider->getValue());
+		g_coreData.getMenuMusic()->setVolume(float(slider->getValue()));
 	}
 }
 

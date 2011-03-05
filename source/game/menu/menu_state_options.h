@@ -15,6 +15,7 @@
 
 #include "main_menu.h"
 #include "compound_widgets.h"
+#include "slider.h"
 
 namespace Glest { namespace Menu {
 using namespace Widgets;
@@ -41,7 +42,7 @@ private:
 							
 	CheckBox	*m_3dTexCheckBox;
 	
-	Slider		*m_volFxSlider,
+	Slider2		*m_volFxSlider,
 				*m_volAmbientSlider,
 				*m_volMusicSlider;
 
@@ -67,7 +68,7 @@ private:
 
 	void onButtonClick(Button* btn);
 	void on3dTexturesToggle(Button* cb);
-	void onSliderValueChanged(Slider* slider);
+	void onSliderValueChanged(Slider2* slider);
 	void onDropListSelectionChanged(ListBase* list);
 };
 
