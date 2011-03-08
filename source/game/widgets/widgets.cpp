@@ -730,7 +730,7 @@ void CellStrip::setSize(const Vec2i &sz) {
 }
 
 void CellStrip::render() {
-	renderBackground();
+//	renderBackground();
 	if (m_dirty) {
 		WIDGET_LOG( descShort() << " : CellStrip::render() : dirty, laying out cells." );
 		layoutCells();
@@ -1003,7 +1003,6 @@ void Panel::layoutHorizontal() {
 }
 
 Vec2i Panel::getMinSize() const {
-	///TODO Compositor...
 	return Vec2i(-1);
 }
 
@@ -1026,7 +1025,6 @@ void Panel::addChild(Widget* child) {
 
 void Panel::render() {
 	assertGl();
-	Widget::renderBackground();
 	Vec2i pos = getScreenPos();
 	pos.x += getBorderLeft();
 	pos.y += getBorderTop();
@@ -1060,7 +1058,7 @@ void ToolTip::init() {
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
 	Font *font = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::BIG];
 	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), font, false);
-	TextWidget::setTextPos(Vec2i(4, 4));
+	TextWidget::setTextPos(Vec2i(getBorderLeft(), getBorderTop()));
 }
 
 ToolTip::ToolTip(Container* parent)

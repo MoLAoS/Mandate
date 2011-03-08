@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 #include <string>
-#include "font.h"		// Font
+#include "font.h"
 
 #include "math_util.h"
 

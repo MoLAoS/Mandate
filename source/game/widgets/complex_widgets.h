@@ -27,24 +27,29 @@ protected:
 	int             m_selectedIndex;
 	vector<string>  m_listItems;
 
+	// Construct floating
 	ListBase(WidgetWindow* window, Orientation ld, Origin orgn, int cells);
 
 public:
+	// Construct
 	ListBase(Container* parent, Orientation ld, Origin orgn, int cells);
 	ListBase(Container* parent, Vec2i pos, Vec2i size, Orientation ld, Origin orgn, int cells);
 
-	virtual void addItems(const vector<string> &items) = 0;
-	virtual void addItem(const string &item) = 0;
-	virtual void clearItems() = 0;
-
-	virtual void setSelected(int index) = 0;
-	virtual void setSelected(const string &item) = 0;
-
+	// get selected
 	int getSelectedIndex() { return m_selectedIndex; }
 	ListBoxItem* getSelectedItem() { return m_selectedItem; }
 
+	// get item count
 	unsigned getItemCount() const { return m_listItems.size(); }
 
+	// list interface
+	virtual void addItems(const vector<string> &items) = 0;
+	virtual void addItem(const string &item) = 0;
+	virtual void clearItems() = 0;
+	virtual void setSelected(int index) = 0;
+	virtual void setSelected(const string &item) = 0;
+
+	// Signals
 	sigslot::signal<ListBase*> SelectionChanged;
 	sigslot::signal<ListBase*> SameSelected;
 };
@@ -66,35 +71,38 @@ private:
 	void init();
 
 public:
+	// Construct
 	ListBox(Container* parent);
 	ListBox(Container* parent, Vec2i pos, Vec2i size);
 	//ListBox(WidgetWindow* window);
 
-	virtual void addItems(const vector<string> &items) override;
-	virtual void addItem(const string &item) override;
-	void addColours(const vector<Vec3f> &colours);
-	void clearItems() override;
-
-	virtual void setSelected(int index) override;
-	virtual void setSelected(const string &name) override;
-	void onSelected(ListBoxItem* item);
-	
-	virtual void setSize(const Vec2i &sz) override;
-
-	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_BOX); }
-	virtual void layoutCells() override;
-
-	bool mouseWheel(Vec2i pos, int z) override;
-
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-
 	int getPrefHeight(int childCount = -1);
 
+	// ListBase overrides
+	virtual void addItems(const vector<string> &items) override;
+	virtual void addItem(const string &item) override;
+	virtual void clearItems() override;
+	virtual void setSelected(int index) override;
+	virtual void setSelected(const string &name) override;
+
+	// CellStrip override
+	virtual void layoutCells() override;
+
+	// Widget overrides
+	virtual void setSize(const Vec2i &sz) override;
+	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_BOX); }
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 	virtual string descType() const override { return "ListBox"; }
 
-	void onScroll(int);
+	// MouseWidget overrides
+	virtual bool mouseWheel(Vec2i pos, int z) override;
 
+	// Slots (event handlers)
+	void onScroll(int);
+	void onSelected(ListBoxItem* item);
+
+	// Signals
 	// inherited signals:
 	//		ListBase::SelectionChanged
 	//		Widget::Destoyed
@@ -112,25 +120,29 @@ private:
 protected:
 
 public:
+	// Construct
 	ListBoxItem(Container* parent);
 	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz);
-	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour);
+	ListBoxItem(Container* parent, Vec2i pos, Vec2i sz, const Vec3f &bgColour); /**< @deprecated do not use */
 
+	// set 'selected' flag
 	void setSelected(bool s);
-	void setBackgroundColour(const Vec3f &colour);
+	// obsolete
+	void setBackgroundColour(const Vec3f &colour); /**< @deprecated do not use */
 
+	// Widget overrides
+	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_ITEM); }
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
+	virtual string descType() const override { return "ListBoxItem"; }
+
+	// MouseWidget overrides
 	virtual void mouseIn() override;
 	virtual void mouseOut() override;
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	virtual void setStyle() override { setWidgetStyle(WidgetType::LIST_ITEM); }
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-
-	//virtual void render();
-	virtual string descType() const override { return "ListBoxItem"; }
-
+	// Signals
 	//sigslot::signal<ListBoxItem*> Selected;
 	sigslot::signal<ListBoxItem*> Clicked;
 	// inherited signals:
@@ -148,40 +160,42 @@ private:
 	int dropBoxHeight;
 
 	void expandList();
-	//void layout();
 	void init();
 
 public:
+	// Construct
 	DropList(Container* parent);
 	DropList(Container* parent, Vec2i pos, Vec2i size);
 
-	//virtual void setSize(const Vec2i &sz) override;
+	// set a maximum height for the expanded drop list
 	void setDropBoxHeight(int h) { dropBoxHeight = h; }
 
+	// ListBase overrides
+	virtual void addItems(const vector<string> &items) override;
+	virtual void addItem(const string &item) override;
+	virtual void clearItems() override;
+	virtual void setSelected(int index) override;
+	virtual void setSelected(const string &item) override;
+
+	// Widget overrides
 	virtual void setStyle() override { setWidgetStyle(WidgetType::DROP_LIST); }
-	void addItems(const vector<string> &items) override;
-	void addItem(const string &item) override;
-	void clearItems() override;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
+	virtual string descType() const override { return "DropList"; }
 
-	void setSelected(int index) override;
-	void setSelected(const string &item) override;
+	// MouseWidget overrides
+	virtual bool mouseWheel(Vec2i pos, int z) override;
+	virtual void mouseIn() override;
+	virtual void mouseOut() override;
 
-	bool mouseWheel(Vec2i pos, int z) override;
-
-	// event handlers
+	// Slots (event handlers)
 	void onBoxClicked(ListBoxItem*);
 	void onExpandList(Button*);
 	void onSelectionMade(ListBase*);
 	void onSameSelected(ListBase*);
 	void onListDisposed(Widget*);
 
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-	//virtual void setEnabled(bool v) {
-	//}
-
-	virtual string descType() const override { return "DropList"; }
-
+	// Signals
 	sigslot::signal<DropList*> ListExpanded;
 	sigslot::signal<DropList*> ListCollapsed;
 	// inherited signals:

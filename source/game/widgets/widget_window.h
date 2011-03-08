@@ -94,7 +94,6 @@ private:
 	void unwindMouseOverStack();
 	void doMouseInto(Widget* widget);
 	void destroyFloater();
-	void renderMouseCursor();
 	void setScissor(const Rect2i &rect);
 
 public:

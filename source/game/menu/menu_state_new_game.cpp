@@ -86,18 +86,20 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	const int defWidgetHeight = g_widgetConfig.getDefaultItemHeight();
 	const int defCellHeight = defWidgetHeight * 3 / 2;
 
-	// create
+	// top level strip
 	CellStrip *topStrip = 
 		new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::FROM_TOP, 4);
 	Vec2i pad(15, 45);
 	topStrip->setPos(pad);
 	topStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
-	//int hints[] = { 50, 15, 20, 10 };
-	//topStrip->setPercentageHints(hints);
-	topStrip->getCell(0)->setSizeHint(SizeHint()); // all remaining space
-	topStrip->getCell(1)->setSizeHint(SizeHint(-1, 1 * defCellHeight));
-	topStrip->getCell(2)->setSizeHint(SizeHint(-1, 3 * defCellHeight));
-	topStrip->getCell(3)->setSizeHint(SizeHint(10));
+	// cell 0 : player slot space
+	// cell 1 : strip for random locations, shroud and fog check boxes
+	// cell 2 : strip for map label/drop-list/info, tilset drop-list and tech drop-list
+	// cell 3 : strip for return and play buttons
+	topStrip->getCell(0)->setSizeHint(SizeHint());                      // all remaining space
+	topStrip->getCell(1)->setSizeHint(SizeHint(-1, 1 * defCellHeight)); // one default item height
+	topStrip->getCell(2)->setSizeHint(SizeHint(-1, 3 * defCellHeight)); // 3 * default item height
+	topStrip->getCell(3)->setSizeHint(SizeHint(10));                    // 10 %
 
 	Anchors a(Anchor(AnchorType::RIGID, 0));
 	Anchors a2(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
@@ -121,6 +123,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_playerSlots[i]->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight));
 	}
 
+	// check-box strip
 	strip = new CellStrip(topStrip->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	strip->setAnchors(a);
 
@@ -260,6 +263,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeList->setSelected(0);
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
+	// Buttons strip
 	strip = new CellStrip(topStrip->getCell(3), Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	strip->setAnchors(a);
 

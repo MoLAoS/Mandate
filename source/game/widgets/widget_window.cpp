@@ -228,7 +228,7 @@ void WidgetWindow::render() {
 	if (floatingWidget) {
 		floatingWidget->render();
 	}
-	renderMouseCursor();
+	m_mouseCursor->render();
 }
 
 void WidgetWindow::aquireKeyboardFocus(KeyboardWidget* widget) {
@@ -594,10 +594,6 @@ void WidgetWindow::eventKeyPress(char c) {
 //	mouseMain->setPos(mousePos);
 //	//mouseAnimations = new Animset(this, mouseMain, 30);
 //}
-
-void WidgetWindow::renderMouseCursor() {
-	m_mouseCursor->render();
-}
 
 }}
 

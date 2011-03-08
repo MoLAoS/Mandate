@@ -128,9 +128,7 @@ public:
 	//int getFontIndex(const Font *f);
 	int getTextureIndex(const Texture2D *t);
 
-	int getDefaultItemHeight() const {
-		return int(m_fonts[m_defaultFonts[FontUsage::MENU]][FontSize::NORMAL]->getMetrics()->getHeight() * 1.1f);
-	}
+	int getDefaultItemHeight() const;
 
 	FontSet& getMenuFont() { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
 	FontSet& getTitleFont() { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }

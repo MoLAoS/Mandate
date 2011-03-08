@@ -25,27 +25,22 @@ using Global::CoreData;
 using Global::Lang;
 using Sim::ControlTypeNames;
 
-Colour dark = Colour(0x3Fu, 0x3Fu, 0x3Fu, 0x9Fu);
-
 ColourButton::ColourButton(Container *parent)
-		: Button(parent, Vec2i(0), Vec2i(32))
-		, m_colourBase(dark)
-		, m_colourOutline(dark) {
+		: Button(parent, Vec2i(0), Vec2i(32)) {
 	setWidgetStyle(WidgetType::COLOUR_BUTTON);
+	m_colourBase = getRootWindow()->getConfig()->getColour(m_backgroundStyle.m_colourIndices[0]);
+	m_colourOutline = getRootWindow()->getConfig()->getColour(m_borderStyle.m_colourIndices[0]);
 }
 
 ColourButton::ColourButton(Container *parent, Vec2i pos, Vec2i size)
-		: Button(parent, pos, size)
-		, m_colourBase(dark)
-		, m_colourOutline(dark) {
+		: Button(parent, pos, size) {
 	setWidgetStyle(WidgetType::COLOUR_BUTTON);
 }
 
 void ColourButton::clearColour() {
-	m_colourBase = m_colourOutline = dark;
 	setWidgetStyle(WidgetType::COLOUR_BUTTON);
-	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
-	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
+	m_colourBase = getRootWindow()->getConfig()->getColour(m_backgroundStyle.m_colourIndices[0]);
+	m_colourOutline = getRootWindow()->getConfig()->getColour(m_borderStyle.m_colourIndices[0]);
 }
 
 void ColourButton::setColour(Colour base, Colour outline) {
@@ -57,6 +52,7 @@ void ColourButton::setColour(Colour base, Colour outline) {
 
 void ColourButton::setStyle() {
 	setWidgetStyle(WidgetType::COLOUR_BUTTON);
+
 	m_backgroundStyle.setColour(g_widgetConfig.getColourIndex(m_colourBase));
 	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
 }
@@ -197,7 +193,6 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5)
 		, m_freeSlot(false) {
-	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };
 	setPercentageHints(hints);

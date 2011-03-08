@@ -2164,7 +2164,6 @@ void Renderer::init2dList() {
 		glLoadIdentity();
 
 		//disable everything
-		glDisable(GL_BLEND);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_ALPHA_TEST);
 		glDisable(GL_DEPTH_TEST);
@@ -2177,6 +2176,7 @@ void Renderer::init2dList() {
 		glDisable(GL_TEXTURE_2D);
 
 		//blend func
+		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		//color

@@ -181,6 +181,20 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	m_textWidget = 0;
 }
 
+string Widget::descState() {
+	if (!m_enabled) { // disabled ?
+		return "disabled";
+	} else if (m_selected) { // else priority to selected flag
+		return "selected";
+	} else if (m_focus) { // followed by focus flag
+		return "focus";
+	} else if (m_hover) { // then hover
+		return "hover";
+	} else { // or normal
+		return "normal";
+	}
+}
+
 void Widget::setWidgetStyle(WidgetType type) {
 	if (!m_enabled) { // disabled ?
 		setStyle(g_widgetConfig.getWidgetStyle(type, WidgetState::DISABLED));
@@ -269,6 +283,7 @@ void Widget::setBackgroundStyle(const BackgroundStyle &style) {
 }
 
 void Widget::renderOverlay(int ndx, Vec2i pos, Vec2i size) {
+	assert(glIsEnabled(GL_BLEND));
 	const Texture2D *tex = m_rootWindow->getConfig()->getTexture(ndx);
 	if (!tex) {
 		assert(false);
@@ -281,7 +296,6 @@ void Widget::renderOverlay(int ndx, Vec2i pos, Vec2i size) {
 	verts[3] = verts[0] + Vec2i(0, size.y);
 
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
 	glBegin(GL_TRIANGLE_FAN);
 	glColor4f(1.f, 1.f, 1.f, getFade());
@@ -322,13 +336,16 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 //		assert(false);
 		return;
 	}
-
+	assert(imgNdx >= 0);
 	const Texture2DGl *tex = static_cast<const Texture2DGl*>(m_rootWindow->getConfig()->getTexture(imgNdx));
-	assert(glIsTexture(tex->getHandle()));
 	const Vec2f uvStepBorder(borderSize / float(tex->getPixmap()->getW()),
 		borderSize / float(tex->getPixmap()->getH()));
 	const Vec2f uvStepCorner(cornerSize / float(tex->getPixmap()->getW()),
 		cornerSize / float(tex->getPixmap()->getH()));
+
+	// assert sanity
+	assert(glIsEnabled(GL_BLEND));
+	assert(glIsTexture(tex->getHandle()));
 
 	// 8 quads
 	Vec2f verts[32];
@@ -369,9 +386,6 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 	for (unsigned short i=0; i < 32; ++i) {
 		indices.push_back(i);
 	}
-	//glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TEXTURE_BIT);
-	//glActiveTexture(GL_TEXTURE0);
-	//glEnable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex->getHandle());
 	assertGl();
@@ -387,12 +401,15 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 	glDrawElements(GL_QUADS, 32, GL_UNSIGNED_SHORT, &indices[0]);
 	assertGl();
 
-	//glPopAttrib();
+	// restore GL state
 	glPopClientAttrib();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
 	assertGl();
 }
 
 void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
+	assert(glIsEnabled(GL_BLEND));
 	assert(style.m_type != BorderType::NONE);
 	if (size.x < style.m_sizes[Border::LEFT] + style.m_sizes[Border::RIGHT]
 	|| size.y < style.m_sizes[Border::TOP] + style.m_sizes[Border::BOTTOM]) {
@@ -403,6 +420,7 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 		renderBordersFromTexture(style, offset, size);
 	}
 
+	// O = Outside, I = Inside, L = Left, T = Top, R = Right, B = Bottom
 	enum { OBL, OTL, OTR, OBR, IBL, ITL, ITR, IBR };
 	Vec2i verts[8];
 	verts[OTL] = m_screenPos + offset;
@@ -416,10 +434,6 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 	verts[IBR] = verts[OBR] + Vec2i(-style.m_sizes[Border::RIGHT], -style.m_sizes[Border::BOTTOM]);
 
 	assertGl();
-	//glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-	//glDisable(GL_LIGHTING);
-	//glDisable(GL_TEXTURE_2D);
-	//glEnable(GL_BLEND);
 
 	bool raised = false;
 
@@ -534,11 +548,11 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 			break;
 	}
-	//glPopAttrib();
 	assertGl();
 }
 
 void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset, const Vec2i &size) {
+	assert(glIsEnabled(GL_BLEND));
 	assert(style.m_type != BackgroundType::NONE);
 
 	Vec2i verts[4];
@@ -548,9 +562,6 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 	verts[3] = verts[0] + Vec2i(0, size.y);
 
 	assertGl();
-	//glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-	//glEnable(GL_BLEND);
-	//glDisable(GL_LIGHTING);
 
 	Colour colour;
 	switch (style.m_type) {
@@ -605,7 +616,6 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 
 			break;
 	}
-	//glPopAttrib();
 	assertGl();
 }
 
@@ -636,6 +646,7 @@ void Widget::renderForeground() {
 }
 
 void Widget::renderHighLight(int colour, float centreAlpha, float borderAlpha, Vec2i offset, Vec2i size) {
+	assert(glIsEnabled(GL_BLEND));
 	Colour c = m_rootWindow->getConfig()->getColour(colour);
 	const Colour borderColour = Colour(c.r, c.g, c.b, clamp(unsigned(c.a * borderAlpha * m_fade), 0u, 255u));
 	const Colour centreColour = Colour(c.r, c.g, c.b, clamp(unsigned(c.a * centreAlpha * m_fade), 0u, 255u));
@@ -645,8 +656,6 @@ void Widget::renderHighLight(int colour, float centreAlpha, float borderAlpha, V
 	float y2 = y1 + float(size.y);
 	
 	assertGl();
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-	glEnable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
 
 	glBegin(GL_TRIANGLE_FAN);
@@ -661,7 +670,6 @@ void Widget::renderHighLight(int colour, float centreAlpha, float borderAlpha, V
 		glVertex2f(x1, y2);
 		glVertex2f(x1, y1);
 	glEnd();
-	glPopAttrib();
 	assertGl();
 }
 
@@ -713,15 +721,11 @@ void ImageWidget::renderImage(int ndx) {
 }
 
 void ImageWidget::startBatch() {
-	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-	glDisable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
 	batchRender = true;
 }
 
 void ImageWidget::endBatch() {
-	glPopAttrib();
 	assertGl();
 	batchRender = false;
 }
@@ -731,10 +735,7 @@ void ImageWidget::renderImage(int ndx, const Vec4f &colour) {
 	assertGl();
 
 	if (!batchRender) {
-		glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
-		glDisable(GL_LIGHTING);
 		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
 	}
 
 	int x1, x2, y1, y2;
@@ -767,7 +768,6 @@ void ImageWidget::renderImage(int ndx, const Vec4f &colour) {
 	glEnd();
 
 	if (!batchRender) {
-		glPopAttrib();
 		assertGl();
 	}
 }
@@ -848,8 +848,6 @@ void TextWidget::startBatch(const Font *font) {
 	if (!font) {
 		font = m_defaultFont;
 	}
-	glPushAttrib(GL_ENABLE_BIT);
-	glEnable(GL_BLEND);
 	m_textRenderer = g_widgetWindow.getTextRenderer();
 	m_textRenderer->begin(font);
 	m_batchRender = true;
@@ -857,7 +855,6 @@ void TextWidget::startBatch(const Font *font) {
 
 void TextWidget::endBatch() {
 	m_textRenderer->end();
-	glPopAttrib();
 	m_batchRender = false;
 }
 
@@ -867,8 +864,6 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 		if (!font) {
 			font = m_defaultFont;
 		}
-		glPushAttrib(GL_ENABLE_BIT);
-		glEnable(GL_BLEND);
 		m_textRenderer = g_widgetWindow.getTextRenderer();
 		m_textRenderer->begin(font);
 	} 
@@ -876,7 +871,6 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	m_textRenderer->render(txt, x, y + int(font->getMetrics()->getHeight()));
 	if (!m_batchRender) {
 		m_textRenderer->end();
-		glPopAttrib();
 	}
 	assertGl();
 }

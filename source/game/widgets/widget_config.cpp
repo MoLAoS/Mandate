@@ -832,6 +832,10 @@ void WidgetConfig::load() {
 	luaScript.close();
 }
 
+int WidgetConfig::getDefaultItemHeight() const {
+	return int(m_fonts[m_defaultFonts[FontUsage::MENU]][FontSize::NORMAL]->getMetrics()->getHeight() * 1.2f);
+}
+
 int WidgetConfig::getColourIndex(const Vec3f &c) {
 	return getColourIndex(Colour(uint8(c.r * 255), uint8(c.g * 255), uint8(c.b * 255), 255u));
 }

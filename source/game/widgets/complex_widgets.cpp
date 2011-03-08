@@ -163,7 +163,7 @@ void ListBox::layoutCells() {
 	CellStrip::layoutCells();
 
 	// the above call will cause m_listStrip to be laid out, but not until just prior to next render
-	// we need to pull y coord values out, so we force it here
+	// we need to pull y coord values out, so we force the layout to happen now
 	m_listStrip->layoutCells();
 
 	// set scroll-bar ranges
@@ -207,7 +207,7 @@ int ListBox::getPrefHeight(int childCount) {
 	return itemSize * childCount;
 }
 
-///@todo handle no m_children
+///@todo handle no children
 Vec2i ListBox::getMinSize() const {
 	Vec2i res(0);
 	foreach_const (WidgetList, it, m_children) {
@@ -366,6 +366,9 @@ DropList::DropList(Container* parent, Vec2i pos, Vec2i size)
 
 void DropList::init() {
 	setWidgetStyle(WidgetType::DROP_LIST);
+	WIDGET_LOG( descId() << " : DropList::init() state: " << descState()
+		<< " left border " << getBorderLeft() );
+
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
 	Font *itemFont = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::NORMAL];
 
@@ -398,23 +401,14 @@ Vec2i DropList::getMinSize() const {
 	res += getBordersAll();
 	return  res;
 }
-//
-//void DropList::setSize(const Vec2i &size) {
-//	Widget::setSize(size);
-//	layout();
-//}
 
-//void DropList::layout() {
-////	const int borderSize = getBorderSize();
-//	Vec2i size = getSize();
-//	int btn_sz = size.y - getBordersVert();
-//	button->setSize(Vec2i(btn_sz));
-//	button->setPos(Vec2i(size.x - btn_sz - getBorderRight(), getBorderBottom()));
-//	Vec2i liPos(getBorderLeft(), getBorderBottom());
-//	Vec2i liSz(size.x - btn_sz - getBordersHoriz(), btn_sz);
-//	m_selectedItem->setPos(liPos);
-//	m_selectedItem->setSize(liSz);
-//}
+void DropList::mouseIn() {
+	setHover(true);
+}
+
+void DropList::mouseOut() {
+	setHover(false);
+}
 
 bool DropList::mouseWheel(Vec2i pos, int z) {
 	if (m_selectedIndex == -1) {

@@ -274,6 +274,8 @@ public:
 	string descLong();  // describe type, id, pos, and size.
 	string descShort(); // describe type & id
 
+	string descState();
+
 	sigslot::signal<Widget*> Destroyed;
 
 };
@@ -530,10 +532,10 @@ public:
 	virtual void addChild(Widget* child);
 	virtual void remChild(Widget* child);
 
-	virtual void setPos(const Vec2i &p);
-	virtual void setEnabled(bool v);
-	virtual void setFade(float v);
-	virtual void render();
+	virtual void setPos(const Vec2i &p) override;
+	virtual void setEnabled(bool v) override;
+	virtual void setFade(float v) override;
+	virtual void render() override;
 };
 
 // =====================================================
