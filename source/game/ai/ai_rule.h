@@ -179,6 +179,8 @@ public:
 
 	virtual bool test();
 	virtual void execute();
+private:
+	bool canProduce(UnitClass unitClass) const;
 };
 
 // =====================================================
