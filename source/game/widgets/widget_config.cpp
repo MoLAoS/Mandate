@@ -824,6 +824,7 @@ void WidgetConfig::load() {
 	loadStyles("TitleBarExpandButton", WidgetType::TITLE_BAR_EXPAND);
 	loadStyles("TitleBarShrinkButton", WidgetType::TITLE_BAR_SHRINK);
 	loadStyles("ColourButton", WidgetType::COLOUR_BUTTON);
+	loadStyles("TickerTape", WidgetType::TICKER_TAPE);
 
 	WIDGET_LOG( "====================================================" );
 	WIDGET_LOG( "==       Finished Loading widget styles           ==" );

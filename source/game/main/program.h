@@ -103,7 +103,7 @@ private:
 		virtual void renderFg() override;
 	};
 
-	static const int maxUpdateTimes = 5 * 6;
+	static const int maxUpdateTimes = 5;
 	static const int maxUpdateBackLog = 12; ///@todo should be speed dependant
 	static const int maxTimes = 5;
 
@@ -114,6 +114,7 @@ private:
 	PerformanceTimer updateTimer;
 	PerformanceTimer renderTimer;
 	PerformanceTimer updateCameraTimer;
+	PerformanceTimer guiUpdateTimer;
 
 	SimulationInterface *simulationInterface;
 

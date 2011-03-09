@@ -26,9 +26,9 @@ public:
 	StaticImage(Container* parent, Vec2i pos, Vec2i size);
 	StaticImage(Container* parent, Vec2i pos, Vec2i size, Texture2D *tex);
 
+	// Widget overrides
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
-
 	virtual void setStyle() override { setWidgetStyle(WidgetType::STATIC_WIDGET); }
 	virtual void render() override;
 	virtual string descType() const override { return "StaticImage"; }
@@ -65,11 +65,12 @@ public:
 		use the squarespec to extract the images
 	}*/
 	void addImages(const Texture2D *source, int width, int height);
-	virtual void render() override { renderImage(m_active); }
-
 	void setDefaultImage(int ndx = 0);
 	void setActive(int ndx = 0);
+
+	// Widget overrides
 	virtual string descType() const override { return "ImageSet"; }
+	virtual void render() override { renderImage(m_active); }
 };
 
 // =====================================================
@@ -98,11 +99,6 @@ public:
 		m_end = m_imageset->getNumImages()-1;
 	}
 
-	/// rendering is handled by Imageset
-	virtual void render() override {}
-	virtual void update() override;
-	virtual string descType() const override { return "Animset"; }
-
 	void setRange(int start, int end) { m_start = start; m_end = end; }
 	const Texture2D *getCurrent() { return m_imageset->getImage(m_currentFrame); }
 	void setFps(int v) { m_fps = v; }
@@ -110,6 +106,12 @@ public:
 	void stop() { setEnabled(false); }
 	void reset() { m_currentFrame = m_start; }
 	void loop(bool v) { m_loop = v; }
+
+	// Widget overrides
+	/// rendering is handled by Imageset
+	virtual void render() override {}
+	virtual void update() override;
+	virtual string descType() const override { return "Animset"; }
 };
 
 // =====================================================
@@ -127,12 +129,12 @@ public:
 	StaticText(Container* parent, Vec2i pos, Vec2i size);
 
 public:
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-
 	void setShadow(const Vec4f &colour, int offset=2);
 	void setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset=2);
 
+	// Widget overrides
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 	virtual void setStyle() override { setWidgetStyle(WidgetType::STATIC_WIDGET); }
 	virtual void render() override;
 	virtual string descType() const override { return "StaticText"; }
@@ -150,22 +152,22 @@ public:
 	Button(Container* parent);
 	Button(Container* parent, Vec2i pos, Vec2i size, bool hoverHighlight = true);
 
-	virtual void setSize(const Vec2i &sz) override;
-
+	// MouseWidget overrides
 	virtual void mouseIn() override { setHover(true); }
 	virtual void mouseOut() override { setHover(false); }
-
 	virtual bool mouseMove(Vec2i pos) override;
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
+	// Widget overrides
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
-
+	virtual void setSize(const Vec2i &sz) override;
 	virtual void setStyle() { setWidgetStyle(WidgetType::BUTTON); }
 	virtual void render() override;
 	virtual string descType() const override { return "Button"; }
 
+	// Signals
 	sigslot::signal<Button*> Clicked;
 };
 
@@ -181,18 +183,18 @@ public:
 	CheckBox(Container* parent);
 	CheckBox(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void setSize(const Vec2i &sz) override;
 	void setChecked(bool v) { m_checked = v; setStyle(); }
 	bool isChecked() const { return m_checked; }
 
+	// MouseWidget overrides
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
+	// Widget overrides
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
-
+	virtual void setSize(const Vec2i &sz) override;
 	virtual void setStyle() override { setWidgetStyle(m_checked ? WidgetType::CHECK_BOX_CHK : WidgetType::CHECK_BOX); }
-	//virtual void render() override;
 	virtual string descType() const override { return "CheckBox"; }
 };
 
@@ -211,81 +213,31 @@ public:
 	TextBox(Container* parent, Vec2i pos, Vec2i size);
 
 	void setInputMask(const string &allowMask) { m_inputMask = allowMask; }
-
 	void gainFocus();
 
+	// MouseWidget overrides
 	virtual void mouseIn() override { setHover(true);  }
 	virtual void mouseOut() override { setHover(false); }
-
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
+	// KeyboardWidget overrides
 	virtual bool keyDown(Key key) override;
 	virtual bool keyUp(Key key) override;
 	virtual bool keyPress(char c) override;
 	virtual void lostKeyboardFocus() override;
 
+	// Widget overrides
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
-
 	virtual void setStyle() override { setWidgetStyle(WidgetType::TEXT_BOX); }
 	virtual void render() override;
 	virtual string descType() const override { return "TextBox"; }
 
+	// Signals
 	sigslot::signal<TextBox*> TextChanged;
 	sigslot::signal<TextBox*> InputEntered;
 };
-
-// =====================================================
-//  class Slider
-// =====================================================
-//
-//class Slider : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
-//private:
-//	float	m_sliderValue;
-//	bool	m_thumbHover,
-//			m_thumbPressed,
-//			m_shaftHover;
-//	int		m_shaftOffset, 
-//			m_shaftSize,
-//			m_thumbCentre,
-//			m_valSize;
-//	Vec2i	m_thumbPos,
-//			m_thumbSize;
-//	Vec2i	m_titlePos,
-//			m_valuePos;
-//	string	m_title;
-//
-//	BorderStyle m_shaftStyle;
-//
-//	void recalc();
-//
-//public:
-//	Slider(Container* parent, Vec2i pos, Vec2i size, const string &title);
-//
-//	void setValue(float val) { m_sliderValue = val; recalc(); }
-//	float getValue() const { return m_sliderValue; }
-//
-//	virtual void setSize(const Vec2i &size) override {
-//		Widget::setSize(size);
-//		recalc();
-//	}
-//
-//	virtual void setStyle() override { setWidgetStyle(WidgetType::SLIDER); }
-//	virtual void mouseOut() override;
-//
-//	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
-//	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
-//	virtual bool mouseMove(Vec2i pos) override;
-//
-//	virtual void render() override;
-//
-//	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
-//	virtual Vec2i getMinSize() const override { return Vec2i(300,32); }
-//	virtual string descType() const override { return "Slider"; }
-//
-//	sigslot::signal<Slider*> ValueChanged;
-//};
 
 // =====================================================
 // class CellStrip
@@ -311,10 +263,11 @@ public:
 	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells);
 
 protected:
-	void setDirty() { m_dirty = true; }	
-	virtual void addChild(Widget* child) override;
-
 	void setCustumCell(int ndx, WidgetCell *cell);
+	void setDirty() { m_dirty = true; }	
+	
+	// Container override
+	virtual void addChild(Widget* child) override;
 
 public:
 	void setSizeHint(int i, SizeHint hint) {
@@ -340,6 +293,7 @@ public:
 	void addCells(int n);
 	int  getCellCount() const { return m_cells.size(); }
 
+	// Widget overrides
 	virtual void render() override;
 	virtual void setPos(const Vec2i &pos) override;
 	virtual void setSize(const Vec2i &sz) override;
@@ -425,9 +379,10 @@ public:
 	ToolTip(Container* parent);
 	ToolTip(Container* parent, Vec2i pos, Vec2i size);
 
-	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOL_TIP); }
 	void setText(const string &txt);
 
+	// Widget overrides
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOL_TIP); }
 	virtual string descType() const override { return "Tooltip"; }
 };
 

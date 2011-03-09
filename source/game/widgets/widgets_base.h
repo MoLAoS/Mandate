@@ -424,6 +424,7 @@ private:
 
 protected:
 	void renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font = 0);
+	void renderText(const string &txt, int x, int y, const Vec4f &colour, int fontNdx);
 	void renderText(int ndx = 0);
 	void renderTextShadowed(int ndx = 0, int offset = 2);
 	void renderTextDoubleShadowed(int ndx = 0, int offset = 2);
@@ -572,7 +573,7 @@ public:
 
 class WidgetCell : public Container {
 private:
-	SizeHint   m_sizeHint;       // => WidgetCell
+	SizeHint   m_sizeHint;
 
 protected:
 	void anchorWidgets();

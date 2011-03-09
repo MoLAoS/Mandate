@@ -193,7 +193,8 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5)
 		, m_freeSlot(false) {
-	Anchors anchors(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
+	Anchors anchors(Anchor(AnchorType::RIGID, 3), Anchor(AnchorType::RIGID, 0));
+	//Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };
 	setPercentageHints(hints);
 

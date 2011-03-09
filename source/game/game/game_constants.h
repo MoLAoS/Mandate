@@ -48,7 +48,7 @@
 #	define IF_MAD_SYNC_CHECKS(x)
 #endif
 
-#define WORLD_FPS (40)
+#define WORLD_FPS (GameConstants::updateFps)
 
 #include "util.h"
 using Shared::Util::EnumNames;
@@ -109,9 +109,9 @@ namespace GameConstants {
 	const int maxColours = 16;
 	const int serverPort = 61357;
 
-	//const int defaultUpdateInterval = 6;
-	//const int updateFps = 240; // == GameSpeeds_lcm
+	const int updateFps = 40;
 	const int cameraFps = 100;
+	const int guiUpdatesPerSec = 120;
 	const int networkFramePeriod = 5;
 	const int networkExtraLatency = 250;
 

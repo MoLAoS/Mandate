@@ -106,9 +106,10 @@ Program *Program::singleton = NULL;
 Program::Program(CmdArgs &args)
 		: cmdArgs(args)
 		, tickTimer(1, maxTimes, -1)
-		, updateTimer(40/*GameConstants::updateFps*/, maxUpdateTimes, maxUpdateBackLog)
+		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
 		, renderTimer(g_config.getRenderFpsMax(), 1, 0)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
+		, guiUpdateTimer(GameConstants::guiUpdatesPerSec, maxTimes, 10)
 		, simulationInterface(0)
 		, programState(0)
 		, crashed(false)
@@ -224,6 +225,7 @@ void Program::loop() {
 			int64 updateTime = updateTimer.timeToWait();
 			int64 renderTime = renderTimer.timeToWait();
 			int64 tickTime   = tickTimer.timeToWait();
+			int64 guiTime    = guiUpdateTimer.timeToWait();
 			sleepTime = std::min(std::min(cameraTime, updateTime), std::min(renderTime, tickTime));
 		}
 
@@ -238,7 +240,6 @@ void Program::loop() {
 			{
 				_PROFILE_SCOPE("Program::loop() : Update Sound & Gui");
 				SoundRenderer::getInstance().update();
-				WidgetWindow::update();
 			}
 			if (visible) {
 				_PROFILE_SCOPE("Program::loop() : Render");
@@ -253,6 +254,11 @@ void Program::loop() {
 		while (updateCameraTimer.isTime()) {
 			_PROFILE_SCOPE("Program::loop() : update camera");
 			programState->updateCamera();
+		}
+
+		// update gui
+		while (guiUpdateTimer.isTime()) {
+			WidgetWindow::update();
 		}
 
 		// update world
@@ -400,6 +406,7 @@ void Program::resetTimers() {
 	updateTimer.setFps(WORLD_FPS);
 	updateTimer.reset();
 	updateCameraTimer.reset();
+	guiUpdateTimer.reset();
 }
 
 void Program::setUpdateFps(int updateFps) {

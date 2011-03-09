@@ -382,7 +382,7 @@ void WidgetWindow::unregisterUpdate(Widget* widget) {
 }
 
 void WidgetWindow::update() {
-	const float animSpeed = 0.02f;
+	const float animSpeed = 0.01f;
 	anim += animSpeed;
 	if (anim > 1.f) {
 		anim -= 1.f;

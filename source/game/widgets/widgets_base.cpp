@@ -875,6 +875,11 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	assertGl();
 }
 
+void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, int fontNdx) {
+	const Font *font = me->getRootWindow()->getConfig()->getFont(fontNdx);
+	renderText(txt, x, y, colour, font);
+}
+
 void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
@@ -1092,7 +1097,6 @@ void Container::render() {
 	}
 	assertGl();
 }
-
 
 // =====================================================
 // class WidgetCell

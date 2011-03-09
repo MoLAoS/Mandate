@@ -29,9 +29,148 @@
 
 using namespace Shared::Util;
 
-namespace Glest { namespace Main {
+namespace Glest {
+	
 using namespace Sim;
 using namespace Menu;
+
+namespace Widgets {
+
+class TickerTape : public StaticText {
+private:
+	Orientation   m_orientation;
+	int           m_displayInterval;
+	int           m_displayCounter;
+	int           m_transitionInterval;
+	int           m_transitionCounter;
+	int           m_currentIndex;
+	Vec2f         m_basePos;
+	Vec2f         m_transPos;
+
+private:
+	void updateTransition();
+
+public:
+	TickerTape(Container *parent, Orientation orient);
+	~TickerTape() {
+		m_rootWindow->unregisterUpdate(this);
+	}
+
+	void addItems(const vector<string> &strings);
+	void addItems(const char **strings);
+
+	void setDisplayInterval(int v)      { m_displayInterval = v;    }
+	void setTransitionInterval(int v)   { m_transitionInterval = v; }
+
+	// Widget overrides
+	virtual Vec2i getMinSize() const override;
+	virtual Vec2i getPrefSize() const override { return getMinSize(); }
+	virtual void render() override;
+	virtual void update() override;
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TICKER_TAPE); }
+	virtual string descType() const override { return "TickerTape"; }
+};
+
+TickerTape::TickerTape(Container *parent, Orientation orient)
+		: StaticText(parent)
+		, m_orientation(orient)
+		, m_displayInterval(240)
+		, m_displayCounter(0)
+		, m_transitionInterval(120)
+		, m_transitionCounter(0)
+		, m_currentIndex(-1) {
+}
+
+void TickerTape::addItems(const vector<string> &strings) {
+	if (!TextWidget::hasText()) {
+		m_rootWindow->registerUpdate(this);
+	}
+	foreach_const (vector<string>, it, strings) {
+		TextWidget::addText(*it);
+	}
+}
+
+void TickerTape::addItems(const char **strings) {
+	if (!TextWidget::hasText()) {
+		m_rootWindow->registerUpdate(this);
+	}
+	int i=0;
+	while (strings[i]) {
+		TextWidget::addText(strings[i]);
+		++i;
+	}
+}
+
+Vec2i TickerTape::getMinSize() const {
+	Vec2i txtDim = getTextDimensions(0);
+	Vec2i xtra = getBordersAll();
+	for (int i=1; i < TextWidget::numSnippets(); ++i) {
+		Vec2i dim = getTextDimensions(1);
+		if (dim.w > txtDim.w) {
+			txtDim.w = dim.w;
+		}
+		if (dim.h > txtDim.h) {
+			txtDim.h = dim.h;
+		}
+	}
+	return txtDim + xtra;
+}
+
+void TickerTape::render() {
+	if (m_currentIndex == -1) {
+		return;
+	}
+	float t;
+	if (m_displayCounter == 0) { // transition in
+		t = m_transitionCounter / float(m_transitionInterval);
+	} else if (m_displayCounter < m_displayInterval) { // display
+		t = 1.f;
+	} else { // transition out
+		t = 1.f - ((m_transitionCounter - m_transitionInterval) / float(m_transitionInterval));
+	}
+	Vec2f p = m_basePos.lerp(t, m_transPos);
+	Vec2i pos = getScreenPos() + Vec2i(int(p.x), int(p.y));
+	Vec4f col(1.f);
+	col.a = t;
+	m_rootWindow->pushClipRect(getScreenPos(), getSize());
+	TextWidget::renderText(getText(m_currentIndex), pos.x, pos.y, col, m_textStyle.m_fontIndex);
+	m_rootWindow->popClipRect();
+}
+
+void TickerTape::update() {
+	const int period = 2 * m_transitionInterval + m_displayInterval;
+	if ((m_transitionCounter + m_displayCounter) % period == 0) {
+		++m_currentIndex;
+		m_currentIndex %= TextWidget::numSnippets();
+		TextWidget::centreText(m_currentIndex);
+		Vec2i p = TextWidget::getTextPos(m_currentIndex);
+		m_transPos = Vec2f(p);
+
+		m_displayCounter = m_transitionCounter = 0;
+		if (m_orientation == Orientation::VERTICAL) {
+			m_basePos = Vec2f(m_transPos.x, m_transPos.y + getHeight());
+		} else {
+			m_basePos = Vec2f(m_transPos.x + getWidth(), m_transPos.y);
+		}
+	}
+	if (m_transitionCounter < m_transitionInterval) { // transition in
+		++m_transitionCounter;
+		if (m_transitionCounter == m_transitionInterval) {
+			m_basePos = m_transPos;
+		}
+	} else if (m_displayCounter < m_displayInterval) { // display
+		++m_displayCounter;
+		if (m_displayCounter == m_displayInterval) { // end display, set source & dest pos
+			if (m_orientation == Orientation::VERTICAL) {
+				m_basePos = Vec2f(m_transPos.x, m_transPos.y - getHeight());
+			} else {
+				m_basePos = Vec2f(m_transPos.x - getWidth(), m_transPos.y);
+			}
+		}
+	} else { // transition out
+		++m_transitionCounter;
+	}
+}
 
 class ScrollCell : public WidgetCell/*Container*/ {
 private:
@@ -181,7 +320,9 @@ void ScrollPane::onHorizontalScroll(int diff) {
 	m_scrollCell->setOffset(m_offset);
 }
 
+}
 
+namespace Main {
 
 void populateFruitVector(std::vector<string> &fruit) {
 	fruit.push_back("Apple");
@@ -201,16 +342,21 @@ void populateFruitVector(std::vector<string> &fruit) {
 	fruit.push_back("Lime");
 }
 
-void populateDropListStrip(WidgetCell *cell, std::vector<string> &fruit) {
+void populateMiscStrip1(WidgetCell *cell, std::vector<string> &fruit) {
 	cell->setSizeHint(SizeHint(10, -1));
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 15)); // fill with 15 px padding
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 	CellStrip *topStrip = new CellStrip(cell, Orientation::HORIZONTAL);
 	topStrip->setAnchors(padAnchors);
-	topStrip->addCells(1);
-	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
+	topStrip->addCells(3);
+//	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
 
-	DropList *dropList = new DropList(topStrip->getCell(0));
+	TickerTape *tickerTape = new TickerTape(topStrip->getCell(0), Orientation::HORIZONTAL);
+	tickerTape->addItems(fruit);
+	tickerTape->setAnchors(fillAnchors);
+	tickerTape->setTransitionInterval(240);
+
+	DropList *dropList = new DropList(topStrip->getCell(1));
 	dropList->addItems(fruit);
 	dropList->setAnchors(fillAnchors);
 	dropList->setDropBoxHeight(200);
@@ -243,7 +389,7 @@ void populateBigTestStrip(WidgetCell *cell, std::vector<string> &fruit) {
 	scrollText->setText(txt);
 }
 
-void populateMiscStrip(WidgetCell *cell) {
+void populateMiscStrip2(WidgetCell *cell) {
 	cell->setSizeHint(SizeHint(10, -1));
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 15)); // fill with 15 px padding
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
@@ -300,9 +446,9 @@ TestPane::TestPane(Program &program)
 	std::vector<string> fruit;
 	populateFruitVector(fruit);
 
-	populateDropListStrip(   strip->getCell(1), fruit );
+	populateMiscStrip1(      strip->getCell(1), fruit );
 	populateBigTestStrip(    strip->getCell(2), fruit );
-	populateMiscStrip(       strip->getCell(3)        );
+	populateMiscStrip2(      strip->getCell(3)        );
 	populatePlayerSlotStrip( strip->getCell(0)        );
 }
 
