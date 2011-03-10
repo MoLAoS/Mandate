@@ -38,66 +38,158 @@ namespace Widgets {
 
 class TickerTape : public StaticText {
 private:
-	Orientation   m_orientation;
-	int           m_displayInterval;
-	int           m_displayCounter;
-	int           m_transitionInterval;
-	int           m_transitionCounter;
-	int           m_currentIndex;
-	Vec2f         m_basePos;
-	Vec2f         m_transPos;
+	struct Action {
+		int       m_index;
+		int       m_actionNumber;
+		int       m_counter;
+		Vec2f     m_inPos;
+		Vec2f     m_midPos;
+		Vec2f     m_outPos;
+	};
+
+	typedef std::deque<Action> Actions;
 
 private:
-	void updateTransition();
+	Origin        m_origin;
+	bool          m_alternateOrigin;
+	bool          m_overlapTransitions;
+	int           m_displayInterval;
+	int           m_transitionInterval;
+	int           m_actionCounter;
+	Actions       m_actions;
+
+private:
+	void setPositions(Action &action);
+	void startAction(int ndx);
+	void startTicker();
 
 public:
-	TickerTape(Container *parent, Orientation orient);
+	TickerTape(Container *parent, Origin origin);
 	~TickerTape() {
 		m_rootWindow->unregisterUpdate(this);
 	}
 
 	void addItems(const vector<string> &strings);
 	void addItems(const char **strings);
+	void addItems(const char **strings, unsigned n);
 
 	void setDisplayInterval(int v)      { m_displayInterval = v;    }
 	void setTransitionInterval(int v)   { m_transitionInterval = v; }
+	void setAlternateOrigin(bool v)     { m_alternateOrigin = v;    }
+	void setOverlapTransitions(bool v)  { m_overlapTransitions = v; }
 
 	// Widget overrides
 	virtual Vec2i getMinSize() const override;
 	virtual Vec2i getPrefSize() const override { return getMinSize(); }
+	virtual void setSize(const Vec2i &sz) override;
 	virtual void render() override;
 	virtual void update() override;
 	virtual void setStyle() override { setWidgetStyle(WidgetType::TICKER_TAPE); }
 	virtual string descType() const override { return "TickerTape"; }
 };
 
-TickerTape::TickerTape(Container *parent, Orientation orient)
+TickerTape::TickerTape(Container *parent, Origin origin)
 		: StaticText(parent)
-		, m_orientation(orient)
+		, m_origin(origin)
+		, m_alternateOrigin(false)
+		, m_overlapTransitions(false)
 		, m_displayInterval(240)
-		, m_displayCounter(0)
 		, m_transitionInterval(120)
-		, m_transitionCounter(0)
-		, m_currentIndex(-1) {
+		, m_actionCounter(0)
+		/*, m_currentIndex(-1)*/ {
+}
+
+void TickerTape::setPositions(Action &action) {
+	Vec2i p = TextWidget::getTextPos(action.m_index);
+	action.m_midPos = Vec2f(p);
+
+	Origin origin = m_origin;
+	if (m_alternateOrigin && action.m_actionNumber % 2 == 1) {
+		switch (m_origin) {
+			case Origin::FROM_TOP: origin = Origin::FROM_BOTTOM; break;
+			case Origin::FROM_BOTTOM: origin = Origin::FROM_TOP; break;
+			case Origin::FROM_LEFT: origin = Origin::FROM_RIGHT; break;
+			case Origin::FROM_RIGHT: origin = Origin::FROM_LEFT; break;
+			default: assert(false);
+		}
+	}
+	switch (origin) {
+		case Origin::FROM_TOP:
+			action.m_inPos = action.m_midPos + Vec2f(0.f, float(-getHeight()));
+			action.m_outPos = action.m_midPos + Vec2f(0.f, float(getHeight()));
+			break;
+		case Origin::FROM_BOTTOM:
+			action.m_inPos = action.m_midPos + Vec2f(0.f, float(getHeight()));
+			action.m_outPos = action.m_midPos + Vec2f(0.f, float(-getHeight()));
+			break;
+		case Origin::CENTRE:
+			action.m_inPos = action.m_outPos = action.m_midPos;
+			break;
+		case Origin::FROM_LEFT:
+			action.m_inPos = action.m_midPos + Vec2f(float(-getWidth()), 0.f);
+			action.m_outPos = action.m_midPos + Vec2f(float(getWidth()), 0.f);
+			break;
+		case Origin::FROM_RIGHT:
+			action.m_inPos = action.m_midPos + Vec2f(float(getWidth()), 0.f);
+			action.m_outPos = action.m_midPos + Vec2f(float(-getWidth()), 0.f);
+			break;
+	}
+}
+
+void TickerTape::startAction(int ndx) {
+	m_actions.push_back(Action());
+	Action &action = m_actions.back();
+	action.m_counter = 0;
+	action.m_index = ndx;
+	action.m_actionNumber = m_actionCounter++;
+	setPositions(action);
+}
+
+void TickerTape::startTicker() {
+	m_rootWindow->registerUpdate(this);
+	startAction(0);
+	if (getSize() != Vec2i(0)) {
+		for (int i=0; i < TextWidget::numSnippets(); ++i) {
+			TextWidget::centreText(i);
+		}
+	}
+}
+
+void TickerTape::setSize(const Vec2i &sz) {
+	StaticText::setSize(sz);
+	for (int i=0; i < TextWidget::numSnippets(); ++i) {
+		TextWidget::centreText(i);
+	}
+	foreach (Actions, a, m_actions) {
+		setPositions(*a);
+	}
 }
 
 void TickerTape::addItems(const vector<string> &strings) {
-	if (!TextWidget::hasText()) {
-		m_rootWindow->registerUpdate(this);
-	}
 	foreach_const (vector<string>, it, strings) {
 		TextWidget::addText(*it);
+	}
+	if (!strings.empty() && TextWidget::numSnippets() == strings.size()) {
+		startTicker();
 	}
 }
 
 void TickerTape::addItems(const char **strings) {
-	if (!TextWidget::hasText()) {
-		m_rootWindow->registerUpdate(this);
-	}
-	int i=0;
-	while (strings[i]) {
+	int i = 0;
+	for ( ; strings[i]; ++i) {
 		TextWidget::addText(strings[i]);
-		++i;
+	}
+	if (i && TextWidget::numSnippets() == i) {
+		startTicker();
+	}
+}
+
+void TickerTape::addItems(const char **strings, unsigned n) {
+	for (int i=0; i < n; ++i) {
+		TextWidget::addText(strings[i]);
+	}
+	if (n && TextWidget::numSnippets() == n) {
+		startTicker();
 	}
 }
 
@@ -117,58 +209,51 @@ Vec2i TickerTape::getMinSize() const {
 }
 
 void TickerTape::render() {
-	if (m_currentIndex == -1) {
-		return;
-	}
-	float t;
-	if (m_displayCounter == 0) { // transition in
-		t = m_transitionCounter / float(m_transitionInterval);
-	} else if (m_displayCounter < m_displayInterval) { // display
-		t = 1.f;
-	} else { // transition out
-		t = 1.f - ((m_transitionCounter - m_transitionInterval) / float(m_transitionInterval));
-	}
-	Vec2f p = m_basePos.lerp(t, m_transPos);
-	Vec2i pos = getScreenPos() + Vec2i(int(p.x), int(p.y));
-	Vec4f col(1.f);
-	col.a = t;
 	m_rootWindow->pushClipRect(getScreenPos(), getSize());
-	TextWidget::renderText(getText(m_currentIndex), pos.x, pos.y, col, m_textStyle.m_fontIndex);
+	foreach (Actions, a, m_actions) {
+		Action &action = *a;
+		float t;
+		Vec2f p;
+		if (action.m_counter < m_transitionInterval) { // transition in (t 0.f -> 1.f)
+			t = action.m_counter / float(m_transitionInterval);
+			p = action.m_inPos.lerp(t, action.m_midPos);
+		} else if (action.m_counter < m_transitionInterval + m_displayInterval) { // display (t 1.f)
+			t = 1.f;
+			p = action.m_midPos;
+		} else { // transition out (t 1.f -> 0.f)
+			t = 1.f - ((action.m_counter - m_transitionInterval - m_displayInterval) / float(m_transitionInterval));
+			p = action.m_outPos.lerp(t, action.m_midPos); // out -> mid because t 1 -> 0
+		}
+		Vec2i pos = getScreenPos() + Vec2i(p);
+		Vec4f col(1.f, 1.f, 1.f, t);
+		TextWidget::renderText(getText(action.m_index), pos.x, pos.y, col, m_textStyle.m_fontIndex);
+	}
 	m_rootWindow->popClipRect();
 }
 
 void TickerTape::update() {
-	const int period = 2 * m_transitionInterval + m_displayInterval;
-	if ((m_transitionCounter + m_displayCounter) % period == 0) {
-		++m_currentIndex;
-		m_currentIndex %= TextWidget::numSnippets();
-		TextWidget::centreText(m_currentIndex);
-		Vec2i p = TextWidget::getTextPos(m_currentIndex);
-		m_transPos = Vec2f(p);
-
-		m_displayCounter = m_transitionCounter = 0;
-		if (m_orientation == Orientation::VERTICAL) {
-			m_basePos = Vec2f(m_transPos.x, m_transPos.y + getHeight());
-		} else {
-			m_basePos = Vec2f(m_transPos.x + getWidth(), m_transPos.y);
-		}
-	}
-	if (m_transitionCounter < m_transitionInterval) { // transition in
-		++m_transitionCounter;
-		if (m_transitionCounter == m_transitionInterval) {
-			m_basePos = m_transPos;
-		}
-	} else if (m_displayCounter < m_displayInterval) { // display
-		++m_displayCounter;
-		if (m_displayCounter == m_displayInterval) { // end display, set source & dest pos
-			if (m_orientation == Orientation::VERTICAL) {
-				m_basePos = Vec2f(m_transPos.x, m_transPos.y - getHeight());
-			} else {
-				m_basePos = Vec2f(m_transPos.x - getWidth(), m_transPos.y);
+	const int totalInterval = 2 * m_transitionInterval + m_displayInterval;
+	int startNdx = -1;
+	Actions::iterator a = m_actions.begin();
+	while (a != m_actions.end()) {
+		Action &action = *a;
+		++action.m_counter;
+		if (action.m_counter == m_transitionInterval + m_displayInterval) {
+			if (m_overlapTransitions) {
+				startNdx = (action.m_index + 1) % TextWidget::numSnippets();
 			}
 		}
-	} else { // transition out
-		++m_transitionCounter;
+		if (action.m_counter == totalInterval) {
+			if (!m_overlapTransitions) {
+				startNdx = (action.m_index + 1) % TextWidget::numSnippets();
+			}
+			a = m_actions.erase(a);
+		} else {
+			++a;
+		}
+	}
+	if (startNdx != -1) {
+		startAction(startNdx);
 	}
 }
 
@@ -351,10 +436,12 @@ void populateMiscStrip1(WidgetCell *cell, std::vector<string> &fruit) {
 	topStrip->addCells(3);
 //	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
 
-	TickerTape *tickerTape = new TickerTape(topStrip->getCell(0), Orientation::HORIZONTAL);
+	TickerTape *tickerTape = new TickerTape(topStrip->getCell(0), Origin::FROM_RIGHT);
 	tickerTape->addItems(fruit);
 	tickerTape->setAnchors(fillAnchors);
 	tickerTape->setTransitionInterval(240);
+	tickerTape->setDisplayInterval(0);
+	tickerTape->setOverlapTransitions(true);
 
 	DropList *dropList = new DropList(topStrip->getCell(1));
 	dropList->addItems(fruit);
