@@ -36,6 +36,16 @@ using namespace Menu;
 
 namespace Widgets {
 
+class TextInBox : public StaticText {
+public:
+	TextInBox(Container *parent) : StaticText(parent) {
+		setWidgetStyle(WidgetType::TICKER_TAPE);
+	}
+
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TICKER_TAPE); }
+	virtual string descType() const override { return "TickerTape"; }
+};
+
 class TickerTape : public StaticText {
 private:
 	struct Action {
@@ -97,9 +107,11 @@ TickerTape::TickerTape(Container *parent, Origin origin)
 		, m_transitionInterval(120)
 		, m_actionCounter(0)
 		/*, m_currentIndex(-1)*/ {
+	setWidgetStyle(WidgetType::TICKER_TAPE);
 }
 
 void TickerTape::setPositions(Action &action) {
+	TextWidget::centreText(action.m_index);
 	Vec2i p = TextWidget::getTextPos(action.m_index);
 	action.m_midPos = Vec2f(p);
 
@@ -148,18 +160,10 @@ void TickerTape::startAction(int ndx) {
 void TickerTape::startTicker() {
 	m_rootWindow->registerUpdate(this);
 	startAction(0);
-	if (getSize() != Vec2i(0)) {
-		for (int i=0; i < TextWidget::numSnippets(); ++i) {
-			TextWidget::centreText(i);
-		}
-	}
 }
 
 void TickerTape::setSize(const Vec2i &sz) {
 	StaticText::setSize(sz);
-	for (int i=0; i < TextWidget::numSnippets(); ++i) {
-		TextWidget::centreText(i);
-	}
 	foreach (Actions, a, m_actions) {
 		setPositions(*a);
 	}
@@ -209,7 +213,8 @@ Vec2i TickerTape::getMinSize() const {
 }
 
 void TickerTape::render() {
-	m_rootWindow->pushClipRect(getScreenPos(), getSize());
+	Widget::render();
+	m_rootWindow->pushClipRect(getScreenPos() + Vec2i(getBorderLeft(), getBorderTop()), getSize() - getBordersAll());
 	foreach (Actions, a, m_actions) {
 		Action &action = *a;
 		float t;
@@ -436,17 +441,22 @@ void populateMiscStrip1(WidgetCell *cell, std::vector<string> &fruit) {
 	topStrip->addCells(3);
 //	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
 
-	TickerTape *tickerTape = new TickerTape(topStrip->getCell(0), Origin::FROM_RIGHT);
+	TickerTape *tickerTape = new TickerTape(topStrip->getCell(0), Origin::CENTRE);
 	tickerTape->addItems(fruit);
 	tickerTape->setAnchors(fillAnchors);
-	tickerTape->setTransitionInterval(240);
-	tickerTape->setDisplayInterval(0);
+	tickerTape->setTransitionInterval(120);
+	tickerTape->setDisplayInterval(120);
 	tickerTape->setOverlapTransitions(true);
+	tickerTape->setAlternateOrigin(false);
 
 	DropList *dropList = new DropList(topStrip->getCell(1));
 	dropList->addItems(fruit);
 	dropList->setAnchors(fillAnchors);
 	dropList->setDropBoxHeight(200);
+
+	TextInBox *txtInBox = new TextInBox(topStrip->getCell(2));
+	txtInBox->setAnchors(fillAnchors);
+	txtInBox->setText("Apple");
 }
 
 void populateBigTestStrip(WidgetCell *cell, std::vector<string> &fruit) {
