@@ -488,6 +488,7 @@ void ProduceCommandType::update(Unit *unit) const {
 				if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 					unit->cancelCurrCommand();
 					g_world.getUnitFactory().deleteUnit(unit);
+					return;
 				} else {
 					unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
 					produced->create();
@@ -498,15 +499,16 @@ void ProduceCommandType::update(Unit *unit) const {
 					if (ct) {
 						produced->giveCommand(g_world.newCommand(ct, CommandFlags(), unit->getMeetingPos()));
 					}
-					unit->finishCommand();
-					if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-						RUNTIME_CHECK(!unit->isCarried());
-						g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
-							g_gameState.getGameCamera()->getPos());
-					}
 				}
-				unit->setCurrSkill(SkillClass::STOP);
 			}
+			// all the units have been produced, safe to finish command now
+			unit->finishCommand();
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				RUNTIME_CHECK(!unit->isCarried());
+				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+					g_gameState.getGameCamera()->getPos());
+			}
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
 }
