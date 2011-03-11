@@ -96,6 +96,9 @@ void UpgradeManager::cancelUpgrade(const UpgradeType *upgradeType){
 	}
 
 	if(it!=upgrades.end()){
+		// since UpgradeManager owns this memory we need to delete it here
+		delete *it;
+		*it = 0;
 		upgrades.erase(it);
 	}
 	else{

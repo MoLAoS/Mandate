@@ -135,6 +135,7 @@ Program::Program(CmdArgs &args)
 	if (cmdArgs.isTest("interpolation")) {
 		Shared::Graphics::test_interpolate();
 	}
+	g_logger.logProgramEvent("Program object successfully constructed.");
 }
 
 Program::~Program() {
@@ -210,7 +211,9 @@ bool Program::init() {
 
 	// normal startup
 	} else {
-		setState(new Intro(*this));
+		// make sure to fix up menu music in battle end and intro if uncommenting
+		//setState(new Intro(*this));
+		setState(new MainMenu(*this));
 	}
 	return true;
 }

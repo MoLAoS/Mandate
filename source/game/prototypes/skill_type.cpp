@@ -216,9 +216,9 @@ void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) 
 }
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
-	str+= Lang::getInstance().get(speedType) + ": " + intToStr(speed);
-	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
-	str+="\n";
+	//str+= Lang::getInstance().get(speedType) + ": " + intToStr(speed);
+	//EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
+	//str+="\n";
 }
 
 CycleInfo SkillType::calculateCycleTime() const {
@@ -263,6 +263,15 @@ CycleInfo SkillType::calculateCycleTime() const {
 // =====================================================
 // 	class MoveSkillType
 // =====================================================
+
+void MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+
+	XmlNode *visibleOnlyNode = sn->getOptionalChild("visible-only");
+	if (visibleOnlyNode) {
+		visibleOnly = visibleOnlyNode->getAttribute("value")->getBoolValue();
+	}
+}
 
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
 	return speed * unit->getMoveSpeedMult() + unit->getMoveSpeed();

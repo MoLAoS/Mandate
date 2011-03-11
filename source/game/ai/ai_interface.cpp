@@ -36,7 +36,7 @@ namespace Glest { namespace Plan {
 
 GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 	LOG_AI(
-		faction->getIndex(), AiComponent::INVALID, 1,		
+		faction->getIndex(), AiComponent::GENERAL, 1,		
 		__FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
 		<< faction->getType()->getName() << " Random seed: " << randomSeed
 	);

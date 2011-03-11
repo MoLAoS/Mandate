@@ -123,9 +123,29 @@ void GameState::load() {
 	const string &techName = gameSettings.getTechPath();
 	const string &scenarioPath = gameSettings.getScenarioPath();
 	string scenarioName = basename(scenarioPath);
-
 	const string &thisFactionName = gameSettings.getFactionTypeName(gameSettings.getThisFactionIndex());
-	g_logger.getProgramLog().setupLoadingScreen(techName + "/factions/" + thisFactionName);
+
+	// determine loading screen settings:
+	// 1. check sceneraio if applicable
+	// 2. check faction
+	// 3. check tech
+	// 4. use defaults
+	ProgramLog &log = g_logger.getProgramLog();
+
+	if (!scenarioName.empty() 
+		&& log.setupLoadingScreen(scenarioPath)) {
+	} else if (log.setupLoadingScreen(techName + "/factions/" + thisFactionName)) {
+	} else if (log.setupLoadingScreen(techName)) {
+	} else {
+		log.useLoadingScreenDefaults();
+	}
+
+	// check for custom mouse (faction then tech)
+	//if (g_widgetWindow.loadMouse(techName + "/factions/" + thisFactionName)) {
+	//} else if (g_widgetWindow.loadMouse(techName)) {
+	//} else {
+	//	// already using default
+	//}
 
 	g_logger.getProgramLog().setProgressBar(true);
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));
@@ -578,6 +598,8 @@ void GameState::mouseDownRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDownRight(x, y);
+		m_cameraDragCenter.x = float(x);
+		m_cameraDragCenter.y = float(y);
 	}
 }
 
@@ -627,9 +649,13 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 		}
 	} else if (ms.get(MouseButton::RIGHT)) {
 		if (!noInput) {
-			g_program.getMouseCursor().setAppearance(MouseAppearance::MOVE_FREE);
-			gameCamera.setMoveZ((y - lastMousePos.y) * scrollSpeed, true);
-			gameCamera.setMoveX((x - lastMousePos.x) * scrollSpeed, true);
+			Vec2f moveVec = Vec2f(Vec2i(x, y)) - m_cameraDragCenter;
+			if (moveVec.length() > 50) { /// @todo add to config if this is staying - hailstone 11Feb2011
+				moveVec.normalize();
+				g_program.getMouseCursor().setAppearance(MouseAppearance::MOVE_FREE);
+				gameCamera.setMoveZ(moveVec.y * scrollSpeed, true);
+				gameCamera.setMoveX(moveVec.x * scrollSpeed, true);
+			}
 		}
 	} else {
 		if (!noInput) {
@@ -719,6 +745,10 @@ void GameState::keyDown(const Key &key) {
 		gameCamera.setRotate(-1);
 	} else if (cmd == ucCameraRotateRight ) { // rotate camera right
 		gameCamera.setRotate(1);
+	} else if (cmd == ucCameraZoomIn) { // camera zoom in
+		gameCamera.zoom(15.f);
+	} else if (cmd == ucCameraZoomOut) { // camera zoom out
+		gameCamera.zoom(-15.f);
 	} else if (cmd == ucCameraPitchUp) { // camera pitch up
 		gameCamera.setMoveY(1);
 	} else if ( cmd == ucCameraPitchDown) { // camera pitch down

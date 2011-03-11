@@ -223,8 +223,24 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	highlight = node->getChildFloatValue("highlight");
 	toBeUndertaken = node->getChildBoolValue("toBeUndertaken");
 
-	///@todo AutoCmd enable
-	//autoRepairEnabled = node->getChildBoolValue("autoRepairEnabled");
+	m_cloaked = node->getChildBoolValue("cloaked");
+	m_cloaking = node->getChildBoolValue("cloaking");
+	m_deCloaking = node->getChildBoolValue("de-cloaking");
+	m_cloakAlpha = node->getChildFloatValue("cloak-alpha");
+
+	if (m_cloaked && !type->getCloakType()) {
+		throw runtime_error("Unit marked as cloak has no cloak type!");
+	}
+	if (m_cloaking && !m_cloaked) {
+		throw runtime_error("Unit marked as cloaking is not cloaked!");
+	}
+	if (m_cloaking && m_deCloaking) {
+		throw runtime_error("Unit marked as cloaking and de-cloaking!");
+	}
+
+	m_autoCmdEnable[AutoCmdFlag::REPAIR] = node->getChildBoolValue("auto-repair");
+	m_autoCmdEnable[AutoCmdFlag::ATTACK] = node->getChildBoolValue("auto-attack");
+	m_autoCmdEnable[AutoCmdFlag::FLEE] = node->getChildBoolValue("auto-flee");
 
 	if (type->hasMeetingPoint()) {
 		meetingPos = node->getChildVec2iValue("meeting-point");
@@ -262,8 +278,8 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 		carried = true;
 	}
 
+	faction->add(this);
 	if (hp) {
-		faction->add(this);
 		recalculateStats();
 		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 		if (!carried) {
@@ -274,7 +290,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	} else {
 		ULC_UNIT_LOG( this, " constructed dead." );
 	}
-	if(type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
+	if (type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
 		// was previously in World::initUnits but seems to work fine here
 		g_cartographer.updateMapMetrics(getPos(), getSize());
@@ -325,9 +341,14 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("currSkill", currSkill ? currSkill->getName() : "null_value");
 
 	node->addChild("toBeUndertaken", toBeUndertaken);
+	node->addChild("cloaked", m_cloaked);
+	node->addChild("cloaking", m_cloaking);
+	node->addChild("de-cloaking", m_deCloaking);
+	node->addChild("cloak-alpha", m_cloakAlpha);
 
-	///@todo AutoCmd enable
-//	node->addChild("autoRepairEnabled", autoRepairEnabled);
+	node->addChild("auto-repair", m_autoCmdEnable[AutoCmdFlag::REPAIR]);
+	node->addChild("auto-attack", m_autoCmdEnable[AutoCmdFlag::ATTACK]);
+	node->addChild("auto-flee", m_autoCmdEnable[AutoCmdFlag::FLEE]);
 
 	if (type->hasMeetingPoint()) {
 		node->addChild("meeting-point", meetingPos);
@@ -865,11 +886,15 @@ void Unit::loadUnitInit(Command *command) {
 	if (std::find(m_unitsToCarry.begin(), m_unitsToCarry.end(), command->getUnitRef()) == m_unitsToCarry.end()) {
 		m_unitsToCarry.push_back(command->getUnitRef());
 		CMD_LOG( "adding unit to load list " << *command->getUnit() )
-		if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
+		///@bug causes crash at Unit::tick when more than one unit attempts to load at the same time
+		/// while doing multiple loads increases the queue count but it decreases afterwards.
+		/// Furious clicking to make queued commands causes a crash in AnnotatedMap::annotateLocal.
+		/// - hailstone 2Feb2011
+		/*if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
 			CMD_LOG( "deleting load command, already loading.")
 			g_world.deleteCommand(command);
 			command = 0;
-		}
+		}*/
 	}
 }
 
@@ -1024,17 +1049,23 @@ void Unit::create(bool startingUnit) {
 
 /** Give a unit life. Called when a unit becomes 'operative'
   */
-void Unit::born(){
+void Unit::born(bool reborn) {
+	if (reborn && (!isAlive() || !isBuilt())) {
+		return;
+	}
 	ULC_UNIT_LOG( this, "born." );
-	faction->addStore(type);
 	faction->applyStaticProduction(type);
-	setCurrSkill(SkillClass::STOP);
 	computeTotalUpgrade();
 	recalculateStats();
-	hp= type->getMaxHp();
-	faction->checkAdvanceSubfaction(type, true);
-	g_world.getCartographer()->applyUnitVisibility(this);
-	g_simInterface.doUnitBorn(this);
+
+	if (!reborn) {
+		faction->addStore(type);
+		setCurrSkill(SkillClass::STOP);
+		hp = type->getMaxHp();
+		faction->checkAdvanceSubfaction(type, true);
+		g_world.getCartographer()->applyUnitVisibility(this);
+		g_simInterface.doUnitBorn(this);
+	}
 	StateChanged(this);
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorCreated(this);
@@ -1063,11 +1094,6 @@ void Unit::kill() {
 	assert(hp <= 0);
 	ULC_UNIT_LOG( this, "killed." );
 	hp = 0;
-	g_world.getCartographer()->removeUnitVisibility(this);
-
-	if (!isCarried()) { // if not in transport, clear cells
-		map->clearUnitCells(this, pos);
-	}
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
@@ -1091,6 +1117,7 @@ void Unit::kill() {
 		fire = 0;
 	}
 
+	//REFACTOR Use signal, send this code to Faction::onUnitDied();
 	if (isBeingBuilt()) { // no longer needs static resources
 		faction->deApplyStaticConsumption(type);
 	} else {
@@ -1098,13 +1125,19 @@ void Unit::kill() {
 		faction->removeStore(type);
 	}
 
-	setCurrSkill(SkillClass::DIE);
-	g_simInterface.doUpdateAnimOnDeath(this);
-
 	Died(this);
+
 	clearCommands();
-	checkTargets(this); // hack... 'tracking' particle systems might reference this
+	setCurrSkill(SkillClass::DIE);
 	deadCount = Random(id).randRange(-256, 256); // random decay time
+
+	//REFACTOR use signal, send this to World/Cartographer/SimInterface
+	g_world.getCartographer()->removeUnitVisibility(this);
+	if (!isCarried()) { // if not in transport, clear cells
+		map->clearUnitCells(this, pos);
+	}
+	g_simInterface.doUpdateAnimOnDeath(this);
+	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorDied(this);
 	}

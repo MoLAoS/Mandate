@@ -124,7 +124,8 @@ public:
 	void setLoading(bool v);
 	void setProgressBar(bool v)			{m_progressBar = v; m_progress = 0;}
 
-	void setupLoadingScreen(const string &factionDir);
+	void useLoadingScreenDefaults();
+	bool setupLoadingScreen(const string &xmlpath);
 	void renderLoadingScreen();
 
 	void setUnitCount(int count) { totalUnits = count; unitsLoaded = 0; }
@@ -134,6 +135,7 @@ public:
 
 STRINGY_ENUM( AiComponent,
 	ECONOMY,
+	GENERAL,
 	MILITARY,
 	RESEARCH
 );

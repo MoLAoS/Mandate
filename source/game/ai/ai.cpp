@@ -222,7 +222,7 @@ void Ai::update() {
 		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * WORLD_FPS / 1000)) == 0) {
 			if ((*it)->test()) {
 				LOG_AI(
-					aiInterface->getFactionIndex(), AiComponent::INVALID, 2,
+					aiInterface->getFactionIndex(), AiComponent::GENERAL, 2,
 					"Executing rule: " << (*it)->getName()
 				);
 				(*it)->execute();
@@ -469,7 +469,7 @@ bool Ai::isRepairable(const Unit *u) const {
 
 void Ai::addTask(const Task *task){
 	tasks.push_back(task);
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::INVALID, 2, "Task added: " + task->toString() );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::GENERAL, 2, "Task added: " + task->toString() );
 }
 
 void Ai::addPriorityTask(const Task *task){
@@ -477,7 +477,7 @@ void Ai::addPriorityTask(const Task *task){
 	tasks.clear();
 
 	tasks.push_back(task);
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::INVALID, 2, "Priority Task added: " + task->toString() );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::GENERAL, 2, "Priority Task added: " + task->toString() );
 }
 
 bool Ai::anyTask(){
@@ -494,7 +494,7 @@ const Task *Ai::getTask() const{
 }
 
 void Ai::removeTask(const Task *task){
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::INVALID, 2, "Task removed: " + task->toString() );
+	LOG_AI( aiInterface->getFactionIndex(), AiComponent::GENERAL, 2, "Task removed: " + task->toString() );
 	tasks.remove(task);
 	delete task;
 }

@@ -16,15 +16,16 @@
 #include "config.h"
 #include "sound_interface.h"
 #include "factory_repository.h"
+#include "logger.h"
 
 #include "leak_dumper.h"
-
 
 using namespace Shared::Graphics;
 using namespace Shared::Sound;
 
 namespace Glest { namespace Sound {
 using Global::Config;
+using Util::Logger;
 
 const int SoundRenderer::ambientFade= 6000;
 const float SoundRenderer::audibleDist= 50.f;
@@ -38,6 +39,8 @@ SoundRenderer::SoundRenderer(){
 }
 
 void SoundRenderer::init(Window *window){
+	g_logger.logProgramEvent("Initialising sound renderer");
+
 	SoundInterface &si= SoundInterface::getInstance();
 	FactoryRepository &fr= FactoryRepository::getInstance();
 	Config &config= Config::getInstance();

@@ -153,14 +153,15 @@ Program::Program(int w, int h) {
 
 Program::~Program() {
 	delete map;
+	map = NULL;
 }
 
 int Program::getObject(int x, int y) {
 	int i = (x - offsetX) / cellSize;
 	int j = (y + offsetY) / cellSize;
-	if (map->inside(i, j)) {
+	if (map && map->inside(i, j)) {
 		return map->getObject(i,j);
-	}else{
+	} else {
 		return 0;
 	}
 }
@@ -168,7 +169,7 @@ int Program::getObject(int x, int y) {
 int Program::getResource(int x, int y) {
 	int i = (x - offsetX) / cellSize;
 	int j = (y + offsetY) / cellSize;
-	if (map->inside(i, j)) {
+	if (map && map->inside(i, j)) {
 		return map->getResource(i,j);
 	} else {
 		return 0;
@@ -176,26 +177,32 @@ int Program::getResource(int x, int y) {
 }
 
 void Program::glestChangeMapHeight(int x, int y, int Height, int radius) {
+	assert(map);
 	map->glestChangeHeight((x - offsetX) / cellSize, (y + offsetY) / cellSize, Height, radius);
 }
 
 void Program::pirateChangeMapHeight(int x, int y, int Height, int radius) {
+	assert(map);
 	map->pirateChangeHeight((x - offsetX) / cellSize, (y + offsetY) / cellSize, Height, radius);
 }
 
 void Program::changeMapSurface(int x, int y, int surface, int radius) {
+	assert(map);
 	map->changeSurface((x - offsetX) / cellSize, (y + offsetY) / cellSize, surface, radius);
 }
 
 void Program::changeMapObject(int x, int y, int object, int radius) {
+	assert(map);
 	map->changeObject((x - offsetX) / cellSize, (y + offsetY) / cellSize, object, radius);
 }
 
 void Program::changeMapResource(int x, int y, int resource, int radius) {
+	assert(map);
 	map->changeResource((x - offsetX) / cellSize, (y + offsetY) / cellSize, resource, radius);
 }
 
 void Program::changeStartLocation(int x, int y, int player) {
+	assert(map);
 	map->changeStartLocation((x - offsetX) / cellSize, (y + offsetY) / cellSize, player);
 }
 
@@ -239,22 +246,27 @@ void Program::renderMap(int w, int h) {
 }
 
 void Program::setRefAlt(int x, int y) {
+	assert(map);
 	map->setRefAlt((x - offsetX) / cellSize, (y + offsetY) / cellSize);
 }
 
 void Program::flipX() {
+	assert(map);
 	map->flipX();
 }
 
 void Program::flipY() {
+	assert(map);
 	map->flipY();
 }
 
 void Program::randomizeMapHeights() {
+	assert(map);
 	map->randomizeHeights();
 }
 
 void Program::randomizeMap() {
+	assert(map);
 	///@todo show dialog with parameters
 	MapMaker mm(map);
 	///@todo pass parameters
@@ -262,24 +274,29 @@ void Program::randomizeMap() {
 }
 
 void Program::switchMapSurfaces(int surf1, int surf2) {
+	assert(map);
 	map->switchSurfaces(surf1, surf2);
 }
 
 void Program::reset(int w, int h, int alt, int surf) {
+	assert(map);
 	undoStack.clear();
 	redoStack.clear();
 	map->reset(w, h, (float) alt, surf);
 }
 
 void Program::resize(int w, int h, int alt, int surf) {
+	assert(map);
 	map->resize(w, h, (float) alt, surf);
 }
 
 void Program::resetFactions(int maxFactions) {
+	assert(map);
 	map->resetFactions(maxFactions);
 }
 
 bool Program::setMapTitle(const string &title) {
+	assert(map);
 	if (map->getTitle() != title) {
 		map->setTitle(title);
 		return true;
@@ -288,6 +305,7 @@ bool Program::setMapTitle(const string &title) {
 }
 
 bool Program::setMapDesc(const string &desc) {
+	assert(map);
 	if (map->getDesc() != desc) {
 		map->setDesc(desc);
 		return true;
@@ -296,6 +314,7 @@ bool Program::setMapDesc(const string &desc) {
 }
 
 bool Program::setMapAuthor(const string &author) {
+	assert(map);
 	if (map->getAuthor() != author) {
 		map->setAuthor(author);
 		return true;
@@ -327,16 +346,19 @@ void Program::resetOffset() {
 }
 
 void Program::setMapAdvanced(int altFactor, int waterLevel) {
+	assert(map);
 	map->setAdvanced(altFactor, waterLevel);
 }
 
 void Program::loadMap(const string &path) {
+	assert(map);
 	undoStack.clear();
 	redoStack.clear();
 	map->loadFromFile(path);
 }
 
 void Program::saveMap(const string &path) {
+	assert(map);
 	map->saveToFile(path);
 }
 

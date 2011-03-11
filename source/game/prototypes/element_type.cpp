@@ -68,18 +68,18 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 // 	class RequirableType
 // =====================================================
 
-string RequirableType::getReqDesc(const Faction *) const{
+string RequirableType::getReqDesc(const Faction *f) const{
 	stringstream ss;
-///	ss << name;
 	if (unitReqs.empty() && upgradeReqs.empty()) {
 		return ss.str();
 	}
-	ss << Lang::getInstance().get("Reqs") << ":\n";
+	ss << g_lang.getFactionString(f->getType()->getName(), m_name)
+	   << " " << g_lang.get("Reqs") << ":\n";
 	foreach_const (UnitReqs, it, unitReqs) {
-		ss << (*it)->getName() << endl;
+		ss << "  " << (*it)->getName() << endl;
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		ss << (*it)->getName() << endl;
+		ss << "  " << (*it)->getName() << endl;
 	}
 	return ss.str();
 }
@@ -180,11 +180,11 @@ ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f)
 string ProducibleType::getReqDesc(const Faction *f) const {
 	Lang &lang = g_lang;
 	stringstream ss;
-	ss << lang.getFactionString(f->getType()->getName(), m_name);
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}
-	ss << " " << lang.get("Reqs") << ":\n";
+	ss << lang.getFactionString(f->getType()->getName(), m_name)
+	   << " " << g_lang.get("Reqs") << ":\n";
 	for (int i=0; i < getCostCount(); ++i) {
 		ResourceAmount r = getCost(i, f);
 		string resName = lang.getFactionString(f->getType()->getName(), r.getType()->getName());
@@ -194,13 +194,13 @@ string ProducibleType::getReqDesc(const Faction *f) const {
 				resName = formatString(resName);
 			}
 		}
-		ss << resName << ": " << r.getAmount() << endl;
+		ss << "  " << resName << ": " << r.getAmount() << endl;
 	}
 	foreach_const (UnitReqs, it, unitReqs) {
-		ss << (*it)->getName() << endl;
+		ss << "  " << (*it)->getName() << endl;
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		ss << (*it)->getName() << endl;
+		ss << "  " << (*it)->getName() << endl;
 	}
 	return ss.str();
 }

@@ -227,6 +227,12 @@ void Minimap::update(int frameCount) {
 }
 
 void Minimap::addAttackNotice(Vec2i pos) {
+	// translate from cell coords to minimap coords
+	// the 8 and 16 are needed since they're subtracted from the size in Minimap::render()
+	Vec2f ratio = Vec2f(float(getSize().x - 8) / g_map.getW(), float(getSize().y - 16) / g_map.getH());
+	pos = Vec2i(Vec2f(pos) * ratio);
+
+	// is this to prevent overlapping notices? - hailstone 28Feb2011
 	foreach (AttackNotices, it, m_attackNotices) {
 		if (it->m_pos.dist(pos) < 12.f) {
 			return;
@@ -234,7 +240,6 @@ void Minimap::addAttackNotice(Vec2i pos) {
 	}
 	m_attackNotices.push_back(AttackNoticeCircle());
 	m_attackNotices.back().init(pos);
-
 }
 
 // ==================== set ====================
@@ -417,7 +422,7 @@ void Minimap::updateUnitTex() {
 				pos = iter2.next();
 				ndx = m_unitsPMap->getInfluence(pos);
 				if (ndx >= 0) {
-					outlineCheck = false;;
+					outlineCheck = false;
 					pm->setPixel(sPos, factionColours[ndx]);
 					break;
 				}
@@ -499,6 +504,7 @@ void Minimap::render() {
 	const GameCamera *gameCamera = g_gameState.getGameCamera();
 	const Pixmap2D *pixmap = m_terrainTex->getPixmap();
 
+	// what are the extra bits for? - hailstone 28Feb2011
 	Vec2i pos = getScreenPos() + Vec2i(4, 4);
 	Vec2i size = getSize() - Vec2i(8, 16);
 

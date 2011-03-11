@@ -82,17 +82,29 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 
 	scenarioInfo->fogOfWar = scenarioNode->getOptionalBoolValue("fog-of-war", true);
 	scenarioInfo->shroudOfDarkness = scenarioNode->getOptionalBoolValue("shroud-of-darkness", true);
+	scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
+	scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
+	scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
+	scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
+	scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
+	scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
+
+	g_lang.loadTechStrings(scenarioInfo->techTreeName);
 
 	const XmlNode *playersNode = scenarioNode->getChild("players");
-	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		const XmlNode *playerNode;
-		try{
-			playerNode = playersNode->getChild("player", i);
-		}catch(runtime_error err){
-			// old scenario -> has only 4 players
-			scenarioInfo->factionControls[i] = strToControllerType("closed");
-			continue;
+	// determine number of player nodes to parse
+	int numPlayerNodes = playersNode->getChildCount();
+	if (numPlayerNodes > GameConstants::maxPlayers) {
+		numPlayerNodes = GameConstants::maxPlayers;
+	} else {
+		// fill in missing players for old scenarios which only have 4 players
+		for (int i = numPlayerNodes; i < GameConstants::maxPlayers; ++i) {
+			scenarioInfo->factionControls[i] = ControlType::CLOSED;
 		}
+	}
+	for (int i = 0; i < numPlayerNodes; ++i) {
+		const XmlNode *playerNode;
+		playerNode = playersNode->getChild("player", i);
 		ControlType factionControl = strToControllerType(playerNode->getAttribute("control")->getValue());
 		string factionTypeName;
 
@@ -130,18 +142,17 @@ void Scenario::loadScenarioInfo(string scenario, string category, ScenarioInfo *
 			scenarioInfo->factionTypeNames[i] = playerNode->getAttribute("faction")->getValue();
 		}
 	}
-	scenarioInfo->mapName = scenarioNode->getChild("map")->getAttribute("value")->getValue();
-	scenarioInfo->tilesetName = scenarioNode->getChild("tileset")->getAttribute("value")->getValue();
-	scenarioInfo->techTreeName = scenarioNode->getChild("tech-tree")->getAttribute("value")->getValue();
-	scenarioInfo->defaultUnits = scenarioNode->getChild("default-units")->getAttribute("value")->getBoolValue();
-	scenarioInfo->defaultResources = scenarioNode->getChild("default-resources")->getAttribute("value")->getBoolValue();
-	scenarioInfo->defaultVictoryConditions = scenarioNode->getChild("default-victory-conditions")->getAttribute("value")->getBoolValue();
 
 	//add player info
 	scenarioInfo->desc = g_lang.get("Player") + ": ";
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		if (scenarioInfo->factionControls[i] == ControlType::HUMAN) {
-			scenarioInfo->desc += formatString(scenarioInfo->factionTypeNames[i]);
+			const string raw = scenarioInfo->factionTypeNames[i];
+			string facName = g_lang.getTechString(raw);
+			if (facName == raw) {
+				facName = formatString(raw);
+			}
+			scenarioInfo->desc += facName;
 			break;
 		}
 	}

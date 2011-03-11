@@ -685,7 +685,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 		if (selection.isUniform()) {
 			if (choosenBuildingType) {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
-					CommandClass::NULL_COMMAND, targetPos, targetUnit, choosenBuildingType, m_selectedFacing);
+					CommandClass::NULL_COMMAND, targetPos, 0, choosenBuildingType, m_selectedFacing);
 			} else {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
 					CommandClass::NULL_COMMAND, targetPos, targetUnit);

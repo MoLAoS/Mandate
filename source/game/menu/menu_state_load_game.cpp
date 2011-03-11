@@ -297,7 +297,8 @@ void MenuStateLoadGame::initGameInfo() {
 		}
 		gs = new GameSettings(savedGame->getChild("settings"));
 
-		int elapsedSeconds = savedGame->getChild("world")->getChildIntValue("frameCount") / 60;
+		///@todo track time properly?
+		int elapsedSeconds = savedGame->getChild("world")->getChildIntValue("frameCount") / WORLD_FPS;
 		int elapsedMinutes = elapsedSeconds / 60;
 		int elapsedHours = elapsedMinutes / 60;
 		elapsedSeconds = elapsedSeconds % 60;
@@ -314,6 +315,9 @@ void MenuStateLoadGame::initGameInfo() {
 
 		string mapDescr = " (" + g_lang.get("MaxPlayers") + ": " + intToStr(mapInfo.players)
 				+ ", " + g_lang.get("Size") + ": " + intToStr(mapInfo.size.x) + " x " + intToStr(mapInfo.size.y) + ")";
+
+		const string techName = basename(gs->getTechPath());
+		g_lang.loadTechStrings(techName);
 
 		stringstream ss;
 		ss  << m_savedGameList->getSelectedItem()->getText() << ": " << gs->getDescription()
@@ -336,9 +340,13 @@ void MenuStateLoadGame::initGameInfo() {
 				throw runtime_error("Invalid control type (" + intToStr(control)
 						+ ") in saved game.");
 			}
-			ss	<< "\nPlayer " << i << ": " << ControlTypeNames[gs->getFactionControl(i)]
-				<< " : " << gs->getFactionTypeName(i)
-				<< " Team: " << gs->getTeam(i);
+			const string rawFacName = basename(gs->getFactionTypeName(i));
+			string facName = g_lang.getTechString(rawFacName);
+			if (facName == rawFacName) {
+				facName = formatString(rawFacName);
+			}
+			ss	<< "\nPlayer " << i << ": " << g_lang.get(ControlTypeNames[gs->getFactionControl(i)])
+				<< " : " << facName << " Team: " << gs->getTeam(i);
 		}
 		m_infoLabel->setText(ss.str());
 	} catch (exception &e) {

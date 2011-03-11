@@ -509,7 +509,7 @@ public:
 
 	//lifecycle
 	void create(bool startingUnit = false);
-	void born();
+	void born(bool reborn = false);
 	void kill();
 	void undertake();
 

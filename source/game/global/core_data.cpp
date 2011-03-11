@@ -62,11 +62,12 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 }
 
 bool CoreData::load() {
-	g_logger.logProgramEvent("Core data");
+	g_logger.logProgramEvent("Loading core data");
 
 	const string dir = "data/core";
 
 	// textures
+	g_logger.logProgramEvent("\tTextures");
 	try {
 		backgroundTexture = loadTexture(dir + "/menu/textures/back.tga");
 		fireTexture = loadAlphaTexture(dir + "/misc_textures/fire_particle.tga");
@@ -121,6 +122,7 @@ bool CoreData::load() {
 		g_logger.logError(string("Error loading core data.\n") + e.what());
 		return false;		
 	}
+	g_logger.logProgramEvent("\tCore data successfully loaded.");
 	return true;
 }
 

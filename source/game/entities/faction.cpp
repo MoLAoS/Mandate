@@ -243,12 +243,8 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	assert(units.empty() && unitMap.empty());
 	for (int i = 0; i < n->getChildCount(); ++i) {
 		g_world.newUnit(n->getChild("unit", i), this, map, tt);
-		if (units[i]->isBuilt()) {
-			addStore(units[i]->getType());
-			applyStaticProduction(units[i]->getType());
-		}
 	}
-	subfaction = node->getChildIntValue("subfaction"); //reset in case unit construction changed it
+	subfaction = node->getChildIntValue("subfaction"); // reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
 
 	texture = g_renderer.newTexture2D(ResourceScope::GAME);
@@ -306,10 +302,11 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 			const ResourceType *resType = tt->getResourceType(j);
 			Modifier mod = ut->getCostModifier(unitType, resType);
 			m_costModifiers[unitType][resType].m_addition += mod.getAddition();
-			m_costModifiers[unitType][resType].m_multiplier += (1 - mod.getMultiplier());
+			m_costModifiers[unitType][resType].m_multiplier += (mod.getMultiplier() - 1);
+
 			mod = ut->getStoreModifier(unitType, resType);
 			m_storeModifiers[unitType][resType].m_addition += mod.getAddition();
-			m_storeModifiers[unitType][resType].m_multiplier += (1 - mod.getMultiplier());
+			m_storeModifiers[unitType][resType].m_multiplier += (mod.getMultiplier() - 1);
 		}
 	}
 
@@ -757,10 +754,13 @@ void Faction::reEvaluateStore() {
 		}
 	}
 	foreach_const (Units, it, units) {
-		const UnitType *ut = (*it)->getType();
-		for (int j=0; j < ut->getStoredResourceCount(); ++j) {
-			ResourceAmount res = ut->getStoredResource(j, this);
-			storeMap[res.getType()] += res.getAmount();
+		// don't want the resources of dead units to be included
+		if (!(*it)->isDead()) {
+			const UnitType *ut = (*it)->getType();
+			for (int j=0; j < ut->getStoredResourceCount(); ++j) {
+				ResourceAmount res = ut->getStoredResource(j, this);
+				storeMap[res.getType()] += res.getAmount();
+			}
 		}
 	}
 	for (int j = 0; j < resources.size(); ++j) {
