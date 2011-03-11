@@ -156,6 +156,10 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	}
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
+	
+	// start the music
+	g_soundRenderer.playMusic(g_coreData.getMenuMusic());
+	//g_soundRenderer.playMusic(g_coreData.getIntroMusic());
 }
 
 void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
