@@ -179,6 +179,7 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	m_mouseWidget = 0;
 	m_keyboardWidget = 0;
 	m_textWidget = 0;
+	m_cell = 0;
 }
 
 string Widget::descState() {
@@ -308,6 +309,8 @@ void Widget::renderOverlay(int ndx, Vec2i pos, Vec2i size) {
 		glTexCoord2i(0, 0);
 		glVertex2iv(verts[3].ptr());
 	glEnd();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
 }
 
 Vec2f invertTexCoord(Vec2f in) {
@@ -333,9 +336,9 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 	const int &imgNdx = style.m_imageNdx;
 
 	if (style.m_cornerSize * 2 > size.w || style.m_cornerSize * 2 > size.h) {
-//		assert(false);
 		return;
 	}
+
 	assert(imgNdx >= 0);
 	const Texture2DGl *tex = static_cast<const Texture2DGl*>(m_rootWindow->getConfig()->getTexture(imgNdx));
 	const Vec2f uvStepBorder(borderSize / float(tex->getPixmap()->getW()),
@@ -365,27 +368,33 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 	buildArrayQuad(pos + Vec2f(0.f, sz.h - float(cornerSize)),
 		cnrSize, Vec2f(0.f, 1.f - uvStepCorner.v), uvStepCorner, &verts[12], &uvCoords[12]);
 
+	if (size.w == 16) {
+		DEBUG_HOOK();
+	}
+
 	// and 4 sides,
 	// top & bottom
 	Vec2f tbSize(sz.w - float(cornerSize) * 2.f, float(borderSize));
 	Vec2f tUvOffset(uvStepCorner.u, 0.f);
 	Vec2f bUvOffset(uvStepCorner.u, 1.f - uvStepBorder.v);
-	Vec2f tbUvStep(1.f - uvStepCorner.u * 2, uvStepBorder.v);
+	Vec2f tbUvStep(1.f - 2.f * uvStepCorner.u, uvStepBorder.v);
 	buildArrayQuad(pos + Vec2f(float(cornerSize), 0.f), tbSize, tUvOffset, tbUvStep, &verts[16], &uvCoords[16]);
 	buildArrayQuad(pos + Vec2f(float(cornerSize), sz.h - float(borderSize)), tbSize, bUvOffset, tbUvStep, &verts[20], &uvCoords[20]);
 
 	// left & right
-	Vec2f lrSize(float(borderSize), sz.h - float(cornerSize) * 2);
+	Vec2f lrSize(float(borderSize), sz.h - float(cornerSize) * 2.f);
 	Vec2f lUvOffset(0.f, uvStepCorner.v);
 	Vec2f rUvOffset(1.f - uvStepBorder.u, uvStepCorner.v);
 	Vec2f lrUvStep(uvStepBorder.u, 1.f - 2.f * uvStepCorner.v);
 	buildArrayQuad(pos + Vec2f(0.f, float(cornerSize)), lrSize, lUvOffset, lrUvStep, &verts[24], &uvCoords[24]);
 	buildArrayQuad(pos + Vec2f(sz.w - float(borderSize), float(cornerSize)), lrSize, rUvOffset, lrUvStep, &verts[28], &uvCoords[28]);
 
-	vector<GLushort> indices;
-	for (unsigned short i=0; i < 32; ++i) {
-		indices.push_back(i);
-	}
+	static GLushort indices[] = {
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+		12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+		22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+	};
+
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex->getHandle());
 	assertGl();
@@ -398,7 +407,7 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 	assertGl();
 	glColor4f(1.f, 1.f, 1.f, m_fade);
 
-	glDrawElements(GL_QUADS, 32, GL_UNSIGNED_SHORT, &indices[0]);
+	glDrawElements(GL_QUADS, 32, GL_UNSIGNED_SHORT, indices);
 	assertGl();
 
 	// restore GL state
@@ -613,6 +622,8 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 				glTexCoord2i(0, 0);
 				glVertex2iv(verts[3].ptr());
 			glEnd();
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
 
 			break;
 	}
@@ -685,6 +696,80 @@ void Widget::render() {
 	renderForeground();
 }
 
+void Widget::anchor() {
+	// cell pos and size
+	Rect2i cellArea = m_parent->getCellArea(m_cell);
+	Vec2i  cellPos = cellArea.p[0],
+		   cellSize = cellArea.p[1] - cellArea.p[0];
+
+	if (cellSize == Vec2i(0)) {
+		//WIDGET_LOG( descLong() << " : Widget::anchor() ... aborting (cellSize == 0,0)" );
+		return;
+	}
+	WIDGET_LOG( descLong() << " : Widget::anchor()" );
+
+	// result pos & size
+	Vec2i pos = this->getPos();//cellPos;
+	Vec2i size = this->getSize();
+
+	// flags (so we don't apply anchors after centering)
+	bool anchorVertical = true,
+		 anchorHorizontal = true;
+
+	// 1. apply centre anchors
+	if (m_anchors.isCentreHorizontal() || m_anchors.isCentreVertical()) {
+		Vec2i offset = (cellSize - m_size) / 2;
+		if (m_anchors.isCentreHorizontal()) {
+			pos.x = offset.x;
+			anchorHorizontal = false;
+		}
+		if (m_anchors.isCentreVertical()) {
+			pos.y = offset.y;
+			anchorVertical = false;
+		}
+	}
+
+	// 2. convert percentages to absolute values
+	int absolute[Edge::COUNT];
+	foreach_enum (Edge, e) {
+		if (m_anchors[e].isRigid()) {
+			absolute[e] = m_anchors[e].getValue();
+		} else if (m_anchors[e].isSpringy()) {
+			int avail = (e == Edge::LEFT || e == Edge::RIGHT) ? cellSize.w : cellSize.h;
+			absolute[e] = int(float(avail) * (m_anchors[e].getValue() / 100.f));
+		} else {
+			absolute[e] = -1;
+		}
+	}
+
+	// 3. apply absolute anchors (if not centering)
+	if (anchorHorizontal) {
+		if (absolute[Edge::LEFT] != -1) { // anchor left
+			pos.x = absolute[Edge::LEFT];
+			if (absolute[Edge::RIGHT] != -1) { // stretch horizontally
+				size.w = cellSize.w - absolute[Edge::LEFT] - absolute[Edge::RIGHT];
+			}
+		} else if (absolute[Edge::RIGHT] != -1) { // anchor right
+			pos.x = cellSize.w - absolute[Edge::RIGHT] - size.w;
+		}
+	}
+	if (anchorVertical) {
+		if (absolute[Edge::TOP] != -1) { // anchor top
+			pos.y = absolute[Edge::TOP];
+			if (absolute[Edge::BOTTOM] != -1) { // stretch vertically
+				size.h = cellSize.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
+			}
+		} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
+			pos.y = cellSize.h - absolute[Edge::BOTTOM] - size.h;
+		}
+	}
+
+	// 4. set position and size
+	WIDGET_LOG( descShort() << " : setting pos: " << pos << " & size: " << size );
+	this->setPos(cellPos + pos);
+	this->setSize(size);
+}
+
 // =====================================================
 // class MouseWidget
 // =====================================================
@@ -726,6 +811,8 @@ void ImageWidget::startBatch() {
 }
 
 void ImageWidget::endBatch() {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
 	assertGl();
 	batchRender = false;
 }
@@ -768,6 +855,8 @@ void ImageWidget::renderImage(int ndx, const Vec4f &colour) {
 	glEnd();
 
 	if (!batchRender) {
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_TEXTURE_2D);
 		assertGl();
 	}
 }
@@ -1000,6 +1089,8 @@ void MouseCursor::renderTex(const Texture2D *tex) {
 		glTexCoord2i(1, 0);
 		glVertex2i(x2, y1);
 	glEnd();
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
 }
 
 // =====================================================
@@ -1099,75 +1190,75 @@ void Container::render() {
 // class WidgetCell
 // =====================================================
 
-WidgetCell::WidgetCell(Container *parent, Vec2i pos, Vec2i size)
-		: Container(parent, pos, size) {
-}
-
-WidgetCell::WidgetCell(Container *parent) : Container(parent) {
-}
-
-void WidgetCell::anchorWidgets() {
-	if (getSize() == Vec2i(0)) {
-		//WIDGET_LOG( descLong() << " : WidgetCell::anchorWidgets() ... aborting (Size == 0,0)" );
-		return;
-	}
-	WIDGET_LOG( descLong() << " : WidgetCell::anchorWidgets()" );
-	foreach (WidgetList, it, m_children) {
-		Widget *child = *it;
-		Anchors anchors = child->getAnchors();
-		WIDGET_LOG( descShort() << " : anchoring child " << child->descShort()
-			<< " with anchors: " << anchors );
-		if (anchors.isCentreHorizontal() && anchors.isCentreVertical()) {
-			Vec2i offset = (getSize() - child->getSize()) / 2;
-			child->setPos(offset);
-			continue;
-		}
-		///@todo FIX ... for only centred one way
-
-		Vec2i pos = getPos();
-		Vec2i cellSize = getSize();
-		Vec2i size = child->getSize();
-
-		// 1. convert percentages to absolute values
-		int absolute[Edge::COUNT];
-		foreach_enum (Edge, e) {
-			if (anchors[e].isRigid()) {
-				absolute[e] = anchors[e].getValue();
-			} else if (anchors[e].isSpringy()) {
-				int avail;
-				if (e == Edge::LEFT || e == Edge::RIGHT) {
-					avail = cellSize.w;
-				} else {
-					avail = cellSize.h;
-				}
-				absolute[e] = int(float(avail) * (anchors[e].getValue() / 100.f));
-			} else {
-				absolute[e] = -1;
-			}
-		}
-
-		// 2. apply absolute anchors
-		if (absolute[Edge::LEFT] != -1) { // anchor left
-			pos.x = absolute[Edge::LEFT];
-			if (absolute[Edge::RIGHT] != -1) { // stretch horizontally
-				size.w = cellSize.w - absolute[Edge::LEFT] - absolute[Edge::RIGHT];
-			}
-		} else if (absolute[Edge::RIGHT] != -1) { // anchor right
-			pos.x = cellSize.w - absolute[Edge::RIGHT] - size.w;
-		}
-		if (absolute[Edge::TOP] != -1) { // anchor top
-			pos.y = absolute[Edge::TOP];
-			if (absolute[Edge::BOTTOM] != -1) { // stretch vertically
-				size.h = cellSize.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
-			}
-		} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
-			pos.y = cellSize.h - absolute[Edge::BOTTOM] - size.h;
-		}
-		WIDGET_LOG( descShort() << " : setting child " << child->descShort()
-			<< " to pos: " << pos << " & size: " << size);
-		child->setPos(pos);
-		child->setSize(size);
-	}
-}
+//WidgetCell::WidgetCell(Container *parent, Vec2i pos, Vec2i size)
+//		: Container(parent, pos, size) {
+//}
+//
+//WidgetCell::WidgetCell(Container *parent) : Container(parent) {
+//}
+//
+//void WidgetCell::anchorWidgets() {
+//	if (getSize() == Vec2i(0)) {
+//		//WIDGET_LOG( descLong() << " : WidgetCell::anchorWidgets() ... aborting (Size == 0,0)" );
+//		return;
+//	}
+//	WIDGET_LOG( descLong() << " : WidgetCell::anchorWidgets()" );
+//	foreach (WidgetList, it, m_children) {
+//		Widget *child = *it;
+//		Anchors anchors = child->getAnchors();
+//		WIDGET_LOG( descShort() << " : anchoring child " << child->descShort()
+//			<< " with anchors: " << anchors );
+//		if (anchors.isCentreHorizontal() && anchors.isCentreVertical()) {
+//			Vec2i offset = (getSize() - child->getSize()) / 2;
+//			child->setPos(offset);
+//			continue;
+//		}
+//		///@todo FIX ... for only centred one way
+//
+//		Vec2i pos = getPos();
+//		Vec2i cellSize = getSize();
+//		Vec2i size = child->getSize();
+//
+//		// 1. convert percentages to absolute values
+//		int absolute[Edge::COUNT];
+//		foreach_enum (Edge, e) {
+//			if (anchors[e].isRigid()) {
+//				absolute[e] = anchors[e].getValue();
+//			} else if (anchors[e].isSpringy()) {
+//				int avail;
+//				if (e == Edge::LEFT || e == Edge::RIGHT) {
+//					avail = cellSize.w;
+//				} else {
+//					avail = cellSize.h;
+//				}
+//				absolute[e] = int(float(avail) * (anchors[e].getValue() / 100.f));
+//			} else {
+//				absolute[e] = -1;
+//			}
+//		}
+//
+//		// 2. apply absolute anchors
+//		if (absolute[Edge::LEFT] != -1) { // anchor left
+//			pos.x = absolute[Edge::LEFT];
+//			if (absolute[Edge::RIGHT] != -1) { // stretch horizontally
+//				size.w = cellSize.w - absolute[Edge::LEFT] - absolute[Edge::RIGHT];
+//			}
+//		} else if (absolute[Edge::RIGHT] != -1) { // anchor right
+//			pos.x = cellSize.w - absolute[Edge::RIGHT] - size.w;
+//		}
+//		if (absolute[Edge::TOP] != -1) { // anchor top
+//			pos.y = absolute[Edge::TOP];
+//			if (absolute[Edge::BOTTOM] != -1) { // stretch vertically
+//				size.h = cellSize.h - absolute[Edge::TOP] - absolute[Edge::BOTTOM];
+//			}
+//		} else if (absolute[Edge::BOTTOM] != -1) { // anchor bottom
+//			pos.y = cellSize.h - absolute[Edge::BOTTOM] - size.h;
+//		}
+//		WIDGET_LOG( descShort() << " : setting child " << child->descShort()
+//			<< " to pos: " << pos << " & size: " << size);
+//		child->setPos(pos);
+//		child->setSize(size);
+//	}
+//}
 
 }}

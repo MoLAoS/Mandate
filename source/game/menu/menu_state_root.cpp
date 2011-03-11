@@ -55,7 +55,8 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	// Glest Logo PicturePanel
 	int logoHeight = std::min(int(0.3f * g_metrics.getScreenH()), 256);
 	int logoWidth = logoHeight * 2;
-	PicturePanel *pp = new PicturePanel(strip->getCell(0), Vec2i(0), Vec2i(logoWidth, logoHeight));
+	PicturePanel *pp = new PicturePanel(strip, Vec2i(0), Vec2i(logoWidth, logoHeight));
+	pp->setCell(0);
 	pp->setImage(g_coreData.getLogoTexture());
 	pp->setAutoLayout(false);
 
@@ -104,14 +105,16 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	// Buttons Panel
 	anchors.set(Edge::COUNT, 0, false); // anchor all (fill cell)
-	CellStrip *pnl = new CellStrip(strip->getCell(1), Orientation::VERTICAL, Origin::CENTRE, RootMenuItem::COUNT);
+	CellStrip *pnl = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, RootMenuItem::COUNT);
+	pnl->setCell(1);
 	pnl->setAnchors(anchors);
 
 	// Buttons
 	anchors.setCentre(true); // anchor centre
 	foreach_enum (RootMenuItem, i) {
 		int height = g_widgetConfig.getDefaultItemHeight();
-		m_buttons[i] = new Widgets::Button(pnl->getCell(i));
+		m_buttons[i] = new Widgets::Button(pnl);
+		m_buttons[i]->setCell(i);
 		m_buttons[i]->setSize(Vec2i(8 * height, height));
 		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
 		m_buttons[i]->setAnchors(anchors);
@@ -127,7 +130,8 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 			n = 2;
 		}
 		anchors.set(Edge::COUNT, 0, false); // fill cell
-		logoPnl = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, n);
+		logoPnl = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, n);
+		logoPnl->setCell(2);
 		logoPnl->setAnchors(anchors);
 	}
 	// anchor centre
@@ -136,32 +140,37 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	if (!mainMenu->gaeLogoOnRoot()) {
 		if (mainMenu->gplLogoOnRoot()) {
 			// gpl logo
-			StaticImage *si = new StaticImage(logoPnl->getCell(0),
-				Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			StaticImage *si
+				= new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			si->setCell(0);
 			si->setAnchors(anchors);
 		}
 	} else {
 		if (mainMenu->gplLogoOnRoot()) {
-			StaticImage *si = new Widgets::StaticImage(logoPnl->getCell(0), 
-				Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGaeSplashTexture());
+			StaticImage *si
+				= new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGaeSplashTexture());
+			si->setCell(0);
 			si->setAnchors(anchors);
 
-			si = new Widgets::StaticImage(logoPnl->getCell(1),
-				Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			si = new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			si->setCell(1);
 			si->setAnchors(anchors);
 		} else {
-			StaticImage *si = new Widgets::StaticImage(logoPnl->getCell(0),
-				Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGaeSplashTexture());
+			StaticImage *si
+				= new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGaeSplashTexture());
+			si->setCell(0);
 			si->setAnchors(anchors);
 		}
 	}
 
 	// adv eng label if total conversion
 	if (mainMenu->isTotalConversion()) {
-		CellStrip *pnl = new CellStrip(strip->getCell(3), Orientation::HORIZONTAL, Origin::CENTRE, 1);
+		CellStrip *pnl = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 1);
+		pnl->setCell(3);
 		anchors.set(Edge::COUNT, 0, false); // fill
 		pnl->setAnchors(anchors);
-		StaticText *label = new Widgets::StaticText(pnl->getCell(0));
+		StaticText *label = new Widgets::StaticText(pnl);
+		label->setCell(0);
 
 		// anchor bottom-right
 		anchors = Anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0),
@@ -194,7 +203,6 @@ void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
 		case RootMenuItem::OPTIONS:  targetState = MenuStates::OPTIONS;		break;
 		case RootMenuItem::LOADGAME: targetState = MenuStates::LOAD_GAME;	break;
 		case RootMenuItem::ABOUT:	 targetState = MenuStates::ABOUT;		break;
-		case RootMenuItem::TEST:     targetState = MenuStates::TEST;        break;
 		default: break;
 	}
 	if (targetState != MenuStates::INVALID) {
@@ -222,7 +230,6 @@ void MenuStateRoot::update(){
 			case RootMenuItem::OPTIONS: newState = new MenuStateOptions(program, mainMenu); break;
 			case RootMenuItem::LOADGAME: newState = new MenuStateLoadGame(program, mainMenu); break;
 			case RootMenuItem::ABOUT: newState = new MenuStateAbout(program, mainMenu); break;
-			case RootMenuItem::TEST: newState = new MenuStateTest(program, mainMenu); break;
 			default: break;
 		}
 		if (newState) {

@@ -160,27 +160,32 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 	setPercentageHints(hints);
 	
 	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	StaticText *label = new StaticText(m_cells[0]);
+	StaticText *label = new StaticText(this);
+	label->setCell(0);
 	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), font, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
-	label = new StaticText(m_cells[1]);
+	label = new StaticText(this);
+	label->setCell(1);
 	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), font, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
-	label = new StaticText(m_cells[2]);
+	label = new StaticText(this);
+	label->setCell(2);
 	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), font, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
-	label = new StaticText(m_cells[3]);
+	label = new StaticText(this);
+	label->setCell(3);
 	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), font, false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
-	label = new StaticText(m_cells[4]);
+	label = new StaticText(this);
+	label->setCell(4);
 	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), font, false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
@@ -199,28 +204,33 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 	setPercentageHints(hints);
 
 	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	m_label = new StaticText(m_cells[0]);
+	m_label = new StaticText(this);
+	m_label->setCell(0);
 	m_label->setTextParams("Player #", Vec4f(1.f), font, true);
 	m_label->setAnchors(anchors);
 
-	m_controlList = new DropList(m_cells[1]);
+	m_controlList = new DropList(this);
+	m_controlList->setCell(1);
 	m_controlList->setAnchors(anchors);
 
 	foreach_enum (ControlType, ct) {
 		m_controlList->addItem(g_lang.get(ControlTypeNames[ct]));
 	}
 
-	m_factionList = new DropList(m_cells[2]);
+	m_factionList = new DropList(this);
+	m_factionList->setCell(2);
 	m_factionList->setDropBoxHeight(200);
 	m_factionList->setAnchors(anchors);
 	
-	m_teamList = new DropList(m_cells[3]);
+	m_teamList = new DropList(this);
+	m_teamList->setCell(3);
 	for (int i=1; i <= GameConstants::maxPlayers; ++i) {
 		m_teamList->addItem(intToStr(i));
 	}
 	m_teamList->setAnchors(anchors);
 
-	m_colourPicker = new Widgets::ColourPicker(m_cells[4]);
+	m_colourPicker = new Widgets::ColourPicker(this);
+	m_colourPicker->setCell(4);
 	m_colourPicker->setAnchors(anchors);
 
 	m_controlList->SelectionChanged.connect(this, &PlayerSlotWidget::onControlChanged);

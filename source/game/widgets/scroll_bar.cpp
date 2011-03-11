@@ -334,13 +334,16 @@ ScrollBar::ScrollBar(Container *parent, Vec2i pos, Vec2i sz, bool vert, int line
 
 void ScrollBar::init() {
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
-	m_btnOne = new ScrollBarButton(getCell(0), m_vertical ? Direction::UP : Direction::LEFT);
+	m_btnOne = new ScrollBarButton(this, m_vertical ? Direction::UP : Direction::LEFT);
+	m_btnOne->setCell(0);
 	m_btnOne->setAnchors(anchors);
 	m_btnOne->Fire.connect(this, &ScrollBar::onScrollBtnFired);
-	m_btnTwo = new ScrollBarButton(getCell(2), m_vertical ? Direction::DOWN : Direction::RIGHT);
+	m_btnTwo = new ScrollBarButton(this, m_vertical ? Direction::DOWN : Direction::RIGHT);
+	m_btnTwo->setCell(2);
 	m_btnTwo->setAnchors(anchors);
 	m_btnTwo->Fire.connect(this, &ScrollBar::onScrollBtnFired);
-	m_shaft = new ScrollBarShaft(getCell(1), m_vertical);
+	m_shaft = new ScrollBarShaft(this, m_vertical);
+	m_shaft->setCell(1);
 	m_shaft->setAnchors(anchors);
 	m_shaft->ThumbMoved.connect(this, &ScrollBar::onThumbMoved);
 }
@@ -352,9 +355,9 @@ void ScrollBar::setSize(const Vec2i &sz) {
 void ScrollBar::layoutCells() {
 	Vec2i size = getSize() - getBordersAll();
 	int btnSize = m_vertical ? size.w : size.h;
-	getCell(0)->setSizeHint(SizeHint(-1, btnSize));
-	getCell(1)->setSizeHint(SizeHint(100));
-	getCell(2)->setSizeHint(SizeHint(-1, btnSize));
+	setSizeHint(0, SizeHint(-1, btnSize));
+	setSizeHint(1, SizeHint(100));
+	setSizeHint(2, SizeHint(-1, btnSize));
 	CellStrip::layoutCells();
 }
 

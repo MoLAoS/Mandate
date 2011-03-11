@@ -18,6 +18,8 @@ using namespace Shared::Graphics::Gl;
 
 namespace Glest { namespace Widgets {
 
+const int SliderShaft::thumbSize = 16; // pixels (change? make dynamic?) [maybe defItemHeight / 3 ?]
+
 // =====================================================
 //  class SliderThumb
 // =====================================================
@@ -211,7 +213,7 @@ bool SliderShaft::mouseUp(MouseButton btn, Vec2i pos) {
 // =====================================================
 
 Slider2::Slider2(Container *parent, bool vert)
-		: WidgetCell(parent) {
+		: Container(parent) {
 	m_shaft = new SliderShaft(this, vert);
 	Anchors anchors(Anchor(AnchorType::RIGID, getBorderLeft()), Anchor(AnchorType::RIGID, getBorderTop()),
 		Anchor(AnchorType::RIGID, getBorderRight()), Anchor(AnchorType::RIGID, getBorderBottom()));
@@ -221,11 +223,17 @@ Slider2::Slider2(Container *parent, bool vert)
 }
 
 void Slider2::setPos(const Vec2i &pos) {
-	WidgetCell::setPos(pos);
+	Container::setPos(pos);
+	foreach (WidgetList, it, m_children) {
+		(*it)->anchor();
+	}
 }
 
 void Slider2::setSize(const Vec2i &sz) {
-	WidgetCell::setSize(sz);
+	Widget::setSize(sz);
+	foreach (WidgetList, it, m_children) {
+		(*it)->anchor();
+	}
 }
 
 }}

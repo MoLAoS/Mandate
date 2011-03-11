@@ -53,7 +53,7 @@ private:
 	bool         m_dragging;
 
 private:
-	static const int thumbSize = 16; // pixels (change? make dynamic?) [maybe defItemHeight / 3 ?]
+	static const int thumbSize;
 
 private:
 	void recalc();
@@ -85,7 +85,7 @@ public:
 //  class Slider
 // =====================================================
 
-class Slider2 : public WidgetCell, public sigslot::has_slots {
+class Slider2 : public Container, public sigslot::has_slots {
 private:
 	SliderShaft *m_shaft;
 

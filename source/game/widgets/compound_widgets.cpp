@@ -106,7 +106,8 @@ void ScrollText::init() {
 	Anchors anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::RIGID, 0), // left, top
 		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));           // right, bottom
 	
-	m_scrollBar = new ScrollBar(getCell(0), true, 10);
+	m_scrollBar = new ScrollBar(this, true, 10);
+	m_scrollBar->setCell(0);
 	m_scrollBar->setAnchors(anchors);
 	m_scrollBar->setSize(Vec2i(itemSize));
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
@@ -115,7 +116,8 @@ void ScrollText::init() {
 	anchors = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, itemSize), Anchor(AnchorType::RIGID, 0));
 
-	m_staticText = new StaticText(getCell(0));
+	m_staticText = new StaticText(this);
+	m_staticText->setCell(0);
 	m_staticText->setAnchors(anchors);
 }
 

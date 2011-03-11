@@ -262,7 +262,7 @@ void TickerTape::update() {
 	}
 }
 
-class ScrollCell : public WidgetCell/*Container*/ {
+class ScrollCell : public Container {
 private:
 	typedef map<Widget*, Vec2i>   OffsetMap;
 
@@ -270,10 +270,10 @@ private:
 	OffsetMap  m_childOffsets;
 
 public:
-	ScrollCell(Container *parent) : WidgetCell(parent) {}
-	ScrollCell(Container *parent, Vec2i pos, Vec2i sz) : WidgetCell(parent, pos, sz) {}
+	ScrollCell(Container *parent) : Container(parent) {}
+	ScrollCell(Container *parent, Vec2i pos, Vec2i sz) : Container(parent, pos, sz) {}
 
-	void anchorWidgets() { WidgetCell::anchorWidgets(); }
+//	void anchorWidgets() { WidgetCell::anchorWidgets(); }
 
 	virtual void addChild(Widget* child) override {
 		Container::addChild(child);
@@ -293,13 +293,25 @@ public:
 	}
 
 	virtual void setSize(const Vec2i &sz) override {
-		WidgetCell::setSize(sz);
+		Widget::setSize(sz);
 		Resized(sz);
 	}
 	
 	sigslot::signal<Vec2i> Resized;
 
 	virtual string descType() const override { return "ScrollCell"; }
+
+	virtual void render() override {
+		assert(glIsEnabled(GL_BLEND));
+		// clip
+		Vec2i pos = getScreenPos();
+		pos.x += getBorderLeft();
+		pos.y += getBorderTop();
+		Vec2i size = getSize() - m_borderStyle.getBorderDims();
+		m_rootWindow->pushClipRect(pos, size);
+		Container::render();
+		m_rootWindow->popClipRect();
+	}
 };
 
 class ScrollPane : public CellStrip, public sigslot::has_slots {
@@ -359,37 +371,39 @@ ScrollPane::ScrollPane(Container *parent, Vec2i pos, Vec2i sz)
 }
 
 void ScrollPane::init() {
+	setWidgetStyle(WidgetType::TEXT_BOX);
 	Anchors anchors;
 	anchors.set(Edge::COUNT, 0, false); // fill
 
-	CellStrip *bigStrip = new CellStrip(getCell(0), Orientation::VERTICAL, Origin::CENTRE, 2);
+	CellStrip *bigStrip = new CellStrip(this, Orientation::VERTICAL, Origin::CENTRE, 2);
+	bigStrip->setCell(0);
 	bigStrip->setAnchors(anchors);
 	
-	CellStrip *littleStrip = new CellStrip(getCell(1), Orientation::VERTICAL, Origin::CENTRE, 2);
+	CellStrip *littleStrip = new CellStrip(this, Orientation::VERTICAL, Origin::CENTRE, 2);
+	littleStrip->setCell(1);
 	littleStrip->setAnchors(anchors);
 	
-	m_scrollCell = new ScrollCell(bigStrip->getCell(0));
+	m_scrollCell = new ScrollCell(bigStrip);
+	m_scrollCell->setCell(0);
 	m_scrollCell->setAnchors(anchors);
 	m_scrollCell->Resized.connect(this, &ScrollPane::onScrollCellResized);
 
-	WidgetCell *horizBarCell = bigStrip->getCell(1);
-	WidgetCell *vertBarCell = littleStrip->getCell(0);
-	WidgetCell *spacerCell = littleStrip->getCell(1);
-
 	int barSize = m_rootWindow->getConfig()->getDefaultItemHeight();
 
-	getCell(0)->setSizeHint(SizeHint(100));
-	getCell(1)->setSizeHint(SizeHint(-1, barSize));
+	setSizeHint(0, SizeHint(100));
+	setSizeHint(1, SizeHint(-1, barSize));
 
-	bigStrip->getCell(0)->setSizeHint(SizeHint(100));
-	horizBarCell->setSizeHint(SizeHint(-1, barSize));
-	vertBarCell->setSizeHint(SizeHint(100));
-	spacerCell->setSizeHint(SizeHint(-1, barSize));
+	bigStrip->setSizeHint(0, SizeHint(100));
+	bigStrip->setSizeHint(1, SizeHint(-1, barSize));
+	littleStrip->setSizeHint(0, SizeHint(100));
+	littleStrip->setSizeHint(1, SizeHint(-1, barSize));
 
-	m_vertBar = new ScrollBar(vertBarCell, true, 10);
+	m_vertBar = new ScrollBar(littleStrip, true, 10);
+	m_vertBar->setCell(0);
 	m_vertBar->setAnchors(anchors);
 	m_vertBar->ThumbMoved.connect(this, &ScrollPane::onVerticalScroll);
-	m_horizBar = new ScrollBar(horizBarCell, false, 10);
+	m_horizBar = new ScrollBar(bigStrip, false, 10);
+	m_horizBar->setCell(1);
 	m_horizBar->setAnchors(anchors);
 	m_horizBar->ThumbMoved.connect(this, &ScrollPane::onHorizontalScroll);
 
@@ -432,16 +446,18 @@ void populateFruitVector(std::vector<string> &fruit) {
 	fruit.push_back("Lime");
 }
 
-void populateMiscStrip1(WidgetCell *cell, std::vector<string> &fruit) {
-	cell->setSizeHint(SizeHint(10, -1));
+void populateMiscStrip1(CellStrip *strip, int cell, std::vector<string> &fruit) {
+	strip->setSizeHint(cell, SizeHint(10, -1));
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 15)); // fill with 15 px padding
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
-	CellStrip *topStrip = new CellStrip(cell, Orientation::HORIZONTAL);
+	CellStrip *topStrip = new CellStrip(strip, Orientation::HORIZONTAL);
+	topStrip->setCell(cell);
 	topStrip->setAnchors(padAnchors);
 	topStrip->addCells(3);
 //	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
 
-	TickerTape *tickerTape = new TickerTape(topStrip->getCell(0), Origin::CENTRE);
+	TickerTape *tickerTape = new TickerTape(topStrip, Origin::CENTRE);
+	tickerTape->setCell(0);
 	tickerTape->addItems(fruit);
 	tickerTape->setAnchors(fillAnchors);
 	tickerTape->setTransitionInterval(120);
@@ -449,81 +465,98 @@ void populateMiscStrip1(WidgetCell *cell, std::vector<string> &fruit) {
 	tickerTape->setOverlapTransitions(true);
 	tickerTape->setAlternateOrigin(false);
 
-	DropList *dropList = new DropList(topStrip->getCell(1));
+	DropList *dropList = new DropList(topStrip);
+	dropList->setCell(1);
 	dropList->addItems(fruit);
 	dropList->setAnchors(fillAnchors);
 	dropList->setDropBoxHeight(200);
 
-	TextInBox *txtInBox = new TextInBox(topStrip->getCell(2));
+	TextInBox *txtInBox = new TextInBox(topStrip);
+	txtInBox->setCell(2);
 	txtInBox->setAnchors(fillAnchors);
 	txtInBox->setText("Apple");
 }
 
-void populateBigTestStrip(WidgetCell *cell, std::vector<string> &fruit) {
-	cell->setSizeHint(SizeHint());
+void populateBigTestStrip(CellStrip *strip, int cell, std::vector<string> &fruit) {
+	strip->setSizeHint(cell, SizeHint());
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 15)); // fill with 15 px padding
-	CellStrip *middleStrip = new CellStrip(cell, Orientation::HORIZONTAL);
+	CellStrip *middleStrip = new CellStrip(strip, Orientation::HORIZONTAL);
+	middleStrip->setCell(cell);
 	middleStrip->setAnchors(padAnchors);
 	middleStrip->addCells(3);
 
+	CellStrip *leftStrip = new CellStrip(middleStrip, Orientation::VERTICAL);
+	leftStrip->setCell(0);
+	leftStrip->addCells(2);
+	leftStrip->setAnchors(Anchors(Anchor(AnchorType::RIGID, 2)));
+
 	Texture2D *tex = g_coreData.getGaeSplashTexture();
 
-	ScrollPane *scrollPane = new ScrollPane(middleStrip->getCell(0));
+	ScrollPane *scrollPane = new ScrollPane(leftStrip);
+	scrollPane->setCell(0);
 	scrollPane->setTotalRange(tex->getPixmap()->getSize());
 	scrollPane->setAnchors(padAnchors);
-
 	StaticImage *image = new StaticImage(scrollPane->getScrollCell(), Vec2i(0), tex->getPixmap()->getSize());
 	image->setImage(tex);
 
-	ListBox *listBox = new ListBox(middleStrip->getCell(1), Vec2i(50,150), Vec2i(250, 150));
-	listBox->setAnchors(padAnchors);
-	listBox->addItems(fruit);
-
-	ScrollText *scrollText = new ScrollText(middleStrip->getCell(2));
+	ScrollText *scrollText = new ScrollText(leftStrip);
+	scrollText->setCell(1);
 	scrollText->setAnchors(padAnchors);
 	string txt = "La de da.\n\nTest text, testing text, this is some text to test the ScrollText widget.\n";
 	txt += "   and this is some more! ...\nmore\nmore\nmore\nmore\nThis is a last bit.";
 	scrollText->setText(txt);
+
+	ListBox *listBox = new ListBox(middleStrip, Vec2i(50,150), Vec2i(250, 150));
+	listBox->setCell(1);
+	listBox->setAnchors(padAnchors);
+	listBox->addItems(fruit);
 }
 
-void populateMiscStrip2(WidgetCell *cell) {
-	cell->setSizeHint(SizeHint(10, -1));
+void populateMiscStrip2(CellStrip *strip, int cell) {
+	strip->setSizeHint(cell, SizeHint(10, -1));
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 15)); // fill with 15 px padding
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 	Anchors btnAnchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5),
 		Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5));
 
-	CellStrip *middleStrip2 = new CellStrip(cell, Orientation::HORIZONTAL);
+	CellStrip *middleStrip2 = new CellStrip(strip, Orientation::HORIZONTAL);
+	middleStrip2->setCell(cell);
 	middleStrip2->setAnchors(padAnchors);
 	middleStrip2->addCells(3);
-	middleStrip2->getCell(1)->setSizeHint(SizeHint(-1, 40));
+	middleStrip2->setSizeHint(1, SizeHint(-1, 40));
 
-	CheckBox *checkBox = new CheckBox(middleStrip2->getCell(1));
+	CheckBox *checkBox = new CheckBox(middleStrip2);
+	checkBox->setCell(1);
 	checkBox->setAnchors(fillAnchors);
 	checkBox->setChecked(true);
 
-	Slider2 *slider = new Slider2(middleStrip2->getCell(0), false);
+	Slider2 *slider = new Slider2(middleStrip2, false);
+	slider->setCell(0);
 	slider->setAnchors(btnAnchors);
 	slider->setRange(100);
 	slider->setValue(50);
 
-	CellStrip *buttonStrip = new CellStrip(middleStrip2->getCell(2), Orientation::HORIZONTAL, 2);
+	CellStrip *buttonStrip = new CellStrip(middleStrip2, Orientation::HORIZONTAL, 2);
+	buttonStrip->setCell(2);
 	buttonStrip->setAnchors(fillAnchors);
 
-	Button *btn = new Button(buttonStrip->getCell(0));
+	Button *btn = new Button(buttonStrip);
+	btn->setCell(0);
 	btn->setAnchors(btnAnchors);
 	btn->setText("Button 1");
 
-	btn = new Button(buttonStrip->getCell(1));
+	btn = new Button(buttonStrip);
+	btn->setCell(1);
 	btn->setAnchors(btnAnchors);
 	btn->setText("Button 2");
 }
 
-void populatePlayerSlotStrip(WidgetCell *cell) {
-	cell->setSizeHint(SizeHint(10, -1));
+void populatePlayerSlotStrip(CellStrip *strip, int cell) {
+	strip->setSizeHint(cell, SizeHint(10, -1));
 	Anchors psw_anchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 15),
 		Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 15));
-	PlayerSlotWidget *psw = new PlayerSlotWidget(cell);
+	PlayerSlotWidget *psw = new PlayerSlotWidget(strip);
+	psw->setCell(0);
 	psw->setAnchors(psw_anchors);
 }
 
@@ -543,10 +576,10 @@ TestPane::TestPane(Program &program)
 	std::vector<string> fruit;
 	populateFruitVector(fruit);
 
-	populateMiscStrip1(      strip->getCell(1), fruit );
-	populateBigTestStrip(    strip->getCell(2), fruit );
-	populateMiscStrip2(      strip->getCell(3)        );
-	populatePlayerSlotStrip( strip->getCell(0)        );
+	populateMiscStrip1(strip, 1, fruit);
+	populateBigTestStrip(strip, 2, fruit);
+	populateMiscStrip2(strip, 3);
+	populatePlayerSlotStrip(strip, 0);
 }
 
 TestPane::~TestPane() {

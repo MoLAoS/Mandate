@@ -223,6 +223,7 @@ int WidgetConfig::loadTexture(const string &name, const string &path) {
 	}
 	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 	try {
+		tex->setMipmap(false);
 		tex->load(path);
 		tex->init();
 		addGlestTexture(name, tex);

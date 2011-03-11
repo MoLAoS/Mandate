@@ -245,12 +245,16 @@ public:
 
 class CellStrip : public Container {
 protected:
+	typedef vector<CellInfo>    CellInfos;
+
+protected:
 	Orientation         m_orientation;
 	Origin              m_origin; // layout from
-	vector<WidgetCell*> m_cells;
+	//vector<WidgetCell*> m_cells;
 	SizeHint            m_defualtSizeHint;
 	Anchors             m_defaultAnchors;
 	bool                m_dirty;
+	CellInfos           m_cells2;
 
 protected:
 	CellStrip(WidgetWindow *window, Orientation ortn, Origin orgn, int cells);
@@ -263,7 +267,7 @@ public:
 	CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn, Origin orgn, int cells);
 
 protected:
-	void setCustumCell(int ndx, WidgetCell *cell);
+//	void setCustumCell(int ndx, WidgetCell *cell);
 	void setDirty() { m_dirty = true; }	
 	
 	// Container override
@@ -271,27 +275,37 @@ protected:
 
 public:
 	void setSizeHint(int i, SizeHint hint) {
-		ASSERT_RANGE(i, m_cells.size());
-		m_cells[i]->setSizeHint(hint);
+		ASSERT_RANGE(i, m_cells2.size());
+		//m_cells[i]->setSizeHint(hint);
+		m_cells2[i].m_hint = hint;
 	}
 
 	void setPercentageHints(int *hints) {
-		for (int i=0; i < m_cells.size(); ++i) {
-			m_cells[i]->setSizeHint(SizeHint(hints[i]));
+		for (int i=0; i < m_cells2.size(); ++i) {
+			//m_cells[i]->setSizeHint(SizeHint(hints[i]));
+			m_cells2[i].m_hint = SizeHint(hints[i]);
 		}
+	}
+
+	virtual Rect2i getCellArea(int cell) const override {
+		return Rect2i(m_cells2[cell].m_pos, m_cells2[cell].m_pos + m_cells2[cell].m_size);
+	}
+
+	virtual SizeHint getSizeHint(int cell) const override {
+		return m_cells2[cell].m_hint;
 	}
 
 	virtual void layoutCells();
 
-	WidgetCell* getCell(int i) const {
-		ASSERT_RANGE(i, m_cells.size());
-		return m_cells[i];
-	}
+	//WidgetCell* getCell(int i) const {
+	//	ASSERT_RANGE(i, m_cells.size());
+	//	return m_cells[i];
+	//}
 
-	void clearCells();
-	void deleteCells();
+	//void clearCells();
+	//void deleteCells();
 	void addCells(int n);
-	int  getCellCount() const { return m_cells.size(); }
+	int  getCellCount() const { return m_cells2.size(); }
 
 	// Widget overrides
 	virtual void render() override;

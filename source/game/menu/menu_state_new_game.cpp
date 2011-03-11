@@ -96,10 +96,10 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	// cell 1 : strip for random locations, shroud and fog check boxes
 	// cell 2 : strip for map label/drop-list/info, tilset drop-list and tech drop-list
 	// cell 3 : strip for return and play buttons
-	topStrip->getCell(0)->setSizeHint(SizeHint());                      // all remaining space
-	topStrip->getCell(1)->setSizeHint(SizeHint(-1, 1 * defCellHeight)); // one default item height
-	topStrip->getCell(2)->setSizeHint(SizeHint(-1, 3 * defCellHeight)); // 3 * default item height
-	topStrip->getCell(3)->setSizeHint(SizeHint(10));                    // 10 %
+	topStrip->setSizeHint(0, SizeHint());                      // all remaining space
+	topStrip->setSizeHint(1, SizeHint(-1, 1 * defCellHeight)); // one default item height
+	topStrip->setSizeHint(2, SizeHint(-1, 3 * defCellHeight)); // 3 * default item height
+	topStrip->setSizeHint(3, SizeHint(10));                    // 10 %
 
 	Anchors a(Anchor(AnchorType::RIGID, 0));
 	Anchors a2(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
@@ -108,15 +108,18 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	
 	// slot widget container
 	CellStrip *strip = 
-		new CellStrip(topStrip->getCell(0), Orientation::VERTICAL, Origin::CENTRE, GameConstants::maxPlayers + 1);
+		new CellStrip(topStrip, Orientation::VERTICAL, Origin::CENTRE, GameConstants::maxPlayers + 1);
+	strip->setCell(0);
 	strip->setAnchors(a2);
 
-	PlayerSlotLabels *labels = new PlayerSlotLabels(strip->getCell(0));
+	PlayerSlotLabels *labels = new PlayerSlotLabels(strip);
+	labels->setCell(0);
 	labels->setAnchors(a3);
 	labels->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight));
 
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
-		m_playerSlots[i] = new PlayerSlotWidget(strip->getCell(i + 1));
+		m_playerSlots[i] = new PlayerSlotWidget(strip);
+		m_playerSlots[i]->setCell(i + 1);
 		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i + 1));
 		m_playerSlots[i]->setSelectedColour(i);
 		m_playerSlots[i]->setAnchors(a3);
@@ -124,59 +127,72 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	}
 
 	// check-box strip
-	strip = new CellStrip(topStrip->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	strip = new CellStrip(topStrip, Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	strip->setCell(1);
 	strip->setAnchors(a);
 
-	CellStrip *combo = new CellStrip(strip->getCell(0), Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	CellStrip *combo = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	combo->setCell(0);
 	combo->setAnchors(a);
-	combo->getCell(0)->setSizeHint(SizeHint());
-	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
 
-	m_randomLocsLabel = new StaticText(combo->getCell(0));
+	combo->setSizeHint(0, SizeHint());
+	combo->setSizeHint(1, SizeHint(-1, defWidgetHeight * 3));
+
+	m_randomLocsLabel = new StaticText(combo);
+	m_randomLocsLabel->setCell(0);
 	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
 	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_randomLocsLabel->setAnchors(a);
 
-	m_randomLocsCheckbox = new CheckBox(combo->getCell(1));
+	m_randomLocsCheckbox = new CheckBox(combo);
+	m_randomLocsCheckbox->setCell(1);
 	m_randomLocsCheckbox->setAnchors(a3);
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip->getCell(1), Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	combo = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	combo->setCell(1);
 	combo->setAnchors(a);
-	combo->getCell(0)->setSizeHint(SizeHint());
-	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
+	combo->setSizeHint(0, SizeHint());
+	combo->setSizeHint(1, SizeHint(-1, defWidgetHeight * 3));
 
-	m_SODLabel = new StaticText(combo->getCell(0));
+	m_SODLabel = new StaticText(combo);
+	m_SODLabel->setCell(0);
 	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
 	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_SODLabel->setAnchors(a);
 
-	m_SODCheckbox = new CheckBox(combo->getCell(1));
+	m_SODCheckbox = new CheckBox(combo);
+	m_SODCheckbox->setCell(1);
 	m_SODCheckbox->setAnchors(a3);
 	m_SODCheckbox->setChecked(true);
 	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	combo = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	combo->setCell(2);
 	combo->setAnchors(a);
-	combo->getCell(0)->setSizeHint(SizeHint());
-	combo->getCell(1)->setSizeHint(SizeHint(-1, defWidgetHeight * 3));
+	combo->setSizeHint(0, SizeHint());
+	combo->setSizeHint(1, SizeHint(-1, defWidgetHeight * 3));
 
-	m_FOWLabel = new StaticText(combo->getCell(0));
+	m_FOWLabel = new StaticText(combo);
+	m_FOWLabel->setCell(0);
 	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
 	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_FOWLabel->setAnchors(a);
 
-	m_FOWCheckbox = new CheckBox(combo->getCell(1));
+	m_FOWCheckbox = new CheckBox(combo);
+	m_FOWCheckbox->setCell(1);
 	m_FOWCheckbox->setAnchors(a3);
 	m_FOWCheckbox->setChecked(true);
 	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
 	// Map / Tileset / Tech-Tree
-	strip = new CellStrip(topStrip->getCell(2), Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	strip = new CellStrip(topStrip, Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	strip->setCell(2);
 	strip->setAnchors(a);
 
 	// map listBox & info
-	combo = new CellStrip(strip->getCell(0), Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo->setCell(0);
 	a2 = Anchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5));
 	combo->setAnchors(a2);
 	int mttHints[] = { 25, 25, 50}; // 25 % for label and drop list, 50 % for info
@@ -189,12 +205,14 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	foreach (vector<string>, it, m_mapFiles) {
 		results.push_back(formatString(*it));
 	}
-	m_mapLabel = new StaticText(combo->getCell(0));
+	m_mapLabel = new StaticText(combo);
+	m_mapLabel->setCell(0);
 	m_mapLabel->setAnchors(a);
 	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
 	m_mapLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-	m_mapList = new DropList(combo->getCell(1));
+	m_mapList = new DropList(combo);
+	m_mapList->setCell(1);
 	m_mapList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
 	m_mapList->setAnchors(a3);
 	m_mapList->addItems(results);
@@ -206,13 +224,15 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	gs.setMapPath(string("maps/") + m_mapFiles[0]);
 	m_mapInfo.load("maps/" + m_mapFiles[0]);
 
-	m_mapInfoLabel = new StaticText(combo->getCell(2));
+	m_mapInfoLabel = new StaticText(combo);
+	m_mapInfoLabel->setCell(2);
 	m_mapInfoLabel->setAnchors(a);
 	m_mapInfoLabel->setTextParams(m_mapInfo.desc, Vec4f(1.f), font);
 	m_mapInfoLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	// tileset listBox
-	combo = new CellStrip(strip->getCell(1), Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo->setCell(1);
 	combo->setPercentageHints(mttHints);
 	combo->setAnchors(a2);
 
@@ -224,12 +244,14 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	for (int i = 0; i < results.size(); ++i) {
 		results[i] = formatString(results[i]);
 	}
-	m_tilesetLabel = new StaticText(combo->getCell(0));
+	m_tilesetLabel = new StaticText(combo);
+	m_tilesetLabel->setCell(0);
 	m_tilesetLabel->setAnchors(a);
 	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
 	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-	m_tilesetList = new DropList(combo->getCell(1));
+	m_tilesetList = new DropList(combo);
+	m_tilesetList->setCell(1);
 	m_tilesetList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
 	m_tilesetList->setAnchors(a3);
 	m_tilesetList->addItems(results);
@@ -238,7 +260,8 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetList->setSelected(0);
 
 	//tech Tree listBox
-	combo = new CellStrip(strip->getCell(2), Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo->setCell(2);
 	combo->setPercentageHints(mttHints);
 	combo->setAnchors(a2);
 
@@ -250,12 +273,14 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	for (int i = 0; i < results.size(); ++i) {
 		results[i] = formatString(results[i]);
 	}
-	m_techTreeLabel = new StaticText(combo->getCell(0));
+	m_techTreeLabel = new StaticText(combo);
+	m_techTreeLabel->setCell(0);
 	m_techTreeLabel->setAnchors(a);
 	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
 	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-	m_techTreeList = new DropList(combo->getCell(1));
+	m_techTreeList = new DropList(combo);
+	m_techTreeList->setCell(1);
 	m_techTreeList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
 	m_techTreeList->setAnchors(a3);
 	m_techTreeList->addItems(results);
@@ -264,16 +289,19 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
 
 	// Buttons strip
-	strip = new CellStrip(topStrip->getCell(3), Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	strip = new CellStrip(topStrip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	strip->setCell(3);
 	strip->setAnchors(a);
 
 	int w = 8 * defWidgetHeight, h = defWidgetHeight;
-	m_returnButton = new Button(strip->getCell(0), Vec2i(0), Vec2i(w, h));
+	m_returnButton = new Button(strip, Vec2i(0), Vec2i(w, h));
+	m_returnButton->setCell(0);
 	m_returnButton->setAnchors(a3);
 	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);
 	m_returnButton->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
-	m_playNow = new Button(strip->getCell(1), Vec2i(0), Vec2i(w, h));
+	m_playNow = new Button(strip, Vec2i(0), Vec2i(w, h));
+	m_playNow->setCell(1);
 	m_playNow->setAnchors(a3);
 	m_playNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
 	m_playNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);

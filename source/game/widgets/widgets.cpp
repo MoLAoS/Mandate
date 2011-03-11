@@ -469,7 +469,8 @@ CellStrip::CellStrip(WidgetWindow *window, Orientation ortn, Origin orgn, int ce
 		, m_origin(orgn)
 		, m_dirty(false) {
 	for (int i=0; i < cells; ++i) {
-		m_cells.push_back(new WidgetCell(this));
+		//m_cells.push_back(new WidgetCell(this));
+		m_cells2.push_back(CellInfo());
 	}
 }
 
@@ -486,7 +487,8 @@ CellStrip::CellStrip(Container *parent, Orientation ortn, int cells)
 		, m_origin(Origin::CENTRE)
 		, m_dirty(false) {
 	for (int i=0; i < cells; ++i) {
-		m_cells.push_back(new WidgetCell(this));
+		//m_cells.push_back(new WidgetCell(this));
+		m_cells2.push_back(CellInfo());
 	}
 }
 
@@ -496,7 +498,8 @@ CellStrip::CellStrip(Container *parent, Orientation ortn, Origin orgn, int cells
 		, m_origin(orgn)
 		, m_dirty(false) {
 	for (int i=0; i < cells; ++i) {
-		m_cells.push_back(new WidgetCell(this));
+		//m_cells.push_back(new WidgetCell(this));
+		m_cells2.push_back(CellInfo());
 	}
 }
 
@@ -513,38 +516,39 @@ CellStrip::CellStrip(Container *parent, Vec2i pos, Vec2i size, Orientation ortn,
 		, m_origin(orgn)
 		, m_dirty(false) {
 	for (int i=0; i < cells; ++i) {
-		m_cells.push_back(new WidgetCell(this));
+		//m_cells.push_back(new WidgetCell(this));
+		m_cells2.push_back(CellInfo());
 	}
 }
 
-void CellStrip::setCustumCell(int ndx, WidgetCell *cell) {
-	ASSERT_RANGE(ndx, m_cells.size());
-	WidgetCell *old = m_cells[ndx];
-	m_cells[ndx] = cell;
-	m_children[ndx] = cell;
-	delete old;
-}
+//void CellStrip::setCustumCell(int ndx, WidgetCell *cell) {
+//	ASSERT_RANGE(ndx, m_cells.size());
+//	WidgetCell *old = m_cells[ndx];
+//	m_cells[ndx] = cell;
+//	m_children[ndx] = cell;
+//	delete old;
+//}
 
 void CellStrip::addChild(Widget *child) {
 	Container::addChild(child);
 }
 
-void CellStrip::clearCells() {
-	foreach (vector<WidgetCell*>, it, m_cells) {
-		(*it)->clear();
-	}
-}
-
-void CellStrip::deleteCells() {
-	foreach (vector<WidgetCell*>, it, m_cells) {
-		delete *it;
-	}
-	m_cells.clear();
-}
+//void CellStrip::clearCells() {
+//	foreach (vector<WidgetCell*>, it, m_cells) {
+//		(*it)->clear();
+//	}
+//}
+//
+//void CellStrip::deleteCells() {
+//	foreach (vector<WidgetCell*>, it, m_cells) {
+//		delete *it;
+//	}
+//	m_cells.clear();
+//}
 
 void CellStrip::addCells(int n) {
 	for (int i=0; i < n; ++i) {
-		m_cells.push_back(new WidgetCell(this));
+		m_cells2.push_back(CellInfo());
 	}
 }
 
@@ -560,12 +564,11 @@ void CellStrip::setSize(const Vec2i &sz) {
 }
 
 void CellStrip::render() {
-//	renderBackground();
+	assert(glIsEnabled(GL_BLEND));
 	if (m_dirty) {
 		WIDGET_LOG( descShort() << " : CellStrip::render() : dirty, laying out cells." );
 		layoutCells();
 	}
-	//Container::render();
 	Widget::render();
 
 	// clip children
@@ -666,8 +669,8 @@ void CellStrip::layoutCells() {
 	m_dirty = false;
 	// collect hints
 	HintList     hintList;
-	foreach (vector<WidgetCell*>, it, m_cells) {
-		hintList.push_back(static_cast<WidgetCell*>(*it)->getSizeHint());
+	foreach (CellInfos, it, m_cells2) {
+		hintList.push_back(it->m_hint);
 	}
 	// determine space available
 	int space;
@@ -705,7 +708,7 @@ void CellStrip::layoutCells() {
 	}
 	// combine results and set cell pos and size
 	Vec2i pos, size;
-	for (int i=0; i < m_cells.size(); ++i) {
+	for (int i=0; i < m_cells2.size(); ++i) {
 		if (m_orientation == Orientation::VERTICAL) {
 			pos = Vec2i(ppos, getBorderTop() + offset + resultList[i].first);
 			size = Vec2i(psize, resultList[i].second);
@@ -714,9 +717,14 @@ void CellStrip::layoutCells() {
 			size = Vec2i(resultList[i].second, psize);
 		}
 		WIDGET_LOG( descShort() << " : CellStrip::layoutCells(): setting cell " << i 
-			<< " [" << m_cells[i]->descId() << "] pos: " << pos << ", size = " << size );
-		m_cells[i]->setPos(pos);
-		m_cells[i]->setSize(size);
+			<< " pos: " << pos << ", size = " << size );
+
+		m_cells2[i].m_pos = pos;
+		m_cells2[i].m_size = size;
+	}
+	
+	foreach (WidgetList, it, m_children) {
+		(*it)->anchor();
 	}
 }
 

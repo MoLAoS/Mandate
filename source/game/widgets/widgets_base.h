@@ -144,6 +144,7 @@ protected:
 
 	// 'cell' anchors
 	Anchors      m_anchors;
+	int          m_cell;
 	// styles inherited
 
 protected: // flag setters
@@ -185,6 +186,11 @@ public:
 	virtual ~Widget();
 
 	int getId() const { return m_id; }
+
+	int getCell() const { return m_cell; }
+	void setCell(int i) { m_cell = i; }
+
+	virtual void anchor();
 
 	// layout helpers .. Remove... bound for CellWidget...
 	virtual Vec2i getPrefSize() const {return Vec2i(-1); } // may return (-1,-1) to indicate 'as big as possible'
@@ -243,7 +249,6 @@ public:
 	void setBackgroundStyle(const BackgroundStyle &style);
 
 	virtual void update() {} // must 'register' with WidgetWindow to receive
-
 	virtual void render();
 
 	void renderBordersFromTexture(const BorderStyle &style, const Vec2i &offset, const Vec2i &size);
@@ -494,7 +499,7 @@ WRAPPED_ENUM( MouseAppearance,
 )
 
 // =====================================================
-//  class MouseCursor
+//  (abstract) class MouseCursor
 // =====================================================
 
 class MouseCursor : public Widget {
@@ -506,37 +511,6 @@ public:
 	virtual ~MouseCursor() {}
 
 	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) = 0;
-};
-
-// =====================================================
-//  class Container
-// =====================================================
-
-class Container : public Widget {
-public:
-	typedef vector<Widget*> WidgetList;
-
-protected:
-	WidgetList  m_children;
-
-	virtual void delChild(Widget* child);
-	virtual void clear();
-
-public:
-	Container(Container* parent);
-	Container(Container* parent, Vec2i pos, Vec2i size);
-	Container(WidgetWindow* window);
-	virtual ~Container();
-
-	virtual Widget* getWidgetAt(const Vec2i &pos);
-
-	virtual void addChild(Widget* child);
-	virtual void remChild(Widget* child);
-
-	virtual void setPos(const Vec2i &p) override;
-	virtual void setEnabled(bool v) override;
-	virtual void setFade(float v) override;
-	virtual void render() override;
 };
 
 // =====================================================
@@ -568,36 +542,93 @@ public:
 };
 
 // =====================================================
+//  struct CellInfo
+// =====================================================
+
+struct CellInfo {
+	Vec2i    m_pos;
+	Vec2i    m_size;
+	SizeHint m_hint;
+
+	CellInfo() : m_pos(0), m_size(0), m_hint() {}
+	CellInfo(const Vec2i &pos, const Vec2i &size) : m_pos(pos), m_size(size), m_hint() {}
+	CellInfo(const Vec2i &pos, const Vec2i &size, const SizeHint &hint) : m_pos(0), m_size(0), m_hint(hint) {}
+};
+
+// =====================================================
+//  class Container
+// =====================================================
+
+class Container : public Widget {
+public:
+	typedef vector<Widget*>     WidgetList;
+
+protected:
+	WidgetList  m_children;
+
+	virtual void delChild(Widget* child);
+
+public:
+	Container(Container* parent);
+	Container(Container* parent, Vec2i pos, Vec2i size);
+	Container(WidgetWindow* window);
+	virtual ~Container();
+
+	virtual Widget* getWidgetAt(const Vec2i &pos);
+
+	int getChildCount() const { return m_children.size();}
+	Widget* getChild(int i)   { return m_children[i];    }
+
+	virtual Rect2i getCellArea(int cell) const {
+		Vec2i p(getBorderLeft(), getBorderTop());
+		return Rect2i(p, p + getSize() - getBordersAll());
+	}
+
+	virtual SizeHint getSizeHint(int cell) const {
+		return SizeHint();
+	}
+
+	virtual void addChild(Widget* child);
+	virtual void remChild(Widget* child);
+	virtual void clear();
+
+	virtual void setPos(const Vec2i &p) override;
+	virtual void setEnabled(bool v) override;
+	virtual void setFade(float v) override;
+	virtual void render() override;
+};
+
+// =====================================================
 // class WidgetCell
 // =====================================================
 
-class WidgetCell : public Container {
-private:
-	SizeHint   m_sizeHint;
-
-protected:
-	void anchorWidgets();
-
-public:
-	WidgetCell(Container *parent);
-	WidgetCell(Container *parent, Vec2i pos, Vec2i size);
-
-	SizeHint getSizeHint() const { return m_sizeHint; }
-
-	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
-
-	virtual void setSize(const Vec2i &sz) override {
-		Widget::setSize(sz);
-		anchorWidgets();
-	}
-	virtual void setPos(const Vec2i &p) override {
-		Widget::setPos(p); // skip Container, we reset children ourselves...
-		anchorWidgets();
-	}
-
-	virtual void clear() override { Container::clear(); }
-	virtual string descType() const override { return "WidgetCell"; }
-};
+//class WidgetCell : public Container {
+//private:
+//	SizeHint   m_sizeHint;
+//
+//protected:
+//	void anchorWidgets();
+//
+//public:
+//	WidgetCell(Container *parent);
+//	WidgetCell(Container *parent, Vec2i pos, Vec2i size);
+//
+//	SizeHint getSizeHint() const { return m_sizeHint; }
+//
+//	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
+//
+//	virtual void setSize(const Vec2i &sz) override {
+//		Widget::setSize(sz);
+//		anchorWidgets();
+//	}
+//	virtual void setPos(const Vec2i &p) override {
+//		Widget::setPos(p); // skip Container, we reset children ourselves...
+//		anchorWidgets();
+//	}
+//
+//	virtual void clear() override { Container::clear(); }
+//	virtual string descType() const override { return "WidgetCell"; }
+//};
 
 }}
 

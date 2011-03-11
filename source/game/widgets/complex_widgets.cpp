@@ -71,11 +71,13 @@ void ListBox::init() {
 	Anchors anchors;
 	anchors.set(Edge::COUNT, 0, false);
 	setWidgetStyle(WidgetType::LIST_BOX);
-	getCell(0)->setSizeHint(SizeHint(100));
-	getCell(1)->setSizeHint(SizeHint(0));
-	m_listStrip = new CellStrip(getCell(0), Orientation::VERTICAL, Origin::FROM_TOP, 0);
+	m_cells2[0].m_hint = SizeHint(100);
+	m_cells2[1].m_hint = SizeHint(0);
+	m_listStrip = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 0);
+	m_listStrip->setCell(0);
 	m_listStrip->setAnchors(anchors);
-	m_scrollBar = new ScrollBar(getCell(1), true, 10);
+	m_scrollBar = new ScrollBar(this, true, 10);
+	m_scrollBar->setCell(1);
 	m_scrollBar->setVisible(false);
 	m_scrollBar->setFade(1.f);
 	m_scrollBar->setAnchors(anchors);
@@ -111,12 +113,12 @@ void ListBox::addItems(const vector<string> &items) {
 	anchors.set(Edge::COUNT, 0, false);
 	int itemHeight = m_rootWindow->getConfig()->getDefaultItemHeight() + getBordersVert();
 
-	foreach_const (vector<string>, it, items) {
-		WidgetCell *cell = m_listStrip->getCell(ndx++);
-		cell->setSizeHint(SizeHint(-1, itemHeight));
-		ListBoxItem *nItem = new ListBoxItem(cell, Vec2i(0), Vec2i(0), Vec3f(0.25f));
+	for (int i=0; i < items.size(); ++i) {
+		m_listStrip->setSizeHint(ndx + i, SizeHint(-1, itemHeight));
+		ListBoxItem *nItem = new ListBoxItem(m_listStrip, Vec2i(0), Vec2i(0), Vec3f(0.25f));
+		nItem->setCell(ndx + i);
 		nItem->setAnchors(anchors);
-		nItem->setText(*it);
+		nItem->setText(items[i]);
 		m_listBoxItems.push_back(nItem);
 		nItem->Clicked.connect(this, &ListBox::onSelected);
 	}
@@ -124,13 +126,14 @@ void ListBox::addItems(const vector<string> &items) {
 }
 
 void ListBox::addItem(const string &item) {
-	int ndx = m_listStrip->getCellCount();
+	int cell = m_listStrip->getCellCount();
 	m_listStrip->addCells(1);	
 	Anchors anchors;
 	anchors.set(Edge::COUNT, 0, false);
 	int itemHeight = m_rootWindow->getConfig()->getDefaultItemHeight() + getBordersVert();
-	ListBoxItem *nItem = new ListBoxItem(m_listStrip->getCell(ndx), Vec2i(0), Vec2i(0), Vec3f(0.25f));
-	m_listStrip->getCell(ndx)->setSizeHint(SizeHint(-1, itemHeight));
+	ListBoxItem *nItem = new ListBoxItem(m_listStrip, Vec2i(0), Vec2i(0), Vec3f(0.25f));
+	nItem->setCell(cell);
+	this->setSizeHint(cell, SizeHint(-1, itemHeight));
 	nItem->setAnchors(anchors);
 	nItem->setText(item);
 	m_listBoxItems.push_back(nItem);
@@ -149,15 +152,15 @@ void ListBox::layoutCells() {
 	int clientHeight = getSize().y - getBordersVert();
 	SizeHint hint(-1, m_rootWindow->getConfig()->getDefaultItemHeight());
 	if (totalItemHeight > clientHeight) {
-		getCell(1)->setSizeHint(hint);
+		setSizeHint(1, hint);
 		m_scrollBar->setVisible(true);
 	} else {
-		getCell(1)->setSizeHint(SizeHint(0));
+		setSizeHint(1, SizeHint(0));
 		m_scrollBar->setVisible(false);
 	}
 	
 	for (int i=0; i < m_listStrip->getCellCount(); ++i) {
-		m_listStrip->getCell(i)->setSizeHint(hint);
+		m_listStrip->setSizeHint(i, SizeHint(hint));
 	}
 	// zap
 	CellStrip::layoutCells();
@@ -172,22 +175,23 @@ void ListBox::layoutCells() {
 	}
 	m_yPositions.clear();
 	for (int i=0; i < m_listStrip->getCellCount(); ++i) {
-		Vec2i pos = m_listStrip->getCell(i)->getPos();
+		Vec2i pos = m_listStrip->getCellArea(i).p[0];
 		m_yPositions.push_back(pos.y);
 	}
 }
 
 void ListBox::clearItems() {
 	m_listItems.clear();
-	deleteCells();
+	CellStrip *strip = static_cast<CellStrip*>(m_children[0]);
+	strip->clear();
 	m_selectedIndex = -1;
 }
 
 void ListBox::onScroll(int offset) {
 	int ndx = 0;
 	const int x = 0;//m_borderStyle.m_sizes[Border::LEFT];
-	for (int i=0; i < m_listStrip->getCellCount(); ++i) {
-		m_listStrip->getCell(i)->setPos(Vec2i(x, m_yPositions[i] - offset));
+	for (int i=0; i < m_listStrip->getChildCount(); ++i) {
+		m_listStrip->getChild(i)->setPos(Vec2i(x, m_yPositions[i] - offset));
 	}
 }
 
@@ -375,15 +379,17 @@ void DropList::init() {
 	Anchors anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));
 
-	m_selectedItem = new ListBoxItem(getCell(0));
+	m_selectedItem = new ListBoxItem(this);
+	m_selectedItem->setCell(0);
 	m_selectedItem->setAnchors(anchors);
 	m_selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
 	m_selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 
-	getCell(1)->setSizeHint(SizeHint(-1, cfg.getDefaultItemHeight()));
+	setSizeHint(1, SizeHint(-1, cfg.getDefaultItemHeight()));
 
-	button = new Button(getCell(1));
+	button = new Button(this);
+	button->setCell(1);
 	button->setAnchors(anchors);
 	button->Clicked.connect(this, &DropList::onExpandList);
 }
