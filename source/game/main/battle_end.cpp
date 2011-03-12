@@ -165,7 +165,7 @@ BattleEnd::BattleEnd(Program &program, bool quickExit)
 }
 
 BattleEnd::~BattleEnd() {
-	//g_soundRenderer.playMusic(g_coreData.getMenuMusic());
+	g_soundRenderer.playMusic(g_coreData.getMenuMusic());
 }
 
 void BattleEnd::update() {
