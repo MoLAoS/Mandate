@@ -192,7 +192,7 @@ public:
 			}
 		}
 	}
-	~MapVertexData() { delete m_data; }
+	~MapVertexData() { delete [] m_data; }
 
 	TileVertex& get(Vec2i pos) {
 		return m_data[pos.y * m_size.w + pos.x];
