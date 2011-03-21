@@ -37,6 +37,7 @@ EffectType::EffectType() : lightColour(0.0f) {
 	loopSound = false;
 	damageType = NULL;
 	factionType = 0;
+	display = true;
 }
 
 bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, const FactionType *ft) {

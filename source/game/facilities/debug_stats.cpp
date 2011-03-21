@@ -91,6 +91,9 @@ DebugStats::DebugStats() {
 	m_reportLastTick = false;
 	m_reportAvgLast5 = true;
 	m_reportRatio = false;
+	
+	m_lastRenderFps = 0;
+	m_lastWorldFps = 0;
 }
 
 float DebugStats::getTimeRatio(TimerSection section) const {

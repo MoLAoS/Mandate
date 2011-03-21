@@ -52,6 +52,7 @@ private:
 	const Texture *teamTexture;
 
 public:
+	MeshCallbackTeamColor() : teamTexture(0) {}
 	void setTeamTexture(const Texture *teamTexture)	{this->teamTexture= teamTexture;}
 	virtual void execute(const Mesh *mesh);
 };
@@ -748,7 +749,6 @@ void Renderer::renderSelectionQuad(){
 }
 
 Vec2i computeCenteredPos(const string &text, const Font *font, int x, int y){
-	const Metrics &metrics= Metrics::getInstance();
 	Vec2f textDiminsions = font->getMetrics()->getTextDiminsions(text);
 	return Vec2i(int(x - textDiminsions.x / 2.f), int(y - textDiminsions.y / 2.f));
 }

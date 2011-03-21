@@ -44,6 +44,8 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 		path= dayNode->getAttribute("path")->getRestrictedValue();
 		day.open(dir + "/" + path);
 		alwaysPlayDay= dayNode->getAttribute("play-always")->getBoolValue();
+	}else{
+		alwaysPlayDay= false;
 	}
 
 	//night
@@ -53,6 +55,8 @@ void AmbientSounds::load(const string &dir, const XmlNode *xmlNode){
 		path= nightNode->getAttribute("path")->getRestrictedValue();
 		night.open(dir + "/" + path);
 		alwaysPlayNight= nightNode->getAttribute("play-always")->getBoolValue();
+	}else{
+		alwaysPlayNight= false;
 	}
 
 	//rain
