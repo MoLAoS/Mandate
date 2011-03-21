@@ -203,7 +203,7 @@ void Faction::save(XmlNode *node) const {
 	}
 
 	n = node->addChild("units");
-	for (Units::const_iterator i = units.begin(); i != units.end(); i++) {
+	for (Units::const_iterator i = units.begin(); i != units.end(); ++i) {
 		(*i)->save(n->addChild("unit"));
 	}
 }
