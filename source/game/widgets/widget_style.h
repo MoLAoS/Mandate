@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================

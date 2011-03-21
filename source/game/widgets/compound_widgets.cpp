@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -30,11 +30,12 @@ using namespace Shared::Graphics::Gl;
 
 OptionContainer::OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &text)
 		: Container(parent, pos, size) {
+	setWidgetStyle(WidgetType::TEXT_BOX);
 	m_abosulteLabelSize = false;
 	m_labelSize = 30;
 	int w = int(size.x * float(30) / 100.f);
 	m_label = new StaticText(this, Vec2i(0), Vec2i(w, size.y));
-	m_label->setTextParams(text, Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex), true);
+	m_label->setTextParams(text, m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
 	m_widget = 0;
 }
 
@@ -133,7 +134,7 @@ void ScrollText::onScroll(int offset) {
 }
 
 void ScrollText::setSize(const Vec2i &sz) {
-	const FontMetrics *fm = m_staticText->getTextFont()->getMetrics();
+	const FontMetrics *fm = g_widgetConfig.getFont(m_staticText->textStyle().m_fontIndex)->getMetrics();
 	CellStrip::setSize(sz);
 	layoutCells(); // force
 	if (!m_origString.empty()) {
@@ -146,7 +147,7 @@ void ScrollText::setSize(const Vec2i &sz) {
 }
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
-	const FontMetrics *fm = m_staticText->getTextFont()->getMetrics();
+	const FontMetrics *fm = g_widgetConfig.getFont(m_staticText->textStyle().m_fontIndex)->getMetrics();
 	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
 	m_origString = txt;
 	string text = txt;
@@ -174,8 +175,8 @@ TitleBar::TitleBar(Container* parent)
 		, TextWidget(this)
 		, m_title("")
 		, m_closeButton(0) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TITLE_BAR));
-	setTextParams(m_title, Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex), false);
+	setWidgetStyle(WidgetType::TITLE_BAR);
+	setTextParams(m_title, m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
 	setTextPos(Vec2i(5, 2));
 }
 
@@ -185,8 +186,8 @@ TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool 
 		, TextWidget(this)
 		, m_title(title)
 		, m_closeButton(0) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TITLE_BAR));
-	setTextParams(m_title, Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex), false);
+	setWidgetStyle(WidgetType::TITLE_BAR);
+	setTextParams(m_title, m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
 	setTextPos(Vec2i(5, 2));
 	if (closeBtn) {
 		int btn_sz = size.y - 4;
@@ -325,12 +326,14 @@ void BasicDialog::setContent(Widget* content) {
 }
 
 void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
-	int ndx = m_rootWindow->getConfig()->getWidgetStyle(WidgetType::BUTTON).textStyle().m_fontIndex;
-	Font *font = g_widgetConfig.getFont(ndx);
 	delete m_button1;
 	m_button1 = 0;
 	delete m_button2;
 	m_button2 = 0;
+
+	int fontNdx = m_rootWindow->getConfig()->getWidgetStyle(WidgetType::BUTTON).textStyle().m_fontIndex;
+	int colNdx = m_rootWindow->getConfig()->getWidgetStyle(WidgetType::BUTTON).textStyle().m_colourIndex;
+
 	if (btn2Text.empty()) {
 		if (btn1Text.empty()) {
 			m_buttonCount = 0;
@@ -347,13 +350,13 @@ void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) 
 	Vec2i p(gap, 10 + getBorderBottom());
 	Vec2i s(150, 30);
 	m_button1 = new Button(this, p, s);
-	m_button1->setTextParams(btn1Text, Vec4f(1.f), font);
+	m_button1->setTextParams(btn1Text, colNdx, fontNdx);
 	m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
 
 	if (m_buttonCount == 2) {
 		p.x += 150 + gap;
 		m_button2 = new Button(this, p, s);
-		m_button2->setTextParams(btn2Text, Vec4f(1.f), font);
+		m_button2->setTextParams(btn2Text, colNdx, fontNdx);
 		m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
 	}
 }
@@ -431,9 +434,9 @@ InputDialog::InputDialog(WidgetWindow* window)
 	m_panel->setLayoutParams(true, Orientation::VERTICAL);
 	m_panel->setPaddingParams(10, 10);
 	m_label = new StaticText(m_panel);
-	m_label->setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex));
+	m_label->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex);
 	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", Vec4f(1.f), g_widgetConfig.getFont(m_textStyle.m_fontIndex));
+	m_inputBox->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex);
 	m_inputBox->InputEntered.connect(this, &InputDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }

@@ -75,7 +75,9 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 //	_PROFILE_FUNCTION();
 	const Metrics &metrics = Metrics::getInstance();
 	Lang &lang = Lang::getInstance();
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+//	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	// initialize network interface
 	// just set to SERVER now, we'll change it back to LOCAL if necessary before launch
@@ -140,7 +142,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_randomLocsLabel = new StaticText(combo);
 	m_randomLocsLabel->setCell(0);
-	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), Vec4f(1.f), font);
+	m_randomLocsLabel->setTextParams(lang.get("RandomizeLocations"), white, font);
 	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_randomLocsLabel->setAnchors(a);
 
@@ -157,7 +159,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_SODLabel = new StaticText(combo);
 	m_SODLabel->setCell(0);
-	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), Vec4f(1.f), font);
+	m_SODLabel->setTextParams(lang.get("ShroudOfDarkness"), white, font);
 	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_SODLabel->setAnchors(a);
 
@@ -175,7 +177,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_FOWLabel = new StaticText(combo);
 	m_FOWLabel->setCell(0);
-	m_FOWLabel->setTextParams(lang.get("FogOfWar"), Vec4f(1.f), font);
+	m_FOWLabel->setTextParams(lang.get("FogOfWar"), white, font);
 	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_FOWLabel->setAnchors(a);
 
@@ -207,7 +209,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_mapLabel = new StaticText(combo);
 	m_mapLabel->setCell(0);
 	m_mapLabel->setAnchors(a);
-	m_mapLabel->setTextParams(lang.get("Map"), Vec4f(1.f), font);
+	m_mapLabel->setTextParams(lang.get("Map"), white, font);
 	m_mapLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	m_mapList = new DropList(combo);
@@ -226,7 +228,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_mapInfoLabel = new StaticText(combo);
 	m_mapInfoLabel->setCell(2);
 	m_mapInfoLabel->setAnchors(a);
-	m_mapInfoLabel->setTextParams(m_mapInfo.desc, Vec4f(1.f), font);
+	m_mapInfoLabel->setTextParams(m_mapInfo.desc, white, font);
 	m_mapInfoLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	// tileset listBox
@@ -246,7 +248,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_tilesetLabel = new StaticText(combo);
 	m_tilesetLabel->setCell(0);
 	m_tilesetLabel->setAnchors(a);
-	m_tilesetLabel->setTextParams(lang.get("Tileset"), Vec4f(1.f), font);
+	m_tilesetLabel->setTextParams(lang.get("Tileset"), white, font);
 	m_tilesetLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	m_tilesetList = new DropList(combo);
@@ -275,7 +277,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_techTreeLabel = new StaticText(combo);
 	m_techTreeLabel->setCell(0);
 	m_techTreeLabel->setAnchors(a);
-	m_techTreeLabel->setTextParams(lang.get("Techtree"), Vec4f(1.f), font);
+	m_techTreeLabel->setTextParams(lang.get("Techtree"), white, font);
 	m_techTreeLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	m_techTreeList = new DropList(combo);
@@ -296,13 +298,13 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_returnButton = new Button(strip, Vec2i(0), Vec2i(w, h));
 	m_returnButton->setCell(0);
 	m_returnButton->setAnchors(a3);
-	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->setTextParams(lang.get("Return"), white, font);
 	m_returnButton->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
 	m_playNow = new Button(strip, Vec2i(0), Vec2i(w, h));
 	m_playNow->setCell(1);
 	m_playNow->setAnchors(a3);
-	m_playNow->setTextParams(lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNow->setTextParams(lang.get("PlayNow"), white, font);
 	m_playNow->Clicked.connect(this, &MenuStateNewGame::onButtonClick);
 
 	reloadFactions(true);

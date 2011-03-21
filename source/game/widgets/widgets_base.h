@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -212,6 +212,10 @@ public:
 	bool isVisible() const   { return m_visible; }
 	Anchors  getAnchors() const  { return m_anchors;  }
 
+	FontPtr getFont(int ndx, FontSize sz) const;
+	TexPtr  getTexture(int ndx) const;
+	Colour  getColour(int ndx) const;
+
 	bool isInside(const Vec2i &pos) const {
 		if (m_visible) {
 			const Vec2i &p1 = m_screenPos;
@@ -392,23 +396,16 @@ public:
 //  struct TextRenderInfo
 // =====================================================
 
-typedef const Font* FontPtr;
-
 struct TextRenderInfo {
 	string  m_text;
 	Vec2i   m_pos;
-	Vec4f   m_colour;
-	Vec4f   m_shadowColour;
-	Vec4f   m_shadowColour2;
-	FontPtr m_font;
+	int     m_colour;
+	int     m_shadowColour;
+	int     m_shadowColour2;
+	int     m_font;
+//	FontPtr m_font;
 
-	TextRenderInfo(const string &txt, FontPtr font, const Vec4f &colour, const Vec2i &pos)
-			: m_text(txt), m_pos(pos), m_colour(colour), m_font(font) {
-		Vec4f black(0.f, 0.f, 0.f, 1.f);
-		m_shadowColour = (m_colour + black * 2.f) / 3.f;
-		m_shadowColour2 = black;
-
-	}
+	TextRenderInfo(const string &txt, int font, int colour, const Vec2i &pos);
 };
 
 // =====================================================
@@ -424,12 +421,12 @@ private:
 	Texts         m_texts;
 	bool          m_centreText;
 	bool          m_batchRender;
-	FontPtr       m_defaultFont;
+	int           m_defaultFont;
 	TextRenderer *m_textRenderer;
 
 protected:
-	void renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font = 0);
-	void renderText(const string &txt, int x, int y, const Vec4f &colour, int fontNdx);
+	void renderText(const string &txt, int x, int y, const Colour &colour, const Font *font = 0);
+	void renderText(const string &txt, int x, int y, const Colour &colour, int fontNdx);
 	void renderText(int ndx = 0);
 	void renderTextShadowed(int ndx = 0, int offset = 2);
 	void renderTextDoubleShadowed(int ndx = 0, int offset = 2);
@@ -443,28 +440,19 @@ public:
 
 	// set
 	void setCentre(bool val)	{ m_centreText = val; }
-	void setTextParams(const string&, const Vec4f, const Font*, bool cntr=true);
+	void setTextParams(const string&, int, int, bool cntr=true);
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
-	void setTextColour(const Vec4f &col, int ndx = 0) {
-		ASSERT_RANGE(ndx, m_texts.size());
-		m_texts[ndx].m_colour = col;
-	}
-	void setTextShadowColour(const Vec4f &col, int ndx = 0) {
-		ASSERT_RANGE(ndx, m_texts.size());
-		m_texts[ndx].m_shadowColour = col;
-	}
-	void setTextShadowColour2(const Vec4f &col, int ndx = 0) {
-		ASSERT_RANGE(ndx, m_texts.size());
-		m_texts[ndx].m_shadowColour2 = col;
-	}
+	void setTextColour(const Vec4f &col, int ndx = 0);
+	void setTextShadowColour(const Vec4f &col, int ndx = 0);
+	void setTextShadowColour2(const Vec4f &col, int ndx = 0);
 	void setTextShadowColours(const Vec4f &col1, const Vec4f &col2, int ndx = 0) {
 		setTextShadowColour(col1, ndx);
 		setTextShadowColour2(col2, ndx);
 	}
 	void setTextCentre(bool v)	{ m_centreText = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
-	void setTextFont(const Font *f);
+	void setTextFont(int ndx) { m_defaultFont = ndx; }
 
 	void centreText(int ndx = 0);
 	void widgetReSized();
@@ -472,7 +460,7 @@ public:
 	// get
 	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_text; }
 	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_pos; }
-	const Font* getTextFont() const { return m_defaultFont; }
+	int getTextFont() const { return m_defaultFont; }
 	Vec2i getTextDimensions() const;
 	Vec2i getTextDimensions(int ndx) const;
 	bool hasText() const { return !m_texts.empty(); }

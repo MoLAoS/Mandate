@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -28,6 +28,9 @@ using namespace Shared::Lua;
 
 namespace Glest { namespace Widgets {
 
+typedef const Font* FontPtr;
+typedef const Texture2D* TexPtr;
+
 STRINGY_ENUM( WidgetState,
 	NORMAL, HOVER, FOCUS, DISABLED, SELECTED
 );
@@ -39,7 +42,7 @@ STRINGY_ENUM( WidgetType,
 	SCROLLBAR_VERT_SHAFT, SCROLLBAR_VERT_THUMB, SCROLLBAR_HORIZ_SHAFT, SCROLLBAR_HORIZ_THUMB,
 	SLIDER_VERT_THUMB, SLIDER_HORIZ_THUMB, SLIDER_VERT_SHAFT, SLIDER_HORIZ_SHAFT,
 	TITLE_BAR_CLOSE, TITLE_BAR_ROLL_UP, TITLE_BAR_ROLL_DOWN, TITLE_BAR_EXPAND, TITLE_BAR_SHRINK,
-	COLOUR_BUTTON, TICKER_TAPE
+	COLOUR_BUTTON, TICKER_TAPE, INFO_WIDGET 
 );
 
 STRINGY_ENUM( FontUsage, MENU, GAME, LUA, FANCY );
@@ -124,11 +127,14 @@ public:
 
 	// get index of a Colour/Font/Texture, adding to collection if needed
 	int getColourIndex(const Vec3f &c);
+	int getColourIndex(const Vec4f &c);
 	int getColourIndex(const Colour &c);
 	//int getFontIndex(const Font *f);
 	int getTextureIndex(const Texture2D *t);
 
 	int getDefaultItemHeight() const;
+
+	int getDefaultFontIndex(FontUsage fu) const { return m_defaultFonts[fu]; }
 
 	FontSet& getMenuFont() { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
 	FontSet& getTitleFont() { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }
@@ -146,10 +152,10 @@ public:
 	int getTextureIndex(const string &name) const;
 
 	// get Colour/Font/Texture by index
-	const Colour&		getColour(uint32 ndx) const		{ return m_colours[ndx]; }
-	FontSet&            getFontSet(uint32 ndx)          { return m_fonts[ndx]; }
-	//const Font*			getFont(uint32 ndx) const		{ return m_fonts[ndx]; }
-	const Texture2D*	getTexture(uint32 ndx) const	{ return m_textures[ndx]; }
+	Colour     getColour(uint32 ndx) const              { return m_colours[ndx];   }
+	FontSet    getFontSet(uint32 ndx) const             { return m_fonts[ndx];     }
+	FontPtr    getFont(uint32 ndx, FontSize sz) const   { return m_fonts[ndx][sz]; }
+	TexPtr     getTexture(uint32 ndx) const	            { return m_textures[ndx];  }
 
 	Font* getFont(uint32 ndx, FontSize size = FontSize::NORMAL) {
 		ASSERT_RANGE(ndx, m_fonts.size());

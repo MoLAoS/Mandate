@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -562,7 +562,7 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 	if (luaScript.getTable("Text")) {
 		WIDGET_LOG( "\tLoading TextStyle.");
 		string name, size, colour, shadowColour;
-		if (luaScript.getStringField("Name", name)) {
+		if (luaScript.getStringField("Font", name)) {
 			style.m_fontIndex = getFontIndex(name);
 			if (style.m_fontIndex == -1) {
 				WIDGET_LOG( "\t\tFont: '" << name << "' @ ndx " << style.m_fontIndex );
@@ -826,6 +826,7 @@ void WidgetConfig::load() {
 	loadStyles("TitleBarShrinkButton", WidgetType::TITLE_BAR_SHRINK);
 	loadStyles("ColourButton", WidgetType::COLOUR_BUTTON);
 	loadStyles("TickerTape", WidgetType::TICKER_TAPE);
+	loadStyles("InfoWidget", WidgetType::INFO_WIDGET);
 
 	WIDGET_LOG( "====================================================" );
 	WIDGET_LOG( "==       Finished Loading widget styles           ==" );
@@ -838,10 +839,6 @@ int WidgetConfig::getDefaultItemHeight() const {
 	return int(m_fonts[m_defaultFonts[FontUsage::MENU]][FontSize::NORMAL]->getMetrics()->getHeight() * 1.2f);
 }
 
-int WidgetConfig::getColourIndex(const Vec3f &c) {
-	return getColourIndex(Colour(uint8(c.r * 255), uint8(c.g * 255), uint8(c.b * 255), 255u));
-}
-
 int WidgetConfig::getColourIndex(const Colour &c) {
 	const int &n = m_colours.size();
 	for (int i = 0; i < n; ++i) {
@@ -851,6 +848,14 @@ int WidgetConfig::getColourIndex(const Colour &c) {
 	}
 	m_colours.push_back(c);
 	return n;
+}
+
+int WidgetConfig::getColourIndex(const Vec3f &c) {
+	return getColourIndex(Colour(uint8(c.r * 255), uint8(c.g * 255), uint8(c.b * 255), 255u));
+}
+
+int WidgetConfig::getColourIndex(const Vec4f &c) {
+	return getColourIndex(Colour(uint8(c.r * 255), uint8(c.g * 255), uint8(c.b * 255), uint8(c.a * 255)));
 }
 //
 //int WidgetConfig::getFontIndex(const Font *f) {

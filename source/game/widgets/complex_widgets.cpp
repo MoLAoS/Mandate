@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -374,7 +374,6 @@ void DropList::init() {
 		<< " left border " << getBorderLeft() );
 
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
-	Font *itemFont = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::NORMAL];
 
 	Anchors anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));
@@ -382,7 +381,7 @@ void DropList::init() {
 	m_selectedItem = new ListBoxItem(this);
 	m_selectedItem->setCell(0);
 	m_selectedItem->setAnchors(anchors);
-	m_selectedItem->setTextParams("", Vec4f(1.f), itemFont, true);
+	m_selectedItem->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
 	m_selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 

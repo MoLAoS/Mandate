@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engi
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -154,6 +154,7 @@ void ColourPicker::onSelect(Button *b) {
 
 PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5) {
+	setWidgetStyle(WidgetType::TEXT_BOX);
 	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };
@@ -162,31 +163,31 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	StaticText *label = new StaticText(this);
 	label->setCell(0);
-	label->setTextParams(g_lang.get("Player"), Vec4f(1.f), font, true);
+	label->setTextParams(g_lang.get("Player"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(1);
-	label->setTextParams(g_lang.get("Control"), Vec4f(1.f), font, true);
+	label->setTextParams(g_lang.get("Control"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(2);
-	label->setTextParams(g_lang.get("Faction"), Vec4f(1.f), font, true);
+	label->setTextParams(g_lang.get("Faction"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(3);
-	label->setTextParams(g_lang.get("Team"), Vec4f(1.f), font, false);
+	label->setTextParams(g_lang.get("Team"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(4);
-	label->setTextParams(g_lang.get("Colour"), Vec4f(1.f), font, false);
+	label->setTextParams(g_lang.get("Colour"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 }
@@ -198,6 +199,7 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5)
 		, m_freeSlot(false) {
+	setWidgetStyle(WidgetType::TEXT_BOX);
 	Anchors anchors(Anchor(AnchorType::RIGID, 3), Anchor(AnchorType::RIGID, 0));
 	//Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };
@@ -206,7 +208,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	m_label = new StaticText(this);
 	m_label->setCell(0);
-	m_label->setTextParams("Player #", Vec4f(1.f), font, true);
+	m_label->setTextParams("Player #", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
 	m_label->setAnchors(anchors);
 
 	m_controlList = new DropList(this);

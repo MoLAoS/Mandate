@@ -53,25 +53,25 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	int y = metrics.getScreenH() - 110 - int(infoDims.y);
 	int h = int(infoDims.y) + 10;
 	Widgets::StaticText* l_text = new Widgets::StaticText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_text->setTextParams(glInfo, Vec4f(1.f), smallFont);
+//	l_text->setTextParams(glInfo, Vec4f(1.f), smallFont);
 
 	// gl extensions
 	x += gap + w;
 	y = 200;
 	h = metrics.getScreenH() - 300;
 	ScrollText* l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_stext->setTextParams(glExt, Vec4f(1.f), smallFont, false);
+//	l_stext->setTextParams(glExt, Vec4f(1.f), smallFont, false);
 
 	// platform extensions
 	x += gap + w;
 	l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_stext->setTextParams(glExt2, Vec4f(1.f), smallFont, false);
+//	l_stext->setTextParams(glExt2, Vec4f(1.f), smallFont, false);
 
 	// return button
 	x = (metrics.getScreenW() - 150) / 2;
 	w = 150, y = 85, h = 30;
 	Button* l_button = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	l_button->setTextParams(lang.get("Return"), Vec4f(1.f), normFont);
+//	l_button->setTextParams(lang.get("Return"), Vec4f(1.f), normFont);
 	l_button->Clicked.connect(this, &MenuStateGraphicInfo::onButtonClick);
 
 	//program.setFade(0.f);

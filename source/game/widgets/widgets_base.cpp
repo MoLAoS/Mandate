@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -233,6 +233,21 @@ void Widget::setSelected(bool v) {
 Widget* Widget::getWidgetAt(const Vec2i &pos) {
 	assert(isInside(pos));
 	return this;
+}
+
+FontPtr Widget::getFont(int ndx, FontSize sz) const {
+	RUNTIME_CHECK(ndx >= 0 && sz > FontSize::INVALID && sz < FontSize::COUNT);
+	return m_rootWindow->getConfig()->getFont(ndx, sz);
+}
+
+TexPtr Widget::getTexture(int ndx) const {
+	RUNTIME_CHECK(ndx >= 0);
+	return m_rootWindow->getConfig()->getTexture(ndx);
+}
+
+Colour  Widget::getColour(int ndx) const {
+	RUNTIME_CHECK(ndx >= 0);
+	return m_rootWindow->getConfig()->getColour(ndx);
 }
 
 string Widget::descId() {
@@ -901,6 +916,20 @@ void ImageWidget::setImageX(const Texture2D *tex, int ndx, Vec2i offset, Vec2i s
 }
 
 // =====================================================
+//  struct TextRenderInfo
+// =====================================================
+
+TextRenderInfo::TextRenderInfo(const string &txt, int font, int colour, const Vec2i &pos)
+		: m_text(txt), m_pos(pos), m_colour(colour), m_font(font) {
+	WidgetConfig &cfg = g_widgetConfig;
+	Colour c = cfg.getColour(colour);
+	Colour black(0u, 0u, 0u, 255u);
+	Colour shadow = (c + black * 2u) / 3u;
+	m_shadowColour = cfg.getColourIndex(shadow);
+	m_shadowColour2 = cfg.getColourIndex(black);
+}
+
+// =====================================================
 // class TextWidget
 // =====================================================
 
@@ -911,7 +940,22 @@ TextWidget::TextWidget(Widget* me)
 		, m_defaultFont(0)
 		, m_textRenderer(0) {
 	me->m_textWidget = this;
-	m_defaultFont = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	m_defaultFont = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+}
+
+void TextWidget::setTextColour(const Vec4f &col, int ndx) {
+	ASSERT_RANGE(ndx, m_texts.size());
+	m_texts[ndx].m_colour = g_widgetConfig.getColourIndex(col);
+}
+
+void TextWidget::setTextShadowColour(const Vec4f &col, int ndx) {
+	ASSERT_RANGE(ndx, m_texts.size());
+	m_texts[ndx].m_shadowColour = g_widgetConfig.getColourIndex(col);
+}
+
+void TextWidget::setTextShadowColour2(const Vec4f &col, int ndx) {
+	ASSERT_RANGE(ndx, m_texts.size());
+	m_texts[ndx].m_shadowColour2 = g_widgetConfig.getColourIndex(col);
 }
 
 void TextWidget::centreText(int ndx) {
@@ -919,7 +963,8 @@ void TextWidget::centreText(int ndx) {
 		return;
 	}
 	ASSERT_RANGE(ndx, m_texts.size());
-	const FontMetrics *fm = m_texts[ndx].m_font->getMetrics();
+	const FontMetrics *fm = me->getFont(me->textStyle().m_fontIndex, FontSize::NORMAL)->getMetrics();
+	// m_texts[ndx].m_font->getMetrics();
 	Vec2f txtDims = fm->getTextDiminsions(m_texts[ndx].m_text);
 	int halfTextW = int(txtDims.w) / 2;
 	int scratch = (me->getHeight() - int(txtDims.h)) / 2;
@@ -935,7 +980,7 @@ void TextWidget::widgetReSized() {
 
 void TextWidget::startBatch(const Font *font) {
 	if (!font) {
-		font = m_defaultFont;
+		font = me->getFont(m_defaultFont, FontSize::NORMAL);
 	}
 	m_textRenderer = g_widgetWindow.getTextRenderer();
 	m_textRenderer->begin(font);
@@ -947,16 +992,16 @@ void TextWidget::endBatch() {
 	m_batchRender = false;
 }
 
-void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, const Font *font) {
+void TextWidget::renderText(const string &txt, int x, int y, const Colour &colour, const Font *font) {
 	assertGl();
 	if (!m_batchRender) {
 		if (!font) {
-			font = m_defaultFont;
+			font = me->getFont(m_defaultFont, FontSize::NORMAL);
 		}
 		m_textRenderer = g_widgetWindow.getTextRenderer();
 		m_textRenderer->begin(font);
 	} 
-	glColor4fv(colour.ptr());
+	glColor4ubv(colour.ptr());
 	m_textRenderer->render(txt, x, y + int(font->getMetrics()->getMaxAscent()));
 	if (!m_batchRender) {
 		m_textRenderer->end();
@@ -964,7 +1009,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 	assertGl();
 }
 
-void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour, int fontNdx) {
+void TextWidget::renderText(const string &txt, int x, int y, const Colour &colour, int fontNdx) {
 	const Font *font = me->getRootWindow()->getConfig()->getFont(fontNdx);
 	renderText(txt, x, y, colour, font);
 }
@@ -972,7 +1017,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Vec4f &colour
 void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
-	Vec4f colour = m_texts[ndx].m_colour;
+	Colour colour = g_widgetConfig.getColour(m_texts[ndx].m_colour);
 	colour.a *= me->getFade();
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour, m_texts[ndx].m_font);
 }
@@ -981,8 +1026,8 @@ void TextWidget::renderTextShadowed(int ndx, int offset) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
 	Vec2i sPos = pos + Vec2i(offset, offset);
-	Vec4f colour = m_texts[ndx].m_colour;
-	Vec4f shadowColour = m_texts[ndx].m_shadowColour;
+	Colour colour = g_widgetConfig.getColour(m_texts[ndx].m_colour);
+	Colour shadowColour = g_widgetConfig.getColour(m_texts[ndx].m_shadowColour);
 	colour.a *= me->getFade();
 	shadowColour.a *= me->getFade();
 	renderText(m_texts[ndx].m_text, sPos.x, sPos.y, shadowColour);
@@ -994,9 +1039,10 @@ void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
 	Vec2i sPos1 = pos + Vec2i(offset, offset);
 	Vec2i sPos2 = sPos1 + Vec2i(offset, offset);
-	Vec4f colour = m_texts[ndx].m_colour;
-	Vec4f shadowColour = m_texts[ndx].m_shadowColour;
-	Vec4f shadowColour2 = m_texts[ndx].m_shadowColour2;
+	WidgetConfig &cfg = g_widgetConfig;
+	Colour colour = cfg.getColour(m_texts[ndx].m_colour);
+	Colour shadowColour = cfg.getColour(m_texts[ndx].m_shadowColour);
+	Colour shadowColour2 = cfg.getColour(m_texts[ndx].m_shadowColour2);
 	colour.a *= me->getFade();
 	shadowColour.a *= me->getFade();
 	shadowColour2.a *= me->getFade();
@@ -1006,9 +1052,10 @@ void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
 }
 
 Vec2i TextWidget::getTextDimensions() const {
+	WidgetConfig &cfg = g_widgetConfig;
 	Vec2i max = Vec2i(0);
 	foreach_const (vector<TextRenderInfo>, it, m_texts) {
-		const FontMetrics *fm = it->m_font->getMetrics();
+		const FontMetrics *fm = cfg.getFont(it->m_font)->getMetrics();
 		Vec2i tSz = Vec2i(fm->getTextDiminsions(it->m_text) + Vec2f(1.f));
 		if (max.x < tSz.x) {
 			max.x = tSz.x;
@@ -1023,11 +1070,11 @@ Vec2i TextWidget::getTextDimensions() const {
 
 Vec2i TextWidget::getTextDimensions(int ndx) const {
 	ASSERT_RANGE(ndx, m_texts.size());
-	const FontMetrics *fm = m_texts[ndx].m_font->getMetrics();
+	const FontMetrics *fm = g_widgetConfig.getFont(m_texts[ndx].m_font)->getMetrics();
 	return Vec2i(fm->getTextDiminsions(m_texts[ndx].m_text) + Vec2f(1.f));
 }
 
-void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font *font, bool cntr) {
+void TextWidget::setTextParams(const string &txt, int colour, int font, bool cntr) {
 	if (m_texts.empty()) {
 		m_texts.push_back(TextRenderInfo(txt, font, colour, Vec2i(0)));
 	} else {
@@ -1041,13 +1088,13 @@ void TextWidget::setTextParams(const string &txt, const Vec4f colour, const Font
 }
 
 int TextWidget::addText(const string &txt) {
-	m_texts.push_back(TextRenderInfo(txt, m_defaultFont, Vec4f(1.f), Vec2i(0)));
+	m_texts.push_back(TextRenderInfo(txt, m_defaultFont, g_widgetConfig.getColourIndex(Vec4f(1.f)), Vec2i(0)));
 	return m_texts.size() - 1;
 }
 
 void TextWidget::setText(const string &txt, int ndx) {
 	if (m_texts.empty() && !ndx) {
-		m_texts.push_back(TextRenderInfo(txt, m_defaultFont, Vec4f(1.f), Vec2i(0)));
+		m_texts.push_back(TextRenderInfo(txt, m_defaultFont, g_widgetConfig.getColourIndex(Vec4f(1.f)), Vec2i(0)));
 	} else {
 		ASSERT_RANGE(ndx, m_texts.size());
 		m_texts[ndx].m_text = txt;
@@ -1057,9 +1104,9 @@ void TextWidget::setText(const string &txt, int ndx) {
 	}
 }
 
-void TextWidget::setTextFont(const Font *f) {
-	m_defaultFont = f;
-}
+//void TextWidget::setTextFont(const Font *f) {
+//	m_defaultFont = f;
+//}
 
 void TextWidget::setTextPos(const Vec2i &pos, int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());

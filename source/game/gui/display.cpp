@@ -68,6 +68,8 @@ Display::Display(UserInterface *ui, Vec2i pos)
 
 	int iconSize = 32;
 
+	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
 	m_font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
 
 	int x = getBorderLeft();
@@ -81,7 +83,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
 		x += iconSize;
 	}
-	setTextParams("", Vec4f(1.f), m_font, false); // (0) unit title
+	setTextParams("", white, fontNdx, false); // (0) unit title
 	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
 	addText(""); // (1) unit text
 	addText(""); // (2) queued orders text (to display below progress bar if present)
@@ -300,7 +302,7 @@ void Display::setToolTipText(const string &i_txt, DisplaySection i_section) {
 	//WIDGET_LOG( __FUNCTION__ << "( \"" << i_txt << "\" )");
 	string str = i_txt;
 	trimTrailingNewlines(str);
-	const FontMetrics *fm = m_toolTip->getTextFont()->getMetrics();
+	const FontMetrics *fm = g_widgetConfig.getFont(m_toolTip->textStyle().m_fontIndex)->getMetrics();
 	fm->wrapText(str, 32 * cellWidthCount);
 
 	m_toolTip->setText(str);

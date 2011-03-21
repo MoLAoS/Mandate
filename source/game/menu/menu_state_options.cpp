@@ -40,27 +40,30 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	const Metrics &metrics = Metrics::getInstance();
 	CoreData &coreData = CoreData::getInstance();
 
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+	const Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+
 	// create
 	int gap = (metrics.getScreenW() - 450) / 4;
 	int x = gap, w = 150, y = 50, h = 30;
 	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_returnButton->setTextParams(lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->setTextParams(lang.get("Return"), white, font);
 	m_returnButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
 
 	x += w + gap;
 	m_autoConfigButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_autoConfigButton->setTextParams(lang.get("AutoConfig"), Vec4f(1.f), font);
+	m_autoConfigButton->setTextParams(lang.get("AutoConfig"), white, font);
 	m_autoConfigButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
 	
 	x += w + gap;
 	m_openGlInfoButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_openGlInfoButton->setTextParams(lang.get("GraphicInfo"), Vec4f(1.f), font);
+	m_openGlInfoButton->setTextParams(lang.get("GraphicInfo"), white, font);
 	m_openGlInfoButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
 	
 	int y_space = metrics.getScreenH() - 150; // -100 bottom, -50 top
 	const int nItems = 10; // 2 spacers
-	int itemHeight = int(font->getMetrics()->getHeight() + 5.f);
+	int itemHeight = int(fontPtr->getMetrics()->getHeight() + 5.f);
 	int y_gap = (y_space - itemHeight * nItems) / 11;
 
 	x = metrics.getScreenW() / 2 - 300;

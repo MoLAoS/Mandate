@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -824,7 +824,7 @@ void ToolTip::init() {
 	setWidgetStyle(WidgetType::TOOL_TIP);
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
 	Font *font = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::BIG];
-	TextWidget::setTextParams("", Vec4f(1.f, 1.f, 1.f, 1.f), font, false);
+	TextWidget::setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
 	TextWidget::setTextPos(Vec2i(getBorderLeft(), getBorderTop()));
 }
 

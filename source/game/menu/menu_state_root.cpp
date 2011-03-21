@@ -43,7 +43,10 @@ namespace Glest { namespace Menu {
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+	Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+
 	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
 	strip->setPos(Vec2i(0,0));
 	strip->setSize(Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight()));
@@ -66,9 +69,9 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	if (!mainMenu->isTotalConversion()) {
 		// Advanced Engine labels
-		font = g_widgetConfig.getTitleFont()[FontSize::NORMAL];
+		font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
 		Widgets::StaticText *label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("AdvEng1"), Vec4f(1.f), font);
+		label->setTextParams(g_lang.get("AdvEng1"), white, font);
 		Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 		int tx = int(255.f / 512.f * logoWidth);
 		int ty = int(60.f / 256.f * logoHeight);
@@ -78,7 +81,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("AdvEng2"), Vec4f(1.f), font);
+		label->setTextParams(g_lang.get("AdvEng2"), white, font);
 		tx = int(285.f / 512.f * logoWidth);
 		label->setPos(Vec2i(tx, logoHeight - ty - sz.h));
 		label->setSize(label->getTextDimensions() + Vec2i(10,5));
@@ -86,13 +89,13 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		// Version label
-		int bigHeight = int(font->getMetrics()->getHeight());
-		font = g_widgetConfig.getTitleFont()[FontSize::SMALL];
-		int szDiff = bigHeight - int(font->getMetrics()->getHeight());
+		int bigHeight = int(fontPtr->getMetrics()->getHeight());
+		fontPtr = g_widgetConfig.getTitleFont()[FontSize::SMALL];
+		int szDiff = bigHeight - int(fontPtr->getMetrics()->getHeight());
 		Vec2i pos = Vec2i(tx + label->getSize().x, logoHeight - ty - sz.h + szDiff - 2);
 
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(gaeVersionString, Vec4f(1.f), font);
+		label->setTextParams(gaeVersionString, white, font);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		sz = label->getTextDimensions() + Vec2i(10,5);
@@ -101,7 +104,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->centreText();
 	}
 
-	font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 
 	// Buttons Panel
 	anchors.set(Edge::COUNT, 0, false); // anchor all (fill cell)
@@ -116,7 +119,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		m_buttons[i] = new Widgets::Button(pnl);
 		m_buttons[i]->setCell(i);
 		m_buttons[i]->setSize(Vec2i(8 * height, height));
-		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
+		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), white, font, true);
 		m_buttons[i]->setAnchors(anchors);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
@@ -178,7 +181,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setAnchors(anchors);
 
 		label->setTextParams("Glest : " + g_lang.get("AdvEng1") + " " + g_lang.get("AdvEng2") + gaeVersionString,
-			Vec4f(1.f), g_widgetConfig.getTitleFont()[FontSize::SMALL]);
+			white, g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY));
 		Vec2i size = label->getTextDimensions() + Vec2i(5,5);
 		label->setSize(size);
 	}

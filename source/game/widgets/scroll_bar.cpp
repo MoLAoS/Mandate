@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -373,6 +373,121 @@ void ScrollBar::onScrollBtnFired(ScrollBarButton *btn) {
 
 void ScrollBar::scrollLine(bool increase) {
 	m_shaft->onThumbMoved(increase ? m_lineSize : -m_lineSize);
+}
+
+// =====================================================
+//  class ScrollCell
+// =====================================================
+
+void ScrollCell::addChild(Widget* child) {
+	Container::addChild(child);
+	m_childOffsets[child] = child->getPos();
+}
+
+void ScrollCell::remChild(Widget* child) {
+	Container::remChild(child);
+	m_childOffsets.erase(child);
+}
+
+void ScrollCell::setSize(const Vec2i &sz) {
+	Widget::setSize(sz);
+	Resized(sz);
+}
+
+void ScrollCell::render() {
+	assert(glIsEnabled(GL_BLEND));
+	// clip
+	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderTop());
+	Vec2i size = getSize() - m_borderStyle.getBorderDims();
+	m_rootWindow->pushClipRect(pos, size);
+		Container::render();
+	m_rootWindow->popClipRect();
+}
+
+// =====================================================
+//  class ScrollPane
+// =====================================================
+
+ScrollPane::ScrollPane(Container *parent)
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 2) {
+	init();
+	setPos(Vec2i(0));
+}
+
+ScrollPane::ScrollPane(Container *parent, Vec2i pos, Vec2i sz)
+		: CellStrip(parent, pos, sz, Orientation::HORIZONTAL, Origin::CENTRE, 2) {
+	init();
+	setPos(pos);
+}
+
+void ScrollPane::init() {
+	setWidgetStyle(WidgetType::TEXT_BOX);
+	Anchors anchors;
+	anchors.set(Edge::COUNT, 0, false); // fill
+
+	CellStrip *bigStrip = new CellStrip(this, Orientation::VERTICAL, Origin::CENTRE, 2);
+	bigStrip->setCell(0);
+	bigStrip->setAnchors(anchors);
+	
+	CellStrip *littleStrip = new CellStrip(this, Orientation::VERTICAL, Origin::CENTRE, 2);
+	littleStrip->setCell(1);
+	littleStrip->setAnchors(anchors);
+	
+	m_scrollCell = new ScrollCell(bigStrip);
+	m_scrollCell->setCell(0);
+	m_scrollCell->setAnchors(anchors);
+	m_scrollCell->Resized.connect(this, &ScrollPane::onScrollCellResized);
+
+	int barSize = m_rootWindow->getConfig()->getDefaultItemHeight();
+
+	setSizeHint(0, SizeHint(100));
+	setSizeHint(1, SizeHint(-1, barSize));
+
+	bigStrip->setSizeHint(0, SizeHint(100));
+	bigStrip->setSizeHint(1, SizeHint(-1, barSize));
+	littleStrip->setSizeHint(0, SizeHint(100));
+	littleStrip->setSizeHint(1, SizeHint(-1, barSize));
+
+	m_vertBar = new ScrollBar(littleStrip, true, 10);
+	m_vertBar->setCell(0);
+	m_vertBar->setAnchors(anchors);
+	m_vertBar->ThumbMoved.connect(this, &ScrollPane::onVerticalScroll);
+	m_horizBar = new ScrollBar(bigStrip, false, 10);
+	m_horizBar->setCell(1);
+	m_horizBar->setAnchors(anchors);
+	m_horizBar->ThumbMoved.connect(this, &ScrollPane::onHorizontalScroll);
+
+	m_offset = Vec2i(0);
+}
+
+void ScrollPane::setOffset(Vec2i offset) {
+	m_scrollCell->setOffset(offset);
+}
+
+void ScrollPane::onVerticalScroll(int diff) {
+	m_offset.y = -diff;
+	m_scrollCell->setOffset(m_offset);
+}
+
+void ScrollPane::onHorizontalScroll(int diff) {
+	m_offset.x = -diff;
+	m_scrollCell->setOffset(m_offset);
+}
+
+void ScrollPane::onScrollCellResized(Vec2i avail) {
+	WIDGET_LOG( descShort() << " ScrollPane::layoutCells() setting available scroll range to " << avail );
+	m_vertBar->setRanges(m_totalRange.h, avail.h);
+	m_horizBar->setRanges(m_totalRange.w, avail.w);
+	setOffset(m_offset);
+}
+
+void ScrollPane::setTotalRange(Vec2i total) {
+	m_totalRange = total;
+	Vec2i avail = m_scrollCell->getSize();
+	WIDGET_LOG( descShort() << " ScrollPane::setTotalRange() setting available scroll range to " << avail );
+	m_vertBar->setRanges(m_totalRange.h, avail.h);
+	m_horizBar->setRanges(m_totalRange.w, avail.w);
+	setOffset(m_offset);
 }
 
 }}

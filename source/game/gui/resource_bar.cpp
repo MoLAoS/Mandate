@@ -52,7 +52,7 @@ ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &
 
 	Font *font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
 	const FontMetrics *fm = font->getMetrics();
-	setTextFont(font);
+	//setTextFont(font);
 	setTextColour(Vec4f(1.f));
 	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
 	setTextCentre(false);

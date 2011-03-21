@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -150,22 +150,90 @@ public:
 	ScrollBar(Container *parent, bool vert, int lineSize);
 	ScrollBar(Container *parent, Vec2i pos, Vec2i sz, bool vert, int lineSize);
 
+	int getThumbOffset() const { return m_shaft->getThumbOffset(); }
+
 	void setLineSize(int sz) { m_lineSize = sz; }
 	void setRanges(int total, int avail) { m_shaft->setRanges(total, avail); }
-
+	void setOffsetPercent(int v) { m_shaft->setOffsetPercent(v); }
 	void scrollLine(bool increase);
 	void scrollPage(bool increase);
 
-	void setOffsetPercent(int v) { m_shaft->setOffsetPercent(v); }
-	int getThumbOffset() const { return m_shaft->getThumbOffset(); }
-
+	// CellStrip overrids
 	virtual void layoutCells() override;
 
+	// Widget overrides
 	virtual void setStyle() override { setWidgetStyle(WidgetType::SCROLL_BAR); }
 	virtual void setSize(const Vec2i &sz) override;
 	virtual string descType() const override { return "ScrollBar"; }
 
+	// signals
 	sigslot::signal<int>  ThumbMoved;
+};
+
+// =====================================================
+//  class ScrollCell
+// =====================================================
+
+class ScrollCell : public Container {
+private:
+	typedef map<Widget*, Vec2i>   OffsetMap;
+
+private:
+	OffsetMap  m_childOffsets;
+
+public:
+	ScrollCell(Container *parent) : Container(parent) {}
+	ScrollCell(Container *parent, Vec2i pos, Vec2i sz) : Container(parent, pos, sz) {}
+
+	void setOffset(Vec2i offset) {
+		foreach (WidgetList, it, m_children) {
+			Widget *child = *it;
+			child->setPos(m_childOffsets[child] + offset);
+		}
+	}
+
+	// Container overrides
+	virtual void addChild(Widget* child) override;
+	virtual void remChild(Widget* child) override;
+
+	// Widget overrides
+	virtual void setSize(const Vec2i &sz);
+	virtual void render() override;
+	virtual string descType() const override { return "ScrollCell"; }
+
+	// signals
+	sigslot::signal<Vec2i> Resized;
+};
+
+// =====================================================
+//  class ScrollPane
+// =====================================================
+
+class ScrollPane : public CellStrip, public sigslot::has_slots {
+private:
+	ScrollBar  *m_vertBar;
+	ScrollBar  *m_horizBar;
+	ScrollCell *m_scrollCell;
+	Vec2i       m_offset;
+	Vec2i       m_totalRange;
+
+	void init();
+	void setOffset(Vec2i offset = Vec2i(0));
+	void onVerticalScroll(int diff);
+	void onHorizontalScroll(int diff);
+
+public:
+	ScrollPane(Container *parent);
+	ScrollPane(Container *parent, Vec2i pos, Vec2i sz);
+
+	void setTotalRange(Vec2i total);
+	ScrollCell* getScrollCell() { return m_scrollCell; }
+
+	// Widget overrides
+	virtual string descType() const override { return "ScrollPane"; }
+
+	// slots (event handlers)
+	void onScrollCellResized(Vec2i avail);
 };
 
 }}

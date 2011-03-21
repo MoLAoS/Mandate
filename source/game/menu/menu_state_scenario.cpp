@@ -37,7 +37,9 @@ using namespace Shared::Xml;
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_targetTansition(Transition::INVALID) {
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+	Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	// create
 	int gap = (g_metrics.getScreenW() - 300) / 3;
@@ -48,20 +50,20 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	Vec2i playBtnPos(x,y);
 
 	w = 200;
-	h = int(font->getMetrics()->getHeight()) + 6;
+	h = int(fontPtr->getMetrics()->getHeight()) + 6;
 	x = g_metrics.getScreenW() / 2 - (w * 2 + 50) / 2;
 	y = g_metrics.getScreenH() / 2 + (h * 2) / 2 + 100;
 	StaticText* l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_text->setTextParams(g_lang.get("Category"), Vec4f(1.f), font);
+	l_text->setTextParams(g_lang.get("Category"), white, font);
 //	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
 
 	y = g_metrics.getScreenH() / 2 - (h * 2) / 2 + 100;
 	l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w,h));
-	l_text->setTextParams(g_lang.get("Scenario"), Vec4f(1.f), font);
+	l_text->setTextParams(g_lang.get("Scenario"), white, font);
 //	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
 
 	m_infoLabel = new StaticText(&program, Vec2i(x, y - 220), Vec2i(450, 200));
-	m_infoLabel->setTextParams("", Vec4f(1.f), font);
+	m_infoLabel->setTextParams("", white, font);
 //	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
 
 	x += 220;
@@ -73,11 +75,11 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_scenarioList->SelectionChanged.connect(this, &MenuStateScenario::onScenarioChanged);
 
 	m_returnButton = new Button(&program, retBtnPos, btnSize);
-	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->setTextParams(g_lang.get("Return"), white, font);
 	m_returnButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
 
 	m_playNowButton = new Button(&program, playBtnPos, btnSize);
-	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton->setTextParams(g_lang.get("PlayNow"), white, font);
 	m_playNowButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
 
 	vector<string> results;

@@ -76,7 +76,9 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	savedGame = NULL;
 	gs = NULL;
 
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+//	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 	Anchors centreAnchors;
@@ -109,19 +111,19 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	// buttons
 	m_returnButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
 	m_returnButton->setCell(0);
-	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_returnButton->setTextParams(g_lang.get("Return"), white, font);
 	m_returnButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
 	m_returnButton->setAnchors(centreAnchors);
 
 	m_deleteButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
 	m_deleteButton->setCell(1);
-	m_deleteButton->setTextParams(g_lang.get("Delete"), Vec4f(1.f), font);
+	m_deleteButton->setTextParams(g_lang.get("Delete"), white, font);
 	m_deleteButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
 	m_deleteButton->setAnchors(centreAnchors);
 
 	m_playNowButton = new Button(btnPnl, Vec2i(0), Vec2i(256, 32));
 	m_playNowButton->setCell(2);
-	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton->setTextParams(g_lang.get("PlayNow"), white, font);
 	m_playNowButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
 	m_playNowButton->setAnchors(centreAnchors);
 

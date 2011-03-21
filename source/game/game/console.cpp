@@ -88,10 +88,6 @@ void Console::addLine(string line, bool playSound){
 }
 
 void Console::addDialog(string speaker, Colour colour, string text, bool playSound) {
-	addDialog(speaker, Vec3f(colour.r / 255.f, colour.g / 255.f, colour.b / 255.f), text, playSound);
-}
-
-void Console::addDialog(string speaker, Vec3f colour, string text, bool playSound) {
 	if (playSound) {
 		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
 	}
@@ -101,6 +97,10 @@ void Console::addDialog(string speaker, Vec3f colour, string text, bool playSoun
 	if (lines.size() > maxLines) {
 		lines.pop_back();
 	}
+}
+
+void Console::addDialog(string speaker, Vec3f c, string text, bool playSound) {
+	addDialog(speaker, Colour(c.r * 255, c.g * 255, c.b * 255, 255), text, playSound);
 }
 
 void Console::update(){
@@ -114,17 +114,18 @@ void Console::update(){
 }
 
 void Console::render() {
+	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
 	const FontMetrics *fm = m_font->getMetrics();
 
 	TextWidget::startBatch(m_font);
-	Vec4f black(0.f, 0.f, 0.f, 1.f);
+	Colour black(0u, 0u, 0u, 255u);
 	for (int i=0; i < lines.size(); ++i) {
 		int x = 20;
 		int y = yPos + (fromTop ? -(int(lines.size()) - i - 1) : i) * int(fm->getHeight() + 1.f);
 		Message &msg = lines[i].first;
 		foreach (Message, snippet, msg) {
-			renderText(snippet->text, x + 2, y - 2, black, m_font);
-			renderText(snippet->text, x, y, snippet->colour, m_font);
+			renderText(snippet->text, x + 2, y - 2, black, fontNdx);
+			renderText(snippet->text, x, y, snippet->colour, fontNdx);
 			x += int(fm->getTextDiminsions(snippet->text).x + 1.f);
 		}
  	}

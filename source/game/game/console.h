@@ -40,12 +40,12 @@ class Console : public Widget, public TextWidget {
 public:
 	struct TextInfo {
 		string text;
-		Vec4f colour;
-		TextInfo(const string &text) : text(text), colour(1.f) {}
-		TextInfo(const string &text, Vec3f colour) : text(text), colour(colour, 1.f) {}
+		Colour colour;
+		TextInfo(const string &text) : text(text), colour(255u) {}
+		TextInfo(const string &text, Colour colour) : text(text), colour(colour) {}
 	};
 	struct Message : public vector<TextInfo> {
-		Message(const string &txt, Vec3f col) { push_back(TextInfo(txt, col)); }
+		Message(const string &txt, Colour col) { push_back(TextInfo(txt, col)); }
 		Message(const string &txt) { push_back(TextInfo(txt)); }
 	};
 	typedef pair<Message, float> MessageTimePair;
