@@ -29,13 +29,13 @@ using namespace Util;
 // 	class GlestInfoWidget
 // =====================================================
 
-class GlestInfoWidget : public Widget, public TextWidget {
+class GlestInfoWidget : /*public TickerTape*/ public Widget, public TextWidget {
 private:
 	vector<Vec2f> m_startPositions;
 	vector<Vec2f> m_endPositions;
 	int           m_counter;
 
-	static const int transitionTime = 180; // 1.5 seconds
+	static const int transitionTime = 120 * 3;//180; // 1.5 seconds
 
 public:
 	GlestInfoWidget(Container *parent);
@@ -58,7 +58,7 @@ GlestInfoWidget::GlestInfoWidget(Container *parent)
 
 void GlestInfoWidget::start() {
 	assert(getSize() != Vec2i(0) && "widget must be sized first.");
-	const FontMetrics *fm = getFont(m_textStyle.m_fontIndex, FontSize::NORMAL)->getMetrics();
+	const FontMetrics *fm = getFont(m_textStyle.m_fontIndex)->getMetrics();
 	const int &n = numSnippets();
 	const int half_n = n / 2;
 	const float left_x = (getWidth() - fm->getHeight()) / 2.f;  // x-coord to right justify text to
@@ -130,15 +130,21 @@ typedef string (*TeamMemberFunc)(int i, TeamMemberField field);
 
 class TeamInfoWidget : public CellStrip {
 private:
-	StaticText *m_teamLabel;
+	TickerTape *m_teamLabel;
 	TickerTape *m_nameTicker;
 	TickerTape *m_roleTicker;
+	int         m_counter;
 
 public:
 	TeamInfoWidget(Container *parent);
+	~TeamInfoWidget() {
+		m_rootWindow->unregisterUpdate(this);
+	}
 
 	void setTeam(const string &teamName) {
-		m_teamLabel->setText(teamName);
+		m_teamLabel->addItems(&teamName, 1);
+		m_teamLabel->startTicker();
+		m_rootWindow->registerUpdate(this);
 	}
 
 	void setMembers(int count, TeamMemberFunc func) {
@@ -150,27 +156,43 @@ public:
 		m_nameTicker->addItems(names);
 		m_roleTicker->addItems(roles);
 	}
+
+	virtual void update() override {
+		++m_counter;
+		if (m_counter == 120 * 2) {
+			m_nameTicker->startTicker();
+			m_roleTicker->startTicker();
+		}
+	}
 };
 
 TeamInfoWidget::TeamInfoWidget(Container *parent)
-		: CellStrip(parent, Orientation::VERTICAL, 3) {
+		: CellStrip(parent, Orientation::VERTICAL, 3), m_counter(0) {
 	setWidgetStyle(WidgetType::INFO_WIDGET);
 
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
-	m_teamLabel = new StaticText(this);
+	m_teamLabel = new TickerTape(this, Origin::CENTRE, Alignment::CENTERED);
 	m_teamLabel->setCell(0);
 	m_teamLabel->setAnchors(anchors);
-	m_teamLabel->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex);
+	m_teamLabel->setTransitionInterval(120 * 2 + 60);
+	m_teamLabel->setTransitionFunc(TransitionFunc::EXPONENTIAL);
+	m_teamLabel->setDisplayInterval(-1);
 
 	m_nameTicker = new TickerTape(this, Origin::FROM_RIGHT, Alignment::FLUSH_LEFT);
 	m_nameTicker->setCell(1);
 	m_nameTicker->setAnchors(anchors);
-	m_nameTicker->setOverlapTransitions(true);
+//	m_nameTicker->setOverlapTransitions(true);
+	m_nameTicker->setTransitionFunc(TransitionFunc::LOGARITHMIC);
+	m_nameTicker->setTransitionInterval(120 + 60);
+	m_nameTicker->setDisplayInterval(120 * 2);
 
 	m_roleTicker = new TickerTape(this, Origin::FROM_LEFT, Alignment::FLUSH_RIGHT);
 	m_roleTicker->setCell(2);
 	m_roleTicker->setAnchors(anchors);
-	m_roleTicker->setOverlapTransitions(true);
+//	m_roleTicker->setOverlapTransitions(true);
+	m_roleTicker->setTransitionFunc(TransitionFunc::LOGARITHMIC);
+	m_roleTicker->setTransitionInterval(120 + 60);
+	m_roleTicker->setDisplayInterval(120 * 2);
 }
 
 // =====================================================
@@ -180,18 +202,18 @@ TeamInfoWidget::TeamInfoWidget(Container *parent)
 MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu) {
 	Lang &lang = g_lang;
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	Font *bigFont = g_widgetConfig.getMenuFont()[FontSize::BIG];
+	const Font *font = g_widgetConfig.getMenuFont();
+	const Font *bigFont = g_widgetConfig.getMenuFont();
 
 	int itemHeight = g_widgetConfig.getDefaultItemHeight();
 	// top level strip
 	CellStrip *rootStrip = 
 		new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::FROM_TOP, 3);
-	Vec2i pad(15, 45);
+	Vec2i pad(15, 25);
 	rootStrip->setPos(pad);
 	rootStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	rootStrip->setSizeHint(0, SizeHint(-1, 5 * itemHeight));
+	rootStrip->setSizeHint(0, SizeHint(-1, 7 * itemHeight));
 	rootStrip->setSizeHint(1, SizeHint(-1, 3 * itemHeight));
 	rootStrip->setSizeHint(2, SizeHint());
 
@@ -211,10 +233,10 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	teamWidget->setTeam(g_lang.get("GlestTeam"));
 	teamWidget->setMembers(getGlestTeamMemberCount(), &getGlestTeamMemberField);
 
-	teamWidget = new TeamInfoWidget(strip);
-	teamWidget->setCell(1);
-	teamWidget->setAnchors(sidePad);
-	teamWidget->setTeam("Mod Team (place-holder)");
+	//teamWidget = new TeamInfoWidget(strip);
+	//teamWidget->setCell(1);
+	//teamWidget->setAnchors(sidePad);
+	//teamWidget->setTeam("Mod Team (place-holder)");
 	//teamWidget->setMembers(glestTeamCount, glestTeamNames, glestTeamRoles);
 
 	teamWidget = new TeamInfoWidget(strip);

@@ -264,7 +264,7 @@ MenuState::MenuState(Program &program, MainMenu *mainMenu)
 	program.setFade(m_fade);
 	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
 
 	Vec2i pos(10, 50);
 	pos.y -= int(fontPtr->getMetrics()->getHeight());

@@ -100,7 +100,7 @@ LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz
 	ibSize.x = size.x - 10;
 	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	Font *font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
+	const Font *font = g_widgetConfig.getGameFont();
 	ibSize.y = int(font->getMetrics()->getHeight() + 6);
 	m_inputBox = new LuaInputBox(this, m_panel, Vec2i(0), ibSize);
 	m_inputBox->setTextParams("", white, fontNdx, false);

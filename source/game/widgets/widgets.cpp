@@ -823,7 +823,6 @@ Vec2i PicturePanel::getPrefSize() const {
 void ToolTip::init() {
 	setWidgetStyle(WidgetType::TOOL_TIP);
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
-	Font *font = cfg.getFontSet(m_textStyle.m_fontIndex)[FontSize::BIG];
 	TextWidget::setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
 	TextWidget::setTextPos(Vec2i(getBorderLeft(), getBorderTop()));
 }

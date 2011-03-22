@@ -64,7 +64,7 @@ class WidgetConfig {
 
 private:
 	vector<Colour>	 m_colours;
-	vector<FontSet>  m_fonts;
+	vector<FontPtr>  m_fonts;
 	vector<TexPtr>	 m_textures;
 
 	IndexByNameMap	 m_namedColours;
@@ -136,9 +136,9 @@ public:
 
 	int getDefaultFontIndex(FontUsage fu) const { return m_defaultFonts[fu]; }
 
-	FontSet& getMenuFont() { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
-	FontSet& getTitleFont() { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }
-	FontSet& getGameFont() { return m_fonts[m_defaultFonts[FontUsage::GAME]]; }
+	FontPtr getMenuFont() { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
+	FontPtr getTitleFont() { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }
+	FontPtr getGameFont() { return m_fonts[m_defaultFonts[FontUsage::GAME]]; }
 
 	TexPtr getTickTexture() { return m_textures[m_defaultOverlays[OverlayUsage::TICK]]; }
 	TexPtr getCrossTexture() { return m_textures[m_defaultOverlays[OverlayUsage::CROSS]]; }
@@ -152,19 +152,14 @@ public:
 	int getTextureIndex(const string &name) const;
 
 	// get Colour/Font/Texture by index
-	Colour     getColour(uint32 ndx) const              { return m_colours[ndx];   }
-	FontSet    getFontSet(uint32 ndx) const             { return m_fonts[ndx];     }
-	FontPtr    getFont(uint32 ndx, FontSize sz) const   { return m_fonts[ndx][sz]; }
-	TexPtr     getTexture(uint32 ndx) const	            { return m_textures[ndx];  }
+	Colour     getColour(uint32 ndx) const     { return m_colours[ndx];   }
+	FontPtr    getFont(uint32 ndx) const       { return m_fonts[ndx];     }
+	TexPtr     getTexture(uint32 ndx) const	   { return m_textures[ndx];  }
 
-	Font* getFont(uint32 ndx, FontSize size = FontSize::NORMAL) {
-		ASSERT_RANGE(ndx, m_fonts.size());
-		return m_fonts[ndx][size];
-	}
-	Font* getFont(const string &name, FontSize size = FontSize::NORMAL) {
+	FontPtr getFont(const string &name) {
 		int ndx = getFontIndex(name);
 		if (ndx != -1) {
-			return getFont(ndx, size);
+			return getFont(ndx);
 		} else {
 			return 0;
 		}

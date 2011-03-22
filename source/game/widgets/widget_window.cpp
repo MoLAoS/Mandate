@@ -368,8 +368,9 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 
 void WidgetWindow::registerUpdate(Widget* widget) {
 	// only register for updating once, if the widget is already in the container do nothing
-	if (std::find(updateList.begin(), updateList.end(), widget) == updateList.end()) {
-		updateList.push_back(widget);
+	if (std::find(updateList.begin(), updateList.end(), widget) == updateList.end()
+	&& std::find(addUpdateQueue.begin(), addUpdateQueue.end(), widget) == addUpdateQueue.end()) {
+		addUpdateQueue.push_back(widget);
 	}
 	// /@ todo it might be better to use a set instead of a vector to achieve the desired behaviour
 	// JM: set<> == fast look-up, not fast iterate,  better to iterate fast and do this as you have, 
@@ -379,7 +380,7 @@ void WidgetWindow::registerUpdate(Widget* widget) {
 void WidgetWindow::unregisterUpdate(Widget* widget) {
 	WidgetList::iterator it = std::find(updateList.begin(), updateList.end(), widget);
 	if (it != updateList.end()) {
-		updateList.erase(it);
+		remUpdateQueue.push_back(*it);
 	}
 }
 
@@ -399,9 +400,19 @@ void WidgetWindow::update() {
 		}
 		toClean.clear();
 	}
+	foreach (WidgetList, it, remUpdateQueue) {
+		WidgetList::iterator it2 = std::find(updateList.begin(), updateList.end(), *it);
+		assert(it2 != updateList.end());
+		updateList.erase(it2);
+	}
+	remUpdateQueue.clear();
 	foreach (WidgetList, it, updateList) {
 		(*it)->update();
 	}
+	foreach (WidgetList, it, addUpdateQueue) {
+		updateList.push_back(*it);
+	}
+	addUpdateQueue.clear();
 
 	//if (mouseAnimations) {
 	//	mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011

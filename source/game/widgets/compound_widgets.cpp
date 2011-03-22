@@ -243,8 +243,7 @@ void Frame::init(Vec2i pos, Vec2i size, const string &title) {
 void Frame::setSize(const Vec2i &size) {
 	Container::setSize(size);
 	Vec2i p, s;
-	Font *font = g_widgetConfig.getFont(m_textStyle.m_fontIndex);
-	const FontMetrics *fm = font->getMetrics();
+	const FontMetrics *fm = g_widgetConfig.getFont(m_textStyle.m_fontIndex)->getMetrics();
 
 	int a = int(fm->getHeight() + 1.f) + 4;
 	p = Vec2i(getBorderLeft(), getHeight() - a - getBorderTop());

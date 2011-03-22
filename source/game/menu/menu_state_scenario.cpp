@@ -39,7 +39,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 		, m_targetTansition(Transition::INVALID) {
 	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
 
 	// create
 	int gap = (g_metrics.getScreenW() - 300) / 3;

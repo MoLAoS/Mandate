@@ -105,31 +105,16 @@ struct BackgroundStyle {
 //  TextStyle
 // =====================================================
 
-STRINGY_ENUM( FontSize, SMALL, NORMAL, BIG, HUGE );
-
 struct TextStyle {
 	int		 m_fontIndex;
 	int		 m_colourIndex;
 	int		 m_shadowColourIndex;
 	bool	 m_shadow;
-	FontSize m_size;
 
 	TextStyle();
 
 	void setNormal(int fontIndex, int colourIndex);
 	void setShadow(int fontIndex, int colourIndex, int shadowColourIndex);
-};
-
-// =====================================================
-//  FontSet
-// =====================================================
-
-struct FontSet {
-	Font *m_fonts[FontSize::COUNT];
-
-	FontSet() {memset(this, 0, sizeof(*this));}
-	Font* operator[](FontSize size) const {return m_fonts[size];}
-	void load(const string &path, int size);
 };
 
 // =====================================================

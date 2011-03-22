@@ -72,6 +72,8 @@ private:
 
 	WidgetList	toClean;
 	WidgetList	updateList;
+	WidgetList  addUpdateQueue;
+	WidgetList  remUpdateQueue;
 	WidgetStack mouseOverStack;
 
 	TextRenderer *textRendererFT;

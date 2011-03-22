@@ -35,8 +35,8 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	string glExt = renderer.getGlMoreInfo();
 	string glExt2 = renderer.getGlMoreInfo2();
 
-	Font *normFont = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	Font *smallFont = g_widgetConfig.getMenuFont()[FontSize::SMALL];
+	const Font *normFont = g_widgetConfig.getMenuFont();
+	const Font *smallFont = g_widgetConfig.getMenuFont();
 
 	// text dimensions
 	Vec2f infoDims = smallFont->getMetrics()->getTextDiminsions(glInfo);

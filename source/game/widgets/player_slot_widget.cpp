@@ -160,7 +160,6 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 	int hints[] = { 18, 33, 33, 8, 8 };
 	setPercentageHints(hints);
 	
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	StaticText *label = new StaticText(this);
 	label->setCell(0);
 	label->setTextParams(g_lang.get("Player"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
@@ -205,7 +204,6 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 	int hints[] = { 18, 33, 33, 8, 8 };
 	setPercentageHints(hints);
 
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	m_label = new StaticText(this);
 	m_label->setCell(0);
 	m_label->setTextParams("Player #", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);

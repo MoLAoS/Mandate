@@ -32,7 +32,7 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 
 	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	const Font *font = g_widgetConfig.getMenuFont();
 
 	Button* btn = new Button(this, btnPos, btnSize);
 	btn->setTextParams(g_lang.get("ExitProgram"), white, fontNdx);

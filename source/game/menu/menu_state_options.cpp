@@ -42,7 +42,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 
 	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	const Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
 
 	// create
 	int gap = (metrics.getScreenW() - 450) / 4;

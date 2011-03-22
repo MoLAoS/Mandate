@@ -59,7 +59,7 @@ Intro::Intro(Program &program)
 	if (!isTotalConversion) {
 		int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 		int white = g_widgetConfig.getColourIndex(Colour(255u));
-		Font *fontPtr = g_widgetConfig.getTitleFont()[FontSize::NORMAL];
+		const Font *fontPtr = g_widgetConfig.getTitleFont();
 
 		lblAdvanced = new Widgets::StaticText(logoPanel);
 		lblAdvanced->setTextParams(lang.get("AdvEng1"), white, font);
@@ -77,7 +77,7 @@ Intro::Intro(Program &program)
 		// Version label
 		int bigHeight = int(fontPtr->getMetrics()->getHeight());
 		font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
-		fontPtr = g_widgetConfig.getFontSet(font)[FontSize::NORMAL];
+		fontPtr = g_widgetConfig.getFont(font);
 		int szDiff = bigHeight - int(fontPtr->getMetrics()->getHeight());
 		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 60 - sz.h + szDiff - 2);
 		lblVersion = new Widgets::StaticText(logoPanel);

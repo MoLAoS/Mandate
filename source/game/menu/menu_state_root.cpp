@@ -45,7 +45,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
 	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
 
 	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
 	strip->setPos(Vec2i(0,0));
@@ -90,7 +90,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 		// Version label
 		int bigHeight = int(fontPtr->getMetrics()->getHeight());
-		fontPtr = g_widgetConfig.getTitleFont()[FontSize::SMALL];
+		fontPtr = g_widgetConfig.getTitleFont();
 		int szDiff = bigHeight - int(fontPtr->getMetrics()->getHeight());
 		Vec2i pos = Vec2i(tx + label->getSize().x, logoHeight - ty - sz.h + szDiff - 2);
 

@@ -70,7 +70,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 
 	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	m_font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
+	m_font = g_widgetConfig.getGameFont();
 
 	int x = getBorderLeft();
 	int y = getHeight() - getBorderTop();

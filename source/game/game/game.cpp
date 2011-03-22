@@ -451,7 +451,7 @@ void GameState::addScriptMessage(const string &header, const string &msg) {
 void GameState::setScriptDisplay(const string &msg) {
 	m_scriptDisplay = msg;
 	if (!msg.empty()) {
-		const FontMetrics *fm = g_widgetConfig.getMenuFont()[FontSize::NORMAL]->getMetrics();
+		const FontMetrics *fm = g_widgetConfig.getMenuFont()->getMetrics();
 		int space = g_metrics.getScreenW() - 175 - 320;
 		fm->wrapText(m_scriptDisplay, space);
 		int lines = 1;

@@ -94,14 +94,14 @@ void GraphicProgressBar::init(int x, int y, int w, int h) {
 	GraphicComponent::init(x, y, w, h);
 
 	// choose appropriate font size
-	CoreData &coreData = CoreData::getInstance();
-	if (h <= 20) {
-		setFont(g_widgetConfig.getMenuFont()[FontSize::SMALL]);
-	} else if (h < 35) {
-		setFont(g_widgetConfig.getMenuFont()[FontSize::NORMAL]);
-	} else {
-		setFont(g_widgetConfig.getMenuFont()[FontSize::BIG]);
-	}
+	setFont(g_widgetConfig.getMenuFont());
+	//if (h <= 20) {
+	//	setFont(g_widgetConfig.getMenuFont()[FontSize::SMALL]);
+	//} else if (h < 35) {
+	//	setFont(g_widgetConfig.getMenuFont()[FontSize::NORMAL]);
+	//} else {
+	//	setFont(g_widgetConfig.getMenuFont()[FontSize::BIG]);
+	//}
 }
 
 void GraphicProgressBar::render() {

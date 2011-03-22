@@ -20,21 +20,6 @@ using Global::CoreData;
 using namespace Graphics;
 
 // =====================================================
-// 	class FontSet
-// =====================================================
-
-void FontSet::load(const string &path, int size) {
-	const float relativeSizes[] = { 0.8f, 1.0f, 1.3f, 1.6f };
-	int *sizes = new int[FontSize::COUNT];
-	foreach_enum (FontSize, fs) {
-		sizes[fs] = int(size * relativeSizes[fs]);
-		m_fonts[fs] = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-		m_fonts[fs]->setType(path);
-		m_fonts[fs]->setSize(sizes[fs]);
-	}
-}
-
-// =====================================================
 // 	scripting helpers & callbacks
 // =====================================================
 
@@ -210,8 +195,10 @@ void WidgetConfig::setOverlayTexture(const string &type, const string &name) {
 }
 
 void WidgetConfig::loadFont(const string &name, const string &path, int size) {
-	m_fonts.push_back(FontSet());
-	m_fonts.back().load(path, computeFontSize(size));
+	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
+	font->setType(path);
+	font->setSize(size);
+	m_fonts.push_back(font);
 	m_namedFonts[name] = m_fonts.size() - 1;
 	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size: " << size );
 }
@@ -576,23 +563,6 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 				style.m_fontIndex = -1;
 			}
 		}
-		if (luaScript.getStringField("Size", size)) {
-			style.m_size = FontSizeNames.match(size.c_str());
-			if (style.m_size == FontSize::INVALID) {
-				WIDGET_LOG( "\t\tError: font size '" << size << "' invalid. Setting to NORMAL." );
-				style.m_size = FontSize::NORMAL;
-			} else {
-				WIDGET_LOG( "\t\tSize: " << FontSizeNames[style.m_size] );
-			}
-		} else {
-			if (src) {
-				WIDGET_LOG( "\t\tSize not specified, using Default." );
-				style.m_size = src->m_size;
-			} else {
-				WIDGET_LOG( "\t\tSize not specified, setting Default to NORMAL." );
-				style.m_size = FontSize::NORMAL;
-			}
-		}
 		if (luaScript.getStringField("Colour", colour)) {
 			style.m_colourIndex = getColourIndex(colour);
 			if (style.m_colourIndex != -1) {
@@ -836,7 +806,7 @@ void WidgetConfig::load() {
 }
 
 int WidgetConfig::getDefaultItemHeight() const {
-	return int(m_fonts[m_defaultFonts[FontUsage::MENU]][FontSize::NORMAL]->getMetrics()->getHeight() * 1.2f);
+	return int(m_fonts[m_defaultFonts[FontUsage::MENU]]->getMetrics()->getHeight() * 1.2f);
 }
 
 int WidgetConfig::getColourIndex(const Colour &c) {

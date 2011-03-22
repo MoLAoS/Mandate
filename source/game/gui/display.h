@@ -106,7 +106,7 @@ private:
 			m_carryImageOffset, // x,y offset for loaded unit portrait(s)
 			m_progressPos;		// x,y offset for progress bar
 	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
-	Font *m_font;
+	const Font *m_font;
 
 	DisplayButton	m_hoverBtn,		// section/index of button mouse is over
 					m_pressedBtn;	// section/index of button that received a mouse down event

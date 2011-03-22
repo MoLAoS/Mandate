@@ -55,7 +55,7 @@ Console::Console(Container* parent, int maxLines, int y_pos, bool fromTop)
 	if (fromTop) {
 		yPos = Metrics::getInstance().getScreenH() - y_pos;
 	}
-	m_font = g_widgetConfig.getGameFont()[FontSize::NORMAL];
+	m_font = g_widgetConfig.getGameFont();
 
 	g_widgetWindow.registerUpdate(this);
 }
@@ -99,8 +99,18 @@ void Console::addDialog(string speaker, Colour colour, string text, bool playSou
 	}
 }
 
+Colour toColour(const Vec3f &c) {
+	Colour res;
+	res.r = clamp(unsigned(c.r * 255), 0u, 255u);
+	res.g = clamp(unsigned(c.g * 255), 0u, 255u);
+	res.b = clamp(unsigned(c.b * 255), 0u, 255u);
+	res.a = 255u;
+	return res;
+}
+
 void Console::addDialog(string speaker, Vec3f c, string text, bool playSound) {
-	addDialog(speaker, Colour(c.r * 255, c.g * 255, c.b * 255, 255), text, playSound);
+	Colour colour = toColour(c);
+	addDialog(speaker, colour, text, playSound);
 }
 
 void Console::update(){

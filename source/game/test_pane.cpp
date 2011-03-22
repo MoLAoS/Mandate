@@ -73,20 +73,24 @@ void populateMiscStrip1(CellStrip *strip, int cell, std::vector<string> &fruit) 
 	strip->setSizeHint(cell, SizeHint(10, -1));
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 15)); // fill with 15 px padding
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	Anchors tickerAnchors(Anchor(AnchorType::RIGID, 5), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::RIGID, 5), Anchor(AnchorType::RIGID, 0));
 	CellStrip *topStrip = new CellStrip(strip, Orientation::HORIZONTAL);
 	topStrip->setCell(cell);
 	topStrip->setAnchors(padAnchors);
 	topStrip->addCells(3);
 //	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
 
-	TickerTape *tickerTape = new TickerTape(topStrip, Origin::CENTRE);
+	TickerTape *tickerTape = new TickerTape(topStrip, Origin::FROM_LEFT, Alignment::FLUSH_RIGHT);
 	tickerTape->setCell(0);
 	tickerTape->addItems(fruit);
-	tickerTape->setAnchors(fillAnchors);
+	tickerTape->setAnchors(tickerAnchors);
 	tickerTape->setTransitionInterval(120);
 	tickerTape->setDisplayInterval(120);
+	tickerTape->setTransitionFunc(TransitionFunc::LOGARITHMIC);
 	tickerTape->setOverlapTransitions(true);
 	tickerTape->setAlternateOrigin(false);
+	tickerTape->startTicker();
 
 	DropList *dropList = new DropList(topStrip);
 	dropList->setCell(1);

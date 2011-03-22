@@ -70,7 +70,7 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	
 	font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	Font *fontPtr = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
 	const FontMetrics *fm = fontPtr->getMetrics();
 
 	y -= y_gap;

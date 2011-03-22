@@ -212,7 +212,7 @@ public:
 	bool isVisible() const   { return m_visible; }
 	Anchors  getAnchors() const  { return m_anchors;  }
 
-	FontPtr getFont(int ndx, FontSize sz) const;
+	FontPtr getFont(int ndx) const;
 	TexPtr  getTexture(int ndx) const;
 	Colour  getColour(int ndx) const;
 

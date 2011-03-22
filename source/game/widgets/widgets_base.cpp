@@ -235,9 +235,9 @@ Widget* Widget::getWidgetAt(const Vec2i &pos) {
 	return this;
 }
 
-FontPtr Widget::getFont(int ndx, FontSize sz) const {
-	RUNTIME_CHECK(ndx >= 0 && sz > FontSize::INVALID && sz < FontSize::COUNT);
-	return m_rootWindow->getConfig()->getFont(ndx, sz);
+FontPtr Widget::getFont(int ndx) const {
+	RUNTIME_CHECK(ndx >= 0);
+	return m_rootWindow->getConfig()->getFont(ndx);
 }
 
 TexPtr Widget::getTexture(int ndx) const {
@@ -963,7 +963,7 @@ void TextWidget::centreText(int ndx) {
 		return;
 	}
 	ASSERT_RANGE(ndx, m_texts.size());
-	const FontMetrics *fm = me->getFont(me->textStyle().m_fontIndex, FontSize::NORMAL)->getMetrics();
+	const FontMetrics *fm = me->getFont(me->textStyle().m_fontIndex)->getMetrics();
 	// m_texts[ndx].m_font->getMetrics();
 	Vec2f txtDims = fm->getTextDiminsions(m_texts[ndx].m_text);
 	int halfTextW = int(txtDims.w) / 2;
@@ -980,7 +980,7 @@ void TextWidget::widgetReSized() {
 
 void TextWidget::startBatch(const Font *font) {
 	if (!font) {
-		font = me->getFont(m_defaultFont, FontSize::NORMAL);
+		font = me->getFont(m_defaultFont);
 	}
 	m_textRenderer = g_widgetWindow.getTextRenderer();
 	m_textRenderer->begin(font);
@@ -996,7 +996,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Colour &colou
 	assertGl();
 	if (!m_batchRender) {
 		if (!font) {
-			font = me->getFont(m_defaultFont, FontSize::NORMAL);
+			font = me->getFont(m_defaultFont);
 		}
 		m_textRenderer = g_widgetWindow.getTextRenderer();
 		m_textRenderer->begin(font);
@@ -1018,7 +1018,7 @@ void TextWidget::renderText(int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
 	Colour colour = g_widgetConfig.getColour(m_texts[ndx].m_colour);
-	colour.a *= me->getFade();
+	colour.a = uint8(clamp(unsigned(colour.a * me->getFade()), 0u, 255u));
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour, m_texts[ndx].m_font);
 }
 
@@ -1028,8 +1028,8 @@ void TextWidget::renderTextShadowed(int ndx, int offset) {
 	Vec2i sPos = pos + Vec2i(offset, offset);
 	Colour colour = g_widgetConfig.getColour(m_texts[ndx].m_colour);
 	Colour shadowColour = g_widgetConfig.getColour(m_texts[ndx].m_shadowColour);
-	colour.a *= me->getFade();
-	shadowColour.a *= me->getFade();
+	colour.a = uint8(clamp(unsigned(colour.a * me->getFade()), 0u, 255u));
+	shadowColour.a = uint8(clamp(unsigned(shadowColour.a * me->getFade()), 0u, 255u));
 	renderText(m_texts[ndx].m_text, sPos.x, sPos.y, shadowColour);
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour);
 }
@@ -1043,9 +1043,9 @@ void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
 	Colour colour = cfg.getColour(m_texts[ndx].m_colour);
 	Colour shadowColour = cfg.getColour(m_texts[ndx].m_shadowColour);
 	Colour shadowColour2 = cfg.getColour(m_texts[ndx].m_shadowColour2);
-	colour.a *= me->getFade();
-	shadowColour.a *= me->getFade();
-	shadowColour2.a *= me->getFade();
+	colour.a = uint8(clamp(unsigned(colour.a * me->getFade()), 0u, 255u));
+	shadowColour.a = uint8(clamp(unsigned(shadowColour.a * me->getFade()), 0u, 255u));
+	shadowColour2.a = uint8(clamp(unsigned(shadowColour2.a * me->getFade()), 0u, 255u));
 	renderText(m_texts[ndx].m_text, sPos2.x, sPos2.y, shadowColour2);
 	renderText(m_texts[ndx].m_text, sPos1.x, sPos1.y, shadowColour);
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour);

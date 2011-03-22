@@ -63,7 +63,7 @@ private:
 	int yPos;
 	bool fromTop;
 
-	Font *m_font;
+	const Font *m_font;
 
 public:
 	Console(Container* parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
