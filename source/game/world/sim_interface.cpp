@@ -267,42 +267,38 @@ GameStatus SimulationInterface::checkWinner(){
 }
 
 GameStatus SimulationInterface::checkWinnerStandard() {
-	//lose
-	bool lose = false;
-	if (!hasBuilding(world->getThisFaction())) {
-		lose = true;
-		for (int i=0; i < world->getFactionCount(); ++i) {
-			if (!world->getFaction(i)->isAlly(world->getThisFaction())) {
+	bool teams[GameConstants::maxPlayers] = {false};
+	int activeTeams = 0;
+
+	// if any faction in the team has a building set to active
+	for (int i = 0; i < world->getFactionCount(); ++i) {
+		// only bother setting once for each active team
+		if (!teams[world->getFaction(i)->getTeam()] && hasBuilding(world->getFaction(i))) {
+			activeTeams++;
+			teams[world->getFaction(i)->getTeam()] = true;
+		}
+	}
+
+	bool thisTeamWin = teams[world->getThisFaction()->getTeam()];
+
+	// has game ended?
+	if (activeTeams <= 1 /*|| !thisTeamWin*/) { // uncomment to get previous early out behaviour
+		gameOver = true;
+
+		// set victory
+		for (int i = 0; i < world->getFactionCount(); ++i) {
+			if (teams[world->getFaction(i)->getTeam()]) {
 				stats->setVictorious(i);
 			}
 		}
-		gameOver = true;
-		return GameStatus::LOST;
-	}
-
-	//win
-	if (!lose) {
-		bool win = true;
-		for (int i=0; i < world->getFactionCount(); ++i) {
-			if (i != world->getThisFactionIndex()) {
-				if (hasBuilding(world->getFaction(i)) 
-				&& !world->getFaction(i)->isAlly(world->getThisFaction())) {
-					win = false;
-				}
-			}
-		}
-
-		//if win
-		if (win) {
-			for (int i=0; i < world->getFactionCount(); ++i) {
-				if (world->getFaction(i)->isAlly(world->getThisFaction())) {
-					stats->setVictorious(i);
-				}
-			}
-			gameOver = true;
+		
+		if (thisTeamWin) {
 			return GameStatus::WON;
+		} else {
+			return GameStatus::LOST;
 		}
 	}
+
 	return GameStatus::NO_CHANGE;
 }
 
