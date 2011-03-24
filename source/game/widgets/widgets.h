@@ -400,6 +400,58 @@ public:
 	virtual string descType() const override { return "Tooltip"; }
 };
 
+class OptionWidget : public CellStrip {
+public:
+	OptionWidget(Container *parent, const string &text)
+			: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2) {
+		setSizeHint(0, SizeHint(40));
+		setSizeHint(1, SizeHint(60));
+		Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
+			Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
+		setAnchors(dwAnchors);
+		StaticText *label = new StaticText(this);
+		label->setText(text);
+		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+		label->setCell(0);
+		label->setAnchors(Anchor(AnchorType::RIGID, 0));
+		
+	}
+};
+
+class DoubleOption : public CellStrip {
+public:
+	DoubleOption(Container *parent, const string &txt1, const string &txt2)
+			: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 4) {
+		setSizeHint(0, SizeHint(40));
+		setSizeHint(1, SizeHint(10));
+		setSizeHint(2, SizeHint(40));
+		setSizeHint(3, SizeHint(10));
+		Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
+			Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
+		setAnchors(dwAnchors);
+		StaticText *label = new StaticText(this);
+		label->setText(txt1);
+		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+		label->setCell(0);
+		label->setAnchors(Anchor(AnchorType::RIGID, 0));
+
+		label = new StaticText(this);
+		label->setText(txt2);
+		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+		label->setCell(2);
+		label->setAnchors(Anchor(AnchorType::RIGID, 0));
+	}
+
+	void setCustomSplit(bool first, int label) {
+		assert(label > 0 && label < 50);
+		int content = 50 - label;
+		int i = first ? 0 : 2;
+		setSizeHint(i++, SizeHint(label));
+		setSizeHint(i, SizeHint(content));
+	}
+};
+
+
 }}
 
 #endif
