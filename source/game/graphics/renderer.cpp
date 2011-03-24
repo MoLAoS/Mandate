@@ -229,7 +229,7 @@ bool Renderer::init(){
 	if (g_config.getRenderUseShaders()) {
 		g_logger.logProgramEvent("\tloading shaders.");
 		// some hacky stuff so we can test easier, get a list of shader 'sets' to load
-		string names = g_config.getRenderUnitShaders();
+		string names = g_config.getRenderModelShader();
 		char *tmp = new char[names.size() + 1];
 		strcpy(tmp, names.c_str());
 		vector<string> programNames;

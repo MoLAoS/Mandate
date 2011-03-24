@@ -147,6 +147,11 @@ void restoreVideoMode() {
 	assert(dispChangeErr == DISP_CHANGE_SUCCESSFUL);
 }
 
+void getScreenMode(int &width, int &height) {
+	width = GetSystemMetrics(SM_CXSCREEN);
+	height = GetSystemMetrics(SM_CYSCREEN);
+}
+
 void message(string message) {
 	MessageBox(NULL, message.c_str(), "Message", MB_OK);
 }

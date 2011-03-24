@@ -378,7 +378,11 @@ void WidgetWindow::registerUpdate(Widget* widget) {
 }
 
 void WidgetWindow::unregisterUpdate(Widget* widget) {
-	WidgetList::iterator it = std::find(updateList.begin(), updateList.end(), widget);
+	WidgetList::iterator it = std::find(addUpdateQueue.begin(), addUpdateQueue.end(), widget);
+	if (it != addUpdateQueue.end()) {
+		addUpdateQueue.erase(it);
+	}
+	it = std::find(updateList.begin(), updateList.end(), widget);
 	if (it != updateList.end()) {
 		remUpdateQueue.push_back(*it);
 	}

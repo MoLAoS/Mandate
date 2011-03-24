@@ -83,6 +83,7 @@ size_t getFileSize(const string &path);
 
 bool changeVideoMode(int resH, int resW, int colorBits, int refreshFrequency);
 void restoreVideoMode();
+void getScreenMode(int &width, int &height);
 
 void message(string message);
 bool ask(string message);
@@ -90,6 +91,9 @@ void exceptionMessage(const exception &excp);
 
 inline int getScreenW()			{return GetSystemMetrics(SM_CXSCREEN);}
 inline int getScreenH()			{return GetSystemMetrics(SM_CYSCREEN);}
+
+void getScreenMode(int &width, int &height);
+
 inline void sleep(int millis)	{Sleep(millis);}
 inline void showCursor(bool b)	{ShowCursor(b);}
 

@@ -61,24 +61,24 @@ private:
 	int renderDepthBits;
 	float renderDistanceMax;
 	float renderDistanceMin;
-	int renderFilterMaxAnisotropy;
 	string renderFilter;
-	float renderFontScaler;
+	int renderFilterMaxAnisotropy;
 	bool renderFogOfWarSmoothing;
 	int renderFogOfWarSmoothingFrameSkip;
+	float renderFontScaler;
 	float renderFov;
 	int renderFpsMax;
 	string renderGraphicsFactory;
 	bool renderInterpolateWithSIMD;
 	int renderLightsMax;
+	string renderModelShader;
 	float renderShadowAlpha;
 	int renderShadowFrameSkip;
-	string renderShadows;
 	int renderShadowTextureSize;
+	string renderShadows;
 	int renderStencilBits;
 	bool renderTextures3D;
 	bool renderUseShaders;
-	string renderUnitShaders;
 	string soundFactory;
 	int soundStaticBuffers;
 	int soundStreamingBuffers;
@@ -88,8 +88,8 @@ private:
 	int uiConsoleMaxLines;
 	int uiConsoleTimeout;
 	bool uiFocusArrows;
-	string uiLastScenarioCatagory;
 	string uiLastScenario;
+	string uiLastScenarioCatagory;
 	string uiLocale;
 	bool uiPhotoMode;
 	float uiScrollSpeed;
@@ -148,24 +148,24 @@ public:
 	int getRenderDepthBits() const				{return renderDepthBits;}
 	float getRenderDistanceMax() const			{return renderDistanceMax;}
 	float getRenderDistanceMin() const			{return renderDistanceMin;}
-	int getRenderFilterMaxAnisotropy() const	{return renderFilterMaxAnisotropy;}
 	string getRenderFilter() const				{return renderFilter;}
-	float getRenderFontScaler() const			{return renderFontScaler;}
+	int getRenderFilterMaxAnisotropy() const	{return renderFilterMaxAnisotropy;}
 	bool getRenderFogOfWarSmoothing() const		{return renderFogOfWarSmoothing;}
 	int getRenderFogOfWarSmoothingFrameSkip() const{return renderFogOfWarSmoothingFrameSkip;}
+	float getRenderFontScaler() const			{return renderFontScaler;}
 	float getRenderFov() const					{return renderFov;}
 	int getRenderFpsMax() const					{return renderFpsMax;}
 	string getRenderGraphicsFactory() const		{return renderGraphicsFactory;}
 	bool getRenderInterpolateWithSIMD() const	{return renderInterpolateWithSIMD;}
 	int getRenderLightsMax() const				{return renderLightsMax;}
+	string getRenderModelShader() const			{return renderModelShader;}
 	float getRenderShadowAlpha() const			{return renderShadowAlpha;}
 	int getRenderShadowFrameSkip() const		{return renderShadowFrameSkip;}
-	string getRenderShadows() const				{return renderShadows;}
 	int getRenderShadowTextureSize() const		{return renderShadowTextureSize;}
+	string getRenderShadows() const				{return renderShadows;}
 	int getRenderStencilBits() const			{return renderStencilBits;}
 	bool getRenderTextures3D() const			{return renderTextures3D;}
 	bool getRenderUseShaders() const			{return renderUseShaders;}
-	string getRenderUnitShaders() const			{return renderUnitShaders;}
 	string getSoundFactory() const				{return soundFactory;}
 	int getSoundStaticBuffers() const			{return soundStaticBuffers;}
 	int getSoundStreamingBuffers() const		{return soundStreamingBuffers;}
@@ -175,8 +175,8 @@ public:
 	int getUiConsoleMaxLines() const			{return uiConsoleMaxLines;}
 	int getUiConsoleTimeout() const				{return uiConsoleTimeout;}
 	bool getUiFocusArrows() const				{return uiFocusArrows;}
-	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLastScenario() const			{return uiLastScenario;}
+	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLocale() const					{return uiLocale;}
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
@@ -209,24 +209,24 @@ public:
 	void setRenderDepthBits(int val)			{renderDepthBits = val;}
 	void setRenderDistanceMax(float val)		{renderDistanceMax = val;}
 	void setRenderDistanceMin(float val)		{renderDistanceMin = val;}
-	void setRenderFilterMaxAnisotropy(int val)	{renderFilterMaxAnisotropy = val;}
 	void setRenderFilter(string val)			{renderFilter = val;}
-	void setRenderFontScaler(float val)			{renderFontScaler = val;}
+	void setRenderFilterMaxAnisotropy(int val)	{renderFilterMaxAnisotropy = val;}
 	void setRenderFogOfWarSmoothing(bool val)	{renderFogOfWarSmoothing = val;}
 	void setRenderFogOfWarSmoothingFrameSkip(int val){renderFogOfWarSmoothingFrameSkip = val;}
+	void setRenderFontScaler(float val)			{renderFontScaler = val;}
 	void setRenderFov(float val)				{renderFov = val;}
 	void setRenderFpsMax(int val)				{renderFpsMax = val;}
 	void setRenderGraphicsFactory(string val)	{renderGraphicsFactory = val;}
 	void setRenderInterpolateWithSIMD(bool val)	{renderInterpolateWithSIMD = val;}
 	void setRenderLightsMax(int val)			{renderLightsMax = val;}
+	void setRenderModelShader(string val)		{renderModelShader = val;}
 	void setRenderShadowAlpha(float val)		{renderShadowAlpha = val;}
 	void setRenderShadowFrameSkip(int val)		{renderShadowFrameSkip = val;}
-	void setRenderShadows(string val)			{renderShadows = val;}
 	void setRenderShadowTextureSize(int val)	{renderShadowTextureSize = val;}
+	void setRenderShadows(string val)			{renderShadows = val;}
 	void setRenderStencilBits(int val)			{renderStencilBits = val;}
 	void setRenderTextures3D(bool val)			{renderTextures3D = val;}
 	void setRenderUseShaders(bool val)			{renderUseShaders = val;}
-	void setRenderUnitShaders(string val)		{renderUnitShaders = val;}
 	void setSoundFactory(string val)			{soundFactory = val;}
 	void setSoundStaticBuffers(int val)			{soundStaticBuffers = val;}
 	void setSoundStreamingBuffers(int val)		{soundStreamingBuffers = val;}
@@ -236,8 +236,8 @@ public:
 	void setUiConsoleMaxLines(int val)			{uiConsoleMaxLines = val;}
 	void setUiConsoleTimeout(int val)			{uiConsoleTimeout = val;}
 	void setUiFocusArrows(bool val)				{uiFocusArrows = val;}
-	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLastScenario(string val)			{uiLastScenario = val;}
+	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLocale(string val)				{uiLocale = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}

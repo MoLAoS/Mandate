@@ -31,9 +31,11 @@ using namespace Util;
 
 class GlestInfoWidget : /*public TickerTape*/ public Widget, public TextWidget {
 private:
-	vector<Vec2f> m_startPositions;
-	vector<Vec2f> m_endPositions;
-	int           m_counter;
+	typedef vector<TextAction> Actions;
+	//vector<Vec2f> m_startPositions;
+	//vector<Vec2f> m_endPositions;
+	//int           m_counter;
+	Actions       m_actions;
 
 	static const int transitionTime = 120 * 3;//180; // 1.5 seconds
 
@@ -48,12 +50,26 @@ public:
 };
 
 GlestInfoWidget::GlestInfoWidget(Container *parent)
-		: Widget(parent), TextWidget(this), m_counter(0) {
+		: Widget(parent), TextWidget(this) {
 	setWidgetStyle(WidgetType::INFO_WIDGET);
 	setTextFont(m_textStyle.m_fontIndex);
 	for (int i=0; i < getAboutStringCount(); ++i) {
 		addText(getAboutString(i));
 	}
+}
+
+inline int startDelay(int i, const int &n) {
+	const int half_n = n / 2;
+	if (i <= half_n) {
+		i *= 2;
+	} else {
+		if (n % 2 == 1) {
+			i = (i - half_n) * 2 - 1;
+		} else {
+			i = ((i + 1) - half_n) * 2 - 1;
+		}
+	}
+	return (-1 - i) * 80;
 }
 
 void GlestInfoWidget::start() {
@@ -70,7 +86,7 @@ void GlestInfoWidget::start() {
 	int max_len = -1;
 	vector<Vec2f> dims;
 	dims.resize(n);
-	m_endPositions.resize(n);
+	vector<Vec2f> endPositions(n);
 	// pass 1: determine longest string length, set end positions
 	for (int i=0; i < n; ++i) {
 		// get string dimensions and store for later
@@ -79,39 +95,47 @@ void GlestInfoWidget::start() {
 			max_len = int(dims[i].w);
 		}
 		Vec2f pos;
-		if (i <= n / 2) { // left-text
+		if (i <= half_n) { // left-text
 			pos = Vec2f(left_x - dims[i].w, left_y + i * fm->getHeight());
 		} else { // right-text
-			int j = i - (n / 2 + 1);
+			int j = i - (half_n + 1);
 			pos = Vec2f(right_x, right_y + j * fm->getHeight());
 		}
-		m_endPositions[i] = pos;
+		endPositions[i] = pos;
 	}
-	// pass 2: determine start positions
-	m_startPositions.resize(n);
+	// pass 2: determine start positions, create Actions
+	vector<Vec2f> startPositions(n);
 	for (int i=0; i < n; ++i) {
-		Vec2f pos = m_endPositions[i];
-		if (i <= n / 2) {
+		Vec2f pos = endPositions[i];
+		if (i <= half_n) {
 			pos.x -= max_len / 2;
 		} else {
 			pos.x += max_len / 2;
 		}
-		m_startPositions[i] = pos;
+		startPositions[i] = pos;
 		setTextPos(Vec2i(pos), i);
-		setTextColour(Vec4f(1.f, 1.f, 1.f, 0.f), i);
+		setTextColour(Vec4f(1.f), i);
+		setTextFade(0.f, i);
+		m_actions.push_back(TextAction(transitionTime, 0, this, i));
+		int delay = startDelay(i, n);
+		m_actions.back().setPosTransition(startPositions[i], endPositions[i], TransitionFunc::LOGARITHMIC);
+		m_actions.back().setAlphaTransition(0.f, 1.f, TransitionFunc::LINEAR);
+		m_actions.back().m_counter = delay;
 	}
 	m_rootWindow->registerUpdate(this);
 }
 
 void GlestInfoWidget::update() {
-	++m_counter;
-	if (m_counter <= transitionTime) {
-		float t = float(m_counter) / float(transitionTime);
-		Vec4f colour(1.f, 1.f, 1.f, t);
-		for (int i=0; i < numSnippets(); ++i) {
-			setTextPos(Vec2i(m_startPositions[i].lerp(t, m_endPositions[i])), i);
-			setTextColour(colour, i);
+	Actions::iterator it = m_actions.begin();
+	while (it != m_actions.end()) {
+		if (it->update()) {
+			it = m_actions.erase(it);
+		} else {
+			++it;
 		}
+	}
+	if (m_actions.empty()) {
+		m_rootWindow->unregisterUpdate(this);
 	}
 }
 
@@ -143,7 +167,7 @@ public:
 
 	void setTeam(const string &teamName) {
 		m_teamLabel->addItems(&teamName, 1);
-		m_teamLabel->startTicker();
+		m_teamLabel->setTextFade(0.f);
 		m_rootWindow->registerUpdate(this);
 	}
 
@@ -159,7 +183,9 @@ public:
 
 	virtual void update() override {
 		++m_counter;
-		if (m_counter == 120 * 2) {
+		if (m_counter == 120 * 5) {
+			m_teamLabel->startTicker();
+		} else if (m_counter == 120 * 8) {
 			m_nameTicker->startTicker();
 			m_roleTicker->startTicker();
 		}
@@ -174,8 +200,8 @@ TeamInfoWidget::TeamInfoWidget(Container *parent)
 	m_teamLabel = new TickerTape(this, Origin::CENTRE, Alignment::CENTERED);
 	m_teamLabel->setCell(0);
 	m_teamLabel->setAnchors(anchors);
-	m_teamLabel->setTransitionInterval(120 * 2 + 60);
-	m_teamLabel->setTransitionFunc(TransitionFunc::EXPONENTIAL);
+	m_teamLabel->setTransitionInterval(120 * 5);
+	m_teamLabel->setTransitionFunc(TransitionFunc::LINEAR);
 	m_teamLabel->setDisplayInterval(-1);
 
 	m_nameTicker = new TickerTape(this, Origin::FROM_RIGHT, Alignment::FLUSH_LEFT);
@@ -183,7 +209,7 @@ TeamInfoWidget::TeamInfoWidget(Container *parent)
 	m_nameTicker->setAnchors(anchors);
 //	m_nameTicker->setOverlapTransitions(true);
 	m_nameTicker->setTransitionFunc(TransitionFunc::LOGARITHMIC);
-	m_nameTicker->setTransitionInterval(120 + 60);
+	m_nameTicker->setTransitionInterval(120 * 2);
 	m_nameTicker->setDisplayInterval(120 * 2);
 
 	m_roleTicker = new TickerTape(this, Origin::FROM_LEFT, Alignment::FLUSH_RIGHT);
@@ -191,7 +217,7 @@ TeamInfoWidget::TeamInfoWidget(Container *parent)
 	m_roleTicker->setAnchors(anchors);
 //	m_roleTicker->setOverlapTransitions(true);
 	m_roleTicker->setTransitionFunc(TransitionFunc::LOGARITHMIC);
-	m_roleTicker->setTransitionInterval(120 + 60);
+	m_roleTicker->setTransitionInterval(120 * 2);
 	m_roleTicker->setDisplayInterval(120 * 2);
 }
 
@@ -248,112 +274,12 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	rootStrip->layoutCells();
 	infoWidget->start();
 
-	//int centreX = g_metrics.getScreenW() / 2;
-	//Font *font = g_widgetConfig.getMenuFont()[FontSize::SMALL];
-	//Font *fontBig = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	//const FontMetrics *fm = font->getMetrics();
-	//const FontMetrics *fmBig = fontBig->getMetrics();
-	//Vec2i btnSize(150, 30);
-	//Vec2i btnPos(centreX - btnSize.x / 2, 50);
-	//m_returnButton = new Button(&program, btnPos, btnSize);
-	//m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font, true);
-	//m_returnButton->Clicked.connect(this, &MenuStateAbout::onReturn);
-
-	//int topY = g_metrics.getScreenH();
-	//int centreY = topY / 2;
-	//int y = topY - 50;
-	//int x;
-	//int fh = int(fm->getHeight() + 1.f);
-	//int fhBig = int(fmBig->getHeight() + 1.f);
-
-	//Vec2i dims;
-	//StaticText* label;
-	//for (int i=0; i < 4; ++i) {
-	//	y -= fh;
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getAboutString1(i), Vec4f(1.f), font, false);
-	//	dims = label->getTextDimensions();
-	//	x = centreX - 10 - dims.x;
-	//	label->setPos(x, y);
-
-	//	if (i < 3) {
-	//		label = new StaticText(&program);
-	//		label->setTextParams(getAboutString2(i), Vec4f(1.f), font, false);
-	//		x = centreX + 10;
-	//		label->setPos(x, y - fh / 2);
-	//	}
-	//}
-
-	//y -= fh;
-	//int sy = y;
-	//int thirdX = g_metrics.getScreenW() / 3;//centreX / 2;
-
-	//y -= fhBig;
-	//label = new StaticText(&program);
-	//label->setTextParams(lang.get("GlestTeam") + ":", Vec4f(1.f), fontBig, false);
-	//dims = label->getTextDimensions();
-	//x = thirdX - dims.x / 2;
-	//label->setPos(x, y);
-
-	//for (int i=0; i < getGlestTeamMemberCount(); ++i) {
-	//	y -= fh;
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getGlestTeamMemberName(i), Vec4f(1.f), font, false);
-	//	dims = Vec2i(fm->getTextDiminsions(getGlestTeamMemberNameNoDiacritics(i)) + Vec2f(1.f));
-	//	x = thirdX - 10 - dims.x;
-	//	label->setPos(x, y);
-
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getGlestTeamMemberRole(i), Vec4f(1.f), font, false);
-	//	x = thirdX + 10;
-	//	label->setPos(x, y);		
-	//}
-
-	//y = sy;
-	//thirdX *= 2;//3;
-
-	//y -= fhBig;
-	//label = new StaticText(&program);
-	//label->setTextParams(lang.get("GaeTeam") + ":", Vec4f(1.f), fontBig, false);
-	//dims = label->getTextDimensions();
-	//x = thirdX - dims.x / 2;
-	//label->setPos(x, y);
-
-	//for (int i=0; i < getGAETeamMemberCount(); ++i) {
-	//	y -= fh;
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getGAETeamMemberName(i), Vec4f(1.f), font, false);
-	//	dims = label->getTextDimensions();
-	//	x = thirdX - 10 - dims.x;
-	//	label->setPos(x, y);
-
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getGAETeamMemberRole(i), Vec4f(1.f), font, false);
-	//	x = thirdX + 10;
-	//	label->setPos(x, y);		
-	//}
-
-	//y -= fh;
-	//y -= fhBig;
-	//label = new StaticText(&program);
-	//label->setTextParams("GAE Contributors:", Vec4f(1.f), fontBig, false);
-	//dims = label->getTextDimensions();
-	//x = thirdX - dims.x / 2;
-	//label->setPos(x, y);
-
-	//for (int i=0; i < getGAEContributorCount(); ++i) {
-	//	y -= fh;
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getGAEContributorName(i), Vec4f(1.f), font, false);
-	//	dims = label->getTextDimensions();
-	//	x = thirdX - 10 - dims.x;
-	//	label->setPos(x, y);
-
-	//	label = new StaticText(&program);
-	//	label->setTextParams(getGAETeamMemberRole(0), Vec4f(1.f), font, false);
-	//	x = thirdX + 10;
-	//	label->setPos(x, y);
-	//}
+	int s = g_widgetConfig.getDefaultItemHeight();
+	Vec2i btnSize(s * 8, s);
+	Vec2i btnPos((g_metrics.getScreenW() - btnSize.w) / 2, g_metrics.getScreenH() - 50);
+	m_returnButton = new Button(&program, btnPos, btnSize);
+	m_returnButton->setText(g_lang.get("Return"));
+	m_returnButton->Clicked.connect(this, &MenuStateAbout::onReturn);
 }
 
 void MenuStateAbout::onReturn(Button*) {

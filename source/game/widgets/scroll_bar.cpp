@@ -99,7 +99,7 @@ bool ScrollBarButton::mouseUp(MouseButton btn, Vec2i pos) {
 
 void ScrollBarButton::update() {
 	++m_counter;
-	if (m_counter % 5 == 0) {
+	if (m_counter % 20 == 0) {
 		Fire(this);
 		m_fireOnUp = false;
 	}

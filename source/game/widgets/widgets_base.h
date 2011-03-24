@@ -400,10 +400,12 @@ struct TextRenderInfo {
 	string  m_text;
 	Vec2i   m_pos;
 	int     m_colour;
+	int     m_shadowMode;
+	Vec2i   m_shadowOffset;
 	int     m_shadowColour;
 	int     m_shadowColour2;
 	int     m_font;
-//	FontPtr m_font;
+	float   m_fade;
 
 	TextRenderInfo(const string &txt, int font, int colour, const Vec2i &pos);
 };
@@ -438,6 +440,8 @@ public:
 	TextWidget(Widget* me);
 	virtual ~TextWidget() {}
 
+	Widget* widget() { return me; }
+
 	// set
 	void setCentre(bool val)	{ m_centreText = val; }
 	void setTextParams(const string&, int, int, bool cntr=true);
@@ -453,6 +457,7 @@ public:
 	void setTextCentre(bool v)	{ m_centreText = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
 	void setTextFont(int ndx) { m_defaultFont = ndx; }
+	void setTextFade(float alpha, int ndx=0);// { m_texts[ndx].m_fade = alpha; }
 
 	void centreText(int ndx = 0);
 	void widgetReSized();

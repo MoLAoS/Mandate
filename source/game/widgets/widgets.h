@@ -163,7 +163,7 @@ public:
 	virtual Vec2i getPrefSize() const override;
 	virtual Vec2i getMinSize() const override;
 	virtual void setSize(const Vec2i &sz) override;
-	virtual void setStyle() { setWidgetStyle(WidgetType::BUTTON); }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::BUTTON); }
 	virtual void render() override;
 	virtual string descType() const override { return "Button"; }
 
