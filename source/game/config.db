@@ -4,7 +4,6 @@
 # character in this file unless you want to modify the script.
 #
 # variable					type	default			min		max
-cameraFov					float	45.f			0.f		360.f
 cameraInvertXAxis			bool	true
 cameraInvertYAxis			bool	true
 cameraMaxDistance			float	64.f			32.f	2048.f

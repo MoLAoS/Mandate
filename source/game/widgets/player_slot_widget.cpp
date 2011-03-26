@@ -154,7 +154,7 @@ void ColourPicker::onSelect(Button *b) {
 
 PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5) {
-	setWidgetStyle(WidgetType::TEXT_BOX);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 	CoreData &coreData = CoreData::getInstance();
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };
@@ -198,7 +198,7 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 5)
 		, m_freeSlot(false) {
-	setWidgetStyle(WidgetType::TEXT_BOX);
+	setWidgetStyle(WidgetType::STATIC_WIDGET);
 	Anchors anchors(Anchor(AnchorType::RIGID, 3), Anchor(AnchorType::RIGID, 0));
 	//Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	int hints[] = { 18, 33, 33, 8, 8 };

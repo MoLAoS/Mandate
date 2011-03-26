@@ -41,6 +41,9 @@ private:
 
 public:
 	GlestInfoWidget(Container *parent);
+	~GlestInfoWidget() {
+		m_rootWindow->unregisterUpdate(this);
+	}
 
 	void start();
 
@@ -52,7 +55,6 @@ public:
 GlestInfoWidget::GlestInfoWidget(Container *parent)
 		: Widget(parent), TextWidget(this) {
 	setWidgetStyle(WidgetType::INFO_WIDGET);
-	setTextFont(m_textStyle.m_fontIndex);
 	for (int i=0; i < getAboutStringCount(); ++i) {
 		addText(getAboutString(i));
 	}

@@ -27,13 +27,14 @@ LuaInputBox::LuaInputBox(LuaConsole *console, Container *parent)
 		: TextBox(parent)
 		, m_historyPoint(-1)
 		, m_console(console) {
+	setWidgetStyle(WidgetType::CODE_EDIT);
 }
 
-LuaInputBox::LuaInputBox(LuaConsole *console, Container *parent, Vec2i pos, Vec2i size)
-		: TextBox(parent, pos, size)
-		, m_historyPoint(-1)
-		, m_console(console) {
-}
+//LuaInputBox::LuaInputBox(LuaConsole *console, Container *parent, Vec2i pos, Vec2i size)
+//		: TextBox(parent, pos, size)
+//		, m_historyPoint(-1)
+//		, m_console(console) {
+//}
 
 bool LuaInputBox::keyDown(Key key) {
 	KeyCode code = key.getCode();
@@ -87,35 +88,31 @@ void LuaInputBox::recallCommand(bool reverse) {
 // class LuaConsole
 // =====================================================
 
-LuaConsole::LuaConsole(UserInterface *ui, Container* parent, Vec2i pos, Vec2i sz)
-		: BasicDialog(parent, pos, sz)
+LuaConsole::LuaConsole(UserInterface *ui, Container* parent)
+		: BasicDialog(parent)
 		, m_ui(ui) {
-	init(pos, sz, "Lua-Console", "Close", "");
-	m_panel = new Panel(this);
-	setContent(m_panel);
+	setTitleText("Lua-Console");
+	setButtonText(g_lang.get("Close"));
 
-	Vec2i size = m_panel->getSize();
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
+	setContent(panel);
 
-	Vec2i ibSize;
-	ibSize.x = size.x - 10;
-	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	const Font *font = g_widgetConfig.getGameFont();
-	ibSize.y = int(font->getMetrics()->getHeight() + 6);
-	m_inputBox = new LuaInputBox(this, m_panel, Vec2i(0), ibSize);
-	m_inputBox->setTextParams("", white, fontNdx, false);
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	m_inputBox = new LuaInputBox(this, panel);
+	m_inputBox->setCell(0);
+	m_inputBox->setAnchors(anchors);
+	m_inputBox->setText("");
+	m_inputBox->setCentre(false);
 	m_inputBox->setTextPos(Vec2i(3, 3));
 	m_inputBox->InputEntered.connect(this, &LuaConsole::onLineEntered);
+	int h = int(m_inputBox->getFont()->getMetrics()->getHeight()) + 6;
+	panel->setSizeHint(0, SizeHint(-1, h));
 
-	Vec2i obSize;
-	obSize.x = ibSize.x;
-	obSize.y = size.y - ibSize.y - 25;
-	m_outputBox = new ScrollText(m_panel, Vec2i(0), obSize);
-	m_outputBox->setTextParams("", white, fontNdx, false);
-
-	m_panel->setLayoutParams(true, Orientation::VERTICAL);
-	m_panel->setPaddingParams(10, 5);
-	m_panel->layoutChildren();
+	m_outputBox = new CodeBox(panel);
+	m_outputBox->setCell(1);
+	m_outputBox->setAnchors(anchors);
+	m_outputBox->setText("");
+	m_outputBox->setCentre(false);
 }
 
 LuaConsole::~LuaConsole() {

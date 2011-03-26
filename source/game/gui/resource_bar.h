@@ -43,8 +43,10 @@ private:
 	Vec2i m_moveOffset;
 
 public:
-	ResourceBar(const Faction *faction, std::set<const ResourceType*> &types);
+	ResourceBar();
 	~ResourceBar();
+
+	void init(const Faction *faction, std::set<const ResourceType*> &types);
 
 	virtual void update() override;
 	virtual void render() override;

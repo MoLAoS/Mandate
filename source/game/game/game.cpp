@@ -169,7 +169,9 @@ void GameState::init() {
 	IF_DEBUG_EDITION( g_debugRenderer.reset(); )
 
 	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
-	m_chatDialog = new ChatDialog(&g_program, pos, size);
+	m_chatDialog = new ChatDialog(&g_program);
+	m_chatDialog->setPos(pos);
+	m_chatDialog->setSize(size);
 	m_chatDialog->Button1Clicked.connect(this, &GameState::onChatEntered);
 	m_chatDialog->Button2Clicked.connect(this, &GameState::onChatCancel);
 	m_chatDialog->Escaped.connect(this, &GameState::onChatCancel);

@@ -213,6 +213,7 @@ public:
 	Anchors  getAnchors() const  { return m_anchors;  }
 
 	FontPtr getFont(int ndx) const;
+	FontPtr getFont() const { return getFont(m_textStyle.m_fontIndex); }
 	TexPtr  getTexture(int ndx) const;
 	Colour  getColour(int ndx) const;
 
@@ -423,7 +424,7 @@ private:
 	Texts         m_texts;
 	bool          m_centreText;
 	bool          m_batchRender;
-	int           m_defaultFont;
+	//int           m_defaultFont;
 	TextRenderer *m_textRenderer;
 
 protected:
@@ -456,7 +457,7 @@ public:
 	}
 	void setTextCentre(bool v)	{ m_centreText = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
-	void setTextFont(int ndx) { m_defaultFont = ndx; }
+//	void setTextFont(int ndx) { m_defaultFont = ndx; }
 	void setTextFade(float alpha, int ndx=0);// { m_texts[ndx].m_fade = alpha; }
 
 	void centreText(int ndx = 0);
@@ -465,7 +466,7 @@ public:
 	// get
 	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_text; }
 	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_pos; }
-	int getTextFont() const { return m_defaultFont; }
+//	int getTextFont() const { return m_defaultFont; }
 	Vec2i getTextDimensions() const;
 	Vec2i getTextDimensions(int ndx) const;
 	bool hasText() const { return !m_texts.empty(); }

@@ -170,87 +170,130 @@ void ScrollText::render() {
 //  class TitleBar
 // =====================================================
 
-TitleBar::TitleBar(Container* parent)
-		: Container(parent)
-		, TextWidget(this)
-		, m_title("")
-		, m_closeButton(0) {
+TitleBar::TitleBar(Container* parent, ButtonFlags flags)
+		: CellStrip(parent, Orientation::HORIZONTAL)
+		, m_titleText(0)
+		, m_closeButton(0)
+		, m_rollUpButton(0)
+		, m_rollDownButton(0)
+		, m_expandButton(0)
+		, m_shrinkButton(0) {
 	setWidgetStyle(WidgetType::TITLE_BAR);
-	setTextParams(m_title, m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
-	setTextPos(Vec2i(5, 2));
+	init(flags);
 }
 
-TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
-		: Container(parent, pos, size)
-		//, MouseWidget(this)
-		, TextWidget(this)
-		, m_title(title)
-		, m_closeButton(0) {
-	setWidgetStyle(WidgetType::TITLE_BAR);
-	setTextParams(m_title, m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
-	setTextPos(Vec2i(5, 2));
-	if (closeBtn) {
-		int btn_sz = size.y - 4;
-		Vec2i pos(size.x - btn_sz - 2, 2);
-		m_closeButton = new Button(this, pos, Vec2i(btn_sz));
-//		m_closeButton->setWidgetStyle(WidgetType::TITLE_BAR_CLOSE);
+//TitleBar::TitleBar(Container* parent, ButtonFlags flags, Vec2i pos, Vec2i size, string title)
+//		: CellStrip(parent, pos, size, Orientation::HORIZONTAL)
+//		, m_titleText(0)
+//		, m_closeButton(0)
+//		, m_rollUpButton(0)
+//		, m_rollDownButton(0)
+//		, m_expandButton(0)
+//		, m_shrinkButton(0) {
+//	setWidgetStyle(WidgetType::TITLE_BAR);
+//	init(flags);
+//	m_titleText->setText(title);
+//}
+
+void TitleBar::init(ButtonFlags flags) {
+	m_flags = flags;
+	int n = flags.getCount() + 1;
+	addCells(n);
+	if (getHeight()) {
+		setSizeHints();
+	}
+	Anchors anchors(Anchor(AnchorType::RIGID, 2));
+	m_titleText = new StaticText(this);
+	m_titleText->setCell(0);
+	m_titleText->setAnchors(anchors);
+
+	int cell = 1;
+	if (flags.isSet(ButtonFlags::ROLL_UPDOWN)) {
+		m_rollDownButton = new RollDownButton(this);
+		m_rollDownButton->setCell(cell);
+		m_rollDownButton->setAnchors(anchors);
+		m_rollDownButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+
+		m_rollUpButton = new RollUpButton(this);
+		m_rollUpButton->setCell(cell++);
+		m_rollUpButton->setAnchors(anchors);
+		m_rollUpButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+		m_rollUpButton->setVisible(false);
+	}
+	if (flags.isSet(ButtonFlags::SHRINK)) {
+		m_shrinkButton = new ShrinkButton(this);
+		m_shrinkButton->setCell(cell++);
+		m_shrinkButton->setAnchors(anchors);
+		m_shrinkButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+	}
+	if (flags.isSet(ButtonFlags::EXPAND)) {
+		m_expandButton = new ExpandButton(this);
+		m_expandButton->setCell(cell++);
+		m_expandButton->setAnchors(anchors);
+		m_expandButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+	}
+	if (flags.isSet(ButtonFlags::CLOSE)) {
+		m_closeButton = new CloseButton(this);
+		m_closeButton->setCell(cell++);
+		m_closeButton->setAnchors(anchors);
+		m_closeButton->Clicked.connect(this, &TitleBar::onButtonClicked);
 	}
 }
 
-void TitleBar::render() {
-	Widget::renderBackground();
-	TextWidget::renderText();
-	Container::render();
+void TitleBar::onButtonClicked(Button *btn) {
+	if (btn == m_rollDownButton) {
+		RollDown(this);
+	} else if (btn == m_rollUpButton) {
+		RollUp(this);
+	} else if (btn == m_shrinkButton) {
+		Shrink(this);
+	} else if (btn == m_expandButton) {
+		Expand(this);
+	} else if (btn == m_closeButton) {
+		Close(this);
+	}
 }
 
-Vec2i TitleBar::getPrefSize() const { return Vec2i(-1); }
-Vec2i TitleBar::getMinSize() const { return Vec2i(-1); }
+void TitleBar::setSizeHints() {
+	SizeHint hint(-1, getHeight());
+	const int n = m_flags.getCount() + 1;
+	for (int i=1; i < n; ++i) {
+		setSizeHint(i, hint);
+	}
+}
 
 // =====================================================
 //  class Frame
 // =====================================================
 
-Frame::Frame(WidgetWindow *ww)
-		: Container(ww)
+Frame::Frame(WidgetWindow *ww, ButtonFlags flags)
+		: CellStrip(ww, Orientation::VERTICAL, Origin::FROM_TOP, 2)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
-	m_titleBar = new TitleBar(this);
+	init(flags);
 }
 
-Frame::Frame(Container *parent)
-		: Container(parent)
+Frame::Frame(Container *parent, ButtonFlags flags)
+		: CellStrip(parent, Orientation::VERTICAL, Origin::FROM_TOP, 2)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
-	m_titleBar = new TitleBar(this);
+	init(flags);
 }
 
-Frame::Frame(Container *parent, Vec2i pos, Vec2i sz)
-		: Container(parent, pos, sz)
+Frame::Frame(Container *parent, ButtonFlags flags, Vec2i pos, Vec2i sz)
+		: CellStrip(parent, pos, sz, Orientation::VERTICAL, Origin::FROM_TOP, 2)
 		, MouseWidget(this)
 		, m_pressed(false) {
+	init(flags);
+}
+
+void Frame::init(ButtonFlags flags) {
 	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
-	m_titleBar = new TitleBar(this);
-}
-
-void Frame::init(Vec2i pos, Vec2i size, const string &title) {
-	setPos(pos);
-	setSize(size);
-	setTitleText(title);
-}
-
-void Frame::setSize(const Vec2i &size) {
-	Container::setSize(size);
-	Vec2i p, s;
-	const FontMetrics *fm = g_widgetConfig.getFont(m_textStyle.m_fontIndex)->getMetrics();
-
-	int a = int(fm->getHeight() + 1.f) + 4;
-	p = Vec2i(getBorderLeft(), getHeight() - a - getBorderTop());
-	s = Vec2i(getWidth() - getBordersHoriz(), a);
-
-	m_titleBar->setPos(p);
-	m_titleBar->setSize(s);
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	m_titleBar = new TitleBar(this, flags);
+	m_titleBar->setCell(0);
+	m_titleBar->setAnchors(anchors);
+	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() + 4));
 }
 
 void Frame::setTitleText(const string &text) {
@@ -285,79 +328,74 @@ bool Frame::mouseUp(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-void Frame::render() {
-	renderBackground();
-	Container::render();
-}
-
 // =====================================================
 //  class BasicDialog
 // =====================================================
 
 BasicDialog::BasicDialog(WidgetWindow* window)
-		: Frame(window), m_content(0)
-		, m_button1(0), m_button2(0), m_buttonCount(0) {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
-	m_titleBar = new TitleBar(this);
+		: Frame(window, ButtonFlags::CLOSE), m_content(0)
+		, m_button1(0), m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
 }
 
-BasicDialog::BasicDialog(Container* parent, Vec2i pos, Vec2i sz)
-		: Frame(parent, pos, sz), m_content(0)
-		, m_button1(0) , m_button2(0), m_buttonCount(0) {
+BasicDialog::BasicDialog(Container* parent)
+		: Frame(parent, ButtonFlags::CLOSE), m_content(0)
+		, m_button1(0) , m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
+}
+
+void BasicDialog::init() {
 	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
-	m_titleBar = new TitleBar(this);
+	addCells(1);
+	setSizeHint(2, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() * 3 / 2));
 }
 
 void BasicDialog::init(Vec2i pos, Vec2i size, const string &title, 
 					   const string &btn1Text, const string &btn2Text) {
-	Frame::init(pos, size, title);
+	setPos(pos);
+	setSize(size);
+	setTitleText(title);
 	setButtonText(btn1Text, btn2Text);
 }
 
 void BasicDialog::setContent(Widget* content) {
 	m_content = content;
-	Vec2i p, s;
-	int a = m_titleBar->getHeight();
-	p = Vec2i(getBorderLeft(), getBorderBottom() + (m_button1 ? 50 : 0));
-	s = Vec2i(getWidth() - getBordersHoriz(), getHeight() - a - getBordersVert() - (m_button1 ? 50 : 0));
-	m_content->setPos(p);
-	m_content->setSize(s);
+	m_content->setCell(1);
+	m_content->setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
+	setDirty();
 }
 
 void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
-	delete m_button1;
-	m_button1 = 0;
-	delete m_button2;
-	m_button2 = 0;
+	delete m_btnPnl;  m_btnPnl  = 0;
+	delete m_button1; m_button1 = 0;
+	delete m_button2; m_button2 = 0;
 
-	int fontNdx = m_rootWindow->getConfig()->getWidgetStyle(WidgetType::BUTTON).textStyle().m_fontIndex;
-	int colNdx = m_rootWindow->getConfig()->getWidgetStyle(WidgetType::BUTTON).textStyle().m_colourIndex;
-
-	if (btn2Text.empty()) {
-		if (btn1Text.empty()) {
-			m_buttonCount = 0;
-		} else {
-			m_buttonCount = 1;
-		}
-	} else {
-		m_buttonCount = 2;
-	}
+	m_buttonCount = btn2Text.empty() ? (btn1Text.empty() ? 0 : 1) : 2;
 	if (!m_buttonCount) {
 		return;
 	}
-	int gap = (getWidth() - 150 * m_buttonCount) / (m_buttonCount + 1);
-	Vec2i p(gap, 10 + getBorderBottom());
-	Vec2i s(150, 30);
-	m_button1 = new Button(this, p, s);
-	m_button1->setTextParams(btn1Text, colNdx, fontNdx);
+	m_btnPnl = new CellStrip(this, Orientation::HORIZONTAL, m_buttonCount);
+	m_btnPnl->setCell(2);
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	m_btnPnl->setAnchors(anchors);
+
+	Vec2i pos(0,0);
+	Vec2i size(g_widgetConfig.getDefaultItemHeight() * 8, g_widgetConfig.getDefaultItemHeight());
+	anchors.setCentre(true);
+	m_button1 = new Button(m_btnPnl, pos, size);
+	m_button1->setCell(0);
+	m_button1->setAnchors(anchors);
+	m_button1->setText(btn1Text);
 	m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
 
 	if (m_buttonCount == 2) {
-		p.x += 150 + gap;
-		m_button2 = new Button(this, p, s);
-		m_button2->setTextParams(btn2Text, colNdx, fontNdx);
+		m_button2 = new Button(m_btnPnl, pos, size);
+		m_button2->setCell(1);
+		m_button2->setAnchors(anchors);
+		m_button2->setText(btn2Text);
 		m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
 	}
+	setDirty();
 }
 
 void BasicDialog::onButtonClicked(Button* btn) {
@@ -366,11 +404,6 @@ void BasicDialog::onButtonClicked(Button* btn) {
 	} else {
 		Button2Clicked(this);
 	}
-}
-
-void BasicDialog::render() {
-	renderBackground();
-	Container::render();
 }
 
 // =====================================================
@@ -408,10 +441,10 @@ void MessageDialog::setMessageText(const string &text) {
 InputBox::InputBox(Container *parent)
 		: TextBox(parent) {
 }
-
-InputBox::InputBox(Container *parent, Vec2i pos, Vec2i size)
-		: TextBox(parent, pos, size){
-}
+//
+//InputBox::InputBox(Container *parent, Vec2i pos, Vec2i size)
+//		: TextBox(parent, pos, size){
+//}
 
 bool InputBox::keyDown(Key key) {
 	KeyCode code = key.getCode();

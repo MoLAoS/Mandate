@@ -20,6 +20,7 @@
 #include "math_util.h"
 #include "config.h"
 #include "faction.h"
+#include "lang.h"
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -27,9 +28,7 @@ using namespace Shared::Math;
 
 namespace Glest { namespace Gui {
 
-using Global::CoreData;
-using Global::Metrics;
-using Global::Config;
+using namespace Global;
 
 extern void setFancyBorder(BorderStyle &style); // in display.cpp
 
@@ -37,25 +36,25 @@ extern void setFancyBorder(BorderStyle &style); // in display.cpp
 // 	class ResourceBar
 // =====================================================
 
-ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &types)
+ResourceBar::ResourceBar()
 		: Widget(static_cast<Container*>(WidgetWindow::getInstance()))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
-		, m_faction(faction)
+		, m_faction(0)
 		, m_moveOffset(0)
 		, m_draggingWidget(false) {
-	setFancyBorder(m_borderStyle);
-	m_backgroundStyle.setNone();
+	setWidgetStyle(WidgetType::RESOURCE_BAR);
+}
 
+void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &types) {
+	m_faction = faction;
+
+	TextWidget::setCentre(false);
 	g_widgetWindow.registerUpdate(this);
 
-	const Font *font = g_widgetConfig.getGameFont();
+	const Font *font = getFont();
 	const FontMetrics *fm = font->getMetrics();
-	//setTextFont(font);
-	setTextColour(Vec4f(1.f));
-	setTextShadowColour(Vec4f(0.f, 0.f, 0.f, 1.f));
-	setTextCentre(false);
 
 	foreach (std::set<const ResourceType*>, it, types) {
 		m_resourceTypes.push_back(*it);
@@ -65,25 +64,30 @@ ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &
 	int total_req = 0;
 	foreach_const (vector<const ResourceType*>, it, m_resourceTypes) {
 		addImage((*it)->getImage());
-		m_headerStrings.push_back(formatString((*it)->getName()) + ": ");
+		string name = (*it)->getName();
+		string tName = g_lang.getTechString(name);
+		if (name == tName) {
+			tName = formatString(name);
+		}
+		m_headerStrings.push_back(tName + ": ");
 		addText(m_headerStrings.back());
 		int w;
 		if ((*it)->getClass() == ResourceClass::CONSUMABLE) {
-			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "000/0000 (000)").x);
+			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "8000/80000 (8000)").x);
 		} else if ((*it)->getClass() == ResourceClass::STATIC) {
-			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "0000").x);
+			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000").x);
 		} else {
-			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "0000/00000").x);
+			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000/800000").x);
 		}
 		total_req += w;
 		reqWidths.push_back(w);
 	}
-	int max_width = g_metrics.getScreenW() - 20;
+	int max_width = g_metrics.getScreenW() - 20 - getBordersHoriz();
 	if (total_req < max_width) {
 		// single row
-		setSize(Vec2i(total_req + getBorderLeft(), 20 + getBorderTop()));
-		setPos(Vec2i(g_metrics.getScreenW() / 2 - getWidth() / 2, g_metrics.getScreenH() - getHeight() - 5));
-		int x_pos = 5, y_pos = 2;
+		setSize(Vec2i(total_req + getBordersHoriz(), 20 + getBordersVert()));
+		setPos(Vec2i(g_metrics.getScreenW() / 2 - getWidth() / 2, 5));
+		int x_pos = getBorderLeft() + 5, y_pos = getBorderTop() + 2;
 		for (int i=0; i < m_resourceTypes.size(); ++i) {
 			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
 			setTextPos(Vec2i(x_pos + 20, y_pos), i);
@@ -101,7 +105,7 @@ ResourceBar::ResourceBar(const Faction *faction, std::set<const ResourceType*> &
 			width2 += reqWidths[i];
 		}
 		setSize(Vec2i(std::max(width1, width2) + getBorderLeft(), 40 + getBorderTop()));
-		setPos(Vec2i(g_metrics.getScreenW() / 2 - getWidth() / 2, g_metrics.getScreenH() - getHeight() - 5));
+		setPos(Vec2i(g_metrics.getScreenW() / 2 - getWidth() / 2, 5));
 		int x_pos = 5, y_pos = 22;
 		for (int i=0; i < stopAt; ++i) {
 			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
@@ -125,7 +129,7 @@ void ResourceBar::render() {
 	if (g_config.getUiPhotoMode()) {
 		return;
 	}
-	renderBackground();
+	Widget::render();
 	for (int i=0; i < m_resourceTypes.size(); ++i) {
 		renderImage(i);
 		renderTextShadowed(i);
@@ -151,7 +155,7 @@ bool ResourceBar::mouseDown(MouseButton btn, Vec2i pos) {
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
-	if (pos.y > myPos.y + mySize.y - getBorderTop()) {
+	if (pos.y < myPos.y + getBorderTop()) {
 		m_moveOffset = myPos - pos;
 		m_draggingWidget = true;
 		return true;

@@ -125,7 +125,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_playerSlots[i]->setNameText(string("Player #") + intToStr(i + 1));
 		m_playerSlots[i]->setSelectedColour(i);
 		m_playerSlots[i]->setAnchors(a3);
-		m_playerSlots[i]->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight));
+		m_playerSlots[i]->setSize(Vec2i(topStrip->getWidth() * 90 / 100, defWidgetHeight + 4));
 	}
 
 	// check-box strip

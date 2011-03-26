@@ -62,7 +62,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/units/" + unitFilenames[i];
-		UnitType *ut = g_simInterface.newUnitType();
+		UnitType *ut = g_prototypeFactory.newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -77,7 +77,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
-		UpgradeType *ut = g_simInterface.newUpgradeType();
+		UpgradeType *ut = g_prototypeFactory.newUpgradeType();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
 	}
@@ -99,7 +99,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/glestimals/" + unitFilenames[i];
-		UnitType *ut = g_simInterface.newUnitType();
+		UnitType *ut = g_prototypeFactory.newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -150,7 +150,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/units/" + unitTypes[i]->getName();
 		if (unitTypes[i]->load(str, techTree, this)) {
-			g_simInterface.setChecksum(unitTypes[i]);
+			g_prototypeFactory.setChecksum(unitTypes[i]);
 		} else {
 			loadOk = false;
 		}
@@ -179,7 +179,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();
 		if (upgradeTypes[i]->load(str, techTree, this)) {
-			g_simInterface.setChecksum(upgradeTypes[i]);
+			g_prototypeFactory.setChecksum(upgradeTypes[i]);
 		} else {
 			loadOk = false;
 		}
@@ -361,7 +361,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 		if (unitTypes[i]->load(str, techTree, this, true)) {
 			Checksum checksum;
 			unitTypes[i]->doChecksum(checksum);
-			g_simInterface.setChecksum(unitTypes[i]);
+			g_prototypeFactory.setChecksum(unitTypes[i]);
 		} else {
 			loadOk = false;
 		}

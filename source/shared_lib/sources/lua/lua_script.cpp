@@ -353,7 +353,7 @@ bool LuaScript::checkType(LuaType type, int ndx) const {
 //	class LuaArguments
 // =====================================================
 
-LuaArguments::LuaArguments(lua_State *luaState){
+LuaArguments::LuaArguments(lua_State *luaState) {
 	this->luaState= luaState;
 	args = lua_gettop(luaState);
 	returnCount= 0;
@@ -371,7 +371,7 @@ bool LuaArguments::getBoolean(int ndx) const {
 	return lua_toboolean(luaState, ndx);
 }
 
-int LuaArguments::getInt(int ndx) const{
+int LuaArguments::getInt(int ndx) const {
 	if (!checkType(LuaType::NUMBER, ndx)) {
 		string emsg = "Argument " + descArgPos(ndx) + " expected Number, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
@@ -379,7 +379,7 @@ int LuaArguments::getInt(int ndx) const{
 	return luaL_checkint(luaState, ndx);
 }
 
-string LuaArguments::getString(int ndx) const{
+string LuaArguments::getString(int ndx) const {
 	if (!checkType(LuaType::STRING, ndx)) {
 		string emsg = "Argument " + descArgPos(ndx) + " expected String, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
@@ -387,7 +387,7 @@ string LuaArguments::getString(int ndx) const{
 	return luaL_checkstring(luaState, ndx);
 }
 
-Vec2i LuaArguments::getVec2i(int ndx) const{
+Vec2i LuaArguments::getVec2i(int ndx) const {
 	checkTable(ndx, 2u);
 	Vec2i v;
 	try {

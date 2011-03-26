@@ -36,11 +36,8 @@ public:
 	static const int maxTextLength = Net::TextMessage::maxStringSize; ///@todo implement input restriction...
 
 private:
-	StaticText*	m_label;
 	CheckBox*	m_teamCheckBox;
 	InputBox*	m_inputBox;
-	Panel*		m_panel;
-	Panel*		m_subPanel;
 
 	bool m_teamChat;
 
@@ -50,7 +47,7 @@ private:
 	void onEscaped(InputBox *) { Escaped(this); }
 
 public:
-	ChatDialog(Container* parent, Vec2i pos, Vec2i size);
+	ChatDialog(Container* parent);
 //	static ChatDialog* showDialog(Vec2i pos, Vec2i size, bool teamOnly);
 
 	string getInput() const		{ return m_inputBox->getText(); }

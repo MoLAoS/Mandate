@@ -242,7 +242,7 @@ public:
 };
 
 // ===============================
-// 	class MasterTypeFactory
+// 	class PrototypeFactory
 // ===============================
 
 typedef DynamicTypeFactory<SkillClass, SkillType>            SkillTypeFactory;
@@ -251,7 +251,7 @@ typedef DynamicTypeFactory<ProducibleClass, ProducibleType>  ProducibleTypeFacto
 typedef DynamicTypeFactory<EffectClass, EffectType>	         EffectTypeFactory;
 typedef SingleTypeFactory<CloakType>                         CloakTypeFactory;
 
-class MasterTypeFactory {
+class PrototypeFactory {
 protected:
 	ProducibleTypeFactory  m_prodTypeFactory;
 	SkillTypeFactory       m_skillTypeFactory;
@@ -260,7 +260,7 @@ protected:
 	CloakTypeFactory       m_cloakTypeFactory;
 
 public:
-	MasterTypeFactory();
+	PrototypeFactory();
 
 	// get checksums
 	int32 getChecksum(const ProducibleType *pt) { return m_prodTypeFactory.getChecksum(pt); }

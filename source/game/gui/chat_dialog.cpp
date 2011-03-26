@@ -29,44 +29,35 @@ namespace Glest { namespace Gui {
 //  class ChatDialog
 // =====================================================
 
-ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
-		: BasicDialog(parent, pos, size), m_teamChat(false) {
-	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
-//	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+ChatDialog::ChatDialog(Container* parent)
+		: BasicDialog(parent), m_teamChat(false) {
+	Anchors anchors(Anchor(AnchorType::RIGID, 10));
+	// cell 1
+	CellStrip *content = new CellStrip(this, Orientation::VERTICAL, 2);
+	content->setCell(1);
+	content->setAnchors(anchors);
 
-	m_panel = new Panel(this);
-	m_panel->setLayoutParams(true, Orientation::VERTICAL);
-	m_panel->setPaddingParams(10, 10);
+	anchors = Anchors(Anchor(AnchorType::RIGID, 0));
 
-	m_subPanel = new Panel(m_panel);
-	m_subPanel->setLayoutParams(true, Orientation::HORIZONTAL);
-	m_subPanel->setPaddingParams(0, 10);
-	m_label = new StaticText(m_subPanel);
-	m_label->setTextParams(g_lang.get("TeamOnly") + ": ", white, font);
-	m_label->setSize(m_label->getPrefSize());
-	m_teamCheckBox = new CheckBox(m_subPanel);
-	m_teamCheckBox->setSize(m_teamCheckBox->getPrefSize());
+	OptionWidget *ow = new OptionWidget(content, g_lang.get("TeamOnly"));
+	ow->setCell(0);
+	ow->setAnchors(anchors);
+
+	m_teamCheckBox = new CheckBox(ow);
+	m_teamCheckBox->setCell(1);
+	m_teamCheckBox->setAnchors(anchors);
 	m_teamCheckBox->setChecked(m_teamChat);
 	m_teamCheckBox->Clicked.connect(this, &ChatDialog::onCheckChanged);
 
-	m_subPanel->setSize(m_label->getWidth() + m_teamCheckBox->getWidth() + 15, 
-		std::max(m_label->getHeight(), m_teamCheckBox->getHeight())); 
-	m_subPanel->layoutChildren();
-
-	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", white, font);
+	m_inputBox = new InputBox(content);
+	m_inputBox->setCell(1);
+	m_inputBox->setAnchors(anchors);
+	m_inputBox->setText("");
 	m_inputBox->InputEntered.connect(this, &ChatDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &ChatDialog::onEscaped);
 
-	init(pos, size, g_lang.get("ChatMsg"), g_lang.get("Send"), g_lang.get("Cancel"));
-	setContent(m_panel);
-
-	Vec2i sz = m_label->getPrefSize();
-	sz.x = m_panel->getSize().x - 20;
-	m_inputBox->setSize(sz);
-	m_subPanel->layoutChildren();
-	m_panel->layoutChildren();
+	setTitleText(g_lang.get("ChatMsg"));
+	setButtonText(g_lang.get("Send"), g_lang.get("Cancel"));
 }
 
 bool ChatDialog::mouseDown(MouseButton btn, Vec2i pos) {

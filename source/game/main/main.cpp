@@ -199,6 +199,7 @@ int glestMain(int argc, char** argv) {
 			if (!g_config.getDisplayWindowed()) {
 				restoreVideoMode();
 			}
+			g_logger.logError(e.what());
 			exceptionMessage(e);
 		}
 #	endif

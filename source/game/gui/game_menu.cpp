@@ -20,8 +20,10 @@ namespace Glest { namespace Gui {
 using Global::CoreData;
 
 GameMenu::GameMenu(Vec2i pos, Vec2i size)
-		: Frame(&g_widgetWindow) {
-	init(pos, size, g_lang.get("GameMenu"));
+		: Frame(&g_widgetWindow, ButtonFlags::CLOSE | ButtonFlags::ROLL_UPDOWN) {
+	setPos(pos);
+	setSize(size);
+	setTitleText(g_lang.get("GameMenu"));
 
 	static const int numItems = 6;
 

@@ -10,6 +10,7 @@
 #define _GLEST_GAME_TEST_PANE_H_
 
 #include "program.h"
+#include "ticker_tape.h"
 
 namespace Glest { namespace Main {
 
@@ -19,7 +20,12 @@ namespace Glest { namespace Main {
 ///	ProgramState to test widgets on
 // =====================================================
 
-class TestPane: public ProgramState {
+class TestPane: public ProgramState, public sigslot::has_slots {
+private:
+	bool m_done, m_removingDialog;
+	MessageDialog *m_messageDialog;
+	WidgetAction   *m_action;
+
 public:
 	TestPane(Program &program);
 	~TestPane();
@@ -28,6 +34,11 @@ public:
 	virtual void renderFg();
 	virtual void keyDown(const Key &key);
 	virtual void mouseDownLeft(int x, int y);
+
+	void onContinue(Button*);
+	void onContinue2(BasicDialog*);
+	void onDialog(Button*);
+	void onDismissDialog(BasicDialog*);
 };
 
 }}//end namespace

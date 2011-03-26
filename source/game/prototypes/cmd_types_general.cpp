@@ -537,7 +537,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		g_logger.logXmlError(dir, e.what ());
 		return false;
 	}
-	GeneratedType *gt = g_simInterface.newGeneratedType();
+	GeneratedType *gt = g_prototypeFactory.newGeneratedType();
 	if (!gt->load(producibleNode, dir, tt, ft)) {
 		loadOk = false;
 	}

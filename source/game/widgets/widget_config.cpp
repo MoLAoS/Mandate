@@ -797,6 +797,24 @@ void WidgetConfig::load() {
 	loadStyles("ColourButton", WidgetType::COLOUR_BUTTON);
 	loadStyles("TickerTape", WidgetType::TICKER_TAPE);
 	loadStyles("InfoWidget", WidgetType::INFO_WIDGET);
+	loadStyles("CodeView", WidgetType::CODE_VIEW);
+	loadStyles("CodeEdit", WidgetType::CODE_EDIT);
+	loadStyles("ResourceBar", WidgetType::RESOURCE_BAR);
+	loadStyles("ResourceDisplay", WidgetType::RESOURCE_DISPLAY);
+
+	loadStyles("TestWidget", WidgetType::TEST_WIDGET);
+	if (luaScript.getGlobal("TestWidget")) {
+		loadStyles("Header", WidgetType::TEST_WIDGET_HEADER, false);
+	}
+	if (luaScript.getGlobal("TestWidget")) {
+		loadStyles("MainBit", WidgetType::TEST_WIDGET_MAINBIT, false);
+	}
+	if (luaScript.getGlobal("TestWidget")) {
+		loadStyles("CodeBit", WidgetType::TEST_WIDGET_CODEBIT, false);
+	}
+	loadStyles("Logger", WidgetType::LOGGER_WIDGET);
+	loadStyles("Logger.Header", WidgetType::LOG_HEADER);
+	loadStyles("Logger.LogLine", WidgetType::LOG_LINE);
 
 	WIDGET_LOG( "====================================================" );
 	WIDGET_LOG( "==       Finished Loading widget styles           ==" );
@@ -806,7 +824,7 @@ void WidgetConfig::load() {
 }
 
 int WidgetConfig::getDefaultItemHeight() const {
-	return int(m_fonts[m_defaultFonts[FontUsage::MENU]]->getMetrics()->getHeight() * 1.2f);
+	return int(m_fonts[m_defaultFonts[FontUsage::MENU]]->getMetrics()->getHeight() * 1.4f);
 }
 
 int WidgetConfig::getColourIndex(const Colour &c) {

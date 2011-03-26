@@ -175,9 +175,12 @@ void UserInterface::init() {
 			}
 		}
 		// create ResourceBar, connect thisFactions Resources to it...
-		m_resourceBar = new ResourceBar(fac, displayResources);
+		m_resourceBar = new ResourceBar();
+		m_resourceBar->init(fac, displayResources);
 
-		m_luaConsole = new LuaConsole(this, &g_program, Vec2i(200,200), Vec2i(500, 300));
+		m_luaConsole = new LuaConsole(this, &g_program);
+		m_luaConsole->setPos(Vec2i(200,200));
+		m_luaConsole->setSize(Vec2i(500, 300));
 		m_luaConsole->setVisible(false);
 		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
 	}

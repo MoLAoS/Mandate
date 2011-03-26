@@ -57,63 +57,121 @@ public:
 	virtual void render() override;
 };
 
-class TitleBar : public Container, public TextWidget {
+class ButtonFlags {
 private:
-	string		m_title;
-	Button* m_closeButton;
+	int flags;
 
 public:
-	TitleBar(Container* parent);
-	TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn);
+	static const int numButtons = 4;
+	enum E { CLOSE = 1, ROLL_UPDOWN = 2, EXPAND = 4, SHRINK = 8 };
+	
+	ButtonFlags() : flags(0) {}
+	ButtonFlags(int f) : flags(f) {}
 
-	virtual void render() override;
+	bool isSet(E e) { return (flags & e); }
 
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-
-	virtual string descType() const override { return "TitleBar"; }
+	int getCount() const {
+		int n = 0;
+		for (int i=0; i < numButtons; ++i) {
+			if (flags & (1 << i)) {
+				++n;
+			}
+		}
+		return n;
+	}
 };
 
-class Frame : public Container, public MouseWidget {
+class TitleBar : public CellStrip, public sigslot::has_slots {
+private:
+#	define BUTTON_CLASS(X, WT)                      \
+		class X : public Button {                   \
+		public:                                     \
+			X(Container *parent) : Button(parent) { \
+				setWidgetStyle(WT);                 \
+			};                                      \
+			virtual void setStyle() override {      \
+				setWidgetStyle(WT);                 \
+			};                                      \
+		};
+	BUTTON_CLASS(CloseButton, WidgetType::TITLE_BAR_CLOSE);
+	BUTTON_CLASS(RollUpButton, WidgetType::TITLE_BAR_ROLL_UP);
+	BUTTON_CLASS(RollDownButton, WidgetType::TITLE_BAR_ROLL_DOWN);
+	BUTTON_CLASS(ExpandButton, WidgetType::TITLE_BAR_EXPAND);
+	BUTTON_CLASS(ShrinkButton, WidgetType::TITLE_BAR_SHRINK);
+
+private:
+	ButtonFlags      m_flags;
+	StaticText      *m_titleText;
+	CloseButton     *m_closeButton;
+	RollUpButton    *m_rollUpButton;
+	RollDownButton  *m_rollDownButton;
+	ExpandButton    *m_expandButton;
+	ShrinkButton    *m_shrinkButton;
+
+	void init(ButtonFlags flags);
+	void setSizeHints();
+
+	// slots
+	void onButtonClicked(Button *btn);
+
+public:
+	TitleBar(Container* parent, ButtonFlags flags);
+	//TitleBar(Container* parent, ButtonFlags flags, Vec2i pos, Vec2i size, string title);
+
+	const string& getText() const { return m_titleText->getText(); }
+	void setText(const string &txt) { m_titleText->setText(txt); }
+
+	// Widget overrides
+	virtual void setSize(const Vec2i &sz) override { CellStrip::setSize(sz); setSizeHints(); }
+	virtual string descType() const override { return "TitleBar"; }
+
+	// signals
+	sigslot::signal<TitleBar*> RollUp;
+	sigslot::signal<TitleBar*> RollDown;
+	sigslot::signal<TitleBar*> Expand;
+	sigslot::signal<TitleBar*> Shrink;
+	sigslot::signal<TitleBar*> Close;
+};
+
+class Frame : public CellStrip, public MouseWidget {
 protected:
 	TitleBar*   m_titleBar;
 	bool        m_pressed;
 	Vec2i       m_lastPos;
 
 protected:
-	Frame(WidgetWindow*);
-	Frame(Container*);
-	Frame(Container*, Vec2i pos, Vec2i sz);
+	Frame(WidgetWindow*, ButtonFlags flags);
+	Frame(Container*, ButtonFlags flags);
+	Frame(Container*, ButtonFlags flags, Vec2i pos, Vec2i sz);
+
+	void init(ButtonFlags flags);
 
 public:
-	void init(Vec2i pos, Vec2i size, const string &title);
 	void setTitleText(const string &text);
 	const string& getTitleText() const { return m_titleBar->getText(); }
 
 	bool mouseDown(MouseButton btn, Vec2i pos) override;
 	bool mouseMove(Vec2i pos) override;
 	bool mouseUp(MouseButton btn, Vec2i pos) override;
-
-	virtual void render() override;
-	virtual void setSize(const Vec2i &size) override;
 };
 
 class BasicDialog : public Frame, public sigslot::has_slots {
 private:
-	//TitleBar*	m_titleBar;
-	Widget	*m_content;
-	Button	*m_button1,
-			*m_button2;
-
-	int		 m_buttonCount;
+	Widget	  *m_content;
+	Button	  *m_button1,
+			  *m_button2;
+	int		   m_buttonCount;
+	CellStrip *m_btnPnl;
 
 protected:
 	BasicDialog(WidgetWindow*);
-	BasicDialog(Container*, Vec2i pos, Vec2i sz);
+	BasicDialog(Container*);//, Vec2i pos, Vec2i sz);
 	void onButtonClicked(Button*);
 
+	void init();
+
 protected:
-	void setContent(Widget* content);
+	void setContent(Widget* content); //REMOVE: use cell 1
 	void init(Vec2i pos, Vec2i size, const string &title, const string &btn1, const string &btn2);
 
 public:
@@ -123,9 +181,6 @@ public:
 									Button2Clicked,
 									Escaped;
 
-	void render();
-	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
-	virtual Vec2i getMinSize() const override { return Vec2i(-1); }
 	virtual string descType() const override { return "BasicDialog"; }
 };
 
@@ -155,7 +210,7 @@ public:
 class InputBox : public TextBox {
 public:
 	InputBox(Container *parent);
-	InputBox(Container *parent, Vec2i pos, Vec2i size);
+//	InputBox(Container *parent, Vec2i pos, Vec2i size);
 
 	virtual bool keyDown(Key key) override;
 	sigslot::signal<InputBox*> Escaped;

@@ -33,7 +33,7 @@ private:
 // 	Properties *properties;
 	string fileName;
 
-	float cameraFov;
+	//float cameraFov;
 	bool cameraInvertXAxis;
 	bool cameraInvertYAxis;
 	float cameraMaxDistance;
@@ -120,7 +120,7 @@ public:
 
 	void save(const char *path = "glestadv.ini");
 
-	float getCameraFov() const					{return cameraFov;}
+	//float getCameraFov() const					{return cameraFov;}
 	bool getCameraInvertXAxis() const			{return cameraInvertXAxis;}
 	bool getCameraInvertYAxis() const			{return cameraInvertYAxis;}
 	float getCameraMaxDistance() const			{return cameraMaxDistance;}
@@ -181,7 +181,7 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
-	void setCameraFov(float val)				{cameraFov = val;}
+	//void setCameraFov(float val)				{cameraFov = val;}
 	void setCameraInvertXAxis(bool val)			{cameraInvertXAxis = val;}
 	void setCameraInvertYAxis(bool val)			{cameraInvertYAxis = val;}
 	void setCameraMaxDistance(float val)		{cameraMaxDistance = val;}

@@ -937,10 +937,8 @@ TextWidget::TextWidget(Widget* me)
 		: me(me)
 		, m_centreText(true)
 		, m_batchRender(false)
-		, m_defaultFont(0)
 		, m_textRenderer(0) {
 	me->m_textWidget = this;
-	m_defaultFont = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 }
 
 void TextWidget::setTextColour(const Vec4f &col, int ndx) {
@@ -987,7 +985,7 @@ void TextWidget::widgetReSized() {
 
 void TextWidget::startBatch(const Font *font) {
 	if (!font) {
-		font = me->getFont(m_defaultFont);
+		font = me->getFont(me->textStyle().m_fontIndex);
 	}
 	m_textRenderer = g_widgetWindow.getTextRenderer();
 	m_textRenderer->begin(font);
@@ -1003,7 +1001,7 @@ void TextWidget::renderText(const string &txt, int x, int y, const Colour &colou
 	assertGl();
 	if (!m_batchRender) {
 		if (!font) {
-			font = me->getFont(m_defaultFont);
+			font = me->getFont(me->textStyle().m_fontIndex);
 		}
 		m_textRenderer = g_widgetWindow.getTextRenderer();
 		m_textRenderer->begin(font);
@@ -1088,7 +1086,6 @@ void TextWidget::setTextParams(const string &txt, int colour, int font, bool cnt
 	} else {
 		m_texts[0] = TextRenderInfo(txt, font, colour, Vec2i(0));
 	}
-	m_defaultFont = font;
 	m_centreText = cntr;
 	if (m_centreText) {
 		centreText();
@@ -1096,13 +1093,15 @@ void TextWidget::setTextParams(const string &txt, int colour, int font, bool cnt
 }
 
  int TextWidget::addText(const string &txt) {
-	m_texts.push_back(TextRenderInfo(txt, m_defaultFont, g_widgetConfig.getColourIndex(Vec4f(1.f)), Vec2i(0)));
+	TextStyle &style = me->textStyle();
+	m_texts.push_back(TextRenderInfo(txt, style.m_fontIndex, style.m_colourIndex, Vec2i(0)));
 	return m_texts.size() - 1;
 }
 
 void TextWidget::setText(const string &txt, int ndx) {
 	if (m_texts.empty() && !ndx) {
-		m_texts.push_back(TextRenderInfo(txt, m_defaultFont, g_widgetConfig.getColourIndex(Vec4f(1.f)), Vec2i(0)));
+		TextStyle &style = me->textStyle();
+		m_texts.push_back(TextRenderInfo(txt, style.m_fontIndex, style.m_colourIndex, Vec2i(0)));
 	} else {
 		ASSERT_RANGE(ndx, m_texts.size());
 		m_texts[ndx].m_text = txt;

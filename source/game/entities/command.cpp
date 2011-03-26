@@ -107,7 +107,7 @@ Command::Command(CreateParamsLoad params) {// const XmlNode *node, const UnitTyp
 	if (prodTypeId == -1) {
 		prodType = 0;
 	} else {
-		prodType = g_simInterface.getProdType(prodTypeId);
+		prodType = g_prototypeFactory.getProdType(prodTypeId);
 	}
 	if (node->getOptionalChild("facing") ) {
 		facing = enum_cast<CardinalDir>(node->getChildIntValue("facing"));

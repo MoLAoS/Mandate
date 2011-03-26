@@ -40,7 +40,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 	getScreenMode(width, height);
 #endif
 
-	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
+//	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);
 	cameraInvertYAxis = p->getBool("CameraInvertYAxis", true);
 	cameraMaxDistance = p->getFloat("CameraMaxDistance", 64.f, 32.f, 2048.f);
@@ -111,7 +111,7 @@ Config::Config(const char* fileName) : fileName(fileName) {
 void Config::save(const char *path) {
 	Properties *p = new Properties();
 
-	p->setFloat("CameraFov", cameraFov);
+//	p->setFloat("CameraFov", cameraFov);
 	p->setBool("CameraInvertXAxis", cameraInvertXAxis);
 	p->setBool("CameraInvertYAxis", cameraInvertYAxis);
 	p->setFloat("CameraMaxDistance", cameraMaxDistance);

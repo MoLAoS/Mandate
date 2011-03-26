@@ -95,11 +95,42 @@ void LogFile::addNetworkMsg(const string &msg) {
 	add(ss.str());
 }
 
+////////////////////////////////////////////////////////
+//
+//LogWidget::LogWidget(Container *parent) : CellStrip(parent, Orientation::VERTICAL, logLineCount + 1) {
+//	setSizeHint(0, SizeHint(30));
+//	
+//	Anchors anchors(Anchor(AnchorType::SPRINGY, 30), Anchor(AnchorType::RIGID, 0),
+//		Anchor(AnchorType::SPRINGY, 30), Anchor(AnchorType::RIGID, 0));
+//	m_header = new StaticText(this);
+//	m_header->setCell(0);
+//	m_header->setAnchors(anchors);
+//	m_header->setText("");
+//
+//	for (int i=0; i < logLineCount; ++i) {
+//		m_logLines[i] = new StaticText(this);
+//		m_logLines[i]->setCell(1 + i);
+//		m_logLines[i]->setAnchors(anchors);
+//		int lineHeight = int(m_logLines[i]->getFont()->getMetrics()->getHeight()) + 4;
+//		setSizeHint(1 + i, SizeHint(-1, lineHeight));
+//		float alpha = 1.f - float(i) / float(logLineCount + 1);
+//		m_logLines[i]->setTextFade(alpha);
+//	}
+//}
+//
+//void LogWidget::setState(const string &state) {
+//	m_header->setText(state);
+//}
+//
+//void LogWidget::clear() {
+//	for (int i=0; i < logLineCount; ++i) {
+//		m_logLines[i]->setText("");
+//	}
+//}
+
 // =====================================================
 //	class ProgramLog
 // =====================================================
-
-const int ProgramLog::logLineCount= 15;
 
 ProgramLog::ProgramLog()
 		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
@@ -189,6 +220,13 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 }
 
 void ProgramLog::setLoading(bool v) { 
+
+	if (v) {
+		// Create log widget
+	} else {
+		// Detroy log widget
+	}
+
 	loadingGame = v;
 }
 
@@ -203,28 +241,29 @@ void ProgramLog::renderLoadingScreen(){
 		g_renderer.renderBackground(m_backgroundTexture);
 	}
 	
-	Vec2i headerPos(g_metrics.getScreenW() / 4, 75 * g_metrics.getScreenH() / 100);
+	Vec2i headerPos(g_metrics.getScreenW() / 4, 25 * g_metrics.getScreenH() / 100);
 	//g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);
+	int yStart = headerPos.y + int(bigFont->getMetrics()->getHeight()) + 6;
 
 	if (loadingGame) {
-		int offset = 0;
+		//int offset = 0;
 		//int step = int(normFont->getMetrics()->getHeight()) + 4;
-		//for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
-		//	float alpha = offset == 0 ? 1.0f : 0.8f - 0.8f * static_cast<float>(offset) / logLines.size();
+		//for (Strings::iterator it = logLines.begin(); it != logLines.end(); ++it) {
+		//	float alpha = 1.f - float(offset) / float(logLineCount + 1);
 		//	g_renderer.renderText(*it, normFont, alpha, g_metrics.getScreenW() / 4,
-		//		70 * g_metrics.getScreenH() / 100 - offset * step, false);
+		//		30 * g_metrics.getScreenH() / 100 + offset * step, false);
 		//	++offset;
 		//}
 		if (m_progressBar) {
 			Vec2i progBarPos = headerPos;
-			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).x) + 20;
+			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).w) + 20;
 			int w = g_metrics.getScreenW() / 4 * 3 - progBarPos.x;
 			int h = int(normFont->getMetrics()->getHeight() + 2.f);
 			g_renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
 		}
 	} else {
 		//g_renderer.renderText(current, normFont, 1.0f, g_metrics.getScreenW() / 4,
-		//	62 * g_metrics.getScreenH() / 100, false);
+		//	38 * g_metrics.getScreenH() / 100, false);
 	}
 	g_renderer.swapBuffers();
 }
