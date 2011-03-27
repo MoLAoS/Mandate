@@ -141,17 +141,25 @@ UserInterface::~UserInterface() {
 }
 
 void UserInterface::init() {
+	// refs
 	this->commander= g_simInterface.getCommander();
 	this->gameCamera= game.getGameCamera();
-	m_console = new Console(&g_widgetWindow);
-	m_dialogConsole = new Console(&g_widgetWindow, 10, 200, true);
 	this->world= &g_world;
+
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
+
+	// Create Consoles...
+	m_console = new Console(&g_widgetWindow);
+	m_console->setPos(Vec2i(20, g_metrics.getScreenH() - (m_console->getReqHeight() + 20)));
+
+	m_dialogConsole = new Console(&g_widgetWindow, 10, true);
+	m_dialogConsole->setPos(Vec2i(20, 196));
 
 	int x = g_metrics.getScreenW() - 20 - 195;
 	int y = (g_metrics.getScreenH() - 500) / 2;
 
+	// Display Panel
 	m_display = new Display(this, Vec2i(x,y));
 
 	// get 'this' FactionType, discover what resources need to be displayed
@@ -201,10 +209,11 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	} else { // (ratio > 1) {
 		size = Vec2i(128, (128 / ratio).intp());
 	}
-	size += Vec2i(8, 16);
+	BorderStyle style = g_widgetConfig.getBorderStyle(WidgetType::MINIMAP);
+	size += style.getBorderDims();
 
 	int mx = 10;
-	int my = g_metrics.getScreenH() - size.y - 30;
+	int my = 50;
 	m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my), size);
 	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
@@ -923,6 +932,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 		}
 	}
 }
+
 ///@todo move to Display
 void UserInterface::computePortraitInfo(int posDisplay) {
 	if (selection.getCount() < posDisplay) {

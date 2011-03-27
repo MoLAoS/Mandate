@@ -60,14 +60,15 @@ private:
 	int maxLines;
 	float timeout;
 
-	int yPos;
 	bool fromTop;
 
-	const Font *m_font;
-
 public:
-	Console(Container* parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
+	Console(Container* parent, int maxLines = 5, bool fromTop = false);
 	~Console();
+
+	int getReqHeight() {
+		return (int(getFont()->getMetrics()->getHeight() + 1.f) * maxLines);
+	}
 
 	virtual void update() override;
 	virtual void render() override;

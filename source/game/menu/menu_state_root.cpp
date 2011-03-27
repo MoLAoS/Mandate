@@ -43,15 +43,13 @@ namespace Glest { namespace Menu {
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
-	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
 	const Font *fontPtr = g_widgetConfig.getMenuFont();
 
 	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
 	strip->setPos(Vec2i(0,0));
 	strip->setSize(Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight()));
 	int hints[] = {
-		30, 50, 10, 10 // main logo 30 %, button panel 50 %, gpl logo 10 %, engine label 10%
+		35, 45, 10, 10 // main logo 30 %, button panel 50 %, gpl logo 10 %, engine label 10%
 	};
 	strip->setPercentageHints(hints);
 
@@ -61,7 +59,6 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	PicturePanel *pp = new PicturePanel(strip, Vec2i(0), Vec2i(logoWidth, logoHeight));
 	pp->setCell(0);
 	pp->setImage(g_coreData.getLogoTexture());
-	pp->setAutoLayout(false);
 
 	Anchors anchors;
 	anchors.setCentre(true); // centre in cell
@@ -69,9 +66,9 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 	if (!mainMenu->isTotalConversion()) {
 		// Advanced Engine labels
-		font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
 		Widgets::StaticText *label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("AdvEng1"), white, font);
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText(g_lang.get("AdvEng1"));
 		Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 		int tx = int(255.f / 512.f * logoWidth);
 		int ty = int(60.f / 256.f * logoHeight);
@@ -81,30 +78,28 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("AdvEng2"), white, font);
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText(g_lang.get("AdvEng2"));
 		tx = int(285.f / 512.f * logoWidth);
 		label->setPos(Vec2i(tx, logoHeight - ty - sz.h));
 		label->setSize(label->getTextDimensions() + Vec2i(10,5));
 		label->centreText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
+		int advEng2Len = label->getTextDimensions().w;
+		int y_step = int(g_widgetConfig.getTitleFont()->getMetrics()->getHeight() + 1.f);
+
 		// Version label
-		int bigHeight = int(fontPtr->getMetrics()->getHeight());
-		fontPtr = g_widgetConfig.getTitleFont();
-		int szDiff = bigHeight - int(fontPtr->getMetrics()->getHeight());
-		Vec2i pos = Vec2i(tx + label->getSize().x, logoHeight - ty - sz.h + szDiff - 2);
-
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(gaeVersionString, white, font);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText(gaeVersionString);
 		sz = label->getTextDimensions() + Vec2i(10,5);
+		Vec2i pos = Vec2i(tx + advEng2Len + 5, logoHeight - ty - sz.h);
+		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setPos(pos);
 		label->setSize(sz);
 		label->centreText();
 	}
-
-	font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 
 	// Buttons Panel
 	anchors.set(Edge::COUNT, 0, false); // anchor all (fill cell)
@@ -118,12 +113,11 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		int height = g_widgetConfig.getDefaultItemHeight();
 		m_buttons[i] = new Widgets::Button(pnl);
 		m_buttons[i]->setCell(i);
-		m_buttons[i]->setSize(Vec2i(8 * height, height));
-		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), white, font, true);
+		m_buttons[i]->setSize(Vec2i(7 * height, height));
+		m_buttons[i]->setText(g_lang.get(RootMenuItemNames[i]));
 		m_buttons[i]->setAnchors(anchors);
 		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
 	}
-	m_buttons[RootMenuItem::TEST]->setEnabled(false);
 
 	int gplHeight = int(0.1f * g_metrics.getScreenH());
 	CellStrip *logoPnl = 0;
@@ -143,24 +137,29 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	if (!mainMenu->gaeLogoOnRoot()) {
 		if (mainMenu->gplLogoOnRoot()) {
 			// gpl logo
-			StaticImage *si
-				= new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			StaticImage *si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGplTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
 			si->setCell(0);
 			si->setAnchors(anchors);
 		}
 	} else {
 		if (mainMenu->gplLogoOnRoot()) {
-			StaticImage *si
-				= new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGaeSplashTexture());
+			StaticImage *si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGaeSplashTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
 			si->setCell(0);
 			si->setAnchors(anchors);
 
-			si = new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGplTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
 			si->setCell(1);
 			si->setAnchors(anchors);
 		} else {
-			StaticImage *si
-				= new StaticImage(logoPnl, Vec2i(0), Vec2i(gplWidth, gplHeight), g_coreData.getGaeSplashTexture());
+			StaticImage *si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGaeSplashTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
 			si->setCell(0);
 			si->setAnchors(anchors);
 		}
@@ -179,9 +178,8 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		anchors = Anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0),
 			Anchor(AnchorType::RIGID, 15), Anchor(AnchorType::RIGID, 15));
 		label->setAnchors(anchors);
-
-		label->setTextParams("Glest : " + g_lang.get("AdvEng1") + " " + g_lang.get("AdvEng2") + gaeVersionString,
-			white, g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY));
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText("Glest : " + g_lang.get("AdvEng1") + " " + g_lang.get("AdvEng2") + gaeVersionString);
 		Vec2i size = label->getTextDimensions() + Vec2i(5,5);
 		label->setSize(size);
 	}

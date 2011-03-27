@@ -284,6 +284,17 @@ void Widget::setPos(const Vec2i &p) {
 	//WIDGET_LOG( descLong() );
 }
 
+bool Widget::isInsideBorders(const Vec2i &pos) const {
+	Vec2i myPos = getScreenPos();
+	Vec2i mySize = getSize();
+	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderTop()
+	&& pos.x < myPos.x + mySize.x - getBorderRight()
+	&& pos.y < myPos.y + mySize.y - getBorderBottom()) {
+		return true;
+	}
+	return false;
+}
+
 inline Colour calcColour(const Colour &c, float fade) {
 	Colour res(c);
 	res.a = clamp(unsigned(float(c.a) * fade), 0u, 255u);
@@ -1080,17 +1091,17 @@ Vec2i TextWidget::getTextDimensions(int ndx) const {
 	return Vec2i(fm->getTextDiminsions(m_texts[ndx].m_text) + Vec2f(1.f));
 }
 
-void TextWidget::setTextParams(const string &txt, int colour, int font, bool cntr) {
-	if (m_texts.empty()) {
-		m_texts.push_back(TextRenderInfo(txt, font, colour, Vec2i(0)));
-	} else {
-		m_texts[0] = TextRenderInfo(txt, font, colour, Vec2i(0));
-	}
-	m_centreText = cntr;
-	if (m_centreText) {
-		centreText();
-	}
-}
+//void TextWidget::setTextParams(const string &txt, int colour, int font, bool cntr) {
+//	if (m_texts.empty()) {
+//		m_texts.push_back(TextRenderInfo(txt, font, colour, Vec2i(0)));
+//	} else {
+//		m_texts[0] = TextRenderInfo(txt, font, colour, Vec2i(0));
+//	}
+//	m_centreText = cntr;
+//	if (m_centreText) {
+//		centreText();
+//	}
+//}
 
  int TextWidget::addText(const string &txt) {
 	TextStyle &style = me->textStyle();

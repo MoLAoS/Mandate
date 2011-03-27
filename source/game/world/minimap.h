@@ -87,6 +87,9 @@ private:
 	static const float exploredAlpha;
 	static const Vec2i textureSize;
 
+private:
+	Vec2i toCellPos(Vec2i pos) const;
+
 public:
 	void init(int x, int y, const World *world, bool resuming);
 	Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size);

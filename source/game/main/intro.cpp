@@ -52,45 +52,38 @@ Intro::Intro(Program &program)
 		pos = Vec2i(screenSize.x / 2 - logoSize.x / 2, screenSize.y / 3 * 2 - logoSize.y / 2);
 	}	
 	logoPanel = new Widgets::PicturePanel(&program, pos, logoSize);
-	logoPanel->setPaddingParams(0,0);
 	logoPanel->setImage(coreData.getLogoTexture());
-	logoPanel->setAutoLayout(false);
 
 	if (!isTotalConversion) {
-		int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-		int white = g_widgetConfig.getColourIndex(Colour(255u));
 		const Font *fontPtr = g_widgetConfig.getTitleFont();
 
 		lblAdvanced = new Widgets::StaticText(logoPanel);
-		lblAdvanced->setTextParams(lang.get("AdvEng1"), white, font);
+		lblAdvanced->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		lblAdvanced->setText(lang.get("AdvEng1"));
 		Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
 		lblAdvanced->setPos(Vec2i(255 - sz.w, 256 - 60 - sz.h));
 		lblAdvanced->setSize(sz);
 		lblAdvanced->centreText();
 
 		lblEngine = new Widgets::StaticText(logoPanel);
-		lblEngine->setTextParams(lang.get("AdvEng2"), white, font);
+		lblEngine->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		lblEngine->setText(lang.get("AdvEng2"));
 		lblEngine->setPos(Vec2i(285, 256 - 60 - sz.h));
 		lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
 		lblEngine->centreText();
 
 		// Version label
-		int bigHeight = int(fontPtr->getMetrics()->getHeight());
-		font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
-		fontPtr = g_widgetConfig.getFont(font);
-		int szDiff = bigHeight - int(fontPtr->getMetrics()->getHeight());
-		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 60 - sz.h + szDiff - 2);
+		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 60 - sz.h - 2);
 		lblVersion = new Widgets::StaticText(logoPanel);
-		lblVersion->setTextParams(gaeVersionString, white, font);
+		lblVersion->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		lblVersion->setText(gaeVersionString);
 		lblVersion->setPos(pos);
 		lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
 		lblVersion->centreText();
 	} else {
 		lblEngine = new Widgets::StaticText(&program);
 		Vec2i pos, size;
-		int font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
-		int white = g_widgetConfig.getColourIndex(Colour(255u));
-		lblEngine->setTextParams("Glest Advanced Engine " + gaeVersionString, white, font);
+		lblEngine->setText("Glest Advanced Engine " + gaeVersionString);
 		size = lblEngine->getTextDimensions() + Vec2i(5,5);
 		pos = Vec2i(g_metrics.getScreenW() - size.w - 15, 10 + size.h);
 		lblEngine->setPos(pos);
@@ -129,7 +122,7 @@ void Intro::update(){
 		lblWebsite = new Widgets::StaticText(&program);
 		int font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
 		int white = g_widgetConfig.getColourIndex(Colour(255u));
-		lblWebsite->setTextParams("www.glest.org", white, font);
+		lblWebsite->setText("www.glest.org");
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
 		lblWebsite->centreText();

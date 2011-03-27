@@ -381,7 +381,7 @@ void DropList::init() {
 	m_selectedItem = new ListBoxItem(this);
 	m_selectedItem->setCell(0);
 	m_selectedItem->setAnchors(anchors);
-	m_selectedItem->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
+	m_selectedItem->setText("");
 	m_selectedItem->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	m_selectedItem->Clicked.connect(this, &DropList::onBoxClicked);
 

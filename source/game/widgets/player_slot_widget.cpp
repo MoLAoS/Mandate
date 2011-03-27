@@ -25,6 +25,10 @@ using Global::CoreData;
 using Global::Lang;
 using Sim::ControlTypeNames;
 
+// =====================================================
+// class ColourButton
+// =====================================================
+
 ColourButton::ColourButton(Container *parent)
 		: Button(parent, Vec2i(0), Vec2i(32)) {
 	setWidgetStyle(WidgetType::COLOUR_BUTTON);
@@ -57,67 +61,67 @@ void ColourButton::setStyle() {
 	m_borderStyle.setSolid(g_widgetConfig.getColourIndex(m_colourOutline));
 }
 
+// =====================================================
+// class ColourPicker
+// =====================================================
+
 ColourPicker::ColourPicker(Container *parent)
-		: Panel(parent)
+		: CellStrip(parent, Orientation::HORIZONTAL, 2)
 		, m_dropDownPanel(0)
 		, m_selectedIndex(-1) {
 	init();
 }
 
-ColourPicker::ColourPicker(Container *parent, Vec2i pos, Vec2i size)
-		: Panel(parent, pos, size)
-		, m_dropDownPanel(0)
-		, m_selectedIndex(-1) {
-	init();
-	setSize(size);
-}
+//ColourPicker::ColourPicker(Container *parent, Vec2i pos, Vec2i size)
+//		: Panel(parent, pos, size)
+//		, m_dropDownPanel(0)
+//		, m_selectedIndex(-1) {
+//	init();
+//	setSize(size);
+//}
 
 void ColourPicker::init() {
-	setAutoLayout(false);
-	m_borderStyle.setNone();
+	Anchors a = Anchors ::getFillAnchors();
+	setWidgetStyle(WidgetType::COLOUR_PICKER);
 	m_showingItem = new ColourButton(this);
+	m_showingItem->setCell(0);
+	m_showingItem->setAnchors(a);
 	m_button = new Button(this);
+	m_button->setCell(1);
+	m_button->setAnchors(a);
 	m_button->Clicked.connect(this, &ColourPicker::onExpand);
 	m_showingItem->Clicked.connect(this, &ColourPicker::onExpand);
 }
 
 void ColourPicker::setSize(const Vec2i &sz) {
-	Panel::setSize(sz);
-	Vec2i space = sz - getBordersAll();
-	//int h = space.y;
-	
-	Vec2i itemPos(getBorderLeft(), getBorderBottom());
-	Vec2i itemSize(space.x - space.y, space.y);
-	Vec2i btnPos(getBorderLeft() + space.x - space.y, getBorderBottom());
-	Vec2i btnSize(space.y, space.y);
-
-	m_showingItem->setPos(itemPos);
-	m_showingItem->setSize(itemSize);
-	m_button->setPos(btnPos);
-	m_button->setSize(btnSize);
+	setSizeHint(1, SizeHint(-1, sz.h));
+	CellStrip::setSize(sz);
 }
 
 void ColourPicker::onExpand(Button*) {
-	Vec2i size(4 * 32 + 4, 4 * 32 + 4);
+	Anchors anchors = Anchors::getFillAnchors();
+	Vec2i bdims = g_widgetConfig.getBorderStyle(WidgetType::COLOUR_PICKER).getBorderDims();
+	Vec2i size(4 * 32 + bdims.w, 4 * 32 + bdims.h);
 	Vec2i pos(getScreenPos());
 	pos += getSize() / 2;
 	pos -= size / 2;
 
-	m_dropDownPanel = new FloatingPanel(getRootWindow());
+	m_dropDownPanel = new FloatingStrip(m_rootWindow, Orientation::VERTICAL, Origin::FROM_TOP, 4);
 	m_dropDownPanel->setPos(pos);
 	m_dropDownPanel->setSize(size);
 
-	int y = 2;
-	int x = 2;
 	for (int i=0; i < 4; ++i) {
+		CellStrip *strip = new CellStrip(m_dropDownPanel, Orientation::HORIZONTAL, 4);
+		strip->setCell(i);
+		strip->setAnchors(anchors);
 		for (int j=0; j < 4; ++j) {
-			m_colourButtons[i*4+j] = new ColourButton(m_dropDownPanel, Vec2i(x,y), Vec2i(32,32));
-			m_colourButtons[i*4+j]->setColour(factionColours[i*4+j], factionColoursOutline[i*4+j]);
-			m_colourButtons[i*4+j]->Clicked.connect(this, &ColourPicker::onSelect);
-			x += 32;
+			const int ndx = i * 4 + j;
+			m_colourButtons[ndx] = new ColourButton(strip);
+			m_colourButtons[ndx]->setCell(j);
+			m_colourButtons[ndx]->setAnchors(anchors);
+			m_colourButtons[ndx]->setColour(factionColours[ndx], factionColoursOutline[ndx]);
+			m_colourButtons[ndx]->Clicked.connect(this, &ColourPicker::onSelect);
 		}
-		x = 2;
-		y += 32;
 	}
 	getRootWindow()->setFloatingWidget(m_dropDownPanel);
 }
@@ -162,31 +166,31 @@ PlayerSlotLabels::PlayerSlotLabels(Container* parent)
 	
 	StaticText *label = new StaticText(this);
 	label->setCell(0);
-	label->setTextParams(g_lang.get("Player"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
+	label->setText(g_lang.get("Player"));
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(1);
-	label->setTextParams(g_lang.get("Control"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
+	label->setText(g_lang.get("Control"));
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(2);
-	label->setTextParams(g_lang.get("Faction"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
+	label->setText(g_lang.get("Faction"));
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(3);
-	label->setTextParams(g_lang.get("Team"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
+	label->setText(g_lang.get("Team"));
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 
 	label = new StaticText(this);
 	label->setCell(4);
-	label->setTextParams(g_lang.get("Colour"), m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
+	label->setText(g_lang.get("Colour"));
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	label->setAnchors(anchors);
 }
@@ -206,7 +210,7 @@ PlayerSlotWidget::PlayerSlotWidget(Container* parent)
 
 	m_label = new StaticText(this);
 	m_label->setCell(0);
-	m_label->setTextParams("Player #", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
+	m_label->setText("Player #");
 	m_label->setAnchors(anchors);
 
 	m_controlList = new DropList(this);

@@ -641,12 +641,12 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			if (input.isCtrlDown()) {
 				float speed = input.isShiftDown() ? 1.f : 0.125f;
 				float response = input.isShiftDown() ? 0.1875f : 0.0625f;
-				gameCamera.moveForwardH((y - lastMousePos.y) * speed, response);
+				gameCamera.moveForwardH(-(y - lastMousePos.y) * speed, response);
 				gameCamera.moveSideH((x - lastMousePos.x) * speed, response);
 			} else {
-				float ymult = Config::getInstance().getCameraInvertYAxis() ? -0.2f : 0.2f;
-				float xmult = Config::getInstance().getCameraInvertXAxis() ? -0.2f : 0.2f;
-				gameCamera.transitionVH(-(y - lastMousePos.y) * ymult, (lastMousePos.x - x) * xmult);
+				float ymult = g_config.getCameraInvertYAxis() ? -0.2f : 0.2f;
+				float xmult = g_config.getCameraInvertXAxis() ? -0.2f : 0.2f;
+				gameCamera.transitionVH((y - lastMousePos.y) * ymult, (lastMousePos.x - x) * xmult);
 			}
 		}
 	} else if (ms.get(MouseButton::RIGHT)) {

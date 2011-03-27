@@ -147,7 +147,7 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	btnPanel->setAnchors(anchors);
 
 	anchors.setCentre(true, true);
-	Vec2i sz(s * 8, s);
+	Vec2i sz(s * 7, s);
 
 	// create buttons
 	m_returnButton = new Button(btnPanel, Vec2i(0), sz);
@@ -415,13 +415,13 @@ void MenuStateOptions::on3dTexturesToggle(Button* cb) {
 
 void MenuStateOptions::onSpinnerValueChanged(Spinner *spinner) {
 	if (spinner == m_minCamAltitudeSpinner) {
-		g_config.setCameraMinDistance(spinner->getValue());
+		g_config.setCameraMinDistance(float(spinner->getValue()));
 	} else if (spinner == m_maxCamAltitudeSpinner) {
-		g_config.setCameraMaxDistance(spinner->getValue());
+		g_config.setCameraMaxDistance(float(spinner->getValue()));
 	} else if (spinner == m_minRenderDistSpinner) {
-		g_config.setRenderDistanceMin(spinner->getValue());
+		g_config.setRenderDistanceMin(float(spinner->getValue()));
 	} else if (spinner == m_maxRenderDistSpinner) {
-		g_config.setRenderDistanceMax(spinner->getValue());
+		g_config.setRenderDistanceMax(float(spinner->getValue()));
 	}
 }
 

@@ -81,7 +81,7 @@ public:
 	Anchors(Anchor all);
 	Anchors(Anchor leftRight, Anchor topBottom);
 	Anchors(Anchor left, Anchor top, Anchor right, Anchor bottom);
-	
+
 	Anchor get(Edge e) const;
 	Anchor operator[](Edge e) const { return get(e); }
 	bool isCentreVertical() const { return centreVertical; }
@@ -96,6 +96,17 @@ public:
 	}
 	void setCentre(bool vert, bool horiz);
 	void setCentre(bool v) { setCentre(v, v); }
+
+	
+	static Anchors getCentreAnchors() {
+		Anchors a;
+		a.setCentre(true);
+		return a;
+	}
+	static Anchors getFillAnchors() {
+		Anchors a(Anchor(AnchorType::RIGID, 0));
+		return a;
+	}
 };
 
 ostream& operator<<(const ostream &lhs, const Anchors &rhs);
@@ -230,6 +241,8 @@ public:
 	bool isHovered() const  { return m_enabled && m_hover; }
 	bool isFocused() const  { return m_enabled && m_focus; }
 	bool isSelected() const { return m_enabled && m_selected; }
+
+	bool isInsideBorders(const Vec2i &pos) const;
 
 	// set
 	virtual void setEnabled(bool v);
@@ -445,7 +458,6 @@ public:
 
 	// set
 	void setCentre(bool val)	{ m_centreText = val; }
-	void setTextParams(const string&, int, int, bool cntr=true);
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col, int ndx = 0);

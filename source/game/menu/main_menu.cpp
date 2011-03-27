@@ -269,7 +269,8 @@ MenuState::MenuState(Program &program, MainMenu *mainMenu)
 	Vec2i pos(10, 50);
 	pos.y -= int(fontPtr->getMetrics()->getHeight());
 	m_debugText = new StaticText(&program, pos, Vec2i(0));
-	m_debugText->setTextParams("FPS: ", white, font, false);
+	m_debugText->setText("FPS: ");
+	m_debugText->setCentre(false);
 	if (!g_config.getMiscDebugMode()) {
 		m_debugText->setVisible(false);
 	}

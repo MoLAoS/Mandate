@@ -1348,8 +1348,8 @@ bool Renderer::computePosition(const Vec2i &screenPos, Vec2i &worldPos){
 	GLdouble worldX;
 	GLdouble worldY;
 	GLdouble worldZ;
-	GLint screenX= screenPos.x;
-	GLint screenY= screenPos.y;
+	GLint screenX = screenPos.x;
+	GLint screenY = g_metrics.getScreenH() - screenPos.y;
 
 	//get the depth in the cursor pixel
 	glReadPixels(screenX, screenY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
@@ -1388,17 +1388,17 @@ struct PickHit {
 
 void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const Vec2i &posDown, const Vec2i &posUp){
 	SECTION_TIMER(RENDER_SELECT);
-	//declarations
+	// declarations
 	GLuint selectBuffer[UserInterface::maxSelBuff];
 	const Metrics &metrics= Metrics::getInstance();
 
-	//compute center and dimensions of selection rectangle
-	int x= (posDown.x+posUp.x) / 2;
-	int y= (posDown.y+posUp.y) / 2;
-	int w= abs(posDown.x-posUp.x);
-	int h= abs(posDown.y-posUp.y);
-	if(w<1) w=1;
-	if(h<1) h=1;
+	// compute center and dimensions of selection rectangle
+	int x = (posDown.x + posUp.x) / 2;
+	int y = ((metrics.getScreenH() - posDown.y) + (metrics.getScreenH() - posUp.y)) / 2;
+	int w = abs(posDown.x - posUp.x);
+	int h = abs(posDown.y - posUp.y);
+	if (w < 1) w = 1;
+	if (h < 1) h = 1;
 
 	//setup matrices
 	glSelectBuffer(UserInterface::maxSelBuff, selectBuffer);

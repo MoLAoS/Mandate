@@ -153,7 +153,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 
 	StaticText* historyLabel = new StaticText(pnl, Vec2i(0), Vec2i(200, 34));
 	historyLabel->setCell(0);
-	historyLabel->setTextParams(g_lang.get("RecentHosts"), white, font);
+	historyLabel->setText(g_lang.get("RecentHosts"));
 	historyLabel->setAnchors(a2);
 	m_historyList = new DropList(pnl, Vec2i(0), Vec2i(300, 34));
 	m_historyList->setCell(1);
@@ -165,18 +165,18 @@ void MenuStateJoinGame::buildConnectPanel() {
 
 	StaticText* serverLabel = new StaticText(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
 	serverLabel->setCell(0);
-	serverLabel->setTextParams(g_lang.get("Server") + " Ip: ", white, font);
+	serverLabel->setText(g_lang.get("Server") + " Ip: ");
 	serverLabel->setAnchors(a2);
 	
 	m_serverTextBox = new TextBox(pnl, Vec2i(0), Vec2i(10 * defWidgetHeight, defWidgetHeight));
 	m_serverTextBox->setCell(1);
-	m_serverTextBox->setTextParams("", white, font, true);
+	m_serverTextBox->setText("");
 	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
 	m_serverTextBox->setAnchors(a2);
 
 	m_connectLabel = new StaticText(m_connectPanel, Vec2i(0), Vec2i(16 * defWidgetHeight, defWidgetHeight));
 	m_connectLabel->setCell(2);
-	m_connectLabel->setTextParams(g_lang.get("NotConnected"), white, font);
+	m_connectLabel->setText(g_lang.get("NotConnected"));
 	m_connectLabel->setAnchors(a2);
 
 	a.set(Edge::LEFT, 0, false);
@@ -186,21 +186,21 @@ void MenuStateJoinGame::buildConnectPanel() {
 	pnl->setAnchors(a);
 
 	// buttons
-	Button* returnButton = new Button(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
+	Button* returnButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));
 	returnButton->setCell(0);
-	returnButton->setTextParams(g_lang.get("Return"), white, font);
+	returnButton->setText(g_lang.get("Return"));
 	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
 	returnButton->setAnchors(a2);
 
-	Button* connectButton = new Button(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
+	Button* connectButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));
 	connectButton->setCell(1);
-	connectButton->setTextParams(g_lang.get("Connect"), white, font);
+	connectButton->setText(g_lang.get("Connect"));
 	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
 	connectButton->setAnchors(a2);
 
-	Button* searchButton = new Button(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
+	Button* searchButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));
 	searchButton->setCell(2);
-	searchButton->setTextParams(g_lang.get("Search"), white, font);
+	searchButton->setText(g_lang.get("Search"));
 	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
 	searchButton->setAnchors(a2);
 

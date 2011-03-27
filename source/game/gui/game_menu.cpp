@@ -32,37 +32,33 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 	int btnGap = (room.y - 30 * numItems) / (numItems + 1);
 	Vec2i btnPos(10, btnGap);
 
-	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	const Font *font = g_widgetConfig.getMenuFont();
-
 	Button* btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("ExitProgram"), white, fontNdx);
+	btn->setText(g_lang.get("ExitProgram"));
 	btn->Clicked.connect(this, &GameMenu::onExit);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("QuitGame"), white, fontNdx);
+	btn->setText(g_lang.get("QuitGame"));
 	btn->Clicked.connect(this, &GameMenu::onQuit);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("SaveGame"), white, fontNdx);
+	btn->setText(g_lang.get("SaveGame"));
 	btn->Clicked.connect(this, &GameMenu::onSaveGame);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("TogglePhotoMode"), white, fontNdx);
+	btn->setText(g_lang.get("TogglePhotoMode"));
 	btn->Clicked.connect(this, &GameMenu::onTogglePhotoMode);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("ToggleDebug"), white, fontNdx);
+	btn->setText(g_lang.get("ToggleDebug"));
 	btn->Clicked.connect(this, &GameMenu::onDebugToggle);
 
 	btnPos.y += btnGap + btnSize.y;
 	btn = new Button(this, btnPos, btnSize);
-	btn->setTextParams(g_lang.get("ReturnToGame"), white, fontNdx);
+	btn->setText(g_lang.get("ReturnToGame"));
 	btn->Clicked.connect(this, &GameMenu::onReturnToGame);
 }
 

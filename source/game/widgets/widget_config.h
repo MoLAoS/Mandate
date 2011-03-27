@@ -42,8 +42,8 @@ STRINGY_ENUM( WidgetType,
 	SCROLLBAR_VERT_SHAFT, SCROLLBAR_VERT_THUMB, SCROLLBAR_HORIZ_SHAFT, SCROLLBAR_HORIZ_THUMB,
 	SLIDER_VERT_THUMB, SLIDER_HORIZ_THUMB, SLIDER_VERT_SHAFT, SLIDER_HORIZ_SHAFT,
 	TITLE_BAR_CLOSE, TITLE_BAR_ROLL_UP, TITLE_BAR_ROLL_DOWN, TITLE_BAR_EXPAND, TITLE_BAR_SHRINK,
-	COLOUR_BUTTON, TICKER_TAPE, INFO_WIDGET, LOGGER_WIDGET, LOG_HEADER, LOG_LINE, CODE_VIEW, CODE_EDIT,
-	RESOURCE_BAR, RESOURCE_DISPLAY,
+	COLOUR_PICKER, COLOUR_BUTTON, TICKER_TAPE, INFO_WIDGET, LOGGER_WIDGET, LOG_HEADER, LOG_LINE,
+	CODE_VIEW, CODE_EDIT, RESOURCE_BAR, MINIMAP, DISPLAY, CONSOLE,
 
 	TEST_WIDGET, TEST_WIDGET_HEADER, TEST_WIDGET_MAINBIT, TEST_WIDGET_CODEBIT
 );
@@ -139,9 +139,11 @@ public:
 
 	int getDefaultFontIndex(FontUsage fu) const { return m_defaultFonts[fu]; }
 
-	FontPtr getMenuFont() { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
-	FontPtr getTitleFont() { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }
-	FontPtr getGameFont() { return m_fonts[m_defaultFonts[FontUsage::GAME]]; }
+	int getTitleFontNdx() const { return m_defaultFonts[FontUsage::FANCY]; }
+
+	FontPtr getMenuFont() const { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
+	FontPtr getTitleFont() const { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }
+	FontPtr getGameFont() const { return m_fonts[m_defaultFonts[FontUsage::GAME]]; }
 
 	TexPtr getTickTexture() { return m_textures[m_defaultOverlays[OverlayUsage::TICK]]; }
 	TexPtr getCrossTexture() { return m_textures[m_defaultOverlays[OverlayUsage::CROSS]]; }

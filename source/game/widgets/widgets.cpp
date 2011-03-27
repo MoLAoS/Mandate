@@ -492,7 +492,7 @@ void CellStrip::setSize(const Vec2i &sz) {
 	setDirty();
 }
 
-void CellStrip::render() {
+void CellStrip::render(bool clip) {
 	assert(glIsEnabled(GL_BLEND));
 	if (m_dirty) {
 		WIDGET_LOG( descShort() << " : CellStrip::render() : dirty, laying out cells." );
@@ -500,13 +500,13 @@ void CellStrip::render() {
 	}
 	Widget::render();
 
-	// clip children
-	Vec2i pos = getScreenPos();
-	pos.x += getBorderLeft();
-	pos.y += getBorderTop();
-	Vec2i size = getSize() - m_borderStyle.getBorderDims();
-	m_rootWindow->pushClipRect(pos, size);
-
+	if (clip) { // clip children
+		Vec2i pos = getScreenPos();
+		pos.x += getBorderLeft();
+		pos.y += getBorderTop();
+		Vec2i size = getSize() - m_borderStyle.getBorderDims();
+		m_rootWindow->pushClipRect(pos, size);
+	}
 	if (m_orientation == Orientation::VERTICAL) {
 		foreach (WidgetList, it, m_children) {
 			Widget* widget = *it;
@@ -525,7 +525,13 @@ void CellStrip::render() {
 			}
 		}
 	}
-	m_rootWindow->popClipRect();
+	if (clip) {
+		m_rootWindow->popClipRect();
+	}
+}
+
+void CellStrip::render() {
+	render(true);
 }
 
 typedef vector<SizeHint>    HintList;
@@ -660,146 +666,146 @@ void CellStrip::layoutCells() {
 // =====================================================
 //  class Panel
 // =====================================================
-
-Panel::Panel(Container* parent)
-		: Container(parent)
-		, autoLayout(true)
-		, layoutOrigin(Origin::CENTRE) {
-	setPaddingParams(10, 5);
-	m_borderStyle.setNone();
-}
-
-Panel::Panel(Container* parent, Vec2i pos, Vec2i sz)
-		: Container(parent, pos, sz)
-		, autoLayout(true)
-		, layoutOrigin(Origin::CENTRE) {
-	setPaddingParams(10, 5);
-	m_borderStyle.setNone();
-}
-
-Panel::Panel(WidgetWindow* window)
-		: Container(window) {
-}
-
-void Panel::setPaddingParams(int panelPad, int widgetPad) {
-	//setPadding(panelPad);
-	widgetPadding = widgetPad;
-}
-
-void Panel::setLayoutParams(bool autoLayout, Orientation dir, Origin origin) {
-	assert(
-		origin == Origin::CENTRE
-		|| ((origin == Origin::FROM_BOTTOM || origin == Origin::FROM_TOP)
-			&& dir == Orientation::VERTICAL)
-		|| ((origin == Origin::FROM_LEFT || origin == Origin::FROM_RIGHT)
-			&& dir == Orientation::HORIZONTAL)
-	);
-	this->layoutDirection = dir;
-	this->layoutOrigin = origin;		
-	this->autoLayout = autoLayout;
-}
-
-void Panel::layoutChildren() {
-	if (!autoLayout || m_children.empty()) {
-		return;
-	}
-	if (layoutDirection == Orientation::VERTICAL) {
-		layoutVertical();
-	} else if (layoutDirection == Orientation::HORIZONTAL) {
-		layoutHorizontal();
-	}
-}
-
-void Panel::layoutVertical() {
-	vector<int> widgetYPos;
-	int wh = 0;
-	Vec2i size = getSize();
-	Vec2i room = size - m_borderStyle.getBorderDims();
-	foreach (WidgetList, it, m_children) {
-		wh +=  + widgetPadding;
-		widgetYPos.push_back(wh);
-		wh += (*it)->getHeight();
-	}
-	wh -= widgetPadding;
-	
-	Vec2i topLeft(m_borderStyle.m_sizes[Border::LEFT], 
-		getPos().y + m_borderStyle.m_sizes[Border::TOP]);
-	
-	int offset;
-	switch (layoutOrigin) {
-		case Origin::FROM_TOP: offset = m_borderStyle.m_sizes[Border::TOP]; break;
-		case Origin::CENTRE: offset = (size.y - wh) / 2; break;
-		case Origin::FROM_BOTTOM: offset = size.y - wh - m_borderStyle.m_sizes[Border::TOP]; break;
-	}
-	int ndx = 0;
-	foreach (WidgetList, it, m_children) {
-		int ww = (*it)->getWidth();
-		int x = topLeft.x + (room.x - ww) / 2;
-		int y = offset + widgetYPos[ndx++];
-		(*it)->setPos(x, y);
-	}
-}
-
-void Panel::layoutHorizontal() {
-	vector<int> widgetXPos;
-	int ww = 0;
-	Vec2i size = getSize();
-	Vec2i room = size - m_borderStyle.getBorderDims();
-	foreach (WidgetList, it, m_children) {
-		widgetXPos.push_back(ww);
-		ww += (*it)->getWidth();
-		ww += widgetPadding;
-	}
-	ww -= widgetPadding;
-	
-	Vec2i topLeft(getBorderLeft(), size.y - getBorderTop());
-	
-	int offset;
-	switch (layoutOrigin) {
-		case Origin::FROM_LEFT: offset = getBorderLeft(); break;
-		case Origin::CENTRE: offset = (size.x - ww) / 2; break;
-		case Origin::FROM_RIGHT: offset = size.x - ww - getBorderRight(); break;
-	}
-	int ndx = 0;
-	foreach (WidgetList, it, m_children) {
-		int wh = (*it)->getHeight();
-		int x = offset + widgetXPos[ndx++];
-		int y = (room.y - wh) / 2;
-		(*it)->setPos(x, y);
-	}
-}
-
-Vec2i Panel::getMinSize() const {
-	return Vec2i(-1);
-}
-
-Vec2i Panel::getPrefSize() const {
-	return Vec2i(-1);
-}
-
-void Panel::addChild(Widget* child) {
-	Container::addChild(child);
-	if (!autoLayout) {
-		return;
-	}
-	Vec2i sz = child->getSize();
-	int space_x = getWidth() - m_borderStyle.getHorizBorderDim() * 2;
-	if (sz.x > space_x) {
-		child->setSize(space_x, sz.y);
-	}
-	layoutChildren();
-}
-
-void Panel::render() {
-	assertGl();
-	Vec2i pos = getScreenPos();
-	pos.x += getBorderLeft();
-	pos.y += getBorderTop();
-	Vec2i size = getSize() - m_borderStyle.getBorderDims();
-	m_rootWindow->pushClipRect(pos, size);
-	Container::render();
-	m_rootWindow->popClipRect();
-}
+//
+//Panel::Panel(Container* parent)
+//		: Container(parent)
+//		, autoLayout(true)
+//		, layoutOrigin(Origin::CENTRE) {
+//	setPaddingParams(10, 5);
+//	m_borderStyle.setNone();
+//}
+//
+//Panel::Panel(Container* parent, Vec2i pos, Vec2i sz)
+//		: Container(parent, pos, sz)
+//		, autoLayout(true)
+//		, layoutOrigin(Origin::CENTRE) {
+//	setPaddingParams(10, 5);
+//	m_borderStyle.setNone();
+//}
+//
+//Panel::Panel(WidgetWindow* window)
+//		: Container(window) {
+//}
+//
+//void Panel::setPaddingParams(int panelPad, int widgetPad) {
+//	//setPadding(panelPad);
+//	widgetPadding = widgetPad;
+//}
+//
+//void Panel::setLayoutParams(bool autoLayout, Orientation dir, Origin origin) {
+//	assert(
+//		origin == Origin::CENTRE
+//		|| ((origin == Origin::FROM_BOTTOM || origin == Origin::FROM_TOP)
+//			&& dir == Orientation::VERTICAL)
+//		|| ((origin == Origin::FROM_LEFT || origin == Origin::FROM_RIGHT)
+//			&& dir == Orientation::HORIZONTAL)
+//	);
+//	this->layoutDirection = dir;
+//	this->layoutOrigin = origin;		
+//	this->autoLayout = autoLayout;
+//}
+//
+//void Panel::layoutChildren() {
+//	if (!autoLayout || m_children.empty()) {
+//		return;
+//	}
+//	if (layoutDirection == Orientation::VERTICAL) {
+//		layoutVertical();
+//	} else if (layoutDirection == Orientation::HORIZONTAL) {
+//		layoutHorizontal();
+//	}
+//}
+//
+//void Panel::layoutVertical() {
+//	vector<int> widgetYPos;
+//	int wh = 0;
+//	Vec2i size = getSize();
+//	Vec2i room = size - m_borderStyle.getBorderDims();
+//	foreach (WidgetList, it, m_children) {
+//		wh +=  + widgetPadding;
+//		widgetYPos.push_back(wh);
+//		wh += (*it)->getHeight();
+//	}
+//	wh -= widgetPadding;
+//	
+//	Vec2i topLeft(m_borderStyle.m_sizes[Border::LEFT], 
+//		getPos().y + m_borderStyle.m_sizes[Border::TOP]);
+//	
+//	int offset;
+//	switch (layoutOrigin) {
+//		case Origin::FROM_TOP: offset = m_borderStyle.m_sizes[Border::TOP]; break;
+//		case Origin::CENTRE: offset = (size.y - wh) / 2; break;
+//		case Origin::FROM_BOTTOM: offset = size.y - wh - m_borderStyle.m_sizes[Border::TOP]; break;
+//	}
+//	int ndx = 0;
+//	foreach (WidgetList, it, m_children) {
+//		int ww = (*it)->getWidth();
+//		int x = topLeft.x + (room.x - ww) / 2;
+//		int y = offset + widgetYPos[ndx++];
+//		(*it)->setPos(x, y);
+//	}
+//}
+//
+//void Panel::layoutHorizontal() {
+//	vector<int> widgetXPos;
+//	int ww = 0;
+//	Vec2i size = getSize();
+//	Vec2i room = size - m_borderStyle.getBorderDims();
+//	foreach (WidgetList, it, m_children) {
+//		widgetXPos.push_back(ww);
+//		ww += (*it)->getWidth();
+//		ww += widgetPadding;
+//	}
+//	ww -= widgetPadding;
+//	
+//	Vec2i topLeft(getBorderLeft(), size.y - getBorderTop());
+//	
+//	int offset;
+//	switch (layoutOrigin) {
+//		case Origin::FROM_LEFT: offset = getBorderLeft(); break;
+//		case Origin::CENTRE: offset = (size.x - ww) / 2; break;
+//		case Origin::FROM_RIGHT: offset = size.x - ww - getBorderRight(); break;
+//	}
+//	int ndx = 0;
+//	foreach (WidgetList, it, m_children) {
+//		int wh = (*it)->getHeight();
+//		int x = offset + widgetXPos[ndx++];
+//		int y = (room.y - wh) / 2;
+//		(*it)->setPos(x, y);
+//	}
+//}
+//
+//Vec2i Panel::getMinSize() const {
+//	return Vec2i(-1);
+//}
+//
+//Vec2i Panel::getPrefSize() const {
+//	return Vec2i(-1);
+//}
+//
+//void Panel::addChild(Widget* child) {
+//	Container::addChild(child);
+//	if (!autoLayout) {
+//		return;
+//	}
+//	Vec2i sz = child->getSize();
+//	int space_x = getWidth() - m_borderStyle.getHorizBorderDim() * 2;
+//	if (sz.x > space_x) {
+//		child->setSize(space_x, sz.y);
+//	}
+//	layoutChildren();
+//}
+//
+//void Panel::render() {
+//	assertGl();
+//	Vec2i pos = getScreenPos();
+//	pos.x += getBorderLeft();
+//	pos.y += getBorderTop();
+//	Vec2i size = getSize() - m_borderStyle.getBorderDims();
+//	m_rootWindow->pushClipRect(pos, size);
+//	Container::render();
+//	m_rootWindow->popClipRect();
+//}
 
 // =====================================================
 //  class PicturePanel
@@ -823,7 +829,8 @@ Vec2i PicturePanel::getPrefSize() const {
 void ToolTip::init() {
 	setWidgetStyle(WidgetType::TOOL_TIP);
 	WidgetConfig &cfg = *m_rootWindow->getConfig();
-	TextWidget::setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, false);
+	TextWidget::setText("");
+	TextWidget::setCentre(false);
 	TextWidget::setTextPos(Vec2i(getBorderLeft(), getBorderTop()));
 }
 

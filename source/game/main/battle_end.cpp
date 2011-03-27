@@ -66,7 +66,8 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 	pos = Vec2i(100, y);
 	size = Vec2i(0);
 	label = new StaticText(this, pos, size);
-	label->setTextParams(header, white, font, false);
+	label->setText(header);
+	label->setCentre(false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	
 	font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
@@ -76,12 +77,14 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 	y -= y_gap;
 	int x = x_centres[5] - int(fm->getTextDiminsions(g_lang.get("Units")).x) / 2;
 	label = new StaticText(this, Vec2i(x, y), size);
-	label->setTextParams(g_lang.get("Units"), white, font, false);
+	label->setText(g_lang.get("Units"));
+	label->setCentre(false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	x = x_centres[7] - int(fm->getTextDiminsions(g_lang.get("Resources")).x) / 2;
 	label = new StaticText(this, Vec2i(x, y), size);
-	label->setTextParams(g_lang.get("Resources"), white, font, false);
+	label->setText(g_lang.get("Resources"));
+	label->setCentre(false);
 	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 	y -= y_gap;
@@ -92,7 +95,8 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 	for (int i=1; i < 8; ++i) {
 		x = x_centres[i] - int(fm->getTextDiminsions(g_lang.get(hdrs[i-1])).x) / 2;
 		label = new StaticText(this, Vec2i(x, y), size);
-		label->setTextParams(g_lang.get(hdrs[i-1]), white, font, false);
+		label->setText(g_lang.get(hdrs[i-1]));
+		label->setCentre(false);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 	}
 
@@ -104,13 +108,15 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 			name += g_lang.get(ControlTypeNames[gs.getFactionControl(i)]);
 			x = x_centres[0] - int(fm->getTextDiminsions(name).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(name, white, font, false);
+			label->setText(name);
+			label->setCentre(false);
 			label->setDoubleShadow(colour, Vec4f(0.f, 0.f, 0.f, 1.f), 1);
 
 			string winlose = stats.getVictory(i) ? "Victory" : "Defeat";
 			x = x_centres[1] - int(fm->getTextDiminsions(winlose).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(winlose, white, font, false);
+			label->setText(winlose);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 			int kills = stats.getKills(i);
@@ -122,37 +128,43 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 			string tmp = intToStr(score);
 			x = x_centres[2] - int(fm->getTextDiminsions(tmp).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(tmp, white, font, false);
+			label->setText(tmp);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 			tmp = intToStr(gs.getTeam(i));
 			x = x_centres[3] - int(fm->getTextDiminsions(tmp).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(tmp, white, font, false);
+			label->setText(tmp);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 			tmp = intToStr(kills);
 			x = x_centres[4] - int(fm->getTextDiminsions(tmp).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(tmp, white, font, false);
+			label->setText(tmp);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 			tmp = intToStr(deaths);
 			x = x_centres[5] - int(fm->getTextDiminsions(tmp).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(tmp, white, font, false);
+			label->setText(tmp);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 			tmp = intToStr(produced);
 			x = x_centres[6] - int(fm->getTextDiminsions(tmp).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(tmp, white, font, false);
+			label->setText(tmp);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 			tmp = intToStr(harvested);
 			x = x_centres[7] - int(fm->getTextDiminsions(tmp).x) / 2;
 			label = new StaticText(this, Vec2i(x, y), size);
-			label->setTextParams(tmp, white, font, false);
+			label->setText(tmp);
+			label->setCentre(false);
 			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		}
 	}

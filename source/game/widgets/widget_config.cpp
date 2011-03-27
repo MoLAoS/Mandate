@@ -623,8 +623,9 @@ string getErrMsg(const string &type) {
 }
 
 bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob) {
+	string name = formatString(WidgetTypeNames[type]);
 	WIDGET_LOG( "====================================================" );
-	WIDGET_LOG( "Loading styles for widget type '" << tableName << "'" );
+	WIDGET_LOG( "Loading styles for widget type '" << name << "'" );
 	WIDGET_LOG( "====================================================" );
 	if ((glob && luaScript.getGlobal(tableName)) || (!glob && luaScript.getTable(tableName))) {
 		if (luaScript.getTable("Default")) { // load default style (must be present)
@@ -709,7 +710,7 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob)
 				m_styles[type][state].overlay() = normOverlay;
 			}
 		}
-		luaScript.popAll();
+		luaScript.popTable();
 		return true;
 	} else {
 		WIDGET_LOG( "Error loading styles for widget type '" << tableName << "' table not found." );
@@ -723,6 +724,7 @@ WidgetConfig::WidgetConfig() {
 
 void WidgetConfig::load() {
 	luaScript.startUp();
+	luaScript.atPanic(ScriptManager::panicFunc);
 	
 #	define GUI_FUNC(x) luaScript.registerFunction(GuiScript::##x, #x)
 
@@ -762,11 +764,11 @@ void WidgetConfig::load() {
 
 	loadStyles("StaticWidget", WidgetType::STATIC_WIDGET);
 	loadStyles("Button", WidgetType::BUTTON);
+
 	if (luaScript.getGlobal("CheckBox")) {
 		loadStyles("UnChecked", WidgetType::CHECK_BOX, false);
-	}
-	if (luaScript.getGlobal("CheckBox")) {
 		loadStyles("Checked", WidgetType::CHECK_BOX_CHK, false);
+		luaScript.popTable();
 	}
 	loadStyles("TextBox", WidgetType::TEXT_BOX);
 	loadStyles("ListItem", WidgetType::LIST_ITEM);
@@ -794,28 +796,30 @@ void WidgetConfig::load() {
 	loadStyles("TitleBarRollDownButton", WidgetType::TITLE_BAR_ROLL_DOWN);
 	loadStyles("TitleBarExpandButton", WidgetType::TITLE_BAR_EXPAND);
 	loadStyles("TitleBarShrinkButton", WidgetType::TITLE_BAR_SHRINK);
+	loadStyles("ColourPicker", WidgetType::COLOUR_PICKER);
 	loadStyles("ColourButton", WidgetType::COLOUR_BUTTON);
 	loadStyles("TickerTape", WidgetType::TICKER_TAPE);
 	loadStyles("InfoWidget", WidgetType::INFO_WIDGET);
+	loadStyles("Logger", WidgetType::LOGGER_WIDGET);
+	if (luaScript.getGlobal("Logger")) {
+		loadStyles("Header", WidgetType::LOG_HEADER, false);
+		loadStyles("LogLine", WidgetType::LOG_LINE, false);
+		luaScript.popTable();
+	}
 	loadStyles("CodeView", WidgetType::CODE_VIEW);
 	loadStyles("CodeEdit", WidgetType::CODE_EDIT);
 	loadStyles("ResourceBar", WidgetType::RESOURCE_BAR);
-	loadStyles("ResourceDisplay", WidgetType::RESOURCE_DISPLAY);
+	loadStyles("MiniMap", WidgetType::MINIMAP);
+	loadStyles("Display", WidgetType::DISPLAY);
+	loadStyles("Console", WidgetType::CONSOLE);
 
 	loadStyles("TestWidget", WidgetType::TEST_WIDGET);
 	if (luaScript.getGlobal("TestWidget")) {
 		loadStyles("Header", WidgetType::TEST_WIDGET_HEADER, false);
-	}
-	if (luaScript.getGlobal("TestWidget")) {
 		loadStyles("MainBit", WidgetType::TEST_WIDGET_MAINBIT, false);
-	}
-	if (luaScript.getGlobal("TestWidget")) {
 		loadStyles("CodeBit", WidgetType::TEST_WIDGET_CODEBIT, false);
+		luaScript.popTable();
 	}
-	loadStyles("Logger", WidgetType::LOGGER_WIDGET);
-	loadStyles("Logger.Header", WidgetType::LOG_HEADER);
-	loadStyles("Logger.LogLine", WidgetType::LOG_LINE);
-
 	WIDGET_LOG( "====================================================" );
 	WIDGET_LOG( "==       Finished Loading widget styles           ==" );
 	WIDGET_LOG( "====================================================" );
@@ -824,7 +828,7 @@ void WidgetConfig::load() {
 }
 
 int WidgetConfig::getDefaultItemHeight() const {
-	return int(m_fonts[m_defaultFonts[FontUsage::MENU]]->getMetrics()->getHeight() * 1.4f);
+	return int(m_fonts[m_defaultFonts[FontUsage::MENU]]->getMetrics()->getHeight() * 1.3f);
 }
 
 int WidgetConfig::getColourIndex(const Colour &c) {

@@ -35,7 +35,7 @@ OptionContainer::OptionContainer(Container* parent, Vec2i pos, Vec2i size, const
 	m_labelSize = 30;
 	int w = int(size.x * float(30) / 100.f);
 	m_label = new StaticText(this, Vec2i(0), Vec2i(w, size.y));
-	m_label->setTextParams(text, m_textStyle.m_colourIndex, m_textStyle.m_fontIndex, true);
+	m_label->setText(text);
 	m_widget = 0;
 }
 
@@ -441,7 +441,7 @@ void MessageDialog::setMessageText(const string &text) {
 InputBox::InputBox(Container *parent)
 		: TextBox(parent) {
 }
-//
+
 //InputBox::InputBox(Container *parent, Vec2i pos, Vec2i size)
 //		: TextBox(parent, pos, size){
 //}
@@ -462,13 +462,19 @@ bool InputBox::keyDown(Key key) {
 
 InputDialog::InputDialog(WidgetWindow* window)
 		: BasicDialog(window) {
-	m_panel = new Panel(this);
-	m_panel->setLayoutParams(true, Orientation::VERTICAL);
-	m_panel->setPaddingParams(10, 10);
-	m_label = new StaticText(m_panel);
-	m_label->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex);
-	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", m_textStyle.m_colourIndex, m_textStyle.m_fontIndex);
+	Anchors cAnchors;
+	cAnchors.setCentre(true);
+
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
+	setContent(panel);
+	m_label = new StaticText(panel);
+	m_label->setCell(0);
+	m_label->setAnchors(cAnchors);
+	m_label->setText("");
+	m_inputBox = new InputBox(panel);
+	m_inputBox->setCell(1);
+	m_inputBox->setAnchors(cAnchors);
+	m_inputBox->setText("");
 	m_inputBox->InputEntered.connect(this, &InputDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }
@@ -478,13 +484,7 @@ InputDialog* InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title,
 	InputDialog* dlg = new InputDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(dlg, true);
 	dlg->init(pos, size, title, btn1Text, btn2Text);
-	dlg->setContent(dlg->m_panel);
 	dlg->setMessageText(msg);
-	Vec2i sz = dlg->m_label->getPrefSize() + Vec2i(4);
-	dlg->m_label->setSize(sz);
-	sz.x = dlg->m_panel->getSize().x - 20;
-	dlg->m_inputBox->setSize(sz);
-	dlg->m_panel->layoutChildren();
 	dlg->m_inputBox->gainFocus();
 	dlg->m_inputBox->Escaped.connect(dlg, &InputDialog::onEscaped);
 	return dlg;

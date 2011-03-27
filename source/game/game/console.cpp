@@ -38,12 +38,12 @@ namespace Glest { namespace Gui {
 // 	class Console
 // =====================================================
 
-Console::Console(Container* parent, int maxLines, int y_pos, bool fromTop)
-		: Widget(parent, Vec2i(0), Vec2i(0))
+Console::Console(Container* parent, int maxLines, bool fromTop)
+		: Widget(parent)
 		, TextWidget(this)
 		, maxLines(maxLines)
-		, yPos(y_pos)
 		, fromTop(fromTop) {
+	setWidgetStyle(WidgetType::CONSOLE);
 	//config
 #	if _GAE_DEBUG_EDITION_
 		maxLines = 20;
@@ -52,24 +52,19 @@ Console::Console(Container* parent, int maxLines, int y_pos, bool fromTop)
 		timeout= float(Config::getInstance().getUiConsoleTimeout());
 #	endif
 	timeElapsed = 0.0f;
-	if (fromTop) {
-		yPos = Metrics::getInstance().getScreenH() - y_pos;
-	}
-	m_font = g_widgetConfig.getGameFont();
-
-	g_widgetWindow.registerUpdate(this);
+	m_rootWindow->registerUpdate(this);
 }
 
 Console::~Console() {
-	g_widgetWindow.unregisterUpdate(this);
+	m_rootWindow->unregisterUpdate(this);
 }
 
 void Console::addStdMessage(const string &s){
-	addLine(Lang::getInstance().get(s));
+	addLine(g_lang.get(s));
 }
 
 void Console::addStdMessage(const string &s, const string &param1, const string &param2, const string &param3) {
-	string msg = Lang::getInstance().get(s);
+	string msg = g_lang.get(s);
 	size_t bufsize = msg.size() + param1.size()  + param2.size()  + param3.size() + 32;
 	char *buf = new char[bufsize];
 	snprintf(buf, bufsize - 1, msg.c_str(), param1.c_str(), param2.c_str(), param3.c_str());
@@ -77,9 +72,9 @@ void Console::addStdMessage(const string &s, const string &param1, const string 
 	delete[] buf;
 }
 
-void Console::addLine(string line, bool playSound){
+void Console::addLine(string line, bool playSound) {
 	if (playSound) {
-		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
+		g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	}
 	lines.push_front(MessageTimePair(Message(line), timeElapsed));
 	if (lines.size() > maxLines) {
@@ -89,7 +84,7 @@ void Console::addLine(string line, bool playSound){
 
 void Console::addDialog(string speaker, Colour colour, string text, bool playSound) {
 	if (playSound) {
-		SoundRenderer::getInstance().playFx(CoreData::getInstance().getClickSoundA());
+		g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	}
 	Message msg(speaker, colour);
 	msg.push_back(TextInfo(text));
@@ -124,18 +119,20 @@ void Console::update(){
 }
 
 void Console::render() {
-	int fontNdx = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
-	const FontMetrics *fm = m_font->getMetrics();
+	const FontMetrics *fm = getFont()->getMetrics();
+	int lineSize = int(fm->getHeight() + 1.f);
+	const Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderTop());
 
-	TextWidget::startBatch(m_font);
+	TextWidget::startBatch(getFont());
 	Colour black(0u, 0u, 0u, 255u);
 	for (int i=0; i < lines.size(); ++i) {
-		int x = 20;
-		int y = yPos + (fromTop ? -(int(lines.size()) - i - 1) : i) * int(fm->getHeight() + 1.f);
+		int x = pos.x;
+		int y = pos.y;
+		y += fromTop ? i * lineSize : maxLines * lineSize - i * lineSize;
 		Message &msg = lines[i].first;
 		foreach (Message, snippet, msg) {
-			renderText(snippet->text, x + 2, y - 2, black, fontNdx);
-			renderText(snippet->text, x, y, snippet->colour, fontNdx);
+			renderText(snippet->text, x + 2, y + 2, black, getFont());
+			renderText(snippet->text, x, y, snippet->colour, getFont());
 			x += int(fm->getTextDiminsions(snippet->text).x + 1.f);
 		}
  	}
