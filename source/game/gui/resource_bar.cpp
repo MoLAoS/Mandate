@@ -50,7 +50,7 @@ ResourceBar::ResourceBar()
 void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &types) {
 	m_faction = faction;
 
-	TextWidget::setCentre(false);
+	TextWidget::setAlignment(Alignment::NONE);
 	g_widgetWindow.registerUpdate(this);
 
 	const Font *font = getFont();

@@ -145,7 +145,8 @@ MenuStateLoadGame::~MenuStateLoadGame() {
 	loaderThread.join();
 }
 
-void MenuStateLoadGame::onButtonClick(Button* btn) {
+void MenuStateLoadGame::onButtonClick(Widget *source) {
+	Button* btn = static_cast<Button*>(source);
 	if (btn == m_returnButton) {
 		m_targetTransition = Transition::RETURN;
 		g_soundRenderer.playFx(g_coreData.getClickSoundA());
@@ -169,12 +170,12 @@ void MenuStateLoadGame::onButtonClick(Button* btn) {
 	}
 }
 
-void MenuStateLoadGame::onCancelDelete(BasicDialog*) {
+void MenuStateLoadGame::onCancelDelete(Widget*) {
 	program.setFade(1.0f);
 	program.removeFloatingWidget(m_messageDialog);
 }
 
-void MenuStateLoadGame::onConfirmDelete(BasicDialog*) {
+void MenuStateLoadGame::onConfirmDelete(Widget*) {
 	program.setFade(1.0f);
 	program.removeFloatingWidget(m_messageDialog);
 
@@ -185,14 +186,14 @@ void MenuStateLoadGame::onConfirmDelete(BasicDialog*) {
 	}
 }
 
-void MenuStateLoadGame::onConfirmReturn(BasicDialog*) {
+void MenuStateLoadGame::onConfirmReturn(Widget*) {
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	m_targetTransition = Transition::RETURN;
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	doFadeOut();
 }
 
-void MenuStateLoadGame::onSaveSelected(ListBase* list) {
+void MenuStateLoadGame::onSaveSelected(Widget*) {
 	selectionChanged();
 }
 

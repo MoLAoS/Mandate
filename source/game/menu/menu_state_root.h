@@ -28,7 +28,6 @@ STRINGY_ENUM( RootMenuItem,
 	LOADGAME,
 	OPTIONS,
 	ABOUT,
-	TEST,
 	EXIT
 );
 
@@ -48,7 +47,7 @@ public:
 	void update();
 
 	// Event handler
-	void onButtonClick(Widgets::Button*);
+	void onButtonClick(Widget*);
 
 	MenuStates getIndex() const { return MenuStates::ROOT; }
 };

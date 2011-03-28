@@ -47,18 +47,24 @@ public:
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setCell(0);
 		label->setAnchors(Anchor(AnchorType::RIGID, 0));
+		label->setAlignment(Alignment::FLUSH_RIGHT);
+		label->borderStyle().setSizes(0, 0, 10, 0);
 
 		label = new StaticText(this);
 		label->setText(txt1);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setCell(1);
 		label->setAnchors(Anchor(AnchorType::RIGID, 0));
+		label->setAlignment(Alignment::FLUSH_RIGHT);
+		label->borderStyle().setSizes(0, 0, 10, 0);
 
 		label = new StaticText(this);
 		label->setText(txt2);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setCell(3);
 		label->setAnchors(Anchor(AnchorType::RIGID, 0));
+		label->setAlignment(Alignment::FLUSH_RIGHT);
+		label->borderStyle().setSizes(0, 0, 10, 0);
 	}
 
 	void setCustomSplits(int label, int val1, int val2) {
@@ -106,7 +112,8 @@ Spinner::Spinner(Container *parent)
 	m_downButton->Fire.connect(this, &Spinner::onButtonFired);
 }
 
-void Spinner::onButtonFired(ScrollBarButton *btn) {
+void Spinner::onButtonFired(Widget *source) {
+	ScrollBarButton *btn = static_cast<ScrollBarButton*>(source);
 	int val = m_value + (btn == m_upButton ? m_increment : -m_increment);
 	val = clamp(val, m_minValue, m_maxValue);
 	if (val != m_value) {
@@ -193,17 +200,19 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	col2->setCell(1);
 	col2->setAnchors(padAnchors);
 
-	SizeHint hint(-1, g_widgetConfig.getDefaultItemHeight() + 4);
+	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
 	for (int i=0; i < rows; ++i) {
 		col1->setSizeHint(i, hint);
 		col2->setSizeHint(i, hint);
 	}
 
+	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
+
 	OptionWidget *dw = new OptionWidget(col1, lang.get("FxVolume"));
 	dw->setCell(0);
 	m_volFxSlider = new Slider2(dw, false);
 	m_volFxSlider->setCell(1);
-	m_volFxSlider->setAnchors(fillAnchors);
+	m_volFxSlider->setAnchors(squashAnchors);
 	m_volFxSlider->setRange(100);
 	m_volFxSlider->setValue(clamp(config.getSoundVolumeFx(), 0, 100));
 	m_volFxSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
@@ -212,7 +221,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	dw->setCell(1);
 	m_volAmbientSlider = new Slider2(dw, false);
 	m_volAmbientSlider->setCell(1);
-	m_volAmbientSlider->setAnchors(fillAnchors);
+	m_volAmbientSlider->setAnchors(squashAnchors);
 	m_volAmbientSlider->setRange(100);
 	m_volAmbientSlider->setValue(clamp(config.getSoundVolumeAmbient(), 0, 100));
 	m_volAmbientSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
@@ -221,7 +230,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	dw->setCell(2);
 	m_volMusicSlider = new Slider2(dw, false);
 	m_volMusicSlider->setCell(1);
-	m_volMusicSlider->setAnchors(fillAnchors);
+	m_volMusicSlider->setAnchors(squashAnchors);
 	m_volMusicSlider->setRange(100);
 	m_volMusicSlider->setValue(clamp(config.getSoundVolumeMusic(), 0, 100));
 	m_volMusicSlider->ValueChanged.connect(this, &MenuStateOptions::onSliderValueChanged);
@@ -232,27 +241,29 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	TextBox *tb = new TextBox(dw);
 	tb->setText("");
 	tb->setCell(1);
-	tb->setAnchors(fillAnchors);
+	tb->setAnchors(squashAnchors);
 
 	// Language
 	dw = new OptionWidget(col1, lang.get("Language"));
 	dw->setCell(4);
 	m_langList = new DropList(dw);
 	m_langList->setCell(1);
-	m_langList->setAnchors(fillAnchors);
+	m_langList->setAnchors(squashAnchors);
 	setupListBoxLang();
 	m_langList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 	m_langList->setDropBoxHeight(200);
 
-	// Debug mode
+	// Debug mode/keys container
 	DoubleOption *qw = new DoubleOption(col1, lang.get("DebugMode"), lang.get("DebugKeys"));
 	qw->setCell(5);
+
+	// Debug mode
 	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
 	cbh->setCell(1);
 	cbh->setAnchors(fillAnchors);
 	m_debugModeCheckBox = new CheckBox(cbh);
 	m_debugModeCheckBox->setCell(1);
-	m_debugModeCheckBox->setAnchors(fillAnchors);
+	m_debugModeCheckBox->setAnchors(squashAnchors);
 	m_debugModeCheckBox->setChecked(config.getMiscDebugMode());
 	m_debugModeCheckBox->Clicked.connect(this, &MenuStateOptions::onToggleDebugMode);
 
@@ -260,11 +271,11 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	cbh = new CheckBoxHolder(qw);
 	cbh->setCell(3);
 	cbh->setAnchors(fillAnchors);
-	m_debugModeCheckBox = new CheckBox(cbh);
-	m_debugModeCheckBox->setCell(1);
-	m_debugModeCheckBox->setAnchors(fillAnchors);
-	m_debugModeCheckBox->setChecked(config.getMiscDebugKeys());
-	m_debugModeCheckBox->Clicked.connect(this, &MenuStateOptions::onToggleDebugKeys);
+	m_debugKeysCheckBox = new CheckBox(cbh);
+	m_debugKeysCheckBox->setCell(1);
+	m_debugKeysCheckBox->setAnchors(squashAnchors);
+	m_debugKeysCheckBox->setChecked(config.getMiscDebugKeys());
+	m_debugKeysCheckBox->Clicked.connect(this, &MenuStateOptions::onToggleDebugKeys);
 
 	// Camera min / max altitude
 	RelatedDoubleOption *rdo = new RelatedDoubleOption(col1,
@@ -273,7 +284,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	rdo->setCustomSplits(13, 14, 20);
 	m_minCamAltitudeSpinner = new Spinner(rdo);
 	m_minCamAltitudeSpinner->setCell(2);
-	m_minCamAltitudeSpinner->setAnchors(fillAnchors);
+	m_minCamAltitudeSpinner->setAnchors(squashAnchors);
 	m_minCamAltitudeSpinner->setRanges(0, 20);
 	m_minCamAltitudeSpinner->setIncrement(1);
 	m_minCamAltitudeSpinner->setValue(int(config.getCameraMinDistance()));
@@ -281,7 +292,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 
 	m_maxCamAltitudeSpinner = new Spinner(rdo);
 	m_maxCamAltitudeSpinner->setCell(4);
-	m_maxCamAltitudeSpinner->setAnchors(fillAnchors);
+	m_maxCamAltitudeSpinner->setAnchors(squashAnchors);
 	m_maxCamAltitudeSpinner->setRanges(32, 2048);
 	m_maxCamAltitudeSpinner->setIncrement(32);
 	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
@@ -292,7 +303,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	dw->setCell(0);
 	m_shadowsList = new DropList(dw);
 	m_shadowsList->setCell(1);
-	m_shadowsList->setAnchors(fillAnchors);
+	m_shadowsList->setAnchors(squashAnchors);
 	for(int i= 0; i < ShadowMode::COUNT; ++i){
 		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(ShadowMode(i))));
 	}
@@ -305,7 +316,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	dw->setCell(1);
 	m_filterList = new DropList(dw);
 	m_filterList->setCell(1);
-	m_filterList->setAnchors(fillAnchors);
+	m_filterList->setAnchors(squashAnchors);
 	m_filterList->addItem("Bilinear");
 	m_filterList->addItem("Trilinear");
 	m_filterList->setSelected(config.getRenderFilter());
@@ -317,7 +328,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	qw->setCell(2);
 	m_lightsList = new DropList(qw);
 	m_lightsList->setCell(1);
-	m_lightsList->setAnchors(fillAnchors);
+	m_lightsList->setAnchors(squashAnchors);
 	for (int i = 1; i <= 8; ++i) {
 		m_lightsList->addItem(intToStr(i));
 	}
@@ -330,7 +341,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	cbh->setCell(3);
 	m_3dTexCheckBox = new CheckBox(cbh);
 	m_3dTexCheckBox->setCell(1);
-	m_3dTexCheckBox->setAnchors(fillAnchors);
+	m_3dTexCheckBox->setAnchors(squashAnchors);
 	m_3dTexCheckBox->setChecked(config.getRenderTextures3D());
 	m_3dTexCheckBox->Clicked.connect(this, &MenuStateOptions::on3dTexturesToggle);
 
@@ -341,7 +352,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	rdo->setCustomSplits(13, 14, 20);
 	m_minRenderDistSpinner = new Spinner(rdo);
 	m_minRenderDistSpinner->setCell(2);
-	m_minRenderDistSpinner->setAnchors(fillAnchors);
+	m_minRenderDistSpinner->setAnchors(squashAnchors);
 	m_minRenderDistSpinner->setRanges(0, 20);
 	m_minRenderDistSpinner->setIncrement(1);
 	m_minRenderDistSpinner->setValue(int(config.getRenderDistanceMin()));
@@ -349,7 +360,7 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 
 	m_maxRenderDistSpinner = new Spinner(rdo);
 	m_maxRenderDistSpinner->setCell(4);
-	m_maxRenderDistSpinner->setAnchors(fillAnchors);
+	m_maxRenderDistSpinner->setAnchors(squashAnchors);
 	m_maxRenderDistSpinner->setRanges(32, 4096);
 	m_maxRenderDistSpinner->setIncrement(32);
 	m_maxRenderDistSpinner->setValue(int(config.getRenderDistanceMax()));
@@ -376,30 +387,31 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	dw->setCell(8);
 }
 
-void MenuStateOptions::onToggleDebugMode(Button *cb) {
+void MenuStateOptions::onToggleDebugMode(Widget*) {
 	g_config.setMiscDebugMode(m_debugModeCheckBox->isChecked());
+	m_debugText->setVisible(m_debugModeCheckBox->isChecked());
 	saveConfig();
 }
 
-void MenuStateOptions::onToggleDebugKeys(Button *cb) {
+void MenuStateOptions::onToggleDebugKeys(Widget*) {
 	g_config.setMiscDebugKeys(m_debugKeysCheckBox->isChecked());
 }
 
-void MenuStateOptions::onButtonClick(Button* btn) {
+void MenuStateOptions::onButtonClick(Widget *source) {
 	CoreData &coreData= CoreData::getInstance();
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
 
-	if (btn == m_autoConfigButton) {
+	if (source == m_autoConfigButton) {
 		soundRenderer.playFx(coreData.getClickSoundA());
 		Renderer::getInstance().autoConfig();
 		saveConfig();
 		m_transitionTarget = Transition::RE_LOAD;
-	} else if (btn == m_returnButton) {
+	} else if (source == m_returnButton) {
 		soundRenderer.playFx(coreData.getClickSoundA());
 		saveConfig();
 		m_transitionTarget = Transition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
-	} else if (btn == m_openGlInfoButton) {
+	} else if (source == m_openGlInfoButton) {
 		soundRenderer.playFx(coreData.getClickSoundB());
 		m_transitionTarget = Transition::GL_INFO;
 		mainMenu->setCameraTarget(MenuStates::GFX_INFO);
@@ -407,13 +419,14 @@ void MenuStateOptions::onButtonClick(Button* btn) {
 	doFadeOut();
 }
 
-void MenuStateOptions::on3dTexturesToggle(Button* cb) {
+void MenuStateOptions::on3dTexturesToggle(Widget*) {
 	Config &config= Config::getInstance();
 	config.setRenderTextures3D(m_3dTexCheckBox->isChecked());
 // 	saveConfig();
 }
 
-void MenuStateOptions::onSpinnerValueChanged(Spinner *spinner) {
+void MenuStateOptions::onSpinnerValueChanged(Widget *source) {
+	Spinner *spinner = static_cast<Spinner*>(source);
 	if (spinner == m_minCamAltitudeSpinner) {
 		g_config.setCameraMinDistance(float(spinner->getValue()));
 	} else if (spinner == m_maxCamAltitudeSpinner) {
@@ -425,7 +438,8 @@ void MenuStateOptions::onSpinnerValueChanged(Spinner *spinner) {
 	}
 }
 
-void MenuStateOptions::onDropListSelectionChanged(ListBase* list) {
+void MenuStateOptions::onDropListSelectionChanged(Widget *source) {
+	ListBase *list = static_cast<ListBase*>(source);
 	Config &config= Config::getInstance();
 
 	if (list == m_langList) {
@@ -472,7 +486,8 @@ void MenuStateOptions::update() {
 	}
 }
 
-void MenuStateOptions::onSliderValueChanged(Slider2* slider) {
+void MenuStateOptions::onSliderValueChanged(Widget *source) {
+	Slider2 *slider = static_cast<Slider2*>(source);
 	if (slider == m_volFxSlider) {
 		g_config.setSoundVolumeFx(slider->getValue());
 	} else if (slider == m_volAmbientSlider) {

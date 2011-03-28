@@ -113,19 +113,19 @@ private:
 	//void randomiseMap();
 	//void randomiseTileset();
 
-	void onChangeFaction(PlayerSlotWidget*);
-	void onChangeControl(PlayerSlotWidget*);
-	void onChangeTeam(PlayerSlotWidget*);
-	void onChangeColour(PlayerSlotWidget*);
+	void onChangeFaction(Widget*);
+	void onChangeControl(Widget*);
+	void onChangeTeam(Widget*);
+	void onChangeColour(Widget*);
 
-	void onChangeMap(ListBase*);
-	void onChangeTileset(ListBase*);
-	void onChangeTechtree(ListBase*);
+	void onChangeMap(Widget*);
+	void onChangeTileset(Widget*);
+	void onChangeTechtree(Widget*);
 
-	void onCheckChanged(Button*);
+	void onCheckChanged(Widget*);
 
-	void onButtonClick(Button*);
-	void onDismissDialog(BasicDialog*);
+	void onButtonClick(Widget*);
+	void onDismissDialog(Widget*);
 };
 
 }}//end namespace

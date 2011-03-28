@@ -92,13 +92,13 @@ private:
 	MenuStateLoadGame(const MenuStateLoadGame &);
 	const MenuStateLoadGame &operator =(const MenuStateLoadGame &);
 
-	void onButtonClick(Button*);
-	void onSaveSelected(ListBase*);
+	void onButtonClick(Widget*);
+	void onSaveSelected(Widget*);
 
-	void onConfirmDelete(BasicDialog*);
-	void onCancelDelete(BasicDialog*);
+	void onConfirmDelete(Widget*);
+	void onCancelDelete(Widget*);
 
-	void onConfirmReturn(BasicDialog*);
+	void onConfirmReturn(Widget*);
 
 public:
 	MenuStateLoadGame(Program &program, MainMenu *mainMenu);

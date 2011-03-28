@@ -81,7 +81,7 @@ void ChatDialog::setVisible(bool vis) {
 
 }
 
-void ChatDialog::onInputEntered(TextBox*) {
+void ChatDialog::onInputEntered(Widget*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

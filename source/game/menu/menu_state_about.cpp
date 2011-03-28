@@ -185,12 +185,16 @@ public:
 
 	virtual void update() override {
 		++m_counter;
-		if (m_counter == 120 * 5) {
+		if (m_counter == 120 * 5) { // @ 5 sec.
 			m_teamLabel->startTicker();
-		} else if (m_counter == 120 * 8) {
+		} else if (m_counter == 120 * 8) { // @ 8 sec.
 			m_nameTicker->startTicker();
 			m_roleTicker->startTicker();
 		}
+	}
+
+	virtual void render() override {
+		CellStrip::render(false);
 	}
 };
 
@@ -199,25 +203,28 @@ TeamInfoWidget::TeamInfoWidget(Container *parent)
 	setWidgetStyle(WidgetType::INFO_WIDGET);
 
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
-	m_teamLabel = new TickerTape(this, Origin::CENTRE, Alignment::CENTERED);
+	m_teamLabel = new TickerTape(this, SizeHint(50), Alignment::CENTERED);
 	m_teamLabel->setCell(0);
 	m_teamLabel->setAnchors(anchors);
 	m_teamLabel->setTransitionInterval(120 * 5);
 	m_teamLabel->setTransitionFunc(TransitionFunc::LINEAR);
 	m_teamLabel->setDisplayInterval(-1);
 
-	m_nameTicker = new TickerTape(this, Origin::FROM_RIGHT, Alignment::FLUSH_LEFT);
+	m_nameTicker = new TickerTape(this, SizeHint(25), Alignment::FLUSH_LEFT);
 	m_nameTicker->setCell(1);
 	m_nameTicker->setAnchors(anchors);
 //	m_nameTicker->setOverlapTransitions(true);
+	int offset = g_metrics.getScreenW() / 4;
+	m_nameTicker->setOffsets(Vec2i(offset, 0), Vec2i(-offset, 0));
 	m_nameTicker->setTransitionFunc(TransitionFunc::LOGARITHMIC);
 	m_nameTicker->setTransitionInterval(120 * 2);
 	m_nameTicker->setDisplayInterval(120 * 2);
 
-	m_roleTicker = new TickerTape(this, Origin::FROM_LEFT, Alignment::FLUSH_RIGHT);
+	m_roleTicker = new TickerTape(this, SizeHint(50), Alignment::FLUSH_LEFT);
 	m_roleTicker->setCell(2);
 	m_roleTicker->setAnchors(anchors);
 //	m_roleTicker->setOverlapTransitions(true);
+	m_roleTicker->setOffsets(Vec2i(-offset, 0), Vec2i(offset, 0));
 	m_roleTicker->setTransitionFunc(TransitionFunc::LOGARITHMIC);
 	m_roleTicker->setTransitionInterval(120 * 2);
 	m_roleTicker->setDisplayInterval(120 * 2);
@@ -249,15 +256,14 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	infoWidget->setCell(0);
 	infoWidget->setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
 
-	CellStrip *strip = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
+	CellStrip *strip = new CellStrip(rootStrip, Orientation::HORIZONTAL, 2);
 	strip->setCell(1);
-	strip->setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
-	Anchors sidePad(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 0),
-		Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 0));
+	Anchors a(Anchor(AnchorType::RIGID, 0));
+	strip->setAnchors(a);
 
 	TeamInfoWidget *teamWidget = new TeamInfoWidget(strip);
 	teamWidget->setCell(0);
-	teamWidget->setAnchors(sidePad);
+	teamWidget->setAnchors(a);
 	teamWidget->setTeam(g_lang.get("GlestTeam"));
 	teamWidget->setMembers(getGlestTeamMemberCount(), &getGlestTeamMemberField);
 
@@ -268,8 +274,8 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	//teamWidget->setMembers(glestTeamCount, glestTeamNames, glestTeamRoles);
 
 	teamWidget = new TeamInfoWidget(strip);
-	teamWidget->setCell(2);
-	teamWidget->setAnchors(sidePad);
+	teamWidget->setCell(1);//2);
+	teamWidget->setAnchors(a);
 	teamWidget->setTeam(g_lang.get("GaeTeam"));
 	teamWidget->setMembers(getGAETeamMemberCount(), &getGAETeamMemberField);
 
@@ -277,14 +283,14 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	infoWidget->start();
 
 	int s = g_widgetConfig.getDefaultItemHeight();
-	Vec2i btnSize(s * 8, s);
+	Vec2i btnSize(s * 7, s);
 	Vec2i btnPos((g_metrics.getScreenW() - btnSize.w) / 2, g_metrics.getScreenH() - 50);
 	m_returnButton = new Button(&program, btnPos, btnSize);
 	m_returnButton->setText(g_lang.get("Return"));
 	m_returnButton->Clicked.connect(this, &MenuStateAbout::onReturn);
 }
 
-void MenuStateAbout::onReturn(Button*) {
+void MenuStateAbout::onReturn(Widget*) {
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	g_soundRenderer.playFx(g_coreData.getClickSoundB());
 	doFadeOut();

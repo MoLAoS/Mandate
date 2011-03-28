@@ -77,7 +77,7 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 	this->e = e;
 }
 
-void Program::CrashProgramState::onExit(BasicDialog*) {
+void Program::CrashProgramState::onExit(Widget*) {
 	done = true;
 }
 

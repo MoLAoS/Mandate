@@ -76,7 +76,7 @@ public:
 	int getRange() const { return m_range; }
 	int getValue() const { return m_value; }
 
-	sigslot::signal<SliderShaft*> ThumbMoved;
+	sigslot::signal<Widget*> ThumbMoved;
 
 	virtual string descType() const override { return "SliderShaft"; }
 };
@@ -90,7 +90,7 @@ private:
 	SliderShaft *m_shaft;
 
 private:
-	void onValueChanged(SliderShaft*) { ValueChanged(this); }
+	void onValueChanged(Widget*) { ValueChanged(this); }
 
 public:
 	Slider2(Container *parent, bool vert);
@@ -105,7 +105,7 @@ public:
 	int getRange() const { return m_shaft->getRange(); }
 	int getValue() const { return m_shaft->getValue(); }
 
-	sigslot::signal<Slider2*> ValueChanged;
+	sigslot::signal<Widget*> ValueChanged;
 
 	virtual string descType() const override { return "Slider"; }
 };

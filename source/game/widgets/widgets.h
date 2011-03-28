@@ -17,7 +17,7 @@
 namespace Glest { namespace Widgets {
 
 // =====================================================
-// class StaticImage
+//  class StaticImage
 // =====================================================
 
 class StaticImage : public Widget, public ImageWidget {
@@ -36,10 +36,9 @@ public:
 
 // =====================================================
 //	class Imageset
-//
-/// Images are extracted from a single source image
 // =====================================================
 
+/** Images are extracted from a single source image */
 class Imageset : public StaticImage {
 private:
 	int m_active;
@@ -75,9 +74,9 @@ public:
 
 // =====================================================
 //	class Animset
-/// 2D animation control for imagesets
 // =====================================================
 
+/** 2D animation control for imagesets */
 class Animset : public Widget {
 private:
 	Imageset *m_imageset;
@@ -115,7 +114,7 @@ public:
 };
 
 // =====================================================
-// class StaticText
+//  class StaticText
 // =====================================================
 
 class StaticText : public Widget, public TextWidget {
@@ -141,7 +140,7 @@ public:
 };
 
 // =====================================================
-// class Button
+//  class Button
 // =====================================================
 
 class Button : public Widget, public TextWidget, public MouseWidget {
@@ -168,11 +167,11 @@ public:
 	virtual string descType() const override { return "Button"; }
 
 	// Signals
-	sigslot::signal<Button*> Clicked;
+	sigslot::signal<Widget*> Clicked;
 };
 
 // =====================================================
-// class CheckBox
+//  class CheckBox
 // =====================================================
 
 class CheckBox : public Button, public ImageWidget {
@@ -199,7 +198,7 @@ public:
 };
 
 // =====================================================
-// class TextBox
+//  class TextBox
 // =====================================================
 
 class TextBox : public Widget, public MouseWidget, public KeyboardWidget, public TextWidget {
@@ -235,12 +234,12 @@ public:
 	virtual string descType() const override { return "TextBox"; }
 
 	// Signals
-	sigslot::signal<TextBox*> TextChanged;
-	sigslot::signal<TextBox*> InputEntered;
+	sigslot::signal<Widget*> TextChanged;
+	sigslot::signal<Widget*> InputEntered;
 };
 
 // =====================================================
-// class CellStrip
+//  class CellStrip
 // =====================================================
 
 class CellStrip : public Container {
@@ -272,6 +271,8 @@ protected:
 	
 	// Container override
 	virtual void addChild(Widget* child) override;
+
+	void render(bool clip);
 
 public:
 	void setSizeHint(int i, SizeHint hint) {
@@ -315,58 +316,18 @@ public:
 };
 
 // =====================================================
-// class Panel
+//  class PicturePanel
 // =====================================================
 
-class Panel : public Container {
-protected:
-	int		widgetPadding;	// padding between child widgets
-	bool	autoLayout;
-	Orientation	layoutDirection;
-	Origin	layoutOrigin;
-
-	Panel(WidgetWindow* window);
-	void layoutVertical();
-	void layoutHorizontal();
-
-public:
-	void setLayoutParams(bool autoLayout, Orientation dir, Origin origin = Origin::CENTRE);
-	
-public:
-	Panel(Container* parent);
-	Panel(Container* parent, Vec2i pos, Vec2i size);
-
-	void setAutoLayout(bool val) { autoLayout = val; }
-	void setPaddingParams(int panelPad, int widgetPad);
-
-	virtual void addChild(Widget* child) override;
-	virtual void remChild(Widget* child) override { Container::remChild(child); }
-	virtual void delChild(Widget* child) override { Container::delChild(child); }
-	virtual void clear() override { Container::clear(); }
-
-	void setLayoutOrigin(Origin lo) { layoutOrigin = lo; }
-	virtual void layoutChildren();
-
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-
-	virtual void render() override;
-	virtual string descType() const override { return "Panel"; }
-};
-
-// =====================================================
-// class PicturePanel
-// =====================================================
-
-class PicturePanel : public Panel, public ImageWidget {
+class PicturePanel : public Container, public ImageWidget {
 public:
 	PicturePanel(Container* parent)
-			: Panel(parent)
+			: Container(parent)
 			, ImageWidget(this) {
 	}
 
 	PicturePanel(Container* parent, Vec2i pos, Vec2i size) 
-			: Panel(parent, pos, size)
+			: Container(parent, pos, size)
 			, ImageWidget(this) {
 	}
 
@@ -382,7 +343,7 @@ public:
 };
 
 // =====================================================
-// class ToolTip
+//  class ToolTip
 // =====================================================
 
 class ToolTip : public StaticText {
@@ -400,55 +361,48 @@ public:
 	virtual string descType() const override { return "Tooltip"; }
 };
 
+// =====================================================
+//  class OptionWidget
+// =====================================================
+
+/** Simple container coupling (horizontally) a label (StaticText) with a user supplied 'option' widget.
+  * Splits space 40/60 (label/option) use setPercentSplit() or setAbsoluteSplt() to chnage.
+  */
 class OptionWidget : public CellStrip {
 public:
-	OptionWidget(Container *parent, const string &text)
-			: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2) {
-		setSizeHint(0, SizeHint(40));
-		setSizeHint(1, SizeHint(60));
-		Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
-			Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
-		setAnchors(dwAnchors);
-		StaticText *label = new StaticText(this);
-		label->setText(text);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		label->setCell(0);
-		label->setAnchors(Anchor(AnchorType::RIGID, 0));
-		
-	}
+	OptionWidget(Container *parent, const string &text);
+	/** set the option widget
+	  * @param widget the 'option widget' (created as a child of 'this' widget!) */
+	void setOptionWidget(Widget *widget);
+	/** set a Custom split for the label/option pair
+	  * @param lblPercent percentage of space to assign the label (<100, option widget get remainder) */
+	void setPercentSplit(int lblPercent);	
+	/** set a Custom split for the label/option pair
+	  * @param val absolute pixel size for label/option
+	  * @param label true if val is the size for the label, false for the option widget */
+	void setAbsoluteSplit(int val, bool label);
+
+	StaticText* getLabel() { return static_cast<StaticText*>(m_children[0]); }
 };
 
+// =====================================================
+//  class DoubleOption
+// =====================================================
+
+/** Container for coupling (horizontally) two labels (StaticText) with user supplied 'option' widgets,
+  * Each pair is split 40/10 (label/option) use setCustomSplit() to change.
+  */
 class DoubleOption : public CellStrip {
 public:
-	DoubleOption(Container *parent, const string &txt1, const string &txt2)
-			: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 4) {
-		setSizeHint(0, SizeHint(40));
-		setSizeHint(1, SizeHint(10));
-		setSizeHint(2, SizeHint(40));
-		setSizeHint(3, SizeHint(10));
-		Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
-			Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
-		setAnchors(dwAnchors);
-		StaticText *label = new StaticText(this);
-		label->setText(txt1);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		label->setCell(0);
-		label->setAnchors(Anchor(AnchorType::RIGID, 0));
-
-		label = new StaticText(this);
-		label->setText(txt2);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		label->setCell(2);
-		label->setAnchors(Anchor(AnchorType::RIGID, 0));
-	}
-
-	void setCustomSplit(bool first, int label) {
-		assert(label > 0 && label < 50);
-		int content = 50 - label;
-		int i = first ? 0 : 2;
-		setSizeHint(i++, SizeHint(label));
-		setSizeHint(i, SizeHint(content));
-	}
+	DoubleOption(Container *parent, const string &txt1, const string &txt2);
+	/** set one of the option widgets
+	  * @param first true if this is the first option widget, false for the second
+	  * @param widget the 'option widget' (created as a child of 'this' widget!) */
+	void setOptionWidget(bool first, Widget *widget);
+	/** set a Custom split for one of the label/option pairs
+	  * @param first true to set split for first label/option pair, false for second
+	  * @param label percentage of _total_ space to assign the label (<50, option widget get remainder) */
+	void setCustomSplit(bool first, int label);
 };
 
 

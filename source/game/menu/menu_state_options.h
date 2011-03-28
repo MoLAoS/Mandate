@@ -38,7 +38,7 @@ private:
 	int               m_increment;
 	int               m_value;
 
-	void onButtonFired(ScrollBarButton *btn);
+	void onButtonFired(Widget *btn);
 
 public:
 	Spinner(Container *parent);
@@ -52,7 +52,7 @@ public:
 
 	int getValue() const { return m_value; }
 
-	sigslot::signal<Spinner*> ValueChanged;
+	sigslot::signal<Widget*> ValueChanged;
 };
 
 
@@ -111,13 +111,13 @@ private:
 	void setTexts();
 	void buildOptionsPanel(CellStrip *container, int cell);
 
-	void onButtonClick(Button *btn);
-	void on3dTexturesToggle(Button *cb);
-	void onSliderValueChanged(Slider2* slider);
-	void onSpinnerValueChanged(Spinner *spinner);
-	void onDropListSelectionChanged(ListBase *list);
-	void onToggleDebugMode(Button*);
-	void onToggleDebugKeys(Button*);
+	void onButtonClick(Widget *source);
+	void on3dTexturesToggle(Widget *source);
+	void onSliderValueChanged(Widget *source);
+	void onSpinnerValueChanged(Widget *source);
+	void onDropListSelectionChanged(Widget *source);
+	void onToggleDebugMode(Widget*);
+	void onToggleDebugKeys(Widget*);
 
 };
 

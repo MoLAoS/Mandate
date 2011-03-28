@@ -197,7 +197,7 @@ void WidgetConfig::setOverlayTexture(const string &type, const string &name) {
 void WidgetConfig::loadFont(const string &name, const string &path, int size) {
 	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
 	font->setType(path);
-	font->setSize(size);
+	font->setSize(computeFontSize(size));
 	m_fonts.push_back(font);
 	m_namedFonts[name] = m_fonts.size() - 1;
 	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size: " << size );
@@ -254,7 +254,13 @@ void WidgetConfig::addGlestTexture(const string &name, TexPtr tex) {
 }
 
 int WidgetConfig::computeFontSize(int size) {
-	return size;
+	float sz = float(size);
+	float scale = g_config.getDisplayHeight() / 800.f;
+	sz *= scale;
+	if (sz < 10.f) {
+		sz = 10.f;
+	}
+	return int(roundf(sz));
 }
 
 void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, BorderStyle *src) {
@@ -552,7 +558,9 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 		if (luaScript.getStringField("Font", name)) {
 			style.m_fontIndex = getFontIndex(name);
 			if (style.m_fontIndex == -1) {
-				WIDGET_LOG( "\t\tFont: '" << name << "' @ ndx " << style.m_fontIndex );
+				WIDGET_LOG( "\t\tError: font named '" << name << "' not found" );
+			} else {
+				WIDGET_LOG( "\t\tFont: '" << name << "' @ ndx " << style.m_fontIndex );				
 			}
 		} else {
 			if (src) {

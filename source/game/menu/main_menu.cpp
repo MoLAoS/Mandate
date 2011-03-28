@@ -270,7 +270,7 @@ MenuState::MenuState(Program &program, MainMenu *mainMenu)
 	pos.y -= int(fontPtr->getMetrics()->getHeight());
 	m_debugText = new StaticText(&program, pos, Vec2i(0));
 	m_debugText->setText("FPS: ");
-	m_debugText->setCentre(false);
+	m_debugText->setAlignment(Alignment::FLUSH_LEFT);
 	if (!g_config.getMiscDebugMode()) {
 		m_debugText->setVisible(false);
 	}

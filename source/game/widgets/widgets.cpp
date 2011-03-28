@@ -828,9 +828,8 @@ Vec2i PicturePanel::getPrefSize() const {
 
 void ToolTip::init() {
 	setWidgetStyle(WidgetType::TOOL_TIP);
-	WidgetConfig &cfg = *m_rootWindow->getConfig();
 	TextWidget::setText("");
-	TextWidget::setCentre(false);
+	TextWidget::setAlignment(Alignment::NONE);
 	TextWidget::setTextPos(Vec2i(getBorderLeft(), getBorderTop()));
 }
 
@@ -850,6 +849,94 @@ void ToolTip::setText(const string &txt) {
 	dims += getBordersAll() + Vec2i(4);
 	setSize(dims);
 }
+
+// =====================================================
+//  class OptionWidget
+// =====================================================
+
+OptionWidget::OptionWidget(Container *parent, const string &text)
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2) {
+	setSizeHint(0, SizeHint(40));
+	setSizeHint(1, SizeHint(60));
+	Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
+		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
+	setAnchors(dwAnchors);
+	StaticText *label = new StaticText(this);
+	label->setText(text);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setCell(0);
+	label->setAnchors(Anchor(AnchorType::RIGID, 0));
+	label->setAlignment(Alignment::FLUSH_RIGHT);
+	label->borderStyle().setSizes(0, 0, 10, 0);
+}
+
+void OptionWidget::setOptionWidget(Widget *widget) {
+	widget->setCell(1);
+	widget->setAnchors(Anchors::getFillAnchors());
+}
+
+void OptionWidget::setPercentSplit(int lblPercent) {
+	setSizeHint(0, SizeHint(lblPercent));
+	setSizeHint(1, SizeHint(100 - lblPercent));
+}
+
+void OptionWidget::setAbsoluteSplit(int val, bool label) {
+	if (label) {
+		setSizeHint(0, SizeHint(0, val));
+		setSizeHint(1, SizeHint(-1));
+	} else {
+		setSizeHint(0, SizeHint(-1));
+		setSizeHint(1, SizeHint(0, val));
+	}
+}
+
+// =====================================================
+//  class DoubleOption
+// =====================================================
+
+DoubleOption::DoubleOption(Container *parent, const string &txt1, const string &txt2)
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 4) {
+	setSizeHint(0, SizeHint(40));
+	setSizeHint(1, SizeHint(10));
+	setSizeHint(2, SizeHint(40));
+	setSizeHint(3, SizeHint(10));
+	Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
+		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
+	setAnchors(dwAnchors);
+	StaticText *label = new StaticText(this);
+	label->setText(txt1);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setCell(0);
+	label->setAnchors(Anchor(AnchorType::RIGID, 0));
+	label->setAlignment(Alignment::FLUSH_RIGHT);
+	label->borderStyle().setSizes(0, 0, 10, 0);
+
+	label = new StaticText(this);
+	label->setText(txt2);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	label->setCell(2);
+	label->setAnchors(Anchor(AnchorType::RIGID, 0));
+	label->setAlignment(Alignment::FLUSH_RIGHT);
+	label->borderStyle().setSizes(0, 0, 10, 0);
+}
+
+void DoubleOption::setOptionWidget(bool first, Widget *widget) {
+	if (first) {
+		widget->setCell(1);
+	} else {
+		widget->setCell(3);
+	}
+	widget->setAnchors(Anchors::getFillAnchors());
+}
+
+void DoubleOption::setCustomSplit(bool first, int label) {
+	assert(label > 0 && label < 50);
+	int content = 50 - label;
+	int i = first ? 0 : 2;
+	setSizeHint(i++, SizeHint(label));
+	setSizeHint(i, SizeHint(content));
+}
+
 
 }}
 

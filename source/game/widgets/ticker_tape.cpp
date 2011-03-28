@@ -12,10 +12,12 @@
 
 namespace Glest { namespace Widgets {
 
-TickerTape::TickerTape(Container *parent, Origin origin, Alignment alignment)
+TickerTape::TickerTape(Container *parent, SizeHint anchor, Alignment alignment)
 		: StaticText(parent)
-		, m_origin(origin)
+		, m_anchor(anchor)
 		, m_align(alignment)
+		, m_startOffset(0.f)
+		, m_endOffset(0.f)
 		, m_transFunc(TransitionFunc::LINEAR)
 		, m_alternateOrigin(false)
 		, m_overlapTransitions(false)
@@ -24,69 +26,55 @@ TickerTape::TickerTape(Container *parent, Origin origin, Alignment alignment)
 		, m_actionCounter(0)
 		/*, m_currentIndex(-1)*/ {
 	setWidgetStyle(WidgetType::TICKER_TAPE);
+
+}
+
+inline Vec2f textDims(Widget *widget, const string &str) {
+	return widget->getFont()->getMetrics()->getTextDiminsions(str);
 }
 
 void TickerTape::setPositions(TextAction &action) {
-	if (m_align == Alignment::CENTERED) {
-		TextWidget::centreText(action.m_targetIndex);
+	Vec2i txtDims = Vec2i(textDims(this, getText(action.m_targetIndex)));
+	Vec2i widgetSize = getSize() - getBordersAll();
+	int yPos = (widgetSize.h - txtDims.h) / 2;
+	int aPos;
+	if (m_anchor.isPercentage()) {
+		if (m_anchor.getPercentage() == -1) {
+			aPos = widgetSize.w;
+		} else {
+			aPos = int(m_anchor.getPercentage() / 100.f * widgetSize.w);
+		}
 	} else {
-		const FontMetrics *fm = getFont(m_textStyle.m_fontIndex)->getMetrics();
-		Vec2i dims = Vec2i(fm->getTextDiminsions(getText(action.m_targetIndex)));
-		Vec2i size = getSize() - getBordersAll();
-		switch (m_align) {
-			case Alignment::JUSTIFIED:
-				assert(false);
-				break;
-			case Alignment::FLUSH_LEFT:
-				TextWidget::setTextPos(Vec2i(getBorderLeft(), (size.h - dims.h) / 2), action.m_targetIndex);
-				break;
-			case Alignment::FLUSH_RIGHT:
-				Vec2i pos(size.w - getBorderRight() - dims.w, (size.h - dims.h) / 2);
-				TextWidget::setTextPos(pos, action.m_targetIndex);
-				break;
-		}
+		aPos = m_anchor.getAbsolute();
 	}
-	Vec2i p = TextWidget::getTextPos(action.m_targetIndex);
-	Vec2f targetPos = Vec2f(p);
-
-	Origin origin = m_origin;
+	if (m_align == Alignment::CENTERED) {
+		aPos -= txtDims.w / 2;
+	} else if (m_align == Alignment::FLUSH_LEFT) {
+		// nop
+	} else if (m_align == Alignment::FLUSH_RIGHT) {
+		aPos -= txtDims.w;
+	} else {
+		assert(false);
+	}
+	Vec2i destPos(getBorderLeft() + aPos, getBorderTop() + yPos);
+	TextWidget::setTextPos(destPos, action.m_targetIndex);
+	Vec2f targetPos = Vec2f(destPos);	
+	Vec2f startOffset, endOffset;
 	if (m_alternateOrigin && action.m_actionNumber % 2 == 1) {
-		switch (m_origin) {
-			case Origin::FROM_TOP: origin = Origin::FROM_BOTTOM; break;
-			case Origin::FROM_BOTTOM: origin = Origin::FROM_TOP; break;
-			case Origin::FROM_LEFT: origin = Origin::FROM_RIGHT; break;
-			case Origin::FROM_RIGHT: origin = Origin::FROM_LEFT; break;
-			default: assert(false);
-		}
+		startOffset = m_endOffset;
+		endOffset = m_startOffset;
+	} else {
+		startOffset = m_startOffset;
+		endOffset = m_endOffset;
 	}
 	if (action.m_phaseNumber == 0) {
+		action.m_startPos = targetPos + startOffset;
 		action.m_destPos = targetPos;
-		if (origin == Origin::FROM_TOP) {
-			action.m_startPos = targetPos + Vec2f(0.f, float(-getHeight()));
-		} else if (origin == Origin::FROM_BOTTOM) {
-			action.m_startPos = targetPos + Vec2f(0.f, float(getHeight()));
-		} else if (origin == Origin::CENTRE) {
-			action.m_startPos = targetPos;
-		} else if (origin == Origin::FROM_LEFT) {
-			action.m_startPos = targetPos + Vec2f(float(-getWidth()), 0.f);
-		} else if (origin == Origin::FROM_RIGHT) {
-			action.m_startPos = targetPos + Vec2f(float(getWidth()), 0.f);
-		}
 	} else if (action.m_phaseNumber == 1) {
 		action.m_startPos = action.m_destPos = targetPos;
 	} else if (action.m_phaseNumber == 2) {
 		action.m_startPos = targetPos;
-		if (origin == Origin::FROM_TOP) {
-			action.m_destPos = targetPos + Vec2f(0.f, float(getHeight()));
-		} else if (origin == Origin::FROM_BOTTOM) {
-			action.m_destPos = targetPos + Vec2f(0.f, float(-getHeight()));
-		} else if (origin == Origin::CENTRE) {
-			action.m_destPos = targetPos;
-		} else if (origin == Origin::FROM_LEFT) {
-			action.m_destPos = targetPos + Vec2f(float(getWidth()), 0.f);
-		} else if (origin == Origin::FROM_RIGHT) {
-			action.m_destPos = targetPos + Vec2f(float(-getWidth()), 0.f);
-		}
+		action.m_destPos = targetPos + endOffset;
 	}
 	setTextPos(Vec2i(action.m_startPos), action.m_targetIndex);
 	setTextFade(action.m_startAlpha, action.m_targetIndex);

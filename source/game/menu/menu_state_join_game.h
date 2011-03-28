@@ -80,7 +80,7 @@ private:
 
 private:
 	CellStrip        *m_connectPanel;
-	Panel            *m_gameSetupPanel;
+	//Panel            *m_gameSetupPanel;
 	MessageDialog    *m_messageBox;
 
 	DropList         *m_historyList;
@@ -99,16 +99,16 @@ private:
 	void buildConnectPanel();
 	void buildGameSetupPanel();
 
-	void onReturn(Button*);
-	void onConnect(Button*);
-	void onSearchForGame(Button*);
+	void onReturn(Widget*);
+	void onConnect(Widget*);
+	void onSearchForGame(Widget*);
 
-	void onServerSelected(ListBase*);
-	void onTextModified(TextBox*);
+	void onServerSelected(Widget*);
+	void onTextModified(Widget*);
 
-	void onCancelConnect(BasicDialog*);
-	void onDisconnect(BasicDialog*);
-	void onCancelSearch(BasicDialog*);
+	void onCancelConnect(Widget*);
+	void onDisconnect(Widget*);
+	void onCancelSearch(Widget*);
 
 	bool connected;
 	int playerIndex;

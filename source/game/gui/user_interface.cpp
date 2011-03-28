@@ -191,6 +191,9 @@ void UserInterface::init() {
 		m_luaConsole->setSize(Vec2i(500, 300));
 		m_luaConsole->setVisible(false);
 		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
+		m_luaConsole->Close.connect(this, &UserInterface::onCloseLuaConsole);
+		//m_luaConsole->RollUp.connect(this, &UserInterface::onRollUpLuaConsole);
+		//m_luaConsole->RollDown.connect(this, &UserInterface::onRollDownLuaConsole);
 	}
 }
 
@@ -1454,7 +1457,7 @@ void UserInterface::computeBuildPositions(const Vec2i &end) {
 	}
 }
 
-void UserInterface::onCloseLuaConsole(BasicDialog*) {
+void UserInterface::onCloseLuaConsole(Widget*) {
 	m_luaConsole->setVisible(false);
 }
 

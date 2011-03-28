@@ -49,11 +49,11 @@ private:
     ScenarioInfo scenarioInfo;
 
 
-	void onButtonClick(Button*);
-	void onCategoryChanged(ListBase*);
-	void onScenarioChanged(ListBase*);
+	void onButtonClick(Widget*);
+	void onCategoryChanged(Widget*);
+	void onScenarioChanged(Widget*);
 
-	void onConfirmReturn(BasicDialog*);
+	void onConfirmReturn(Widget*);
 
 	void updateConfig();
 

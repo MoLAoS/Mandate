@@ -37,7 +37,7 @@ public:
 };
 
 class ScrollText : public CellStrip, public TextWidget, public sigslot::has_slots {
-private:
+protected:
 	ScrollBar  *m_scrollBar;
 	StaticText *m_staticText;
 	string      m_origString;
@@ -112,7 +112,7 @@ private:
 	void setSizeHints();
 
 	// slots
-	void onButtonClicked(Button *btn);
+	void onButtonClicked(Widget *btn);
 
 public:
 	TitleBar(Container* parent, ButtonFlags flags);
@@ -126,14 +126,14 @@ public:
 	virtual string descType() const override { return "TitleBar"; }
 
 	// signals
-	sigslot::signal<TitleBar*> RollUp;
-	sigslot::signal<TitleBar*> RollDown;
-	sigslot::signal<TitleBar*> Expand;
-	sigslot::signal<TitleBar*> Shrink;
-	sigslot::signal<TitleBar*> Close;
+	sigslot::signal<Widget*> RollUp;
+	sigslot::signal<Widget*> RollDown;
+	sigslot::signal<Widget*> Expand;
+	sigslot::signal<Widget*> Shrink;
+	sigslot::signal<Widget*> Close;
 };
 
-class Frame : public CellStrip, public MouseWidget {
+class Frame : public CellStrip, public MouseWidget, public sigslot::has_slots {
 protected:
 	TitleBar*   m_titleBar;
 	bool        m_pressed;
@@ -153,9 +153,23 @@ public:
 	bool mouseDown(MouseButton btn, Vec2i pos) override;
 	bool mouseMove(Vec2i pos) override;
 	bool mouseUp(MouseButton btn, Vec2i pos) override;
+
+	// signals
+	sigslot::signal<Widget*>  Close;
+	sigslot::signal<Widget*>  RollUp;
+	sigslot::signal<Widget*>  RollDown;
+	sigslot::signal<Widget*>  Shrink;
+	sigslot::signal<Widget*>  Expand;
+
+private:
+	void onClose(Widget*)    { Close(this);    }
+	void onRollUp(Widget*)   { RollUp(this);   }
+	void onRollDown(Widget*) { RollDown(this); }
+	void onShrink(Widget*)   { Shrink(this);   }
+	void onExpand(Widget*)   { Expand(this);   }
 };
 
-class BasicDialog : public Frame, public sigslot::has_slots {
+class BasicDialog : public Frame {
 private:
 	Widget	  *m_content;
 	Button	  *m_button1,
@@ -165,8 +179,10 @@ private:
 
 protected:
 	BasicDialog(WidgetWindow*);
+	BasicDialog(WidgetWindow*, ButtonFlags btnFlags);
 	BasicDialog(Container*);//, Vec2i pos, Vec2i sz);
-	void onButtonClicked(Button*);
+	BasicDialog(Container*, ButtonFlags btnFlags);
+	void onButtonClicked(Widget*);
 
 	void init();
 
@@ -177,9 +193,10 @@ protected:
 public:
 	void setButtonText(const string &btn1Text, const string &btn2Text = "");
 
-	sigslot::signal<BasicDialog*>	Button1Clicked,
-									Button2Clicked,
-									Escaped;
+	// signals
+	sigslot::signal<Widget*>  Button1Clicked;
+	sigslot::signal<Widget*>  Button2Clicked;
+	sigslot::signal<Widget*>  Escaped;
 
 	virtual string descType() const override { return "BasicDialog"; }
 };
@@ -213,7 +230,7 @@ public:
 //	InputBox(Container *parent, Vec2i pos, Vec2i size);
 
 	virtual bool keyDown(Key key) override;
-	sigslot::signal<InputBox*> Escaped;
+	sigslot::signal<Widget*> Escaped;
 	virtual string descType() const override { return "InputBox"; }
 };
 
@@ -225,13 +242,12 @@ class InputDialog : public BasicDialog {
 private:
 	StaticText*	m_label;
 	InputBox*	m_inputBox;
-	Panel*		m_panel;
 
 private:
 	InputDialog(WidgetWindow*);
 
-	void onInputEntered(TextBox*);
-	void onEscaped(InputBox*) { Escaped(this); }
+	void onInputEntered(Widget*);
+	void onEscaped(Widget*) { Escaped(this); }
 
 public:
 	static InputDialog* showDialog(Vec2i pos, Vec2i size, const string &title,

@@ -75,7 +75,7 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	btnPanel->setAnchors(fillAnchors);
 
 	// create buttons
-	Vec2i sz(itemHeight * 8, itemHeight);
+	Vec2i sz(itemHeight * 7, itemHeight);
 	Button* l_button = new Button(btnPanel, Vec2i(0), sz);
 	l_button->setCell(0);
 	l_button->setAnchors(centreAnchors);
@@ -83,7 +83,7 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	l_button->Clicked.connect(this, &MenuStateGraphicInfo::onButtonClick);
 }
 
-void MenuStateGraphicInfo::onButtonClick(Button* btn) {
+void MenuStateGraphicInfo::onButtonClick(Widget*) {
 	mainMenu->setCameraTarget(MenuStates::OPTIONS);
 	doFadeOut();
 }

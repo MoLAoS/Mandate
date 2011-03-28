@@ -102,17 +102,17 @@ public:
 		m_header->setCell(0);
 		m_header->setAnchors(anchors);
 		m_header->setText("");
-		m_header->setCentre(false);
+		m_header->setAlignment(Alignment::FLUSH_LEFT);
 		m_tip = new TipWidget(this);
 		m_tip->setCell(1);
 		m_tip->setAnchors(anchors);
 		m_tip->setText("");
-		m_tip->setCentre(false);
+		m_tip->setAlignment(Alignment::NONE);
 		m_code = new CodeWidget(this);
 		m_code->setCell(2);
 		m_code->setAnchors(anchors);
 		m_code->setText("");
-		m_code->setCentre(false);
+		m_code->setAlignment(Alignment::NONE);
 		int h = int(getFont(m_header->textStyle().m_fontIndex)->getMetrics()->getHeight() + 12);
 		setSizeHint(0, SizeHint(0, h));
 	}
@@ -193,10 +193,11 @@ void populateMiscStrip1(CellStrip *parent, int cell, std::vector<string> &fruit)
 	topStrip->addCells(3);
 //	topStrip->getCell(0)->setSizeHint(SizeHint(-1, 200));
 
-	TickerTape *tickerTape = new TickerTape(topStrip, Origin::FROM_LEFT, Alignment::FLUSH_RIGHT);
+	TickerTape *tickerTape = new TickerTape(topStrip, SizeHint(80), Alignment::FLUSH_RIGHT);
 	tickerTape->setCell(0);
 	tickerTape->addItems(fruit);
 	tickerTape->setAnchors(tickerAnchors);
+	tickerTape->setOffsets(Vec2i(-200, 0), Vec2i(200, 0));
 	tickerTape->setTransitionInterval(120);
 	tickerTape->setDisplayInterval(120);
 	tickerTape->setTransitionFunc(TransitionFunc::LOGARITHMIC);
@@ -315,7 +316,7 @@ void populateMiscStrip2(CellStrip *parent, int cell, TestPane *tp) {
 	btn->setCell(0);
 	btn->setAnchors(btnAnchors);
 	btn->setText("Dialog");
-	btn->Clicked.connect(tp, &TestPane::onDialog);
+	btn->Clicked.connect(tp, &TestPane::onDoDialog);
 
 	btn = new Button(buttonStrip);
 	btn->setCell(1);
@@ -377,30 +378,27 @@ void TestPane::update() {
 	}
 }
 
-void TestPane::onContinue(Button*) {
+void TestPane::onContinue(Widget*) {
+	if (m_messageDialog) {
+		g_widgetWindow.removeFloatingWidget(m_messageDialog);
+		m_messageDialog = 0;
+	}
 	delete m_action;
 	m_action = 0;
 	m_done = true;
 }
 
-void TestPane::onContinue2(BasicDialog*) {
-	g_widgetWindow.removeFloatingWidget(m_messageDialog);
-	m_messageDialog = 0;
-	delete m_action;
-	m_action = 0;
-	m_done = true;
-}
-
-void TestPane::onDialog(Button*) {
+void TestPane::onDoDialog(Widget*) {
 	Vec2i size(500, 400);
 	Vec2i pos = (g_metrics.getScreenDims() - size) / 2;
-	m_messageDialog = MessageDialog::showDialog(pos,size, "Title Text", "Message text...\nmore msg...\netc",
-			"Continue", "Cancel");
-	m_messageDialog->Button1Clicked.connect(this, &TestPane::onContinue2);
+	m_messageDialog = MessageDialog::showDialog(pos,size, "Test MessageBox",
+		"Message text goes here.\n\nSelect Continue to proceed to game.", "Continue", "Cancel");
+	m_messageDialog->Button1Clicked.connect(this, &TestPane::onContinue);
 	m_messageDialog->Button2Clicked.connect(this, &TestPane::onDismissDialog);
+	m_messageDialog->Close.connect(this, &TestPane::onDismissDialog);
 	m_messageDialog->Escaped.connect(this, &TestPane::onDismissDialog);
 
-	m_action = new WidgetAction(40, m_messageDialog);
+	m_action = new WidgetAction(60, m_messageDialog);
 	Vec2f start(pos);
 	start.x -= g_metrics.getScreenW();
 	m_action->setPosTransition(start, Vec2f(pos), TransitionFunc::LOGARITHMIC);
@@ -408,13 +406,16 @@ void TestPane::onDialog(Button*) {
 	m_action->update();
 }
 
-void TestPane::onDismissDialog(BasicDialog *d) {
-	assert(m_action == 0);
-	m_action = new WidgetAction(40, m_messageDialog);
+void TestPane::onDismissDialog(Widget *d) {
+	if (m_action) {
+		m_action->reset();
+	} else {
+		m_action = new WidgetAction(40, m_messageDialog);
+	}
 	Vec2f startPos(m_messageDialog->getPos());
 	Vec2f endPos(startPos + Vec2f(0.f, 150.f));
 	m_action->setPosTransition(startPos, endPos, TransitionFunc::EXPONENTIAL);
-	m_action->setAlphaTransition(1.f, 0.f, TransitionFunc::LINEAR);
+	m_action->setAlphaTransition(m_messageDialog->getFade(), 0.f, TransitionFunc::LINEAR);
 	m_removingDialog = true;
 }
 

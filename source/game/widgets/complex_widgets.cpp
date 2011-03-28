@@ -84,7 +84,8 @@ void ListBox::init() {
 	m_scrollBar->ThumbMoved.connect(this, &ListBox::onScroll);
 }
 
-void ListBox::onSelected(ListBoxItem* item) {
+void ListBox::onSelected(Widget* source) {
+	ListBoxItem *item = static_cast<ListBoxItem*>(source);
 	if (m_selectedItem != item) {
 		if (m_selectedItem) {
 			m_selectedItem->setSelected(false);
@@ -502,19 +503,20 @@ void DropList::expandList() {
 	ListExpanded(this);
 }
 
-void DropList::onBoxClicked(ListBoxItem*) {
+void DropList::onBoxClicked(Widget*) {
 	if (isEnabled()) {
 		expandList();
 	}
 }
 
-void DropList::onExpandList(Button*) {
+void DropList::onExpandList(Widget*) {
 	if (isEnabled()) {
 		expandList();
 	}
 }
 
-void DropList::onSelectionMade(ListBase* lb) {
+void DropList::onSelectionMade(Widget *source) {
+	ListBase *lb = static_cast<ListBase*>(source);
 	assert(floatingList == lb);
 	setSelected(lb->getSelectedIndex());
 	floatingList->Destroyed.disconnect(this);
@@ -522,7 +524,8 @@ void DropList::onSelectionMade(ListBase* lb) {
 	getRootWindow()->removeFloatingWidget(lb);
 }
 
-void DropList::onSameSelected(ListBase* lb) {
+void DropList::onSameSelected(Widget *source) {
+	ListBase *lb = static_cast<ListBase*>(source);
 	assert(floatingList == lb);
 	floatingList->Destroyed.disconnect(this);
 	onListDisposed(lb);

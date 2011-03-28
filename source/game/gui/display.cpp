@@ -78,7 +78,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
 		x += iconSize;
 	}
-	setCentre(false);
+	setAlignment(Alignment::NONE);
 	setText(""); // (0) unit title
 	addText(""); // (1) unit text
 	addText(""); // (2) queued orders text (to display below progress bar if present)

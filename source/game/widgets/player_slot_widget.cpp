@@ -98,7 +98,7 @@ void ColourPicker::setSize(const Vec2i &sz) {
 	CellStrip::setSize(sz);
 }
 
-void ColourPicker::onExpand(Button*) {
+void ColourPicker::onExpand(Widget*) {
 	Anchors anchors = Anchors::getFillAnchors();
 	Vec2i bdims = g_widgetConfig.getBorderStyle(WidgetType::COLOUR_PICKER).getBorderDims();
 	Vec2i size(4 * 32 + bdims.w, 4 * 32 + bdims.h);
@@ -137,9 +137,9 @@ void ColourPicker::setColour(int index) {
 	}
 }
 
-void ColourPicker::onSelect(Button *b) {
+void ColourPicker::onSelect(Widget *source) {
 	WidgetWindow::getInstance()->removeFloatingWidget(m_dropDownPanel);
-	ColourButton *btn = static_cast<ColourButton*>(b);
+	ColourButton *btn = static_cast<ColourButton*>(source);
 	int i=0;
 	for ( ; i < GameConstants::maxColours; ++i) {
 		if (m_colourButtons[i] == btn) {

@@ -63,14 +63,14 @@ Intro::Intro(Program &program)
 		Vec2i sz = lblAdvanced->getTextDimensions() + Vec2i(10, 5);
 		lblAdvanced->setPos(Vec2i(255 - sz.w, 256 - 60 - sz.h));
 		lblAdvanced->setSize(sz);
-		lblAdvanced->centreText();
+		lblAdvanced->alignText();
 
 		lblEngine = new Widgets::StaticText(logoPanel);
 		lblEngine->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
 		lblEngine->setText(lang.get("AdvEng2"));
 		lblEngine->setPos(Vec2i(285, 256 - 60 - sz.h));
 		lblEngine->setSize(lblEngine->getTextDimensions() + Vec2i(10,5));
-		lblEngine->centreText();
+		lblEngine->alignText();
 
 		// Version label
 		pos = Vec2i(285 + lblEngine->getSize().x, 256 - 60 - sz.h - 2);
@@ -79,7 +79,7 @@ Intro::Intro(Program &program)
 		lblVersion->setText(gaeVersionString);
 		lblVersion->setPos(pos);
 		lblVersion->setSize(lblVersion->getTextDimensions() + Vec2i(10,5));
-		lblVersion->centreText();
+		lblVersion->alignText();
 	} else {
 		lblEngine = new Widgets::StaticText(&program);
 		Vec2i pos, size;
@@ -125,7 +125,7 @@ void Intro::update(){
 		lblWebsite->setText("www.glest.org");
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));
 		lblWebsite->setPos(metrics.getScreenDims() / 2 - lblWebsite->getSize() / 2);
-		lblWebsite->centreText();
+		lblWebsite->alignText();
 		program.setFade(0.f);
 	} else if (timer <= fadeTime * 4) {
 		float fade = (timer - fadeTime * 3) / float(fadeTime);

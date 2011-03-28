@@ -49,6 +49,7 @@ public:
 //	LuaInputBox(LuaConsole *console, Container *parent, Vec2i pos, Vec2i size);
 
 	virtual bool keyDown(Key key);
+	virtual void setStyle() override { setWidgetStyle(WidgetType::CODE_EDIT); }
 	virtual string descType() const override { return "LuaInputBox"; }
 };
 
@@ -66,7 +67,9 @@ private:
 	public:
 		CodeBox(Container *parent) : ScrollText(parent) {
 			setWidgetStyle(WidgetType::CODE_VIEW);
+			m_staticText->textStyle() = textStyle();
 		}
+		virtual void setStyle() override { setWidgetStyle(WidgetType::CODE_VIEW); }
 	};
 
 private:
@@ -76,7 +79,7 @@ private:
 	LuaInputBox* m_inputBox;
 	CodeBox*  m_outputBox;
 
-	void onLineEntered(TextBox*);
+	void onLineEntered(Widget*);
 
 public:
 	LuaConsole(UserInterface *ui, Container* parent);

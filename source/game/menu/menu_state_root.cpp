@@ -74,7 +74,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		int ty = int(60.f / 256.f * logoHeight);
 		label->setPos(Vec2i(tx - sz.w, logoHeight - ty - sz.h));
 		label->setSize(sz);
-		label->centreText();
+		label->alignText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		label = new Widgets::StaticText(pp);
@@ -83,7 +83,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		tx = int(285.f / 512.f * logoWidth);
 		label->setPos(Vec2i(tx, logoHeight - ty - sz.h));
 		label->setSize(label->getTextDimensions() + Vec2i(10,5));
-		label->centreText();
+		label->alignText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		int advEng2Len = label->getTextDimensions().w;
@@ -98,7 +98,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setPos(pos);
 		label->setSize(sz);
-		label->centreText();
+		label->alignText();
 	}
 
 	// Buttons Panel
@@ -188,11 +188,11 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }
 
-void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
+void MenuStateRoot::onButtonClick(Widget *source) {
 	// which button ?
 	foreach_enum (RootMenuItem, i) {
 		m_buttons[i]->setEnabled(false);
-		if (btn == m_buttons[i]) {
+		if (source == m_buttons[i]) {
 			m_selectedItem = i;
 		}
 	}

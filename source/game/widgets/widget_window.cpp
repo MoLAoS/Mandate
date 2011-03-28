@@ -419,8 +419,16 @@ void WidgetWindow::update() {
 	addUpdateQueue.clear();
 
 	//if (mouseAnimations) {
-	//	mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011
+	//	mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011. Yes?
 	//}
+
+	// check mouse over stack 10 times a second, to handle movement
+	// of widgets in response to updates
+	static int updateCount = 0;
+	++updateCount;
+	if (updateCount % (GameConstants::guiUpdatesPerSec / 10) == 0) {
+		eventMouseMove(mousePos.x, mousePos.y, input.getMouseState());
+	}
 }
 
 void WidgetWindow::destroyFloater() {

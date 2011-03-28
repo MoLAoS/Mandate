@@ -88,7 +88,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	btnPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 1.f, 0.f)));
 	btnPanel->borderStyle().setSizes(2);
 
-	Vec2i sz(itemHeight * 8, itemHeight);
+	Vec2i sz(itemHeight * 7, itemHeight);
 
 	// create buttons
 	m_returnButton = new Button(btnPanel, Vec2i(0), sz);
@@ -140,15 +140,15 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_categoryList->setSelected(match);
 }
 
-void MenuStateScenario::onConfirmReturn(BasicDialog*) {
+void MenuStateScenario::onConfirmReturn(Widget*) {
 	m_targetTansition = Transition::RETURN;
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	doFadeOut();
 }
 
-void MenuStateScenario::onButtonClick(Button* btn) {
-	if (btn == m_returnButton) {
+void MenuStateScenario::onButtonClick(Widget* source) {
+	if (source == m_returnButton) {
 		m_targetTansition = Transition::RETURN;
 		g_soundRenderer.playFx(g_coreData.getClickSoundA());
 		mainMenu->setCameraTarget(MenuStates::ROOT);
@@ -185,12 +185,12 @@ void MenuStateScenario::setScenario(int i) {
 	m_scenarioList->setSelected(i);
 }
 
-void MenuStateScenario::onCategoryChanged(ListBase*) {
+void MenuStateScenario::onCategoryChanged(Widget*) {
 	updateScenarioList(categories[m_categoryList->getSelectedIndex()]);
 	updateConfig();
 }
 
-void MenuStateScenario::onScenarioChanged(ListBase*) {
+void MenuStateScenario::onScenarioChanged(Widget*) {
 	//update scenario info
 	Scenario::loadScenarioInfo(scenarioFiles[m_scenarioList->getSelectedIndex()],
 					categories[m_categoryList->getSelectedIndex()], &scenarioInfo);

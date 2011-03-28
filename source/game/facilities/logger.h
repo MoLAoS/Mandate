@@ -89,27 +89,6 @@ public:
 
 const int logLineCount = 15;
 
-//class LogWidget : public CellStrip {
-//private:
-//	StaticText   *m_header;
-//	StaticText   *m_logLines[logLineCount];
-//
-//public:
-//	LogWidget(Container *parent);
-//
-//	void setState(const string &state);
-//	void clear();
-//
-//	template<typename InIt> addLines(InIt start, InIt end) {
-//		InIt &c = start;
-//		int i = 0;
-//		while (c != end) {
-//			RUNTIME_CHECK(i < logLineCount);
-//			m_logLines[i++]->setText(*c++);
-//		}
-//	}
-//};
-
 // =====================================================
 // class ProgramLog
 //
@@ -132,8 +111,6 @@ private:
 	bool m_progressBar;
 	int m_progress;
 	Shared::Graphics::Texture2D *m_backgroundTexture;
-
-	//LogWidget  *m_widget;
 
 public:
 	ProgramLog();

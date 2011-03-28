@@ -17,6 +17,10 @@ namespace Glest { namespace Widgets {
 using Sim::ControlType;
 using Global::Lang;
 
+// =====================================================
+// class ColourButton
+// =====================================================
+
 class ColourButton : public Button {
 private:
 	Colour	m_colourBase, m_colourOutline;
@@ -34,42 +38,41 @@ public:
 	virtual string descType() const override { return "ColourButton"; }
 };
 
-class FloatingPanel : public Panel {
+class FloatingStrip : public CellStrip {
 public:
-	FloatingPanel(WidgetWindow *window) : Panel(window) {
-		setStyle(g_widgetConfig.getWidgetStyle(WidgetType::LIST_BOX));
-		m_backgroundStyle.setNone();
+	FloatingStrip(WidgetWindow *window, Orientation orient, Origin origin, int cells)
+			: CellStrip(window, orient, origin, cells) {
+		setWidgetStyle(WidgetType::COLOUR_PICKER);
 	}
-
-	virtual string descType() const override { return "FloatingPanel"; }
 };
+// =====================================================
+// class ColourPicker
+// =====================================================
 
-class ColourPicker : public Panel, public sigslot::has_slots {
+class ColourPicker : public CellStrip, public sigslot::has_slots {
 private:
-	ColourButton*	m_showingItem;
-	Button*			m_button;
-
-	FloatingPanel*	m_dropDownPanel;
-	ColourButton*	m_colourButtons[GameConstants::maxColours];
-
-	int				m_selectedIndex;
+	ColourButton    *m_showingItem;
+	Button          *m_button;
+	FloatingStrip   *m_dropDownPanel;
+	ColourButton    *m_colourButtons[GameConstants::maxColours];
+	int              m_selectedIndex;
 
 private:
-	void onExpand(Button*);
-	void onSelect(Button*);
+	void onExpand(Widget*);
+	void onSelect(Widget*);
 
 	void init();
 
 public:
 	ColourPicker(Container *parent);
-	ColourPicker(Container *parent, Vec2i pos, Vec2i size);
+	//ColourPicker(Container *parent, Vec2i pos, Vec2i size);
 
 	virtual void setSize(const Vec2i &sz);
 
 	void setColour(int index);
 	int getColourIndex()	{ return m_selectedIndex; }
 
-	sigslot::signal<ColourPicker*> ColourChanged;
+	sigslot::signal<Widget*> ColourChanged;
 
 	virtual string descType() const override { return "ColourPicker"; }
 };
@@ -132,17 +135,17 @@ public:
 	int getSelectedTeamIndex() const { return m_teamList->getSelectedIndex(); }
 	int getSelectedColourIndex() const { return m_colourPicker->getColourIndex(); }
 
-	sigslot::signal<PlayerSlotWidget*> ControlChanged;
-	sigslot::signal<PlayerSlotWidget*> FactionChanged;
-	sigslot::signal<PlayerSlotWidget*> TeamChanged;
-	sigslot::signal<PlayerSlotWidget*> ColourChanged;
+	sigslot::signal<Widget*> ControlChanged;
+	sigslot::signal<Widget*> FactionChanged;
+	sigslot::signal<Widget*> TeamChanged;
+	sigslot::signal<Widget*> ColourChanged;
 
 private:
 	void disableSlot();
 	void enableSlot();
 
 private: // re-route signals from DropLists
-	void onControlChanged(ListBase*) {
+	void onControlChanged(Widget*) {
 		ControlChanged(this);
 		if (m_controlList->getSelectedIndex() == ControlType::CLOSED) {
 			m_factionList->setEnabled(false);
@@ -154,9 +157,9 @@ private: // re-route signals from DropLists
 			m_colourPicker->setEnabled(true);
 		}
 	}
-	void onFactionChanged(ListBase*) { FactionChanged(this); }
-	void onTeamChanged(ListBase*)	 { TeamChanged(this);	 }
-	void onColourChanged(ColourPicker*)	 { ColourChanged(this);	 }
+	void onFactionChanged(Widget*) { FactionChanged(this); }
+	void onTeamChanged(Widget*)	   { TeamChanged(this);	   }
+	void onColourChanged(Widget*)  { ColourChanged(this);  }
 
 	virtual string descType() const override { return "PlayerSlotWidget"; }
 };

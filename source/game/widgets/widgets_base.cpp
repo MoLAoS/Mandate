@@ -946,7 +946,7 @@ TextRenderInfo::TextRenderInfo(const string &txt, int font, int colour, const Ve
 
 TextWidget::TextWidget(Widget* me)
 		: me(me)
-		, m_centreText(true)
+		, m_align(Alignment::CENTERED)
 		, m_batchRender(false)
 		, m_textRenderer(0) {
 	me->m_textWidget = this;
@@ -974,23 +974,35 @@ void TextWidget::setTextFade(float alpha, int ndx) {
 	m_texts[ndx].m_fade = alpha;
 }
 
-void TextWidget::centreText(int ndx) {
-	if (m_texts.empty()) {
+void TextWidget::alignText(int ndx) {
+	if (m_texts.empty() || m_align == Alignment::NONE) {
 		return;
 	}
 	ASSERT_RANGE(ndx, m_texts.size());
-	const FontMetrics *fm = me->getFont(me->textStyle().m_fontIndex)->getMetrics();
-	// m_texts[ndx].m_font->getMetrics();
+	Vec2i mySize = me->getSize();
+	const FontMetrics *fm = me->getFont()->getMetrics();
 	Vec2f txtDims = fm->getTextDiminsions(m_texts[ndx].m_text);
-	int halfTextW = int(txtDims.w) / 2;
-	int scratch = (me->getHeight() - int(txtDims.h)) / 2;
-	int y = scratch > 0 ? scratch : 0;
-	m_texts[ndx].m_pos = Vec2i(me->getWidth() / 2 - halfTextW, y);
+
+	int y = (mySize.h - int(txtDims.h)) / 2;
+	y = y > 0 ? y : 0;
+	switch (m_align) {
+		case Alignment::CENTERED:
+			m_texts[ndx].m_pos = Vec2i((mySize.w - int(txtDims.w)) / 2, y);
+			break;
+		case Alignment::FLUSH_LEFT:
+			m_texts[ndx].m_pos = Vec2i(me->getBorderLeft(), y);
+			break;
+		case Alignment::FLUSH_RIGHT:
+			m_texts[ndx].m_pos = Vec2i(mySize.w - int(txtDims.w) - me->getBorderRight(), y);
+			break;
+		default:
+			throw runtime_error("TextWidget::alignText() bad Alignment in,\n\t" + me->descLong());
+	}
 }
 
 void TextWidget::widgetReSized() {
-	if (m_centreText) {
-		centreText();
+	if (m_align != Alignment::NONE) {
+		alignText();
 	}
 }
 
@@ -1117,8 +1129,8 @@ void TextWidget::setText(const string &txt, int ndx) {
 		ASSERT_RANGE(ndx, m_texts.size());
 		m_texts[ndx].m_text = txt;
 	}
-	if (m_centreText) {
-		centreText(ndx);
+	if (m_align != Alignment::NONE) {
+		alignText(ndx);
 	}
 }
 

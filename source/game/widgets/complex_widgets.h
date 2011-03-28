@@ -50,8 +50,8 @@ public:
 	virtual void setSelected(const string &item) = 0;
 
 	// Signals
-	sigslot::signal<ListBase*> SelectionChanged;
-	sigslot::signal<ListBase*> SameSelected;
+	sigslot::signal<Widget*> SelectionChanged;
+	sigslot::signal<Widget*> SameSelected;
 };
 
 // =====================================================
@@ -100,7 +100,7 @@ public:
 
 	// Slots (event handlers)
 	void onScroll(int);
-	void onSelected(ListBoxItem* item);
+	void onSelected(Widget* item);
 
 	// Signals
 	// inherited signals:
@@ -143,8 +143,8 @@ public:
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
 	// Signals
-	//sigslot::signal<ListBoxItem*> Selected;
-	sigslot::signal<ListBoxItem*> Clicked;
+	//sigslot::signal<Widget*> Selected;
+	sigslot::signal<Widget*> Clicked;
 	// inherited signals:
 	//		Widget::Destoyed
 };
@@ -189,15 +189,15 @@ public:
 	virtual void mouseOut() override;
 
 	// Slots (event handlers)
-	void onBoxClicked(ListBoxItem*);
-	void onExpandList(Button*);
-	void onSelectionMade(ListBase*);
-	void onSameSelected(ListBase*);
+	void onBoxClicked(Widget*);
+	void onExpandList(Widget*);
+	void onSelectionMade(Widget*);
+	void onSameSelected(Widget*);
 	void onListDisposed(Widget*);
 
 	// Signals
-	sigslot::signal<DropList*> ListExpanded;
-	sigslot::signal<DropList*> ListCollapsed;
+	sigslot::signal<Widget*> ListExpanded;
+	sigslot::signal<Widget*> ListCollapsed;
 	// inherited signals:
 	//		ListBase::SelectionChanged
 	//		Widget::Destoyed

@@ -89,30 +89,32 @@ void LuaInputBox::recallCommand(bool reverse) {
 // =====================================================
 
 LuaConsole::LuaConsole(UserInterface *ui, Container* parent)
-		: BasicDialog(parent)
+		: BasicDialog(parent, ButtonFlags::ROLL_UPDOWN | ButtonFlags::CLOSE)
 		, m_ui(ui) {
 	setTitleText("Lua-Console");
-	setButtonText(g_lang.get("Close"));
+	setButtonText("");
 
 	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
 	setContent(panel);
 
-	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	Anchors inputAnchors(Anchor(AnchorType::RIGID, 2));
 	m_inputBox = new LuaInputBox(this, panel);
 	m_inputBox->setCell(0);
-	m_inputBox->setAnchors(anchors);
+	m_inputBox->setAnchors(inputAnchors);
 	m_inputBox->setText("");
-	m_inputBox->setCentre(false);
+	m_inputBox->setAlignment(Alignment::FLUSH_LEFT);
 	m_inputBox->setTextPos(Vec2i(3, 3));
 	m_inputBox->InputEntered.connect(this, &LuaConsole::onLineEntered);
-	int h = int(m_inputBox->getFont()->getMetrics()->getHeight()) + 6;
+
+	int h = int(m_inputBox->getFont()->getMetrics()->getHeight()) * 2;
 	panel->setSizeHint(0, SizeHint(-1, h));
 
+	Anchors outputAnchors(Anchor(AnchorType::RIGID, 0));
 	m_outputBox = new CodeBox(panel);
 	m_outputBox->setCell(1);
-	m_outputBox->setAnchors(anchors);
+	m_outputBox->setAnchors(outputAnchors);
 	m_outputBox->setText("");
-	m_outputBox->setCentre(false);
+	m_outputBox->setAlignment(Alignment::NONE);
 }
 
 LuaConsole::~LuaConsole() {
@@ -129,7 +131,7 @@ void LuaConsole::setVisible(bool vis) {
 	}
 }
 
-void LuaConsole::onLineEntered(TextBox*) {
+void LuaConsole::onLineEntered(Widget*) {
 	addOutput(string("> ") + m_inputBox->getText());
 	Script::ScriptManager::doSomeLua(m_inputBox->getText());
 }

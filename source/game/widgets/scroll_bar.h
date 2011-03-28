@@ -43,7 +43,7 @@ public:
 
 	virtual void update() override;
 
-	sigslot::signal<ScrollBarButton*> Fire;
+	sigslot::signal<Widget*> Fire;
 };
 
 // =====================================================
@@ -143,7 +143,7 @@ private:
 private:
 	void init();
 
-	void onScrollBtnFired(ScrollBarButton*);
+	void onScrollBtnFired(Widget*);
 	void onThumbMoved(int diff) { ThumbMoved(diff); }
 
 public:

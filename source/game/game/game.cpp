@@ -151,10 +151,10 @@ void GameState::load() {
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));
 
 	if (scenarioName.empty()) {
-		g_logger.getProgramLog().setSubtitle(formatString(mapName) + " - " +
+		log.setSubtitle(formatString(mapName) + " - " +
 			formatString(tilesetName) + " - " + formatString(techName));
 	} else {
-		g_logger.getProgramLog().setSubtitle(formatString(scenarioName));
+		log.setSubtitle(formatString(scenarioName));
 	}
 
 	simInterface->loadWorld();
@@ -330,7 +330,7 @@ void GameState::displayError(std::exception &e) {
 	dialog->Escaped.connect(this, &GameState::onErrorDismissed);
 }
 
-void GameState::onErrorDismissed(BasicDialog*) {
+void GameState::onErrorDismissed(Widget*) {
 	simInterface->resume();
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
@@ -391,13 +391,13 @@ void GameState::confirmExitProgram() {
 	m_modalDialog = dialog;
 }
 
-void GameState::onConfirmQuitGame(BasicDialog*) {
+void GameState::onConfirmQuitGame(Widget*) {
 	exitGame = true;
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 }
 
-void GameState::onConfirmExitProgram(BasicDialog*) {
+void GameState::onConfirmExitProgram(Widget*) {
 	exitProgram = true;
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
@@ -428,7 +428,7 @@ void GameState::doSaveBox() {
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
 }
 
-void GameState::onSaveSelected(BasicDialog*) {
+void GameState::onSaveSelected(Widget*) {
 	InputDialog* in  = static_cast<InputDialog*>(m_modalDialog);
 	string name = in->getInput();
 	saveGame(name);
@@ -492,7 +492,7 @@ void GameState::doChatDialog() {
 //	}
 //}
 
-void GameState::onChatEntered(BasicDialog* ptr) {
+void GameState::onChatEntered(Widget* ptr) {
 	string txt = m_chatDialog->getInput();
 	bool isTeamOnly = m_chatDialog->isTeamOnly();
 	int team = (isTeamOnly ? g_world.getThisFaction()->getTeam() : -1);
@@ -510,11 +510,11 @@ void GameState::onChatEntered(BasicDialog* ptr) {
 	m_chatDialog->setVisible(false);
 }
 
-void GameState::onChatCancel(BasicDialog*) {
+void GameState::onChatCancel(Widget*) {
 	m_chatDialog->setVisible(false);
 }
 
-void GameState::destroyDialog(BasicDialog*) {
+void GameState::destroyDialog(Widget*) {
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
 	if (!m_scriptMessages.empty()) {

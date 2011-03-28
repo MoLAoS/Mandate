@@ -96,7 +96,7 @@ private:
 		CrashProgramState(Program &program, const exception *e);
 		virtual int getUpdateFps() const {return 10;}
 
-		void onExit(BasicDialog*);
+		void onExit(Widget*);
 		virtual void update() override;
 
 		virtual void renderBg() override;

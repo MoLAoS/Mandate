@@ -46,6 +46,7 @@ class TextWidget;
 WRAPPED_ENUM( Direction, LEFT, UP, RIGHT, DOWN );
 WRAPPED_ENUM( Edge, LEFT, TOP, RIGHT, BOTTOM );
 WRAPPED_ENUM( AnchorType, NONE, RIGID, SPRINGY );
+WRAPPED_ENUM( Alignment, NONE, CENTERED, JUSTIFIED, FLUSH_LEFT, FLUSH_RIGHT );
 
 // =====================================================
 //  class Anchor
@@ -435,7 +436,8 @@ private:
 private:
 	Widget*       me;
 	Texts         m_texts;
-	bool          m_centreText;
+	//bool          m_centreText;
+	Alignment     m_align;
 	bool          m_batchRender;
 	//int           m_defaultFont;
 	TextRenderer *m_textRenderer;
@@ -457,7 +459,7 @@ public:
 	Widget* widget() { return me; }
 
 	// set
-	void setCentre(bool val)	{ m_centreText = val; }
+	void setAlignment(Alignment val)   { m_align = val; }
 	int addText(const string &txt);
 	void setText(const string &txt, int ndx = 0);
 	void setTextColour(const Vec4f &col, int ndx = 0);
@@ -467,19 +469,22 @@ public:
 		setTextShadowColour(col1, ndx);
 		setTextShadowColour2(col2, ndx);
 	}
-	void setTextCentre(bool v)	{ m_centreText = v; }
 	void setTextPos(const Vec2i &pos, int ndx=0);
 //	void setTextFont(int ndx) { m_defaultFont = ndx; }
 	void setTextFade(float alpha, int ndx=0);// { m_texts[ndx].m_fade = alpha; }
 
-	void centreText(int ndx = 0);
+	void alignText(int ndx = 0);
 	void widgetReSized();
 
 	// get
 	const string& getText(int ndx=0) const	{ ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_text; }
 	const Vec2i& getTextPos(int ndx=0) const { ASSERT_RANGE(ndx, m_texts.size()); return m_texts[ndx].m_pos; }
 //	int getTextFont() const { return m_defaultFont; }
+
+	/** get maximum dimensions from all snippets */
 	Vec2i getTextDimensions() const;
+
+	/** get text dimensions for text snippet at ndx */
 	Vec2i getTextDimensions(int ndx) const;
 	bool hasText() const { return !m_texts.empty(); }
 	int  numSnippets() const { return m_texts.size(); }

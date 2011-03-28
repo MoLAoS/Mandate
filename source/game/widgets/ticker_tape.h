@@ -172,26 +172,14 @@ struct WidgetAction : public ActionBase {
 	}
 };
 
-WRAPPED_ENUM( Alignment, CENTERED, JUSTIFIED, FLUSH_LEFT, FLUSH_RIGHT );
-
 class TickerTape : public StaticText {
-//private:
-//	struct Action {
-//		int            m_index;
-//		int            m_actionNumber;
-//		int            m_counter;
-//		Vec2f          m_inPos;
-//		Vec2f          m_midPos;
-//		Vec2f          m_outPos;
-//		TransitionFunc m_transFunc;
-//	};
-//
-//	typedef std::deque<Action> Actions;
 	typedef std::deque<TextAction> Actions;
 
 private:
-	Origin         m_origin;
+	SizeHint       m_anchor;
 	Alignment      m_align;
+	Vec2f          m_startOffset;
+	Vec2f          m_endOffset;
 	TransitionFunc m_transFunc;
 	bool           m_alternateOrigin;
 	bool           m_overlapTransitions;
@@ -205,7 +193,7 @@ private:
 	void startAction(int ndx);
 
 public:
-	TickerTape(Container *parent, Origin origin = Origin::CENTRE, Alignment alignment = Alignment::CENTERED);
+	TickerTape(Container *parent, SizeHint anchor = SizeHint(50), Alignment alignment = Alignment::CENTERED);
 	~TickerTape() {
 		m_rootWindow->unregisterUpdate(this);
 	}
@@ -220,7 +208,12 @@ public:
 	void startTicker();
 
 	// configure
-	void setAlignment(Alignment a)      { m_align = a; }
+	void setOffsets(const Vec2i &startOffset, const Vec2i &endOffset) {
+		m_startOffset = Vec2f(startOffset);
+		m_endOffset = Vec2f(endOffset);
+	}
+	void setAnchor(SizeHint a)          { m_anchor = a;             }
+	void setAlignment(Alignment a)      { m_align = a;              }
 	void setDisplayInterval(int v)      { m_displayInterval = v;    }
 	void setTransitionInterval(int v)   { m_transitionInterval = v; }
 	void setAlternateOrigin(bool v)     { m_alternateOrigin = v;    }

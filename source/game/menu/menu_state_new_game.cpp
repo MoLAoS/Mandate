@@ -130,57 +130,47 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	strip->setCell(1);
 	strip->setAnchors(a);
 
-	CellStrip *combo = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
-	combo->setCell(0);
-	combo->setAnchors(a);
-
-	combo->setSizeHint(0, SizeHint());
-	combo->setSizeHint(1, SizeHint(-1, defWidgetHeight * 3));
-
-	m_randomLocsLabel = new StaticText(combo);
-	m_randomLocsLabel->setCell(0);
-	m_randomLocsLabel->setText(lang.get("RandomizeLocations"));
-	m_randomLocsLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_randomLocsLabel->setAnchors(a);
-
-	m_randomLocsCheckbox = new CheckBox(combo);
+	OptionWidget *ow = new OptionWidget(strip, lang.get("RandomizeLocations"));
+	ow->setCell(0);
+	ow->setAbsoluteSplit(defWidgetHeight * 2, false);
+	Vec2i dims = ow->getLabel()->getTextDimensions(0);
+	dims.w += defWidgetHeight * 3;
+	dims.h += 4;
+	ow->setAnchors(Anchors::getCentreAnchors());
+	ow->setSize(dims);
+	m_randomLocsCheckbox = new CheckBox(ow);
 	m_randomLocsCheckbox->setCell(1);
 	m_randomLocsCheckbox->setAnchors(a3);
+	m_randomLocsCheckbox->setSize(Vec2i(defWidgetHeight));
 	m_randomLocsCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
-	combo->setCell(1);
-	combo->setAnchors(a);
-	combo->setSizeHint(0, SizeHint());
-	combo->setSizeHint(1, SizeHint(-1, defWidgetHeight * 3));
-
-	m_SODLabel = new StaticText(combo);
-	m_SODLabel->setCell(0);
-	m_SODLabel->setText(lang.get("ShroudOfDarkness"));
-	m_SODLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_SODLabel->setAnchors(a);
-
-	m_SODCheckbox = new CheckBox(combo);
+	ow = new OptionWidget(strip, lang.get("ShroudOfDarkness"));
+	ow->setCell(1);
+	ow->setAbsoluteSplit(defWidgetHeight * 2, false);
+	dims = ow->getLabel()->getTextDimensions(0);
+	dims.w += defWidgetHeight * 3;
+	dims.h += 4;
+	ow->setAnchors(Anchors::getCentreAnchors());
+	ow->setSize(dims);
+	m_SODCheckbox = new CheckBox(ow);
 	m_SODCheckbox->setCell(1);
 	m_SODCheckbox->setAnchors(a3);
+	m_SODCheckbox->setSize(Vec2i(defWidgetHeight));
 	m_SODCheckbox->setChecked(true);
 	m_SODCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
-	combo = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
-	combo->setCell(2);
-	combo->setAnchors(a);
-	combo->setSizeHint(0, SizeHint());
-	combo->setSizeHint(1, SizeHint(-1, defWidgetHeight * 3));
-
-	m_FOWLabel = new StaticText(combo);
-	m_FOWLabel->setCell(0);
-	m_FOWLabel->setText(lang.get("FogOfWar"));
-	m_FOWLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	m_FOWLabel->setAnchors(a);
-
-	m_FOWCheckbox = new CheckBox(combo);
+	ow = new OptionWidget(strip, lang.get("FogOfWar"));
+	ow->setCell(2);
+	ow->setAbsoluteSplit(defWidgetHeight * 2, false);
+	dims = ow->getLabel()->getTextDimensions(0);
+	dims.w += defWidgetHeight * 3;
+	dims.h += 4;
+	ow->setAnchors(Anchors::getCentreAnchors());
+	ow->setSize(dims);
+	m_FOWCheckbox = new CheckBox(ow);
 	m_FOWCheckbox->setCell(1);
 	m_FOWCheckbox->setAnchors(a3);
+	m_FOWCheckbox->setSize(Vec2i(defWidgetHeight));
 	m_FOWCheckbox->setChecked(true);
 	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
@@ -190,7 +180,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	strip->setAnchors(a);
 
 	// map listBox & info
-	combo = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, 3);
+	CellStrip *combo = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, 3);
 	combo->setCell(0);
 	a2 = Anchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::RIGID, 5));
 	combo->setAnchors(a2);
@@ -395,7 +385,8 @@ int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
 
 //  === === ===
 
-void MenuStateNewGame::onChangeFaction(PlayerSlotWidget* psw) {
+void MenuStateNewGame::onChangeFaction(Widget *source) {
+	PlayerSlotWidget *psw = static_cast<PlayerSlotWidget*>(source);
 	GameSettings &gs = g_simInterface.getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
@@ -412,13 +403,14 @@ void MenuStateNewGame::onChangeFaction(PlayerSlotWidget* psw) {
 	}
 }
 
-void MenuStateNewGame::onChangeControl(PlayerSlotWidget* ps) {
+void MenuStateNewGame::onChangeControl(Widget *source) {
+	PlayerSlotWidget *psw = static_cast<PlayerSlotWidget*>(source);
 	static bool noRecurse = false;
 	if (noRecurse) {
 		return; // control was changed progmatically
 	}
 	noRecurse = true;
-	int ndx = getSlotIndex(ps, m_playerSlots);
+	int ndx = getSlotIndex(psw, m_playerSlots);
 	if (m_playerSlots[ndx]->getControlType() == ControlType::HUMAN && ndx != m_humanSlot) {
 		// human moved slots
 		assert(m_humanSlot >= 0);
@@ -443,14 +435,16 @@ void MenuStateNewGame::onChangeControl(PlayerSlotWidget* ps) {
 	noRecurse = false;
 }
 
-void MenuStateNewGame::onChangeTeam(PlayerSlotWidget* psw) {
+void MenuStateNewGame::onChangeTeam(Widget *source) {
+	PlayerSlotWidget *psw = static_cast<PlayerSlotWidget*>(source);
 	GameSettings &gs = g_simInterface.getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
 	gs.setTeam(ndx, psw->getSelectedTeamIndex());
 }
 
-void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
+void MenuStateNewGame::onChangeColour(Widget *source) {
+	PlayerSlotWidget *psw = static_cast<PlayerSlotWidget*>(source);
 	GameSettings &gs = g_simInterface.getGameSettings();
 	int ndx = getSlotIndex(psw, m_playerSlots);
 	assert(ndx >= 0 && ndx < GameConstants::maxPlayers);
@@ -469,7 +463,7 @@ void MenuStateNewGame::onChangeColour(PlayerSlotWidget* psw) {
 	}
 }
 
-void MenuStateNewGame::onCheckChanged(Button* cb) {
+void MenuStateNewGame::onCheckChanged(Widget* cb) {
 	GameSettings &gs = g_simInterface.getGameSettings();
 	if (cb == m_FOWCheckbox) {
 		gs.setFogOfWar(m_FOWCheckbox->isChecked());
@@ -483,7 +477,7 @@ void MenuStateNewGame::onCheckChanged(Button* cb) {
 
 }
 
-void MenuStateNewGame::onChangeMap(ListBase*) {
+void MenuStateNewGame::onChangeMap(Widget*) {
 	assert(m_mapList->getSelectedIndex() >= 0 && m_mapList->getSelectedIndex() < m_mapFiles.size());
 	string mapBaseName = m_mapFiles[m_mapList->getSelectedIndex()];
 	string mapFile = "maps/" + mapBaseName;
@@ -498,17 +492,18 @@ void MenuStateNewGame::onChangeMap(ListBase*) {
 	gs.setMapPath(mapFile);
 }
 
-void MenuStateNewGame::onChangeTileset(ListBase*) {
+void MenuStateNewGame::onChangeTileset(Widget*) {
 	GameSettings &gs = g_simInterface.getGameSettings();
 	assert(m_tilesetList->getSelectedIndex() >= 0);
 	gs.setTilesetPath(string("tilesets/") + m_tilesetFiles[m_tilesetList->getSelectedIndex()]);
 }
 
-void MenuStateNewGame::onChangeTechtree(ListBase*) {
+void MenuStateNewGame::onChangeTechtree(Widget*) {
 	reloadFactions(true);
 }
 
-void MenuStateNewGame::onButtonClick(Button* btn) {
+void MenuStateNewGame::onButtonClick(Widget *source) {
+	Button *btn = static_cast<Button*>(source);
 	if (btn == m_returnButton) {
 		m_targetTransition = Transition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
@@ -522,7 +517,7 @@ void MenuStateNewGame::onButtonClick(Button* btn) {
 	doFadeOut();
 }
 
-void MenuStateNewGame::onDismissDialog(BasicDialog*) {
+void MenuStateNewGame::onDismissDialog(Widget*) {
 	program.removeFloatingWidget(m_messageDialog);
 	doFadeIn();
 }

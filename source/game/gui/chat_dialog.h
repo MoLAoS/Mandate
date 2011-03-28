@@ -42,9 +42,9 @@ private:
 	bool m_teamChat;
 
 private:
-	void onCheckChanged(Button*) { m_teamChat = m_teamCheckBox->isChecked(); }
-	void onInputEntered(TextBox*);
-	void onEscaped(InputBox *) { Escaped(this); }
+	void onCheckChanged(Widget*) { m_teamChat = m_teamCheckBox->isChecked(); }
+	void onInputEntered(Widget*);
+	void onEscaped(Widget*) { Escaped(this); }
 
 public:
 	ChatDialog(Container* parent);

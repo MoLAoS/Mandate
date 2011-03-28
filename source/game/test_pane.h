@@ -35,10 +35,9 @@ public:
 	virtual void keyDown(const Key &key);
 	virtual void mouseDownLeft(int x, int y);
 
-	void onContinue(Button*);
-	void onContinue2(BasicDialog*);
-	void onDialog(Button*);
-	void onDismissDialog(BasicDialog*);
+	void onContinue(Widget*);
+	void onDoDialog(Widget*);
+	void onDismissDialog(Widget*);
 };
 
 }}//end namespace

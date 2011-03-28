@@ -1648,10 +1648,11 @@ void Renderer::autoConfig(){
 	bool nvidiaCard= toLower(getGlVendor()).find("nvidia")!=string::npos;
 	bool atiCard= toLower(getGlVendor()).find("ati")!=string::npos;
 	bool shadowExtensions = isGlExtensionSupported("GL_ARB_shadow");
+
 	// 3D textures
 	config.setRenderTextures3D(isGlExtensionSupported("GL_EXT_texture3D"));
-	// shadows
-	string shadows;
+
+	string shadows; // shadows mode
 	if (getGlMaxTextureUnits() >= 3) {
 		if (nvidiaCard && shadowExtensions) {
 			shadows = shadowsToStr(ShadowMode::MAPPED);
@@ -1662,10 +1663,16 @@ void Renderer::autoConfig(){
 		shadows = shadowsToStr(ShadowMode::DISABLED);
 	}
 	config.setRenderShadows(shadows);
-	// lights
-	config.setRenderLightsMax(atiCard? 1: 4);
-	// filter
-	config.setRenderFilter("Bilinear");
+	config.setRenderLightsMax(atiCard? 1: 4); // max lights
+	config.setRenderFilter("Bilinear");       // texture filter
+
+	// Model shaders...
+	if (isGlVersionSupported(2, 0, 0)) {
+		config.setRenderUseShaders(true);
+		config.setRenderModelShader("diffuse_only_pv");
+	} else {
+		config.setRenderUseShaders(false);
+	}
 }
 
 void Renderer::clearBuffers(){
@@ -2347,44 +2354,51 @@ void Renderer::renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &co
 	glEnd();
 }
 
-void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const Font *font){
+void Renderer::renderText(const string &text, const Font *font, const Vec4f &color, int x, int y) {
+	textRendererFT->begin(font);
+	glColor4fv(color.ptr());
+	textRendererFT->render(text, x, y + int(font->getMetrics()->getMaxAscent()));
+	textRendererFT->end();
+}
+
+void Renderer::renderProgressBar(int progress, int x, int y, int w, int h, const Font *font) {
 	assert(progress <= maxProgressBar);
-	assert(x >= maxProgressBar);
+	//assert(x >= maxProgressBar);//wtf?
 
 	int widthFactor = static_cast<int>(w / maxProgressBar);
 	int width = progress * widthFactor;
 
-	//bar
+	// bar
 	glBegin(GL_QUADS);
 		glColor4fv(progressBarFront2.ptr());
-		glVertex2i(x, y); // bottom left
-		glVertex2i(x, y + h); // top left
+		glVertex2i(x, y + h);  // bottom left
+		glVertex2i(x, y);      // top left
 		glColor4fv(progressBarFront1.ptr());
-		glVertex2i(x+width, y + h); // top right
-		glVertex2i(x+width, y); // bottom right
+		glVertex2i(x + width, y);     // top right
+		glVertex2i(x + width, y + h); // bottom right
 	glEnd();
 
-	//transp bar
+	// transp bar
 	glEnable(GL_BLEND);
 	glBegin(GL_QUADS);
 		glColor4fv(progressBarBack2.ptr());
-		glVertex2i(x+width, y); // bottom left
-		glVertex2i(x+width, y + h); // top left
+		glVertex2i(x + width, y + h); // bottom left
+		glVertex2i(x + width, y);     // top left
 		glColor4fv(progressBarBack1.ptr());
-		glVertex2i(x+maxProgressBar*widthFactor, y + h); // top right
-		glVertex2i(x+maxProgressBar*widthFactor, y); // bottom right
+		glVertex2i(x + maxProgressBar * widthFactor, y);     // top right
+		glVertex2i(x + maxProgressBar * widthFactor, y + h); // bottom right
 	glEnd();
 	glDisable(GL_BLEND);
 
-	//text
+	// text
 	string msg = intToStr(progress) + "%";
 	int mx = x + maxProgressBar * widthFactor / 2;
 	glColor3fv(defColor.ptr());
 	textRendererFT->begin(font);
 	glColor3f(0.f, 0.f, 0.f);
-	textRendererFT->render(msg, mx + 2, y - 2, true);
+	textRendererFT->render(msg, mx + 2, y + 2 + int(font->getMetrics()->getMaxAscent()), true);
 	glColor3f(1.f, 1.f, 1.f);
-	textRendererFT->render(msg, mx, y, true);
+	textRendererFT->render(msg, mx, y + int(font->getMetrics()->getMaxAscent()), true);
 	textRendererFT->end();
 }
 

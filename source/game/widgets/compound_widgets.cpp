@@ -103,7 +103,7 @@ void ScrollText::init() {
 	int itemSize = m_rootWindow->getConfig()->getDefaultItemHeight();
 
 	// Anchors for scroll-bar, stick to the top, right & bottom sides.
-	// Not anchored to left border, so we must set size (width will be respected, height wont)
+	// Not anchored to left border, so we must set size (width will be respected, height will not)
 	Anchors anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::RIGID, 0), // left, top
 		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));           // right, bottom
 	
@@ -120,6 +120,7 @@ void ScrollText::init() {
 	m_staticText = new StaticText(this);
 	m_staticText->setCell(0);
 	m_staticText->setAnchors(anchors);
+	m_staticText->setAlignment(Alignment::NONE);
 }
 
 void ScrollText::recalc() {
@@ -240,7 +241,8 @@ void TitleBar::init(ButtonFlags flags) {
 	}
 }
 
-void TitleBar::onButtonClicked(Button *btn) {
+void TitleBar::onButtonClicked(Widget *source) {
+	Button *btn = static_cast<Button*>(source);
 	if (btn == m_rollDownButton) {
 		RollDown(this);
 	} else if (btn == m_rollUpButton) {
@@ -294,6 +296,12 @@ void Frame::init(ButtonFlags flags) {
 	m_titleBar->setCell(0);
 	m_titleBar->setAnchors(anchors);
 	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() + 4));
+
+	m_titleBar->Close.connect(this, &Frame::onClose);
+	m_titleBar->RollUp.connect(this, &Frame::onRollUp);
+	m_titleBar->RollDown.connect(this, &Frame::onRollDown);
+	m_titleBar->Shrink.connect(this, &Frame::onShrink);
+	m_titleBar->Expand.connect(this, &Frame::onExpand);
 }
 
 void Frame::setTitleText(const string &text) {
@@ -338,8 +346,20 @@ BasicDialog::BasicDialog(WidgetWindow* window)
 	init();
 }
 
+BasicDialog::BasicDialog(WidgetWindow* window, ButtonFlags flags)
+		: Frame(window, flags), m_content(0)
+		, m_button1(0) , m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
+}
+
 BasicDialog::BasicDialog(Container* parent)
 		: Frame(parent, ButtonFlags::CLOSE), m_content(0)
+		, m_button1(0), m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
+}
+
+BasicDialog::BasicDialog(Container* parent, ButtonFlags flags)
+		: Frame(parent, flags), m_content(0)
 		, m_button1(0) , m_button2(0), m_buttonCount(0), m_btnPnl(0) {
 	init();
 }
@@ -347,7 +367,6 @@ BasicDialog::BasicDialog(Container* parent)
 void BasicDialog::init() {
 	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 	addCells(1);
-	setSizeHint(2, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() * 3 / 2));
 }
 
 void BasicDialog::init(Vec2i pos, Vec2i size, const string &title, 
@@ -371,34 +390,37 @@ void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) 
 	delete m_button2; m_button2 = 0;
 
 	m_buttonCount = btn2Text.empty() ? (btn1Text.empty() ? 0 : 1) : 2;
-	if (!m_buttonCount) {
-		return;
-	}
-	m_btnPnl = new CellStrip(this, Orientation::HORIZONTAL, m_buttonCount);
-	m_btnPnl->setCell(2);
-	Anchors anchors(Anchor(AnchorType::RIGID, 0));
-	m_btnPnl->setAnchors(anchors);
+	if (m_buttonCount) {
+		setSizeHint(2, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() * 3 / 2));
+		m_btnPnl = new CellStrip(this, Orientation::HORIZONTAL, m_buttonCount);
+		m_btnPnl->setCell(2);
+		Anchors anchors(Anchor(AnchorType::RIGID, 0));
+		m_btnPnl->setAnchors(anchors);
 
-	Vec2i pos(0,0);
-	Vec2i size(g_widgetConfig.getDefaultItemHeight() * 8, g_widgetConfig.getDefaultItemHeight());
-	anchors.setCentre(true);
-	m_button1 = new Button(m_btnPnl, pos, size);
-	m_button1->setCell(0);
-	m_button1->setAnchors(anchors);
-	m_button1->setText(btn1Text);
-	m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
+		Vec2i pos(0,0);
+		Vec2i size(g_widgetConfig.getDefaultItemHeight() * 7, g_widgetConfig.getDefaultItemHeight());
+		anchors.setCentre(true);
+		m_button1 = new Button(m_btnPnl, pos, size);
+		m_button1->setCell(0);
+		m_button1->setAnchors(anchors);
+		m_button1->setText(btn1Text);
+		m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
 
-	if (m_buttonCount == 2) {
-		m_button2 = new Button(m_btnPnl, pos, size);
-		m_button2->setCell(1);
-		m_button2->setAnchors(anchors);
-		m_button2->setText(btn2Text);
-		m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
+		if (m_buttonCount == 2) {
+			m_button2 = new Button(m_btnPnl, pos, size);
+			m_button2->setCell(1);
+			m_button2->setAnchors(anchors);
+			m_button2->setText(btn2Text);
+			m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
+		}
+	} else {
+		setSizeHint(2, SizeHint(-1, 0));
 	}
 	setDirty();
 }
 
-void BasicDialog::onButtonClicked(Button* btn) {
+void BasicDialog::onButtonClicked(Widget *source) {
+	Button *btn = static_cast<Button*>(source);
 	if (btn == m_button1) {
 		Button1Clicked(this);
 	} else {
@@ -490,7 +512,7 @@ InputDialog* InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title,
 	return dlg;
 }
 
-void InputDialog::onInputEntered(TextBox*) {
+void InputDialog::onInputEntered(Widget*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

@@ -68,29 +68,29 @@ GameMenu* GameMenu::showDialog(Vec2i pos, Vec2i size) {
 	return menu;
 }
 
-void GameMenu::onReturnToGame(Button*) {
+void GameMenu::onReturnToGame(Widget*) {
 	g_gameState.destroyDialog();
 }
 
-void GameMenu::onDebugToggle(Button*) {
+void GameMenu::onDebugToggle(Widget*) {
 	g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
 }
 
-void GameMenu::onTogglePhotoMode(Button*) {
+void GameMenu::onTogglePhotoMode(Widget*) {
 	g_config.setUiPhotoMode(!g_config.getUiPhotoMode());
 }
 
-void GameMenu::onSaveGame(Button*) {
+void GameMenu::onSaveGame(Widget*) {
 	g_gameState.destroyDialog();
 	g_gameState.doSaveBox();
 }
 
-void GameMenu::onQuit(Button*) {
+void GameMenu::onQuit(Widget*) {
 	g_gameState.destroyDialog();
 	g_gameState.confirmQuitGame();
 }
 
-void GameMenu::onExit(Button*) {
+void GameMenu::onExit(Widget*) {
 	g_gameState.destroyDialog();
 	g_gameState.confirmExitProgram();
 }

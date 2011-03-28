@@ -361,7 +361,8 @@ void ScrollBar::layoutCells() {
 	CellStrip::layoutCells();
 }
 
-void ScrollBar::onScrollBtnFired(ScrollBarButton *btn) {
+void ScrollBar::onScrollBtnFired(Widget *source) {
+	ScrollBarButton *btn = static_cast<ScrollBarButton*>(source);
 	if (btn == m_btnOne) {
 		m_shaft->onThumbMoved(m_lineSize);
 	} else if (btn == m_btnTwo) {

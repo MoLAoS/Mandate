@@ -220,6 +220,7 @@ public:
 	//void renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered= false);
 	//void renderTextShadow(const string &text, const Font *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(1.f));
 
+	void renderText(const string &text, const Font *font, const Vec4f &color, int x, int y);
 	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
     //complex rendering
