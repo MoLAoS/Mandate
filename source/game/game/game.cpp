@@ -347,7 +347,9 @@ void GameState::doGameMenu() {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
-	Vec2i size(240, 280), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	int wh = g_widgetConfig.getDefaultItemHeight();
+	Vec2i size(wh * 8, wh * 9);
+	Vec2i pos = (g_metrics.getScreenDims() - size) / 2;
 	m_modalDialog = GameMenu::showDialog(pos, size);
 }
 
