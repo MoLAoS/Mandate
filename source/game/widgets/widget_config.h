@@ -108,6 +108,7 @@ private:
 	void loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &style, BackgroundStyle *src = 0);
 	void loadHighLightStyle(WidgetType widgetType, HighLightStyle &style, HighLightStyle *src = 0);
 	void loadTextStyle(WidgetType widgetType, TextStyle &style, TextStyle *src = 0);
+	void loadOverlayStyle(WidgetType widgetType, OverlayStyle &style, OverlayStyle *src = 0);
 
 	int computeFontSize(int size);
 
@@ -195,7 +196,7 @@ public:
 	}
 
 	int getOverlay(WidgetType type, WidgetState state = WidgetState::NORMAL) const {
-		return m_styles[type][state].overlay();
+		return m_styles[type][state].overlayStyle().m_tex;
 	}
 };
 

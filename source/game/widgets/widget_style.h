@@ -24,7 +24,6 @@ namespace Glest { namespace Widgets {
 WRAPPED_ENUM( Border, TOP, RIGHT, BOTTOM, LEFT );
 WRAPPED_ENUM( Corner, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT );
 
-
 // =====================================================
 //  BorderStyle
 // =====================================================
@@ -137,8 +136,12 @@ struct HighLightStyle {
 
 struct OverlayStyle {
 	int     m_tex;
+	bool    m_insideBorders;
 	//Vec2i   m_offset;
 	//Vec2i   m_size;
+
+	OverlayStyle(int tex, bool inBorders) : m_tex(tex), m_insideBorders(inBorders) {}
+	OverlayStyle() : m_tex(-1), m_insideBorders(false) {}
 };
 
 // =====================================================
@@ -151,22 +154,22 @@ protected:
 	BackgroundStyle  m_backgroundStyle;
 	HighLightStyle   m_highlightStyle;
 	TextStyle        m_textStyle;
-	int              m_overlay;
+	OverlayStyle     m_overlayStyle;
 
 public:
-	WidgetStyle() : m_overlay(-1) {}
+	WidgetStyle() {}
 
 	BorderStyle&      borderStyle() { return m_borderStyle; }
 	BackgroundStyle&  backgroundStyle() { return m_backgroundStyle; }
 	HighLightStyle&   highLightStyle() { return m_highlightStyle; }
 	TextStyle&        textStyle() { return m_textStyle; }
-	int&              overlay() { return m_overlay; }
+	OverlayStyle&     overlayStyle() { return m_overlayStyle; }
 
 	const BorderStyle&      borderStyle() const { return m_borderStyle; }
 	const BackgroundStyle&  backgroundStyle() const { return m_backgroundStyle; }
 	const HighLightStyle&   highLightStyle() const { return m_highlightStyle; }
 	const TextStyle&        textStyle() const { return m_textStyle; }
-	const int&              overlay() const { return m_overlay; }
+	const OverlayStyle&     overlayStyle() const { return m_overlayStyle; }
 };
 
 }}

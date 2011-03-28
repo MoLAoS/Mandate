@@ -666,8 +666,16 @@ void Widget::renderBackground() {
 }
 
 void Widget::renderForeground() {
-	if (m_overlay != -1) {
-		renderOverlay(m_overlay, Vec2i(0), m_size);
+	if (m_overlayStyle.m_tex != -1) {
+		Vec2i pos, size;
+		if (m_overlayStyle.m_insideBorders) {
+			pos = Vec2i(getBorderLeft(), getBorderTop());
+			size = m_size - getBordersAll();
+		} else {
+			pos = Vec2i(0);
+			size = m_size;
+		}
+		renderOverlay(m_overlayStyle.m_tex, pos, size);
 	}
 	if (m_highlightStyle.m_type == HighLightType::FIXED) {
 		renderHighLight(m_highlightStyle.m_colourIndex, 0.8f, 0.35f);
