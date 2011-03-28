@@ -398,7 +398,7 @@ void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) 
 		m_btnPnl->setAnchors(anchors);
 
 		Vec2i pos(0,0);
-		Vec2i size(g_widgetConfig.getDefaultItemHeight() * 7, g_widgetConfig.getDefaultItemHeight());
+		Vec2i size(g_widgetConfig.getDefaultItemHeight() * 5, g_widgetConfig.getDefaultItemHeight());
 		anchors.setCentre(true);
 		m_button1 = new Button(m_btnPnl, pos, size);
 		m_button1->setCell(0);

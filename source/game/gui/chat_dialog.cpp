@@ -37,21 +37,27 @@ ChatDialog::ChatDialog(Container* parent)
 	content->setCell(1);
 	content->setAnchors(anchors);
 
-	anchors = Anchors(Anchor(AnchorType::RIGID, 0));
-
+	int defHeight = g_widgetConfig.getDefaultItemHeight();
 	OptionWidget *ow = new OptionWidget(content, g_lang.get("TeamOnly"));
 	ow->setCell(0);
-	ow->setAnchors(anchors);
+	ow->setAnchors(Anchors::getCentreAnchors());
+	ow->setAbsoluteSplit(defHeight + 10, false);
+	int w = ow->getLabel()->getTextDimensions().w + defHeight + 20;
+	ow->setSize(Vec2i(w, defHeight + 4));
 
 	m_teamCheckBox = new CheckBox(ow);
 	m_teamCheckBox->setCell(1);
-	m_teamCheckBox->setAnchors(anchors);
+	m_teamCheckBox->setAnchors(Anchors::getCentreAnchors());
+	m_teamCheckBox->setSize(Vec2i(defHeight));
 	m_teamCheckBox->setChecked(m_teamChat);
 	m_teamCheckBox->Clicked.connect(this, &ChatDialog::onCheckChanged);
+
+	anchors = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::NONE, 0));
 
 	m_inputBox = new InputBox(content);
 	m_inputBox->setCell(1);
 	m_inputBox->setAnchors(anchors);
+	m_inputBox->setSize(Vec2i(0, defHeight + 4));
 	m_inputBox->setText("");
 	m_inputBox->InputEntered.connect(this, &ChatDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &ChatDialog::onEscaped);
