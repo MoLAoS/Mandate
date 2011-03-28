@@ -117,9 +117,21 @@ void Spinner::onButtonFired(Widget *source) {
 	int val = m_value + (btn == m_upButton ? m_increment : -m_increment);
 	val = clamp(val, m_minValue, m_maxValue);
 	if (val != m_value) {
+		if (m_value == m_minValue) {
+			m_downButton->setEnabled(true);
+		}
+		if (m_value == m_maxValue) {
+			m_upButton->setEnabled(true);
+		}
 		m_value = val;
 		m_valueBox->setText(intToStr(m_value));
 		ValueChanged(this);
+		if (m_value == m_minValue) {
+			m_downButton->setEnabled(false);
+		}
+		if (m_value == m_maxValue) {
+			m_upButton->setEnabled(false);
+		}
 	}
 }
 

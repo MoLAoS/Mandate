@@ -84,7 +84,7 @@ bool ScrollBarButton::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool ScrollBarButton::mouseUp(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( descLong() << " : ScrollBarButton::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
-	if (isEnabled() && btn == MouseButton::LEFT) {
+	if (btn == MouseButton::LEFT) {
 		if (isFocused() && isHovered() && m_fireOnUp) {
 			Fire(this);
 		}
