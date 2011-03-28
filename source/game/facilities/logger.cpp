@@ -209,7 +209,7 @@ void ProgramLog::renderLoadingScreen(){
 	if (loadingGame) {
 		int offset = 0;
 		int step = int(normFont->getMetrics()->getHeight()) + 4;
-		for (Strings::iterator it = logLines.begin(); it != logLines.end(); ++it) {
+		for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
 			colour.a = 1.f - float(offset) / float(logLineCount + 1);
 			g_renderer.renderText(*it, normFont, colour, g_metrics.getScreenW() / 4,
 				30 * g_metrics.getScreenH() / 100 + offset * step);

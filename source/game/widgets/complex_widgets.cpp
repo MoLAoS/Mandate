@@ -486,10 +486,10 @@ void DropList::expandList() {
 	const Vec2i &size = getSize();
 	const Vec2i &screenPos = getScreenPos();
 	int num = m_listItems.size();
-	int ph = floatingList->getPrefHeight(num);
+	int ph = floatingList->getPrefHeight(num) + floatingList->getBordersVert();
 	int h = dropBoxHeight == 0 ? ph : ph > dropBoxHeight ? dropBoxHeight : ph;
 
-	Vec2i sz(size.x, h);
+	Vec2i sz(size.w, h);
 	Vec2i pos(screenPos.x, screenPos.y);
 	floatingList->setPos(pos);
 	floatingList->addItems(m_listItems);
