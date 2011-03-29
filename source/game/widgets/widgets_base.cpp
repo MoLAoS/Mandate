@@ -658,7 +658,15 @@ void Widget::renderBackground(const BackgroundStyle &style, const Vec2i &offset,
 
 void Widget::renderBackground() {
 	if (m_backgroundStyle.m_type) {
-		renderBackground(m_backgroundStyle, Vec2i(0), m_size);
+		Vec2i pos, size;
+		if (m_backgroundStyle.m_insideBorders) {
+			pos = Vec2i(getBorderLeft(), getBorderTop());
+			size = m_size - getBordersAll();
+		} else {
+			pos = Vec2i(0);
+			size = m_size;
+		}
+		renderBackground(m_backgroundStyle, pos, size);
 	}
 	if (m_borderStyle.m_type) {
 		renderBorders(m_borderStyle, Vec2i(0), m_size);
