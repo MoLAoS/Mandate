@@ -886,11 +886,15 @@ void Unit::loadUnitInit(Command *command) {
 	if (std::find(m_unitsToCarry.begin(), m_unitsToCarry.end(), command->getUnitRef()) == m_unitsToCarry.end()) {
 		m_unitsToCarry.push_back(command->getUnitRef());
 		CMD_LOG( "adding unit to load list " << *command->getUnit() )
-		if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
+		///@bug causes crash at Unit::tick when more than one unit attempts to load at the same time
+		/// while doing multiple loads increases the queue count but it decreases afterwards.
+		/// Furious clicking to make queued commands causes a crash in AnnotatedMap::annotateLocal.
+		/// - hailstone 2Feb2011
+		/*if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
 			CMD_LOG( "deleting load command, already loading.")
 			g_world.deleteCommand(command);
 			command = 0;
-		}
+		}*/
 	}
 }
 

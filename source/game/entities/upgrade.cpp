@@ -89,13 +89,16 @@ void UpgradeManager::startUpgrade(const UpgradeType *upgradeType, int factionInd
 void UpgradeManager::cancelUpgrade(const UpgradeType *upgradeType){
 	Upgrades::iterator it;
 
-	for(it=upgrades.begin(); it!=upgrades.end(); it++){
+	for(it=upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType){
 			break;
 		}
 	}
 
 	if(it!=upgrades.end()){
+		// since UpgradeManager owns this memory we need to delete it here
+		delete *it;
+		*it = 0;
 		upgrades.erase(it);
 	}
 	else{
@@ -106,7 +109,7 @@ void UpgradeManager::cancelUpgrade(const UpgradeType *upgradeType){
 void UpgradeManager::finishUpgrade(const UpgradeType *upgradeType){
 	Upgrades::iterator it;
 
-	for(it=upgrades.begin(); it!=upgrades.end(); it++){
+	for(it=upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType){
 			break;
 		}
@@ -123,7 +126,7 @@ void UpgradeManager::finishUpgrade(const UpgradeType *upgradeType){
 bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType) const{
 	Upgrades::const_iterator it;
 
-	for(it= upgrades.begin(); it!=upgrades.end(); it++){
+	for(it= upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType){
 			return true;
 		}
@@ -133,7 +136,7 @@ bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType) const
 }
 
 bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const{
-	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
+	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType && (*it)->getState()==UpgradeState::UPGRADED){
 			return true;
 		}
@@ -142,7 +145,7 @@ bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const{
 }
 
 bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const{
-	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); it++){
+	for(Upgrades::const_iterator it= upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType && (*it)->getState()==UpgradeState::UPGRADING){
 			return true;
 		}

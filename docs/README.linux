@@ -8,8 +8,9 @@ Dependencies
 - Lua 5.1
 - PhysicsFS (physfs) 2.0 or later
 - zlib
-- Freetype
+- Freetype2
 - libpng
+- libjpeg-turbo
 - wxWidgets 2.8 or later, optional, needed for map editor and model viewer
 - CppUnit, optional, needed for testsuite
 - LibXml2, optional, needed for Blender export script

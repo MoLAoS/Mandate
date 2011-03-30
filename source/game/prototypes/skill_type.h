@@ -189,14 +189,17 @@ class MoveSkillType: public SkillType {
 private:
 	float maxInclination;
 	float maxDeclination;
+	bool visibleOnly;
 
 public:
-	MoveSkillType() : SkillType("Move"){}
+	MoveSkillType() : SkillType("Move"), visibleOnly(false) {}
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "WalkSpeed");
 		descEpCost(str, unit);
 	}
 	//virtual void doChecksum(Checksum &checksum) const;
+	bool getVisibleOnly() const { return visibleOnly; }
 	virtual fixed getSpeed(const Unit *unit) const;
 	virtual SkillClass getClass() const { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MOVE; }

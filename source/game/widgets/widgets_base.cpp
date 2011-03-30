@@ -507,7 +507,8 @@ TextWidget::TextWidget(Widget* me)
 		, txtShadowColour(0.f)
 		, font(0)
 		, centre(true)
-		, m_batchRender(false) {
+		, m_batchRender(false)
+		, m_textRenderer(0) {
 	me->textWidget = this;
 }
 

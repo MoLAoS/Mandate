@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "png.h"
+#include "jpeglib.h"
 
 #include "vec.h"
 #include "types.h"
@@ -124,6 +125,35 @@ public:
 	}*/
 };
 
+// =====================================================
+//	class PixmapIoJpg
+// =====================================================
+
+/** From MegaGlest: Uses code from CImageLoaderJPG.cpp of Irrlicht Engine (zlib/libpng license) */
+class PixmapIoJpg: public PixmapIo {
+private:
+	FileOps *file;
+	struct jpeg_decompress_struct cinfo;
+	struct jpeg_source_mgr source;
+	struct jpeg_error_mgr jerr;
+	uint8 *buffer;
+
+public:
+	PixmapIoJpg(): file(0), buffer(0) {}
+	virtual ~PixmapIoJpg() {delete file;}
+
+	virtual void openRead(const string &path);
+	virtual void read(uint8 *pixels);
+	virtual void read(uint8 *pixels, int components);
+
+	virtual void openWrite(const string &path, int w, int h, int components) {
+		throw runtime_error("Can't write JPG.");
+	}
+
+	virtual void write(uint8 *pixels) {
+		throw runtime_error("Can't write JPG.");
+	}
+};
 
 
 // =====================================================
@@ -182,6 +212,7 @@ public:
 	void loadTga(const string &path);
 	void loadBmp(const string &path);
 	void loadPng(const string &path);
+	void loadJpg(const string &path);
 
 	void save(const string &path);
 	void saveBmp(const string &path);

@@ -81,6 +81,7 @@ protected:
 	bool noInput;
 	bool netError, gotoMenu, exitGame, exitProgram;
 	float scrollSpeed;
+	Vec2f m_cameraDragCenter;
 
 	DebugStats		m_debugStats;
 

@@ -80,7 +80,8 @@ ClusterMap::~ClusterMap() {
 		assert(Edge::NumEdges(f) == 0);
 		assert(Transition::NumTransitions(f) == 0);
 		if (Edge::NumEdges(f) != 0 || Transition::NumTransitions(f) != 0) {
-			throw runtime_error("memory leak");
+			g_logger.logError("~ClusterMap(): memory leak");
+			break;
 		}
 	}
 }

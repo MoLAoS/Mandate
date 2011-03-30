@@ -598,6 +598,8 @@ void GameState::mouseDownRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!noInput) {
 		gui.mouseDownRight(x, y);
+		m_cameraDragCenter.x = x;
+		m_cameraDragCenter.y = y;
 	}
 }
 
@@ -646,9 +648,13 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			}
 		}
 	} else if (ms.get(MouseButton::RIGHT)) {
-		g_program.setMouseAppearance(MouseAppearance::CAMERA_MOVE);
-		gameCamera.setMoveZ((y - lastMousePos.y) * scrollSpeed, true);
-		gameCamera.setMoveX((x - lastMousePos.x) * scrollSpeed, true);
+		Vec2f moveVec = Vec2f(x, y) - m_cameraDragCenter;
+		if (moveVec.length() > 50) { /// @todo add to config if this is staying - hailstone 11Feb2011
+			moveVec.normalize();
+			g_program.setMouseAppearance(MouseAppearance::CAMERA_MOVE);
+			gameCamera.setMoveZ(moveVec.y * scrollSpeed, true);
+			gameCamera.setMoveX(moveVec.x * scrollSpeed, true);
+		}
 	} else {
 		if (!noInput) {
 			//main window
@@ -736,6 +742,10 @@ void GameState::keyDown(const Key &key) {
 		gameCamera.setRotate(-1);
 	} else if (cmd == ucCameraRotateRight ) { // rotate camera right
 		gameCamera.setRotate(1);
+	} else if (cmd == ucCameraZoomIn) { // camera zoom in
+		gameCamera.zoom(15.f);
+	} else if (cmd == ucCameraZoomOut) { // camera zoom out
+		gameCamera.zoom(-15.f);
 	} else if (cmd == ucCameraPitchUp) { // camera pitch up
 		gameCamera.setMoveY(1);
 	} else if ( cmd == ucCameraPitchDown) { // camera pitch down

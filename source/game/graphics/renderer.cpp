@@ -52,6 +52,7 @@ private:
 	const Texture *teamTexture;
 
 public:
+	MeshCallbackTeamColor() : teamTexture(0) {}
 	void setTeamTexture(const Texture *teamTexture)	{this->teamTexture= teamTexture;}
 	virtual void execute(const Mesh *mesh);
 };
@@ -196,28 +197,32 @@ Renderer &Renderer::getInstance(){
 
 bool Renderer::init(){
 	// config
+	g_logger.logProgramEvent("Initialising renderer.");
 	Config &config= Config::getInstance();
 	loadConfig();
-	if(config.getRenderCheckGlCaps()){
+	if (config.getRenderCheckGlCaps()) {
 		checkGlCaps();
 	}
-	if(config.getMiscFirstTime()){
+	if (config.getMiscFirstTime()) {
 		config.setMiscFirstTime(false);
 		autoConfig();
 		config.save();
 	}
 	// init resource managers
+	g_logger.logProgramEvent("\tinit core data.");
 	try {
 		modelManager[ResourceScope::GLOBAL]->init();
 		textureManager[ResourceScope::GLOBAL]->init();
 		fontManager[ResourceScope::GLOBAL]->init();
 	} catch (runtime_error &e) {
-		g_logger.logError(string("Error loading core data.\n") + e.what());
+		g_logger.logProgramEvent(
+			string("\tError while initialising data in ResourceScope::GLOBAL.\n\t") + e.what());
 		return false;
 	}
 
 	// load shader code (todo ?: do this in initGame(), so a shader-set can be selected in menu)
 	if (g_config.getRenderUseShaders()) {
+		g_logger.logProgramEvent("\tloading shaders.");
 		// some hacky stuff so we can test easier, get a list of shader 'sets' to load
 		string names = g_config.getRenderUnitShaders();
 		char *tmp = new char[names.size() + 1];
@@ -234,13 +239,14 @@ bool Renderer::init(){
 		try {
 			static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
 		} catch (runtime_error &e) {
-			g_logger.logError("Error: shader source load/compile failed: " + string(e.what()));
+			g_logger.logError("\tError: shader source load/compile failed:\n\t" + string(e.what()));
 		}
 		while (mediaErrorLog.hasError()) {
 			MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
 			g_logger.logError(rec.path, rec.msg);
 		}
 	}
+	g_logger.logProgramEvent("\tinit 2d display lists.");
 	init2dList();
 	init2dNonVirtList();
 
@@ -750,7 +756,6 @@ void Renderer::renderSelectionQuad(){
 }
 
 Vec2i computeCenteredPos(const string &text, const Font *font, int x, int y){
-	const Metrics &metrics= Metrics::getInstance();
 	Vec2f textDiminsions = font->getMetrics()->getTextDiminsions(text);
 	return Vec2i(int(x - textDiminsions.x / 2.f), int(y - textDiminsions.y / 2.f));
 }

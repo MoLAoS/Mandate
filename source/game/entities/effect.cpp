@@ -104,7 +104,7 @@ Effects::Effects(const XmlNode *node) {
 
 Effects::~Effects() {
 	if (World::isConstructed()) {
-		for (iterator i = begin(); i != end(); i++) {
+		for (iterator i = begin(); i != end(); ++i) {
 			(*i)->clearSource();
 			(*i)->clearRoot();
 			g_world.deleteEffect(*i);
@@ -122,7 +122,7 @@ bool Effects::add(Effect *e){
 		return true;
 	}
 
-	for (iterator i = begin(); i != end(); i++) {
+	for (iterator i = begin(); i != end(); ++i) {
 		if((*i)->getType() == e->getType() && (*i)->getSource() == e->getSource() && (*i)->getRoot() == e->getRoot() ){
 			switch (es) {
 				case EffectStacking::EXTEND:
@@ -157,7 +157,7 @@ bool Effects::add(Effect *e){
 }
 
 void Effects::remove(Effect *e) {
-	for (iterator i = begin(); i != end(); i++) {
+	for (iterator i = begin(); i != end(); ++i) {
 		if(*i == e) {
 			list<Effect*>::remove(e);
 			dirty = true;
@@ -167,7 +167,7 @@ void Effects::remove(Effect *e) {
 }
 
 void Effects::clearRootRef(Effect *e) {
-	for(const_iterator i = begin(); i != end(); i++) {
+	for(const_iterator i = begin(); i != end(); ++i) {
 		if((*i)->getRoot() == e) {
 			(*i)->clearRoot();
 		}
@@ -183,7 +183,7 @@ void Effects::tick() {
 			i = erase(i);
 			dirty = true;
 		} else {
-			i++;
+			++i;
 		}
 	}
 }
@@ -206,7 +206,7 @@ void Effects::getDesc(string &str) const {
 	bool printedFirst = false;
 	Lang &lang= Lang::getInstance();
 
-	for(const_iterator i = begin(); i != end(); i++) {
+	for(const_iterator i = begin(); i != end(); ++i) {
 		const EffectType *type = (*i)->getType();
 		if(type->isDisplay()) {
 			uei = uniqueEffects.find(type);
@@ -222,7 +222,7 @@ void Effects::getDesc(string &str) const {
 		}
 	}
 
-	for(uei = uniqueEffects.begin(); uei != uniqueEffects.end(); uei++) {
+	for(uei = uniqueEffects.begin(); uei != uniqueEffects.end(); ++uei) {
 		if(printedFirst){
 			str += "\n    ";
 		} else {
@@ -242,7 +242,7 @@ void Effects::getDesc(string &str) const {
 
 //who killed Kenny?
 Unit *Effects::getKiller() const {
-	for (const_iterator i = begin(); i != end(); i++) {
+	for (const_iterator i = begin(); i != end(); ++i) {
 		Unit *source = g_world.getUnit((*i)->getSource());
 		//If more than two other units hit this unit with a DOT and it died,
 		//credit goes to the one 1st in the list.

@@ -268,6 +268,17 @@ void MoveCommandType::tick(const Unit *unit, Command &command) const {
 // 	class TeleportCommandType
 // =====================================================
 
+CommandResult TeleportCommandType::check(const Unit *unit, const Command &command) const {
+	if (m_moveSkillType->getVisibleOnly()) {
+		if (g_map.getTileFromCellPos(command.getPos())->isVisible(unit->getTeam())) {
+			return CommandResult::SUCCESS;
+		} else {
+			return CommandResult::FAIL_UNDEFINED;
+		}
+	}
+	return CommandResult::SUCCESS;
+}
+
 void TeleportCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
@@ -477,6 +488,7 @@ void ProduceCommandType::update(Unit *unit) const {
 				if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 					unit->cancelCurrCommand();
 					g_world.getUnitFactory().deleteUnit(unit);
+					return;
 				} else {
 					unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
 					produced->create();
@@ -487,15 +499,16 @@ void ProduceCommandType::update(Unit *unit) const {
 					if (ct) {
 						produced->giveCommand(g_world.newCommand(ct, CommandFlags(), unit->getMeetingPos()));
 					}
-					unit->finishCommand();
-					if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-						RUNTIME_CHECK(!unit->isCarried());
-						g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
-							g_gameState.getGameCamera()->getPos());
-					}
 				}
-				unit->setCurrSkill(SkillClass::STOP);
 			}
+			// all the units have been produced, safe to finish command now
+			unit->finishCommand();
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				RUNTIME_CHECK(!unit->isCarried());
+				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+					g_gameState.getGameCamera()->getPos());
+			}
+			unit->setCurrSkill(SkillClass::STOP);
 		}
 	}
 }
@@ -1082,7 +1095,7 @@ void LoadCommandType::update(Unit *unit) const {
 		}
 	}
 	assert(closest);
-	if (dist < loadSkillType->getMaxRange()) { // if in load range, load 'em
+	if (dist < loadSkillType->getMaxRange() + unit->getSize()) { // if in load range, load 'em
 		closest->removeCommands();
 		closest->setCurrSkill(SkillClass::STOP);
 		g_map.clearUnitCells(closest, closest->getPos());
@@ -1195,7 +1208,7 @@ void UnloadCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(SkillClass::STOP);
 		return;
 	}
-	if (command->getPos() != Command::invalidPos) {
+	if (command->getPos() != Command::invalidPos && moveSkillType) {
 		if (unit->travel(command->getPos(), moveSkillType) == TravelState::ARRIVED) {
 			command->setPos(Command::invalidPos);
 		}
@@ -1204,7 +1217,7 @@ void UnloadCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::UNLOAD);
 		} else {
 			Unit *targetUnit = g_world.getUnit(unit->getUnitsToUnload().front());
-			int maxRange = unloadSkillType->getMaxRange();
+			int maxRange = unloadSkillType->getMaxRange() + unit->getSize();
 			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
@@ -1218,6 +1231,7 @@ void UnloadCommandType::update(Unit *unit) const {
 				unit->setCurrSkill(SkillClass::STOP);
 				// cancel?
 				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
+				// should check it has moveskill first - hailstone 3Feb2011
 			}
 		}
 	}

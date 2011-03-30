@@ -257,10 +257,14 @@ extern MediaErrorLog mediaErrorLog;
 // Util finctions
 //
 
-// check existence of a file (@todo move into Shared::PhysFS ?)
+/// check existence of a file 
+///@todo move into Shared::PhysFS?
 bool fileExists(const string &path);
-// find all files in a directory (@todo move into Shared::PhysFS ?)
-void findAll(const string &path, vector<string> &results, bool cutExtension = false);
+///@todo move into Shared::PhysFS?
+/** Find all files in a directory
+  * @param out_results stores the found paths, can be 0 size if doThrow = false
+  */
+void findAll(const string &path, vector<string> &out_results, bool cutExtension = false, bool doThrow = true);
 
 // path string utils
 string cleanPath(const string &s);

@@ -192,7 +192,7 @@ public:
 			}
 		}
 	}
-	~MapVertexData() { delete m_data; }
+	~MapVertexData() { delete [] m_data; }
 
 	TileVertex& get(Vec2i pos) {
 		return m_data[pos.y * m_size.w + pos.x];
@@ -261,6 +261,11 @@ public:
 		return &tiles[sy * m_tileSize.w + sx];
 	}
 	Tile *getTile(const Vec2i &sPos) const { return getTile(sPos.x, sPos.y); }
+	
+	Tile *getTileFromCellPos(int x, int y) const {
+		return getTile(x / GameConstants::cellScale, y / GameConstants::cellScale);
+	}
+	Tile *getTileFromCellPos(const Vec2i &pos) const { return getTileFromCellPos(pos.x, pos.y);	}
 
 	int getW() const							{ return m_cellSize.w;  }
 	int getH() const							{ return m_cellSize.h;   }

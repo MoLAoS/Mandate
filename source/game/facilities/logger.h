@@ -135,6 +135,7 @@ public:
 
 STRINGY_ENUM( AiComponent,
 	ECONOMY,
+	GENERAL,
 	MILITARY,
 	RESEARCH
 );

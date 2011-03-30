@@ -112,6 +112,13 @@ const AttackSkillType * AttackCommandTypeBase::getAttackSkillType(Field field) c
   * @returns true when completed */
 bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, 
 									  Unit* target, const Vec2i &targetPos) const {
+	
+	if (target && target->getHp() <= 0) {
+		// the target is dead, finish command so the unit doesn't 
+		// wander to the target pos
+		return true;
+	}
+
 	const AttackSkillType *ast = NULL;
 
 	if (target && !attackSkillTypes.getZone(target->getCurrZone())) { // if have target but can't attack it

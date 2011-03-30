@@ -119,6 +119,7 @@ UserInterface::UserInterface(GameState &game)
 	dragStartPos= Vec2i(0, 0);
 	computeSelection= false;
 	validPosObjWorld= false;
+	choosenBuildingType= NULL;
 	activeCommandType= NULL;
 	activeCommandClass= CommandClass::STOP;
 	selectingPos= false;
@@ -445,7 +446,7 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 		UnitVector units;
 		Vec2i pos(x, y);
 
-		const MapObject *obj;
+		const MapObject *obj = 0;
 		g_renderer.computeSelected(units, obj, pos, pos);
 		//g_gameState.lastPick(units, obj);
 		calculateNearest(units, gameCamera->getPos());
@@ -685,7 +686,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 		if (selection.isUniform()) {
 			if (choosenBuildingType) {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
-					CommandClass::NULL_COMMAND, targetPos, targetUnit, choosenBuildingType, m_selectedFacing);
+					CommandClass::NULL_COMMAND, targetPos, 0, choosenBuildingType, m_selectedFacing);
 			} else {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
 					CommandClass::NULL_COMMAND, targetPos, targetUnit);
@@ -1394,7 +1395,7 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj) {
 	units.clear();
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
-	const MapObject *junk;
+	const MapObject *junk = 0;
 	g_renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
 	//g_gameState.lastPick(units, selectedObject);
 

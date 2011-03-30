@@ -264,6 +264,15 @@ CycleInfo SkillType::calculateCycleTime() const {
 // 	class MoveSkillType
 // =====================================================
 
+void MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+
+	XmlNode *visibleOnlyNode = sn->getOptionalChild("visible-only");
+	if (visibleOnlyNode) {
+		visibleOnly = visibleOnlyNode->getAttribute("value")->getBoolValue();
+	}
+}
+
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
 	return speed * unit->getMoveSpeedMult() + unit->getMoveSpeed();
 }

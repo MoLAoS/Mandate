@@ -102,6 +102,8 @@ const int ProgramLog::logLineCount= 15;
 ProgramLog::ProgramLog()
 		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
 		, loadingGame(true)
+		, totalUnits(0)
+		, unitsLoaded(0)
 		, m_progressBar(false)
 		, m_progress(0)
 		, m_backgroundTexture(0) {
@@ -239,8 +241,7 @@ AiLogFile::AiLogFile()
 
 void AiLogFile::add(int f, AiComponent c, int level, const string &msg) {
 	ASSERT_RANGE(f, GameConstants::maxPlayers);
-	if (m_flags[f].m_enabled && level <= m_flags[f].m_level
-	&& (c == AiComponent::INVALID || m_flags[f].m_components[c])) {
+	if (m_flags[f].m_enabled && level <= m_flags[f].m_level	&& m_flags[f].m_components[c]) {
 		stringstream ss;
 		ss << "AI: " << f << " [" << AiComponentNames[c] << "] Frame: " 
 			<< g_world.getFrameCount() << ", " << ": " << msg;

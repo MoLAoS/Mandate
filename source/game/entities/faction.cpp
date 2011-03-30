@@ -203,7 +203,7 @@ void Faction::save(XmlNode *node) const {
 	}
 
 	n = node->addChild("units");
-	for (Units::const_iterator i = units.begin(); i != units.end(); i++) {
+	for (Units::const_iterator i = units.begin(); i != units.end(); ++i) {
 		(*i)->save(n->addChild("unit"));
 	}
 }
@@ -754,10 +754,13 @@ void Faction::reEvaluateStore() {
 		}
 	}
 	foreach_const (Units, it, units) {
-		const UnitType *ut = (*it)->getType();
-		for (int j=0; j < ut->getStoredResourceCount(); ++j) {
-			ResourceAmount res = ut->getStoredResource(j, this);
-			storeMap[res.getType()] += res.getAmount();
+		// don't want the resources of dead units to be included
+		if (!(*it)->isDead()) {
+			const UnitType *ut = (*it)->getType();
+			for (int j=0; j < ut->getStoredResourceCount(); ++j) {
+				ResourceAmount res = ut->getStoredResource(j, this);
+				storeMap[res.getType()] += res.getAmount();
+			}
 		}
 	}
 	for (int j = 0; j < resources.size(); ++j) {

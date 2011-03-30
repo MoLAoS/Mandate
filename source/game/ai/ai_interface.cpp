@@ -36,7 +36,7 @@ namespace Glest { namespace Plan {
 
 GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 	LOG_AI(
-		faction->getIndex(), AiComponent::INVALID, 1,		
+		faction->getIndex(), AiComponent::GENERAL, 1,		
 		__FUNCTION__ << " Faction index: " << faction->getIndex() << ", Type:"
 		<< faction->getType()->getName() << " Random seed: " << randomSeed
 	);
@@ -115,7 +115,7 @@ int GlestAiInterface::getMyUpgradeCount() const{
 
 void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
 	assert(list.empty());
-	Map *map= world->getMap();
+
 	for (int i=0; i < world->getFactionCount(); ++i) {
 		Faction *f = world->getFaction(i);
 		if (faction == f || faction->getTeam() == f->getTeam()) { 

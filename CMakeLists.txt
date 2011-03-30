@@ -37,6 +37,8 @@ if(DEFINED GAE_WINDEPS AND WIN32)
 	# sadly FindZLIB does not support HINTS, set it directly (seemingly the same with PNG...)
 	set(PNG_LIBRARY ${GAE_WINDEPS}/lib/libpng.lib)
 	set(PNG_PNG_INCLUDE_DIR ${GAE_WINDEPS}/include)
+	set(JPEG_LIBRARY ${GAE_WINDEPS}/lib/jpeg-static.lib)
+	set(JPEG_INCLUDE_DIR ${GAE_WINDEPS}/include/jpeg)
 	set(ZLIB_INCLUDE_DIR ${GAE_WINDEPS}/include)
 	set(ZLIB_LIBRARY ${GAE_WINDEPS}/lib/zlib.lib)
 	# FindLibXml2 uses PkgConfig as HINTS on non win, set them directly
@@ -67,6 +69,7 @@ find_package(LibXml2)
 find_package(wxWidgets COMPONENTS base core gl)
 find_package(Freetype REQUIRED)
 find_package(PNG REQUIRED)
+find_package(JPEG REQUIRED)
 find_package(GLEW REQUIRED)
 
 # PhysFS
@@ -115,7 +118,7 @@ else (MSVC)
 endif (MSVC)
 
 include_directories(${LUA_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR}
-		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
+		${PHYSFS_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${PNG_INCLUDE_DIR} ${JPEG_INCLUDE_DIR} ${GLEW_INCLUDE_DIR})
 
 if(WIN32)
 	# dsound8 library

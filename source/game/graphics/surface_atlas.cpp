@@ -33,22 +33,24 @@ using Shared::Graphics::Gl::getGlMaxTextureSize;
 //	class SurfaceInfo
 // =====================================================
 
-SurfaceInfo::SurfaceInfo(const Pixmap2D *lu, const Pixmap2D *ru, const Pixmap2D *ld, const Pixmap2D *rd) {
-	this->leftDown = ld;
-	this->leftUp = lu;
-	this->rightDown = rd;
-	this->rightUp = ru;
-	this->center = NULL;
-	this->coord = Vec2f(0.f);
+SurfaceInfo::SurfaceInfo(const Pixmap2D *lu, const Pixmap2D *ru, const Pixmap2D *ld, const Pixmap2D *rd)
+		: center(NULL)
+		, leftUp(lu)
+		, rightUp(ru) 
+		, leftDown(ld)
+		, rightDown(rd)
+		, coord(Vec2f(0.f))
+		, texture(0) {
 }
 
-SurfaceInfo::SurfaceInfo(const Pixmap2D *center) {
-	this->leftDown = NULL;
-	this->leftUp = NULL;
-	this->rightDown = NULL;
-	this->rightUp = NULL;
-	this->center = center;
-	this->coord = Vec2f(0.f);
+SurfaceInfo::SurfaceInfo(const Pixmap2D *center)
+		: center(center)
+		, leftUp(NULL)
+		, rightUp(NULL) 
+		, leftDown(NULL)
+		, rightDown(NULL)
+		, coord(Vec2f(0.f))
+		, texture(0) {
 }
 
 bool SurfaceInfo::operator==(const SurfaceInfo &si) const {
