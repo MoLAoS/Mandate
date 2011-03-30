@@ -1094,7 +1094,7 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 
 //computes the fog of war texture, contained in the minimap
 void World::computeFow() {
-	GameSettings &gs = m_simInterface->getGameSettings();
+	//GameSettings &gs = m_simInterface->getGameSettings();
 	
 	///@todo move to Minimap
 	//reset texture

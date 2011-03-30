@@ -42,6 +42,7 @@ ServerInterface::ServerInterface(Program &prog)
 		: NetworkInterface(prog)
 		, m_waitingForPlayers(false)
 		, m_dataSync(0)
+		, m_syncCounter(0)
 		, m_dataSyncDone(false){
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
 		slots[i] = NULL;

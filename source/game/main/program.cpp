@@ -211,8 +211,9 @@ bool Program::init() {
 
 	// normal startup
 	} else {
-		// make sure to fix up menu music in battle end and intro if uncommenting
+		// make sure to delete the music line so it doesn't play multiple times if uncommenting
 		//setState(new Intro(*this));
+		g_soundRenderer.playMusic(g_coreData.getMenuMusic());
 		setState(new MainMenu(*this));
 	}
 	return true;

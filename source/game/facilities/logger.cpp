@@ -102,6 +102,8 @@ void LogFile::addNetworkMsg(const string &msg) {
 ProgramLog::ProgramLog()
 		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
 		, loadingGame(true)
+		, totalUnits(0)
+		, unitsLoaded(0)
 		, m_progressBar(false)
 		, m_progress(0)
 		, m_backgroundTexture(0) {

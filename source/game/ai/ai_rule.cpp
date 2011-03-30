@@ -343,7 +343,8 @@ bool AiRuleAddTasks::canProduce(UnitClass unitClass) const {
 // =====================================================
 
 AiRuleBuildOneFarm::AiRuleBuildOneFarm(Ai *ai)
-		: AiRule(ai) {
+		: AiRule(ai)
+		, farm(0) {
 }
 
 bool AiRuleBuildOneFarm::test() {
