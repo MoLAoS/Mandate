@@ -198,8 +198,8 @@ public:
 		void  Class::operator delete(void *ptr) {					\
 			if (!ptr) return;										\
 			AllocationMap::iterator it = s_allocMap.find(ptr);		\
-			ASSERT(it != s_allocMap.end(), "Bad delete!");			\
-			ASSERT(it->second != 0, "Bad alloc, size == 0.");		\
+			INVARIANT(it != s_allocMap.end(), "Bad delete!");			\
+			INVARIANT(it->second != 0, "Bad alloc, size == 0.");		\
 			s_allocTotal -= it->second;								\
 			s_allocMap.erase(it);									\
 			++s_deAllocCount;										\
@@ -216,8 +216,8 @@ public:
 		void Class::operator delete[](void *ptr) {					\
 			if (!ptr) return;										\
 			AllocationMap::iterator it = s_allocMap.find(ptr);		\
-			ASSERT(it != s_allocMap.end(), "Bad delete!");			\
-			ASSERT(it->second != 0, "Bad alloc, size == 0.");		\
+			INVARIANT(it != s_allocMap.end(), "Bad delete!");			\
+			INVARIANT(it->second != 0, "Bad alloc, size == 0.");		\
 			s_allocTotal -= it->second;								\
 			s_allocMap.erase(it);									\
 			::operator delete[](ptr);								\

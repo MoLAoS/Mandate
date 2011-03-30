@@ -118,7 +118,7 @@ private:
 
 	SimulationInterface *simulationInterface;
 
-	ProgramState *programState;
+	ProgramState *m_programState;
 	bool crashed;
 	bool terminating;
 	bool visible;

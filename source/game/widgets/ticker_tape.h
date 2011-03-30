@@ -71,7 +71,7 @@ struct ActionBase {
 		}
 		Vec2f pos;
 		float alpha;
-		const float e = 2.71828183f;
+		const float two_e = 2.f * 2.71828183f;
 		float tt = float(m_counter) / float(m_length);
 		if (m_inverse) {
 			tt = 1.f - tt;
@@ -81,11 +81,11 @@ struct ActionBase {
 			if (m_transFuncPos == TransitionFunc::SQUARED) {
 				t *= t;
 			} else if (m_transFuncPos == TransitionFunc::EXPONENTIAL) {
-				t = exp(t * 2.f * e - 2.f * e);
+				t = exp(t * two_e - two_e);
 			} else if (m_transFuncPos == TransitionFunc::SQUARE_ROOT) {
 				t = sqrt(t);
 			} else if (m_transFuncPos == TransitionFunc::LOGARITHMIC) {
-				t = (log(t) + 2.f * e) / (2.f * e);
+				t = (log(t) + two_e) / two_e;
 			}
 			t = clamp(t, 0.f, 1.f);
 			if (m_inverse) {
@@ -101,11 +101,11 @@ struct ActionBase {
 			if (m_transFuncAlpha == TransitionFunc::SQUARED) {
 				t *= t;
 			} else if (m_transFuncAlpha == TransitionFunc::EXPONENTIAL) {
-				t = exp(t * 2.f * e - 2.f * e);
+				t = exp(t * two_e - two_e);
 			} else if (m_transFuncPos == TransitionFunc::SQUARE_ROOT) {
 				t = sqrt(t);
 			} else if (m_transFuncAlpha == TransitionFunc::LOGARITHMIC) {
-				t = (log(t) + 2.f * e) / (2.f * e);
+				t = (log(t) + two_e) / two_e;
 			}
 			t = clamp(t, 0.f, 1.f);
 			if (m_inverse) {
@@ -138,6 +138,7 @@ struct TextAction : public ActionBase {
 
 	TextAction& operator=(const TextAction &that) {
 		memcpy(this, &that, sizeof(TextAction));
+		return *this;
 	}
 
 	virtual void updateTarget(Vec2f pos, float alpha) override {

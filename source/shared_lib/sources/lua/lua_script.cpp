@@ -530,7 +530,7 @@ bool LuaArguments::checkType(LuaType type, int ndx) const {
 		case LuaType::FUNCTION:
 			return lua_isfunction(luaState, ndx);
 		default:
-			ASSERT(false, "LuaArguments::checkType() passed bad arg.");
+			INVARIANT(false, "LuaArguments::checkType() passed bad arg.");
 			return false;
 	}
 }
@@ -564,7 +564,7 @@ size_t LuaArguments::checkTable(int ndx, size_t minSize, size_t maxSize) const {
 }
 
 string LuaArguments::descArgPos(int ndx) const {
-	ASSERT(ndx, "LuaArguments::descArgPos() passed 0. Invalid stack index.");
+	INVARIANT(ndx, "LuaArguments::descArgPos() passed 0. Invalid stack index.");
 	if (ndx > 0) {
 		return intToStr(ndx);
 	}

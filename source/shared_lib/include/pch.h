@@ -17,7 +17,7 @@
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
 
-#define ASSERT(condition, message) assert((condition) && message)
+#define INVARIANT(condition, message) assert((condition) && message)
 #ifdef WIN32
 #	define CHECK_HEAP() assert(_CrtCheckMemory())
 #else
@@ -39,6 +39,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 //----
+#	include <xaudio2.h>
 #	include <windows.h>
 #	include <crtdbg.h>
 #else

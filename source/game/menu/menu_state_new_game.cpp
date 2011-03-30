@@ -370,7 +370,7 @@ int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
 	}
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i]->getSelectedColourIndex() != -1) {
-			ASSERT(slots[i]->getControlType() != ControlType::CLOSED, "Closed slot has colour set.");
+			INVARIANT(slots[i]->getControlType() != ControlType::CLOSED, "Closed slot has colour set.");
 			colourUsed[slots[i]->getSelectedColourIndex()] = true;
 		}
 	}
@@ -379,7 +379,7 @@ int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
 			return i;
 		}
 	}
-	ASSERT(false, "No free colours");
+	INVARIANT(false, "No free colours");
 	return -1;
 }
 
@@ -472,7 +472,7 @@ void MenuStateNewGame::onCheckChanged(Widget* cb) {
 	} else if (cb == m_randomLocsCheckbox) {
 		gs.setRandomStartLocs(m_randomLocsCheckbox->isChecked());
 	} else {
-		ASSERT(false, "Unknown CheckBox!?!");
+		INVARIANT(false, "Unknown CheckBox!?!");
 	}
 
 }

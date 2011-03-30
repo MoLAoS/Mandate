@@ -111,7 +111,7 @@ Program::Program(CmdArgs &args)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
 		, guiUpdateTimer(GameConstants::guiUpdatesPerSec, maxTimes, 10)
 		, simulationInterface(0)
-		, programState(0)
+		, m_programState(0)
 		, crashed(false)
 		, terminating(false)
 		, visible(true)
@@ -140,12 +140,8 @@ Program::Program(CmdArgs &args)
 
 Program::~Program() {
 	Renderer::getInstance().end();
-
-	if (programState) {
-		delete programState;
-	}
+	delete m_programState;
 	delete simulationInterface;
-
 	singleton = 0;
 }
 
@@ -247,17 +243,17 @@ void Program::loop() {
 			}
 			if (visible) {
 				_PROFILE_SCOPE("Program::loop() : Render");
-				programState->renderBg();
+				m_programState->renderBg();
 				g_renderer.reset2d();
 				WidgetWindow::render();
-				programState->renderFg();
+				m_programState->renderFg();
 			}
 		}
 
 		// update camera
 		while (updateCameraTimer.isTime()) {
 			_PROFILE_SCOPE("Program::loop() : update camera");
-			programState->updateCamera();
+			m_programState->updateCamera();
 		}
 
 		// update gui
@@ -268,7 +264,7 @@ void Program::loop() {
 		// update world
 		while (updateTimer.isTime() && !terminating) {
 			_PROFILE_SCOPE("Program::loop() : Update World/Menu");
-			programState->update();
+			m_programState->update();
 			if (simulationInterface->isNetworkInterface()) {
 				simulationInterface->asNetworkInterface()->update();
 			}
@@ -277,7 +273,7 @@ void Program::loop() {
 		// tick timer
 		while (tickTimer.isTime() && !terminating) {
 			_PROFILE_SCOPE("Program::loop() : tick");
-			programState->tick();
+			m_programState->tick();
 		}
 	}
 	terminating = true;
@@ -302,13 +298,13 @@ bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	switch (btn) {
 		case MouseButton::LEFT:
-			programState->mouseDownLeft(pos.x, pos.y);
+			m_programState->mouseDownLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseDownRight(pos.x, pos.y);
+			m_programState->mouseDownRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseDownCenter(pos.x, pos.y);
+			m_programState->mouseDownCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -320,13 +316,13 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	switch (btn) {
 		case MouseButton::LEFT:
-			programState->mouseUpLeft(pos.x, pos.y);
+			m_programState->mouseUpLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseUpRight(pos.x, pos.y);
+			m_programState->mouseUpRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseUpCenter(pos.x, pos.y);
+			m_programState->mouseUpCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -336,7 +332,7 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
-	programState->mouseMove(pos.x, pos.y, input.getMouseState());
+	m_programState->mouseMove(pos.x, pos.y, input.getMouseState());
 	return true;
 }
 
@@ -344,13 +340,13 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	switch (btn){
 		case MouseButton::LEFT:
-			programState->mouseDoubleClickLeft(pos.x, pos.y);
+			m_programState->mouseDoubleClickLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseDoubleClickRight(pos.x, pos.y);
+			m_programState->mouseDoubleClickRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseDoubleClickCenter(pos.x, pos.y);
+			m_programState->mouseDoubleClickCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -360,25 +356,25 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseWheel(Vec2i pos, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << ", " << zDelta << " )");
-	programState->eventMouseWheel(pos.x, pos.y, zDelta);
+	m_programState->eventMouseWheel(pos.x, pos.y, zDelta);
 	return true;
 }
 
 bool Program::keyDown(Key key) {
 	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
-	programState->keyDown(key);
+	m_programState->keyDown(key);
 	return true;
 }
 
 bool Program::keyUp(Key key) {
 	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
-	programState->keyUp(key);
+	m_programState->keyUp(key);
 	return true;
 }
 
 bool Program::keyPress(char c) {
 	WIDGET_LOG( __FUNCTION__ << "( '" << c << "' )");
-	programState->keyPress(c);
+	m_programState->keyPress(c);
 	return true;
 }
 
@@ -391,12 +387,12 @@ void Program::setSimInterface(SimulationInterface *si) {
 }
 
 void Program::setState(ProgramState *programState) {
-	if (programState) {
-		delete this->programState;
-	}
-	this->programState = programState;
-	programState->load();
-	programState->init();
+	//cout << "setting state to ProgramState object @ 0x" << intToHex(int(programState)) << endl;
+	assert(programState != m_programState);
+	delete m_programState;
+	m_programState = programState;
+	m_programState->load();
+	m_programState->init();
 	resetTimers();
 }
 
@@ -428,11 +424,9 @@ void Program::crash(const exception *e) {
 			printf("Exception: %s\n", e.what());
 		}
 		crashed = true;
-		if (programState) {
-			delete programState;
-		}
+		delete m_programState;
 		clear();
-		programState = new CrashProgramState(*this, e);
+		m_programState = new CrashProgramState(*this, e);
 		loop();
 	} else {
 		exit();

@@ -506,7 +506,7 @@ void MenuStateOptions::onSliderValueChanged(Widget *source) {
 		g_config.setSoundVolumeAmbient(slider->getValue());
 	} else if (slider == m_volMusicSlider) {
 		g_config.setSoundVolumeMusic(slider->getValue());
-		g_coreData.getMenuMusic()->setVolume(float(slider->getValue()));
+		g_coreData.getMenuMusic()->setVolume(slider->getValue() / 100.f);
 	}
 }
 

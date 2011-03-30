@@ -88,6 +88,12 @@ string PlatformExceptionHandler::codeToStr(DWORD code) {
 	}
 }
 
+void fail(const char *msg, HRESULT hr) {
+	stringstream ss;
+	ss << msg << "\n\tHRESULT == " << hr;
+	throw runtime_error(ss.str());
+}
+
 // =====================================================
 // class Misc
 // =====================================================

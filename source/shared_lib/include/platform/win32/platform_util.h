@@ -30,6 +30,14 @@ using Shared::Platform::int64;
 
 namespace Shared { namespace Platform {
 
+void fail(const char *msg, HRESULT hr);
+
+#define CHECK_HR(hr, errorMsg) \
+	if (FAILED(hr)) {     \
+		fail(errorMsg, hr);    \
+	}
+
+
 // =====================================================
 //	class PlatformExceptionHandler
 // =====================================================

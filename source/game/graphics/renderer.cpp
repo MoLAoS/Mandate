@@ -1430,7 +1430,7 @@ void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const V
 	set<PickHit> unitHits, objectHits;
 	GLuint *ptr = selectBuffer;
 	for (int i = 0; i < selCount; ++i) {
-		ASSERT(*ptr == 2, "something was rendered in selection mode without 2 names on the stack");
+		INVARIANT(*ptr == 2, "something was rendered in selection mode without 2 names on the stack");
 		++ptr;
 		GLuint nearDist = *ptr++;
 		++ptr;
